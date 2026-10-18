@@ -71,7 +71,7 @@ The following are **total IPv4 address counts**, not cluster-size recommendation
 | /20 | 4,096 |
 | /16 | 65,536 |
 
-For ordinary AWS IPv4 subnet allocations, AWS reserves the first four and last address of each subnet: a /24 therefore has 251 assignable addresses and a /22 has 1,019, before workloads and infrastructure consume any. This is per subnet, not five addresses for the entire VPC; BYOIP has documented exceptions. Existing subnet CIDRs cannot simply be enlarged in place. Prefix delegation requires contiguous blocks and does not create new address space.
+For ordinary AWS IPv4 subnet allocations, AWS reserves the first four addresses and the last address of each subnet: a /24 therefore has 251 assignable addresses and a /22 has 1,019, before workloads and infrastructure consume any. This is per subnet, not five addresses for the entire VPC; BYOIP has documented exceptions. Existing subnet CIDRs cannot simply be enlarged in place. Prefix delegation requires contiguous blocks and does not create new address space.
 ### Example Subnet Design
 
 <!-- Audit 2026-09-11: parent asset repair required. Private10.0.2.0/22and10.0.6.0/22arenoncanonical;canonicalfirstoverlapspublicsubnets. Use10.0.4.0/22and10.0.8.0/22;showzonalpublicNATplacementandIGWroute;rawIPcountsnotusable.

@@ -286,7 +286,7 @@ spec:
 ```
 
 **Explanation:**
-This is an AL2023 learning example. @latest may change the resolved AMI and trigger drift; pin and test an approved release or AMI before production rollout. The private marker is a custom tag that must exist on subnets whose routes you verified. IMDSv2 reduces several metadata attack paths but does not universally prevent SSRF; hop limit1 limits many non-host-network container paths and must be tested with the CNI/workload identity design. The named instance profile, node access, KMS/volume configuration and network paths are prerequisites.
+This is an AL2023 learning example. @latest may change the resolved AMI and trigger drift; pin and test an approved release or AMI before production rollout. The private marker is a custom tag that must exist on subnets whose routes you verified. IMDSv2 reduces several metadata attack paths but does not universally prevent SSRF; hop limit 1 limits many non-host-network container paths and must be tested with the CNI/workload identity design. The named instance profile, node access, KMS/volume configuration and network paths are prerequisites.
 </details>
 
 15. Write commands to verify Karpenter installation status and debug provisioning issues.

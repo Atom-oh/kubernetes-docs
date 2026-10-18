@@ -1,6 +1,6 @@
 # Prometheus クイズ
 
-> **最終更新**: September 12, 2026
+> **最終更新**: 2026年9月12日
 
 1. Prometheus の通常のメトリクス収集経路は何ですか？
 
@@ -18,7 +18,7 @@
 
 </details>
 
-2. Counter の5分間における1秒あたりの平均 rate を得る式はどれですか？
+2. Counter の過去 5 分間の平均増加率（1 秒あたり）を求める式はどれですか？
 
    - A) `rate(http_requests_total, 5m)`
    - B) `rate(http_requests_total[5m])`
@@ -78,7 +78,7 @@ Prometheus はまず monitor の namespace と label を選択し、その monit
 
 **回答: C**
 
-この chart は、有効化された values に応じて Prometheus/Alertmanager、Operator、Grafana、exporter をパッケージ化します。VictoriaMetrics は別の deployment です。任意の image version を混在させるのではなく、確認した chart cohort を pin してください。
+この chart は、有効化した values に応じて Prometheus/Alertmanager、Operator、Grafana、exporter をパッケージ化します。VictoriaMetrics は別途デプロイします。無関係な image version を混在させず、確認済みの chart 一式のバージョンを固定してください。
 
 </details>
 
@@ -94,7 +94,7 @@ Prometheus はまず monitor の namespace と label を選択し、その monit
 
 **回答: B**
 
-receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに独自の endpoint、identity、quota、HA 契約があります。WAL バッファリングには上限があり、ローカル Prometheus の retention 自体も設定可能で、普遍的に30日間に制限されるものではありません。
+receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに固有の endpoint、identity、quota、HA 契約があります。WAL バッファリングには上限があり、ローカル Prometheus の保持期間も設定できます。常に 30 日間に制限されるわけではありません。
 
 </details>
 
@@ -110,7 +110,7 @@ receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに�
 
 **回答: B**
 
-その alert identity に対して、condition は evaluation を通じて満たされ続ける必要があります。データの欠落や label の変更により、pending 状態が中断されることがあります。通知の grouping と timing は別の Alertmanager 設定です。
+同じアラート識別情報について、条件が評価のたびに満たされ続ける必要があります。データの欠落や label の変更により、pending 状態が中断されることがあります。通知の grouping とタイミングは別の Alertmanager 設定です。
 
 </details>
 
@@ -126,7 +126,7 @@ receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに�
 
 **回答: B**
 
-観測された linear trend を予測します。workload の変更、cleanup、sparse data、非線形な動作により無効になる可能性があります。以前の holt_winters 名は、Prometheus 3 では明示的に experimental な double-exponential smoothing function に置き換えられています。これは seasonal model ではありません。
+観測された Gauge の線形トレンドを将来に外挿します。ワークロードの変更、クリーンアップ、疎なデータ、非線形な動作によって予測が当てはまらなくなる場合があります。以前の holt_winters という名前は、Prometheus 3 で明示的に experimental とされた double-exponential smoothing function に置き換えられています。これは季節性モデルではありません。
 
 </details>
 
@@ -142,7 +142,7 @@ receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに�
 
 **回答: B**
 
-groupBy は native configuration では group_by になります。通常、route は continue が設定されていない限り、最初に一致した sibling で停止します。inhibition では、無関係な service/node warning を抑制しないように、意味のある resource-identity の equal label が必要です。
+groupBy はネイティブ形式では group_by になります。通常、continue を設定しない限り、route は最初に一致した同階層のルートで評価を止めます。inhibition で無関係な service/node warning を抑制しないよう、equal にはリソースを識別できる意味のある label を指定してください。
 
 </details>
 
@@ -158,7 +158,7 @@ groupBy は native configuration では group_by になります。通常、rout
 
 **回答: B**
 
-WAL replay は durability の仕組みであり、破損、volume 障害、または長時間の remote outage が発生しても損失がゼロであるという保証ではありません。retention と WAL/head/compaction のディスク要件は別個です。検証済みの backup と recovery procedure を維持してください。
+WAL replay は耐久性を高める仕組みですが、データ破損、volume 障害、長時間の remote outage があっても損失がゼロになる保証ではありません。保持期間と WAL/head/compaction のディスク要件は別々に考慮してください。検証済みのバックアップと復旧手順を維持してください。
 
 </details>
 

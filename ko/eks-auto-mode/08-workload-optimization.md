@@ -11,7 +11,7 @@
 
 On-Demand는 Spot 회수 이벤트를 피하지만 용량·가용성을 보장하지는 않습니다. Replica, topology, readiness, disruption policy, 영구 상태와 장애 복구 검증이 필요합니다.
 
-다음은 복제본 3개와 모두 정상일 때 자발적 축출 1개를 허용하는 PDB입니다. `N-1`을 PDB의 실제 값으로 가정하지 않습니다. 이전 복제본 10개는 크기 예시이지 보편적 요구가 아닙니다. Nginx 이미지/digest·non-root 구성은 운영 장에서 확인한 것을 사용하며 8080의 `/`를 probe합니다. 임의 애플리케이션 이미지에 `/health`가 있다고 가정할 수는 없습니다.
+다음은 복제본이 3개이고 모두 정상일 때 자발적 축출 1개를 허용하는 PDB입니다. `N-1`을 PDB의 실제 값으로 가정하지 않습니다. 이전 복제본 10개는 크기 예시이지 보편적 요구가 아닙니다. Nginx 이미지/digest·non-root 구성은 운영 장에서 확인한 것을 사용하며 8080의 `/`를 probe합니다. 임의 애플리케이션 이미지에 `/health`가 있다고 가정할 수는 없습니다.
 
 ```yaml
 apiVersion: v1
@@ -307,7 +307,7 @@ Auto Mode는 NVIDIA driver/device 지원과 Bottlerocket 이미지를 관리합�
 | g5.12xlarge | A10G 4개 | 합계 96 GB, 각각 24 GB | 48 / 192 GiB |
 | p5.48xlarge | H100 8개 | 합계 640 GB, 각각 80 GB | 192 / 2 TiB |
 
-최신·모든 지역에서 사용 가능한 GPU 목록이 아닌 예시입니다. GPU 메모리 합계는 단일 장치의 연속 메모리가 아닙니다. 특히 이전 Pod의 4 CPU/16Gi request는 노드/system 예약·DaemonSet overhead를 제외하면 g5.xlarge에 들어가지 않습니다. 추론 pool은 더 큰 G5를 허용하며 검토되지 않은 1-GPU 서비스 때문에 8-GPU 학습 노드를 선택하지 않도록 구성합니다.
+최신 목록이나 모든 지역에서 사용 가능한 GPU 목록이 아닌 예시입니다. GPU 메모리 합계는 단일 장치의 연속 메모리가 아닙니다. 특히 이전 Pod의 4 CPU/16Gi request는 노드/system 예약·DaemonSet overhead를 제외하면 g5.xlarge에 들어가지 않습니다. 추론 pool은 더 큰 G5를 허용하며 검토되지 않은 1-GPU 서비스 때문에 8-GPU 학습 노드를 선택하지 않도록 구성합니다.
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1
@@ -438,7 +438,7 @@ spec:
 
 의도적으로 무효인 예시 registry/image를 검토된 immutable image로 바꾸고 실제 entrypoint·model/input 경로·probe·스토리지·제한된 워크로드 identity를 제공하기 전까지 `replicas: 0`을 유지합니다. Driver/CUDA/library와 non-root UID 1000/security policy 호환성을 그 이미지로 검증하세요. 추론 runtime 실행 검증은 하지 않았습니다.
 
-`ephemeralStorage`는 노드 스토리지 설정이며 영구 model/checkpoint 저장소나 throughput 보장이 아닙니다. 실제 allocatable storage와 backing device를 확인하세요. Node root/data EBS 암호화가 임의 PVC 암호화를 입증하지 않습니다. GPU 개수 limit은 pool 리소스 제어이며 전체 달러 상한이 아니고 급격한 프로비저닝에서 일시 초과할 수도 있습니다. 이전 16/20-GPU는 크기 예시이며 실습은 더 작은 4-GPU 상한을 사용합니다.
+`ephemeralStorage`는 노드 스토리지 설정이며 영구 model/checkpoint 저장소나 throughput 보장이 아닙니다. 실제 allocatable storage와 backing device를 확인하세요. Node root/data EBS 암호화가 임의 PVC 암호화를 입증하지 않습니다. GPU 개수 limit은 pool 리소스 제어이며 전체 달러 상한이 아니고 급격한 프로비저닝에서는 이 limit을 일시적으로 초과할 수도 있습니다. 이전 16/20-GPU는 크기 예시이며 실습은 더 작은 4-GPU 상한을 사용합니다.
 
 `WhenEmpty`·10분 debounce는 작업 종료 후 churn을 줄일 수 있지만 GPU 초기화까지 배치를 지연하거나 warm node를 보장하지는 않습니다. 미리 확보한 desired 용량이 필요하면 별도 limits/consolidation 의미와 지속 비용을 가진 static NodePool도 검토할 수 있습니다.
 
@@ -693,7 +693,7 @@ jq '[.items[]|{name:.metadata.name,
 
 이전 expiry 24h/72h/168h/336h, consolidation 30s/1m/5m/10m/15m/30m은 정책 예시이며 워크로드 유형별 기본값이 아닙니다. Auto Mode 최대 수명과 별도 termination grace도 적용됩니다.
 
-CPU 중심 워크로드의 이전 2 CPU/2Gi request·4 CPU/4Gi limit은 가능한 burst 정책 예시이지 보편적 크기가 아닙니다. Memory 중심 워크로드도 8Gi request/limit만 같고 CPU가 다르면 Guaranteed QoS가 되지 않습니다. Guaranteed QoS는 모든 해당 컨테이너·리소스 조건도 충족해야 하며 memory limit에서도 OOM은 가능합니다. 이전 사용량 1.2–1.5배·request 2배 공식에는 확인된 일반 성능 근거가 없습니다.
+CPU 중심 워크로드의 이전 2 CPU/2Gi request·4 CPU/4Gi limit은 가능한 burst 정책 예시이지 보편적 크기가 아닙니다. Memory 중심 워크로드도 8Gi request/limit만 같고 CPU가 다르면 Guaranteed QoS가 되지 않습니다. Guaranteed QoS를 적용받으려면 모든 해당 컨테이너·리소스 조건도 충족해야 하며 memory limit에서도 OOM은 가능합니다. 이전 사용량 1.2–1.5배·request 2배 공식에는 확인된 일반 성능 근거가 없습니다.
 
 Device-plugin API의 GPU는 정수 extended resource입니다. Limit을 지정하고 request도 지정한다면 일치시킵니다. Request만 쓰는 방식은 GPU 패턴이 아닙니다. CPU/memory request 외에 필수 system 작업의 node allocatable 여유도 필요합니다. Limit만 줄여도 일반적인 request 기반 bin-packing이 개선되는 것은 아닙니다.
 

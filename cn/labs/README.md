@@ -1,7 +1,7 @@
 # 实验指南
 
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 本节提供用于练习 Kubernetes 及相关技术的动手实验指南。每个实验都包含分步说明和验证方法，让您能够在真实环境中确认理论学习的内容。
 
@@ -18,9 +18,9 @@
 | 7 | [ConfigMap 和 Secret 实验](core/05-configuration-secrets-lab.md) | 初级 | kubectl、K8s 集群 |
 | 8 | [EKS 集群创建实验](eks/01-eks-cluster-creation-lab.md) | 中级 | AWS CLI、eksctl |
 | 9 | [可观测性 E2E：系列介绍](observability/README.md) | 高级 | 已获批准的 AWS 环境、Helm、Python |
-| 10 | [可观测性 E2E：基础设施设置](observability/01-infrastructure-setup-lab.md) | 中级 | 已准备好系列介绍和网络 |
+| 10 | [可观测性 E2E：基础设施设置](observability/01-infrastructure-setup-lab.md) | 中级 | 已阅读系列介绍，网络已就绪 |
 | 11 | [可观测性 E2E：可观测性技术栈](observability/02-observability-stack-lab.md) | 高级 | 已完成第 1 部分 |
-| 12 | [可观测性 E2E：MSA Deployment 和 Canary](observability/03-msa-deployment-lab.md) | 高级 | 已完成第 2 部分 |
+| 12 | [可观测性 E2E：MSA 部署和金丝雀发布](observability/03-msa-deployment-lab.md) | 高级 | 已完成第 2 部分 |
 | 13 | [可观测性 E2E：负载测试和自动扩缩容](observability/04-load-testing-scaling-lab.md) | 中级 | 已完成第 3 部分 |
 | 14 | [可观测性 E2E：告警和 AIOps](observability/05-alerting-aiops-lab.md) | 高级 | 已完成第 4 部分 |
 | 15 | [可观测性 E2E：分布式追踪分析](observability/06-distributed-tracing-lab.md) | 高级 | 已完成第 5 部分 |

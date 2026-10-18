@@ -217,7 +217,7 @@ Stream suffix는 rotate됩니다. 기존 그림의 `/aws/eks/cluster/logs`는 �
 
 현재의 **Amazon CloudWatch Observability EKS add-on** 또는 **amazon-cloudwatch-observability** Helm chart를 사용합니다. 과거 ADOT exporter chart나 치환되지 않은 quickstart URL은 같은 설치 경로가 아닙니다.
 
-Add-on은 실제 클러스터와 호환되는 버전을 조회하고 선택한 설정 schema와 IAM association을 확인합니다. Chart version과 EKS add-on version 문자열은 다릅니다.
+Add-on의 경우 실제 클러스터와 호환되는 버전을 조회하고 선택한 설정 schema와 IAM association을 확인합니다. Chart version과 EKS add-on version 문자열은 다릅니다.
 
 ```bash
 K8S_VERSION=$(aws eks describe-cluster --name "$DOCS_CLUSTER" \
@@ -550,7 +550,7 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-진단용 검색이며 audit이 모든 동작을 기록하거나 텍스트 매칭만으로 원인을 확정한다는 보장은 아닙니다.
+진단용 검색이며 audit이 모든 동작을 기록하거나 텍스트 매칭만으로 원인을 확정한다는 보장은 없습니다.
 
 ### 애플리케이션 로그 쿼리
 
@@ -875,7 +875,7 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 
 Lambda subscription 전에 log-group ARN과 source account로 제한한 permission을 설정합니다. SNS alarm 목적지에도 적절한 topic policy가 필요합니다. 함수 배포, execution-role policy, topic subscription, 전체 알림 전달은 별도 사전 조건입니다.
 
-알람은 **오류 건수**이며 오류율이 아닙니다. 5분 구간 두 번 각각에서 일치 이벤트가 100건을 초과하는 조건입니다. `default_value = 0`은 로그가 들어왔지만 일치 항목이 없을 때 적용됩니다. 로그 자체가 없으면 missing data가 될 수 있고 `treat_missing_data = "missing"`은 침묵을 정상으로 판단하지 않습니다. Metric filter는 과거 이벤트를 backfill하지 않으며 중복 전송이 집계에 영향을 줄 수 있습니다.
+알람은 **오류 건수**를 기준으로 하며 오류율을 기준으로 하지 않습니다. 두 5분 구간 각각에서 일치 이벤트가 100건을 초과하는 조건입니다. `default_value = 0`은 로그가 들어왔지만 일치 항목이 없을 때 적용됩니다. 로그 자체가 없으면 missing data가 될 수 있고 `treat_missing_data = "missing"`은 침묵을 정상으로 판단하지 않습니다. Metric filter는 과거 이벤트를 backfill하지 않으며 중복 전송이 집계에 영향을 줄 수 있습니다.
 
 <span id="_3-s3로-아카이브"></span>
 

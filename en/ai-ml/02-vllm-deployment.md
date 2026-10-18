@@ -426,7 +426,7 @@ with urllib.request.urlopen(request, timeout=60) as response:
 print(result["choices"][0]["message"]["content"])
 ```
 
-Request model must match served-model-name or /v1/models. Production clients need file-based gateway credentials plus timeout/error/stream handling. A JSON body model field is not an HTTP model header, so header routing does not automatically inspect it.
+The request model must match served-model-name or /v1/models. Production clients need file-based gateway credentials plus timeout/error/stream handling. A JSON body model field is not an HTTP model header, so header routing does not automatically inspect it.
 
 ## Validation Scope
 

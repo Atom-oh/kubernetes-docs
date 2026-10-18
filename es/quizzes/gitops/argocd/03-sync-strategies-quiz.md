@@ -46,7 +46,7 @@ Cuando `syncPolicy.automated` está habilitado, ArgoCD sincronizará automática
 **Respuesta: B) Eliminar automáticamente recursos que ya no están definidos en Git**
 
 **Explicación:**
-Cuando se establece `prune: true` en la sincronización automática, ArgoCD eliminará automáticamente los recursos de Kubernetes que existen en el cluster, pero que ya no están definidos en el repositorio Git.
+Cuando se establece `prune: true` en la sincronización automática, Argo CD elimina los recursos registrados que pertenecen a esta Application cuando desaparecen de la fuente deseada; no elimina todos los recursos no administrados del clúster.
 
 </details>
 
@@ -62,7 +62,7 @@ Cuando se establece `prune: true` en la sincronización automática, ArgoCD elim
 **Respuesta: B) Sincroniza automáticamente cuando el estado live se desvía del estado deseado debido a cambios manuales**
 
 **Explicación:**
-La autorreparación garantiza que, si alguien realiza un cambio manual en un recurso del cluster (fuera de Git), ArgoCD lo revertirá automáticamente para que coincida con el estado deseado en Git.
+Con la sincronización automática habilitada, `selfHeal` reconcilia las desviaciones observadas solo en el estado activo, sujeto a las ventanas de sincronización, la autorización y las reglas de exclusión. No restaura datos perdidos ni corrige errores de YAML.
 
 </details>
 
@@ -78,6 +78,6 @@ La autorreparación garantiza que, si alguien realiza un cambio manual en un rec
 **Respuesta: B) Replace=true**
 
 **Explicación:**
-La opción de sincronización `Replace=true` indica a ArgoCD que use `kubectl replace` en lugar de `kubectl apply`, lo que reemplaza completamente el recurso en vez de aplicarle un patch. Esto es útil al trabajar con campos inmutables.
+La opción de sincronización `Replace=true` indica a ArgoCD que use `kubectl replace` en lugar de `kubectl apply`. `replace`/`create` no elude automáticamente las restricciones de campos inmutables. `Force=true` junto con `Replace=true` puede eliminar y volver a crear recursos; no es un atajo para migrar un PVC.
 
 </details>

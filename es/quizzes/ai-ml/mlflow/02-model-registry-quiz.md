@@ -72,9 +72,9 @@ Varios alias pueden hacer referencia a una versión, y un alias puede pasar a ot
 Las etapas heredadas son None/Staging/Production/Archived. Diseñe flujos nuevos con alias/etiquetas y permisos explícitos.
 </details>
 
-6. ¿Cómo puede producirse el registro cuando se registra un modelo?
+6. ¿Cómo se puede registrar un modelo al guardarlo?
    - A) Estableciendo solo una etiqueta
-   - B) Pasando registered_model_name a flavor log_model
+   - B) Indicando registered_model_name en el método log_model del flavor
    - C) Eliminando un alias
    - D) Renombrando un archivo a champion
 
@@ -83,14 +83,14 @@ Las etapas heredadas son None/Staging/Production/Archived. Diseñe flujos nuevos
 
 **Respuesta: B**
 
-Registrar después de registrar con register_model es otra vía. El registro no mueve por sí mismo un alias.
+También se puede registrar después de guardar el modelo mediante register_model. El registro no mueve un alias por sí solo.
 </details>
 
 7. ¿Qué controla la promoción de champion?
-   - A) MLflow aprueba automáticamente la versión más grande
+   - A) MLflow aprueba automáticamente el número de versión más alto
    - B) Una etiqueta review_state por sí sola completa la separación de permisos
    - C) Evidencia de evaluación/aprobación y autenticación/autorización para quien realiza la acción
-   - D) Cada entrenador siempre cambia el alias
+   - D) Cada proceso de entrenamiento siempre cambia el alias
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -104,7 +104,7 @@ Una cadena de etiqueta no sustituye ni el flujo de aprobación ni el control de 
    - A) Siempre se reemplaza de inmediato
    - B) Se vuelve a entrenar automáticamente
    - C) El tráfico sombra aparece automáticamente
-   - D) Puede seguir atendiendo solicitudes hasta que lo cambie la política de recarga/despliegue/caché
+   - D) Puede seguir atendiendo solicitudes hasta que la política de recarga, despliegue o caché provoque su actualización
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -121,7 +121,7 @@ La nueva resolución y el ciclo de vida de una instancia cargada existente son i
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Es un estado de registro; los elementos de prueba de metadatos pueden estar en READY. Valide por separado los flavors reales, los pesos, la carga de dependencias y la calidad.
+No. Es un estado de registro; los datos de prueba que solo contienen metadatos también pueden estar en READY. Valide por separado los flavors reales, los pesos, la carga de dependencias y la calidad.
 </details>
 
 10. ¿Por qué el registro no siempre puede reconstruir la trazabilidad exacta del código y los datos?
@@ -129,7 +129,7 @@ No. Es un estado de registro; los elementos de prueba de metadatos pueden estar 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Los enlaces de ejecución/modelo son opcionales y los archivos de origen, las ejecuciones o los artefactos pueden cambiar o desaparecer. Conserve la versión de servicio, los hashes, el commit, la instantánea del conjunto de datos, las dependencias y las aprobaciones.
+Los enlaces de ejecución/modelo son opcionales y los archivos de origen, las ejecuciones o los artefactos pueden cambiar o desaparecer. Conserve la versión desplegada, los hashes, el commit, la instantánea del conjunto de datos, las dependencias y las aprobaciones.
 </details>
 
 ---

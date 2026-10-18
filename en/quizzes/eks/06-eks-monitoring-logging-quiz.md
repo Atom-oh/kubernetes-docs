@@ -41,7 +41,7 @@ A combination of tools can be useful, but the required signals and operational c
 
 **Implementation Sequence:**
 
-1. Follow the [source chapter](../../eks/06-eks-monitoring-logging.md) for the owned CloudWatch add-on catalog/schema/identity checks. Version5+ Auto Monitor and restart settings must be reviewed; do not layer another agent onto already instrumented workloads without checking conflicts.
+1. Follow the [source chapter](../../eks/06-eks-monitoring-logging.md) for the owned CloudWatch add-on catalog/schema/identity checks. Version 5+ Auto Monitor and restart settings must be reviewed; do not layer another agent onto already instrumented workloads without checking conflicts.
 2. If Prometheus collection/queries are required, use the source’s KPS92.9.0 values and prepared storage, Grafana Secret and kubelet serving-CA prerequisites. The Operator supplies ServiceMonitor/PrometheusRule handling; a standalone Prometheus installation is not equivalent. Verify actual targets after installation.
 3. For the explicit ADOT path, use the source’s Operator0.158/Collector0.50 v1beta1 example with object-valued config, TLS and its prepared ServiceAccount. The Collector release does not contain the Operator installation manifest. This traces-only path sends spans to X-Ray; applications still need instrumentation and propagation.
 4. For AMP, configure the real workspace remote-write endpoint and writer identity. Configure Grafana/AMG data-source/query identity separately; AMG12+ uses the AMP plugin. An awsemf exporter publishes through CloudWatch, not automatically to AMP.
@@ -61,7 +61,7 @@ These are selectable paths, not a statement that every collector exports to ever
 
 **Terraform Planning Example:**
 
-The following resource example uses AWS provider 6.69.1. It assumes the selected account/Region, an existing reviewed Grafana workspace role, supported AMG version and an eligible IAM Identity Center setup. Existing resources need their owner’s import/change procedure. The application log-group name matches the source collector path; do not create a second owner for a group already managed by an add-on or another stack.
+The following resource example uses AWS provider 6.69.1. It assumes the selected account/Region, an existing reviewed Grafana workspace role, a supported AMG version and an eligible IAM Identity Center setup. Existing resources need their owner’s import/change procedure. The application log-group name matches the source collector path; do not create a second owner for a group already managed by an add-on or another stack.
 
 ```hcl
 terraform {
@@ -219,7 +219,7 @@ This uses the official fluent-plugin-opensearch IRSA endpoint fields and a fixed
 
 ADOT0.50.0 includes filelog, file_storage and awscloudwatchlogs. The matching upstream0.158 CloudWatch Logs exporter is marked alpha; this is a version-specific example with explicit runtime prerequisites, not a production-readiness claim. Use it as an alternative collector for the selected dataset, not an accidental duplicate of Fluent Bit.
 
-Prepare Operator0.158, logging namespace and ServiceAccount adot-logs with its reviewed IRSA role and AWS log-write permissions. Scope trust to this cluster OIDC provider, sub=system:serviceaccount:logging:adot-logs and aud=sts.amazonaws.com; provide the required STS/Logs network path. The example is for standard Linux EC2 nodes and requires admission permission for a root node agent with read-only /var/log/pods and a dedicated writable state directory. The default-namespace include filter limits exported data; it does not turn the node-wide host mount into a filesystem security boundary. Review node placement/taints, file ownership and namespace policy. Set the actual Region/log-group values before deployment:
+Prepare Operator0.158, the logging namespace and ServiceAccount adot-logs with its reviewed IRSA role and AWS log-write permissions. Scope trust to this cluster OIDC provider, sub=system:serviceaccount:logging:adot-logs and aud=sts.amazonaws.com; provide the required STS/Logs network path. The example is for standard Linux EC2 nodes and requires admission permission for a root node agent with read-only /var/log/pods and a dedicated writable state directory. The default-namespace include filter limits exported data; it does not turn the node-wide host mount into a filesystem security boundary. Review node placement/taints, file ownership and namespace policy. Set the actual Region/log-group values before deployment:
 
 ```yaml
 apiVersion: opentelemetry.io/v1beta1
@@ -416,7 +416,7 @@ CloudWatch alarms, Prometheus/Alertmanager and EventBridge cover different signa
 
 **Metric Rules Must Match Real Series and Units:**
 
-The following PrometheusRule uses the source chapter’s KPS selectors and real node-exporter/kube-state-metrics series. CPU and available-memory calculations explicitly produce percentages, so an80 threshold is meaningful. CrashLoopBackOff uses the waiting reason rather than any restart; Ready=false on a Running Pod is included, while terminal Pods are excluded. Add stable cluster identity when combining clusters, and check for equivalent bundled rules before deploying duplicates:
+The following PrometheusRule uses the source chapter’s KPS selectors and real node-exporter/kube-state-metrics series. CPU and available-memory calculations explicitly produce percentages, so an 80 threshold is meaningful. CrashLoopBackOff uses the waiting reason rather than any restart; Ready=false on a Running Pod is included, while terminal Pods are excluded. Add stable cluster identity when combining clusters, and check for equivalent bundled rules before deploying duplicates:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -610,7 +610,7 @@ resource "aws_cloudwatch_event_target" "sns" {
 }
 ```
 
-The CPU example requires two breaching five-minute maxima, not continuous80% usage for ten minutes. Missing data is not treated as automatically healthy. Review resource ownership, publisher access, metric data and expected notifications before enabling through the owner’s controlled change. This excerpt does not create/replace the topic policy or configure subscriptions, and was not planned/applied against AWS.
+The CPU example requires two breaching five-minute maxima, not continuous 80% usage for ten minutes. Missing data is not treated as automatically healthy. Review resource ownership, publisher access, metric data and expected notifications before enabling through the owner’s controlled change. This excerpt does not create/replace the topic policy or configure subscriptions, and was not planned/applied against AWS.
 
 **SNS Subscriptions and Optional Lambda Processing:**
 
@@ -640,7 +640,7 @@ References: [source chapter](../../eks/06-eks-monitoring-logging.md), [Alertmana
 - A. Treat node CPU alone as proof of every application latency cause.
 - B. Overwrite all incoming service.name attributes with one shared collector name.
 - C. Correlate selected metrics, logs and traces while preserving service identity and verifying their actual paths.
-- D. Assume a10% head sampler always retains every error and slow request.
+- D. Assume a 10% head sampler always retains every error and slow request.
 
 <details>
 <summary>Show Answer</summary>
@@ -659,7 +659,7 @@ For Prometheus metrics, use the source’s wired ServiceMonitor/Service path or 
 
 **Java Instrumentation Example:**
 
-One alternative to a Spring Boot starter is the upstream OpenTelemetry Java agent. The inspected release is2.31.1; prepare its reviewed JAR and a compatible application/JVM through the application build process. This avoids mixing Gradle declarations and application.properties inside a Java source block or copying an unaligned1.18-alpha starter. Do not add another agent to a process already instrumented by CloudWatch Auto Monitor or another owner.
+One alternative to a Spring Boot starter is the upstream OpenTelemetry Java agent. The inspected release is 2.31.1; prepare its reviewed JAR and a compatible application/JVM through the application build process. This avoids mixing Gradle declarations and application.properties inside a Java source block or copying an unaligned 1.18-alpha starter. Do not add another agent to a process already instrumented by CloudWatch Auto Monitor or another owner.
 
 This is application runtime configuration, not an audit test command. It selects OTLP/HTTP traces for the source’s TLS receiver and leaves SDK metric/log exporting off for these separate paths. Mount the trusted CA and preserve any other required JVM startup options:
 
@@ -683,11 +683,11 @@ export OTEL_TRACES_SAMPLER_ARG=0.1
 java "-javaagent:$OTEL_JAVA_AGENT_JAR" -jar "$APP_JAR"
 ```
 
-Java agent2.x defaults to http/protobuf; the example makes that choice explicit. A signal-specific HTTP endpoint includes /v1/traces. The4317 gRPC endpoint uses a different protocol and cannot be substituted by changing only the port. Release/configuration metadata was verified; no Java agent, JDK or application was executed here.
+Java agent 2.x defaults to http/protobuf; the example makes that choice explicit. A signal-specific HTTP endpoint includes /v1/traces. The 4317 gRPC endpoint uses a different protocol and cannot be substituted by changing only the port. Release/configuration metadata was verified; no Java agent, JDK or application was executed here.
 
 **Python Instrumentation Example:**
 
-Use the source’s RequestTracing adapter with Python3.10+ and aligned SDK/HTTP exporter1.44.0. Set these values in the payment application’s environment, replacing the example cluster name and mounting the trusted CA:
+Use the source’s RequestTracing adapter with Python 3.10+ and aligned SDK/HTTP exporter 1.44.0. Set these values in the payment application’s environment, replacing the example cluster name and mounting the trusted CA:
 
 ```bash
 export OTEL_SERVICE_NAME=payment-service
@@ -975,7 +975,7 @@ Inspect authenticator records before defining format-specific failure filters. A
 
 **A Dashboard Does Not Publish a Metric:**
 
-A Logs Insights widget runs a query. An alarm on a custom metric needs a real publisher, such as a metric filter. The independent Terraform example below connects a STANDARD log group, a filter, its metric, an alarm and dashboard. Manage/import the existing log group through its actual owner before using this configuration; the KMS key and SNS topic/publisher permissions must already be prepared. It does not create a new EKS cluster or KMS key.
+A Logs Insights widget runs a query. An alarm on a custom metric needs a real publisher, such as a metric filter. The independent Terraform example below connects a STANDARD log group, a filter, its metric, an alarm and a dashboard. Manage/import the existing log group through its actual owner before using this configuration; the KMS key and SNS topic/publisher permissions must already be prepared. It does not create a new EKS cluster or KMS key.
 
 ```hcl
 terraform {
@@ -1097,7 +1097,7 @@ resource "aws_cloudwatch_dashboard" "control_plane" {
 
 The filter counts newly ingested audit ResponseComplete records with responseStatus.code>=500. The cluster-prefixed metric name distinguishes the cluster without inventing a ClusterName dimension absent from audit JSON. Filter, alarm and metric widget use exactly the same namespace/name and no dimensions. The dashboard query may cover older records, but the metric filter does not backfill history. These are recorded-event counts, not an API error rate or a deduplicated request total; duplicate deliveries can occur.
 
-A default_value of0 is emitted when logs arrive but none match; no incoming logs can still produce missing data. Metric filters cannot combine a default value with dimensions. The alarm intentionally starts with actions disabled, treats missing data explicitly and uses an illustrative threshold. Verify new metric datapoints, permissions, subscriptions and a controlled delivery test before enabling.
+A default_value of 0 is emitted when logs arrive but none match; no incoming logs can still produce missing data. Metric filters cannot combine a default value with dimensions. The alarm intentionally starts with actions disabled, treats missing data explicitly and uses an illustrative threshold. Verify new metric datapoints, permissions, subscriptions and a controlled delivery test before enabling.
 
 jsonencode avoids the broken shell quoting in the old dashboard command. If using the CLI instead, pass a valid JSON file with --dashboard-body file://dashboard.json and inspect DashboardValidationMessages. PutDashboard replaces an existing body; preserve its owner’s widgets and configuration. Local HCL/JSON validation is not execution of the AWS filter/query engine.
 
@@ -1130,7 +1130,7 @@ The regional Logs service requires key-use permission. The following is only a s
 }
 ```
 
-The encryption-context log-group ARN has no trailing :*. The operator associating the key needs the documented Logs permissions and kms:DescribeKey. Read/write callers need the KMS permissions appropriate to their operations, via the regional Logs service. Key rotation or a short deletion waiting period does not remove the requirement to retain decrypt access for historical data. Retention90 is an example, not a compliance or immutability guarantee.
+The encryption-context log-group ARN has no trailing :*. The operator associating the key needs the documented Logs permissions and kms:DescribeKey. Read/write callers need the KMS permissions appropriate to their operations, via the regional Logs service. Key rotation or a short deletion waiting period does not remove the requirement to retain decrypt access for historical data. Retention 90 is an example, not a compliance or immutability guarantee.
 
 **Scope Read Access Correctly:**
 

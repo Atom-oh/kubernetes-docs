@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **レビュー基準**: Argo CD 3.5.2, Argo Rollouts 1.10.0; リリースノートのレビュー後に Argo CD マニフェストのピンをパッチ 3.5.4 に更新（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **レビュー基準**: Argo CD 3.5.2、Argo Rollouts 1.10.0。リリースノートをレビューした後、Argo CD マニフェストの指定パッチを 3.5.5 に更新（例は再実行していません）
+> **最終更新日**: 2026年10月16日
 
 ## 目次
 - [ArgoCD とは？](#what-is-argocd)
@@ -12,7 +12,7 @@
 - [クイックスタート](#quick-start)
 - [バージョン互換性](#version-compatibility)
 
-## ArgoCD とは？
+## ArgoCD とは？ {#what-is-argocd}
 
 ArgoCD は、Kubernetes 向けの宣言的な GitOps 継続的デリバリーツールです。Git リポジトリで定義された望ましい状態をクラスター内の実際の状態と同期することで、Kubernetes クラスターへのアプリケーションのデプロイを自動化します。
 
@@ -22,7 +22,7 @@ Argo CD は CNCF の Graduated Argo プロジェクトの一部です。採用�
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
-## 主な利点
+## 主な利点 {#key-benefits}
 
 ### GitOps ネイティブ
 
@@ -51,7 +51,7 @@ Argo CD は CNCF の Graduated Argo プロジェクトの一部です。採用�
 - **通知**: Slack、Teams、メール、webhook 統合
 - **ヘルスモニタリング**: 組み込みおよびカスタムのヘルスチェック
 
-## アーキテクチャの概要
+## アーキテクチャの概要 {#architecture-overview}
 
 ### コアコンポーネント
 
@@ -71,7 +71,7 @@ Argo CD は CNCF の Graduated Argo プロジェクトの一部です。採用�
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
-## コアコンセプト
+## コアコンセプト {#core-concepts}
 
 ### Application
 
@@ -103,7 +103,7 @@ ApplicationSet は、generators を使用して単一の定義から複数のア
 - **Self-Heal**: 差異を自動的に修正
 - **Prune**: 孤立リソースを削除
 
-## サブガイドのナビゲーション
+## サブガイドのナビゲーション {#sub-guide-navigation}
 
 | ガイド | 説明 |
 |-------|-------------|
@@ -118,7 +118,7 @@ ApplicationSet は、generators を使用して単一の定義から複数のア
 | [ベストプラクティス](09-best-practices.md) | リポジトリパターン、パフォーマンスチューニング、トラブルシューティング、EKS のヒント |
 | [Rollouts Experiments 詳細解説](10-rollouts-experiment.md) | Experiment CRD、一時的な ReplicaSet 検証、AnalysisRun の判定 |
 
-## クイックスタート
+## クイックスタート {#quick-start}
 
 ### 1. ArgoCD をインストール
 
@@ -129,7 +129,7 @@ ApplicationSet は、generators を使用して単一の定義から複数のア
 kubectl create namespace argocd
 
 # Install ArgoCD
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 # Wait for pods to be ready
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
@@ -205,9 +205,9 @@ spec:
       - CreateNamespace=true
 ```
 
-## バージョン互換性
+## バージョン互換性 {#version-compatibility}
 
-レビュー対象の基準は **Argo CD 3.5.2 / Helm chart 10.8.4** です。マニフェスト例はリリースノートのレビュー後にパッチ 3.5.4 へ更新されています（再実行はしていません）。Chart 10.8.4 は依然として Argo CD v3.5.2 をデプロイします。3.5.4 は chart 10.9.7 で初めて提供されます。Application と installation-chart のバージョンは異なります。Argo CD は直近 3 つのマイナーラインにパッチを提供し、それより古いラインは EOL です。
+レビュー対象の基準は **Argo CD 3.5.2 / Helm chart 10.8.4** です。マニフェスト例はリリースノートをレビューした後、パッチ 3.5.5 に更新されています（再実行はしていません）。Chart 10.8.4 がデプロイする Argo CD は引き続き v3.5.2 です。3.5.5 が初めて含まれるのは chart 10.10.3 です。Application とインストール用 chart のバージョンは異なります。Argo CD は直近3つのマイナーラインにパッチを提供し、それより古いラインは EOL です。
 
 ### テスト済み Kubernetes の組み合わせ
 
@@ -217,7 +217,7 @@ spec:
 | 3.4 | 1.35, 1.34, 1.33, 1.32 |
 | 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-これは 3.5.4 リポジトリに記録されているアップストリームのテストマトリックスです。これは chart の最小 kubeVersion 制約、Kubernetes/EKS のサポート期間、および管理対象 Argo CD のバージョンポリシーとは異なります。EKS のマイナーバージョンと Argo CD のマイナーバージョンの間に一対一の対応関係はありません。
+これは 3.5.5 リポジトリに記録されているアップストリームのテストマトリックスです。これは chart の最小 kubeVersion 制約、Kubernetes/EKS のサポート期間、および管理対象 Argo CD のバージョンポリシーとは異なります。EKS のマイナーバージョンと Argo CD のマイナーバージョンの間に一対一の対応関係はありません。
 
 ### 最近のリリース
 
@@ -225,7 +225,12 @@ spec:
 - 3.5.1: 2026-08-12 にリリース。
 - 3.5.2: 2026-08-27 にリリース。
 - 3.5.3: 2026-09-14 にリリース。バグ修正（ヘルスチェック、Sync retry state、UI）。
-- 3.5.4: 2026-10-06 にリリース。repo-server および AppProject hook 処理で CRITICAL 評価が 4 件を含むセキュリティ修正。リリースノートには、破壊的変更となる可能性がある 2 件が記載されています。Helm chart をレンダリングする Kustomize ビルドは `helmGlobals.configHome` を尊重しなくなり、4 MiB を超える OCI マニフェストは拒否されます。現在サポートされているラインについては公式リリースを確認してください。
+- 3.5.4: 2026-10-06 にリリースされた**セキュリティパッチ**です。CRITICAL の問題4件を修正します。Kustomize の remote ref 経由および Helm config home 経由の repo-server でのコマンド実行、Jsonnet import 経由の repo-server ファイル読み取り、PreDelete／PostDelete hook による AppProject 制限の迂回が対象です（CVE-2026-77459）。同じ修正は v3.4.10／v3.3.15 にもバックポートされました。動作変更として、Kustomize build は `helmGlobals.configHome` を考慮しなくなり、4 MiB を超える OCI マニフェストは拒否されます。アップグレード前に[リリースノート](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)を確認してください。
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 3.6 系初のリリース候補で、2026-09-15 に公開されました。本番環境の基準バージョンではありません。
+
+### 2026年10月の更新：Argo CD 4.0 のビジョン策定を開始
+
+[9月30日のCNCF記事](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)によると、Argoコミュニティは Argo CD 4.0 のビジョン策定を始めました。ArgoCon North America 2026（KubeCon NA と併催される終日・2トラックのイベント）は、メンテナーによる基調講演で最近の進展と今後のバージョンを取り上げて開幕する予定です。これは初期のロードマップ検討であり、4.0 の機能や時期はまだ確定していません。
 
 ### Argo Rollouts
 
@@ -254,11 +259,11 @@ Argo CD 向け EKS Capability は、自己管理インストールとは異な�
 
 ### バージョン付きレビューソース
 
-- [Argo CD 3.5.4 でテスト済みの Kubernetes バージョン](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/tested-kubernetes-versions.md)
-- [リリースサポートポリシー](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/developer-guide/release-process-and-cadence.md)
+- [Argo CD 3.5.5 でテスト済みの Kubernetes バージョン](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/tested-kubernetes-versions.md)
+- [リリースサポートポリシー](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/developer-guide/release-process-and-cadence.md)
 - [3.5.0 リリース](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)
 - [3.5.2 リリース](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)
 - [3.5.3 リリース](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3)
 - [3.5.4 リリース](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)
-- [Chart 10.9.7（Argo CD 3.5.4 を含む最初の chart）](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.9.7)
-- [HA コンポーネントの動作](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
+- [Chart 10.10.3（Argo CD 3.5.5 を含む最初の chart）](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.10.3)
+- [HA コンポーネントの動作](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)

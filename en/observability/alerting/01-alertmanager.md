@@ -34,7 +34,7 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Prometheus Alert Flow
 
-Prometheus evaluates rules; Alertmanager processes notifications. This sequence summarizes responsibilities, not a guarantee of delivery latency.
+Prometheus evaluates rules; Alertmanager processes notifications. This sequence summarizes responsibilities; it is not a guarantee of delivery latency.
 
 ```mermaid
 sequenceDiagram
@@ -402,7 +402,7 @@ kubectl -n monitoring create secret generic notification-credentials \
 kubectl -n monitoring create configmap alertmanager-config   --from-file=alertmanager.yml=alertmanager.yaml
 ```
 
-Protect Secret read/exec permissions and the notification content itself. Add only the credential files required by enabled integrations. ConfigMap projection is not automatic Alertmanager reload: use the chosen owner’s reviewed reload/rollout mechanism; invalid reloads should leave the last good configuration running.
+Protect Secret read/exec permissions and the notification content itself. Add only the credential files required by enabled integrations. ConfigMap projection does not automatically reload Alertmanager: use the chosen owner’s reviewed reload/rollout mechanism; invalid reloads should leave the last good configuration running.
 
 ## Defining Alert Rules
 
@@ -1359,7 +1359,7 @@ spec:
 
 For `PodCrashLooping`, apply `max_over_time(waiting_reason[5m])` to each metric series **before UID/node enrichment**, then require the resulting observation condition for `10m`. Retry gaps can remove the instantaneous waiting reason; the bounded window bridges gaps shorter than five minutes. A one-off waiting sample expires before the ten-minute hold is satisfied. This detects recurring observations, not ten minutes spent continuously waiting. Clearing can lag the last observation by up to five minutes plus scrape/evaluation delay.
 
-Readiness is not just Pod phase. The rules exclude completed/deleting Pods, distinguish CrashLoopBackOff from ordinary restarts, and combine a recent restart with the last OOM reason. The last-termination/deletion metrics are experimental in kube-state-metrics 2.20.0; verify availability. Node enrichment joins by Pod UID and keeps the alert when info is absent. Memory limits must be positive; a CFS-period throttling percentage is not CPU-time percentage.
+Readiness is not just Pod phase. The rules exclude completed/deleting Pods, distinguish CrashLoopBackOff from ordinary restarts, and combine a recent restart with the last OOM reason. The last-termination/deletion metrics are experimental in kube-state-metrics 2.20.0; verify availability. Node enrichment joins by Pod UID and keeps the alert when info is absent. Memory limits must be positive; a CFS-period throttling percentage is not a CPU-time percentage.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1462,7 +1462,7 @@ spec:
 
 ### API Server Alerts
 
-The checked stack ServiceMonitor uses `job="apiserver"`; verify the actual target labels. No successful scrape can mean discovery/RBAC/TLS/network failure, not necessarily a failed API server. The error ratio fills an absent 5xx numerator only when total requests exist, and excludes zero traffic. Percent values are multiplied by100. The client-certificate histogram is ALPHA in the Kubernetes1.35 source and observes request certificates; a recent quantile is not a full certificate inventory or AWS IAM credential expiry monitor.
+The checked stack ServiceMonitor uses `job="apiserver"`; verify the actual target labels. No successful scrape can mean discovery/RBAC/TLS/network failure, not necessarily a failed API server. The error ratio fills an absent 5xx numerator only when total requests exist, and excludes zero traffic. Percent values are multiplied by 100. The client-certificate histogram is ALPHA in the Kubernetes 1.35 source and observes request certificates; a recent quantile is not a full certificate inventory or AWS IAM credential expiry monitor.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1531,7 +1531,7 @@ spec:
 
 ### etcd Alerts
 
-These optional rules are for an explicitly scraped **self-managed etcd** deployment with three expected members and `job="etcd"`. Do not deploy them as EKS-managed-etcd checks. `etcd_server_id` is real in the inspected3.6.5 source; count distinct observed IDs and handle no data, rather than claiming scrape counts prove Raft quorum. Database pressure uses the positive configured quota, not a fixed6GB threshold. Physical allocation and logical in-use size differ.
+These optional rules are for an explicitly scraped **self-managed etcd** deployment with three expected members and `job="etcd"`. Do not deploy them as EKS-managed-etcd checks. `etcd_server_id` is real in the inspected 3.6.5 source; count distinct observed IDs and handle no data, rather than claiming scrape counts prove Raft quorum. Database pressure uses the positive configured quota, not a fixed 6GB threshold. Physical allocation and logical in-use size differ.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1642,7 +1642,7 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 
 ### Metric Verification
 
-The first six descriptions were checked against the actual0.34.0 `/metrics` HELP output using synthetic local traffic. A counter is cumulative; use an appropriate rate/increase window for incident analysis and account for resets. Do not label attempted notifications as successful delivery.
+The first six descriptions were checked against the actual 0.34.0 `/metrics` HELP output using synthetic local traffic. A counter is cumulative; use an appropriate rate/increase window for incident analysis and account for resets. Do not label attempted notifications as successful delivery.
 
 | Metric | Meaning |
 |---|---|
@@ -1658,7 +1658,7 @@ The first six descriptions were checked against the actual0.34.0 `/metrics` HELP
 
 Use synthetic alerts and an owned local/test receiver before enabling provider routes. Do not forward production alert payloads to a public request-bin service. A `localhost` receiver means the Alertmanager process’s network namespace, not your laptop. Debug logging can expose operational data and must be bounded and reverted through the owner’s configuration.
 
-Keep shell API requests outside YAML fences. Posting a test alert or reloading configuration is a deliberate mutation; only do so against the approved test endpoint. A webhook response proves that request reached the fixture, not end-to-end production incident handling.
+Keep shell API requests outside YAML fences. Posting a test alert or reloading configuration is a deliberate mutation; only do so against the approved test endpoint. A webhook response proves that the request reached the fixture, not end-to-end production incident handling.
 
 ## References
 

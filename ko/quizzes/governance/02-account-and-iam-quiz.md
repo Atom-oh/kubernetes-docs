@@ -40,7 +40,7 @@ Permission Set–Account 조합별 한도입니다. 서로 다른 Permission Set
 
 ---
 
-3. Shared Cluster에서 다른 Account의 AWS resource를 접근하는 방법은?
+3. Shared Cluster에서 다른 Account의 AWS resource에 접근하는 방법은?
    - A) 항상 IAM user key 필요
    - B) Target-role chaining, 지원 resource policy 또는 IRSA 등 요구에 맞는 경로 선택
    - C) 모든 workload에 반드시2개씩 role 생성

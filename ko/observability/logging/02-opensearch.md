@@ -465,7 +465,7 @@ PUT _plugins/_ism/policies/logs-lifecycle
 
 정책은 새로 생성되는 일치 인덱스에 연결됩니다. 기존 인덱스에는 별도 연결 작업이 필요하므로 변경 전에 `_plugins/_ism/explain/INDEX`와 정책 버전을 확인합니다.
 
-각 action 객체에는 작업 하나와 지원되는 retry/timeout 메타데이터를 둡니다. 관리형 `warm_migration`, `cold_migration`, **`cold_delete`**는 자체 설치 ISM과 다릅니다. Cold 인덱스 삭제에는 `cold_delete`가 필요하고 ISM cold migration에는 timestamp field를 명시해야 합니다. Warm 이동·replica 변경·force merge를 한 action 객체에 넣지 않습니다.
+각 action 객체에는 작업 하나와 지원되는 retry/timeout 메타데이터를 둡니다. 관리형 `warm_migration`, `cold_migration`, **`cold_delete`는** 자체 설치 ISM과 다릅니다. Cold 인덱스 삭제에는 `cold_delete`가 필요하고 ISM cold migration에는 timestamp field를 명시해야 합니다. Warm 이동·replica 변경·force merge를 한 action 객체에 넣지 않습니다.
 
 ISM은 보통 5–8분마다 작업을 평가하며 red 클러스터에서는 실행하지 않습니다. 인덱스 나이는 생성 시점부터 계산합니다. 예제의 90일 삭제는 조직이 선택하는 정책이며 보편적인 법적 요건이나 레코드별 정확한 만료 시간이 아닙니다. 삭제 활성화 전에 지연 데이터·스냅샷·복구를 시험합니다.
 

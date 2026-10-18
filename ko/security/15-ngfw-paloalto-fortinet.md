@@ -37,7 +37,7 @@ GWLB integration 지원과 실제 인터페이스·zone·health-check·보안 �
 
 수동 구성 가이드는 HTTP health check를 사용할 수 없고 HTTPS 또는 TCP를 사용하라고 설명하지만, 뒤의 management profile 단계에는 HTTP 활성화 문장이 함께 있습니다. **이 모호성을 자동 설정으로 옮기지 않습니다.** 선택 버전·template에서 TCP/HTTPS 등 지원 protocol과 실제 응답을 확인하고 제조사 설명을 요청합니다. endpoint 응답만으로 위협 검사·서명·라이선스·정책 동작까지 입증되지 않습니다. [S20]
 
-AWS는 TLS 1.3만 지원하는 target의 HTTPS health check가 실패하므로 health endpoint가 TLS 1.2 같은 이전 버전을 지원해야 한다고 설명합니다. 이는 검사 대상 앱의 TLS 지원과 별도 조건입니다. [S26]
+AWS는 TLS 1.3만 지원하는 target의 HTTPS health check가 실패하므로 health endpoint가 TLS 1.2 같은 이전 버전을 지원해야 한다고 설명합니다. 이는 검사 대상 앱의 TLS 지원과는 별개의 조건입니다. [S26]
 
 같은 가이드는 GWLB 통합 트래픽을 intrazone으로 취급하고 기본 intrazone 규칙이 모든 트래픽을 허용한다고 설명합니다. 의도한 보안 규칙에 일치하지 않는 트래픽을 거부하도록 default intrazone action과 실제 profile 적용을 확인합니다. interface 활성화만으로 차단 정책이 완성됐다고 보지 않습니다. [S20]
 
@@ -60,7 +60,7 @@ flowchart TB
     P --> L
 ```
 
-이 그림은 논리적 책임 분리이며 실제 ENI·subnet 개수는 선택한 제품 template에 따릅니다.
+이 그림은 논리적 책임 분리를 나타내며 실제 ENI·subnet 개수는 선택한 제품 template에 따릅니다.
 
 관리면의 운영 기준으로 다음을 제안합니다.
 
@@ -138,7 +138,7 @@ GWLB는 target 선택·health·flow failover를 제공하지만 독립 장비 �
 
 Fortinet의 2025 분석은 기존 SSL-VPN 취약점 패치 후에도 읽기 접근이 남을 수 있음을 설명합니다. 2026 SSO 분석도 확인된 침해 시 설정 감사·정상 설정 복구와 관련 자격 증명 교체를 안내합니다. 버전만 최신이면 침해 제거가 끝났다는 판단은 피합니다. [S07] [S05]
 
-당시 symbolic link 문제에는 7.6.2·7.4.7·7.2.11·7.0.17·6.4.16으로 업그레이드하면 link를 제거한다고 명시하면서 설정 검토도 요구했습니다. 이 값은 과거 조치의 근거이며 2026년 운영 권장 버전이 아닙니다. [S07]
+당시 symbolic link 문제에 대한 안내는 7.6.2·7.4.7·7.2.11·7.0.17·6.4.16으로 업그레이드하면 link를 제거한다고 명시하면서 설정 검토도 요구했습니다. 이 값은 과거 조치의 근거이며 2026년 운영 권장 버전이 아닙니다. [S07]
 
 PAN-OS의 fixed release·ETA 표는 브랜치별로 바뀔 수 있습니다. 고정된 “권장 패치 버전”을 이 장에서 배포 지시로 만들지 않고 실제 변경 시 제조사 경보를 다시 확인합니다. [S03]
 

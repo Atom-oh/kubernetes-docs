@@ -374,7 +374,7 @@ These are functional comparisons, not interchangeable resources or feature guara
 | Controllers | kube-controllers / Tigera Operator | Cilium Operator; responsibilities do not map one-to-one |
 | CLI | calicoctl | cilium and agent-side cilium-dbg have distinct roles |
 
-Calico's supported Windows feature set is narrower than Linux: for example, IPv4 HNS with the documented VXLAN/BGP limits, not WireGuard/eBPF/host endpoint parity. There is no evidence here for unconditional performance, maturity or community-size rankings. Compare a specific workload and operational requirement instead.
+Calico's supported Windows feature set is narrower than its Linux feature set: for example, IPv4 HNS with the documented VXLAN/BGP limits, not WireGuard/eBPF/host endpoint parity. There is no evidence here for unconditional performance, maturity or community-size rankings. Compare a specific workload and operational requirement instead.
 
 ---
 

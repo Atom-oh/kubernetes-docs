@@ -313,7 +313,7 @@ GlobalNetworkPolicy는 namespace에 속하지 않으며 여러 namespace의 워�
 
 ### 기본 거부와 명시적 예외
 
-빈 정책은 양쪽 방향을 선택합니다. order를 생략하면 명시한 정책들보다 나중에 평가하며 10,000이 특별한 “최하위 우선순위” 값은 아닙니다. 빈 규칙은 앞선 최종 Allow를 덮어쓰지 않습니다. 애플리케이션 정책이 우회하면 안 되는 제한은 별도 관리하는 앞쪽 Tier에 배치하세요.
+빈 정책은 양쪽 방향을 선택합니다. order를 생략하면 order를 명시한 정책들보다 나중에 평가하며 10,000이 특별한 “최하위 우선순위” 값은 아닙니다. 빈 규칙은 앞선 최종 Allow를 덮어쓰지 않습니다. 애플리케이션 정책이 우회하면 안 되는 제한은 별도 관리하는 앞쪽 Tier에 배치하세요.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -502,7 +502,7 @@ Tier는 Calico Open Source 3.32에서도 지원합니다. namespaced·global Cal
 
 ### 평가 순서와 기본 동작
 
-일반 endpoint 정책에서는 Tier의 `order`, Tier 안의 정책 `order`가 낮은 순서로 평가합니다. 정책 order를 생략하면 명시한 정책들보다 뒤에서 평가합니다. 대상 endpoint뿐 아니라 **트래픽 방향**도 구분하세요.
+일반 endpoint 정책에서는 Tier의 `order`, Tier 안의 정책 `order`가 낮은 순서로 평가합니다. 정책 order를 생략하면 order를 명시한 정책들보다 뒤에서 평가합니다. 대상 endpoint뿐 아니라 **트래픽 방향**도 구분하세요.
 
 | 상황 | 결과 |
 | --- | --- |
@@ -894,7 +894,7 @@ kubectl patch kubecontrollersconfiguration.projectcalico.org default --type=merg
 
 ### DoNotTrack
 
-untracked Allow는 매칭 트래픽의 연결 추적을 생략합니다. 항상 성능이 향상되는 것은 아니며 conntrack이 필요한 Service/NAT 경로와 충돌할 수 있습니다. 요청·응답 규칙을 모두 정의해야 합니다. 아래는 테스트 호스트의 DNS 프로세스가 신뢰한 클라이언트 서브넷에 직접 서비스하는 가정입니다.
+untracked Allow는 매칭 트래픽의 연결 추적을 생략합니다. 항상 성능이 향상되는 것은 아니며 conntrack이 필요한 Service/NAT 경로와 충돌할 수 있습니다. 요청·응답 규칙을 모두 정의해야 합니다. 아래는 테스트 호스트의 DNS 프로세스가 신뢰한 클라이언트 서브넷에 직접 서비스한다는 가정에 따른 예시입니다.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1227,7 +1227,7 @@ spec:
 
 동등 비교, 집합 membership, 레이블 존재 selector는 모두 최적화 대상이 될 수 있습니다. 객체 수를 줄이려고 허용 범위를 넓히는 정책 통합을 하지 마세요. 관리되는 NetworkSet을 재사용하고 로그량을 제한하며 대표 변경 부하에서 수렴 시간을 측정합니다.
 
-readiness 검사, “Policy sync” 검색, `iptables -L` 출력 줄 수는 정책 평가 지연을 측정하지 않습니다. 문서화된 Felix metrics endpoint를 활성화·수집하고 TYPE/HELP·단위를 확인하여 제어한 워크로드의 정책 반영 시간과 연결하세요.
+readiness 검사, “Policy sync” 검색, `iptables -L` 출력 줄 수는 정책 평가 지연을 측정하지 않습니다. 문서화된 Felix metrics endpoint를 활성화하고 메트릭을 수집한 뒤 TYPE/HELP·단위를 확인하여 제어한 워크로드의 정책 반영 시간과 연결하세요.
 
 ```bash
 # After enabling the documented Felix metrics endpoint through its config owner:

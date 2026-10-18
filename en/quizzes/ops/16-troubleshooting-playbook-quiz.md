@@ -48,7 +48,7 @@ Do not confuse application IRSA with the image-pull identity. Fargate uses the p
 
 **Answer: B) Inspect container limits, node pressure, memory time series, and kernel events**
 
-137 commonly represents SIGKILL (128+9); OOMKilled adds evidence of OOM. This does not alone prove a leak or exclusively a container-limit failure. A different reason with 137 needs separate investigation. SIGTERM handling can also produce exit codes other than 143 depending on the application.
+137 commonly represents SIGKILL (128+9); OOMKilled adds evidence of OOM. This alone does not prove a leak or that the failure was exclusively due to a container limit. A different reason with 137 needs separate investigation. SIGTERM handling can also produce exit codes other than 143 depending on the application.
 
 </details>
 

@@ -99,7 +99,7 @@ CRDs. The S3 example uses Bucket.spec.policy. The reviewed versions have no sepa
 <details>
 <summary>Show answer</summary>
 
-When provided for the resource, use status.ackResourceMetadata.arn, including NLB and TargetGroup. Additional status fields differ by resource.
+When provided for the resource, use status.ackResourceMetadata.arn, including for NLB and TargetGroup. Additional status fields differ by resource.
 
 </details>
 

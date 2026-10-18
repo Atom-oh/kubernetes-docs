@@ -116,11 +116,11 @@ sudo tcpdump -nn -r "$LAB_CAPTURE/http.pcap"
 
 Send the client request again while the write command runs. `-Z "$(id -un)"` drops to the current regular user after opening the capture device, allowing the file to be written in that user's temporary directory. A PCAP can contain addresses and real payloads. Use only the exercise string, not SSH credentials or real user traffic. The read command uses `sudo` to accommodate file-permission differences.
 
-**Interpretation:** Identify request and response addresses and ports. If the capture is empty, first check its NIC, filter and time window. NIC offload can make host-observed packet sizes and checksums differ from the wire. A checksum warning in one capture does not establish a network fault.
+**Interpretation:** Identify request and response addresses and ports. If the capture is empty, first check its NIC, filter and time window. NIC offload can make host-observed packet sizes and checksums differ from those on the wire. A checksum warning in one capture does not establish a network fault.
 
 ## Bandwidth and request timing {#bandwidth-and-time}
 
-`iftop` is optional. Ubuntu can install it with `sudo apt install iftop`. If Rocky's configured repositories do not provide it, skip this exercise or first check the [EPEL prerequisites in lesson 6](06-firewalls-host-security.md). A failed `sudo dnf install iftop` is not a reason to run an arbitrary external installation script.
+`iftop` is optional. On Ubuntu, you can install it with `sudo apt install iftop`. If Rocky's configured repositories do not provide it, skip this exercise or first check the [EPEL prerequisites in lesson 6](06-firewalls-host-security.md). A failed `sudo dnf install iftop` is not a reason to run an arbitrary external installation script.
 
 **Server:** In the terminal where the verified `LAB_IF` is set:
 
@@ -161,13 +161,13 @@ sysctl net.ipv4.tcp_rmem net.ipv4.tcp_wmem
 lsblk -o NAME,TYPE,SIZE
 ```
 
-The buffer policy values returned by `sysctl` are not each socket's current usage. Before increasing them, distinguish [socket buffers, windows and BDP](../../kernel/02-network-stack.md#tcp-buffer-policy). After identifying a disk with `lsblk`, reading `/sys/block/DEVICE/queue/scheduler` shows supported/selected block I/O schedulers; not every virtual device offers the same choices.
+The buffer policy values returned by `sysctl` are not each socket's current usage. Before increasing them, distinguish [socket buffers, windows and BDP](../../kernel/02-network-stack.md#tcp-buffer-policy). After you identify a disk with `lsblk`, reading `/sys/block/DEVICE/queue/scheduler` shows supported/selected block I/O schedulers; not every virtual device offers the same choices.
 
 A block I/O scheduler handles storage requests, while a network qdisc handles network transmit queuing. Sharing the word “scheduler” does not make them interchangeable tuning controls. This lesson does not change sysctls, MTU, qdiscs or I/O schedulers. Advanced work requires a separate experiment with one changed variable, measurements and rollback.
 
 ## Cleanup and completion {#completion}
 
-Stop the server in console A with Ctrl+C or its time limit. In **that same terminal**, remove only your exercise file and directory.
+Stop the server in console A with Ctrl+C or let it reach its time limit. In **that same terminal**, remove only your exercise file and directory.
 
 ```bash
 rm -- "${LAB_WEB:?}/index.html"
@@ -183,7 +183,7 @@ rmdir -- "${LAB_CAPTURE:?}"
 
 `${VARIABLE:?}` stops the command when the variable is unset or empty. If a directory is not empty, investigate instead of using a broad recursive deletion.
 
-- Explain why a listener, a TCP connection and HTTP success are different evidence.
+- Explain why a listener, a TCP connection and HTTP success are different forms of evidence.
 - Identify both directions' addresses/ports in a PCAP and record the capture point.
 - Explain queue/bandwidth units and the DNS-measurement limit of an IP-literal request.
 - Distinguish observation from tuning that needs a separate controlled experiment.

@@ -1,6 +1,6 @@
 # SPIFFE/SPIRE クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 ## 問題
 
@@ -162,7 +162,7 @@ CSI は API socket へのアクセスを提供します。ファイルベース�
 
 **回答: C) IRSA は AWS の認証情報の経路であり、SPIFFE は workload identity で、いずれも検証が必要である**
 
-IRSA はサポートされている SDK/projected token の挙動によって更新され、クロスアカウント構成にも対応します。ServiceAccount の annotation、aud/sub の信頼関係、AWS の権限を検証してください。SPIFFE の mTLS でも、認証情報の利用とピアの認可が必要です。
+対応 SDK と projected token の仕組みによって IRSA の認証情報を更新でき、クロスアカウント構成にも対応します。ServiceAccount の annotation、aud/sub の信頼関係、AWS の権限を検証してください。SPIFFE の mTLS でも、認証情報の利用とピアの認可が必要です。
 
 </details>
 

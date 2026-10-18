@@ -120,7 +120,7 @@ spec:
 kubectl -n storage-demo get pvc -l storage-demo=stateful-files -o wide
 ```
 
-Claim template의 레이블이 조회 selector와 일치합니다. 보존 클레임을 일반적인 Pod 정리처럼 삭제하지 마세요. WFFC는 스케줄 조건으로 적합한 볼륨 AZ를 선택하며 EBS 데이터를 모든 AZ에 제공하지 않습니다. RWO는 노드 단위 접근 제약이지 Pod 하나 보장이 아니며 필요하면 지원 RWOP를 사용합니다.
+Claim template의 레이블이 조회 selector와 일치합니다. 보존 클레임을 일반적인 Pod 정리처럼 삭제하지 마세요. WFFC는 스케줄 조건으로 적합한 볼륨 AZ를 선택하며 EBS 데이터를 모든 AZ에 제공하지 않습니다. RWO는 노드 단위 접근 제약이지 Pod 하나만 사용한다는 보장이 아니며 필요하면 지원되는 RWOP를 사용합니다.
 
 </details>
 
@@ -198,7 +198,7 @@ parameters:
   s3ImportPath: s3://replace-with-owned-data-bucket/training/
 ```
 
-동적 파일 시스템 크기는 PVC 요청으로 정하며 범용 StorageClass storageCapacity 필드는 없습니다. 데이터·동시성에 맞춰 압축·striping을 측정합니다. 병렬성·stripe 증가나 LZ4가 항상 빨라지는 것은 아닙니다. 관리형 EKS add-on catalog로 호환성을 선택하며 “EKS 통합이 없다”는 이유로 FSx를 제외하는 것은 부정확합니다.
+동적 파일 시스템 크기는 PVC 요청으로 정해지며 범용 StorageClass storageCapacity 필드는 없습니다. 데이터·동시성에 맞춰 압축·striping을 측정합니다. 병렬성·stripe 증가나 LZ4가 항상 성능을 높이는 것은 아닙니다. 관리형 EKS add-on catalog로 호환성을 선택하며 “EKS 통합이 없다”는 이유로 FSx를 제외하는 것은 부정확합니다.
 
 </details>
 
@@ -234,7 +234,7 @@ CSI2.8은 pod-level Pod Identity·IRSA를 지원하며 해당 볼륨의 driver �
 
 </details>
 
-### 6. CSI v2의 설정한 emptyDir 캐시는 어디에 있나요?
+### 6. CSI v2에서 설정한 emptyDir 캐시는 어디에 있나요?
 
 - A. Mountpoint Pod
 - B. 같은 경로를 가진 임의 app Pod emptyDir
@@ -262,7 +262,7 @@ CSI2.8은 pod-level Pod Identity·IRSA를 지원하며 해당 볼륨의 driver �
 
 **정답: B**
 
-S3는 강한 읽기·목록 일관성을 제공합니다. 선택적인 Mountpoint 캐시는 TTL 만료 전 클라이언트 관측값에 영향을 줍니다. 캐시 동작을 S3 일관성 모델로 혼동하지 마세요. 재현성이 중요하면 불변 데이터셋 접두사나 적절한 캐시 설정을 사용합니다.
+S3는 강한 읽기·목록 일관성을 제공합니다. 선택적인 Mountpoint 캐시는 TTL 만료 전 클라이언트 관측값에 영향을 줍니다. 캐시 동작을 S3 일관성 모델과 혼동하지 마세요. 재현성이 중요하면 불변 데이터셋 접두사나 적절한 캐시 설정을 사용합니다.
 
 </details>
 
@@ -380,7 +380,7 @@ time dd if=/dev/zero of="$EFS_TEST_PATH/payload" bs=1M count=64 conv=fsync
 time dd if="$EFS_TEST_PATH/payload" of=/dev/null bs=1M
 ```
 
-이번 검토에서는 EFS 성능 테스트를 실행하지 않았습니다. 적절한 CloudWatch 통계·기간으로 EFS TotalIOBytes·DataReadIOBytes·DataWriteIOBytes·MetadataIOBytes와 클라이언트/애플리케이션 지연·동시성을 함께 봅니다. Byte 합계는 측정 간격으로 나누기 전까지 처리량 속도가 아닙니다.
+이번 검토에서는 EFS 성능 테스트를 실행하지 않았습니다. 적절한 CloudWatch 통계·기간으로 EFS TotalIOBytes·DataReadIOBytes·DataWriteIOBytes·MetadataIOBytes와 클라이언트/애플리케이션 지연·동시성을 함께 봅니다. Byte 합계는 측정 간격으로 나누기 전까지 처리량이 아닙니다.
 
 </details>
 
@@ -431,7 +431,7 @@ AWS CLI 이미지에 kubectl·Kubernetes/IAM 권한이 자동 포함되지는 �
 
 **정답: 자동 복구 보장이 아닌 검토용 설계**
 
-높은 I/O 요구의 PostgreSQL, 예약 백업·검증한 복구·통제된 확장을 설계합니다. 다음은 실증된 프로덕션 배포가 아닌 **학습용 설계**입니다. 전용 `database` 네임스페이스, 준비한 `postgres-secret/password` Secret, 호환 EBS/snapshot 드라이버와 소유자가 관리하는 Velero를 재사용합니다. 기존 리소스 소유자를 거치지 않고 덮어쓰지 마세요.
+I/O 요구가 높은 PostgreSQL, 예약 백업·검증한 복구·통제된 확장을 설계합니다. 다음은 실증된 프로덕션 배포가 아닌 **학습용 설계**입니다. 전용 `database` 네임스페이스, 준비한 `postgres-secret/password` Secret, 호환 EBS/snapshot 드라이버와 소유자가 관리하는 Velero를 재사용합니다. 기존 리소스 소유자를 거치지 않고 덮어쓰지 마세요.
 
 #### 스토리지와 데이터베이스
 
@@ -585,9 +585,9 @@ spec:
     persistentVolumeClaimName: data-postgres-0
 ```
 
-복구 가능하다고 판단하기 전에 readyToUse와 restoreSize·content·driver를 확인합니다. Snapshot 암호화는 소스·키 구성을 따르며 VolumeSnapshotClass의 미지원 encrypted/tagSpecification 키로 설정되지 않습니다. 현재 드라이버가 지원하는 별도 snapshot tag 파라미터는 볼륨 class에서 복사하지 말고 해당 릴리스로 확인해야 합니다.
+복구 가능하다고 판단하기 전에 readyToUse와 restoreSize·content·driver를 확인합니다. Snapshot 암호화는 소스·키 구성을 따르며 VolumeSnapshotClass의 미지원 encrypted/tagSpecification 키로 설정되지 않습니다. 현재 드라이버가 지원하는 별도 snapshot tag 파라미터는 볼륨 class에서 복사하지 말고 해당 릴리스에서 확인해야 합니다.
 
-다음은30일 TTL의 일일 Velero schedule을 출력합니다. CSI class 선택·DB 일관성 hook/프로토콜을 확인한 뒤 백업 소유자를 통해 적용합니다. 원래 class가 Retain이어도 Velero TTL이 CSI snapshot을 삭제할 수 있습니다. 실패·누락 백업을 경고하고 주기적으로 복구를 테스트하세요. Schedule만으로 복구 가능성이 입증되지는 않습니다:
+다음 예제는 30일 TTL의 일일 Velero schedule을 출력합니다. CSI class 선택·DB 일관성 hook/프로토콜을 확인한 뒤 백업 소유자를 통해 적용합니다. 원래 class가 Retain이어도 Velero TTL이 CSI snapshot을 삭제할 수 있습니다. 실패·누락 백업을 경고하고 주기적으로 복구를 테스트하세요. Schedule만으로 복구 가능성이 입증되지는 않습니다:
 
 ```bash
 velero schedule create database-daily --schedule="0 1 * * *" \
@@ -596,7 +596,7 @@ velero schedule create database-daily --schedule="0 1 * * *" \
 
 #### 상한이 있는 확장 계획
 
-오래된 지표로6시간마다 무조건50%씩 늘리지 않습니다. 아래 읽기 전용 planner는 Bound 클레임·일치하는 확장 가능 class·진행 중 확장 없음·같은 PVC UID를 식별하는 신선한 지표·유효한 파일 시스템 byte 수치를 요구합니다. 일반적인 Kubernetes decimal/binary quantity를 지원하고 미지원 입력은 거부합니다.80% 사용 시 요청 용량의 최소1.5배를 제안하되 예시500Gi 상한과 UID/resourceVersion/현재 크기 전제 조건을 둡니다. Kubernetes patch를 수행하지 않습니다.
+오래된 지표로6시간마다 무조건50%씩 늘리지 않습니다. 아래 읽기 전용 planner는 Bound 클레임·일치하는 확장 가능 class·진행 중 확장 없음·같은 PVC UID를 식별하는 최신 지표·유효한 파일 시스템 byte 수치를 요구합니다. 일반적인 Kubernetes decimal/binary quantity를 지원하고 미지원 입력은 거부합니다.80% 사용 시 요청 용량의 최소1.5배를 제안하되 예시500Gi 상한과 UID/resourceVersion/현재 크기 전제 조건을 둡니다. Kubernetes patch를 수행하지 않습니다.
 
 정확한 객체에서 최신 `pvc.json`·`storageclass.json`을 수집합니다. `trusted-metrics.json`은 실제 마운트 파일 시스템의 namespace·pvcName·pvcUID·timezone 포함 observedAt·usedBytes·capacityBytes를 포함해야 합니다. 호출자가 준 UID만으로 지표 출처가 입증되지는 않습니다. 운영자·컨트롤러가 검토한 patch를 적용하기 전에 수집기·마운트 매핑·quota·비용·드라이버 제약을 확인하세요.
 

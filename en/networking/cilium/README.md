@@ -260,7 +260,7 @@ spec:
 
 ### HTTP Example
 
-In a separate `cilium-l7-demo`, this selects backend Pods and restricts plaintext HTTP on TCP 8080 to the stated method/path from frontend Pods in that namespace. L7 proxy support must be available in the chosen CNI mode; encrypted HTTP is not automatically inspected without a supported termination configuration.
+In a separate `cilium-l7-demo` namespace, this selects backend Pods and restricts plaintext HTTP on TCP 8080 to the stated method/path from frontend Pods in that namespace. L7 proxy support must be available in the chosen CNI mode; encrypted HTTP is not automatically inspected without a supported termination configuration.
 
 ```yaml
 apiVersion: cilium.io/v2

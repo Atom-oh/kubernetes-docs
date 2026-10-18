@@ -81,7 +81,7 @@ A separately created PVC is not owned by the Pod and remains when that Pod is de
 **Answer: D) WriteOnlyMany**
 
 **Explanation:**
-The access modes for PersistentVolumes in Kubernetes are ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX), and ReadWriteOncePod (RWOP, CSI only). WriteOnlyMany does not exist as an access mode. ReadWriteOnce allows read-write mounting by a single node, ReadOnlyMany allows read-only mounting by multiple nodes, and ReadWriteMany allows read-write mounting by multiple nodes.
+The access modes for PersistentVolumes in Kubernetes are ReadWriteOnce (RWO), ReadOnlyMany (ROX), ReadWriteMany (RWX), and ReadWriteOncePod (RWOP, CSI only). WriteOnlyMany does not exist as an access mode. ReadWriteOnce allows read-write mounting by a single node, ReadOnlyMany allows read-only mounting by multiple nodes, and ReadWriteMany allows read-write mounting by multiple nodes.
 </details>
 
 6. Which PersistentVolume Reclaim Policy releases the resource without deleting the volume?
@@ -166,7 +166,7 @@ CSI (Container Storage Interface) defines a standard interface between container
 
 ## Advanced Questions
 
-1. Explain how to integrate new storage types using CSI (Container Storage Interface) drivers in Kubernetes and its benefits.
+1. Explain how to integrate new storage types using CSI (Container Storage Interface) drivers in Kubernetes and the benefits of doing so.
 
 <details>
 

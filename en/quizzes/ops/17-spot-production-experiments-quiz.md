@@ -94,7 +94,7 @@
 
 **Answer: C) Record NOT RUN and missing measurements; hold production expansion**
 
-**Explanation:** Documented behavior, hypotheses, and measurements are different evidence. Missing run IDs and raw results cannot establish production readiness.
+**Explanation:** Documented behavior, hypotheses, and measurements are different types of evidence. Missing run IDs and raw results cannot establish production readiness.
 
 </details>
 
@@ -126,7 +126,7 @@
 
 **Answer: B) The Pod preserves its original Guaranteed class, with equal CPU and memory requests and limits after downscale**
 
-**Explanation:** QoS class is determined at creation and cannot change through resize. This container-level design keeps each applicable container's CPU and memory requests equal to their corresponding positive limits, reducing the target CPU request and limit together. Preserving Guaranteed neither proves application SLOs after downscale nor prevents Spot reclamation.
+**Explanation:** QoS class is determined at creation and cannot change through resize. This container-level design keeps each applicable container's CPU and memory requests equal to their corresponding positive limits, reducing the target CPU request and limit together. Preserving Guaranteed neither proves compliance with application SLOs after downscale nor prevents Spot reclamation.
 
 </details>
 

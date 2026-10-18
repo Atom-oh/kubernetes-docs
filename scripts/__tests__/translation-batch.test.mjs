@@ -10,6 +10,24 @@ import { prepareBatch, translateBatch, refreshBatch, publishBatch, checkpointBat
 const source = '# Source\n\nA complete paragraph about Kubernetes Pod scheduling and networking.\n'
 const translated = source.replace('Source', 'Translated')
 
+test('full coverage queues every missing English page in all three locales and resumes validated outputs', async t => {
+  const f = fixture(t, {
+    'en/README.md': source, 'en/topic/page.md': source,
+    'en/quizzes/topic/quiz.md': source, 'en/labs/topic/lab.md': source,
+    'en/new-section/page.md': source, 'cn/topic/page.md': translated,
+    'jp/new-section/page.md': translated, 'assets/example.md': source
+  })
+  const pairs = prepareBatch(f.root, { fillMissing: true })
+  assert.equal(pairs.length, 13)
+  assert.equal(new Set(pairs.map(([, file]) => file)).size, 13)
+  assert.deepEqual([...new Set(pairs.map(([, , lang]) => lang))].sort(), ['cn', 'es', 'jp'])
+  assert.ok(pairs.some(([src, , lang]) => src === 'en/README.md' && lang === 'es'))
+  assert.ok(pairs.some(([src, , lang]) => src === 'en/labs/topic/lab.md' && lang === 'jp'))
+  assert.ok(pairs.every(([src]) => src.startsWith('en/')))
+  assert.deepEqual(await translateBatch(f.root, pairs, (src, file) => f.write(file, translated)), [])
+  assert.deepEqual(prepareBatch(f.root, { fillMissing: true }), [])
+})
+
 function fixture(t, files = { 'en/topic/page.md': source, 'cn/topic/page.md': translated }) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-batch-test-'))
   const root = path.join(directory, 'repo')
@@ -31,6 +49,26 @@ function fixture(t, files = { 'en/topic/page.md': source, 'cn/topic/page.md': tr
   const before = commit()
   return { root, directory, git, write, read, commit, before, state: () => JSON.parse(read(statePath)) }
 }
+
+test('a completed batch does not create a metadata-only diff after unrelated main commits', t => {
+  const f = fixture(t, {
+    'en/topic/page.md': source, 'cn/topic/page.md': translated,
+    'jp/topic/page.md': translated, 'es/topic/page.md': translated
+  })
+  const sourceBlob = f.git('rev-parse', 'HEAD:en/topic/page.md')
+  const state = {
+    version: 1,
+    sources: Object.fromEntries(['cn', 'es', 'jp'].map(lang => [`${lang}/topic/page.md`, sourceBlob])),
+    pending: [], sourceCommit: f.before
+  }
+  f.write(statePath, JSON.stringify(state, null, 2) + '\n')
+  f.commit()
+  f.write('unrelated.txt', 'main advanced\n')
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root, { fillMissing: true }), [])
+  assert.equal(f.read(statePath), JSON.stringify(state, null, 2) + '\n')
+  assert.equal(f.git('diff', '--name-only'), '')
+})
 
 test('fresh pending translations survive main advancement and identical reruns avoid model calls', t => {
   const f = fixture(t)
@@ -60,6 +98,28 @@ test('changed English source keeps current main translation and queues replaceme
   assert.deepEqual(prepareBatch(f.root, { refs: [pending] }), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
   assert.equal(f.read('cn/topic/page.md'), translated)
   assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+})
+
+test('reviewed translations on main supersede obsolete draft results and retry queues', t => {
+  const f = fixture(t)
+  f.git('checkout', '-qb', 'obsolete-draft')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Older draft'))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+  }))
+  const oldDraft = f.commit()
+  f.git('checkout', '-q', 'main')
+  f.write('en/topic/page.md', source + '\nUpdated source.\n')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Reviewed main'))
+  f.commit()
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: { 'cn/topic/page.md': f.git('rev-parse', 'HEAD:en/topic/page.md') },
+    pending: [], sourceCommit: f.before
+  }))
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root, { refs: [oldDraft], before: f.before }), [])
+  assert.match(f.read('cn/topic/page.md'), /Reviewed main/)
+  assert.deepEqual(f.state().pending, [])
 })
 
 test('overlapping locale edits preserve main and retry; non-overlapping edits merge without conflict markers', t => {
@@ -207,6 +267,33 @@ test('valid outputs survive main refresh, including staged new backfill files', 
   refreshBatch(f.root, latest)
   assert.equal(f.read('cn/topic/page.md'), translated)
   assert.deepEqual(f.state().pending, [])
+})
+
+test('main review completed during a run supersedes older outputs and retry queues on refresh', t => {
+  const f = fixture(t, {
+    'en/topic/page.md': source, 'cn/topic/page.md': translated,
+    'en/topic/other.md': source, 'cn/topic/other.md': translated
+  })
+  const sourceBlob = f.git('rev-parse', 'HEAD:en/topic/page.md')
+  f.git('checkout', '-qb', 'reviewed-main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Reviewed main'))
+  const reviewedState = {
+    version: 1,
+    sources: { 'cn/topic/other.md': sourceBlob, 'cn/topic/page.md': sourceBlob },
+    pending: [], sourceCommit: f.before
+  }
+  f.write(statePath, JSON.stringify(reviewedState, null, 2) + '\n')
+  const latest = f.commit()
+  f.git('checkout', '-q', 'main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Older unreviewed output'))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md', 'cn/topic/other.md'],
+    sourceCommit: f.before
+  }))
+  refreshBatch(f.root, latest)
+  assert.match(f.read('cn/topic/page.md'), /Reviewed main/)
+  assert.deepEqual(f.state(), reviewedState)
+  assert.equal(f.git('diff', '--name-only'), '')
 })
 
 test('deleted English pages remove translated counterpart and queued state', t => {

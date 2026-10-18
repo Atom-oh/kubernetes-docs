@@ -35,7 +35,7 @@ parameters:
   encrypted: 'true'
   csi.storage.k8s.io/fstype: ext4
 ```
-스냅샷에는 snapshot CRD·controller와 일치하는 VolumeSnapshotClass가 추가로 필요합니다. 여러 EBS 볼륨 유형은 각각 용량·성능 제약이 있습니다. 일반 EBS 볼륨은 한 AZ에 위치하고 Fargate Pod는 마운트할 수 없지만 별도로 설계한 EBS 컨트롤러 자체는 Fargate에 실행할 수 있습니다. Hybrid Nodes에는 EBS를 사용할 수 없습니다.
+스냅샷에는 snapshot CRD·controller와 일치하는 VolumeSnapshotClass가 추가로 필요합니다. 여러 EBS 볼륨 유형은 각각 용량·성능 제약이 있습니다. 일반 EBS 볼륨은 한 AZ에 위치하고 Fargate Pod는 마운트할 수 없지만 별도로 설계한 EBS 컨트롤러 자체는 Fargate에서 실행할 수 있습니다. Hybrid Nodes에는 EBS를 사용할 수 없습니다.
 
 EFS·FSx에도 각각 지원 드라이버가 있습니다. 공식 S3 CSI가 없다는 기존 설명은 틀렸습니다. Mountpoint CSI는 기존 S3 버킷을 제한된 POSIX 의미로 제공하고, S3 Files는 EFS CSI3.0+의 별도 공유 파일 시스템 인터페이스를 사용합니다.
 
@@ -91,7 +91,7 @@ spec:
 ```
 5Gi 클레임은 디렉토리 quota가 아닌 바인딩 메타데이터입니다. Access point는 POSIX 신원·루트 디렉토리를 강제하며 IAM·파일 시스템 정책과 네트워크 제어가 접근을 정합니다. 동적 AP 프로비저닝은 Fargate 경로가 아니므로 지원 static 통합을 사용합니다. TLS·클라이언트 마운트 권한은 컨트롤러 프로비저닝 권한과 별개입니다.
 
-EFS Regional과 One Zone의 장애 특성은 다릅니다. 공표한 내구성·설계 목표와 서비스 수준 약정이 이 애플리케이션의 실측 uptime 보장은 아닙니다. 스토리지 자동 증가는 처리량·IOPS·quota·백업·비용 계획을 없애지 않습니다. AWS는 General Purpose를 권장하며 Max I/O는 연산 지연이 더 높습니다. Elastic·Provisioned·Bursting을 의도적으로 선택하고 기본값을 일반화하지 마세요.
+EFS Regional과 One Zone의 장애 특성은 다릅니다. 공표한 내구성·설계 목표와 서비스 수준 약정이 이 애플리케이션의 실측 uptime을 보장하지는 않습니다. 스토리지 자동 증가는 처리량·IOPS·quota·백업·비용 계획을 없애지 않습니다. AWS는 General Purpose를 권장하며 Max I/O는 연산 지연이 더 높습니다. Elastic·Provisioned·Bursting을 의도적으로 선택하고 기본값을 일반화하지 마세요.
 
 정적 애플리케이션 설정에는 공유 스토리지보다 ConfigMap/Secret이 적합할 수 있습니다. 공유 가변 파일은 애플리케이션 locking·일관성 처리가 필요합니다. S3 API·Mountpoint·S3 Files는 별도 인터페이스이므로 모든 S3 파일 접근을 부정하면 안 됩니다. FSx for Lustre는 병렬 파일 시스템 대안이며 설치 방식이 다르다는 이유만으로 부적합하지는 않습니다.
 
@@ -124,7 +124,7 @@ spec:
     requests:
       storage: 10Gi
 ```
-초기 볼륨 배치에 스케줄링 제약이 반영되도록 `WaitForFirstConsumer`를 사용합니다. 바인딩된 PVC는 PV 토폴로지에 제약되며 node selector 변경으로 데이터를 이동하지는 못합니다. StatefulSet의 복제본별 PVC는 별도 볼륨이지 DB 복제 기능이 아닙니다. 다중 AZ 가용성에는 애플리케이션·데이터 복제 또는 복구 설계가 필요합니다.
+초기 볼륨 배치에 스케줄링 제약이 반영되도록 `WaitForFirstConsumer`를 사용합니다. 바인딩된 PVC는 PV 토폴로지의 제약을 받으며 node selector 변경으로 데이터를 이동하지는 못합니다. StatefulSet의 복제본별 PVC는 별도 볼륨이지 DB 복제 기능이 아닙니다. 다중 AZ 가용성에는 애플리케이션·데이터 복제 또는 복구 설계가 필요합니다.
 
 EBS CSI1.66.0은 호환 인프라와 애플리케이션 조정을 전제로 io2 raw block Multi-Attach/RWX 경로도 지원합니다. 이것이 일반 gp3/ext4를 여러 노드의 공유 파일 시스템으로 만들지는 않습니다. Fargate Pod에는 EBS를 마운트할 수 없습니다. 공유 파일 시스템이 필요하면 그 요구에 맞는 백엔드를 선택하세요.
 
@@ -315,7 +315,7 @@ parameters:
   iops: '16000'
   throughput: '1000'
 ```
-StatefulSet의 `data` 클레임 템플릿은 **data-postgres-0**을 만듭니다. 이전의 사용하지 않는 `database-data` PVC를 중복 생성하거나 그 클레임을 백업하지 마세요. 안전하게 관리한 `password` 키가 있는 `postgres-secret`을 준비하며 여기에 암호 값은 제공하지 않습니다. 이미지는 마운트된 파일에서 읽고 PGDATA는 하위 디렉토리를 사용하여 볼륨 루트의 파일 시스템 메타데이터가 초기화를 방해하지 않게 합니다.
+StatefulSet의 `data` 클레임 템플릿은 **data-postgres-0**을 만듭니다. 이전의 사용하지 않는 `database-data` PVC를 중복 생성하거나 그 클레임을 백업하지 마세요. 안전하게 관리한 `password` 키가 있는 `postgres-secret`을 준비하며 여기에 암호 값은 제공하지 않습니다. 이미지는 마운트된 파일에서 암호를 읽고 PGDATA는 하위 디렉토리를 사용하여 볼륨 루트의 파일 시스템 메타데이터가 초기화를 방해하지 않게 합니다.
 ```yaml
 apiVersion: v1
 kind: Service
@@ -422,7 +422,7 @@ spec:
         requests:
           storage: 100Gi
 ```
-예제는 PostgreSQL14 계열의 확인한 현재 minor14.24를 사용합니다. Major14 지원은2026년11월12일 종료되므로 검증한 지원 버전 이전을 계획하고 프로덕션 이미지는 승인한 digest로 고정합니다. 단일 복제본은 복제·HA DB가 아니며 DB 복제 설계 없이 replicas만 늘려 해결할 수 없습니다. 명시적 PVC 보존 정책은 StatefulSet 삭제·축소 후 클레임을 남겨 데이터와 스토리지 요금이 유지될 수 있습니다.
+예제는 PostgreSQL14 계열의 확인한 현재 minor14.24를 사용합니다. Major14 지원은 2026년 11월 12일 종료되므로 검증한 지원 버전으로의 이전을 계획하고 프로덕션 이미지는 승인한 digest로 고정합니다. 단일 복제본은 복제·HA DB가 아니며 DB 복제 설계 없이 replicas만 늘려 해결할 수 없습니다. 명시적 PVC 보존 정책은 StatefulSet 삭제·축소 후 클레임을 남겨 데이터와 스토리지 요금이 유지될 수 있습니다.
 
 애플리케이션 일관성을 확보하는 백업·quiesce 후 실제 DB 클레임을 스냅샷으로 만듭니다. Class는 앞서 정의한 EBS Retain snapshot class입니다:
 ```yaml

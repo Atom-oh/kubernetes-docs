@@ -64,7 +64,7 @@ v1 Training Operator는 `PyTorchJob`, `TFJob`, `MPIJob` 등 프레임워크당 �
 **정답: B) `ClusterTrainingRuntime`**
 
 **설명:**
-`ClusterTrainingRuntime`(또는 네임스페이스 범위의 `TrainingRuntime`)은 플랫폼 팀이 한 번 정의해두는 재사용 가능한 템플릿으로, 컨테이너 이미지와 분산 실행 메커니즘을 담습니다. 개별 TrainJob은 kind/name으로 참조하고 허용된 실행별 설정을 지정합니다. numNodes는 학습 Pod 수이며 EC2 인스턴스 수와 동일하지 않습니다.
+`ClusterTrainingRuntime`(또는 네임스페이스 범위의 `TrainingRuntime`)은 플랫폼 팀이 한 번 정의해두는 재사용 가능한 템플릿으로, 컨테이너 이미지와 분산 실행 메커니즘을 담습니다. 개별 TrainJob은 이 템플릿을 kind/name으로 참조하고 허용된 실행별 설정을 지정합니다. numNodes는 학습 Pod 수이며 EC2 인스턴스 수와 동일하지 않습니다.
 
 </details>
 
@@ -96,7 +96,7 @@ Kubeflow Trainer의 [릴리스 노트](https://github.com/kubeflow/trainer/relea
 **정답: B) 26.03.1 배포판에는 레거시 Training Operator(1.9.2)가 Trainer v2와 함께 여전히 포함되어 있으며, 기존 API와 TrainJob은 별도로 검증해 이전해야 한다**
 
 **설명:**
-Kubeflow Community Distribution 26.03.1은 Trainer v2와 함께 레거시 Training Operator 1.9.2를 여전히 배포하며, 이는 두 API가 함께 제공된다는 뜻이며 특정 팀의 이전 진행률은 알 수 없습니다.
+Kubeflow Community Distribution 26.03.1은 Trainer v2와 함께 레거시 Training Operator 1.9.2를 여전히 배포하며, 이는 두 API가 함께 제공된다는 뜻입니다. 특정 팀의 이전 진행률은 알 수 없습니다.
 
 </details>
 
@@ -126,7 +126,7 @@ Kubeflow Community Distribution 26.03.1은 Trainer v2와 함께 레거시 Traini
 **정답:** 재스케줄링 시 바뀔 수 있는 Pod IP에 의존하지 않고, 각 워커 Pod에 안정적이고 조회 가능한 DNS 이름을 부여해 다른 워커들이 그것을 찾을 수 있게 합니다.
 
 **설명:**
-분산 학습 워커들은 서로를 안정적으로 찾아야 합니다. 워커 Pod 앞에 둔 헤드리스 Service는 Pod 이름·hostname/subdomain과 네트워크 설정이 맞을 때 DNS 기반 탐색을 제공합니다. 상태나 IP의 영구 보존은 아닙니다.
+분산 학습 워커들은 서로를 안정적으로 찾아야 합니다. 워커 Pod 앞에 둔 헤드리스 Service는 Pod 이름·hostname/subdomain과 네트워크 설정이 맞을 때 DNS 기반 탐색을 제공합니다. 상태나 IP를 영구 보존하는 것은 아닙니다.
 
 </details>
 

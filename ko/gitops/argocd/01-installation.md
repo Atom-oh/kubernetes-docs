@@ -15,7 +15,7 @@
 
 ## 사전 요구 사항
 
-이 가이드는 자체 설치용입니다. EKS 관리형 Argo CD capability는 별도 생성·권한·설정 절차를 사용하며 여기에 self-managed 설치를 겹치지 않습니다. [개요의 호환성 표](README.md)에서 테스트된 Kubernetes 조합과 EKS 지원 기간을 확인합니다. Chart 최소 kubeVersion 조건은 테스트·지원 보장과 다릅니다.
+이 가이드는 자체 설치용입니다. EKS 관리형 Argo CD capability는 별도 생성·권한·설정 절차를 사용하며 여기에 self-managed 설치를 중복 적용하지 않습니다. [개요의 호환성 표](README.md)에서 테스트된 Kubernetes 조합과 EKS 지원 기간을 확인합니다. Chart 최소 kubeVersion 조건은 테스트·지원 보장과 다릅니다.
 
 namespace 생성 권한 하나로 CRD·ClusterRole·ClusterRoleBinding 설치 권한 전체가 확인되지는 않습니다. 실제 context와 권한을 확인합니다. HA 번들은 anti-affinity 때문에 최소 3개 노드가 필요합니다. CPU/메모리는 앱·클러스터·리포지토리 규모에 맞춰 측정하며 Redis 캐시에 무조건 10/50GB PVC가 필요한 것은 아닙니다.
 
@@ -328,7 +328,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 위 Helm 예제에서 확인할 사항은 다음과 같습니다.
 
-- Application Controller는 전역 leader 하나와 standby들이 아니라 클러스터를 shard에 분산합니다. Chart가 replica 수와 `ARGOCD_CONTROLLER_REPLICAS`를 맞춥니다. 알고리즘·재배치·실패 복구를 검증하고, 별도 기능인 dynamic distribution을 replica 증가와 혼동하지 않습니다.
+- Application Controller는 전역 leader 하나와 standby들로 구성되는 대신 클러스터를 shard에 분산합니다. Chart가 replica 수와 `ARGOCD_CONTROLLER_REPLICAS`를 맞춥니다. 알고리즘·재배치·실패 복구를 검증하고, 별도 기능인 dynamic distribution을 replica 증가와 혼동하지 않습니다.
 - ApplicationSet의 leader election과 Application Controller sharding은 다릅니다. 이 Chart는 ApplicationSet replica가 여러 개이면 leader election을 설정합니다.
 - Dex는 번들 in-memory 저장소를 쓰므로 replica만 늘리면 데이터 불일치가 생길 수 있습니다. 기본 1개를 유지하고 별도 HA 요구는 지원 구성을 확인합니다.
 - Redis는 폐기 가능한 캐시이고 Argo 설정은 Kubernetes 객체에 저장됩니다. Redis HA subchart의 replica 수는 `redis-ha.replicas`이며 `redis-ha.redis.replicas`가 아닙니다. 번들은 Redis/Sentinel 3개 모델을 사용합니다.
@@ -371,7 +371,7 @@ spec:
               number: 443
 ```
 
-백엔드가 HTTPS이므로 `server.insecure=false`를 유지합니다. 이 단일 HTTP target group을 통한 CLI는 `--grpc-web`을 사용합니다. native gRPC가 필요하면 별도 gRPC target group과 라우팅 조건을 공식 가이드대로 추가합니다.
+백엔드가 HTTPS이므로 `server.insecure=false`를 유지합니다. 이 단일 HTTP target group을 통해 접속하는 CLI는 `--grpc-web`을 사용합니다. native gRPC가 필요하면 별도 gRPC target group과 라우팅 조건을 공식 가이드대로 추가합니다.
 
 ```bash
 argocd login argocd.example.com --grpc-web
@@ -450,7 +450,7 @@ data:
   server.insecure: "false"
 ```
 
-`admin.enabled=false`는 SSO 사용자·권한과 복구 경로를 확인한 뒤 적용합니다. `/argocd` 같은 subpath는 실제 Ingress 경로·server.rootpath/basehref와 함께 설계하며 기본 예제에는 넣지 않습니다. 명령행/환경 변수 기반 설정 변경은 해당 컴포넌트의 rollout이 필요할 수 있습니다.
+`admin.enabled=false`는 SSO 사용자·권한과 복구 경로를 확인한 뒤 적용합니다. `/argocd` 같은 subpath는 실제 Ingress 경로·server.rootpath/basehref와 함께 설계하며 기본 예제에는 넣지 않습니다. 명령행/환경 변수 기반 설정 변경에는 해당 컴포넌트의 rollout이 필요할 수 있습니다.
 
 Rollout 등 지원 리소스의 내장 헬스 체크를 먼저 사용합니다. 사용자 정의 Lua는 status가 없을 때도 유효한 상태를 반환해야 하며, “알 수 없음”을 임의로 Healthy로 처리하지 않습니다. custom Kustomize는 `kustomize.path.<version>`과 해당 실행 파일을 실제로 제공해야 합니다. 구 `repositories`·`repository.credentials` ConfigMap 필드 대신 아래 Secret 방식을 사용합니다.
 

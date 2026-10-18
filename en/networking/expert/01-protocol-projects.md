@@ -12,7 +12,7 @@ These are original exercises, not solutions to graded university projects.
 
 Complete the [eight beginner lessons](../beginner/README.md) first, including restoration and the final service diagnosis.
 You should be able to distinguish an address, next hop, DNS answer, listening socket, and HTTP status.
-You also need basic Python reading, byte/hex notation, and the ability to compare two files.
+You also need basic Python reading skills, familiarity with byte/hex notation, and the ability to compare two files.
 
 Read these existing guides before collecting evidence:
 
@@ -213,7 +213,7 @@ Choose one connection by its two endpoint pairs and identify SYN, SYN-ACK, ACK, 
 Do not require a particular packet count or one segment per request; annotate missing handshake/closure as collection limits.
 For raw HTTP byte rules, consult [RFC 9112](https://www.rfc-editor.org/rfc/rfc9112.html) and the [curl manual](https://curl.se/docs/manpage.html).
 
-**Original framing exercise, offline:** Design a parser for two-byte unsigned big-endian length followed by that many payload bytes, capped at 64 bytes.
+**Original framing exercise, offline:** Design a parser for a two-byte unsigned big-endian length followed by that many payload bytes, capped at 64 bytes.
 Its synthetic input is `00 03 63 61 74 00 02 6f 6b`; this is your own protocol, not HTTP.
 Trace these delivery partitions: all bytes at once; one byte at a time; split after the first length byte; split in the first body.
 Record buffered bytes, needed bytes and emitted records after each delivery.

@@ -1,6 +1,6 @@
 # Cuestionario del laboratorio de observabilidad, parte 4
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 1. ¿Cómo se relacionan los VUs de k6 con las RPS?
    - A) Un VU siempre equivale a una RPS.
@@ -19,18 +19,18 @@ Tener el mismo número de VUs no implica el mismo rendimiento en distintas carga
 
 ---
 
-2. ¿Cómo deben hacer que fallen las comprobaciones fallidas de k6 en CI?
+2. ¿Cómo se deben configurar en CI las comprobaciones de k6 para que fallen cuando corresponda?
    - A) Llamar a check siempre termina con el código 1.
-   - B) Configure un umbral de comprobaciones/tasa de fallos e inspeccione el código de salida.
+   - B) Configura un umbral para las comprobaciones o la tasa de fallos e inspecciona el código de salida.
    - C) Un archivo JSON de resumen demuestra que fue exitoso.
    - D) Cuente únicamente las respuestas HTTP 200.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configure un umbral de comprobaciones/tasa de fallos e inspeccione el código de salida.**
+**Respuesta: B) Configura un umbral para las comprobaciones o la tasa de fallos e inspecciona el código de salida.**
 
-El éxito HTTP y el éxito del negocio son diferentes; valide también JSON, IDs y el estado del pago.
+Una respuesta HTTP correcta no garantiza que la operación de negocio haya tenido éxito; valida también el JSON, los IDs y el estado del pago.
 
 </details>
 
@@ -45,15 +45,15 @@ El éxito HTTP y el éxito del negocio son diferentes; valide también JSON, IDs
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) IDs creados realmente por la prueba.**
+**Respuesta: B) IDs creados por la prueba.**
 
-Use los IDs de la respuesta de creación para que los 404 aleatorios no contaminen la carga de trabajo.
+Usa los IDs de la respuesta de creación para que los 404 aleatorios no contaminen la carga de trabajo.
 
 </details>
 
 ---
 
-4. ¿Qué debe escalar directamente con la acumulación de SQS?
+4. ¿Qué debe escalar directamente con la acumulación de mensajes pendientes en SQS?
    - A) Siempre únicamente el productor de la API.
    - B) El consumidor que procesa esa cola.
    - C) Réplicas de Alertmanager.
@@ -74,14 +74,14 @@ KEDA lee los atributos de la cola y administra el escalado con HPA; no consume m
    - A) En cada cambio de 10 a 9 réplicas.
    - B) Al escalar a cero después del último trigger activo.
    - C) En el retraso de arranque de EC2.
-   - D) En la retención de logs.
+   - D) En la retención de registros.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B) Al escalar a cero después del último trigger activo.**
 
-Inspeccione el comportamiento de HPA y las ventanas de estabilización para el escalado dentro de 1..N réplicas.
+Inspecciona el comportamiento de HPA y las ventanas de estabilización para el escalado dentro de 1..N réplicas.
 
 </details>
 
@@ -132,17 +132,17 @@ Más nodos no solucionan las descargas de imágenes ni los errores de la aplicac
 
 **Respuesta: B) El total de réplicas de Deployment, distinto de las réplicas listas.**
 
-Use kube_deployment_status_replicas_ready para las réplicas listas; los Rollouts necesitan su propio estado/exporter.
+Usa kube_deployment_status_replicas_ready para las réplicas listas; los Rollouts necesitan su propio estado y exportador de métricas.
 
 </details>
 
 ---
 
 9. ¿Cómo deben contarse los Pods Running a partir de las métricas de fase?
-   - A) Cuente todas las series Running sin filtrar los valores.
-   - B) Sume directamente los indicadores 0/1 de la fase Running.
-   - C) Sume las longitudes de los nombres de los Pods.
-   - D) Devuelva siempre tres.
+   - A) Cuenta todas las series Running sin filtrar los valores.
+   - B) Suma directamente los indicadores 0/1 de la fase Running.
+   - C) Suma las longitudes de los nombres de los Pods.
+   - D) Devuelve siempre tres.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -166,7 +166,7 @@ Las series de la fase Running pueden existir con el valor cero, por lo que un re
 
 **Respuesta: B) Solicitudes, errores, latencia, cola, réplicas, nodos y estado de salida medidos.**
 
-No presente como resultados un rendimiento, disponibilidad o ahorro de costes sin medir.
+No presentes como resultados el rendimiento, la disponibilidad o el ahorro de costes si no se midieron.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Dynatrace 测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 ---
 
@@ -32,7 +32,7 @@
 
 **答案：B) Dynatrace Operator。**
 
-Helm 或 manifest 都用于安装 Operator，二者并非互相竞争的监控模式。所审阅的 Operator/chart 版本为 1.10.2。其发布的 CRD 提供 v1beta5 和 v1beta6，其中 v1beta6 为存储版本；旧的 v1beta2 示例已不是当前提供的 API。组件版本和更新行为仍需审查。
+Helm 或资源清单都用于安装 Operator，二者并非互相竞争的监控模式。所审阅的 Operator/chart 版本为 1.10.2。其发布的 CRD 提供 v1beta5 和 v1beta6，其中 v1beta6 为存储版本；旧的 v1beta2 示例已不是当前提供的 API。组件版本和更新行为仍需审查。
 
 </details>
 
@@ -66,7 +66,7 @@ Davis 这一术语仍出现在较旧的资料中；当前文档使用 Dynatrace 
 
 **答案：B) 主机监控与基于 webhook 的应用代码模块注入。**
 
-已发布的 Operator 将 cloudNativeFullStack 描述为结合 hostMonitoring 和 applicationMonitoring，并使用其 CSI 基础设施。它不仅仅是一个应用 sidecar。classicFullStack 在所审阅的版本中仍然存在，不要称其已被移除。模式、操作系统和 CSI 权限决定其适用性。
+已发布的 Operator 将 cloudNativeFullStack 描述为结合 hostMonitoring 和 applicationMonitoring，并使用其 CSI 基础设施。它不仅仅是一个应用边车（sidecar）。classicFullStack 在所审阅的版本中仍然存在，不要称其已被移除。模式、操作系统和 CSI 权限决定其适用性。
 
 </details>
 
@@ -93,7 +93,7 @@ Davis 这一术语仍出现在较旧的资料中；当前文档使用 Dynatrace 
    - A) vCPU 加 RAM。
    - B) 按适用价目表计费的受监控内存 GiB 小时数。
    - C) max(RAM/16, vCPU/1.5) 个 Host Unit。
-   - D) 每个 Kubernetes namespace 一个固定单位。
+   - D) 每个 Kubernetes 命名空间一个固定单位。
 
 <details>
 <summary>显示答案</summary>
@@ -110,31 +110,31 @@ Davis 这一术语仍出现在较旧的资料中；当前文档使用 Dynatrace 
    - A) 路由遥测数据。
    - B) 已配置的 Kubernetes API 监控。
    - C) 作为长期分析数据湖仓（data lakehouse）。
-   - D) 提供经批准的到环境的连通路径。
+   - D) 提供经批准的、通往 Dynatrace 环境的连接路径。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：C) 作为长期分析数据湖仓（data lakehouse）。**
 
-路由/监控和本地缓冲与长期后端存储不同。某些容器化 ActiveGate 的数据摄取配置需要 PVC。SaaS 路径仍然需要连通性；代理并不能让完全断网的网络访问到 SaaS。
+路由/监控和本地缓冲与长期后端存储不同。某些容器化 ActiveGate 的数据摄取配置需要 PVC。通往 SaaS 的路径仍需具备网络连通性；代理并不能让完全断网的网络访问 SaaS。
 
 </details>
 
 ---
 
 8. oneAgent.cloudNativeFullStack.namespaceSelector 选择的是什么？
-   - A) 要创建的 namespace。
-   - B) 符合所配置的 webhook 注入条件的 namespace。
+   - A) 要创建的命名空间。
+   - B) 符合所配置的 webhook 注入条件的命名空间。
    - C) 网络隔离边界。
    - D) 主机监控和 Kubernetes API 监控的完整范围。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 符合所配置的 webhook 注入条件的 namespace。**
+**答案：B) 符合所配置的 webhook 注入条件的命名空间。**
 
-该选择器和 Pod 注入注解控制 webhook 注入。它们不会限制 OneAgent 的主机监控或 ActiveGate 的 Kubernetes API 监控。元数据增强和 OTLP exporter 自动配置各有自己的选择器。请保护标签和 DynaKube 的更新权限；选择器既不是 RBAC，也不是计费上限。
+该选择器和 Pod 注入注解控制 webhook 注入。它们不会限制 OneAgent 的主机监控或 ActiveGate 的 Kubernetes API 监控。元数据增强和 OTLP 导出器（exporter）的自动配置各有自己的选择器。请保护标签和 DynaKube 的更新权限；选择器既不是 RBAC，也不是计费上限。
 
 </details>
 
@@ -151,7 +151,7 @@ Davis 这一术语仍出现在较旧的资料中；当前文档使用 Dynatrace 
 
 **答案：B) 使用二进制 Protocol Buffers 的 HTTP。**
 
-原生端点支持 HTTP/protobuf，不支持 gRPC 或 protobuf JSON。Collector 可以接收 gRPC 并以 HTTP 方式导出到 Dynatrace。请使用正确的 /api/v2/otlp 基础路径和信号后缀、TLS 以及所选端点要求的令牌类型/权限范围。不要用 .apps 浏览器 URL 代替。
+原生端点支持 HTTP/protobuf，不支持 gRPC 或 protobuf JSON。采集器（Collector）可以接收 gRPC 并以 HTTP 方式导出到 Dynatrace。请使用正确的 /api/v2/otlp 基础路径和信号后缀、TLS 以及所选端点要求的令牌类型/权限范围。不要用 .apps 浏览器 URL 代替。
 
 </details>
 

@@ -161,7 +161,7 @@ A Job is a workload resource that creates one or more pods and continues executi
 **Answer: C) CronJob**
 
 **Explanation:**
-CronJob is a workload resource that runs jobs periodically according to a specified schedule. It works similar to Linux cron jobs and is used for regular tasks such as backups, report generation, and email sending. Deployments are for continuously running applications, Jobs run one-time tasks, and StatefulSets are for applications that require state persistence.
+CronJob is a workload resource that runs jobs periodically according to a specified schedule. It works similarly to Linux cron jobs and is used for regular tasks such as backups, report generation, and email sending. Deployments are for continuously running applications, Jobs run one-time tasks, and StatefulSets are for applications that require state persistence.
 </details>
 
 ## Short Answer Questions

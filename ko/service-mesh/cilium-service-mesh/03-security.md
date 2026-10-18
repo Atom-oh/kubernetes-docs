@@ -14,7 +14,7 @@
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-0.html)
 
-상자는 책임 구분이며 모든 조합에서 모든 정책이 유지된다는 보장이 아닙니다. 특히 ztunnel 베타는 별도 Identity·데이터 경로를 사용하고 기본 CA에는 out-of-band 인증용 SPIRE 통합이 필수이지 않습니다.
+상자는 책임 구분을 나타내며 모든 조합에서 모든 정책이 유지된다는 보장이 아닙니다. 특히 ztunnel 베타는 별도 Identity·데이터 경로를 사용하고 기본 CA에는 out-of-band 인증용 SPIRE 통합이 필수가 아닙니다.
 
 ## 상호 인증과 데이터 암호화
 
@@ -30,7 +30,7 @@ Cilium 1.20.3은 out-of-band 방식을 여전히 **베타·미완성 기능**으
 
 ### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
 
-Cilium 1.20.3에는 **Ztunnel Transparent Encryption (Beta)**가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
+Cilium 1.20.3에는 **Ztunnel Transparent Encryption** (Beta)가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
 
 ```yaml
 encryption:
@@ -93,7 +93,7 @@ authentication:
 
 SPIRE StatefulSet에 적합한 StorageClass/PV가 필요합니다. 모든 EKS 클러스터에 `gp3`라는 클래스가 자동으로 존재하는 것은 아닙니다. `authentication.enabled`가 필요하고, trust domain·Agent 소켓 설정은 `install.server`나 `install.agent` 아래가 아니라 `authentication.mutual.spire` 아래에 둡니다. 번들 chart는 기존의 `server.replicas`, `server.nodeAttestor`, `agent.workloadAttestor`, `server.ca.ttl` 예시를 구현하지 않습니다.
 
-SPIRE Server는 Agent를 증명하고 SVID에 서명합니다. Agent는 워크로드 증명을 수행하며, Cilium 통합은 Cilium 보안 Identity 항목을 등록하고 인증 정보 조회를 위임하는 과정도 사용합니다. SPIRE 활성화만으로 모든 트래픽의 인증을 강제하거나 WireGuard/IPsec을 켜지는 않습니다.
+SPIRE Server는 Agent를 증명하고 SVID에 서명합니다. Agent는 워크로드 증명을 수행하며, Cilium 통합은 Cilium 보안 Identity 항목을 등록하고 인증 정보 조회를 위임하는 과정도 사용합니다. SPIRE 활성화만으로 모든 트래픽의 인증이 강제되거나 WireGuard/IPsec이 켜지지는 않습니다.
 
 ### 상호 인증 정책 적용
 
@@ -174,7 +174,7 @@ spec:
       mode: required
 ```
 
-여기서 송신·수신 레이블은 워크로드를 나타내며 최종 사용자의 로그인이 아닙니다. 누가 워크로드를 생성하고 레이블을 바꾸거나 ServiceAccount를 사용할 수 있는지는 Kubernetes 권한으로 통제해야 합니다.
+여기서 송신·수신 레이블은 워크로드를 나타내며 최종 사용자의 로그인을 나타내는 것은 아닙니다. 누가 워크로드를 생성하고 레이블을 바꾸거나 ServiceAccount를 사용할 수 있는지는 Kubernetes 권한으로 통제해야 합니다.
 
 ## CiliumNetworkPolicy L7 규칙
 
@@ -454,7 +454,7 @@ ESP·방화벽, 실제 암호화 인터페이스와 native-routing CIDR을 확�
 
 ### Cilium Identity
 
-Cilium은 Identity 관련 레이블 집합에 숫자 ID를 할당하며 여러 Pod가 공유할 수 있습니다. 사용자가 계산하는 해시나 영구적인 Pod 식별자가 아닙니다.
+Cilium은 Identity 관련 레이블 집합에 숫자 ID를 할당하며 여러 Pod가 이 ID를 공유할 수 있습니다. 사용자가 계산하는 해시나 영구적인 Pod 식별자가 아닙니다.
 
 ### Identity 구성 요소
 
@@ -557,7 +557,7 @@ Cert-manager의 설정된 cluster-resource namespace에 충분한 잔여 수명�
 
 외부에서 관리하는 SPIRE Server는 지원되는 UpstreamAuthority와 필요한 마운트 자료 또는 Issuer API를 사용해야 합니다. 기존 PKI에 가입하는 disk authority에는 `cert_file_path`, `key_file_path`, 신뢰 루트의 `bundle_file_path`가 필요하며 reload·교체·신뢰 중첩을 설계해야 합니다. Kubernetes Secret 변경만으로 모든 인증서 소비자가 새 CA를 채택했다고 판단하면 안 됩니다.
 
-번들 SPIRE ConfigMap을 부분적인 별도 파일로 교체하지 마세요. 외부 SPIRE에는 Cilium의 외부 서버 주소, trust domain, 위임 Identity 등록과 인증 요건을 별도로 검토해야 합니다.
+번들 SPIRE ConfigMap을 부분적인 별도 파일로 교체하지 마세요. 외부 SPIRE를 사용할 때는 Cilium의 외부 서버 주소, trust domain, 위임 Identity 등록과 인증 요건을 별도로 검토해야 합니다.
 
 ### Vault 통합
 

@@ -46,7 +46,7 @@ apt-cache madison kubeadm
 ```
 
 
-## 集群管理概述
+## 集群管理概述 {#cluster-administration-overview}
 
 Kubernetes 集群管理是管理集群整个生命周期的过程，主要包括以下方面：
 
@@ -58,7 +58,7 @@ Kubernetes 集群管理是管理集群整个生命周期的过程，主要包括
 
 下图展示了 Kubernetes 集群管理的主要领域及相关工具：
 
-## 集群组件管理
+## 集群组件管理 {#cluster-component-management}
 
 Kubernetes 集群由控制平面组件和节点组件组成。管理每个组件对于集群的稳定性和性能至关重要。
 
@@ -287,7 +287,7 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## 资源管理
+## 资源管理 {#resource-management}
 
 有效管理 Kubernetes 集群资源对于保持集群稳定性和性能十分重要。
 
@@ -399,7 +399,7 @@ spec:
 
 在上述示例中，`frontend` Deployment 中 Pod 的 CPU 和内存 requests 会根据实际资源使用情况自动调整。
 
-## 集群网络
+## 集群网络 {#cluster-networking}
 
 Kubernetes 集群网络负责管理 Pod、Service 和节点之间的通信。
 
@@ -537,7 +537,7 @@ spec:
 
 在上述示例中，带有 `role=db` 标签的 Pod 仅允许带有 `role=frontend` 标签的 Pod 通过 TCP 端口 3306 入站通信，并允许其通过 TCP 端口 9090 向带有 `role=monitoring` 标签的 Pod 出站通信。
 
-## 身份验证和授权管理
+## 身份验证和授权管理 {#authentication-and-authorization-management}
 
 Kubernetes 身份验证和授权管理是集群安全的核心要素。
 
@@ -749,7 +749,7 @@ spec:
 
 在上述示例中，Pod 以 UID 1000 和 GID 3000 运行；容器无法提升权限，所有 Linux capabilities 均被移除，且根文件系统以只读方式挂载。
 
-## 集群升级
+## 集群升级 {#cluster-upgrades}
 
 升级 Kubernetes 集群是应用新功能、性能改进和安全补丁的必要操作。
 
@@ -814,7 +814,7 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## 备份和恢复
+## 备份和恢复 {#backup-and-recovery}
 
 Kubernetes 集群备份和恢复是灾难恢复规划的重要组成部分。
 
@@ -955,7 +955,7 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## 监控和日志记录
+## 监控和日志记录 {#monitoring-and-logging}
 
 有效的监控和日志记录是集群管理的核心要素。
 
@@ -1069,7 +1069,7 @@ data:
     </match>
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 Kubernetes 集群故障排除是集群管理的重要组成部分。
 
@@ -1165,7 +1165,7 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Amazon EKS 集群管理
+## Amazon EKS 集群管理 {#amazon-eks-cluster-administration}
 
 Amazon EKS 是一项托管 Kubernetes 服务，可自动处理集群管理的许多方面。
 
@@ -1294,7 +1294,7 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## 集群管理最佳实践
+## 集群管理最佳实践 {#cluster-administration-best-practices}
 
 Kubernetes 和 EKS 集群管理最佳实践：
 
@@ -1338,7 +1338,7 @@ Kubernetes 和 EKS 集群管理最佳实践：
 4. **Service Account 的 IAM 角色 (IRSA)**：按 Pod 管理 IAM 权限
 5. **VPC CNI 自定义配置**：根据网络要求配置 VPC CNI
 
-## 结论
+## 结论 {#conclusion}
 
 Kubernetes 集群管理对于保持集群稳定性、安全性和性能发挥着重要作用。本章介绍了集群管理的各个方面，包括集群组件管理、资源管理、网络、身份验证和授权管理、升级、备份和恢复、监控和日志记录以及故障排除。
 

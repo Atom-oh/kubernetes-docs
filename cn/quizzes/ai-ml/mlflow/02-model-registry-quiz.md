@@ -121,15 +121,15 @@ Legacy stages 包括 None/Staging/Production/Archived。请使用 aliases/tags �
 <details>
 <summary>显示答案</summary>
 
-不能。它是注册状态；metadata fixtures 可以是 READY。请分别验证实际 flavors、weights、依赖项加载和质量。
+不能。它是注册状态；仅含元数据的测试样例也可能处于 READY 状态。请分别验证实际的 flavors、权重、依赖项加载和质量。
 </details>
 
-10. 为什么 registry 不一定总能重建精确的代码和数据 lineage？
+10. 为什么 registry 不一定总能重建精确的代码和数据血缘信息？
 
 <details>
 <summary>显示答案</summary>
 
-Run/model 链接是可选的，并且源文件、Runs 或 artifacts 可能发生变化或消失。请保留 serving version、哈希、commit、数据集快照、依赖项和批准信息。
+Run/model 链接是可选的，源文件、Runs 或产物可能发生变化或消失。请保留提供服务的模型版本、哈希、代码提交、数据集快照、依赖项和批准信息。
 </details>
 
 ---

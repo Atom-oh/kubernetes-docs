@@ -1,9 +1,9 @@
 # 使用 cert-manager 管理证书
 
-> **最后更新**：October 12, 2026
-> **验证基准**：cert-manager 1.21.2、cmctl 2.5.0、trust-manager 0.25.0、istio-csr 0.17.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 已发布的受支持/已测试 Kubernetes 版本范围为 1.33–1.36；Kubernetes 1.37 不在该范围内，因此本指南不声明与其兼容。
+> **最后更新**：October 16, 2026
+> **验证基线**：cert-manager 1.21.2、cmctl 2.6.1、trust-manager 0.25.0、istio-csr 0.18.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 公布的受支持/已测试 Kubernetes 版本范围为 1.33–1.36；Kubernetes 1.37 不在该范围内，因此本指南不声明与其兼容。
 
-cert-manager 将证书签发和续订作为 Kubernetes 资源进行管理。**CA 信任分发、应用程序重载、吊销以及 CRL/OCSP 操作仍是独立职责。**示例已使用本地 schema、配置和库进行检查；它们并非外部 CA 签发或 AWS/Kubernetes 部署的证据。一项单独的临时本地 Vault 2.1.0 测试使用合成 CA，对十六个签发/CSR 签名接受/拒绝案例进行了测试。
+cert-manager 将证书签发和续期作为 Kubernetes 资源进行管理。**CA 信任分发、应用重新加载、吊销以及 CRL/OCSP 操作仍是单独的职责**。示例已使用本地 schema、配置和库进行检查；它们不能证明外部 CA 签发或 AWS/Kubernetes 部署已成功。另有一项独立的临时本地 Vault 2.1.0 测试，使用合成 CA 对十六种签发/CSR 签名接受/拒绝场景进行了验证。
 
 <span id="what-cert-manager-solves"></span>
 <span id="project-status"></span>
@@ -12,17 +12,17 @@ cert-manager 将证书签发和续订作为 Kubernetes 资源进行管理。**CA
 
 ## 概述
 
-cert-manager 于 2020 年 11 月 10 日加入 CNCF，于 2022 年 9 月 19 日成为孵化项目，并于 **2024 年 9 月 29 日毕业**。毕业并不保证特定部署的安全性或可用性。
+cert-manager 于 2020 年 11 月 10 日加入 CNCF，于 2022 年 9 月 19 日进入孵化阶段，并于 **2024 年 9 月 29 日毕业**。毕业并不保证特定部署的安全性或可用性。
 
-| 生命周期关注点 | 职责 |
+| 生命周期事项 | 职责 |
 |---|---|
-| 签发 | Issuer 身份验证、请求者批准、SAN/用途/有效期策略 |
-| 续订 | 实际签发的有效期、ARI/renewBefore、重试和告警 |
-| 密钥轮换 | Secret 访问、使用方重载、CA 轮换顺序 |
-| 信任 | 每个 namespace/进程信任哪些根/中间证书 |
-| 吊销 | CA 吊销流程以及 CRL/OCSP 的发布/使用 |
+| 签发 | 签发者身份验证、请求者审批、SAN/用途/有效期策略 |
+| 续期 | 实际签发的有效期、ARI/renewBefore、重试和告警 |
+| 密钥轮换 | Secret 访问、使用方重新加载、CA 轮换顺序 |
+| 信任 | 每个命名空间/进程信任哪些根证书/中间证书 |
+| 吊销 | CA 吊销流程以及 CRL/OCSP 发布/使用 |
 
-不要将旧的 1.16.2 安装和兼容性表格作为当前支持指南。1.16 版本已于 2025 年 6 月结束生命周期（EOL）。请使用中间版本的发行说明和 CRD 变更规划升级。
+不要将旧版 1.16.2 安装和兼容性表作为当前支持指南。1.16 版本已于 2025 年 6 月结束生命周期。请根据中间版本的发布说明和 CRD 变更规划升级。
 
 <span id="component-overview"></span>
 <span id="component-responsibilities"></span>
@@ -30,11 +30,11 @@ cert-manager 于 2020 年 11 月 10 日加入 CNCF，于 2022 年 9 月 19 日�
 
 ## 架构
 
-![cert-manager 组件及 Issuer/Secret 关系](../.gitbook/assets/en-security-10-cert-manager-0.png)
+![cert-manager 组件以及签发者/Secret 关系](../.gitbook/assets/en-security-10-cert-manager-0.png)
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-0.html)
 
-controller 协调 Certificates 并创建 CertificateRequests；issuer controller 负责处理签发。webhook 对自定义资源进行验证/默认值设置/转换，cainjector 则在受支持的 API/webhook 配置中管理 CA bundle。CA/SelfSigned issuer 不一定是外部服务。
+控制器协调 Certificates 并创建 CertificateRequests；签发者控制器负责签发。Webhook 用于验证/设置默认值/转换自定义资源，而 cainjector 管理受支持 API/webhook 配置中的 CA bundle。CA/SelfSigned 签发者不一定是外部服务。
 
 <span id="prerequisites"></span>
 <span id="installation-with-helm-recommended"></span>
@@ -44,7 +44,7 @@ controller 协调 Certificates 并创建 CertificateRequests；issuer controller
 
 ## 安装
 
-检查受支持的 Kubernetes 版本、Helm/cluster 权限、Gateway API CRD 和真实的 Gateway controller，以及可选的 Prometheus Operator CRD。如果在 controller 启动后才安装 Gateway API CRD，请验证重启/发现要求。
+检查受支持的 Kubernetes 版本、Helm/集群权限、Gateway API CRD 和实际的 Gateway 控制器，以及可选的 Prometheus Operator CRD。如果在控制器启动后才安装 Gateway API CRD，请确认是否需要重启/重新发现。
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
@@ -86,9 +86,9 @@ cainjector:
     minAvailable: 1
 ```
 
-此配置启用了 ServiceMonitor 和 Gateway API，因此其 CRD/controller 必须已经存在。对于不含这些依赖项的最小安装，请禁用这些选项。副本数/PDB 不能替代节点/AZ 分布和 API 连通性。当前配置使用 config.gatewayAPI.enabled；较旧的 enableGatewayAPI 字段仍会被 1.21.2 解码器接受，但已弃用。
+此配置启用了 ServiceMonitor 和 Gateway API，因此相应的 CRD/控制器必须已存在。若要在不依赖这些组件的情况下进行最小化安装，请禁用这些选项。副本/PDB 不能替代节点/AZ 分布和 API 连通性。当前配置使用 config.gatewayAPI.enabled；旧字段 enableGatewayAPI 在 1.21.2 解码器中仍可接受，但已弃用。
 
-检查 CRD 保留和实际卸载所有权。删除 CRD 可能会删除其自定义资源；这不是常规升级故障排除步骤。
+检查 CRD 保留策略以及实际的卸载归属。删除 CRD 可能会删除其自定义资源；这不是常规的升级故障排查步骤。
 
 <span id="custom-resource-definitions-crds"></span>
 <span id="certificate-resource"></span>
@@ -97,21 +97,21 @@ cainjector:
 
 ## 核心概念
 
-![Certificate 资源和 controller 创建的请求](../.gitbook/assets/en-security-10-cert-manager-1.png)
+![Certificate 资源以及由控制器创建的请求](../.gitbook/assets/en-security-10-cert-manager-1.png)
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-1.html)
 
-| 资源 | 范围和用途 |
+| 资源 | 作用范围和用途 |
 |---|---|
-| Certificate | namespace 内所需的证书和输出 Secret |
-| Issuer | 在其 namespace 内引用的签发配置 |
-| ClusterIssuer | 跨 namespace 引用的签发配置 |
-| CertificateRequest | CSR、issuerRef 和批准/拒绝状态 |
-| Order/Challenge | ACME 路径使用的订购/验证资源 |
+| Certificate | 命名空间内所需的证书和输出 Secret |
+| Issuer | 在其命名空间内引用的签发配置 |
+| ClusterIssuer | 可跨命名空间引用的签发配置 |
+| CertificateRequest | CSR、issuerRef 以及审批/拒绝状态 |
+| Order/Challenge | ACME 流程使用的排序/验证资源 |
 
-ClusterIssuer 的凭据/CA Secret 位于 controller 的 cluster-resource namespace，默认值为 cert-manager。Issuer Secret 位于 Issuer namespace。创建 Certificate 的权限本身并不会限制 SAN 或 issuerRef。
+ClusterIssuer 的凭证/CA Secret 位于控制器的集群资源命名空间，默认为 cert-manager。Issuer Secret 位于 Issuer 所在的命名空间。创建 Certificate 的权限本身不会限制 SAN 或 issuerRef。
 
-### Certificate 和续订
+### Certificate 和续期
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -136,13 +136,13 @@ spec:
     group: cert-manager.io
 ```
 
-请求的有效期可能与 CA 实际签发的有效期不同。默认续订发生在**实际 X.509 有效期的三分之二处**，而非到期前固定的 15/30 天。renewBeforePercentage 根据实际有效期推导缓冲期。选择 renewBefore 或百分比，不要同时选择两者；duration 至少为 1 小时，有效续订缓冲期必须至少为 5 分钟且短于 duration。
+请求的有效期可能与 CA 实际签发的有效期不同。默认续期时间为**实际 X.509 有效期的三分之二处**，而不是在到期前固定 15/30 天。renewBeforePercentage 根据实际有效期计算缓冲时间。选择 renewBefore 或 percentage，不要同时使用两者；duration 至少为 1 小时，实际续期缓冲时间必须至少为 5 分钟且短于 duration。
 
-版本 1.21.2 的续订策略/窗口和受支持的 ARI 路径会影响时机。renewal.policy:Disabled 会禁用自动续订。检查 status.renewalTime、实际 notBefore/notAfter 和失败告警。自 1.18 起，privateKey.rotationPolicy 默认为 Always。更新密钥/证书 Secret 并不能保证应用程序重载。
+1.21.2 版本的续期策略/窗口和受支持的 ARI 路径可能会影响时间。renewal.policy:Disabled 会禁用自动续期。检查 status.renewalTime、实际 notBefore/notAfter 和失败告警。自 1.18 起，privateKey.rotationPolicy 的默认值为 Always。更新密钥/证书 Secret 并不保证应用会重新加载。
 
 ### CertificateRequest 和私钥
 
-直接请求需要真实的 PEM CSR；不要应用截断的 base64 示例。cmctl create certificaterequest **会在 cluster 中创建请求**，并非离线验证命令。单独限制 cmctl approve/deny 权限。本次审计仅使用 cert-manager PKI 库生成并验证合成的本地密钥/CSR。
+直接请求必须使用真实的 PEM CSR；不要应用被截断的 base64 示例。cmctl create certificaterequest **会在集群中创建请求**，并非离线验证命令。应单独限制 cmctl approve/deny 权限。本次审计仅使用 cert-manager PKI 库生成并验证了合成的本地密钥/CSR。
 
 <span id="selfsigned-issuer-development-testing"></span>
 <span id="ca-issuer-internal-pki"></span>
@@ -153,11 +153,11 @@ spec:
 <span id="aws-private-ca-issuer"></span>
 <span id="hashicorp-vault-pki"></span>
 
-## Issuer 类型
+## 签发者类型
 
 ### SelfSigned 和 CA 引导
 
-[完整引导示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/bootstrap.yaml)创建专用的实验室根证书和叶证书。根证书明确使用 renewal Disabled 和密钥轮换 Never，以避免**计划外的信任锚替换**。生产根证书托管、离线 CA、中间证书隔离、审计和吊销需要单独设计。
+[完整的引导示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/bootstrap.yaml)会创建专用的实验室根证书和叶证书。根证书明确设置 renewal Disabled 和密钥轮换 Never，以避免**意外替换信任锚**。生产环境根密钥保管、离线 CA、中间 CA 隔离、审计和吊销需要单独设计。
 
 ```yaml
 apiVersion: v1
@@ -238,7 +238,7 @@ spec:
     group: cert-manager.io
 ```
 
-CA issuer 使用包含 CA 证书/私钥的 Secret。替换该 Secret 不会立即重新签发每个叶证书或更新每个客户端信任库。CA issuer 可包含 CRL/OCSP URL，但不会生成或维护 CRL/OCSP 响应。实施策略以防止叶证书的存活时间超过其 CA。
+CA 签发者使用包含 CA 证书/私钥的 Secret。替换该 Secret 不会立即重新签发所有叶证书，也不会更新所有客户端的信任存储。CA 签发者可以包含 CRL/OCSP URL，但不会生成或维护 CRL/OCSP 响应。应实施策略，防止叶证书的有效期超过其 CA。
 
 ### ACME：HTTP-01 和 DNS-01
 
@@ -246,11 +246,11 @@ CA issuer 使用包含 CA 证书/私钥的 Secret。替换该 Secret 不会立�
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-2.html)
 
-HTTP-01 需要通过端口 80 访问 hostname，且不支持通配符。DNS-01 使用 DNS TXT 权限进行通配符验证。重复使用的授权和 ACM 的预验证流程意味着不一定会为每个请求都创建新的 Challenge。
+HTTP-01 需要通过端口 80 访问主机名，且不支持通配符。DNS-01 使用 DNS TXT 权限进行通配符验证。重复使用授权以及 ACM 的预验证流程意味着并非每个请求都会创建新的 challenge。
 
-不要推荐维护已于 2026 年 3 月结束的社区 ingress-nginx 作为新安装的默认选项。[HTTP-01 Gateway 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml)假设已安装 Envoy Gateway 及其 envoy-gateway GatewayClass。验证实际 class，并使 solver namespace 的 cert-manager-http01:enabled 标签与 allowedRoutes 对齐。Gateway 证书 shimming 不会安装 Gateway controller 或实现其 TLS 重载。
+不要将社区版 ingress-nginx 推荐为新安装的默认选择；它已于 2026 年 3 月结束维护。[HTTP-01 Gateway 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml)假定已安装 Envoy Gateway 及其 envoy-gateway GatewayClass。请验证实际的 class，并确保 solver 命名空间的 cert-manager-http01:enabled 标签与 allowedRoutes 相匹配。Gateway 证书填充功能不会安装 Gateway 控制器，也不会实现其 TLS 重新加载。
 
-[Route53 issuer](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml)和[IAM 策略](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json)指定 hostedZoneID，并将变更限制为 Challenge TXT 名称。指定 zone 可避免要求全局 ListHostedZonesByName 访问权限。通过 IRSA 或受支持的 Pod Identity 以及任何跨账户角色链验证 controller 凭据。namespace 选择和 dnsZones 不能替代 IAM 授权。
+[Route53 签发者](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml)和 [IAM 策略](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json)指定了 hostedZoneID，并将更改范围限制为 challenge TXT 名称。指定 zone 可避免要求全局 ListHostedZonesByName 访问权限。请通过 IRSA 或受支持的 Pod Identity，以及任何跨账户角色链来验证控制器凭证。命名空间选择和 dnsZones 不能替代 IAM 授权。
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -272,11 +272,11 @@ spec:
             hostedZoneID: Z1234567890ABC
 ```
 
-Let’s Encrypt staging 具有生产浏览器不信任的速率限制和根证书。ACME 账户按环境区分。到期通知电子邮件已于 2025 年停止；email 字段不能替代到期监控。对于 429 响应，应遵循 Retry-After 和相关的补充策略，而不是总在一小时后重试。ARI 续订与新签发有不同的速率限制处理方式。
+Let’s Encrypt staging 环境有速率限制，其根证书也不受生产环境浏览器信任。ACME 账户按环境区分。到期通知邮件已于 2025 年停止发送；email 字段不能替代到期监控。对于 429 响应，应遵循 Retry-After 和相应的补充策略，而不是一律在一小时后重试。ARI 续期和新签发适用不同的速率限制规则。
 
 ### AWS Private CA
 
-外部 aws-privateca-issuer controller 需要 CA-ARN 范围内的签发/读取权限和 EKS workload identity。文档规定的操作为 acm-pca:DescribeCertificateAuthority、acm-pca:GetCertificate 和 acm-pca:IssueCertificate；将其 Resource 限制为目标 CA ARN。替换[示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/pca-issuer.yaml)中的实际 CA ARN，并验证 CA 模式、template、算法、用途和请求的有效期。分别检查短期 CA 限制和定价。不要使用 disableApprovedCheck 绕过批准检查。
+外部 aws-privateca-issuer 控制器需要限定 CA ARN 范围的签发/读取权限，以及 EKS 工作负载身份。文档中列出的操作为 acm-pca:DescribeCertificateAuthority、acm-pca:GetCertificate 和 acm-pca:IssueCertificate；请将其 Resource 限定为目标 CA ARN。替换[示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/pca-issuer.yaml)中的实际 CA ARN，并验证 CA 模式、模板、算法、用途和请求的有效期。请另行检查短期 CA 限制和定价。不要通过 disableApprovedCheck 绕过审批检查。
 
 ```bash
 helm repo add awspca https://cert-manager.github.io/aws-privateca-issuer
@@ -286,27 +286,27 @@ helm upgrade --install aws-pca-issuer awspca/aws-privateca-issuer \
 
 ### Vault PKI
 
-[Issuer/token RBAC 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-issuer.yaml)将 token 创建限制为 demo-app/vault-issuer。单独提供 Vault server 的 TLS CA Secret。[PKI role/policy 脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-setup.sh)假定现有 PKI/Kubernetes-auth mount、已批准的 Vault identity 以及已配置的 TokenReview 访问。
+[Issuer/token RBAC 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-issuer.yaml)将令牌创建权限限制在 demo-app/vault-issuer。请单独提供 Vault 服务器的 TLS CA Secret。[PKI 角色/策略脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-setup.sh)假定 PKI/Kubernetes-auth 挂载已存在、Vault 身份已获批准，且 TokenReview 访问权限已配置。
 
-在 Vault role 中限制 SAN，并将 audience vault://demo-app/vault-pki 绑定到此 Issuer。reviewer JWT、Kubernetes API audience 和 OIDC 访问取决于 Vault 的运行位置。不要以 tls-skip-verify 或宽泛的默认 Vault policy 绕过连通性问题。
+在 Vault 角色中限制 SAN，并将 audience vault://demo-app/vault-pki 绑定到此 Issuer。审核者 JWT、Kubernetes API audience 和 OIDC 访问取决于 Vault 的运行位置。不要通过 tls-skip-verify 或宽泛的默认 Vault 策略来绕过连通性问题。
 
 <span id="tls-termination-comparison"></span>
 <span id="alb-ingress-with-acm-vs-cert-manager"></span>
 <span id="nlb-with-tls-termination-at-ingress-controller"></span>
 <span id="gateway-api-integration"></span>
 
-DNS role 明确设置 allow_ip_sans=false 和 allow_localhost=false。allowed_domains 不会限制 IP SAN，而 localhost 有单独的宽松默认值。vault write POST 会将省略的 role 字段重置为默认值；应用后读取完整 role，并测试允许的 DNS 请求以及被拒绝的 IP/localhost 请求。
+DNS 角色明确设置 allow_ip_sans=false 和 allow_localhost=false。allowed_domains 不会限制 IP SAN，而 localhost 有单独的宽松默认值。vault write POST 会将未提供的角色字段重置为默认值；应用后请读取完整角色，并测试允许的 DNS 请求以及被拒绝的 IP/localhost 请求。
 
 ## EKS 集成模式
 
-| 路径 | TLS 终止和密钥位置 |
+| 路径 | TLS 终止位置和密钥位置 |
 |---|---|
-| 使用 ACM 的 ALB/NLB TLS listener | AWS 负载均衡器使用 ACM ARN |
-| 使用 Gateway/Pod 的 NLB TCP | Backend 使用 Kubernetes Secret 终止 TLS |
-| Gateway HTTPS listener | Gateway controller 引用同一 namespace 的 TLS Secret |
-| 可导出的 ACM 公共证书 | 客户管理的 workload 使用显式导出的密钥/证书 |
+| 使用 ACM 的 ALB/NLB TLS 侦听器 | AWS 负载均衡器使用 ACM ARN |
+| 使用 Gateway/Pod 的 NLB TCP | 后端使用 Kubernetes Secret 终止 TLS |
+| Gateway HTTPS 侦听器 | Gateway 控制器引用同一命名空间中的 TLS Secret |
+| ACM 可导出的公有证书 | 显式导出的密钥/证书供客户管理的工作负载使用 |
 
-ALB 不会直接读取 cert-manager Kubernetes Secret 作为 listener 证书；导入/导出和 ACM ARN 关系是独立步骤。[ALB 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/alb-acm-ingress.yaml)需要真实的 ACM ARN 和 backend Service。[NLB TCP 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/nlb-tcp-service.yaml)将 TLS 传递到 backend 端口 8443，该端口必须实际提供 TLS。
+ALB 不能直接将 cert-manager Kubernetes Secret 作为侦听器证书；导入/导出以及 ACM ARN 关联是单独的步骤。[ALB 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/alb-acm-ingress.yaml)需要真实的 ACM ARN 和后端 Service。[NLB TCP 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/nlb-tcp-service.yaml)会将 TLS 流量转发到后端端口 8443，该端口必须实际提供 TLS 服务。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -348,7 +348,7 @@ spec:
           port: 8080
 ```
 
-此 Gateway 使用 lab-ca，普通浏览器并不信任它。真正的公共签发需要经批准的 issuer/domain 验证路径和 controller。验证 GatewayClass 名称和 certificateRefs 范围/类型；避免让两个 controller 拥有同一个 Secret。
+此 Gateway 使用 lab-ca，普通浏览器不信任该 CA。实际的公有证书签发需要经过批准的签发者/域名验证流程及控制器。请验证 GatewayClass 名称以及 certificateRefs 的作用域/类型；避免由两个控制器管理同一个 Secret。
 
 <span id="july-2026-update-acm-now-supports-the-acme-protocol"></span>
 <span id="supported-certificate-types"></span>
@@ -362,7 +362,7 @@ spec:
 
 ### ACM RequestCertificate 和 ACK 导出
 
-ACK ACM 本身是需要安装和运维的开源 controller。1.8.1 [示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml)明确配置 options.export:ENABLED、exportTo 和输出 Secret。仅定义签发请求不会创建 TLS Secret。在 1.8.1 CRD（v1.10.0 中未变）中，validationMethod 仅出现在只读 status domainValidations 字段中，而非 spec 中；不要从旧示例复制到请求中。
+ACK ACM 本身也是一个已安装并需要运维的开源控制器。1.8.1 [示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml)明确配置 options.export:ENABLED、exportTo 和输出 Secret。仅定义签发请求不会创建 TLS Secret。在 1.8.1 CRD 中（v1.10.0 中也未变化），validationMethod 仅出现在只读的 status domainValidations 字段中，而不在 spec 中；不要将旧示例中的该字段复制到请求中。
 
 ```yaml
 apiVersion: v1
@@ -391,11 +391,11 @@ spec:
     key: tls.crt
 ```
 
-域验证是独立的。Route53 ACK 可以管理 ACM 提供的 CNAME，但安装 ACM controller 不会自动验证每个 DNS 提供商。评估可导出证书的定价、controller IAM/RBAC/namespace 边界，以及私钥 Secret 访问。Private-CA/SPIFFE mTLS identity 需要自身的 issuer/trust 设计。
+域名验证是单独的步骤。Route53 ACK 可以管理 ACM 提供的 CNAME，但安装 ACM 控制器不会自动验证所有 DNS 提供商。请评估可导出证书的定价、控制器 IAM/RBAC/命名空间边界，以及私钥 Secret 的访问权限。私有 CA/SPIFFE mTLS 身份需要单独设计签发者/信任方案。
 
-### ACM ACME：EAB 和预验证域
+### ACM ACME：EAB 和预验证域名
 
-ACM ACME 于 2026 年 7 月 6 日发布，可签发 45 天有效期的公共证书。PKI 管理员准备与 IAM role 关联的 endpoint/domain 验证和 EAB 凭据，然后注册客户端。**仅更改 server URL 不够。**安全地存储 HMAC 密钥，并在 cert-manager 的 cluster-resource namespace 中提供 acm-eab Secret/hmac 条目。
+ACM 于 2026 年 7 月 6 日宣布推出 ACME，可签发有效期为 45 天的公有证书。PKI 管理员会准备端点/域名验证以及与 IAM 角色关联的 EAB 凭证，然后注册客户端。**仅更改服务器 URL 并不足够**。请安全存储 HMAC 密钥，并在 cert-manager 的集群资源命名空间中提供 acm-eab Secret/hmac 条目。
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -415,16 +415,16 @@ spec:
         key: hmac
 ```
 
-externalAccountBinding 引用的 Secret 值必须包含 base64url 编码的 HMAC 密钥；Kubernetes Secret 数据编码是单独一层。保留已编码的 provider 值，不要重复编码。请参阅 [ACME EAB 配置](https://cert-manager.io/docs/configuration/acme/)。
+externalAccountBinding 引用的 Secret 值必须包含经过 base64url 编码的 HMAC 密钥；Kubernetes Secret 数据编码是另一个独立的编码层。若提供方的值已经编码，请保留原值，不要再次编码。请参阅 [ACME EAB 配置](https://cert-manager.io/docs/configuration/acme/)。
 
-Endpoint ID 和 EAB keyID 是占位符。域必须在 endpoint 上预验证。ACME client 生成/持有私钥并管理续订。ACM inventory 中出现 ARN 并不使该证书可直接与托管的 ALB/CloudFront/API Gateway 集成使用。ExportCertificate、RenewCertificate 和 RevokeCertificate 不适用于此签发路径；ACME client 拥有其生命周期。请区分 AWS 集成服务的 RequestCertificate。
+Endpoint ID 和 EAB keyID 都是占位符。域名必须已在端点完成预验证。ACME 客户端会生成/持有私钥并管理续期。ACM 资源清单中出现 ARN 并不意味着此证书可以直接用于托管 ALB/CloudFront/API Gateway 集成。ExportCertificate、RenewCertificate 和 RevokeCertificate 不适用于此签发路径；其生命周期由 ACME 客户端管理。请区分面向 AWS 集成服务的 RequestCertificate。
 
 <span id="istio-with-istio-csr"></span>
 <span id="installing-istio-csr"></span>
 <span id="configuring-istio-to-use-istio-csr"></span>
 <span id="linkerd-trust-anchor-management"></span>
 
-## Service Mesh 集成
+## 服务网格集成
 
 ![istio-agent、istio-csr、SDS 和对等 mTLS](../.gitbook/assets/en-security-10-cert-manager-3.png)
 
@@ -432,18 +432,18 @@ Endpoint ID 和 EAB keyID 是占位符。域必须在 endpoint 上预验证。AC
 
 ### Istio 和 istio-csr
 
-在 sidecar 流程中，istio-agent 创建 CSR，istio-csr 提交 CertificateRequest。agent 通过 SDS 将密钥/证书材料传递给 Envoy；workload proxy 建立 mTLS。同一 Pod 内的应用程序 hop 不会自动使用 mTLS。
+在 sidecar 流程中，istio-agent 会创建 CSR，istio-csr 会提交 CertificateRequest。Agent 通过 SDS 将密钥/证书材料交付给 Envoy；工作负载代理会建立 mTLS。同一 Pod 内的应用流量不会自动启用 mTLS。
 
-[istio-csr values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/istio-csr-values.yaml)为 rootCAFile 配置真实的 ConfigMap volume/mount。先在 cert-manager 中创建应用程序信任 bundle，并等待 issuer 就绪。仅文件路径或 meshConfig 中的空 PEM 均不足够。使用当前的 Istio Helm/istioctl external-CA 设置；不要将 istio-csr 路径与 Kubernetes CSR RA 模式混用。单独评估 Ambient 支持。
+[istio-csr values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/istio-csr-values.yaml)会为 rootCAFile 配置实际的 ConfigMap 卷/挂载。请先在 cert-manager 中创建应用信任 bundle，并等待签发者就绪。仅有文件路径或 meshConfig 中的空 PEM 并不足够。请使用当前的 Istio Helm/istioctl 外部 CA 设置；不要将 istio-csr 路径与 Kubernetes CSR RA 模式混用。Ambient 支持情况应单独评估。
 
 ```bash
 helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
-  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
+  --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
-### Linkerd 和 trust-manager
+### Linkerd 和 trust-manager {#linkerd-and-trust-manager}
 
-[Linkerd identity 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml)准备 issuer Secret 和 root-bundle ConfigMap。固定版本的 control-plane chart 2026.9.1 引用 linkerd-identity-issuer 和 linkerd-identity-trust-roots。
+[Linkerd identity 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml)会准备签发者 Secret 和根证书 bundle ConfigMap。固定版本的控制平面 chart 2026.9.1 引用了 linkerd-identity-issuer 和 linkerd-identity-trust-roots。
 
 ```yaml
 identity:
@@ -452,7 +452,7 @@ identity:
     scheme: kubernetes.io/tls
 ```
 
-这会将 control plane 连接到由外部续订的 issuer Secret，而不是在安装期间只复制一次密钥。根证书轮换需要旧/新根证书重叠、workload 续订和信任重载。示例实验室根证书为手动管理，且已禁用自动续订。
+这样控制平面会连接到由外部续期的签发者 Secret，而不是在安装时只复制一次密钥。根证书轮换需要新旧根证书重叠、工作负载续期以及信任重新加载。示例中的实验室根证书由人工管理，并已禁用自动续期。
 
 <span id="installing-trust-manager"></span>
 <span id="bundle-resource"></span>
@@ -460,7 +460,7 @@ identity:
 
 ## trust-manager
 
-默认 trust-manager 0.25.0 chart 渲染 trust.cert-manager.io/v1alpha1 Bundle。仓库中的额外 CRD 本身不会更改默认安装的 API。源 Secret/ConfigMap 从已配置的 trust namespace 读取。
+默认的 trust-manager 0.25.0 chart 会渲染 trust.cert-manager.io/v1alpha1 Bundle。仓库中的额外 CRD 本身不会改变默认安装的 API。源 Secret/ConfigMap 会从配置的 trust 命名空间读取。
 
 ```yaml
 apiVersion: trust.cert-manager.io/v1alpha1
@@ -480,9 +480,9 @@ spec:
         trust-bundle: enabled
 ```
 
-内联 PEM 字段是 inLine，而不是 inlineString。最小化公共/私有信任根，并明确选择目标 namespace。Secret target 需要单独启用/RBAC；该示例使用 ConfigMap。信任 bundle 分发信任锚，而非私钥。
+内联 PEM 字段为 inLine，而非 inlineString。尽量减少公有/私有信任根，并明确选择目标命名空间。Secret 目标需要单独启用/RBAC；此示例使用 ConfigMap。信任 bundle 分发的是信任锚，而非私钥。
 
-[consumer Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/trust-consumer.yaml)挂载一个目录。ConfigMap 变更不会通过 subPath 文件挂载传播。即使目录投影也不会重载进程缓存的 TLS context；测试应用程序是否实际使用 SSL_CERT_FILE 或其配置的 trust store。
+[使用方 Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/trust-consumer.yaml)会挂载一个目录。通过 subPath 文件挂载时，ConfigMap 更改不会传播。即使挂载的是目录投影，也不会自动重新加载进程缓存的 TLS 上下文；请测试应用是否实际使用 SSL_CERT_FILE 或其配置的信任存储。
 
 <span id="prometheus-metrics"></span>
 <span id="key-metrics"></span>
@@ -491,9 +491,9 @@ spec:
 <span id="common-errors-and-solutions"></span>
 <span id="cmctl-cli-tool"></span>
 
-## 监控和故障排除
+## 监控和故障排查
 
-检查已安装 chart 的 ServiceMonitor 中的 selector 和 port/targetPort 值。1.21.2 配置面向 controller/cainjector/webhook 的 http-metrics。不要杜撰 tcp-prometheus-servicemonitor port 名称。
+检查已安装 chart 的 ServiceMonitor 中的选择器和 port/targetPort 值。1.21.2 配置会针对 controller/cainjector/webhook 选择 http-metrics。不要凭空编造 tcp-prometheus-servicemonitor 端口名称。
 
 ```yaml
 groups:
@@ -521,7 +521,7 @@ groups:
           severity: critical
 ```
 
-就绪指标包含 True/False/Unknown 序列；未过滤的 ==0 可能会对健康证书触发。这些规则通过了 5 个案例/20 个断言，覆盖健康、NotReady、警告到期、严重到期和已过期的证书。抓取/指标缺失需要单独的告警。
+就绪指标包含 True/False/Unknown 序列；未筛选的 ==0 可能会对健康证书触发告警。这些规则通过了 5 个案例/20 项断言，涵盖健康、NotReady、即将到期警告、严重到期和已过期证书。抓取/指标缺失需要单独设置告警。
 
 ```bash
 kubectl get certificates,certificaterequests -A
@@ -532,7 +532,7 @@ cmctl status certificate app-tls -n demo-app
 cmctl renew app-tls -n demo-app
 ```
 
-选择递归 DNS resolver 不是增加传播等待时间。检查 split-horizon DNS、CAA、TXT 授权、CNAME、HTTP 路径和 Challenge 原因。调整 chart timeoutSeconds（1–30 秒）之前，先调查 webhook 连通性/身份验证/路由；不存在可盲目套用的通用 webhook-timeout 标志。
+选择递归 DNS 解析器并不等于延长传播等待时间。请检查分视 DNS、CAA、TXT 授权、CNAME、HTTP 路径以及 Challenge 原因。调整 chart 的 timeoutSeconds（1–30 秒）前，应先调查 webhook 连通性/身份验证/路由问题；没有可盲目套用的通用 webhook-timeout 标志。
 
 <span id="renewal-buffer-configuration"></span>
 <span id="backup-ca-strategy"></span>
@@ -542,12 +542,12 @@ cmctl renew app-tls -n demo-app
 
 ## 最佳实践
 
-- [namespace Role](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/certificate-requester-rbac.yaml)管理 Certificates，而不向开发人员授予 cluster 范围的 Secret 读取权限。SAN/issuerRef/secretName 限制需要独立的准入/批准策略。
-- 将 CertificateRequest 批准与 CA 凭据访问分离。检查默认 approval-controller 行为，并在需要时配置 approver-policy 等签发策略。
-- CA 密钥备份需要加密、访问控制和恢复测试；不要将明文 Secret YAML 转储到普通目录中。Base64 不是加密。
-- 私有 CA 不是公共 CA 的自动后备方案：请验证客户端信任、名称、用途、密钥访问和恢复时间。
-- secretTemplate annotations/labels 是元数据；它们本身不会激活 external-secret 同步。
-- 分别测试续订、CA 轮换、使用方重载和吊销。Schema/Helm 成功并不能证明签发成功。
+- [命名空间 Role](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/certificate-requester-rbac.yaml)可管理 Certificates，但不会授予开发人员集群范围的 Secret 读取权限。SAN/issuerRef/secretName 限制需要单独的准入/审批策略。
+- 将 CertificateRequest 审批与 CA 凭证访问分离。检查默认审批控制器行为，并在需要时配置 approver-policy 等签发策略。
+- CA 密钥备份需要加密、访问控制和恢复测试；不要将明文 Secret YAML 转储到普通目录中。Base64 不等于加密。
+- 私有 CA 不能自动作为公有 CA 的备用方案：请验证客户端信任、名称、用途、密钥访问权限和恢复时间。
+- secretTemplate 注解/标签只是元数据；它们本身不会激活外部 Secret 同步。
+- 分别测试续期、CA 轮换、使用方重新加载和吊销。Schema/Helm 成功并不能证明签发成功。
 
 <span id="table-of-contents"></span>
 <span id="key-concepts-summary"></span>
@@ -557,23 +557,23 @@ cmctl renew app-tls -n demo-app
 
 ## 总结和参考资料
 
-本地检查包括固定版本的 Helm/CRD schema、controller-config 解码、6 个续订案例、真实 CSR 生成/签名检查、5 个 Prometheus 案例/20 个断言、24 个图表浏览器案例，以及临时本地 Vault 中十六个合成签发/CSR 签名案例。未执行外部 CA/ACME 签发、AWS 资源创建、已部署 Vault 登录、mesh 安装或运行时 mTLS。
+本地检查包括固定版本的 Helm/CRD schema、控制器配置解码、6 个续期案例、真实 CSR 生成/签名检查、5 个 Prometheus 案例/20 项断言、24 个图表浏览器案例，以及临时本地 Vault 中的十六种合成签发/CSR 签名案例。未执行外部 CA/ACME 签发、AWS 资源创建、已部署 Vault 登录、网格安装或运行时 mTLS。
 
-- [cert-manager 发行版本](https://cert-manager.io/docs/releases/)
-- [cert-manager 1.21.2 发行版本](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)
+- [cert-manager 发布版本](https://cert-manager.io/docs/releases/)
+- [cert-manager 1.21.2 发布版本](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)
 - [CNCF 项目历史](https://www.cncf.io/projects/cert-manager/)
-- [证书续订和轮换](https://cert-manager.io/docs/usage/certificate/)
-- [CA issuer 限制](https://cert-manager.io/docs/configuration/ca/)
-- [Vault issuer](https://cert-manager.io/docs/configuration/vault/)
-- [Gateway API issuer 集成](https://cert-manager.io/docs/usage/gateway/)
+- [证书续期和轮换](https://cert-manager.io/docs/usage/certificate/)
+- [CA 签发者的限制](https://cert-manager.io/docs/configuration/ca/)
+- [Vault 签发者](https://cert-manager.io/docs/configuration/vault/)
+- [Gateway API 签发者集成](https://cert-manager.io/docs/usage/gateway/)
 - [trust-manager](https://cert-manager.io/docs/trust/trust-manager/)
 - [istio-csr](https://cert-manager.io/docs/usage/istio-csr/)
 - [Linkerd 自动证书轮换](https://linkerd.io/2-edge/tasks/automatically-rotating-control-plane-tls-credentials/)
 - [ACM Kubernetes 导出](https://docs.aws.amazon.com/acm/latest/userguide/exportable-certificates-kubernetes.html)
 - [ACM ACME](https://docs.aws.amazon.com/acm/latest/userguide/acm-acme.html)
-- [ACM ACME 发布](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/)
-- [AWS Private CA issuer](https://github.com/cert-manager/aws-privateca-issuer/tree/v1.9.2)
+- [ACM ACME 发布公告](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/)
+- [AWS Private CA 签发者](https://github.com/cert-manager/aws-privateca-issuer/tree/v1.9.2)
 - [Let’s Encrypt 速率限制](https://letsencrypt.org/docs/rate-limits/)
-- [Staging 环境](https://letsencrypt.org/docs/staging-environment/)
-- [到期电子邮件已停止](https://letsencrypt.org/2025/01/22/ending-expiration-emails/)
+- [暂存环境](https://letsencrypt.org/docs/staging-environment/)
+- [停止发送到期邮件](https://letsencrypt.org/2025/01/22/ending-expiration-emails/)
 - [Ingress NGINX 退役](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

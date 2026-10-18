@@ -275,7 +275,7 @@ In the example, both constraints must be satisfied for the candidate placement. 
 2. Find the eligible global minimum; it is zero if fewer domains exist than `minDomains`.
 3. Include the incoming Pod in its candidate domain if it matches the selector, then compare that candidate count with the minimum.
 
-For counts **2,2,1** and `maxSkew: 1`, another matching Pod can enter the third domain (2−1=1), but not either of the first two (3−1=2). This checks candidate placement, not a promise that every existing domain pair is always balanced.
+For counts **2,2,1** and `maxSkew: 1`, another matching Pod can enter the third domain (2−1=1), but not either of the first two (3−1=2). This checks candidate placement; it is not a promise that every existing domain pair is always balanced.
 
 **Common Topology Keys:**
 1. **kubernetes.io/hostname**: Node-level spread
@@ -349,7 +349,7 @@ spec:
 * `Equal` (the default operator) compares key/value. `Exists` must omit the value.
 * A specified effect must match; an empty effect matches all effects for that key. An empty key requires `Exists` and matches all keys, so use it deliberately.
 * `tolerationSeconds` applies only to `NoExecute`. Omitting it tolerates that matching taint indefinitely; specifying it bounds the tolerated period.
-* This example uses the default `Equal`/`Exists` behavior. Kubernetes1.35's optional comparison-operator feature is alpha and disabled here.
+* This example uses the default `Equal`/`Exists` behavior. Kubernetes 1.35's optional comparison-operator feature is alpha and disabled here.
 
 ```yaml
 tolerations:
@@ -408,7 +408,7 @@ func ToleratesHardTaints(pod *v1.Pod, node *v1.Node) bool {
 - D. Restrict communication between pods: This is the role of NetworkPolicy.
 </details>
 
-### 5. Which of the following is NOT a main characteristic of Scheduler Extender in Kubernetes?
+### 5. Which of the following is NOT a main characteristic of a Scheduler Extender in Kubernetes?
 
 A. Communicates with the scheduler through HTTP webhooks
 B. Provides filtering and prioritization capabilities
@@ -421,7 +421,7 @@ D. Runs as an external process
 **Answer: C. Directly integrated with the scheduler codebase**
 
 **Explanation:**
-"Directly integrated with the scheduler codebase" is NOT a main characteristic of Scheduler Extender in Kubernetes. Scheduler extenders are not directly integrated with the scheduler codebase; they communicate through HTTP webhooks and run as external processes. This is the main difference from scheduling framework plugins.
+"Directly integrated with the scheduler codebase" is NOT a main characteristic of a Scheduler Extender in Kubernetes. Scheduler extenders are not directly integrated with the scheduler codebase; they communicate through HTTP webhooks and run as external processes. This is the main difference from scheduling framework plugins.
 
 **Main Characteristics of Scheduler Extender:**
 1. **HTTP webhooks**: The scheduler communicates with extenders through HTTP requests.
@@ -1041,7 +1041,7 @@ func NewPool(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, err
 ```
 
 **Enable Both Implemented Stages and Keep Default Resource Checks:**
-The registration command in question7 includes this plugin.
+The registration command in question 7 includes this plugin.
 
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
@@ -1160,7 +1160,7 @@ spec:
 ```
 
 **Node Controller and Eviction Timing:**
-For the pinned upstream 1.35.8 baseline, `--node-monitor-period` defaults to 5s and `--node-monitor-grace-period` to**50s**, not 40s. The old `--pod-eviction-timeout` flag is not the current mechanism for taint-based eviction; matching Pod tolerations and the taint-eviction controller govern it. Detection, taint publication, controller rate limits and deletion can add delay.
+For the pinned upstream 1.35.8 baseline, `--node-monitor-period` defaults to 5s and `--node-monitor-grace-period` to **50s**, not 40s. The old `--pod-eviction-timeout` flag is not the current mechanism for taint-based eviction; matching Pod tolerations and the taint-eviction controller govern it. Detection, taint publication, controller rate limits and deletion can add delay.
 
 Since Kubernetes 1.29, taint-based eviction runs in the separate `taint-eviction-controller`, enabled by default but independently configurable on self-managed control planes. These values are not EKS configuration instructions or a failover-time guarantee. Before force-removing a stateful Pod on an unreachable node, establish that the old writer is stopped/fenced to avoid concurrent writers.
 

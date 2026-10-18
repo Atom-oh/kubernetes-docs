@@ -44,7 +44,7 @@ The PBT guide requires an RWX volume and `resumePolicy: FromVolume`. Changing an
 | `maxFailedTrialCount` | Failure threshold including failed and metrics-unavailable Trials |
 | `metricsCollectorSpec` / `earlyStopping` | Metric reporting and separate early-stopping configuration |
 
-Goal attainment, completed-count limit or exhausted suggestions can end successfully; failure thresholds or Suggestion errors can fail the Experiment. Completion status counts succeeded, failed, killed, early-stopped and metrics-unavailable Trials. Resume policy and spec changes also affect lifecycle, so do not treat maxTrialCount as an immutable lifetime creation or spending limit.
+Goal attainment, a completed-count limit or exhausted suggestions can end the Experiment successfully; failure thresholds or Suggestion errors can fail the Experiment. Completion status counts succeeded, failed, killed, early-stopped and metrics-unavailable Trials. Resume policy and spec changes also affect lifecycle, so do not treat maxTrialCount as an immutable lifetime creation or spending limit.
 
 `Succeeded` is a control-loop outcome, not a model-quality certification. `status.currentOptimalTrial` describes the best collected observation; missing metrics can leave no usable best model.
 
@@ -74,7 +74,7 @@ The Experiment controller requests candidates through Suggestion resources and c
 | `Custom` | User-supplied collector implementation; arbitrary HTTP scraping is not a built-in default |
 | `Push` | Training code calls SDK `report_metrics()` to DB manager; a collector sidecar is not always required |
 
-Pull injection needs namespace label `katib.kubeflow.org/metrics-collector-injection: enabled`, a working webhook and correct target Pod/container selection. Distributed training needs an explicit reporting-rank policy. Validate metric names, numeric format, timestamps, connectivity and policies. A successful training job does not guarantee metrics were collected.
+Pull injection needs the namespace label `katib.kubeflow.org/metrics-collector-injection: enabled`, a working webhook and correct target Pod/container selection. Distributed training needs an explicit reporting-rank policy. Validate metric names, numeric format, timestamps, connectivity and policies. A successful training job does not guarantee metrics were collected.
 
 ## Capacity and Cost on EKS
 

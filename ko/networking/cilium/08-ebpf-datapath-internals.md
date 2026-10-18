@@ -18,7 +18,7 @@
 
 ## 1. 프로그램 구성과 attach 지점
 
-Cilium은 `bpf/` 아래의 소수 C 소스를 컴파일합니다. 소스마다 ELF 오브젝트 하나가 나오고, 각 오브젝트에는 **entry 프로그램**(ELF section `tc/entry`, `xdp/entry`, `cgroup/...`)과 여러 **tail 프로그램**(section `tc/tail`)이 있습니다. `bpftool prog show`의 프로그램 이름에는 `cil_` 접두사가 붙습니다.
+Cilium은 `bpf/` 아래의 소수의 C 소스를 컴파일합니다. 소스마다 ELF 오브젝트 하나가 나오고, 각 오브젝트에는 **entry 프로그램**(ELF section `tc/entry`, `xdp/entry`, `cgroup/...`)과 여러 **tail 프로그램**(section `tc/tail`)이 있습니다. `bpftool prog show`의 프로그램 이름에는 `cil_` 접두사가 붙습니다.
 
 ### 1.1 1.20.2의 entry 프로그램
 
@@ -58,13 +58,13 @@ Cilium은 `bpf/` 아래의 소수 C 소스를 컴파일합니다. 소스마다 E
 
 ### 1.2 tcx, legacy tc, netkit
 
-device별 프로그램은 loader(`pkg/datapath/loader/tc.go`)가 다음 순서로 attach 방식을 고릅니다.
+loader(`pkg/datapath/loader/tc.go`)는 device별 프로그램의 attach 방식을 다음 순서로 고릅니다.
 
 1. **tcx**(Helm `bpf.enableTCX: true`, 기본값): `link.AttachTCX`로 tail anchor에 붙이는 `bpf_link`. 링크는 `/sys/fs/bpf/cilium/endpoints/<id>/links/`(endpoint) 또는 `/sys/fs/bpf/cilium/devices/<dev>/links/`(device) 아래에 **pin**됩니다. 프로그램 갱신은 링크를 원자적으로 업데이트하므로 reload 중 프로그램이 비는 구간이 없습니다. 커널 6.6 이상이 필요합니다. tcx attach가 성공하면 남은 legacy filter는 제거됩니다.
 2. **Legacy tc**: 커널이 지원하지 않거나 `enableTCX: false`이면 `clsact` qdisc + `cls_bpf`(direct-action)를 쓰고, 남은 tcx 링크는 detach합니다.
 3. 둘 다 안 될 때만 치명적 오류: tc-bpf 또는 tcx(Linux 6.6 이상) 지원이 필요하다고 보고합니다.
 
-**netkit**(성숙도 **beta**): `bpf.datapathMode: veth | netkit | netkit-l2 | auto`. 기본값은 `veth`입니다. netkit에서는 Pod별 프로그램이 netkit **peer** device 안에 attach되고, 다른 device는 계속 tcx를 쓰며, netkit을 고르면 tcx가 자동으로 켜집니다. 소스가 강제하는 전제 조건(`canUseNetkit`): 커널 probe 통과(upstream 문서는 6.8 이상, 소스의 probe 오류 문구는 6.7), BPF host routing(`bpf.hostLegacyRouting` 사용 안 함), BPF masquerade, kube-proxy replacement, **`bpf.tproxy` 사용 안 함**(`bpf_sk_assign`은 tc ingress에서만 유효). `auto`는 1.20 신규로, probe 후 경고와 함께 veth로 fallback합니다. 이미 veth로 만든 Pod가 있으면 netkit/`auto`로의 전환은 거부되므로 새 노드 그룹으로 교체하세요.
+**netkit**(성숙도 **beta**): `bpf.datapathMode: veth | netkit | netkit-l2 | auto`. 기본값은 `veth`입니다. netkit에서는 Pod별 프로그램이 netkit **peer** device 안에 attach되고, 다른 device는 계속 tcx를 쓰며, netkit을 고르면 tcx가 자동으로 켜집니다. 소스가 강제하는 전제 조건(`canUseNetkit`): 커널 probe 통과(upstream 문서는 6.8 이상, 소스의 probe 오류 문구는 6.7), BPF host routing(`bpf.hostLegacyRouting` 사용 안 함), BPF masquerade, kube-proxy replacement, **`bpf.tproxy` 사용 안 함**(`bpf_sk_assign`은 tc ingress에서만 유효). `auto`는 1.20에서 새로 도입되었으며, probe 후 경고와 함께 veth로 fallback합니다. 이미 veth로 만든 Pod가 있으면 netkit/`auto`로의 전환은 거부되므로 새 노드 그룹으로 교체하세요.
 
 | 방식 | 커널 | Pin 오브젝트 | Reload 동작 | Cilium 성숙도 |
 |---|---|---|---|---|
@@ -175,7 +175,7 @@ policy 갱신은 `cilium_policy_v3_<id>`에 대한 map 연산입니다(`applyPol
 
 proxy 포트는 `--proxy-portrange-min/max`(10000-20000)에서 할당됩니다. CT entry에 `proxy_redirect`가 기록되어 응답이 proxy로 돌아갑니다. L7 이벤트는 BPF가 아니라 Envoy와 DNS proxy가 agent에 보고하는 access-log 레코드입니다.
 
-mutual authentication(`auth_type`)은 **1.20에서 deprecated**(ztunnel 사용)이고, **[1.21 pre-release]**에서는 `--bpf-auth-map-max`와 `cilium_auth_map`이 제거되며 entry의 auth 비트는 reserved가 됩니다.
+mutual authentication(`auth_type`)은 **1.20에서 deprecated**(ztunnel 사용)이고, **[1.21 pre-release]에서는** `--bpf-auth-map-max`와 `cilium_auth_map`이 제거되며 entry의 auth 비트는 reserved가 됩니다.
 
 ## 4. Map 카탈로그
 
@@ -201,7 +201,7 @@ mutual authentication(`auth_type`)은 **1.20에서 deprecated**(ztunnel 사용)�
 | `cilium_events` | PERF_EVENT_ARRAY | CPU -> perf fd | monitor와 Hubble의 원천(8절) |
 | `cilium_signals` | PERF_EVENT_ARRAY | datapath -> agent 신호 | 예: CT 가득 참 -> GC 트리거 |
 
-conntrack 주소는 패킷 기준과 출발지/목적지가 뒤바뀐 형태로 저장됩니다. `ct_entry`에는 lifetime, `rx/tx_closing`, `rev_nat_index`, `proxy_redirect`, `from_l7lb`, `from_tunnel`, `src_sec_id`, 관찰된 TCP 플래그가 들어 있습니다. 한 map에 egress, ingress, service scope entry가 함께 있고 `tuple.flags`로 구분합니다. Cluster Mesh는 겹치는 IP를 위해 cluster별 inner map(`cilium_per_cluster_ct_*`)을 추가합니다.
+conntrack 주소는 패킷 기준과 비교해 출발지/목적지가 뒤바뀐 형태로 저장됩니다. `ct_entry`에는 lifetime, `rx/tx_closing`, `rev_nat_index`, `proxy_redirect`, `from_l7lb`, `from_tunnel`, `src_sec_id`, 관찰된 TCP 플래그가 들어 있습니다. 한 map에 egress, ingress, service scope entry가 함께 있고 `tuple.flags`로 구분합니다. Cluster Mesh는 겹치는 IP를 위해 cluster별 inner map(`cilium_per_cluster_ct_*`)을 추가합니다.
 
 timeout(agent 플래그, 1.20.2): TCP established 2h13m20s, SYN 1m, FIN 10s, non-TCP 1m, service TCP 2h13m20s, service grace 1m.
 
@@ -323,7 +323,7 @@ EKS에서는 tcx나 netkit에 의존하는 설정을 켜기 전에 실제 노드
 1. `cilium_lb4_services_v2`를 `{10.100.0.20, 80, TCP, slot 0, scope 0}`으로 조회합니다. entry가 없으면 sockaddr를 건드리지 않습니다. 여기서는 `count=2`.
 2. slot을 고릅니다(TCP는 random, UDP는 socket cookie). 그 slot의 service key로 `backend_id`를 얻고 `cilium_lb4_backends_v3[backend_id]`에서 10.0.2.77:80을 얻습니다. `sessionAffinity`가 있으면 `cilium_lb4_affinity`를 먼저 봅니다.
 3. `cilium_lb4_reverse_sk[{cookie, 10.0.2.77, 80}] = {10.100.0.20, 80, 42}`를 기록합니다.
-4. syscall의 `user_ip4/user_port`를 다시 씁니다. **wire에서는 DNAT이 일어나지 않습니다.** Pod 안 `tcpdump`에는 backend IP가 보이며 흔한 혼란 요인입니다. socket-LB tracing이 켜져 있으면 `trace_sock_notify` 이벤트가 발생합니다.
+4. syscall의 `user_ip4/user_port`를 다시 씁니다. **wire에서는 DNAT이 일어나지 않습니다.** Pod 안 `tcpdump`에는 backend IP가 보이는데, 이는 흔한 혼란 요인입니다. socket-LB tracing이 켜져 있으면 `trace_sock_notify` 이벤트가 발생합니다.
 
 ### Hop 1: SYN이 Pod를 떠남, 호스트 측 veth의 `cil_from_container`(tcx ingress)
 
@@ -401,7 +401,7 @@ gRPC: hubble observe / Relay / UI
 
 - 이벤트 map은 1.20과 1.21-pre.3에서 BPF ring buffer가 아니라 **perf event array**입니다.
 - datapath의 양 조절: `bpf.monitorAggregation`(Helm 기본 `medium`, agent 플래그 기본 `None`). `medium` 이상에서는 노드 내부 수신 trace가 억제되고, established flow는 `bpf.monitorInterval`(5s)이 지나거나 `bpf.monitorFlags`의 플래그가 보일 때만 보고됩니다. 종류별 토글: `bpf.events.drop.enabled`, `bpf.events.policyVerdict.enabled`, `bpf.events.trace.enabled`(모두 기본 true), 실험적 rate limit `bpf.events.default.rateLimit` / `burstLimit`(둘 다 설정하거나 둘 다 0).
-- `hubble observe`의 flow는 메모리 ring에 있습니다(`hubble.eventBufferCapacity`, 2^n - 1이어야 하며 기본 4095, 최대 65535). best-effort이므로 perf buffer overrun과 observer queue overflow 모두 이벤트를 잃고, `source` 레이블(`perf_event_ring_buffer`, `observer_events_queue`)로 구분해 집계됩니다.
+- `hubble observe`의 flow는 메모리 ring에 있습니다(`hubble.eventBufferCapacity`, 2^n - 1이어야 하며 기본 4095, 최대 65535). best-effort이므로 perf buffer overrun과 observer queue overflow 모두에서 이벤트가 손실되고, `source` 레이블(`perf_event_ring_buffer`, `observer_events_queue`)로 구분해 집계됩니다.
 - L7 이벤트는 BPF에서 나오지 않고 proxy가 보내는 agent 이벤트로 들어옵니다.
 
 ## 9. 점검 도구
@@ -450,7 +450,7 @@ Datapath Plugins는 Cilium datapath를 fork하지 않고도 외부 구성요소�
 
 - Helm `datapathPlugins.enabled=true`로 켭니다(기본 false, agent `--enable-datapath-plugins`). state 디렉터리는 `datapathPlugins.stateDir`(기본 `/var/run/cilium/plugins`).
 - `CiliumDatapathPlugin` CRD(`cilium.io/v2alpha1`)로 등록합니다: `spec.attachmentPolicy: Always | BestEffort`, `spec.version`.
-- agent는 `<stateDir>/<name>/plugin.sock`의 gRPC로 각 plugin과 통신하며 `PrepareCollection`, `InstrumentCollection` 호출을 사용합니다. Cilium이 dispatcher를 생성하여 `BPF_PROG_TYPE_EXT`(freplace) 유형의 plugin 프로그램이 tc, XDP, cgroup sock hook의 Cilium entry 프로그램 앞 또는 뒤에서 실행됩니다.
+- agent는 `<stateDir>/<name>/plugin.sock`의 gRPC로 각 plugin과 통신하며 `PrepareCollection`, `InstrumentCollection` 호출을 사용합니다. Cilium이 dispatcher를 생성하므로 `BPF_PROG_TYPE_EXT`(freplace) 유형의 plugin 프로그램이 tc, XDP, cgroup sock hook의 Cilium entry 프로그램 앞 또는 뒤에서 실행됩니다.
 - plugin Pod에는 `SYS_ADMIN`이 필요합니다. plugin CR을 생성, 수정, 삭제하면 datapath 전체가 재초기화됩니다. 버전 간 호환성은 보장되지 않습니다. 1.18과 1.19에는 없습니다.
 
 실험이나 벤더 통합용으로 보고, 아직 운영 환경의 일반 확장 지점으로 쓰지 마세요.
@@ -536,7 +536,7 @@ pre-release 트리의 1.21 업그레이드 노트는 아직 1.20 내용 그대�
 
 ## 검증 한계 및 출처
 
-실습은 이번 검토에서 실제 클러스터에 실행하지 않았고, 명령과 플래그를 upstream 소스와 문서에 대조해 확인했습니다. trace의 ID, IP, identity는 예시입니다. 소스 사실은 Cilium v1.20.2 트리(예: `bpf/bpf_lxc.c`, `bpf/lib/tailcall.h`, `bpf/lib/policy.h`, `bpf/lib/eps.h`, `pkg/datapath/loader/tc.go`, `pkg/bpf/collection.go`, `Documentation/cmdref/cilium-agent.md`)에서 읽었으며, 줄 번호는 릴리스마다 움직이므로 사용하는 태그에서 다시 확인하세요. 확인하지 못한 항목: agent 이미지의 `bpftool` 포함 여부, `bpf_sock_destroy` kfunc이 도입된 정확한 커널 버전, **[1.21 pre-release]** stats report는 소스(`cilium-dbg/cmd/bpf_stats_report.go`)에서 읽었을 뿐 실행하지 않았습니다.
+실습은 이번 검토에서 실제 클러스터에서 실행하지 않았고, 명령과 플래그를 upstream 소스와 문서에 대조해 확인했습니다. trace의 ID, IP, identity는 예시입니다. 소스 사실은 Cilium v1.20.2 트리(예: `bpf/bpf_lxc.c`, `bpf/lib/tailcall.h`, `bpf/lib/policy.h`, `bpf/lib/eps.h`, `pkg/datapath/loader/tc.go`, `pkg/bpf/collection.go`, `Documentation/cmdref/cilium-agent.md`)에서 읽었으며, 줄 번호는 릴리스마다 움직이므로 사용하는 태그에서 다시 확인하세요. 확인하지 못한 항목: agent 이미지의 `bpftool` 포함 여부, `bpf_sock_destroy` kfunc이 도입된 정확한 커널 버전, **[1.21 pre-release]** stats report는 소스(`cilium-dbg/cmd/bpf_stats_report.go`)에서 읽었을 뿐 실행하지 않았습니다.
 
 - Cilium v1.20.2 시스템 요구사항: https://github.com/cilium/cilium/blob/v1.20.2/Documentation/operations/system_requirements.rst
 - Map 레퍼런스: https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/ebpf/maps.rst (문서에는 `cilium_ct_{4,6}_global`로 적혀 있으나 실제 이름은 `cilium_ct4_global`, `cilium_ct6_global`)

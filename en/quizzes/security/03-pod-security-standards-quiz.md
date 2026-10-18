@@ -93,7 +93,7 @@ Label format: `pod-security.kubernetes.io/<MODE>: <LEVEL>`
 **Answer: A) hostNetwork: true**
 
 **Explanation:**
-Baseline level prevents known privilege escalation. The following are prohibited:
+The Baseline level prevents known privilege escalation. The following are prohibited:
 - hostNetwork, hostPID, hostIPC
 - privileged containers
 - Explicit capability additions outside the Baseline allowlist, including NET_RAW

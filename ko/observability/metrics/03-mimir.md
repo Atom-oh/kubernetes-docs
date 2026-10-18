@@ -287,7 +287,7 @@ mimir:
 
 EKS cluster의 OIDC provider와 IRSA role을 준비하고, trust policy의 `sub`를 `system:serviceaccount:monitoring:mimir-storage`, `aud`를 `sts.amazonaws.com`으로 제한합니다. Chart의 `serviceAccount.create: false`, `name: mimir-storage`가 준비한 계정과 일치해야 합니다. Role annotation과 projected token 전달을 확인하세요. Kubernetes RBAC가 S3 권한을 부여하는 것은 아닙니다.
 
-예시 버킷 세 개의 범위를 제한한 S3 정책 형식은 다음과 같습니다. 버킷 이름을 바꾸고 필요한 KMS·key policy 권한은 따로 검토하세요.
+범위를 예시 버킷 세 개로 제한한 S3 정책 형식은 다음과 같습니다. 버킷 이름을 바꾸고 필요한 KMS·key policy 권한은 따로 검토하세요.
 
 ```json
 {
@@ -340,7 +340,7 @@ Metadata·index cache 적중만으로 완전한 쿼리 답이 만들어지지는
 
 수집 samples/series/cardinality, ingester memory/WAL/disk, Kafka backlog, frontend queue, querier memory/CPU, store-gateway cache miss와 compactor 진행을 관측하세요. Chart의 small/large 계획은 출발점이지 처리량 보장이 아닙니다. Replica·동시성을 늘리기 전에 query 형태와 tenant limits를 확인해야 합니다.
 
-내구성과 가용성은 Kafka 쓰기 복제, ingester partition/zone coverage, store-gateway 배치, 실제 schedulable capacity, 객체 스토리지, frontend/scheduler replica와 rollout 동작을 각각 검토해야 합니다. Cache 복제는 데이터 내구성이 아닙니다. Rate/cardinality limit은 데이터를 거절할 수 있으며 거절된 샘플을 자동 보관하거나 집계하지 않습니다.
+내구성과 가용성 측면에서 Kafka 쓰기 복제, ingester partition/zone coverage, store-gateway 배치, 실제 schedulable capacity, 객체 스토리지, frontend/scheduler replica와 rollout 동작을 각각 검토해야 합니다. Cache 복제는 데이터 내구성이 아닙니다. Rate/cardinality limit은 데이터를 거절할 수 있으며 거절된 샘플을 자동 보관하거나 집계하지 않습니다.
 
 수집량을 줄일 때는 데이터에 맞는 collector relabeling이나 recording rule을 검토하세요. Mimir는 `limits.drop_labels`와 해당 테넌트별 runtime override도 지원합니다. 이 설정은 수집 label을 바꾸며 임의의 cardinality를 안전하게 줄여주는 것은 아닙니다. Identity label을 제거하면 다른 시계열이 합쳐질 수 있으므로 충돌과 query/alert 의미를 먼저 테스트해야 합니다.
 
@@ -389,7 +389,7 @@ curl --fail --silent --show-error http://127.0.0.1:18080/ready
 curl --fail --silent --show-error http://127.0.0.1:18080/api/v1/status/buildinfo
 ```
 
-`buildinfo`는 느린 쿼리가 아닌 build metadata를 반환합니다. Timeout에는 queue·query 통계/로그와 범위를 제한한 query sample을 조사하세요. Ingester OOM은 실제 series/cardinality와 buffer를 확인한 뒤 instance limit을 조정하고, compactor 지연은 객체 권한·디스크·실패·backlog를 먼저 확인하세요. `/config`, `/runtime_config`, tenant 통계, ring·metrics endpoint를 보호하고 공개 진단 경로로 노출하지 마세요. Ring endpoint는 컴포넌트마다 다르며 Kafka에서는 partition ring도 중요합니다.
+`buildinfo`는 느린 쿼리가 아닌 build metadata를 반환합니다. Timeout이 발생하면 queue·query 통계/로그와 범위를 제한한 query sample을 조사하세요. Ingester OOM은 실제 series/cardinality와 buffer를 확인한 뒤 instance limit을 조정하고, compactor 지연은 객체 권한·디스크·실패·backlog를 먼저 확인하세요. `/config`, `/runtime_config`, tenant 통계, ring·metrics endpoint를 보호하고 공개 진단 경로로 노출하지 마세요. Ring endpoint는 컴포넌트마다 다르며 Kafka에서는 partition ring도 중요합니다.
 
 ## 검증과 참고 자료
 

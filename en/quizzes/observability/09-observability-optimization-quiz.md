@@ -206,7 +206,7 @@ Default trace-complete sampling decides using spans received during its decision
 **Answer:** Exemplars
 
 **Explanation:**
-Exemplars is a feature that attaches additional context (typically traceID) to metric samples. When exemplars are added to histogram or counter metrics, you can click on a specific point in the metric graph in Grafana to navigate directly to the trace from that time. This facilitates correlation analysis between observability data, allowing you to analyze "why latency spiked at this point" in the trace.
+The exemplars feature attaches additional context (typically traceID) to metric samples. When exemplars are added to histogram or counter metrics, you can click on a specific point in the metric graph in Grafana to navigate directly to the trace from that time. This facilitates correlation analysis between observability data, allowing you to analyze "why latency spiked at this point" in the trace.
 
 </details>
 

@@ -222,7 +222,7 @@ volumes:
     secretName: istio-root-ca
 ```
 
-완전한 차트·Istio 설치 매니페스트는 [현재 istio-csr 설치 가이드](https://cert-manager.io/docs/usage/istio-csr/installation/)에서 호환성을 확인합니다. Istio 매니페스트는 istiod CA를 끄고(`ENABLE_CA_SERVER=false`), CA 주소를 `cert-manager-istio-csr.cert-manager.svc:443`으로 지정하며 발급된 istiod 서버 인증서와 고정 루트를 마운트합니다. 이 입력에는 `istioctl install -f`를 사용합니다. Ambient는 istio-csr에 신뢰할 ztunnel ServiceAccount도 설정해야 합니다. 기존 Istio 설치 후 istio-csr을 추가하는 방식은 해당 가이드에서 지원하지 않습니다.
+완전한 차트·Istio 설치 매니페스트의 호환성은 [현재 istio-csr 설치 가이드](https://cert-manager.io/docs/usage/istio-csr/installation/)에서 확인합니다. Istio 매니페스트는 istiod CA를 끄고(`ENABLE_CA_SERVER=false`), CA 주소를 `cert-manager-istio-csr.cert-manager.svc:443`으로 지정하며 발급된 istiod 서버 인증서와 고정 루트를 마운트합니다. 이 입력에는 `istioctl install -f`를 사용합니다. Ambient는 istio-csr에 신뢰할 ztunnel ServiceAccount도 설정해야 합니다. 기존 Istio 설치 후 istio-csr을 추가하는 방식은 해당 가이드에서 지원하지 않습니다.
 
 cert-manager `Certificate`는 일반적으로 `tls.crt`, `tls.key`, 선택적 `ca.crt`를 생성합니다. Secret 이름을 `cacerts`로 지정해도 Istio가 요구하는 `ca-cert.pem`, `ca-key.pem`, `root-cert.pem`, `cert-chain.pem`이 되지 않습니다. istio-csr 경로는 이 Secret 형식 불일치를 피합니다.
 
@@ -253,7 +253,7 @@ Leaf 갱신, 동일 루트 아래 중간 CA 갱신, 루트 교체는 서로 다�
 3. SDS 상태, 인증서 체인, 클러스터 간 통신, 남아 있는 이전 leaf를 확인합니다. 연결이 끊긴 워크로드와 장시간 연결도 고려합니다.
 4. 마이그레이션과 롤백 기간이 끝난 뒤에만 이전 루트를 제거합니다.
 
-선택한 CA 제공자의 지원되는 순환 절차를 따릅니다. `cacerts`를 한 번에 덮어쓰고 재시작한다고 무중단이 보장되지 않으며 갱신을 강제하려고 모든 네임스페이스를 재시작하지 않습니다.
+선택한 CA 제공자가 지원하는 순환 절차를 따릅니다. `cacerts`를 한 번에 덮어쓰고 재시작한다고 무중단이 보장되지 않으며 갱신을 강제하려고 모든 네임스페이스를 재시작하지 않습니다.
 
 ## PeerAuthentication 설정
 
@@ -444,7 +444,7 @@ aws cloudfront update-distribution --id "$DIST_ID" --if-match "$ETAG" \
 
 Origin request policy로 필요한 `CloudFront-Viewer-Cert-*` 헤더만 전달합니다: `Present`, `Sha256`, `Serial-Number`, `Issuer`, `Subject`, 선택적 `Validity`/`Pem`. PEM 헤더는 원본에만 제공되며 엣지 함수에서는 사용할 수 없습니다. 사용자별 응답은 캐시를 끄거나 신원을 고려한 캐시 키를 사용합니다. Origin request policy는 캐시 키를 바꾸지 않습니다.
 
-선택적으로 viewer-request CloudFront Function에서 **네이티브 mTLS 검증 후** 허용 목록을 적용할 수 있습니다. 지문은 인증서를 식별하지만 일련번호만으로는 발급자 범위 안에서만 고유합니다. 클라이언트 인증서 교체 시 허용 목록도 갱신합니다:
+선택적으로 viewer-request CloudFront Function에서 **네이티브 mTLS 검증 후** 허용 목록을 적용할 수 있습니다. 지문은 인증서를 식별하지만 일련번호는 발급자 범위 안에서만 고유합니다. 클라이언트 인증서 교체 시 허용 목록도 갱신합니다:
 
 ```javascript
 // Additional authorization after native CloudFront viewer mTLS verification.
@@ -955,7 +955,7 @@ mTLS 적용 비율, 워크로드 인증서 잔여 시간(초), mTLS 위 HTTP 5xx
 
 ### 인증서 만료 알림
 
-아래 예제는 자동 갱신되는 24시간 사이드카 leaf와 이 PrometheusRule을 선택하는 Prometheus Operator를 가정합니다. 실제 발급 TTL·갱신 일정에 맞게 임계치를 조정합니다. 스크레이프 실패·필수 시계열 누락도 별도로 알립니다. 인증서 메트릭이 없다고 정상은 아닙니다. Agent의 초 단위 gauge는 음수가 가능하지만 Envoy의 정수 일 단위 gauge는 24시간 leaf에 7일 경고를 적용하거나 음수로 만료를 판단하기에 부적합합니다.
+아래 예제는 자동 갱신되는 24시간 사이드카 leaf와 이 PrometheusRule을 선택하는 Prometheus Operator를 가정합니다. 실제 발급 TTL·갱신 일정에 맞게 임계치를 조정합니다. 스크레이프 실패·필수 시계열 누락도 별도로 알립니다. 인증서 메트릭이 없다고 정상인 것은 아닙니다. Agent의 초 단위 gauge는 음수가 가능하지만 Envoy의 정수 일 단위 gauge는 24시간 leaf에 7일 경고를 적용하거나 음수로 만료를 판단하기에 부적합합니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1

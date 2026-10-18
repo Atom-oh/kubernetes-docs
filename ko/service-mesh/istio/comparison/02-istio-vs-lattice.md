@@ -172,9 +172,9 @@ AWS_REGION=us-east-1
 aws vpc-lattice create-rule --region "$AWS_REGION" --cli-input-json file://rule.json
 ```
 
-작은 priority 숫자가 먼저 평가됩니다. pathMatch.match.prefix의 중첩 형식이 필요합니다. 이 rule은 `/api/v1/` 아래 GET을 선택하며 모든 Istio match의 동등한 구현이나 인증 정책은 아닙니다. Weight는 version을 배포·확장하지 않습니다. 같은 rule/target을 AWS controller와 CLI 예제가 경쟁해서 관리하지 않도록 하세요.
+priority 숫자가 작은 rule이 먼저 평가됩니다. pathMatch.match.prefix의 중첩 형식이 필요합니다. 이 rule은 `/api/v1/` 아래 GET을 선택하며 모든 Istio match의 동등한 구현이나 인증 정책은 아닙니다. Weight는 version을 배포·확장하지 않습니다. 같은 rule/target을 AWS controller와 CLI 예제가 경쟁해서 관리하지 않도록 하세요.
 
-Lattice는 round-robin target 선택을 문서화하며 target group 사이 weight와는 별개입니다. 이 API에는 기존 문서가 주장한 “least connections” 선택 항목이 없습니다.
+Lattice에 문서화된 round-robin target 선택은 target group 사이 weight와는 별개입니다. 이 API에는 기존 문서가 주장한 “least connections” 선택 항목이 없습니다.
 
 ### Mirroring과 Fault
 
@@ -548,7 +548,7 @@ Metric dimension 추가가 임의의 업무 metric 생성과 같지는 않습니
 
 ### VPC Lattice Metric
 
-문서화된 CloudWatch namespace는 대소문자까지 **AWS/VpcLattice**입니다. Service dimension은 Service·AvailabilityZone, target group은 TargetGroup·AvailabilityZone 등을 사용합니다. 실제로 emit된 metric/dimension 조합을 먼저 확인합니다.
+문서화된 CloudWatch namespace는 대소문자까지 **AWS/VpcLattice**입니다. Service dimension은 Service·AvailabilityZone, target group dimension은 TargetGroup·AvailabilityZone 등을 사용합니다. 실제로 emit된 metric/dimension 조합을 먼저 확인합니다.
 
 ```bash
 aws cloudwatch list-metrics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount
@@ -562,7 +562,7 @@ aws cloudwatch list-metrics --region "$AWS_REGION"   --namespace AWS/VpcLattice 
 | HTTPCode_VpcLattice_403_Count 등의 세부 코드 | Lattice가 생성한 응답; access-log 원인과 함께 사용 |
 | Target-group connection metric | Protocol별 connection/error/byte이며 앱 요청 metric과 구분 |
 
-Resource가 트래픽을 받은 이후 1분 단위로 발행합니다. 5분 query period는 집계 선택입니다. Target health는 list-targets와 health-check 정보로 확인하며 HealthyTargetCount, TargetResponseTime 같은 ALB metric 이름을 이 namespace에 가정하지 마세요.
+Resource가 트래픽을 받은 이후 metric을 1분 단위로 발행합니다. 5분 query period는 집계 선택입니다. Target health는 list-targets와 health-check 정보로 확인하며 HealthyTargetCount, TargetResponseTime 같은 ALB metric 이름이 이 namespace에 있다고 가정하지 마세요.
 
 최근 1시간 조회를 위해 UTC 시각을 한 번 생성합니다. 다음 Bash/Python 코드는 AWS를 호출하지 않습니다.
 
@@ -662,7 +662,7 @@ Ambient는 sidecar가 없는 workload를 앱 restart 없이 등록할 수 있지
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.html)
 
-Istio에서는 proxy-status/config와 실제 workload log가 유용합니다. Proxy image에 curl, tcpdump, shell이 있다고 가정하지 말고 필요한 권한의 지원되는 디버깅 방법을 사용하세요. 진단 archive를 보호하고 일시적인 debug 설정을 복구합니다. Backend replica 0은 Deployment/endpoint의 사실이지 Service.spec.replicas field가 아닙니다.
+Istio에서는 proxy-status/config와 실제 workload log가 유용합니다. Proxy image에 curl, tcpdump, shell이 있다고 가정하지 말고 필요한 권한을 갖추고 지원되는 디버깅 방법을 사용하세요. 진단 archive를 보호하고 일시적인 debug 설정을 복구합니다. Backend replica 0은 Deployment/endpoint의 사실이지 Service.spec.replicas field가 아닙니다.
 
 Lattice의 실제 resource는 다음 read operation으로 확인합니다.
 
@@ -682,7 +682,7 @@ list-services에는 service-network filter가 없습니다. Network 분석 도�
 
 ### 같은 비용 범위를 비교
 
-앱, 가용성 요구, network traffic, log/metric retention과 엔지니어링 범위를 양쪽에 동일하게 포함합니다. Lattice가 앱의 EC2/EKS/ECS/Lambda compute를 지불하거나 제거하지 않습니다. 관리형 networking 청구액만 전체 Istio 앱 fleet·인건비와 비교할 수는 없습니다.
+앱, 가용성 요구, network traffic, log/metric retention과 엔지니어링 범위를 양쪽에 동일하게 포함합니다. Lattice가 앱의 EC2/EKS/ECS/Lambda compute 비용을 지불하거나 compute를 제거하지 않습니다. 관리형 networking 청구액만 전체 Istio 앱 fleet·인건비와 비교할 수는 없습니다.
 
 기존 예제에는 서로 다른 문제가 있었습니다.
 
@@ -751,7 +751,7 @@ jq -n --arg host "$LATTICE_HOST" '{
 
 Workload의 정상 configuration owner가 검토·적용할 registry entry만 생성합니다. Lattice provisioning, egress-gateway 통과 강제, 서명이나 IAM 우회를 수행하지 않습니다. 앱 HTTPS는 sidecar에 불투명하므로 기존 불완전한 egress 예제처럼 HTTP VirtualService가 그 path를 읽을 수 없습니다. 이미 암호화한 앱 stream에 SIMPLE TLS를 한 겹 더 씌우지 마세요.
 
-Service-network endpoint는 on-premises나 다른 연결 network의 지원되는 진입 경로가 될 수 있습니다. Routing, DNS, security group과 해당 service authorization이 필요합니다. “AWS에서 운영됨”이 AWS 밖 client는 무조건 불가능하다는 뜻은 아닙니다. Global service network를 만들거나 Region/cloud 사이 앱 데이터를 복제하지도 않습니다.
+Service-network endpoint는 on-premises나 다른 연결 network의 지원되는 진입 경로가 될 수 있습니다. Routing, DNS, security group과 해당 service authorization이 필요합니다. “AWS에서 운영됨”이 AWS 밖 client의 접근은 무조건 불가능하다는 뜻은 아닙니다. Global service network를 만들거나 Region/cloud 사이 앱 데이터를 복제하지도 않습니다.
 
 Migration에는 API, identity, certificate trust, route, telemetry와 복구 ownership을 대응시켜야 합니다. Namespace label 변경만으로 Lattice IAM에서 mesh identity로 완전히 전환되지 않습니다. 세부 조건은 [VPC Lattice 가이드](../../../networking/02-vpc-lattice.md), [AWS 통합](../04-aws-integration.md), [multicluster 가이드](../advanced/02-multi-cluster.md)를 참고하세요.
 

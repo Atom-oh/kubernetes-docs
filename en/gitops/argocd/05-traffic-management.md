@@ -119,7 +119,7 @@ helm upgrade --install argo-rollouts argo/argo-rollouts \
   --values rollouts-values.yaml --wait --timeout 5m
 ```
 
-Enable ServiceMonitor only after its CRD and Prometheus selectors are configured. A shared Dashboard requires a separate authentication/authorization layer. The 1.10.0 CLI `dashboard` command binds all interfaces and uses your kubeconfig privileges; its printed localhost URL does not restrict access.
+Enable ServiceMonitor only after its CRD and Prometheus selectors are configured. A shared Dashboard requires a separate authentication/authorization layer. The 1.10.0 CLI `dashboard` command binds to all interfaces and uses your kubeconfig privileges; its printed localhost URL does not restrict access.
 
 ### Dashboard Access (Helm Installation)
 
@@ -383,7 +383,7 @@ kubectl argo rollouts promote myapp-canary -n myapp
 
 ### Canary Traffic Flow
 
-![Diagram showing client requests split at the load balancer: relative weight90 targets the stable Service with10Pods and weight10 targets the canary Service with1Pod at the example’s 10% step under the default traffic-routing capacity policy.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
+![Diagram showing client requests split at the load balancer: relative weight 90 targets the stable Service with 10 Pods and weight 10 targets the canary Service with 1 Pod at the example’s 10% step under the default traffic-routing capacity policy.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
@@ -1010,7 +1010,7 @@ From here, apply the same [Gateway API plugin](#gateway-api-plugin-httproute) co
 
 ### Verification Results on EKS
 
-The previous document reported these results with EKS 1.36, Rollouts 1.9.0, AWS Load Balancer Controller 3.2.1, Istio 1.30, KIC 3.5 and plugin0.16.0. Raw logs, request counts, measurement duration and executed manifests are not attached, so this static review could not reproduce the report. These are historical observations, not fresh 1.10.0/0.17.0 results or guarantees of instant, zero-downtime transitions.
+The previous document reported these results with EKS 1.36, Rollouts 1.9.0, AWS Load Balancer Controller 3.2.1, Istio 1.30, KIC 3.5 and plugin 0.16.0. Raw logs, request counts, measurement duration and executed manifests are not attached, so this static review could not reproduce the report. These are historical observations, not fresh 1.10.0/0.17.0 results or guarantees of instant, zero-downtime transitions.
 
 | Provider | What was checked | Result |
 |---|---|---|
@@ -1019,7 +1019,7 @@ The previous document reported these results with EKS 1.36, Rollouts 1.9.0, AWS 
 | AWS ALB | Listener rule forward weight transition, cross-checked against the live AWS state with `aws elbv2 describe-rules` | ✅ Confirmed (but requires the [`use-annotation` caveat](#aws-alb-ingress) above) |
 | Kong (Gateway API plugin) | `HTTPRoute.backendRefs[].weight` transition, and real traffic through Kong's data plane | ✅ Confirmed, though the `gatewayclass-unmanaged` annotation and exact `controllerName` are easy to get wrong (see above) |
 
-When Argo CD manages routing resources, review narrow diff exclusions for fields owned by Rollouts: the relevant ALB action annotation, Istio route weights, HTTPRoute backend weights and Service rollouts-pod-template-hash selector. Avoid ignoring entire specs/managers. Keeping values during sync also requires RespectIgnoreDifferences=true and its existing-resource limitation.
+When Argo CD manages routing resources, review narrow diff exclusions for fields owned by Rollouts: the relevant ALB action annotation, Istio route weights, HTTPRoute backend weights and Service rollouts-pod-template-hash selector. Avoid ignoring entire specs/managers. Keeping values during sync also requires RespectIgnoreDifferences=true and is subject to its existing-resource limitation.
 
 ## Rollback Strategies
 

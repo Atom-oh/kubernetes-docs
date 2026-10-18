@@ -11,7 +11,7 @@
 - [マルチクラスターのパターン](#multi-cluster-patterns)
 - [テンプレートパッチ](#template-patches)
 
-## ApplicationSet の概要
+## ApplicationSet の概要 {#applicationset-overview}
 
 ApplicationSet は、テンプレートから ArgoCD Application を生成する機能を追加する Kubernetes controller です。クラスター、環境、またはリポジトリをまたいで、類似した設定を持つ複数のアプリケーションを管理できます。
 
@@ -65,7 +65,7 @@ spec:
   - missingkey=error
 ```
 
-## Generator
+## Generator {#generators}
 
 Generator は、Application を作成するためにテンプレートへ代入されるパラメータを生成します。
 
@@ -690,7 +690,7 @@ data:
 
 ConfigMap はコードを実行しません。別途デプロイされた HTTP service が POST `/api/v1/getparams.execute` を処理し、`output.parameters` array を返す必要があります。例の domain は TLS 検証済みの endpoint に置き換えてください。key `token` と Label `app.kubernetes.io/part-of: argocd` を持つ Secret `appset-plugin-token` を `argocd` にプロビジョニングし、その値を Git に含めないでください。接続する前に、認証、入力検証、および文書化された response schema を実装してください。
 
-## Go テンプレート
+## Go テンプレート {#go-templating}
 
 Go テンプレートを使用するには `spec.goTemplate: true` を設定します。3.5.4 のデフォルト engine は引き続き fasttemplate です。このページの例では、`missingkey=error` を指定して Go テンプレートを明示的に有効化しています。各 string field は独立してレンダリングされます。control statement を YAML field にまたがらせることはできず、boolean/object/list には `templatePatch` が必要です。存在しない key への直接アクセスは `default` の実行前に失敗するため、任意 key には `dig` を使用してください。
 
@@ -762,7 +762,7 @@ spec:
         - CreateNamespace=true
 ```
 
-## 段階的同期
+## 段階的同期 {#progressive-sync}
 
 Progressive Syncs は 3.3 から Beta であり、3.5.4 でも明示的に有効化する必要があります。既存の `argocd-cmd-params-cm.data` に `applicationsetcontroller.enable.progressive.syncs: "true"` をマージしてから、ApplicationSet controller を再起動します。Helm の場合は、`configs.params` 配下の対応する key を管理します。
 
@@ -845,7 +845,7 @@ spec:
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
-## マルチクラスターのパターン
+## マルチクラスターのパターン {#multi-cluster-patterns}
 
 ### Hub-and-Spoke パターン
 
@@ -978,7 +978,7 @@ imageTag: v1.2.3
 
 ```
 
-## テンプレートパッチ
+## テンプレートパッチ {#template-patches}
 
 Generator の出力に基づいてテンプレート field をオーバーライドします。
 

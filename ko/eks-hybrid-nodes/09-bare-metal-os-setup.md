@@ -22,7 +22,7 @@
 | AL2023 | **지원되는 배포 경로 아님** | 온프레미스 가상화 guest | nodeadm/YAML; EC2 밖 AL2023 OS에는 AWS Support Plans 미적용 |
 | Bottlerocket VMware variant >=1.37.0 | **Hybrid bare metal 미지원** | VMware vSphere, **x86_64** | Bottlerocket settings/bootstrap; govc는 VMware VM 관리 |
 
-AWS는 명시된 Ubuntu/RHEL 계열과의 Hybrid 통합을 지원하며 OS vendor의 지원을 대신하지 않습니다. 구체적 버전, architecture, CNI/kernel 조건도 확인합니다. EC2 밖 AL2023은 VM guest 선택지이며 일반 raw-image 베어메탈 권장이 아닙니다. Bottlerocket VMware용 Kubernetes variant가 1.28부터 있다는 설명은 과거 variant 범위이며 오래된 EKS 버전 사용 권장이 아닙니다. SSM 설치·업그레이드는 오래된 SSM 서명 키 문제를 피하도록 nodeadm >=1.0.19가 필요합니다.
+AWS는 명시된 Ubuntu/RHEL 계열과의 Hybrid 통합을 지원하며 OS vendor의 지원을 대신하지 않습니다. 구체적 버전, architecture, CNI/kernel 조건도 확인합니다. EC2 밖 AL2023은 VM guest 선택지이며 일반 raw-image 베어메탈 권장이 아닙니다. Bottlerocket VMware용 Kubernetes variant가 1.28부터 있다는 설명은 과거 variant 범위이며 오래된 EKS 버전 사용 권장이 아닙니다. SSM 설치·업그레이드에는 오래된 SSM 서명 키 문제를 피하기 위해 nodeadm >=1.0.19가 필요합니다.
 
 ## 비용 비교 분석
 
@@ -40,11 +40,11 @@ AWS는 명시된 Ubuntu/RHEL 계열과의 Hybrid 통합을 지원하며 OS vendo
 
 [공식 요금](https://aws.amazon.com/eks/pricing/)은 **노드가 보고한 vCPU-hours**의 월별 구간 요금입니다. 처음 576,000은 $0.020, 다음 576,000은 $0.014, 다음 4,608,000은 $0.010, 다음 5,760,000은 $0.008, 11,520,000 초과분은 $0.006입니다. 모든 사용량에 적용되는 고정 $0.01 요금이 아닙니다.
 
-동일 계정·리전에서 합산하며 AWS Organizations 통합 결제는 동일 리전의 조직 계정 사용량을 합산합니다. Hyperthreading한 bare-metal core 하나가 vCPU 2개로 보고될 수 있습니다. 노드 가입 시 과금이 시작하고 제거 시 종료하므로 workload가 idle이어도 노드 요금이 사라지지 않습니다. AWS는 머신당 32 vCPU를 초과하면 account team과 요금을 상담하도록 안내합니다. 클러스터, provisioned control plane/capability, 네트워크, 로그, storage, OS와 기타 지원 요금은 별도입니다.
+사용량은 동일 계정·리전에서 합산하며 AWS Organizations 통합 결제는 동일 리전의 조직 계정 사용량을 합산합니다. Hyperthreading한 bare-metal core 하나가 vCPU 2개로 보고될 수 있습니다. 노드 가입 시 과금이 시작되고 제거 시 종료되므로 workload가 idle이어도 노드 요금이 사라지지 않습니다. AWS는 머신당 32 vCPU를 초과하면 account team과 요금을 상담하도록 안내합니다. 클러스터, provisioned control plane/capability, 네트워크, 로그, storage, OS와 기타 지원 요금은 별도입니다.
 
 ### 규모별 연간 비용 비교 (32 vCPU 서버 기준)
 
-다음은 청구서·실측이 아닌 결정적 **계산 모델**입니다. 노드당 보고된 32 vCPU, 매월 730시간, 동일 리전·합산 범위, 다른 Hybrid 사용량 없음, 같은 월을 12번 반복한 연환산을 가정합니다. 마지막 열은 기본 control-plane tier의 표준 지원 클러스터 1개($0.10/시간)를 더합니다. 다른 서비스, 할인·세금, 하드웨어, 전력, OS entitlement, 인력·이전 비용은 제외하며 실제 월 길이와 구간 초기화가 청구액에 영향을 줍니다.
+다음은 청구서·실측이 아닌 결정적 **계산 모델**입니다. 노드당 보고된 32 vCPU, 매월 730시간, 동일 리전·합산 범위, 다른 Hybrid 사용량 없음, 같은 월을 12번 반복한 연환산을 가정합니다. 마지막 열은 기본 control-plane tier의 표준 지원 클러스터 1개($0.10/시간)의 요금을 더합니다. 다른 서비스, 할인·세금, 하드웨어, 전력, OS entitlement, 인력·이전 비용은 제외하며 실제 월 길이와 구간 초기화가 청구액에 영향을 줍니다.
 
 | 노드 | 월 vCPU-hours | 월 노드 요금 | 연환산 노드 요금 | 노드 + 기본 tier 표준 지원 클러스터 1개 연환산 |
 | --- | --- | --- | --- | --- |
@@ -213,7 +213,7 @@ SELinux enforcing을 유지하고 구체적인 policy/context 요구사항을 �
 
 #### RHEL containerd 설치 주의사항
 
-RHEL에서 nodeadm의 `distro` containerd source는 지원되지 않습니다. 호환되는 Docker 배포 패키지를 nodeadm으로 설치하려면 `docker`, 별도로 설치·관리한다면 `none`을 선택합니다. “RHEL은 항상 docker가 필수”라는 표현은 너무 넓습니다.
+RHEL에서 nodeadm의 `distro` containerd source는 지원되지 않습니다. 호환되는 Docker 배포 패키지를 nodeadm으로 설치하려면 `docker`, 별도로 설치·관리한다면 `none`을 선택합니다. “RHEL은 항상 docker가 필수”라는 표현은 적용 범위가 너무 넓습니다.
 
 ```bash
 set -euo pipefail
@@ -229,7 +229,7 @@ Satellite/Foreman으로 검토한 Kickstart template, repository와 provisioning
 
 ### Amazon Linux 2023
 
-이 절은 베어메탈 설치가 아닌 **가상화 guest 참고 사항**입니다. AWS는 EC2 밖 AL2023에 KVM, VMware, Hyper-V VM 이미지를 제공합니다. 해당 OS 사용에는 AWS Support Plans이 적용되지 않으며 EKS Hybrid 통합 지원과 구분합니다. 적절한 이미지·cloud-init 전달 경로를 선택합니다. 최소 VM identity 조각은 다음과 같습니다.
+이 절은 베어메탈 설치가 아닌 **가상화 guest 참고 사항**입니다. AWS는 EC2 밖 AL2023에 KVM, VMware, Hyper-V VM 이미지를 제공합니다. 해당 OS 사용에는 AWS Support Plans가 적용되지 않으며 EKS Hybrid 통합 지원과 구분합니다. 적절한 이미지·cloud-init 전달 경로를 선택합니다. 최소 VM identity 조각은 다음과 같습니다.
 
 ```yaml
 #cloud-config
@@ -394,7 +394,7 @@ Workload/data 수락, 합의한 rollback 기간, backup 복구와 계약·보존
 
 ## 설치 후 검증
 
-검증 중 패키지를 재설치하거나 가입한 호스트를 초기화하지 않습니다. 아래 읽기는 관측일 뿐이며 프로세스 활성 상태나 과거 Ready만으로 workload를 수락하지 않습니다.
+검증 중 패키지를 재설치하거나 가입한 호스트를 초기화하지 않습니다. 아래 읽기 작업은 관측일 뿐이며 프로세스 활성 상태나 과거 Ready만으로 workload를 수락하지 않습니다.
 
 ```bash
 # Read-only, on the host mapped to the intended Kubernetes Node:

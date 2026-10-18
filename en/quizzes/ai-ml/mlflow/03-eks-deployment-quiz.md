@@ -44,7 +44,7 @@ Distinguish SQLite capabilities from multi-Pod storage topology.
 The chart override differs from the upstream CLI’s new SQLite-file default.
 </details>
 
-4. Does an external tracking PostgreSQL database automatically share every other state?
+4. Does an external tracking PostgreSQL database automatically share all other state?
    - A) Yes, every auth DB and cache
    - B) Yes, all worker memory
    - C) Yes, every session secret

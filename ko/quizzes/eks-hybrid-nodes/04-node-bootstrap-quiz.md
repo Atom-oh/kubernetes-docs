@@ -113,7 +113,7 @@ D. Hybrid IAM 역할 대체
 
 **정답: C. 서버 인증서 신뢰 검증에 사용하며 클라이언트 인증서 승인·발급은 별도**
 
-**설명:** 서버 호스트명과 CA 체인을 검증하며 curl -k를 신뢰 검사로 사용하지 않습니다. 클러스터 CA, 프라이빗 레지스트리 CA와 IAM Roles Anywhere 호스트 신원은 서로 다른 신뢰 용도입니다.
+**설명:** 서버 호스트명과 CA 체인을 검증하며 curl -k를 신뢰 검사로 사용하지 않습니다. 클러스터 CA, 프라이빗 레지스트리 CA와 IAM Roles Anywhere 호스트 신원은 서로 다른 신뢰 용도로 사용됩니다.
 
 </details>
 
@@ -170,7 +170,7 @@ D. 노드 하나를 고치려고 cilium이 포함된 모든 CRD 삭제
 
 **정답: B. Hybrid 범위 preflight를 수행하고 DaemonSet 커버리지·검증 Deployment readiness 확인 후 업그레이드**
 
-**설명:** Preflight는 별도 node selector를 사용합니다. 기존 pool 항목과 mask size는 변경하지 않으며, 확장은 EKS·라우팅 변경을 함께 검토한 새 pool 항목을 추가할 수 있습니다. CNI·CRD 제거는 소유자가 통제할 중단 작업입니다.
+**설명:** Preflight는 별도 node selector를 사용합니다. 기존 pool 항목과 mask size는 변경하지 않으며, 확장 시에는 EKS·라우팅 변경을 함께 검토한 새 pool 항목을 추가할 수 있습니다. CNI·CRD 제거는 소유자가 통제할 중단 작업입니다.
 
 </details>
 

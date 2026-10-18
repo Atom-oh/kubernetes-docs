@@ -30,7 +30,7 @@ Grafana는 Prometheus·Loki·Tempo·CloudWatch 같은 데이터 소스를 조회
 
 ### 기본 설치
 
-예제는 **복제본 1개 + SQLite + RWO PVC + Recreate**입니다. `gp3` StorageClass와 CSI 드라이버가 필요하며, 업그레이드 중 중단이 있을 수 있습니다. 고가용성 구성은 뒤에서 분리합니다. chart는 community 저장소를 사용하고 이미지 버전과 digest를 고정합니다.
+예제는 **복제본 1개 + SQLite + RWO PVC + Recreate**입니다. `gp3` StorageClass와 CSI 드라이버가 필요하며, 업그레이드 중 중단이 있을 수 있습니다. 고가용성 구성은 뒤에서 별도로 다룹니다. chart는 community 저장소를 사용하고 이미지 버전과 digest를 고정합니다.
 
 먼저 저장소를 checkout하고 `endpoints.yaml`의 세 URL을 **실제 Service와 포트**에 맞춥니다. Tempo 3.x 예제의 HTTP API는 3200이며 OTLP 수신 포트와 다릅니다. 기본 URL은 설명용 서비스 이름으로, 백엔드를 생성하지 않습니다. 실습 백엔드가 mTLS를 요구하면 동일한 CA·클라이언트 인증서 설정을 데이터 소스에 적용해야 합니다. HTTP만으로 우회할 수 없습니다.
 
@@ -104,7 +104,7 @@ helm upgrade --install grafana grafana-community/grafana --version 13.2.2 \
 
 `grafana` 릴리스와 `monitoring` namespace를 기준으로 peer DNS가 고정되어 있습니다. 이름을 변경하면 함께 수정합니다. Pod 사이 TCP/UDP 9094, DNS, DB, 필요한 백엔드만 허용하는 네트워크 정책을 구성합니다. Grafana DB가 인증 세션을 공유하므로 로그인 유지에 Redis 세션 저장소나 sticky session이 필수는 아닙니다.
 
-Alerting HA는 별도 peer 연결과 중복 억제가 필요합니다. 기본값에서는 각 노드의 규칙 평가 부하도 고려합니다. 13.2.1에는 `ha_single_node_evaluation` 옵션이 있지만 이 예제는 기본값을 유지합니다. 네트워크 분리 상황까지 정확히 한 번 알림을 보장하지 않습니다. 로컬 검증은 단일 Grafana 프로세스에서 수행했으며 이 HA 프로필의 DB 장애 전환을 실행한 것은 아닙니다.
+Alerting HA는 별도 peer 연결과 중복 억제가 필요합니다. 기본값에서는 각 노드의 규칙 평가 부하도 고려합니다. 13.2.1에는 `ha_single_node_evaluation` 옵션이 있지만 이 예제는 기본값을 유지합니다. 네트워크 분리 상황에서도 정확히 한 번의 알림 전달을 보장하지 않습니다. 로컬 검증은 단일 Grafana 프로세스에서 수행했으며 이 HA 프로필의 DB 장애 전환을 실행한 것은 아닙니다.
 
 ## 데이터 소스 연동
 
@@ -179,7 +179,7 @@ Exemplar는 모든 요청의 추적을 담는 기능이 아니라 메트릭 표�
 
 CloudWatch를 추가할 때는 Grafana ServiceAccount에 승인된 IRSA role을 연결하고 OIDC trust의 namespace/ServiceAccount와 `aud`를 제한합니다. IRSA token projection과 Pod에서의 SDK credential 획득을 확인합니다. 데이터 소스의 `authType: default`는 이 자격 증명 체인을 사용합니다. 같은 role ARN을 `assumeRoleArn`에 다시 넣는 설정은 필요하지 않습니다. 다른 role로 전환할 때만 양쪽 trust와 `sts:AssumeRole` 권한을 준비합니다.
 
-Metrics 조회에 필요한 `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`부터 시작하고, Logs·EC2·tag·X-Ray 기능을 쓸 때 해당 권한을 별도로 추가합니다. ARN 제한을 지원하지 않는 조회 action의 `Resource: "*"`에는 가능한 Region 조건을 적용하고, Logs 조회 범위는 실제 log group으로 제한합니다. 모든 AWS 조회 권한을 하나의 무조건 wildcard statement에 넣지 않습니다. 이 장의 기본 예제는 CloudWatch 자격 증명이나 AWS 리소스를 생성하지 않습니다.
+Metrics 조회에 필요한 `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`부터 시작하고, Logs·EC2·tag·X-Ray 기능을 쓸 때 해당 권한을 별도로 추가합니다. ARN 제한을 지원하지 않는 조회 action의 `Resource: "*"`에는 가능한 Region 조건을 적용하고, Logs 조회 범위는 실제 log group으로 제한합니다. 모든 AWS 조회 권한을 하나의 조건 없는 wildcard statement에 넣지 않습니다. 이 장의 기본 예제는 CloudWatch 자격 증명이나 AWS 리소스를 생성하지 않습니다.
 
 <span id="use-method-utilization-saturation-errors"></span>
 
@@ -227,7 +227,7 @@ helm upgrade grafana grafana-community/grafana --version 13.2.2 \
 
 ### Grafana Operator 사용
 
-Operator를 선택하면 먼저 해당 버전의 controller와 CRD를 설치하고, `Grafana` 인스턴스 및 `GrafanaDashboard`/`GrafanaDatasource` selector를 연결합니다. 별도 Helm 인스턴스와 Operator가 같은 리소스를 동시에 소유하지 않게 합니다. 이 장은 Helm 파일 프로비저닝을 검증했으며 Operator 배포 예제라고 주장하지 않습니다. JSON의 `panels: [...]` 같은 생략 표기는 적용 가능한 manifest가 아닙니다. 필요한 대시보드 내용은 이 장의 완전한 `dashboard.json`을 사용합니다.
+Operator를 선택하면 먼저 해당 버전의 controller와 CRD를 설치하고, `Grafana` 인스턴스 및 `GrafanaDashboard`/`GrafanaDatasource` selector를 연결합니다. 별도 Helm 인스턴스와 Operator가 같은 리소스를 동시에 소유하지 않게 합니다. 이 장은 Helm 파일 프로비저닝을 검증했으며 Operator 배포 예제라고 주장하지 않습니다. JSON의 `panels: [...]` 같은 생략 표기는 적용 가능한 manifest가 아닙니다. 필요한 대시보드 내용으로는 이 장의 완전한 `dashboard.json`을 사용합니다.
 
 <span id="알림-규칙-구성"></span>
 
@@ -358,7 +358,7 @@ allow_sign_up = true
 
 <span id="grafana-cloud-연결-hybrid"></span>
 
-Cloud의 Prometheus/Loki URL과 username은 해당 stack의 Connections에서 가져옵니다. 두 서비스가 같은 ID라는 가정이나 임의의 Region URL을 복사하지 않습니다. 토큰은 필요한 `metrics:read`/`logs:read` 범위의 Cloud Access Policy로 발급하고 `secureJsonData.basicAuthPassword`에 Secret을 통해 공급합니다. Grafana 서비스 계정 토큰과 Cloud 데이터 접근 토큰을 혼동하지 않습니다.
+Cloud의 Prometheus/Loki URL과 username은 해당 stack의 Connections에서 가져옵니다. 두 서비스가 같은 ID라고 가정하거나 임의의 Region URL을 복사하지 않습니다. 토큰은 필요한 `metrics:read`/`logs:read` 범위의 Cloud Access Policy로 발급하고 `secureJsonData.basicAuthPassword`에 Secret을 통해 공급합니다. Grafana 서비스 계정 토큰과 Cloud 데이터 접근 토큰을 혼동하지 않습니다.
 
 <span id="_1-대시보드-구조화"></span>
 

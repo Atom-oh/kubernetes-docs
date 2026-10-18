@@ -62,7 +62,7 @@
 
    </details>
 
-5. **1.20.2에서 `--bpf-map-dynamic-size-ratio`의 기본값과 크기를 조정하는 map은 무엇인가요?**
+5. **1.20.2에서 `--bpf-map-dynamic-size-ratio`의 기본값과 이 플래그가 크기를 조정하는 map은 무엇인가요?**
    - A) RAM의 0.0025. CT, NAT, NodePort neighbor, socket reverse-NAT map
    - B) 0(비활성). policy map만, `--bpf-policy-map-max`로 크기 결정
    - C) RAM의 0.25. LB map과 ipcache를 포함한 모든 BPF map

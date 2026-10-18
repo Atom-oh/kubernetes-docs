@@ -297,7 +297,7 @@ unset -f config_kubectl
 - [Secret security and updates](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [Secret file permissions and environment variables](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
 
-셸 구문, 매니페스트, 로컬 fixture를 검증했습니다. 감사 중 Kubernetes Secret, Pod, 네임스페이스, 외부 Secret 저장소를 생성하거나 접근하지 않았습니다.
+셸 구문, 매니페스트, 로컬 fixture를 검증했습니다. 감사 중 Kubernetes Secret, Pod, 네임스페이스, 외부 Secret 저장소를 생성하거나 이에 접근하지 않았습니다.
 
 ## 다음 단계
 - [구성 퀴즈](../../quizzes/core/05-configuration-secrets-quiz.md)

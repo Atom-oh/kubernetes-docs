@@ -5,7 +5,7 @@
 
 ## Cluster mode와 client mode
 
-Kubernetes는 Spark의 **두 배포 모드 모두** 지원합니다. Client mode는 Spark
+Kubernetes는 Spark의 **두 배포 모드 모두**를 지원합니다. Client mode는 Spark
 2.4부터 지원되며 notebook만을 위한 기능이 아닙니다.
 
 | 모드 | Driver 위치 | 운영 시 고려사항 |

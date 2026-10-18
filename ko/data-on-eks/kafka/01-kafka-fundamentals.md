@@ -31,7 +31,7 @@ Kafka의 로그 순서는 **파티션 안**에서 정의됩니다. 토픽 전체
 
 키가 없는 레코드의 라우팅은 클라이언트/partitioner에 따라 다릅니다. 높은 키 cardinality만으로 균등 부하가 보장되지도 않습니다. 특정 키의 높은 빈도는 hot partition을 만들 수 있습니다.
 
-다음 명령은 **이미 접근 가능한 3개 이상 브로커의 클러스터**에서 새 토픽을 만듭니다. 인증이 필요한 listener에서는 `--command-config client.properties`를 추가합니다. 이 명령을 아래의 단일 노드 학습 설정에 그대로 적용하지 않습니다.
+다음 명령은 **이미 접근 가능한 브로커 3개 이상으로 구성된 클러스터**에서 새 토픽을 만듭니다. 인증이 필요한 listener에서는 `--command-config client.properties`를 추가합니다. 이 명령을 아래의 단일 노드 학습 설정에 그대로 적용하지 않습니다.
 
 ```bash
 : "${DOCS_BOOTSTRAP:?Set the existing Kafka bootstrap host:port}"
@@ -73,7 +73,7 @@ Classic의 eager rebalance는 파티션을 반납하는 범위가 넓습니다. 
 
 `enable.idempotence`는 프로듀서 재시도로 같은 전송이 중복 기록되는 것을 방지합니다. 애플리케이션이 같은 업무 이벤트를 새 전송으로 다시 보내는 것까지 일반적인 중복 제거 키로 처리하지는 않습니다.
 
-Kafka 토픽을 읽어 다른 Kafka 토픽에 결과를 쓸 때는 출력과 **다음 입력 offset**을 같은 트랜잭션에 넣고, 소비자는 `read_committed`로 읽어야 합니다. `transactional.id` 문자열만 설정하는 것으로 이 처리 로직이 생기지는 않습니다. 외부 DB/API의 부작용은 sink의 트랜잭션·멱등성·복구 계약이 별도로 필요합니다.
+Kafka 토픽을 읽어 다른 Kafka 토픽에 결과를 쓸 때는 출력과 **다음 입력 offset**을 같은 트랜잭션에 넣고, 소비자는 `read_committed`로 읽어야 합니다. `transactional.id` 문자열만 설정하는 것으로 이 처리 로직이 생기지는 않습니다. 외부 DB/API의 부작용에 대해서는 sink의 트랜잭션·멱등성·복구 계약이 별도로 필요합니다.
 
 **`producer.properties`**
 

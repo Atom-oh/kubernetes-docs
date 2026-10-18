@@ -462,7 +462,7 @@ mode: "iptables"
 
 ### Container Runtime
 
-Container runtime is software that runs containers. Kubernetes supports various container runtimes through the Container Runtime Interface (CRI).
+A container runtime is software that runs containers. Kubernetes supports various container runtimes through the Container Runtime Interface (CRI).
 
 **Main Container Runtimes**:
 1. **containerd**: Lightweight container runtime (currently most widely used)
@@ -841,7 +841,7 @@ Follow the [etcd recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). 
 
 ## Cluster Networking
 
-Kubernetes networking enables communication between pods, services, and the outside world. The Kubernetes networking model assumes that every pod has a unique IP address and can communicate with each other without NAT.
+Kubernetes networking enables communication between pods, services, and the outside world. The Kubernetes networking model assumes that every pod has a unique IP address and can communicate with every other pod without NAT.
 
 ### Networking Model
 
@@ -1554,7 +1554,7 @@ On September 23, 2026, patch releases shipped for every supported minor version:
 Also published that week is the v1.37 deep-dive post [Tracking When a PersistentVolumeClaim Was Last Used (Beta)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/): the `PersistentVolumeClaimUnusedSinceTime` feature gate graduated to Beta (enabled by default), so the PVC protection controller now adds an `Unused` condition to each PVC, letting you identify orphaned PVCs that no running pod references without custom tooling.
 ### September 2026 Update: v1.37 Feature Deep Dives
 
-Between September 14–16, 2026, the Kubernetes blog published a series of deep-dive posts on v1.37 features:
+Between September 14 and 16, 2026, the Kubernetes blog published a series of deep-dive posts on v1.37 features:
 
 - **[Memory QoS graduates to Beta](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: the `MemoryQoS` feature gate is now Beta and enabled by default on v1.37 kubelets. On Linux nodes running cgroup v2, it uses the memory controller to give the kernel better guidance on how to treat container memory. The default kubelet configuration writes no `memory.high`/`memory.min`/`memory.low` values, so nothing changes until you explicitly set fields such as `memoryThrottlingFactor`.
 - **[Pod-Level Resource Managers graduate to Beta](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (disabled by default): the kubelet's Topology Manager, CPU Manager, and Memory Manager can now use pod-level resource declarations (`.spec.resources`) directly for NUMA-aligned placement. This enables hybrid allocation: exclusive cores for primary containers while lightweight sidecars share a pod-isolated pool.

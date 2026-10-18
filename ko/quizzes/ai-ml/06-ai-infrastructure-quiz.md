@@ -1,6 +1,6 @@
 # EKS 기반 AI 인프라 퀴즈
 
-현재 API와 운영 경계를 확인하는15문항입니다.
+현재 API와 운영 경계를 확인하는 15문항입니다.
 
 ## 1. JARK는 무엇이며 자동으로 완성되는 플랫폼인가요?
 
@@ -111,7 +111,7 @@ driver가 실제 device inventory와 typed attribute/capacity를 게시합니다
 <details>
 <summary>정답 및 설명</summary>
 
-GPU를 요청한Pending Pod의 수는 원인 확정이 아닙니다. events/PVC/affinity/taint/quota/claim/image를 확인하고 실제checkpoint 저장·resume를 검증합니다. 여러container의 GPU요청도Pod한번으로 집계합니다.
+GPU를 요청한 Pending Pod의 수만으로는 원인을 확정할 수 없습니다. events/PVC/affinity/taint/quota/claim/image를 확인하고 실제checkpoint 저장·resume를 검증합니다. 여러 container의 GPU 요청도 Pod 단위로 한 번만 집계합니다.
 </details>
 
 ## 15. MCP protocol이 Kubernetes 자동검색 gateway를 제공하나요?
@@ -119,7 +119,7 @@ GPU를 요청한Pending Pod의 수는 원인 확정이 아닙니다. events/PVC/
 <details>
 <summary>정답 및 설명</summary>
 
-아닙니다. tool 목록/호출 같은 protocol이며 실제 server/gateway 구현·release·transport·인증·권한을 선택해야 합니다. 임의 image/label/config나URL환경변수만으로 도구 discovery와실행이생기지 않습니다.
+아닙니다. tool 목록/호출 같은 protocol이며 실제 server/gateway 구현·release·transport·인증·권한을 선택해야 합니다. 임의 image/label/config나 URL 환경 변수만으로 도구 discovery와 실행이 이루어지지 않습니다.
 </details>
 
 [본문으로 돌아가기](../../ai-ml/06-ai-infrastructure.md)

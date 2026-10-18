@@ -4,172 +4,162 @@
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el propósito principal de la arquitectura Terraform de 3 capas?
+### 1. ¿Qué tres capas operativas usa esta guía?
 
-- A) Reducir la cantidad de archivos de Terraform
-- B) Separar la infraestructura por ciclo de vida y radio de impacto
-- C) Habilitar tiempos de despliegue más rápidos
-- D) Eliminar la necesidad de gestionar el estado
+- A) Red → Clúster → Plataforma
+- B) Fundamentos → Carga de trabajo → Base de datos
+- C) VPC → Pod → Contenedor
+- D) Todos los recursos en un mismo estado
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separar la infraestructura por ciclo de vida y radio de impacto**
+**Respuesta: A) Red → Clúster → Plataforma**
 
-**Explicación:**
-La arquitectura de 3 capas separa la infraestructura en capas Foundation (VPC, IAM), Platform (cluster de EKS) y Workload (aplicaciones). Cada capa tiene distintas frecuencias de cambio y radios de impacto, lo que permite cambios de infraestructura más seguros y manejables.
+00-shared es un proceso de arranque independiente. La capa de red administra la VPC, la capa de clúster administra EKS y la capa de plataforma administra CoreDNS, Pod Identity y el acceso de los equipos. Separar los estados no impide que los fallos de VPC o DNS afecten a las demás capas.
 
 </details>
 
-### 2. En la configuración del backend S3 de Terraform, ¿cuál es el propósito de la tabla de DynamoDB?
+### 2. ¿Qué ajuste habilita el bloqueo nativo del backend de S3 en Terraform 1.10 o posterior?
 
-- A) Almacenar archivos de estado de Terraform
-- B) Proporcionar bloqueo de estado y consistencia
-- C) Hacer copias de seguridad de las configuraciones de Terraform
-- D) Registrar operaciones de Terraform
+- A) use_lockfile = true
+- B) Crear siempre una tabla de DynamoDB
+- C) Habilitar solo el versionado del bucket
+- D) Usar la misma clave para todas las capas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Proporcionar bloqueo de estado y consistencia**
+**Respuesta: A) use_lockfile = true**
 
-**Explicación:**
-La tabla de DynamoDB habilita el bloqueo de estado para evitar modificaciones concurrentes al mismo archivo de estado. Esto evita condiciones de carrera cuando varios usuarios o pipelines de CI/CD intentan modificar la infraestructura simultáneamente.
+El bloqueo nativo usa escrituras condicionales de S3. El bloqueo de DynamoDB sigue siendo pertinente para configuraciones existentes y transiciones, pero no es necesario para el bloqueo nativo de S3. Cambiar solo el mecanismo de bloqueo no traslada la ubicación donde se almacena el estado.
 
 </details>
 
-### 3. ¿Qué te permite hacer el data source `terraform_remote_state`?
+### 3. ¿Qué afirmación sobre la seguridad de terraform_remote_state es correcta?
 
-- A) Almacenar archivos de estado en una ubicación remota
-- B) Referenciar outputs de otro estado de Terraform
-- C) Migrar el estado entre backends
-- D) Cifrar archivos de estado automáticamente
+- A) Los lectores solo pueden acceder a las salidas
+- B) El acceso al backend puede exponer toda la instantánea del estado, por lo que hay que considerar los límites de confianza
+- C) sensitive=true revoca el acceso de lectura de IAM
+- D) El estado nunca contiene valores sensibles
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Referenciar outputs de otro estado de Terraform**
+**Respuesta: B) El acceso al backend puede exponer toda la instantánea del estado, por lo que hay que considerar los límites de confianza**
 
-**Explicación:**
-El data source `terraform_remote_state` permite que una configuración de Terraform lea valores de output desde otro archivo de estado. Esto habilita referencias entre capas, como que la capa Platform lea el ID de VPC desde la capa Foundation.
+La expresión expone las salidas raíz, pero el estado subyacente contiene más información. Considera publicar por separado solo los valores necesarios cuando se crucen límites de confianza.
 
 </details>
 
-### 4. ¿Qué tamaño de bloque CIDR de VPC se recomienda para clusters de EKS en producción?
+### 4. ¿Qué afirmación sobre un clúster regional estándar de EKS y los grupos integrados de Auto Mode es correcta?
 
-- A) /24 (256 direcciones)
-- B) /20 (4,096 direcciones)
-- C) /16 (65,536 direcciones)
-- D) /8 (16 millones de direcciones)
+- A) Basta con una sola zona de disponibilidad para las subredes del plano de control
+- B) El nombre blue fija los nodos de trabajo en la zona AZ-a
+- C) Las subredes de EKS deben abarcar al menos dos zonas de disponibilidad distintas; las restricciones de ubicación de los nodos de trabajo son independientes
+- D) Una etiqueta de subred Cluster=blue fija la ubicación de los nodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) /16 (65,536 direcciones)**
+**Respuesta: C) Las subredes de EKS deben abarcar al menos dos zonas de disponibilidad distintas; las restricciones de ubicación de los nodos de trabajo son independientes**
 
-**Explicación:**
-Un bloque CIDR /16 proporciona 65,536 direcciones IP, lo cual se recomienda para clusters de EKS en producción. Esto permite la asignación de IPs de pod (especialmente con VPC CNI), crecimiento futuro y despliegues multi-AZ sin preocupaciones por agotamiento de IPs.
+Los grupos integrados pueden usar varias zonas de disponibilidad configuradas. Las celdas de nodos de trabajo de una sola zona requieren diseñar la ubicación mediante NodePool/NodeClass y disponer de capacidad de recuperación en otras celdas.
 
 </details>
 
-### 5. ¿Cuál es la característica clave de EKS Auto Mode en comparación con Managed Node Groups?
+### 5. ¿Qué sucede si se añade gpu como nombre de grupo integrado en compute_config.node_pools?
 
-- A) Auto Mode requiere aprovisionamiento manual de nodos
-- B) Auto Mode gestiona automáticamente el ciclo de vida y el escalado de los nodos
-- C) Auto Mode solo admite instancias Spot
-- D) Auto Mode elimina la necesidad de pods
+- A) Se crea un grupo GPU integrado oficial
+- B) gpu no es un nombre de grupo integrado; configura un NodePool personalizado adecuado
+- C) Los nodos existentes se convierten inmediatamente en GPU
+- D) Todos los clústeres se vuelven exclusivos para GPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Auto Mode gestiona automáticamente el ciclo de vida y el escalado de los nodos**
+**Respuesta: B) gpu no es un nombre de grupo integrado; configura un NodePool personalizado adecuado**
 
-**Explicación:**
-EKS Auto Mode gestiona automáticamente el aprovisionamiento, escalado y ciclo de vida de los nodos según las demandas de la workload. A diferencia de Managed Node Groups, los operadores no necesitan configurar Auto Scaling Groups ni gestionar manualmente las actualizaciones de nodos.
+Los nombres integrados son general-purpose y system. La entrada es una lista de nombres, no un mapa arbitrario que defina grupos GPU. Los NodePool personalizados corresponden al lado de GitOps de esta guía.
 
 </details>
 
-### 6. ¿En qué se diferencia Pod Identity de IRSA (IAM Roles for Service Accounts)?
+### 6. ¿Cuál es el propósito y el requisito correctos de EKS Pod Identity?
 
-- A) Pod Identity no admite roles de IAM
-- B) Pod Identity usa credenciales gestionadas por EKS sin configurar un proveedor OIDC
-- C) Pod Identity requiere rotación manual de tokens
-- D) Pod Identity solo funciona con Fargate
+- A) Corrige automáticamente las descargas de imágenes de Pod desde ECR
+- B) Siempre requiere un proveedor OIDC
+- C) Proporciona credenciales de rol para llamadas compatibles del SDK, con asociación, relación de confianza y compatibilidad de nodo
+- D) La asociación instala ServiceAccount y ESO
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Pod Identity usa credenciales gestionadas por EKS sin configurar un proveedor OIDC**
+**Respuesta: C) Proporciona credenciales de rol para llamadas compatibles del SDK, con asociación, relación de confianza y compatibilidad de nodo**
 
-**Explicación:**
-Pod Identity simplifica la integración con IAM al eliminar la necesidad de configurar un proveedor OIDC. AWS gestiona la inyección de credenciales mediante el Pod Identity Agent, lo que facilita la configuración y el mantenimiento en comparación con IRSA.
+Auto Mode incluye la funcionalidad del agente; los nodos normales de EKS pueden necesitar el agente por separado. Configura el namespace y el SA correspondientes, y distingue los permisos de kubelet para descargar imágenes de los permisos de la aplicación para llamadas al SDK.
 
 </details>
 
-### 7. En la arquitectura de 3 capas, ¿qué capa contiene el recurso de cluster de EKS?
+### 7. ¿Cómo se debe separar el estado por entorno y color de clúster?
 
-- A) Capa Foundation
-- B) Capa Platform
-- C) Capa Workload
-- D) Capa Network
+- A) TF_DATA_DIR por sí solo separa una clave de S3 compartida
+- B) Seleccionar valores distintos de bucket/clave del backend y directorios de inicialización correspondientes
+- C) Cambiar la variable de entorno traslada el estado de producción a desarrollo
+- D) Deshabilitar el versionado de S3
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Capa Platform**
+**Respuesta: B) Seleccionar valores distintos de bucket/clave del backend y directorios de inicialización correspondientes**
 
-**Explicación:**
-La capa Platform contiene el cluster de EKS, los node groups y los add-ons del cluster. Depende de la capa Foundation (VPC, subnets) y proporciona la plataforma para la capa Workload (aplicaciones, services).
+La configuración del backend determina la ubicación real del estado. TF_DATA_DIR separa los metadatos de inicialización, los módulos y las cachés de proveedores; no sustituye la clave de estado. Separa también el estado local de arranque por cuenta y entorno.
 
 </details>
 
-### 8. ¿Qué debe habilitarse en los buckets de S3 que almacenan el estado de Terraform?
+### 8. ¿Cómo gestiona este ejemplo de Auto Mode CoreDNS y las StorageClasses?
 
-- A) Acceso público
-- B) Versionado y cifrado
-- C) Alojamiento de sitio web estático
-- D) Solo replicación entre regiones
+- A) Ambos se crean siempre sin configuración
+- B) Auto Mode puro usa DNS local al nodo; los clústeres mixtos necesitan un Deployment de CoreDNS; las StorageClasses se crean por separado
+- C) Siempre se instalan agentes duplicados de EBS CSI y Pod Identity
+- D) Se fija la versión de CoreDNS a la palabra latest
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Versionado y cifrado**
+**Respuesta: B) Auto Mode puro usa DNS local al nodo; los clústeres mixtos necesitan un Deployment de CoreDNS; las StorageClasses se crean por separado**
 
-**Explicación:**
-Los archivos de estado de Terraform contienen información sensible y deben protegerse con versionado (para recuperarse de corrupción o cambios accidentales) y cifrado (para proteger secretos en reposo). El acceso público siempre debe bloquearse.
+Auto Mode puro usa CoreDNS como servicio de sistema del nodo. Los clústeres mixtos conservan el Deployment; consulta la compatibilidad de Kubernetes y de la región y fija la versión de ese complemento. Las StorageClasses de Auto Mode usan ebs.csi.eks.amazonaws.com.
 
 </details>
 
-### 9. Al usar workspaces de Terraform para la gestión de múltiples entornos, ¿cuál es una limitación clave?
+### 9. ¿Una entrada de acceso de administrador completa por sí sola el acceso con kubectl?
 
-- A) Los workspaces no pueden usar variables
-- B) Todos los entornos comparten la misma configuración de backend
-- C) Los workspaces no admiten módulos
-- D) Solo se permiten dos workspaces
+- A) También concede IAM DescribeCluster y acceso de red
+- B) No: autentícate como ese principal y prepara los permisos de IAM y la conectividad a la API privada
+- C) El solicitante de Terraform siempre se convierte automáticamente en administrador
+- D) La misma entrada debe volver a crearse en la capa de plataforma
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Todos los entornos comparten la misma configuración de backend**
+**Respuesta: B) No: autentícate como ese principal y prepara los permisos de IAM y la conectividad a la API privada**
 
-**Explicación:**
-Los workspaces de Terraform comparten la misma configuración de backend y el mismo código, lo que puede provocar cambios accidentales en producción al trabajar en desarrollo. Muchos equipos prefieren directorios o repositorios separados por entorno para lograr un aislamiento más fuerte.
+Este ejemplo deshabilita la administración automática del creador. Las políticas de acceso de EKS rigen los permisos de Kubernetes, por separado de IAM. Una sola capa debe ser responsable de la entrada de acceso de cada principal.
 
 </details>
 
-### 10. ¿Cuál es el enfoque recomendado para gestionar las versiones de proveedores de Terraform?
+### 10. ¿Qué gestión de fallos es correcta para una prueba de humo?
 
-- A) Usar siempre la versión más reciente sin restricciones
-- B) Usar restricciones de versión exactas en el bloque required_providers
-- C) Dejar que Terraform actualice automáticamente los proveedores
-- D) Evitar especificar versiones de proveedores
+- A) Ocultar los errores al crear Pods con || true
+- B) Eliminar siempre un namespace preexistente de la prueba de humo
+- C) Devolver un estado distinto de cero si falla y limpiar solo el namespace temporal verificado
+- D) Considerar saludable cualquier Pod en fase Running
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usar restricciones de versión exactas en el bloque required_providers**
+**Respuesta: C) Devolver un estado distinto de cero si falla y limpiar solo el namespace temporal verificado**
 
-**Explicación:**
-Especificar restricciones de versión exactas o pesimistas (por ejemplo, `~> 5.0`) en el bloque `required_providers` garantiza despliegues reproducibles y evita cambios incompatibles inesperados por actualizaciones de proveedores. Esto es especialmente importante en entornos de producción.
+La prueba abarca la programación de cargas de trabajo y el DNS del clúster, no el tráfico externo del balanceador ni todas las dependencias de la aplicación. Los recuentos READY de contenedores y las condiciones Ready de los Pods también son distintos.
 
 </details>

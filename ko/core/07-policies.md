@@ -143,7 +143,7 @@ Kubernetes 정책은 클러스터 관리자가 클러스터 내의 리소스와 
 3. **규정 준수**: 조직의 정책과 규정을 준수하도록 보장
 4. **표준화**: 일관된 구성과 배포 관행을 적용
 
-Kubernetes에서는 다양한 유형의 정책을 구현할 수 있으며, 이는 기본 제공 리소스(예: NetworkPolicy, ResourceQuota, LimitRange)나 타사 정책 엔진(예: OPA Gatekeeper, Kyverno)을 통해 구현할 수 있습니다.
+Kubernetes에서는 다양한 유형의 정책을 기본 제공 리소스(예: NetworkPolicy, ResourceQuota, LimitRange)나 타사 정책 엔진(예: OPA Gatekeeper, Kyverno)을 통해 구현할 수 있습니다.
 
 ## 리소스 할당 정책
 
@@ -276,7 +276,7 @@ spec:
 
 네트워크 정책을 사용하려면 클러스터의 네트워크 플러그인이 네트워크 정책을 지원해야 합니다. Calico, Cilium, Antrea 등의 CNI 플러그인은 네트워크 정책을 지원합니다.
 
-namespaceSelector가 없는 podSelector는 정책의 네임스페이스 안에서 선택합니다. 표준 NetworkPolicy는 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있고 출발지 egress와 목적지 ingress 양쪽이 허용해야 합니다. 이 예시는 클러스터 DNS로의 TCP/UDP 53을 별도 허용하지 않으면 DNS도 차단합니다.
+namespaceSelector가 없는 podSelector는 정책의 네임스페이스 안에서 파드를 선택합니다. 표준 NetworkPolicy는 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있고 출발지 egress와 목적지 ingress 양쪽이 트래픽을 허용해야 합니다. 이 예시는 클러스터 DNS로의 TCP/UDP 53을 별도 허용하지 않으면 DNS도 차단합니다.
 
 ### 네트워크 정책 유형
 
@@ -572,7 +572,7 @@ spec:
       - owner
 ```
 
-위 리소스보다 정책 엔진·CRD·정책 서버를 먼저 설치하세요. Gatekeeper 예시는 더 풍부한 라이브러리 `K8sRequiredLabels`와 충돌하지 않도록 `K8sRequiredLabelKeys`를 정의합니다. Kubewarden은 실제 배포된 검증 버전·다이제스트의 safe-labels와 `mandatory_labels` 설정을 사용하며 `<tested-tag>`는 자리 표시자입니다.
+위 리소스를 적용하기 전에 정책 엔진·CRD·정책 서버를 먼저 설치하세요. Gatekeeper 예시는 더 풍부한 라이브러리 `K8sRequiredLabels`와 충돌하지 않도록 `K8sRequiredLabelKeys`를 정의합니다. Kubewarden은 실제 배포된 검증 버전·다이제스트의 safe-labels와 `mandatory_labels` 설정을 사용하며 `<tested-tag>`는 자리 표시자입니다.
 
 ## Amazon EKS에서의 정책 관리
 
@@ -599,7 +599,7 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-참조한 고객 관리 정책을 먼저 생성하고 필요한 버킷·접두사 읽기로 제한하세요. 지원 컴퓨팅에서는 EKS Pod Identity도 사용할 수 있습니다. IAM은 AWS API 접근을 제어하며 Kubernetes 리소스 인가와 구분됩니다.
+참조한 고객 관리 정책을 먼저 생성하고 권한을 필요한 버킷·접두사의 읽기로 제한하세요. 지원 컴퓨팅에서는 EKS Pod Identity도 사용할 수 있습니다. IAM은 AWS API 접근을 제어하며 Kubernetes 리소스 인가와 구분됩니다.
 
 ### AWS Security Groups for Pods
 

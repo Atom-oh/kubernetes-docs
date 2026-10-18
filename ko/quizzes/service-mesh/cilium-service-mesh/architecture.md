@@ -94,7 +94,7 @@ Maglev는 해당 north–south 로드 밸런싱에서 흐름을 백엔드에 일
 
 **정답: B. Cilium이 Identity 관련 레이블 집합에 숫자 ID를 할당하며 여러 Pod가 공유할 수 있음**
 
-Identity 관련 레이블에는 네임스페이스, ServiceAccount와 선택한 워크로드 레이블이 포함될 수 있습니다. 할당기가 집합을 ID로 해석하며, 사용자 계산 해시나 반드시 Pod별로 고유한 값이 아닙니다. CiliumEndpoint/CiliumIdentity와 Agent의 cilium-dbg identity list로 조회하세요.
+Identity 관련 레이블에는 네임스페이스, ServiceAccount와 선택한 워크로드 레이블이 포함될 수 있습니다. 할당기가 집합을 ID로 해석하며, 이 ID는 사용자가 계산한 해시도, 반드시 Pod별로 고유한 값도 아닙니다. CiliumEndpoint/CiliumIdentity와 Agent의 cilium-dbg identity list로 조회하세요.
 
 </details>
 
@@ -174,7 +174,7 @@ Cilium의 SPIRE provider는 설정한 trust domain 아래에 `/identity/<numeric
 
 **정답: C. Kubernetes API 서버 역할**
 
-Agent는 노드에서 실행하고 Kubernetes API 서버는 별도 제어 평면 구성 요소로 남습니다. Cilium Operator도 별도 Deployment로서 Identity 가비지 컬렉션과 해당 IPAM 작업 등의 클러스터 전체 기능을 담당합니다.
+Agent는 노드에서 실행되고 Kubernetes API 서버는 별도 제어 평면 구성 요소로 남습니다. Cilium Operator도 별도 Deployment로서 Identity 가비지 컬렉션과 해당 IPAM 작업 등의 클러스터 전체 기능을 담당합니다.
 
 </details>
 

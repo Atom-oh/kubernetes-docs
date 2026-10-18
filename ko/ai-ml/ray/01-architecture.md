@@ -16,7 +16,7 @@ Ray Core는 원격 함수(task), 상태를 가진 원격 인스턴스(actor), Ob
 
 ### Task
 
-함수에 `@ray.remote`를 적용한 뒤 **`f.remote(...)`**로 제출합니다. 일반 함수처럼 `f(...)`를 호출하는 것은 맞지 않습니다. 단일 반환 예제에서는 `ObjectRef`를 받고 `ray.get()`으로 결과를 읽습니다.
+함수에 `@ray.remote`를 적용한 뒤 **`f.remote(...)`로** 제출합니다. 일반 함수처럼 `f(...)`를 호출하는 것은 맞지 않습니다. 단일 반환 예제에서는 `ObjectRef`를 받고 `ray.get()`으로 결과를 읽습니다.
 
 Task가 상태 없는 실행 단위라는 설명은 함수가 반드시 순수하거나 부작용이 없다는 보장이 아닙니다. 파일·DB를 변경하는 작업은 재시도에 대비한 idempotency를 설계해야 합니다. Worker가 재사용될 수도 있으므로 module global cache가 우연히 남는 것과 명시적 상태 관리도 구분합니다.
 
@@ -84,7 +84,7 @@ GCS는 actor·node·placement group 같은 cluster metadata를 관리합니다. 
 
 ### 자원 배치
 
-Ray는 cluster 상태를 보고 후보 노드를 선택하지만 **각 task/actor는 한 노드의 요구 자원을 충족해야 합니다.** CPU 1개씩 남은 두 노드의 합이 2라고 해서 CPU 2개를 요구하는 단일 task를 나눠 실행하지 않습니다. Feasible/available 상태, data locality, placement/label/affinity 조건을 함께 고려합니다.
+Ray는 cluster 상태를 보고 후보 노드를 선택하지만 **각 task/actor의 요구 자원은 한 노드에서 충족되어야 합니다.** CPU 1개씩 남은 두 노드의 합이 2라고 해서 CPU 2개를 요구하는 단일 task를 나눠 실행하지 않습니다. Feasible/available 상태, data locality, placement/label/affinity 조건을 함께 고려합니다.
 
 논리 CPU/GPU resource는 admission과 scheduling에 쓰입니다. `num_cpus=1`이 프로세스의 모든 OS thread를 한 core로 강제 제한하는 것은 아닙니다. 실제 container request/limit과 library thread 설정도 관리합니다.
 

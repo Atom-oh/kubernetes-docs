@@ -133,7 +133,7 @@ BGPConfiguration default는 ASN, mesh, Service 광고 등의 클러스터 기본
 
 </details>
 
-9. 재사용 외부 CIDR 집합을 정의하는 Calico NetworkSet과 기능이 유사한 Cilium 리소스는?
+9. 재사용 가능한 외부 CIDR 집합을 정의하는 Calico NetworkSet과 기능이 유사한 Cilium 리소스는?
    - A) CiliumNetworkPolicy
    - B) CiliumEndpoint
    - C) CiliumCIDRGroup with cidrGroupRef/cidrGroupSelector

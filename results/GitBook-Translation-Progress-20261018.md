@@ -1,0 +1,29 @@
+# GitBook translation progress
+
+Checkpoint: 2026-10-18T13:06:51.785604+00:00
+
+Chinese, Japanese and Spanish each contain all 693 English Markdown counterparts and all 690 required navigation references. Three managed native Codex subagents running `openai.gpt-6-luna` perform full-page source comparisons and repair retained translations. Manual work uses native Codex agents without external model calls.
+
+| Locale | English pages | Present | Missing | Reviewed Markdown changes staged | Existing structure failures | Genuine current complete reviews | Remaining reviews |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| cn | 693 | 693 | 0 | 13 | 68 | 307 | 386 |
+| jp | 693 | 693 | 0 | 11 | 255 | 245 | 448 |
+| es | 693 | 693 | 0 | 11 | 192 | 254 | 439 |
+
+**Quality review: IN PROGRESS.** The 806 current complete reviews include 2 saved-byte-proven canonical-ID-only derivations retaining their original genuine scores. The other 804 records match their reviewed target bytes directly. Historical repeated Japanese reviews are retained and counted once per page. File presence and structural checks do not establish semantic review or quality grades. Each page requires a genuine whole-page source comparison, current hashes, saved reviewed bytes and an actual score of at least 85. Another 1273 full-page reviews remain; the PR stays a draft without deployment.
+
+This checkpoint stages 35 Markdown changes whose genuine full-page reviews and saved bytes match the staging snapshot. Fenced code, link destinations, heading/fence counts and language size thresholds match English. 50 edited pages remain excluded because source contracts or genuine current review evidence are pending. Review ledgers are frozen before staging so agents can continue on new pages without inflating this checkpoint's counts.
+
+Native GPT-6.1-Sol completed 128 whole-page wording reviews: 125 Chinese pages, two Spanish pages and Japanese SUMMARY. Actual findings, resolutions, original scores, hashes and saved reviewed bytes are retained in `Native-Sol-Wording-Review-20261018.json`. The native host completed 44 additional Chinese whole-page comparisons with its honest reviewer identity. Imported records are checked against current bytes before contributing to the counts above.
+
+The unified Actions workflow scans cn/jp/es together, serializes batches, persists retries and accumulates one translation branch and PR. Reviewed translations on main supersede obsolete draft outputs during import and refresh. Future Actions translation uses GPT-6-Luna; provider errors stop before queue mutation. Translation instructions require idiomatic full prose and preserve conditions, exceptions and dependency direction. Context-specific terms distinguish database schema, business domains, IAM roles, MIG profiles, Operator operands, Kafka log compaction, validated dependency version combinations, accounting credit pools, lab guest VMs, packet/alert content, receiver-advertised receive windows, operational release windows and alert resolution notifications.
+
+All five CI validation/build jobs at `9b2bf1de` passed. The five-locale build completed in 18:24.67 with a 4,636 MB site, 7,738 MB peak process RSS and 7,959 MB peak build disk usage, and generated all 235 README redirects without missing-page warnings. The subsequent `aa2b9f9a` and `37b5a3df` snapshots have passed their four non-build jobs; their builds were still running at the last status check. These results apply to those pushed snapshots. The current translation-prompt changes and newly merged main redirect changes passed the complete local 177-test suite, all 94 bilingual news records, Korean/English links and parity, and referenced PNG checks across all five locales.
+
+Fresh actual VitePress/Vue rendering examined all 3,465 pages with zero compilation failures and zero literal bold markers. Fresh authored local-fragment checks found zero failures across all five locales. These are byte-specific diagnostic snapshots, not final multilingual acceptance: retained translations still have 44 Chinese, 142 Japanese and 94 Spanish heading hierarchy differences. Final acceptance requires all 2,079 genuine current reviews and fresh renderer, hierarchy and fragment checks on every page.
+
+Assets are copied from English with identical bytes and without Markdown rewrites during parallel editing. This checkpoint requires no additional asset copies and reports zero unresolved destinations. The earlier Chinese emphasis repair fixed 894 malformed regions across 113 pages while preserving prose and exact fenced code; those repairs alone are not semantic reviews. The Japanese Kafka benchmark guide now has a complete native translation with its source caveats, eight code blocks and image links preserved.
+
+English drift remains zero across all 693 frozen source blobs, and the branch contains the latest fetched main `0fbcadc3efb728c975513d587840a97647d6b2e7`. All 1,040 changed English/Korean documents preserve protected code, link destinations, heading/fence counts and explicit anchors. Review aggregation rejects stale bytes, incomplete full-page evidence and unresolved findings. Translation state is finalized only after all 2,079 genuine current reviews and final global checks pass.
+
+The earlier anchor CLI incident remains documented in `Native-Anchor-Repair-Review-20261018.json`; original scores are retained only where saved bytes prove a canonical-ID-only transformation. A Spanish wrong-checkout edit was backed up and restored at its affected primary-checkout path. The scaling-quiz final newline correction received a complete native reread with its original actual scores and exact new reviewed bytes retained. Neither mechanical transformation is assigned a new semantic grade.

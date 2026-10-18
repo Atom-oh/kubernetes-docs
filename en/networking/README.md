@@ -71,7 +71,7 @@ Services describe a logical set of endpoints, usually Pods, and how to reach the
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-2.html)
 
-These are typical exposure mechanisms, not security guarantees. NodePort range and accessible node addresses are configurable; LoadBalancers can be internal. ExternalName returns a DNS alias and does not create a forwarding proxy.
+These are typical exposure mechanisms, not security guarantees. The NodePort range and accessible node addresses are configurable; LoadBalancers can be internal. ExternalName returns a DNS alias and does not create a forwarding proxy.
 
 #### Service Type Characteristics
 

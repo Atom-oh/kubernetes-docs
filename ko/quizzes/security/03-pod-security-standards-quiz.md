@@ -182,7 +182,7 @@ pod-security.kubernetes.io/<MODE>-version: <VERSION>
 **정답: B) 기본적으로 활성화되어 있음**
 
 **설명:**
-PSA는 upstream Kubernetes 1.23에서 베타·기본 활성화가 되었고 1.25에서 GA가 되었습니다. AWS는 EKS 1.23부터 기본 활성화하며 privileged/latest 기본값과 정적 예외 없음으로 설명합니다. 실제 namespace 레이블을 조회하고 적절한 정책을 적용해야 하며 활성화만으로 Baseline/Restricted가 적용되는 것은 아닙니다.
+PSA는 upstream Kubernetes 1.23에서 베타·기본 활성화가 되었고 1.25에서 GA가 되었습니다. AWS는 EKS 1.23부터 기본 활성화하며 기본값은 privileged/latest이고 정적 예외는 없다고 설명합니다. 실제 namespace 레이블을 조회하고 적절한 정책을 적용해야 하며 활성화만으로 Baseline/Restricted가 적용되는 것은 아닙니다.
 
 </details>
 
@@ -274,6 +274,6 @@ Privileged는 다음 유효한 Pod 필드에 PSS 제약을 추가하지 않습�
 - 모든 capabilities 허용
 - 모든 볼륨 타입 허용
 
-IAM/RBAC 권한을 부여하거나 스키마·다른 어드미션을 우회하거나 privileged: true를 강제하지 않습니다. 검토한 호스트 접근 컴포넌트에만 이런 네임스페이스를 제한합니다.
+IAM/RBAC 권한을 부여하거나 스키마·다른 어드미션을 우회하거나 privileged: true를 강제하지 않습니다. 이런 네임스페이스의 사용을 검토한 호스트 접근 컴포넌트로만 제한합니다.
 
 </details>

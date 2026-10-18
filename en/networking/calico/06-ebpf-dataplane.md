@@ -163,7 +163,7 @@ Use the current requirements for the selected release, not a historical minimum:
 | Underlay | Permit the configured VXLAN traffic between nodes, including NodePort forwarding even when Pod pools are unencapsulated |
 | Runtime | Required BPF/cgroup facilities, privileges and writable mounts; immutable OS variants require a suitable `CgroupV2Path` |
 
-BTF supplies type information for CO-RE and tooling; it is not the verifier itself or a guarantee of compatibility with every kernel. Calico's released loader selects CO-RE/non-CO-RE object variants where supported, so `/sys/kernel/btf/vmlinux` is not a complete readiness test. Verify the release requirements, node configuration and actual load diagnostics. Pinned objects in bpffs survive the creating process, not a host reboot as persistent disk data.
+BTF supplies type information for CO-RE and tooling; it is not the verifier itself or a guarantee of compatibility with every kernel. Calico's released loader selects CO-RE/non-CO-RE object variants where supported, so `/sys/kernel/btf/vmlinux` is not a complete readiness test. Verify the release requirements, node configuration and actual load diagnostics. Pinned objects in bpffs survive the creating process, but not a host reboot as persistent disk data would.
 
 ### Platform Boundaries
 
@@ -182,7 +182,7 @@ kubectl get installation.operator.tigera.io default -o yaml
 kubectl get felixconfiguration.projectcalico.org default -o yaml
 ```
 
-Use the installation namespace and inspect the actual Calico/operator image versions. On each node, inspect `uname -r`, available BTF, bpffs and cgroup mounts in the host's mount namespace. A debug container's filesystem view is not automatically identical to the host. Do not upgrade an existing Helm release with a guessed release name or discard its values just to change dataplane mode.
+Use the installation namespace and inspect the actual Calico/operator image versions. On each node, inspect `uname -r`, available BTF, bpffs and cgroup mounts in the host's mount namespace. A debug container's filesystem view is not automatically identical to the host's. Do not upgrade an existing Helm release with a guessed release name or discard its values just to change dataplane mode.
 
 ## iptables to eBPF Migration
 
@@ -201,7 +201,7 @@ The operator configures direct API access and manages kube-proxy during the tran
 
 ### Manual Preparation and Ownership
 
-For other supported installations, first establish stable **direct** API-server access that does not depend on the Service implementation being replaced. Use the actual API load-balancer hostname/address and port. For EKS this is the cluster's API endpoint hostname, normally port 443; the example below is a placeholder for a self-managed API endpoint.
+For other supported installations, first establish stable **direct** API-server access that does not depend on the Service implementation being replaced. Use the actual API load-balancer hostname/address and port. For EKS this is the cluster's API endpoint hostname, normally on port 443; the example below is a placeholder for a self-managed API endpoint.
 
 ```yaml
 apiVersion: v1

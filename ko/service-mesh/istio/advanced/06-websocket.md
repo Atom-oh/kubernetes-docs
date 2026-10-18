@@ -7,7 +7,7 @@ Istio는 생성한 HTTP connection manager에서 WebSocket upgrade를 활성화�
 
 ## 기본 설정
 
-전제조건은 표시한 라벨과443번 포트를 제공하는 기존 ingress Gateway Deployment/Service, `ws.example.com` DNS, Gateway workload namespace의 `ws-tls` 인증서/키 Secret,8080번의 `/ws`를 제공하는 기존 `app: websocket-service` Pod입니다. 예시 domain은 인증서가 포함하는 실제 이름으로 바꾸세요. 다음 리소스는 앱 배포·로드 밸런서·인증서를 생성하지 않습니다.
+전제조건은 표시한 라벨과 443번 포트를 제공하는 기존 ingress Gateway Deployment/Service, `ws.example.com` DNS, Gateway workload namespace의 `ws-tls` 인증서/키 Secret, 8080번의 `/ws`를 제공하는 기존 `app: websocket-service` Pod입니다. 예시 domain은 인증서가 포함하는 실제 이름으로 바꾸세요. 다음 리소스는 앱 배포·로드 밸런서·인증서를 생성하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -93,7 +93,7 @@ spec:
         idleTimeout: 3600s
 ```
 
-`maxConnections`와 pending request 제한은 프록시별 목적지 pool 설정이며 클러스터 전체 WebSocket 수용량 보장이 아닙니다. `connectionPool.http.idleTimeout`은 활성 request/stream이 없는 HTTP 연결의 idle을 뜻하며 활성 WebSocket의1시간 수명이나 메시지 idle 제한이 아닙니다.
+`maxConnections`와 pending request 제한은 프록시별 목적지 pool 설정이며 클러스터 전체 WebSocket 수용량 보장이 아닙니다. `connectionPool.http.idleTimeout`은 활성 request/stream이 없는 HTTP 연결의 idle을 뜻하며 활성 WebSocket의 1시간 수명이나 메시지 idle 제한이 아닙니다.
 
 생성된 HCM/route의 stream idle 설정, 최대 stream/connection 시간, 앱 heartbeat/close 정책, 모든 중간 장비의 idle timeout을 확인하세요. Istio HCM 생성 및 설치된 ConnectionSettings가 Envoy 기본값을 바꿀 수 있습니다. Body buffering/filter는 upgrade와 호환되지 않을 수 있습니다. 복제본이 확장되어도 기존 WebSocket은 이동하지 않으므로 drain과 앱 수준 재연결을 계획하고 쓰기를 무조건 재생하지 않아야 합니다.
 
@@ -108,7 +108,7 @@ istioctl proxy-config clusters <gateway-pod> -n istio-system --fqdn websocket-se
 curl --http1.1 --include --max-time 5 https://ws.example.com/ws -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ=='
 ```
 
-이 HTTP/1.1 검사에서는 정상 서버가 일반적으로101과 올바른 `Sec-WebSocket-Accept`를 반환합니다. curl은 handshake만 검사하며5초 제한에 도달하면 열린 연결을 exit 28로 끝낼 수 있습니다. 실제 WebSocket client로 frame·ping/pong·앱 인증·장시간 idle·close code·롤아웃/재연결을 시험하세요. 문서 감사에서는 배포나 live session 시험을 수행하지 않았습니다.
+이 HTTP/1.1 검사에서는 정상 서버가 일반적으로 101과 올바른 `Sec-WebSocket-Accept`를 반환합니다. curl은 handshake만 검사하며 5초 제한에 도달하면 열린 연결을 exit 28로 끝낼 수 있습니다. 실제 WebSocket client로 frame·ping/pong·앱 인증·장시간 idle·close code·롤아웃/재연결을 시험하세요. 문서 감사에서는 배포나 live session 시험을 수행하지 않았습니다.
 
 ## 참고 자료
 

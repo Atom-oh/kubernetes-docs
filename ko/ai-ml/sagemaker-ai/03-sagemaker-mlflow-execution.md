@@ -1,12 +1,12 @@
 # Part 3: SageMaker AI와 MLflow 실행
 
-직접 따라가는 학습은 [QLoRA 학습 실습](05-qlora-finetuning-workshop.md)에서 시작합니다. 이 장은 기존 구현과 운영 계약을 설명합니다.
+직접 따라 하는 학습은 [QLoRA 학습 실습](05-qlora-finetuning-workshop.md)에서 시작합니다. 이 장은 기존 구현과 운영 계약을 설명합니다.
 
 > **마지막 업데이트**: 2026년 9월 12일
 
 ## 실행 전 주의
 
-**현재 커밋된 GPU 실행 경로는 지원 종료 이미지 때문에 차단됩니다.** 예제의 PyTorch `2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker` DLC는 공식 카탈로그에서 패치 지원 종료일을 `2026-08-06`으로 명시합니다. `src/runtime_contract.py`는 preflight·provisioning·Training Job 제출·EKS 생성·학습 진입점에서 이 기준을 검사합니다. 이미지, `torch` 및 의존성을 함께 갱신하고 GPU smoke 검증을 수행하기 전에 날짜 검사만 제거하면 안 됩니다.
+**현재 커밋된 GPU 실행 경로는 지원 종료 이미지 때문에 차단됩니다.** 예제의 PyTorch `2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker` DLC는 공식 카탈로그에 패치 지원 종료일이 `2026-08-06`으로 명시되어 있습니다. `src/runtime_contract.py`는 preflight·provisioning·Training Job 제출·EKS 생성·학습 진입점에서 이 기준을 검사합니다. 이미지, `torch` 및 의존성을 함께 갱신하고 GPU smoke 검증을 수행하기 전에 날짜 검사만 제거하면 안 됩니다.
 
 아래는 `examples/ai-ml/qwen-pii-finetuning/`의 수정된 실행 계약입니다. 로컬 테스트·요청 미리보기·소유 자원 정리는 사용할 수 있습니다. 2026년 9월 1일 AWS 실험은 **학습 제출 전에 중단**됐으며, 이번 검토에서도 AWS 자원 생성이나 GPU 학습은 수행하지 않았습니다.
 
@@ -71,7 +71,7 @@ python3 -m launch.sagemaker_train \
   --mode smoke --inventory results/resource-inventory.json
 ```
 
-기본 동작은 `results/previews/` 아래 고유한 미리보기 JSON을 작성하며 AWS 제출은 하지 않습니다. 실제 제출 기록인 `<job-name>-request.json`과 `<job-name>-job.json`은 덮어쓰지 않습니다. 지원되는 런타임 검증 후 `--execute`를 붙여야 실제 제출합니다. full은 별도로 `--mode full --execute`를 지정합니다. 성공한 smoke나 입력 해시 확인을 launcher가 자동 승인하는 것은 아닙니다.
+기본 동작에서는 `results/previews/` 아래 고유한 미리보기 JSON을 작성하며 AWS 제출은 하지 않습니다. 실제 제출 기록인 `<job-name>-request.json`과 `<job-name>-job.json`은 덮어쓰지 않습니다. 지원되는 런타임 검증 후 `--execute`를 붙여야 실제 제출합니다. full은 별도로 `--mode full --execute`를 지정합니다. 성공한 smoke나 입력 해시 확인을 launcher가 자동 승인하는 것은 아닙니다.
 
 설정 파일은 소스 번들의 `/opt/ml/code/config/experiment.yaml`에서 읽습니다. 데이터 channel의 `/opt/ml/input/data/dataset/`에는 네 데이터 파일이 있습니다. 로컬 `--config`와 번들 설정이 일치하도록 같은 소스에서 생성해야 합니다.
 

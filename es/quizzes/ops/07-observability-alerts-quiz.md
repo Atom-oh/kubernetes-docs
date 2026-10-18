@@ -4,7 +4,7 @@
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Qué expresión PromQL detecta CPU throttling en contenedores?
+### 1. ¿Qué expresión PromQL detecta el throttling de CPU en contenedores?
 
 - A) `container_cpu_usage_seconds_total`
 - B) `rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0`
@@ -17,28 +17,28 @@
 **Respuesta: B) `rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0`**
 
 **Explicación:**
-CPU throttling ocurre cuando un contenedor supera su límite de CPU. La métrica `container_cpu_cfs_throttled_seconds_total` registra el tiempo que se pasa con throttling. Una tasa positiva indica throttling activo que puede afectar el rendimiento de la aplicación.
+El throttling de CPU puede ocurrir cuando se agota la cuota CFS disponible; interprétalo junto con la cuota de la carga de trabajo y el contexto de rendimiento. La métrica `container_cpu_cfs_throttled_seconds_total` registra el tiempo que se pasa bajo throttling. Una tasa positiva indica throttling activo que puede afectar al rendimiento de la aplicación.
 
 </details>
 
 ### 2. ¿Cuál es el propósito de la configuración `group_by` de Alertmanager?
 
 - A) Eliminar alertas
-- B) Agregar alertas con etiquetas coincidentes en notificaciones individuales
+- B) Agrupar las alertas con etiquetas coincidentes en una sola notificación
 - C) Aumentar la severidad de las alertas
 - D) Enrutar alertas a logs
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agregar alertas con etiquetas coincidentes en notificaciones individuales**
+**Respuesta: B) Agrupar las alertas con etiquetas coincidentes en una sola notificación**
 
 **Explicación:**
-`group_by` combina múltiples alertas activas que comparten valores de etiquetas especificados en una sola notificación. Esto reduce la fatiga por alertas durante incidentes que activan muchas alertas similares (por ejemplo, todos los Pods de un Deployment fallando).
+`group_by` combina varias alertas activas que comparten los valores de las etiquetas especificadas en una sola notificación. Esto reduce la fatiga por alertas durante incidentes que activan muchas alertas similares (por ejemplo, cuando fallan todos los Pods de un Deployment).
 
 </details>
 
-### 3. ¿Qué métrica es más importante para detectar la terminación de un Node en EKS Auto Mode?
+### 3. ¿Qué métrica ayuda a observar la preparación de un Node de Kubernetes?
 
 - A) `node_cpu_seconds_total`
 - B) `kube_node_status_condition` con condition="Ready"
@@ -51,32 +51,32 @@ CPU throttling ocurre cuando un contenedor supera su límite de CPU. La métrica
 **Respuesta: B) `kube_node_status_condition` con condition="Ready"**
 
 **Explicación:**
-Monitorear `kube_node_status_condition` para Ready=false detecta Nodes que dejan de estar disponibles. En Auto Mode, esto indica la terminación o el reemplazo de un Node. Combinado con etiquetas, puedes rastrear el ciclo de vida de los Nodes y los patrones de reemplazo.
+La condición Ready informa sobre la preparación de un Node observado. False o Unknown pueden deberse a varias causas y no demuestran que el Node haya terminado ni que lo hayan reemplazado. Correlaciona el inventario, las condiciones de Node/NodeClaim y los eventos o registros de auditoría reales.
 
 </details>
 
-### 4. ¿Qué especifica la duración `for` en una regla de alerting de Prometheus?
+### 4. ¿Qué especifica la duración `for` en una regla de alertas de Prometheus?
 
-- A) Cuánto tiempo conservar las alertas en el historial
-- B) Cuánto tiempo debe ser verdadera una condición antes de activarse
-- C) El intervalo de evaluación de alertas
-- D) El timeout de notificación
+- A) Durante cuánto tiempo se conservan las alertas en el historial
+- B) Durante cuánto tiempo debe ser verdadera una condición antes de activar la alerta
+- C) El intervalo de evaluación de las alertas
+- D) El tiempo de espera de la notificación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cuánto tiempo debe ser verdadera una condición antes de activarse**
+**Respuesta: B) Durante cuánto tiempo debe ser verdadera una condición antes de activar la alerta**
 
 **Explicación:**
-La cláusula `for` especifica la duración durante la cual una condición debe ser verdadera continuamente antes de que la alerta pase de "pending" a "firing". Esto evita alertas por picos breves y reduce los falsos positivos.
+La cláusula `for` especifica cuánto tiempo debe mantenerse continuamente una condición antes de que la alerta pase de "pending" a "firing". Así se evitan alertas por picos breves y se reducen los falsos positivos.
 
 </details>
 
-### 5. ¿Cómo deben definirse los niveles de severidad de las alertas?
+### 5. ¿Cómo se deben definir los niveles de severidad de las alertas?
 
 - A) Todas las alertas deben ser críticas
 - B) Según el impacto en el negocio y el tiempo de respuesta requerido
-- C) Asignados aleatoriamente
+- C) Asignados al azar
 - D) Según el nombre de la métrica
 
 <details>
@@ -85,11 +85,11 @@ La cláusula `for` especifica la duración durante la cual una condición debe s
 **Respuesta: B) Según el impacto en el negocio y el tiempo de respuesta requerido**
 
 **Explicación:**
-La severidad debe reflejar el impacto: crítica para interrupciones de cara al cliente que requieren respuesta inmediata, advertencia para degradación que necesita atención en cuestión de horas e informativa para conocimiento sin acción. Esto permite el enrutamiento y la escalación de guardia adecuados.
+La severidad debe reflejar el impacto: crítica para interrupciones que afectan a los clientes y requieren respuesta inmediata; advertencia para una degradación que necesita atención en cuestión de horas; e informativa para avisos que no requieren acción. Esto permite un enrutamiento y una escalación de guardia adecuados.
 
 </details>
 
-### 6. ¿Qué función PromQL calcula la tasa de aumento a lo largo del tiempo?
+### 6. ¿Qué función de PromQL calcula la tasa de aumento a lo largo del tiempo?
 
 - A) `sum()`
 - B) `rate()`
@@ -102,74 +102,74 @@ La severidad debe reflejar el impacto: crítica para interrupciones de cara al c
 **Respuesta: B) `rate()`**
 
 **Explicación:**
-`rate()` calcula la tasa promedio por segundo de aumento durante un rango de tiempo. Está diseñada para contadores y maneja reinicios de contadores. Por ejemplo, `rate(http_requests_total[5m])` da las solicitudes por segundo promediadas durante 5 minutos.
+`rate()` calcula la tasa media de aumento por segundo durante un intervalo. Está diseñada para contadores y maneja sus reinicios. Por ejemplo, `rate(http_requests_total[5m])` da el promedio de solicitudes por segundo durante cinco minutos.
 
 </details>
 
-### 7. ¿Cuál es el enfoque recomendado para las alertas de pérdida de paquetes?
+### 7. ¿Cuál es el enfoque recomendado para las alertas por pérdida de paquetes?
 
-- A) Alertar ante cualquier pérdida de un solo paquete
-- B) Alertar cuando la tasa de pérdida supere un umbral sostenido a lo largo del tiempo
-- C) Nunca alertar por pérdidas de paquetes
-- D) Solo registrar pérdidas de paquetes en logs
+- A) Alertar ante la pérdida de un solo paquete
+- B) Alertar cuando la tasa de pérdida supere un umbral de forma sostenida
+- C) No alertar nunca por pérdida de paquetes
+- D) Registrar únicamente las pérdidas de paquetes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Alertar cuando la tasa de pérdida supere un umbral sostenido a lo largo del tiempo**
+**Respuesta: B) Alertar cuando la tasa de pérdida supere un umbral de forma sostenida**
 
 **Explicación:**
-Las pérdidas ocasionales de paquetes son normales en las redes. Las alertas deben activarse ante tasas de pérdida elevadas sostenidas que indiquen problemas reales. Usar `rate()` sobre una ventana (por ejemplo, 5m) con un umbral evita alertas por picos transitorios.
+En las redes son normales algunas pérdidas ocasionales de paquetes. Las alertas deben activarse ante tasas de pérdida elevadas y sostenidas que indiquen problemas reales. Usar `rate()` sobre una ventana (por ejemplo, 5m) junto con un umbral evita alertas por picos transitorios.
 
 </details>
 
 ### 8. En el enrutamiento de Alertmanager, ¿qué hace `continue: true`?
 
-- A) Detiene el procesamiento de rutas adicionales
-- B) Permite que la alerta coincida con rutas adicionales después de la actual
+- A) Detiene el procesamiento de las rutas posteriores
+- B) Permite que la alerta también coincida con rutas posteriores a la actual
 - C) Repite la notificación de alerta
 - D) Silencia la alerta
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Permite que la alerta coincida con rutas adicionales después de la actual**
+**Respuesta: B) Permite que la alerta también coincida con rutas posteriores a la actual**
 
 **Explicación:**
-De forma predeterminada, Alertmanager se detiene en la primera ruta coincidente. Establecer `continue: true` permite que una alerta coincida con múltiples rutas, lo que habilita escenarios como enviar alertas críticas tanto a PagerDuty como a Slack simultáneamente.
+`continue: true` permite que la alerta también coincida con rutas hermanas posteriores. Si ya coincidió con una ruta hija, el receptor raíz no funciona automáticamente como alternativa. Prueba el árbol completo, incluidas las alertas críticas que no coincidan con una ruta de equipo.
 
 </details>
 
-### 9. ¿Qué métrica indica que se excedió el ancho de banda de red en Nodes de EKS?
+### 9. ¿Qué expresión ayuda a medir el caudal de transmisión de la red?
 
 - A) `container_cpu_usage_seconds_total`
-- B) `node_network_transmit_bytes_total` acercándose a los límites de red de la instancia
+- B) `rate(node_network_transmit_bytes_total[5m])` con unidades que correspondan al contrato de capacidad real
 - C) `kube_pod_container_status_running`
 - D) `container_fs_writes_bytes_total`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `node_network_transmit_bytes_total` acercándose a los límites de red de la instancia**
+**Respuesta: B) `rate(node_network_transmit_bytes_total[5m])` con unidades que correspondan al contrato de capacidad real**
 
 **Explicación:**
-`node_network_transmit_bytes_total` y `node_network_receive_bytes_total` registran la E/S de red. Comparar la tasa con los límites de ancho de banda de red de la instancia EC2 ayuda a identificar cuándo las cargas de trabajo están alcanzando restricciones de red.
+`node_network_transmit_bytes_total` y `node_network_receive_bytes_total` registran la E/S de red. La tasa se expresa en bytes/s; multiplícala por ocho para obtener bits/s y compárala con la línea base, la capacidad de ráfaga y los límites de la ruta que se hayan verificado. El contador acumulativo por sí solo, la velocidad anunciada de una NIC virtual o un límite universal supuesto de 10 Gbps no demuestran saturación.
 
 </details>
 
 ### 10. ¿Cuál es el propósito de las reglas de inhibición de alertas en Alertmanager?
 
 - A) Aumentar la prioridad de las alertas
-- B) Suprimir alertas dependientes cuando se está activando una alerta principal
-- C) Enrutar alertas a diferentes receptores
+- B) Suprimir las alertas dependientes cuando se activa una alerta principal
+- C) Enrutar alertas a distintos receptores
 - D) Crear alertas nuevas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Suprimir alertas dependientes cuando se está activando una alerta principal**
+**Respuesta: B) Suprimir las alertas dependientes cuando se activa una alerta principal**
 
 **Explicación:**
-Las reglas de inhibición evitan tormentas de alertas silenciando alertas descendentes cuando se activa una alerta de causa raíz. Por ejemplo, cuando se activa "NodeDown", inhibe todas las alertas "PodNotReady" para los Pods en ese Node, ya que son síntomas del mismo problema.
+La inhibición suprime las notificaciones que coinciden según los selectores de origen y destino configurados y las etiquetas que deben ser iguales. No determina automáticamente la causa raíz. Exige identificadores de clúster o entidad no vacíos para que las etiquetas ausentes no supriman alertas que no guardan relación; la evaluación de Prometheus continúa.
 
 </details>

@@ -1,6 +1,6 @@
 # Cuestionario del laboratorio de Observabilidad, parte 6
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 1. ¿Cómo se distinguen las duraciones de una traza completa y de un span individual?
    - A) Siempre son idénticas.
@@ -47,7 +47,7 @@ Si un SDK aún emite http.status_code, inspecciona sus datos y usa la consulta h
 
 **Respuesta: B) Los spans B que descienden de los spans A.**
 
-Coloca el selector de Service a la izquierda y el selector de DB a la derecha para encontrar trabajo de DB descendiente.
+Coloca el selector de servicio a la izquierda y el selector de base de datos a la derecha para encontrar trabajo de base de datos descendiente.
 
 </details>
 
@@ -64,7 +64,7 @@ Coloca el selector de Service a la izquierda y el selector de DB a la derecha pa
 
 **Respuesta: B) TraceQL válido más la configuración de ordenación/límite de búsqueda de Grafana.**
 
-El parser real de Tempo3.0.3 rechaza esos ejemplos antiguos de sort/order-by/limit.
+El analizador sintáctico de Tempo 3.0.3 rechaza esos ejemplos antiguos con `sort`, `order by` y `limit`.
 
 </details>
 
@@ -72,14 +72,14 @@ El parser real de Tempo3.0.3 rechaza esos ejemplos antiguos de sort/order-by/lim
 
 5. ¿Qué requiere un grafo de servicios?
    - A) Solo instalar Tempo.
-   - B) Spans conectados, un procesador service-graphs, un backend de metrics y vinculación de datasource.
+   - B) Spans conectados, un procesador `service-graphs`, un backend de métricas y la vinculación de la fuente de datos.
    - C) Solo almacenar trace IDs como labels de log.
    - D) Dibujar manualmente nodos rojos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Spans conectados, un procesador service-graphs, un backend de metrics y vinculación de datasource.**
+**Respuesta: B) Spans conectados, un procesador `service-graphs`, un backend de métricas y la vinculación de la fuente de datos.**
 
 Valida por separado la ingesta de trazas y la entrega de métricas de grafos.
 
@@ -91,14 +91,14 @@ Valida por separado la ingesta de trazas y la entrega de métricas de grafos.
    - A) Definitivamente falta un índice.
    - B) La duración de la operación observada; su causa necesita más evidencia.
    - C) La red está en buen estado.
-   - D) Es seguro sumarlo con todas las duraciones principales.
+   - D) Es seguro sumarlo con las duraciones de todos los spans padre.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B) La duración de la operación observada; su causa necesita más evidencia.**
 
-Comprueba locks, pools, red y planes de consulta; evita contar dos veces spans superpuestos.
+Comprueba los bloqueos, los pools, la red y los planes de consulta; evita contar dos veces los spans superpuestos.
 
 </details>
 
@@ -106,33 +106,33 @@ Comprueba locks, pools, red y planes de consulta; evita contar dos veces spans s
 
 7. ¿Cómo debe escribirse una expresión de enlace de campo derivado en el provisioning de Grafana?
    - A) Elimina todas las variables de dólar con envsubst.
-   - B) Escapa la sustitución de provisioning con $${__value.raw}.
+   - B) Escapa la sustitución de variables de provisión con $${__value.raw}.
    - C) Agrega trace IDs a cada label de stream.
    - D) Agrega límites de tiempo como una cláusula SQL de LogQL.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Escapa la sustitución de provisioning con $${__value.raw}.**
+**Respuesta: B) Escapa la sustitución de variables de provisión con $${__value.raw}.**
 
-Los nombres reales de los campos de trace ID y los UID de datasource también deben coincidir.
+Los nombres reales de los campos de ID de traza y los UID de la fuente de datos también deben coincidir.
 
 </details>
 
 ---
 
-8. ¿A qué solicitud conduce un exemplar?
+8. ¿A qué solicitud conduce un ejemplar?
    - A) Necesariamente a la solicitud exacta del límite p99.
-   - B) A una observación representativa cuya traza aún debe conservarse.
+   - B) A una observación representativa cuya traza debe seguir conservándose.
    - C) A una copia de cada solicitud.
    - D) Siempre recuperable independientemente del sampling de trazas.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) A una observación representativa cuya traza aún debe conservarse.**
+**Respuesta: B) A una observación representativa cuya traza debe seguir conservándose.**
 
-El sampling y la retención pueden hacer que los IDs de exemplar y la disponibilidad de trazas sean diferentes.
+El muestreo y la retención pueden hacer que los ID de ejemplares y la disponibilidad de trazas sean diferentes.
 
 </details>
 

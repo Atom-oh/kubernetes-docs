@@ -1,11 +1,11 @@
 # メトリクス概要クイズ
 
-> **最終更新**: September 12, 2026
+> **最終更新日**: 2026年9月12日
 
 1. リセットされる可能性がある累積カウントを表すタイプはどれですか？
 
-   - A) Gauge
-   - B) Counter
+   - A) Gauge（ゲージ）
+   - B) Counter（カウンター）
    - C) 事前計算された p99
    - D) スクレイプのタイムスタンプ
 
@@ -14,14 +14,14 @@
 
 **回答: B**
 
-Counter は非負の増分を累積します。計測対象の状態が再作成された場合、リセットが発生することがあります。rate() は観測されたリセットを処理しますが、観測されなかった増分を復元することはできません。
+Counter は0以上の増分を累積します。計測対象の状態が作り直されると、値がリセットされることがあります。`rate()` は観測できたリセットを処理しますが、観測できなかった増分を復元することはできません。
 
 </details>
 
 2. 5 つのメソッド、20 のルート、10 のステータスは何を意味しますか？
 
-   - A) すべての Deployment に正確に 1,000 個の保存済み series が存在する
-   - B) すべての組み合わせが可能な場合、アプリケーションラベルの組み合わせは最大 1,000 個
+   - A) すべてのデプロイで保存される時系列が正確に1,000本になる
+   - B) すべての組み合わせが発生し得る場合、アプリケーションラベルの組み合わせは最大1,000通りになる
    - C) 1 日あたり正確に 1,000 個のサンプル
    - D) リソース使用量に影響しない
 
@@ -30,135 +30,135 @@ Counter は非負の増分を累積します。計測対象の状態が再作成
 
 **回答: B**
 
-この積は上限です。実際の組み合わせ、target/replica ラベル、histogram bucket、および履歴上の変動によって、実際の series/ストレージ使用量が決まります。
+掛け算の結果は上限です。実際の組み合わせ、target/replica ラベル、ヒストグラムのバケット、過去の変動によって、時系列の実数とストレージ使用量が決まります。
 
 </details>
 
 3. 適切な Pushgateway の使用方法はどれですか？
 
-   - A) すべての短命な Pod に 1 つの HOSTNAME grouping key を使用し、自動期限切れに依存する
-   - B) 安定したグループ化、成功タイムスタンプ、明示的な削除ポリシーを備えた、適切なサービスレベルのバッチに使用する
-   - C) gateway up=1 を、すべてのバッチが成功した証拠として扱う
-   - D) バッチが失敗した場合でも成功タイムスタンプを push する
+   - A) すべての短命な Pod で同じ `HOSTNAME` グループキーを使い、自動期限切れに頼る
+   - B) 適切なサービス単位のバッチで、安定したグループ化、成功時刻、明示的な終了方針を設けて使う
+   - C) `gateway up=1` を、すべてのバッチが成功した証拠とみなす
+   - D) バッチが失敗しても成功時刻を push する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-Pushgateway はすべての短命な job に対するデフォルトではなく、group に自動 TTL はありません。スクレイプの正常性は、バッチの鮮度とは別です。honor_labels を使用したスクレイプでは、push された job identity が保持されます。
+Pushgateway は、短時間で終了するすべてのジョブに使う既定の選択肢ではありません。また、グループに自動 TTL はありません。スクレイプが成功していることと、バッチデータが新しいことは別です。`honor_labels` を有効にしてスクレイプすると、push されたジョブ名が保持されます。
 
 </details>
 
 4. Histogram と Summary に関する正しい記述はどれですか？
 
-   - A) Summary の quantile は常に正確である
-   - B) instance の p99 値を平均すると fleet の p99 が得られる
-   - C) 互換性のある classic histogram bucket は結合できる。Summary の sum/count は平均のために結合できる
-   - D) Summary データを集約できることは一切ない
+   - A) Summary の分位点は常に正確である
+   - B) 各インスタンスの p99 を平均すれば、全体の p99 が得られる
+   - C) 互換性のある classic histogram バケットは結合できる。Summary の sum/count は平均を求めるために結合できる
+   - D) Summary のデータは一切集約できない
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-Classic bucket は計装された producer によってカウントされ、Prometheus はクエリ時に quantile を計算します。Summary の quantile にはアルゴリズムおよび window に依存する誤差があり、fleet の quantile に集約することはできません。一方、非負の duration の sum/count rate からは fleet の平均を得られます。
+classic バケットは計装した側でカウントし、Prometheus はクエリ時に分位点を計算します。Summary の分位点にはアルゴリズムや時間窓に依存する誤差があり、複数インスタンス全体の分位点には集約できません。一方、継続時間が0以上であれば、sum/count のレートから全体の平均を求められます。
 
 </details>
 
-5. 新しい Prometheus アプリケーションメトリクスで推奨されない規則はどれですか？
+5. 新しい Prometheus アプリケーションメトリクスで推奨されない命名規則はどれですか？
 
-   - A) 説明的な prefix を使用する
-   - B) _seconds や _bytes などの unit suffix を使用する
-   - C) 一般的な base-unit 規則よりも camelCase と millisecond 単位を優先する
-   - D) 累積 Counter を識別するために _total を使用する
+   - A) 説明的な接頭辞を使う
+   - B) `_seconds` や `_bytes` など、単位を示す接尾辞を使う
+   - C) 一般的な基本単位の規則より、camelCase とミリ秒単位を優先する
+   - D) 累積カウンターを示すために `_total` を使う
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-説明的なアンダースコア区切りの名前と base unit を優先します。_total は Counter のマーカーであり、物理単位ではありません。node_memory_MemAvailable_bytes など、既存の exporter API は公開済みの表記を維持します。
+説明的なスネークケースの名前と基本単位を使ってください。`_total` はカウンターを示す接尾辞であり、物理単位ではありません。`node_memory_MemAvailable_bytes` など既存の exporter API では、公開済みの名前をそのまま使います。
 
 </details>
 
-6. Prometheus の retention に関する正しい記述はどれですか？
+6. Prometheus のデータ保持期間について、正しい記述はどれですか？
 
-   - A) 30 日を超えて保持することは決してできない
-   - B) 明示的な時間/サイズの retention 設定がない場合、デフォルトは 15 日である。より長い retention には適切な設定と容量が必要である
+   - A) 30日を超えて保持することはできない
+   - B) 時間またはサイズの保持設定を明示しない場合、既定は15日である。より長く保持するには適切な設定と容量が必要である
    - C) ローカルデータを圧縮しない
-   - D) Mimir なしでは独立した collection replica は不可能である
+   - D) Mimir がなければ、独立した収集レプリカを構成できない
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-デフォルトの retention は上限ではありません。ローカル TSDB はレプリケートされた分散ストアではありません。collection redundancy、query deduplication、durability、および recovery はそれぞれ個別の設計判断です。
+既定の保持期間は上限ではありません。ローカル TSDB は複製された分散ストアではありません。収集の冗長化、クエリ結果の重複排除、耐久性、復旧はそれぞれ別に設計する必要があります。
 
 </details>
 
-7. product/storage に関する誤った主張はどれですか？
+7. 製品やストレージに関する、誤った主張はどれですか？
 
-   - A) VictoriaMetrics の single-node と cluster の Deployment では運用要件が異なる
-   - B) 従来の CloudWatch メトリクスの resolution は時間の経過とともに粗くなる
-   - C) Mimir の object storage は無制限のスケールを保証し、すべてのローカルストレージ要件を不要にする
-   - D) Datadog メトリクスは query rollup を使用するため、retention はすべてのグラフで元の resolution を保証しない
+   - A) VictoriaMetrics の単一ノード構成とクラスター構成では運用要件が異なる
+   - B) 従来の CloudWatch メトリクスは、時間の経過とともに解像度が粗くなる
+   - C) Mimir のオブジェクトストレージは無制限の拡張を保証し、ローカルストレージを一切不要にする
+   - D) Datadog のメトリクスはクエリ時に集約されるため、保持期間が長くてもすべてのグラフで元の解像度が保たれるとは限らない
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-Object storage は Mimir のアーキテクチャの一部であり、無制限の容量を保証するものではありません。ingest/local resource、query limit、replication、および運用容量は依然として重要です。バックアップ先や edition 固有の機能を、product の主要ストアと混同しないでください。
+オブジェクトストレージは Mimir の構成要素であり、容量が無制限になる保証ではありません。データ取り込みやローカルリソース、クエリ制限、レプリケーション、運用上の処理能力も考慮が必要です。バックアップ先や特定エディションの機能を、製品の主要な保存先と混同しないでください。
 
 </details>
 
-8. メトリクスの cardinality を制御できないアプローチはどれですか？
+8. メトリクスのカーディナリティを抑えられない方法はどれですか？
 
-   - A) 正規化されたルートテンプレートを使用する
-   - B) user/session ID を通常の label として使用しない
-   - C) 詳細を失っても許容できる場合は status code をグループ化する
-   - D) すべての request に新しい request_id label value を割り当てる
+   - A) 正規化したルートテンプレートを使う
+   - B) ユーザーIDやセッションIDを通常のラベルとして使わない
+   - C) 詳細が失われても問題ない場合は、ステータスコードをまとめる
+   - D) リクエストごとに新しい `request_id` ラベル値を割り当てる
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-値がハッシュ化されている場合も含め、異なる label value は異なる series を作成します。必要に応じて、request 固有のコンテキストは適切に制御された logs/traces に含めるべきです。cardinality と機密データの露出は、どちらもレビューが必要です。
+値をハッシュ化しても、ラベル値が異なれば別々の時系列が作られます。リクエスト固有の情報が必要な場合は、アクセスを適切に制御したログやトレースに記録してください。カーディナリティと機密データの露出は、どちらも確認が必要です。
 
 </details>
 
-9. 正しく対応付けられている Kubernetes メトリクスの役割はどれですか？
+9. Kubernetes のメトリクス提供元と役割の正しい組み合わせはどれですか？
 
-   - A) node-exporter — Kubernetes API object の status
-   - B) kube-state-metrics — 計測された container CPU usage
-   - C) cAdvisor/kubelet metrics — container resource measurements
-   - D) metrics-server — 長期的な Prometheus TSDB
+   - A) node-exporter — Kubernetes API オブジェクトの状態
+   - B) kube-state-metrics — 計測されたコンテナの CPU 使用量
+   - C) cAdvisor/kubelet のメトリクス — コンテナリソースの測定値
+   - D) metrics-server — 長期保存用の Prometheus TSDB
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-node-exporter は host OS metrics を報告します。kube-state-metrics は API object state を公開し、metrics-server は Resource Metrics API を提供します。Prometheus/vmalert/Mimir rules は alert を評価し、Alertmanager はそれらをルーティングします。vmagent は collector/forwarder であり、クエリ可能な TSDB ではありません。
+node-exporter はホストOSのメトリクスを報告します。kube-state-metrics は API オブジェクトの状態を公開し、metrics-server は Resource Metrics API を提供します。Prometheus/vmalert/Mimir のルールがアラートを評価し、Alertmanager が通知先へ振り分けます。vmagent はデータ収集・転送を担い、クエリ可能な TSDB ではありません。
 
 </details>
 
-10. コスト比較をレビュー可能にするものは何ですか？
+10. コスト比較を検証可能にするために必要なものは何ですか？
 
-   - A) team size のみに基づく product ranking
-   - B) sample interval や feature の前提なしの node count
-   - C) 計測された series/sample volume、retention/resolution、HA/query requirements、および選択した feature の現在の pricing
-   - D) metric name/value の長さは決して重要ではないと仮定する
+   - A) チームの規模だけに基づく製品ランキング
+   - B) サンプル間隔や機能の前提を示さないノード数
+   - C) 実測した時系列数とサンプル量、保持期間と解像度、高可用性/クエリ要件、選択機能の現在の料金
+   - D) メトリクス名や値の長さはコストに影響しないと仮定する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-15 秒間隔で 30 日間にわたり実際に export された 100 万 series は、delivery filtering/deduplication 前に 1,728 億サンプルを意味します。infrastructure、index/WAL、replica、query work、custom-metric allowance、および operator effort によりコストは変化します。これは workload の計算であり、provider quote ではありません。
+実際に出力される100万時系列を15秒間隔で30日間収集すると、配信時のフィルタリングや重複排除を行う前に1,728億サンプルになります。インフラ、インデックス/WAL、レプリカ、クエリ処理、カスタムメトリクスの利用枠、運用工数によって費用は変わります。これはワークロードに基づく試算であり、プロバイダーの見積もりではありません。
 
 </details>
 

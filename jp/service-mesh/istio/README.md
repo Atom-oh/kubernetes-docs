@@ -1,16 +1,20 @@
 # Istio
 
-> **最終更新**: October 12, 2026
+> **最終更新日**: 2026年10月16日
 
 Amazon EKS で Istio Service Mesh を活用するための実践ガイド。
 
 ### 2026年10月レビュー: サポート対象リリース
 
-Istio 1.31.0 は GA です。その[リリース発表](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)は2026年8月31日に公開されました。現在のパッチは **1.31.1** で、9月21日に公開されています。その[リリース発表](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)には、未解決の `BackendTLSPolicy` CA 参照が plaintext のバックエンド接続へフォールバックするのを防ぐ修正が記載されています。
+Istio 1.31.0 は GA です。[リリース告知](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)は2026年8月31日に公開されました。現行パッチは **1.31.2** で、10月15日に公開され、[ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) のセキュリティ修正が含まれています（[リリース告知](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)）。その前のパッチ 1.31.1 は9月21日に公開されました。[リリース告知](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)には、未解決の `BackendTLSPolicy` CA 参照が、バックエンドへの平文接続にフォールバックするのを防ぐ修正が記載されています。
 
-このガイドの新規インストールコマンドでは 1.31.1 を使用します。Istio 1.31 が公開している Kubernetes サポート範囲は 1.32–1.37 です。EKS の標準サポートは現在 1.34–1.37 を対象としています。標準サポートの重複範囲は 1.34–1.37 です。EKS 拡張サポート対象バージョン (1.31–1.33) のうち、1.32 と 1.33 も Istio 1.31 の範囲内です。インストール前に [Istio サポートマトリクス](https://istio.io/latest/docs/releases/supported-releases/)と [EKS バージョンライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)を再確認してください。
+このガイドの新規インストールコマンドでは 1.31.2 を使用します。Istio 1.31 が公開している Kubernetes サポート範囲は 1.32～1.37 です。EKS の標準サポートは現在 1.34～1.37 を対象としています。標準サポートの重複範囲は 1.34～1.37 です。EKS の延長サポート対象バージョン（1.31～1.33）のうち、1.32 と 1.33 も Istio 1.31 の範囲内です。インストール前に [Istio サポートマトリクス](https://istio.io/latest/docs/releases/supported-releases/)と [EKS バージョンライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)を再確認してください。
 
-このレビュー時点で、Istio 1.30 および 1.29 はマトリクス上で引き続きサポート対象として記載されています。1.29 の予定サポート終了日は本日、2026年10月12日です。インストールまたはアップグレードの前に状態を確認してください。これらのブランチを使用する既存のインストールには、Envoy の脆弱性、BackendTLSPolicy の fail-open、および EnvoyFilter control-plane のサービス拒否を対象とする [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/) に対応するため、少なくとも 1.30.4 または 1.29.7 が必要です。Istio 1.28 はサポート対象外です。Istio 1.31 の chart は `https://blob.istio.io/istio-release/charts` を使用します。以前の Google ホストのリポジトリには、新しいリリースは提供されません。
+このレビュー時点で、Istio 1.30 と 1.29 はサポートマトリクス上で引き続きサポート対象です。1.29 のサポート終了日は2026年10月12日（予定）と記載されています。インストールまたはアップグレードの前に状態を確認してください。これらのブランチを使用している既存環境には、Envoy の脆弱性、BackendTLSPolicy の fail-open、EnvoyFilter によるコントロールプレーンのサービス拒否を扱う [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/) への対処として、少なくとも 1.30.4 または 1.29.7 が必要です。2026年10月15日公開の [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) は、1.31.0～1.31.1、1.30.0～1.30.5、1.29.0～1.29.8 に影響します。サポートマトリクスで既知の CVE なしとされている最初のバージョンは、それぞれ 1.31.2、1.30.6、1.29.9 です。Istio 1.28 はサポート対象外です。Istio 1.31 の chart は `https://blob.istio.io/istio-release/charts` を使用します。以前の Google ホストのリポジトリには新しいリリースは提供されません。
+
+### 2026年9月の更新: 1.31.1、1.30.5、1.29.8 のパッチリリース
+
+2026年9月21日、サポート対象の3ブランチすべてでパッチがリリースされました。対象は [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)、1.30.5、1.29.8。1.31.1 にはセキュリティ修正 [GHSA-qm8v-g4f9-qhjx](https://github.com/istio/istio/security/advisories/GHSA-qm8v-g4f9-qhjx)（CVSS 6.8、中程度）が含まれます。これは CA 参照を解決できない場合に、sidecar proxy 上の `BackendTLSPolicy` が fail-open し、バックエンドへの平文接続を許してしまう問題です。ほかの修正には、ambient mode の CNI node agent が自動検出した iptables backend（legacy／nft）を agent 再起動のたびに切り替える問題、`AuthorizationPolicy` の数に応じて istiod の CPU 使用量が増える問題、リモートクラスターの認証情報をローテーションした際に ambient のマルチクラスター mode で発生するメモリーリークが含まれます。当時の新規インストール環境と既存の 1.31 環境には、1.31.1 への更新が推奨されました。
 
 ## 目次
 
@@ -52,7 +56,7 @@ Service Mesh は、マイクロサービス間の通信を管理するインフ�
 
 これらの Bookinfo 図は Sidecar mode を示しています。自動インジェクションでは、opt in した namespace または workload 内で新規作成された Pod にのみ Envoy が追加されます。ambient mode では Sidecar はインジェクトされません。
 
-## Service Mesh は本当に必要ですか？
+## Service Mesh は本当に必要ですか？ {#do-you-really-need-a-service-mesh}
 
 以下のサービス数のしきい値とチェックリストのスコアは、Istio の要件ではなく、検討を促すためのものです。小規模な Mesh でもセキュリティ要件によって正当化される場合があります。判断図では同じ例示的なしきい値を使用しています。
 

@@ -1,179 +1,114 @@
-# Cuestionario de requisitos previos de EKS Hybrid Nodes
+# Cuestionario sobre requisitos previos de EKS Hybrid Nodes
 
 > **Documento relacionado**: [Requisitos previos](../../eks-hybrid-nodes/01-prerequisites.md)
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál NO es un caso de uso adecuado para EKS Hybrid Nodes?
+### 1. ¿Cuál de estos escenarios no es un motivo compatible para registrar máquinas como EKS Hybrid Nodes?
 
-A. Utilizar servidores GPU en centros de datos on-premises
-B. Requisitos de localidad de datos para cumplimiento normativo
-C. Ejecutar workloads puramente cloud-native
-D. Workloads de edge sensibles a la latencia
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C. Ejecutar workloads puramente cloud-native**
-
-**Explicación:**
-Los workloads puramente cloud-native se ejecutan de forma más eficiente en EKS node groups normales o en Fargate. Hybrid Nodes se usa cuando existen requisitos especiales (on-premises, edge, regulatorios, etc.).
-
-**Casos de uso adecuados para EKS Hybrid Nodes:**
-- Utilizar hardware GPU/especializado on-premises
-- Requisitos de soberanía de datos/cumplimiento normativo
-- Edge computing sensible a la latencia
-- Período de transición de migración a la nube
-- Proteger inversiones existentes en infraestructura
-
-</details>
-
-### 2. ¿Qué sistema operativo es compatible con EKS Hybrid Nodes?
-
-A. Solo Windows Server 2019
-B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9
-C. macOS Ventura o posterior
-D. FreeBSD 13 o posterior
+- A) Usar servidores GPU locales compatibles
+- B) Mantener el procesamiento de aplicaciones cerca de los conjuntos de datos locales
+- C) Registrar máquinas EC2/nube ordinarias como infraestructura de nodos híbridos
+- D) Cargas de trabajo conectadas en el edge con recuperación probada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9**
+**Respuesta: C) Registrar máquinas EC2/nube ordinarias como infraestructura de nodos híbridos**
 
 **Explicación:**
-EKS Hybrid Nodes solo admite sistemas operativos basados en Linux. Las versiones de OS compatibles incluyen:
-- Ubuntu 20.04 LTS, 22.04 LTS
-- Amazon Linux 2023
-- Red Hat Enterprise Linux (RHEL) 8, 9
-- Bottlerocket (container-optimized OS)
-
-```bash
-# Check OS version
-cat /etc/os-release
-
-# Check kernel version (5.4 or later recommended)
-uname -r
-```
+AWS admite infraestructura de nodos híbridos en hosts físicos o virtuales locales/edge operados por el cliente, no en infraestructura de nube. Registrar EC2 como nodo híbrido sigue generando cargos de Hybrid Nodes. Para los nodos en la nube, use los tipos de cómputo ordinarios de AWS. Hybrid Nodes requiere conectividad fiable; una etiqueta de ubicación por sí sola no demuestra cumplimiento normativo ni funcionamiento sin conexión.
 
 </details>
 
-### 3. ¿Cuál NO es un requisito mínimo para ejecutar workloads de GPU en Hybrid Nodes?
+### 2. ¿Qué afirmación sobre el sistema operativo coincide con la matriz actual de integración de AWS para nodos híbridos?
 
-A. NVIDIA Driver 525 o posterior
-B. CUDA Toolkit 11.8 o posterior
-C. Mínimo 4GB de memoria GPU
-D. La arquitectura x86_64 o arm64 es obligatoria
+- A) Windows Server es la única opción
+- B) Ubuntu 20.04/22.04/24.04, RHEL 8/9, AL2023 virtualizado y variantes de Bottlerocket para VMware compatibles
+- C) Cualquier versión de macOS
+- D) Cualquier imagen Linux recibe automáticamente soporte del sistema operativo de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. La arquitectura x86_64 o arm64 es obligatoria**
+**Respuesta: B) Ubuntu 20.04/22.04/24.04, RHEL 8/9, AL2023 virtualizado y variantes de Bottlerocket para VMware compatibles**
 
 **Explicación:**
-La arquitectura x86_64 o arm64 es un requisito de arquitectura de CPU, no un requisito directo para workloads de GPU. Los requisitos clave para workloads de GPU son:
-
-- **NVIDIA Driver**: 525 o posterior (soporte para CUDA 12)
-- **CUDA Toolkit**: 11.8 o posterior
-- **Memoria GPU**: Mínimo 4GB recomendado (varía según el workload)
-- **containerd**: 1.6 o posterior (soporte para contenedores GPU)
-
-```bash
-# Check NVIDIA driver version
-nvidia-smi --query-gpu=driver_version --format=csv,noheader
-
-# Check CUDA version
-nvcc --version
-```
+Revise el mantenimiento de seguridad del proveedor, la arquitectura y el CNI/kernel elegido. Bottlerocket VMware v1.37.0 o posterior solo admite x86_64 y usa su propio procedimiento de arranque. AL2023 es para entornos virtualizados locales y no está cubierto por el soporte de sistemas operativos de AWS fuera de EC2. EKS kube-proxy para ARM a partir de la versión 1.31 requiere ARMv8.2+crypto; una regla genérica de kernel 5.4 o el nombre del modelo de CPU no bastan para completar la validación.
 
 </details>
 
-### 4. ¿Cuáles son los requisitos mínimos de hardware para EKS Hybrid Nodes?
+### 3. ¿Qué afirmación es incorrecta al evaluar la compatibilidad de una carga de trabajo GPU?
 
-A. CPU de 1 núcleo, memoria de 512MB
-B. CPU de 2 núcleos, memoria de 2GB
-C. CPU de 4 núcleos, memoria de 8GB
-D. CPU de 8 núcleos, memoria de 16GB
+- A) Importa la compatibilidad entre el controlador, CUDA y la imagen del framework
+- B) Los requisitos de memoria dependen de la carga de trabajo
+- C) Importan el sistema operativo/kernel compatible y el runtime de contenedores
+- D) Se puede ignorar la arquitectura de CPU una vez instalada una GPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. CPU de 2 núcleos, memoria de 2GB**
+**Respuesta: D) Se puede ignorar la arquitectura de CPU una vez instalada una GPU**
 
 **Explicación:**
-Los requisitos mínimos de hardware para EKS Hybrid Nodes son:
-
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 2 cores | 4 cores or more |
-| Memory | 2GB | 4GB or more |
-| Disk | 20GB | 50GB or more (SSD recommended) |
-| Network | 100Mbps | 1Gbps or more |
-
-Los entornos de producción pueden requerir especificaciones más altas según los requisitos del workload.
+La arquitectura de CPU, la variante de GPU, los controladores, el sistema operativo/kernel, el toolkit/runtime de contenedores y la imagen de la aplicación deben ser compatibles entre sí. No existe un mínimo universal de 4 GB de GPU ni un requisito fijo de controlador 525/550 para Hybrid Nodes. No hace falta un compilador host `nvcc` solo para ejecutar un contenedor empaquetado correctamente; `nvidia-smi` y `nvcc` informan de componentes diferentes.
 
 </details>
 
-### 5. ¿Cuál NO es un componente de software requerido para la configuración de EKS Hybrid Nodes?
+### 4. ¿Cómo deben interpretarse las recomendaciones básicas de recursos del host?
 
-A. containerd runtime
-B. kubelet
-C. Docker Engine
-D. aws-iam-authenticator
+- A) 1 núcleo y 512 MB garantizan una configuración suficiente
+- B) AWS recomienda al menos 1 vCPU y 1 GiB de RAM, sin un mínimo universal estricto
+- C) Todas las cargas de trabajo requieren exactamente 4 núcleos y 8 GB
+- D) Un disco de 50 GB garantiza que el nodo está listo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Docker Engine**
+**Respuesta: B) AWS recomienda al menos 1 vCPU y 1 GiB de RAM, sin un mínimo universal estricto**
 
 **Explicación:**
-EKS Hybrid Nodes usa containerd como container runtime, y Docker Engine no es necesario. Los componentes requeridos son:
-
-- **containerd**: Container runtime (1.6 o posterior)
-- **kubelet**: Agente de Kubernetes node
-- **aws-iam-authenticator**: Autenticación de AWS IAM
-- **CNI plugins**: Redes de contenedores
-
-```bash
-# nodeadm automatically installs components
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-
-# Check installed components
-systemctl status containerd
-systemctl status kubelet
-```
+Dimensione por separado el sistema operativo, kubelet/runtime, CNI/agentes, imágenes/registros y la carga de trabajo real. La respuesta anterior de dos núcleos y 2 GB y las recomendaciones de discos de 20/50/100 GB eran ejemplos de planificación incoherentes, no mínimos validados para una carga de trabajo. Del mismo modo, la recomendación general de AWS de 100 Mbps/200 ms para la red no es un umbral universal de aceptación.
 
 </details>
 
-### 6. ¿Cuál es la versión mínima de NVIDIA driver requerida para usar GPU H100 con Hybrid Nodes?
+### 5. ¿Qué componente no es necesario solo porque un host pase a ser un nodo EKS Hybrid?
 
-A. 450.x
-B. 470.x
-C. 525.x
-D. 535.x
+- A) Un runtime CRI compatible, como containerd
+- B) kubelet
+- C) Docker Engine
+- D) Los ayudantes de credenciales/autenticación elegidos de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. 535.x**
+**Respuesta: C) Docker Engine**
 
 **Explicación:**
-La GPU NVIDIA H100 usa arquitectura Hopper y requiere los drivers más recientes:
-
-| GPU Model | Minimum Driver Version | Recommended Driver Version |
-|-----------|----------------------|---------------------------|
-| A100 | 450.x | 525.x or later |
-| H100 | 525.x | 535.x or later |
-| H200 | 535.x | 545.x or later |
-
-```bash
-# Verify H100 driver installation
-nvidia-smi
-
-# Update driver
-sudo apt-get update
-sudo apt-get install nvidia-driver-535
-```
-
-Se recomienda la versión de driver 535.x o posterior para aprovechar por completo las características clave de H100 (expansión MIG, Transformer Engine, etc.).
+La fuente del paquete containerd de Docker no es un requisito para ejecutar Docker Engine. En hosts que no sean Bottlerocket, `nodeadm install` instala dependencias, `config check` valida las entradas e `init` configura y une el nodo. La instalación/actualización mediante SSM requiere nodeadm 1.0.19 o posterior tras el cambio de clave de firma; la versión revisada es la 1.0.20. En RHEL, el runtime puede ser `docker` o uno preinstalado; se debe especificar `none` como distribución.
 
 </details>
+
+### 6. ¿Cuál es el enfoque correcto para desplegar H100 en EKS Hybrid Nodes?
+
+- A) Instalar la versión 450.x en todos los hosts
+- B) Considerar que un ejemplo antiguo con 525.x siempre es suficiente
+- C) Exigir exactamente 535.x sin importar el framework
+- D) Elegir un conjunto compatible de GPU/sistema operativo/controlador/CUDA/runtime y validar la aplicación
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D) Elegir un conjunto compatible de GPU/sistema operativo/controlador/CUDA/runtime y validar la aplicación**
+
+**Explicación:**
+La tabla antigua mezclaba versiones mínimas y recomendadas del controlador, y contradecía su propia respuesta. Los valores 450/525/535/545/550 no constituyen un contrato de despliegue universal vigente. Verifique la variante H100 concreta, la rama de controlador compatible, la imagen del framework y los requisitos de funcionalidades; pruebe los cambios primero en un host de pruebas desalojado. En esta auditoría no se ejecutó ninguna GPU ni se hizo ningún benchmark de modelos.
+
+</details>
+
+## Referencias
+
+- [Requisitos previos de Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html)
+- [Compatibilidad de sistemas operativos de Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+- [Referencia de nodeadm](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)

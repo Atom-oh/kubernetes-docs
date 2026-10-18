@@ -31,7 +31,7 @@ Graduation concerns the project. Deployment security, isolation and regulatory c
 
 **Answer: B) Community 26.03.1, including KFP 2.16.1 and Dashboard 2.0.0**
 
-Distribution and component versions differ. The community calendar release plans roughly two base releases per year and describes support as best effort, not an SLA.
+Distribution and component versions differ. The community calendar release plan calls for roughly two base releases per year and describes support as best effort, not an SLA.
 </details>
 
 3. What happens when Profile resourceQuotaSpec.hard is omitted?
@@ -61,7 +61,7 @@ Quota is optional. Emptying hard removes the controller-managed quota. RBAC, net
 
 **Answer: C) Whether the release is compatible and its required images remain available**
 
-The inspected v1.7.0-aws-b1.0.3 release explicitly warns that removed OIDC image availability breaks new installations. It is not a verified 26.03.1 recipe.
+The inspected v1.7.0-aws-b1.0.3 release explicitly warns that OIDC images are no longer available, breaking new installations. It is not a verified 26.03.1 recipe.
 </details>
 
 5. Which statement about current KFP S3 identity is supported?

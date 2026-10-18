@@ -26,7 +26,7 @@
 
 기준은 보존될 **압축 후 로그 바이트율**과 실제 retention입니다. 짧은 피크를 7일 내내 유지한다고 가정하면 과도한 추정이 될 수 있습니다. 토픽별 retention·복제 수가 다르면 각각 계산하고, compaction·인덱스·내부 토픽·재배치 임시 복사본을 추가로 고려합니다.
 
-가상으로 50 **MB/s(10⁶ bytes/s)**가 7일 동안 지속되고 RF=3이라면 복제된 로그는 90.72 TB입니다.
+가상으로 50 **MB/s**(10⁶ bytes/s)가 7일 동안 지속되고 RF=3이라면 복제된 로그는 90.72 TB입니다.
 
 | 해석 | 용량 | 실제 빈 공간 비율 |
 | --- | --- | --- |
@@ -101,7 +101,7 @@ kubectl -n kafka patch kafkanodepool broker --type=merge \
 kubectl -n kafka get pvc -l strimzi.io/cluster=my-cluster
 ```
 
-확장은 StorageClass/CSI와 실제 파일시스템 지원을 확인합니다. PVC shrink는 이 절차가 아니며, class나 volume ID를 바꾸는 것도 단순 증설이 아닙니다. `kraftMetadata: shared`를 두 볼륨에 지정하지 않습니다.
+확장 시에는 StorageClass/CSI와 실제 파일시스템 지원을 확인합니다. PVC shrink는 이 절차가 아니며, class나 volume ID를 바꾸는 것도 단순 증설이 아닙니다. `kraftMetadata: shared`를 두 볼륨에 지정하지 않습니다.
 
 볼륨 제거 전에는 해당 디렉터리의 replica와 metadata 위치를 확인하고 데이터를 이동해야 합니다. Strimzi 1.3의 `remove-disks` rebalance 모드는 broker 내부 JBOD 이동을 지원하지만, 필드와 지원 조건에 맞는 별도 계획이 필요합니다. `deleteClaim: false`/Retain은 백업이나 복구 가능성의 증명이 아닙니다. Strimzi가 관리하는 데이터에 수동 `kafka-storage.sh format`을 실행하지 않습니다.
 
@@ -445,7 +445,7 @@ kubectl -n kafka get kafka my-cluster -o yaml
 kubectl -n kafka get pods,pvc -l strimzi.io/cluster=my-cluster
 ```
 
-`acks=all`은 동기화된 복제본의 승인이라는 조건 아래 더 강한 내구성을 제공하지만 애플리케이션의 요청이 항상 성공하는 것은 아닙니다. 재시작 중 leader/coordinator 변경, timeout, 재시도와 처리 중복을 계획합니다. broker 재시작이 모든 consumer group을 반드시 전체 중단시키는 것도 아닙니다.
+`acks=all`은 동기화된 복제본의 승인이라는 조건 아래 더 강한 내구성을 제공하지만 애플리케이션의 요청이 항상 성공하는 것은 아닙니다. 재시작 중 leader/coordinator 변경, timeout, 재시도와 처리 중복에 대한 대응을 계획합니다. broker 재시작이 모든 consumer group을 반드시 전체 중단시키는 것도 아닙니다.
 
 Strimzi Drain Cleaner 같은 추가 구성은 별도 지원 모드와 PDB 동작을 확인합니다. 장애가 났다는 이유만으로 finalizer나 scale-down 검사를 제거하지 말고, 원인과 남아 있는 replica·metadata를 먼저 확인합니다.
 

@@ -176,7 +176,7 @@ policies:
 
 With these positive policies, matching error/slow traces are kept and other traces are eligible for the probabilistic policy. This does not imply a 90% overall volume reduction. Drop/composite/inverted policies have different decision semantics; do not generalize “first matching rule wins”. The example removes only the specifically named `sensitive_data` span attribute. Sanitize span names, events, resource attributes and application logs through an explicit data policy before export.
 
-For a cluster deployment, use the [OTel guide](./tracing/03-opentelemetry.md) and [observability stack lab](../labs/observability/02-observability-stack-lab.md). Operator injection annotations require the Operator, matching `Instrumentation` resource, supported runtime image and workload restart. Match OTLP HTTP/4318 versus gRPC/4317 and TLS/authentication; an annotation alone does not install instrumentation.
+For a cluster deployment, use the [OTel guide](./tracing/03-opentelemetry.md) and [observability stack lab](../labs/observability/02-observability-stack-lab.md). Operator injection annotations require the Operator, a matching `Instrumentation` resource, a supported runtime image and a workload restart. Match OTLP HTTP/4318 versus gRPC/4317 and TLS/authentication; an annotation alone does not install instrumentation.
 
 <span id="_5-1-why-ebpf-monitoring"></span>
 
@@ -344,7 +344,7 @@ Test failures at collection, queue, receiver, storage and query layers. PDBs con
 
 Establish a baseline: bytes/day per signal, active series, new-series churn, samples/second, spans/second, sample retention, query scan volume, retention, buffer loss, recovery time and operating effort. Use current Region-specific pricing and your negotiated terms. For a hypothetical $5,000/month baseline and $2,500 target, attribute actual cost categories before estimating savings. No tool switch guarantees 50% savings.
 
-Roll out one measurable change at a time. Compare incident investigation success, SLO coverage, dropped data and the bill before and after. Maintain enough data to reverse a harmful filter and restore diagnosis. Deployment duration depends on permissions, team experience, validation and migration; fixed “one to two days” schedules are not commitments.
+Roll out one measurable change at a time. Compare incident investigation success, SLO coverage, dropped data and the bill before and after. Maintain enough data to reverse a harmful filter and restore the ability to diagnose. Deployment duration depends on permissions, team experience, validation and migration; fixed “one to two days” schedules are not commitments.
 
 ### Validation and limits
 

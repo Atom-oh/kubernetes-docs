@@ -67,7 +67,7 @@ kubectl -n kube-system get daemonset cilium
 kubectl -n kube-system get daemonset cilium-envoy
 ```
 
-The CLI's own version and the running Cilium image version are different information. Keep full status output and failures; a grep matching “Envoy” or “Hubble” does not certify readiness. An absent dedicated Envoy DaemonSet can be expected in embedded mode.
+The CLI's own version and the running Cilium image version are different pieces of information. Keep full status output and failures; a grep matching “Envoy” or “Hubble” does not certify readiness. An absent dedicated Envoy DaemonSet can be expected in embedded mode.
 
 ### EKS installation choices
 
@@ -182,7 +182,7 @@ hubble observe --server localhost:4245 --namespace bookinfo --protocol http --fo
 hubble observe --server localhost:4245 --to-service bookinfo/productpage
 ```
 
-The selected Hubble CLI rejects combining `--namespace` with `--to-service`. Use either the namespace observation or a namespaced service-name prefix. L7 records need actual matching traffic and proxy visibility; drops occurring before the L7 proxy may require broader flow/drop inspection. No observed flows is not proof of an allowed, denied or healthy application path.
+The selected Hubble CLI rejects combining `--namespace` with `--to-service`. Use either the namespace observation or a namespaced service-name prefix. L7 records need actual matching traffic and proxy visibility; drops occurring before the L7 proxy may require broader flow/drop inspection. The absence of observed flows is not proof of an allowed, denied or healthy application path.
 
 ## Document Structure and References
 

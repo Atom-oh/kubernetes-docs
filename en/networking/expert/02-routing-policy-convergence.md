@@ -79,7 +79,7 @@ The topology configures OSPF, eBGP, iBGP and advertisements; the learner changes
 The [source topology](https://github.com/bgplab/bgplab/blob/5a9fab68658ce69317b147396481714ee3478482/policy/5-local-preference/topology.yml) requires **netlab 2.0.0 or newer**.
 
 The supplied `https://bgplabs.net/install/` returned 404 on the check date; use the official [Installation and Setup](https://bgplabs.net/1-setup/) page.
-Follow its [Ubuntu installation prerequisite](https://netlab.tools/install/ubuntu/) on this separate VM before this workbook.
+Follow its [Ubuntu installation prerequisite](https://netlab.tools/install/ubuntu/) on this separate VM before starting this workbook.
 Do not reuse the beginner VM, a shared Docker host or a Kubernetes node.
 
 - Allocate an owned x86-64 Ubuntu 24.04 VM. A **planning allowance**, not an upstream minimum or benchmark, is 4 vCPU, 8 GiB RAM and 20 GiB free disk for four FRR containers and tools.

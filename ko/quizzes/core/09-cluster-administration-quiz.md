@@ -41,7 +41,7 @@
 
 1. 스냅샷을 검증하고 원본 데이터, PKI, 암호화 공급자 키·설정을 보관합니다. etcd 스냅샷에는 PV 파일이나 모든 호스트 설정이 포함되지 않습니다.
 2. 배포판 운영 절차로 모든 API 서버와 해당 etcd 프로세스를 중지합니다. kubeadm은 보통 개별 systemd 서비스가 아닌 정적 파드를 사용하며 kubelet만 중지해도 컨테이너가 종료되지는 않습니다.
-3. 호환 etcdutl로 새 디렉토리에 오프라인 복원합니다. 아래 단일 멤버 예시는 HA 복구 명령이 아닙니다:
+3. 호환되는 etcdutl로 새 디렉토리에 오프라인 복원합니다. 아래 단일 멤버 예시는 HA 복구 명령이 아닙니다:
 
 ```bash
 etcdutl snapshot restore snapshot.db \
@@ -53,7 +53,7 @@ etcdutl snapshot restore snapshot.db \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-4. HA는 같은 스냅샷을 각 멤버 고유 이름·피어 URL과 동일한 전체 멤버 목록으로 복원합니다. 리비전 증가량은 스냅샷 이후 쓰기를 초과하도록 정하고 watch 캐시를 무효화합니다.
+4. HA 환경에서는 같은 스냅샷을 각 멤버의 고유 이름·피어 URL과 동일한 전체 멤버 목록으로 복원합니다. 리비전 증가량은 스냅샷 이후 쓰기를 초과하도록 정하고 watch 캐시를 무효화합니다.
 5. etcd 매니페스트·서비스의 경로, 소유권, 인증서를 복원 데이터에 맞춥니다. etcd 쿼럼·상태 확인 후 API 서버·컨트롤러를 시작하고 노드·워크로드를 검증합니다.
 6. [공식 복구 절차](https://etcd.io/docs/v3.6/op-guide/recovery/)를 따르세요. EKS 사용자는 관리형 etcd에 접근하지 않고 지원되는 백업 도구로 앱 리소스·데이터를 복원합니다.
 
@@ -697,7 +697,7 @@ exit "$status"
 2. 각 노드에 대해:
    - 서비스 상태를 조회하고 복구 요청 후 Ready 상태를 검증합니다.
    - SSH를 통해 노드에 연결하여 kubelet 서비스 상태를 확인합니다.
-   - 서비스 상태 조회에 성공한 비활성 서비스를 보고하고 REPAIR_KUBELET=1일 때만 시작합니다.
+   - 서비스 상태 조회에 성공한 경우 비활성 서비스를 보고하고 REPAIR_KUBELET=1일 때만 시작합니다.
    - 서비스 시작 후 상태를 다시 확인합니다.
    - 시작에 실패한 경우 로그를 확인합니다.
    - SSH·sudo·조회 실패를 비활성 서비스와 구분하고 복구 후 노드 Ready를 확인합니다.
@@ -821,7 +821,7 @@ sudo /opt/etcd-backup/backup_etcd.sh
 
 **6. 백업 모니터링:**
 
-스크립트의 EXIT 트랩은 METRICS_DIR이 있을 때 숫자형 `etcd_backup_success`, `etcd_backup_last_attempt_timestamp_seconds`를 기록합니다. node-exporter textfile collector가 해당 디렉토리를 읽도록 구성하고 작성 권한을 부여하며 실패·오래된 시도를 경고하세요. echo·복사 명령 뒤의 `$?`로 백업 성공 여부를 판정하면 안 됩니다. 외부 마운트는 이미 있어야 하며 검증·복사 실패 시 보존 기간 정리를 중단합니다.
+스크립트의 EXIT 트랩은 METRICS_DIR이 있을 때 숫자형 `etcd_backup_success`, `etcd_backup_last_attempt_timestamp_seconds`를 기록합니다. node-exporter textfile collector가 해당 디렉토리를 읽도록 구성하고 작성 권한을 부여하며 실패·오래된 시도에 대한 경고를 설정하세요. echo·복사 명령 뒤의 `$?`로 백업 성공 여부를 판정하면 안 됩니다. 외부 마운트는 이미 있어야 하며 검증·복사 실패 시 보존 기간 정리를 중단합니다.
 
 **참고 사항:**
 - 백업 파일은 클러스터 외부의 안전한 위치에 저장해야 합니다.
@@ -889,7 +889,7 @@ for node in "$@"; do
 done
 ```
 
-이 예시는 kubectl, jq, 선택한 노드의 SSH 별칭, 승인된 비대화형 sudo, 검토한 유지 관리 명령이 필요합니다. Debian/Ubuntu의 reboot-required 표시를 검사하므로 OS에 맞게 조정하세요. WORKLOAD_HEALTHCHECK는 실제 중요 앱을 검증하는 명령으로 설정하고 검토한 워커 목록만 전달합니다:
+이 예시를 실행하려면 kubectl, jq, 선택한 노드의 SSH 별칭, 승인된 비대화형 sudo, 검토한 유지 관리 명령이 필요합니다. Debian/Ubuntu의 reboot-required 표시를 검사하므로 OS에 맞게 조정하세요. WORKLOAD_HEALTHCHECK는 실제 중요 앱을 검증하는 명령으로 설정하고 검토한 워커 목록만 전달합니다:
 
 ```bash
 MAINTENANCE_COMMAND='sudo -n /usr/local/sbin/approved-node-maintenance' \
@@ -1144,7 +1144,7 @@ Kubernetes 컨트롤 플레인의 고가용성(HA)을 구현하는 가장 효과
 - **데이터 일관성**: etcd의 Raft 합의 알고리즘을 통해 데이터 일관성을 보장합니다.
 
 다른 옵션들의 문제점:
-- 단일 마스터 노드에 여러 API 서버 인스턴스를 실행하는 것은 노드 자체가 단일 장애점이 됩니다.
+- 단일 마스터 노드에 여러 API 서버 인스턴스를 실행하면 노드 자체가 단일 장애점이 됩니다.
 - API 서버를 StatefulSet으로 배포하는 것은 일반적인 접근 방식이 아니며, 컨트롤 플레인 구성 요소는 일반적으로 Kubernetes 외부에서 관리됩니다.
 - 감시 프로세스는 도움이 될 수 있지만, 그 자체로는 진정한 고가용성 솔루션이 아닙니다.
 </details>
@@ -1161,7 +1161,7 @@ Kubernetes 컨트롤 플레인의 고가용성(HA)을 구현하는 가장 효과
 **정답: B) 감사 정책으로 이벤트와 수준 선택**
 
 **설명:**
-Kubernetes 감사 로깅(Audit Logging)을 구성할 때 가장 중요한 고려 사항은 감사 정책으로 이벤트와 수준 선택하는 것입니다. 이는 다음과 같은 이유로 중요합니다:
+Kubernetes 감사 로깅(Audit Logging)을 구성할 때 가장 중요한 고려 사항은 감사 정책으로 이벤트와 수준을 선택하는 것입니다. 이는 다음과 같은 이유로 중요합니다:
 
 1. **성능 영향 최소화**: 모든 API 요청을 로깅하면 API 서버에 상당한 부하가 발생하고 성능이 저하될 수 있습니다. 필요한 감사 이력과 측정한 부하에 따라 수준을 선택하며 모든 요청의 메타데이터 기록도 지원되는 기본 전략입니다.
 
@@ -1295,7 +1295,7 @@ RBAC 모범 사례 구현 예시:
      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
    ```
 
-Pod·Deployment 생성 권한으로 네임스페이스의 Secret·ServiceAccount 권한을 간접적으로 사용할 수 있습니다. 직접 Secret 읽기 제거만으로 워크로드가 마운트할 자격 증명을 제한하지는 못하므로 적절한 admission 통제가 필요합니다.
+Pod·Deployment 생성 권한으로 네임스페이스의 Secret·ServiceAccount 권한을 간접적으로 사용할 수 있습니다. Secret을 직접 읽는 권한을 제거하는 것만으로 워크로드가 마운트할 자격 증명을 제한하지는 못하므로 적절한 admission 통제가 필요합니다.
 
 2. **역할 바인딩 생성**:
    ```yaml

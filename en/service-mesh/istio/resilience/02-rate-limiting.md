@@ -215,7 +215,7 @@ spec:
                     prefix: /api/v1/admin
 ```
 
-`rate_limits` generates `header_match` entries, and `descriptors` selects matching token buckets. This field is present in the Envoy API pinned by Istio 1.31; when set here it replaces local filter lookup of route/vhost rate-limit actions. Path values are literal descriptor keys; actual prefix matching is in `headers`. Prefixes also match longer paths beginning with that text. The fallback bucket limits unmatched requests; `always_consume_default_token_bucket: false` avoids additionally capping matched100 req/s users at the10 req/s fallback.
+`rate_limits` generates `header_match` entries, and `descriptors` selects matching token buckets. This field is present in the Envoy API pinned by Istio 1.31; when set here it replaces local filter lookup of route/vhost rate-limit actions. Path values are literal descriptor keys; actual prefix matching is in `headers`. Prefixes also match longer paths beginning with that text. The fallback bucket limits unmatched requests; `always_consume_default_token_bucket: false` avoids additionally capping matched 100 req/s users at the 10 req/s fallback.
 
 ### Header-Based Rate Limiting
 
@@ -306,7 +306,7 @@ Global rate limiting asks a shared decision service about a domain/descriptor. I
 
 ### Configuration Method
 
-Global Rate Limiting requires deploying an external Rate Limit service and integrating with EnvoyFilter.
+Global Rate Limiting requires deploying an external Rate Limit service and integrating it with EnvoyFilter.
 
 The diagram’s cache must be backed by a shared counter store such as Redis; independent in-process caches do not create a global quota. The following Deployment assumes an **already available Redis TCP service** at `redis-ratelimit.istio-system.svc.cluster.local:6379` in an isolated lab. Provisioning, authentication/TLS, persistence/HA and failover of that backend are separate requirements; it is not created below. Configure the pinned service’s REDIS_AUTH/REDIS_TLS/certificate settings for protected backends using appropriate Secrets/mounts.
 
@@ -314,7 +314,7 @@ The image is the published commit 8fe6ea42 (August 24, 2026), pinned by its mani
 
 #### 1. Deploy Rate Limit Service
 
-**Note**: Istio uses [envoyproxy/ratelimit](https://github.com/envoyproxy/ratelimit) service as an external dependency.
+**Note**: Istio uses the [envoyproxy/ratelimit](https://github.com/envoyproxy/ratelimit) service as an external dependency.
 
 ```yaml
 apiVersion: v1
@@ -706,7 +706,7 @@ spec:
                     exact: free
 ```
 
-Enterprise/premium/free quotas below are shared per tier per configured proxy bucket. They require the same trusted-header and bypass-prevention controls as the earlier header example. Do not interpret1000 req/s as each enterprise user’s separate allocation.
+Enterprise/premium/free quotas below are shared per tier per configured proxy bucket. They require the same trusted-header and bypass-prevention controls as the earlier header example. Do not interpret 1000 req/s as each enterprise user’s separate allocation.
 
 ### Example 3: External API Protection
 
@@ -807,7 +807,7 @@ rate(envoy_cluster_ratelimit_error{namespace="istio-system"}[5m])
 rate(envoy_cluster_ratelimit_failure_mode_allowed{namespace="istio-system"}[5m])
 ```
 
-For gateway-local policies use `namespace="istio-system"`; narrow Pod/cluster/prefix labels for the chosen policy. A zero denominator, missing stat or failed scrape needs explicit no-data handling. The application can return429 independently, so an HTTP 429 alone does not prove this filter enforced a quota.
+For gateway-local policies use `namespace="istio-system"`; narrow Pod/cluster/prefix labels for the chosen policy. A zero denominator, missing stat or failed scrape needs explicit no-data handling. The application can return 429 independently, so an HTTP 429 alone does not prove this filter enforced a quota.
 
 ### Grafana Dashboard
 

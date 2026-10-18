@@ -45,7 +45,7 @@ Use volumeClaimTemplate for per-run storage and separate writable data across tr
 
 **Answer: B) Use a separate execution trust level with limited permissions**
 
-HMAC validates delivery origin, not permission for code to deploy. This chapter's privileged CI path is limited to the approved repository's protected main push.
+HMAC validates delivery origin, not permission for code to deploy. This chapter's privileged CI path is limited to a push to the approved repository's protected main branch.
 
 </details>
 

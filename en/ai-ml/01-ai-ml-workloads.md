@@ -13,7 +13,7 @@ AI/ML workloads have different characteristics compared to typical application w
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-0.html)
 
-1. **Resource Intensive**: Requires significant computing resources including GPUs, high-performance CPUs, and large memory.
+1. **Resource Intensive**: Requires significant computing resources including GPUs, high-performance CPUs, and large amounts of memory.
 2. **Data Intensive**: Requires fast access to large datasets.
 3. **Distributed Processing**: Requires distributed processing across multiple nodes for large-scale model training.
 4. **Workload Diversity**: Includes various types of workloads such as training, inference, and data preprocessing.
@@ -24,7 +24,7 @@ Verify support against the selected framework, image, device and Kubernetes vers
 
 ### 1. Large Language Model (LLM) Deployment
 
-Large Language Models (LLMs) are one of the most prominent technologies in AI recently. Key considerations for efficiently deploying LLMs on Kubernetes:
+Large Language Models (LLMs) have been one of the most prominent technologies in AI recently. Key considerations for efficiently deploying LLMs on Kubernetes:
 
 - **Model Sharding**: Distributing large models across multiple GPUs
 - **Precision selection**: Distinguish FP16/BF16 computation from INT8/INT4 quantization and validate accuracy/device support
@@ -161,7 +161,7 @@ helm template gpu-operator nvidia/gpu-operator \
   > gpu-operator.rendered.yaml
 ```
 
-The NVIDIA extended resource is `nvidia.com/gpu`. Integer limits imply an equal request; if both are specified they must match. `0.5` is not valid GPU allocation. This CUDA 12.8 image is illustrative; verify host-driver/architecture compatibility and pin the image digest before deployment. No GPU execution was performed in this review.
+The NVIDIA extended resource is `nvidia.com/gpu`. Integer limits imply an equal request; if both are specified they must match. `0.5` is not a valid GPU allocation. This CUDA 12.8 image is illustrative; verify host-driver/architecture compatibility and pin the image digest before deployment. No GPU execution was performed in this review.
 
 ```yaml
 apiVersion: v1
@@ -242,7 +242,7 @@ helm template nvdp nvdp/nvidia-device-plugin \
   > device-plugin.rendered.yaml
 ```
 
-This exposes nvidia.com/gpu.shared; Pods request an integer one of that resource. replicas=2 does not guarantee half the GPU memory. Verify selected nodes, allocation and contention on real GPU hardware.
+This exposes nvidia.com/gpu.shared; Pods request an integer value of one for that resource. replicas=2 does not guarantee half the GPU memory. Verify selected nodes, allocation and contention on real GPU hardware.
 
 ### Placement and Topology
 

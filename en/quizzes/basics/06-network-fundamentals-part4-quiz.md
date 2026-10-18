@@ -34,7 +34,7 @@ This is a dependency summary, not a packet trace. DNS messages already use link/
 **Answer: B) kube-proxy: NAT + L4 load balancing**
 
 **Explanation:**
-On Linux, kube-proxy programs iptables or nftables; its IPVS mode is deprecated since Kubernetes1.35. An eBPF-based Service implementation can replace kube-proxy, but is not a kube-proxy eBPF mode. Service/EndpointSlice state supplies eligible endpoints. Headless Services do not use a ClusterIP, and NetworkPolicy needs a supporting implementation.
+On Linux, kube-proxy programs iptables or nftables; its IPVS mode has been deprecated since Kubernetes 1.35. An eBPF-based Service implementation can replace kube-proxy, but is not a kube-proxy eBPF mode. Service/EndpointSlice state supplies eligible endpoints. Headless Services do not use a ClusterIP, and NetworkPolicy needs a supporting implementation.
 
 </details>
 

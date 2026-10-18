@@ -92,7 +92,7 @@ Separating candidate creation from promotion requires authentication, authorizat
 
 Lineage is only as complete as the information recorded and retained. The registry cannot later reconstruct missing `run_id`, `model_id`, code revisions, or dataset hashes. Changed source files, deleted Runs/Model Versions, and artifact cleanup can also leave incomplete links.
 
-An audit needs the version/model ID actually serving, artifact hashes and locations, source commit, dataset snapshot, dependencies, and evaluation/approval records. Operate metadata DB and artifact-store backups and retention together. An alias is not a permanent audit log of all changes.
+An audit needs the version/model ID actually serving, artifact hashes and locations, source commit, dataset snapshot, dependencies, and evaluation/approval records. Manage metadata DB and artifact-store backups and retention together. An alias is not a permanent audit log of all changes.
 
 ## Next Steps
 

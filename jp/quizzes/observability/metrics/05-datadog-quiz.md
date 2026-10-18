@@ -1,12 +1,12 @@
 # Datadog クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 
-1. Datadog SaaS でチームに残る責任は何ですか？
+1. Datadog SaaS を利用する場合、チーム側に残る責任はどれですか？
 
    - A) Agent をインストールした後は何もない
    - B) ダッシュボードの色を選ぶことだけ
-   - C) Collector、identity、instrumentation、データ処理、monitor、コスト
+   - C) データ収集、ID 管理、計装、データの取り扱い、監視、コスト
    - D) Datadog の物理データベースサーバー
 
 <details>
@@ -14,151 +14,151 @@
 
 **回答: C**
 
-SaaS はバックエンドを管理します。APM、profiling、logs、その他の製品にはそれぞれ異なる権限と課金があり、Agent がすべてを含むわけではありません。
+SaaS ではバックエンドが管理されます。APM、プロファイリング、ログなどの製品はそれぞれ利用権と課金が異なり、Agent を導入してもすべての機能が含まれるわけではありません。
 
 </details>
 
-2. credential/integration に関する正しい記述はどれですか？
+2. 認証情報と連携について、正しい記述はどれですか？
 
-   - A) 基本的な Agent ingestion には API key が必要で、application key と AWS account role は追加の特定機能に使用される
-   - B) すべての Agent には application key と広範な AWS 読み取り role が必要である
-   - C) IRSA を追加すると Datadog SaaS AWS integration が自動的に設定される
-   - D) 推測した service-account 名で十分である
+   - A) Agent の基本的なデータ送信には API キーが必要で、アプリケーションキーと AWS アカウントロールは特定の追加機能に使われる
+   - B) すべての Agent にアプリケーションキーと広範な AWS 読み取りロールが必要である
+   - C) IRSA を追加すると Datadog SaaS の AWS 連携が自動的に設定される
+   - D) 推測した ServiceAccount 名だけで十分である
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: A**
 
-external metrics provider には追加の API permission/key 設定が必要です。SaaS AWS integration では、承認済みの cross-account role/external ID を使用します。実際にレンダリングされた Agent SA を確認してください。
+外部メトリクスプロバイダーには、追加の API 権限とキー設定が必要です。SaaS の AWS 連携では、認可されたクロスアカウントロールと外部 ID を使います。実際にレンダリングされた Agent の ServiceAccount を特定してください。
 
 </details>
 
-3. admission.datadoghq.com/enabled=true だけで APM SDK injection が証明されますか？
+3. `admission.datadoghq.com/enabled=true` だけで APM SDK の自動挿入が保証されますか？
 
-   - A) はい。すべての language/version を自動的に含みます
-   - B) いいえ。SDK annotation または SSI target を設定し、新たに admission された Pod と実際の trace データを検証してください
-   - C) はい。Cluster Agent namespace 内でも同様です
-   - D) はい。trace socket が存在すれば可能です
+   - A) はい。すべての言語とバージョンが自動的に対象になります
+   - B) いいえ。SDK アノテーションまたは SSI の対象を設定し、新たに admission された Pod と実際のトレースデータを確認してください
+   - C) はい。Cluster Agent の namespace 内でも同様です
+   - D) はい。トレース用ソケットがあれば可能です
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-mutation/connection 設定と library injection は別のものです。現在のローカル injection は kube-system と Cluster Agent namespace を除外します。library、runtime、mount、security の互換性も依然として重要です。
+Pod の変更設定や接続設定とライブラリの自動挿入は別の機能です。現在のローカル設定では、`kube-system` と Cluster Agent の namespace は自動挿入の対象外です。ライブラリ、ランタイム、マウント、セキュリティ設定の互換性も確認してください。
 
 </details>
 
-4. application Pod は node DogStatsD Agent にどのように到達すべきですか？
+4. アプリケーションの Pod からノード上の DogStatsD Agent に接続するには、どうすればよいですか？
 
-   - A) 常に application の localhost を使用する
-   - B) すべての UDP packet に API key を含める
-   - C) 無関係な ConfigMap を作成する
-   - D) mount された Linux UDS directory など、設定済みで到達可能な endpoint を使用する
+   - A) 常にアプリケーションの localhost を使う
+   - B) すべての UDP パケットに API キーを含める
+   - C) 関係のない ConfigMap を作成する
+   - D) マウント済みの Linux UDS ディレクトリなど、設定済みで到達可能なエンドポイントを使う
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-application の localhost は node Agent ではありません。UDS path、permission、SDK argument format は一致している必要があります。datagram は SaaS ingestion を確認応答せず、counter は exactly-once ledger ではありません。
+アプリケーション内の localhost は、ノード上の Agent を指すものではありません。UDS のパス、アクセス権限、SDK の引数形式を一致させる必要があります。データグラムの送信は SaaS への取り込み確認を返しません。また、カウンターは厳密に一度だけ処理されたことを記録する台帳ではありません。
 
 </details>
 
-5. 正しい metric の解釈はどれですか？
+5. メトリクスの解釈として正しいものはどれですか？
 
-   - A) kubernetes.cpu.usage.total は percent である
-   - B) 存在しないすべての legacy-catalogue metric は削除された
-   - C) kubernetes.cpu.usage.total は nanocore であり、Kubelet restart metric は累積 gauge である
-   - D) 繰り返し取得した restart sample を合計すると、新しい restart を数えられる
+   - A) `kubernetes.cpu.usage.total` は百分率である
+   - B) 旧カタログにないメトリクスはすべて削除された
+   - C) `kubernetes.cpu.usage.total` はナノコア単位であり、Kubelet の再起動メトリクスは累積ゲージである
+   - D) 再起動サンプルを繰り返し合計すれば、新たな再起動回数を数えられる
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-system.cpu.idle は percent です。Kubelet と State Core には、有効な metric 名と tag がそれぞれ異なります。restart monitor の例では明示的に total を評価しており、最近の増加には reset を考慮した検証が必要です。
+`system.cpu.idle` は百分率です。Kubelet と State Core では、有効なメトリクス名やタグが異なります。再起動監視の例では合計値を評価します。直近の増加を判定するには、カウンターのリセットを考慮して確認する必要があります。
 
 </details>
 
-6. .as_count() の error-ratio path は何を計算しますか？
+6. `.as_count()` を使ったエラー比率の計算では、何を求めますか？
 
-   - A) 時間集計された error count と total count の比率
-   - B) すべての time-bucket ratio の合計
-   - C) グローバルな p95
-   - D) traffic がゼロの場合の自動的な 100% success
+   - A) 指定した時間範囲で集計したエラー件数と総件数の比率
+   - B) 各時間区間の比率の合計
+   - C) 全体の p95
+   - D) トラフィックがゼロなら自動的に成功率を 100% とする
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: A**
 
-sum aggregation と一致する group を使用します。helper は good/error count がゼロであることを明示的に出力します。traffic がゼロ、data が欠損、error がない traffic はそれぞれ異なる状態です。
+合計集計を使い、対応するグループ同士を比較します。補助処理は正常件数とエラー件数がゼロの場合も明示的に出力します。トラフィックがゼロの場合、データが欠損している場合、トラフィックはあるがエラーがない場合は、それぞれ異なる状態です。
 
 </details>
 
-7. 正しい OpenMetrics/log 設定の記述はどれですか？
+7. OpenMetrics とログの設定について、正しい記述はどれですか？
 
-   - A) 任意の ConfigMap は自動的に mount される
-   - B) 一致する container annotation/current check field を使用する。Logs Grok rule では match_rules/support_rules を使用する
-   - C) chart root の prometheus.enabled がすべてを設定する
-   - D) Grok の camelCase key と snake_case key は同等である
+   - A) 任意の ConfigMap は自動的にマウントされる
+   - B) コンテナのアノテーションと現行チェック設定のフィールドを対応させ、Logs Grok ルールには match_rules/support_rules を使う
+   - C) チャートのルートにある prometheus.enabled ですべて設定できる
+   - D) Grok の camelCase と snake_case のキーは同じ意味である
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-現在の OpenMetrics check は openmetrics_endpoint を使用します。datadog.confd は chart 所有の mount を提供し、standalone ConfigMap は自動的にはインストールされません。request-schema validation は live scrape や Grok parse ではありません。
+現行の OpenMetrics チェックでは `openmetrics_endpoint` を使います。`datadog.confd` はチャートが管理するマウントを提供しますが、単独の ConfigMap を作成しただけではインストールされません。リクエストスキーマの検証は、実際のメトリクス取得や Grok によるログ解析を保証しません。
 
 </details>
 
-8. 手動の trace-log correlation で保持すべきものは何ですか？
+8. トレースとログを手動で関連付ける際に保持すべきものは何ですか？
 
-   - A) dd.trace_id だけを残し、他のすべての MDC field を削除する
-   - B) 128-bit ID を任意に numeric cast した値
-   - C) ハードコードされた成功した trace ID
-   - D) 呼び出し元の既存 MDC context、string ID、実際の instrumentation/data の前提条件
+   - A) `dd.trace_id` だけを残し、他の MDC フィールドはすべて削除する
+   - B) 128 ビット ID を任意に数値変換した値
+   - C) 成功したものとして固定で埋め込んだトレース ID
+   - D) 呼び出し元が持つ既存の MDC コンテキスト、文字列形式の ID、実際の計装とデータに必要な前提条件
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-helper は application code が例外を送出した場合でも context を復元します。これは同期的です。自動 injection/parsing、一貫した service tag、利用可能な trace は別の要件です。
+補助処理は、アプリケーションコードが例外を送出した場合でも、呼び出し前のコンテキストを復元します。この処理は同期的です。自動挿入と解析、一貫したサービスのタグ付け、実際に利用できるトレースは別途必要です。
 
 </details>
 
-9. 50 個の service を 50 台の APM host として価格計算することの問題は何ですか？
+9. 50 個のサービスを APM の課金対象ホスト 50 台として見積もると、何が問題ですか？
 
    - A) APM は常に無料である
-   - B) log ingestion が log 請求額のすべてである
-   - C) service と請求対象 host は異なる単位であり、製品/contract の allotment と usage を数える必要がある
-   - D) すべての cluster には host が 1 台ある
+   - B) ログの取り込み料金がログ関連の請求額のすべてである
+   - C) サービスと課金対象ホストは別の単位であり、製品や契約ごとの利用枠と実使用量を数える必要がある
+   - D) すべてのクラスターにはホストが1台ある
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-以前の見積もりは実測された請求額ではありませんでした。indexing/retention、span allotment、custom metric、その他の製品も重要です。nonLocalTraffic は到達可能性であり、cost quota ではありません。
+以前の金額は実際の請求額を測定したものではありません。インデックス化と保持期間、スパンの利用枠、カスタムメトリクスなど、ほかの製品や機能も費用に関わります。`nonLocalTraffic` はネットワーク到達性の設定であり、費用の上限ではありません。
 
 </details>
 
-10. 正しい Watchdog/SLO/diagnostic の実践はどれですか？
+10. Watchdog、SLO、診断に関する適切な運用はどれですか？
 
-   - A) Watchdog insight によって page が配信されたことが証明される
-   - B) SLO model と good/total policy を一致させ、routing をテストし、共有前にローカル diagnostic bundle を確認する
-   - C) ローカル flare は自動的に upload を許可する
-   - D) trace がない場合はすべての DD_ environment value を出力する
+   - A) Watchdog の分析結果があれば、通知が配信されたことを証明できる
+   - B) SLO のモデルと正常/合計の判定方針を一致させ、通知経路をテストし、共有前にローカル診断バンドルを確認する
+   - C) ローカル flare を作成すれば、自動的にアップロードが許可される
+   - D) トレースがない場合は、すべての DD_ 環境変数の値を出力する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-Datadog は metric-、monitor-、time-slice SLO をサポートします。notification と no-data の挙動には検証が必要です。env dump には key が露出する可能性があり、--local は最初の flare collection をローカルに保持します。
+Datadog はメトリクスベース、モニターベース、時間区間ベースの SLO をサポートします。通知とデータ欠損時の挙動は検証が必要です。環境変数をすべて出力するとキーが漏れるおそれがあります。`--local` を指定すると、最初の flare 収集結果はローカルに保存されます。
 
 </details>
 

@@ -113,7 +113,7 @@ A Pending Pod may not be scheduled yet. For allocation failures, inspect kubelet
 **Answer: B) The affected node’s session state, source/peer addresses and ASNs, TCP 179, authentication/TTL and filters**
 
 **Explanation:**
-A TCP connection does not prove BGP Established or prefix acceptance. Check the expected routes and correct IPv4/IPv6 BIRD socket. Use these checks only when the chosen networking profile enables BGP.
+A TCP connection does not prove that BGP is in the Established state or that prefixes are accepted. Check the expected routes and correct IPv4/IPv6 BIRD socket. Use these checks only when the chosen networking profile enables BGP.
 
 </details>
 

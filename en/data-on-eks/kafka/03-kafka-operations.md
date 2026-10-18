@@ -115,7 +115,7 @@ These procedures target **broker-only pools**. Strimzi 1.3 configures a static c
 | `add-brokers` autoRebalance | Automatically redistribute after scale-out |
 | `remove-brokers` autoRebalance | Automatically coordinate replica evacuation during scale-in |
 
-Automation reacts to **replicas changes on existing pools**. Pool creation/deletion is not the same trigger. With Kafka 4.3+, automatic scale-down also cordons brokers to prevent new replica assignments while evacuation proceeds.
+Automation reacts to **changes to replicas on existing pools**. Pool creation/deletion is not the same trigger. With Kafka 4.3+, automatic scale-down also cordons brokers to prevent new replica assignments while evacuation proceeds.
 
 ### Manual scale-out
 

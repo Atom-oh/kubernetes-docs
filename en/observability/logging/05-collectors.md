@@ -136,7 +136,7 @@ Save this as `fluent-bit.conf`. It collects container logs and uses the **native
     storage.total_limit_size  1G
 ```
 
-The tail database and filesystem chunks use the writable state mount, not the read-only log mount. Existing offsets resume from the database; `Read_From_Head Off` skips pre-existing content when a file is first discovered. Choose a deliberate backfill policy before changing it. `Skip_Long_Lines On`, finite retries and finite storage can discard data; monitor these conditions.
+The tail database and filesystem chunks use the writable state mount, not the read-only log mount. Reading resumes at existing offsets from the database; `Read_From_Head Off` skips pre-existing content when a file is first discovered. Choose a deliberate backfill policy before changing it. `Skip_Long_Lines On`, finite retries and finite storage can discard data; monitor these conditions.
 
 The exclusion matches this example's own collector Pods. Adjust it if the namespace or workload name changes, rather than silently excluding every application in a namespace. Kubernetes annotations cannot override the parser/exclusion policy in this configuration.
 
@@ -399,7 +399,7 @@ alloy convert --source-format=promtail \
 alloy validate config.alloy
 ```
 
-Inspect the generated configuration and diagnostic report. Do not bypass conversion errors as a normal deployment step. The converter supports nearly all legacy features, not an unconditional guarantee of identical behavior.
+Inspect the generated configuration and diagnostic report. Do not bypass conversion errors as a normal deployment step. The converter supports nearly all legacy features, but this is not an unconditional guarantee of identical behavior.
 
 The reviewed legacy configuration converted successfully, but the tool warned that its global read-rate limit becomes per-pipeline `stage.limit` limits, that Promtail's own tracing configuration may need manual migration, and that Alloy emits different self-metrics. Update alerts/dashboards and verify those changes with real data.
 
@@ -435,7 +435,7 @@ Alloy is Grafana's OpenTelemetry Collector distribution with Prometheus and Loki
 
 ### River Configuration
 
-Save the following as `config.alloy`. This example uses **one file-based path** for Linux CRI logs. Set the nonsecret `NODE_NAME` from `spec.nodeName` in the Pod Downward API, mount the node log files and provide writable persistent `--storage.path`.
+Save the following as `config.alloy`. This example uses **one file-based path** for Linux CRI logs. Set the nonsecret `NODE_NAME` from `spec.nodeName` in the Pod Downward API, mount the node log files and provide a writable persistent `--storage.path`.
 
 ```alloy
 logging {

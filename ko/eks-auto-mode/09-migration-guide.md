@@ -107,7 +107,7 @@ Driver/controller 인터페이스는 다릅니다.
 
 StorageClass 이름을 바꿔도 기존 PVC의 driver가 바뀌지 않으며 기존 load balancer가 관리형 controller에 자동 인수되지도 않습니다. EBS에는 검증한 backup/snapshot 복원 계획이나 현재 AWS가 문서화한 **workload 중지·Retain·static PV/PVC 재생성** 절차를 사용합니다. 후자는 EBS volume을 재사용하지만 Kubernetes binding 객체를 재생성하며 in-place driver 전환은 아닙니다. Backup 복구, volume/AZ/KMS 소유권, reclaim policy, finalizer, binding과 앱 일관성을 검증하세요. 이 문서는 파괴적인 volume 이전 스크립트를 제공하지 않습니다.
 
-자체 AWS Load Balancer Controller가 리소스를 소유하는 동안 유지합니다. 새 관리형 load balancer를 생성·검증하고 blue/green DNS 계획으로 트래픽을 전환한 뒤 기존 것을 정리합니다. Class 불변성, annotation과 TargetGroupBinding 소유권은 별도로 검토하며 API group 변경만으로 안전한 인수가 되지는 않습니다.
+자체 AWS Load Balancer Controller가 리소스를 소유하는 동안 해당 controller를 유지합니다. 새 관리형 load balancer를 생성·검증하고 blue/green DNS 계획으로 트래픽을 전환한 뒤 기존 것을 정리합니다. Class 불변성, annotation과 TargetGroupBinding 소유권은 별도로 검토하며 API group 변경만으로 안전한 인수가 되지는 않습니다.
 
 Auto Mode 노드는 node-local DNS를 사용합니다. **비 Auto 노드가 필요로 하는 동안 CoreDNS Deployment를 유지하세요.** 남은 노드 유형의 CNI/proxy/storage/identity agent와 placement도 유지합니다. Pure Auto Mode 관리형 기능을 이유로 혼합 클러스터 의존성을 먼저 제거하면 안 됩니다.
 
@@ -431,13 +431,13 @@ kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeo
 printf 'Drain returned successfully. Validate application health before selecting another node.\n'
 ```
 
-일괄 cordon/drain loop, 고정 sleep health gate나 “실패 후 계속 진행”은 없습니다. 기본 drain은 unmanaged Pod/local emptyDir data를 의도적으로 처리하기 전에는 거부합니다. 오류를 없애려고 `--force`, `--disable-eviction`, `--delete-emptydir-data`를 붙이지 마세요. 실패·중단된 drain은 노드를 cordon 상태로 남길 수 있습니다. 상태를 확인하고 복구 계획상 필요할 때만 배치를 복원합니다. 다음 노드 전에 영향 앱을 검증하세요.
+일괄 cordon/drain loop, 고정 sleep health gate나 “실패 후 계속 진행”은 없습니다. 기본 drain은 unmanaged Pod/local emptyDir data를 의도적으로 처리하기 전에는 거부합니다. 오류를 없애려고 `--force`, `--disable-eviction`, `--delete-emptydir-data`를 붙이지 마세요. 실패·중단된 drain은 노드를 cordon 상태로 남길 수 있습니다. 상태를 확인하고 복구 계획상 필요할 때만 배치를 복원합니다. 다음 노드를 drain하기 전에 영향을 받는 앱을 검증하세요.
 
 ## 5. 기존 Workload 제거 확인 후 축소
 
 **MNG desired size 변경은 PDB를 따르지 않습니다.** EKS는 ASG scale-down을 사용하며 일반 node-group version update의 drain과 다릅니다. Desired size를 절반으로 줄이고 5분 기다리는 것은 안전한 안정화가 아닙니다.
 
-원래 scaling/IaC owner와 조율하고 이전 노드에 신규 앱 배치를 막습니다. 아래 API 예제는 모든 관측된 이전 노드가 cordon됐고 active non-DaemonSet Pod가 없는지 확인한 뒤 min/desired 0을 요청합니다. Cordon을 무시하거나 노드를 교체하는 controller와의 race까지 없애지는 못하므로 migration placement를 유지합니다. 먼저 남은 모든 DaemonSet/system 의존성과 완료 Job artifact export를 확인하세요.
+원래 scaling/IaC owner와 조율하고 이전 노드로의 신규 앱 배치를 막습니다. 아래 API 예제는 관측된 모든 이전 노드가 cordon됐고 active non-DaemonSet Pod가 없는지 확인한 뒤 min/desired 0을 요청합니다. Cordon을 무시하거나 노드를 교체하는 controller와의 race까지 없애지는 못하므로 migration placement를 유지합니다. 먼저 남은 모든 DaemonSet/system 의존성과 완료 Job artifact export를 확인하세요.
 
 ```bash
 guard_nodegroup

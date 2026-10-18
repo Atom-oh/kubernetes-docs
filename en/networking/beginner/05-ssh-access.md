@@ -17,7 +17,7 @@ Take snapshots of both guests named `before-ssh-lesson`. Record existing SSH lis
 
 ## 1. Find the client and the server
 
-The **SSH client** is the `ssh` command you run to connect. The **SSH server** is `sshd`, which waits for connections, normally TCP 22. A **host key** belongs to the server and proves its identity. A **user key** belongs to you and proves permission to use an account. A fingerprint is a short representation of a public key, suitable for comparison through a trusted channel.
+The **SSH client** is the `ssh` command you run to connect. The **SSH server** is `sshd`, which waits for connections, normally on TCP 22. A **host key** belongs to the server and proves its identity. A **user key** belongs to you and proves permission to use an account. A fingerprint is a short representation of a public key, suitable for comparison through a trusted channel.
 
 **Both guests, normal user; inspect first:**
 
@@ -71,7 +71,7 @@ systemctl status "$SSH_UNIT" --no-pager
 sudo ss -ltnp 'sport = :22'
 ```
 
-`sshd -t` checks configuration and key sanity; success normally prints nothing. Do not start/reload after a validation error. `start` affects current runtime, not boot enablement. `systemctl cat` reveals the unit and overrides: this procedure assumes the normal configuration path. If custom `ExecStart`/environment options supply `-f` or `-o`, mirror those options in later validation/effective checks rather than testing a different configuration. A listener on `0.0.0.0:22`/`[::]:22` covers more than the lab address; it is not source restriction. Do not change network bindings here, because that could remove management access. Lesson 6 restricts lab traffic by source and interface.
+`sshd -t` checks configuration and key sanity; success normally prints nothing. Do not start/reload after a validation error. `start` affects current runtime, not boot enablement. `systemctl cat` reveals the unit and overrides: this procedure assumes the normal configuration path. If custom `ExecStart`/environment options supply `-f` or `-o`, mirror those options in later validation/effective checks rather than testing a different configuration. A listener on `0.0.0.0:22`/`[::]:22` covers more than the lab address; it is not a source restriction. Do not change network bindings here, because that could remove management access. Lesson 6 restricts lab traffic by source and interface.
 
 If a firewall currently blocks the lab connection, complete **only the matching firewall branch in lesson 6** to allow `.10` to `.20` TCP 22, then return. Keep console access; do not turn off the firewall. “Connection refused” often means no listener/rejection; a timeout can indicate filtering or a path failure. Follow lesson 4's evidence sequence.
 

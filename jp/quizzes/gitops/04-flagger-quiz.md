@@ -1,7 +1,7 @@
 # Flagger プログレッシブデリバリー クイズ
 
 1. Flagger の Canary deployment で、`stepWeight: 10`、`maxWeight: 50` は何を意味しますか？
-   - A) トラフィックを 10% で開始し、50% まで段階的に増加させた後、100% に昇格させる
+   - A) 分析対象のトラフィックを 10% ずつ増やし、50% を分析目標としてから昇格を行う
    - B) 10 個の Pod を作成し、最大 50 個までスケールアップする
    - C) 10 秒間隔でトラフィックを 50% に切り替える
    - D) 最大 10% のエラー率を許容し、50% でロールバックする
@@ -9,10 +9,10 @@
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) トラフィックを 10% で開始し、50% まで段階的に増加させた後、100% に昇格させる**
+**回答: A) 分析対象のトラフィックを 10% ずつ増やし、50% を分析目標としてから昇格を行う**
 
 **解説:**
-`stepWeight` は各分析ステップで増加させるトラフィックの割合であり、`maxWeight` は Canary が受信できるトラフィックの最大割合です。トラフィックは 10% → 20% → 30% → 40% → 50% と増加し、すべてのメトリクスが合格すると 100% に昇格します。
+`stepWeight` は分析ステップごとの重みの増分、`maxWeight` は分析時の目標重みです。チェックが進むにつれて 10% → 20% → 30% → 40% → 50% と増加し、その後、primary の更新とトラフィックの昇格を行います。昇格中は Canary が一時的にすべてのトラフィックを受ける場合があるため、50% は最終的なトラフィック上限ではありません。
 
 </details>
 
@@ -20,17 +20,17 @@
 
 2. Flagger はどのような条件で Canary deployment を自動的にロールバックしますか？
    - A) CPU 使用率が 80% を超えた場合
-   - B) 設定された連続失敗回数にわたってメトリクスのしきい値を超えた場合
+   - B) ある revision に対する失敗したチェックがしきい値に達した場合
    - C) Pod 数が maxReplicas を超えた場合
    - D) deployment 時間が 30 分を超えた場合
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 設定された連続失敗回数にわたってメトリクスのしきい値を超えた場合**
+**回答: B) ある revision に対する失敗したチェックがしきい値に達した場合**
 
 **解説:**
-Flagger は各分析ステップで定義されたメトリクス（request-success-rate、request-duration など）を評価します。連続失敗回数が `threshold` に達すると、自動的にロールバックを実行し、Canary トラフィックを 0% に戻して元のバージョンを維持します。
+Flagger は各分析ステップで定義されたメトリクス（request-success-rate、request-duration など）を評価します。失敗したチェックは revision ごとに累積し、成功したチェックがあっても毎回リセットされるわけではありません。しきい値に達すると、その後の reconciliation でロールバックします。primary への昇格に失敗した場合は別の復旧処理が必要になることがあり、正常な Canary を維持する場合もあります。
 
 </details>
 
@@ -48,7 +48,7 @@ Flagger は各分析ステップで定義されたメトリクス（request-succ
 **回答: B) Flagger は Flux エコシステムと統合され、Argo Rollouts は Argo エコシステムと統合される**
 
 **解説:**
-Flagger は Flux/Flagger エコシステムの一部であり、FluxCD を使用した GitOps ワークフローに自然に統合されます。Argo Rollouts は ArgoCD とともに Argo エコシステムの一部です。どちらも Canary、Blue-Green、A/B Testing 戦略をサポートし、さまざまな service mesh と ingress controller で動作します。
+Flagger は Flux/Flagger エコシステムの一部であり、FluxCD を使った GitOps ワークフローに自然に統合されます。Argo Rollouts は ArgoCD と並ぶ Argo エコシステムの一部です。ただし、この関係は必須の組み合わせを意味するものではありません。Flagger は Canary リソースを通じて既存のワークロードを制御し、Argo Rollouts は `Rollout` リソースと `workloadRef` を使用します。利用できるルーティングや実験機能はプロバイダーによって異なります。
 
 </details>
 
@@ -66,7 +66,7 @@ Flagger は Flux/Flagger エコシステムの一部であり、FluxCD を使用
 **回答: B) 本番トラフィックを Canary（Green）に複製し、実際のトラフィックでテストする**
 
 **解説:**
-`mirror: true` は、本番トラフィックのコピーを新しいバージョン（Green）に送信し、実際のトラフィックパターンでテストします。ミラーリングされたレスポンスはクライアントに返されないため、ユーザーに影響を与えずに新しいバージョンの動作を検証できます。
+`mirror: true` は、本番トラフィックのコピーを新しいバージョン（Green）へ送り、実際のトラフィックパターンでテストします。応答は破棄されますが、データベースへの書き込み、メッセージ送信、決済処理、追加の負荷が発生する可能性があります。読み取り専用であることを確認したリクエストを使うか、分離や冪等性の対策を設けてください。
 
 </details>
 
@@ -102,14 +102,14 @@ Flagger は Flux/Flagger エコシステムの一部であり、FluxCD を使用
 **回答: B) トラフィック切り替え前に load test または conformance test を実行し、新しいバージョンを検証する**
 
 **解説:**
-pre-rollout Webhook は、トラフィック切り替えの開始前に呼び出されます。通常は Flagger loadtester を介して load test（hey、wrk）または Helm test を実行し、新しいバージョンを実際のユーザーに公開する前に、基本操作が正しく実行されることを検証します。
+pre-rollout Webhook は、トラフィックの切り替え開始前に呼び出されます。準備済みのツールと権限を使って、スモークテストや適合性テストを実行してください。非同期の `cmd` load-test が受け付けられたことは、テスト合格を意味しません。`bash` などのブロッキングテストは、設定されたタイムアウト内に完了する必要があります。
 
 </details>
 
 ---
 
 7. FluxCD Image Automation と Flagger を使用する際の正しい順序は何ですか？
-   - A) 新しい image tag を検出 → Git commit → Flux sync → Flagger Canary 分析
+   - A) イメージを選定 → Git の変更をレビューしてマージ → Flux が適用 → Flagger が分析
    - B) Flagger Canary 分析 → 新しい image tag を検出 → Git commit
    - C) Git commit → 新しい image tag を検出 → Flux sync
    - D) Flux sync → Flagger Canary 分析 → 新しい image tag を検出
@@ -117,10 +117,10 @@ pre-rollout Webhook は、トラフィック切り替えの開始前に呼び出
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) 新しい image tag を検出 → Git commit → Flux sync → Flagger Canary 分析**
+**回答: A) イメージを選定 → Git の変更をレビューしてマージ → Flux が適用 → Flagger が分析**
 
 **解説:**
-Flux Image Automation は registry 内の新しい image tag を検出し、Git repository 内の manifest を更新する commit を作成します。Flux がこの変更を sync すると Deployment が更新され、Flagger はその変更を検出して Canary 分析プロセスを自動的に開始します。
+image-reflector はタグとポリシーを評価し、image-automation は指定された YAML を更新します。変更を別ブランチへ push する構成では、PR のレビューとマージ後に Flux が source branch の変更を適用し、Flagger がワークロードの変更を検知します。Flagger が HelmRelease を直接 reconcile するわけではありません。
 
 </details>
 
@@ -138,6 +138,6 @@ Flux Image Automation は registry 内の新しい image tag を検出し、Git 
 **回答: B) 特定の HTTP header/cookie 条件に一致するリクエストのみが新しいバージョンにルーティングされる**
 
 **解説:**
-A/B Testing では、トラフィックは `spec.analysis.match` で定義された HTTP header または cookie 条件に基づいて分類されます。これらの条件に一致するリクエストのみが新しいバージョンにルーティングされるため、他のユーザーが stable version を引き続き使用する一方で、特定のユーザーグループ（beta tester、社内従業員など）に新機能を公開できます。
+A/B Testing では、トラフィックを `spec.analysis.match` で定義した HTTP header または cookie の条件で分類します。一致したリクエストだけが新しいバージョンにルーティングされ、他のリクエストは stable version に送られます。ただし、クライアントが設定できる header や cookie は、従業員であることの認証や機密機能の保護には使えません。
 
 </details>

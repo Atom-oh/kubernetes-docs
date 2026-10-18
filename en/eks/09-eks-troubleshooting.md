@@ -2,7 +2,7 @@
 
 > **Last Updated**: September 12, 2026
 
-When operating Amazon EKS clusters, various issues can arise. This document provides common problems that can occur in EKS clusters and their solutions.
+When operating Amazon EKS clusters, various issues can arise. This document describes common problems that can occur in EKS clusters and their solutions.
 
 ## Table of Contents
 
@@ -157,7 +157,7 @@ printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDE
 
 A failed query stops this example; existing files are partial evidence. Avoid blanket `cluster-info dump` or all-Pod descriptions when a scoped inventory suffices, and review/redact evidence before sharing it.
 
-For resource pressure, compare requests/limits, node allocatable resources and `kubectl top` where Metrics Server is available. On accessible nodes, check both `df -h` and `df -i`; free bytes do not rule out inode exhaustion. A node debug Pod has its own root filesystem, while the host root is mounted at `/host`; `df -h` without the intended path can inspect the wrong filesystem. Creating such a Pod requires reviewed namespace, image, debug profile, permissions and cleanup.
+For resource pressure, compare requests/limits, node allocatable resources and `kubectl top` where Metrics Server is available. On accessible nodes, check both `df -h` and `df -i`; free bytes do not rule out inode exhaustion. A node debug Pod has its own root filesystem, while the host root is mounted at `/host`; `df -h` without the intended path can inspect the wrong filesystem. Creating such a Pod requires a reviewed namespace, image, debug profile, permissions and cleanup.
 
 For network diagnosis, identify source Pod/namespace/node, destination, protocol and port. Inspect applicable policies and the source's resolver first. A newly created debug Pod may have different labels, identity, DNS or routing than the affected workload. ICMP ping does not establish TCP/UDP application reachability. Use a bounded test on the actual permitted path; prepare tools and cleanup through the owner rather than repeatedly creating unpinned `dnsutils`/`netshoot` Pods with common names.
 
@@ -809,7 +809,7 @@ Do not replace `aws-auth` with a short example or grant `system:masters` as a ge
 
 ### RBAC Issues
 
-An authentication failure, a Kubernetes `Forbidden` response and a failed impersonation request are different evidence. Check the exact API verb, resource/subresource, namespace and subject kind.
+An authentication failure, a Kubernetes `Forbidden` response and a failed impersonation request are different forms of evidence. Check the exact API verb, resource/subresource, namespace and subject kind.
 
 ```bash
 set -euo pipefail
@@ -860,7 +860,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-The namespace must already exist and the group mapping must be reviewed separately. For an application ServiceAccount, use a distinct binding with `kind: ServiceAccount`, its exact name and namespace. Node/namespace reads are cluster-scoped and need an explicitly reviewed ClusterRole; do not widen every diagnostic user to cluster-admin. Log access can disclose application data even though this Role does not grant Secret reads.
+The namespace must already exist and the group mapping must be reviewed separately. For an application ServiceAccount, use a distinct binding with `kind: ServiceAccount`, its exact name and namespace. Node/namespace reads are cluster-scoped and need an explicitly reviewed ClusterRole; do not grant every diagnostic user cluster-admin access. Log access can disclose application data even though this Role does not grant Secret reads.
 
 ### IRSA and Pod Identity Issues
 
@@ -1027,7 +1027,7 @@ reclaimPolicy: Retain
 
 This does not modify an existing PVC's class. Provisioner/parameters/binding mode are not freely mutable on an existing StorageClass, and switching the default class affects other claims. `Retain` intentionally leaves storage for a separate cleanup decision and can incur ongoing charges. Expansion requires driver/class/filesystem support and does not allow shrinking a PVC by editing its requested size.
 
-Choose and configure a compatible CSI add-on through its existing owner, including its actual IRSA/Pod Identity and complete configuration. `eksctl create iamserviceaccount --role-only` creates a role; it does not itself associate that role with an add-on. Use the inspected add-on identity and update procedure rather than `--force` reinstalling it.
+Choose and configure a compatible CSI add-on through its existing owner, including its actual IRSA/Pod Identity and complete configuration. `eksctl create iamserviceaccount --role-only` creates a role; it does not itself associate that role with an add-on. Use the inspected add-on identity and update procedure rather than reinstalling it with `--force`.
 
 For Auto Mode migration, the [EBS guide](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) documents snapshot migration, while the [Auto Mode migration guide](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html) also describes a stopped-workload Retain/static-PV path. Validate the applicable driver, tags/IAM, claim/finalizer lifecycle and recovery plan before choosing a path. Changing a provisioner string on a bound claim is not migration. Snapshot use also requires the CSI snapshot controller/CRDs and appropriate classes/permissions.
 
@@ -1277,7 +1277,7 @@ Metrics require their collection path to work. Include CPU throttling, working s
 
 ### Node Performance Issues
 
-On the verified remote Linux node session, with the relevant tools available, collect bounded observations:
+In the verified remote Linux node session, with the relevant tools available, collect bounded observations:
 
 ```bash
 top -b -n 1

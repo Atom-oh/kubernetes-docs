@@ -1,7 +1,7 @@
 <span id="quiz-questions"></span>
 
 # Cuestionario de seguridad de imágenes de contenedores
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 <span id="_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy"></span>
 
@@ -17,7 +17,7 @@
 
 **Respuesta: B. trivy image "$IMAGE_REF"**
 
-trivy image es el comando de análisis de imágenes. Establezca IMAGE_REF en una referencia real por digest. Una sintaxis válida por sí sola no demuestra acceso al registro, una base de datos actualizada ni cobertura en la detección de paquetes.
+trivy image es el comando de análisis de imágenes. Establece IMAGE_REF en una referencia real por digest. Una sintaxis válida no demuestra por sí sola que haya acceso al registro, que la base de datos esté actualizada ni que la detección de paquetes tenga cobertura suficiente.
 
 </details>
 

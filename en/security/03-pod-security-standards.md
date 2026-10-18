@@ -78,7 +78,7 @@ Request → authentication / authorization → mutating admission
 
 ### How PSA Works
 
-![Simplified authenticated and authorized Pod CREATE. PSA is internal to the API server;201 additionally requires other admission checks and storage to succeed.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
+![Simplified authenticated and authorized Pod CREATE. PSA is internal to the API server; 201 additionally requires other admission checks and storage to succeed.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-1.html)
 
@@ -515,7 +515,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 Migration from PSP to PSS should be carefully planned and performed in stages.
 
-![Migration preserves existing enforcement while assessing gaps, observing warn/audit, remediating and validating a target policy. PSP API cleanup applies only to historical1.24-or-earlier environments.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
+![Migration preserves existing enforcement while assessing gaps, observing warn/audit, remediating and validating a target policy. PSP API cleanup applies only to historical 1.24-or-earlier environments.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-2.html)
 

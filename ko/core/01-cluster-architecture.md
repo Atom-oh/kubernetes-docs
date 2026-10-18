@@ -315,11 +315,11 @@ cloud-controller-manager \
 - Kubernetes 코어 변경 없이 클라우드 기능 추가 가능
 ## 노드 구성 요소
 
-노드는 Kubernetes 클러스터에서 워커 머신으로, 컨테이너화된 애플리케이션을 실행합니다. 각 노드는 컨트롤 플레인에 의해 관리되며, 여러 구성 요소로 이루어져 있습니다.
+노드는 Kubernetes 클러스터의 워커 머신으로, 컨테이너화된 애플리케이션을 실행합니다. 각 노드는 컨트롤 플레인에 의해 관리되며, 여러 구성 요소로 이루어져 있습니다.
 
 ### kubelet
 
-kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리합니다. kubelet은 다양한 메커니즘을 통해 파드 스펙(PodSpec)을 받아 컨테이너가 해당 스펙에 따라 건강하게 실행되도록 보장합니다.
+kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리합니다. kubelet은 다양한 메커니즘을 통해 파드 스펙(PodSpec)을 받아 컨테이너가 해당 스펙에 따라 정상적으로 실행되도록 보장합니다.
 
 **주요 기능**:
 - PodSpec에 따라 컨테이너 실행
@@ -760,7 +760,7 @@ resources:
 애플리케이션의 고가용성은 다음과 같은 방법으로 구현됩니다:
 
 1. **레플리카셋/디플로이먼트**: 여러 파드 복제본 실행
-2. **파드 분산 규칙**: 파드 안티-어피니티를 통한 여러 노드에 파드 분산
+2. **파드 분산 규칙**: 파드 안티-어피니티를 통해 여러 노드에 파드 분산
 3. **PodDisruptionBudget**: 계획된 중단 시 최소 가용성 보장
 4. **서비스 및 로드 밸런싱**: 트래픽을 여러 파드에 분산
 
@@ -1213,7 +1213,7 @@ tags:
   k8s.io/cluster-autoscaler/my-cluster: "owned"
 ```
 
-**Cluster Autoscaler Deployment 일부 (v1.36 클러스터 예시)**: 클러스터 마이너 버전과 일치하는 패치 릴리스를 선택하세요. ServiceAccount, Kubernetes RBAC, 전용 IAM 역할이 추가로 필요하며 완전한 설치 매니페스트가 아닙니다.
+**Cluster Autoscaler Deployment 일부 (v1.36 클러스터 예시)**: 클러스터 마이너 버전과 일치하는 패치 릴리스를 선택하세요. ServiceAccount, Kubernetes RBAC, 전용 IAM 역할이 추가로 필요하며 이 예시는 완전한 설치 매니페스트가 아닙니다.
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1538,7 +1538,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 2026년 8월 26일 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)이 예정대로 정식 릴리스되었습니다. 이번 릴리스에는 총 67개의 개선 사항이 포함되었으며, 그중 16개가 Stable, 23개가 Beta로 승격되었고 27개가 Alpha로 도입되었으며 1개는 사용 중단·제거 항목입니다. 주요 내용:
 
 - **파드 인증서와 ClusterTrustBundle의 Stable 승격**: 서비스 어카운트 토큰 대신 워크로드에 X.509 인증서를 자동 발급·로테이션하는 PodCertificate 기능과 신뢰 앵커(trust anchor) 배포용 ClusterTrustBundle이 표준 기능이 되었습니다 ([상세 글](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
-- **Metrics API(metrics.k8s.io) GA**: `kubectl top`과 HPA가 사용하는 리소스 메트릭 API가 정식(stable) 버전으로 졸업했습니다 ([상세 글](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
+- **Metrics API(metrics.k8s.io) GA**: `kubectl top`과 HPA가 사용하는 리소스 메트릭 API가 정식(stable) 버전으로 승격되었습니다 ([상세 글](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
 - 그 외 **Stable**: DRA(Dynamic Resource Allocation) 기능 다수, watchcache 초기화 복원력 개선 등 / **Beta**: HPA scale-to-zero, 매니페스트 기반 어드미션 컨트롤 구성 등 / **Alpha**: 파드 수준 체크포인트·복원 등
 - **사용 중단(deprecation)**: kube-dns와 `kubectl run --filename/-f`가 사용 중단되었고, v1.35부터 사용 중단된 kube-proxy `ipvs` 모드는 v1.40 기본 비활성화·v1.43 제거 일정이 제시되었으며([KEP-5495](https://kep.k8s.io/5495)), 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
 

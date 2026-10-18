@@ -724,7 +724,7 @@ spec:
         port: 4317
 ```
 
-설치 설정은 기존 파일에 병합해 `istioctl install -f <merged-install-file>`로 적용하거나 동등한 Helm values를 사용하세요. 위 OTLP 수집기는 별도 배포해야 합니다. 아래 Telemetry는 kubectl로 적용하며 샘플링 1%는 환경에 맞게 조정할 예시입니다.
+설치 설정을 기존 파일에 병합해 `istioctl install -f <merged-install-file>`로 적용하거나 동등한 Helm values를 사용하세요. 위 OTLP 수집기는 별도 배포해야 합니다. 아래 Telemetry는 kubectl로 적용하며 샘플링 1%는 환경에 맞게 조정할 예시입니다.
 
 ```yaml
 apiVersion: telemetry.istio.io/v1

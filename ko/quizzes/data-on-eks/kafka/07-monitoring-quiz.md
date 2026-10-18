@@ -203,7 +203,7 @@ spec:
 <details>
 <summary>정답 보기</summary>
 
-namespace="kafka", kafka_cluster="my-cluster"로 좁힌 gauge를 클러스터별 합산해 >0 조건에 for:5m을 적용합니다. 별도의 node scrape coverage와 controller metric missing 규칙을 둡니다. lag도 exporter 실패·예상 그룹 누락·음수 커밋 오프셋을 따로 감시합니다.
+namespace="kafka", kafka_cluster="my-cluster"로 좁힌 gauge를 클러스터별로 합산해 >0 조건에 for:5m을 적용합니다. 별도의 node scrape coverage와 controller metric missing 규칙을 둡니다. lag도 exporter 실패·예상 그룹 누락·음수 커밋 오프셋을 따로 감시합니다.
 
 </details>
 

@@ -105,7 +105,7 @@ RR 수와 피어링은 장애 설계에 따라 결정합니다. 클라이언트�
 
 [공식 BGP 전환 절차](https://docs.tigera.io/calico/latest/networking/configuring/bgp)를 따릅니다. RR cluster ID를 지정하면 해당 노드가 기존 node mesh에서 즉시 빠져 워크로드에 영향을 줄 수 있습니다. 애플리케이션 워크로드가 없는 전용 노드를 준비하거나 명시적인 유지보수 전환을 계획하세요. 기존 Calico Node를 다른 필드가 빠진 부분 객체로 대체하면 안 됩니다.
 
-Kubernetes API 데이터스토어에서는 문서화된 노드 annotation을 사용해 다른 Node 필드를 보존합니다. 이름을 준비한 노드로 바꿉니다.
+Kubernetes API 데이터스토어에서는 문서화된 노드 annotation을 사용해 다른 Node 필드를 보존합니다. 이름을 준비한 노드의 이름으로 바꿉니다.
 
 ```bash
 # Existing, prepared RR nodes with no application workloads.
@@ -133,7 +133,7 @@ kubectl patch bgpconfiguration.projectcalico.org default --type merge \
   -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
 ```
 
-블록을 한 번에 모두 적용하거나 무중단을 보장하는 절차가 아닙니다. 이전 설정과 검증한 복구 경로를 보관하세요. 외부 패브릭의 주소·ASN·AS 재사용에는 경로 정책과 AS-loop 처리가 필요합니다.
+블록을 한 번에 모두 적용하는 절차나 무중단을 보장하는 절차가 아닙니다. 이전 설정과 검증한 복구 경로를 보관하세요. 외부 패브릭의 주소·ASN·AS 재사용에는 경로 정책과 AS-loop 처리가 필요합니다.
 
 ### 외부 네트워크 연동
 
@@ -273,7 +273,7 @@ Operator 1.42.6의 기본 Open Source 배포는 `ENABLED_CONTROLLERS=node,loadba
 
 Typha는 읽기·watch 업데이트를 분배하며 Felix의 일반적인 쓰기 프록시가 아닙니다. 상태나 리소스를 갱신하는 컴포넌트는 각자의 데이터스토어 접근을 사용합니다. Kubernetes API 상태는 그 저장소에 보존되지만 이 모드에 별도 Calico etcd 클러스터는 필요하지 않습니다.
 
-직접 etcdv3 접근은 지원·기능 조건을 확인할 별도 설치 선택입니다. 더 빠르거나 무제한이거나 5,000노드 이상에서 필수라고 추론하면 안 됩니다. eBPF 데이터플레인은 Kubernetes 데이터스토어를 요구합니다. 직접 etcd에는 자체 TLS 신뢰·자격 증명·가용성·일관된 백업/복원 설계도 필요합니다.
+직접 etcdv3 접근은 지원·기능 조건을 확인해야 하는 별도의 설치 선택지입니다. 더 빠르거나 무제한이거나 5,000노드 이상에서 필수라고 추론하면 안 됩니다. eBPF 데이터플레인은 Kubernetes 데이터스토어를 요구합니다. 직접 etcd에는 자체 TLS 신뢰·자격 증명·가용성·일관된 백업/복원 설계도 필요합니다.
 
 | 관심사 | Kubernetes API 데이터스토어 | 직접 etcdv3 |
 |---|---|---|

@@ -1,183 +1,167 @@
 # CloudWatch Metrics 测验
 
-用于测试您对 CloudWatch Metrics 理解程度的测验。
+根据 2026-09-13 版指南进行复核。
 
----
+1. 使用托管 CloudWatch 后端后，团队可以从哪些责任中卸下工作？
 
-1. Amazon CloudWatch Container Insights 的主要功能是什么？
-   - A) 构建 Container 镜像
-   - B) 对 EKS 集群进行 Container/Pod 级监控
-   - C) Container 编排
-   - D) CI/CD pipeline 管理
+   - A) 所有采集和 IAM 工作
+   - B) 仅 AWS 后端运维；collector、身份、保留策略和响应仍需明确负责人
+   - C) 所有网络前提条件
+   - D) 所有查询和日志费用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 对 EKS 集群进行 Container/Pod 级监控**
+**答案：B**
 
-**说明：**
-Container Insights 是 CloudWatch 的一项功能，用于监控 EKS、ECS 和 Kubernetes 环境中的 Container 化工作负载。它会自动收集并可视化集群、节点、Pod 和 Container 级别的 CPU、内存、网络和文件系统指标。
+传统、增强型和 OTel 采集方式有不同的命名与计费模型。托管存储并不意味着无需运维。
+
+</details>
+
+2. 关于在 EKS 上安装 CloudWatch 组件，哪项说法正确？
+
+   - A) `update-cluster-logging` 会安装 Container Insights
+   - B) 所有计算平台都运行同一种主机 DaemonSet
+   - C) 选择兼容的 add-on 或由团队负责的 Helm 安装，并验证平台与身份前提条件
+   - D) Helm 6.6.0 必然就是 EKS add-on 的版本
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C**
+
+控制平面日志是另一项配置。Fargate 不运行此处展示的主机 DaemonSet；Auto Mode 和混合计算需要检查兼容性。Pod Identity/IRSA 仍需实际完成配置。
+
+</details>
+
+3. 如何用 `SEARCH` 生成前十名的仪表板视图？
+
+   - A) `SEARCH` 本身总会将结果限制为十项
+   - B) `SLICE(SORT(SEARCH(...), AVG, DESC), 0, 10)`
+   - C) `PERCENTILE(SEARCH(...), 10)`
+   - D) 对 `SEARCH` 数组直接创建普通告警
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B**
+
+`SEARCH` 会返回匹配的时间序列。要排序并截取前十项，必须显式执行排序和切片；排名依据所评估的时间范围。不能直接对 `SEARCH` 结果创建告警。
+
+</details>
+
+4. 关于百分位数和比率，哪项说法正确？
+
+   - A) `PERCENTILE(METRICS(),95)` 会给出全局请求 p95
+   - B) 每个零流量时段都代表健康的零错误结果
+   - C) `AVG(METRICS()) PERIOD(300)` 是移动平均值
+   - D) 使用受支持的 p95 统计值；比率分母应防止零流量，并检查遥测缺失
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D**
+
+指南对 ALB 计数使用 Sum，并采用 `IF(m2>0,100*m1/m2)`。CloudWatch 算术会将缺失值视为零，并丢弃除以零的结果；不能通过服务 p95 值重建全局 p95。
+
+</details>
+
+5. ADOT/EMF 指标声明在实际遥测中必须包含什么？
+
+   - A) 维度标签和值，由发现/重标记流程或应用提供
+   - B) 只在 exporter 配置中列出维度名称
+   - C) 在每个标签中放入 secret access key
+   - D) 每个节点运行一个副本来采集所有 Pod
+
+<details>
+<summary>显示答案</summary>
+
+**答案：A**
+
+`awsemf` 会发送日志事件，以便从中提取传统指标。示例会创建 ClusterName/Namespace/Service 维度，并使用 gauge。现代的直接 OTLP 路径是另一种选择。
+
+</details>
+
+6. 以下哪项成本操作不安全，或与本指南不兼容？
+
+   - A) 衡量摄取量和查询用量
+   - B) 为一个由团队负责的日志组设置经批准的保留策略
+   - C) 将 EMF/Container Insights 日志转为 Infrequent Access，并缩短所有未设上限的日志组保留期
+   - D) 检查重复采集和不必要的标签
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C**
+
+Infrequent Access 不支持 EMF 或 Container Insights 日志摄取。缩短保留期可能导致已有历史数据到期删除。高分辨率会增加请求/告警成本，但不意味着指标存储费用统一按十倍计算。
+
+</details>
+
+7. 关于 PutMetricData 辅助函数，哪项说法正确？
+
+   - A) 它会自动创建 IAM 权限
+   - B) 它使用调用方提供的客户端和 UTC 时间戳，并将错误传递给调用方
+   - C) 重试可以保证业务计数恰好写入一次
+   - D) CloudWatch 会自动创建每一种聚合维度组合
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B**
+
+自定义指标由完整维度集合标识。PutMetricData 没有幂等性 token；结果不确定时重试可能造成样本重复。示例上报区间计数，并使用 Sum。
+
+</details>
+
+8. 传统指标的 dimensions 与 OTel labels 有何不同？
+
+   - A) 两者数量都不受限制
+   - B) 150 个 label 的上限取代了 PutMetricData 的限制
+   - C) 传统指标允许 30 个维度；文档所述 OTel 模型最多支持 150 个 label
+   - D) label 不会影响 payload 成本或信息暴露
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C**
+
+这是两种不同的摄取模型。额外标签会增加 payload 和元数据暴露；仅查看维度名称无法衡量基数。
+
+</details>
+
+9. 关于指标的解释，哪项说法正确？
+
+   - A) `node_network_total_bytes` 的单位是字节/秒；`namespace_number_of_running_pods` 用于统计 Pod 数量
+   - B) `cluster_cpu_utilization` 是标准发布的指标
+   - C) 正在运行的容器数始终等于正在运行的 Pod 数
+   - D) 所有预留容量指标都只属于增强型功能
+
+<details>
+<summary>显示答案</summary>
+
+**答案：A**
+
+请核对实际指标目录及维度集合。Pod CPU/内存利用率可以节点限制为分母。增强型可观测性会增加指标和维度，并采用自己的计费模型。
+
+</details>
+
+10. 配置异常或重启告警时必须检查哪些内容？
+
+   - A) 告警创建成功就证明实时遥测正常
+   - B) 重启总量始终代表一个时间窗口内的增量
+   - C) 无条件从被观测的异常序列中移除 ReturnData
+   - D) 历史记录、精确指标身份、总量或增量的含义、缺失数据以及通知送达情况
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D**
+
+`ANOMALY_DETECTION_BAND` 会返回模型学习到的预期范围。指南中的异常检测表达式可以同时返回被观测的序列和范围。带有 PodName/Namespace/ClusterName 维度的重启总量，并不会自动表示每五分钟新增五次重启。
 
 </details>
 
 ---
 
-2. 将 CloudWatch Agent 部署到 EKS 的推荐方法是什么？
-   - A) 部署为单个 Pod
-   - B) 作为 DaemonSet 部署到所有节点
-   - C) 使用 Deployment 部署 3 个副本
-   - D) 部署为 StatefulSet
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 作为 DaemonSet 部署到所有节点**
-
-**说明：**
-CloudWatch Agent 以 DaemonSet 的形式部署，以便从每个节点收集指标和日志。这可确保从所有节点一致地收集系统指标、Container 指标和日志。
-
-</details>
-
----
-
-3. CloudWatch Metric Math 中 `SEARCH()` 函数的用途是什么？
-   - A) 日志搜索
-   - B) 动态搜索与模式匹配的指标
-   - C) 告警搜索
-   - D) Dashboard 搜索
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 动态搜索与模式匹配的指标**
-
-**说明：**
-`SEARCH()` 函数使用 namespace、dimension 和指标名称模式动态搜索指标。例如，`SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average')` 会搜索所有 EC2 实例的 CPU 利用率。
-
-</details>
-
----
-
-4. CloudWatch Anomaly Detection 如何工作？
-   - A) 基于手动设置的阈值进行检测
-   - B) 基于 ML 的自动异常模式检测
-   - C) 日志模式分析
-   - D) 网络流量分析
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 基于 ML 的自动异常模式检测**
-
-**说明：**
-CloudWatch Anomaly Detection 使用机器学习来学习指标的正常模式，并自动检测异常值。它会考虑季节性、趋势和每周日期模式，生成动态预期范围（band），并在值超出这些范围时识别异常。
-
-</details>
-
----
-
-5. 使用 AWS Distro for OpenTelemetry (ADOT) 将 Prometheus 指标发送到 CloudWatch 时，使用哪个 exporter？
-   - A) prometheus-exporter
-   - B) awsemf (AWS EMF Exporter)
-   - C) cloudwatch-exporter
-   - D) metric-exporter
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) awsemf (AWS EMF Exporter)**
-
-**说明：**
-要在 ADOT 中将 Prometheus 指标发送到 CloudWatch，请使用 AWS EMF (Embedded Metric Format) Exporter。该 exporter 会将指标转换为 CloudWatch Logs 中的 EMF 格式并发送，随后 CloudWatch 将其提取为指标。
-
-</details>
-
----
-
-6. 以下哪项不是有效的 CloudWatch 成本优化方法？
-   - A) 设置日志保留期
-   - B) 移除不必要的高分辨率指标
-   - C) 以 1 秒间隔收集所有指标
-   - D) 使用 Infrequent Access 日志类别
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) 以 1 秒间隔收集所有指标**
-
-**说明：**
-高分辨率指标（1 秒间隔）成本较高。为了进行成本优化，仅以高分辨率收集必要的指标，而大多数指标应以 60 秒间隔（默认值）收集。设置日志保留期、筛选不必要的指标以及使用 Infrequent Access 日志类别也有助于降低成本。
-
-</details>
-
----
-
-7. 在 CloudWatch 中创建自定义指标时使用哪个 API？
-   - A) CreateMetric
-   - B) PutMetricData
-   - C) PublishMetric
-   - D) SendMetric
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) PutMetricData**
-
-**说明：**
-`PutMetricData` API 用于向 CloudWatch 发送自定义指标。您可以指定 namespace、指标名称、dimensions、值、单位、时间戳等。可以通过 AWS SDK 或 CLI 调用它。
-
-</details>
-
----
-
-8. Dimensions 在 CloudWatch 中的作用是什么？
-   - A) 指定指标单位
-   - B) 用于细分指标的键值对
-   - C) 指定告警严重性
-   - D) 指定日志组
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 用于细分指标的键值对**
-
-**说明：**
-Dimensions 是用于细分和标识指标的键值对。例如，在 EC2 实例指标中，`InstanceId` dimension 用于标识特定实例。单个指标最多可以指定 30 个 dimensions。
-
-</details>
-
----
-
-9. Enhanced Container Insights 与基础 Container Insights 有何不同？
-   - A) 免费提供
-   - B) 提供额外指标和更详细的监控
-   - C) 移除日志收集功能
-   - D) 仅提供告警功能
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 提供额外指标和更详细的监控**
-
-**说明：**
-Enhanced Container Insights 收集的指标比基础 Container Insights 更多。它提供预留 CPU/内存容量、GPU 指标（如适用）以及 Kubernetes control plane 指标等额外信息。虽然成本更高，但可实现更详细的监控。
-
-</details>
-
----
-
-10. `ANOMALY_DETECTION_BAND()` 函数在 CloudWatch 告警中的作用是什么？
-    - A) 设置固定阈值
-    - B) 返回异常检测模型的预期范围
-    - C) 日志筛选
-    - D) 创建 Dashboard
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 返回异常检测模型的预期范围**
-
-**说明：**
-`ANOMALY_DETECTION_BAND()` 函数返回由异常检测模型学习到的预期值范围（上限/下限）。该范围可用于告警，以便在指标超出预期范围时触发通知。第二个参数指定用于调整 band 宽度的标准差乘数。
-
-</details>
+[返回指南](../../../observability/metrics/04-cloudwatch-metrics.md)

@@ -142,7 +142,7 @@ IAM/공유·AZ·타입·platform·tenancy와 실제 예약 사용 상태를 확�
 
 **정답: C**
 
-직접 HPA/Deployment 변경은 reconcile로 덮어쓸 수 있습니다. 원래 값을 기록하고 복원합니다.
+직접 HPA/Deployment 변경은 reconcile로 덮어써질 수 있습니다. 원래 값을 기록하고 복원합니다.
 
 </details>
 

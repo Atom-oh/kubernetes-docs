@@ -206,7 +206,7 @@ TraceID のすべての Span を同じ sampler インスタンスにルーティ
 
 ## Trace-Log-Metric の相関付け
 
-### TraceID によるログのリンク
+### TraceID によるログのリンク {#linking-logs-via-traceid}
 
 フレームワークでサポートされている logging instrumentation を優先してください。SLF4J MDC を手動で使用する場合、操作が例外を送出しても以前の context を復元してください。
 

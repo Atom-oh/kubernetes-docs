@@ -23,7 +23,7 @@ App Mesh와 Istio가 Pod 안에 Envoy를 넣는 이유는 **애플리케이션�
 
 Lattice는 반대 방향을 택했습니다. 프록시를 Pod에서 빼내고 **AWS가 운영하는 인프라 계층**에 둡니다. 클라이언트 Pod는 아무것도 모른 채 평범한 HTTP 요청을 보내고, 그 요청이 Lattice 서비스의 주소로 향하면 인프라가 가로채서 처리합니다.
 
-이 설계가 사는 문제는 규모와 이질성입니다. 사이드카를 쓰지 않으므로 Pod 수만큼 프록시가 늘지 않고, EKS·ECS·EC2·Lambda가 **같은 방식으로** 서비스 네트워크에 참여할 수 있습니다. Lambda 함수 안에 Envoy를 넣을 수는 없지만, 인프라 계층의 프록시라면 Lambda도 대상이 됩니다. VPC와 계정 경계, 심지어 IP 대역 중복까지 인프라가 흡수합니다.
+이 설계가 해결하는 문제는 규모와 이질성입니다. 사이드카를 쓰지 않으므로 Pod 수만큼 프록시가 늘지 않고, EKS·ECS·EC2·Lambda가 **같은 방식으로** 서비스 네트워크에 참여할 수 있습니다. Lambda 함수 안에 Envoy를 넣을 수는 없지만, 인프라 계층의 프록시라면 Lambda도 대상이 됩니다. VPC와 계정 경계, 심지어 IP 대역 중복까지 인프라가 흡수합니다.
 
 Envoy를 제거하면 복원력과 관측 기능의 구현 위치가 달라집니다. **App Mesh가 제공하던 기능과 현재 Lattice API가 제공하는 기능**을 비교한 뒤 애플리케이션이나 다른 프록시로 옮길 제어를 구분합니다. 개념 구성도로 AWS 내부 상태 위치나 영구적인 기능 제약을 추론하지 않습니다.
 
@@ -103,8 +103,8 @@ graph TB
 **VirtualNode 행이 문제입니다.** App Mesh의 VirtualNode는 세 가지를 동시에 표현했습니다. 이 워크로드가 누구인지(신원, backend TLS 설정 포함), 어디로 나가는지(backends), 어디서 받는지(listeners, health check, connection pool, outlier detection). Lattice에서 이 셋은 서로 다른 곳으로 흩어집니다.
 
 - **"어디서 받는지"의 일부**(대상 집합, health check)만 Target Group으로 갑니다
-- **"어디로 나가는지"**는 리소스가 아니라 **auth policy와 IAM 권한**의 문제가 됩니다
-- **"누구인지"**는 SVID가 아니라 **IAM Role**이 됩니다 ([05번 문서](./05-spiffe-to-iam.md))
+- "**어디로 나가는지**"는 리소스가 아니라 **auth policy와 IAM 권한**의 문제가 됩니다
+- "**누구인지**"는 SVID가 아니라 **IAM Role**이 됩니다 ([05번 문서](./05-spiffe-to-iam.md))
 - **connection pool과 outlier detection**은 **대응되는 리소스가 없습니다**
 
 즉 매핑표에서 오른쪽 칸이 채워져 있어도, 왼쪽 리소스가 갖고 있던 속성 전부가 옮겨가는 것은 아닙니다. **표는 리소스 이름의 대응이고, 기능의 대응이 아닙니다.**
@@ -151,9 +151,9 @@ App Mesh에서 Pod IP를 추적하던 주체는 Cloud Map과 Envoy였습니다. 
 
 여기서 파생되는 두 가지 실무 포인트가 있습니다.
 
-**첫째, 컨트롤러가 멈추면 라우팅 대상이 낡습니다.** 트래픽은 Lattice가 계속 흘려보내지만, 새로 뜬 Pod는 Target으로 등록되지 않고 죽은 Pod는 해제되지 않습니다. 컨트롤러 Deployment의 가용성과 IAM 권한이 데이터 경로의 신뢰성에 직접 연결됩니다.
+**첫째, 컨트롤러가 멈추면 라우팅 대상 정보가 오래된 상태로 남습니다.** 트래픽은 Lattice가 계속 흘려보내지만, 새로 뜬 Pod는 Target으로 등록되지 않고 죽은 Pod는 해제되지 않습니다. 컨트롤러 Deployment의 가용성과 IAM 권한이 데이터 경로의 신뢰성에 직접 연결됩니다.
 
-**둘째, Pod readiness gate를 쓸 수 있습니다.** Lattice Target Group의 health가 `Healthy`가 될 때까지 Pod를 Ready로 표시하지 않게 만들 수 있고, 이렇게 하면 롤링 업데이트가 **새 Pod가 Lattice 관점에서 건강해질 때까지 구 Pod를 종료하지 않습니다.** 전환 기간 중 무중단을 확보하는 데 중요한 장치입니다.
+**둘째, Pod readiness gate를 쓸 수 있습니다.** Lattice Target Group의 health가 `Healthy`가 될 때까지 Pod를 Ready로 표시하지 않게 만들 수 있고, 이렇게 하면 롤링 업데이트 중에 **새 Pod가 Lattice 관점에서 건강해질 때까지 구 Pod를 종료하지 않습니다.** 전환 기간 중 무중단을 확보하는 데 중요한 장치입니다.
 
 ### 컨트롤러 범위의 한계
 

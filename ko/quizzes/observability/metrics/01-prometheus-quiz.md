@@ -14,7 +14,7 @@
 
 **정답: B**
 
-기본 경로는 pull/scrape입니다. Remote write·선택적 배치 통합은 다른 전달 경로를 추가합니다. up은 scrape 성공이며 애플리케이션의 전체 가용성을 증명하지 않습니다.
+기본 경로는 pull/scrape입니다. Remote write·선택적 배치 통합은 다른 전달 경로를 추가합니다. up은 scrape 성공 여부를 나타내며 애플리케이션의 전체 가용성을 증명하지 않습니다.
 
 </details>
 
@@ -30,7 +30,7 @@
 
 **정답: B**
 
-rate()는 range vector를 사용해 관측한 리셋·외삽을 처리합니다. increase()는 초당 변화율이 아니라 총 증가량 추정입니다. 집계 전에 rate를 적용하며 놓친 모든 증가량이 복원된다고 해석하지 않습니다.
+rate()는 range vector를 사용해 관측한 리셋·외삽을 처리합니다. increase()는 초당 변화율이 아니라 총 증가량 추정값입니다. 집계 전에 rate를 적용하며 놓친 모든 증가량이 복원된다고 해석하지 않습니다.
 
 </details>
 
@@ -142,7 +142,7 @@ AMP·VictoriaMetrics·Mimir 등 수신기는 각각의 endpoint·identity·쿼�
 
 **정답: B**
 
-groupBy는 native 설정의 group_by가 됩니다. Continue를 설정하지 않으면 보통 첫 형제 route 일치에서 멈춥니다. Inhibition은 다른 서비스·노드 warning을 억제하지 않도록 의미 있는 자원 식별 equal 레이블이 필요합니다.
+groupBy는 native 설정의 group_by가 됩니다. Continue를 설정하지 않으면 보통 일치하는 첫 형제 route에서 멈춥니다. Inhibition에는 다른 서비스·노드 warning을 억제하지 않도록 의미 있는 자원 식별용 equal 레이블이 필요합니다.
 
 </details>
 
@@ -158,7 +158,7 @@ groupBy는 native 설정의 group_by가 됩니다. Continue를 설정하지 않�
 
 **정답: B**
 
-WAL replay는 내구성 장치이지 손상·볼륨 장애·긴 원격 장애에서 무손실을 보장하지 않습니다. Retention과 WAL·head·compaction 디스크 요구도 구분해야 하며 검증한 백업·복구 절차를 보존합니다.
+WAL replay는 내구성 장치이지만 손상·볼륨 장애·긴 원격 장애에서 무손실을 보장하지 않습니다. Retention과 WAL·head·compaction 디스크 요구도 구분해야 하며 검증한 백업·복구 절차를 보존합니다.
 
 </details>
 

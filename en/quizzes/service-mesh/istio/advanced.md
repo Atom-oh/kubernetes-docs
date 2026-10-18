@@ -526,7 +526,7 @@ spec:
     app: ratelimit
 ```
 
-The image is the verified upstream commit 8fe6ea42 with a digest, not a moving master tag. The gRPC port is **8081**, HTTP health is **8080**. This workload needs a matching injector and actual mesh/network access. Configure protected Redis credentials via appropriate Secret/mount mechanisms. Ensure the new configuration is loaded; the shown file-mode setup is not proof of hot reload.
+The image is the verified upstream commit 8fe6ea42 with a digest, not a moving master tag. The gRPC port is **8081**; HTTP health is **8080**. This workload needs a matching injector and actual mesh/network access. Configure protected Redis credentials via appropriate Secret/mount mechanisms. Ensure the new configuration is loaded; the shown file-mode setup is not proof of hot reload.
 
 Use the generated Istio gRPC cluster so the established service discovery/TLS policy applies:
 
@@ -746,7 +746,7 @@ spec:
       scaleDownDelaySeconds: 600
 ```
 
-The initial image is the verified blue demo digest; the guide supplies the corresponding green digest for an update. On a new revision, preview points at the candidate. After successful pre-analysis, `autoPromotionEnabled: true` permits automatic promotion. Set it false when deliberate manual promotion is required; that is a separate policy choice.
+The initial image is the verified blue demo digest; the guide supplies the corresponding green digest for an update. On a new revision, preview points at the candidate. After successful pre-analysis, `autoPromotionEnabled: true` permits automatic promotion. Set it to false when deliberate manual promotion is required; that is a separate policy choice.
 
 Here traffic comes from meshed clients to internal Services. Production edge exposure requires a real Gateway, TLS, matching host bindings and authorization. Merely creating a second VirtualService hostname does not add it to a Gateway or protect preview access.
 

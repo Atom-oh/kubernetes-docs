@@ -137,7 +137,7 @@ router_settings:
 
 ## 5. RAG データと Retrieval Boundaries
 
-最新の検査済み Milvus release は 3.0.1 です。別途レビュー済みの Operator 1.3.9 は、デフォルトで Milvus 2.6.11 を使用します。これらは 1 つの version ではなく、広範な compatibility table はテスト済みの 3.x upgrade の証明にはなりません。operator repository は https://zilliztech.github.io/milvus-operator/ であり、通常の Milvus chart repository とは別です。
+最新の検査済み Milvus release は 3.0.3 (2026-10-14) です。別途レビュー済みの Operator 1.3.9 は、デフォルトで Milvus 2.6.11 を使用します。これらは 1 つの version ではなく、広範な compatibility table はテスト済みの 3.x upgrade の証明にはなりません。operator repository は https://zilliztech.github.io/milvus-operator/ であり、通常の Milvus chart repository とは別です。
 
 Vector dimensions は実際の embedding output と一致する必要があります。ingestion と queries について、revision、dimensions options、tokenizer、normalization、distance metric を記録してください。Index parameters は異なります。HNSW M/efConstruction を GPU_IVF_FLAT に単純に再利用することはできません。GPU indexing には互換性のある images、version、devices、component roles が必要です。indexNode に GPU を要求しても、自動的に acceleration されるわけではありません。
 
@@ -305,7 +305,7 @@ client.flush()
 client.shutdown()
 ```
 
-Langfuse chart 2.1.0 は app 4.24.0 を参照しており、最新の検査済み server 4.35.0 とは異なります。Web/worker、PostgreSQL、Redis/Valkey、object storage、ClickHouse が必要です。chart は ClickHouse Operator/cert-manager prerequisites をチェックします。Offline rendering は、deployed operator ではなく、simulated API capability information を提供しました。デフォルトの charts には secret environment delivery が含まれており、承認済みの file-only credential deployments ではありません。
+Langfuse chart 2.1.0 は app 4.24.0 を参照しており、最新の検査済み server 4.60.0 (2026-10-15) とは異なります。Web/worker、PostgreSQL、Redis/Valkey、object storage、ClickHouse が必要です。chart は ClickHouse Operator/cert-manager prerequisites をチェックします。Offline rendering は、deployed operator ではなく、simulated API capability information を提供しました。デフォルトの charts には secret environment delivery が含まれており、承認済みの file-only credential deployments ではありません。
 
 DCGM FB_USED は percentage ではなく quantity です。units と total memory を検証してください。GPU utilization80% または temperature85C は universal health thresholds ではありません。latency/queues/errors/throttling と実際の device limits を併せて観測してください。
 

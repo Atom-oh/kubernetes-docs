@@ -5,7 +5,7 @@
 
 ## 실습 환경 설정
 
-[설치 프로필](README.md)과 [네트워킹 조건](03-networking.md)에 따라 일회용 Linux 클러스터를 준비합니다. kubectl은 API 서버와 지원되는 버전 차이로 맞춥니다. 아래 IPAM 프로필은 설치·문서화된 마이그레이션의 선택지이며 실행 중인 클러스터에 ConfigMap을 순서대로 바꾸는 절차가 아닙니다.
+[설치 프로필](README.md)과 [네트워킹 조건](03-networking.md)에 따라 일회용 Linux 클러스터를 준비합니다. kubectl은 API 서버와 지원되는 버전 차이 범위에 맞춥니다. 아래 IPAM 프로필은 설치·문서화된 마이그레이션의 선택지이며 실행 중인 클러스터의 ConfigMap을 순서대로 바꾸는 절차가 아닙니다.
 
 정책 실습은 아래 별도 namespace와 일치하는 workload를 사용합니다. 이전 Cilium 1.14 Star Wars manifest는 정책의 label과 맞지 않았습니다. 기존 Kubernetes/Cilium cluster-wide 정책과 admission 설정부터 확인하며 새 namespace가 이를 무효화하지는 않습니다.
 
@@ -94,7 +94,7 @@ ipv6:
 
 ### Multi-Pool과 CiliumPodIPPool
 
-문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]**에서는 `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
+문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]에서는** `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
 
 **`multi-pool-values.yaml`**
 
@@ -541,7 +541,7 @@ HTTP method·path 필드는 정규식입니다. 예제처럼 범위를 고정하
 
 ### DNS/FQDN 정책
 
-이 예제는 `kube-system`의 CoreDNS/kube-dns Pod가 TCP/UDP 53 resolver인 환경을 가정합니다. 먼저 Pod의 실제 resolver를 확인합니다. NodeLocal DNS, OpenShift, 관리형 DNS 경로는 맞는 별도 설정이 필요합니다.
+이 예제는 `kube-system`의 CoreDNS/kube-dns Pod가 TCP/UDP 53 resolver인 환경을 가정합니다. 먼저 Pod의 실제 resolver를 확인합니다. NodeLocal DNS, OpenShift, 관리형 DNS 경로에 맞는 별도 설정이 필요합니다.
 
 **`dns-egress.yaml`**
 

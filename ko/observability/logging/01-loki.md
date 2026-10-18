@@ -236,7 +236,7 @@ test:
   enabled: false
 ```
 
-테넌트 gateway는 위 allowlist의 데이터 API와 비민감한 `/` readiness만 노출합니다. 유효한 tenant 계정이라도 `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status·삭제·ruler 관리 경로는 403으로 거절합니다. 관리 작업은 별도로 권한을 부여한 내부 경로/port-forward에서 수행합니다. 추가 client API가 필요하면 기능과 권한을 검토해 allowlist를 확장하고, backend 직접 접근 차단도 유지합니다.
+테넌트 gateway는 위 allowlist의 데이터 API와 비민감한 `/` readiness만 노출합니다. 유효한 tenant 계정이라도 `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status·삭제·ruler 관리 경로에 대한 요청은 403으로 거절합니다. 관리 작업은 별도로 권한을 부여한 내부 경로/port-forward에서 수행합니다. 추가 client API가 필요하면 기능과 권한을 검토해 allowlist를 확장하고, backend 직접 접근 차단도 유지합니다.
 
 
 
@@ -267,7 +267,7 @@ kubectl get pods,services,pvc -n loki
 
 ### IAM과 ServiceAccount
 
-예제는 IRSA를 사용합니다. 노드 플랫폼·agent·애플리케이션 AWS SDK 자격 증명 체인이 지원하면 EKS Pod Identity도 선택할 수 있습니다. IRSA만이 유일하게 안전한 방식은 아닙니다. Loki YAML에 S3 access key를 넣거나 광범위한 노드 역할 권한을 상속하지 않습니다.
+예제는 IRSA를 사용합니다. 노드 플랫폼·agent·애플리케이션 AWS SDK 자격 증명 체인이 지원하면 EKS Pod Identity도 선택할 수 있습니다. IRSA가 유일하게 안전한 방식은 아닙니다. Loki YAML에 S3 access key를 넣거나 광범위한 노드 역할 권한을 상속하지 않습니다.
 
 명시된 동일 계정 버킷에 대한 정책 예시입니다.
 
@@ -498,7 +498,7 @@ sum(count_over_time({app="api"} |= "error" [5m])) > 100
 
 ## 레이블 설계와 수집기
 
-Cluster, namespace, service/app, environment처럼 필요하고 범위가 제한된 인덱스 레이블을 선택합니다. 익숙한 레이블 이름도 실제 조합·변경 빈도가 높을 수 있습니다. Request/user ID, timestamp, Pod UID·이름, client IP는 대개 인덱스 레이블에 적합하지 않습니다. 필요한 값만 접근·개인정보 정책에 따라 로그 본문 또는 structured metadata에 둡니다.
+Cluster, namespace, service/app, environment처럼 필요하고 범위가 제한된 인덱스 레이블을 선택합니다. 익숙한 레이블 이름도 실제 조합 수·변경 빈도가 높을 수 있습니다. Request/user ID, timestamp, Pod UID·이름, client IP는 대개 인덱스 레이블에 적합하지 않습니다. 필요한 값만 접근·개인정보 정책에 따라 로그 본문 또는 structured metadata에 둡니다.
 
 | 예시 | 스트림 수에 미치는 영향 |
 |---|---|
@@ -533,7 +533,7 @@ loki.process "app" {
 }
 ```
 
-인덱싱하는 `level` 값은 제한된 집합이어야 합니다. 앱이 제공한 데이터로 신뢰된 테넌트·클러스터 신원을 결정하지 않습니다. Structured metadata에는 호환 스키마(이 예제의 v13)와 `allow_structured_metadata`가 필요하며 개인정보 삭제 기능이 아닙니다. 수집기 secret 참조·파일 권한은 별도로 설정합니다.
+인덱싱하는 `level` 값은 제한된 집합이어야 합니다. 앱이 제공한 데이터로 신뢰된 테넌트·클러스터 신원을 결정하지 않습니다. Structured metadata에는 호환 스키마(이 예제의 v13)와 `allow_structured_metadata`가 필요하며, Structured metadata는 개인정보 삭제 기능이 아닙니다. 수집기 secret 참조·파일 권한은 별도로 설정합니다.
 
 ## 성능 튜닝
 
@@ -640,7 +640,7 @@ curl --fail --silent --show-error \
   --data-urlencode 'since=1h' | jq '.data | length'
 ```
 
-URL은 의도한 HTTPS gateway로 지정하고 자격 증명 파일 권한·조회 범위를 제한합니다. `start`에는 지원되는 절대 타임스탬프가 필요하고 상대 범위에는 `since=1h`를 사용합니다. Series API 건수는 조회 구간에서 일치하는 series이며 현재 메모리에 있는 활성 스트림 수와 같지 않을 수 있습니다.
+URL은 의도한 HTTPS gateway로 지정하고 자격 증명 파일 권한·조회 범위를 제한합니다. `start`에는 지원되는 절대 타임스탬프가 필요하고 상대 범위에는 `since=1h`를 사용합니다. Series API 건수는 조회 구간에서 일치하는 series 수이며 현재 메모리에 있는 활성 스트림 수와 같지 않을 수 있습니다.
 
 관리 진단은 실제 Pod를 선택해 로컬 port-forward를 사용합니다.
 
@@ -653,7 +653,7 @@ curl --fail http://127.0.0.1:13100/ready
 curl --fail http://127.0.0.1:13100/metrics
 ```
 
-Readiness는 전체 저장·조회 경로 정상의 증거가 아닙니다. 링 endpoint는 선택한 컴포넌트에 따라 다릅니다. `/config`는 민감한 운영 정보로 취급합니다. **`POST /flush`는 플러시를 실행하는 동작이며 상태 조회가 아니므로** 진단 명령에서 제외했습니다.
+Readiness는 전체 저장·조회 경로가 정상이라는 증거가 아닙니다. 링 endpoint는 선택한 컴포넌트에 따라 다릅니다. `/config`는 민감한 운영 정보로 취급합니다. **`POST /flush`는 플러시를 실행하는 동작이며 상태 조회가 아니므로** 진단 명령에서 제외했습니다.
 
 다음은 **스크레이프한 Loki 메트릭**에 대한 Prometheus 식이며 LogQL이나 완전한 Grafana import dashboard가 아닙니다.
 
@@ -671,7 +671,7 @@ Distributor bytes는 도착 데이터를 나타낼 뿐 영속 수집 성공을 �
 
 ## 검증과 참고 자료
 
-감사는 공식 release SHA digest로 검증한 Loki 3.7.7 바이너리·chart 18.12.1로 로컬 설정·Helm·LogQL을 검사했습니다. EKS 권한, TLS Secret 유효성, 전달 보장, S3 보존 실행, 운영 용량·AZ 장애조치를 입증하는 검사는 아닙니다. Alloy 조각과 Terraform 리소스는 완전한 구성 안에서 통합 검증해야 합니다.
+감사에서는 공식 release SHA digest로 검증한 Loki 3.7.7 바이너리·chart 18.12.1로 로컬 설정·Helm·LogQL을 검사했습니다. EKS 권한, TLS Secret 유효성, 전달 보장, S3 보존 실행, 운영 용량·AZ 장애조치를 입증하는 검사는 아닙니다. Alloy 조각과 Terraform 리소스는 완전한 구성 안에서 통합 검증해야 합니다.
 
 - [고정 버전 community chart values](https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/values.yaml)
 - [Helm 설치·배포 권장 사항](https://grafana.com/docs/loki/latest/setup/install/helm/)

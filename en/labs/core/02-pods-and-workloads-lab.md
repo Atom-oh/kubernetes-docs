@@ -106,7 +106,7 @@ workload_kubectl get pod nginx-lab -o wide
 ### Steps
 
 **Step 2.1: Create Deployment**
-The Deployment retains old ready replicas during the intentional bad-image rollout with maxUnavailable0 and maxSurge1. Spare capacity is needed for surge and terminating Pods, plus the standalone Pod. This does not guarantee availability during unrelated failures.
+The Deployment retains old ready replicas during the intentional bad-image rollout with maxUnavailable set to 0 and maxSurge set to 1. Spare capacity is needed for surge and terminating Pods, plus the standalone Pod. This does not guarantee availability during unrelated failures.
 
 ```bash
 cat > "${WORKLOADS_LAB_DIR:?}/nginx-deployment.yaml" << 'EOF'

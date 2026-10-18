@@ -46,7 +46,7 @@ Cluster generatorは、ArgoCDに登録されている各クラスター用のApp
 **回答: B) 指定されたパス内のディレクトリごとにApplicationsを作成する**
 
 **解説:**
-Git directory generatorは、Gitリポジトリ内の指定されたディレクトリをスキャンし、見つかった各サブディレクトリに対してApplicationを作成します。これはmonorepo構成で役立ちます。
+Git directory generatorは、Gitリポジトリ内の指定したディレクトリをスキャンし、設定された glob と除外ルールに一致する各ディレクトリに対してApplicationを作成します。これはmonorepo構成で役立ちます。
 
 </details>
 
@@ -62,7 +62,7 @@ Git directory generatorは、Gitリポジトリ内の指定されたディレク
 **回答: D) AとBの両方**
 
 **解説:**
-Matrix generatorは、複数のジェネレーターからのパラメータの組み合わせ（デカルト積）を作成します。Merge generatorは、複数のジェネレーターからのパラメータを組み合わせ、一致するエントリをマージします。どちらもジェネレーターの組み合わせに使用できます。
+Matrix generatorは、2つの子ジェネレーターからのパラメータの組み合わせ（デカルト積）を作成します。Merge generatorは、複数のジェネレーターからのパラメータを組み合わせ、一致するエントリをマージします。どちらもジェネレーターの組み合わせに使用できます。
 
 </details>
 
@@ -79,6 +79,7 @@ Matrix generatorは、複数のジェネレーターからのパラメータの�
 
 **解説:**
 `goTemplate: true`を設定するとGo template構文が有効になり、デフォルトの単純な変数置換と比較して、条件分岐、ループ、関数など、より強力なテンプレート機能を利用できます。
+各文字列フィールドは個別に評価されます。制御文を複数の YAML フィールドにまたがって記述することはできません。また、ブール値やオブジェクトのフィールドを直接テンプレート化することもできません。
 
 </details>
 
@@ -110,22 +111,22 @@ Pull Request generatorは、リポジトリ内のオープンなpull requestご�
 **回答: B) 生成されたすべてのApplicationsが削除される**
 
 **解説:**
-デフォルトでは、ApplicationSetsにはカスケード削除ポリシーがあり、ApplicationSetを削除すると、それによって生成されたすべてのApplicationsも削除されます。これは`preserveResourcesOnDeletion`ポリシーを使用して変更できます。
+デフォルトでは、ApplicationSets の削除ポリシーはカスケード削除です。ApplicationSet を削除すると、生成されたすべての Application も削除されます。`preserveResourcesOnDeletion` が制御するのはデプロイ済みリソースのクリーンアップであり、Application オブジェクトがガベージコレクションされるかどうかではありません。
 
 </details>
 
 8. ApplicationSetが削除されたときに、生成されたApplicationsが削除されないようにするにはどうしますか？
-   - A) `syncPolicy.preserveResourcesOnDeletion: true`を設定する
-   - B) `orphan` finalizerを使用する
-   - C) 削除ポリシーannotationを設定する
-   - D) owner referenceを手動で削除する
+   - A) `kubectl delete applicationset NAME --cascade=orphan` で削除する
+   - B) `syncPolicy.preserveResourcesOnDeletion: true` だけを設定する
+   - C) 削除ポリシーの annotation を設定する
+   - D) ApplicationSet controller のレプリカ数を 0 にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) `syncPolicy.preserveResourcesOnDeletion: true`を設定する**
+**回答: A) `kubectl delete applicationset NAME --cascade=orphan` で削除する**
 
 **解説:**
-ApplicationSetのsyncPolicyで`preserveResourcesOnDeletion: true`を設定すると、ApplicationSetが削除された際に、生成されたApplications（およびそれらがデプロイしたリソース）が保持されます。
+`--cascade=orphan` を指定すると、親の ApplicationSet を削除した後も生成された Application オブジェクトが残ります。`preserveResourcesOnDeletion: true` は、デプロイ済みリソースを削除する finalizer の追加を防ぎますが、Application オブジェクトのガベージコレクションを防ぐものではありません。finalizer が残った orphan Application を後から削除すると、そのリソースが削除される場合があります。
 
 </details>

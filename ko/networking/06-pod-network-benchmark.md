@@ -55,7 +55,7 @@ AWS는 네트워크 I/O 크레딧이 남아 있어도 버스트 대역폭은 bes
 
 ### 배포 매니페스트
 
-아래는 과거의 selector·requests·이미지·명령·annotation을 보존한 측정 픽스처이며, 애플리케이션 Service 객체는 없습니다. selector만으로 새 노드나 격리된 노드가 보장되지는 않습니다. 새 실행에서는 복사본을 승인된 테스트 NodePool·사용 가능한 AZ·리소스 예산에 맞추고, 공유 `system` 풀에 그대로 배포하지 마세요. 이미지 digest와 도구 버전도 기록해야 합니다. 변경 가능한 태그와 netshoot의 빌드 시점 도구 다운로드는 과거 바이너리를 보장하지 않습니다. 아래의 보완된 재현 절차는 이 역사적 매니페스트와 구분합니다.
+아래는 과거의 selector·requests·이미지·명령·annotation을 보존한 측정 픽스처이며, 애플리케이션 Service 객체는 없습니다. selector만으로 새 노드나 격리된 노드가 보장되지는 않습니다. 새 실행에서는 복사본을 승인된 테스트 NodePool·사용 가능한 AZ·리소스 예산에 맞추고, 공유 `system` 풀에 그대로 배포하지 마세요. 이미지 digest와 도구 버전도 기록해야 합니다. 변경 가능한 태그와 netshoot의 빌드 시점 도구 다운로드는 과거 바이너리를 보장하지 않습니다. 아래의 보완된 재현 절차는 이 역사적 매니페스트와 구분됩니다.
 
 ```yaml
 apiVersion: v1
@@ -222,7 +222,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 
 기록은 빈 요청 페이로드의 HTTP echo 응답 본문이 약 75바이트이고 실행별 오류가 0건이었다고 설명합니다. 프로토콜별 결과는 구분해야 합니다. HTTP 200, gRPC Ping 결과, gRPC health check의 `SERVING`은 서로 다르며, `-grpc -ping`은 기본 health check가 아닌 Ping 부하를 선택합니다.
 
-**읽는 법.** HTTP p50과 ping 평균의 차이는 약 0.22 / 0.12 / 0.16 ms이지만, 서로 다른 프로토콜과 통계량을 빼서 유저 공간 오버헤드를 분리할 수는 없습니다. HTTP p50의 관측 단계는 +0.202 / +0.243 ms이며 노드·AZ당 고정 비용이 아닙니다. gRPC p50은 HTTP보다 0.138 / 0.131 / 0.161 ms 높았지만 HTTP/2·직렬화·스케줄링·구현별 기여도는 측정하지 않았습니다. HTTP p99는 0.350 → 0.667 → 0.812 ms, gRPC p99.9는 1.187 → 1.052 → **2.582 ms**였습니다. 각 셀은 한 번 실행한 분포입니다.
+**읽는 법.** HTTP p50과 ping 평균의 차이는 약 0.22 / 0.12 / 0.16 ms이지만, 서로 다른 프로토콜과 통계량을 빼서 유저 공간 오버헤드를 분리할 수는 없습니다. HTTP p50의 관측된 단계별 증가분은 +0.202 / +0.243 ms이며 노드·AZ당 고정 비용이 아닙니다. gRPC p50은 HTTP보다 0.138 / 0.131 / 0.161 ms 높았지만 HTTP/2·직렬화·스케줄링·구현별 기여도는 측정하지 않았습니다. HTTP p99는 0.350 → 0.667 → 0.812 ms, gRPC p99.9는 1.187 → 1.052 → **2.582 ms**였습니다. 각 셀은 한 번 실행한 분포입니다.
 
 > **메시 벤치마크와의 비교.** [Istio sidecar vs ambient 기록](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)의 p50 **+1.29 ms**(2.11 − 0.82 ms)는 사이드카 시나리오 전체의 차이이며 프록시 하나의 독립 비용이 아닙니다. Graviton 하드웨어·200 qps·커넥션 16개·Fortio 1.69.4로, 여기의 M5·100 qps·커넥션 4개와 조건이 다릅니다. 두 값을 보편적인 “메시 홉”과 “AZ 홉” 비용으로 더하거나 순위를 매길 수 없습니다.
 
@@ -268,7 +268,7 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 1. **같은 노드에서는 물리 NIC를 우회했습니다.** 단일 플로우 29.97 Gbps에서 클라이언트 프로세스 CPU가 99.8%였고, 8개 플로우는 48.15 Gbps였습니다. 호스트 라우팅, 양쪽 Pod의 veth 경로, 커널 처리와 CPU 스케줄링은 여전히 영향을 줍니다. CPU 부하 징후가 있는 네트워크 측정이지 순수 메모리 복사 속도 측정은 아닙니다.
 2. **두 노드 간 단일 플로우는 모두 4.96 Gbps였습니다.** 클러스터 배치 그룹 외부의 일반적인 5 Gbps 한도에 부합합니다. AWS는 클러스터 배치 그룹 내부에서는 최대 10 Gbps, 같은 AZ의 지원되는 ENA Express 경로에서는 최대 25 Gbps도 문서화합니다. iperf3 프로세스 CPU가 낮다는 사실만으로 모든 호스트·네트워크 처리 한계를 배제할 수는 없습니다.
 3. **8개 플로우는 두 경로 모두 9.94 Gbps였습니다.** 해당 관측 구간에서 비슷한 처리량을 얻었다는 근거입니다. 재전송은 단일 플로우에서도 4 / 2회 있었고 8개에서 5,874 / 5,979회로 늘었습니다. 재전송 수만으로 ENA 셰이핑이나 손실 위치를 특정할 수 없으며, ENA allowance 카운터는 수집하지 않았습니다.
-4. **부하 중 TCP RTT가 유휴 ICMP RTT보다 컸습니다.** 단일 플로우 송신측 값은 약 **5.6 / 5.4 ms**, 혼잡 윈도우는 약 4.3 MB였고 유휴 ping 평균은 0.34 / 0.54 ms였습니다. 큐잉이 가능한 설명이지만 프로토콜·표본 방식·부하가 다릅니다. 큐의 위치나 다중화된 모든 RPC에 정확히 5 ms가 추가된다는 주장은 측정하지 않았습니다.
+4. **부하 중 TCP RTT가 유휴 ICMP RTT보다 컸습니다.** 단일 플로우 송신측 값은 약 **5.6 / 5.4 ms**, 혼잡 윈도우는 약 4.3 MB였고 유휴 ping 평균은 0.34 / 0.54 ms였습니다. 큐잉이 가능한 설명이지만 프로토콜·표본 방식·부하가 다릅니다. 큐의 위치는 측정하지 않았으며 다중화된 모든 RPC에 정확히 5 ms가 추가된다는 주장은 검증하지 않았습니다.
 
 기록된 MSS 8949는 MTU 9001과 당시 IPv4/TCP 오버헤드에 부합하지만, 유효 MSS는 헤더와 경로 MTU에도 좌우됩니다. 전송 바이트는 애플리케이션 전송량이며 별도로 검증된 과금 사용량은 아닙니다.
 
@@ -314,9 +314,9 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-06-pod-network-benchmark-1.html)
 
-그림은 당시 glibc search 순서입니다. 4.37 ms는 기록된 A 응답까지이며 전체 `getaddrinfo` 호출 시간이 아닙니다. Pod 캡처에서 보이지 않은 업스트림 화살표는 설명용입니다. “cache 30”은 TTL 상한이며 30초 동안 캐시 히트를 보장하지 않습니다.
+그림은 당시 glibc search 순서입니다. 4.37 ms는 기록된 A 응답까지의 시간이며 전체 `getaddrinfo` 호출 시간이 아닙니다. Pod 캡처에서 보이지 않은 업스트림 화살표는 설명용입니다. “cache 30”은 TTL 상한이며 30초 동안 캐시 히트를 보장하지 않습니다.
 
-기록된 Pod에는 search 도메인 4개와 `ndots:5`가 있었지만 모든 EKS·DNS 정책·운영체제·노드 설정이 같지는 않습니다. 당시 glibc `AF_UNSPEC` 호출은 후보마다 A와 AAAA를 질의했고 search 후보 4개가 NXDOMAIN인 뒤 절대 STS 이름이 성공했습니다. A/AAAA 동시성과 쿼리 수는 리졸버 옵션·주소 패밀리·조기 성공·재시도·TCP 폴백에 따라 달라집니다. 과거 캡처의 `tcpdump -i eth0 -nn udp port 53`은 UDP DNS만 관측합니다. 기록은 프로세스 첫 조회 1회와 이후 20회 반복을 구분하지만, 첫 호출이라고 CoreDNS나 업스트림 캐시까지 비어 있었다고 볼 수는 없습니다. [Kubernetes Pod DNS 설정](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)을 참고하세요.
+기록된 Pod에는 search 도메인 4개와 `ndots:5`가 있었지만 모든 EKS·DNS 정책·운영체제·노드 설정이 같지는 않습니다. 당시 glibc `AF_UNSPEC` 호출은 후보마다 A와 AAAA를 질의했고 search 후보 4개에 대해 NXDOMAIN 응답을 받은 뒤 절대 STS 이름 조회가 성공했습니다. A/AAAA 동시성과 쿼리 수는 리졸버 옵션·주소 패밀리·조기 성공·재시도·TCP 폴백에 따라 달라집니다. 과거 캡처의 `tcpdump -i eth0 -nn udp port 53`은 UDP DNS만 관측합니다. 기록은 프로세스 첫 조회 1회와 이후 20회 반복을 구분하지만, 첫 호출이라고 CoreDNS나 업스트림 캐시까지 비어 있었다고 볼 수는 없습니다. [Kubernetes Pod DNS 설정](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)을 참고하세요.
 
 ### 한 번의 이름 풀이가 보내는 쿼리 수와 웜 지연 (20회 반복), ms
 
@@ -399,7 +399,7 @@ for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
 done
 ```
 
-계속하기 전에 `cli`와 `srv-same`은 같은 노드, `srv-a`는 같은 AZ의 다른 노드, `srv-b`는 다른 AZ인지 확인합니다. 5201/8080/8079 리스너와 시작 오류도 확인하세요. 과거 픽스처에는 readiness probe가 없으므로 Pod Ready만으로 프로세스 리슨을 보장할 수 없습니다. 노드 ID·IP·image ID와 실제 `iperf3 --version` / `fortio version`을 기록하고, Pod가 재생성되면 중지한 뒤 주소를 다시 조회합니다.
+계속하기 전에 `cli`와 `srv-same`은 같은 노드에 있고, `srv-a`는 같은 AZ의 다른 노드에 있으며, `srv-b`는 다른 AZ에 있는지 확인합니다. 5201/8080/8079 리스너와 시작 오류도 확인하세요. 과거 픽스처에는 readiness probe가 없으므로 Pod Ready만으로 프로세스 리슨을 보장할 수 없습니다. 노드 ID·IP·image ID와 실제 `iperf3 --version` / `fortio version`을 기록하고, Pod가 재생성되면 중지한 뒤 주소를 다시 조회합니다.
 
 **2. RTT와 참고용 HTTP 1회를 측정합니다.**
 
@@ -459,7 +459,7 @@ kubectl -n bench-net exec -it dns-default -c sniffer -- \
   tcpdump -l -i eth0 -nn '(udp or tcp) and port 53'
 ```
 
-터미널 2에서 로컬 헬퍼를 만들고 **`kubectl exec -i`**로 입력을 전달합니다. first 모드는 리졸버를 정확히 한 번 호출합니다. warm 모드는 같은 프로세스에서 준비 호출 1회 후 20회를 측정합니다. 이 보완 절차는 캡처 범위를 명확히 구분합니다.
+터미널 2에서 로컬 헬퍼를 만들고 **`kubectl exec -i`로** 입력을 전달합니다. first 모드는 리졸버를 정확히 한 번 호출합니다. warm 모드는 같은 프로세스에서 준비 호출 1회 후 20회를 측정합니다. 이 보완 절차는 캡처 범위를 명확히 구분합니다.
 
 ```bash
 cat > dns-probe.py <<'PY'

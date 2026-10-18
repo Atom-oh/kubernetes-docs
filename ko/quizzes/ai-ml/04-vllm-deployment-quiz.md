@@ -166,7 +166,7 @@ Prefix cache, 응답 cache, 모델 weight cache는 다릅니다. CPU tokenizatio
 
 **정답: B. p50이 약 33.1% 증가했고 이 측정 범위에서 집계 처리량이 늘었다; 원시 로그 없는 과거 보고를 현재 버전 결과로 일반화하지 않는다**
 
-기록된 값은 0.6.4.post1의 n=1 과거 보고입니다. 이번 감사는 raw request/server logs를 찾지 못했고 재실행하지 않았습니다. 서버 interval average의 최댓값은 순간 peak가 아니며 roofline 계산은 병목에 대한 추정입니다.
+기록된 값은 0.6.4.post1의 n=1 과거 보고입니다. 이번 감사에서는 raw request/server logs를 찾지 못했고 재실행하지 않았습니다. 서버 interval average의 최댓값은 순간 peak가 아니며 roofline 계산은 병목에 대한 추정입니다.
 </details>
 
 ---

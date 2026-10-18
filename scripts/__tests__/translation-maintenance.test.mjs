@@ -59,6 +59,10 @@ test('stale image case and relative depth follow the English source while transl
     fs.writeFileSync(path.join(root, 'en/topic/page.md'), '# English\n\n![Diagram](../.gitbook/assets/en-readme-0.png)\n')
     const translated = '# 日本語\n\n![図](../../.gitbook/assets/en-README-0.png)\n\n```md\n![example](../../.gitbook/assets/en-README-0.png)\n```\n'
     fs.writeFileSync(path.join(root, 'jp/topic/page.md'), translated)
+    const assetOnly = syncTranslatedAssets(root, ['jp'], { repairPaths: false })
+    assert.deepEqual(assetOnly.repairedLinks, [])
+    assert.equal(assetOnly.unresolved.length, 1)
+    assert.equal(fs.readFileSync(path.join(root, 'jp/topic/page.md'), 'utf8'), translated)
     const result = syncTranslatedAssets(root)
     assert.equal(result.repairedLinks.length, 1)
     assert.deepEqual(result.unresolved, [])
@@ -81,6 +85,23 @@ test('translation validation rejects changed code and link targets even when cou
     fs.writeFileSync(dst, translated.replace('kind: Pod', 'kind: Job'))
     assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }))
     fs.writeFileSync(dst, translated.replace('example.org/reference', 'example.org/different'))
+    assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }))
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
+test('complete Chinese prose can be shorter than English without accepting an empty summary', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-chinese-size-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    fs.mkdirSync(path.join(root, 'cn'))
+    const source = '# Source\n\nThe operator reconciles the declared cluster state. It observes resource changes, creates the required workload objects, and reports status. Use matching software versions and verify permissions before deployment. A successful reconciliation does not prove that every application request succeeds.\n'
+    const translated = '# 说明\n\nOperator 将实际集群状态协调至声明状态，观察资源变化，创建所需的工作负载对象并报告状态。部署前，应使用匹配的软件版本并验证权限。协调成功并不能证明每个应用请求都能成功。\n'
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'cn/page.md')
+    assert.ok(translated.length / source.length < 0.4)
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    fs.writeFileSync(dst, '# 说明\n\n略。\n')
     assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }))
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })

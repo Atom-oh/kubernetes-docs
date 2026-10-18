@@ -56,7 +56,7 @@ Datadog은 Kubernetes 1.33+의 `AllocatedResources` 호환성에 Agent/Cluster A
 ## Datadog Agent 설치
 
 Datadog은 상위 lifecycle 설정을 위한 Operator를 권장하며 Helm 설치도 지원합니다.
-이 예제는 **Datadog Agent Helm chart**가 node/Cluster Agent를 소유합니다.
+이 예제에서는 **Datadog Agent Helm chart**가 node/Cluster Agent를 소유합니다.
 Chart 3.244.0에는 선택적 Operator dependency도 있으므로
 `datadog.operator.enabled: false`로 이 예제의 추가 controller를 끕니다.
 Operator가 폐기되었다는 뜻은 아닙니다.
@@ -89,7 +89,7 @@ node·trace·init·Cluster Agent 소비자를 모두 보존합니다. Native res
 Secret은 의도적으로 만들지 않습니다. Renderer 누락을 우회하려고 생성하지 마세요.
 모든 install/upgrade에 renderer를 유지하고 chart·image·profile 계약 변경을 검토합니다.
 
-다음 명령은 install 단계에서 cluster를 변경하며 감사에서 배포를 실행한 것은 아닙니다.
+다음 명령은 install 단계에서 cluster를 변경하지만, 이번 감사에서는 배포를 실행하지 않았습니다.
 IAM/secret 전제조건, 기존 `datadog` namespace와 release 소유권을 확인한 뒤 repository
 root에서 실행합니다.
 
@@ -385,7 +385,7 @@ Counter 재전송·중복 전송을 exactly-once business ledger로 취급하지
 
 ### 파일 기반 Autodiscovery 설정
 
-Helm 소유 config는 `datadog.confd`가 check file 생성과 mount를 처리합니다.
+Helm 소유 config에서는 `datadog.confd`가 check file 생성과 mount를 처리합니다.
 `datadog-checks`라는 독립 ConfigMap이 있다고 자동 발견되는 것은 아닙니다.
 다음 NGINX fragment에는 일치하는 image identity와 설정·접근 권한이 있는
 `stub_status` endpoint가 필요합니다.
@@ -533,7 +533,7 @@ exclude 설정·backend pipeline filter가 모두 수집에 영향을 줍니다.
 
 ### Pipeline 요청 구조
 
-실제 API field는 **`match_rules`와 `support_rules`**입니다.
+실제 API field는 **`match_rules`와 `support_rules`입니다**.
 기존 camelCase field는 Logs API model과 맞지 않습니다. Sample message가 기대하는
 line format을 정의합니다. 실제 application format/timezone과 unmatched/multiline/
 error 사례를 시험합니다. 요청 model이 유효해도 Datadog tenant에서 Grok parsing이나
@@ -633,7 +633,7 @@ import·checked exception 계약 없이 그대로 복사하지 않습니다.
 ### Dashboard 요청 생성
 
 다음 helper는 `datadog-api-client==2.60.0`으로 요청 body를 만듭니다.
-Query가 cluster/namespace template variable을 실제 참조합니다.
+Query가 cluster/namespace template variable을 실제로 참조합니다.
 Host widget은 percent 지표, Pod widget은 memory byte와 namespace filter를
 사용합니다. 실제 데이터에 해당 grouping tag가 있는지 확인합니다.
 
@@ -849,7 +849,7 @@ production 청구액이 아닙니다. 현재 site/상품 견적과 측정 사용
   아닙니다. Receiver를 닫으면 telemetry가 유실될 수 있습니다.
 - `ignoreAutoConfig`는 선택한 자동 check를 끕니다. Container exclude는 container를
   선택하며 어느 것도 일반적인 tag-cardinality limiter가 아닙니다.
-- 수집 소유자에서 metric/tag 값을 검토합니다. Origin tag cardinality를 바꾸면
+- 수집 소유자가 metric/tag 값을 검토합니다. Origin tag cardinality를 바꾸면
   grouping tag도 달라질 수 있으므로 monitor/SLO를 다시 확인합니다.
 <span id="_2-로그-최적화"></span>
 

@@ -1,183 +1,165 @@
 # Grafana Mimir 测验
 
-用于测试您对 Grafana Mimir 理解程度的测验。
+基线：Mimir 3.2.1 / chart 6.2.0。请复核当前架构、身份验证、存储和验证限制。
 
----
+## 1. 生产环境中的 Mimir 块存储应使用什么后端？
 
-1. Grafana Mimir 的主要存储后端是什么？
-   - A) 仅本地 SSD
-   - B) 对象存储（S3、GCS、Azure Blob）
-   - C) NFS 共享存储
-   - D) 仅块存储
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 对象存储（S3、GCS、Azure Blob）**
-
-**说明：**
-Grafana Mimir 需要对象存储。它支持 S3、Google Cloud Storage、Azure Blob Storage 等，可提供无限扩展能力和高性价比的长期存储。本地存储仅用于 Ingester 的 WAL 和临时数据。
-
-</details>
-
----
-
-2. Distributor 在 Mimir 架构中的作用是什么？
-   - A) 长期数据存储
-   - B) 写入请求的第一个入口点、租户验证和样本分发
-   - C) 查询结果缓存
-   - D) 块压缩
+- A. 仅本地 SSD
+- B. 对象存储，例如 S3、GCS、Azure Blob 或 Swift
+- C. 仅 NFS
+- D. 仅内存缓存
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 写入请求的第一个入口点、租户验证和样本分发**
+**答案：B. 对象存储，例如 S3、GCS、Azure Blob 或 Swift**
 
-**说明：**
-Distributor 是写入请求的第一个入口点，负责租户 ID 验证、时间序列验证、基于哈希环的 Ingester 分发，以及基于复制因子的复制。它是一个无状态组件，易于水平扩展。
+生产部署应使用适当的外部对象存储。Filesystem 后端可用于本地开发，但这不意味着它是共享的生产对象存储。Ingester 的本地 TSDB/WAL 和 Kafka 存储有各自独立的持久化与恢复要求。
 
 </details>
 
----
+## 2. 在 ingest-storage 架构中，Distributor 的作用是什么？
 
-3. Mimir 如何实现多租户？
-   - A) 为每个租户运行单独的集群
-   - B) 通过 X-Scope-OrgID header 识别租户
-   - C) 基于 IP 地址的租户隔离
-   - D) 基于 Namespace 的租户隔离
+- A. 自行存储所有长期块
+- B. 验证写入并将记录追加到 Kafka
+- C. 从结果缓存返回所有查询
+- D. 压缩 TSDB 块
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过 X-Scope-OrgID header 识别租户**
+**答案：B. 验证写入并将记录追加到 Kafka**
 
-**说明：**
-Mimir 通过 HTTP header `X-Scope-OrgID` 识别租户。在 Prometheus 的 remote_write 配置中添加此 header 可隔离各个租户的数据。可以配置每个租户的限制，数据会按租户路径存储在对象存储中。
+Distributor 会验证并限制写入，然后将其分片到 Kafka 分区。写入确认取决于配置的持久性条件下 Kafka 是否成功写入；它不会等待块上传到 S3。直接写入 Ingester 仲裁描述的是经典架构。
 
 </details>
 
----
+## 3. 对不可信调用方，应如何安全地选择租户？
 
-4. Mimir 的 Ingester 为什么要将块上传到对象存储？
-   - A) 提升实时查询性能
-   - B) 将数据从内存持久化到磁盘
-   - C) 存储告警规则
-   - D) 备份仪表板设置
+- A. 允许客户端自行选择任意 X-Scope-OrgID 值
+- B. 由可信网关进行身份验证和授权，并由网关设置租户标头
+- C. 只使用对象键前缀
+- D. 将命名空间名称视为自动生效的 HTTP 身份验证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 将数据从内存持久化到磁盘**
+**答案：B. 由可信网关进行身份验证和授权，并由网关设置租户标头**
 
-**说明：**
-Ingester 首先将接收到的时间序列数据存储在内存中，然后定期（默认每 2 小时）创建 TSDB 块并将其上传到对象存储。这确保数据被永久存储，即使 Ingester 发生故障也能最大限度地减少数据丢失。
+X-Scope-OrgID 用于标识租户，本身不是凭证。可信网关必须替换不可信标头，并强制执行调用方与租户之间的映射。只有在代理实现了相应策略时，Basic Auth 用户名才会映射到租户。还必须限制对后端的绕过访问。
 
 </details>
 
----
+## 4. Ingester 为什么要将 TSDB 块上传到对象存储？
 
-5. Mimir 的 Compactor 的正确作用是什么？
-   - A) 实时查询处理
-   - B) 将小块合并为大块并去重
-   - C) Metrics 收集
-   - D) 告警传递
+- A. 为了避免所有本地持久化
+- B. 为了提供长期块存储和块查询访问
+- C. 为了备份 Grafana 仪表板
+- D. 为了保证每个已确认样本都能在任何故障下存活
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 将小块合并为大块并去重**
+**答案：B. 为了提供长期块存储和块查询访问**
 
-**说明：**
-Compactor 将对象存储中的小块合并（压缩）为较大的块，删除重复数据，并根据保留策略删除旧数据。这可提升查询性能并降低存储成本。
+Ingester 会维护本地 TSDB/WAL，并定期上传块。本地保留时间与数据移交给 Store-gateway 的阶段会有重叠。Kafka 确认、Ingester 消费和对象上传是不同阶段；恢复能力仍取决于持久化、保留策略和故障条件。
 
 </details>
 
----
+## 5. Compactor 负责哪些工作？
 
-6. 以下哪项不是 Mimir 的 Query-frontend 提供的功能？
-   - A) 大型查询拆分
-   - B) 结果缓存
-   - C) 数据存储
-   - D) 查询重试
+- A. 抓取每个应用端点
+- B. 合并块、去重副本样本并执行保留清理
+- C. 验证所有租户的身份
+- D. 自动对所有原始序列降采样，使用 downsampling_enabled
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 数据存储**
+**答案：B. 合并块、去重副本样本并执行保留清理**
 
-**说明：**
-Query-frontend 是负责查询优化和缓存的无状态组件。它将大型查询拆分为较小的查询，缓存结果，并重试失败的查询。数据存储由 Ingester（短期）和对象存储（长期）处理。
+Compactor 会合并块，并移除副本产生的重复样本。保留清理是异步进行的。虚构的 compactor.downsampling_enabled 选项无效；记录规则可以生成派生序列，但不会自动删除原始数据。
 
 </details>
 
----
+## 6. 哪项不属于 Query-frontend 的职责？
 
-7. 与 VictoriaMetrics 相比，以下哪项是 Mimir 的正确特性？
-   - A) 仅可使用本地磁盘
-   - B) 运维复杂度更低
-   - C) 需要对象存储，提供企业级多租户
-   - D) 使用 MetricsQL 查询语言
+- A. 拆分并分片其支持的查询
+- B. 使用查询结果缓存
+- C. 持久化权威的长期 TSDB 块
+- D. 合并查询响应
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 需要对象存储，提供企业级多租户**
+**答案：C. 持久化权威的长期 TSDB 块**
 
-**说明：**
-Mimir 需要对象存储，并提供原生多租户功能，因此适用于企业环境。VictoriaMetrics 也支持本地磁盘，且运维更简单，但 Mimir 与 Grafana 生态系统的集成非常出色。
+Frontend 会规划和缓存工作，并返回合并后的响应。Scheduler 会对工作排队，Querier 会获取所需数据。命中元数据或 chunk 缓存并不代表完整查询答案已经得到。步长对齐可能改变请求的时间戳，并影响 PromQL 一致性。
 
 </details>
 
----
+## 7. 与 VictoriaMetrics 的比较中，哪项说法准确？
 
-8. Store-gateway 在 Mimir 中的作用是什么？
-   - A) Metrics 收集
-   - B) 缓存对象存储块并处理历史数据查询
-   - C) 告警规则评估
-   - D) 租户认证
+- A. Mimir 从不提供 filesystem 后端
+- B. 使用 Grafana 就意味着 Mimir 在任何情况下都更快
+- C. 应比较存储架构、查询语义、租户强制策略、恢复能力和实测成本
+- D. VictoriaMetrics 无法支持租户
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 缓存对象存储块并处理历史数据查询**
+**答案：C. 应比较存储架构、查询语义、租户强制策略、恢复能力和实测成本**
 
-**说明：**
-Store-gateway 缓存存储在对象存储中的块索引和 chunks，并处理历史数据查询。Querier 从 Ingester 获取近期数据，从 Store-gateway 获取历史数据，然后将它们合并。
+两种产品都需要身份验证/授权边界。Mimir 的生产块存储与经审查的 VictoriaMetrics 本地存储架构具有不同的运维要求。未经支持的压缩排名和对生态系统的偏好，都不能证明哪种方案在性能或成本上胜出。
 
 </details>
 
----
+## 8. Store-gateway 提供什么能力？
 
-9. Mimir 中的 `compactor_blocks_retention_period` 设置的作用是什么？
-   - A) 内存缓存保留期
-   - B) 设置块数据保留期
-   - C) 日志保留期
-   - D) 告警历史保留期
+- A. 收集应用指标
+- B. 借助对象存储、索引头和已配置缓存来访问块查询
+- C. 自动验证租户身份
+- D. 复制 Kafka broker
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 设置块数据保留期**
+**答案：B. 借助对象存储、索引头和已配置缓存来访问块查询**
 
-**说明：**
-`compactor_blocks_retention_period` 设置 Compactor 保留块的期限。例如，将其设置为 `365d` 会删除超过 1 年的块。此设置有助于管理存储成本并满足合规要求。
+Querier 会从 Store-gateway 请求块数据，并从 Ingester 获取近期数据；块交接期间，两个数据范围可能重叠。复用缓存或索引元数据可以避免部分工作，但这不表示每个查询都无需读取 chunk 即可完成。
 
 </details>
 
----
+## 9. compactor_blocks_retention_period 控制什么？
 
-10. 以下哪项不是 Mimir 高可用性配置的建议？
-    - A) 至少 3 个 Ingester 副本，采用区域感知复制
-    - B) 至少 2 个 Store-gateway 副本
-    - C) 在单个可用区中部署所有组件
-    - D) 使用 memcached 启用缓存
+- A. 仅控制内存缓存过期时间
+- B. Compactor 使用的长期块保留策略
+- C. Kafka topic 的保留时间
+- D. 精确的物理删除/合规截止时间
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 在单个可用区中部署所有组件**
+**答案：B. Compactor 使用的长期块保留策略**
 
-**说明：**
-为实现高可用性，应将组件分布在多个可用区（AZ）中。Mimir 支持区域感知复制，可将 Ingesters 分布在多个 AZ 中。在单个 AZ 中部署会导致该 AZ 发生故障时服务完全中断。
+块的时间范围、扫描、删除标记和 deletion_delay 都会影响实际删除时间。本地 TSDB 保留和 Kafka 保留彼此独立。S3 版本控制、Object Lock 和备份也会影响数据能否彻底删除；单独设置 365d 并不能保证满足监管要求。
 
 </details>
+
+## 10. 哪项不是可靠的可用性假设？
+
+- A. 单独验证 Kafka 的持久性和恢复能力
+- B. 确保 zone 选择器与实际可调度节点相匹配
+- C. 将所有组件放在一个 AZ 并声称能够容忍可用区故障
+- D. 检查 Ingester 分区覆盖、Store-gateway 副本数和发布依赖
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. 将所有组件放在一个 AZ 并声称能够容忍可用区故障**
+
+逻辑 zone 不等同于物理部署位置。示例会在三个选定的 zone 中渲染三个 Ingester/Store-gateway；但 broker 拓扑、PVC、容量、队列、发布和其他组件仍需验证。缓存冗余和单个 Compactor 都不能证明端到端高可用。
+
+</details>
+
+[返回章节](../../../observability/metrics/03-mimir.md)

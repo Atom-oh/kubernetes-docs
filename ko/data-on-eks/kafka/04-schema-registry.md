@@ -26,7 +26,7 @@ message index도 들어갑니다. JSON Schema 직렬화기의 값은 여전히 J
 
 직렬화기는 스키마를 등록하거나 조회하고, 역직렬화기는 식별자로 writer 스키마를
 찾습니다. 일반적으로 캐시를 사용하므로 레코드마다 HTTP 요청을 보내지는 않습니다.
-새 스키마나 비어 있는 캐시는 레지스트리 연결이 필요할 수 있습니다. Kafka 데이터,
+새 스키마를 사용하거나 캐시가 비어 있으면 레지스트리 연결이 필요할 수 있습니다. Kafka 데이터,
 아카이브와 복구용 사본을 읽어야 하는 기간 동안 ID와 스키마의 대응 관계도 보존합니다.
 
 ## 주요 구현체 비교
@@ -491,7 +491,7 @@ schema.registry.url=http://apicurio-registry.kafka.svc:8080/apis/ccompat/v7
 specific.avro.reader=false
 ```
 
-프로듀서는 일치하는 스키마가 먼저 등록되어 있어야 합니다.
+프로듀서를 사용하려면 일치하는 스키마가 먼저 등록되어 있어야 합니다.
 `specific.avro.reader=false`는 generic Avro record를 사용합니다. 생성한
 SpecificRecord 클래스를 쓰려면 해당 코드와 reader 설정을 맞춥니다.
 기본 subject 전략에서 애플리케이션의 Kafka 토픽 이름은 `orders`여야 합니다.

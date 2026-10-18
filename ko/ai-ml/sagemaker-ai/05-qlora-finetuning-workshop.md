@@ -357,7 +357,7 @@ trainer = SFTTrainer(
 
 위 발췌는 설정된 **full-run** 값을 보여주며 model, tokenizer, dataset, output directory가 이미 준비된 상황을 가정합니다. `max_length`와 `processing_class`를 의도적으로 사용했습니다. 버전을 확인하지 않고 옛 `max_seq_length`/`tokenizer` 예제를 대입하지 마세요. 고정된 `SFTConfig`에는 설정 수준의 `chat_template_kwargs` 필드가 없습니다. 0.24.0은 레코드별 template kwargs를 지원합니다.
 
-실제 tokenizer에는 이미 적절한 EOS가 설정되어 있습니다. 수업에서 계약을 명시적으로 보여주기 위해 `eos_token="<|im_end|>"`을 추가하는 것은 이 SFTConfig에서 지원합니다. 그러나 위 설정에 그 인자가 없다는 사실만으로 현재 tokenizer의 EOS가 잘못되었다고 판단하면 안 됩니다.
+실제 tokenizer에는 이미 적절한 EOS가 설정되어 있습니다. 수업에서 계약을 명시적으로 보여주기 위해 `eos_token="<|im_end|>"`을 추가하는 기능은 이 SFTConfig에서 지원합니다. 그러나 위 설정에 그 인자가 없다는 사실만으로 현재 tokenizer의 EOS가 잘못되었다고 판단하면 안 됩니다.
 
 `config/experiment.yaml`에는 `quantization`, `double_quant`, `compute_dtype`가 있지만 loader는 현재 NF4/double quantization/BF16을 코드에 고정합니다. YAML 값만 바꿔서는 ablation이 구현되지 않습니다. 고정된 선택으로 유지하고 이를 설명하거나, loader까지 실제 선택을 연결하는 수업용 수정을 별도로 검토해야 합니다.
 
@@ -430,7 +430,7 @@ assert 80 / updates_per_epoch == 0.4
 
 따라서 설정된 smoke는 optimizer update 10회, 약 80회의 예제 제시입니다. “Full”은 update 80회, 약 640회의 예제 제시로, 위의 packing 없음·정수 배치 가정에서 1,600개 데이터셋의 0.4 epoch입니다. Full은 mode 이름이며 수렴이나 한 epoch 완료를 뜻하지 않습니다.
 
-`max_steps`는 업데이트 예산을 결정합니다. Sequence 길이가 가변적이면 같은 step이 같은 정답 토큰 수나 계산량을 뜻하지 않습니다. 긴 문맥이나 증강 데이터셋을 비교할 때는 시간과 loss뿐 아니라 실제 본 예제와 정답 토큰 수도 기록하세요. 분산 환경의 마지막 불완전 batch나 packing에는 추가 계산이 필요하며 위 산술에는 포함하지 않았습니다.
+`max_steps`는 업데이트 예산을 결정합니다. Sequence 길이가 가변적이면 같은 step이 같은 정답 토큰 수나 계산량을 뜻하지 않습니다. 긴 문맥이나 증강 데이터셋을 비교할 때는 시간과 loss뿐 아니라 실제로 본 예제와 정답 토큰 수도 기록하세요. 분산 환경의 마지막 불완전 batch나 packing에는 추가 계산이 필요하며 위 산술에는 포함하지 않았습니다.
 
 ## 8. 작은 과적합 진단과 모델 선택 분리하기
 
@@ -446,7 +446,7 @@ assert 80 / updates_per_epoch == 0.4
 
 커밋된 trainer는 test 파일을 읽고 smoke를 포함해 **매 실행 전후 두 번** 평가합니다. 중간 trainer 평가는 validation을 사용하지만 마지막 baseline/tuned 지표는 매번 test로 계산합니다. Hyperparameter를 선택하면서 그 test 결과를 반복 확인하면 안 됩니다.
 
-수업용 튜닝 절차에서는 실행 진단에 smoke subset, 후보 비교에 validation을 사용하는 수정임을 명시해야 합니다. 일반 튜닝 run에서는 test를 사용할 수 없게 하고, 선택한 설정을 고정한 다음 최종 baseline/candidate test 비교를 수행합니다. 이 구분은 [PII 평가·릴리스 워크숍](07-pii-evaluation-release.md)에서 더 자세히 다룹니다.
+수업용 튜닝 절차에서는 실행 진단에 smoke subset, 후보 비교에 validation을 사용하도록 수정한다는 점을 명시해야 합니다. 일반 튜닝 run에서는 test를 사용할 수 없게 하고, 선택한 설정을 고정한 다음 최종 baseline/candidate test 비교를 수행합니다. 이 구분은 [PII 평가·릴리스 워크숍](07-pii-evaluation-release.md)에서 더 자세히 다룹니다.
 
 | 실험 | 고정할 것 | 의도적으로 바꿀 것 | Validation에서 선택할 근거 |
 |---|---|---|---|

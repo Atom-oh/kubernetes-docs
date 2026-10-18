@@ -548,7 +548,7 @@ curl --fail http://127.0.0.1:61679/v1/enis
 curl --fail http://127.0.0.1:61678/metrics
 ```
 
-IPAMD introspection defaults to loopback **61679**; Prometheus metrics use **61678**. `/v1/enis` is not a metrics endpoint. These commands use local curl through the Kubernetes forwarding path; they do not require a curl binary inside the CNI image.
+IPAMD introspection defaults to loopback port **61679**; Prometheus metrics use **61678**. `/v1/enis` is not a metrics endpoint. These commands use local curl through the Kubernetes forwarding path; they do not require a curl binary inside the CNI image.
 
 ### Classify Errors Before Changing the Cluster
 
@@ -646,7 +646,7 @@ spec:
         summary: A known CNI metrics endpoint cannot be scraped
 ```
 
-The pool ratio is limited to IPv4 and a positive observed denominator. It is an informational tuning signal, not proof of subnet exhaustion. The assignment-failure counter signals an actual failed allocation. A failed scrape is different from a disappeared target; compare expected node/component inventory separately. No data is not healthy zero. Tune thresholds, labels and notification routing in the actual monitoring environment.
+The pool ratio is limited to IPv4 and a positive observed denominator. It is an informational tuning signal, not proof of subnet exhaustion. The assignment-failure counter signals an actual failed allocation. A failed scrape is different from a disappeared target; compare expected node/component inventory separately. No data does not mean a healthy zero. Tune thresholds, labels and notification routing in the actual monitoring environment.
 
 ## References
 

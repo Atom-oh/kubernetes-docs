@@ -36,7 +36,7 @@ Kubeflow Trainer v2 は、framework ごとに 1 つの CRD を用意するので
 
 2.2.0 では `PodTemplateOverrides` が `RuntimePatches` に置き換えられ、Torch policy から `numProcPerNode` が削除され、`ElasticPolicy` も削除されました。runtime の Torch policy と実行ごとの `trainer.numProcPerNode` を混同しないでください。以前の 2.x manifest でも移行が必要になる場合があります。
 
-`status.trainerStatus` の runtime progress/metrics には、**alpha TrainJobStatus feature gate（デフォルトでは無効）**が必要です。トレーニング code は、機能する TLS/projected ServiceAccount-token access で status server に report する必要があります。注入される token/CA environment value は secret の内容ではなく file path です。log を出力するだけでは、status metrics は自動的に設定されません。
+`status.trainerStatus` の runtime progress/metrics には、**alpha TrainJobStatus feature gate**（デフォルトでは無効）が必要です。トレーニング code は、機能する TLS/projected ServiceAccount-token access で status server に report する必要があります。注入される token/CA environment value は secret の内容ではなく file path です。log を出力するだけでは、status metrics は自動的に設定されません。
 
 2026 年 8 月 7 日にリリースされた [2.3.0](https://github.com/kubeflow/trainer/releases/tag/v2.3.0) は、runtime finalizer/snapshot と Helm CRD の配置を変更します。release note では、2.0/2.1/2.2 の installation は、以降の version に進む前に 2.3 を経由する必要があるとされています。アップグレード前に CRD の Helm ownership と release 固有の移行を確認してください。既存の CRD の削除は通常のアップグレード修正ではありません。
 

@@ -47,7 +47,7 @@ Image·namespace처럼 지정한 비어 있지 않은 값은 일반적으로 ove
 | Metadata labels | Key별로 병합 |
 | init container | 같은 이름끼리 병합하고 나머지는 추가 |
 
-Kubernetes 자원 설정은 **container_resources=V1ResourceRequirements(...)**로
+Kubernetes 자원 설정은 **container_resources=V1ResourceRequirements**(...)로
 전달합니다. 일반 resources 인자를 Kubernetes container 자원 설정과 혼동하지
 않습니다. dry_run과 실제 생성된 Pod를 확인하며 admission 이후 설정까지 검증합니다.
 
@@ -226,7 +226,7 @@ ds 같은 시간 context가 없을 수 있으므로 모든 task에 `{{ ds }}`가
 Workload namespace/RBAC를 적용하고 DAG 전달·파싱을 확인한 뒤 UI나 CLI에서
 kpo_smoke를 실행합니다. Task 상태, KPO_SMOKE_OK 로그, 선택한 image와 실제 Pod의
 serviceAccountName·resources를 확인합니다. 성공 후 Pod 삭제는 설정된 동작입니다.
-장기 로그 보존은 Part 5의 원격 로그 구성이 필요합니다.
+장기 로그 보존에는 Part 5의 원격 로그 구성이 필요합니다.
 
 ### 삭제·중단·재시작
 

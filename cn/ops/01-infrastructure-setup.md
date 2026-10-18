@@ -1,44 +1,51 @@
 # 基础设施设置
 
-> **支持的版本**：Terraform >= 1.10、AWS Provider >= 5.40、EKS >= 1.29 **最后更新**：February 19, 2026
+> **验证基线**：Terraform 1.16.6、AWS Provider 6.69.1、EKS module 21.29.0、VPC module 6.7.3、Pod Identity module 2.9.0
+> **最后审阅**：October 16, 2026。本地 schema/mock-plan 验证；不是实时 AWS 部署结果。
 
 < [目录](./README.md) | [下一篇：NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md) >
+
+本示例介绍**特定账户/环境的状态存储桶，以及同一区域中的蓝绿集群**。内置 Auto Mode 池可以使用配置的多个 AZ。颜色名称或子网标签不会将工作节点固定在某个 AZ。对于单 AZ 工作节点单元，请使用[区域操作指南](15-zonal-operations-guide.md)，单独设计 NodePool/NodeClass 放置、路由和恢复容量。
+
+请在单独的 `eks-terraform/` 项目中创建示例文件。Terraform 不会自动继承父级 `00-shared` 目录中的 `.tf` 文件；请使用各根目录自己的声明，并避免在其中重复复制变量/locals。对于现有的 v20/v5 状态，请在升级前查看模块迁移指南和实际 plan。保留各根目录的 `.terraform.lock.hcl`，并单独固定模块版本。
+
+API 端点默认是私有的。kubectl 验证和 GitOps 控制器需要实际的 API 连通性，例如 VPC runner 或 VPN。本指南不会配置此访问路径。
 
 ***
 
 ## 概述
 
-本指南介绍一种生产就绪的 Terraform 架构，用于部署启用了 Auto Mode 的 Amazon EKS 集群。三层方法按照变更频率、所有权和影响范围分离基础设施关注点，使团队能够在保持运维安全的同时独立工作。
+本指南介绍一种 Terraform 参考架构，用于部署启用了 Auto Mode 的 Amazon EKS 集群。三层方法根据变更频率、所有权和影响范围划分基础设施职责，使团队可以独立工作，同时保障运维安全。
 
 **关键设计原则：**
 
-* **关注点分离**：每一层都有不同的所有权和变更模式
-* **影响范围最小化**：某一层的变更不会意外影响其他层
-* **状态隔离**：每层使用独立的 Terraform state 文件
-* **GitOps 就绪**：Terraform 管理 AWS 基础设施；Kubernetes 资源由 ArgoCD 管理
+* **职责分离**：每一层都有明确的所有权和变更模式
+* **最小化影响范围**：状态分离可缩小变更范围；依赖故障仍可能影响其他层
+* **状态隔离**：每层使用独立的 Terraform 状态文件
+* **适用于 GitOps**：Terraform 管理 AWS 基础设施；Kubernetes 资源由 ArgoCD 管理
 
 ***
 
-## 1. 三层架构介绍
+## 1. 三层架构简介
 
 ### 为什么要分层？
 
-传统的单体 Terraform 配置会带来多项运维挑战：
+传统的单体 Terraform 配置会带来一些运维挑战：
 
-1. **Plan/Apply 时间过长**：每次变更都需要评估所有资源
-2. **影响范围**：单个错误配置可能影响整个基础设施
-3. **团队冲突**：多个团队争用同一个 state 文件
-4. **变更风险**：将网络变更与应用程序变更捆绑会增加部署风险
+1. **Plan/Apply 时间长**：每次变更都需要评估所有资源
+2. **影响范围大**：单个配置错误就可能影响整个基础设施
+3. **团队冲突**：多个团队争用同一个状态文件
+4. **变更风险**：将网络变更与应用变更捆绑会增加部署风险
 
-三层架构通过根据稳定性和所有权将基础设施组织为不同层级，解决了这些挑战。
+三层架构根据稳定性和所有权将基础设施组织成不同层级，以应对这些挑战。
 
-### 各层特征
+### 各层特征（频率仅供说明）
 
-| 层 | 名称     | 变更频率 | 主要负责人       | 影响范围 | 依赖关系           |
+| 层 | 名称     | 变更频率 | 主要所有者       | 影响范围 | 依赖项           |
 | ----- | -------- | ---------------- | ------------------- | ------------ | ---------------------- |
 | 01    | 网络  | 每季度        | 基础设施团队 | 高         | 无                   |
-| 02    | 集群  | 每月          | 平台团队       | 中等       | 01-network             |
-| 03    | 平台 | 每周           | 平台/应用团队  | 低          | 01-network、02-cluster |
+| 02    | 集群  | 每月          | 平台团队       | 中       | 01-network             |
+| 03 | 平台 | 每周 | 平台/应用团队 | DNS/访问变更可能影响集群 | 01-network, 02-cluster |
 
 ### 目录结构
 
@@ -46,7 +53,7 @@
 eks-terraform/
 ├── 00-shared/
 │   ├── variables.tf          # Common variables across all layers
-│   ├── backend.tf.template   # Backend configuration template
+│   ├── bootstrap/main.tf     # Local state creates the S3 backend
 │   └── providers.tf.template # Provider configuration template
 ├── 01-network/
 │   ├── main.tf               # VPC, subnets, NAT Gateway
@@ -70,9 +77,20 @@ eks-terraform/
     └── providers.tf
 ```
 
-### 变更流程可视化
+请将这些路径添加到新项目的 .gitignore 中。将每个根目录的 .terraform.lock.hcl 纳入版本控制。
 
-![展示按变更频率划分的三个 Terraform 层的图示——网络为每季度、集群为每月、平台为每周——每层在 S3 中均有自己的 state 文件。](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
+```text
+.terraform/
+.terraform-data/
+.bootstrap-state/
+*.tfstate
+*.tfstate.*
+*.tfplan
+```
+
+### 变更流程示意图
+
+![网络、集群和平台各自拥有独立 Terraform 状态，并共享运行时依赖项且使用不同的 S3 键。](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-0.html)
 
@@ -80,24 +98,25 @@ eks-terraform/
 
 ## 2. 00-shared：通用配置
 
-共享层包含所有层通用的配置模板和变量。这可确保一致性并减少重复。
+共享层包含各层使用的配置模板和通用变量。这些只是命名示例，不会自动导入父目录中的配置。
 
 ### S3 后端配置
 
-首先，创建用于 Terraform state 管理的 S3 bucket：
+首先，创建用于管理 Terraform 状态的 S3 存储桶：
 
-> **注意**：从 Terraform 1.10 开始，S3 后端通过 `use_lockfile = true` 支持原生 state 锁定，利用 S3 条件写入。这消除了为 state 锁定创建 DynamoDB 表的需要。
+> **注意**：从 Terraform 1.10 开始，S3 后端支持通过 `use_lockfile = true` 使用原生状态锁定机制，该机制利用 S3 条件写入。这样就无需使用 DynamoDB 表来锁定状态。
 
 ```hcl
 # 00-shared/bootstrap/main.tf
 # Run this once to create backend infrastructure
 
 terraform {
+  backend "local" {}
   required_version = ">= 1.10.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.40.0"
+      version = "6.69.1"
     }
   }
 }
@@ -125,7 +144,7 @@ variable "environment" {
 }
 
 locals {
-  bucket_name = "${var.project_name}-${var.environment}-tfstate"
+  bucket_name = "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
 }
 
 # S3 bucket for Terraform state
@@ -173,6 +192,8 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
 output "state_bucket_name" {
   value = aws_s3_bucket.terraform_state.id
 }
+
+data "aws_caller_identity" "current" {}
 ```
 
 ### 通用变量
@@ -228,7 +249,6 @@ locals {
   })
 
   # Backend configuration
-  state_bucket = "${var.project_name}-${var.environment}-tfstate"
 }
 ```
 
@@ -236,20 +256,11 @@ locals {
 
 ## 3. 01-network：VPC 配置
 
-网络层建立基础 VPC 基础设施。该层变更不频繁，且由于其影响范围较大，需要谨慎规划。
+网络层建立基础 VPC 基础设施。此层变更不频繁，但由于影响范围较大，需要谨慎规划。
 
-### 设计考量
+### 设计注意事项
 
-对于此架构，我们使用**蓝绿区域设计**：
-
-* **蓝色区域**：ap-northeast-2a（主区域）
-* **绿色区域**：ap-northeast-2c（次要区域）
-
-这种每个集群使用单个区域的方法提供了：
-
-* 有状态工作负载的数据本地性
-* 成本优化（减少跨 AZ 流量）
-* 清晰的故障域隔离
+此布局使用两个不同的 AZ。蓝/绿表示部署环境；默认 Auto Mode 池不受单个 AZ 的限制。规划 CIDR 时，应考虑 Pod 分配、预留池、端点 ENI、增长空间以及 VPC 中的其他使用者。示例中的 /16 并非适用于所有场景的生产建议，也不能保证不会耗尽 IP。
 
 ### 主配置
 
@@ -261,7 +272,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.40.0"
+      version = "6.69.1"
     }
   }
 }
@@ -285,19 +296,19 @@ locals {
   }
 
   # Availability zones for blue/green clusters
-  azs = ["ap-northeast-2a", "ap-northeast-2c"]
+  azs = var.availability_zones
 
   # Subnet CIDR allocation
   # VPC: 10.0.0.0/16 (65,536 IPs)
   # Public subnets:  10.0.0.0/20, 10.0.16.0/20  (4,096 IPs each)
   # Private subnets: 10.0.128.0/18, 10.0.192.0/18 (16,384 IPs each)
-  public_subnets  = ["10.0.0.0/20", "10.0.16.0/20"]
-  private_subnets = ["10.0.128.0/18", "10.0.192.0/18"]
+  public_subnets  = [cidrsubnet(var.vpc_cidr, 4, 0), cidrsubnet(var.vpc_cidr, 4, 1)]
+  private_subnets = [cidrsubnet(var.vpc_cidr, 2, 2), cidrsubnet(var.vpc_cidr, 2, 3)]
 }
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.5"
+  version = "6.7.3"
 
   name = "${local.name_prefix}-vpc"
   cidr = var.vpc_cidr
@@ -308,7 +319,7 @@ module "vpc" {
 
   # NAT Gateway configuration
   enable_nat_gateway     = true
-  single_nat_gateway     = false  # One per AZ for HA
+  single_nat_gateway     = false # One per AZ for HA
   one_nat_gateway_per_az = true
 
   # DNS settings
@@ -338,39 +349,22 @@ module "vpc" {
 
 # Additional subnet tags for specific clusters
 # Blue cluster (ap-northeast-2a)
-resource "aws_ec2_tag" "private_subnet_blue_cluster" {
-  resource_id = module.vpc.private_subnets[0]
-  key         = "kubernetes.io/cluster/${local.name_prefix}-blue"
-  value       = "shared"
-}
-
-resource "aws_ec2_tag" "public_subnet_blue_cluster" {
-  resource_id = module.vpc.public_subnets[0]
-  key         = "kubernetes.io/cluster/${local.name_prefix}-blue"
-  value       = "shared"
-}
-
 # Green cluster (ap-northeast-2c)
-resource "aws_ec2_tag" "private_subnet_green_cluster" {
-  resource_id = module.vpc.private_subnets[1]
-  key         = "kubernetes.io/cluster/${local.name_prefix}-green"
-  value       = "shared"
-}
-
-resource "aws_ec2_tag" "public_subnet_green_cluster" {
-  resource_id = module.vpc.public_subnets[1]
-  key         = "kubernetes.io/cluster/${local.name_prefix}-green"
-  value       = "shared"
-}
-
-# VPC Endpoints for AWS services (reduces NAT costs)
+# VPC endpoints reduce NAT traffic; compare endpoint hourly/data costs for the actual workload
 module "vpc_endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "~> 5.5"
+  version = "6.7.3"
 
   vpc_id = module.vpc.vpc_id
 
   endpoints = {
+    eks_auth = {
+      service             = "eks-auth"
+      private_dns_enabled = true
+      subnet_ids          = module.vpc.private_subnets
+      security_group_ids  = [aws_security_group.vpc_endpoints.id]
+    }
+
     s3 = {
       service      = "s3"
       service_type = "Gateway"
@@ -427,14 +421,6 @@ resource "aws_security_group" "vpc_endpoints" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-vpc-endpoints-sg"
   })
@@ -472,6 +458,16 @@ variable "vpc_cidr" {
   validation {
     condition     = can(cidrnetmask(var.vpc_cidr))
     error_message = "VPC CIDR must be a valid IPv4 CIDR block."
+  }
+}
+
+variable "availability_zones" {
+  description = "Two distinct standard Availability Zones in the selected region"
+  type        = list(string)
+  default     = ["ap-northeast-2a", "ap-northeast-2c"]
+  validation {
+    condition     = length(var.availability_zones) == 2 && length(distinct(var.availability_zones)) == 2
+    error_message = "Choose two distinct Availability Zones for this layout."
   }
 }
 ```
@@ -565,11 +561,9 @@ output "vpc_endpoints_sg_id" {
 
 terraform {
   backend "s3" {
-    bucket         = "eks-platform-prod-tfstate"
-    key            = "network/terraform.tfstate"
-    region         = "ap-northeast-2"
-    encrypt        = true
-    use_lockfile   = true
+    key          = "network/terraform.tfstate"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 ```
@@ -578,17 +572,17 @@ terraform {
 
 ## 4. 02-cluster：EKS Auto Mode
 
-集群层部署启用了 Auto Mode 的 EKS。Auto Mode 通过自动化计算、网络和存储管理来简化集群运维。
+集群层部署启用了 Auto Mode 的 EKS。Auto Mode 通过自动化计算、网络和存储管理，简化集群运维。
 
 ### 了解 EKS Auto Mode
 
 EKS Auto Mode 提供：
 
-* **计算 Auto Mode**：自动节点配置和扩缩容
-* **网络 Auto Mode**：具有自动 IP 管理的托管 VPC CNI
-* **存储 Auto Mode**：动态 Storage Class 配置
+* **计算 Auto Mode**：自动配置和扩缩节点
+* **网络 Auto Mode**：托管式 VPC CNI，自动管理 IP
+* **存储 Auto Mode**：托管式块存储集成；需显式创建 StorageClass
 
-有关 EKS Auto Mode 的更多详细信息，请参阅[开始使用 EKS Auto Mode](../eks-auto-mode/01-getting-started.md)。
+有关 EKS Auto Mode 的详细信息，请参阅 [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)。
 
 ### 数据源
 
@@ -600,9 +594,9 @@ data "terraform_remote_state" "network" {
   backend = "s3"
 
   config = {
-    bucket = "eks-platform-prod-tfstate"
+    bucket = "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
     key    = "network/terraform.tfstate"
-    region = "ap-northeast-2"
+    region = var.region
   }
 }
 
@@ -611,9 +605,6 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 # EKS cluster auth for kubectl provider
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
 ```
 
 ### 主配置
@@ -626,11 +617,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.40.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.25.0"
+      version = "6.69.1"
     }
   }
 }
@@ -643,21 +630,15 @@ provider "aws" {
   }
 }
 
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix  = "${var.project_name}-${var.environment}"
   cluster_name = "${local.name_prefix}-${var.cluster_color}"
 
   tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "terraform"
-    Layer       = "cluster"
+    Environment  = var.environment
+    Project      = var.project_name
+    ManagedBy    = "terraform"
+    Layer        = "cluster"
     ClusterColor = var.cluster_color
   }
 
@@ -672,41 +653,31 @@ locals {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.8"
+  version = "21.29.0"
 
-  cluster_name    = local.cluster_name
-  cluster_version = var.cluster_version
+  name               = local.cluster_name
+  kubernetes_version = var.cluster_version
 
   # Network configuration
   vpc_id     = local.vpc_id
   subnet_ids = local.private_subnet_ids
 
   # Cluster endpoint access
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = true
+  endpoint_public_access  = false
+  endpoint_private_access = true
 
   # EKS Auto Mode Configuration
-  cluster_compute_config = {
+  compute_config = {
     enabled    = true
     node_pools = ["general-purpose", "system"]
   }
 
   # Enable Auto Mode for networking
-  cluster_kubernetes_network_config = {
-    elastic_load_balancing = {
-      enabled = true
-    }
-  }
-
   # Enable Auto Mode for storage
-  cluster_storage_config = {
-    block_storage = {
-      enabled = true
-    }
-  }
-
   # Control plane logging
-  cluster_enabled_log_types = [
+  cloudwatch_log_group_retention_in_days = var.log_retention_days
+
+  enabled_log_types = [
     "api",
     "audit",
     "authenticator",
@@ -715,7 +686,10 @@ module "eks" {
   ]
 
   # Encryption configuration
-  cluster_encryption_config = {
+  iam_role_use_name_prefix      = false
+  node_iam_role_use_name_prefix = false
+  create_kms_key                = false
+  encryption_config = {
     provider_key_arn = aws_kms_key.eks.arn
     resources        = ["secrets"]
   }
@@ -760,13 +734,6 @@ resource "aws_kms_alias" "eks" {
 }
 
 # CloudWatch Log Group for EKS control plane logs
-resource "aws_cloudwatch_log_group" "eks" {
-  name              = "/aws/eks/${local.cluster_name}/cluster"
-  retention_in_days = var.log_retention_days
-
-  tags = local.tags
-}
-
 # Security group rules for cluster
 resource "aws_security_group_rule" "cluster_ingress_vpc" {
   description       = "Allow VPC traffic to cluster API"
@@ -816,7 +783,7 @@ variable "cluster_color" {
 variable "cluster_version" {
   description = "EKS cluster version"
   type        = string
-  default     = "1.30"
+  default     = "1.36"
 }
 
 variable "cluster_admin_arn" {
@@ -905,11 +872,8 @@ output "cluster_color" {
 
 terraform {
   backend "s3" {
-    bucket         = "eks-platform-prod-tfstate"
-    key            = "cluster/blue/terraform.tfstate"  # Use cluster/green/ for green cluster
-    region         = "ap-northeast-2"
-    encrypt        = true
-    use_lockfile   = true
+    encrypt      = true
+    use_lockfile = true
   }
 }
 ```
@@ -918,7 +882,14 @@ terraform {
 
 ## 5. 03-platform：附加组件和 Pod Identity
 
-平台层为应用团队管理 EKS 附加组件、Pod Identity 关联和访问条目。随着团队加入以及应用程序需求演变，该层会频繁变更。
+不要使用常规 aws-node/EBS CSI/agent 附加组件，重复部署 Auto Mode 内置的 Pod Identity agent、节点网络或块存储集成。[当前 Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) 会将**节点本地 CoreDNS 作为系统服务运行**。纯 Auto Mode 无需 CoreDNS Deployment。包含非 Auto 节点的混合集群必须保留该 Deployment：设置 enable_coredns_addon=true，并固定兼容版本。示例默认值为 false。请按照[官方说明](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)，通过 GitOps 使用 ebs.csi.eks.amazonaws.com 创建 Auto Mode StorageClass。
+
+此 Pod Identity 示例允许 **External Secrets 控制器读取明确命名的 Secrets Manager/SSM 值**。关联本身不会安装 ESO 或创建其 ServiceAccount：请通过 GitOps 配置相同的 namespace/SA，并使用受支持的 SDK 默认凭证链。基于 ListSecrets 的发现不在此最小策略的范围内。客户管理的 KMS 密钥还需要针对所需密钥 ARN 授予 kms:Decrypt 权限，并在密钥策略中允许该操作。
+
+镜像拉取使用 kubelet/节点角色权限，而不是应用 Pod Identity。请另行配置 ArgoCD 目标 EKS 身份验证和 OCI/ECR 令牌刷新，参阅 [ArgoCD 安装](../gitops/argocd/01-installation.md)和[应用](../gitops/argocd/02-applications.md)。集群层管理员负责管理其访问条目；不要在平台层再次为同一主体创建访问条目。
+
+
+平台层管理 EKS 附加组件、Pod Identity 关联，以及应用团队的访问条目。随着团队接入和应用需求变化，此层会频繁变更。
 
 ### 数据源
 
@@ -930,9 +901,9 @@ data "terraform_remote_state" "network" {
   backend = "s3"
 
   config = {
-    bucket = "eks-platform-prod-tfstate"
+    bucket = "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
     key    = "network/terraform.tfstate"
-    region = "ap-northeast-2"
+    region = var.region
   }
 }
 
@@ -941,9 +912,9 @@ data "terraform_remote_state" "cluster" {
   backend = "s3"
 
   config = {
-    bucket = "eks-platform-prod-tfstate"
+    bucket = "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
     key    = "cluster/${var.cluster_color}/terraform.tfstate"
-    region = "ap-northeast-2"
+    region = var.region
   }
 }
 
@@ -952,9 +923,6 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 # EKS cluster auth
-data "aws_eks_cluster_auth" "cluster" {
-  name = data.terraform_remote_state.cluster.outputs.cluster_name
-}
 ```
 
 ### 主配置
@@ -967,11 +935,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.40.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.25.0"
+      version = "6.69.1"
     }
   }
 }
@@ -984,16 +948,9 @@ provider "aws" {
   }
 }
 
-provider "kubernetes" {
-  host                   = data.terraform_remote_state.cluster.outputs.cluster_endpoint
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.cluster.outputs.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
 locals {
   name_prefix  = "${var.project_name}-${var.environment}"
   cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
-  oidc_provider_arn = data.terraform_remote_state.cluster.outputs.oidc_provider_arn
 
   tags = {
     Environment  = var.environment
@@ -1008,59 +965,15 @@ locals {
 # EKS Add-ons
 #------------------------------------------------------------------------------
 
-# EBS CSI Driver Add-on
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = local.cluster_name
-  addon_name   = "aws-ebs-csi-driver"
-
-  addon_version            = var.ebs_csi_version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-
-  pod_identity_association {
-    role_arn        = aws_iam_role.ebs_csi.arn
-    service_account = "ebs-csi-controller-sa"
-  }
-
-  tags = local.tags
-}
-
-# EBS CSI Driver IAM Role
-resource "aws_iam_role" "ebs_csi" {
-  name = "${local.cluster_name}-ebs-csi-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-
-  tags = local.tags
-}
-
-resource "aws_iam_role_policy_attachment" "ebs_csi" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.ebs_csi.name
-}
-
-# CoreDNS Add-on (managed by Auto Mode but can be customized)
+# Optional CoreDNS Deployment for mixed clusters; pure Auto Mode uses node-local CoreDNS
 resource "aws_eks_addon" "coredns" {
+  count = var.enable_coredns_addon ? 1 : 0
   cluster_name = local.cluster_name
   addon_name   = "coredns"
 
-  addon_version            = var.coredns_version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
+  addon_version               = var.coredns_addon_version
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
 
   tags = local.tags
 }
@@ -1068,60 +981,6 @@ resource "aws_eks_addon" "coredns" {
 #------------------------------------------------------------------------------
 # Pod Identity Associations
 #------------------------------------------------------------------------------
-
-# ArgoCD Pod Identity
-resource "aws_eks_pod_identity_association" "argocd" {
-  cluster_name    = local.cluster_name
-  namespace       = "argocd"
-  service_account = "argocd-server"
-  role_arn        = aws_iam_role.argocd.arn
-
-  tags = local.tags
-}
-
-resource "aws_iam_role" "argocd" {
-  name = "${local.cluster_name}-argocd-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-
-  tags = local.tags
-}
-
-# ArgoCD ECR access policy
-resource "aws_iam_role_policy" "argocd_ecr" {
-  name = "ecr-access"
-  role = aws_iam_role.argocd.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
 
 # External Secrets Operator Pod Identity
 resource "aws_eks_pod_identity_association" "external_secrets" {
@@ -1148,6 +1007,13 @@ resource "aws_iam_role" "external_secrets" {
           "sts:AssumeRole",
           "sts:TagSession"
         ]
+        Condition = {
+          StringEquals = {
+            "aws:RequestTag/eks-cluster-arn"            = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${local.cluster_name}"
+            "aws:RequestTag/kubernetes-namespace"       = "external-secrets"
+            "aws:RequestTag/kubernetes-service-account" = "external-secrets"
+          }
+        }
       }
     ]
   })
@@ -1168,9 +1034,8 @@ resource "aws_iam_role_policy" "external_secrets_sm" {
         Action = [
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecrets"
         ]
-        Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
+        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
       },
       {
         Effect = "Allow"
@@ -1179,49 +1044,10 @@ resource "aws_iam_role_policy" "external_secrets_sm" {
           "ssm:GetParameters",
           "ssm:GetParametersByPath"
         ]
-        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
       }
     ]
   })
-}
-
-# Application Pod Identity (ECR pull)
-resource "aws_eks_pod_identity_association" "app_ecr" {
-  for_each = toset(var.app_namespaces)
-
-  cluster_name    = local.cluster_name
-  namespace       = each.value
-  service_account = "default"
-  role_arn        = aws_iam_role.app_ecr.arn
-
-  tags = local.tags
-}
-
-resource "aws_iam_role" "app_ecr" {
-  name = "${local.cluster_name}-app-ecr-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-
-  tags = local.tags
-}
-
-resource "aws_iam_role_policy_attachment" "app_ecr" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.app_ecr.name
 }
 
 #------------------------------------------------------------------------------
@@ -1278,6 +1104,8 @@ resource "aws_eks_access_policy_association" "readonly" {
 
   depends_on = [aws_eks_access_entry.readonly]
 }
+# If named secrets or SecureString parameters use customer-managed KMS keys,
+# grant this ESO role kms:Decrypt on the required key ARNs and allow it in the key policy.
 ```
 
 ### 变量
@@ -1309,24 +1137,6 @@ variable "cluster_color" {
   default     = "blue"
 }
 
-variable "ebs_csi_version" {
-  description = "EBS CSI driver addon version"
-  type        = string
-  default     = "v1.28.0-eksbuild.1"
-}
-
-variable "coredns_version" {
-  description = "CoreDNS addon version"
-  type        = string
-  default     = "v1.11.1-eksbuild.6"
-}
-
-variable "app_namespaces" {
-  description = "Application namespaces for ECR Pod Identity"
-  type        = list(string)
-  default     = ["default", "apps", "staging"]
-}
-
 variable "developer_roles" {
   description = "Developer IAM roles and their namespace access"
   type = map(object({
@@ -1341,6 +1151,22 @@ variable "readonly_roles" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_coredns_addon" {
+  description = "Retain a CoreDNS deployment for non-Auto Mode nodes in a mixed cluster"
+  type = bool
+  default = false
+}
+
+variable "coredns_addon_version" {
+  description = "Pin a CoreDNS EKS addon version verified for this Kubernetes version and region"
+  type        = string
+  default     = null
+  validation {
+    condition     = !var.enable_coredns_addon || can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+-eksbuild\\.[0-9]+$", var.coredns_addon_version))
+    error_message = "Select a compatible vX.Y.Z-eksbuild.N version with describe-addon-versions."
+  }
+}
 ```
 
 ### 输出
@@ -1348,29 +1174,14 @@ variable "readonly_roles" {
 ```hcl
 # 03-platform/outputs.tf
 
-output "ebs_csi_role_arn" {
-  description = "EBS CSI driver IAM role ARN"
-  value       = aws_iam_role.ebs_csi.arn
-}
-
-output "argocd_role_arn" {
-  description = "ArgoCD IAM role ARN"
-  value       = aws_iam_role.argocd.arn
-}
-
 output "external_secrets_role_arn" {
   description = "External Secrets IAM role ARN"
   value       = aws_iam_role.external_secrets.arn
 }
 
-output "app_ecr_role_arn" {
-  description = "Application ECR access IAM role ARN"
-  value       = aws_iam_role.app_ecr.arn
-}
 
-output "configured_namespaces" {
-  description = "Namespaces with Pod Identity configured"
-  value       = var.app_namespaces
+output "coredns_addon_version" {
+  value = var.enable_coredns_addon ? aws_eks_addon.coredns[0].addon_version : null
 }
 ```
 
@@ -1381,11 +1192,8 @@ output "configured_namespaces" {
 
 terraform {
   backend "s3" {
-    bucket         = "eks-platform-prod-tfstate"
-    key            = "platform/blue/terraform.tfstate"  # Use platform/green/ for green cluster
-    region         = "ap-northeast-2"
-    encrypt        = true
-    use_lockfile   = true
+    encrypt      = true
+    use_lockfile = true
   }
 }
 ```
@@ -1394,9 +1202,9 @@ terraform {
 
 ## 6. 层间集成
 
-### 远程 State 模式
+### 远程状态模式
 
-`terraform_remote_state` 数据源使各层能够使用其他层的输出，而无需紧密耦合。
+terraform_remote_state 数据源会公开根模块输出，但读取者可以访问完整的状态快照。它不是仅公开输出的安全边界。跨越信任边界时，可以考虑通过单独的渠道（例如 SSM 参数）仅发布所需值。
 
 ```hcl
 # Pattern: Consuming outputs from another layer
@@ -1404,7 +1212,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
 
   config = {
-    bucket = "eks-platform-prod-tfstate"
+    bucket = "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
     key    = "network/terraform.tfstate"
     region = "ap-northeast-2"
   }
@@ -1418,22 +1226,22 @@ locals {
 
 ### 输出/数据流
 
-![展示 Terraform 层输出如何通过 terraform_remote_state 引用馈送到下一层输入的图示。](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
+![Terraform 各层的输出如何通过 terraform_remote_state 引用传递给下一层输入的示意图。](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-1.html)
 
-### State 管理最佳实践
+### 状态管理最佳实践
 
-1. **使用一致的 Bucket 命名**：`{project}-{env}-tfstate`
+1. **统一存储桶命名**：`{project}-{env}-{account-id}-tfstate`
 2. **按层和颜色组织**：`network/`、`cluster/blue/`、`platform/green/`
-3. **启用版本控制**：从 state 损坏中恢复
-4. **启用加密**：保护 state 中的敏感值
-5. **使用 S3 原生锁定**（Terraform 1.10+）：在后端配置中启用 `use_lockfile = true`，以便基于 S3 条件写入实现无需 DynamoDB 的 state 锁定
+3. **启用版本控制**：从损坏的状态中恢复
+4. **启用加密**：保护状态中的敏感值
+5. **使用 S3 原生锁定**（Terraform 1.10+）：在后端配置中启用 `use_lockfile = true`，通过 S3 条件写入锁定状态，无需 DynamoDB
 
-### State 文件组织
+### 状态文件组织
 
 ```
-s3://eks-platform-prod-tfstate/
+s3://eks-platform-prod-ACCOUNT_ID-tfstate/
 ├── network/
 │   └── terraform.tfstate
 ├── cluster/
@@ -1454,148 +1262,208 @@ s3://eks-platform-prod-tfstate/
 
 ### 部署顺序
 
-由于依赖关系，必须按顺序部署各层：
+这是一个新项目操作方案，需要 AWS CLI、Terraform、jq 和部署权限。请先将 DOCS_ADMIN_ARN 设置为真实的管理员 IAM ARN。这些命令会创建资源；请检查并明确确认每个 terraform apply plan。纯 Auto Mode 会禁用 CoreDNS 附加组件。只有在扩展到混合集群时，才设置 DOCS_ENABLE_COREDNS_ADDON=true，以查询并固定附加组件版本。生成的输入仅包含必填值；在执行 plan 前，请合并任何额外标签或团队权限。
+
+存储桶/区域取自生成的后端 JSON。TF_DATA_DIR 用于隔离账户、环境、根目录和集群颜色。英文示例为每个集群分别管理独立状态。请保护并备份 bootstrap 状态；不要将其、.terraform-data/ 和 plan 文件提交到 Git。不要将此方案用作现有状态的迁移流程。
 
 ```bash
-# Step 1: Bootstrap (run once)
-cd 00-shared/bootstrap
-terraform init
-terraform apply
+set -euo pipefail
+# Run from the NEW eks-terraform project containing the documented files.
+DOCS_ROOT="$PWD"
+DOCS_ENV="dev"
+DOCS_REGION="ap-northeast-2"
+DOCS_PROJECT="eks-platform"
+DOCS_K8S_VERSION="1.36"
+: "${DOCS_ADMIN_ARN:?Set an existing IAM administrator role ARN}"
+DOCS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+mkdir -p environments ".bootstrap-state/$DOCS_ACCOUNT_ID"
+chmod 700 .bootstrap-state ".bootstrap-state/$DOCS_ACCOUNT_ID"
 
-# Step 2: Network layer
-cd ../../01-network
-terraform init
-terraform apply
+jq -n --arg region "$DOCS_REGION" --arg env "$DOCS_ENV" --arg project "$DOCS_PROJECT" \
+  '{region:$region, environment:$env, project_name:$project}' \
+  > "environments/$DOCS_ENV.tfvars.json"
 
-# Step 3: Cluster layer (blue)
-cd ../02-cluster
-# Edit backend.tf to use cluster/blue/terraform.tfstate
-# Edit terraform.tfvars to set cluster_color = "blue"
-terraform init
-terraform apply
+# Pure Auto Mode uses node-local CoreDNS. Set true only for mixed/non-Auto nodes.
+DOCS_ENABLE_COREDNS_ADDON="${DOCS_ENABLE_COREDNS_ADDON:-false}"
+case "$DOCS_ENABLE_COREDNS_ADDON" in true|false) ;; *) exit 2 ;; esac
+if [[ "$DOCS_ENABLE_COREDNS_ADDON" == true ]]; then
+  DOCS_COREDNS_VERSION="$(aws eks describe-addon-versions --region "$DOCS_REGION" \
+    --addon-name coredns --kubernetes-version "$DOCS_K8S_VERSION" --output json | \
+    jq -er --arg version "$DOCS_K8S_VERSION" '
+      [.addons[0].addonVersions[]
+       | select(any(.compatibilities[]; .clusterVersion == $version and .defaultVersion == true))
+       | .addonVersion] | first // empty
+    ')"
+  jq -n --arg version "$DOCS_COREDNS_VERSION" \
+    '{enable_coredns_addon:true, coredns_addon_version:$version}' \
+    > "environments/$DOCS_ENV.platform.tfvars.json"
+else
+  jq -n '{enable_coredns_addon:false}' > "environments/$DOCS_ENV.platform.tfvars.json"
+fi
 
-# Step 4: Platform layer (blue)
-cd ../03-platform
-# Edit backend.tf to use platform/blue/terraform.tfstate
-# Edit terraform.tfvars to set cluster_color = "blue"
-terraform init
-terraform apply
+jq -n --arg admin "$DOCS_ADMIN_ARN" --arg version "$DOCS_K8S_VERSION" \
+  '{cluster_admin_arn:$admin, cluster_version:$version}' > "environments/$DOCS_ENV.cluster.tfvars.json"
+
+# Isolate local bootstrap state by account and environment.
+export TF_DATA_DIR="$DOCS_ROOT/.terraform-data/$DOCS_ACCOUNT_ID/$DOCS_ENV/bootstrap"
+terraform -chdir=00-shared/bootstrap init \
+  -backend-config="path=$DOCS_ROOT/.bootstrap-state/$DOCS_ACCOUNT_ID/$DOCS_ENV.tfstate"
+terraform -chdir=00-shared/bootstrap plan -var-file="../../environments/$DOCS_ENV.tfvars.json"
+# Review the plan. This apply presents its own plan and asks for confirmation.
+terraform -chdir=00-shared/bootstrap apply -var-file="../../environments/$DOCS_ENV.tfvars.json"
+DOCS_STATE_BUCKET="$(terraform -chdir=00-shared/bootstrap output -raw state_bucket_name)"
+jq -n --arg bucket "$DOCS_STATE_BUCKET" --arg region "$DOCS_REGION" \
+  '{bucket:$bucket, region:$region}' > "environments/$DOCS_ENV.backend.json"
+
+apply_layer() {
+  local layer="$1" key="$2" suffix="$3"
+  shift 3
+  export TF_DATA_DIR="$DOCS_ROOT/.terraform-data/$DOCS_ACCOUNT_ID/$DOCS_ENV/$suffix"
+  terraform -chdir="$layer" init \
+    -backend-config="../environments/$DOCS_ENV.backend.json" -backend-config="key=$key"
+  terraform -chdir="$layer" validate
+  terraform -chdir="$layer" plan -var-file="../environments/$DOCS_ENV.tfvars.json" "$@"
+  # Review the new plan and explicitly confirm apply.
+  terraform -chdir="$layer" apply -var-file="../environments/$DOCS_ENV.tfvars.json" "$@"
+}
+
+apply_layer 01-network network/terraform.tfstate network
+
+for DOCS_COLOR in blue green; do
+  apply_layer 02-cluster "cluster/$DOCS_COLOR/terraform.tfstate" "cluster/$DOCS_COLOR"     -var-file="../environments/$DOCS_ENV.cluster.tfvars.json" -var="cluster_color=$DOCS_COLOR"
+  apply_layer 03-platform "platform/$DOCS_COLOR/terraform.tfstate" "platform/$DOCS_COLOR"     -var-file="../environments/$DOCS_ENV.platform.tfvars.json" -var="cluster_color=$DOCS_COLOR"
+done
 ```
 
 ### 验证命令
 
-部署集群后，验证配置：
+请使用为配置的管理员主体提供的 AWS CLI 凭证运行。EKS 访问策略不能替代 IAM eks:DescribeCluster 权限。Terraform 创建者的自动管理员权限已禁用；必要时请使用管理员配置文件或已授权的 AssumeRole 配置。以下命令检查默认的双集群部署；如果集群已禁用，请省略相应集群。请在单独通过 GitOps 配置 StorageClass 后验证它们。
 
 ```bash
-# Configure kubectl
-aws eks update-kubeconfig --name eks-platform-prod-blue --region ap-northeast-2
-
-# Verify cluster access
-kubectl cluster-info
-
-# Check nodes (Auto Mode will provision as needed)
-kubectl get nodes
-
-# Verify Auto Mode node pools
-kubectl get nodepools
-
-# Check EKS add-ons
-kubectl get pods -n kube-system
-
-# Verify Pod Identity agent
-kubectl get pods -n kube-system -l app.kubernetes.io/name=eks-pod-identity-agent
-
-# Check storage classes
-kubectl get storageclass
-
-# Verify OIDC provider
-aws eks describe-cluster --name eks-platform-prod-blue \
-  --query "cluster.identity.oidc.issuer" --output text
+for DOCS_COLOR in blue green; do
+  DOCS_CLUSTER_NAME="${DOCS_PROJECT}-${DOCS_ENV}-${DOCS_COLOR}"
+  DOCS_CONTEXT="${DOCS_COLOR}-${DOCS_ENV}"
+  aws eks update-kubeconfig --region "$DOCS_REGION" \
+    --name "$DOCS_CLUSTER_NAME" --alias "$DOCS_CONTEXT"
+  kubectl --context "$DOCS_CONTEXT" get nodes
+  kubectl --context "$DOCS_CONTEXT" get nodepools
+  kubectl --context "$DOCS_CONTEXT" get pods -n kube-system
+  aws eks list-pod-identity-associations --region "$DOCS_REGION" \
+    --cluster-name "$DOCS_CLUSTER_NAME"
+done
 ```
 
-### Smoke Test 脚本
+### 冒烟测试脚本
 
-创建一个全面的 Smoke Test：
+以下脚本会在每个显式指定的 kube-context 中创建一个名称唯一的临时 namespace 和一个 DNS Job。它验证工作负载调度和集群 DNS，但不验证外部 LB 流量或每一项应用依赖。清理操作会检查 namespace UID，发生失败时会返回非零退出代码。如果无法访问 Docker Hub，请通过 DOCS_TEST_IMAGE 使用经批准的镜像镜像站。
 
 ```bash
-#!/bin/bash
-# smoke-test.sh - Validate EKS cluster deployment
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
-
-CLUSTER_NAME="${1:-eks-platform-prod-blue}"
-REGION="${2:-ap-northeast-2}"
-
-echo "=== EKS Cluster Smoke Test ==="
-echo "Cluster: $CLUSTER_NAME"
-echo "Region: $REGION"
-echo ""
-
-# Update kubeconfig
-echo "1. Configuring kubectl..."
-aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"
-
-# Test cluster connectivity
-echo "2. Testing cluster connectivity..."
-kubectl cluster-info || { echo "FAIL: Cannot connect to cluster"; exit 1; }
-
-# Check cluster version
-echo "3. Checking cluster version..."
-CLUSTER_VERSION=$(kubectl version --short 2>/dev/null | grep Server | awk '{print $3}')
-echo "   Cluster version: $CLUSTER_VERSION"
-
-# Check nodes
-echo "4. Checking nodes..."
-NODE_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
-echo "   Node count: $NODE_COUNT"
-
-# Check system pods
-echo "5. Checking system pods..."
-PENDING_PODS=$(kubectl get pods -n kube-system --field-selector=status.phase!=Running,status.phase!=Succeeded --no-headers 2>/dev/null | wc -l)
-if [ "$PENDING_PODS" -gt 0 ]; then
-  echo "   WARNING: $PENDING_PODS pods not running in kube-system"
-  kubectl get pods -n kube-system --field-selector=status.phase!=Running,status.phase!=Succeeded
-else
-  echo "   All system pods running"
+if (( $# == 0 )); then
+  echo "Usage: $0 <kube-context> [<kube-context> ...]" >&2
+  exit 2
 fi
+command -v kubectl >/dev/null
+command -v jq >/dev/null
+DOCS_TEST_IMAGE="${DOCS_TEST_IMAGE:-docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662}"
 
-# Check storage classes
-echo "6. Checking storage classes..."
-kubectl get storageclass
+smoke_cluster() (
+  set -euo pipefail
+  context="$1"
+  namespace=""
+  namespace_uid=""
+  cleanup() {
+    [[ -n "$namespace" ]] || return 0
+    current_uid="$(kubectl --context "$context" get namespace "$namespace" \
+      --ignore-not-found -o jsonpath='{.metadata.uid}')" || return 1
+    [[ -n "$current_uid" ]] || return 0
+    if [[ "$current_uid" != "$namespace_uid" ]]; then
+      echo "Cleanup skipped: namespace identity changed: $namespace" >&2
+      return 0
+    fi
+    kubectl --context "$context" delete namespace "$namespace" --timeout=120s
+  }
+  trap 'result=$?; cleanup || result=1; exit "$result"' EXIT
 
-# Check Pod Identity agent
-echo "7. Checking Pod Identity agent..."
-PI_PODS=$(kubectl get pods -n kube-system -l app.kubernetes.io/name=eks-pod-identity-agent --no-headers 2>/dev/null | wc -l)
-echo "   Pod Identity agent pods: $PI_PODS"
+  kubectl --context "$context" version -o json | jq -er '.serverVersion.gitVersion'
+  # Mixed clusters retain the Deployment; pure Auto Mode can have none.
+  coredns_deployment="$(kubectl --context "$context" get deployment coredns \
+    -n kube-system --ignore-not-found -o name)"
+  if [[ -n "$coredns_deployment" ]]; then
+    kubectl --context "$context" rollout status deployment/coredns -n kube-system --timeout=600s
+  fi
+  kubectl --context "$context" get nodepools -o json | jq -e '
+    any(.items[]; any(.status.conditions[]?; .type == "Ready" and .status == "True"))
+  ' >/dev/null
 
-# Test pod creation
-echo "8. Testing pod creation..."
-kubectl run smoke-test --image=nginx:alpine --restart=Never --rm -it --timeout=60s -- echo "Pod creation successful" 2>/dev/null || true
+  record="$(kubectl --context "$context" create -f - -o json <<'JSON'
+{"apiVersion":"v1","kind":"Namespace","metadata":{"generateName":"docs-smoke-","labels":{"pod-security.kubernetes.io/enforce":"restricted"}}}
+JSON
+  )"
+  namespace="$(jq -er '.metadata.name' <<<"$record")"
+  namespace_uid="$(jq -er '.metadata.uid' <<<"$record")"
 
-# Check Auto Mode node pools
-echo "9. Checking Auto Mode node pools..."
-kubectl get nodepools 2>/dev/null || echo "   NodePools CRD not available (expected if no workloads yet)"
+  jq -n --arg namespace "$namespace" --arg image "$DOCS_TEST_IMAGE" '{
+    apiVersion: "batch/v1", kind: "Job",
+    metadata: {name: "dns-check", namespace: $namespace},
+    spec: {
+      backoffLimit: 0, activeDeadlineSeconds: 300,
+      template: {spec: {
+        restartPolicy: "Never", automountServiceAccountToken: false,
+        securityContext: {runAsNonRoot: true, runAsUser: 65534, seccompProfile: {type: "RuntimeDefault"}},
+        containers: [{name: "check", image: $image,
+          command: ["sh", "-ec", "nslookup kubernetes.default.svc.cluster.local"],
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: ["ALL"]}},
+          resources: {requests: {cpu: "10m", memory: "16Mi"}, limits: {cpu: "100m", memory: "64Mi"}}
+        }]
+      }}
+    }
+  }' | kubectl --context "$context" create -f -
 
-echo ""
-echo "=== Smoke Test Complete ==="
+  if ! kubectl --context "$context" wait --for=condition=complete job/dns-check \
+    -n "$namespace" --timeout=360s; then
+    kubectl --context "$context" describe pods -n "$namespace" >&2 || true
+    kubectl --context "$context" logs job/dns-check -n "$namespace" --tail=100 >&2 || true
+    exit 1
+  fi
+  kubectl --context "$context" logs job/dns-check -n "$namespace" --tail=30
+  kubectl --context "$context" get pods -n kube-system -o json | jq -e '
+    all(.items[]; .status.phase == "Succeeded" or
+      any(.status.conditions[]?; .type == "Ready" and .status == "True"))
+  ' >/dev/null
+  echo "Workload scheduling and cluster DNS passed: $context"
+)
+
+for context in "$@"; do
+  smoke_cluster "$context"
+done
+```
+
+将脚本保存为 smoke-test.sh，并显式选择创建的 contexts。
+
+```bash
+bash smoke-test.sh "blue-${DOCS_ENV}" "green-${DOCS_ENV}"
 ```
 
 ### Terraform 验证
 
-```bash
-# Validate all layers
-for layer in 01-network 02-cluster 03-platform; do
-  echo "Validating $layer..."
-  cd "$layer"
-  terraform validate
-  terraform fmt -check
-  cd ..
-done
+使用部署方案中已初始化的相同数据目录。plan 可以读取 AWS 资源和远程状态，并获取状态锁；它不会应用拟议的基础设施变更。
 
-# Plan without applying (dry run)
-cd 01-network && terraform plan -out=plan.out
-cd ../02-cluster && terraform plan -out=plan.out
-cd ../03-platform && terraform plan -out=plan.out
+```bash
+export TF_DATA_DIR="$DOCS_ROOT/.terraform-data/$DOCS_ACCOUNT_ID/$DOCS_ENV/network"
+terraform -chdir=01-network validate
+terraform -chdir=01-network fmt -check
+for DOCS_COLOR in blue green; do
+  for DOCS_LAYER in cluster platform; do
+    DOCS_DIR="02-cluster"
+    [[ "$DOCS_LAYER" == platform ]] && DOCS_DIR="03-platform"
+    export TF_DATA_DIR="$DOCS_ROOT/.terraform-data/$DOCS_ACCOUNT_ID/$DOCS_ENV/$DOCS_LAYER/$DOCS_COLOR"
+    terraform -chdir="$DOCS_DIR" validate
+    terraform -chdir="$DOCS_DIR" fmt -check
+  done
+done
 ```
 
 ***
@@ -1604,23 +1472,23 @@ cd ../03-platform && terraform plan -out=plan.out
 
 ### Terraform 仅管理 AWS 基础设施
 
-此架构遵循清晰的分离原则：
+此架构遵循清晰的职责划分：
 
 | 层      | Terraform 管理                  | GitOps 管理                  |
 | ---------- | ---------------------------------- | ------------------------------- |
 | 网络    | VPC、子网、NAT、端点       | -                               |
 | 集群    | EKS、KMS、CloudWatch               | -                               |
-| 平台   | 附加组件、IAM Role、访问条目 | -                               |
-| Kubernetes | -                                  | NodePool、Deployment、Service |
+| 平台   | 附加组件、IAM 角色、访问条目 | -                               |
+| Kubernetes | -                                  | NodePool、Deployments、Services |
 
-Kubernetes 资源（NodePool 定义、应用程序 Deployment）由 ArgoCD GitOps 管理。详情请参阅 [GitOps Pipeline 配置](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)。
+Kubernetes 资源（NodePool 定义、应用 Deployment）由 ArgoCD GitOps 管理。详情请参阅 [GitOps 流水线配置](04-gitops-multi-cluster.md)。
 
 ### 交叉引用
 
-* [开始使用 EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)
 * [EKS 安全最佳实践](../eks/05-eks-security.md)
 * [NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md)
-* [GitOps Pipeline 配置](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
+* [GitOps 流水线配置](04-gitops-multi-cluster.md)
 
 ***
 

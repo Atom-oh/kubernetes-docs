@@ -299,7 +299,7 @@ EC2의 baseline/burst bandwidth와 실제 경로·PPS 제한을 확인한 뒤 �
 
 CFS throttled-period 비율은 **스로틀링이 관측된 기간의 비율**이지 CPU 시간의 손실률이 아닙니다. throttled seconds를 실제 CPU usage로 나눈 값도 단순한 “시간의 몇 %”로 해석할 수 없습니다. counter에 `delta()`를 사용하지 않고 0인 분모를 걸러냅니다.
 
-CPU request 초과는 허용된 burst일 수 있습니다. 높은 사용률·스로틀링·iowait/steal 값 하나로 고객 영향이나 root cause를 확정하지 않습니다. limits·requests 변경은 서비스 latency와 quota, scheduling·HPA 영향을 함께 검토합니다.
+CPU request 초과는 허용된 burst일 수 있습니다. 높은 사용률·스로틀링·iowait/steal 값 하나로 고객 영향이나 root cause를 확정하지 않습니다. limits·requests 변경 시에는 서비스 latency와 quota, scheduling·HPA 영향을 함께 검토합니다.
 
 `process_cpu_seconds_total{job="containerd"}` 같은 식은 해당 프로세스 exporter와 job이 실제로 있을 때만 의미가 있습니다. Auto Mode의 시스템 서비스나 관리형 구성요소가 일반 Deployment/DaemonSet의 지표를 그대로 제공한다고 가정하지 않습니다.
 
@@ -336,7 +336,7 @@ rate(awscni_no_available_ip_addresses[5m])
 
 ### DNS
 
-`NXDOMAIN`은 정상적인 negative lookup일 수 있습니다. DNS 오류율은 실제 실패 정의와 트래픽을 기준으로 정합니다. 수집된 CoreDNS 지표가 있는 환경에서 다음은 SERVFAIL/REFUSED 비율의 진단 예시입니다.
+`NXDOMAIN`은 정상적인 negative lookup일 수 있습니다. DNS 오류율은 실제 실패 정의와 트래픽을 기준으로 정합니다. 다음은 수집된 CoreDNS 지표가 있는 환경에서의 SERVFAIL/REFUSED 비율 진단 예시입니다.
 
 ```promql
 (
@@ -382,7 +382,7 @@ PDB의 currentHealthy가 desiredHealthy보다 작다는 것은 건강 상태 부
 
 ### 관리형 Auto Mode와 자체 관리 Karpenter
 
-자체 관리 Karpenter controller의 Prometheus endpoint를 Auto Mode에도 있다고 가정하지 않습니다. Auto Mode는 Node 조건, NodeClaim/NodePool 상태와 관리형 control-plane audit 로그 등 지원되는 관측 경로를 확인합니다.
+자체 관리 Karpenter controller의 Prometheus endpoint가 Auto Mode에도 있다고 가정하지 않습니다. Auto Mode는 Node 조건, NodeClaim/NodePool 상태와 관리형 control-plane audit 로그 등 지원되는 관측 경로를 확인합니다.
 
 AWS의 Auto Mode 문제 해결 문서에서는 control-plane audit 로그의 `DisruptionBlocked`, `DisruptionTerminating`, `FailedScheduling`, `FailedDraining` 등 이벤트를 조회하는 방법을 안내합니다. Audit logging이 켜진 실제 cluster log group에서 다음처럼 범위를 정해 조사할 수 있습니다.
 
@@ -414,7 +414,7 @@ fields @timestamp, @message
 
 수신기 자격 증명은 승인된 secret 관리 방식으로 공급합니다. 실제 URL·키를 Git, Helm values나 PR 로그에 넣지 않습니다. 현대 Slack incoming webhook은 설치 때 선택한 채널에 연결되므로, 하나의 URL에 `channel`을 바꿔 여러 채널로 보낼 수 있다고 가정하지 않습니다. 예제는 채널별 URL 파일을 사용합니다.
 
-PagerDuty 예제는 Events API v2의 routing key입니다. `service_key`/`service_key_file`도 지원되는 별도 v1 integration 경로이므로 선택한 integration type에 맞춰야 합니다.
+PagerDuty 예제는 Events API v2의 routing key를 사용합니다. `service_key`/`service_key_file`도 지원되는 별도 v1 integration 경로이므로 선택한 integration type에 맞춰야 합니다.
 
 ```yaml
 # alertmanager.yaml
@@ -500,7 +500,7 @@ time_intervals:
             end_time: "04:00"
 ```
 
-Critical은 oncall에 전달한 뒤 팀별 Slack 경로도 평가합니다. 마지막 sibling fallback을 명시했기 때문에 team이 없는 critical도 Slack을 받습니다. 한 자식 route가 이미 match했다면 `continue: true`만으로 root receiver가 자동 fallback하는 것은 아닙니다.
+Critical은 oncall에 전달한 뒤 팀별 Slack 경로도 평가합니다. 마지막 sibling fallback을 명시했기 때문에 team이 없는 critical도 Slack으로 전달됩니다. 한 자식 route가 이미 match했다면 `continue: true`만으로 root receiver가 자동 fallback하는 것은 아닙니다.
 
 Info는 별도 경로를 사용하며 매일 **Asia/Seoul 02:00–04:00**에 그 경로만 mute합니다. 이는 기존 알림을 모아 일간 다이제스트로 보내는 기능이 아닙니다. 반복·그룹 대기 시간도 달력 기반 digest를 대신하지 않습니다.
 
@@ -614,7 +614,7 @@ amtool config routes test --config.file=alertmanager.yaml \
   --verify.receivers=oncall,network-team severity=critical team=network
 ```
 
-로컬 검증에는 실제 자격 증명 대신 synthetic 파일을 쓸 수 있습니다. 이 장은 17개 rule의 파싱과 18개 평가 시나리오, 10개 라우팅 사례, native template 2개, 외부 수신기가 없는 로컬 Alertmanager의 억제 범위 16개를 확인했습니다. 실제 exporter 데이터·외부 채널 인증·전송 성공은 환경 연결 후 별도로 확인해야 합니다.
+로컬 검증에는 실제 자격 증명 대신 synthetic 파일을 쓸 수 있습니다. 이 장에서는 17개 rule의 파싱과 18개 평가 시나리오, 10개 라우팅 사례, native template 2개, 외부 수신기가 없는 로컬 Alertmanager의 억제 범위 16개를 확인했습니다. 실제 exporter 데이터·외부 채널 인증·전송 성공은 환경 연결 후 별도로 확인해야 합니다.
 
 Silence 생성·만료는 알림 정책을 바꾸는 작업입니다. 실제 Alertmanager URL, cluster·namespace·대상 matcher, 책임자·사유·기간을 확인합니다. Silence는 Prometheus 평가 자체를 중단시키는 기능이 아닙니다. 장기 muted alert를 성공적으로 해결한 것으로 처리하지 않습니다.
 

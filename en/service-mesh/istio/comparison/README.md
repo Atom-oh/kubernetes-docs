@@ -108,7 +108,7 @@ When its supported service/resource model and AWS networking/authentication cont
 <details>
 <summary>How much overhead should I expect?</summary>
 
-No universal latency, CPU percentage or memory-per-Pod figure applies across these products. Measure equivalent policies, TLS, traffic, concurrency, node/proxy/waypoint counts and failure behavior. Keep a reproducible benchmark's original versions and raw data. Managed networking still adds a processing path, observability work and billable usage; it is not zero infrastructure impact.
+No universal latency, CPU percentage or memory-per-Pod figure applies across these products. Measure equivalent policies, TLS, traffic, concurrency, node/proxy/waypoint counts and failure behavior. Keep a reproducible benchmark's original versions and raw data. Managed networking still adds a processing path, observability work and billable usage; it does not have zero infrastructure impact.
 
 </details>
 

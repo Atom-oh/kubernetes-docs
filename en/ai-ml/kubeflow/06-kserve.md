@@ -63,7 +63,7 @@ A percentage alone does not validate quality or automate promotion/rollback. Che
 
 A Pod's nvidia.com/gpu request enables scheduling/device allocation. Actual GPU inference requires compatible CUDA/drivers, server image, model backend and device configuration. Review Triton model configuration or framework device selection; a GPU request does not automatically move a CPU model to GPU.
 
-Karpenter provisions for eligible Pending Pods, NodePools, quotas and available capacity. KServe/Knative/HPA/KEDA Pod scaling and EC2 provisioning/reclamation are separate loops. Even at zero model Pods, other workloads or disruption policies can keep nodes and costs running.
+Karpenter provisions for eligible Pending Pods, NodePools, quotas and available capacity. KServe/Knative/HPA/KEDA Pod scaling and EC2 provisioning/reclamation are separate loops. Even at zero model Pods, other workloads or disruption policies can keep nodes running and costs accruing.
 
 ## Validation and Sources
 

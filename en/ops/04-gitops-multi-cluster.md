@@ -336,7 +336,7 @@ patches:
           values: [ap-northeast-2c]
 ```
 
-Review both `kustomize build nodepools/overlays/blue` and green. Standard instance-type requirements avoid mixing self-managed Karpenter's `karpenter.k8s.aws/*` keys into Auto Mode. Match workload selectors, architecture and placement requirements to the pools.
+Review both `kustomize build nodepools/overlays/blue` and its green counterpart. Standard instance-type requirements avoid mixing self-managed Karpenter's `karpenter.k8s.aws/*` keys into Auto Mode. Match workload selectors, architecture and placement requirements to the pools.
 
 Do not copy self-managed `EC2NodeClass` fields such as `amiSelectorTerms`, `blockDeviceMappings` or `instanceStorePolicy` into an Auto Mode `NodeClass`. Custom Auto Mode classes use actual node roles, subnet/security-group selectors and supported fields such as `ephemeralStorage`; a different node role also needs its Auto Mode node access entry. Design persistent database storage separately from ephemeral disks. See the [NodePool/NodeClass guide](../eks-auto-mode/02-nodepool-configuration.md).
 

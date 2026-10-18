@@ -170,7 +170,7 @@ spec:
 
 Namespace 또는 Pod의 비활성화 label이 우선합니다. Pod opt-in은 `istio-injection=disabled`를 덮어쓰지 못합니다. `istio-injection=enabled`만 제거한다고 항상 비활성화되는 것은 아닙니다. Revision label, Pod opt-in, injector 기본값도 확인해야 합니다. 구형 inject annotation 대신 label을 사용하며 서로 모순되는 설정을 피하세요.
 
-변경은 새 Pod에 적용되며 이미 주입된 proxy를 제거하지 않습니다. 기존 Pod 변경은 workload의 검토된 rollout 절차를 따릅니다. Namespace는 주입을 활성화하고 일부 template만 제외할 수 있지만 해당 workload의 mesh·보안 참여도 달라집니다.
+변경은 새 Pod에 적용되며 이미 주입된 proxy를 제거하지 않습니다. 기존 Pod 변경은 workload의 검토된 rollout 절차를 따릅니다. Namespace에서 주입을 활성화하고 일부 template만 제외할 수 있지만 해당 workload의 mesh·보안 참여도 달라집니다.
 
 ```bash
 kubectl get pod "$POD" -n "$NAMESPACE" -o json   | jq '{containers: [.spec.containers[].name],
@@ -292,13 +292,13 @@ spec:
 
 r5.xlarge는 vCPU 4개와 메모리 32 GiB를 제공합니다. 노드 5개는 system/app 용량을 제외하기 전에도 20 vCPU뿐이므로 sidecar 50 vCPU 가정부터 이 고정 노드 구성에서 불가능합니다. Proxy CPU만의 하한은 ceil(50/4) = 13개 노드이며 앱 CPU, system 예약, 메모리, IP 제한, placement와 복원력 요구사항을 제외한 값입니다.
 
-이 13개 하한을 “ambient 노드 하나”와 비교하면서 ztunnel은 계속 노드 5개분으로 계산하면 안 됩니다. **실제로 유지할 노드 수**에 맞춰 ztunnel 용량을 다시 계산하고 waypoint HA/트래픽 용량과 다른 workload도 포함해야 합니다.
+이 13개 노드라는 하한을 “ambient 노드 하나”와 비교하면서 ztunnel은 계속 노드 5개분으로 계산하면 안 됩니다. **실제로 유지할 노드 수**에 맞춰 ztunnel 용량을 다시 계산하고 waypoint HA/트래픽 용량과 다른 workload도 포함해야 합니다.
 
 가정 가격에서:
 
 - 노드 한 개의 한 달 비용은 `0.252 × 730 = $183.96`입니다.
 - 동일한 노드 5개를 유지하면 두 모드 모두 `$919.80/월`입니다. Proxy 여유 용량만 늘었다고 청구액이 줄지는 않습니다.
-- 노드 13개의 한 달 비용은 `$2,391.48`로 기존 산술 오류를 바로잡습니다. 필요한 운영 fleet이 13개라는 검증은 아닙니다.
+- 노드 13개의 한 달 비용은 `$2,391.48`로, 기존 산술 오류를 바로잡은 값입니다. 필요한 운영 fleet이 13개라는 검증은 아닙니다.
 - 검증된 fleet이 Nₛ개와 Nₐ개라면 다른 비용·약정을 제외한 compute 차이는 `(Nₛ − Nₐ) × $183.96/월`입니다.
 
 전체 비교에는 EKS/control-plane, load balancer, AZ/Region 전송, storage, telemetry와 실제 구매 약정을 포함하세요. Sidecar도 local 통신을 사용하며 ambient가 network 비용이나 OOM을 자동 제거하지 않습니다.
@@ -635,7 +635,7 @@ spec:
 | Redis/RLS 접근 불가 | 의도한 fail-closed와 실제 status/latency |
 | Window 경계·Redis 재시작 | Counter/window 동작 측정; 나눠 실행한 시험에서 항상 101번째가 거부된다고 단정하지 않음 |
 
-허용된 read-only endpoint에 bounded 요청을 보내며 새 test identity/window를 사용합니다. 50회 다음 150회를 실행한다고 두 번 모두 새 budget이 시작되지 않습니다. Rate-limit 응답 header에는 지원되는 service 응답과 filter 설정이 필요하므로 remaining/reset 값을 만들어 쓰지 마세요.
+허용된 read-only endpoint에 bounded 요청을 보내며 새 test identity/window를 사용합니다. 50회 실행한 다음 150회를 실행한다고 두 번 모두 새 budget이 시작되지 않습니다. Rate-limit 응답 header에는 지원되는 service 응답과 filter 설정이 필요하므로 remaining/reset 값을 만들어 쓰지 마세요.
 
 RLS health, 로드된 config와 실제 Envoy stat을 확인합니다. HTTP stat prefix 아래의 `ratelimit.ok`, `ratelimit.over_limit`, `ratelimit.error` 등이 해당합니다. 실제 Prometheus 이름/label을 확인하며 `rejected_total`을 추측하지 마세요. 큰 운영 keyspace에 Redis `KEYS *`를 실행하거나 내부 counter를 남은 quota로 해석하면 안 됩니다. 고정한 distroless RLS image는 redis-cli shell이 아닙니다.
 
@@ -920,11 +920,11 @@ spec:
 
 두 template은 같은 gate 정의를 서로 다른 Service 인수로 사용합니다. `initialDelay: 5m`은 2분 window가 전환 이전 구간에서 벗어날 여유를 주지만 source freshness와 실제 트래픽은 여전히 확인해야 합니다. 구 active-version sample을 candidate 근거로 읽으면 안 됩니다.
 
-Prometheus 결과는 vector이므로 길이와 유한한 값인지 확인한 뒤 `result[0]`을 사용합니다. 분자의 `or vector(0)`은 2xx가 없는 전체 5xx와 5xx가 없는 정상 사례를 처리합니다. 분모와 volume 검사가 누락·idle telemetry의 통과를 막습니다. 성공률은 2xx만 포함하므로 4xx는 성공률을 낮추지만 5xx/zero-status 오류 분자에는 포함되지 않습니다.
+Prometheus 결과는 vector이므로 길이와 값이 유한한지 확인한 뒤 `result[0]`을 사용합니다. 분자의 `or vector(0)`은 2xx가 없고 모두 5xx인 사례와 5xx가 없는 정상 사례를 처리합니다. 분모와 volume 검사가 누락·idle telemetry의 통과를 막습니다. 성공률은 2xx만 포함하므로 4xx는 성공률을 낮추지만 5xx/zero-status 오류 분자에는 포함되지 않습니다.
 
 `failureLimit: 0`은 첫 실패 측정에서 중단합니다. 2이면 세 번째 실패가 한도를 초과합니다. 실패를 허용한 sample 5개가 모두 성공해야 한다는 뜻은 아닙니다. Initial delay와 provider 오류 등을 포함하면 30초 간격 5회가 정확히 2.5분의 wall-clock phase라고 보장할 수도 없습니다.
 
-승격 전 실패는 기존 active 대상을 유지합니다. 승격 후 실패는 controller 규칙에 따라 이전 ReplicaSet이 사용 가능한 동안 중단하고 이전 active 선택을 복구합니다. 모든 요청이 즉시 복구되는 보장은 아닙니다. 구 version 용량을 충분히 유지하고 전파, session, drain과 DB 호환성을 확인하세요.
+승격 전 실패는 기존 active 대상을 유지합니다. 승격 후 실패는 controller 규칙에 따라 이전 ReplicaSet이 사용 가능한 동안 중단하고 이전 active 선택을 복구합니다. 모든 요청이 즉시 복구된다는 보장은 없습니다. 구 version 용량을 충분히 유지하고 전파, session, drain과 DB 호환성을 확인하세요.
 
 ```bash
 kubectl argo rollouts get rollout test -n rollouts-demo --watch

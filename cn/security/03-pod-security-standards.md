@@ -22,7 +22,7 @@ PSS 定义策略；PSA 是应用这些策略的内置准入实现。除非另有
 
 ---
 
-## 从 PSP 演进到 PSS
+## 从 PSP 演进到 PSS {#evolution-from-psp-to-pss}
 
 ### PodSecurityPolicy (PSP) 的历史
 
@@ -65,7 +65,7 @@ Pod 安全标准（PSS）和 Pod 安全准入（PSA）在 Kubernetes 1.22 中以
 
 ---
 
-## Pod 安全准入（PSA）Controller
+## Pod 安全准入（PSA）Controller {#pod-security-admission-psa-controller}
 
 ### PSA 架构
 
@@ -97,7 +97,7 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 
 ---
 
-## 安全级别
+## 安全级别 {#security-levels}
 
 PSS 定义了三个安全级别（配置文件）。每个级别逐步应用更严格的安全约束。
 
@@ -265,7 +265,7 @@ spec:
 
 ---
 
-## 强制模式
+## 强制模式 {#enforcement-modes}
 
 PSA 提供三种强制模式。这些模式可单独使用，也可组合使用。
 
@@ -417,7 +417,7 @@ metadata:
 
 ---
 
-## Namespace 级配置
+## Namespace 级配置 {#namespace-level-configuration}
 
 ### 基本标签配置
 
@@ -509,7 +509,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## 从 PSP 迁移到 PSS
+## 从 PSP 迁移到 PSS {#migration-from-psp-to-pss}
 
 ### 迁移概览
 
@@ -523,7 +523,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ### 步骤 1：分析当前 PSP
 
-**仅限历史流程：**以下 PSP 命令/资源适用于仍提供 `policy/v1beta1` 服务的旧集群（最高 Kubernetes 1.24），或保存的 manifest。不要将此 PSP 应用于当前集群。同时盘点之前由 PSP 默认设置/变更的字段；PSA 不会填充它们。
+**仅限历史流程**：以下 PSP 命令/资源适用于仍提供 `policy/v1beta1` 服务的旧集群（最高 Kubernetes 1.24），或保存的 manifest。不要将此 PSP 应用于当前集群。同时盘点之前由 PSP 默认设置/变更的字段；PSA 不会填充它们。
 
 ```bash
 # List current PSPs
@@ -569,7 +569,7 @@ spec:
     rule: RunAsAny
 ```
 
-**映射结果：**Restricted 是候选目标，而不是等效策略。此 PSP 缺少必需的 seccomp 控制，并允许 PSS 可能拒绝的 SELinux 设置。比较每项控制和每个生成的 Pod；三个选定字段无法确定等效性。
+**映射结果**：Restricted 是候选目标，而不是等效策略。此 PSP 缺少必需的 seccomp 控制，并允许 PSS 可能拒绝的 SELinux 设置。比较每项控制和每个生成的 Pod；三个选定字段无法确定等效性。
 
 ### PSP 到 PSS 映射表
 
@@ -697,7 +697,7 @@ subprocess.run(base + [
 
 ---
 
-## EKS 默认设置与配置
+## EKS 默认设置与配置 {#eks-defaults-and-configuration}
 
 ### EKS 中的 PSA 默认设置
 
@@ -778,7 +778,7 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## 安全配置文件详情
+## 安全配置文件详情 {#security-profile-details}
 
 ### Privileged 配置文件详情
 
@@ -1009,7 +1009,7 @@ data:
 
 ---
 
-## 豁免配置
+## 豁免配置 {#exemptions-configuration}
 
 ### 集群级豁免配置
 
@@ -1076,7 +1076,7 @@ Kyverno 无法将 PSA 拒绝变为允许。如果主机 agent 需要例外，请
 
 ---
 
-## 逐步采用的最佳实践
+## 逐步采用的最佳实践 {#best-practices-for-gradual-adoption}
 
 ### 步骤 1：分析当前状态
 

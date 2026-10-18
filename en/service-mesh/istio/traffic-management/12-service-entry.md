@@ -122,7 +122,7 @@ spec:
 
 ### 3. NONE Resolution
 
-Does not perform address resolution, uses the address provided by the client as-is.
+This mode does not perform address resolution; it uses the address provided by the client as-is.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -182,7 +182,7 @@ spec:
 
 ### MESH_INTERNAL (Internal Service)
 
-Treat as mesh internal service (rarely used).
+Treat the service as a mesh-internal service (rarely used).
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -468,7 +468,7 @@ This example selects the writable primary only. Register replicas separately for
 
 ## Combining with Egress Gateway
 
-Control external traffic centrally through Egress Gateway.
+Control external traffic centrally through an Egress Gateway.
 
 ### Basic Egress Gateway Configuration
 

@@ -1,175 +1,163 @@
 # リソース最適化クイズ
 
-> **関連ドキュメント**: [リソース最適化](../../ops/10-resource-optimization.md)
+> **関連ドキュメント**: [Resource optimization](../../ops/10-resource-optimization.md)
 
-## 選択式問題
+## 1. memory pressure 下の eviction を正しく説明しているのはどれですか？
 
-### 1. Kubernetes における resource requests と limits の違いは何ですか？
-
-- A) Requests は CPU 専用で、limits は memory 専用である
-- B) Requests はスケジューリングのために保証されるリソースで、limits は許可される最大値である
-- C) Requests と limits は同じものである
-- D) Limits は保証され、requests は任意である
+- A) eviction の順序は QoS class だけで決まる
+- B) request を超える使用量、Pod Priority、相対的な使用量が関係する
+- C) Guaranteed Pod は決して eviction されない
+- D) PDB は node pressure による eviction をすべて防ぐ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Requests はスケジューリングのために保証されるリソースで、limits は許可される最大値である**
+**回答: B**
 
-**解説:**
-Requests は Kubernetes が container に保証するリソースであり、スケジューリングの判断に使用されます。Limits は container が使用できる最大リソースです。CPU limits を超えると throttling が発生し、memory limits を超えると OOM kill が発生する可能性があります。
+QoS は判断材料になりますが、eviction の順序を絶対的に決めるものではありません。container limit 超過による OOM、memory pressure による eviction、DiskPressure を区別してください。
 
 </details>
 
-### 2. node のリソース逼迫時に最も高い優先度を得る QoS class はどれですか？
+## 2. CPU throttled-period ratio は何を測定しますか？
 
-- A) BestEffort
-- B) Burstable
-- C) Guaranteed
-- D) すべての class の優先度は同じである
+- A) 失われた CPU 時間の正確な割合
+- B) throttling が発生した quota period の割合
+- C) CPU request の使用率
+- D) 平均 memory 使用率
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Guaranteed**
+**回答: B**
 
-**解説:**
-Guaranteed pods（CPU と memory の両方で requests=limits）は最も高い優先度を持ち、リソース逼迫時に最後に evict されます。BestEffort pods（requests/limits なし）が最初に evict され、その次に Burstable pods が続きます。
+複数の thread は quota を共有します。period の割合だけでは、失われた CPU 時間は分からず、limit を引き上げるのが適切な対処だとも判断できません。
 
 </details>
 
-### 3. Kubernetes containers で CPU throttling が発生する原因は何ですか？
+## 3. JVM heap と container memory について、正しい説明はどれですか？
 
-- A) memory が不足している
-- B) container が CFS period 中に CPU limit を超えている
-- C) ネットワーク輻輳
-- D) ディスク I/O ボトルネック
+- A) 75% が常に最適である
+- B) 比率を決める際は non-heap memory と RSS を測定する
+- C) `MaxRAMPercentage` は実行中の Pod limit の変更に常に即時追従する
+- D) kernel の SIGKILL が発生すると必ず heap dump が生成される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) container が CFS period 中に CPU limit を超えている**
+**回答: B**
 
-**解説:**
-Linux CFS (Completely Fair Scheduler) は 100ms の period ごとに CPU limits を強制します。container が period の早い段階で quota を使い切ると、次の period が始まるまで throttled（一時停止）されます。これは `cpu.cfs_throttled_us` で追跡されます。
+Metaspace、thread stack、direct buffer、JNI にも memory が必要です。JVM ergonomics と cgroup limit、Java の OOME と SIGKILL を区別してください。
 
 </details>
 
-### 4. containers に推奨される JVM MaxRAMPercentage 設定は何ですか？
+## 4. `JAVA_OPTS` を設定しても JVM option が適用されないことがあるのはなぜですか？
 
-- A) 100%
-- B) 90%
-- C) 75%
-- D) 50%
+- A) JVM が security option として拒否する
+- B) entrypoint が渡さない限り、JVM は自動的に読み込まない
+- C) Kubernetes は環境変数をサポートしない
+- D) Java 21 は container 内で動作しない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 75%**
+**回答: B**
 
-**解説:**
-MaxRAMPercentage を 75% に設定すると、container memory の 25% を non-heap 用途（metaspace、thread stacks、native memory、OS overhead）に残せます。より高い値を使用すると、non-heap memory が予期せず増えた場合に OOM kill のリスクがあります。
+`JAVA_TOOL_OPTIONS` を使うか、`java` に引数を明示的に渡し、実際の `VM.flags` 出力を確認してください。
 
 </details>
 
-### 5. VPA で "Initial" update mode は何をしますか？
+## 5. VPA の `upperBound` について、正しい説明はどれですか？
 
-- A) pods を継続的に更新する
-- B) pods が最初に作成されるときにのみ resources を設定する
-- C) 既存の pods をすべて削除する
-- D) VPA を完全に無効化する
+- A) 常に container memory limit にコピーする
+- B) request の推奨範囲の一部であり、container limit ではない
+- C) HPA の最大 replica 数である
+- D) OOM が発生しないことを保証する memory 量である
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) pods が最初に作成されるときにのみ resources を設定する**
+**回答: B**
 
-**解説:**
-"Initial" mode は VPA の推奨値を pod 作成時にのみ適用し、実行中の pods には適用しません。これは HPA と併用する場合に有用です。VPA が初期サイズを設定し、HPA が scaling を処理し、既存の pods は中断されないためです。
+`target`、`lowerBound`、`upperBound`、`uncappedTarget` を区別してください。Initial mode でも、新しい request が HPA の分母に影響することがあります。
 
 </details>
 
-### 6. container CPU limits に基づいて設定すべき Go runtime 設定は何ですか？
+## 6. Go 1.25 以降の `GOMAXPROCS` の既定値について、正しい説明はどれですか？
 
-- A) GOGC
-- B) GOMAXPROCS
-- C) GOPATH
-- D) GOROOT
+- A) 常に host CPU 数を使い、外部 library が必須である
+- B) language version と互換性の既定動作に応じて、quota と CPU affinity を考慮する。明示的に設定すると自動更新は無効になる
+- C) CPU request だけを使用する
+- D) どの環境でも `500m` は常に 1 として扱われる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) GOMAXPROCS**
+**回答: B**
 
-**解説:**
-GOMAXPROCS は Go code を実行する OS threads の数を制御します。デフォルトでは、Go は container limits ではなく host CPUs をすべて使用します。GOMAXPROCS を container CPU limits に合わせて設定する（automaxprocs library を使用する）ことで、過剰な context switching を防げます。
+この例は Go 1.27.2 と `go.mod` 1.25 以降でテストされています。quota の丸めと最小値の条件も考慮してください。
 
 </details>
 
-### 7. Go applications で GOMEMLIMIT は何に使用されますか？
+## 7. `GOMEMLIMIT` と Node の old-space limit に共通する制約は何ですか？
 
-- A) 最小 memory allocation を設定する
-- B) garbage collector に soft memory limit のヒントを提供する
-- C) goroutines の数を制限する
-- D) swap memory を設定する
+- A) process の RSS 全体を完全には制限しない
+- B) native memory をすべて強制的に解放する
+- C) container の OOM を防ぐことを保証する
+- D) Pod request を自動的に変更する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) garbage collector に soft memory limit のヒントを提供する**
+**回答: A**
 
-**解説:**
-GOMEMLIMIT は Go garbage collector に目標 memory ceiling を伝えます。memory がこの limit に近づくと GC が早めに実行され、利用可能な memory を効率的に活用しながら OOM kill のリスクを低減します。
+Go の値は runtime が管理する soft limit です。Node の option は V8 の old space を制御します。native allocation と複数 worker の memory は別途考慮してください。
 
 </details>
 
-### 8. containers 内の Python Gunicorn workers について、推奨される worker 数の計算式は何ですか？
+## 8. Gunicorn と Tokio の worker 数をどう決めるべきですか？
 
-- A) 2 * CPU_CORES + 1
-- B) host cores ではなく、container CPU limit に基づく
-- C) 常に 1 worker を使用する
-- D) 最大 throughput のために 100 workers を使用する
+- A) host CPU 数の固定倍率で十分である
+- B) 実際の設定を確認し、quota、memory、workload の動作をテストする
+- C) Rust には GC がないため、concurrency limit は不要である
+- D) thread／process 数は memory に影響しない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) host cores ではなく、container CPU limit に基づく**
+**回答: B**
 
-**解説:**
-古典的な計算式 (2*cores+1) は host CPU count を使用するため、containers では過剰割り当てになります。worker 数は resource contention と OOM issues を避けるため、container CPU limits（例: CPU limit あたり 2〜4 workers）に基づく必要があります。
+設定が実際に `WEB_CONCURRENCY` を読み取ることを確認してください。`worker_threads` を明示した Tokio の設定は環境変数を上書きします。blocking pool は別に扱います。
 
 </details>
 
-### 9. memory limit を超えた container には何が起きますか？
+## 9. OOM reason と Pending phase の metric はどう解釈すべきですか？
 
-- A) CPU throttled される
-- B) kernel によって OOM killed される
-- C) 自動的に水平 scaling される
-- D) memory が他の containers から借用される
+- A) reason gauge に increase を適用すれば、正確な OOM 件数が得られる
+- B) Pending の series をすべて数えれば、現在の Pending 数が得られる
+- C) 0／1 の値と、reason gauge が最後の状態しか表さない制約を考慮する
+- D) Pending は常に CPU 不足を意味する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) kernel によって OOM killed される**
+**回答: C**
 
-**解説:**
-CPU（throttled される）とは異なり、memory limits は厳格に強制されます。container が memory limit を超えると、Linux OOM killer が container 内の processes を終了します。その後 Kubernetes は restart policy に基づいて container を再起動します。
+Pending で値が 0 の series も存在します。最近の restart と最後の OOM reason を組み合わせても、期間内の OOM をすべて再構成することはできません。
 
 </details>
 
-### 10. VPA Recommender component の目的は何ですか？
+## 10. Auto Mode の bin-packing と placeholder Pod について、正しい説明はどれですか？
 
-- A) 新しい resources で pods を再起動する
-- B) resource usage を分析して resource recommendations を生成する
-- C) node scaling を管理する
-- D) resource configurations を検証する
+- A) 4 vCPU の instance には、アプリケーションの CPU request を常に合計 4 CPU 分配置できる
+- B) placeholder は EC2 Capacity Reservation である
+- C) allocatable、overhead、scheduler の制約を考慮する。placeholder は容量を保証しない
+- D) `preemptionPolicy: Never` を設定すると、その Pod が preempt されなくなる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) resource usage を分析して resource recommendations を生成する**
+**回答: C**
 
-**解説:**
-VPA Recommender は時間の経過に伴う containers の実際の resource usage を監視し、requests と limits の推奨値を生成します。CPU と memory の usage patterns、peaks、variance を考慮して、適切な値を提案します。
+`Never` はこの Pod がほかの Pod を preempt するのを防ぎます。NodePool は `karpenter.sh/v1` を使い、Auto Mode の NodeClass group は `eks.amazonaws.com` です。
 
 </details>

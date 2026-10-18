@@ -27,7 +27,7 @@ Deployment mode, protocol routing, customization, rollout control and autoscalin
 
 ## 1. Ambient Mode
 
-Ambient first shipped as alpha in Istio1.18 and reached GA in1.24. It separates the node-level L4 secure overlay from optional waypoint-based L7 processing.
+Ambient first shipped as alpha in Istio 1.18 and reached GA in 1.24. It separates the node-level L4 secure overlay from optional waypoint-based L7 processing.
 
 ### Sidecar Mode vs Ambient Mode
 
@@ -134,13 +134,13 @@ spec:
 - Reduced load on external DNS servers
 - Registry-aware answers, subject to discovery/TTL/refresh behavior
 
-Sidecar DNS capture is opt-in; ambient enables DNS proxying by default from1.25. Capture, registry address allocation and upstream DNS refresh are separate behaviors; caching does not promise permanently identical DNS answers or eliminate every external lookup.
+Sidecar DNS capture is opt-in; ambient enables DNS proxying by default from 1.25. Capture, registry address allocation and upstream DNS refresh are separate behaviors; caching does not promise permanently identical DNS answers or eliminate every external lookup.
 
 **More details**: [DNS Caching Guide](04-dns-cache.md)
 
 ## 5. gRPC Support
 
-gRPC uses HTTP/2 routing. This example assumes a `grpc-service` Service with a named gRPC port9090 and ready Pods labeled `version: v2`. RPCs are not inherently idempotent, so mesh retries are explicitly disabled here; clients still need deadlines/context propagation.
+gRPC uses HTTP/2 routing. This example assumes a `grpc-service` Service with a named gRPC port 9090 and ready Pods labeled `version: v2`. RPCs are not inherently idempotent, so mesh retries are explicitly disabled here; clients still need deadlines/context propagation.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -194,7 +194,7 @@ spec:
 
 ## 6. WebSocket Support
 
-Istio supports HTTP WebSocket upgrades. This assumes an existing `my-gateway` in `default` for `ws.example.com`, and an HTTP8080 backend Service serving `/ws`. An exact case-sensitive Upgrade-header match is unnecessary.
+Istio supports HTTP WebSocket upgrades. This assumes an existing `my-gateway` in `default` for `ws.example.com`, and an HTTP backend Service on port 8080 serving `/ws`. An exact case-sensitive Upgrade-header match is unnecessary.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -295,7 +295,7 @@ Implement Istio metrics-based autoscaling using KEDA.
 |External metrics|Requires an external-metrics adapter|Provides its metrics API adapter|
 |Query logic|Consumes numeric metric values|PromQL or CloudWatch metric/math/Metrics Insights queries, depending on scaler|
 
-Metrics Server supplies resource metrics; it is not the generic external-metrics adapter. KEDA2.20 requires Kubernetes≥1.30; verify the selected release, APIs and platform support independently of Istio. Scale-to-zero also requires a signal that stays observable at zero and a viable activation path. CloudWatch Metrics Insights is distinct from CloudWatch Logs Insights.
+Metrics Server supplies resource metrics; it is not the generic external-metrics adapter. KEDA 2.20 requires Kubernetes ≥ 1.30; verify the selected release, APIs and platform support independently of Istio. Scale-to-zero also requires a signal that stays observable at zero and a viable activation path. CloudWatch Metrics Insights is distinct from CloudWatch Logs Insights.
 
 ### KEDA Architecture
 
@@ -305,7 +305,7 @@ Metrics Server supplies resource metrics; it is not the generic external-metrics
 
 ### Key Scaling Strategies
 
-This KEDA2.20 API example assumes an existing `reviews` Deployment in `default`, collected destination-workload metrics and an accessible private Prometheus endpoint. Configure supported authentication/TLS for your backend. It returns one aggregate value and uses an AverageValue target of100 requests/s per replica.
+This KEDA 2.20 API example assumes an existing `reviews` Deployment in `default`, collected destination-workload metrics and an accessible private Prometheus endpoint. Configure supported authentication/TLS for your backend. It returns one aggregate value and uses an AverageValue target of 100 requests/s per replica.
 
 
 ```yaml
@@ -329,7 +329,7 @@ spec:
   maxReplicaCount: 10
 ```
 
-The minimum remains1 because destination traffic metrics disappear when the target has no running Pods; this example cannot wake itself from zero. `ignoreNullValues: false` treats an empty result as an error instead of silently treating lost telemetry as zero. Do not attach a competing HPA to the same workload. Latency/error ratios and breaker gauges are not inherently proportional to replica capacity; validate their control behavior rather than adding them as arbitrary scaling signals.
+The minimum remains 1 because destination traffic metrics disappear when the target has no running Pods; this example cannot wake itself from zero. `ignoreNullValues: false` treats an empty result as an error instead of silently treating lost telemetry as zero. Do not attach a competing HPA to the same workload. Latency/error ratios and breaker gauges are not inherently proportional to replica capacity; validate their control behavior rather than adding them as arbitrary scaling signals.
 
 **Scaling Metrics**:
 - **RPS (Requests Per Second)**: Based on requests per second

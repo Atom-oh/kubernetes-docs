@@ -76,7 +76,7 @@ Hyperband trades exhaustive per-configuration information for early pruning: it 
 **Answer: B) It stores successful-Trial averages over the first start_step observations, then calculates their arithmetic mean**
 
 **Explanation:**
-The official guide describes a median rule, but 0.19.0 calculates an arithmetic mean. Successful-Trial averages [1, 2, 100] yield about 34.333 in the unchanged function, not statistical median 2. Defaults are min_trials_required=3 and start_step=4; collector/timestamp requirements also apply.
+The official guide describes a median rule, but 0.19.0 calculates an arithmetic mean. Successful-Trial averages [1, 2, 100] yield about 34.333 in the unchanged function, not the statistical median of 2. Defaults are min_trials_required=3 and start_step=4; collector/timestamp requirements also apply.
 </details>
 
 6. How does Katib typically get the objective metric value out of a running Trial's training container?

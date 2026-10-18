@@ -13,8 +13,8 @@
 <span id="service-call-flow"></span>
 
 > **難易度**: 上級
-> **最終更新**: September 13, 2026
-実行可能な合成注文アプリケーションと、そのメトリクス/ログ/トレースを、2 つの EKS クラスターにまたがって接続します。ベースラインでは Prometheus、Loki、Tempo、Grafana と、AWS SNS/SQS、Aurora、CloudWatch を使用します。ラボ構成は、本番環境の HA/キャパシティ検証とは別のものです。
+> **最終更新**: 2026年9月13日
+注文処理を模擬する実行可能なアプリケーションを、そのメトリクス/ログ/トレースとともに 2 つの EKS クラスター間で連携させます。ベースラインでは Prometheus、Loki、Tempo、Grafana と、AWS SNS/SQS、Aurora、CloudWatch を使用します。ラボ構成は、本番環境の HA/キャパシティ検証とは別のものです。
 
 ![管理/サービスの責任範囲と認証境界](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
@@ -51,7 +51,7 @@
 
 ## アプリケーションとデータフロー {#application}
 
-1 つの Python イメージを、個別の api-gateway、order-service、payment-service、notification、analytics ロールとして実行します。決済/通知は合成であり、実際の請求/メール/SMS は行いません。注文と outbox はトランザクションを共有し、独立したキューとイベント ID の重複排除が notification/analytics を処理します。Gateway 認証、一般的なレート制限、実際の決済ゲートウェイは実装も主張もされていません。
+1 つの Python イメージを、api-gateway、order-service、payment-service、notification、analytics の各ロールとして実行します。決済/通知は模擬処理であり、実際の請求/メール/SMS は行いません。注文と outbox はトランザクションを共有し、独立したキューとイベント ID の重複排除で notification/analytics を処理します。Gateway 認証、一般的なレート制限、実際の決済ゲートウェイは実装されておらず、実装済みとも主張していません。
 
 ![HTTP、トランザクション outbox、個別の consumer キュー](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
@@ -71,9 +71,9 @@
 | OTel / Tempo | X-Ray、Dynatrace |
 | Grafana | Amazon Managed Grafana、商用ツール |
 | Alertmanager / SNS / 診断 Lambda | 既存のオンコールプラットフォーム、CloudWatch Investigations グループ |
-| 合成イベント consumer | MWAA スケジューリング/バッチ分析、本番トランザクションシステム |
+| 模擬イベントの consumer | MWAA スケジューリング/バッチ分析、本番トランザクションシステム |
 
-インストールは、検証済みの取り込み、クエリ、権限、コストとは異なります。拡張機能については、[metrics](../../observability/metrics/README.md)、[logging](../../observability/logging/README.md)、[tracing](../../observability/tracing/README.md)、[Grafana](../../observability/grafana/README.md) のガイドを参照してください。Part5 には OnCall OSS のアーカイブなどの変更が組み込まれています。
+インストールしただけでは、データ取り込み、クエリ、権限、コストを検証したことにはなりません。拡張機能については、[metrics](../../observability/metrics/README.md)、[logging](../../observability/logging/README.md)、[tracing](../../observability/tracing/README.md)、[Grafana](../../observability/grafana/README.md) のガイドを参照してください。Part 5 には OnCall OSS のアーカイブ化などの変更が組み込まれています。
 
 ## コスト、検証、クリーンアップ {#cost-and-cleanup}
 

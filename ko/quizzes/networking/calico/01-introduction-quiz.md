@@ -17,7 +17,7 @@
 **정답: C) 2014년**
 
 **설명:**
-Project Calico의 시작은 2014년 Metaswitch이며 Tigera는 2016년에 설립되었습니다. 프로젝트 시작과 이후 제품 출시·Calico 버전 공개 날짜를 구분해야 합니다.
+Project Calico는 2014년 Metaswitch에서 시작되었으며 Tigera는 2016년에 설립되었습니다. 프로젝트 시작과 이후 제품 출시·Calico 버전 공개 날짜를 구분해야 합니다.
 
 </details>
 
@@ -81,7 +81,7 @@ Calico는 이 Linux 데이터플레인 선택지를 지원합니다. VXLAN·IPIP
 **정답: B) Calico 리소스 관리 및 상태 확인**
 
 **설명:**
-calicoctl은 정책·IPPool·BGPPeer 등의 Calico 리소스와 진단 기능을 제공하는 CLI입니다. 일치하는 버전을 사용해야 하며 API 서버가 있으면 많은 일반 작업은 kubectl로도 가능합니다. calicoctl node status에는 적절한 노드 환경이 필요합니다.
+calicoctl은 정책·IPPool·BGPPeer 등의 Calico 리소스 관리와 진단 기능을 제공하는 CLI입니다. 일치하는 버전을 사용해야 하며 API 서버가 있으면 많은 일반 작업은 kubectl로도 가능합니다. calicoctl node status에는 적절한 노드 환경이 필요합니다.
 
 </details>
 

@@ -89,7 +89,7 @@ kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$IRSA_NAMESPACE" \
 **한계와 책임:**
 
 - 지원되는 SDK와 자격 증명 체인을 사용합니다. 하드코딩한 자격 증명이나 체인에서 우선하는 공급자가 IRSA보다 먼저 선택될 수 있습니다. 웹훅이 역할·토큰 파일 설정을 주입하고 SDK가 임시 자격 증명을 갱신합니다. 토큰·자격 증명 값을 출력하거나 복사하지 않습니다.
-- IRSA 자체는 노드 IMDS 접근을 차단하지 않으며 같은 노드를 공유하는 컨테이너가 강한 보안 경계는 아닙니다. IMDS와 노드 권한을 별도로 제한합니다. `hostNetwork` 포드는 IMDS에 접근할 수 있습니다.
+- IRSA 자체는 노드 IMDS 접근을 차단하지 않으며 같은 노드를 공유하는 컨테이너 사이에 강한 보안 경계가 있는 것은 아닙니다. IMDS와 노드 권한을 별도로 제한합니다. `hostNetwork` 포드는 IMDS에 접근할 수 있습니다.
 - IAM 조건은 역할 수임 범위를 제한하지만 그 서비스 계정으로 포드를 만들 수 있는 주체는 해당 AWS 권한을 얻을 수 있습니다. Kubernetes 워크로드·서비스 계정 관리 권한도 통제합니다.
 - EKS Pod Identity는 별도 지원 조건이 있는 워크로드 자격 증명 대안입니다. EKS Auth·에이전트 흐름은 IRSA의 OIDC·STS 흐름과 다릅니다.
 - 클러스터 사용자는 EKS 액세스 항목·정책 또는 구성된 기존 `aws-auth` 매핑으로 Kubernetes 접근 권한을 얻습니다. 이는 워크로드의 IAM 권한 정책을 대체하지 않습니다.
@@ -136,7 +136,7 @@ aws eks create-cluster --name "${NEW_CLUSTER_NAME:?}" \
   --resources-vpc-config "subnetIds=${PRIVATE_SUBNET_A:?},${PRIVATE_SUBNET_B:?},securityGroupIds=${ADDITIONAL_CONTROL_PLANE_SG:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"
 ```
 
-동등한 eksctl 네트워크 필드는 [Part 2](../../eks/02-eks-cluster-creation-part2.md)의 검토한 전체 구성에 넣습니다. 문서용 CIDR과 모든 ID를 실제 값으로 바꿉니다:
+동등한 eksctl 네트워크 필드는 [Part 2](../../eks/02-eks-cluster-creation-part2.md)에서 검토한 전체 구성에 넣습니다. 문서용 CIDR과 모든 ID를 실제 값으로 바꿉니다:
 
 ```yaml
 # Networking example; merge into a reviewed full ClusterConfig.
@@ -254,7 +254,7 @@ spec:
     bgp: Disabled
 ```
 
-- **Amazon VPC CNI와 Cilium:** 문서화된 chaining 구성이 필요하며 터널·masquerade만 끈다고 chaining이 구성되지는 않습니다. 다음 값은 릴리스된 1.20.1 안내의 참조입니다. 릴리스·클러스터 호환성과 전체 전제조건을 확인합니다. 기존 포드에는 새 chaining 경로가 자동 적용되지 않으므로 통제된 롤아웃으로 다시 생성해야 합니다.
+- **Amazon VPC CNI와 Cilium:** 문서화된 chaining 구성이 필요하며 터널·masquerade만 끈다고 chaining이 구성되지는 않습니다. 다음 값은 릴리스된 1.20.1 안내를 참조한 것입니다. 릴리스·클러스터 호환성과 전체 전제조건을 확인합니다. 기존 포드에는 새 chaining 경로가 자동 적용되지 않으므로 통제된 롤아웃으로 다시 생성해야 합니다.
 
 ```yaml
 # Relevant Helm values from the Cilium 1.20.1 AWS-CNI chaining guide.
@@ -266,9 +266,9 @@ enableIPv4Masquerade: false
 routingMode: native
 ```
 
-검토하지 않은 CNI·정책 설치를 겹치지 말고 의도한 구현체를 선택해 검증합니다. 구현체 교체 후 노드 수준 규칙이 남을 수 있으므로 계획적인 전환이 필요합니다.
+검토하지 않은 CNI·정책 설치를 중복 적용하지 말고 의도한 구현체를 선택해 검증합니다. 구현체 교체 후 노드 수준 규칙이 남을 수 있으므로 계획적인 전환이 필요합니다.
 
-**정책 예제:** 새 `policy-lab` 네임스페이스에서 frontend→backend TCP 8080과 DNS를 허용하고 다른 트래픽을 차단합니다. 백엔드는 실제로 8080에서 수신해야 합니다. AWS 구현체에는 Service와 컨테이너의 같은 포트를 사용합니다. 아래 DNS 선택기는 `kube-system`의 일반 CoreDNS 포드를 전제로 하므로 NodeLocal DNSCache·사용자 지정 DNS에는 별도 규칙 검토가 필요합니다.
+**정책 예제:** 새 `policy-lab` 네임스페이스에서 frontend→backend TCP 8080과 DNS를 허용하고 다른 트래픽을 차단합니다. 백엔드는 실제로 8080에서 수신해야 합니다. AWS 구현체에서는 Service와 컨테이너에 같은 포트를 사용합니다. 아래 DNS 선택기는 `kube-system`의 일반 CoreDNS 포드를 전제로 하므로 NodeLocal DNSCache·사용자 지정 DNS에는 별도 규칙 검토가 필요합니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -424,7 +424,7 @@ kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
   jq '{name:.metadata.name,type:.type,keys:(.data|keys)}'
 ```
 
-실제 자격 증명은 평문·base64 매니페스트 커밋, 셸 이력에 남는 리터럴, 값을 출력하는 진단 명령을 피합니다. Base64는 되돌릴 수 있는 인코딩입니다. AWS Secrets Manager는 CSI 파일 마운트나 Kubernetes Secret 동기화 컨트롤러와 연동할 수 있으므로 모든 애플리케이션에 반드시 SDK 변경이 필요한 것은 아닙니다. 동기화된 Secret에는 Kubernetes 접근 통제가 계속 적용됩니다. 사이드카는 관리형 API 서버의 저장 시 암호화를 구성할 수 없습니다.
+실제 자격 증명을 사용할 때는 평문·base64 매니페스트 커밋, 셸 이력에 남는 리터럴, 값을 출력하는 진단 명령을 피합니다. Base64는 되돌릴 수 있는 인코딩입니다. AWS Secrets Manager는 CSI 파일 마운트나 Kubernetes Secret 동기화 컨트롤러와 연동할 수 있으므로 모든 애플리케이션에 반드시 SDK 변경이 필요한 것은 아닙니다. 동기화된 Secret에는 Kubernetes 접근 통제가 계속 적용됩니다. 사이드카는 관리형 API 서버의 저장 시 암호화를 구성할 수 없습니다.
 
 참고: [기본 봉투 암호화](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [AssociateEncryptionConfig](https://docs.aws.amazon.com/eks/latest/APIReference/API_AssociateEncryptionConfig.html), [기존 KMS 절차와 권한](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html), [EKS의 Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html).
 
@@ -523,7 +523,7 @@ sudo journalctl -u nodeadm-config -u nodeadm-run -u kubelet --since '-15 min' --
 
 **정답: B) Pod Security Admission과 필요에 맞는 호환 정책 엔진**
 
-PodSecurityPolicy는 Kubernetes 1.21에서 사용 중단되었고 1.25에서 제거되었습니다. 기본 **Pod Security Admission(PSA)**으로 **Pod Security Standards(PSS)**를 적용하고, 그 이상의 요구사항에는 적절한 정책 엔진을 사용합니다.
+PodSecurityPolicy는 Kubernetes 1.21에서 사용 중단되었고 1.25에서 제거되었습니다. 기본 **Pod Security Admission**(PSA)으로 **Pod Security Standards**(PSS)를 적용하고, 그 이상의 요구사항에는 적절한 정책 엔진을 사용합니다.
 
 **PSA:** Privileged·Baseline·Restricted는 PSS의 세 수준이며 `enforce`·`audit`·`warn`은 별도의 모드입니다. 새 실습 네임스페이스에서 다음 예제는 Baseline을 강제하면서 Restricted 위반을 보고합니다. 정책 버전은 EKS 1.36 예제에 맞춰 고정했으며 실제 클러스터가 지원하는 버전을 선택해야 합니다.
 
@@ -697,7 +697,7 @@ kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n irsa-lab \
 kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n irsa-lab logs irsa-identity-check
 ```
 
-포드 종료 상태와 반환된 계정·수임 역할을 예상한 역할과 비교합니다. 노드 역할이 반환되었다고 IRSA가 정상이라고 판단하지 않습니다. 이후에는 범위가 제한된 애플리케이션 작업만 시험합니다. 버킷 없이 `aws s3 ls`를 실행하면 전체 버킷 나열 권한이 필요하므로 단일 버킷 정책의 시험에 맞지 않습니다.
+포드 종료 상태를 확인하고 반환된 계정·수임 역할을 예상한 역할과 비교합니다. 노드 역할이 반환되었다고 IRSA가 정상이라고 판단하지 않습니다. 이후에는 범위가 제한된 애플리케이션 작업만 시험합니다. 버킷 없이 `aws s3 ls`를 실행하면 전체 버킷 나열 권한이 필요하므로 단일 버킷 정책의 시험에 맞지 않습니다.
 
 EKS Pod Identity는 다른 방식이며 클러스터마다 IAM OIDC 공급자를 만들 필요가 없습니다. 서비스 계정 연결, 에이전트, IAM 신뢰 요구사항을 IRSA와 구분합니다.
 
@@ -1148,7 +1148,7 @@ aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
 
 역할은 새로 생성되어야 합니다. 생성 실패 시 정책 연결 전에 중단하고 정리를 위해 불변 IAM `RoleId`를 기록합니다. 우연히 이름이 같은 기존 역할에 실습 정책을 추가하지 않도록 합니다.
 
-**3. 서비스 계정과 단기 테스트 포드 생성.** 세 컨테이너가 호출자 신원, 허용된 접두사의 최대 한 객체 나열, 지정한 객체의 메타데이터 읽기를 확인합니다. 예제는 개수·길이만 출력하고 신원 메타데이터를 기록하며 토큰·비밀 키·객체 내용을 출력하지 않습니다.
+**3. 서비스 계정과 단기 테스트 포드 생성.** 세 컨테이너가 호출자 신원, 허용된 접두사의 최대 한 개의 객체 나열, 지정한 객체의 메타데이터 읽기를 확인합니다. 예제는 개수·길이만 출력하고 신원 메타데이터를 기록하며 토큰·비밀 키·객체 내용을 출력하지 않습니다.
 
 ```bash
 # JSON construction preserves literal object keys and prevents YAML interpolation errors.
@@ -1483,7 +1483,7 @@ EOF
 kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" apply -f "$SECURITY_LAB_DIR/networkpolicies.yaml" || exit 1
 ```
 
-**5. 새 연결과 정상 동작 대조군 검증.** 정책 반영 후 무관한 클라이언트의 요청 거부를 관찰하고 허용된 frontend 요청과 DNS가 계속 동작하는지 확인합니다. 결과는 이 테스트 토폴로지에 한정됩니다. 예상 밖 실패는 정책·에이전트 상태와 로그를 함께 확인합니다.
+**5. 새 연결과 정상 동작 대조군 검증.** 정책 반영 후 무관한 클라이언트의 요청 거부를 관찰하고 허용된 frontend 요청과 DNS가 계속 동작하는지 확인합니다. 결과는 이 테스트 토폴로지에 한정됩니다. 예상 밖 실패가 발생하면 정책·에이전트 상태와 로그를 함께 확인합니다.
 
 ```bash
 # Wait briefly for the expected denied fresh connection; do not treat baseline failures as success.
@@ -1540,7 +1540,7 @@ fi
 
 ## 고급 주제
 
-다음은 Amazon EKS 클러스터 생성에 관한 고급 주제에 대한 질문입니다. 이 섹션은 EKS 클러스터 생성의 심화 개념과 모범 사례에 대한 이해를 테스트합니다.
+다음은 Amazon EKS 클러스터 생성의 고급 주제에 대한 질문입니다. 이 섹션은 EKS 클러스터 생성의 심화 개념과 모범 사례에 대한 이해를 테스트합니다.
 
 1. EKS IPv6 클러스터의 요구사항이 아닌 것은 무엇인가요?
    * A) IPv4·IPv6 주소를 가진 VPC·서브넷
@@ -1858,7 +1858,7 @@ spec:
 **지원 기능 범위:**
 
 - Windows는 EKS Fargate 포드, EKS Auto Mode 노드, EKS Hybrid Nodes로 실행할 수 없습니다. EKS IPv6, VPC CNI 사용자 지정 네트워킹, 포드 보안 그룹도 지원하지 않습니다.
-- 일반 Windows 포드는 Linux privileged 컨테이너와 다릅니다. Windows **HostProcess** 포드는 호스트 네트워킹을 사용할 수 있으므로 “Windows는 hostNetwork를 전혀 지원하지 않는다”는 설명은 잘못입니다. HostProcess에는 별도 높은 권한 검토가 필요합니다.
+- 일반 Windows 포드는 Linux privileged 컨테이너와 다릅니다. Windows **HostProcess** 포드는 호스트 네트워킹을 사용할 수 있으므로 “Windows는 hostNetwork를 전혀 지원하지 않는다”는 설명은 잘못입니다. HostProcess에는 높은 권한에 대한 별도 검토가 필요합니다.
 - Windows의 네트워킹·IP 용량은 Linux와 다릅니다. Linux 포드 밀도 계산을 그대로 적용하지 말고 단일 ENI 제한과 지원되는 prefix delegation을 확인합니다.
 - Windows 지원 스토리지 드라이버를 선택하고 볼륨·경로 동작을 검증합니다. Linux hostPath 권한이나 모든 CSI 기능이 그대로 동작한다고 가정하지 않습니다.
 - EKS 최적화 Windows 노드는 containerd를 사용하며 Linux 애플리케이션 이미지는 Linux 노드에 배치합니다. 혼합 OS 클러스터에서 시스템 애드온과 애플리케이션 배치를 확인합니다.
@@ -1948,7 +1948,7 @@ aws ec2 modify-instance-metadata-options --region "$EXAMPLE_REGION" \
   --http-put-response-hop-limit 1 --http-endpoint enabled
 ```
 
-옵션이 `applied` 상태가 되고 노드 에이전트, 이미지 풀, 워크로드 자격 증명이 정상인지 확인합니다. 애플리케이션이 IRSA를 사용한다는 이유만으로 메타데이터 엔드포인트 전체를 끄지 않습니다. 호스트 구성 요소는 노드 인스턴스 프로필과 메타데이터에 의존할 수 있습니다.
+옵션이 `applied` 상태가 되었는지와 노드 에이전트, 이미지 풀, 워크로드 자격 증명이 정상인지 확인합니다. 애플리케이션이 IRSA를 사용한다는 이유만으로 메타데이터 엔드포인트 전체를 끄지 않습니다. 호스트 구성 요소는 노드 인스턴스 프로필과 메타데이터에 의존할 수 있습니다.
 
 **추가 통제:**
 
@@ -2013,7 +2013,7 @@ EOF
 
 표 전체를 일괄 적용하는 노드 스크립트로 사용하지 않습니다. 기준 상태를 기록하고 테스트 그룹에서 변경을 검증하며 되돌릴 경로를 유지합니다.
 
-**디스크:** `/dev/nvme1n1`이라고 가정한 장치에 `mkfs`를 실행하지 않습니다. NVMe 열거 순서는 안정적인 소유권 식별자가 아니며 필요한 데이터가 있는 장치일 수 있습니다. 볼륨 ID·serial로 대상 EBS 볼륨을 식별하고 새로 만든 임시 장치 또는 명시적으로 준비한 장치임을 확인한 뒤 파티션·파일 시스템·마운트를 검사합니다. 영속적인 마운트 구성에는 파일 시스템 UUID 같은 안정적인 식별자를 사용합니다.
+**디스크:** `/dev/nvme1n1`이라고 가정한 장치에 `mkfs`를 실행하지 않습니다. NVMe 열거 순서는 안정적인 소유권 식별자가 아니며 대상 장치는 필요한 데이터가 있는 장치일 수 있습니다. 볼륨 ID·serial로 대상 EBS 볼륨을 식별하고 새로 만든 임시 장치 또는 명시적으로 준비한 장치임을 확인한 뒤 파티션·파일 시스템·마운트를 검사합니다. 영속적인 마운트 구성에는 파일 시스템 UUID 같은 안정적인 식별자를 사용합니다.
 
 ```bash
 # Read-only inspection on the specifically authorized test node.
@@ -2022,7 +2022,7 @@ findmnt
 sysctl net.ipv4.ip_forward vm.max_map_count
 ```
 
-영구 애플리케이션 데이터는 노드의 임시 디스크에 결합하기보다 적절한 CSI·PV 수명 주기를 사용합니다. 위의 검사 명령은 포맷하거나 마운트하지 않습니다.
+영구 애플리케이션 데이터는 노드의 임시 디스크에 결합하기보다 적절한 CSI·PV 수명 주기를 사용해 관리합니다. 위의 검사 명령은 포맷하거나 마운트하지 않습니다.
 
 **레이블·테인트·보안:** 관리형 노드 그룹의 레이블·테인트 필드와 소유한 도메인을 사용하고 공급자가 관리하는 토폴로지·노드 그룹 레이블을 덮어쓰지 않습니다. 호스트 강화는 검토한 AMI와 보안 그룹·CNI 설계로 구성합니다. 부트스트랩 중 임의의 SSH·방화벽 수정은 기존 규칙과 충돌하거나 접근을 끊을 수 있으며 완전한 보안 강화 절차가 아닙니다.
 
@@ -2084,7 +2084,7 @@ managedNodeGroups:
       - install -d -m 0755 /opt/company
 ```
 
-이 예제는 프로덕션 노드 절차로 부팅 검증하지 않았습니다. 실제 환경에서 패키지 출처, nodeadm·kubelet의 적용 구성, 시작 실패, 네트워킹, 워크로드 상태를 확인합니다.
+이 예제는 프로덕션 노드 절차로 부팅 검증을 수행하지 않았습니다. 실제 환경에서 패키지 출처, nodeadm·kubelet의 적용 구성, 시작 실패, 네트워킹, 워크로드 상태를 확인합니다.
 
 **CoreDNS는 데이터 플레인 워크로드·애드온**이며 일반적으로 Linux EC2 또는 지원되는 Fargate 용량의 Deployment로 실행됩니다. EKS가 관리하는 컨트롤 플레인 프로세스가 아니므로 애드온·Kubernetes 경로로 구성합니다. 로깅처럼 EKS API가 제공하는 컨트롤 플레인 설정은 노드 사용자 데이터와 별개입니다.
 

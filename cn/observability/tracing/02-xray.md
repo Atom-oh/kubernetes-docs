@@ -4,24 +4,24 @@
 
 ## 简介
 
-AWS X-Ray 是一项 AWS 原生服务，用于追踪和分析分布式应用程序中的请求。在 EKS 环境中使用 X-Ray 可让您可视化微服务之间的请求流、识别性能瓶颈并确定错误的根本原因。
+AWS X-Ray 是一项 AWS 原生服务，用于跟踪和分析分布式应用程序中的请求。在 EKS 环境中使用 X-Ray，可以可视化微服务之间的请求流、识别性能瓶颈并确定错误的根本原因。
 
-**自 2026 年 2 月 25 日起，X-Ray SDK 和 daemon 已进入维护模式**，根据当前的[支持时间线](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html)，仅提供安全修复，且尚未宣布结束日期。这是插桩生命周期，而非 X-Ray 服务退役。AWS 建议在新的插桩和迁移中使用 OpenTelemetry。下面的 daemon 示例是一条旧版兼容路径。
+**X-Ray SDK 和守护进程自 2026 年 2 月 25 日起已处于维护模式**，仅提供安全修复；当前的[支持时间表](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html)尚未公布结束日期。这是指检测组件的生命周期，并非 X-Ray 服务退役。AWS 建议新建检测以及迁移时使用 OpenTelemetry。下面的守护进程示例是一种旧版兼容路径。
 
 ## 主要功能
 
-| 功能 | 说明 |
+| 功能 | 描述 |
 |---------|-------------|
-| **服务地图** | 自动可视化服务依赖关系 |
-| **请求追踪** | 端到端请求路径跟踪 |
+| **服务映射** | 自动可视化服务依赖关系 |
+| **请求跟踪** | 端到端跟踪请求路径 |
 | **分析工具** | 响应时间分布、错误率分析 |
 | **AWS 集成** | 原生支持 Lambda、API Gateway、ECS、EKS |
 | **采样规则** | 集中式采样配置 |
-| **组和告警** | 基于筛选条件的分组和 CloudWatch 告警 |
+| **组和警报** | 基于筛选条件分组并设置 CloudWatch 警报 |
 
 ## 架构
 
-下图展示了此处所述的两种采集替代方案。daemon 向 AWS 发送已签名的 HTTPS 请求；UDP/TCP2000 是面向应用程序的旧版协议。已配置的 ADOT awsxray exporter 使用 PutTraceSegments，而非原生 CloudWatch OTLP 端点。
+下图展示了本文介绍的两种数据采集方案。守护进程会向 AWS 发送经过签名的 HTTPS 请求；UDP/TCP2000 是其面向应用程序的旧版协议。配置的 ADOT awsxray exporter 使用 PutTraceSegments，而不是 CloudWatch 原生 OTLP 端点。
 
 ```mermaid
 flowchart LR
@@ -32,11 +32,11 @@ flowchart LR
     XRay --> Analysis["CloudWatch trace map and analysis"]
 ```
 
-EKS 不会自动为每个应用程序添加插桩。Lambda/API Gateway 和其他服务集成需要各自受支持的追踪配置和传播。原生 CloudWatch OTLP 是独立的摄取路径，具有 Transaction Search 和 SigV4 前提条件，如下所述。
+EKS 不会自动为每个应用程序添加检测。Lambda/API Gateway 和其他服务集成需要各自受支持的跟踪配置和传播机制。CloudWatch 原生 OTLP 是一条独立的摄取路径，需要 Transaction Search 和 SigV4 前置条件，详见下文。
 
-## X-Ray Daemon 部署
+## 部署 X-Ray 守护进程
 
-### 以 DaemonSet 部署
+### 以 DaemonSet 方式部署
 
 ```yaml
 # xray-daemon.yaml
@@ -110,14 +110,14 @@ spec:
   type: ClusterIP
 ```
 
-此维护路径镜像固定为已验证的官方 3.7.0 多架构 manifest（Linux amd64/arm64）。其入口点是 `/xray`，不是 `/usr/bin/xray`；`-o` 禁用 EC2 元数据扩充，`-n` 提供 Region。DaemonSet 不会在 EKS Fargate 上运行。此 ClusterIP Service 可以选择另一个节点上的 daemon，因此不能保证节点本地交付或无丢失 UDP。
+此维护路径使用的映像固定为经过验证的官方 3.7.0 多架构清单（Linux amd64/arm64）。它的入口点是 `/xray`，而不是 `/usr/bin/xray`；`-o` 会禁用 EC2 元数据增强，`-n` 用于指定区域。DaemonSet 不会在 EKS Fargate 上运行。此 ClusterIP Service 可能会选择另一个节点上的守护进程，因此无法保证流量发送到本地节点，也无法保证 UDP 不丢失。
 
-对于旧版 SDK 客户端，请设置 `AWS_XRAY_DAEMON_ADDRESS=xray-daemon.amazon-cloudwatch.svc.cluster.local:2000`。UDP segment 和 TCP 采样流量都需要可达性。将这条未加密的旧版路径限制为受信任的工作负载；对已认证的 TLS 采集使用 OpenTelemetry 路径。每个 producer 选择一条采集路径。
+对于旧版 SDK 客户端，请设置 `AWS_XRAY_DAEMON_ADDRESS=xray-daemon.amazon-cloudwatch.svc.cluster.local:2000`。UDP segment 和 TCP 采样流量都必须能够到达。应将这条未加密的旧版路径限制为受信任的工作负载；如需经过身份验证的 TLS 数据采集，请使用 OpenTelemetry 路径。每个数据生产者选择一种数据采集路径。
 
 
 ### IRSA 配置
 
-通过其现有所有者创建 `amazon-cloudwatch` namespace。旧版 daemon 的 `xray-daemon` ServiceAccount 必须引用其自身准备好的 role。以下权限 policy 涵盖 segment/telemetry 导出和集中式采样调用；请将 Region 替换为实际部署 Region：
+通过其现有负责人创建 `amazon-cloudwatch` 命名空间。旧版守护进程的 `xray-daemon` ServiceAccount 必须引用为其准备的专属角色。以下权限策略涵盖 segment/遥测数据导出和集中式采样调用；请将区域替换为实际部署区域：
 
 ```json
 {
@@ -143,9 +143,9 @@ spec:
 }
 ```
 
-这些 X-Ray 操作使用 `Resource: "*"`，此处由 `aws:RequestedRegion` 约束。daemon 的 policy 与下面较窄的 ADOT policy 分开。两项 policy 均不授予 operator 创建组或采样规则的权限。
+这些 X-Ray 操作使用 `Resource: "*"`，此处通过 `aws:RequestedRegion` 加以限制。守护进程的策略与下面范围更窄的 ADOT 策略相互独立。两种策略都不会授予操作员创建组或采样规则的权限。
 
-对于任一 collector，请使用集群已注册的 OIDC provider、`aud=sts.amazonaws.com` 和**精确的 namespace/ServiceAccount subject**准备一个 IRSA role。以下信任示例适用于 `adot-collector`；daemon role 则需要 `system:serviceaccount:amazon-cloudwatch:xray-daemon`。请一致地替换示例 account、Region 和 OIDC ID。
+对于任一 collector，请使用集群已注册的 OIDC 提供方准备 IRSA 角色，并设置 `aud=sts.amazonaws.com` 和**准确的命名空间/ServiceAccount subject**。下面的信任策略示例适用于 `adot-collector`；守护进程角色则需要使用 `system:serviceaccount:amazon-cloudwatch:xray-daemon`。请一致替换示例账户、区域和 OIDC ID。
 
 ```json
 {
@@ -168,26 +168,26 @@ spec:
 }
 ```
 
-请 IAM/基础设施所有者创建或更新预期的 role 并附加匹配的权限 policy。保留现有 ServiceAccount 的所有权；不要将 `eksctl --override-existing-serviceaccounts` 作为通用设置步骤运行。在批准的环境中验证渲染后 Pod 的 projected token、role ARN、SDK 凭证解析和实际授权。仅有 ServiceAccount annotation 并不是授权测试。
+请让 IAM/基础设施负责人创建或更新预期角色，并附加相匹配的权限策略。保留现有 ServiceAccount 的所有权；不要将 `eksctl --override-existing-serviceaccounts` 作为通用设置步骤运行。请在获批环境中验证渲染后 Pod 的投射令牌、角色 ARN、SDK 凭证解析和实际授权。仅有 ServiceAccount 注释并不能证明授权有效。
 
-## ADOT Collector 部署
+## 部署 ADOT Collector
 
-此 trace pipeline 使用 [ADOT Collector 0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0)，基于 Collector/Contrib 0.158.0。已发布的 ADOT distribution 有自己的 component inventory；不要假设其包含上游 Contrib 版本中的每个 component。固定的 collector binary 已使用合成 OTLP/X-Ray 数据和一个假的 loopback X-Ray endpoint 在本地进行了测试。未执行 AWS 授权、Kubernetes 部署或生产可用性测试。
+此跟踪管道使用 [ADOT Collector 0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0)，其基础版本为 Collector/Contrib 0.158.0。发布版 ADOT 有自己的组件清单；不要假定它包含上游 Contrib 发布版中的所有组件。此固定版本的 collector 二进制文件已在本地使用合成 OTLP/X-Ray 数据和伪造的 loopback X-Ray 端点进行了测试。本次没有测试 AWS 授权、Kubernetes 部署或生产环境可用性。
 
 <a id="adot-collector-daemonset"></a>
 
-### Collector 部署和前提条件
+### Collector 部署和前置条件
 
-该示例是一个中心化的 **Deployment** 和 ClusterIP Service，没有 host port。它不是 HA 配置。应用程序显式选择其 DNS endpoint；安装它不会为应用程序添加插桩。DaemonSet 是一种独立的 placement design，且不受 EKS Fargate 支持。Fargate 上的 Deployment 仍需匹配的 Fargate profile 以及受支持的资源/存储/网络配置。
+此示例使用一个中心 **Deployment** 和 ClusterIP Service，不配置 host port。这不是高可用配置。应用程序必须显式选择其 DNS 端点；安装此组件不会自动为应用程序添加检测。DaemonSet 是另一种独立的调度设计，且 EKS Fargate 不支持 DaemonSet。在 Fargate 上运行 Deployment 仍需要匹配的 Fargate profile，以及受支持的资源/存储/网络配置。
 
-在应用这些资源之前：
+应用这些资源前：
 
-- 使用上一节中的 subject `system:serviceaccount:amazon-cloudwatch:adot-collector` 准备 namespace 和 IRSA role。
-- 通过已批准的证书流程交付现有 Kubernetes Secret `adot-collector-tls`。它包含 `server.crt`、`server.key` 和 `ca.crt`。server certificate 必须覆盖实际的 Service DNS name，例如 `adot-collector.amazon-cloudwatch.svc.cluster.local`；CA 必须信任预期的 client certificates。
-- 将已批准的 CA/client certificate/key 文件挂载到 producers。限制对 Secret 的访问、工作负载对端口 4317/4318 和 health endpoint 的访问；规划证书轮换。不要将证书 private-key 内容或 AWS 凭证放入环境变量。
-- 替换 cluster/account/Region 值并检查最终的 workload identity。resource processor 明确设置一个 cluster name；它不会发现所有 Pod/node 元数据，并且不得将来自无关 cluster 的流量重新标记为此 cluster。
+- 按照上一节准备命名空间和 IRSA 角色，并将 subject 设置为 `system:serviceaccount:amazon-cloudwatch:adot-collector`。
+- 通过获批的证书流程提供现有 Kubernetes Secret `adot-collector-tls`。其中包含 `server.crt`、`server.key` 和 `ca.crt`。服务器证书必须涵盖实际的 Service DNS 名称，例如 `adot-collector.amazon-cloudwatch.svc.cluster.local`；CA 必须信任预期的客户端证书。
+- 将获批的 CA/客户端证书/密钥文件挂载到数据生产者。限制对 Secret 的访问、工作负载对端口 4317/4318 的访问以及对运行状况端点的访问；规划证书轮换。不要将证书私钥内容或 AWS 凭证放入环境变量。
+- 替换集群/账户/区域的值，并检查最终工作负载身份。资源处理器会显式设置一个集群名称；它不会发现所有 Pod/node 元数据，也不得将其他集群的流量错误标记为本集群流量。
 
-以下 ADOT pipeline 禁用 exporter telemetry，并且只使用经典的 X-Ray `PutTraceSegments` 导出路径，因此其工作负载权限 policy 为：
+以下 ADOT 管道会禁用 exporter 遥测，并且只使用经典 X-Ray `PutTraceSegments` 导出路径，因此其工作负载权限策略如下：
 
 ```json
 {
@@ -207,7 +207,7 @@ spec:
 }
 ```
 
-将这个完整的 ConfigMap 与以下 workload/Service manifest 一起使用：
+请将此完整 ConfigMap 与以下工作负载/Service 清单配合使用：
 
 ```yaml
 apiVersion: v1
@@ -386,13 +386,13 @@ spec:
       targetPort: otlp-http
 ```
 
-container image 提供 `RUN_IN_CONTAINER=True`；对于独立的 native collector 测试，需要此变量以使其自定义 CLI logging 不写入 `/opt`。其 CLI 不能与每个上游 `otelcol` 命令互换。本地测试使用了带版本的 AWS binary、测试证书和仅 loopback destinations。
+容器映像提供了 `RUN_IN_CONTAINER=True`；在独立的原生 collector 测试中，需要此变量，以免其自定义 CLI 日志写入 `/opt`。其 CLI 不能与所有上游 `otelcol` 命令互换。本地测试使用了带版本号的 AWS 二进制文件、测试证书和仅指向 loopback 的目标。
 
-建议的配置通过了五项本地 mTLS 检查，包括在没有 client certificate 时拒绝，以及在使用受信任证书时接受。这三个 Kubernetes 资源通过了本地 OpenAPI schema 验证。这并不验证实际的 Secret、IRSA mutation、CNI policy、调度或 AWS 权限。health endpoint 报告 collector process health，而非成功交付到 X-Ray。队列、重试、内存压力、终止和 backend 故障仍可能丢失 telemetry；请规划容量并监控被拒绝/丢弃/导出失败的数据。
+所提配置通过了五项本地 mTLS 检查，包括在没有客户端证书时拒绝连接，以及在使用受信任证书时接受连接。这三个 Kubernetes 资源通过了本地 OpenAPI schema 验证。这些结果不能验证实际 Secret、IRSA 注入、CNI 策略、调度或 AWS 权限。运行状况端点报告的是 collector 进程的运行状况，而不是成功传送到 X-Ray 的状态。队列、重试、内存压力、终止和后端故障仍可能导致遥测数据丢失；请规划容量，并监控被拒绝/丢弃/导出失败的数据。
 
-### 旧版 X-Ray Receiver 和独立的 Telemetry Pipelines
+### 旧版 X-Ray Receiver 和独立遥测管道
 
-ADOT 0.50.0 还包括 `awsxray` receiver。其受支持的 UDP 配置为：
+ADOT 0.50.0 还包含 `awsxray` receiver。其受支持的 UDP 配置如下：
 
 ```yaml
 # Receiver fragment only; requires an explicitly connected trace pipeline.
@@ -402,17 +402,17 @@ receivers:
     transport: udp
 ```
 
-此旧版 receiver 是通过 daemon 发送 SDK segments 的替代方案；避免复制同一 producer 的 trace path。它默认还启动一个 TCP sampling proxy。如果使用集中式采样，请配置并限制所需的 TCP2000 Service/proxy path 和采样权限，以及 UDP2000。旧版协议不受 OTLP receiver 的 mTLS 设置保护。原生审计确认了 OTLP 和 X-Ray UDP 接收；它未执行远程 AWS sampling。
+此旧版 receiver 可替代通过守护进程发送 SDK segment 的方式；请避免为同一数据生产者重复配置跟踪路径。它还会默认启动 TCP 采样代理。如果使用集中式采样，除了 UDP2000，还要配置并限制所需的 TCP2000 Service/代理路径和采样权限。旧版协议不受 OTLP receiver 的 mTLS 设置保护。原生审计确认了 OTLP 和 X-Ray UDP 接收功能；但未执行远程 AWS 采样。
 
-metrics、应用程序 logs 和 traces 需要各自连接的 pipelines 和 backend 配置。仅声明一个 `awscloudwatchlogs` exporter 不会将 traces 转换为 logs，也不会将其写入虚构的 `/aws/xray/traces` log group。同样，metrics remote-write endpoint 也需要其实际的 receiver、认证和 TLS 配置；它不是 X-Ray 的前提条件。
+指标、应用程序日志和跟踪各自都需要连接好的管道和后端配置。仅仅声明一个 `awscloudwatchlogs` exporter，并不会将跟踪转换成日志，也不会将其写入臆造的 `/aws/xray/traces` 日志组。指标 remote-write 端点同样需要实际的 receiver、身份验证和 TLS 配置；它不是 X-Ray 的前置条件。
 
-## OpenTelemetry 到 X-Ray 集成
+## OpenTelemetry 与 X-Ray 集成
 
-这些示例使用上述已认证的 collector Service。producers 需要访问该 Service 及其挂载的 client TLS files；它们不需要 collector 的 AWS credentials。这些示例创建合成 spans，且不执行支付、数据库或 AWS 业务操作。
+以下示例使用上文经过身份验证的 collector Service。数据生产者需要能够访问该 Service，并能够访问其挂载的客户端 TLS 文件；它们不需要 collector 的 AWS 凭证。这些示例会创建合成 span，不执行任何支付、数据库或 AWS 业务操作。
 
-确切的验证基线是 Python SDK/exporter1.44.0 配合 Flask3.1.3、Go SDK/exporter1.44.0 配合 Go1.26.8，以及 Java1.66.0 API sources。这些固定版本不是通用的 AWS compatibility matrix，也不声明每种语言都具有相同的最新版本。Python 和 Go 已在本地进行了测试；Java API/configuration 已针对标记的 source 进行了检查，但在本次审计中没有可用的 JDK/Maven compilation。
+精确的验证基准为 Python SDK/exporter1.44.0 与 Flask3.1.3、Go SDK/exporter1.44.0 与 Go1.26.8，以及 Java1.66.0 API 源码。这些固定版本并不构成通用 AWS 兼容性矩阵，也不表示每种语言都使用相同的最新版本。Python 和 Go 已在本地测试；Java API/配置已根据带标签的源代码进行检查，但本次审计没有可用的 JDK/Maven 编译环境。
 
-对有限的 demo process 使用这些设置。endpoint 包含用于 OTLP/HTTP 的 `/v1/traces`。将 client private key 保存在挂载的受保护文件中。为此有限演示对 root spans 进行采样，并遵循 remote parent decisions；请选择经过衡量的生产 sampler，而不要将全 root demo 设置复制到不受限制的生产流量中。通用 SDK samplers 不会自动获取 X-Ray 集中式规则。
+有限时长的演示进程请使用以下设置。OTLP/HTTP 端点包含 `/v1/traces`。请将客户端私钥保存在受保护的挂载文件中。此有限演示会对根 span 进行采样，并遵从远程父级的采样决策；生产环境应选择经过测量的采样器，不要将演示用的全根 span 采样设置复制到不受限制的生产流量中。通用 SDK sampler 不会自动获取 X-Ray 集中式规则。
 
 ```bash
 # Application-process configuration; mounted file paths are not secret contents.
@@ -430,9 +430,9 @@ export OTEL_PROPAGATORS=tracecontext
 export OTEL_TRACES_SAMPLER=parentbased_always_on
 ```
 
-### 应用程序配置 (Java)
+### 应用程序配置（Java）
 
-将 `InventoryDemo.java` 保存到现有 Java project 中。Autoconfiguration 会读取标准 OTLP endpoint、protocol 和 CA/client-key/client-certificate file settings。它不会自动为整个应用程序添加插桩。如果 agent/framework 已拥有另一个 SDK，请不要初始化它。`OpenTelemetrySdk` 实现了 Closeable；关闭它会协调 provider shutdown，但一个已完成的方法调用并不能证明后端交付。
+将 `InventoryDemo.java` 保存到现有 Java 项目中。自动配置会读取标准的 OTLP 端点、协议和 CA/客户端密钥/客户端证书文件设置。它不会自动为整个应用程序添加检测。如果 agent/framework 已负责管理 SDK，请勿再次初始化 SDK。`OpenTelemetrySdk` 实现了 Closeable；关闭它会协调 provider 的关闭，但方法调用完成并不能证明数据已传送到后端。
 
 ```xml
 <!-- Dependency fragment for an existing Java17+ Maven project. -->
@@ -482,9 +482,9 @@ public final class InventoryDemo {
 }
 ```
 
-### 应用程序配置 (Python)
+### 应用程序配置（Python）
 
-使用隔离的应用程序环境，其中包含 `opentelemetry-api==1.44.0`、`opentelemetry-sdk==1.44.0`、`opentelemetry-exporter-otlp-proto-http==1.44.0` 和 `Flask==3.1.3`。将以下内容保存为 `payment_demo.py`。其 `/api/payment` endpoint 只返回合成响应；它不会收费或验证真实付款。本地 Flask development server 不是生产 WSGI deployment。
+请在隔离的应用程序环境中使用 `opentelemetry-api==1.44.0`、`opentelemetry-sdk==1.44.0`、`opentelemetry-exporter-otlp-proto-http==1.44.0` 和 `Flask==3.1.3`。将以下内容保存为 `payment_demo.py`。其 `/api/payment` 端点只会返回合成响应；它不会处理或验证真实支付。本地 Flask 开发服务器不是生产 WSGI 部署。
 
 ```python
 """Synthetic Flask instrumentation example: no payment is processed."""
@@ -561,9 +561,9 @@ if __name__ == "__main__":
         provider.shutdown()
 ```
 
-### 应用程序配置 (Go)
+### 应用程序配置（Go）
 
-将以下 `go.mod` 和 `main.go` 保存到单独的 example directory 中，使用 `go mod tidy` 解析固定 dependencies，并且只在预期的 collector/TLS environment 中运行它。该示例发出两个有限 spans。`DEMO_TRACEPARENT` 是可选的演示 carrier；真实 HTTP handlers 必须从 request headers 中提取并注入到 outgoing requests。仅创建 SDK 不会为每个 HTTP/database library 添加插桩。
+将以下 `go.mod` 和 `main.go` 保存到单独的示例目录中，使用 `go mod tidy` 解析固定版本的依赖项，并仅在配置了预期 collector/TLS 环境的情况下运行。此示例会发出两个有限 span。`DEMO_TRACEPARENT` 是一个可选的演示 carrier；真实 HTTP handler 必须从请求标头中提取上下文，并将其注入传出的请求。仅创建 SDK 并不会为每个 HTTP/数据库库自动添加检测。
 
 ```text
 module example.invalid/xray-otel-demo
@@ -662,23 +662,23 @@ func main() {
 }
 ```
 
-Python 示例通过了 13 项检查，涵盖混合大小写的传入 headers、parent/child identity、未采样 parents、敏感 payload 排除和真实的 loopback mTLS OTLP POST。Go 通过了 4 项 native tests，涵盖 mTLS/protobuf export、W3C identity、未采样 parents、plaintext 拒绝和缺失的 TLS files。两项测试均未联系 AWS 或展示生产应用程序性能。Java imports、lifecycle 和 TLS autoconfiguration 仅经过 source 验证。
+Python 示例通过了 13 项检查，涵盖大小写混合的传入标头、父子 span 标识、未采样的父级、排除敏感负载，以及实际的 loopback mTLS OTLP POST。Go 通过了 4 项原生测试，涵盖 mTLS/protobuf 导出、W3C 标识、未采样的父级、拒绝明文连接和缺少 TLS 文件的情况。这两项测试都未连接 AWS，也未展示生产应用程序性能。Java 导入、生命周期和 TLS 自动配置仅通过源码验证。
 
-请审慎选择 propagation：此处使用 W3C Trace Context。X-Amzn-Trace-Id 互操作可能需要特定语言/集成的适当 AWS propagator，但 W3C traces 并非普遍需要特定于 X-Ray 的 ID generator。如果接受多种格式，应定义优先级和信任边界，而不是盲目组合 propagators。异步工作必须显式携带其 parent context。
+请谨慎选择传播格式：此处使用 W3C Trace Context。X-Amzn-Trace-Id 互操作可能需要针对特定语言/集成使用相应的 AWS propagator，但 W3C trace 并非在所有情况下都必须使用 X-Ray 专用 ID 生成器。如果接受多种格式，应明确定义优先级和信任边界，而不是盲目组合 propagator。异步工作必须显式传递其父级上下文。
 
 ## 采样规则
 
 ### 集中式采样配置
 
-X-Ray 集中式规则仅适用于使用兼容 X-Ray remote sampler 的 producers。通用 OpenTelemetry `parentbased_traceidratio` sampler 不会获取这些规则，且创建规则不会在 SDK 中启用 remote sampling。collector 的 `awsxray` exporter 导出已经选择的 spans；它不会追溯选择 requests。
+X-Ray 集中式规则仅适用于使用兼容 X-Ray 远程 sampler 的数据生产者。通用 OpenTelemetry `parentbased_traceidratio` sampler 不会获取这些规则，而创建规则也不会在 SDK 中启用远程采样。collector 的 `awsxray` exporter 只会导出已选中的 span；它不会追溯性地选择请求。
 
-head sampling 会在已完成响应已知之前作出决定。匹配未来的 HTTP500 或最终时长无法保证捕获每个错误/慢请求。经典 X-Ray SDK 忽略包含 `Attributes` 的规则，并支持 `ResourceARN: "*"`；此前的错误属性规则并非有效的全错误 policy。广泛匹配的“慢”规则也不会检查最终 latency。
+头部采样会在已知完整响应之前做出决定。匹配未来的 HTTP500 或最终耗时，并不能保证捕获每个错误/慢请求。经典 X-Ray SDK 会忽略包含 `Attributes` 的规则，并支持 `ResourceARN: "*"`；之前的错误属性规则并不是一个有效的全错误策略。广泛匹配的“慢请求”规则也无法检查最终延迟。
 
-规则按数字 priority 升序匹配。当请求量较少时，reservoir targets 和 fixed rates 是尽力而为的采样行为，而不是每秒十个 traces 的保证。parent decisions、受支持的 sampler implementations 和分布式 quotas 都很重要。
+规则按数字优先级升序匹配。Reservoir 目标和固定采样率属于尽力而为的采样行为；如果每秒到达的请求不足 10 个，就无法保证每秒采集 10 条 trace。父级决策、受支持的 sampler 实现和分布式配额都会产生影响。
 
-以下是三个独立的 request files。其 AWS API shapes 已在本地验证，未应用到 AWS。
+以下是三个彼此独立的请求文件。它们的 AWS API 结构已在本地验证，但尚未应用到 AWS。
 
-**`sampling-production.json` — 通用 API request policy：**
+**通用 API 请求策略 `sampling-production.json`：**
 
 ```json
 {
@@ -699,7 +699,7 @@ head sampling 会在已完成响应已知之前作出决定。匹配未来的 HT
 }
 ```
 
-**`sampling-health.json` — 一个更高 priority 的 GET health-check exclusion：**
+**优先级较高、用于排除 GET 健康检查的 `sampling-health.json`：**
 
 ```json
 {
@@ -720,9 +720,9 @@ head sampling 会在已完成响应已知之前作出决定。匹配未来的 HT
 }
 ```
 
-**`sampling-adaptive.json` — 可选的 request-scoped adaptive 示例：**
+**可选的请求级自适应示例 `sampling-adaptive.json`：**
 
-当前的 [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html) 支持由异常驱动的临时提升，并具有最大 rate 和 cooldown。`MaxRate: 0.5` 是绝对采样率上限，而不是相对增加 50%。这不是追溯性的 tail sampling，也不保证捕获所有失败请求。使用前请确认 producer 对 adaptive-sampling 的支持。
+当前的 [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html) 支持根据异常临时提高采样率，并设置最高采样率和冷却时间。`MaxRate: 0.5` 是绝对采样率上限，而不是相对提高 50%。这不是追溯性尾部采样，也不能保证捕获所有失败请求。使用前请确认数据生产者支持自适应采样。
 
 ```json
 {
@@ -747,9 +747,9 @@ head sampling 会在已完成响应已知之前作出决定。匹配未来的 HT
 }
 ```
 
-### 采样规则管理
+### 管理采样规则
 
-在创建、更新或删除任何内容之前，请检查预期 account/Region 中现有的 rule names 和 priorities。使用具有所需 rule-management permissions 的 operator role；collector write permissions 不足。
+在创建、更新或删除任何内容之前，请检查目标账户/区域中现有规则的名称和优先级。请使用具有所需规则管理权限的操作员角色；collector 写入权限并不足够。
 
 ```bash
 set -euo pipefail
@@ -760,13 +760,13 @@ aws xray get-sampling-statistic-summaries --region "$AWS_REGION"
 aws xray create-sampling-rule --region "$AWS_REGION"   --cli-input-json file://sampling-production.json
 ```
 
-对于您拥有的现有规则，请使用 `update-sampling-rule` 并保留其先前配置。仅使用 `delete-sampling-rule` 删除明确退役的自有规则；查询失败或猜测的名称都不能证明规则可安全移除。
+对于你拥有的现有规则，请使用 `update-sampling-rule` 并保留其先前配置。只有在明确退役由你拥有的规则时，才使用 `delete-sampling-rule` 删除；查询失败或猜测规则名称，都不能证明删除该规则是安全的。
 
-要基于错误/latency 保留完成的 traces，请评估单独设计的 tail-sampling pipeline。它必须在任何上游 head drop 之前接收相关 spans、将每个 trace 保留在适当的 sampler 上，并容忍 late spans 和有限内存。它无法恢复已丢弃的 spans，也无法保证无丢失地捕获所有错误。
+如需根据错误/延迟保留已完成的 trace，请评估单独设计的尾部采样管道。它必须在上游任何头部丢弃发生之前接收相关 span，为每条 trace 保留适当的 sampler，并能处理迟到的 span 和有限的内存。它无法恢复已丢弃的 span，也不能保证无损捕获所有错误。
 
 ### 筛选表达式示例
 
-这些是用于其 query UI/API 的 X-Ray filter expressions，而不是 shell commands 或 Logs Insights queries。Duration 值以秒为单位；`> 2` 表示严格大于两秒。选择由 producers 实际发出并已编入索引的 annotations。
+以下是用于 X-Ray 查询 UI/API 的筛选表达式，不是 shell 命令或 Logs Insights 查询。Duration 值以秒为单位；`> 2` 表示严格大于两秒。请选择数据生产者实际发出并已编入索引的 annotation。
 
 ```text
 service("order-service")
@@ -777,13 +777,13 @@ service("api-gateway") AND responsetime > 1 AND !fault
 edge("api-gateway", "order-service")
 ```
 
-## 服务地图
+## 服务映射
 
-### 使用 Trace Map
+### 使用跟踪映射
 
-CloudWatch 的 trace map 汇集了 X-Ray map 和原 ServiceLens map。其流量颜色区分类别：红色表示 server faults (HTTP5xx)，黄色表示 client errors (HTTP4xx)，紫色表示 throttling (HTTP429)，绿色表示成功流量。它们并非任意的 latency-warning thresholds。
+CloudWatch 的跟踪映射整合了 X-Ray 映射和旧版 ServiceLens 映射。流量颜色表示不同类别：红色表示服务器故障（HTTP5xx），黄色表示客户端错误（HTTP4xx），紫色表示节流（HTTP429），绿色表示成功流量。它们不是任意设置的延迟警告阈值。
 
-原始韩文插图使用了以下 topology。其值保留为**说明性的 aggregate averages**，并非实际 measurements、单个 trace 的 additive timings 或 QPS ranking。拥有更多 outgoing connections 并不能证明 Order Service 收到最多 requests。
+原始韩文示意图使用了以下拓扑结构。其数值保留为**示例性聚合平均值**，并非实际测量值、单个 trace 的累加耗时或 QPS 排名。出站连接较多并不能证明 Order Service 接收的请求最多。
 
 ```mermaid
 flowchart LR
@@ -795,17 +795,17 @@ flowchart LR
     Order --> DB["DynamoDB"]
 ```
 
-| 组件 | 原始说明性平均值 |
+| 组件 | 原始示例平均值 |
 |---|---:|
 | Client |250ms|
 | API Gateway |50ms|
 | Auth Service |30ms|
 | Order Service |100ms|
-| Payment Service |150ms; 说明性错误率2%|
+| Payment Service |150ms；示例错误率为 2%|
 | ElastiCache |5ms|
 | DynamoDB |20ms|
 
-### 阅读服务图
+### 查看服务图
 
 ```bash
 # Read-only AWS API example; requires the approved operator role.
@@ -819,17 +819,17 @@ aws xray get-service-graph --region "$AWS_REGION"   --start-time "$START_TIME" -
 
 ## CloudWatch ServiceLens 集成
 
-### 配置实际采集路径
+### 配置实际的数据采集路径
 
-CloudWatch 可以关联 traces、metrics 和 logs，但它们必须实际被采集并共享适当的 service/trace identifiers。未挂载的 ConfigMap 不会配置 agent。使用 [CloudWatch Observability EKS add-on](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) 或已批准的现有 agent/operator configuration，并保留其所有者、IAM identity、Secret/CA settings 和受支持的平台行为。不要在已由另一个 collector 拥有的 host port 上启动额外 receiver。此前单独的 ConfigMap 并未建立此集成。
+CloudWatch 可以关联跟踪、指标和日志，但前提是这些数据确实已被采集，并且共享适当的服务/跟踪标识符。未挂载的 ConfigMap 并不会配置 agent。请使用 [CloudWatch Observability EKS add-on](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) 或获批的现有 agent/operator 配置，并保留其所有者、IAM 身份、Secret/CA 设置和受支持的平台行为。不要在已有其他 collector 占用的 host port 上启动额外 receiver。仅有前文的 ConfigMap 并不能建立此集成。
 
-原生 OTLP trace ingestion 使用 HTTPS endpoint `https://xray.REGION.amazonaws.com/v1/traces`、**带 SigV4 的 HTTP**，并要求 [Transaction Search](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html)。指向该 URL 的通用未签名 OTLP exporter 不足。这与上述 ADOT awsxray exporter 不同，后者将 OTLP spans 转换为经典 X-Ray segment documents。
+CloudWatch 原生 OTLP 跟踪摄取使用 HTTPS 端点 `https://xray.REGION.amazonaws.com/v1/traces`、**带 SigV4 的 HTTP**，并且需要启用 [Transaction Search](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html)。将通用的未签名 OTLP exporter 指向该 URL 并不足够。这与上文的 ADOT awsxray exporter 不同；后者会将 OTLP span 转换为经典 X-Ray segment 文档。
 
-Transaction Search 将 structured spans 存储在 CloudWatch `aws/spans` log group 中。其 index-sampling controls 与 producer head sampling 和 span ingestion 分离。X-Ray 支持 W3C 128-bit trace IDs；经典 segment representation 使用 `1-8hex-24hex`，但 W3C traces 并非普遍需要特定于 X-Ray 的 SDK ID generator。仅在实际 upstream/downstream integration 需要时选择 X-Amzn-Trace-Id propagation；如果接受多个 propagation formats，请定义优先级。
+Transaction Search 会将结构化 span 存储在 CloudWatch 的 `aws/spans` 日志组中。其索引采样控制与数据生产者的头部采样和 span 摄取相互独立。X-Ray 支持 W3C 128 位 trace ID；经典 segment 表示法使用 `1-8hex-24hex`，但并非在所有情况下都必须使用 X-Ray 专用 SDK ID 生成器。只有在实际的上游/下游集成需要时才选择 X-Amzn-Trace-Id 传播；如果接受多种传播格式，请明确定义优先级。
 
 ### Span 分析查询
 
-以下是针对 `aws/spans` 的**独立 Logs Insights QL queries**，基于[已记录的 span fields](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html)。请先检查来自您 ingestion path 的实际 fields；并非每个 custom span 都具有 AWS local-service 或 HTTP attributes。不存在名为 `xray.traces` 的提供 SQL table。这些示例已根据文档化的 query/field contracts 进行检查，但未在受管 CloudWatch account 中执行。
+以下是适用于 `aws/spans` 的**独立 Logs Insights QL 查询**，基于[文档记录的 span 字段](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html)。请先检查数据摄取路径中的实际字段；并非每个自定义 span 都包含 AWS 本地服务或 HTTP 属性。没有名为 `xray.traces` 的 SQL 表。以下示例根据文档记录的查询/字段规范进行了检查，并未在托管 CloudWatch 账户中执行。
 
 ```text
 fields @timestamp, durationNano, attributes.aws.local.service
@@ -850,13 +850,13 @@ filter attributes.http.response.status_code >= 500
 | sort sampled_5xx_spans desc
 ```
 
-在 query UI 中选择预期的 time range 和 span/service scope。多个 spans 可以属于一个 request；已采样 span counts 和 span-duration percentiles 并非无偏的应用程序错误率或 request-latency SLO。对于 request-level rates，请使用范围一致的 request metrics，包括无错误的健康流量、缺失数据和采样偏差。降序会选择最大的值。
+在查询 UI 中选择预期的时间范围和 span/service 范围。一个请求可能包含多个 span；采样的 span 数量和 span 耗时百分位数并不等同于无偏的应用程序错误率或请求延迟 SLO。请求级速率应使用范围一致的请求指标，并考虑无错误的正常流量、缺失数据和采样偏差。降序排列会选择数值最大的项目。
 
-## 组和筛选器
+## 组和筛选条件
 
 ### 创建 X-Ray 组
 
-使用已授权的 operator role 和预期 Region。在创建前检查现有 groups；对于您拥有的现有 group，使用 update operation。以下 demo filter 匹配由 SDK examples 发出的明确编入索引的 environment attribute。请在适用时将其替换为实际的生产 field/value。
+请使用已授权的操作员角色和目标区域。创建前请检查现有组；对于你拥有的现有组，请使用更新操作。下面的演示筛选表达式会匹配 SDK 示例发出的、已显式编入索引的环境属性。适当时，请将其替换为实际的生产字段/值。
 
 ```bash
 set -euo pipefail
@@ -873,13 +873,13 @@ aws xray create-group --region "$AWS_REGION" --group-name docs-payment \
   --filter-expression 'service("payment-demo")'
 ```
 
-组会筛选收集到的 traces 并公开相关 metrics；它们不定义 IAM isolation、retention 或 producer sampling。请单独配置和测试 CloudWatch alarms。空结果可能表示不匹配的 attributes、sampling、缺失数据或错误的 time range，而不是应用程序健康。
+组会筛选已采集的 trace，并公开相关指标；它们不会定义 IAM 隔离、保留期限或数据生产者采样。请单独配置并测试 CloudWatch 警报。结果为空可能表示属性不匹配、发生采样、数据缺失或时间范围不正确，并不一定意味着应用程序运行正常。
 
 ## 最佳实践
 
 ### 1. Segment 和 Subsegment 设计
 
-为有意义的 operations 使用有限的名称，并保留 parent context。以下旧版 Java SDK fragment 展示嵌套同步工作，而不是完整应用程序或已执行的 AWS operation。X-Ray Java 2.21.1 Segment/Subsegment 实现了 AutoCloseable，因此 try-with-resources 有效；应重用 middleware-created segment，而不是添加第二个 root。异步/thread transitions 需要显式的受支持 context propagation。新代码优先使用 OpenTelemetry。
+为有意义的操作使用范围有限的名称，并保留父级上下文。以下旧版 Java SDK 片段展示的是嵌套同步工作，并非完整应用程序，也不会实际执行 AWS 操作。X-Ray Java 2.21.1 的 Segment/Subsegment 实现了 AutoCloseable，因此可以使用 try-with-resources；如果中间件已创建 segment，应复用该 segment，而不是再添加一个根 segment。异步/线程切换需要显式使用受支持的上下文传播。新代码应优先使用 OpenTelemetry。
 
 ```java
 // Legacy X-Ray SDK structure fragment; no database/payment/queue call is executed.
@@ -902,7 +902,7 @@ try (Segment segment = AWSXRay.beginSegment("ProcessOrder")) {
 
 ### 2. 使用 Annotations 和 Metadata
 
-X-Ray 每个 trace 最多索引 **50 个 annotations**，而非每个 segment 独立 50 个。使用经过审慎设计的低基数字段。Metadata 不会作为 annotations 编入索引，但仍会被存储和访问；它不是脱敏或隐私边界。采集前移除 access tokens、cookies、private keys、原始 request/response payloads、user identifiers 和 SQL parameters。Transaction Search span/log access 和 retention 也需要审查。collector 的 index_all_attributes=false 不会移除未编入索引的 attributes。
+X-Ray 对每条 trace 最多索引 **50 个 annotation**，而不是每个 segment 独立索引 50 个。请有意识地使用低基数值字段。Metadata 不会像 annotation 一样编入索引，但仍会被存储并且可以访问；它不构成数据遮蔽或隐私边界。采集前请移除访问令牌、cookie、私钥、原始请求/响应负载、用户标识符和 SQL 参数。还需要审查 Transaction Search 的 span/日志访问权限和保留期限。collector 的 `index_all_attributes=false` 不会移除未编入索引的属性。
 
 ```java
 // Synthetic, bounded examples. Never attach complete request/response bodies.
@@ -916,8 +916,8 @@ segment.putMetadata("diagnostics", Map.of(
 
 ### 3. 成本优化
 
-针对所选路径使用实际的 SDK/remote-sampler 或 collector configuration；通用 sampling.default/errors YAML block 不是 X-Ray API 或 ADOT configuration。将 health-check exclusions 置于更宽泛的 API rules 之前，并衡量其影响。head sampling 无法保证获取 100% 的最终 errors。请针对当前定价分别评估 recording、retrieval/scanning、Transaction Search ingestion/indexing、CloudWatch retention 和 collector capacity。index sampling 和 producer sampling 是不同 controls；降低其中一个不一定会减少所有已存储 spans 或每项费用。
+请根据所选路径使用实际的 SDK/远程 sampler 或 collector 配置；通用的 sampling.default/errors YAML 块既不是 X-Ray API，也不是 ADOT 配置。将健康检查排除规则放在更宽泛的 API 规则之前，并衡量其效果。头部采样无法保证捕获所有最终发生的错误。请根据当前定价，分别评估记录、检索/扫描、Transaction Search 摄取/索引、CloudWatch 保留期限和 collector 容量。索引采样和数据生产者采样是不同的控制机制；降低其中一项不一定能减少所有存储的 span 或所有费用。
 
 ## 测验
 
-通过 [X-Ray 测验](../../quizzes/observability/tracing/02-xray-quiz.md) 测试您的知识。
+请通过 [X-Ray 测验](../../quizzes/observability/tracing/02-xray-quiz.md)测试你的知识。

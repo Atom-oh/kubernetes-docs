@@ -1,209 +1,195 @@
-# Cuestionario de multi-cluster de Linkerd
+# Cuestionario de Linkerd multiclúster
 
-Este cuestionario evalúa tu comprensión de las características de multi-cluster de Linkerd.
+Basado en la [guía multiclúster](../../../service-mesh/linkerd/06-multi-cluster.md), revisada el 11 de septiembre de 2026.
 
-## Preguntas del cuestionario
+### 1. ¿Cuál es un mecanismo esencial de Linkerd multiclúster?
 
-### 1. ¿Cuál es el concepto central de la arquitectura multi-cluster de Linkerd?
-
-A. Federación de mesh
-B. Reflejo de Service
-C. Fusión de clusters
-D. Balanceador de carga global
+- A. Fusionar clústeres de Kubernetes
+- B. Reflejar Services
+- C. Replicar automáticamente todas las escrituras de las aplicaciones
+- D. Usar obligatoriamente un balanceador de carga global
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Reflejo de Service**
+**Respuesta: B**
 
-**Explicación:**
-Linkerd utiliza una arquitectura de reflejo de Service. Los Services exportados desde clusters remotos aparecen como Services espejo en el cluster local, accesibles como Services locales.
+**Explicación:** Un controlador de origen observa información seleccionada de Services mediante la API de Kubernetes de destino y crea recursos locales para su descubrimiento. Esto no es duplicación de solicitudes ni replicación de datos. Los modos jerárquico, plano y federado tienen distintos requisitos de red.
 
 </details>
 
-### 2. ¿Qué se debe compartir para la comunicación mTLS entre dos clusters?
+### 2. ¿Qué deben autenticar los clústeres para usar mTLS de la malla?
 
-A. Identity Issuer
-B. Trust Anchor
-C. Certificados de workload
-D. Kubernetes Secret
+- A. La misma clave privada de la entidad emisora
+- B. El conjunto pertinente de anclas de confianza públicas y cadenas de entidades emisoras
+- C. Una clave privada compartida de carga de trabajo
+- D. Objetos Secret de Kubernetes idénticos en todos los clústeres
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Trust Anchor**
+**Respuesta: B**
 
-**Explicación:**
-Para que dos clusters confíen mutuamente entre sí, deben compartir el mismo Trust Anchor (Root CA). Cada cluster puede tener Identity Issuers independientes, pero deben estar firmados por el mismo Trust Anchor.
+**Explicación:** Una raíz común es la configuración más sencilla; un paquete de confianza compartido puede contener varias raíces adecuadas. Las entidades emisoras de cada clúster pueden tener claves distintas. Los proxies existentes necesitan una transición coordinada del paquete de confianza, y hay que distinguir las raíces públicas de las claves de firma.
 
 </details>
 
-### 3. ¿Qué label se utiliza para exportar un Service a otros clusters?
+### 3. ¿Cuál es la etiqueta de exportación predeterminada para la réplica jerárquica mediante gateway?
 
-A. linkerd.io/exported: "true"
-B. mirror.linkerd.io/exported: "true"
-C. multicluster.linkerd.io/export: "enabled"
-D. linkerd.io/multicluster: "export"
+- A. `linkerd.io/exported: "true"`
+- B. `mirror.linkerd.io/exported: "true"`
+- C. `multicluster.linkerd.io/export: "enabled"`
+- D. `linkerd.io/multicluster: "export"`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. mirror.linkerd.io/exported: "true"**
+**Respuesta: B**
 
-**Explicación:**
-Agregar el label `mirror.linkerd.io/exported: "true"` a un Service hace que otros clusters vinculados lo reflejen.
+**Explicación:** El selector jerárquico predeterminado coincide con `mirror.linkerd.io/exported=true`. El modo plano usa `remote-discovery` y la federación usa `mirror.linkerd.io/federated=member` para los miembros. Las etiquetas afectan el descubrimiento según los Links y RBAC coincidentes; no constituyen un límite de control de acceso.
 
 </details>
 
-### 4. ¿Cuál es el formato de nomenclatura para los Services espejo?
+### 4. ¿Cuál suele ser el nombre de un Service replicado?
 
-A. `<service>.<cluster>`
-B. `<service>-<cluster>`
-C. `<cluster>-<service>`
-D. `<service>@<cluster>`
+- A. `<service>.<cluster>`
+- B. `<service>-<nombre del clúster de Link>`
+- C. `<cluster>-<service>`
+- D. `<service>@<cluster>`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `<service>-<cluster>`**
+**Respuesta: B**
 
-**Explicación:**
-Los Services espejo se crean con el formato `<original-service-name>-<original-cluster-name>`. Ejemplo: el Service web del cluster west se refleja como web-west en el cluster east.
+**Explicación:** Normalmente, el Service `web` importado desde un Link llamado `west` pasa a llamarse `web-west` en el espacio de nombres correspondiente. El nombre de clúster del Link es un alias y no tiene que coincidir con el nombre físico del clúster de EKS. La creación de espacios de nombres no está habilitada de forma predeterminada.
 
 </details>
 
-### 5. ¿Cuál es el propósito del comando `linkerd multicluster link`?
+### 5. ¿Qué genera el comando actual `link-gen`?
 
-A. Conexión de red entre dos clusters
-B. Registrar localmente las credenciales del cluster remoto
-C. Configurar el enrutamiento del tráfico de Service a Service
-D. Intercambio de certificados
+- A. Rutas de VPC y balanceadores de carga de gateway
+- B. Un Link y dos Secrets de credenciales para el clúster de origen
+- C. Una base de datos de aplicación replicada
+- D. Certificados nuevos para cada Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Registrar localmente las credenciales del cluster remoto**
+**Respuesta: B**
 
-**Explicación:**
-`linkerd multicluster link --cluster-name <name>` genera las credenciales del cluster actual (dirección del gateway, token de Service Account, etc.) para registrarlas en otro cluster.
+**Explicación:** Generar los recursos con el contexto `west` y aplicarlos a `east` permite que East descubra West. La lista de controladores del chart proporciona el controlador de réplica de origen. El comando antiguo `link` está obsoleto. Los datos de kubeconfig generados son confidenciales y deben incluir un endpoint de API accesible y datos de CA utilizables.
 
 </details>
 
-### 6. ¿Qué comando comprueba el estado de los gateways multi-cluster?
+### 6. ¿Qué comando muestra las estadísticas de sondeo del gateway de destino?
 
-A. `linkerd multicluster status`
-B. `linkerd multicluster gateways`
-C. `linkerd multicluster check`
-D. `kubectl get gateway`
+- A. `linkerd multicluster status`
+- B. `linkerd multicluster gateways`
+- C. `kubectl get gateway`
+- D. `linkerd gateway inspect`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `linkerd multicluster gateways`**
+**Respuesta: B**
 
-**Explicación:**
-`linkerd multicluster gateways` muestra el estado de los gateways de los clusters vinculados. Muestra ALIVE, NUM_SVC (número de Services espejo) y LATENCY.
+**Explicación:** `gateways` muestra el resultado del sondeo configurado del gateway de destino, no el estado de cada aplicación. El sondeo lo ejecuta el controlador de réplica del clúster de origen. Los Links que solo usan el modo plano no requieren un gateway; usa los diagnósticos de Link, endpoint y conectividad de Pods para esos casos.
 
 </details>
 
-### 7. ¿Cuál es la configuración recomendada para los gateways en multi-cluster de EKS?
+### 7. ¿Qué configuración de balanceador se usa en el ejemplo de AWS Load Balancer Controller de la guía?
 
-A. Service ClusterIP
-B. Service NodePort
-C. NLB (Network Load Balancer)
-D. ALB (Application Load Balancer)
+- A. Un ALB público que termina el TLS de la malla
+- B. Un ClusterIP arbitrario al que se puede acceder automáticamente entre regiones
+- C. Un NLB TCP interno seleccionado con `service.k8s.aws/nlb`
+- D. La anotación heredada de NLB demuestra automáticamente que el propietario usa destinos IP
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. NLB (Network Load Balancer)**
+**Respuesta: C**
 
-**Explicación:**
-Se recomienda NLB para los gateways multi-cluster en EKS. Está optimizado para el tráfico TCP/TLS y se configura con la anotación `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"`.
+**Explicación:** El ejemplo presupone ese controlador, las anotaciones admitidas y la conectividad privada ya preparada. EKS Auto Mode tiene una clase y un propietario diferentes. Hay que comprobar por separado la accesibilidad de los datos del gateway, las rutas de sondeo y los endpoints de la API remota de Kubernetes.
 
 </details>
 
-### 8. ¿Qué Services de backend se usan al dividir el tráfico entre clusters locales y remotos con TrafficSplit?
+### 8. ¿Qué backends puede usar el ejemplo actual de HTTPRoute para distribuir solicitudes entre servicios locales y remotos?
 
-A. Service local y gateway remoto
-B. Service local y Service espejo
-C. Solo Service local
-D. Referencia directa al Service remoto
+- A. Un Service local y una IP de Pod arbitraria de otro servidor de API
+- B. Un Service backend local y un Service réplica importado localmente
+- C. Solo el Service local
+- D. Un conjunto de réplicas de base de datos automático
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Service local y Service espejo**
+**Respuesta: B**
 
-**Explicación:**
-Los backends de TrafficSplit especifican el Service local (p. ej., web) y el Service espejo (p. ej., web-west). El tráfico hacia el Service espejo se enruta automáticamente al gateway del cluster remoto.
+**Explicación:** El ejemplo conecta `web-local` y `web-west` mediante un Service raíz. Los pesos relativos no crean una política automática de respaldo; un reparto 100/0 no cambia por sí solo al backend de peso cero si hay un fallo. Las extensiones SMI/Failover están obsoletas; la federación plana tiene requisitos y comportamiento propios.
 
 </details>
 
-### 9. ¿Cuál NO es una función del mirror controller en entornos multi-cluster?
+### 9. ¿Cuál no es una función del controlador de réplica?
 
-A. Observar Services remotos
-B. Crear/actualizar Services espejo
-C. Emitir certificados
-D. Sincronizar endpoints
+- A. Observar Services remotos seleccionados
+- B. Crear o actualizar réplicas locales
+- C. Emitir certificados de cargas de trabajo
+- D. Mantener la información de descubrimiento y endpoints adecuada para cada modo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Emitir certificados**
+**Respuesta: C**
 
-**Explicación:**
-El service mirror controller observa los Services exportados en clusters remotos, crea/actualiza Services espejo localmente y sincroniza endpoints. La emisión de certificados es función del Identity Controller.
+**Explicación:** Identity emite certificados para las cargas de trabajo. El controlador de réplica seleccionado sigue manteniendo Endpoints heredados para los servicios jerárquicos; en el modo `remote-discovery` puede quitar los Endpoints locales y depender del descubrimiento remoto del lado de destino.
 
 </details>
 
-### 10. ¿Qué servicio de AWS se utiliza para la conectividad privada entre dos clusters de EKS?
+### 10. ¿Qué puede proporcionar conectividad privada enrutada entre VPC cuando se configura adecuadamente?
 
-A. Solo Direct Connect
-B. VPC Peering o Transit Gateway
-C. Solo Route 53
-D. CloudFront
+- A. Route 53 por sí solo
+- B. VPC Peering o rutas adecuadas de Transit Gateway
+- C. CloudFront por sí solo
+- D. Un endpoint de interfaz de administración de EKS que proporcione automáticamente enrutamiento de Pods en modo plano
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. VPC Peering o Transit Gateway**
+**Respuesta: B**
 
-**Explicación:**
-Para la conectividad privada entre clusters de EKS, usa VPC Peering (conexión directa entre dos VPC) o Transit Gateway (modelo hub-and-spoke). Configura el gateway con un NLB interno.
+**Explicación:** También se necesitan rutas, direcciones únicas y accesibles, DNS y controles de seguridad. PrivateLink ofrece acceso a servicios o recursos seleccionados; no equivale a VPC Peering. Un endpoint de interfaz de EKS no es el endpoint de la API de Kubernetes del clúster.
 
 </details>
 
-### 11. ¿Cómo permites el acceso solo a Services remotos específicos en un entorno multi-cluster?
+### 11. ¿Cómo puede autorizar un servidor final una identidad remota de carga de trabajo que se haya conservado?
 
-A. NetworkPolicy
-B. ServerAuthorization con SPIFFE ID
-C. AWS Security Group
-D. Kubernetes RBAC
+- A. Tratar el nombre de la cuenta de AWS como una identidad implícita de la malla
+- B. Usar la autorización de Linkerd con la identidad real en formato DNS en modo plano o federado
+- C. Usar en cualquier gateway el ejemplo obsoleto de URI SPIFFE
+- D. Suponer que una etiqueta pública de exportación autentica a los clientes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. ServerAuthorization con SPIFFE ID**
+**Respuesta: B**
 
-**Explicación:**
-Controla el acceso especificando SPIFFE IDs concretos del cluster remoto en meshTLS.identities de ServerAuthorization. Ejemplo: `spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway`
+**Explicación:** Los gateways jerárquicos pierden la identidad del cliente original cuando llega al servidor final. Las rutas planas o federadas la conservan. El mismo nombre de ServiceAccount, espacio de nombres y dominio de confianza puede identificar cargas de trabajo en más de un clúster; la política no demuestra automáticamente que el origen sea East.
 
 </details>
 
-### 12. ¿Qué NO verifica el comando `linkerd multicluster check`?
+### 12. ¿Qué no demuestra una comprobación de la infraestructura multiclúster?
 
-A. Estado del recurso Link
-B. Conectividad del gateway
-C. Lógica de negocio de la aplicación
-D. Estado del service mirror controller
+- A. Si la configuración Link tiene errores detectables
+- B. Si el acceso remoto o los sondeos configurados tienen fallos detectables
+- C. La corrección de la aplicación o una recuperación regional garantizada
+- D. Si los componentes de réplica tienen problemas de configuración detectables
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Lógica de negocio de la aplicación**
+**Respuesta: C**
 
-**Explicación:**
-`linkerd multicluster check` verifica el estado de la infraestructura multi-cluster, incluidos los recursos Link, los gateways, el service mirror controller y los certificados. No verifica la lógica de la aplicación.
+**Explicación:** Las comprobaciones ayudan a diagnosticar la configuración, las credenciales y la infraestructura. No demuestran la coherencia de datos, que los reintentos de escritura sean seguros, que haya capacidad suficiente ni que el comportamiento de negocio sea correcto tras una conmutación por error. Verifica por separado los resultados reales de las cargas de trabajo.
 
 </details>

@@ -1,175 +1,165 @@
-# CI Pipelines 测验
+# CI 流水线测验
 
-> **相关文档**: [CI Pipelines](../../ops/03-ci-pipelines.md)
+> **相关文档**：[CI 流水线](../../ops/03-ci-pipelines.md)
 
 ## 选择题
 
-### 1. ECR lifecycle policies 的主要用途是什么？
+### 1. 为什么发布镜像和 BuildKit 缓存使用不同的 ECR 仓库？
 
-- A) 自动构建 container images
-- B) 管理 image 保留并降低存储成本
-- C) 扫描 images 中的漏洞
-- D) 跨区域复制 images
+- A) 缓存镜像不需要 IAM 身份验证
+- B) 不可变的发布标签和可变的缓存引用需要不同的策略
+- C) ECR 只支持一个标签
+- D) 缓存消除了扫描的必要性
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 管理 image 保留并降低存储成本**
+**答案：B) 不可变的发布标签和可变的缓存引用需要不同的策略**
 
-**解释：**
-ECR lifecycle policies 会根据年龄或数量等规则自动过期并删除旧 images。这可以防止存储无限增长并降低成本，同时无限期保留重要 images（例如 production tags）。
+**说明**：示例将应用仓库设为不可变，将构建缓存设为可变。仅使用形如提交 SHA 的标签并不能防止覆盖；部署使用的是已验证的摘要。
 
 </details>
 
-### 2. 在 EKS 上运行 GitLab Runner 时，建议使用哪种 executor 类型来实现隔离？
+### 2. GitLab Kubernetes 执行器的每个作业使用单独的 Pod，有什么作用？
 
-- A) Shell executor
-- B) Docker executor
-- C) Kubernetes executor
-- D) SSH executor
+- A) 即使对于特权作业，也能实现完全隔离
+- B) 消除所有节点访问风险
+- C) 分别管理作业生命周期和资源，但不保证构成完整的安全边界
+- D) 为不受信任的 PR 安全地继承 AWS 发布权限
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Kubernetes executor**
+**答案：C) 分别管理作业生命周期和资源，但不保证构成完整的安全边界**
 
-**解释：**
-Kubernetes executor 会在单独的 pod 中运行每个 CI job，从而在 jobs 之间提供强隔离。它会在 jobs 完成后自动清理资源，并且可以利用 Kubernetes 的 node selectors 和 tolerations 等功能。
+**说明**：本指南中的特权 DinD 配置适用于可信且受保护的作业。Pod 隔离、专用 CI 节点和最小权限角色是彼此独立的控制措施；它们单独都不能证明任意不受信任的代码是安全的。
 
 </details>
 
-### 3. GitHub Actions Runner Controller (ARC) 是什么？
+### 3. poll_interval 和 check_interval 有什么区别？
 
-- A) GitHub 托管的 runner 服务
-- B) 用于自托管 GitHub runners 的 Kubernetes operator
-- C) GitHub API client library
-- D) Container registry controller
+- A) poll_interval 检查 Kubernetes Pod 状态；check_interval 用于协调器轮询作业
+- B) 它们是同一设置的别名
+- C) 两者都会使 Docker 镜像缓存过期
+- D) poll_interval 会重启 Pod
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 用于自托管 GitHub runners 的 Kubernetes operator**
+**答案：A) poll_interval 检查 Kubernetes Pod 状态；check_interval 用于协调器轮询作业**
 
-**解释：**
-ARC 是一个 Kubernetes operator，会根据 workflow 需求自动扩缩自托管的 GitHub Actions runners。它会在 jobs 排队时创建 runner pods，并在完成后清理它们。
+**说明**：Kubernetes 执行器在等待作业 Pod 就绪时使用 poll_interval。Runner 全局的 check_interval 控制的是另一种轮询流程；更改其中一个不能代替更改另一个。
 
 </details>
 
-### 4. 多平台 container builds (linux/amd64, linux/arm64) 的好处是什么？
+### 4. 为什么要将 GitLab 管理器和构建 Pod 的 AWS 角色分开？
 
-- A) 更小的 image 大小
-- B) 更快的构建时间
-- C) 支持不同的 CPU architectures（x86 和 Graviton）
-- D) 更好的安全扫描
+- A) 让管理器获得所有 AWS 权限
+- B) 因为 Pod Identity 会自动创建 ServiceAccount
+- C) 因为构建 Pod 必须存储长期密钥
+- D) 将管理器的 S3 缓存访问权限与构建 Pod 的 ECR 发布权限分开限定
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 支持不同的 CPU architectures（x86 和 Graviton）**
+**答案：D) 将管理器的 S3 缓存访问权限与构建 Pod 的 ECR 发布权限分开限定**
 
-**解释：**
-多平台 builds 会创建可同时在 x86 (amd64) 和 ARM (arm64/Graviton) processors 上运行的 images。这可以通过使用 Graviton instances 实现成本优化，并支持多样化的部署环境。
+**说明**：如果没有 RoleARN，示例中的 S3 缓存会使用管理器的凭证链。构建 Pod 会获得不同的 ECR 角色。ServiceAccount 必须单独创建；AWS Pod Identity 令牌不同于常规 Kubernetes API 令牌。
 
 </details>
 
-### 5. BuildKit cache 如何提升 container build 性能？
+### 5. 当前的 ARC 示例如何接收并路由作业？
 
-- A) 跳过所有构建步骤
-- B) 缓存 layer artifacts 并重用未变化的 layers
-- C) 将 images 压缩得更小
-- D) 并行化所有操作
+- A) 只安装 RunnerDeployment 和 HorizontalRunnerAutoscaler
+- B) 使用官方运行器扩缩集（scale set）的 Helm Chart 和监听器，并让 runs-on 与实际的扩缩集名称匹配
+- C) 组织运行器组名称始终是作业标签
+- D) minRunners=0 可消除所有集群成本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 缓存 layer artifacts 并重用未变化的 layers**
+**答案：B) 使用官方运行器扩缩集（scale set）的 Helm Chart 和监听器，并让 runs-on 与实际的扩缩集名称匹配**
 
-**解释：**
-BuildKit 会智能地缓存 build artifacts 和 layer outputs。当 source files 未发生变化时，它会重用 cached layers，而不是重新构建。Cache 可以存储在 registries、S3 或本地存储中，以便在 builds 之间共享。
+**说明**：不要将旧版 CRD 模型与当前的运行器扩缩集 Helm Chart 混用。ARC 0.15.0 也支持 scaleSetLabels。minRunners 指的是空闲运行器数量；它不会消除控制器/监听器成本，也无法保证启动时没有延迟。
 
 </details>
 
-### 6. Kaniko 主要用于什么？
+### 6. 哪些 GitHub 作业会获取示例中的 AWS OIDC 凭证？
 
-- A) Container orchestration
-- B) 在没有 Docker daemon 的情况下构建 container images
-- C) Container runtime security
-- D) Image vulnerability scanning
+- A) 每个外部 PR 测试
+- B) 执行任意 PR 代码的 pull_request_target 作业
+- C) 测试通过后的受信任推送发布作业
+- D) 每个启动时运行的自托管运行器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在没有 Docker daemon 的情况下构建 container images**
+**答案：C) 测试通过后的受信任推送发布作业**
 
-**解释：**
-Kaniko 可以从 Dockerfiles 构建 container images，而不需要 Docker daemon 或 privileged mode。这使它非常适合 CI/CD 环境，因为在这些环境中运行 Docker-in-Docker 可能带来安全顾虑，或者根本不可用。
+**说明**：PR 测试在 GitHub 托管的运行器上运行，不会请求发布凭证。角色信任策略将范围限定为确切的仓库以及 main/受保护标签，并且 ARC Pod 不会继承 AWS 发布角色。
 
 </details>
 
-### 7. 在 GitLab CI 中，`services` 关键字的用途是什么？
+### 7. 哪种顺序能确保扫描到发布的流程约定得到遵守？
 
-- A) 定义 deployment targets
-- B) 启动辅助 containers（如 databases）用于测试
-- C) 配置 GitLab Pages
-- D) 设置 monitoring
+- A) 构建 → 成功扫描同一镜像 → 发布 → 根据获批的摘要创建索引
+- B) 发布 → 忽略扫描失败 → 部署 latest
+- C) 扫描源代码 → 重新构建不同的镜像 → 始终发布
+- D) 将任何 JSON 文件的存在视为扫描成功
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 启动辅助 containers（如 databases）用于测试**
+**答案：A) 构建 → 成功扫描同一镜像 → 发布 → 根据获批的摘要创建索引**
 
-**解释：**
-`services` 关键字定义与主 job container 一起运行的 containers。它们通常用于测试依赖项，例如 tests 需要交互的 databases（PostgreSQL、MySQL）或 caches（Redis）。
+**说明**：GitLab 通过特定于架构的 1:1 依赖项传递镜像归档。GitHub 会在推送前扫描本地构建的镜像。Trivy 错误或漏洞门禁失败都会阻止发布；原生 Trivy JSON 不会被错误标记为 GitLab 报告的数据格式（Schema）。
 
 </details>
 
-### 8. 在 CI/CD 中存储 container build cache 的推荐方法是什么？
+### 8. 关于原生运行器和 QEMU，哪项说法正确？
 
-- A) 仅使用本地磁盘
-- B) 使用带有 --cache-to 和 --cache-from flags 的 registry-based cache
-- C) 绝不在 CI/CD 中使用 cache
-- D) 将 cache 存储在 git repository 中
+- A) 仅设置平台标志就能让所有异构指令都可执行
+- B) QEMU 本身就是应用程序的交叉编译器
+- C) AMD64 镜像可以通过重新打标签变成 ARM64 镜像
+- D) 原生运行器在目标 CPU 上构建；QEMU 则模拟另一种 CPU 的指令
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用带有 --cache-to 和 --cache-from flags 的 registry-based cache**
+**答案：D) 原生运行器在目标 CPU 上构建；QEMU 则模拟另一种 CPU 的指令**
 
-**解释：**
-Registry-based caching 会将 build cache layers 存储在 container registry 中，使其可被不同的 CI runners 访问。BuildKit 的 `--cache-to` 和 `--cache-from` flags 支持这种模式，以实现一致的构建加速。
+**说明**：确保管理器/作业节点选择器、运行器标签和辅助容器架构彼此匹配。最终索引必须引用经过独立检查的平台摘要。交叉编译需要经过专门配置的工具链和 Dockerfile。
 
 </details>
 
-### 9. 配置 GitHub ARC 时，`minRunners` 设置控制什么？
+### 9. Next.js standalone 示例需要什么？
 
-- A) 最大并发 jobs 数
-- B) 维护的最小空闲 runners 数
-- C) Runner memory allocation
-- D) Job timeout duration
+- A) npm ci --omit=dev 足以满足所有构建需求
+- B) Standalone 输出、构建依赖、复制的静态资源以及正确的服务器路径
+- C) public 和 .next/static 总会自动复制到 standalone 中
+- D) 每个 monorepo 的入口都是根目录下的 server.js
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 维护的最小空闲 runners 数**
+**答案：B) Standalone 输出、构建依赖、复制的静态资源以及正确的服务器路径**
 
-**解释：**
-`minRunners` 可确保始终有一组基线 warm runners 可用，从而减少 job 启动延迟。将其设置为大于零可以避免对时间敏感的 workflows 出现 cold-start delays，但会增加空闲资源成本。
+**说明**：示例假设只有一个应用根目录，并使用 npm 锁文件。它会将 public 和 .next/static 复制到运行时目录结构中，并绑定到 0.0.0.0。Monorepo 需要自行检查 tracing-root 和嵌套输出路径。
 
 </details>
 
-### 10. 使用 IAM roles 而不是长期凭证来配置 CI/CD runners 的安全优势是什么？
+### 10. 关于 Kaniko 和无根 BuildKit，哪项说法正确？
 
-- A) 更快的身份验证
-- B) 自动凭证轮换并降低暴露风险
-- C) 更简单的配置
-- D) Cross-account access
+- A) 无守护进程就能保证每次构建都无需 root 且完全隔离
+- B) 将特权 DinD 镜像重命名就完成了无根配置
+- C) 检查维护状态，以及节点对用户命名空间、挂载和安全策略的支持情况
+- D) no-process-sandbox 会增强进程隔离
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 自动凭证轮换并降低暴露风险**
+**答案：C) 检查维护状态，以及节点对用户命名空间、挂载和安全策略的支持情况**
 
-**解释：**
-IAM roles 提供会自动轮换的临时凭证，消除了长期 access keys 泄露或被攻破的风险。结合 Pod Identity 或 IRSA，runners 可以获得范围限定的权限，而无需存储 secrets。
+**说明**：Google Kaniko 仓库已归档。可选的无根 BuildKit 片段需要使用经过单独验证的运行器。no-process-sandbox 会削弱守护进程容器的进程隔离和清理能力；镜像仓库缓存也不会自动持久化所有缓存挂载。
 
 </details>

@@ -222,7 +222,7 @@ etcd는 Kubernetes API 객체와 클러스터 상태(애플리케이션 볼륨 �
 * **ServiceAccount 컨트롤러**: 기본 계정 생성; 현대 Pod 토큰은 TokenRequest와 kubelet 갱신 사용
 * **잡 컨트롤러**: 일회성 작업 관리
 * **크론잡 컨트롤러**: 예약된 작업 관리
-* **DaemonSet 컨트롤러**: 각 적합한 노드의 Pod를 조정
+* **DaemonSet 컨트롤러**: 적합한 각 노드의 Pod를 조정
 * **스테이트풀셋 컨트롤러**: 상태 유지 애플리케이션 관리
 * **PV 컨트롤러**: 영구 볼륨 관리
 
@@ -589,11 +589,11 @@ spec:
           storage: 10Gi
 ```
 
-아래 Linux Fluent Bit 예제는 CRI 로그를 stdout으로 출력하는 실습용입니다. 자체 로그는 제외하여 재수집 루프를 막으며 상태 DB를 별도 경로에 유지합니다. 같은 로그를 다시 stdout으로 내보내는 다른 수집기와 함께 배포하지 않습니다. 운영 환경은 중앙 로그 저장소로 전달하고 호스트 경로/권한/PSS 예외를 검토합니다.
+아래 Linux Fluent Bit 예제는 CRI 로그를 stdout으로 출력하는 실습용입니다. 자체 로그는 제외하여 재수집 루프를 막으며 상태 DB를 별도 경로에 유지합니다. 같은 로그를 다시 stdout으로 내보내는 다른 수집기와 함께 배포하지 않습니다. 운영 환경에서는 로그를 중앙 로그 저장소로 전달하고 호스트 경로/권한/PSS 예외를 검토합니다.
 
 ### 데몬셋 (DaemonSet)
 
-DaemonSet은 각 적합한 노드에 Pod를 생성하며 nodeSelector, taint, 용량 및 admission 정책의 영향을 받습니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다.
+DaemonSet은 적합한 각 노드에 Pod를 생성하며 nodeSelector, taint, 용량 및 admission 정책의 영향을 받습니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다.
 
 **주요 사용 사례**:
 
@@ -721,7 +721,7 @@ spec:
       restartPolicy: Never
 ```
 
-Job은 실패/기한 제한으로 실패할 수 있고 동일 작업이 재실행될 수 있으므로 멱등성을 확보합니다. CronJob 스케줄도 정확히 한 번 실행을 보장하지 않으며 Forbid는 해당 CronJob의 겹치는 실행만 제어합니다.
+Job은 실패/기한 제한으로 실패할 수 있고 동일 작업이 재실행될 수 있으므로 멱등성을 확보합니다. CronJob 스케줄도 정확히 한 번의 실행을 보장하지 않으며 Forbid는 해당 CronJob의 겹치는 실행만 제어합니다.
 
 ### 크론잡 (CronJob)
 
@@ -1284,7 +1284,7 @@ Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객
 * **kubernetes.io/ssh-auth**: SSH 인증을 위한 자격 증명
 * **kubernetes.io/tls**: TLS 클라이언트 또는 서버를 위한 데이터
 
-data 필드는 base64 인코딩이며 암호화가 아닙니다. RBAC와 클러스터에 맞는 저장 암호화를 사용합니다. EKS는 1.28 이상에서 모든 Kubernetes API 데이터를 기본 암호화합니다. 아래 값은 설명용이며 실제 배포 시 교체해야 합니다.
+data 필드의 값은 base64로 인코딩되며 암호화되는 것은 아닙니다. RBAC와 클러스터에 맞는 저장 암호화를 사용합니다. EKS는 1.28 이상에서 모든 Kubernetes API 데이터를 기본 암호화합니다. 아래 값은 설명용이며 실제 배포 시 교체해야 합니다.
 
 **Secret 예시**:
 
@@ -1523,7 +1523,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kuber
 4. **Fargate 프로필**: 서버리스 Kubernetes 파드 실행
 5. **VPC CNI 플러그인**: AWS VPC 네트워킹과의 통합
 6. **CloudWatch Container Insights**: 컨테이너 모니터링 및 로깅
-7. **AWS App Mesh**: 지원이 2026-09-30 종료됐으며, AWS 안내상 이후 콘솔과 리소스에 접근할 수 없음
+7. **AWS App Mesh**: 지원이 2026-09-30에 종료됐으며, AWS 안내상 이후 콘솔과 리소스에 접근할 수 없음
 8. **AWS Distro for OpenTelemetry**: 분산 추적 및 모니터링
 9. **EKS 콘솔 및 CLI**: 관리 인터페이스 제공
 10. **EKS 블루프린트**: 모범 사례 기반 클러스터 구성
@@ -1553,7 +1553,7 @@ EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 9. **AWS WAF**: ALB 등 지원되는 애플리케이션 진입점에 연결하며 EKS API 엔드포인트에 직접 연결하지 않음
 10. **AWS Shield**: DDoS 보호
 11. **AWS X-Ray**: 분산 추적
-12. **AWS App Mesh**: 지원이 2026-09-30 종료됐으며, 기존 워크로드의 마이그레이션이 필요
+12. **AWS App Mesh**: 지원이 2026-09-30에 종료됐으며, 기존 워크로드의 마이그레이션이 필요
 13. **AWS SageMaker**: 기계 학습 워크로드
 14. **AWS Bedrock**: 생성형 AI 워크로드
 

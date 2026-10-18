@@ -1,6 +1,6 @@
 # Cuestionario de seguridad en tiempo de ejecución
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 Este cuestionario evalúa tu comprensión de Falco, Seccomp, AppArmor, seguridad basada en eBPF y seguridad en tiempo de ejecución de EKS.
 
@@ -19,7 +19,7 @@ Este cuestionario evalúa tu comprensión de Falco, Seccomp, AppArmor, seguridad
 **Respuesta: B. Monitorización de llamadas al sistema (syscalls)**
 
 **Explicación:**
-Falco habitualmente evalúa eventos de syscall de Linux frente a reglas; los plugins pueden proporcionar otras fuentes de eventos. En 0.44.1, los campos de contenedor proceden del plugin de contenedor. Verifica los requisitos de kernel/BTF de modern_ebpf y la recopilación de metadatos.
+Falco habitualmente evalúa eventos de syscall de Linux frente a reglas; los plugins pueden proporcionar otras fuentes de eventos. En 0.45.0, los campos de contenedor proceden del plugin de contenedor. Verifica los requisitos de kernel/BTF de modern_ebpf y la recopilación de metadatos.
 
 </details>
 

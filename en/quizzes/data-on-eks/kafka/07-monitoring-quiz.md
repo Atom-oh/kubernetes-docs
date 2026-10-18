@@ -115,7 +115,7 @@ Use rate(...[5m]) on the bytesin_total counter for per-second throughput. idle_p
 <details>
 <summary>Show answer</summary>
 
-The target is 50 effective total lag per replica; roughly ceil(total lag/50) is subject to HPA/scaler adjustments and limits. It does not create multiple consumers for each partition. With min=1, inspect HPA scale-down behavior, not zero-scaling activation/cooldown.
+The target is an effective total lag of 50 per replica; roughly ceil(total lag/50) is subject to HPA/scaler adjustments and limits. It does not create multiple consumers for each partition. With min=1, inspect HPA scale-down behavior, not zero-scaling activation/cooldown.
 
 </details>
 

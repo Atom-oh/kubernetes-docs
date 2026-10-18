@@ -16,7 +16,7 @@ Hybrid가 대부분의 조직에서 현실적인 시작점입니다. 다만 이 
 
 ## 2. Cross-account 복구는 리소스와 vault 유형별로 검증한다
 
-데이터 소유권과 복구 위치를 함께 정하되, 특정 snapshot API 제한을 모든 복구 경로의 불가능으로 해석하지 않습니다.
+데이터 소유권과 복구 위치를 함께 정하되, 특정 snapshot API 제한을 모든 복구 경로가 불가능하다는 뜻으로 해석하지 않습니다.
 
 <span id="rds-스냅샷"></span>
 
@@ -24,7 +24,7 @@ Hybrid가 대부분의 조직에서 현실적인 시작점입니다. 다만 이 
 
 - RDS DB instance의 automated snapshot은 manual snapshot으로 복사한 후 공유합니다. RDS 공유 절차에서는 AWS Backup이 생성한 snapshot에도 같은 설명이 적용됩니다. 이것을 모든 AWS Backup 복구 방식의 단계로 확대하지 않습니다.
 - 암호화된 shared DB instance snapshot은 recipient가 복사한 뒤 restore합니다. AWS 관리형 기본 KMS key로 암호화된 snapshot은 그대로 공유할 수 없으므로 승인된 customer-managed key로 복사하는 경로를 검토합니다.
-- Manual snapshot의 공유 대상은 최대20Account입니다. Oracle/SQL Server의 permanent/persistent option에 추가 제약이 있습니다.
+- Manual snapshot의 공유 대상은 최대 20 Account입니다. Oracle/SQL Server의 permanent/persistent option에 추가 제약이 있습니다.
 - **Multi-AZ DB cluster snapshot은 이 RDS snapshot-sharing 경로에서 공유할 수 없습니다.** 이것이 논리 백업·검증된 데이터 복제 등 모든 cross-account 복구 경로가 없다는 뜻은 아니며, workload-owned DB를 강제하지도 않습니다. engine·snapshot 종류·리전별 지원 범위와 대체 복구의 RTO/RPO를 확인합니다.
 
 <span id="aws-backup-cross-account-copy"></span>
@@ -84,7 +84,7 @@ Secret resource policy와 호출자의 identity policy가 **모두** 필요합�
 
 ## 5. AWS-native security telemetry vs 기존 CNAPP
 
-기존 CNAPP(Cloud-Native Application Protection Platform) 도구가 있는 조직이 AWS-native 기능을 도입할 때는, "제품을 대체한다"는 전제가 아니라 **보안 목적별로 현재 coverage와 AWS 고유 기능을 비교하고, 확인된 공백만 보완하는 접근**이 안전합니다. 목적 분류는 다음과 같이 나눌 수 있습니다.
+기존 CNAPP(Cloud-Native Application Protection Platform) 도구가 있는 조직이 AWS-native 기능을 도입할 때는, "제품을 대체한다"는 전제가 아니라 **보안 목적별로 현재 coverage와 AWS 고유 기능을 비교하고, 확인된 공백만 보완하는 접근**이 안전합니다. 목적은 다음과 같이 나눌 수 있습니다.
 
 - 조직 예방 control
 - Configuration posture
@@ -119,7 +119,7 @@ Secret resource policy와 호출자의 identity policy가 **모두** 필요합�
 | DMS, Verified Access, SageMaker Unified Studio | |
 | **Amazon MQ** | **Apache ActiveMQ만 지원. RabbitMQ는 미지원** |
 
-Amazon MQ의 RabbitMQ처럼 공식 목록에 명시적으로 제외된 engine은 별도 배치를 검토합니다. CUJ 전체를 Shared VPC에서 제외하기 전에 해당 dependency만 별도 VPC/API 경로로 연결할 수 있는지도 평가합니다.
+Amazon MQ의 RabbitMQ처럼 공식 목록에서 명시적으로 제외된 engine은 별도 배치를 검토합니다. CUJ 전체를 Shared VPC에서 제외하기 전에 해당 dependency만 별도 VPC/API 경로로 연결할 수 있는지도 평가합니다.
 
 ## 다음
 

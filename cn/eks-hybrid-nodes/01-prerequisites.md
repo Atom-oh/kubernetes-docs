@@ -200,7 +200,7 @@ SSM 和 Roles Anywhere 都需要连接 AWS。本地 CA 或更长的缓存凭证�
 
 ### SSM 角色和激活
 
-该角色需要 `eks:DescribeCluster`、ECR 拉取权限以及 SSM core/cleanup 权限。**仅有 AmazonEKSWorkerNodeMinimalPolicy 并不包含 DescribeCluster。**Pod Identity 的 `eks-auth:AssumeRoleForPodIdentity` 权限是单独的。
+该角色需要 `eks:DescribeCluster`、ECR 拉取权限以及 SSM core/cleanup 权限。**仅有 AmazonEKSWorkerNodeMinimalPolicy 并不包含 DescribeCluster**。Pod Identity 的 `eks-auth:AssumeRoleForPodIdentity` 权限是单独的。
 
 请一致地替换示例中的账户/区域/集群值。以下列表操作缺少针对单个实例的资源范围限制，因此其通配符仅限于目标区域：
 

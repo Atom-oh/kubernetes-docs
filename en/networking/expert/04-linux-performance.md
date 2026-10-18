@@ -18,7 +18,7 @@ Read the [existing Pod benchmark guide](../06-pod-network-benchmark.md) later; l
 
 You need Linux process/file skills, basic Python, TCP sequence/window knowledge, and arithmetic with bits, bytes and seconds.
 C and driver development are optional extensions, not prerequisites for the bounded Python exercise.
-The authoring of this chapter ran no network/cloud experiment; the criteria below are instructions for a future owned guest run.
+No network/cloud experiment was run while authoring this chapter; the criteria below are instructions for a future owned guest run.
 
 ## Bootlin and primary reading map {#readings}
 

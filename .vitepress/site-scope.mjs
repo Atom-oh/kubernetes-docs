@@ -2,10 +2,9 @@
 // ko/en parity checks cover only these.
 export const supportedLocales = ['ko', 'en']
 
-// Machine translations of en (translation workflows). They are published too,
-// but cover only part of en: pages they lack redirect to the English page and
-// links to them point at English (scripts/build-vitepress-locales.mjs and
-// .vitepress/translation-fallback.mjs).
+// Translations of en (translation workflows) are published too. Missing pages
+// redirect to English, and links to them point at English
+// (scripts/build-vitepress-locales.mjs and .vitepress/translation-fallback.mjs).
 export const translatedLocales = ['cn', 'jp', 'es']
 
 // Every locale VitePress publishes, in language-menu order.

@@ -127,7 +127,7 @@ Cilium BGP Control Plane은 설정된 Pod·Service prefix를 peer에 광고합�
 - **데이터 경로:** socket load balancing, 지원되는 XDP 가속과 DSR은 특정 경로의 기능입니다. VXLAN/native 모드만으로 자동 활성화되지 않습니다.
 - **연결 추적:** Cilium BPF conntrack과 Linux netfilter conntrack은 다른 상태 메커니즘입니다. Netfilter 경로 우회가 기존 연결에서 Cilium 상태도 모두 사용하지 않는다는 뜻은 아닙니다.
 - **맵:** 실제 용량·메모리 압력에 맞춰 크기를 정합니다. LRU 축출은 캐시에 유용하지만 모든 맵의 보편적 최적화는 아닙니다.
-- **호스트 조정:** CPU/NUMA 배치, IRQ 분배·병합, queue 설정은 워크로드에 따라 도움이 되거나 악화시킬 수 있습니다. Huge page는 일반적인 Cilium 가속 스위치가 아니며 실제 사용 주체·환경의 근거가 필요합니다.
+- **호스트 조정:** CPU/NUMA 배치, IRQ 분배·병합, queue 설정은 워크로드에 따라 성능을 개선하거나 악화시킬 수 있습니다. Huge page는 일반적인 Cilium 가속 스위치가 아니며 실제 사용 주체·환경의 근거가 필요합니다.
 
 ## 클라우드 제공업체별 네트워킹
 

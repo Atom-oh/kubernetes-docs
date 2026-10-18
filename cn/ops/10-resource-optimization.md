@@ -1,22 +1,22 @@
-# 资源优化：requests、limits 和语言运行时
+# 资源优化：requests、limits 与语言运行时
 
-> **最后更新**：2026 年 9 月 11 日。示例使用 Kubernetes 1.36 模式，
-> Java 21 / Spring Boot 4.1.1、Python 3.12 / Gunicorn 26.2.0，
-> Node.js 24.21、Go 1.27.1 和 Rust 1.98 / Tokio 1.53.1 进行了检查。
+> **最后更新**：October 16, 2026。示例已根据 Kubernetes 1.36 schemas、Java 21 / Spring Boot 4.1.1、Python 3.12 / Gunicorn 26.2.0、Node.js 24.22、Go 1.27.2 和 Rust 1.98 / Tokio 1.53.1 进行检查。
 
-不要仅根据语言名称或固定百分比规划工作负载容量。应在有代表性的负载、启动、重启、GC 和故障条件下测量吞吐量与延迟 SLO。同时调整 requests、limits、副本数和运行时并发度。示例百分比和阈值是测试起点，不是性能保证。
+不要仅根据语言名称或固定百分比来确定工作负载的资源配置。在有代表性的负载、启动、重启、GC 和故障条件下，测量吞吐量和延迟 SLO。将 requests、limits、副本数和运行时并发配置一起调整。示例百分比和阈值是测试起点，并非性能保证。
 
-## 1. Requests、limits 和 QoS
+## 1. Requests、limits 与 QoS
 
 | 资源 | Requests | Limits |
 |---|---|---|
-| CPU | 调度记账和竞争时的相对权重 | Linux cgroup CPU 配额可限制执行 |
-| 内存 | 调度记账 | 回收无法满足分配压力时，可能发生 cgroup OOM |
-| 未指定 | 准入默认值和更高层策略仍然重要 | 可能没有容器限制，但节点/祖先 cgroup 限制仍适用 |
+| CPU | 用于调度核算，以及发生争用时的相对权重 | Linux cgroup CPU 配额可以限制执行 |
+| 内存 | 用于调度核算 | 当回收无法满足需求时，分配压力可能导致 cgroup OOM |
+| 未指定 | Admission 默认值和更高层级的策略仍然会产生影响 | 容器可能没有 limit，但节点/上级 cgroup 限制仍然适用 |
 
-request 不是物理 CPU 绑定或预分配内存，也不保证应用性能。若仅提供 limit，且其他准入默认值未设置 request，Kubernetes 会将 limit 复制为 request。在 LimitRange 和其他策略处理后，检查获准的 Pod。
+request 不是物理 CPU 绑定或预分配内存，也不保证应用程序性能。如果只提供了 limit，且没有其他 admission 默认值设置 request，Kubernetes 会将 limit 复制到 request。应用 LimitRange 和其他策略后，请检查经过 admission 处理的 Pod。
 
-这些示例使用容器级资源，不是 Pod 级资源。先创建 `resource-demo`，并在没有 LimitRange 注入资源默认值的情况下比较 QoS。Guaranteed 要求 CPU 和内存 requests/limits 为正且相等，并满足普通容器和初始化容器的适用条件。
+这些示例使用容器级资源，而非 Pod 级资源。
+先创建 `resource-demo`，并在没有 LimitRange 注入资源默认值的情况下比较 QoS。
+Guaranteed 要求 CPU 和内存的 requests/limits 均为正值且相等，并满足常规容器和 init 容器的适用条件。
 
 ```yaml
 # qos-pods.yaml
@@ -65,21 +65,24 @@ spec:
     resources: {}
 ```
 
-BestEffort 没有 CPU/内存 requests 或 limits；其他配置可能是 Burstable。使用 Pod 级资源或 Sidecar/初始化容器资源记账时，检查特定版本规则。
+BestEffort 没有 CPU/内存 requests 或 limits；其他配置可能属于 Burstable。
+使用 Pod 级资源或 sidecar/init 资源核算时，请检查特定版本的规则。
 
-QoS 不是绝对驱逐顺序。内存压力下，kubelet 考虑用量是否超过 requests、Pod 优先级及相对 requests 的用量。Guaranteed 和未超 request 的 Burstable Pod 往往较晚考虑，但 Guaranteed 不总是最后被选中。区分 DiskPressure 驱逐与容器限制 OOM。OOMKilled 通常是容器终止原因，不是 Pod 阶段。单个进程可能被终止；若 PID 1 退出，则由重启策略决定容器重启行为。
+QoS 并不意味着绝对的驱逐顺序。在内存压力下，kubelet 会考虑用量是否超过 requests、Pod Priority，以及用量相对于 requests 的情况。Guaranteed 和用量未超过 request 的 Burstable Pod 往往较晚被考虑驱逐，但 Guaranteed 并不总是最后一个被驱逐的对象。
+请区分 DiskPressure 驱逐和容器 limit 导致的 OOM。OOMKilled 通常是容器终止原因，而不是 Pod phase。单个进程可能会被杀死；如果 PID 1 退出，重启策略会决定容器的重启行为。
 
-### CPU 配额和内存边界
+### CPU 配额与内存边界
 
-cgroup v1 使用 `cpu.cfs_quota_us` / `cpu.cfs_period_us`；v2 使用 `cpu.max`。100ms 是常见配额周期，不是通用常量。500m 配额、100ms 周期下，所有线程共享总计 50ms 执行预算。节流可同时影响延迟和吞吐量。被节流周期比率衡量包含节流的周期，不是损失的 CPU 时间。
+cgroup v1 使用 `cpu.cfs_quota_us` / `cpu.cfs_period_us`；v2 使用 `cpu.max`。
+100ms 是常见的配额周期，并非普遍适用的固定值。使用 500m 和 100ms 周期时，所有线程共享 50ms 的总执行时间预算。限流可能同时影响延迟和吞吐量。限流周期比率衡量的是包含限流的周期，而不是损失的 CPU 时间。
 
-内存限制不是堆限制。区分 cgroup v1 `memory.limit_in_bytes` 和 v2 `memory.max`。考虑 RSS、原生分配、线程栈、页缓存及内存型 emptyDir 用量。内存接近阈值时重启应用的存活探针可能掩盖原因并制造重启循环；它不是通用 OOM 解决方案。
+内存 limit 不是堆大小限制。请区分 cgroup v1 的 `memory.limit_in_bytes` 和 v2 的 `memory.max`。考虑 RSS、原生内存分配、线程栈、页缓存以及内存支持的 emptyDir 用量。当内存接近某个阈值时重启应用的 liveness probe 可能会掩盖根因并造成重启循环；它不是通用的 OOM 解决方案。
 
-移除 CPU limit 可减少该容器的配额节流，但不消除竞争、祖先配额或节点限制。应同时评估 requests、优先级、隔离、策略和 SLO。
+移除 CPU limit 可以减少该容器的配额限流，但不会消除资源争用、上级配额或节点限制。应综合评估 requests、priority、隔离、策略和 SLO。
 
-### 命名空间默认值和预算
+### Namespace 默认值与预算
 
-LimitRange 控制准入默认值及各资源约束。ResourceQuota 控制命名空间内 requests、limits 和对象数量的准入预算。它们不直接计量或限制实时 CPU 用量或成本。应用这些策略前，创建 `production` 命名空间。
+LimitRange 控制 admission 默认值和每种资源的约束。ResourceQuota 控制 namespace 中 requests、limits 和对象数量的 admission 预算。它们不会直接计量或限制实时 CPU 用量或成本。应用这些策略前，先创建 `production` namespace。
 
 ```yaml
 # namespace-policy.yaml
@@ -114,11 +117,15 @@ spec:
     pods: '20'
 ```
 
-## 2. 测量和 VPA
+## 2. 测量与 VPA
 
-在有代表性的时间段内观察分布、峰值、启动成本和内存增长。P70 requests 和 P99 limits 是待测试假设，不是通用默认值。即使同一种语言，GC、模型加载、JIT、密码学运算、Sidecar 和批输入大小也不同。不要仅提高 limits 来掩盖泄漏，也不要自动将空闲备用/灾备 Pod 归为浪费。
+在有代表性的时间段内观察分布、峰值、启动成本和内存增长。
+P70 requests 和 P99 limits 是待验证的假设，并非通用默认值。
+即使是同一种语言，GC、模型加载、JIT、加密、sidecar 和批量输入大小也会有所不同。
+不要只靠提高 limits 来掩盖内存泄漏，也不要自动将空闲的备用/灾难恢复 Pod 判定为浪费。
 
-固定版本 VPA 和 Goldilocks 安装参阅[扩缩容章节](./06-scaling-strategies.md)。Goldilocks 为所选命名空间/工作负载创建和展示 VPA；安装不会自动优化一切。此 VPA 观察下方 `resource-java` Deployment。
+有关固定版本的 VPA 和 Goldilocks 安装，请参阅[扩缩容章节](./06-scaling-strategies.md)。
+Goldilocks 会为选定的 namespace/workload 创建/显示 VPA；安装后不会自动优化所有内容。此 VPA 会监控下方所示的 `resource-java` Deployment。
 
 ```yaml
 # vpa.yaml
@@ -146,19 +153,25 @@ spec:
         memory: 4Gi
 ```
 
-`Off` 仅提供建议。`target` 是 request 建议；上下界描述建议范围。不要直接将 upperBound 当作内存 limit，或将 uncappedTarget 当作已应用值。`RequestsAndLimits` 可在保留现有比率的同时调整 limits；不会把 upperBound 复制到 limits。
+`Off` 只提供建议。`target` 是 request 建议值；上下界表示建议范围。不要将 upperBound 直接视为内存 limit，也不要将 uncappedTarget 直接视为已应用的值。`RequestsAndLimits` 可以在保留现有比例的同时调整 limits；它不会将 upperBound 复制到 limits。
 
-VPA 1.7.1 中，已弃用的 `Auto` 行为等同于 `Recreate`。检查 `InPlaceOrRecreate`/`InPlace` 的前提条件和 Kubernetes 原地更新支持。`Initial` 仍会更改新 Pod 的 requests，从而更改基于 request 的 HPA 利用率分母。它不会自动与 HPA 无冲突。
+在 VPA 1.8.0 中，已弃用的 `Auto` 行为与 `Recreate` 相同。请检查使用 `InPlaceOrRecreate`/`InPlace` 的前提条件以及 Kubernetes 原地更新支持情况。`Initial` 仍会更改新 Pod 的 requests，因此也会更改基于 request 的 HPA 利用率分母。
+它与 HPA 配合时不会自动避免冲突。
 
-若一个 Pod 在所需 SLO 下持续处理 200 RPS，1,000 RPS 在稳态需要五个 Pod。失去一个 Pod 后仍保持该吞吐量，至少需要六个。这不保证承受整个可用区故障。还应区分增加 20% 容量与保留 20% 可用容量不用；后者需要 `ceil(1000 / (200 × 0.8)) = 7`。
+如果一个 Pod 能在满足所需 SLO 的情况下持续处理 200 RPS，那么稳定状态下处理 1,000 RPS 需要五个 Pod。要在丢失一个 Pod 后仍维持该吞吐量，至少需要六个 Pod。这并不能保证整个 AZ 故障时仍能正常运行。还要区分增加 20% 容量和让 20% 的可用容量保持闲置；后者需要 `ceil(1000 / (200 × 0.8)) = 7`。
 
-## 3. JVM：堆和容器内存
+## 3. JVM：堆与容器内存
 
-`MaxRAMPercentage` 是 JVM 根据检测到的内存进行堆自适应调整的输入。75% 并非普遍最优，也不是立即跟随 Pod limit 变化的实时调整器。`-Xmx`、`-XX:MaxRAM` 和小堆自适应逻辑也很重要。元空间、代码缓存、栈、直接缓冲区、JNI 和分配器消耗堆外内存。固定 25% 不保证堆外容量充足。
+`MaxRAMPercentage` 是 JVM 根据检测到的内存进行堆大小优化时使用的输入值。
+75% 并非普遍适用的最优值，也不是能在 Pod limit 变更后立即跟随调整的实时缩放器。`-Xmx`、`-XX:MaxRAM` 和小堆优化也会产生影响。
+Metaspace、代码缓存、栈、直接缓冲区、JNI 和分配器都会消耗堆外内存。
+固定的 25% 并不能保证非堆内存容量充足。
 
-JVM 不会自动读取 `JAVA_OPTS`；镜像入口必须将其传给命令。此示例使用 JVM 识别的 `JAVA_TOOL_OPTIONS` 及显式 `java -jar` 命令。60% 是性能剖析起点。
+JVM 不会自动读取 `JAVA_OPTS`；镜像的 entrypoint 必须将其传递给命令。此示例使用 JVM 识别的 `JAVA_TOOL_OPTIONS` 和显式的 `java -jar` 命令。
+60% 是性能分析的起始值。
 
-下方完整 Spring Boot 示例使用 Java 21 和 Boot 4.1.1 构建。将文件保存到指定项目路径。
+下面的完整 Spring Boot 示例使用 Java 21 和 Boot 4.1.1 构建。
+将文件保存到指定的项目路径。
 
 ```xml
 <!-- java/pom.xml -->
@@ -273,7 +286,11 @@ mvn -f java/pom.xml package
 java -jar java/target/resource-api-1.0.0.jar
 ```
 
-最小项目不包含 wrapper 文件；除非添加 wrapper，否则使用 `mvn package`。镜像必须在 `/app/resource-api.jar` 包含构建出的 jar，并具有兼容 Java 21 的运行时。下方 `registry.example.com` 镜像是需替换的占位符。命名空间创建、镜像构建和仓库访问是独立前提条件。就绪/存活路径匹配应用实际 Actuator 端点。
+这个最小项目不包含 wrapper 文件；除非添加 wrapper，否则请使用 `mvn package`。
+镜像必须包含位于 `/app/resource-api.jar` 的构建后 jar 文件，以及兼容 Java 21 的运行时。
+下方的 `registry.example.com` 镜像是占位符，需要替换。
+创建 namespace、构建镜像和访问 registry 是彼此独立的前提条件。
+Readiness/liveness 路径与应用程序实际的 Actuator endpoints 一致。
 
 ```yaml
 # java-deployment.yaml
@@ -346,26 +363,35 @@ spec:
             app: resource-java
 ```
 
-Prometheus 配置路径为 `management.prometheus.metrics.export`。不要无差别暴露指标和详细健康信息。只有发布直方图的指标才支持 `_bucket` 查询；对各 Pod 客户端计算的百分位数求平均，不会得到全局百分位数。Micrometer Timer 已提供 count/sum，同一测量无需重复 Counter。
+Prometheus 配置路径为 `management.prometheus.metrics.export`。
+不要不加区分地暴露 metrics 和详细健康信息。
+只有发布了 histogram 的 metrics 才能支持 `_bucket` 查询；对各 Pod 的客户端计算百分位数取平均，并不能得到全局百分位数。
+Micrometer Timer 已提供 count/sum，因此同一项测量无需再添加重复的 Counter。
 
-HeapDumpOnOutOfMemoryError 处理 JVM Java OOME。内核 SIGKILL 无法运行堆转储或关闭钩子。emptyDir 中的诊断文件随 Pod 删除而消失；应处理文件名冲突和磁盘耗尽。堆转储可能包含敏感应用数据，应限制访问和保留期。`ScheduleAnyway` 表示偏好，不是严格可用区分布。
+HeapDumpOnOutOfMemoryError 用于处理 JVM Java OOME。内核 SIGKILL 无法执行 heap-dump 或 shutdown hooks。删除 Pod 后，emptyDir 中的诊断文件也会消失；还应处理文件名冲突和磁盘耗尽问题。Heap dump 可能包含敏感应用数据，因此应限制访问和保留时间。
+`ScheduleAnyway` 表示一种调度倾向，而非严格的 AZ 分布要求。
 
-### GC 和 CPU
+### GC 与 CPU
 
-| 选择 | 验证内容 |
+| 选项 | 需要验证的内容 |
 |---|---|
-| G1 | 常见起点；暂停目标不是最大延迟保证 |
-| ZGC | JDK 专属分代行为及 CPU/内存预算 |
-| Shenandoah | 在所选 JDK 发行版和版本中的可用性 |
-| Parallel / Serial | 针对吞吐量或小堆工作负载需求比较 |
+| G1 | 常见的起始选择；暂停目标并非最大延迟保证 |
+| ZGC | 特定 JDK 版本的分代行为以及 CPU/内存预算 |
+| Shenandoah | 所选 JDK 发行版和版本是否提供该选项 |
+| Parallel / Serial | 根据吞吐量或小堆工作负载需求进行比较 |
 
-Java 21 通过 `-XX:+UseZGC -XX:+ZGenerational` 支持分代 ZGC。分代模式在 Java 23 成为默认；Java 24 移除非分代模式，使选择标志过时。应区分 Java 25 的过时警告与未来标志失效。不要将此标志复制到 Java 17。当前仅分代 JDK 使用 `-XX:+UseZGC`，并在确切版本上验证启动。固定 GC 延迟/吞吐量数据需要基准测试。
+Java 21 支持通过 `-XX:+UseZGC -XX:+ZGenerational` 启用分代 ZGC。
+分代模式在 Java 23 中成为默认设置；Java 24 移除了非分代模式，并使选择标志过时。请区分 Java 25 中的过时警告与未来标志失效。
+不要将此标志复制到 Java 17。在仅支持分代模式的当前 JDK 上，使用 `-XX:+UseZGC`，并在确切的版本上验证启动情况。固定的 GC 延迟/吞吐量数据需要通过基准测试得出。
 
-`availableProcessors()` 不总是 GC 工作线程数。配额、亲和性、JDK 版本和收集器自适应逻辑都重要。增加 GC 线程可能更快耗尽较小 CPU 配额。启动慢时使用 startupProbe，并测量 JIT/GC/CPU 行为。
+`availableProcessors()` 并不总是 GC worker 数量。配额、CPU 亲和性、JDK 版本和收集器优化都会产生影响。增加 GC 线程可能会更快耗尽较小的 CPU 配额。
+如果启动缓慢，请使用 startupProbe 并测量 JIT/GC/CPU 行为。
 
-### JMX 和 JFR
+### JMX 与 JFR
 
-在镜像中包含 JMX exporter 1.6.0 jar，或获取官方制品并验证校验和。以下配置已对实际内存、线程和 GC MBean 测试。JMX 与 Micrometer 使用不同指标名；不要在仪表板中默默混用。GC CollectionTime 从毫秒转换为秒。
+在镜像中包含 JMX exporter 1.6.0 jar，或获取官方 artifact 并验证其校验和。以下配置已针对实际的内存、线程和 GC MBeans 进行测试。
+JMX 和 Micrometer 使用不同的 metric 名称；不要在 dashboard 中不加区分地混用。
+GC CollectionTime 会从毫秒转换为秒。
 
 ```yaml
 # jmx-config.yaml
@@ -400,9 +426,10 @@ rules:
 java -javaagent:jmx_prometheus_javaagent-1.6.0.jar=127.0.0.1:9404:jmx-config.yaml   -jar java/target/resource-api-1.0.0.jar
 ```
 
-此本地诊断命令绑定回环地址。从另一 Pod 采集需要显式指标端口、ServiceMonitor 和访问控制。代理 jar 缺失时 JVM 无法启动。NMT 需要启动时设置 `-XX:NativeMemoryTracking=summary`；它不是覆盖所有外部原生库分配的完整 RSS 记账系统。
+此本地诊断命令会绑定到 loopback。从另一个 Pod 采集数据需要显式配置 metrics 端口、ServiceMonitor 和访问控制。若 agent jar 不存在，JVM 将无法启动。
+NMT 需要在启动时设置 `-XX:NativeMemoryTracking=summary`；它并不能完整核算所有外部原生库分配所占用的 RSS。
 
-在线 JFR 采集需要 JDK 工具、适当的同用户权限、附加支持及可写目的地。将 `PID` 替换为 Java 进程 ID，不要假定为 PID 1。
+实时 JFR 采集需要 JDK 工具、适当的同用户权限、attach 支持以及可写的目标路径。将 `PID` 替换为 Java 进程 ID，不要想当然地认为 PID 1 就是它。
 
 ```bash
 jcmd PID VM.native_memory summary
@@ -410,11 +437,15 @@ jcmd PID JFR.start name=profile settings=profile duration=60s filename=/diagnost
 jfr summary /diagnostics/profile.jfr
 ```
 
-从容器复制时，考虑选定容器及 `kubectl cp` 所需 `tar` 是否可用。录制完成后再复制；进程/Pod 替换不保证堆或 JFR 文件保留。
+从容器复制文件时，请考虑所选容器，以及 `kubectl cp` 是否有可用的 `tar`。
+录制结束后再复制；进程/Pod 被替换后，并不能保证 heap 或 JFR 文件仍然存在。
 
-## 4. Python：工作进程和性能剖析
+## 4. Python：workers 与性能分析
 
-将 `2 × CPU + 1` 应用于主机 `multiprocessing.cpu_count()`，可能超配容器配额。测试 CPU/IO 行为、GIL/原生扩展、每工作进程 RSS 和请求并发。不存在普遍正确的每 CPU 工作进程公式。此 WSGI Flask 示例实际读取 `WEB_CONCURRENCY`，并从一个工作进程、两个线程开始。
+将 `2 × CPU + 1` 应用于主机的 `multiprocessing.cpu_count()` 可能导致容器 CPU 配额超额使用。
+测试 CPU/IO 行为、GIL/原生扩展、每个 worker 的 RSS 和请求并发情况。
+不存在普遍适用的每 CPU worker 数公式。
+此 WSGI Flask 示例会实际读取 `WEB_CONCURRENCY`，并以一个 worker 和两个线程启动。
 
 ```text
 # python/requirements.txt
@@ -473,11 +504,15 @@ python -m venv .venv
 WEB_CONCURRENCY=2 GUNICORN_THREADS=2   .venv/bin/python -m gunicorn --chdir python   --config python/gunicorn.conf.py 'app:create_app()'
 ```
 
-这些健康端点仅检查示例进程。应为应用实现依赖就绪检查。不要使用 Flask 已移除的 `before_first_request` 钩子。此最小示例禁用 Gunicorn 26 本地管理控制套接字。
+这些健康检查 endpoint 只检查示例进程。请为应用实现依赖项 readiness 检查。不要使用 Flask 中已移除的 `before_first_request` hook。
+此最小示例禁用了 Gunicorn 26 的本地管理 control socket。
 
-区分 WSGI Flask 与 FastAPI 等 ASGI 应用。Gunicorn 26 也有 ASGI worker；若选择 Uvicorn，应区分已弃用的 `uvicorn.workers` 和独立 `uvicorn-worker` 包。不要将 gthread 设置原样用于 ASGI 应用。评估预加载的写时复制收益时，也要考虑 fork 前初始化的线程/连接/客户端。工作进程回收不是内存泄漏的根因修复。
+请区分 WSGI Flask 和 FastAPI 等 ASGI 应用。Gunicorn 26 也有 ASGI worker；如果选择 Uvicorn，请区分已弃用的 `uvicorn.workers` 和独立的 `uvicorn-worker` 包。不要将 gthread 设置原样应用于 ASGI 应用。
+评估 preload 的写时复制优势时，也要考虑在 fork 前初始化的线程/连接/客户端。
+回收 worker 不能从根本上解决内存泄漏。
 
-tracemalloc 观察被跟踪的 Python 分配，不覆盖所有原生/RSS 用量。以下是显式本地诊断，不是公开暴露的 HTTP 调试端点。
+tracemalloc 只能观察受跟踪的 Python 分配，无法涵盖所有原生/RSS 用量。
+以下是显式的本地诊断示例，不是公开暴露的 HTTP 调试 endpoint。
 
 ```python
 # python/profile_allocations.py
@@ -502,11 +537,16 @@ if __name__ == "__main__":
     profile_allocation_delta(lambda: [bytearray(1024) for _ in range(100)])
 ```
 
-## 5. Node.js：老生代空间和进程内存
+## 5. Node.js：old space 与进程内存
 
-`--max-old-space-size` 以 MiB 计，控制 V8 老生代空间。它不是 RSS 上限；新生代、外部/Buffer 及原生内存也需要容量。使用多个工作进程时，为每个进程的堆做预算。Node.js 20 于 2026 年 4 月结束生命周期，因此新示例使用受支持的 Node.js 24 系列。
+`--max-old-space-size` 以 MiB 为单位，控制 V8 old space。
+它不是 RSS 上限；young generation、external/Buffer 和原生内存也需要预留容量。
+使用多个 worker 进程时，应为每个进程的堆分别预留资源。
+Node.js 20 已于 2026 年 4 月结束生命周期，因此新示例使用受支持的 Node.js 24 系列。
 
-此单进程示例实现健康端点、内存观察和 SIGTERM 处理。仅根据百分比反复调用 `global.gc()` 不是通用优化。已测试的 Node 24 在 NODE_OPTIONS 中接受 `--expose-gc`；这不能证明强制 GC 对生产有益。
+此单进程示例实现了健康检查 endpoint、内存监控和 SIGTERM 处理。
+仅根据百分比反复调用 `global.gc()` 并非通用优化方法。
+经测试的 Node 24 接受在 NODE_OPTIONS 中设置 `--expose-gc`；但这并不能证明强制 GC 在生产环境中有益。
 
 ```javascript
 // node/server.cjs
@@ -552,17 +592,24 @@ process.on('SIGINT', shutdown);
 NODE_OPTIONS="--max-old-space-size=512" node node/server.cjs
 ```
 
-`UV_THREADPOOL_SIZE` 影响使用 libuv 线程池的操作，包括文件系统 I/O、部分 DNS 工作和密码学运算。它不涵盖所有网络 I/O。更多线程可能增加栈及并发操作内存。启动前设置，并用真实工作负载测试。
+`UV_THREADPOOL_SIZE` 会影响使用 libuv 线程池的操作，包括文件系统 I/O、部分 DNS 操作和加密。它不涵盖所有网络 I/O。
+更多线程可能会增加栈内存和并发操作的内存用量。应在启动前设置，并使用实际工作负载进行测试。
 
-若使用 Node cluster，优先使用 `isPrimary` 并显式限制工作进程数。不要假定 `os.cpus().length`、PM2 `instances: max` 或 `availableParallelism()` 是所有 cgroup 配额的精确公式。重启循环需要退避，关闭期间不得重新创建工作进程。组合 Pod 副本和进程副本会成倍增加工作进程及内存预算。
+如果使用 Node cluster，请优先使用 `isPrimary` 并明确限制 worker 数量。
+不要认为 `os.cpus().length`、PM2 的 `instances: max` 或 `availableParallelism()` 对所有 cgroup 配额都适用。
+重启循环需要退避机制，并且在关闭期间不得重新创建 worker。
+同时使用 Pod 副本和进程副本会使 worker 数量和内存预算成倍增加。
 
-## 6. Go 和 Rust
+## 6. Go 与 Rust
 
 ### Go
 
-Go 1.25 在 Linux 引入感知 cgroup 的默认 GOMAXPROCS。`go.mod` 语言版本和 GODEBUG 兼容默认值很重要；这些默认行为要求使用 `go 1.25.0` 或更新版本。此示例以 Go 1.27.1 测试。显式在环境中设置 GOMAXPROCS，或调用正值 `runtime.GOMAXPROCS(n)`，会禁用自动更新。使用 `runtime.GOMAXPROCS(0)` 查询不会更改它。
+Go 1.25 在 Linux 上引入了感知 cgroup 的默认 GOMAXPROCS。
+`go.mod` 的语言版本和 GODEBUG 兼容性默认设置也很重要；要使用这些默认值，请使用 `go 1.25.0` 或更高版本。此示例已使用 Go 1.27.2 进行测试。
+在环境中显式设置 GOMAXPROCS，或调用参数为正数的 `runtime.GOMAXPROCS(n)`，都会禁用自动更新。使用 `runtime.GOMAXPROCS(0)` 查询不会更改其值。
 
-当前运行时将配额向上取整，同时考虑逻辑 CPU 和亲和性。当逻辑 CPU/亲和性数量允许两个时，通常不会选择少于两个，因此 `500m always means 1` 不正确。不要将 automaxprocs 版本/取整行为等同于 Go 内置默认值，也不要盲目同时启用两者。CPU requests 不是配额。
+当前运行时会将配额向上取整，并同时考虑逻辑 CPU 和亲和性。
+如果逻辑 CPU/亲和性数量允许两个，它通常不会选择低于两个的值，因此“`500m always means 1`”是不正确的。不要将 automaxprocs 的版本/取整行为等同于 Go 内置默认值，也不要不加判断地同时启用两者。CPU requests 不是配额。
 
 ```text
 // go/go.mod
@@ -605,13 +652,18 @@ go -C go build -o resource-probe .
 GOMEMLIMIT=450MiB ./go/resource-probe
 ```
 
-GOMEMLIMIT 是 Go 运行时管理内存的软限制，约为 `MemStats.Sys - HeapReleased`。它不是涵盖 cgo、mmap 或外部库的整个进程 RSS 上限。运行时可能超出它以限制 GC 开销。设为容器内存的 80–90% 不保证防止 OOM；远低于存活堆可能引起过度 GC。此程序仅报告设置，不读取或修改 cgroup。
+GOMEMLIMIT 是 Go 运行时管理内存的软限制，近似于
+`MemStats.Sys - HeapReleased`。它不是涵盖 cgo、mmap 或外部库的整个进程 RSS 上限。运行时可能会超出此限制以降低 GC 开销。
+将其设为容器内存的 80–90% 并不能保证避免 OOM；若远低于活动堆大小，则可能导致过度 GC。此程序只报告设置，不会读取或修改 cgroup。
 
 ### Rust
 
-没有 GC 不意味着内存用量或延迟确定。观察分配器行为、碎片、并发工作、缓冲区、阻塞工作和操作系统调度。根据性能剖析和平台支持评估 jemalloc 等分配器更改，不要假定普遍提升性能。
+没有 GC 并不意味着内存用量或延迟具有确定性。应观察分配器行为、碎片、并发工作、缓冲区、阻塞工作和 OS 调度。
+是否更换为 jemalloc 等分配器，应依据性能分析结果和平台支持情况进行评估，不要假设它能普遍提升性能。
 
-此小型 Tokio 程序验证运行时设置；不是 HTTP 服务器。显式 `worker_threads()` 覆盖环境，因此示例省略它。工作线程数不限制 `spawn_blocking` 或外部库线程。
+这个小型 Tokio 程序用于验证运行时设置；它不是 HTTP server。
+显式设置 `worker_threads()` 会覆盖环境变量，因此示例中省略了它。
+worker 线程数量并不限制 `spawn_blocking` 或外部库线程的数量。
 
 ```toml
 # rust/Cargo.toml
@@ -654,15 +706,26 @@ cargo build --manifest-path rust/Cargo.toml
 TOKIO_WORKER_THREADS=2 ./rust/target/debug/resource-probe
 ```
 
-没有锁文件的新项目先运行 `cargo build`，再审核并提交锁文件。后续可复现构建可使用 `--locked`。使用有界队列/并发，不要创建无限 CPU 密集型异步任务。没有可比较基准测试，不要发布语言级内存/启动/速度排名。
+如果新项目还没有 lockfile，请运行 `cargo build`，然后检查并提交 lockfile。
+后续可复现构建可以使用 `--locked`。
+使用有界队列/并发，而不是创建数量不受限的 CPU 密集型异步任务。
+没有可比基准测试时，不要发布针对整个语言的内存/启动/速度排名。
 
-## 7. PromQL 和警报
+## 7. PromQL 与告警
 
-这些规则假定使用 kube-prometheus-stack 的 `job="kubelet"`、`metrics_path="/metrics/cadvisor"` 和聚合 `cpu="total"` 序列，以及 kube-state-metrics。针对每 CPU 采集调整聚合，并根据实际标签约定调整选择器。
+这些规则假设 kube-prometheus-stack 使用 `job="kubelet"`、`metrics_path="/metrics/cadvisor"` 和聚合的 `cpu="total"` series，并且使用 kube-state-metrics。
+请根据每 CPU 采集情况调整聚合方式，并根据实际 label 约定调整 selectors。
 
-示例使用每容器 max 聚合，避免重复抓取观测相加。检查同一 Pod/容器名下多个运行时 ID 重叠的重启窗口；这些观测不是精确 CPU 计费数据。多集群需要采集/远程写入路径中的真实 `cluster` 标签；PromQL 不会虚构缺失的集群身份。
+该示例使用每个容器的 max 聚合，以避免对重复的 scrape 观测求和。
+请检查同一个 Pod/container 名称下多个 runtime ID 重叠的重启时间窗口；
+这些观测并非精确的 CPU 计费数据。
+多个集群需要在采集/remote-write 路径中提供真实的 `cluster` label；
+PromQL 不会凭空生成缺失的集群标识。
 
-有序规则对齐 request/limit 分母并排除零值。工作集不是精确 OOM 预测器；应调查页缓存和回收行为。最近终止原因是 gauge，因此 `increase(reason)` 不是 OOM 次数。OOM 警报结合近期重启及最近记录的 OOM 原因；不会统计间隔内每次 OOM。
+这些有序规则使用一致的 request/limit 分母，并排除零值。
+Working set 不是精确的 OOM 预测指标；请检查页缓存和回收行为。
+最近一次终止原因是 gauge，因此 `increase(reason)` 并不是 OOM 计数。
+OOM 告警将最近一次重启与最后记录的 OOM 原因结合起来；它不会统计时间间隔内发生的每一次 OOM。
 
 ```yaml
 # resource-rules.yaml
@@ -734,15 +797,21 @@ spec:
           termination state.
 ```
 
-让 `release: prometheus` 和 `observability` 命名空间匹配 Prometheus 规则选择器。阈值仅为示例。较高节流周期比率不自动意味着需要提高 limit；应关联延迟、吞吐量、并发和节点竞争。
+将 `release: prometheus` 和 `observability` namespace 与 Prometheus rule selector 匹配。
+阈值仅为示例。较高的限流周期比率并不自动意味着应该调高 limit；应结合延迟、吞吐量、并发和节点争用情况进行分析。
 
-`cluster:pending_pods:count` 对 0/1 阶段 gauge 求和。`count(kube_pod_status_phase{phase="Pending"})` 也会统计零值样本。Pending 可包含已调度但等待镜像/存储的 Pod，因此不等同于资源不足。`node:pods:count` 已是每节点计数；不要再除以集群节点数。
+`cluster:pending_pods:count` 对 0/1 phase gauge 求和。
+`count(kube_pod_status_phase{phase="Pending"})` 也会统计值为零的样本。
+Pending 可能包含已调度但正在等待镜像/存储的 Pod，因此不等同于资源不足。
+`node:pods:count` 已经是每节点的计数；不要再除以集群节点数。
 
-Deployment 聚合应使用 kube-state-metrics 的 Pod→ReplicaSet→Deployment 所有权关系，或已验证的记录规则，不要用 Pod 名正则猜测所有权。长期容量规划应评估滚动发布、节假日、备用容量和 SLO；观察到低用量不是自动驱逐策略。
+聚合 Deployment 时，请使用 kube-state-metrics 的 Pod→ReplicaSet→Deployment 所有权关系或经过验证的 recording rules，而不是猜测 Pod 名称正则表达式所表示的所有权。
+长期配置资源时，应评估 rollout、假期、备用容量和 SLO；观测到低用量并不意味着应自动驱逐。
 
-### JVM 查询和仪表板
+### JVM 查询与 dashboard
 
-这些查询针对使用上方 Micrometer 配置的 JVM。通过 Prometheus instance 标签区分进程，并在真实抓取中验证指标名。
+这些查询针对使用上述 Micrometer 配置的 JVM。
+请通过 Prometheus 的 instance label 区分进程，并在实际 scrape 中验证 metric 名称。
 
 ```promql
 sum by (instance, application) (jvm_memory_used_bytes{area="heap"})
@@ -764,15 +833,23 @@ sum by (instance, application) (rate(jvm_gc_pause_seconds_sum[5m]))
 rate(jvm_classes_loaded_count_classes_total[5m])
 ```
 
-`jvm_gc_pause_seconds_sum` 的速率表示每秒墙钟时间观察到的暂停秒数。将其除以进程 CPU 不能得到有效 GC CPU 百分比，也不涵盖所有并发 GC 工作。`jvm_classes_loaded_classes` 是当前已加载类的 gauge；已测试 Micrometer 累计计数器为 `jvm_classes_loaded_count_classes_total`。更改 JDK/库版本时检查实际暴露数据。
+`jvm_gc_pause_seconds_sum` 的 rate 表示每秒墙钟时间内观测到的暂停秒数。
+将其除以进程 CPU 得不到有效的 GC CPU 百分比，也无法涵盖所有并发 GC 工作。`jvm_classes_loaded_classes` 是当前已加载类的 gauge；
+经测试的 Micrometer 累积计数器是 `jvm_classes_loaded_count_classes_total`。
+更改 JDK/库版本时，请检查实际的 exposition。
 
-使用[上一章](./09-observability-stack.md)的显式数据源 UID 和仪表板预置。比例使用 percentunit 显示，或乘以 100 后使用 percent。不要将原始利用率 gauge 当作热图中的直方图桶。不要将部分面板 JSON 片段描述为完整可导入仪表板。
+请使用[上一章](./09-observability-stack.md)中明确指定的 datasource UID 和 dashboard provisioning。
+使用 percentunit 显示比率，或者将比率乘以 100 并使用 percent。
+不要在 heatmap 中将原始利用率 gauge 当作 histogram bucket。
+不要把不完整的 panel JSON 片段描述为可完整导入的 dashboard。
 
-## 8. EKS Auto Mode 和备用容量
+## 8. EKS Auto Mode 与备用容量
 
-考虑 requests、实际 Node allocatable、DaemonSet/系统开销、Pod 开销、端口、卷、拓扑和污点。4 vCPU 实例不一定为应用请求暴露四个可分配 CPU。大实例不总是更高效，小实例也不总是更便宜。评估故障影响、可用性、定价和碎片。
+请考虑 requests、实际 Node allocatable、DaemonSet/系统开销、Pod 开销、端口、卷、拓扑和 taints。4-vCPU 实例不一定能为应用程序 requests 提供四个可分配 CPU。较大的实例不总是更高效，较小的实例也不总是更便宜。应评估故障影响、可用性、定价和碎片化情况。
 
-Auto Mode NodePool 使用 `karpenter.sh/v1`；NodeClass 组为 `eks.amazonaws.com`。此示例引用现有 Auto Mode `default` NodeClass。单独验证该 NodeClass、子网、IAM 角色和区域实例可用性。
+Auto Mode NodePools 使用 `karpenter.sh/v1`；NodeClass 的 group 是 `eks.amazonaws.com`。
+此示例引用现有 Auto Mode `default` NodeClass。
+请分别验证 NodeClass、子网、IAM role 和区域内实例可用性。
 
 ```yaml
 # auto-nodepool.yaml
@@ -803,9 +880,14 @@ spec:
     consolidateAfter: 5m
 ```
 
-整合考虑 requests、调度可行性、价格和中断约束；观察到 CPU 低于 30% 不保证节点会被整合。PDB 不阻止所有终止，也不保证强制终止不中断。当 request 未变时，普通调度器不会自动预留过大的 limit。
+Consolidation 会考虑 requests、调度可行性、价格和中断约束；
+观测到 CPU 使用率低于 30%，并不保证节点会进行 consolidation。
+PDB 不能阻止所有终止操作，也不能保证强制终止期间服务不间断。
+如果 request 保持不变，普通 scheduler 不会自动预留超大的 limit。
 
-占位 Pod 可促使系统为更高优先级工作保留备用容量。优先级 -1 低于默认 0，不是可能的最低优先级。`preemptionPolicy: Never` 阻止占位 Pod 抢占其他 Pod；不阻止它被抢占。这不是 EC2 Capacity Reservation，也不是可用性保证，其拓扑、污点和资源形态必须适合真实工作负载。
+占位 Pod 可以鼓励系统为更高优先级的工作保留备用容量。
+Priority -1 低于默认值 0，但并非可能的最低优先级。
+`preemptionPolicy: Never` 可防止占位 Pod 抢占其他 Pod；但不能防止占位 Pod 本身被抢占。这不是 EC2 Capacity Reservation，也不是可用性保证；其拓扑、taints 和资源规格必须适合实际工作负载。
 
 ```yaml
 # capacity-buffer.yaml
@@ -843,20 +925,22 @@ spec:
             memory: 4Gi
 ```
 
-## 发布顺序和验证限制
+## 部署顺序与验证限制
 
-1. 在有代表性的负载下测量延迟、吞吐量、配额行为、总内存和重启原因。
-2. 使用 VPA 和观测结果提出 requests，同时考虑 HPA 与运行时并发。
-3. 调整 limits 和余量前，在生产之外测试启动、峰值负载、故障和重启。
-4. 金丝雀期间观察 SLO、成本、放置和中断；保留回滚所需配置。
+1. 在有代表性的负载下，测量延迟、吞吐量、配额行为、总内存和重启原因。
+2. 使用 VPA 和观测结果提出 requests 建议，并同时考虑 HPA 和运行时并发。
+3. 在调整 limits 和预留容量前，在生产环境之外测试启动、峰值负载、故障和重启。
+4. 在 canary 期间观察 SLO、成本、部署位置和中断情况；保留回滚所需的配置。
 
-验证在本地运行了 Java/Spring/JMX 指标和 JFR/NMT、Gunicorn/Node 健康与 SIGTERM 行为、Go 运行时报告和 Tokio 工作线程配置。PromQL 计算用例涵盖重复抓取、多集群、零分母、历史 OOM 状态及 Pending 0/1 gauge。未部署 EKS、修改 cgroup 配额、强制触发 OOM 或进行性能基准测试。
+验证过程在本地运行了 Java/Spring/JMX metrics 和 JFR/NMT、Gunicorn/Node 健康检查及 SIGTERM 行为、Go 运行时报告和 Tokio worker 配置。
+PromQL 计算案例覆盖了重复 scrape、多集群、零分母、历史 OOM 状态和 Pending 的 0/1 gauge。
+验证过程没有部署 EKS、修改 cgroup 配额、强制触发 OOM 或进行性能基准测试。
 
 ## 官方参考资料
 
 - [Kubernetes 资源](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [节点压力驱逐](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
-- [Go 容器感知 GOMAXPROCS](https://go.dev/blog/container-aware-gomaxprocs)
+- [Go 容器感知的 GOMAXPROCS](https://go.dev/blog/container-aware-gomaxprocs)
 - [Go GC 指南](https://go.dev/doc/gc-guide)
 - [Java 21 选项](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
 - [JEP 474](https://openjdk.org/jeps/474)
@@ -864,10 +948,10 @@ spec:
 - [Spring Boot 属性](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
 - [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
 - [Gunicorn 设置](https://gunicorn.org/reference/settings/)
-- [Flask 变更日志](https://flask.palletsprojects.com/en/stable/changes/)
-- [Node.js 24 CLI](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
-- [Tokio 运行时构建器](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
+- [Flask 更新日志](https://flask.palletsprojects.com/en/stable/changes/)
+- [Node.js 24 CLI](https://nodejs.org/download/release/v24.22.0/docs/api/cli.html)
+- [Tokio runtime builder](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---
 
-< [上一篇：可观测性技术栈](./09-observability-stack.md) | [目录](./README.md) | [下一篇：EKS 升级](./11-upgrade-operations.md) >
+< [上一章：可观测性栈](./09-observability-stack.md) | [目录](./README.md) | [下一章：EKS 升级](./11-upgrade-operations.md) >

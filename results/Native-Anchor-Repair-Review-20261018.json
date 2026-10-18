@@ -1,0 +1,1118 @@
+{
+  "time": "2026-10-18T09:34:10.968Z",
+  "modelCalls": 0,
+  "localeWrites": 0,
+  "scope": "Compare deterministic canonical-heading-ID transformation of actual prior bytes against current files.",
+  "sourceUnresolvedFragments": [],
+  "trackedCanonicalIdOnly": [
+    {
+      "path": "cn/README.md",
+      "originalSha256": "96370eaa81b2a6a50133027586a702ef9e53bc77c76918c9c5cfbdae810146ea",
+      "finalSha256": "5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/ai-ml/01-ai-ml-workloads.md",
+      "originalSha256": "81ae30e99fdcb1e752f9dc444aeaec109d626fad491fd913d7f4e74f78f1c40a",
+      "finalSha256": "bc5c1a34d0c70ec0edc5ba5d22581bc47f62fccdd070d21352609116492d1510",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/ai-ml/sagemaker-ai/README.md",
+      "originalSha256": "9661cca88dadecb3a089734ee5403004296de673d7113d66994ca3cb7bed162a",
+      "finalSha256": "82808bc8cdf816dc651fc8f7ba73f48923b28ef9a5c2484452207220f2164fee",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/autoscaling/01-keda.md",
+      "originalSha256": "cee248278584d08c959986fd03e0e5099dde7c814588befea4082333ef17e3a4",
+      "finalSha256": "e6fd73ada292b3a944e6a085ed19fe13bf255ad41a925dcfa1d8bb20a716d71f",
+      "addedIds": 13
+    },
+    {
+      "path": "cn/autoscaling/02-karpenter.md",
+      "originalSha256": "5df8ec93626f4687d5d7974654316d34a5fb443c5cb589caf933206c8df553ee",
+      "finalSha256": "6fe30697dff7a2a33223fc7a790512bae1e3f9010cfc4a2174c0bd929753818c",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/autoscaling/03-knative.md",
+      "originalSha256": "af8c213fede2a7e3353ff7c88bbb2c77098e94ad1ba8521f83467d353ea819c8",
+      "finalSha256": "4ee275be9ab52cd912896a6e27de76c28689c7de5cac4c4caea929427c5da94e",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/basics/01-linux-basics.md",
+      "originalSha256": "82cf105032e111eb629a4303e89251e15518e8bad45db960aef1e7c34198f856",
+      "finalSha256": "b1b55f6753b2e639edfb5af91299cf9cef0dfee34eeb0017676274afceea592a",
+      "addedIds": 16
+    },
+    {
+      "path": "cn/basics/03-container-technology.md",
+      "originalSha256": "f3484b960063c4e4dba362bc601d937eff4b7c5d8e91b57999b9d6daa7baff80",
+      "finalSha256": "b3b1918c270ddded2d407a6bab629808d416adb19b04d9b93829eac4c67f14f6",
+      "addedIds": 11
+    },
+    {
+      "path": "cn/basics/04-kubernetes-introduction.md",
+      "originalSha256": "a79747ef4dc133ab172ac8d53761c186befed77ca72d94ba8d46754e5c2adb86",
+      "finalSha256": "606ded7f710306d513c2df1434f50ac6e017b661b1311da8d57d350c80c0201a",
+      "addedIds": 11
+    },
+    {
+      "path": "cn/core/02-pods-and-workloads.md",
+      "originalSha256": "05e185efb00c725063d7d86b23100ec36946ceda122ef31b65118c11e2ea7b75",
+      "finalSha256": "6511573af38703c9cb4d18bc5525b9d8dbc1e3c13a22eecfa3f42027a1a7cadc",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/core/03-services-networking.md",
+      "originalSha256": "6f784eff5c56a5e98d7391f840b548ba0cc9f3860a2aa34fb0e77100972c0f4c",
+      "finalSha256": "9dd7b3878f53e2d9acbdd42d17fff95a7044677e34fde9cf029d27ef512f7751",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/core/04-storage.md",
+      "originalSha256": "a60865f367b044212e12b30f9aeaa3ebdfc5ec0ee7e368b49c8cc59916edaa17",
+      "finalSha256": "c97cb2a632344bdd7d7e0ba74ef40b63377de334c5fe961e05172a3a8908f1cf",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/core/05-configuration-secrets.md",
+      "originalSha256": "4078594dd7bc4133adcc5d4a34c97f633dc73fbbfcbdfa0d8d36cce6db3bbf5b",
+      "finalSha256": "d0829c8c41d84eaa81d07030fe6e9742d170f4598995494db71fbaab7b1da80a",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/core/06-security.md",
+      "originalSha256": "1714abb502c1f040c903cf7584e360a1f828bdf5ef30342c1d0c913b65e40253",
+      "finalSha256": "10e29855d7a19021e68fca29ac5236ca845ebc8d12f7c35fee9a6a9d13fbb4c3",
+      "addedIds": 10
+    },
+    {
+      "path": "cn/core/07-policies.md",
+      "originalSha256": "cddef779069540dff8aa16ecb48480341112c80480ddb7f33e8f7ccff531e0bf",
+      "finalSha256": "4aff844c5b5fb68c3c12a70d61046614374fb2bd1a13380ab3e7fd6b8f0ebe8b",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/core/08-scheduling-preemption-eviction.md",
+      "originalSha256": "456a2faba3d826098a7b4fabfadffb722976734be86d2a8b96a1fa95d0a14d42",
+      "finalSha256": "80ae33f76baf01aeb9b78dfb23b9614d42770b820e119adcd3e0ef830162af7a",
+      "addedIds": 14
+    },
+    {
+      "path": "cn/core/09-cluster-administration.md",
+      "originalSha256": "1cb07a38af033f4eeac14110c515c8e31bdcc576f6495cb507e62f3090e519ff",
+      "finalSha256": "507f5f53a7991d21473c9b8d9de3efb9397c91e8f54fac9eae16dd597c9763f8",
+      "addedIds": 12
+    },
+    {
+      "path": "cn/core/11-extending-kubernetes.md",
+      "originalSha256": "38d7cf6806868e1f7cff9ceb8e5bc5e3c710b087c96bec54496d501ae5c7defe",
+      "finalSha256": "793190841834bca939169434c61476cfe35d28fb7547e3a8bb5298bdad672586",
+      "addedIds": 12
+    },
+    {
+      "path": "cn/eks-hybrid-nodes/02-network-configuration.md",
+      "originalSha256": "0122a5edb33a7cb8243b05f7fc6734631576bffdb2a2f8a0a41dcdc28f9d68a8",
+      "finalSha256": "8c56ba7cd34bd3e6ca5becf3899112b3ca30e8998c81ff1fa9852d60360a3d1b",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/eks-hybrid-nodes/08-operations.md",
+      "originalSha256": "7e75488c5b33f720558619d5bb1cbcc06aac76db2b5a5499da935098fbab9b05",
+      "finalSha256": "04b5c1b540cf18d4ba0931c149b417ba91a0b54cae7f2a6b54d23260c50d3d4e",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+      "originalSha256": "ad1bab06c7997fafff4bdb2fbca5660c1a61661612d7b449f3128c7d56f163ca",
+      "finalSha256": "921f2955f5e01084f38e19ef81758bc133bc7992a5e1d12b3a88bc5cff41708e",
+      "addedIds": 3
+    },
+    {
+      "path": "cn/eks-hybrid-nodes/README.md",
+      "originalSha256": "cfe1cc8929810ab0cf728680b14e6cddacccbb153b0d87a3d43654c36180e449",
+      "finalSha256": "f7337a7c2a71012dcac579f619d1802c153c1c3463b09dfeaa8337dff50a3a3b",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/eks/02-eks-cluster-creation-part1.md",
+      "originalSha256": "74b60702d289bbdd2e150ec72727e7c011f88fb4645cce99c44f7c37ead2003d",
+      "finalSha256": "ca703684d56e5796213d2b2d28ea6df126959472d1c679686f4e8c4427bf0652",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/eks/02-eks-cluster-creation.md",
+      "originalSha256": "61b1de769ca194da4d1c4ca448957141ba5da3e5cdc96b8da561fa38ecc6376c",
+      "finalSha256": "fd7919b3f454ee690f988110751ef6b35fd8e719e21544aa96b896e813df8c5d",
+      "addedIds": 10
+    },
+    {
+      "path": "cn/eks/04-eks-storage-part1.md",
+      "originalSha256": "5c8d59df1d0f8db9974df50c2324fb555d2deaac4403b049a44fae957e78155e",
+      "finalSha256": "81e6c51f560e33d414cb5df163ecf009574e7a26569d45785d24f6c1bcd46c92",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/eks/04-eks-storage-part2.md",
+      "originalSha256": "ebf24f4822334fbf1c4ca6cfa41593ac1693995683c4e080a7c6335d6e15f644",
+      "finalSha256": "551c46be1528bd1276674516f27c061f754abc6a8dd462e46d86e496d2142373",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/eks/04-eks-storage-part3.md",
+      "originalSha256": "24a7c266ae137b06e4dc0d5431cecad62364987e1332a9c2030282a66da411ff",
+      "finalSha256": "4cc4219389eb52bbf6cc6d93c3bb5e53142bbb6be730cb78fb7102ec14e1b08d",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/eks/05-eks-security.md",
+      "originalSha256": "a39be2fe115fe90dfc19c782f2c11f1f1dd65aedf4ab5703191da5b12c5a8d03",
+      "finalSha256": "ed3a69925063da1469781e7a706a7ca4e2314b420e7968dadbf9396851e0adac",
+      "addedIds": 14
+    },
+    {
+      "path": "cn/eks/06-eks-monitoring-logging.md",
+      "originalSha256": "65410f800ec1ddf710405a50d29131721cce3a184a4c56c2e4023ef1c9a8372e",
+      "finalSha256": "1079edf4334dc7f727b702017c5a407b34b1887342b65a8a0b9ac9a71d7ff14a",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/eks/07-eks-cost-optimization.md",
+      "originalSha256": "f4321f5334891e677d7d9db0d23bf57bc87df50d5e21690b7456fca2b911d43a",
+      "finalSha256": "7d5647ce7c5a0bdc2a3d727d66c28945363f6029546dde3ad85ae72bce2cd83b",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/eks/08-eks-upgrades.md",
+      "originalSha256": "3930af0e010e5285bf4d394098d7e07ed159363a0d4ca2b308d7177fb463c6b2",
+      "finalSha256": "2c90e5803ff61b20dffbf029fd0f068be9dc9779a9ba8530cb5896e38b7a9588",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/eks/11-eks-advanced-debugging.md",
+      "originalSha256": "2f5d6555371ff2a8c127f47571f7d0b148d3c1c4b1b18173b172295f17f63b04",
+      "finalSha256": "de88454a919e39a701bf28d99f324df7b13fb2bea245e0773efbb04ccfc0d6fe",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/gitops/04-flagger.md",
+      "originalSha256": "26f30bf2cdca70f6bd16a83ff308b3941bb5ca7c44dad6acb83969afa71fc46b",
+      "finalSha256": "03b7370522a14c6a136d3cea7aad9e9a6962a5c38f0d068f52045c41d1015db5",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/gitops/README.md",
+      "originalSha256": "13b895195ccff4df7b5cfba155b567660a38b3ba80bf56ee9ca303f3c1e4d0b6",
+      "finalSha256": "9443bc4ec8e7c5d7ecfded40a2001ecddc70713930caa994ef72d653a2b7ac6b",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/gitops/argocd/01-installation.md",
+      "originalSha256": "406f8891291fecc7b3e56033437b12f955bfddddc98d05f9917e51c00feb620a",
+      "finalSha256": "684ec6894448386d9ce07d706c1ee953280bbb32c3ebb172f7942eaf56de7db2",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/gitops/argocd/02-applications.md",
+      "originalSha256": "796cbe99197c01420d2e61612d767217024d745ce280ce5cf574363d636ba358",
+      "finalSha256": "5c53152fea7e3e94b7bdc2ba1e6cfd7619aba24fe24b5c7d751073b26cc07bc9",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/gitops/argocd/03-sync-strategies.md",
+      "originalSha256": "41af3decbfc65c8cf06c2f579eda7cb63383c14ba72dfc743dc654d8f5174bb1",
+      "finalSha256": "5c4db2d95182133dcb934d59d49d7f3cec27c4e44bd35159922b745babfce4e4",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/gitops/argocd/04-applicationsets.md",
+      "originalSha256": "1a7bf4a7d0c19749d9ba8d5053ee2cc4da959d93103466d0e6fddb31f5dfc18a",
+      "finalSha256": "faa37d26c15ec63653f372d9307e238f7768f1a47d60f403f250a96b8db59e5a",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/gitops/argocd/05-traffic-management.md",
+      "originalSha256": "dd75e099210b8ee026d90b986c81cf28b3985895983414a7c6fb856f39bed69a",
+      "finalSha256": "f0032b892a54395bb1a410ba39ea28c7c6f53c4a15d6bb5a9a05944ec9364edf",
+      "addedIds": 11
+    },
+    {
+      "path": "cn/gitops/argocd/06-projects-rbac.md",
+      "originalSha256": "4e12bed9e00b8211e7583595df8ff8421744d6f4ebd1d8af9a0f3a59d12d2627",
+      "finalSha256": "f6eeba25a72ea29ad95406eb000559cc5cde206ecf5772771fec7104ca94e395",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/gitops/argocd/07-security.md",
+      "originalSha256": "3ff3f5cb522e726793995d38a047dc413072367fa925f8b29538bb4f59f36d45",
+      "finalSha256": "0f341ab2aaef559adbfef7df19608e10cf66b8abed33bf552de0d5eb96992f92",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/gitops/argocd/09-best-practices.md",
+      "originalSha256": "58013bce269030f06c5fc766285680b7dd8db489653e858d5f1cebbc231f93c4",
+      "finalSha256": "5e8c2365d1767d4432adda6079f3b23a934c7b9d337d2aedf788eff03fa25d84",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/gitops/argocd/10-rollouts-experiment.md",
+      "originalSha256": "dcc3df0ce76c236353e6a51062b340b55f3717b6a3468c5f387ada05498545e3",
+      "finalSha256": "3777eb9baf6b4300ddf3ec53460bfec309f130971dc90765b7790899bfc45307",
+      "addedIds": 12
+    },
+    {
+      "path": "cn/gitops/argocd/README.md",
+      "originalSha256": "79710b1922fd8f4aca748b1840a171bfc4942d951bd3d25fa53d4f330858e98f",
+      "finalSha256": "c504551ad339c33c17ead2b0514f21df8e3b351f41680f26e673480beb85c55e",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/networking/01-vpc-cni.md",
+      "originalSha256": "2c4461daa49c3fd2458977a30745da421ca26fd2fb7693cefdba18b306ba64c3",
+      "finalSha256": "d61d90941490e239b543ba235d662fa29f9331b2d13335b34bb1c5f50dbcc13d",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/networking/02-vpc-lattice.md",
+      "originalSha256": "3cd0e430751b4903168e3ecfbc6d08b96ea02893b695d8438c007f796be1a270",
+      "finalSha256": "abb7cda8edc44fed2b9aebe07b0b83c06d25965f18770eb0691b4e1646f0bc62",
+      "addedIds": 11
+    },
+    {
+      "path": "cn/networking/05-cross-org-vpc-connectivity.md",
+      "originalSha256": "5b4792190b1a9c5429359fc9a6ea9257b4110b71d7c40a766a75ba9bb4821aff",
+      "finalSha256": "f34f528f73ae7d5b4c1cbae18f34bc210e9ba7eb1108a9da088973eb20b66e1f",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/networking/cilium/networking-concepts.md",
+      "originalSha256": "806bd10fa4c92bd3a556e291a0b7e779922abaac165f4ca510fc37d7ba240957",
+      "finalSha256": "a93c443da1f0e35e947281b051a4a2937a0d855074320086e249d3ee18dfe4ec",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/observability/alerting/01-alertmanager.md",
+      "originalSha256": "b7b0c4c007bafe8ae138ac5383740b0003b5d788d0c02ac8481af01212873eb5",
+      "finalSha256": "7e25fdf080f172632e9bd83cbc95aaee49a1c44e3aba4f0d33e2798745c4d3c9",
+      "addedIds": 12
+    },
+    {
+      "path": "cn/observability/logging/03-cloudwatch-logs.md",
+      "originalSha256": "c2f0732c7eb2d8d229b47e41e7f0c70f0238f5344fc6ad9a234ef93d269bcc69",
+      "finalSha256": "8aad4c0d41b1d777408ab6b60f561ca1169cff445576e6123a598d33e41db43d",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/observability/logging/04-clickhouse.md",
+      "originalSha256": "b5778d32bf219d92732d0050dfba5c8f6362f38ccd54584e53a2152608314276",
+      "finalSha256": "f2eeb1a9a2474767af497da8e114cf059749986c1ba62dad8069b3a1668c6091",
+      "addedIds": 2
+    },
+    {
+      "path": "cn/observability/logging/05-collectors.md",
+      "originalSha256": "b7889ea9975520dab762f6119121340902ce927619a9ba663ed55e183b17ed42",
+      "finalSha256": "6676654f7862e6e491532211aa467e6ca3a36cb9292fcbd612932220e359d9b4",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/observability/metrics/01-prometheus.md",
+      "originalSha256": "81995271f7d46208796b84bf1d30841164d72fa1fbb59497595af6dc484817ac",
+      "finalSha256": "ed1fd0b57a0cd43d60acdf80f6baf584ec37de52d3d761d20e6a9e48838a6319",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/observability/tracing/README.md",
+      "originalSha256": "9e7fc960d61a467d030bd287fb70244a8346dd09a1cdbbca401071e77090858d",
+      "finalSha256": "c9a2e7ddf10102eae5d3508ad86c22577259b47f23881e091d626c65dc715a54",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/ops/15-zonal-operations-guide.md",
+      "originalSha256": "e909bef0c02ad33d638389236cf37a97acb4dcacb0bd07148ec9d223d8efa2b7",
+      "finalSha256": "268095cb2b1252aae6ce1c657e9d83a73ffbe52fee69eb6b105931a635bb21bd",
+      "addedIds": 4
+    },
+    {
+      "path": "cn/ops/16-troubleshooting-playbook.md",
+      "originalSha256": "53c64e68c812526262f1a8a3bce91523000fa6d3298283147850e98551b5ecd3",
+      "finalSha256": "cbded526460ca2339ad3e95a0d766746cfb3fa3aec957cbec375262b57af10e9",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "originalSha256": "dddfa250264dbbff777227200fbda2ec82e81c74f200e5a55e9a9431e9fdeb1b",
+      "finalSha256": "70cad9f330ebc3322dbac529a563139947e5cfefa16da1e78bae2a99f2093a35",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/security/03-pod-security-standards.md",
+      "originalSha256": "f81fb6c76b4a17276a83f8700c59933a6fb45f126122dfc3a9af2a3171104b02",
+      "finalSha256": "49182fb510461734687a395ba1c98a0a7c40699d6490a8abb97aba02bfb19ab3",
+      "addedIds": 10
+    },
+    {
+      "path": "cn/security/06-eks-security-best-practices.md",
+      "originalSha256": "e81d301f5aec1127b2fe57ffc0b0781c9c163417d251fb2792e63411cce3b517",
+      "finalSha256": "5c17470bb59a5ac3cf62bd2cd9ecab9a2226e109422616a20ff99684d40a93c2",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/security/07-image-security.md",
+      "originalSha256": "2172b4fcfc0a3d9066da0e9ea9b9e67ac6835b150b26e92cb5cfa572b66607e0",
+      "finalSha256": "0685f8536bcbc4e3d3c40e5e041ee741249ca2622baaa14f0cb94defa7138625",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/security/10-cert-manager.md",
+      "originalSha256": "8cbe2622bc66f67ea6b4e82607e841e4b4c6cb8ec410db1ee38cbe0561d962c9",
+      "finalSha256": "d412a5ca9a59dc11a51cbdaee81a533dfff022d4a962e469ff8a0ee80823b939",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/service-mesh/cilium-service-mesh/01-architecture.md",
+      "originalSha256": "235fb3e7e5200782052e63ad75d61d4627dfc78be8989c5700a31ffa40734244",
+      "finalSha256": "aad0fc15fc0e3a8fb05454f026ba425f3d7ff755cd7a996031c8f3fc92305013",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "originalSha256": "4b9f5a2a097f2bc05458c7bb1c35577bd931d9c88d2c95ed37b88f8f02a6c30a",
+      "finalSha256": "9c8ad46649bc80145503abd20c4927c608630a8d6b515c4438d495911bec45e7",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+      "originalSha256": "4a2ab715c98f97a41a1021f221185c9854f3d81db3805a40fa6ee7fc8d1a98f2",
+      "finalSha256": "b0451b27dba7502ff71ac4c723e61bdbafed4e56c1c080269dc0871cae744bce",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/service-mesh/istio/01-installation.md",
+      "originalSha256": "3f547461fc8c65f5f5fbe38ce4a43c810542ff0018816f9547adddd17ce2bcb7",
+      "finalSha256": "fff7c257138d9ea7b01008fe3beb98382f1e0366bcf40a527c6401010c971eb8",
+      "addedIds": 10
+    },
+    {
+      "path": "cn/service-mesh/istio/03-architecture.md",
+      "originalSha256": "adb5e7d0be2f097dc8a8c04ff68c71f6cdd26a87c5954ed2cdac3a104773c259",
+      "finalSha256": "c12b62ec91e05aa92d5bd9734d0b5ade4a3340ae0fec0a708dc01394ae92dd3b",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/service-mesh/istio/README.md",
+      "originalSha256": "759bc11d08e811e41a864730f3db988c01a43250da7e071b326d634577ab350c",
+      "finalSha256": "a8f75e2852a273e0ae035d08226e91c33de888f89673c79e3e4f77f9b5b8edce",
+      "addedIds": 1
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/01-ambient-mode.md",
+      "originalSha256": "9c0df3f600adf4cb416fa7dc082be22c9834fa5ae8790d822d02237839c3f790",
+      "finalSha256": "cb9d2a230e8ed18cd01719f011206587778e7e7c77dd4313ca6cb7e1df8be806",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/02-multi-cluster.md",
+      "originalSha256": "1d143ceda256113e130ad974f01af8d0b6f9af7735b1dbc8ab19b50eea1e3d40",
+      "finalSha256": "345d27c181e9061a41977c82dfe856c69dbdfe1589be464bdd08173c1dfa33be",
+      "addedIds": 11
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/04-dns-cache.md",
+      "originalSha256": "3151ccf3a05797daf0e590d3f9ecbf1cf84ec18fd0c8f6311842f86deef705f2",
+      "finalSha256": "3c9a7c89017243d0ea19beaa2b53132a110ae0d3d383436bffe283c3ef152d33",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "originalSha256": "8d009aeef76d1e88ab75840bdcbe5bb680267543d5540c6f60af4e6636ea3fe1",
+      "finalSha256": "88115fac2dfec629cd6faf17590346cccd6b89c6f57b63db9f9586cb667c771f",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/10-keda-autoscaling.md",
+      "originalSha256": "812cd478ab7ade77a45059f06974239d8a9752e85b97052edf611d14d32b438a",
+      "finalSha256": "38744d2f0a1e7c158415a3b904ab3f7fe653ac1e531fae3d46b3f25a610e22d9",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/service-mesh/istio/best-practices.md",
+      "originalSha256": "0626bc3d8892eecb68d9b9642acc1be7b3aacf4023e757e9b798e0b3f0683339",
+      "finalSha256": "4d3d3091af38bfe5b01aefcd5fa328f418d5c2b0e2ea3a220785779aa4d5dc7b",
+      "addedIds": 6
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "originalSha256": "6afaf55ce691b8c6833838cab9a07c15599df84c9cb19446b8f166dea13cb50e",
+      "finalSha256": "3172dfe3a6cb0188d98ed165825be128692ba26d0df46e44e81b6dfb877838f8",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "originalSha256": "53ce811b976c5d9a68265897c4323e980adb2a3831a0a675d3d1f9413981b7b2",
+      "finalSha256": "fd213a055287590653c6fe83d1d55682f94a8205fcf48f68271e519a904f0409",
+      "addedIds": 8
+    },
+    {
+      "path": "cn/service-mesh/istio/security/01-mtls.md",
+      "originalSha256": "3d098f86832af9c0c953689404e493e0e08545b28c2ebf8f1fd38bb2c26ea740",
+      "finalSha256": "e55af053f7f480cf8d234f732c57195def2ef365620804c692464b3a6a3b1570",
+      "addedIds": 9
+    },
+    {
+      "path": "cn/service-mesh/istio/security/03-authorization.md",
+      "originalSha256": "07c7076bb6a43109c3d83bc630a9bc71f52f3e42e173c7bcd3cc8d4fe375eb8c",
+      "finalSha256": "c95ada88929b0b078713e995495dcdddbeaa8d7b69a15bd1de1986b273fd0fdf",
+      "addedIds": 5
+    },
+    {
+      "path": "cn/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "originalSha256": "200c253989e486a0839606938cc8c6cd975a69a76194e1ff89277f06dd219315",
+      "finalSha256": "4c0b6198b576b20e8b42a711c6f84ddfe9a5e479e508a4130c45a5cacf167a8e",
+      "addedIds": 7
+    },
+    {
+      "path": "cn/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+      "originalSha256": "399e345dc108d90cfff0b623606869d2ebc797178675b11a17a62d064456887e",
+      "finalSha256": "7ecf0545330bbde91e055388a911e5d962cb095e0e0216df42dc3985eeb2bfc8",
+      "addedIds": 10
+    },
+    {
+      "path": "es/README.md",
+      "originalSha256": "c57aad54a58c9fbb7c729fc22e3f8c90352e04289b9579232bed0a9b0fcb6836",
+      "finalSha256": "4f5c453c7815a6c00d71b9da1f7f789ca8f8c408464154af3d141a9cfd80c8ad",
+      "addedIds": 1
+    },
+    {
+      "path": "es/ai-ml/01-ai-ml-workloads.md",
+      "originalSha256": "d97e949dec8e10633b527f36e234b2bcf29560901ac4dfa733f1de491b5d4d17",
+      "finalSha256": "cfbfd9f01b4d7b6753dca194363ef691437d5036cfb1f5597a4b5e0f1a524067",
+      "addedIds": 8
+    },
+    {
+      "path": "es/ai-ml/sagemaker-ai/README.md",
+      "originalSha256": "705c0c02299b32fd528193c7c9dc315dda9960dc2d7a4dd2648db051d224e5e4",
+      "finalSha256": "c88b92cfcc20e621b82b9be2d16a9452725180fd7661b5389213274da159a362",
+      "addedIds": 1
+    },
+    {
+      "path": "es/autoscaling/01-keda.md",
+      "originalSha256": "742381a72415fd5425be5a058e03b0d161cb1bc4bd0f65ba804d4c187f73e4e6",
+      "finalSha256": "666deae923cb8c5b12caac8fcbf59532ea5e992b108dc9d4eea97e074491e440",
+      "addedIds": 12
+    },
+    {
+      "path": "es/autoscaling/02-karpenter.md",
+      "originalSha256": "ff3cea79956faa55131605159cd402a4bde3090628d2537ff3459a9be817b8f4",
+      "finalSha256": "92cb596db4bbcb612d833cc16825271e678d854c2ebefdfdea415ddf144c2fe6",
+      "addedIds": 9
+    },
+    {
+      "path": "es/autoscaling/03-knative.md",
+      "originalSha256": "78a7ed40ca8361132d7d94cefca9ce0d4657b61872f6c27cfe62617905df8a2e",
+      "finalSha256": "c9a0bae928948cd90df609514905dccf638583b2acf56e0e7a983696ea428185",
+      "addedIds": 9
+    },
+    {
+      "path": "es/basics/01-linux-basics.md",
+      "originalSha256": "70ecd8d67144bc8648f8fe175851c350111f3995e8b5b40a829e3595a00a84ce",
+      "finalSha256": "22e6745b0df18cbb544ff35f404c2f5cc0e23c16dc4d2795216847b65e7f56d7",
+      "addedIds": 14
+    },
+    {
+      "path": "es/basics/03-container-technology.md",
+      "originalSha256": "4b0a0b6492e1e74b55a4b3d74d8eff4d65d98a4bd363f2d0cf2984ee57b5040f",
+      "finalSha256": "1b8abd2b6d88b03d7a3e29a26d27e8badec5ba967d3b090f84743cd226e89a28",
+      "addedIds": 11
+    },
+    {
+      "path": "es/basics/04-kubernetes-introduction.md",
+      "originalSha256": "92e3cf8370e2f211b14c9ff30bafaff4b6da6f6ce7a3e0c6bf45acb529464ab9",
+      "finalSha256": "ebdb583bb484918ae734ccef66d2a74c0a2e9aced236cc9c6b010bb0b0851dfb",
+      "addedIds": 11
+    },
+    {
+      "path": "es/core/02-pods-and-workloads.md",
+      "originalSha256": "fcfcb3a1a047238d3dfc6538fbc0735be5da3d243e1bf8b48203a260418cff26",
+      "finalSha256": "560c86aa490bbac05fb54769ac5b74bf8f0418ceed010698b82f491b500e6964",
+      "addedIds": 5
+    },
+    {
+      "path": "es/core/03-services-networking.md",
+      "originalSha256": "2b059031f72b5efb449f0b67d26dcb2680678045647055c86dc42f995d55583c",
+      "finalSha256": "7a7be8a6c85ce986e44916a222d91b677db9acc7f35ca079039deb6dc8bc5359",
+      "addedIds": 10
+    },
+    {
+      "path": "es/core/04-storage.md",
+      "originalSha256": "04a802dbc8efae5494a4d90462b970a89b52ecc09b29c415166504c4b12b2d09",
+      "finalSha256": "10bab8c720320c60dc637e49ebd40437a195e88a953413ebbad9dc7534984a39",
+      "addedIds": 9
+    },
+    {
+      "path": "es/core/05-configuration-secrets.md",
+      "originalSha256": "ed53b378251026283a3d3a0d86a7d61e3e8a5ba423423fb89b5505bbe589110d",
+      "finalSha256": "0807ec4dbbe167583e241b72aedabf84127f384a44bed94392cd926dd2f4498d",
+      "addedIds": 5
+    },
+    {
+      "path": "es/core/06-security.md",
+      "originalSha256": "ef976371c940603d44c54055ca1ae93e4dfb390e20bf058ce8f75b7fd53a841d",
+      "finalSha256": "b274fa8ec3c5c9493967e8fbae1ebabadcdc1ac0932490dccfc4d72304389799",
+      "addedIds": 9
+    },
+    {
+      "path": "es/core/07-policies.md",
+      "originalSha256": "a330ebf04e8b48631ff5cfb77e5bbabf53dc51fdbad83c3fae28d63cf7b6f1ef",
+      "finalSha256": "961ebeae39ffe5e97cf4cc9fb843dd6758e5f9fb1bf41b2fa28d277cf34e423a",
+      "addedIds": 8
+    },
+    {
+      "path": "es/core/08-scheduling-preemption-eviction.md",
+      "originalSha256": "358244d286d55deb2fc2bcf6ecc391af39a23173cf574aa66d392b8deb8a547f",
+      "finalSha256": "edfd1a8e767ec2ada1576fc1638a88e7c05cb0c95d598b660c705fe506c3a9fd",
+      "addedIds": 15
+    },
+    {
+      "path": "es/core/09-cluster-administration.md",
+      "originalSha256": "174438131ff9adcf8362c296eb2a6b90f737e3e8c16428e3cab525312e6ff657",
+      "finalSha256": "569848235b40c01af5129d5ef08efdbd1efe89d78063c382a161fb57b0b465e2",
+      "addedIds": 11
+    },
+    {
+      "path": "es/core/11-extending-kubernetes.md",
+      "originalSha256": "0b20ed854f60d19b488f95127cedafe72a6d68492f9d4aa04acb58d84d93db86",
+      "finalSha256": "afd5fc9e4ac726a91a23d3524d13ceab124d5f3f1b130760aabd601c5db7f5af",
+      "addedIds": 9
+    },
+    {
+      "path": "es/eks-hybrid-nodes/02-network-configuration.md",
+      "originalSha256": "6c1cdd86fc07d0cce445c8bc289db28c95b5c12e2d0869491958d041b8c250f8",
+      "finalSha256": "f4b2819255ddd5b8c15c186100e827c5c439b87054413ad7a01e29dd0a098986",
+      "addedIds": 1
+    },
+    {
+      "path": "es/eks-hybrid-nodes/README.md",
+      "originalSha256": "d766185cd7d68e122cedfdf3a7884d60e99a4fe507baaf732ad8c132023232c5",
+      "finalSha256": "9fc06b54e150e3bda58bf211dc7c93ed1e2ee61bcab4ca9fbbd075cea3c3ac67",
+      "addedIds": 1
+    },
+    {
+      "path": "es/eks/02-eks-cluster-creation-part1.md",
+      "originalSha256": "7d2e71b06ecb6c58ce2a289a9a2b161cac106360b7e7f99a63084d814ce8749b",
+      "finalSha256": "647e89855082b4c3b956324e1bac40a895b10835661149a093458ef59372bf71",
+      "addedIds": 1
+    },
+    {
+      "path": "es/eks/02-eks-cluster-creation.md",
+      "originalSha256": "ec329e93fcee5b0325c58849da7eba8efb34818c22fc0c6e30d4bb740f287995",
+      "finalSha256": "37e7a0fea51de767c91e403e291304acc172bc83a07c9fe1529567fb94c05f76",
+      "addedIds": 10
+    },
+    {
+      "path": "es/eks/04-eks-storage-part1.md",
+      "originalSha256": "be064eb631e4f2424e4e673fce212c0eeac727098631744d346b7a40b3121fc4",
+      "finalSha256": "9ae011c28b834cee28842949d8f6e457151dbe8ae41324318bf89ffa4b2d6520",
+      "addedIds": 5
+    },
+    {
+      "path": "es/eks/04-eks-storage-part2.md",
+      "originalSha256": "0b5aa37476a35da5b2e4fbb4c30ee3f9607ae46a9e86bdc302c6af2c0f5688f4",
+      "finalSha256": "d78c71f8adaf672011703ccc579f24a5793c0f4c8aadf93c5b10c20a98deb8f1",
+      "addedIds": 7
+    },
+    {
+      "path": "es/eks/04-eks-storage-part3.md",
+      "originalSha256": "df4b9348ddf84535dfbdedea2a6270c3be6446b6534b9460f0ed4a0455026b4d",
+      "finalSha256": "7807275c8b34b6eb6bec73dd60cd74b5b31434016cbc8bfeb14962f134d64deb",
+      "addedIds": 5
+    },
+    {
+      "path": "es/eks/05-eks-security.md",
+      "originalSha256": "3cba2e8e5929cd25962b25a79cd895d48f68be11f78efd2d708532b933254dd2",
+      "finalSha256": "895334a3416777b950f1a9211b83ff95e5021fce1ae3be2aa04944e1699e1186",
+      "addedIds": 14
+    },
+    {
+      "path": "es/eks/06-eks-monitoring-logging.md",
+      "originalSha256": "4187ecf164bf2a3b5a3ff3ef745620da813b81a027286348904d7b7a70b3ccb2",
+      "finalSha256": "cb8aff7eb10913be7d90e1c0cc95d290d2075d7f0a1a58df7232e1139cc25d66",
+      "addedIds": 8
+    },
+    {
+      "path": "es/eks/07-eks-cost-optimization.md",
+      "originalSha256": "501957d633a9a4116b7373aaad801d10ee8e0c58908597cf182910c02626a2aa",
+      "finalSha256": "6168dee3b507188c47aab86382163a901065545724fecd9100501d5f34f77e0c",
+      "addedIds": 8
+    },
+    {
+      "path": "es/eks/08-eks-upgrades.md",
+      "originalSha256": "b929965ac65be9275e654d3bd309a6f3cbc3fc42f78ab1618ea34f92af0d707f",
+      "finalSha256": "4279ec9116a4c9d2bc6d0af5b01b3e6eb6c232c00347a1f7366b1cd78a33375f",
+      "addedIds": 9
+    },
+    {
+      "path": "es/eks/11-eks-advanced-debugging.md",
+      "originalSha256": "a272bfb93e668b525bea2e7ab4c89a6fdf4e1983a3c375d4d6420b607372379f",
+      "finalSha256": "d0c2025142e7af0ee885e2e38a3817afe440c9a769a4a66fed65ce638124c29f",
+      "addedIds": 1
+    },
+    {
+      "path": "es/gitops/04-flagger.md",
+      "originalSha256": "9bb6cff236cc847a24ea7b5cb0d4d2aab6e48325f8a66134bba3513948db79a5",
+      "finalSha256": "b548a7e42419a27b92fe997be9c08dc470dd36fc10cebcd1e1074fe5f48e0cfb",
+      "addedIds": 8
+    },
+    {
+      "path": "es/gitops/README.md",
+      "originalSha256": "e414609e96d667ba6211657bb2735be91af5b5df9d0aa64355711574a945da2e",
+      "finalSha256": "e5e8d330041ac6f5d17b6e82207b9258c2f3cf57d24a656707c04d6e801fa028",
+      "addedIds": 7
+    },
+    {
+      "path": "es/gitops/argocd/01-installation.md",
+      "originalSha256": "b909b55175f41a3979d7f762b1c6cae2ee4c597ba101a0b67d00d2628fde8f81",
+      "finalSha256": "20f70c56fdc3563b3593470eabd2cf25bafe9c42240968cf3fbad7b89c4ad1fd",
+      "addedIds": 8
+    },
+    {
+      "path": "es/gitops/argocd/02-applications.md",
+      "originalSha256": "0a5f1d82546607f91dfbacfd902087699f4349699c0013cf2cb25c1f2e3e821d",
+      "finalSha256": "eaff4347b1656a294cd46457bcaa5b85b8d405ef0961f96d0cf1a77dd51fd03c",
+      "addedIds": 8
+    },
+    {
+      "path": "es/gitops/argocd/03-sync-strategies.md",
+      "originalSha256": "73c6ba7f604903c24645a84ed775f62a2e38f27e47d73152828f92c50fdb4971",
+      "finalSha256": "d8c99a7b3d5f8c1cb54527178e2f71f0c619949130c22b94f997e8a7476377e0",
+      "addedIds": 8
+    },
+    {
+      "path": "es/gitops/argocd/04-applicationsets.md",
+      "originalSha256": "be84f9ab723897aef67b506802df5725e556bee2ccad6c426c15e2750417e393",
+      "finalSha256": "fcf6a729bb3b06bd3520263020d93c64ca9d21aed25be68f27839bf51d0877ca",
+      "addedIds": 6
+    },
+    {
+      "path": "es/gitops/argocd/05-traffic-management.md",
+      "originalSha256": "60c439396c13eef044f648579dbb18e4ba02a07d846781bca05ddeb38d70f04a",
+      "finalSha256": "0e1627c26c303acdb471f1d80ff135c1db0adb9eb4daea271597dd6c6481632d",
+      "addedIds": 11
+    },
+    {
+      "path": "es/gitops/argocd/06-projects-rbac.md",
+      "originalSha256": "d597efb25e326a3b0d7ad6f0cb2d85cc9431a34298885132341b8cfbd4e7cdf3",
+      "finalSha256": "061c47255bfba533805717e5395177c6dd5b06159a4e2a15fcdabdd596d64c8f",
+      "addedIds": 6
+    },
+    {
+      "path": "es/gitops/argocd/08-notifications.md",
+      "originalSha256": "b83944ab4bc7eb6fc41d439adf07b4e4ed351493a24d4276ade9c9beebf770d0",
+      "finalSha256": "a663cd8f0218527b5015d2527699dbe2e6006c3e99a76c4d1f36409e3caaeec2",
+      "addedIds": 8
+    },
+    {
+      "path": "es/gitops/argocd/09-best-practices.md",
+      "originalSha256": "8ac2831863df8e1fa1fe352fa470eb121d2abb748ffb782be118a751625881be",
+      "finalSha256": "62a242872c09e99a0bfa8d2b109c43c09f887386ee50fa0f14730064d1e10f38",
+      "addedIds": 9
+    },
+    {
+      "path": "es/networking/01-vpc-cni.md",
+      "originalSha256": "3438fe11dd905400a34db105d6d9e9d91c08376c5e9babd38719a675af65cc3a",
+      "finalSha256": "517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0",
+      "addedIds": 8
+    },
+    {
+      "path": "es/networking/02-vpc-lattice.md",
+      "originalSha256": "ee843fc24f287716c6f25c9ac8b632d1390f00f381ff68e949d47fb4b54e7aaa",
+      "finalSha256": "d726f7fb1d43c060bb0ee7474694dd31c8f8430e669e0a92efe979a8eba3d45f",
+      "addedIds": 11
+    },
+    {
+      "path": "es/networking/cilium/12-mtls-encryption-identity.md",
+      "originalSha256": "78946049d6ff6672962dd553c5be45d0397bcde617e39372e7738b70275cca2b",
+      "finalSha256": "f9cd7d7c09d02a180454023695b97d9d5401414e138259f5be7cb43be423b679",
+      "addedIds": 1
+    },
+    {
+      "path": "es/observability/logging/04-clickhouse.md",
+      "originalSha256": "6575f4b275ea379edaa74e8f176e6fe426cca209031a7d28379f8879fb7bc5f4",
+      "finalSha256": "1666e4bf41e915991b28abe884600bf98526c249b99d6da5a878dee05c008031",
+      "addedIds": 2
+    },
+    {
+      "path": "es/observability/logging/05-collectors.md",
+      "originalSha256": "b8a23faf8b2063b5d59beffb9933c18cab193dba6171e7c67545ebcc56b27812",
+      "finalSha256": "cd1d8d015d394fb875590ad50c426a587b91271120abea7a591e8eb5198ab05f",
+      "addedIds": 1
+    },
+    {
+      "path": "es/observability/tracing/README.md",
+      "originalSha256": "f054e48d253778c3fc7d5f64f0a2dad1ea7e561de2b568a79c42df5b3bdf4924",
+      "finalSha256": "6b58afa26eaf299830cc1b71bef24c37b4b728d8215cdad174d0a559ada49e02",
+      "addedIds": 1
+    },
+    {
+      "path": "es/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "originalSha256": "3d8399f40c59da6c361a8a51d739a4815630c3a9dd87a698eda7e64f57ffcc03",
+      "finalSha256": "f1018655549184f74bbbc8556c06c0aef8e1e652c3ffb68214e6c0348075aeee",
+      "addedIds": 1
+    },
+    {
+      "path": "es/security/03-pod-security-standards.md",
+      "originalSha256": "096f7399f39a99e15d52b9921ceb4cbfccd0003b527c50a8daf70ed9768eb0c2",
+      "finalSha256": "291339e8d1ca58c0c130dab66e053f67ba8eb6af3fbccffed2c3a8d6d27cdb55",
+      "addedIds": 10
+    },
+    {
+      "path": "es/security/06-eks-security-best-practices.md",
+      "originalSha256": "ec19c70d8c49eb48f4ad93f29b31a484cba465df4b9455fea5496bc957974b0f",
+      "finalSha256": "0316a6fee5845f8da8869420814197af9604532c5c1af7d3520d7032d3670e78",
+      "addedIds": 9
+    },
+    {
+      "path": "es/security/10-cert-manager.md",
+      "originalSha256": "2cd23c66c978eb1a6479946fd7abea3836d8cb8f533cca311c4eb978ef1eaca6",
+      "finalSha256": "791454674daa5b25d7afed7f3c8a45e6fb1db4ab39f26108fcec32d8febdef01",
+      "addedIds": 1
+    },
+    {
+      "path": "es/service-mesh/02-istio.md",
+      "originalSha256": "0800ad017f20cce447f2b01e908e569e1dfe79e06ecc7b642c9271611af46599",
+      "finalSha256": "a943e7400408c1eeb9900ba2dcbc321adddda6c1adba44b12b2888d6d504190d",
+      "addedIds": 6
+    },
+    {
+      "path": "es/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "originalSha256": "1feaae281d967fd98a947104a6eaf3acf977dfea8b7d87673a4a1c74675bb991",
+      "finalSha256": "9ab0e78c837de8f7cac0b7c874610e8d834de8cac9319a4567de2c8c2e22a215",
+      "addedIds": 1
+    },
+    {
+      "path": "es/service-mesh/istio/01-installation.md",
+      "originalSha256": "074cebac45c4acdae06487fddfb4c1b07e490524ff4f550350ba22dfc45aa756",
+      "finalSha256": "1e2b158460da097d7f9dada3e9465ebfe92133e898f3955318fb2f14e532961a",
+      "addedIds": 10
+    },
+    {
+      "path": "es/service-mesh/istio/advanced/01-ambient-mode.md",
+      "originalSha256": "2991ead4cedef3a0793d85a817938672003b4507e67b3a9c7280179f8d78774d",
+      "finalSha256": "3b01bd65678bff3249c35bd6a925dfdc92ee753134202d5e06a7981f96ef8546",
+      "addedIds": 9
+    },
+    {
+      "path": "es/service-mesh/istio/best-practices.md",
+      "originalSha256": "b8c5b4d1ce334f60fabb7bd0fbf3d258190441e5b0dd45cc8d11e2d63ac2f714",
+      "finalSha256": "0a964258aec48d7c7e5af3357c734fb071794e6b7bbd94b074c5f62de3a67381",
+      "addedIds": 6
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "originalSha256": "bb79f39ade804bf9449f0dd257f7c96282c7b7b60dfef6d70d1cc5bb0f1ec8df",
+      "finalSha256": "7413bb187c0193219325c6f400a3e93ed1086be32bd2dbf807f0bf00842491fc",
+      "addedIds": 8
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "originalSha256": "6950d81756e90dcc4b04d1a9e06ed170c849a7514ff515a55b891c68b32d842a",
+      "finalSha256": "6423b5dbe3510119d98ec0f88550877e6f6dbffd60a4bd2b781ebdad573df5f7",
+      "addedIds": 8
+    },
+    {
+      "path": "es/service-mesh/istio/traffic-management/05-retry-timeout.md",
+      "originalSha256": "81f4637dbfe294257d8359208eed4c7ac0e5a7d250c60b8de2cc7d13c5619494",
+      "finalSha256": "c8bf492b4e8fffb4325c0a5d4c1945f351a3e991aa398e0fc9dd691c9a613f5e",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/README.md",
+      "originalSha256": "446bd1c150c5fd6cc02f5993469789fb288c2a3bcae275596863b60f8790c072",
+      "finalSha256": "9b4853e6b9c1ba40f0db5c907a189cc3b6beef2c7e3b40b1ec45f5f5a10850b7",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/ai-ml/sagemaker-ai/README.md",
+      "originalSha256": "5cae36fd31d7c5d1572d4221e9ee7095efa50ac9d3d8cb6f81ba892e4b81d792",
+      "finalSha256": "1a7262b3e6f7ec5d60a7ff9cf9c8dae1b2ef85409728cd396d4ea8e4b0b5a103",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/basics/01-linux-basics.md",
+      "originalSha256": "7f6032428be9ab23a7aae2af8d6c52514c58932bed2d15afaf7043a6199a3d00",
+      "finalSha256": "2620f4eee80648c6f8b6e767a35faca4bf972f2acb07a57f9520033b2bf80397",
+      "addedIds": 15
+    },
+    {
+      "path": "jp/basics/04-kubernetes-introduction.md",
+      "originalSha256": "b8008ea3b334d63dbd2db1bb6f464e6145a10f044f464f88f8376d8f51d70e43",
+      "finalSha256": "1be0c3f1577d3b61d6b3dd9acfdc6caf6916afa024a2b7093fe5bcb10c843be1",
+      "addedIds": 11
+    },
+    {
+      "path": "jp/core/02-pods-and-workloads.md",
+      "originalSha256": "e9c6cf0b06bfbbcc49dbf0c1c58b4193177ff5f526e29ba0c64662e60221d2c2",
+      "finalSha256": "d595535a61f57a9aafbe6746f3835550e288776992eca97c3fd2df1b811c391d",
+      "addedIds": 5
+    },
+    {
+      "path": "jp/core/08-scheduling-preemption-eviction.md",
+      "originalSha256": "e1bfe38e987d276badcbe864d6ec0b9c8f37d740e1d4cb8ea9906679d855c5e4",
+      "finalSha256": "e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0",
+      "addedIds": 10
+    },
+    {
+      "path": "jp/core/09-cluster-administration.md",
+      "originalSha256": "58b467fd68b1a97e5f22a2cfecaafc7f28588795531afd4d2a34f44b1bd1cf43",
+      "finalSha256": "36eb29fcdda7b83dd03ae553726752e8f2b7a32ca9ec678011625f6a8037f9c3",
+      "addedIds": 12
+    },
+    {
+      "path": "jp/core/11-extending-kubernetes.md",
+      "originalSha256": "db6fac04f18f9f70c75468acbe330e18e65140f54d5cca6c263dd76c8c9b4711",
+      "finalSha256": "82a02b6e6cc42d4bff01eef368ed36805ed09ab8e2aa936822ffdfce7023f451",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/eks-hybrid-nodes/README.md",
+      "originalSha256": "ca2ce9ecd74827e05fcb07f94c76ce53985880aa3cd613235dc4bc0873651719",
+      "finalSha256": "349b7dd44be9461f1c06768d67e718722d364f2774c3a483127bf02ae239abe2",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/eks/02-eks-cluster-creation-part1.md",
+      "originalSha256": "5aef92b3a5344ed0351fa26fcc90acc42aca2976a4dffef333e1b4fcedac94bc",
+      "finalSha256": "70fe698f22477b312ad47aa01f3216883dc2fc71be5a03752ea20f359488d220",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/gitops/04-flagger.md",
+      "originalSha256": "766011780625ddde6d8f98de3406ad5fb76538f4c5d3e5b7cdb6369297145675",
+      "finalSha256": "afa3d4979540b8d333a50c9c6443d722fa0e73ea331042884a5a6b2317c7d4fc",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/gitops/README.md",
+      "originalSha256": "600d41ad69b86ec107cfc0201e95e2db35c965ecdd5d2342422aae40638197c5",
+      "finalSha256": "e6a267935231b1b8a349b695cc0a587131f898aae2b3c42a55b6856018ce9018",
+      "addedIds": 7
+    },
+    {
+      "path": "jp/gitops/argocd/01-installation.md",
+      "originalSha256": "e43b5fb877b91dca45a1a8082a791dfbf9940ba2e58dd9c7fdd4fa51b2302f9d",
+      "finalSha256": "97be75cb91bf182b8d6473ddbb5bb46c5654558509a194b1cb772edfab4eac57",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/gitops/argocd/02-applications.md",
+      "originalSha256": "fc153bf52bf7fa13e6d9f7069e4288b6354b69974997bdfade9eefbbb4326dca",
+      "finalSha256": "a8e737c89fd9fbe707128d8da20bc71afd17ef996e4ab0360134d56c6b2bfe92",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/gitops/argocd/03-sync-strategies.md",
+      "originalSha256": "54d8d5dc88ae142269b27e5af2222080d6364c7c2172fb2072ab209de161d31e",
+      "finalSha256": "17ab5959a8972d84abf2fba7d93c1f0d58fbb6ab1053b90ce707dde396ca382c",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/gitops/argocd/04-applicationsets.md",
+      "originalSha256": "bed3162791bef095f161176c91b81aaa68d2d40e9ed8cbc2ce84ac31aed0de98",
+      "finalSha256": "ce1771f8f5b19856295dd6a77045476927c8e2214f654313e2c36b59aaaf9dbc",
+      "addedIds": 6
+    },
+    {
+      "path": "jp/gitops/argocd/05-traffic-management.md",
+      "originalSha256": "62c59c149b6c53d0bbce3b5475f134e79f54116569f7e4145ccc11555b54f9c1",
+      "finalSha256": "c2687fa699b0838d4c7704783434f97bb4d2acddd743bc7f5265e7709e5ab6de",
+      "addedIds": 10
+    },
+    {
+      "path": "jp/gitops/argocd/06-projects-rbac.md",
+      "originalSha256": "794884a2047834b706bd0d1a3834b3646323befa66e404f5d9d3b35ca93e58ed",
+      "finalSha256": "4280b04cf56df289ebdc70d74e1924c8628c86d8fd37772b1ddece25900c0d74",
+      "addedIds": 6
+    },
+    {
+      "path": "jp/gitops/argocd/08-notifications.md",
+      "originalSha256": "ff6b80289c73383f22673fc72f32e32148b38aee4b2b65610da60b4f8f562f15",
+      "finalSha256": "d907ae2451d61a70f339437d3f6f42dd577cb23db427a428caf143a7d904de87",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/gitops/argocd/09-best-practices.md",
+      "originalSha256": "197671d4e9201d92b0e8591616b1c5af4e71a95853a9908076fdf2d24f5c560f",
+      "finalSha256": "0e0b09df2f26cfc7e05a2528499abf915feb0145708bd2f655202783f36aea59",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/gitops/argocd/10-rollouts-experiment.md",
+      "originalSha256": "34f86e1ed6e4478676b144074fbae531d9ab1f6802dee109b3ae60c45b5c88c5",
+      "finalSha256": "953e9af63713ab0f0e89b33a32172fc4ebf5d2bac1729b2aa2ca3a01c6f8dc76",
+      "addedIds": 12
+    },
+    {
+      "path": "jp/networking/01-vpc-cni.md",
+      "originalSha256": "5669704b2c075ecc84320430f19ddcba0a4e774a6c6585cbecb22bc797db2334",
+      "finalSha256": "54795dc183ae60bfab0ecdd309d962ff08250ced6664ab8bfd7610bb8d08fba9",
+      "addedIds": 8
+    },
+    {
+      "path": "jp/observability/logging/04-clickhouse.md",
+      "originalSha256": "e82abac7702232571b50a92216ab4384cb9ee50103e39081f4749d852955beda",
+      "finalSha256": "463f31f3fa19eee974f2c955a8049d5a7c91dd1bcb97062be3d777e081223cce",
+      "addedIds": 2
+    },
+    {
+      "path": "jp/observability/tracing/README.md",
+      "originalSha256": "09e80e7efca07980472065433650ae7efc8595d755da0f210427402316e7dc9c",
+      "finalSha256": "eab1e8dea944052f2c66132435dae4beeb900f7cefd29b5ff4b16a5f5a6dfaf4",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/security/03-pod-security-standards.md",
+      "originalSha256": "b0ff80698eaae16615cf43cc8dd5cad9d66e6064d812996bdde6626da8215fc6",
+      "finalSha256": "cde26b59dc31d96469d16194f72430c8e971558eb2a492e64f3e447dffdfbc9f",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/security/06-eks-security-best-practices.md",
+      "originalSha256": "70dfb464e784517506eaafcfb696627c14b2ca77b9bef82fde8fe4cbde5b70e0",
+      "finalSha256": "28977d6b16ef4d5eda769f2d19d0803badf65d9fd5ca8100a08ebea5d2cb55f3",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/security/10-cert-manager.md",
+      "originalSha256": "6aaa823a16f4bd297c0c4e180d69718ec8addcab87a85721cd862d1e101fd2f2",
+      "finalSha256": "1e230afc03a9b56ffedcce9b7e2cef236609b66293f9c0e80ecd61f4449e460b",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/service-mesh/02-istio.md",
+      "originalSha256": "11afd46a5a388df724a4fdf269ef67a2a787c2486daa5508832567a9f4e2741f",
+      "finalSha256": "d7d4d8cff8f96f8e114566e86ed7b491eb03a8c7a5385951e4df56f0b6868746",
+      "addedIds": 6
+    },
+    {
+      "path": "jp/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "originalSha256": "acd6ad84d4a946a92faf03308f42fb6fa734452866a184a42d1e7eef6eea4848",
+      "finalSha256": "f558652a1df55ffc688be6c797a820c814264033f33e65bff9b4f6a5d0499190",
+      "addedIds": 1
+    },
+    {
+      "path": "jp/service-mesh/istio/01-installation.md",
+      "originalSha256": "d76ee03d5fa6c3127b20b0e5ac414c3d33b97d6e32feed97a0b8598197831aaa",
+      "finalSha256": "580f046676ff3962b1015d1ae999ce5a0e821785cca14defe586140100179e40",
+      "addedIds": 10
+    },
+    {
+      "path": "jp/service-mesh/istio/advanced/01-ambient-mode.md",
+      "originalSha256": "9874717fd3b9029ad2c014eefdf52a572891cfe111e7f041b3b4254459839d14",
+      "finalSha256": "5d31be246bd2e201c347a408d5fa4ab11aea75e15ed1a46cbda09d77366e9db5",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/service-mesh/istio/best-practices.md",
+      "originalSha256": "dd01b93810f85f720af2cb3cff4680133cc14ed4fb86d7a29c89ecdbd2e1249f",
+      "finalSha256": "09149eefd3fd807ab11a582c2631fc78bf697741c40cb7b4724456377d3f8da6",
+      "addedIds": 6
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "originalSha256": "a43761a3284e7870ec40a1a665e96a5911628c3d3d7ae1e7a0d3f8e31faa21af",
+      "finalSha256": "19f0dfde10dced1873b03555bcec89cd7c454749b24f1f29d583dfbc0e9555c5",
+      "addedIds": 9
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "originalSha256": "0dfa098cdbdeed8285f830e56d60218e14b897d5dbba63838e4b46186715d2a5",
+      "finalSha256": "bf562faa91615012f5a3005575568b58a5c8021de696be2fd2062fce4596b5ae",
+      "addedIds": 8
+    }
+  ],
+  "otherNativeWork": [
+    {
+      "path": "cn/networking/cilium/08-ebpf-datapath-internals.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "es/eks-hybrid-nodes/07-node-lifecycle.md",
+      "reason": "Heading structure differs from English; translate the complete page first"
+    },
+    {
+      "path": "es/eks-hybrid-nodes/08-operations.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "es/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "jp/data-on-eks/kafka/04-schema-registry.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "jp/data-on-eks/kafka/08-best-practices.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "jp/observability/logging/05-collectors.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "jp/ops/16-troubleshooting-playbook.md",
+      "reason": "Unresolved canonical IDs: 1-pod-stuck-in-pending, 3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors, 4-running-but-not-ready--empty-endpoints, 5-service-is-unreachable, 6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure, 7-pvc-stuck-in-pending, 8-eks-irsa--pod-identity-accessdenied, 9-eks-enivpc-cni-ip-exhaustion, 10-eks-karpenter-does-not-launch-a-node, 11-no-service-can-be-created-failed-calling-webhook"
+    },
+    {
+      "path": "jp/security/08-runtime-security.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    },
+    {
+      "path": "jp/storage/01-ebs-gp2-gp3-benchmark.md",
+      "reason": "Contains changes beyond the anchor transformation of HEAD"
+    }
+  ],
+  "reviewedHashDerivations": [
+    {
+      "path": "cn/gitops/argocd/10-rollouts-experiment.md",
+      "reviewedSha256": "dcc3df0ce76c236353e6a51062b340b55f3717b6a3468c5f387ada05498545e3",
+      "finalSha256": "3777eb9baf6b4300ddf3ec53460bfec309f130971dc90765b7790899bfc45307",
+      "sourceBlob": "95051c2ef994beec7bbba017445e7ca90b0c4645",
+      "addedIds": 12,
+      "originalReviewPreserved": true,
+      "transform": "scripts/sync-translated-anchors.mjs:repairTranslatedAnchors",
+      "completeProseAndCodeInvariant": true
+    },
+    {
+      "path": "es/networking/cilium/12-mtls-encryption-identity.md",
+      "reviewedSha256": "78946049d6ff6672962dd553c5be45d0397bcde617e39372e7738b70275cca2b",
+      "finalSha256": "f9cd7d7c09d02a180454023695b97d9d5401414e138259f5be7cb43be423b679",
+      "sourceBlob": "7cb0ae457c1bea6509ed7958b25fa22c0bbf1287",
+      "addedIds": 1,
+      "originalReviewPreserved": true,
+      "transform": "scripts/sync-translated-anchors.mjs:repairTranslatedAnchors",
+      "completeProseAndCodeInvariant": true
+    },
+    {
+      "path": "es/eks-hybrid-nodes/02-network-configuration.md",
+      "reviewedSha256": "6c1cdd86fc07d0cce445c8bc289db28c95b5c12e2d0869491958d041b8c250f8",
+      "finalSha256": "f4b2819255ddd5b8c15c186100e827c5c439b87054413ad7a01e29dd0a098986",
+      "sourceBlob": "7620d8bc6f4ab6b69cd9587690d5b2be4a8af594",
+      "addedIds": 1,
+      "originalReviewPreserved": true,
+      "transform": "scripts/sync-translated-anchors.mjs:repairTranslatedAnchors",
+      "completeProseAndCodeInvariant": true
+    }
+  ],
+  "unprovenStaleReviews": [
+    {
+      "path": "es/eks-hybrid-nodes/08-operations.md",
+      "reason": "No reviewed-byte preimage retained",
+      "reviewedSha256": "45fde0ec714d77b9bae7578282f331e92de5b499a131e475e75673ccc22e3e3f"
+    }
+  ],
+  "status": "CANONICAL_TRANSFORMS_VERIFIED; OVERALL_CONTENT_REVIEW_IN_PROGRESS",
+  "note": "This is a byte-level transformation audit, not a semantic quality score. Remaining stale review evidence must be re-established by its native reviewer."
+}

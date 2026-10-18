@@ -189,7 +189,7 @@ Auto Mode는 IMDSv2와 hop limit 1을 강제하며 NodeClass에서 변경할 수
 
 ### 고객 KMS, CA bundle과 Pod 네트워크 분리
 
-잘린 인증서 문자열을 manifest에 붙이지 마세요. 선택적인 다음 생성기는 검토한 기본 템플릿을 읽고 승인된 공개 PEM bundle을 검사한 뒤 `certificateBundles[].data`에 base64로 넣어 완전한 두 번째 NodeClass를 만듭니다. Python 3와 PyYAML이 필요합니다. `NODE_KMS_KEY_ARN`, `CA_BUNDLE_FILE`을 설정하고 이전 장에서 검토한 `AWS_REGION`·`EXPECTED_ACCOUNT_ID`를 유지하세요.
+잘린 인증서 문자열을 manifest에 붙이지 마세요. 선택적으로 사용하는 다음 생성기는 검토한 기본 템플릿을 읽고 승인된 공개 PEM bundle을 검사한 뒤 `certificateBundles[].data`에 base64로 넣어 완전한 두 번째 NodeClass를 만듭니다. Python 3와 PyYAML이 필요합니다. `NODE_KMS_KEY_ARN`, `CA_BUNDLE_FILE`을 설정하고 이전 장에서 검토한 `AWS_REGION`·`EXPECTED_ACCOUNT_ID`를 유지하세요.
 
 CA 발급자, fingerprint와 유효 기간은 별도로 승인받아야 합니다. 아래 형식 검사는 신뢰성, KMS 권한이나 클라우드 리소스의 존재를 입증하지 않습니다. 적용 전에 key policy/IAM grant와 Pod 네트워크 태그 선택을 검토하세요.
 
@@ -352,7 +352,7 @@ spec:
 
 ### 개발용 풀
 
-현재 AWS 지원 목록에는 M 계열과 함께 T 계열 burstable 인스턴스도 있습니다. 과거 Auto Mode 가정만으로 T를 제거하지 마세요. Auto Mode는 CPU가 1개보다 많아야 하며 nano/micro/small 크기를 제외합니다. 그래도 리전별 타입 가용성, CPU credit 동작과 워크로드 적합성을 확인해야 합니다.
+현재 AWS 지원 목록에는 M 계열과 함께 T 계열 burstable 인스턴스도 있습니다. 과거 Auto Mode 가정만으로 T를 제거하지 마세요. Auto Mode에서는 인스턴스의 CPU가 1개보다 많아야 하며 nano/micro/small 크기를 제외합니다. 그래도 리전별 타입 가용성, CPU credit 동작과 워크로드 적합성을 확인해야 합니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1

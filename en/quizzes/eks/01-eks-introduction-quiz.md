@@ -62,9 +62,9 @@ Key characteristics of EKS control plane deployment:
 
 Issues with other options:
 
-* The control plane is not deployed within the user's VPC. Instead, a connection is established between the user's VPC and the AWS-managed VPC through ENI (Elastic Network Interface).
+* The control plane is not deployed within the user's VPC. Instead, a connection is established between the user's VPC and the AWS-managed VPC through an ENI (Elastic Network Interface).
 * The control plane is deployed across multiple availability zones, not a single one, to ensure high availability.
-* The control plane runs on AWS-managed infrastructure, not on user's EC2 instances.
+* The control plane runs on AWS-managed infrastructure, not on the user's EC2 instances.
 
 </details>
 
@@ -660,7 +660,7 @@ While port forwarding runs, open `http://127.0.0.1:8080`; stop forwarding with C
 
 ### Exercise 2: Deploying Applications and Exposing Services in an EKS Cluster
 
-**Scenario:** Your team has developed a web application based on microservices architecture. You need to deploy this application to the EKS cluster and configure it to be accessible from outside.
+**Scenario:** Your team has developed a web application based on a microservices architecture. You need to deploy this application to the EKS cluster and configure it to be accessible from outside.
 
 **Requirements:**
 
@@ -674,7 +674,7 @@ While port forwarding runs, open `http://127.0.0.1:8080`; stop forwarding with C
 <details>
 <summary>Show Solution</summary>
 
-Use the dedicated cluster and shell variables from exercise1, AWS LBC/IngressClass `alb`, and a healthy Metrics Server. This HTTP demo serves only public dummy responses and restricts ALB access to the selected client CIDR. It does not implement application authentication, TLS or production load validation.
+Use the dedicated cluster and shell variables from exercise 1, AWS LBC/IngressClass `alb`, and a healthy Metrics Server. This HTTP demo serves only public dummy responses and restricts ALB access to the selected client CIDR. It does not implement application authentication, TLS or production load validation.
 
 **1. Create the namespace**
 
@@ -687,7 +687,7 @@ EKS_INTRO_WEB_UID=$(intro_kubectl create namespace web-app -o jsonpath='{.metada
 
 **2. Configure the backend**
 
-Configure NGINX to listen on port80 and return dummy JSON for paths including `/api`.
+Configure NGINX to listen on port 80 and return dummy JSON for paths including `/api`.
 
 ```bash
 cat > "${EKS_INTRO_DIR:?}/backend-deployment.yaml" << 'EOF'

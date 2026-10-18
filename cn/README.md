@@ -14,7 +14,7 @@
 - [学习路线图](./roadmap.md) - 完整的学习地图和推荐学习路径 | [测验](./quizzes/roadmap-quiz.md)
 - [使用 LLM 阅读](./llm-guide.md) - 通过 llms.txt、清单和 MCP 查找并阅读源材料 | [测验](./quizzes/llm-guide-quiz.md)
 
-## 目录
+## 目录 {#table-of-contents}
 
 ### 新闻
 - [每周新闻](./news/README.md) - Kubernetes/EKS 生态系统最新新闻摘要

@@ -64,7 +64,7 @@ Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob
 **Answer: B) `ClusterTrainingRuntime`**
 
 **Explanation:**
-`ClusterTrainingRuntime` (or the namespace-scoped `TrainingRuntime`) is the reusable template a platform team defines once, covering the container image and distributed launch mechanics. Individual TrainJobs reference kind/name and supply allowed run-specific settings. numNodes is training Pod count, not necessarily EC2 instance count.
+`ClusterTrainingRuntime` (or the namespace-scoped `TrainingRuntime`) is the reusable template a platform team defines once, covering the container image and distributed launch mechanics. Individual TrainJobs reference kind/name and supply allowed run-specific settings. numNodes is the training Pod count, not necessarily the EC2 instance count.
 
 </details>
 

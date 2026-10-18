@@ -37,7 +37,7 @@ ConfigMap 是一种 Kubernetes 资源，用于以键值对形式存储配置数�
 </details>
 
 3. Kubernetes Pod 中 resource requests 和 limits 的区别是什么？
-   - A) Requests 是 Pod 可以使用的最小资源，limits 是最大资源
+   - A) Requests 用于指导调度和资源分配；limits 用于限制运行时用量
    - B) Requests 是 Pod 可以使用的最大资源，limits 是最小资源
    - C) Requests 仅用于调度，limits 仅在运行时应用
    - D) Requests 仅适用于 CPU，limits 仅适用于内存
@@ -46,10 +46,10 @@ ConfigMap 是一种 Kubernetes 资源，用于以键值对形式存储配置数�
 
 <summary>显示答案</summary>
 
-**答案：A) Requests 是 Pod 可以使用的最小资源，limits 是最大资源**
+**答案：A) Requests 用于指导调度和资源分配；limits 用于限制运行时用量**
 
 **解释：**
-Resource requests 指定保证给 Pod 的最小资源量，scheduler 在将 Pod 放置到 node 上时会使用这些值。Resource limits 指定 Pod 可以使用的最大资源量。当超过这些值时，Pod 可能会被限流（CPU）或终止（内存）。
+Requests 会预留调度容量，并影响运行时资源分配；进程实际用量可以低于 request。CPU limits 通过节流强制执行；内存 limits 则在超限后通过 OOM 终止进程来响应。设置了 requests 并不意味着 Pod 不受节点资源压力影响。
 </details>
 
 4. 以下哪项不是在 Kubernetes 中向 Pod 提供 Secret 数据的方法？
@@ -68,20 +68,20 @@ Resource requests 指定保证给 Pod 的最小资源量，scheduler 在将 Pod 
 在 Kubernetes 中向 Pod 提供 Secret 数据的方法包括：作为环境变量、作为挂载的 Volume，以及作为镜像仓库凭证。Kubernetes 不支持通过网络接口提供 Secrets。
 </details>
 
-5. 以下哪项不是在 Kubernetes 中创建 ConfigMap 的方法？
+5. `kubectl create configmap` 不支持以下哪项输入方式？
    - A) 从字面值创建
    - B) 从文件创建
    - C) 从目录创建
-   - D) 从网络请求创建
+   - D) 使用 `--from-url`
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：D) 从网络请求创建**
+**答案：D) `--from-url`**
 
 **解释：**
-在 Kubernetes 中创建 ConfigMaps 的方法包括：从字面值（`--from-literal`）、从文件（`--from-file`）以及从目录（`--from-file=<directory>`）创建。Kubernetes 原生不支持直接从网络请求创建 ConfigMap。
+创建 ConfigMap 时，可以使用字面值（`--from-literal`）、文件（`--from-file`）或目录（`--from-file=<directory>`），但此命令没有 `--from-url` 参数。当然，也可以通过 Kubernetes REST API 请求创建 ConfigMap，或先从 URL 获取 manifest 再应用。
 </details>
 
 6. Kubernetes 中用于指定 Pod 的 service account 的字段是什么？
@@ -116,20 +116,20 @@ Resource requests 指定保证给 Pod 的最小资源量，scheduler 在将 Pod 
 Kubernetes 中的 Secret 数据默认以 Base64 编码形式存储。这只是编码，不是加密，因此需要额外的安全措施。自 Kubernetes 1.13 起，可以对存储在 etcd 中的 Secret 数据进行加密。
 </details>
 
-8. Kubernetes 中最不推荐使用哪种设置环境变量的方法？
-   - A) 从 ConfigMap 设置
-   - B) 从 Secret 设置
-   - C) 直接硬编码在 Pod spec 中
-   - D) 从 Downward API 设置
+8. 在 Pod manifest 中设置真实密码时，应避免采用哪种做法？
+   - A) 引用 Secret key
+   - B) 使用受保护的 Secret volume
+   - C) 直接在 Pod spec 中硬编码
+   - D) 使用 workload identity 从外部密钥管理器获取
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 直接硬编码在 Pod spec 中**
+**答案：C) 直接在 Pod spec 中硬编码**
 
 **解释：**
-将环境变量直接硬编码在 Pod spec 中违反了配置与代码分离的原则，因此不推荐。使用 ConfigMaps 或 Secrets 管理环境变量，可以在不修改应用程序代码的情况下更改配置；使用 Downward API 则可以将 Pod 元数据或资源信息作为环境变量提供。
+不要在 manifest 或日志中写入明文密码。对非敏感常量而言，直接设置 `env.value` 是有效做法；机密值应使用 Secret 或外部密钥存储。ConfigMap 和 Downward API 都不是密码存储方式。
 </details>
 
 9. 当一个 Pod 中的所有容器都设置了 resource requests 和 limits，并且 requests 等于 limits 时，会分配哪个 QoS（Quality of Service）类别？
@@ -145,23 +145,23 @@ Kubernetes 中的 Secret 数据默认以 Base64 编码形式存储。这只是�
 **答案：A) Guaranteed**
 
 **解释：**
-当一个 Pod 中的所有容器都设置了 resource requests 和 limits，并且 requests 等于 limits 时，会分配 Guaranteed QoS 类别。当资源不足时，此类别中的 Pods 最后被终止。当只有部分容器设置了 requests 和 limits，或 requests 与 limits 不同时，会分配 Burstable。未设置任何 requests 或 limits 时，会分配 BestEffort。
+当 Pod 中每个容器都设置了 CPU 和内存 requests 与 limits，且两者相等（并且没有 Pod 级资源设置）时，会分配 Guaranteed QoS 类别。驱逐还会考虑 Pod 优先级和相对于 requests 的资源用量；Guaranteed 并非无条件保证 Pod 存活。只有部分容器设置了 requests/limits，或 requests 与 limits 不同时，会分配 Burstable。任何容器都未设置 requests 或 limits 时，会分配 BestEffort。
 </details>
 
-10. ConfigMaps 或 Secrets 的更改何时会自动反映到 Pod 中？
+10. ConfigMap 或 Secret 的更改何时会自动反映到 Pod 中？
     - A) 总是自动反映
-    - B) 仅在作为 Volume 挂载时
+    - B) 最终会反映到完整的 volume 挂载中（`subPath` 除外）
     - C) 仅在作为环境变量使用时
-    - D) 永远不会自动反映；需要重启 Pod
+    - D) 永远不会自动反映；必须重启 Pod
     
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 仅在作为 Volume 挂载时**
+**答案：B) 最终会反映到完整的 volume 挂载中（`subPath` 除外）**
 
 **解释：**
-当 ConfigMaps 或 Secrets 作为 volumes 挂载时，Kubernetes 会定期更新已挂载的文件（默认约为 1 分钟）。但是，当它们作为环境变量使用时，只会在 Pod 创建时设置一次，因此必须重启 Pod 才能反映更改。这是因为环境变量是在进程启动时设置的。
+可变 ConfigMap/Secret 的完整 volume 投影最终会更新；延迟取决于 kubelet 同步和缓存/变更检测设置。`subPath` 挂载不会更新。应用程序必须重新读取文件；环境变量则需要替换或重启应用容器，或重新创建 Pod。
 </details>
 
 ## 实践题
@@ -181,6 +181,7 @@ kind: ConfigMap
 metadata:
    name: app-config
 data:
+  app.name: MyApp
   app.properties: |
     app.name=MyApp
     app.version=1.0.0
@@ -218,8 +219,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: app.properties
-              subPath: app.name
+              key: app.name
         # Get environment variables from Secret
         - name: DB_USER
           valueFrom:
@@ -259,7 +259,7 @@ kubectl apply -f pod.yaml
 
 5. 验证环境变量：
 ```bash
-kubectl exec app-pod -- env | grep -E 'APP_NAME|DB_'
+kubectl exec app-pod -- sh -c 'test -n "$APP_NAME" && test -n "$DB_PASSWORD" && echo "Configuration available"'
 ```
 
 6. 验证挂载的 volumes：
@@ -271,7 +271,7 @@ kubectl exec app-pod -- ls -la /etc/secrets
 7. 验证文件内容：
 ```bash
 kubectl exec app-pod -- cat /etc/config/app.properties
-kubectl exec app-pod -- cat /etc/secrets/db.user
+kubectl exec app-pod -- test -s /etc/secrets/db.user
 ```
 </details>
 
@@ -369,7 +369,7 @@ kubectl top pod burstable-pod
 kubectl top pod besteffort-pod
 ```
 
-**QoS Class Decision Rules**：
+**QoS 类别判定规则**：
   - **Guaranteed**：所有容器都设置了 resource requests 和 limits，并且 requests 等于 limits
   - **Burstable**：至少一个容器设置了 resource requests，但不满足 Guaranteed 条件
   - **BestEffort**：任何容器都未设置 resource requests 或 limits
@@ -436,11 +436,13 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
         - name: CPU_LIMIT
           valueFrom:
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
         - name: MEM_REQUEST
           valueFrom:
             resourceFieldRef:
@@ -471,10 +473,12 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
           - path: "cpu-limit"
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
 ```
 
 2. 创建 Pod：
@@ -494,9 +498,9 @@ kubectl exec downward-api-pod -- cat /etc/podinfo/labels
 kubectl exec downward-api-pod -- cat /etc/podinfo/cpu-request
 ```
 
-**Fields Available via Downward API**：
+**Downward API 可提供的字段**：
 
-**Fields available as environment variables**：
+**可作为环境变量提供的字段**：
   - `metadata.name` - Pod 名称
   - `metadata.namespace` - Pod namespace
   - `metadata.uid` - Pod UID
@@ -507,7 +511,7 @@ kubectl exec downward-api-pod -- cat /etc/podinfo/cpu-request
   - `spec.serviceAccountName` - Pod 的 service account 名称
   - `status.hostIP` - Pod 正在运行的 node 的 IP 地址
 
-**Resource fields**：
+**资源字段**：
   - `requests.cpu` - CPU request
   - `limits.cpu` - CPU limit
   - `requests.memory` - Memory request

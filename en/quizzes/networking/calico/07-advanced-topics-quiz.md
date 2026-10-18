@@ -17,7 +17,7 @@
 **Answer: B) 64 IPs**
 
 **Explanation:**
-An IPv4 /26 contains 64 addresses. This is not always 64 usable Pod addresses: Calico Windows reserves four per owned block. IPv6 defaults use /122, also 64 addresses. Set blockSize when creating a pool; it is not an in-place tuning change.
+An IPv4 /26 contains 64 addresses. This does not always mean 64 usable Pod addresses: Calico Windows reserves four per owned block. IPv6 defaults use /122, also 64 addresses. Set blockSize when creating a pool; it is not an in-place tuning change.
 
 </details>
 

@@ -49,7 +49,7 @@ Verify the AMI selected by the launch template/provisioner and the running kerne
 **Answer: B) A mismatch between the CPU count the application perceives and its quota: align `GOMAXPROCS`, `-XX:ActiveProcessorCount`, etc., with the limit**
 
 **Explanation:**
-If the runtime inside the container sees all node cores and spawns that many threads, it burns the CPU limit's quota instantly. With 4 threads running concurrently, a 20ms quota is consumed in 5ms of wall time and the remaining 95ms is waiting. So the first response is aligning the perceived CPU count with the limit, followed by raising the limit, followed by considering limit removal for extremely sensitive cases.
+If the runtime inside the container sees all node cores and spawns that many threads, it burns the CPU limit's quota instantly. With 4 threads running concurrently, a 20ms quota is consumed in 5ms of wall time and the remaining 95ms is spent waiting. So the first response is aligning the perceived CPU count with the limit, followed by raising the limit, followed by considering limit removal for extremely sensitive cases.
 </details>
 
 4. What is more effective than kernel tuning for node stability, and why?
@@ -97,7 +97,7 @@ With insufficient `--system-reserved` and `--kube-reserved`, Pods consume all no
 **Answer: C) Changing TCP buffer settings without a measured BDP/memory problem or understanding the per-socket override**
 
 **Explanation:**
-tcp_rmem/tcp_wmem define sizing bounds/defaults; changing them does not by itself disable autotuning. Explicit SO_RCVBUF/SO_SNDBUF disables the corresponding socket’s automatic sizing.
+tcp_rmem/tcp_wmem define sizing bounds/defaults; changing them does not by itself disable autotuning. Explicit SO_RCVBUF/SO_SNDBUF settings disable the corresponding socket’s automatic sizing.
 </details>
 
 7. Which value cannot be changed via a Pod's `securityContext.sysctls`?
@@ -129,5 +129,5 @@ Many `net.*` values are settable per net namespace and can be changed via Pod `s
 **Answer: B) Managing as code, recording the rationale in comments, and separating node groups by workload character**
 
 **Explanation:**
-Codifying with Karpenter `EC2NodeClass`, launch templates, or Bottlerocket settings prevents values differing per node. Without a comment on "why this value," nobody can revert it six months later. Different workload characters need different tuning, so separate node groups rather than forcing one profile. Add to that pinning or planning the kernel transition, verifying actual values after applying (especially conntrack), and measuring before and after under identical conditions.
+Codifying settings with Karpenter `EC2NodeClass`, launch templates, or Bottlerocket settings prevents values from differing per node. Without a comment on "why this value," nobody can revert it six months later. Different workload characteristics need different tuning, so separate node groups rather than forcing one profile. Add to that pinning or planning the kernel transition, verifying actual values after applying (especially conntrack), and measuring before and after under identical conditions.
 </details>

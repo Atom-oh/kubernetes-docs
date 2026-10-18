@@ -245,7 +245,7 @@ aws emr-containers describe-virtual-cluster \
   --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID" --query virtualCluster.state
 ```
 
-삭제는 비동기 상태를 확인합니다. 권한 문제는 ARRESTED로 나타날 수 있습니다.
+삭제 시에는 비동기 상태를 확인합니다. 권한 문제는 ARRESTED로 나타날 수 있습니다.
 Namespace·EKS cluster·S3 artifact·log group·IAM role과 Pod Identity association을
 각각 검토합니다. Association은 namespace/SA가 없어도 남을 수 있으므로 사용이 끝난
 연결만 별도로 정리합니다. 공유 리소스는 이 실습 때문에 삭제하지 않습니다.

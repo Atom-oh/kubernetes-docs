@@ -215,7 +215,7 @@ TorchServe는 더 이상 적극적으로 유지보수되지 않고 보안 수정
 
 ### GPU 공유와 메모리
 
-Time-slicing은 여러 워크로드에 같은 GPU 접근을 노출하지만 메모리·장애 격리나 비례 성능을 보장하지 않습니다. MPS는 별도 control daemon을 사용하며 검토한 device plugin 문서는 실험적 지원과 MIG와의 동시 사용 제한을 명시합니다. RuntimeClass와 privileged MPS Pod만으로 전체 노드의 GPU 공유를 구성할 수 없습니다.
+Time-slicing은 여러 워크로드에 같은 GPU에 대한 접근을 제공하지만 메모리·장애 격리나 비례 성능을 보장하지 않습니다. MPS는 별도 control daemon을 사용하며 검토한 device plugin 문서는 실험적 지원과 MIG와의 동시 사용 제한을 명시합니다. RuntimeClass와 privileged MPS Pod만으로 전체 노드의 GPU 공유를 구성할 수 없습니다.
 
 아래는 standalone device plugin의 공유 설정 예시입니다. Operator가 plugin을 관리한다면 그 owner의 설정 경로를 사용하세요.
 
@@ -283,7 +283,7 @@ spec:
 
 ### 스토리지와 캐싱 {#storage-and-caching}
 
-FSx CSI의 정적 방식은 **이미 존재하는 파일시스템**을 PV/PVC로 연결합니다. 아래의 파일시스템 ID, DNS, mount name, capacity와 namespace를 실제 값으로 바꿔야 합니다. Retain은 파일시스템을 자동 삭제하지 않는다는 뜻이며, 별도 정리 전 비용도 유지됩니다.
+FSx CSI의 정적 방식은 **이미 존재하는 파일시스템**을 PV/PVC로 연결합니다. 아래의 파일시스템 ID, DNS, mount name, capacity와 namespace를 실제 값으로 바꿔야 합니다. Retain은 파일시스템을 자동 삭제하지 않는다는 뜻이며, 별도 정리 전까지 비용도 계속 발생합니다.
 
 ```yaml
 apiVersion: v1
@@ -331,7 +331,7 @@ Alluxio 같은 캐시는 worker DaemonSet 하나만으로 완성되지 않습니
 
 ### Prometheus와 Grafana {#prometheus-and-grafana}
 
-DCGM Exporter는 GPU 메트릭을 제공하며 device plugin의 allocatable 값과는 다릅니다. Operator가 관리하는 exporter와 별도 DaemonSet을 중복 설치하지 마세요. containerd 환경에 Docker socket을 마운트하는 예제는 필요하지 않습니다.
+DCGM Exporter가 제공하는 GPU 메트릭은 device plugin의 allocatable 값과는 다릅니다. Operator가 관리하는 exporter와 별도 DaemonSet을 중복 설치하지 마세요. containerd 환경에 Docker socket을 마운트하는 예제는 필요하지 않습니다.
 
 ServiceMonitor는 Pod가 아닌 **Service label과 named port**를 선택합니다. 아래 값은 설치된 exporter Service와 대조해 바꿔야 하며 Prometheus의 ServiceMonitor namespace/label selector도 이 객체를 선택해야 합니다.
 
@@ -352,11 +352,11 @@ spec:
       interval: 15s
 ```
 
-GPU 활용률, memory, 오류와 함께 애플리케이션의 요청 수·실패·latency histogram을 관측하세요. 정확도는 정답 데이터가 있는 평가 경로가 필요하며 replica 수만 늘린다고 개선되지 않습니다. Grafana의 예전 `graph`/flot 패널 JSON 대신 현재 버전의 time series·gauge 형식과 실제 datasource UID를 사용하고 import를 검증하세요.
+GPU 활용률, memory, 오류와 함께 애플리케이션의 요청 수·실패·latency histogram을 관측하세요. 정확도를 평가하려면 정답 데이터가 있는 평가 경로가 필요하며 replica 수만 늘린다고 정확도가 개선되지 않습니다. Grafana의 예전 `graph`/flot 패널 JSON 대신 현재 버전의 time series·gauge 형식과 실제 datasource UID를 사용하고 import를 검증하세요.
 
 ### 로그 수집
 
-EKS containerd의 CRI 로그와 애플리케이션 JSON은 다른 계층입니다. Fluent Bit의 CRI/multiline parser, 파일 경로·DB 위치·rotation, Kubernetes metadata RBAC를 설정해야 합니다. Elasticsearch/OpenSearch의 제거된 document type이나 존재하지 않는 parser 이름을 그대로 복사하지 마세요. CloudWatch 등 출력은 해당 이미지의 plugin과 workload IAM·네트워크가 필요합니다. 모델 입력·출력의 민감정보와 무제한 재시도 버퍼도 관리하세요. [관측성 가이드](../observability/README.md)에서 선택한 수집 경로를 검토하세요.
+EKS containerd의 CRI 로그와 애플리케이션 JSON은 다른 계층입니다. Fluent Bit의 CRI/multiline parser, 파일 경로·DB 위치·rotation, Kubernetes metadata RBAC를 설정해야 합니다. Elasticsearch/OpenSearch의 제거된 document type이나 존재하지 않는 parser 이름을 그대로 복사하지 마세요. CloudWatch 등으로 출력하려면 해당 이미지의 plugin과 workload IAM·네트워크가 필요합니다. 모델 입력·출력의 민감정보와 무제한 재시도 버퍼도 관리하세요. [관측성 가이드](../observability/README.md)에서 선택한 수집 경로를 검토하세요.
 
 ## 비용 최적화
 
@@ -366,7 +366,7 @@ Spot에는 interruption과 용량 부족이 있으므로 외부 checkpoint·재�
 
 ### HPA와 메트릭 {#hpa-and-metrics}
 
-HPA의 Resource 메트릭 경로는 metrics-server가 제공하는 CPU·메모리에 사용합니다. nvidia.com/gpu 할당량을 GPU 사용률 Resource 메트릭으로 간주하지 마세요. GPU나 요청 신호는 DCGM/애플리케이션 exporter와 custom/external metrics adapter가 필요합니다.
+HPA의 Resource 메트릭 경로는 metrics-server가 제공하는 CPU·메모리에 사용됩니다. nvidia.com/gpu 할당량을 GPU 사용률 Resource 메트릭으로 간주하지 마세요. GPU나 요청 신호를 사용하려면 DCGM/애플리케이션 exporter와 custom/external metrics adapter가 필요합니다.
 
 아래는 adapter가 **namespace/Pod별로 제공하는** RPS 메트릭을 사용하는 HPA 예시입니다. 대상 Deployment와 adapter는 별도로 설치해야 하며 100 RPS는 측정으로 조정할 예시 목표입니다. 여러 HPA나 KEDA가 같은 대상 replica를 동시에 관리하지 않도록 하나의 owner를 정하세요.
 

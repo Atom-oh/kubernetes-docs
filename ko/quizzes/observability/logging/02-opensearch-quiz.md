@@ -126,7 +126,7 @@ Firehose도 역할·연결·호환 레코드가 필요합니다. Backup mode는 
 
 **정답: B**
 
-Keyword는 분석되는 text 및 ClickHouse LowCardinality와 다릅니다. 여러 keyword·숫자 집계는 컬럼형 doc values를 사용하므로 항상 모든 _source 문서 전체를 스캔하지 않습니다.
+Keyword는 분석되는 text 및 ClickHouse LowCardinality와 다릅니다. 여러 keyword·숫자 집계는 컬럼형 doc values를 사용하므로 항상 모든 _source 문서를 스캔하지 않습니다.
 
 </details>
 
@@ -144,7 +144,7 @@ Keyword는 분석되는 text 및 ClickHouse LowCardinality와 다릅니다. 여�
 
 **정답: D**
 
-Alias가 존재한다고 자동 사용하지 않습니다. 가이드는 날짜 경로와 rollover-logs-*를 분리합니다. 후자에는 rollover alias 설정, 번호가 붙은 인덱스와 write alias가 필요합니다.
+Alias가 존재한다고 자동으로 사용하지는 않습니다. 가이드는 날짜 경로와 rollover-logs-*를 분리합니다. 후자에는 rollover alias 설정, 번호가 붙은 인덱스와 write alias가 필요합니다.
 
 </details>
 

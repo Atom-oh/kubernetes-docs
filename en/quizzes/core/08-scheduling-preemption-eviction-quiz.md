@@ -237,7 +237,7 @@ spec:
 
 **Node pressure:** Kubelet observes memory, filesystem, and PID availability and may reclaim resources before terminating Pods. Typical Linux hard defaults include memory.available below 100Mi, nodefs.available below 10%, imagefs.available below 15%, and free inodes below 5%. PID does not have a default 10% threshold. Windows memory defaults differ.
 
-**Soft versus hard:** Soft thresholds and their grace periods must be explicitly configured. Hard thresholds can terminate Pods without a graceful period. Soft termination is also bounded by evictionMaxPodGracePeriod. Preserve all intended thresholds when overriding defaults.
+**Soft versus hard:** Soft thresholds and their grace periods must be explicitly configured. Hard thresholds can terminate Pods without a grace period. Soft termination is also bounded by evictionMaxPodGracePeriod. Preserve all intended thresholds when overriding defaults.
 
 **Eviction API:** Normal drain and compatible automation submit policy/v1 Eviction requests. PDBs gate these requests. A direct Pod DELETE is different and bypasses PDB checks.
 
@@ -454,7 +454,7 @@ spec:
       app: web-server
 ```
 
-The PDB gates normal Eviction API requests so voluntary eviction does not reduce current health below its budget. The alternative maxUnavailable: 1 has the same effect only for three desired replicas. It does not protect direct deletion, rolling updates, or involuntary failures.
+The PDB gates normal Eviction API requests so voluntary eviction does not reduce current health below its budget. The alternative maxUnavailable: 1 has the same effect only for three desired replicas. It does not protect against direct deletion, rolling updates, or involuntary failures.
 </details>
 
 ## Advanced Topics
@@ -578,7 +578,7 @@ Kubelet does not use QoS as a strict eviction sequence. It ranks usage above req
 **Answer: B) `MostAllocated`, because it packs new pods onto the already-busiest nodes and leaves others empty**
 
 **Explanation:**
-A disposable 3-worker `kind` test with uneven baseline load (75%/37%/0% CPU) confirmed this: the default `LeastAllocated` scheduler routed 6 new pods to the emptiest node, bringing all three nodes to 75%/37%/37% (none scalable down). A second scheduler configured with `scoringStrategy.type: MostAllocated` routed the same 6 pods to the two busiest nodes (93%/56%/0%), leaving the idle node untouched and eligible for consolidation. Amazon EKS's control plane is managed, so applying `MostAllocated` requires running an additional scheduler `Deployment` and targeting pods at it with `schedulerName`, not editing the default scheduler directly.
+A disposable 3-worker `kind` test with uneven baseline load (75%/37%/0% CPU) confirmed this: the default `LeastAllocated` scheduler routed 6 new pods to the emptiest node, bringing all three nodes to 75%/37%/37% (none could be scaled down). A second scheduler configured with `scoringStrategy.type: MostAllocated` routed the same 6 pods to the two busiest nodes (93%/56%/0%), leaving the idle node untouched and eligible for consolidation. Amazon EKS's control plane is managed, so applying `MostAllocated` requires running an additional scheduler `Deployment` and targeting pods at it with `schedulerName`, not editing the default scheduler directly.
 </details>
 
 [Return to Learning Materials](../../core/08-scheduling-preemption-eviction.md)

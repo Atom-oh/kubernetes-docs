@@ -141,7 +141,7 @@ spec:
     instanceClass: db.t3.medium
 ```
 
-WebApplication above is a **custom platform API that must be defined beforehand**, not a built-in Kubernetes/kro kind. Without its RGD/generated CRD, the object cannot be applied. This overview does not provide a complete RGD or create resources.
+The WebApplication above is a **custom platform API that must be defined beforehand**, not a built-in Kubernetes/kro kind. Without its RGD/generated CRD, the object cannot be applied. This overview does not provide a complete RGD or create resources.
 
 When an RGD explicitly declares Deployment, Service and ACK RDS/IAM resources, kro manages the Kubernetes objects/dependencies and the relevant ACK service controllers call AWS APIs. The resulting resource set depends on that RGD. Validate controllers/CRDs, RBAC/IAM, quotas, readiness/errors, credential delivery and deletion/retention policies separately. Creating one CR does not guarantee immediate AWS readiness or transactional provisioning. See the [ExampleCorp example](./05-example-corp-app.md) and [kro guide](./03-kro.md).
 

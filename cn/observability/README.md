@@ -1,270 +1,138 @@
-# 可观测性概述
+# 可观测性概览
 
-> **最后更新**: February 20, 2026
+> **最后审核**：September 12, 2026.
 
 ## 简介
 
-在现代分布式系统中，尤其是在基于 Kubernetes 的微服务架构中，通过外部输出观察和理解系统内部状态的能力至关重要。这称为**可观测性（Observability）**。
+在现代分布式系统中，尤其是基于 Kubernetes 的微服务架构中，通过外部输出观察和了解系统内部状态的能力至关重要。这称为**可观测性**。
 
 ## 可观测性与监控
 
-可观测性和监控常被混用，但二者存在根本区别：
+监控是收集和分析系统行为并对变化作出响应的活动。可观测性描述的是输出在多大程度上能帮助你了解内部状态。二者相辅相成：监控可以包括日志、追踪和诊断查询。
 
 | 方面 | 监控 | 可观测性 |
-|--------|-----------|---------------|
-| **方法** | 基于预定义指标和阈值 | 通过系统输出推断内部状态 |
-| **问题类型** | “出了什么问题？”（What） | “为什么会出问题？”（Why） |
-| **数据范围** | 检测已知问题 | 探索未知问题 |
-| **灵活性** | 预定义仪表板 | 动态查询和探索 |
-| **复杂性** | 适用于简单系统 | 对复杂分布式系统至关重要 |
-
-```mermaid
-flowchart LR
-    subgraph Monitoring["Monitoring"]
-        M1[Predefined Metrics]
-        M2[Threshold Alerts]
-        M3[Dashboards]
-    end
-
-    subgraph Observability["Observability"]
-        O1[Logs]
-        O2[Metrics]
-        O3[Traces]
-    end
-
-    M1 --> M2
-    M2 --> M3
-
-    O1 <--> O2
-    O2 <--> O3
-    O3 <--> O1
-
-    Monitoring -->|Evolution| Observability
-
-    classDef monitoring fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef observability fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class M1,M2,M3 monitoring
-    class O1,O2,O3 observability
-```
+| --- | --- | --- |
+| **关注点** | 持续评估健康状况和对用户的影响 | 提供足够的可见性，以解释系统行为 |
+| **实践** | SLO、仪表板、告警和调查 | 埋点、上下文、关联和探索 |
+| **问题** | 发生了什么变化，为什么会故障？ | 是否有足够的证据回答这些问题？ |
+| **数据** | 指标、日志、追踪和其他有用信号 | 这些信号的质量、覆盖率及相互关联 |
+| **复杂性** | 适用于简单系统和分布式系统 | 围绕系统和运维目标设计 |
 
 ## 可观测性的三大支柱
 
-可观测性由三种核心数据类型构成：
-
-```mermaid
-flowchart TD
-    subgraph Pillars["Three Pillars of Observability"]
-        direction TB
-
-        subgraph Logs["Logs"]
-            L1[Event Records]
-            L2[Structured Data]
-            L3[Context Information]
-        end
-
-        subgraph Metrics["Metrics"]
-            M1[Numeric Measurements]
-            M2[Time Series Data]
-            M3[Aggregatable]
-        end
-
-        subgraph Traces["Traces"]
-            T1[Request Path]
-            T2[Inter-service Flow]
-            T3[Latency Analysis]
-        end
-    end
-
-    Logs <-->|TraceID Linking| Traces
-    Metrics <-->|Exemplar| Traces
-    Logs <-->|Label Matching| Metrics
-
-    classDef logs fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef traces fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1,L2,L3 logs
-    class M1,M2,M3 metrics
-    class T1,T2,T3 traces
-```
+日志、指标和追踪是三种广泛使用的信号，但它们并不能穷尽可观测性的定义。性能剖析也可以描述代码级的资源使用情况；各类信号的成熟度在 OpenTelemetry 中有所不同，其中性能剖析支持仍在开发中。
 
 ### 1. 日志
 
-日志是系统中发生的各个事件的记录。
+日志是系统中发生的单个事件的记录。
 
-**特征：**
-- 离散且不可变的事件记录
+**特点：**
+- 离散事件的记录；防篡改能力和保留保证取决于存储配置
 - 包含时间戳和上下文信息
 - 结构化（JSON）或非结构化格式
-- 对调试和审计至关重要
+- 通过有意识地规划事件覆盖范围、访问控制和保留策略，可用于调试和审计
 
 **使用场景：**
 - 错误和异常追踪
 - 安全审计
-- 合规性
+- 合规
 - 详细调试
 
-**工具：** Loki、Elasticsearch、CloudWatch Logs、Fluent Bit
+**工具作用**：Loki、Elasticsearch/OpenSearch 和 CloudWatch Logs 提供存储/查询后端；Fluent Bit 用于采集和转发记录。
 
 ### 2. 指标
 
-指标是随时间变化的数值测量值。
+指标是随时间变化的数值测量数据。
 
-**特征：**
-- 以时间序列数据形式存储
+**特点：**
+- 以时间序列数据的形式存储
 - 支持聚合和数学运算
-- 存储效率高
-- 适用于趋势分析
+- 在控制基数和采集量时可实现高效存储
+- 适合趋势分析
 
-**主要指标类型：**
-- **Counter**：累计递增值（例如，请求数）
-- **Gauge**：当前状态值（例如，CPU 使用率）
-- **Histogram**：分布测量值（例如，响应时间）
-- **Summary**：分位数计算
+**常见的 Prometheus 指标类型：**
+- **Counter**：持续递增的累计值，可重置为零，例如在重启时重置（如请求计数）
+- **Gauge**：可增加或减少的当前测量值（如内存使用量）
+- **Histogram**：观测值的分布（如响应时间）；经典直方图和原生直方图在表示方式和查询语法上有所不同
+- **Summary**：观测次数/总和，以及根据具体实现预先计算的分位数；对实例分位数取平均并不能得出有效的全服务集群分位数
 
-**工具：** Prometheus、VictoriaMetrics、CloudWatch Metrics、Datadog
+**工具**：Prometheus、VictoriaMetrics、CloudWatch Metrics、Datadog
 
-### 3. 链路追踪
+### 3. 追踪
 
-链路追踪可跟踪请求在分布式系统中的完整路径。
+追踪通过 Span 描述相关工作经过的观测路径。埋点缺失、采样、传播失败和数据丢失都可能导致追踪不完整。
 
-**特征：**
+**特点：**
 - 可视化服务之间的请求流
 - 测量每个步骤的延迟
 - 识别瓶颈
-- 依赖关系分析
+- 分析依赖关系
 
-**组件：**
-- **Trace**：单个请求的完整旅程
+**组成部分：**
+- **Trace**：通过共同的 TraceID 连接起来的相关 Span
 - **Span**：单个工作单元
-- **SpanContext**：在服务之间传播的上下文
+- **SpanContext**：用于传播追踪上下文的 TraceID、SpanID、追踪标志和 tracestate
 
-**工具：** Tempo、Jaeger、X-Ray、Zipkin、Datadog APM
+**工具**：Tempo、Jaeger、X-Ray、Zipkin、Datadog APM
 
 ## 三大支柱之间的关联
 
-三大支柱并非相互独立，而是彼此关联，可提供强大的分析能力：
+在配置好埋点、采集和后端链接后，可以关联各种信号。仅仅存在这些信号，并不会自动连接每个事件。
 
-```mermaid
-flowchart TD
-    subgraph Request["User Request"]
-        R[HTTP Request]
-    end
+![一个 HTTP 请求从 API 网关分发到用户、订单和支付服务；每个服务都会发出带有同一 Trace ID 的日志、指标和追踪，该 ID 可双向关联到指标示例和相关日志条目，从而让你能够在三大支柱之间切换查询。](../.gitbook/assets/en-observability-readme-2.png)
 
-    subgraph Services["Microservices"]
-        S1[API Gateway]
-        S2[User Service]
-        S3[Order Service]
-        S4[Payment Service]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-2.html)
 
-    subgraph Correlation["Correlation"]
-        C1[TraceID: abc123]
-        C2[Metric Exemplar]
-        C3[Log Correlation]
-    end
-
-    R --> S1
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
-
-    S1 -.->|Logs/Metrics/Traces| C1
-    S2 -.->|Logs/Metrics/Traces| C1
-    S3 -.->|Logs/Metrics/Traces| C1
-    S4 -.->|Logs/Metrics/Traces| C1
-
-    C1 <--> C2
-    C2 <--> C3
-    C3 <--> C1
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef correlation fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class R request
-    class S1,S2,S3,S4 service
-    class C1,C2,C3 correlation
-```
+图中为便于说明而缩短了 ID。在实际数据中，请使用下方展示的有效完整长度 ID。指标关联使用示例元数据；常规指标标签应保持有限的基数。
 
 ### Trace 到日志的关联
 
-在日志中包含 TraceID，以跟踪与特定请求相关的所有日志：
+当存在活跃的追踪上下文时，记录 TraceID 和 SpanID，以便将发出的日志事件关联到 Span。后台日志或未埋点的日志可能没有这些 ID。以下是应用程序 JSON 示例，并非完整的 OTLP 请求负载。
 
 ```json
 {
   "timestamp": "2025-02-15T10:30:00Z",
   "level": "ERROR",
   "message": "Payment processing failed",
-  "traceId": "abc123def456",
-  "spanId": "789xyz",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "spanId": "00f067aa0ba902b7",
   "service": "payment-service"
 }
 ```
 
-### 指标到 Trace 的关联（Exemplar）
+W3C 格式的 TraceID 包含 32 个十六进制字符，SpanID 包含 16 个；全零 ID 无效。JSON 中保留的是用于说明的历史事件时间戳。
 
-将 TraceID 关联到指标，以便在出现异常时追踪请求：
+### 指标到追踪的关联（Exemplar）
 
-```yaml
-# Prometheus Exemplar
-http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
+Exemplar 是一种独立的元数据，可将某个观测值关联到一条追踪。若在普通指标序列上按每个请求添加 TraceID，会造成高基数，因此应使用 Exemplar 或日志字段。以下是一个完整的经典直方图 OpenMetrics 文本示例，其中包含用于说明的测量值。
+
+```text
+# HELP http_request_duration_seconds Observed HTTP request duration.
+# TYPE http_request_duration_seconds histogram
+# UNIT http_request_duration_seconds seconds
+http_request_duration_seconds_bucket{le="0.5"} 1000 # {trace_id="4bf92f3577b34da6a3ce929d0e0e4736"} 0.42
+http_request_duration_seconds_bucket{le="+Inf"} 1000
+http_request_duration_seconds_sum 123.4
+http_request_duration_seconds_count 1000
+# EOF
 ```
 
-## OpenTelemetry 和标准化
+Exemplar 需要同时包含标签集和观测值（`0.42`）；时间戳为可选项。采集/存储系统必须支持并保留 Exemplar，数据源链接必须将 `trace_id` 标签映射到追踪后端。所引用的追踪也必须已被采样并保留。
 
-OpenTelemetry（OTel）是可观测性数据采集的行业标准：
+## OpenTelemetry 与标准化
 
-```mermaid
-flowchart TD
-    subgraph Apps["Applications"]
-        A1[Java App]
-        A2[Python App]
-        A3[Node.js App]
-        A4[Go App]
-    end
+OpenTelemetry (OTel) 提供与供应商无关的 API、SDK、埋点和 Collector 工具。支持的信号和自动埋点能力因语言、框架和组件版本而异。
 
-    subgraph SDK["OpenTelemetry SDK"]
-        SDK1[Auto-instrumentation]
-        SDK2[Manual instrumentation]
-    end
+![任意四种语言的应用通过自动或手动埋点，将数据发送到 OpenTelemetry Collector 的接收、处理和导出阶段，最终进入五种可观测性后端之一。](../.gitbook/assets/en-observability-readme-3.png)
 
-    subgraph Collector["OTEL Collector"]
-        C1[Receivers]
-        C2[Processors]
-        C3[Exporters]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-3.html)
 
-    subgraph Backends["Backends"]
-        B1[Tempo]
-        B2[Prometheus]
-        B3[Loki]
-        B4[X-Ray]
-        B5[Datadog]
-    end
-
-    A1 & A2 & A3 & A4 --> SDK1 & SDK2
-    SDK1 & SDK2 --> C1
-    C1 --> C2
-    C2 --> C3
-    C3 --> B1 & B2 & B3 & B4 & B5
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef sdk fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef backend fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class A1,A2,A3,A4 app
-    class SDK1,SDK2 sdk
-    class C1,C2,C3 collector
-    class B1,B2,B3,B4,B5 backend
-```
+这是一种部署模式。应用也可以直接导出到受支持的后端。必须针对所选信号配置 Collector 接收器、处理器和导出器；各组件的成熟度有所不同。
 
 **OpenTelemetry 的优势：**
 - 与供应商无关的标准
 - 支持多种语言的 SDK
-- 自动插桩能力
+- 自动埋点能力
 - 支持多个后端
 - 活跃的社区
 
@@ -272,141 +140,101 @@ flowchart TD
 
 在 Amazon EKS 中实施有效可观测性的策略：
 
-### 1. 基于层的可观测性
+### 1. 分层可观测性
 
-```mermaid
-flowchart TD
-    subgraph Infra["Infrastructure Layer"]
-        I1[EC2/Fargate Metrics]
-        I2[VPC Flow Logs]
-        I3[EBS Performance]
-    end
+![基础设施、Kubernetes 和应用层分别将其信号发送到相应的可观测性工具：基础设施指标发送到 CloudWatch，集群和业务指标发送到 Prometheus/Grafana，应用追踪和日志发送到 Tempo/X-Ray 和 Loki。](../.gitbook/assets/en-observability-readme-4.png)
 
-    subgraph K8s["Kubernetes Layer"]
-        K1[kube-state-metrics]
-        K2[Node Exporter]
-        K3[API Server Metrics]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-4.html)
 
-    subgraph App["Application Layer"]
-        A1[Business Metrics]
-        A2[Application Logs]
-        A3[Distributed Tracing]
-    end
+这些是信号路径示例，并不表示工具只能用于特定层。CloudWatch 和其他后端可以覆盖多个层级。节点级采集器必须采用所选 EKS 计算模式支持的访问方式和部署模式。
 
-    subgraph Tools["Observability Tools"]
-        T1[CloudWatch]
-        T2[Prometheus/Grafana]
-        T3[Tempo/X-Ray]
-        T4[Loki]
-    end
+### 2. 工具选择示例
 
-    I1 & I2 & I3 --> T1
-    K1 & K2 & K3 --> T2
-    A1 --> T2
-    A2 --> T4
-    A3 --> T3
-
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef tools fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class I1,I2,I3 infra
-    class K1,K2,K3 k8s
-    class A1,A2,A3 app
-    class T1,T2,T3,T4 tools
-```
-
-### 2. 推荐工具栈
-
-| 功能 | 开源 | AWS 原生 | 商业 |
+| 功能 | 自托管示例 | AWS 托管示例 | 商业平台 |
 |----------|-------------|------------|------------|
-| 指标 | Prometheus, VictoriaMetrics | CloudWatch, AMP | Datadog, New Relic |
-| 日志 | Loki, Elasticsearch | CloudWatch Logs | Splunk, Datadog |
-| 链路追踪 | Tempo, Jaeger | X-Ray | Datadog APM, Dynatrace |
-| 可视化 | Grafana | CloudWatch Dashboards | Datadog, Dynatrace |
+| 指标 | Prometheus、VictoriaMetrics | CloudWatch、AMP | Datadog、New Relic |
+| 日志 | Loki、Elasticsearch/OpenSearch | CloudWatch Logs | Splunk、Datadog |
+| 追踪 | Tempo、Jaeger | X-Ray | Datadog APM、Dynatrace |
+| 可视化 | Grafana | CloudWatch Dashboards | Datadog、Dynatrace |
 
 ### 3. 成本优化策略
 
-- **采样**：通过对 Trace 数据采样降低成本
+- **采样**：在保留的追踪量与调查覆盖率之间取得平衡；尾部采样在作出决定前仍会接收并缓冲数据，因此无法消除所有上游成本
 - **保留策略**：优化数据保留期限
-- **分层存储**：将较旧的数据移至更廉价的存储
-- **聚合**：存储聚合数据而非详细数据
+- **分层存储**：检查后端支持的存储层级、查询路径和所需保留时长
+- **聚合与基数**：控制采集量和标签维度，同时评估聚合会损失哪些诊断细节
 
 ## 可观测性成熟度模型
 
-```mermaid
-flowchart LR
-    L1[Level 1<br/>Basic Monitoring]
-    L2[Level 2<br/>Centralization]
-    L3[Level 3<br/>Correlation]
-    L4[Level 4<br/>AIOps]
+使用此实用规划模型来审视运维目标。它不是产品采购顺序，也不是通用认证等级。评估信号覆盖率、调查速度、可执行的告警和成本；只有在评估过自动分析的行为后，才引入自动分析。
 
-    L1 -->|Log/Metric Collection| L2
-    L2 -->|TraceID Linking| L3
-    L3 -->|ML-based Analysis| L4
-
-    classDef level1 fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-    classDef level2 fill:#B8D4E3,stroke:#333,stroke-width:1px,color:black
-    classDef level3 fill:#7FB3D3,stroke:#333,stroke-width:1px,color:white
-    classDef level4 fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1 level1
-    class L2 level2
-    class L3 level3
-    class L4 level4
-```
-
-| 级别 | 特征 | 示例工具 |
-|-------|-----------------|---------------|
-| 级别 1 | 基础日志/指标采集 | kubectl logs, CloudWatch |
-| 级别 2 | 集中式可观测性 | Loki, Prometheus, Grafana |
-| 级别 3 | 三大支柱关联 | Tempo, Exemplars, TraceID |
-| 级别 4 | AIOps、自动异常检测 | Datadog Watchdog, Dynatrace Davis |
+| 审查领域 | 待评估能力 | 工具示例 |
+| --- | --- | --- |
+| 基础采集 | 所需服务/平台信号的可靠覆盖 | kubectl logs、CloudWatch |
+| 集中化 | 合适的保留策略、访问控制和查询能力 | Loki、Prometheus、Grafana |
+| 关联 | 通过请求、服务和部署上下文进行关联 | Tempo、Exemplar、TraceID |
+| 可选自动化 | 已测试误报、缺失情况和响应行为的分析辅助 | Datadog Watchdog、Dynatrace Intelligence |
 
 ## 章节指南
 
-本可观测性章节的组织如下：
+本可观测性章节的组织结构如下：
 
-### [日志](./logging/README.md)
+### [日志记录](./logging/README.md)
 日志采集、存储和分析的工具与策略：
-- Loki：轻量级日志聚合系统
+- Loki：日志聚合和查询后端
 - Fluent Bit：高性能日志采集器
-- CloudWatch Logs：AWS 原生日志记录
+- CloudWatch Logs：AWS 原生日志服务
 
 ### [指标](./metrics/README.md)
-时间序列指标采集和分析：
-- Prometheus：行业标准指标系统
-- VictoriaMetrics：高性能 Prometheus 替代方案
-- CloudWatch Metrics：AWS 原生指标
+时间序列指标的采集和分析：
+- Prometheus：业界标准指标系统
+- VictoriaMetrics：指标存储和查询后端
+- CloudWatch Metrics：AWS 原生指标服务
 
-### [链路追踪](./tracing/README.md)
-分布式链路追踪和请求流分析：
-- Tempo：Grafana 的分布式链路追踪后端
-- X-Ray：AWS 原生分布式链路追踪
-- OpenTelemetry：标准化插桩
+### [追踪](./tracing/README.md)
+分布式追踪和请求流分析：
+- Tempo：Grafana 的分布式追踪后端
+- X-Ray：AWS 原生分布式追踪服务
+- OpenTelemetry：标准化埋点
 - Dynatrace：AI 驱动的 APM
 
 ### [Grafana（仪表板）](./grafana/README.md)
-统一可视化和仪表板：
+统一的可视化和仪表板：
 - 数据源集成
 - 仪表板设计模式
 - 告警配置
 
+### [告警](./alerting/README.md)
+可执行的告警、路由和响应集成。
+
+### [可观测性优化](./09-observability-optimization.md)
+采集量、基数、保留策略和运营成本。
+
+### [集成实验](../labs/observability/README.md)
+循序渐进的基础设施、技术栈、应用、负载和追踪练习。
+
 ## 开始使用
 
-要开始实施可观测性，建议按以下顺序进行：
+从服务目标、调查问题以及现有平台/采集器能力入手。根据这些需求调整以下示例步骤：
 
-1. **设置指标采集**：部署 Prometheus 或 VictoriaMetrics
+1. **设置指标**：选择 Prometheus、VictoriaMetrics 或合适的托管后端
 2. **设置日志采集**：部署 Loki 和 Fluent Bit
-3. **设置链路追踪**：部署 Tempo 或 X-Ray
-4. **可视化**：在 Grafana 中连接所有数据源
+3. **设置追踪**：部署 Tempo 或 X-Ray
+4. **可视化**：在选定的平台中连接所需的数据源和仪表板
 5. **关联**：配置基于 TraceID 的链接
 
 ## 参考资料
 
-- [OpenTelemetry 官方文档](https://opentelemetry.io/docs/)
-- [Grafana LGTM Stack](https://grafana.com/oss/lgtm-stack/)
+- [OpenTelemetry 信号](https://opentelemetry.io/docs/concepts/signals/)
+- [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
+- [OpenTelemetry 日志数据模型](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [Prometheus 指标类型](https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md)
+- [OpenMetrics 规范](https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md)
+- [OpenTelemetry 采样](https://opentelemetry.io/docs/concepts/sampling/)
+- [Grafana OpenTelemetry 文档](https://grafana.com/docs/opentelemetry/)
+- [Amazon EKS 监控和日志记录](https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html)
 - [AWS 可观测性最佳实践](https://aws-observability.github.io/observability-best-practices/)
-- [SRE 工作手册 - 监控](https://sre.google/workbook/monitoring/)
+- [SRE 工作手册：监控](https://sre.google/workbook/monitoring/)
+- [Datadog Watchdog](https://docs.datadoghq.com/watchdog/)
+- [Dynatrace Intelligence](https://docs.dynatrace.com/docs/dynatrace-intelligence)

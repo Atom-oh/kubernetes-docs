@@ -2,12 +2,12 @@
 
 Spark 4.2.0 / Hadoop 3.5.0 / AWS SDK v2 2.35.4.
 
-## 1. Spark 4.2의 검증한 Hadoop/S3A 버전 조합은?
+## 1. Spark 4.2에서 검증한 Hadoop/S3A 버전 조합은?
 
 <details>
 <summary>정답 보기</summary>
 
-Hadoop client와 hadoop-aws는 3.5.0으로 맞추며 AWS SDK v2 bundle 2.35.4와 Maven이 해결한 runtime 의존성을 포함합니다. 다른 이미지·EMR에는 그 번들의 버전을 다시 확인합니다.
+Hadoop client와 hadoop-aws는 3.5.0으로 맞추며 AWS SDK v2 bundle 2.35.4와 Maven이 해결한 runtime 의존성을 포함합니다. 다른 이미지·EMR에서는 그 번들의 버전을 다시 확인합니다.
 
 </details>
 
@@ -115,7 +115,7 @@ Driver의 Kubernetes API 관리 권한과 각 프로세스의 S3 데이터 권�
 <details>
 <summary>정답 보기</summary>
 
-Agent는 JVM 안에서 실행되고 별도 프로세스가 아닙니다. Operator chart 기본 메트릭은 Operator 자체이며 Spark JVM마다 agent를 자동 설치하지 않습니다.
+Agent는 JVM 안에서 실행되고 별도 프로세스가 아닙니다. Operator chart 기본 메트릭은 Operator 자체의 메트릭이며 Spark JVM마다 agent를 자동 설치하지 않습니다.
 
 </details>
 
@@ -142,7 +142,7 @@ JVM이 끝나면 live UI는 서비스되지 않습니다. History Server는 별�
 <details>
 <summary>정답 보기</summary>
 
-아닙니다. 예제는 spark-class org.apache.spark.deploy.history.HistoryServer --properties-file 경로로 명시적으로 읽고 foreground로 실행합니다. 파일 경로와 로그 디렉터리·S3 identity를 함께 확인합니다.
+아닙니다. 예제는 spark-class org.apache.spark.deploy.history.HistoryServer --properties-file 경로로 설정 파일을 명시적으로 읽고 foreground로 실행합니다. 파일 경로와 로그 디렉터리·S3 identity를 함께 확인합니다.
 
 </details>
 

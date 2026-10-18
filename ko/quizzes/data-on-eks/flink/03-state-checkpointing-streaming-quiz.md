@@ -84,7 +84,7 @@
 <details>
 <summary>정답 보기</summary>
 
-**정답:** 독립적인 동시 sink/job 사이에는 고유하고, 같은 논리적 실행의 재시작 동안에는 안정적으로 유지합니다.
+**정답:** 독립적인 동시 sink/job 사이에는 고유하게 유지하고, 같은 논리적 실행의 재시작 동안에는 안정적으로 유지합니다.
 
 **설명:** 충돌은 fencing을 일으킬 수 있고 prefix 변경은 lingering transaction 정리와 consumer 진행을 지연할 수 있습니다.
 

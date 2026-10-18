@@ -78,7 +78,7 @@ kubectl -n networking-demo get svc,pods
    - [使用 Hubble 实现网络可视化](#network-visibility-with-hubble)
    - [在 Amazon EKS 上配置 Cilium](#configuring-cilium-on-amazon-eks)
 
-## Service 类型
+## Service 类型 {#service-types}
 
 > **核心概念**：Kubernetes Service 为一组 Pod 提供稳定的网络端点，并通过多种类型控制内部和外部访问。
 
@@ -440,7 +440,7 @@ endpoints:
   zone: us-west-2a
 ```
 
-## Service 发现
+## Service 发现 {#service-discovery}
 
 Kubernetes 提供两种主要的 Service 发现方式：
 
@@ -544,7 +544,7 @@ spec:
     - name: edns0
 ```
 
-## 网络策略
+## 网络策略 {#network-policies}
 
 网络策略提供控制 Pod 之间通信的方式。要使用网络策略，网络插件必须支持该功能（例如 Calico、Cilium）。
 
@@ -781,7 +781,7 @@ CNI 插件会配置 Pod 网络接口和 IP 地址分配。网络策略的执行�
 
 [Cilium 详情](../networking/cilium/README.md)
 
-### Cilium 简介
+### Cilium 简介 {#introduction-to-cilium}
 
 Cilium 是一款开源软件，利用 Linux 内核中功能强大的 eBPF 技术，为容器化应用提供网络连接、安全性和可观测性。Cilium 当前与 Kubernetes 的集成通过 CNI 插件和 Controller 提供网络、安全和可观测性功能。
 
@@ -812,7 +812,7 @@ Cilium 是一款开源软件，利用 Linux 内核中功能强大的 eBPF 技术
 - **高性能要求**：优化的数据路径
 - **Service Mesh 集成**：与 Istio 等 Service Mesh 集成
 
-### eBPF 技术
+### eBPF 技术 {#ebpf-technology}
 
 eBPF（extended Berkeley Packet Filter）是一种允许程序在 Linux 内核中安全运行的技术。Cilium 使用 eBPF 实现网络、安全和可观测性功能。
 
@@ -842,7 +842,7 @@ Cilium 通过以下方式使用 eBPF：
 | 可观测性 | 高 | 有限 |
 | 实现复杂度 | 高 | 中等 |
 
-### Cilium 网络模型
+### Cilium 网络模型 {#cilium-networking-model}
 
 Cilium 支持多种网络模型，可以根据不同的环境和需求进行配置。
 
@@ -900,7 +900,7 @@ Cilium 默认使用 VXLAN 实现 Overlay 网络，同时也支持 Geneve 等其�
 - 集成 AWS 安全组和网络策略
 - 提升网络性能
 
-### Cilium 网络策略
+### Cilium 网络策略 {#cilium-network-policies}
 
 Cilium 扩展了 Kubernetes 网络策略，支持在 L3-L7 层实施细粒度网络安全策略。
 
@@ -978,7 +978,7 @@ spec:
 
 此策略允许来自 `kube-system` 命名空间中 Pod 的入站流量访问所有 Pod。
 
-### 使用 Hubble 实现网络可视化
+### 使用 Hubble 实现网络可视化 {#network-visibility-with-hubble}
 
 Hubble 是 Cilium 的可观测性层，它使用 eBPF 监控网络流并排查问题。
 
@@ -1026,7 +1026,7 @@ hubble observe --pod default/myapp-pod
 hubble observe --verdict DROPPED
 ```
 
-### 在 Amazon EKS 上配置 Cilium
+### 在 Amazon EKS 上配置 Cilium {#configuring-cilium-on-amazon-eks}
 
 在 Amazon EKS 上配置 Cilium 有多种方式。下面介绍一些常见的配置方法。
 

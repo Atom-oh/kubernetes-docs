@@ -86,7 +86,7 @@ Use an AWS-maintained Cilium branch/version meeting the gateway VTEP minimum, wi
 **Answer: B) VNI 2 on UDP port 8472 (Cilium default)**
 
 **Explanation:**
-The default interface is hybrid_vxlan0 with VNI 2 and UDP 8472. Version 1.0.2 does not assign an IP to that interface. It derives deterministic MACs and installs FDB/neighbor/onlink route entries using each Hybrid node internal IP and Pod CIDR. Allow the required underlay UDP path in both directions. VXLAN encapsulation does not encrypt the traffic.
+The default interface is hybrid_vxlan0 with VNI 2 and UDP 8472. Version 1.0.2 does not assign an IP to that interface. It derives deterministic MACs and installs FDB/neighbor/onlink route entries using each Hybrid node's internal IP and Pod CIDR. Allow the required underlay UDP path in both directions. VXLAN encapsulation does not encrypt the traffic.
 
 </details>
 

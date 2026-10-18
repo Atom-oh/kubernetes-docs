@@ -2,77 +2,77 @@
 
 > **関連ドキュメント**: [スケーリング戦略](../../ops/06-scaling-strategies.md)
 
-## 選択式問題
+## 選択問題
 
-### 1. HPA で custom metrics を使用するには何が必要ですか？
+### 1. HPA でカスタムメトリクスを使うには何が必要ですか？
 
 - A) Kubernetes 1.30 以上
-- B) Prometheus Adapter または同様の custom metrics server
-- C) AWS Auto Scaling integration
-- D) 手動での Pod scaling
+- B) Prometheus Adapter などのカスタムメトリクスサーバー
+- C) AWS Auto Scaling との統合
+- D) Pod の手動スケーリング
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Prometheus Adapter または同様の custom metrics server**
+**解答: B) Prometheus Adapter などのカスタムメトリクスサーバー**
 
 **解説:**
-custom metrics を使用する HPA には、custom.metrics.k8s.io API を実装する metrics server が必要です。Prometheus Adapter は Prometheus に query し、HPA が期待する形式で metrics を公開することで、1 秒あたりの requests など application-specific metrics に基づく scaling を可能にします。
+カスタムメトリクスを使う HPA には、`custom.metrics.k8s.io` API を実装したメトリクスサーバーが必要です。Prometheus Adapter は Prometheus に問い合わせて、HPA が期待する形式でメトリクスを公開します。これにより、1 秒あたりのリクエスト数など、アプリケーション固有のメトリクスに基づいてスケーリングできます。
 
 </details>
 
-### 2. KEDA は HPA では scaling できないどのような種類の event に基づいて scaling できますか？
+### 2. KEDA はネイティブな HPA の制御ループに何を追加しますか？
 
-- A) CPU utilization
-- B) Memory usage
-- C) SQS queue depth や Kafka lag などの external events
-- D) Pod restart counts
+- A) CPU 使用率
+- B) メモリ使用量
+- C) イベントソース用の scaler と、activation／ゼロまでのスケーリング管理
+- D) Pod の再起動回数
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C) SQS queue depth や Kafka lag などの external events**
+**解答: C) イベントソース用の scaler と、activation／ゼロまでのスケーリング管理**
 
 **解説:**
-KEDA (Kubernetes Event-Driven Autoscaling) には、AWS SQS、Kafka、RabbitMQ、databases などの external systems 向けの scaler が含まれています。KEDA はゼロまで scale でき、Kubernetes metrics system の外部にある event に反応できます。
+KEDA（Kubernetes Event-Driven Autoscaling）には、AWS SQS、Kafka、RabbitMQ、データベースなどの外部システム向け scaler があります。対応するワークロードでは、HPA に外部メトリクスを提供し、activation とゼロからの遷移を管理します。HPA 自体も adapter 経由で外部メトリクスを利用できます。KEDA がないと HPA は外部メトリクスを読めない、という意味ではありません。
 
 </details>
 
-### 3. VPA mode の「Auto」と「Off」の違いは何ですか？
+### 3. VPA の「Recreate」と「Off」モードはどう違いますか？
 
-- A) Auto は HPA を有効にし、Off は無効にする
-- B) Auto は Pod を in-place で更新し、Off は recommendation のみを提供する
-- C) Auto は restart が必要で、Off は即時に反映される
-- D) Auto は Spot instances を使用し、Off は On-Demand を使用する
+- A) Recreate は HPA を有効にし、Off は無効にする
+- B) Recreate は Pod を退避・再作成することがあり、Off は推奨値だけを提示する
+- C) Recreate は停止なく更新でき、Off は即時に反映される
+- D) Recreate は Spot インスタンスを使い、Off は On-Demand を使う
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Auto は Pod を in-place で更新し、Off は recommendation のみを提供する**
+**解答: B) Recreate は Pod を退避・再作成することがあり、Off は推奨値だけを提示する**
 
 **解説:**
-VPA の「Auto」mode は、更新された resource requests で Pod を自動的に evict して再作成します。「Off」mode は変更を行わず recommendation のみを生成するため、手動で実装する前に提案内容を review するのに役立ちます。
+VPA 1.8.0 では `Auto` が非推奨になっており、現在は `Recreate` と同様に動作します。`Recreate` は Pod の退避と再作成によって更新することがあります。`Off` は推奨値を提示するだけなので、確認に使えます。明示的な `InPlaceOrRecreate` と、feature gate が必要な `InPlace` は、それぞれ異なるフォールバック動作を持つ別モードです。
 
 </details>
 
-### 4. Pod Deletion Cost とは何で、scaling にどのように影響しますか？
+### 4. Pod Deletion Cost とは何で、スケーリングにどう影響しますか？
 
-- A) Pod を削除する financial cost
-- B) scale-down 時にどの Pod を先に削除するかに影響する annotation
+- A) Pod の削除にかかる金銭的コスト
+- B) scale-down 時に先に削除する Pod の選択に影響するアノテーション
 - C) Pod の削除に必要な時間
-- D) Pod termination に関連する storage costs
+- D) Pod 終了時のストレージコスト
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) scale-down 時にどの Pod を先に削除するかに影響する annotation**
+**解答: B) scale-down 時に先に削除する Pod の選択に影響するアノテーション**
 
 **解説:**
-`controller.kubernetes.io/pod-deletion-cost` annotation は Pod に cost value を割り当てます。scale-down 時には、deletion cost が低い Pod が先に終了されます。これにより、重要な workload を実行している Pod や cached data を持つ Pod を維持しやすくなります。
+`controller.kubernetes.io/pod-deletion-cost` アノテーションで Pod にコスト値を割り当てます。ReplicaSet 内では、先に Pod の割り当て、フェーズ、Ready 状態を比較し、その後にコスト値の低い Pod が優先されます。これはベストエフォートの仕組みであり、退避、Spot インスタンスの回収、Job／StatefulSet の動作、異なる Deployment 間のスケーリングから Pod を保護するものではありません。
 
 </details>
 
-### 5. custom metrics で HPA を使用する場合、desired replicas を計算する式は何ですか？
+### 5. カスタムメトリクスを使う HPA では、希望レプリカ数をどの式で計算しますか？
 
 - A) currentReplicas + 1
 - B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))
@@ -80,96 +80,96 @@ VPA の「Auto」mode は、更新された resource requests で Pod を自動�
 - D) currentMetricValue * targetUtilization
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))**
+**解答: B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))**
 
 **解説:**
-HPA は current metric values を target values と比較し、その後比例的に scaling して desired replicas を計算します。ceiling function により、scale up 時には少なくとも 1 つの追加 replica が追加されます。
+HPA は現在のメトリクス値と目標値を比較し、比例計算で希望レプリカ数を求めます。この簡略式は、利用可能なメトリクスがあり、Pod が Ready であることを前提とします。許容範囲、データ欠落、最小／最大数、スケーリング動作の設定によって、実際の変更は抑制または制限されます。切り上げても Pod が必ず 1 つ増えるとは限りません。
 
 </details>
 
-### 6. Spot node interruption handling の推奨戦略は何ですか？
+### 6. Spot ノードの中断に対処する推奨方法は何ですか？
 
-- A) interruption を無視する
-- B) Pod Disruption Budgets と interruption handlers による graceful termination を使用する
-- C) stateless workloads のみを実行する
-- D) Spot instances を完全に無効にする
+- A) 中断を無視する
+- B) Pod Disruption Budget と、中断ハンドラーを使った graceful termination を組み合わせる
+- C) ステートレスなワークロードだけを実行する
+- D) Spot インスタンスを完全に無効化する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Pod Disruption Budgets と interruption handlers による graceful termination を使用する**
+**解答: B) Pod Disruption Budget と、中断ハンドラーを使った graceful termination を組み合わせる**
 
 **解説:**
-Spot interruption handling は、AWS Node Termination Handler (または Karpenter の native handling)、可用性を確保するための Pod Disruption Budgets、十分な termination grace periods、そして preemption を graceful に処理する workload design を組み合わせます。
+ノードの動作モードに応じた方法を選びます。管理された Auto Mode、構成済みのセルフマネージド Karpenter、必要に応じた Node Termination Handler の完全な構成が該当します。重複した drain コントローラーは避けてください。PDB や猶予期間を設定しても Spot の回収は防げず、アプリケーションに必ず 2 分間の停止猶予が与えられる保証もありません。
 
 </details>
 
-### 7. KEDA において `pollingInterval` は何を設定しますか？
+### 7. KEDA の `pollingInterval` は何を設定しますか？
 
-- A) Pod が restart される頻度
-- B) KEDA が external metric source を確認する頻度
-- C) scale operations の間の delay
-- D) Health check frequency
+- A) Pod を再起動する頻度
+- B) KEDA が外部メトリクスソースを確認する頻度
+- C) スケーリング操作の間隔
+- D) ヘルスチェックの頻度
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) KEDA が external metric source を確認する頻度**
+**解答: B) KEDA が外部メトリクスソースを確認する頻度**
 
 **解説:**
-`pollingInterval` は、KEDA が metric values を取得するために external scaler (例: SQS、Prometheus) に query する頻度を定義します。interval を短くすると反応時間は速くなりますが、metric source への load が増加します。
+`pollingInterval` は、KEDA が外部 scaler（例: SQS、Prometheus）に問い合わせてメトリクス値を取得する頻度を定めます。間隔を短くすると反応は速くなりますが、メトリクスソースへの負荷が増えます。
 
 </details>
 
-### 8. 新しい version の Kubernetes で、VPA が restart なしに Pod を resize できるようにする Kubernetes feature は何ですか？
+### 8. 新しい Kubernetes バージョンで、再起動せずに VPA が Pod のサイズを変更できる機能は何ですか？
 
-- A) Rolling updates
+- A) Rolling update
 - B) In-place Pod Vertical Scaling
-- C) Blue/green deployment
-- D) Canary releases
+- C) Blue/green デプロイ
+- D) Canary release
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) In-place Pod Vertical Scaling**
+**解答: B) In-place Pod Vertical Scaling**
 
 **解説:**
-Kubernetes 1.27+ は `resizePolicy` field を通じて in-place vertical scaling をサポートしており、Pod restart なしで CPU と memory を変更できます。VPA はこれを活用して、より disruption の少ない resource adjustment を行えます。
+In-place Pod resize は Kubernetes 1.27 で alpha、1.33 で beta、1.35 で stable になりました。対応する VPA モードで利用できますが、`resizePolicy` によってコンテナ再起動が必要になる場合があります。また、キャパシティや QoS の制約により、更新が延期または拒否されることがあります。
 
 </details>
 
-### 9. HPA に metrics-server ではなく Prometheus Adapter を使用する利点は何ですか？
+### 9. HPA で metrics-server ではなく Prometheus Adapter を使う利点は何ですか？
 
-- A) より低い resource usage
-- B) CPU/memory を超える custom metrics と external metrics のサポート
-- C) より速い metric collection
-- D) built-in alerting
+- A) 使用リソースが少ない
+- B) CPU／メモリを超えたカスタムメトリクスと外部メトリクスを使える
+- C) メトリクス収集が速い
+- D) アラート機能が組み込まれている
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) CPU/memory を超える custom metrics と external metrics のサポート**
+**解答: B) CPU／メモリを超えたカスタムメトリクスと外部メトリクスを使える**
 
 **解説:**
-metrics-server は CPU と memory metrics のみを提供します。Prometheus Adapter は custom.metrics.k8s.io API を通じて任意の Prometheus metric を公開し、HPA が 1 秒あたりの requests、queue depth、latency などの application metrics に基づいて scaling できるようにします。
+metrics-server が提供するのは CPU とメモリのメトリクスだけです。Prometheus Adapter は、構成済みで利用可能な系列を `custom.metrics.k8s.io` API 経由で公開します。これにより、HPA はリクエスト数、キュー深度、レイテンシーなどのアプリケーションメトリクスに基づいてスケーリングできます。
 
 </details>
 
-### 10. HPA と VPA を組み合わせる場合、何を考慮すべきですか？
+### 10. HPA と VPA を組み合わせるとき、何を考慮すべきですか？
 
-- A) 一緒に使用することはできない
-- B) 異なる resource dimensions に設定する (CPU には HPA、memory には VPA)
-- C) VPA が有効な場合は常に HPA を無効にする
-- D) 設定なしで自動的に連携する
+- A) 両者を一緒には使えない
+- B) 異なるリソース軸を管理するよう構成する（HPA は CPU、VPA はメモリなど）
+- C) VPA を有効にしたら、常に HPA を無効にする
+- D) 構成しなくても自動で連携する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 異なる resource dimensions に設定する (CPU には HPA、memory には VPA)**
+**解答: B) 異なるリソース軸を管理するよう構成する（HPA は CPU、VPA はメモリなど）**
 
 **解説:**
-HPA と VPA の両方が同じ resource dimension を管理しようとすると競合する可能性があります。一般的な pattern は、CPU に基づく horizontal scaling に HPA を使用し、memory には recommendation mode の VPA を使用する、または Pod 作成時にのみ resources を設定する VPA の「Initial」mode を使用することです。
+HPA と VPA が同じリソース軸を管理しようとすると、競合することがあります。VPA を推奨値の提示だけにする方法や、HPA は RPS／backlog などのワークロードメトリクスで動かし、VPA はサイズ調整を担う方法があります。`Initial` でも新しい Pod の requests は変わるため、CPU 使用率の分母との相互作用はなくなりません。再起動とスケジューリングへの影響も検証してください。
 
 </details>

@@ -413,7 +413,7 @@ EKS Kubernetes API CA 파일과 다릅니다. Node identity를 image에 복제�
 
 고정된 v1.0.20 template은 provisioning의 출발점입니다. SSM template은 role을 만들며 **activation은 만들지 않습니다**. 여러 cluster에 쓰기 전 넓은 DescribeCluster scope와 고정 export 이름을 검토하세요.
 
-IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal <strong>`${aws:PrincipalTag/x509Subject/CN}`</strong>입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation 검증은 아닙니다.
+IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal <strong>`${aws:PrincipalTag/x509Subject/CN}`</strong>입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation을 검증하지는 않습니다.
 
 ```bash
 : "${CA_PEM_FILE:?Set the approved CA certificate file, not a private key}"

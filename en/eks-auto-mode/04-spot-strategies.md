@@ -248,11 +248,11 @@ Adapt the window to your operational calendar; other timezones and daylight-savi
 
 ## Graceful Shutdown Within the Time Actually Available
 
-EC2 normally issues a two-minute warning before stop/terminate interruption, but notices are best effort. Hibernation has a different immediate-start behavior. Do not treat two minutes as time guaranteed to every Pod: detection, eviction, application work and routing changes consume time, and failures can prevent notice handling.
+EC2 normally issues a two-minute warning before a stop/terminate interruption, but notices are best effort. Hibernation has a different immediate-start behavior. Do not treat two minutes as time guaranteed to every Pod: detection, eviction, application work and routing changes consume time, and failures can prevent notice handling.
 
 `terminationGracePeriodSeconds` is a Kubernetes shutdown budget, not an extension of the EC2 deadline. `preStop` runs inside that budget before the normal stop signal. A blind `sleep 90` wastes most of a 120-second budget and does not implement application shutdown or checkpointing.
 
-This nginx-specific example initiates graceful quit immediately, has a real HTTP readiness probe and records the node name accurately. For another application, implement and test its own stop-signal handler, readiness transition, in-flight work completion and durable checkpoints. The chosen 60 seconds is an example upper budget, not guaranteed available time.
+This nginx-specific example initiates graceful quit immediately, has a real HTTP readiness probe and records the node name accurately. For another application, implement and test its own stop-signal handler, readiness transition, in-flight work completion and durable checkpoints. The chosen 60 seconds is an example upper limit for the budget, not guaranteed available time.
 
 ```yaml
 apiVersion: apps/v1

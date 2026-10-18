@@ -791,7 +791,7 @@ A silent video that deletes the leader gateway Pod and shows the Lease handover,
 
 ### Single Gateway Failure and Multiple Data Centers
 
-The gateway (1.0.2) is one set per cluster with a single active leader. The leader creates a route in each configured route table **for every CIDR** in `podCIDRs` (CSV), and tunnel entries are managed per Hybrid `CiliumNode`. Data centers with different Pod CIDRs (for example DC A `10.85.0.0/16`, DC B `10.86.0.0/16`) are all served by one gateway as long as each CIDR is listed in both the cluster `remotePodNetworks` and the gateway `podCIDRs`. The ranges do not need to be contiguous.
+The gateway (1.0.2) is deployed as one set per cluster with a single active leader. The leader creates a route in each configured route table **for every CIDR** in `podCIDRs` (CSV), and tunnel entries are managed per Hybrid `CiliumNode`. Data centers with different Pod CIDRs (for example DC A `10.85.0.0/16`, DC B `10.86.0.0/16`) are all served by one gateway as long as each CIDR is listed in both the cluster `remotePodNetworks` and the gateway `podCIDRs`. The ranges do not need to be contiguous.
 
 | Item | Details |
 |---|---|
@@ -1022,7 +1022,7 @@ Size for peak byte rate, packets per second, concurrent connections/tunnels, CPU
 
 #### Gateway Capacity Planning
 
-The original calculation below is retained as an **unmeasured planning example**. Its 800 Mbps uses decimal KB/MB and assumes 10 KB in each direction per request. If 10 KB already includes request plus response, multiplying by two double-counts it. Packet size, headers, peak concurrency and retries need separate accounting. It does not establish that the named instance has sufficient sustained headroom:
+The original calculation below is retained as an **unmeasured planning example**. Its 800 Mbps calculation uses decimal KB/MB and assumes 10 KB in each direction per request. If 10 KB already includes request plus response, multiplying by two double-counts it. Packet size, headers, peak concurrency and retries need separate accounting. It does not establish that the named instance has sufficient sustained headroom:
 
 ```
 Throughput estimation:

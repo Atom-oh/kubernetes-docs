@@ -27,7 +27,7 @@ To follow along with the examples in this document, you need the following envir
 - bpftool, bcc-tools
 - Kubernetes cluster (optional)
 
-bpftrace examples were checked against the official0.27 language syntax (args.field). Distribution packages may be older; use their matching syntax/features. Verify tracepoint fields with bpftrace -lv or tracefs format files. Function probes depend on kernel/library versions and architecture. No tracing/attachment was executed during this audit.
+bpftrace examples were checked against the official 0.27 language syntax (args.field). Distribution packages may be older; use their matching syntax/features. Verify tracepoint fields with bpftrace -lv or tracefs format files. Function probes depend on kernel/library versions and architecture. No tracing/attachment was executed during this audit.
 
 ### Environment Setup
 
@@ -166,7 +166,7 @@ cat /proc/sys/net/core/bpf_jit_enable
 echo 1 | sudo tee /proc/sys/net/core/bpf_jit_enable
 ```
 
-Some kernels enforce CONFIG_BPF_JIT_ALWAYS_ON; availability/writability of this sysctl depends on kernel configuration. Debug mode2 writes kernel log traces and is not a production default.
+Some kernels enforce CONFIG_BPF_JIT_ALWAYS_ON; availability/writability of this sysctl depends on kernel configuration. Debug mode 2 writes kernel log traces and is not a production default.
 
 **JIT Compilation Benefits**:
 - The original 4–5x speedup claim is unsourced here; actual speedup depends on program, architecture and kernel
@@ -869,7 +869,7 @@ helm install coroot coroot/coroot-ce -n coroot --version "$COROOT_CE_VERSION"
 
 ### 6.4 Kepler: Energy Consumption Monitoring
 
-Early Kepler used eBPF, but it was **rewritten starting in 0.10.0** around read-only host /proc and /sys access, RAPL/powercap and CPU-usage-based power attribution. CAP_BPF is no longer required, so current Kepler is not an example that depends on eBPF instrumentation. Versions0.9 and earlier are frozen legacy code with different metrics/deployment methods.
+Early Kepler used eBPF, but it was **rewritten starting in 0.10.0** around read-only host /proc and /sys access, RAPL/powercap and CPU-usage-based power attribution. CAP_BPF is no longer required, so current Kepler is not an example that depends on eBPF instrumentation. Versions 0.9 and earlier are frozen legacy code with different metrics/deployment methods.
 
 Check that the hardware/VM exposes power sensors. Container/Pod values attribute measured node energy rather than directly measuring each container with a power meter. Summing nested RAPL zones double-counts energy. Verify version-specific experimental GPU/HWMon/platform support.
 

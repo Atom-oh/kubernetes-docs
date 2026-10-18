@@ -24,7 +24,7 @@ Amazon VPC Lattice는 VPC와 AWS 계정 간 애플리케이션을 연결합니�
 
 VPC Lattice는 각 애플리케이션 옆에 프록시를 배치하지 않아도 애플리케이션 네트워킹을 제공합니다. **서비스 네트워크**는 서비스와 리소스 구성을 묶고 허용된 소비자와 연결합니다. 서비스는 리스너, 라우팅 규칙, 대상 그룹, 서비스 DNS 이름을 제공합니다.
 
-현재 제품은 리소스 게이트웨이와 **리소스 구성(resource configuration)**을 통해 TCP를 사용하는 RDS 데이터베이스 같은 리소스도 연결합니다. 이 접근 모델은 대상 그룹을 사용하는 HTTP 서비스와 구분해야 합니다. 서비스 네트워크/서비스의 IAM 인증 정책은 리소스 구성 트래픽을 인가하지 않습니다. PrivateLink 기반 **서비스 네트워크 VPC 엔드포인트**를 사용하면 피어링, Transit Gateway, Direct Connect, VPN을 거치는 클라이언트에도 접근 경로를 제공할 수 있습니다. 직접 VPC 연결만으로는 Transit Gateway나 피어링 너머의 클라이언트까지 접근이 확장되지 않습니다.
+현재 제품은 리소스 게이트웨이와 **리소스 구성**(resource configuration)을 통해 TCP를 사용하는 RDS 데이터베이스 같은 리소스도 연결합니다. 이 접근 모델은 대상 그룹을 사용하는 HTTP 서비스와 구분해야 합니다. 서비스 네트워크/서비스의 IAM 인증 정책은 리소스 구성 트래픽을 인가하지 않습니다. PrivateLink 기반 **서비스 네트워크 VPC 엔드포인트**를 사용하면 피어링, Transit Gateway, Direct Connect, VPN을 거치는 클라이언트에도 접근 경로를 제공할 수 있습니다. 직접 VPC 연결만으로는 Transit Gateway나 피어링 너머의 클라이언트까지 접근이 확장되지 않습니다.
 
 대표적인 용도는 계정 간 애플리케이션 API, EKS와 다른 컴퓨팅 서비스 간 통신, 공유 데이터 리소스 접근입니다. 연결 관계, 라우팅, 보안 그룹, 인증과 애플리케이션 인가는 여전히 구성해야 합니다.
 
@@ -58,7 +58,7 @@ VPC Lattice의 관리형 데이터 플레인을 직접 운영할 필요는 없�
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-02-vpc-lattice-1.html)
 
-그림은 하나의 라우터 프로세스가 아니라 논리적 연결 관계를 나타냅니다. 실제 접근에는 네트워크 도달성과 해당 정책도 필요합니다. 요청은 **서비스의** DNS 이름을 해석하고 리스너에 도착한 뒤, 적용되는 인가 검사를 통과하면 리스너 규칙에 따라 대상으로 전달됩니다. 대상 그룹은 목적지를 정의하는 리소스이며 또 하나의 애플리케이션 홉은 아닙니다.
+그림은 하나의 라우터 프로세스가 아니라 논리적 연결 관계를 나타냅니다. 실제 접근에는 네트워크 도달성과 해당 정책도 필요합니다. **서비스의** DNS 이름이 해석되면 요청은 리스너에 도착한 뒤, 적용되는 인가 검사를 통과하면 리스너 규칙에 따라 대상으로 전달됩니다. 대상 그룹은 목적지를 정의하는 리소스이며 또 하나의 애플리케이션 홉은 아닙니다.
 
 실제 도메인은 `get-service --query dnsEntry` 또는 컨트롤러의 Route 어노테이션에서 조회하세요. 서비스 이름과 서비스 네트워크 ID로 직접 조합하지 마세요. 할당 이름에는 서비스별 식별자가 포함되며, 서비스를 재생성하면 달라질 수 있습니다.
 
@@ -167,7 +167,7 @@ kubectl -n aws-application-networking-system logs \
 
 기존 Helm 릴리스는 저장된 values와 검토된 `helm upgrade` 계획으로 변경하세요. Helm은 `crds/`의 CRD를 자동 업그레이드하지 않으므로 변경 내용을 별도로 검토해야 합니다. 업그레이드를 통과시키기 위해 공유 Gateway API CRD나 admission 정책을 삭제하지 마세요.
 
-매니페스트 방식이 필요하면 **동일한 차트**를 같은 values와 서비스 계정 설정으로 `helm template --include-crds` 렌더링하고 결과를 검토·적용하세요. 릴리스의 RBAC, EndpointSlice 감시, 리더 선출 권한과 웹훅 구성이 유지됩니다. 오래된 수동 v1.0 Deployment는 사용하지 마세요. 차트는 인증서를 직접 제공하거나 cert-manager 옵션을 쓰지 않으면 웹훅 인증서를 생성합니다. 업그레이드 시 Secret과 CA bundle 중 하나만 따로 재생성하지 말고 일치 상태를 유지해야 합니다.
+매니페스트 방식이 필요하면 **동일한 차트**를 같은 values와 서비스 계정 설정으로 `helm template --include-crds`로 렌더링하고 결과를 검토·적용하세요. 릴리스의 RBAC, EndpointSlice 감시, 리더 선출 권한과 웹훅 구성이 유지됩니다. 오래된 수동 v1.0 Deployment는 사용하지 마세요. 차트는 인증서를 직접 제공하거나 cert-manager 옵션을 쓰지 않으면 웹훅 인증서를 생성합니다. 업그레이드 시 Secret과 CA bundle 중 하나만 따로 재생성하지 말고 일치 상태를 유지해야 합니다.
 
 ### 서비스 네트워크 생성
 
@@ -515,7 +515,7 @@ lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVI
 
 ### 서명된 HTTPS 클라이언트
 
-다음을 `lattice_get.py`로 저장하세요. 기본 AWS 자격 증명 공급자 체인을 사용하고 요청별로 자격 증명을 고정한 뒤, **`vpc-lattice-svcs`** 서비스 이름으로 서명합니다. VPC Lattice가 요구하는 **`UNSIGNED-PAYLOAD`**를 지정하며 TLS를 검증합니다. 이전 URL의 서명으로 리다이렉트를 따라가거나 요청을 자동 재시도하지 않습니다.
+다음을 `lattice_get.py`로 저장하세요. 기본 AWS 자격 증명 공급자 체인을 사용하고 요청별로 자격 증명을 고정한 뒤, **`vpc-lattice-svcs`** 서비스 이름으로 서명합니다. VPC Lattice가 요구하는 **`UNSIGNED-PAYLOAD`를** 지정하며 TLS를 검증합니다. 이전 URL의 서명으로 리다이렉트를 따라가거나 요청을 자동 재시도하지 않습니다.
 
 ```python
 import argparse
@@ -688,7 +688,7 @@ aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID"
   --health-check '{"enabled":true,"protocol":"HTTP","protocolVersion":"HTTP1","port":8080,"path":"/health","healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":2,"unhealthyThresholdCount":2,"matcher":{"httpCode":"200"}}'
 ```
 
-상태 검사는 임계값에 따라 준비 상태를 평가하며 가용성이나 무중단을 보장하지 않습니다. HTTP1 대상 그룹은 기본 활성화지만 HTTP2는 명시적인 검토가 필요합니다. gRPC 대상의 상태 검사는 HTTP1/HTTP2를 사용하며 Lambda/ALB 대상 유형은 동작이 다릅니다. 파드 예제를 모든 대상에 적용하지 말고 현재 대상 유형별 문서를 확인하세요.
+상태 검사는 임계값에 따라 준비 상태를 평가하며 가용성이나 무중단을 보장하지 않습니다. HTTP1 대상 그룹의 상태 검사는 기본적으로 활성화되지만 HTTP2는 명시적인 검토가 필요합니다. gRPC 대상의 상태 검사는 HTTP1/HTTP2를 사용하며 Lambda/ALB 대상 유형은 동작이 다릅니다. 파드 예제를 모든 대상에 적용하지 말고 현재 대상 유형별 문서를 확인하세요.
 
 ## 보안 및 인증
 
@@ -914,7 +914,7 @@ aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
   --period 60 --statistics Sum
 ```
 
-AWS 서비스 사고는 AWS Health와 관련 계정 이벤트를 확인하세요. 계정별 API 접근 및 지원 작업은 해당 플랜과 엔드포인트의 영향을 받습니다. 지원 사례에는 검토한 리소스 ID, 시간 범위, 실패 증상과 민감 정보를 제거한 로그를 포함하세요. 계정에서 현재 제공되는 서비스/분류/심각도 옵션을 선택하고 `urgent`를 고정한 사례 생성 명령을 그대로 실행하지 마세요.
+AWS 서비스 사고가 발생하면 AWS Health와 관련 계정 이벤트를 확인하세요. 계정별 API 접근 및 지원 작업은 해당 플랜과 엔드포인트의 영향을 받습니다. 지원 사례에는 검토한 리소스 ID, 시간 범위, 실패 증상과 민감 정보를 제거한 로그를 포함하세요. 계정에서 현재 제공되는 서비스/분류/심각도 옵션을 선택하고 `urgent`를 고정한 사례 생성 명령을 그대로 실행하지 마세요.
 
 ## 참고 자료
 

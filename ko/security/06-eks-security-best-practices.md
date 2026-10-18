@@ -169,7 +169,7 @@ metadata:
 
 ### Pod Identity 개요
 
-EKS Pod Identity는 별도의 자격 증명 전달 방식입니다. 실제 플랫폼·SDK 지원, 신뢰 경계, 운영 요구에 따라 IRSA와 선택하며 IRSA를 폐기하거나 모든 워크로드의 보안을 자동 향상시키는 것은 아닙니다.
+EKS Pod Identity는 별도의 자격 증명 전달 방식입니다. 실제 플랫폼·SDK 지원, 신뢰 경계, 운영 요구에 따라 IRSA와 비교해 선택하며 IRSA를 폐기하거나 모든 워크로드의 보안을 자동 향상시키는 것은 아닙니다.
 
 Pod의 지원 SDK가 로컬 agent 경로를 이용하고 agent는 EKS Auth API를 통해 association·역할에 맞는 임시 자격 증명을 가져옵니다. 역할이 다른 계정에 있거나 역할 체인을 사용하면 현재 지원 방식·신뢰·세션 태그 조건을 별도로 검증합니다.
 
@@ -443,7 +443,7 @@ GuardDuty의 EKS 감사 로그 분석, Runtime Monitoring, 기본 데이터 소�
 
 다음 EventBridge 패턴은 Kubernetes/Runtime type을 라우팅합니다. 기존 `prefix: Kubernetes`와 `prefix: Runtime`은 실제 전술 접두사 때문에 일치하지 않았습니다. 공식 AWS Event Ruler 2.2.0으로 6개 일치/비일치 사례와 기존 실패를 검증했습니다.
 
-패턴에는 통보·격리 target이 없습니다. Runtime Finding은 EKS 외 리소스일 수도 있으므로 실제 리소스 메타데이터를 확인한 뒤 승인된 대응 경로로 전달합니다. target 역할·권한·재시도·DLQ·중복 처리를 별도로 구성해야 합니다. `boto3.client("eks")`를 만드는 것만으로 Pod가 격리되지 않으며 네트워크 격리는 CNI 정책, 호스트·클라우드 통제와 권한 있는 Kubernetes 작업의 설계가 필요합니다.
+패턴에는 통보·격리 target이 없습니다. Runtime Finding은 EKS 외 리소스일 수도 있으므로 실제 리소스 메타데이터를 확인한 뒤 승인된 대응 경로로 전달합니다. target 역할·권한·재시도·DLQ·중복 처리를 별도로 구성해야 합니다. `boto3.client("eks")`를 만드는 것만으로 Pod가 격리되지 않으며 네트워크 격리에는 CNI 정책, 호스트·클라우드 통제와 권한 있는 Kubernetes 작업의 설계가 필요합니다.
 
 ```json
 {
@@ -522,7 +522,7 @@ EKS **1.28 이상은 모든 Kubernetes API 데이터에 AWS 소유 KMS 키를 �
 
 ### Bottlerocket OS
 
-Bottlerocket는 컨테이너 호스트용 OS 선택지이며 OS 선택만으로 모든 워크로드의 보안이 완성되지는 않습니다. 클러스터 Kubernetes 버전·CPU 아키텍처·관리형 노드 그룹/Auto Mode·CNI·스토리지·agent의 지원 조합을 확인합니다. 관리형 노드 그룹의 bootstrap 병합 규칙을 따르고 기존 cluster/API/CA 설정을 임의로 덮어쓰지 않습니다.
+Bottlerocket은 컨테이너 호스트용 OS 선택지이며 OS 선택만으로 모든 워크로드의 보안이 완성되지는 않습니다. 클러스터 Kubernetes 버전·CPU 아키텍처·관리형 노드 그룹/Auto Mode·CNI·스토리지·agent의 지원 조합을 확인합니다. 관리형 노드 그룹의 bootstrap 병합 규칙을 따르고 기존 cluster/API/CA 설정을 임의로 덮어쓰지 않습니다.
 
 업데이트·재시작·노드 교체, control/admin container 접근, SSM 권한, 이미지 출처와 복구 절차를 운영합니다. 기존 예제의 네트워크 버퍼 sysctl 변경은 그 자체로 보안 강화 근거가 아니었습니다. Terraform AMI 타입과 인스턴스 아키텍처가 맞아야 하며 이 장은 노드 그룹을 생성하거나 OS를 실행하지 않았습니다.
 
@@ -538,7 +538,7 @@ Pod에는 적합한 비루트 UID, 권한 상승 금지, capability drop, seccom
 
 ### 완전 프라이빗 EKS 구성
 
-private Kubernetes API는 VPC 또는 연결된 관리 네트워크의 DNS·라우팅·보안 그룹과 IAM 인증/Kubernetes 권한이 모두 필요합니다. 인터넷에서 직접 접근할 수 없다는 사실이 연결된 네트워크의 모든 사용자에게 접근 권한을 주는 것은 아닙니다.
+private Kubernetes API에 접근하려면 VPC 또는 연결된 관리 네트워크의 DNS·라우팅·보안 그룹과 IAM 인증/Kubernetes 권한이 모두 필요합니다. 인터넷에서 직접 접근할 수 없다는 사실이 연결된 네트워크의 모든 사용자에게 접근 권한을 주는 것은 아닙니다.
 
 API 공개 범위를 바꾸기 전에 현재 운영자·CI·복구 경로에서 private API 접근을 시험합니다. 기존 IaC 소유자를 통해 `endpoint_private_access`/`endpoint_public_access`를 관리하고 무심코 새 클러스터 리소스를 선언하지 않습니다. 워커 bootstrap과 필요한 AWS API·이미지·패키지 접근 경로도 별도로 설계합니다. 외부 인터넷이 없는 구성과 private API 설정은 동일한 개념이 아닙니다.
 
@@ -670,7 +670,7 @@ roleRef:
 
 예제 workload admin은 Namespace 레이블·RoleBinding·NetworkPolicy·Secret API 권한을 직접 변경하지 못합니다. 하지만 Pod/Deployment 생성 권한은 namespace의 Secret·ServiceAccount·볼륨을 간접 사용하게 할 수 있습니다. “Secret get을 제외했으므로 시크릿에 접근 불가”라고 판단하지 않습니다. 강한 격리가 필요하면 별도 클러스터/계정 등 더 넓은 경계를 검토합니다.
 
-EKS 사용자 접근은 현재 access entry와 namespace 범위 access policy 또는 Kubernetes 그룹/RBAC를 검토합니다. `aws-auth` ConfigMap은 기존 호환 경로이며 항상 유일한 통합 방법이 아닙니다. API 인증 mode 변경에는 되돌릴 수 없는 전환 제약이 있으므로 기존 관리자·노드 매핑·복구 경로를 검증한 뒤 이전합니다. EKS access policy와 Kubernetes RBAC는 각각 허용할 수 있으므로 한쪽의 권한 부재가 다른 쪽 허용을 거부하는 것은 아닙니다. 일반 개발자에게 `system:masters`를 예시 기본값으로 부여하지 않습니다.
+EKS 사용자 접근을 위해 현재 access entry와 namespace 범위 access policy 또는 Kubernetes 그룹/RBAC를 검토합니다. `aws-auth` ConfigMap은 기존 호환 경로이며 항상 유일한 통합 방법이 아닙니다. API 인증 mode 변경에는 되돌릴 수 없는 전환 제약이 있으므로 기존 관리자·노드 매핑·복구 경로를 검증한 뒤 이전합니다. EKS access policy와 Kubernetes RBAC는 각각 허용할 수 있으므로 한쪽의 권한 부재가 다른 쪽 허용을 거부하는 것은 아닙니다. 일반 개발자에게 `system:masters`를 예시 기본값으로 부여하지 않습니다.
 
 ---
 
@@ -685,7 +685,7 @@ IAM·Pod 정책 외에 공개 웹, admission webhook, 관리자 접근, 외부 �
 | 관리면·TLS 가시성·장비 선택 | [Palo Alto·Fortinet NGFW](./15-ngfw-paloalto-fortinet.md) |
 | 대칭 라우팅·NAT·AZ·장애 | [GWLB·GENEVE](./16-gwlb-geneve-inspection.md) |
 
-위 가이드에는 공식 출처와 검사 한계, 승인 환경의 검증 계획을 포함합니다. 실제 장비 배포나 성능 측정 결과는 아닙니다.
+위 가이드는 공식 출처와 검사 한계, 승인 환경의 검증 계획을 포함합니다. 실제 장비 배포나 성능 측정 결과는 아닙니다.
 
 ---
 

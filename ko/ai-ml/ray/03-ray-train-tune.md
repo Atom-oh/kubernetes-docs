@@ -18,7 +18,7 @@ Trainer는 worker와 분산 process group 같은 기반 조율을 제공합니�
 
 `ScalingConfig`는 worker 수와 worker별 CPU/GPU 등 논리 자원을 선언합니다. 고정 worker 수뿐 아니라 지원되는 elastic 설정도 있으므로 실제 mode와 데이터 재분할·복구 조건을 확인합니다. 2.58.0 V2에서 이전 `trainer_resources`를 지정하면 deprecation 오류가 발생합니다. V2 controller의 논리 CPU와 training worker 자원, Tune trial driver 자원을 구분합니다.
 
-Placement group과 worker 배치에 필요한 전체 자원을 확보해야 framework process group이 정상 시작할 수 있습니다. 이것은 Kubernetes scheduler 자체를 교체하거나 모든 Pod가 원자적으로 배치된다는 보장이 아닙니다. GPU가 부족하면 대기·timeout·실패할 수 있고, Ray/KubeRay의 최대 규모·quota·image 준비·EC2 가용성도 영향을 줍니다.
+Placement group과 worker 배치에 필요한 전체 자원을 확보해야 framework process group이 정상 시작할 수 있습니다. 이것은 Kubernetes scheduler 자체를 교체하지 않으며, 모든 Pod가 원자적으로 배치된다는 보장도 아닙니다. GPU가 부족하면 대기·timeout·실패할 수 있고, Ray/KubeRay의 최대 규모·quota·image 준비·EC2 가용성도 영향을 줍니다.
 
 ## 체크포인트와 보고
 

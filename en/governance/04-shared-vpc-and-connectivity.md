@@ -109,7 +109,7 @@ Check endpoint and endpoint-policy support by service, Region, and feature. A de
 
 ## 7. Route 53 Profiles and Hybrid DNS
 
-A Route 53 Profile can be associated with a Private Hosted Zone, Resolver rules (forwarding/system), a DNS Firewall rule group, an **interface VPC endpoint**, and VPC Resolver query logging config. A VPC can have only one Profile attached.
+A Route 53 Profile can be associated with a Private Hosted Zone, Resolver rules (forwarding/system), a DNS Firewall rule group, an **interface VPC endpoint**, and a VPC Resolver query logging config. A VPC can have only one Profile attached.
 
 **The priority rule is the part most likely to be misunderstood.** It's not "local VPC always wins"; it's **"the more specific name wins."**
 
@@ -119,7 +119,7 @@ A Route 53 Profile can be associated with a Private Hosted Zone, Resolver rules 
 | `test.example.com` | `test.example.com` | `example.com` | **Profile (more specific name wins)** |
 | `marketing.example.com` | none | `marketing.example.com` | Local VPC |
 
-As the second row shows, **a more specific name registered on the central Profile overrides the workload's local rule.** Without knowing this, workloads can suffer from unexplained name resolution failures. **We recommend formalizing the rule that "the central Profile never owns a name more specific than the namespace delegated to a workload."** In practice, a combination works well where namespace governance is central and subdomains beneath it are delegated to workload teams. Route 53 Profiles are supported in the Seoul Region.
+As the second row shows, **a more specific name registered on the central Profile overrides the workload's local rule.** If this is not understood, workloads can suffer from unexplained name resolution failures. **We recommend formalizing the rule that "the central Profile never owns a name more specific than the namespace delegated to a workload."** In practice, a combination works well where namespace governance is central and subdomains beneath it are delegated to workload teams. Route 53 Profiles are supported in the Seoul Region.
 
 ## 8. VPC-to-VPC Connectivity Options
 

@@ -58,7 +58,7 @@ This is the crux of the decision.
 | **Region and network configuration** | Limited to AMB-supported regions and connectivity options |
 | **Cost structure** | Depends on offering: provisioned node/component costs or serverless request/API charges; measure equivalent coverage and usage |
 
-**Validator operation is an especially important distinction.** AMB Access public chain nodes are for reading chain data and submitting transactions; **participating as a PoS validator to earn staking rewards is a different set of requirements** (key management, signing availability, slashing risk). If staking is the goal, AMB does not solve it.
+**Validator operation is an especially important distinction.** AMB Access public chain nodes are for reading chain data and submitting transactions; **participating as a PoS validator to earn staking rewards has a different set of requirements** (key management, signing availability, slashing risk). If staking is the goal, AMB does not solve it.
 
 ## Selection Criteria
 

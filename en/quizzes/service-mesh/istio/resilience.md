@@ -126,7 +126,7 @@ spec:
               denominator: HUNDRED
 ```
 
-The shown bucket starts with100 tokens and refills10/s. Three replicas can sustain about30/s in aggregate under suitable load distribution, with separate burst allowances; this is not a shared30/s cap.
+The shown bucket starts with 100 tokens and refills 10/s. Three replicas can sustain about 30/s in aggregate under suitable load distribution, with separate burst allowances; this is not a shared 30/s cap.
 
 **Characteristics of Global Rate Limiting:**
 
@@ -174,7 +174,7 @@ C is not a guarantee. Locality is relative to each caller; it can concentrate a 
 
 **Actual Benefits of Zone Aware Routing:**
 
-Same-zone routing can reduce the network component of latency and billable cross-zone bytes, but exact latency/prices/savings depend on the deployment. Weighted80/10/10 means normal traffic is sent to all three healthy zones; the10% portions are not standby failover. Other zones need real reachable endpoints and spare capacity.
+Same-zone routing can reduce the network component of latency and billable cross-zone bytes, but exact latency/prices/savings depend on the deployment. Weighted 80/10/10 means normal traffic is sent to all three healthy zones; the 10% portions are not standby failover. Other zones need real reachable endpoints and spare capacity.
 
 **DestinationRule Configuration Example:**
 
@@ -331,7 +331,7 @@ spec:
 
 **Operation Example:**
 
-A success resets the relevant consecutive sequence. When a host reaches the threshold it can be ejected if the cap permits it; it becomes eligible after its actual ejection duration. Repeated ejections increase that duration with an Envoy multiplier/cap. `minHealthPercent` is a panic/fail-open threshold, not a guaranteed fraction of healthy Pods;0 disables that threshold.
+A success resets the relevant consecutive sequence. When a host reaches the threshold it can be ejected if the cap permits it; it becomes eligible after its actual ejection duration. Repeated ejections increase that duration with an Envoy multiplier/cap. `minHealthPercent` is a panic/fail-open threshold, not a guaranteed fraction of healthy Pods; 0 disables that threshold.
 
 **Reference:**
 
@@ -519,7 +519,7 @@ spec:
       consecutiveGatewayErrors: 3
 ```
 
-The gateway subset502/503/504 is already included in5xx. Equal thresholds of3 are redundant but valid; lower gateway thresholds would eject on that subset earlier. `interval: 20s` does not delay consecutive-error detection. `baseEjectionTime: 60s` is the initial minimum duration, not an active health probe. The30% cap limits ejections but cannot keep the remaining endpoints healthy. `minHealthPercent: 70` would enable panic behavior below its threshold, not preserve70% healthy capacity. Unsupported `enforcing*` fields are Envoy internals, not this DestinationRule API.
+The gateway subset 502/503/504 is already included in 5xx. Equal thresholds of 3 are redundant but valid; lower gateway thresholds would eject on that subset earlier. `interval: 20s` does not delay consecutive-error detection. `baseEjectionTime: 60s` is the initial minimum duration, not an active health probe. The 30% cap limits ejections but cannot keep the remaining endpoints healthy. `minHealthPercent: 70` would enable panic behavior below its threshold, not preserve 70% healthy capacity. Unsupported `enforcing*` fields are Envoy internals, not this DestinationRule API.
 
 A ten-host example can reach the cap after three ejections, but discovered pool size, rounding and current health matter; inspect actual enforced/detected/overflow counters. A returning host must receive successful traffic to demonstrate recovery.
 
@@ -609,9 +609,9 @@ spec:
               value: '1'
 ```
 
-The full bucket admits up to200 requests immediately, then refills50 tokens/s. At sustained100 requests/s after depletion, about50/s can be admitted, assuming one token per request and no other limits. Smooth40/s demand can fit, but a40/s average alone does not guarantee that every burst is accepted. Admission does not guarantee backend processing success.
+The full bucket admits up to 200 requests immediately, then refills 50 tokens/s. At sustained 100 requests/s after depletion, about 50/s can be admitted, assuming one token per request and no other limits. Smooth 40/s demand can fit, but a 40/s average alone does not guarantee that every burst is accepted. Admission does not guarantee backend processing success.
 
-The filter defaults to HTTP429 and adds these headers only to its enforced rate-limit responses. A normal200 response does not receive these headers from this configuration. `Retry-After: 1` is an advisory delay, not a reservation or guarantee of success a second later. No `tokens_remaining` dynamic metadata is created by this example, so a fabricated Remaining header is omitted.
+The filter defaults to HTTP 429 and adds these headers only to its enforced rate-limit responses. A normal 200 response does not receive these headers from this configuration. `Retry-After: 1` is an advisory delay, not a reservation or guarantee of success a second later. No `tokens_remaining` dynamic metadata is created by this example, so a fabricated Remaining header is omitted.
 
 ```http
 HTTP/1.1 429 Too Many Requests
@@ -620,7 +620,7 @@ X-Local-Rate-Limit: true
 Retry-After: 1
 ```
 
-For different path-prefix buckets, use this **alternative**, not a second overlapping filter. The explicit descriptor generator is supported by the Envoy API pinned with Istio1.31. Missing/unmatched paths use the bounded default bucket; prefix matching includes longer paths beginning with the supplied text.
+For different path-prefix buckets, use this **alternative**, not a second overlapping filter. The explicit descriptor generator is supported by the Envoy API pinned with Istio 1.31. Missing/unmatched paths use the bounded default bucket; prefix matching includes longer paths beginning with the supplied text.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -720,7 +720,7 @@ Your AWS EKS cluster is distributed across 3 AZs (us-east-1a, us-east-1b, us-eas
 
 <summary>Show Answer</summary>
 
-These requirements mix weighted distribution, priority failover and a healthy-capacity guarantee. They cannot all be expressed by combining fields in one locality policy. Use the following distribution policy for normal70/15/15 traffic; `minHealthPercent` is not a switch that activates locality only when half the Pods are healthy.
+These requirements mix weighted distribution, priority failover and a healthy-capacity guarantee. They cannot all be expressed by combining fields in one locality policy. Use the following distribution policy for normal 70/15/15 traffic; `minHealthPercent` is not a switch that activates locality only when half the Pods are healthy.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -787,18 +787,18 @@ spec:
       minHealthPercent: 0
 ```
 
-A complete zone outage also affects the client in that zone: a surviving/recreated client or entry point elsewhere is required. Remaining healthy endpoint capacity, detection, connection reuse and network reachability determine failover; the policy does not promise100% to zoneB or instantaneous recovery. `minHealthPercent: 0` disables panic use of unhealthy hosts, and a100% cap permits all endpoints to be ejected if all fail. Neither makes healthy capacity appear.
+A complete zone outage also affects the client in that zone: a surviving/recreated client or entry point elsewhere is required. Remaining healthy endpoint capacity, detection, connection reuse and network reachability determine failover; the policy does not promise 100% to zoneB or instantaneous recovery. `minHealthPercent: 0` disables panic use of unhealthy hosts, and a 100% cap permits all endpoints to be ejected if all fail. Neither makes healthy capacity appear.
 
 Use the [zone-aware chapter](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) for Node→Pod topology checks, matching topologySpreadConstraints, EKS node groups and EDS diagnostics. Do not manually assign cloud topology labels merely to make an example match. Standard Istio metrics do not contain `source_cluster_zone`/`destination_cluster_zone`; zone queries require verified enrichment, separate from routing.
 
-**Illustrative cost arithmetic**: assume decimal1TB=1000GB, an effective charge of$0.01 per billable GB, baseline cross-zone fraction2/3 and after fraction0.30. This is a simplified assumption, not an AWS price quote, measured saving or complete network bill.
+**Illustrative cost arithmetic**: assume decimal 1TB=1000GB, an effective charge of $0.01 per billable GB, baseline cross-zone fraction 2/3 and after fraction 0.30. This is a simplified assumption, not an AWS price quote, measured saving or complete network bill.
 
 | Monthly traffic | Before | After | Monthly saving | Annual saving |
 |---|---:|---:|---:|---:|
 |1TB|$6.67|$3.00|$3.67|$44.00|
 |100TB|$666.67|$300.00|$366.67|$4,400.00|
 
-The modeled reduction is55%. Calculate from exact fractions and round only the displayed currency; annual savings must not multiply a prematurely rounded monthly$367. Actual billable directions, byte volumes, region and service processing charges need billing/flow evidence.
+The modeled reduction is 55%. Calculate from exact fractions and round only the displayed currency; annual savings must not multiply a prematurely rounded monthly $367. Actual billable directions, byte volumes, region and service processing charges need billing/flow evidence.
 
 ```bash
 kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
@@ -825,7 +825,7 @@ Write the DestinationRule and VirtualService.
 
 <summary>Show Answer</summary>
 
-A DestinationRule cannot implement “globally block this service above50% errors” through the listed success-rate fields. Those fields are not supported here, and statistical deviation is not a fixed error-percentage threshold. Pool circuit breakers constrain concurrent connections/requests per caller proxy’s upstream cluster; outlier detection changes host eligibility. A coordinated service-wide error-ratio breaker would need a separately designed application/controller mechanism.
+A DestinationRule cannot implement “globally block this service above 50% errors” through the listed success-rate fields. Those fields are not supported here, and statistical deviation is not a fixed error-percentage threshold. Pool circuit breakers constrain concurrent connections/requests per caller proxy’s upstream cluster; outlier detection changes host eligibility. A coordinated service-wide error-ratio breaker would need a separately designed application/controller mechanism.
 
 This answer applies to **caller→payment-service HTTP8080**. The service’s outgoing payment API call needs its own destination policy and TLS visibility as described in the [outlier chapter](../../../service-mesh/istio/resilience/01-outlier-detection.md). Mesh retries cannot provide payment idempotency.
 
@@ -902,11 +902,11 @@ spec:
       attempts: 0
 ```
 
-The explicit write/fallback rules disable inherited mesh retries. Retry only the matched reads whose application semantics are safe to repeat. `gateway-error` covers502/503/504; broad reset/5xx/4xx conditions are not added to payment writes. A transport error does not establish whether a payment committed.
+The explicit write/fallback rules disable inherited mesh retries. Retry only the matched reads whose application semantics are safe to repeat. `gateway-error` covers 502/503/504; broad reset/5xx/4xx conditions are not added to payment writes. A transport error does not establish whether a payment committed.
 
-`attempts: 3` means up to three retries **after** the initial attempt. Four full2s attempts plus backoff cannot fit within5s, so the total route budget stops earlier; application deadlines must also cover upload/streaming and downstream work. This is not an exact failure timeline or a promise of a particular final HTTP status.
+`attempts: 3` means up to three retries **after** the initial attempt. Four full 2s attempts plus backoff cannot fit within 5s, so the total route budget stops earlier; application deadlines must also cover upload/streaming and downstream work. This is not an exact failure timeline or a promise of a particular final HTTP status.
 
-`maxRetries: 3` limits concurrent outstanding retries for that proxy/cluster, not retries per request. `http2MaxRequests` also applies to HTTP/1.1. `maxRequestsPerConnection: 0` permits reuse without that request-count cap. Pending/active request overflow can reject HTTP requests, while one connection-limit hit can first cause queuing. None of these settings is a global50%-error circuit.
+`maxRetries: 3` limits concurrent outstanding retries for that proxy/cluster, not retries per request. `http2MaxRequests` also applies to HTTP/1.1. `maxRequestsPerConnection: 0` permits reuse without that request-count cap. Pending/active request overflow can reject HTTP requests, while one connection-limit hit can first cause queuing. None of these settings is a global 50%-error circuit.
 
 | Observation | Correct interpretation |
 |---|---|
@@ -921,7 +921,7 @@ sum(rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="pro
 sum(rate(istio_requests_total{reporter="source",destination_service_name="payment-service",destination_service_namespace="production",response_flags=~".*UT.*"}[5m]))
 ```
 
-The `_open` series is a0/1 gauge, not a counter to pass to `rate`. Scope Envoy cluster labels and enable the relevant stats. See [retry/timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md) and [circuit breaking](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md) for safe operational tradeoffs.
+The `_open` series is a 0/1 gauge, not a counter to pass to `rate`. Scope Envoy cluster labels and enable the relevant stats. See [retry/timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md) and [circuit breaking](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md) for safe operational tradeoffs.
 
 </details>
 
@@ -948,7 +948,7 @@ In a large-scale microservices environment, monthly network costs are $5,000. De
 
 <summary>Show Answer</summary>
 
-Treat the supplied100 services,500TB/month,$5,000 bill,150ms latency and3% errors as a **hypothetical baseline**, not measured results from this audit. First identify the billable traffic components and the user-facing SLI boundary. Proxy hop latency is not automatically end-to-end request latency.
+Treat the supplied 100 services, 500TB/month, $5,000 bill, 150ms latency and 3% errors as a **hypothetical baseline**, not measured results from this audit. First identify the billable traffic components and the user-facing SLI boundary. Proxy hop latency is not automatically end-to-end request latency.
 
 **1. Consolidate one destination policy per reviewed service**
 
@@ -1135,7 +1135,7 @@ spec:
 
 **3. Separate an illustrative model from an actual bill**
 
-Assume decimal500TB=500,000GB, baseline cross-AZ fraction2/3, after fraction0.20, and an **assumed effective**$0.015 per billable GB. The modeled variable component is:
+Assume decimal 500TB=500,000GB, baseline cross-AZ fraction 2/3, after fraction 0.20, and an **assumed effective** $0.015 per billable GB. The modeled variable component is:
 
 | Model | Calculation | Monthly amount |
 |---|---|---:|
@@ -1143,9 +1143,9 @@ Assume decimal500TB=500,000GB, baseline cross-AZ fraction2/3, after fraction0.20
 |After|500,000 × 0.20 × 0.015|$1,500|
 |Difference|5,000 − 1,500|$3,500 (70%)|
 
-This matches the full$5,000 baseline only if that entire bill is this variable component. Actual network bills can include other directions, load-balancer/NAT processing, internet/region transfer and fixed costs. Request weights need not equal byte fractions when request/response sizes differ. Validate modeled savings against billable flow/CUR data and current pricing; do not promise70% total-bill savings.
+This matches the full $5,000 baseline only if that entire bill is this variable component. Actual network bills can include other directions, load-balancer/NAT processing, internet/region transfer and fixed costs. Request weights need not equal byte fractions when request/response sizes differ. Validate modeled savings against billable flow/CUR data and current pricing; do not promise 70% total-bill savings.
 
-For illustrative one-hop network latencies0.3ms same-AZ and1.5ms cross-AZ, an equal three-zone baseline gives0.3×1/3+1.5×2/3=1.10ms;80/20 gives0.54ms. This0.56ms component change cannot establish150ms→100ms end-to-end improvement. Trace the real critical path, database/pool waits, application work and retry amplification.
+For illustrative one-hop network latencies of 0.3ms same-AZ and 1.5ms cross-AZ, an equal three-zone baseline gives 0.3×1/3+1.5×2/3=1.10ms; 80/20 gives 0.54ms. This 0.56ms component change cannot establish a 150ms→100ms end-to-end improvement. Trace the real critical path, database/pool waits, application work and retry amplification.
 
 **4. Validate staged changes**
 
@@ -1155,7 +1155,7 @@ For illustrative one-hop network latencies0.3ms same-AZ and1.5ms cross-AZ, an eq
 |Weeks3–4: outlier/pool limits|Enforced ejections, remaining endpoints, overflow, latency and application error causes|
 |Weeks5–6: rate limits|Genuine overload rejected without unacceptable legitimate-request rejection; observe client retry behavior|
 
-The schedule is illustrative. Define rollback/stop criteria and measure after each change. Outlier detection can remove capacity or expose underlying failure; it does not guarantee errors below1%. A changed timeout can produce more failures instead of making work faster.
+The schedule is illustrative. Define rollback/stop criteria and measure after each change. Outlier detection can remove capacity or expose underlying failure; it does not guarantee errors below 1%. A changed timeout can produce more failures instead of making work faster.
 
 **5. Use correctly typed, scoped metrics**
 
@@ -1177,7 +1177,7 @@ sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace
 
 Enable optional stats and handle no traffic/scrape failures. A cross-AZ query requires real zone enrichment; `source_cluster_zone!=destination_cluster_zone` is not valid PromQL. See the [zone chapter](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) for explicitly scoped conditional queries.
 
-**Targets remain to be measured**: cross-AZ cost−50%, mean user-facing latency≤100ms and errors<1% are acceptance criteria, not predicted results. Cache placement can reduce distance but does not by itself increase hit ratio. Evaluate ambient feature/capacity requirements before comparing overhead; a generic30–50% saving is not established. One HPA over a multi-zone Deployment does not independently scale each zone; independent zonal scaling needs an explicit workload/controller design.
+**Targets remain to be measured**: cross-AZ cost −50%, mean user-facing latency ≤100ms and errors <1% are acceptance criteria, not predicted results. Cache placement can reduce distance but does not by itself increase hit ratio. Evaluate ambient feature/capacity requirements before comparing overhead; a generic 30–50% saving is not established. One HPA over a multi-zone Deployment does not independently scale each zone; independent zonal scaling needs an explicit workload/controller design.
 
 References: [Outlier detection](../../../service-mesh/istio/resilience/01-outlier-detection.md), [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md), [EKS network cost optimization](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html).
 

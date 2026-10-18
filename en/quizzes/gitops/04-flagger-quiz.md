@@ -1,6 +1,6 @@
 # Flagger Progressive Delivery Quiz
 
-1. In Flagger's Canary deployment, what does `stepWeight: 10`, `maxWeight: 50` mean?
+1. In Flagger's Canary deployment, what do `stepWeight: 10`, `maxWeight: 50` mean?
    - A) Increase analysis traffic by 10% up to 50%, then run promotion
    - B) Create 10 Pods and scale up to a maximum of 50
    - C) Shift traffic to 50% at 10-second intervals
@@ -18,7 +18,7 @@ StepWeight is the analysis weight increment and maxWeight is its analysis target
 
 ---
 
-2. Under what condition does Flagger automatically rollback a Canary deployment?
+2. Under what condition does Flagger automatically roll back a Canary deployment?
    - A) When CPU usage exceeds 80%
    - B) When failed checks for a revision reach threshold
    - C) When Pod count exceeds maxReplicas
@@ -30,7 +30,7 @@ StepWeight is the analysis weight increment and maxWeight is its analysis target
 **Answer: B) When failed checks for a revision reach threshold**
 
 **Explanation:**
-Flagger evaluates defined metrics (request-success-rate, request-duration, etc.) at each analysis step. Failed checks accumulate for a revision rather than resetting on every success. Reaching threshold causes rollback on subsequent reconciliation. Primary-promotion failures can require different recovery, including retaining the healthy canary.
+Flagger evaluates defined metrics (request-success-rate, request-duration, etc.) at each analysis step. Failed checks accumulate for a revision rather than resetting on every success. Reaching the threshold causes rollback on subsequent reconciliation. Primary-promotion failures can require different recovery, including retaining the healthy canary.
 
 </details>
 
@@ -138,6 +138,6 @@ Image-reflector evaluates tags/policy and image-automation edits marked YAML. A 
 **Answer: B) Only requests matching specific HTTP header/cookie conditions are routed to the new version**
 
 **Explanation:**
-In A/B Testing, traffic is classified based on HTTP header or cookie conditions defined in `spec.analysis.match`. Only requests matching these conditions are routed to the new version, allowing cohort routing while other requests use stable. Client-controlled headers/cookies are not employee authorization or protection for sensitive features.
+In A/B Testing, traffic is classified based on HTTP header or cookie conditions defined in `spec.analysis.match`. Only requests matching these conditions are routed to the new version, allowing cohort routing while other requests use the stable version. Client-controlled headers/cookies are not employee authorization or protection for sensitive features.
 
 </details>

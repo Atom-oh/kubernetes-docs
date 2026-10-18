@@ -21,7 +21,7 @@ Without RTO (Recovery Time Objective)/RPO (Recovery Point Objective) targets def
 
 ### On-call ownership during incidents
 
-Even with security, quota, cost, lifecycle, and blast radius all factored into boundary decisions, missing "who responds first" means losing time during a 2am incident on a Shared Cluster where it's unclear whether the issue is CNI or the application. Add "primary responder" and "escalation path" columns to your decision matrix, and adopt the rule that **a boundary with more than one primary responder is a candidate for splitting.**
+Even with security, quota, cost, lifecycle, and blast radius all factored into boundary decisions, not specifying "who responds first" means losing time during a 2am incident on a Shared Cluster where it's unclear whether the issue is CNI or the application. Add "primary responder" and "escalation path" columns to your decision matrix, and adopt the rule that **a boundary with more than one primary responder is a candidate for splitting.**
 
 ### Target Kubernetes version and upgrade strategy
 

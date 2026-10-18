@@ -1,209 +1,195 @@
-# Cilium Service Mesh 架构测验
+# Cilium 服务网格架构测验
 
-本测验用于测试您对 Cilium Service Mesh 架构、eBPF 数据路径、node Envoy proxy 和 CRD 模型的理解。
+基于 Cilium 1.20.3 审核。有关配置、资格要求和主要参考资料，请阅读[架构指南](../../../service-mesh/cilium-service-mesh/01-architecture.md)。
 
-## 测验题目
+### 1. Cilium 架构的一个特点是什么？
 
-### 1. Cilium Service Mesh 与传统基于 sidecar 的 Service Mesh 之间的关键区别是什么？
-
-A. 非 Kubernetes 原生
-B. 使用 eBPF 在内核层处理 L3/L4 流量
-C. 在 user space 处理所有流量
-D. 每个 Pod 使用多个 proxy
+- **A.** 它取代 Kubernetes API server
+- **B.** 它将 eBPF L3/L4 处理与用于适用 L7 流量的 Envoy 相结合
+- **C.** 它通过每个 Pod 的 Envoy 发送所有数据包
+- **D.** 它无法使用 Kubernetes 资源
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 使用 eBPF 在内核层处理 L3/L4 流量**
+**答案：B. 它将 eBPF L3/L4 处理与用于适用 L7 流量的 Envoy 相结合**
 
-**说明：**
-Cilium Service Mesh 使用 eBPF（extended Berkeley Packet Filter）直接在 Linux 内核中处理 L3/L4 流量。这与通过 user-space sidecar proxy 处理所有流量的传统 Service Mesh 有根本区别。仅当需要 L7 处理时，流量才会被转发到每个 node 共享的 Envoy proxy。
+Cilium 使用 eBPF 实现网络功能和 L3/L4 策略。适用的 L7 功能使用 Envoy，可由 Agent 管理，也可运行在独立的 DaemonSet 中。这描述的是组件部署位置，并不代表普遍适用的性能结果。
 
 </details>
 
-### 2. 以下哪一项不是 Cilium 程序可执行的 eBPF hook point？
+### 2. 以下哪项不是用于描述 Cilium 数据路径的内核挂载机制？
 
-A. XDP (eXpress Data Path)
-B. TC (Traffic Control)
-C. 应用层
-D. cgroup
+- **A.** TC/TCX
+- **B.** cgroup socket hooks
+- **C.** 应用程序的 HTTP handler
+- **D.** XDP
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 应用层**
+**答案：C. 应用程序的 HTTP handler**
 
-**说明：**
-eBPF 程序在内核层运行，主要 hook point 包括 XDP（NIC 驱动程序）、TC（网络栈入口）、Socket Operations（socket 层）和 cgroup（进程组）。应用层位于 user space，因此不是 eBPF hook point。
+HTTP handler 是应用程序代码，不是内核钩子。Cilium 可以使用 TC/TCX 和 cgroup hooks；XDP 加速需要适当的配置/设备。存在 eBPF 并不意味着这些钩子会在每个数据包上运行。
 
 </details>
 
-### 3. Cilium 的每个 node 一个 Envoy proxy 模型有什么优势？
+### 3. 在节点范围内共享 Envoy 进程意味着什么？
 
-A. 可以实现更复杂的配置
-B. 增加每个 Pod 的内存使用量
-C. 资源效率和低延迟
-D. 无法加密所有流量
+- **A.** 每个节点恰好占用 100 MB 内存
+- **B.** 请求延迟保证为 0.1 ms
+- **C.** 共享代理生命周期/资源/故障边界，需要根据工作负载进行容量规划
+- **D.** 无需配置加密
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 资源效率和低延迟**
+**答案：C. 共享代理生命周期/资源/故障边界，需要根据工作负载进行容量规划**
 
-**说明：**
-每个 node 使用一个 Envoy proxy 比为每个 Pod 部署 sidecar 使用的内存显著更少。在一个有 100 个 Pod 的 cluster 中，Istio 使用约 5GB（每个 Pod 50MB），而 Cilium 仅使用约 500MB（每个 node 100MB）。此外，L3/L4 流量直接在 eBPF 中处理，显著降低延迟。
+与每个 Pod 都运行 sidecar 相比，共享方式可以减少代理实例数量，但总资源使用量还包括 Agent、映射、控制平面和可选组件。实际开销取决于节点数量、流量、策略和功能；过去关于固定 5 GB 与 500 MB 的对比并非测量结果。
 
 </details>
 
-### 4. CiliumEnvoyConfig CRD 的主要用途是什么？
+### 4. CiliumEnvConfig 定义什么？
 
-A. 定义 Kubernetes network policy
-B. 为特定 Service 定义 Envoy proxy 配置
-C. 定义 Pod 调度规则
-D. 定义存储类
+- **A.** 仅 Pod 调度
+- **B.** 命名空间范围的低级 Envoy 资源，以及关联的 Service 流量重定向/后端同步
+- **C.** 所有 CiliumEndpoint 的替代品
+- **D.** 只要 kubectl apply 成功，就一定会被接受的通用配置
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 为特定 Service 定义 Envoy proxy 配置**
+**答案：B. 命名空间范围的低级 Envoy 资源，以及关联的 Service 流量重定向/后端同步**
 
-**说明：**
-CiliumEnvoyConfig 是一个 namespace-scoped CRD，用于为特定 Service 定义 Envoy proxy 设置（listener、route、cluster 等）。这使得可以配置 HTTP 路由、header 操作和负载均衡等 L7 功能。
+CEC 将 Kubernetes Service 与 Envoy Listener、Route 和 Cluster 关联起来。Cilium 可以分配未指定的 listener 地址，并填充 xDS 源。Kubernetes 不会验证所有内嵌的 Envoy 字段，因此仍需检查配置是否被接受以及运行时行为。CCEC 的作用范围是集群级别，但它不会将“*”变成 Service 通配符。
 
 </details>
 
-### 5. 当 Cilium 替换 kube-proxy 时，哪种负载均衡算法提供一致性哈希？
+### 5. 关于 Maglev，哪项说法正确？
 
-A. Random
-B. Round Robin
-C. Maglev
-D. Least Connection
+- **A.** 它是 HTTP cookie 解析器
+- **B.** 它取代 Kubernetes ClientIP 会话亲和性
+- **C.** 它为适用的外部流量提供一致的后端选择，与会话亲和性相互独立
+- **D.** 它保证已移除的后端继续处理旧连接
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Maglev**
+**答案：C. 它为适用的外部流量提供一致的后端选择，与会话亲和性相互独立**
 
-**说明：**
-Maglev 是由 Google 开发的一致性哈希算法，用于 Cilium 基于 eBPF 的 load balancer。即使 backend 发生变化，该算法也能提供 session affinity，从而维持大多数现有连接。它以 O(1) 查找时间提供高性能。
+对于适用的南北向负载均衡，Maglev 会将流一致地映射到后端。文档所述的 socket 级东西向路径不使用 Maglev。ClientIP 亲和性和连接跟踪是不同的机制；Maglev 无法使不可用的后端继续运行。
 
 </details>
 
-### 6. 关于 Cilium Identity，哪项说法正确？
+### 6. Cilium 如何分配工作负载安全身份？
 
-A. 基于 IP 地址识别 workload
-B. 通过哈希 Pod label 生成数字 ID
-C. 使用 MAC 地址进行识别
-D. 必须由用户手动分配
+- **A.** 它始终与 Pod IP 相同
+- **B.** Cilium 会为一组与身份相关的标签分配一个数字 ID；多个 Pod 可以共用该 ID
+- **C.** 用户计算标签哈希并创建一个猜测出来的 CiliumIdentity
+- **D.** 每个 Pod 都有一个永久不变的全局数字身份
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 通过哈希 Pod label 生成数字 ID**
+**答案：B. Cilium 会为一组与身份相关的标签分配一个数字 ID；多个 Pod 可以共用该 ID**
 
-**说明：**
-Cilium Identity 通过哈希 Pod label（namespace、service account、用户定义的 label 等）生成唯一的数字 ID。基于 ID 的方法的优势在于，当 IP 地址发生变化时，policy 不会受到影响。
+与身份相关的标签可以包括命名空间、service account 和选定的工作负载标签。分配器会将标签集解析为一个 ID；它既不是用户计算出来的哈希值，也不一定是每个 Pod 唯一的。请检查 CiliumEndpoint/CiliumIdentity 和 Agent 的 cilium-dbg identity list。
 
 </details>
 
-### 7. 在 Cilium 中应用 L7 policy 时，流量会发生什么变化？
+### 7. 哪些流量可能使用 Envoy？
 
-A. 所有流量始终通过 Envoy
-B. 只有具有 L7 policy 的流量会被重定向到 Envoy
-C. 完全绕过 Envoy
-D. 流量被丢弃
+- **A.** 在任何配置下的每个数据包
+- **B.** HTTP L7 策略流量，以及由受支持的 Service/Ingress/Gateway 配置重定向的流量
+- **C.** 仅包含 CiliumNetworkPolicy HTTP 规则的流，Gateway 流量绝不会使用
+- **D.** 除非每个 Pod 都有 Envoy sidecar，否则没有任何流量会使用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 只有具有 L7 policy 的流量会被重定向到 Envoy**
+**答案：B. HTTP L7 策略流量，以及由受支持的 Service/Ingress/Gateway 配置重定向的流量**
 
-**说明：**
-为了提高效率，Cilium 仅将具有 L7 policy 的流量重定向到 node Envoy proxy。仅具有 L3/L4 policy 或没有 policy 的流量会直接在 eBPF 中处理，并在内核中快速转发。
+HTTP 策略会将相应的入站或出站流量重定向到 Envoy。CEC Service 负载均衡以及 Gateway/Ingress 也可能需要 Envoy。经代理的请求，其响应会使用已建立的代理连接；这并不是针对每个响应单独进行的可选重定向。
 
 </details>
 
-### 8. Cilium 的连接跟踪在哪里执行？
+### 8. Cilium 的 BPF 连接跟踪有什么用途？
 
-A. user space 中的 conntrack daemon
-B. eBPF maps
-C. Envoy proxy
-D. Kubernetes API server
+- **A.** 取代 Kubernetes API
+- **B.** 维护流状态并识别返回流量，同时执行策略检查
+- **C.** 永久缓存首次允许决定，并将其应用于之后的所有数据包
+- **D.** 存储 HTTP 应用程序凭据
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. eBPF maps**
+**答案：B. 维护流状态并识别返回流量，同时执行策略检查**
 
-**说明：**
-Cilium 使用 eBPF maps 进行连接跟踪。CT（Connection Tracking）maps 在内核中存储和查找连接状态，从而为现有连接缓存并快速应用 policy 决策。
+CT maps 会跟踪流状态、生命周期以及转换/代理元数据。已发布的 endpoint 数据路径会针对新建流量和已建立连接的发起方向流量检查策略，但有明确列出的例外情况，并会以有状态方式处理已识别的回复流量。CT 缓存并不意味着策略执行可以一概豁免。
 
 </details>
 
-### 9. CiliumClusterwideNetworkPolicy 和 CiliumNetworkPolicy 之间有什么区别？
+### 9. CiliumClusterwideNetworkPolicy 与 CiliumNetworkPolicy 有什么区别？
 
-A. 两者具有相同的 scope
-B. CiliumClusterwideNetworkPolicy 在整个 cluster 中生效
-C. CiliumNetworkPolicy 具有更多功能
-D. CiliumClusterwideNetworkPolicy 不支持 L7 policy
+- **A.** 它们的 Kubernetes 资源作用范围相同
+- **B.** CCNP 的作用范围是集群级别，而 CNP 的作用范围是命名空间级别；受影响的 endpoint 仍由选择器决定
+- **C.** 只有 CNP 能表达任何 L7 规则
+- **D.** 每个 CCNP 都必然拒绝所有命名空间中的流量
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. CiliumClusterwideNetworkPolicy 在整个 cluster 中生效**
+**答案：B. CCNP 的作用范围是集群级别，而 CNP 的作用范围是命名空间级别；受影响的 endpoint 仍由选择器决定**
 
-**说明：**
-CiliumNetworkPolicy 是 namespace-scoped，而 CiliumClusterwideNetworkPolicy 是 cluster-wide scoped。cluster-wide policy 适用于默认拒绝 policy，或必须应用于所有 namespace 的安全规则。两个 CRD 都支持 L7 policy。
+两者都支持适用的 L7 策略规则。资源作用范围与 endpoint 选择是不同的概念：集群级别的资源不会自动选择或拒绝所有工作负载。其他适用策略的允许规则也同样重要。
 
 </details>
 
-### 10. Cilium Service Mesh 中使用的 SPIFFE ID 的格式是什么？
+### 10. Cilium beta 版带外双向身份验证的默认 SPIFFE ID 格式是什么？
 
-A. urn:spiffe:cluster/namespace/pod
-B. spiffe://cluster.local/ns/\<namespace\>/sa/\<service-account\>
-C. https://spiffe.io/id/\<pod-name\>
-D. spiffe:\<namespace\>:\<pod-name\>
+- **A.** urn:spiffe:cluster/namespace/pod
+- **B.** `spiffe://spiffe.cilium/identity/<numeric-security-identity>`
+- **C.** `spiffe://cluster.local/ns/<namespace>/sa/<service-account>`，适用于每个 Cilium 安装
+- **D.** `https://spiffe.io/id/<pod-name>`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. spiffe://cluster.local/ns/\<namespace\>/sa/\<service-account\>**
+**答案：B. `spiffe://spiffe.cilium/identity/<numeric-security-identity>`**
 
-**说明：**
-SPIFFE（Secure Production Identity Framework for Everyone）ID 是 workload 的唯一标识符。在 Cilium Service Mesh 中与 SPIRE 集成时，每个 workload 都会获得格式为 `spiffe://cluster.local/ns/<namespace>/sa/<service-account>` 的 SPIFFE ID。此 ID 用于 mTLS 身份验证。
+Cilium 已发布的 SPIRE provider 会在其配置的 trust domain 下构造 `/identity/<numeric-id>` 路径，默认值为 spiffe.cilium。Agent 代表 Cilium 安全身份运行。身份验证交换在带外进行；应用程序加密需要单独配置 WireGuard/IPsec。带外功能仍处于 beta 阶段/尚未完善。独立的 ztunnel 加密 beta 使用不同的工作负载身份模型；此答案并不描述其证书路径。
 
 </details>
 
-### 11. 以下哪一项不是 Cilium Agent 的职责？
+### 11. 以下哪项不是 Cilium Agent 的职责？
 
-A. eBPF program 管理
-B. Envoy 配置生成和同步
-C. Kubernetes API server 职责
-D. Identity 管理
+- **A.** 管理本地 eBPF 程序和映射
+- **B.** 管理本地策略和 Envoy 配置
+- **C.** 充当 Kubernetes API server
+- **D.** 管理本地 endpoint 和身份相关内容
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Kubernetes API server 职责**
+**答案：C. 充当 Kubernetes API server**
 
-**说明：**
-Cilium Agent 在每个 node 上运行，负责 eBPF program 管理、policy 编译、Envoy 配置生成/同步、Identity 管理、endpoint 管理和 flow logging。Kubernetes API server 是 Kubernetes control plane 的一部分，与 Cilium 相互独立。
+Agent 在节点上运行；Kubernetes API server 仍是独立的控制平面组件。Cilium Operator 是独立的 Deployment，负责身份垃圾回收和相关 IPAM 操作等集群级任务。
 
 </details>
 
-### 12. 对于同一 node 上的 Pod-to-Pod 通信，Cilium 提供了什么优化？
+### 12. 关于同节点 Pod 流量，哪项说法准确？
 
-A. 始终通过外部网络路由
-B. 通过 eBPF 绕过 network stack 的直接内核路径
-C. 将所有流量转发到 Envoy
-D. 无法通信
+- **A.** 它必须始终离开节点
+- **B.** 满足条件时，合适的 BPF 主机路由路径可以绕过主机网络栈的上层；但实际路径取决于配置
+- **C.** 始终会绕过所有 Linux 和 Pod 网络栈
+- **D.** 其延迟保证为 0.1 ms
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 通过 eBPF 绕过 network stack 的直接内核路径**
+**答案：B. 满足条件时，合适的 BPF 主机路由路径可以绕过主机网络栈的上层；但实际路径取决于配置**
 
-**说明：**
-对于同一 node 上的 Pod-to-Pod 通信，Cilium 使用 eBPF 通过直接内核路径转发流量。这会绕过整个 Linux network stack，从而实现极低延迟（~0.1ms）。
+满足要求时，BPF 主机路由可以绕过主机网络栈的上层/netfilter。Pod 协议栈仍然存在。传统路由、endpoint 设备模式、L7 策略和集成组件都会改变路径；延迟需要通过测量确定。
 
 </details>

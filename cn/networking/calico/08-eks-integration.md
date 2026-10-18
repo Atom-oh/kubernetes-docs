@@ -37,7 +37,7 @@
 
 当发布新的 add-on 版本或 cluster minor 版本更改时，EKS add-on 不会自动更新。AWS、Marketplace 和社区 add-on 也有不同的支持责任方。不要假定存在名为 `calico` 的 add-on，或 Marketplace 产品与此 OSS 安装相同；应检查实际 catalog、发布者、版本、许可和 compute 兼容性。
 
-**对相同 endpoint 只使用一个 network policy 引擎。**Calico EKS 指南要求禁用 AWS VPC CNI network policy。迁移需要经过审查地交接策略、node 状态和可用性；仅在两个引擎都运行时切换一个 flag 不是迁移过程。AWS 警告，移除策略 agent 后规则可能仍然存在，并建议在从第三方引擎迁移时替换受影响 node。参阅 [AWS 策略注意事项](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)和[禁用过程](https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html)。
+**对相同 endpoint 只使用一个 network policy 引擎**。Calico EKS 指南要求禁用 AWS VPC CNI network policy。迁移需要经过审查地交接策略、node 状态和可用性；仅在两个引擎都运行时切换一个 flag 不是迁移过程。AWS 警告，移除策略 agent 后规则可能仍然存在，并建议在从第三方引擎迁移时替换受影响 node。参阅 [AWS 策略注意事项](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)和[禁用过程](https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html)。
 
 ## 准备现有 VPC CNI 安装
 

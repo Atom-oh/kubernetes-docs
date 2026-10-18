@@ -246,7 +246,7 @@ HBONE in this guide transports TCP streams. Application UDP is not carried by th
 
 The lab needs compatible Linux nodes and the required Istio CNI/ztunnel DaemonSets. EKS Fargate cannot run these node DaemonSets; use supported EC2-backed placement and review the actual node/CNI platform. [Platform prerequisites](https://istio.io/latest/docs/ambient/install/platform-prerequisites/) cover CNI paths, permissions and health probes. VPC CNI Pod ENI trunking with SecurityGroupPolicy can require standard enforcing mode or appropriate exec probes; assess the policy implications. GKE, OpenShift, k3s and other platforms may need different settings.
 
-Istio1.31 supports Kubernetes1.32–1.37; see the [installation guide](../01-installation.md) for EKS compatibility. Gateway API1.6.0 below matches Istio1.31’s dependency and official ambient tutorial. Check an existing bundle's compatibility; do not downgrade a newer compatible bundle merely to copy the example.
+Istio 1.31 supports Kubernetes 1.32–1.37; see the [installation guide](../01-installation.md) for EKS compatibility. Gateway API 1.6.0 below matches Istio 1.31’s dependency and official ambient tutorial. Check an existing bundle's compatibility; do not downgrade a newer compatible bundle merely to copy the example.
 
 ### 1. Istio Installation (Ambient Mode)
 
@@ -272,7 +272,7 @@ kubectl get pods,daemonsets -n istio-system
 
 ### 2. Enable Ambient Mode and Deploy the Application
 
-Use a fresh disposable namespace with no sidecar-injection/revision override. Existing sidecar Pods are not converted by adding the ambient label. The complete Bookinfo manifest from the1.31 distribution supplies the reviews Service, version labels, ServiceAccounts and ratings dependency missing from the old single-Deployment example; it uses Bookinfo1.20.3 images.
+Use a fresh disposable namespace with no sidecar-injection/revision override. Existing sidecar Pods are not converted by adding the ambient label. The complete Bookinfo manifest from the 1.31 distribution supplies the reviews Service, version labels, ServiceAccounts and ratings dependency missing from the old single-Deployment example; it uses Bookinfo 1.20.3 images.
 
 ```bash
 kubectl create namespace ambient-demo
@@ -378,7 +378,7 @@ Use the existing installation method and reviewed values to add ambient support 
 
 #### Step 2: Apply to Test Namespace
 
-This independent ambient test deploys both client and server from the1.31 distribution. The httpbin Service exposes8000 and targets8080.
+This independent ambient test deploys both client and server from the 1.31 distribution. The httpbin Service exposes 8000 and targets 8080.
 
 ```bash
 kubectl create namespace test-ambient
@@ -460,7 +460,7 @@ done
 
 ### Benchmark Results
 
-The removed `perf.png` URL returned404 and did not substantiate the old “official benchmark” table. No source established its per-Pod CPU/memory, latency or throughput percentages. Use [published performance results](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) with their original release, load, payload, hardware and policy conditions; do not relabel historical measurements as a current-release test.
+The removed `perf.png` URL returned 404 and did not substantiate the old “official benchmark” table. No source established its per-Pod CPU/memory, latency or throughput percentages. Use [published performance results](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) with their original release, load, payload, hardware and policy conditions; do not relabel historical measurements as a current-release test.
 
 | Measure | Keep comparable |
 |---|---|
@@ -471,7 +471,7 @@ The removed `perf.png` URL returned404 and did not substantiate the old “offic
 
 ### Resource Savings Calculation
 
-The original100-Pod arithmetic is preserved below only as a **what-if budget model**. Its50MB/0.1CPU and waypoint values are assumed inputs, not recommended requests/limits or measured costs. Include every waypoint/ztunnel replica, HA placement and control-plane resources in a real comparison. Additional waypoint replicas change the result.
+The original 100-Pod arithmetic is preserved below only as a **what-if budget model**. Its 50MB/0.1CPU and waypoint values are assumed inputs, not recommended requests/limits or measured costs. Include every waypoint/ztunnel replica, HA placement and control-plane resources in a real comparison. Additional waypoint replicas change the result.
 
 ```python
 # Hypothetical planning inputs, not measured resource consumption or billing
@@ -579,7 +579,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### Historical Introductions
 
-These2022 pages describe the experimental preview, not current installation or ServiceAccount-waypoint commands.
+These 2022 pages describe the experimental preview, not current installation or ServiceAccount-waypoint commands.
 
 - [Introducing ambient mesh (2022)](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
 - [Experimental security architecture (2022)](https://istio.io/latest/blog/2022/ambient-security/)
@@ -594,7 +594,7 @@ These2022 pages describe the experimental preview, not current installation or S
 |1.22 Beta (2024)|Beta milestone|
 |1.24 core GA (2024)|Core ztunnel/waypoint/API milestone; individual features retain their own status|
 
-Current [ambient multicluster documentation](https://istio.io/latest/docs/ambient/install/multicluster/) describes **Beta multi-primary, multi-network** support. Primary/remote is unsupported and single-network deployments are untested; waypoint naming/configuration and service scope must be coordinated across clusters. The old1.26/1.27 roadmap and unattributed enterprise savings are not evidence of supported behavior or guaranteed cost reduction.
+Current [ambient multicluster documentation](https://istio.io/latest/docs/ambient/install/multicluster/) describes **Beta multi-primary, multi-network** support. Primary/remote is unsupported and single-network deployments are untested; waypoint naming/configuration and service scope must be coordinated across clusters. The old 1.26/1.27 roadmap and unattributed enterprise savings are not evidence of supported behavior or guaranteed cost reduction.
 
 ## Summary
 

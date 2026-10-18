@@ -57,7 +57,7 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [必須の Linux コマンド](01-linux-basics.md#essential-linux-commands)
 * [コンテナ関連の Linux 機能](01-linux-basics.md#container-related-linux-features)
 
-## Linux カーネルとユーザー空間
+## Linux カーネルとユーザー空間 {#linux-kernel-and-user-space}
 
 ### カーネルの役割
 
@@ -96,7 +96,7 @@ Linux カーネルはオペレーティングシステムの中核であり、�
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
-## プロセス管理
+## プロセス管理 {#process-management}
 
 ### プロセスとスレッド
 
@@ -136,7 +136,7 @@ fg %<job-number>
 bg %<job-number>
 ```
 
-## Namespace
+## Namespace {#namespaces}
 
 Namespace (名前空間) は、プロセスグループを分離して、それぞれのグループがシステムリソースを独立して認識できるようにする Linux カーネルの機能です。これはコンテナ技術の中核的な要素です。
 
@@ -220,7 +220,7 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
-## ファイルシステム
+## ファイルシステム {#file-system}
 
 ### ファイルシステム階層
 
@@ -260,7 +260,7 @@ df -h
 umount <mount-point>
 ```
 
-## ネットワークの基礎
+## ネットワークの基礎 {#networking-basics}
 
 ### ネットワークインターフェイス
 
@@ -300,7 +300,7 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-## セキュリティコンテキスト
+## セキュリティコンテキスト {#security-context}
 
 ### ユーザーとグループ
 
@@ -353,7 +353,7 @@ aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
 
-## systemd とサービス管理
+## systemd とサービス管理 {#systemd-and-service-management}
 
 systemd は、現代の Linux システムにおける init システムかつサービスマネージャーです。Kubernetes ノード上の kubelet や containerd といった中核サービスの管理に使用されます。
 
@@ -446,7 +446,7 @@ sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
 
-## カーネルパラメータとモジュール
+## カーネルパラメータとモジュール {#kernel-parameters-and-modules}
 
 ### sysctl によるカーネルパラメータ設定
 
@@ -538,7 +538,7 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-## システムリソース制限
+## システムリソース制限 {#system-resource-limits}
 
 ### ulimit - ユーザー単位のリソース制限
 
@@ -594,7 +594,7 @@ cat /proc/<PID>/limits
 find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
 
-## ログ管理
+## ログ管理 {#log-management}
 
 ### journald - systemd の統合ロギング
 
@@ -702,7 +702,7 @@ sudo vi /etc/logrotate.d/linux-basics-demo
 sudo logrotate -f /etc/logrotate.d/linux-basics-demo
 ```
 
-## DNS とネットワーク設定
+## DNS とネットワーク設定 {#dns-and-network-configuration}
 
 ### DNS の設定
 
@@ -769,7 +769,7 @@ sudo netplan generate
 sudo netplan try
 ```
 
-## 時刻同期
+## 時刻同期 {#time-synchronization}
 
 分散システムにおいて時刻同期は非常に重要です。Kubernetes クラスターのすべてのノードは正確な時刻を維持する必要があります。
 
@@ -862,7 +862,7 @@ sudo timedatectl set-timezone Asia/Seoul
 sudo timedatectl set-ntp true
 ```
 
-## パッケージ管理
+## パッケージ管理 {#package-management}
 
 Kubernetes と関連ツールをインストール・管理するためのパッケージマネージャーの使い方です。
 
@@ -969,7 +969,7 @@ sudo dnf versionlock add kubelet kubeadm kubectl
 sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
-## 必須の Linux コマンド
+## 必須の Linux コマンド {#essential-linux-commands}
 
 ### ファイルとディレクトリの管理
 
@@ -1012,7 +1012,7 @@ systemctl restart <service> # Or use start/stop as separate subcommands
 journalctl -u <service> # View service logs
 ```
 
-## コンテナ関連の Linux 機能
+## コンテナ関連の Linux 機能 {#container-related-linux-features}
 
 ### OverlayFS
 

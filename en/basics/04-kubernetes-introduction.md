@@ -57,7 +57,7 @@ if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.e
 
 **minikube Installation**:
 
-Use minikube’s official start guide to select the binary, checksum and driver for your OS/architecture. Run Linux and Windows instructions in their respective shells and add the verified binary to PATH. For macOS:
+Use minikube’s official start guide to select the binary, checksum and driver for your OS/architecture. Follow the Linux and Windows instructions in their respective shells and add the verified binary to PATH. For macOS:
 
 ```bash
 brew install minikube
@@ -943,7 +943,7 @@ spec:
       port: 53
 ```
 
-NetworkPolicy allows are additive. The policy permits role=api to DB port3306 and app=prometheus in monitoring to a separately installed DB exporter on9104. It does not make the DB connect to Prometheus9090. Adapt DNS egress selectors for the actual cluster DNS/NodeLocal DNS setup.
+NetworkPolicy allows are additive. The policy permits access from role=api to DB port 3306 and from app=prometheus in monitoring to a separately installed DB exporter on port 9104. It does not make the DB connect to Prometheus on port 9090. Adapt DNS egress selectors for the actual cluster DNS/NodeLocal DNS setup.
 
 ### DNS
 
@@ -1080,7 +1080,7 @@ A PersistentVolume is an API object representing a storage resource in the clust
 * **ReadWriteMany (RWX)**: Can be mounted read/write by multiple nodes
 * **ReadWriteOncePod (RWOP)**: Single-Pod access for supporting CSI volumes; RWO alone still allows multiple Pods on the same node
 
-The EBS CSI driver and IAM permissions must already be installed. Use an existing volume ID and its actual Availability Zone; never reuse a volume still in use elsewhere. These storage examples are AWS-specific; local clusters need their own provisioner.
+The EBS CSI driver must already be installed and IAM permissions must already be configured. Use an existing volume ID and its actual Availability Zone; never reuse a volume still in use elsewhere. These storage examples are AWS-specific; local clusters need their own provisioner.
 
 **PersistentVolume Example**:
 

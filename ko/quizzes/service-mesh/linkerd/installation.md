@@ -150,7 +150,7 @@ D. 기존 모든 앱 Pod에 proxy 주입
 
 **정답: B**
 
-명령은 manifest를 출력합니다. 실제 설치는 kubectl apply나 선택한 배포 소유 도구가 수행합니다. Gateway API는 기본 Linkerd CRD 출력과 별도 전제이며 control plane은 이후 설치합니다.
+명령은 manifest를 출력합니다. 실제 설치는 kubectl apply나 선택한 배포 소유 도구가 수행합니다. Gateway API는 기본 Linkerd CRD 출력과 별개의 전제이며 control plane은 이후 설치합니다.
 
 </details>
 

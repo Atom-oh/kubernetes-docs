@@ -223,7 +223,7 @@ spec:
 
 #### 1. Listeners
 
-**포트를 수신하고 연결을 받아들입니다**:
+**포트에서 연결을 받아들입니다**:
 
 ```json
 {
@@ -289,7 +289,7 @@ spec:
 
 ### Envoy 성능
 
-실제 트래픽 패턴, 구성 크기, 텔레메트리 설정으로 측정하세요. [공식 벤치마크](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)는 Istio 1.24의 결과이며 공통 RPS/core, 1ms 미만 P99, 메모리 보장값은 없습니다. istiod도 서비스·프록시 수와 구성 변경량으로 산정해야 합니다.
+실제 트래픽 패턴, 구성 크기, 텔레메트리 설정으로 측정하세요. [공식 벤치마크](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)는 Istio 1.24의 결과이며 공통 RPS/core, 1ms 미만 P99, 메모리 보장값은 없습니다. istiod의 리소스도 서비스·프록시 수와 구성 변경량을 기준으로 산정해야 합니다.
 
 ## Sidecar Injection 메커니즘
 

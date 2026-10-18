@@ -46,11 +46,11 @@ The example tests annual recurrence and boundaries. Remove or update the event c
 
 **Answer: B**
 
-Distinguish static/dynamic modes. Static scale bypasses NodePool disruption budgets but respects PDBs.
+Distinguish static/dynamic modes. Static scaling bypasses NodePool disruption budgets but respects PDBs.
 
 </details>
 
-## 4. What can happen if placeholder Deployment desired count remains unchanged after handoff?
+## 4. What can happen if the placeholder Deployment's desired count remains unchanged after handoff?
 
 - A) It always remains free of additional cost
 - B) Recreated placeholders can cause additional nodes to be provisioned
@@ -78,7 +78,7 @@ Validate retention/expiry, removal of placeholder demand and actual application 
 
 **Answer: C**
 
-The 15/11-node example fails baseline peak after losing the larger AZ. Validate the input assumptions with measurements too.
+The 15/11-node example fails to meet baseline peak demand after losing the larger AZ. Validate the input assumptions with measurements too.
 
 </details>
 

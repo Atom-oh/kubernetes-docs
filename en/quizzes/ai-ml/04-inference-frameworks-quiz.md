@@ -1,6 +1,6 @@
 # Inference Frameworks Quiz
 
-15questions on current APIs and execution boundaries.
+15 questions on current APIs and execution boundaries.
 
 ## 1. What does NIM provide, and what must be verified?
 
@@ -18,12 +18,12 @@ Model/device-oriented containers and profiles. NIM is not always TensorRT-LLM; v
 Separate prefill and decode workers connected by compatible KV transfer. Model, KV format, backend, device and networking must agree; speed or cost improvements are workload-dependent.
 </details>
 
-## 3. How is a LoRA adapter declared in AIBrix0.7.0?
+## 3. How is a LoRA adapter declared in AIBrix 0.7.0?
 
 <details>
 <summary>Answer and explanation</summary>
 
-Use ModelAdapter with baseModel, podSelector and artifactURL. Omitted replicas means all matching Pods;1 means one Pod; other values are unsupported. Adapter names do not authenticate tenants.
+Use ModelAdapter with baseModel, podSelector and artifactURL. Omitted replicas means all matching Pods; 1 means one Pod; other values are unsupported. Adapter names do not authenticate tenants.
 </details>
 
 ## 4. Which controller and scaling layers operate Ray Serve on Kubernetes?
@@ -39,7 +39,7 @@ KubeRay reconciles Ray resources; Ray autoscaling adjusts workers and Serve auto
 <details>
 <summary>Answer and explanation</summary>
 
-Measure the same model, SLO, successful throughput and dated prices. Each chip has2cores/32GiB HBM. inf2.24xlarge has6chips/12cores/192GiB HBM;48xlarge has12/24/384GiB. Host RAM is separate.
+Measure the same model, SLO, successful throughput and dated prices. Each chip has 2 cores/32GiB HBM. inf2.24xlarge has 6 chips/12 cores/192GiB HBM; 48xlarge has 12/24/384GiB. Host RAM is separate.
 </details>
 
 ## 6. How do TTFT, ITL and end-to-end latency differ?
@@ -55,7 +55,7 @@ TTFT measures time to first token; ITL measures subsequent token intervals. Unif
 <details>
 <summary>Answer and explanation</summary>
 
-Cache locality and worker load. A fixed0.7/0.3 formula or decode-only cache assumption is not universal; inspect the actual backend and routing policy.
+Cache locality and worker load. A fixed 0.7/0.3 formula or decode-only cache assumption is not universal; inspect the actual backend and routing policy.
 </details>
 
 ## 8. What should be checked before installing the Neuron device plugin?
@@ -103,7 +103,7 @@ Compare local/EBS/EFS/FSx using size, revision, restart/download concurrency, au
 <details>
 <summary>Answer and explanation</summary>
 
-Version0.0.16 uses profile and synthetic-input-tokens-mean/output-tokens-mean. analyze can run additional sweep load. Preserve raw results, failures, warmup and tokenizer; GPU utilization needs configured collection.
+Version 0.0.16 uses profile and synthetic-input-tokens-mean/output-tokens-mean. analyze can run additional sweep load. Preserve raw results, failures, warmup and tokenizer; GPU utilization needs configured collection.
 </details>
 
 ## 14. Does StatefulSet alone implement distributed vLLM?
@@ -119,7 +119,7 @@ No. Stable names can help, but rank, rendezvous, TP/PP, model and communication 
 <details>
 <summary>Answer and explanation</summary>
 
-It selects runtime cores and does not create unallocated devices. inf2.xlarge has one device, so neuron:2 cannot schedule. Distinguish SDK2.32 NxD for Inf2 from the new Trn2/3 beta path.
+It selects runtime cores and does not create unallocated devices. inf2.xlarge has one device, so neuron:2 cannot schedule. Distinguish SDK 2.32 NxD for Inf2 from the new Trn2/3 beta path.
 </details>
 
 [Return to guide](../../ai-ml/04-inference-frameworks.md)

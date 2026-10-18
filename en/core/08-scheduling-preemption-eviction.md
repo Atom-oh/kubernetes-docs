@@ -131,7 +131,7 @@ EOF
 
 ## Scheduling Overview
 
-The Kubernetes scheduler is a control plane component that places pods on appropriate nodes. The scheduler considers various factors to determine the optimal node to place pods:
+The Kubernetes scheduler is a control plane component that places pods on appropriate nodes. The scheduler considers various factors to determine the optimal node to place pods on:
 
 1. **Resource Requirements**: CPU, memory, and other resources requested by the pod
 2. **Hardware/Software/Policy Constraints**: Node selectors, node affinity, taints, etc.
@@ -252,7 +252,7 @@ Kubernetes provides several mechanisms to place pods on specific nodes.
 
 ### Node Selector
 
-Node selector is the simplest way to restrict pods to only be placed on nodes with specific labels.
+A node selector is the simplest way to restrict pods to nodes with specific labels.
 
 ```yaml
 apiVersion: v1
@@ -450,7 +450,7 @@ Kubernetes applies default taints to some nodes:
 
 ## Node Affinity
 
-Node affinity provides a more expressive way to place pods on specific sets of nodes. It allows specifying more complex conditions than node selector.
+Node affinity provides a more expressive way to place pods on specific sets of nodes. It allows specifying more complex conditions than a node selector.
 
 ### Node Affinity Types
 
@@ -623,7 +623,7 @@ The kubelet ranks candidates by whether usage exceeds requests, then Pod priorit
 
 ## Pod Disruption Budget (PDB)
 
-Pod Disruption Budget (PDB) is a way to maintain application availability during voluntary disruptions. PDB limits the number of pods that can be simultaneously disrupted.
+A Pod Disruption Budget (PDB) is a way to maintain application availability during voluntary disruptions. A PDB limits the number of pods that can be simultaneously disrupted.
 
 ![Diagram showing a PodDisruptionBudget's minAvailable, maxUnavailable, and selector settings gating a voluntary disruption such as node drain, allowing or denying eviction, with an example deployment where equivalent minAvailable and maxUnavailable settings produce the same effect.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-7.png)
 
@@ -1040,9 +1040,9 @@ spec:
       app: web
 ```
 
-With this PDB in place, the descheduler will ensure at least 2 pods with `app: web` label remain available during descheduling operations.
+With this PDB in place, the descheduler will ensure at least 2 pods with the `app: web` label remain available during descheduling operations.
 
-The policy above is a Descheduler configuration file, not an API object for kubectl apply. It uses Balance plugins for group redistribution and Deschedule plugins for per-Pod decisions. LowNodeUtilization normally evaluates resource requests rather than live CPU usage, and eviction does not guarantee the replacement Pod lands elsewhere. Review safeguards and test in dry-run before enabling recurring eviction.
+The policy above is a Descheduler configuration file, not an API object for kubectl apply. It uses Balance plugins for group redistribution and Deschedule plugins for per-Pod decisions. LowNodeUtilization normally evaluates resource requests rather than live CPU usage, and eviction does not guarantee the replacement Pod lands elsewhere. Review safeguards and test in dry-run mode before enabling recurring eviction.
 
 ### Descheduler CronJob Example
 

@@ -30,7 +30,7 @@
 
 **정답: C**
 
-**설명:** EWMA는 적합하고 지연 시간이 낮은 후보를 선호하지만 모든 요청이 전체 endpoint 중 표시된 최저 점수를 선택한다고 보장하지 않습니다. HTTP는 요청 단위, TCP는 connection 단위로 분산합니다.
+**설명:** EWMA는 적합하고 지연 시간이 낮은 후보를 선호하지만 모든 요청이 전체 endpoint 중 표시된 점수가 가장 낮은 endpoint를 선택한다고 보장하지 않습니다. HTTP는 요청 단위, TCP는 connection 단위로 분산합니다.
 
 </details>
 
@@ -62,7 +62,7 @@
 
 **정답: C**
 
-**설명:** minRetriesPerSecond가 별도 허용량을 더하므로 전체 재시도의 엄격한 20% 상한이 아닙니다. ttl은 lookback/보존 구간이며 주기적인 초기화가 아닙니다. 실제 재시도는 대상 조건, buffering, deadline에도 제한됩니다.
+**설명:** minRetriesPerSecond가 별도 허용량을 더하므로 전체 재시도의 엄격한 20% 상한이 아닙니다. ttl은 lookback/보존 구간이며 주기적인 초기화가 아닙니다. 실제 재시도는 대상 조건, buffering, deadline에 의해서도 제한됩니다.
 
 </details>
 

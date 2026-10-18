@@ -126,7 +126,7 @@ Fluent Bit 예시는 classic-format filter fragment입니다. Keep_Log의 raw co
 
 **정답: D**
 
-emptyDir는 같은 Pod의 container 재시작은 견디지만 Pod 삭제는 아닙니다. DaemonSet은 대상 node에 배치되며 rollout/복수 경로로 중복 수집될 수 있습니다.
+emptyDir는 같은 Pod의 container 재시작은 견디지만 Pod 삭제는 견디지 못합니다. DaemonSet은 대상 node에 배치되며 rollout/복수 경로로 중복 수집될 수 있습니다.
 
 </details>
 

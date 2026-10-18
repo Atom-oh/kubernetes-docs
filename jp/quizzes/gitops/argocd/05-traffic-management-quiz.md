@@ -18,7 +18,7 @@ Argo Rollouts は、Canary deployment、Blue-Green deployment、および自動�
 
 </details>
 
-2. 古いバージョンから新しいバージョンへトラフィックを段階的に移行する Deployment 戦略はどれですか？
+2. 明示的なトラフィック重みの各段階と分析ゲートを使って新しいバージョンを検証する戦略はどれですか？
    - A) Recreate
    - B) Rolling Update
    - C) Canary
@@ -36,17 +36,17 @@ Canary deployment は、古いバージョンから新しいバージョンへ�
 
 3. Argo Rollouts を使用した Blue-Green deployment では、promotion 中に何が起こりますか？
    - A) blue 環境が削除される
-   - B) トラフィックが stable（blue）Service から preview（green）Service へ切り替わる
+   - B) active Service の selector が新しい ReplicaSet に切り替わる
    - C) 両方のバージョンが永久に同時実行される
    - D) 新しい環境が作成される
 
 <details>
 <summary>答えを表示</summary>
 
-**答え: B) トラフィックが stable（blue）Service から preview（green）Service へ切り替わる**
+**答え: B) active Service の selector が新しい ReplicaSet に切り替わる**
 
 **解説:**
-Blue-Green deployment では、active Service selector を更新することで、promotion により現在の stable バージョンから preview バージョンへトラフィックを切り替えます。古い ReplicaSet は promotion 後にスケールダウンされます。
+Blue-Green deployment の promotion では、active Service の selector を新しい ReplicaSet に切り替えます。古い ReplicaSet のスケールダウンは、分析と遅延の設定に従います。データプレーンへの反映は瞬時ではありません。
 
 </details>
 
@@ -66,7 +66,7 @@ AnalysisTemplate は、クエリするメトリクス（Prometheus、Datadog な
 
 </details>
 
-5. トラフィック分割のために Argo Rollouts とネイティブ統合している Ingress controller はどれですか？
+5. Argo Rollouts にネイティブなトラフィック管理統合を提供するプロバイダーはどれですか？
    - A) Traefik のみ
    - B) NGINX Ingress のみ
    - C) NGINX、ALB、Istio、Traefik を含む複数
@@ -78,11 +78,11 @@ AnalysisTemplate は、クエリするメトリクス（Prometheus、Datadog な
 **答え: C) NGINX、ALB、Istio、Traefik を含む複数**
 
 **解説:**
-Argo Rollouts は、NGINX Ingress、AWS ALB、Istio、Linkerd、SMI、Traefik を含む複数の Ingress controller および Service mesh とネイティブのトラフィック管理統合を提供します。
+Argo Rollouts は、AWS ALB、Istio、Traefik、APISIX など、複数の Ingress controller と Service mesh にネイティブなトラフィック管理統合を提供します。ingress-nginx や SMI の API が引き続きサポートされていても、それらのプロジェクトが今も保守されているとは限りません。Linkerd 用の独立したネイティブフィールドはありません。
 
 </details>
 
-6. Canary 戦略の `setWeight` ステップは何を行いますか？
+6. トラフィックルーターがあり、既定の `maxTrafficWeight=100` を使う場合、`setWeight` は何を設定しますか？
    - A) Pod の CPU ウェイトを設定する
    - B) Canary バージョンへルーティングするトラフィックの割合を設定する
    - C) Deployment の重要度を設定する
@@ -94,11 +94,11 @@ Argo Rollouts は、NGINX Ingress、AWS ALB、Istio、Linkerd、SMI、Traefik �
 **答え: B) Canary バージョンへルーティングするトラフィックの割合を設定する**
 
 **解説:**
-Canary 戦略の `setWeight` ステップは、Canary（新しい）バージョンへルーティングするトラフィックの割合を設定します。たとえば、`setWeight: 20` はトラフィックの 20% を Canary へルーティングします。
+Canary 戦略の `setWeight` ステップは、Canary（新しい）バージョンへ送るトラフィックの割合を指定します。たとえば、`setWeight: 20` は 20/100 の相対的な重みを要求します。実際に観測される割合は、サンプル数、接続、cookie によって異なります。トラフィックルーターがない場合は、Pod 数でおおよその比率を実現します。
 
 </details>
 
-7. Canary deployment 中に AnalysisRun が失敗すると、何が起こりますか？
+7. Rollout に関連付けられた分析が AnalysisRun の `Failed` フェーズに達すると、何が起こりますか？
    - A) Deployment は関係なく続行される
    - B) アラートは送信されるが、それ以外は何も起こらない
    - C) Rollout が自動的に中止され、rollback される
@@ -110,7 +110,7 @@ Canary 戦略の `setWeight` ステップは、Canary（新しい）バージョ
 **答え: C) Rollout が自動的に中止され、rollback される**
 
 **解説:**
-AnalysisRun が失敗すると（メトリクスが失敗しきい値を超えると）、Argo Rollouts は自動的に Rollout を中止し、stable バージョンへの rollback を開始します。これにより、不適切な Deployment がすべてのトラフィックに影響するのを防ぎます。
+AnalysisRun が失敗フェーズに達すると、Argo Rollouts は Rollout を中止してトラフィックを stable に戻します。ただし、Git やデータベースの変更は巻き戻しません。`failureLimit` は失敗した測定値と AnalysisRun 自体の失敗を区別します。`Inconclusive` は調査のために一時停止します。
 
 </details>
 
@@ -142,7 +142,7 @@ duration を指定しない `pause` ステップを追加すると、無期限�
 **答え: B) Gateway API plugin（`trafficRouting.plugins`）を介して HTTPRoute を操作する**
 
 **解説:**
-Kong にはネイティブの Argo Rollouts 統合はありません。`trafficRouting.kong` フィールドは存在しません。Kong は、標準の HTTPRoute リソースを操作する argoproj-labs の Gateway API plugin を介してのみサポートされます。Traefik や kgateway など、その他の Gateway API 準拠 controller も同じ plugin を使用します。
+Kong には Argo Rollouts とのネイティブ統合がなく、`trafficRouting.kong` フィールドもありません。この章では argoproj-labs の Gateway API plugin を使い、標準の HTTPRoute リソースを操作します。Traefik や kgateway など、ほかの Gateway API 準拠 controller も同じ plugin を使用します。
 
 </details>
 
@@ -158,6 +158,6 @@ Kong にはネイティブの Argo Rollouts 統合はありません。`trafficR
 **答え: C) HTTPRoute の `backendRefs[].weight`**
 
 **解説:**
-Gateway API plugin は、各 setWeight ステップで標準 Gateway API HTTPRoute リソースの `backendRefs[].weight` 値を直接更新します。これは、Kong、Traefik、kgateway など、Gateway API を実装するあらゆる controller に同様に適用される汎用的な仕組みです。
+Gateway API plugin は、各 `setWeight` ステップで標準 Gateway API の HTTPRoute リソースにある `backendRefs[].weight` 値を直接更新します。対応する controller で機能する仕組みですが、導入済み CRD、サポートされる Route 機能、実際のデータプレーンへの反映を確認してください。
 
 </details>

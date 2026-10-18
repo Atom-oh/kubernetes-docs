@@ -1,12 +1,12 @@
 # Kafka 运维测验
 
-> **最后更新**：2026 年 9 月 12 日，Strimzi 1.2.0 / Kafka 4.3.1。
+> **最后更新**：October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
 
-本测验检验您对 EKS 上 Strimzi 管理的 Kafka 集群的存储设计、代理扩缩容、Cruise Control 再平衡、滚动升级和故障处理的理解。
+本测验旨在检验你对 EKS 上由 Strimzi 管理的 Kafka 集群的存储设计、Broker 扩缩容、Cruise Control 重新平衡、滚动升级和故障处理的理解。
 
 ## 选择题
 
-1. AWS 为低延迟、高 IOPS 和高持久性设计了哪种 SSD 选项？
+1. AWS 为低延迟、高 IOPS 和高耐久性设计了哪种 SSD 选项？
    - A) gp2
    - B) gp3
    - C) io2
@@ -18,11 +18,11 @@
 
 **答案：C) io2**
 
-**解释：**
-io2 Block Express 面向低延迟、高 IOPS 和持久性。最高 256,000 IOPS 需要 Nitro 等适当条件。区分 99.999% 设计持久性与 0.001% AFR。容量和 IOPS 都影响成本；应根据测量、要求和价格选择。
+**说明：**
+io2 Block Express 面向低延迟、高 IOPS 和高耐久性。最大 256,000 IOPS 需要满足 Nitro 等适当条件。请区分 99.999% 的设计耐久性与 0.001% 的 AFR。容量和 IOPS 都会影响成本；应依据测量结果、需求和定价进行选择。
 </details>
 
-2. `KafkaNodePool` 上哪种存储类型将代理配置为使用多个独立卷？
+2. `KafkaNodePool` 上哪种存储类型可配置 Broker 使用多个独立卷？
    - A) `type: persistent-claim`
    - B) `type: jbod`
    - C) `type: ephemeral`
@@ -34,11 +34,11 @@ io2 Block Express 面向低延迟、高 IOPS 和持久性。最高 256,000 IOPS 
 
 **答案：B) `type: jbod`**
 
-**解释：**
-JBOD 提供独立卷 ID。Kafka 4.3.1 对新日志通常优先选择分区日志较少的目录；不保证轮询或按字节均衡放置。移动现有数据是独立操作。
+**说明：**
+JBOD 提供独立的卷 ID。Kafka 4.3.1 通常会优先选择分区日志较少的目录来存储新日志；但这不保证采用轮询或按字节均衡的方式分配。现有数据的迁移是另一项独立操作。
 </details>
 
-3. 持续保留 100MB/s 日志、保留七天且 RF=3 时，哪个公式让总容量的 30% 保持空闲？
+3. 对于持续写入速率为 100MB/s、保留期为七天且 RF=3 的日志，哪种公式能确保总容量中有 30% 空闲？
    - A) 100MB/s × 7 天（秒数）× 3
    - B) 100MB/s × 7 天（秒数）× 3 ÷ 0.70
    - C) 100MB/s × 7 天（秒数）÷ 3
@@ -50,45 +50,45 @@ JBOD 提供独立卷 ID。Kafka 4.3.1 对新日志通常优先选择分区日志
 
 **答案：B) 100MB/s × 7 天（秒数）× 3 ÷ 0.70**
 
-**解释：**
-在数据大小上增加 30%，仅使总容量约 23.08% 空闲。将复制数据除以 0.70，才能保留 30% 空闲。使用持续保留/压缩日志字节数、实际保留期和独立运维开销。
+**说明：**
+在数据大小上增加 30%，总容量中只会剩下约 23.08% 的空闲空间。将复制后的数据量除以 0.70，才能保留 30% 的空闲空间。应使用持续保留的压缩后日志字节数、实际保留期，并单独考虑运行开销。
 </details>
 
-4. 在 Strimzi 管理的 Kafka 集群上，操作员必须手动运行什么脚本来格式化存储卷？
-   - A) 必须在每个代理手动运行 `kafka-storage.sh format`
-   - B) 必须使用 `kafka-configs.sh` 应用格式化设置
-   - C) 无需手动脚本——代理 Pod 启动时由 Strimzi Operator 自动处理
+4. 对于由 Strimzi 管理的 Kafka 集群，运维人员必须手动运行哪个脚本来格式化存储卷？
+   - A) 必须在每个 Broker 上手动运行 `kafka-storage.sh format`
+   - B) 必须使用 `kafka-configs.sh` 应用格式设置
+   - C) 无：Broker Pod 启动时，Strimzi Operator 会自动处理此操作
    - D) 必须使用 `kafka-reassign-partitions.sh --format`
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 无需手动脚本——代理 Pod 启动时由 Strimzi Operator 自动处理**
+**答案：C) 无：Broker Pod 启动时，Strimzi Operator 会自动处理此操作**
 
-**解释：**
-Strimzi/启动脚本管理新存储元数据所需初始化。现有数据不会在每次启动时被擦除。不要随意手动格式化 Operator 管理的卷。
+**说明：**
+Strimzi/启动脚本会管理新存储元数据所需的初始化。每次启动时不会清除现有数据。不要随意手动格式化由 Operator 管理的卷。
 </details>
 
-5. 没有匹配的 autoRebalance 模式时，增加代理池 replicas 会发生什么？
-   - A) 现有分区立即重新分布到新代理
-   - B) 新代理加入集群，但现有主题分区不会自动重新分配
-   - C) 新代理自动成为所有分区的领导者
-   - D) 新代理仅充当控制器
+5. 如果没有匹配的 autoRebalance 模式，增加 Broker 池的副本数会怎样？
+   - A) 现有分区会立即重新分配到新 Broker 上
+   - B) 新 Broker 会加入集群，但现有主题分区不会自动重新分配
+   - C) 新 Broker 会自动成为所有分区的 Leader
+   - D) 新 Broker 只会充当 Controller
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 新代理加入集群，但现有主题分区不会自动重新分配**
+**答案：B) 新 Broker 会加入集群，但现有主题分区不会自动重新分配**
 
-**解释：**
-这描述没有匹配 autoRebalance 模式的情况。配置 add-brokers 自动化后，Strimzi 1.2 可在现有池 replicas 增加后自动再平衡。池创建/删除是不同事件。
+**说明：**
+此描述适用于没有匹配的 autoRebalance 模式的情况。配置了 add-brokers 自动化后，Strimzi 1.3 可以在现有池的副本数增加后自动重新平衡。创建或删除池属于不同的事件。
 </details>
 
-6. 移除代理前必须满足什么数据状态要求？
-   - A) 无需任何要求——Strimzi 自动排空
-   - B) 必须先将待移除代理上的分区重新分配到剩余代理
+6. 移除 Broker 之前，必须满足什么数据状态要求？
+   - A) 无需任何操作：Strimzi 会自动清空该 Broker
+   - B) 必须先将待移除 Broker 上的分区重新分配到剩余 Broker
    - C) 必须重启集群
    - D) 必须删除所有主题
 
@@ -96,29 +96,29 @@ Strimzi/启动脚本管理新存储元数据所需初始化。现有数据不会
 
 <summary>显示答案</summary>
 
-**答案：B) 必须先将待移除代理上的分区重新分配到剩余代理**
+**答案：B) 必须先将待移除 Broker 上的分区重新分配到剩余 Broker**
 
-**解释：**
-移除代理前必须安全迁出所有副本。手动流程包含内部主题；配置的 remove-brokers autoRebalance 可自动协调迁出。保留非空代理检查并验证移除 ID。
+**说明：**
+移除 Broker 之前，必须安全地迁出所有副本。手动操作流程包括内部主题；配置 remove-brokers autoRebalance 后，可以自动协调迁出过程。保留非空 Broker 检查，并验证移除 ID。
 </details>
 
 7. Cruise Control 的主要作用是什么？
    - A) 自动创建和删除主题
-   - B) 收集代理负载指标并自动生成/执行基于目标的分区重新分配计划
-   - C) 管理消费者组偏移提交
+   - B) 收集 Broker 负载指标，并自动生成/执行基于目标的分区重新分配计划
+   - C) 管理消费者组偏移量提交
    - D) 自动续订 TLS 证书
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 收集代理负载指标并自动生成/执行基于目标的分区重新分配计划**
+**答案：B) 收集 Broker 负载指标，并自动生成/执行基于目标的分区重新分配计划**
 
-**解释：**
-Cruise Control 根据负载/目标计算提案，并按审批/自动化策略执行。生成提案和移动数据相互独立；不要随意绕过指标不足或硬性目标失败。
+**说明：**
+Cruise Control 会根据负载和目标计算方案，并依照审批/自动化策略执行。生成方案与迁移数据是两项独立操作；不要轻率地绕过指标不足或硬性目标失败的问题。
 </details>
 
-8. `KafkaRebalance` 资源的 `mode` 字段中，哪种模式专注于将分区移动到新添加代理，为其分配负载？
+8. 在 `KafkaRebalance` 资源的 `mode` 字段中，哪种模式专注于将分区迁移到新添加的 Broker 上以填充其负载？
    - A) `full`
    - B) `add-brokers`
    - C) `remove-brokers`
@@ -130,27 +130,27 @@ Cruise Control 根据负载/目标计算提案，并按审批/自动化策略执
 
 **答案：B) `add-brokers`**
 
-**解释：**
-add-brokers 针对指定新代理，需要实际 ID。目标、数据量和机架约束决定时长/影响；它不总是比 full 更快。remove-brokers 在移除前迁出代理数据。
+**说明：**
+add-brokers 会针对指定的新 Broker，并且需要这些 Broker 的实际 ID。目标、数据量和机架约束会决定耗时和影响；它并不总是比 full 更快。remove-brokers 则会在移除 Broker 之前将其清空。
 </details>
 
-9. 哪种模式将 Kafka 4.2.1 升级到 4.3.1，同时保留旧元数据格式以提供验证窗口？
-   - A) 立即同时提高 version 和 metadataVersion
-   - B) 将 version 提高到 4.3.1，保留 metadataVersion 4.2-IV1，验证后再改为 4.3-IV0
-   - C) 检查二进制兼容性前先提高 metadataVersion
+9. 将 Kafka 4.2.1 升级到 4.3.1，同时在验证期内保留旧元数据格式，应采用哪种方式？
+   - A) 立即同时提升 version 和 metadataVersion
+   - B) 将 version 提升到 4.3.1，保留 metadataVersion 4.2-IV1，然后先进行验证，再改为 4.3-IV0
+   - C) 在检查二进制兼容性之前先提升 metadataVersion
    - D) 删除所有数据并重启
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 将 version 提高到 4.3.1，保留 metadataVersion 4.2-IV1，验证后再改为 4.3-IV0**
+**答案：B) 将 version 提升到 4.3.1，保留 metadataVersion 4.2-IV1，然后先进行验证，再改为 4.3-IV0**
 
-**解释：**
-这是显式保留之前 metadataVersion 以验证的运维模式。若省略，Strimzi 可在二进制升级后更新元数据。Operator 必须支持当前/目标 Kafka，后续格式更改可能阻止降级。
+**说明：**
+这是显式保留先前 metadataVersion 以进行验证的运维方式。如果未设置，Strimzi 可能会在二进制升级后更新元数据。Operator 必须支持当前和目标 Kafka 版本；之后更改格式可能会导致无法降级。
 </details>
 
-10. 哪种 Kubernetes 资源约束 Strimzi Kafka 集群的自愿驱逐？
+10. 哪种 Kubernetes 资源会限制 Strimzi Kafka 集群的自愿驱逐？
     - A) ResourceQuota
     - B) NetworkPolicy
     - C) PodDisruptionBudget
@@ -162,13 +162,13 @@ add-brokers 针对指定新代理，需要实际 ID。目标、数据量和机�
 
 **答案：C) PodDisruptionBudget**
 
-**解释：**
-Strimzi 1.2 通常每集群创建一个 Kafka PDB，覆盖其各池的 Kafka Pod。它约束自愿驱逐，不约束节点/可用区故障或强制删除。
+**说明：**
+Strimzi 1.3 通常会为每个集群创建一个 Kafka PDB，涵盖该集群各池中的 Kafka Pod。它会限制自愿驱逐，但不会限制节点/AZ 故障或强制删除。
 </details>
 
 ## 简答题
 
-11. Kafka 滚动可用性检查会考虑哪个最小 ISR 配置？
+11. Kafka 滚动可用性检查会考虑哪项最小 ISR 配置？
 
 <details>
 
@@ -176,11 +176,11 @@ Strimzi 1.2 通常每集群创建一个 Kafka PDB，覆盖其各池的 Kafka Pod
 
 **答案：`min.insync.replicas`**
 
-**解释：**
-min.insync.replicas 是重要可用性输入，不是每次滚动更新的无条件保证。检查实际 ISR、控制器法定人数、存储/网络和客户端超时/重试。
+**说明：**
+min.insync.replicas 是可用性评估的重要输入，但并不能无条件保证每次滚动期间的可用性。请检查实际 ISR、Controller quorum、存储/网络状况，以及客户端超时/重试设置。
 </details>
 
-12. 升级前，哪个组件的支持矩阵必须同时包含当前和目标 Kafka？
+12. 升级之前，哪个组件的支持矩阵必须涵盖当前和目标 Kafka 版本？
 
 <details>
 
@@ -188,11 +188,11 @@ min.insync.replicas 是重要可用性输入，不是每次滚动更新的无条
 
 **答案：Strimzi Operator**
 
-**解释：**
-验证 Strimzi 版本同时支持当前和目标 Kafka。若已支持，无需强制升级 Operator。若最新 Operator 不再支持当前 Kafka，规划中间版本和 API/CRD 迁移。
+**说明：**
+请确认 Strimzi 版本同时支持当前和目标 Kafka 版本。如果现有版本已支持，就不必强制升级 Operator。如果最新的 Operator 不再支持当前 Kafka 版本，则应规划中间版本以及 API/CRD 迁移。
 </details>
 
-13. 实际执行分区重新分配计划前，使用 `kafka-reassign-partitions.sh` 的哪个选项针对指定代理列表生成计划？
+13. 实际执行分区重新分配计划之前，使用 `kafka-reassign-partitions.sh` 的哪个选项可针对指定的 Broker 列表生成计划？
 
 <details>
 
@@ -200,25 +200,25 @@ min.insync.replicas 是重要可用性输入，不是每次滚动更新的无条
 
 **答案：`--generate`**
 
-**解释：**
---generate 打印当前和提议的分配，不执行移动。单独提取 Proposed，并审核 RF、ID、机架和容量。完成的 --verify 若无 preserve-throttles，可清除节流配置。
+**说明：**
+--generate 会打印当前分配和提议的分配，但不会执行迁移。请单独提取 Proposed，并检查 RF、ID、机架和容量。完成 --verify 后，如果没有使用 preserve-throttles，可能会清除限流配置。
 </details>
 
-14. 区分 acks=all 的持久性假设与滚动更新期间的请求成功保证。
+14. 区分 acks=all 的耐久性假设与滚动期间请求成功的保证。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：同步副本和可用法定人数/领导者仍存在时持久性更强，但请求仍可能超时或需要重试。**
+**答案：只要同步副本和可用的 quorum/Leader 仍然存在，耐久性就更有保障，但请求仍可能超时或需要重试。**
 
-**解释：**
-acks=all 在满足最小 ISR 的同时等待当前完整 ISR。同步副本以及有效领导者/法定人数/存储条件必须维持。单独处理超时、重试和重复处理。
+**说明：**
+acks=all 会等待当前完整 ISR，同时满足最小 ISR 要求。必须保持同步副本以及可用的 Leader/quorum/存储条件。应分别处理超时、重试和重复处理问题。
 </details>
 
-## 实践题
+## 实操题
 
-15. 为新环境定义代理池示例，使用三个 300Gi gp3 卷。
+15. 定义一个新环境的 Broker 池示例，包含三个 300Gi gp3 卷。
 
 <details>
 
@@ -280,11 +280,11 @@ spec:
             docs.example.com/kafka-role: broker
 ```
 
-**解释：**
-这是新环境定义，不是要求缩小已扩至 500Gi 的卷。它使用第 2 部分的 gp3-kafka，并选择一个元数据卷。Retain/deleteClaim 设置不是备份。
+**说明：**
+这是新环境的定义，不是将已扩容到 500Gi 的卷缩小的指令。它使用 Part 2 gp3-kafka，并选择一个元数据卷。保留/删除 claim 的设置不能替代备份。
 </details>
 
-16. 为名为 `my-cluster` 的集群创建 `full` 模式 `KafkaRebalance` 资源，并编写批准生成的再平衡提案的命令。
+16. 为名为 `my-cluster` 的集群创建一个 `KafkaRebalance` 资源，使用 `full` 模式，并写出批准生成的重新平衡方案的命令。
 
 <details>
 
@@ -316,11 +316,11 @@ kubectl -n kafka annotate kafkarebalance reviewed-full-rebalance \
 kubectl -n kafka get kafkarebalance reviewed-full-rebalance -w
 ```
 
-**解释：**
-需启用 Cruise Control，并具有有效指标/目标。自动审批为 false：批准前检查 ProposalReady。区分手动请求与自动扩缩请求。
+**说明：**
+必须启用 Cruise Control，并配置有效的指标/目标。自动审批为 false：请在批准前检查 ProposalReady。应区分手动请求与自动扩缩容请求。
 </details>
 
-17. 代理扩容后，使用实际 ID 和 TLS 管理员设置，生成、提取、执行并检查 orders 重新分配。
+17. 扩容 Broker 后，使用实际 ID 和 TLS 管理配置，生成、提取、执行并检查 orders 的重新分配。
 
 <details>
 
@@ -351,10 +351,10 @@ kafka-reassign-partitions.sh \
   --reassignment-json-file reassignment.json --verify --preserve-throttles
 ```
 
-**解释：**
-将文件保留在运行 CLI 的环境。使用真实代理 ID 和 TLS 管理员配置，提取 Proposed 而非 Current。用 --verify --preserve-throttles 检查移动状态，再单独检查 URP/min-ISR/离线状态。移动一个主题不能证明代理已完全排空。
+**说明：**
+请将文件保存在运行 CLI 的环境中。使用真实的 Broker ID 和 TLS 管理配置，并提取 Proposed 而不是 Current。使用 --verify --preserve-throttles 检查迁移状态，然后单独检查 URP/min-ISR/离线状态。只迁移一个主题并不能证明已将 Broker 完全清空。
 </details>
 
 ---
 
-[返回学习资料](../../../data-on-eks/kafka/03-kafka-operations.md) | [下一测验：Schema Registry](./04-schema-registry-quiz.md)
+[返回学习资料](../../../data-on-eks/kafka/03-kafka-operations.md) | [下一个测验：Schema Registry](./04-schema-registry-quiz.md)

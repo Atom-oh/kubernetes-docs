@@ -47,7 +47,7 @@ flowchart LR
   G -->|메트릭 조회| P["메트릭 백엔드"]
 ```
 
-화살표는 요청과 데이터 흐름이며 모든 응답·제어 연결을 표현하지 않습니다. Grafana는 메트릭 백엔드를 **조회**합니다. Metrics-generator가 Grafana에 메트릭을 저장하는 구조가 아닙니다.
+화살표는 요청과 데이터 흐름을 나타내며 모든 응답·제어 연결을 표현하지 않습니다. Grafana는 메트릭 백엔드를 **조회**합니다. Metrics-generator가 Grafana에 메트릭을 저장하는 구조가 아닙니다.
 
 ### 구성 요소 상세
 
@@ -151,7 +151,7 @@ tempo:
 
 수신 크기 제한 단위는 **MiB**, 수집 rate/burst 단위는 **바이트**입니다. 16 MiB 및 15/20 MB 값은 예시 제한이며 측정된 처리 용량이 아닙니다.
 
-선택적인 메트릭 생성은 프로세서 활성화와 기존 인증 수신처가 모두 필요합니다. URL을 교체하고 세 인증서 파일을 가진 `tempo-metrics-client` Secret을 준비한 뒤 두 번째 파일을 병합합니다.
+선택적인 메트릭 생성에는 프로세서 활성화와 기존 인증 수신처가 모두 필요합니다. URL을 교체하고 세 인증서 파일을 가진 `tempo-metrics-client` Secret을 준비한 뒤 두 번째 파일을 병합합니다.
 
 ```yaml
 metricsGenerator:
@@ -206,7 +206,7 @@ tempo -config.file=tempo.yaml -config.verify=true
 
 이 명령은 서비스 초기화 전에 종료합니다. Kafka/S3 연결이나 임의의 receiver 내부 설정 전체를 실행 검증하지 않습니다. **앞의 배포 조건을 해결하기 전에는 Helm install을 실행하지 마세요.** 이후 검토한 values·소유한 release/namespace·롤백 또는 마이그레이션 계획을 배포 절차에 적용합니다.
 
-로컬 단일 프로세스 검사는 아래 별도 파일을 `tempo-local.yaml`로 저장하고 OS/아키텍처에 맞게 검증한 공식 Tempo 3.0.3 바이너리를 사용합니다.
+로컬 단일 프로세스를 검사하려면 아래 별도 파일을 `tempo-local.yaml`로 저장하고 OS/아키텍처에 맞게 검증한 공식 Tempo 3.0.3 바이너리를 사용합니다.
 
 ```yaml
 target: all
@@ -426,7 +426,7 @@ output "tempo_bucket" { value = aws_s3_bucket.tempo.id }
 
 ### Grafana 데이터 소스 설정
 
-다음은 차트 전용 `values.yaml`이 아닌 **Grafana provisioning 파일**입니다. 사용 중인 Grafana 차트가 지원하는 방식으로 마운트합니다. 세 내부 URL은 기존 접근 통제된 서비스를 가리키도록 교체합니다.
+다음은 차트 전용 `values.yaml`이 아닌 **Grafana provisioning 파일**입니다. 사용 중인 Grafana 차트가 지원하는 방식으로 마운트합니다. 세 내부 URL은 접근이 통제된 기존 서비스를 가리키도록 교체합니다.
 
 ```yaml
 apiVersion: 1
@@ -597,7 +597,7 @@ curl --fail http://127.0.0.1:3200/api/traces/4bf92f3577b34da6a3ce929d0e0e4736
 
 ### 모니터링 대시보드
 
-배포가 실제 내보내는 시계열과 target 라벨을 사용합니다.
+배포가 실제로 내보내는 시계열과 target 라벨을 사용합니다.
 
 ```promql
 sum(rate(tempo_distributor_spans_received_total[5m]))

@@ -49,7 +49,7 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
 
 NodePool/EC2NodeClass에는 설치된 호환 Karpenter 컨트롤러/CRD, 범위가 제한된 컨트롤러 IAM, 노드 역할, 검색 대상 리소스, 중단 처리 큐가 필요합니다. 현재 호환성 표에서 EKS 1.36은 Karpenter >=1.13이 필요합니다. `al2023@latest`는 변하는 선택자이므로 실제 AMI를 검토하고 통제된 변경에는 검증한 별칭/AMI를 고정합니다. 인스턴스 목록과 용량 limits는 예시이며 금액 상한이 아닙니다. 관리형 노드 그룹은 자체 중단 경로를 처리하며 Karpenter 노드에 두 번째 처리기를 중복 적용하지 않습니다.
 
-HPA에는 resource metrics와 requests가 필요하고 CPU/메모리 목표 중 가장 큰 희망 복제본 수를 선택합니다. 아래 VPA는 분모를 변경하지 않고 권고만 제공하도록 **Off**입니다. `Auto`는 deprecated되어 `Recreate` 같은 명시적 모드로 대체하며, CPU/메모리 자동 변경은 HPA와 조율해야 합니다. preStop hook도 종료 유예 시간을 소비하며 Spot 기한이나 cleanup 성공을 보장하지 않습니다.
+HPA는 resource metrics와 requests를 필요로 하고 CPU/메모리 목표 중 가장 큰 희망 복제본 수를 선택합니다. 아래 VPA는 분모를 변경하지 않고 권고만 제공하도록 **Off**입니다. `Auto`는 deprecated되어 `Recreate` 같은 명시적 모드로 대체하며, CPU/메모리 자동 변경은 HPA와 조율해야 합니다. preStop hook도 종료 유예 시간을 소비하며 Spot 기한이나 cleanup 성공을 보장하지 않습니다.
 
 **구현 방법:**
 
@@ -438,7 +438,7 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 StorageClass 예시에는 설치된 CSI 드라이버와 올바른 IAM/KMS·토폴로지 설정이 필요합니다. `WaitForFirstConsumer`는 EBS 프로비저닝을 스케줄링과 맞추며 `Retain`으로 남은 볼륨은 소유자가 처리할 때까지 과금됩니다. 바인딩된 PVC의 클래스 변경이나 제자리 축소는 불가능합니다. 스냅샷/복원 또는 지원되는 볼륨 유형 변경은 소유자가 검토한 이전 절차와 복원 테스트가 필요합니다. Auto Mode의 EBS provisioner는 다르므로 표준 CSI 예시에 조용히 대입하지 않습니다.
 
-`create-file-system`에는 `--lifecycle-policies` 옵션이 없습니다. 아래처럼 기존 파일 시스템의 전체 원하는 정책 배열을 보존하며 `put-lifecycle-configuration`을 사용합니다. S3 전환도 최소 기간/크기, 요청 비용, 버전 관리, 복구 지연을 검토하고 lifecycle 전체 교체 시 관련 없는 규칙을 보존해야 합니다.
+`create-file-system`에는 `--lifecycle-policies` 옵션이 없습니다. 아래처럼 기존 파일 시스템의 원하는 전체 정책 배열을 보존하며 `put-lifecycle-configuration`을 사용합니다. S3 전환도 최소 기간/크기, 요청 비용, 버전 관리, 복구 지연을 검토하고 lifecycle 전체 교체 시 관련 없는 규칙을 보존해야 합니다.
 
 **구현 방법:**
 
@@ -845,7 +845,7 @@ StorageClass 예시에는 설치된 CSI 드라이버와 올바른 IAM/KMS·토�
        print(json.dumps(unreferenced_claims(claims, pods), indent=2))
    ```
 
-위 Python을 `unreferenced_pvcs.py`로 저장하고 앞의 읽기 전용 명령과 사용합니다. 현재 Pod snapshot에서 참조되지 않는 Bound PVC 후보만 출력합니다. `(namespace, name)`으로 비교하고 PVC가 아닌 볼륨의 `persistentVolumeClaim: null`도 처리합니다. 기본 Kubernetes에는 `pv_used` 어노테이션이 없으며 이를 미사용 판정으로 사용하지 않습니다. 서로 다른 시점의 목록, 축소된 StatefulSet, 대기 작업, 컨트롤러 template, 백업/복구 요구는 이 목록으로 확인되지 않습니다. 삭제를 자동화하지 마세요. EBS `available`도 미사용을 의미하지 않으며, [EKS06 비용 문항](06-eks-monitoring-logging-quiz.md)의 계정·태그 범위 조회를 사용합니다.
+위 Python을 `unreferenced_pvcs.py`로 저장하고 앞의 읽기 전용 명령과 함께 사용합니다. 현재 Pod snapshot에서 참조되지 않는 Bound PVC 후보만 출력합니다. `(namespace, name)`으로 비교하고 PVC가 아닌 볼륨의 `persistentVolumeClaim: null`도 처리합니다. 기본 Kubernetes에는 `pv_used` 어노테이션이 없으며 이를 미사용 판정으로 사용하지 않습니다. 서로 다른 시점의 목록, 축소된 StatefulSet, 대기 작업, 컨트롤러 template, 백업/복구 요구는 이 목록으로 확인되지 않습니다. 삭제를 자동화하지 마세요. EBS `available`도 미사용을 의미하지 않으며, [EKS06 비용 문항](06-eks-monitoring-logging-quiz.md)의 계정·태그 범위 조회를 사용합니다.
 
 hot/warm/cold 도식은 접근 패턴별 선택 예시이며 EBS→EFS→S3 자동 이전 파이프라인이 아닙니다. `efs-standard`/`ebs-io2` 클래스는 별도로 준비해야 하고, EFS PVC의 `100Gi` 요청은 파일 시스템 사용량 quota나 선결제 용량을 설정하지 않습니다. PVC 레이블도 AWS 청구 태그로 자동 전달되지 않습니다. Terraform은 기존 provider·caller identity 등을 요구하는 구성 fragment로, 기존 StorageClass 소유권과 파일 시스템 mount target/접근 권한, 백업·보존 요구를 별도 구성해야 합니다.
 
@@ -1389,7 +1389,7 @@ VirtualService는 첫 일치 규칙을 사용하므로 premium match를 catch-al
 
 Terraform은 VPC·private subnet·endpoint SG·라우팅 테이블이 이미 정의된 모듈 fragment입니다. 기존 VPC 소유자가 NAT와 route association을 관리해야 하며 단일 zonal NAT를 모든 AZ에 공유하는 구성을 기본 고가용성/절감 해법으로 적용하지 않습니다. cross-AZ 전송과 장애 의존성을 비교하거나 별도의 regional NAT 모델을 평가합니다.
 
-Python을 network_costs.py로 저장하고 EXPECTED_CALLER_ACCOUNT, LINKED_ACCOUNT_ID, START_DATE, END_DATE를 명시합니다. reviewed-usage-types.json은 Cost Explorer/GetDimensionValues에서 선택한 실제 USAGE_TYPE 문자열의 JSON 배열이어야 합니다. 이 코드는 상업 AWS 파티션의 us-east-1 청구 endpoint를 사용하며 읽기 권한과 호출 계정을 확인해야 합니다. API 쿼리 비용이 발생할 수 있습니다. GetCostAndUsage Dimensions는 CONTAINS를 지원하지 않으므로 정확한 값과 EQUALS를 사용합니다. NextPageToken을 끝까지 처리하고 금액은 Decimal, 단위와 estimated 상태는 원본대로 보존합니다. 빈 결과/실패를 전체 네트워크 비용 0으로 해석하지 않습니다. 특정 EKS 클러스터에 귀속하려면 계정 수준 결과에 검증된 태그/리소스 매핑이 추가로 필요합니다. 선택한 usage type만 포함하므로 전체 비용을 보장하지 않으며 서비스명/Regional/Region 같은 부분 문자열로 인터넷·AZ·리전 비용을 추정 분류하지 않습니다. 기간은 UTC이며 End는 미포함이고 조회 가능 이력과 최종 정산 상태를 확인합니다. 원래의 100/50/200 USD 임계값은 설명용 조사 기준일 뿐 범용 최적화 판정이 아닙니다.
+Python을 network_costs.py로 저장하고 EXPECTED_CALLER_ACCOUNT, LINKED_ACCOUNT_ID, START_DATE, END_DATE를 명시합니다. reviewed-usage-types.json은 Cost Explorer/GetDimensionValues에서 선택한 실제 USAGE_TYPE 문자열의 JSON 배열이어야 합니다. 이 코드는 상업 AWS 파티션의 us-east-1 청구 endpoint를 사용하며 읽기 권한과 호출 계정을 확인해야 합니다. API 쿼리 비용이 발생할 수 있습니다. GetCostAndUsage Dimensions는 CONTAINS를 지원하지 않으므로 정확한 값과 EQUALS를 사용합니다. NextPageToken을 끝까지 처리하고 금액은 Decimal, 단위와 estimated 상태는 원본대로 보존합니다. 빈 결과/실패를 전체 네트워크 비용 0으로 해석하지 않습니다. 특정 EKS 클러스터에 귀속하려면 계정 수준 결과에 검증된 태그/리소스 매핑이 추가로 필요합니다. 선택한 usage type만 포함하므로 전체 비용을 보장하지 않으며 서비스명/Regional/Region 같은 부분 문자열로 인터넷·AZ·리전 비용을 추정 분류하지 않습니다. 기간은 UTC이며 End는 포함하지 않고 조회 가능 이력과 최종 정산 상태를 확인합니다. 원래의 100/50/200 USD 임계값은 설명용 조사 기준일 뿐 범용 최적화 판정이 아닙니다.
 
 다른 옵션들의 문제점:
 - **A. 모든 트래픽에 대해 가장 비싼 네트워크 대역폭 사용**: 이는 불필요한 비용을 발생시키며, 모든 워크로드가 고대역폭을 필요로 하지는 않습니다.
@@ -1429,7 +1429,7 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 
 짧은 eksctl 명령은 생성 예시이며 운영 네트워크/IAM 기본 구성이 아닙니다. AWS 카탈로그에서 EKS 버전을 선택하고 [생성 가이드](../../eks/02-eks-cluster-creation.md)에 따라 VPC와 API endpoint 노출을 검토하며 컨트롤러 권한은 전용 identity에 둡니다. 노드 그룹 크기 범위는 autoscaler를 설치하거나 지출 상한을 만들지 않습니다. 표준/확장 지원 요금, 선택적인 Provisioned Control Plane 용량, 공유 관리 구성 요소의 의존성도 비교에 포함합니다.
 
-Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는 **6.59**, 예시 고정 버전은 6.69.1입니다. 환경 기본값을 추측하지 않도록 입력값을 필수로 두었습니다. 소유한 private 네트워크/API 연결 경로, 검토한 access entry, 호환·고정 애드온과 IAM 연결, 관리형 노드 그룹을 제공해야 합니다. 표준 EC2 노드에 맞는 CNI/DNS/proxy 경로가 필요하며 Auto Mode 예시는 아닙니다. autoscaler와 desired-size 소유권을 조율하고 격리 모델에 따라 state/provider identity를 분리합니다. plan/apply 실행이나 운영 준비 완료를 주장하지 않습니다.
+Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider 버전은 **6.59**, 예시 고정 버전은 6.69.1입니다. 환경 기본값을 추측하지 않도록 입력값을 필수로 두었습니다. 소유한 private 네트워크/API 연결 경로, 검토한 access entry, 호환·고정 애드온과 IAM 연결, 관리형 노드 그룹을 제공해야 합니다. 표준 EC2 노드에 맞는 CNI/DNS/proxy 경로가 필요하며 Auto Mode 예시는 아닙니다. autoscaler와 desired-size 소유권을 조율하고 격리 모델에 따라 state/provider identity를 분리합니다. plan/apply 실행이나 운영 준비 완료를 주장하지 않습니다.
 
 **구현 방법:**
 
@@ -1799,9 +1799,9 @@ Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는
 
 Argo CD Application에는 설치된 컨트롤러, 검토한 저장소/commit, 저장소·대상·리소스 종류를 제한하는 기존 `cluster-config` AppProject가 필요합니다. 자리표시자 SHA와 저장소를 바꾼 후 사용합니다. 초기 검토를 위해 자동 동기화/pruning을 끈 상태이며 소유자가 의도한 조정 동작만 활성화합니다. 공유 관리 자격 증명/컨트롤러는 별도 클러스터 사이에도 장애·보안 영향 범위를 넓힐 수 있습니다.
 
-ResourceQuota는 admission과 객체 수를 제한하며 청구액이나 테넌트 인가를 제어하지 않습니다. NetworkPolicy는 여러 정책의 허용이 합쳐지고 CNI 집행이 필요합니다. namespace 예시는 `team-a` 내부, 지정한 공유 namespace와의 통신, 표준 CoreDNS Deployment로의 DNS를 허용합니다. node-local/Auto Mode DNS 및 다른 의존성은 명시적으로 조정합니다. shared API 예시는 `app: shared-api` Pod의 TCP 8080에 `team-a`만 허용합니다. 기존의 광범위한 allow-all 정책을 남기지 말고 함께 조정하세요. RBAC·admission·IAM·신뢰 경계는 별도 제어입니다.
+ResourceQuota는 admission과 객체 수를 제한하며 청구액이나 테넌트 인가를 제어하지 않습니다. NetworkPolicy에서는 여러 정책의 허용 규칙이 합쳐지며 CNI 집행이 필요합니다. namespace 예시는 `team-a` 내부, 지정한 공유 namespace와의 통신, 표준 CoreDNS Deployment로의 DNS를 허용합니다. node-local/Auto Mode DNS 및 다른 의존성은 명시적으로 조정합니다. shared API 예시는 `app: shared-api` Pod의 TCP 8080에 `team-a`만 허용합니다. 기존의 광범위한 allow-all 정책을 남기지 말고 함께 조정하세요. RBAC·admission·IAM·신뢰 경계는 별도 제어입니다.
 
-환경별 tfvars는 위 검토한 모듈의 override이며 제공되지 않은 `./modules/eks-cluster` 호출이 아닙니다. 각 환경의 계정·네트워크·버전·애드온·접근 설정과 병합하고 별도 state/backend 및 identity를 사용합니다. 인스턴스 목록/수량은 예시이므로 중단 허용성과 현재 리전 선택지를 검토합니다.
+환경별 tfvars는 위에서 검토한 모듈의 override이며 제공되지 않은 `./modules/eks-cluster` 호출이 아닙니다. 각 환경의 계정·네트워크·버전·애드온·접근 설정과 병합하고 별도 state/backend 및 identity를 사용합니다. 인스턴스 목록/수량은 예시이므로 중단 허용성과 현재 리전 선택지를 검토합니다.
 
 수집 스크립트는 실행마다 **명시적인 context 하나**를 사용합니다. `KUBE_CONTEXT`, `EXPECTED_API_SERVER`, `EXPECTED_CALLER_ACCOUNT`, `LINKED_ACCOUNT_ID`, `BILLING_TAG_KEY`, `BILLING_TAG_VALUE`, `START_DATE`, `END_DATE`를 설정하고 클러스터마다 의도적으로 반복합니다. API server URL은 검토한 EKS 클러스터와 일치해야 합니다. 같은 context의 requests를 모든 클러스터의 사용률로 재표시하지 않고, 실제 Metrics API 표본의 timestamp/window/단위와 태그 범위 Cost Explorer 전체 페이지를 저장합니다. Metrics Server와 읽기 권한이 필요합니다. 노드 표본 누락은 사용량 0이 아니며 짧은 표본은 피크 수요 이력이 아닙니다.
 
@@ -2059,11 +2059,11 @@ Kubernetes 레이블, AWS 리소스 태그, 활성화한 청구 태그는 서로
 **추가 구성과 데이터 검증 예시:**
 
 1. **비용 모니터링 대시보드**:
-리전별 TagResources 호출은 대상 리전을 확인하고 `FailedResourcesMap`을 검사합니다. CLI 종료 성공만으로 모든 요청 리소스의 태그 성공이 입증되지는 않으므로 청구 할당에 사용하기 전에 실제 태그를 확인합니다.
+리전별 TagResources 호출 시 대상 리전을 확인하고 `FailedResourcesMap`을 검사합니다. CLI 종료 성공만으로 모든 요청 리소스의 태그 성공이 입증되지는 않으므로 청구 할당에 사용하기 전에 실제 태그를 확인합니다.
 
 **할당 비용률 추정 대시보드**
 
-이 예시는 한 클러스터 Prometheus의 순간 **CPU+메모리 할당 비용률 추정치(USD/hour)**이며 청구서나 namespace 전체 비용이 아닙니다. 입력은 OpenCost 할당/가격 메트릭(예시 `job="opencost"`)과 kube-state-metrics의 Pod 레이블(`job="kube-state-metrics"`)입니다. 실제 job 레이블과 CPU·메모리·가격 데이터 수집 범위를 확인합니다. 적절한 ServiceMonitor honor-label 설정으로 exporter의 워크로드 namespace 레이블을 유지하세요. 공유 백엔드에서는 모든 집계/join에 일치하는 cluster 식별자가 필요합니다.
+이 예시는 한 클러스터 Prometheus의 순간 **CPU+메모리 할당 비용률 추정치**(USD/hour)이며 청구서나 namespace 전체 비용이 아닙니다. 입력은 OpenCost 할당/가격 메트릭(예시 `job="opencost"`)과 kube-state-metrics의 Pod 레이블(`job="kube-state-metrics"`)입니다. 실제 job 레이블과 CPU·메모리·가격 데이터 수집 범위를 확인합니다. 적절한 ServiceMonitor honor-label 설정으로 exporter의 워크로드 namespace 레이블을 유지하세요. 공유 백엔드에서는 모든 집계/join에 일치하는 cluster 식별자가 필요합니다.
 
 첫 values fragment는 소유한 kube-prometheus-stack 릴리스에 병합합니다. team 레이블 값은 제한하고 Pod template에 실제로 넣어야 하며 namespace 레이블만으로 생성되지 않습니다. team 누락은 `unassigned`로 집계합니다. 동일 수집본은 중복 제거하지만 상충하는 가격/소유권 소스는 별도로 해결해야 합니다. GPU·스토리지·네트워크·컨트롤 플레인·유휴/공유 할당·할인·크레딧·세금은 이 두 구성 요소에 포함되지 않습니다. 누락은 비용 0이 아니며 시간당 비용률은 월별 금액이 아닙니다.
 
@@ -2218,12 +2218,12 @@ data:
    ```
 
 4. **비용 최적화 자동화 스크립트**:
-Q4의 검증한 context·계정·태그 범위 수집 스크립트를 재사용하여 실제 Metrics API 표본과 청구 페이지를 확보합니다. requests/limits는 선언된 구성이지 실제 사용량이 아닙니다. 따라서 requests/limits 비율이 0.5보다 작다는 이유만으로 requests 축소를 권고하지 않습니다. 현재 replica 수로 계산한 요청량을 과거 기간 사용량과 직접 비교하지 말고 같은 워크로드·기간·단위·수집 범위를 맞춥니다. 팀/비용 센터별 표는 태그 없는 비용과 공유 비용 정책까지 대조해야 합니다. 운영용 보고·알림은 [FinOps 가이드](../../ops/13-finops-cost-platform.md)의 명시적인 수집/검증 절차를 참고하며 실패나 누락을 0으로 바꾸지 않습니다.
+Q4에서 검증한 context·계정·태그 범위 수집 스크립트를 재사용하여 실제 Metrics API 표본과 청구 페이지를 확보합니다. requests/limits는 선언된 구성이지 실제 사용량이 아닙니다. 따라서 requests/limits 비율이 0.5보다 작다는 이유만으로 requests 축소를 권고하지 않습니다. 현재 replica 수로 계산한 요청량을 과거 기간 사용량과 직접 비교하지 말고 같은 워크로드·기간·단위·수집 범위를 맞춥니다. 팀/비용 센터별 표는 태그 없는 비용과 공유 비용 정책까지 대조해야 합니다. 운영용 보고·알림은 [FinOps 가이드](../../ops/13-finops-cost-platform.md)의 명시적인 수집/검증 절차를 참고하며 실패나 누락을 0으로 바꾸지 않습니다.
 
 추가 예산의 1,000 USD/80%는 설정 예시입니다. 활성화한 실제 Budgets 태그 필터 형식과 범위를 확인하고 태그 없는/공유 요금을 별도로 다룹니다. Budgets는 처리된 청구 데이터에 의존하며 지출을 강제로 막지 않습니다. Terraform은 기존 CUR 버킷·caller identity·provider·region 입력을 요구하는 구성 fragment입니다. Athena 결과 버킷의 접근·보존·암호화와 Glue 테이블/쿼리 권한도 소유자가 구성해야 합니다. QuickSight 대시보드는 Terraform의 `aws_quicksight_dashboard`로 관리할 수 있으나 계정 에디션·데이터셋·템플릿·권한 설정을 대신하지 않습니다.
 
 다른 옵션들의 문제점:
-- **A. AWS 청구서만 검토**: AWS 청구서는 높은 수준의 비용 정보만 제공하며, 세부적인 비용 할당이나 최적화 기회를 식별하기 어렵습니다.
+- **A. AWS 청구서만 검토**: AWS 청구서는 개괄적인 비용 정보만 제공하며, 세부적인 비용 할당이나 최적화 기회를 식별하기 어렵습니다.
 - **C. 모든 리소스에 동일한 비용 할당**: 이는 실제 리소스 사용량과 비용 발생을 정확하게 반영하지 않으며, 팀이나 프로젝트별 비용 책임을 명확히 하지 못합니다.
 - **D. 비용 모니터링 없이 리소스 사용**: 비용 모니터링 없이는 비용 증가를 조기에 감지하거나 최적화 기회를 식별할 수 없으며, 예산 관리가 어렵습니다.
 </details>
@@ -2271,7 +2271,7 @@ Q4의 검증한 context·계정·태그 범위 수집 스크립트를 재사용�
 **구현 방법:**
 
 1. **Kubecost 설치 및 구성**:
-Q5와 [본문](../../eks/07-eks-cost-optimization.md)의 검증한 설치/할당 데이터 전제 조건을 재사용합니다. Kubecost 3.3.1은 현재 `kubecost/kubecost` chart와 ClickHouse/직접 agent 구조를 사용하며 기능은 에디션/설정에 따릅니다. OpenCost는 별도 선택지입니다. 기존 소유 구성에 두 번째 수집기를 중복 배포하지 않습니다.
+Q5와 [본문](../../eks/07-eks-cost-optimization.md)에서 검증한 설치/할당 데이터 전제 조건을 재사용합니다. Kubecost 3.3.1은 현재 `kubecost/kubecost` chart와 ClickHouse/직접 agent 구조를 사용하며 기능은 에디션/설정에 따릅니다. OpenCost는 별도 선택지입니다. 기존 소유 구성에 두 번째 수집기를 중복 배포하지 않습니다.
 
 2. **Karpenter 설치 및 구성**:
 다음을 `karpenter-values.yaml`로 저장하고 계정/역할/클러스터/endpoint/queue를 검토한 기존 값으로 바꾼 뒤 [Karpenter 가이드](../../autoscaling/02-karpenter.md)를 따릅니다. 확인한 예시는 1.14.1이며 호환성 표에서 EKS 1.36은 최소 1.13이 필요합니다. 적용되는 키는 `settings.*`이며 무시되는 `controller.clusterName/clusterEndpoint`가 아닙니다. IRSA trust는 `system:serviceaccount:karpenter:karpenter`와 audience에 맞춰야 하고 상충하는 IRSA/Pod Identity를 혼합하지 않습니다. 컨트롤러/노드 IAM, 노드 접근, 서브넷/보안 그룹, 중단 queue/이벤트 연결, 안정적인 bootstrap 용량을 먼저 준비합니다. 새 Helm 설치와 CRD 업그레이드는 소유권/수명 주기가 다르며 컨트롤러 업그레이드만으로 기존 CRD가 갱신되지 않습니다.

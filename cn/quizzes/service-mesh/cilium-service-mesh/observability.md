@@ -1,209 +1,195 @@
 # Cilium Service Mesh 可观测性测验
 
-本测验检验你对 Hubble、指标收集、服务地图、Golden Signals 监控和 OpenTelemetry 集成的理解。
+已根据 Cilium 1.20.3/Hubble CLI 1.20.2 进行核对。有关经过测试的命令、指标定义和限制，请参阅[可观测性指南](../../../service-mesh/cilium-service-mesh/04-observability.md)。
 
-## 测验题目
+### 1. 以下哪一项不是 Hubble 的主要组件？
 
-### 1. 以下哪项不是 Hubble 的主要组件？
-
-A. Hubble Observer
-B. Hubble Relay
-C. Hubble Router
-D. Hubble UI
+- **A.** Hubble Observer
+- **B.** Hubble Relay
+- **C.** Hubble Router
+- **D.** Hubble UI
 
 <details>
 <summary>显示答案</summary>
 
 **答案：C. Hubble Router**
 
-**解释：**
-Hubble 的主要组件包括 Hubble Observer（嵌入在 Cilium Agent 中）、Hubble Relay（集群范围的流量聚合）、Hubble UI（可视化仪表板）和 Hubble CLI（命令行界面）。Hubble Router 不是现有组件。
+Observer、Relay、UI 和 CLI 是相关的 Hubble 组件。Observer 和指标处理内嵌于 Cilium 中；Relay 则聚合已连接的服务器。Hubble Router 并非此架构中的命名组件。
 
 </details>
 
-### 2. 在 Hubble CLI 中，哪个命令可仅筛选和观察 HTTP 流量？
+### 2. 在 Hubble CLI 中，哪个命令可以筛选并仅观察 HTTP 流量？
 
-A. hubble observe --type http
-B. hubble observe --protocol http
-C. hubble observe --filter http
-D. hubble observe --layer http
+- **A.** hubble observe --type http
+- **B.** hubble observe --protocol http
+- **C.** hubble observe --filter http
+- **D.** hubble observe --layer http
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. hubble observe --protocol http**
 
-**解释：**
-`hubble observe --protocol http` 命令仅筛选 HTTP 协议流量。其他协议（tcp、dns 等）也可以用相同方式筛选。
+此命令会筛选已有的 HTTP 观测数据。它不会启用 L7 检查，也不会解密任意 TLS。必须已有受支持的 L7 策略/代理路径和能够提供观测数据的流量。
 
 </details>
 
 ### 3. 要在 Prometheus 中收集 Hubble 指标，需要在 values.yaml 中启用哪个设置？
 
-A. hubble.prometheus.enabled: true
-B. hubble.metrics.enabled
-C. hubble.export.prometheus: true
-D. prometheus.hubble: true
+- **A.** hubble.prometheus.enabled: true
+- **B.** hubble.metrics.enabled
+- **C.** hubble.export.prometheus: true
+- **D.** prometheus.hubble: true
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. hubble.metrics.enabled**
 
-**解释：**
-要启用 Hubble 指标，请在 hubble.metrics.enabled 下以列表形式指定要收集的指标类型（dns、drop、tcp、flow、http 等）。此外，设置 serviceMonitor.enabled: true 可让 Prometheus Operator 自动抓取。
+hubble.metrics.enabled 用于选择 dns 和 httpV2 等处理器。Prometheus 收集还需要可正常工作的发现/抓取机制；使用 ServiceMonitor 时，需要 Operator CRD/控制器以及匹配的选择器。创建了 ServiceMonitor 并不能证明目标已被抓取。
 
 </details>
 
-### 4. 以下哪项不是监控中的四个 Golden Signals 之一？
+### 4. 以下哪一项不属于监控的四个黄金信号？
 
-A. Latency
-B. Traffic
-C. Availability
-D. Saturation
+- **A.** 延迟
+- **B.** 流量
+- **C.** 可用性
+- **D.** 饱和度
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Availability**
+**答案：C. 可用性**
 
-**解释：**
-Google SRE 定义的四个 Golden Signals 是 Latency、Traffic、Errors 和 Saturation。Availability 不包含在 Golden Signals 中，而是通过 Errors 指标间接衡量。
+四个信号分别是延迟、流量、错误和饱和度。可用性仍然需要明确的 SLI，且无法仅根据不完整的 HTTP5xx 观测流全面推断。
 
 </details>
 
-### 5. 在 Hubble 中观察被策略拒绝的流量，正确的命令是什么？
+### 5. 哪个命令可以先筛选出丢弃的流，以便进一步分析原因？
 
-A. hubble observe --denied
-B. hubble observe --verdict DROPPED
-C. hubble observe --blocked
-D. hubble observe --policy-denied
+- **A.** hubble observe --denied
+- **B.** hubble observe --verdict DROPPED
+- **C.** hubble observe --blocked
+- **D.** hubble observe --policy-denied
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. hubble observe --verdict DROPPED**
 
-**解释：**
-`--verdict DROPPED` 选项会筛选被网络策略拒绝的流量。相反，`--verdict FORWARDED` 显示被允许的流量。
+DROPPED 包含多种原因。添加 --drop-reason-desc POLICY_DENIED 可筛选报告为策略拒绝的丢弃流；L7/应用层故障则需单独检查。FORWARDED 是数据路径观测结果，并不能证明业务成功。
 
 </details>
 
 ### 6. 在 PromQL 查询中，使用哪个函数来衡量 HTTP P99 延迟？
 
-A. avg()
-B. histogram_quantile()
-C. rate()
-D. sum()
+- **A.** avg()
+- **B.** histogram_quantile()
+- **C.** rate()
+- **D.** sum()
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. histogram_quantile()**
 
-**解释：**
-P99 延迟等百分位指标使用 histogram_quantile() 函数。例如：`histogram_quantile(0.99, rate(hubble_http_request_duration_seconds_bucket[5m]))`。其中，0.99 表示第 99 个百分位。
+histogram_quantile 根据直方图计算估算值。要聚合工作负载，请在保留 le 和选定的集群/命名空间/工作负载标签的同时，对兼容的桶速率求和，然后计算分位数。对各实例的百分位数求平均并不等同于此操作。
 
 </details>
 
-### 7. 以下哪项不是 Hubble UI 提供的主要功能？
+### 7. 以下哪一项不是 Hubble UI 提供的主要功能？
 
-A. Service Map
-B. Flow Timeline
-C. Auto Scaling
-D. Namespace Filter
+- **A.** 服务映射
+- **B.** 流时间线
+- **C.** 自动扩缩容
+- **D.** 命名空间筛选器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Auto Scaling**
+**答案：C. 自动扩缩容**
 
-**解释：**
-Hubble UI 提供服务地图、流量时间线、Namespace 筛选、判定筛选以及单个流量的 L7 详情。Auto Scaling 是工作负载管理功能，而不是可观测性功能。
+UI 会显示观测到的关系和流量详情，并提供筛选器；它不会自动扩缩工作负载。静默或不受支持的路径以及缺失的元数据，都可能导致映射不完整。
 
 </details>
 
-### 8. 在 Cilium 中，计算 HTTP 错误率的 PromQL 查询的正确形式是什么？
+### 8. 使用 httpV2 时，应如何计算观测到的 HTTP5xx 百分比？
 
-A. hubble_http_errors_total / hubble_http_requests_total
-B. sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) / sum(rate(hubble_http_responses_total[5m]))
-C. count(hubble_http_errors) / count(hubble_http_requests)
-D. hubble_http_error_rate
+- **A.** 将生命周期内的错误计数器除以请求计数器，不使用速率
+- **B.** 将匹配的 5xx 响应速率除以观测到的总速率，并对缺失值/零值进行范围限定的处理
+- **C.** 统计指标序列的数量
+- **D.** 读取自动提供的 hubble_http_error_rate gauge
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) / sum(rate(hubble_http_responses_total[5m]))**
+**答案：B. 将匹配的 5xx 响应速率除以观测到的总速率，并对缺失值/零值进行范围限定的处理**
 
-**解释：**
-HTTP 错误率的计算方式是将 5xx 响应数量除以总响应数量。rate() 函数计算每秒速率，status 标签筛选器（status=~"5.."）仅选择服务器错误。
+使用 httpV2 时，hubble_http_requests_total 包含状态码，并根据响应事件更新。分子和分母应使用相同的分组/观测范围。仅当总数存在时，才将缺失的 5xx 分子补为零；对于缺少观测数据的情况，保留无数据状态；计算百分比时排除总数为零的情况。
 
 </details>
 
-### 9. 在 Hubble 中，仅观察发往特定服务的流量时使用哪个选项？
+### 9. 在 Hubble 中，使用哪个选项可以仅观察目标为特定 Service 的流量？
 
-A. --destination-service
-B. --to-service
-C. --target-service
-D. --svc
+- **A.** --destination-service
+- **B.** --to-service
+- **C.** --target-service
+- **D.** --svc
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. --to-service**
 
-**解释：**
-`hubble observe --to-service <service-name>` 命令会筛选发往特定服务的流量。相反，`--from-service` 会筛选源自特定服务的流量。
+Service 筛选器使用带命名空间的名称前缀以及基于 Service/ClusterIP 的元数据。--from-service 通常不会筛选出由该 Service 后方的 Pod 发起的调用；筛选调用方时，请使用工作负载/Pod/标签筛选器。未指定命名空间时，默认使用 default。
 
 </details>
 
-### 10. 在 Cilium 中，哪个指标监控连接跟踪表利用率？
+### 10. 哪个已记录的指标会报告已插桩 BPF 映射的压力？
 
-A. cilium_ct_usage
-B. cilium_datapath_conntrack_active
-C. cilium_connections_total
-D. cilium_ct_table_size
+- **A.** cilium_ct_usage
+- **B.** cilium_bpf_map_pressure
+- **C.** cilium_connections_total
+- **D.** cilium_datapath_conntrack_active / cilium_datapath_conntrack_max
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. cilium_datapath_conntrack_active**
+**答案：B. cilium_bpf_map_pressure**
 
-**解释：**
-cilium_datapath_conntrack_active 指标表示当前活跃连接数。它可与 cilium_datapath_conntrack_max 一起使用，以计算连接跟踪表利用率。
+cilium_bpf_map_pressure 会报告已插桩 BPF 映射的压力；部分映射还设有报告阈值。但这并不能证明所有 CT 映射都包含在内。已记录的 CT GC 条目指标是垃圾回收时的快照，并非先前臆造的 active/max 指标对。
 
 </details>
 
-### 11. 使用哪个选项可接收 JSON 格式的 Hubble 输出？
+### 11. 要以 JSON 格式接收 Hubble 输出，应使用哪个选项？
 
-A. --format json
-B. -o json
-C. --json
-D. --output-type json
+- **A.** --format json
+- **B.** -o json
+- **C.** --json
+- **D.** --output-type json
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. -o json**
 
-**解释：**
-`hubble observe -o json` 命令以 JSON 格式输出。这对于通过管道传递给 jq 等工具进行进一步处理很有用。
+json 是 jsonpb 的别名。Protobuf JSON 会将 latency_ns 等 64 位值编码为字符串；在 jq 中进行数值比较之前，请先将其转换为数字。dict、compact 和 table 也是受支持的显示格式。
 
 </details>
 
-### 12. 将 OpenTelemetry Collector 与 Hubble 集成时使用什么协议？
+### 12. 使用 OpenTelemetry Collector 收集 Hubble 流日志的受支持路径是什么？
 
-A. HTTP REST API
-B. OTLP (OpenTelemetry Protocol)
-C. Prometheus Remote Write
-D. StatsD
+- **A.** 在 chart 中启用 hubble.export.opentelemetry
+- **B.** 使用 Hubble 文件导出和 filelog receiver，然后使用受支持的日志导出器
+- **C.** 自动将每条流转换为分布式追踪
+- **D.** 使用已移除的 jaeger exporter 导入流日志
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. OTLP (OpenTelemetry Protocol)**
+**答案：B. 使用 Hubble 文件导出和 filelog receiver，然后使用受支持的日志导出器**
 
-**解释：**
-Hubble 可使用 OpenTelemetry Protocol (OTLP) 将流量数据导出到 OpenTelemetry Collector。这允许将数据路由到 Jaeger、Prometheus、Loki 等各种后端。
+Cilium 1.20.3 记录了用于流日志的文件导出方式。filelog receiver 可以收集这些文件，并通过受支持的导出器（例如 OTLP/HTTP）将日志发送到 Loki。指标和应用追踪使用各自的收集路径；旧版 Hubble opentelemetry 配置项以及已移除的 Collector jaeger/loki 导出器并不能作为替代方案。
 
 </details>

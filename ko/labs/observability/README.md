@@ -82,6 +82,6 @@ Python 애플리케이션 이미지 하나를 api-gateway, order-service, paymen
 
 ## 비용·검증·정리 {#cost-and-cleanup}
 
-리전·노드·NAT·EBS·Aurora ACU/storage/I/O·로그 수집/보존·메시지·KMS·LB·전송·모델 호출을 실제 사용량으로 산정합니다. 월별 사용자 과금과 시간별 인프라 비용을 섞은 고정 총액은 제공하지 않습니다. 단일 writer/backend 실습은 production-grade HA가 아니며 replica 증가가 비용 상한을 보장하지 않습니다.
+리전·노드·NAT·EBS·Aurora ACU/storage/I/O·로그 수집/보존·메시지·KMS·LB·전송·모델 호출의 비용을 실제 사용량으로 산정합니다. 월별 사용자 과금과 시간별 인프라 비용을 섞은 고정 총액은 제공하지 않습니다. 단일 writer/backend 실습은 production-grade HA가 아니며 replica 증가가 비용 상한을 보장하지 않습니다.
 
 로컬 native/SDK/schema/브라우저 검증과 실제 AWS 실습 결과를 구분합니다. 생성한 리소스·IAM attachment·snapshot·DNS·LB/PVC를 inventory에 기록하고 Part6의 의존성 순서로 정리합니다. 실패를 모두 무시하거나 cluster부터 지워 리소스를 남기지 않습니다.

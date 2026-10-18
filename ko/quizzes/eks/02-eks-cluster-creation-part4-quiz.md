@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 10월 12일
 
-이 퀴즈는 Terraform 클러스터 가이드와 확장·신원·수명주기 운영을 연결합니다. 마지막 절은 Terraform 자체 개념을 확인합니다. 예제에는 검토된 계정·리전·kubeconfig와 IAM·네트워크 선행조건이 필요하며 이번 감사에서 배포하지 않았습니다.
+이 퀴즈는 Terraform 클러스터 가이드와 확장·신원·수명주기 운영을 연결합니다. 마지막 절은 Terraform 자체 개념을 확인합니다. 예제에는 검토된 계정·리전·kubeconfig와 IAM·네트워크 선행조건이 필요하며 이번 감사에서는 예제를 배포하지 않았습니다.
 
 ## 기본 개념 문제
 
@@ -168,7 +168,7 @@ managedNodeGroups:
 
 **정답: B) 네임스페이스; 레이블은 선택 사항**
 
-프로필의 각 선택기는 **네임스페이스**가 필수이며 레이블은 선택 사항입니다. 프로필 이름·Pod 실행 역할도 필요하고 적격한 프라이빗 서브넷을 사용합니다. 프로필에는 보안 그룹 파라미터가 없습니다. Pod 보안 그룹은 별도의 지원 정책 기능이며 Fargate 프로필 필드가 아닙니다.
+프로필의 각 선택기에서 **네임스페이스**는 필수이며 레이블은 선택 사항입니다. 프로필 이름·Pod 실행 역할도 필요하고 적격한 프라이빗 서브넷을 사용합니다. 프로필에는 보안 그룹 파라미터가 없습니다. Pod 보안 그룹은 별도의 지원 정책 기능이며 Fargate 프로필 필드가 아닙니다.
 
 미사용 프로필 이름과 검토된 프라이빗 서브넷 ID를 사용합니다. 이 선택기는 애플리케이션 Pod만 대상으로 하므로 기존 CoreDNS 배치를 변경하지 않습니다:
 
@@ -234,7 +234,7 @@ aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
 ```
 비율 설정 대안은 `{"maxUnavailablePercentage":20,"updateStrategy":"DEFAULT"}`입니다. 반환된 업데이트 ID가 `Successful`이 된 뒤 버전 업데이트를 시작합니다. `DEFAULT`는 대체 용량을 먼저 시작하고 `MINIMAL`은 일시적인 추가 용량을 줄이기 위해 선택한 기존 노드를 먼저 종료합니다.
 
-`update-lab`의 검토된 복제본 3개 Deployment에 다음 PDB를 적용하면 자발적인 축출을 제한합니다:
+`update-lab`의 검토된 복제본이 3개인 Deployment에 다음 PDB를 적용하면 자발적인 축출을 제한합니다:
 
 ```yaml
 apiVersion: policy/v1
@@ -291,7 +291,7 @@ CLUSTER_UPDATE_ID=$(aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" \
 aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
   --update-id "$CLUSTER_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
-해당 업데이트 ID의 성공을 확인한 뒤 노드와 호환 클러스터 구성 요소를 문서화된 순서로 갱신합니다. Cluster Autoscaler 마이너를 클러스터와 맞추고 kubectl도 지원 스큐를 따릅니다.
+해당 업데이트 ID의 성공을 확인한 뒤 노드와 호환 클러스터 구성 요소를 문서화된 순서로 갱신합니다. Cluster Autoscaler 마이너를 클러스터와 맞추고 kubectl 버전도 지원 스큐에 맞춥니다.
 
 현재 EKS는 in-place 업그레이드 완료 후 7일 이내에 조건부로 직전 마이너로 롤백할 수 있습니다. 처음부터 그 버전으로 만든 클러스터나 연장 지원 종료에 따른 자동 업그레이드는 대상이 아닙니다. 먼저 호환 노드·애드온을 준비하며 Auto Mode 노드 롤백은 EKS가 관리합니다. 롤백은 etcd·워크로드·영속 데이터를 이전 시점으로 되돌리지 않습니다. 무조건적인 실행 취소로 취급하지 말고 공식 롤백 준비 조건을 확인하세요.
 

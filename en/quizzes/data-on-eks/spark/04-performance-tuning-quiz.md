@@ -16,7 +16,7 @@ No. Measure task/stage time, spill, shuffle fetch wait, skew, and CPU/memory/dis
 <details>
 <summary>Show answer</summary>
 
-Validate arm64 support in the Spark image, JNI, codecs, BLAS, Python wheels and plugins, then benchmark representative work. An existing tested multi-architecture image can avoid building your own.
+Validate arm64 support in the Spark image, JNI, codecs, BLAS, Python wheels and plugins, then benchmark representative work. Using an existing tested multi-architecture image can avoid the need to build your own.
 
 </details>
 

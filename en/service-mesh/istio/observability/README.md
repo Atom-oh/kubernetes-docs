@@ -108,7 +108,7 @@ App → Envoy (Access Log generation)
 
 ## Golden Signals
 
-Core signals following Google SRE principles. The HTTP queries select `reporter="destination"` to avoid counting both source and destination observations of the same mesh hop. They measure service hops, not unique user transactions. Analyze external/gateway traffic without a destination reporter separately; gRPC application failures also require `grpc_response_status`. Latency values below are milliseconds.
+Core signals following Google SRE principles. The HTTP queries select `reporter="destination"` to avoid counting both source and destination observations of the same mesh hop. They measure service hops, not unique user transactions. Analyze external/gateway traffic without a destination reporter separately; gRPC application failures also require `grpc_response_status`. Latency values below are in milliseconds.
 
 ### 1. Latency
 

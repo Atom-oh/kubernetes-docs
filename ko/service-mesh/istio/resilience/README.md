@@ -109,7 +109,7 @@ spec:
 - 로컬 및 글로벌 Rate Limiting
 - 클라이언트별, 경로별 제한
 
-예제는 선택한 HTTP listener의 Envoy process별 local bucket을 강제합니다. 초기 100 token 후 초당 10 token을 보충하며 서비스 전체 quota가 아닙니다. Replica 수·분산에 따라 총량이 달라집니다. 전역 quota에는 rate-limit 서비스·descriptor, 클라이언트·경로별 제한에는 신뢰 가능한 추가 분류가 필요하며 임의 요청 헤더는 인증된 신원이 아닙니다.
+예제는 선택한 HTTP listener의 Envoy process별 local bucket을 강제합니다. 초기 100 token을 제공한 후 초당 10 token을 보충하며 서비스 전체 quota가 아닙니다. Replica 수·분산에 따라 총량이 달라집니다. 전역 quota에는 rate-limit 서비스·descriptor, 클라이언트·경로별 제한에는 신뢰 가능한 추가 분류가 필요하며 임의 요청 헤더는 인증된 신원이 아닙니다.
 
 ### 3. Zone Aware Routing (지역 인식 라우팅)
 
@@ -425,7 +425,7 @@ spec:
       attempts: 0
 ```
 
-장애 주입은 통제된 실습입니다. 클라이언트 route에 `fault`를 설정하면 해당 route의 retry/timeout은 활성화되지 않습니다. 재시도 검증은 별도 downstream 홉에서 장애를 주입합니다. Test-user 헤더는 범위 선택일 뿐이므로 누가 지정할 수 있는지도 통제합니다. 일반 트래픽 fallback은 다른 요청의 route 미매칭을 방지합니다.
+장애 주입은 통제된 실습입니다. 클라이언트 route에 `fault`를 설정하면 해당 route의 retry/timeout은 활성화되지 않습니다. 재시도를 검증하려면 별도 downstream 홉에서 장애를 주입합니다. Test-user 헤더는 범위 선택일 뿐이므로 누가 지정할 수 있는지도 통제합니다. 일반 트래픽 fallback은 다른 요청의 route 미매칭을 방지합니다.
 
 ## 복원력 패턴 조합
 
@@ -608,7 +608,7 @@ sum(rate(istio_requests_total{reporter="source",destination_service_namespace="d
 sum(rate(istio_requests_total{reporter="source",destination_service_namespace="default"}[5m]))
 ```
 
-Retry counter로 “재시도가 없었다면의 오류율”을 복원할 수 없습니다. 범위를 맞춘 시도 수·최종 결과·지연·부하를 함께 분석하고 무트래픽·누락 시계열은 별도로 처리합니다.
+Retry counter로 “재시도가 없었을 때의 오류율”을 복원할 수 없습니다. 범위를 맞춘 시도 수·최종 결과·지연·부하를 함께 분석하고 무트래픽·누락 시계열은 별도로 처리합니다.
 
 ## 모범 사례
 
@@ -668,7 +668,7 @@ connectionPool:
 route 예산 >= (1 + attempts) × perTryTimeout + backoff + 기타 오버헤드
 ```
 
-`attempts: 3`·`perTryTimeout: 2s`이면 네 번의 전체 시도에만8초가 필요합니다. `timeout: 10s`는 예시 예산이며 backoff·오버헤드를 포함해 보장하지 않습니다. `timeout: 5s`에는 2초씩 네 번이 모두 들어가지 않습니다. 애플리케이션 deadline은 업로드·streaming 의미도 고려하고 적절히 취소를 전파해야 합니다.
+`attempts: 3`·`perTryTimeout: 2s`이면 네 번의 전체 시도에만 8초가 필요합니다. `timeout: 10s`는 예시 예산이며 backoff·오버헤드를 포함해 보장하지 않습니다. `timeout: 5s`에는 2초씩 네 번이 모두 들어가지 않습니다. 애플리케이션 deadline을 설정할 때는 업로드·streaming 의미도 고려하고 적절히 취소를 전파해야 합니다.
 
 ### 7. Fault Injection 테스트
 

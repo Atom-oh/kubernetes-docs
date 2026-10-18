@@ -13,7 +13,7 @@ Reviewed September 11, 2026 for Linux EC2-backed EKS nodes and AWS Load Balancer
 
 ## AWS Load Balancer Integration
 
-Istio Ingress Gateway can be integrated with AWS Load Balancer to handle external traffic.
+The Istio Ingress Gateway can be integrated with an AWS Load Balancer to handle external traffic.
 
 ### Network Load Balancer (NLB) Integration
 

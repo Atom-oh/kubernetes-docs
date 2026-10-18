@@ -1,25 +1,32 @@
-# 可观测性技术栈配置与运维
+# 可观测性堆栈配置与运维
 
-> **最后更新**：2026 年 9 月 11 日：Loki 3.7.7、Tempo 3.0.3、Alloy 1.19.2，
-> OpenTelemetry Collector Contrib 0.160.0、kube-prometheus-stack 90.1.1。
+> **最后更新**：October 16, 2026：Loki 3.7.8、Tempo 3.0.3、Alloy 1.20.1、
+> OpenTelemetry Collector Contrib 0.162.0、kube-prometheus-stack 92.9.0。
 
-本章配置采集、存储、权限、保留策略和跨信号导航。
-使用上一章的[完整 Go/Python 插桩和 Java JSON 日志示例](./08-observability-analysis.md)。
-仅安装 Grafana 不会关联这三种信号。
+本章介绍采集、存储、权限、保留期限和跨信号导航的配置。
+请使用上一章中的[完整 Go/Python 插桩和 Java JSON 日志示例](./08-observability-analysis.md)。
+仅安装 Grafana 并不能关联这三种信号。
 
-## 范围和前提条件
+## 范围和先决条件
 
 | 信号 | 采集路径 | 存储和查询 |
 |---|---|---|
-| 日志 | 应用 JSON stdout → Alloy Kubernetes 日志 API 源 | Loki → Grafana |
-| 追踪 | 应用 OTLP → Collector → Tempo | Tempo → Grafana |
-| 指标 | Prometheus 抓取；可选远程写入 Tempo 生成的指标 | Prometheus；可选 AMP |
+| 日志 | 应用程序 JSON stdout → Alloy Kubernetes logs API source | Loki → Grafana |
+| Trace | 应用程序 OTLP → Collector → Tempo | Tempo → Grafana |
+| 指标 | Prometheus 抓取；可选地远程写入 Tempo 生成的指标 | Prometheus；可选 AMP |
 
-示例使用 `observability` 命名空间。准备该命名空间、Prometheus Operator CRD 和可用的 `gp3` StorageClass。EKS Auto Mode 与普通 EBS CSI 驱动使用不同的 StorageClass 预置器；类名匹配不能证明兼容。S3 桶和 IRSA 角色是独立前提条件。替换账户、角色、桶和工作区占位符。按用途使用独立桶并阻止公有访问。将 Loki/Tempo 角色限制到所需桶列举和对象读取/写入/删除操作；使用 SSE-KMS 时包含所选 KMS 密钥权限。
+示例使用 `observability` namespace。请准备该 namespace、Prometheus Operator CRD
+以及可用的 `gp3` StorageClass。EKS Auto Mode 和普通 EBS CSI 驱动程序使用不同的
+StorageClass provisioner；StorageClass 名称相同并不能证明它们兼容。
+S3 bucket 和 IRSA 角色是单独的先决条件。请替换账户、角色、bucket 和 workspace
+占位符。按用途使用不同的 bucket，并阻止公共访问。将 Loki/Tempo 角色的权限范围
+限制为所需的 bucket 列表以及对象读/写/删操作；使用 SSE-KMS 时，还要包含所选 KMS
+密钥的权限。
 
-这些设置是配置起点。内部未经身份验证的 HTTP、Kafka 连接、资源大小和保留期不是通用生产默认值。应验证环境中的网络访问、TLS/身份验证、容量和恢复。`ClusterIP` 不提供身份验证。
+这些设置是配置起点。内部未认证 HTTP、Kafka 连接、资源大小和保留期限并非通用的生产默认值。请针对你的环境验证网络访问、TLS/身份验证、容量和恢复能力。`ClusterIP` 不提供身份验证。
 
-Chart 版本不同于应用版本。Loki 和 Tempo 示例使用当前 `grafana-community` 仓库。向旧 `grafana/tempo` 单体 chart 提供分布式 values，不会将其变为分布式部署。
+Chart 版本与应用程序版本不同。Loki 和 Tempo 示例使用当前的 `grafana-community`
+仓库。向早期的 `grafana/tempo` 单体 Chart 提供分布式配置值，并不会将其变成分布式部署。
 
 ```bash
 helm repo add grafana-community https://grafana-community.github.io/helm-charts
@@ -30,24 +37,27 @@ helm repo update
 
 ## Loki：部署模式和 S3 存储
 
-Loki 为流标签建立索引，并将日志内容存储在块中。内容搜索仍需读取所选流的数据，因此标签选择、时间范围和块/索引缓存影响查询成本。压缩比及固定日数据量阈值需要工作负载专属测量。
+Loki 会为流标签建立索引，并以 chunk 形式存储日志内容。内容搜索仍需读取所选流中的数据，因此标签选择、时间范围以及 chunk/index 缓存都会影响查询成本。压缩率和固定的每日流量阈值需要针对具体工作负载进行测量。
 
-| 模式 | 用途和约束 |
+| 模式 | 用途和限制 |
 |---|---|
-| 单体 | 组件位于一个进程；高可用需要共享对象存储、复制和路由 |
-| SimpleScalable | 分离读/写/后端目标；已弃用，计划在 Loki 4.0 移除 |
-| 分布式 | 独立组件；增加网络、环、查询路径和存储运维 |
+| Monolithic | 所有组件运行在一个进程中；HA 需要共享对象存储、复制和路由 |
+| SimpleScalable | 分离的 read/write/backend target；已弃用，计划在 Loki 4.0 中移除 |
+| Distributed | 独立组件；需要额外的网络、ring、查询路径和存储运维 |
 
-示例使用分布式模式，包含三个 ingester 和一个 compactor。`zoneAwareReplication: false` 表示仅有三个副本不能保证可用区隔离。应一并验证可用区/节点放置、法定人数、PDB 和滚动更新。为减小初始验证占用，缓存被禁用；通过生产负载测试选择缓存容量。
+示例使用 Distributed 模式，配置三个 ingester 和一个 compactor。
+`zoneAwareReplication: false` 表示仅有三个副本并不能保证 AZ 隔离。
+请一并验证 AZ/节点放置、quorum、PDB 和滚动更新。缓存已禁用，以减少初始验证所需的资源；请通过生产负载测试确定缓存容量。
 
-模式日期适用于新存储。不要替换现有安装的历史模式条目：应保留它们，并遵循添加未来日期条目的流程。`auth_enabled: false` 为此内部示例选择单一 `fake` 租户。启用多租户不会添加用户身份验证；身份验证代理必须验证并设置租户标头。
+Schema 日期适用于新存储。请勿替换现有安装中的历史 schema 条目：保留这些条目，并遵循添加未来日期条目的流程。
+`auth_enabled: false` 表示此内部示例使用单一 `fake` tenant。启用多租户并不会增加用户身份验证；身份验证代理必须验证并设置 tenant header。
 
 ```yaml
 # loki-values.yaml
 deploymentMode: Distributed
 loki:
   image:
-    tag: 3.7.7
+    tag: 3.7.8
   auth_enabled: false
   commonConfig:
     replication_factor: 3
@@ -139,13 +149,18 @@ helm template loki grafana-community/loki --version 18.12.2   --namespace observ
 helm upgrade --install loki grafana-community/loki --version 18.12.2   --namespace observability -f loki-values.yaml
 ```
 
-对于 chart 18.12.2，通过 `persistence.claims` 配置 ingester 和 compactor PVC。替换列表时包含 `accessModes`。检查渲染的 `volumeClaimTemplates` 和实际 PVC 绑定，不要只看 Helm 退出状态。网关 Service 使用端口 **80**；Loki 进程 HTTP 端口为 **3100**。
+对于 Chart 18.12.2，请通过 `persistence.claims` 配置 ingester 和 compactor PVC。
+替换列表时请包含 `accessModes`。请检查渲染后的 `volumeClaimTemplates` 和实际 PVC 绑定情况，而不仅仅是 Helm 的退出状态。gateway Service 使用端口 **80**；Loki 进程的 HTTP 端口是 **3100**。
 
-### 保留策略
+### 保留期限
 
-同时配置采用 24 小时索引周期的 TSDB v13 模式、`compactor.retention_enabled`、`delete_request_store` 和 `limits_config.retention_period`。删除是异步的，并遵循 `retention_delete_delay`。重启时保留 compactor 删除标记和状态。不要假定更改保留期会追溯性地重组现有数据。
+请同时配置 TSDB v13 schema、24 小时索引周期、`compactor.retention_enabled`、
+`delete_request_store` 和 `limits_config.retention_period`。删除是异步的，
+并会遵循 `retention_delete_delay`。重启时请保留 compactor 删除标记和状态。
+不要假设更改保留期限会追溯性地重新组织现有数据。
 
-每租户覆盖设置位于 chart 的 `loki.runtimeConfig.overrides`。单租户示例使用 `fake`。以下片段将默认 30 天覆盖为七天；仅在检查保留要求后应用。
+各 tenant 的覆盖设置应放在 Chart 的 `loki.runtimeConfig.overrides` 下。
+单租户示例使用 `fake`。以下片段将默认的 30 天覆盖为 7 天；仅在检查保留需求后应用。
 
 ```yaml
 loki:
@@ -155,13 +170,17 @@ loki:
         retention_period: 168h
 ```
 
-桶范围的对象生命周期到期可能损坏索引、删除请求和 ruler 配置。如果需要生命周期兜底，应将范围限制到块前缀，并将到期时间设为长于保留期加删除延迟。单独评估版本控制/备份成本和删除要求；启用版本控制不是恢复测试。
+对整个 bucket 设置对象生命周期过期策略可能会损坏索引、删除请求和 ruler 配置。如果需要生命周期安全网，请将其范围限定为 chunk 前缀，并将过期时间设置为长于保留期限加删除延迟。请分别评估版本控制/备份成本和删除需求；启用版本控制并不等于完成了恢复测试。
 
 ## Alloy 日志采集和标签
 
-Promtail 于 2026-03-02 结束生命周期。新示例使用 Alloy。此配置通过 Kubernetes 日志 API 读取[上一章](./08-observability-analysis.md)中 `observability` 内的 `app=correlation-api` Pod。它不跟踪节点文件，不需要 hostPath 挂载或 `stage.cri`。
+Promtail 已于 2026-03-02 结束生命周期（EOL）。新示例使用 Alloy。
+此配置通过 Kubernetes logs API，从[上一章](./08-observability-analysis.md)中的
+`observability` namespace 读取 `app=correlation-api` 的 Pod。
+它不会跟踪节点文件，也不需要 hostPath 挂载或 `stage.cri`。
 
-使用 `Recreate` 的单副本 Deployment 避免稳态和滚动发布期间重复采集。它不具备高可用，更新可能中断采集。扩展时，应同时配置 Alloy 集群和源的集群支持，或按节点限制目标。若 DaemonSet 每个 Pod 都发现所有应用 Pod，就会重复采集。
+使用 `Recreate` 的单副本 Deployment 可避免稳定运行和滚动更新期间的重复采集。
+但它并非 HA，更新可能中断采集。若要扩展，请同时配置 Alloy clustering 和 source 的 clustering 支持，或限制每个节点的目标范围。若 DaemonSet 中的每个 Pod 都发现所有应用 Pod，就会造成重复采集。
 
 ```yaml
 # alloy-rbac.yaml
@@ -257,7 +276,8 @@ loki.write "backend" {
 }
 ```
 
-将这些 values 保存为 `alloy-values.yaml`，并通过 `--set-file` 注入前面的文件。这样避免在 YAML 字符串内重复 Alloy 配置。
+将这些值保存为 `alloy-values.yaml`，并通过 `--set-file` 注入前面的文件。
+这样可以避免在 YAML 字符串中重复 Alloy 配置。
 
 ```yaml
 controller:
@@ -286,14 +306,20 @@ crds:
 
 ```bash
 kubectl apply -f alloy-rbac.yaml
-helm upgrade --install alloy grafana/alloy --version 1.12.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
+helm upgrade --install alloy grafana/alloy --version 1.13.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
 ```
 
-优先使用 `namespace`、`service_name` 和 `container` 等取值有界标签。将 `trace_id` 和 `request_id` 保留在 JSON 内容或结构化元数据中。Pod 名称并非一律禁止，但生命周期和变动影响流数量。标签组合的乘积很重要；固定标签数不是安全保证。此示例保留完整 JSON 行，并额外为 `level` 建立索引。在应用或采集层规范化无界 level 值并移除个人数据。
+优先使用 `namespace`、`service_name` 和 `container` 等取值范围有限的标签。
+将 `trace_id` 和 `request_id` 保存在 JSON 内容或结构化元数据中。
+Pod 名称并非在所有情况下都禁止使用，但其生命周期和变化频率会影响流数量。
+标签组合的乘积才是关键；标签数量固定并不能保证安全。
+此示例保留完整的 JSON 行，并额外为 `level` 建立索引。请规范取值范围不受限的 level 值，并在应用程序或采集层移除个人数据。
 
-### LogQL 和日志警报
+### LogQL 和日志告警
 
-数值聚合前，移除 JSON 解析错误和无效数值字段。以下延迟字段以毫秒计。`rate` 统计每秒日志行数；每秒字节数使用 `bytes_rate`。
+在数值聚合之前，先排除 JSON 解析错误和无效的数值字段。
+以下 latency 字段以毫秒为单位。
+`rate` 统计每秒日志行数；要统计每秒字节数，请使用 `bytes_rate`。
 
 ```logql
 {service_name="correlation-api"} | json | __error__="" | level="ERROR"
@@ -315,27 +341,32 @@ avg_over_time({service_name="correlation-api"} | json | latency_ms >= 0 | __erro
 quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms >= 0 | __error__="" | unwrap latency_ms | __error__="" [5m])
 ```
 
-Loki Ruler 评估 LogQL 规则并向 Alertmanager 发送警报。将 LogQL 放入 PrometheusRule，或添加任意 `loki_rule` ConfigMap 标签，不会加载规则。上方基线的 ruler 副本数为零。测试评估前，配置 ruler 部署、规则存储/API 或挂载、评估间隔和 Alertmanager 端点。
+Loki Ruler 会评估 LogQL 规则并向 Alertmanager 发送告警。将 LogQL 放入 PrometheusRule，或添加任意的 `loki_rule` ConfigMap 标签，都不会加载规则。上述基线配置的 ruler 副本数为零。在测试评估前，请先配置 ruler 部署、其规则存储/API 或挂载、评估间隔和 Alertmanager endpoint。
 
-出现通用 `"error"` 或 `"unauthorized"` 文本不能证明发生故障或攻击。检查 kube-state-metrics 容器状态中的 CrashLoopBackOff，不要依赖应用日志。比例警报需要匹配的分子/分母范围、解析错误处理、零流量处理及错误序列缺失行为。将其接入[警报路由和抑制测试](./07-observability-alerts.md)。
+出现通用的 `"error"` 或 `"unauthorized"` 文本，并不能证明发生了故障或攻击。请检查 kube-state-metrics 中的容器状态以确认 CrashLoopBackOff，而不要只依赖应用程序日志。
+比率告警需要对齐分子/分母的范围，并处理解析错误、零流量和错误序列缺失等情况。请将它们连接到[告警路由和抑制测试](./07-observability-alerts.md)。
 
-## Tempo 3：单体与分布式运维
+## Tempo 3：单体和分布式运维
 
-Tempo 支持按 trace ID 查找和 TraceQL 属性搜索。metrics-generator 从选定追踪派生指标；它不是启用搜索的开关。
+Tempo 支持按 trace ID 查询和 TraceQL 属性搜索。
+metrics-generator 会从所选 trace 派生指标；它并不是启用搜索的开关。
 
-| 组件 | Tempo 3 分布式职责 |
+| 组件 | Tempo 3 分布式模式下的职责 |
 |---|---|
-| Distributor | 将收到的 span 写入 Kafka |
-| Block-builder | 消费 Kafka 并创建对象存储块 |
-| Live-store | 提供近期数据查询 |
-| Backend-scheduler / backend-worker | 块维护、压缩整理和保留 |
+| Distributor | 将传入的 span 写入 Kafka |
+| Block-builder | 消费 Kafka 并创建对象存储 block |
+| Live-store | 为近期数据查询提供服务 |
+| Backend-scheduler / backend-worker | Block 维护、压缩和保留 |
 | Query-frontend / querier | 查询近期数据和对象存储 |
 
-2.x ingester、compactor 目标及可扩展单二进制模式已移除。单体单进程模式不需要 Kafka。增加其 `replicas` 不是转为分布式高可用的受支持方法。
+2.x 的 ingester 和 compactor target 以及可扩展单二进制模式已被移除。
+单进程单体模式不需要 Kafka。
+增加其 `replicas` 并不是受支持的分布式 HA 转换方式。
 
-### 单实例实验
+### 单实例实验环境
 
-`tempo-lab-values.yaml` 使用本地 PVC，不使用 Kafka。进程/PVC 故障可中断可用性；不要将此配置与分布式 S3 部署 values 混用。对于 chart 3.0.0，使用 `null` 禁用各 Jaeger 协议，不要移除父项，否则会破坏 chart 渲染。Service 可保留旧端口；根据实际接收器配置和网络策略限制访问。
+`tempo-lab-values.yaml` 使用本地 PVC，不使用 Kafka。进程/PVC 故障可能中断可用性；请勿将此配置与分布式 S3 部署配置混用。
+对于 Chart 3.0.0，请使用 `null` 禁用单个 Jaeger 协议，而不要移除其父级，否则会导致 Chart 渲染失败。Service 可保留旧端口；请根据实际 receiver 配置和网络策略限制访问。
 
 ```yaml
 # tempo-lab-values.yaml
@@ -386,11 +417,14 @@ persistence:
 helm upgrade --install tempo grafana-community/tempo --version 3.0.0   --namespace observability -f tempo-lab-values.yaml
 ```
 
-### 供审核的分布式配置
+### 供审查的分布式配置
 
-此文件是单实例 chart 的替代方案，不是其覆盖配置。Kafka 和 S3 必须已存在。示例在隔离验证环境中使用内部 Kafka 端点。先对照 Tempo 3.0.3 客户端支持确认生产 Kafka TLS/身份验证要求。此版本的 `ingest.kafka` 不支持任意 `tls` 或 MSK IAM 字段。SASL 用户名/密码支持不意味着传输加密。
+此文件是单实例 Chart 的替代方案，而不是用于叠加到它上面的配置。Kafka 和 S3 必须已存在。此示例在隔离的验证环境中使用内部 Kafka endpoint。请先根据 Tempo 3.0.3 的客户端支持确认生产环境的 Kafka TLS/身份验证要求。此版本的 `ingest.kafka` 不支持任意的 `tls` 或 MSK IAM 字段。支持 SASL 用户名/密码并不意味着传输加密。
 
-默认 `partitions_per_instance: 1` 下，三个 Kafka 分区需要三个 block-builder。此 chart 示例也使用三个 live-store。更改 `auto_create_topic_default_partitions` 不会调整现有主题大小。禁用自动创建时，单独配置实际分区数、复制、最小 ISR、保留期和容量。向 block-builder/live-store values 添加不受支持的 `persistence` 键不会创建 PVC。根据 chart 的实际存储行为和 Kafka 重放窗口测试恢复。
+使用默认的 `partitions_per_instance: 1` 时，三个 Kafka partition 需要三个 block-builder。
+此 Chart 示例也使用三个 live-store。更改 `auto_create_topic_default_partitions` 不会调整现有 topic 的大小。禁用自动创建时，请另行配置实际的 partition 数量、副本数、最小 ISR、保留期限和容量。
+向 block-builder/live-store 配置值添加不受支持的 `persistence` 键不会创建 PVC。
+请根据 Chart 的实际存储行为和 Kafka 重放窗口测试恢复能力。
 
 ```yaml
 # tempo-distributed-values.yaml
@@ -474,19 +508,25 @@ gateway:
 helm template tempo grafana-community/tempo-distributed --version 3.5.1   --namespace observability -f tempo-distributed-values.yaml > tempo-rendered.yaml
 ```
 
-显式设置 `backendWorker.podDisruptionBudget.enabled`，以避免 3.5.1 PDB 模板缺失默认值。渲染仍不测试 Kafka 连通性、S3 权限、调度或端到端写入/查询。分布式写入使用 `tempo-distributor:4318`，查询使用 `tempo-query-frontend:3200`；更新下方 Collector 和 Grafana 的两个实验 URL。
+显式设置 `backendWorker.podDisruptionBudget.enabled`，以避免 3.5.1 PDB 模板中的默认值缺失。渲染仍无法测试 Kafka 连接、S3 权限、调度或端到端写入/查询。分布式写入使用 `tempo-distributor:4318`，查询使用 `tempo-query-frontend:3200`；请更新下文 Collector 和 Grafana 实验环境的 URL。
 
 ### 从 2.x 迁移到 3.x
 
-对于单体模式，审核 `tempo-cli migrate config --mode=monolithic` 的输出。对于分布式模式，采用并行部署、验证和流量迁移。移除 `ingester`、`ingester_client`、`compactor`、`metrics_generator_client` 和已移除的 `local_blocks` 配置。历史存储必须使用 vParquet4 或更新的块。
+对于单体模式，请检查 `tempo-cli migrate config --mode=monolithic` 的输出。
+对于分布式模式，请采用并行部署、验证和流量迁移。
+移除 `ingester`、`ingester_client`、`compactor`、`metrics_generator_client` 和已移除的
+`local_blocks` 配置。历史存储必须使用 vParquet4 或更新版本的 block。
 
-不要同时启用两个压缩整理系统操作共享存储。在 3.x 默认配置及每个租户覆盖中设置 `compaction_disabled`，停止 2.x compactor 后再移除它。租户覆盖不会简单继承省略的默认字段。切换流量前，验证历史和新的 trace ID。TraceQL 指标存在 RF1 块覆盖等迁移约束；历史追踪可用不自动意味着历史指标覆盖相同。
+不要同时对共享存储启用两个压缩系统。
+在 3.x 默认值和每个 tenant 覆盖项中设置 `compaction_disabled`，然后在停止 2.x compactor 后将其移除。Tenant 覆盖项不会简单地继承未显式填写的默认字段。切换流量前，请验证历史和新 trace ID。
+TraceQL metrics 存在迁移限制，例如 RF1 block 覆盖范围；历史 trace 可用并不自动意味着历史指标覆盖范围相同。
 
 ## Collector 和采样
 
-此配置在一个 Collector 中验证尾部采样。应用必须在资源中设置 `service.name`。它不会自动添加 Kubernetes 元数据；添加 k8sattributes 需要 Pod 关联策略和独立 RBAC。Kubernetes 事件属于日志信号；`k8s_events` 不是追踪接收器。
+此配置用于在单个 Collector 中验证 tail sampling。应用程序必须在其 resource 中设置 `service.name`。它不会自动添加 Kubernetes 元数据；添加 k8sattributes 需要 Pod 关联策略和单独的 RBAC。
+Kubernetes event 属于日志信号；`k8s_events` 不是 trace receiver。
 
-敏感属性删除发生在尾部缓冲之前。它仅覆盖所列键，不覆盖所有可能含敏感数据的日志、事件或属性。仅对 `db.statement` 哈希不能确保隐私或密钥保护。
+敏感属性删除步骤在 tail buffer 之前执行。它只涵盖列出的键，并不涵盖所有可能包含敏感数据的日志、event 或属性。仅对 `db.statement` 做哈希处理并不能确保隐私或机密信息受到保护。
 
 ```yaml
 # collector.yaml
@@ -581,7 +621,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: collector
-          image: otel/opentelemetry-collector-contrib:0.160.0
+          image: otel/opentelemetry-collector-contrib:0.162.0
           args: ["--config=/etc/otel/collector.yaml"]
           resources:
             requests:
@@ -628,22 +668,25 @@ kubectl create configmap otel-collector --namespace observability   --from-file=
 kubectl apply -f collector-deployment.yaml
 ```
 
-Collector Contrib 0.160.0 使用 `service.telemetry.metrics.readers` 配置内部指标。不要保留旧 `metrics.address`、不存在的独立 `rate_limiting` 处理器或已移除的 `loki` 导出器。清单连接 ConfigMap、Service 和端口。此单实例实验使用 `Recreate`；更新可能丢失缓冲追踪和内存队列。
+Collector Contrib 0.162.0 使用 `service.telemetry.metrics.readers` 提供内部指标。
+不要保留旧的 `metrics.address`、不存在的独立 `rate_limiting` processor，或已移除的 `loki` exporter。这些清单会关联 ConfigMap、Service 和端口。此单实例实验环境使用 `Recreate`；更新可能导致缓冲中的 trace 和内存队列丢失。
 
 | 设置 | 含义 |
 |---|---|
-| 头部采样 | 在开始时决定；不能根据尚未知晓的最终错误/延迟选择 |
-| 尾部采样 | 根据 `decision_wait` 内收到的 span 决定；不保证完整性 |
-| 错误/延迟/基线策略 | 此处按 OR 组合；独立限速策略不是全局上限 |
-| `spans_per_second` | 每秒 span 数，不是 trace 数；不是独立处理器 |
-| `num_traces` | 待决追踪缓冲容量；溢出、迟到数据和重启可能丢失 span |
-| `send_batch_size` | 发送触发值；`send_batch_max_size` 是批大小上限 |
+| Head sampling | 在开始时做出决定；无法根据尚未知晓的最终错误/延迟进行选择 |
+| Tail sampling | 根据 `decision_wait` 内收到的 span 做出决定；无法保证数据完整 |
+| Error/latency/baseline 策略 | 在此处以 OR 方式组合；单独的速率限制策略并非全局上限 |
+| `spans_per_second` | 每秒 span 数，而非 trace 数；不是独立的 processor |
+| `num_traces` | 待处理 trace 缓冲区容量；溢出、延迟数据和重启都可能导致 span 丢失 |
+| `send_batch_size` | 发送触发阈值；`send_batch_max_size` 是 batch 大小上限 |
 
-多个尾部采样器需要按 trace ID 路由，确保同一追踪的所有 span 到达同一采样器。普通随机 Service 均衡可拆散追踪。尾部采样无法恢复头部丢弃的 span。队列限制、迟到 span 和接收失败使其不能保证保留每条错误追踪。`UNSET` 不是错误状态；包含它可能保留大量正常 span。服务图和生成指标受采样影响；需要完整请求总体测量时，使用独立插桩指标。
+多个 tail sampler 需要按 trace ID 路由，以确保某个 trace 的所有 span 都到达同一个 sampler。普通的随机 Service 负载均衡可能会拆分 trace。Tail sampling 无法恢复被 head sampling 丢弃的 span。队列限制、延迟 span 和接收失败都意味着无法保证保留每个错误 trace。`UNSET` 并非错误状态；将其纳入可能会保留大量正常 span。Service graph 和生成的指标依赖采样；若需要完整请求总体的测量结果，请使用单独插桩的指标。
 
-## TraceQL、服务图和日志关联
+## TraceQL、service graph 和日志关联
 
-这些是单条追踪搜索查询。`span:duration` 测量一个 span，不是整个追踪。HTTP 属性取决于 SDK 语义约定版本：上一章已测试 Go 示例使用 `http.response.status_code`，而默认 Python 插桩使用 `http.status_code`。
+以下是单条 trace 的搜索查询。`span:duration` 测量的是 span，而非整个 trace。
+HTTP 属性取决于 SDK 的语义约定版本：上一章经过测试的 Go 示例使用
+`http.response.status_code`，而默认的 Python 插桩使用 `http.status_code`。
 
 ```traceql
 { resource.service.name = "correlation-api" && span:status = error }
@@ -661,17 +704,24 @@ Collector Contrib 0.160.0 使用 `service.telemetry.metrics.readers` 配置内�
 { resource.service.name = "correlation-api" } | by(span:status) | count() > 1
 ```
 
-`>>` 表示后代；`>` 表示直接子级。`| by(...) | count()` 聚合 span 集合。`rate()` 等 TraceQL 指标函数返回时间序列，不同于单条追踪搜索。对已知 ID 使用 Grafana trace ID 模式或 Tempo 追踪 API；不要使用 `{ trace:id = "abc123" }` 这样的无效内在属性和不完整 ID。
+`>>` 表示后代；`>` 表示直接子级。`| by(...) | count()` 会聚合 span 集。
+TraceQL metrics 函数（例如 `rate()`）返回时间序列，与单条 trace 搜索不同。对于已知 ID，请使用 Grafana 的 trace-ID 模式或 Tempo 的 trace API；不要使用无效的内置字段和不完整的 ID，例如 `{ trace:id = "abc123" }`。
 
-Tempo 示例在部署配置和覆盖设置中同时连接 service-graphs 和 span-metrics，再将结果发送到 Prometheus 远程写入接收器。服务图需要适当的客户端/服务器 SpanKind 及一致服务名。添加原始 `http.target`、完整 URL 或用户 ID 作为维度可能导致基数膨胀。
+Tempo 示例在部署配置和覆盖项中均连接了 service-graphs 和 span-metrics，并将结果发送到 Prometheus remote-write receiver。
+Service graph 需要恰当的 client/server SpanKind 和一致的 service name。
+将原始 `http.target`、完整 URL 或用户 ID 添加为维度可能会扩大基数。
 
-复用已测试的 [Java MDC/Logback 和 Go/Python 追踪/样例示例](./08-observability-analysis.md)。`is_recording()` 为 false 时仍可能存在有效的未采样上下文。没有 span 时不要丢弃普通日志，也不要用 `MDC.clear()` 清除无关 MDC 值。
+请复用经过测试的 [Java MDC/Logback 和 Go/Python trace/exemplar 示例](./08-observability-analysis.md)。
+当 `is_recording()` 为 false 时，仍可能存在有效的未采样上下文。没有 span 时不要丢弃普通日志，也不要用 `MDC.clear()` 清除无关的 MDC 值。
 
 ## Prometheus 和 Grafana
 
-以下 kube-prometheus-stack values 为 Tempo 生成指标启用远程写入接收器和样例存储。将接收器限制为 Tempo 等可信发送方。应用指标仍需要抓取目标/ServiceMonitor，以及上一章 `correlation-api` 使用的指标/标签约定。
+以下 kube-prometheus-stack 配置值启用了用于 Tempo 生成指标的 remote-write receiver 和 exemplar 存储。请将 receiver 的访问范围限制为 Tempo 等受信任的发送方。
+应用程序指标仍需配置抓取目标/ServiceMonitor，以及上一章中 `correlation-api` 使用的指标/标签约定。
 
-Grafana 使用显式 `prometheus`、`loki` 和 `tempo` UID、`tracesToLogsV2`、容忍空白的 32 字符小写 trace ID 正则表达式，以及预置配置中的 `$` 转义。`serviceMap` 目标必须实际包含生成的服务图指标。
+Grafana 使用显式的 `prometheus`、`loki` 和 `tempo` UID、`tracesToLogsV2`、
+可容忍空白字符的 32 字符小写 trace-ID 正则表达式，以及 provisioning `$` 转义。
+`serviceMap` target 必须实际包含生成的 service-graph 指标。
 
 ```yaml
 # prometheus-values.yaml
@@ -761,16 +811,16 @@ grafana:
 ```
 
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability -f prometheus-values.yaml
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability -f prometheus-values.yaml
 ```
 
-样例需要插桩中的 trace/span 关联、OpenMetrics 暴露格式、Prometheus 存储支持和 Grafana UID 映射。仅 HTTP/2 或直方图配置不会创建样例。采样、保留、租户或权限仍可能使链接的追踪不可用。
+Exemplar 需要插桩建立 trace/span 关联、使用 OpenMetrics 暴露、Prometheus 存储支持和 Grafana UID 映射。仅配置 HTTP/2 或 histogram 并不会生成 exemplar。采样、保留期限、租户设置或权限仍可能导致关联的 trace 无法访问。
 
-仪表板自动化时，将仪表板 JSON 本身放入选定 ConfigMap 值。不要使用 API 响应的 `dashboard` 包装层，也不要将提供程序 YAML 当作仪表板 JSON。这些 values 选择 `observability` 中带 `grafana_dashboard: "1"` 的 ConfigMap。避免将手动管理的提供程序/挂载与重叠 Sidecar 设置混用。上一章的完整仪表板 JSON 可放入此 ConfigMap。
+要自动化配置 dashboard，请将 dashboard JSON 本身放入所选 ConfigMap 的值中。不要使用 API 响应中的 `dashboard` 封装，也不要将 provider YAML 当作 dashboard JSON。这些值会在 `observability` 中选择带有 `grafana_dashboard: "1"` 的 ConfigMap。避免将手动管理的 provider/挂载与重叠的 sidecar 配置混用。上一章中的完整 dashboard JSON 可放入此 ConfigMap。
 
-## AMP：分离写入和读取权限
+## AMP：分离写入者和读取者权限
 
-AMP 提供兼容 Prometheus 的存储和查询。没有配置的采集器或托管抓取器，它不会采集集群指标。以下 Terraform 创建工作区及独立 IRSA 写入/读取角色；EKS OIDC 提供程序必须已存在。没有独立采集路径，CloudWatch 指标不会自动包含在内。
+AMP 提供兼容 Prometheus 的存储和查询功能。如果未配置采集器或托管 scraper，它不会采集集群指标。以下 Terraform 会创建 workspace，并创建分离的 IRSA 写入者/读取者角色；EKS OIDC provider 必须已存在。如果没有单独的采集路径，CloudWatch 指标也不会自动包含在内。
 
 ```hcl
 # amp.tf
@@ -779,7 +829,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -868,9 +918,13 @@ output "client_role_arns" {
 }
 ```
 
-`oidc_provider_arn` 和不带协议的 `oidc_issuer` 必须标识同一 EKS 集群。写入方信任 `observability:prometheus-amp`，读取方信任 `observability:grafana-amp`，两者均约束 `aud=sts.amazonaws.com`。策略仅针对该工作区 ARN。具有 RemoteWrite 但没有 QueryMetrics 的 Grafana 角色无法查询指标。
+`oidc_provider_arn` 和不含 scheme 的 `oidc_issuer` 必须指向同一个 EKS 集群。
+写入者信任 `observability:prometheus-amp`，读取者信任 `observability:grafana-amp`，
+二者都将 `aud=sts.amazonaws.com` 作为约束。策略仅针对此 workspace ARN。
+Grafana 角色若有 RemoteWrite 权限但没有 QueryMetrics 权限，就无法查询指标。
 
-以下是 `prometheus-values.yaml` 的核心 AMP 覆盖配置。Helm 替换整个 `additionalDataSources` 列表，因此添加 AMP 前保留三个基础条目。示例继续同时使用本地 Prometheus。
+以下是 `prometheus-values.yaml` 的 AMP 核心叠加配置。
+Helm 会替换整个 `additionalDataSources` 列表，因此添加 AMP 前请保留三个基础条目。示例仍会使用本地 Prometheus。
 
 ```yaml
 prometheus:
@@ -913,7 +967,7 @@ grafana:
       sigV4Region: ap-northeast-2
 ```
 
-将片段保存为 `amp-overlay.yaml`，再使用已安装 PyYAML 的 Python 显式组装数据源列表。此程序仅合并该列表，不重新实现 Helm 通用合并行为。应用前替换 IAM 角色 ARN 和工作区端点。
+将该片段保存为 `amp-overlay.yaml`，然后使用已安装 PyYAML 的 Python 显式组装数据源列表。此程序只组合该列表；它不会重新实现 Helm 的通用合并行为。应用之前请替换 IAM 角色 ARN 和 workspace endpoint。
 
 ```python
 import yaml
@@ -929,49 +983,53 @@ Path("amp-values.yaml").write_text(yaml.safe_dump(overlay, sort_keys=False))
 ```
 
 ```bash
-helm template prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
+helm template prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
 ```
 
-### 高可用、队列和保留
+### HA、队列和保留期限
 
-AMP 高可用去重使用 `cluster` 和 `__replica__`。相同数据的副本需要相同 `cluster` 及不同 `__replica__` 值。将抓取覆盖不同的独立 Prometheus 实例归入同一高可用组可能丢失数据。检查与指标自身 `cluster` 标签的冲突。跨集群规划工作区和高可用组标签；独立工作区不会自动联邦化。
+AMP HA 去重使用 `cluster` 和 `__replica__`。同一数据的副本需要使用相同的
+`cluster` 和不同的 `__replica__` 值。将抓取覆盖范围不同的独立 Prometheus 实例
+归入同一个 HA 组可能导致数据丢失。请检查是否与指标自身的 `cluster` 标签冲突。规划各集群之间的 workspace 和 HA 组标签；不同 workspace 不会自动联合查询。
 
-队列分片数和容量影响吞吐量与内存。WAL 和重试不是无限缓冲或交付保证。本地保留七天不保证可以重放七天远程写入中断的数据。监控积压、失败、拒绝和 WAL 行为，并测试恢复。命名空间保留过滤器可能移除没有该标签的节点/集群指标；`labeldrop` 可能使原本不同的序列冲突。记录规则添加聚合序列，不会自动降低源基数。
+队列的 shard 数量和容量会影响吞吐量和内存。WAL 和重试并非无限缓冲，也不保证交付。本地保留 7 天并不能保证远程写入中断时可以重放 7 天的数据。请监控延迟、故障、拒绝情况和 WAL 行为，并测试恢复。Namespace keep-filter 可能会移除没有该标签的节点/集群指标；`labeldrop` 可能导致原本不同的序列发生冲突。Recording rule 会增加聚合序列，但不会自动移除源基数。
 
-AMP 工作区保留期可配置，最长 1,095 天。声称 150 天是必须使用 Thanos 才能突破的硬限制是不正确的。延长保留期不能恢复已过期指标。
+AMP workspace 的保留期限最高可配置为 1,095 天。声称 150 天是硬性上限且必须使用 Thanos 的说法不正确。延长保留期限无法恢复已过期的指标。
 
-| 领域 | AMP | Thanos |
+| 方面 | AMP | Thanos |
 |---|---|---|
-| 存储和运维 | 托管存储；用户仍负责采集、IAM、配额、成本和规则 | 运维对象存储集成及 query/store/compactor 组件 |
-| 保留 | 工作区配置和服务限制 | Compactor 策略、对象存储和预算 |
-| 高可用与多集群 | 显式高可用标签和工作区设计 | 副本标签、去重和存储连接 |
-| 降采样 | 不要假定具有 Thanos 式自动降采样 | 审核 compactor 分辨率/保留和查询行为 |
+| 存储和运维 | 托管存储；用户仍负责采集、IAM、配额、成本和规则 | 运维对象存储集成以及 query/store/compactor 组件 |
+| 保留期限 | Workspace 配置和服务限制 | Compactor 策略、对象存储和预算 |
+| HA 和多集群 | 显式 HA 标签和 workspace 设计 | 副本标签、去重和 store 连接 |
+| 降采样 | 不要假设会像 Thanos 一样自动降采样 | 检查 compactor 分辨率/保留期限和查询行为 |
 
-SigV4 验证 AWS 请求；不替代 TLS 加密。同时验证 Grafana 进程 SigV4 启用、凭证、IRSA 信任和工作区查询权限。Amazon Managed Grafana 与自托管 Grafana 使用不同角色配置流程。
+SigV4 用于验证 AWS 请求；它不能替代 TLS 加密。请一并验证 Grafana 进程的 SigV4 启用状态、凭证、IRSA 信任和 workspace 查询权限。
+Amazon Managed Grafana 和自托管 Grafana 使用不同的角色配置流程。
 
 ## 应用后
 
-1. 检查渲染的镜像、PVC、Service 端口、ConfigMap 挂载和 ServiceAccount。
-2. 在各自后端查询一条日志、一条追踪和一个直接插桩指标。
-3. 检查 Grafana 追踪到日志、日志到追踪和样例链接，包括租户及时间范围。
-4. 在生产环境之外测试 Collector 重启、Kafka 重放、S3 权限失败和远程写入中断/恢复。
-5. 观察 Loki 保留删除、Tempo 块维护、警告、配额和成本。
+1. 检查渲染后的镜像、PVC、Service 端口、ConfigMap 挂载和 ServiceAccount。
+2. 在各自后端查询一条日志、一条 trace 和一个直接插桩的指标。
+3. 检查 Grafana 中 trace 到日志、日志到 trace 以及 exemplar 链接的功能，包括租户设置和时间范围。
+4. 在生产环境之外测试 Collector 重启、Kafka 重放、S3 权限故障以及远程写入中断/恢复。
+5. 观察 Loki 保留期限删除、Tempo block 维护、警告、配额和成本。
 
-本次审查使用固定版本 chart 渲染、原生 Loki/Tempo/Collector/Alloy 配置解析器、渲染后的 PVC/Service/身份检查和 Terraform 模拟测试。未部署 EKS/Kafka/S3，也未证明实际 Grafana 登录及 AWS 读写访问成功。
+本次审查使用了固定版本的 Chart 渲染、Loki/Tempo/Collector/Alloy 原生配置解析器、渲染后 PVC/Service/身份检查以及 Terraform mock 测试。
+它没有部署 EKS/Kafka/S3，也未验证 Grafana 实际登录和 AWS 读/写访问。
 
 ## 官方参考资料
 
 - [Loki 部署模式](https://grafana.com/docs/loki/latest/get-started/deployment-modes/)
-- [Loki 保留策略](https://grafana.com/docs/loki/latest/operations/storage/retention/)
-- [Grafana 社区 Helm chart](https://github.com/grafana-community/helm-charts)
+- [Loki 保留期限](https://grafana.com/docs/loki/latest/operations/storage/retention/)
+- [Grafana 社区 Helm Chart](https://github.com/grafana-community/helm-charts)
 - [Promtail 生命周期](https://grafana.com/docs/loki/latest/send-data/promtail/)
 - [Tempo 3 迁移](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
 - [Tempo 3.0.3 Kafka 配置](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
-- [Collector 尾部采样](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
-- [Collector 批处理器](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor)
-- [AMP 工作区配置](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
-- [AMP 高可用](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
+- [Collector tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.162.0/processor/tailsamplingprocessor)
+- [Collector batch processor](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.162.0/processor/batchprocessor)
+- [AMP workspace 配置](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
+- [AMP 高可用性](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
 
 ---
 
-< [上一篇：可观测性分析](./08-observability-analysis.md) | [目录](./README.md) | [下一篇：资源优化](./10-resource-optimization.md) >
+< [上一章：可观测性分析](./08-observability-analysis.md) | [目录](./README.md) | [下一章：资源优化](./10-resource-optimization.md) >

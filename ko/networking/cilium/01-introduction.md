@@ -150,7 +150,7 @@ kubectl --context "$CILIUM_LAB_CONTEXT" apply -f cilium-intro-policy.yaml
 kubectl --context "$CILIUM_LAB_CONTEXT" get cnp -n cilium-intro-demo
 ```
 
-위 전제와 추가 matching allow가 없을 때 **일반 Pod 간 ingress**의 기대 결과는 다음과 같습니다.
+위 전제가 충족되고 추가 matching allow가 없을 때 **일반 Pod 간 ingress**의 기대 결과는 다음과 같습니다.
 
 | 출발지 / 목적지 | 기대 결과 |
 | --- | --- |

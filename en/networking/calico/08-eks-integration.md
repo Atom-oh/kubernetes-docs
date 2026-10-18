@@ -334,7 +334,7 @@ helm get values calico -n tigera-operator -o yaml
 
 Current EKS supports **conditional rollback to the previous minor version within seven days of an in-place upgrade**. The cluster must meet the documented eligibility and readiness requirements; the window is not a general downgrade capability. Ordinary managed/self-managed/hybrid nodes and incompatible add-ons need preparation before the control plane. Auto Mode handles its node rollback; Fargate needs its own workload treatment. Calico and EKS add-ons are not automatically reverted, and preserving etcd data does not make incompatible resources safe. Follow the [current rollback procedure](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), without using `--force` to hide unresolved compatibility issues. Outside the eligible window, plan migration to another supported cluster.
 
-Applying an older operator manifest or running `helm rollback` is not proof of safe Calico downgrade. Check the specific release's support and schema/data changes before choosing recovery steps. `calicoctl node status` reports node-local BGP state and is not a policy-only EKS acceptance test.
+Applying an older operator manifest or running `helm rollback` is not proof of a safe Calico downgrade. Check the specific release's support and schema/data changes before choosing recovery steps. `calicoctl node status` reports node-local BGP state and is not a policy-only EKS acceptance test.
 
 ## Cost and Performance
 
@@ -405,7 +405,7 @@ cloudWatch:
     enableTypes: [api, audit, authenticator, controllerManager, scheduler]
 ```
 
-The IPv4 CNI policy belongs to the VPC CNI identity, not Calico. Revisit IAM for other IP families and identity methods. After the approved cluster exists, perform the annotation/RBAC checks and **one** Calico installation path above.
+The IPv4 CNI policy belongs to the VPC CNI identity, not Calico. Revisit IAM for other IP families and identity methods. After the approved cluster exists, perform the annotation/RBAC checks and follow **one** Calico installation path above.
 
 ## Validate the Result
 

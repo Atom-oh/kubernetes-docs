@@ -78,7 +78,7 @@ The component relationship is: kubelet requests Pod sandbox operations through *
 
 ### Security Identity
 
-A security identity is an allocated numeric identifier for an endpoint's **security-relevant label set**, within the relevant allocation scope. These labels are filtered/configured and can include namespace-derived labels. Same `app` labels alone do not guarantee the same identity across namespaces or clusters. The numeric ID is not a permanent globally meaningful hash or a Pod IP. Other endpoint types also use identities.
+A security identity is an allocated numeric identifier for an endpoint's **security-relevant label set**, within the relevant allocation scope. These labels are filtered/configured and can include namespace-derived labels. The same `app` labels alone do not guarantee the same identity across namespaces or clusters. The numeric ID is not a permanent globally meaningful hash or a Pod IP. Other endpoint types also use identities.
 
 ## Container Networking Basics
 

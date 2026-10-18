@@ -86,7 +86,7 @@ The math of "2-AZ needs roughly 2x, 3-AZ (N-1 basis) needs roughly 1.5x pre-prov
 
 ### Cross-AZ cost optimization
 
-Approach this in the order of measure → optimize → compare residual cost.
+Approach this in the following order: measure → optimize → compare residual cost.
 
 1. Identify the top cost paths using Flow Logs and ENI/AZ mapping (CUR alone can't tell you the source/destination AZ pair).
 2. Evaluate same-zone routing, Service `spec.trafficDistribution`, topology spread, ALB IP targets, NAT/endpoint locality, and data locality. The field itself was not renamed. Verify support and feature gates for `PreferClose`, `PreferSameZone`, and `PreferSameNode` on the target Kubernetes/EKS version.
@@ -110,7 +110,7 @@ Creating a cluster requires subnets in at least two distinct AZs, but worker nod
 
 ## 3. Full Workload Cell: An Alternative for Stronger Isolation
 
-If you need stronger isolation than an A/B EKS Runtime provides, you can split and replicate ingress, compute, data, and required dependencies together as a "Cell" unit, containing blast radius within the Cell. Partitioning, consistency, capacity, and operational cost grow substantially, so this is realistic **only for workloads that can support independent data partitioning and replication.**
+If you need stronger isolation than an A/B EKS Runtime provides, you can split and replicate ingress, compute, data, and required dependencies together as a "Cell" unit, containing the blast radius within the Cell. Partitioning, consistency, capacity, and operational cost grow substantially, so this is realistic **only for workloads that can support independent data partitioning and replication.**
 
 ## Next
 

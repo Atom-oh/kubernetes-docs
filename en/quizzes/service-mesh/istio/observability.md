@@ -603,7 +603,7 @@ Explain how to monitor Google SRE's **Golden Signals** (Latency, Traffic, Errors
 
 <summary>Show Answer</summary>
 
-Use one reporter per service-hop calculation and keep service namespace (plus cluster where relevant). Destination metrics measure requests received by the service; source metrics are needed for upstream failures that never arrive. HTTP5xx is only one error definition; gRPC failures require `grpc_response_status` and application-specific SLI rules. The following latency is milliseconds and rates are per second:
+Use one reporter per service-hop calculation and keep service namespace (plus cluster where relevant). Destination metrics measure requests received by the service; source metrics are needed for upstream failures that never arrive. HTTP5xx is only one error definition; gRPC failures require `grpc_response_status` and application-specific SLI rules. The following latency is in milliseconds and rates are per second:
 
 ```promql
 histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
@@ -730,7 +730,7 @@ These are hypothetical debugging scenarios, not benchmark results or literal Jae
 |~10s request with connection-pool timeout|Inspect the application's DB client pool, concurrency and DB capacity|Tune the application/DB pool and fix leaks; an Envoy DestinationRule does not configure the application pool, and HTTP pool settings do not tune PostgreSQL|
 |Independent2s+2s+1s calls run sequentially|Confirm dependencies, load limits and tracing context|Parallelize only independent I/O with real async clients or bounded threads; expected time can approach the longest call plus overhead, not a guaranteed2s|
 
-For existing synchronous I/O callbacks, this Python3.9+ fragment preserves return ordering and uses worker threads. The application must provide callbacks and enforce their own timeouts; cancelling the awaiting task does not stop an already-running thread:
+For existing synchronous I/O callbacks, this Python 3.9+ fragment preserves return ordering and uses worker threads. The application must provide callbacks and enforce their own timeouts; cancelling the awaiting task does not stop an already-running thread:
 
 ```python
 import asyncio
@@ -764,8 +764,8 @@ Use Kiali's configuration checks, observed traffic, pod logs and traces as evide
 | Symptom | Correct interpretation and checks |
 |---|---|
 |Missing service/subset|In `default`, `reviews` and `reviews.default.svc.cluster.local` resolve to the same host. Shortening the name does not create a missing Service. KIA1107 identifies an undefined subset; check Service/EndpointSlice, DestinationRule and actual pod labels|
-|Subset label mismatch|The label value`1.0` is not inherently wrong; match the intended Deployment labels with the subset. Include metadata, host and document separators when writing complete DestinationRules|
-|Observed90/10 instead of configured50/50|Check effective weights, matching rules, connection affinity, retries, endpoint/ejection state and the time window. Fewer ready replicas alone do not redefine VirtualService subset weights or guarantee a later50/50 split|
+|Subset label mismatch|The label value `1.0` is not inherently wrong; match the intended Deployment labels with the subset. Include metadata, host and document separators when writing complete DestinationRules|
+|Observed90/10 instead of configured50/50|Check effective weights, matching rules, connection affinity, retries, endpoint/ejection state and the time window. Fewer ready replicas alone do not redefine VirtualService subset weights or guarantee a later 50/50 split|
 |A↔B cycle|A bidirectional graph is not proof of recursive calls, deadlock or an automatic Kiali alert. Use a trace to identify an actual unintended cycle before redesigning the application|
 |HTTP403|Inspect the enforcing proxy's policy, identity and response details. Empty-spec AuthorizationPolicy is an ALLOW policy with no matching rules; another ALLOW can provide an exception. It is not an overriding DENY|
 |mTLS failure|PeerAuthentication describes the receiver. Check sender TLS settings, receiver policy, enrollment, certificate/trust and port protocol for the specific direction. Different receiver modes are not automatically a conflict; blanket STRICT is a migration decision, not a generic fix|
@@ -973,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Kubernetes collection**: this sidecar lab uses Istio's merged endpoint so it does not assume a plaintext application scrape will pass STRICT mTLS. Merge these labels/annotations into the actual `order-service` Deployment in `default`; its image must contain the application and expose `/metrics` on8080. The mesh must have Prometheus merging enabled. The agent endpoint15020 is cleartext, so restrict network access. If an existing scraper already collects these business metrics, do not add a duplicate monitor.
+**Kubernetes collection**: this sidecar lab uses Istio's merged endpoint so it does not assume a plaintext application scrape will pass STRICT mTLS. Merge these labels/annotations into the actual `order-service` Deployment in `default`; its image must contain the application and expose `/metrics` on 8080. The mesh must have Prometheus merging enabled. The agent endpoint 15020 is cleartext, so restrict network access. If an existing scraper already collects these business metrics, do not add a duplicate monitor.
 
 ```yaml
 spec:

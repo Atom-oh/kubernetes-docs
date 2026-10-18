@@ -136,7 +136,7 @@ cluster2.example.internal:53 {
     forward . 10.1.20.10 10.1.21.10
 }
 ```
-The following ingress policy permits a remote source CIDR to one API port, based on the source address actually visible after NAT/proxies. Other matching policies can widen the allowance. Egress/DNS requirements must be designed separately; cross-cluster namespace/Pod labels are not automatically shared.
+The following ingress policy permits traffic from a remote source CIDR to one API port, based on the source address actually visible after NAT/proxies. Other matching policies can widen the allowance. Egress/DNS requirements must be designed separately; cross-cluster namespace/Pod labels are not automatically shared.
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -218,7 +218,7 @@ Istio sidecar mode uses Envoy, with istiod supplying discovery, routing and cert
 
 Envoy supports connection pools, HTTP/TCP routing, retries, outlier detection, TLS and telemetry when configured. Merely adding an Envoy container does not arrange transparent traffic interception, workload identity, xDS or mTLS. For a real mesh, use its supported injector and proxy build. The old standalone Envoy 1.20 image and incomplete Deployment were not a valid current installation.
 
-The following **standalone reverse-proxy bootstrap** illustrates the original listener/route/cluster concepts. It is locally validated with upstream Envoy 1.39.1. A separate HTTP application must listen on `127.0.0.1:8080` in the same network namespace. The proxy and admin listener bind only loopback; this is not a production or Kubernetes mesh deployment:
+The following **standalone reverse-proxy bootstrap** illustrates the original listener/route/cluster concepts. It is locally validated with upstream Envoy 1.39.1. A separate HTTP application must listen on `127.0.0.1:8080` in the same network namespace. The proxy and admin listener bind only to loopback; this is not a production or Kubernetes mesh deployment:
 ```yaml
 admin:
   address:
@@ -333,7 +333,7 @@ This is an illustrative **Corefile**, not a ConfigMap to blindly overwrite. Pres
 ```
 `errors` records failures; `health` and `ready` serve different probe roles; `kubernetes` answers cluster records; `forward` resolves other domains; `prometheus` exposes metrics; `cache`, `reload` and `loadbalance` affect caching/config reload/record order. The `loop` plugin detects certain simple forwarding loops during startup, not all dynamic DNS loops forever. `loadbalance` changes DNS answer ordering, not Service packet forwarding.
 
-For conditional forwarding, use approved reachable DNS servers and permit UDP/TCP53. A VPC subnet’s first address such as10.0.0.1 is not a sample corporate DNS server. The `file` plugin serves an authoritative zone file that must be created/mounted and maintained with valid SOA/records; it is not a substitute for a stub-domain forward. Public resolvers require deliberate egress and disclosure policy; they cannot resolve private hosted zones by magic.
+For conditional forwarding, use approved reachable DNS servers and permit UDP/TCP53. A VPC subnet’s first address such as 10.0.0.1 is not a sample corporate DNS server. The `file` plugin serves an authoritative zone file that must be created/mounted and maintained with valid SOA/records; it is not a substitute for a stub-domain forward. Public resolvers require deliberate egress and disclosure policy; they cannot resolve private hosted zones by magic.
 
 This cache fragment fixes the original argument order: `prefetch AMOUNT DURATION PERCENTAGE`. Replace the existing cache directive rather than adding a second one:
 ```text
@@ -343,7 +343,7 @@ cache 30 {
     prefetch 10 2m 10%
 }
 ```
-In upstream CoreDNS 1.14.7, `denial1000` is accepted but normalized to1024; `success10000` normalizes to9984. Explicit1024 keeps the original effective denial capacity. These capacities are implementation behavior, not a measured DNS sizing recommendation.
+In upstream CoreDNS 1.14.7, `denial1000` is accepted but normalized to 1024; `success10000` normalizes to 9984. Explicit 1024 keeps the original effective denial capacity. These capacities are implementation behavior, not a measured DNS sizing recommendation.
 
 Choose a **single scaling owner**. Use EKS-managed CoreDNS autoscaling when supported by the exact add-on version/schema, or a separately owned HPA/cluster-proportional autoscaler. The following HPA is only for a deliberately self-managed Deployment with metrics-server and CPU requests; do not combine it with another replica manager:
 ```yaml
@@ -455,7 +455,7 @@ Do not select all ACTIVE CAs from an account into one variable. Creating a root 
 
 For existing plaintext peers, stage a documented PERMISSIVE transition, provision client/server identities and trust, test both accepted and rejected peers, then require STRICT. Inspect `ssl.handshake`, `ssl.no_certificate`, `ssl.fail_verify_no_cert` and `ssl.fail_verify_san` plus real request results. A successful server-TLS handshake alone is insufficient proof of mTLS.
 
-**3. Preserve observability during migration.** `Mesh.spec.tracing`, `Mesh.spec.logging` and `Mesh.spec.serviceDiscovery` from the original recipe are not fields in the reviewed controller 1.13.1 CRD. Access logging belongs on VirtualNode (as above). App Mesh Envoy image tracing settings are separate, for example this **container environment fragment** requires a working local X-Ray daemon/collector on2000, permissions, endpoint access and trace-context propagation:
+**3. Preserve observability during migration.** `Mesh.spec.tracing`, `Mesh.spec.logging` and `Mesh.spec.serviceDiscovery` from the original recipe are not fields in the reviewed controller 1.13.1 CRD. Access logging belongs on VirtualNode (as above). App Mesh Envoy image tracing settings are separate; for example, this **container environment fragment** requires a working local X-Ray daemon/collector on port 2000, permissions, endpoint access and trace-context propagation:
 ```yaml
 env:
 - name: ENABLE_ENVOY_XRAY_TRACING
@@ -506,7 +506,7 @@ spec:
         httpRetryEvents:
         - gateway-error
 ```
-**5. Validate and cut over gradually.** Compare routing, authorized/unauthorized peers, DNS, TLS rotation, retries, failure recovery, traces and metric continuity before moving traffic. Preserve a rollback path within the remaining product-support window. The original100–200m CPU and128–256Mi proxy memory values are **unverified example estimates**, not measurements or guaranteed sizing. Measure real saturation, memory, latency and error rates. No mesh, CA, collector or cloud dashboard was provisioned in this audit.
+**5. Validate and cut over gradually.** Compare routing, authorized/unauthorized peers, DNS, TLS rotation, retries, failure recovery, traces and metric continuity before moving traffic. Preserve a rollback path within the remaining product-support window. The original 100–200m CPU and 128–256Mi proxy memory values are **unverified example estimates**, not measurements or guaranteed sizing. Measure real saturation, memory, latency and error rates. No mesh, CA, collector or cloud dashboard was provisioned in this audit.
 
 </details>
 

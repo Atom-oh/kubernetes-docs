@@ -1,143 +1,135 @@
 # FinOps コスト可視化プラットフォーム クイズ
 
-1. 3つの FinOps 運用サイクルフェーズの正しい順序はどれですか？
-   - A) Optimize → Inform → Operate
-   - B) Inform → Optimize → Operate
-   - C) Operate → Inform → Optimize
-   - D) Inform → Operate → Optimize
+1. Inform → Optimize → Operate を最も適切に説明しているのはどれですか？
+   - A) 一度限りの、エンジニアリングだけで行うコスト削減
+   - B) 可視化、改善、テクノロジーの価値に対する共同責任を反復する実践
+   - C) すべての組織が 6 か月以内に完了する一連の段階
+   - D) すべての Pod を自動的に終了する財務プロセス
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Inform → Optimize → Operate**
+**回答: B) 可視化、改善、テクノロジーの価値に対する共同責任を反復する実践**
 
-**解説:**
-FinOps サイクルは、Inform（コスト可視性の確立）→ Optimize（コスト削減）→ Operate（ガバナンス）の順に反復します。まず、誰が何にどれだけ支出しているかを理解し、その後に最適化し、最後にポリシーで管理します。
+プロダクト、事業、エンジニアリング、財務が連携します。支出に加え、サービスレベルとユニットエコノミクスも考慮します。
 
 </details>
 
 ---
 
-2. AWS CUR (Cost and Usage Report) を Kubecost と統合する主な理由は何ですか？
-   - A) Kubecost ライセンスコストを削減するため
-   - B) Kubernetes 外の AWS サービスコストを追跡するため
-   - C) 実際の AWS 請求データと照合して、Pod レベルのコスト精度を向上させるため
-   - D) マルチクラスター フェデレーションを有効にするため
+2. OpenCost Cloud Cost の Athena 設定で `bucket` が示すものは何ですか？
+   - A) CUR のソースバケットのみ
+   - B) Athena クエリ結果用のバケットとプレフィックス
+   - C) kubeconfig の保存先
+   - D) すべてのアカウントで共有するパブリックバケット
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) 実際の AWS 請求データと照合して、Pod レベルのコスト精度を向上させるため**
+**回答: B) Athena クエリ結果用のバケットとプレフィックス**
 
-**解説:**
-Kubecost は公開定価に基づいてコストを見積もります。CUR 統合により、これらの見積もりを Savings Plans、Reserved Instances、交渉済み料金が反映された実際の請求データと照合でき、コスト精度が大幅に向上します。
+ソースの読み取りとクエリ結果の書き込みには、それぞれ別の権限が必要です。実際の Glue テーブルとインポーターのデータ更新状況も確認してください。
 
 </details>
 
 ---
 
-3. Kyverno でコストラベルを強制する場合、`validationFailureAction: Enforce` は何を意味しますか？
-   - A) ラベルのないワークロードに警告を表示する
-   - B) 必須ラベルのないワークロードのデプロイをブロックする
-   - C) ラベルを自動的に追加する
-   - D) 既存のワークロードのラベルを変更する
+3. `validationActions: [Audit]` を設定した ValidatingPolicy について正しい説明はどれですか？
+   - A) 既存の Pod をすべて削除する
+   - B) 違反をブロックしない。選択したポリシーを Deny に変える前にレポートを確認する
+   - C) 不足しているラベルを自動的に追加する
+   - D) `namespaceSelector` を無視する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 必須ラベルのないワークロードのデプロイをブロックする**
+**回答: B) 違反をブロックしない。選択したポリシーを Deny に変える前にレポートを確認する**
 
-**解説:**
-`validationFailureAction: Enforce` は、ポリシーに違反するリソースの作成や変更をブロックします。team、service、cost-center ラベルのない Deployment は拒否されます。まず警告用に `Audit` モードから始め、チームの準備が整ったら `Enforce` に切り替えることを推奨します。
+Audit とユーザーに警告を表示する Warn は別の動作です。ローカル CLI テストの失敗は、Admission による拒否と同じではありません。
 
 </details>
 
 ---
 
-4. VPA を `updateMode: "Off"` に設定する理由は何ですか？
-   - A) VPA を完全に無効化するため
-   - B) Pod を自動的に再起動せず、推奨値のみを提供するため
-   - C) メモリを固定したまま CPU のみを調整するため
-   - D) HPA との競合を防ぐため
+4. VPA の Off モードと、この章の推奨値スクリプトが実際に行うことは何ですか？
+   - A) ノード数と請求額を直ちに減らす
+   - B) 推奨値を観測し、コンテナ名を照合して変更案を出力する
+   - C) PR を自動的に作成してマージする
+   - D) `upperBound` をすべてのコンテナの limit として適用する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Pod を自動的に再起動せず、推奨値のみを提供するため**
+**回答: B) 推奨値を観測し、コンテナ名を照合して変更案を出力する**
 
-**解説:**
-`updateMode: "Off"` により、VPA はリソース使用量を分析し、変更を適用するために Pod を自動的に再起動することなく推奨値を提供します。これにより、推奨値をレビューし、PR 経由で手動適用する安全なワークフローが可能になります。Goldilocks ダッシュボードもこのモードを活用します。
+マニフェストの編集、PR、性能テスト、デプロイはそれぞれ別の手順です。request を減らしても節約が保証されないため、請求額の削減見積もりは算出されません。
 
 </details>
 
 ---
 
 5. Showback と Chargeback の違いは何ですか？
-   - A) Showback はコストを表示し、Chargeback はコストを隠す
-   - B) Showback はコスト可視性を提供し、Chargeback は実際に部門やチームに課金する
-   - C) Showback はリアルタイムで、Chargeback は月次である
-   - D) Showback はクラウド専用で、Chargeback はオンプレミス専用である
+   - A) Showback は可視化し、Chargeback は合意したルールに基づいて配賦・請求する
+   - B) Showback はリアルタイムで、Chargeback は常に年次である
+   - C) Showback が対応するのは AWS のみ
+   - D) Chargeback では端数処理やクレジットを無視できる
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Showback はコスト可視性を提供し、Chargeback は実際に部門やチームに課金する**
+**回答: A) Showback は可視化し、Chargeback は合意したルールに基づいて配賦・請求する**
 
-**解説:**
-Showback は、意識を高めるために各チームやサービスがどれだけ支出しているかを示します。一方、Chargeback は実際に部門予算からコストを差し引きます。多くの組織は、Chargeback へ移行する前に、コストを意識する文化を確立するため Showback から始めます。
+期間、通貨、共有・アイドル・未配賦のコスト、税金、返金、端数処理について合意してください。モデルの値が自動的に社内請求書になるわけではありません。
 
 </details>
 
 ---
 
-6. Goldilocks がリソース推奨値を表示するには、namespace にどのラベルが必要ですか？
-   - A) goldilocks.fairwinds.com/vpa-enabled=true
-   - B) goldilocks.fairwinds.com/enabled=true
-   - C) vpa.kubernetes.io/enabled=true
-   - D) monitoring.goldilocks.com/watch=true
+6. 現在の Prometheus コストレートを 730 倍するパネルが示すものは何ですか？
+   - A) 確定した月間 AWS 請求額
+   - B) 現在のレートが固定の 730 時間続くと仮定した見積もり
+   - C) 観測した日ごとのコストを正確に合計した値
+   - D) あらゆる割引と税金を含む最終会計額
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) goldilocks.fairwinds.com/enabled=true**
+**回答: B) 現在のレートが固定の 730 時間続くと仮定した見積もり**
 
-**解説:**
-Goldilocks は、`goldilocks.fairwinds.com/enabled=true` ラベルが付いた namespace 内のすべての Deployment に対して VPA を自動的に作成し、推奨されるリソース値を Web ダッシュボードで可視化します。
+現在のレート、期間集計したモデル上のコスト、請求上のコストを区別してください。月末コストの単純な線形見積もりは、データの欠落や需要の変化にも左右されます。
 
 </details>
 
 ---
 
-7. Kubecost Allocation API で `aggregate=label:team` は何を意味しますか？
-   - A) team ラベルを持つ Pod のみをフィルタリングする
-   - B) team ラベルの値ごとにコストをグループ化して合計する
-   - C) team ごとに個別の API 呼び出しを作成する
-   - D) team ラベルを自動的に追加する
+7. Grafana のチーム用 namespace 変数だけでデータ分離は保証されますか？
+   - A) はい。変数がデータソースの認可になる
+   - B) いいえ。サーバー側のデータソース権限またはテナント分離と、拒否テストが必要
+   - C) はい。内部 ALB があれば認証も不要になる
+   - D) ラベル名が十分に長い場合に限り保証される
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) team ラベルの値ごとにコストをグループ化して合計する**
+**回答: B) いいえ。サーバー側のデータソース権限またはテナント分離と、拒否テストが必要**
 
-**解説:**
-`aggregate=label:team` は、すべての Pod コストを `team` ラベルの値（例: team-commerce、team-platform）ごとにグループ化して合計するよう Kubecost に指示します。これにより、team ごとの合計コスト、CPU コスト、メモリコストを単一のクエリで取得できます。
+ダッシュボードのフィルターとフォルダーはビューを整理するものです。同じデータソースに対して、ユーザーが別のクエリを実行できないか確認してください。
 
 </details>
 
 ---
 
-8. コスト異常アラートが発火する前に、30分間継続して高コストであることを要求するのはなぜですか？
-   - A) Prometheus のスクレイプ間隔が30分だから
-   - B) 一時的なスパイク（デプロイ、オートスケーリング）による誤検知を防ぐため
-   - C) Slack API のレート制限を回避するため
-   - D) Kubecost データ更新サイクルが30分だから
+8. コストレートのアラートに `for: 30m` を設定する説明として正しいものはどれですか？
+   - A) スクレイプ間隔を 30 分に変更する
+   - B) 条件の継続を求め、短いスパイクによるノイズを減らすが、誤検知をなくすわけではない
+   - C) AWS の請求データを直ちに更新する
+   - D) Slack への通知が必ず一度だけ届くことを保証する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 一時的なスパイク（デプロイ、オートスケーリング）による誤検知を防ぐため**
+**回答: B) 条件の継続を求め、短いスパイクによるノイズを減らすが、誤検知をなくすわけではない**
 
-**解説:**
-Deployment、オートスケーリングイベント、バッチジョブは一時的なコストスパイクを引き起こすことがあります。`for: 30m` 条件により、コストが30分以上高い状態で維持された場合にのみアラートが発火し、通常の運用活動によるノイズを減らします。
+条件の継続時間、データ更新、モデルの正確さ、通知の配信保証はそれぞれ別の論点です。メトリクスが欠けている場合を支出ゼロとして扱ってはいけません。
 
 </details>

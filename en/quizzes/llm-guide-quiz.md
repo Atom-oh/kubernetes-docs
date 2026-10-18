@@ -56,7 +56,7 @@ The page states: "The site build generates them from the same source and deploys
 **Answer: B) Only the quiz index page is linked (one link per language), under `## Optional` in `llms.txt`; individual quiz pages and their answer keys are left out of both the index and the full files**
 
 **Explanation:**
-The page says: "Quizzes appear in `llms.txt` only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files; answer keys don't belong in an LLM's context." So an LLM can discover that quizzes exist and where each language's quiz index lives, but neither the flat index nor the whole-book files ever carry a single quiz page or its answers. Lab guides differ: they are also only an index link in `llms.txt`, but their full text is included in the full files.
+The page says: "Quizzes appear in `llms.txt` only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files; answer keys don't belong in an LLM's context." So an LLM can discover that quizzes exist and where each language's quiz index lives, but neither the flat index nor the whole-book files ever carry a single quiz page or its answers. Lab guides differ: they are also represented only by an index link in `llms.txt`, but their full text is included in the full files.
 
 </details>
 

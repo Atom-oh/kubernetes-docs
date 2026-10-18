@@ -2,7 +2,7 @@
 
 关于当前 API 和运维边界的 15 道问题。
 
-## 1. 什么是 JARK，它是否会自动完整配置？
+## 1. 什么是 JARK？它是否会自动形成完整方案？
 
 <details>
 <summary>答案与说明</summary>
@@ -15,7 +15,7 @@ JupyterHub/Argo Workflows/Ray/Karpenter 的一种集成模式。需要显式连�
 <details>
 <summary>答案与说明</summary>
 
-Callback/token/userInfo URL、scope、稳定的用户名 claim 和允许策略。从准备好的文件中读取客户端密钥；在 provider 中单独配置 MFA/federation。认证成功并不意味着可以通用访问。
+回调/token/userInfo URL、作用域、稳定的用户名声明和访问允许策略。从准备好的文件中读取客户端密钥；在身份提供商中单独配置 MFA/联合身份。身份验证成功并不意味着可以访问所有资源。
 </details>
 
 ## 3. Ray head 和 Karpenter 分别承担什么角色？
@@ -23,31 +23,31 @@ Callback/token/userInfo URL、scope、稳定的用户名 claim 和允许策略�
 <details>
 <summary>答案与说明</summary>
 
-GCS 是 Global Control Service；调度会与 raylet 交互。声明 CPU 的 head 可能会运行工作负载。Karpenter 根据 worker-Pod 需求和 Kubernetes 调度状态来配置节点。
+GCS 是 Global Control Service（全局控制服务）；调度会与 raylet 交互。声明可用 CPU 的 head 节点可能会运行工作负载。Karpenter 根据工作节点 Pod 的需求和 Kubernetes 调度状态提供节点容量。
 </details>
 
-## 4. 应如何比较 DRA 与 device plugin？
+## 4. 应如何比较 DRA 与设备插件？
 
 <details>
 <summary>答案与说明</summary>
 
-DRA 通过 DeviceClass/ResourceSlice/ResourceClaim 提供结构化请求、属性和分配。device plugin 也支持 MIG/time-slicing；它们并非在所有情况下都只能互斥使用。功能取决于 driver、硬件和 gate。
+DRA 通过 DeviceClass/ResourceSlice/ResourceClaim 提供结构化请求、属性和分配。设备插件也支持 MIG/时间切片，并非一律只能以设备独占方式分配。功能取决于驱动程序、硬件和特性开关。
 </details>
 
-## 5. 关于 MIG profile 和隔离，有哪些要点？
+## 5. 关于 MIG 配置方案（profile）和隔离，有哪些要点？
 
 <details>
 <summary>答案与说明</summary>
 
-3g.20gb 描述的是一个 profile，而不是三个 20GB device。MIG 会划分硬件，但不能替代 host/driver/authorization 隔离。MPS/time-slicing 不是安全边界。
+3g.20gb 描述的是一种配置方案，而不是三个 20GB 设备。MIG 会划分硬件，但不能替代主机/驱动程序/授权隔离。MPS/时间切片不是安全边界。
 </details>
 
-## 6. 一个 GPU Operator 版本能否建立所有 DRA 支持？
+## 6. 仅凭一个 GPU Operator 版本，能否确认所有 DRA 功能都受支持？
 
 <details>
 <summary>答案与说明</summary>
 
-不能。检查 Kubernetes API、driver/hardware/CDI 和各项 gate。Operator 26.7 的 GPUCluster 与 ClusterPolicy 互斥；standalone 0.5 提供了防止 device-plugin 冲突的 opt-in guard。
+不能。检查 Kubernetes API、驱动程序/硬件/CDI 和各项特性开关。Operator 26.7 的 GPUCluster 与 ClusterPolicy 互斥；独立版本 0.5 提供了需主动启用的保护机制，以防止与设备插件发生冲突。
 </details>
 
 ## 7. 集成 Langfuse 时应检查什么？
@@ -55,7 +55,7 @@ DRA 通过 DeviceClass/ResourceSlice/ResourceClaim 提供结构化请求、属�
 <details>
 <summary>答案与说明</summary>
 
-验证当前 SDK/backend 依赖项、DB/ClickHouse/object storage、文件凭证、tracing 以及敏感数据保留策略。旧的 2.x Deployment 或 trace() 调用不是当前的 4.x API。
+验证当前 SDK/后端依赖项、数据库/ClickHouse/对象存储、文件凭证、追踪以及敏感数据保留策略。旧的 2.x Deployment 或 trace() 调用不是当前的 4.x API。
 </details>
 
 ## 8. 应如何选择 EFS、FSx 和 Mountpoint？
@@ -63,31 +63,31 @@ DRA 通过 DeviceClass/ResourceSlice/ResourceClaim 提供结构化请求、属�
 <details>
 <summary>答案与说明</summary>
 
-比较 I/O、authorization、namespace/PVC 范围、容量和 filesystem 语义。EFS 请求不是 quota；Mountpoint CSI 2.8 对现有 bucket 使用静态 PV，且并非完全 POSIX 兼容。
+比较 I/O、授权、命名空间/PVC 范围、容量和文件系统语义。EFS 请求不是配额；Mountpoint CSI 2.8 对现有存储桶使用静态 PV，且并非完全 POSIX 兼容。
 </details>
 
-## 9. 应如何理解 EFA bandwidth 和 interface 数量？
+## 9. 应如何理解 EFA 带宽和网络接口数量？
 
 <details>
 <summary>答案与说明</summary>
 
-区分实例 aggregate bandwidth 与每个 interface 的值；不要将已是 aggregate 的数值再次相乘。验证同一 AZ 放置、interface、driver/libfabric/NCCL、security group 和 Pod 资源。RAID0 不会启用 EFA。
+区分实例的汇总带宽与每个接口的带宽；不要将已汇总的数值再次相乘。验证同一可用区内的放置、接口、驱动程序/libfabric/NCCL、安全组和 Pod 资源。RAID0 不会启用 EFA。
 </details>
 
-## 10. 应如何理解 GPU memory 和 XID metric？
+## 10. 应如何理解 GPU 显存和 XID 指标？
 
 <details>
 <summary>答案与说明</summary>
 
-FB_USED/FREE 是以 MiB 为单位的 gauge；较高比例不一定表示 OOM。XID_ERRORS 是最后一个 code gauge，而不是可用于 increase() 的 counter。调查实际错误、cache、allocation failure 和特定 device 的限制。
+FB_USED/FREE 是以 MiB 为单位的 Gauge 指标；较高比例不一定表示 OOM。XID_ERRORS 是记录最后一个错误码的 Gauge 指标，而不是可用于 increase() 的 Counter。应调查实际错误、缓存、分配失败以及具体设备的限制。
 </details>
 
-## 11. Karpenter consolidation 会直接使用 GPU utilization metric 吗？
+## 11. Karpenter 节点整合会直接使用 GPU 利用率指标吗？
 
 <details>
 <summary>答案与说明</summary>
 
-它使用 workload request、调度可行性、价格和 disruption constraint，而不是 DCGM 20% 阈值。limit/budget 并非绝对的成本或故障保障；应验证终止和恢复。
+它依据工作负载资源请求、调度可行性、价格和中断约束，而不是 DCGM 20% 阈值。资源限制/预算并非绝对的成本或故障保障；应验证终止和恢复。
 </details>
 
 ## 12. 谁发布 ResourceSlice，它们表示什么？
@@ -95,7 +95,7 @@ FB_USED/FREE 是以 MiB 为单位的 gauge；较高比例不一定表示 OOM。X
 <details>
 <summary>答案与说明</summary>
 
-driver 使用带类型的 attribute/capacity 发布真实的 device inventory。创建任意 slice 并不会创建 GPU。CEL 和 matchAttribute 必须遵循实际发布的 schema。
+驱动程序发布真实的设备清单，其中包含有类型的属性/容量。任意创建一个 ResourceSlice 并不会创建 GPU。CEL 和 matchAttribute 必须遵循实际发布的数据模式。
 </details>
 
 ## 13. 为 Milvus 请求 GPU 就能完成 RAG 吗？
@@ -103,23 +103,23 @@ driver 使用带类型的 attribute/capacity 发布真实的 device inventory。
 <details>
 <summary>答案与说明</summary>
 
-不能。匹配受支持的 image/index、embedding dimension/revision、metric/parameter、tenant filtering 以及更新/删除生命周期。验证结果 authorization，并处理缺少 evidence 的情况。
+不能。匹配受支持的镜像/索引、嵌入维度/修订版本、度量/参数、租户筛选以及更新/删除生命周期。验证结果访问授权，并处理缺少证据的情况。
 </details>
 
-## 14. 应如何调查 pending GPU Pod 和 node failure？
+## 14. 应如何调查待处理的 GPU Pod 和节点故障？
 
 <details>
 <summary>答案与说明</summary>
 
-仅统计请求 GPU 的 pending Pod 无法诊断原因。检查 event、PVC、affinity、taint、quota、claim 和 image，并测试 checkpoint/resume。多个请求 GPU 的 container 在每个 Pod 中只计数一次。
+仅统计处于 Pending 状态且请求 GPU 的 Pod 无法诊断原因。检查事件、PVC、亲和性、污点、配额、资源申领和镜像，并测试检查点/恢复。即使一个 Pod 内有多个请求 GPU 的容器，该 Pod 也只计数一次。
 </details>
 
-## 15. MCP 是否提供标准的 Kubernetes auto-discovery gateway？
+## 15. MCP 是否提供标准的 Kubernetes 自动发现网关？
 
 <details>
 <summary>答案与说明</summary>
 
-不是。它定义了诸如 tool listing/calling 的操作。选择实际的 server/gateway 版本、transport 和 authorization 设计。虚构的 image/label/config 或 URL environment variable 并不能实现 discovery/execution。
+不是。它定义了工具列举/调用等操作。应选择实际的服务器/网关版本、传输方式和授权设计。虚构的镜像/标签/配置或 URL 环境变量并不能实现发现/执行功能。
 </details>
 
 [返回指南](../../ai-ml/06-ai-infrastructure.md)

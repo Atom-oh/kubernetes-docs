@@ -110,7 +110,7 @@ Identity-relevant labels can include namespace, service account and selected wor
 
 **Answer: B. HTTP L7 policy traffic and traffic redirected by supported Service/Ingress/Gateway configuration**
 
-HTTP policy redirects the corresponding ingress or egress traffic to Envoy. CEC Service load balancing and Gateway/Ingress can also require Envoy. The response of a proxied request uses the established proxy connection; this is not an independent optional redirect for each response.
+HTTP policy redirects the corresponding ingress or egress traffic to Envoy. CEC Service load balancing and Gateway/Ingress can also require Envoy. The response to a proxied request uses the established proxy connection; this is not an independent optional redirect for each response.
 
 </details>
 

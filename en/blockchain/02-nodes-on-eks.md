@@ -11,7 +11,7 @@
 
 ## Opening Question: Should You Run This on EKS?
 
-Before discussing configuration, this question comes first. **Blockchain nodes fit poorly with some of Kubernetes' strengths.**
+Before discussing configuration, consider this question. **Blockchain nodes fit poorly with some of Kubernetes' strengths.**
 
 | What Kubernetes does well | For a blockchain node |
 |---|---|
@@ -151,7 +151,7 @@ In particular, Fusaka's PeerDAS changed blob handling, so check current requirem
 
 ### Snapshot strategy
 
-As seen in [Fundamentals](./01-fundamentals.md), **chain data is re-obtainable from the network but takes time.** So the purpose of a backup is not "preserving data" but **"shortening recovery time."**
+As seen in [Fundamentals](./01-fundamentals.md), **chain data can be re-obtained from the network, but doing so takes time.** So the purpose of a backup is not "preserving data" but **"shortening recovery time."**
 
 | Method | Characteristics |
 |---|---|
@@ -167,7 +167,7 @@ A health check that ignores synchronization can send application traffic to a st
 
 ### The problem
 
-An ordinary health check asks "is the process responding." For a blockchain node that is **insufficient and dangerous.**
+An ordinary health check asks "is the process responding?" For a blockchain node that is **insufficient and dangerous.**
 
 A node behind on sync:
 
@@ -255,7 +255,7 @@ Blockchain nodes **use CPU and IOPS steadily.** Blocks keep arriving, verificati
 | **Dedicated nodes** | Separate from other workloads with taints/tolerations to prevent noisy neighbors |
 | **File descriptors** | A socket per peer connection. Consider raising the limit ([Kernel Tuning](../kernel/03-eks-node-tuning.md)) |
 
-**The CPU limit judgment matters most.** As seen in the [kernel documents](../kernel/01-container-primitives.md), a CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands in that window, latency appears, and for a validator, a missed opportunity.
+**The CPU limit judgment matters most.** As seen in the [kernel documents](../kernel/01-container-primitives.md), a CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands in that window, latency appears and, for a validator, an opportunity is missed.
 
 Dedicated nodes reduce tenant contention, but kubelet, CNI/CSI, observability and OS services still share the node. Preserve reservations and headroom even if application CPU limits are omitted; test latency, sync and node health under sustained load.
 
@@ -382,7 +382,7 @@ A node running an incompatible client may stop following the canonical chain or 
 - For storage, **IOPS bottlenecks before capacity.** gp3's independent capacity/IOPS settings are the key advantage, and a volume expansion plan is mandatory.
 - Separate process liveness from synchronization readiness and test both; this chapter supplies no outage-frequency ranking.
 - When opening inbound P2P, **forgetting the advertised address means no peers arrive.**
-- Resources are sustained load, not bursts. **Dedicate nodes and decide CPU limits carefully.**
+- Resource use is sustained, not bursty. **Dedicate nodes and decide CPU limits carefully.**
 - Ethereum uses EL and CL clients; validator identities/keys are separate from process and VM counts. Consolidation does not by itself demonstrate cost savings.
 - Fabric's main operational burden is **certificate expiry.** Start with an operator and automate renewal.
 - After a hard fork, **compare block hashes with other nodes and explorers** to confirm you are on the same chain.

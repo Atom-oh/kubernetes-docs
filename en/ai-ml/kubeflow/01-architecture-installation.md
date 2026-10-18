@@ -91,7 +91,7 @@ The controller refuses takeover of an existing namespace with mismatched ownersh
 
 The [AWS release warning](https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3) means the old manifest/Terraform walkthrough is not a verified 26.03.1 installation recipe. Repository activity alone does not change that release's compatibility.
 
-Historical AWS overlays describe Cognito, RDS, and S3 integrations. They can reduce operation of self-hosted identity, database, and object-store services, but are not interchangeable defaults: issuer/claim mapping, database compatibility, networking, IAM, costs, and migration still matter. Validate old overlays before combining them with a new release.
+Historical AWS overlays describe Cognito, RDS, and S3 integrations. They can reduce the work of operating self-hosted identity, database, and object-store services, but are not interchangeable defaults: issuer/claim mapping, database compatibility, networking, IAM, costs, and migration still matter. Validate old overlays before combining them with a new release.
 
 ### Render Before Applying
 
@@ -124,7 +124,7 @@ The Dashboard `AwsIamForServiceAccount` Profile plugin is not a Pod Identity swi
 
 EKS fits teams with Kubernetes operating capacity that need shared tooling, custom training runtimes, or specific scheduling and serving behavior. The team owns controllers, CRDs, tenant boundaries, recovery, capacity and upgrades.
 
-SageMaker AI can reduce infrastructure operation but does not remove application, data, IAM, or model-quality responsibilities. Compare the services and deployment modes actually needed.
+SageMaker AI can reduce the work of operating infrastructure but does not remove application, data, IAM, or model-quality responsibilities. Compare the services and deployment modes actually needed.
 
 ## Sources and Validation
 

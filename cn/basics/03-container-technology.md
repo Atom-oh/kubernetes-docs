@@ -21,7 +21,7 @@
 
 > 以下 Linux 命令假设运行在 Linux Docker 主机上。Docker Desktop 在 VM 中运行其守护进程，因此无法直接从桌面操作系统检查主机 PID/文件系统路径。镜像需要兼容的 CPU 架构、操作系统和内核功能。Kata/Fargate 等基于 VM 的环境与此处介绍的基本进程隔离模型有所不同。
 
-## 什么是容器？
+## 什么是容器？ {#what-is-a-container}
 
 容器是一种标准化的软件单元，其中包含运行应用程序所需的一切（代码、运行时、系统工具、系统库、设置）。容器在隔离环境中运行，同时共享主机操作系统的内核。
 
@@ -43,7 +43,7 @@
 * **2015 年**：Open Container Initiative (OCI) 成立，推动容器标准化
 * **2017 年**：containerd 捐赠给 CNCF 项目
 
-## 容器与虚拟机
+## 容器与虚拟机 {#container-vs-virtual-machine}
 
 ### 虚拟机架构与容器架构
 
@@ -62,7 +62,7 @@
 | 资源效率 | 高                             | 中                                                    |
 | 使用场景           | 微服务、CI/CD、开发/测试   | 旧版应用、多种操作系统需求、高安全性需求 |
 
-## 容器的技术基础
+## 容器的技术基础 {#technical-foundation-of-containers}
 
 容器通过 Linux 内核的多项功能实现。这些技术已在 01-linux-basics.md 中详细介绍；此处重点说明它们与容器的关系。
 
@@ -171,7 +171,7 @@ docker stop test-container
 docker rm test-container
 ```
 
-## 容器运行时
+## 容器运行时 {#container-runtime}
 
 容器运行时是用于管理容器生命周期的软件。它运行容器镜像、限制容器资源使用，并配置网络和存储。
 
@@ -193,7 +193,7 @@ Kubernetes 通过 CRI（容器运行时接口）与各种容器运行时集成�
 
 Kubernetes 1.26+ 要求使用 CRI v1。请使用受支持的 containerd/CRI-O 版本，并使其 cgroup 驱动程序与 kubelet 保持一致。Docker Engine 本身并未实现 CRI；内置的 dockershim 已在 1.24 中移除。Docker Engine 需要单独的 CRI 适配器，例如 cri-dockerd。使用 Docker 构建的 OCI 镜像仍可使用。CRI 是 kubelet/运行时 API 契约，并不一定是单独部署的中间服务。
 
-## 容器镜像
+## 容器镜像 {#container-images}
 
 容器镜像是不可变模板，其中包含应用程序及其依赖项。镜像由多个层组成，每一层表示文件系统的更改。
 
@@ -280,7 +280,7 @@ CMD ["nginx", "-g", "daemon off;"]
 4. **排除不必要的文件**：使用 .dockerignore 文件
 5. **利用缓存**：将经常变化的层放在后面
 
-## 容器网络
+## 容器网络 {#container-networking}
 
 容器网络支持容器之间以及容器与外部世界之间的通信。
 
@@ -311,7 +311,7 @@ docker run -p 8080:80 nginx
 2. **Links**：旧式方法，用于在容器之间直接建立链接
 3. **外部网络**：通过主机端口进行通信
 
-## 容器存储
+## 容器存储 {#container-storage}
 
 Docker 容器的可写层在停止/启动后仍会保留，但删除容器时也会被删除。请将持久数据存储在 volumes 或其他外部存储中。
 
@@ -344,7 +344,7 @@ docker run -v /host/path:/container/path:ro nginx
 2. **数据 volume 容器**：创建仅包含数据的容器，然后共享数据
 3. **外部存储集成**：使用 AWS EBS、NFS 等外部存储系统
 
-## 容器安全
+## 容器安全 {#container-security}
 
 容器安全必须从多个层面考虑，包括镜像、容器运行时和主机系统。
 
@@ -371,7 +371,7 @@ docker run -v /host/path:/container/path:ro nginx
 4. **资源限制**：限制 CPU、内存和其他资源的使用
 5. **监控和日志记录**：监控容器活动并集中管理日志
 
-## 容器生命周期管理
+## 容器生命周期管理 {#container-lifecycle-management}
 
 了解完整的容器生命周期对于有效运行容器至关重要。
 
@@ -609,7 +609,7 @@ docker events --filter container=<container-id>
 docker diff <container-id>
 ```
 
-## 容器编排
+## 容器编排 {#container-orchestration}
 
 容器编排是管理和协调多个容器的过程。其主要功能包括部署管理、扩展、网络和服务发现。
 
@@ -630,7 +630,7 @@ docker diff <container-id>
 6. **存储编排**：管理持久存储
 7. **批处理执行**：执行一次性任务和 cron 作业
 
-## AWS 上的容器
+## AWS 上的容器 {#containers-on-aws}
 
 AWS 提供多种容器工作负载服务。
 

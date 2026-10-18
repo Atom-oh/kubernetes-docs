@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-例では SQS 1.7.0 / SNS 1.10.1 のスキーマを使用します。Queue では queueName と文字列属性を使用し、tags はマップとして指定します。SNS の tags はキー/値のリストであり、displayName、filterPolicy、rawMessageDelivery は専用フィールドです。
+例では SQS 1.8.2 / SNS 1.11.1 のスキーマを使用します。Queue では queueName と文字列属性を使用し、tags はマップとして指定します。SNS の tags はキー/値のリストであり、displayName、filterPolicy、rawMessageDelivery は専用フィールドです。
 
 account、region、queue/topic 名、および policy ARN はまとめて変更してください。SNS→SQS Subscription だけでは配信権限は付与されません。Queue policy は厳密な topic ARN と SourceAccount に制限します。topic/queue の準備完了後に Subscription を適用し、その後、配信とリトライをテストしてください。
 
@@ -115,5 +115,5 @@ spec:
 
 フィールドは公式のバージョン指定 CRD と照合済みです。スキーマの成功は、IAM 権限、AWS サービスの制約、作成、接続性、または復旧を保証するものではありません。適用前に、保持されるリソースの所有権、コスト、クリーンアップ、およびバックアップの責任を割り当ててください。
 
-- [sqs v1.7.0 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases)
-- [sns v1.10.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases)
+- [sqs v1.8.2 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.8.2/config/crd/bases)
+- [sns v1.11.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.11.1/config/crd/bases)

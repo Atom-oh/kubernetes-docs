@@ -1,143 +1,145 @@
-# Knative クイズ
+# Knativeクイズ
 
-1. Knative Serving では Scale-to-Zero はどのように機能しますか？
-   - A) Pod を削除し、新しいリクエスト時に Deployment を再作成する
-   - B) Autoscaler がレプリカを 0 から 1 にスケールする間、Activator がトラフィックをバッファする
-   - C) Node を停止し、リクエスト時に Karpenter に新しい Node をプロビジョニングさせる
-   - D) コンテナを一時停止し、リクエスト時に再開する
+> **最終更新**: 2026年9月11日
+
+1. Knative ServingのScale-to-Zeroはどのように機能しますか？
+   - A) Podを削除し、新しいrequestを受けたらDeploymentを再作成する
+   - B) autoscaling経路がreadyなreplicaを起動する間、Activatorが対象requestをbufferする
+   - C) Nodeを停止し、requestのたびにKarpenterで新しいNodeをprovisionする
+   - D) containerを一時停止し、requestを受けたら再開する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Autoscaler がレプリカを 0 から 1 にスケールする間、Activator がトラフィックをバッファする**
+**正解: B) autoscaling経路がreadyなreplicaを起動する間、Activatorが対象requestをbufferする**
 
 **解説:**
-レプリカが 0 の場合、受信リクエストは Activator によってバッファされます。Activator は Autoscaler にスケールアップをリクエストし、Pod の準備ができると、バッファされたリクエストが転送されます。このプロセスが「コールドスタート」であり、`minScale` を設定して最小インスタンス数を維持することで防止できます。
+replicaが0のときはActivatorを経由するrouting経路が使われます。Activatorは自身の容量とtimeoutの範囲でrequestをbufferし、activationによってreadyな処理容量が確保されます。failureやbuffer容量の超過、client/request timeoutによってerrorになる場合があります。min-scaleを1以上にすると通常のidle時にScale-to-Zeroしませんが、新しいRevisionの初期化、restart、追加replicaの起動は引き続き発生します。
 
 </details>
 
 ---
 
-2. KPA (Knative Pod Autoscaler) と HPA の主な違いは何ですか？
-   - A) KPA は CPU ベースのみ、HPA はメモリベースのみ
-   - B) KPA は concurrency に基づいてスケールし、Scale-to-Zero をサポートする一方、HPA は CPU/メモリに基づいてスケールする
-   - C) KPA は Node をスケールし、HPA は Pod をスケールする
-   - D) KPA は手動スケーリング、HPA は自動スケーリング
+2. Knative ServingのKPAとHPA integrationの違いは何ですか？
+   - A) KPAはCPUのみ、HPAはmemoryのみを基準にscaleする
+   - B) KPAはconcurrencyを基準にScale-to-Zeroに対応し、HPAはCPU/memoryを基準にscaleする
+   - C) KPAはNodeをscaleし、HPAはPodをscaleする
+   - D) KPAは手動scale、HPAは自動scaleである
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) KPA は concurrency に基づいてスケールし、Scale-to-Zero をサポートする一方、HPA は CPU/メモリに基づいてスケールする**
+**正解: B) KPAはconcurrencyを基準にScale-to-Zeroに対応し、HPAはCPU/memoryを基準にscaleする**
 
 **解説:**
-KPA は Queue Proxy によって測定される同時リクエスト数または RPS に基づいてスケールし、Scale-to-Zero をネイティブにサポートします。HPA は CPU/メモリ metrics に基づいてスケールしますが、常に少なくとも 1 レプリカが必要です。
+Knative KPAはconcurrency/RPSに対応し、Activatorを使ったScale-to-Zero経路を提供します。任意で導入するKnative HPA extensionは、CPU、memory、対応するcustom Pod metricを使いますが、このzero経路は実装しません。これはKubernetes HPA全体についての一般論ではありません。upstream Kubernetes 1.37ではobject/external metricを対象としたScale-to-Zeroがbetaです。1.23のHPA実装では、CPU targetはCPU requestに対する利用率の割合、memory targetはMiB、custom metricはPodごとの平均値を使います。
 
 </details>
 
 ---
 
-3. Knative Eventing の Broker/Trigger パターンにおける Trigger の役割は何ですか？
-   - A) イベントを生成する source
-   - B) Broker からイベントをフィルタリングし、特定の Service にルーティングする
-   - C) イベント用の永続ストレージ
-   - D) 外部システムにイベントを送信する gateway
+3. Knative EventingのBroker/Trigger patternにおけるTriggerの役割は何ですか？
+   - A) eventを生成するsource
+   - B) Brokerのeventをfilterし、特定のserviceにrouteする
+   - C) eventの永続storage
+   - D) eventを外部systemに送るgateway
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Broker からイベントをフィルタリングし、特定の Service にルーティングする**
+**正解: B) Brokerのeventをfilterし、特定のserviceにrouteする**
 
 **解説:**
-Trigger は Broker に登録され、属性（type、source など）に基づいて CloudEvents をフィルタリングします。一致するイベントのみが指定された Subscriber（Knative Service、Kubernetes Service など）に配信されます。単一の Broker に複数の Trigger を登録して、異なる Service にイベントをルーティングできます。
+Triggerは一つのBrokerに対するfilter条件とsubscriberを定義し、controllerとBrokerのdataplaneがdeliveryを実行します。条件に一致するTriggerが複数あると、同じeventが複数回deliveryされる場合があります。retryとbacking storeの動作は実装とpolicyによって異なります。Triggerは永続event storeでも、汎用consumer autoscalerでもありません。
 
 </details>
 
 ---
 
-4. Knative Service で `containerConcurrency: 1` を設定すると何が起こりますか？
-   - A) コンテナごとに 1 つの Pod のみが作成される
-   - B) 各コンテナが一度に 1 つのリクエストを処理し、追加のリクエストは新しい Pod にルーティングされる
-   - C) 1 秒あたり 1 つのリクエストのみが許可される
-   - D) 1 つの Revision のみが維持される
+4. Knative Serviceで`containerConcurrency: 1`を設定すると、どうなりますか？
+   - A) containerごとにPodが一つだけ作成される
+   - B) Queue ProxyはPodごとに同時に一件までrequestを転送し、待ち行列の範囲内で待機させながら非同期にscaleする
+   - C) 1秒あたり一件のrequestだけが許可される
+   - D) Revisionが一つだけ維持される
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 各コンテナが一度に 1 つのリクエストを処理し、追加のリクエストは新しい Pod にルーティングされる**
+**正解: B) Queue ProxyはPodごとに同時に一件までrequestを転送し、待ち行列の範囲内で待機させながら非同期にscaleする**
 
 **解説:**
-`containerConcurrency: 1` は、各 Pod 内の Queue Proxy がコンテナへ同時に 1 つのリクエストのみを転送するように設定します。追加のリクエストが到着すると、Autoscaler が新しい Pod を作成します。これは CPU 負荷の高いタスクやスレッドセーフではないアプリケーションに有用です。
+Queue Proxyは各Podで、受信containerへ転送する同時request数を制限します。追加requestは上限付きqueueで待つか、処理可能な容量へ送られるか、失敗する場合があります。autoscalingは非同期で、各種上限とNode容量にも制約されます。1秒あたり一件の制限でも、全replicaを通じた一件の制限でもなく、追加requestごとにPodが作成される保証もありません。
 
 </details>
 
 ---
 
-5. KEDA と Knative を一緒に使用する適切なシナリオはどれですか？
-   - A) 2 つのツールには互換性がないため、どちらか一方のみを使用する
-   - B) HTTP workloads には Knative Serving を使用し、queue/stream ベースの非同期 workloads には KEDA を使用する
-   - C) Scale-to-Zero には KEDA を使用し、event routing には Knative を使用する
-   - D) Knative は内部的に KEDA を使用している
+5. KEDAとKnativeを組み合わせる適切な方法はどれですか？
+   - A) 互換性がないため、どちらか一方だけを使う
+   - B) HTTP workloadにはKnative Serving、queue/stream型の非同期workloadにはKEDAを使う
+   - C) KEDAとKPAの両方で、同じKnative生成Deploymentを個別にscaleする
+   - D) Knative Serviceを作成すると、KEDAが自動でinstallされdefault autoscalerになる
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) HTTP workloads には Knative Serving を使用し、queue/stream ベースの非同期 workloads には KEDA を使用する**
+**正解: B) HTTP workloadにはKnative Serving、queue/stream型の非同期workloadにはKEDAを使う**
 
 **解説:**
-Knative Serving は、Scale-to-Zero と concurrency ベースのスケーリングを備えた HTTP リクエストベースの serverless workloads に最適化されています。KEDA は SQS、Kafka、Redis などのキュー metrics に基づくスケーリングに優れています。両方を一緒に使用することで、同期および非同期 workloads を最適にスケールできます。
+適したHTTP serviceにはKnative Servingを、個別に管理するbackground workerにはKEDAを使います。queue retention/acknowledgement、activation metric、workerのidempotencyを設定してください。KEDAとKPAの両方で、同じ生成Deploymentを制御してはいけません。SinkBindingはevent producerを設定するもので、Scale-to-Zero中の任意のHTTP consumerを起動するものではありません。
 
 </details>
 
 ---
 
-6. Knative で traffic splitting を使用して Canary deployment（カナリアデプロイメント）を実装するにはどうしますか？
-   - A) Deployment のレプリカ数を調整する
-   - B) Knative Service の spec.traffic で Revision ごとのトラフィック比率を指定する
-   - C) Istio VirtualService を手動で作成する
-   - D) HPA minReplicas を調整する
+6. Knativeのtraffic splittingを使ってCanary deploymentを実装するには、どうしますか？
+   - A) Deploymentのreplica数を調整する
+   - B) Knative Serviceのspec.trafficでRevisionごとのtraffic割合を指定する
+   - C) Istio VirtualServiceを手動で作成する
+   - D) HPAのminReplicasを調整する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Knative Service の spec.traffic で Revision ごとのトラフィック比率を指定する**
+**正解: B) Knative Serviceのspec.trafficでRevisionごとのtraffic割合を指定する**
 
 **解説:**
-Knative Service の `spec.traffic` フィールドでは、Revision ごとのトラフィック比率を指定できます。たとえば、canary deployment では既存の Revision に 90%、新しい Revision に 10% を割り当てます。最新の Revision を参照するには `@latest` を使用するか、Revision 名を直接指定します。
+spec.trafficには、revisionNameを指定したtargetか、latestRevision: trueとtraffic割合を設定します。`@latest`はkn CLIの省略表記であり、revisionNameの値や「最新」を意味するAPI tagではありません。参照するRevisionは存在し、readyである必要があります。routeのreconcileは全体へ即時反映されるわけではなく、既存requestが古いRevisionで処理され続ける場合もあります。
 
 </details>
 
 ---
 
-7. Knative における Dead Letter Sink の目的は何ですか？
-   - A) 削除された Knative Service をアーカイブする
-   - B) イベント損失を防ぐため、失敗したイベントを別の送信先に送る
-   - C) 期限切れの Revision をクリーンアップする
-   - D) debug logs を保存する
+7. KnativeのDead Letter Sinkの目的は何ですか？
+   - A) 削除されたKnative Serviceをarchiveする
+   - B) subscriberへのdeliveryに失敗したとき、設定済みの別destinationへのdeliveryを試みる
+   - C) 期限切れのRevisionを削除する
+   - D) debug logを保存する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) イベント損失を防ぐため、失敗したイベントを別の送信先に送る**
+**正解: B) subscriberへのdeliveryに失敗したとき、設定済みの別destinationへのdeliveryを試みる**
 
 **解説:**
-Dead Letter Sink は、再試行後に配信が失敗した場合、イベントを指定された送信先（別の Knative Service、Kubernetes Service など）に転送します。これによりイベント損失を防ぎ、失敗したイベントの分析や再処理が可能になります。
+delivery policyに従ってsubscriberへeventを届けられない場合、設定済みのDLSが代替destinationとして使われます。DLSへのdeliveryも失敗する場合があります。eventの保持と永続化が成功するかはtransportとhandler次第です。意図したstorageまたは処理が成功した後にacknowledgeし、必要に応じてCloudEventのsourceとidを使って重複を排除してください。
 
 </details>
 
 ---
 
-8. Knative Serving で cold start を最小限に抑える最も効果的な方法は何ですか？
-   - A) コンテナイメージサイズを無限に小さくする
-   - B) `minScale` annotation で最小インスタンス数を維持し、高速起動 framework の軽量イメージを使用する
-   - C) Scale-to-Zero を完全に無効化する
-   - D) Node 数を常に最大に保つ
+8. 明示的なwarm capacityの方針を保ちながらcold-start latencyを下げる組み合わせはどれですか？
+   - A) container imageのsizeを際限なく小さくする
+   - B) `minScale` annotationでminimum instance数を保ち、高速起動するframeworkと軽量imageを使う
+   - C) Scale-to-Zeroを完全に無効にする
+   - D) Node数を常に最大にする
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) `minScale` annotation で最小インスタンス数を維持し、高速起動 framework の軽量イメージを使用する**
+**正解: B) `minScale` annotationでminimum instance数を保ち、高速起動するframeworkと軽量imageを使う**
 
 **解説:**
-`autoscaling.knative.dev/min-scale` を 1 以上に設定すると cold start を防げます。これを軽量ベースイメージ（distroless、alpine）、GraalVM Native Image のような高速起動 framework、`initialScale` 設定と組み合わせることで、cold start のレイテンシーを最小化できます。
+autoscaling.knative.dev/min-scaleを正の値にすると、通常のidle期間でもbaseline capacityを維持できます。一方、initial-scaleはRevision作成時の初期replica数に適用されます。image size、Nodeの利用可否、image cache、startup、readinessの挙動はいずれもlatencyに影響します。新しいRevision、restart、warm baselineを超えるscale-outではcold startが起こり得るため、発生しないと約束せず、実際のtrafficで測定してください。
 
 </details>

@@ -40,7 +40,7 @@ else
 fi
 ```
 
-명령이 성공 종료해도 warning을 검토합니다. 정상 control-plane check가 애플리케이션 SLO나 Region failover를 입증하지는 않습니다.
+명령이 성공적으로 종료되어도 warning을 검토합니다. 정상 control-plane check가 애플리케이션 SLO나 Region failover를 입증하지는 않습니다.
 
 ## 리소스 할당
 
@@ -297,7 +297,7 @@ ServiceProfile route timeout은 deadline이며 connection pool 설정이 아닙�
 
 ## 근거에 따른 문제 해결
 
-Injection 문제는 namespace와 실제 Pod template/Pod metadata, 두 container 유형, webhook 설정, injector log를 확인합니다.
+Injection 문제를 조사할 때는 namespace와 실제 Pod template/Pod metadata, 두 container 유형, webhook 설정, injector log를 확인합니다.
 
 ```bash
 kubectl get namespace my-app -o yaml
@@ -314,7 +314,7 @@ kubectl get mutatingwebhookconfiguration linkerd-proxy-injector-webhook-config
 kubectl -n linkerd logs deployment/linkerd-proxy-injector -c proxy-injector --tail=100
 ```
 
-지연이나 불안정은 애플리케이션 동작, resource pressure, Pending Pod, endpoint, DNS, protocol detection, 인증서/정책 오류를 비교합니다. Timeout 증가나 control plane 전체 재시작은 진단이 아닙니다.
+지연이나 불안정을 조사할 때는 애플리케이션 동작, resource pressure, Pending Pod, endpoint, DNS, protocol detection, 인증서/정책 오류를 비교합니다. Timeout 증가나 control plane 전체 재시작은 진단이 아닙니다.
 
 ```bash
 linkerd check

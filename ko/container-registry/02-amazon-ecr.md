@@ -6,7 +6,7 @@
 
 Amazon Elastic Container Registry(ECR)는 AWS에서 제공하는 완전관리형 컨테이너 레지스트리 서비스입니다. Docker 이미지, OCI 이미지 및 OCI 호환 아티팩트를 저장, 관리, 배포할 수 있으며, AWS IAM과 통합되어 세밀한 접근 제어가 가능합니다.
 
-이후 CLI/CDK/IAM/lifecycle 예제는 별도 표시가 없으면 ECR Private 기준입니다. 서로 다른 구성 대안이므로 같은 이름의 리포지터리를 중복 생성하지 말고 사용할 방식을 선택합니다. 조회·스캔 예제에는 해당 리포지터리와 이미지 태그가 먼저 존재해야 합니다. AWS 자격 증명을 구성하고 예시 계정 ID·리소스 이름을 실제 값으로 바꿉니다.
+이후 CLI/CDK/IAM/lifecycle 예제는 별도 표시가 없으면 ECR Private 기준입니다. 서로 다른 구성 대안이므로 같은 이름의 리포지터리를 중복 생성하지 말고 사용할 방식을 선택합니다. 조회·스캔 예제를 실행하려면 해당 리포지터리와 이미지 태그가 먼저 존재해야 합니다. AWS 자격 증명을 구성하고 예시 계정 ID·리소스 이름을 실제 값으로 바꿉니다.
 
 ```bash
 export AWS_REGION=ap-northeast-2
@@ -487,7 +487,7 @@ myapp-prod/          myapp-dev/
 
 **개발 리포지토리 (myapp-dev) Lifecycle Policy:**
 
-이 예제는 나이 기준 보존만 적용합니다. 60일보다 오래된 tagged 이미지는 모두 만료될 수 있으며, 다른 count 규칙을 아래에 추가한다고 최소 30개가 보호되지 않습니다. 실행 중인 digest와 롤백 이미지의 별도 보호 정책이 필요합니다.
+이 예제는 이미지의 경과 시간 기준 보존만 적용합니다. 60일보다 오래된 tagged 이미지는 모두 만료될 수 있으며, 다른 count 규칙을 아래에 추가해도 최소 30개가 보호되는 것은 아닙니다. 실행 중인 digest와 롤백 이미지의 별도 보호 정책이 필요합니다.
 
 ```json
 {
@@ -947,7 +947,7 @@ kubectl create secret generic ecr-secret \
   kubectl apply --server-side --field-manager=ecr-credentials-sync -f -
 ```
 
-이 스크립트를 CronJob에 넣으려면 세 도구가 실제 포함된 검증된 이미지, `ecr:GetAuthorizationToken`을 호출할 IAM 자격 증명, 대상 Secret의 get/create/patch 권한, 12시간보다 짧은 갱신 주기와 실패 알림을 별도로 준비합니다. `amazon/aws-cli` 이미지에 kubectl이 있다고 가정하면 안 됩니다. 회전 작업 자신의 이미지를 만료될 동일 Secret에 의존시키지 않습니다. 기존 Secret의 필드 관리 충돌도 확인하며 `--force-conflicts`로 다른 컨트롤러를 덮어쓰지 않습니다.
+이 스크립트를 CronJob에 넣으려면 세 도구가 실제 포함된 검증된 이미지, `ecr:GetAuthorizationToken`을 호출할 IAM 자격 증명, 대상 Secret의 get/create/patch 권한, 12시간보다 짧은 갱신 주기와 실패 알림을 별도로 준비합니다. `amazon/aws-cli` 이미지에 kubectl이 있다고 가정하면 안 됩니다. 회전 작업 자체의 이미지가 만료될 동일 Secret에 의존하지 않도록 합니다. 기존 Secret의 필드 관리 충돌도 확인하며 `--force-conflicts`로 다른 컨트롤러를 덮어쓰지 않습니다.
 
 ### Private Endpoint 접근
 

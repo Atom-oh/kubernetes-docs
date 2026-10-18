@@ -430,7 +430,7 @@ WantedBy=multi-user.target
 
 ### systemd Resource Limits
 
-The commands below assume the training unit above was saved and daemon-reload completed in the lab VM. Do not apply these teaching limits to production kubelet/containerd.
+The commands below assume the training unit above was saved and daemon-reload was completed in the lab VM. Do not apply these teaching limits to production kubelet/containerd.
 
 ```bash
 # CPU limit (20%)
@@ -495,7 +495,7 @@ sudo sysctl --system
 
 ### Kernel Module Management
 
-Modules depend on the runtime/CNI/storage choice. IPVS mode is deprecated since Kubernetes 1.35; the IPVS commands below are for existing IPVS clusters only. Do not preload every listed module on new clusters.
+Modules depend on the runtime/CNI/storage choice. IPVS mode has been deprecated since Kubernetes 1.35; the IPVS commands below are for existing IPVS clusters only. Do not preload every listed module on new clusters.
 
 ```bash
 # Load modules

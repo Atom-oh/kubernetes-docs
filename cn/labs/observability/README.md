@@ -13,8 +13,8 @@
 <span id="service-call-flow"></span>
 
 > **难度**: 高级
-> **最后更新**: September 13, 2026
-连接一个可运行的合成订单应用程序及其指标/日志/追踪，覆盖两个 EKS 集群。基线采用 Prometheus、Loki、Tempo 和 Grafana，并使用 AWS SNS/SQS、Aurora 和 CloudWatch。实验配置不同于生产环境的 HA/容量验证。
+> **最后更新**: 2026 年 9 月 13 日
+连接一个可运行的模拟订单应用程序及其指标/日志/追踪，覆盖两个 EKS 集群。基线采用 Prometheus、Loki、Tempo 和 Grafana，并使用 AWS SNS/SQS、Aurora 和 CloudWatch。实验配置不同于生产环境的 HA/容量验证。
 
 ![管理/服务职责及身份验证边界](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
@@ -30,11 +30,11 @@
 | eksctl / Helm | 0.229.0 / 3.21.3 |
 | Python / AWS CLI | 3.12 / v2 |
 | k6 / Locust | 2.2.0 / 2.46.5 |
-| 应用程序 / 控制器 | 示例中固定的要求、镜像摘要和 Chart 版本 |
+| 应用程序 / 控制器 | 示例中锁定的依赖版本、镜像摘要和 Chart 版本 |
 
 ## 可运行代码和顺序 {#sequence}
 
-使用本仓库中的 [应用程序](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)、[堆栈](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)、[负载测试](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) 和 [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) 示例。固定使用已审核的 commit/tag，并保留私有的 LAB_STATE；请勿克隆旧的、不存在的示例仓库。
+使用本仓库中的 [应用程序](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)、[堆栈](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)、[负载测试](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) 和 [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) 示例。固定使用已审核的提交/标签，并保留私有的 LAB_STATE；请勿克隆旧的、不存在的示例仓库。
 
 ![从基础设施到追踪分析的六个阶段](../../.gitbook/assets/en-labs-observability-overview-2.png)
 
@@ -51,7 +51,7 @@
 
 ## 应用程序和数据流 {#application}
 
-一个 Python 镜像以独立的 api-gateway、order-service、payment-service、notification 和 analytics 角色运行。支付/通知均为合成操作，不会进行真实扣款/发送电子邮件/SMS。订单和 outbox 共享一个事务；独立队列和 event-ID 去重机制为 notification/analytics 提供服务。未实现或声称实现 Gateway 身份验证、通用速率限制和真实支付网关。
+一个 Python 镜像以独立的 api-gateway、order-service、payment-service、notification 和 analytics 角色运行。支付/通知均为模拟操作，不会进行真实扣款/发送电子邮件/短信。订单和 outbox 共享一个事务；独立队列和事件 ID 去重机制为 notification/analytics 提供服务。未实现或声称实现网关身份验证、通用速率限制和真实支付网关。
 
 ![HTTP、事务性 outbox 和独立消费者队列](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
@@ -71,12 +71,12 @@
 | OTel / Tempo | X-Ray、Dynatrace |
 | Grafana | Amazon Managed Grafana、商业工具 |
 | Alertmanager / SNS / 诊断 Lambda | 现有值班平台、CloudWatch Investigations 组 |
-| 合成事件消费者 | MWAA 调度/批量分析、生产事务系统 |
+| 模拟事件消费者 | MWAA 调度/批量分析、生产事务系统 |
 
 安装不同于已验证的数据摄取、查询、权限和成本。有关扩展，请参阅 [指标](../../observability/metrics/README.md)、[日志](../../observability/logging/README.md)、[追踪](../../observability/tracing/README.md) 和 [Grafana](../../observability/grafana/README.md) 指南。第 5 部分纳入了诸如 OnCall OSS 归档等变更。
 
 ## 成本、验证和清理 {#cost-and-cleanup}
 
-根据实际使用量估算特定 Region 的节点、NAT、EBS、Aurora ACU/存储/I/O、日志摄取/保留、消息、KMS、LB、传输和模型调用。请勿将按用户按月收费与按小时计费的基础设施混合为一个固定总额。单写入器/backend 实验并非生产级 HA；副本限制并不是绝对的支出上限。
+根据实际使用量估算特定区域的节点、NAT、EBS、Aurora ACU/存储/I/O、日志摄取/保留、消息、KMS、LB、传输和模型调用。请勿将按用户按月收费与按小时计费的基础设施混合为一个固定总额。采用单个数据库写入节点/单个后端实例的实验并非生产级 HA；副本限制并不是绝对的支出上限。
 
-区分本地原生/SDK/schema/浏览器验证与实际 AWS 结果。清查资源、IAM 附加项、快照、DNS 和 LB/PVC；按照第 6 部分的依赖顺序进行清理。不要抑制所有失败，也不要在其托管依赖项之前删除集群。
+区分本地原生/SDK/模式（schema）/浏览器验证与实际 AWS 结果。清查资源、IAM 附加项、快照、DNS 和 LB/PVC；按照第 6 部分的依赖顺序进行清理。不要抑制所有失败，也不要在其托管依赖项之前删除集群。

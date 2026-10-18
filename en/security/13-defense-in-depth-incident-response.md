@@ -43,7 +43,7 @@ The [WAF resource list][S09] and [GWLB documentation][S24] establish their scope
 
 ## 3. Inventory traffic first
 
-Use this threat-model template, fill actual principals, CIDRs and resource IDs, and mark unobserved paths as unverified.
+Use this threat-model template, fill in actual principals, CIDRs and resource IDs, and mark unobserved paths as unverified.
 
 | Flow | Entry or exit paths to investigate | Control and evidence |
 |---|---|---|
@@ -99,7 +99,7 @@ NIST SP 800-61r3 connects detection, response and recovery to broader risk manag
 6. **Demonstrate recovery**: Retest denied management access, legitimate business functions, benign blocking canaries, egress, AZ failure and log collection.
 7. **Improve**: Analyze causes, exposure duration, exceptions, detection delays and change permissions; update controls and playbooks.
 
-Fortinet recommends treating system/configuration as compromised when indicators are confirmed, restoring or auditing configuration and rotating connected credentials. Its persistence analysis also requires configuration review. [S05] [S07]
+Fortinet recommends treating the system/configuration as compromised when indicators are confirmed, restoring or auditing configuration and rotating connected credentials. Its persistence analysis also requires configuration review. [S05] [S07]
 
 ## 7. Adoption sequence and completion criteria
 

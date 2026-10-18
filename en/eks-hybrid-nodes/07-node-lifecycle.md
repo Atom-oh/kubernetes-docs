@@ -451,7 +451,7 @@ kubectl --context "$KUBE_CONTEXT" cordon "$NODE"
 kubectl --context "$KUBE_CONTEXT" drain "$NODE" --ignore-daemonsets --timeout=10m
 ```
 
-Only after drain succeeds, connect to the **mapped physical/virtual host**, verify its recorded identity and the reviewed nodeadm binary, and run the disruptive upgrade there. The NodeConfig must retain the existing credential provider. Do not skip node/pod/init validation as routine operation.
+Only after drain succeeds, connect to the **mapped physical/virtual host**, verify its recorded identity and the reviewed nodeadm binary, and run the disruptive upgrade there. The NodeConfig must retain the existing credential provider. Do not skip node/pod/init validation as a routine operation.
 
 ```bash
 set -euo pipefail
@@ -613,7 +613,7 @@ Read back and verify the intended anchor and test new credential issuance for a 
 
 ### Automated Health Check CronJob
 
-This observer runs the Node snapshot check from section2. It does **not** execute nodeadm on the hosts or validate their AWS credentials. Use a reviewed image containing Bash, kubectl and jq, compatible with the cluster and able to run as UID10001. The placeholder image must be replaced before deployment; no image or cluster execution was validated here. The monitoring namespace must already exist.
+This observer runs the Node snapshot check from section 2. It does **not** execute nodeadm on the hosts or validate their AWS credentials. Use a reviewed image containing Bash, kubectl and jq, compatible with the cluster and able to run as UID 10001. The placeholder image must be replaced before deployment; no image or cluster execution was validated here. The monitoring namespace must already exist.
 
 Create the ConfigMap manifest from the saved check-fleet.sh and approved expected-nodes.json. Then review/apply it together with the ServiceAccount/RBAC/CronJob below. The ClusterRole can list all Nodes; the label selector is a query filter, not an authorization boundary. Review namespace owners who can change the ConfigMap or run Pods with this ServiceAccount.
 

@@ -118,7 +118,7 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
     service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
 ```
-`aws-load-balancer-nlb-target-type`이 대상 유형을 선택합니다. `preserve_client_ip.enabled`는 대상 유형이 아니라 소스 IP 동작을 바꿉니다. 교차 영역 로드 밸런싱은 용량·가용성·비용을 함께 판단하며 영역별 대상과 장애 동작을 확인해야 합니다. Proxy Protocol v2는 이를 해석하는 백엔드가 필요하므로 일반 HTTP 서버에 무조건 켜면 요청이 실패할 수 있습니다.
+`aws-load-balancer-nlb-target-type`이 대상 유형을 선택합니다. `preserve_client_ip.enabled`는 대상 유형이 아니라 소스 IP 동작을 바꿉니다. 교차 영역 로드 밸런싱을 구성할 때는 용량·가용성·비용을 함께 판단하며 영역별 대상과 장애 동작을 확인해야 합니다. Proxy Protocol v2는 이를 해석하는 백엔드가 필요하므로 일반 HTTP 서버에 무조건 켜면 요청이 실패할 수 있습니다.
 
 ### Application Load Balancer(ALB)
 
@@ -208,7 +208,7 @@ metadata:
 
 ## 네트워크 정책
 
-NetworkPolicy는 적용 엔진이 활성화된 경우 선택한 Pod와 방향의 L3/L4 통신을 제어합니다. 지원되는 EC2/Linux 환경의 Amazon VPC CNI는 네이티브 네트워크 정책을 지원하므로 다른 CNI 설치가 필수는 아닙니다. 정확한 add-on 버전, 커널·컴퓨팅 제약, standard/strict 모드와 관리되는 Pod 요건은 [AWS 안내](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)를 확인하세요.
+NetworkPolicy는 적용 엔진이 활성화된 경우 선택한 Pod와 통신 방향에 대한 L3/L4 통신을 제어합니다. 지원되는 EC2/Linux 환경의 Amazon VPC CNI는 네이티브 네트워크 정책을 지원하므로 다른 CNI 설치가 필수는 아닙니다. 정확한 add-on 버전, 커널·컴퓨팅 제약, standard/strict 모드와 관리되는 Pod 요건은 [AWS 안내](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)를 확인하세요.
 
 <!-- Diagram repair pending: see batch report.
 ![외부 트래픽 제한, Pod 간 통신 허용, 이그레스 제한, 네임스페이스 격리라는 네 가지 네트워크 정책이 외부 서비스에서 프론트엔드 Pod로, 프론트엔드에서 백엔드 Pod로(TCP 80), 백엔드에서 데이터베이스 Pod로(TCP 5432), 백엔드에서 외부 HTTPS(443)로 향하는 트래픽을 각각 어떻게 제어하는지 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-4.png)
@@ -226,7 +226,7 @@ Calico는 대안 정책 엔진입니다. VPC CNI와 함께 사용할 때는 `cni
 
 ### 기본 네트워크 정책
 
-해당 방향을 선택하는 NetworkPolicy가 없으면 Pod는 그 방향에 대해 비격리 상태이지만 경로·보안 그룹 등 다른 제어는 적용됩니다. Ingress와 Egress 격리는 별개이며 일치하는 정책의 허용 규칙은 합집합입니다. 양쪽이 격리된 연결은 소스 egress와 대상 ingress 모두 허용해야 하며 응답 트래픽은 암묵적으로 허용됩니다. 아래 정책은 대안 예제이며 순서대로 누적 적용하여 더 제한하는 구성이 아닙니다. 네임스페이스 전체 ingress 허용을 함께 적용하면 뒤의 frontend 전용 정책이 의도한 제한이 완화됩니다.
+해당 방향을 선택하는 NetworkPolicy가 없으면 Pod는 그 방향에 대해 비격리 상태이지만 경로·보안 그룹 등 다른 제어는 적용됩니다. Ingress와 Egress 격리는 별개이며 일치하는 정책의 허용 규칙은 합집합입니다. 양쪽이 격리된 연결은 소스 egress와 대상 ingress를 모두 허용해야 하며 응답 트래픽은 암묵적으로 허용됩니다. 아래 정책은 대안 예제이며 순서대로 누적 적용하여 더 제한하는 구성이 아닙니다. 네임스페이스 전체 ingress 허용을 함께 적용하면 뒤의 frontend 전용 정책이 의도한 제한이 완화됩니다.
 
 ### 네임스페이스 격리 정책
 

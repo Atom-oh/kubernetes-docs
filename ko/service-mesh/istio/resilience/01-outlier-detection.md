@@ -30,7 +30,7 @@ Outlier detection은 관측 프록시별 passive 검사입니다. HTTP를 볼 �
 
 ### Outlier Detection 프로세스
 
-성공하면 해당 연속 오류 카운트가 초기화됩니다. 임계치에 도달한 실패는 `interval`을 기다리지 않고 즉시 ejection을 유발할 수 있습니다. 반복 제외 시 base 기간×배수로 길어지며 Envoy 상한을 따릅니다. 고정30초 probe나 지수 두 배 증가가 아닙니다.
+성공하면 해당 연속 오류 카운트가 초기화됩니다. 임계치에 도달한 실패는 `interval`을 기다리지 않고 즉시 ejection을 유발할 수 있습니다. 반복 제외 시 제외 기간이 base 기간×배수로 길어지며 Envoy 상한을 따릅니다. 고정30초 probe나 지수 두 배 증가가 아닙니다.
 
 
 ### 감지 방식
@@ -219,7 +219,7 @@ Envoy 통계적 성공률 감지는 최소 host/요청량·편차 조건을 사�
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-2.html)
 
-HTTP를 분석하는 다음 외부 API 예제는 애플리케이션이 **HTTP80**으로 호출하고 사이드카가 target443으로 TLS를 시작해야 합니다. SNI/SAN을 지정하고 프록시 OS 신뢰 저장소를 사용하며 사설 CA에는 적절한 CA bundle을 마운트합니다. 앱→사이드카는 평문이므로 그 홉도 암호화해야 하는 요구에는 맞지 않습니다. 앱이 HTTPS를 시작한다면 SIMPLE로 다시 암호화하지 않는 passthrough를 사용하며 Envoy에는 HTTP 상태·지연·HTTP retry가 아닌 전송 실패만 보입니다. 자격 증명을 전송하기 전에 등록·라우팅·인증서 검증을 확인합니다. 아래 host/IP는 생성된 서비스가 아닌 예시이므로 권한 있는 endpoint로 바꿉니다.
+HTTP를 분석하는 다음 외부 API 예제는 애플리케이션이 **HTTP80**으로 호출하고 사이드카가 target443으로 TLS를 시작해야 합니다. SNI/SAN을 지정하고 프록시 OS 신뢰 저장소를 사용하며 사설 CA에는 적절한 CA bundle을 마운트합니다. 앱→사이드카는 평문이므로 그 홉도 암호화해야 한다는 요구에는 맞지 않습니다. 앱이 HTTPS를 시작한다면 SIMPLE로 다시 암호화하지 않는 passthrough를 사용하며 Envoy에는 HTTP 상태·지연·HTTP retry가 아닌 전송 실패만 보입니다. 자격 증명을 전송하기 전에 등록·라우팅·인증서 검증을 확인합니다. 아래 host/IP는 생성된 서비스가 아닌 예시이므로 권한 있는 endpoint로 바꿉니다.
 
 ### 예제 1: 단일 외부 API (DNS 기반)
 
@@ -565,7 +565,7 @@ spec:
         - maps.googleapis.com
 ```
 
-Geocoding 예제는 매칭된 멱등 읽기만 재시도합니다. HTTP80 경로로 호출해야 프록시가 메서드를 볼 수 있으며 HTTPS passthrough에는 HTTP 정책이 적용되지 않습니다. 전체5초에서 각 시도가2초를 쓰면 최초+재시도3회가 모두 들어가지 않습니다.
+Geocoding 예제는 매칭된 멱등 읽기만 재시도합니다. HTTP80 경로로 호출해야 프록시가 메서드를 볼 수 있으며 HTTPS passthrough에는 HTTP 정책이 적용되지 않습니다. 전체 5초 안에 각 시도가 2초를 쓰면 최초 시도+재시도 3회를 모두 수행할 수 없습니다.
 
 ### 예제 5: 외부 서비스 with Rate Limiting
 
@@ -795,7 +795,7 @@ histogram_quantile(0.95,
 
 #### 4. 알림 설정
 
-Kubernetes 리소스가 아닌 Prometheus rule-file 조각입니다. Prometheus에 마운트·선택하거나 groups를 선택된 PrometheusRule로 감쌉니다. 임계치에는 최소 트래픽·no-data·scrape 상태 처리가 필요하며 검증된 SLO가 아닙니다. 지연은 밀리초, rate는 초당 값입니다.
+Kubernetes 리소스가 아닌 Prometheus rule-file 조각입니다. Prometheus에 마운트·선택하거나 groups를 선택된 PrometheusRule로 감쌉니다. 임계치 적용에는 최소 트래픽·no-data·scrape 상태 처리가 필요하며 이 임계치는 검증된 SLO가 아닙니다. 지연은 밀리초, rate는 초당 값입니다.
 
 
 ```yaml
@@ -974,7 +974,7 @@ spec:
 
 **해석**:
 
-세 endpoint는 하나의 pool입니다. `tier: primary/secondary/tertiary` 레이블은 장애조치 우선순위가 아니며 정상 분산은 어느 후보든 선택할 수 있습니다. 실패 endpoint를 해당 프록시에서 제외하고 다른 후보를 고를 수 있지만 전체 외부 서비스 장애를 라우팅으로 고칠 수는 없습니다. `minHealthPercent: 0`은 비정상 host까지 쓰는 panic 동작을 끄며 비율 한도가 정상 endpoint 하나를 보장하지 않습니다. 순차 장애조치가 필요하면 locality priority나 앱/provider failover를 명시적으로 설계합니다. 문서용 IP는 연결 시험 전에 바꿔야 합니다.
+세 endpoint는 하나의 pool입니다. `tier: primary/secondary/tertiary` 레이블은 장애조치 우선순위가 아니며 정상적인 부하 분산에서는 어느 후보든 선택할 수 있습니다. 실패 endpoint를 해당 프록시에서 제외하고 다른 후보를 고를 수 있지만 전체 외부 서비스 장애를 라우팅으로 고칠 수는 없습니다. `minHealthPercent: 0`은 비정상 host까지 쓰는 panic 동작을 끄며 비율 한도가 정상 endpoint 하나를 보장하지 않습니다. 순차 장애조치가 필요하면 locality priority나 앱/provider failover를 명시적으로 설계합니다. 문서용 IP는 연결 시험 전에 바꿔야 합니다.
 
 ## 실전 예제
 
@@ -1059,7 +1059,7 @@ spec:
         minHealthPercent: 0
 ```
 
-v2 endpoint 전체를 제외해도 route의10%가 v1으로 이동하지 않습니다. 빈 canary subset으로 선택된 요청은 실패할 수 있으며 rollout controller가 상태를 보고 가중치·rollback을 바꿔야 합니다. 실제 workload 레이블도 두 subset과 일치해야 합니다.
+v2 endpoint 전체를 제외해도 route의10%가 v1으로 이동하지 않습니다. 빈 canary subset이 선택된 요청은 실패할 수 있으며 rollout controller가 상태를 보고 가중치·rollback을 바꿔야 합니다. 실제 workload 레이블도 두 subset과 일치해야 합니다.
 
 ### 예제 3: 다중 리전 배포
 
@@ -1358,7 +1358,7 @@ trafficPolicy:
 
 ### 4. 단계적 롤아웃
 
-Baseline과 실제 mesh/namespace/workload 정책을 확인하고 격리된 실습 대상에 측정한 설정을 적용한 뒤 검증 후 확대합니다. `maxEjectionPercent: 0`을 관찰 전용 switch로 쓰지 않습니다. [Istio1.31 구현](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)은0보다 큰 값만 Envoy 필드에 지정하므로0은 제외를 끄지 않고 Envoy 기본값을 남깁니다. 생략한 값은 mesh 기본 정책을 상속할 수도 있습니다. 범위 확대 전에 실제 강제 제외·남은 endpoint를 관찰합니다.
+Baseline과 실제 mesh/namespace/workload 정책을 확인하고 격리된 실습 대상에 측정한 설정을 적용한 뒤 검증하고 확대합니다. `maxEjectionPercent: 0`을 관찰 전용 switch로 쓰지 않습니다. [Istio1.31 구현](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)은0보다 큰 값만 Envoy 필드에 지정하므로0은 제외를 끄지 않고 Envoy 기본값을 남깁니다. 생략한 값은 mesh 기본 정책을 상속할 수도 있습니다. 범위 확대 전에 실제 강제 제외·남은 endpoint를 관찰합니다.
 
 ### 5. 모니터링 및 알림
 

@@ -1,50 +1,23 @@
 # Duplicación de tráfico
 
-Traffic Mirroring (o Shadow Traffic) es una técnica que replica el tráfico de producción en tiempo real para probar nuevas versiones.
+Traffic Mirroring (o Shadow Traffic) es una técnica que replica en tiempo real el tráfico de producción para probar nuevas versiones.
 
 ## Tabla de contenido
 
 1. [Descripción general de Traffic Mirroring](#traffic-mirroring-overview)
 2. [Configuración básica](#basic-configuration)
 3. [Duplicación parcial](#partial-mirroring)
-4. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#basic-configuration)
-5. [Mejores prácticas (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#best-practices)
+4. [Buenas prácticas](#best-practices)
 
-<span id="traffic-mirroring-overview"></span>
+## Descripción general de Traffic Mirroring {#traffic-mirroring-overview}
 
-## Descripción general de Traffic Mirroring
+![Un cliente envía una solicitud que responde la Versión 1 en la ruta activa; la misma solicitud se replica a la Versión 2 como copia sombra, cuya respuesta se descarta y nunca llega al cliente.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.png)
 
-```mermaid
-flowchart LR
-    Client[Client]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.html)
 
-    subgraph Production["Production"]
-        V1[Version 1<br/>Actual Response]
-    end
+## Configuración básica {#basic-configuration}
 
-    subgraph Shadow["Shadow (Mirror)"]
-        V2[Version 2<br/>Response Ignored]
-    end
-
-    Client -->|Request| V1
-    V1 -->|Response| Client
-    Client -.->|Replicate| V2
-    V2 -.->|Ignored| Client
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef production fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef shadow fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class V1 production;
-    class V2 shadow;
-```
-
-<span id="basic-configuration"></span>
-
-## Configuración básica
+Estos ejemplos de sidecar requieren un Service `reviews` y subconjuntos `v1`/`v2` de DestinationRule que coincidan con las etiquetas de los Pods. Aplique una sola configuración alternativa de VirtualService para este host a la vez. El espejo no recibe una parte del peso de la ruta principal: recibe una copia adicional.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -67,9 +40,7 @@ spec:
       value: 100  # 100% mirroring
 ```
 
-<span id="partial-mirroring"></span>
-
-## Duplicación parcial
+## Duplicación parcial {#partial-mirroring}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -90,6 +61,13 @@ spec:
     mirrorPercentage:
       value: 10  # Mirror only 10%
 ```
+
+## Buenas prácticas {#best-practices}
+
+- Las respuestas duplicadas se descartan; esto no es una conmutación por error ni una comparación automática de respuestas.
+- Las escrituras también se ejecutan en el destino sombra. Aísle sus bases de datos, colas y efectos secundarios externos antes de duplicar solicitudes de producción.
+- Comience con un porcentaje pequeño y supervise tanto la latencia principal como la capacidad del destino sombra. La duplicación agrega tráfico y costo de procesamiento.
+- De forma predeterminada, el Host/Authority duplicado recibe el sufijo `-shadow`; configure el servicio sombra para que lo acepte. Evalúe la API de enrutamiento de la versión seleccionada para los waypoints ambient.
 
 ## Referencias
 

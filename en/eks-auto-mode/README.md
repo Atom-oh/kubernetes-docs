@@ -13,7 +13,7 @@ EKS 1.37 became available on October 1, 2026. A newly created custom NodePool th
 
 On July 22, 2026, AWS announced that EKS Auto Mode and open-source Karpenter node pools support Elastic Fabric Adapter (EFA) network-device configuration and EC2 placement groups.
 
-On EFA-capable instances, network interfaces can be configured as EFA-only or standard ENI. EFA-only interfaces do not consume VPC IP addresses while still delivering full interconnect bandwidth. Node pool configuration can also specify cluster, spread or partition placement strategies. These options target distributed training and inference workloads that need high throughput or fault isolation. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/) for details.
+On EFA-capable instances, network interfaces can be configured as EFA-only interfaces or standard ENIs. EFA-only interfaces do not consume VPC IP addresses while still delivering full interconnect bandwidth. Node pool configuration can also specify cluster, spread or partition placement strategies. These options target distributed training and inference workloads that need high throughput or fault isolation. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/) for details.
 
 ### July 2026 Update: ARC Zonal Shift Support
 

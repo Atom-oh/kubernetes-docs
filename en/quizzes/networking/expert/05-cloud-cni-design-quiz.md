@@ -2,7 +2,7 @@
 
 [Workbook](../../../networking/expert/05-cloud-cni-design.md)
 
-1. DNS answers but TCP connection fails. What is the appropriate next step?
+1. DNS answers but the TCP connection fails. What is the appropriate next step?
 
    - A) Declare the backend healthy from DNS alone
    - B) Inspect actual target, port, routes, controls and listener

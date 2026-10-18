@@ -1,13 +1,13 @@
 # Cuestionario sobre infraestructura de IA en EKS
 
-15preguntas sobre las APIs actuales y los límites operativos.
+15 preguntas sobre las APIs actuales y los límites operativos.
 
 ## 1. ¿Qué es JARK y está completo automáticamente?
 
 <details>
 <summary>Respuesta y explicación</summary>
 
-Un patrón de integración de JupyterHub/Argo Workflows/Ray/Karpenter. Conecta explícitamente identidades, envíos, ejecución, ubicación de Pods, aprovisionamiento de nodos, almacenamiento y autorización.
+Es un patrón de integración de JupyterHub/Argo Workflows/Ray/Karpenter. Debes conectar explícitamente las identidades, el envío de trabajos, su ejecución, la ubicación de los Pods, el aprovisionamiento de nodos, el almacenamiento y la autorización.
 </details>
 
 ## 2. ¿Qué se debe configurar para usar JupyterHub con Cognito?
@@ -15,15 +15,15 @@ Un patrón de integración de JupyterHub/Argo Workflows/Ray/Karpenter. Conecta e
 <details>
 <summary>Respuesta y explicación</summary>
 
-URLs de callback/token/userInfo, scopes, claims de nombre de usuario estables y políticas de permiso. Lee el client secret desde un archivo preparado; configura MFA/federación por separado en el proveedor. Una autenticación correcta no implica acceso universal.
+Las URL de callback, de token y de userInfo; los scopes; las claims estables del nombre de usuario; y las políticas que autorizan el acceso. Lee el secreto del cliente desde un archivo preparado y configura MFA y la federación por separado en el proveedor. Autenticarse correctamente no concede acceso universal.
 </details>
 
-## 3. ¿Cuáles son los roles del head de Ray y de Karpenter?
+## 3. ¿Qué funciones cumplen el nodo head de Ray y Karpenter?
 
 <details>
 <summary>Respuesta y explicación</summary>
 
-GCS es Global Control Service; la planificación interactúa con los raylets. Un head que anuncia CPUs puede ejecutar trabajo. Karpenter aprovisiona nodos según la demanda de los Pods worker y el estado de planificación de Kubernetes.
+GCS significa Global Control Service; el planificador interactúa con los raylets. Un nodo head que anuncia CPU también puede ejecutar trabajo. Karpenter aprovisiona nodos según la demanda de los Pods de los workers y el estado de planificación de Kubernetes.
 </details>
 
 ## 4. ¿Cómo se deben comparar DRA y los device plugins?
@@ -31,7 +31,7 @@ GCS es Global Control Service; la planificación interactúa con los raylets. Un
 <details>
 <summary>Respuesta y explicación</summary>
 
-DRA ofrece solicitudes estructuradas, atributos y asignación mediante DeviceClass/ResourceSlice/ResourceClaim. Los device plugins también admiten MIG/time-slicing; no son universalmente de uso exclusivo. Las funcionalidades dependen de los drivers, el hardware y los gates.
+DRA ofrece solicitudes estructuradas, atributos y asignación mediante DeviceClass/ResourceSlice/ResourceClaim. Los complementos de dispositivos también admiten MIG y time-slicing; no se limitan siempre a la asignación exclusiva. Las funciones dependen de los controladores, el hardware y los feature gates.
 </details>
 
 ## 5. ¿Qué es importante sobre los perfiles MIG y el aislamiento?
@@ -39,7 +39,7 @@ DRA ofrece solicitudes estructuradas, atributos y asignación mediante DeviceCla
 <details>
 <summary>Respuesta y explicación</summary>
 
-3g.20gb describe un perfil, no tres dispositivos de20GB. MIG particiona el hardware pero no sustituye el aislamiento de host/driver/autorización. MPS y time-slicing no son límites de seguridad.
+3g.20gb describe un perfil, no tres dispositivos de 20 GB. MIG particiona el hardware, pero no sustituye el aislamiento del host, los controladores ni la autorización. MPS y time-slicing no son límites de seguridad.
 </details>
 
 ## 6. ¿Puede una sola versión del GPU Operator establecer todo el soporte de DRA?
@@ -47,7 +47,7 @@ DRA ofrece solicitudes estructuradas, atributos y asignación mediante DeviceCla
 <details>
 <summary>Respuesta y explicación</summary>
 
-No. Revisa las APIs de Kubernetes, los drivers/hardware/CDI y cada gate individual. GPUCluster del Operator26.7 es mutuamente excluyente con ClusterPolicy; standalone0.5 tiene una protección opt-in frente a colisiones con el device plugin.
+No. Revisa las API de Kubernetes, los controladores, el hardware, CDI y cada feature gate por separado. GPUCluster de GPU Operator 26.7 es mutuamente excluyente con ClusterPolicy; la versión standalone 0.5 tiene una protección opt-in contra conflictos con el complemento de dispositivos.
 </details>
 
 ## 7. ¿Qué se debe verificar al integrar Langfuse?
@@ -55,7 +55,7 @@ No. Revisa las APIs de Kubernetes, los drivers/hardware/CDI y cada gate individu
 <details>
 <summary>Respuesta y explicación</summary>
 
-Verifica las dependencias actuales de SDK/backend, la BD/ClickHouse/almacenamiento de objetos, las credenciales en archivos, el tracing y la retención de datos sensibles. Los Deployments antiguos2.x o las llamadas a trace() no son las APIs actuales4.x.
+Verifica las dependencias actuales del SDK y el backend, la base de datos, ClickHouse y el almacenamiento de objetos, las credenciales en archivos, el trazado y la retención de datos sensibles. Los Deployments antiguos de la versión 2.x o las llamadas a trace() no corresponden a las API actuales de la versión 4.x.
 </details>
 
 ## 8. ¿Cómo se deben elegir EFS, FSx y Mountpoint?
@@ -63,7 +63,7 @@ Verifica las dependencias actuales de SDK/backend, la BD/ClickHouse/almacenamien
 <details>
 <summary>Respuesta y explicación</summary>
 
-Compara E/S, autorización, alcance de namespace/PVC, capacidad y semántica del sistema de archivos. Las requests de EFS no son cuotas; Mountpoint CSI2.8 usa PVs estáticos para buckets existentes y no es totalmente POSIX.
+Compara la entrada/salida, la autorización, el alcance del espacio de nombres/PVC, la capacidad y la semántica del sistema de archivos. Las solicitudes de almacenamiento de EFS no son cuotas; Mountpoint CSI 2.8 usa PV estáticos para buckets existentes y no ofrece compatibilidad POSIX completa.
 </details>
 
 ## 9. ¿Cómo se deben interpretar el ancho de banda de EFA y el número de interfaces?
@@ -71,7 +71,7 @@ Compara E/S, autorización, alcance de namespace/PVC, capacidad y semántica del
 <details>
 <summary>Respuesta y explicación</summary>
 
-Distingue el ancho de banda agregado de la instancia de los valores por interfaz; no multipliques una cifra que ya es agregada. Verifica la ubicación en la misma AZ, las interfaces, los drivers/libfabric/NCCL, los security groups y los recursos del Pod. RAID0 no habilita EFA.
+Distingue el ancho de banda total de la instancia de los valores por interfaz; no multipliques una cifra que ya sea total. Verifica que las instancias estén en la misma AZ, así como las interfaces, los controladores, libfabric, NCCL, los grupos de seguridad y los recursos del Pod. RAID0 no habilita EFA.
 </details>
 
 ## 10. ¿Cómo se deben interpretar las métricas de memoria de GPU y XID?
@@ -79,7 +79,7 @@ Distingue el ancho de banda agregado de la instancia de los valores por interfaz
 <details>
 <summary>Respuesta y explicación</summary>
 
-FB_USED/FREE son gauges en MiB; una proporción alta no implica necesariamente OOM. XID_ERRORS es un gauge con el último código, no un contador para increase(). Investiga los errores reales, las cachés, los fallos de asignación y los límites propios del dispositivo.
+FB_USED/FREE son indicadores tipo gauge en MiB; una proporción alta no implica necesariamente un error de memoria agotada (OOM). XID_ERRORS es el indicador tipo gauge del último código, no un contador para increase(). Investiga los errores reales, las cachés, los fallos de asignación y los límites específicos del dispositivo.
 </details>
 
 ## 11. ¿La consolidación de Karpenter usa directamente métricas de utilización de GPU?
@@ -87,7 +87,7 @@ FB_USED/FREE son gauges en MiB; una proporción alta no implica necesariamente O
 <details>
 <summary>Respuesta y explicación</summary>
 
-Usa las requests de las cargas de trabajo, la viabilidad de planificación, los precios y las restricciones de disrupción, en lugar de un umbral del20% de DCGM. Los limits/budgets no son garantías absolutas de coste o de ausencia de fallos; verifica la terminación y la recuperación.
+Usa las solicitudes de recursos de las cargas de trabajo, la posibilidad de programarlas, los precios y las restricciones de interrupción, no un umbral de DCGM del 20 %. Los límites y presupuestos no garantizan un coste máximo ni que no haya fallos; verifica la terminación y la recuperación.
 </details>
 
 ## 12. ¿Quién publica los ResourceSlices y qué representan?
@@ -95,7 +95,7 @@ Usa las requests de las cargas de trabajo, la viabilidad de planificación, los 
 <details>
 <summary>Respuesta y explicación</summary>
 
-Los drivers publican el inventario real de dispositivos con atributos y capacidad tipados. Crear un slice arbitrario no crea GPUs. CEL y matchAttribute deben seguir el esquema realmente publicado.
+Los controladores publican el inventario real de dispositivos con atributos tipados y su capacidad. Crear un slice arbitrario no crea GPU. CEL y matchAttribute deben ajustarse al esquema publicado.
 </details>
 
 ## 13. ¿Solicitar una GPU para Milvus completa el RAG?
@@ -103,7 +103,7 @@ Los drivers publican el inventario real de dispositivos con atributos y capacida
 <details>
 <summary>Respuesta y explicación</summary>
 
-No. Haz coincidir las imágenes e índices admitidos, las dimensiones/revisiones de embeddings, las métricas y parámetros, el filtrado por tenant y el ciclo de vida de actualización/eliminación. Valida la autorización de los resultados y gestiona la ausencia de evidencia.
+No. Asegúrate de que coincidan las imágenes e índices admitidos, las dimensiones y revisiones de las incrustaciones, las métricas y los parámetros, el filtrado por inquilino y el ciclo de vida de actualización y eliminación. Valida la autorización de los resultados y gestiona la ausencia de evidencia.
 </details>
 
 ## 14. ¿Cómo se deben investigar los Pods de GPU pendientes y los fallos de nodo?
@@ -111,7 +111,7 @@ No. Haz coincidir las imágenes e índices admitidos, las dimensiones/revisiones
 <details>
 <summary>Respuesta y explicación</summary>
 
-Contar los Pods pendientes que solicitan GPU no diagnostica la causa. Revisa los eventos, PVCs, afinidad, taints, cuotas, claims e imágenes, y prueba el checkpoint/reanudación. Varios contenedores solicitantes cuentan una sola vez por Pod.
+No basta con contar los Pods pendientes que solicitan GPU para diagnosticar la causa. Revisa los eventos, los PVC, la afinidad, las taints, las cuotas, los claims y las imágenes, y prueba los puntos de control y la reanudación. Si varios contenedores de un Pod solicitan GPU, el Pod se cuenta una sola vez.
 </details>
 
 ## 15. ¿MCP proporciona un gateway estándar de autodescubrimiento para Kubernetes?
@@ -119,7 +119,7 @@ Contar los Pods pendientes que solicitan GPU no diagnostica la causa. Revisa los
 <details>
 <summary>Respuesta y explicación</summary>
 
-No. Define operaciones como el listado y la invocación de herramientas. Elige una release real de servidor/gateway, el transporte y el diseño de autorización. Inventar imágenes/labels/configuración o una variable de entorno con una URL no implementa el descubrimiento ni la ejecución.
+No. Define operaciones como listar y llamar herramientas. Elige una versión publicada del servidor o la pasarela, el transporte y el diseño de autorización. Inventar imágenes, etiquetas, configuración o una variable de entorno con una URL no implementa el autodescubrimiento ni la ejecución.
 </details>
 
 [Volver a la guía](../../ai-ml/06-ai-infrastructure.md)

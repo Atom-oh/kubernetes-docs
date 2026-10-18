@@ -169,7 +169,7 @@ spec:
 <details>
 <summary>Show answer</summary>
 
-This is the same template as the guide. readyWhen refers only to the Deployment itself; verify image, namespace and policies in the actual environment.
+This is the same template as in the guide. readyWhen refers only to the Deployment itself; verify image, namespace and policies in the actual environment.
 
 ```yaml
 resources:

@@ -198,10 +198,10 @@ metadata:
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-3.html)
 -->
 
-1. **Use ClusterIP for internal services**: Use ClusterIP type for services accessed only within the cluster.
-2. **Use LoadBalancer or Ingress for external services**: Use LoadBalancer type or Ingress resources for services that need external access.
+1. **Use ClusterIP for internal services**: Use the ClusterIP type for services accessed only within the cluster.
+2. **Use LoadBalancer or Ingress for external services**: Use the LoadBalancer type or Ingress resources for services that need external access.
 3. **Use ALB**: Use ALB when features like path-based routing, SSL termination, and authentication are needed.
-4. **Use NLB**: Use NLB when TCP/UDP traffic, high performance, and static IP are needed.
+4. **Use NLB**: Use NLB when TCP/UDP traffic, high performance, and a static IP are needed.
 5. **Use internal load balancers**: Use an internal load balancer for private routed clients, including connected VPCs/on-premises where allowed; ClusterIP is usually sufficient for in-cluster clients.
 6. **Enable cross-zone load balancing**: Evaluate cross-zone behavior against target capacity, zonal failure tests and transfer costs; enabling it alone does not guarantee high availability.
 7. **Select appropriate target type**: Choose `ip` target type to use pod IPs directly as targets, or `instance` target type to use node IPs as targets.
@@ -548,7 +548,7 @@ spec:
 
 ### QUIC/HTTP3 Support
 
-An ALB HTTPS listener does **not** automatically become HTTP/3. LBC 3.6.0 documents QUIC for **NLB UDP/TCP_UDP listeners** using `listenerConfigurations[].quicEnabled`. This requires IP targets and an NLB without attached security groups. The backend must terminate QUIC/HTTP3 itself. The following is a configuration component for a separate NLB Gateway with UDP:443 and UDPRoute; it is not an ALB configuration or a complete deployment. Plan target-side security and health checks before choosing the no-SG design.
+An ALB HTTPS listener does **not** automatically support HTTP/3. LBC 3.6.0 documents QUIC for **NLB UDP/TCP_UDP listeners** using `listenerConfigurations[].quicEnabled`. This requires IP targets and an NLB without attached security groups. The backend must terminate QUIC/HTTP3 itself. The following is a configuration component for a separate NLB Gateway with UDP:443 and UDPRoute; it is not an ALB configuration or a complete deployment. Plan target-side security and health checks before choosing the no-SG design.
 ```yaml
 apiVersion: gateway.k8s.aws/v1
 kind: LoadBalancerConfiguration

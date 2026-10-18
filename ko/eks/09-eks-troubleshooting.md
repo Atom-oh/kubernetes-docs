@@ -137,7 +137,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" \
   -c "$CONTAINER_NAME" --previous --tail=200 --timestamps=true
 ```
 
-`--previous`는 **동일 Pod**의 지정 컨테이너에서 이전에 종료된 인스턴스입니다. 삭제된 이전 Pod 로그를 조회하지 못하므로 보존 이력은 로그 백엔드를 사용합니다. 일반·init container 상태, readiness와 종료 이유를 함께 확인합니다.
+`--previous`는 **동일 Pod**의 지정 컨테이너에서 이전에 종료된 인스턴스의 로그를 조회합니다. 삭제된 이전 Pod 로그를 조회하지 못하므로 보존된 로그 이력은 로그 백엔드에서 확인합니다. 일반·init container 상태, readiness와 종료 이유를 함께 확인합니다.
 
 ### 진단 정보 수집
 
@@ -157,7 +157,7 @@ printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDE
 
 조회 실패 시 예제가 중단되며 기존 파일은 부분 근거입니다. 범위를 제한한 정보로 충분하면 무차별 `cluster-info dump`나 전체 Pod 상세 수집을 피하고 공유 전에 근거를 검토·마스킹합니다.
 
-리소스 압박은 requests·limits, 노드 allocatable과 Metrics Server가 있을 때의 `kubectl top`을 비교합니다. 접근 가능한 노드에서는 `df -h`와 `df -i`를 모두 확인합니다. 여유 바이트가 있어도 inode는 고갈될 수 있습니다. node debug Pod의 루트와 `/host`에 마운트된 호스트 루트는 다르므로 대상 경로 없는 `df -h`는 다른 파일시스템을 볼 수 있습니다. debug Pod 생성에는 namespace·이미지·profile·권한·정리 절차 검토가 필요합니다.
+리소스 압박을 확인하려면 requests·limits, 노드 allocatable과 Metrics Server가 있을 때의 `kubectl top`을 비교합니다. 접근 가능한 노드에서는 `df -h`와 `df -i`를 모두 확인합니다. 여유 바이트가 있어도 inode는 고갈될 수 있습니다. node debug Pod의 루트와 `/host`에 마운트된 호스트 루트는 다르므로 대상 경로 없는 `df -h`는 다른 파일시스템을 볼 수 있습니다. debug Pod 생성에는 namespace·이미지·profile·권한·정리 절차 검토가 필요합니다.
 
 네트워크 진단은 출발 Pod·namespace·node, 목적지·프로토콜·포트를 식별하고 적용 정책과 출발지 resolver부터 확인합니다. 새 debug Pod는 실제 워크로드와 레이블·identity·DNS·경로가 다를 수 있습니다. ICMP ping은 TCP·UDP 앱 접근을 증명하지 못합니다. 공통 이름·미고정 이미지의 `dnsutils`·`netshoot` Pod를 반복 생성하기보다 소유자를 통해 도구·정리를 준비하고 실제 허용 경로에서 제한된 검사를 수행합니다.
 
@@ -455,7 +455,7 @@ aws elbv2 describe-target-health --region "$AWS_REGION" \
   --target-group-arn "$TARGET_GROUP_ARN"
 ```
 
-`describe-load-balancer-attributes`는 속성이며 운영 상태는 `describe-load-balancers`에서 확인합니다. target health reason, health-check protocol·port·path, listener·rule 경로와 앱 응답을 확인합니다. instance target은 보통 node·NodePort, IP target은 Pod target port로 접근합니다. 보안 그룹은 실제 경로에 맞아야 합니다.
+`describe-load-balancer-attributes`는 속성을 조회하며 운영 상태는 `describe-load-balancers`에서 확인합니다. target health reason, health-check protocol·port·path, listener·rule 경로와 앱 응답을 확인합니다. instance target은 보통 node·NodePort, IP target은 Pod target port로 접근합니다. 보안 그룹은 실제 경로에 맞아야 합니다.
 
 자동 discovery에 사용하는 subnet role tag와 public·internal scheme, route table, IP 여유와 AZ를 확인합니다. 같은 서브넷에 public·private role tag를 모두 추가하는 것은 해결책이 아닙니다. 명시적 subnet 지정·controller 버전에 따라 tag 요구가 달라질 수 있습니다. health check 실패를 우회하려고 frontend·backend SG에 `0.0.0.0/0`을 열지 않습니다.
 
@@ -553,7 +553,7 @@ aws ec2 describe-instance-types --region "$AWS_REGION" --instance-types "$INSTAN
   --query 'InstanceTypes[].{Type:InstanceType,Network:NetworkInfo}'
 ```
 
-활성화된 IPAMD introspection은 노드에 설정된 endpoint(보통 loopback 61679)에서 제공합니다. 필요한 도구가 있는 허용된 node·agent 진단 방법을 사용합니다. CNI 이미지에 curl이 없다는 것은 IPAM 장애가 아닙니다.
+활성화된 IPAMD introspection은 노드에 설정된 endpoint(보통 loopback 61679)에서 제공됩니다. 필요한 도구가 있는 허용된 node·agent 진단 방법을 사용합니다. CNI 이미지에 curl이 없다는 것은 IPAM 장애가 아닙니다.
 
 #### 할당 제약 구분
 
@@ -685,9 +685,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
   "deployment/$DEPLOYMENT_NAME" --timeout=5m
 ```
 
-Secret은 Pod와 같은 namespace여야 합니다. strategic Pod-template patch는 이름 기준으로 pull-secret 항목을 병합하고 통제된 Deployment rollout을 시작합니다. 릴리스 소유권과 다른 설정을 보존합니다. 기존 Pod의 `imagePullSecrets`는 일반적으로 수정 가능한 필드가 아닙니다. ServiceAccount 기본값은 새로 승인되는 Pod에 적용되며 namespace의 default SA 변경은 무관한 워크로드에도 영향을 줄 수 있습니다. timer로 공유 Secret을 삭제·재생성하지 말고 자격 증명 소유자를 통해 만료를 관리합니다.
+Secret은 Pod와 같은 namespace에 있어야 합니다. strategic Pod-template patch는 이름 기준으로 pull-secret 항목을 병합하고 통제된 Deployment rollout을 시작합니다. 릴리스 소유권과 다른 설정을 보존합니다. 기존 Pod의 `imagePullSecrets`는 일반적으로 수정 가능한 필드가 아닙니다. ServiceAccount 기본값은 새로 승인되는 Pod에 적용되며 namespace의 default SA 변경은 무관한 워크로드에도 영향을 줄 수 있습니다. timer로 공유 Secret을 삭제·재생성하지 말고 자격 증명 소유자를 통해 만료를 관리합니다.
 
-다른 설정 오류도 컨트롤러의 선언 template에서 고치고 rollout·readiness를 관찰합니다. 적절한 컨트롤러가 있을 때만 Pod 삭제 후 재생성되며 삭제로 근거가 사라질 수 있습니다. debug `--copy-to`는 앱 부작용을 복제할 수 있으므로 라이브 앱에 패키지를 설치하기보다 권한·정리가 명시된 검토된 진단 방식·이미지를 사용합니다.
+다른 설정 오류도 컨트롤러의 선언 template에서 고치고 rollout·readiness를 관찰합니다. 적절한 컨트롤러가 있을 때만 Pod가 삭제 후 재생성되며 삭제로 근거가 사라질 수 있습니다. debug `--copy-to`는 앱 부작용을 복제할 수 있으므로 라이브 앱에 패키지를 설치하기보다 권한·정리가 명시된 검토된 진단 방식·이미지를 사용합니다.
 
 ### 리소스 제약 문제
 
@@ -698,7 +698,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
 kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-메트릭 명령은 Metrics Server와 정상 kubelet 접근이 필요합니다. 스케줄링은 현재 top 사용률이 아니라 requests·node allocatable을 사용합니다. 해당하는 init container, Pod overhead, ephemeral storage, extended resource와 Pod 수 한도를 포함합니다. namespace quota·LimitRange는 별도 제약입니다.
+메트릭 명령을 실행하려면 Metrics Server와 정상 kubelet 접근이 필요합니다. 스케줄링은 현재 top 사용률이 아니라 requests·node allocatable을 사용합니다. 해당하는 init container, Pod overhead, ephemeral storage, extended resource와 Pod 수 한도를 포함합니다. namespace quota·LimitRange는 별도 제약입니다.
 
 측정한 필요량이 뒷받침할 때만 requests를 줄입니다. memory request 감소는 Insufficient pods를 해결하거나 limit 내 동작을 보장하지 않습니다. limit 증가는 pressure를 node로 옮길 수 있습니다. 로그·cache 삭제 전에 disk·inode·image·filesystem 사용을 확인하고 장애 근거를 보존합니다.
 
@@ -1034,7 +1034,7 @@ reclaimPolicy: Retain
 
 기존 소유자를 통해 호환 CSI add-on과 실제 IRSA·Pod Identity·전체 설정을 구성합니다. `eksctl create iamserviceaccount --role-only`는 역할을 만들 뿐 add-on에 연결하지 않습니다. 강제 재설치 대신 조사한 add-on identity와 업데이트 절차를 사용합니다.
 
-Auto Mode 이전은 [EBS 가이드](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)의 snapshot 경로와 [Auto Mode 이전 가이드](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)의 workload 정지·Retain·static PV 경로가 문서화되어 있습니다. 선택 전에 적용 driver, tag·IAM, claim·finalizer 생명주기와 복구 계획을 검증합니다. bound claim의 provisioner 문자열 변경은 마이그레이션이 아닙니다. snapshot에는 CSI snapshot controller·CRD, 적절한 class·권한도 필요합니다.
+Auto Mode 이전에는 [EBS 가이드](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)의 snapshot 경로와 [Auto Mode 이전 가이드](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)의 workload 정지·Retain·static PV 경로가 문서화되어 있습니다. 선택 전에 적용 driver, tag·IAM, claim·finalizer 생명주기와 복구 계획을 검증합니다. bound claim의 provisioner 문자열 변경은 마이그레이션이 아닙니다. snapshot에는 CSI snapshot controller·CRD, 적절한 class·권한도 필요합니다.
 
 ### EFS 문제
 
@@ -1053,7 +1053,7 @@ aws efs describe-mount-target-security-groups --region "$AWS_REGION" \
   --mount-target-id "$MOUNT_TARGET_ID"
 ```
 
-실제 client network identity와 mount target 사이 TCP 2049, route·NACL·SG를 확인합니다. control-plane subnet에서 node subnet을 추정하지 않습니다. workload AZ·topology에 맞는 mount target을 사용하며 추가 생성은 별도 인프라 변경입니다.
+실제 client network identity와 mount target 사이의 TCP 2049, route·NACL·SG를 확인합니다. control-plane subnet에서 node subnet을 추정하지 않습니다. workload AZ·topology에 맞는 mount target을 사용하며 추가 생성은 별도 인프라 변경입니다.
 
 지원 EC2 환경은 설치된 EFS CSI controller·node plugin과 현재 호환 버전을 확인합니다. Fargate는 내장 EFS mount와 문서화된 static provisioning을 사용하며 현재 EKS 가이드는 Fargate node의 dynamic provisioning을 지원하지 않습니다. EFS CSI driver는 Windows container·EKS Hybrid Nodes를 지원하지 않습니다. 오래된 release-1.5 manifest를 무조건 설치하거나 관리형 add-on을 중복 설치하지 않습니다.
 
@@ -1102,7 +1102,7 @@ spec:
 
 static PV에는 검토한 claim의 `storageClassName: ""`와 의도한 volumeName을 지정하고 binding·claimRef 의미를 유지합니다. dynamic class와 혼용하여 filesystem root에 의도치 않게 binding하지 않습니다. 5Gi capacity는 Kubernetes binding metadata이며 EFS directory·filesystem의 강제 용량 한도가 아닙니다.
 
-mount 진단은 기존 Pod·CSI event·log부터 사용합니다. 진단 Pod는 claim과 같은 namespace, 호환 node·identity가 필요합니다. df 확인을 위해 앱 PVC를 read-write mount하면 writer를 추가할 수 있습니다. probe가 필요하면 검토한 read-only mount, 준비한 이미지, 제한된 수명과 소유권에 맞는 정리를 사용합니다. 무관한 EBS volume 생성·수동 device 연결을 storage “테스트”로 실행하지 않습니다.
+mount 진단에는 기존 Pod·CSI event·log부터 사용합니다. 진단 Pod는 claim과 같은 namespace, 호환 node·identity가 필요합니다. df 확인을 위해 앱 PVC를 read-write mount하면 writer를 추가할 수 있습니다. probe가 필요하면 검토한 read-only mount, 준비한 이미지, 제한된 수명과 소유권에 맞는 정리를 사용합니다. 무관한 EBS volume 생성·수동 device 연결을 storage “테스트”로 실행하지 않습니다.
 
 출처: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html), [EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html), [영구 볼륨](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/).
 
@@ -1131,7 +1131,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$COLLECTOR_NAMESPACE" logs "$COLLECTOR_POD
   -c "$COLLECTOR_CONTAINER" --since=15m --tail=200 --timestamps=true
 ```
 
-이름·레이블을 가정하지 말고 실제 collector의 namespace·Pod·container·설정·목적지를 사용합니다. input path·parser·filter, buffering·backpressure, filesystem 용량, timestamp, output error, DNS·TLS·endpoint·quota를 확인합니다. log group 부재는 미전송·다른 목적지·조회 권한 부족일 수 있으며 group 생성만으로 producer가 고쳐지지 않습니다.
+이름·레이블을 가정하지 말고 실제 collector의 namespace·Pod·container·설정·목적지를 사용합니다. input path·parser·filter, buffering·backpressure, filesystem 용량, timestamp, output error, DNS·TLS·endpoint·quota를 확인합니다. log group 부재의 원인은 미전송·다른 목적지·조회 권한 부족일 수 있으며 group 생성만으로 producer가 고쳐지지 않습니다.
 
 실제 IRSA·Pod Identity 등 지원 identity를 확인합니다. node policy·ServiceAccount annotation만으로 실제 사용하는 credentials를 증명하지 못합니다. CloudWatch Observability EKS add-on으로 설치한 경우 해당 identity·health를 확인합니다.
 
@@ -1306,7 +1306,7 @@ ss -s
 
 이를 실행하려고 운영 앱 container에 도구를 설치하지 않습니다. 준비된 진단 이미지·지원 node 접근을 사용하고 host 변경 전에 근거를 보존합니다.
 
-node 추가는 schedulable capacity에 도움이 되지만 instance별 network·ENI·EBS 한도를 바꾸지 않습니다. instance type은 지원 교체·launch-template 경로를 사용하며 `update-nodegroup-config --launch-template`는 유효한 명령이 아닙니다. 소유자 몰래 resize하지 말고 autoscaling·placement와 조율합니다.
+node 추가는 schedulable capacity에 도움이 되지만 instance별 network·ENI·EBS 한도를 바꾸지 않습니다. instance type 변경에는 지원 교체·launch-template 경로를 사용하며 `update-nodegroup-config --launch-template`는 유효한 명령이 아닙니다. 소유자 몰래 resize하지 말고 autoscaling·placement와 조율합니다.
 
 #### Kernel 설정
 
@@ -1347,7 +1347,7 @@ aws ec2 describe-volumes-modifications --region "$AWS_REGION" --volume-ids "$VOL
 
 ### 파드 성능과 메모리 문제
 
-container별 사용량·limit, restart·termination reason을 요청 부하와 연결합니다. OOMKilled는 container status에서 확인하며 Event reason 문자열에 없을 수 있습니다. node에 여유 메모리가 있어도 cgroup limit으로 OOM이 날 수 있습니다. cache 증가, allocator, burst, reachable retained object는 다른 조사이며 주기적 GC·node reboot는 일반 누수 해결책이 아닙니다.
+container별 사용량·limit, restart·termination reason을 요청 부하와 연결합니다. OOMKilled는 container status에서 확인하며 Event reason 문자열에 없을 수 있습니다. node에 여유 메모리가 있어도 cgroup limit으로 OOM이 날 수 있습니다. cache 증가, allocator, burst, reachable retained object는 각각 다른 조사가 필요하며 주기적 GC·node reboot는 일반 누수 해결책이 아닙니다.
 
 실제 runtime·version에 맞는 profiler를 검토한 절차로 대상 process에 연결합니다. node --inspect는 새 프로세스를 시작하며 기존 앱에 자동 연결하지 않습니다. JVM·Python·Go profiler에는 도구·symbol·code·endpoint 전제 조건이 있습니다. heap dump는 pause·disk 고갈·secret 노출을 일으킬 수 있으므로 수집을 제한하고 보호합니다. 이번 장 검토에서는 profile·benchmark를 실행하지 않았습니다.
 
@@ -1357,7 +1357,7 @@ container별 사용량·limit, restart·termination reason을 요청 부하와 �
 
 실제 CNI·policy·SG 경로, instance bandwidth·PPS·connection limit, MTU·DNS·placement를 확인합니다. MTU 9001 변경, ENA 활성화, launch-template 교체는 보편적인 라이브 수정이 아닙니다. platform·state 전제 조건과 소유 rollout을 따릅니다. Auto Mode는 이미 node DNS와 자체 network 설정을 제공합니다.
 
-계획한 테스트는 호환 client·server image, resource, node·AZ placement와 TCP 5201 허용을 분리된 범위에 준비합니다. image·version·방향·topology를 기록합니다. 아래는 원래 30초 시간을 유지하면서 단일 stream의 target bitrate를 제한한 예시입니다.
+계획한 테스트를 위해 호환 client·server image, resource, node·AZ placement와 TCP 5201 허용을 분리된 범위에 준비합니다. image·version·방향·topology를 기록합니다. 아래는 원래의 30초를 유지하면서 단일 stream의 target bitrate를 제한한 예시입니다.
 
 ```bash
 set -euo pipefail
@@ -1416,7 +1416,7 @@ aws eks describe-addon-versions --kubernetes-version "$TARGET_VERSION" --region 
 
 원래 manifest·Helm metadata, runtime API caller, insight와 admission·conversion webhook을 확인합니다. container image 목록이나 현재 반환된 객체의 apiVersion으로 제거된 API 호출 부재를 증명하지 못합니다. migration guide와 본문 upgrade 장의 검증된 Pluto 명령을 사용합니다. kubectl convert는 별도 plugin이지 보편적인 내장 migration·test가 아닙니다.
 
-현재 EKS 가이드에서 일반 upgrade insight의 force 강제는 일시 철회되었으며 ROLLBACK_READINESS 차단과 별개입니다. 이전 명령 timeout만으로 업그레이드를 재제출하지 않고, 시작한 일반 control-plane upgrade를 취소할 수 있다고 가정하지 않습니다.
+현재 EKS 가이드에서 일반 upgrade insight의 force 강제는 일시적으로 철회되었으며 ROLLBACK_READINESS 차단과 별개입니다. 이전 명령 timeout만으로 업그레이드를 재제출하지 않고, 시작한 일반 control-plane upgrade를 취소할 수 있다고 가정하지 않습니다.
 
 ### 노드 그룹·애드온 복구
 

@@ -49,7 +49,7 @@
 **정답: B) `Host` 헤더: SigV4에서 Host는 항상 서명 대상이므로, 서명할 때 쓴 Host 값과 실제 요청의 Host 헤더가 일치해야 한다**
 
 **설명:**
-SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain을 붙이면 클라이언트는 그 도메인으로 요청을 보내므로 그 값으로 서명해야 하는데, 서명 로직이 Lattice 생성 도메인을 쓰고 있으면 불일치가 발생합니다. 이 문제는 전환 초기가 아니라 custom domain을 붙이는 시점에 터지기 때문에 놓치기 쉽습니다. custom domain 도입은 SNI 통제, 서명 대상 Host, 인증서 관리를 함께 결정해야 하는 항목입니다.
+SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain을 붙이면 클라이언트는 그 도메인으로 요청을 보내므로 그 값으로 서명해야 하는데, 서명 로직이 Lattice 생성 도메인을 쓰고 있으면 불일치가 발생합니다. 이 문제는 전환 초기가 아니라 custom domain을 붙이는 시점에 터지기 때문에 놓치기 쉽습니다. custom domain 도입 시에는 SNI 통제, 서명 대상 Host, 인증서 관리를 함께 결정해야 합니다.
 </details>
 
 4. "특정 노드에 있는 Pod만 간헐적으로 403이 발생한다"면 가장 유력한 원인은?
@@ -65,7 +65,7 @@ SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain
 **정답: B) 그 노드의 시각 동기화 문제: `x-amz-date`는 서명 대상이며 SigV4의 허용 오차는 약 5분이다**
 
 **설명:**
-일반 AWS SigV4 안내는 대부분의 요청이 timestamp부터 5분 안에 도착해야 한다고 설명합니다. 실제 service 오류와 UTC 시계를 확인하며 별도 실측 Lattice 전용 보장으로 보지 않습니다.
+일반 AWS SigV4 안내는 대부분의 요청이 timestamp에 표시된 시각부터 5분 안에 도착해야 한다고 설명합니다. 실제 service 오류와 UTC 시계를 확인하며 별도로 실측한 Lattice 전용 보장으로 보지 않습니다.
 </details>
 
 5. 서명과 Lattice 검증 사이에서 무엇을 확인해야 합니까?
@@ -81,7 +81,7 @@ SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain
 **정답: B) Canonical 서명 필드 변경은 검증을 깨뜨릴 수 있으며 Lattice의 UNSIGNED-PAYLOAD 본문은 TLS/앱 제어로 보호한다**
 
 **설명:**
-서명한 Host/path/query 값은 실제 요청과 같아야 합니다. Canonical sorting 때문에 동등한 query 순서 변경은 반드시 변화가 아닙니다. Lattice는 payload signing을 지원하지 않으며 x-amz-content-sha256: UNSIGNED-PAYLOAD header가 필요합니다.
+서명한 Host/path/query 값은 실제 요청과 같아야 합니다. Canonical sorting 때문에 동등한 query 순서 변경이 반드시 서명 값의 변화를 의미하는 것은 아닙니다. Lattice는 payload signing을 지원하지 않으며 x-amz-content-sha256: UNSIGNED-PAYLOAD header가 필요합니다.
 </details>
 
 6. auth policy를 설정했는데도 클러스터 내부에서 인가가 적용되지 않는 경우의 원인은?

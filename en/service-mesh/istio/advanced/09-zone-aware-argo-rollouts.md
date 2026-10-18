@@ -710,7 +710,7 @@ spec:
 
 The numerator is specifically **HTTP 2xx**, preserving this guide's success definition. An all 5xx window produces 0, not an empty numerator; no traffic or missing data cannot pass the finite-value/volume gates. Source proxies and the provider must reach the configured Prometheus, and its actual labels must match these selectors.
 
-Sustain representative meshed traffic through `http://test.zone-rollouts-demo.svc.cluster.local:8080/color`. The caller label chooses its zone, and the controller chooses that zone's stable/canary weight. Five-minute warm-up exceeds the two-minute metric lookback; the twenty-request estimate and measurement counts are illustrative, not statistical confidence.
+Sustain representative meshed traffic through `http://test.zone-rollouts-demo.svc.cluster.local:8080/color`. The caller label chooses its zone, and the controller chooses that zone's stable/canary weight. A five-minute warm-up exceeds the two-minute metric lookback; the twenty-request estimate and measurement counts are illustrative, not measures of statistical confidence.
 
 ## Traffic Flow
 

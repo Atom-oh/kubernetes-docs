@@ -55,7 +55,7 @@ kubectl annotate notebook -n team-a analysis \
 kubectl annotate notebook -n team-a analysis kubeflow-resource-stopped-
 ```
 
-위 날짜는 annotation 값의 형식을 보여주는 예시입니다. 대상 네임스페이스·노트북을 바꿔 사용하고 작업을 저장한 뒤 실행하세요. Istio sidecar 주입은 admission webhook이 구성된 경우 수행하며 Notebook 컨트롤러가 직접 주입하지 않습니다.
+위 날짜는 annotation 값의 형식을 보여주는 예시입니다. 대상 네임스페이스·노트북을 바꿔 사용하고 작업을 저장한 뒤 실행하세요. Istio sidecar 주입은 admission webhook이 구성된 경우 수행되며 Notebook 컨트롤러가 직접 주입하지 않습니다.
 
 ## EKS에서의 노트북 GPU 스케줄링
 
@@ -67,7 +67,7 @@ Karpenter는 지원되는 Pending Pod와 NodePool 조건을 기준으로 용량�
 
 검토한 spawner 설정의 `allowCustomImage` 기본값은 `true`입니다. UI 목록 제한만으로 직접 Notebook API를 호출하는 사용자의 이미지 선택을 강제하지는 못합니다. 필요한 제약은 RBAC와 admission 정책에도 적용하세요.
 
-이미지는 서버 포트, `/notebook/<namespace>/<name>/` 경로 또는 rewrite 설정, UID/GID, 쓰기 가능한 홈, 프로브, 런타임 의존성을 충족해야 합니다. Jupyter Docker Stacks 이미지라고 자동으로 모든 Kubeflow 관례나 SDK가 포함되는 것은 아닙니다. 고정한 의존성을 빌드하고 ECR 등에서 digest로 참조하며, 대상 CPU 아키텍처와 GPU 드라이버도 확인하세요.
+이미지는 서버 포트, `/notebook/<namespace>/<name>/` 경로 또는 rewrite 설정, UID/GID, 쓰기 가능한 홈, 프로브, 런타임 의존성에 관한 요구 사항을 충족해야 합니다. Jupyter Docker Stacks 이미지라고 자동으로 모든 Kubeflow 관례나 SDK가 포함되는 것은 아닙니다. 고정한 의존성을 빌드하고 ECR 등에서 digest로 참조하며, 대상 CPU 아키텍처와 GPU 드라이버도 확인하세요.
 
 동일한 태그만으로 동일한 바이트가 보장되지는 않습니다. 이미지 digest가 같아도 PVC의 사용자 패키지·설정, 시작 스크립트, 설치 과정이 달라지면 실행 환경이 달라질 수 있습니다.
 

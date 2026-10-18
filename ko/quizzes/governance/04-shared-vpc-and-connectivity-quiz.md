@@ -88,6 +88,6 @@ Resource에는 같은 lifetime 제한이 없습니다. WebSocket은 TLS listener
 **정답: C) 이름이 같으면 local VPC가 우선하지만, Profile에 더 구체적인 이름이 등록되어 있으면 Profile이 우선한다**
 
 **설명:**
-예를 들어 local VPC에 `example.com` rule이 있고 Profile에 더 구체적인 `test.example.com` rule이 있다면 Profile이 적용됩니다. 이 때문에 "중앙 Profile은 워크로드가 위임받은 namespace보다 구체적인 이름을 갖지 않는다"를 명문 규칙으로 두는 것이 권장됩니다.
+예를 들어 local VPC에 `example.com` rule이 있고 Profile에 더 구체적인 `test.example.com` rule이 있다면 Profile이 적용됩니다. 이 때문에 "중앙 Profile은 워크로드가 위임받은 namespace보다 구체적인 이름을 갖지 않는다"라는 명문 규칙을 두는 것이 권장됩니다.
 
 </details>

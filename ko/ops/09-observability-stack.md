@@ -50,7 +50,7 @@ Loki는 스트림 레이블을 인덱싱하고 로그를 청크로 저장합니�
 | SimpleScalable | read/write/backend 분리. 현재 deprecated이며 Loki 4.0에서 제거 예정 |
 | Distributed | 구성 요소별 확장. 네트워크·링·쿼리 경로·저장 운영 부담도 증가 |
 
-새 예제는 Distributed를 사용합니다. 아래는 ingester 3개와 compactor 1개를 렌더링합니다.
+새 예제는 Distributed를 사용합니다. 아래 설정은 ingester 3개와 compactor 1개를 렌더링합니다.
 `zoneAwareReplication: false`이므로 3개 복제본만으로 AZ 장애 분리가 보장되지는 않습니다.
 운영 시 AZ/노드 배치, quorum과 PDB, 롤링 업데이트를 함께 검증합니다.
 캐시는 초기 검증 범위를 줄이기 위해 껐으며, 운영 용량 시험에서 필요성과 크기를 결정합니다.
@@ -293,7 +293,7 @@ loki.write "backend" {
 ```
 
 아래 값을 `alloy-values.yaml`로 저장하고 `--set-file`로 앞의 파일을 주입합니다.
-이 방식은 긴 Alloy 설정을 YAML 문자열로 다시 복사할 필요가 없습니다.
+이 방식을 사용하면 긴 Alloy 설정을 YAML 문자열로 다시 복사할 필요가 없습니다.
 
 ```yaml
 controller:
@@ -363,7 +363,7 @@ LogQL을 넣거나 임의 ConfigMap에 `loki_rule` 레이블을 붙이는 것만
 규칙 평가 주기와 Alertmanager 주소를 구성한 뒤 검증합니다.
 
 일반 문자열 `"error"`·`"unauthorized"`가 보였다는 것만으로 장애나 공격을 확정하지 않습니다.
-CrashLoopBackOff는 애플리케이션 로그보다 kube-state-metrics의 컨테이너 상태를 확인합니다.
+CrashLoopBackOff를 확인할 때는 애플리케이션 로그보다 kube-state-metrics의 컨테이너 상태를 확인합니다.
 로그 비율 알림은 분자·분모의 같은 범위, 파싱 실패, 무트래픽, 누락 error 시계열을 처리하고
 [알림 장](./07-observability-alerts.md)의 라우팅·억제 시험과 연결합니다.
 
@@ -714,7 +714,7 @@ kubectl apply -f collector-deployment.yaml
 Collector Contrib 0.162.0의 자체 메트릭은 `service.telemetry.metrics.readers`로 설정합니다.
 과거 `metrics.address`, 독립 `rate_limiting` processor와 구형 `loki` exporter를 그대로 사용하지 않습니다.
 배포 파일은 ConfigMap·Service·포트가 연결되어 있으며, 단일 인스턴스 실습이라 `Recreate`를
-사용합니다. 업데이트는 buffer와 인메모리 queue를 잃을 수 있습니다.
+사용합니다. 업데이트 시 buffer와 인메모리 queue를 잃을 수 있습니다.
 
 | 항목 | 올바른 해석 |
 |---|---|

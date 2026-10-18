@@ -25,7 +25,7 @@ CNCF는 [2026년 8월 17일 Kubeflow의 졸업을 발표했습니다](https://ww
 | Trainer | 설정된 런타임을 이용한 분산 학습 | `TrainJob`, `TrainingRuntime`, `ClusterTrainingRuntime` | [Part 5](05-training-operator.md) |
 | KServe | 모델 추론 서비스 | `InferenceService`; 배포 모드별 의존성 | [Part 6](06-kserve.md) |
 
-이 표는 가이드의 범위이며 전체 배포판 목록은 아닙니다. 26.03.1에는 Hub/모델 레지스트리와 Spark Operator도 포함됩니다. KFP Experiment는 Katib Experiment CRD와 다릅니다.
+이 표는 가이드의 범위를 보여주며 전체 배포판 목록은 아닙니다. 26.03.1에는 Hub/모델 레지스트리와 Spark Operator도 포함됩니다. KFP Experiment는 Katib Experiment CRD와 다릅니다.
 
 ![대시보드의 UI 탐색과 명시적으로 구성하는 파이프라인·튜닝·학습·모델 배포 연동을 구분한 Kubeflow 컴포넌트 맵.](../../.gitbook/assets/ko-ai-ml-kubeflow-readme-0.png)
 

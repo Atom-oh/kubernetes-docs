@@ -81,7 +81,7 @@ NetworkPolicy selects workloads in its namespace. GlobalNetworkPolicy is non-nam
 **Answer: B) Defining reusable sets of IP addresses/CIDRs**
 
 **Explanation:**
-A NetworkSet groups labeled IP/CIDR ranges for reuse. A namespaced NetworkSet and a GlobalNetworkSet have different selection scope. Use a separate namespaceSelector: global() when selecting global resources from a namespaced policy; global(label-expression) is not valid syntax.
+A NetworkSet groups labeled IP/CIDR ranges for reuse. A namespaced NetworkSet and a GlobalNetworkSet have different selection scopes. Use a separate namespaceSelector: global() when selecting global resources from a namespaced policy; global(label-expression) is not valid syntax.
 
 </details>
 
@@ -97,7 +97,7 @@ A NetworkSet groups labeled IP/CIDR ranges for reuse. A namespaced NetworkSet an
 **Answer: B) By order field, lower numbers evaluated first**
 
 **Explanation:**
-Lower tier orders are evaluated first, then lower policy orders within each tier. Only tiers with a policy selecting the endpoint and direction apply. No rule match in an applicable tier uses its defaultAction, normally Deny. The built-in default tier is fixed at 1,000,000; it is not an implicit infinity.
+Lower tier orders are evaluated first, then lower policy orders within each tier. Only tiers with a policy selecting the endpoint and direction apply. An applicable tier with no rule match uses its defaultAction, normally Deny. The built-in default tier is fixed at 1,000,000; it is not an implicit infinity.
 
 </details>
 

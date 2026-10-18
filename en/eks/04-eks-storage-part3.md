@@ -50,7 +50,7 @@ LogicalDiskUsage and PhysicalDiskUsage are also valid metrics: they describe unc
 
 ### Monitoring with Prometheus and Grafana
 
-Reuse the monitoring owner’s existing stack. For a new reviewed installation, the published kube-prometheus-stack92.9.0 chart is a verified reference with operator0.94.1; it is not an automatic upgrade instruction for an existing cluster. The following renders manifests only. Prepare `monitoring/grafana-admin` with admin-user/admin-password keys and the chapter’s expandable ebs-gp3 class. Adjust the actual cluster version, storage sizing and retention. Alert delivery, Grafana persistence, availability and kubelet TLS/auth defaults still need deployment-specific review:
+Reuse the monitoring owner’s existing stack. For a new reviewed installation, the published kube-prometheus-stack 92.9.0 chart is a verified reference with operator 0.94.1; it is not an automatic upgrade instruction for an existing cluster. The following renders manifests only. Prepare `monitoring/grafana-admin` with admin-user/admin-password keys and the chapter’s expandable ebs-gp3 class. Adjust the actual cluster version, storage sizing and retention. Alert delivery, Grafana persistence, availability and kubelet TLS/auth defaults still need deployment-specific review:
 
 ```yaml
 grafana:
@@ -83,7 +83,7 @@ helm template prometheus prometheus-community/kube-prometheus-stack \
   --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
-A ServiceMonitor selects **Services**, then their endpoints; its namespaceSelector and the Prometheus instance’s ServiceMonitor selectors must both match. EBS CSI1.66’s Helm chart defaults controller.enableMetrics to false. For an installation managed by that chart, review these values with its existing owner; they enable the driver’s3301 metrics endpoint, sidecar metrics Services and generated ServiceMonitors. Match the release label to the actual Prometheus selector:
+A ServiceMonitor selects **Services**, then their endpoints; its namespaceSelector and the Prometheus instance’s ServiceMonitor selectors must both match. EBS CSI 1.66’s Helm chart defaults controller.enableMetrics to false. For an installation managed by that chart, review these values with its existing owner; they enable the driver’s 3301 metrics endpoint, sidecar metrics Services and generated ServiceMonitors. Match the release label to the actual Prometheus selector:
 
 ```yaml
 controller:
@@ -218,9 +218,9 @@ WaitForFirstConsumer intentionally leaves a new PVC Pending until a schedulable 
 
 Distinguish attach errors, node publish/mount errors, missing filesystem clients, identity/permission errors and application permissions. Select the relevant CSI driver/sidecar container when reading logs; a multi-container Pod’s default log is not every component. Inspect VolumeAttachment, the bound PV’s driver/handle and the assigned node as needed.
 
-For node logs, use the node owner’s supported access/diagnostic mechanism. SSH as ec2-user and journalctl are not universal for Bottlerocket, Auto Mode or other managed compute. A privileged amazonlinux:2 helper is not a replacement for the correct CSI/client setup; AL2 is past its2026 OS support end. Reuse the chapter’s supported CSI consumer test and inspect its events before considering a separately approved node-level manual mount.
+For node logs, use the node owner’s supported access/diagnostic mechanism. SSH as ec2-user and journalctl are not universal for Bottlerocket, Auto Mode or other managed compute. A privileged amazonlinux:2 helper is not a replacement for the correct CSI/client setup; AL2 is past its 2026 OS support end. Reuse the chapter’s supported CSI consumer test and inspect its events before considering a separately approved node-level manual mount.
 
-For EFS, inspect mount targets/DNS and TCP2049 from the actual mount client. Lustre requires TCP988 and1018–1023 plus the service’s client/server rules; EFA configurations have additional SG-reference requirements. Check NACL return traffic and routes too. ICMP ping failure is not proof that NFS is unavailable, and an AWS CLI container is not guaranteed to contain ping/telnet/mount helpers. A Pod network test may use a different source/security group from a node-originated CSI mount.
+For EFS, inspect mount targets/DNS and TCP 2049 from the actual mount client. Lustre requires TCP 988 and 1018–1023 plus the service’s client/server rules; EFA configurations have additional SG-reference requirements. Check NACL return traffic and routes too. ICMP ping failure is not proof that NFS is unavailable, and an AWS CLI container is not guaranteed to contain ping/telnet/mount helpers. A Pod network test may use a different source/security group from a node-originated CSI mount.
 
 ### Slow I/O
 
@@ -253,7 +253,7 @@ if not points:
 PY
 ```
 
-A filesystem write test must use an approved disposable directory on the verified mount. Save this script inside the intended test environment; it creates a unique64MiB file and cleans up only its own file/directory. The read can hit cache, so these timings do not establish cold-storage performance. Do not run a predictable `/data/test` overwrite or raw-device zero write on live data:
+A filesystem write test must use an approved disposable directory on the verified mount. Save this script inside the intended test environment; it creates a unique 64 MiB file and cleans up only its own file/directory. The read can hit cache, so these timings do not establish cold-storage performance. Do not run a predictable `/data/test` overwrite or raw-device zero write on live data:
 
 ```bash
 set -euo pipefail
@@ -268,7 +268,7 @@ time dd if="$STORAGE_TEST_PATH/payload" of=/dev/null bs=1M
 
 No storage benchmark was executed for this review. Treat fragmentation as a hypothesis requiring evidence; recreating/formatting a filesystem is a data migration, not a routine first fix. Do not change a guessed nvme0n1 I/O scheduler: it may be another volume/root device, and modern blk-mq scheduler names/support differ.
 
-For EFS, General Purpose and the actual throughput mode, client limits, metadata demand and concurrency matter. Use the supported mount-helper options from Part2, including hard/TLS and appropriate timeout/retry behavior. File bundling or more sequential access may help a measured workload, but changing application data layout is not universally beneficial.
+For EFS, General Purpose and the actual throughput mode, client limits, metadata demand and concurrency matter. Use the supported mount-helper options from Part 2, including hard/TLS and appropriate timeout/retry behavior. File bundling or more sequential access may help a measured workload, but changing application data layout is not universally beneficial.
 
 ## Storage Cost Optimization
 
@@ -284,11 +284,11 @@ Optimize total workload cost while preserving latency, durability, recovery and 
 
 Compare gp3 against the actual gp2 cost/performance profile; consider HDD types only for suitable access patterns. Provision measured headroom and alerts, not arbitrary maximum size. EBS/PVC capacity generally grows rather than shrinks; reducing allocated capacity requires a supported migration to a smaller new volume with data validation.
 
-Creating a gp3 StorageClass or marking it default **does not migrate existing gp2 volumes**. A default-class change also affects unrelated new claims. Reuse the explicitly named class from Part1. For existing volumes, choose the deployed driver’s supported modification workflow or a tested backup/restore migration to a new claim; inspect ownership, application consistency and rollback before changing storage.
+Creating a gp3 StorageClass or marking it default **does not migrate existing gp2 volumes**. A default-class change also affects unrelated new claims. Reuse the explicitly named class from Part 1. For existing volumes, choose the deployed driver’s supported modification workflow or a tested backup/restore migration to a new claim; inspect ownership, application consistency and rollback before changing storage.
 
 ### Lifecycle and Retention
 
-A VolumeSnapshotClass defines driver/retention behavior; it neither schedules snapshots nor deletes them by age. Use the backup owner’s schedule and retention policy. Part2 explains Velero’s CSI snapshot lifecycle, including deletion even when the original class was Retain.
+A VolumeSnapshotClass defines driver/retention behavior; it neither schedules snapshots nor deletes them by age. Use the backup owner’s schedule and retention policy. Part 2 explains Velero’s CSI snapshot lifecycle, including deletion even when the original class was Retain.
 
 A PV marked Available or Released is not automatically disposable, and Bound does not prove active use. Inventory claimRef/UID, workload owners, snapshots, retention obligations and actual backend resources before cleanup. Retain can leave chargeable resources; Delete behavior depends on the driver. Deleting an EFS access point is not the same as deleting its filesystem/data. Tiering files into S3/Archive also requires an application-compatible restore/access plan.
 
@@ -308,7 +308,7 @@ aws efs describe-lifecycle-configuration --region "$AWS_REGION" \
   --file-system-id "$EFS_FILE_SYSTEM_ID" --output json > efs-lifecycle-before.json
 ```
 
-A put-lifecycle-configuration request updates the filesystem configuration; preserve all intended existing transitions in the reviewed array. An empty array disables lifecycle management. Each policy object contains one transition. Archive requires supported General Purpose/Elastic configuration and a transition later than IA. Include IA/Archive access and minimum-duration charges in the cost analysis; do not blindly overwrite an existing policy with a single30-day example.
+A put-lifecycle-configuration request updates the filesystem configuration; preserve all intended existing transitions in the reviewed array. An empty array disables lifecycle management. Each policy object contains one transition. Archive requires supported General Purpose/Elastic configuration and a transition later than IA. Include IA/Archive access and minimum-duration charges in the cost analysis; do not blindly overwrite an existing policy with a single 30-day example.
 
 ### FSx for Lustre and Cost Attribution
 
@@ -345,7 +345,7 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
 ```
 
-Configure EFS encryption at filesystem creation using the guarded infrastructure workflow in Part1. Existing unencrypted data needs a supported migration to an encrypted filesystem, not a mount option. FSx for Lustre encrypts data at rest automatically: scratch filesystems use service-managed keys; a selectable AWS managed/customer managed KMS key is a **persistent-filesystem** choice. Do not pass a customer kms-key-id to the SCRATCH_2 example.
+Configure EFS encryption at filesystem creation using the guarded infrastructure workflow in Part 1. Existing unencrypted data needs a supported migration to an encrypted filesystem, not a mount option. FSx for Lustre encrypts data at rest automatically: scratch filesystems use service-managed keys; a selectable AWS managed/customer managed KMS key is a **persistent-filesystem** choice. Do not pass a customer kms-key-id to the SCRATCH_2 example.
 
 Inspect the actual cloud resources, matching EBS IDs to bound PV volumeHandles and confirming the account/Region. A scratch FSx response without a selected customer key is not evidence of unencrypted storage:
 
@@ -367,9 +367,9 @@ For data in transit, use the supported EFS CSI/mount-helper `tls` option and ver
 
 ### Access Control
 
-Use the prepared CSI identity from Part1: the controller’s supported Pod Identity/IRSA role and exact driver permissions, plus KMS grants when applicable. Do not recreate an existing managed add-on ServiceAccount through an unrelated eksctl command or move controller permissions onto every node/application. Mountpoint pod-level identity, EFS IAM mounts and filesystem POSIX/access-point identities have different authorization paths.
+Use the prepared CSI identity from Part 1: the controller’s supported Pod Identity/IRSA role and exact driver permissions, plus KMS grants when applicable. Do not recreate an existing managed add-on ServiceAccount through an unrelated eksctl command or move controller permissions onto every node/application. Mountpoint pod-level identity, EFS IAM mounts and filesystem POSIX/access-point identities have different authorization paths.
 
-For network access, allow the actual client/node source security group to reach EFS mount targets on TCP2049. Lustre requires the documented TCP988 and1018–1023 rules between clients and file servers, including required self/client traffic. EFA-enabled Lustre instead needs the specified security-group-referenced all-traffic rules; an internet-wide CIDR is not a substitute. Inspect routes, DNS, NACLs and the true CSI mount source as well as SGs. A Kubernetes Pod NetworkPolicy does not automatically control every node-originated filesystem connection.
+For network access, allow the actual client/node source security group to reach EFS mount targets on TCP 2049. Lustre requires the documented TCP 988 and 1018–1023 rules between clients and file servers, including required self/client traffic. EFA-enabled Lustre instead needs the specified security-group-referenced all-traffic rules; an internet-wide CIDR is not a substitute. Inspect routes, DNS, NACLs and the true CSI mount source as well as SGs. A Kubernetes Pod NetworkPolicy does not automatically control every node-originated filesystem connection.
 
 The following namespace-scoped reader can inspect PVC objects; it cannot create, resize or delete them. Cluster-scoped PV access needs a separately reviewed ClusterRole. Neither role controls file bytes directly. A principal able to create Pods in a namespace may be able to mount its PVCs, so Pod creation, workload identity, POSIX/access-point permissions and tenant isolation must also be controlled:
 
@@ -413,7 +413,7 @@ roleRef:
 
 ### Pod Security Context
 
-This complete example separates Pod-level runAsUser/runAsGroup/fsGroup/seccomp from container-level allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem. It uses a prepared encrypted class and a declared PVC, rather than an undefined data volume and an nginx image with unprovided writable runtime paths. The namespace policy version is tied to the reviewed Kubernetes1.36 example; use the policy version appropriate to your cluster.
+This complete example separates Pod-level runAsUser/runAsGroup/fsGroup/seccomp from container-level allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem. It uses a prepared encrypted class and a declared PVC, rather than an undefined data volume and an nginx image with writable runtime paths that were not provided. The namespace policy version is tied to the reviewed Kubernetes 1.36 example; use the policy version appropriate to your cluster.
 
 ```yaml
 apiVersion: v1
@@ -485,7 +485,7 @@ Read-only root does not make `/data` read-only: this workload deliberately check
 
 ### Security Policy Enforcement
 
-A PVC name pattern or StorageClass allowlist alone cannot prove EBS encryption. The following **Kyverno ValidatingPolicy** uses the served `policies.kyverno.io/v1` API, checked with Kyverno1.19.1 and its CRD. It requires the installed controller/CRD and appropriate admission ownership. Older ClusterPolicy examples are deprecated in that release; migrate intentionally rather than assuming API compatibility.
+A PVC name pattern or StorageClass allowlist alone cannot prove EBS encryption. The following **Kyverno ValidatingPolicy** uses the served `policies.kyverno.io/v1` API, checked with Kyverno 1.19.1 and its CRD. It requires the installed controller/CRD and appropriate admission ownership. Older ClusterPolicy examples are deprecated in that release; migrate intentionally rather than assuming API compatibility.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -529,7 +529,7 @@ Document latency/IOPS/throughput, capacity growth, read/write patterns, concurre
 
 ### Backup and Disaster Recovery
 
-Use a supported schedule with unique backup identities and a retention owner. A shell cron line repeatedly creating a fixed snapshot name fails after the first object exists; a one-off Velero backup named daily-backup is not a schedule. With the reviewed Velero/CSI installation and database consistency requirements from Part2, this command emits a daily schedule for review:
+Use a supported schedule with unique backup identities and a retention owner. A shell cron line repeatedly creating a fixed snapshot name fails after the first object exists; a one-off Velero backup named daily-backup is not a schedule. With the reviewed Velero/CSI installation and database consistency requirements from Part 2, this command emits a daily schedule for review:
 
 ```bash
 velero schedule create storage-daily --schedule="0 0 * * *" \
@@ -540,11 +540,11 @@ Deploy through the owner after review, then alert on missing/failed backups and 
 
 ### Infrastructure as Code and GitOps
 
-Use the guarded filesystem creation examples in Part1/Part2 or an owned Terraform/CloudFormation module with reviewed provider/schema versions, subnet/mount-target/security-group configuration and deletion protection. A filesystem-only Terraform resource is not an EKS-ready mount path. Separate backup retention from IaC destroy/prune behavior.
+Use the guarded filesystem creation examples in Part 1/Part 2 or an owned Terraform/CloudFormation module with reviewed provider/schema versions, subnet/mount-target/security-group configuration and deletion protection. A filesystem-only Terraform resource is not an EKS-ready mount path. Separate backup retention from IaC destroy/prune behavior.
 
 Helm values are chart-specific inputs: a custom `storage.encrypted: true` value does nothing unless a template maps it to the actual supported resource field. Render and validate the resulting StorageClass/PVC/workload before deployment. GitOps pruning, chart uninstall and claim-retention settings can have different effects on data; document which system owns each resource and test lifecycle changes on disposable data.
 
-For example, this filesystem resource requests encryption and Elastic throughput, retains the30-day IA teaching policy and adds a Terraform destroy guard. Replace the creation token with a stable project-specific value, configure the provider/account/Region and add the reviewed network/mount-target resources. prevent_destroy is a Terraform operation guard, not a backup or protection against every external deletion:
+For example, this filesystem resource requests encryption and Elastic throughput, retains the 30-day IA teaching policy and adds a Terraform destroy guard. Replace the creation token with a stable project-specific value, configure the provider/account/Region and add the reviewed network/mount-target resources. prevent_destroy is a Terraform operation guard, not a backup or protection against every external deletion:
 
 ```hcl
 resource "aws_efs_file_system" "example" {

@@ -117,7 +117,7 @@ Sources: [EKS networking requirements](https://docs.aws.amazon.com/eks/latest/us
 
 **Answer: B. Inspect node conditions/events, logs, resources and the actual network/identity path**
 
-Use the condition reason/time and actual node identity to investigate. Ready=False, missing heartbeats/Ready=Unknown, disk pressure and memory pressure are different evidence; none automatically identifies the root cause.
+Use the condition reason/time and actual node identity to investigate. Ready=False, missing heartbeats/Ready=Unknown, disk pressure and memory pressure are different types of evidence; none automatically identifies the root cause.
 
 **Node and workload inventory**
 
@@ -375,7 +375,7 @@ The helper handles selectorless Services without accidentally selecting every Po
 
 - Selector mismatch: update the owner's Service/Pod template, not just one replaceable Pod label.
 - Port mismatch: Service port, named targetPort and the actual application listener must agree; a containerPort declaration does not create a listener.
-- Policy restriction: check both source egress and destination ingress, labels and implementation coverage. Do not delete policy or allow every namespace to all ports.
+- Policy restriction: check both source egress and destination ingress, labels and implementation coverage. Do not delete policy or allow every namespace access to all ports.
 - DNS/data plane: distinguish resolution from transport, and identify standard kube-proxy, an alternative implementation or Auto Mode. Pure Auto Mode uses node DNS; mixed clusters retain DNS for non-Auto nodes.
 
 This **independent policy illustration** allows only a reviewed peer/port. Adapt labels/namespaces and the complete required-flow matrix before using it:
@@ -646,7 +646,7 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-The YAML is a configuration example, not a command to apply to an existing class. Retain preserves storage for a separate lifecycle decision and can leave charges. PVC YAML is not a data backup; deleting/recreating the claim can destroy data or leave a retained volume needing deliberate rebinding.
+The YAML is a configuration example, not a command to apply to an existing class. Retain preserves storage for a separate lifecycle decision and can result in charges. PVC YAML is not a data backup; deleting/recreating the claim can destroy data or leave a retained volume needing deliberate rebinding.
 
 Auto Mode requires `ebs.csi.eks.amazonaws.com`, not the standard provisioner above. Its node root/data encryption does not imply all dynamic PVCs are encrypted. Explicitly request `encrypted: "true"` and inspect the actual EBS volume/key. Use the documented snapshot or applicable Retain/static migration procedure rather than changing a bound claim's provisioner/class.
 
@@ -668,7 +668,7 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 }
 ```
 
-Preserve/import existing ownership. The controller role needs current scoped EBS permissions/tag conditions and customer-key permissions where applicable. The former old IAM-module/add-on version pair was not a current compatibility guarantee, and `--role-only` does not attach a role to an add-on. Follow the [storage source](../../eks/04-eks-storage-part1.md) and current add-on catalog.
+Preserve/import existing ownership. The controller role needs current scoped EBS permissions/tag conditions and customer-key permissions where applicable. The former IAM-module/add-on version pair was not a current compatibility guarantee, and `--role-only` does not attach a role to an add-on. Follow the [storage source](../../eks/04-eks-storage-part1.md) and current add-on catalog.
 
 The same new class can be managed through the current Kubernetes resource:
 
@@ -1765,7 +1765,7 @@ resource "kubernetes_manifest" "memory_alerts" {
 }
 ```
 
-The Kubernetes manifest provider needs the PrometheusRule CRD during planning; `depends_on` a same-apply Helm installation is not a general solution to schema discovery. Reuse the existing monitoring stack and the working-set panels from Question 6; do not install another stack or reference an unexplained dashboard file. Confirm rule selection, alert routing and telemetry health in the real environment.
+The Kubernetes manifest provider needs the PrometheusRule CRD during planning; using `depends_on` for a same-apply Helm installation is not a general solution to schema discovery. Reuse the existing monitoring stack and the working-set panels from Question 6; do not install another stack or reference an unexplained dashboard file. Confirm rule selection, alert routing and telemetry health in the real environment.
 
 A/B/D may mitigate capacity temporarily but do not establish or fix the allocation defect. Record the demonstrated cause and validate the actual code/configuration correction under representative load.
 
@@ -1824,7 +1824,7 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
 
 **Resolver configuration and policies**
 
-ClusterFirst is the normal Pod path when cluster DNS is intended. An intentionally hostNetwork Pod generally needs ClusterFirstWithHostNet for that purpose. Setting hostNetwork merely to fix DNS changes isolation and is not a general remedy. DNSPolicy None requires a complete deliberate resolver configuration.
+ClusterFirst is the normal Pod path when cluster DNS is intended. A Pod intentionally configured with hostNetwork generally needs ClusterFirstWithHostNet for that purpose. Setting hostNetwork merely to fix DNS changes isolation and is not a general remedy. DNSPolicy None requires a complete deliberate resolver configuration.
 
 The old `169.254.20.10` example is a chosen NodeLocal DNSCache address, not a universal VPC resolver. A public resolver such as `8.8.8.8` does not serve Kubernetes Service zones/private AWS names, and a nameserver list is not a zone-aware fallback guarantee. Inspect the real CoreDNS/NodeLocal upstream and cluster domain rather than hardcoding `172.20.0.10` or a public backup.
 
@@ -1859,7 +1859,7 @@ spec:
           port: 53
 ```
 
-Source egress and destination ingress may both need allowances. The namespace and Pod selectors are AND within one peer. Auto Mode/NodeLocal paths need their own implementation-specific handling; do not assume Pod-label selection targets a host-level cache. A separate tcpdump Pod does not capture another workload's queries; use an authorized, bounded capture in the relevant context.
+Source egress and destination ingress may both need allowances. The namespace and Pod selectors are combined with AND within one peer. Auto Mode/NodeLocal paths need their own implementation-specific handling; do not assume Pod-label selection targets a host-level cache. A separate tcpdump Pod does not capture another workload's queries; use an authorized, bounded capture in the relevant context.
 
 **Read VPC DNS settings correctly**
 

@@ -1,406 +1,367 @@
-# Cilium 简介与基本概念测验
+# Cilium 介绍与基本概念测验
 
-本测验用于检验您对 Cilium 基本概念、eBPF 技术、架构、关键组件以及 CNI 对比的理解。
+> **基准版本**：Cilium 1.20.3 / CLI 0.20.1。**最后更新**：October 16, 2026
 
 ## 选择题
 
-1. Cilium 在内核中提供可编程数据路径的核心技术是什么？
+1. 哪种技术为 Cilium 提供可编程的内核数据路径？
    - A) iptables
    - B) eBPF
    - C) VXLAN
    - D) IPsec
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：B) eBPF**
 
-**说明：**
-eBPF（extended Berkeley Packet Filter）是一种允许程序在 Linux 内核中安全运行的技术。Cilium 利用 eBPF 在内核层实现网络、安全和可观测性功能。与基于 iptables 的解决方案相比，这提供了更高的性能和灵活性，并且无需重新编译内核即可动态应用网络策略。
+**解释：**
+Cilium 会在受支持的内核钩子处加载经过验证的 eBPF 程序。这使网络和可观测性功能得以实现，但并不保证性能一定优于所有替代方案；请针对所选工作负载和配置进行测量。
+
 </details>
 
-2. Cilium 的网络策略支持哪个层级？
-   - A) 仅 L3（网络层）
-   - B) L3-L4（网络层和传输层）
-   - C) L3-L7（网络层到应用层）
-   - D) L2-L3（数据链路层和网络层）
+2. 在具备所需集成的情况下，Cilium 可以支持哪些策略层？
+   - A) 仅 L3
+   - B) 仅 L3–L4
+   - C) L3/L4 和受支持的 L7 协议
+   - D) 仅 L2–L3
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：C) L3/L4 和受支持的 L7 协议**
 
-**答案：C) L3-L7（网络层到应用层）**
+**解释：**
+HTTP 和 DNS 策略使用受支持的代理路径；加密的 HTTP 流量需要适当的终止/集成方式。Kafka 感知型 L7 规则已在 1.20 中移除。L4 策略仍可控制 Kafka 连接。
 
-**说明：**
-Cilium 支持从 L3（IP）、L4（TCP/UDP 端口）到 L7（应用层）的网络策略。这意味着它可以过滤 HTTP 方法、路径、标头、gRPC 方法、Kafka 主题等应用层流量。这种感知 API 的网络功能对于在微服务架构中实施细粒度安全策略非常有用。
 </details>
 
-3. Cilium 中哪个工具提供网络可见性和监控？
+3. Cilium 的哪个组件可提供网络流可见性？
    - A) Prometheus
    - B) Hubble
    - C) Grafana
    - D) Jaeger
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：B) Hubble**
 
-**说明：**
-Hubble 是 Cilium 的网络可观测性层，使用 eBPF 实时监控和分析网络流。Hubble 提供服务依赖关系图生成、网络策略违规检测、HTTP/gRPC/DNS 请求跟踪以及网络延迟测量等功能。Prometheus 和 Grafana 是指标收集和可视化工具，而 Jaeger 是分布式追踪工具。
+**解释：**
+Hubble 可观测网络/代理流量，并显示服务间的关系。HTTP 可见性取决于代理路径。它不会自动生成完整的应用程序跟踪；Prometheus 指标和分布式跟踪用途不同。
+
 </details>
 
-4. Cilium 的分布式负载均衡功能可以替代哪个 Kubernetes 组件？
+4. 在受支持的配置中，Cilium 可以替代哪个 Kubernetes Service 组件？
    - A) CoreDNS
    - B) kube-proxy
    - C) etcd
    - D) kubelet
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：B) kube-proxy**
 
-**说明：**
-Cilium 提供基于 eBPF 的 Service 负载均衡，可以完全替代 kube-proxy。kube-proxy 使用 iptables 或 IPVS 将 Service 流量路由到后端 Pod，而 Cilium 使用 eBPF 提供更高的性能和可扩展性。启用 Cilium 的 kube-proxy 替代模式后，还可使用 DSR（Direct Server Return）、Maglev 哈希和套接字层负载均衡等高级功能。
+**解释：**
+kubeProxyReplacement 用于请求由 Cilium 处理 Service。API/引导访问和迁移前提仍然重要，而 DSR/Maglev/XDP 是单独的选项，并不自动保证性能更好。
+
 </details>
 
-5. 以下哪项不是 Cilium 支持的节点间流量加密方式？
-   - A) IPsec
-   - B) WireGuard
-   - C) TLS
-   - D) 两者均受支持（A 和 B）
+5. 哪一组选项列出了 Cilium 的透明网络加密模式？
+   - A) IPsec 和 WireGuard
+   - B) TLS 和 SSH
+   - C) GRE 和 HTTP
+   - D) DNS 和 VXLAN
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：A) IPsec 和 WireGuard**
 
-**答案：C) TLS**
+**解释：**
+IPsec 和 WireGuard 是本题中已经成熟的模式组合。同一个 `encryption.type` 键也接受 beta 版 `ztunnel`，用于工作负载 mTLS，但它有自己的命名空间注册、CA/引导、流量和策略前提。这些是同一个键下的不同模式；声称 Cilium 从不使用 TLS 是不正确的。
 
-**说明：**
-Cilium 支持两种节点间流量加密方式：IPsec 和 WireGuard。IPsec 是广泛使用的传统 VPN 协议套件，而 WireGuard 是一种更现代、更简单、更快速的 VPN 协议。TLS 是应用层加密协议，其用途不同于 Cilium 的网络层加密。在 Cilium 中，您可以通过配置选项选择 IPsec 或 WireGuard 来实现透明网络加密。
 </details>
 
-6. Cilium 的多集群网络功能叫什么？
+6. Cilium 的多集群连接功能叫什么？
    - A) Cluster Federation
-   - B) Cluster Mesh
+   - B) ClusterMesh
    - C) Multi-Cluster Network
    - D) Global Cluster
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：B) ClusterMesh**
 
-**答案：B) Cluster Mesh**
+**解释：**
+ClusterMesh 使用已配置的身份、信任关系和网络可达性连接兼容的集群。它不会创建整个底层网络，也不会自动让所有服务都可从全局访问。
 
-**说明：**
-Cluster Mesh 是 Cilium 的多集群网络功能，可将多个 Kubernetes 集群连接为一个网络运行。借助 Cluster Mesh，可以实现跨集群 Service 发现、负载均衡和网络策略执行。此功能适用于混合云、多云和灾难恢复场景，使每个集群中的 Pod 能够直接访问其他集群中的 Service。
 </details>
 
-7. Cilium 使用什么技术来优化数据包处理性能？
+7. Cilium 可以使用哪种技术来加速可选的早期数据包处理/负载均衡？
    - A) DPDK
-   - B) XDP (eXpress Data Path)
+   - B) XDP
    - C) RDMA
    - D) SR-IOV
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：B) XDP**
 
-**答案：B) XDP (eXpress Data Path)**
+**解释：**
+XDP 可以在受支持的钩子/驱动程序处较早处理选定的流量。并非所有 Cilium 数据包路径都会使用它；启用 XDP 既不能保证特定的数据包每秒处理量，也不能实现全面的 DDoS 防护。
 
-**说明：**
-XDP (eXpress Data Path) 是一种基于 eBPF 的技术，允许在网络驱动程序层处理数据包。XDP 会绕过内核网络协议栈，从而实现极高性能的数据包处理（每秒数百万个数据包）。Cilium 使用 XDP 实现 DDoS 防御、高性能负载均衡和数据包过滤。DPDK、RDMA 和 SR-IOV 也是高性能网络技术，但 Cilium 的核心技术是 eBPF/XDP。
 </details>
 
-8. Cilium 1.18 支持的最低 Linux 内核版本是什么？
+8. Cilium 1.20 标准上游 Linux 内核的基线版本是多少（不包括文档中列明的供应商回移等效版本）？
    - A) 3.10
    - B) 4.9
    - C) 4.19
    - D) 5.10
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：D) 5.10**
 
-**答案：C) 4.19**
+**解释：**
+当前要求规定 Linux 5.10+，并列出了诸如 RHEL 8.10 回移版本 4.18 这样的等效版本。个别功能可能需要更新的内核。请检查节点/VM 的内核，而不只是工作站操作系统。
 
-**说明：**
-Cilium 1.18 要求使用 Linux 内核 4.19 或更高版本。这是因为 Cilium 所使用的 eBPF 功能在此版本及更高版本中得到完整支持。使用更新的内核版本（5.x 及以上）可获得额外的 eBPF 功能和更好的性能。例如，XDP 原生模式、BPF 到 BPF 函数调用和 BTF（BPF Type Format）等高级功能在较新的内核中支持得更好。
 </details>
 
-9. 以下哪个 CNI 插件不是基于 eBPF 的？
-   - A) Cilium
-   - B) Calico（eBPF 模式）
-   - C) Flannel
-   - D) 两者都不是基于 eBPF 的（仅 C）
+9. 哪个选项无需使用 Cilium 的 eBPF 数据平面即可提供 VXLAN/host-gw 连接？
+   - A) Cilium 原生路由
+   - B) Calico BPF 模式
+   - C) Flannel VXLAN/host-gw
+   - D) Cilium netkit 模式
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：C) Flannel VXLAN/host-gw**
 
-**答案：C) Flannel**
+**解释：**
+Flannel 的连接后端采用不同的实现方式。其可选策略控制器或其他策略集成需要单独评估；应避免对资源/性能进行一概而论的排名。
 
-**说明：**
-Flannel 是一种使用 VXLAN 或 host-gw 的简单覆盖网络解决方案，不使用 eBPF。相比之下，Cilium 从一开始就设计为基于 eBPF，Calico 在较新版本中也支持 eBPF 数据平面模式。Flannel 配置简单且资源占用较低，但不提供 L7 网络策略或高级可观测性功能。
 </details>
 
-10. Cilium Network Policy 的 API 版本是什么？
-    - A) networking.k8s.io/v1
-    - B) cilium.io/v1
-    - C) cilium.io/v2
-    - D) policy.cilium.io/v1
+10. CiliumNetworkPolicy 的 API 版本是什么？
+   - A) networking.k8s.io/v1
+   - B) cilium.io/v1
+   - C) cilium.io/v2
+   - D) policy.cilium.io/v1
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：C) cilium.io/v2**
 
-**说明：**
-CiliumNetworkPolicy 使用 `cilium.io/v2` API 版本。这是独立于标准 Kubernetes NetworkPolicy（`networking.k8s.io/v1`）的 CRD（Custom Resource Definition），用于支持 Cilium 的高级功能（L7 策略、基于 DNS 的策略、端点选择器等）。Cilium 也支持标准 Kubernetes NetworkPolicy，但使用 CiliumNetworkPolicy 可以进行更细粒度的控制。
+**解释：**
+CiliumNetworkPolicy 是独立于标准 Kubernetes NetworkPolicy 的 CRD/API。功能是否可用仍取决于 Cilium 版本以及数据平面/代理配置。
+
 </details>
 
 ## 简答题
 
-11. 在 Cilium 中，运行在每个节点上、加载 eBPF 程序并实施网络策略的核心组件名称是什么？
+11. 哪个组件在每个节点上运行，并对端点和 eBPF 策略进行编程？
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：Cilium Agent**
 
-**说明：**
-Cilium Agent 是 Cilium 的核心组件，作为 DaemonSet 运行在每个 Kubernetes 节点上。Agent 的主要职责包括在内核中加载和管理 eBPF 程序、实施和执行网络策略、执行 Service 负载均衡、IP 地址管理（IPAM）、网络端点管理、指标和日志收集，以及与 API server 通信。Cilium Agent 处理本地节点上的所有网络操作。
+**解释：**
+Agent 负责节点本地的工作。容器运行时/CNI 插件、operator、代理和主机操作系统各自承担其他职责；并非所有网络操作都由 Agent 负责。
+
 </details>
 
-12. Cilium 中哪个组件在整个集群范围内运行，并执行 CRD 同步和 IP 分配协调等任务？
+12. 哪个组件负责协调集群级别的分配/控制器工作？
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：Cilium Operator**
 
-**说明：**
-Cilium Operator 是一个 Kubernetes Operator，以单个实例在整个集群中运行。Agent 处理每个节点上的本地操作，而 Operator 处理集群范围级别的操作。其关键功能包括 CiliumIdentity 和 CiliumEndpoint CRD 管理、集群级 IPAM 管理、节点间 CIDR 分配协调、垃圾回收（清理未使用的资源）以及 Cluster Mesh 连接管理。
+**解释：**
+Operator 可以运行多个副本；经审查的 chart 默认使用两个副本，并为适用的工作启用领导者选举。其职责取决于 IPAM/身份模式。它并非天然只能有一个实例，也不是所有 ClusterMesh 连接的唯一管理者。
+
 </details>
 
-13. 在 Cilium 中，用于诊断连通性问题的 CLI 命令是什么？
+13. 哪条 CLI 命令会运行 Cilium 的连通性测试工作负载？
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：cilium connectivity test**
 
-**说明：**
-`cilium connectivity test` 命令会全面测试 Cilium 集群中的网络连通性。该命令会自动测试多种场景，包括 Pod 到 Pod 通信、Service 连通性、外部连通性和网络策略执行。测试结果以成功/失败显示，并为失败的测试提供详细信息。此外，您可以使用 `cilium status` 检查 Cilium 状态，并使用 `cilium monitor` 监控实时流量。
+**解释：**
+该命令会创建工作负载/策略，需要在获准的测试环境中运行并具备相应权限。只读检查可从 cilium status、端点诊断和 Hubble 开始。管理命令 cilium monitor 并非当前的 Agent 诊断接口。
+
 </details>
 
-14. 在 Cilium 中，表示 Pod 安全身份的数字标识符是什么？
+14. 与端点安全相关标签关联的数字标识符是什么？
 
 <details>
+<summary>显示答案</summary>
 
-<summary>查看答案</summary>
+**答案：安全身份（Cilium identity）**
 
-**答案：Identity（或 Security Identity、Cilium Identity）**
+**解释：**
+只有相关/选定的标签集才会在其分配范围内决定身份。由命名空间派生的标签可能不同；仅有相同的应用标签并不能证明身份相同。该数字 ID 是分配得到的，并非永久且具有全局意义的哈希值。
 
-**说明：**
-Cilium Identity 是根据 Pod 的标签集生成的数字标识符。具有相同标签的所有 Pod 共享相同的 Identity。这种方法允许使用 Identity 而非 IP 地址来应用网络策略，因此即使 Pod IP 发生变化，策略仍保持一致。基于 Identity 的策略具有很高的可扩展性，即使在大型集群中也能高效运行。
 </details>
 
-15. 定义容器运行时与网络插件之间标准接口的 CNCF 项目缩写是什么？
+15. 哪项规范定义了容器网络插件接口？
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：CNI（Container Network Interface）**
 
-**说明：**
-CNI（Container Network Interface）是一个 CNCF 项目，定义了容器运行时与网络插件之间的标准接口。在 Kubernetes 中，kubelet 通过 CNI 接口与网络插件（Cilium、Calico、Flannel 等）通信。CNI 为添加/删除容器时的网络配置定义了标准 API，并且可通过插件架构集成各种网络解决方案。
+**解释：**
+kubelet 通过 CRI 与运行时通信，运行时再调用 CNI。CNI 负责交换网络配置/结果并处理网络的设置/移除；kubelet 过去用于 CNI 配置的标志已在 Kubernetes 1.24 中移除。
+
 </details>
 
-## 实操题
+## 实践题
 
-16. 使用 Cilium CLI 在 Kubernetes 集群上安装 Cilium 1.18.0 的命令是什么？
+16. 使用已安装的 CLI、准备好的实验值和明确指定的 context，展示一个全新的 Cilium 1.20.3 安装。
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：**
+
 ```bash
-# Install Cilium CLI
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
-
-# Install Cilium
-cilium install --version 1.18.0
-
-# Check installation status
-cilium status
-
-# Connectivity test
-cilium connectivity test
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+cilium version --client
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.3 \
+  --values cilium-lab-values.yaml
+cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```
 
-**说明：**
-上述命令首先将 Cilium CLI 二进制文件下载并安装到 `/usr/local/bin`。然后，`cilium install` 命令会在 Kubernetes 集群上安装指定版本的 Cilium。安装后，使用 `cilium status` 验证所有组件是否正常运行，并使用 `cilium connectivity test` 验证网络连通性。也可以使用 Helm 安装，从而提供更细粒度的配置选项。
+**解释：**
+请满足指南中预先验证的环境/CNI 所有权、CIDR 和 values 前提条件。如果已有发行版本，请跳过安装，并使用其所有者的升级流程。状态检查不能替代正向/负向流量测试。
+
 </details>
 
-17. 编写一个 CiliumNetworkPolicy，仅允许从 frontend Pod 到 backend Pod 8080 端口的 TCP 流量。
+17. 编写实验策略，允许 cilium-intro-demo 中 frontend Pod 向 backend Pod 发起 TCP 8080 入站流量。
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：**
+
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "allow-frontend-backend"
-  namespace: default
+  name: allow-frontend-backend
+  namespace: cilium-intro-demo
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-intro-demo
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
 ```
 
-**说明：**
-此 CiliumNetworkPolicy 仅允许带有 `app: frontend` 标签的 Pod 向带有 `app: backend` 标签的 Pod 发起 TCP 8080 端口入站流量。`endpointSelector` 选择策略适用的目标 Pod，`ingress` 部分定义允许的入站流量。`fromEndpoints` 指定源 Pod，`toPorts` 指定允许的端口和协议。应用此策略后，其他 Pod 发往 backend 的流量将被阻止。
+**解释：**
+命名空间和工作负载必须已存在。明确指定对端命名空间可避免向其他具有相同标签的命名空间授予访问权限。其他 allow/deny 策略和主机流量会影响结果；此规则不是 HTTP 过滤规则，也不限制出站流量。
+
 </details>
 
-18. 编写启用 kube-proxy 替代模式安装 Cilium 的命令，以及启用 DSR（Direct Server Return）模式的配置。
+18. 展示一个部分 values 示例，请求使用 Geneve 分发的 kube-proxy 替换和原生路由 DSR。还需要准备什么？
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：**
-```bash
-# Install Cilium with kube-proxy replacement and DSR mode
-cilium install --version 1.18.0 \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.mode=dsr
 
-# Or installation using Helm
-helm install cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.mode=dsr \
-  --set k8sServiceHost=<API_SERVER_IP> \
-  --set k8sServicePort=<API_SERVER_PORT>
-
-# Verify installation
-cilium status --verbose
+```yaml
+kubeProxyReplacement: true
+k8sServiceHost: api.lab.example.internal
+k8sServicePort: 443
+routingMode: native
+tunnelProtocol: geneve
+ipv4NativeRoutingCIDR: 10.244.0.0/16
+loadBalancer:
+  mode: dsr
+  dsrDispatch: geneve
 ```
 
-**说明：**
-`kubeProxyReplacement=true` 选项将 Cilium 配置为替代全部 kube-proxy 功能。在此模式下，必须移除或禁用现有 kube-proxy。`loadBalancer.mode=dsr` 启用 Direct Server Return 模式，使响应流量无需经过负载均衡器而直接发送给客户端。DSR 模式可消除负载均衡器瓶颈并节省带宽，在处理大型响应时尤其有效。
+**解释：**
+这是单独的原生配置方案，并非要求在 VXLAN 实验中启用 DSR。请将 API 主机/端口和原生路由 CIDR 替换为实际准备好的值。确保 API/引导 DNS 访问、底层网络中的 Pod 路由、Geneve/MTU 以及返回/源地址路径均已就绪，然后遵循受支持的 kube-proxy 迁移流程。静态值不能保证与云负载均衡器兼容，也不能消除所有瓶颈。
+
 </details>
 
-19. 编写检查 Cilium 状态、查询特定 Pod 端点信息以及查看已应用网络策略的命令。
+19. 展示集群状态、所选 backend 端点的本地状态，以及预期的策略资源。
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：**
+
 ```bash
-# Check overall Cilium status
-cilium status
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+CILIUM_LAB_NS=cilium-intro-demo
+BACKEND_POD=replace-with-actual-backend-pod
+cilium status --context "$CILIUM_LAB_CONTEXT" --verbose
+kubectl --context "$CILIUM_LAB_CONTEXT" get pod "$BACKEND_POD" -n "$CILIUM_LAB_NS" -o wide
+kubectl --context "$CILIUM_LAB_CONTEXT" get pods -n kube-system -l k8s-app=cilium -o wide
 
-# Check detailed status (all components)
-cilium status --verbose
-
-# List all endpoints
-cilium endpoint list
-
-# Get detailed information for a specific endpoint (using endpoint ID)
-cilium endpoint get <endpoint_id>
-
-# Query endpoint by pod name
-kubectl exec -n kube-system <cilium-agent-pod> -- cilium endpoint list | grep <pod-name>
-
-# Query applied network policies
-cilium policy get
-
-# Query policies applied to a specific endpoint
-cilium endpoint get <endpoint_id> -o json | jq '.status.policy'
-
-# Real-time traffic monitoring
-cilium monitor
+# Choose the agent on the backend Pod's node.
+CILIUM_AGENT_POD=replace-with-agent-pod-on-that-node
+kubectl --context "$CILIUM_LAB_CONTEXT" exec -n kube-system "$CILIUM_AGENT_POD" \
+  -c cilium-agent -- cilium-dbg endpoint list
+kubectl --context "$CILIUM_LAB_CONTEXT" exec -n kube-system "$CILIUM_AGENT_POD" \
+  -c cilium-agent -- cilium-dbg endpoint get "pod-name:$CILIUM_LAB_NS:$BACKEND_POD"
+kubectl --context "$CILIUM_LAB_CONTEXT" get networkpolicy -n "$CILIUM_LAB_NS" -o yaml
+kubectl --context "$CILIUM_LAB_CONTEXT" get cnp -n "$CILIUM_LAB_NS" -o yaml
+kubectl --context "$CILIUM_LAB_CONTEXT" get ccnp -o yaml
 ```
 
-**说明：**
-`cilium status` 显示所有组件的状态，包括 Cilium Agent、Operator 和 Hubble。`cilium endpoint list` 列出当前节点上的所有端点（Pod），您可以查看每个端点的 ID、状态、标签和 Identity。`cilium policy get` 查询集群中已应用的所有网络策略。`cilium monitor` 实时监控网络流量，以检查数据包流、策略应用和被丢弃的数据包。
+**解释：**
+端点标识符和已实现的状态属于所选 Agent/节点；请使用 cilium-dbg 支持的 Pod 标识符。kubectl 读取的是预期的策略资源，不能证明策略已生效。cilium-dbg policy get 已弃用，管理端的 cilium endpoint/policy/monitor 命令也不等同于上述命令。
+
 </details>
 
-20. 编写启用 Hubble 并使用 Hubble CLI 观察网络流的命令。
+20. 为现有实验发行版本启用 Hubble，并使用已安装的客户端工具观察流量。
 
 <details>
-
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
 **答案：**
+
 ```bash
-# Install Cilium with Hubble enabled
-cilium install --version 1.18.0 \
-  --set hubble.enabled=true \
-  --set hubble.relay.enabled=true \
-  --set hubble.ui.enabled=true
-
-# Enable Hubble on existing Cilium
-cilium hubble enable
-
-# Install Hubble CLI
-export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
-sudo tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
-rm hubble-linux-amd64.tar.gz
-
-# Hubble port forwarding
-cilium hubble port-forward &
-
-# Observe network flows
-hubble observe
-
-# Observe flows in a specific namespace
-hubble observe --namespace default
-
-# Observe flows for a specific pod
-hubble observe --pod default/frontend
-
-# Filter HTTP traffic only
-hubble observe --protocol http
-
-# Observe only dropped packets
-hubble observe --verdict DROPPED
-
-# Access Hubble UI (separate terminal)
-cilium hubble ui
+# Terminal 1; the lab Cilium release and client tools must already exist.
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+cilium hubble enable --context "$CILIUM_LAB_CONTEXT" --ui
+cilium hubble port-forward --context "$CILIUM_LAB_CONTEXT" --port-forward 4245
 ```
 
-**说明：**
-Hubble 是 Cilium 的可观测性层，使用 eBPF 实时监控网络流。`hubble.enabled=true` 启用 Hubble，`hubble.relay.enabled=true` 启用 Hubble Relay 以收集整个集群中的流，`hubble.ui.enabled=true` 启用基于 Web 的 UI。`hubble observe` 命令提供各种过滤选项，可按特定 namespace、Pod、协议、判定结果等过滤流量。
+```bash
+# Terminal 2, with the port-forward still running.
+BACKEND_POD=replace-with-actual-backend-pod
+hubble observe --server 127.0.0.1:4245 --namespace cilium-intro-demo
+hubble observe --server 127.0.0.1:4245 --pod "cilium-intro-demo/$BACKEND_POD"
+hubble observe --server 127.0.0.1:4245 --protocol http
+hubble observe --server 127.0.0.1:4245 --verdict DROPPED
+```
+
+**解释：**
+如果发行版本由 GitOps 管理，请修改其所有者的 Helm values，而不要通过命令式 CLI 更新；如果已启用，则跳过 enable。保持前台运行的 port-forward 持续活动；如果 Relay 使用客户端 TLS，也要配置客户端 TLS。HTTP 事件需要受支持的 L7 代理路径，而 DROPPED 并不涵盖所有应用程序故障。要访问 UI，请在另一个终端中使用相同的明确 context 运行 cilium hubble ui。
+
 </details>
 
----
-
-[返回学习材料](../../../networking/cilium/01-introduction.md) | [下一测验：eBPF 基础](./02-ebpf-quiz.md)
+[返回学习资料](../../../networking/cilium/01-introduction.md) | [下一份测验：eBPF 基础](02-ebpf-quiz.md)

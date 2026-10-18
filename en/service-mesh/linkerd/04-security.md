@@ -71,7 +71,7 @@ These resources belong to Linkerd's `policy.linkerd.io` API. `AuthorizationPolic
 | AuthorizationPolicy | Grants access to a target when its authentication requirements match |
 | ServerAuthorization | Older Server-only grant; supported as `v1beta1` in the selected CRDs |
 
-`ServerAuthorization` and `AuthorizationPolicy` are alternative grant mechanisms, not a sequential pipeline. Multiple grants can broaden access; multiple `requiredAuthenticationRefs` within one AuthorizationPolicy must **all** match. A namespace-targeted AuthorizationPolicy covers policy targets defined in that namespace, not an automatic policy for every undeclared port.
+`ServerAuthorization` and `AuthorizationPolicy` are alternative grant mechanisms, not a sequential pipeline. Multiple grants can broaden access; multiple `requiredAuthenticationRefs` within one AuthorizationPolicy must **all** match. A namespace-targeted AuthorizationPolicy covers policy targets defined in that namespace, but does not automatically apply a policy to every undeclared port.
 
 Servers must not select overlapping Pod/port pairs. Declare the application port in the Pod specification. A Server defaults to denying unmatched traffic even if the namespace's default policy is permissive. `accessPolicy: audit` can help observe unmatched traffic during preparation, but it allows that traffic and is not enforcement.
 
@@ -333,7 +333,7 @@ Replacing a root needs a staged transition. The healthy-root procedure is not a 
 5. Allow or deliberately coordinate leaf renewal, and verify that all relevant clients/servers use the new chain. A fixed sleep or only a successful controller rollout is insufficient.
 6. Remove the old root through the bundle owner, propagate the final bundle to all consumers, and verify connections and trust again.
 
-Preserve rollback material and monitor each stage. Restart only reviewed meshed workload controllers with workload-appropriate readiness/disruption handling; an all-namespace Deployment loop misses other workload types and can disrupt unrelated workloads. This document does not claim that an untested rotation is zero downtime.
+Preserve rollback material and monitor each stage. Restart only reviewed meshed workload controllers with workload-appropriate readiness/disruption handling; an all-namespace Deployment loop misses other workload types and can disrupt unrelated workloads. This document does not claim that an untested rotation has zero downtime.
 
 ## External Certificate Management
 

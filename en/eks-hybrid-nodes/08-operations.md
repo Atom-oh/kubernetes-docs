@@ -201,7 +201,7 @@ Track the actual issuer/owner, configured certificate path, expiration and alert
 
 The self-managed AWS Load Balancer Controller can register routable Hybrid Pod IPs using `alb.ingress.kubernetes.io/target-type: ip`. Routes, return traffic, security groups/firewalls and EKS remote Pod network configuration must agree.
 
-AWS's mixed-mode webhook recipe places the controller on cloud nodes. This is a placement recommendation for that design, not a universal inability to run a webhook on Hybrid Nodes: the add-on guidance permits Hybrid placement when the control plane can reach the configured remote Pod CIDR. Prefer positive administrative placement labels over `compute-type NotIn [hybrid]`, which also matches nodes with no such label. The example label below must be assigned only to verified eligible cloud nodes.
+AWS's mixed-mode webhook recipe places the controller on cloud nodes. This is a placement recommendation for that design, not a statement of universal inability to run a webhook on Hybrid Nodes: the add-on guidance permits Hybrid placement when the control plane can reach the configured remote Pod CIDR. Prefer positive administrative placement labels over `compute-type NotIn [hybrid]`, which also matches nodes with no such label. The example label below must be assigned only to verified eligible cloud nodes.
 
 ```yaml
 # Fragment under the controller Deployment's spec.template.spec:

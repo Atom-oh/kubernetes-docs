@@ -54,7 +54,7 @@ The OTEL Collector pipeline is structured as Receivers (data ingestion) -> Proce
 **Answer: C) Fine-grained business logic tracing**
 
 **Explanation:**
-Auto-instrumentation automatically traces common library calls like HTTP, databases, and message queues without code changes. However, detailed operations within business logic or custom metrics require manual instrumentation. It's common to use both auto-instrumentation and manual instrumentation together.
+Auto-instrumentation automatically traces common library calls for HTTP, databases, and message queues without code changes. However, detailed operations within business logic or custom metrics require manual instrumentation. It's common to use both auto-instrumentation and manual instrumentation together.
 
 </details>
 

@@ -1,35 +1,35 @@
 # Istio 安装与初始设置
 
-> **最后更新**: October 12, 2026 · 安装固定版本：Istio 1.31.1
+> **最后更新**：October 16, 2026 · 安装固定版本：Istio 1.31.2
 
-截至 2026 年 10 月 12 日，Istio 1.31.1 是当前的 1.31 补丁版本；它修复了 `BackendTLSPolicy` 明文回退问题。下方 Helm 命令示例已从 1.31.0 更新；早期的 chart 渲染并不能验证所有 1.31.1 值，因此请在应用前渲染并检查所选 chart。
+截至 October 16, 2026，Istio 1.31.2 是当前的 1.31 补丁版本；它包含 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 安全修复，以及 1.31.1 的 `BackendTLSPolicy` 明文回退修复。以下命令示例已从 1.31.1 更新；较早版本的 chart 渲染结果并不能验证 1.31.2 的所有值，因此应用前请渲染并检查所选 chart。
 
-本文档介绍如何在 Amazon EKS 集群上安装和初始配置 Istio。
+本文介绍如何在 Amazon EKS 集群上安装和初始配置 Istio。
 
 ## 目录
 
-1. [前提条件](#prerequisites)
+1. [先决条件](#prerequisites)
 2. [选择安装方法](#choosing-an-installation-method)
 3. [使用 istioctl 安装](#installation-using-istioctl)
 4. [使用 Helm 安装](#installation-using-helm)
-5. [使用 istioctl 进行声明式安装](#declarative-installation-with-istioctl)
+5. [使用 istioctl 声明式安装](#declarative-installation-with-istioctl)
 6. [安装配置文件](#installation-profiles)
-7. [安装验证](#installation-verification)
-8. [示例应用部署](#sample-application-deployment)
-9. [Istio 移除](#istio-removal)
+7. [验证安装](#installation-verification)
+8. [部署示例应用程序](#sample-application-deployment)
+9. [卸载 Istio](#istio-removal)
 10. [故障排除](#troubleshooting)
 
-## 前提条件
+## 先决条件 {#prerequisites}
 
-在安装 Istio 前，必须满足以下要求：
+安装 Istio 前，必须满足以下要求：
 
 ### 1. Amazon EKS 集群
 
-- **Kubernetes 版本**：此 Istio 1.31.1 示例使用 EKS 1.34–1.37（于 2026 年 10 月 12 日审核）。Istio 1.31 支持 1.32–1.37；EKS 1.31–1.33 处于延长支持阶段，1.34–1.37 处于标准支持阶段。请同时查阅 [Istio 矩阵](https://istio.io/latest/docs/releases/supported-releases/) 和 [EKS 生命周期](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
-- **节点类型**：至少 2 个 worker node（建议：3 个或更多）
-- **节点规格**：至少 2 vCPU、4GB RAM（建议：t3.medium 或更大）
+- **Kubernetes 版本**：本 Istio 1.31.2 示例适用于 EKS 1.34–1.37（于 October 16, 2026 审阅）。Istio 1.31 支持 1.32–1.37；EKS 1.31–1.33 处于扩展支持阶段，1.34–1.37 处于标准支持阶段。请同时查看 [Istio 版本矩阵](https://istio.io/latest/docs/releases/supported-releases/)和 [EKS 生命周期](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
+- **节点类型**：至少 2 个工作节点（建议：3 个或更多）
+- **节点规格**：至少 2 个 vCPU、4GB RAM（建议：t3.medium 或更高规格）
 
-这些示例面向 Linux EC2 worker node。Fargate 无法运行这些 Istio 安装路径所需的 DaemonSet/特权网络。EKS Auto Mode 使用不同的托管网络/负载均衡模型；请单独验证其前提条件。
+这些示例面向 Linux EC2 工作节点。Fargate 无法运行这些 Istio 安装路径所需的 DaemonSet/特权网络功能。EKS Auto Mode 采用不同的托管网络/负载均衡模型；请单独验证其先决条件。
 
 ### 2. kubectl 安装与配置
 
@@ -41,46 +41,46 @@ kubectl version --client
 kubectl get nodes
 ```
 
-### 3. 必需工具
+### 3. 所需工具
 
 - **AWS CLI**：2.x 或更高版本
 - **eksctl**：（可选）用于集群管理
-- **Helm**：当前受支持的 Helm 3 或 Helm 4 版本（最低 3.6；请参阅官方安装指南）
+- **Helm**：当前受支持的 Helm 3 或 Helm 4 版本（最低 3.6；参见官方安装指南）
 
 ### 4. 集群资源
 
-以下为说明性规划请求，并非通用最低要求；应根据测量到的负载确定规模：
-- **Control Plane**：1 vCPU、1.5GB RAM
-- **Sidecar（每个 pod）**：0.1 vCPU、128MB RAM
+仅供规划参考的请求值，并非普遍适用的最低要求；请根据测得的负载确定规格：
+- **控制平面**：1 vCPU，1.5GB RAM
+- **Sidecar（每个 Pod）**：0.1 vCPU，128MB RAM
 
-## 选择安装方法
+## 选择安装方法 {#choosing-an-installation-method}
 
-选择一种受支持的安装路径；不要在同一个 Control Plane 上同时运行 istioctl 和 Helm 安装：
+选择一种受支持的安装路径；不要在同一个控制平面上同时运行 istioctl 和 Helm 安装：
 
-| 方法 | 优点 | 缺点 | 推荐使用场景 |
+| 方法 | 优点 | 缺点 | 推荐用例 |
 |------|------|------|---------------|
-| **istioctl** | 简单快速，提供验证功能 | 在自动化中需要显式协调 | 开发和生产环境 |
-| **Helm** | 对 GitOps 友好，易于进行版本管理 | 配置可能较复杂 | 生产环境、CI/CD 管道 |
+| **istioctl** | 简单快速，提供验证功能 | 在自动化中需要显式协调 | 开发和生产 |
+| **Helm** | 适合 GitOps，版本管理方便 | 配置可能较复杂 | 生产环境、CI/CD 管道 |
 
-## 使用 istioctl 安装
+## 使用 istioctl 安装 {#installation-using-istioctl}
 
-istioctl 是 Istio 的官方 CLI 工具，也是最简单的安装方法。
+istioctl 是 Istio 官方 CLI 工具，也是最简单的安装方法。
 
 ### 1. 安装 istioctl
 
 ```bash
 # Download the current 1.31 patch
-curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.1 sh -
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.2 sh -
 
 # Add istioctl to PATH
-cd istio-1.31.1
+cd istio-1.31.2
 export PATH=$PWD/bin:$PATH
 
 # Verify installation
 istioctl version
 ```
 
-### 2. 安装前集群验证
+### 2. 安装前验证集群
 
 ```bash
 # Verify cluster meets Istio installation requirements
@@ -107,9 +107,9 @@ kubectl get all -n istio-system
 kubectl logs -n istio-system -l app=istiod
 ```
 
-## 使用 Helm 安装
+## 使用 Helm 安装 {#installation-using-helm}
 
-上次审核期间渲染的 1.31.0 chart 不包含 `eks` 平台 profile。下方 chart 示例现已固定到 1.31.1，但本次审核未渲染该补丁版本的 chart；请在安装前检查所选 chart。这些示例未设置 `global.platform=eks`，而是采用显式的 EKS 前提条件和负载均衡器设置，以避免假定存在某个 profile。
+istiod 1.31.0 和 1.31.2 的 chart 存档中不包含 `eks` 平台配置文件（`files/profile-platform-eks.yaml`；于 October 16, 2026 检查）。以下 chart 示例现已固定为 1.31.2，但本次审阅未渲染该 chart；安装前请检查所选 chart。这些示例不设置 `global.platform=eks`，以免假设该配置文件存在，并明确设置 EKS 先决条件和负载均衡器参数。
 
 Helm 是适用于 GitOps 工作流的 Kubernetes 包管理器。
 
@@ -123,7 +123,7 @@ helm repo update
 
 ### 2. 安装 istio-base
 
-istio-base 会安装 Istio 的 CRD（Custom Resource Definition）。
+istio-base 用于安装 Istio 的 CRD（自定义资源定义）。
 
 ```bash
 # Create istio-system namespace
@@ -133,18 +133,18 @@ kubectl create namespace istio-system
 helm install istio-base istio/base \
   -n istio-system \
   --set defaultRevision=default \
-  --version 1.31.1
+  --version 1.31.2
 ```
 
 ### 3. 安装 istiod
 
-istiod 是 Istio Control Plane。
+istiod 是 Istio 控制平面。
 
 ```bash
 # Install istiod chart
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -159,17 +159,17 @@ helm install istio-ingressgateway istio/gateway \
   -n istio-system \
   --set labels.istio=ingressgateway \
   --set labels.app=istio-ingressgateway \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
-### 5. 使用 values.yaml 进行自定义安装
+### 5. 使用 values.yaml 自定义安装
 
 ```yaml
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.31.1
+  tag: 1.31.2
 
 autoscaleEnabled: true
 autoscaleMin: 2
@@ -187,14 +187,14 @@ meshConfig:
 # Install using values.yaml file
 helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   -f values.yaml \
   --wait
 ```
 
-## 使用 istioctl 进行声明式安装
+## 使用 istioctl 声明式安装 {#declarative-installation-with-istioctl}
 
-上游集群内 operator 在 1.23 中已弃用，并在 1.24 中移除。`istioctl operator init/remove` 以及向集群应用 IstioOperator 对象已不是当前的安装方法。[IstioOperator 文件格式仍受支持，可作为 istioctl 的输入](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/)。
+上游集群内 operator 已在 1.23 中弃用，并在 1.24 中移除。`istioctl operator init/remove` 和向集群应用 IstioOperator 对象都不是当前的安装方法。[IstioOperator 文件格式仍受支持，可作为 istioctl 的输入](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/)。
 
 ```yaml
 # istio-operator.yaml
@@ -227,34 +227,34 @@ istioctl install -f istio-operator.yaml
 kubectl rollout status deployment/istiod -n istio-system
 ```
 
-## 安装配置文件
+## 安装配置文件 {#installation-profiles}
 
-Istio 为不同使用场景提供多种 profile。
+Istio 提供多种适用于不同用例的配置文件。
 
-### 可用 profile
+### 可用配置文件
 
-| Profile | 说明 | 组件 | 推荐使用场景 |
+| 配置文件 | 描述 | 组件 | 推荐用途 |
 |-------|------|----------|----------|
-| **default** | 用于生产部署的默认设置 | istiod、ingress gateway | 大多数生产环境 |
-| **demo** | 演示设置，并非所有功能 | istiod、ingress gateway、egress gateway、高追踪采样率 | 开发和演示 |
-| **minimal** | 仅安装最小组件 | 仅 istiod | 资源受限环境 |
+| **default** | 适用于生产部署的默认设置 | istiod、Ingress Gateway | 大多数生产环境 |
+| **demo** | 演示设置，并非包含所有功能 | istiod、Ingress Gateway、egress gateway、高跟踪采样率 | 开发和演示 |
+| **minimal** | 仅安装最少组件 | 仅 istiod | 资源受限的环境 |
 | **remote** | 用于多集群环境中的远程集群 | - | 多集群设置 |
 | **empty** | 无默认配置 | - | 完全自定义设置 |
 | **preview** | 包含实验性功能 | 各种实验性功能 | 测试环境 |
-| **ambient** | 无 Sidecar 的 L4 服务网格 | istiod、CNI、ztunnel；L7 waypoint 单独配置 | Ambient 部署 |
+| **ambient** | 无 Sidecar 的 L4 网格 | istiod、CNI、ztunnel；L7 waypoint 需单独配置 | Ambient 部署 |
 
-组件列表适用于 istioctl。Helm 要求分别安装每个 chart；一个 profile 不会安装其他 chart。
+组件列表适用于 istioctl。使用 Helm 时必须分别安装每个 chart；配置文件不会安装其他 chart。
 
-### 检查 profile
+### 查看配置文件
 
 ```bash
-helm show values istio/istiod --version 1.31.1
+helm show values istio/istiod --version 1.31.2
 istioctl manifest generate --set profile=default > default.yaml
 istioctl manifest generate --set profile=demo > demo.yaml
 diff -u default.yaml demo.yaml
 ```
 
-### 按 profile 安装
+### 按配置文件安装
 
 ```bash
 # Install with demo profile
@@ -264,7 +264,7 @@ istioctl install --set profile=demo -y
 istioctl install --set profile=minimal -y
 ```
 
-### 自定义 profile
+### 自定义配置文件
 
 ```bash
 # Modify specific settings based on profile
@@ -274,9 +274,9 @@ istioctl install --set profile=default \
   -y
 ```
 
-## 安装验证
+## 验证安装 {#installation-verification}
 
-### 1. 检查 Control Plane
+### 1. 检查控制平面
 
 ```bash
 # Check all resources in istio-system namespace
@@ -320,13 +320,13 @@ kubectl get mutatingwebhookconfiguration
 kubectl get validatingwebhookconfiguration
 ```
 
-## 示例应用部署
+## 部署示例应用程序 {#sample-application-deployment}
 
-Istio 包含一个名为 Bookinfo 的示例应用。
+Istio 包含一个名为 Bookinfo 的示例应用程序。
 
-请在解压后的 `istio-1.31.1` 目录中运行这些命令，并选择 default namespace（`kubectl config set-context --current --namespace=default`）。对于 Helm，请先安装上方可选的 gateway。后面的 dashboard 命令需要单独安装 telemetry addon。
+请在解压后的 `istio-1.31.2` 目录中运行以下命令，并选中默认命名空间（`kubectl config set-context --current --namespace=default`）。如果使用 Helm，请先安装上文中的可选 Gateway。后面的 dashboard 命令要求事先单独安装遥测插件。
 
-### 1. 为 Namespace 启用自动 Sidecar 注入
+### 1. 为命名空间启用自动 Sidecar 注入
 
 ```bash
 # Add label to default namespace
@@ -336,9 +336,9 @@ kubectl label namespace default istio-injection=enabled --overwrite
 kubectl get namespace -L istio-injection
 ```
 
-更改注入标签后，现有 pod 需要重新创建。请使用没有冲突 `istio.io/rev` 或 ambient 标签的 namespace。
+更改注入标签后，现有 Pod 需要重新创建。请使用未设置冲突的 `istio.io/rev` 或 ambient 标签的命名空间。
 
-### 2. 部署 Bookinfo 应用
+### 2. 部署 Bookinfo 应用程序
 
 ```bash
 # Deploy Bookinfo application
@@ -351,7 +351,7 @@ kubectl get pods
 kubectl get services
 ```
 
-### 3. 验证应用访问
+### 3. 验证应用程序访问
 
 ```bash
 # Test productpage service
@@ -425,11 +425,11 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
-## Istio 移除
+## 卸载 Istio {#istio-removal}
 
-这些清理命令适用于一次性实验室环境。清除会移除共享服务网格资源；在卸载正在运行的服务网格之前，请移除已注入的工作负载，或在未注入的情况下重启它们。Helm 卸载会保留 CRD。
+这些清理命令适用于一次性实验环境。清除操作会移除共享网格资源；从运行中的网格卸载前，请先移除已注入的工作负载，或在不启用注入的情况下重启它们。Helm 卸载会保留 CRD。
 
-### 使用 istioctl 移除
+### 使用 istioctl 卸载
 
 ```bash
 # Remove sample application
@@ -446,7 +446,7 @@ kubectl delete namespace istio-system
 kubectl label namespace default istio-injection-
 ```
 
-### 使用 Helm 移除
+### 使用 Helm 卸载
 
 ```bash
 # Remove Ingress Gateway
@@ -462,13 +462,13 @@ helm delete istio-base -n istio-system
 kubectl delete namespace istio-system
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ### 常见问题
 
 #### 1. Sidecar 自动注入失败
 
-**症状**：Envoy Sidecar 未注入到 pod 中
+**症状**：Envoy Sidecar 未注入 Pod
 
 **解决方案**：
 ```bash
@@ -482,9 +482,9 @@ kubectl label namespace default istio-injection=enabled --overwrite
 kubectl get mutatingwebhookconfiguration
 ```
 
-#### 2. istiod Pod 未启动
+#### 2. istiod Pod 无法启动
 
-**症状**：istiod pod 处于 Pending 或 CrashLoopBackOff 状态
+**症状**：istiod Pod 处于 Pending 或 CrashLoopBackOff 状态
 
 **解决方案**：
 ```bash
@@ -502,9 +502,9 @@ kubectl top nodes
 kubectl describe nodes
 ```
 
-#### 3. Ingress Gateway 未接收外部 IP
+#### 3. Ingress Gateway 未获取外部 IP
 
-**症状**：LoadBalancer 类型 Service 处于 Pending 状态
+**症状**：LoadBalancer 类型的 Service 处于 Pending 状态
 
 **解决方案**：
 ```bash
@@ -556,7 +556,7 @@ istioctl dashboard prometheus
 istioctl dashboard envoy <POD_NAME>.<NAMESPACE>
 ```
 
-### 日志收集
+### 收集日志
 
 ```bash
 # Control Plane logs
@@ -574,18 +574,18 @@ istioctl bug-report
 
 ## 后续步骤
 
-Istio 安装已完成！现在请参阅以下文档，开始使用 Istio：
+Istio 安装已完成！请参阅以下文档，开始使用 Istio：
 
 1. **[基本概念](02-basic-concepts.md)**：了解 Istio 核心概念和架构
-2. **[流量管理](traffic-management/README.md)**：学习 Gateway、VirtualService、DestinationRule
-3. **[安全](security/README.md)**：配置 mTLS、认证、授权
+2. **[流量管理](traffic-management/README.md)**：了解 Gateway、VirtualService、DestinationRule
+3. **[安全](security/README.md)**：配置 mTLS、身份验证和授权
 
 ## 参考资料
 
 - [Istio 官方安装指南](https://istio.io/latest/docs/setup/install/)
-- [Istio profile 文档](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+- [Istio 配置文件文档](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
 - [Istio EKS 平台指南](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
 - [Istio 故障排除指南](https://istio.io/latest/docs/ops/diagnostic-tools/)
 
 - [EKS Fargate 限制](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
-- [Istio 1.31 发布与制品迁移](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)
+- [Istio 1.31 发布说明和制品迁移](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)

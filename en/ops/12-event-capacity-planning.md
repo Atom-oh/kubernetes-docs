@@ -364,7 +364,7 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-Threshold 3,000 is requests per Pod per minute, matching the illustrative throughput units.
+The threshold of 3,000 is measured in requests per Pod per minute, matching the illustrative throughput units.
 Replace it with load-test evidence. The query must resolve to one value.
 ignoreNullValues=false avoids hiding missing observations as zero demand.
 Test HPA error/missing-data behavior and manual response outside production.
@@ -390,7 +390,7 @@ Stabilization is not simply a fixed sleep followed by one action.
 
 ### SQS worker
 
-queueLength is target backlog per Pod, not a promise that each Pod handles exactly ten messages.
+queueLength is the target backlog per Pod, not a promise that each Pod handles exactly ten messages.
 Choose it from processing time, concurrency and allowed wait, and monitor oldest-message age,
 DLQ and retries. This example includes visible and in-flight messages but excludes delayed ones;
 the counts are approximate. Implement visibility timeout, idempotency and shutdown/ack behavior separately.
@@ -444,7 +444,7 @@ spec:
 RequestCount is an application-published request count/delta; Sum over 60 seconds yields the
 period's request count. Do not sum repeatedly published per-minute rate gauges or cumulative counters.
 KEDA 2.20.2 uses metricStat, not metricStatType.
-minMetricValue is a NoData fallback, not activation threshold.
+minMetricValue is a NoData fallback, not an activation threshold.
 ignoreNullValues=false takes precedence. Validate collection time, end offset and publishing delay.
 
 ```yaml
@@ -490,7 +490,7 @@ demand. Pre-scaling the actual application and validating initialization is the 
 Self-managed Karpenter also supports static NodePools through spec.replicas.
 This differs from an EC2 Auto Scaling stopped-instance Warm Pool.
 
-This NodeClass is for self-managed Karpenter. Set real IAM role, subnet/SG tags and cluster version.
+This NodeClass is for self-managed Karpenter. Set a real IAM role, subnet/SG tags and cluster version.
 The alias pins a release verified through the Seoul EKS 1.36 AL2023 x86_64 public SSM parameter.
 Recheck compatibility for other Kubernetes versions/architectures.
 Decide explicitly whether fallback is allowed when reservations are absent or exhausted.
@@ -736,7 +736,7 @@ kubectl --context "$DOCS_CONTEXT" scale nodepool event-static-c --replicas=10
 ```
 
 If GitOps owns replicas, update its desired state as well.
-Verify static Nodes Ready before enabling placement and event scaling.
+Verify that static Nodes are Ready before enabling placement and event scaling.
 Do not move live workloads onto zero-replica capacity or activate Cron before preparation.
 Include earlier preparation time in node_start/reservation_start cost inputs.
 
@@ -908,7 +908,7 @@ test -n "$DOCS_HPA" || exit 1
 kubectl --context "$DOCS_CONTEXT" -n ecommerce get hpa "$DOCS_HPA"
 ```
 
-Directly scaling the Deployment or patching a KEDA-owned HPA can be overwritten at reconciliation.
+The effects of directly scaling the Deployment or patching a KEDA-owned HPA can be overwritten at reconciliation.
 Do not assume the HPA has the Deployment's name.
 If necessary, temporarily raise ScaledObject minReplicaCount within the approved maximum,
 record and restore the prior value, and update Git when GitOps owns it.

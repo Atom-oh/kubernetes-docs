@@ -133,7 +133,7 @@ AND입니다. 서로 다른 peer 항목은 OR입니다. NetworkPolicy들은 합�
 <details>
 <summary>정답 보기</summary>
 
-사용하는 provisioner에 맞춰 encrypted:true와 실제 KMS 권한을 구성하고 EBS 결과를 확인합니다. Auto Mode 노드·임시 디스크 암호화로 모든 동적 PVC를 추정하지 않습니다. StorageClass·계정 기본값 변경은 기존 볼륨을 소급 암호화하지 않습니다.
+사용하는 provisioner에 맞춰 encrypted:true와 실제 KMS 권한을 구성하고 EBS 결과를 확인합니다. Auto Mode 노드·임시 디스크 암호화로 모든 동적 PVC의 암호화 여부를 추정하지 않습니다. StorageClass·계정 기본값 변경은 기존 볼륨을 소급 암호화하지 않습니다.
 
 </details>
 

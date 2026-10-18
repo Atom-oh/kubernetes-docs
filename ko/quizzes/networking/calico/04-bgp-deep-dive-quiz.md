@@ -33,7 +33,7 @@ BGP는 Border Gateway Protocol의 약자로, 인터넷에서 자율 시스템(AS
 **정답: B) iBGP는 같은 AS 내에서, eBGP는 다른 AS 간에 사용**
 
 **설명:**
-iBGP(Internal BGP)는 동일한 자율 시스템(AS) 내의 라우터 간 통신에 사용되고, eBGP(External BGP)는 서로 다른 AS 간의 라우터 간 통신에 사용됩니다.
+iBGP(Internal BGP)는 동일한 자율 시스템(AS) 내의 라우터 간 통신에 사용되고, eBGP(External BGP)는 서로 다른 AS에 속한 라우터 간 통신에 사용됩니다.
 
 </details>
 
@@ -97,7 +97,7 @@ Full-mesh BGP에서는 모든 노드가 서로 피어링하므로, 총 세션 �
 **정답: B) Full-mesh 없이 BGP 라우트 전파**
 
 **설명:**
-Route Reflector는 iBGP에서 full-mesh 요구 사항을 제거합니다. 클라이언트 노드는 Route Reflector에게만 피어링하고, Route Reflector가 라우트를 다른 클라이언트들에게 반사(reflect)합니다.
+Route Reflector는 iBGP에서 full-mesh 요구 사항을 제거합니다. 클라이언트 노드는 Route Reflector와만 피어링하고, Route Reflector가 라우트를 다른 클라이언트들에게 반사(reflect)합니다.
 
 </details>
 

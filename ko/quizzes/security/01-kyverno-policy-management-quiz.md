@@ -18,7 +18,7 @@
 
 **정답: A) Admission과 별도로 구성한 background/lifecycle controller를 가진 Kubernetes 정책 엔진.**
 
-정책 범위에 따라 validation·mutation·generation·image verification·deletion을 수행합니다. 현재 v1 정책은 YAML/JSON 안에서 CEL을 사용하며 기존 ClusterPolicy pattern·JMESPath와는 다른 문법입니다. Kubernetes-native 형식이 표현식 학습을 없애지는 않습니다.
+정책 범위에 따라 validation·mutation·generation·image verification·deletion을 수행합니다. 현재 v1 정책은 YAML/JSON 안에서 CEL을 사용하며 기존 ClusterPolicy pattern·JMESPath와는 다른 문법입니다. Kubernetes-native 형식이 표현식 학습의 필요성을 없애지는 않습니다.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -306,7 +306,7 @@ spec:
 
 **정답: B) ImageValidatingPolicy.**
 
-레거시 ClusterPolicy verifyImages rule과 새 manifest kind를 구분합니다. 이미지 보안 문서의 지원되는 Cosign 또는 Notary/Notation trust 경로, 정확한 signer/issuer/key와 registry 접근을 구성합니다. 임의 GPG/Docker Content Trust 자료를 그대로 대입하지 않습니다. 서명 검증은 취약점 스캔이나 자동 registry allowlist가 아닙니다. Digest mutation 설정은 image reference를 바꿀 수 있으며 이 장에서는 실제 registry/signature 작업을 실행하지 않았습니다.
+레거시 ClusterPolicy verifyImages rule과 새 manifest kind를 구분합니다. 이미지 보안 문서에서 지원되는 Cosign 또는 Notary/Notation trust 경로, 정확한 signer/issuer/key와 registry 접근을 구성합니다. 임의 GPG/Docker Content Trust 자료를 그대로 대입하지 않습니다. 서명 검증은 취약점 스캔이나 자동 registry allowlist가 아닙니다. Digest mutation 설정은 image reference를 바꿀 수 있으며 이 장에서는 실제 registry/signature 작업을 실행하지 않았습니다.
 
 [이미지 보안 문서](../../security/07-image-security.md)
 
@@ -326,7 +326,7 @@ spec:
 
 **정답: A) 해당 설정의 주기적 기존 리소스 검사는 꺼지지만 매칭되는 admission update는 여전히 검사할 수 있다.**
 
-현재 유형은 spec.evaluation.background.enabled, classic ClusterPolicy는 background를 사용했습니다. Mutate-existing·generation·cleanup 전체를 제어하는 switch가 아닙니다. Background reporting은 이미 저장된 객체를 복구·거부·삭제하지 않습니다. Admission operation과 match 조건은 update에 여전히 적용됩니다.
+현재 유형은 spec.evaluation.background.enabled를 사용하고, classic ClusterPolicy는 background를 사용했습니다. Mutate-existing·generation·cleanup 전체를 제어하는 switch가 아닙니다. Background reporting은 이미 저장된 객체를 복구·거부·삭제하지 않습니다. Admission operation과 match 조건은 update에 여전히 적용됩니다.
 
 </details>
 

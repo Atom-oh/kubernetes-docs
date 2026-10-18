@@ -457,7 +457,7 @@ spec:
 
 ### Locality Failover
 
-한 지역이 실패하면 다른 지역으로 자동 전환합니다.
+한 지역에 장애가 발생하면 다른 지역으로 자동 전환합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1004,7 +1004,7 @@ sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 
 ### 8. 문서화
 
-아래 annotation 값은 예시입니다. 지연/부하 수치는 직접 측정한 값으로 바꾸세요. 이번 검토의 벤치마크 결과가 아닙니다. Redis 세션 저장소도 DestinationRule annotation이 아닌 앱 통합이 필요합니다.
+아래 annotation 값은 예시입니다. 지연/부하 수치는 직접 측정한 값으로 바꾸세요. 이번 검토의 벤치마크 결과가 아닙니다. Redis 세션 저장소도 DestinationRule annotation이 아니라 앱 통합이 필요합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1

@@ -110,7 +110,7 @@ EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-01-eks-introduction-0.html)
 
-1. **IAM**: IAM 신원이 클러스터에 인증하고 EKS access entry의 접근 정책 및/또는 Kubernetes RBAC 그룹으로 권한을 부여합니다. 워크로드의 AWS 권한은 Pod Identity·IRSA로 별도 구성합니다.
+1. **IAM**: IAM 신원으로 클러스터에 인증하고 EKS access entry의 접근 정책 및/또는 Kubernetes RBAC 그룹으로 권한을 부여합니다. 워크로드의 AWS 권한은 Pod Identity·IRSA로 별도 구성합니다.
 2. **VPC**: 네트워킹 인프라를 제공합니다.
 3. **CloudWatch**: 모니터링 및 로깅을 제공합니다.
 4. **ALB/NLB**: 로드 밸런싱을 제공합니다.

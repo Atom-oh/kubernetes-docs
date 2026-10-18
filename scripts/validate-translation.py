@@ -15,6 +15,7 @@ Exit 0 if the translation passes, 1 otherwise (reason printed to stderr).
 import re
 import sys
 from collections import Counter
+from pathlib import Path
 
 
 def counts(text):
@@ -22,6 +23,13 @@ def counts(text):
         "headings": len(re.findall(r"^#{1,6} ", text, re.MULTILINE)),
         "fences": text.count("```"),
     }
+
+
+def minimum_size_ratio(dst_path):
+    # Natural Chinese prose often uses fewer characters than English. A size
+    # heuristic must not encourage padding; fidelity is checked separately.
+    return 0.25 if "cn" in Path(dst_path).parts else 0.4
+
 
 def code_blocks(text):
     """Keep code bytes and fence languages unchanged, including quoted fences."""
@@ -97,7 +105,7 @@ def main():
         return 1
 
     ratio = len(dst) / max(len(src), 1)
-    if not (0.4 <= ratio <= 2.5):
+    if not (minimum_size_ratio(dst_path) <= ratio <= 2.5):
         print(f"size ratio out of range: {ratio:.2f} ({dst_path})", file=sys.stderr)
         return 1
 

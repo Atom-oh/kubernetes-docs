@@ -13,7 +13,7 @@ Strimzi 1.3.0 supports Kafka 4.2.0, 4.2.1, 4.2.2, 4.3.0 and 4.3.1, defaulting to
 
 Brokers store topic partition replicas. KafkaConsumer groups distribute partitions, with one member potentially owning several partitions. A separate controller quorum manages the metadata Raft log.
 
-KRaft arrived as early access in 2.8 and production-ready in 3.3; Kafka 4.0 removed ZooKeeper mode. Controllers and brokers can be dedicated roles. Removing ZooKeeper does not remove controller, storage or recovery operations.
+KRaft arrived as early access in 2.8 and became production-ready in 3.3; Kafka 4.0 removed ZooKeeper mode. Controllers and brokers can be dedicated roles. Removing ZooKeeper does not remove controller, storage or recovery operations.
 
 Users declare custom resources such as Kafka and KafkaNodePool; Strimzi reconciles Pods, PVCs, Services and Secrets. The diagram below is a simplified relationship sketch, not an HA replica-count deployment specification.
 

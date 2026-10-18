@@ -324,7 +324,7 @@ spec:
 
 ### XFF 기반 IP 접근 제어
 
-다음 두 예제는 서로 독립적인 **전용 API Gateway** 정책입니다. ALLOW 정책이 하나라도 선택되면 그 워크로드의 요청은 일치하는 ALLOW 규칙이 필요합니다. 여러 ALLOW 정책은 합집합이므로 공유 Gateway의 다른 앱에 그대로 누적 적용하지 마세요.
+다음 두 예제는 서로 독립적인 **전용 API Gateway** 정책입니다. ALLOW 정책이 하나라도 선택되면 그 워크로드의 요청에는 일치하는 ALLOW 규칙이 필요합니다. 여러 ALLOW 정책은 합집합이므로 공유 Gateway의 다른 앱에 그대로 누적 적용하지 마세요.
 
 #### 1. IP 허용 목록과 거부 목록
 
@@ -469,7 +469,7 @@ Istio는 정적 응답을 구현하는 여러 방법을 제공합니다:
 
 #### 1. 기본 정적 응답 (directResponse)
 
-본문 timestamp는 고정된 예시 문자열이며 현재 시각으로 갱신되지 않습니다. 생성된 route의 본문 한도와 처리 위치를 확인해야 합니다. Istio1.31은 이 outbound VirtualService route에1MiB를 설정하며 수정하지 않은 Envoy 기본값은4KiB입니다. 큰 정적 본문은 프록시 메모리를 사용합니다. 이 mesh outbound 예제들은 각각 독립적이며 같은 host의 VirtualService들을 중첩 적용하지 않습니다.
+본문 timestamp는 고정된 예시 문자열이며 현재 시각으로 갱신되지 않습니다. 생성된 route의 본문 한도와 처리 위치를 확인해야 합니다. Istio 1.31은 이 outbound VirtualService route에 1MiB를 설정하며 수정하지 않은 Envoy 기본값은 4KiB입니다. 큰 정적 본문은 프록시 메모리를 사용합니다. 이 mesh outbound 예제들은 각각 독립적이며 같은 host의 VirtualService들을 중첩 적용하지 않습니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -525,7 +525,7 @@ retry-after: 3600
 
 #### 2. 헬스체크 엔드포인트
 
-정적200은 프록시의 경로 처리만 확인합니다. Kubernetes readiness나 ALB target health가 애플리케이션 상태를 알아야 하는 경우 실제 백엔드 probe를 사용하세요.
+정적 200 응답은 프록시의 경로 처리만 확인합니다. Kubernetes readiness나 ALB target health가 애플리케이션 상태를 알아야 하는 경우 실제 백엔드 probe를 사용하세요.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -622,7 +622,7 @@ spec:
 
 #### 커스텀 거부 응답
 
-다음은 해당 Gateway가 **직접 생성한 모든 HTTP403**의 형식을 통일합니다. 백엔드가 반환한403이나 모든 TCP 거부를 재작성하는 기능은 아닙니다. IP 거부 여부를 본문 문자열로 추측하지 않고 일반 `FORBIDDEN` 코드를 사용합니다. 앞선 RBAC 필터가 반환하면 뒤쪽 Lua가 실행되지 않을 수 있으므로 HCM의 `local_reply_config`를 사용합니다. 기존 mapper와의 순서/범위를 병합 검토하세요.
+다음은 해당 Gateway가 **직접 생성한 모든 HTTP 403 응답**의 형식을 통일합니다. 백엔드가 반환한 403 응답이나 모든 TCP 거부를 재작성하는 기능은 아닙니다. IP 거부 여부를 본문 문자열로 추측하지 않고 일반 `FORBIDDEN` 코드를 사용합니다. 앞선 RBAC 필터가 반환하면 뒤쪽 Lua가 실행되지 않을 수 있으므로 HCM의 `local_reply_config`를 사용합니다. 기존 mapper와의 순서/범위를 검토하여 병합하세요.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -740,9 +740,9 @@ spec:
 
 ### 통합 예제: VirtualService + AuthorizationPolicy
 
-독립된 **HTTP 실습 조각**입니다. 기존 ingress Gateway Deployment/Service, 해당 Service가 노출하는80번 포트, `default/api-service`의8080번 Service/정상 Endpoint, 실제 DNS/ALB 경로와 앞에서 검증한 XFF 신뢰 설정이 필요합니다. 실제 외부 접속에는 검증된 TLS 종료와 백엔드 우회 방지도 별도로 구성해야 합니다. 이 감사에서 실행하거나 production 검증한 배포 묶음은 아닙니다.
+독립된 **HTTP 실습 조각**입니다. 기존 ingress Gateway Deployment/Service, 해당 Service가 노출하는 80번 포트, `default/api-service`의 8080번 Service/정상 Endpoint, 실제 DNS/ALB 경로와 앞에서 검증한 XFF 신뢰 설정이 필요합니다. 실제 외부 접속에는 검증된 TLS 종료와 백엔드 우회 방지도 별도로 구성해야 합니다. 이 감사에서 실행하거나 production에서 검증한 배포 묶음은 아닙니다.
 
-정책과 라우트 모두 같은 Gateway에서 평가되며 public·health·retired 경로를 명시적으로 허용합니다. 나머지는 거부됩니다. `/health`는 프록시 경로 응답일 뿐 애플리케이션·DB 건강 상태가 아닙니다. 쓰기를 포함할 수 있는 일반 라우트의 mesh 재시도는0입니다.
+정책과 라우트 모두 같은 Gateway에서 평가되며 public·health·retired 경로를 명시적으로 허용합니다. 나머지는 거부됩니다. `/health`는 프록시 경로 응답일 뿐 애플리케이션·DB 건강 상태가 아닙니다. 쓰기를 포함할 수 있는 일반 라우트의 mesh 재시도는 0입니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -964,7 +964,7 @@ spec:
 
 #### 시나리오 1: Blue/Green 배포 중 트래픽 차단
 
-선택한v1 워크로드의 모든 inbound HTTP route를503으로 바꾸는 명시적 차단 예제입니다. 무중단 전환이나 기존 연결 drain을 구현하지 않습니다. `MERGE`는 Envoy Route의 action oneof를 direct_response로 바꾸며, 다른 필터의 선행 거부나 TCP 경로까지 통제하지 않습니다. cutoff_date는 고정 예시값으로 실제 배포 일정에 맞춰 설정해야 합니다.
+선택한 v1 워크로드의 모든 inbound HTTP route를 503으로 바꾸는 명시적 차단 예제입니다. 무중단 전환이나 기존 연결 drain을 구현하지 않습니다. `MERGE`는 Envoy Route의 action oneof를 direct_response로 바꾸며, 다른 필터의 선행 거부나 TCP 경로까지 통제하지 않습니다. cutoff_date는 고정 예시값으로 실제 배포 일정에 맞춰 설정해야 합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -1098,11 +1098,11 @@ spec:
                   code: "RATE_LIMIT_EXCEEDED"
 ```
 
-두 리소스는 같은 워크로드를 선택합니다. mapper는 이 프록시가 직접 생성한429를 JSON으로 바꾸며 upstream 429는 변경하지 않습니다. 토큰 보충 시간이 모든 호출자의 재시도 성공 시간을 보장하지 않으므로 고정 `Retry-After: 60`을 만들지 않습니다.
+두 리소스는 같은 워크로드를 선택합니다. mapper는 이 프록시가 직접 생성한 429를 JSON으로 바꾸며 upstream 429는 변경하지 않습니다. 토큰 보충 시간이 모든 호출자의 재시도 성공 시간을 보장하지 않으므로 고정 `Retry-After: 60`을 만들지 않습니다.
 
 #### 시나리오 3: 카나리 배포 테스트 응답
 
-격리된 테스트 워크로드에서만 사용합니다. 임의 클라이언트가 헤더를 보낼 수 있으므로 이200 응답은 사용자 인증·백엔드 실행·새 버전 건강 상태를 증명하지 않습니다. 운영 경로에 노출하려면 별도 인증과 헤더 신뢰 경계를 먼저 검증해야 합니다.
+격리된 테스트 워크로드에서만 사용합니다. 임의 클라이언트가 헤더를 보낼 수 있으므로 이 200 응답은 사용자 인증·백엔드 실행·새 버전 건강 상태를 증명하지 않습니다. 운영 경로에 노출하려면 별도 인증과 헤더 신뢰 경계를 먼저 검증해야 합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -1161,9 +1161,9 @@ curl -i http://api-service:8080/admin
 curl -i http://api-service:8080/admin/users
 ```
 
-유지보수 함수는 격리된 Lua 테스트에서 UTC1,2,3,4시를 입력해 각각 false,true,true,false를 확인합니다. Pod/노드의 시계를 변경하지 않습니다. 실제 필터 통합 시험은 테스트 환경에서 시간을 주입하는 harness나 검토한 임시 함수로 수행하고, 기본 함수로 복원합니다.
+유지보수 함수는 격리된 Lua 테스트에서 UTC 1, 2, 3, 4시를 입력해 각각 false, true, true, false를 확인합니다. Pod/노드의 시계를 변경하지 않습니다. 실제 필터 통합 시험은 테스트 환경에서 시간을 주입하는 harness나 검토한 임시 함수로 수행하고, 기본 함수로 복원합니다.
 
-Rate limit은 단일 프록시로 고정한 테스트에서 초기100개와 초당10개 보충, 경과 시간, 실제429 수를 함께 측정합니다. 순차 curl150회만으로429가 반드시 발생한다고 판단할 수 없습니다. 복제본 수와 분산 상태를 바꾸는 시험은 별도입니다.
+Rate limit은 단일 프록시로 고정한 테스트에서 초기 100개와 초당 10개 보충, 경과 시간, 실제 429 수를 함께 측정합니다. 순차 curl 150회만으로 429가 반드시 발생한다고 판단할 수 없습니다. 복제본 수와 분산 상태를 바꾸는 시험은 별도입니다.
 
 #### Envoy 구성 확인
 

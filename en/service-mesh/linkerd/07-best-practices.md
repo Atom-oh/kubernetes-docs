@@ -330,7 +330,7 @@ kubectl -n linkerd logs deployment/linkerd-identity -c identity --tail=100
 kubectl -n linkerd get events --sort-by=.lastTimestamp
 ```
 
-`linkerd identity` retrieves public leaf certificates; do not assume a fixed `end-entity.crt` file exists in the proxy image. Use ServiceProfile `viz routes` or current policy diagnostics only for the resources actually configured. Keep the relevant controller container explicit when reading logs.
+`linkerd identity` retrieves public leaf certificates; do not assume a fixed `end-entity.crt` file exists in the proxy image. Use ServiceProfile `viz routes` or current policy diagnostics only for the resources actually configured. Specify the relevant controller container explicitly when reading logs.
 
 After a targeted fix, verify the original failing path, not only a command's successful completion.
 

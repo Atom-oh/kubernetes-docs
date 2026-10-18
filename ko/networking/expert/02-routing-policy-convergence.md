@@ -46,7 +46,7 @@ OSPF 인접 관계만으로 필요한 next-hop prefix가 광고되었다고 볼 
 | Linux FIB 조회 | 목적지의 경로, 출력 인터페이스, next hop | 반환 경로가 있는지, 필터가 없는지 |
 | 패킷 관찰 | 출발지를 지정한 probe와 인터페이스 캡처 | 모든 애플리케이션·크기·ECMP 경로가 동작하는지 |
 
-보고서에는 둘 다 “라우팅 테이블”이라고 쓰기보다 “BGP 테이블”과 “커널 포워딩 테이블”을 구분합니다.
+보고서에서는 둘 다 “라우팅 테이블”이라고 쓰기보다 “BGP 테이블”과 “커널 포워딩 테이블”을 구분합니다.
 선택한 소프트웨어 데이터 평면에서 FRR은 Zebra를 통해 경로를 전달하고 Linux가 포워딩합니다.
 
 ## 3. 검증 전에 정책 설명하기
@@ -73,7 +73,7 @@ Reflector의 ORIGINATOR_ID와 CLUSTER_LIST는 루프 방지에 쓰이며, reflec
 
 ## 4. 이 실습의 환경 준비
 
-선정한 upstream은 **`bgplab/bgplab`의 `policy/5-local-preference/topology.yml`**, revision **`5a9fab68658ce69317b147396481714ee3478482`**입니다.
+선정한 upstream은 **`bgplab/bgplab`의 `policy/5-local-preference/topology.yml`**, revision **`5a9fab68658ce69317b147396481714ee3478482`입니다**.
 라우터 네 대 중 c1/c2는 AS65000, x1/x2는 AS65100에 속합니다.
 토폴로지가 OSPF, eBGP, iBGP와 경로 광고를 구성하며 학습자는 고객 측 정책을 변경합니다.
 [원본 토폴로지](https://github.com/bgplab/bgplab/blob/5a9fab68658ce69317b147396481714ee3478482/policy/5-local-preference/topology.yml)는 **netlab 2.0.0 이상**을 요구합니다.
@@ -197,7 +197,7 @@ c2에서 6절을 다시 실행합니다. c1 경로가 유효하고 LOCAL_PREF 20
 
 ## 8. Peer 하나의 장애 측정
 
-선호도 실험 상태를 유지합니다. 사전 상태는 **c1의 이웃 `10.1.0.2`**가 established이고 `shutdown` 설정이 없는 것입니다.
+선호도 실험 상태를 유지합니다. 사전 상태는 **c1의 이웃 `10.1.0.2`가** established이고 `shutdown` 설정이 없는 것입니다.
 역연산은 같은 BGP instance에서 `no neighbor 10.1.0.2 shutdown`입니다.
 이 실험은 관리 명령으로 발생시킨 peer 장애이며 케이블 단절, 무응답 패킷 손실, BFD 실험이 아닙니다.
 

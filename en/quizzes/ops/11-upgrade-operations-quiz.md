@@ -142,7 +142,7 @@ Ordinary managed node groups need separate UpdateNodegroupVersion handling. Vers
 
 **Answer: B**
 
-Weights are relative values from 0–999. Distinguish ordinary changes from zero-weight transition; TLS listeners do not support TG stickiness.
+Weights are relative values from 0–999. Distinguish ordinary changes from a zero-weight transition; TLS listeners do not support TG stickiness.
 
 </details>
 

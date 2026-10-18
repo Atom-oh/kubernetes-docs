@@ -135,7 +135,7 @@
 
    **정답: C) ENI**
 
-   ENI 모드는 AWS 전제 조건을 가지며 모든 EKS 컴퓨팅 모드나 CNI 체이닝 구성의 보편적인 권장은 아닙니다.
+   ENI 모드는 AWS 전제 조건이 있으며 모든 EKS 컴퓨팅 모드나 CNI 체이닝 구성에 보편적으로 권장되는 것은 아닙니다.
 
    </details>
 
@@ -151,7 +151,7 @@
 
    **정답: A) spec.podCIDR / spec.podCIDRs**
 
-   Kubernetes가 노드 Pod CIDR을 할당하며 Cilium의 Kubernetes host-scope IPAM이 이를 사용합니다. PodCIDR는 실제 IPAM 모드 이름이 아닙니다.
+   Kubernetes가 노드 Pod CIDR을 할당하며 Cilium의 Kubernetes host-scope IPAM이 이를 사용합니다. PodCIDR은 실제 IPAM 모드 이름이 아닙니다.
 
    </details>
 
@@ -207,7 +207,7 @@
 
 ## 네트워크 정책
 
-13. **toCIDR는 무엇을 선택하나요?**
+13. **toCIDR은 무엇을 선택하나요?**
 
    - A) 목적지 주소 범위
    - B) 인증된 DNS 호스트 이름

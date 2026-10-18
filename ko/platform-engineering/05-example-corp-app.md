@@ -6,7 +6,7 @@
 
 ExampleCorp는 학습용 가상 조직입니다. 이 문서는 ACK가 생성한 AWS 인프라에 kro 애플리케이션 그래프를 연결하는 구성 계약이며, 동작하는 Order API 구현이나 공개 이미지를 제공하는 end-to-end 실습은 아닙니다. 원문의 가상 ECR 이미지가 실행 가능하다고 표시하지 않습니다.
 
-ACK는 NLB·TargetGroup·Listener, Route 53 record와 Aurora를 관리합니다. kro는 Service, ConfigMap, TargetGroupBinding(TGB), Deployment를 만듭니다. **TGB를 보고 Pod IP를 target에 등록·해제하는 주체는 별도의 AWS Load Balancer Controller(LBC)**입니다. ACK와 kro만 설치해서는 이 연결이 작동하지 않습니다.
+ACK는 NLB·TargetGroup·Listener, Route 53 record와 Aurora를 관리합니다. kro는 Service, ConfigMap, TargetGroupBinding(TGB), Deployment를 만듭니다. **TGB를 보고 Pod IP를 target에 등록·해제하는 주체는 별도의 AWS Load Balancer Controller**(LBC)입니다. ACK와 kro만 설치해서는 이 연결이 작동하지 않습니다.
 
 ![ACK 인프라와 kro 애플리케이션을 AWS LBC의 TargetGroupBinding 조정으로 연결하는 구성](../.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png)
 
@@ -220,13 +220,13 @@ kubectl get deploy,svc,targetgroupbindings.elbv2.k8s.aws,configmap \
 kubectl get pods -n production -l app.kubernetes.io/name=order-api -o wide
 ```
 
-CR conditions와 Deployment뿐 아니라 Pod readiness gates, EndpointSlice, TGB 상태, AWS target health, DNS·HTTP와 DB TLS 연결을 확인합니다. readiness endpoint가 DB 연결을 검증하는지는 실제 app 계약에 달려 있습니다. label은 모든 생성 리소스 metadata에 동일하게 넣어 조회가 맞도록 했습니다.
+CR conditions와 Deployment뿐 아니라 Pod readiness gates, EndpointSlice, TGB 상태, AWS target health, DNS·HTTP와 DB TLS 연결을 확인합니다. readiness endpoint가 DB 연결을 검증하는지는 실제 app 계약에 달려 있습니다. label은 모든 생성 리소스 metadata에 동일하게 넣어 조회 결과가 일치하도록 했습니다.
 
 새 payment 서비스에는 검증한 image와 별도 TargetGroup·Listener routing, DB 사용자/권한·schema 계약이 필요합니다. 동일 Aurora cluster 사용이 데이터·성능·비용 격리를 보장하지 않습니다. 같은 TargetGroup을 여러 TGB/cluster가 공유하면 LBC의 multiClusterTargetGroup lifecycle을 별도로 검토합니다. 기본 소유 모델을 무시하면 다른 target이 해제될 수 있습니다.
 
 Aurora replica는 ACK DBInstance와 지원 class/region으로 추가할 수 있지만 writer 역할은 이름/tag로 고정되지 않습니다. 기존 [RDS 예제](ack/03-elbv2-route53-rds.md)의 promotionTier, endpoint와 failover 설명을 따르고 실제 부하·복구를 검증합니다.
 
-Deployment image 갱신은 보통 RollingUpdate이며 Blue/Green이나 무중단을 자동 보장하지 않습니다. Blue/Green은 별도 app 버전·target/routing 전환, 검증 지표와 rollback 조건, DB 호환성을 설계해야 합니다. CR 삭제·교체가 child TGB/Deployment와 target 연결을 정리할 수 있으므로 가벼운 버전 전환 명령처럼 사용하지 않습니다.
+Deployment image 갱신은 보통 RollingUpdate이며 Blue/Green이나 무중단을 자동 보장하지 않습니다. Blue/Green에서는 별도 app 버전·target/routing 전환, 검증 지표와 rollback 조건, DB 호환성을 설계해야 합니다. CR 삭제·교체가 child TGB/Deployment와 target 연결을 정리할 수 있으므로 가벼운 버전 전환 명령처럼 사용하지 않습니다.
 
 ## 수행한 검증
 

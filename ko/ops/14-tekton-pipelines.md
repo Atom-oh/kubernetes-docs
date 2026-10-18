@@ -686,7 +686,7 @@ spec:
 
 Google Kaniko 원본 저장소는 보관 상태이므로 새 예제는 BuildKit 0.33.0을 사용합니다. rootless도 완전한 프로세스 격리를 보장하지 않습니다. 프로덕션에서는 Step image의 digest·아키텍처를 확인해 고정하고, 도구별 writable path와 securityContext를 실제 노드에서 검증합니다.
 
-스캐너 exit code 1은 취약점 발견, 다른 오류도 실패로 처리합니다. 실패한 스캔의 보고서가 없다는 이유로 “취약점 0”으로 바꾸지 않습니다. `/tmp/trivy-report.json`은 임시 파일이므로 장기 보관이 필요하면 실행 종료 전에 승인된 아티팩트 저장소로 내보내야 합니다.
+스캐너 exit code 1은 취약점 발견을 의미하며, 다른 오류도 실패로 처리합니다. 실패한 스캔의 보고서가 없다는 이유로 “취약점 0”으로 바꾸지 않습니다. `/tmp/trivy-report.json`은 임시 파일이므로 장기 보관이 필요하면 실행 종료 전에 승인된 아티팩트 저장소로 내보내야 합니다.
 
 ## 4. Pipeline과 실행
 
@@ -834,7 +834,7 @@ tkn pipelinerun logs --last -n tekton-builds --follow --exit-with-pipelinerun-er
 
 생성되는 PVC는 실행마다 새로 만들어집니다. `ReadWriteOnce`는 같은 노드의 여러 Pod가 접근할 수 있지만 다중 노드 RWX가 아닙니다. `emptyDir`를 서로 다른 TaskRun Pod의 공유 저장소로 가정하지 않습니다. 캐시는 신뢰 수준과 실행별 쓰기 충돌을 고려해 분리합니다.
 
-`finally`는 일반 Task 종료 후 실행되지만 무조건 실행 보장은 아닙니다. 누락된 Task Result를 참조하면 skip될 수 있고, 취소 방식·전체 timeout·자원/참조 오류로도 실행되지 못할 수 있습니다. 이 예제의 최종 리포트는 생성되지 않았을 수 있는 이미지 Result 대신 run 이름과 `tasks.status`만 사용합니다. 여러 finally Task 사이의 실행 순서도 가정하지 않습니다.
+`finally`는 일반 Task 종료 후 실행되지만 실행이 무조건 보장되는 것은 아닙니다. 누락된 Task Result를 참조하면 skip될 수 있고, 취소 방식·전체 timeout·자원/참조 오류로도 실행되지 못할 수 있습니다. 이 예제의 최종 리포트는 생성되지 않았을 수 있는 이미지 Result 대신 run 이름과 `tasks.status`만 사용합니다. 여러 finally Task 사이의 실행 순서도 가정하지 않습니다.
 
 ## 5. Webhook과 Triggers
 
@@ -958,7 +958,7 @@ Pipeline-level provenance는 Pipeline 종료 후 생성됩니다. 같은 Pipelin
 
 ### 6.2 KMS 기반 구성
 
-기존 비대칭 `SIGN_VERIFY` KMS 키를 사용합니다. 키 ARN과 `builder.id`를 실제 값으로 바꿉니다. **Chains 컨트롤러의 ServiceAccount `tekton-chains/tekton-chains-controller`**에는 별도의 IRSA 역할을 설정하고 후보 리포지터리 ECR 쓰기 권한과 다음 KMS 권한을 줍니다. 빌드 Pod의 IRSA 역할을 설정했다고 컨트롤러까지 같은 자격 증명을 받지는 않습니다.
+기존 비대칭 `SIGN_VERIFY` KMS 키를 사용합니다. 키 ARN과 `builder.id`를 실제 값으로 바꿉니다. **Chains 컨트롤러의 ServiceAccount `tekton-chains/tekton-chains-controller`에는** 별도의 IRSA 역할을 설정하고 후보 리포지터리 ECR 쓰기 권한과 다음 KMS 권한을 줍니다. 빌드 Pod의 IRSA 역할을 설정했다고 컨트롤러까지 같은 자격 증명을 받지는 않습니다.
 
 현재 OCI 저장 구현은 Kubernetes credential 조회와 기본/ECR credential helper 체인을 사용합니다. 컨트롤러의 ambient AWS 자격 증명을 구성하고 실제 서명 업로드를 확인해야 합니다. 빌드 Task의 `/auth` emptyDir는 Chains에서 읽을 수 있는 공용 Secret이 아닙니다.
 
@@ -1116,7 +1116,7 @@ ArgoCD는 Git의 manifest를 동기화하고, 실제 애플리케이션 이미�
 
 `keep`, `keep-since`는 tkn 삭제 명령 등의 옵션이며 PipelineRun에 기본 TTL을 부여하는 필드가 아닙니다. tkn 0.46.1의 `pipelinerun delete`에는 `--dry-run`이 없습니다. 삭제 전에 로그·스캔 보고서·서명/provenance 보관과 감사 기간을 확인합니다. 성공 Pod 전체를 나이 조건 없이 삭제하지 않습니다.
 
-다음 도구는 선택한 namespace에서 성공 7일·실패 14일이 지난 **검토 후보만** 출력합니다. 생성 시각 대신 완료 시각을 사용하며, Chains와 외부 아카이브의 완료 표시를 요구합니다. `ci.example.com/archive-complete`는 자동 제공되는 Tekton 필드가 아니라 실제 아카이브 성공 후 운영 절차가 기록할 annotation입니다. 스크립트는 Kubernetes API를 호출하거나 삭제하지 않습니다.
+다음 도구는 선택한 namespace에서 성공 후 7일·실패 후 14일이 지난 **검토 후보만** 출력합니다. 생성 시각 대신 완료 시각을 사용하며, Chains와 외부 아카이브의 완료 표시를 요구합니다. `ci.example.com/archive-complete`는 자동 제공되는 Tekton 필드가 아니라 실제 아카이브 성공 후 운영 절차가 기록할 annotation입니다. 스크립트는 Kubernetes API를 호출하거나 삭제하지 않습니다.
 
 **`cleanup_candidates.py`**
 
@@ -1194,7 +1194,7 @@ PVC 생명 주기는 `coschedule` 모드별로 다릅니다.
 
 ### 8.2 모니터링
 
-Pipelines 1.17의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`**입니다. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
+Pipelines 1.17의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`입니다**. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
 
 **`servicemonitor.yaml`**
 
@@ -1276,7 +1276,7 @@ kubectl -n tekton-chains logs deployment/tekton-chains-controller --tail=100
 
 `--last`는 마지막 실행이며 “마지막 실패 실행”이 아닙니다. CRD에 지원되지 않는 condition field-selector를 사용하지 말고 JSON을 읽어 condition type/value를 확인합니다. Loki/Alloy를 쓰면 실제로 수집한 namespace·PipelineRun label을 조회합니다. 빌드 namespace가 `tekton-builds`인데 컨트롤러 namespace 파일만 수집하는 경로는 빌드 로그를 놓칩니다.
 
-`Pending`은 quota·노드·PVC·스케줄링 이벤트를 확인합니다. `gp3` RWO를 YAML에서 RWX로 바꾸는 것만으로 EFS처럼 동작하지 않습니다. 결과 과다·권한 오류·누락 Task·없는 CLI는 timeout 연장으로 해결되지 않습니다.
+`Pending` 상태에서는 quota·노드·PVC·스케줄링 이벤트를 확인합니다. `gp3` RWO를 YAML에서 RWX로 바꾸는 것만으로 EFS처럼 동작하지 않습니다. 결과 과다·권한 오류·누락 Task·없는 CLI는 timeout 연장으로 해결되지 않습니다.
 
 ## 9. 재사용과 운영 선택
 

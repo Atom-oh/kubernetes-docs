@@ -3,7 +3,7 @@
 > **Scope**: Proposed gateway design; the InferencePool example follows `inference.networking.k8s.io/v1`. Pin compatible Kubernetes, Gateway API, controller, EPP and model-server releases before deployment.
 > **Last Updated**: September 28, 2026
 
-Once coding agents (Claude Code, OpenCode, Codex), RAG applications, and autonomous agents in one organization start calling several model providers at once (Anthropic, Amazon Bedrock, self-hosted vLLM), a moment arrives quickly where nobody can answer "who used which model, how much did it cost, and what data left the building on the way." An **LLM gateway** (also called an AI gateway or inference gateway) is the proxy that becomes the **single entry point** for all LLM traffic so that question has an answer.
+Once coding agents (Claude Code, OpenCode, Codex), RAG applications, and autonomous agents in one organization start calling several model providers at once (Anthropic, Amazon Bedrock, self-hosted vLLM), a moment quickly arrives when nobody can answer "who used which model, how much did it cost, and what data left the building on the way." An **LLM gateway** (also called an AI gateway or inference gateway) is the proxy that becomes the **single entry point** for all LLM traffic so that question has an answer.
 
 This chapter does not treat an LLM gateway as "an API gateway with a few model names bolted on." It explains, at the level of how things actually work, how token-based billing, streaming, prompt caches, and the fact that *a prompt is code and data at the same time* reshape gateway design. Four axes get the deepest treatment:
 
@@ -80,7 +80,7 @@ The order is not arbitrary. **Where a stage sits determines its security propert
 | 12 | **Audit completion** | Link completion/cancellation/unknown outcomes to the pre-dispatch start record; preserve a durable reconciliation journal and external integrity anchors. |
 | 13 | **Metrics** | OpenTelemetry GenAI semantic conventions (`gen_ai.*`). Label cardinality is bounded by config; key IDs and user IDs never become labels. |
 
-**Every billable subcall follows the same admission contract:** authorize its destination and input data → validate and price a conservative bound → atomically reserve quota/money → persist `subcall_started` → dispatch → settle. This applies inside routing and filters, to the main model and output checks, and to each retry. A main-model allow-list entry does not authorize auxiliary destinations. Unknown prices, exhausted or expired allowances prevent dispatch.
+**Every billable subcall follows the same admission contract:** authorize its destination and input data → validate and price a conservative bound → atomically reserve quota/money → persist `subcall_started` → dispatch → settle. This applies inside routing and filters, to the main model and output checks, and to each retry. A main-model allow-list entry does not authorize auxiliary destinations. Unknown prices or exhausted or expired allowances prevent dispatch.
 
 A request can therefore have several separately funded calls. With zero available budget, a paid LLM router cannot run merely to discover that main inference will be denied. If routing already incurred a charge before main admission fails, retain that charge. Reserve the bounded cost of required output checks before starting generation; an unfunded additional check fails closed. The ledger covers the metered call charges included in its pricing policy; infrastructure, storage and network costs require their own accounting.
 
@@ -293,7 +293,7 @@ circuit_breaker:
 
 ### 4.7 L7: Endpoint Picking (Self-Hosted Pools)
 
-The following fragment follows the published [InferencePool v1 schema](https://gateway-api-inference-extension.sigs.k8s.io/reference/spec/), not a complete deployment. First install compatible Gateway API/Inference Extension CRDs, a supporting Gateway controller, the referenced Gateway and EPP Service/Deployment, and labeled model pods. Verify EPP port and scorer configuration against the pinned release.
+The following fragment follows the published [InferencePool v1 schema](https://gateway-api-inference-extension.sigs.k8s.io/reference/spec/), but is not a complete deployment. First install compatible Gateway API/Inference Extension CRDs, a supporting Gateway controller, the referenced Gateway and EPP Service/Deployment, and labeled model pods. Verify EPP port and scorer configuration against the pinned release.
 
 ```yaml
 apiVersion: inference.networking.k8s.io/v1
@@ -500,7 +500,7 @@ How the prefix is computed for an Anthropic Messages request
 
 ### 7.3 Defending Against Prompt Injection: Five Layers of Defense in Depth
 
-Prompt injection is #1 in the OWASP Top 10 for LLM Applications (LLM01) because **there is no complete fix**. A gateway stacks five layers and designs on the assumption that none is sufficient alone.
+Prompt injection is #1 in the OWASP Top 10 for LLM Applications (LLM01) because **there is no complete fix**. A gateway stacks five layers and is designed on the assumption that none is sufficient alone.
 
 **A. Policy prompt injection** (section 7.2): tell the model up front not to follow instructions found inside tool results. It helps; it does not guarantee.
 

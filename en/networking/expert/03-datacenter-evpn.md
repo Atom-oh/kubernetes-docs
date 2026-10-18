@@ -29,7 +29,7 @@ Before adapting the exercises to another fabric, require correct access/trunk me
 The **underlay** supplies IP reachability between VTEPs. Its routing, return path and usable MTU must work independently of tenant addressing.
 The **overlay** carries tenant traffic between those VTEPs; VXLAN adds an outer Ethernet/IP/UDP/VXLAN encapsulation.
 The outer destination is a remote VTEP, not the tenant host; the VNI identifies a virtual segment in the VXLAN header.
-VLAN IDs are locally significant; their mapping to VNIs must be verified rather than assumed numerically equal.
+VLAN IDs are locally significant; their mapping to VNIs must be verified; VLAN IDs and VNIs must not be assumed to be numerically equal.
 
 ## 2. Separate identifiers, routes and forwarding
 

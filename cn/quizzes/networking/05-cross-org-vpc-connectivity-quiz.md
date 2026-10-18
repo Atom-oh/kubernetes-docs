@@ -1,101 +1,89 @@
 # 跨组织 VPC 连接测验
 
-本测验检验你对在不同 AWS Organizations 之间连接 VPC 的五种选项的理解。
+请区分报告中的测量结果与 AWS 平台要求。
 
-## 多项选择题
+## 1. 与资源所有者不属于同一 Organization 的账户共享 TGW，需要满足什么条件？
 
-1. 与其他 Organization 中的账户共享 Transit Gateway 需要什么？
-   - A) 将两个 Organizations 合并为一个
-   - B) 使用 `--allow-external-principals` 选项，并由接收方接受邀请
-   - C) 在两个 Organizations 的管理账户之间建立 VPN 连接
-   - D) 通过 AWS Support 工单进行人工审批
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) 使用 `--allow-external-principals` 选项，并由接收方接受邀请**
-
-**说明：**
-通过 AWS RAM 与 Organization 外部的账户共享资源时，资源共享必须启用 `--allow-external-principals`，并且在接收账户运行 `accept-resource-share-invitation` 前，该资源不可见。不同于在同一 Organization 内基于 OU 的自动共享，跨组织共享要求明确指定账户 ID，并进行明确接受。
-</details>
-
-2. 当另一个 Organization 中的账户为共享 TGW 创建 VPC attachment 时，会发生什么？
-   - A) 它会立即变为可用
-   - B) 它会停留在 pendingAcceptance，直到拥有 TGW 的账户接受它
-   - C) 请求会被拒绝，且无法创建 attachment
-   - D) 它会在 24 小时后自动激活
+- A. 合并两个 Organization
+- B. 共享资源允许外部主体，并由接收账户接受 RAM 邀请
+- C. 通过 VPN 连接两个管理账户
+- D. 取得 Support 工单审批
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 它会停留在 pendingAcceptance，直到拥有 TGW 的账户接受它**
+B. 共享设置必须允许外部账户，接收方必须先接受邀请，才能使用共享资源。`CreateResourceShare` 默认将 `allowExternalPrincipals` 设为 true，因此并非始终都需要显式指定 `--allow-external-principals`。请检查实际生效的配置以及 IAM/共享限制。
 
-**说明：**
-在禁用自动接受（默认设置）时，外部账户的 attachment 会一直处于 `pendingAcceptance`，直至 TGW 所有者运行 `accept-transit-gateway-vpc-attachment`。这是“TGW 所有者集中控制网络”的模型在 API 层面得到强制执行的地方。接收共享的账户只能创建 attachments，不能修改 route tables。
 </details>
 
-3. 根据同一 AZ 内的实时测量，每次 Transit Gateway hop 会增加多少延迟（p50）？
-   - A) 约 0.02 ms，几乎为零
-   - B) 约 0.4–0.6 ms，不足一毫秒
-   - C) 约 3–5 ms
-   - D) 10 ms 或更多
+## 2. 禁用 AutoAcceptSharedAttachments 后，要使跨账户 VPC attachment 连接到共享 TGW，还需要什么？
+
+- A. 不需要接受
+- B. TGW 所有者必须接受待处理的共享 attachment
+- C. 这类 attachment 不能跨 Organization 建立
+- D. 它总会在 24 小时后激活
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 约 0.4–0.6 ms，不足一毫秒**
+B. 默认禁用共享 attachment 的自动接受。接受 RAM 共享和接受 VPC attachment 是两个独立步骤。如果启用了自动接受，第二个流程会有所不同。TGW 所有者控制 TGW 路由表；接收账户仍负责自己的 VPC 路由和安全设置。
 
-**说明：**
-使用 c7g.large、普通 EC2 responder 和持续 TCP_RR（每个路径 1,500 个样本）测得，一个 TGW hop 的开销为 +0.571 ms（TCP_RR）/ +0.410 ms（ICMP）。作为参考，VPC Peering 的开销在测量范围内为零（与同一 VPC 基线相同），而一次 NLB hop（+0.79 ms）的开销实际上高于一次 TGW hop。使用 burstable instances 或多阶段 proxy chains 进行测量，会使这种亚毫秒信号淹没在噪声中，因此测量设计非常重要。
 </details>
 
-4. VPC Lattice target instance 的 Security Group 配置中常见的陷阱是什么？
-   - A) 必须开放所有 outbound rules
-   - B) Lattice data plane 的流量来自链路本地地址（169.254.171.0/24），因此必须允许该 managed prefix list
-   - C) 必须使用 NACLs 而非 SGs
-   - D) 只需允许端口 443
+## 3. 报告中的 TCP_RR 对比 M3−M2 能证明什么？
+
+- A. 每个 TGW 跳点总会增加相同的单向延迟
+- B. 报告的路径中位数相差 0.619−0.048 = 0.571 ms
+- C. AWS 提供有保证的延迟 SLA
+- D. GPU 训练的吞吐量
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) Lattice data plane 的流量来自链路本地地址（169.254.171.0/24），因此必须允许该 managed prefix list**
+B. 这是报告中的往返时延中位数之差，并非对单个组件的纯测量，也不是每跳固定值。在该次测试中，两台 TGW 的路径的 TCP_RR 中位数低于单台 TGW 的路径。要得出更广泛的结论，还需要原始样本、不确定性和工作负载测量；本次复核没有重新运行基准测试。
 
-**说明：**
-VPC Lattice 流量（包括 health checks）来自链路本地范围 169.254.171.0/24，而不是 VPC CIDR。如果 target SG 只允许 VPC CIDR，每项 health check 都会报告 UNHEALTHY。解决方法是在 SG 的 inbound rules 中添加 managed prefix list `com.amazonaws.<region>.vpc-lattice`。
 </details>
 
-5. 哪些选项可以连接位于两个 Organizations 中且 IP CIDRs 重叠的 VPC？
-   - A) VPC Peering 和 TGW Peering
-   - B) TGW RAM Sharing
-   - C) PrivateLink 和 VPC Lattice
-   - D) 没有任何选项可以
+## 4. 对已测试的 Lattice HTTP service/VPC association 路径，应检查目标 SG 中的什么设置？
+
+- A. 开放所有入站和出站端口
+- B. 在实际目标端口和运行状况检查端口上，允许正确区域和 IP 地址族对应的托管前缀列表
+- C. 用 NACL 替代安全组
+- D. 无论后端如何都只允许 TCP 443
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) PrivateLink 和 VPC Lattice**
+B. Lattice 流量可能来自其托管前缀列表中的地址，因此仅允许客户端 VPC CIDR 并不足够。历史示例中的 169.254.171.0/24 并非完整且通用的地址定义。应使用文档列出的前缀列表和已配置端口；endpoint/resource gateway 路径有各自的控制措施。
 
-**说明：**
-VPC Peering、TGW RAM sharing 和 TGW Peering 都基于 L3 routing，因此 CIDRs 重叠会将它们排除在外。PrivateLink 通过 consumer VPC 内的 ENI 运行，而 VPC Lattice 使用链路本地地址，因此两者均可在 CIDR 重叠时工作。在 M&A 或 MSP migration 等无法重新规划 IP 的情境中，这两种是唯一的选择。
 </details>
 
-6. 关于 TGW Peering 配置中的 routing，哪项陈述是正确的？
-   - A) 路由会通过 BGP 自动传播
-   - B) 不支持 BGP，因此必须手动将 static routes 添加到两个 TGW route tables
-   - C) 只需要修改 VPC route tables
-   - D) 完全不需要 routing 配置
+## 5. 哪些对比方案可以在 VPC CIDR 重叠、且不在这些重叠网段之间直接路由的情况下提供服务访问？
+
+- A. 直接 VPC peering
+- B. 未修改的直接 TGW 路由
+- C. PrivateLink 服务访问或 VPC Lattice 服务访问
+- D. 没有任何架构能够处理网段重叠
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 不支持 BGP，因此必须手动将 static routes 添加到两个 TGW route tables**
+C. 这些方案提供的是服务访问，而不是不受限制的双向 VPC 路由。直接 VPC peering 无法连接 CIDR 重叠的 VPC，路由方案则需要明确且无歧义的地址规划。NAT 和重新规划地址也是其他选择，所以 PrivateLink/Lattice 并非唯一可行架构。
 
-**说明：**
-TGW peering attachments 不支持 BGP，因此不会自动传播路由。必须将指向对等方 CIDRs 的 static routes 添加到两个 TGW route tables；在实时测试中，只有配置了 static routes 后流量才会传输。还需注意，在运维上 static TGW routes 的优先级高于 propagated routes，并且 peering attachment ID 在请求方与接受方之间不同。
 </details>
+
+## 6. 关于直接 TGW-to-TGW peering，哪项路由说明正确？
+
+- A. peering 会通过 BGP 自动传播所有路由
+- B. 明确配置静态对等路由以及所需的 VPC 路由
+- C. 只需配置 VPC 路由表
+- D. 接受 peering 后会自动创建所有必需路由
+
+<details>
+<summary>显示答案</summary>
+
+B. peering attachment 使用静态路由；也可以通过自动化管理这些路由。TGW 路由先选择最长匹配前缀；当静态路由与传播路由的前缀相同时，静态路由优先。应在接收方区域使用其 attachment ID 接受待处理的 peering 请求；仅凭 NotFound 不能证明请求方和接收方的 ID 必须不同。
+
+</details>
+
+[返回指南](../../networking/05-cross-org-vpc-connectivity.md)

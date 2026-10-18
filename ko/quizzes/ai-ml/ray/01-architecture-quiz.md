@@ -27,7 +27,7 @@
 
 **정답: B**
 
-Stateless 실행 단위라는 설명은 순수 함수나 exactly-once 보장이 아닙니다.
+Stateless 실행 단위라는 설명은 순수 함수임을 뜻하거나 exactly-once를 보장하지는 않습니다.
 </details>
 
 3. Actor 상태에 대한 정확한 설명은?
@@ -111,7 +111,7 @@ Container limits와 library thread 설정은 별도입니다.
 
 **정답: B**
 
-Ray작업·Pod배치·EC2공급은 서로 다른 계층입니다.
+Ray 작업·Pod 배치·EC2 공급은 서로 다른 계층입니다.
 </details>
 
 ## 단답형 문제
@@ -121,7 +121,7 @@ Ray작업·Pod배치·EC2공급은 서로 다른 계층입니다.
 <details>
 <summary>정답 보기</summary>
 
-명시적인 원격 인스턴스가 상태를 소유하기 때문입니다. Task worker의 우연한 global cache 재사용을 correctness에 의존하지 않습니다. Actor 장애 후에는 checkpoint·복구가 별도로 필요합니다.
+명시적인 원격 인스턴스가 상태를 소유하기 때문입니다. correctness는 Task worker의 우연한 global cache 재사용에 의존하지 않습니다. Actor 장애 후에는 checkpoint·복구가 별도로 필요합니다.
 </details>
 
 10. GCS 복구와 object/actor 애플리케이션 복구를 구분해야 하는 이유는?

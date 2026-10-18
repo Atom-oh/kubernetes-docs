@@ -441,7 +441,7 @@ spec:
     memory: 400Gi
 ```
 
-이 manifest는 EC2 예약이나 고정된 노드 수를 만들지 않습니다. 예약은 사용하지 않아도 비용이 발생할 수 있습니다. Pod 수요와 무관한 desired node count에는 Auto Mode의 `spec.replicas` 정적 풀이 있으며 limits·weight·consolidation·scale 의미가 다릅니다. 정적 용량 참조를 확인하세요. Desired count도 실제 프로비저닝과 정상 용량 확보가 필요합니다.
+이 manifest는 EC2 예약이나 고정된 노드 수를 만들지 않습니다. 예약은 사용하지 않아도 비용이 발생할 수 있습니다. Pod 수요와 무관한 desired node count에는 Auto Mode의 `spec.replicas` 정적 풀이 있으며 limits·weight·consolidation·scale 의미가 다릅니다. 정적 용량 참조를 확인하세요. Desired count를 충족하려면 실제 프로비저닝과 정상 용량 확보가 필요합니다.
 
 ## 실제 Publisher에 맞춘 모니터링
 
@@ -634,7 +634,7 @@ Restricted namespace에는 호환되는 워크로드 security context가 필요�
 
 - kube-state-metrics에서 `karpenter.sh/nodepool`, `eks.amazonaws.com/compute-type` node label을 allowlist에 포함합니다.
 - CPU series에 정확히 매핑된 `node` label이 필요합니다. 모든 node-exporter scrape 구성에 자동으로 붙는 label은 아닙니다.
-- Join/count 전에 kube-state-metrics replica를 중복 제거합니다. 한 노드에는 하나의 현재 NodePool label이 있어야 합니다.
+- Join/count 전에 kube-state-metrics replica의 중복을 제거합니다. 한 노드에는 하나의 현재 NodePool label이 있어야 합니다.
 - 여러 클러스터라면 모든 소스에 실제 cluster label을 보존하고 모든 group/join에 포함합니다.
 
 Node query는 Auto Mode 노드만 선택합니다. Pod pending/unschedulable 신호는 클러스터 전체 기준이므로 Auto Mode 문제로 분류하기 전에 진단해야 합니다. CPU 식은 **노드별 non-idle 시간**이며 request 비율이나 용량 가중 pool 평균이 아닙니다. Series 부재를 자동으로 사용량 0으로 해석하지 마세요.

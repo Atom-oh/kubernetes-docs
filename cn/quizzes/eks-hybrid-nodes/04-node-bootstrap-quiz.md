@@ -1,298 +1,194 @@
-# EKS Hybrid Nodes Node Bootstrapping 测验
+# EKS Hybrid Nodes 节点引导测验
 
-> **相关文档**: [Node Bootstrapping](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **相关文档**：[节点引导](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **最后更新**：2026 年 9 月 12 日
 
-## 选择题
+### 1. Hybrid nodeadm 的作用是什么？
 
-### 1. nodeadm 的主要作用是什么？
+A. 创建 EKS control plane
 
-A. 创建 EKS clusters
-B. 安装并引导 kubelet 和 containerd 等 Node components
-C. 做出 Pod 调度决策
-D. 管理 cluster network policies
+B. 使用 `aws/eks-hybrid` 实现安装和初始化 Hybrid 节点组件
+
+C. 调度应用 Pod
+
+D. 替换 CNI controller
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 安装并引导 kubelet 和 containerd 等 Node components**
+**答案：B. 使用 `aws/eks-hybrid` 实现安装和初始化 Hybrid 节点组件**
 
-**解释：**
-nodeadm 是用于 EKS Node Bootstrapping 的官方工具。它会安装并配置必要组件，包括 kubelet、containerd 和 aws-iam-authenticator。
-
-```bash
-# Install nodeadm
-curl -L -o nodeadm https://github.com/awslabs/amazon-eks-ami/releases/download/nodeadm-v0.1.0/nodeadm-linux-amd64
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# Initialize node with nodeadm
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-```
-
-**nodeadm 功能：**
-- Kubernetes component 安装（kubelet、containerd）
-- AWS IAM Authenticator 配置
-- kubelet certificate bootstrapping
-- Node label 和 taint 设置
+**解释**：使用 Hybrid 安装程序，而不是 EC2 `amazon-eks-ami` 中的 `nodeadm`。先安装依赖再执行初始化，并选择正确的操作系统/运行时来源，验证已批准的二进制文件。当前 SSM 新安装和升级要求 nodeadm 版本为 1.0.19 或更高。
 
 </details>
 
-### 2. 使用 nodeadm 初始化 Hybrid Node 时，需要哪 3 项 cluster 信息？
+### 2. 常规 Hybrid NodeConfig 使用哪些集群输入？
 
-A. Cluster name、VPC ID、Subnet ID
-B. Cluster name、API server endpoint、CA certificate
-C. Cluster name、IAM role、Security group
-D. Cluster name、Region、Availability zone
+A. 集群名称和区域，以及受支持的凭证 provider
+
+B. 仅 VPC ID 和子网 ID
+
+C. 三个必须手工填写的字段：名称、端点和 CA
+
+D. IAM 用户访问密钥和密码
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Cluster name、API server endpoint、CA certificate**
+**答案：A. 集群名称和区域，以及受支持的凭证 provider**
 
-**解释：**
-nodeadm 配置文件中的必需项：
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster                    # Required 1
-    region: us-west-2
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com  # Required 2
-    certificateAuthority: LS0tLS1CRUdJTi...             # Required 3
-```
-
-```bash
-# Get required information from EKS
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.{name:name,endpoint:endpoint,ca:certificateAuthority.data}" \
-  --output json
-```
+**解释**：文档中的 Hybrid 配置使用 `spec.cluster.name`/`region`，以及 `spec.hybrid.ssm` 或 `spec.hybrid.iamRolesAnywhere`。已准备好的 Hybrid 角色提供集群发现权限。对于常规 Hybrid 初始化，要求手动复制原始 PEM CA 是不正确的。
 
 </details>
 
-### 3. EKS Hybrid Nodes 中的 IAM 使用哪种身份验证方法？
+### 3. nodeadm 支持哪一组凭证 provider？
 
-A. Static tokens
-B. 仅 x509 certificates
-C. IAM Roles Anywhere 或 IAM user credentials
-D. LDAP authentication
+A. IAM 用户密钥和 LDAP
+
+B. 静态 Kubernetes token 和本地密码
+
+C. SSM hybrid activation 和 IAM Roles Anywhere
+
+D. EC2 instance profile 和 kubeconfig 密码
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. IAM Roles Anywhere 或 IAM user credentials**
+**答案：C. SSM hybrid activation 和 IAM Roles Anywhere**
 
-**解释：**
-EKS Hybrid Nodes 需要来自 on-premises 的 AWS IAM 身份验证。IAM Roles Anywhere 允许从 on-premises servers 使用 IAM roles。
-
-```bash
-# Create IAM Roles Anywhere Trust Anchor
-aws rolesanywhere create-trust-anchor \
-  --name hybrid-nodes-anchor \
-  --source "sourceType=CERTIFICATE_BUNDLE,sourceData={x509CertificateData=$CERT_DATA}"
-
-# Create IAM Roles Anywhere Profile
-aws rolesanywhere create-profile \
-  --name hybrid-node-profile \
-  --role-arns arn:aws:iam::123456789012:role/HybridNodeRole \
-  --duration-seconds 3600
-```
-
-```yaml
-# Using IAM Roles Anywhere in nodeadm Configuration
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  iam:
-    mode: rolesAnywhere
-    rolesAnywhere:
-      trustAnchorArn: arn:aws:rolesanywhere:us-west-2:123456789012:trust-anchor/xxxxx
-      profileArn: arn:aws:rolesanywhere:us-west-2:123456789012:profile/xxxxx
-      roleArn: arn:aws:iam::123456789012:role/HybridNodeRole
-```
+**解释**：在 `ssm` 和 `iam-ra` 中选择且只选择一个。SSM 配置在 `spec.hybrid.ssm` 下包含 `activationCode` 和 `activationId`；IAM Roles Anywhere 使用 `spec.hybrid.iamRolesAnywhere`。两种方式都需要已准备好的 Hybrid 角色和集群访问权限。
 
 </details>
 
-### 4. 以下哪一项不是 NodeConfig 中有效的 kubelet 配置选项？
+### 4. 哪项不是 kubelet 配置字段？
 
-A. maxPods
-B. clusterDNS
-C. clusterCIDR
-D. podScheduler
+A. `maxPods`
+
+B. `clusterDNS`
+
+C. `clusterDomain`
+
+D. `podScheduler`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. podScheduler**
+**答案：D. `podScheduler`**
 
-**解释：**
-`podScheduler` 不是 NodeConfig 中的 kubelet 配置选项。调度由 control plane 中的 kube-scheduler 处理。
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  kubelet:
-    config:
-      maxPods: 110              # Maximum Pods per node
-      clusterDNS:               # Cluster DNS servers
-        - 10.100.0.10
-      clusterDomain: cluster.local
-      evictionHard:             # Pod eviction thresholds
-        memory.available: "100Mi"
-        nodefs.available: "10%"
-    flags:
-      - "--node-labels=location=onprem"
-      - "--register-with-taints=dedicated=hybrid:NoSchedule"
-```
+**解释：**`podScheduler` 不是 kubelet 配置字段；scheduler 在 control plane 中运行。之前把 `clusterCIDR` 作为选项的题目也有歧义，因为它同样不是 kubelet 配置字段。NodeConfig 的 kubelet 设置不能代替 CNI IPAM 规划。
 
 </details>
 
-### 5. 使用 SSM (Systems Manager) 注册 Hybrid Node 时需要哪些组件？
+### 5. 自动化记录“init 命令已完成”能证明什么？
 
-A. SSM Agent 和 activation code
-B. 仅 CloudWatch Agent
-C. 仅 AWS CLI
-D. EC2 instance profile
+A. 节点永久处于 Ready 状态
+
+B. init 命令已完成，且当时的本地检查已通过；仍须验证集群就绪状态
+
+C. 所有镜像拉取和凭证续期都已测试
+
+D. 可以安全地克隆主机及其身份
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A. SSM Agent 和 activation code**
+**答案：B. init 命令已完成，且当时的本地检查已通过；仍须验证集群就绪状态**
 
-**解释：**
-要使用 SSM 管理 on-premises servers，必须安装 SSM Agent 并通过 hybrid activation 注册。
-
-```bash
-# 1. Create SSM hybrid activation (AWS Console or CLI)
-aws ssm create-activation \
-  --default-instance-name "hybrid-node" \
-  --iam-role service-role/AmazonEC2RunCommandRoleForManagedInstances \
-  --registration-limit 10
-
-# Output: ActivationId, ActivationCode
-
-# 2. Install and register SSM Agent on on-premises server
-sudo amazon-ssm-agent -register \
-  -code "activation-code" \
-  -id "activation-id" \
-  -region "us-west-2"
-
-# 3. Start SSM Agent
-sudo systemctl start amazon-ssm-agent
-sudo systemctl enable amazon-ssm-agent
-```
-
-```yaml
-# Use SSM mode in nodeadm
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  hybrid:
-    ssm: true
-    ssmActivationId: "activation-id"
-    ssmActivationCode: "activation-code"
-```
+**解释**：自动化记录应绑定主机、配置和二进制文件；中断时保留 started 状态，并拒绝自动重放状态未知的操作。`network-online.target` 和 `RemainAfterExit` 都不能证明 AWS 连通或节点已 Ready。
 
 </details>
 
-### 6. 在 nodeadm 配置中提供 CA certificate 的目的是什么？
+### 6. 如何理解 Kubernetes API server CA？
 
-A. 加密 nodes 之间的流量
-B. kubelet 验证 API server 的可信性
-C. 配置 Pods 之间的 mTLS
-D. Harbor registry authentication
+A. 每次 TLS 握手时都会自动签发 kubelet client certificate
+
+B. 它是 registry 登录凭证
+
+C. 它用于验证 server certificate 是否可信；client certificate 的批准/签发是另一回事
+
+D. 它能取代 Hybrid IAM 角色
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. kubelet 验证 API server 的可信性**
+**答案：C. 它用于验证 server certificate 是否可信；client certificate 的批准/签发是另一回事**
 
-**解释：**
-kubelet 在连接时使用 CA (Certificate Authority) certificate 来验证 EKS API server 的可信性。
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com
-    certificateAuthority: |
-      LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM...
-      # Base64 encoded CA certificate
-```
-
-**证书流程：**
-```
-kubelet ----TLS connection----> EKS API Server
-   |                              |
-   |-- Verify server cert with CA |
-   |                              |
-   |<-- Issue client certificate --|
-```
-
-```bash
-# Get CA certificate from EKS cluster
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.certificateAuthority.data" \
-  --output text | base64 -d > ca.crt
-
-# View CA certificate contents
-openssl x509 -in ca.crt -text -noout
-```
+**解释**：验证 server 主机名和 CA 证书链。不要把 `curl -k` 当作信任验证。集群 CA、私有 registry CA 和 IAM Roles Anywhere 主机身份分别用于不同的信任场景。
 
 </details>
 
-### 7. 运行 nodeadm init 后，如果 Node 无法加入 cluster，应首先检查什么？
+### 7. 加入集群失败或初始化只完成一部分时，适当的处理方式是什么？
 
-A. Pod deployment status
-B. kubelet logs 和 network connectivity
-C. Deployment configuration
-D. ConfigMap contents
+A. 运行 `nodeadm status`，然后立即执行 `uninstall --force`
+
+B. 检查范围受限的私有 kubelet 日志和 nodeadm debug，验证身份与网络，再协调已记录的状态
+
+C. 删除共享集群中的所有 Cilium CRD
+
+D. 删除 Node 对象并假定 SSM 已注销
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. kubelet logs 和 network connectivity**
+**答案：B. 检查范围受限的私有 kubelet 日志和 nodeadm debug，验证身份与网络，再协调已记录的状态**
 
-**解释：**
-当 Node 加入失败时，首先检查 kubelet logs 和 network connectivity。
+**解释**：所检查的 CLI 提供 `nodeadm debug`，不提供 `nodeadm status`。debug 会连接 AWS/集群服务；请妥善保护输出。删除 Node 对象既不会停止 kubelet，也不会注销 SSM。uninstall 是受控的移除操作，不是通用的身份验证修复方法。
 
-```bash
-# 1. Check kubelet service status
-sudo systemctl status kubelet
+</details>
 
-# 2. Check kubelet logs
-sudo journalctl -u kubelet -f
+### 8. 关于 Bottlerocket Pod Identity，哪项说法正确？
 
-# 3. Check for common error patterns
-sudo journalctl -u kubelet | grep -E "error|failed|unable"
+A. 它与 Ubuntu 完全相同，使用 NodeConfig 和 nodeadm
 
-# 4. Check resource status (memory, disk)
-free -h
-df -h
+B. `settings.hybrid.ssm` 就是完整的文档化引导契约
 
-# 5. Test network connectivity
-curl -vk https://<eks-api-endpoint>:443
+C. Bottlerocket 1.39.0 及更高版本使用 provider 的引导凭证文件支持和 `hybrid-bottlerocket` agent DaemonSet
 
-# 6. Check DNS resolution
-nslookup <eks-api-endpoint>
+D. Base64 用户数据会加密私钥
 
-# 7. Check firewall rules
-sudo iptables -L -n | grep 443
+<details>
+<summary>显示答案</summary>
 
-# 8. Check nodeadm status
-sudo nodeadm status
-```
+**答案：C. Bottlerocket 1.39.0 及更高版本使用 provider 的引导凭证文件支持和 `hybrid-bottlerocket` agent DaemonSet**
 
-**常见失败原因：**
-- API server endpoint 无法访问（firewall）
-- CA certificate 不匹配
-- IAM authentication 失败
-- DNS resolution 失败
-- Time synchronization 问题（NTP）
+**解释**：Bottlerocket 使用不同的 settings/bootstrap-container 输入。兼容的 agent 最低版本为 v1.3.7-eksbuild.2，临时凭证路径为 `/var/eks-hybrid/.aws/credentials`。选择当前兼容的 add-on 并保护用户数据；编码不等于加密。
+
+</details>
+
+### 9. 哪项 Cilium 生命周期操作的范围正确？
+
+A. 原地更改现有 cluster-pool CIDR
+
+B. 执行限定于 Hybrid 范围的预检，并在升级前验证 DaemonSet 覆盖范围和验证 Deployment 的就绪状态
+
+C. 不经审核，总是重复使用所有旧 Helm 值
+
+D. 为修复一个节点而卸载所有名称中包含 cilium 的 CRD
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. 执行限定于 Hybrid 范围的预检，并在升级前验证 DaemonSet 覆盖范围和验证 Deployment 的就绪状态**
+
+**解释**：预检使用单独的节点选择器。现有 pool 元素和 mask size 不得更改；扩展时可以在审核后新增 pool 条目，并相应调整 EKS/路由配置。移除 CNI/CRD 是会造成干扰且应由资源所有者负责的操作。
+
+</details>
+
+### 10. 在所检查的版本中，`nodeadm uninstall --force` 表示什么？
+
+A. 保证删除所有已挂载路径，包括 `/var/lib/kubelet`
+
+B. 通用的确认绕过方式，可以代替 drain
+
+C. 会删除更多默认路径，但 v1.0.9 及更高版本对 `/var/lib/kubelet` 的保护仍然生效
+
+D. 会自动验证新的替代节点
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. 会删除更多默认路径，但 v1.0.9 及更高版本对 `/var/lib/kubelet` 的保护仍然生效**
+
+**解释**：不要盲目删除已挂载的 kubelet 路径。应先迁出工作负载，审核数据及 provider/CNI 清理步骤，并保留恢复证据。获批的重新安装顺序应是 install → config check → init；卸载后不能只执行 init。
 
 </details>

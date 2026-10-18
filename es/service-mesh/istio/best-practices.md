@@ -12,7 +12,7 @@ Este documento cubre las mejores prácticas y recomendaciones para operar Istio 
 
 Revisado para Istio 1.31 el 11 de septiembre de 2026. Los fragmentos de `IstioOperator` son entradas para `istioctl install -f`, no recursos de Kubernetes que se aplican con kubectl. Intégrelos en la configuración de instalación existente; use valores de chart equivalentes para Helm. La mayoría de los ejemplos describen sidecars; use políticas waypoint/Gateway API para ambient. Los ajustes de recursos y las duraciones de rollout son puntos de partida que se deben validar bajo carga.
 
-## Optimización del rendimiento
+## Optimización del rendimiento {#performance-optimization}
 
 ### 1. Optimización de recursos del Control Plane
 
@@ -148,7 +148,7 @@ spec:
 - Menor uso de memoria
 - Envío de configuración más rápido
 
-## Fortalecimiento de la seguridad
+## Fortalecimiento de la seguridad {#security-hardening}
 
 ### 1. Aplicar mTLS estricto
 
@@ -263,7 +263,7 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
-## Guía de operaciones
+## Guía de operaciones {#operations-guide}
 
 ### 1. Estrategia de Deployment
 
@@ -380,7 +380,7 @@ kubectl apply -f istio-config-backup.yaml
 
 Para las instalaciones de Helm, preserve las versiones de chart y `helm get values <release> -n <namespace> -o yaml` en su lugar. Haga backup de los Secrets de CA/TLS de forma segura e incluya cualquier recurso Gateway API, EnvoyFilter o WasmPlugin en uso. Vuelva a crear los Namespaces requeridos y revise las instantáneas generadas antes de la restauración.
 
-## Monitoreo y observabilidad
+## Monitoreo y observabilidad {#monitoring-and-observability}
 
 ### 1. Señales doradas
 
@@ -470,7 +470,7 @@ groups:
       summary: "Istiod scrape target is unavailable"
 ```
 
-## Lista de verificación para producción
+## Lista de verificación para producción {#production-checklist}
 
 ### Preinstalación
 
@@ -570,7 +570,7 @@ groups:
    Do require Golden Signals monitoring
    ```
 
-## Optimización de costos
+## Optimización de costos {#cost-optimization}
 
 - Compare las solicitudes de recursos del sidecar medidas con ztunnel más cualquier capacidad waypoint requerida. El número de Pods por sí solo no establece un porcentaje de ahorro fijo.
 - Mida los bytes entre AZ y use los precios regionales actuales de AWS para la ruta real; los pesos de localidad no se traducen directamente en una reducción de facturación universal.

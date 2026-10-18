@@ -443,7 +443,7 @@ helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
 
 ### Linkerd and trust-manager
 
-The [Linkerd identity example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml) prepares the issuer Secret and root-bundle ConfigMap. Pinned control-plane chart 2026.9.1 references linkerd-identity-issuer and linkerd-identity-trust-roots.
+The [Linkerd identity example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml) prepares the issuer Secret and root-bundle ConfigMap. The pinned control-plane chart 2026.9.1 references linkerd-identity-issuer and linkerd-identity-trust-roots.
 
 ```yaml
 identity:
@@ -460,7 +460,7 @@ This connects the control plane to an externally renewed issuer Secret, rather t
 
 ## trust-manager
 
-The default trust-manager 0.25.0 chart renders trust.cert-manager.io/v1alpha1 Bundle. An additional CRD in the repository does not by itself change the default installed API. Source Secrets/ConfigMaps are read from the configured trust namespace.
+The default trust-manager 0.25.0 chart renders a trust.cert-manager.io/v1alpha1 Bundle. An additional CRD in the repository does not by itself change the default installed API. Source Secrets/ConfigMaps are read from the configured trust namespace.
 
 ```yaml
 apiVersion: trust.cert-manager.io/v1alpha1

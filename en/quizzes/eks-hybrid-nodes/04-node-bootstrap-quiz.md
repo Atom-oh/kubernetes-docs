@@ -18,7 +18,7 @@ D. Replacing the CNI controller
 
 **Answer: B. Installing and initializing Hybrid node components using the aws/eks-hybrid implementation**
 
-**Explanation:** Use the Hybrid installer, not the EC2 amazon-eks-ami nodeadm. Install dependencies before init, select the correct OS/runtime source and verify the approved binary. Current SSM new installs/upgrades require nodeadm1.0.19 or later.
+**Explanation:** Use the Hybrid installer, not the EC2 amazon-eks-ami nodeadm. Install dependencies before init, select the correct OS/runtime source and verify the approved binary. Current SSM new installs/upgrades require nodeadm 1.0.19 or later.
 
 </details>
 

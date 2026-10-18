@@ -14,23 +14,23 @@
 **答案：B) 对应用程序进行逻辑分组并实施访问限制**
 
 **说明：**
-AppProjects 对 Applications 进行逻辑分组，并限制允许使用的 sources、destinations 和 resources。它们通过限制每个团队能够部署的内容来实现多租户。
+AppProjects 对 Applications 进行逻辑分组，并限制允许使用的 sources、destinations 和 resources。它们限制 Argo CD 的部署范围；Kubernetes RBAC、Pod Security Admission、网络隔离和配额仍是独立的控制措施。
 
 </details>
 
 2. AppProject 中的 `sourceRepos` 字段控制什么？
    - A) 可以使用的 Git branches
-   - B) Applications 可以从中拉取 manifests 的 Git 仓库
+   - B) 允许使用的源仓库（Git/Helm/OCI）
    - C) container image 仓库
    - D) Helm chart 版本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Applications 可以从中拉取 manifests 的 Git 仓库**
+**答案：B) 允许使用的源仓库（Git/Helm/OCI）**
 
 **说明：**
-`sourceRepos` 字段限制此项目中的 Applications 可以用作 source 的 Git 仓库。使用 `*` 允许任何仓库，而指定 URL 则仅限于这些仓库。
+`sourceRepos` 字段限制 Applications 可以用作源的 Git、Helm 和 OCI 仓库，而不是选择 Git 分支或容器镜像 registry。使用 `*` 允许任何仓库，而指定 URL 则将允许的源限定为这些仓库。
 
 </details>
 
@@ -46,7 +46,7 @@ AppProjects 对 Applications 进行逻辑分组，并限制允许使用的 sourc
 **答案：A) 使用 `destinations` 字段**
 
 **说明：**
-`destinations` 字段定义允许的 cluster 和 namespace 组合。每个条目都指定 Applications 可以作为目标的 `server`（cluster URL 或 `*`）和 `namespace`（指定 namespace 或 `*`）。
+`destinations` 字段定义允许的 cluster 和 namespace 组合。每个条目将 server 或已注册的集群名称与 namespace 进行匹配。这限制的是部署目标范围，不同于用于指定 Application CR 所在位置的 sourceNamespaces。
 
 </details>
 
@@ -62,7 +62,7 @@ AppProjects 对 Applications 进行逻辑分组，并限制允许使用的 sourc
 **答案：A) 允许管理特定的 cluster-scoped resources**
 
 **说明：**
-默认情况下，projects 无法管理 cluster-scoped resources。`clusterResourceWhitelist` 允许项目中的 Applications 管理特定 kinds（例如 Namespaces 或 ClusterRoles）。
+未配置允许列表的新建自定义项目无法管理集群级资源。初始配置较宽松的 default 项目是例外，因为它显式允许所有资源类型。`clusterResourceWhitelist` 允许项目中的 Applications 管理特定类型（例如 Namespaces 或 ClusterRoles）。
 
 </details>
 
@@ -78,6 +78,6 @@ AppProjects 对 Applications 进行逻辑分组，并限制允许使用的 sourc
 **答案：B) 使用 AppProject spec 中的 `roles` 字段**
 
 **说明：**
-Project roles 在 AppProject 的 `spec.roles` 字段中定义。每个 role 都包含名称、描述、policies（允许执行的 actions），以及可选的 JWT tokens 或 group bindings。
+Project roles 在 AppProject 的 `spec.roles` 字段中定义。每个 role 都包含名称、描述、policies（允许执行的 actions），以及已签发令牌的元数据或 group bindings。带签名的 JWT 通过 CLI/API 签发；仅声明元数据并不会签发令牌。
 
 </details>

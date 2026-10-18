@@ -443,7 +443,7 @@ D. Namespace name
 
 **Answer: C**
 
-Istio manages service-to-service identity based on **Service Account**.
+Istio manages service-to-service identity based on a **Service Account**.
 
 **Explanation:**
 
@@ -796,7 +796,7 @@ Configure Keycloak realm `myrealm`, an OIDC client and an explicit API audience 
 
 Every proxy evaluating `requestPrincipals` or `request.auth.claims` needs its own RequestAuthentication. A verified JWT at the gateway does not establish the request identity at the frontend or backend. `forwardOriginalToken` preserves the token on that forwarded request, and **the frontend application must propagate Authorization to its new backend request**.
 
-The following replaces the related policies from Question 6. Do not retain a broader ALLOW policy beside the role-restricted backend rules: ALLOW policies form a union. The deployment and HTTPS gateway prerequisites are the same as Question 6.
+The following replaces the related policies from Question 6. Do not retain a broader ALLOW policy beside the role-restricted backend rules: ALLOW policies form a union. The deployment and HTTPS gateway prerequisites are the same as those in Question 6.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -984,7 +984,7 @@ curl -i -H "Authorization: Bearer invalid-token" https://myapp.example.com/api/u
 # Invalid JWT: 401 from RequestAuthentication.
 ```
 
-Also test a valid token from the wrong ServiceAccount, wrong audience and insufficient role. JWT role changes are not instantaneous revocation of already-issued tokens; token lifetime and issuer/application revocation mechanisms matter. See [authentication](../../../service-mesh/istio/security/02-authentication.md) and [Keycloak grant types](https://www.keycloak.org/securing-apps/oidc-layers).
+Also test a valid token from the wrong ServiceAccount, with the wrong audience and with an insufficient role. JWT role changes are not instantaneous revocation of already-issued tokens; token lifetime and issuer/application revocation mechanisms matter. See [authentication](../../../service-mesh/istio/security/02-authentication.md) and [Keycloak grant types](https://www.keycloak.org/securing-apps/oidc-layers).
 
 </details>
 
@@ -1131,7 +1131,7 @@ spec:
         - '8443'
 ```
 
-The mesh client calls `http://api.github.com/users/octocat`. Its sidecar connects to the gateway with ISTIO_MUTUAL. The gateway's HTTP listener can enforce the backend ServiceAccount and GET `/users/*`, then sends HTTPS to GitHub using port 80 → targetPort 443. Retries shown are for this idempotent GET use case, not arbitrary side-effecting APIs.
+The mesh client calls `http://api.github.com/users/octocat`. Its sidecar connects to the gateway with ISTIO_MUTUAL. The gateway's HTTP listener can enforce the backend ServiceAccount and GET `/users/*`; it then sends HTTPS to GitHub using port 80 → targetPort 443. Retries shown are for this idempotent GET use case, not arbitrary side-effecting APIs.
 
 ```bash
 kubectl exec <backend-pod> -n app -c backend -- curl -i http://api.github.com/users/octocat
@@ -1231,7 +1231,7 @@ spec:
 
 The Telemetry resource also adds a bounded `security_operation` dimension (`admin`/`other`) to request counts. `request_method` and raw URL path are not default Istio metric labels. Avoid full URL labels because of cardinality and sensitive data. Errors, DELETE requests and admin access are logged even if no AUDIT plugin is installed. To enable all requests omit the filter; to cover a namespace omit the selector; a selector-free root-namespace policy is mesh-wide.
 
-For CloudWatch, deploy/configure the supported EKS logging agent or Fluent Bit DaemonSet with node log mounts, CRI/containerd parsing, JSON parsing of the `log` field, IAM credentials and a CloudWatch output. A ConfigMap alone does not start an agent. For Elasticsearch/OpenSearch use a collector output configured for that destination; Telemetry with provider `envoy` writes stdout and does not configure Elasticsearch. Fargate needs its supported logging mechanism instead of a node DaemonSet.
+For CloudWatch, deploy/configure the supported EKS logging agent or Fluent Bit DaemonSet with node log mounts, CRI/containerd parsing, JSON parsing of the `log` field, IAM credentials and a CloudWatch output. A ConfigMap alone does not start an agent. For Elasticsearch/OpenSearch use a collector output configured for that destination; Telemetry with provider `envoy` writes to stdout and does not configure Elasticsearch. Fargate needs its supported logging mechanism instead of a node DaemonSet.
 
 After ingesting the structured JSON fields, run each CloudWatch Logs Insights query separately:
 

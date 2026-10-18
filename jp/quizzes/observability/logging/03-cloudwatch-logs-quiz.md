@@ -1,6 +1,6 @@
 # CloudWatch Logs クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 [ガイド](../../../observability/logging/03-cloudwatch-logs.md)
 

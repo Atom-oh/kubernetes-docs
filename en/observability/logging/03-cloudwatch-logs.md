@@ -466,7 +466,7 @@ An illustrative enriched event sent to CloudWatch is:
 
 Application fields are under `log_processed`, while trusted Kubernetes metadata is under `kubernetes`. The raw `log` string duplicates application data; redact prohibited fields before collection. The query, subscription and metric-filter examples below use this exact JSON envelope and lowercase `level: error`.
 
-If you need Linux journal collection, verify whether persistent journals exist at `/var/log/journal` or volatile journals at `/run/log/journal`. Configure a `systemd` input, appropriate unit filters, read-only mounts, separate writable DB, output group and IAM permissions. Do not blindly mount Docker's old `/var/lib/docker/containers` path or require nonexistent text files on containerd/Bottlerocket/AL2023 nodes. These platform-specific host configurations are not deployed by the manual profile.
+If you need Linux journal collection, verify whether persistent journals exist at `/var/log/journal` or volatile journals at `/run/log/journal`. Configure a `systemd` input, appropriate unit filters, read-only mounts, a separate writable DB, an output group and IAM permissions. Do not blindly mount Docker's old `/var/lib/docker/containers` path or require nonexistent text files on containerd/Bottlerocket/AL2023 nodes. These platform-specific host configurations are not deployed by the manual profile.
 
 ## CloudWatch Logs Insights
 

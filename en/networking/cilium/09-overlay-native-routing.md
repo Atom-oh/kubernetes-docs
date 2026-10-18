@@ -68,7 +68,7 @@ Both also need `CONFIG_FIB_RULES`. Port 8472 is the Linux kernel's historical VX
 Related tunables:
 
 - `tunnelSourcePortRange: "0-0"` (default) lets the kernel driver pick the outer UDP source port range. A narrower range constrains the entropy underlay ECMP/filters see; it has no effect on identity.
-- `underlayProtocol: auto|ipv4|ipv6` (added in 1.18). `auto` prefers IPv4 if enabled, else IPv6. An IPv6 underlay raises the tunnel overhead to 70 bytes, forbids XDP acceleration, and Egress Gateway requires an IPv4 underlay.
+- `underlayProtocol: auto|ipv4|ipv6` (added in 1.18). `auto` prefers IPv4 if enabled, else IPv6. An IPv6 underlay raises the tunnel overhead to 70 bytes and forbids XDP acceleration; Egress Gateway requires an IPv4 underlay.
 - Switching `tunnelProtocol` deletes the other device and creates the new one, so plan it as a node-by-node disruptive change.
 
 Security group/firewall requirement: UDP 8472 (VXLAN) or UDP 6081 (Geneve) between **all** nodes, plus TCP 4240 for health checks and ICMP echo. In AWS, express this with security-group-to-security-group references (the node SG referencing itself), never a CIDR open to the internet. WireGuard needs UDP 51871; IPsec needs ESP (IP protocol 50), which AWS security groups do not allow by default.
@@ -169,11 +169,11 @@ Key points:
 - **The kernel encapsulates, BPF steers.** BPF sets the tunnel key (`BPF_F_ZERO_CSUM_TX`, TTL 64) and redirects to the tunnel device. This corrects a common simplification ("eBPF encapsulates the packet itself").
 - Encryption is applied **after** encapsulation (IPsec since 1.18; WireGuard is a separate device), so the physical NIC sees ESP or WireGuard, not VXLAN, when encryption is on.
 - Reply traffic returns symmetrically using the conntrack entry; the destination node encapsulates with Pod B's identity as the VNI.
-- Pod to a **remote node** address is not sent through the tunnel. In tunnel mode it is masqueraded (section 9).
+- Pod traffic to a **remote node** address is not sent through the tunnel. In tunnel mode it is masqueraded (section 9).
 
 ### 5.2 Same node
 
-`__lookup_ip4_endpoint` finds the destination local endpoint, `ipv4_local_delivery` tail-calls `cilium_call_policy` (ingress policy of the destination) and delivers by `bpf_redirect_peer` (veth with BPF host routing) or `bpf_redirect`. With netkit, Pod to Pod uses a plain `redirect` from egress to ingress. There is no encapsulation.
+`__lookup_ip4_endpoint` finds the destination local endpoint; `ipv4_local_delivery` tail-calls `cilium_call_policy` (ingress policy of the destination) and delivers by `bpf_redirect_peer` (veth with BPF host routing) or `bpf_redirect`. With netkit, Pod to Pod uses a plain `redirect` from egress to ingress. There is no encapsulation.
 
 ### 5.3 Pod A to Pod B, native routing
 
@@ -214,7 +214,7 @@ Native-routing CIDR semantics: destinations inside it are not masqueraded and ar
 
 ### AWS ENI datapath (how it routes)
 
-With ENI IPAM the Pod IP is a secondary IP or prefix on an ENI. The agent installs per-endpoint routes and two ip rules per Pod IP: an ingress rule `to <podIP> lookup main` (priority 20, `RulePriorityIngress`) and an egress rule `from <podIP> lookup <ENI table>` (priority 111, `RulePriorityEgressv2`; the older priority 110 is used only in Azure IPAM mode). The `to <VPC CIDR>` selector is added to the egress rule (one rule per VPC CIDR) only when masquerade is on; ENI defaults masquerade off, so by default the egress rule has no `to` selector. The ENI table holds a default route via the ENI subnet's router. The router IP is taken from the ENI address space so ICMP packet-too-big messages can be generated. The operator needs `ec2:DescribeRouteTables` since 1.18. Addressing details: [IPAM deep dive](10-ipam-deep-dive.md).
+With ENI IPAM the Pod IP is a secondary IP or prefix on an ENI. The agent installs per-endpoint routes and two ip rules per Pod IP: an ingress rule `to <podIP> lookup main` (priority 20, `RulePriorityIngress`) and an egress rule `from <podIP> lookup <ENI table>` (priority 111, `RulePriorityEgressv2`; the older priority 110 is used only in Azure IPAM mode). The `to <VPC CIDR>` selector is added to the egress rule (one rule per VPC CIDR) only when masquerade is on; ENI has masquerade off by default, so by default the egress rule has no `to` selector. The ENI table holds a default route via the ENI subnet's router. The router IP is taken from the ENI address space so ICMP packet-too-big messages can be generated. The operator has needed `ec2:DescribeRouteTables` since 1.18. Addressing details: [IPAM deep dive](10-ipam-deep-dive.md).
 
 ## 7. Startup validations: hard failures and silent fallbacks
 
@@ -343,7 +343,7 @@ The chart renders a ConfigMap named `ip-masq-agent` with key `config` (JSON) in 
 
 Verify: `cilium-dbg status | grep Masquerading` (for example `BPF (ip-masq-agent) [eth0] <cidr> [IPv4: Enabled, IPv6: Disabled]`) and `cilium-dbg bpf ipmasq list`.
 
-Known limits: BPF masquerade does not masquerade Pod to a node's External IP (upstream issue 17177). **[1.21 pre-release]** `nodePort.extendedNATPortRange` (`--node-port-nat-range-ext`) extends the SNAT port range for large NAT tables.
+Known limits: BPF masquerade does not masquerade Pod traffic to a node's External IP (upstream issue 17177). **[1.21 pre-release]** `nodePort.extendedNATPortRange` (`--node-port-nat-range-ext`) extends the SNAT port range for large NAT tables.
 
 Incompatibilities enforced at start: `--masquerade-interfaces`-style device selection and `enable-masquerade-to-route-source` cannot be combined with BPF masquerade.
 
@@ -401,7 +401,7 @@ Where each service feature sits relative to the Pod-to-Pod walk in section 5:
 
 **kube-proxy replacement (KPR).** A boolean: `kubeProxyReplacement: true|false` (strict/partial are gone). `true` forces socket-LB on. Set `k8sServiceHost`/`k8sServicePort` because there is no kube-proxy to resolve the API ClusterIP. It covers ClusterIP, NodePort, LoadBalancer, externalIPs and hostPort, and works in tunnel and native mode. KPR=false still does per-packet ClusterIP load balancing. Removed in 1.19: `--enable-node-port`, `--enable-host-port`, `--enable-external-ips`; removed in 1.20: `--node-port-mode`, `--node-port-algorithm` (use `loadBalancer.mode`/`loadBalancer.algorithm`).
 
-**Socket-LB.** `socketLB.enabled` (on with KPR), hooks `connect`/`sendmsg`/`recvmsg`/`getpeername`. `socketLB.hostNamespaceOnly: true` restricts it to the host namespace, needed for Istio sidecars, KubeVirt, Kata and gVisor (forced when `gatewayAPI.enabled`). `socketLB.terminatePodConnections` (default true) needs kernel `CONFIG_INET_DIAG*`. **1.20 behavior change**: with socket-LB off or `hostNamespaceOnly=true`, Pod to NodePort connections are DNAT'd at the client Pod's egress, so egress NetworkPolicy must allow the backends, not just the NodePort.
+**Socket-LB.** `socketLB.enabled` (on with KPR) hooks `connect`/`sendmsg`/`recvmsg`/`getpeername`. `socketLB.hostNamespaceOnly: true` restricts it to the host namespace, needed for Istio sidecars, KubeVirt, Kata and gVisor (forced when `gatewayAPI.enabled`). `socketLB.terminatePodConnections` (default true) needs kernel `CONFIG_INET_DIAG*`. **1.20 behavior change**: with socket-LB off or `hostNamespaceOnly=true`, Pod to NodePort connections are DNAT'd at the client Pod's egress, so egress NetworkPolicy must allow the backends, not just the NodePort.
 
 **Algorithm.** `loadBalancer.algorithm: random|maglev`. Maglev builds a per-service lookup table in the map-in-map `cilium_lb4_maglev` / `cilium_lb6_maglev` and hashes the 5-tuple (source port zeroed when ClientIP affinity is on) modulo the table size. It applies to north/south traffic only; east/west via socket-LB bypasses it. `maglev.tableSize` must be one of 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521 or 131071 (default 16381, sized for roughly 160 backends per service); `maglev.hashSeed` must be identical on all agents.
 
@@ -442,9 +442,9 @@ loadBalancer:
   dsrDispatch: geneve
 ```
 
-Annotation mode: `bpf.lbModeAnnotation=true` makes `service.cilium.io/forwarding-mode: dsr|snat` per Service and requires `loadBalancer.dsrDispatch` to be set explicitly. Any LoadBalancer Service you annotate on EKS must stay internal (`service.beta.kubernetes.io/aws-load-balancer-scheme: internal`); publish externally only through CloudFront and a VPC origin.
+Annotation mode: `bpf.lbModeAnnotation=true` makes `service.cilium.io/forwarding-mode: dsr|snat` configurable per Service and requires `loadBalancer.dsrDispatch` to be set explicitly. Any LoadBalancer Service you annotate on EKS must stay internal (`service.beta.kubernetes.io/aws-load-balancer-scheme: internal`); publish externally only through CloudFront and a VPC origin.
 
-**XDP acceleration.** `loadBalancer.acceleration: disabled|native|best-effort`. Needs a native-XDP driver on all selected devices (else use `best-effort`), only the direct-routing device is accelerated, incompatible with an IPv6 underlay, and auto-enables L2 neighbor discovery. Packets bounced back at XDP are invisible to `tcpdump`. N/S traffic accelerated by XDP or using non-Geneve DSR is not encrypted by WireGuard.
+**XDP acceleration.** `loadBalancer.acceleration: disabled|native|best-effort`. It needs a native-XDP driver on all selected devices (else use `best-effort`); only the direct-routing device is accelerated; it is incompatible with an IPv6 underlay and auto-enables L2 neighbor discovery. Packets bounced back at XDP are invisible to `tcpdump`. N/S traffic accelerated by XDP or using non-Geneve DSR is not encrypted by WireGuard.
 
 **Known issues worth knowing:** reverse socket map exhaustion, NFS/SMB kernel patches for socket-LB, backend-termination races (add a `preStop` sleep), TCP Fast Open breaking DSR, and an rp_filter warning for multi-device DSR. Cross-reference [L2/L7 networking](05-l2-l7-networking.md) for the comparison tables.
 
@@ -547,7 +547,7 @@ EKS notes:
 - Secondary VPC CIDRs (for example 100.64.0.0/16): the autodetected native-routing CIDR is the **primary** VPC CIDR only. If masquerade is on and Pods live in a secondary range, set `ipv4NativeRoutingCIDR` to a covering range and check `cilium-dbg status | grep Masquerading`. This is derived from the code and not tested.
 - ENI IPv6: `eni.rst` documents one /80 prefix per node and dual-stack subnets, while the EKS requirements page still says IPv4 only. Treat ENI IPv6 as unsettled upstream and confirm in your region.
 - Source/destination check: documented as required to be disabled for DSR. For native routing on non-ENI EC2 it is the same constraint in principle (Pod IPs are not owned by the instance); this part is inference.
-- Public path policy: only CloudFront reaches workloads, through an internal ALB/NLB behind a CloudFront VPC origin. Cilium examples here never need a public listener or an `0.0.0.0/0` rule.
+- Public path policy: only CloudFront reaches workloads, through an internal ALB/NLB behind a CloudFront VPC origin. Cilium examples here never need a public listener or a `0.0.0.0/0` rule.
 
 ## 17. Inspection cheat sheet
 
@@ -592,7 +592,7 @@ sudo tcpdump -nni any -c 50 'udp port 8472'      # Geneve: 'udp port 6081'
 sudo tcpdump -nni <nic> -vv 'udp port 8472'       # -vv prints the VNI
 ```
 
-`cilium-dbg status` prints a `Routing:` line similar to `Network: Tunnel [vxlan]  Host: BPF`. Commands that print a map content may differ in column layout between versions; do not script against the column positions.
+`cilium-dbg status` prints a `Routing:` line similar to `Network: Tunnel [vxlan]  Host: BPF`. Commands that print a map's contents may differ in column layout between versions; do not script against the column positions.
 
 ## 18. Labs
 
@@ -647,10 +647,10 @@ Run these only on a disposable cluster (kind or a two-node EKS test cluster with
 
 **Prerequisites:** (a) a node with kernel 6.8 or newer and one older node; (b) for the ENI portion, a throwaway EKS cluster created without `aws-node`.
 
-1. With `bpf.datapathMode=auto`, `bpf.masquerade=true`, `kubeProxyReplacement=true`, compare `cilium-dbg status | grep -E "Device Mode|Routing"` on the new and old kernel. Expect `Device Mode` to show netkit on the new one and veth with a fallback log on the old one; the `Routing:` line shows `Host: BPF` on both. Do not switch a node that already runs veth Pods; drain it first.
+1. With `bpf.datapathMode=auto`, `bpf.masquerade=true`, `kubeProxyReplacement=true`, compare `cilium-dbg status | grep -E "Device Mode|Routing"` on the new and old kernels. Expect `Device Mode` to show netkit on the new one and veth with a fallback log on the old one; the `Routing:` line shows `Host: BPF` on both. Do not switch a node that already runs veth Pods; drain it first.
 2. Set `bpf.masquerade=false`: the `Routing:` line should end with `Host: Legacy` and an agent log line should state it fell back. Revert.
 3. Apply `kubernetes.io/egress-bandwidth: "10M"` to a Pod with the bandwidth manager enabled and confirm `cilium-dbg bpf bandwidth list` lists it.
-4. ENI: install with the ENI profile from section 16. `ip rule` should show, per Pod IP, an ingress rule `to <podIP> lookup main` (priority 20) and an egress rule `from <podIP> lookup <ENI table>` (priority 111), with per-ENI route tables; because ENI defaults masquerade off, the egress rule has no `to <VPC CIDR>` part unless you enable masquerade. Try `routingMode: tunnel` with ENI on a scratch cluster: expect the agent to refuse to start.
+4. ENI: install with the ENI profile from section 16. `ip rule` should show, per Pod IP, an ingress rule `to <podIP> lookup main` (priority 20) and an egress rule `from <podIP> lookup <ENI table>` (priority 111), with per-ENI route tables; because ENI disables masquerade by default, the egress rule has no `to <VPC CIDR>` part unless you enable masquerade. Try `routingMode: tunnel` with ENI on a scratch cluster: expect the agent to refuse to start.
 5. Overlay on EKS: deploy a validating webhook backed by a normal Pod on an overlay cluster and observe whether the API server can reach it; then move it to `hostNetwork`.
 
 **Cleanup:** remove test workloads; revert Helm values; terminate the scratch cluster. Replacing the CNI on a populated cluster is out of scope and not a supported in-place migration here.

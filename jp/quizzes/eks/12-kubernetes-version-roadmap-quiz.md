@@ -1,143 +1,149 @@
-# Kubernetes バージョン機能とロードマップクイズ
+# Kubernetes バージョン機能とロードマップのクイズ
 
-1. Kubernetes のリリース頻度はどれですか？
-   - A) 主要機能を含めて年 1 回
-   - B) 約 4 か月ごとに、年約 3 回のリリース
-   - C) 月次のパッチリリースと四半期ごとの機能リリース
-   - D) AWS re:Invent と Summit に合わせて年 2 回
+> **最終更新日**: 2026年9月12日
+
+バージョンごとの前提条件と監査エビデンスの限界については、[元の章](../../eks/12-kubernetes-version-roadmap.md)を参照してください。
+
+1. Kubernetes のマイナーバージョンのリリース頻度はどの程度ですか？
+
+   - A) 年に 1 回の機能リリース
+   - B) 約 4 か月ごとに、年 3 回程度
+   - C) 毎月マイナーバージョンをリリースする
+   - D) AWS カンファレンスに合わせた固定スケジュール
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) 約 4 か月ごとに、年約 3 回のリリース**
+**解答: B) 約 4 か月ごとに、年 3 回程度**
 
-**解説:**
-Kubernetes は約 4 か月のリリースサイクルに従い、年に約 3 回の minor version リリースを行います。各リリースは enhancement freeze、code freeze、release candidate フェーズを経ます。最近のリリース: 1.33 (Apr 2025)、1.34 (Aug 2025)、1.35 (Dec 2025)、1.36 (Apr 2026)。その後、各バージョンは約 14 か月間、patch release でメンテナンスされます。
+アップストリームのマイナーリリースは通常、年に約 3 回、ほぼ 4 か月ごとに提供されます。パッチリリースは別の周期です。アップストリームのパッチサポート方針は約 14 か月 (通常 12 か月 + メンテナンス 2 か月) です。EKS の標準サポートも 14 か月ですが、EKS で利用可能になった時点から数えるため、両者のカレンダーを混同しないでください。
 
 </details>
 
 ---
 
-2. EKS Standard Support と Extended Support の違いは何ですか？
-   - A) Standard は無料で、Extended には Enterprise ライセンスが必要
-   - B) Standard は 14 か月間で $0.10/cluster/hour、Extended はさらに 12 か月間を $0.60/cluster/hour で追加
-   - C) Standard は 3 バージョンをサポートし、Extended はすべてのバージョンをサポートする
-   - D) Standard は月次でパッチを提供し、Extended は週次でパッチを提供する
+2. EKS の標準サポートと延長サポートの料金はどう異なりますか？
+
+   - A) 標準サポートは無料
+   - B) 標準サポートは 14 か月間でクラスター 1 時間あたり $0.10、延長サポートはさらに 12 か月間で合計クラスター 1 時間あたり $0.60
+   - C) 延長サポートにより、すべての古いバージョンが無期限にサポートされる
+   - D) 延長サポートではセキュリティパッチが提供されない
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Standard は 14 か月間で $0.10/cluster/hour、Extended はさらに 12 か月間を $0.60/cluster/hour で追加**
+**解答: B) 標準サポートは 14 か月間でクラスター 1 時間あたり $0.10、延長サポートはさらに 12 か月間で合計クラスター 1 時間あたり $0.60**
 
-**解説:**
-EKS 上の各 Kubernetes バージョンは 14 か月間の standard support ($0.10/cluster/hour) を受け、その後 12 か月間の extended support ($0.60/cluster/hour — コストは 6 倍) が続きます。バージョンごとの合計サポート期間は 26 か月です。Extended support はデフォルトで有効です。あるバージョンが extended support を終了すると、cluster は自動的にアップグレードされます。この料金差は、サポート対象バージョンに留まることを促します。
+これはバージョンサポートの料金であり、コンピューティング、ストレージ、ネットワークの総請求額ではありません。アップグレードポリシーの既定値は EXTENDED です。STANDARD では標準サポート終了後に自動アップグレードされる場合があります。延長サポートでも該当するセキュリティパッチが提供されます。最新のリリースカレンダーを使い、実際のサポート終了日とワークロードのリスクを考慮してください。
 
 </details>
 
 ---
 
-3. Sidecar Containers が GA に昇格した Kubernetes バージョンはどれですか？
-   - A) 1.28 (alpha として初めて導入されたとき)
+3. ネイティブの sidecar コンテナが安定版になったのはいつですか？
+
+   - A) 1.28
    - B) 1.31
    - C) 1.33
    - D) 1.35
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) 1.33**
+**解答: C) 1.33**
 
-**解説:**
-Native Sidecar Containers (KEP-753) は次の昇格パスをたどりました: v1.28 (Aug 2023) で alpha、v1.29 (Dec 2023) で beta、v1.33 (Apr 2025) で GA。Sidecar は `restartPolicy: Always` を持つ init containers として定義され、application containers より前に起動し、Pod lifecycle 全体を通して実行され、main containers の後に終了することを保証します。これにより、Jobs における長年の "zombie sidecar" 問題を解決します。
+段階は alpha 1.28 → beta 1.29 → stable 1.33 です。再起動可能な init container には `restartPolicy: Always` を使います。起動順序は started／startupProbe の状態に依存し、正常終了の猶予には Pod 共通の終了時間枠が使われます。GA になっても、すべての補助コンテナが正常終了することや、proxy イメージが正しく設定されていることが保証されるわけではありません。
 
 </details>
 
 ---
 
-4. In-Place Pod Resize 機能とは何で、いつ GA に到達しましたか？
-   - A) 再デプロイなしで Pod replicas を変更できる機能。1.30 で GA
-   - B) 実行中の Pods に対して restart なしで CPU/memory requests と limits を変更できる機能。1.35 で GA
-   - C) PersistentVolumes をオンラインで resize できる機能。1.31 で GA
-   - D) 実行中の Pods の container images を変更できる機能。1.34 で GA
+4. コンテナのインプレース resize でできることと、安定版になった時期はどれですか？
+
+   - A) レプリカ数のスケーリング。1.30
+   - B) 既存 Pod の CPU／メモリ割り当て変更。1.35。再起動とランタイムの制約がある
+   - C) PVC の拡張。1.31
+   - D) プロセスを再起動せずにイメージを更新する。1.34
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) 実行中の Pods に対して restart なしで CPU/memory requests と limits を変更できる機能。1.35 で GA**
+**解答: B) 既存 Pod の CPU／メモリ割り当て変更。1.35。再起動とランタイムの制約がある**
 
-**解説:**
-In-Place Pod Resize (KEP-1287) は、実行中の Pods で CPU と memory の requests/limits を変更可能にします。昇格: v1.27 で alpha、v1.33 で beta、v1.35 (Dec 2025) で GA。v1.33 からは、変更に `/resize` subresource を使用します。`resizePolicy` field は、resource type ごとに container restart が必要かどうかを制御します。この機能は VPA integration にとって変革的であり、Pod disruption なしに resource right-sizing を可能にします。
+この機能は 1.27 で alpha、1.33 で beta、1.35 で stable になりました。コンテナの `resizePolicy` が再起動動作を制御し、リソース変更が保留または実現不能のままになる場合もあります。PATCH が受理されたことや `containerID` が変わっていないことだけでは、cgroup への反映完了や無停止を証明できません。要求値と報告値、generation、condition を比較してください。VPA の各モードには、それぞれ異なるバージョンと feature gate があります。
 
 </details>
 
 ---
 
-5. Kubernetes 1.31 で Dynamic Resource Allocation (DRA) に起きた大きな変更は何ですか？
-   - A) DRA が deprecated となり、Device Plugins v2 に置き換えられた
-   - B) Classic DRA が削除され、Structured Parameters DRA のみが残った (これは後に 1.34 で GA に到達)
-   - C) DRA が alpha から直接 GA に昇格した
-   - D) DRA が GPUs に加えて network devices のサポートを追加した
+5. Kubernetes 1.31 における DRA を正しく説明しているのはどれですか？
+
+   - A) 従来の DRA が Device Plugins v2 に置き換えられた
+   - B) DRA は引き続き alpha で、構造化 API が進化する一方、従来型の割り当ては別の gate の背後に残っていた
+   - C) DRA はすでに GA だった
+   - D) 安定版 v1 の要求構文は、以前のすべての alpha API と同一だった
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Classic DRA が削除され、Structured Parameters DRA のみが残った (これは後に 1.34 で GA に到達)**
+**解答: B) DRA は引き続き alpha で、構造化 API が進化する一方、従来型の割り当ては別の gate の背後に残っていた**
 
-**解説:**
-DRA は大幅に再設計されました。Classic DRA (KEP-3063、v1.26 以降 alpha) は、scheduler と cluster autoscaler が推論できない opaque vendor parameters を使用していました。Structured Parameters DRA (KEP-4381) は、`ResourceSlice` objects を使用する Kubernetes-native 形式でそれを置き換えました。v1.31 では、classic DRA が完全に削除されました。Structured DRA は v1.32 で beta、v1.34 で GA へ進みました。これは AI/ML workloads における GPU/accelerator scheduling にとって重要です。
+1.31 のリリース情報とソースには、無効化された alpha gate `DRAControlPlaneController` が記載されています。この gate は 1.32 で削除され、DRA の中核機能は 1.32 で beta、1.34 で stable になります。以前のクイズにあった「1.31 で削除」という回答は誤りでした。現在の v1 要求では `exactly` を使います。実際の driver、ResourceSlice、属性を検証してください。
 
 </details>
 
 ---
 
-6. Kubernetes 1.30 で GA に昇格し、webhooks なしで declarative admission control を可能にする機能はどれですか？
+6. ネイティブ CEL admission validation のため、1.30 で安定版になった機能はどれですか？
+
    - A) OPA Gatekeeper v4
-   - B) Kyverno Native Policies
-   - C) CEL expressions を使用する ValidatingAdmissionPolicy
-   - D) Pod Security Standards enforcement
+   - B) 必須の parameter CRD
+   - C) ValidatingAdmissionPolicy
+   - D) すべての mutating admission の仕組み
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) CEL expressions を使用する ValidatingAdmissionPolicy**
+**解答: C) ValidatingAdmissionPolicy**
 
-**解説:**
-ValidatingAdmissionPolicy (KEP-3488) は Common Expression Language (CEL) expressions を使用した in-process validation を提供し、external webhook servers の必要性をなくします。昇格: v1.26 で alpha、v1.28 で beta、v1.30 (Apr 2024) で GA。これは 3 つの resource types を使用します: ValidatingAdmissionPolicy (rules)、ValidatingAdmissionPolicyBinding (resources への binding)、および optional parameter CRDs。これにより、webhook-based admission control と比較して latency、complexity、failure domains が削減されます。
+ValidatingAdmissionPolicy は policy と binding を使い、必要に応じて parameter object を参照します。parameter object に CRD は必須ではありません。適切なロジックであれば外部の検証 webhook を避けられますが、エラーや `failurePolicy` はリクエストに影響することがあります。binding の対象範囲を限定し、Audit と Deny を区別してください。MAP mutation は別の機能であり、1.36 で stable になりました。
 
 </details>
 
 ---
 
-7. KYAML とは何で、現在のステータスは何ですか？
-   - A) Kubernetes YAML linter。1.35 で GA
-   - B) strict formatting を使用する、Kubernetes 向けのより安全で曖昧さの少ない YAML subset。1.35 で beta、デフォルトで有効
-   - C) YAML-to-JSON converter tool。1.34 で alpha
-   - D) Kubernetes manifest validation schema。1.30 以降 stable
+7. 検証済みのリリース履歴に基づく KYAML の説明はどれですか？
+
+   - A) 通常の YAML anchor をすべて拒否する API server validator
+   - B) kubectl の出力形式。1.34 で alpha、1.35～1.36 で beta、1.37 で stable
+   - C) サポートチケットで有効化する新しい EKS サーバー側機能
+   - D) すべての入力マニフェストを YAML 1.2 に変換する要件
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) strict formatting を使用する、Kubernetes 向けのより安全で曖昧さの少ない YAML subset。1.35 で beta、デフォルトで有効**
+**解答: B) kubectl の出力形式。1.34 で alpha、1.35～1.36 で beta、1.37 で stable**
 
-**解説:**
-KYAML は Kubernetes 専用に設計された、より厳格な YAML subset であり、YAML の悪名高い曖昧さを排除します。maps には curly brackets ({})、lists には square brackets ([])、すべての strings には double quotes を使用します。v1.34 で alpha として導入され、v1.35 (Dec 2025) で beta に昇格し、デフォルトで有効になっています。`KUBECTL_KYAML=false` で無効化できます。これは YAML における "Norway problem" (NO が boolean false と解釈される) のような長年の問題に対処します。
+KYAML は KEP-5295 です。native kubectl 1.36.2 のテストでは通常の YAML anchor が受け入れられ、出力には KYAML が使われました。`KUBECTL_KYAML=false` はその出力 printer を無効にしますが、KYAML 形式の入力は JSON 出力時にも解析されます。書式設定と schema／admission validation は別のものです。レビュー日までにアップストリーム 1.37 はすでにリリースされていましたが、これは EKS で 1.37 が利用可能であることを意味しません。
 
 </details>
 
 ---
 
-8. EKS clusters に推奨される version upgrade planning strategy はどれですか？
-   - A) upgrade frequency を最小化するためにバージョンをスキップする (例: 1.29 → 1.33)
-   - B) minor version を 1 つずつアップグレードし、staging で feature gates をテストし、本番前に API compatibility と add-on alignment を確認する
-   - C) 常に latest version を使用し、rollback には extended support に依存する
-   - D) stability を確保するため、アップグレード前にバージョンが extended support に到達するまで待つ
+8. EKS のアップグレード計画に適した方法はどれですか？
+
+   - A) 時間を節約するためマイナーバージョンを飛ばす
+   - B) 各マイナーバージョンへの段階的な移行をリハーサルし、実際の互換性と管理主体を確認して復旧に備える
+   - C) スキャナーが exit 0 を返せば完全な証明とみなす
+   - D) コントロールプレーンの後は、常にすべてのアドオンを決まった順序で更新する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) minor version を 1 つずつアップグレードし、staging で feature gates をテストし、本番前に API compatibility と add-on alignment を確認する**
+**解答: B) 各マイナーバージョンへの段階的な移行をリハーサルし、実際の互換性と管理主体を確認して復旧に備える**
 
-**解説:**
-EKS では minor version upgrades を順番に行う必要があります (1.33 → 1.34 → 1.35。スキップはサポートされていません)。Best practices: (1) 新しい feature gates と API changes をまず staging environments でテストする、(2) target version との add-on compatibility を確認する、(3) deprecated APIs を確認するために `kubectl convert` を実行する、(4) control plane を最初にアップグレードし、その後 add-ons、node groups の順にアップグレードする。Standard support に留まることで、extended support の 6 倍のコスト増を回避し、最新の security patches へのアクセスを確保できます。
+最新のサポートカレンダー、マニフェストとクライアント利用状況の証拠、正確なアドオン互換性、コンピュート方式ごとの順序を確認してください。一部の前提条件はコントロールプレーンの更新前に満たす必要があります。実際の更新 ID を記録し、readiness とデータを検証し、Pod resize、ノード置き換え、スケーリングを区別してください。EKS ネイティブのロールバックは、インプレース更新の完了後 7 日以内など条件付きで使える機能です。データベースのロールバックではなく、すべての制御を回避できる仕組みでもありません。
 
 </details>
+
+---

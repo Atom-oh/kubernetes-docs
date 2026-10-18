@@ -1098,7 +1098,7 @@ Auto Mode의 Pod Identity agent·노드 네트워킹·블록 스토리지 기능
 
 이 예제의 Pod Identity는 **External Secrets 컨트롤러가 이름으로 지정한 Secrets Manager/SSM 값을 읽는 용도**입니다. association은 ServiceAccount나 ESO 설치를 대신하지 않으므로 같은 namespace/SA를 GitOps로 구성하고, Pod Identity를 지원하는 SDK 기본 자격 증명 체인을 사용합니다. `ListSecrets` 기반 검색은 이 최소 예제에 포함하지 않습니다. 고객 관리 KMS 키를 쓰면 해당 키 ARN의 `kms:Decrypt`와 key policy 허용을 추가해야 합니다.
 
-이미지 pull은 kubelet/노드 역할의 권한입니다. 애플리케이션의 Pod Identity로 해결하지 않습니다. ArgoCD의 대상 EKS 인증 및 OCI/ECR 토큰 갱신은 [ArgoCD 설치](../gitops/argocd/01-installation.md)·[애플리케이션 구성](../gitops/argocd/02-applications.md)에서 별도로 구성합니다. 관리자 access entry는 Cluster layer가 소유하고, Platform layer에서 같은 principal을 다시 만들지 않습니다.
+이미지 pull은 kubelet/노드 역할의 권한으로 수행합니다. 애플리케이션의 Pod Identity로 해결하지 않습니다. ArgoCD의 대상 EKS 인증 및 OCI/ECR 토큰 갱신은 [ArgoCD 설치](../gitops/argocd/01-installation.md)·[애플리케이션 구성](../gitops/argocd/02-applications.md)에서 별도로 구성합니다. 관리자 access entry는 Cluster layer가 소유하고, Platform layer에서 같은 principal을 다시 만들지 않습니다.
 
 
 ### Backend 설정
@@ -1495,7 +1495,7 @@ output "coredns_addon_version_green" {
 
 ### terraform\_remote\_state 데이터 소스 패턴
 
-각 레이어는 이전 레이어의 root output을 읽습니다. 단, `terraform_remote_state`를 읽는 권한은 실제 state snapshot 전체에 접근할 수 있는 권한이므로 output만 공개하는 보안 경계가 아닙니다. 신뢰 경계가 다른 팀에는 별도 게시한 SSM parameter 등 필요한 값만 제공하는 방식을 검토합니다.
+각 레이어는 이전 레이어의 root output을 읽습니다. 단, `terraform_remote_state`를 읽는 권한은 실제 state snapshot 전체에 접근할 수 있는 권한이므로 output만 공개하는 보안 경계가 아닙니다. 신뢰 경계가 다른 팀에는 별도로 게시한 SSM parameter 등 필요한 값만 제공하는 방식을 검토합니다.
 
 ```hcl
 # 기본 패턴
@@ -1548,7 +1548,7 @@ locals {
 
 ### 레이어별 적용 순서
 
-새 프로젝트용 예제입니다. AWS CLI·Terraform·jq와 배포 권한이 필요합니다. `DOCS_ADMIN_ARN`에 실제 관리자 IAM ARN을 먼저 지정합니다. 아래 절차는 리소스를 생성하므로 각 `terraform apply`가 보여 주는 plan을 검토하고 직접 승인합니다. 순수 Auto Mode는 CoreDNS add-on을 끕니다. 혼합 클러스터로 확장할 때만 `DOCS_ENABLE_COREDNS_ADDON=true`를 지정해 호환 버전을 조회·고정합니다. 환경별 파일에는 필수 값만 생성하므로 추가 태그·팀 권한은 plan 전에 해당 입력에 병합합니다.
+새 프로젝트용 예제입니다. AWS CLI·Terraform·jq와 배포 권한이 필요합니다. `DOCS_ADMIN_ARN`에 실제 관리자 IAM ARN을 먼저 지정합니다. 아래 절차는 리소스를 생성하므로 각 `terraform apply`가 보여 주는 plan을 검토하고 직접 승인합니다. 순수 Auto Mode는 CoreDNS add-on을 끕니다. 혼합 클러스터로 확장할 때만 `DOCS_ENABLE_COREDNS_ADDON=true`를 지정해 호환 버전을 조회·고정합니다. 환경별 파일은 필수 값만 넣어 생성하므로 추가 태그·팀 권한은 plan 전에 해당 입력에 병합합니다.
 
 backend의 bucket/region은 생성된 JSON으로 전달하고 `TF_DATA_DIR`를 계정·환경·root별로 분리합니다. 한국어 예제의 Cluster root는 두 클러스터를 함께 관리합니다. bootstrap state와 `.terraform-data/`, plan 파일은 Git에 넣지 않고 보호·백업합니다. 기존 state의 위치나 계정을 바꾸는 migration 명령으로 이 절차를 재사용하지 않습니다.
 

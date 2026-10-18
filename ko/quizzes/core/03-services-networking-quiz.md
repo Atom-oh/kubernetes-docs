@@ -113,7 +113,7 @@ NetworkPolicy는 포드 간의 통신을 제어하는 방법을 제공합니다.
 **정답: B) CoreDNS**
 
 **설명:**
-CoreDNS는 Kubernetes 클러스터의 DNS 서버로 사용되는 유연하고 확장 가능한 DNS 서버입니다. CoreDNS는 Kubernetes 1.11에서 GA가 되었고 1.13부터 기본 DNS 서버로 사용되고 있습니다.
+CoreDNS는 Kubernetes 클러스터에서 사용되는 유연하고 확장 가능한 DNS 서버입니다. CoreDNS는 Kubernetes 1.11에서 GA가 되었고 1.13부터 기본 DNS 서버로 사용되고 있습니다.
 </details>
 
 8. 다음 중 Cilium이 활용하는 Linux 커널 기술은 무엇인가요?
@@ -199,7 +199,7 @@ AWS Load Balancer Controller는 AWS EKS에서 Application Load Balancer를 프�
 **정답: Default**
 
 **설명:**
-`Default` DNS 정책은 포드가 실행 중인 노드의 DNS 설정을 상속받습니다. 이는 노드의 `/etc/resolv.conf` 파일을 포드에 그대로 사용하는 것을 의미합니다.
+`Default` DNS 정책은 포드가 실행 중인 노드의 DNS 설정을 상속받습니다. 이는 노드의 `/etc/resolv.conf` 파일을 포드에서 그대로 사용하는 것을 의미합니다.
 </details>
 
 4. Cilium의 관찰 가능성 계층으로, eBPF를 활용하여 네트워크 흐름을 모니터링하고 문제를 해결하는 도구의 이름은 무엇인가요?

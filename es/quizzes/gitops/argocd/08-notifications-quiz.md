@@ -50,19 +50,19 @@ Los triggers definen las condiciones (como cambios en el estado de sync, cambios
 
 </details>
 
-4. ¿Cómo suscribes una Application para recibir notificaciones?
-   - A) Edita el ConfigMap de notificaciones
-   - B) Agrega annotations a la Application con suscripciones de notificaciones
-   - C) Crea un CRD NotificationSubscription
-   - D) Configúralo en la UI de ArgoCD
+4. ¿Cómo se define una suscripción directamente en los metadatos de una Application específica?
+   - A) Cambiando el número de réplicas de la Application
+   - B) Añadiendo annotations de suscripción a las notificaciones en la Application
+   - C) Creando un CRD NotificationSubscription
+   - D) Configurándola en la UI de ArgoCD
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agrega annotations a la Application con suscripciones de notificaciones**
+**Respuesta: B) Añadiendo annotations de suscripción a las notificaciones en la Application**
 
 **Explicación:**
-Las Applications se suscriben a las notificaciones mediante annotations como `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. Esto especifica el trigger, el servicio y el destinatario.
+Las Applications se suscriben a las notificaciones mediante annotations como `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. Esto especifica el trigger, el servicio y el destinatario. También se admiten las suscripciones en el ConfigMap central y las annotations de AppProject. Separe varios destinatarios con punto y coma.
 
 </details>
 
@@ -78,6 +78,6 @@ Las Applications se suscriben a las notificaciones mediante annotations como `no
 **Respuesta: C) Varios, incluidos Slack, Teams, correo electrónico, webhooks y más**
 
 **Explicación:**
-Las notificaciones de ArgoCD admiten muchos servicios, incluidos Slack, Microsoft Teams, Telegram, Opsgenie, Grafana, PagerDuty, GitHub, correo electrónico (SMTP) y webhooks genéricos.
+Argo CD admite formatos para Slack, Teams Workflows, GitHub, correo electrónico, webhooks genéricos, SQS y otros servicios. Antes de entregar notificaciones, configure las credenciales, los triggers, las plantillas y las suscripciones. Una plantilla con formatos para varios servicios no envía automáticamente la notificación a todos ellos. Prepare un plan de migración para las integraciones existentes con Opsgenie debido al cierre anunciado de ese servicio.
 
 </details>

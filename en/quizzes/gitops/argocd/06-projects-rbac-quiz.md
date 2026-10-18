@@ -30,7 +30,7 @@ AppProjects provide a logical grouping of Applications with restrictions on what
 **Answer: B) Allowed source repositories (Git/Helm/OCI)**
 
 **Explanation:**
-The `sourceRepos` field restricts which Git, Helm and OCI repositories Applications can use as sources, rather than selecting Git branches or container-image registries. Using `*` allows any repository, while specific URLs limit to those repositories only.
+The `sourceRepos` field restricts which Git, Helm and OCI repositories Applications can use as sources, rather than selecting Git branches or container-image registries. Using `*` allows any repository, while specific URLs limit the allowed sources to those repositories only.
 
 </details>
 

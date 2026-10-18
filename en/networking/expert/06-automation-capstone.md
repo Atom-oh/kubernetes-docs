@@ -18,7 +18,7 @@
 
 Changing expected values merely to match new output can conceal regressions. Review intent first and record its revision/hash. Observation adapters preserve units, scope and time while normalizing actual output.
 
-For example, a FRR peer's advertisements, a Linux host's entire FIB and a TGW route table are different datasets. The prefix contract below compares **the set advertised to a specified peer**. Preference, ECMP count, FIB installation and actual forwarding need separate evidence.
+For example, an FRR peer's advertisements, a Linux host's entire FIB and a TGW route table are different datasets. The prefix contract below compares **the set advertised to a specified peer**. Preference, ECMP count, FIB installation and actual forwarding need separate evidence.
 
 ## 2. A small validator exercise {#record-validator}
 

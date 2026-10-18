@@ -54,7 +54,7 @@ Ignoring HPA tolerance, missing/unready Pods, limits and behavior policies:
 
 For 600 RPS at 100 RPS/Pod, AverageValue asks for 6 replicas. Dividing the query by 3 Pods first would feed 200 and incorrectly ask for 2. `count(up)` counts scrape targets and is not a safe replica divisor either.
 
-With 4 replicas, a global 300ms latency and a Value target 200ms suggest 6 replicas. If adding replicas does not reduce that latency, repeated decisions can drive the workload to its cap. Treat latency/error ratio controllers as experiments requiring evidence of negative feedback, not production defaults.
+With 4 replicas, a global 300ms latency and a Value target of 200ms suggest 6 replicas. If adding replicas does not reduce that latency, repeated decisions can drive the workload to its cap. Treat latency/error ratio controllers as experiments requiring evidence of negative feedback, not production defaults.
 
 ## Prometheus Metrics-based Scaling
 
@@ -309,7 +309,7 @@ spec:
     behavior: currentReplicasIfHigher
 ```
 
-This is a workload-wide 5xx/zero-status percentage with a Value target. Known idle traffic returns 0; no telemetry is not fabricated as0. Only use an error-based controller after establishing that replica shortage causes those errors. Dependency outages, authorization failures or client-side pool limits can make scaling ineffective or harmful.
+This is a workload-wide 5xx/zero-status percentage with a Value target. Known idle traffic returns 0; no telemetry is not fabricated as 0. Only use an error-based controller after establishing that replica shortage causes those errors. Dependency outages, authorization failures or client-side pool limits can make scaling ineffective or harmful.
 
 ### 4. Composite Metrics
 
@@ -467,7 +467,7 @@ spec:
     behavior: currentReplicasIfHigher
 ```
 
-Average over the gauge's60-second period retains RPS units. Summing cumulative `istio_requests_total` samples is not a request count per minute. For a genuinely published delta-count metric, derive a separately calibrated per-period target instead.
+Averaging over the gauge's 60-second period retains RPS units. Summing cumulative `istio_requests_total` samples is not a request count per minute. For a genuinely published delta-count metric, derive a separately calibrated per-period target instead.
 
 `minMetricValue` is explicitly present for the released scaler parser, but `ignoreNullValues: "false"` takes precedence on empty results. `metricEndTimeOffset` skips recent potentially incomplete points; it adds delay and does not prove data freshness. Monitor timestamps and publisher health, including stale-but-nonempty results.
 
@@ -1191,7 +1191,7 @@ helm upgrade --install keda kedacore/keda --version 2.20.2   --namespace keda --
 kubectl get deployments,services,pods -n keda
 ```
 
-`operator.replicaCount: 2` and the metrics-adapter port 9022 override are valid chart values;9022 is an explicit override of the chart's8080 default. This enables operator metrics on 8080 as well. Two operator replicas alone do not make the metrics adapter/webhook or entire scaling path highly available.
+`operator.replicaCount: 2` and the metrics-adapter port 9022 override are valid chart values; 9022 is an explicit override of the chart's 8080 default. This enables operator metrics on 8080 as well. Two operator replicas alone do not make the metrics adapter/webhook or entire scaling path highly available.
 
 If the components are injected into Istio, KEDA documents this optional port-exclusion workaround for its own TLS-protected internal protocols:
 
@@ -1267,7 +1267,7 @@ The queue worker needs its own receive/delete/visibility permissions as appropri
 
 ### Optional CloudWatch EMF Publication
 
-This example uses **upstream Collector Contrib 0.158.0 with Operator 0.158.0**, matching the operator's minor-version recommendation. Operator 0.158 supports Kubernetes 1.25–1.36. A custom image is not automatically upgraded by the operator. An ADOT distribution is an alternative only after verifying its components/configuration; the commands below are not claimed tested against an unspecified ADOT image.
+This example uses **upstream Collector Contrib 0.158.0 with Operator 0.158.0**, matching the operator's minor-version recommendation. Operator 0.158 supports Kubernetes 1.25–1.36. A custom image is not automatically upgraded by the operator. An ADOT distribution is an alternative only after verifying its components/configuration; the commands below are not claimed to have been tested against an unspecified ADOT image.
 
 First load this recording-rule file into the existing Prometheus (or equivalent PrometheusRule with the appropriate selection labels):
 

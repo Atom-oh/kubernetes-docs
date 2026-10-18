@@ -13,7 +13,7 @@
 
 ### 블록·어피니티·할당 제한
 
-Calico는 노드와 연결된 블록에서 주소를 할당합니다. IPv4 `/26`과 IPv6 `/122`는 각각 주소 64개를 포함하지만 모든 플랫폼에서 Pod 64개가 사용 가능하다는 뜻은 아닙니다. Windows는 Calico 소유 블록당 주소 네 개를 예약합니다.
+Calico는 노드와 연결된 블록에서 주소를 할당합니다. IPv4 `/26`과 IPv6 `/122`는 각각 주소 64개를 포함하지만 모든 플랫폼에서 Pod 64개를 실행할 수 있다는 뜻은 아닙니다. Windows는 Calico 소유 블록당 주소 네 개를 예약합니다.
 
 ![데이터스토어가 IPPool 10.244.0.0/16에서 /26 블록을 각 노드에 할당하고, 노드는 자신에게 친화성이 있는 블록(소진 시 추가 블록으로 확장) 안에서 Pod IP를 개별 배정하는 Block 기반 IPAM 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-0.png)
 
@@ -27,7 +27,7 @@ Calico는 노드와 연결된 블록에서 주소를 할당합니다. IPv4 `/26`
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-1.html)
 
-> 단순화한 흐름은 적합한 풀·자동 블록 할당·허용된 차용·제한에 걸리지 않는 상황을 가정합니다. Windows는 차용을 지원하지 않으며 전체 주소가 고갈되어야만 실패한다는 보장이 아닙니다.
+> 단순화한 흐름은 적합한 풀·자동 블록 할당·허용된 차용·제한에 걸리지 않는 상황을 가정합니다. Windows는 차용을 지원하지 않으며 전체 주소가 고갈되어야만 실패한다는 보장은 없습니다.
 
 전역 설정은 `IPAMConfiguration/default`를 확인하세요. 웹 참고 문서에는 기본 제한 20이 적혀 있지만 **3.32.2 릴리스 구현과 공개 CRD는 설정이 없을 때 `maxBlocksPerHost: 0`을 생성**합니다. 0은 전역 블록 제한이 없다는 뜻이며 요청별·플랫폼 제한은 남습니다. 기존 클러스터의 설정값도 유지됩니다. 검토한 IPAM 설정 경로에서는 양수 전역 제한에 `strictAffinity: true`가 필요합니다.
 
@@ -54,7 +54,7 @@ spec:
 
 ### Host-Local IPAM
 
-Host-local은 노드 로컬 할당 상태와 Kubernetes가 제공하는 노드별 PodCIDR 구성을 사용합니다. operator의 선택 필드는 **`spec.cni.ipam.type: HostLocal`**입니다.
+Host-local은 노드 로컬 할당 상태와 Kubernetes가 제공하는 노드별 PodCIDR 구성을 사용합니다. operator의 선택 필드는 **`spec.cni.ipam.type: HostLocal`입니다**.
 
 ```yaml
 # Installation fragment: preserve other settings through the configuration owner.
@@ -133,7 +133,7 @@ spec:
       image: registry.example.com/team/app:approved
 ```
 
-annotation은 IPPool을 요청하고 Pod의 `nodeSelector`는 스케줄링을 제어합니다. 검토한 Calico IPAM 코드에서 명시적 풀 요청은 호환성을 위해 풀의 node/namespace selector를 건너뛰므로 **권한 경계가 아닙니다**. 비활성화되었거나 없는 풀은 실패합니다. namespace annotation으로 기본 풀을 지정할 수 있지만 네트워크 정책을 대체하지 않습니다.
+annotation은 IPPool을 요청하고 Pod의 `nodeSelector`는 스케줄링을 제어합니다. 검토한 Calico IPAM 코드에서 명시적 풀 요청은 호환성을 위해 풀의 node/namespace selector를 건너뛰므로 **권한 경계가 아닙니다**. 비활성화되었거나 없는 풀에 대한 요청은 실패합니다. namespace annotation으로 기본 풀을 지정할 수 있지만 네트워크 정책을 대체하지 않습니다.
 
 ### IPv6와 Dual Stack
 
@@ -165,7 +165,7 @@ spec:
 
 호환되는 Linux 데이터 평면은 IPv6 VXLAN을 지원하지만 IPv6 IP-in-IP는 지원하지 않습니다. 위 ULA 주소는 IPv6라는 이유로 인터넷에서 라우팅되지 않습니다. `natOutgoing: false`에는 적절한 반환 경로나 별도 egress 설계가 필요합니다.
 
-노드 주소 자동 감지는 operator 설정 또는 해당 설치 환경에 속하며 임의의 Felix 필드가 아닙니다.
+노드 주소 자동 감지 설정은 operator 설정 또는 해당 설치 환경에 속하며 임의의 Felix 필드가 아닙니다.
 
 ```yaml
 # Operator configuration fragment, not a replacement for the existing Installation.
@@ -213,7 +213,7 @@ kubectl get blockaffinities.projectcalico.org -o json | jq -r \
 
 이 출력은 현황이며 즉시 실행할 `ip route add` 목록이 아닙니다. 실제 node next hop, 할당 상태, 풀 export/encapsulation 규칙, more-specific 경로가 필요합니다. placeholder 노드 IP나 모든 affinity 레코드만으로 유효한 정적 라우팅 계획을 만들 수 없습니다.
 
-**EKS Hybrid Nodes**의 [전용 CNI 가이드](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)는 AWS 유지 Cilium 빌드를 문서화하고 Calico 예시를 Hybrid Examples 저장소로 안내합니다. 한편 AWS [일반 대체 CNI 문서](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)는 여전히 Hybrid Nodes에서 Cilium/Calico 핵심 기능 지원을 설명합니다. 두 문서에서 일관된 Calico 버전별 지원 매트릭스를 확인할 수 없으므로 예시 이동만으로 지원 종료를 추론하지 마세요. 계획한 배포판·기능·지원 주체를 확인해야 하며, 이 절은 Hybrid 설치 레시피가 아닌 Calico IPAM 현황 확인입니다.
+**EKS Hybrid Nodes**의 [전용 CNI 가이드](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)는 AWS가 유지 관리하는 Cilium 빌드를 문서화하고 Calico 예시를 Hybrid Examples 저장소로 안내합니다. 한편 AWS [일반 대체 CNI 문서](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)는 여전히 Hybrid Nodes에서 Cilium/Calico 핵심 기능 지원을 설명합니다. 두 문서에서 일관된 Calico 버전별 지원 매트릭스를 확인할 수 없으므로 예시 이동만으로 지원 종료를 추론하지 마세요. 계획한 배포판·기능·지원 주체를 확인해야 하며, 이 절은 Hybrid 설치 레시피가 아닌 Calico IPAM 현황 확인입니다.
 
 ## WireGuard 암호화
 
@@ -422,7 +422,7 @@ spec:
       port: 8080
 ```
 
-Backing Service는 선택한 클러스터에서 같은 namespace 이름에 있고 포트 **이름·프로토콜**이 일치해야 합니다. Federated Service에는 `spec.selector`를 생략하며 `targetPort`로 backing port를 선택하지 않습니다. Endpoint 레코드를 수동 관리하지 마세요.
+Backing Service는 선택한 클러스터에서 이름이 같은 namespace에 있고 포트 **이름·프로토콜**이 일치해야 합니다. Federated Service에는 `spec.selector`를 생략하며 `targetPort`로 backing port를 선택하지 않습니다. Endpoint 레코드를 수동 관리하지 마세요.
 
 원격 API 자격 증명, controller 설치, Kubernetes 버전·EndpointSlice 호환성, 네트워크 도달성은 별도 전제입니다. 위 예시가 이를 구성하거나 장애 전환을 검증한 것은 아닙니다. 현재 제품 절차와 실제 경로를 확인하고 문서의 2018년 Endpoints 출력 예시를 현재 배포 매니페스트로 복사하지 마세요.
 
@@ -490,7 +490,7 @@ kubectl get pods -n calico-system -l k8s-app=calico-node-windows -o wide
 kubectl logs -n calico-system -l k8s-app=calico-node-windows -c felix --tail=100
 ```
 
-위 내용은 설정 검토이며 실제 Windows 노드 구축·장애 전환을 검증한 것이 아닙니다. 양쪽 OS에서 Pod/Service 트래픽과 정책을 검사하세요. Windows NAT 변경은 새로 네트워킹한 Pod에만 적용될 수 있고 일부 HNS 정책 갱신은 연결을 재설정할 수 있습니다.
+위 내용은 설정 검토이며 실제 Windows 노드 구축·장애 전환을 검증한 것이 아닙니다. 양쪽 OS에서 Pod/Service 트래픽과 정책을 검사하세요. Windows NAT 변경은 네트워킹이 새로 구성된 Pod에만 적용될 수 있고 일부 HNS 정책 갱신은 연결을 재설정할 수 있습니다.
 
 ### HNS와 패킷 경로
 

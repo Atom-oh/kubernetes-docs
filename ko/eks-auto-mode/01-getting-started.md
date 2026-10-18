@@ -25,7 +25,7 @@ Auto Mode는 Pod Identity agent 기능을 제공합니다. Auto Mode 활성화�
 
 ### 공통 계정과 로컬 컨텍스트
 
-필수 환경 변수를 승인된 실제 값으로 설정합니다. 새 클러스터에는 고유한 이름을 사용하고, 기존 클러스터에는 식별 정보와 소유권을 확인합니다. 이후 명령도 이 전용 Bash 세션에서 실행하고 생성된 디렉터리를 비공개로 보관하세요.
+필수 환경 변수를 승인된 실제 값으로 설정합니다. 새 클러스터에는 고유한 이름을 사용하고, 기존 클러스터의 식별 정보와 소유권을 확인합니다. 이후 명령도 이 전용 Bash 세션에서 실행하고 생성된 디렉터리를 비공개로 보관하세요.
 
 ```bash
 set -euo pipefail
@@ -238,7 +238,7 @@ terraform apply "$WORK_DIR/tfplan"
 
 승인된 계정과 `ap-northeast-2`를 대상으로 하는 CDK 애플리케이션에서 사용합니다. CloudFormation 파라미터 `ClusterName`, `ClusterRoleArn`, `NodeRoleArn`, `OperatorRoleArn`, `ApiClientCidr`를 지정하세요. Operator 파라미터에는 kubectl에 사용할 자격 증명의 검토된 IAM 역할 ARN을 입력합니다. STS assumed-role 세션 ARN을 사용하지 않습니다.
 
-실제 **L1 `eks.CfnCluster`**를 사용합니다. 기존 `eks.Cluster` L2의 `defaultChild`를 `CfnCluster`로 형 변환해도 해당 custom resource가 `AWS::EKS::Cluster`로 바뀌거나 Auto Mode가 올바르게 설정되는 것은 아닙니다. 여기서는 세 Auto Mode 기능, API 접근과 노드 역할을 명시합니다. Access entry로 검토된 실습 운영자에게 Kubernetes 관리자 접근을 부여하며, CloudFormation 실행 주체의 bootstrap 접근은 비활성화합니다. 프로덕션에서는 이 실습용 클러스터 전체 권한을 적절한 접근 범위로 대체하세요. 참조한 IAM 역할은 이 스택의 수명 주기에 포함되지 않습니다.
+실제 **L1 `eks.CfnCluster`를** 사용합니다. 기존 `eks.Cluster` L2의 `defaultChild`를 `CfnCluster`로 형 변환해도 해당 custom resource가 `AWS::EKS::Cluster`로 바뀌거나 Auto Mode가 올바르게 설정되는 것은 아닙니다. 여기서는 세 Auto Mode 기능, API 접근과 노드 역할을 명시합니다. Access entry로 검토된 실습 운영자에게 Kubernetes 관리자 접근을 부여하며, CloudFormation 실행 주체의 bootstrap 접근은 비활성화합니다. 프로덕션에서는 이 실습용 클러스터 전체 권한을 적절한 접근 범위로 대체하세요. 참조한 IAM 역할은 이 스택의 수명 주기에 포함되지 않습니다.
 
 ```typescript
 import * as cdk from 'aws-cdk-lib/core';

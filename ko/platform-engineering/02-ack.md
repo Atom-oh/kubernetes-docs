@@ -134,9 +134,9 @@ Git에 환경별 manifest와 chart 버전을 기록하고 credentials는 저장�
 
 ## 문제 해결
 
-생성 실패는 conditions/events, controller image·로그, 계정·region, IAM trust/policy, 참조 대상과 AWS 서비스 제약부터 확인합니다. AccessDenied는 RBAC와 IAM 중 어느 계층인지 구분합니다. Terminating 상태에서는 finalizer가 기다리는 AWS 삭제·dependency·보존 정책을 조사합니다.
+생성에 실패하면 conditions/events, controller image·로그, 계정·region, IAM trust/policy, 참조 대상과 AWS 서비스 제약부터 확인합니다. AccessDenied는 RBAC와 IAM 중 어느 계층인지 구분합니다. Terminating 상태에서는 finalizer가 기다리는 AWS 삭제·dependency·보존 정책을 조사합니다.
 
-finalizer를 비우는 명령을 일반 해결책으로 사용하지 않습니다. 추적되지 않는 AWS 리소스를 남길 수 있으므로 원인을 해결하고, 마지막 수단은 리소스 실제 상태·백업·이후 소유권을 검토한 복구 절차로 수행합니다.
+finalizer를 비우는 명령을 일반 해결책으로 사용하지 않습니다. 추적되지 않는 AWS 리소스를 남길 수 있으므로 원인을 해결하고, 마지막 수단으로는 리소스 실제 상태·백업·이후 소유권을 검토한 복구 절차를 수행합니다.
 
 ## 검증 범위와 참고 자료
 

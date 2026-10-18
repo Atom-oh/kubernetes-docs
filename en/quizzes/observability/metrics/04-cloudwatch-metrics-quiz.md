@@ -94,7 +94,7 @@ awsemf sends log events for extraction into traditional metrics. The example cre
 
 **Answer: C**
 
-Infrequent Access does not support EMF or Container Insights log ingestion. Retention reduction may expire existing history. High resolution can increase request/alarm cost, not a universal tenfold metric-storage rate.
+Infrequent Access does not support EMF or Container Insights log ingestion. Retention reduction may expire existing history. High resolution can increase request/alarm cost; it does not imply a universal tenfold metric-storage rate.
 
 </details>
 

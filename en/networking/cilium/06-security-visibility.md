@@ -121,7 +121,7 @@ Kernel/datapath events + proxy/agent events
        CLI / UI
 ```
 
-The server maintains bounded in-memory history. Relay queries multiple servers; it is not a durable database. UI offers flow exploration and service dependency maps, while the CLI supports explicit filters. No matching records can mean no traffic, the wrong filter, unavailable peers, missing L7 visibility or overwritten/lost events.
+The server maintains bounded in-memory history. Relay queries multiple servers; it is not a durable database. The UI offers flow exploration and service dependency maps, while the CLI supports explicit filters. No matching records can mean no traffic, the wrong filter, unavailable peers, missing L7 visibility or overwritten/lost events.
 
 ### Hubble CLI Usage Examples
 

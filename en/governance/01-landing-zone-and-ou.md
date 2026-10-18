@@ -32,7 +32,7 @@ Earlier landing zones included Control Tower-managed Security OU creation. **Ver
 2. If a non-service-integration Account is placed in this OU, it won't receive baseline resources.
 3. Control Tower only auto-creates Identity Center permission sets for the Logging Account and SecurityRoles Account. **You must create the permission sets for the Config Account and Backup Account yourself.**
 
-Moving a general Account into the same OU as service-integration Accounts can drift enabled controls, independently of auto-enrollment. This constraint concerns that OU. Consider a separate managed OU for general security tools and Accounts awaiting migration.
+Moving a general Account into the same OU as service-integration Accounts can cause enabled controls to drift, independently of auto-enrollment. This constraint concerns that OU. Consider a separate managed OU for general security tools and Accounts awaiting migration.
 
 > **Design proposal**: Separate service-integration Accounts from general security-operations Accounts to clarify baseline scope. AWS does not mandate particular OU names.
 
@@ -55,7 +55,7 @@ Based on which service integrations and OU baselines you activate, you need to d
 
 With Landing Zone 3.1+, enable auto-enrollment through landing-zone settings/API before moving an Account into a registered OU to automatically apply that OU’s baselines and controls. Still, there are things it doesn't do for you.
 
-- **It doesn't resolve pre-existing configuration conflicts or failure recovery automatically.** Pre-checks (Config, CloudTrail, SCP, IAM conflicts) need to be done separately.
+- **It doesn't resolve pre-existing configuration conflicts or handle failure recovery automatically.** Pre-checks (Config, CloudTrail, SCP, IAM conflicts) need to be done separately.
 - Unenrollment can remove managed baseline resources. Verify retention of existing logs and evidence separately. Keeping governance while restricting changes is an operational option for retiring Accounts, not an AWS requirement that every OU remain enrolled.
 - Enrollment follows an eventually-consistent model, so it can take anywhere from minutes to hours depending on how many Accounts are moved.
 - **Auto-enrollment does not create, modify, or terminate Service Catalog provisioned products.** If you unenroll an Account created via Account Factory, its provisioned product becomes an orphan in the management Account.

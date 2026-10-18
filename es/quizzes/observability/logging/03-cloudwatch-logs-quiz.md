@@ -1,12 +1,12 @@
 # Cuestionario de CloudWatch Logs
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 [Guía](../../../observability/logging/03-cloudwatch-logs.md)
 
 ---
 
-1. ¿Cuál no es un tipo de log del control plane de EKS?
+1. ¿Cuál no es un tipo de registro del plano de control de EKS?
 
    - A) api
    - B) audit
@@ -18,7 +18,7 @@
 
 **Respuesta: C**
 
-Los cinco tipos son api, audit, authenticator, controllerManager y scheduler. Los logs de worker/aplicación y la entrega de componentes administrados de Auto Mode son rutas independientes.
+Los cinco tipos son api, audit, authenticator, controllerManager y scheduler. Los registros de nodos de trabajo y aplicaciones, y la entrega de componentes administrados de Auto Mode, son rutas independientes.
 
 </details>
 
@@ -29,7 +29,7 @@ Los cinco tipos son api, audit, authenticator, controllerManager y scheduler. Lo
    - A) La ingesta siempre es el cargo mensual más alto
    - B) El almacenamiento siempre es gratuito
    - C) Todas las rutas de entrega a S3 son gratuitas
-   - D) Comparar el volumen real, la retención, los escaneos, la clase, la Region y los cargos posteriores
+   - D) Comparar el volumen real, la retención, los escaneos, la clase, la región y los cargos posteriores
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -54,13 +54,13 @@ Un precio por GB ingerido no se puede clasificar por sí solo frente al almacena
 
 **Respuesta: B**
 
-parse extrae campos; jsonParse puede analizar un mensaje JSON. La envoltura del collector coloca los campos de la aplicación bajo log_processed. No asumas un orden arbitrario de claves JSON en un glob.
+parse extrae campos; jsonParse puede analizar un mensaje JSON. La envoltura del recopilador coloca los campos de la aplicación bajo log_processed. No asumas un orden arbitrario de claves JSON en un glob.
 
 </details>
 
 ---
 
-4. ¿Qué grupo usa el collector manual de la aplicación en esta guía?
+4. ¿Qué grupo usa el recopilador manual de la aplicación en esta guía?
 
    - A) /aws/containerinsights/example-eks/application
    - B) /aws/eks/example-eks/logs
@@ -72,7 +72,7 @@ parse extrae campos; jsonParse puede analizar un mensaje JSON. La envoltura del 
 
 **Respuesta: A**
 
-El grupo de aplicación configurado es diferente de /aws/eks/example-eks/cluster para los logs del control plane. El grupo se prepara primero; el collector no lo crea ni modifica la retención.
+El grupo de aplicación configurado es diferente de /aws/eks/example-eks/cluster para los registros del plano de control. El grupo se prepara primero; el recopilador no lo crea ni modifica la retención.
 
 </details>
 
@@ -90,7 +90,7 @@ El grupo de aplicación configurado es diferente de /aws/eks/example-eks/cluster
 
 **Respuesta: C**
 
-La API de destino y el formato de entrada son importantes. CloudWatch Logs→Firehose→OpenSearch no es compatible específicamente. Las suscripciones son asíncronas y al menos una vez; las tareas de exportación y la entrega de vended-log son API diferentes.
+La API de destino y el formato de entrada son importantes. CloudWatch Logs→Firehose→OpenSearch no es compatible específicamente. Las suscripciones son asíncronas y de entrega al menos una vez; las tareas de exportación y la entrega de registros generados por servicios (vended logs) usan API diferentes.
 
 </details>
 
@@ -108,7 +108,7 @@ La API de destino y el formato de entrada son importantes. CloudWatch Logs→Fir
 
 **Respuesta: B**
 
-cloudwatch_logs es el plugin nativo. cloudwatch nombra el plugin anterior de Go. Las credenciales, el ServiceAccount real, el grupo de salida y la política IAM aún deben coincidir.
+cloudwatch_logs es el plugin nativo. cloudwatch nombra el plugin anterior de Go. Las credenciales, el ServiceAccount real, el grupo de salida y la política de IAM aún deben coincidir.
 
 </details>
 
@@ -132,10 +132,10 @@ stats cambia los campos de salida disponibles, así que ordena por el alias de s
 
 ---
 
-8. ¿Qué política de logging no es segura como enfoque predeterminado de control de costos?
+8. ¿Qué política de gestión de registros no es segura como enfoque predeterminado de control de costos?
 
    - A) Revisar los filtros frente a los registros que se deben conservar
-   - B) Establecer la retención a través del único propietario del grupo de logs
+   - B) Establecer la retención a través del único propietario del grupo de registros
    - C) Conservar toda la salida DEBUG indefinidamente y descartar indiscriminadamente los registros relevantes para la seguridad como compensación
    - D) Medir la ingesta y los escaneos antes de cambiar el diseño
 
@@ -153,33 +153,33 @@ Los controles de volumen deben conservar los diagnósticos y registros de seguri
 9. ¿Qué hace un filtro de métricas y qué significa un valor predeterminado de cero?
 
    - A) Exporta todos los registros históricos a S3
-   - B) Deriva métricas de los logs nuevos que coinciden; el cero predeterminado se aplica cuando llegan logs pero ningún registro coincide
-   - C) Siempre emite cero incluso cuando no llegan logs
-   - D) Es compatible con todas las funciones en todas las clases de logs
+   - B) Deriva métricas de los registros nuevos que coinciden; el cero predeterminado se aplica cuando llegan registros pero ninguno coincide
+   - C) Siempre emite cero incluso cuando no llegan registros
+   - D) Es compatible con todas las funciones en todas las clases de registros
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B**
 
-Este capítulo usa un filtro JSON de clase Standard en $.log_processed.level. Sin logs entrantes, pueden faltar datos. La alarma comprueba un recuento de errores en dos períodos de cinco minutos, no una tasa de errores ni una prueba de la salud del Service.
+Este capítulo usa un filtro JSON de clase Standard en $.log_processed.level. Si no llegan registros, pueden faltar datos. La alarma comprueba un recuento de errores en dos períodos de cinco minutos, no una tasa de errores ni una prueba del estado del Service.
 
 </details>
 
 ---
 
-10. ¿Qué disposición de IAM/propiedad se ajusta al collector manual solo para logs?
+10. ¿Qué disposición de IAM/propiedad se ajusta al recopilador manual que solo recopila registros?
 
    - A) Otorgar a todos los Pods un rol de administrador
    - B) Adjuntar una política a cloudwatch-agent mientras se implementa un ServiceAccount no relacionado
    - C) Usar solo s3:PutObject
-   - D) Crear previamente el grupo, autorizar logs:CreateLogStream/logs:PutLogEvents en su ARN y asignar el ServiceAccount real del collector
+   - D) Crear previamente el grupo, autorizar logs:CreateLogStream/logs:PutLogEvents en su ARN y asignar el ServiceAccount real del recopilador
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: D**
 
-El perfil manual usa logging/fluent-bit-cloudwatch y una relación de confianza IRSA aprobada. No necesita PutMetricData ni logs:* amplios para esta ruta. El chart completo de observabilidad es un perfil independiente cuyos Pods de Fluent Bit usan cloudwatch-agent.
+El perfil manual usa logging/fluent-bit-cloudwatch y una relación de confianza IRSA aprobada. No necesita PutMetricData ni permisos amplios de logs:* para esta ruta. El chart completo de observabilidad es un perfil independiente cuyos Pods de Fluent Bit usan cloudwatch-agent.
 
 </details>

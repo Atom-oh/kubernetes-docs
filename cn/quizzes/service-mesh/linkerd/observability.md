@@ -1,209 +1,207 @@
 # Linkerd 可观测性测验
 
-本测验用于测试您对 Linkerd 可观测性功能的理解。
+本测验基于[可观测性指南](../../../service-mesh/linkerd/05-observability.md)，审阅日期：2026 年 9 月 11 日。
 
-## 测验题目
+### 1. 以下哪项不是 Linkerd 的三项核心 HTTP 服务指标之一？
 
-### 1. 以下哪项不是 Linkerd 自动收集的黄金指标？
-
-A. 成功率
-B. 请求率 (RPS)
-C. 延迟
-D. CPU 使用率
+- A. 成功率
+- B. 请求率
+- C. 延迟
+- D. CPU 利用率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. CPU 使用率**
+**答案：D**
 
 **说明：**
-Linkerd 会自动收集三项黄金指标：成功率、请求率 (RPS) 和延迟 (p50、p95、p99)。CPU 使用率是 Kubernetes 指标，必须单独收集。
+三项指标分别是由代理分类的成功率、请求率和延迟。CPU 或容量属于额外的运维信息；这并不表示代理或其他采集器不能提供进程或资源指标。对于不透明的 TCP 流量，系统也不会自动提供 HTTP 服务指标。
 
 </details>
 
-### 2. 以下哪项不包含在 `linkerd viz stat` 命令输出中？
+### 2. 以下哪项不是此版本 linkerd viz stat 表中的标准列？
 
-A. SUCCESS（成功率）
-B. RPS（请求率）
-C. LATENCY_P99
-D. ERROR_TYPE
+- A. SUCCESS
+- B. RPS
+- C. LATENCY_P99
+- D. ERROR_TYPE
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. ERROR_TYPE**
+**答案：D**
 
 **说明：**
-`linkerd viz stat` 显示 MESHED、SUCCESS、RPS、LATENCY_P50/P95/P99。必须通过 `linkerd viz tap` 或日志检查错误类型。
+所选版本包含 MESHED、SUCCESS、RPS、各百分位延迟以及 TCP_CONN。宽格式输出还会包含传输字节速率，而不是代理版本清单。排查错误时，应结合适用的策略、Tap、日志和指标。
 
 </details>
 
-### 3. `linkerd viz tap` 命令的用途是什么？
+### 3. linkerd viz tap 提供什么？
 
-A. 捕获网络数据包
-B. 查看实时请求流
-C. 更改代理配置
-D. 更新证书
+- A. 完整的网络数据包捕获
+- B. 对受支持请求的实时观测流
+- C. 自动修改代理策略
+- D. 证书续期
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 查看实时请求流**
+**答案：B**
 
 **说明：**
-`linkerd viz tap` 实时流式传输请求。它会显示请求方法、路径、状态码、延迟、mTLS 状态等。
+Tap 只能观测受支持的流量，并且会进行采样；它不是完整审计记录。max-rps 限制被 Tap 观测的速率，不会限制所有应用流量。当前版本的 Tap 没有 --from 或 --show-headers 标志；应使用受支持的 selector，并保护请求元数据的访问权限。
 
 </details>
 
-### 4. 定义 ServiceProfile 后可以获得哪些额外指标？
+### 4. 旧版 ServiceProfile 中的路由命名有什么作用？
 
-A. Pod 资源使用率
-B. 每路由指标
-C. 网络带宽
-D. 磁盘 I/O
+- A. 统计磁盘 I/O
+- B. 提供逐路由指标
+- C. 自动生成完整的分布式追踪
+- D. 对每种方法强制启用重试
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 每路由指标**
+**答案：B**
 
 **说明：**
-定义 ServiceProfile 可收集每路由（例如 GET /api/users、POST /api/orders）的成功率、请求率和延迟指标。可通过 `linkerd viz routes` 命令查看。
+ServiceProfile 支持路由指标以及 viz routes 视图。它仍是兼容性接口，可能优先于当前出站 HTTPRoute 的可靠性设置。为获得可观测性而添加 profile 时，不应悄然启用不安全的重试或覆盖现有策略。
 
 </details>
 
-### 5. 访问 Viz 扩展的 Prometheus 的默认方法是什么？
+### 5. 指南如何在本机访问现有的默认 Viz Prometheus？
 
-A. NodePort Service
-B. LoadBalancer Service
-C. kubectl port-forward
-D. 公共 URL
+- A. 暴露未经身份验证的 NodePort
+- B. 创建公共 LoadBalancer
+- C. 使用绑定到 loopback 地址的 kubectl port-forward
+- D. 假定存在公共 URL
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. kubectl port-forward**
+**答案：C**
 
 **说明：**
-Viz 的 Prometheus 被部署为 ClusterIP Service。可通过 `kubectl port-forward -n linkerd-viz svc/prometheus 9090:9090` 访问。出于安全考虑，不建议对外暴露。
+示例会将现有 Prometheus Service 转发到 127.0.0.1。它既不会安装 Prometheus，也不会配置公共身份验证。其他工作负载若要访问，还需配置适用的网络规则和 Linkerd 授权设置。
 
 </details>
 
-### 6. 以下哪个 header 不是分布式追踪传播所必需的？
+### 6. 应用示例所用的 W3C trace context 包含哪一对字段？
 
-A. x-b3-traceid
-B. x-request-id
-C. x-linkerd-proxy
-D. x-b3-spanid
+- A. x-request-id 和 Authorization
+- B. x-b3-traceid 和 x-b3-spanid
+- C. traceparent 和 tracestate
+- D. x-linkerd-proxy 和 Cookie
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. x-linkerd-proxy**
+**答案：C**
 
 **说明：**
-分布式追踪所需的 header 包括：x-request-id、x-b3-traceid、x-b3-spanid、x-b3-parentspanid、x-b3-sampled、b3 等。x-linkerd-proxy 不存在。
+Linkerd 支持 W3C 和 B3；两者同时存在时优先使用 W3C。x-request-id 是关联请求的 ID，并不是必需的追踪格式。仅传播这些 header 不会创建应用 span，也不会配置采样或导出；这些工作需要合适的追踪库。
 
 </details>
 
-### 7. `linkerd viz top` 命令显示什么？
+### 7. linkerd viz top 汇总什么？
 
-A. 使用最多资源的 Pod
-B. 最活跃的请求路径
-C. 最常见的错误消息
-D. 最新日志条目
+- A. 按 CPU 使用量排序的 Pod
+- B. Tap 捕获的实时请求路径或路由
+- C. 所有历史错误消息
+- D. 最新的容器日志
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 最活跃的请求路径**
+**答案：B**
 
 **说明：**
-`linkerd viz top` 实时显示最活跃的请求路径。它会显示 Source、Destination、Method、Path、Count、Latency、Success Rate 等。
+top 汇总实时流量，并受采样、速率限制和受支持过滤条件的约束。hide-sources 控制是否显示来源列，不控制 header。此视图不能替代保留在 Prometheus 中的指标或完整请求审计记录。
 
 </details>
 
-### 8. 哪个 annotation 用于设置代理日志级别？
+### 8. 哪个 annotation 会更改代理诊断日志级别？
 
-A. config.linkerd.io/log-level
-B. config.linkerd.io/proxy-log-level
-C. linkerd.io/proxy-log
-D. proxy.linkerd.io/log-level
+- A. config.linkerd.io/log-level
+- B. config.linkerd.io/proxy-log-level
+- C. linkerd.io/proxy-log
+- D. proxy.linkerd.io/log-level
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. config.linkerd.io/proxy-log-level**
+**答案：B**
 
 **说明：**
-`config.linkerd.io/proxy-log-level` annotation 用于设置代理日志级别。示例："warn,linkerd=info,linkerd_proxy=debug"
+proxy-log-level 控制诊断日志过滤器，proxy-log-format 控制诊断日志格式。HTTP 访问日志通过 config.linkerd.io/access-log:json 或 apache 单独启用。局部 Pod 模板只是补丁或片段，并不是完整的 Deployment。
 
 </details>
 
-### 9. 用于计算 Linkerd 成功率的正确 Prometheus 查询是什么？
+### 9. 如何计算一个时间窗口内的成功率？
 
-A. `sum(response_total{classification="success"}) / sum(response_total)`
-B. `rate(success_total[5m]) / rate(request_total[5m])`
-C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`
-D. `avg(success_rate)`
+- A. 不使用 rate，直接将生命周期累计成功数除以总数
+- B. 使用并不存在的 success_total 计数器
+- C. 在范围一致、正确处理缺失成功序列且总响应速率为正的前提下，用成功响应速率除以总响应速率
+- D. 对并不存在的 success_rate 指标求平均值
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`**
+**答案：C**
 
 **说明：**
-成功率通过将成功响应率除以总响应率来计算。rate() 函数计算时间范围内每秒的速率，sum() 函数进行聚合。
+应选定一种观测方向，以及明确的工作负载和集群范围。若窗口内全部请求失败而没有成功序列，结果仍应为 0；缺失或空闲数据不能被误算为 100% 成功。代理的 HTTP 分类可能将 400 计为成功，因此应根据业务 SLI 有意选择分类方式。
 
 </details>
 
-### 10. Jaeger 扩展的主要功能是什么？
+### 10. 在当前追踪配置中，Jaeger 可以承担什么角色？
 
-A. 指标收集
-B. 日志聚合
-C. 分布式追踪
-D. 流量拆分
+- A. 替代 Kubernetes 指标发现
+- B. 只聚合应用访问日志
+- C. 作为单独管理的后端收集、存储和查询分布式追踪
+- D. 自动拆分流量
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 分布式追踪**
+**答案：C**
 
 **说明：**
-Jaeger 扩展提供分布式追踪。它可视化请求经过多个 Service 的完整路径，并分析每个步骤的延迟。
+Linkerd-Jaeger 扩展已在 2.19 中移除。当前 Linkerd 配置兼容 OpenTelemetry 的采集器；在示例所示的 chart 配置路径中，还会配置其 mesh identity。只有后端 UI 并不能证明应用或代理 span 已送达，也不能证明追踪完整。
 
 </details>
 
-### 11. linkerd viz dashboard 命令不提供以下哪个视图？
+### 11. 哪类信息应通过 kubectl logs 或日志系统获取，而不能假设 Viz 是容器日志查看器？
 
-A. Topology
-B. Deployments
-C. Pod Logs
-D. Routes
+- A. 工作负载拓扑
+- B. Deployment 指标
+- C. Pod 容器日志
+- D. ServiceProfile 路由指标
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Pod Logs**
+**答案：C**
 
 **说明：**
-Viz dashboard 提供 Namespace、Deployments、Pods、TCP、Routes、Topology 和 Tap 视图。必须通过 kubectl logs 或单独的日志系统检查 Pod 日志。
+Viz 提供工作负载和流量视图、拓扑以及 Tap。诊断日志和访问日志属于不同的数据。查看这些视图的流程仍须确定原因、实施修复并验证结果；它不会自动解决事件。
 
 </details>
 
-### 12. 与外部 Grafana 集成时，使用哪个 Viz 安装选项？
+### 12. 哪项设置可将 Viz 链接到现有且浏览器可访问的外部 Grafana？
 
-A. `--set grafana.external=true`
-B. `--set grafana.enabled=false`
-C. `--set grafana.url=external`
-D. `--set monitoring=external`
+- A. grafana.external:true
+- B. grafana.externalUrl:https://grafana.example.com/
+- C. grafana.enabled:false
+- D. monitoring:external
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `--set grafana.enabled=false`**
+**答案：B**
 
 **说明：**
-使用外部 Grafana 时，请禁用 Viz 的内置 Grafana。使用 `helm install linkerd-viz linkerd/linkerd-viz --set grafana.enabled=false`，或在 values 文件中配置。
+当前 Viz 不会安装 Grafana。externalUrl 提供外部链接；grafana.url 是集群内反向代理选项，还需要配置根路径或子路径。这两项设置都不会创建 Grafana、配置其数据源或授予它访问 Prometheus 的权限。
 
 </details>

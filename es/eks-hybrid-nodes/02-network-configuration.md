@@ -1,7 +1,7 @@
 # Configuración de red
 
 > **Versiones compatibles**: ejemplos de EKS 1.36; referencia de Cilium 1.18.3-0 mantenida por AWS; se requiere host/kernel compatible
-> **Última actualización**: September 16, 2026
+> **Última actualización**: 18 de octubre de 2026
 
 Valide por separado el enrutamiento, DNS, TLS, las credenciales y el tráfico de aplicaciones. Estos ejemplos se comprobaron con esquemas y fixtures locales, incluido un proveedor de Terraform simulado; no se modificaron recursos de AWS, routers, firewalls ni clusters activos. Los diagramas son ilustraciones del repositorio basadas en conceptos de AWS, no validación publicada por AWS de esta configuración.
 
@@ -73,7 +73,9 @@ No enrutable no significa que un Pod no pueda iniciar ninguna llamada de API de 
 | Transporte de gateway VPN | UDP500/4500 y requisitos aplicables de transporte IPsec |
 | Aplicaciones / servicios de credenciales y registro de AWS | Solo sus destinos y puertos reales |
 
-Aplique cambios de firewall mediante el propietario de la red, preservando el seguimiento de conexiones y las reglas existentes. Las antiguas reglas INPUT amplias de `10.0.0.0/8`, los permisos DNS/VXLAN sin alcance y los guardados de conjuntos de reglas completos no eran una política de firewall reutilizable y segura. No abra kubelet 10255 sin autenticación como requisito moderno opcional.
+El administrador de red debe modificar las reglas del firewall sin eliminar las reglas existentes ni el seguimiento de conexiones. Permita solo las direcciones IP, los CIDR y los puertos necesarios para la comunicación. Evite reglas INPUT que permitan todo el rango `10.0.0.0/8` o reglas DNS/VXLAN sin restricciones de origen y destino. Antes de guardar los cambios, revise qué reglas debe persistir en lugar de guardar indiscriminadamente todo el conjunto de reglas.
+
+Use TCP `10250` para la API de kubelet, con autenticación y autorización. No abra TCP `10255`, el antiguo puerto de solo lectura de kubelet que permite acceso sin autenticación.
 
 ## Acceso a endpoints de AWS
 
@@ -128,7 +130,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -648,7 +650,30 @@ Con tres endpoints elegibles de peso igual y sin una política de affinity/local
 
 Use diagnósticos compatibles mediados por el servidor API y la autorización apropiada. Importa el `status.addresses` real del nodo; no sustituya un nombre de host ni la primera dirección de un objeto no relacionado.
 
-## Configuración de CIDR de Pod enrutable
+## Cómo elegir un diseño de CNI: solo Cilium o junto con VPC CNI
+
+VPC CNI no es compatible con nodos híbridos, por lo que **los nodos híbridos siempre ejecutan Cilium (o Calico)**. Por eso, la pregunta «¿solo Cilium o junto con VPC CNI?» en realidad se refiere a **si el clúster tiene nodos en la nube y, en caso afirmativo, qué CNI ejecutan**.
+
+| Criterio | ① Clúster solo híbrido (solo Cilium) | ② Modo mixto (VPC CNI en la nube + Cilium en híbrido) | ③ Cilium también en nodos de la nube |
+|---|---|---|---|
+| Compatibilidad con AWS | Compatible (Cilium en nodos híbridos) | Compatible. Es el diseño de modo mixto recomendado por AWS | El lado de la nube no es compatible: AWS no admite Cilium en ejecución en nodos de AWS Cloud |
+| Ubicación de webhooks | Se ejecutan en nodos híbridos. El plano de control se conecta a las IP de Pod, por lo que el CIDR de Pods local debe ser enrutable mediante BGP o rutas estáticas | Se ejecutan en nodos de la nube. No es necesario enrutar el CIDR de Pods local | Depende de IPAM y del enrutamiento de Cilium en la nube; debe validarlo por su cuenta |
+| Tráfico de la nube a Pods locales | No corresponde | CIDR de Pods locales enrutable o el [gateway de Hybrid Nodes](10-hybrid-nodes-gateway.md) | Diseñe los túneles o el enrutamiento por su cuenta. El gateway de Hybrid Nodes requiere VPC CNI (o la red integrada de Auto Mode) en los nodos de la nube, incluidos los nodos del gateway, por lo que no se puede usar |
+| Ampliación de capacidad y Auto Mode | No es posible sin capacidad en la nube | Karpenter puede añadir nodos de la nube. Auto Mode usa la red integrada | Auto Mode no permite reemplazar su CNI. Cilium en nodos de Karpenter también requiere operación propia |
+| Políticas y observabilidad | Un CNI (NetworkPolicy, políticas de Cilium, Hubble) | Cada CNI aplica NetworkPolicy estándar de Kubernetes. Las políticas específicas de Cilium y Hubble solo están disponibles en el lado híbrido | Un CNI, pero usted o un proveedor se encargan de la respuesta a incidentes y las actualizaciones del lado de la nube |
+
+Cómo elegir:
+
+- **Hay nodos en la nube: ②.** El diseño mixto cuenta con el soporte de AWS. Ejecute los webhooks en la nube y use la ampliación de capacidad y el gateway de Hybrid Nodes. En modo mixto, ejecute al menos una réplica de CoreDNS en cada lado; las funciones que requieren que el plano de control o la VPC accedan a las IP de Pods híbridos (destinos IP de ALB/NLB, Metrics Server, recopilación de AMP) necesitan que el CIDR de Pods local sea enrutable ([Operaciones de webhooks en modo mixto](08-operations.md#mixed-mode-webhook-operations)).
+- **Solo instalaciones locales: ①.** Es más sencillo con un solo CNI, pero los webhooks se ejecutan en nodos híbridos, por lo que se necesita un [CIDR de Pods enrutable](#routable-pod-cidr-configuration).
+- **Evalúe cuidadosamente ③.** AWS no admite Cilium en nodos de la nube, y no se pueden usar el gateway de Hybrid Nodes ni Auto Mode. Considérelo solo si tiene un acuerdo de soporte con un proveedor y necesita un único CNI a pesar de estas limitaciones.
+
+Referencias:
+- [Configurar CNI para nodos híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Configurar webhooks para nodos híbridos: consideraciones para clústeres en modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Introducción al gateway de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
+
+## Configuración de CIDR de Pod enrutable {#routable-pod-cidr-configuration}
 
 ![CIDR de Pod remotos ilustrativos y el router de instalaciones locales.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 
@@ -672,6 +697,8 @@ operator:
 ```
 
 Las API `v2alpha1` de estilo AWS siguen servidas en los CRD 1.18.3 revisados (que también sirven `v2`). No es necesario reemplazar los CRD solo para usar este ejemplo.
+
+En Cilium 1.19 y versiones posteriores, usa las CRD de BGP `cilium.io/v2` (las CRD BGP `v2alpha1` están obsoletas); además, el `CiliumBGPPeeringPolicy` heredado se eliminó en 1.19.
 
 Lo siguiente selecciona nodos híbridos, vincula el selector de anuncios del peer a las etiquetas de anuncios y anuncia solo sus CIDR de Pod:
 
@@ -1113,7 +1140,7 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 
 `available` es un estado de recurso VPN, no el estado del túnel. TunnelState es 1 para UP/static o ESTABLISHED/BGP y 0 para otros estados; los agregados pueden ser fraccionarios. Mantenga los datos ausentes separados de DOWN y verifique ambos túneles, las rutas y el comportamiento real de los workloads. La consulta evita volcar configuraciones de customer gateway/clave precompartida.
 
-La guía de AWS de RTT ≤200ms / 100Mbps es orientación general. Las antiguas bandas de 50/100ms y «Direct Connect siempre por debajo de 10ms» eran heurísticas sin verificar, no garantías.
+La recomendación general de conectividad de AWS es un ancho de banda de **100 Mbps y un RTT de 200 ms o menos**. Al elegir VPN o Direct Connect, evalúe la latencia real de ida y vuelta, la pérdida de paquetes, las rutas de conmutación por error y los tiempos de respuesta de las cargas de trabajo, además del ancho de banda nominal del circuito.
 
 ## Referencias
 
@@ -1132,7 +1159,7 @@ La guía de AWS de RTT ≤200ms / 100Mbps es orientación general. Las antiguas 
 - [Referencia BGP RouterOS](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
 - [Fuente de referencia BGP FRR 10.7.1](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
 - [Métricas VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
-- [Fuente de servidor kubelet Kubernetes 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/server/server.go)
+- [Código fuente del servidor kubelet de Kubernetes 1.36.5](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
 - [Semántica Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 

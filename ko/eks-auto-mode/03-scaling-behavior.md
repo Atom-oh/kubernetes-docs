@@ -179,7 +179,7 @@ kubectl --context "$CLUSTER_NAME" --request-timeout=15s get nodeclaims -o json |
 | NodePool weight, limits, disruption 동작 | 그 자체는 노드 템플릿 drift가 아니지만 허용되는 작업을 바꿀 수 있음 |
 | `expireAfter` 또는 `terminationGracePeriod` 변경 | 기존 NodeClaim 필드를 덮어쓰지 않으며 교체된 노드에 새 값 적용 |
 
-일반적인 graceful 경로는 budget과 배치 가능성을 확인하고, 선택한 노드에 새 배치를 막고, **필요하면** 대체 용량을 준비한 뒤 기존 Pod를 축출·drain하고 노드를 종료합니다. 대체 용량과 기존 용량이 겹쳐 비용이 발생할 수 있습니다. 병렬성은 budget으로 제어되며 반드시 하나씩 교체하는 것은 아닙니다. 강제 interruption/expiration 경로도 항상 정상 대체 노드를 먼저 기다린다고 설명해서는 안 됩니다.
+일반적인 graceful 경로는 budget과 배치 가능성을 확인하고, 선택한 노드로의 새 배치를 막고, **필요하면** 대체 용량을 준비한 뒤 기존 Pod를 축출·drain하고 노드를 종료합니다. 대체 용량과 기존 용량이 겹쳐 비용이 발생할 수 있습니다. 병렬성은 budget으로 제어되며 반드시 하나씩 교체하는 것은 아닙니다. 강제 interruption/expiration 경로도 항상 정상 대체 노드를 먼저 기다린다고 설명해서는 안 됩니다.
 
 ## Expiration과 종료 유예 시간
 
@@ -306,7 +306,7 @@ kubectl --context "$CLUSTER_NAME" --request-timeout=15s \
      createdAt: .metadata.creationTimestamp}]'
 ```
 
-이벤트는 판단 이유를 설명하지만 집계·중복·만료될 수 있습니다. 아래는 명시적인 `events.k8s.io` 리소스에서 워크로드 데이터 대신 상태 식별자를 선택합니다.
+이벤트는 판단 이유를 설명하지만 집계·중복·만료될 수 있습니다. 아래 명령은 명시적인 `events.k8s.io` 리소스에서 워크로드 데이터 대신 상태 식별자를 선택합니다.
 
 ```bash
 kubectl --context "$CLUSTER_NAME" --request-timeout=15s \

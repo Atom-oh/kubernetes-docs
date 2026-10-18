@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-これらは ELBv2 1.7.0 / Route 53 1.6.0 / RDS 1.12.0 それぞれのスキーマ例です。Aurora の前段に NLB を配置するものではありません。内部 NLB/DNS はアプリケーションを提供し、Aurora はそれとは別のアプリケーション依存関係です。エンドツーエンドで接続したデプロイはテストしていません。
+これらは ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3 それぞれのスキーマ例です。Aurora の前段に NLB を配置するものではありません。内部 NLB/DNS はアプリケーションを提供し、Aurora はそれとは別のアプリケーション依存関係です。エンドツーエンドで接続したデプロイはテストしていません。
 
 3 つのコントローラーすべてについて、インフラと認証/権限を準備してください。VPC、private subnet、security group、hosted zone ID は承認済みの値に置き換えてください。NLB とデータベースの security group は、必要な送信元/ポートのみを許可すべきです。内部 NLB は認可やネットワーク制御の代わりにはなりません。
 
@@ -234,8 +234,8 @@ spec:
 
 フィールドは公式のバージョン付き CRD と照合して確認しました。スキーマが正しいことは、IAM 権限、AWS サービスの制約、作成、接続性、復旧を保証するものではありません。適用する前に、retain されるリソースについて所有権、コスト、クリーンアップ、バックアップの責任を割り当ててください。
 
-- [elbv2 v1.7.0 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases)
-- [route53 v1.6.0 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases)
-- [rds v1.12.0 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases)
+- [elbv2 v1.8.2 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.8.2/config/crd/bases)
+- [route53 v1.7.1 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.7.1/config/crd/bases)
+- [rds v1.13.3 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.13.3/config/crd/bases)
 - [Aurora PostgreSQL マイナーバージョン](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/)
 - [Aurora カスタムエンドポイント](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html)

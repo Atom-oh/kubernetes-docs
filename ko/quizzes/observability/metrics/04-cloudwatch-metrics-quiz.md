@@ -110,7 +110,7 @@ Infrequent Access는 EMF/Container Insights 수집을 지원하지 않습니다.
 
 **정답: B**
 
-전체 dimension set이 custom metric을 식별합니다. Idempotency token이 없어 응답 불명확 재시도는 sample을 중복시킬 수 있습니다. 예제는 구간 count를 Sum으로 조회합니다.
+전체 dimension set이 custom metric을 식별합니다. Idempotency token이 없어 응답이 불명확할 때 재시도하면 sample이 중복될 수 있습니다. 예제는 구간 count를 Sum으로 조회합니다.
 
 </details>
 

@@ -13,56 +13,56 @@
 <span id="service-call-flow"></span>
 
 > **Dificultad**: Avanzado
-> **Última actualización**: September 13, 2026
-Conecta una aplicación sintética de pedidos ejecutable y sus métricas/logs/trazas a través de dos clústeres de EKS. La base utiliza Prometheus, Loki, Tempo y Grafana con AWS SNS/SQS, Aurora y CloudWatch. La configuración del lab es distinta de la validación de HA/capacidad en producción.
+> **Última actualización**: 13 de septiembre de 2026
+Conecta una aplicación sintética de pedidos ejecutable y sus métricas, registros y trazas a través de dos clústeres de EKS. La configuración base usa Prometheus, Loki, Tempo y Grafana junto con AWS SNS/SQS, Aurora y CloudWatch. La configuración del laboratorio es distinta de la validación de alta disponibilidad y capacidad en producción.
 
-![Management/service responsibilities and authentication boundaries](../../.gitbook/assets/en-labs-observability-overview-0.png)
+![Responsabilidades de gestión y servicio, y límites de autenticación](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
 
 ## Requisitos previos {#prerequisites}
 
-Usa un rol temporal de AWS aprobado, VPC/subredes/rutas/DNS/SGs privados revisados, EBS CSI/gp3, un CNI compatible con NetworkPolicy y AWS Load Balancer Controller. No se requiere ningún FullAccess general de servicio ni claves de acceso de larga duración. Vuelve a comprobar versiones, permisos y cuotas en cada etapa.
+Usa un rol temporal de AWS aprobado, una VPC privada y subredes, rutas, DNS y grupos de seguridad revisados, EBS CSI/gp3, un CNI compatible con NetworkPolicy y AWS Load Balancer Controller. No se requieren permisos generales FullAccess para servicios ni claves de acceso de larga duración. Vuelve a comprobar las versiones, los permisos y las cuotas en cada etapa.
 
-| Herramienta | Base revisada |
+| Herramienta | Versiones de referencia revisadas |
 |---|---|
 | EKS / kubectl | 1.36 / 1.36.2 |
 | eksctl / Helm | 0.229.0 / 3.21.3 |
 | Python / AWS CLI | 3.12 / v2 |
 | k6 / Locust | 2.2.0 / 2.46.5 |
-| Aplicación / controllers | Requisitos fijados, digest de imagen y versiones de chart en los ejemplos |
+| Aplicación / controladores | Requisitos fijados, digest de imagen y versiones de charts en los ejemplos |
 
 ## Código ejecutable y secuencia {#sequence}
 
-Usa los ejemplos [application](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application), [stack](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack), [load-test](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) y [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) de este repositorio. Fija un commit/tag revisado y conserva el LAB_STATE privado; no clones el antiguo repositorio de ejemplos inexistente.
+Usa los ejemplos de [aplicación](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application), [pila](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack), [pruebas de carga](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) y [AIOps](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) de este repositorio. Fija un commit o una etiqueta revisados y conserva el valor privado de `LAB_STATE`; no clones el antiguo repositorio de ejemplos, que ya no existe.
 
-![Six stages from infrastructure to trace analysis](../../.gitbook/assets/en-labs-observability-overview-2.png)
+![Seis etapas, desde la infraestructura hasta el análisis de trazas](../../.gitbook/assets/en-labs-observability-overview-2.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-2.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-2.html)
 
 | Parte | Etapa | Resultado |
 |---|---|---|
 | 1 | [Infraestructura](01-infrastructure-setup-lab.md) | EKS, base de datos privada, fanout de SNS, roles restringidos |
-| 2 | [Stack de observabilidad](02-observability-stack-lab.md) | Colectores/remote-write con mTLS, Loki/Tempo/Grafana |
+| 2 | [Pila de observabilidad](02-observability-stack-lab.md) | Colectores y escritura remota con mTLS, Loki/Tempo/Grafana |
 | 3 | [MSA/canary](03-msa-deployment-lab.md) | Cinco roles ejecutables, outbox, análisis solo por revisión |
-| 4 | [Carga/escalado](04-load-testing-scaling-lab.md) | Peticiones medidas y observaciones de consumidores/nodos |
-| 5 | [Alertas/AIOps](05-alerting-aiops-lab.md) | Reporter de diagnóstico con topic separado, revisión humana |
-| 6 | [Trazado distribuido](06-distributed-tracing-lab.md) | Correlación real de métricas/exemplars/trazas/logs, limpieza |
+| 4 | [Pruebas de carga y escalado](04-load-testing-scaling-lab.md) | Solicitudes medidas y observaciones de consumidores y nodos |
+| 5 | [Alertas y AIOps](05-alerting-aiops-lab.md) | Emisor de diagnósticos con un tema separado y revisión humana |
+| 6 | [Trazado distribuido](06-distributed-tracing-lab.md) | Correlación real de métricas, ejemplares, trazas y registros; limpieza |
 
 ## Aplicación y flujo de datos {#application}
 
-Una única imagen de Python se ejecuta como los roles separados api-gateway, order-service, payment-service, notification y analytics. Los pagos y notificaciones son sintéticos, sin cargos, correos ni SMS reales. Los pedidos y el outbox comparten una transacción; colas independientes y la deduplicación por ID de evento sirven a notification/analytics. La autenticación en el gateway, la limitación de tasa general y una pasarela de pago real no están implementadas ni se afirman.
+Una sola imagen de Python se ejecuta con roles separados: `api-gateway`, `order-service`, `payment-service`, `notification` y `analytics`. Los pagos y las notificaciones son sintéticos; no se realizan cargos ni se envían correos electrónicos o SMS reales. Los pedidos y el registro de salida (outbox) comparten una transacción; colas independientes y la deduplicación por ID de evento sirven a `notification` y `analytics`. No se implementan ni se afirman la autenticación en la puerta de enlace, la limitación general de solicitudes ni una pasarela de pago real.
 
-![HTTP, transactional outbox and separate consumer queues](../../.gitbook/assets/en-labs-observability-overview-3.png)
+![HTTP, registro de salida transaccional y colas de consumidores separadas](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-3.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-3.html)
 
 ## Base frente a extensiones opcionales {#coverage}
 
 
-![Baseline paths and extensions needing independent validation](../../.gitbook/assets/en-labs-observability-overview-1.png)
+![Rutas de referencia y extensiones que requieren validación independiente](../../.gitbook/assets/en-labs-observability-overview-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-1.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-1.html)
 
 | Base | Integración opcional independiente |
 |---|---|
@@ -70,13 +70,13 @@ Una única imagen de Python se ejecuta como los roles separados api-gateway, ord
 | Loki / CloudWatch Logs | ClickHouse, OpenSearch |
 | OTel / Tempo | X-Ray, Dynatrace |
 | Grafana | Amazon Managed Grafana, herramientas comerciales |
-| Alertmanager / SNS / Lambda de diagnóstico | Plataforma de on-call existente, grupo de CloudWatch Investigations |
-| Consumidores de eventos sintéticos | Programación con MWAA/analítica por lotes, sistemas transaccionales de producción |
+| Alertmanager / SNS / Lambda de diagnóstico | Plataforma de guardia existente, grupo de CloudWatch Investigations |
+| Consumidores de eventos sintéticos | Planificación con MWAA/analítica por lotes y sistemas de transacciones de producción |
 
-La instalación es distinta de la ingesta, las consultas, los permisos y los costes verificados. Consulta las guías de [métricas](../../observability/metrics/README.md), [logging](../../observability/logging/README.md), [trazado](../../observability/tracing/README.md) y [Grafana](../../observability/grafana/README.md) para las extensiones. La Part5 incorpora cambios como el archivado de OnCall OSS.
+La instalación no equivale a verificar la ingesta, las consultas, los permisos ni los costes. Consulta las guías de [métricas](../../observability/metrics/README.md), [registros](../../observability/logging/README.md), [trazado](../../observability/tracing/README.md) y [Grafana](../../observability/grafana/README.md) para conocer las extensiones. La parte 5 incorpora cambios como el archivado de OnCall OSS.
 
 ## Coste, verificación y limpieza {#cost-and-cleanup}
 
-Estima a partir del uso real los nodos específicos de la Región, NAT, EBS, ACU/almacenamiento/E-S de Aurora, la ingesta/retención de logs, los mensajes, KMS, los LBs, la transferencia y las llamadas al modelo. No mezcles cargos mensuales por usuario con infraestructura por horas en un total fijo. Los labs con un único writer/backend no tienen HA de nivel de producción; los límites de réplicas no son topes absolutos de gasto.
+Estima los costes a partir del uso real: nodos específicos de la región, NAT, EBS, ACU/almacenamiento/entrada y salida de Aurora, ingesta y retención de registros, mensajes, KMS, balanceadores de carga, transferencia y llamadas al modelo. No sumes los cargos mensuales por usuario y la infraestructura por hora como si fueran un total fijo. Los laboratorios con un único escritor y backend no ofrecen alta disponibilidad de nivel de producción; los límites de réplicas no son topes absolutos del gasto.
 
-Distingue la validación local nativa/de SDK/de esquema/de navegador de los resultados reales en AWS. Inventaria recursos, asociaciones de IAM, snapshots, DNS y LBs/PVCs; realiza la limpieza en el orden de dependencias de la Part6. No silencies todos los fallos ni elimines clústeres antes que sus dependientes gestionados.
+Distingue la validación local nativa, la del SDK, la del esquema y la del navegador de los resultados reales en AWS. Inventaría los recursos, las asociaciones de IAM, las instantáneas, el DNS, los balanceadores de carga y los PVC; realiza la limpieza siguiendo el orden de dependencias de la parte 6. No silencies todos los errores ni elimines los clústeres antes que los recursos administrados que dependen de ellos.

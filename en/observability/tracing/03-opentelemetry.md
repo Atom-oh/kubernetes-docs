@@ -13,7 +13,7 @@ OpenTelemetry achieved CNCF **graduated** status in **May 2026**; the July 24 ar
 
 ## What is OpenTelemetry?
 
-OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
+OpenTelemetry was born from the merger of the OpenTracing and OpenCensus projects:
 
 ![Historical milestones include OpenTracing joining CNCF (2016), the OpenCensus Go repository (2017), and the OpenTelemetry merger (2019), followed by Specification, SDKs, Collector and Protocol.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
 
@@ -225,7 +225,7 @@ npm install --save-exact \
   @opentelemetry/auto-instrumentations-node@0.78.0
 # Commit package-lock.json and use npm ci for subsequent application builds.
 ```
-Save as `tracing.cjs`, loaded before application/framework modules. This is a CommonJS example; ESM loading needs the language guide's separate setup. The SDK reads the explicit OTEL exporter/TLS environment below. For programmatic metric readers, current configuration uses `metricReaders`, replacing the deprecated singular option. Integrate `shutdownTelemetry()` after the application's own request-draining step.
+Save this as `tracing.cjs` and load it before application/framework modules. This is a CommonJS example; ESM loading needs the language guide's separate setup. The SDK reads the explicit OTEL exporter/TLS environment below. For programmatic metric readers, current configuration uses `metricReaders`, replacing the deprecated singular option. Integrate `shutdownTelemetry()` after the application's own request-draining step.
 
 
 ```javascript
@@ -375,7 +375,7 @@ public final class OrderTelemetry {
 ```
 #### Python Manual Instrumentation
 
-The synchronous decorator preserves results and errors while ending nested spans. It records only error type, avoiding duplicate raw exception events. An async function requires an async-aware wrapper. Supply your own parameterized database lookup, validation, persistence and event-publishing callbacks; local validation used synthetic callbacks and an in-memory exporter.
+The synchronous decorator preserves results and errors while ending nested spans. It records only the error type, avoiding duplicate raw exception events. An async function requires an async-aware wrapper. Supply your own parameterized database lookup, validation, persistence and event-publishing callbacks; local validation used synthetic callbacks and an in-memory exporter.
 
 
 ```python
@@ -614,7 +614,7 @@ The hard memory limit is 384 MiB and the soft limit is 288 MiB, leaving headroom
 
 ### Single-instance workload and configuration
 
-Prepare the `otel` namespace and the `otel-ingest-tls` / `otel-backend-tls` Secrets with `tls.crt`, `tls.key`, `ca.crt`. Use certificate SANs matching the relevant Service/gateway names, a suitable trust bundle and certificates with the correct server/client usages. Adapt the 10001 UID/GID file access. The configuration map contains text configuration, not private keys. `Recreate` avoids normal rolling-surge overlap for this single-instance sampler, at the cost of downtime; it does not preserve in-memory traces over restarts.
+Prepare the `otel` namespace and the `otel-ingest-tls` / `otel-backend-tls` Secrets with `tls.crt`, `tls.key`, `ca.crt`. Use certificate SANs matching the relevant Service/gateway names, a suitable trust bundle and certificates with the correct server/client usages. Adapt file access for UID/GID 10001. The configuration map contains text configuration, not private keys. `Recreate` avoids normal rolling-surge overlap for this single-instance sampler, at the cost of downtime; it does not preserve in-memory traces over restarts.
 
 
 ```bash

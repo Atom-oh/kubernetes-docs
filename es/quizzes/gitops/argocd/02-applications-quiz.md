@@ -14,7 +14,7 @@ Este cuestionario evalúa tu comprensión de las Applications de ArgoCD y su con
 **Respuesta: B) Especificar el estado deseado de una aplicación y su configuración de sincronización**
 
 **Explicación:**
-Una Application de ArgoCD es un recurso personalizado de Kubernetes que define el origen (repositorio Git, ruta, revisión) y el destino (cluster, namespace) de una aplicación, junto con las políticas de sincronización y las comprobaciones de estado.
+Una Application de ArgoCD es un recurso personalizado de Kubernetes que define el origen (repositorio Git, ruta y revisión) y el destino (cluster y namespace) de una aplicación, junto con una política de sincronización. El controlador informa el estado de salud; las comprobaciones de salud personalizadas para recursos se configuran por separado en `argocd-cm`.
 
 </details>
 
@@ -50,7 +50,7 @@ El campo `path` en `source` especifica el directorio dentro del repositorio Git 
 
 </details>
 
-4. ¿Cómo puedes implementar una aplicación en un namespace específico que aún no existe?
+4. ¿Qué opción de sincronización integrada hace que Argo CD cree automáticamente `destination.namespace`?
    - A) Crear primero el namespace manualmente
    - B) Usar syncPolicy.syncOptions con CreateNamespace=true
    - C) No es posible
@@ -62,7 +62,7 @@ El campo `path` en `source` especifica el directorio dentro del repositorio Git 
 **Respuesta: B) Usar syncPolicy.syncOptions con CreateNamespace=true**
 
 **Explicación:**
-Configurar `CreateNamespace=true` en `syncPolicy.syncOptions` indica a ArgoCD que cree automáticamente el namespace de destino si no existe antes de sincronizar los recursos de la aplicación.
+Configurar `CreateNamespace=true` en `syncPolicy.syncOptions` indica a Argo CD que cree automáticamente el namespace de destino antes de sincronizar, siempre que lo autoricen AppProject y RBAC. No crea cada namespace distinto que aparezca en los manifiestos.
 
 </details>
 
@@ -75,10 +75,10 @@ Configurar `CreateNamespace=true` en `syncPolicy.syncOptions` indica a ArgoCD qu
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) HEAD siempre apunta a la rama predeterminada; main se especifica explícitamente**
+**Respuesta: B) HEAD sigue la referencia remota HEAD; main nombra una rama específica**
 
 **Explicación:**
-`HEAD` es una referencia simbólica que apunta a la rama predeterminada del repositorio, mientras que `main` especifica explícitamente la rama principal. Usar `HEAD` es más flexible si cambia la rama predeterminada.
+`HEAD` es una referencia simbólica que apunta a la rama predeterminada del repositorio remoto, mientras que `main` especifica explícitamente esa rama. Un cambio en la rama predeterminada puede cambiar el destino de la implementación. Para que las versiones publicadas sean reproducibles, usa una política con commits o etiquetas verificados.
 
 </details>
 
@@ -110,7 +110,7 @@ Al implementar desde un repositorio de Helm, configuras `source.chart` y `source
 **Respuesta: B) Anula el nombre de release predeterminado (que es el nombre de la Application)**
 
 **Explicación:**
-De forma predeterminada, ArgoCD usa el nombre de la Application como nombre de release de Helm. Configurar `releaseName` explícitamente te permite usar un nombre diferente para el release de Helm.
+De forma predeterminada, Argo CD usa el nombre de la Application como nombre de release de Helm. `releaseName` cambia el valor de plantilla `Release.Name`, pero Argo CD sigue administrando el ciclo de vida de los recursos y no mantiene un release de Helm normal. Si el seguimiento se basa en etiquetas, comprueba cómo interactúa este ajuste con los selectores del chart y las etiquetas de seguimiento.
 
 </details>
 
@@ -126,6 +126,6 @@ De forma predeterminada, ArgoCD usa el nombre de la Application como nombre de r
 **Respuesta: C) Tanto mediante archivos de valores como mediante valores en línea**
 
 **Explicación:**
-ArgoCD admite especificar valores de Helm mediante `spec.source.helm.valueFiles` (que hace referencia a archivos en el repositorio) y/o `spec.source.helm.values` (YAML en línea). Ambos pueden usarse juntos y los valores en línea tienen prioridad.
+Argo CD admite valores de Helm mediante `spec.source.helm.valueFiles` (archivos del repositorio) o `spec.source.helm.values` (YAML en línea), y permite combinarlos. La precedencia completa es `parameters` > `valuesObject` > `values` > `valueFiles` > valores predeterminados del chart. Conviene elegir una sola representación en línea en vez de duplicar valores en `valuesObject` y `values`.
 
 </details>

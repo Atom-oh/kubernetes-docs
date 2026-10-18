@@ -92,7 +92,7 @@ linkerd check --pre
 
 ### 2. Render, 검토와 설치
 
-선택한 CLI와 전제 조건을 갖춘 새 통제 실습에서 CLI는 매니페스트를 생성합니다:
+선택한 CLI와 전제 조건을 갖춘 통제된 새 실습 환경에서 CLI는 매니페스트를 생성합니다:
 
 ```bash
 set -euo pipefail
@@ -105,11 +105,11 @@ kubectl apply -f linkerd-control-plane.yaml
 linkerd check
 ```
 
-기본 CLI 구성은 유한한 유효기간의 trust credential을 생성하며 공유 trust multicluster 완성 구성이 아닙니다. 장기 설치는 문서화된 Helm·CA 수명 주기 절차를 따르세요. 이번 검토는 오프라인 render와 CLI 문법을 확인했으며 실제 설치는 하지 않았습니다.
+기본 CLI 구성은 유한한 유효기간의 trust credential을 생성하며 공유 trust multicluster의 완성된 구성이 아닙니다. 장기 설치는 문서화된 Helm·CA 수명 주기 절차를 따르세요. 이번 검토는 오프라인 render와 CLI 문법을 확인했으며 실제 설치는 하지 않았습니다.
 
 ### 3. 의도한 애플리케이션 추가
 
-기존 namespace와 Deployment를 선택하고 두 my-app 이름을 실제 대상으로 바꿉니다:
+기존 namespace와 Deployment를 선택하고 두 곳의 my-app 이름을 실제 대상으로 바꿉니다:
 
 ```bash
 kubectl annotate namespace my-app linkerd.io/inject=enabled

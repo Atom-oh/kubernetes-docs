@@ -291,7 +291,7 @@ CLUSTER_UPDATE_ID=$(aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" \
 aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
   --update-id "$CLUSTER_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
-Wait for that update ID to succeed, then update nodes and compatible cluster components in their documented order. Match Cluster Autoscaler's minor to the cluster and kubectl within its supported skew.
+Wait for that update ID to succeed, then update nodes and compatible cluster components in their documented order. Match Cluster Autoscaler's minor to the cluster and keep kubectl within its supported skew.
 
 Current EKS offers conditional rollback to the previous minor within seven days of a completed in-place upgrade. It is not available for a cluster created at that version or an end-of-extended-support automatic upgrade. Prepare compatible nodes/add-ons first; Auto Mode manages its node rollback. Rollback does not rewind etcd, workloads or persistent data. See the official rollback readiness requirements instead of treating it as an unconditional undo.
 

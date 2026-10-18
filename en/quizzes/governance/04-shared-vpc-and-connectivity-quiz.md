@@ -16,7 +16,7 @@
 **Answer: B) TGW routes are not automatically propagated; the owner adds VPC static routes targeting the TGW**
 
 **Explanation:**
-TGW tables have a combined default 10,000 routes; VPC non-propagated routes default to 500. Do not confuse the VGW propagated-route 100 limit with TGW totals.
+TGW tables have a combined default limit of 10,000 routes; VPC non-propagated routes default to 500. Do not confuse the VGW propagated-route limit of 100 with TGW totals.
 
 </details>
 
@@ -88,6 +88,6 @@ Resources do not have the same lifetime limit. TLS listeners or resource paths c
 **Answer: C) Local VPC wins when names match, but if the Profile has a more specific name registered, the Profile wins**
 
 **Explanation:**
-For example, if the local VPC has an `example.com` rule and the Profile has a more specific `test.example.com` rule, the Profile applies. This is why it's recommended to formalize that "the central Profile never owns a name more specific than the namespace delegated to a workload."
+For example, if the local VPC has an `example.com` rule and the Profile has a more specific `test.example.com` rule, the Profile applies. This is why it's recommended to formalize the rule that "the central Profile never owns a name more specific than the namespace delegated to a workload."
 
 </details>

@@ -55,7 +55,7 @@ Ray 2.58.0 配置生成器将全局空闲超时默认设为 60 秒；组级空�
 
 ## CPU/GPU 资源声明
 
-**Pod 的 GPU limit 并非总是唯一的配置来源。**审查的代码会按优先级处理结构化组 `resources`、`rayStartParams` 和第一个 Ray 容器的 limits/requests。显式指定的 `num-gpus` 不会无条件被容器 GPU limit 覆盖。
+**Pod 的 GPU limit 并非总是唯一的配置来源**。审查的代码会按优先级处理结构化组 `resources`、`rayStartParams` 和第一个 Ray 容器的 limits/requests。显式指定的 `num-gpus` 不会无条件被容器 GPU limit 覆盖。
 
 Ray 2.58.0 原生配置检查结果显示：limit 为 1 时得到 GPU 1；`rayStartParams.num-gpus=2` 时得到 GPU 2；结构化组 `resources.GPU=3` 时得到 GPU 3。这**不会创造更多物理 GPU**。请确保 Kubernetes limits、device plugin、驱动程序、Ray 逻辑资源和可见硬件相互匹配。
 

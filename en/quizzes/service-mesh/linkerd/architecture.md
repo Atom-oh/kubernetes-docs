@@ -93,7 +93,7 @@ D. 30 days
 
 **Answer: B**
 
-The default configured issuance lifetime is 24 hours, with renewal before expiry. Actual validity and refresh timing depend on configuration and certificate state. Certificate renewal is not automatically a fresh private key, issuer rotation or root rotation.
+The default configured issuance lifetime is 24 hours, with renewal before expiry. Actual validity and refresh timing depend on configuration and certificate state. Certificate renewal does not automatically mean a fresh private key, issuer rotation or root rotation.
 
 </details>
 

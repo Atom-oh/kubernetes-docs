@@ -1,84 +1,84 @@
-# Parte 6: KServe — Servicio de modelos en Kubernetes
+# Parte 6: KServe (serving de modelos en Kubernetes)
 
-> **Línea base revisada**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
+> **Referencia de revisión**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
 > **Última actualización**: October 12, 2026
 
 ## Configuración del entorno de laboratorio
 
-Use Kubernetes compatible, controlador/CRDs de KServe, ServingRuntime, acceso al almacenamiento y una ruta de red autenticada. No se requiere Kubeflow completo; la aplicación web es opcional. El modo Knative necesita Knative Serving/networking; la ruta KEDA de Standard necesita KEDA y proveedores de métricas. Las GPU dependen de la carga de trabajo.
+Usa versiones compatibles de Kubernetes, el controlador/las CRD de KServe, ServingRuntime, acceso al almacenamiento y una ruta de red autenticada. No se requiere Kubeflow completo; la aplicación web es opcional. El modo Knative necesita Knative Serving/networking; la ruta KEDA de Standard necesita KEDA y proveedores de métricas. El uso de GPU depende de la carga de trabajo.
 
 ## KServe y Kubeflow
 
-KServe evolucionó de KFServing a un proyecto independiente de serving. Este capítulo revisa **KServe y Models Web Application 0.18.0**, incluidos en Community Distribution 26.03.1.
+KServe evolucionó a partir de KFServing hasta convertirse en un proyecto de serving independiente. En este capítulo se revisan **KServe y Models Web Application 0.18.0**, incluidos en Community Distribution 26.03.1.
 
-La última versión pública de KServe comprobada el October 12, 2026 es la **0.21.0 (September 25, 2026)**. La versión 0.20.0 (August 6, 2026) fue anterior. Ninguna de las dos versiones corresponde a la línea base 0.18.0 de la distribución.
+La versión pública más reciente de KServe consultada el 12 de octubre de 2026 es **0.21.0 (25 de septiembre de 2026)**. La versión 0.20.0 (6 de agosto de 2026) se publicó antes. Ninguna de las dos versiones corresponde a la referencia 0.18.0 de la distribución.
 
-El controlador, los CRD y la aplicación web son artefactos independientes que requieren comprobaciones de compatibilidad. Sus números de versión no tienen por qué coincidir siempre ni ser siempre distintos. Registre las imágenes reales, los esquemas de CRD y las revisiones de la aplicación web.
+El controlador, las CRD y la aplicación web son artefactos independientes que requieren comprobaciones de compatibilidad. Sus números de versión no tienen por qué coincidir ni ser siempre distintos. Registra las imágenes reales, los esquemas de las CRD y las revisiones de la aplicación web.
 
-`InferenceService` es la API de serving que se trata aquí, no toda la arquitectura de KServe. ServingRuntime/ClusterServingRuntime, ModelMesh y la API independiente LLMInferenceService tienen dependencias y modelos operativos distintos.
+`InferenceService` es la API de serving que se aborda aquí, no toda la arquitectura de KServe. ServingRuntime/ClusterServingRuntime, ModelMesh y la API LLMInferenceService independiente tienen diferentes dependencias y modelos operativos.
 
-## InferenceService: Predictor, Transformer, Explainer
+## InferenceService: Predictor, Transformer y Explainer
 
-InferenceService tiene un predictor obligatorio y un transformer/explainer opcionales. Predictor configura el servidor de modelos, transformer proporciona preprocesamiento/posprocesamiento y explainer gestiona las solicitudes de explicación. Las explicaciones no se adjuntan automáticamente a cada predicción; es importante contar con soporte de runtime/protocolo.
+InferenceService requiere un predictor y admite, de forma opcional, un transformer y un explainer. Predictor configura el servidor del modelo, transformer proporciona el preprocesamiento y posprocesamiento, y explainer gestiona las solicitudes de explicación. Las explicaciones no se adjuntan automáticamente a cada predicción; la compatibilidad del runtime y el protocolo es importante.
 
-Haga coincidir modelFormat, ServingRuntime, la versión de la disposición de archivos/biblioteca, URI/credenciales, puertos/probes y el protocolo de solicitud. Una URI por sí sola no puede hacer que todos los modelos se puedan servir. Los contenedores personalizados también deben cumplir el contrato del cliente y los requisitos de routing/comprobación de estado de KServe.
+Haz coincidir modelFormat, ServingRuntime, la estructura de archivos/la versión de la biblioteca, URI/credenciales, puertos/sondas y el protocolo de solicitud. Una URI por sí sola no permite servir cualquier modelo. Los contenedores personalizados también deben cumplir el contrato del cliente y los requisitos de enrutamiento y comprobación de estado de KServe.
 
-El chart oficial runtime-config no genera recursos de forma predeterminada. Renderizar con `kserve.servingruntime.enabled=true` produce 12 ClusterServingRuntimes. La presencia en el catálogo no establece la vigencia de la imagen, el soporte de seguridad ni la compatibilidad del modelo.
+El chart oficial de configuración de runtimes no genera recursos de forma predeterminada. Al renderizar con `kserve.servingruntime.enabled=true` se generan 12 ClusterServingRuntimes. La presencia en el catálogo no garantiza que las imágenes estén actualizadas, que cuenten con soporte de seguridad ni que sean compatibles con el modelo.
 
-El [aviso del proyecto](https://github.com/pytorch/serve) de TorchServe indica que no se prevén nuevas características, correcciones de errores ni parches de seguridad. Su presencia en un catálogo de runtimes antiguo no lo convierte en una opción predeterminada mantenida para usos nuevos en producción. Valide un runtime mantenido para el formato de modelo y los requisitos de GPU.
+El [aviso del proyecto](https://github.com/pytorch/serve) de TorchServe indica que no se prevén nuevas funciones, correcciones de errores ni parches de seguridad. Su presencia en un catálogo de runtimes antiguo no lo convierte en una opción predeterminada mantenida para nuevos usos en producción. Valida un runtime mantenido que sea adecuado para el formato del modelo y los requisitos de GPU.
 
-## Modos de Deployment: Knative y Standard
+## Modos de implementación: Knative y Standard
 
-Los nombres de 0.18.0 son **Knative** y **Standard**. Los valores de anotación Serverless y RawDeployment son alias obsoletos normalizados a esos nombres. Inspeccione serving.kserve.io/deploymentMode e inferenceservice-config instalados. El valor de reserva del código es Standard, mientras que el chart de recursos OCI descargado usa Knative de forma predeterminada. No infiera los valores predeterminados de instalación solo a partir de la terminología.
+Los nombres de la versión 0.18.0 son **Knative** y **Standard**. Los valores de anotación Serverless y RawDeployment son alias obsoletos que se normalizan a esos nombres. Inspecciona serving.kserve.io/deploymentMode y el inferenceservice-config instalado. La alternativa predeterminada en el código es Standard, mientras que el chart de recursos OCI descargado tiene Knative como valor predeterminado. No deduzcas los valores predeterminados de la instalación basándote solo en la terminología.
 
 | Elemento | Knative | Standard |
 | --- | --- | --- |
 | Recursos de carga de trabajo | Ruta de Knative Service/Revision | Deployment/Service y el autoscaler seleccionado |
-| Reducción de escala | Es posible llegar a cero con soporte de KPA/política y minReplicas=0 | La ruta HPA predeterminada conserva al menos uno; KEDA puede admitir cero con señales de activación externas adecuadas |
-| minReplicas predeterminado | KServe usa uno de forma predeterminada; elegir solo Knative no habilita cero | HPA limita un cero solicitado a al menos uno |
-| Dependencias | Knative Serving/networking y el autoscaler seleccionado | Ingress/gateway elegido, métricas HPA o KEDA, etc. |
-| Latencia de inicio | Programación/carga de imagen/modelo al comenzar desde cero | Los reinicios, rollouts y el escalado horizontal aún generan latencia de inicio pese a las réplicas activas |
+| Reducción de escala | Es posible llegar a cero con compatibilidad con KPA/policies y minReplicas=0 | La ruta HPA predeterminada conserva al menos una réplica; KEDA puede permitir llegar a cero si se dispone de señales externas de activación adecuadas |
+| minReplicas predeterminado | KServe establece el valor predeterminado en uno; elegir Knative por sí solo no habilita llegar a cero | HPA limita a un mínimo de uno el valor cero solicitado |
+| Dependencias | Knative Serving/networking y el autoscaler seleccionado | Ingress/gateway elegido, métricas de HPA o KEDA, etc. |
+| Latencia de inicio | La programación, la carga de imágenes y la carga del modelo cuando se parte de cero | Los reinicios, los despliegues progresivos y el escalado horizontal siguen teniendo latencia de inicio, incluso con réplicas en caliente |
 
-Ningún modo garantiza réplicas disponibles ni un SLA de latencia. Valide la carga del modelo, la preparación, la capacidad, los timeouts y la recuperación. El escalado desde cero de KEDA requiere una señal observable sin ejecutar Pods y una ruta de reactivación; las métricas de CPU/memoria por sí solas no implican una activación basada en solicitudes.
+Ninguno de los modos garantiza que haya réplicas disponibles ni ofrece un SLA de latencia. Valida la carga del modelo, la preparación, la capacidad, los tiempos de espera y la recuperación. El escalado desde cero con KEDA requiere una señal observable sin Pods en ejecución y una ruta de reactivación; las métricas de CPU/memoria por sí solas no implican una activación basada en solicitudes.
 
-![La reconciliación de InferenceService es independiente de las solicitudes a servidores de modelos en ejecución; las rutas Knative y Standard muestran un comportamiento de autoscaling condicional.](../../.gitbook/assets/en-ai-ml-kubeflow-06-kserve-0.png)
+![La reconciliación de InferenceService es independiente de las solicitudes a los servidores de modelos en ejecución; las rutas Knative y Standard muestran un comportamiento de escalado automático condicional.](../../.gitbook/assets/en-ai-ml-kubeflow-06-kserve-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-06-kserve-0.html)
 
-## Autoscaling y métricas
+## Escalado automático y métricas
 
-Knative KPA admite concurrencia/RPS, mientras que la clase HPA de Knative es otra ruta. Standard selecciona hpa, keda o external/none mediante serving.kserve.io/autoscalerClass. No todos los Deployments Standard crean un HPA.
+Knative KPA admite concurrencia/RPS, mientras que la clase HPA de Knative es otra alternativa. Standard selecciona hpa, keda o external/none mediante serving.kserve.io/autoscalerClass. No todas las implementaciones Standard crean un HPA.
 
-Las métricas de CPU, externas o de Pod compatibles necesitan las dependencias reales de metrics-server/adapter/provider. Las solicitudes de GPU no crean automáticamente métricas de GPU. La velocidad de respuesta depende de los intervalos de observación, la estabilización y el comportamiento del modelo; las métricas de concurrencia no son universalmente más rápidas.
+Las métricas de CPU, externas o de Pod compatibles necesitan dependencias reales de metrics-server/adapter/proveedor. Las solicitudes de GPU no generan automáticamente métricas de GPU. La velocidad de respuesta depende de los intervalos de observación, la estabilización y el comportamiento del modelo; las métricas de concurrencia no son siempre más rápidas.
 
 ## Actualizaciones graduales y tráfico canary
 
-El canaryTrafficPercent de esta versión se verificó en la **ruta de división de tráfico de Knative Revision**. KServe establece la revisión previamente desplegada y la nueva revisión como destinos de tráfico de Knative Service; el networking de Knative distribuye las solicitudes. El controlador de KServe no es el proxy para cada llamada de inferencia.
+Se verificó que canaryTrafficPercent de esta versión funciona con la **ruta de división del tráfico entre Revisiones de Knative**. KServe establece la revisión anterior implementada y la nueva como destinos del tráfico de Knative Service; Knative networking distribuye las solicitudes. El controlador de KServe no actúa como proxy para cada solicitud de inferencia.
 
-No equipare una actualización continua de un Deployment Standard con ese routing por porcentaje de revisión. El routing ponderado en Standard necesita servicios/gateway/mesh diseñados por separado o herramientas de rollout y una propiedad claramente definida. Al usar la [gestión de tráfico de Istio](../../service-mesh/istio/traffic-management/04-traffic-splitting.md) o [Argo Rollouts](../../service-mesh/istio/advanced/08-argo-rollouts.md), evite conflictos de propiedad de los objetos gestionados por KServe.
+No equipares una actualización progresiva de Deployment en Standard con ese enrutamiento basado en porcentajes por revisión. El enrutamiento ponderado en Standard requiere servicios/gateway/mesh o herramientas de despliegue gradual diseñados por separado, además de una titularidad bien definida. Al usar [la gestión del tráfico de Istio](../../service-mesh/istio/traffic-management/04-traffic-splitting.md) o [Argo Rollouts](../../service-mesh/istio/advanced/08-argo-rollouts.md), evita que haya titularidad en conflicto sobre los objetos gestionados por KServe.
 
-Un porcentaje por sí solo no valida la calidad ni automatiza la promoción/el rollback. Compruebe las métricas de comparación, los errores/latencia, las revisiones/artefactos de modelo conservados y la preparación de la ruta.
+Un porcentaje por sí solo no valida la calidad ni automatiza la promoción o la reversión. Comprueba las métricas de comparación, los errores y la latencia, las revisiones y los artefactos del modelo que se conservan, y la disponibilidad de las rutas.
 
 ## Inferencia con GPU en EKS
 
-La solicitud nvidia.com/gpu de un Pod habilita la programación/asignación de dispositivos. La inferencia real con GPU requiere CUDA/drivers compatibles, imagen de servidor, backend del modelo y configuración del dispositivo. Revise la configuración del modelo Triton o la selección de dispositivos del framework; una solicitud de GPU no mueve automáticamente un modelo de CPU a GPU.
+Una solicitud nvidia.com/gpu de un Pod permite la programación y la asignación del dispositivo. La inferencia real con GPU requiere CUDA/controladores compatibles, una imagen de servidor, un backend de modelo y una configuración del dispositivo compatibles. Revisa la configuración del modelo de Triton o la selección del dispositivo del framework; una solicitud de GPU no traslada automáticamente un modelo de CPU a la GPU.
 
-Karpenter aprovisiona para Pods Pending aptos, NodePools, cuotas y capacidad disponible. El escalado de Pods de KServe/Knative/HPA/KEDA y el aprovisionamiento/recuperación de EC2 son bucles independientes. Incluso con cero Pods de modelo, otras cargas de trabajo o políticas de interrupción pueden mantener nodos y costos en ejecución.
+Karpenter aprovisiona recursos para Pods Pending aptos, NodePools, cuotas y capacidad disponible. El escalado de Pods de KServe/Knative/HPA/KEDA y el aprovisionamiento/reclamación de instancias EC2 son ciclos independientes. Incluso cuando hay cero Pods de modelos, otras cargas de trabajo o las políticas de disrupción pueden mantener los nodos y los costes activos.
 
 ## Validación y fuentes
 
-Los charts OCI oficiales de CRD/resource/runtime-config 0.18.0 se descargaron y renderizaron localmente para inspeccionar el esquema/la configuración. Se revisaron el aliasing de modos, los mínimos de HPA, KEDA ScaledObject y el código de tráfico de Knative. No se ejecutaron descargas/serving de modelos, GPU, autoscaling del clúster ni solicitudes canary en vivo.
+Se descargaron y renderizaron localmente los charts OCI oficiales de CRD, recursos y configuración de runtimes de la versión 0.18.0 para inspeccionar el esquema y la configuración. Se revisaron los alias de modo, los mínimos de HPA, ScaledObject de KEDA y el código de tráfico de Knative. No se ejecutó ninguna descarga ni serving de modelos, prueba de GPU, escalado automático del clúster ni solicitud canary en directo.
 
-- [Nombres y valores predeterminados de modos de 0.18.0](https://github.com/kserve/kserve/blob/v0.18.0/pkg/constants/constants.go)
-- [Gestión de réplicas mínimas de HPA](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/hpa/hpa_reconciler.go)
-- [Gestión de KEDA ScaledObject](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go)
-- [Gestión de tráfico de Knative](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go)
+- [Nombres de modos y valores predeterminados de 0.18.0](https://github.com/kserve/kserve/blob/v0.18.0/pkg/constants/constants.go)
+- [Gestión del número mínimo de réplicas de HPA](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/hpa/hpa_reconciler.go)
+- [Gestión de ScaledObject de KEDA](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go)
+- [Gestión del tráfico de Knative](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go)
 - [Versión 0.20.0](https://github.com/kserve/kserve/releases/tag/v0.20.0)
-- [Versión 0.21.0 (última comprobada)](https://github.com/kserve/kserve/releases/tag/v0.21.0)
+- [Versión 0.21.0 (la más reciente consultada)](https://github.com/kserve/kserve/releases/tag/v0.21.0)
 
 ## Próximos pasos
 
-Conecte esta ruta de serving con los capítulos de arquitectura, Pipelines, Notebooks, Katib y Trainer de la [serie de Kubeflow](README.md), al tiempo que trata el despliegue y la validación de artefactos de modelo como pasos independientes.
+Conecta esta ruta de serving con los capítulos sobre arquitectura, Pipelines, Notebooks, Katib y Trainer de la [serie de Kubeflow](README.md), tratando la implementación y validación de los artefactos del modelo como pasos independientes.
 
 ---
 
@@ -86,4 +86,4 @@ Conecte esta ruta de serving con los capítulos de arquitectura, Pipelines, Note
 
 ## Cuestionario
 
-Para poner a prueba lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../../quizzes/ai-ml/kubeflow/06-kserve-quiz.md).
+Para comprobar lo que has aprendido en este capítulo, prueba el [cuestionario del tema](../../quizzes/ai-ml/kubeflow/06-kserve-quiz.md).

@@ -334,7 +334,7 @@ sum(rate(istio_requests_total{reporter="source"}[5m]))
 
 The Istio `opentelemetry` extension provider exports **traces**. To collect standard mesh metrics, keep the Prometheus metrics provider and let an OpenTelemetry Collector **Prometheus receiver scrape** the exposed endpoints. A collector can then export metrics over OTLP to a metrics-capable backend; Tempo is a trace backend, not a metrics destination.
 
-This example uses Collector Contrib 0.160.0 with a Prometheus exporter for a visible demonstration path. Create namespace `observability` first. Use one replica because replicas with identical scrape configurations duplicate every target; production scaling needs target allocation/sharding. The ServiceAccount can only read pods, as required by the pod discovery jobs. Configure network access to cleartext proxy metrics 15090 and istiod 15014; this example does not scrape application metrics or ambient ztunnel.
+This example uses Collector Contrib 0.160.0 with a Prometheus exporter for a visible demonstration path. Create namespace `observability` first. Use one replica because replicas with identical scrape configurations duplicate every target; production scaling needs target allocation/sharding. The ServiceAccount can only read pods, as required by the pod discovery jobs. Configure network access to cleartext proxy metrics on port 15090 and istiod on port 15014; this example does not scrape application metrics or ambient ztunnel.
 
 ```yaml
 apiVersion: v1

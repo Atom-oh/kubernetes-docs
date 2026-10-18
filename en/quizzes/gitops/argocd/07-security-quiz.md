@@ -30,7 +30,7 @@ ArgoCD itself doesn't provide secret encryption. Sealed Secrets/SOPS store ciphe
 **Answer: B) Sealed Secrets**
 
 **Explanation:**
-Sealed Secrets uses controller key pairs. Default strict scope also binds the name/namespace, while the decryption trust boundary depends on possession of the keys. The encrypted SealedSecret can be safely stored in Git and is decrypted by the Sealed Secrets controller in the cluster.
+Sealed Secrets uses controller key pairs. The default strict scope also binds the name/namespace, while the decryption trust boundary depends on possession of the keys. The encrypted SealedSecret can be safely stored in Git and is decrypted by the Sealed Secrets controller in the cluster.
 
 </details>
 

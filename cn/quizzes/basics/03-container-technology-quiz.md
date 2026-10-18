@@ -1,30 +1,32 @@
 # 容器技术测验
 
-本测验测试你对容器技术基础、其工作方式以及它们与 Kubernetes 的关系的理解。
+本测验考查你对容器技术基础知识、容器的工作方式以及容器与 Kubernetes 之间关系的理解。
+
+请针对普通的 Linux 进程隔离型容器作答。基于 VM 的运行时（例如 Kata/Fargate）以及 Windows 的支持情况有所不同。
 
 ## 选择题
 
-1. 以下哪一项不是容器的关键特性？
+1. 以下哪项不是容器的关键特性？
    - A) 可移植性
-   - B) 轻量级
-   - C) 完整硬件虚拟化
+   - B) 轻量
+   - C) 完整的硬件虚拟化
    - D) 隔离的执行环境
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 完整硬件虚拟化**
+**答案：C) 完整的硬件虚拟化**
 
 **解释：**
-容器共享主机 OS 内核，并不会虚拟化硬件。完整硬件虚拟化是虚拟机（VM）的特性。容器提供可移植性、轻量级运行和隔离的执行环境，但它们依赖主机 OS 内核运行。
+容器共享主机 OS 内核，并不虚拟化硬件。完整的硬件虚拟化是虚拟机 (VM) 的特性。容器具有可移植、轻量和提供隔离执行环境等优点，但其运行依赖主机 OS 内核。
 </details>
 
-2. 容器和虚拟机之间的主要区别是什么？
-   - A) 每个容器都需要自己独立的 OS
-   - B) 虚拟机的启动时间比容器更快
+2. 容器与虚拟机的主要区别是什么？
+   - A) 每个容器都需要自己的独立 OS
+   - B) 虚拟机的启动速度比容器快
    - C) 容器共享主机 OS 内核
-   - D) 虚拟机使用的资源比容器更少
+   - D) 虚拟机比容器占用更少资源
    
 <details>
 
@@ -33,10 +35,10 @@
 **答案：C) 容器共享主机 OS 内核**
 
 **解释：**
-容器通过共享主机 OS 内核运行，而每个虚拟机都包含完整的 OS。因此，容器比虚拟机更轻量、启动更快，并且资源效率更高。
+容器通过共享主机 OS 内核运行，而每个虚拟机都包含一个完整的 OS。因此，容器比虚拟机更轻量、启动更快、资源利用率也更高。
 </details>
 
-3. 以下哪一项不是 OCI (Open Container Initiative) 兼容的低级容器运行时？
+3. 以下哪项不是兼容 OCI (Open Container Initiative) 的低级容器运行时？
    - A) runc
    - B) crun
    - C) containerd
@@ -49,39 +51,39 @@
 **答案：C) containerd**
 
 **解释：**
-containerd 是高级容器运行时，提供镜像传输、存储和容器执行管理等功能。runc、crun 和 gVisor 都是 OCI 兼容的低级容器运行时，负责实际的容器创建和执行。
+containerd 是高级容器运行时，提供镜像传输、存储和容器执行管理等功能。runc、crun 和 gVisor 都是兼容 OCI 的低级容器运行时，负责实际创建并运行容器。
 </details>
 
-4. 关于容器镜像层，哪项说法是正确的？
+4. 关于容器镜像层，以下哪项说法正确？
    - A) 每一层都可以独立修改
-   - B) 层总是会合并并存储为单个文件
-   - C) 层表示相对于前一层的更改
+   - B) 各层总会合并并存储为一个文件
+   - C) 各层表示相对于上一层的更改
    - D) 每个容器都有自己唯一的一组层
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 层表示相对于前一层的更改**
+**答案：C) 各层表示相对于上一层的更改**
 
 **解释：**
-容器镜像由多个层组成，每一层都表示相对于前一层的更改。这种分层方法使镜像共享和缓存更高效，从而节省存储空间并提高镜像下载速度。层是只读的，当容器运行时，会在顶部添加一个可写层。
+容器镜像由多个层组成，每一层都表示相对于上一层的更改。这种分层方式让镜像共享和缓存更高效，节省存储空间并提升镜像下载速度。各层为只读层；容器运行时，会在最上方添加一个可写层。
 </details>
 
 5. 在 Dockerfile 中使用多阶段构建的主要目的是什么？
    - A) 提高构建速度
-   - B) 减小最终镜像大小
+   - B) 减小最终镜像的大小
    - C) 减少安全漏洞
-   - D) 支持多个操作系统
+   - D) 支持多种操作系统
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 减小最终镜像大小**
+**答案：B) 减小最终镜像的大小**
 
 **解释：**
-多阶段构建的主要目的是减小最终镜像大小。构建阶段包含源代码编译、依赖安装等所需的所有工具，而运行阶段只带入构建产物，以最小运行时环境创建小镜像。这会将构建工具和中间文件排除在最终镜像之外。
+多阶段构建的主要目的是减小最终镜像的大小。构建阶段包含编译源代码、安装依赖等所需的全部工具，而运行阶段只引入构建产物，从而创建运行环境精简的小型镜像。这样，构建工具和中间文件就不会包含在最终镜像中。
 </details>
 
 6. Docker 的默认网络驱动是什么？
@@ -97,10 +99,10 @@ containerd 是高级容器运行时，提供镜像传输、存储和容器执行
 **答案：B) bridge**
 
 **解释：**
-bridge 是 Docker 的默认网络驱动，用于支持同一主机上运行的容器之间通信。该驱动在主机内创建一个虚拟网桥来连接容器。host 驱动直接使用主机网络，overlay 用于多主机通信，macvlan 为容器分配 MAC 地址，使其看起来像物理网络设备。
+bridge 是 Docker 的默认网络驱动，可让运行在同一主机上的容器相互通信。此驱动会在主机内创建虚拟网桥来连接容器。host 驱动直接使用主机网络，overlay 用于多主机通信，而 macvlan 会为容器分配 MAC 地址，使其看起来像物理网络设备。
 </details>
 
-7. 对于容器中的持久数据存储，哪种方法使用由 Docker 管理的主机文件系统区域？
+7. 在容器中存储持久化数据时，哪种方法使用由 Docker 管理的主机文件系统区域？
    - A) 临时存储
    - B) Volume
    - C) Bind mount
@@ -113,11 +115,11 @@ bridge 是 Docker 的默认网络驱动，用于支持同一主机上运行的�
 **答案：B) Volume**
 
 **解释：**
-Volume 是由 Docker 管理的主机文件系统区域，是容器中持久数据存储最合适的方法。临时存储是容器的内部文件系统，容器删除时数据会丢失。Bind mount 将特定主机路径挂载到容器中，而 tmpfs mount 仅将数据存储在内存中。
+Volume 是由 Docker 管理的主机文件系统区域，是容器持久化数据存储最合适的方法。临时存储是容器的内部文件系统，删除容器时其中的数据会丢失。Bind mount 会将主机上的特定路径挂载到容器中，而 tmpfs 由内存支持，但可能使用交换空间。
 </details>
 
-8. 以下哪一项不是增强容器安全性的方法？
-   - A) 以非 root 用户运行容器
+8. 以下哪项不是增强容器安全性的方法？
+   - A) 以非 root 用户身份运行容器
    - B) 仅授予必要的 Linux capabilities
    - C) 向所有容器授予管理员权限
    - D) 使用只读文件系统
@@ -129,42 +131,42 @@ Volume 是由 Docker 管理的主机文件系统区域，是容器中持久数�
 **答案：C) 向所有容器授予管理员权限**
 
 **解释：**
-向所有容器授予管理员权限会削弱安全性。为了增强容器安全性，应遵循最小权限原则。以非 root 用户运行容器、仅授予必要的 Linux capabilities，并在可能时以只读方式挂载文件系统，都是良好的安全实践。
+向所有容器授予管理员权限会削弱安全性。要增强容器安全性，应遵循最小权限原则。以非 root 用户身份运行容器、仅授予必要的 Linux capabilities，以及在可行时以只读方式挂载文件系统，都是良好的安全实践。
 </details>
 
-9. 哪项 AWS 服务提供 serverless 容器执行环境？
+9. 哪项 AWS 服务提供无服务器容器执行环境？
    - A) Amazon EC2
    - B) Amazon ECS
-   - C) Amazon Fargate
+   - C) AWS Fargate
    - D) Amazon ECR
    
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) Amazon Fargate**
+**答案：C) AWS Fargate**
 
 **解释：**
-Amazon Fargate 是 AWS 的 serverless 容器执行环境，允许你在不管理服务器的情况下运行容器。Amazon EC2 是虚拟服务器服务，Amazon ECS 是容器编排服务，Amazon ECR 是容器镜像注册表服务。
+AWS Fargate 是 AWS 的无服务器容器执行环境，可让你在无需管理服务器的情况下运行容器。Amazon EC2 是虚拟服务器服务，Amazon ECS 是容器编排服务，而 Amazon ECR 是容器镜像注册表服务。
 </details>
 
-10. 以下哪一项不是容器编排工具的主要功能？
+10. 以下哪项不是容器编排工具的主要功能？
     - A) 自动部署和回滚
     - B) 服务发现和负载均衡
-    - C) 容器镜像构建
+    - C) 构建容器镜像
     - D) 自动扩缩容
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 容器镜像构建**
+**答案：C) 构建容器镜像**
 
 **解释：**
-容器镜像构建通常是 CI/CD 流水线或 Docker 等容器构建工具的职责。容器编排工具（Kubernetes、Docker Swarm 等）的主要功能包括自动部署和回滚、服务发现和负载均衡、自动扩缩容、自愈、配置管理和存储编排。
+构建容器镜像通常由 CI/CD 流水线或 Docker 等容器构建工具负责。容器编排工具（Kubernetes、Docker Swarm 等）的主要功能包括自动部署和回滚、服务发现和负载均衡、自动扩缩容、自我修复、配置管理以及存储编排。
 </details>
 
-11. 容器在未运行时不可能处于以下哪种状态？
+11. 以下哪项不是 Docker 容器的生命周期状态？
     - A) Created
     - B) Exited
     - C) Building
@@ -177,10 +179,10 @@ Amazon Fargate 是 AWS 的 serverless 容器执行环境，允许你在不管理
 **答案：C) Building**
 
 **解释：**
-容器生命周期状态包括 Created（已创建）、Running（运行中）、Paused（已暂停）、Restarting（重启中）、Exited（已退出）和 Dead（死亡）。Building 是镜像构建过程的状态，不是容器状态。容器是在镜像构建完成后创建的。
+容器生命周期状态包括 Created、Running、Paused、Restarting、Exited、Removing 和 Dead。Building 是镜像构建过程中的状态，不是容器状态。镜像构建完成后，才会创建容器。
 </details>
 
-12. 哪种容器重启策略会在 Docker daemon 启动时重启容器，但如果容器是手动停止的，则不会重启？
+12. 哪种容器重启策略会在 Docker 守护进程启动时重启容器，但如果容器是被手动停止的，则不会重启？
     - A) no
     - B) on-failure
     - C) always
@@ -193,10 +195,10 @@ Amazon Fargate 是 AWS 的 serverless 容器执行环境，允许你在不管理
 **答案：D) unless-stopped**
 
 **解释：**
-`unless-stopped` 重启策略会始终重启容器，除非它被明确停止。即使 Docker daemon 重启，容器也会自动启动，但如果用户使用 `docker stop` 命令手动停止了它，daemon 重启后容器不会启动。`always` 会无论手动停止状态如何都进行重启。
+`unless-stopped` 重启策略会始终重启容器，除非容器被明确停止。即使 Docker 守护进程重启，容器也会自动启动；但如果用户使用 `docker stop` 命令手动停止了容器，那么守护进程重启后容器不会启动。手动停止会让 `always` 策略暂停重启，直至守护进程重启或显式启动容器；与 `unless-stopped` 不同，守护进程重启后它会再次启动容器。
 </details>
 
-13. 哪个 Docker 命令用于检查容器与其原始镜像之间的文件系统变化？
+13. 哪条 Docker 命令可以检查容器与其原始镜像之间的文件系统更改？
     - A) docker inspect
     - B) docker diff
     - C) docker logs
@@ -209,12 +211,12 @@ Amazon Fargate 是 AWS 的 serverless 容器执行环境，允许你在不管理
 **答案：B) docker diff**
 
 **解释：**
-`docker diff` 命令显示容器文件系统与原始镜像之间的变化。在输出中，A 表示 Added 文件，C 表示 Changed 文件，D 表示 Deleted 文件。该命令有助于调试容器运行期间哪些文件被修改。
+`docker diff` 命令会显示容器文件系统与原始镜像之间的更改。输出中，A 表示新增的文件，C 表示已更改的文件，D 表示已删除的文件。此命令有助于调试容器运行期间被修改的文件。
 </details>
 
 ## 简答题
 
-14. 基于容器镜像内容、以 SHA256 哈希表示的唯一标识符是什么？
+14. 基于容器镜像内容并以 SHA256 哈希表示的唯一标识符是什么？
 
 <details>
 
@@ -223,10 +225,10 @@ Amazon Fargate 是 AWS 的 serverless 容器执行环境，允许你在不管理
 **答案：Digest**
 
 **解释：**
-Digest 是容器镜像内容的 SHA256 哈希，用作镜像的唯一标识符。与标签不同，如果镜像内容发生变化，Digest 也会变化，因此它用于准确引用特定的镜像版本。示例：`nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
+镜像引用的 digest 用于标识 manifest 或多平台索引的字节内容，通常使用 SHA256；manifest 则会引用各层和配置的 digest。与标签不同，如果镜像内容发生变化，digest 也会随之变化，因此可以用它准确引用特定版本的镜像。例如：`nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
-15. Dockerfile 中指定容器启动时要运行的命令的指令是什么？
+15. Dockerfile 中用于指定容器启动时运行命令的指令是什么？
 
 <details>
 
@@ -235,10 +237,10 @@ Digest 是容器镜像内容的 SHA256 哈希，用作镜像的唯一标识符�
 **答案：CMD**
 
 **解释：**
-CMD 指令指定容器启动时默认运行的命令。例如，`CMD ["node", "server.js"]` 会在容器启动时运行 `node server.js` 命令。CMD 可以通过向 docker run 命令提供参数来覆盖。
+CMD 指令用于指定容器启动时默认运行的命令。例如，`CMD ["node", "server.js"]` 会在容器启动时运行 `node server.js` 命令。可以通过向 docker run 命令提供参数来覆盖 CMD。
 </details>
 
-16. Docker 为容器之间通信创建的虚拟网络接口名称是什么？
+16. Docker 创建的、用于容器间通信的虚拟网络接口叫什么？
 
 <details>
 
@@ -247,10 +249,10 @@ CMD 指令指定容器启动时默认运行的命令。例如，`CMD ["node", "s
 **答案：docker0**
 
 **解释：**
-docker0 是 Docker 默认创建的虚拟网桥网络接口。该网桥支持同一主机上运行的容器之间通信，并在容器与外部网络之间进行通信中介。
+docker0 是 Docker 默认创建的虚拟网桥网络接口。此网桥可让运行在同一主机上的容器相互通信，并在容器与外部网络之间转发通信。
 </details>
 
-17. 限制容器内运行的进程可使用的系统调用的 Linux 安全功能是什么？
+17. 哪项 Linux 安全功能可以限制容器内进程可使用的系统调用？
 
 <details>
 
@@ -259,10 +261,10 @@ docker0 是 Docker 默认创建的虚拟网桥网络接口。该网桥支持同�
 **答案：seccomp (Secure Computing Mode)**
 
 **解释：**
-seccomp 是一种 Linux 内核安全功能，用于限制进程可以使用的系统调用。Docker 等容器运行时使用 seccomp 配置文件限制容器可以执行的系统调用，从而增强安全性。
+seccomp 是 Linux 内核的一项安全功能，可以限制进程可使用的系统调用。Docker 等容器运行时会使用 seccomp 配置文件来限制容器可执行的系统调用，从而增强安全性。
 </details>
 
-18. 用于存储和管理容器镜像的 AWS 服务名称是什么？
+18. 用于存储和管理容器镜像的 AWS 服务叫什么？
 
 <details>
 
@@ -271,10 +273,10 @@ seccomp 是一种 Linux 内核安全功能，用于限制进程可以使用的�
 **答案：Amazon ECR (Elastic Container Registry)**
 
 **解释：**
-Amazon ECR (Elastic Container Registry) 是 AWS 的托管容器镜像注册表服务。它提供镜像漏洞扫描、IAM 集成和镜像生命周期管理等功能，并与其他 AWS 服务无缝集成。
+Amazon ECR (Elastic Container Registry) 是 AWS 托管的容器镜像注册表服务。它提供镜像漏洞扫描、IAM 集成和镜像生命周期管理等功能，并可与其他 AWS 服务无缝集成。
 </details>
 
-19. 哪个 Docker 命令允许在正在运行的容器内运行额外命令？
+19. 哪条 Docker 命令可以在运行中的容器内执行其他命令？
 
 <details>
 
@@ -283,10 +285,10 @@ Amazon ECR (Elastic Container Registry) 是 AWS 的托管容器镜像注册表�
 **答案：docker exec**
 
 **解释：**
-`docker exec` 命令允许在正在运行的容器内运行额外命令。例如，`docker exec -it <container> bash` 会连接到容器内的交互式 shell，或者 `docker exec <container> ls /app` 会列出容器内的文件。该命令对容器调试非常有用。
+`docker exec` 命令可以在运行中的容器内执行其他命令。例如，`docker exec -it <container> bash` 可连接到容器内的交互式 shell；`docker exec <container> ls /app` 可列出容器内的文件。此命令对容器调试非常有用。
 </details>
 
-20. 哪个 Docker 命令以流的形式监控实时容器事件（start、stop、restart 等）？
+20. 哪条 Docker 命令可以将容器的实时事件（启动、停止、重启等）作为流进行监控？
 
 <details>
 
@@ -295,19 +297,19 @@ Amazon ECR (Elastic Container Registry) 是 AWS 的托管容器镜像注册表�
 **答案：docker events**
 
 **解释：**
-`docker events` 命令以流的形式显示来自 Docker daemon 的实时事件。你可以监控 container start、stop、restart、image pull、network connect/disconnect 等事件。`--filter` 选项允许按特定容器或事件类型过滤，这对调试和监控很有用。
+`docker events` 命令会以流的形式显示 Docker 守护进程的实时事件。你可以监控容器启动、停止、重启、拉取镜像、连接或断开网络等事件。`--filter` 选项可用于按特定容器或事件类型进行筛选，便于调试和监控。
 </details>
 
-## 实践题
+## 实操题
 
 21. 编写一个满足以下要求的 Dockerfile：
-    - 使用 Node.js 14 Alpine 镜像
+    - 使用 Node.js 24 Alpine 镜像
     - 将工作目录设置为 /app
-    - 先复制 package.json 和 package-lock.json 文件
+    - 首先复制 package.json 和 package-lock.json 文件
     - 安装依赖
     - 复制其余文件
     - 暴露端口 3000
-    - 容器启动时运行 "node server.js" 命令
+    - 在容器启动时运行 "node server.js" 命令
 
 <details>
 
@@ -315,15 +317,17 @@ Amazon ECR (Elastic Container Registry) 是 AWS 的托管容器镜像注册表�
 
 **答案：**
 ```dockerfile
-FROM node:14-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3000
 
@@ -331,10 +335,10 @@ CMD ["node", "server.js"]
 ```
 
 **解释：**
-这个 Dockerfile 展示了 Node.js 应用程序的基本配置。通过先复制依赖文件（package*.json）并在复制其余文件之前安装依赖，它优化了 Docker 的层缓存。这样，即使源代码发生变化，只要依赖没有变化，npm install 步骤也可以复用。
+此 Dockerfile 展示了 Node.js 应用的基本配置。先复制依赖文件 (package*.json)，并在复制其余文件之前安装依赖，可优化 Docker 的层缓存。这样一来，只要依赖没有变化，即使源代码发生更改，npm ci 步骤仍可复用。
 </details>
 
-22. 分析以下 Docker 命令并解释其用途：
+22. 分析以下 Docker 命令并说明其用途：
     ```bash
     docker run -d --name my-app -p 8080:80 -v data:/app/data --restart always nginx:latest
     ```
@@ -344,18 +348,20 @@ CMD ["node", "server.js"]
 <summary>显示答案</summary>
 
 **答案：**
-此命令用于以下目的：
-    - `-d`：在后台运行容器（detached mode）
-    - `--name my-app`：将容器名称设置为 "my-app"
+此命令用于以下用途：
+    - `-d`：在后台运行容器（分离模式）
+    - `--name my-app`：将容器名称设为 "my-app"
     - `-p 8080:80`：将主机端口 8080 映射到容器端口 80
-    - `-v data:/app/data`：将名为 "data" 的 volume 挂载到容器中的 /app/data 路径
-    - `--restart always`：容器退出时始终自动重启
-    - `nginx:latest`：使用最新版本的 nginx 镜像
+    - `-v data:/app/data`：将名为 "data" 的 Volume 挂载到容器中的 /app/data 路径
+    - `--restart always`：退出后重启；手动停止会让容器暂停运行，直至守护进程重启或显式启动
+    - `nginx:latest`：使用名为 latest 的可变标签；若要确保使用最新版本，需要拉取镜像
 
-此命令在后台运行 nginx Web 服务器，使其可通过主机端口 8080 访问，设置用于持久数据存储的 volume，并配置容器退出时自动重启。
+/app/data 挂载不会更改 NGINX 的文档根目录。默认情况下，端口发布会绑定到主机的所有地址；若只允许本地访问，请使用 127.0.0.1:8080:80。
+
+此命令会在后台运行 nginx Web 服务器，使其可通过主机端口 8080 访问，设置用于持久化数据存储的 Volume，并配置容器退出后自动重启。
 </details>
 
-23. 使用多阶段构建为 React 应用程序编写一个优化后的 Dockerfile。
+23. 使用多阶段构建为 React 应用编写一个经过优化的 Dockerfile。
 
 <details>
 
@@ -364,20 +370,20 @@ CMD ["node", "server.js"]
 **答案：**
 ```dockerfile
 # Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
 # Run stage
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy build artifacts to nginx's service directory
 COPY --from=build /app/build /usr/share/nginx/html
@@ -390,14 +396,14 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 **解释：**
-这个多阶段 Dockerfile 由两个阶段组成：
-1. 构建阶段：使用 Node.js 镜像构建 React 应用程序。
-2. 运行阶段：使用轻量级 nginx 镜像提供构建后的静态文件。
+此多阶段 Dockerfile 包含两个阶段：
+1. 构建阶段：使用 Node.js 镜像构建 React 应用。
+2. 运行阶段：使用轻量的 nginx 镜像提供构建后的静态文件。
 
-这种方法的优势在于最终镜像不包含 Node.js 运行时、npm 包、源代码等，从而显著减小镜像大小。最终镜像只包含构建后的静态文件和 nginx，因此更小、更安全。
+这种方法的优点是最终镜像不包含 Node.js 运行时、npm 包、源代码等，从而显著减小镜像体积。最终镜像只包含构建后的静态文件和 nginx，因此体积更小，也更安全。
 </details>
 
-24. 编写一个包含容器健康检查的 Dockerfile。将其配置为每 30 秒检查一次 HTTP endpoint /health，如果 3 秒内没有响应则视为失败，并在失败 3 次后标记为 unhealthy。
+24. 编写一个包含容器健康检查的 Dockerfile。配置为每 30 秒检查一次 HTTP 端点 /health，若在 3 秒内没有响应则视为失败，并在连续失败 3 次后标记为不健康。
 
 <details>
 
@@ -405,14 +411,15 @@ CMD ["nginx", "-g", "daemon off;"]
 
 **答案：**
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy application (example)
 COPY ./html /usr/share/nginx/html
+RUN printf 'ok\n' > /usr/share/nginx/html/health
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1
 
 EXPOSE 80
 
@@ -420,17 +427,17 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 **解释：**
-每个 HEALTHCHECK 指令选项的含义：
+各 HEALTHCHECK 指令选项的含义：
 - `--interval=30s`：每 30 秒执行一次健康检查
 - `--timeout=3s`：健康检查命令必须在 3 秒内完成
-- `--start-period=10s`：容器启动后的 10 秒内忽略健康检查失败（初始化时间）
-- `--retries=3`：连续失败 3 次后将容器标记为 unhealthy
-- `CMD`：要执行的健康检查命令。使用 wget 检查 /health endpoint
+- `--start-period=10s`：允许初始化阶段最长 10 秒内检查失败；提前检查成功会结束宽限期
+- `--retries=3`：连续失败 3 次后将容器标记为不健康
+- `CMD`：要执行的健康检查命令。使用 wget 检查 /health 端点
 
-容器编排工具使用健康检查来判断容器状态，以便做出自动恢复或流量路由决策。
+Docker 会将容器标记为不健康，但不会仅因该状态而重启独立容器。编排器可能会响应其支持的健康状态信号；Kubernetes 需要使用自己的探针，不会使用 Dockerfile 中的 HEALTHCHECK。此示例要求提供返回 HTTP 200 的 /health 端点。
 </details>
 
-25. 编写 Docker 命令，用于检查正在运行的容器的环境变量、网络设置和进程列表，以便进行调试。
+25. 编写 Docker 命令，以便在调试时检查运行中容器的环境变量、网络设置和进程列表。
 
 <details>
 
@@ -473,17 +480,19 @@ docker stats <container-id>
 ```
 
 **解释：**
-调试容器时，可以组合使用这些命令来诊断问题：
-- `docker exec` 在正在运行的容器中执行命令
+调试容器时，可结合使用这些命令来诊断问题：
+- `docker exec` 在运行中的容器内执行命令
 - `docker inspect` 检查详细的容器元数据
 - `docker top` 从主机视角查看容器进程
-- `docker diff` 检查相对于镜像发生变化的文件
+- `docker diff` 检查相较于镜像发生更改的文件
 有效使用这些工具有助于了解容器内部状态并解决问题。
 </details>
 
-## 高级题
+Dockerfile 练习要求读者提供相应的 package-lock.json、server.js/静态构建脚本和 html 目录。使用 .dockerignore 排除 node_modules/.git/.env。React 的静态输出目录可能是 build 或 dist；请使用实际工具的输出目录。SSR 应用不能通过将静态文件复制到 NGINX 中来运行。/health 示例测试的是 NGINX 的静态响应，而不是后端是否已就绪。
 
-26. 比较 namespace 和 cgroups 这两个容器技术核心组件的作用，并解释它们各自如何为容器隔离做出贡献。
+## 进阶题
+
+26. 比较容器技术核心组件 namespaces 和 cgroups 的作用，并说明它们各自如何实现容器隔离。
 
 <details>
 
@@ -498,7 +507,7 @@ docker stats <container-id>
     - PID namespace：进程 ID 隔离
     - Network namespace：网络栈隔离
     - Mount namespace：文件系统挂载点隔离
-    - UTS namespace：主机名和域名隔离
+    - UTS namespace：主机名和 NIS 域名隔离
     - IPC namespace：进程间通信资源隔离
     - User namespace：用户和组 ID 隔离
 
@@ -506,24 +515,24 @@ docker stats <container-id>
     - **作用**：限制并隔离进程组的资源使用。
     - **隔离类型**：提供资源限制。
     - **主要功能**：
-    - CPU 时间限制
-    - 内存使用限制
-    - Block I/O 带宽限制
-    - 网络带宽限制
-    - 设备访问控制
+    - 限制 CPU 时间
+    - 限制内存使用量
+    - 限制块 I/O 带宽
+    - 通过 tc/eBPF 集成控制网络流量
+    - 控制设备访问
 
 **对容器隔离的贡献**：
 
 Namespaces 和 cgroups 发挥互补作用：
 
-    - Namespaces 允许容器拥有自己的独立环境（进程树、网络接口、挂载点等），提供逻辑隔离。这使每个容器都拥有自己独特的系统视图。
+    - Namespaces 让容器拥有各自独立的环境（进程树、网络接口、挂载点等），从而提供逻辑隔离。这样，每个容器都能获得系统的专属视图。
 
-    - cgroups 限制容器可以使用的系统资源（CPU、内存、磁盘 I/O 等），提供物理资源隔离。这可以防止一个容器使用过多资源并影响其他容器或主机系统。
+    - cgroups 限制容器可使用的系统资源（CPU、内存、磁盘 I/O 等），从而提供物理资源隔离。这可以防止某个容器消耗过多资源，进而影响其他容器或主机系统。
 
-这两项技术协同工作，使容器能够在隔离环境中运行，并限制资源使用。这种隔离比虚拟机更轻量，但为安全性和资源管理提供了足够的隔离。
+这两种技术协同工作，让容器能够在隔离的环境中运行，并限制资源使用。容器的隔离比虚拟机更轻量，但安全性取决于内核暴露情况、权限和运行时配置；这并不意味着能够完全隔离。
 </details>
 
-27. 解释容器镜像分层系统的工作方式，以及 Copy-on-Write (CoW) 策略如何提升容器效率。
+27. 解释容器镜像分层系统的工作原理，以及写时复制 (CoW) 策略如何提升容器效率。
 
 <details>
 
@@ -533,42 +542,42 @@ Namespaces 和 cgroups 发挥互补作用：
 
 **容器镜像分层系统**：
 
-容器镜像由多个层的堆栈组成。每一层都表示文件系统更改，每条 Dockerfile 命令（FROM、RUN、COPY 等）都会创建一个新层。这些层是只读的，并以层级方式堆叠形成最终镜像。
+容器镜像由多个层叠加组成。每一层都表示文件系统更改；RUN/COPY/ADD 可以创建文件系统差异，而 ENV/CMD 等仅修改元数据的指令不会创建文件系统层。这些层均为只读，并以层级方式叠加，形成最终镜像。
 
-分层系统的关键特性：
-1. **增量构建**：镜像构建期间只重新生成发生变化的层
+分层系统的主要特点：
+1. **增量构建**：构建镜像时仅重新生成发生更改的层
 2. **层共享**：多个镜像共享相同的基础层
-3. **缓存**：复用已经下载的层
+3. **缓存**：复用已下载的层
 
-**Copy-on-Write (CoW) 策略**：
+**写时复制 (CoW) 策略**：
 
-Copy-on-Write 是一种优化策略，会将复制操作延迟到数据实际被修改时才执行。在容器上下文中：
+写时复制是一种优化策略，会延迟复制操作，直到数据实际被修改。在容器环境中：
 
-1. **容器启动**：当容器启动时，会在现有镜像层顶部添加一个薄的可写层。
-2. **读操作**：读取文件时，系统从上到下搜索各层，并使用找到的第一个文件版本。
-3. **写操作**：修改文件时，文件会先被复制到可写层，然后再修改（Copy-on-Write）。原始文件保持不变。
-4. **删除操作**：删除文件时，文件实际上不会被删除；而是在可写层中创建一个 “whiteout” 文件，使其看起来像已删除。
+1. **容器启动**：容器启动时，会在现有镜像层上方添加一个很薄的可写层。
+2. **读取操作**：读取文件时，系统会从上到下搜索各层，并使用找到的第一个文件版本。
+3. **写入操作**：修改文件时，会先将文件复制到可写层，再进行修改（写时复制）。原始文件保持不变。
+4. **删除操作**：删除较低层中的文件时，会在可写层中创建 whiteout；如果文件仅存在于上层，则可以直接在该层将其删除。
 
 **对效率的贡献**：
 
 1. **存储效率**： 
-    - 使用相同基础镜像的多个容器共享镜像层，节省磁盘空间。
-    - 每个容器只需要存储自己的变更数据。
+    - 多个使用同一基础镜像的容器可以共享镜像层，从而节省磁盘空间。
+    - 每个容器只需存储自身更改的数据。
 
-2. **更快的启动时间**：
-    - 启动新容器时，只需要创建可写层，而不需要复制整个文件系统。
-    - 这显著缩短了容器启动时间。
+2. **更快的启动速度**：
+    - 启动新容器时，只需创建可写层，无需复制整个文件系统。
+    - 这会显著缩短容器启动时间。
 
 3. **内存效率**：
-    - 当多个容器使用同一个文件时，可以共享 page cache。
+    - 多个容器使用同一个文件时，可以共享页缓存。
 
 4. **网络效率**：
-    - 镜像下载期间，已经存在的层不需要再次下载。
+    - 下载镜像时，无需重新下载已经存在的层。
 
-由于这些效率优势，容器可以比虚拟机更轻量、更快速地启动，并且同一主机上可以运行更多容器。
+得益于这些效率优势，容器启动时比虚拟机更轻、更快，而且同一主机可以运行更多容器。
 </details>
 
-28. 解释完整的容器生命周期，并描述每种状态（Created、Running、Paused、Restarting、Exited、Dead）下的容器行为和状态转换方法。
+28. 解释完整的容器生命周期，并描述容器在每种状态（Created、Running、Paused、Restarting、Exited、Dead）下的行为和状态转换方式。
 
 <details>
 
@@ -579,46 +588,46 @@ Copy-on-Write 是一种优化策略，会将复制操作延迟到数据实际被
 **容器生命周期状态：**
 
 1. **Created**
-   - 容器已创建但尚未启动
+   - 容器已创建，但尚未启动
    - 使用 `docker create` 命令创建
-   - 进程未运行，资源分配最少
+   - 进程未运行，资源分配很少
    - 转换：`docker start` → Running
 
 2. **Running**
    - 容器的主进程正在运行
-   - 通过 `docker run` 或 `docker start` 进入
-   - 正在主动使用 CPU、内存等资源
-   - 转换：
+   - 通过 `docker run` 或 `docker start` 进入此状态
+   - 正在使用 CPU、内存等资源
+   - 状态转换：
      - `docker pause` → Paused
      - `docker stop` → Exited
      - `docker kill` → Exited
-     - `docker restart` → Restarting → Running
+     - `docker restart` → 停止/启动 → Running
      - 进程终止时 → Exited
 
 3. **Paused**
-   - 所有进程已通过 SIGSTOP 暂停
-   - 通过 `docker pause` 命令进入
-   - 内存保持不变，但不使用 CPU
+   - Linux 进程使用 freezer cgroup 冻结，而不是通过发送 SIGSTOP 来冻结
+   - 使用 `docker pause` 命令进入此状态
+   - 保留内存，但不使用 CPU
    - 转换：`docker unpause` → Running
 
 4. **Restarting**
    - 容器正在重启时的临时状态
-   - 通过 `docker restart` 或重启策略发生
+   - 表示由重启策略触发的自动重启；显式执行 docker restart 会请求按停止/启动顺序执行
    - 转换：自动转换为 Running 或 Exited
 
 5. **Exited**
    - 主进程已终止
    - 保留退出代码
    - 保留文件系统更改
-   - 转换：
+   - 状态转换：
      - `docker start` → Running
-     - `docker rm` → Deleted
+     - `docker rm` → 已删除
 
 6. **Dead**
-   - 容器删除尝试失败时的异常状态
-   - 资源清理未完成
-   - 通常需要手动干预
-   - 尝试使用 `docker rm -f` 强制删除
+   - 容器移除操作失败时出现的异常状态
+   - 资源清理尚未完成
+   - 通常需要手动处理
+   - 尝试使用 `docker rm -f` 强制移除
 
 **状态检查和管理命令：**
 ```bash
@@ -638,13 +647,40 @@ docker rm <id>                  # Delete
 
 **重启策略和生命周期：**
 - `no`：不自动重启
-- `on-failure[:max]`：异常退出时重启，可指定最大次数
-- `always`：始终重启（包括 daemon 重启）
-- `unless-stopped`：始终重启，直到被手动停止
+- `on-failure[:max]`：异常退出时重启，可指定最大重启次数
+- `always`：退出或守护进程重启后重启；手动停止会让重启暂停，直至守护进程重启或显式启动容器
+- `unless-stopped`：始终重启，直至容器被手动停止
 
-理解容器生命周期有助于确保应用程序可用性，并在出现问题时建立适当的恢复策略。
+了解容器生命周期有助于确保应用可用性，并在发生问题时制定适当的恢复策略。
 </details>
 
 ---
 
-[返回学习资料](../../basics/03-container-technology.md) | [下一测验：Kubernetes 入门](./04-kubernetes-introduction-quiz.md)
+[返回学习资料](../../basics/03-container-technology.md) | [下一测验：Kubernetes 简介](./04-kubernetes-introduction-quiz.md)
+
+## 验证参考资料
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

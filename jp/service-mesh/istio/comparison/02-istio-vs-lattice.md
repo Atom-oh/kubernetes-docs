@@ -18,7 +18,7 @@
 7. [ハイブリッドおよびマルチクラウド設計](#hybrid-and-multicloud-design)
 8. [選定基準](#selection-criteria)
 
-## アーキテクチャとプラットフォーム
+## アーキテクチャとプラットフォーム {#architecture-and-platforms}
 
 ### Istio
 
@@ -50,7 +50,7 @@ VPC association と endpoint association は address/connectivity の動作が�
 
 「required sidecar なし」は deployment の特性であり、latency、CPU、signing/controller 作業、または infrastructure 総コストがゼロである根拠ではありません。
 
-## トラフィック管理
+## トラフィック管理 {#traffic-management}
 
 ### 重み付きおよび条件付きルーティング
 
@@ -315,7 +315,7 @@ Lattice は自動的に healthy target を使用します。group 内のすべ�
 
 Service `idleTimeoutSeconds` は 60～600 秒で設定可能です。これは per-route request timeout や retry budget と同じ control ではありません。一般的な勝者を決めつけるのではなく、選択した HTTP、gRPC、TLS path の connection/request limit と failure behavior を test してください。
 
-## セキュリティと Identity
+## セキュリティと Identity {#security-and-identity}
 
 ### Istio: 意図する条件をまとめて要求する
 
@@ -482,7 +482,7 @@ Lattice authorization は L4/service name に限定されません。文書化�
 現在の WAF AssociateWebACL resource list には Lattice service/network は含まれません。サポート対象 WAF component は別途設計された path の一部になり得ますが、古い図の直接的な「Lattice WAF integration」という主張は正当化されません。IAM、WAF、network isolation、application authorization は別々の control のままです。
 
 
-## オブザーバビリティ
+## オブザーバビリティ {#observability}
 
 ### Istio Metrics と Trace
 
@@ -618,7 +618,7 @@ aws logs get-query-results --region "$AWS_REGION" --query-id "$QUERY_ID"
 
 query は Scheduled または Running の可能性があります。直後の空の result は error が発生しなかった証明ではありません。調査対象に合わせて access と time range を絞ります。Kiali/Grafana または CloudWatch dashboard には、実際の data source と access configuration が必要です。dashboard 名は同等の可視性を証明しません。
 
-## インストールと運用
+## インストールと運用 {#installation-and-operations}
 
 ### プラットフォームを選択して検証する
 
@@ -674,7 +674,7 @@ aws vpc-lattice list-targets --region "$AWS_REGION" --target-group-identifier "$
 list-services は service-network filter を受け取りません。network analysis tool はサポート対象 network resource を調べます。Lattice service ID を EC2 network-insights destination として渡しても、完全な application/IAM diagnostic にはなりません。固定の 3-layer process、5 分 repair time、managed な「auto healing」の保証は、これらの command からは導かれません。
 
 
-## コストと履歴上の根拠
+## コストと履歴上の根拠 {#cost-and-historical-evidence}
 
 ### 同じコスト境界を比較する
 
@@ -724,7 +724,7 @@ one-time setup/migration は recurring operation と分けてモデル化しま�
 
 元の匿名 customer story と、主張された re:Invent satisfaction survey には追跡可能な publication や methodology がありませんでした。migration、staffing、hybrid ownership に関する疑問を示唆することはできますが、測定済み success rate を示すことはできません。特定された **CNCF 2024 Annual Survey** は container challenge、project usage、service-mesh usage について尋ねています。主張された「40% Istio adoption failure」や列挙された failure-cause percentage を実証するものではありません。survey を引用する場合は、実際の question、sample、meaning を使用してください。
 
-## ハイブリッドおよびマルチクラウド設計
+## ハイブリッドおよびマルチクラウド設計 {#hybrid-and-multicloud-design}
 
 ![可能な hybrid layout は、cluster 内で Istio を使用し、その外側で別途設定した Lattice service path を使用します。signer、network、TLS、任意の egress-gateway contract を完成させる必要があります。](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
@@ -751,7 +751,7 @@ service-network endpoint は、on-premises または他の接続済み network �
 
 migration では、API、identity、certificate trust、route、telemetry、recovery ownership を map します。namespace label の移動は、Lattice IAM から mesh identity への完全な変更ではありません。各固有の contract については、[VPC Lattice guide](../../../networking/02-vpc-lattice.md)、[AWS integration](../04-aws-integration.md)、[multicluster guide](../advanced/02-multi-cluster.md) を参照してください。
 
-## 選定基準
+## 選定基準 {#selection-criteria}
 
 | 要件 | 判断の根拠 |
 |---|---|

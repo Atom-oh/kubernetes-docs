@@ -47,7 +47,7 @@ Key challenges to solve when building an Agentic AI platform:
 
 Agents using external model APIs do not necessarily need GPUs. Self-hosted inference requires device selection based on weights/precision, KV cache, concurrency, CPU architecture and driver compatibility. Use the [reviewed GPU guide](01-ai-ml-workloads.md) and avoid duplicate driver/toolkit installation on AL2023 NVIDIA AMIs.
 
-MIG partitions supported GPUs. Time-slicing within one MIG instance does not add memory/fault isolation between its sharing workloads; it is not a software security boundary. Likewise, 80 GB does not generally fit 70B FP16 weights.
+MIG partitions supported GPUs. Time-slicing within one MIG instance does not add memory/fault isolation between workloads sharing it; it is not a software security boundary. Likewise, 80 GB does not generally fit 70B FP16 weights.
 
 GPU Operator Helm values are different from ConfigMap/HelmRelease resources. Passing a Flux HelmRelease as helm --values does not apply the intended settings. MIG manager ConfigMap references, profile node labels and plugin strategy must agree. device-plugin.config labels select a configuration key, not the ConfigMap name. MIG reconfiguration can disrupt workloads and was not executed in this audit.
 
@@ -67,7 +67,7 @@ vLLM provides high-performance LLM inference through the following core technolo
 
 Use the [current vLLM guide](02-vllm-deployment.md) for 0.29.0 image/model revisions, startup probes, private Service and actual CLI options. A single-GPU NodePool cannot place the former four-GPU/200Gi Pod. Distinguish TP/PP groups from independent replicas and calculate memory needs.
 
-Prefix cache reuses supported KV prefixes, not full responses. GPU memory utilization is not solely a KV-cache fraction, and swap-space is absent from current CLI. llm-d disaggregation is not two invented prefill/decode images with role arguments; validate its real release's model server, KV connector, scheduler, gateway and hardware/network combination.
+Prefix cache reuses supported KV prefixes, not full responses. GPU memory utilization is not solely a KV-cache fraction, and swap-space is absent from the current CLI. llm-d disaggregation is not two invented prefill/decode images with role arguments; validate its real release's model server, KV connector, scheduler, gateway and hardware/network combination.
 
 ## 4. Inference Gateway
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
 Production thread_id must be bound to authenticated tenant/session identity, with DB authorization, encryption, concurrency and retention controls. :memory: does not survive process exit. SqliteSaver cannot use a PostgreSQL DSN; use the appropriate Postgres saver. Reading get_state_history() alone does not restore execution; use checkpoint configuration and actual resume/replay semantics.
 
-Validate supervisor output against an allowed enum and handle unknown values/budget exhaustion. Substring COMPLETE must not treat INCOMPLETE as success. Asking a model to use a tool does not itself execute or verify the tool.
+Validate supervisor output against an allowed enum and handle unknown values/budget exhaustion. A check for the substring COMPLETE must not treat INCOMPLETE as success. Asking a model to use a tool does not itself execute or verify the tool.
 
 ## 7. Langfuse and Operational Observability
 
@@ -305,9 +305,9 @@ client.flush()
 client.shutdown()
 ```
 
-Langfuse chart 2.1.0 references app 4.24.0, distinct from latest inspected server 4.60.0 (2026-10-15). Web/worker, PostgreSQL, Redis/Valkey, object storage and ClickHouse are required. The chart checks ClickHouse Operator/cert-manager prerequisites. Offline rendering supplied simulated API capability information, not a deployed operator. Default charts include secret environment delivery and are not approved file-only credential deployments.
+Langfuse chart 2.1.0 references app 4.24.0, distinct from the latest inspected server 4.60.0 (2026-10-15). Web/worker, PostgreSQL, Redis/Valkey, object storage and ClickHouse are required. The chart checks ClickHouse Operator/cert-manager prerequisites. Offline rendering supplied simulated API capability information, not a deployed operator. Default charts include secret environment delivery and are not approved file-only credential deployments.
 
-DCGM FB_USED is a quantity, not a percentage; verify units and total memory. GPU utilization80% or temperature85C are not universal health thresholds. Observe latency/queues/errors/throttling and actual device limits together.
+DCGM FB_USED is a quantity, not a percentage; verify units and total memory. GPU utilization of 80% or a temperature of 85C is not a universal health threshold. Observe latency/queues/errors/throttling and actual device limits together.
 
 ### Response Caches and Cost
 

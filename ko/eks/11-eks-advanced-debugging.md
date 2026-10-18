@@ -30,7 +30,7 @@ Amazon EKS 클러스터의 안정적인 운영을 위해서는 체계적인 장�
 
 Node condition·Pod/container state·controller rollout·최근 event·resource sample을 함께 봅니다. `phase!=Running`은 Running이면서 NotReady·CrashLooping인 Pod를 놓치고 정상 완료 Job은 포함합니다. Running phase가 readiness를 보장하지 않습니다. Deployment는 `1/1` 같은 화면 문자열 grep 대신 desired·updated·ready/available replica와 observed generation을 비교합니다.
 
-표준 VPC CNI `aws-node` DaemonSet은 보통 `kube-system`에서 실행되며 `amazon-vpc-cni-system` namespace가 EKS 필수 전제는 아닙니다. 순수 Auto Mode는 networking·node system DNS를 달리 관리하므로 표준 add-on Pod 부재는 node·controller mode와 함께 해석합니다. Metrics Server는 수집된 resource sample이며 고객 가용성 신호가 아닙니다.
+표준 VPC CNI `aws-node` DaemonSet은 보통 `kube-system`에서 실행되며 `amazon-vpc-cni-system` namespace가 EKS 필수 전제는 아닙니다. 순수 Auto Mode는 networking·node system DNS를 달리 관리하므로 표준 add-on Pod 부재는 node·controller mode와 함께 해석합니다. Metrics Server가 제공하는 값은 수집된 resource sample이며 고객 가용성 신호가 아닙니다.
 
 ### 초기 진단 스크립트
 
@@ -110,7 +110,7 @@ test "$TRIAGE_FAILED" -eq 0
 
 `status.tsv`와 각 실패 출력을 확인합니다. 권한 부족·metric 부재·API timeout을 수집 실패로 남기며 하나라도 실패하면 nonzero로 종료합니다. Incident가 해결되었다고 주장하지 않습니다. 완료·Pending·Running 상태를 그대로 보여 주므로 함께 해석합니다. 후속 log는 정확한 namespace·Pod UID·container와 제한한 기간·행 수를 사용합니다.
 
-LoadBalancer 목록은 Service JSON을 로컬 filter합니다. `spec.type`은 기본 Service의 지원 field selector가 아닙니다. 초기 수집에 전체 `cluster-info dump`·자동 archive 업로드·자원 restart·delete를 포함하지 않습니다.
+LoadBalancer 목록은 Service JSON을 로컬에서 filter해 확인합니다. `spec.type`은 기본 Service의 지원 field selector가 아닙니다. 초기 수집에 전체 `cluster-info dump`·자동 archive 업로드·자원 restart·delete를 포함하지 않습니다.
 
 ### 장애 심각도 매트릭스 (Severity Matrix)
 
@@ -121,7 +121,7 @@ LoadBalancer 목록은 Service JSON을 로컬 filter합니다. `spec.type`은 �
 | **P3** | Medium | 부분적 영향 | 4시간 이내 | 일부 파드 재시작, 성능 저하 |
 | **P4** | Low | 경미한 문제 | 24시간 이내 | 로그 수집 지연, 비핵심 모니터링 알림 |
 
-위 심각도별 대응 시간은 조직 목표의 예시입니다. 실제 고객 영향으로 분류하며 control-plane만의 장애에서도 기존 workload traffic은 실행될 수 있습니다.
+위 심각도별 대응 시간은 조직 목표의 예시입니다. 실제 고객 영향으로 분류하며 control-plane만의 장애에서도 기존 workload traffic은 처리될 수 있습니다.
 
 ### 신속한 문제 식별을 위한 의사결정 트리
 
@@ -173,7 +173,7 @@ aws eks describe-update --region "$AWS_REGION" --name "$CLUSTER_NAME" \
 
 ### CloudWatch Logs Insights 쿼리
 
-각 블록을 Bash·SQL이 아닌 **별도의 Logs Insights QL query**로 실행합니다. Console·StartQuery 요청에서 정확한 log group·기간을 선택합니다. CloudWatch가 발견한 EKS JSON audit field를 사용하므로 pipeline이 형식을 바꾸면 실제 record·중첩 log parsing을 확인합니다. 검색 결과가 없다고 서비스 정상·log 전송을 증명하지는 않습니다.
+각 블록을 Bash·SQL이 아닌 **별도의 Logs Insights QL query**로 실행합니다. Console·StartQuery 요청에서 정확한 log group·기간을 선택합니다. CloudWatch가 발견한 EKS JSON audit field를 사용하므로 pipeline이 형식을 바꾸면 실제 record·중첩 log parsing을 확인합니다. 검색 결과가 없다는 사실이 서비스 정상 상태·log 전송을 증명하지는 않습니다.
 
 #### API 오류 메시지
 
@@ -340,7 +340,7 @@ Association·role trust/권한·지원 SDK provider·agent/node 접근성을 확
 
 Projected token에 보편적인 “최대 24시간” 규칙은 없습니다. 요청 기간과 API server의 설정 상한은 다릅니다. Kubelet은 TTL의 80%보다 오래되었거나 24시간이 지난 token의 갱신을 요청하며 앱은 교체된 file을 다시 읽어야 합니다. EKS는 Kubernetes API ServiceAccount token migration의 90일 호환성 연장·stale-token audit annotation을 문서화하지만 이를 안전한 cache 기간이나 IRSA·Pod Identity·임의 외부 verifier의 수명 보장으로 쓰지 않습니다.
 
-다음 예시는 STS audience의 custom token을 한 시간으로 요청합니다. 기본 API token을 연장하거나 IRSA를 자동 구성하지 않습니다. 기존 namespace·ServiceAccount, 검토한 image, role trust, 앱 SDK·token-file 설정은 별도 전제입니다. STS audience token이 Kubernetes API에도 유효하다고 가정하지 않습니다.
+다음 예시는 STS audience의 custom token을 유효 기간 한 시간으로 요청합니다. 기본 API token을 연장하거나 IRSA를 자동 구성하지 않습니다. 기존 namespace·ServiceAccount, 검토한 image, role trust, 앱 SDK·token-file 설정은 별도 전제입니다. STS audience token이 Kubernetes API에도 유효하다고 가정하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -465,7 +465,7 @@ aws ec2 describe-instance-status --region "$AWS_REGION" --instance-ids "$INSTANC
 
 ### Host·관리 node 진단
 
-고객이 접근 가능한 Linux node의 SSM에는 node agent·role/network 전제와 정확한 instance 접근 권한이 필요하며 session을 엽니다. EKS Auto Mode managed instance는 직접 SSH를 지원하지 않습니다. 문서화된 NodeDiagnostic·console-output 또는 지원 kubectl debug node 경로를 사용합니다. 현재 Auto Mode 가이드는 live log용 **명시적 sysadmin debug profile**을 지원합니다. 이는 privileged Pod 생성이며 SSH나 기본 debug 권한이 아닙니다. NodeDiagnostic은 민감한 log·capture를 S3에 업로드할 수 있어 별도 범위·저장 권한 검토가 필요합니다.
+고객이 접근 가능한 Linux node에서 SSM session을 열려면 node agent·role/network 전제와 정확한 instance 접근 권한이 필요합니다. EKS Auto Mode managed instance는 직접 SSH를 지원하지 않습니다. 문서화된 NodeDiagnostic·console-output 또는 지원되는 kubectl debug node 경로를 사용합니다. 현재 Auto Mode 가이드는 live log용 **명시적 sysadmin debug profile**을 지원합니다. 이는 privileged Pod 생성이며 SSH나 기본 debug 권한이 아닙니다. NodeDiagnostic은 민감한 log·capture를 S3에 업로드할 수 있어 별도 범위·저장 권한 검토가 필요합니다.
 
 ```bash
 # Interactive host access: an operational session, not an automatic triage step.
@@ -624,7 +624,7 @@ kubectl --context "$KUBE_CONTEXT" get nodes \
   -l audit.example.com/readiness-demo=true -o json
 ```
 
-Bootstrap gate는 controller와 scheduling의 경합 전에 새 node가 일치하는 startup taint로 등록되어야 합니다. Reporter·필수 system DaemonSet은 해당 taint를 tolerate하고 API에 접근할 수 있어야 합니다. 모든 조건 충족 후 bootstrap-only는 taint를 제거하고 완료를 기록하며 이후 condition 장애에 gate를 다시 적용하지 않습니다. Continuous는 별도 정책 선택입니다.
+Bootstrap gate를 사용하려면 controller와 scheduling의 경합 전에 새 node가 일치하는 startup taint로 등록되어야 합니다. Reporter·필수 system DaemonSet은 해당 taint를 tolerate하고 API에 접근할 수 있어야 합니다. 모든 조건 충족 후 bootstrap-only는 taint를 제거하고 완료를 기록하며 이후 condition 장애에 gate를 다시 적용하지 않습니다. Continuous는 별도 정책 선택입니다.
 
 `NoSchedule`은 taint를 tolerate하지 않는 새 Pod를 제한하며 기존 Pod를 eviction하지 않습니다. Bootstrap-only에 `defaultStatus`를 설정하는 조합은 release에서 거부합니다. 여기의 CRD 검증이 reporter health·admission webhook·모든 EKS node 유형의 운영 동작을 증명하지는 않습니다. 감사 중 node label·taint·controller·condition을 변경하지 않았습니다.
 
@@ -800,7 +800,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get vpa "$VPA_NAME" -o json | 
   recommendation:.status.recommendation,conditions:.status.conditions
 }'
 ```
-HPA 예시는 기존 Deployment·resource-metrics provider와 대상 container의 CPU/memory request가 필요합니다. Utilization은 limit가 아닌 request 대비 비율입니다. 여러 metric은 가장 큰 권장 replica를 선택하며 missing·error metric도 결정에 영향을 줍니다. Memory utilization이 leak·OOM의 보편적 해결은 아니며 scale-down 안정화·변경률 정책도 일시정지 스위치가 아닙니다.
+HPA 예시에는 기존 Deployment·resource-metrics provider와 대상 container의 CPU/memory request가 필요합니다. Utilization은 limit가 아닌 request 대비 비율입니다. 여러 metric을 사용할 때는 가장 큰 권장 replica를 선택하며 missing·error metric도 결정에 영향을 줍니다. Memory utilization이 leak·OOM의 보편적 해결은 아니며 scale-down 안정화·변경률 정책도 일시정지 스위치가 아닙니다.
 
 VPA는 별도 설치합니다. 실제 recommendation·condition·update mode·지원 release를 확인합니다. 현재 안내에서 legacy Auto mode명은 deprecated이며 recommendation 전용 Off 또는 검토한 update mode를 선택합니다. HPA의 동일한 request 분모를 VPA가 변경하도록 할 때는 조정이 필요합니다.
 
@@ -943,7 +943,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" -c "$CONTAINE
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" -c "$CONTAINER_NAME" \
   -- nslookup kubernetes.default.svc.cluster.local.
 ```
-관련 logging 설정이 없으면 CoreDNS가 모든 DNS query를 기록하지는 않습니다. 새 test Pod는 장애 workload와 namespace·node·DNS·identity·policy 경로가 다를 수 있습니다. 실제 resolver 문맥에서 절대 해석 검증에는 끝에 점이 있는 FQDN을 사용합니다.
+관련 logging 설정이 없으면 CoreDNS가 모든 DNS query를 기록하지는 않습니다. 새 test Pod는 장애 workload와 namespace·node·DNS·identity·policy 경로가 다를 수 있습니다. 실제 resolver 문맥에서 절대 해석을 검증할 때는 끝에 점이 있는 FQDN을 사용합니다.
 
 아래 ndots=2는 지연의 보편적 해결책이 아닌 실험 값입니다. Search 동작·부분 수식 이름에 영향을 줄 수 있습니다. Libc·언어 resolver·앱 cache가 다르므로 glibc의 single-request-reopen 같은 옵션을 이식 가능한 전제로 쓰지 않습니다.
 
@@ -1213,7 +1213,7 @@ fi
 ```
 PVC 이름은 namespace 안에서 고유하므로 consumer도 해당 namespace에서 검색해야 합니다. Claim/PV UID·controller owner·VolumeAttachment·finalizer를 확인합니다. Deletion timestamp에 따른 Terminating 표시는 별도 PVC status.phase가 아닙니다. WaitForFirstConsumer에서는 스케줄 가능한 consumer가 생기기 전 Pending이 정상일 수 있습니다. StorageClassName 생략과 class 없음을 명시한 빈 문자열은 다릅니다.
 
-삭제를 끝내려고 PVC/PV finalizer를 모두 null로 만들지 않습니다. PVC protection·CSI detach/delete·reclaim policy는 다른 생명주기를 보호합니다. 재생성할 수 있는 controller를 포함한 consumer·attachment·controller 오류·backup·data owner를 먼저 확인합니다. 최후의 orphan 복구는 driver별 절차와 검증한 data/attachment 상태가 필요하며 metadata 제거가 안전한 detach·data 복원이 아닙니다. Delete는 backing storage를 지울 수 있고 Retain도 backup은 아닙니다.
+삭제를 끝내려고 PVC/PV finalizer를 모두 null로 만들지 않습니다. PVC protection·CSI detach/delete·reclaim policy는 다른 생명주기를 보호합니다. 재생성할 수 있는 controller를 포함한 consumer·attachment·controller 오류·backup·data owner를 먼저 확인합니다. 최후의 orphan 복구에는 driver별 절차와 검증한 data/attachment 상태가 필요하며 metadata 제거가 안전한 detach·data 복원이 아닙니다. Delete는 backing storage를 지울 수 있고 Retain도 backup은 아닙니다.
 
 ### WaitForFirstConsumer·Topology·암호화
 
@@ -1247,7 +1247,7 @@ aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$EBS_VOLUME_ID" \
 ```
 Auto Mode는 별도 provisioner·node 호환 요구를 사용합니다. **encrypted: "true"를 명시하고 실제 volume·KMS key를 확인합니다.** 현재 Auto Mode StorageClass parameter 표의 encrypted 기본값은 false입니다. Auto Mode node root/data disk 암호화가 모든 workload PVC의 암호화를 증명하지 않습니다. StorageClass 변경이 기존 volume을 소급 변경하지도 않습니다.
 
-WaitForFirstConsumer만으로 기존 EBS를 다른 AZ에 attach할 수 없습니다. Migration·복구는 문서의 snapshot 또는 통제된 static-volume 절차, 정확한 ownership tag·IAM·앱 일관성을 고려한 data 처리가 필요하며 driver명 편집으로 끝나지 않습니다. Snapshot controller·CRD도 별도 전제이고 snapshot 생성이 restore 성공의 증명은 아닙니다. ReadWriteOnce는 한 node 기준이며 보편적으로 “Pod 하나”를 뜻하지 않습니다. Auto Mode SELinux가 추가 cross-Pod 제약을 줄 수 있으므로 data를 보존하고 원하는 접근·일관성 모델을 검토합니다.
+WaitForFirstConsumer만으로 기존 EBS를 다른 AZ에 attach할 수 없습니다. Migration·복구에는 문서의 snapshot 또는 통제된 static-volume 절차, 정확한 ownership tag·IAM·앱 일관성을 고려한 data 처리가 필요하며 driver명 편집으로 끝나지 않습니다. Snapshot controller·CRD도 별도 전제이고 snapshot 생성이 restore 성공의 증명은 아닙니다. ReadWriteOnce는 한 node 기준이며 보편적으로 “Pod 하나”를 뜻하지 않습니다. Auto Mode SELinux가 추가 cross-Pod 제약을 줄 수 있으므로 data를 보존하고 원하는 접근·일관성 모델을 검토합니다.
 
 [EBS CSI/IAM](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) · [Managed-policy scopes](https://docs.aws.amazon.com/eks/latest/userguide/security-iam-awsmanpol.html) · [Auto Mode parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) · [PV lifecycle](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 
@@ -1386,7 +1386,7 @@ fields @timestamp, @message
 
 ### PrometheusRule 선택·알림
 
-Release label을 대상 Prometheus ruleSelector에 맞는 값으로 바꾸고 ruleNamespaceSelector를 확인합니다. CRD 접수만으로 rule loading·알림 전송을 증명하지 못합니다. Threshold·기간은 workload SLO에 맞출 예시이며 alert가 자동 삭제·restart를 승인하지 않습니다.
+Release label을 대상 Prometheus ruleSelector에 맞는 값으로 바꾸고 ruleNamespaceSelector를 확인합니다. CRD 접수만으로 rule loading·알림 전송을 증명하지 못합니다. Threshold·기간은 workload SLO에 맞춰 조정할 예시이며 alert가 자동 삭제·restart를 승인하지 않습니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1689,7 +1689,7 @@ spec:
     - protocol: TCP
       port: 4318
 ```
-OTLP client는 certificate를 신뢰하고 생성 Service·protocol·4317/4318 port를 일치시켜야 합니다. NetworkPolicy enforcement가 필요하며 policy는 Collector Pod만 선택하고 같은 namespace의 label을 가진 client를 허용합니다. 필요한 metrics-target TLS/auth·workload ingress도 설정합니다. Prometheus discovery는 한 namespace에서 annotation으로 선택한 Running Pod의 metrics라는 TCP port만 사용합니다. 실제 endpoint port를 사용해 잘못된 annotation-port rewrite를 피합니다.
+OTLP client는 certificate를 신뢰하고 생성된 Service·protocol·4317/4318 port를 일치시켜야 합니다. NetworkPolicy enforcement가 필요하며 policy는 Collector Pod만 선택하고 같은 namespace의 label을 가진 client를 허용합니다. 필요한 metrics-target TLS/auth·workload ingress도 설정합니다. Prometheus discovery는 한 namespace에서 annotation으로 선택한 Running Pod의 metrics라는 TCP port만 사용합니다. 실제 endpoint port를 사용해 잘못된 annotation-port rewrite를 피합니다.
 
 예시 replica 하나는 모든 scrape 중복을 피하기 위한 값이며 확장에는 target sharding/allocator 설계가 필요합니다. Memory_limiter를 batch 앞에 두어도 memory/batch 값이 무손실을 보장하지 않습니다. X-Ray는 trace, awsemf는 CloudWatch Logs 경유 metric, AMP는 SigV4 remote write를 받습니다. Custom EKS/DiagnosticsExample 지표가 자동으로 Container Insights schema/dashboard가 되지는 않습니다. 고정 log명은 {ClusterName}이 undefined로 치환되는 문제를 피하지만 resource attribute가 routing에 영향을 줄 수 있어 producer data·IAM을 제한합니다. Cardinality 검토 없이 모든 resource attribute를 metric label로 변환하지 않습니다.
 
@@ -1829,7 +1829,7 @@ inhibit_rules:
 
 ### CloudWatch Threshold·Anomaly·Composite Alarm
 
-실제 metric dimension·단위·statistic을 사용합니다. List-metrics filter보다 많은 dimension의 series가 반환될 수 있으므로 게시된 **완전한** dimension 집합 하나를 선택합니다. Container Insights 설정이 필요하며 앞 절의 custom ADOT namespace가 대체하지 않습니다. Node_cpu_utilization은 Pod CPU/request/limit 비율과 다릅니다. 아래 alarm명·topic ARN·cluster 값은 예시이며 기존 이름의 설정을 교체할 수 있는 명령 전에 확인합니다. Topic·접근/KMS policy·recipient는 별도 준비합니다.
+실제 metric dimension·단위·statistic을 사용합니다. List-metrics filter보다 많은 dimension의 series가 반환될 수 있으므로 게시된 **완전한** dimension 집합 하나를 선택합니다. Container Insights 설정이 필요하며 앞 절의 custom ADOT namespace가 이를 대체하지 않습니다. Node_cpu_utilization은 Pod CPU/request/limit 비율과 다릅니다. 아래 alarm명·topic ARN·cluster 값은 예시이며 기존 이름의 설정을 교체할 수 있는 명령을 실행하기 전에 확인합니다. Topic·접근/KMS policy·recipient는 별도 준비합니다.
 
 ```bash
 # Read-only: select an actual published metric and its complete dimension set.
@@ -1852,7 +1852,7 @@ aws cloudwatch put-metric-alarm --region "$AWS_REGION" \
 ```
 예시는 300초 period 세 개와 breach datapoint 세 개, 즉 15분 평가 window이며 2분 감지 보장이 아닙니다. TreatMissingData=missing은 data 부재 상태를 보존합니다. 다른 정책은 지표 의미에 맞을 때만 선택합니다. 생성 성공만 믿지 말고 초기 INSUFFICIENT_DATA·상태 전환을 확인합니다.
 
-Anomaly 예시는 API의 metric/band 구조를 따릅니다. M1은 관측 series, ad1은 ThresholdMetricId가 선택하는 band이며 model·period·statistic·dimension이 일치해야 합니다. 적절한 data·학습이 필요하고 장애 예측 보장이 아닙니다. JSON의 예시 dimension을 검토한 dimensions file과 일치하도록 교체한 뒤 사용합니다.
+Anomaly 예시는 API의 metric/band 구조를 따릅니다. M1은 관측 series, ad1은 ThresholdMetricId가 선택하는 band이며 model·period·statistic·dimension이 일치해야 합니다. 적절한 data·학습이 필요하고 장애 예측을 보장하지는 않습니다. JSON의 예시 dimension을 검토한 dimensions file과 일치하도록 교체한 뒤 사용합니다.
 
 ```json
 {
@@ -2116,7 +2116,7 @@ curl --fail --location --silent --show-error --connect-timeout 5 --max-time 30 \
   --output "$COLLECTOR_DIR/eks-log-collector.sh"
 sha256sum "$COLLECTOR_DIR/eks-log-collector.sh"
 ```
-Digest는 별도로 검토한 artifact 기록과 비교합니다. Sha256sum 출력만으로 인증된 것은 아닙니다. Collector 실행은 disk/CPU·민감 정보 영향을 고려한 별도 인가 host 작업입니다. Archive를 검사·삭제 처리한 뒤 소유 AWS Support case에 수동 첨부합니다. Kubeconfig/key·앱 log·endpoint·env 정보가 공개 공유에 안전하다고 가정하지 않습니다. 감사에서 support archive를 생성·업로드하지 않았습니다.
+Digest는 별도로 검토한 artifact 기록과 비교합니다. Sha256sum 출력만으로 인증된 것은 아닙니다. Collector 실행은 disk/CPU·민감 정보에 대한 영향을 고려한 별도로 인가받은 host 작업입니다. Archive를 검사·삭제 처리한 뒤 소유 AWS Support case에 수동 첨부합니다. Kubeconfig/key·앱 log·endpoint·env 정보가 공개 공유에 안전하다고 가정하지 않습니다. 감사에서 support archive를 생성·업로드하지 않았습니다.
 
 [Kubeconform](https://github.com/yannh/kubeconform) · [K9s](https://github.com/derailed/k9s) · [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) · [EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 

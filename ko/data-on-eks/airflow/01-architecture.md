@@ -59,7 +59,7 @@ Airflow 2는 2026년 4월 22일 EOL이며 아래 비교는 마이그레이션 �
 Airflow 3부터 HA가 가능해졌다”는 설명은 맞지 않습니다. 분리하면 파싱과 스케줄링을
 독립적으로 조정하기 좋지만 새 DAG의 파싱 지연, 공유 CPU·메모리·metadata DB 병목,
 과도한 parser 수 등은 계속 scheduling latency에 영향을 줄 수 있습니다.
-Replica 수만 늘려 안전성이 자동으로 확보되지 않습니다.
+Replica 수만 늘린다고 안전성이 자동으로 확보되지는 않습니다.
 
 ## 3. Metadata, broker와 DAG 코드
 
@@ -114,7 +114,7 @@ DAG 전체 기본값은 `default_args={"executor": "KubernetesExecutor"}`처럼 
 
 ## 5. Part 2 준비와 검증 범위
 
-Chart 1.22.0은 Helm **3.19.0+**와 Airflow **3.1.0+**를 대상으로 합니다.
+Chart 1.22.0은 Helm **3.19.0**+와 Airflow **3.1.0**+를 대상으로 합니다.
 Airflow 3.3.1의 Kubernetes 테스트 목록은 **1.30–1.35**입니다. 이것을 모든 미래
 Kubernetes 버전 지원이나 오래된 EKS 1.30 권장으로 해석하지 않습니다.
 실제 EKS 지원 기간·선택한 provider/chart 호환성을 함께 확인합니다.

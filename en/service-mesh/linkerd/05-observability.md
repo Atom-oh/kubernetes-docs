@@ -59,7 +59,7 @@ Open the displayed local URL. Keep this local access path bound to loopback; an 
 
 [View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-05-observability-1.html)
 
-The default bundled Prometheus retains six hours and uses transient storage. The selected chart pins its own Prometheus image; do not silently substitute a new major version. Persistence is configurable as described in the installation guide, and long-term/HA storage is a separate design.
+The default bundled Prometheus retains metrics for six hours and uses transient storage. The selected chart pins its own Prometheus image; do not silently substitute a new major version. Persistence is configurable as described in the installation guide, and long-term/HA storage is a separate design.
 
 ```bash
 kubectl -n linkerd-viz port-forward --address 127.0.0.1 svc/prometheus 9090:9090
@@ -740,7 +740,7 @@ spec:
     isRetryable: false
 ```
 
-Explicit all conditions make method/path matching clear. Profile routes, HTTPRoute policy metrics and arbitrary application paths are different views:
+Explicit use of all conditions makes method/path matching clear. Profile routes, HTTPRoute policy metrics and arbitrary application paths are different views:
 
 ```bash
 linkerd viz routes service/api-service -n my-app

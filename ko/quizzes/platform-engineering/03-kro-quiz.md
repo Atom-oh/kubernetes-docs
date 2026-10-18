@@ -27,7 +27,7 @@ spec.resources입니다. 각 항목의 id와 template 또는 externalRef를 사�
 <details>
 <summary>정답 보기</summary>
 
-리소스 참조 그래프와 인스턴스의 지속적 조정을 제공합니다. Helm은 chart 렌더링과 release 관리에 사용하며 두 도구를 함께 쓸 수 있습니다. 어느 하나가 모든 workload에 더 낫다는 뜻은 아닙니다.
+리소스 참조 그래프와 인스턴스의 지속적 조정을 제공합니다. Helm은 chart 렌더링과 release 관리에 사용되며 두 도구를 함께 쓸 수 있습니다. 어느 하나가 모든 workload에 더 낫다는 뜻은 아닙니다.
 
 </details>
 
@@ -63,7 +63,7 @@ spec.schema.status에 CEL 식을 정의합니다. 예를 들어 availableReplica
 <details>
 <summary>정답 보기</summary>
 
-다른 resource id를 참조하는 CEL에서 DAG를 추론합니다. readyWhen이 있으면 의존 자원은 해당 조건도 기다립니다. 순환 참조는 허용하지 않으며 YAML 나열 순서가 dependency를 대신하지 않습니다.
+다른 resource id를 참조하는 CEL에서 DAG를 추론합니다. readyWhen이 있으면 의존 자원은 해당 조건의 충족도 기다립니다. 순환 참조는 허용하지 않으며 YAML 나열 순서가 dependency를 대신하지 않습니다.
 
 </details>
 

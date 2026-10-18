@@ -376,7 +376,7 @@ FROM docker.io/library/docker@sha256:eccaacfeed644c7de222ff047483568cb988dde9547
 RUN apk add --no-cache bash aws-cli jq
 ```
 
-The pipeline uses native matrix jobs with 1:1 build → scan → publish dependencies, supported by GitLab 19.3. Each archive is scanned before publishing that same image. Trivy's native JSON is a downloadable artifact, not mislabeled as GitLab's container-scanning report schema. Final per-architecture digest files have different names, avoiding artifact overwrites in the manifest job.
+The pipeline uses native matrix jobs with 1:1 build → scan → publish dependencies, supported by GitLab 19.3. Each archive is scanned before that same image is published. Trivy's native JSON is a downloadable artifact, not mislabeled as GitLab's container-scanning report schema. Final per-architecture digest files have different names, avoiding artifact overwrites in the manifest job.
 
 ```yaml
 # gitlab-ci.yaml

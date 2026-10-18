@@ -143,7 +143,7 @@ Use the current SDK example in the [chapter](../../ai-ml/03-agentic-ai-platform.
 <details>
 <summary>Answer and explanation</summary>
 
-Keep original question separate from search_query, set retry and recursion bounds, generate with evidence, rewrite within budget, then abstain when none is found. The chapter verifies these paths and SQLite reopening using local deterministic callbacks.
+Keep the original question separate from search_query, set retry and recursion bounds, generate with evidence, rewrite within budget, then abstain when none is found. The chapter verifies these paths and SQLite reopening using local deterministic callbacks.
 </details>
 
 ## 19. Advanced: what boundaries matter for a financial consultation agent?

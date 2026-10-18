@@ -29,7 +29,7 @@ IRSA 또는 Pod Identity를 준비할 관리자 권한, 기존 S3 bucket·역할
 
 구버전 AWS SDK JAR를 임의로 섞거나 hadoop-aws 하나만 추가하지 않습니다.
 아래 POM은 Hadoop common을 다시 복사하지 않고 hadoop-aws의 런타임 의존성을
-해결합니다. 다른 Spark 이미지·EMR runtime에는 해당 번들의 버전을 다시 확인합니다.
+해결합니다. 다른 Spark 이미지·EMR runtime에서는 해당 번들의 버전을 다시 확인합니다.
 
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0">
@@ -141,7 +141,7 @@ provider도 ContainerCredentialsProvider로 바꿉니다. OIDC provider는 IRSA 
 ## 3. Driver RBAC와 실행 설정
 
 driver-rbac.yaml로 저장합니다. 이 예제는 PVC 생성 등 추가 기능을 쓰지 않는
-기본 경로입니다. 새 기능이 필요한 권한은 해당 기능을 검증하며 추가합니다.
+기본 경로입니다. 새 기능에 필요한 권한은 해당 기능을 검증하며 추가합니다.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1

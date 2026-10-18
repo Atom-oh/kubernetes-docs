@@ -88,7 +88,7 @@ spec:
     spec: {}
 ```
 
-The Kubernetes feature is stable from 1.33; Istio's native-sidecar annotation is documented Alpha. Verify actual injected initContainers and application shutdown behavior. Ordering alone does not guarantee zero failed requests or wait forever beyond the Pod's grace period. Ambient workloads have no per-Pod Envoy to configure this way.
+The Kubernetes feature is stable from 1.33; Istio's native-sidecar annotation is documented as Alpha. Verify actual injected initContainers and application shutdown behavior. Ordering alone does not guarantee zero failed requests or wait forever beyond the Pod's grace period. Ambient workloads have no per-Pod Envoy to configure this way.
 
 There is no documented sidecar.istio.io/terminationGracePeriodSeconds annotation. Set the real spec.terminationGracePeriodSeconds field.
 
@@ -193,7 +193,7 @@ Validate the newly injected resource settings and namespace LimitRange/ResourceQ
 
 ### Problem Description
 
-Upstream connect errors,503s and WRONG_VERSION_NUMBER can have TLS, protocol, endpoint or network causes. PeerAuthentication controls **accepted inbound mTLS**. DestinationRule TLS settings control outbound TLS from the client-side Envoy. Setting the client's PeerAuthentication to STRICT does not itself force that client to originate mTLS.
+Upstream connect errors, 503s and WRONG_VERSION_NUMBER can have TLS, protocol, endpoint or network causes. PeerAuthentication controls **accepted inbound mTLS**. DestinationRule TLS settings control outbound TLS from the client-side Envoy. Setting the client's PeerAuthentication to STRICT does not itself force that client to originate mTLS.
 
 ### PeerAuthentication and DestinationRule
 
@@ -231,7 +231,7 @@ Use the relevant caller proxy for outbound cluster configuration and the receivi
 
 ### Issue 1: Traffic Not Being Routed
 
-A404 can come from Envoy or the application. Identify its source and response details before changing routes. A VirtualService with hosts:myapp.example.com routing to the internal Service myapp is **valid** when attached to the appropriate gateway and matched by the request's Host/authority. Frontend host and backend service name need not be identical.
+A 404 can come from Envoy or the application. Identify its source and response details before changing routes. A VirtualService with hosts:myapp.example.com routing to the internal Service myapp is **valid** when attached to the appropriate gateway and matched by the request's Host/authority. Frontend host and backend service name need not be identical.
 
 For mesh traffic, match the requested service host; for ingress traffic, match the gateway's admitted domain and attach the VirtualService to that gateway. Short destination names are resolved relative to the configuration resource's namespace, so explicit FQDNs reduce cross-namespace ambiguity.
 

@@ -171,7 +171,7 @@ spec:
 ```
 
 The `release` label must match your Prometheus resource's PodMonitor/PrometheusRule
-selectors. Its namespace selectors and RBAC must also discover resources in `kafka`.
+selectors. Its namespace selectors and RBAC must also allow discovery of resources in `kafka`.
 Check network policies and port access from Prometheus to these pods.
 
 A correctly configured **ServiceMonitor also works** with a matching Service.

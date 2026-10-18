@@ -405,7 +405,7 @@ syncPolicy:
 
 ## Health Assessment
 
-Synced describes compared desired/live fields, not proof that the service handles requests. Healthy follows configured per-resource checks. Custom resources without a check may be omitted from application health and need an appropriate definition.
+Synced describes compared desired/live fields but is not proof that the service handles requests. Healthy follows configured per-resource checks. Custom resources without a check may be omitted from application health and need an appropriate definition.
 
 ### Built-in Health Checks
 
@@ -597,7 +597,7 @@ Fixed-name Jobs need lifecycle rules such as BeforeHookCreation for repeat runs.
 
 ## Ignore Differences
 
-Exclude only specific fields owned by a known other controller. This Application.spec fragment ignores HPA-managed replicas on my-deployment in production.
+Exclude only specific fields owned by another known controller. This Application.spec fragment ignores HPA-managed replicas on my-deployment in production.
 
 ```yaml
 spec:
@@ -613,7 +613,7 @@ spec:
     - RespectIgnoreDifferences=true
 ```
 
-ignoreDifferences normally affects comparison. RespectIgnoreDifferences=true extends it to synchronization, but initial creation without a live resource still applies the desired manifest. Broad image, secret, entire-resources or all-manager rules can hide important drift.
+ignoreDifferences normally affects comparison. RespectIgnoreDifferences=true extends it to synchronization, but initial creation without a live resource still applies the desired manifest. Broad image, secret, entire-resource or all-manager rules can hide important drift.
 
 For webhook arrays, select by name rather than fixed indices and scope the resource name too. Use this only when the CA-injection controller and webhook identity are known.
 

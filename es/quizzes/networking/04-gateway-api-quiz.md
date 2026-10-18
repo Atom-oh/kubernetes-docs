@@ -1,389 +1,347 @@
 # Cuestionario de Gateway API
 
-Este cuestionario evalúa tu comprensión del modelo de recursos de Kubernetes Gateway API, las implementaciones y la migración desde Ingress.
+Basado en la versión 1.6 de la API y en los requisitos previos específicos de la implementación descritos en la guía. Cada ejemplo de código representa un escenario independiente.
 
-## Preguntas del cuestionario
+## 1. ¿Cuál NO es un objetivo de diseño de Gateway API?
 
-### 1. ¿Cuál NO es una forma en que Gateway API mejora la API de Ingress existente?
-
-A. Separación de recursos basada en roles (proveedor de infraestructura, operador del clúster, desarrollador de aplicaciones)
-B. Compatibilidad nativa con diversos protocolos como TCP, UDP y gRPC
-C. Implementación de funcionalidades mediante campos estandarizados en lugar de anotaciones
-D. Integración de todas las funciones de red en un único recurso
+- A. Definir con mayor claridad la propiedad de los recursos entre infraestructura, operadores y aplicaciones
+- B. Ofrecer tipos de API para varios protocolos de tráfico
+- C. Proporcionar campos estándar con niveles definidos de compatibilidad de funciones
+- D. Combinar todas las funciones de red en un solo objeto
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Integración de todas las funciones de red en un único recurso**
-
-**Explicación:**
-Mejoras de Gateway API:
-- **Separación de roles**: La responsabilidad se separa en GatewayClass (infraestructura), Gateway (operador) y Routes (desarrollador)
-- **Múltiples protocolos**: HTTPRoute, GRPCRoute, TCPRoute, TLSRoute, UDPRoute
-- **Estandarización**: Definición de funcionalidades mediante campos explícitos sin anotaciones
-- **Extensibilidad**: Facilidad para agregar nuevas funcionalidades basadas en CRD
-
-Gateway API se separa en varios recursos, por lo que la «integración en un único recurso» es incorrecta.
+D. Los recursos GatewayClass, Gateway y Route separan responsabilidades. Los controladores aún deben implementar la versión, el perfil y las funciones pertinentes de la API; RBAC/admission aplica la propiedad. Los campos estándar mejoran la portabilidad sin eliminar las extensiones específicas de cada implementación.
 
 </details>
 
-### 2. En la separación de roles de Gateway API, ¿quién gestiona GatewayClass?
+## 2. ¿Quién suele administrar GatewayClass en el modelo basado en roles?
 
-A. Desarrollador de aplicaciones
-B. Operador del clúster
-C. Proveedor de infraestructura
-D. Administrador de seguridad
+- A. Cada desarrollador de aplicaciones por separado
+- B. Solo el propietario de un Service de backend
+- C. El proveedor de infraestructura o el equipo de plataforma/redes
+- D. Un cliente de aplicación sin autenticar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Proveedor de infraestructura**
-
-**Explicación:**
-Separación de roles de Gateway API:
-
-| Rol | Recursos gestionados | Responsabilidad |
-|------|------------------|----------------|
-| **Proveedor de infraestructura** | GatewayClass | Definir la configuración básica de infraestructura, especificar el controller |
-| **Operador del clúster** | Gateway, ReferenceGrant | Aprovisionamiento de balanceador de carga, gestión de permisos de namespace |
-| **Desarrollador de aplicaciones** | HTTPRoute, GRPCRoute, etc. | Definir reglas de enrutamiento de aplicaciones |
-
-GatewayClass es definido por proveedores de nube o equipos de red.
+C. GatewayClass selecciona el controlador instalado y los parámetros específicos de implementación que admita. Los operadores de plataforma administran Gateways y las políticas de asociación; los desarrolladores administran Routes. El propietario del espacio de nombres al que se hace referencia administra su ReferenceGrant. Estos son roles operativos, no permisos automáticos de Kubernetes.
 
 </details>
 
-### 3. ¿Cuál es la diferencia correcta entre la terminación y el passthrough de TLS en Gateway?
+## 3. ¿Cuál es la diferencia entre la terminación TLS y el paso directo?
 
-A. Terminate pasa TLS al backend, Passthrough termina en Gateway
-B. Terminate termina TLS en Gateway, Passthrough pasa TLS al backend
-C. Ambos modos se comportan de forma idéntica
-D. Terminate solo admite HTTP, Passthrough solo admite HTTPS
+- A. La terminación reenvía sin cambios los bytes cifrados
+- B. La terminación finaliza TLS descendente en el gateway; con el paso directo, TLS termina en el backend
+- C. Ambos requieren un listener HTTPS con modos intercambiables
+- D. La terminación siempre obliga a que el tráfico hacia el backend vaya en texto sin cifrar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Terminate termina TLS en Gateway, Passthrough pasa TLS al backend**
-
-**Explicación:**
-Modos de TLS:
-
-| Modo | Descripción | Caso de uso |
-|------|-------------|----------|
-| **Terminate** | TLS termina en Gateway; el backend recibe texto sin cifrar | HTTPS estándar, gestión centralizada de certificados |
-| **Passthrough** | TLS se pasa al backend tal cual | Cifrado de extremo a extremo, el backend gestiona los certificados |
+B. La terminación HTTPS y el paso directo de TLS usan configuraciones distintas de listener. El cifrado del backend después de la terminación es una decisión independiente y requiere una BackendTLSPolicy compatible o una configuración de la implementación.
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-tls
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
     protocol: HTTPS
+    port: 443
     tls:
-      mode: Terminate  # or Passthrough
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
+  - name: tls-passthrough
+    protocol: TLS
+    port: 8443
+    tls:
+      mode: Passthrough
 ```
+
+Deben existir el Secret TLS referenciado y las Routes/backends apropiados. No se puede habilitar el paso directo en un listener HTTPS con solo cambiar el modo.
 
 </details>
 
-### 4. ¿Cómo se implementa la división de tráfico (ponderaciones) en HTTPRoute?
+## 4. ¿Cómo expresa HTTPRoute una división ponderada entre backends?
 
-A. Usar el campo `trafficSplit`
-B. Especificar el campo `weight` en varios `backendRefs`
-C. Usar la anotación `canary`
-D. Crear un CRD TrafficSplit independiente
+- A. Con un campo trafficSplit
+- B. Con weight en varios backendRefs
+- C. Con una anotación canary obligatoria
+- D. Con un CRD TrafficSplit de otra API
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Especificar el campo `weight` en varios `backendRefs`**
-
-**Explicación:**
-División de tráfico en HTTPRoute:
+B. Con la configuración de Gateway/Namespace de la guía y los Services de backend existentes:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
+metadata:
+  name: quiz-split
+  namespace: production
 spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
   rules:
-    - backendRefs:
-        - name: app-stable
-          port: 80
-          weight: 90  # 90%
-        - name: app-canary
-          port: 80
-          weight: 10  # 10%
+  - backendRefs:
+    - name: app-stable
+      port: 80
+      weight: 90
+    - name: app-canary
+      port: 80
+      weight: 10
 ```
 
-Casos de uso:
-- Despliegues canary
-- Pruebas A/B
-- Despliegues blue-green
-
-Las ponderaciones no necesitan sumar 100; se calculan como proporciones.
+Los pesos expresan una distribución relativa y no tienen que sumar 100. Una muestra pequeña no tiene que coincidir exactamente con la proporción. Los pesos seleccionan backends detrás de este Gateway; no trasladan clientes de un frontend Ingress antiguo a uno Gateway nuevo.
 
 </details>
 
-### 5. ¿Cuál es el propósito principal de ReferenceGrant?
+## 5. ¿En qué espacio de nombres se crea un ReferenceGrant para un backend entre espacios de nombres?
 
-A. Gestión de permisos de recursos Gateway
-B. Permitir referencias entre namespaces
-C. Gestión de compatibilidad de versiones de API
-D. Autorización de certificados TLS
+- A. Siempre en el espacio de nombres de la Route
+- B. En el espacio de nombres del backend referenciado y a cargo de su propietario
+- C. Solo en kube-system
+- D. En la estación de trabajo del cliente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Permitir referencias entre namespaces**
-
-**Explicación:**
-Uso de ReferenceGrant:
+B. El destinatario autoriza la referencia. Por ejemplo:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: allow-routes
+  name: allow-shared-api
   namespace: backend-services
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: frontend
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: production
   to:
-    - group: ""
-      kind: Service
+  - group: ''
+    kind: Service
+    name: shared-api
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: shared-api
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /shared
+    backendRefs:
+    - name: shared-api
+      namespace: backend-services
+      port: 80
 ```
 
-Casos de uso:
-- Permitir referencias a Services en otros namespaces
-- Que Gateway haga referencia a Secrets (certificados TLS) en otros namespaces
-- Autorización explícita para seguridad
-
-Las referencias entre namespaces están bloqueadas de forma predeterminada.
+El Service shared-api debe existir en backend-services. `to.name` limita la autorización a ese Service. Para asociar una Route a un Gateway se usan `parentRefs` y `allowedRoutes`; esa asociación no necesita un ReferenceGrant. Un grant no autentica a los usuarios de la aplicación.
 
 </details>
 
-### 6. ¿Cuál NO es un recurso incluido en el canal Standard de Gateway API?
+## 6. ¿Qué recurso no forma parte del paquete Standard de Gateway API v1.6?
 
-A. GatewayClass
-B. Gateway
-C. HTTPRoute
-D. TCPRoute
+- A. GatewayClass
+- B. GRPCRoute
+- C. TCPRoute
+- D. Istio VirtualService
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. TCPRoute**
-
-**Explicación:**
-Clasificación de canales de Gateway API:
-
-**Canal Standard (GA)**:
-- GatewayClass
-- Gateway
-- HTTPRoute
-- ReferenceGrant
-
-**Canal Experimental (Beta/Alpha)**:
-- GRPCRoute
-- TCPRoute
-- TLSRoute
-- UDPRoute
-
-Los recursos del canal Standard usan la versión de API `gateway.networking.k8s.io/v1`; Experimental usa `v1alpha2` o `v1beta1`.
+D. VirtualService es una API de Istio. El paquete Standard de v1.6 incluye, entre otros recursos, HTTPRoute, GRPCRoute, TCPRoute, TLSRoute y UDPRoute. La respuesta antigua que afirmaba que TCPRoute era Experimental ya no es correcta. El canal y la versión de la API son distintos: ReferenceGrant v1beta1 sigue disponible en Standard junto con v1, mientras que el paquete Experimental puede incluir campos experimentales en recursos v1.
 
 </details>
 
-### 7. ¿Qué tipo de filtro de HTTPRoute cambia la solicitud a una URL diferente?
+## 7. ¿Qué filtro reescribe la solicitud al backend sin devolver una redirección al cliente?
 
-A. RequestHeaderModifier
-B. ResponseHeaderModifier
-C. URLRewrite
-D. RequestMirror
+- A. RequestHeaderModifier
+- B. ResponseHeaderModifier
+- C. URLRewrite
+- D. RequestMirror
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. URLRewrite**
-
-**Explicación:**
-Tipos de filtros de HTTPRoute:
-
-| Filtro | Descripción |
-|--------|-------------|
-| RequestHeaderModifier | Agregar/modificar/eliminar encabezados de solicitud |
-| ResponseHeaderModifier | Agregar/modificar/eliminar encabezados de respuesta |
-| **URLRewrite** | Cambiar la ruta o el host de la URL |
-| RequestRedirect | Redirigir a una URL diferente (respuesta 3xx) |
-| RequestMirror | Duplicar el tráfico (copiar al servicio sombra) |
+C. URLRewrite cambia la ruta/Host enviados al backend; `backendRefs` sigue seleccionando el destino. RequestRedirect devuelve al cliente una respuesta 3xx.
 
 ```yaml
-filters:
-  - type: URLRewrite
-    urlRewrite:
-      path:
-        type: ReplacePrefixMatch
-        replacePrefixMatch: /new-api
-      hostname: "new-api.example.com"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: quiz-rewrite
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /old-api
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /new-api
+        hostname: new-api.example.com
+    backendRefs:
+    - name: new-api-service
+      port: 80
 ```
 
+En este caso, /old-api/users se convierte en /new-api/users. ReplaceFullPath reemplaza, en cambio, toda la ruta. Estos comportamientos son distintos al traducir reescrituras heredadas.
+
 </details>
 
-### 8. ¿Cuál NO es una implementación compatible con Gateway API?
+## 8. ¿Qué componente NO reconcilia recursos de Gateway API?
 
-A. Istio
-B. Cilium
-C. kube-proxy
-D. Envoy Gateway
+- A. El controlador Gateway de Istio
+- B. El controlador Gateway de Cilium
+- C. kube-proxy
+- D. Envoy Gateway
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. kube-proxy**
-
-**Explicación:**
-Implementaciones de Gateway API:
-
-| Implementación | Controller |
-|----------------|------------|
-| **Istio** | istio.io/gateway-controller |
-| **Cilium** | io.cilium/gateway-controller |
-| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller |
-| **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller |
-| **Contour** | projectcontour.io/gateway-controller |
-| **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller |
-
-kube-proxy gestiona el enrutamiento de Service ClusterIP/NodePort y no está relacionado con Gateway API.
+C. kube-proxy gestiona el reenvío de Services y puede participar en una ruta de red del backend, pero no reconcilia recursos GatewayClass/Gateway/Route. Instalar solo los CRD de Gateway API no instala ninguno de los controladores enumerados.
 
 </details>
 
-### 9. Al migrar de Ingress a Gateway API, ¿qué funcionalidad de Gateway API corresponde a las anotaciones de Ingress?
+## 9. ¿Qué construcción de Gateway API expresa una reescritura de ruta HTTP de una configuración Ingress heredada?
 
-A. Metadatos de Gateway
-B. Coincidencias y filtros de HTTPRoute
-C. Parámetros de GatewayClass
-D. Spec de ReferenceGrant
+- A. El nombre del objeto Gateway
+- B. El filtro URLRewrite de HTTPRoute
+- C. Un ReferenceGrant de cualquier espacio de nombres
+- D. Solo las etiquetas del espacio de nombres
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Coincidencias y filtros de HTTPRoute**
-
-**Explicación:**
-Asignación de anotaciones de Ingress → Gateway API:
-
-| Anotación de Ingress | Gateway API |
-|-------------------|-------------|
-| `nginx.ingress.kubernetes.io/rewrite-target` | Filtro HTTPRoute: URLRewrite |
-| `nginx.ingress.kubernetes.io/ssl-redirect` | Filtro HTTPRoute: RequestRedirect |
-| `nginx.ingress.kubernetes.io/canary-weight` | Ponderación de backendRefs de HTTPRoute |
-| Enrutamiento basado en ruta | Ruta de coincidencias de HTTPRoute |
-| Enrutamiento basado en encabezados | Encabezados de coincidencias de HTTPRoute |
-
-Gateway API usa campos explícitos en lugar de anotaciones para una mejor portabilidad.
+B. Verifica la semántica de reescritura anterior antes de elegir ReplaceFullPath o ReplacePrefixMatch. El valor constante `rewrite-target: /` de la guía requiere reemplazar toda la ruta, no conservar un sufijo. Otras anotaciones Ingress pueden corresponder a ajustes de Gateway o CRD de políticas del controlador; algunas no tienen un equivalente compatible. Las redirecciones HTTP a HTTPS deben asociarse al listener HTTP.
 
 </details>
 
-### 10. ¿Cuál es la configuración para permitir solo Routes de namespaces específicos en Gateway?
+## 10. ¿Cómo puede un Gateway restringir los espacios de nombres que asocian Routes?
 
-A. `allowedRoutes.namespaces.from: All`
-B. `allowedRoutes.namespaces.from: Same`
-C. `allowedRoutes.namespaces.from: Selector`
-D. Tanto B como C son posibles
+- A. `from: All` limita la asociación a un espacio de nombres
+- B. `from: Same` permite su propio espacio de nombres
+- C. `from: Selector` selecciona etiquetas de Namespace
+- D. B y C son válidas, pero tienen alcances distintos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Tanto B como C son posibles**
-
-**Explicación:**
-Configuración de allowedRoutes de Gateway:
+D. Elige un solo valor para `from`. Para usar un selector:
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-namespace-selector
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
     allowedRoutes:
       namespaces:
-        from: All  # All namespaces
-        # or
-        from: Same  # Only same namespace as Gateway
-        # or
-        from: Selector  # Select by label selector
+        from: Selector
         selector:
           matchLabels:
-            gateway-access: "true"
+            gateway-access: 'true'
 ```
 
-- **All**: Permitir Routes de todos los namespaces
-- **Same**: Permitir solo del mismo namespace que Gateway
-- **Selector**: Permitir solo de namespaces con etiquetas específicas
+La etiqueta pertenece a Namespace, no a Route ni a Pod. Controla quién puede cambiar las etiquetas de Namespace. `allowedRoutes` limita las asociaciones; no concede acceso a backends de otros espacios de nombres ni autoriza solicitudes de la aplicación.
 
 </details>
 
-### 11. ¿Cuál es la configuración de matches para enrutar a un método específico de un servicio específico en GRPCRoute?
+## 11. ¿Qué coincidencia de GRPCRoute selecciona un método concreto de un servicio?
 
-A. `path.service` y `path.method`
-B. `method.service` y `method.method`
-C. `grpc.service` y `grpc.method`
-D. `rpc.service` y `rpc.method`
+- A. path.service y path.method
+- B. method.service y method.method
+- C. grpc.service y grpc.method
+- D. rpc.service y rpc.method
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `method.service` y `method.method`**
-
-**Explicación:**
-Coincidencia de GRPCRoute:
+B. Para el listener gRPC de la guía:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GRPCRoute
+metadata:
+  name: quiz-grpc
+  namespace: production
 spec:
+  parentRefs:
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: grpc
+  hostnames:
+  - grpc.example.com
   rules:
-    - matches:
-        - method:
-            service: "myapp.UserService"
-            method: "GetUser"
-      backendRefs:
-        - name: user-service
-          port: 50051
+  - matches:
+    - method:
+        service: myapp.UserService
+        method: GetUser
+    backendRefs:
+    - name: user-service
+      port: 50051
 ```
 
-Opciones de enrutamiento de gRPC:
-- Solo servicio: Todos los métodos de ese servicio
-- Servicio + método: Solo el método específico
-- También se admite el enrutamiento basado en encabezados
+Con la coincidencia Exact predeterminada, el nombre del método distingue mayúsculas de minúsculas. El backend debe ofrecer el transporte gRPC esperado y tener la configuración TLS adecuada; el número de puerto por sí solo no lo demuestra. Una coincidencia solo por servicio abarca los métodos de ese servicio.
 
 </details>
 
-### 12. ¿Qué comparación entre Gateway API e Ingress API NO es correcta?
+## 12. ¿Qué comparación con Ingress es incorrecta?
 
-A. Gateway API admite separación basada en roles; Ingress no
-B. Gateway API admite TCP/UDP de forma nativa; Ingress no
-C. Gateway API admite división de tráfico de forma nativa; Ingress requiere anotaciones
-D. Gateway API usa menos tipos de recursos que Ingress
+- A. Gateway API separa de forma más explícita la propiedad de listeners y Routes
+- B. Gateway API define tipos específicos de enrutamiento TCP/UDP/gRPC
+- C. Los campos de enrutamiento estándar tienen requisitos de compatibilidad de implementación
+- D. Gateway API tiene menos tipos de recursos que Ingress
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Gateway API usa menos tipos de recursos que Ingress**
-
-**Explicación:**
-Gateway API frente a Ingress:
-
-| Funcionalidad | Ingress | Gateway API |
-|---------|---------|-------------|
-| Número de recursos | 1 (Ingress) | Varios (GatewayClass, Gateway, Routes, etc.) |
-| Separación de roles | Ninguna | Separación en 3 niveles |
-| TCP/UDP | No compatible | Compatibilidad nativa |
-| División de tráfico | Anotación | Nativa (weight) |
-| Extensibilidad | Limitada | Basada en CRD |
-
-Gateway API usa más tipos de recursos, pero esto proporciona separación de roles y flexibilidad.
+D. Gateway API introduce varios tipos de recursos. Ingress también tiene IngressClass y puede usar RBAC/admission; es incorrecto afirmar que carece de controles de autorización o propiedad. Gateway API hace más explícitos varios acuerdos de responsabilidad y de comunicación entre espacios de nombres. Comprueba la compatibilidad del controlador y de la versión, en lugar de suponer que todos los campos de la API se comportan igual en todas partes.
 
 </details>
 
----
-
-## Recursos adicionales de aprendizaje
-
-- [Documentación oficial de Gateway API](https://gateway-api.sigs.k8s.io/)
-- [GitHub de Gateway API](https://github.com/kubernetes-sigs/gateway-api)
-- [Guías específicas de implementación](https://gateway-api.sigs.k8s.io/implementations/)
+[Volver a la guía](../../networking/04-gateway-api.md)

@@ -136,7 +136,7 @@ inhibit_rules는 상위 레벨 알림이 발생했을 때 하위 레벨 알림�
 **정답: B) rate() 함수로 초당 바이트 전송량 계산 후 임계값 비교**
 
 **설명:**
-네트워크 대역폭 사용량은 `rate(node_network_transmit_bytes_total[5m])`로 초당 바이트 전송량을 계산합니다. bits/s로 비교하려면 8을 곱하고, 실제 인스턴스의 baseline/burst·경로 제한과 단위를 맞춥니다. 가상 NIC의 표시 속도나 모든 노드에 공통인 10Gbps를 실제 한도로 가정하지 않습니다.
+네트워크 대역폭 사용량은 `rate(node_network_transmit_bytes_total[5m])`로 초당 바이트 전송량을 계산하여 확인합니다. bits/s로 비교하려면 8을 곱하고, 실제 인스턴스의 baseline/burst·경로 제한과 단위를 맞춥니다. 가상 NIC의 표시 속도나 모든 노드에 공통인 10Gbps를 실제 한도로 가정하지 않습니다.
 
 </details>
 

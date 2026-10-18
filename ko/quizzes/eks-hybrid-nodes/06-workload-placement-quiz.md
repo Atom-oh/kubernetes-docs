@@ -132,7 +132,7 @@ D. Cost annotation이 없을 때만 가능
 
 **정답: C. 그렇다.확인한 컨트롤러에서는 할당·phase·readiness가 cost보다 먼저**
 
-**설명:** 미할당, Pending/Unknown, NotReady 기준이 먼저 적용될 수 있습니다. Deletion cost는 같은 ReplicaSet Pod 사이의 best-effort 선호이며 모든 컨트롤러·rollout·eviction·장애의 보호 장치가 아닙니다.
+**설명:** 미할당, Pending/Unknown, NotReady 기준이 먼저 적용될 수 있습니다. Deletion cost는 같은 ReplicaSet Pod 사이의 best-effort 선호이며 모든 컨트롤러·rollout·eviction·장애에 대한 보호 장치가 아닙니다.
 
 </details>
 
@@ -189,7 +189,7 @@ D. 첫 충돌 뒤 동시 변경 test 제거
 
 **정답: C. 의도한 ReplicaSet owner·노드 분류·Pod UID·resourceVersion 확인 후 좁은 patch 검토**
 
-**설명:** 예제는 알 수 없거나 미스케줄 상태를 거부하고 검토 가능한 patch를 만듭니다. UID·resourceVersion·node test가 오래된 상태를 거부하며 다른 annotation을 보존합니다. 모든 namespace를 조사·수정하지 않습니다.
+**설명:** 예제는 알 수 없는 상태나 미스케줄 상태를 거부하고 검토 가능한 patch를 만듭니다. UID·resourceVersion·node test가 오래된 상태를 거부하며 다른 annotation을 보존합니다. 모든 namespace를 조사·수정하지 않습니다.
 
 </details>
 

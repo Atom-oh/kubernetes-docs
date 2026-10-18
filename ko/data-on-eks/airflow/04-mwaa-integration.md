@@ -174,7 +174,7 @@ MWAA runtime에서 aws 실행 파일과 get-token 경로가 동작하는지도 �
 apache-airflow-providers-cncf-kubernetes==10.21.0
 ```
 
-S3 버킷은 MWAA 요구사항에 맞게 versioning과 Block Public Access를 켭니다.
+S3 버킷에는 MWAA 요구사항에 맞게 versioning과 Block Public Access를 켭니다.
 requirements.txt를 업로드한 뒤 environment가 참조하는 object version도 갱신하고
 설치 로그를 확인합니다. 파일 overwrite만으로 설정 변경이 끝난다고 가정하지 않습니다.
 

@@ -95,7 +95,7 @@ spec:
 
 ### 문제 2: AuthorizationPolicy의 action
 
-이 네임스페이스의 대상 워크로드에 적용되는 유일한 AuthorizationPolicy라면 다음 구성의 의미는?
+다음 구성이 이 네임스페이스의 대상 워크로드에 적용되는 유일한 AuthorizationPolicy라면 그 의미는?
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -786,7 +786,7 @@ Frontend → backend는 애플리케이션에 도달하고 frontend → database
 
 ### 문제 7: JWT + mTLS 이중 인증
 
-Istio에서 \*\*최종 사용자 인증(JWT)\*\*과 \*\*서비스 간 인증(mTLS)\*\*을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
+Istio에서 **최종 사용자 인증**(JWT)과 **서비스 간 인증**(mTLS)을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
 
 <details>
 
@@ -992,7 +992,7 @@ curl -i -H "Authorization: Bearer invalid-token" https://myapp.example.com/api/u
 
 ### 문제 8: 외부 서비스 접근 제어
 
-Istio에서 **Egress 트래픽**을 제어하여 특정 외부 서비스만 접근을 허용하는 방법을 설명하세요. **ServiceEntry**, **VirtualService**, **AuthorizationPolicy**를 사용한 완전한 예제를 포함해야 합니다.
+Istio에서 **Egress 트래픽**을 제어하여 특정 외부 서비스에만 접근을 허용하는 방법을 설명하세요. **ServiceEntry**, **VirtualService**, **AuthorizationPolicy**를 사용한 완전한 예제를 포함해야 합니다.
 
 <details>
 
@@ -1151,7 +1151,7 @@ istioctl x authz check <egress-pod>.istio-system
 
 ### 문제 9: 보안 감사 및 로깅
 
-Istio에서 보안 관련 이벤트를 \*\*감사(Audit)\*\*하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
+Istio에서 보안 관련 이벤트를 **감사**(Audit)하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
 
 <details>
 
@@ -1229,7 +1229,7 @@ spec:
           value: 'request.url_path.startsWith("/api/admin/") ? "admin" : "other"'
 ```
 
-Telemetry는 요청 수에 제한된 `security_operation` 차원(`admin`/`other`)도 추가합니다. `request_method`와 원시 URL 경로는 기본 Istio 메트릭 레이블이 아닙니다. 전체 URL 레이블은 카디널리티·민감 데이터 문제 때문에 피합니다. AUDIT 플러그인이 없어도 오류·DELETE·admin 접근은 access log에 기록됩니다. 필터를 빼면 모든 요청, selector를 빼면 네임스페이스, 루트 네임스페이스의 selector 없는 정책은 메시 전체에 적용됩니다.
+Telemetry는 요청 수 메트릭에 제한된 `security_operation` 차원(`admin`/`other`)도 추가합니다. `request_method`와 원시 URL 경로는 기본 Istio 메트릭 레이블이 아닙니다. 전체 URL 레이블은 카디널리티·민감 데이터 문제 때문에 피합니다. AUDIT 플러그인이 없어도 오류·DELETE·admin 접근은 access log에 기록됩니다. 필터를 빼면 모든 요청, selector를 빼면 네임스페이스, 루트 네임스페이스의 selector 없는 정책은 메시 전체에 적용됩니다.
 
 CloudWatch에는 지원되는 EKS 로깅 agent 또는 Fluent Bit DaemonSet을 배포하고 노드 로그 마운트, CRI/containerd 파싱, `log` 필드 JSON 파싱, IAM 자격 증명, CloudWatch 출력을 구성합니다. ConfigMap만으로 agent는 실행되지 않습니다. Elasticsearch/OpenSearch에는 해당 수집기 출력을 설정합니다. `envoy` 제공자의 Telemetry는 stdout에 쓰며 Elasticsearch를 구성하지 않습니다. Fargate는 노드 DaemonSet 대신 지원되는 로깅 방식을 사용합니다.
 

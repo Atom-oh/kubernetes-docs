@@ -68,10 +68,10 @@ eksctl utils describe-stacks --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
 
 **예시 메시지**
 
-- eks:CreateCluster 거부는 caller 권한을 조사하며 service-role 문제와 별도입니다.
+- eks:CreateCluster 거부 시에는 caller 권한을 조사하며, 이는 service-role 문제와 별도입니다.
 - 기존 us-west-2a capacity 부족 메시지는 AZ·capacity 응답 예시이지 현재 리전 가용성 정보가 아닙니다.
 - 기존 “Current limit is 5”는 역사적 예시로 보존합니다. 증가 값을 정하기 전 현재 quota를 조회합니다.
-- UnsupportedAvailabilityZoneException은 해당 계정의 미지원 EKS cluster AZ이며 EC2 instance 제공 목록만의 문제가 아닙니다.
+- UnsupportedAvailabilityZoneException은 해당 계정의 미지원 EKS cluster AZ를 나타내며 EC2 instance 제공 목록만의 문제가 아닙니다.
 
 **인프라 설정 검토**
 
@@ -144,7 +144,7 @@ aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NOD
   --query 'nodegroup.{status:status,health:health,version:version,release:releaseVersion,nodeRole:nodeRole,repair:nodeRepairConfig,update:updateConfig}'
 ```
 
-접근 가능한 표준 Linux node는 [본문의 원격 세션 절차](../../eks/09-eks-troubleshooting.md)로 kubelet·containerd journal, byte·inode, memory·route를 확인합니다. 실제 이미지에 Docker daemon·/var/log/syslog가 없을 수 있습니다. node DNS는 Pod cluster DNS와 다를 수 있으며 endpoint TLS에는 cluster CA를 사용합니다. curl -k는 certificate 오류를 숨깁니다.
+접근 가능한 표준 Linux node에서는 [본문의 원격 세션 절차](../../eks/09-eks-troubleshooting.md)로 kubelet·containerd journal, byte·inode, memory·route를 확인합니다. 실제 이미지에 Docker daemon·/var/log/syslog가 없을 수 있습니다. node DNS는 Pod cluster DNS와 다를 수 있으며 endpoint TLS에는 cluster CA를 사용합니다. curl -k는 certificate 오류를 숨깁니다.
 
 image·journal 정리·reboot 전에 근거를 보존합니다. kubectl top은 정상 metrics 경로가 필요하여 비정상 node에서는 실패할 수 있습니다. private key를 노출하지 않고 실제 certificate 경로를 확인합니다. kubeadm alpha certs renew all은 현재 일반 명령도 EKS node 복구 절차도 아니며 eksctl replace nodegroup도 지원되지 않습니다.
 
@@ -183,7 +183,7 @@ resource "aws_eks_node_group" "self_healing" {
 
 검증된 production module이 아닌 설정 발췌입니다. 호환 Kubernetes·AMI·instance와 기존 소유권을 확인하고 autoscaler가 관리한다면 desired capacity를 조율합니다. node-group tag만으로 실제 ASG의 CA discovery tag가 있다고 판단하지 않습니다.
 
-repair 기본값·threshold는 compute owner에 따라 다릅니다. Auto Mode는 기본 활성화, MNG는 명시적 활성화, Karpenter는 자체 feature 요구가 있습니다. monitoring은 repair 활성화 없이도 문제를 보고할 수 있습니다. 현재 기본 표는 **MemoryPressure·DiskPressure를 자동 repair하지 않습니다**. fleet health·parallelism·ARC 제어가 작업을 제한할 수 있으며 무조건 교체·PDB 보호를 약속하지 않습니다.
+repair 기본값·threshold는 compute owner에 따라 다릅니다. Auto Mode는 기본 활성화, MNG는 명시적 활성화, Karpenter는 자체 feature 요구가 있습니다. monitoring은 repair 활성화 없이도 문제를 보고할 수 있습니다. 현재 기본 표에 따르면 **MemoryPressure·DiskPressure를 자동 repair하지 않습니다**. fleet health·parallelism·ARC 제어가 작업을 제한할 수 있으며 무조건 교체·PDB 보호를 약속하지 않습니다.
 
 **모니터링 예시**
 
@@ -277,7 +277,7 @@ aws ecr describe-images --region "$REGISTRY_REGION" \
 
 **권한 예시**
 
-검토한 기존 EC2 node role에 한 repository pull을 설명하는 예시입니다. GetAuthorizationToken은 repository resource scope가 없어 Region 조건의 별도 `*` statement를 사용하고 image read는 repository로 제한합니다.
+검토한 기존 EC2 node role로 한 repository에서 pull하는 방법을 설명하는 예시입니다. GetAuthorizationToken은 repository resource scope가 없어 Region 조건의 별도 `*` statement를 사용하고 image read는 repository로 제한합니다.
 
 ```hcl
 # Permission example for a reviewed existing EC2 node role.
@@ -322,7 +322,7 @@ resource "aws_iam_role_policy_attachment" "ecr_pull" {
 
 **Image-pull Secret**
 
-Secret이 필요한 registry는 보호된 완전한 Docker auth file과 [본문의 namespaced Secret·Pod-template 절차](../../eks/09-eks-troubleshooting.md)를 사용합니다. Secret data·token을 출력하거나 진단 명령 인자로 password를 전달하지 않습니다. desktop credential-helper 참조만으로 kubelet auth data가 제공되지는 않습니다.
+Secret이 필요한 registry에는 보호된 완전한 Docker auth file과 [본문의 namespaced Secret·Pod-template 절차](../../eks/09-eks-troubleshooting.md)를 사용합니다. Secret data·token을 출력하거나 진단 명령 인자로 password를 전달하지 않습니다. desktop credential-helper 참조만으로 kubelet auth data가 제공되지는 않습니다.
 
 기존 Pod의 imagePullSecrets는 일반적으로 직접 patch할 수 없습니다. 기존 목록을 유지하며 소유 Deployment·StatefulSet template을 바꾸고 통제된 rollout을 수행합니다. ServiceAccount 변경은 새 Pod에 적용되므로 무관한 앱의 default SA를 바꾸지 않습니다.
 
@@ -330,7 +330,7 @@ Secret이 필요한 registry는 보호된 완전한 Docker auth file과 [본문�
 
 표준 EKS ECR pull에는 기존 token-renewal CronJob이 필요하지 않습니다. ECR authorization token은 12시간 유효합니다. non-native consumer가 실제로 수동 ECR pull Secret을 필요로 한다면 지원 credential 방식이나 명시적으로 설계한 갱신 workflow를 사용합니다.
 
-기존 `*/6 * * * *`는 6시간이 아닌 **6분마다**입니다. 6시간 예시는 `0 */6 * * *`이며 controller timezone 또는 지원되는 명시적 spec.timeZone을 고려합니다. schedule만으로 renewer가 완성되지는 않습니다. 필요한 도구가 있는 검토한 image, AWS identity, 제한한 Kubernetes 권한, 정확한 namespace, 중복·실패 처리와 rotation 검증이 필요합니다. 검증 전에는 suspend를 유지합니다. 미리 준비한 named Secret을 갱신하고 삭제·재생성으로 credential 공백을 만들지 않습니다. AWS CLI 기본 이미지에 kubectl이 있다고 가정하지 않습니다.
+기존 `*/6 * * * *`는 6시간마다가 아닌 **6분마다** 실행되는 일정입니다. 6시간 예시는 `0 */6 * * *`이며 controller timezone 또는 지원되는 명시적 spec.timeZone을 고려합니다. schedule만으로 renewer가 완성되지는 않습니다. 필요한 도구가 있는 검토한 image, AWS identity, 제한한 Kubernetes 권한, 정확한 namespace, 중복·실패 처리와 rotation 검증이 필요합니다. 검증 전에는 suspend를 유지합니다. 미리 준비한 named Secret을 갱신하고 삭제·재생성으로 credential 공백을 만들지 않습니다. AWS CLI 기본 이미지에 kubectl이 있다고 가정하지 않습니다.
 
 의도한 digest를 고정하고 registry 가용성을 유지하며 pull policy 변경 전에 실제 오류를 조사합니다. Always는 없는 이미지·권한 부족을 고치지 못합니다. A·C·D는 실패 경로를 식별하지 않습니다.
 
@@ -378,7 +378,7 @@ helper는 selector 없는 Service에서 전체 Pod를 잘못 선택하지 않습
 - Policy 제한: source egress·destination ingress, label과 구현 범위를 확인합니다. policy 삭제·모든 namespace 모든 port 허용으로 해결하지 않습니다.
 - DNS·data plane: 이름 해석과 전송을 구분하고 kube-proxy·대안 구현·Auto Mode를 식별합니다. 순수 Auto는 node DNS, 혼합은 비 Auto node용 DNS를 유지합니다.
 
-아래 **독립 policy 예시**는 검토한 peer·port만 허용합니다. 실제 사용 전에 label·namespace와 전체 필요한 흐름에 맞춥니다.
+아래 **독립 policy 예시**는 검토한 peer·port만 허용합니다. 실제 사용 전에 label·namespace와 필요한 전체 흐름에 맞춥니다.
 
 ```yaml
 # Example ingress policy only: review both peers and the complete allowed-flow matrix.
@@ -646,7 +646,7 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-기존 class에 바로 적용하는 명령이 아닌 설정 예시입니다. Retain은 별도 처리를 위해 storage를 남겨 비용이 계속될 수 있습니다. PVC YAML은 데이터 백업이 아니며 삭제·재생성은 데이터를 잃거나 retained volume의 재바인딩을 필요로 할 수 있습니다.
+기존 class에 바로 적용하는 명령이 아닌 설정 예시입니다. Retain은 별도 처리를 위해 storage를 남겨 비용이 계속될 수 있습니다. PVC YAML은 데이터 백업이 아니며 삭제·재생성은 데이터 손실을 일으키거나 retained volume의 재바인딩을 필요로 할 수 있습니다.
 
 Auto Mode는 위 표준 provisioner가 아닌 ebs.csi.eks.amazonaws.com을 사용합니다. node root·data 암호화가 모든 dynamic PVC의 암호화를 뜻하지 않습니다. encrypted true를 명시하고 실제 EBS volume·key를 확인합니다. bound claim의 provisioner·class 변경 대신 문서화된 snapshot 또는 해당 Retain·static migration을 사용합니다.
 
@@ -694,7 +694,7 @@ class 소유권은 YAML 또는 Terraform 중 하나를 선택합니다. provider
 
 **분리된 프로비저닝 검사**
 
-검토한 Linux EC2 경로는 [EKS 업그레이드](../../eks/08-eks-upgrades.md)의 완전한 eks-upgrade-smoke.py를 저장하고 test context·class를 명시합니다.
+검토한 Linux EC2 경로에서는 [EKS 업그레이드](../../eks/08-eks-upgrades.md)의 완전한 eks-upgrade-smoke.py를 저장하고 test context·class를 명시합니다.
 
 ```bash
 set -euo pipefail
@@ -756,7 +756,7 @@ aws autoscaling describe-auto-scaling-groups --region "$AWS_REGION" \
 
 CA는 평균 node CPU가 높아서가 아니라 unschedulable Pod·제약에 반응합니다. 지원 minor, 실제 Pod identity, 최소 discovery·scaling 권한, ASG tag, max size, EC2·IP quota와 launch 실패를 확인합니다. node-group tag가 ASG discovery tag를 증명하지 않습니다. 관리형 limit은 EKS·인프라 owner를 우선하며 직접 ASG 변경은 drift, scaling config 변경은 PDB 미준수로 이어질 수 있습니다.
 
-Karpenter·Auto Mode는 해당 NodePool·NodeClaim·provider limit·event를 확인합니다. 고정 CA label 조회가 비었다고 CA 설치를 권하지 않습니다. VPA Off·Initial은 의도적일 수 있습니다. Auto는 Recreate로 대체되어 deprecated이며 mode 변경은 중단과 같은 CPU·memory 신호의 HPA 상호작용을 일으킬 수 있습니다.
+Karpenter·Auto Mode는 해당 NodePool·NodeClaim·provider limit·event를 확인합니다. 고정 CA label 조회가 비었다고 CA 설치를 권하지 않습니다. VPA Off·Initial은 의도적일 수 있습니다. Auto는 Recreate로 대체되어 deprecated이며 mode 변경은 중단 및 같은 CPU·memory 신호를 사용하는 HPA와의 상호작용을 일으킬 수 있습니다.
 
 **Helm·Terraform 설정 예시**
 
@@ -802,7 +802,7 @@ resource "helm_release" "metrics_server" {
 }
 ```
 
-반복 set 블록 대신 Helm provider 3.x의 values 문서를 사용합니다. CA ServiceAccount 이름과 IRSA trust subject를 맞추며 Pod Identity는 별도 owner 설정입니다. role은 [비용·확장 본문](../../eks/07-eks-cost-optimization.md)의 제한한 권한이 필요하고 AutoScalingFullAccess를 일반 처방으로 붙이지 않습니다.
+반복 set 블록 대신 Helm provider 3.x의 values 문서를 사용합니다. CA ServiceAccount 이름과 IRSA trust subject를 맞추며 Pod Identity는 별도 owner 설정입니다. role에는 [비용·확장 본문](../../eks/07-eks-cost-optimization.md)의 제한한 권한이 필요하고 AutoScalingFullAccess를 일반 처방으로 붙이지 않습니다.
 
 Metrics Server의 실제 검토한 values를 병합합니다. 현재 upstream default는 secure kubelet 경로이며 kubelet-insecure-tls를 기본 가정하지 않습니다. lab 한정 우회책 선택 전에 certificate·trust·address를 진단합니다. EKS add-on 소유 구성 요소에 Helm release를 중복 생성하지 않습니다. 대상 환경의 chart·identity·network·runtime 호환성을 시험해야 하며 여기서는 Helm 설치를 실행하지 않았습니다.
 
@@ -1051,7 +1051,7 @@ kubectl --context "$KUBE_CONTEXT" get daemonsets -A -o json \
   | jq '.items[] | {namespace:.metadata.namespace,name:.metadata.name,containers:[.spec.template.spec.containers[] | {name,image}]}'
 ```
 
-빈 Pod 목록도 kubectl 종료 코드는 성공입니다. if kubectl get pods -l 결과만으로 VPC CNI·Calico·Cilium 설치를 판단하지 않습니다. 실제 owner·object·image, policy-agent 상태와 compute·kernel·version 지원을 확인합니다. Auto Mode는 NodeClass 기반 내장 network를 사용하며 임의 alternate CNI 설치를 지원하지 않습니다.
+Pod 목록이 비어 있어도 kubectl 종료 코드는 성공을 나타냅니다. if kubectl get pods -l 결과만으로 VPC CNI·Calico·Cilium 설치를 판단하지 않습니다. 실제 owner·object·image, policy-agent 상태와 compute·kernel·version 지원을 확인합니다. Auto Mode는 NodeClass 기반 내장 network를 사용하며 임의 alternate CNI 설치를 지원하지 않습니다.
 
 VPC CNI는 native policy를 지원합니다. 현재 AWS는 새 Pod 규칙을 구성하는 동안 처음 허용하는 standard mode와, 처음 거부하여 필요한 DNS·의존 경로가 필요한 strict mode를 구분합니다. 실제 agent container와 event logging을 확인하며 과거 “VPC CNI는 정책 미지원” 설명을 적용하지 않습니다.
 
@@ -1362,7 +1362,7 @@ render·lint는 server API·admission, CRD 설치, image·readiness·앱 테스�
 
 **Terraform Helm provider 의미**
 
-로컬 확인한 provider 3.3 schema, 이미 준비한 namespace와 release owner 예시입니다. 긴 apply에 단발성 short-lived token을 저장하기보다 검토한 exec-credential kubeconfig를 사용합니다.
+로컬에서 확인한 provider 3.3 schema, 이미 준비한 namespace와 release owner 예시입니다. 긴 apply에 단발성 short-lived token을 저장하기보다 검토한 exec-credential kubeconfig를 사용합니다.
 
 ```hcl
 # Choose the existing release/configuration owner and reviewed chart artifact.
@@ -1921,7 +1921,7 @@ output "vpc_dns_attributes" {
 }
 ```
 
-전체 config file을 선택한 schema·현재 설정과 검증합니다. PRESERVE는 명시적 payload의 전체 병합을 보장하지 않습니다. [EKS 업그레이드](../../eks/08-eks-upgrades.md)의 exact-update 절차와 실제 DNS 검증을 수행합니다. 이 예시는 Auto node DNS 설정·공유 VPC 교체가 아닙니다.
+전체 config file을 선택한 schema·현재 설정과 대조하여 검증합니다. PRESERVE는 명시적 payload의 전체 병합을 보장하지 않습니다. [EKS 업그레이드](../../eks/08-eks-upgrades.md)의 exact-update 절차와 실제 DNS 검증을 수행합니다. 이 예시는 Auto node DNS 설정·공유 VPC 교체가 아닙니다.
 
 **지원 표준 node 환경의 선택적 NodeLocal DNSCache**
 

@@ -10,9 +10,9 @@
 4. [监控与可观测性](#monitoring-and-observability)
 5. [生产检查清单](#production-checklist)
 
-已于 2026 年 9 月 11 日针对 Istio 1.31 进行审核。`IstioOperator` 摘录是 `istioctl install -f` 的输入，而不是可使用 kubectl 应用的 Kubernetes 资源。请将其合并到现有安装配置中；对于 Helm，请使用等效的 chart 值。大多数示例描述 Sidecar；对于 ambient，请使用 waypoint/Gateway API 策略。资源设置和滚动更新时间是应在负载下验证的起点。
+已于 2026 年 9 月 11 日针对 Istio 1.31 进行审核。`IstioOperator` 摘录是 `istioctl install -f` 的输入，而不是可使用 kubectl 应用的 Kubernetes 资源。请将其合并到现有安装配置中；对于 Helm，请使用等效的 chart 值。大多数示例描述 Sidecar；对于 ambient，请使用 waypoint/Gateway API 策略。资源设置和滚动发布时长是应在负载下验证的起点。
 
-## 性能优化
+## 性能优化 {#performance-optimization}
 
 ### 1. Control Plane 资源优化
 
@@ -45,7 +45,7 @@ spec:
 **建议**：
 - Istiod 至少应具有 2 个副本
 - CPU：根据集群规模调整
-- Memory：衡量 Service/Proxy 数量、配置大小和更新速率；没有固定的每 Service 计算公式
+- Memory：衡量 Service/Proxy 数量、配置大小和更新速率；不能按 Service 数量套用固定公式
 
 ### 2. Data Plane 资源优化
 
@@ -96,7 +96,7 @@ spec:
 
 **建议**：
 - `maxConnections`：考虑工作负载的并发连接数
-- `maxRequestsPerConnection`：0 表示无限制；较小的值会增加连接流失和 TLS 握手
+- `maxRequestsPerConnection`：0 表示无限制；较小的值会增加连接重建次数和 TLS 握手
 - `idleTimeout`：若需要长生命周期连接，请增大此值
 
 ### 4. 本地性负载均衡
@@ -148,7 +148,7 @@ spec:
 - 减少内存使用
 - 加快配置推送
 
-## 安全加固
+## 安全加固 {#security-hardening}
 
 ### 1. 应用严格 mTLS
 
@@ -263,7 +263,7 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
-## 运维指南
+## 运维指南 {#operations-guide}
 
 ### 1. 部署策略
 
@@ -380,7 +380,7 @@ kubectl apply -f istio-config-backup.yaml
 
 对于 Helm 安装，请改为保留 chart 版本和 `helm get values <release> -n <namespace> -o yaml`。请安全备份 CA/TLS Secrets，并纳入正在使用的所有 Gateway API、EnvoyFilter 或 WasmPlugin 资源。重新创建必需的 Namespace，并在恢复前审查生成的快照。
 
-## 监控与可观测性
+## 监控与可观测性 {#monitoring-and-observability}
 
 ### 1. 黄金信号
 
@@ -470,7 +470,7 @@ groups:
       summary: "Istiod scrape target is unavailable"
 ```
 
-## 生产检查清单
+## 生产检查清单 {#production-checklist}
 
 ### 安装前
 
@@ -570,7 +570,7 @@ groups:
    Do require Golden Signals monitoring
    ```
 
-## 成本优化
+## 成本优化 {#cost-optimization}
 
 - 将测得的 Sidecar 资源 requests 与 ztunnel 及所需的 waypoint 容量进行比较。仅凭 Pod 数量无法确定固定的节省百分比。
 - 测量跨 AZ 字节数，并针对实际路径使用当前 AWS 区域定价；本地性权重并不直接等同于通用计费降幅。

@@ -1,125 +1,125 @@
 # EKS 上的模型训练测验
 
-关于当前 API、启动器（launcher）与恢复边界的 15 道题。
+关于当前 API、启动器和恢复边界的 15 个问题。
 
-## 1. 张量并行（tensor parallelism）对什么进行切分？
+## 1. 张量并行会对什么进行分区？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-层内部的张量运算与权重。DP 在副本之间切分数据，PP 切分层的阶段，专家并行切分专家/token 分发；它们的通信方式各不相同。
+对层内的张量运算和权重进行分区。DP 会在副本之间对数据进行分区，PP 会对层阶段进行分区，专家并行会对专家/Token 分发进行分区；它们的通信方式各不相同。
 </details>
 
-## 2. 应如何规划 200B 模型与全局批量（global batch）？
+## 2. 应如何规划 200B 模型和全局批次？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-不要仅凭模型规模就强制采用 3D 并行；要考虑训练状态、激活值、通信与设备网格（device mesh）。TP8×PP4×DP2 为 64 个 rank，但微批量 1×梯度累积 32×DP2 得到的全局批量为 64。
+不要仅凭模型大小就强制采用 3D 并行；还要考虑训练状态、激活值、通信和设备网格。TP8×PP4×DP2 是 64 个 rank，但 microbatch1×accumulation32×DP2 得到的全局批次为 64。
 </details>
 
-## 3. slurmctld 与 slurmdbd 在状态职责上有何不同？
+## 3. slurmctld 和 slurmdbd 的状态管理职责有何不同？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-slurmctld 管理运行中的作业/节点/分区状态、调度以及 StateSaveLocation。slurmdbd 负责记账数据库记录，并不能替代控制器的恢复状态。
+slurmctld 管理运行中的作业/节点/分区状态、调度和 StateSaveLocation。slurmdbd 处理记账数据库记录，不能替代控制器的恢复状态。
 </details>
 
-## 4. Slinky 1.2.2 的计算组（compute-group）API 是什么？
+## 4. Slinky1.2.3 的计算组 API 是什么？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-slinky.slurm.net/v1beta1 的 NodeSet，使用 Controller 引用/模板。默认为 StatefulSet 风格的扩缩容，也可选 DaemonSet 风格；在 DaemonSet 模式下 replicas 会被忽略。其 kind 不是 SlurmNodeSet。
+使用 slinky.slurm.net/v1beta1 NodeSet，并引用 Controller/template。默认采用 StatefulSet 风格扩缩容，也可选择 DaemonSet 风格；在 DaemonSet 模式下会忽略 replicas。其 kind 不是 SlurmNodeSet。
 </details>
 
-## 5. 仅设置 FI_PROVIDER=efa 就能让 NCCL 走 EFA 吗？
+## 5. 仅设置 FI_PROVIDER=efa 就能启用通过 EFA 运行的 NCCL 吗？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-不能。还需要 EFA 接口、驱动/libfabric/aws-ofi-nccl、device plugin（设备插件）/Pod 分配、安全组以及同一可用区（AZ）内的放置。请通过日志/集合通信测试验证实际使用的传输方式；400Gbps 并非普遍适用。
+不能。需要 EFA 接口、driver/libfabric/aws-ofi-nccl、device plugin/Pod 分配、安全组和同一 AZ 部署。通过日志/collective 测试验证实际传输方式；400Gbps 并非普遍适用。
 </details>
 
-## 6. 使用 BioNeMo 3.0.0 时应检查什么？
+## 6. 对 BioNeMo3.0.0 应检查什么？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-在 BioNeMo Recipes 中确认模型/TransformerEngine/训练配方的支持情况。不要在未验证的情况下沿用旧的 1.5 版 MegaMolBART 模块；应验证镜像/数据/模型版本、设备、收敛性以及生物学层面的评估。
+检查 BioNeMo Recipes 中的模型/TransformerEngine/训练配方支持。不要未经验证就沿用旧版1.5 MegaMolBART 模块；应验证镜像/数据/模型版本、设备、收敛情况和生物学评估。
 </details>
 
-## 7. Optimum Neuron Trainer 能保证训练任意 HF 模型吗？
+## 7. Optimum Neuron Trainer 能保证训练所有 HF 模型吗？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-不能。需要匹配特定版本的训练模型实现、配置、SDK/PyTorch、硬件、数据与 collator。推理支持与训练支持并不相同；仅有一个预训练模型和未定义的数据集并不构成 TP 训练的实现。
+不能。需匹配特定版本的训练模型实现、配置、SDK/PyTorch、硬件、数据和 collator。推理支持与训练支持不同；预训练模型和未定义的数据集并不能实现 TP 训练。
 </details>
 
-## 8. 应如何验证 FSx 与 S3 的集成？
+## 8. 应如何验证 FSx 和 S3 集成？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-区分静态挂载与动态制备（dynamic provisioning），并验证 DRA/导入/导出策略、完成状态与权限。EFS PVC 的容量并不是配额，而仅使用本地存储也无法建立 S3 级别的持久性。
+区分静态挂载和动态置备，并验证 DRA/导入/导出策略、完成情况和权限。EFS PVC 容量并非配额，仅使用本地存储也不能确保 S3 持久性。
 </details>
 
-## 9. Volcano 的 minAvailable:4 是否要求四个节点？
+## 9. Volcano 的 minAvailable:4 要求四个节点吗？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-不是；它统计的是 Pod/成员数量。三个节点也可能容纳四个 Pod。请检查最小成员数/资源条件以及 gang 插件；它并不保证同时启动或训练成功。
+不要求；它统计的是 Pod/成员数量。四个 Pod 可能分布在三个节点上。检查最小成员数/资源条件和 gang 插件；它不能保证同时启动或训练成功。
 </details>
 
 ## 10. BF16 与 FP16 有何不同？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-它有 8 位指数位/7 位尾数位。其指数位数与 FP32 相同，但精度和可表示的确切最大有限值并不相同。通常不需要 FP16 那样的损失缩放（loss scaling），但仍需验证硬件/算子/收敛性；autocast 并不会转换所有训练状态。
+它有 8 位指数/7 位尾数。其指数位数与 FP32 相同，但精度和最大有限值并不相同。通常不需要 FP16 风格的 loss scaling，但仍需验证硬件/运算/收敛情况；autocast 不会转换所有训练状态。
 </details>
 
 ## 11. 激活检查点与恢复检查点有何不同？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-激活检查点（activation checkpointing）以反向重算换取显存；这与保存到磁盘的模型/优化器/RNG 恢复状态不同。请验证 use_reentrant、RNG/状态与梯度，不要假定固定能节省 3–4 倍。
+激活检查点通过反向传播时重新计算来换取内存空间；它不同于用于恢复的磁盘模型/优化器/RNG 状态。验证 use_reentrant、RNG/状态和梯度，不要假定能固定节省 3–4 倍内存。
 </details>
 
-## 12. ZeRO Stage 3 会自动卸载（offload）到 CPU 吗？
+## 12. ZeRO Stage3 会自动将数据卸载到 CPU 吗？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-不会。它切分优化器状态、梯度与参数；卸载需要单独配置。显存的降低取决于 DP 规模、状态、缓冲区与激活值，并非可以无限扩展。
+不会。它会对优化器状态、梯度和参数进行分区；卸载需单独配置。内存减少量取决于 DP 大小、状态、缓冲区和激活值，并非可以无限扩展。
 </details>
 
-## 13. MPIJob 的 slotsPerWorker 确定了什么？
+## 13. MPIJob 的 slotsPerWorker 表示什么？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-worker 的 hostfile slot 数量。实际进程数取决于 mpirun -np/映射方式与启动器设置；每个 GPU 绑定一个 rank 需要显式配置。Operator 0.8.2 使用 v2beta1 API。
+它表示 worker hostfile 中的 slots 数量。实际进程数取决于 mpirun -np/mapping 和启动器设置；每个 GPU 绑定一个 rank 需要显式配置。Operator0.8.2 使用 v2beta1 API。
 </details>
 
-## 14. 应如何验证检查点频率与恢复？
+## 14. 应如何验证检查点频率和恢复能力？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-依据保存延迟、故障率、可接受的丢失工作量与保留成本来选择间隔。验证完整的状态/清单/校验和、远端写入完成以及实际能够恢复。本指南会对比连续四次不中断更新与在两次后恢复的 CPU 结果是否一致。
+根据保存延迟、故障率、可接受的工作损失和保留成本选择间隔。验证完整状态/清单/校验和、远程保存完成情况以及实际恢复能力。本指南会检查以下两种情况的 CPU 结果是否相同：不中断地更新四次，以及更新两次后恢复并继续运行。
 </details>
 
-## 15. 同一可用区内的 EFA 放置与 Karpenter 中断预算（disruption budget）意味着什么？
+## 15. 同一 AZ 中的 EFA 部署和 Karpenter 中断预算意味着什么？
 
 <details>
-<summary>答案与解释</summary>
+<summary>答案与说明</summary>
 
-将 Pod/NodePool 的约束关联起来，使相互通信的 worker 真正位于同一可用区。为获得性能，建议使用放置组（placement group）。预算为 0 只会限制自愿中断，并不能阻止 Spot 回收、故障或强制终止。
+配置 Pod/NodePool 约束，确保通信中的 worker 实际位于同一 AZ。建议使用置放群组以提升性能。预算 0 会限制自愿中断，但无法阻止 Spot 回收、故障或强制终止。
 </details>
 
 [返回指南](../../ai-ml/05-model-training.md)

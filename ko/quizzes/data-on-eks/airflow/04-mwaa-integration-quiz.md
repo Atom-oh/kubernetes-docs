@@ -9,7 +9,7 @@ Provisioned MWAA 3.3.1/Python 3.12 기준으로 관리 범위와 실제 EKS 연�
 
 **정답:** 아니요. AWS 관리 Fargate 실행 환경이며 고객 VPC의 private subnet에 연결됩니다.
 
-**설명:** 사용자 VPC와 무관하다는 뜻은 아닙니다. DAG·IAM·네트워크·용량 설정·업그레이드는 사용자 책임을 포함합니다.
+**설명:** 사용자 VPC와 무관하다는 뜻은 아닙니다. DAG·IAM·네트워크·용량 설정·업그레이드에는 사용자 책임이 포함됩니다.
 
 </details>
 
@@ -112,14 +112,14 @@ Provisioned MWAA 3.3.1/Python 3.12 기준으로 관리 범위와 실제 EKS 연�
 
 </details>
 
-11. data-processing namespace만 위한 Role에 Kubernetes group을 연결할 때 어떤 binding을 사용하나요?
+11. data-processing namespace만을 위한 Role에 Kubernetes group을 연결할 때 어떤 binding을 사용하나요?
 
 <details>
 <summary>정답 보기</summary>
 
 **정답:** 그 namespace의 RoleBinding을 사용합니다.
 
-**설명:** ClusterRoleBinding은 namespace 제한을 표현하지 않습니다. 다른 grant는 합산되며 Pod 생성 권한은 다른 SA 선택 가능성도 고려해야 합니다.
+**설명:** ClusterRoleBinding은 namespace 제한을 표현하지 않습니다. 다른 grant는 합산되며 Pod 생성 권한을 부여할 때는 다른 SA 선택 가능성도 고려해야 합니다.
 
 </details>
 

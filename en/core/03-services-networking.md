@@ -201,7 +201,7 @@ This service does not allocate a cluster IP and creates DNS records for each Pod
 
 ### External IP
 
-`externalIPs` exposes this Service at administrator-managed IPs already routed to the nodes; it does not allocate addresses or select an external backend. It is deprecated since v1.36. Prefer a supported load balancer or Gateway implementation for new configurations. The documentation-only address below must be replaced with an address you control.
+`externalIPs` exposes this Service at administrator-managed IPs already routed to the nodes; it does not allocate addresses or select an external backend. It has been deprecated since v1.36. Prefer a supported load balancer or Gateway implementation for new configurations. The documentation-only address below must be replaced with an address you control.
 
 ```yaml
 apiVersion: v1
@@ -236,7 +236,7 @@ To use Ingress resources, an Ingress controller must be running in the cluster. 
 - HAProxy
 - Istio Ingress
 
-Community ingress-nginx retired in March 2026 ([notice](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). The generic examples below assume an installed Traefik controller and `traefik` IngressClass. Ingress is a configuration API, not a packet-processing hop; the controller configures the actual proxy/load balancer.
+Community ingress-nginx retired in March 2026 ([notice](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). The generic examples below assume an installed Traefik controller and a `traefik` IngressClass. Ingress is a configuration API, not a packet-processing hop; the controller configures the actual proxy/load balancer.
 
 ### Basic Ingress
 
@@ -395,7 +395,7 @@ This Ingress uses AWS ALB to handle requests to `example.com`.
 
 ## Endpoints
 
-The legacy `v1/Endpoints` API is deprecated since v1.33. Use `discovery.k8s.io/v1` EndpointSlices for new integrations. These objects describe backends; traffic does not pass through API objects.
+The legacy `v1/Endpoints` API has been deprecated since v1.33. Use `discovery.k8s.io/v1` EndpointSlices for new integrations. These objects describe backends; traffic does not pass through API objects.
 
 Endpoints are resources that store the IP addresses and ports of Pods that a service points to. When there are Pods matching the service's selector, Kubernetes automatically creates and manages the Endpoints object.
 
@@ -411,7 +411,7 @@ subsets:
   - port: 9376
 ```
 
-For manual backends, create a Service named `my-service` **without a selector** and matching ports; otherwise the controller can overwrite the backend data. Prefer a manually managed EndpointSlice as below.
+For manual backends, create a Service named `my-service` **without a selector** and with matching ports; otherwise the controller can overwrite the backend data. Prefer a manually managed EndpointSlice as below.
 
 ### EndpointSlice
 

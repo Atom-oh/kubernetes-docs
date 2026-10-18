@@ -20,7 +20,7 @@ Use guest consoles and identify lab NICs by matching their hypervisor MACs to `i
 | Ubuntu OpenBSD `nc`, or Rocky `ncat` | Make one TCP connection test |
 | `resolvectl` where systemd-resolved is active | Inspect that resolver; not a requirement on Rocky |
 
-Check availability with `command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`. Missing optional alternatives are normal; a missing tool needed for your selected exercise means return to [guest tool preparation](README.md#guest-tools) for the package mapping and selected missing-tool installation. This chapter contains no package-install commands.
+Check availability with `command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`. Missing optional alternatives are normal; a missing tool needed for your selected exercise means you should return to [guest tool preparation](README.md#guest-tools) for the package mapping and installation of the selected missing tool. This chapter contains no package-install commands.
 
 You will distinguish NSS lookup from DNS, explain authoritative answers and caching, inspect the selected route, interpret ICMP and trace results, separate TCP from HTTP, and write a failure report with a justified next step.
 
@@ -59,7 +59,7 @@ resolvectl status
 resolvectl statistics
 ```
 
-Inspect per-link DNS servers/search domains and the cache statistics. The course lab NIC should not supply DNS; management DNS may still appear. On a **Rocky client managed by NetworkManager**, use `nmcli -f GENERAL,IP4,IP6 device show` and the resolver-file inspection above. Do not install resolved or rewrite the symlink just to match Ubuntu's layout. Any durable correction belongs in the confirmed owner from chapter 03.
+Inspect per-link DNS servers/search domains and the cache statistics. The course lab NIC should not supply DNS; management DNS may still appear. On a **Rocky client managed by NetworkManager**, use `nmcli -f GENERAL,IP4,IP6 device show` and the resolver-file inspection above. Do not install resolved or rewrite the symlink just to match Ubuntu's layout. Any durable correction belongs in the configuration managed by the confirmed owner from chapter 03.
 
 ## 2. Give the two VMs local names
 

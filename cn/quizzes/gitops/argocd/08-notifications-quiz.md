@@ -50,8 +50,8 @@ ArgoCD Notifications Controller 监控 ArgoCD Applications，并根据配置的�
 
 </details>
 
-4. 如何为 Application 订阅通知？
-   - A) 编辑通知 ConfigMap
+4. 如何直接在特定 Application 的元数据中定义订阅？
+   - A) 更改 Application 的副本数
    - B) 为 Application 添加带有通知订阅的注解
    - C) 创建 NotificationSubscription CRD
    - D) 在 ArgoCD UI 中进行配置
@@ -62,7 +62,7 @@ ArgoCD Notifications Controller 监控 ArgoCD Applications，并根据配置的�
 **答案：B) 为 Application 添加带有通知订阅的注解**
 
 **说明：**
-Applications 通过注解订阅通知，例如 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`。这指定了触发器、服务和接收者。
+Applications 通过注解订阅通知，例如 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`。这指定了触发器、服务和接收者。集中式 ConfigMap 中的 `subscriptions` 和 AppProject 注解也是受支持的订阅方式。多个接收者应以分号分隔。
 
 </details>
 
@@ -78,6 +78,6 @@ Applications 通过注解订阅通知，例如 `notifications.argoproj.io/subscr
 **答案：C) 包括 Slack、Teams、电子邮件、webhooks 等在内的多种服务**
 
 **说明：**
-ArgoCD notifications 支持许多服务，包括 Slack、Microsoft Teams、Telegram、Opsgenie、Grafana、PagerDuty、GitHub、电子邮件 (SMTP) 和通用 webhooks。
+Argo CD 支持 Slack、Teams Workflows、GitHub、电子邮件、通用 webhooks、SQS 等服务的通知格式。发送前必须配置凭证、触发器、模板和订阅。一个模板包含多个服务的格式，并不意味着它会自动向所有服务广播通知。现有 Opsgenie 集成需要针对已宣布的停服制定迁移计划。
 
 </details>

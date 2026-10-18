@@ -238,7 +238,7 @@ kubectl get deployments,services,ingresses -n example \
 
 0.9.4는 RGD spec의 변경을 immutable GraphRevision으로 기록하고 컴파일합니다. latest revision이 실패하면 이전 revision으로 자동 fallback하지 않고 인스턴스 진행이 멈출 수 있습니다. GraphAccepted, GraphVerified, GraphRevisionsResolved 등의 조건과 오류 메시지를 확인하고 유효한 spec을 다시 적용합니다.
 
-GraphRevision은 internal.kro.run API이므로 관찰·진단 목적으로 사용하고 구조에 의존하는 외부 도구를 만들 때 버전 안정성을 가정하지 않습니다. Git 이전 spec으로 돌아가도 새 revision에서 다시 검증되며, DB 데이터·외부 부작용까지 되돌리는 transaction은 아닙니다.
+GraphRevision은 internal.kro.run API이므로 관찰·진단 목적으로 사용하고 구조에 의존하는 외부 도구를 만들 때 버전 안정성을 가정하지 않습니다. Git의 이전 spec으로 돌아가도 새 revision에서 다시 검증되며, DB 데이터·외부 부작용까지 되돌리는 transaction은 아닙니다.
 
 group, kind, apiVersion, scope는 해당 RGD에서 immutable 필드입니다. 같은 API의 호환성 변경과 신규 API 마이그레이션을 구분하고 기존 인스턴스·schema·저장 데이터를 검토하세요. conversion webhook이 자동 생성된다고 가정하지 않습니다.
 
@@ -254,7 +254,7 @@ Helm과 kro가 같은 object를 동시에 관리하지 않도록 이름·selecto
 
 여러 환경에는 동일한 API 계약과 검증된 이미지 digest를 사용하되 namespace, replicas, ingress와 정책은 별도 인스턴스로 관리합니다. ApplicationSet 같은 fleet 도구를 사용하려면 각 cluster에 kro/RGD/권한을 먼저 준비해야 합니다. kro가 임의 원격 cluster에 자동 접속하는 기능은 아닙니다.
 
-DB·stateful app은 전용 DB Operator 또는 관리형 서비스의 backup, restore, failover, schema migration 기능이 필요합니다. kro의 리소스 조정만으로 데이터 복구가 구현되지는 않습니다. RGD 크기와 권한을 제한하고 재사용 단위를 나누며 필요한 status만 공개하세요. Secret 내용을 status·label·로그로 내보내지 않습니다.
+DB·stateful app에는 전용 DB Operator 또는 관리형 서비스의 backup, restore, failover, schema migration 기능이 필요합니다. kro의 리소스 조정만으로 데이터 복구가 구현되지는 않습니다. RGD 크기와 권한을 제한하고 재사용 단위를 나누며 필요한 status만 공개하세요. Secret 내용을 status·label·로그로 내보내지 않습니다.
 
 ## 검증 범위와 참고 자료
 

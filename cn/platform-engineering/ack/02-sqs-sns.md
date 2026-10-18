@@ -1,14 +1,14 @@
-# SQS 和 SNS (ACK)
+# SQS and SNS (ACK)
 
 [ACK](../02-ack.md)
 
-示例使用 SQS 1.7.0 / SNS 1.10.1 schemas。Queue 使用 queueName 和字符串属性，tags 为 map。SNS tags 是键/值列表；displayName、filterPolicy 和 rawMessageDelivery 是专用字段。
+示例使用 SQS 1.8.2 / SNS 1.11.1 架构。队列使用 queueName 和字符串属性，标签采用映射形式。SNS 标签采用键/值列表；displayName、filterPolicy 和 rawMessageDelivery 是专用字段。
 
-请同时修改 account、region、queue/topic 名称和 policy ARN。仅创建 SNS→SQS subscription 并不会授予投递权限。Queue policy 限制了准确的 topic ARN 和 SourceAccount。在 topic/queue 就绪后应用 subscriptions，然后测试投递和重试。
+请同时修改账户、区域、队列/主题名称和策略 ARN。仅创建 SNS→SQS 订阅并不会授予投递权限。队列策略会将权限限制为确切的主题 ARN 和 SourceAccount。等待主题/队列就绪后再应用订阅，然后测试消息投递和重试。
 
-email endpoint 仅用于说明，且需要收件人确认。本次审计未发送 email 或消息。filterPolicy 默认基于 message attributes，因此发布者必须相应提供 event_type。FIFO 基于内容的去重使用 message body，无法避免所有业务层面的重复。
+电子邮件端点仅用于示例，需要收件人确认。本次审计未发送任何电子邮件或消息。filterPolicy 默认使用消息属性，因此发布者必须相应地提供 event_type。FIFO 基于内容的去重会使用消息正文，但无法避免所有业务层面的重复。
 
-## Queue — queue-app-events
+## 队列：queue-app-events
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -36,7 +36,7 @@ spec:
     \   }\n  ]\n}"
 ```
 
-## Queue — queue-app-events-fifo
+## 队列：queue-app-events-fifo
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -55,7 +55,7 @@ spec:
     Environment: Development
 ```
 
-## Topic — topic-app-events
+## 主题：topic-app-events
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -73,7 +73,7 @@ spec:
     value: Development
 ```
 
-## Subscription — subscription-app-email
+## 订阅：subscription-app-email
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -92,7 +92,7 @@ spec:
   filterPolicy: '{"event_type":["order_placed","order_shipped"]}'
 ```
 
-## Subscription — subscription-app-queue
+## 订阅：subscription-app-queue
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -111,9 +111,9 @@ spec:
   rawMessageDelivery: 'true'
 ```
 
-## 验证和运维前提条件
+## 验证和运行前提
 
-已根据官方的版本化 CRDs 检查字段。Schema 验证成功并不代表 IAM 权限、AWS 服务限制、创建、连接性或恢复已就绪。在应用前，为保留资源分配所有权、成本、清理和备份职责。
+已根据官方版本化 CRD 检查字段。架构验证成功并不能证明 IAM 权限、AWS 服务约束、资源创建、连通性或恢复能力。在应用配置之前，请明确保留资源的所有权、费用、清理和备份责任。
 
-- [sqs v1.7.0 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases)
-- [sns v1.10.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases)
+- [sqs v1.8.2 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.8.2/config/crd/bases)
+- [sns v1.11.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.11.1/config/crd/bases)

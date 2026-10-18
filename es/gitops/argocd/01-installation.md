@@ -1,23 +1,23 @@
 # Instalación de ArgoCD
 
-> **Base de revisión**: Argo CD 3.5.2 / Helm Chart 10.8.4; los pines de manifiesto y CLI se actualizaron al parche 3.5.4 después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Línea base de revisión**: Argo CD 3.5.2 / Helm Chart 10.8.4; las versiones fijadas para los manifiestos y la CLI se actualizaron a la versión de parche 3.5.5 tras revisar las notas de la versión (no se volvieron a ejecutar los ejemplos)
+> **Última actualización**: October 16, 2026
 
 ## Tabla de contenido
 - [Requisitos previos](#prerequisites)
 - [Métodos de instalación](#installation-methods)
-- [Instalación de CLI](#cli-installation)
+- [Instalación de la CLI](#cli-installation)
 - [Acceso inicial](#initial-access)
 - [Configuración de alta disponibilidad](#high-availability-setup)
 - [ArgoCD en Amazon EKS](#argocd-on-amazon-eks)
 - [Configuración declarativa](#declarative-setup)
 - [Actualización de ArgoCD](#upgrading-argocd)
 
-## Requisitos previos
+## Requisitos previos {#prerequisites}
 
-Esta es una guía de instalación autogestionada. Argo CD administrado por EKS utiliza creación de capacidades, autorización y configuración separadas; no superponga allí una instalación autogestionada. Consulte la [tabla de compatibilidad de la descripción general](README.md) y las ventanas de soporte de EKS. El kubeVersion mínimo de un chart no garantiza que se haya probado ni que tenga soporte.
+Esta guía explica una instalación autogestionada. Argo CD administrado por EKS utiliza procesos separados para crear, autorizar y configurar capacidades; no superponga allí una instalación autogestionada. Consulte la [tabla de compatibilidad general](README.md) y los períodos de soporte de EKS. La versión mínima de kubeVersion de un chart no garantiza que se haya probado ni que tenga soporte.
 
-El permiso para crear un namespace no demuestra permisos para CRD, ClusterRole y enlaces. Compruebe el contexto y la autorización reales. El paquete de HA requiere al menos tres nodos para la antiafinidad. Mida CPU/memoria para la escala de aplicaciones, clúster y repositorios; un PVC de Redis fijo de 10/50GB no es universalmente necesario.
+Tener permiso para crear un namespace no demuestra que se tengan permisos para CRD, ClusterRoles y enlaces. Compruebe el contexto y la autorización reales. El paquete de alta disponibilidad requiere al menos tres nodos para la antiafinidad. Mida el uso de CPU y memoria según la escala de las aplicaciones, los clústeres y los repositorios; no siempre se requiere un PVC de Redis fijo de 10/50 GB.
 
 ```bash
 kubectl version --client
@@ -27,20 +27,20 @@ kubectl auth can-i create customresourcedefinitions.apiextensions.k8s.io
 kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 ```
 
-## Métodos de instalación
+## Métodos de instalación {#installation-methods}
 
-Elija un propietario de instalación: manifiestos, Helm o Kustomize. Los comandos no-HA/HA a continuación son alternativas, no pasos secuenciales. Un namespace personalizado también requiere actualizar los sujetos de ServiceAccount en ClusterRoleBindings.
+Elija un único responsable de la instalación: manifiestos, Helm o Kustomize. Los comandos de alta disponibilidad y sin alta disponibilidad que aparecen a continuación son alternativas, no pasos secuenciales. Si utiliza un namespace personalizado, también debe actualizar los sujetos de ServiceAccount en los ClusterRoleBindings.
 
-### Método 1: Manifiestos sin formato (recomendado para comenzar)
+### Método 1: Manifiestos simples (recomendado para empezar)
 
-El método de instalación más sencillo que usa manifiestos oficiales:
+El método de instalación más sencillo, mediante manifiestos oficiales:
 
 ```bash
 # Create namespace
 kubectl create namespace argocd
 
 # Install ArgoCD (non-HA)
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 ```
 
@@ -48,12 +48,12 @@ Para alta disponibilidad:
 
 ```bash
 # Install HA manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/ha/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml
 ```
 
 ### Método 2: Helm Chart (recomendado para producción)
 
-El Helm chart proporciona más opciones de configuración:
+El Helm chart ofrece más opciones de configuración:
 
 ```bash
 # Add Argo Helm repository
@@ -72,11 +72,11 @@ helm install argocd argo/argo-cd --version 10.8.4 \
   --values values.yaml
 ```
 
-El chart 10.8.4 despliega Argo CD v3.5.2 (su `appVersion`), no el parche 3.5.4 fijado por los ejemplos de manifiestos, por lo que carece de las correcciones de seguridad de 3.5.4. Argo CD 3.5.4 se distribuye por primera vez en el chart 10.9.7, una actualización menor de chart que esta guía no ha revisado; lea el changelog del chart antes de cambiar el pin.
+El chart 10.8.4 implementa Argo CD v3.5.2 (su `appVersion`), no el parche 3.5.5 fijado en los ejemplos de manifiestos, por lo que no incluye las correcciones de seguridad de la versión 3.5.4. Argo CD 3.5.5 se publica por primera vez en el chart 10.10.3, una actualización de versión menor del chart que esta guía no ha revisado; lea el registro de cambios del chart antes de actualizar la versión fijada.
 
 Ejemplo de `values.yaml` para producción:
 
-Estos son valores iniciales de HA que se deben ajustar bajo carga real. El chart configura el número de shards del controller y la elección de líder de ApplicationSet; Dex permanece con una réplica. Elija la instalación predeterminada o la personalizada. Primero revise la salida de `helm template`; habilite ServiceMonitor solo si los CRD de Operator están instalados.
+Estos son valores iniciales para alta disponibilidad que se deben ajustar con carga real. El chart configura la cantidad de shards del controller y la elección de líder de ApplicationSet; Dex permanece con una sola réplica. Elija una instalación predeterminada o personalizada. Revise primero el resultado de `helm template`; habilite ServiceMonitor solo si están instalados los CRD del Operator.
 
 ```yaml
 fullnameOverride: argocd
@@ -150,7 +150,7 @@ redis-ha:
 
 ### Método 3: Kustomize
 
-Para instalaciones de ArgoCD administradas por GitOps:
+Para instalaciones de ArgoCD administradas con GitOps:
 
 ```yaml
 # kustomization.yaml
@@ -160,7 +160,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 patches:
   - patch: |-
@@ -190,16 +190,16 @@ Aplique con:
 kubectl apply --server-side -k .
 ```
 
-## Instalación de CLI
+## Instalación de la CLI {#cli-installation}
 
 ### Linux / macOS
 
-Guarde lo siguiente como un script y ejecútelo. Haga coincidir la arquitectura de CPU/versión del servidor y verifique las sumas de comprobación de la versión oficial. Homebrew es una alternativa en macOS; compruebe la versión instalada.
+Guarde lo siguiente como script y ejecútelo. Asegúrese de que coincidan la arquitectura de la CPU y la versión del servidor, y verifique las sumas de comprobación oficiales de la versión. Homebrew es una alternativa en macOS; compruebe la versión instalada.
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-ARGOCD_VERSION=v3.5.4
+ARGOCD_VERSION=v3.5.5
 case "$(uname -s)" in
   Linux) ARGOCD_OS=linux ;;
   Darwin) ARGOCD_OS=darwin ;;
@@ -232,7 +232,7 @@ argocd version --client
 
 ### Windows
 
-Descargue `argocd-windows-amd64.exe` y `cli_checksums.txt` de la versión v3.5.4. Compare `Get-FileHash -Algorithm SHA256` con la entrada de suma de comprobación correspondiente. Instale en un directorio propiedad del usuario y añádalo al PATH del usuario en vez de usar System32 como valor predeterminado.
+Descargue `argocd-windows-amd64.exe` y `cli_checksums.txt` de la versión v3.5.5. Compare `Get-FileHash -Algorithm SHA256` con la entrada de suma de comprobación correspondiente. Instálelo en un directorio propiedad del usuario y agréguelo al PATH del usuario, en lugar de usar System32 como ubicación predeterminada.
 
 ### Finalización
 
@@ -243,7 +243,7 @@ source <(argocd completion bash)
 # source <(argocd completion zsh)
 ```
 
-## Acceso inicial
+## Acceso inicial {#initial-access}
 
 ### Opción 1: Reenvío de puertos (desarrollo)
 
@@ -256,7 +256,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 ### Acceso mediante Ingress
 
-Use un controller mantenido, un certificado válido y un límite de acceso intencional. El ingress-nginx de la comunidad se retiró en marzo de 2026 y aquí no es el nuevo valor predeterminado. La sección de EKS a continuación proporciona un ejemplo coherente de ALB interno/backend HTTPS; siga la documentación de otro controller para passthrough/gRPC.
+Utilice un controller con mantenimiento, un certificado válido y un límite de acceso deliberado. ingress-nginx de la comunidad dejó de recibir soporte en marzo de 2026 y no es la nueva opción predeterminada aquí. La sección de EKS a continuación ofrece un ejemplo coherente de ALB interno con backend HTTPS; para passthrough/gRPC, siga la documentación de otro controller.
 
 ### Recuperar la contraseña inicial
 
@@ -266,7 +266,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d && echo
 ```
 
-### Inicio de sesión
+### Iniciar sesión
 
 ```bash
 # CLI login
@@ -289,28 +289,28 @@ argocd account update-password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
-## Configuración de alta disponibilidad
+## Configuración de alta disponibilidad {#high-availability-setup}
 
-### Arquitectura de HA
+### Arquitectura de alta disponibilidad
 
-![Las réplicas de API/Repo y los shards de Application Controller usan la caché de Redis HA, con Sentinels que admiten la conmutación por error de Redis.](../../.gitbook/assets/en-gitops-argocd-01-installation-0.png)
+![Las réplicas de API/Repo y los shards del Application Controller usan la caché de Redis HA, y Sentinel admite la conmutación por error de Redis.](../../.gitbook/assets/en-gitops-argocd-01-installation-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-01-installation-0.html)
 
 Compruebe lo siguiente en el ejemplo de Helm renderizado.
 
-- Application Controller distribuye los clústeres entre los shards en lugar de usar un líder global y réplicas de reserva. El chart alinea el número de réplicas con `ARGOCD_CONTROLLER_REPLICAS`. Valide el algoritmo, la redistribución y la recuperación; la distribución dinámica es una característica independiente.
-- La elección de líder de ApplicationSet difiere del sharding de Application Controller. Este chart habilita la elección de líder para varias réplicas de ApplicationSet.
-- Dex incluido usa almacenamiento en memoria; añadir réplicas puede crear datos incoherentes. Mantenga su réplica única predeterminada y valide un diseño compatible para requisitos adicionales de HA.
-- Redis es una caché desechable; los objetos de Kubernetes conservan la configuración de Argo. El número de réplicas de Redis HA es `redis-ha.replicas`, no `redis-ha.redis.replicas`. El paquete usa tres instancias de Redis/Sentinel.
-- Los PDB limitan la expulsión voluntaria, no los fallos de nodos ni cada rollout. Pruebe la distribución, la disponibilidad, las dependencias y la recuperación de reconciliación.
-- Ajuste la concurrencia de Repo Server, HPA y los límites de CPU según la carga real de generación de manifiestos/memoria. No existe un umbral universal de «100 aplicaciones implican dos shards».
+- Application Controller distribuye los clústeres entre shards, en lugar de usar un único líder global y réplicas en espera. El chart alinea la cantidad de réplicas con `ARGOCD_CONTROLLER_REPLICAS`. Valide el algoritmo, la redistribución y la recuperación; la distribución dinámica es una función independiente.
+- La elección de líder de ApplicationSet es distinta del sharding de Application Controller. Este chart habilita la elección de líder para varias réplicas de ApplicationSet.
+- Dex incluido usa almacenamiento en memoria; agregar réplicas puede generar datos incoherentes. Mantenga el valor predeterminado de una sola réplica y valide un diseño compatible para cualquier requisito adicional de alta disponibilidad.
+- Redis es una caché descartable; los objetos de Kubernetes conservan la configuración de Argo. La cantidad de réplicas de Redis HA es `redis-ha.replicas`, no `redis-ha.redis.replicas`. El paquete utiliza tres instancias de Redis/Sentinel.
+- Los PDB limitan las expulsiones voluntarias, no los fallos de nodos ni todos los despliegues. Pruebe la distribución, la disponibilidad, las dependencias y la recuperación de la reconciliación.
+- Ajuste la concurrencia de Repo Server, el HPA y los límites de CPU según la carga real de generación de manifiestos y memoria. No existe un umbral universal de «100 aplicaciones significa dos shards».
 
-## ArgoCD en Amazon EKS
+## ArgoCD en Amazon EKS {#argocd-on-amazon-eks}
 
 ### ALB y TLS
 
-Este ejemplo usa un ALB interno. Prepare AWS Load Balancer Controller, subnets/tags/security groups, DNS y un certificado ACM válido en la misma región. Sustituya el marcador de posición del certificado/nombre de host y proporcione al cliente de administración acceso de red al ALB.
+Este ejemplo utiliza un ALB interno. Prepare AWS Load Balancer Controller, las subredes/etiquetas/grupos de seguridad, DNS y un certificado ACM válido de la misma región. Reemplace el marcador del certificado/nombre de host y proporcione al cliente de administración acceso de red al ALB.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -342,29 +342,29 @@ spec:
               number: 443
 ```
 
-Mantenga `server.insecure=false` porque el backend usa HTTPS. Use `--grpc-web` para el tráfico de CLI mediante este único grupo de destino HTTP. El gRPC nativo requiere un grupo de destino gRPC separado y condiciones de enrutamiento como se documenta upstream.
+Mantenga `server.insecure=false` porque el backend utiliza HTTPS. Use `--grpc-web` para el tráfico de la CLI a través de este único grupo de destino HTTP. gRPC nativo requiere un grupo de destino gRPC independiente y condiciones de enrutamiento, tal como se documenta en el proyecto upstream.
 
 ```bash
 argocd login argocd.example.com --grpc-web
 ```
 
-### IRSA y permisos específicos de la función
+### IRSA y permisos específicos para cada función
 
 Una anotación de IAM por sí sola no configura las integraciones de AWS ni la renovación de tokens. Distinga la identidad real de cada función.
 
 | Función | Identidad |
 |---|---|
-| Desplegar en otra API de EKS | Rol de administración de Controller y de ApplicationSet/Server requerido → AssumeRole de destino → EKS Access Entry/RBAC |
-| Leer fuentes OCI/Helm | Autenticación de registro de Repo Server real, proveedor de credenciales y renovación de tokens |
+| Desplegar en otra API de EKS | Controller y rol de administración requerido de ApplicationSet/Server → AssumeRole de destino → EKS Access Entry/RBAC |
+| Leer fuentes OCI/Helm | Autenticación de registro, proveedor de credenciales y renovación de tokens del Repo Server real |
 | Detectar imágenes/actualizar Git | Image Updater independiente |
-| Leer Secrets Manager | Rol del llamador real de AWS, como External Secrets |
-| Extraer imágenes de Pod | Rol de nodo o rol de ejecución de Fargate |
+| Leer Secrets Manager | Rol de la persona que realmente realiza la llamada a AWS, como External Secrets |
+| Obtener imágenes de Pod | Rol del nodo o rol de ejecución de Fargate |
 
-IRSA necesita un proveedor OIDC y confianza limitada por aud/sub; Pod Identity necesita el agente, la asociación y un SDK compatible. Limite las relaciones de confianza de destino y los permisos de AssumeRole del rol de administración a los ARN previstos. Configure por separado las entradas de acceso de EKS de destino, la autorización de namespace y la conectividad de API. Vuelva a crear los Pod afectados después de cambiar la identidad de la carga de trabajo cuando sea necesario.
+IRSA requiere un proveedor OIDC y una relación de confianza restringida por aud/sub; Pod Identity requiere el agente, la asociación y un SDK compatible. Limite la confianza de destino y los permisos AssumeRole del rol de administración a los ARN previstos. Configure por separado las entradas de acceso de EKS de destino, la autorización del namespace y la conectividad con la API. Si es necesario, vuelva a crear los Pods afectados después de cambiar la identidad de la carga de trabajo.
 
-### Registro declarativo de clúster de EKS
+### Registro declarativo del clúster de EKS
 
-Después de establecer los roles y permisos, registre mediante el endpoint y la CA reales. Seleccione explícitamente el contexto kubeconfig del clúster de administración.
+Después de establecer los roles y permisos, registre el clúster con el endpoint y la CA reales. Seleccione explícitamente el contexto de kubeconfig del clúster de administración.
 
 ```bash
 # IAM roles, trust relationships and target EKS access/RBAC must already exist.
@@ -391,11 +391,11 @@ kubectl --context "$ARGOCD_CONTEXT" apply -f target-cluster-secret.json
 argocd cluster list
 ```
 
-El comando imperativo `argocd cluster add` acepta un nombre de contexto kubeconfig. Un contexto predeterminado de EKS puede ser un ARN, pero no es una API de AWS que acepte ARN arbitrarios. Puede crear objetos de ServiceAccount/RBAC de destino; limítelos a los namespace y permisos requeridos.
+El comando imperativo `argocd cluster add` acepta un nombre de contexto de kubeconfig. Un contexto predeterminado de EKS puede ser un ARN, pero este comando no es una llamada a la API de AWS que acepte ARN arbitrarios. Puede crear objetos de ServiceAccount/RBAC en el clúster de destino; restrínjalos a los namespaces y permisos necesarios.
 
-## Configuración declarativa
+## Configuración declarativa {#declarative-setup}
 
-Para Helm, administre `configs.cm`/`configs.params` en values. Para manifiestos, combine las claves requeridas a continuación con la configuración existente. Evite que Helm y un propietario kubectl independiente compitan por los mismos campos.
+En Helm, administre `configs.cm`/`configs.params` en los valores. En los manifiestos, combine las claves necesarias que aparecen a continuación con la configuración existente. Evite que Helm y un proceso independiente de kubectl compitan por los mismos campos.
 
 ```yaml
 apiVersion: v1
@@ -421,13 +421,13 @@ data:
   server.insecure: "false"
 ```
 
-Establezca admin.enabled=false solo después de probar la autorización de SSO y el acceso de recuperación. Diseñe cualquier subruta /argocd junto con las rutas de ingress y server.rootpath/basehref; no es un requisito predeterminado. La configuración de línea de comandos/entorno puede requerir un rollout de componentes.
+Establezca admin.enabled=false solo después de probar la autorización de SSO y el acceso de recuperación. Diseñe cualquier subruta /argocd junto con las rutas de ingress y server.rootpath/basehref; no es un requisito predeterminado. Es posible que los ajustes de línea de comandos/entorno requieran desplegar de nuevo un componente.
 
-Prefiera las comprobaciones de estado integradas para recursos compatibles como Rollouts. Lua personalizado debe devolver un estado válido incluso cuando falta el estado; no equipare lo desconocido con Healthy. Las versiones personalizadas de Kustomize requieren `kustomize.path.<version>` además del ejecutable real. Use los Secret de repositorio siguientes en lugar de los campos heredados de ConfigMap repositories/repository.credentials.
+Prefiera las comprobaciones de estado integradas para los recursos compatibles, como Rollouts. El Lua personalizado debe devolver un estado válido incluso cuando no haya status; no equipare un estado desconocido con Healthy. Las versiones personalizadas de Kustomize requieren `kustomize.path.<version>` y el ejecutable correspondiente. Para los repositorios, use los Secrets que se indican a continuación en lugar de los campos obsoletos repositories/repository.credentials de ConfigMap.
 
-### Credenciales de repositorio
+### Credenciales del repositorio
 
-Estos ejemplos inicializan Secret a partir de archivos protegidos. Proporcione usuarios/repositorios/ID de App reales y solo los permisos de lectura requeridos. No haga commit de tokens, claves privadas ni Secret codificados en base64 en Git. Use un solo propietario, como External Secrets, para la rotación continua.
+Estos ejemplos aprovisionan Secrets a partir de archivos protegidos. Proporcione usuarios/repositorios/ID de aplicaciones reales y solo los permisos de lectura necesarios. No confirme tokens, claves privadas ni Secrets codificados en base64 en Git. Use un único responsable, como External Secrets, para la rotación continua.
 
 #### Plantilla de credenciales HTTPS
 
@@ -443,7 +443,7 @@ kubectl -n argocd label secret github-repo-creds \
   argocd.argoproj.io/secret-type=repo-creds
 ```
 
-repo-creds es una plantilla de credenciales de prefijo URL; repository registra un repositorio. Compruebe la precedencia cuando un repositorio ya tenga credenciales explícitas.
+repo-creds es una plantilla de credenciales para un prefijo de URL; repository registra un único repositorio. Compruebe la precedencia cuando un repositorio ya tenga credenciales explícitas.
 
 #### SSH
 
@@ -457,7 +457,7 @@ kubectl -n argocd label secret private-repo-ssh \
   argocd.argoproj.io/secret-type=repository
 ```
 
-Verifique la clave de host del servidor SSH mediante un canal de confianza antes de añadirla a los hosts conocidos; no confíe en un escaneo de clave no verificado.
+Verifique la clave de host del servidor SSH por un canal de confianza antes de agregarla a los hosts conocidos; no confíe en una clave obtenida mediante un escaneo sin verificar.
 
 #### GitHub App
 
@@ -472,27 +472,27 @@ kubectl -n argocd label secret github-app-creds \
   argocd.argoproj.io/secret-type=repo-creds
 ```
 
-## Actualización de ArgoCD
+## Actualización de ArgoCD {#upgrading-argocd}
 
 ### Lista de comprobación previa a la actualización
 
-Revise cada guía de cambios incompatibles pertinente desde la versión instalada hasta la versión de destino, y pruebe en staging. No suponga que una sustitución directa de versión de 2.x a 3.5 es suficiente. Mantenga el mismo propietario de instalación. Cifre y restrinja el acceso a las copias de seguridad de Secret; no es seguro hacerles commit en Git.
+Revise todas las guías pertinentes sobre cambios incompatibles desde la versión instalada hasta la versión de destino y haga pruebas en un entorno de staging. No dé por sentado que basta con sustituir directamente la versión 2.x por la 3.5. Mantenga el mismo responsable de la instalación. Cifre y restrinja el acceso a las copias de seguridad de los Secret; no es seguro confirmarlas en Git.
 
-1. **Revise las notas de la versión** para detectar cambios incompatibles
-2. **Realice una copia de seguridad de la instalación actual**:
+1. **Revise las notas de la versión** para identificar cambios incompatibles
+2. **Haga una copia de seguridad de la instalación actual**:
    ```bash
    umask 077
    kubectl get applications,applicationsets -n argocd -o yaml > applications-backup.yaml
    kubectl get appprojects -n argocd -o yaml > projects-backup.yaml
    kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type -o yaml > secrets-backup.yaml
    ```
-3. **Compruebe la compatibilidad del clúster**, los valores de chart, los permisos del clúster de destino y los procedimientos de rollback/restauración. La copia de seguridad de configuración no incluye las bases de datos de aplicaciones.
+3. **Compruebe la compatibilidad del clúster**, los valores del chart, los permisos del clúster de destino y los procedimientos de reversión/restauración. La copia de seguridad de la configuración no respalda las bases de datos de las aplicaciones.
 
 ### Actualización mediante manifiestos
 
 ```bash
 # Apply new version manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 # Wait for rollout
 kubectl rollout status deployment argocd-server -n argocd
@@ -533,7 +533,7 @@ kubectl get pods -n argocd
 
 ### Problemas comunes
 
-**Los Pod no se inician:**
+**Los Pods no se inician:**
 ```bash
 # Check pod events
 kubectl describe pod -n argocd -l app.kubernetes.io/name=argocd-server
@@ -542,14 +542,14 @@ kubectl describe pod -n argocd -l app.kubernetes.io/name=argocd-server
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server --tail=100
 ```
 
-**La conexión del repositorio falló:**
+**Error de conexión con el repositorio:**
 ```bash
 # Test repository access
 argocd repo list
 argocd repo get https://github.com/myorg/myrepo.git
 ```
 
-**Problemas de certificado:**
+**Problemas con los certificados:**
 ```bash
 # Check TLS certificates
 # Select the Secret actually used by the server (argocd-server-tls or its configured fallback).
@@ -563,11 +563,11 @@ kubectl get secret -n argocd "$ARGOCD_TLS_SECRET" -o jsonpath='{.data.tls\.crt}'
 
 Para poner a prueba lo que ha aprendido, intente el [cuestionario de instalación de ArgoCD](../../quizzes/gitops/argocd/01-installation-quiz.md).
 
-### Fuentes de consulta
+### Fuentes de referencia
 
-- [Instalación de Argo CD 3.5.4](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/installation.md)
-- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
-- [Configuración de EKS y repositorio](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/declarative-setup.md)
-- [Ingress y gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/ingress.md)
+- [Instalación de Argo CD 3.5.5](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/installation.md)
+- [Argo CD de alta disponibilidad](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)
+- [Configuración de EKS y repositorios](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/declarative-setup.md)
+- [Ingress y gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/ingress.md)
 - [Chart 10.8.4](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.8.4)
-- [Retiro de Ingress NGINX](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
+- [Fin del soporte de Ingress NGINX](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

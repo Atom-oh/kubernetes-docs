@@ -18,7 +18,7 @@ Based on the Loki3.7.7/chart18.12.1 examples in the [guide](../../../observabili
 
 **Answer: B**
 
-Labels narrow the streams to scan. This does not prove a fixed10× cost advantage or eliminate parsing/chunk-read costs.
+Labels narrow the streams to scan. This does not prove a fixed 10× cost advantage or eliminate parsing/chunk-read costs.
 
 </details>
 
@@ -54,7 +54,7 @@ The Ingester also serves recent data. WAL needs persistent storage and is not by
 
 **Answer: D**
 
-SSD is scheduled for removal in Loki4.0. Capacity and availability depend on workload, storage, topology and tested failure handling, not a fixed GB/day table.
+SSD is scheduled for removal in Loki 4.0. Capacity and availability depend on workload, storage, topology and tested failure handling, not a fixed GB/day table.
 
 </details>
 
@@ -144,13 +144,13 @@ LogQL uses a label-filter stage after parsing. For an unwrapped numeric metric, 
 
 **Answer: D**
 
-It is not a general small-log-chunk merger. Retention needs compatible schema/index period, enabled processing, a deletion store and durable marker state;31days is an example policy.
+It is not a general small-log-chunk merger. Retention needs a compatible schema/index period, enabled processing, a deletion store and durable marker state; 31 days is an example policy.
 
 </details>
 
 ---
 
-9. What should happen first after an ingestion429 response?
+9. What should happen first after an ingestion 429 response?
 
    - A) Increase every limit without measuring capacity
    - B) Distinguish tenant byte rate/burst, per-stream rate and active-stream limits, then inspect capacity/client retries

@@ -2,13 +2,13 @@
 
 [ACK](../02-ack.md)
 
-Los ejemplos utilizan los esquemas de SQS 1.7.0 / SNS 1.10.1. Queue utiliza queueName y atributos de tipo cadena, con tags como un mapa. En SNS, tags es una lista de pares clave/valor; displayName, filterPolicy y rawMessageDelivery son campos específicos.
+Los ejemplos utilizan los esquemas de SQS 1.8.2 / SNS 1.11.1. El recurso Queue utiliza el campo queueName y atributos de tipo cadena, con tags representados como un mapa. En SNS, tags es una lista de pares clave/valor; displayName, filterPolicy y rawMessageDelivery son campos independientes.
 
-Cambie conjuntamente la cuenta, la región, los nombres de queue/topic y los ARN de las políticas. Una suscripción SNS→SQS no concede por sí sola permiso de entrega. La política de Queue restringe la entrega al ARN exacto del topic y a SourceAccount. Aplique las suscripciones cuando el topic y la queue estén listos y, después, pruebe la entrega y los reintentos.
+Cambie conjuntamente la cuenta, la región, los nombres de colas/temas y los ARN de las políticas. Una suscripción SNS→SQS no concede por sí sola permiso de entrega. La política de Queue restringe la entrega al ARN exacto del tema y a SourceAccount. Aplique las suscripciones cuando el tema y la cola estén listos y, después, pruebe la entrega y los reintentos.
 
-El endpoint de correo electrónico es ilustrativo y requiere la confirmación del destinatario. Esta auditoría no envió correos ni mensajes. filterPolicy utiliza los atributos del mensaje de forma predeterminada, por lo que los publicadores deben proporcionar event_type según corresponda. La deduplicación basada en contenido de FIFO utiliza el cuerpo del mensaje y no evita todos los duplicados a nivel de negocio.
+El endpoint de correo electrónico es ilustrativo y requiere la confirmación del destinatario. Esta auditoría no envió correos ni mensajes. filterPolicy usa los atributos del mensaje de forma predeterminada, por lo que los publicadores deben proporcionar event_type según corresponda. La deduplicación basada en contenido de FIFO utiliza el cuerpo del mensaje y no evita todos los duplicados a nivel de negocio.
 
-## Queue — queue-app-events
+## Queue: queue-app-events
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -36,7 +36,7 @@ spec:
     \   }\n  ]\n}"
 ```
 
-## Queue — queue-app-events-fifo
+## Queue: queue-app-events-fifo
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -55,7 +55,7 @@ spec:
     Environment: Development
 ```
 
-## Topic — topic-app-events
+## Topic: topic-app-events
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -73,7 +73,7 @@ spec:
     value: Development
 ```
 
-## Subscription — subscription-app-email
+## Subscription: subscription-app-email
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -92,7 +92,7 @@ spec:
   filterPolicy: '{"event_type":["order_placed","order_shipped"]}'
 ```
 
-## Subscription — subscription-app-queue
+## Subscription: subscription-app-queue
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -115,5 +115,5 @@ spec:
 
 Los campos se comprobaron con las CRD oficiales de las versiones indicadas. Que el esquema sea válido no demuestra que se cumplan los permisos de IAM ni las restricciones de los servicios de AWS, ni que funcionen la creación, la conectividad o la recuperación. Antes de aplicar los recursos, asigne las responsabilidades de propiedad, costes, limpieza y copias de seguridad de los recursos retenidos.
 
-- [sqs v1.7.0 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases)
-- [sns v1.10.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases)
+- [sqs v1.8.2 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.8.2/config/crd/bases)
+- [sns v1.11.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.11.1/config/crd/bases)

@@ -41,7 +41,7 @@ HeadOnly/Disabled는 명시적 선택이며 오래된 architecture 설명과 현
 
 **정답: B**
 
-직접 AutoscalingConfig()를 만들면 max 기본값은1이므로 별도로 지정해야 합니다.
+직접 AutoscalingConfig()를 만들면 max 기본값은 1이므로 별도로 지정해야 합니다.
 </details>
 
 4. max_queued_requests의 범위는?
@@ -121,7 +121,7 @@ Application 변경과 cluster 전환, actor 재설정을 구분합니다.
 <details>
 <summary>정답 보기</summary>
 
-Replica에 전달된 요청 상한, autoscaling 목표 부하, 각 caller에 대기할 요청 한도는 서로 다른 제어입니다. 하나를 설정했다고 나머지 상한과 latency가 보장되지 않습니다.
+Replica에 전달된 요청 상한, autoscaling 목표 부하, 각 caller에서 대기하는 요청 한도는 서로 다른 제어입니다. 하나를 설정했다고 나머지 상한과 latency가 보장되지 않습니다.
 </details>
 
 10. Token auth나 ClusterIP만으로 application 보안이 완료되지 않는 이유는?

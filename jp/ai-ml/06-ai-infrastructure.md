@@ -1,7 +1,7 @@
 # EKS 上の AI Infrastructure
 
-> **最終更新**: September 12, 2026
-> **Baselines**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
+> **最終更新**: October 16, 2026
+> **Baselines**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI Infrastructure は、notebook、pipeline、分散 runtime、device/node、storage/networking、認可を組み合わせます。ツールの一覧や成功した Helm release だけでは、platform の security、availability、または model execution は確立されません。
 
@@ -23,7 +23,7 @@ JARK は JupyterHub、Argo Workflows、Ray、Karpenter を組み合わせます�
 
 ### JupyterHub Authentication と Notebook Profile
 
-Chart4.4.2 は appVersion5.5.2 を宣言しており、確認した最新の PyPI Hub6.0.0 とは異なります。ローカル API check では Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0 を使用しました。運用中の chart image 内の実際の package combination を確認してください。
+Chart4.4.2 は appVersion5.5.2 を宣言しており、確認した最新の PyPI Hub6.1.0 (2026-10-14) とは異なります。ローカル API check では Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0 を使用しました。運用中の chart image 内の実際の package combination を確認してください。
 
 Cognito は OIDC provider の選択肢の 1 つです。callback URL、token/userInfo endpoint、scope、安定した username claim を一致させ、明示的な allow policy を設定してください。MFA/corporate federation は provider 側で設定する必要があります。GenericOAuthenticator が自動的に有効化するものではありません。
 

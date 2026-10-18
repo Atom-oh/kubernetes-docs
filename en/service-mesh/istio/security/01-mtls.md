@@ -329,7 +329,7 @@ ALB supports client certificate-based mTLS.
 
 #### Configure the ALB Listener and Gateway
 
-Create an ALB trust store from the client CA bundle and use its name below. The AWS Load Balancer Controller owns this Ingress and its listener settings. The gateway deployment must already exist with label `istio: ingressgateway`, a `gateway-cert` TLS Secret, and a VirtualService bound to `istio-system/public-gateway` routing `api.example.com` to the application.
+Create an ALB trust store from the client CA bundle and use its name below. The AWS Load Balancer Controller owns this Ingress and its listener settings. The gateway deployment must already exist with the label `istio: ingressgateway`, a `gateway-cert` TLS Secret, and a VirtualService bound to `istio-system/public-gateway` routing `api.example.com` to the application.
 
 ```yaml
 apiVersion: v1
@@ -781,7 +781,7 @@ Repair the node's configured time synchronization service according to its OS (`
 
 ### 4. Circular Dependency
 
-A Service A → B → A call cycle does not inherently cause an mTLS failure. Inspect distributed traces, application deadlines, retries, connection errors and proxy logs to distinguish recursion or resource exhaustion from TLS negotiation. `istioctl analyze` checks configuration; it does not reconstruct the runtime call graph. Increasing TCP connect timeout is not a fix for a dependency cycle.
+A Service A → B → A call cycle does not inherently cause an mTLS failure. Inspect distributed traces, application deadlines, retries, connection errors and proxy logs to distinguish recursion or resource exhaustion from TLS negotiation. `istioctl analyze` checks configuration; it does not reconstruct the runtime call graph. Increasing the TCP connect timeout is not a fix for a dependency cycle.
 
 ### 5. Mixed Protocol (mTLS + Plaintext)
 

@@ -73,7 +73,7 @@ helm upgrade --install argo-rollouts argo/argo-rollouts --version 2.43.1   --kub
 helm upgrade --install observability-lab ./chart --kube-context service -n msa   -f "$LAB_STATE/helm-inputs/application.yaml"
 kubectl --context service -n msa get deployment,rollout,pods,svc,scaledobject
 ```
-5개 ServiceAccount의 역할과 IRSA subject를 확인합니다. gateway는 AWS 역할이 없고, publisher는 SNS, 소비자는 자기 queue, KEDA는 queue attributes만 접근합니다. 기존 Pod Identity와 IRSA를 같은 workload에 중복 구성하지 않습니다. readiness는 DB/schema를 확인하지만 SQS/IAM delivery 성공까지 의미하지 않습니다.
+5개 ServiceAccount의 역할과 IRSA subject를 확인합니다. gateway는 AWS 역할이 없고, publisher는 SNS에, 소비자는 자기 queue에, KEDA는 queue attributes에만 접근합니다. 기존 Pod Identity와 IRSA를 같은 workload에 중복 구성하지 않습니다. readiness는 DB/schema를 확인하지만 SQS/IAM delivery 성공까지 의미하지 않습니다.
 
 ServiceMonitor label은 service Prometheus release와 일치합니다. `honorLabels`로 앱 service label을 유지합니다. NodePool이 없는 환경에서도 EKS managed node group에서 실행할 수 있으며, Karpenter는 [별도 가이드](../../autoscaling/02-karpenter.md)의 IAM·discovery·EC2NodeClass·AMI·taint 검증 후 추가합니다.
 

@@ -1,27 +1,29 @@
-# Secrets 管理クイズ
+# シークレット管理クイズ
 
-このクイズでは、Kubernetes Secrets、AWS Secrets Manager、External Secrets Operator、および暗号化についての理解を確認します。
+> **最終更新**: 2026年9月13日
+
+このクイズでは、Kubernetes Secret、AWS Secrets Manager、External Secrets Operator、暗号化について確認します。
 
 ## クイズ問題
 
-### 1. Kubernetes Secrets のデフォルトのエンコーディング方式は何ですか？
+### 1. Kubernetes Secretのデフォルトのencoding方式は何ですか？
 
-A. AES-256 暗号化
-B. Base64 エンコーディング
-C. SHA-256 ハッシュ
-D. RSA 暗号化
+A. AES-256暗号化
+B. Base64 encoding
+C. SHA-256 hash
+D. RSA暗号化
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Base64 エンコーディング**
+**正解: B. Base64 encoding**
 
 **解説:**
-Kubernetes Secrets はデフォルトで Base64 エンコードされます。Base64 は単純なエンコーディングであり、暗号化ではないため、etcd 暗号化を有効にするか、外部の secrets 管理システムを使用する必要があります。
+シリアライズされたSecretの`data` fieldはBase64で表現されます。encodingは暗号化ではありません。APIへのアクセス制御、保存データの保護、Secretを使うapplicationの保護が必要であり、外部storeを使ってもこれらの要件はなくなりません。
 
 </details>
 
-### 2. EKS で etcd 暗号化に使用される AWS service はどれですか？
+### 2. EKSのetcd暗号化には、どのAWS serviceが使われますか？
 
 A. AWS Secrets Manager
 B. AWS KMS (Key Management Service)
@@ -31,62 +33,50 @@ D. AWS CloudHSM
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. AWS KMS (Key Management Service)**
+**正解: B. AWS KMS (Key Management Service)**
 
 **解説:**
-EKS は AWS KMS を使用して、etcd に保存される Kubernetes Secrets を暗号化します。エンベロープ暗号化は、cluster の作成時または作成後に有効化できます:
-```bash
-aws eks associate-encryption-config \
-  --cluster-name my-cluster \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:..."}}]'
-```
+EKS 1.28以降では、AWS所有のkeyを使ったKMS envelope encryptionにより、Kubernetes APIのすべてのdataがデフォルトで暗号化されます。customer-managed keyも選択できます。これはself-managed API serverの設定とは異なります。EKSではdataが暗号化されないと決めつけたり、customer-managed keyが常に必要だと考えたりしないでください。
 
 </details>
 
-### 3. External Secrets Operator で AWS Secrets Manager の secrets を参照する resources はどれですか？
+### 3. External Secrets OperatorでAWS Secrets Managerのsecretを参照するresourceはどれですか？
 
 A. SecretStore
 B. ExternalSecret
 C. ClusterSecretStore
-D. A と B、または C と B
+D. AとB、またはCとB
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. A と B、または C と B**
+**正解: D. AとB、またはCとB**
 
 **解説:**
-External Secrets Operator の components:
-- **SecretStore/ClusterSecretStore**: 外部 secret store の接続設定
-- **ExternalSecret**: 実際の secret 参照と Kubernetes Secret の作成
-
-SecretStore は namespace スコープ、ClusterSecretStore は cluster スコープです。
+SecretStore/ClusterSecretStoreはproviderへのaccessとidentityを設定し、ExternalSecretは外部の値を選択して、作成するtarget Secretを定義します。namespace内のSecretStoreが参照するServiceAccountも同じnamespaceに置きます。ClusterSecretStoreでは参照先namespaceを明示し、利用範囲の制限も設定してください。
 
 </details>
 
-### 4. Pod で Secrets を使用する方法ではないものはどれですか？
+### 4. PodでSecretを使う方法ではないものはどれですか？
 
-A. environment variables として注入する
-B. volumes としてマウントする
-C. image pull secrets
-D. ConfigMap に変換する
+A. environment variableとして注入する
+B. volumeとしてmountする
+C. image pull secretとして使う
+D. ConfigMapに変換する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. ConfigMap に変換する**
+**正解: D. ConfigMapに変換する**
 
 **解説:**
-Pod で Secrets を使用する方法:
-1. **Environment variables**: `envFrom.secretRef` または `env.valueFrom.secretKeyRef`
-2. **Volume mount**: ファイルとしてマウントする
-3. **Image pull secrets**: `imagePullSecrets`
-
-Secrets は自動的に ConfigMaps に変換されません。これらは別々の resources です。
+Podはkey参照、volume、imagePullSecretsを通じてSecretを利用できます。ConfigMapは別のresourceであり、Secretを保護する仕組みではありません。実行中containerのenvironment variableは更新されず、volumeの更新とapplicationによる再読み込みも別に扱う必要があります。
 
 </details>
 
-### 5. AWS Secrets Manager で automatic rotation を設定するために使用される AWS service はどれですか？
+<span id="_5-which-aws-service-is-used-to-configure-automatic-rotation-in-aws-secrets-manager"></span>
+
+### 5. AWS Secrets Managerで、custom Lambda-based rotation functionを実行するserviceはどれですか？
 
 A. AWS EventBridge
 B. AWS Lambda
@@ -96,162 +86,132 @@ D. AWS SNS
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. AWS Lambda**
+**正解: B. AWS Lambda**
 
 **解説:**
-AWS Secrets Manager の automatic rotation は Lambda functions を使用します。AWS は RDS、Redshift など向けに事前構築済みの rotation functions を提供しており、custom rotation も Lambda で実装できます。
+custom Lambda-based rotation workflowでは、更新処理、権限、network accessを備えたLambda functionを使います。Secrets Managerにはmanaged rotationの統合機能もあり、すべてのrotationで利用者がLambdaを管理するわけではありません。ESOは値を同期しますが、database credential自体はrotationしません。
 
 </details>
 
-### 6. Sealed Secrets の主な特徴は何ですか？
+### 6. Sealed Secretsの主な特徴は何ですか？
 
-A. etcd 内での暗号化
-B. Git に安全に保存できる
-C. AWS 専用
-D. automatic rotation のサポート
+A. etcd内で暗号化される
+B. Gitに保存できる
+C. AWS専用である
+D. 自動rotationに対応する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Git に安全に保存できる**
+**正解: B. Gitに保存できる**
 
 **解説:**
-Sealed Secrets は public key で secrets を暗号化するため、Git repositories に安全に保存できます。cluster 内の Sealed Secrets controller だけが private key で復号できます。GitOps workflows に適しています。
+Sealed Secretsは信頼されたcertificateを使って値を暗号化するため、Gitに保存できます。適切なprivate keyを持つ人は、復旧担当者として認可された人も含め、復号できます。metadataは見えるままです。keyを更新してもapplication credentialはrotationされず、Gitに残る過去の暗号文も消えません。
 
 </details>
 
-### 7. ExternalSecret の refreshInterval field の役割は何ですか？
+### 7. ExternalSecretのrefreshInterval fieldは何を設定しますか？
 
-A. secret の有効期限を設定する
-B. external secret との同期間隔を設定する
-C. cache の保持時間を設定する
-D. retry interval を設定する
+A. secretの有効期限
+B. 外部secretとの同期間隔
+C. cacheの保持期間
+D. retry間隔
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. external secret との同期間隔を設定する**
+**正解: B. 外部secretとの同期間隔**
 
 **解説:**
-`refreshInterval` は External Secrets Operator が external secret store と同期する頻度を定義します:
-```yaml
-spec:
-  refreshInterval: 1h  # Sync every 1 hour
-```
-
-secrets が外部で変更されると、この間隔に従って Kubernetes Secret が更新されます。
+refreshPolicyがPeriodicで、refreshIntervalが正の値の場合、ESOは外部の値を定期的にreconcileします。これは同期完了までの時間を保証するものではなく、OnChangeやCreatedOnceとも動作が異なります。provider errorやbackoffへの対応と、application側での再読み込みも必要です。
 
 </details>
 
-### 8. Kubernetes Secret の immutable field が true に設定されるとどうなりますか？
+### 8. Kubernetes Secretのimmutable fieldをtrueにすると、どうなりますか？
 
-A. Secret を削除できなくなる
-B. Secret を変更できなくなる
-C. Secret を読み取れなくなる
-D. Secret をコピーできなくなる
+A. Secretを削除できなくなる
+B. Secretのdataを変更できなくなる
+C. Secretを読み取れなくなる
+D. Secretを複製できなくなる
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Secret を変更できなくなる**
+**正解: B. Secretのdataを変更できなくなる**
 
 **解説:**
-`immutable: true` 設定は、Secret が作成された後の変更を防ぎます:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-secret
-immutable: true
-data:
-  password: cGFzc3dvcmQ=
-```
-
-変更するには、Secret を削除して再作成する必要があります。これにより、偶発的な変更を防ぎ、performance が向上します。
+immutableにするとSecretのdataを変更できず、mutableな状態へ戻すこともできません。metadataは引き続き変更でき、Secretも削除できます。稼働中の依存先を置き換える場合は、新しい名前のSecretを作成し、管理された手順でrolloutしてください。
 
 </details>
 
-### 9. CSI Secrets Store Driver の主な機能は何ですか？
+### 9. CSI Secrets Store Driverの主な機能は何ですか？
 
-A. etcd 内の secrets を暗号化する
-B. external secrets を volumes としてマウントする
-C. secrets を自動生成する
-D. secrets をバックアップする
+A. etcd内でsecretを暗号化する
+B. 外部secretをvolumeとしてmountする
+C. secretを自動生成する
+D. secretをbackupする
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. external secrets を volumes としてマウントする**
+**正解: B. 外部secretをvolumeとしてmountする**
 
 **解説:**
-Secrets Store CSI Driver は、AWS Secrets Manager、Azure Key Vault などの external secrets を CSI volumes として直接マウントします。Pods は Kubernetes Secrets を作成せずに secrets を使用できます。
+Secrets Store CSI Driverと対応providerは、外部の値をfileとしてmountします。Kubernetes Secretへの同期は任意ですが、sync機能を有効にし、同期先Secretを使うmountも必要です。rotation、fileへの反映、applicationによる再読み込みはそれぞれ別の処理であり、platformによって対応状況も異なります。
 
 </details>
 
-### 10. External Secrets で IRSA (IAM Roles for Service Accounts) を使用する利点は何ですか？
+### 10. IRSA (IAM Roles for Service Accounts) とExternal Secretsを使う利点は何ですか？
 
-A. secret へのアクセスが高速になる
-B. Pods に IAM credentials をハードコードする必要がない
-C. automatic secret rotation
-D. 無料で使用できる
+A. secretに速くaccessできる
+B. PodにIAM credentialをhardcodeしなくてよい
+C. secretが自動rotationされる
+D. 無料で使える
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Pods に IAM credentials をハードコードする必要がない**
+**正解: B. PodにIAM credentialをhardcodeしなくてよい**
 
 **解説:**
-IRSA により、Service Accounts に IAM roles を関連付けることができます。External Secrets Operator Pods は AWS credentials なしで AWS Secrets Manager に安全にアクセスできます。これは security best practice です。
+IRSAはprojected identity tokenを、厳密に指定したrole trust bindingを通じてtemporary AWS credentialと交換します。長期間有効なaccess keyのhardcodeを避けられますが、credentialそのものが不要になるわけではありません。ESOのPod Identityではcontrollerのidentityを使うため、serviceAccountRefによるimpersonationの代用にはなりません。
 
 </details>
 
-### 11. stringData で Secret data を定義する特徴は何ですか？
+### 11. stringDataでSecret dataを定義する場合の特徴は何ですか？
 
 A. 暗号化される
-B. Base64 エンコーディングが不要
-C. より安全である
+B. Base64 encodingが不要
+C. より安全になる
 D. 圧縮される
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Base64 エンコーディングが不要**
+**正解: B. Base64 encodingが不要**
 
 **解説:**
-`stringData` field では、値を plain text で指定できます:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-secret
-stringData:
-  password: mypassword  # Plain text, auto Base64 encoded
-```
-
-Kubernetes が自動的に Base64 エンコーディングを処理します。ただし、query すると data field では Base64 として表示されます。
+stringDataは、手動でBase64変換せずにplaintextを入力でき、その値はdataに統合されます。暗号化でも追加のaccess保護でもありません。APIから読み取ると、認可された利用者にはdataの表現が見えます。追跡対象のYAMLに実際の値を書かないようにし、server-side applyの制約にも注意してください。
 
 </details>
 
-### 12. secrets 管理の best practice ではないものはどれですか？
+### 12. 次のうち、secret管理のbest practiceではないものはどれですか？
 
-A. etcd 暗号化を有効にする
-B. RBAC で Secret access を制限する
-C. secrets を source code に commit する
-D. external secrets management system を使用する
+A. etcd encryptionを有効にする
+B. RBACでSecret accessを制限する
+C. plaintext credentialをsource codeにcommitする
+D. 外部secret管理systemを使う
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. secrets を source code に commit する**
+**正解: C. plaintext credentialをsource codeにcommitする**
 
 **解説:**
-Secrets 管理の best practices:
-- etcd 暗号化を有効にする
-- RBAC で Secret access を制限する
-- external secrets management systems (AWS Secrets Manager、HashiCorp Vault など) を使用する
-- audit logging を有効にする
-- 定期的な secret rotation
-
-secrets を source code に commit してはいけません。plain text secrets は version control systems で公開されてしまいます。
+plaintext credentialや復号用private keyをcommitしてはいけません。暗号化済みのSOPS/SealedSecret artifactや、値を含まないESO referenceは、recipientをレビューし、keyを保護し、復旧テストとaccess controlを行ったうえでGitに保存できます。どのtoolも、それだけでsecurityやcomplianceを保証するものではありません。
 
 </details>
+
+---
+
+[シークレット管理ガイド](../../security/05-secrets-management.md)

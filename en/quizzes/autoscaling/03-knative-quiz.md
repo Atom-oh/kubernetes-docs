@@ -32,7 +32,7 @@ At zero replicas, the routing path uses the Activator, which buffers within its 
 **Answer: B) KPA scales based on concurrency and supports Scale-to-Zero, while HPA scales based on CPU/memory**
 
 **Explanation:**
-Knative KPA supports concurrency/RPS and its Activator-based zero path. The optional Knative HPA extension supports CPU, memory and supported custom Pod metrics, and does not implement that zero path. This is not a universal claim about Kubernetes HPA: upstream Kubernetes1.37 has beta scale-to-zero for object/external metrics. In the1.23 HPA implementation CPU targets are percentage utilization of CPU requests, memory targets are MiB, and custom metrics use per-Pod average values.
+Knative KPA supports concurrency/RPS and its Activator-based zero path. The optional Knative HPA extension supports CPU, memory and supported custom Pod metrics, and does not implement that zero path. This is not a universal claim about Kubernetes HPA: upstream Kubernetes 1.37 has beta scale-to-zero for object/external metrics. In the 1.23 HPA implementation, CPU targets are percentage utilization of CPU requests, memory targets are MiB, and custom metrics use per-Pod average values.
 
 </details>
 

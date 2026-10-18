@@ -14,7 +14,7 @@ These questions refer to the September 2, 2026 report, not universal performance
 **Answer: C) In this run, 0.040 ms → 0.339 ms → 0.544 ms: about +0.30 ms and +0.21 ms between adjacent placements**
 
 **Explanation:**
-The reported ping means used 200 probes per path with 0/200 loss. The cross-AZ minus same-AZ difference is 0.205 ms, rounded to 0.21 ms; cross-AZ minus same-node is 0.504 ms. HTTP p50 was 0.259 → 0.461 → 0.704 ms. Subtracting an HTTP median from a ping mean does not isolate user-space cost. The 5.4 ms figure belongs to loaded TCP RTT, whose queue location was not measured. The separate Istio report's +1.29 ms is a whole-scenario p50 difference on different hardware and workload, not a measured single-proxy cost that can be added to these values.
+The reported ping means were based on 200 probes per path with 0/200 loss. The cross-AZ minus same-AZ difference is 0.205 ms, rounded to 0.21 ms; cross-AZ minus same-node is 0.504 ms. HTTP p50 was 0.259 → 0.461 → 0.704 ms. Subtracting an HTTP median from a ping mean does not isolate user-space cost. The 5.4 ms figure belongs to loaded TCP RTT, whose queue location was not measured. The separate Istio report's +1.29 ms is a whole-scenario p50 difference on different hardware and with a different workload, not a measured single-proxy cost that can be added to these values.
 
 </details>
 
@@ -46,7 +46,7 @@ The m5.xlarge baseline is 1.25 Gbps and its best-effort burst peak is 10 Gbps; t
 **Answer: D) A steady closed loop with about 16 in-flight requests is consistent with throughput ≈ 16 / mean latency; the observed rates differ by 33.5 %, without proving a universal AZ penalty**
 
 **Explanation:**
-The reported means were 0.355 / 0.415 / 0.624 ms. Dividing 16 by those durations gives 45,070 / 38,554 / 25,641 qps, near the reported 44,991 / 38,507 / 25,602. (38,507 − 25,602) / 38,507 ≈ 33.5 %. Little's law describes concurrency, throughput and mean time under the stated steady-state conditions; it does not identify the exclusive cause of delay. The report records zero errors and the same instance type for both servers, not evidence for options B or C. CPU contention could contribute to the worse same-node tail, but was not established by profiling.
+The reported means were 0.355 / 0.415 / 0.624 ms. Dividing 16 by those durations gives 45,070 / 38,554 / 25,641 qps, near the reported 44,991 / 38,507 / 25,602. (38,507 − 25,602) / 38,507 ≈ 33.5 %. Little's law describes concurrency, throughput and mean time under the stated steady-state conditions; it does not identify the exclusive cause of delay. The report records zero errors and the same instance type for both servers, neither of which provides evidence for options B or C. CPU contention could contribute to the worse same-node tail, but was not established by profiling.
 
 </details>
 

@@ -760,7 +760,7 @@ kubeProxy:
 
 Use one owner for operator/CRDs. The profile disables the chart's CRD cleanup hook and Prometheus-resource conversion; it does not make arbitrary deletion of CRDs safe. If reusing a separately managed operator, configure the chart for that ownership instead of installing a competing controller. Review CRD upgrades separately from Helm release upgrades.
 
-After reviewing the context, rendered objects, permissions and existing resources, installation uses the same pin and values:
+After you review the context, rendered objects, permissions and existing resources, installation uses the same pin and values:
 
 ```bash
 helm upgrade --install vm-demo vm/victoria-metrics-k8s-stack \
@@ -904,7 +904,7 @@ These p50/p90/p99 values are derived gauges and cannot reconstruct the original 
 | `search.maxUniqueTimeseries`, `search.maxSamplesPerQuery` | Reject unexpectedly large queries; they do not reduce ingestion cardinality. |
 | `search.maxQueryDuration`, `search.maxPointsPerTimeseries` | Query time/output bounds. A larger range step changes evaluation resolution, not the original stored samples. |
 | `storage.cacheSizeIndexDBDataBlocks`, `storage.cacheSizeIndexDBIndexBlocks` | Advanced cache overrides. Measure cache misses, CPU and disk I/O before overriding automatic sizing. |
-| `maxLabelsPerTimeseries`, `maxLabelValueLen` | The reviewed version rejects series exceeding limits and increments `vm_rows_ignored_total`; these are not harmless label truncation. |
+| `maxLabelsPerTimeseries`, `maxLabelValueLen` | The reviewed version rejects series exceeding limits and increments `vm_rows_ignored_total`; this is not harmless label truncation. |
 | `dedup.minScrapeInterval` | Retains one point per discrete interval of the same label set; choose deliberately for replication/scraper cadence, not as generic compression. |
 
 Measure active series and churn, query fan-out, retention, queue growth, cache pressure and free disk. A fixed resource example or one benchmark does not establish a safe production capacity. Protect administrative and query endpoints with network and application access controls.

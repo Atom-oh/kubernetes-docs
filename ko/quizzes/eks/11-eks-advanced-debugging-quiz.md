@@ -163,7 +163,7 @@ D. Retention 연장만
 
 **정답: C. 적절한 측정 기반 alert·수집 범위 확인·escalation**
 
-실제 SLO·장애 양상에 맞추며 낮은 threshold는 alert fatigue를 만들 수 있습니다. 아래 HTTP counter·status label은 앱 instrumentation이 필요하고 요청 분모 0·누락이 성공을 증명하지 않습니다. 모든 restart 대신 waiting reason으로 CrashLoopBackOff를 확인합니다. Prometheus가 rule·namespace를 선택해야 하며 알림 수신은 별도 확인입니다. 여기서 MTTD를 측정하지 않았습니다.
+실제 SLO·장애 양상에 맞추며 낮은 threshold는 alert fatigue를 만들 수 있습니다. 아래 HTTP counter·status label은 앱 instrumentation이 필요하고 요청 분모 0·누락이 성공을 증명하지 않습니다. 모든 restart 대신 waiting reason으로 CrashLoopBackOff를 확인합니다. Prometheus가 rule·namespace를 선택해야 하며 알림 수신은 별도로 확인합니다. 여기서 MTTD를 측정하지 않았습니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -282,7 +282,7 @@ D. kubectl logs
 
 **정답: B. kubectl top pods**
 
-Kubectl top은 보통 Metrics Server 같은 정상 metrics.k8s.io provider가 필요합니다. 순간 측정·이력이 아닌 최근 수집 CPU/memory sample이며 metric 부재가 사용량 0은 아닙니다. Requests/limits는 별도로 비교하고 이력은 monitoring backend를 사용합니다.
+Kubectl top은 보통 Metrics Server 같은 정상 metrics.k8s.io provider가 필요합니다. 순간 측정·이력이 아닌 최근 수집 CPU/memory sample이며 metric 부재가 사용량 0은 아닙니다. Requests/limits는 별도로 비교하고 이력 확인에는 monitoring backend를 사용합니다.
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
@@ -392,7 +392,7 @@ rate(container_cpu_usage_seconds_total{namespace="diagnostics-example",container
 <details>
 <summary>정답 보기</summary>
 
-단일 클러스터와 `namespace`·`pod`·`uid`·`container` label을 제공하는 kube-state-metrics를 전제로 합니다. `increase()`는 counter reset을 보정하고 외삽하므로 소수가 나올 수 있으며 완전한 이벤트 장부가 아닙니다. `max`는 같은 값을 노출하는 exporter replica의 단순 합산을 피하지만 범용 HA 중복 제거는 아니므로 scrape 상태와 backend deduplication을 확인합니다. Pod UID를 유지해 같은 이름의 교체 Pod를 구분합니다. 변형은 생애 누적 횟수 >5, 최근 1시간 컨테이너 증가를 합친 상위 **Pod** 10개, 그래프용 초당 재시작률입니다. Series 누락은 재시작 0회가 아닙니다.
+단일 클러스터와 `namespace`·`pod`·`uid`·`container` label을 제공하는 kube-state-metrics를 전제로 합니다. `increase()`는 counter reset을 보정하고 외삽하므로 소수가 나올 수 있으며 완전한 이벤트 장부가 아닙니다. `max`는 같은 값을 노출하는 exporter replica의 단순 합산을 피하지만 범용 HA 중복 제거는 아니므로 scrape 상태와 backend deduplication을 확인합니다. Pod UID를 유지해 같은 이름의 교체 Pod를 구분합니다. 변형은 생애 누적 횟수 >5, 최근 1시간 컨테이너 재시작 증가를 합친 상위 **Pod** 10개, 그래프용 초당 재시작률입니다. Series 누락은 재시작 0회가 아닙니다.
 
 ```promql
 max by (namespace,pod,uid,container) (
@@ -464,7 +464,7 @@ fi
 <details>
 <summary>정답 보기</summary>
 
-감사 로그가 이미 활성화되어 있어야 합니다. 소유 계정·Region과 `/aws/eks/<cluster-name>/cluster`를 선택하고 콘솔에서는 최근 1시간 범위를 지정합니다. 각 블록은 별도 Logs Insights QL입니다. JSON key 순서를 가정해 parse하지 말고 추출된 필드를 사용합니다. 집계는 고유 요청이 아닌 감사 이벤트 수이며 여러 audit stage가 같은 audit ID를 기록할 수 있습니다. 403은 인가 거부이지만 어느 IAM/RBAC policy 때문인지 단독으로 증명하지는 않습니다. CLI 예시는 AWS CLI·Bash·jq·Python이 필요하고 최대 100개 결과를 비공개 저장합니다. 실행 중 결과가 있어도 `Complete`만 최종 결과입니다. Polling 종료가 서비스의 query를 취소하지는 않습니다.
+감사 로그가 이미 활성화되어 있어야 합니다. 소유 계정·Region과 `/aws/eks/<cluster-name>/cluster`를 선택하고 콘솔에서는 최근 1시간 범위를 지정합니다. 각 블록은 별도 Logs Insights QL입니다. JSON key 순서를 가정해 parse하지 말고 추출된 필드를 사용합니다. 집계는 고유 요청이 아닌 감사 이벤트 수이며 여러 audit stage가 같은 audit ID를 기록할 수 있습니다. 403은 인가 거부이지만 어느 IAM/RBAC policy 때문인지 단독으로 증명하지는 않습니다. CLI 예시는 AWS CLI·Bash·jq·Python이 필요하고 최대 100개 결과를 비공개로 저장합니다. 실행 중 결과가 있어도 `Complete`만 최종 결과입니다. Polling 종료가 서비스의 query를 취소하지는 않습니다.
 
 ```sql
 fields @timestamp, user.username, verb, objectRef.namespace, objectRef.resource, responseStatus.code
@@ -771,7 +771,7 @@ spec:
 
 Prometheus가 이 rule을 선택해야 하며 condition/exporter series 누락에는 별도 수집·inventory 알림이 필요합니다. 용량 알림과 kubelet pressure condition은 측정 대상이 달라 이름도 구분했습니다.
 
-설정을 소유한 Linux kubelet이라면 아래는 **기존 설정에 검토 후 병합하는 조각**입니다. 완전한 설정이나 EKS node 파일 덮어쓰기 명령이 아닙니다. OS·provisioner가 지원하는 bootstrap 경로를 사용합니다. `mergeDefaultEvictionSettings`는 생략된 hard default를 유지하며, 이를 사용하지 않은 일부 값 변경은 나머지 threshold를 0으로 만들 수 있습니다. Soft threshold에는 대응하는 grace period가 필요하고 `evictionMaxPodGracePeriod`는 종료 유예 시간을 제한합니다. 값은 workload·용량 검증이 필요한 예시이며 Auto Mode 설정 지시가 아닙니다.
+설정을 소유한 Linux kubelet이라면 아래는 **기존 설정에 검토 후 병합하는 조각**입니다. 완전한 설정이나 EKS node 파일 덮어쓰기 명령이 아닙니다. OS·provisioner가 지원하는 bootstrap 경로를 사용합니다. `mergeDefaultEvictionSettings`는 생략된 hard default를 유지하며, 이를 사용하지 않고 일부 값을 변경하면 나머지 threshold가 0이 될 수 있습니다. Soft threshold에는 대응하는 grace period가 필요하고 `evictionMaxPodGracePeriod`는 종료 유예 시간을 제한합니다. 값은 workload·용량 검증이 필요한 예시이며 Auto Mode 설정 지시가 아닙니다.
 
 ```json
 {

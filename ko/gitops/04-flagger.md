@@ -69,7 +69,7 @@ Deployment 예제에서 podinfo는 원래 리소스이자 canary workload입니�
 
 초기 primary를 준비한 뒤 Pod template 또는 추적하는 ConfigMap/Secret 변경을 감지하면 canary를 준비합니다. pre-rollout 검사, 분석과 라우팅을 거쳐 승격할 때는 준비된 canary로 트래픽을 보내면서 primary를 새 spec으로 갱신합니다. primary readiness를 확인한 후 트래픽을 되돌리고 canary를 축소합니다.
 
-**분석 중 실패**는 정상 primary로 복귀합니다. **primary 갱신 중 장애**는 다릅니다. 1.45.0은 Promoting/Finalising 중 primary가 비정상이면 건강한 canary로 트래픽을 유지/되돌리고 실패를 보고할 수 있습니다. Failed 표시만 보고 이전 primary가 서비스 중이라고 가정하지 않습니다.
+**분석 중 실패** 시 정상 primary로 복귀합니다. **primary 갱신 중 장애**는 다릅니다. 1.45.0은 Promoting/Finalising 중 primary가 비정상이면 건강한 canary로 트래픽을 유지/되돌리고 실패를 보고할 수 있습니다. Failed 표시만 보고 이전 primary가 서비스 중이라고 가정하지 않습니다.
 
 ### Provider와 수명주기
 
@@ -87,7 +87,7 @@ adapter 존재를 신규 운영 플랫폼의 유지보수 보장으로 해석하
 
 ## EKS 설치 및 구성
 
-기본 실습은 지원 중인 EKS/Kubernetes, 설치된 Istio sidecar 환경, 해당 지표를 수집하는 Prometheus가 필요합니다. URL은 실제 Prometheus Service로 바꿉니다. Flagger가 Istio나 계측을 자동 설치하지 않습니다. chart에 포함된 Prometheus 기본 이미지는 오래된 2.41.0이므로 사용하지 않습니다.
+기본 실습에는 지원 중인 EKS/Kubernetes, 설치된 Istio sidecar 환경, 해당 지표를 수집하는 Prometheus가 필요합니다. URL은 실제 Prometheus Service로 바꿉니다. Flagger가 Istio나 계측을 자동 설치하지 않습니다. chart에 포함된 Prometheus 기본 이미지는 오래된 2.41.0이므로 사용하지 않습니다.
 
 하나의 release/관리 방식만 선택합니다. 다른 namespace에 동일 Flagger를 두 번 설치하면 같은 Canary를 제어할 수 있습니다. 예제는 controller용 flagger-system, workload용 flagger-demo입니다. 주입 레이블은 실제 Istio revision에 맞게 조정합니다.
 
@@ -196,7 +196,7 @@ helm upgrade --install flagger-loadtester flagger/loadtester --version 0.39.0 \
   --namespace flagger-system -f loadtester-values.yaml --wait --timeout 5m
 ```
 
-Loadtester는 HTTP 요청의 명령을 실행합니다. namespaceRegexp는 body 문자열 필터이며 호출자 인증이 아닙니다. 인터넷에 노출하지 않고 controller Pod만 접근하도록 CNI NetworkPolicy를 적용합니다. 운영자 exec/port-forward는 RBAC로 통제합니다. 메모리 gate 실습은 replicas 1을 사용합니다.
+Loadtester는 HTTP 요청에 포함된 명령을 실행합니다. namespaceRegexp는 body 문자열 필터이며 호출자 인증이 아닙니다. 인터넷에 노출하지 않고 controller Pod만 접근하도록 CNI NetworkPolicy를 적용합니다. 운영자 exec/port-forward는 RBAC로 통제합니다. 메모리 gate 실습은 replicas 1을 사용합니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -754,7 +754,7 @@ stringData:
   datadog_application_key: REPLACE_WITH_APPLICATION_KEY
 ```
 
-myapp.request_duration_ms는 별도로 발행할 custom 평균 latency(ms) 예제이며 P99가 아닙니다. 사이트는 provider.address로 선택합니다. native client는 표시된 두 Secret 키를 읽고 datadog_site는 사용하지 않습니다. metric interval의 10배를 조회하여 첫 시계열의 가장 오래된 첫 datapoint를 반환합니다. 최신 canary 검증의 유일한 지표로 사용하지 말고 신선한 버전별 측정으로 보완합니다.
+myapp.request_duration_ms는 별도로 발행할 custom 평균 latency(ms) 예제이며 P99가 아닙니다. 사이트는 provider.address로 선택합니다. native client는 표시된 두 Secret 키를 읽고 datadog_site는 사용하지 않습니다. metric interval의 10배를 조회하여 첫 시계열의 가장 오래된 datapoint를 반환합니다. 최신 canary 검증의 유일한 지표로 사용하지 말고 신선한 버전별 측정으로 보완합니다.
 
 추가로 원본 client를 사용한 로컬 모의 응답 검증에서 첫 datapoint의 null이 0으로 디코딩되는 것을 확인했습니다. 0ms를 정상으로 받아들이는 latency gate에는 특히 주의가 필요합니다. 최신 timestamp와 결측값을 검증하는 중계 또는 신선한 Prometheus 지표를 사용합니다.
 
@@ -836,7 +836,7 @@ spec:
       interval: 1m
 ```
 
-provider.region은 지원되며 필수입니다. MyApp 지표와 Service/Namespace 차원을 별도로 발행해야 합니다. 식은 결측·저트래픽 구간을 -1로 표현하여 0–1% 검사에 통과시키지 않습니다. 수집 지연으로 거부될 수 있으므로 실제 발행 주기와 집계/조회 창을 검증합니다.
+provider.region은 지원되며 필수입니다. MyApp 지표와 Service/Namespace 차원을 별도로 발행해야 합니다. 식은 결측·저트래픽 구간을 -1로 표현하여 0–1% 검사를 통과시키지 않습니다. 수집 지연으로 거부될 수 있으므로 실제 발행 주기와 집계/조회 창을 검증합니다.
 
 native provider는 metric interval의 10배를 조회하고 첫 결과의 첫 값을 선택하며 timestamp/StatusCode를 별도로 검사하지 않습니다. 오래된 datapoint나 ALB 전체 지표를 현재 canary의 증거로 오인하지 않도록 현재 버전의 Prometheus 요청/헬스 검사 등으로 보완합니다. 필요한 AWS API 권한은 GetMetricData입니다.
 
@@ -888,7 +888,7 @@ Webhook에는 임의 Authorization header 설정이 없습니다. 필요한 인�
 
 cmd load test는 비동기 수락이며 HTTP 성공이 부하 테스트 품질 통과를 뜻하지 않습니다. bash는 완료를 기다리므로 timeout 안에 끝나야 합니다. 0.39.0 이미지에 curl/jq/hey/wrk/bash는 있지만 k6는 없습니다. k6에는 별도 검증한 이미지가 필요하며 check()만으로 실패 exit를 기대하지 말고 thresholds도 설정합니다.
 
-아래는 k6가 준비된 전용 테스트 이미지에 넣을 script 예제입니다. 기본 loadtester 이미지에 그대로 실행하는 명령이 아닙니다.
+아래는 k6가 준비된 전용 테스트 이미지에 넣을 script 예제입니다. 기본 loadtester 이미지에서 그대로 실행하는 명령이 아닙니다.
 
 ```javascript
 import http from 'k6/http';
@@ -955,7 +955,7 @@ spec:
       timeout: 5s
 ```
 
-rollback endpoint는 평소 403으로 신호 없음, 요청할 때 200으로 신호를 줍니다. 알림 수신 서버를 이 hook에 연결하면 성공 응답 자체가 의도치 않은 rollback 요청이 될 수 있습니다. 다음은 정상적으로 조정 중인 분석/승격 승인 대기 단계의 요청 예제입니다. 즉시 실행이나 모든 단계의 복구를 보장하는 스위치가 아닙니다.
+rollback endpoint는 평소 403으로 신호가 없음을 알리고, 요청할 때 200으로 신호를 줍니다. 알림 수신 서버를 이 hook에 연결하면 성공 응답 자체가 의도치 않은 rollback 요청이 될 수 있습니다. 다음은 정상적으로 조정 중인 분석/승격 승인 대기 단계의 요청 예제입니다. 즉시 실행이나 모든 단계의 복구를 보장하는 스위치가 아닙니다.
 
 ```bash
 kubectl get canary podinfo -n flagger-demo -o jsonpath='{.status.phase}{"\n"}'
@@ -1091,7 +1091,7 @@ spec:
       mountPath: /tmp
 ```
 
-Flux가 CRD를 CreateReplace로 갱신하는 설정도 무조건 안전한 migration 보장은 아닙니다. 업그레이드할 CRD 변경과 기존 저장 객체를 검토합니다. 소스와 provider 설치가 준비된 뒤 Canary 객체를 적용합니다.
+Flux가 CRD를 CreateReplace로 갱신하는 설정도 무조건 안전한 migration을 보장하지는 않습니다. 업그레이드할 CRD 변경과 기존 저장 객체를 검토합니다. 소스와 provider 설치가 준비된 뒤 Canary 객체를 적용합니다.
 
 ### HelmRelease 방식의 애플리케이션
 
@@ -1488,7 +1488,7 @@ spec:
 
 위 예제는 해당 클러스터의 Flux가 실행하는 객체입니다. 자기 자신을 dependsOn으로 참조하지 않습니다. 독립 클러스터의 같은 이름을 dependsOn으로 찾을 수도 없습니다. 중앙 control plane에 서로 다른 원격 Kustomization을 만들더라도 Ready가 현재 Flagger revision의 승격 완료를 자동 보장하지 않으므로, 실제 결과를 확인한 release 절차가 다음 환경의 Git 변경을 승인해야 합니다.
 
-관측을 중앙 집계하면 cluster 레이블과 보존 정책을 설정합니다. 알림·MetricTemplate의 namespace 분리만으로 테넌트 보안이 완성되는 것은 아니므로 RBAC, cross-namespace refs, 네트워크와 Secret 접근을 함께 제한합니다.
+관측 데이터를 중앙에서 집계하면 cluster 레이블과 보존 정책을 설정합니다. 알림·MetricTemplate의 namespace 분리만으로 테넌트 보안이 완성되는 것은 아니므로 RBAC, cross-namespace refs, 네트워크와 Secret 접근을 함께 제한합니다.
 
 ## 참고 문서
 

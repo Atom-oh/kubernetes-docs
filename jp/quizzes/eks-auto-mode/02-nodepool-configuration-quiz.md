@@ -2,190 +2,148 @@
 
 > **関連ドキュメント**: [NodePool 設定](../../eks-auto-mode/02-nodepool-configuration.md)
 
-## 選択式問題
+## 選択問題
 
-### 1. EKS Auto Mode が提供するデフォルトの NodePools はどれですか？
+### 1. EKS Auto Mode が提供する任意選択の組み込み NodePool はどれですか？
 
-- A) default, worker
-- B) general-purpose, system
-- C) compute, memory
-- D) primary, secondary
+- A) default、worker
+- B) general-purpose、system
+- C) compute、memory
+- D) primary、secondary
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) general-purpose, system**
+**解答: B) general-purpose、system**
 
 **解説:**
-EKS Auto Mode は 2 つのデフォルト NodePools を提供します。
-- **general-purpose**: general workloads 向けのデフォルト NodePool で、さまざまな instance types (c, m, r) と Spot/On-Demand の両方をサポートします
-- **system**: system components (CoreDNS, kube-proxy など) 向けの NodePool で、CriticalAddonsOnly taint が適用され、On-Demand のみを使用します
+有効にすると、`general-purpose` と `system` は第 5 世代以降の On-Demand C/M/R インスタンスを使用します。general-purpose は amd64、system は amd64 と arm64 をサポートし、`CriticalAddonsOnly` taint が付与されます。Spot を使う場合はカスタムプールを使用してください。Auto Mode のローカル DNS／サービスネットワーク機能は、system プールにスケジュールする通常の Pod ではありません。
 
 ```yaml
-# Auto Mode activation example
+# eksctl configuration fragment
 autoModeConfig:
   enabled: true
-  nodePools:
-    - general-purpose
-    - system
+  nodePools: [general-purpose, system]
+```
+
+組み込みプールの名前を削除すると、その NodePool も削除され、管理対象ノードは drain されて終了します。両方を無効にする場合は、`default` が存在すると想定せず、カスタム NodeClass を用意する必要があります。
+
+</details>
+
+### 2. Auto Mode ノードの IMDS はどのように設定されていますか？
+
+- A) NodeClass で `metadataOptions.httpTokens: optional` を設定する
+- B) AWS が IMDSv2 と hop limit 1 を強制し、NodeClass からこれらを上書きできない
+- C) IMDSv2 を使うため hop limit を 0 にする
+- D) AL2023 を選ぶと IMDS 認証が無効になる
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) AWS が IMDSv2 と hop limit 1 を強制し、NodeClass からこれらを上書きできない**
+
+**解説:**
+管理対象インスタンスの既定値では IMDSv2 と hop limit 1 が必須で、Auto Mode では変更できません。以前の `metadataOptions` の例は別の API のものでした。hop limit は hostNetwork を使わない Pod からのアクセスを制限しますが、hostNetwork のワークロードを含むすべての Pod が隔離される保証ではありません。ノード認証情報に頼らず、ワークロード ID とリージョンや設定の明示を使ってください。[管理対象インスタンスの制約](https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html)を参照してください。
+
+</details>
+
+### 3. Auto Mode ノードのオペレーティングシステムイメージを選択するのは誰ですか？
+
+- A) ユーザーが `amiFamily` で Amazon Linux 2 または Ubuntu を選ぶ
+- B) AWS が適切な管理対象 Bottlerocket バリアントを選択する
+- C) ユーザーが任意の Windows AMI を指定する
+- D) NodePool の weight によって AL2023 と Bottlerocket のどちらを使うか決まる
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) AWS が適切な管理対象 Bottlerocket バリアントを選択する**
+
+**解説:**
+Auto Mode は AWS 管理の Bottlerocket バリアントを使用します。AWS NodeClass では `amiFamily: AL2023` や `amiFamily: Bottlerocket` を選択できません。ストレージ、ネットワーク、証明書、サポート対象のカーネル設定については、ドキュメントに記載された NodeClass の設定を使用してください。任意の AMI 選択やシェルの user data とは異なります。
+
+</details>
+
+### 4. Auto Mode で GPU の製造元を選択する NodePool ラベルはどれですか？
+
+- A) karpenter.k8s.aws/gpu-vendor
+- B) eks.amazonaws.com/instance-gpu-manufacturer
+- C) nvidia.com/gpu-family
+- D) karpenter.sh/gpu-type
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) eks.amazonaws.com/instance-gpu-manufacturer**
+
+**解説:**
+AWS Auto Mode のラベル `eks.amazonaws.com/instance-gpu-manufacturer` を使用します。NVIDIA GPU ハードウェアを使う場合、要件には次のように指定できます。
+
+```yaml
+# Requirements fragment inside a complete NodePool
+requirements:
+  - key: eks.amazonaws.com/instance-category
+    operator: In
+    values: ["g", "p"]
+  - key: eks.amazonaws.com/instance-gpu-manufacturer
+    operator: In
+    values: ["nvidia"]
+```
+
+ハードウェアを選択しても、コンテナに GPU が割り当てられるわけではありません。Pod が `nvidia.com/gpu` などの適切な拡張リソースを要求し、互換性のあるイメージ／ランタイムを使う必要があります。この監査では GPU の実行確認をしていません。
+
+</details>
+
+### 5. EC2 の第 6 世代以降を選択する条件はどれですか？
+
+- A) node.kubernetes.io/instance-generation: "6"
+- B) eks.amazonaws.com/instance-generation に `Gt` と値 "5" を指定する
+- C) eks.amazonaws.com/generation: "6"
+- D) instance-generation: 6
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) eks.amazonaws.com/instance-generation に `Gt` と値 "5" を指定する**
+
+**解説:**
+`Gt` は数値の厳密な下限を表すため、`Gt ["5"]` は第 6 世代以降を選択します。`In ["6"]` は第 6 世代だけを選択し、同じ意味ではありません。どちらも最新世代だけを指定する条件ではありません。
+
+```yaml
+# Requirements fragment inside a complete NodePool
+requirements:
+  - key: eks.amazonaws.com/instance-generation
+    operator: Gt
+    values: ["5"]
 ```
 
 </details>
 
-### 2. NodeClass で IMDSv2 を必須として適用するにはどうしますか？
+### 6. NodeClass でプライベートサブネットを選択するにはどうすればよいですか？
 
-- A) `httpTokens: optional`
-- B) `httpTokens: required`
-- C) `httpEndpoint: disabled`
-- D) `httpPutResponseHopLimit: 0`
-
-<details>
-<summary>答えを表示</summary>
-
-**答え: B) `httpTokens: required`**
-
-**解説:**
-NodeClass の `metadataOptions` で `httpTokens: required` を設定すると、IMDSv2 のみが強制され、security が向上します。
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: secure-nodeclass
-spec:
-  metadataOptions:
-    httpEndpoint: enabled
-    httpProtocolIPv6: disabled
-    httpPutResponseHopLimit: 2
-    httpTokens: required  # IMDSv2 required
-```
-
-**Security Best Practices:**
-- `httpTokens: required`: IMDSv2 の使用を強制します
-- `httpPutResponseHopLimit: 1`: Pods からの直接 IMDS access をブロックします
-
-</details>
-
-### 3. EKS Auto Mode がサポートする AMI families はどれですか？
-
-- A) Amazon Linux 2, Ubuntu
-- B) AL2023, Bottlerocket
-- C) Windows Server, Amazon Linux 2
-- D) Red Hat Enterprise Linux, Ubuntu
+- A) `subnetType: private` を設定する
+- B) 確認済みのサブネット ID／タグを選び、ルートと IP 設定を検証する
+- C) `privateSubnetsOnly: true` を設定する
+- D) `networkType: private` を設定する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) AL2023, Bottlerocket**
-
-**解説:**
-EKS Auto Mode は AL2023 (Amazon Linux 2023) と Bottlerocket の AMI families のみをサポートします。Windows nodes はサポートされていません。
-
-**AMI Family Characteristics:**
-- **AL2023**: general-purpose use、豊富な package support
-- **Bottlerocket**: Container-optimized OS、より速い boot time、強化された security
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: custom-nodeclass
-spec:
-  amiFamily: Bottlerocket  # or AL2023
-```
-
-</details>
-
-### 4. GPU workloads 用の NodePool で GPU manufacturer を指定する label key はどれですか？
-
-- A) `karpenter.k8s.aws/gpu-vendor`
-- B) `karpenter.k8s.aws/instance-gpu-manufacturer`
-- C) `nvidia.com/gpu-family`
-- D) `karpenter.sh/gpu-type`
-
-<details>
-<summary>答えを表示</summary>
-
-**答え: B) `karpenter.k8s.aws/instance-gpu-manufacturer`**
+**解答: B) 確認済みのサブネット ID／タグを選び、ルートと IP 設定を検証する**
 
 **解説:**
-GPU instances を選択するときに manufacturer を指定できます。
+`subnetSelectorTerms` では ID またはタグを使って選択します。`kubernetes.io/role/internal-elb` などのタグは慣例であり、プライベートなルートテーブルを使っている証拠ではありません。複数の term は選択肢として扱われ、1 つの term 内の複数のタグはすべて一致する必要があります。VPC／AZ の選択、ルート、パブリック IP の動作を確認してください。
 
 ```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["g", "p"]
-        - key: karpenter.k8s.aws/instance-gpu-manufacturer
-          operator: In
-          values: ["nvidia"]
+# Selection fragment; a complete NodeClass also needs identity and security groups
+subnetSelectorTerms:
+  - tags:
+      kubernetes.io/role/internal-elb: "1"
+      Environment: production
+advancedNetworking:
+  associatePublicIPAddress: false
 ```
 
-</details>
-
-### 5. NodePool で instance generation を指定する正しい方法はどれですか？
-
-- A) `node.kubernetes.io/instance-generation: "6"`
-- B) `karpenter.k8s.aws/instance-generation` with `operator: In`
-- C) `eks.amazonaws.com/generation: "6"`
-- D) `instance-generation: 6`
-
-<details>
-<summary>答えを表示</summary>
-
-**答え: B) `karpenter.k8s.aws/instance-generation` with `operator: In`**
-
-**解説:**
-instance generation を指定するには Karpenter labels を使用します。
-
-```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]  # Generation 6 or higher
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-```
-
-</details>
-
-### 6. private subnets のみを使用するように NodeClass を設定する正しい方法はどれですか？
-
-- A) `subnetType: private`
-- B) `subnetSelectorTerms` with internal-elb tag
-- C) `privateSubnetsOnly: true`
-- D) `networkType: private`
-
-<details>
-<summary>答えを表示</summary>
-
-**答え: B) `subnetSelectorTerms` with internal-elb tag**
-
-**解説:**
-private subnets を選択するには `subnetSelectorTerms` を使用します。
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: secure-nodeclass
-spec:
-  # Use private subnets only
-  subnetSelectorTerms:
-    - tags:
-        kubernetes.io/role/internal-elb: "1"
-```
-
-Public subnets は `kubernetes.io/role/elb: "1"` tag を使用します。
+`associatePublicIPAddress: false` を設定しても、パブリック IP の割り当てが防がれるだけで、NAT ルートや VPC endpoint が作られるわけではありません。NodeClass に必要な identity と security group の設定をすべて用意し、Ready 状態を検証してください。
 
 </details>

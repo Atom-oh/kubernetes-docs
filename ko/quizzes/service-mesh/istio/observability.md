@@ -229,7 +229,7 @@ app.get('/api/users', async (req, res) => {
 
 **샘플링 설정:**
 
-추적 장의 `otel-tracing` 제공자를 전제합니다. `1.0`은100%가 아닌1%이며 제공자·exporter 설정과 context 전파는 별도 요구입니다.
+추적 장의 `otel-tracing` 제공자를 전제합니다. `1.0`은 100%가 아닌 1%이며 제공자·exporter 설정과 context 전파는 별도로 필요합니다.
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -603,7 +603,7 @@ Google SRE의 **Golden Signals**(Latency, Traffic, Errors, Saturation)를 Istio�
 
 <summary>예시 답안</summary>
 
-서비스 홉 계산에는 한 reporter를 선택하고 서비스 네임스페이스(필요 시 클러스터)를 유지합니다. 수신 메트릭은 서비스에 도착한 요청을, 도착하지 못한 upstream 오류는 송신 메트릭으로 봅니다. HTTP5xx는 오류 정의 중 하나이며 gRPC는 `grpc_response_status`와 애플리케이션 SLI 규칙이 필요합니다. 다음 지연 단위는 밀리초, rate는 초당 값입니다:
+서비스 홉 계산에는 한 reporter를 선택하고 서비스 네임스페이스(필요 시 클러스터)를 유지합니다. 서비스에 도착한 요청은 수신 메트릭으로, 도착하지 못한 upstream 오류는 송신 메트릭으로 봅니다. HTTP5xx는 오류 정의 중 하나이며 gRPC는 `grpc_response_status`와 애플리케이션 SLI 규칙이 필요합니다. 다음 지연 단위는 밀리초, rate는 초당 값입니다:
 
 ```promql
 histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
@@ -615,7 +615,7 @@ sum by (destination_service_name, destination_service_namespace) (rate(istio_req
 sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
 ```
 
-단일 클러스터의 일반 사이드카 사용량/limit 비율에는 kubelet/cAdvisor와 kube-state-metrics가 필요합니다. 없거나0인 limit은 제외합니다. Native sidecar의 설정 limit은 init-container 자원 시계열일 수 있으므로 실제 메트릭 계열을 확인합니다:
+단일 클러스터의 일반 사이드카 사용량/limit 비율에는 kubelet/cAdvisor와 kube-state-metrics가 필요합니다. 없거나 0인 limit은 제외합니다. Native sidecar의 설정 limit은 init-container 자원 시계열일 수 있으므로 실제 메트릭 계열을 확인합니다:
 
 ```promql
 sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"}) > 0)
@@ -627,9 +627,9 @@ envoy_cluster_upstream_rq_pending_active
 envoy_cluster_circuit_breakers_default_cx_open
 ```
 
-`_cx_open`은0/1 상태 gauge이므로 활성 연결 수를 이것으로 나누면 사용률이 되지 않습니다. 비율이 필요하면 설정된 circuit breaker 한도를 확인합니다. 나누기 전 CPU rate는 core, working set은 byte 단위입니다. 메서드별 집계에는 제한된 `request_method` Telemetry 레이블을 먼저 추가해야 합니다.
+`_cx_open`은 0/1 상태 gauge이므로 활성 연결 수를 이것으로 나누면 사용률이 되지 않습니다. 비율이 필요하면 설정된 circuit breaker 한도를 확인합니다. 나누기 전 CPU rate는 core, working set은 byte 단위입니다. 메서드별 집계에는 제한된 `request_method` Telemetry 레이블을 먼저 추가해야 합니다.
 
-다음 PrometheusRule을 설치된 Prometheus Operator가 선택해야 합니다. 임계치·비교 구간은 예시이며 계절성·데이터 부재·스크레이프 실패·최소 트래픽 조건은 환경에 맞춰 처리합니다. 이전1시간 구간은 학습된 정상 baseline이 아닙니다.
+다음 PrometheusRule을 설치된 Prometheus Operator가 선택해야 합니다. 임계치·비교 구간은 예시이며 계절성·데이터 부재·스크레이프 실패·최소 트래픽 조건은 환경에 맞춰 처리합니다. 이전 1시간 구간은 학습된 정상 baseline이 아닙니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -869,7 +869,7 @@ Istio Envoy가 수집하는 기본 메트릭 외에 **비즈니스 메트릭**(�
 
 <summary>예시 답안</summary>
 
-메트릭 선택 전에 비즈니스 이벤트·집계 경계를 정의합니다. Envoy는 요청을 알지만 주문의 영속 생성·결제 확정을 알지는 못합니다. 다음 **통합 코드 조각은 완료된 처리 시도**를 세며 고유 주문 수·회계 매출이 아닙니다. 처리 함수·오류 계약·멱등성·입력 검증은 애플리케이션이 제공해야 합니다. 실제 결제 성공률은 결제 경계의 결과 counter로 계산하며 갱신하지 않는 Gauge는 성공률이 아닙니다.
+메트릭 선택 전에 비즈니스 이벤트·집계 경계를 정의합니다. Envoy는 요청을 알지만 주문의 영속 생성·결제 확정을 알지는 못합니다. 다음 **통합 코드 조각은 완료된 처리 시도**를 세며 고유 주문 수·회계 매출을 나타내지는 않습니다. 처리 함수·오류 계약·멱등성·입력 검증은 애플리케이션이 제공해야 합니다. 실제 결제 성공률은 결제 경계의 결과 counter로 계산하며 갱신하지 않는 Gauge는 성공률이 아닙니다.
 
 상태·카테고리 레이블을 제한하고 Counter로 시도 수, Histogram으로 비음수 금액·지연을 관찰합니다. 실패 지연도 포함되도록 `finally`에서 기록합니다. 주문/user ID·원시 URL을 레이블로 넣지 않습니다. 단일 process 예제이며 multi-worker는 라이브러리가 지원하는 집계 설정이 필요합니다.
 
@@ -973,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Kubernetes 수집**: 이 사이드카 실습은 Istio 병합 endpoint를 사용하므로 평문 애플리케이션 스크레이프가 STRICT mTLS를 통과한다고 가정하지 않습니다. `default`의 실제 `order-service` Deployment에 다음 레이블·annotation을 병합하고 이미지가8080 `/metrics`를 제공해야 합니다. 메시의 Prometheus 병합 기능이 필요합니다. Agent15020은 평문이므로 네트워크 접근을 제한하고 이미 수집 중인 비즈니스 메트릭을 중복 스크레이프하지 않습니다.
+**Kubernetes 수집**: 이 사이드카 실습은 Istio 병합 endpoint를 사용하므로 평문 애플리케이션 스크레이프가 STRICT mTLS를 통과한다고 가정하지 않습니다. `default`의 실제 `order-service` Deployment에 다음 레이블·annotation을 병합하고 이미지가 8080 포트에서 `/metrics`를 제공해야 합니다. 메시의 Prometheus 병합 기능이 필요합니다. Agent15020은 평문이므로 네트워크 접근을 제한하고 이미 수집 중인 비즈니스 메트릭을 중복 스크레이프하지 않습니다.
 
 ```yaml
 spec:

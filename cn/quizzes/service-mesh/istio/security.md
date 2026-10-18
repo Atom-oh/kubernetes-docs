@@ -159,7 +159,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**评估：**CUSTOM → DENY → ALLOW。匹配的 CUSTOM provider 必须允许该请求；随后任何匹配的 DENY 都会拒绝它。如果存在适用的 ALLOW policy，至少必须有一条规则匹配。如果没有适用的 ALLOW policy，此阶段会允许该请求。规则和 ALLOW policy 构成并集，而不是额外限制条件的有序列表。AUDIT 会标记匹配的请求以供已配置的 audit plugin 使用；它不是第四个强制执行阶段，并且本身不会记录日志。
+**评估**：CUSTOM → DENY → ALLOW。匹配的 CUSTOM provider 必须允许该请求；随后任何匹配的 DENY 都会拒绝它。如果存在适用的 ALLOW policy，至少必须有一条规则匹配。如果没有适用的 ALLOW policy，此阶段会允许该请求。规则和 ALLOW policy 构成并集，而不是额外限制条件的有序列表。AUDIT 会标记匹配的请求以供已配置的 audit plugin 使用；它不是第四个强制执行阶段，并且本身不会记录日志。
 
 **实际示例：**
 
@@ -201,7 +201,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**测试：**从已加入 mesh 的 frontend workload 中使用 ServiceAccount `frontend` 运行；配置 backend HTTP protocol/port detection。
+**测试**：从已加入 mesh 的 frontend workload 中使用 ServiceAccount `frontend` 运行；配置 backend HTTP protocol/port detection。
 
 ```bash
 # GET request -> Matches ALLOW policy -> Allowed
@@ -786,7 +786,7 @@ Frontend → backend 应到达应用程序；frontend → database 应在 TCP �
 
 ### 问题 7：JWT + mTLS 双重身份验证
 
-实施一个在 Istio 中同时使用**终端用户身份验证（JWT）**和**服务间身份验证（mTLS）**的场景。包括如何与 OAuth2/OIDC provider（例如 Keycloak）集成。
+实施一个在 Istio 中同时使用**终端用户身份验证**（JWT）和**服务间身份验证**（mTLS）的场景。包括如何与 OAuth2/OIDC provider（例如 Keycloak）集成。
 
 <details>
 

@@ -123,13 +123,13 @@ if (-not $ContainerdVersion -or -not $KubernetesVersion) { throw "Versions requi
 
 ### Joining Windows Node Using kubeadm
 
-Generate join token on the Linux control plane:
+Generate a join token on the Linux control plane:
 
 ```bash
 kubeadm token create --print-join-command
 ```
 
-Run join command on the Windows node:
+Run the join command on the Windows node:
 
 ```powershell
 # Run kubeadm join command
@@ -188,7 +188,7 @@ spec:
 
 ### Resource Requests and Limits
 
-Resource requests and limits for Windows containers are handled differently than Linux containers:
+Resource requests and limits for Windows containers are handled differently than those for Linux containers:
 
 1. **CPU Limits**: CPU limits are applied differently on Windows. For example, a CPU limit of 1 means 100% of a single CPU core can be used.
 2. **Memory Limits**: Windows containers respect memory limits, but some system processes may cause additional overhead.
@@ -255,7 +255,7 @@ spec:
 
 ## Networking
 
-Networking on Windows nodes has different characteristics than Linux nodes.
+Networking on Windows nodes has different characteristics than networking on Linux nodes.
 
 The following diagram shows the networking architecture of a Kubernetes cluster with mixed Windows and Linux nodes:
 
@@ -735,7 +735,7 @@ Provide Linux nodes or a supported Fargate setup for CoreDNS. Windows is unsuppo
 
 ### Creating Windows Node Groups
 
-Create Windows node group using eksctl:
+Create a Windows node group using eksctl:
 
 ```bash
 eksctl create nodegroup \
@@ -845,7 +845,7 @@ Let's explore best practices for running Windows workloads in Kubernetes.
 
 1. **Regular Updates**: Regularly update Windows nodes and container images
 2. **Automation**: Automate deployment and management tasks
-3. **Backup and Recovery**: Regularly backup important data
+3. **Backup and Recovery**: Regularly back up important data
 4. **Troubleshooting Tools**: Build appropriate troubleshooting tools and processes
 5. **Documentation**: Document configurations and procedures
 

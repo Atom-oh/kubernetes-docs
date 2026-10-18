@@ -228,7 +228,7 @@ resources:
 
 #### ReadWriteOncePod: GA
 
-`ReadWriteOncePod` constrains a PVC to one Pod across the cluster. `ReadWriteOnce` instead permits multiple Pods on one node. RWOP requires a compatible CSI volume/driver; the upstream minimum sidecars are csi-provisioner 3.0.0, csi-attacher 3.3.0 and csi-resizer 1.3.0. These are feature minimums, not recommended current releases. Select supported versions for the actual cluster and provisioner.
+`ReadWriteOncePod` constrains a PVC to one Pod across the cluster. `ReadWriteOnce` instead permits multiple Pods on one node. RWOP requires a compatible CSI volume/driver; the minimum upstream sidecar versions are csi-provisioner 3.0.0, csi-attacher 3.3.0 and csi-resizer 1.3.0. These are feature minimums, not recommended current releases. Select supported versions for the actual cluster and provisioner.
 
 The example requires the existing `version-lab` namespace and an appropriate `reviewed-csi-class`. Access-mode coordination is not a kernel security boundary against privileged host access, a database leader-election protocol, or a substitute for application fencing and backups.
 
@@ -501,7 +501,7 @@ spec:
 
 The August 13 release lists **45 enhancements: 11 stable, 22 beta and 12 alpha**.
 
-<!-- Parent repair: DRA structured parameters remained alpha in1.31, not beta as drawn.
+<!-- Parent repair: DRA structured parameters remained alpha in 1.31, not beta as drawn.
 ![Diagram showing the 45 enhancements in Kubernetes 1.31 "Elli" split into 11 Stable (GA), 22 Beta, and 12 Alpha, with the representative features covered on this page grouped under each maturity stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-8.html)
@@ -571,7 +571,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pv "$PV_NAME" -o jso
 
 The DRA redesign made device information and requests visible to Kubernetes through structured APIs and ResourceSlices, enabling scheduler-side allocation. **Classic DRA was still available in 1.31**, behind the separate, disabled-by-default `DRAControlPlaneController` gate. The released 1.31 source contains that gate; the 1.32 source removes it. The old quiz’s claim that classic DRA was already removed in 1.31 is therefore incorrect.
 
-DRA remained alpha in 1.31 and graduated to beta in 1.32, then its core API became stable in 1.34. The former `resource.k8s.io/v1beta1` example was not a valid representation of the 1.31 API generation. Use the stable DRA example in the 1.34 section for current syntax and verify the installed driver’s DeviceClasses, ResourceSlices, attributes and capabilities. A Kubernetes API does not itself install a GPU driver or implement time-slicing/MIG.
+DRA remained alpha in 1.31 and graduated to beta in 1.32; then its core API became stable in 1.34. The former `resource.k8s.io/v1beta1` example was not a valid representation of the 1.31 API generation. Use the stable DRA example in the 1.34 section for current syntax and verify the installed driver’s DeviceClasses, ResourceSlices, attributes and capabilities. A Kubernetes API does not itself install a GPU driver or implement time-slicing/MIG.
 
 #### Service traffic distribution: beta
 
@@ -2067,7 +2067,7 @@ func buildResizePatch(pod *corev1.Pod, cfg config, now time.Time) ([]byte, error
 }
 ```
 
-Successful PATCH is logged as `RESIZE_REQUESTED`; it is not marked completed. UID/resourceVersion tests reject a stale name or changed object. A work queue bounds retries, handles cancellation and avoids the old ever-growing processed-UID map. The prototype does not restore startup CPU for a container restart inside an existing Pod, coordinate another HPA/VPA/GitOps writer, implement deployment packaging/readiness/HA policy, or prove application SLOs. Different workload controllers can create eligible Pods, but their rollout/replacement/storage behavior still requires integration testing.
+A successful PATCH is logged as `RESIZE_REQUESTED`; it is not marked completed. UID/resourceVersion tests reject a stale name or changed object. A work queue bounds retries, handles cancellation and avoids the old ever-growing processed-UID map. The prototype does not restore startup CPU for a container restart inside an existing Pod, coordinate another HPA/VPA/GitOps writer, implement deployment packaging/readiness/HA policy, or prove application SLOs. Different workload controllers can create eligible Pods, but their rollout/replacement/storage behavior still requires integration testing.
 
 The ServiceAccount has namespace-scoped Pod reads and only the resize subresource for writes; it has no general Pod patch or Secret-read permission. Prepare the existing namespace/labels, build and review the controller image, run it as this ServiceAccount, and set the two required environment variables. The `50m` demo floor is illustrative, not a generic production recommendation.
 
@@ -2305,7 +2305,7 @@ Gateway API is a separately released API/CRD project. Do not assign its channels
 
 ### Distinguish API versions, fields, implementations and gates
 
-A GA **API version** must not be removed within the same Kubernetes major version. That is not the same as a CLI flag, a feature gate, an individual field or a volume implementation. Beta API retirement has its own minimum timing: nine months or three minor releases after deprecation, whichever is longer. Alpha APIs can change or disappear without that guarantee. The original “GA APIs may be removed after12months/3releases” rule was incorrect.
+A GA **API version** must not be removed within the same Kubernetes major version. That is not the same as a CLI flag, a feature gate, an individual field or a volume implementation. Beta API retirement has its own minimum timing: nine months or three minor releases after deprecation, whichever is longer. Alpha APIs can change or disappear without that guarantee. The original “GA APIs may be removed after 12 months/3 releases” rule was incorrect.
 
 Gate deprecation/removal follows separate rules, and the actual release must be checked. Do not remove/disable a gate merely by adding two to its GA release number. The earlier version sections and released code distinguish default enablement, locking and actual removal.
 
@@ -2362,7 +2362,7 @@ awk '/^apiserver_requested_deprecated_apis/ {print}' "$evidence_dir/metrics.prom
 
 The following example requires Python/PyYAML and an owned directory of rendered YAML/JSON manifests. Its finite catalog is pinned to the 1.36.2 review and accepts target versions 1.29–1.36. It distinguishes kinds within the same API version, rejects parse errors/empty directories and never prints resource bodies. It is **not a complete schema, client-usage or runtime compatibility audit**. It does not detect every deprecated API, semantic change or all YAML/schema problems; use a versioned schema validator with the actual CRDs as well. `notInCatalog` must be reviewed.
 
-Exit1 means lifecycle findings, exit2 means an input/parse problem, and exit0 only means no known catalog findings in parsed input. Do not suppress those failures or label a partial scan “compatible.”
+Exit 1 means lifecycle findings, exit 2 means an input/parse problem, and exit 0 only means no known catalog findings in parsed input. Do not suppress those failures or label a partial scan “compatible.”
 
 ```python
 """Limited offline GVK lifecycle audit, snapshot: Kubernetes 1.36.2.
@@ -2497,7 +2497,7 @@ python3 api-version-audit.py --directory "$MANIFEST_DIR" --target-version 1.36.0
 
 ### Pluto, kubent and Helm boundaries
 
-Pluto is useful as an additional detector, but tool/rule freshness is not proof of correctness. This audit’s native **Pluto5.24.3** fixtures missed the removed VAP beta API, returned exit0 for malformed YAML, and labeled DRA beta1 removed in 1.36 despite the released 1.36.2 lifecycle/storage evidence above. Treat results as leads to reconcile with primary sources. Its default exit2/3/4 statuses mean deprecation/removal/unavailable replacement findings; other failures also require investigation. `--components k8s` avoids silently using unrelated bundled component-version defaults.
+Pluto is useful as an additional detector, but tool/rule freshness is not proof of correctness. This audit’s native **Pluto 5.24.3** fixtures missed the removed VAP beta API, returned exit 0 for malformed YAML, and labeled DRA beta1 removed in 1.36 despite the released 1.36.2 lifecycle/storage evidence above. Treat results as leads to reconcile with primary sources. Its default exit 2/3/4 statuses mean deprecation/removal/unavailable replacement findings; other failures also require investigation. `--components k8s` avoids silently using unrelated bundled component-version defaults.
 
 ```bash
 # Advisory only: record the reviewed Pluto version and its rule coverage.
@@ -2524,7 +2524,7 @@ helm get manifest --kube-context "$KUBE_CONTEXT" --namespace "$NAMESPACE" \
   "$RELEASE_NAME" > "$PRIVATE_MANIFEST_FILE"
 ```
 
-Kubent is another original-manifest detector, not an API-server oracle. The latest tagged release observed here was 0.7.3 (August2024); verify rule coverage for newer target APIs. Its documented `--context`, `--target-version` and `--exit-error` flags are relevant, and Helm collection requires release-Secret/ConfigMap permissions. `kubectl convert` converts supported object representations; it is not a deprecated-client-usage scanner. A configured CRD conversion webhook is not inherently deprecated.
+Kubent is another original-manifest detector, not an API-server oracle. The latest tagged release observed here was 0.7.3 (August 2024); verify rule coverage for newer target APIs. Its documented `--context`, `--target-version` and `--exit-error` flags are relevant, and Helm collection requires release-Secret/ConfigMap permissions. `kubectl convert` converts supported object representations; it is not a deprecated-client-usage scanner. A configured CRD conversion webhook is not inherently deprecated.
 
 [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/deprecation-policy/) · [API migration guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/) · [1.34 changelog](https://github.com/kubernetes/kubernetes/blob/v1.34.0/CHANGELOG/CHANGELOG-1.34.md) · [1.36.2 DRA REST storage](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/registry/resource/rest/storage_resource.go) · [Pluto](https://github.com/FairwindsOps/pluto) · [Kubent](https://github.com/doitintl/kube-no-trouble)
 
@@ -2536,7 +2536,7 @@ Kubent is another original-manifest detector, not an API-server oracle. The late
 
 ### Release and feature availability
 
-EKS follows its own qualification and support calendar. The dates in section3 are verified release records, not a promise that every future release arrives after a fixed delay. Upstream API maturity, EKS API availability and node/runtime capability are separate questions. AWS manages EKS control-plane flags; editing a kube-apiserver Pod, applying a kubeadm configuration or changing one node gate is not an EKS control-plane configuration mechanism.
+EKS follows its own qualification and support calendar. The dates in section 3 are verified release records, not a promise that every future release arrives after a fixed delay. Upstream API maturity, EKS API availability and node/runtime capability are separate questions. AWS manages EKS control-plane flags; editing a kube-apiserver Pod, applying a kubeadm configuration or changing one node gate is not an EKS control-plane configuration mechanism.
 
 EKS’s FAQ supports generally available Kubernetes APIs, states that new beta APIs are not enabled by default and does not support alpha features. Existing beta APIs/new versions of existing beta APIs are treated differently. Check the specific EKS release notes and compute implementation rather than assuming every beta field is available or every GA feature is usable without drivers, configuration or compatible nodes.
 
@@ -2608,9 +2608,9 @@ An eksctl ClusterConfig with a new `metadata.version` is not by itself an upgrad
 
 ### Extended-support cost context
 
-The verified version-support fee difference is $0.50 per cluster-hour. For an illustrative 365-day year, additional fees are $4,380 for1 cluster, $21,900 for5, $43,800 for10, $109,500 for25, and $219,000 for50. These exclude compute, provisioned control-plane tiers, networking and other charges. A 730-hour month is a planning assumption, not every calendar month.
+The verified version-support fee difference is $0.50 per cluster-hour. For an illustrative 365-day year, additional fees are $4,380 for 1 cluster, $21,900 for 5, $43,800 for 10, $109,500 for 25, and $219,000 for 50. These exclude compute, provisioned control-plane tiers, networking and other charges. A 730-hour month is a planning assumption, not every calendar month.
 
-Fleet size is only one planning dimension: one critical cluster can have more operational risk than many simple clusters. Approaching end of standard support should increase planning priority, not justify skipping staging validation or a direct production upgrade with minimal checks. Compare a controlled upgrade with the explicitly accepted cost of extended support where applicable.
+Fleet size is only one planning dimension: one critical cluster can have more operational risk than many simple clusters. Approaching the end of standard support should increase planning priority, not justify skipping staging validation or performing a direct production upgrade with minimal checks. Compare a controlled upgrade with the explicitly accepted cost of extended support where applicable.
 
 ![Upgrade priority matrix placing five EKS fleet profiles by fleet complexity and extended-support cost urgency, from a single simple cluster in the Monitor quadrant to a 50-plus cluster enterprise fleet in Plan and schedule with the highest cost risk.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-19.png)
 
@@ -2635,7 +2635,7 @@ Fleet size is only one planning dimension: one critical cluster can have more op
 EKS upgrades proceed one minor version at a time. Use the verified release/support calendar, target-specific compatibility records and current EKS upgrade guide; do not infer eligibility from the upstream latest tag. The original one-to-two-week preparation and one-to-two-day execution estimates are planning examples, not measured durations or deadlines.
 
 1. Record the owned account/Region/cluster, control-plane and node versions, compute modes, add-on builds, API usage, operators and workload owners. Bring nodes to a safe current version before the next control-plane upgrade. Supported skew is a compatibility boundary, not a recommendation to keep nodes three minors behind or a universal assertion about every API enforcement path.
-2. Review target release changes, deprecated/removed API and stored-version migration requirements, runtime/OS/AMI support, CRDs and admission policies. A tool exit0, a converted GET response or a GA label is not a complete compatibility test.
+2. Review target release changes, deprecated/removed API and stored-version migration requirements, runtime/OS/AMI support, CRDs and admission policies. A tool's exit0 result, a converted GET response or a GA label is not a complete compatibility test.
 3. Back up application state and Kubernetes configuration appropriately and test restoration. EKS manages its etcd; customers cannot inspect a managed etcd backup schedule or run etcd snapshot commands as if they owned the control plane. Git does not replace database/PVC backups.
 4. Rehearse the actual version step and component sequence in a representative non-production environment. Validate application readiness, networking/DNS, storage, autoscaling, identity and observability. Decide rollback/data-recovery criteria before production.
 5. Execute the approved control-plane update and track the returned update ID to a successful terminal result. Upgrade nodes and applicable components in their documented order. Some compatibility/migration work belongs before the control-plane update; there is no universal “kube-proxy → CoreDNS → VPC CNI → CSI” sequence for every version and compute mode.
@@ -2651,7 +2651,7 @@ Auto Mode manages node replacement, but workload readiness/disruption constraint
 
 ### Native EKS rollback and recovery alternatives
 
-Version rollback is real EKS functionality. It must be initiated within seven days of a **completed in-place upgrade**, targets only the previous minor version, and requires an eligible supported version/cluster. A cluster created at its current version, a later subsequent upgrade, expired eligibility or an incompatible EKS feature can prevent rollback. End-of-extended-support automatic upgrades are not eligible. Choosing an extended-support target also has upgrade-policy/billing implications.
+Version rollback is real EKS functionality. It must be initiated within seven days of a **completed in-place upgrade**, targets only the previous minor version, and requires an eligible supported version/cluster. A cluster created at its current version, a subsequent upgrade, expired eligibility or an incompatible EKS feature can prevent rollback. End-of-extended-support automatic upgrades are not eligible. Choosing an extended-support target also has upgrade-policy/billing implications.
 
 Auto Mode rolls its nodes back before the control plane after an operator initiates rollback. Managed node groups require a separate UpdateNodegroupVersion rollback first; self-managed/Hybrid nodes require their own preparation. Fargate worker versions cannot be rolled back in place: the official procedure calls for planned removal/redeployment coordination before/after control-plane rollback. Do not treat force-bypassed kubelet skew as a supported configuration or blindly delete live Fargate workloads.
 

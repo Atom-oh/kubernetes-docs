@@ -5,7 +5,7 @@
 
 ## Three-Layer Terraform Example
 
-Terraform manages infrastructure as code. This example uses AWS provider 6.x and pins EKS module **21.29.0** and VPC module **6.7.3**. The HCL was checked with Terraform 1.16.6 and AWS provider 6.69.1; AWS deployment and production behavior were not executed. The original v20-style `cluster_*` inputs are incompatible with module v21: use `name`, `kubernetes_version`, `addons` and the other v21 names shown below.
+Terraform manages infrastructure as code. This example uses AWS provider 6.x and pins EKS module **21.29.0** and VPC module **6.7.3**. The HCL was checked with Terraform 1.16.6 and AWS provider 6.69.1; AWS deployment was not executed, and production behavior was not exercised. The original v20-style `cluster_*` inputs are incompatible with module v21: use `name`, `kubernetes_version`, `addons` and the other v21 names shown below.
 
 Separate states can help teams divide ownership and review changes by lifecycle. They do not eliminate dependencies or operational impact: a network change can still interrupt a cluster, and an add-on or access-policy change can affect every workload. This is an example structure, not a tested production architecture.
 
@@ -207,7 +207,7 @@ output "public_subnet_ids" {
 
 ## Layer 2: EKS Cluster (02-cluster)
 
-This layer creates a **new conventional EC2 cluster**, managed node groups and core add-ons. Set the existing `cluster_admin_role_arn` explicitly; the Terraform caller is not automatically granted Kubernetes administration. The operator must be able to assume that role. Private endpoint access requires a connected, routed management environment before kubectl or platform installation.
+This layer creates a **new conventional EC2 cluster**, managed node groups and core add-ons. Set the existing `cluster_admin_role_arn` explicitly; the Terraform caller is not automatically granted Kubernetes administration. The operator must be able to assume that role. Private endpoint access requires a connected, routed management environment before kubectl use or platform installation.
 
 ### 02-cluster/providers.tf
 

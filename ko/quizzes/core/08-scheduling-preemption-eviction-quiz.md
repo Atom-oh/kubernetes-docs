@@ -153,7 +153,7 @@ Kubernetes 1.12 이전에는 DaemonSet 컨트롤러가 기본 스케줄러를 �
 **정답: C) Guaranteed**
 
 **설명:**
-Guaranteed는 모든 컨테이너의 CPU·메모리 요청과 제한이 각각 같은 경우입니다. CPU·메모리 요청·제한이 전혀 없으면 BestEffort이고 그 사이의 구성은 Burstable입니다. 파드 수준 리소스를 사용하는 경우에는 별도의 QoS 기준도 적용됩니다. QoS는 PriorityClass가 아니며 Guaranteed도 장애·축출에서 무조건 보호되지 않습니다.
+Guaranteed는 모든 컨테이너의 CPU·메모리 요청과 제한이 각각 같은 경우에 부여됩니다. CPU·메모리 요청·제한이 전혀 없으면 BestEffort이고 그 사이의 구성은 Burstable입니다. 파드 수준 리소스를 사용하는 경우에는 별도의 QoS 기준도 적용됩니다. QoS는 PriorityClass가 아니며 Guaranteed도 장애·축출에서 무조건 보호되지 않습니다.
 </details>
 
 9. 노드에 `node-role.kubernetes.io/control-plane:NoSchedule` 테인트가 적용되어 있을 때, 이 노드에 포드를 스케줄링하기 위해 필요한 것은 무엇인가요?
@@ -342,7 +342,7 @@ spec:
    
    b. 가장 적합한 노드를 선택합니다(선점으로 인한 영향이 최소화되는 노드).
    
-   c. API를 통해 선택된 노드의 낮은 우선순위 파드 삭제를 요청하며 kubelet·런타임이 종료합니다. 이때 여러 포드를 선점해야 할 수도 있습니다.
+   c. API를 통해 선택된 노드의 낮은 우선순위 파드 삭제를 요청하며 kubelet·런타임이 해당 파드를 종료합니다. 이때 여러 포드를 선점해야 할 수도 있습니다.
    
    d. 선점된 포드가 정상적으로 종료되고 리소스가 확보되면, 우선순위가 높은 포드가 해당 노드에 스케줄링됩니다.
 
@@ -392,7 +392,7 @@ kubelet에 의해 관리되며, 노드의 리소스 부족 상황에 대응하�
   - PID 임계값은 명시적으로 설정해야 하며 기본 10% 임계값은 없습니다.
 
 **심각도 수준:**
-- **소프트 축출(Soft Eviction)**: 유예 기간이 있으며, 임계값을 초과한 후 명시한 유예 시간 동안 지속되면 축출이 시작됩니다. 소프트 임계값·유예 기간은 기본 5분으로 제공되지 않습니다.
+- **소프트 축출(Soft Eviction)**: 유예 기간이 있으며, 임계값을 초과한 상태가 명시한 유예 시간 동안 지속되면 축출이 시작됩니다. 소프트 임계값·유예 기간은 기본 5분으로 제공되지 않습니다.
   - 예: `evictionSoftGracePeriod: {memory.available: "1m30s"}`
 - **하드 축출(Hard Eviction)**: 즉시 축출이 시작됩니다.
   - 예: `eviction-hard=memory.available<100Mi`
@@ -768,17 +768,17 @@ Descheduler의 실제 주요 정책은 다음과 같습니다:
 
 5. **PodLifeTime**: 지정된 기간보다 오래 실행된 포드를 제거합니다.
 
-6. **RemovePodsHavingTooManyRestarts**: 너무 많은 재시작을 한 포드를 제거합니다.
+6. **RemovePodsHavingTooManyRestarts**: 너무 많이 재시작한 포드를 제거합니다.
 
 7. **RemovePodsViolatingTopologySpreadConstraint**: 토폴로지 분산 제약 조건을 위반하는 포드를 제거합니다.
 
-Descheduler는 클러스터 관리자가 설정한 정책에 따라 주기적으로 실행되며, 제거된 포드는 해당 컨트롤러(예: Deployment 컨트롤러)에 의해 다시 생성되어 더 나은 배치를 얻을 수 있습니다.
+Descheduler는 클러스터 관리자가 설정한 정책에 따라 주기적으로 실행되며, 제거된 포드는 해당 컨트롤러(예: Deployment 컨트롤러)에 의해 다시 생성되어 더 적절하게 배치될 수 있습니다.
 </details>
 
 3. **노드 테인트 기반 축출(Taint-Based Evictions)**: Kubernetes는 노드 상태에 따라 자동으로 테인트를 적용하여 포드를 축출할 수 있습니다. 다음 중 노드 상태에 따른 테인트가 아닌 것은 무엇인가요?
 
    - A) `node.kubernetes.io/not-ready` - 노드가 준비되지 않은 상태
-   - B) `node.kubernetes.io/unreachable` - 노드가 도달할 수 없는 상태
+   - B) `node.kubernetes.io/unreachable` - 노드에 도달할 수 없는 상태
    - C) `node.kubernetes.io/unschedulable` - 노드의 스케줄링 비활성화
    - D) `node.kubernetes.io/high-load` - 노드의 부하가 높은 상태
 
@@ -830,7 +830,7 @@ not-ready·unreachable에는 NoExecute 기반 축출과 기본 300초 톨러레�
 
 1. **토폴로지 도메인**: `topologyKey` 필드를 사용하여 포드를 분산시킬 토폴로지 도메인을 지정합니다. 예를 들어, `topology.kubernetes.io/zone`은 가용 영역 간에 포드를 분산시킵니다.
 
-2. **최대 편차(maxSkew)**: 토폴로지 도메인 간 포드 수의 최대 허용 차이를 지정합니다. DoNotSchedule에서는 대상 도메인의 일치 파드 수와 전역 최소값의 차이를 제한합니다. 적격 도메인이 minDomains 미만이면 최소값을 0으로 계산하며 ScheduleAnyway에서는 선호 점수로 작동합니다.
+2. **최대 편차(maxSkew)**: 토폴로지 도메인 간 포드 수의 최대 허용 차이를 지정합니다. DoNotSchedule에서는 대상 도메인의 일치 파드 수와 전역 최소값의 차이를 제한합니다. 적격 도메인 수가 minDomains 미만이면 최소값을 0으로 계산하며 ScheduleAnyway에서는 선호 점수로 작동합니다.
 
 3. **불만족 시 동작(whenUnsatisfiable)**: 제약 조건을 만족할 수 없을 때의 동작을 지정합니다:
    - `DoNotSchedule`: 제약 조건을 만족할 수 없으면 포드를 스케줄링하지 않습니다.

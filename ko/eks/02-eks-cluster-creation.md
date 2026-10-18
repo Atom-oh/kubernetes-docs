@@ -4,7 +4,7 @@
 
 Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다. 이 장에서는 다양한 도구와 방법을 사용하여 EKS 클러스터를 생성하는 방법을 자세히 알아보겠습니다.
 
-이 장의 생성 방법은 대안입니다. 한 방법을 선택해 새 전용 클러스터에 적용하고 같은 리소스를 여러 도구로 동시에 관리하지 않습니다. 예시 이름·계정·역할·VPC·서브넷·CIDR은 승인된 실제 값으로 바꿉니다. 별도 표시가 없는 셸 예제는 Bash 기준이며 선행 명령 실패 시 중단합니다. 실제 AWS 프로비저닝이나 워크로드 실측은 이 감사에서 수행하지 않았습니다.
+이 장의 생성 방법은 서로 대안 관계에 있습니다. 한 방법을 선택해 새 전용 클러스터에 적용하고 같은 리소스를 여러 도구로 동시에 관리하지 않습니다. 예시 이름·계정·역할·VPC·서브넷·CIDR은 승인된 실제 값으로 바꿉니다. 별도 표시가 없는 셸 예제는 Bash 기준이며 선행 명령 실패 시 중단합니다. 실제 AWS 프로비저닝이나 워크로드 실측은 이 감사에서 수행하지 않았습니다.
 
 **현재 릴리스:** EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다.
 
@@ -25,7 +25,7 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 ## 사전 요구 사항
 
-EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
+EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항을 충족해야 합니다:
 
 ### 1. AWS 계정
 
@@ -73,7 +73,7 @@ export AWS_PROFILE=eks-docs
 
 #### kubectl과 eksctl (Linux/macOS)
 
-이 장의 EKS 1.36 예제에는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
+이 장의 EKS 1.36 예제에서는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 사용하는 것이 권장되며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
 
 아래 Bash 예제는 AMD64/ARM64를 구분하고 공식 체크섬을 확인한 뒤 설치합니다. `curl`, `tar`, `awk`와 `sha256sum` 또는 `shasum`이 필요하며 `/usr/local/bin` 설치는 관리자 권한이 필요합니다. 다운로드/검증 실패 시 설치를 중단합니다.
 
@@ -581,7 +581,7 @@ EKS Auto Mode는 인프라 설정을 줄여 줍니다. 워크로드 신원·네�
    - **Amazon VPC CNI**: 포드 네트워킹을 위한 CNI 플러그인입니다.
    - **CoreDNS**: 클러스터 내 DNS 서비스입니다.
    - **kube-proxy**: 네트워크 프록시 및 로드 밸런싱을 제공합니다.
-   - **스토리지/네트워킹 애드온**: 일반 컴퓨팅에는 필요한 구성 요소와 IAM 권한을 설치합니다. Auto Mode의 관리형 EBS·네트워킹·DNS와 중복되는 구성 요소를 Auto Mode 노드에 설치하지 않습니다.
+   - **스토리지/네트워킹 애드온**: 일반 컴퓨팅에는 필요한 구성 요소를 설치하고 IAM 권한을 설정합니다. Auto Mode의 관리형 EBS·네트워킹·DNS와 중복되는 구성 요소를 Auto Mode 노드에 설치하지 않습니다.
    - "다음" 버튼을 클릭합니다.
 
 ### 검토 및 생성
@@ -639,7 +639,7 @@ aws sts get-caller-identity
 
 ### EKS Auto Mode 클러스터 생성
 
-클러스터 역할은 `eks.amazonaws.com`에 대한 `sts:AssumeRole`·`sts:TagSession` 신뢰와 다음 정책이 필요합니다: `AmazonEKSClusterPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicyV2`, `AmazonEKSLoadBalancingPolicy`, `AmazonEKSNetworkingPolicy` 또는 동등한 사용자 정책입니다.
+클러스터 역할에는 `eks.amazonaws.com`에 대한 `sts:AssumeRole`·`sts:TagSession` 신뢰와 `AmazonEKSClusterPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicyV2`, `AmazonEKSLoadBalancingPolicy`, `AmazonEKSNetworkingPolicy` 또는 동등한 사용자 정책이 필요합니다.
 
 노드 역할은 `ec2.amazonaws.com`을 신뢰하고 `AmazonEKSWorkerNodeMinimalPolicy`·`AmazonEC2ContainerRegistryPullOnly`를 사용합니다. 워크로드의 AWS 권한은 별도의 Pod Identity/IRSA 경로로 구성합니다. 컴퓨팅·로드 밸런싱·블록 스토리지를 함께 켜고 자체 관리형 기본 애드온 부트스트랩을 끕니다.
 
@@ -1486,7 +1486,7 @@ else
 fi
 ```
 
-정리가 실패하면 여기서 중단하고 원인을 해결합니다. 다음 ARN은 현재 조회 결과를 무조건 복사하지 말고 생성 결과나 소유한 IaC state의 값과 대조합니다.
+정리가 실패하면 여기서 중단하고 원인을 해결합니다. 다음 ARN을 사용할 때는 현재 조회 결과를 무조건 복사하지 말고 생성 결과나 소유한 IaC state의 값과 대조합니다.
 
 ```bash
 : "${EKS_EXPECTED_CLUSTER_ARN:?Copy the ARN from the creation result or owning IaC state}"

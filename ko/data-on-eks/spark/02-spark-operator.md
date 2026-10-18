@@ -233,7 +233,7 @@ spec:
     securityContext: *id002
 ```
 
-이 버전은 driver.serviceAccount와 **executor.serviceAccount 모두** 지원합니다.
+이 버전은 driver.serviceAccount와 **executor.serviceAccount 모두**를 지원합니다.
 재시도는 컨테이너 하나의 제자리 재시작이 아닌 제출·애플리케이션 시도에 적용됩니다.
 재실행은 출력 작업을 반복할 수 있으므로 실제 작업에는 멱등성·트랜잭션을 설계합니다.
 
@@ -496,7 +496,7 @@ Chart의 기본 Prometheus endpoint 8080은 **Operator** 메트릭입니다.
 
 ## 정리와 검증 범위
 
-예약을 먼저 멈추고 parent 삭제의 자식 리소스 영향도 확인합니다.
+예약을 먼저 멈추고 parent 삭제가 자식 리소스에 미치는 영향도 확인합니다.
 의도한 API group을 지정해 데모 리소스를 정리합니다.
 
 ```bash

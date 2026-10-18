@@ -444,7 +444,7 @@ spec:
 
 ## 分布式训练与 EFA
 
-Auto Mode 对 EFA 的支持是当前有效的功能。**在磁盘设置旁添加注释并不会启用它。**受支持的 NodeClass 字段是 `advancedNetworking.networkInterfaces`；device-plugin 路径会公开 `vpc.amazonaws.com/efa`。
+Auto Mode 对 EFA 的支持是当前有效的功能。**在磁盘设置旁添加注释并不会启用它**。受支持的 NodeClass 字段是 `advancedNetworking.networkInterfaces`；device-plugin 路径会公开 `vpc.amazonaws.com/efa`。
 
 在启用训练工作负载之前，请检查以下各项：
 

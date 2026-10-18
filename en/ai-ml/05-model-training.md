@@ -28,13 +28,13 @@ For single-GPU QLoRA and SageMaker AI/EKS comparison, see the [Qwen guide](sagem
 | Expert parallel | MoE experts and token dispatch | Imbalance, all-to-all and routing capacity |
 | Combinations | DP/TP/PP/context/expert groups | Supported device mesh and total rank count |
 
-Do not assume3D is always best above100B parameters. Account for optimizer, gradient, activation and communication memory beyond weights, then compare throughput and recovery cost. DDP all-reduce does not require a parameter server.
+Do not assume 3D is always best above 100B parameters. Account for optimizer, gradient, activation and communication memory beyond weights, then compare throughput and recovery cost. DDP all-reduce does not require a parameter server.
 
-TP8×PP4×DP2 means64ranks. Global batch is **microbatch × accumulation × DP replicas**:1×32×2=64, not2048 from multiplying all TP/PP ranks again. With variable-length packing, track samples and tokens separately.
+TP8×PP4×DP2 means 64 ranks. Global batch is **microbatch × accumulation × DP replicas**: 1×32×2=64, not 2048 from multiplying all TP/PP ranks again. With variable-length packing, track samples and tokens separately.
 
 ## Slurm and Slinky
 
-The official repository is SlinkyProject/slurm-operator. Tag1.2.3 and its OCI charts were verified; GitHub releases/latest returned404, so it is not described as the latest GitHub release. The1.2 documentation lists minimum Kubernetes1.29 and Slurm25.11(data parser0.0.44). Minimum compatibility is not an operational support-lifecycle guarantee.
+The official repository is SlinkyProject/slurm-operator. Tag 1.2.3 and its OCI charts were verified; GitHub releases/latest returned 404, so it is not described as the latest GitHub release. The 1.2 documentation lists minimum Kubernetes 1.29 and Slurm 25.11 (data parser 0.0.44). Minimum compatibility is not an operational support-lifecycle guarantee.
 
 ![Roles of Slinky Controller, NodeSet, Accounting and RestApi/LoginSet, with external storage and node provisioning.](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
@@ -42,9 +42,9 @@ The official repository is SlinkyProject/slurm-operator. Tag1.2.3 and its OCI ch
 
 ### Actual APIs and Lifecycle
 
-Version1.2.3 defines Controller, NodeSet, Accounting, LoginSet, RestApi and Token in `slinky.slurm.net/v1beta1`. The former SlurmCluster/SlurmNodeSet examples are not this API. NodeSet uses controllerRef and a Pod template. Its default scalingMode behaves like StatefulSet; DaemonSet mode creates one Pod per matching Kubernetes node and ignores replicas. These are NodeSet-controller modes, not proof that slurmd always runs as a Kubernetes DaemonSet resource.
+Version 1.2.3 defines Controller, NodeSet, Accounting, LoginSet, RestApi and Token in `slinky.slurm.net/v1beta1`. The former SlurmCluster/SlurmNodeSet examples are not this API. NodeSet uses controllerRef and a Pod template. Its default scalingMode behaves like StatefulSet; DaemonSet mode creates one Pod per matching Kubernetes node and ignores replicas. These are NodeSet-controller modes, not proof that slurmd always runs as a Kubernetes DaemonSet resource.
 
-slurmctld manages job/node/partition state and scheduling; preserve its StateSaveLocation. slurmdbd handles accounting-database access and records, not a replacement for controller state. Design login/REST/job identities, filesystem permissions, Slurm keys/JWT and DB credential delivery/rotation together. Public NLB SSH exposure is not a default prerequisite.
+slurmctld manages job/node/partition state and scheduling; preserve its StateSaveLocation. slurmdbd handles accounting-database access and records; it is not a replacement for controller state. Design login/REST/job identities, filesystem permissions, Slurm keys/JWT and DB credential delivery/rotation together. Public NLB SSH exposure is not a default prerequisite.
 
 Render the actual charts first. These commands only produce local files. An operational deployment separately requires cert-manager/CRD/operator/Slurm ordering, persistence/database, user identity and compatible Slurm images.
 
@@ -58,7 +58,7 @@ An Argo CD Application must reference a real chart path/revision and actual valu
 
 ### Launching torchrun from Slurm
 
-Run one torchrun launcher per node, letting it create processes per GPU. The previous eight Slurm tasks each launched eight processes, producing64processes per node. This example intends4nodes×8processes; no actual Slurm/GPU allocation was run in this audit.
+Run one torchrun launcher per node, letting it create processes per GPU. The previous eight Slurm tasks each launched eight processes, producing 64 processes per node. This example is intended for 4 nodes×8 processes; no actual Slurm/GPU allocation was run in this audit.
 
 ```bash
 #!/bin/bash
@@ -97,19 +97,19 @@ If Slurm restricts GPU visibility per task, ensure each launcher receives all ei
 
 FI_PROVIDER=efa selects a libfabric provider; it does not install EFA, attach interfaces or integrate NCCL. Validate supported EFA-enabled instances, driver/libfabric, aws-ofi-nccl, device plugin/Pod allocation, security groups and actual transport together. RAID0 or a subnet tag does not enable EFA.
 
-Communicating nodes must share an AZ; a cluster placement group is recommended for performance. Ensure training Pods actually use the restricted NodePool. Bandwidth and EFA-device counts vary by instance;400Gbps is not universal. Blindly forcing old Ring/Simple, IB_DISABLE, SOCKET_IFNAME or FI_EFA_USE_DEVICE_RDMA settings can interfere with current plugins. Verify release documentation, logs and collective tests.
+Communicating nodes must share an AZ; a cluster placement group is recommended for performance. Ensure training Pods actually use the restricted NodePool. Bandwidth and EFA-device counts vary by instance; 400 Gbps is not universal. Blindly forcing old Ring/Simple, IB_DISABLE, SOCKET_IFNAME or FI_EFA_USE_DEVICE_RDMA settings can interfere with current plugins. Verify release documentation, logs and collective tests.
 
 Karpenter budgets.nodes=0 restricts voluntary disruption paths; it does not prevent Spot reclamation, node failure, forced termination or every expiration. Check do-not-disrupt/PDB interaction with terminationGracePeriod/expireAfter and preserve checkpoint recovery. Avoid fetching floating driver installers in every bootstrap or hardcoding GPU clocks across device types.
 
 ## BioNeMo
 
-The inspected3.0.0 is **BioNeMo Recipes**, providing TransformerEngine-based models/checkpoints and recipes for PyTorch, Accelerate and Lightning. Check recipe-specific support for ESM-2, AMPLIFY, Geneformer and others. Do not execute a BioNeMo1.5 MegaMolBART module as if it were the3.0 API. Biological evaluation and model/data permissions remain separate requirements; GPU allocation alone does not prepare the recipe.
+The inspected 3.0.0 is **BioNeMo Recipes**, providing TransformerEngine-based models/checkpoints and recipes for PyTorch, Accelerate and Lightning. Check recipe-specific support for ESM-2, AMPLIFY, Geneformer and others. Do not execute a BioNeMo 1.5 MegaMolBART module as if it were the 3.0 API. Biological evaluation and model/data permissions remain separate requirements; GPU allocation alone does not prepare the recipe.
 
 ## Trainium and Neuron
 
-Distinguish SDK2.32.0 torch-neuronx, NeuronX Distributed Training/model implementations and Optimum Neuron paths. transformers-neuronx inference support is not general training support. Check TensorFlow/JAX/PyTorch versions against the selected hardware/SDK rather than adding arbitrary pip packages to an old2.18 DLC.
+Distinguish SDK 2.32.0 torch-neuronx, NeuronX Distributed Training/model implementations and Optimum Neuron paths. transformers-neuronx inference support is not general training support. Check TensorFlow/JAX/PyTorch versions against the selected hardware/SDK rather than adding arbitrary pip packages to an old 2.18 DLC.
 
-Optimum Neuron0.4.5 includes NeuronTrainer/NeuronTrainingArguments and dedicated Neuron training-model implementations. Loading a generic BertForPreTraining and passing undefined dataset/tokenizer variables is not complete TP training. Prepare supported model/config, labels/collator, tokenizer/revisions, optimizer/checkpoint formats and launcher. The CPU example's PyTorch2.14 is not a claim of Neuron SDK compatibility.
+Optimum Neuron 0.4.5 includes NeuronTrainer/NeuronTrainingArguments and dedicated Neuron training-model implementations. Loading a generic BertForPreTraining and passing undefined dataset/tokenizer variables is not complete TP training. Prepare supported model/config, labels/collator, tokenizer/revisions, optimizer/checkpoint formats and launcher. The CPU example's PyTorch 2.14 is not a claim of Neuron SDK compatibility.
 
 ### Multi-node Jobs and Precompilation
 
@@ -119,11 +119,11 @@ neuron_parallel_compile extracts/compiles graphs; it is not a replacement for ac
 
 ## Ray Train, MPI and Volcano
 
-Use the audited Ray2.58/KubeRay1.7 [Train guide](ray/03-ray-train-tune.md). Match report-call counts across workers and report actual Checkpoint objects. get_checkpoint() retrieves prior recovery state, not a new-save context manager. resources_per_worker GPU8 does not automatically launch eight DDP processes inside one worker.
+Use the audited Ray 2.58/KubeRay 1.7 [Train guide](ray/03-ray-train-tune.md). Match report-call counts across workers and report actual Checkpoint objects. get_checkpoint() retrieves prior recovery state, not a new-save context manager. resources_per_worker GPU8 does not automatically launch eight DDP processes inside one worker.
 
-MPI Operator0.8.2 uses kubeflow.org/v2beta1. slotsPerWorker declares hostfile slots; it does not independently determine mpirun -np, mapping or GPU binding. Prepare Launcher/Worker code, MPI/SSH implementation, supported images and CRD/RBAC. Four workers×eight slots does not by itself guarantee32GPU processes.
+MPI Operator 0.8.2 uses kubeflow.org/v2beta1. slotsPerWorker declares hostfile slots; it does not independently determine mpirun -np, mapping or GPU binding. Prepare Launcher/Worker code, MPI/SSH implementation, supported images and CRD/RBAC. Four workers×eight slots does not by itself guarantee 32 GPU processes.
 
-Volcano1.15.2 minAvailable counts **Pods/members**, not EC2 nodes. Three sufficiently provisioned nodes may fit four Pods. The gang plugin applies minimum-member/resource conditions but does not guarantee simultaneous container startup or training success. Review extra workers, elastic-runtime support and RestartJob/requeue behavior.
+Volcano 1.15.2 minAvailable counts **Pods/members**, not EC2 nodes. Three sufficiently provisioned nodes may fit four Pods. The gang plugin applies minimum-member/resource conditions but does not guarantee simultaneous container startup or training success. Review extra workers, elastic-runtime support and RestartJob/requeue behavior.
 
 JupyterHub GPU profiles must match actual images/device labels and authorization. g5.xlarge is A10G, not an A100 profile. Wire the configuration into the running Hub and configure per-user storage, quotas, networking and idle culling.
 
@@ -137,7 +137,7 @@ Recovery needs model, optimizer, scheduler, RNG, scaler when used, data/sampler 
 
 ### Executable Tiny CPU Example
 
-This synthetic16sample, one-CPU-thread example performs four optimizer updates. It demonstrates accumulation, a bounded cosine schedule, temporary-file replacement and optimizer/RNG restoration. PyTorch2.14.0+cpu produced identical results for uninterrupted training and resuming after two steps. This is not GPU, distributed or remote-durability testing.
+This synthetic 16-sample, one-CPU-thread example performs four optimizer updates. It demonstrates accumulation, a bounded cosine schedule, temporary-file replacement and optimizer/RNG restoration. PyTorch 2.14.0+cpu produced identical results for uninterrupted training and resuming after two steps. This is not GPU, distributed or remote-durability testing.
 
 ```python
 from pathlib import Path
@@ -223,23 +223,23 @@ if __name__ == "__main__":
     print("Completed four CPU optimizer updates, including checkpoint resume.")
 ```
 
-The example demonstrates completed-file replacement on one filesystem, not filesystem-crash/directory-metadata durability, S3 transactions or distributed checkpoint protocols. Its fixed data order also does not implement general sampler recovery. Choose checkpoint intervals/retention using save latency, failure rate, acceptable lost work and cost rather than a universal500step/five-copy rule.
+The example demonstrates completed-file replacement on one filesystem, not filesystem-crash/directory-metadata durability, S3 transactions or distributed checkpoint protocols. Its fixed data order also does not implement general sampler recovery. Choose checkpoint intervals/retention using save latency, failure rate, acceptable lost work and cost rather than a universal 500-step/five-copy rule.
 
 ## Numerical Precision and Memory Optimization
 
 Current PyTorch APIs use torch.amp.autocast and torch.amp.GradScaler. BF16 shares FP32's exponent-bit count, not its mantissa precision or exact maximum finite value. It commonly avoids FP16-style loss scaling, but verify hardware, operations and convergence. Autocast does not convert all weights/optimizer state to BF16.
 
-Activation checkpointing recomputes activations during backward, trading compute for memory. It differs from disk checkpoints and guarantees neither3–4x savings nor30% slowdown. Specify use_reentrant explicitly and validate gradients, dropout/RNG and stateful layers.
+Activation checkpointing recomputes activations during backward, trading compute for memory. It differs from disk checkpoints and guarantees neither 3–4x savings nor 30% slowdown. Specify use_reentrant explicitly and validate gradients, dropout/RNG and stateful layers.
 
 Flash Attention/SDPA backend selection depends on dtype, head size, device and masks. Define training state and pass dropout_p=0 during evaluation. Check API support for explicit/causal mask combinations; use_cache=False alone does not install an attention backend.
 
-DeepSpeed0.19.6 ZeRO1 partitions optimizer state;2 adds gradients;3 adds parameters. CPU/NVMe offload is separately configured, not automatically enabled by Stage3. Distinguish upper-level integrations that replace auto values from pure DeepSpeed configuration. Buffers, activations and the largest layer prevent unlimited memory reduction.
+DeepSpeed 0.19.6 ZeRO 1 partitions optimizer state; 2 adds gradients; 3 adds parameters. CPU/NVMe offload is separately configured, not automatically enabled by Stage 3. Distinguish upper-level integrations that replace auto values from pure DeepSpeed configuration. Buffers, activations and the largest layer prevent unlimited memory reduction.
 
 Advance schedulers by optimizer updates rather than accumulation microsteps. Clamp progress so cosine does not rise again after the training horizon, and validate warmup/total-step bounds as in the example.
 
 ## Verification Scope
 
-All guide/quiz prose and76unique original code blocks were reviewed. Checks cover official Slinky Helm/CRDs, MPI/Volcano APIs and SDK sources, tiny CPU training/resume and a shell-launcher fixture. No GPU/Neuron/EFA, Slurm/MPI cluster, actual pretrained model or cloud resource was run. Local code/schema verification differs from production deployment validation.
+All guide/quiz prose and 76 unique original code blocks were reviewed. Checks cover official Slinky Helm/CRDs, MPI/Volcano APIs and SDK sources, tiny CPU training/resume and a shell-launcher fixture. No GPU/Neuron/EFA, Slurm/MPI cluster, actual pretrained model or cloud resource was run. Local code/schema verification differs from production deployment validation.
 
 ## References
 

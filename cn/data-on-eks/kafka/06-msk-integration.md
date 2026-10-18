@@ -211,7 +211,7 @@ deserializer，以及 consumer 的 `group.id`。JVM 必须信任 broker 的 TLS
 ## MSK Connect：部署前先确认兼容性
 
 MSK Connect 运行托管的 Kafka Connect worker，并可连接到独立托管的 Kafka
-集群。**仅有网络可达性并不足够。**当前的
+集群。**仅有网络可达性并不足够**。当前的
 `KafkaClusterClientAuthentication` API 接受 `NONE` 或 `IAM`；broker 信任、
 身份验证和受支持的 worker 设置必须相互匹配。第 2 部分中的 TLS/SCRAM
 Strimzi listener 并非只要主机名可以解析就能直接用作目标。不要为了强行

@@ -185,7 +185,7 @@ The old bootstrap example changed `vm.max_map_count`. The supported replacement 
 
 ### Fixed IMDS security configuration
 
-Auto Mode enforces IMDSv2 and hop limit 1; those defaults cannot be changed through NodeClass. Normal non-host-network Pods cannot reach IMDS by that path, but this is not a universal Pod isolation guarantee: `hostNetwork` changes reachability. Prefer workload identity for application AWS access, and explicitly supply region or other configuration rather than depending on node metadata.
+Auto Mode enforces IMDSv2 and a hop limit of 1; those defaults cannot be changed through NodeClass. Normal non-host-network Pods cannot reach IMDS by that path, but this is not a universal Pod isolation guarantee: `hostNetwork` changes reachability. Prefer workload identity for application AWS access, and explicitly supply region or other configuration rather than depending on node metadata.
 
 ### Customer KMS, CA bundles and separate Pod networking
 

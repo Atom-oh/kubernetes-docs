@@ -103,7 +103,7 @@ SigV4 signing needs an access key, a secret key, and a session token. A Pod obta
 | **Session tags** | Pod/cluster context can be passed as session tags → usable in conditional authorization | Limited |
 | **Prerequisites** | Pod Identity Agent add-on installed + node Role has `AssumeRoleForPodIdentity` | OIDC provider association |
 
-**The practical reason to prefer Pod Identity is multi-cluster.** One of the main motivations for adopting Lattice is cross-cluster communication, and IRSA requires registering an OIDC provider per cluster and managing Role trust policies for as many clusters as you have. Pod Identity does not carry that burden.
+**The practical reason to prefer Pod Identity is multi-cluster use.** One of the main motivations for adopting Lattice is cross-cluster communication, and IRSA requires registering an OIDC provider per cluster and managing Role trust policies for as many clusters as you have. Pod Identity does not carry that burden.
 
 ### The STS temporary credential dependency
 
@@ -167,7 +167,7 @@ This matters especially **when signing via an egress proxy.** The aws-samples re
 
 ## Stage 3: Lattice Verification
 
-On an HTTPS listener, Lattice **terminates TLS, parses the headers**, recomputes the signature in the `Authorization` header, and compares.
+On an HTTPS listener, Lattice **terminates TLS, parses the headers**, recomputes the signature in the `Authorization` header, and compares the signatures.
 
 The single most important constraint of this architecture hides here.
 

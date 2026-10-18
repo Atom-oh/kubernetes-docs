@@ -23,7 +23,7 @@
 9. [集群升级](#cluster-upgrade)
 10. [删除集群](#cluster-deletion)
 
-## 先决条件
+## 先决条件 {#prerequisites}
 
 创建 EKS 集群前，需要满足以下先决条件：
 
@@ -147,7 +147,7 @@ export AWS_PROFILE=eks-docs
 
 标签不会配置路由、安全组或可用 IP 容量。请参阅 [VPC/子网要求](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)和[无互联网访问的集群](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)。
 
-## 使用 eksctl 创建集群
+## 使用 eksctl 创建集群 {#creating-a-cluster-using-eksctl}
 
 eksctl 是创建和管理 EKS 集群的最简单方法。eksctl 使用 CloudFormation 创建 EKS 集群和相关资源。
 
@@ -491,7 +491,7 @@ eksctl create fargateprofile -f fargate.yaml
 
 请先审查工作负载、负载均衡器、数据保留要求和资源所属工具，然后按照[删除集群](#cluster-deletion)中的说明操作。
 
-## 使用 AWS 管理控制台创建集群
+## 使用 AWS 管理控制台创建集群 {#creating-a-cluster-using-aws-management-console}
 
 使用 AWS 管理控制台创建 EKS 集群的步骤如下：
 
@@ -613,7 +613,7 @@ EKS Auto Mode 可减少基础设施设置工作。工作负载身份、网络、
 
 4. 在“Review and create”页面，检查配置并单击“Create”按钮。
 
-## 使用 AWS CLI 创建集群
+## 使用 AWS CLI 创建集群 {#creating-a-cluster-using-aws-cli}
 
 以下示例会创建一个**新集群**。请选择 Auto Mode 或传统 EKS；不要使用相同名称连续运行两条创建命令。使用 Bash、`jq`、当前版本的 AWS CLI v2 和获得授权的 AWS 角色。EKS 1.36 是经过验证的示例版本；选择其他版本前，请检查区域支持情况和兼容性。
 
@@ -780,7 +780,7 @@ kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 
 参考：[CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode IAM 和创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## 使用 Terraform 创建集群
+## 使用 Terraform 创建集群 {#creating-a-cluster-using-terraform}
 
 以下完整示例支持**一个新集群**，需在首次 apply 前选择 Auto Mode 或传统托管节点组。不要将另一种方案作为第二个集群资源附加，也不要在没有迁移计划的情况下切换现有集群。Terraform 状态及其提供商锁定文件属于此特定部署。
 
@@ -1073,7 +1073,7 @@ enable_auto_mode = false
 
 参考：[AWS provider EKS 集群](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown)、[托管节点组](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown)、[Auto Mode 角色要求](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
-## 使用 AWS CDK 创建集群
+## 使用 AWS CDK 创建集群 {#creating-a-cluster-using-aws-cdk}
 
 此**新堆栈**示例使用 `aws-cdk-lib/aws-eks-v2`。它会创建原生 `AWS::EKS::Cluster` 和访问条目；启用 Auto Mode 不需要 Lambda 自定义资源。不要将用此示例替换现有已部署构造视为原地迁移。
 
@@ -1249,7 +1249,7 @@ kubectl --kubeconfig ./kubeconfig get nodes
 
 参考：[EKS V2 构造库](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto Mode 集群角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode 创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## 配置集群访问权限
+## 配置集群访问权限 {#configuring-cluster-access}
 
 设置所选方法生成的集群名称、区域和专用 kubeconfig 路径。对于 Terraform/CDK 示例，请在 `EKS_OPERATOR_ROLE_ARN` 中设置经批准的操作员角色。使用 CLI 创建者访问权限时可以省略该变量。写入 kubeconfig 不会授予 Kubernetes 权限。
 
@@ -1320,7 +1320,7 @@ fi
 
 此读取角色既不授予 Secret API 访问权限，也不授予修改权限。请以该角色进行身份验证并检查 `kubectl auth can-i`；其他 RBAC/EKS 策略授权可能会增加权限。[EKS 访问条目](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 
-## 集群验证
+## 集群验证 {#cluster-validation}
 
 使用访问部分中的 `eks_kubectl` 和同一个专用 kubeconfig。仅能访问控制平面并不能证明节点或工作负载运行正常。
 
@@ -1413,7 +1413,7 @@ eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" port-forward --address 127.0.0.1 service/
 
 端口转发运行期间，打开 `http://127.0.0.1:8080`，然后按 Ctrl-C 停止。这会检查 ClusterIP 访问，而非外部负载均衡器。对于 NLB，请选择 Auto Mode 的 `eks.amazonaws.com/nlb`，或已安装且获得授权的 AWS LBC 的 `service.k8s.aws/nlb`，并单独检查网络/成本先决条件。本次审计未执行部署或端口转发。
 
-## 集群升级
+## 集群升级 {#cluster-upgrade}
 
 首先检查升级洞察、已移除的 API、Webhook/附加组件兼容性、节点版本、备用 IP 和恢复计划。先将滞后的节点升级到当前控制平面版本，然后每次推进一个受支持的次要版本。某些组件需要在控制平面升级前更新到兼容版本。
 
@@ -1451,7 +1451,7 @@ aws eks update-nodegroup-version --cluster-name "${EKS_CLUSTER_NAME:?}" \
 
 [升级流程](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [回退条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
-## 删除集群
+## 删除集群 {#cluster-deletion}
 
 请在目标账户和区域中，通过原始所有者工具/状态删除集群。首先在相关控制器仍运行时移除工作负载和 Ingress/LoadBalancer Service，然后确认操作已完成。确定如何保留或恢复 PVC/PV、快照和日志。不要使用强制选项绕过超时或 finalizer。
 

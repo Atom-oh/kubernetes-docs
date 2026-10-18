@@ -64,7 +64,7 @@ replica.selector.class의 전체 클래스 이름은 org.apache.kafka.common.rep
 
 **정답: B) 같은 AZ replica → 같은 AZ primary → 다른 AZ의 replica 또는 primary**
 
-서버 AZ 정보와 client_az가 맞아야 합니다. replica 읽기의 지연된 데이터를 허용하는지 먼저 판단하며 read 비율만으로 선택하지 않습니다. HotelTrader의 개선 수치는 요청 배칭을 함께 적용한 사례 결과입니다.
+서버 AZ 정보와 client_az가 맞아야 합니다. replica 읽기에서 지연된 데이터를 허용하는지 먼저 판단하며 read 비율만으로 선택하지 않습니다. HotelTrader의 개선 수치는 요청 배칭을 함께 적용한 사례 결과입니다.
 
 </details>
 

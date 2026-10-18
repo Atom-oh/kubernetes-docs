@@ -239,7 +239,7 @@ spec:
 
 Use the Blue ARN in the Blue cluster and Green ARN in the Green cluster, replacing the VPC/NLB security-group IDs. Update both `backend_port` and the TGB networking port if the Pod targetPort changes. The controller needs permission to register targets and reconcile the relevant backend security groups.
 
-Built-in Auto Mode TGB uses `eks.amazonaws.com/v1`. Its [tag and lifecycle rules](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html) differ: AWS documents deletion of the target group when that TGB or cluster is deleted. Do not substitute it for this example's externally owned target group. `multiClusterTargetGroup` is relevant when intentionally sharing one TG across clusters; this recipe uses distinct TGs.
+The built-in Auto Mode TGB uses `eks.amazonaws.com/v1`. Its [tag and lifecycle rules](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html) differ: AWS documents deletion of the target group when that TGB or cluster is deleted. Do not substitute it for this example's externally owned target group. `multiClusterTargetGroup` is relevant when intentionally sharing one TG across clusters; this recipe uses distinct TGs.
 
 ### Outputs
 
@@ -346,7 +346,7 @@ variable "endpoints" {
 
 Route 53 weights are integers **0–255**, unlike ELB weights. Weighted records share one DNS name/type and have distinct set identifiers. DNS answers are cached and connections can outlive DNS entries. Alias records inherit the ELB target TTL; do not replace generated LB DNS endpoints with manually copied IP addresses just to set a TTL.
 
-`evaluate_target_health` evaluates the target LB, not an application-specific transaction. If all choices are unhealthy, DNS policies have fallback behavior; they are not a guaranteed traffic stop. TTL, health detection, resolver behavior, propagation, and reconnection together determine recovery time. Do not interpret 60-second TTL as a 60-second recovery SLA.
+`evaluate_target_health` evaluates the target LB, not an application-specific transaction. If all choices are unhealthy, DNS policies have fallback behavior; they are not a guaranteed traffic stop. TTL, health detection, resolver behavior, propagation, and reconnection together determine recovery time. Do not interpret a 60-second TTL as a 60-second recovery SLA.
 
 ## 4. Data Node Placement
 

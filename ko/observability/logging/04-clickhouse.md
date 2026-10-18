@@ -33,7 +33,7 @@ ClickHouse는 컬럼 기반 분석 데이터베이스입니다. SQL 필터·집�
 
 구조화된 로그에서 반복적인 분석 쿼리가 많다면 검토할 만합니다. 대표 필터·텍스트 검색·보존 기간·동시 조회·수집 burst를 함께 측정합니다. 10:1 이상의 압축, 수십억 행을 수초에 조회하는 성능, 특정 비용 절감률은 workload에 따른 결과이지 이 설정의 보장이 아닙니다.
 
-이 가이드의 명시적인 검토 기준은 **ClickHouse 26.3.33.24 LTS**, **Altinity Operator 0.27.3**, **Vector 0.58.0**, **Grafana ClickHouse datasource 4.21.2**입니다. 릴리스가 공개되었다고 임의의 Kubernetes/EKS 버전·StorageClass·조합이 운영 환경에서 호환됨을 뜻하지 않습니다. 실제 클러스터와 업그레이드 경로를 따로 검증합니다.
+이 가이드의 명시적인 검토 기준은 **ClickHouse 26.3.33.24 LTS**, **Altinity Operator 0.27.3**, **Vector 0.58.0**, **Grafana ClickHouse datasource 4.21.2**입니다. 릴리스가 공개되었다는 것이 임의의 Kubernetes/EKS 버전·StorageClass·조합이 운영 환경에서 호환됨을 뜻하지 않습니다. 실제 클러스터와 업그레이드 경로를 따로 검증합니다.
 
 ### 다른 솔루션과의 비교
 
@@ -149,7 +149,7 @@ TLS port 노출만으로 충분하지 않습니다. 인증서 로딩·hostname/C
 
 신규 구성에서는 ClickHouse Keeper와 operator의 `ClickHouseKeeperInstallation` 지원을 검토할 수 있습니다. 고정한 operator는 `zookeeper.keeper.name`으로 CHK를 참조하고 reconciliation 중 secure Keeper service port를 감지합니다. 공식 [Keeper 참조](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/keeper_reference.md)와 [TLS 예제](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml)를 설정 근거로 사용하되 예제의 image·설정을 그대로 운영 기준으로 간주하지 않습니다.
 
-Voting member 3개는 과반수 2개가 필요합니다. 영속 상태·peer 연결·인증서·장애 도메인별 배치를 검증해야 합니다. `zookeeper-0` 같은 Pod 이름을 숫자형 `ZOO_MY_ID`에 전달하지 않습니다.
+Voting member가 3개일 때는 과반수인 2개가 필요합니다. 영속 상태·peer 연결·인증서·장애 도메인별 배치를 검증해야 합니다. `zookeeper-0` 같은 Pod 이름을 숫자형 `ZOO_MY_ID`에 전달하지 않습니다.
 
 ```bash
 kubectl -n clickhouse get chk logs-keeper
@@ -243,7 +243,7 @@ SETTINGS distributed_foreground_insert = 1, async_insert = 0;
 ALTER USER log_writer SETTINGS PROFILE logs_writer;
 ```
 
-Writer의 foreground Distributed insert는 shard 전달을 기다리지만 특정 replica quorum·모든 retry의 중복 제거·모든 저장소 장애 보호를 뜻하지 않습니다. Quorum·실패·retry·권한은 따로 검증합니다. Grafana reader는 read-only를 유지하면서 플러그인이 필요한 query timeout 설정 변경을 허용합니다.
+Writer의 foreground Distributed insert는 shard 전달을 기다리지만 특정 replica quorum·모든 retry의 중복 제거·모든 저장소 장애 보호를 뜻하지 않습니다. Quorum·실패·retry·권한은 따로 검증합니다. Grafana reader는 read-only를 유지하면서 플러그인에 필요한 query timeout 설정 변경을 허용합니다.
 
 ### Vector를 통한 수집
 
@@ -378,7 +378,7 @@ WHERE timestamp >= now() - INTERVAL 1 HOUR
 GROUP BY namespace, service ORDER BY distinct_pods_with_logs DESC;
 ```
 
-`error_log_percent`는 오류로 표시된 **로그 이벤트 비율**입니다. 요청마다 관련 레코드가 정확히 하나라는 계약이 없으면 HTTP 실패율이 아닙니다. `uniqExact`는 정확한 집계, `uniq`는 근사 집계입니다. 두 쿼리는 관측된 로그를 설명하며 현재 Running Pod 수가 아닙니다.
+`error_log_percent`는 오류로 표시된 **로그 이벤트 비율**입니다. 요청마다 관련 레코드가 정확히 하나라는 계약이 없으면 HTTP 실패율이 아닙니다. `uniqExact`는 정확한 집계, `uniq`는 근사 집계입니다. 두 쿼리는 관측된 로그를 설명하며 현재 Running Pod 수를 나타내는 것은 아닙니다.
 
 ### 고급 분석 쿼리
 
@@ -423,7 +423,7 @@ WHERE timestamp >= now() - INTERVAL 1 DAY
 GROUP BY namespace, pod_name;
 ```
 
-`message_bytes`는 message 문자열 byte 수이며 압축 저장량이나 network 청구량이 아닙니다. “Back-off” 문자열 일치도 로그 이벤트 수이지 실제 container restart 수가 아닙니다. Restart는 Kubernetes 상태 메트릭을 사용합니다. SQL `SELECT`는 한 시점의 조회이며 dashboard refresh interval이 반복 조회를 수행합니다.
+`message_bytes`는 message 문자열 byte 수이며 압축 저장량이나 network 청구량이 아닙니다. “Back-off” 문자열 일치도 로그 이벤트 수이지 실제 container restart 수가 아닙니다. Restart 확인에는 Kubernetes 상태 메트릭을 사용합니다. SQL `SELECT`는 한 시점의 조회이며 dashboard refresh interval이 반복 조회를 수행합니다.
 
 ## Grafana 연동
 
@@ -622,7 +622,7 @@ EKS에서는 EBS 용량·성능, AZ 간 전송, node architecture, 장애 도메
 1. **Cold table storage:** ClickHouse가 설정한 S3 disk/volume의 part와 metadata를 관리합니다. Local metadata를 보존하고 선택한 disk 설계에 맞게 replica별 object namespace를 분리합니다. 살아 있는 ClickHouse 테이블이 소유한 object를 외부 lifecycle로 임의 삭제하지 않습니다.
 2. **독립 archive:** 선택한 행을 버전·inventory가 있는 Parquet object로 export합니다. 완전성·지연 데이터·접근 통제·복구/조회 검증을 따로 정의합니다.
 
-Cold storage는 서버에 `cold` volume이 있는 storage policy를 만들고 테이블에서 그 policy를 명시적으로 선택합니다.
+Cold storage를 사용하려면 서버에 `cold` volume이 있는 storage policy를 만들고 테이블에서 그 policy를 명시적으로 선택합니다.
 
 ```sql
 -- Separate example: the server must already define the logs_tiered policy.

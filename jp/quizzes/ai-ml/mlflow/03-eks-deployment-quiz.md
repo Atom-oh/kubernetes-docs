@@ -30,7 +30,7 @@
 SQLite の機能とマルチ Pod ストレージトポロジーを区別してください。
 </details>
 
-3. レビュー対象のコミュニティ Chart 1.11.7 のメタデータにおけるデフォルトは何ですか？
+3. 確認したコミュニティ Chart 1.11.7 のメタデータにおけるデフォルトは何ですか？
    - A) 必須の RDS PostgreSQL
    - B) S3 オブジェクト
    - C) backendStore.defaultSqlitePath は :memory: である
@@ -69,7 +69,7 @@ SQLite の機能とマルチ Pod ストレージトポロジーを区別して�
 
 **回答: C**
 
-レビュー対象の upstream Chart source と appVersion も異なっていました。
+確認した upstream Chart のソースと appVersion も異なっていました。
 </details>
 
 6. ServiceAccount の S3 への IAM アクセスは、PostgreSQL ログインを自動的に許可しますか？

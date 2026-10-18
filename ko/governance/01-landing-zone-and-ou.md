@@ -26,7 +26,7 @@ Landing Zone의 Config integration은 service integration Account에 Config 리�
 
 ### Security OU의 배치와 baseline 범위
 
-이전 landing zone은 Control Tower가 Security OU 생성을 관리했습니다. **4.0은 그 OU 생성을 더 이상 관리하지 않으며 service integration Account들이 위치한 공통 parent OU를 Security OU로 지정**합니다. 다음 baseline 범위를 확인합니다.
+이전 landing zone에서는 Control Tower가 Security OU 생성을 관리했습니다. **4.0은 그 OU 생성을 더 이상 관리하지 않으며 service integration Account들이 위치한 공통 parent OU를 Security OU로 지정**합니다. 다음 baseline 범위를 확인합니다.
 
 1. 이 OU에는 `AWSControlTowerBaseline`과 Config Baseline을 적용할 수 없습니다(`Not Applicable` 상태로 표시되며 정상 동작입니다). `BackupBaseline`은 적용 가능합니다.
 2. Security OU 안에 service integration Account가 아닌 일반 Account를 두면 baseline 리소스를 받지 못합니다.
@@ -40,7 +40,7 @@ Landing Zone의 Config integration은 service integration Account에 Config 리�
 
 Control Tower 3.3 이하에서는 CentralizedLogging integration을 비활성화해도 Organization CloudTrail만 꺼지고 이미 배포된 리소스는 유지됐습니다. **4.0에서는 비활성화 시 logging Account의 Config Recorder, Delivery Channel, CloudTrail 관련 스택 인스턴스가 실제로 삭제됩니다.** 이후 Control Tower는 해당 Account를 더 이상 관리하지 않습니다.
 
-따라서 비활성화 전에 삭제 대상 stack·수집 중단·보존 중인 S3 로그를 각각 확인합니다. 재활성화하거나 관리 OU로 옮겨 governance를 다시 적용할 수 있지만, 수집 중단 기간의 복구 가능성을 별도로 시험해야 합니다. 이 동작을 모든 과거 로그가 삭제된다는 뜻으로 확대하지 않습니다.
+따라서 비활성화 전에 삭제 대상 stack·수집 중단·보존 중인 S3 로그를 각각 확인합니다. 재활성화하거나 관리 OU로 옮겨 governance를 다시 적용할 수 있지만, 수집 중단 기간의 복구 가능성을 별도로 시험해야 합니다. 이 동작을 모든 과거 로그가 삭제된다는 뜻으로 확대 해석하지 않습니다.
 
 ### Control Tower와 내부 파이프라인의 책임 분리
 
@@ -60,7 +60,7 @@ Landing Zone 3.1 이상에서 설정/API로 auto-enrollment를 먼저 활성화�
 - Enrollment는 최종적 일관성(eventual consistency) 모델이라 이동하는 Account 수에 따라 수 분에서 수 시간이 걸릴 수 있습니다.
 - **auto-enrollment는 Service Catalog provisioned product를 생성·수정·종료하지 않습니다.** Account Factory로 만든 Account를 unenroll하면, 그 provisioned product가 management Account에 고아 리소스로 남습니다.
 
-내부 파이프라인이 "Account 이동 → 자동 enrollment → workload bootstrap" 순서로 자동화를 구성한다면, 시작 조건은 "이동 이벤트"가 아니라 **"baseline 적용 완료 확인"**으로 잡아야 합니다.
+내부 파이프라인이 "Account 이동 → 자동 enrollment → workload bootstrap" 순서로 자동화를 구성한다면, 시작 조건은 "이동 이벤트"가 아니라 "**baseline 적용 완료 확인**"으로 잡아야 합니다.
 
 ## 3. OU와 조직 Control 정책 유형별 quota
 

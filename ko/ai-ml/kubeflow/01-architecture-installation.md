@@ -8,7 +8,7 @@
 
 설치 명령보다 먼저 배포판 릴리스를 선택하세요. EKS/Kubernetes 버전, 노드 아키텍처, CNI, StorageClass, 신원 공급자, 필요한 컴포넌트를 기록해야 합니다. `Kubernetes 1.34+`가 이후 모든 버전의 지원을 보장하지는 않습니다.
 
-26.03.1은 Kubernetes 1.36 CI 검증과 Kind 0.32+ 사용을 명시합니다. 이것이 모든 EKS 애드온 조합의 인증은 아닙니다. README는 일부 이미지가 ARM64를 지원하지 않을 수 있다고 설명합니다. 렌더링에는 Kustomize가 포함된 kubectl 또는 배포판이 지정한 독립 Kustomize가 필요하며, 실제 적용에는 대상 클러스터, 권한, 준비된 의존성이 추가로 필요합니다.
+26.03.1은 Kubernetes 1.36 CI 검증과 Kind 0.32+ 사용을 명시합니다. 이것이 모든 EKS 애드온 조합이 인증되었다는 뜻은 아닙니다. README는 일부 이미지가 ARM64를 지원하지 않을 수 있다고 설명합니다. 렌더링에는 Kustomize가 포함된 kubectl 또는 배포판이 지정한 독립 Kustomize가 필요하며, 실제 적용에는 대상 클러스터, 권한, 준비된 의존성이 추가로 필요합니다.
 
 ## Kubeflow란 무엇인가
 
@@ -22,7 +22,7 @@ Kubeflow는 독립적으로 릴리스되는 ML 컴포넌트로 구성됩니다. 
 
 배포판은 `YY.MM.patch`를 사용하고 연간 약 두 차례의 기본 릴리스를 계획하며 커뮤니티 지원을 약 6개월의 best effort로 설명합니다. 벤더 지원 SLA와는 다릅니다.
 
-2026년 6월 15일 발표된 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [태그에 고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)의 기준입니다.
+다음은 2026년 6월 15일 발표된 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [태그에 고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)을 기준으로 한 목록입니다.
 
 | 컴포넌트 | 포함된 리비전 |
 | --- | --- |
@@ -79,7 +79,7 @@ spec:
       persistentvolumeclaims: "10"
 ```
 
-컨트롤러는 소유권이 맞지 않는 기존 네임스페이스를 인수하지 않습니다. 네임스페이스에 Profile 소유자 참조도 설정하므로 Profile을 삭제하면 네임스페이스와 내부 리소스가 삭제될 수 있습니다. Dashboard v2 이전 때는 릴리스별 절차로 이전 컨트롤러 리소스를 정리하고 Profile CRD, Profile 객체, 사용자 네임스페이스를 보존해야 합니다.
+컨트롤러는 소유권이 맞지 않는 기존 네임스페이스를 인수하지 않습니다. 네임스페이스에 Profile 소유자 참조도 설정하므로 Profile을 삭제하면 네임스페이스와 내부 리소스가 삭제될 수 있습니다. Dashboard v2로 이전할 때는 릴리스별 절차로 이전 컨트롤러 리소스를 정리하고 Profile CRD, Profile 객체, 사용자 네임스페이스를 보존해야 합니다.
 
 ## EKS에서의 설치 방식
 
@@ -106,9 +106,9 @@ kubectl kustomize \
   > profile-controller.rendered.yaml
 ```
 
-오버레이는 Profile CRD, RBAC, Service, `kubeflow`의 `profiles-deployment` 등을 포함한 14개 리소스를 생성했습니다. 컨테이너는 Dashboard 2.0.0의 Profile Controller와 접근 관리 이미지를 사용합니다. 오버레이 자체는 `kubeflow` 네임스페이스를 만들지 않으며 Istio·네트워크 정책 의존성도 필요합니다.
+오버레이는 Profile CRD, RBAC, Service, `kubeflow`의 `profiles-deployment` 등을 포함한 14개 리소스를 생성했습니다. 컨테이너는 Dashboard 2.0.0의 Profile Controller와 접근 관리 이미지를 사용합니다. 오버레이 자체는 `kubeflow` 네임스페이스를 만들지 않으며 Istio·네트워크 정책 의존성도 충족해야 합니다.
 
-실제 설치는 고정된 릴리스의 개별 컴포넌트 순서를 따르세요. 렌더링을 검토하고 CRD를 등록한 뒤 컨트롤러·웹훅이 준비되면 커스텀 리소스를 적용합니다. admission이나 필드 소유권 오류는 반복 강제 적용 대신 원인을 확인하세요. 렌더링 성공은 API admission이나 EKS 배포 성공의 증명이 아닙니다.
+실제 설치는 고정된 릴리스의 개별 컴포넌트 순서를 따르세요. 렌더링을 검토하고 CRD를 등록한 뒤 컨트롤러·웹훅이 준비되면 커스텀 리소스를 적용합니다. admission이나 필드 소유권 오류가 발생하면 반복해서 강제 적용하는 대신 원인을 확인하세요. 렌더링 성공은 API admission이나 EKS 배포 성공의 증명이 아닙니다.
 
 ## IAM 접근 패턴: IRSA, KFPv2, Pod Identity
 

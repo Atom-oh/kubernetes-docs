@@ -90,7 +90,7 @@ sysctl net.ipv4.tcp_keepalive_time net.ipv4.tcp_keepalive_intvl \
   net.ipv4.tcp_keepalive_probes net.ipv4.tcp_rmem net.ipv4.tcp_wmem \
   net.core.rmem_max net.core.wmem_max
 ```
-The original 60/15/6 values are an **unmeasured tuning example**, not universal production defaults. For a compatible Linux kernel and a non-hostNetwork workload, these sysctls are in Kubernetes’s safe set since 1.29. Merge only the sysctls into the existing Pod securityContext and preserve its other settings:
+The original 60/15/6 values are an **unmeasured tuning example**, not universal production defaults. For a compatible Linux kernel and a non-hostNetwork workload, these sysctls have been in Kubernetes’s safe set since 1.29. Merge only the sysctls into the existing Pod securityContext and preserve its other settings:
 ```yaml
 spec:
   template:
@@ -104,7 +104,7 @@ spec:
         - name: net.ipv4.tcp_keepalive_probes
           value: "6"
 ```
-**Buffers:** size experiments using bandwidth-delay product in bytes: `bandwidth_bits_per_second × RTT_seconds / 8`. TCP auto-tuning, parallel flows, socket overrides and total memory pressure matter. The former 16,777,216-byte maxima (16 MiB) and `4096 87380 16777216` / `4096 65536 16777216` triplets are examples, not measured optimal values. `tcp_rmem`/`tcp_wmem` are safe Pod sysctls since Kubernetes 1.32 with kernel 4.15+; `net.core.*` settings must not be assumed to have the same admission/isolation support. Use the node owner’s controlled configuration for node-level changes and compare error/latency/throughput/memory before and after.
+**Buffers:** size experiments using bandwidth-delay product in bytes: `bandwidth_bits_per_second × RTT_seconds / 8`. TCP auto-tuning, parallel flows, socket overrides and total memory pressure matter. The former 16,777,216-byte maxima (16 MiB) and `4096 87380 16777216` / `4096 65536 16777216` triplets are examples, not measured optimal values. `tcp_rmem`/`tcp_wmem` have been safe Pod sysctls since Kubernetes 1.32 with kernel 4.15+; `net.core.*` settings must not be assumed to have the same admission/isolation support. Use the node owner’s controlled configuration for node-level changes and compare error/latency/throughput/memory before and after.
 
 ### Node Placement and Locality
 

@@ -134,7 +134,7 @@ The old scalar result >= 0.95, omitted provider address, missing latency templat
 <details>
 <summary>How do mTLS, authorization and JWT validation differ?</summary>
 
-PeerAuthentication controls accepted inbound workload mTLS. It does not make the client's outbound TLS policy. The following namespace policy assumes callers have been prepared for STRICT; placing it in the mesh root namespace would have a wider effect:
+PeerAuthentication controls accepted inbound workload mTLS. It does not set the client's outbound TLS policy. The following namespace policy assumes callers have been prepared for STRICT; placing it in the mesh root namespace would have a wider effect:
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -396,7 +396,7 @@ spec:
 
 consecutive5xxErrors is the current field. Consecutive-failure detection can act inline; interval is not a promise to wait 30 seconds before every ejection. baseEjectionTime can increase on repeat ejections, and per-proxy endpoint/capacity behavior matters. A maxEjectionPercent value should not be read as a global availability guarantee.
 
-For a **sidecar inbound** HTTP listener on 9080, this illustrative local token bucket has an initial burst capacity 100 and refills 10 tokens per second:
+For a **sidecar inbound** HTTP listener on 9080, this illustrative local token bucket has an initial burst capacity of 100 and refills 10 tokens per second:
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -497,7 +497,7 @@ Verify the actual labels and proxy endpoint locality. AZ names can differ across
 <summary>What must be checked before installing or operating Istio on EKS?</summary>
 
 1. Use the exact supported Istio/Kubernetes/EKS intersection and a pinned CLI/chart. There is no built-in production profile. Use reviewed Helm/istioctl configuration through the installation's owner.
-2. Identify the load balancer controller: AWS Load Balancer Controller, EKS Auto Mode and legacy provisioning use different ownership/settings. Match Service selectors/ports to the actual gateway. Decide TLS termination at the NLB or gateway; do not accidentally send plaintext to a TLS listener or add unintended double TLS.
+2. Identify the load balancer controller: AWS Load Balancer Controller, EKS Auto Mode and legacy provisioning use different ownership/settings. Match Service selectors/ports to the actual gateway. Decide on TLS termination at the NLB or gateway; do not accidentally send plaintext to a TLS listener or add unintended double TLS.
 3. Scope AWS permissions to the component calling AWS APIs, such as the load balancer controller or telemetry collector. Envoy does not need an IAM role merely to forward traffic. Configure trust and permissions for IRSA or supported EKS Pod Identity integration; an annotation alone is not a complete setup.
 4. Open only required directional network paths. Proxy interception ports are not a list to expose indiscriminately in security groups. Include webhook/xDS, health checks and the actual ingress/ambient paths where relevant.
 5. Size Istiod/proxies from workload evidence and provide scheduling/availability capacity. PDBs address selected voluntary disruptions; replica count alone does not ensure zone diversity or protect against all failures.

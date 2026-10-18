@@ -16,7 +16,7 @@ Gatekeeper는 Kubernetes admission과 주기적 audit에서 정책을 평가합�
 
 ## Gatekeeper와 Kyverno 선택
 
-Gatekeeper의 Rego·Constraint 모델과 Kyverno의 Kubernetes 지향 policy 모델 중 팀의 정책·테스트·운영 요구에 맞는 것을 선택합니다. Gatekeeper도 선택적으로 CEL 기반 Kubernetes native validation을 사용할 수 있으며 모든 기능이 Rego 하나에 한정되는 것은 아닙니다. 고정된 “메모리 중간/낮음” 또는 “다른 도구는 복잡한 로직을 표현할 수 없음” 비교를 근거 없이 사용하지 않습니다. OPA 프로젝트의 CNCF 졸업 상태와 Gatekeeper를 별도 졸업 프로젝트라고 부르는 것은 다릅니다.
+Gatekeeper의 Rego·Constraint 모델과 Kyverno의 Kubernetes 지향 policy 모델 중 팀의 정책·테스트·운영 요구에 맞는 것을 선택합니다. Gatekeeper도 선택적으로 CEL 기반 Kubernetes native validation을 사용할 수 있으며 모든 기능이 Rego 하나에 한정되는 것은 아닙니다. 고정된 “메모리 중간/낮음” 또는 “다른 도구는 복잡한 로직을 표현할 수 없음” 비교를 근거 없이 사용하지 않습니다. OPA 프로젝트가 CNCF 졸업 상태라는 것과 Gatekeeper를 별도 졸업 프로젝트라고 부르는 것은 다릅니다.
 
 <span id="helm을-이용한-설치"></span>
 
@@ -180,7 +180,7 @@ spec:
       kind: Ingress
 ```
 
-같은 namespace의 다른 이름, 다른 namespace의 같은 이름도 host 충돌일 수 있습니다. “namespace와 name이 모두 다름”이라는 AND 조건으로 제외하면 충돌을 놓칩니다. 예제는 namespace/name이 둘 다 같은 객체만 update로 제외합니다. Cache는 eventual consistency이므로 동시에 생성되는 두 객체의 전역 유일성을 원자적으로 보장하지 않습니다.
+같은 namespace에서 이름이 다른 객체나 다른 namespace에서 이름이 같은 객체도 host가 충돌할 수 있습니다. “namespace와 name이 모두 다름”이라는 AND 조건으로 제외하면 충돌을 놓칩니다. 예제는 namespace/name이 둘 다 같은 객체만 update로 제외합니다. Cache는 eventual consistency이므로 동시에 생성되는 두 객체의 전역 유일성을 원자적으로 보장하지 않습니다.
 
 <span id="mutation-기능"></span>
 
@@ -224,7 +224,7 @@ spec:
         effect: NoSchedule
 ```
 
-Mutation은 defaulting 편의 기능과 검증의 역할을 구분합니다. CREATE/UPDATE 범위, 반복 적용, 다른 mutator와의 수렴, 기존 객체 영향을 검토합니다. Mutator를 만들었다고 기존 객체가 모두 자동 재작성되는 것은 아닙니다.
+Mutation에서는 defaulting 편의 기능과 검증의 역할을 구분합니다. CREATE/UPDATE 범위, 반복 적용, 다른 mutator와의 수렴, 기존 객체 영향을 검토합니다. Mutator를 만들었다고 기존 객체가 모두 자동 재작성되는 것은 아닙니다.
 
 <span id="감사-audit-및-모니터링"></span>
 
@@ -284,7 +284,7 @@ gator test -f templates/docsnoprivileged.yaml \
   -f tests/fixtures/tenant-skip-label-no-bypass.yaml --output=json
 ```
 
-`verify`는 Suite의 예상 위반을 검사하고, `test -f`는 manifest들을 Template/Constraint에 평가합니다. Suite가 없는 디렉터리는 `verify`에서 무시될 수 있으므로 성공 exit뿐 아니라 5개 test·33개 case가 실행됐는지 확인합니다. 예제 registry image는 정책 test 입력이며 실제 pull할 workload가 아닙니다. CI는 credentials 없이 이 로컬 suite를 실행합니다. Cluster dry-run이 필요하면 별도의 신뢰된 환경과 승인된 권한을 사용합니다.
+`verify`는 Suite의 예상 위반을 검사하고, `test -f`는 manifest들을 Template/Constraint를 기준으로 평가합니다. Suite가 없는 디렉터리는 `verify`에서 무시될 수 있으므로 성공 exit뿐 아니라 5개 test·33개 case가 실행됐는지 확인합니다. 예제 registry image는 정책 test 입력이며 실제 pull할 workload가 아닙니다. CI는 credentials 없이 이 로컬 suite를 실행합니다. Cluster dry-run이 필요하면 별도의 신뢰된 환경과 승인된 권한을 사용합니다.
 
 <span id="모범-사례"></span>
 
@@ -302,7 +302,7 @@ gator test -f templates/docsnoprivileged.yaml \
 
 ## 단계적 적용과 문제 해결
 
-동일한 Constraint를 dryrun → warn → deny로 전환하고 각 단계의 audit·admission 결과와 예외를 검토합니다. 같은 Template의 파라미터 없는 Constraint 세 개를 생성하는 방식은 사용하지 않습니다. `dryrun`과 `warn`도 violation 데이터를 만들지만 Gator test의 exit는 0일 수 있습니다. `deny` 위반은 1입니다. Webhook availability failure와 정책 위반은 별도로 관찰합니다.
+동일한 Constraint를 dryrun → warn → deny로 전환하고 각 단계의 audit·admission 결과와 예외를 검토합니다. 같은 Template의 파라미터 없는 Constraint 세 개를 생성하는 방식은 사용하지 않습니다. `dryrun`과 `warn`도 violation 데이터를 만들지만 Gator test의 exit는 0일 수 있습니다. `deny` 위반 시 exit는 1입니다. Webhook availability failure와 정책 위반은 별도로 관찰합니다.
 
 ```bash
 kubectl get validatingwebhookconfiguration gatekeeper-validating-webhook-configuration -o yaml

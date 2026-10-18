@@ -1,57 +1,57 @@
-# Configuración con acceso a Internet restringido (S3, endpoints privados y proxy)
+# Configuración con acceso restringido a Internet (S3, endpoints privados y proxy)
 
-< [Anterior: Configuración de red](./02-network-configuration.md) | [Tabla de contenidos](./README.md) | [Siguiente: Bootstrap del nodo](./04-node-bootstrap.md) >
+< [Anterior: Configuración de red](./02-network-configuration.md) | [Tabla de contenido](./README.md) | [Siguiente: Inicio de nodos](./04-node-bootstrap.md) >
 
-> **Versiones compatibles**: EKS Hybrid Nodes; se revisó el código fuente de nodeadm v1.0.20. Seleccione la cohorte de Kubernetes, OS, runtime y add-on para su clúster.
-> **Última actualización**: September 16, 2026
+> **Versiones compatibles**: EKS Hybrid Nodes; se verificó el código fuente de nodeadm v1.0.20. Seleccione el conjunto de versiones de Kubernetes, SO, runtime y complementos para su clúster.
+> **Última actualización**: 16 de septiembre de 2026
 
-Este capítulo prepara Hybrid Nodes cuyo acceso público a Internet está restringido. **Hybrid Nodes aún necesitan conectividad con el control plane de EKS alojado por AWS y los servicios de AWS utilizados para las credenciales.** La transferencia física de software no convierte a Hybrid Nodes en una distribución Kubernetes desconectada.
+Este capítulo prepara Hybrid Nodes cuyo acceso público a Internet está restringido. **Hybrid Nodes aún necesitan conectividad con el plano de control de EKS alojado en AWS y con los servicios de AWS que se usan para las credenciales.** La transferencia física de software no convierte Hybrid Nodes en una distribución de Kubernetes desconectada.
 
-Los ejemplos son procedimientos de preparación y revisión, no un despliegue de producción probado. La auditoría verificó el código fuente, la configuración y casos de fallo locales; no creó una imagen de OS, publicó artefactos, registró un nodo ni validó una red privada real. El manifiesto de artefactos público no pudo recuperarse en el entorno de auditoría porque falló la verificación del nombre de host TLS. No se omitió ninguna comprobación de certificado ni se infiere de esa recuperación fallida ningún parche o digest de artefacto actual.
+Los ejemplos son procedimientos de preparación y revisión, no una implementación de producción probada. La auditoría verificó el código fuente, la configuración y casos de fallo locales; no creó una imagen de SO, publicó artefactos, registró un nodo ni validó una red privada real. No se pudo recuperar el manifiesto público de artefactos en el entorno de auditoría porque falló la verificación del nombre de host TLS. No se omitió ninguna comprobación de certificados, y de esa descarga fallida no se deduce ningún parche o digest actual de los artefactos.
 
-**Complemento para el equipo de seguridad:** la [revisión de separación de red de Hybrid Nodes](11-network-separation-security.md) explica las nuevas conexiones del control plane a las instalaciones locales, los tipos de endpoint, los límites de permisos y datos, y las evidencias de revisión. La conectividad privada por sí sola no establece el cumplimiento.
+**Material complementario para el equipo de seguridad:** [Revisión de la separación de redes para Hybrid Nodes](11-network-separation-security.md) explica las nuevas conexiones desde el plano de control hacia las instalaciones locales, los tipos de endpoint, los límites de permisos y datos, y las evidencias de revisión. La conectividad privada por sí sola no establece el cumplimiento.
 
 ## Límites de conectividad y aislamiento
 
-| Patrón | Lo que proporciona | Consideración para Hybrid Nodes |
+| Patrón | Qué proporciona | Consideración para Hybrid Nodes |
 |---|---|---|
-| Red físicamente desconectada | Sin conexión activa con AWS | No puede proporcionar la conectividad requerida con el control plane de EKS y el servicio de credenciales |
-| Proxy de salida controlado | Destinos HTTPS externos aprobados y registros | Configure por separado el instalador, los gestores de paquetes, los daemons del host y los Pods aplicables |
-| VPN/Direct Connect con endpoints privados | Rutas privadas al clúster y a las API de AWS compatibles | Requiere rutas bidireccionales, DNS, security groups y autorización; los endpoints no cubren todos los hosts de descarga públicos |
-| Transferencia de software sin conexión | Una forma controlada de importar artefactos revisados | Útil con conectividad privada de AWS; no sustituye dicha conectividad |
+| Red físicamente desconectada | Ninguna conexión activa con AWS | No puede proporcionar la conectividad necesaria con el plano de control de EKS y los servicios de credenciales |
+| Proxy de salida controlado | Destinos HTTPS externos aprobados y registros | Configure por separado el instalador, los administradores de paquetes, los daemons del host y los Pods correspondientes |
+| VPN/Direct Connect con endpoints privados | Rutas privadas al clúster y a las API de AWS compatibles | Requiere rutas bidireccionales, DNS, grupos de seguridad y autorización; los endpoints no cubren todos los hosts públicos de descarga |
+| Transferencia de software sin conexión | Una forma controlada de importar artefactos revisados | Útil junto con la conectividad privada de AWS; no la reemplaza |
 
-Las restricciones de red pueden reducir la exposición, pero no garantizan el cumplimiento normativo, eliminan la exfiltración de datos ni previenen todos los ataques a la cadena de suministro. La confianza en certificados, los publicadores aprobados, las firmas, el parcheo, el acceso de operadores y los flujos de datos de aplicaciones siguen siendo controles independientes. La conectividad privada también mantiene dependencias de los servicios de AWS y de la red local.
+Las restricciones de red pueden reducir la exposición, pero no garantizan el cumplimiento normativo, no eliminan la exfiltración de datos ni previenen todos los ataques a la cadena de suministro. La confianza en los certificados, los publicadores aprobados, las firmas, los parches, el acceso de los operadores y los flujos de datos de las aplicaciones siguen siendo controles independientes. La conectividad privada también mantiene dependencias de los servicios de AWS y de la red local.
 
-![Comparación de aislamiento físico, salida mediante proxy y conectividad privada de AWS. Solo los patrones conectados pueden operar EKS Hybrid Nodes.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-0.png)
+![Comparación del aislamiento físico, la salida mediante proxy y la conectividad privada de AWS. Solo los patrones con conectividad pueden ejecutar EKS Hybrid Nodes.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-0.html)
 
 > **Aclaración del diagrama:** la opción físicamente aislada es una comparación, no un modo de operación compatible con Hybrid Nodes.
 
-## Arquitectura y responsabilidades de los artefactos
+## Arquitectura y responsabilidades sobre los artefactos
 
-![Un host de preparación controlado prepara software revisado en almacenamiento privado; los nodos usan URL de descarga validadas y conectividad privada de AWS.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-1.png)
+![Un host de preparación controlado almacena software revisado en almacenamiento privado; los nodos usan URL de descarga validadas y conectividad privada de AWS.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-1.html)
 
-> **Corrección del diagrama:** el atajo `hybrid-assets.eks.amazonaws.com → PHZ → S3` no es un mirror transparente funcional. Use las rutas de instalación indicadas a continuación. Los cambios de DNS por sí solos no proporcionan el certificado TLS del nombre de host original, el enrutamiento de objetos de S3 ni la autorización de solicitudes.
+> **Corrección del diagrama:** el atajo `hybrid-assets.eks.amazonaws.com → PHZ → S3` no es un espejo transparente funcional. Use las rutas de instalación que se indican a continuación. Los cambios de DNS por sí solos no proporcionan el certificado TLS del nombre de host original, el enrutamiento de objetos de S3 ni la autorización de solicitudes.
 
 | Artefacto | Preparación y entrega |
 |---|---|
-| `nodeadm` de Hybrid | Apruebe una versión de `aws/eks-hybrid`; verifique la procedencia y la suma de comprobación antes de ejecutarla como root. Es distinto del nodeadm de `amazon-eks-ami` de EC2 |
-| kubelet, kubectl, plugins CNI, proveedor de credenciales ECR, autenticador IAM | Seleccione una versión/build/OS/arquitectura exacta del manifiesto de artefactos aprobado |
-| Ayudante de firma de IAM Roles Anywhere | Seleccione y verifique su propia versión; no elija una primera entrada arbitraria de un array |
-| Instalador/agente SSM | Ruta de descarga, firma y registro Regional independiente; no se redirige completamente mediante un manifiesto de artefactos de EKS personalizado |
-| containerd, runc, iptables y dependencias de OS | Cohorte de paquetes de OS/runtime aprobada, incluidas las dependencias transitivas y los metadatos de repositorio firmados |
-| Imágenes CNI, CoreDNS, kube-proxy, sandbox y workload | Inventaríe los manifiestos reales, los init containers, los digests de imagen y las plataformas; el manifiesto binario no proporciona las etiquetas de imagen |
+| Hybrid `nodeadm` | Apruebe una versión de `aws/eks-hybrid`; verifique la procedencia y la suma de comprobación antes de ejecutarlo como root. Es distinto de nodeadm de `amazon-eks-ami` para EC2 |
+| kubelet, kubectl, complementos de CNI, proveedor de credenciales de ECR, autenticador de IAM | Seleccione una versión/build/SO/arquitectura exactos del manifiesto de artefactos aprobado |
+| Ayudante de firma de IAM Roles Anywhere | Seleccione y verifique su propia versión; no elija arbitrariamente el primer elemento de una matriz |
+| Instalador/agente de SSM | Ruta de descarga, firma y registro regional independiente; no se redirige por completo con un manifiesto de artefactos de EKS personalizado |
+| containerd, runc, iptables y dependencias del SO | Conjunto aprobado de paquetes de SO/runtime, incluidas las dependencias transitivas y los metadatos firmados del repositorio |
+| CNI, CoreDNS, kube-proxy, imágenes de sandbox y de cargas de trabajo | Haga un inventario de los manifiestos reales, los contenedores de inicialización, los digests de imagen y las plataformas; el manifiesto binario no proporciona etiquetas de imagen |
 
-Amazon VPC CNI (`aws-node` / `vpc-cni-init`) no es el CNI para Hybrid Nodes. Use el procedimiento Hybrid CNI compatible en [Configuración de red](./02-network-configuration.md). Incluya kube-proxy solo cuando la ruta de datos del CNI elegido lo utilice. Un bundle binario de plugin CNI no es un controlador CNI desplegado.
+Amazon VPC CNI (`aws-node` / `vpc-cni-init`) no es el CNI para Hybrid Nodes. Use el procedimiento compatible de Hybrid CNI en [Configuración de red](./02-network-configuration.md). Incluya kube-proxy solo cuando la ruta de datos del CNI elegido lo utilice. Un conjunto de binarios de complemento CNI no equivale a un controlador CNI implementado.
 
 ## Elija una ruta de instalación
 
-### Ruta A: imagen de OS preinstalada
+### Ruta A: imagen de SO preinstalada
 
-En un builder controlado, instale el nodeadm Hybrid aprobado y ejecute `nodeadm install` con la versión de Kubernetes seleccionada para el clúster y el proveedor de credenciales. AWS documenta este uso para la creación de imágenes. Conserve los artefactos instalados y el rastreador de nodeadm en la imagen.
+En un entorno de compilación controlado, instale el nodeadm de Hybrid aprobado y ejecute `nodeadm install` con la versión de Kubernetes seleccionada para el clúster y el proveedor de credenciales. AWS documenta este uso para crear imágenes. Conserve los artefactos instalados y el tracker de nodeadm en la imagen.
 
 ```bash
 # Controlled image builder only; installs software on this host.
@@ -63,36 +63,36 @@ sudo nodeadm install "$KUBERNETES_VERSION" \
   --credential-provider "$CREDENTIAL_PROVIDER" --region "$REGION"
 ```
 
-La fuente de runtime predeterminada es la distro del OS; esa fuente no es compatible con RHEL. Para RHEL, seleccione la fuente de paquetes Docker documentada o preinstale un runtime compatible y use `--containerd-source none`. La fuente Docker no es compatible con AL2023. `none` no instala containerd por usted.
+El origen predeterminado del runtime es la distribución del SO; ese origen no es compatible con RHEL. Para RHEL, seleccione el origen de paquetes de Docker documentado o preinstale un runtime compatible y use `--containerd-source none`. El origen Docker no es compatible con AL2023. `none` no instala containerd por usted.
 
-**No** inicialice/registre el builder ni clone su identidad. Entregue la activación SSM o el certificado/clave privada de IAM Roles Anywhere de cada nodo mediante el proceso aprobado por nodo. No incorpore códigos de activación, claves privadas, estado de registro SSM, certificados kubelet ni credenciales de operador en una imagen reutilizable. Bottlerocket tiene su propio flujo de trabajo de preparación/bootstrap y no usa este procedimiento nodeadm.
+**No** inicialice ni registre el entorno de compilación ni clone su identidad. Entregue la activación de SSM o el certificado/clave privada de IAM Roles Anywhere de cada nodo mediante el proceso aprobado para cada nodo. No incluya códigos de activación, claves privadas, estado de registro de SSM, certificados de kubelet ni credenciales de operadores en una imagen reutilizable. Bottlerocket tiene su propio flujo de preparación/inicio y no usa este procedimiento de nodeadm.
 
-Las nuevas instalaciones/actualizaciones de SSM requieren nodeadm **1.0.19 o posterior** porque las versiones anteriores contienen una clave de firma SSM desactualizada. Este capítulo inspeccionó **v1.0.20**, no un binario `latest` sin límite.
+Las instalaciones/actualizaciones nuevas de SSM requieren nodeadm **1.0.19 o posterior**, porque las versiones anteriores contienen una clave de firma de SSM obsoleta. Este capítulo inspeccionó **v1.0.20**, no un binario `latest` sin versión específica.
 
 ### Ruta B: un manifiesto de artefactos personalizado
 
-El **código fuente v1.0.20** publicado admite las siguientes flags aunque la tabla de flags de la guía de usuario no las enumera todas:
+El **código fuente de la versión v1.0.20** admite las siguientes opciones, aunque la tabla de opciones de la guía del usuario no las enumera todas:
 
 | Comando/configuración | Comportamiento real en la versión inspeccionada |
 |---|---|
 | `install --manifest-override file:///path/manifest.json` | Lee el manifiesto local; el decodificador YAML acepta JSON |
-| `install --manifest-override https://mirror.example.com/manifest.json` | Descarga el manifiesto con un cliente HTTP ordinario |
-| `install --private-mode` | Requiere `--manifest-override`; omite la instalación de paquetes de OS, pero aún instala artefactos de credenciales y EKS |
-| `init --manifest-override ... --private-mode` | Requiere el argumento de manifiesto y obtiene de él los metadatos de Region; no elimina los requisitos de autenticación de AWS ni de conectividad con EKS |
-| `uri` / `checksum_uri` de artefactos individuales | Se recuperan mediante HTTP(S), sin firma S3 SigV4. Un **manifiesto** `file://` no implica compatibilidad con URL de **artefactos** `file://` |
-| `gzip_uri` | Tiene preferencia sobre `uri` cuando está presente; la verificación de la suma de comprobación ocurre después de la descompresión |
+| `install --manifest-override https://mirror.example.com/manifest.json` | Descarga el manifiesto con un cliente HTTP convencional |
+| `install --private-mode` | Requiere `--manifest-override`; omite la instalación de paquetes del SO, pero sigue instalando los artefactos de credenciales y EKS |
+| `init --manifest-override ... --private-mode` | Requiere el argumento del manifiesto y obtiene de este los metadatos de Región; no elimina los requisitos de autenticación de AWS ni de conectividad de EKS |
+| `uri` / `checksum_uri` de cada artefacto | Se obtienen por HTTP(S), sin firma S3 SigV4. Un manifiesto `file://` no implica compatibilidad con URL `file://` para los artefactos |
+| `gzip_uri` | Tiene prioridad sobre `uri` cuando está presente; la verificación de la suma de comprobación se realiza después de la descompresión |
 
-Compruebe el `install --help` e `init --help` del binario exacto desplegado antes de usar estas flags. El modo privado no es un instalador completo de paquetes sin conexión. Preinstale containerd con su unidad systemd, runc, iptables, certificados CA y todas las dependencias de OS requeridas.
+Compruebe `install --help` y `init --help` del binario implementado exacto antes de usar estas opciones. El modo privado no es un instalador de paquetes sin conexión completo. Preinstale containerd con su unidad systemd, runc, iptables, certificados de CA y todas las dependencias necesarias del SO.
 
-Con `--credential-provider ssm`, v1.0.20 aún construye por separado las URL Regionales de `ssm-setup-cli` y de la firma. El campo `ssm_releases` de un manifiesto no redirige esta ruta de instalación. Planifique el acceso a esos objetos S3 y a las dependencias posteriores de instalación/registro del agente, o use un flujo de trabajo validado de imagen preinstalada.
+Con `--credential-provider ssm`, v1.0.20 sigue construyendo por separado las URL regionales de `ssm-setup-cli` y de las firmas. El campo `ssm_releases` de un manifiesto no redirige esta ruta de instalación. Planifique el acceso a esos objetos de S3 y a las dependencias posteriores de instalación/registro del agente, o use un flujo de trabajo validado con imagen preinstalada.
 
-### Revise un manifiesto y seleccione una cohorte
+### Revise un manifiesto y seleccione un conjunto de versiones
 
-El manifiesto upstream tiene `supported_eks_releases`, `iam_roles_anywhere_releases` y `region_config`. Los registros de Kubernetes incluyen `major_minor_version`, `latest_patch_version`, `patch_releases[].version`, **`patch_version`**, **`release_date`** y URL por artefacto. Varios builds pueden compartir una versión de parche. El ejemplo anterior de `1.33.3` era una ilustración histórica del esquema, no evidencia de un parche actualmente aprobado.
+El manifiesto upstream contiene `supported_eks_releases`, `iam_roles_anywhere_releases` y `region_config`. Los registros de Kubernetes incluyen `major_minor_version`, `latest_patch_version`, `patch_releases[].version`, **`patch_version`**, **`release_date`** y URL por artefacto. Varios builds pueden compartir una versión de parche. El ejemplo anterior `1.33.3` ilustraba un esquema histórico, no era evidencia de un parche aprobado actualmente.
 
-Conserve el manifiesto upstream descargado, su fecha/hash de recuperación y el registro de aprobación. Verifique su origen HTTPS antes de seleccionarlo. El siguiente selector local requiere un parche exacto de Kubernetes, fecha de build, versión del ayudante de firma y arquitectura. Rechaza selecciones ambiguas, artefactos faltantes, claves YAML duplicadas y Regions desconocidas. Conserva los metadatos reales de Region en lugar de adivinar una cuenta ECR.
+Conserve el manifiesto upstream descargado, su fecha/hash de recuperación y el registro de aprobación. Verifique el origen HTTPS antes de seleccionar una versión. El siguiente selector local requiere un parche exacto de Kubernetes, una fecha de build, una versión del ayudante de firma y una arquitectura. Rechaza selecciones ambiguas, artefactos ausentes, claves YAML duplicadas y Regiones desconocidas. Conserva los metadatos reales de Región en lugar de adivinar una cuenta de ECR.
 
-Guarde como `select-mirror.py` en el host de preparación; requiere Python 3 y PyYAML:
+Guarde el archivo como `select-mirror.py` en el host de preparación; requiere Python 3 y PyYAML:
 
 ```python
 #!/usr/bin/env python3
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     main()
 ```
 
-El directorio de salida debe ser nuevo. El prefijo del mirror HTTPS debe asignarse al mismo prefijo de objetos inmutable usado para la publicación. Este script solo crea un plan; no descarga ni se autentica ante el mirror.
+El directorio de salida debe ser nuevo. El prefijo HTTPS del espejo debe corresponder al mismo prefijo de objetos inmutables que se usa para la publicación. Este script solo crea un plan; no descarga ni se autentica en el espejo.
 
 ```bash
 set -euo pipefail
@@ -232,9 +232,9 @@ python3 select-mirror.py upstream.yaml "$APPROVED_PATCH" "$APPROVED_BUILD_DATE" 
   "$APPROVED_IAM_VERSION" "$ARCH" "$REGION" "$MIRROR_PREFIX" "$NEW_PLAN_DIR"
 ```
 
-Revise todos los hosts de origen y los seis artefactos seleccionados antes de descargarlos. Este es un **ejemplo de artefactos de IAM Roles Anywhere**, no un mirror de instalador SSM. No incluye el propio nodeadm, paquetes de OS, imágenes, claves de firma ni certificados.
+Revise todos los hosts de origen y los seis artefactos seleccionados antes de descargarlos. Este es un **ejemplo de artefactos de IAM Roles Anywhere**, no un espejo del instalador de SSM. No incluye nodeadm, paquetes de SO, imágenes, claves de firma ni certificados.
 
-Guarde como `download-plan.sh`:
+Guarde el archivo como `download-plan.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -277,15 +277,15 @@ sha256sum --strict --check checksums.sha256
 printf '%s\n' 'Six artifacts verified locally; publishing and node installation remain separate.'
 ```
 
-El límite de tamaño es intencionalmente de 256 MiB por artefacto; revíselo si un artefacto aprobado lo supera. Una descarga, suma de comprobación malformada o falta de coincidencia de hash detiene el script. Se conserva un directorio parcial para inspección; inicie un nuevo candidato después de resolver la causa. No elimine un directorio `/tmp` compartido ni omita las sumas de comprobación faltantes.
+El límite de tamaño es de 256 MiB por artefacto de forma intencional; revíselo si un artefacto aprobado lo supera. Una descarga fallida, una suma de comprobación mal formada o una discrepancia de hash detienen el script. Se conserva un directorio parcial para inspeccionarlo; inicie un candidato nuevo después de resolver la causa. No elimine un directorio compartido de `/tmp` ni omita sumas de comprobación ausentes.
 
-Estos hashes vinculan los bytes seleccionados con las sumas de comprobación recuperadas. No son una firma independiente ni una prueba de que un publicador comprometido sea confiable. Proteja el registro de manifiesto/suma de comprobación revisado y use la verificación del publicador donde esté disponible.
+Estos hashes vinculan los bytes seleccionados con las sumas de comprobación recuperadas. No son una firma independiente ni demuestran que un publicador comprometido sea confiable. Proteja el registro revisado de manifiesto/sumas de comprobación y use la verificación del publicador cuando esté disponible.
 
-## Publicación y autorización de S3 privado
+## Publicación en S3 privado y autorización
 
-Use un bucket **precreado y de su propiedad** con Block Public Access, cifrado aprobado, versionado/retención y permisos separados de publicador/lector. Los ejemplos siguientes no crean un bucket ni reemplazan su política. AccessDenied, las credenciales expiradas y los timeouts son fallos, no evidencia de que un bucket/objeto no exista.
+Use un bucket **previamente creado y de su propiedad**, con Bloqueo de acceso público, cifrado aprobado, control de versiones/retención y permisos separados para publicadores y lectores. Los siguientes ejemplos no crean un bucket ni reemplazan su política. AccessDenied, las credenciales vencidas y los tiempos de espera agotados son errores, no pruebas de que un bucket/objeto no exista.
 
-Un ejemplo de *sentencia de política de lector* para un bucket existente es:
+Un ejemplo de *declaración de política para lectores* para un bucket existente:
 
 ```json
 {
@@ -298,16 +298,16 @@ Un ejemplo de *sentencia de política de lector* para un bucket existente es:
 }
 ```
 
-Sustituya la cuenta, el rol, el bucket, el prefijo y el endpoint por valores revisados. Esta sentencia concede una ruta; no revoca otras concesiones existentes. Un `Deny s3:*` para todo el bucket para cada solicitud fuera de un endpoint también puede bloquear al publicador conectado y la recuperación administrativa. Diseñe explícitamente esas rutas antes de aplicar tal límite.
+Reemplace la cuenta, el rol, el bucket, el prefijo y el endpoint por valores revisados. Esta declaración concede acceso a una ruta; no revoca otros permisos existentes. Un `Deny s3:*` para todo el bucket que se aplique a cada solicitud fuera de un endpoint puede bloquear también al publicador conectado y la recuperación administrativa. Diseñe explícitamente esas rutas antes de aplicar ese límite.
 
-La política de principal nombrado requiere una solicitud firmada. **El descargador HTTPS ordinario de nodeadm no se convierte en un cliente S3 autenticado con IAM porque el nodo tenga un rol IAM.** Dos diseños funcionales que se deben validar son:
+La política con principal especificado requiere una solicitud firmada. **El descargador HTTPS convencional de nodeadm no se convierte en un cliente de S3 autenticado con IAM porque el nodo tenga un rol de IAM.** Dos diseños que se pueden validar son:
 
-1. Use un agente/CLI de preparación autenticado para recuperar los archivos aprobados y luego proporciónelos a través de un servicio de artefactos HTTPS controlado por la organización con controles de acceso de red apropiados y un certificado para su propio nombre de host.
-2. Use la ruta de imagen preinstalada, sin dependencia de un mirror binario en tiempo de ejecución.
+1. Use un agente/CLI de preparación autenticado para obtener los archivos aprobados y luego ofrézcalos mediante un servicio de artefactos HTTPS controlado por la organización, con controles de acceso de red adecuados y un certificado para su propio nombre de host.
+2. Use la ruta de imagen preinstalada, sin depender de un espejo de binarios en tiempo de ejecución.
 
-Una URL de objeto S3 privada que devuelve `403` no se corrige con una anulación DNS. No coloque URL prefirmadas de portador ni credenciales en manifiestos, argumentos de proceso o logs publicados. Si una organización elige lecturas no autenticadas de binarios no secretos restringidas a una red privada, esa es una política independiente y revisada explícitamente, no la política de principal nombrado anterior.
+Una URL de objeto privado de S3 que devuelve `403` no se arregla con una anulación de DNS. No incluya URL prefirmadas portadoras de tokens ni credenciales en manifiestos, argumentos de procesos o registros publicados. Si una organización opta por lecturas no autenticadas de binarios no secretos restringidas a una red privada, esa es una política distinta y debe revisarse explícitamente; no es la política con principal especificado descrita anteriormente.
 
-Guarde como `publish-plan.sh`. Ejecute solo después de que el propietario del bucket apruebe el candidato y los permisos; este script **escribe objetos S3**:
+Guarde el archivo como `publish-plan.sh`. Ejecútelo solo después de que el propietario del bucket apruebe el candidato y los permisos; este script **escribe objetos en S3**:
 
 ```bash
 #!/usr/bin/env bash
@@ -334,26 +334,26 @@ done
 printf '%s\n' 'Candidate uploaded. Verify readback, mirror URL mapping and hashes before promotion.'
 ```
 
-Para un bucket que requiera SSE-KMS, use su clave aprobada y permisos KMS en lugar del ejemplo AES256. Las escrituras condicionales evitan sobrescribir una clave existente; no hacen atómica una carga de varios objetos. El manifiesto se carga al final, y un candidato fallido permanece sin publicar hasta que se verifiquen la lectura de vuelta y la asignación real del mirror HTTPS. Registre los VersionIds/sumas de comprobación y la retención de objetos devueltos; los ETags de S3 no son un digest SHA-256 universal.
+Para un bucket que requiera SSE-KMS, use la clave aprobada y los permisos de KMS correspondientes en lugar del ejemplo AES256. Las escrituras condicionales impiden sobrescribir una clave existente; no hacen atómica una carga de varios objetos. El manifiesto se carga al final, y un candidato con errores sigue sin publicarse hasta verificar la lectura posterior y la correspondencia HTTPS real del espejo. Registre los VersionId/sumas de comprobación de los objetos devueltos y la retención; los ETag de S3 no son siempre un digest SHA-256.
 
-## Requisitos de DNS y endpoint privado
+## Requisitos de DNS y endpoints privados
 
-`hybrid-assets.eks.amazonaws.com` es el host de descarga AWS CloudFront. Crear una PHZ con ese nombre y asignarle un alias a S3 no conserva:
+`hybrid-assets.eks.amazonaws.com` es el host de descarga de AWS CloudFront. Crear una PHZ con ese nombre y asignarle un alias a S3 no conserva:
 
 - el certificado TLS/nombre de host SNI;
-- el encabezado HTTP Host y la asignación bucket/clave de objeto de S3;
-- las rutas originales, especialmente cuando un cargador aplanó todos los nombres;
+- el encabezado HTTP Host y la correspondencia entre bucket/clave de objeto de S3;
+- las rutas originales, especialmente si un cargador aplanó todos los nombres;
 - la autorización de solicitudes.
 
-No corrija esto desactivando las comprobaciones TLS. Mantenga el origen aprobado accesible a través de un proxy controlado, use la imagen preinstalada o use anulaciones de manifiesto compatibles con URL de mirror reales.
+No lo resuelva desactivando las comprobaciones TLS. Mantenga accesible el origen aprobado mediante un proxy controlado, use la imagen preinstalada o use anulaciones compatibles del manifiesto con URL reales del espejo.
 
-Los endpoints **Interface** de S3 pueden atender clientes locales mediante VPN/Direct Connect. El DNS privado de S3 es compatible. La opción **private DNS only for inbound Resolver** requiere un endpoint gateway S3 mantenido para el lado VPC; como alternativa, enrute las solicitudes tanto de VPC como locales a través del endpoint interface. Un endpoint gateway por sí solo no es accesible directamente desde las instalaciones locales.
+Los endpoints **Interface** de S3 pueden servir a clientes locales a través de VPN/Direct Connect. Se admite el DNS privado de S3. La opción **Private DNS only for inbound Resolver** requiere un endpoint de gateway de S3 mantenido para el lado de la VPC; otra opción es enrutar las solicitudes de la VPC y de las instalaciones locales a través del endpoint de interfaz. No se puede acceder directamente desde las instalaciones locales a un endpoint de gateway por sí solo.
 
-Seleccione los endpoints por sus ID de VPC y endpoint revisados, no el primer endpoint S3 de una Region. Use el procedimiento de DNS/enrutamiento en [Configuración de red](./02-network-configuration.md). Los endpoints de API de administración EKS no son el endpoint de API Kubernetes; los endpoints ECR privados no proporcionan acceso general a ECR público ni CloudFront.
+Seleccione endpoints según los ID de VPC y de endpoint revisados, no el primer endpoint de S3 de una Región. Use el procedimiento de DNS/enrutamiento de [Configuración de red](./02-network-configuration.md). Los endpoints de la API de administración de EKS no son el endpoint de la API de Kubernetes; los endpoints privados de ECR no proporcionan acceso general a ECR público ni a CloudFront.
 
 ## Instale e inicialice un nodo preparado
 
-Para la ruta personalizada de IAM Roles Anywhere, el runtime, las dependencias de OS, el nodeadm aprobado y el servicio mirror ya deben estar preparados. El comando instala software en el nodo de destino:
+Para la ruta personalizada de IAM Roles Anywhere, el runtime, las dependencias del SO, nodeadm aprobado y el servicio de espejo ya deben estar preparados. El comando instala software en el nodo de destino:
 
 ```bash
 set -euo pipefail
@@ -365,7 +365,7 @@ sudo nodeadm install "$APPROVED_PATCH" --region "$REGION" \
   --manifest-override "file://$LOCAL_MANIFEST" --private-mode
 ```
 
-Prepare la configuración por nodo usando [Requisitos previos](./01-prerequisites.md) y [Bootstrap del nodo](./04-node-bootstrap.md). Por ejemplo, la **forma** de la configuración SSM es:
+Prepare la configuración por nodo siguiendo [Requisitos previos](./01-prerequisites.md) y [Inicio de nodos](./04-node-bootstrap.md). Por ejemplo, la **estructura** de la configuración de SSM es:
 
 ```yaml
 apiVersion: node.eks.aws/v1alpha1
@@ -380,14 +380,14 @@ spec:
       activationId: REPLACE_WITH_NODE_ACTIVATION_ID
 ```
 
-Use exactamente el proveedor instalado en el nodo; esta forma SSM no es la configuración para el comando IAM Roles Anywhere anterior. Proteja el archivo completado (propiedad de root, modo `0600`), no lo haga commit nunca y no coloque secretos en el historial de shell. Proporcionar campos de endpoint API/CA escritos manualmente no elimina la necesidad de la ruta documentada de detección y autenticación del clúster.
+Use exactamente el proveedor instalado en el nodo; esta estructura de SSM no es la configuración del comando de IAM Roles Anywhere anterior. Proteja el archivo rellenado (propiedad de root, modo `0600`), nunca lo confirme en el repositorio y no incluya secretos en el historial de shell. Proporcionar manualmente campos de endpoint de API/CA no elimina la necesidad de la ruta documentada de descubrimiento y autenticación del clúster.
 
 ```bash
 # Local config validation; this is not a join or an end-to-end network test.
 sudo nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml
 ```
 
-Después de que se cumplan los requisitos previos de red, identidad y CNI, el propietario puede ejecutar `nodeadm init`. En la ruta de manifiesto privado, pase de nuevo el manifiesto aprobado:
+Después de que se cumplan los requisitos previos de red, identidad y CNI, el propietario puede ejecutar `nodeadm init`. En la ruta con manifiesto privado, vuelva a pasar el manifiesto aprobado:
 
 ```bash
 # Mutates the target node and registers it with EKS.
@@ -395,19 +395,19 @@ sudo nodeadm init --config-source file:///etc/eks/nodeconfig.yaml \
   --manifest-override file:///etc/eks/manifest.json --private-mode
 ```
 
-No existe `nodeadm init --dry-run` en la versión inspeccionada. No omita la validación de inicialización solo para que una preparación incompleta parezca aprobada.
+La versión inspeccionada no incluye `nodeadm init --dry-run`. No omita la validación de la inicialización solo para que pase una preparación incompleta.
 
 ## Entrega de imágenes de contenedor
 
-Las descargas de ECR privado requieren las rutas API y DKR de ECR, la ruta de descarga de capas S3, DNS y los permisos de descarga de imágenes apropiados. Una llamada `describe-repositories` correcta no demuestra que se puedan descargar capas de imagen. Precargue y pruebe cualquier caché pull-through; la documentación de endpoint ECR describe requisitos adicionales de Internet para una primera descarga sin caché.
+Las extracciones desde ECR privado requieren las rutas de ECR API y DKR, la ruta de descarga de capas de S3, DNS y los permisos adecuados para extraer imágenes. Una llamada correcta a `describe-repositories` no demuestra que se puedan descargar las capas de imágenes. Rellene y pruebe cualquier caché pull-through; la documentación de endpoints de ECR describe requisitos adicionales de Internet para la primera extracción sin caché.
 
-Use referencias reales de cuenta/Region/imagen de registro de los manifiestos add-on desplegados. No construya etiquetas de imagen añadiendo `-eksbuild.1` a un parche Kubernetes ni copie versiones obsoletas de pause/CoreDNS de un clúster no relacionado.
+Use las referencias reales de registro/cuenta/Región/imagen de los manifiestos de complementos implementados. No construya etiquetas de imagen añadiendo `-eksbuild.1` a un parche de Kubernetes ni copie versiones obsoletas de pause/CoreDNS de un clúster no relacionado.
 
-nodeadm instala el ayudante ECR en `/etc/eks/image-credential-provider/ecr-credential-provider` e inicializa su configuración en `/etc/eks/image-credential-provider/config.json`. Compruebe la configuración kubelet generada en lugar de escribir un archivo sin usar bajo un directorio diferente. `ctr images pull` es un cliente independiente y no usa automáticamente el proveedor de credenciales exec de kubelet.
+nodeadm instala el helper de ECR en `/etc/eks/image-credential-provider/ecr-credential-provider` e inicializa su configuración en `/etc/eks/image-credential-provider/config.json`. Revise la configuración generada de kubelet en lugar de escribir un archivo sin uso en otro directorio. `ctr images pull` es un cliente independiente y no usa automáticamente el proveedor de credenciales exec de kubelet.
 
 ### Transferencia de imágenes sin conexión
 
-Seleccione un digest aprobado y las plataformas requeridas. Para un archivo multi-plataforma, conserve el índice y los digests cuando los formatos de origen/destino lo permitan:
+Seleccione un digest aprobado y las plataformas necesarias. Para un archivo multiplataforma, conserve el índice y los digests cuando lo permitan los formatos de origen/destino:
 
 ```bash
 # Preparation host: downloads images; requires reviewed registry authentication.
@@ -421,7 +421,7 @@ skopeo copy --all --preserve-digests "docker://$SOURCE_DIGEST_REF" \
 (cd "$NEW_IMAGE_DIR" && sha256sum image.tar > image.tar.sha256)
 ```
 
-Transfiera el archivo y su registro de aprobación/hash protegido de manera independiente. Antes de importar o cargar, ejecute `sha256sum --strict --check image.tar.sha256` en ese directorio y deténgase ante un fallo. Para un destino de registro interno:
+Transfiera el archivo y su registro de aprobación/hash protegido de forma independiente. Antes de importarlo o enviarlo, ejecute `sha256sum --strict --check image.tar.sha256` en ese directorio y deténgase si falla. Para un destino de registro interno:
 
 ```bash
 # Internal staging host: writes an image to the reviewed destination registry.
@@ -433,21 +433,21 @@ skopeo copy --all --preserve-digests oci-archive:image.tar:approved \
   "docker://$DEST_DIGEST_REF"
 ```
 
-No desactive la verificación TLS del registro. Cambiar el formato de compresión/manifiesto puede impedir conservar un digest; deténgase y revise la identidad resultante en lugar de afirmar silenciosamente que no cambió.
+No desactive la verificación TLS del registro. Cambiar la compresión o el formato del manifiesto puede impedir conservar un digest; deténgase y revise la identidad resultante en lugar de afirmar silenciosamente que no ha cambiado.
 
-La precarga directa de containerd es otra opción, pero debe probarse para el runtime desplegado: Kubernetes usa el namespace `k8s.io`, las referencias importadas deben coincidir con las referencias Pod/sandbox y deben existir todos los blobs de plataforma requeridos. Una anotación `approved` de un archivo no es automáticamente el nombre de registro que solicita un Pod. La recolección de basura de imágenes y `imagePullPolicy` también pueden provocar descargas posteriores. Una importación de tar correcta por sí sola no demuestra que se iniciará un Pod sin conexión.
+La precarga directa en containerd es otra opción, pero debe probarse con el runtime implementado: Kubernetes usa el espacio de nombres `k8s.io`, las referencias importadas deben coincidir con las referencias de Pod/sandbox y deben existir todos los blobs de las plataformas requeridas. La anotación `approved` de un archivo no es automáticamente el nombre del registro que solicita un Pod. La recolección de basura de imágenes y `imagePullPolicy` también pueden provocar extracciones posteriores. Una importación correcta del tar por sí sola no demuestra que un Pod sin conexión vaya a iniciarse.
 
-## Repositorios de paquetes locales firmados
+## Repositorios locales de paquetes firmados
 
-Refleje la versión de OS, arquitectura, dependencias transitivas y metadatos como una cohorte revisada. Conserve las firmas del proveedor o firme un repositorio mantenido por la organización con una clave de confianza independiente.
+Duplique la versión del SO, la arquitectura, las dependencias transitivas y los metadatos como un conjunto revisado. Conserve las firmas del proveedor o firme un repositorio mantenido por la organización con una clave de confianza independiente.
 
-Ejemplo de configuración de cliente Ubuntu para un repositorio flat local **ya preparado y firmado**:
+Ejemplo de configuración de cliente Ubuntu para un repositorio local plano **ya preparado y firmado**:
 
 ```text
 deb [signed-by=/etc/apt/keyrings/hybrid-mirror.gpg] file:///srv/apt-repo ./
 ```
 
-El repositorio necesita `Release` válido más `InRelease` o `Release.gpg`, no solo `Packages.gz`. Distribuya y verifique la huella de la clave mediante una ruta de confianza independiente. No use `trusted=yes` para suprimir la autenticación del repositorio.
+El repositorio necesita `Release` válido y `InRelease` o `Release.gpg`, no solo `Packages.gz`. Distribuya y verifique la huella digital de la clave mediante una ruta de confianza independiente. No use `trusted=yes` para omitir la autenticación del repositorio.
 
 Ejemplo de configuración de repositorio DNF/YUM:
 
@@ -461,13 +461,13 @@ repo_gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-hybrid-mirror
 ```
 
-Esto requiere firmas de paquetes válidas y metadatos de repositorio firmados. Las claves de firma de metadatos y paquetes pueden diferir; configure el conjunto de claves aprobado. No establezca `gpgcheck=0` cuando falle la verificación. La instalación de paquetes y los reinicios de servicios pertenecen a una creación de imagen o a una operación de mantenimiento con drenaje, no a un script arbitrario de verificación de nodo activo.
+Esto requiere firmas de paquetes válidas y metadatos de repositorio firmados. Las claves de firma de metadatos y paquetes pueden ser distintas; configure el conjunto de claves aprobado. No establezca `gpgcheck=0` cuando falle la verificación. La instalación de paquetes y los reinicios de servicios corresponden a una compilación de imagen o a una operación de mantenimiento con los nodos desalojados, no a un script arbitrario de verificación en un nodo activo.
 
-## Configuración de proxy
+## Configuración del proxy
 
-Primero cree un mapa de destinos por cliente. Incluya loopback, los nombres reales de API/registro privados y los rangos de nodo/Pod/Service que deben omitir el proxy. La coincidencia de CIDR y sufijos varía según el cliente. No coloque ciegamente **`.eks.amazonaws.com`** en `NO_PROXY`: también coincide con el host de descarga público `hybrid-assets.eks.amazonaws.com`.
+Primero, cree un mapa de destinos por cliente. Incluya loopback, los nombres reales de las API/registros privados y los rangos de nodo/Pod/Service que deben omitir el proxy. La coincidencia de CIDR y sufijos varía según el cliente. No incluya **`.eks.amazonaws.com`** a ciegas en `NO_PROXY`: también coincide con el host público de descarga `hybrid-assets.eks.amazonaws.com`.
 
-Un ejemplo de shell para configuración de proxy revisada y no secreta es:
+Ejemplo de shell para una configuración de proxy revisada y sin secretos:
 
 ```bash
 export HTTP_PROXY=http://proxy.internal.example.com:3128
@@ -476,9 +476,9 @@ export NO_PROXY=localhost,127.0.0.1,::1,.svc,.cluster.local,registry.internal.ex
 export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" no_proxy="$NO_PROXY"
 ```
 
-Añada el nombre de host/IP real de la API privada y otros destinos de omisión; esta no es una configuración completa del sitio. El entorno de un shell de login no configura servicios systemd existentes. No cargue ni añada repetidamente contenido a `/etc/environment`.
+Añada el nombre de host/IP real de la API privada y otros destinos que deban omitir el proxy; esto no es una configuración completa del sitio. El entorno de un shell de inicio de sesión no configura los servicios systemd existentes. No obtenga ni añada repetidamente contenido a `/etc/environment`.
 
-Para `containerd.service` y `kubelet.service`, use un drop-in gestionado por el propietario en `/etc/systemd/system/UNIT.service.d/http-proxy.conf`:
+Para `containerd.service` y `kubelet.service`, use un archivo complementario administrado por el propietario en `/etc/systemd/system/UNIT.service.d/http-proxy.conf`:
 
 ```ini
 [Service]
@@ -487,22 +487,22 @@ Environment="HTTPS_PROXY=http://proxy.internal.example.com:3128"
 Environment="NO_PROXY=localhost,127.0.0.1,::1,.svc,.cluster.local,registry.internal.example.com"
 ```
 
-Revise los drop-ins existentes y reinicie las unidades afectadas solo en la fase aprobada de creación/mantenimiento. Una sección `[proxy.http]` en TOML de containerd no es la configuración de proxy HTTP.
+Revise los archivos complementarios existentes y reinicie las unidades afectadas solo durante la fase de compilación/mantenimiento aprobada. Una sección `[proxy.http]` en TOML de containerd no es la configuración del proxy HTTP.
 
 | Componente | Configuración y condiciones |
 |---|---|
 | Proceso nodeadm | Pase solo el entorno de proxy revisado mediante `sudo`; no reenvíe todo el entorno del operador con `sudo -E` |
-| containerd / kubelet | Entorno systemd separado; la configuración kubelet generada y el entorno del host son capas diferentes |
+| containerd / kubelet | Entorno systemd independiente; la configuración generada de kubelet y el entorno del host son capas distintas |
 | SSM en Ubuntu con la instalación snap documentada | `snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
-| SSM en AL2023/RHEL | `amazon-ssm-agent.service.d/http-proxy.conf`; confirme la unidad realmente instalada |
-| Proceso de credenciales IAM Roles Anywhere | nodeadm detecta variables de proxy al generar `--with-proxy`; el daemon que invoca también debe recibir el entorno correcto |
-| IAM Roles Anywhere con `spec.hybrid.enableCredentialsFile: true` | `aws_signing_helper_update.service` **sí existe** en este modo; configure su drop-in antes de la inicialización. No suponga que el servicio está presente en todas las instalaciones de IAM Roles Anywhere |
-| apt | Un archivo gestionado por el propietario en `/etc/apt/apt.conf.d/` con `Acquire::http::Proxy` y `Acquire::https::Proxy` |
-| snap | `snap set system proxy.http=... proxy.https=...`, cuando realmente se use snap |
-| dnf / yum | Revise y actualice el ajuste `proxy` de la configuración existente; no reemplace sus otros ajustes ni añada duplicados |
-| kube-proxy / otros Pods | Configure su entorno Pod solo cuando su tráfico requiera el proxy |
+| SSM en AL2023/RHEL | `amazon-ssm-agent.service.d/http-proxy.conf`; confirme la unidad instalada real |
+| Proceso de credenciales de IAM Roles Anywhere | nodeadm detecta las variables de proxy al generar `--with-proxy`; el daemon que lo invoca también debe recibir el entorno correcto |
+| IAM Roles Anywhere con `spec.hybrid.enableCredentialsFile: true` | El servicio `aws_signing_helper_update.service` **sí existe** en este modo; configure su archivo complementario antes de la inicialización. No dé por hecho que el servicio está presente en todas las instalaciones de IAM Roles Anywhere |
+| apt | Archivo `/etc/apt/apt.conf.d/` administrado por el propietario con `Acquire::http::Proxy` y `Acquire::https::Proxy` |
+| snap | `snap set system proxy.http=... proxy.https=...`, cuando se use snap |
+| dnf / yum | Revise y actualice la configuración existente de `proxy`; no reemplace las demás opciones ni añada duplicados |
+| kube-proxy / otros Pods | Configure el entorno de sus Pods solo cuando su tráfico requiera el proxy |
 
-Para la topología de proxy documentada, configure kube-proxy después de la creación del clúster y antes de unir los nodos hybrid. Conserve el entorno `NODE_NAME` existente y todos los argumentos de comando. Lo siguiente es un **fragmento de strategic merge patch**, no un DaemonSet independiente:
+Para la topología de proxy documentada, configure kube-proxy después de crear el clúster y antes de unir los nodos híbridos. Conserve el entorno `NODE_NAME` existente y todos los argumentos del comando. Lo siguiente es un **fragmento de parche de combinación estratégica**, no un DaemonSet independiente:
 
 ```yaml
 spec:
@@ -519,38 +519,38 @@ spec:
               value: localhost,127.0.0.1,::1,.svc,.cluster.local
 ```
 
-Revise/extienda los destinos de omisión y aplique mediante el propietario del add-on. Un strategic merge integrado de DaemonSet usa nombres de container/env; JSON Patch `add /containers/0/env` puede reemplazar todo el entorno existente y presupone el índice del container. No despliegue kube-proxy solo para este ejemplo si el CNI elegido lo reemplaza.
+Revise/amplíe los destinos que deben omitir el proxy y aplique los cambios mediante el propietario del complemento. Una combinación estratégica integrada de DaemonSet usa los nombres de contenedores/variables de entorno; `add /containers/0/env` de JSON Patch puede reemplazar todo el entorno existente y da por sentado el índice del contenedor. No implemente kube-proxy solo por este ejemplo si el CNI elegido lo reemplaza.
 
 ## Validación y actualizaciones controladas
 
-| Comprobación | Evidencia requerida | Qué es insuficiente |
+| Comprobación | Evidencia necesaria | Qué no es suficiente |
 |---|---|---|
-| Integridad de artefactos | Cada archivo seleccionado, suma de comprobación, manifiesto aprobado y cohorte coincide | Omitir archivos faltantes o aceptar cero archivos verificados |
+| Integridad de los artefactos | Cada archivo seleccionado, suma de comprobación, manifiesto aprobado y conjunto de versiones coincide | Omitir archivos ausentes o aceptar cero archivos verificados |
 | DNS/TLS | Destino correcto y validación de nombre de host/CA en la ruta prevista | Una dirección `10.*`, cualquier dirección `172.*` o `curl -k` |
-| S3 | Lectura de vuelta autorizada real del bucket/clave/versión exactos, propietario esperado y hash | Listar un prefijo o tratar errores de API como ausencia |
-| ECR | Digest/plataforma requeridos reales y descargas de capas mediante la ruta de credenciales del workload | `describe-repositories` o una llamada `ctr` independiente no autenticada |
-| Configuración nodeadm | `nodeadm config check` tiene éxito con un archivo protegido y completado | Contar una configuración faltante como éxito o un `init --dry-run` inexistente |
-| Operación del nodo | Actualización de credenciales, confianza/autenticación de API Kubernetes, CNI/DNS y una prueba de workload acotada | Una comprobación correcta de parser local o una respuesta `/healthz` |
+| S3 | Lectura real autorizada del bucket/clave/versión exactos, propietario esperado y hash | Enumerar un prefijo o tratar errores de API como ausencia |
+| ECR | Extracción real del digest/plataforma y las capas necesarios mediante la ruta de credenciales de la carga de trabajo | `describe-repositories` o una llamada `ctr` independiente sin autenticación |
+| Configuración de nodeadm | `nodeadm config check` se ejecuta correctamente con un archivo protegido y rellenado | Contar una configuración ausente como correcta o usar un `init --dry-run` inexistente |
+| Operación del nodo | Actualización de credenciales, confianza/autenticación de la API de Kubernetes, CNI/DNS y una prueba acotada de carga de trabajo | Una comprobación correcta del analizador local o una única respuesta `/healthz` |
 
-Use `nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml` para los diagnósticos documentados de conectividad/identidad cuando las lecturas AWS estén autorizadas. Contacta servicios y puede emitir contexto de diagnóstico confidencial; mantenga la salida privada y enmascare antes de compartirla. No convierta comprobaciones desconocidas/fallidas en «listo para producción».
+Use `nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml` para los diagnósticos documentados de conectividad/identidad cuando se autoricen las lecturas de AWS. Se conecta a servicios y puede emitir contexto de diagnóstico sensible; mantenga la salida en privado y enmascárela antes de compartirla. No convierta las comprobaciones desconocidas/fallidas en “listo para producción”.
 
-La automatización de actualizaciones debe **descubrir candidatos** y, después, requerir verificación de origen, revisión de compatibilidad, escaneo de OS/imagen, validación local, un canary de nodo representativo y aprobación antes de la promoción. Publique bajo un nuevo prefijo inmutable de versión/build, conserve la cohorte aprobada anterior y registre los límites de rollback. No ejecute un trabajo cron que sobrescriba silenciosamente claves `latest` de producción; `nodeadm upgrade` es disruptivo y requiere evacuación de workloads.
+La automatización de actualizaciones debe **detectar candidatos** y luego exigir la verificación del origen, la revisión de compatibilidad, el análisis del SO/las imágenes, la validación local, una prueba piloto en un nodo representativo y la aprobación antes de promoverlos. Publique con un nuevo prefijo inmutable de versión/build, conserve el conjunto aprobado anterior y registre los límites de reversión. No ejecute un cron que sobrescriba silenciosamente las claves `latest` de producción; `nodeadm upgrade` causa interrupciones y requiere evacuar las cargas de trabajo.
 
-Las estimaciones históricas de ancho de banda del cuestionario anterior —caché de capas **50–80%**, compresión **30–50%**, filtrado de plataformas **50%**— no tenían una medición atribuible. Consérvelas solo como ilustraciones históricas no verificadas, no como ahorros previstos. Mida los bytes reales para la reutilización de capas, el conjunto de plataformas y el formato de compresión; no recomprima contenido aprobado mientras afirma que su digest permanece sin cambios.
+El almacenamiento en caché de capas, la compresión y la sincronización de imágenes solo para las plataformas necesarias pueden reducir el volumen de transferencia. Compare los bytes realmente transferidos antes y después de aplicar estas técnicas y calcule el ahorro para las imágenes seleccionadas y la reutilización de capas. Si se recomprime contenido aprobado, vuelva a comprobar su digest y envíe los artefactos modificados a través del proceso de aprobación.
 
 ## Referencias principales
 
-- [Referencia de AWS Hybrid nodeadm](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
-- [Preparar sistemas operativos Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
-- [Configuración de proxy Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-proxy.html)
-- [Flags de instalación de nodeadm v1.0.20](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/install/install.go) y [flags de init](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/init/init.go)
-- [Implementación de selección/descarga de artefactos](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/aws/source.go) y [fuente SSM](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/ssm/source.go)
-- [Endpoints interface/DNS privado de S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
-- [Endpoints VPC de ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html)
-- [Copia de Skopeo](https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md)
+- [Referencia de nodeadm de Hybrid de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
+- [Preparación de sistemas operativos para Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+- [Configuración de proxy para Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-proxy.html)
+- [Opciones de instalación de nodeadm v1.0.20](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/install/install.go) y [opciones de init](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/init/init.go)
+- [Implementación de selección/descarga de artefactos](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/aws/source.go) y [origen de SSM](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/ssm/source.go)
+- [Endpoints de interfaz/DNS privado de S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [Endpoints de VPC de ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html)
+- [Copia con Skopeo](https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md)
 - [Autenticación de repositorios APT](https://manpages.ubuntu.com/manpages/noble/man8/apt-secure.8.html)
-- [Ajustes de firma de repositorios DNF](https://github.com/rpm-software-management/dnf/blob/master/doc/conf_ref.rst)
+- [Configuración de firmas de repositorios DNF](https://github.com/rpm-software-management/dnf/blob/master/doc/conf_ref.rst)
 - [Condiciones, cifrado y sumas de comprobación de S3 PutObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html)
-- [Nombres, digests y políticas de descarga de imágenes Kubernetes](https://kubernetes.io/docs/concepts/containers/images/)
+- [Nombres, digests y políticas de extracción de imágenes de Kubernetes](https://kubernetes.io/docs/concepts/containers/images/)
 
-< [Anterior: Configuración de red](./02-network-configuration.md) | [Tabla de contenidos](./README.md) | [Siguiente: Bootstrap del nodo](./04-node-bootstrap.md) >
+< [Anterior: Configuración de red](./02-network-configuration.md) | [Tabla de contenido](./README.md) | [Siguiente: Inicio de nodos](./04-node-bootstrap.md) >

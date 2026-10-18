@@ -503,7 +503,7 @@ aws events put-targets \
 
 ### 자동 복구 Lambda 예시
 
-고CPU는 재부팅이 필요한 장애라는 증거가 아닙니다. 이 예제는 자동 복구의 **입력 점검 단계**로, 상태·계정·리전·alarm ARN을 확인하고 메트릭을 반환합니다. 실제 EventBridge의 `dimensions`는 객체이고 SNS alarm 본문의 dimension 목록과 다릅니다. metric math의 첫 항목이 expression이거나 composite에 metric 목록이 없어도 처리합니다.
+높은 CPU 사용률은 재부팅이 필요한 장애라는 증거가 아닙니다. 이 예제는 자동 복구의 **입력 점검 단계**로, 상태·계정·리전·alarm ARN을 확인하고 메트릭을 반환합니다. 실제 EventBridge의 `dimensions`는 객체이고 SNS alarm 본문의 dimension 목록과 다릅니다. metric math의 첫 항목이 expression이거나 composite에 metric 목록이 없어도 처리합니다.
 
 [검증된 event normalizer와 테스트](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/cloudwatch-alarms)를 Lambda package에 포함한 뒤 다음처럼 호출할 수 있습니다.
 

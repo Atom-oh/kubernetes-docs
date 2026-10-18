@@ -174,7 +174,7 @@ Label은 payload 크기와 metadata 공개 범위를 늘리므로 무료·무제
 
 ### 올바른 기존 Container Insights JSON
 
-Kubernetes collector의 위치는 **`logs.metrics_collected.kubernetes`**입니다.
+Kubernetes collector의 위치는 **`logs.metrics_collected.kubernetes`입니다**.
 다음은 해당 수집 설정을 보여주는 fragment이며 완전한 DaemonSet·identity policy나
 전체 add-on 설정을 대체하지 않습니다. JSON 안에는 inline comment를 넣지 않습니다.
 

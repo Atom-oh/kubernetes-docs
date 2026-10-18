@@ -136,7 +136,7 @@ spec:
     group: cert-manager.io
 ```
 
-요청 duration과 CA가 실제 발급한 기간은 다를 수 있습니다. 기본 갱신은 **실제 X.509 수명의 2/3 지점**이며 고정 15일/30일 전이 아닙니다. renewBeforePercentage는 실제 수명으로 버퍼를 계산합니다. renewBefore와 percentage는 서로 배타적으로 선택하고, duration은 최소1시간·유효 renewBefore는 최소5분·duration보다 작아야 합니다.
+요청 duration과 CA가 실제 발급한 기간은 다를 수 있습니다. 기본 갱신은 **실제 X.509 수명의 2/3 지점**이며 고정 15일/30일 전이 아닙니다. renewBeforePercentage는 실제 수명으로 버퍼를 계산합니다. renewBefore와 percentage는 서로 배타적으로 선택하고, duration은 최소 1시간이어야 하며 유효 renewBefore는 최소 5분이면서 duration보다 작아야 합니다.
 
 1.21.2의 renewal policy/windows와 지원되는 ARI 경로는 시점에 영향을 줄 수 있습니다. `renewal.policy: Disabled`는 자동 갱신을 끕니다. 설정값만 보지 말고 status.renewalTime, 실제 notBefore/notAfter, 실패 경보를 확인합니다. v1.18부터 privateKey.rotationPolicy 기본값은 Always입니다. 갱신된 key/cert가 Secret에 들어가도 application이 자동으로 reload한다고 가정하지 않습니다.
 
@@ -274,7 +274,7 @@ spec:
             hostedZoneID: Z1234567890ABC
 ```
 
-Let's Encrypt staging도 rate limit이 있으며 production root로 신뢰되지 않습니다. ACME account는 환경별로 구분됩니다. 만료 알림 email은 2025년에 종료되었으므로 email 필드만으로 만료 감시를 대신하지 않습니다. 429 응답은 Retry-After와 해당 한도의 보충 주기를 따르며 무조건1시간 후 재시도로 일반화하지 않습니다. ARI renewal과 일반 신규 발급의 한도 적용도 다릅니다.
+Let's Encrypt staging도 rate limit이 있으며 production root로 신뢰되지 않습니다. ACME account는 환경별로 구분됩니다. 만료 알림 email은 2025년에 종료되었으므로 email 필드만으로 만료 감시를 대신하지 않습니다. 429 응답을 받으면 Retry-After와 해당 한도의 보충 주기를 따르며 무조건 1시간 후 재시도하는 것으로 일반화하지 않습니다. ARI renewal과 일반 신규 발급의 한도 적용도 다릅니다.
 
 ### AWS Private CA
 
@@ -400,7 +400,7 @@ Domain validation은 별도입니다. ACM이 제공하는 CNAME을 Route53 ACK �
 
 ### ACM ACME: EAB와 사전 도메인 검증
 
-2026년 7월6일 발표된 ACM ACME는45일 public certificate를 발급합니다. PKI 관리자가 endpoint와 domain validation을 준비하고 IAM role에 연결된 EAB credential을 발급한 뒤 client를 등록합니다. **server 주소만 바꾸는 절차가 아닙니다.** HMAC key는 안전하게 저장하고 ClusterIssuer가 읽는 cert-manager namespace의 acm-eab Secret/hmac key를 제공하세요.
+2026년 7월 6일 발표된 ACM ACME는 45일 public certificate를 발급합니다. PKI 관리자가 endpoint와 domain validation을 준비하고 IAM role에 연결된 EAB credential을 발급한 뒤 client를 등록합니다. **server 주소만 바꾸는 절차가 아닙니다.** HMAC key는 안전하게 저장하고 ClusterIssuer가 읽는 cert-manager namespace의 acm-eab Secret/hmac key를 제공하세요.
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -528,7 +528,7 @@ groups:
           severity: critical
 ```
 
-ready metric에는 True/False/Unknown condition series가 있으므로 조건 없이 `==0`을 쓰면 정상 인증서에서도 오탐할 수 있습니다. 위 rules는 정상·NotReady·만료 임박·24시간 이내·만료5case/20assertion을 promtool로 검증했습니다. 수집 자체가 멈춘 경우는 별도의 scrape/absence 경보가 필요합니다.
+ready metric에는 True/False/Unknown condition series가 있으므로 조건 없이 `==0`을 쓰면 정상 인증서에서도 오탐할 수 있습니다. 위 rules는 정상·NotReady·만료 임박·24시간 이내·만료의 5개 case/20개 assertion으로 promtool에서 검증했습니다. 수집 자체가 멈춘 경우는 별도의 scrape/absence 경보가 필요합니다.
 
 ```bash
 kubectl get certificates,certificaterequests -A

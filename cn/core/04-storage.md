@@ -463,7 +463,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-## 动态制备
+## 动态制备 {#dynamic-provisioning}
 
 动态制备是一项功能，可在创建 PVC 时自动创建 PV。这样，用户就可以按需请求存储，而无需管理员预先创建 PV。
 
@@ -521,7 +521,7 @@ spec:
         claimName: myclaim
 ```
 
-## Volume 快照
+## Volume 快照 {#volume-snapshots}
 
 Kubernetes 支持创建 PV 的时间点副本的 Volume 快照。这适用于备份和恢复场景。
 
@@ -575,7 +575,7 @@ spec:
       storage: 100Gi
 ```
 
-## Volume 扩容
+## Volume 扩容 {#volume-expansion}
 
 Kubernetes 支持扩展 PVC 的容量。为此，必须在 Storage Class 中设置 `allowVolumeExpansion: true`。
 
@@ -593,7 +593,7 @@ kubectl patch pvc myclaim --type merge -p '{"spec":{"resources":{"requests":{"st
 
 请使用 PVC 所在的命名空间和现有 StorageClass。driver 和文件系统必须支持扩容；不支持缩容。不要更改已绑定 PVC 的 Storage Class，也不要直接编辑 PV 容量来模拟扩容。
 
-## 投射卷
+## 投射卷 {#projected-volumes}
 
 投射卷允许你将多个 Volume 源合并到单个 Volume 挂载中。当你需要在单个目录中同时公开 secrets、configMaps、downwardAPI 和 serviceAccountToken 时，这很有用。
 
@@ -686,7 +686,7 @@ spec:
 
 投射的令牌会轮换；应用必须重新读取文件。显式设置的 `audience` 必须与预期的验证方匹配，而且它不会自动获得访问 Kubernetes API 的权限。
 
-## 通用临时卷
+## 通用临时卷 {#generic-ephemeral-volumes}
 
 通用临时卷提供类似 PVC 的存储，并与 Pod 的生命周期绑定。与 emptyDir 不同，它们可以使用 PVC 和 StorageClasses 的全部功能，包括动态制备。
 
@@ -777,7 +777,7 @@ spec:
 
 通用临时 PVC 由其 Pod 所有，并会随 Pod 一同进行垃圾回收。底层数据是否删除取决于 PV 回收策略：`Retain` 会保留存储，以便手动清理。请将必须在 Pod 丢失后保留的检查点导出到持久化存储。
 
-## 块卷模式
+## 块卷模式 {#block-volume-mode}
 
 除了文件系统卷，Kubernetes 还支持原始块卷。块卷会将存储作为没有文件系统的原始块设备呈现，适用于自行管理数据布局的应用。
 
@@ -864,7 +864,7 @@ spec:
 
 请将静态 EBS Volume ID 和 nodeAffinity 区域替换为实际 Volume 及其可用区。`custom-database` 镜像是占位符，实际镜像必须支持原始块设备。
 
-## Volume 克隆
+## Volume 克隆 {#volume-cloning}
 
 Volume 克隆会创建一个新的 PVC，并在其中复制现有 PVC 的内容。这适用于创建测试环境、复制数据或迁移工作负载。
 
@@ -961,7 +961,7 @@ spec:
       claimName: test-db-clone
 ```
 
-## 存储 ResourceQuota
+## 存储 ResourceQuota {#storage-resourcequota}
 
 ResourceQuota 可以限制命名空间中的存储用量，包括 PVC 数量和总存储容量。
 
@@ -1036,7 +1036,7 @@ spec:
 - PVC 的最大容量为 100Gi
 - 每个 PVC 都必须显式请求存储；LimitRange 不会为 PVC 设置默认值
 
-## EKS 中的存储选项
+## EKS 中的存储选项 {#storage-options-in-eks}
 
 Amazon EKS 提供多种存储选项。每种选项都有不同的使用场景和性能特征，因此请务必根据应用的需求选择合适的存储。
 

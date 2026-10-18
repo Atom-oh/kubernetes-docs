@@ -142,7 +142,7 @@ It projects the observed linear trend. Workload changes, cleanup, sparse data an
 
 **Answer: B**
 
-groupBy becomes group_by in native configuration. Routes normally stop at the first sibling match unless continue is configured. Inhibition needs meaningful resource-identity equal labels to avoid suppressing unrelated service/node warnings.
+groupBy becomes group_by in native configuration. Routes normally stop at the first sibling match unless continue is configured. Inhibition needs meaningful resource-identity labels in its equal setting to avoid suppressing unrelated service/node warnings.
 
 </details>
 

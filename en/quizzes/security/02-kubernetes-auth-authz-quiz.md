@@ -217,7 +217,7 @@ The aggregation controller manages the target ClusterRole rules and can overwrit
 <details>
 <summary>Show Answer</summary>
 
-**Answer: TokenRequest API creates time-limited, audience-bound tokens that are more secure than long-lived static tokens.**
+**Answer: The TokenRequest API creates time-limited, audience-bound tokens that are more secure than long-lived static tokens.**
 
 **Explanation:**
 Check the actual expiry returned by the server, which can adjust the requested lifetime. Kubelet rotates Pod-projected tokens, but the application must reload the file. A standalone TokenRequest does not itself provide automatic file rotation. These tokens remain secret bearer credentials.
@@ -238,7 +238,7 @@ Do not assume a fixed X.509 → OIDC → proxy order. Invalid credentials can re
 
 ## Hands-on Questions
 
-### 1. Write a Role and RoleBinding that meets the following requirements:
+### 1. Write a Role and RoleBinding that meet the following requirements:
 
 - Namespace: development
 - Permissions: Pod read (get, list, watch), ConfigMap reads and individual-object create/update/patch/delete (no deletecollection)
@@ -321,7 +321,7 @@ spec:
 ```
 
 **Explanation:**
-The minimum requested `expirationSeconds` is 600; the server determines actual expiry. The example audience must be configured and validated by the receiving service; it is not automatically accepted by the Kubernetes API. For Kubernetes API calls, use an audience that API server accepts. Automatic mounting is disabled, and only the explicit token is mounted read-only. This pause Pod illustrates the volume; it neither uses the token nor serves HTTP. A real application must reload the file after kubelet rotates it.
+The minimum requested `expirationSeconds` is 600; the server determines actual expiry. The example audience must be configured and validated by the receiving service; it is not automatically accepted by the Kubernetes API. For Kubernetes API calls, use an audience that the API server accepts. Automatic mounting is disabled, and only the explicit token is mounted read-only. This pause Pod illustrates the volume; it neither uses the token nor serves HTTP. A real application must reload the file after kubelet rotates it.
 
 </details>
 

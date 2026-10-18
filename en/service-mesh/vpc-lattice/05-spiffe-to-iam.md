@@ -153,7 +153,7 @@ The comparison table makes them look like entirely different systems, but **stru
 
 Both SVIDs and STS temporary credentials are short-lived and auto-renewed. Both were designed that way for the same reason: **to bound the useful window of a compromise without a revocation mechanism.**
 
-Both approaches can avoid distributing long-lived application secrets, but the review must still cover credential lifetime, renewal, compromise response and authorization. Short lifetime does not remove revocation or emergency-deny requirements.
+Both approaches can avoid distributing long-lived application secrets, but the review must still cover credential lifetime, renewal, compromise response and authorization. A short lifetime does not remove revocation or emergency-deny requirements.
 
 ### ② Both are based on platform attestation
 
@@ -197,7 +197,7 @@ The question that actually comes up in a review is:
 
 The honest answer is **"not within the workload identity system; you must prevent it with IAM controls over the service network and Lattice resources."** In other words, **the line of defense moves from workload-to-workload mutual authentication to control over resource creation permissions.**
 
-This is not a bad answer. Strictly limiting via IAM who can create Lattice Services, controlling service network associations, and monitoring resource creation with CloudTrail does manage the practical risk. But **if your review documentation said "mutual authentication," that item must be rewritten and the basis for control presented at a different layer.** Discovering this late in the migration causes major schedule slippage.
+This is not a bad answer. Strictly limiting via IAM who can create Lattice Services, controlling service network associations, and monitoring resource creation with CloudTrail do manage the practical risk. But **if your review documentation said "mutual authentication," that item must be rewritten and the basis for control presented at a different layer.** Discovering this late in the migration causes major schedule slippage.
 
 ### Difference (b): Ownership of the root of trust
 
@@ -216,7 +216,7 @@ This is not a bad answer. Strictly limiting via IAM who can create Lattice Servi
 
 The trade-off is explicit: **you hand the operational burden to AWS in exchange for handing over ownership of the root of trust.**
 
-This item is heavy in the financial sector because of regulation and review practice. Many organizations' security standards explicitly require **"the root of trust of an authentication system must be under our own control,"** or contain clauses read that way. Running your own CA was the most direct way to satisfy that requirement, and adopting SPIRE was likely the result of passing that very review.
+This item carries weight in the financial sector because of regulation and review practice. Many organizations' security standards explicitly require **"the root of trust of an authentication system must be under our own control,"** or contain clauses read that way. Running your own CA was the most direct way to satisfy that requirement, and adopting SPIRE was likely the result of passing that very review.
 
 Moving to Lattice IAM Auth means rebuilding that argument. Available grounds:
 

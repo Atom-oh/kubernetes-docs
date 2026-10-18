@@ -126,7 +126,7 @@ DNS 규칙은 선택한 resolver의 질의를 제한하고, toFQDNs와 포트 �
 
 **정답: B. 워크로드의 신원 확인**
 
-SPIRE Agent는 구성한 attestor·selector로 워크로드를 증명하고, Server는 Agent를 증명하며 SVID에 서명합니다. Cilium out-of-band 통합에는 위임 Identity 조회와 Cilium 보안 Identity 항목도 사용합니다. 애플리케이션 payload의 자동 암호화를 의미하지 않습니다.
+SPIRE Agent는 구성한 attestor·selector로 워크로드를 증명하고, Server는 Agent를 증명하며 SVID에 서명합니다. Cilium out-of-band 통합에서는 위임 Identity 조회와 Cilium 보안 Identity 항목도 사용합니다. 애플리케이션 payload의 자동 암호화를 의미하지 않습니다.
 
 </details>
 

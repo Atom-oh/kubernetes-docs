@@ -289,7 +289,7 @@ syncOptions:
 
 ### Replace
 
-리소스를 패치 대신 대체합니다:
+리소스를 패치하는 대신 대체합니다:
 
 ```yaml
 syncOptions:
@@ -309,7 +309,7 @@ syncOptions:
 
 ### RespectIgnoreDifferences
 
-`ignoreDifferences` 설정을 동기화 시에도 존중합니다:
+`ignoreDifferences` 설정을 동기화 시에도 적용합니다:
 
 ```yaml
 spec:
@@ -597,7 +597,7 @@ syncPolicy:
 
 ## 선택적 동기화
 
---resource/--label로 일부 리소스를 명시 선택하는 sync는 훅을 실행하지 않고 이력도 남기지 않습니다. ApplyOutOfSyncOnly/--apply-out-of-sync-only는 3.5.4에서 훅·이력을 유지합니다. --label은 리소스 선택, --selector(-l)는 Application 선택이므로 혼동하지 않습니다.
+--resource/--label로 일부 리소스를 명시적으로 선택하는 sync는 훅을 실행하지 않고 이력도 남기지 않습니다. ApplyOutOfSyncOnly/--apply-out-of-sync-only는 3.5.4에서 훅·이력을 유지합니다. --label은 리소스 선택, --selector(-l)는 Application 선택이므로 혼동하지 않습니다.
 
 ### 특정 리소스만 동기화
 

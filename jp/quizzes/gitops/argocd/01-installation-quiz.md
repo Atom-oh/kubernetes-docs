@@ -2,7 +2,7 @@
 
 このクイズでは、ArgoCD のインストールと設定に関する理解度を確認します。
 
-1. 本番環境で ArgoCD をインストールする際の推奨方法はどれですか？
+1. chart values を通じて HA/設定をバージョン管理したいチームに適したインストール方法はどれですか？
    - A) raw GitHub URL からの kubectl apply
    - B) カスタム values を使用した Helm chart
    - C) Docker Compose
@@ -14,7 +14,7 @@
 **回答: B) カスタム values を使用した Helm chart**
 
 **解説:**
-ArgoCD は公式 manifest から kubectl apply を使用してインストールできますが、設定値のカスタマイズ、アップグレード、管理が容易になるため、本番環境では Helm chart の使用が推奨されます。
+Helm は chart values を使うワークフローに適しています。公式の HA manifest や Kustomize も、本番環境に適したインストール方法です。管理主体を一つに決め、アップグレードもその主体の管理下で行ってください。
 
 </details>
 
@@ -62,7 +62,7 @@ Repo Server は、Git リポジトリを clone し、さまざまなソース（
 **回答: B) argocd-initial-admin-secret という名前の Secret から取得する**
 
 **解説:**
-初期 admin パスワードは自動生成され、`argocd-initial-admin-secret` という名前の Kubernetes Secret に保存されます。次のコマンドで取得できます: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+通常の生成済み bootstrap password のフローでは、初期 admin パスワードが生成され、`argocd-initial-admin-secret` という名前の Kubernetes Secret に保存されます。次のコマンドで取得できます: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
 
 </details>
 

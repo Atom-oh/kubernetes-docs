@@ -53,7 +53,7 @@ sudo bpftool feature probe kernel
 
 ### 1.1 eBPF란 무엇인가?
 
-**eBPF(extended Berkeley Packet Filter)**는 Linux 커널 내에서 안전하게 사용자 정의 프로그램을 실행할 수 있게 해주는 기술입니다. 원래 네트워크 패킷 필터링을 위해 설계되었던 BPF를 확장하여, 이제는 네트워킹, 보안, 추적, 성능 분석 등 다양한 영역에서 활용됩니다.
+**eBPF**(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 사용자 정의 프로그램을 실행할 수 있게 해주는 기술입니다. 원래 네트워크 패킷 필터링을 위해 설계되었던 BPF를 확장하여, 이제는 네트워킹, 보안, 추적, 성능 분석 등 다양한 영역에서 활용됩니다.
 
 > **핵심 개념**: eBPF를 사용하면 커널 소스 코드를 수정하거나 커널 모듈을 로드하지 않고도 커널의 동작을 확장하고 관찰할 수 있습니다.
 
@@ -95,7 +95,7 @@ eBPF는 다음과 같은 이유로 혁신적입니다:
 4. **동적 로딩**: 재부팅 없이 프로그램 로드/언로드 가능
 5. **프로덕션 안정성**: 실행 경계 검사가 위험을 줄이지만 정책 정확성, 커널/JIT 버그 및 운영 영향은 별도 검증 필요
 
-![기존 커널 모듈 개발 방식은 커널 버전별 재컴파일과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거쳐 검증을 수행하지만 정책 정확성과 호스트 안정성을 별도로 검증해야 함을 설명하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-1.png)
+![기존 커널 모듈 개발 방식은 커널 버전별 재컴파일과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거치며 정책 정확성과 호스트 안정성을 별도로 검증해야 함을 설명하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-1.html)
 
@@ -239,7 +239,7 @@ long bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 
 ---
 
-C 예제는 별도 프로그램/조각입니다. vmlinux.h 또는 필요한 UAPI 타입과 libbpf의 bpf_helpers.h, bpf_endian.h, bpf_tracing.h, bpf_core_read.h를 용도에 맞게 포함합니다. BPF_KPROBE/BPF_UPROBE는 올바른 대상 아키텍처 정의와 실제 attach 지점/ABI가 필요합니다. 로드/attach는 격리된 테스트 환경에서 검증해야 하며 이 감사에서는 수행하지 않았습니다. 경로 기반 LSM 예제는 읽기 오류에 fail-open하고 별칭/하드링크/다른 프로토콜까지 방어하지 않는 교육용입니다.
+C 예제는 별도 프로그램/조각입니다. vmlinux.h 또는 필요한 UAPI 타입과 libbpf의 bpf_helpers.h, bpf_endian.h, bpf_tracing.h, bpf_core_read.h를 용도에 맞게 포함합니다. BPF_KPROBE/BPF_UPROBE에는 올바른 대상 아키텍처 정의와 실제 attach 지점/ABI가 필요합니다. 로드/attach는 격리된 테스트 환경에서 검증해야 하며 이 감사에서는 수행하지 않았습니다. 경로 기반 LSM 예제는 읽기 오류에 fail-open하고 별칭/하드링크/다른 프로토콜까지 방어하지 않는 교육용입니다.
 
 <span id="3-ebpf-프로그램-유형"></span>
 
@@ -720,7 +720,7 @@ kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{
 
 **벤치마크 결과** (1000개 서비스 기준):
 
-원문에서 제시한 아래 수치는 테스트 출처, 하드웨어, 커널/CNI 버전 및 측정 방법이 제공되지 않았습니다. 재실행하지 않았으며 현재 성능이나 일반적 개선율로 사용할 수 없습니다. 비교를 재현하려면 원본 방법과 환경이 필요합니다.
+원문에서 제시한 아래 수치의 테스트 출처, 하드웨어, 커널/CNI 버전 및 측정 방법이 제공되지 않았습니다. 재실행하지 않았으며 현재 성능이나 일반적 개선율로 사용할 수 없습니다. 비교를 재현하려면 원본 방법과 환경이 필요합니다.
 
 ```
 | 지표              | iptables    | eBPF      | 개선율    |

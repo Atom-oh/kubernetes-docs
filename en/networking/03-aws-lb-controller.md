@@ -180,7 +180,7 @@ kubectl get ingressclass
 
 ## Application Load Balancer (ALB)
 
-Treat each manifest below as an independent example. Replace account/resource IDs, domains, subnets, security groups and certificate ARNs with verified values in the correct region. Create the referenced namespaces, Services and ready backend workloads first; service port 80 and target port 8080 are different roles. A declared containerPort does not make an application listen or implement /health. The health endpoint, actual target port, HTTP/TLS protocol, security groups and NetworkPolicies must agree. The image in the overview illustrates **IP targets**; instance targets register nodes and use NodePorts. TargetGroupBinding is also reconciled by this controller, and the sequence diagram is illustrative rather than an atomic transaction.
+Treat each manifest below as an independent example. Replace account/resource IDs, domains, subnets, security groups and certificate ARNs with verified values in the correct region. Create the referenced namespaces, Services and ready backend workloads first; service port 80 and target port 8080 serve different roles. A declared containerPort does not make an application listen or implement /health. The health endpoint, actual target port, HTTP/TLS protocol, security groups and NetworkPolicies must agree. The image in the overview illustrates **IP targets**; instance targets register nodes and use NodePorts. TargetGroupBinding is also reconciled by this controller, and the sequence diagram is illustrative rather than an atomic transaction.
 
 ### Basic Ingress Configuration
 
@@ -543,7 +543,7 @@ spec:
 
 ### Weighted Target Groups
 
-The Service below gives its own implicit target group weight 90 and the existing `service-canary:8080` backend weight 10. Both Services must have the intended ready endpoints and compatible target settings; this annotation does not create the canary workload. The annotation suffix is the listener protocol and port, **`actions.TCP-80`**.
+The Service below gives its own implicit target group a weight of 90 and the existing `service-canary:8080` backend a weight of 10. Both Services must have the intended ready endpoints and compatible target settings; this annotation does not create the canary workload. The annotation suffix is the listener protocol and port, **`actions.TCP-80`**.
 
 Weights are relative values from **0 to 999** and apply to new connections. Ordinary weight changes preserve existing connections; **setting a target group’s weight to 0 closes its existing connections after a short period**, as well as stopping new ones. Do not describe this as a guaranteed zero-downtime drain. TLS listeners require compatible target-group protocols and do not support target-group stickiness.
 

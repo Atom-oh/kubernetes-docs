@@ -1,175 +1,165 @@
-# Cuestionario de pipelines de CI
+# Cuestionario sobre pipelines de CI
 
 > **Documento relacionado**: [Pipelines de CI](../../ops/03-ci-pipelines.md)
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el propósito principal de las políticas de ciclo de vida de ECR?
+### 1. ¿Por qué se usan repositorios de ECR distintos para las imágenes de publicación y la caché de BuildKit?
 
-- A) Construir automáticamente imágenes de container
-- B) Gestionar la retención de imágenes y reducir los costos de almacenamiento
-- C) Escanear imágenes en busca de vulnerabilidades
-- D) Replicar imágenes entre regiones
+- A) Las imágenes de caché no requieren autenticación de IAM
+- B) Los tags inmutables de publicación y las referencias mutables de caché necesitan políticas distintas
+- C) ECR solo admite un tag
+- D) El almacenamiento en caché elimina la necesidad de escanear
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Gestionar la retención de imágenes y reducir los costos de almacenamiento**
+**Respuesta: B) Los tags inmutables de publicación y las referencias mutables de caché necesitan políticas distintas**
 
-**Explicación:**
-Las políticas de ciclo de vida de ECR expiran y eliminan automáticamente imágenes antiguas según reglas como antigüedad o cantidad. Esto evita el crecimiento ilimitado del almacenamiento y reduce costos, mientras conserva indefinidamente las imágenes importantes (como tags de producción).
+**Explicación:** En el ejemplo, el repositorio de la aplicación es INMUTABLE y el de la caché de compilación, MUTABLE. Un tag con forma de SHA de commit por sí solo no impide que se sobrescriba; los despliegues consumen el digest verificado.
 
 </details>
 
-### 2. Al ejecutar GitLab Runner en EKS, ¿qué tipo de executor se recomienda para el aislamiento?
+### 2. ¿Qué ofrece un Pod independiente para cada trabajo del executor de Kubernetes de GitLab?
 
-- A) Shell executor
-- B) Docker executor
-- C) Kubernetes executor
-- D) SSH executor
+- A) Aislamiento completo incluso para los trabajos privilegiados
+- B) La eliminación de todos los riesgos de acceso a los nodos
+- C) Ciclos de vida y recursos separados por trabajo, sin garantizar una frontera de seguridad completa
+- D) Acceso de publicación de AWS heredado y seguro para solicitudes de extracción no confiables
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Kubernetes executor**
+**Respuesta: C) Ciclos de vida y recursos separados por trabajo, sin garantizar una frontera de seguridad completa**
 
-**Explicación:**
-El Kubernetes executor ejecuta cada trabajo de CI en un pod separado, lo que proporciona un fuerte aislamiento entre trabajos. Limpia automáticamente los recursos después de que los trabajos finalizan y puede aprovechar características de Kubernetes como node selectors y tolerations.
+**Explicación:** La configuración privilegiada de Docker-in-Docker de esta guía es para trabajos protegidos y confiables. La separación de Pods, los nodos dedicados a CI y los roles con privilegios mínimos son controles distintos; ninguno demuestra por sí solo que sea seguro ejecutar código arbitrario no confiable.
 
 </details>
 
-### 3. ¿Qué es GitHub Actions Runner Controller (ARC)?
+### 3. ¿En qué se diferencian `poll_interval` y `check_interval`?
 
-- A) Un servicio de runners alojado por GitHub
-- B) Un operador de Kubernetes para runners de GitHub autohospedados
-- C) Una biblioteca cliente de la API de GitHub
-- D) Un controlador de container registry
+- A) `poll_interval` comprueba el estado del Pod de Kubernetes; `check_interval` se refiere a la consulta de trabajos por parte del coordinador
+- B) Son dos nombres para el mismo ajuste
+- C) Ambos caducan las cachés de imágenes de Docker
+- D) `poll_interval` reinicia los Pods
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un operador de Kubernetes para runners de GitHub autohospedados**
+**Respuesta: A) `poll_interval` comprueba el estado del Pod de Kubernetes; `check_interval` se refiere a la consulta de trabajos por parte del coordinador**
 
-**Explicación:**
-ARC es un operador de Kubernetes que escala automáticamente runners de GitHub Actions autohospedados según la demanda del workflow. Crea pods de runners cuando los trabajos se ponen en cola y los limpia después de completarlos.
+**Explicación:** El executor de Kubernetes usa `poll_interval` mientras espera a que el Pod de un trabajo esté listo. El `check_interval` de Runner controla otra ruta de consulta; cambiar uno no sustituye el cambio del otro.
 
 </details>
 
-### 4. ¿Cuál es el beneficio de las compilaciones de container multiplataforma (linux/amd64, linux/arm64)?
+### 4. ¿Por qué se separan los roles de AWS del administrador de GitLab y de los Pods de compilación?
 
-- A) Tamaños de imagen más pequeños
-- B) Tiempos de compilación más rápidos
-- C) Compatibilidad con diferentes arquitecturas de CPU (x86 y Graviton)
-- D) Mejor escaneo de seguridad
+- A) Para otorgar al administrador todos los permisos de AWS
+- B) Porque Pod Identity crea automáticamente las ServiceAccounts
+- C) Porque los Pods de compilación deben almacenar claves de larga duración
+- D) Para delimitar por separado el acceso a la caché S3 del administrador y el acceso de publicación en ECR de los Pods de compilación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Compatibilidad con diferentes arquitecturas de CPU (x86 y Graviton)**
+**Respuesta: D) Para delimitar por separado el acceso a la caché S3 del administrador y el acceso de publicación en ECR de los Pods de compilación**
 
-**Explicación:**
-Las compilaciones multiplataforma crean imágenes que funcionan tanto en procesadores x86 (amd64) como ARM (arm64/Graviton). Esto habilita la optimización de costos mediante el uso de instancias Graviton y admite entornos de despliegue diversos.
+**Explicación:** Sin `RoleARN`, la caché S3 del ejemplo usa la cadena de credenciales del administrador. Los Pods de compilación reciben un rol ECR distinto. Las ServiceAccounts se deben crear por separado; el token de AWS Pod Identity es distinto del token normal de la API de Kubernetes.
 
 </details>
 
-### 5. ¿Cómo mejora la caché de BuildKit el rendimiento de compilación de containers?
+### 5. ¿Cómo recibe y asigna trabajos el ejemplo actual de ARC?
 
-- A) Omitiendo todos los pasos de compilación
-- B) Almacenando en caché artefactos de capas y reutilizando capas sin cambios
-- C) Comprimiendo las imágenes para hacerlas más pequeñas
-- D) Paralelizando todas las operaciones
+- A) Instala únicamente `RunnerDeployment` y `HorizontalRunnerAutoscaler`
+- B) Usa los charts y listeners oficiales de conjuntos de escalado, y hace coincidir `runs-on` con el nombre real del conjunto
+- C) El nombre de un grupo de runners de la organización siempre es una etiqueta del trabajo
+- D) `minRunners=0` elimina todos los costos del clúster
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenando en caché artefactos de capas y reutilizando capas sin cambios**
+**Respuesta: B) Usa los charts y listeners oficiales de conjuntos de escalado, y hace coincidir `runs-on` con el nombre real del conjunto**
 
-**Explicación:**
-BuildKit almacena inteligentemente en caché los artefactos de compilación y las salidas de capas. Cuando los archivos fuente no han cambiado, reutiliza capas en caché en lugar de reconstruirlas. La caché puede almacenarse en registries, S3 o almacenamiento local para compartirla entre compilaciones.
+**Explicación:** No mezcles el modelo heredado de CRD con los charts actuales de conjuntos de escalado. ARC 0.15.0 también admite `scaleSetLabels`. `minRunners` se refiere a los runners inactivos; no elimina los costos del controlador ni del listener, ni garantiza que no haya latencia de arranque.
 
 </details>
 
-### 6. ¿Para qué se usa principalmente Kaniko?
+### 6. ¿Qué trabajos de GitHub obtienen las credenciales de AWS OIDC del ejemplo?
 
-- A) Orquestación de containers
-- B) Construir imágenes de container sin Docker daemon
-- C) Seguridad del runtime de containers
-- D) Escaneo de vulnerabilidades de imágenes
+- A) Todas las pruebas de solicitudes de extracción externas
+- B) Un trabajo `pull_request_target` que ejecuta código arbitrario de una solicitud de extracción
+- C) Los trabajos confiables de publicación tras una inserción, después de que pasen las pruebas
+- D) Todos los runners autohospedados al arrancar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Construir imágenes de container sin Docker daemon**
+**Respuesta: C) Los trabajos confiables de publicación tras una inserción, después de que pasen las pruebas**
 
-**Explicación:**
-Kaniko construye imágenes de container a partir de Dockerfiles sin requerir un Docker daemon ni modo privilegiado. Esto lo hace ideal para entornos de CI/CD donde ejecutar Docker-in-Docker plantea preocupaciones de seguridad o no está disponible.
+**Explicación:** Las pruebas de solicitudes de extracción se ejecutan en runners alojados por GitHub y no solicitan credenciales de publicación. La relación de confianza del rol restringe el repositorio exacto y la rama principal o los tags protegidos; los Pods de ARC no heredan un rol de publicación de AWS.
 
 </details>
 
-### 7. En GitLab CI, ¿cuál es el propósito de la palabra clave `services`?
+### 7. ¿Qué secuencia mantiene el contrato entre el escaneo y la publicación?
 
-- A) Definir destinos de despliegue
-- B) Levantar containers auxiliares (como bases de datos) para pruebas
-- C) Configurar GitLab Pages
-- D) Configurar monitoreo
+- A) Compilar → escanear correctamente la misma imagen → publicar → crear un índice con los digests aprobados
+- B) Publicar → ignorar el fallo del escaneo → desplegar `latest`
+- C) Escanear el código fuente → compilar otra imagen → publicarla siempre
+- D) Considerar que la existencia de cualquier archivo JSON significa que el escaneo tuvo éxito
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Levantar containers auxiliares (como bases de datos) para pruebas**
+**Respuesta: A) Compilar → escanear correctamente la misma imagen → publicar → crear un índice con los digests aprobados**
 
-**Explicación:**
-La palabra clave `services` define containers que se ejecutan junto al container principal del trabajo. Se usan comúnmente para dependencias de prueba como bases de datos (PostgreSQL, MySQL) o cachés (Redis) con las que las pruebas necesitan interactuar.
+**Explicación:** GitLab pasa archivos de imagen mediante dependencias 1:1 específicas de cada arquitectura. GitHub escanea su imagen compilada localmente antes de subirla. Los errores de Trivy o los fallos de la barrera de vulnerabilidades impiden publicar; el JSON nativo de Trivy no se etiqueta incorrectamente como el esquema de informes de GitLab.
 
 </details>
 
-### 8. ¿Cuál es el enfoque recomendado para almacenar la caché de compilación de containers en CI/CD?
+### 8. ¿Qué afirmación compara correctamente los runners nativos con QEMU?
 
-- A) Solo disco local
-- B) Caché basada en registry con las flags --cache-to y --cache-from
-- C) Nunca usar caché en CI/CD
-- D) Almacenar la caché en el repositorio git
+- A) Una opción de plataforma por sí sola permite ejecutar cualquier instrucción de otra arquitectura
+- B) QEMU es el compilador cruzado de la aplicación
+- C) Una imagen AMD64 se convierte en ARM64 al cambiarle el tag
+- D) Los runners nativos compilan en la CPU de destino; QEMU emula las instrucciones de otra CPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Caché basada en registry con las flags --cache-to y --cache-from**
+**Respuesta: D) Los runners nativos compilan en la CPU de destino; QEMU emula las instrucciones de otra CPU**
 
-**Explicación:**
-El almacenamiento en caché basado en registry guarda las capas de caché de compilación en un container registry, lo que las hace accesibles entre distintos runners de CI. Las flags `--cache-to` y `--cache-from` de BuildKit habilitan este patrón para una aceleración de compilación consistente.
+**Explicación:** Haz coincidir los selectores de nodo del administrador y del trabajo, los tags del runner y la arquitectura auxiliar. El índice final debe apuntar a digests de plataformas verificados de forma independiente. La compilación cruzada requiere una cadena de herramientas y un Dockerfile configurados deliberadamente.
 
 </details>
 
-### 9. Al configurar GitHub ARC, ¿qué controla la configuración `minRunners`?
+### 9. ¿Qué requiere el ejemplo de salida independiente de Next.js?
 
-- A) Trabajos concurrentes máximos
-- B) Cantidad mínima de runners inactivos mantenidos
-- C) Asignación de memoria del runner
-- D) Duración del timeout del trabajo
+- A) `npm ci --omit=dev` es suficiente para todas las compilaciones
+- B) Salida standalone, dependencias de compilación, recursos estáticos copiados y la ruta correcta del servidor
+- C) `public` y `.next/static` siempre se copian automáticamente en la salida standalone
+- D) Todos los monorepos comienzan en `root/server.js`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cantidad mínima de runners inactivos mantenidos**
+**Respuesta: B) Salida standalone, dependencias de compilación, recursos estáticos copiados y la ruta correcta del servidor**
 
-**Explicación:**
-`minRunners` garantiza que siempre haya disponible una línea base de runners preparados, lo que reduce la latencia de inicio de trabajos. Configurarlo por encima de cero evita demoras por arranque en frío para workflows sensibles al tiempo, pero aumenta los costos de recursos inactivos.
+**Explicación:** El ejemplo presupone una sola raíz de aplicación y un archivo de bloqueo de npm. Copia `public` y `.next/static` al diseño de ejecución y enlaza con `0.0.0.0`. Los monorepos necesitan sus propias comprobaciones de la raíz de seguimiento y de la ruta de salida anidada.
 
 </details>
 
-### 10. ¿Cuál es el beneficio de seguridad de usar roles de IAM para runners de CI/CD en lugar de credenciales de larga duración?
+### 10. ¿Qué afirmación sobre Kaniko y BuildKit sin privilegios de root es correcta?
 
-- A) Autenticación más rápida
-- B) Rotación automática de credenciales y menor riesgo de exposición
-- C) Configuración más simple
-- D) Acceso entre cuentas
+- A) No tener daemon garantiza que cada compilación se ejecute sin root y con aislamiento completo
+- B) Renombrar la imagen privilegiada de Docker-in-Docker completa una configuración sin root
+- C) Comprueba el estado de mantenimiento y la compatibilidad del nodo con espacios de nombres de usuario, montajes y políticas de seguridad
+- D) `no-process-sandbox` refuerza el aislamiento de procesos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Rotación automática de credenciales y menor riesgo de exposición**
+**Respuesta: C) Comprueba el estado de mantenimiento y la compatibilidad del nodo con espacios de nombres de usuario, montajes y políticas de seguridad**
 
-**Explicación:**
-Los roles de IAM proporcionan credenciales temporales que rotan automáticamente, lo que elimina el riesgo de que claves de acceso de larga duración se filtren o se vean comprometidas. Combinados con Pod Identity o IRSA, los runners obtienen permisos delimitados sin almacenar secretos.
+**Explicación:** El repositorio de Google Kaniko está archivado. El fragmento opcional de BuildKit sin root requiere un runner validado por separado. `no-process-sandbox` debilita el aislamiento de procesos y la limpieza del contenedor daemon; además, la caché del registro no conserva automáticamente todos los montajes de caché.
 
 </details>

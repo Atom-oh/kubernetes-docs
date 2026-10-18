@@ -59,7 +59,7 @@ The scope lives in bits 24-31:
 | Local | `1<<24` | Identities that exist only on one node: CIDR- and FQDN-derived identities |
 | Remote-node | `2<<24` | Node identities used for node-based policy selection |
 
-With ClusterMesh, the 24 low bits are shared between identity and cluster ID: `max-connected-clusters` 255 gives 16 bits of identity plus 8 bits of cluster ID, 511 gives 15 plus 9. Identities below 256 are reserved (`MinimalIdentity=256`). See `pkg/identity/numericidentity.go` at v1.21.0-pre.3 for the constants. ClusterMesh sizing is covered in [Part 13](13-clustermesh-install-upgrade.md).
+With ClusterMesh, the 24 low bits are shared between identity and cluster ID: `max-connected-clusters` 255 gives 16 bits of identity plus 8 bits of cluster ID; 511 gives 15 plus 9. Identities below 256 are reserved (`MinimalIdentity=256`). See `pkg/identity/numericidentity.go` at v1.21.0-pre.3 for the constants. ClusterMesh sizing is covered in [Part 13](13-clustermesh-install-upgrade.md).
 
 ### Reserved and well-known identities
 
@@ -85,7 +85,7 @@ Behaviour to remember: a Pod sits in `reserved:init` until its labels are resolv
 
 ### Identity-relevant labels and identity churn
 
-By default every label is identity-relevant except an exclusion list (for example `io.kubernetes`, `kubernetes.io`, StatefulSet pod-name, `pod-template-hash`, `controller-revision-hash`, `annotation.*`, `topology.kubernetes.io`). Patterns are regular expressions anchored at the start of the label.
+By default every label is identity-relevant except those on an exclusion list (for example `io.kubernetes`, `kubernetes.io`, StatefulSet pod-name, `pod-template-hash`, `controller-revision-hash`, `annotation.*`, `topology.kubernetes.io`). Patterns are regular expressions anchored at the start of the label.
 
 - Adding any **inclusive** pattern switches the agent to allow-list mode and automatically adds `reserved:`, the Pod namespace, namespace labels, `policy.cluster`, service account and `app.kubernetes.io`.
 - Helm `labels:` **appends** to the defaults. To override the list exactly, use `--label-prefix-file` (agent flags `--labels` and `--label-prefix-file`).
@@ -344,7 +344,7 @@ If a selector matches fewer identities than expected, the usual cause is an iden
 
 ### CEL rejection of empty policies (1.20)
 
-In 1.20 the CNP and CCNP CRDs carry the CEL rule `has(self.spec) || has(self.specs)` with the message "spec or specs must be provided". Creating or updating a policy with neither field is rejected at admission. Existing empty policies are unaffected until updated. Related earlier changes: `FromRequires`/`ToRequires` must be empty since 1.19, and Kafka/proxylib L7 policy was removed in 1.20.
+In 1.20 the CNP and CCNP CRDs carry the CEL rule `has(self.spec) || has(self.specs)` with the message "spec or specs must be provided". Creating or updating a policy with neither field is rejected at admission. Existing empty policies are unaffected until updated. Related earlier changes: `FromRequires`/`ToRequires` have been required to be empty since 1.19, and Kafka/proxylib L7 policy was removed in 1.20.
 
 ### Host policies
 
@@ -396,7 +396,7 @@ Migration guidance:
 
 - A `ztunnel-cilium` DaemonSet (hostNetwork, container `istio-proxy`) runs per node; the image in 1.20 and 1.21 is `quay.io/cilium/ztunnel:v1.0.0` (1.19 used `docker.io/istio/ztunnel` 1.28.0-distroless).
 - The agent serves workload data (from CEPs) over xDS, passes Pod network namespace file descriptors and metadata over the ZDS unix socket, and signs workload CSRs whose URI SAN is `spiffe://<trust domain>/ns/<ns>/sa/<sa>` for service accounts that have endpoints on that node.
-- iptables rules are installed **inside each enrolled Pod's netns**: outbound goes to 15001, plaintext inbound to 15006, HBONE inbound on 15008 is not redirected (mark 0x539). Wire protocol is HBONE (HTTP/2 CONNECT over mTLS) on **TCP 15008**.
+- iptables rules are installed **inside each enrolled Pod's netns**: outbound goes to 15001, plaintext inbound to 15006, HBONE inbound on 15008 is not redirected (mark 0x539). The wire protocol is HBONE (HTTP/2 CONNECT over mTLS) on **TCP 15008**.
 - Differences from Istio ambient: no istiod, no waypoint, no L7 features; enrollment is the label `io.cilium/mtls-enabled=true`, not `istio.io/dataplane-mode=ambient`; the CA is Cilium's internal CA or SPIRE. Do not run both on the same Pods.
 
 ### Secrets, CA type and enrollment
@@ -487,7 +487,7 @@ encryption:
     persistentKeepalive: 0s
 ```
 
-- With CNI chaining (AWS VPC CNI) set `cni.enableRouteMTUForCNIChaining=true`, otherwise encrypted Pod traffic may fragment.
+- With CNI chaining (AWS VPC CNI) set `cni.enableRouteMTUForCNIChaining=true`; otherwise encrypted Pod traffic may fragment.
 - ClusterMesh needs WireGuard on all clusters and UDP 51871 between clusters.
 - Packet drops while the device is being configured are a known issue (gh-33159 upstream).
 - **Node-to-node** (`encryption.nodeEncryption`, beta): extends encryption to host traffic. Control-plane nodes opt out via `node-encryption-opt-out-labels`. There are gaps for north-south paths with XDP or non-Geneve DSR. **[1.21 pre-release]** deprecated, removal in 1.22.
@@ -558,7 +558,7 @@ Istio coexistence (upstream `network/servicemesh/istio.rst`): `kubeProxyReplacem
 
 **TLS interception** (`terminatingTLS` / `originatingTLS` in CNP `toPorts`): Envoy terminates the client's TLS with a certificate from an internal CA that clients must trust, then re-originates to the destination. Secrets are delivered over SDS (default since 1.17); Helm `tls.secretsNamespace.name` defaults to `cilium-secrets` and `tls.readSecretsOnlyFromSecretsNamespace` is true, so the operator copies referenced Secrets there. This gives visibility for L7 policy on encrypted egress; it is not a mesh mTLS replacement.
 
-**Gateway API TLS**: HTTPS listener termination uses a Secret; `BackendTLSPolicy` (gateway.networking.k8s.io/v1; `targetRefs` Service, `validation.caCertificateRefs` ConfigMap, `hostname`) encrypts Envoy to backend. Cilium 1.20 requires Gateway API v1.6.1 CRDs; TLSRoute is v1 and needs the experimental channel if you used it earlier or existing objects disappear. cert-manager integrates through the `cert-manager.io/issuer` annotation. **Exposure rule**: upstream Gateway/Ingress examples create `Service` type `LoadBalancer`. On EKS use an internal scheme (`service.beta.kubernetes.io/aws-load-balancer-scheme: internal`) behind a CloudFront VPC origin; never internet-facing. This was not verified against the Cilium chart in this review. See [Part 11](11-bgp-lb-egress-edge.md).
+**Gateway API TLS**: HTTPS listener termination uses a Secret; `BackendTLSPolicy` (gateway.networking.k8s.io/v1; `targetRefs` Service, `validation.caCertificateRefs` ConfigMap, `hostname`) encrypts traffic from Envoy to the backend. Cilium 1.20 requires Gateway API v1.6.1 CRDs; TLSRoute is v1 and needs the experimental channel if you used it earlier; otherwise, existing objects disappear. cert-manager integrates through the `cert-manager.io/issuer` annotation. **Exposure rule**: upstream Gateway/Ingress examples create `Service` type `LoadBalancer`. On EKS use an internal scheme (`service.beta.kubernetes.io/aws-load-balancer-scheme: internal`) behind a CloudFront VPC origin; never internet-facing. This was not verified against the Cilium chart in this review. See [Part 11](11-bgp-lb-egress-edge.md).
 
 ## Hubble and Tetragon
 
@@ -570,7 +570,7 @@ Event path: datapath events, then the per-agent ring buffer (`hubble.eventBuffer
 
 ### Metrics
 
-`hubble.metrics.enabled` takes a list of handlers (for example `dns`, `drop`, `tcp`, `flow`, `port-distribution`, `icmp`, `httpV2`, `flows-to-world`, `policy`; `sctp` is new in 1.20; the handler is absent in v1.19.8). Endpoint port 9965. Dynamic metrics (`hubble.metrics.dynamic.enabled`, ConfigMap `cilium-dynamic-metrics-config`) reconfigure without agent restart. L7 handlers produce data only for Pods with L7 visibility. The Kafka handler was removed in 1.20. `hubble.metrics.portName` is new **[1.21 pre-release]**.
+`hubble.metrics.enabled` takes a list of handlers (for example `dns`, `drop`, `tcp`, `flow`, `port-distribution`, `icmp`, `httpV2`, `flows-to-world`, `policy`; `sctp` is new in 1.20; the handler is absent in v1.19.8). Endpoint port 9965. Dynamic metrics (`hubble.metrics.dynamic.enabled`, ConfigMap `cilium-dynamic-metrics-config`) reconfigure without an agent restart. L7 handlers produce data only for Pods with L7 visibility. The Kafka handler was removed in 1.20. `hubble.metrics.portName` is new **[1.21 pre-release]**.
 
 ### Exporters
 
@@ -600,7 +600,7 @@ hubble:
 
 ### Tetragon (overview only)
 
-Tetragon is a separate project (not part of the Cilium repository): eBPF-based runtime security observability and enforcement for process execution, file and network activity, configured with `TracingPolicy` resources. Cilium's threat-model documentation recommends it for runtime visibility. Details of its CRD versions and enforcement actions were **not verified in this review** and this section is overview only; use the Tetragon project documentation for specifics.
+Tetragon is a separate project (not part of the Cilium repository): eBPF-based runtime security observability and enforcement for process execution, file and network activity, configured with `TracingPolicy` resources. Cilium's threat-model documentation recommends it for runtime visibility. Details of its CRD versions and enforcement actions were **not verified in this review** and this section is an overview only; use the Tetragon project documentation for specifics.
 
 ## Certificate Management
 
@@ -617,7 +617,7 @@ Values to know (1.20.2 `values.yaml`): `hubble.tls.auto.certValidityDuration` de
 
 - ClusterMesh auto certificates default to 1 year (`clustermesh.apiserver.tls.auto.certValidityDuration: 365`; was 1095 in 1.19). With the `helm` method, certificates renew only when the chart is rendered, so upgrade at least yearly; `cronJob` and `certmanager` renew automatically (ClusterMesh cronJob regenerates every four months).
 - `certgen.enforceCAValidityThroughoutLeavesDuration` defaults to true: certgen fails if the CA would expire before a leaf certificate. Set false to disable.
-- Manually supplied certificates as Helm values were removed: pre-create the Secrets and set `tls.auto.enabled=false`.
+- Support for certificates supplied manually as Helm values was removed: pre-create the Secrets and set `tls.auto.enabled=false`.
 - `clustermesh.apiserver.tls.server.{extraDnsNames,extraIpAddresses}` moved to `...tls.auto.server.*`.
 
 User-provided Hubble certificates need these SANs: `*.<cluster>.hubble-grpc.cilium.io` (server), `*.hubble-relay.cilium.io` (Relay), `*.hubble-ui.cilium.io`, `<cluster>.hubble-metrics.cilium.io`; Secrets carry `tls.crt`, `tls.key`, `ca.crt`. **[1.21 pre-release]** per-Pod certificates: `hubble.tls.disableDefaultVolumes`, `hubble.relay.tls.disableDefaultVolumes`, `hubble.ui.tls.disableDefaultVolumes` and `extraInitContainers` allow Vault, cert-manager CSI or SPIFFE sources; `clustermesh.apiserver.tls.authMode` default becomes `cluster`.

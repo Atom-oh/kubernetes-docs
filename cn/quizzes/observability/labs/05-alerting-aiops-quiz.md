@@ -2,7 +2,7 @@
 
 <span id="observability-lab-part-5-alerting-and-aiops-quiz"></span>
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 1. 哪个组件负责评估 PrometheusRule 告警？
    - A) Alertmanager
@@ -25,7 +25,7 @@ Prometheus 负责评估；Alertmanager 负责分组、路由和通知。
    - A) 必须恰好连续两次超出阈值。
    - B) 三个已评估数据点中必须有两个超出阈值；它们不必连续。
    - C) 每三秒发送两条通知。
-   - D) 使用两个 Region。
+   - D) 使用两个区域。
 
 <details>
 <summary>显示答案</summary>
@@ -49,7 +49,7 @@ Period 是指标聚合粒度，并不等同于评估频率。
 
 **答案：B) 考虑归档以及 Cloud Connection 于 2026-03-24 终止。**
 
-验证受支持的事件/通知路径以及组织实际的交付情况。
+验证组织受支持的事件响应/通知路径及实际投递情况。
 
 </details>
 
@@ -108,16 +108,16 @@ Period 是指标聚合粒度，并不等同于评估频率。
 
 7. 在此示例中，Powertools 幂等性提供什么？
    - A) 端到端的 SNS 恰好一次交付。
-   - B) 在 24 小时内禁止对具有相同消息 ID 的重复成功工作。
+   - B) 对于同一消息 ID，在 24 小时内抑制对已成功完成工作的重复执行。
    - C) 每个新的消息 ID 都是同一操作。
    - D) 以原子方式组合发布和 DB 提交。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在 24 小时内禁止对具有相同消息 ID 的重复成功工作。**
+**答案：B) 对于同一消息 ID，在 24 小时内抑制对已成功完成工作的重复执行。**
 
-区分发布/提交重复窗口以及 SNS/Lambda 重试层。
+区分发布与提交之间可能导致重复的时间窗口，以及 SNS 和 Lambda 各自的重试层。
 
 </details>
 
@@ -142,16 +142,16 @@ Period 是指标聚合粒度，并不等同于评估频率。
 
 9. 如何配置告警以启动 CloudWatch Investigations？
    - A) 调用 list-dashboards。
-   - B) 将已准备好的 investigation-group ARN 添加为告警操作。
+   - B) 将已准备好的调查组 ARN 添加为告警操作。
    - C) 仅调用 put-insight-rule。
    - D) 仅启用 Application Signals 发现。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 将已准备好的 investigation-group ARN 添加为告警操作。**
+**答案：B) 将已准备好的调查组 ARN 添加为告警操作。**
 
-准备组、权限、保留、加密以及实际的告警操作。
+准备调查组、权限、保留策略、加密配置以及实际的告警操作。
 
 </details>
 
@@ -168,7 +168,7 @@ Period 是指标聚合粒度，并不等同于评估频率。
 
 **答案：B) 不会；发现、身份验证以及任务/消息契约需要单独实现。**
 
-专家拆分是一种设计模式，不同于遵循代理协议。
+按专长拆分分析任务是一种设计模式，不同于遵循代理协议。
 
 </details>
 

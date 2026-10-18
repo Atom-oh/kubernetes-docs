@@ -572,7 +572,7 @@ spec:
       - owner
 ```
 
-Install the policy engines, their CRDs, and policy servers before these resources. The Gatekeeper example deliberately defines `K8sRequiredLabelKeys` to avoid conflicting with the richer library `K8sRequiredLabels` template. For Kubewarden, select a tested published safe-labels tag/digest and use its `mandatory_labels` settings; `<tested-tag>` is a placeholder.
+Install the policy engines, their CRDs, and policy servers before applying these resources. The Gatekeeper example deliberately defines `K8sRequiredLabelKeys` to avoid conflicting with the richer library `K8sRequiredLabels` template. For Kubewarden, select a tested published safe-labels tag/digest and use its `mandatory_labels` settings; `<tested-tag>` is a placeholder.
 
 ## Policy Management in Amazon EKS
 
@@ -681,7 +681,7 @@ Here are best practices for effectively managing policies in Kubernetes clusters
 
 Kubernetes policies are powerful tools for controlling security, resource usage, and network communication for clusters and workloads. You can build a policy framework tailored to your organization's requirements by combining built-in policy mechanisms (ResourceQuota, LimitRange, NetworkPolicy, etc.) with third-party policy engines (OPA Gatekeeper, Kyverno, etc.).
 
-When using Amazon EKS, you can further strengthen policy management by leveraging various AWS services (IAM, Security Groups, AWS Config, AWS Organizations, AWS Firewall Manager, etc.). Through integrating these services, you can effectively manage security, compliance, and resource management for clusters and workloads.
+When using Amazon EKS, you can further strengthen policy management by leveraging various AWS services (IAM, Security Groups, AWS Config, AWS Organizations, AWS Firewall Manager, etc.). By integrating these services, you can effectively manage security, compliance, and resource management for clusters and workloads.
 
 Policies are a continuously evolving area, so it's important to regularly review and update policies to respond to new threats and requirements. Additionally, managing policies as code and automating them is recommended to improve consistency and efficiency.
 

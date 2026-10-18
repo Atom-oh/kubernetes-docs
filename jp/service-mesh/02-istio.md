@@ -13,7 +13,7 @@
 - [クイックスタート](#quick-start)
 - [学習リソース](#learning-resources)
 
-## はじめに
+## はじめに {#introduction}
 
 Istio は、マイクロサービスアプリケーション向けのオープンソースの service mesh プラットフォームです。service mesh は、サービス間通信を処理するインフラストラクチャ層であり、サービス通信をインフラストラクチャレベルで制御および観測できます。アプリケーションの trace-context 伝播、グレースフルシャットダウン、ビジネス上の冪等性には、引き続きアプリケーション側の対応が必要です。
 
@@ -34,7 +34,7 @@ service mesh は、次の中核的な機能を提供します。
 - **Detailed Metrics**: サービス間通信に関する詳細なメトリクス
 - **Policy Enforcement**: アクセス制御と、明示的に構成されたローカル／グローバルの rate limiting
 
-## 主な機能
+## 主な機能 {#key-features}
 
 ### 1. Traffic Management
 
@@ -74,7 +74,7 @@ Istio は強力な Traffic Management 機能を提供します。
 - **Outlier Detection**: 正常でない instance を除外
 - **Rate Limiting**: 構成済みのローカル token bucket またはグローバル rate-limit service
 
-## アーキテクチャの概要
+## アーキテクチャの概要 {#architecture-overview}
 
 Istio は **Control Plane** と **Data Plane** で構成されます。次の図は sidecar 形式を示しており、ambient トポロジーではありません。
 
@@ -101,7 +101,7 @@ sidecar モードでは、Envoy は参加済みの各 application Pod ととも�
 
 Ambient は、L4 トランスポートに node レベルの ztunnel を使用し、サポートされる L7 機能には任意で Envoy waypoint を使用します。すべての application Pod に Envoy を inject するわけではありません。機能サポート、policy のアタッチ、リソース使用量はモードによって異なります。このトポロジーから、固定的なリソース削減率や普遍的なパフォーマンス優位性が導かれるわけではありません。[Ambient Mode](istio/advanced/01-ambient-mode.md) を参照してください。
 
-## 詳細ドキュメント
+## 詳細ドキュメント {#detailed-documentation}
 
 以下のリンクは、保守されているサブツリーを学ぶためのマップです。その index には、追加および新規トピックが含まれます。
 
@@ -173,7 +173,7 @@ Ambient は、L4 トランスポートに node レベルの ztunnel を使用し
 |----------|-------------|
 | [Best Practices](istio/best-practices.md) | 本番運用のチェックリストと推奨事項 |
 
-## クイックスタート
+## クイックスタート {#quick-start}
 
 1. [installation guide](istio/01-installation.md) で、正確な Istio/Kubernetes/EKS の互換性の共通範囲を確認してください。一般的な「Kubernetes 1.28+」という前提条件だけでは、現在の Istio release に対して十分ではありません。
 2. sidecar または ambient を選択し、その guide の固定された CLI/chart、分離された namespace、およびプラットフォームの前提条件に従ってください。指定されていない latest CLI をダウンロードしてから、古い version directory に移動しないでください。
@@ -191,7 +191,7 @@ istioctl proxy-status
 
 Proxy status は診断入力の一つにすぎません。Ambient enrollment と ztunnel には独自の確認が必要であり、analyzer の結果が正常であっても end-to-end traffic test ではありません。
 
-## 学習リソース
+## 学習リソース {#learning-resources}
 
 ### 公式ドキュメント
 

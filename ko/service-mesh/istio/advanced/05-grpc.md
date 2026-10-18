@@ -13,7 +13,7 @@ Istio는 평문 gRPC HTTP/2 요청을 RPC 경로·metadata로 라우팅하고 �
 
 ## 기본 설정
 
-이 sidecar 예제는 `app: grpc-service` workload와9090번 포트를 수신하는 `version: v2` backend, `mypackage.MyService` 구현이 이미 있다고 가정합니다. 서버 배포를 포함하지 않습니다. `grpc` port 선언으로 HTTP/2를 명시하므로 모든 연결에 `h2UpgradePolicy`를 추가할 필요가 없습니다. 대상 환경에서 생성된 endpoint/route와 실제 RPC를 검증하세요.
+이 sidecar 예제는 `app: grpc-service` workload와 9090번 포트를 수신하는 `version: v2` backend, `mypackage.MyService` 구현이 이미 있다고 가정합니다. 서버 배포를 포함하지 않습니다. `grpc` port 선언으로 HTTP/2를 명시하므로 모든 연결에 `h2UpgradePolicy`를 추가할 필요가 없습니다. 대상 환경에서 생성된 endpoint/route와 실제 RPC를 검증하세요.
 
 ```yaml
 apiVersion: v1
@@ -132,7 +132,7 @@ spec:
       attempts: 0
 ```
 
-`attempts: 2`는 최초 요청 이후 최대 두 번의 재시도를 허용하며 전체3초 mesh timeout과 client deadline의 제한을 받습니다. Backoff·처리 시간 때문에 세 번의 완료를 보장하지 않습니다. 취소·deadline 만료·resource exhaustion을 무조건 재시도하지 마세요. Client deadline을 적절히 설정하고 서버 작업이 취소에 반응하도록 구현해야 하며 mesh timeout만으로 이를 보장할 수 없습니다.
+`attempts: 2`는 최초 요청 이후 최대 두 번의 재시도를 허용하며 전체 3초 mesh timeout과 client deadline의 제한을 받습니다. Backoff·처리 시간 때문에 세 번의 완료를 보장하지 않습니다. 취소·deadline 만료·resource exhaustion을 무조건 재시도하지 마세요. Client deadline을 적절히 설정하고 서버 작업이 취소에 반응하도록 구현해야 하며 mesh timeout만으로 이를 보장할 수 없습니다.
 
 Client library도 transparent/configured retry를 수행할 수 있으므로 계층별 retry 담당과 예산을 조율하여 호출 증폭을 막습니다. 쓰기 재생에는 애플리케이션의 멱등성·중복 제거 보장이 필요하며, 이미 응답을 전달한 stream을 이 route로 안전하게 재개할 수는 없습니다.
 

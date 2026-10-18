@@ -81,8 +81,7 @@ const ARCHMAP_CAPTIONS: Record<string, string> = {
   es: 'Abrir a pantalla completa ↗'
 }
 
-// cn/jp/es: machine translations of en with their own SUMMARY.md sidebars.
-// They have no LLM guide page, so they get no nav entry.
+// cn/jp/es use their own translated SUMMARY.md sidebars.
 const translatedLocaleConfig = {
   cn: {
     label: '简体中文',

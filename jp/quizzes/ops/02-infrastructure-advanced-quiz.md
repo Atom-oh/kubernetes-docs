@@ -4,172 +4,162 @@
 
 ## 多肢選択問題
 
-### 1. blue/green deployment における NLB weighted target groups の主な目的は何ですか？
+### 1. NLB の重み比 5:5 は何を意味しますか？
 
-- A) より少ない load balancer を使用してコストを削減するため
-- B) cluster バージョン間の traffic distribution を制御するため
-- C) SSL termination の性能を向上させるため
-- D) health check の必要性をなくすため
+- A) 各クラスターに 5 台ずつノードを作成する
+- B) 新しいフローを相対的に均等に振り分ける
+- C) 既存のすべての接続を 5 秒以内に移行する
+- D) 合計が 100 ではないため無効である
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) cluster バージョン間の traffic distribution を制御するため**
+**回答: B) 新しいフローを相対的に均等に振り分ける**
 
-**解説:**
-NLB weighted target groups により、blue（現在）cluster と green（新規）cluster の間で traffic を段階的に移行できます。重み（例: 90:10、50:50、0:100）を調整することで、operator は制御された rollout を実行し、問題が検出された場合にすばやく rollback できます。
+NLB の重みは 0～999 の相対的な整数です。フローのサイズ、スティッキー性、観測期間によって、実際のバイト数やリクエスト数は異なります。
 
 </details>
 
-### 2. single-zone EKS cluster 戦略では、data nodes を 1 つの Availability Zone のみにデプロイすることがあるのはなぜですか？
+### 2. NLB グループの重みを 0 に下げるとき、何に注意すべきですか？
 
-- A) Cross-AZ data transfer costs を削減するため
-- B) DNS 設定を簡素化するため
-- C) 複数の subnet の使用を避けるため
-- D) persistent volume の必要性をなくすため
+- A) 既存の接続は自然に終了するまで維持される
+- B) 現行ガイドでは、既存の接続も短時間後に閉じるとされているため、再接続をテストする
+- C) 登録解除の遅延によって、すべての切り替え時間が保証される
+- D) API が成功を返せば、すべてのトラフィックはすでに移行している
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: A) Cross-AZ data transfer costs を削減するため**
+**回答: B) 現行ガイドでは、既存の接続も短時間後に閉じるとされているため、再接続をテストする**
 
-**解説:**
-AWS では Cross-AZ data transfer にコストが発生します。local storage を持つ data-intensive workload（database など）では、すべての replica を単一の AZ に保持することでこれらのコストをなくしつつ、durability には application-level replication に依存します。
+通常の重み変更と、重みを 0 にする場合を区別してください。設定の受け付けとデータプレーンへの反映は別です。新規・既存フロー、エラー、レイテンシを確認してください。
 
 </details>
 
-### 3. Pod が異なる zone または node に分散されることを保証する Kubernetes 機能は何ですか？
+### 3. blue と green の DNS 名が同じ共有 NLB を指す場合、DNS の重みで何ができますか？
 
-- A) PodAffinity
-- B) TopologySpreadConstraints
-- C) ResourceQuota
-- D) LimitRange
+- A) その NLB のターゲットグループを個別に選ぶ
+- B) ホスト名だけで特定の AZ にリクエストを固定する
+- C) 同じロードバランサーを選ぶだけであり、クラスター別のターゲットグループは選べない
+- D) 同じデータベースレプリカを自動的に選ぶ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) TopologySpreadConstraints**
+**回答: C) 同じロードバランサーを選ぶだけであり、クラスター別のターゲットグループは選べない**
 
-**解説:**
-TopologySpreadConstraints は、Pod が topology domain（zone、node、region）全体にどのように分散されるかを制御します。高可用性のために均等な分散を保証し、`maxSkew`、`topologyKey`、`whenUnsatisfiable` パラメータで設定できます。
+DNS による振り分けには、接続先クラスターへ到達する実際に異なるロードバランサーのエンドポイントが必要です。リスナーの重みと DNS レコードの重みは、それぞれ異なるレイヤーで動作します。
 
 </details>
 
-### 4. Route53 weighted routing は NLB weighted target groups とどのように異なりますか？
+### 4. 選択した AZ の Auto Mode ノードにワークロードを配置するには、何を設定しますか？
 
-- A) Route53 は DNS level で動作し、NLB は connection level で動作する
-- B) Route53 は等しい重みのみをサポートする
-- C) NLB は health check をサポートしない
-- D) Route53 には VPC peering が必要である
+- A) Pod の `nodeSelector` だけでノードを作成する
+- B) NodePool に `subnet_ids` を指定する
+- C) Pod の選択条件、NodePool の要件、NodeClass のサブネット選択、toleration を整合させる
+- D) クラスター名を blue にする
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: A) Route53 は DNS level で動作し、NLB は connection level で動作する**
+**回答: C) Pod の選択条件、NodePool の要件、NodeClass のサブネット選択、toleration を整合させる**
 
-**解説:**
-Route53 weighted routing は DNS 解決時に traffic を分散します。一方、NLB weighted target groups は connection level で分散します。DNS-based routing には TTL の考慮事項がありますが、NLB はより即時的な traffic shifting を提供します。
+`nodeSelector` や affinity は配置可能なノードを選びます。プロビジョニング制約、taint、toleration も一致させる必要があります。ワーカーノードの配置と、リージョン単位で管理されるコントロールプレーンを区別してください。
 
 </details>
 
-### 5. 3-AZ deployment における TopologySpreadConstraints の推奨 `maxSkew` 値は何ですか？
+### 5. 外部管理のターゲットグループを使うこの TGB の例では、どの所有モデルを使っていますか？
 
-- A) 0
-- B) 1
-- C) 3
-- D) 10
+- A) 組み込み Auto Mode は常に同じ削除動作をする
+- B) 組み込み Auto Mode とは別に、`elbv2.k8s.aws/v1beta1` を使う LBC を個別にインストールする
+- C) Service や `targetPort` の前提条件なしで ARN だけを指定する
+- D) Terraform で Pod IP を恒久的に登録する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) 1**
+**回答: B) 組み込み Auto Mode とは別に、`elbv2.k8s.aws/v1beta1` を使う LBC を個別にインストールする**
 
-**解説:**
-`maxSkew` を 1 にすると、topology domain 間の Pod 数の差が最大 1 になるように、Pod が均等に分散されます。これにより、node に resource constraints がある場合でも scheduling の柔軟性を保ちながら、良好なバランスを実現できます。
+組み込み Auto Mode は `eks.amazonaws.com/v1` を使用し、ターゲットグループの削除動作を説明しています。この手順では、動的な登録とネットワークルールのために別のコントローラーを使います。
 
 </details>
 
-### 6. blue/green cluster architecture では、cluster 間で何を共有すべきですか？
+### 6. PostgreSQL の StatefulSet が 1 つあり、PVC の reclaim policy が Retain の場合、何が保証されますか？
 
-- A) Worker nodes
-- B) External DNS and load balancer
-- C) etcd storage
-- D) Kubernetes API server
+- A) クラスター間のレプリケーション
+- B) AZ をまたぐ停止時間ゼロのデータベースフェイルオーバー
+- C) すべての接続が維持される
+- D) それだけでは HA、バックアップ、復旧は保証されない
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) External DNS and load balancer**
+**回答: D) それだけでは HA、バックアップ、復旧は保証されない**
 
-**解説:**
-Blue/green cluster は、DNS record や load balancer などの外部 infrastructure を共有する別々の EKS cluster です。これにより、client-facing endpoint を変更せずに cluster 間で traffic を移行できます。
+Retain はボリュームの再利用ポリシーです。レプリケーション、バックアップ、書き込み元の管理、復旧手順は別途設計する必要があります。NLB の重みを変えても、EBS ボリュームを別の AZ に移動することはできません。
 
 </details>
 
-### 7. TopologySpreadConstraints で `whenUnsatisfiable: DoNotSchedule` が設定されている場合、何が起こりますか？
+### 7. アラーム入力用と判断結果の通知用で SNS トピックを分けるのはなぜですか？
 
-- A) Pod は constraint に関係なくどこにでも schedule される
-- B) constraint を満たせない場合、Pod は pending のままになる
-- C) Pod は自動的に削除される
-- D) constraint は無視される
+- A) 通知が新たな入力として戻り、余分な実行やエラーを起こすのを防ぐため
+- B) IAM 権限なしで発行できるようにするため
+- C) Lambda を無期限に再試行させるため
+- D) DNS TTL をなくすため
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) constraint を満たせない場合、Pod は pending のままになる**
+**回答: A) 通知が新たな入力として戻り、余分な実行やエラーを起こすのを防ぐため**
 
-**解説:**
-`DoNotSchedule` は、spread constraint に違反する場合に Pod の scheduling を防ぎます。これにより topology requirements への厳密な準拠が保証されますが、cluster topology が constraint をサポートしない場合、Pod が pending になる可能性があります。
+このハンドラーは SNS エンベロープを受け取ります。CloudWatch から Lambda への直接イベントは形式が異なるため、両方の呼び出し経路を同じように接続しないでください。通知に失敗しても、成功済みのリスナー変更を再実行させてはいけません。
 
 </details>
 
-### 8. blue/green cluster 間の automated failover には、health check とともにどの AWS service を使用できますか？
+### 8. `automatic_failover=false` の既定値は何をしますか？
 
-- A) AWS Config
-- B) Route53 health checks with failover routing
-- C) AWS Inspector
-- D) AWS Trusted Advisor
+- A) すべてのトラフィックをすぐに green へ切り替える
+- B) `ModifyListener` 権限を付与せずに、変更案を提示する
+- C) ヘルスチェックを省略する
+- D) 利用可能なすべてのリスナーを変更する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) Route53 health checks with failover routing**
+**回答: B) `ModifyListener` 権限を付与せずに、変更案を提示する**
 
-**解説:**
-Route53 health checks は endpoint の可用性を継続的に監視し、failover routing policy を使用して healthy cluster に traffic を自動的に切り替えることができます。これにより、手動介入なしで automated disaster recovery が可能になります。
+自動モードを有効にする前に、容量、SLO、再接続、書き込み元の調整をテストしてください。予約済み同時実行数を 1 にしても、外部の Terraform や手動操作との書き込み順序は制御できません。
 
 </details>
 
-### 9. NLB cross-zone load balancing を使用する際の重要な考慮事項は何ですか？
+### 9. 手動の切り替えスクリプトでは何を行うべきですか？
 
-- A) 常に無料である
-- B) 追加の data transfer charges が発生する可能性がある
-- C) VPC peering が必要である
-- D) TCP protocol でのみ動作する
+- A) ユーザー入力をそのまま Bash の算術式として評価する
+- B) 常に初期状態を 100/0 とみなす
+- C) 重みと移行先の正常性を検証し、全体の計画を表示して承認を得る
+- D) `STEP=0` のままタイマーループを繰り返す
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) 追加の data transfer charges が発生する可能性がある**
+**回答: C) 重みと移行先の正常性を検証し、全体の計画を表示して承認を得る**
 
-**解説:**
-cross-zone load balancing が有効な場合、NLB は有効化されたすべての AZ 内のすべての registered target に traffic を均等に分散します。その結果、Cross-AZ data transfer charges が発生する可能性があります。multi-AZ deployment を設計する際には、このコストを考慮してください。
+最初に数値の範囲を検証し、意図した変数とバックエンドを使ってください。各段階で実際の SLO とデータ互換性を確認します。API 呼び出しや適用処理が成功しただけでは、移行完了の証明にはなりません。
 
 </details>
 
-### 10. zonal cluster deployment（a-zone blue、c-zone green）における主な利点は何ですか？
+### 10. Route 53 の重みと TTL について、正しい記述はどれですか？
 
-- A) networking complexity の低減
-- B) failure isolation と独立した upgrade paths
-- C) compute costs の削減
-- D) 自動 data replication
+- A) 重みは 0～255 の整数であり、TTL だけでは復旧時間を保証できない
+- B) 重みは常に 0～999 である
+- C) TTL が 60 秒なら、復旧 SLA も 60 秒である
+- D) すべての選択肢が異常な場合、DNS は必ず応答を返さない
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) failure isolation と独立した upgrade paths**
+**回答: A) 重みは 0～255 の整数であり、TTL だけでは復旧時間を保証できない**
 
-**解説:**
-zonal cluster は failure domain isolation を提供します。つまり、1 つの zone での問題がもう一方の cluster に影響しません。これにより、独立した upgrade testing と段階的な rollout も可能になり、Kubernetes version upgrade 時のリスクを低減できます。
+Alias レコードは宛先の TTL を引き継ぎます。ヘルス状態、リゾルバーのキャッシュ、接続の存続時間、フォールバック動作を考慮してください。重みをすべて 0 にしても、確実なトラフィック停止にはなりません。
 
 </details>

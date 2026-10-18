@@ -142,7 +142,7 @@ Based on the [observability guide](../../../service-mesh/linkerd/05-observabilit
 
 **Answer: C**
 
-**Explanation:** Use one intended observation direction and workload/cluster scope. An all-failure window with no success series must still produce ratio 0; missing/idle data must not become 100% success. Proxy HTTP classification can count 400 as success, so match the business SLI deliberately.
+**Explanation:** Use one intended observation direction and workload/cluster scope. An all-failure window with no success series must still produce a ratio of 0; missing/idle data must not become 100% success. Proxy HTTP classification can count 400 as success, so match the business SLI deliberately.
 
 </details>
 

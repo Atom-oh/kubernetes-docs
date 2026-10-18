@@ -330,7 +330,7 @@ argocd app get guestbook
 
 AWS API를 호출하는 컴포넌트의 IAM 역할과 대상 EKS Kubernetes API의 인증·RBAC를 구분합니다. ServiceAccount annotation만으로 IRSA 신뢰 정책이나 클러스터 접근이 생기지는 않습니다. 노드의 이미지 풀 역할, Repo Server의 OCI 인증, Image Updater, External Secrets의 권한도 사용하는 기능에 맞춰 분리합니다.
 
-UI 접근은 TLS와 접근 범위를 구성한 Ingress 또는 로컬 포트 포워딩을 사용합니다. [설치 및 구성](01-installation.md)에 AWS Load Balancer Controller·인증서·백엔드 프로토콜을 포함한 예제를 제공합니다.
+UI 접근에는 TLS와 접근 범위를 구성한 Ingress 또는 로컬 포트 포워딩을 사용합니다. [설치 및 구성](01-installation.md)에 AWS Load Balancer Controller·인증서·백엔드 프로토콜을 포함한 예제를 제공합니다.
 
 ## 다음 단계
 

@@ -65,7 +65,7 @@ kubelet은 각 노드에서 실행되는 에이전트로, 컨트롤 플레인의
 **정답: D) ExternalProxy**
 
 **설명:**
-Kubernetes의 서비스 유형은 ClusterIP, NodePort, LoadBalancer, ExternalName이 있습니다. ExternalProxy는 존재하지 않는 서비스 유형입니다. ClusterIP는 클러스터 내부에서만 접근 가능한 서비스, NodePort는 각 노드의 IP와 특정 포트를 통해 외부에서 접근 가능한 서비스, LoadBalancer는 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능한 서비스, ExternalName은 외부 서비스에 대한 CNAME 레코드를 생성하는 서비스입니다.
+Kubernetes의 서비스 유형에는 ClusterIP, NodePort, LoadBalancer, ExternalName이 있습니다. ExternalProxy는 존재하지 않는 서비스 유형입니다. ClusterIP는 클러스터 내부에서만 접근 가능한 서비스, NodePort는 각 노드의 IP와 특정 포트를 통해 외부에서 접근 가능한 서비스, LoadBalancer는 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능한 서비스, ExternalName은 외부 서비스에 대한 CNAME 레코드를 생성하는 서비스입니다.
 </details>
 
 5. Kubernetes에서 파드의 복제본 수를 관리하는 리소스는 무엇인가요?
@@ -81,7 +81,7 @@ Kubernetes의 서비스 유형은 ClusterIP, NodePort, LoadBalancer, ExternalNam
 **정답: C) ReplicaSet**
 
 **설명:**
-ReplicaSet은 원하는 Pod 개수를 조정하며 이미지/스케줄링/앱 오류가 있어도 모든 Pod의 Ready를 보장하는 것은 아닙니다. 파드가 실패하거나 삭제되면 ReplicaSet은 자동으로 대체 파드를 생성합니다. Service는 파드 집합에 대한 단일 엔드포인트와 로드 밸런싱을 제공하고, ConfigMap은 구성 데이터를 저장하며, Namespace는 리소스 그룹을 격리하는 방법을 제공합니다.
+ReplicaSet은 원하는 Pod 개수를 조정하며 이미지/스케줄링/앱 오류가 있어도 모든 Pod의 Ready 상태를 보장하는 것은 아닙니다. 파드가 실패하거나 삭제되면 ReplicaSet은 자동으로 대체 파드를 생성합니다. Service는 파드 집합에 대한 단일 엔드포인트와 로드 밸런싱을 제공하고, ConfigMap은 구성 데이터를 저장하며, Namespace는 리소스 그룹을 격리하는 방법을 제공합니다.
 </details>
 
 6. Kubernetes에서 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스는 무엇인가요?
@@ -98,7 +98,7 @@ ReplicaSet은 원하는 Pod 개수를 조정하며 이미지/스케줄링/앱 �
 
 **설명:**
 StatefulSet은 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스입니다. 각 파드에 고유한 식별자를 부여하고, 안정적인 네트워크 식별자와 영구 스토리지를 제공합니다. 데이터베이스와 같이 상태를 유지해야 하는 애플리케이션에 적합합니다. Deployment는 상태가 없는 애플리케이션을 위한 것이고, DaemonSet은 모든 노드에서 파드의 복사본을 실행하도록 보장하며, Job은 일회성 작업을 실행합니다.
-StatefulSet 스토리지는 PVC/드라이버가 필요하며 데이터 복제/백업을 자동 구성하지 않습니다.
+StatefulSet 스토리지에는 PVC/드라이버가 필요하며 데이터 복제/백업은 자동으로 구성되지 않습니다.
 </details>
 
 7. Kubernetes에서 모든 노드에서 파드의 복사본을 실행하도록 보장하는 리소스는 무엇인가요?
@@ -344,7 +344,7 @@ stringData:
 
 **설명:**
 이 YAML 파일은 app-config라는 이름의 ConfigMap을 정의합니다. ConfigMap은 키-값 쌍의 형태로 구성 데이터를 저장하며, 여기서는 민감하지 않은 DATABASE_URL과 LOG_LEVEL만 포함합니다. DB 자격 증명과 API_KEY는 별도 Secret으로 분리합니다. 이 ConfigMap은 파드에 환경 변수나 볼륨으로 마운트하여 사용할 수 있습니다.
-Secret 값은 설명용 자리표시자입니다. 실제 값은 보호된 입력/시크릿 관리자를 사용하고 저장소에 커밋하지 않습니다. stringData도 저장 암호화를 대신하지 않습니다.
+Secret 값은 설명용 자리표시자입니다. 실제 값을 다룰 때는 보호된 입력/시크릿 관리자를 사용하고 저장소에 커밋하지 않습니다. stringData도 저장 암호화를 대신하지 않습니다.
 </details>
 
 ## 심화 문제
@@ -449,7 +449,7 @@ spec:
       port: 3306
 ```
 
-이 NetworkPolicy는 production 네임스페이스에서 role=database 레이블을 가진 파드에 적용됩니다. 이 정책은 같은 네임스페이스에서 role=backend 레이블을 가진 파드로부터의 TCP 포트 3306(MySQL 기본 포트)으로의 인그레스 트래픽만 허용합니다. 다른 정책이 추가로 허용하지 않는 인그레스 트래픽은 차단됩니다. 이그레스 트래픽은 이 정책에 의해 제한되지 않습니다.
+이 NetworkPolicy는 production 네임스페이스에서 role=database 레이블을 가진 파드에 적용됩니다. 이 정책은 같은 네임스페이스에서 role=backend 레이블을 가진 파드로부터 TCP 포트 3306(MySQL 기본 포트)으로 들어오는 인그레스 트래픽만 허용합니다. 다른 정책이 추가로 허용하지 않는 인그레스 트래픽은 차단됩니다. 이그레스 트래픽은 이 정책에 의해 제한되지 않습니다.
 production 네임스페이스와 NetworkPolicy를 실제로 적용하는 네트워크 플러그인이 필요합니다. 정책의 허용 규칙은 합산되므로 다른 정책이 추가 접근을 허용할 수 있습니다. 이 정책은 egress를 제한하지 않습니다.
 </details>
 

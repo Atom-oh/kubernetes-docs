@@ -127,7 +127,7 @@ With refreshPolicy Periodic and a positive refreshInterval, ESO periodically rec
 
 </details>
 
-### 8. What happens when Kubernetes Secret's immutable field is set to true?
+### 8. What happens when a Kubernetes Secret's immutable field is set to true?
 
 A. Secret cannot be deleted
 B. Secret data cannot be modified

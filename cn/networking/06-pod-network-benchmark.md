@@ -1,59 +1,61 @@
-# Pod 网络基准测试 — 同节点、同一 AZ、跨 AZ 与 DNS ndots
+# Pod 网络基准测试：同节点、同 AZ、跨 AZ 与 DNS ndots
 
-> **支持版本**: Kubernetes 1.36 (Amazon EKS), Amazon VPC CNI v1.21.1, kube-proxy iptables mode
-> **最后更新**: September 2, 2026
+> **记录的测试环境**：Kubernetes 1.36（Amazon EKS）、Amazon VPC CNI v1.21.1、kube-proxy iptables 模式
+> **测量日期**：2026 年 9 月 2 日 · **内容审核**：2026 年 9 月 12 日
 
-当 EKS 上的两个 Pod 位于同一节点、同一 AZ 的不同节点，或不同 AZ 时，实际会发生什么变化？这个问题常伴随着两个误解。第一个是，跨越 AZ “会让速度变慢并降低带宽”——在本次运行中，AZ 边界改变了**延迟和账单**，但完全没有改变带宽。第二个与 DNS 有关：每个 EKS Pod 获得的 `ndots:5` 和四项搜索列表，会悄然将一次外部查找——对于任何点数少于五个的名称——从 2 次 DNS 查询变为 10 次。本页汇集了在 **September 2, 2026**、使用“如何复现”中所述装置，对 `fsi-demo-cluster`（首尔）测得的 RTT、HTTP/gRPC 延迟、iperf3 吞吐量、区域内数据传输成本和 DNS 查询次数。每个数字均为 Pod IP 到 Pod IP（不经 ClusterIP）；原因见“注意事项”。
+本页保留了 2026 年 9 月 2 日对 `fsi-demo-cluster`（首尔）进行的基准测试报告：Pod 到 Pod 的 RTT、HTTP/gRPC 延迟、iperf3 吞吐量和 DNS 查询数。在这些测试中，跨 AZ 会增加延迟，而两条节点间路径的吞吐量相近。这并不能证明带宽保证与 AZ 无关。测量 1–2 中的应用流量直接使用 Pod IP；测量 3 对其成本进行建模，而测量 4 使用现有的 `kube-dns` ClusterIP。报告中的 10 次 DNS 查询过程取决于此解析器、搜索列表和响应序列，并不适用于每个 EKS Pod。历史版本和测量数据均予以保留；审核没有重新运行 EKS 基准测试，也没有核实账单。
 
-![节点 A（ap-northeast-2a）上的客户端 Pod 访问位于同一节点、同一 AZ 节点 B 和 ap-northeast-2b 节点 C 的服务器 Pod — RTT 为 0.040 / 0.339 / 0.544 ms，单流为 29.97 / 4.96 / 4.96 Gbps。](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
+![Client Pod 位于节点 A（ap-northeast-2a），访问同一节点上的 Server Pod、同一 AZ 中节点 B 上的 Server Pod，以及 ap-northeast-2b 中节点 C 上的 Server Pod（RTT 0.040 / 0.339 / 0.544 ms，单流 29.97 / 4.96 / 4.96 Gbps）。](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-06-pod-network-benchmark-0.html)
 
-## TL;DR — 我们测得了什么
+该图记录了本次测试的拓扑。其中的 +0.21 ms 是这几次测试之间的差值；$4.47 是下文说明的历史十进制 GB 成本模型，并非经核实的费用，也不是适用于所有情况的每 AZ 成本。
 
-1. **RTT 阶梯**：同节点 **0.040 ms** → 同一 AZ **0.339 ms** → 跨 AZ **0.544 ms**（ping，200 个探测的平均值）。一次 AZ 跳转增加 +0.21 ms，相比同一节点则增加 +0.50 ms。
-2. **HTTP p50 / p99**（fortio，100 qps，4 个连接，keepalive，60 s）：0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms —— 从应用层看到相同的阶梯。
-3. **带宽**：无论流量留在 AZ 内还是跨越 AZ，单个 TCP 流最高均为 **4.96 Gbps**（EC2 5 Gbps 单流限制）。八个流达到 **9.94 Gbps** = m5.xlarge 10 Gbps 峰值。**跨越 AZ 不会降低吞吐量。**
-4. **同节点 Pod 到 Pod**：单个流为 **29.97 Gbps**（受 CPU 限制——客户端使用了一个核心的 99.8 %），8 个流为 **48.15 Gbps**。流量经过一对 veth，完全不会接触 NIC。
-5. **账单**：以线速跨 AZ 运行 3 分钟 = **223.4 GB** = 约 **$4.47** 的区域数据传输费用（每个方向 $0.01/GB）。在 180 s 内未观察到向 1.25 Gbps 基线的突发积分降速。
-6. **DNS**：使用默认的 `ndots:5` 时，glibc Pod 一次解析 `sts.ap-northeast-2.amazonaws.com` 会发送 **10 次查询**（其中 8 次回答 NXDOMAIN），预热中位数为 **3.78 ms**。末尾点将其降至 **2 次查询**（A+AAAA）/ 0.80 ms；`ndots:1` 为 2 次查询 / 0.54 ms。
-7. **每个请求的新连接多花一个 RTT**：关闭 keepalive 时，p50 从 0.259 → 0.664、0.461 → 1.079 和 0.704 → **1.517 ms**。跨 AZ 时，每请求延迟增加超过一倍。
+## TL;DR：测量结果
+
+1. **报告的 RTT**：同节点 **0.040 ms** → 同 AZ **0.339 ms** → 跨 AZ **0.544 ms**（ping，200 次探测的平均值）。观察到的两条节点间路径相差 +0.21 ms；与同节点路径相比，相差 +0.50 ms。
+2. **HTTP p50 / p99**（fortio，100 qps、4 个连接、keepalive、60 s）：0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms，应用侧观察到的延迟阶梯也相同。
+3. **报告的带宽**：两条节点间路径的单 TCP 流均达到 **4.96 Gbps**；8 个流达到 **9.94 Gbps**，接近 m5.xlarge 10 Gbps 突发峰值。这与集群置放群组之外通常适用的 5 Gbps 单流限制相符。其他实例特性和路径可能有不同限制。
+4. **同节点 Pod 到 Pod**：单流达到 **29.97 Gbps**（客户端进程 CPU 为 99.8%，与 CPU 压力相符），8 个流达到 **48.15 Gbps**。在此 VPC CNI 配置中，流量经由 Pod 的 veth 对和主机网络栈传输，不经过物理网卡。
+5. **成本模型**：180 s 的跨 AZ 测试传输了 **223.4 十进制 GB**。原始的基于有效载荷的模型按每端 $0.01/GB 估算为 **$4.47**；这不是账单。在 180 s 内未观察到吞吐量逐步降至 1.25 Gbps 基线的现象。
+6. **报告的 DNS 结果**：此 glibc Pod 在 `ndots:5` 下解析 `sts.ap-northeast-2.amazonaws.com` 时发送了 **10 次查询**（8 次 NXDOMAIN），预热后的中位数为 **3.78 ms**。名称末尾加点时为 **2 次查询** / 0.80 ms；`ndots:1` 时为 2 次 / 0.54 ms。这些时间是样本值，不是保证值。
+7. **新建连接**：禁用 keepalive 后，p50 从 0.259 → 0.664、0.461 → 1.079 和 0.704 → **1.517 ms**。TCP 建连会造成这部分增幅，但测试没有单独测量握手、套接字和应用成本。
 
 ## 测试环境
 
 | 项目 | 值 |
 |---|---|
-| 集群 | Amazon EKS `fsi-demo-cluster`、ap-northeast-2（首尔）、控制平面 `v1.36.2-eks-bca9cf6`、使用两个 AZ（2a、2b） |
-| 节点 | **3 × m5.xlarge**，由 Karpenter `system` NodePool 为本测试新启动——2a 中的一个客户端节点、一个服务器节点，以及 2b 中的一个服务器节点。4 vCPU，Intel Xeon Platinum 8175M @ 2.50GHz |
-| 节点 OS | Amazon Linux 2023.12.20260817、内核 `6.18.41-94.142.amzn2023.x86_64`、containerd 2.2.5、kubelet v1.36.3-eks-cb19647 |
+| 集群 | Amazon EKS `fsi-demo-cluster`，ap-northeast-2（首尔），控制平面 `v1.36.2-eks-bca9cf6`，使用两个 AZ（2a、2b） |
+| 节点 | **3 × m5.xlarge**，由 Karpenter `system` NodePool 为本次测试全新启动：2a 中一个客户端节点、2a 中一个服务器节点、2b 中一个服务器节点。4 vCPU，Intel Xeon Platinum 8175M @ 2.50GHz |
+| 节点操作系统 | Amazon Linux 2023.12.20260817，内核 `6.18.41-94.142.amzn2023.x86_64`，containerd 2.2.5，kubelet v1.36.3-eks-cb19647 |
 | CNI | Amazon VPC CNI `v1.21.1-eksbuild.8`（+ network-policy-agent v1.3.4）；`ENABLE_PREFIX_DELEGATION=false`、`ENABLE_POD_ENI=false`、`AWS_VPC_K8S_CNI_EXTERNALSNAT=false`、`NETWORK_POLICY_ENFORCING_MODE=standard`、`WARM_ENI_TARGET=1`、`WARM_IP_TARGET=3` |
-| kube-proxy | `v1.35.3-eksbuild.5`、`mode: "iptables"` |
-| CoreDNS | `v1.14.2-eksbuild.4`、2 个副本——每个 AZ 一个（`10.0.2.106` / 2a、`10.0.3.14` / 2b）；Service `kube-dns` ClusterIP `172.20.0.10`；Corefile `kubernetes cluster.local … { pods insecure }`、`forward . /etc/resolv.conf`、`cache 30`、`loadbalance`；**没有 NodeLocal DNSCache**，没有 `autopath` 插件 |
+| kube-proxy | `v1.35.3-eksbuild.5`，`mode: "iptables"` |
+| CoreDNS | `v1.14.2-eksbuild.4`，2 个副本，每个 AZ 各一个（`10.0.2.106` / 2a、`10.0.3.14` / 2b）；Service `kube-dns` ClusterIP `172.20.0.10`；Corefile `kubernetes cluster.local … { pods insecure }`、`forward . /etc/resolv.conf`、`cache 30`、`loadbalance`；**未启用 NodeLocal DNSCache**，未启用 `autopath` 插件 |
 | Pod resolv.conf（默认） | `search bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal` / `nameserver 172.20.0.10` / `options ndots:5` |
-| Pod NIC | eth0 MTU **9001**（巨型帧）、TCP 拥塞控制 `cubic`、iperf3 `tcp_mss_default: 8949` |
-| EC2 网络规格 | m5.xlarge “Up to 10 Gigabit”——基线 **1.25 Gbps**、峰值 **10 Gbps**、4 vCPU（对比：m5.large 基线 0.75 Gbps、峰值 10 Gbps、2 vCPU）。使用 `aws ec2 describe-instance-types` 验证；需要 ENA |
-| 定价 | usagetype `APN2-DataTransfer-Regional-Bytes`、“Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses”、**$0.01/GB**（`aws pricing get-products --region us-east-1`，查询于 2026-09） |
-| 工具 | `nicolaka/netshoot:v0.14` —— iperf **3.19**、fortio **1.69.5**、iputils ping 20250605、tcpdump 4.99.5；DNS 客户端 `python:3.12-slim`（Debian 13、**glibc 2.41**、Python 3.12.14） |
-| 测试时段 | 2026-09-02 07:58–08:40 UTC（首个 Pod 于 07:58:22Z，DNS Pod 于 08:16:24Z） |
+| Pod 网卡 | eth0 MTU **9001**（巨型帧），TCP 拥塞控制 `cubic`，iperf3 `tcp_mss_default: 8949` |
+| EC2 网络规格 | m5.xlarge“最高 10 Gigabit”：基线 **1.25 Gbps**、峰值 **10 Gbps**、4 vCPU（对比：m5.large 基线 0.75 Gbps、峰值 10 Gbps、2 vCPU）。通过 `aws ec2 describe-instance-types` 验证；需要 ENA |
+| 定价 | usagetype `APN2-DataTransfer-Regional-Bytes`，“Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses”，**$0.01/GB**（通过 `aws pricing get-products --region us-east-1` 查询，查询时间为 2026-09） |
+| 工具 | `nicolaka/netshoot:v0.14`（iperf **3.19**、fortio **1.69.5**、iputils ping 20250605、tcpdump 4.99.5）；DNS 客户端 `python:3.12-slim`（Debian 13、**glibc 2.41**、Python 3.12.14） |
+| 测试时段 | 2026-09-02 07:58–08:40 UTC（首个 Pod 于 07:58:22Z 启动，DNS Pod 于 08:16:24Z 启动） |
 
-“Up to”表示可突发网络：实例拥有网络 I/O 积分时可以使用峰值带宽，积分耗尽后会向基线限速（AWS EC2 User Guide，“Amazon EC2 instance network bandwidth”）。测量 2 中的持续运行仅表明该限制未在 180 s 内触发（未观察到向基线降速，且没有测试更长时间）。
+AWS 将突发带宽描述为尽力而为，即使网络 I/O 积分仍有余额也是如此；入站和出站流量使用独立的积分池。新实例以最大积分启动，但峰值带宽的可用性和突发持续时间各不相同。本次 180 s 测试只能说明在测试时段内未观察到吞吐量降至基线的现象。记录的 m5.xlarge 1.25 Gbps 基线 / 10 Gbps 峰值也见于官方的 [M5 网络规格](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html)；当前积分行为说明见 [EC2 带宽指南](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html)。
 
-本次运行期间的装置放置：
+测试期间的工作负载放置情况：
 
-| Pod | IP | 节点 | 区域 | 角色 / requests |
+| Pod | IP | 节点 | 可用区 | 角色 / requests |
 |---|---|---|---|---|
 | `cli` | 10.0.2.109 | ip-10-0-2-128（nodeclaim `system-76r87`） | ap-northeast-2a | 客户端；2500m / 1Gi |
-| `srv-same` | 10.0.2.72 | ip-10-0-2-128 — 与 `cli` 同一节点（required podAffinity） | ap-northeast-2a | 服务器；200m / 256Mi |
-| `srv-a` | 10.0.2.37 | ip-10-0-2-20（nodeclaim `system-ksrbg`，与 `cli` podAntiAffinity） | ap-northeast-2a | 服务器；2800m / 1Gi |
+| `srv-same` | 10.0.2.72 | ip-10-0-2-128，与 `cli` 位于同一节点（通过 required podAffinity） | ap-northeast-2a | 服务器；200m / 256Mi |
+| `srv-a` | 10.0.2.37 | ip-10-0-2-20（nodeclaim `system-ksrbg`，与 `cli` 使用 podAntiAffinity） | ap-northeast-2a | 服务器；2800m / 1Gi |
 | `srv-b` | 10.0.3.65 | ip-10-0-3-32（nodeclaim `system-svdvk`） | ap-northeast-2b | 服务器；2500m / 1Gi |
-| `dns-default` | 10.0.2.5 | ip-10-0-2-20（与 `srv-a` podAffinity） | ap-northeast-2a | glibc 解析器，默认 `ndots:5` |
+| `dns-default` | 10.0.2.5 | ip-10-0-2-20（与 `srv-a` 使用 podAffinity） | ap-northeast-2a | glibc 解析器，默认 `ndots:5` |
 | `dns-ndots1` | 10.0.2.143 | ip-10-0-2-20 | ap-northeast-2a | glibc 解析器，`dnsConfig.options ndots=1` |
 
-服务器 Pod 运行 `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`，每个基准 Pod 均带有 `karpenter.sh/do-not-disrupt: "true"`。`srv-a` 最初请求 m5.large / 1500m，但 Karpenter 报告 `no instance type has enough resources`——DaemonSet 开销占用了 m5.large 的 1930m 可分配资源中的 821m——因此改为 m5.xlarge / 2800m。
+服务器 Pod 运行 `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`，每个基准测试 Pod 都带有 `karpenter.sh/do-not-disrupt: "true"`。最初为 `srv-a` 请求的是 m5.large / 1500m，但 Karpenter 报告 `no instance type has enough resources`（DaemonSet 开销占用 m5.large 的 1930m 可分配资源中的 821m），因此改为 m5.xlarge / 2800m。
 
-### 装置 manifest
+### 测试工作负载清单
 
-仅移除了较长的英文注释头；`nodeSelector`、`affinity`、`requests`、`command` 和 `annotations` 与实际运行的内容完全一致。由于该装置只使用 Pod IP，因此没有 Service 对象（原因见“注意事项”）。
+以下内容是记录的测试工作负载，保留了其中的历史选择器、requests、镜像、命令和注解。它不包含任何应用 Service 对象。仅凭这些选择器本身无法保证使用全新或隔离的节点。重新测试前，请根据获批的测试 NodePool、可用 AZ 和资源预算调整副本；不要未经评估就将其部署到共享的 `system` 池。请记录镜像摘要和工具版本：可变镜像标签以及 netshoot 在构建时下载工具的做法，无法保证使用原始二进制文件。下文修订后的步骤与这份历史材料是分开的。
 
 ```yaml
 apiVersion: v1
@@ -63,7 +65,7 @@ metadata:
   labels:
     bench: net
 ---
-# client — fresh m5.xlarge in ap-northeast-2a
+# client: fresh m5.xlarge in ap-northeast-2a
 apiVersion: v1
 kind: Pod
 metadata:
@@ -84,7 +86,7 @@ spec:
       resources:
         requests: { cpu: "2500m", memory: "1Gi" }
 ---
-# same-node — co-located with cli through required podAffinity
+# same-node: co-located with cli through required podAffinity
 apiVersion: v1
 kind: Pod
 metadata:
@@ -107,7 +109,7 @@ spec:
       resources:
         requests: { cpu: "200m", memory: "256Mi" }
 ---
-# same-AZ — same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
+# same-AZ: same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -134,7 +136,7 @@ spec:
       resources:
         requests: { cpu: "2800m", memory: "1Gi" }
 ---
-# cross-AZ — fresh m5.xlarge in ap-northeast-2b
+# cross-AZ: fresh m5.xlarge in ap-northeast-2b
 apiVersion: v1
 kind: Pod
 metadata:
@@ -157,7 +159,7 @@ spec:
         requests: { cpu: "2500m", memory: "1Gi" }
 ```
 
-两个 DNS Pod 被放置在与 `srv-a` 相同的节点上。`app` 容器使用 glibc（`python:3.12-slim`、Debian 13、glibc 2.41）：本页测量 glibc 解析器，未测量其他解析器（musl/alpine）的结果；`sniffer`（netshoot）共享 Pod 的网络命名空间，因此其 tcpdump 能看到 `app` 发送的每一项查询。这两个 Pod 唯一的差异是 `dnsConfig`。
+报告称，两个 DNS Pod 与 `srv-a` 位于同一节点。报告中的 `app` 镜像为 Debian 13 / glibc 2.41；未测量 musl 和其他解析器。`sniffer` 与应用共享 Pod 网络命名空间，因此在集群允许抓包的情况下，它可以捕获匹配的应用 DNS 数据包。若要通过下例创建两个 DNS 对象，请复制此配置：将第二个对象的名称和 `app` 标签改为 `dns-ndots1`，并且仅在第二个对象中取消注释 `dnsConfig`。两个对象应使用相同镜像；重新测试时，请固定并记录镜像摘要。
 
 ```yaml
 apiVersion: v1
@@ -190,262 +192,350 @@ spec:
       resources: { requests: { cpu: "50m", memory: "64Mi" } }
 ```
 
-## 测量 1 — RTT 和 HTTP 延迟：同节点 → 同一 AZ → 跨 AZ
+## 测量 1. RTT 和 HTTP 延迟：同节点 → 同 AZ → 跨 AZ
 
-先使用 ICMP 测量纯网络路径（`ping -c 200 -i 0.05 -q`），然后使用 fortio 将相同的三条路径作为 HTTP/1.1 和 gRPC 请求进行测试。列出单个冷 `curl` 请求的连接 / 总时间供参考。
+ICMP 探测（`ping -c 200 -i 0.05 -q`）用于刻画空闲路径，包括端点内核处理和调度。随后通过 HTTP/1.1 和 gRPC 测试相同路径。表中还列出了一次新建连接的 `curl` connect / total 时间，供参考。
 
-| 路径 | RTT 最小 / **平均** / 最大 / mdev (ms) | 丢失 | curl，1 个冷请求：连接 / 总计 |
+| 路径 | RTT 最小值 / **平均值** / 最大值 / mdev (ms) | 丢包 | curl，1 次冷请求：connect / total |
 |---|---|---|---|
 | 同节点 → 10.0.2.72 | 0.021 / **0.040** / 0.089 / 0.007 | 0/200 | 0.194 ms / 0.497 ms |
-| 同一 AZ → 10.0.2.37 | 0.300 / **0.339** / 0.450 / 0.017 | 0/200 | 0.497 ms / 2.333 ms |
+| 同 AZ → 10.0.2.37 | 0.300 / **0.339** / 0.450 / 0.017 | 0/200 | 0.497 ms / 2.333 ms |
 | 跨 AZ → 10.0.3.65 | 0.504 / **0.544** / 0.625 / 0.015 | 0/200 | 0.694 ms / 4.038 ms |
 
-差值：同一 AZ − 同节点 = +0.30 ms，跨 AZ − 同一 AZ = **+0.21 ms**，跨 AZ − 同节点 = +0.50 ms。三条路径都非常稳定——mdev 均为 0.017 ms 或更低。curl 的“总计”是包含进程启动的一次冷运行，因此仅作指示用途；请从下面的 fortio 表中读取延迟。
+观察到的差值：同 AZ − 同节点 = +0.30 ms，跨 AZ − 同 AZ = **+0.21 ms**，跨 AZ − 同节点 = +0.50 ms。此样本中报告的 mdev 值最高为 0.017 ms。curl 的 `time_total` 测量的是传输操作，而不是进程启动；单次观测不足以刻画其分布。参见 [curl 计时定义](https://curl.se/docs/manpage.html)。
 
-### HTTP/1.1 — 100 qps、4 个连接、keepalive、60 s（6,000 个请求）、ms
+### HTTP/1.1：100 qps、4 个连接、keepalive、60 s（6,000 个请求），单位 ms
 
-| 路径 | 平均 | **p50** | p90 | p99 | p99.9 | 最大 | 最小 |
+| 路径 | 平均值 | **p50** | p90 | p99 | p99.9 | 最大值 | 最小值 |
 |---|---|---|---|---|---|---|---|
 | 同节点 | 0.260 | **0.259** | 0.299 | 0.350 | 1.267 | 2.080 | 0.111 |
-| 同一 AZ | 0.468 | **0.461** | 0.560 | 0.667 | 0.783 | 2.823 | 0.336 |
+| 同 AZ | 0.468 | **0.461** | 0.560 | 0.667 | 0.783 | 2.823 | 0.336 |
 | 跨 AZ | 0.706 | **0.704** | 0.782 | 0.812 | 1.150 | 4.581 | 0.551 |
 
-### gRPC ping — 100 qps、4 个连接、30 s（3,000 个请求）、ms
+### gRPC ping：100 qps、4 个连接、30 s（3,000 个请求），单位 ms
 
-| 路径 | 平均 | **p50** | p90 | p99 | p99.9 | 最大 | 最小 |
+| 路径 | 平均值 | **p50** | p90 | p99 | p99.9 | 最大值 | 最小值 |
 |---|---|---|---|---|---|---|---|
 | 同节点 | 0.410 | **0.397** | 0.449 | 0.869 | 1.187 | 1.314 | 0.241 |
-| 同一 AZ | 0.601 | **0.592** | 0.687 | 0.889 | 1.052 | 1.105 | 0.448 |
+| 同 AZ | 0.601 | **0.592** | 0.687 | 0.889 | 1.052 | 1.105 | 0.448 |
 | 跨 AZ | 0.878 | **0.865** | 0.967 | 1.209 | 2.582 | 2.826 | 0.692 |
 
-响应体约为 75 字节（fortio echo，空 payload），且每次运行均以 0 错误（200 / SERVING）完成。
+报告描述的 HTTP 回显正文约为 75 字节，请求负载为空，所有测试均无错误。请分别检查每种协议的结果计数器：HTTP 状态码 200、gRPC Ping 结果和 gRPC 健康检查的 `SERVING` 是不同的响应；`-grpc -ping` 选择的是 Ping，而不是默认的健康检查工作负载。
 
-**如何解读。**HTTP p50 是 ping 平均值加上 0.12–0.22 ms（0.259 − 0.040 ≈ 0.22、0.461 − 0.339 ≈ 0.12、0.704 − 0.544 ≈ 0.16）——该余量来自客户端和服务器用户空间栈。AZ 跳转在 p50 上增加 **+0.24 ms**（0.461 → 0.704），与 ping 的 +0.21 ms 大小相同，也接近节点跳转（+0.20 ms，0.259 → 0.461）。换言之，“同节点 → 不同节点”和“同一 AZ → 不同 AZ”各自都是约 0.2 ms 的恒定阶跃。每条路径上 gRPC ping p50 均比 HTTP/1.1 高约 0.13–0.16 ms（0.397 / 0.592 / 0.865 对比 0.259 / 0.461 / 0.704）——这是 fortio ping 中 HTTP/2 framing 加 protobuf 所致。路径差异最大的地方在尾部：HTTP p99 为 0.350 → 0.667 → 0.812 ms，而 gRPC p99.9 为 1.187 → 1.052 → **2.582 ms**，只有跨 AZ 路径超过 2 ms。
+**如何解读。** HTTP p50 比 ping 平均值高约 0.22 / 0.12 / 0.16 ms，但用不同协议的不同统计值相减，无法单独得出用户空间开销。观测到的 HTTP p50 增幅为 +0.202 ms 和 +0.243 ms；它们并不是固定的每节点或每 AZ 成本。在这些实现中，gRPC p50 比 HTTP p50 高 0.138 / 0.131 / 0.161 ms，但这并不能证明其中有多少来自 HTTP/2、序列化、调度或客户端/服务器代码。HTTP p99 为 0.350 → 0.667 → 0.812 ms；gRPC p99.9 为 1.187 → 1.052 → **2.582 ms**。这些是每个单元格各运行一次所报告的分布。
 
-> **一个对比点。**在本仓库的 [Istio sidecar 与 ambient 测量](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)中，单个 sidecar 在 p50 上增加 **+1.29 ms**。此处一次 AZ 跳转的成本为 +0.21–0.24 ms——**一次 mesh 跳转的成本高于一次 AZ 跳转。**在将慢请求归咎于“另一个 AZ”之前，先数一数其路径中的代理。
+> **与服务网格基准测试对比。** [Istio sidecar 与 ambient 报告](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)记录了其完整 sidecar 场景中 **+1.29 ms** 的 p50 差值（2.11 − 0.82 ms），并非单个代理的独立开销。该测试使用 Graviton 硬件、200 qps、16 个连接和 Fortio 1.69.4，与本次 M5 / 100 qps / 4 连接测试不同。这些数字不能相加，也不能作为普遍的“网格跳数”成本与“AZ 跳数”成本进行比较排序。
 
-### 新连接的成本 — keepalive=false、100 qps、4 个连接、30 s（3,000 个请求）、ms
+### 新建连接的成本：keepalive=false、100 qps、4 个连接、30 s（3,000 个请求），单位 ms
 
-当每个请求都建立新的 TCP 连接（fortio `-keepalive=false`）时，延迟会怎样？
+每个请求都新建一个 TCP 连接时（fortio `-keepalive=false`），延迟会怎样变化？
 
-| 路径 | 平均 | **p50** | p90 | p99 | p99.9 | 最大 | 最小 | 相比 keepalive p50 |
+| 路径 | 平均值 | **p50** | p90 | p99 | p99.9 | 最大值 | 最小值 | 相对 keepalive p50 |
 |---|---|---|---|---|---|---|---|---|
 | 同节点 | 0.672 | **0.664** | 0.782 | 0.957 | 1.253 | 1.306 | 0.364 | **+0.405 ms** |
-| 同一 AZ | 1.066 | **1.079** | 1.185 | 1.369 | 1.582 | 1.795 | 0.769 | **+0.618 ms** |
+| 同 AZ | 1.066 | **1.079** | 1.185 | 1.369 | 1.582 | 1.795 | 0.769 | **+0.618 ms** |
 | 跨 AZ | 1.530 | **1.517** | 1.678 | 1.796 | 1.981 | 2.009 | 1.300 | **+0.813 ms** |
 
-一个新连接大约需要**一个 RTT（TCP 握手）加上约 0.3 ms 的 socket 建立和拆除时间**。路径的 RTT 越大，附加成本越高：跨 AZ 时，单个请求的 p50 从 0.704 变为 1.517 ms——**超过两倍**。连接池（HTTP keepalive、gRPC channel 重用、数据库连接池）不是性能优化；它是所有跨 AZ 调用的前提条件（并且和任何每请求一个连接的客户端一样，每个新连接还会留下一个 TIME_WAIT socket——此处未测量）。
+观察到的增幅为 **+0.405 / +0.618 / +0.813 ms**。新建 TCP 连接会增加建连开销，但这些测量无法证明存在固定的“1 个 RTT + 0.3 ms”分解。连接复用值得结合真实工作负载进行测量优化；但它不是跨 AZ 正确运行的前提。根据连接关闭方式，连接频繁创建和销毁也可能增加主动关闭端的 TIME_WAIT 状态；本次未测量套接字和 TIME_WAIT。
 
-### 固定连接池的最大 qps — 延迟就是吞吐量（闭环、16 个连接、20 s）
+### 固定连接池的最大 qps：延迟即吞吐量（闭环、16 个连接、20 s）
 
-使用 `-qps 0`（无限制、闭环）时，16 个连接可持续的最大请求速率会将延迟差异转变为吞吐量差异。
+使用 `-qps 0`（无限制，闭环）时，16 个连接所能维持的最大请求速率会将延迟差异转化为吞吐量差异。
 
-| 路径 | 请求数 | **达到的 qps** | 平均 ms | p50 | p90 | p99 | p99.9 | 最大 |
+| 路径 | 请求数 | **达到的 qps** | 平均值 ms | p50 | p90 | p99 | p99.9 | 最大值 |
 |---|---|---|---|---|---|---|---|---|
 | 同节点 | 899,827 | **44,991** | 0.355 | 0.249 | 0.733 | 1.695 | 3.389 | 13.593 |
-| 同一 AZ | 770,156 | **38,507** | 0.415 | 0.396 | 0.537 | 0.728 | 1.147 | 4.502 |
+| 同 AZ | 770,156 | **38,507** | 0.415 | 0.396 | 0.537 | 0.728 | 1.147 | 4.502 |
 | 跨 AZ | 512,060 | **25,602** | 0.624 | 0.597 | 0.770 | 0.949 | 1.293 | 4.725 |
 
-Little 定律（推导：吞吐量 = 并发数 ÷ 延迟）几乎完全成立——16 ÷ 0.000355 s = 45,070（实测 44,991）、16 ÷ 0.000415 = 38,554（38,507）、16 ÷ 0.000624 = 25,641（25,602）。对于固定大小的池，AZ 跳转的 +0.2 ms **将可达到的吞吐量降低 34 %**（38.5k → 25.6k qps）。对于请求/响应服务，另一个 AZ 昂贵的原因是此延迟而非带宽。同节点的 p99/最大值比同一 AZ 更差也并非网络问题：在 45k qps 下，客户端和服务器共享一个节点的 4 vCPU 并争用 CPU。
+对于稳定的闭环负载，若约有 16 个请求在途且客户端思考时间很短，根据 Little 定律，吞吐量 ≈ 并发数 / 平均延迟：16 / 0.000355 = 45,070（报告值为 44,991）、16 / 0.000415 = 38,554（38,507）以及 16 / 0.000624 = 25,641（25,602）。本次测试中，报告的跨 AZ 速率比同 AZ **低 33.5%**。这一关系无法确定延迟的唯一原因，也不能预测普遍适用的 AZ 额外开销。共享 CPU 争用或许能解释同节点路径尾延迟较差的现象，但本次没有通过性能分析确认这一原因。
 
-## 测量 2 — 吞吐量：5 Gbps 单流上限和 10 Gbps 实例上限
+## 测量 2. 吞吐量：5 Gbps 单流上限和 10 Gbps 实例上限
 
-iperf3 3.19、TCP、每次运行 20 s、`-J`、客户端 `cli`。CPU 列为 iperf3 自身的每进程数值，其中 100 % = 一个 vCPU。
+iperf3 3.19、TCP、每次运行 20 s、`-J`、客户端 `cli`。CPU 列是 iperf3 自身报告的进程数据，其中 100% = 1 个 vCPU。
 
-| 路径 | 流数 (-P) | 发送 Gbps | 接收 Gbps | 重传 | 已发送字节 | 客户端 CPU | 服务器 CPU | 发送方 TCP 平均 RTT（流 1） | 最大 snd_cwnd |
+| 路径 | 流数 (-P) | 发送 Gbps | 接收 Gbps | 重传次数 | 发送字节数 | 客户端 CPU | 服务器 CPU | 发送端 TCP 平均 RTT（流 1） | 最大 snd_cwnd |
 |---|---|---|---|---|---|---|---|---|---|
-| 同节点 (cli→srv-same) | 1 | **29.97** | 29.97 | 13 | 74,921,541,632 | **99.8 %** | 80.9 % | 34 µs | 1,861,392 B |
-| 同节点 | 8 | **48.15** | 48.08 | 14,567 | 120,375,083,008 | 179.0 % | 186.9 % | 201 µs / 767 µs（流 1、2） | 5,888,442 B |
-| 同一 AZ (cli→srv-a, 2a→2a) | 1 | **4.96** | 4.96 | 4 | 12,411,731,968 | 19.5 % | 15.4 % | **5,641 µs** | 4,349,214 B |
-| 同一 AZ | 8 | **9.94** | 9.93 | 5,874 | 24,846,139,392 | 36.3 % | 159.3 % | 2,720 µs / 1,626 µs | 1,163,370 B |
-| 跨 AZ (cli→srv-b, 2a→2b) | 1 | **4.96** | 4.96 | 2 | 12,411,994,112 | 20.0 % | 22.5 % | **5,420 µs** | 4,304,469 B |
-| 跨 AZ | 8 | **9.94** | 9.93 | 5,979 | 24,845,090,816 | 36.7 % | 138.2 % | 3,671 µs / 3,237 µs | 1,226,013 B |
+| 同节点（cli→srv-same） | 1 | **29.97** | 29.97 | 13 | 74,921,541,632 | **99.8%** | 80.9% | 34 µs | 1,861,392 B |
+| 同节点 | 8 | **48.15** | 48.08 | 14,567 | 120,375,083,008 | 179.0% | 186.9% | 201 µs / 767 µs（流 1、2） | 5,888,442 B |
+| 同 AZ（cli→srv-a，2a→2a） | 1 | **4.96** | 4.96 | 4 | 12,411,731,968 | 19.5% | 15.4% | **5,641 µs** | 4,349,214 B |
+| 同 AZ | 8 | **9.94** | 9.93 | 5,874 | 24,846,139,392 | 36.3% | 159.3% | 2,720 µs / 1,626 µs | 1,163,370 B |
+| 跨 AZ（cli→srv-b，2a→2b） | 1 | **4.96** | 4.96 | 2 | 12,411,994,112 | 20.0% | 22.5% | **5,420 µs** | 4,304,469 B |
+| 跨 AZ | 8 | **9.94** | 9.93 | 5,979 | 24,845,090,816 | 36.7% | 138.2% | 3,671 µs / 3,237 µs | 1,226,013 B |
 
-这里有四点需要解读。
+这里有四点值得注意。
 
-1. **同节点是内存复制速度。**单个流达到 29.97 Gbps 时，客户端 iperf3 使用了一个核心的 99.8 %；8 个流将其推至 48.15 Gbps。通过一对 veth 的数据包不会经过 NIC 或 ENA shaper，因此这些是此实例的 CPU 数据，在其他实例系列上会不同。
-2. **节点之间的单个 TCP 流在 4.96 Gbps 停止——同一 AZ 与跨 AZ 精确到小数点后两位都相同。**AWS 文档说明，在 cluster placement group 外部，单个流被限制为 5 Gbps（“Amazon EC2 instance network bandwidth”），测得的正是此限制。该流仅使用约一个核心的 20 %，因此 CPU 不是瓶颈。
-3. **八个流达到 9.94 Gbps = m5.xlarge 10 Gbps 峰值**，同样在两条路径上完全一致。**跨越 AZ 边界不会降低带宽。**仅当达到实例上限时才出现重传（8 个流为 5,874 / 5,979，而 1 个流为 2–13）——这是符合 ENA allowance shaping 在上限处丢包的**间接信号**；本次运行没有收集 ENA `*_allowance_exceeded` 计数器（注意事项）。
-4. **流饱和时，搭乘它的每个请求都会等待。**单个流固定在上限时，发送方 TCP RTT 从空闲 ping RTT 的 0.34 ms（同一 AZ）/ 0.54 ms（跨 AZ），增长为拥塞窗口约 4.3 MB 下的 **5.6 ms** / **5.4 ms**。该延迟是 shaper 中的排队，因此与批量传输复用在同一 TCP 连接上的请求/响应交换会损失约 5 ms。
+1. **同节点流量绕过了物理网卡。** 单流结果为 29.97 Gbps，客户端进程 CPU 为 99.8%；8 个流达到 48.15 Gbps。主机路由、两个 Pod 的 veth 路径、内核处理和 CPU 调度仍然会产生影响。这是一个有 CPU 压力证据的网络基准测试，而不是纯内存复制速度测量。
+2. **两次节点间单流测试均达到 4.96 Gbps。** 这与集群置放群组之外通常适用的 5 Gbps 限制相符。AWS 还说明，集群置放群组内的流量最高可达 10 Gbps；同一 AZ 中符合条件的 ENA Express 路径最高可达 25 Gbps。iperf3 进程 CPU 较低，本身不足以排除所有主机/网络处理限制。
+3. **两次 8 流测试均达到 9.94 Gbps。** 这表明在该时段内，两条路径的实测吞吐量相近。即使只有一个流也发生了重传（节点间路径分别为 4 / 2 次），8 个流时重传增加（5,874 / 5,979 次）；单靠重传次数无法判断是否发生了 ENA 限流，也无法确定丢包位置。未采集 ENA allowance 计数器。
+4. **负载下的 TCP RTT 高于空闲 ICMP RTT。** 单流发送端报告约 **5.6 / 5.4 ms**，拥塞窗口约为 4.3 MB；空闲 ping 平均值则为 0.34 / 0.54 ms。排队可能是原因之一，但协议、采样和负载均不相同。本次没有测量队列位置，也没有测量每个多路复用 RPC 是否必然增加 5 ms。
 
-MSS 8949 源自 9001 字节 MTU（巨型帧），已发送字节列是下一节成本计算的基础。
+报告中的 MSS 8949 与 9001 字节 MTU 及观测到的 IPv4/TCP 开销相符；有效 MSS 还取决于报头和路径 MTU。下方的发送字节数是应用传输量，并非经独立核实的计费使用量。
 
-> **所以呢：**一个 gRPC stream、一个 Kafka replica fetcher、一次 volume copy——位于不同节点的两个 Pod 之间的“一条连接”无论承载什么，均不会超过约 5 Gbps。要使用实例的 10 Gbps，必须将工作拆分到并行连接（`num.replica.fetchers`、multipart uploads、并行 rsync 等）；反之，“保留在一个 AZ 内会使带宽翻倍”的预期也不受这些测量支持。
+> 对于这种普通 EC2 路径，并行流相比单流更充分地利用了实例可用的突发带宽。提高并行度也会改变 CPU 负载、拥塞和成本。调整 Kafka fetcher 或传输并发数之前，应先检查实际实例/路径限制；这些测量既不支持“每个连接都被限制在 5 Gbps”，也不支持“一个 AZ 总能使带宽翻倍”。
 
-### 3 分钟持续运行与突发积分
+### 3 分钟持续测试与突发积分
 
-“Up to 10 Gigabit”的基线是 1.25 Gbps。积分耗尽后，实例应从峰值降向基线，因此以 10 s 间隔监控了一个 4 流跨 AZ 运行 180 s（`iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J`）。
+报告中的 m5.xlarge 基线为 1.25 Gbps，尽力而为的峰值最高可达 10 Gbps。历史上的四流跨 AZ 测试持续 180 s，并以 10 s 为间隔记录数据（`iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J`）。该 IP 属于记录中的测试工作负载；新测试前请先获取当前 Pod IP。
 
 | 项目 | 值 |
 |---|---|
-| 每个 10 s 间隔的 Gbps（18 个间隔） | 9.94、9.93 ×12、9.92、9.93 ×4 —— **最小 9.92、最大 9.94** |
+| 每个 10 s 时间间隔的 Gbps（共 18 个间隔） | 9.94、9.93 ×12、9.92、9.93 ×4（**最小值 9.92，最大值 9.94**） |
 | 总发送量 | 223,376,179,200 B = 180.0 s 内 **223.4 GB**（9.93 Gbps） |
-| 重传 | 44,842（≈ 249/s；每个 10 s 间隔 2,273–2,669） |
-| CPU | 客户端 30.7 %（系统 30.1 %），服务器 54.2 %（系统 52.2 %） |
+| 重传次数 | 44,842（约 249/s；每个 10 s 间隔为 2,273–2,669 次） |
+| CPU | 客户端 30.7%（system 30.1%），服务器 54.2%（system 52.2%） |
 
-**在 180 s 内没有观察到向 1.25 Gbps 基线的下降。**这并不表示突发积分不存在。AWS 记录，在“Up to”实例上，较长时间的持续传输可能被限速至基线；此处没有测试超过 180 s 的情况，因此本次运行无法说明何时——或者对于新节点是否——达到该点。如果正在为 m5.xlarge 上持续数小时的备份、重新平衡或重放做计划，请按 1.25 Gbps 基线预算（其他规格有各自的基线），并将 10 Gbps 视为额外收益。
+**在 180 s 内未观察到吞吐量降至 1.25 Gbps。** 这并不能证明积分无限，也不能保证带宽持续处于峰值。AWS 说明，突发为可变的尽力而为模式；积分耗尽后会限流至接近基线。规划长时间备份和重新平衡时，应依据适用的基线和实测工作负载需求，而不是从这次短时测试外推。
 
-## 测量 3 — 真正的跨 AZ 成本是账单
+## 测量 3. 跨 AZ 数据传输成本模型
 
-测量 1 和 2 显示，AZ 跳转增加 +0.2 ms 延迟，但带宽不受影响。那么不同 AZ 之间真正的差异在哪里？在账单上。
+本节保留报告中的成本计算，作为估算值。基准测试提供了有效载荷字节数和公开标价，并未提供成本和使用情况报告（CUR）或发票。
 
-在一个区域内，AWS 对 AZ 跨越两侧均收取 $0.01/GB——发送 AZ 的“out”和接收 AZ 的“in”（EC2 On-Demand pricing page，“Data Transfer within the same AWS Region”）。此账户的 Pricing API 条目为 `APN2-DataTransfer-Regional-Bytes`，“Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses”，**$0.0100000000 USD/GB**。对于单向批量传输，发送 AZ 的“out”按 $0.01/GB 计费，接收 AZ 的“in”也按 $0.01/GB 计费，因此在一个账户内，实际为**每 GB 跨越 AZ 边界 $0.02**（推导：$0.01 × 2）。
+对于同一 Region 内 AZ 之间通过 EC2 私有 IP 直接传输数据，[EC2 定价页面](https://aws.amazon.com/ec2/pricing/on-demand/)说明每端收费 $0.01/GB。报告中的公开 Pricing API 项目为 `APN2-DataTransfer-Regional-Bytes`，价格为 **$0.0100000000 USD/GB**。`get-products` 返回的是目录价格，不是特定账户的实付费率。单向有效载荷传输可能同时产生发送端“out”和接收端“in”费用；并不要求存在同等规模的反向传输。其他 AWS 服务路径可能遵循不同的计费规则。
 
-| 场景 | 跨越 AZ 边界的字节数 | 成本（推导：GB × $0.01 × 2） |
+| 场景 | 历史十进制 GB 模型中的有效载荷量 | 估算成本（模型 GB × $0.01 × 2） |
 |---|---|---|
-| 本页的 180 s 持续运行（实测） | 223.4 GB | 223.4 × $0.01 = **每个方向 $2.23，合计 $4.47** |
-| 测量 2 中所有跨 AZ 传输（实测：12.41 + 24.85 + 223.38 GB） | 260.6 GB | ≈ 每个方向 $2.61，**合计 ≈ $5.21**（fortio 和 ping 流量低于 0.2 GB，忽略） |
-| 跨 AZ 平均 1 Gbps 持续 30 天（**假设**） | 0.125 GB/s × 86,400 s × 30 天 = 324,000 GB ≈ **324 TB** | 324,000 × $0.02 ≈ **$6,480 / 月** |
-| 分布在 3 个 AZ 的 RF3 StatefulSet，leader ingest 为 100 MiB/s（**假设**，仅复制流量） | 两个 follower 各位于另一个 AZ → 2 × 100 MiB/s = 209,715,200 B/s × 2,592,000 s ≈ 543,600 GB ≈ **544 TB / 月** | 543,600 × $0.02 ≈ **$10,870 / 月** |
+| 180 s 测试（测得的有效载荷；估算成本） | 223.4 GB | 223.4 × $0.01 ≈ **每端 $2.23，总计 $4.47** |
+| 测量 2 中的跨 AZ iperf3 传输（12.41 + 24.85 + 223.38 GB） | 260.6 GB | 每端约 $2.61，**总计约 $5.21**（不含其他流量） |
+| 30 天内平均每秒有 1 Gbps 跨 AZ 传输（**假设**） | 0.125 GB/s × 86,400 s × 30 天 = 324,000 GB ≈ **324 TB** | 324,000 × $0.02 ≈ **$6,480 / 月** |
+| 横跨 3 个 AZ 的 RF3 StatefulSet，leader ingest 为 100 MiB/s（**假设**，仅计算复制流量） | 两个 follower 均位于其他 AZ → 2 × 100 MiB/s = 209,715,200 B/s × 2,592,000 s ≈ 543,600 GB ≈ **544 TB / 月** | 543,600 × $0.02 ≈ **$10,870 / 月** |
 
-最下面两行不是测量值，而是按该单价得出的**估算**，且忽略了生产者/消费者流量和 AZ 放置。关键在于量级：三节点基准测试在三分钟内花费了 $4.47，全天持续运行则会变成每月数千美元。带宽不受损地跨越边界，但每个字节都带有价格标签。
+这四行成本均采用原始的**十进制换算方式，即 1 GB = 10⁹ 有效载荷字节**，作为建模假设。本次审核未能确认 EC2 的计费使用量是否采用相同换算方式。精确原始总量为：持续测试 223,376,179,200 B；全部三次跨 AZ iperf3 测试共 260,633,264,128 B。请根据 [CUR 数据传输记录](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)，核对实际计量单位、费率、两个计费端点、协议开销/重传以及适用的抵扣或折扣。后两行还假设 30 天内持续产生流量；复制流量不包括 producer/consumer 流量。**$4.47 和 $5.21 是估算值，并非已证实的实际支出。**
 
-**运维人员应该做什么。**
+**运维人员应采取的措施。**
 
-- **将流量保留在 AZ 内。**`Service.spec.trafficDistribution: PreferClose`——Kubernetes 1.31 中为 beta、1.33 中为 GA（Kubernetes 文档，“Traffic Distribution”）——使 kube-proxy 优先选择同一区域的 endpoint。**本次运行未测量它**——无法创建 Service（注意事项）——因此本页没有其效果的数值。
-- **按区域对齐有状态工作负载。**具有大量复制 fan-out 的 StatefulSet（Kafka RF3、分布式数据库）会将大部分复制字节跨 AZ 发送，如上表第四行所示。区域级放置和 AZ failover 设计见 [Zonal Cluster Operations guide](../ops/15-zonal-operations-guide.md)。
-- **了解批量传输的方向和体量。**记录 AZ 备份、重新平衡和重放的流向及流量，并记住在同一账户中，“in”和“out”作为两个独立的账单项计费。
+- **在适用情况下优先选择合适的本地端点。** 当前 Kubernetes 文档使用 `Service.spec.trafficDistribution: PreferSameZone`；`PreferClose` 是已弃用的别名。这只是优先策略，会在必要时回退，并非严格的 AZ 限制。请检查 API server、kube-proxy 版本和功能支持情况；本集群记录的是 1.36 控制平面搭配 1.35 kube-proxy。此偏好和应用 Service 路径均未经过测量，也不会影响直接使用 Pod IP 的流量。
+- **在本地性与容错之间取得平衡。** 采用 AZ 感知型读取或客户端可减少不必要的数据传输，但将所有 RF3 副本迁移到一个 AZ 会失去 AZ 故障保护。请保留所需的副本/故障转移设计；参见 [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md)。
+- **测量两个计费端点。** 跟踪备份、重新平衡和重放的源/目标 AZ 及计量流量。汇总相关的“in”和“out”使用记录；这些记录可能属于不同账户。不要仅凭有效载荷字节数推断最终账单。
 
-## 测量 4 — DNS：ndots:5 的查询放大
+## 测量 4. DNS：ndots:5 导致的查询放大
 
-![在 ndots:5 下，一次 glibc 查找会以 A+AAAA 成对遍历四个搜索后缀（8 个 NXDOMAIN、10 次查询），然后绝对名称才得到响应；相比之下，末尾点查找在 2 次查询后结束。](../.gitbook/assets/en-networking-06-pod-network-benchmark-1.png)
+![在 ndots:5 下，一次 glibc 查询会遍历四个搜索后缀，每个后缀分别查询 A+AAAA（8 次 NXDOMAIN，共 10 次查询），之后绝对名称才得到应答；名称末尾加点的查询则以 2 次查询结束。](../.gitbook/assets/en-networking-06-pod-network-benchmark-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-06-pod-network-benchmark-1.html)
 
-EKS Pod 的 `/etc/resolv.conf` 有四个搜索域（`bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal`）和 `options ndots:5`。glibc 解析器会将点数少于 `ndots` 的任何名称**先尝试附加每个搜索后缀**，并为每个候选并行发送 A 和 AAAA（默认关闭 `single-request`）。因此有 3 个点的 `sts.ap-northeast-2.amazonaws.com`，必须先为全部四个候选收集 NXDOMAIN，才会查询绝对名称。方法：在 `dns-default` / `dns-ndots1` 的 `app` 容器中，执行一次冷 `socket.getaddrinfo(name, 80, AF_UNSPEC, SOCK_STREAM)` 调用，同时 `sniffer` sidecar 中的 tcpdump（`-i eth0 -nn udp port 53`）捕获并计数该次解析的 DNS 数据包；随后再解析相同名称 20 次并在进程内计时——这就是预热延迟。
+该图展示了记录中的 glibc 搜索序列。其中的 4.37 ms 截止于报告的 A 记录响应，并非完整的 `getaddrinfo` 调用；指向上游的箭头仅作说明，因为 Pod 抓包未观测到该段路径。“cache 30”是 TTL 上限，并不保证缓存命中 30 秒。
 
-### 单次解析的发送查询数与预热延迟（20 次重复）、ms
+记录中的 Pod 有四个搜索域，且设置了 `ndots:5`；该配置并非所有 EKS、DNS 策略、操作系统或节点设置都通用。对于此 glibc `AF_UNSPEC` 查询，每个候选名称都请求了 A 和 AAAA；四个搜索候选名称均返回 NXDOMAIN，之后绝对 STS 名称才解析成功。A/AAAA 的并发方式和查询数可能会随解析器选项、地址族、提前成功、重试和 TCP 回退而变化。历史抓包使用 `tcpdump -i eth0 -nn udp port 53`，只能观察 UDP DNS。报告描述了首次进程查询和随后 20 次计时重复查询；进程首次调用并不能证明 CoreDNS 或上游缓存当时处于冷状态。参见 [Kubernetes Pod DNS 配置](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)。
 
-| Pod / ndots | 名称（点数） | 发送查询数 | NXDOMAIN 响应数 | 预热最小 | **中位数** | p90 | 最大 |
+### 单次解析发送的查询数和预热延迟（重复 20 次），单位 ms
+
+| Pod / ndots | 名称（点号数） | 发送的查询数 | NXDOMAIN 响应数 | 预热最小值 | **中位数** | p90 | 最大值 |
 |---|---|---|---|---|---|---|---|
-| 默认 / 5 | `kubernetes.default` (1) | 4 | 2 | 0.87 | **1.71** | 1.97 | 2.61 |
-| 默认 / 5 | `kubernetes.default.svc.cluster.local` (4) | **10** | 8 | 1.53 | **3.63** | 4.45 | 6.41 |
-| 默认 / 5 | `kubernetes.default.svc.cluster.local.`（末尾点） | 2 | 0 | 0.33 | **0.46** | 1.09 | 1.58 |
-| 默认 / 5 | `sts.ap-northeast-2.amazonaws.com` (3) | **10** | 8 | 3.08 | **3.78** | 4.66 | 4.84 |
-| 默认 / 5 | `sts.ap-northeast-2.amazonaws.com.`（末尾点） | 2 | 0 | 0.42 | **0.80** | 1.25 | 2.17 |
-| 默认 / 5 | `www.amazon.com` (2) | **10** | 8 | 2.51 | **3.46** | 3.74 | 5.86 |
-| ndots1 / 1 | `kubernetes.default` (1) | **6** | 4 | 1.16 | **2.04** | 2.80 | 4.54 |
-| ndots1 / 1 | `kubernetes.default.svc.cluster.local` (4) | 2 | 0 | 0.35 | **0.97** | 1.08 | 1.35 |
+| default / 5 | `kubernetes.default`（1） | 4 | 2 | 0.87 | **1.71** | 1.97 | 2.61 |
+| default / 5 | `kubernetes.default.svc.cluster.local`（4） | **10** | 8 | 1.53 | **3.63** | 4.45 | 6.41 |
+| default / 5 | `kubernetes.default.svc.cluster.local.`（名称末尾有点） | 2 | 0 | 0.33 | **0.46** | 1.09 | 1.58 |
+| default / 5 | `sts.ap-northeast-2.amazonaws.com`（3） | **10** | 8 | 3.08 | **3.78** | 4.66 | 4.84 |
+| default / 5 | `sts.ap-northeast-2.amazonaws.com.`（名称末尾有点） | 2 | 0 | 0.42 | **0.80** | 1.25 | 2.17 |
+| default / 5 | `www.amazon.com`（2） | **10** | 8 | 2.51 | **3.46** | 3.74 | 5.86 |
+| ndots1 / 1 | `kubernetes.default`（1） | **6** | 4 | 1.16 | **2.04** | 2.80 | 4.54 |
+| ndots1 / 1 | `kubernetes.default.svc.cluster.local`（4） | 2 | 0 | 0.35 | **0.97** | 1.08 | 1.35 |
 | ndots1 / 1 | `kubernetes.default.svc.cluster.local.` | 2 | 0 | 0.34 | **0.40** | 0.97 | 1.17 |
-| ndots1 / 1 | `sts.ap-northeast-2.amazonaws.com` (3) | 2 | 0 | 0.45 | **0.54** | 1.22 | 1.42 |
+| ndots1 / 1 | `sts.ap-northeast-2.amazonaws.com`（3） | 2 | 0 | 0.45 | **0.54** | 1.22 | 1.42 |
 | ndots1 / 1 | `sts.ap-northeast-2.amazonaws.com.` | 2 | 0 | 0.47 | **0.75** | 1.20 | 1.30 |
-| ndots1 / 1 | `www.amazon.com` (2) | 2 | 0 | 0.63 | **0.90** | 1.27 | 2.74 |
+| ndots1 / 1 | `www.amazon.com`（2） | 2 | 0 | 0.63 | **0.90** | 1.27 | 2.74 |
 
-冷的首次解析（包括 glibc NSS 初始化；仅作指示用途）为：默认 / `sts` 6.22 ms、默认 / `sts.` 2.87 ms、默认 / `www.amazon.com` 9.58 ms、默认 / `kubernetes.default.svc.cluster.local` 7.40 ms、ndots1 / `kubernetes.default` 10.52 ms、ndots1 / `sts` 2.84 ms。
+报告中的进程首次调用时间为：default / `sts` 6.22 ms、default / `sts.` 2.87 ms、default / `www.amazon.com` 9.58 ms、default / `kubernetes.default.svc.cluster.local` 7.40 ms、ndots1 / `kubernetes.default` 10.52 ms，以及 ndots1 / `sts` 2.84 ms。这些时间包含解析器初始化开销，与下方的网络数据包时间线不同。
 
-**如何解读。**在默认 `ndots:5` 下，两个外部名称（`sts.…`、`www.amazon.com`）以及——或许令人意外的——**没有末尾点的集群 FQDN**（`kubernetes.default.svc.cluster.local`：4 个点，少于 5）均需要**10 次查询、8 个 NXDOMAIN，中位数 3.5–3.8 ms**。给相同名称加一个点（`….com.`），则变为 2 次查询 / 0.46–0.80 ms——**查询数仅为五分之一，且 `sts` 的预热中位数从 3.78 降至 0.80 ms，集群 FQDN 从 3.63 降至 0.46 ms**。短名称 `kubernetes.default` 在第二个候选（`svc.cluster.local`）匹配并停止在 4 次查询 / 1.71 ms。CoreDNS 的 `cache 30` 也最多缓存 NXDOMAIN 30 s，因此预热状态下昂贵的不是上游查找，而是**等待 5 次顺序的 Pod↔CoreDNS 往返**。
+**如何解读。** 在这些样本中，不带末尾点的外部名称和集群 FQDN 都产生了 **10 次查询 / 8 次 NXDOMAIN**。STS 名称末尾加点后，中位数从 3.78 降至 0.80 ms；集群 FQDN 从 3.63 降至 0.46 ms。`kubernetes.default` 在第二个搜索候选名称处解析成功，因此只需四次查询：搜索扩展并不总会遍历完整列表。[CoreDNS cache](https://coredns.io/plugins/cache/) 可以缓存否定响应，但 `cache 30` 设置的是 TTL 上限；响应 TTL 和最小值仍然适用，每个副本也有自己的缓存。除非另行配置，Kubernetes 插件的默认 TTL 为 5 s。即使命中缓存，顺序查询仍会发生，但本次抓包不能证明所有预热查询都避免了上游流量。
 
-### 实际遍历过程 — 一次 `sts.ap-northeast-2.amazonaws.com` 的冷解析（ndots:5、tcpdump、从第一个数据包起算 ms）
+### 查询过程：对 `sts.ap-northeast-2.amazonaws.com` 进行一次冷解析（ndots:5，tcpdump，时间相对首个数据包，单位 ms）
 
-| t (ms) | 发送至 172.20.0.10 的候选（并行 A + AAAA） | 响应 |
+| t (ms) | 发送到 172.20.0.10 的候选名称（并行查询 A + AAAA） | 响应 |
 |---|---|---|
-| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | NXDomain（权威，CoreDNS kubernetes plugin）于 0.92 / 1.14 |
-| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | NXDomain 于 2.01 / 2.26 |
-| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | NXDomain 于 3.15 / 3.41 |
-| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain（转发至 VPC resolver——非权威）于 3.68 / 3.93 |
-| 3.99 | `sts.ap-northeast-2.amazonaws.com.` | **A 10.0.3.84, A 10.0.2.129** 于 4.37（AAAA：无数据） |
+| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | 0.92 / 1.14 时返回 NXDomain（权威响应，CoreDNS kubernetes 插件） |
+| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | 2.01 / 2.26 时返回 NXDomain |
+| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | 3.15 / 3.41 时返回 NXDomain |
+| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | 3.68 / 3.93 时返回 NXDomain（转发到 VPC 解析器，非权威响应） |
+| 3.99 | `sts.ap-northeast-2.amazonaws.com.` | 4.37 时返回 **A 10.0.3.84、A 10.0.2.129**（AAAA：无数据） |
 
-10 次查询、8 个 NXDOMAIN、5 次顺序往返、端到端 4.37 ms——有用的响应在最后 0.38 ms 到达。每个候选的 Pod→CoreDNS→Pod 往返为 0.8–1.1 ms，其中包含 CoreDNS 处理时间及测量 1 中的 RTT 阶梯。`172.20.0.10` 通过 iptables 随机选择分配到两个 CoreDNS Pod，且其中一个位于另一个 AZ，因此**约一半 DNS 查询跨越 AZ 边界。**`sts.ap-northeast-2.amazonaws.com` 解析为两个私有 IP（10.0.2.x / 10.0.3.x），因为该 VPC 有一个 STS interface endpoint，每个 AZ 一个 ENI。没有末尾点的 `kubernetes.default.svc.cluster.local` 走过相同的路径；其 `.ap-northeast-2.compute.internal` 候选耗时 2.2 ms，因为 CoreDNS 将其向上游转发；整个遍历冷状态为 5.6 ms，而带末尾点时为 0.4–0.5 ms。
+表中记录了 10 次查询和 8 次 NXDOMAIN。**4.37 ms** 是从第一个查询到报告的 A 响应之间的时间；未列出 AAAA 完成时间，因此这不是进程首次调用的完整 6.22 ms。各候选名称的 RTT 并非都为 0.8–1.1 ms：第四组查询耗时 0.21 / 0.46 ms，最后一个 A 查询耗时 0.38 ms。kube-proxy iptables 会为新的 conntrack 流选择一个端点，而不是为每个数据包独立选择；A/AAAA 请求可能共享同一流。若两个端点被等概率选中，那么一半新流会落到其中一个端点，这只是说明性预期，**并非实测的跨 AZ DNS 查询比例**。显示 Service VIP `172.20.0.10` 的 Pod 抓包无法确定所选后端的 AZ。原始报告将两个 STS 私有地址归因于接口端点 ENI，并记录了集群 FQDN 的转发候选名称耗时 2.2 ms / 网络传输过程耗时 5.6 ms，而名称末尾加点时为 0.4–0.5 ms；这些是不同的观测结果。
 
 ### `ndots:1` 的作用及其副作用
 
-- **外部名称**：10 → **2 次查询**，中位数 3.5–3.8 → **0.5–0.9 ms**（约快 4–7 倍，查询数为五分之一）。
-- **短集群名称变差。**`kubernetes.default`（1 个点，≥ ndots 1）首先作为绝对名称 `kubernetes.default.` 尝试；CoreDNS 没有其 zone，因而**将它转发至 VPC resolver**（1.6 ms 后 NXDomain），然后遍历 `bench-net.svc.cluster.local`（NXDOMAIN），最后从 `svc.cluster.local` 获取 `172.20.0.1`——6 次查询、4 个 NXDOMAIN、中位数 2.04 ms，比 ndots:5 下的 1.71 ms 更慢。集群内部名称也会泄漏到上游 resolver。若使用 `ndots:1`，请通过 FQDN（`name.namespace.svc.cluster.local`）访问集群内 Service。
-- **无论 ndots 如何，末尾点均有效**——所有情况下均为 2 次查询、0.4–0.8 ms。
+- **本次样本中的外部名称**：10 → **2 次查询**，中位数约从 3.5–3.8 降至 **0.5–0.9 ms**。收益取决于名称和解析器行为。
+- **短名称可能会多出一次失败尝试。** 此处 `kubernetes.default` 含一个点，达到 `ndots:1` 的要求，因此 glibc 首先尝试了 `kubernetes.default.`。CoreDNS 将其转发并在报告的 1.6 ms 后收到 NXDOMAIN，随后尝试带命名空间后缀的名称，最后在 `svc.cluster.local` 下成功解析到 `172.20.0.1`：共 6 次查询、4 次 NXDOMAIN，中位数为 2.04 ms，而原来为 1.71 ms。这可能会将看似内部的名称泄露给上游。更改 `ndots` 前，请测试每个应用的 Service 命名方式；使用完整 Service 名称可以减少这种不确定性。
+- **名称末尾加点可使解析器将其视为绝对名称**，从而在此解析器中避免搜索扩展。但这不能保证只产生两次网络查询，也不能保证在重试、地址族设置不同或使用缓存时延迟固定。
 
-### 放大计算（推导）
+### 查询放大计算（推导值）
 
-每个请求解析一个外部名称的应用，在 `ndots:5` 下会发送 10 次而不是 2 次 DNS 查询，并为每次解析花费**约 +3 ms**（推导：`sts` 为 3.78 − 0.80 = 2.98 ms，未带末尾点的 FQDN 为 3.63 − 0.46 = 3.17 ms）。假设全集群每秒 1,000 次解析，CoreDNS 将接收 **10,000** 次而不是 2,000 次查询，其中 8,000 次回答 NXDOMAIN。两个 CoreDNS 副本上五分之四的负载用于生成“不存在”，而其中约一半数据包还会以区域数据传输费率跨越 AZ 边界（体量小，但并非零）。
+假设**响应模式相同**、应用没有 DNS 缓存且每个请求都执行一次解析，那么每秒 1,000 次解析 × 每次 10 次查询 = 每秒 10,000 次查询；两次查询的形式则为每秒 2,000 次。在 10,000 次查询中，8,000 次（80%）会收到 NXDOMAIN。这只是查询数量模型，并非 CoreDNS CPU 或跨 AZ 查询比例的测量值。观测到的中位数差异为：STS 3.78 − 0.80 = 2.98 ms，集群 FQDN 3.63 − 0.46 = 3.17 ms；它们不是固定的每请求额外开销。
 
-> **所以呢——四种修复方法。**(1) 在配置中的外部 endpoint 加上**末尾点**（`sts.ap-northeast-2.amazonaws.com.`）——立即变为 2 次查询，无需改代码。(2) 对发起大量外部调用的 Pod 设置 `dnsConfig: {options: [{name: ndots, value: "1"}]}`——但随后要通过 FQDN 访问集群名称。(3) **NodeLocal DNSCache**——本集群不存在它；有了它，Pod↔CoreDNS 往返（其中一半跨 AZ）将变为节点本地缓存命中（未测量）。(4) CoreDNS `autopath` 插件会代表 Pod 在服务器端遍历搜索路径；它不在此 Corefile 中（未测量）。
+**可使用实际应用测试以下选项：**
 
-## 如何复现
+- 客户端支持时使用绝对 DNS 名称。不要不加判断地在 HTTPS 或 AWS SDK 端点 URL 后追加点号：Host 处理、SNI、证书验证和请求签名仍须正常工作。
+- 结合短名称行为和应用 DNS 缓存，评估 `dnsConfig: {options: [{name: ndots, value: "1"}]}`。
+- 适用时评估 [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)。缓存命中会留在本地；缓存未命中时仍可能向上游查询。当前的 [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) 已将 node-local CoreDNS 作为系统服务运行；纯 Auto Mode 集群不需要 CoreDNS Deployment，而混合集群中的非 Auto 节点仍然需要。
+- [CoreDNS autopath](https://coredns.io/plugins/autopath/) 可以在服务器端完成搜索扩展，但其 Kubernetes 集成要求启用 `pods verified`、能够看到发起查询的 Pod IP，并具备相关的 Pod 监视权限/RBAC/内存。记录中的 `pods insecure` 配置不满足这些要求。本次未测试此优化。
 
-1. 将上述 manifest 保存为 `bench-net.yaml`，应用它，并检查放置是否符合预期。每次运行的 Pod IP 都不同，因此请从 `-o wide` 中读取并替换到下面的命令中。
+## 如何复现：修订后的步骤
 
-   ```bash
-   kubectl apply -f bench-net.yaml
-   kubectl -n bench-net get pods -o wide   # cli and srv-same on one node (2a), srv-a on another 2a node, srv-b in 2b
-   kubectl -n bench-net exec -it cli -- bash
-   ```
+请在获批的隔离实验环境中，使用专用于本测试且未被占用的命名空间。将调整后的首个测试工作负载保存为 `bench-net.yaml`，并将两个 DNS 对象保存为 `bench-dns.yaml`；确保命名空间名称一致。应用配置前，请检查 NodePool 容量、AZ、调度和抓包权限。不要为了运行测试而放宽生产环境的准入或安全控制。这些限定时长的命令仍可能使节点饱和并产生费用。
 
-2. **RTT**——每条路径以 50 ms 间隔进行 200 次探测：
+所有命令都在**运维人员的 Bash shell** 中运行；不要进入 `cli` 的交互式 shell。审核检查了语法和部分本地工具行为，但没有部署此测试工作负载，也没有在 EKS 上运行这些网络负载。
 
-   ```bash
-   ping -c 200 -i 0.05 -q 10.0.2.72   # same-node
-   ping -c 200 -i 0.05 -q 10.0.2.37   # same-AZ
-   ping -c 200 -i 0.05 -q 10.0.3.65   # cross-AZ
-   curl -s -o /dev/null -w 'connect=%{time_connect} total=%{time_total}\n' http://10.0.3.65:8080/   # one cold request, for reference
-   ```
+**1. 部署调整后的测试工作负载并验证放置情况。**
 
-3. **吞吐量**——iperf3，20 s、1 个流和 8 个流、JSON 输出。持续运行是跨 AZ 的 180 s / 4 个流 / 10 s 间隔：
+```bash
+set -euo pipefail
+BENCH_NS=bench-net
+kubectl apply -f bench-net.yaml
+kubectl -n "$BENCH_NS" wait --for=condition=Ready \
+  pod/cli pod/srv-same pod/srv-a pod/srv-b --timeout=300s
+kubectl -n "$BENCH_NS" get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/zone,node.kubernetes.io/instance-type,karpenter.sh/nodepool
 
-   ```bash
-   for SRV in 10.0.2.72 10.0.2.37 10.0.3.65; do
-     iperf3 -c $SRV -p 5201 -t 20 -P 1 -J > t1-$SRV-P1.json
-     iperf3 -c $SRV -p 5201 -t 20 -P 8 -J > t1-$SRV-P8.json
-   done
-   iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J > t1-b-sustained180-P4.json
-   ```
+SAME_IP=$(kubectl -n "$BENCH_NS" get pod srv-same -o jsonpath='{.status.podIP}')
+AZ_IP=$(kubectl -n "$BENCH_NS" get pod srv-a -o jsonpath='{.status.podIP}')
+CROSS_IP=$(kubectl -n "$BENCH_NS" get pod srv-b -o jsonpath='{.status.podIP}')
+: "${SAME_IP:?missing srv-same IP}" "${AZ_IP:?missing srv-a IP}" "${CROSS_IP:?missing srv-b IP}"
+for bench_pod in srv-same srv-a srv-b; do
+  kubectl -n "$BENCH_NS" logs "$bench_pod" --tail=30
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -- ss -lnt
+done
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- \
+    curl --fail --silent --show-error --max-time 5 "http://$bench_ip:8080/" >/dev/null
+done
+```
 
-   表格列来自 JSON：`end.sum_sent.bits_per_second`、`retransmits`、`end.cpu_utilization_percent.host_total` / `remote_total`，以及每个流的 `sender.mean_rtt` 和 `max_snd_cwnd`。
+继续前，请确认 `cli` 与 `srv-same` 位于同一节点，`srv-a` 位于同一 AZ 的不同节点，而 `srv-b` 位于另一个 AZ。检查服务器是否在 5201/8080/8079 端口上监听，以及是否有启动错误：Pod Ready 并不能证明这些进程正在监听，因为历史测试工作负载没有 readiness probe。请记录节点 ID、IP、镜像 ID 以及实际的 `iperf3 --version` / `fortio version`。如果 Pod 被重新创建，请停止测试并更新地址。
 
-4. **请求延迟**——fortio。每次运行均使用 `-quiet -r 0.00001 -json -`：
+**2. RTT 和一次参考 HTTP 请求。**
 
-   ```bash
-   SRV=10.0.3.65   # repeat per path
-   fortio load -quiet -r 0.00001 -json - -qps 100 -c 4 -t 60s http://$SRV:8080/                    # HTTP keepalive
-   fortio load -quiet -r 0.00001 -json - -qps 100 -c 4 -t 30s -keepalive=false http://$SRV:8080/   # new connection per request
-   fortio load -quiet -r 0.00001 -json - -qps 0 -c 16 -t 20s http://$SRV:8080/                     # qps 0 = unlimited, closed loop
-   fortio load -quiet -r 0.00001 -json - -grpc -ping -qps 100 -c 4 -t 30s $SRV:8079                # gRPC ping
-   ```
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- ping -c 200 -i 0.05 -q "$bench_ip"
+done
+kubectl -n "$BENCH_NS" exec cli -- curl --fail --silent --show-error --max-time 5 \
+  -o /dev/null -w 'connect=%{time_connect} total=%{time_total}\n' "http://$CROSS_IP:8080/"
+```
 
-   **不要去掉 `-r 0.00001`。**fortio 的默认直方图分辨率为 `-r 0.001`，即 1 ms 的 bucket。本页的每个延迟都低于 1 ms，因此使用默认值时，每个请求都会落入第一个 bucket，p50/p99 会变为该 bucket 内的线性插值——任何低于 1 ms 的值 p50 = 0.5 ms。首次 T2 运行正是得到了该结果；其百分位数被丢弃（平均值有效），而上面的表为 10 µs 分辨率下的重新运行。任何使用 fortio 测量亚毫秒延迟的人都会遇到这一问题。
+**3. 吞吐量测试，限制运行时长，并将输出文件保存在运维人员本地。**
 
-5. **DNS**——从 `bench-dns.yaml` 部署两个 Pod；一个终端中通过 `sniffer` sidecar 捕获，同时另一个终端中 `app` 容器冷解析该名称一次、预热解析 20 次：
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- iperf3 -c "$bench_ip" -p 5201 -t 20 -P 1 -J > "t1-$bench_ip-P1.json"
+  kubectl -n "$BENCH_NS" exec cli -- iperf3 -c "$bench_ip" -p 5201 -t 20 -P 8 -J > "t1-$bench_ip-P8.json"
+done
+kubectl -n "$BENCH_NS" exec cli -- \
+  iperf3 -c "$CROSS_IP" -p 5201 -t 180 -P 4 -i 10 -J > t1-cross-sustained180-P4.json
+```
 
-   ```bash
-   kubectl apply -f bench-dns.yaml
-   kubectl -n bench-net exec dns-default -c app -- cat /etc/resolv.conf        # confirm 4 search domains + ndots:5
-   kubectl -n bench-net exec dns-ndots1  -c app -- grep ndots /etc/resolv.conf  # options ndots:1
-   # terminal 1 — every DNS packet this Pod sends or receives
-   kubectl -n bench-net exec dns-default -c sniffer -- tcpdump -i eth0 -nn udp port 53
-   # terminal 2 — one cold resolution (count queries and NXDOMAIN in the capture above) + 20 warm timings
-   kubectl -n bench-net exec dns-default -c app -- python3 - <<'PY'
-   import socket, statistics, time
-   name = "sts.ap-northeast-2.amazonaws.com"       # trailing-dot variant: name + "."
-   def one():
-       t = time.perf_counter()
-       socket.getaddrinfo(name, 80, socket.AF_UNSPEC, socket.SOCK_STREAM)
-       return (time.perf_counter() - t) * 1000
-   print("cold ms", round(one(), 2))
-   xs = sorted(one() for _ in range(20))
-   print("warm min/median/p90/max", round(xs[0], 2), round(statistics.median(xs), 2), round(xs[int(len(xs)*0.9)-1], 2), round(xs[-1], 2))
-   PY
-   ```
+除了退出状态，还要检查 JSON 错误。读取 `end.sum_sent.bits_per_second`、`end.sum_sent.retransmits`、`end.cpu_utilization_percent.host_total` / `remote_total` 以及 `end.streams[].sender.mean_rtt` / `max_snd_cwnd`。iperf3 3.19 的进程 CPU 中，一个 CPU 在整个运行时段内的时间占比 100% 即为 100%；多线程时数值可以超过 100%。TCP RTT 字段的单位为微秒。
 
-   对 `dns-ndots1` 重复相同过程，以获得表格的最后六行。该表测量 glibc 解析器（`python:3.12-slim`）；未测量其他解析器（musl/alpine）的结果，因此请使用 glibc 镜像复现这些数字。
+**4. 请求延迟。对每个经验证的服务器地址重复执行。**
 
-6. 完成后删除 namespace——`kubectl delete ns bench-net`。Karpenter 会移除空节点。
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 100 -c 4 -t 60s "http://$bench_ip:8080/" > "http-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 100 -c 4 -t 30s -keepalive=false "http://$bench_ip:8080/" > "new-connection-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 0 -c 16 -t 20s "http://$bench_ip:8080/" > "closed-loop-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -grpc -ping -qps 100 -c 4 -t 30s "$bench_ip:8079" > "grpc-$bench_ip.json"
+done
+```
+
+在 Fortio 1.69.5 中，`-r` 是直方图的最低桶分辨率，单位为秒：默认值 `0.001` 即 1 ms，`0.00001` 即 10 µs；较大的桶宽可能增大。百分位数在桶边界内插值，包括边缘处观测到的最小值/最大值。因此，只有一个桶有数据，**并不意味着 p50 = 0.5 ms**。报告舍弃了首次粗分辨率测试的百分位数，随后以 10 µs 分辨率重新运行；应保留这一过程记录，但不要因此称所有插值百分位数都是伪数据。表中的多个尾延迟值和新建连接中位数都超过 1 ms。请将完整直方图和错误计数器与平均值一并保存。
+
+**5. DNS：将单次查询抓包与计时重复查询分开进行。**
+
+```bash
+kubectl apply -f bench-dns.yaml
+kubectl -n "$BENCH_NS" wait --for=condition=Ready pod/dns-default pod/dns-ndots1 --timeout=300s
+for bench_pod in dns-default dns-ndots1; do
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -c app -- cat /etc/resolv.conf
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -c app -- ldd --version
+done
+```
+
+在终端 1 中，先启动抓包，再执行单次查询。此过滤器同时包含普通 UDP 和 TCP 的 53 端口 DNS 流量，但不包括加密 DNS 或 CoreDNS 的上游路径。完成该次查询后，使用 Ctrl-C 停止抓包，然后再进行预热重复查询。
+
+```bash
+kubectl -n bench-net exec -it dns-default -c sniffer -- \
+  tcpdump -l -i eth0 -nn '(udp or tcp) and port 53'
+```
+
+在终端 2 中创建以下本地辅助脚本，并通过 **`kubectl exec -i`** 将其传入。第一种模式只执行一次解析器调用。预热模式先执行一次不计时的预热调用，再在同一进程中执行 20 次查询；此修订流程明确了抓包边界。
+
+```bash
+cat > dns-probe.py <<'PY'
+import json
+import socket
+import statistics
+import sys
+import time
+
+name, mode = sys.argv[1:3]
+if mode not in ("first", "warm"):
+    raise SystemExit("mode must be first or warm")
+
+def one():
+    started = time.perf_counter()
+    socket.getaddrinfo(name, 80, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    return (time.perf_counter() - started) * 1000
+
+first = one()
+if mode == "first":
+    print(json.dumps({"name": name, "first_process_ms": first}))
+else:
+    samples = [one() for _ in range(20)]
+    ordered = sorted(samples)
+    print(json.dumps({
+        "name": name, "warmup_ms": first, "samples_ms": samples,
+        "min_ms": ordered[0], "median_ms": statistics.median(ordered),
+        "p90_ms": ordered[17], "max_ms": ordered[-1],
+    }))
+PY
+BENCH_NS=bench-net
+DNS_POD=dns-default
+DNS_NAME=sts.ap-northeast-2.amazonaws.com
+kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
+  python3 - "$DNS_NAME" first < dns-probe.py
+```
+
+停止抓包后：
+
+```bash
+kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
+  python3 - "$DNS_NAME" warm < dns-probe.py
+```
+
+对表中的名称重复测试，并将 `DNS_POD=dns-ndots1`，同时更改抓包目标。只统计首次查询时间窗口内的查询/响应对；不要把 21 次查询当作一次。请使用匹配的镜像摘要、解析器版本和配置，但需预期计时结果和缓存状态会有所不同。本页未提供原始镜像摘要以及完整的数据包/JSON 工件，因此无法保证精确复现。
+
+**6. 仅清理本次测试创建的资源。** 如果 `bench-net` 专为本次测试创建，请在保存结果后使用 `kubectl delete namespace bench-net` 删除。请另行核实剩余节点和费用。Karpenter 是否整合节点取决于其策略、预算和其他工作负载；删除命名空间并不能保证节点会立即移除。`do-not-disrupt` 并不能防止所有强制中断方式。
 
 ## 注意事项
 
-- **节点是新建的，但并非完全独占。**Karpenter 为此测试启动三个 m5.xlarge 节点后不久，consolidation 将其他 namespace 中少量小 Pod 移至这些节点（`cli` 节点一个，`srv-b` 节点三个——与基准流量无关的小型内部服务和 controller）。运行期间它们空闲或流量很低，负载被限制为最长 180 s 的突发。`cli` 节点显示 CPU *requests* 为 3901m / 3920m（99 %），这并未说明实际利用率。
-- **单次运行（每个单元 n = 1、仅一天）。**未做重复以估计方差。请将这些数字视为量级锚点，而非 SLA，并基于比例和模式得出结论（RTT 阶梯、5 Gbps 流上限、10 Gbps 实例上限、10 对 2 次查询）。
-- **无法测量 ClusterIP（kube-proxy iptables 跳转）和 `trafficDistribution: PreferClose`。**集群中的每次 Service `kubectl apply` 均被拒绝，错误为 `Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`。只读诊断结果：`aws-load-balancer-controller` 已持续数周处于 CrashLoopBackOff，因此其后的 `failurePolicy: Fail` webhook 有零个就绪 endpoint——在 controller 恢复之前，集群中任何位置都无法创建 Service。本基准没有绕过该 webhook；装置只使用 Pod IP。症状 → 诊断 → 修复已写入 [Troubleshooting Playbook，第 11 项“无法创建 Service：failed calling webhook” (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook)。
-- **未收集 ENA allowance 计数器。**`ethtool -S eth0 | grep allowance_exceeded`（`bw_in_allowance_exceeded`、`bw_out_allowance_exceeded`、`pps_allowance_exceeded`、`conntrack_allowance_exceeded`、`linklocal_allowance_exceeded`）需要节点上的 hostNetwork Pod，此处未运行。重传计数是间接信号。
-- **仅是在 180 s 内未观察到突发积分耗尽。**在“Up to”实例上，较长的持续传输可能被限速至基线（1.25 Gbps）。未测试超过 180 s 的情况。
-- **DNS 延迟包含 CoreDNS 缓存效应。**冷首次解析和 20 次预热重复不同（`cache 30` 也会缓存 NXDOMAIN），外部名称经过 VPC resolver。预热值之间的比较有效；绝对值取决于缓存状态。
-- **同节点 iperf3 受一个客户端核心限制（99.8 %）。**29.97 / 48.15 Gbps 是此实例系列的 CPU 数值，在其他系列上会不同。
-- **未比较其他 CNI 模式。**关闭 prefix delegation、关闭 Security Groups for Pods、network policy enforcing mode 为 `standard`（eBPF agent 存在，但 namespace 没有 policy）。这些设置改变时会发生什么不在本页范围内。
+- **节点是全新启动的，但并非完全独占。** Karpenter 为本次测试启动三个 m5.xlarge 节点后不久，整合操作将其他命名空间中的少量 Pod 移到了这些节点上（一个移至 `cli` 节点，三个移至 `srv-b` 节点；这些是与基准测试流量无关、流量较低的内部服务和控制器）。测试期间它们处于空闲或低流量状态，负载也只以不超过 180 s 的突发形式运行。`cli` 节点的 CPU *requests* 为 3901m / 3920m（99%），但这并不能说明实际利用率。
+- **单次运行（每个单元格 n = 1，测试一天）。** 没有独立重复测试来估算方差。由于样本量如此有限，排序、比例和因果解释也受到限制；这些结果都不是 SLA。
+- **未测量应用 ClusterIP 和流量分配。** 报告称，在基准测试命名空间中创建 Service 失败，错误为 `failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`。一个失败的 `failurePolicy: Fail` Webhook 会拒绝匹配的请求；其规则、命名空间/对象选择器和匹配条件决定影响范围。这一历史事件不代表当前集群无法创建任何 Service。基准测试没有绕过该 Webhook。DNS 仍使用现有的 `kube-dns` Service。参见[故障排查手册](../ops/16-troubleshooting-playbook.md)。
+- **未采集 ENA allowance 计数器。** `ethtool -S` 必须在具备适当访问权限的情况下，针对主机实际的 ENA 接口运行；Pod 自身的 `eth0` 通常是 veth，仅使用 `hostNetwork` 并不能证明设备或权限正确。相关计数器包括 `bw_in_allowance_exceeded`、`bw_out_allowance_exceeded`、`pps_allowance_exceeded`、`conntrack_allowance_exceeded` 和 `linklocal_allowance_exceeded`。重传不能替代这些测量。
+- **只是没有在 180 s 内观察到突发积分耗尽。** 对于“最高可达”类型的实例，持续时间更长的传输可能会被限流至接近基线（1.25 Gbps）。本次未测试超过 180 s 的情况。
+- **DNS 缓存状态未受控。** 进程首次查询与重复查询有所不同，但 `cache 30` 并不能保证缓存命中 30 s。副本选择和上游状态都可能影响两组计时数据；报告中的比较是观察结果。
+- **同节点 CPU 压力是合理推测。** 客户端进程 CPU 达到 99.8%，支持将 29.97 Gbps 结果作此解读；但这并不能确定所有瓶颈，也不能说明 29.97 / 48.15 Gbps 能推广到其他实例。
+- **未比较其他 CNI 模式和策略执行情况。** 未启用前缀委派和 Pod 的安全组；该命名空间没有 NetworkPolicy。这些裸 Pod 也不能验证 VPC CNI 是否会对其支持的控制器管理型工作负载正确执行 NetworkPolicy。
 
-## 相关阅读
+## 延伸阅读
 
-- [Amazon VPC CNI](./01-vpc-cni.md) —— 这些测量所基于的数据平面：Pod 直接接收 VPC IP、prefix delegation、ENI/IP warming
-- [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md) —— 减少测量 3 账单的区域对齐放置和 AZ failover 设计
-- [Troubleshooting Playbook，第 11 项 — 无法创建 Service：failed calling webhook (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) —— 使 ClusterIP 未纳入本基准的故障
-- [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) —— 将 sidecar 跳转的 +1.29 ms p50 与此处测得的 +0.21 ms AZ 跳转并列比较
-- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) —— 同一集群的存储路径测量
-- [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) —— RF3 复制流量如何遇到本页的 5 Gbps 流上限和跨 AZ 定价
-- [Guidebook Roadmap — 测量基准系列](https://www.atomai.click/kubernetes-docs/en/roadmap)
+- [Amazon VPC CNI](./01-vpc-cni.md)：这些测量所涉及的数据平面（Pod 直接获得 VPC IP、前缀委派、ENI/IP 预热）
+- [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md)：与 AZ 对齐的放置和 AZ 故障转移设计，可降低测量 3 中的账单
+- [故障排查手册](../ops/16-troubleshooting-playbook.md)：Webhook 故障诊断；此处的事件是历史事件
+- [Sidecar 与 Ambient 模式选择指南](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)：硬件/工作负载不同的独立实验；其中的 +1.29 ms 是整个场景的差值
+- [EBS gp2 与 gp3 实测基准测试](../storage/01-ebs-gp2-gp3-benchmark.md)：同一集群中的存储路径实测
+- [EKS 上的 Kafka 实测基准测试](../data-on-eks/kafka/09-kafka-benchmark.md)：复制流量、流限制和可用性权衡
+- [指南路线图：实测基准测试系列](../roadmap.md)
 - [测验：Pod 网络基准测试](../quizzes/networking/06-pod-network-benchmark-quiz.md)
+
+
+### 审核中使用的主要参考资料
+
+- [Fortio 1.69.5 直方图实现](https://github.com/fortio/fortio/blob/v1.69.5/stats/stats.go) · [CLI 标志](https://github.com/fortio/fortio/blob/v1.69.5/cli/fortio_main.go)
+- [glibc 2.41 搜索顺序](https://github.com/bminor/glibc/blob/glibc-2.41/resolv/res_query.c) · [A/AAAA 传输](https://github.com/bminor/glibc/blob/glibc-2.41/resolv/res_send.c)
+- [CoreDNS Kubernetes / autopath 要求](https://coredns.io/plugins/kubernetes/)
+- [Kubernetes Service 流量分配](https://kubernetes.io/docs/concepts/services-networking/service/) · [虚拟 IP 处理](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [EC2 ENA 网络指标](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-network-performance-ena.html)
+- [Karpenter 中断和清理条件](https://karpenter.sh/docs/concepts/disruption/)

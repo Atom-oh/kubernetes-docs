@@ -5,7 +5,7 @@
 > **支持的版本**：DRA GPU 示例要求在受支持的 EKS 版本上运行 Kubernetes 1.34.2+。已审查的接口：GPU Operator 26.7.0、DRA driver 0.5.0、device plugin 0.20.0。
 > **最后更新**：October 12, 2026
 
-本章将准备就绪的 NVIDIA GPU 主机集成到 EKS Hybrid Nodes。内容涵盖分配、GPU Operator 所有权、MIG 和时间切片。**本次审计未执行 GPU、驱动程序安装、模型下载或推理基准测试。**这些示例要求使用已获批准的 OS/kernel/driver/toolkit/runtime/image 组合，并在实际硬件上进行测试。
+本章将准备就绪的 NVIDIA GPU 主机集成到 EKS Hybrid Nodes。内容涵盖分配、GPU Operator 所有权、MIG 和时间切片。**本次审计未执行 GPU、驱动程序安装、模型下载或推理基准测试**。这些示例要求使用已获批准的 OS/kernel/driver/toolkit/runtime/image 组合，并在实际硬件上进行测试。
 
 ## 为每个 GPU 选择一个分配所有者
 

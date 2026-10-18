@@ -277,7 +277,7 @@ ls -Z "$HOME"
 sudo ausearch -m AVC,USER_AVC -ts recent -i
 ```
 
-SELinux가 활성화된 준비된 게스트에서 사용합니다. disabled라면 실행 중 전체 재라벨링을 시도하지 말고 올바르게 준비한 스냅샷으로 돌아갑니다. `ausearch`에는 `audit` 도구가 필요합니다. 검색 결과가 없다는 것은 그 시간 범위의 보관 기록 중 일치 항목이 없다는 뜻이지, 정책이 어떤 접근도 거부하지 않는다는 증거가 아닙니다.
+SELinux가 활성화된 상태로 준비된 게스트에서 사용합니다. disabled라면 실행 중 전체 재라벨링을 시도하지 말고 올바르게 준비한 스냅샷으로 돌아갑니다. `ausearch`에는 `audit` 도구가 필요합니다. 검색 결과가 없다는 것은 그 시간 범위의 보관 기록 중 일치 항목이 없다는 뜻이지, 정책이 어떤 접근도 거부하지 않는다는 증거가 아닙니다.
 
 AVC 기록에는 시도한 권한, 프로세스, 대상, 출발 문맥(`scontext`), 대상 문맥(`tcontext`)이 있습니다. 실행 파일·경로·시간을 함께 읽으세요. SELinux 문맥은 흔히 `user:role:type:level` 형태이고 targeted policy에서 **type**이 중요합니다. 모든 거부를 무조건 `audit2allow`에 넣지 마세요. 잘못된 라벨이나 애플리케이션 경로가 원인일 수 있습니다.
 
@@ -298,7 +298,7 @@ sudo restorecon -v "$SEL_DIR/probe.txt"
 matchpathcon -V "$SEL_DIR/probe.txt"
 ```
 
-정책 조회가 이 경로의 예상 문맥을 알려 줍니다. 먼저 기준 상태를 맞추며 모든 홈 구조가 같은 type이라고 외우지 않습니다. 이제 파일에 다른 존재하는 type을 의도적으로 지정한 뒤 복구합니다.
+정책 조회가 이 경로의 예상 문맥을 알려 줍니다. 먼저 기준 상태를 맞추며 모든 홈 구조가 같은 type이라고 외우지 않습니다. 이제 파일에 존재하는 다른 type을 의도적으로 지정한 뒤 복구합니다.
 
 **Rocky 서버, 일반 사용자. 표시된 명령만 sudo 호출:**
 
@@ -316,7 +316,7 @@ matchpathcon -V "$SEL_DIR/probe.txt"
 
 ## 5. 선택 패키지와 Rocky 9 EPEL·CRB {#epel-prerequisites}
 
-방화벽·SELinux 핵심 실습은 Fail2ban·`iftop` 없이도 완료할 수 있습니다. 이 절은 7장의 선택적 `iftop` 경로가 참고할 Rocky 준비도 설명합니다. 패키지는 관리 연결을 통해 **버려도 되는 게스트 안에서만** 설치합니다.
+방화벽·SELinux 핵심 실습은 Fail2ban·`iftop` 없이도 완료할 수 있습니다. 이 절은 7장의 선택적 `iftop` 경로가 참고할 Rocky 준비 절차도 설명합니다. 패키지는 관리 연결을 통해 **버려도 되는 게스트 안에서만** 설치합니다.
 
 **Ubuntu 서버**는 먼저 `apt-cache policy fail2ban python3-systemd`를 조회합니다. 구성된 Ubuntu 저장소에 후보가 있으면 `sudo apt update`, `sudo apt install fail2ban python3-systemd`로 Fail2ban과 저널 backend를 준비합니다. 후보가 없다면 임의 다운로드 출처 대신 공식 저장소 구성 요소 설정을 확인하세요.
 
@@ -444,7 +444,7 @@ sudo fail2ban-client status network-beginner-sshd
 
 IP 하나만 정확히 해제합니다. 해당 UFW·rich rule이 없고 새 SSH 연결이 되는지 확인합니다. 기존 세션만으로 충분하지 않습니다. 모든 차단이나 방화벽 규칙을 flush하지 마세요.
 
-정리할 때는 **이 jail**에 실제로 나열된 주소만 하나씩 정확히 unban하고 action 제거를 확인합니다. 이어서 `sudo fail2ban-client stop network-beginner-sshd`를 실행하고, 서비스가 원래 inactive·새 설치였을 때만 정지합니다. 자신이 만든 두 파일만 `sudo rm -i -- /etc/fail2ban/jail.d/99-network-beginner.local /etc/fail2ban/action.d/network-beginner.conf`로 지웁니다. jail과 실습 차단이 없음을 확인합니다. **firewalld zone 삭제 전에** 이 정리를 수행하세요. 기록한 서비스·활성화 상태를 복원하며 선택 설치 전체 복구는 스냅샷을 사용합니다.
+정리할 때는 **이 jail**에 실제로 나열된 주소만 하나씩 정확히 unban하고 action 제거를 확인합니다. 이어서 `sudo fail2ban-client stop network-beginner-sshd`를 실행하고, 서비스가 원래 inactive·새 설치였을 때만 정지합니다. 자신이 만든 두 파일만 `sudo rm -i -- /etc/fail2ban/jail.d/99-network-beginner.local /etc/fail2ban/action.d/network-beginner.conf`로 지웁니다. jail과 실습 차단이 없음을 확인합니다. **firewalld zone 삭제 전에** 이 정리를 수행하세요. 기록한 서비스·활성화 상태를 복원하며 선택 설치 전체 복구에는 스냅샷을 사용합니다.
 
 ## 완료 확인과 다음 장 연결
 

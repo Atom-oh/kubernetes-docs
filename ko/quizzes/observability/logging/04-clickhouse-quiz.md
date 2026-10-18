@@ -56,7 +56,7 @@ Replica에는 coordination·독립된 영속 저장소·장애 도메인 설계�
 
 ---
 
-4. 반복되는 namespace나 severity 값에 검토할 타입은?
+4. 반복되는 namespace나 severity 값에 대해 검토할 타입은?
 
    - A) 항상 FixedString(255)
    - B) LowCardinality(String)

@@ -3,7 +3,7 @@
 > **예제 API 기준**: Kubernetes 1.36; 공식 근거·예제 전제는 [본문](../../eks/10-eks-resiliency.md)과 동일합니다.
 > **마지막 업데이트**: 2026년 9월 12일
 
-설정·수치는 예시이며 감사에서 cloud 자원·chaos·workload·benchmark를 실행하지 않았습니다. 소유 test 범위에서 placeholder를 교체한 뒤 배포합니다.
+설정·수치는 예시이며 감사에서 cloud 자원·chaos·workload·benchmark를 실행하지 않았습니다. 소유한 test 범위에서 placeholder를 교체한 뒤 배포합니다.
 
 이 퀴즈는 Amazon EKS 클러스터의 고가용성(HA), 복원력, Multi-AZ 배포, Cell-Based Architecture, Chaos Engineering, PodDisruptionBudget, Topology Spread Constraints에 대한 이해를 테스트합니다.
 
@@ -60,9 +60,9 @@ D. 모든 Pod 종료 원인
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. Workload 가용성을 고려하는 지원 자발적 eviction**
+**정답: B. Workload 가용성을 고려하는 지원되는 자발적 eviction**
 
-PDB는 협력하는 drain·유지보수·autoscaler가 사용하는 Eviction API를 제한합니다. 직접 Pod 삭제, Deployment rollout·scale-down, 비자발적 장애를 보호하지는 않습니다. minAvailable·maxUnavailable 중 하나를 선택하고 대상 controller workload label을 일치시킵니다. 아래 percentage PDB와 함께 중복 적용하는 것이 아닌 대안입니다.
+PDB는 협력하는 drain·유지보수·autoscaler가 사용하는 Eviction API를 제한합니다. 직접 Pod 삭제, Deployment rollout·scale-down, 비자발적 장애로부터 보호하지는 않습니다. minAvailable·maxUnavailable 중 하나를 선택하고 대상 controller workload label을 일치시킵니다. 아래 percentage PDB와 함께 중복 적용하는 것이 아닌 대안입니다.
 
 ```yaml
 apiVersion: policy/v1
@@ -91,7 +91,7 @@ D. 기존 Pod를 삭제해 균형 복원
 
 **정답: B. Spread 제약을 만족하는 eligible node가 없으면 새 Pod를 미배치 상태로 유지**
 
-API server가 Pod 객체 생성을 거부한다는 뜻이 아닌 scheduling filter입니다. ScheduleAnyway도 이 spread rule만 선호도로 바꾸며 resource·affinity·taint·storage 조건은 남습니다. 완전한 Deployment 예시의 placeholder image·앱 health path는 적용 전에 교체합니다. minDomains=2는 eligible zone 두 개가 남을 때 N-1 계산을 허용하지만 초기 3 AZ 점유·용량 생성을 강제하지 않습니다.
+API server가 Pod 객체 생성을 거부한다는 뜻이 아니라 scheduling filter로 동작한다는 뜻입니다. ScheduleAnyway도 이 spread rule만 선호도로 바꾸며 resource·affinity·taint·storage 조건은 남습니다. 완전한 Deployment 예시의 placeholder image·앱 health path는 적용 전에 교체합니다. minDomains=2는 eligible zone 두 개가 남을 때 N-1 계산을 허용하지만 초기 3 AZ 점유·용량 생성을 강제하지 않습니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -164,7 +164,7 @@ spec:
 A. 독립 배포·확장
 B. Cell 장애를 전체 시스템으로 전파
 C. 자체 완결된 기능 단위
-D. 다른 cell과의 제한한 결합
+D. 다른 cell과의 제한된 결합
 
 <details>
 <summary>정답 보기</summary>
@@ -417,7 +417,7 @@ managedNodeGroups:
 <details>
 <summary>정답 보기</summary>
 
-신뢰하는 tenant identity와 안정적 hash·명시적 mapping·지역 할당을 사용합니다. Router는 authorization·용량·data 위치를 검증해야 하며 임의 client x-cell-id를 tenant 권한으로 믿지 않습니다. 아래 mesh는 등록된 destination Service·정책을 전제합니다. 알 수 없거나 신뢰하지 않는 cell ID는 거부·기본 처리 정책이 필요합니다. Namespace·ConfigMap만으로 격리·failover를 구현하지는 못합니다.
+신뢰하는 tenant identity와 안정적 hash·명시적 mapping·지역 할당을 사용합니다. Router는 authorization·용량·data 위치를 검증해야 하며 임의 client x-cell-id를 tenant 권한으로 믿지 않습니다. 아래 mesh는 등록된 destination Service·정책을 전제합니다. 알 수 없거나 신뢰하지 않는 cell ID에는 거부·기본 처리 정책이 필요합니다. Namespace·ConfigMap만으로 격리·failover를 구현하지는 못합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -484,7 +484,7 @@ kubectl --context "$KUBE_CONTEXT" -n resilience-demo describe pdb api-server-pdb
 <details>
 <summary>정답 보기</summary>
 
-완전한 예시는 N-1 상황에 maxSkew=1·minDomains=2를 사용합니다. 초기 3-zone 배치·잔여 용량은 별도 검증하며 자동 재배치·zonal PVC 이동을 하지 않습니다. 앱 placeholder image·health path를 바꾸고 resource를 조정합니다. 통제한 적용 후 모든 Pod에 node·zone label이 있다고 가정하지 말고 아래 Python 보고를 사용합니다.
+완전한 예시는 N-1 상황에 maxSkew=1·minDomains=2를 사용합니다. 초기 3-zone 배치·잔여 용량은 별도 검증하며 자동 재배치·zonal PVC 이동을 하지 않습니다. 앱 placeholder image·health path를 바꾸고 resource를 조정합니다. 통제된 적용 후 모든 Pod에 node·zone label이 있다고 가정하지 말고 아래 Python 보고를 사용합니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -582,7 +582,7 @@ print(json.dumps({"activePodsByZone": dict(counts), "readyPodsByZone": dict(read
 <details>
 <summary>정답 보기</summary>
 
-전체 production selector가 아닌 resilience-demo의 소유 payment-service test workload를 사용합니다. UID·owner 확인 후 TARGET_PODS를 현재 정확한 이름으로 바꿉니다. Operator·pod-delete ChaosExperiment·검증한 runner/helper image·제한한 RBAC가 준비되어야 합니다. Duration·interval은 반복 삭제 시도를 만들 수 있으므로 30초 동안 정확히 한 번 삭제한다는 증명이 아닙니다. 한 번의 선택한 삭제 action이 필요하면 본문의 FIS COUNT(1)과 별도 IAM·RBAC 전제를 사용합니다. 여기서는 fault를 실행하지 않습니다.
+전체 production selector가 아닌 resilience-demo의 소유 payment-service test workload를 사용합니다. UID·owner 확인 후 TARGET_PODS를 현재 정확한 이름으로 바꿉니다. Operator·pod-delete ChaosExperiment·검증한 runner/helper image·제한한 RBAC가 준비되어야 합니다. Duration·interval은 반복 삭제 시도를 만들 수 있으므로 30초 동안 정확히 한 번 삭제한다는 증명이 아닙니다. 선택한 삭제 action을 한 번 수행해야 하면 본문의 FIS COUNT(1)과 별도 IAM·RBAC 전제를 사용합니다. 여기서는 fault를 실행하지 않습니다.
 
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
@@ -812,7 +812,7 @@ spec:
 ```
 CPU resource metric에는 정상 Metrics Server와 관련 container CPU request가 필요합니다. Replica 증가가 memory leak·DB 포화·zonal volume 제약을 해결하지는 않습니다. Replica field·GitOps·HPA 소유권을 일치시킵니다.
 
-정기 game day는 소유 scheduler·승인한 workflow로 검토한 개별 실험을 호출하고 정확한 target·ID·abort 신호·다음 실험 전 복구를 기록합니다. 기존 2024 ChaosSchedule은 기간이 만료되었고 Litmus 3.31.0 CRD에도 없으므로 날짜만 바꿔 해결할 수 없습니다. 99.99% 주장은 주간 schedule이 아니라 실제 SLI·훈련 근거가 필요합니다.
+정기 game day는 소유 scheduler·승인한 workflow로 검토한 개별 실험을 호출하고 정확한 target·ID·abort 신호·다음 실험 전 복구를 기록합니다. 기존 2024 ChaosSchedule은 기간이 만료되었고 Litmus 3.31.0 CRD에도 없으므로 날짜만 바꿔 해결할 수 없습니다. 99.99% 주장에는 주간 schedule이 아니라 실제 SLI·훈련 근거가 필요합니다.
 
 </details>
 
@@ -930,7 +930,7 @@ spec:
       minHealthPercent: 30
       splitExternalLocalOriginErrors: true
 ```
-Proxy pool 제한·outlier detection이 backend 용량을 예약하지는 않습니다. 본문의 timeout·idempotency 원칙으로 조정합니다. 아래 query는 명시한 counter·classic histogram·job/namespace/status label을 제공하는 **앱 instrumentation**과 kube-state-metrics가 필요하며 EKS가 자동 제공하지 않습니다. 관련 status series를 초기화하고 scrape 범위를 확인합니다. 분모 0·sample 없음은 가용성 100%가 아닌 근거 없음입니다. Pod 지표는 완료·삭제 중 Pod를 제외하지만 앱 SLI가 아닙니다.
+Proxy pool 제한·outlier detection이 backend 용량을 예약하지는 않습니다. 본문의 timeout·idempotency 원칙으로 조정합니다. 아래 query에는 명시한 counter·classic histogram·job/namespace/status label을 제공하는 **앱 instrumentation**과 kube-state-metrics가 필요하며 EKS가 자동 제공하지 않습니다. 관련 status series를 초기화하고 scrape 범위를 확인합니다. 분모 0·sample 없음은 가용성 100%가 아닌 근거 없음입니다. Pod 지표는 완료·삭제 중 Pod를 제외하지만 앱 SLI가 아닙니다.
 
 Request rate
 

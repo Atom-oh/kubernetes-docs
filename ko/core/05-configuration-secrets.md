@@ -790,7 +790,7 @@ kubectl rollout restart deployment/my-deployment
 
 ### 리소스 요청과 QoS
 
-요청은 스케줄링과 실행 중 리소스 배분의 기준이며 앱이 반드시 그만큼 사용해야 한다는 뜻은 아닙니다. CPU 제한은 스로틀링하고 메모리 제한은 OOM 종료를 유발할 수 있습니다. 퀴즈의 컨테이너 수준 예시에서 Guaranteed는 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 같아야 하며 BestEffort는 둘 다 없고 나머지는 Burstable입니다. 파드 수준 리소스도 QoS에 영향을 줄 수 있습니다. 노드 압력 축출에는 우선순위와 요청 대비 사용량도 반영됩니다. [리소스 관리](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)와 [파드 QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)를 참고하세요.
+요청은 스케줄링과 실행 중 리소스 배분의 기준이며 앱이 반드시 그만큼 사용해야 한다는 뜻은 아닙니다. CPU 제한은 스로틀링을 유발하고 메모리 제한은 OOM 종료를 유발할 수 있습니다. 퀴즈의 컨테이너 수준 예시에서 Guaranteed는 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 같아야 하며 BestEffort는 둘 다 없고 나머지는 Burstable입니다. 파드 수준 리소스도 QoS에 영향을 줄 수 있습니다. 노드 압력 축출에는 우선순위와 요청 대비 사용량도 반영됩니다. [리소스 관리](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)와 [파드 QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)를 참고하세요.
 
 ## Amazon EKS에서의 구성 관리
 

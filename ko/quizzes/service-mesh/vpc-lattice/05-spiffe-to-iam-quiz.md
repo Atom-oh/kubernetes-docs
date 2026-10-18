@@ -113,5 +113,5 @@ SPIRE 도입 자체가 그 심의를 통과한 결과일 가능성이 높습니�
 **정답: B) 선택한 설계에 endpoint mTLS나 지원되는 AWS 외부 workload의 SPIFFE 신원이 계속 필요할 때**
 
 **설명:**
-SPIRE 유지는 설계 선택이며 모든 AWS 외부 workload의 보편적 필수 사항은 아닙니다. 다른 credential provider와 지원 사설 network 경로도 평가할 수 있습니다.
+SPIRE 유지는 설계 선택이며 모든 AWS 외부 workload의 보편적 필수 사항은 아닙니다. 다른 credential provider와 지원되는 사설 network 경로도 평가할 수 있습니다.
 </details>

@@ -731,7 +731,7 @@ groups:
 
 Classic histogram은 `le`를 보존해서 집계합니다. Error series가 아직 없으면 같은 서비스의 실제 요청 series를 기준으로 0을 채우고, 요청도 0이면 비율을 정상 0으로 만들지 않습니다. 기록 규칙의 단위와 dashboard의 `s`, `percentunit`, `reqps`를 맞춥니다.
 
-RPS는 counter의 `rate`로 구하고 장기 추세도 rate/증가량을 목적에 맞게 사용합니다. 누적 counter를 30일 평균내면 평균 요청률이 되지 않습니다. 평균·백분위수와 histogram quantile은 서로 다른 통계입니다.
+RPS는 counter의 `rate`로 구하고 장기 추세를 볼 때도 rate/증가량을 목적에 맞게 사용합니다. 누적 counter를 30일 평균내면 평균 요청률이 되지 않습니다. 평균·백분위수와 histogram quantile은 서로 다른 통계입니다.
 
 Istio 요청 metric은 source/destination reporter가 중복될 수 있으므로 관측 방향을 선택합니다. 예를 들어 destination 관찰값을 집계할 때:
 
@@ -1126,7 +1126,7 @@ File provisioning에는 이처럼 dashboard 객체 자체를 저장합니다. HT
 
 구형 `graph` panel 대신 현재 `timeseries`를 사용합니다. Cumulative histogram bucket 곡선은 heatmap의 bucket별 분포와 다릅니다. Trace search 결과를 변환 없이 “Active Traces” 숫자나 service-map panel로 표시하지 않습니다.
 
-변수를 추가할 때는 실제 query/metric에 존재하는 label을 사용합니다. Multi/All 값은 적절한 regex escaping과 매칭 연산자가 필요하며 단일 문자열과 같다고 가정하지 않습니다. 데이터소스별 문법에 맞춰 테스트합니다.
+변수를 추가할 때는 실제 query/metric에 존재하는 label을 사용합니다. Multi/All 값에는 적절한 regex escaping과 매칭 연산자가 필요하며 단일 문자열과 같다고 가정하지 않습니다. 데이터소스별 문법에 맞춰 테스트합니다.
 
 ## 검증 범위
 

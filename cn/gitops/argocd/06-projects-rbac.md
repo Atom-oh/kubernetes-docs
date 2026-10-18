@@ -1,34 +1,34 @@
-# ArgoCD 项目与 RBAC
+# ArgoCD Projects 和 RBAC
 
-> **已根据以下版本审查**：Argo CD 3.5.2；在审查发布说明后更新至补丁版本 3.5.4（示例未重新运行）
-> **最后更新**：October 12, 2026
+> **审阅依据**：Argo CD 3.5.2；经发布说明审阅后更新至补丁版本 3.5.5（未重新运行示例）
+> **最后更新**：October 16, 2026
 
 ## 目录
 - [AppProject 概述](#appproject-overview)
-- [默认项目](#default-project)
-- [自定义项目](#custom-projects)
+- [默认 Project](#default-project)
+- [自定义 Project](#custom-projects)
 - [RBAC 配置](#rbac-configuration)
 - [多租户模式](#multi-tenancy-patterns)
-- [用于 CI/CD 的 JWT Token](#jwt-tokens-for-cicd)
+- [CI/CD 的 JWT Token](#jwt-tokens-for-cicd)
 - [孤立资源监控](#orphaned-resource-monitoring)
 
-## AppProject 概述
+## AppProject 概述 {#appproject-overview}
 
-AppProject 为 Application 提供逻辑分组，并定义访问控制：哪些资源可以部署、部署到何处以及谁可以管理它们。
+AppProject 为 Applications 提供逻辑分组，并定义访问控制，规定可以部署哪些资源、部署到哪里，以及谁可以管理它们。
 
-AppProject 会限制源、目标、渲染后的资源种类以及 Argo CD API 权限。它不能替代 Kubernetes RBAC、Pod Security Admission、NetworkPolicy 或 ResourceQuota。拒绝 Pod 种类并不能阻止 Deployment 创建特权 Pod。
+AppProject 会限制来源、目标、渲染后的资源类型以及 Argo CD API 权限。它不能取代 Kubernetes RBAC、Pod Security Admission、NetworkPolicy 或 ResourceQuota。禁止 Pod 类型并不能阻止 Deployment 创建特权 Pod。
 
-请提供真实的仓库 URL、组、已注册集群和 namespace。平台管理员应预先创建 Application namespace，并负责其安全性/配额策略。以下团队/环境项目不允许集群范围资源；单独的平台项目仅供受信任的管理员使用。完整项目示例是相互独立的替代方案，包括名称相同的示例。
+请提供真实的仓库 URL、组、已注册集群和命名空间。平台管理员应预先创建应用程序命名空间，并负责其安全和配额策略。下面的团队/环境 Project 不允许集群范围的资源；单独的平台 Project 供受信任的管理员使用。完整的 Project 示例彼此独立，可作为替代方案使用，其中也包括名称相同的示例。
 
-### 关键功能
+### 主要功能
 
-| 功能 | 描述 |
+| 功能 | 说明 |
 |---------|-------------|
-| 源限制 | 限制可使用的 Git 仓库 |
-| 目标限制 | 限制目标集群和 namespace |
-| 资源允许列表/拒绝列表 | 控制可创建哪些 K8s 资源 |
-| 角色定义 | 定义项目专属的 RBAC 角色 |
-| 同步窗口 | 定义 Application 可以同步的时间 |
+| 来源限制 | 限制可使用的 Git 仓库 |
+| 目标限制 | 限制目标集群和命名空间 |
+| 资源允许列表/拒绝列表 | 控制可以创建哪些 K8s 资源 |
+| 角色定义 | 定义特定于 Project 的 RBAC 角色 |
+| 同步窗口 | 定义 Applications 可以同步的时间 |
 
 ### AppProject 配置示例
 
@@ -82,11 +82,11 @@ spec:
       name: kube-root-ca.crt
 ```
 
-## 默认项目
+## 默认 Project {#default-project}
 
-ArgoCD 会创建一个默认项目，允许所有源、目标和资源种类。它可以被限制，但不能删除。
+ArgoCD 会创建一个允许所有来源、目标和资源类型的默认 Project。可以对其进行限制，但不能删除。
 
-### 默认项目规范
+### 默认 Project 规范
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -106,15 +106,15 @@ spec:
     kind: '*'
 ```
 
-### 何时使用默认项目
+### 何时使用默认 Project
 
 - 开发环境
 - 快速测试
-- 没有多租户要求的小型团队
+- 不需要多租户的团队
 
-### 限制默认项目
+### 限制默认 Project
 
-对于生产环境，请限制默认项目：
+在生产环境中，应限制默认 Project：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -133,9 +133,9 @@ spec:
     kind: '*'
 ```
 
-## 自定义项目
+## 自定义 Project {#custom-projects}
 
-### 基于团队的项目
+### 基于团队的 Project
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -180,7 +180,7 @@ spec:
     - myorg:frontend-viewers
 ```
 
-### 基于环境的项目
+### 基于环境的 Project
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -225,7 +225,7 @@ spec:
     - p, proj:production:deployer, applications, get, production/*, allow
 ```
 
-### 平台基础设施项目
+### 平台基础设施 Project
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -288,14 +288,14 @@ spec:
 
 ### 范围解读与验证
 
-- AppProject 目标匹配 `(server OR registered name) AND namespace`；同时指定两个集群标识符不会增加 AND 约束。这些示例仅使用 server。Application 的目标则要求选择 server 或 name。
-- ResourceQuota 和 LimitRange 属于 namespace 范围；clusterResourceBlacklist 无法阻止它们。请针对 Argo CD 部署路径使用 namespaceResourceBlacklist。
-- 省略 namespaceResourceWhitelist 会默认允许 namespace 范围的种类；显式允许/拒绝列表会一并评估。集群范围的种类需要允许列表。Argo CD 3.5.4 还支持在集群资源列表中使用名称模式。
-- 如果委托 Namespace 管理，也应限制其名称（group:'', kind:Namespace, name:team-a-*）。这仍允许修改 Namespace 标签；对于租户边界，预先配置及准入控制更加安全。
-- manualSync 允许在允许窗口之外手动例外；它不会禁用自动同步，也不会将例外限制为值班角色。请在同步章节中检查重叠的拒绝窗口及显式时区。
-- 在限制 default 之前，请将现有 Application 移至显式项目并验证访问权限。
+- AppProject 的 destination 匹配 `(server OR registered name) AND namespace`；同时指定两个集群标识并不会增加 AND 约束。这些示例仅使用 server。Application 的 destination 则要求在 server 或 name 中选择其一。
+- ResourceQuota 和 LimitRange 属于命名空间范围；clusterResourceBlacklist 无法阻止它们。对于 Argo CD 部署路径，应使用 namespaceResourceBlacklist。
+- 如果省略 namespaceResourceWhitelist，默认允许命名空间范围的类型；显式的允许/拒绝列表会一起评估。集群范围的类型需要通过允许列表放行。Argo CD 3.5.4 还支持在集群资源列表中使用名称模式。
+- 如果委派 Namespace 管理权限，也要限制其名称（group:'', kind:Namespace, name:team-a-*）。这仍允许更改 Namespace 标签；预先创建命名空间并使用准入控制，对租户边界而言更安全。
+- manualSync 允许在允许窗口之外手动例外同步；它不会禁用自动同步，也不会将例外限制为值班角色。请在同步章节中审查重叠的拒绝窗口和显式时区。
+- 限制 default 之前，应将现有 Applications 移至显式指定的 Project，并验证访问权限。
 
-## RBAC 配置
+## RBAC 配置 {#rbac-configuration}
 
 ArgoCD RBAC 在 `argocd-rbac-cm` ConfigMap 中配置。
 
@@ -306,7 +306,7 @@ p, <subject>, <resource>, <action>, <object>, <effect>
 g, <subject>, <role>
 ```
 
-| 字段 | 描述 |
+| 字段 | 说明 |
 |-------|-------------|
 | `subject` | 用户、组或角色 |
 | `resource` | applications、clusters、repositories 等 |
@@ -316,14 +316,14 @@ g, <subject>, <role>
 
 ### 内置角色
 
-| 角色 | 描述 |
+| 角色 | 说明 |
 |------|-------------|
-| `role:readonly` | 对所有资源的只读访问 |
-| `role:admin` | 对所有资源的完全访问 |
+| `role:readonly` | 对所有资源的只读访问权限 |
+| `role:admin` | 对所有资源的完全访问权限 |
 
 ### 完整 RBAC 配置
 
-此示例不授予隐式 Application 访问权限，而是分配显式组权限。Developer 的范围限定为 team-frontend。请保留 role:authenticated，且不为其添加策略条目。默认策略授予的权限无法通过用户 deny 移除；默认设为 role:readonly 会暴露跨项目读取权限。不要在 policy.csv 中复制/重新定义内置角色规则。
+此示例不授予隐式的 Application 访问权限，而是分配显式的组权限。开发人员的权限限定在 team-frontend 范围内。role:authenticated 不要添加策略条目。默认策略授予的权限无法通过用户级 deny 移除；将默认角色设为 role:readonly 会暴露跨 Project 的读取权限。不要在 policy.csv 中复制/重新定义内置角色规则。
 
 ```yaml
 apiVersion: v1
@@ -370,15 +370,15 @@ data:
     p, role:sre, projects, get, production, allow
 ```
 
-使用 Kustomize/Helm 将额外策略片段组合到现有 ConfigMap data 中。Argo CD 会将 policy.example-N.csv 键追加到 policy.csv。不要将每个片段作为整个 ConfigMap 的替代项应用，也不要累积无关的宽泛 allow 示例。
+使用 Kustomize/Helm 将其他策略片段合并到现有 ConfigMap 数据中。Argo CD 会将 policy.example-N.csv 键追加到 policy.csv。不要将每个片段作为整个 ConfigMap 的替代内容来应用，也不要累积互不相关、范围过宽的 allow 示例。
 
-Argo CD API RBAC 与 Kubernetes RBAC 相互独立。object project/app 不标识目标 namespace；控制平面 namespace 之外的 Application 也使用 project/application-namespace/app。Glob 匹配不会将斜杠视为分隔符，因此应包含完整的资源-操作路径。
+Argo CD API RBAC 与 Kubernetes RBAC 相互独立。object project/app 无法标识目标命名空间；位于控制平面命名空间之外的 Applications 也使用 project/application-namespace/app。Glob 匹配不会把斜杠视为分隔符，因此应包含完整的资源操作路径。
 
-在 3.x 默认设置下，Application 的 update/delete 权限不会自动授予对子 Kubernetes 资源执行相同操作的权限。对于这些操作，请使用 `update/<group>/<kind>/<namespace>/<name>` 或 `delete/...`，同时考虑 `server.rbac.disableApplicationFineGrainedRBACInheritance`。
+在 3.x 默认行为下，Application 的 update/delete 权限不会自动授予对其子 Kubernetes 资源执行相同操作的权限。对于这些操作，请使用 `update/<group>/<kind>/<namespace>/<name>` 或 `delete/...`，并考虑 `server.rbac.disableApplicationFineGrainedRBACInheritance`。
 
-sync 可以创建、更新并清理已部署资源。拒绝删除 Application 并不能阻止通过 sync/prune 进行删除。rollback API 同样检查 sync；没有单独的 action/rollback 或仅限 rollback 的权限。override 允许替换源，例如使用本地 manifests，而不仅仅是强制同步。当提供 revision 时，application.sync.requireOverridePrivilegeForRevisionSync 可以要求 override。
+sync 可以创建、更新和修剪已部署的资源。禁止删除 Application 并不能阻止通过 sync/prune 删除资源。rollback API 也会检查 sync；没有独立的 action/rollback 或仅限 rollback 的权限。override 允许替换来源（例如使用本地清单），而不只是强制同步。当提供修订版本时，application.sync.requireOverridePrivilegeForRevisionSync 可以要求具备 override 权限。
 
-### 资源专属权限
+### 特定资源的权限
 
 ```yaml
 policy.example-1.csv: |
@@ -405,7 +405,7 @@ policy.example-1.csv: |
   p, role:debugger, applications, get, production/*, allow
 ```
 
-### Application 专属操作
+### Application 特定操作
 
 ```yaml
 policy.example-2.csv: |
@@ -421,15 +421,15 @@ policy.example-2.csv: |
   p, role:operator, applications, get, production/*, allow
 ```
 
-## 多租户模式
+## 多租户模式 {#multi-tenancy-patterns}
 
-### 每个团队一个 Namespace
+### 每个团队使用一个命名空间
 
-![团队 A、团队 B 和平台团队在 ArgoCD AppProject 中获得 Application 角色；该项目的目标将 Argo CD 部署限制在各自的 namespace：team-a、team-b，以及共享的 monitoring 和 logging namespace。](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
+![团队 A、团队 B 和平台团队在 ArgoCD AppProject 中获得应用角色；该 AppProject 的 destination 将 Argo CD 部署限制在各自的命名空间 team-a、team-b 以及共享的 monitoring 和 logging 命名空间中。](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-06-projects-rbac-0.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-06-projects-rbac-0.html)
 
-实现：
+实现方式：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -475,7 +475,7 @@ spec:
     - team-b-admins
 ```
 
-### 每个环境一个集群
+### 每个环境使用一个集群
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -519,13 +519,13 @@ spec:
 
 <span id="jwt-tokens-for-cicd"></span>
 
-## 用于 CI/CD 的 JWT Token
+## CI/CD 的 JWT Token
 
-为自动化创建项目范围的 Token。
+为自动化创建 Project 范围的 Token。
 
 ### 创建 JWT Token
 
-有权更新项目的操作员负责签发/撤销 Token；CI 角色本身仅有 get/sync 权限。请先准备 my-project、其 ci-deployer 角色和 my-app Application。请在过期前轮换；CLI 默认不设置过期时间。
+有权更新 Project 的操作员负责签发/撤销 Token；CI 角色本身仅拥有 get/sync 权限。请先准备好 my-project、其 ci-deployer 角色以及 my-app Application。应在 Token 过期前轮换；CLI 默认不设置过期时间。
 
 ```bash
 set -euo pipefail
@@ -536,11 +536,11 @@ argocd proj role create-token my-project ci-deployer \
 # Store this file's value in the approved CI secret store; do not commit or print it.
 ```
 
-需要显式标识符时，请使用 `--id UNIQUE_ID`；--token-id 不是 3.5.4 的 flag。expires-in 接受如 24h 的 duration。签名 Token 值会在签发时返回，不能在之后检索。
+需要显式标识符时请使用 `--id UNIQUE_ID`；--token-id 不是 3.5.4 的标志。expires-in 接受诸如 24h 的时长。签名后的 Token 值会在签发时返回，不会被存储以供日后检索。
 
 ### 在 CI/CD 中使用 Token
 
-将此角色合并到现有 my-project AppProject；它本身不会创建源/目标权限或 Application：
+将此角色合并到现有的 my-project AppProject 中；它本身不会创建来源/目标权限或 Application：
 
 ```yaml
 spec:
@@ -551,7 +551,7 @@ spec:
     - p, proj:my-project:ci-deployer, applications, sync, my-project/*, allow
 ```
 
-工作流会同步由 Application 声明的 revision，而不是强制使用工作流 SHA。在需要不可变 revision 时，请在 Git 中固定 targetRevision。使用 --revision 前，请审查 server override 设置。请单独配置生产 Environment 的批准/保护规则。
+此工作流会同步 Application 声明的修订版本，而不是强制使用工作流 SHA。需要不可变修订版本时，请在 Git 中固定 targetRevision。使用 --revision 之前，请检查服务器的 override 设置。请另行配置 production Environment 的审批/保护规则。
 
 ```yaml
 name: Sync declared Argo CD application
@@ -574,7 +574,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.4
+        ARGOCD_VERSION=v3.5.5
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;
@@ -603,7 +603,7 @@ jobs:
 
 ### Token 管理
 
-Token 元数据存储/规范化在项目的角色/status 记录中。手动声明 iat/exp/id 不会签发已签名的 Token。角色策略变更会影响已签发的 Token。请使用操作员凭证，以 Token 的 ISSUED AT 整数而不是其 ID 标签来撤销单个 Token：
+Token 元数据会存储/规范化在 Project 的角色/状态记录中。手动声明 iat/exp/id 并不会签发签名 Token。角色策略的更改会影响已签发的 Token。使用操作员凭据，通过 Token 的 ISSUED AT 整数值而非其 ID 标签来撤销单个 Token：
 
 ```bash
 argocd proj role list-tokens my-project ci-deployer --unixtime
@@ -613,20 +613,20 @@ argocd proj role list-tokens my-project ci-deployer --unixtime
 argocd proj role delete-token my-project ci-deployer "$SELECTED_ISSUED_AT"
 ```
 
-### 集群内 CI 的 Token 存储
+### 在集群内 CI 中存储 Token
 
-Kubernetes Secret 可为 CI job 存储之前签发的 Token。它不是 Argo CD Token 签发器，也不存在特殊的 argocd-token Secret 类型。例如，请使用 CI job 的 namespace 和安全的文件输入：
+Kubernetes Secret 可以为 CI 作业存储先前签发的 Token。它不是 Argo CD Token 签发器，也没有特殊的 argocd-token Secret 类型。请使用 CI 作业所在的命名空间，并通过安全文件输入传入 Token，例如：
 
 ```bash
 kubectl create secret generic argocd-ci-token -n ci \
   --from-file=token=./argocd-ci.token
 ```
 
-请先配置 ci namespace 和 job RBAC。仅在获授权的 CI job 中挂载/读取 Secret，并在 Token 过期前轮换其值。不要将 Token 值放入 Git。
+请先创建 ci 命名空间并配置作业 RBAC。仅在获授权的 CI 作业中挂载/读取 Secret，并在 Token 过期前轮换其值。不要将 Token 值放入 Git。
 
-## 孤立资源监控
+## 孤立资源监控 {#orphaned-resource-monitoring}
 
-检测目标 namespace 中不由 ArgoCD 管理的资源。
+检测目标命名空间中未由 ArgoCD 管理的资源。
 
 ### 启用孤立资源监控
 
@@ -664,17 +664,17 @@ curl --fail --silent --show-error --max-time 30 \
   | jq '.orphanedNodes'
 ```
 
-警告是可选的：warn:false 仍允许查看孤立候选资源。项目拒绝的资源和内置默认对象都有例外；请缩小受监控的 namespace，以避免大范围扫描 kube-system。
+警告是可选的：即使 warn:false，仍可查看疑似孤立资源。被 Project 拒绝的资源和内置默认对象有例外；请缩小监控的命名空间范围，避免扫描大量 kube-system 资源。
 
 ### 清理前审查
 
-孤立资源监控会报告未由 Argo CD Application 跟踪的顶层 namespace 范围资源。它们仍可能属于另一个 operator，或被有意地在 GitOps 之外管理。标签选择器 `managed-by!=argocd` 也会匹配没有该标签的资源，并且不实现 Argo CD 跟踪。不要将该选择器变为 PostSync 删除 job。
+孤立资源监控会报告未由 Argo CD Application 跟踪的顶层命名空间资源。它们仍可能属于其他操作器，或者是有意在 GitOps 之外管理的资源。标签选择器 `managed-by!=argocd` 也会匹配不带此类标签的资源，并不实现 Argo CD 跟踪机制。不要将该选择器转变为 PostSync 删除作业。
 
-在决定资源是否已废弃之前，请检查孤立列表、owner reference、实际的 Argo CD 跟踪元数据和所属 controller。使用范围严格的孤立监控忽略规则来排除合法资源。任何删除都应使用经过明确审查的资源列表以及适当的备份/恢复流程；此处示例仅报告候选资源。
+在判断资源是否已过时之前，请检查孤立资源列表、所有者引用、实际的 Argo CD 跟踪元数据以及所属控制器。使用范围严格限定的孤立资源监控忽略规则排除合法资源。任何删除操作都应使用经过明确审查的资源列表，并遵循相应的备份/恢复流程；此处的示例仅报告疑似资源。
 
 ## 策略验证
 
-将基础 ConfigMap 示例保存为 argocd-rbac-cm.yaml。CLI 也会初始化有效的 kubeconfig，但策略文件检查不会修改实时设置。请另行检查动态 AppProject 角色、实际 SSO claim 和 Kubernetes 准入。
+将基本 ConfigMap 示例保存为 argocd-rbac-cm.yaml。CLI 也会初始化有效的 kubeconfig，但策略文件检查不会修改实时设置。请分别检查动态 AppProject 角色、实际的 SSO 声明和 Kubernetes 准入控制。
 
 ```bash
 argocd admin settings rbac validate --policy-file ./argocd-rbac-cm.yaml
@@ -685,15 +685,15 @@ argocd admin settings rbac can developers get applications team-b/my-app \
   --policy-file ./argocd-rbac-cm.yaml
 ```
 
-validate 可能警告内置 role:admin 在用户 CSV 中缺失。can 默认包含内置策略；不要为了消除该警告而重复内置角色。请检查本地用户/SSO 组冲突及实际组 claim。exec 策略本身不会启用终端：还应检查 exec.enabled 和底层 Kubernetes 权限。
+validate 可能会警告用户 CSV 中缺少内置 role:admin。can 默认包含内置策略；不要为了消除警告而重复定义内置角色。请检查本地用户/SSO 组冲突和实际的组声明。exec 策略本身不会启用终端：还要检查 exec.enabled 和底层 Kubernetes 权限。
 
 ## 参考资料
 
 - [Argo CD 3.5.4 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/rbac.md)
-- [项目匹配和验证](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/app_project_types.go)
-- [源完整性](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
-- [项目 Token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/project_role.go)
+- [Project 匹配与验证](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/app_project_types.go)
+- [来源完整性](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
+- [Project Token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/project_role.go)
 
 ## 测验
 
-为了测试所学内容，请尝试 [ArgoCD 项目与 RBAC 测验](../../quizzes/gitops/argocd/06-projects-rbac-quiz.md)。
+检验你学到的内容，请尝试 [ArgoCD Projects 和 RBAC 测验](../../quizzes/gitops/argocd/06-projects-rbac-quiz.md)。

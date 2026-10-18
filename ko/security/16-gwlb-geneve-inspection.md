@@ -29,9 +29,9 @@ Outer IP
           └─ Original encapsulated traffic
 ```
 
-RFC 8926은 GENEVE header·VNI·가변 option과 UDP transport를 정의합니다. AWS GWLB는 Option Class `0x0108`의 TLV metadata를 사용하며, 장비는 TLV 쌍을 처리하고 GWLB는 이 metadata로 반환 GWLBE를 선택합니다. 지원 integration에서 필요한 metadata를 보존합니다. “일반 GENEVE를 지원한다”만으로 GWLB 호환성을 입증하지 않습니다. [S31] [S42] [S29]
+RFC 8926은 GENEVE header·VNI·가변 option과 UDP transport를 정의합니다. AWS GWLB는 Option Class `0x0108`의 TLV metadata를 사용하며, 장비는 TLV 쌍을 처리하고 GWLB는 이 metadata로 반환 GWLBE를 선택합니다. 지원 integration에서 필요한 metadata를 보존합니다. “일반 GENEVE를 지원한다”는 설명만으로 GWLB 호환성을 입증하지 않습니다. [S31] [S42] [S29]
 
-GENEVE는 TLS·IPsec처럼 payload를 암호화하지 않습니다. 동일 포트라도 Cilium overlay와 GWLB encapsulation은 목적·처리 경로가 다릅니다. TLS payload 검사는 장비의 별도 복호화 정책 또는 종료 지점의 통제가 필요합니다. [S31] [S24]
+GENEVE는 TLS·IPsec처럼 payload를 암호화하지 않습니다. 동일 포트라도 Cilium overlay와 GWLB encapsulation은 목적·처리 경로가 다릅니다. TLS payload 검사에는 장비의 별도 복호화 정책 또는 종료 지점의 통제가 필요합니다. [S31] [S24]
 
 ## 3. AZ별 egress 논리 흐름
 
@@ -102,7 +102,7 @@ EKS에서는 Pod/노드 IP·CNI SNAT·Security Groups for Pods 모드가 관측�
 
 기본 GWLB stickiness는 source/destination IP, source/destination port와 protocol의 **5-tuple**입니다. 지원 설정으로 **3-tuple**(IP 쌍+protocol) 또는 **2-tuple**(IP 쌍)을 선택할 수 있지만, **TGW appliance mode를 켠 구성에는 2/3-tuple이 지원되지 않습니다.** 이 중앙 검사 패턴은 5-tuple을 사용합니다. reduced-tuple은 특정 target에 부하를 집중시킬 수 있으므로 선택 모드의 제약과 용량을 확인합니다. [S25]
 
-TCP idle timeout 기본값은 350초이며, 5-tuple stickiness에서는 지원 범위 60–6000초로 변경할 수 있습니다. UDP idle timeout은 고정 120초입니다. 2/3-tuple에서 TCP timeout 변경을 지원한다고 가정하지 않습니다. 장비·NAT·앱·TGW와 target ENI의 `TcpEstablishedTimeout`도 독립적으로 확인합니다. GWLB timeout이 ENI timeout보다 길면 연결 추적의 불일치로 drop이 발생할 수 있습니다. [S24]
+TCP idle timeout 기본값은 350초이며, 5-tuple stickiness에서는 지원 범위인 60–6000초 내에서 변경할 수 있습니다. UDP idle timeout은 고정 120초입니다. 2/3-tuple에서 TCP timeout 변경을 지원한다고 가정하지 않습니다. 장비·NAT·앱·TGW와 target ENI의 `TcpEstablishedTimeout`도 독립적으로 확인합니다. GWLB timeout이 ENI timeout보다 길면 연결 추적의 불일치로 drop이 발생할 수 있습니다. [S24]
 
 TCP timeout 후의 새 SYN은 새 flow로 처리되지만, 이전 연결의 data packet은 drop됩니다. UDP timeout 후 packet은 새 flow가 될 수 있습니다. timeout 연장과 여러 장비의 세션 상태 공유는 별개입니다. keepalive·idle 후 재개·장시간 gRPC/WebSocket·UDP를 시험합니다. [S24]
 
@@ -186,7 +186,7 @@ aws ec2 describe-transit-gateway-vpc-attachments \
 | MTU·idle·IPv6 | 큰 packet·장시간 세션·지원 경로별 결과 |
 | 중앙 경로 밖 통신 | local·endpoint·peering·Pod 경로와 보완 통제 |
 
-수용 기준은 **정상 업무 SLO, 실제 검사·차단 증거, 기존/신규 세션 동작, N-1 용량, 우회 경로 설명, rollback·복구 담당자**를 함께 포함하도록 제안합니다. 이번 문서 보강은 실환경 배포·장애 주입·성능 측정을 수행하지 않았습니다.
+수용 기준은 **정상 업무 SLO, 실제 검사·차단 증거, 기존/신규 세션 동작, N-1 용량, 우회 경로 설명, rollback·복구 담당자**를 함께 포함하도록 제안합니다. 이번 문서 보강 과정에서는 실환경 배포·장애 주입·성능 측정을 수행하지 않았습니다.
 
 ## 다음 학습
 

@@ -319,8 +319,8 @@ Kubernetes provides various types of secrets:
 
 - **Opaque**: Default type, stores arbitrary user-defined data.
 - **kubernetes.io/service-account-token**: Stores service account tokens.
-- **kubernetes.io/dockercfg**: Stores serialized form of `.dockercfg` file.
-- **kubernetes.io/dockerconfigjson**: Stores serialized form of `.docker/config.json` file.
+- **kubernetes.io/dockercfg**: Stores the serialized form of a `.dockercfg` file.
+- **kubernetes.io/dockerconfigjson**: Stores the serialized form of a `.docker/config.json` file.
 - **kubernetes.io/basic-auth**: Stores credentials for basic authentication.
 - **kubernetes.io/ssh-auth**: Stores credentials for SSH authentication.
 - **kubernetes.io/tls**: Stores TLS certificates and keys.

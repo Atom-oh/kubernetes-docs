@@ -144,7 +144,7 @@ check_pod_exists() {
 
 ### 2.5 Init Container 패턴
 
-아래는 DNS 검색 대기의 유한 반복 예제입니다. DNS 성공은 데이터베이스 준비 완료가 아니므로 실제 애플리케이션은 연결 재시도/DB별 readiness 검사를 구현해야 합니다. Service mysql과 커스텀 myapp 이미지는 사전에 준비합니다. 실패 시 kubelet이 init 컨테이너를 다시 시작할 수 있으므로 전체 Pod 시작 기한과도 구분합니다.
+아래는 DNS 검색 대기의 유한 반복 예제입니다. DNS 성공은 데이터베이스 준비 완료를 의미하지 않으므로 실제 애플리케이션은 연결 재시도/DB별 readiness 검사를 구현해야 합니다. Service mysql과 커스텀 myapp 이미지는 사전에 준비합니다. 실패 시 kubelet이 init 컨테이너를 다시 시작할 수 있으므로 전체 Pod 시작 기한과도 구분합니다.
 
 ```yaml
 apiVersion: v1
@@ -207,7 +207,7 @@ kubectl get pods -o json | jq -r '.items[].metadata.name'
 
 ### 3.5 yq로 YAML 파싱
 
-이 예제는 Mike Farah yq v4 문법이며 Python yq와 옵션이 다릅니다.
+이 예제는 Mike Farah yq v4 문법을 사용하며 Python yq와 옵션이 다릅니다.
 
 ```bash
 yq '.metadata.name' deployment.yaml

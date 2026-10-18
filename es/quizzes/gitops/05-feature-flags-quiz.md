@@ -1,143 +1,143 @@
 # Cuestionario sobre Feature Flags y OpenFeature
 
-1. ¿Cuál es la ventaja clave del modelo de Provider de OpenFeature?
-   - A) El vendor lock-in proporciona un rendimiento óptimo
-   - B) Una API independiente del proveedor permite cambiar libremente los backends de Feature Flag
-   - C) Requiere ejecutar tu propio servidor de Feature Flag
-   - D) Solo admite API REST
+1. ¿Cuál es la principal ventaja del modelo Provider de OpenFeature?
+   - A) El bloqueo con un proveedor ofrece un rendimiento óptimo
+   - B) Una API de evaluación independiente del proveedor reduce los cambios de código al cambiar de backend
+   - C) Requiere ejecutar tu propio servidor de Feature Flags
+   - D) Solo admite la API REST
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una API independiente del proveedor permite cambiar libremente los backends de Feature Flag**
+**Respuesta: B) Una API de evaluación independiente del proveedor reduce los cambios de código al cambiar de backend**
 
 **Explicación:**
-OpenFeature es un estándar de CNCF que proporciona una API de SDK independiente del proveedor. Mediante la interfaz Provider, puedes cambiar entre backends como flagd, LaunchDarkly, Flagsmith y otros modificando únicamente la configuración de Provider, sin necesidad de cambios en el código de la aplicación.
+La API SDK independiente del proveedor de OpenFeature reduce los cambios en el código de evaluación al cambiar de backend. Las claves de flags, las variantes, las reglas de segmentación, la semántica del contexto, las credenciales, el almacenamiento en caché y el comportamiento de los eventos siguen requiriendo migración y pruebas.
 
 </details>
 
 ---
 
-2. ¿Cuál es la diferencia entre los modos de despliegue Sidecar y Standalone para flagd en Kubernetes?
+2. ¿Cuál es la diferencia entre los modos de despliegue Sidecar y Standalone de flagd en Kubernetes?
    - A) Sidecar tiene mejor rendimiento y Standalone es más fácil de administrar
-   - B) Sidecar se inyecta en cada Pod y minimiza la latencia; Standalone se ejecuta como un servicio central
+   - B) Sidecar se ejecuta dentro del Pod de una aplicación, mientras que Standalone ofrece evaluaciones mediante un Service compartido
    - C) Sidecar solo admite TCP y Standalone solo admite HTTP
    - D) Sidecar usa CRDs y Standalone solo usa ConfigMaps
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Sidecar se inyecta en cada Pod y minimiza la latencia; Standalone se ejecuta como un servicio central**
+**Respuesta: B) Sidecar se ejecuta dentro del Pod de una aplicación, mientras que Standalone ofrece evaluaciones mediante un Service compartido**
 
 **Explicación:**
-En el modo Sidecar, el OpenFeature Operator inyecta un contenedor flagd en cada Pod, lo que permite comunicación local con una latencia mínima. En el modo Standalone, flagd se ejecuta como un Deployment independiente administrado de forma centralizada, lo que resulta más eficiente en recursos, pero requiere llamadas de red.
+Las llamadas RPC pueden dirigirse a un sidecar local o a un Deployment compartido a través de un Service. Mide la latencia y el uso de recursos reales. Sidecar/deployment compartido describe dónde se ejecuta flagd; RPC/en proceso describe dónde se evalúan los flags. Un provider en proceso puede sincronizar las reglas y evaluarlas dentro de la aplicación.
 
 </details>
 
 ---
 
-3. ¿Cuál es la función de la información incluida en el Evaluation Context de un Feature Flag?
-   - A) Transmitir información de compilación para determinar los Flags en tiempo de compilación
-   - B) Evaluar reglas de targeting mediante contexto como ID de usuario, región y entorno
-   - C) Transmitir información de conexión a la base de datos
-   - D) Transmitir información de nodos de Kubernetes
+3. ¿Qué función tiene la información incluida en el Evaluation Context de un Feature Flag?
+   - A) Pasar información de compilación para determinar flags en tiempo de compilación
+   - B) Evaluar reglas de segmentación con datos contextuales, como ID de usuario, región y entorno
+   - C) Pasar información de conexión a la base de datos
+   - D) Pasar información de nodos de Kubernetes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Evaluar reglas de targeting mediante contexto como ID de usuario, región y entorno**
+**Respuesta: B) Evaluar reglas de segmentación con datos contextuales, como ID de usuario, región y entorno**
 
 **Explicación:**
-El Evaluation Context son metadatos que se transmiten dinámicamente durante la evaluación de un Flag. Incluye información como ID de usuario, región, entorno (dev/staging/prod) y grupos de usuarios. Las reglas de targeting utilizan esta información para habilitar funcionalidades para usuarios o grupos específicos.
+Evaluation Context son metadatos que se pasan dinámicamente durante la evaluación de un flag. Incluyen información como ID de usuario, región, entorno (dev/staging/prod) y grupos de usuarios. Las reglas de segmentación usan esta información para habilitar funciones para usuarios o grupos específicos. Para decisiones relacionadas con derechos de acceso, usa atributos verificados en el servidor; los feature flags no sustituyen la autenticación ni la autorización.
 
 </details>
 
 ---
 
-4. ¿Cuál es la función de los Feature Flags en el patrón Dark Launch?
-   - A) Ocultar completamente un servicio y bloquear el acceso
-   - B) Desplegar código de una nueva funcionalidad, pero deshabilitarlo mediante un Flag para que los usuarios no lo vean
+4. ¿Qué función tienen los Feature Flags en el patrón Dark Launch?
+   - A) Ocultar por completo un servicio y bloquear el acceso
+   - B) Devolver el resultado existente mientras se prueba la lógica nueva mediante una ejecución en sombra sin efectos secundarios
    - C) Cambiar los servidores al modo oscuro
-   - D) Ejecutar despliegues únicamente por la noche
+   - D) Ejecutar despliegues únicamente de noche
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Desplegar código de una nueva funcionalidad, pero deshabilitarlo mediante un Flag para que los usuarios no lo vean**
+**Respuesta: B) Devolver el resultado existente mientras se prueba la lógica nueva mediante una ejecución en sombra sin efectos secundarios**
 
 **Explicación:**
-Dark Launch despliega código de una nueva funcionalidad en producción, pero lo mantiene invisible para los usuarios mediante Feature Flags. Después, el Flag se habilita gradualmente para un subconjunto de usuarios con fines de prueba y, si no surgen problemas, se habilita para todos los usuarios. Este es un patrón clave para separar el despliegue del lanzamiento.
+La validación en sombra devuelve el resultado existente y compara cálculos de solo lectura o reproducciones aisladas. No debe cobrar, escribir registros de negocio ni enviar notificaciones dos veces. Limita la concurrencia asíncrona y asigna su propio tiempo de espera al trabajo en segundo plano. Esto difiere de una publicación gradual que sí expone el resultado nuevo a usuarios seleccionados.
 
 </details>
 
 ---
 
-5. ¿Cuál es la ventaja de Feature Flag as Code (GitOps)?
-   - A) Los Flags solo se pueden administrar mediante GUI
-   - B) Los cambios de Flags administrados mediante Git PRs permiten revisión, auditoría y rollback
-   - C) La evaluación de Flags se vuelve más rápida
+5. ¿Qué ventaja ofrece Feature Flag as Code (GitOps)?
+   - A) Los flags solo se pueden administrar mediante una interfaz gráfica
+   - B) Gestionar los cambios de flags mediante PR de Git permite revisarlos, auditarlos y revertirlos
+   - C) La evaluación de flags es más rápida
    - D) Se ahorran recursos del servidor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los cambios de Flags administrados mediante Git PRs permiten revisión, auditoría y rollback**
+**Respuesta: B) Gestionar los cambios de flags mediante PR de Git permite revisarlos, auditarlos y revertirlos**
 
 **Explicación:**
-Feature Flag as Code administra FeatureFlag CRs en un repositorio Git, aplicando procesos de revisión y aprobación basados en PR. El historial de cambios se registra en Git para auditoría, y los problemas se pueden revertir rápidamente mediante Git revert. ArgoCD o Flux sincronizan automáticamente los cambios.
+Gestionar los recursos CR de FeatureFlag en Git proporciona revisión mediante PR, historial de cambios y la posibilidad de revertirlos con Git. Los consumidores aún requieren la reconciliación de ArgoCD/Flux, la sincronización de la fuente y la actualización del estado del SDK. La autorreparación puede deshacer una corrección manual urgente; por eso, hay que considerar conjuntamente la propiedad y el comportamiento de reconciliación.
 
 </details>
 
 ---
 
-6. ¿Cuál es la práctica recomendada para prevenir deuda técnica derivada de Feature Flags?
-   - A) Mantener todos los Flags de forma permanente
-   - B) Establecer fechas de expiración en los Flags y limpiar el código de Flag después de completar el lanzamiento
-   - C) Crear Flags libremente sin limitar la cantidad
-   - D) No incluir fechas en los nombres de los Flags
+6. ¿Cuál es la mejor práctica para evitar la deuda técnica de los Feature Flags?
+   - A) Mantener todos los flags para siempre
+   - B) Definir fechas de vencimiento para los flags y limpiar su código al terminar el lanzamiento
+   - C) Crear flags sin límite de cantidad
+   - D) No incluir fechas en los nombres de los flags
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Establecer fechas de expiración en los Flags y limpiar el código de Flag después de completar el lanzamiento**
+**Respuesta: B) Definir fechas de vencimiento para los flags y limpiar su código al terminar el lanzamiento**
 
 **Explicación:**
-Los Feature Flags suelen utilizarse como herramientas temporales de lanzamiento. Después de completar un lanzamiento, el Flag y el código condicional relacionado deben limpiarse para evitar la acumulación de deuda técnica. Etiqueta los Flags con fechas de expiración y propietarios, y establece un proceso para detectar y eliminar periódicamente los Flags sin uso.
+Registra a los responsables y las fechas de revisión, y comprueba si las versiones anteriores de la aplicación u otros consumidores siguen usando el código y la configuración antes de eliminarlos. Los metadatos de vencimiento no borran un flag por sí solos. Los flags operativos permanentes pueden requerir revisiones periódicas en vez de eliminación.
 
 </details>
 
 ---
 
-7. ¿Cuál es la funcionalidad principal que proporciona el OpenFeature Operator en Kubernetes?
-   - A) Inyectar automáticamente sidecars flagd en Pods y administrar FeatureFlag CRDs
+7. ¿Qué funcionalidad principal ofrece el OpenFeature Operator en Kubernetes?
+   - A) Inyectar automáticamente sidecars de flagd en los Pods y administrar recursos CRD de FeatureFlag
    - B) Auditar la seguridad del clúster de Kubernetes
-   - C) Compilar automáticamente imágenes de contenedores
+   - C) Crear automáticamente imágenes de contenedor
    - D) Configurar automáticamente HPA
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Inyectar automáticamente sidecars flagd en Pods y administrar FeatureFlag CRDs**
+**Respuesta: A) Inyectar automáticamente sidecars de flagd en los Pods y administrar recursos CRD de FeatureFlag**
 
 **Explicación:**
-El OpenFeature Operator es un Operator para administrar Feature Flags de forma nativa en Kubernetes. Administra Flags de forma declarativa mediante FeatureFlag CRDs, define fuentes de Flags mediante FeatureFlagSource CRDs e inyecta automáticamente contenedores sidecar flagd en Pods con las anotaciones adecuadas.
+El Operator administra recursos como FeatureFlag y FeatureFlagSource. La inyección en Pods usa las anotaciones openfeature.dev/enabled y openfeature.dev/featureflagsource. Los volúmenes ConfigMap de origen de archivos, el acceso directo a Kubernetes y los orígenes de proxy siguen rutas de sincronización distintas. La aplicación aún requiere integración con el SDK.
 
 </details>
 
 ---
 
-8. ¿Cómo funciona el auto-rollout basado en métricas en la combinación de Flagger + Feature Flag?
-   - A) Feature Flag controla directamente el tráfico
-   - B) Flagger gestiona el cambio de tráfico Canary, mientras que Feature Flag controla la exposición gradual de funcionalidades en el nivel de la aplicación
-   - C) Feature Flag reemplaza completamente a Flagger
+8. ¿Cómo funciona el despliegue automático basado en métricas al combinar Flagger y Feature Flags?
+   - A) Feature Flags controlan directamente el tráfico
+   - B) Flagger gestiona el cambio del tráfico Canary, mientras que los Feature Flags controlan la exposición gradual de funciones en la aplicación
+   - C) Feature Flags sustituyen por completo a Flagger
    - D) Ambas herramientas usan métricas idénticas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Flagger gestiona el cambio de tráfico Canary, mientras que Feature Flag controla la exposición gradual de funcionalidades en el nivel de la aplicación**
+**Respuesta: B) Flagger gestiona el cambio del tráfico Canary, mientras que los Feature Flags controlan la exposición gradual de funciones en la aplicación**
 
 **Explicación:**
-Flagger y Feature Flags operan en niveles diferentes. Flagger divide el tráfico en el nivel de infraestructura y analiza métricas para controlar el despliegue. Los Feature Flags controlan la activación o desactivación de funcionalidades individuales en el nivel de la aplicación. Utilizarlos juntos separa completamente el despliegue (Flagger) del lanzamiento (Feature Flags).
+Flagger controla la entrega de cargas de trabajo y el tráfico; los feature flags controlan el comportamiento de la aplicación. No forman automáticamente una única transacción. Para coordinar los cambios de flags y las reversiones hacen falta webhooks reales o automatización con Git, autorización y manejo de fallos. Los porcentajes de tráfico de Canary y los porcentajes de cohortes de usuarios describen poblaciones distintas.
 
 </details>

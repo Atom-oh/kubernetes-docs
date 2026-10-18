@@ -29,7 +29,7 @@ Harbor는 2020년에 CNCF Graduated 프로젝트가 되었습니다. 이는 Harb
 **정답: D) Prometheus (메트릭 수집)**
 
 **설명:**
-Harbor의 핵심 구성 요소는 Core(API·인증), Portal(웹 UI), Registry, Job Service, PostgreSQL, Redis, Trivy 어댑터가 있습니다. Notary v1 서버는 Harbor 2.9부터 제거되었습니다. Prometheus는 Harbor의 구성 요소가 아니라 외부 모니터링 도구입니다.
+Harbor의 핵심 구성 요소로는 Core(API·인증), Portal(웹 UI), Registry, Job Service, PostgreSQL, Redis, Trivy 어댑터가 있습니다. Notary v1 서버는 Harbor 2.9부터 제거되었습니다. Prometheus는 Harbor의 구성 요소가 아니라 외부 모니터링 도구입니다.
 
 </details>
 
@@ -77,7 +77,7 @@ Robot Account는 CI/CD 파이프라인, 스크립트 등 자동화된 시스템�
 **정답: B) 대상 Harbor에서 소스 레지스트리의 이미지를 가져옴**
 
 **설명:**
-Pull-based 복제에서는 대상(destination) Harbor가 소스 레지스트리(Harbor, Docker Hub, ECR 등)에서 이미지를 가져옵니다. 이는 소스가 Harbor가 아닌 레지스트리에도 유용하지만, 대상 Harbor에서 업스트림으로 연결할 수 있어야 합니다. 완전한 폐쇄망에는 별도 오프라인 반입이 필요합니다.
+Pull-based 복제에서는 대상(destination) Harbor가 소스 레지스트리(Harbor, Docker Hub, ECR 등)에서 이미지를 가져옵니다. 이는 소스가 Harbor가 아닌 레지스트리인 경우에도 유용하지만, 대상 Harbor에서 업스트림으로 연결할 수 있어야 합니다. 완전한 폐쇄망에는 별도 오프라인 반입이 필요합니다.
 
 </details>
 

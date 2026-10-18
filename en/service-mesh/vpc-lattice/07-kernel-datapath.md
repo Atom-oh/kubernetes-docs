@@ -11,7 +11,7 @@
 
 ## Why This Document Exists
 
-[Document 04](./04-networking-basics.md) explained that a link-local address is a marker meaning "the infrastructure handles this packet." That is enough conceptually, but **the problems that actually break during migration live at the kernel layer.**
+[Document 04](./04-networking-basics.md) explained that a link-local address is a marker meaning "the infrastructure handles this packet." That is enough conceptually, but **the problems that actually cause failures during migration live at the kernel layer.**
 
 | Symptom in production | The reality at the kernel layer |
 |---|---|
@@ -278,7 +278,7 @@ As a diagnosis order:
 
 ## Per-Node Divergence: "It Only Fails on Some Nodes"
 
-This symptom narrows to a few causes.
+This symptom narrows the possible causes to a few.
 
 | Cause | Check |
 |---|---|

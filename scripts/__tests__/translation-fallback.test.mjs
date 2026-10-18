@@ -7,6 +7,7 @@ import { extractLastUpdated, localeAlternates } from '../../.vitepress/seo.mjs'
 
 const files = new Set([
   'cn/basics/01-linux-basics.md',
+  'cn/basics/02-linux-advanced.md',
   'en/basics/01-linux-basics.md',
   'en/kernel/01-basics.md',
   'en/networking/beginner/README.md',
@@ -45,12 +46,12 @@ test('links that resolve, leave the locale, or are missing in English too are le
 
 test('the markdown rule rewrites fallback links and opts them out of SPA navigation', () => {
   const md = new MarkdownIt()
-  translationFallbackLinks(md)
-  // Uses the real tree: jp has no kernel section, en does.
-  const html = md.render('[k](../kernel/01-container-primitives.md) [b](./02-linux-advanced.md)', {
-    relativePath: 'jp/basics/01-linux-basics.md'
+  translationFallbackLinks(md, { fileExists })
+  // An isolated fixture stays valid as real translated coverage grows.
+  const html = md.render('[k](../kernel/01-basics.md#section) [b](./02-linux-advanced.md)', {
+    relativePath: 'cn/basics/01-linux-basics.md'
   })
-  assert.match(html, /<a href="\/kubernetes-docs\/en\/kernel\/01-container-primitives" target="_self">k<\/a>/)
+  assert.match(html, /<a href="\/kubernetes-docs\/en\/kernel\/01-basics" target="_self">k<\/a>/)
   assert.match(html, /<a href="\.\/02-linux-advanced\.md">b<\/a>/)
 })
 

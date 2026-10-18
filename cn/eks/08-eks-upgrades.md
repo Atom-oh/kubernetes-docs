@@ -1,281 +1,251 @@
 # Amazon EKS 升级
 
-> **最后更新**: July 3, 2026
+> **最后更新**：October 12, 2026
 
-让你的 Amazon EKS cluster 保持最新，对于安全性、稳定性以及利用新功能都很重要。本文档提供了安全升级 EKS cluster 的策略、最佳实践和分步指南。
+让 Amazon EKS 集群保持最新状态，对于安全性、稳定性以及利用新功能都很重要。本文档介绍了安全升级 EKS 集群的策略、最佳实践和分步指南。
+
+这些是经过负责人审核的操作流程，并非本次审计中实际执行的升级。请明确指定账户、Region 和 Kubernetes context，记录已批准的源版本/目标版本及更新 ID，并验证应用程序行为。不要对同一组资源连续运行所有替代示例。本地解析/模拟无法证明生产环境已做好准备。
 
 ## 目录
 
-1. [EKS 升级概览](#eks-upgrade-overview)
-2. [升级规划和准备](#upgrade-planning-and-preparation)
-3. [EKS Control Plane 升级](#eks-control-plane-upgrade)
-4. [Node Group 升级](#node-group-upgrade)
-5. [Add-on 升级](#add-on-upgrade)
-6. [升级验证和故障排查](#upgrade-validation-and-troubleshooting)
+1. [EKS 升级概述](#eks-upgrade-overview)
+2. [升级规划与准备](#upgrade-planning-and-preparation)
+3. [EKS 控制平面升级](#eks-control-plane-upgrade)
+4. [节点组升级](#node-group-upgrade)
+5. [附加组件升级](#add-on-upgrade)
+6. [升级验证与故障排除](#upgrade-validation-and-troubleshooting)
 7. [升级自动化](#upgrade-automation)
 8. [升级最佳实践](#upgrade-best-practices)
 
-<span id="eks-upgrade-overview"></span>
+## EKS 升级概述 {#eks-upgrade-overview}
 
-## EKS 升级概览
+![Tree diagram of the four pillars of an EKS upgrade: version management policy, the components that get upgraded (control plane, node groups, add-ons, self-managed components), the one-minor-version-at-a-time upgrade path versus an unsupported version skip, and the five-step upgrade order.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
-```mermaid
-flowchart TD
-    UpgradeOverview[EKS Upgrade Overview] --> VersionManagement[EKS Version Management]
-    UpgradeOverview --> UpgradeComponents[Upgrade Components]
-    UpgradeOverview --> UpgradePath[Upgrade Path]
-    UpgradeOverview --> UpgradeOrder[Upgrade Order]
-
-    VersionManagement --> Support["Version Support
-                Minimum 4 versions supported simultaneously"]
-    VersionManagement --> SupportPeriod["Support Period
-                Approximately 14 months"]
-    VersionManagement --> Deprecation["Version Deprecation
-                Minimum 60 days notice"]
-
-    UpgradeComponents --> ControlPlane[EKS Control Plane]
-    UpgradeComponents --> NodeGroups[Node Groups]
-    UpgradeComponents --> Addons[Add-ons]
-    UpgradeComponents --> SelfManaged[Self-managed Components]
-
-    UpgradePath --> CorrectPath["Correct Path
-                1.24 → 1.25 → 1.26 → 1.27"]
-    UpgradePath --> InvalidPath["Not Supported
-                1.24 → 1.26"]
-
-    UpgradeOrder --> Step1[1. Upgrade Planning and Preparation]
-    UpgradeOrder --> Step2[2. EKS Control Plane Upgrade]
-    UpgradeOrder --> Step3[3. Add-on Upgrade]
-    UpgradeOrder --> Step4[4. Node Group Upgrade]
-    UpgradeOrder --> Step5[5. Upgrade Validation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ControlPlane,NodeGroups,Addons awsService;
-    class SelfManaged k8sComponent;
-    class UpgradeOverview,VersionManagement,UpgradeComponents,UpgradePath,UpgradeOrder,Support,SupportPeriod,Deprecation,CorrectPath,InvalidPath,Step1,Step2,Step3,Step4,Step5 default;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-0.html)
 
 ### EKS 版本管理
 
-Amazon EKS 遵循 Kubernetes 版本管理策略：
+EKS 使用 Kubernetes 版本编号，并有自己的发布/支持日历。每个次要版本会获得 **14 个月的标准支持**，随后是 **12 个月的延长支持**，需额外付费。AWS 至少会提前 60 天公告标准支持结束时间。请参阅[当前 EKS 版本目录/日历](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)；上游 Kubernetes 的某个版本并不会自动在 EKS 上提供。不要假设“至少相差四个版本”，也不要把 14 个月视为整个支持生命周期。
 
-- **Version Support**: EKS 同时支持至少 4 个 Kubernetes 版本。
-- **Support Period**: 每个 Kubernetes 版本在 EKS 上发布后大约支持 14 个月。
-- **Version Deprecation**: 在某个版本弃用之前，至少会提前 60 天通知。
+### 近期 EKS 升级公告（2026）
 
-### 最近的 EKS 升级公告（2026）
-
-- **Kubernetes 版本回滚支持（July 1, 2026）**: 如果升级导致问题，现在可以在 7 天内将 Control Plane 回滚到上一个次要版本。EKS 会预先运行自动化 Rollback Readiness 检查，涵盖 API 兼容性、版本偏差、Add-on 兼容性和 cluster 健康状况。EKS Auto Mode cluster 会自动回滚 -- worker nodes 会自行还原，并且 Control Plane 会按顺序恢复。此功能不收取额外费用，并且在所有区域可用。有关详细信息，请参阅下面的 [回滚流程](#rollback-procedure)。（来源：[Amazon EKS 宣布 Kubernetes 版本回滚](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback)）
-- **99.99% SLA 和 8XL Control Plane 层级（March 20, 2026）**: Provisioned Control Plane cluster 的 SLA 从 99.95% 提升到 99.99%，以一分钟粒度衡量。新的 8XL 扩展层级将 API 请求处理能力提升到此前 4XL 层级的两倍，面向超大型 cluster 以及 AI/ML/HPC workload。（来源：[Amazon EKS 宣布 SLA 和 8XL 扩展层级](https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/)）
+- **Kubernetes 1.37 已推出（2026 年 10 月 1 日）**：EKS 1.37 现已成为受支持的目标版本。在 Auto Mode 上，新建且未指定整合策略的自定义 NodePool 默认使用 `Balanced`；内置的 `general-purpose` 和 `system` 池也使用 `Balanced`。对于受支持的 CSI 和 Pod 配置，SELinux 卷挂载已稳定并默认启用。升级前，请检查预期的 NodePool 行为，以及在不同标签下共享卷的工作负载对 SELinux/CSI 的要求。请参阅 [EKS 标准支持发行说明](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)中的 Kubernetes 1.37 部分和[支持日历](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
+- **支持回滚 Kubernetes 版本（2026 年 7 月 1 日）**：如果升级导致问题，现在可以在 7 天内将控制平面回滚到先前的次要版本。EKS 会事先运行自动回滚就绪检查，涵盖 API 兼容性、版本偏差、附加组件兼容性和集群运行状况。对于用户发起的回滚，Auto Mode 会先替换符合条件的工作节点，再回退控制平面；这并非针对应用程序故障的自动响应。仍需满足资格条件和中断控制要求。在提供 EKS 的 Region 中，此功能不额外收费；节点/存储费用以及适用的版本支持费用仍需支付。详情请参阅下文的[回滚流程](#rollback-procedure)。（来源：[Amazon EKS 宣布支持回滚 Kubernetes 版本](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback)）
+- **99.99% SLA 和 8XL 控制平面层级（2026 年 3 月 20 日）**：Provisioned Control Plane 集群的 SLA 从 99.95% 提高到 99.99%，按一分钟粒度测量。新增的 8XL 扩展层级将 API 请求处理能力提升至原 4XL 层级的两倍，面向超大型集群以及 AI/ML/HPC 工作负载。（来源：[Amazon EKS 宣布 SLA 和 8XL 扩展层级](https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/)）
 
 ### 升级组件
 
-EKS cluster 升级包括以下组件：
+EKS 集群升级包括以下组件：
 
-1. **EKS Control Plane**: Kubernetes API server、etcd、controller manager 等。
-2. **Node Groups**: Worker nodes 和 node AMI
-3. **Add-ons**: AWS managed add-ons（例如 CoreDNS、kube-proxy、VPC CNI）
-4. **Self-managed Components**: Helm charts、custom resources 等。
+1. **EKS 控制平面**：Kubernetes API server、etcd、controller manager 等。
+2. **节点组**：工作节点和节点 AMI
+3. **附加组件**：AWS 托管的附加组件（例如 CoreDNS、kube-proxy、VPC CNI）
+4. **自行管理的组件**：Helm charts、自定义资源等
 
 ### 升级路径
 
-EKS cluster 必须一次升级一个次要版本：
+EKS 集群必须一次升级一个次要版本：
 
-- 1.24 → 1.25 → 1.26 → 1.27（正确路径）
-- 1.24 → 1.26（不支持）
+- 历史示例：1.24 → 1.25 → 1.26 → 1.27 展示了一次一个次要版本的模式；这些并非当前部署目标。
+- 直接从 1.24 → 1.26 跳转，展示了不受支持的跳过次要版本的情形。
+- 对于实际变更，请选择 EKS 在你的 Region 和支持策略下实际提供的下一个次要版本。
 
 ### 升级顺序
 
-一般升级顺序如下：
+1. 清点/测试/备份，处理正在进行的更新，并按照保守的准备流程使节点与**当前**控制平面次要版本保持一致。
+2. 应用任何与当前和目标 Kubernetes 版本都兼容的必需附加组件/控制器过渡版本；验证各组件特定的前置条件。
+3. 将控制平面升级一个受支持的次要版本，并等待该更新 ID 成功。
+4. 按照已验证的依赖顺序升级节点、客户端/控制器和剩余附加组件，每一步都要检查。Auto Mode 自主管理其内置功能，并在控制平面升级后启动节点更新。
+5. 验证实际节点版本、工作负载就绪状态、流量、存储和 SLO。
 
-1. 升级规划和准备
-2. EKS Control Plane 升级
-3. Add-on 升级
-4. Node Group 升级
-5. 升级验证
+对于 kubelet 1.25 及更高版本，上游允许其最多落后 API server 三个次要版本，但不能更新；API server 版本混合时，允许的范围会缩小。EKS 文档既说明了升级前节点版本对齐建议，也说明了支持的版本偏差范围。本操作手册选择对齐作为准备策略；它并不声称 EKS API 一律拒绝所有受支持的版本偏差。附加组件并非一律都要“在控制平面升级之前”或“之后”升级。回滚采用不同的先升级节点顺序，详见下文。
 
-<span id="upgrade-planning-and-preparation"></span>
+## 升级规划与准备 {#upgrade-planning-and-preparation}
 
-## 升级规划和准备
+<!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
+![Tree diagram showing upgrade planning and preparation split into an upgrade assessment branch (version compatibility check, resource requirements, upgrade schedule planning) and a pre-upgrade preparation branch (check cluster state, create backup, test upgrade, upgrade documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
 
-```mermaid
-flowchart TD
-    UpgradePlanning[Upgrade Planning and Preparation] --> Assessment[Upgrade Assessment]
-    UpgradePlanning --> Preparation[Pre-upgrade Preparation]
-
-    Assessment --> Compatibility[Version Compatibility Check]
-    Assessment --> ResourceReq[Resource Requirements Assessment]
-    Assessment --> Schedule[Upgrade Schedule Planning]
-
-    Compatibility --> DeprecatedAPI[Check Deprecated APIs]
-    Compatibility --> FeatureChanges[Review Feature Changes]
-    Compatibility --> AddonCompat[Check Add-on Compatibility]
-
-    ResourceReq --> ClusterCapacity[Check Cluster Capacity]
-    ResourceReq --> Downtime[Downtime Tolerance]
-    ResourceReq --> RollbackPlan[Rollback Plan]
-
-    Schedule --> MaintenanceWindow[Set Maintenance Window]
-    Schedule --> PhaseApproach[Phased Approach]
-    Schedule --> RollbackWindow[Plan Rollback Window]
-
-    Preparation --> ClusterState[Check Cluster State]
-    Preparation --> Backup[Create Backup]
-    Preparation --> TestUpgrade[Test Upgrade]
-    Preparation --> Documentation[Create Upgrade Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ClusterCapacity,MaintenanceWindow awsService;
-    class DeprecatedAPI,AddonCompat,ClusterState k8sComponent;
-    class UpgradePlanning,Assessment,Preparation,Compatibility,ResourceReq,Schedule,FeatureChanges,Downtime,RollbackPlan,PhaseApproach,RollbackWindow,Backup,TestUpgrade,Documentation default;
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-1.html)
+-->
 
 ### 升级评估
 
-开始升级之前，应评估以下内容：
+开始升级之前，应评估以下事项：
 
 #### 版本兼容性检查
 
 检查与目标 Kubernetes 版本的兼容性：
 
-- **API Deprecation**: 识别使用已弃用 API 的 workload
-- **Feature Changes**: 查看新版本中的功能变化
-- **Add-on Compatibility**: 验证 add-on 与目标版本兼容
+- **API 弃用**：找出使用已弃用 API 的工作负载
+- **功能变更**：检查新版本中的功能变更
+- **附加组件兼容性**：验证附加组件与目标版本兼容
 
-```bash
-# Check deprecated API usage
-kubectl get -l k8s-app!=kube-dns deployments --all-namespaces -o json | jq '.items[].spec.template.spec.containers[].image' | sort | uniq
+镜像列表或 `kubectl get … .apiVersion` 并不是客户端/API 弃用审计：API server 返回的是协商后的/当前表示形式。Beta API 并不自动意味着已弃用。请根据目标版本审查源代码/Helm manifests、客户端、CRD、webhook 和 EKS 升级洞察。单次抓取 API server 指标只能作为观测到的证据；没有数据/出现错误并不能证明不存在已弃用用法。
 
-# Check deprecated API usage
-kubectl get $(kubectl api-resources --verbs=list -o name | paste -sd, -) \
-  --all-namespaces -o json | jq '.items[] | select(.apiVersion | contains("beta"))' | jq -r '.kind,.apiVersion,.metadata.name' | sort | uniq
+将以下只读收集器保存为 `eks-upgrade-preflight.py`。导出 `CLUSTER_NAME`、`AWS_REGION`、`EXPECTED_ACCOUNT_ID`、`KUBE_CONTEXT` 和 `TARGET_VERSION`；使用受限的本地权限保存其 JSON。程序成功退出仅表示收集成功，并不意味着升级已获批准或所有工作负载都兼容。
+
+```python
+import json
+import os
+import re
+import subprocess
+
+
+def run_json(args):
+    result = subprocess.run(args, check=True, capture_output=True, text=True, timeout=60)
+    return json.loads(result.stdout)
+
+
+def run_text(args):
+    return subprocess.run(args, check=True, capture_output=True, text=True, timeout=30).stdout.strip()
+
+
+def inspect_upgrade(cluster_name, region, expected_account, context, target, query=run_json, text=run_text):
+    if not re.fullmatch(r"[0-9]{12}", expected_account):
+        raise ValueError("Set the reviewed 12-digit AWS account ID")
+    if not re.fullmatch(r"[0-9]+\.[0-9]+", target):
+        raise ValueError("Target must be an EKS major.minor version")
+    aws = [os.environ.get("AWS_CLI", "aws")]
+    suffix = ["--region", region, "--output", "json", "--no-cli-pager"]
+    identity = query(aws + ["sts", "get-caller-identity"] + suffix)
+    if identity["Account"] != expected_account:
+        raise RuntimeError("AWS account mismatch")
+    cluster = query(aws + ["eks", "describe-cluster", "--name", cluster_name] + suffix)["cluster"]
+    if cluster["status"] != "ACTIVE":
+        raise RuntimeError("Cluster must be ACTIVE; inspect any in-progress updates")
+    if cluster["arn"].split(":")[4] != expected_account:
+        raise RuntimeError("Cluster/account mismatch")
+    current = cluster["version"]
+    current_parts = tuple(map(int, current.split(".")))
+    target_parts = tuple(map(int, target.split(".")))
+    if target_parts != (current_parts[0], current_parts[1] + 1):
+        raise ValueError("This upgrade example requires exactly the next minor version")
+    server = text(["kubectl", "--context", context, "config", "view", "--minify",
+                   "--output", "jsonpath={.clusters[0].cluster.server}"])
+    if server != cluster["endpoint"]:
+        raise RuntimeError("Kubernetes context does not match the EKS API endpoint")
+    catalog = query(aws + ["eks", "describe-cluster-versions", "--cluster-versions", target,
+                         "--include-all", "--no-default-only"] + suffix)["clusterVersions"]
+    if not any(item["clusterVersion"] == target and item.get("versionStatus") in
+               ["STANDARD_SUPPORT", "EXTENDED_SUPPORT"] for item in catalog):
+        raise ValueError("Target is not offered as a supported EKS version in this Region")
+    insights = query(aws + [
+        "eks", "list-insights", "--cluster-name", cluster_name,
+        "--filter", json.dumps({"categories": ["UPGRADE_READINESS"], "kubernetesVersions": [target]}),
+    ] + suffix)["insights"]
+    nodes = query(["kubectl", "--context", context, "get", "nodes", "--output", "json"])["items"]
+    update_ids = query(aws + ["eks", "list-updates", "--name", cluster_name] + suffix)["updateIds"]
+    addon_names = query(aws + ["eks", "list-addons", "--cluster-name", cluster_name] + suffix)["addons"]
+    addons = []
+    for name in addon_names:
+        addon = query(aws + ["eks", "describe-addon", "--cluster-name", cluster_name,
+                             "--addon-name", name] + suffix)["addon"]
+        addons.append({"name": name, "version": addon["addonVersion"], "status": addon["status"]})
+    return {
+        "cluster": cluster_name, "region": region, "account": expected_account,
+        "currentVersion": current, "targetVersion": target, "targetCatalog": catalog,
+        "insights": insights,
+        "clusterUpdateIds": update_ids,
+        "nodes": [{"name": node["metadata"]["name"],
+                   "kubeletVersion": node["status"]["nodeInfo"]["kubeletVersion"],
+                   "ready": next((condition.get("status") for condition in node["status"].get("conditions", [])
+                                  if condition.get("type") == "Ready"), None),
+                   "computeType": node["metadata"].get("labels", {}).get("eks.amazonaws.com/compute-type"),
+                   "nodegroup": node["metadata"].get("labels", {}).get("eks.amazonaws.com/nodegroup")}
+                  for node in nodes],
+        "managedAddons": addons,
+        "decision": "Inventory collected only; active-update review, owner approval, node alignment, API/client scans, "
+                    "backups/restore tests, add-on bridge versions, capacity, and workload tests remain required.",
+    }
+
+
+if __name__ == "__main__":
+    report = inspect_upgrade(
+        os.environ["CLUSTER_NAME"], os.environ["AWS_REGION"],
+        os.environ["EXPECTED_ACCOUNT_ID"], os.environ["KUBE_CONTEXT"],
+        os.environ["TARGET_VERSION"],
+    )
+    print(json.dumps(report, indent=2))
 ```
 
 #### 资源需求评估
 
 评估升级所需的资源：
 
-- **Cluster Capacity**: 在升级期间有足够容量容纳额外 nodes
-- **Downtime Tolerance**: workload 是否可以容忍停机
-- **Rollback Plan**: 出现问题时的回滚计划
+- **集群容量**：容量足以在升级期间容纳额外节点
+- **停机容忍度**：工作负载是否能够容忍停机
+- **回滚计划**：出现问题时的回滚计划
 
 #### 升级计划安排
 
 规划升级时间表：
 
-- **Maintenance Window**: 在低流量时段安排升级
-- **Phased Approach**: 从非生产环境开始，逐步推进到生产环境
-- **Rollback Window**: 规划出现问题时回滚所需的时间
+- **维护窗口**：安排在低流量时段进行升级
+- **分阶段方法**：从非生产环境开始，再逐步推进到生产环境
+- **回滚窗口**：规划出现问题时回滚所需的时间
 
 ### 升级前准备
 
-#### 检查 Cluster 状态
+#### 检查集群状态
 
-在升级前检查 cluster 状态：
+升级前检查集群状态：
 
 ```bash
 # Check node status
-kubectl get nodes
+kubectl --context "$KUBE_CONTEXT" get nodes
 
 # Check pod status
-kubectl get pods --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces
 
 # Check component status
-kubectl get componentstatuses
+kubectl --context "$KUBE_CONTEXT" get --raw /readyz
 
 # Check events
-kubectl get events --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get events --all-namespaces
 ```
 
 #### 创建备份
 
 升级前备份重要数据：
 
-```bash
-# etcd backup
-kubectl -n kube-system exec -it etcd-pod -- etcdctl snapshot save /tmp/etcd-backup.db
+托管控制平面的 etcd 由 EKS 管理；在你的命名空间中运行 `etcd-pod`/`etcdctl snapshot` 命令无法备份它。`kubectl get all` 也会遗漏重要资源和卷数据，因此并非完整备份。
 
-# Backup using Velero
-velero backup create pre-upgrade-backup --include-namespaces=default,app-namespace
-```
+[AWS Backup for EKS](https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html) 可以通过复合恢复点保护集群状态以及由 PVC 支持的 EBS/EFS/S3 资源，但需满足文档所述的 IAM、API/API_AND_CONFIG_MAP 访问模式、存储和还原前置条件。或者，使用由你负责的 Velero/应用程序备份设置，并验证卷覆盖范围。检查命名空间/集群范围的覆盖、数据库一致性、保留期限和还原测试。备份请求返回 ID 并不能证明备份已完成或可恢复。
 
 #### 测试升级
 
 在非生产环境中测试升级：
 
-1. 创建与生产环境类似的测试 cluster
-2. 在测试 cluster 上执行升级
-3. 测试 workload 和功能
-4. 识别并解决问题
+1. 创建与生产环境相似的测试集群
+2. 在测试集群上执行升级
+3. 测试工作负载和功能
+4. 找出并解决问题
 
 #### 创建升级文档
 
-记录升级过程：
+记录升级流程：
 
 - 升级步骤
-- 负责人和联系方式
+- 负责人和联系人
 - 回滚流程
-- 故障排查指南
+- 故障排除指南
 
-<span id="eks-control-plane-upgrade"></span>
+## EKS 控制平面升级 {#eks-control-plane-upgrade}
 
-## EKS Control Plane 升级
+<!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
+![Diagram of an EKS control plane upgrade split into four stages, preparation, execution, monitoring, and troubleshooting, each grouping its steps: version checks and planning, Console/CLI/eksctl, status, cluster state and CloudWatch monitoring, and common issues with troubleshooting steps.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
 
-```mermaid
-flowchart TD
-    ControlPlaneUpgrade[EKS Control Plane Upgrade] --> Preparation[Control Plane Upgrade Preparation]
-    ControlPlaneUpgrade --> Execution[Control Plane Upgrade Execution]
-    ControlPlaneUpgrade --> Monitoring[Control Plane Upgrade Monitoring]
-    ControlPlaneUpgrade --> Troubleshooting[Control Plane Upgrade Troubleshooting]
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-2.html)
+-->
 
-    Preparation --> CheckVersion[Check Current Version]
-    Preparation --> AvailableVersions[Check Available Versions]
-    Preparation --> UpgradePlan[Create Upgrade Plan]
-
-    Execution --> Console[Using AWS Management Console]
-    Execution --> CLI[Using AWS CLI]
-    Execution --> Eksctl[Using eksctl]
-
-    Monitoring --> CheckStatus[Check Upgrade Status]
-    Monitoring --> ClusterState[Monitor Cluster State]
-    Monitoring --> CloudWatchMetrics[Monitor CloudWatch Metrics]
-
-    Troubleshooting --> CommonIssues[Common Issues]
-    Troubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-
-    CommonIssues --> UpgradeFailure[Upgrade Failure]
-    CommonIssues --> APIAvailability[API Server Availability Issues]
-    CommonIssues --> CompatibilityIssues[Compatibility Issues]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Console,CLI,CloudWatchMetrics awsService;
-    class Eksctl,ClusterState,APIAvailability k8sComponent;
-    class ControlPlaneUpgrade,Preparation,Execution,Monitoring,Troubleshooting,CheckVersion,AvailableVersions,UpgradePlan,CheckStatus,CommonIssues,TroubleshootingSteps,UpgradeFailure,CompatibilityIssues default;
-```
-
-### Control Plane 升级准备
+### 控制平面升级准备
 
 #### 检查当前版本
 
-检查当前 EKS cluster 版本：
+检查当前 EKS 集群版本：
 
 ```bash
-aws eks describe-cluster --name my-cluster --query "cluster.version"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" --query "cluster.version"
 ```
 
 #### 检查可用版本
@@ -283,1140 +253,1043 @@ aws eks describe-cluster --name my-cluster --query "cluster.version"
 检查可用的 Kubernetes 版本：
 
 ```bash
-aws eks describe-addon-versions --kubernetes-version 1.27
+aws eks describe-cluster-versions --region "$AWS_REGION" \
+  --no-default-only --output json --no-cli-pager
 ```
 
-#### 创建升级计划
+#### 制定升级计划
 
-创建 Control Plane 升级计划：
+提交常规升级之前，请查阅当前 [EKS 指南](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)：要求针对升级洞察结果使用 `--force` 的强制规则已暂时回退。这与版本回滚的阻断性 `ROLLBACK_READINESS` 规则不同。请解决或明确评估相关发现；即使问题已修复，滚动 30 天的已弃用 API 证据仍可能保留。确保集群子网存在、有足够的可用地址（EKS 最多可能需要五个），并允许控制平面通信。控制平面升级一旦启动，就无法暂停/停止；客户端必须能够处理重新连接。
+
+制定控制平面升级计划：
 
 - 升级时间：选择低流量时段
-- 监控设置：升级期间监控 cluster 状态
+- 监控设置：升级期间监控集群状态
 - 回滚计划：出现问题时的回滚流程
 
-### Control Plane 升级执行
+### 控制平面升级执行
 
 #### 使用 AWS Management Console 升级
 
 1. 登录 AWS Management Console
-2. 导航到 Amazon EKS 服务
-3. 从 cluster 列表中选择要升级的 cluster
-4. 选择 "Cluster configuration" 选项卡
-5. 点击 "Update Kubernetes version"
-6. 选择目标版本并点击 "Update"
+2. 前往 Amazon EKS 服务
+3. 在集群列表中选择要升级的集群
+4. 选择“Cluster configuration”选项卡
+5. 点击“Update Kubernetes version”
+6. 选择目标版本并点击“Update”
 
 #### 使用 AWS CLI 升级
 
+只有在记录的计划和前置条件获批后才能运行。将下一节中的轮询辅助程序保存为 `eks-wait-update.py`。此操作只请求控制平面更新；它不会升级节点/附加组件，也不能证明工作负载已就绪。
+
 ```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the reviewed cluster}"
+: "${AWS_REGION:?Set the reviewed Region}"
+: "${TARGET_VERSION:?Set the next supported EKS minor version}"
+umask 077
 aws eks update-cluster-version \
-  --name my-cluster \
-  --kubernetes-version 1.27
+  --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$TARGET_VERSION" --output json --no-cli-pager \
+  > control-plane-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' control-plane-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID
+unset NODEGROUP_NAME ADDON_NAME
+python3 eks-wait-update.py
 ```
 
 #### 使用 eksctl 升级
 
 ```bash
 eksctl upgrade cluster \
-  --name my-cluster \
-  --version 1.27 \
+  --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --version "$TARGET_VERSION" \
   --approve
 ```
 
-### Control Plane 升级监控
+### 控制平面升级监控
 
 #### 检查升级状态
 
 检查升级状态：
 
-```bash
-# Check status using AWS CLI
-aws eks describe-update \
-  --name my-cluster \
-  --update-id <update-id>
+针对确切的更新 ID 跟踪 `DescribeUpdate`。`cluster-active`/`nodegroup-active` 不能证明此请求已成功；AWS CLI 2.36.44 没有 `eks wait update-successful` waiter。将以下代码保存为 `eks-wait-update.py`；对于节点组/附加组件请求，设置 `NODEGROUP_NAME` 或 `ADDON_NAME` 中的一个，且只能设置一个；否则将两者都留空。如果 API 出错、请求失败/取消、状态未知，或超过客户端截止时间，该程序会报错退出。客户端超时不会取消 AWS 操作。默认两小时的客户端等待时间应根据获批的操作进行调整，尤其是耗时较长的 Auto Mode 回滚。
 
-# Check status using eksctl
-eksctl get clusters
-eksctl get nodegroup --cluster my-cluster
+```python
+import json
+import os
+import subprocess
+import time
+from pathlib import Path
+
+
+def wait_update(lookup, timeout_seconds, interval_seconds=15, clock=time.monotonic, sleep=time.sleep):
+    if timeout_seconds <= 0 or interval_seconds < 0:
+        raise ValueError("Use a positive timeout and nonnegative polling interval")
+    deadline = clock() + timeout_seconds
+    while True:
+        update = lookup()["update"]
+        status = update["status"]
+        print(json.dumps({"id": update["id"], "status": status, "errors": update.get("errors", [])}), flush=True)
+        if status == "Successful":
+            return update
+        if status in ["Failed", "Cancelled"]:
+            raise RuntimeError(f"EKS update ended with {status}; inspect its error details")
+        if status not in ["InProgress", "Cancelling"]:
+            raise RuntimeError(f"Unexpected update status: {status}")
+        if clock() >= deadline:
+            raise TimeoutError("Client wait expired; the AWS operation may still be running. Preserve its update ID.")
+        sleep(interval_seconds)
+
+
+if __name__ == "__main__":
+    cluster = os.environ["CLUSTER_NAME"]
+    region = os.environ["AWS_REGION"]
+    update_id = os.environ["UPDATE_ID"]
+    nodegroup = os.environ.get("NODEGROUP_NAME")
+    addon = os.environ.get("ADDON_NAME")
+    if nodegroup and addon:
+        raise ValueError("Set only NODEGROUP_NAME or ADDON_NAME for a scoped update")
+    command = [
+        os.environ.get("AWS_CLI", "aws"), "eks", "describe-update",
+        "--name", cluster, "--region", region, "--update-id", update_id,
+        "--output", "json", "--no-cli-pager",
+    ]
+    if nodegroup:
+        command += ["--nodegroup-name", nodegroup]
+    if addon:
+        command += ["--addon-name", addon]
+    status_file = Path(os.environ.get("UPDATE_STATUS_FILE", "eks-update-status.json"))
+
+    def lookup():
+        completed = subprocess.run(command, check=True, capture_output=True, text=True, timeout=60)
+        response = json.loads(completed.stdout)
+        status_file.write_text(json.dumps(response, indent=2) + "\n")
+        return response
+
+    wait_update(lookup, int(os.environ.get("WAIT_TIMEOUT_SECONDS", "7200")))
 ```
 
-#### 监控 Cluster 状态
+#### 监控集群状态
 
-升级期间监控 cluster 状态：
+升级期间监控集群状态：
 
 ```bash
 # Check node status
-kubectl get nodes
+kubectl --context "$KUBE_CONTEXT" get nodes
 
 # Check pod status
-kubectl get pods --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces
 
 # Check events
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
+kubectl --context "$KUBE_CONTEXT" get events --all-namespaces --sort-by='.lastTimestamp'
 ```
 
-#### 监控 CloudWatch Metrics
+#### 监控 CloudWatch 指标
 
-在 CloudWatch 中监控 cluster metrics：
+监控针对你的 EKS 版本/层级实际发布的控制平面指标，以及已配置的遥测数据：API 请求速率/延迟/错误、API 就绪状态和客户端重新连接、调度、节点/工作负载运行状况以及应用程序 SLO。不要假设能够直接访问 etcd/controller-manager 端点，或所有组件指标都会公开。`/readyz` 检查的是 API 就绪状态，而不是所有应用程序或历史可用性条件。
 
-- API server latency
-- etcd latency
-- Controller manager latency
-- Scheduler latency
-
-### Control Plane 升级故障排查
+### 控制平面升级故障排除
 
 #### 常见问题
 
-Control Plane 升级期间可能发生的常见问题：
+控制平面升级期间可能出现的常见问题：
 
-- **Upgrade Failure**: 升级过程失败或中断
-- **API Server Availability**: 升级期间出现 API server 可用性问题
-- **Compatibility Issues**: workload 与新版本之间的兼容性问题
+- **升级失败**：升级过程失败或中断
+- **API Server 可用性**：API server 可用性问题
+- **兼容性问题**：工作负载与新版本之间的兼容性问题
 
-#### 故障排查步骤
+#### 故障排除步骤
 
 1. 检查升级状态
-2. 查看 CloudTrail logs
-3. 查看 EKS Control Plane logs
+2. 查看 CloudTrail 日志
+3. 查看 EKS 控制平面日志
 4. 联系 AWS Support
-<span id="node-group-upgrade"></span>
 
-## Node Group 升级
+## 节点组升级 {#node-group-upgrade}
 
-升级 Control Plane 后，需要升级 Node Groups。Node Group 升级有多种策略，每种策略都有优缺点。
+升级控制平面后，需要升级节点组。节点组升级有多种策略，各有优缺点。
 
-```mermaid
-flowchart TD
-    NodeGroupUpgrade[Node Group Upgrade] --> UpgradeStrategies[Node Group Upgrade Strategies]
-    NodeGroupUpgrade --> ManagedNG[Managed Node Group Upgrade]
-    NodeGroupUpgrade --> SelfManagedNG[Self-managed Node Group Upgrade]
-    NodeGroupUpgrade --> FargateUpgrade[Fargate Node Upgrade]
-    NodeGroupUpgrade --> MonitoringValidation[Node Upgrade Monitoring and Validation]
+<!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
+![Diagram showing node group upgrades split into five branches, strategies, managed, self-managed, Fargate, and monitoring and validation, with the strategies branch broken down into managed, self-managed, and Fargate approaches.](../.gitbook/assets/en-eks-08-eks-upgrades-3.png)
 
-    UpgradeStrategies --> ManagedStrategy[Managed Node Groups]
-    UpgradeStrategies --> SelfManagedStrategy[Self-managed Node Groups]
-    UpgradeStrategies --> FargateStrategy[Fargate]
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-3.html)
+-->
 
-    ManagedStrategy --> RollingUpgrade[Rolling Upgrade]
-    ManagedStrategy --> AutoDraining[Auto Draining]
-    ManagedStrategy --> VersionTracking[Version Tracking]
+### 节点组升级策略
 
-    SelfManagedStrategy --> BlueGreen[Blue/Green Deployment]
-    SelfManagedStrategy --> RollingManual[Rolling Upgrade]
-    SelfManagedStrategy --> InPlace[In-place Upgrade]
+#### 托管节点组升级
 
-    ManagedNG --> CheckManagedVersion[Check Managed Node Group Version]
-    ManagedNG --> ConsoleManagedUpgrade[Using AWS Management Console]
-    ManagedNG --> CLIManagedUpgrade[Using AWS CLI]
-    ManagedNG --> EksctlManagedUpgrade[Using eksctl]
-    ManagedNG --> ManagedConfig[Managed Node Group Upgrade Configuration]
+托管节点组是 AWS 提供的一项节点组管理功能，可自动执行节点升级：
 
-    SelfManagedNG --> BlueGreenDeploy[Blue/Green Deployment]
-    SelfManagedNG --> RollingUpgradeSelf[Rolling Upgrade]
-    SelfManagedNG --> InPlaceUpgrade[In-place Upgrade]
+- **替换策略**：`maxUnavailable`/百分比允许并行替换。API `updateStrategy=DEFAULT` 会先启动新容量再移除旧容量；`MINIMAL` 会先移除旧容量，在可用性/容量方面有不同的权衡。
+- **驱逐**：常规更新使用 Pod 驱逐/PDB 检查；控制器会重新创建 Pod，而不是实时迁移 Pod。节点组的强制选项可以绕过与 PDB 相关的排空失败，这与集群回滚的 force 标志不同。
+- **版本/AMI 选择**：选择经过审核的 Kubernetes 和 AMI 发行版本，或者为自定义 AMI 选择原始启动模板的新版本。更新失败并不能证明集群会自动回滚；请检查节点/AMI 混合状态和更新错误。
 
-    MonitoringValidation --> CheckNodeVersion[Check Node Version]
-    MonitoringValidation --> CheckNodeStatus[Check Node Status]
-    MonitoringValidation --> CheckPodDeployment[Check Pod Deployment]
+#### 自行管理的节点组升级
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+对于自行管理的节点组，必须手动升级节点：
 
-    %% Class application
-    class ManagedNG,ConsoleManagedUpgrade,CLIManagedUpgrade,FargateUpgrade,FargateStrategy awsService;
-    class EksctlManagedUpgrade,RollingUpgrade,AutoDraining,BlueGreen,RollingManual,InPlace,CheckNodeVersion,CheckNodeStatus,CheckPodDeployment k8sComponent;
-    class NodeGroupUpgrade,UpgradeStrategies,SelfManagedNG,ManagedStrategy,SelfManagedStrategy,VersionTracking,CheckManagedVersion,ManagedConfig,BlueGreenDeploy,RollingUpgradeSelf,InPlaceUpgrade,MonitoringValidation default;
-```
+- **蓝绿部署**：创建新的节点组并迁移工作负载
+- **滚动升级**：逐个排空并终止节点，然后替换为新节点
+- **就地升级**：升级现有节点上的 kubelet 和容器运行时
 
-### Node Group 升级策略
+#### Fargate 节点升级
 
-#### Managed Node Group 升级
+AWS 负责 Fargate 节点基础设施，但工作负载负责人必须协调 Pod 替换。新启动的 Fargate Pod 使用与控制平面匹配的 kubelet 版本；控制平面操作不会升级现有 Pod。请规划控制器滚动发布、可用性和验证，而不要把 Fargate 当作无需任何升级工作的服务。Auto Mode 则有所不同：控制平面升级后，它会在自身中断控制约束下启动增量节点替换。
 
-Managed Node Groups 是 AWS 提供的一项 node group 管理功能，可自动化 node 升级：
+### 托管节点组升级
 
-- **Rolling Upgrade**: 逐个替换 nodes，以最大限度减少 workload 中断
-- **Auto Draining**: 自动 drain nodes，使 Pods 移动到其他 nodes
-- **Version Tracking**: 自动选择与 Control Plane 版本兼容的 node AMI
+#### 检查托管节点组版本
 
-#### Self-managed Node Group 升级
-
-对于 self-managed node groups，必须手动升级 nodes：
-
-- **Blue/Green Deployment**: 创建新的 node group 并迁移 workload
-- **Rolling Upgrade**: 逐个 drain 并终止 nodes，然后替换为新 nodes
-- **In-place Upgrade**: 在现有 nodes 上升级 kubelet 和 container runtime
-
-#### Fargate Node 升级
-
-Fargate nodes 由 AWS 管理，因此不需要单独升级：
-
-- 新调度的 Fargate pods 会自动使用最新 platform version。
-- 现有 Fargate pods 会保持当前 platform version，直到重启。
-
-### Managed Node Group 升级
-
-#### 检查 Managed Node Group 版本
-
-检查当前 managed node group 版本：
+检查当前托管节点组版本：
 
 ```bash
 aws eks describe-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
+  --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --nodegroup-name "$NODEGROUP_NAME" \
   --query "nodegroup.version"
 ```
 
 #### 使用 AWS Management Console 升级
 
 1. 登录 AWS Management Console
-2. 导航到 Amazon EKS 服务
-3. 从 cluster 列表中选择要升级的 cluster
-4. 选择 "Compute" 选项卡
-5. 选择要升级的 node group
-6. 点击 "Update node group"
-7. 选择目标版本并点击 "Update"
+2. 前往 Amazon EKS 服务
+3. 在集群列表中选择要升级的集群
+4. 选择“Compute”选项卡
+5. 选择要升级的节点组
+6. 点击“Update node group”
+7. 选择目标版本并点击“Update”
 
 #### 使用 AWS CLI 升级
 
+对于 EKS 优化 AMI，请使用经过审核的发行版本和目标版本。此操作有自己的更新 ID；轮询时请保留节点组范围。检查平台/AMI 系列支持情况；仅更改 Kubernetes 版本并不会将 AL2 节点组迁移到 AL2023。
+
 ```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+: "${TARGET_VERSION:?Set the reviewed target, no newer than the control plane}"
+: "${TARGET_AMI_RELEASE:?Set the reviewed EKS-optimized AMI release}"
+umask 077
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" --output json > nodegroup-before.json
+if jq -e '.nodegroup.amiType == "CUSTOM"' nodegroup-before.json >/dev/null; then
+  echo "Use the custom launch-template path for this node group" >&2
+  exit 1
+fi
 aws eks update-nodegroup-version \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --kubernetes-version 1.27
+  --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$TARGET_VERSION" --release-version "$TARGET_AMI_RELEASE" \
+  --output json > nodegroup-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' nodegroup-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID NODEGROUP_NAME
+unset ADDON_NAME
+python3 eks-wait-update.py
+```
+
+对于**自定义 AMI**，请将原始启动模板更新到经过审核的新版本。使用自定义 AMI 请求时，不要传入 Kubernetes `version` 或 `releaseVersion`；请验证替换节点上的实际 kubelet/运行时/AMI。
+
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+: "${LAUNCH_TEMPLATE_ID:?Set the same launch template originally used by the group}"
+: "${LAUNCH_TEMPLATE_VERSION:?Set the reviewed version containing the updated custom AMI}"
+aws eks update-nodegroup-version \
+  --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" --region "$AWS_REGION" \
+  --launch-template "id=$LAUNCH_TEMPLATE_ID,version=$LAUNCH_TEMPLATE_VERSION" \
+  --output json > nodegroup-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' nodegroup-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID NODEGROUP_NAME
+unset ADDON_NAME
+python3 eks-wait-update.py
 ```
 
 #### 使用 eksctl 升级
 
 ```bash
 eksctl upgrade nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --kubernetes-version 1.27
+  --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --name "$NODEGROUP_NAME" \
+  --kubernetes-version "$TARGET_VERSION"
 ```
 
-#### Managed Node Group 升级配置
+#### 托管节点组升级配置
 
-你可以配置 managed node group 升级行为：
+可以配置托管节点组的升级行为：
 
-- **Max Unavailable**: 升级期间不可用 nodes 的最大数量
-- **Pod Disruption Budget**: 通过遵守 Pod Disruption Budgets (PDB) 来保持 Service 可用性
+- **最大不可用数**：升级期间不可用的节点数上限
+- **PDB**：约束符合条件的自愿驱逐，但不约束所有故障或应用程序结果。强制节点组更新可以忽略 PDB 问题。更改托管节点组的期望/最小/最大扩缩容配置属于 ASG 扩缩容操作，**不会**提供升级排空/PDB 保障；不要把缩容至零当作安全迁移方式。
 
 ```bash
 aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
+  --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --nodegroup-name "$NODEGROUP_NAME" \
   --update-config maxUnavailable=1
 ```
 
-### Self-managed Node Group 升级
+### 自行管理的节点组升级
 
-#### Blue/Green Deployment
+#### 蓝绿部署
 
-Blue/green deployment 会创建一个新的 node group，然后迁移 workload：
+根据所属配置准备一个名称不同的新节点组，保留经过审核的子网/可用区、IAM、AMI 架构/引导配置、标签、污点、存储和网络要求。请参阅[集群创建指南](02-eks-cluster-creation.md)。`eksctl create nodegroup` 默认创建托管组；自行管理的配置必须显式选择 `--managed=false` 或相应的 `nodeGroups` 配置段。创建时使用 `--version`，而 `eksctl upgrade nodegroup` 使用 `--kubernetes-version`。
 
-1. 创建新的 node group：
+1. 根据经过审核的配置创建绿色容量，然后验证节点数量、目标 kubelet/AMI、Ready 状态、CNI/DNS 以及应用程序调度。仅仅列出节点并不能完成这些验证。
+2. 按照负责人控制的阶段迁移工作负载。首选亲和性并不能保证工作负载会放置到绿色节点上；请检查实际 Pod 节点分配情况和存储拓扑。
+3. 每次排空一个已识别的旧节点，并设置有限超时时间；如果驱逐或运行状况检查失败，则停止。继续之前，重新验证工作负载/替换容量。
+4. 只有在已记录迁移、运行状况、数据保留和恢复验收之后，才退役旧节点组。不要在未经检查的循环或固定等待之后自动删除它。
 
 ```bash
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup-new \
-  --node-type m5.large \
-  --nodes 3 \
-  --nodes-min 3 \
-  --nodes-max 6 \
-  --node-ami auto
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed cluster context}"
+: "${NODE_NAME:?Set one reviewed old node}"
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o wide
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" \
+  -o jsonpath='{.spec.providerID}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces \
+  --field-selector "spec.nodeName=$NODE_NAME" -o wide
+# Stop on failure. Do not terminate the instance or delete the node group here.
+kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeout=10m
 ```
 
-2. 迁移 workload：
+此默认排空操作会拒绝处理需要另行决策的非托管 Pod/本地数据情形。`--delete-emptydir-data` 明确允许丢失 emptyDir 数据；不要盲目添加它。`kubectl drain --force` 允许非托管 Pod 存在，这与绕过驱逐/PDB 检查不同。请由相应负责人协调 DaemonSet、静态 Pod、控制器和持久数据。
+
+#### 滚动升级
+
+对于自行管理的 ASG，首先将所属启动配置/模板更新为已验证的 AMI；否则替换节点可能再次启动旧镜像。使用上述单节点排空关卡，并在任何终止操作之前验证节点 provider ID、EC2 实例和 ASG 所属关系。不要把 Kubernetes 节点映射到第一个通过 EC2 私有 DNS 名称搜索到的结果。由 ASG 负责人替换已排空的实例，等待一个**新的**、配置正确且 Ready 的节点以及工作负载恢复，然后再继续。等待 60 秒并不能证明替换节点已就绪。直接执行 ASG 扩缩容/实例刷新需要相应的 Kubernetes 排空集成；它不会自动强制执行 PDB。
+
+#### 就地升级
+
+仅对支持此操作的自行管理主机使用经过单独测试、适用于特定 OS/镜像的流程。对于 EKS 优化的托管集群，优先使用不可变且经过验证的 AMI 替换路径；Auto Mode/Fargate 基础设施由服务负责。通用的 `yum update kubelet kubectl` 既不会选择经过审核的 Kubernetes/运行时版本，也不能算作 EKS 节点升级。SSM 请求是异步的：在调用、所需的服务重启、实际版本、节点就绪状态和工作负载测试全部成功之前，不要解除节点隔离。发生错误时应保留故障证据，而不是自动解除隔离或终止节点。
+
+### 节点升级监控与验证
+
+#### 检查节点版本
+
+检查节点 Kubernetes 版本：
 
 ```bash
-# Apply taint to existing nodes
-kubectl taint nodes -l alpha.eksctl.io/nodegroup-name=my-nodegroup-old \
-  node-group=old:NoSchedule
-
-# Verify new pods are scheduled on new nodes
-kubectl get pods -o wide
-
-# Drain existing nodes
-for node in $(kubectl get nodes -l alpha.eksctl.io/nodegroup-name=my-nodegroup-old -o name); do
-  kubectl drain --ignore-daemonsets --delete-emptydir-data $node
-done
+kubectl --context "$KUBE_CONTEXT" get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
 ```
 
-3. 删除现有 node group：
+#### 检查节点状态
+
+检查节点状态：
 
 ```bash
-eksctl delete nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup-old
-```
-
-#### Rolling Upgrade
-
-Rolling upgrade 会逐个 drain 并终止 nodes，然后替换为新 nodes：
-
-```bash
-# Get node list
-NODES=$(kubectl get nodes -l alpha.eksctl.io/nodegroup-name=my-nodegroup -o name)
-
-# Perform draining and termination for each node
-for node in $NODES; do
-  echo "Draining node $node..."
-  kubectl drain --ignore-daemonsets --delete-emptydir-data $node
-
-  # Get node ID
-  INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=private-dns-name,Values=$(echo $node | cut -d'/' -f2)" \
-    --query "Reservations[0].Instances[0].InstanceId" \
-    --output text)
-
-  # Terminate node
-  aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-
-  # Wait for new node to be ready
-  echo "Waiting for new node to be ready..."
-  sleep 60
-
-  # Check node status
-  kubectl get nodes
-done
-```
-
-#### In-place Upgrade
-
-In-place upgrade 会在现有 nodes 上升级 kubelet 和 container runtime：
-
-```bash
-# Get node list
-NODES=$(kubectl get nodes -l alpha.eksctl.io/nodegroup-name=my-nodegroup -o name)
-
-# Perform in-place upgrade for each node
-for node in $NODES; do
-  echo "Cordoning node $node..."
-  kubectl cordon $node
-
-  echo "Draining node $node..."
-  kubectl drain --ignore-daemonsets --delete-emptydir-data $node
-
-  # SSH to node and perform upgrade
-  # This part may vary depending on node access method
-  INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=private-dns-name,Values=$(echo $node | cut -d'/' -f2)" \
-    --query "Reservations[0].Instances[0].InstanceId" \
-    --output text)
-
-  # Execute command using SSM
-  aws ssm send-command \
-    --instance-ids $INSTANCE_ID \
-    --document-name "AWS-RunShellScript" \
-    --parameters commands=["sudo yum update -y kubelet kubectl"]
-
-  # Uncordon node
-  echo "Uncordoning node $node..."
-  kubectl uncordon $node
-done
-```
-
-### Node 升级监控和验证
-
-#### 检查 Node 版本
-
-检查 node Kubernetes 版本：
-
-```bash
-kubectl get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
-```
-
-#### 检查 Node 状态
-
-检查 node 状态：
-
-```bash
-kubectl get nodes
-kubectl describe nodes
+kubectl --context "$KUBE_CONTEXT" get nodes
+kubectl --context "$KUBE_CONTEXT" describe nodes
 ```
 
 #### 检查 Pod 部署
 
-验证 pods 是否正常部署：
+验证 Pod 是否正常部署：
 
 ```bash
-kubectl get pods --all-namespaces -o wide
-kubectl get pods --all-namespaces -o wide | grep -v Running
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o wide
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,READY:'.status.conditions[?(@.type=="Ready")].status'
 ```
 
-<span id="add-on-upgrade"></span>
+## 附加组件升级 {#add-on-upgrade}
 
-## Add-on 升级
+清点实际组件负责人和升级路径。控制平面升级不会自动升级 EKS 托管的附加组件；负责人需选择并发起兼容的更新。必需的过渡版本可以先于控制平面变更安装。Auto Mode 内置功能由 AWS 单独管理；不要像所有集群都使用相同的 DaemonSet/Deployment 一样，安装或更新重复的节点网络/存储/DNS 组件。
 
-EKS cluster 包含多个 add-ons，这些也需要升级。
+![Diagram showing how add-on upgrades split into AWS managed add-ons (check versions, then upgrade with update-addon or eksctl), self-managed add-ons (Helm or kubectl), key add-on guides (CoreDNS, kube-proxy, VPC CNI), and troubleshooting (common issues and troubleshooting steps).](../.gitbook/assets/en-eks-08-eks-upgrades-4.png)
 
-```mermaid
-flowchart TD
-    AddonUpgrade[Add-on Upgrade] --> ManagedAddons[AWS Managed Add-ons]
-    AddonUpgrade --> SelfManagedAddons[Self-managed Add-ons]
-    AddonUpgrade --> KeyAddonGuides[Key Add-on Upgrade Guides]
-    AddonUpgrade --> AddonTroubleshooting[Add-on Upgrade Troubleshooting]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-4.html)
 
-    ManagedAddons --> ListAddons[Check Managed Add-on List]
-    ManagedAddons --> CheckAddonVersion[Check Managed Add-on Version]
-    ManagedAddons --> AvailableVersions[Check Available Add-on Versions]
-    ManagedAddons --> UpgradeAddons[Upgrade Managed Add-ons]
+### AWS 托管附加组件
 
-    SelfManagedAddons --> HelmUpgrade[Upgrade Using Helm]
-    SelfManagedAddons --> KubectlUpgrade[Upgrade Using kubectl]
+#### 检查托管附加组件列表
 
-    KeyAddonGuides --> CoreDNSUpgrade[CoreDNS Upgrade]
-    KeyAddonGuides --> KubeProxyUpgrade[kube-proxy Upgrade]
-    KeyAddonGuides --> VPCCNIUpgrade[VPC CNI Upgrade]
-
-    AddonTroubleshooting --> CommonAddonIssues[Common Issues]
-    AddonTroubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-
-    CommonAddonIssues --> ConfigConflicts[Configuration Conflicts]
-    CommonAddonIssues --> CompatibilityIssues[Compatibility Issues]
-    CommonAddonIssues --> ResourceConstraints[Resource Constraints]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ManagedAddons,UpgradeAddons awsService;
-    class CoreDNSUpgrade,KubeProxyUpgrade,VPCCNIUpgrade,HelmUpgrade,KubectlUpgrade k8sComponent;
-    class AddonUpgrade,SelfManagedAddons,KeyAddonGuides,AddonTroubleshooting,ListAddons,CheckAddonVersion,AvailableVersions,CommonAddonIssues,TroubleshootingSteps,ConfigConflicts,CompatibilityIssues,ResourceConstraints default;
-```
-
-### AWS Managed Add-ons
-
-#### 检查 Managed Add-on 列表
-
-检查 cluster 中安装的 managed add-ons：
+检查集群中安装的托管附加组件：
 
 ```bash
-aws eks list-addons --cluster-name my-cluster
+aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-#### 检查 Managed Add-on 版本
+#### 检查托管附加组件版本
 
-检查 managed add-ons 的当前版本：
+检查托管附加组件的当前版本：
 
 ```bash
 aws eks describe-addon \
-  --cluster-name my-cluster \
+  --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --addon-name vpc-cni \
   --query "addon.addonVersion"
 ```
 
-#### 检查可用 Add-on 版本
+#### 检查可用的附加组件版本
 
-检查可用 add-on 版本：
+检查可用的附加组件版本：
 
-```bash
-aws eks describe-addon-versions \
-  --addon-name vpc-cni \
-  --kubernetes-version 1.27
-```
-
-#### 升级 Managed Add-ons
-
-你可以使用 AWS Management Console、AWS CLI 或 eksctl 升级 managed add-ons：
+数组的第一个元素并不保证是“最新”或正确的版本。请检查 `compatibilities`、默认版本标记、平台/计算类型/架构支持、发行说明、IAM 变更和中间版本要求。更改附加组件之前，保存其配置和身份关联。请使用受限权限保存文件；配置可能包含敏感值。
 
 ```bash
-# Upgrade using AWS CLI
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version v1.12.0-eksbuild.1 \
-  --resolve-conflicts PRESERVE
-
-# Upgrade using eksctl
-eksctl update addon \
-  --cluster my-cluster \
-  --name vpc-cni \
-  --version v1.12.0-eksbuild.1 \
-  --preserve
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ADDON_NAME:?}"
+: "${TARGET_VERSION:?Set the Kubernetes version for this stage}"
+umask 077
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --region "$AWS_REGION" --output json > addon-before.json
+aws eks describe-addon-versions --addon-name "$ADDON_NAME" \
+  --kubernetes-version "$TARGET_VERSION" --region "$AWS_REGION" \
+  --output json > addon-candidates.json
+# Select ADDON_VERSION after reviewing compatibility, architecture, compute type, and upgrade path.
+: "${ADDON_VERSION:?Set the reviewed add-on version}"
+aws eks describe-addon-configuration --addon-name "$ADDON_NAME" \
+  --addon-version "$ADDON_VERSION" --region "$AWS_REGION" \
+  --output json > addon-schema.json
+jq -r '.addon.configurationValues // "{}"' addon-before.json > addon-config-candidate.json
 ```
 
-### Self-managed Add-ons
+#### 升级托管附加组件
 
-#### 升级 Self-managed Add-ons
+可以使用 AWS Management Console、AWS CLI 或 eksctl 升级托管附加组件：
 
-使用 Helm 或 kubectl 升级 self-managed add-ons：
+根据目标 schema 验证候选 JSON，并保留预期的配置/身份语义。`PRESERVE` 用于处理托管字段中的冲突；它不会验证所有自定义值、保证应用程序行为，也不会将显式的部分配置合并到旧 JSON 中。传入 `{}` 可能会重置配置。一次只更新一个由你负责的附加组件，并检查其更新 ID、运行状况、版本和工作负载行为。
 
 ```bash
-# Upgrade using Helm
-helm repo update
-helm upgrade metrics-server metrics-server/metrics-server \
-  --namespace kube-system \
-  --version 3.8.2
-
-# Upgrade using kubectl
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/v0.6.1/deploy/kubernetes/metrics-server-deployment.yaml
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ADDON_NAME:?}"; : "${ADDON_VERSION:?}"
+: "${REVIEWED_ADDON_CONFIG_FILE:?Provide the complete reviewed target configuration JSON}"
+aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --addon-version "$ADDON_VERSION" --region "$AWS_REGION" \
+  --configuration-values "file://$REVIEWED_ADDON_CONFIG_FILE" \
+  --resolve-conflicts PRESERVE --output json > addon-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' addon-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID ADDON_NAME
+unset NODEGROUP_NAME
+python3 eks-wait-update.py
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --region "$AWS_REGION" --output json
 ```
 
-### 关键 Add-on 升级指南
+对于 eksctl 0.229，`update addon` 有 `--wait` 和 `--config-file`，但没有 `--preserve` 标志。请在经过审核的 eksctl 配置中指定预期的冲突策略，或使用上述明确的 AWS CLI 流程。`eksctl --force` 会将所有权从自行管理的附加组件迁移过来，并非通用的冲突保留选项。
+
+### 自行管理的附加组件
+
+#### 升级自行管理的附加组件
+
+使用 Helm 或 kubectl 升级自行管理的附加组件：
+
+使用现有 Helm/manifests 负责人。以下示例假设已审核 chart 仓库/OCI 引用和现有 release；当 release 缺失时，示例会刻意避免使用 `--install` 创建第二个管理者。请检查新 chart 的 CRD 和 IAM 迁移要求；单独运行 `helm upgrade` 不会升级 chart 的 `crds/` 目录中的 CRD。Helm 和原始 manifest 部署是替代方案，而不是连续执行的更新步骤。此前的 Metrics Server 0.6.1/3.8.2 示例不是目标版本兼容性选择。
+
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${RELEASE:?}"; : "${ADDON_NAMESPACE:?}"
+: "${CHART_REF:?Set the verified repository/chart or OCI reference}"
+: "${CHART_VERSION:?Set a reviewed compatible chart version}"
+: "${REVIEWED_VALUES_FILE:?Set the complete reviewed target values file}"
+umask 077
+helm get values "$RELEASE" --namespace "$ADDON_NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  --all > addon-values-before.yaml
+helm show values "$CHART_REF" --version "$CHART_VERSION" > addon-values-defaults.yaml
+# Merge/migrate values and handle CRDs/IAM through the owner before this step.
+helm upgrade "$RELEASE" "$CHART_REF" --version "$CHART_VERSION" \
+  --namespace "$ADDON_NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  -f "$REVIEWED_VALUES_FILE" --wait --timeout 15m
+```
+
+### 主要附加组件升级指南
 
 #### CoreDNS 升级
 
-CoreDNS 为 Kubernetes cluster 提供 DNS service：
-
-```bash
-# Check CoreDNS version
-kubectl get deployment coredns -n kube-system -o jsonpath="{.spec.template.spec.containers[0].image}"
-
-# Upgrade CoreDNS
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name coredns \
-  --addon-version v1.9.3-eksbuild.2 \
-  --resolve-conflicts PRESERVE
-```
+对于标准节点，确定 CoreDNS Deployment 由 EKS 还是其他工具管理，保留 Corefile/PDB/自定义设置，并遵循所选版本的迁移说明。Auto Mode 节点以节点系统服务的形式运行 CoreDNS：纯 Auto Mode 集群不需要 Deployment 附加组件，而混合集群必须为非 Auto 节点保留 DNS。不要把纯 Auto Mode 中缺少 Deployment 理解为升级失败。
 
 #### kube-proxy 升级
 
-kube-proxy 处理 Kubernetes service networking：
-
-```bash
-# Check kube-proxy version
-kubectl get daemonset kube-proxy -n kube-system -o jsonpath="{.spec.template.spec.containers[0].image}"
-
-# Upgrade kube-proxy
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name kube-proxy \
-  --addon-version v1.27.1-eksbuild.1 \
-  --resolve-conflicts PRESERVE
-```
+确保 kube-proxy 与 API server 以及它所运行的节点兼容；其版本不能高于 API server。使用目标版本支持的附加组件构建版本，并遵循已验证的升级顺序。Auto Mode 管理其服务网络；不要假设其中存在自行管理的 kube-proxy DaemonSet。
 
 #### VPC CNI 升级
 
-Amazon VPC CNI 处理 pod networking：
+对于标准 EC2 节点，请验证 CNI 版本路径、IP/前缀模式、IAM、网络策略设置和工作负载连接情况。不要假设单个 `aws-node` ConfigMap 包含所有设置：在适用情况下，还要检查 EKS `configurationValues`、DaemonSet/容器配置、服务账户身份和所属的 Helm/GitOps 配置。Auto Mode 的内置网络遵循其自身的管理路径。
+
+对每个由 EKS 管理的附加组件，使用上述通用的捕获/选择/更新/等待流程。仅在实际安装标准节点代理的地方检查它们：
 
 ```bash
-# Check VPC CNI version
-kubectl describe daemonset aws-node -n kube-system | grep Image
-
-# Upgrade VPC CNI
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version v1.12.0-eksbuild.1 \
-  --resolve-conflicts PRESERVE
+kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset kube-proxy aws-node -o wide
 ```
 
-### Add-on 升级故障排查
+### 附加组件升级故障排除
 
 #### 常见问题
 
-Add-on 升级期间可能发生的常见问题：
+附加组件升级期间可能出现的常见问题：
 
-- **Configuration Conflicts**: 自定义配置与新版本之间的冲突
-- **Compatibility Issues**: add-on 与 Kubernetes 版本之间的兼容性问题
-- **Resource Constraints**: 升级资源不足
+- **配置冲突**：自定义配置与新版本之间存在冲突
+- **兼容性问题**：附加组件与 Kubernetes 版本之间存在兼容性问题
+- **资源限制**：升级所需资源不足
 
-#### 故障排查步骤
+#### 故障排除步骤
 
-1. 检查 add-on 状态：
+1. 检查附加组件状态：
 
 ```bash
 aws eks describe-addon \
-  --cluster-name my-cluster \
+  --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --addon-name vpc-cni
 ```
 
-2. 检查 add-on logs：
+2. 检查附加组件日志：
 
 ```bash
-kubectl logs -n kube-system -l k8s-app=kube-dns
-kubectl logs -n kube-system -l k8s-app=kube-proxy
-kubectl logs -n kube-system -l k8s-app=aws-node
+kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=kube-dns
+kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=kube-proxy
+kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=aws-node
 ```
 
-3. 检查 add-on events：
+3. 检查附加组件事件：
 
 ```bash
-kubectl get events -n kube-system --sort-by='.lastTimestamp'
+kubectl --context "$KUBE_CONTEXT" get events -n kube-system --sort-by='.lastTimestamp'
 ```
-<span id="upgrade-validation-and-troubleshooting"></span>
 
-## 升级验证和故障排查
+## 升级验证与故障排除 {#upgrade-validation-and-troubleshooting}
 
-升级完成后，需要验证 cluster 是否正常运行，并解决可能发生的任何问题。
+升级完成后，需要验证集群是否正常运行，并解决可能出现的任何问题。
 
-```mermaid
-flowchart TD
-    ValidationTroubleshooting[Upgrade Validation and Troubleshooting] --> Validation[Upgrade Validation]
-    ValidationTroubleshooting --> Troubleshooting[Upgrade Troubleshooting]
+![Tree diagram splitting post-upgrade work into Upgrade Validation (cluster version, cluster state, workload validation, functional testing) and Upgrade Troubleshooting (common upgrade issues, troubleshooting steps, rollback procedure).](../.gitbook/assets/en-eks-08-eks-upgrades-5.png)
 
-    Validation --> VersionCheck[Check Cluster Version]
-    Validation --> ClusterStateCheck[Check Cluster State]
-    Validation --> WorkloadValidation[Workload Validation]
-    Validation --> FunctionalTesting[Functional Testing]
-
-    ClusterStateCheck --> NodeStatus[Check Node Status]
-    ClusterStateCheck --> PodStatus[Check Pod Status]
-    ClusterStateCheck --> NamespaceStatus[Check Namespace Status]
-    ClusterStateCheck --> ServiceStatus[Check Service Status]
-
-    WorkloadValidation --> DeploymentStatus[Check Deployment Status]
-    WorkloadValidation --> StatefulSetStatus[Check StatefulSet Status]
-    WorkloadValidation --> DaemonSetStatus[Check DaemonSet Status]
-    WorkloadValidation --> EndpointStatus[Check Service Endpoints]
-
-    FunctionalTesting --> PodCreation[Pod Creation Test]
-    FunctionalTesting --> ServiceCreation[Service Creation Test]
-    FunctionalTesting --> ScalingTest[Scaling Test]
-
-    Troubleshooting --> CommonIssues[Common Upgrade Issues]
-    Troubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-    Troubleshooting --> RollbackProcedure[Rollback Procedure]
-
-    CommonIssues --> ControlPlaneIssues[Control Plane Upgrade Failure]
-    CommonIssues --> NodeIssues[Node Upgrade Issues]
-    CommonIssues --> AddonIssues[Add-on Upgrade Issues]
-    CommonIssues --> WorkloadIssues[Workload Issues]
-
-    TroubleshootingSteps --> CheckLogs[Check Logs]
-    TroubleshootingSteps --> CheckEvents[Check Events]
-    TroubleshootingSteps --> CheckResourceStatus[Check Resource Status]
-    TroubleshootingSteps --> CheckAPIVersion[Check API Version]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ControlPlaneIssues awsService;
-    class NodeStatus,PodStatus,NamespaceStatus,ServiceStatus,DeploymentStatus,StatefulSetStatus,DaemonSetStatus,EndpointStatus,PodCreation,ServiceCreation,ScalingTest,NodeIssues,AddonIssues,WorkloadIssues,CheckLogs,CheckEvents,CheckResourceStatus,CheckAPIVersion k8sComponent;
-    class ValidationTroubleshooting,Validation,Troubleshooting,VersionCheck,ClusterStateCheck,WorkloadValidation,FunctionalTesting,CommonIssues,TroubleshootingSteps,RollbackProcedure default;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-5.html)
 
 ### 升级验证
 
-#### 检查 Cluster 版本
+#### 检查集群版本
 
-检查 cluster 和 node 版本：
+检查集群和节点版本：
 
 ```bash
 # Check cluster version
-kubectl version --short
+kubectl --context "$KUBE_CONTEXT" version --output=yaml
 
 # Check node version
-kubectl get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
+kubectl --context "$KUBE_CONTEXT" get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
 ```
 
-#### 检查 Cluster 状态
+#### 检查集群状态
 
-检查 cluster 组件状态：
+检查集群组件的状态：
 
 ```bash
 # Check node status
-kubectl get nodes
+kubectl --context "$KUBE_CONTEXT" get nodes
 
 # Check pod status
-kubectl get pods --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces
 
 # Check namespace status
-kubectl get namespaces
+kubectl --context "$KUBE_CONTEXT" get namespaces
 
 # Check service status
-kubectl get services --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get services --all-namespaces
 ```
 
-#### Workload 验证
+#### 工作负载验证
 
-验证应用 workload 是否正常运行：
+验证应用程序工作负载是否正常运行：
 
 ```bash
 # Check deployment status
-kubectl get deployments --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get deployments --all-namespaces
 
 # Check statefulset status
-kubectl get statefulsets --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get statefulsets --all-namespaces
 
 # Check daemonset status
-kubectl get daemonsets --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get daemonsets --all-namespaces
 
 # Check service endpoints
-kubectl get endpoints --all-namespaces
+kubectl --context "$KUBE_CONTEXT" get endpointslices.discovery.k8s.io --all-namespaces
 ```
 
 #### 功能测试
 
-测试关键功能是否正常运行：
+使用隔离且由你负责的测试资源，并明确验收标准。以下 **Linux EC2 节点烟雾测试**通过多个独立的 Job 覆盖 Deployment 滚动发布/扩缩容、Service/DNS 请求以及 PVC 数据。它不是负载基准测试，不会测试每个节点/AZ，也不能证明应用程序/高可用性/安全性正确。请添加针对工作负载的测试、入口/出口测试、控制器/webhook 测试和恢复测试。Fargate/混合/其他平台路径需要各自兼容的测试计划。
 
-1. **Pod Creation Test**:
+将代码保存为 `eks-upgrade-smoke.py`。它使用本次审计已检查的固定官方 BusyBox 镜像清单；此处未执行镜像或集群测试。运行前，请验证镜像策略、准入/网络规则、可用容量，以及所选节点上兼容的文件系统 StorageClass。设置 `KUBE_CONTEXT`、`TEST_STORAGE_CLASS`、`RUN_SMOKE_TEST=yes`，如果要测试特定替换节点，还要设置经过审核的 `SMOKE_NODE_SELECTOR` JSON 映射。脚本会创建唯一命名空间，绝不会接管现有命名空间，遇到失败会停止，并记录实际放置情况和 PV 回收详情。对于 `WaitForFirstConsumer` 卷，会先创建写入者使用者，再等待操作完成。
 
-```bash
-kubectl run nginx --image=nginx
-kubectl get pod nginx
-kubectl delete pod nginx
+默认情况下会保留资源以供检查。只有在检查成功后设置 `CLEANUP_ON_SUCCESS=yes`，才会删除本次运行创建的命名空间 UID。若 StorageClass 使用 Retain，删除命名空间后可能仍会留下产生费用的 PV/存储；请检查记录的 PV，并且只清理由本测试拥有的存储。发生失败时会保留现场以供诊断，不会报告为成功。短时间的当前指标和 20 个顺序 HTTP 请求无法证明性能等效。
+
+```python
+import json
+import os
+import subprocess
+import uuid
+from pathlib import Path
+
+IMAGE = "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+
+
+def manifests(namespace, storage_class, marker, node_selector):
+    if node_selector.get("kubernetes.io/os", "linux") != "linux":
+        raise ValueError("This BusyBox example requires Linux nodes")
+    node_selector = {"kubernetes.io/os": "linux", **node_selector}
+    security = {"runAsNonRoot": True, "runAsUser": 65532, "fsGroup": 65532,
+                "seccompProfile": {"type": "RuntimeDefault"}}
+    container_security = {"allowPrivilegeEscalation": False, "readOnlyRootFilesystem": True,
+                          "capabilities": {"drop": ["ALL"]}}
+    resources = {"requests": {"cpu": "50m", "memory": "32Mi"},
+                 "limits": {"cpu": "200m", "memory": "128Mi"}}
+
+    def job(name, command, with_volume=False):
+        container = {"name": "check", "image": IMAGE, "command": ["sh", "-ec", command],
+                     "resources": resources, "securityContext": container_security}
+        pod = {"restartPolicy": "Never", "automountServiceAccountToken": False,
+               "securityContext": security, "nodeSelector": node_selector, "containers": [container]}
+        if with_volume:
+            container["volumeMounts"] = [{"name": "data", "mountPath": "/data"}]
+            pod["volumes"] = [{"name": "data", "persistentVolumeClaim": {"claimName": "smoke-data"}}]
+        return {"apiVersion": "batch/v1", "kind": "Job", "metadata": {"name": name, "namespace": namespace},
+                "spec": {"backoffLimit": 0, "activeDeadlineSeconds": 120,
+                         "template": {"spec": pod}}}
+
+    config = {"apiVersion": "v1", "kind": "ConfigMap",
+              "metadata": {"name": "smoke-content", "namespace": namespace},
+              "data": {"index.html": marker + "\n"}}
+    deployment = {
+        "apiVersion": "apps/v1", "kind": "Deployment",
+        "metadata": {"name": "smoke-http", "namespace": namespace},
+        "spec": {"replicas": 2, "selector": {"matchLabels": {"app": "smoke-http"}},
+                 "template": {"metadata": {"labels": {"app": "smoke-http"}}, "spec": {
+                     "automountServiceAccountToken": False, "securityContext": security,
+                     "nodeSelector": node_selector,
+                     "containers": [{"name": "http", "image": IMAGE,
+                                     "command": ["httpd", "-f", "-p", "8080", "-h", "/www"],
+                                     "securityContext": container_security, "resources": resources,
+                                     "ports": [{"name": "http", "containerPort": 8080}],
+                                     "readinessProbe": {"httpGet": {"path": "/", "port": "http"}},
+                                     "volumeMounts": [{"name": "content", "mountPath": "/www", "readOnly": True}]}],
+                     "volumes": [{"name": "content", "configMap": {"name": "smoke-content"}}],
+                 }}},
+    }
+    service = {"apiVersion": "v1", "kind": "Service",
+               "metadata": {"name": "smoke-http", "namespace": namespace},
+               "spec": {"selector": {"app": "smoke-http"}, "ports": [{"port": 80, "targetPort": "http"}]}}
+    pvc = {"apiVersion": "v1", "kind": "PersistentVolumeClaim",
+           "metadata": {"name": "smoke-data", "namespace": namespace},
+           "spec": {"storageClassName": storage_class, "accessModes": ["ReadWriteOnce"],
+                    "resources": {"requests": {"storage": "1Gi"}}}}
+    writer = job("smoke-write", f"printf '%s\\n' '{marker}' > /data/marker; sync", True)
+    reader = job("smoke-read", f"test \"$(cat /data/marker)\" = '{marker}'", True)
+    http = job("smoke-request", f"i=0; while [ \"$i\" -lt 20 ]; do "
+               f"test \"$(wget -T 5 -q -O - http://smoke-http)\" = '{marker}'; "
+               "i=$((i + 1)); sleep 1; done")
+    return [config, deployment, service, pvc, writer], reader, http
+
+
+def run_smoke(context, storage_class, node_selector, call=subprocess.run):
+    if not context or not storage_class or not isinstance(node_selector, dict):
+        raise ValueError("Set the reviewed context, StorageClass, and node selector map")
+    namespace = "eks-upgrade-smoke-" + uuid.uuid4().hex[:12]
+    marker = uuid.uuid4().hex
+    evidence = Path(namespace)
+    evidence.mkdir()
+    prefix = ["kubectl", "--context", context]
+
+    def kubectl(*args, payload=None):
+        completed = call(prefix + list(args), input=json.dumps(payload) if payload else None,
+                         check=True, capture_output=True, text=True, timeout=240)
+        return completed.stdout
+
+    # Create, never apply/adopt, the namespace. A failed creation must not lead to deletion.
+    created = json.loads(kubectl("create", "namespace", namespace, "--output", "json"))
+    namespace_uid = created["metadata"]["uid"]
+    (evidence / "namespace.json").write_text(json.dumps(created, indent=2) + "\n")
+    print(f"Owned smoke namespace: {namespace}; preserve evidence and inspect PV reclamation before cleanup.", flush=True)
+    try:
+        initial, reader, http = manifests(namespace, storage_class, marker, node_selector)
+        kubectl("create", "-f", "-", payload={"apiVersion": "v1", "kind": "List", "items": initial})
+        # The writer is a PVC consumer, so WaitForFirstConsumer provisioning can proceed.
+        kubectl("-n", namespace, "wait", "--for=condition=Complete", "job/smoke-write", "--timeout=180s")
+        kubectl("-n", namespace, "delete", "job", "smoke-write", "--cascade=foreground",
+                "--wait=true", "--timeout=60s")
+        kubectl("create", "-f", "-", payload=reader)
+        kubectl("-n", namespace, "wait", "--for=condition=Complete", "job/smoke-read", "--timeout=180s")
+        kubectl("-n", namespace, "rollout", "status", "deployment/smoke-http", "--timeout=180s")
+        kubectl("-n", namespace, "scale", "deployment/smoke-http", "--replicas=3")
+        kubectl("-n", namespace, "rollout", "status", "deployment/smoke-http", "--timeout=180s")
+        kubectl("create", "-f", "-", payload=http)
+        kubectl("-n", namespace, "wait", "--for=condition=Complete", "job/smoke-request", "--timeout=180s")
+        pods = json.loads(kubectl("-n", namespace, "get", "pods", "--output", "json"))
+        claim = json.loads(kubectl("-n", namespace, "get", "pvc", "smoke-data", "--output", "json"))
+        volume = json.loads(kubectl("get", "pv", claim["spec"]["volumeName"], "--output", "json"))
+        result = {"namespace": namespace, "namespaceUID": namespace_uid, "nodeSelector": node_selector,
+                  "checks": ["PVC write/read across Jobs", "Deployment rollout/scale", "20 HTTP/DNS requests"],
+                  "pods": pods, "pvc": claim, "pv": volume,
+                  "limits": "A bounded smoke test, not a load benchmark, HA proof, or full application validation."}
+        (evidence / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    except Exception:
+        print(f"Smoke test failed; namespace {namespace} retained for diagnosis.", flush=True)
+        raise
+    print(f"Smoke checks completed. Evidence: {evidence}/result.json", flush=True)
+    if os.environ.get("CLEANUP_ON_SUCCESS") == "yes":
+        current = json.loads(kubectl("get", "namespace", namespace, "--output", "json"))
+        if current["metadata"]["uid"] != namespace_uid:
+            raise RuntimeError("Namespace identity changed; refusing cleanup")
+        kubectl("delete", "namespace", namespace, "--wait=true", "--timeout=180s")
+        print("Namespace deleted; inspect the recorded PV reclaim policy for retained billable storage.", flush=True)
+    return namespace
+
+
+if __name__ == "__main__":
+    if os.environ.get("RUN_SMOKE_TEST") != "yes":
+        raise SystemExit("Set RUN_SMOKE_TEST=yes only for the approved test scope")
+    os.umask(0o077)
+    run_smoke(os.environ["KUBE_CONTEXT"], os.environ["TEST_STORAGE_CLASS"],
+              json.loads(os.environ.get("SMOKE_NODE_SELECTOR", "{}")))
 ```
 
-2. **Service Creation Test**:
-
-```bash
-kubectl create deployment nginx --image=nginx --replicas=2
-kubectl expose deployment nginx --port=80 --type=ClusterIP
-kubectl get service nginx
-kubectl delete service nginx
-kubectl delete deployment nginx
-```
-
-3. **Scaling Test**:
-
-```bash
-kubectl create deployment nginx --image=nginx
-kubectl scale deployment nginx --replicas=3
-kubectl get deployment nginx
-kubectl delete deployment nginx
-```
-
-### 升级故障排查
+### 升级故障排除
 
 #### 常见升级问题
 
-升级期间可能发生的常见问题：
+升级期间可能出现的常见问题：
 
-1. **Control Plane Upgrade Failure**:
+1. **控制平面升级失败**：
    - API server 可用性问题
-   - etcd database 问题
+   - etcd 数据库问题
    - IAM 权限问题
 
-2. **Node Upgrade Issues**:
-   - Node draining 失败
-   - 新 node 启动失败
+2. **节点升级问题**：
+   - 节点排空失败
+   - 新节点启动失败
    - kubelet 版本不匹配
 
-3. **Add-on Upgrade Issues**:
+3. **附加组件升级问题**：
    - 配置冲突
    - 兼容性问题
    - 资源限制
 
-4. **Workload Issues**:
-   - 因 API 弃用导致 workload 失败
-   - 因资源限制导致 Pod 调度失败
-   - Networking 问题
+4. **工作负载问题**：
+   - 工作负载因 API 弃用而失败
+   - Pod 因资源限制而调度失败
+   - 网络问题
 
-#### 故障排查步骤
+#### 故障排除步骤
 
-1. **Check Logs**:
-
-```bash
-# Check control plane logs
-aws eks update-cluster-config \
-  --region us-west-2 \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-
-# Check node logs
-kubectl logs -n kube-system -l component=kube-proxy
-kubectl logs -n kube-system -l k8s-app=aws-node
-```
-
-2. **Check Events**:
+1. **检查日志**：
 
 ```bash
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+: "${START_TIME_MS:?Set the reviewed start timestamp in epoch milliseconds}"
+: "${END_TIME_MS:?Set the reviewed analysis-window end timestamp}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging' --output json --no-cli-pager
+# Read existing logs; enabling logging is a separate change and does not backfill history.
+aws logs filter-log-events --region "$AWS_REGION" \
+  --log-group-name "/aws/eks/$CLUSTER_NAME/cluster" \
+  --start-time "$START_TIME_MS" --end-time "$END_TIME_MS" \
+  --max-items 200 --output json --no-cli-pager
+# Standard EC2-node agents only, where installed; these are Pod logs, not all host journals.
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-proxy \
+  --all-containers=true --prefix=true --since=15m --tail=100
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=aws-node \
+  --all-containers=true --prefix=true --since=15m --tail=100
 ```
 
-3. **Check Resource Status**:
+2. **检查事件**：
 
 ```bash
-kubectl describe nodes
-kubectl describe pods --all-namespaces | grep -A 10 "Events:"
+kubectl --context "$KUBE_CONTEXT" get events --all-namespaces --sort-by='.lastTimestamp'
 ```
 
-4. **Check API Version**:
+3. **检查资源状态**：
 
 ```bash
-kubectl api-versions
+kubectl --context "$KUBE_CONTEXT" describe nodes
+kubectl --context "$KUBE_CONTEXT" -n "$WORKLOAD_NAMESPACE" get deployments,statefulsets,daemonsets,pods -o wide
 ```
 
-<span id="rollback-procedure"></span>
-
-#### 回滚流程
-
-如果无法解决升级问题，请考虑回滚：
-
-1. **Control Plane Rollback**:
-   - 截至 July 2026，Amazon EKS 支持在升级后的 7 天内将 Control Plane 回滚到上一个次要版本。系统会预先运行自动化 Rollback Readiness 检查，涵盖 API 兼容性、版本偏差、Add-on 兼容性和 cluster 健康状况。EKS Auto Mode cluster 会自动回滚 -- worker nodes 会自行还原，并且 Control Plane 会按顺序恢复。此功能不收取额外费用，并且在所有区域可用。（来源：[Amazon EKS 宣布 Kubernetes 版本回滚](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback)）
-   - 如果已超过 7 天，或者此功能不可用，并且问题很严重，则必须创建新的 cluster 并迁移 workload。
-
-2. **Node Group Rollback**:
-   - 回滚到先前版本的 node group：
+4. **检查 API 版本**：
 
 ```bash
-# Create new node group with previous version
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup-old-version \
-  --node-type m5.large \
-  --nodes 3 \
-  --nodes-min 3 \
-  --nodes-max 6 \
-  --node-ami-family AmazonLinux2 \
-  --node-ami auto \
-  --kubernetes-version 1.26
-
-# Delete previous node group once new node group is ready
-eksctl delete nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup-new-version
+kubectl --context "$KUBE_CONTEXT" api-versions
 ```
 
-3. **Add-on Rollback**:
-   - 回滚到先前版本的 add-on：
+#### 回滚流程 {#rollback-procedure}
+
+EKS 版本回滚是一项真实存在、由用户发起的操作，于 2026 年 7 月推出。请使用[当前回滚指南](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)，不要笼统沿用较早的“不能降级”说法。此操作会更改 Kubernetes 次要版本；它**不会**还原先前的 etcd/应用程序/PV 数据快照，也不会自动回退附加组件。平台版本会变为先前次要版本的最新平台版本。
+
+**资格条件和准备**
+
+- 必须在就地升级完成后的 **7 天内**发起。以当前版本创建的集群不符合条件。只允许回滚到紧邻的上一个次要版本；不能连续回滚到更早的次要版本。
+- 目标版本必须受支持。若目标版本处于延长支持阶段，需先采用 `EXTENDED` 支持策略，并考虑相关费用。延长支持结束时触发的自动升级无法撤销；标准支持自动升级受文档所述的延长策略条件约束。
+- 集群必须处于 ACTIVE 状态且不存在冲突更新。在新版本上启用的向后不兼容 EKS 功能可能阻止回滚。`--force` 不能绕过这些前置条件。
+- 检查回滚洞察、应用程序/客户端/CRD/webhook 兼容性、节点版本偏差和附加组件兼容性。这些检查基于某一时点，且尽力而为；回滚期间应避免引入不兼容变更。
+
+`ROLLBACK_READINESS` 的 ERROR/UNKNOWN 发现会阻止回滚；WARNING 仅供参考。这与常规升级洞察中已暂时撤销的强制规则不同。回滚的 `--force` 标志会绕过洞察检查（ERROR/WARNING/UNKNOWN），但不能让不安全的计划变安全，也不能绕过资格条件和 Auto Mode 中断控制。尽可能解决相关发现，并将任何覆盖操作视为明确的风险决策；常规示例中省略了此标志。
 
 ```bash
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version <previous-version> \
-  --resolve-conflicts PRESERVE
+aws eks list-insights --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --filter '{"categories":["ROLLBACK_READINESS"]}' --output json --no-cli-pager
+# Set INSIGHT_ID from the response to inspect one finding.
+aws eks describe-insight --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --id "$INSIGHT_ID" --output json --no-cli-pager
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
 ```
 
-<span id="upgrade-automation"></span>
+**在控制平面之前准备节点和附加组件**
 
-## 升级自动化
+如当前[托管节点组指南](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)所述，可以使用 `UpdateNodegroupVersion` 回滚托管节点组。在降低控制平面版本之前执行此操作，并验证最终节点/AMI 版本。较旧的 API 概述文本仍包含不支持回滚的说法；当前回滚指南明确介绍了此版本回滚流程。这并不表示可以随意回退到任意历史 AMI 版本。自定义 AMI 节点组需要使用经过审核的原始启动模板路径。
 
-在大规模环境中，自动化升级过程非常重要。你可以使用以下工具和方法自动化 EKS 升级。
-
-```mermaid
-flowchart TD
-    UpgradeAutomation[Upgrade Automation] --> EksctlAutomation[Automation Using eksctl]
-    UpgradeAutomation --> CLIScriptAutomation[Automation Using AWS CLI and Scripts]
-    UpgradeAutomation --> GitOpsAutomation[Automation Using GitOps]
-    UpgradeAutomation --> BestPractices[Automation Best Practices]
-
-    EksctlAutomation --> ClusterUpgrade[Cluster Upgrade]
-    EksctlAutomation --> NodegroupUpgrade[Node Group Upgrade]
-
-    CLIScriptAutomation --> VariableSetup[Variable Setup]
-    CLIScriptAutomation --> ClusterUpgradeScript[Cluster Upgrade Script]
-    CLIScriptAutomation --> AddonUpgradeScript[Add-on Upgrade Script]
-    CLIScriptAutomation --> NodegroupUpgradeScript[Node Group Upgrade Script]
-
-    GitOpsAutomation --> GitConfig[Store Cluster Configuration in Git Repository]
-    GitOpsAutomation --> CICDPipeline[Configure CI/CD Pipeline]
-
-    BestPractices --> GradualApproach[Gradual Approach]
-    BestPractices --> RollbackPlan[Rollback Plan]
-    BestPractices --> ValidationSteps[Validation Steps]
-    BestPractices --> Notifications[Notifications]
-    BestPractices --> Documentation[Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CLIScriptAutomation,VariableSetup,ClusterUpgradeScript,AddonUpgradeScript,NodegroupUpgradeScript awsService;
-    class EksctlAutomation,ClusterUpgrade,NodegroupUpgrade,GitOpsAutomation,GitConfig,CICDPipeline k8sComponent;
-    class UpgradeAutomation,BestPractices,GradualApproach,RollbackPlan,ValidationSteps,Notifications,Documentation default;
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+: "${ROLLBACK_VERSION:?Set the reviewed previous minor for the eligible rollback}"
+aws eks update-nodegroup-version \
+  --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$ROLLBACK_VERSION" --output json --no-cli-pager > node-rollback-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' node-rollback-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID NODEGROUP_NAME
+unset ADDON_NAME
+python3 eks-wait-update.py
 ```
+
+自行管理/混合节点由负责人负责。Auto Mode 会在控制平面之前自动处理其自身节点。Fargate kubelet 无法就地回滚：请协调可用性和控制器（包括 HPA/GitOps/Jobs），避免不兼容的 Fargate Pod 立即以更新版本重新创建。使用经过测试的迁移/维护计划，然后在控制平面回退后重新创建 Pod。简单的 Pod 删除循环并不足够。强行绕过 Fargate 版本偏差洞察，并不能让更新的 kubelet 变为旧版 API server 支持的版本。
+
+EKS 不会回退附加组件版本。请选择兼容的过渡/先前附加组件版本和经过审核的配置，并使用各自的更新 ID 和功能检查。自行管理的控制器/CRD 需要单独评估。不要将一律使用 OVERWRITE 或猜测一个旧 AL2 节点组作为回滚计划。
+
+**请求并监控控制平面回滚**
+
+使用 `update-cluster-version` 指定获批的先前次要版本；没有单独的 `rollback-cluster` 命令。这是升级请求的替代操作，不是每次更新后自动执行的步骤。请明确设置适当的客户端等待时间，并保留返回的更新 ID：
+
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ROLLBACK_VERSION:?}"
+: "${WAIT_TIMEOUT_SECONDS:?Set an explicit client wait for the approved rollback}"
+aws eks update-cluster-version --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$ROLLBACK_VERSION" --output json --no-cli-pager > rollback-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' rollback-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID WAIT_TIMEOUT_SECONDS
+unset NODEGROUP_NAME ADDON_NAME
+python3 eks-wait-update.py
+```
+
+**Auto Mode 时间安排与取消**
+
+Auto Mode 节点回滚期间，集群可能一直保持 **ACTIVE**，之后才在控制平面阶段变为 UPDATING。整个过程中都要跟踪更新 ID。NodePool 漂移预算和节点 do-not-disrupt 注释可能阻止节点替换；PDB 和 Pod do-not-disrupt 注释会在 `terminationGracePeriod` 限制下延迟替换。它们并不能绝对保证应用程序可用性。`--force` 不会覆盖这些控制。
+
+Auto Mode 的 `rollbackConfig.timeoutMinutes` 默认值为 **720**，可接受范围为 **120–10080**。这是一项最小边界超时，而不是精确截止时间。如果超时，更新会失败，控制平面仍保持当前版本，节点会向当前版本漂移。重试时仍需考虑原始的七天发起窗口。CLI 2.36.44 已在本地对以下选项进行了解析器检查：
+
+```bash
+# Alternative Auto Mode request: do not run this as a second request after the preceding one.
+# Select a reviewed timeout from 120 to 10080 minutes; default is 720 when omitted.
+aws eks update-cluster-version --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$ROLLBACK_VERSION" --rollback-config timeoutMinutes=720 \
+  --output json --no-cli-pager > rollback-update.json
+```
+
+Auto Mode 请求后，请使用返回的 ID 和同一个 waiter；辅助程序默认等待两小时，短于服务默认的十二小时超时，因此应谨慎选择客户端截止时间。CI/IaC/凭证超时不会取消 AWS 操作。只有在 Auto Mode 节点阶段、控制平面回滚开始之前，才能使用 CancelUpdate；它是尽力而为的操作，已开始中断的节点会完成其操作。监控 Cancelling → Cancelled 以及之后的节点收敛。常规控制平面升级或已开始的控制平面回滚无法通过此方式取消。
+
+```bash
+# Only during the cancellable Auto Mode node phase, before control-plane rollback starts.
+aws eks cancel-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID" --output json --no-cli-pager
+```
+
+CloudFormation 堆栈回滚或 Git 撤销不会自动发起 EKS 版本回滚。显式恢复后，请根据观测到的版本协调 IaC 状态/计划。如果不符合回滚条件，请评估向前修复，或在受支持的版本上新建集群并采用经过测试的迁移/恢复方案。这些机制都不会自动撤销数据库迁移或应用程序数据变更。
+
+## 升级自动化 {#upgrade-automation}
+
+在大规模环境中，自动化升级流程很重要。可以使用以下工具和方法自动升级 EKS。
+
+<!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
+![Diagram of EKS upgrade automation branching into three paths -- eksctl, AWS CLI scripts, and GitOps -- each with its ordered cluster, add-on, and node group upgrade steps, plus the automation best practices that apply across all of them.](../.gitbook/assets/en-eks-08-eks-upgrades-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-6.html)
+-->
 
 ### 使用 eksctl 自动化
 
-eksctl 是用于 EKS cluster 管理的 command-line tool，可用于升级自动化：
-
-```bash
-# Cluster upgrade
-eksctl upgrade cluster \
-  --name my-cluster \
-  --version 1.27 \
-  --approve
-
-# Node group upgrade
-eksctl upgrade nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --kubernetes-version 1.27
-```
+使用经过审核的 eksctl 配置和正确的操作标志。`upgrade cluster --approve` 会请求控制平面变更；不带 `--approve` 时，该命令会预览变更。创建节点组时使用 `--version`，而 `upgrade nodegroup` 使用 `--kubernetes-version`。为每项操作选择一个负责人/工具，然后验证实际 EKS 更新和工作负载状态。不要先后运行 AWS CLI 更新和 eksctl 更新，重复发起同一请求。
 
 ### 使用 AWS CLI 和脚本自动化
 
-你可以使用 AWS CLI 和 shell scripts 自动化升级过程：
+上述只读预检、针对确切更新的轮询器和各组件请求示例都是构建模块。编排器必须保留这些结果，并在出现失败、超时或验证未完成时停止。它必须使用已批准的附加组件/AMI/配置版本，而不能依赖数组顺序；必须处理自定义 AMI 和 Auto/Fargate 差异；并在客户端失败后通过更新 ID 恢复。不能因为某个资源变为 ACTIVE 就宣称整个升级成功。此检查入口不会启动升级：
 
 ```bash
-#!/bin/bash
-
-# Variable setup
-CLUSTER_NAME="my-cluster"
-TARGET_VERSION="1.27"
-REGION="us-west-2"
-
-# Cluster upgrade
-echo "Upgrading cluster $CLUSTER_NAME to version $TARGET_VERSION..."
-UPDATE_ID=$(aws eks update-cluster-version \
-  --region $REGION \
-  --name $CLUSTER_NAME \
-  --kubernetes-version $TARGET_VERSION \
-  --query "update.id" \
-  --output text)
-
-# Wait for upgrade completion
-echo "Waiting for cluster upgrade to complete..."
-aws eks wait update-successful \
-  --region $REGION \
-  --name $CLUSTER_NAME \
-  --update-id $UPDATE_ID
-
-# Add-on upgrade
-echo "Upgrading addons..."
-for ADDON in vpc-cni coredns kube-proxy; do
-  LATEST_VERSION=$(aws eks describe-addon-versions \
-    --region $REGION \
-    --addon-name $ADDON \
-    --kubernetes-version $TARGET_VERSION \
-    --query "addons[0].addonVersions[0].addonVersion" \
-    --output text)
-
-  echo "Upgrading $ADDON to version $LATEST_VERSION..."
-  aws eks update-addon \
-    --region $REGION \
-    --cluster-name $CLUSTER_NAME \
-    --addon-name $ADDON \
-    --addon-version $LATEST_VERSION \
-    --resolve-conflicts PRESERVE
-done
-
-# Managed node group upgrade
-echo "Upgrading managed nodegroups..."
-NODEGROUPS=$(aws eks list-nodegroups \
-  --region $REGION \
-  --cluster-name $CLUSTER_NAME \
-  --query "nodegroups[]" \
-  --output text)
-
-for NG in $NODEGROUPS; do
-  echo "Upgrading nodegroup $NG..."
-  aws eks update-nodegroup-version \
-    --region $REGION \
-    --cluster-name $CLUSTER_NAME \
-    --nodegroup-name $NG
-
-  # Wait for node group upgrade completion
-  echo "Waiting for nodegroup $NG upgrade to complete..."
-  aws eks wait nodegroup-active \
-    --region $REGION \
-    --cluster-name $CLUSTER_NAME \
-    --nodegroup-name $NG
-done
-
-echo "Upgrade process completed successfully!"
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${EXPECTED_ACCOUNT_ID:?}"
+: "${KUBE_CONTEXT:?}"; : "${TARGET_VERSION:?}"
+export CLUSTER_NAME AWS_REGION EXPECTED_ACCOUNT_ID KUBE_CONTEXT TARGET_VERSION
+umask 077
+python3 eks-upgrade-preflight.py > preflight.json
+# Review this evidence and the workload/backup/capacity plan before a separate change step.
 ```
 
 ### 使用 GitOps 自动化
 
-你可以使用 GitOps tools（例如 Flux、ArgoCD）自动化 EKS cluster 升级：
+Git 可以存放期望版本、兼容性证据和经过审核的操作手册。Argo CD/Flux 无法原生地将 eksctl `ClusterConfig` 文件转换为 EKS 控制平面变更；需要适当授权且了解 AWS 的控制器或运行器。Git/CloudFormation 回滚不会自动撤销 EKS 版本升级。
 
-1. **Store Cluster Configuration in Git Repository**:
+以下工作流有意设计为**只读就绪情况收集**。使用前，请将上文完整的 `eks-upgrade-preflight.py` 提交到 `runbooks/eks-upgrade-preflight.py`。请单独配置可信的私有网络运行器，以及经过审核的 AWS CLI/kubectl/Python 工具链。固定版本的 Actions 使用 Node.js 24；自托管运行器必须支持该运行时。配置仓库变量和受保护的 `eks-upgrade-review` 环境，并将 OIDC 信任绑定到此仓库/环境和 `sts.amazonaws.com`。仅仅命名一个环境并不会创建审核者保护机制。使用仅具备所需 EKS/STS 读取权限和 Kubernetes 节点列表访问权限的检查角色；此示例不需要修改集群版本的权限。
 
-```yaml
-# cluster.yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-  version: "1.27"
-managedNodeGroups:
-  - name: my-nodegroup
-    instanceType: m5.large
-    desiredCapacity: 3
-    minSize: 3
-    maxSize: 6
-```
-
-2. **Configure CI/CD Pipeline**:
+使用应用程序/API/备份/容量测试来审核产物，然后通过单独获批的变更阶段使用上述各组件流程。此工作流不会声称收集成功就等于已做好准备，也不会声称已测试生产环境升级。产物访问权限必须符合基础设施/洞察元数据的敏感程度；不会上传隔离的 kubeconfig。
 
 ```yaml
-# .github/workflows/upgrade-eks.yml
-name: Upgrade EKS Cluster
-
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'cluster.yaml'
-
+name: Inspect EKS upgrade readiness
+'on':
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: Reviewed next EKS minor version; inspection only
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: eks-readiness-${{ vars.AWS_REGION }}-${{ vars.EKS_CLUSTER_NAME }}
+  cancel-in-progress: false
 jobs:
-  upgrade:
-    runs-on: ubuntu-latest
+  inspect:
+    runs-on:
+    - self-hosted
+    - linux
+    - eks-upgrade
+    environment: eks-upgrade-review
+    timeout-minutes: 20
+    env:
+      CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EXPECTED_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      KUBE_CONTEXT: eks-upgrade-review
+      TARGET_VERSION: ${{ inputs.target_version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Assume the scoped review role
+      uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c
+      with:
+        role-to-assume: ${{ vars.EKS_REVIEW_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+        allowed-account-ids: ${{ env.EXPECTED_ACCOUNT_ID }}
+        unset-current-credentials: true
+    - name: Prepare isolated context
+      shell: bash
+      run: "set -euo pipefail\numask 077\nEVIDENCE_DIR=\"$RUNNER_TEMP/eks-readiness-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\"\
+        \nKUBECONFIG=\"$EVIDENCE_DIR/kubeconfig\"\nexport EVIDENCE_DIR KUBECONFIG\n\
+        mkdir -m 700 -p \"$EVIDENCE_DIR\"\nprintf 'EVIDENCE_DIR=%s\\nKUBECONFIG=%s\\\
+        n' \"$EVIDENCE_DIR\" \"$KUBECONFIG\" >> \"$GITHUB_ENV\"\naws eks update-kubeconfig\
+        \ --name \"$CLUSTER_NAME\" --region \"$AWS_REGION\" \\\n  --kubeconfig \"\
+        $KUBECONFIG\" --alias \"$KUBE_CONTEXT\"\naws --version\nkubectl version --client\
+        \ --output=json\npython3 --version"
+      id: prepare
+    - name: Collect review evidence
+      shell: bash
+      run: 'set -euo pipefail
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+        umask 077
 
-      - name: Install eksctl
-        run: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
-
-      - name: Upgrade EKS cluster
-        run: |
-          eksctl upgrade cluster -f cluster.yaml
+        python3 runbooks/eks-upgrade-preflight.py > "$EVIDENCE_DIR/preflight.json"'
+    - name: Preserve the review artifact
+      if: ${{ always() && steps.prepare.outcome == 'success' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: eks-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ env.EVIDENCE_DIR }}/preflight.json
+        if-no-files-found: warn
+        retention-days: 14
 ```
 
 ### 自动化最佳实践
 
 EKS 升级自动化的最佳实践：
 
-1. **Gradual Approach**: 从非生产环境开始，逐步推进到生产环境
-2. **Rollback Plan**: 实现自动回滚机制
-3. **Validation Steps**: 在升级后包含自动化验证步骤
-4. **Notifications**: 配置升级成功或失败通知
-5. **Documentation**: 记录自动化过程和步骤
+1. **渐进式方法**：从非生产环境开始，再逐步推进到生产环境
+2. **恢复计划**：使用经过测试且考虑资格条件的恢复流程；不要盲目回退版本或数据变更
+3. **验证步骤**：在升级后加入自动验证步骤
+4. **通知**：配置升级成功或失败时的通知
+5. **文档**：记录自动化流程和步骤
 
-<span id="upgrade-best-practices"></span>
+## 升级最佳实践 {#upgrade-best-practices}
 
-## 升级最佳实践
+下面来看看 EKS 集群升级的最佳实践。
 
-下面介绍 EKS cluster 升级的最佳实践。
+<!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
+![Tree diagram showing general EKS upgrade best practices across planning, preparation, execution, and post-upgrade, plus additional practices for large clusters and for financial-services compliance.](../.gitbook/assets/en-eks-08-eks-upgrades-7.png)
 
-```mermaid
-flowchart TD
-    BestPractices[Upgrade Best Practices] --> GeneralPractices[General Best Practices]
-    BestPractices --> LargeClusterPractices[Best Practices for Large Clusters]
-    BestPractices --> FinancialServicesPractices[Best Practices for Financial Services]
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-7.html)
+-->
 
-    GeneralPractices --> UpgradePlanning[Upgrade Planning]
-    GeneralPractices --> UpgradePreparation[Upgrade Preparation]
-    GeneralPractices --> UpgradeExecution[Upgrade Execution]
-    GeneralPractices --> PostUpgrade[Post-upgrade]
-
-    UpgradePlanning --> VersionSelection[Version Selection]
-    UpgradePlanning --> UpgradeSchedule[Upgrade Schedule]
-    UpgradePlanning --> PhaseApproach[Phased Approach]
-    UpgradePlanning --> RollbackPlanning[Rollback Planning]
-
-    UpgradePreparation --> Backup[Backup]
-    UpgradePreparation --> ResourceAllocation[Resource Allocation]
-    UpgradePreparation --> CompatibilityCheck[Compatibility Check]
-    UpgradePreparation --> DeprecatedAPIIdentification[Deprecated API Identification]
-
-    UpgradeExecution --> ControlPlaneFirst[Control Plane First]
-    UpgradeExecution --> AddonsNext[Add-ons Next]
-    UpgradeExecution --> NodesLast[Nodes Last]
-    UpgradeExecution --> GradualNodeUpgrade[Gradual Node Upgrade]
-
-    PostUpgrade --> Validation[Validation]
-    PostUpgrade --> Monitoring[Monitoring]
-    PostUpgrade --> Documentation[Documentation]
-    PostUpgrade --> Learning[Learning]
-
-    LargeClusterPractices --> CanaryDeployment[Canary Deployment]
-    LargeClusterPractices --> Automation[Automation]
-    LargeClusterPractices --> EnhancedMonitoring[Enhanced Monitoring]
-    LargeClusterPractices --> CommunicationPlan[Communication Plan]
-    LargeClusterPractices --> AutomatedRollback[Automated Rollback]
-
-    FinancialServicesPractices --> ComplianceCheck[Regulatory Compliance]
-    FinancialServicesPractices --> RiskAssessment[Risk Assessment]
-    FinancialServicesPractices --> ChangeManagement[Change Management]
-    FinancialServicesPractices --> EnhancedTesting[Enhanced Testing]
-    FinancialServicesPractices --> EnhancedDocumentation[Enhanced Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ResourceAllocation,EnhancedMonitoring awsService;
-    class ControlPlaneFirst,AddonsNext,NodesLast,GradualNodeUpgrade,CanaryDeployment,Automation,AutomatedRollback k8sComponent;
-    class BestPractices,GeneralPractices,LargeClusterPractices,FinancialServicesPractices,UpgradePlanning,UpgradePreparation,UpgradeExecution,PostUpgrade,VersionSelection,UpgradeSchedule,PhaseApproach,RollbackPlanning,Backup,CompatibilityCheck,DeprecatedAPIIdentification,Validation,Monitoring,Documentation,Learning,CommunicationPlan,ComplianceCheck,RiskAssessment,ChangeManagement,EnhancedTesting,EnhancedDocumentation default;
-```
-
-### 通用最佳实践
+### 一般最佳实践
 
 #### 升级规划
 
-1. **Version Selection**: 选择稳定版本并查看 release notes
-2. **Upgrade Schedule**: 在低流量时段安排升级
-3. **Phased Approach**: 从非生产环境开始，逐步推进到生产环境
-4. **Rollback Planning**: 创建出现问题时的回滚计划
+1. **版本选择**：选择稳定版本并查阅发行说明
+2. **升级时间安排**：安排在低流量时段进行升级
+3. **分阶段方法**：从非生产环境开始，再逐步推进到生产环境
+4. **回滚规划**：制定出现问题时的回滚计划
 
 #### 升级准备
 
-1. **Backup**: 备份重要数据
-2. **Resource Allocation**: 为升级确保足够资源
-3. **Compatibility Check**: 验证 workload 和 add-on 兼容性
-4. **Deprecated API Identification**: 识别并更新使用已弃用 API 的 workload
+1. **备份**：备份重要数据
+2. **资源分配**：确保升级所需资源充足
+3. **兼容性检查**：验证工作负载和附加组件的兼容性
+4. **识别已弃用 API**：找出并更新使用已弃用 API 的工作负载
 
 #### 升级执行
 
-1. **Control Plane First**: 先升级 Control Plane
-2. **Add-ons Next**: 在 Control Plane 升级后升级 add-ons
-3. **Nodes Last**: 在 Control Plane 和 add-on 升级后升级 nodes
-4. **Gradual Node Upgrade**: 逐步升级 nodes，以最大限度减少 workload 中断
+1. **准备**：在目标变更之前，使当前节点版本保持一致，并更新任何必需的过渡附加组件/控制器
+2. **控制平面目标版本**：请求下一个受支持的次要版本并验证更新 ID
+3. **依赖组件**：按照经过审核的兼容性顺序升级节点、剩余附加组件/控制器和客户端
+4. **渐进式节点升级**：逐步升级节点，以尽量减少工作负载中断
 
 #### 升级后
 
-1. **Validation**: 验证 cluster 和 workload 状态
-2. **Monitoring**: 升级后监控 cluster
-3. **Documentation**: 记录升级过程和结果
-4. **Learning**: 从升级过程中遇到的问题及其解决方案中学习
+1. **验证**：验证集群和工作负载状态
+2. **监控**：升级后监控集群
+3. **文档**：记录升级流程和结果
+4. **总结经验**：从升级中遇到的问题及其解决方案中吸取经验
 
-### 大型 Cluster 的最佳实践
+### 大型集群的最佳实践
 
-大型 EKS cluster 升级的额外最佳实践：
+大型 EKS 集群升级的其他最佳实践：
 
-1. **Canary Deployment**: 从部分 nodes 或 workloads 开始，然后逐步扩大
-2. **Automation**: 自动化升级过程
-3. **Enhanced Monitoring**: 升级期间持续监控 cluster 状态
-4. **Communication Plan**: 定期向利益相关者沟通升级状态
-5. **Automated Rollback**: 实现出现问题时的自动回滚机制
+1. **金丝雀部署**：从部分节点或工作负载开始，然后逐步扩大范围
+2. **自动化**：自动执行升级流程
+3. **增强监控**：在升级期间持续监控集群状态
+4. **沟通计划**：定期向利益相关者通报升级状态
+5. **受控恢复**：自动执行证据/资格检查并采用经过审核的恢复路径；回滚需要满足条件
 
-### 金融服务最佳实践
+### 金融服务行业的最佳实践
 
-金融服务行业中 EKS cluster 升级的额外最佳实践：
+金融服务行业中 EKS 集群升级的其他最佳实践：
 
-1. **Regulatory Compliance**: 确保升级满足监管要求
-2. **Risk Assessment**: 升级前进行风险评估
-3. **Change Management**: 遵循严格的变更管理流程
-4. **Enhanced Testing**: 升级前进行全面测试
-5. **Enhanced Documentation**: 详细记录升级过程和结果
+1. **法规遵从**：确保升级符合监管要求
+2. **风险评估**：升级前进行风险评估
+3. **变更管理**：遵循严格的变更管理流程
+4. **增强测试**：升级前进行全面测试
+5. **完善文档**：详细记录升级流程和结果
 
 ## 结论
 
-成功升级 Amazon EKS cluster 需要周密的规划、准备和验证。本文档介绍了安全升级 EKS cluster Control Plane、Node Groups 和 Add-ons 的策略、步骤和最佳实践。
+成功升级 Amazon EKS 集群需要充分的规划、准备和验证。本文档介绍了安全升级 EKS 集群控制平面、节点组和附加组件的策略、步骤和最佳实践。
 
 要点：
 
-1. **EKS Upgrade Overview**: EKS 版本管理、升级组件和路径
-2. **Upgrade Planning and Preparation**: 升级评估、准备和测试
-3. **EKS Control Plane Upgrade**: Control Plane 升级方法和监控
-4. **Node Group Upgrade**: Managed 和 self-managed Node Group 升级策略
-5. **Add-on Upgrade**: AWS managed 和 self-managed add-on 升级
-6. **Upgrade Validation and Troubleshooting**: 升级验证和常见问题解决
-7. **Upgrade Automation**: 使用 eksctl、AWS CLI 和 GitOps 进行升级自动化
-8. **Upgrade Best Practices**: 通用最佳实践和行业特定最佳实践
+1. **EKS 升级概述**：EKS 版本管理、升级组件和升级路径
+2. **升级规划与准备**：升级评估、准备和测试
+3. **EKS 控制平面升级**：控制平面升级方法和监控
+4. **节点组升级**：托管和自行管理节点组的升级策略
+5. **附加组件升级**：AWS 托管和自行管理附加组件的升级
+6. **升级验证与故障排除**：升级验证和常见问题解决
+7. **升级自动化**：使用 eksctl、AWS CLI 和 GitOps 自动化升级
+8. **升级最佳实践**：一般最佳实践和行业特定最佳实践
 
-让你的 EKS cluster 保持最新，可以利用安全补丁、bug fixes 和新功能，从而提升 cluster 的整体安全性、稳定性和性能。
+让 EKS 集群保持最新状态，可以利用安全补丁、错误修复和新功能，从而提升集群的整体安全性、稳定性和性能。
 
 ## 参考资料
 
-- [Amazon EKS Upgrade Documentation](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
-- [Kubernetes Versions and Version Skew](https://kubernetes.io/docs/setup/release/version-skew-policy/)
-- [EKS Managed Node Group Upgrade](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)
-- [EKS Add-on Upgrade](https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html)
-- [eksctl Documentation](https://eksctl.io/usage/cluster-upgrade/)
-- [Kubernetes Upgrade Best Practices](https://kubernetes.io/docs/tasks/administer-cluster/cluster-upgrade/)
+- [Amazon EKS 升级文档](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [Kubernetes 版本与版本偏差](https://kubernetes.io/docs/setup/release/version-skew-policy/)
+- [EKS 托管节点组升级](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)
+- [EKS 附加组件升级](https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html)
+- [eksctl 文档](https://eksctl.io/usage/cluster-upgrade/)
+- [Kubernetes 升级最佳实践](https://kubernetes.io/docs/tasks/administer-cluster/cluster-upgrade/)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试 [主题测验](../quizzes/eks/08-eks-upgrades-quiz.md)。
+要测试你对本章内容的掌握情况，请尝试[主题测验](../quizzes/eks/08-eks-upgrades-quiz.md)。

@@ -2,9 +2,9 @@
 
 ## 概述
 
-本指南使用 Strimzi Operator 作为 EKS 上的自我管理 Kafka 方案。Operator 会协调 Pods、存储、监听器、证书和升级；但它不会免除你在数据、可用性和安全策略方面的责任。第 6 部分会比较 Amazon MSK 等托管替代方案。
+本指南使用 Strimzi Operator 作为 EKS 上的自管 Kafka 方案。Operator 会协调 Pods、存储、监听器、证书和升级；但它不会免除你在数据、可用性和安全策略方面的责任。第 6 部分会比较 Amazon MSK 等托管替代方案。
 
-> **最后更新**：October 16, 2026。Strimzi 1.3.0 / Kafka 4.3.1。
+> **最后更新**：2026 年 10 月 16 日。Strimzi 1.3.0 / Kafka 4.3.1。
 > **升级要求**：Strimzi 1.0 及更高版本仅支持 CRD API `v1`。升级 Operator 之前，请按照官方迁移流程转换现有的 `v1beta2` / `v1beta1` / `v1alpha1` 资源并准备 CRD。仅更改版本号并不构成升级计划。
 
 Strimzi 1.3.0 支持 Kafka 4.2.0、4.2.1、4.2.2、4.3.0 和 4.3.1，默认使用 4.3.1。本指南固定使用兼容的组合；安装前也请检查发行版、Kubernetes 版本和升级路径。
@@ -51,14 +51,14 @@ KRaft 于 2.8 版作为早期访问功能推出，并于 3.3 版达到生产就�
 - 使用 MirrorMaker2 进行灾难恢复和跨区域复制
 
 **[6. MSK 集成](06-msk-integration.md)**
-- Amazon MSK 与自我管理的 Strimzi
+- Amazon MSK 与自管的 Strimzi
 - 使用 MSK Connect
 - 与 Kinesis Data Streams 集成并进行比较
 
 **[7. 监控](07-monitoring.md)**
 - 使用 Prometheus/Grafana 收集 Broker 指标
 - 监控消费者滞后
-- 使用 KEDA 自动扩缩消费者
+- 使用 KEDA 对消费者自动扩缩容
 
 **[8. 最佳实践](08-best-practices.md)**
 - 分区数量和键设计策略

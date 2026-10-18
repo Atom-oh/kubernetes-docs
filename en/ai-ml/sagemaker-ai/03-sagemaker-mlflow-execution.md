@@ -75,7 +75,7 @@ By default this writes a uniquely named JSON file under `results/previews/` with
 
 The config is read from `/opt/ml/code/config/experiment.yaml` in the source bundle. The four data files live in `/opt/ml/input/data/dataset/`. Build the local `--config` and bundle from the same source so they agree.
 
-Before submission, the launcher reserves both request and job journal under the cleanup tool's shared lock. For a job whose creation succeeded, monitor failure or interruption triggers a stop request attempt. `stop_requested` does not mean termination is confirmed. Reconcile AWS state and ownership after `submission_unknown`, `stop_unconfirmed`, or host loss; do not overwrite an existing journal or orphan request to resubmit.
+Before submission, the launcher reserves both the request and the job journal under the cleanup tool's shared lock. For a job whose creation succeeded, monitor failure or interruption triggers a stop request attempt. `stop_requested` does not mean termination is confirmed. Reconcile AWS state and ownership after `submission_unknown`, `stop_unconfirmed`, or host loss; do not overwrite an existing journal or orphan request to resubmit.
 
 The historical config specifies one `ml.g6e.4xlarge`, 300 GiB, smoke 10/full 80 steps, and `MaxRuntimeInSeconds: 10800`. That limit does not cap total cost including termination, uploads, MLflow, S3, and other resources.
 

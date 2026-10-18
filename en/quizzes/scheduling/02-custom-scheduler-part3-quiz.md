@@ -272,7 +272,7 @@ profiles:
 4. **Approval workflows**: Request external approval for pod scheduling.
 
 **Why a Permit barrier is not a complete gang scheduler:**
-A real implementation must scope group identity by namespace/UID, count unique members, handle retries/deletion/timeouts, release reservations on failure and account for binding failures. Do not construct a private `WaitingPod`, count the same retry twice or treat the current Pod as registered before Permit returns. A barrier does not guarantee simultaneous container startup or freedom from starvation. Question3 describes maintained implementations.
+A real implementation must scope group identity by namespace/UID, count unique members, handle retries/deletion/timeouts, release reservations on failure and account for binding failures. Do not construct a private `WaitingPod`, count the same retry twice or treat the current Pod as registered before Permit returns. A barrier does not guarantee simultaneous container startup or freedom from starvation. Question 3 describes maintained implementations.
 
 **Issues with other options:**
 - A. Bind pods to nodes: This is the role of the "Bind" extension point.
@@ -412,7 +412,7 @@ extenders:
 **Wire contract:**
 * Filter/prioritize use `ExtenderArgs` with `Pod` and either full `Nodes` or `NodeNames`, according to `nodeCacheCapable`.
 * Filter returns `Nodes`/`NodeNames`, failure maps and `Error`.
-* Prioritize returns a bare array such as `[{"Host":"node-a","Score":7}]`; scores are0–10, not100. Priority errors omit that extender's scores, so scores cannot enforce required constraints.
+* Prioritize returns a bare array such as `[{"Host":"node-a","Score":7}]`; scores are 0–10, not 100. Priority errors omit that extender's scores, so scores cannot enforce required constraints.
 * Bind uses `PodName`, `PodNamespace`, `PodUID` and `Node`. Only return success after the real binding succeeds; a `customBind` stub returning nil is not a binding implementation.
 * Preempt uses `ExtenderPreemptionArgs` with candidate victim maps and returns `ExtenderPreemptionResult.NodeNameToMetaVictims`. It does not return an invented `podsToPreempt` envelope.
 
@@ -467,8 +467,8 @@ leaderElection:
 ```
 
 **Preemption process:**
-1. PostFilter phase is called when a pod fails the filtering phase on all nodes.
-2. PostFilter plugin identifies preemption candidate nodes.
+1. The PostFilter phase is called when a pod fails the filtering phase on all nodes.
+2. The PostFilter plugin identifies preemption candidate nodes.
 3. Determines which pods to preempt on each node.
 4. Verifies that pods can be scheduled after preemption.
 5. Selects the optimal preemption strategy.
@@ -518,7 +518,7 @@ score = int((1 - std) * 100)
 
 The requested totals include the incoming Pod and the scheduler's accounted requests. The full plugin also handles its version-specific resource options. For more than two included resources, it uses population standard deviation.
 
-Illustrative arithmetic, not measurements: fractions80%/80% give100;90%/50% give80;30%/90% give70. Other plugins and weights also affect node selection.
+Illustrative arithmetic, not measurements: fractions 80%/80% give 100; 90%/50% give 80; 30%/90% give 70. Other plugins and weights also affect node selection.
 
 **Enabling NodeResourcesBalancedAllocation plugin in scheduler configuration:**
 ```yaml
@@ -577,7 +577,7 @@ leaderElection:
 3. **Scalability improvement**: Clusters with balanced resource usage can scale more efficiently.
 
 **Arithmetic helper (`scoring/formulas.go`):**
-This checks the formula and the optional70:30 GPU weighting described in the source chapter. It is not a complete scheduler plugin. Keep the built-in resource accounting, including CPU millicores, init/sidecar containers, overhead and feature-specific handling.
+This checks the formula and the optional 70:30 GPU weighting described in the source chapter. It is not a complete scheduler plugin. Keep the built-in resource accounting, including CPU millicores, init/sidecar containers, overhead and feature-specific handling.
 
 ```go
 package scoring
@@ -632,7 +632,7 @@ D. Perform recovery operations when binding fails
 **Explanation:**
 PreBind coordinates prerequisites before the Pod binding commits. `VolumeBinding` handles scheduling-related volume binding/provisioning coordination with storage controllers. There is no default plugin named `DefaultPreBind`.
 
-The1.35.8 interface includes **both** `PreBindPreFlight` and `PreBind`, using `fwk.CycleState`. Preflight can return Skip for a Pod to avoid unnecessary work.
+The 1.35.8 interface includes **both** `PreBindPreFlight` and `PreBind`, using `fwk.CycleState`. Preflight can return Skip for a Pod to avoid unnecessary work.
 
 **Complete read-only demonstration (`quizplugins/prebind.go`):**
 This opt-in identity check does not provision volumes, configure CNI, create service endpoints or allocate GPUs. Those require their actual controllers/device mechanisms. `DefaultBinder` already carries the UID, so this extra round trip is only an interface example.
@@ -684,7 +684,7 @@ func NewPreBind(_ context.Context, _ runtime.Object, handle fwk.Handle) (fwk.Plu
 }
 ```
 
-The question2 command registers it. Keep `VolumeBinding` enabled:
+The question 2 command registers it. Keep `VolumeBinding` enabled:
 
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
@@ -799,7 +799,7 @@ The NodeResourcesFit plugin supports the following scoring strategies:
 **Custom implementation caution:**
 Keep upstream `NodeResourcesFit`. Checking only resources listed in a scoring-weight map can omit a required resource, and CPU `Quantity.Value()` loses millicore precision. A sum of ordinary container requests misses init/sidecar/overhead behavior. A hand-written score that truncates fractions before scaling may produce only zeros.
 
-Part1's local check exercises the actual pinned fit function: with1500m already requested on a2-core node, another1-core request does not fit, while250m fits even with larger CPU limits. That is a synthetic accounting test, not a cluster benchmark.
+Part1's local check exercises the actual pinned fit function: with 1500m already requested on a 2-core node, another 1-core request does not fit, while 250m fits even with larger CPU limits. That is a synthetic accounting test, not a cluster benchmark.
 
 **Resource request and limit example:**
 ```yaml
@@ -1064,7 +1064,7 @@ D. A global scheduler that ranks all Pods across Deployments
 
 **Answer: B. ReplicaSet, including those owned by Deployments**
 
-The annotation is compared within one ReplicaSet and is best effort. Missing means0 and signed int32 values, including negatives, are valid. Assignment, phase and readiness can take precedence, so a high-cost unready Pod can be removed before a lower-cost ready Pod. The feature was alpha in1.21 and beta/default-on since1.22.
+The annotation is compared within one ReplicaSet and is best effort. Missing means 0 and signed int32 values, including negatives, are valid. Assignment, phase and readiness can take precedence, so a high-cost unready Pod can be removed before a lower-cost ready Pod. The feature was alpha in 1.21 and has been beta/default-on since 1.22.
 </details>
 
 ### 12. Which deletion-cost update pattern matches the source chapter?

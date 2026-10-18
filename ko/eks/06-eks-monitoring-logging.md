@@ -66,7 +66,7 @@ EKS는 선택한 관리형 control plane log type을 CloudWatch Logs로 export�
 | `controllerManager` | Core controller-manager 동작 |
 | `scheduler` | Scheduler 결정·진단 |
 
-Audit log는 모든 요청 본문·앱 작업을 빠짐없이 기록하는 보장이 아닙니다. Secret 관련 기록은 metadata만 남길 수 있고 일부 이벤트는 policy에서 제외합니다. CloudTrail의 AWS API 기록과 앱 데이터 접근 log는 별도 증거입니다.
+Audit log는 모든 요청 본문·앱 작업을 빠짐없이 기록한다고 보장하지 않습니다. Secret 관련 기록은 metadata만 남길 수 있고 일부 이벤트는 policy에서 제외합니다. CloudTrail의 AWS API 기록과 앱 데이터 접근 log는 별도 증거입니다.
 
 ### 로깅 조회·활성화
 
@@ -101,7 +101,7 @@ aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 
 마지막 명령은 waiter가 아닌 상태 조회입니다. Successful 또는 최종 실패가 될 때까지 DescribeUpdate를 반복한 뒤 실제 설정·log 도착을 확인합니다. Update ID만으로 완료가 증명되지는 않습니다. 선택한 유형 활성화를 위해 기존 다른 유형을 끌 필요는 없으며 명시적인 disable은 보존·가시성에 대한 별도 결정입니다.
 
-검토한 eksctl CLI에서 --approve를 생략하면 변경을 preview합니다. CLUSTER_NAME·AWS_REGION을 확인한 같은 클러스터로 설정하고 preview를 확인합니다:
+검토한 eksctl CLI에서 --approve를 생략하면 변경을 preview합니다. CLUSTER_NAME·AWS_REGION을 확인한 동일한 클러스터에 맞게 설정하고 preview를 확인합니다:
 
 ```bash
 set -euo pipefail
@@ -212,7 +212,7 @@ Container runtime은 stdout·stderr를 노드의 CRI log 파일에 기록합니�
 
 ### Collector 소유권 선택
 
-CloudWatch Observability add-on에는 컨테이너 log collector가 포함되므로 이를 선택한 stack이라면 소유자가 해당 구성을 관리합니다. 아래 standalone Fluent Bit는 독립적으로 관리하는 log pipeline의 대안입니다. 중복 전송·비용을 설계하지 않은 채 같은 파일·목적지에 collector를 겹쳐 설치하지 않습니다.
+CloudWatch Observability add-on에는 컨테이너 log collector가 포함되므로 이를 선택한 stack에서는 소유자가 해당 구성을 관리합니다. 아래 standalone Fluent Bit는 독립적으로 관리하는 log pipeline의 대안입니다. 중복 전송·비용에 대한 설계 없이 같은 파일·목적지에 collector를 겹쳐 설치하지 않습니다.
 
 ### 실제 연결된 Fluent Bit 예제
 
@@ -372,17 +372,17 @@ helm install eks-log-collector eks/aws-for-fluent-bit \
   --wait --timeout 5m
 ```
 
-모든 upgrade에도 같은 검토한 post-renderer를 사용하고 chart version·release 신원·namespace·metadata 방식을 바꿀 때 다시 검증합니다. Render된 ConfigMap은 실제 DaemonSet에 mount되며 무관한 ConfigMap만 apply해도 구성이 바뀌지는 않습니다. 계정·IRSA 역할·log group은 선행 요건이며 이 chart 예제가 생성하는 리소스가 아닙니다.
+모든 upgrade에도 검토한 동일한 post-renderer를 사용하고 chart version·release 신원·namespace·metadata 방식을 바꿀 때 다시 검증합니다. Render된 ConfigMap은 실제 DaemonSet에 mount되며 무관한 ConfigMap만 apply해도 구성이 바뀌지는 않습니다. 계정·IRSA 역할·log group은 선행 요건이며 이 chart 예제가 생성하는 리소스가 아닙니다.
 
 ### Buffer·Rotation·실패 동작
 
 Host log는 읽기 전용이고 checkpoint·filesystem buffer 상태는 별도 node-local directory에 둡니다. Tail database는 offset 기록이며 그 자체가 내구성 있는 backend archive는 아닙니다. 노드 교체 시 상태가 사라질 수 있습니다. Checkpoint가 없을 때 Read_from_Head On은 남아 있는 파일 내용을 읽으므로 backfill·중복 처리를 설계합니다.
 
-512M output queue 한도와 backlog memory는 예시 할당입니다. storage.total_limit_size에 도달하면 Fluent Bit가 해당 queue의 오래된 chunk를 버릴 수 있습니다. Skip_Long_Lines On도 큰 record를 의도적으로 건너뜁니다. 유한 buffer·retry·node-local 상태는 무손실·exactly-once 전달 보장이 아닙니다. Retry·drop·disk 용량·목적지 실패를 감시하고 실제 log 유입량·장애 기간에 맞게 한도를 검증합니다.
+512M output queue 한도와 backlog memory는 예시 할당입니다. storage.total_limit_size에 도달하면 Fluent Bit가 해당 queue의 오래된 chunk를 버릴 수 있습니다. Skip_Long_Lines On도 큰 record를 의도적으로 건너뜁니다. 유한 buffer·retry·node-local 상태는 무손실·exactly-once 전달을 보장하지 않습니다. Retry·drop·disk 용량·목적지 실패를 감시하고 실제 log 유입량·장애 기간에 맞게 한도를 검증합니다.
 
 ### 선택적 OpenSearch 동시 전송
 
-소유 VPC domain과 collector IAM·FGAC mapping을 준비한 후 overlay를 fluent-bit-opensearch-values.yaml로 저장하고 endpoint hostname을 바꿉니다. 같은 검토된 Helm 작업에 `-f fluent-bit-opensearch-values.yaml`을 추가합니다. CloudWatch를 유지하면 두 목적지로 복제 전송하며 OpenSearch만 선택하는 경우에만 cloudWatchLogs.enabled=false를 설정합니다.
+소유 VPC domain과 collector IAM·FGAC mapping을 준비한 후 overlay를 fluent-bit-opensearch-values.yaml로 저장하고 endpoint hostname을 바꿉니다. 검토된 동일한 Helm 작업에 `-f fluent-bit-opensearch-values.yaml`을 추가합니다. CloudWatch를 유지하면 두 목적지로 복제 전송하며 OpenSearch만 선택하는 경우에만 cloudWatchLogs.enabled=false를 설정합니다.
 
 ```yaml
 opensearch:
@@ -469,11 +469,11 @@ aws eks describe-addon-versions --region "$AWS_REGION" \
   --addon-name amazon-cloudwatch-observability --kubernetes-version "$CLUSTER_VERSION"
 ```
 
-고정된 v5.0.0 예제로 downgrade하지 말고 catalog에서 호환되는 검토한 build를 선택합니다. Add-on configuration schema는 버전별로 다릅니다. 여기서 로컬 기준 render에는 Helm chart 6.6.0을 사용했고 Fluent Bit DaemonSet도 agent 신원 경로의 cloudwatch-agent ServiceAccount를 사용합니다.
+고정된 v5.0.0 예제로 downgrade하지 말고 catalog에서 검토한 호환 build를 선택합니다. Add-on configuration schema는 버전별로 다릅니다. 여기서 로컬 기준 render에는 Helm chart 6.6.0을 사용했고 Fluent Bit DaemonSet도 agent 신원 경로의 cloudwatch-agent ServiceAccount를 사용합니다.
 
 #### 명시적인 Auto Monitor 구성
 
-신규 설치 예제의 cloudwatch-config.json으로 저장합니다. 기본 컨테이너 log 구성은 유지하고 앱 rollout을 검토할 때까지 광범위한 자동 workload 선택·자동 restart를 비활성화합니다:
+신규 설치 예제를 cloudwatch-config.json으로 저장합니다. 기본 컨테이너 log 구성은 유지하고 앱 rollout을 검토할 때까지 광범위한 자동 workload 선택·자동 restart를 비활성화합니다:
 
 ```json
 {
@@ -516,7 +516,7 @@ PY
 
 #### 신규 소유 설치 요청
 
-CloudWatch 역할에는 선택한 기능에 필요한 CloudWatch·trace 권한이 이미 있어야 합니다. 다음은 검토한 schema·build를 재확인하고 기존 add-on·collector association이 있으면 중단하며 충돌 리소스를 인수하지 않습니다:
+CloudWatch 역할에는 선택한 기능에 필요한 CloudWatch·trace 권한이 이미 있어야 합니다. 다음 예제는 검토한 schema·build를 재확인하고 기존 add-on·collector association이 있으면 중단하며 충돌 리소스를 인수하지 않습니다:
 
 ```bash
 set -euo pipefail
@@ -579,7 +579,7 @@ Container Insights console view에서 실제 클러스터를 선택하고 공개
 
 Dashboard는 데이터 조회를 돕지만 모든 경보를 만들거나 알림 전달을 보장하지 않습니다. 뒤의 CloudWatch 경보 예제는 명시적으로 선택한 차원과 node metric·Maximum을 사용합니다. Metric 존재를 검증하고 workload에 맞는 경보·전달 경로를 구성하세요.
 
-기존 공개 chart의 기본 log 구성·Auto Monitor 인수를 render하고 schema·소유권·실패 흐름의 mocked 사례 9개를 검증했습니다. 합성 test schema는 helper 동작 검사이며 위의 실제 build별 schema를 대체하지 않습니다. 이번 감사에서 add-on·workload 계측·telemetry export·AWS resource를 실행하지 않았습니다.
+기존 공개 chart의 기본 log 구성·Auto Monitor 인수를 render하고 schema·소유권·실패 흐름의 mocked 사례 9개를 검증했습니다. 합성 test schema는 helper 동작 검사용이며 위의 실제 build별 schema를 대체하지 않습니다. 이번 감사에서 add-on·workload 계측·telemetry export·AWS resource를 실행하지 않았습니다.
 
 참고: [CloudWatch add-on 설치·Auto Monitor](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html), [기본 APM 발표](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/), [Container Insights metric](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html).
 
@@ -634,7 +634,7 @@ AMP는 수집한 Prometheus metric을 저장·조회하고 AMG는 구성한 data
 
 ServiceAccount monitoring/amp-writer용 IRSA 역할을 준비합니다. Trust policy는 이 클러스터의 OIDC provider와 정확한 sub=system:serviceaccount:monitoring:amp-writer·aud=sts.amazonaws.com 조건을 사용해야 합니다. 대상 workspace ARN에 aps:RemoteWrite를 부여합니다. Prometheus process는 projected token을 받고 STS·AMP endpoint에 연결할 수 있어야 하며 Kubernetes RBAC는 별도 권한 경로입니다. 이 예제에 무관한 Pod Identity association이나 정적 AWS key를 함께 연결하지 않습니다.
 
-다음은 workspace를 읽고 검토한 chart 92.9.0의 overlay를 작성합니다. /api/v1/이 있거나 없는 endpoint 형식을 처리해 remote_write 경로를 한 번만 붙입니다. Python 3이 필요하며 workspace를 생성하지 않습니다:
+다음 예제는 workspace를 읽고 검토한 chart 92.9.0의 overlay를 작성합니다. /api/v1/이 있거나 없는 endpoint 형식을 처리해 remote_write 경로를 한 번만 붙입니다. Python 3이 필요하며 workspace를 생성하지 않습니다:
 
 ```bash
 set -euo pipefail
@@ -685,7 +685,7 @@ print("Wrote amp-values.json; review it with all existing release values")
 PY
 ```
 
-소유자의 검토한 설치·upgrade values에서 amp-values.json과 monitoring-values.yaml을 함께 사용합니다. Overlay는 remoteWrite 목록을 교체하므로 기존 목적지·external label을 의도에 맞게 보존합니다. 신규 release는 아래 설치 명령에 -f amp-values.json을 추가합니다. 기존 release는 현재 설정을 모두 유지하고 render diff·rollout을 검토한 뒤 소유자의 upgrade 절차를 따릅니다. ServiceAccount 변경은 Prometheus Pod 신원을 바꾸며 Chart 92.9.0의 기본 API-server·kubelet ServiceMonitor 인증은 명시적인 ServiceAccount token Secret을 사용합니다. 이 Secret을 보호하고 rotation·폐기 절차를 따릅니다. IRSA의 짧은 수명·audience 제한 token과는 다릅니다. 의존하는 모든 monitor 자격 증명을 교체하지 않고 createTokenSecret을 끄면 render·인증이 실패합니다.
+소유자가 검토한 설치·upgrade values에서 amp-values.json과 monitoring-values.yaml을 함께 사용합니다. Overlay는 remoteWrite 목록을 교체하므로 기존 목적지·external label을 의도에 맞게 보존합니다. 신규 release는 아래 설치 명령에 -f amp-values.json을 추가합니다. 기존 release는 현재 설정을 모두 유지하고 render diff·rollout을 검토한 뒤 소유자의 upgrade 절차를 따릅니다. ServiceAccount 변경은 Prometheus Pod 신원을 바꾸며 Chart 92.9.0의 기본 API-server·kubelet ServiceMonitor 인증은 명시적인 ServiceAccount token Secret을 사용합니다. 이 Secret을 보호하고 rotation·폐기 절차를 따릅니다. IRSA의 짧은 수명·audience 제한 token과는 다릅니다. 의존하는 모든 monitor 자격 증명을 교체하지 않고 createTokenSecret을 끄면 render·인증이 실패합니다.
 
 여러 replica에서는 중복 scrape가 무료라고 가정하지 말고 AMP의 문서화된 HA deduplication label·replica 구성을 설정합니다. 실제 workload에 맞게 cardinality·retention·수집 비용을 계획합니다. Remote-write 실패·backlog와 대상 workspace의 최근 데이터를 확인하며 Helm rollout 성공만으로 수집을 증명하지 않습니다.
 
@@ -710,7 +710,7 @@ AMG 12+에서는 Amazon Managed Service for Prometheus data-source plugin을 선
 
 #### 자체 관리형 Prometheus 및 Grafana
 
-이 예제는 ServiceMonitor·PrometheusRule 예제에 필요한 Prometheus Operator를 포함하는 kube-prometheus-stack release 하나를 소유자가 관리합니다. 독립 Prometheus chart만 설치하면 해당 CRD·controller가 자동 제공되는 것은 아닙니다. 설치 전에 기존 operator·release·CRD 소유권을 확인하며 기존 stack은 소유자의 upgrade 절차를 따릅니다.
+이 예제에서는 ServiceMonitor·PrometheusRule 예제에 필요한 Prometheus Operator를 포함하는 kube-prometheus-stack release 하나를 소유자가 관리합니다. 독립 Prometheus chart만 설치하면 해당 CRD·controller가 자동 제공되는 것은 아닙니다. 설치 전에 기존 operator·release·CRD 소유권을 확인하며 기존 stack은 소유자의 upgrade 절차를 따릅니다.
 
 검토한 기준은 chart 92.9.0·Operator 0.94.1이며 EKS 1.36용으로 render했습니다. 일반 Linux EC2 노드와 동작하는 EBS CSI 권한, 준비된 암호화 ebs-gp3 StorageClass를 전제로 합니다. Auto Mode·다른 storage 구현은 실제 지원 class와 노드 배치를 선택합니다. 아래 retention·PVC 크기는 예시 할당이며 실측 용량 보장이 아닙니다.
 
@@ -1229,7 +1229,7 @@ Prometheus가 경보 rule을 평가하고 Alertmanager가 결과 경보를 묶�
 
 #### Alertmanager 구성
 
-Slack 예제는 승인된 secret 관리 경로로 실제 webhook URL을 slack-url key에 담은 monitoring/notification-credentials를 준비합니다. 자격 증명을 ConfigMap·저장소 본문·Helm 명령 인수에 넣지 않습니다. 다음 비밀 값이 없는 routing 정의를 alertmanager-config.yaml로 저장합니다:
+Slack 예제는 승인된 secret 관리 경로로 실제 webhook URL을 slack-url key에 담은 monitoring/notification-credentials를 준비합니다. 자격 증명을 ConfigMap·저장소 본문·Helm 명령 인수에 넣지 않습니다. 비밀 값이 없는 다음 routing 정의를 alertmanager-config.yaml로 저장합니다:
 
 ```yaml
 global:
@@ -1257,7 +1257,7 @@ receivers:
 
 Webhook은 대상 Slack 목적지의 권한이 있어야 하며 channel 필드가 Slack app 권한을 덮어쓰지는 않습니다. 예제는 Slack으로 주기적 메시지를 보내지 않도록 기본 항상 firing인 Watchdog 경보를 버립니다. 실제 dead-man·heartbeat 감시는 별도 receiver와 외부 수신 중단 감지가 필요하며 Watchdog 폐기가 알림 전달을 시험하는 것은 아닙니다.
 
-일치하는 amtool로 file을 로컬 검증한 뒤 신규 소유 설치에만 구성 Secret을 만듭니다. 기존 Secret·release는 소유자의 검토한 update 절차를 따릅니다:
+일치하는 amtool로 file을 로컬 검증한 뒤 신규 소유 설치에만 구성 Secret을 만듭니다. 기존 Secret·release는 소유자가 검토한 update 절차를 따릅니다:
 
 ```bash
 amtool --no-version-check check-config alertmanager-config.yaml
@@ -1334,7 +1334,7 @@ CrashLoopBackOff rule은 최근 5분 구간을 반복 관찰하며 재시작 횟
 
 #### 직접 Add-on Health Event와 CloudTrail API 활동
 
-다음은 선택한 account·Region 범위의 대안 두 개를 작성합니다. 단일 클러스터가 아니라 해당 account·Region의 일치하는 활동을 포함합니다. 범위를 더 좁히려면 해당 event type의 실제 수신 event·문서화된 필드를 확인해 시험하며 모든 event에 detail.clusterName이 있다고 가정하지 않습니다.
+다음은 선택한 account·Region 범위의 대안 두 개입니다. 단일 클러스터가 아니라 해당 account·Region의 일치하는 활동을 포함합니다. 범위를 더 좁히려면 해당 event type의 실제 수신 event·문서화된 필드를 확인해 시험하며 모든 event에 detail.clusterName이 있다고 가정하지 않습니다.
 
 ```bash
 set -euo pipefail
@@ -1373,7 +1373,7 @@ CloudTrail pattern은 적용되는 upgrade·rollback 요청을 포함한 UpdateC
 
 같은 account·Region에 standard SNS topic·확인한 subscription과 EventBridge target execution role을 준비합니다. 역할은 EventBridge를 신뢰하고 대상 topic의 sns:Publish 및 암호화에 필요한 KMS 권한을 가져야 합니다. 운영자에게는 rule·target 제어와 승인 역할 전달 권한이 필요합니다. 현재 EventBridge는 SNS target의 execution role을 지원합니다. Resource-based policy도 대안이지만 target 추가만으로 자동 구성되지는 않습니다.
 
-생성한 pattern file 하나와 신규 소유 rule 이름을 선택합니다. 사전 조회에서 존재하는 이름은 거부하지만 PutRule은 upsert이므로 소유권·동시 변경을 조율해야 합니다. Rule은 비활성 상태로 만들고 PutTargets의 부분 실패도 workflow를 중단합니다:
+생성한 pattern file 하나와 신규 소유 rule 이름을 선택합니다. 사전 조회에서 존재하는 이름은 거부하지만 PutRule은 upsert이므로 소유권·동시 변경을 조율해야 합니다. Rule은 비활성 상태로 만들고 PutTargets의 부분 실패 시에도 workflow를 중단합니다:
 
 ```bash
 set -euo pipefail
@@ -1600,7 +1600,7 @@ kubectl logs -n monitoring deployment/event-exporter --tail=100
 
 #### 누락·반복 Event·Alert Payload
 
-확인한 v1.7 watcher는 add notification을 처리하고 update·delete callback을 무시합니다. 따라서 반복 Event의 count·series update를 신뢰할 수 있는 내보낸 발생 횟수로 볼 수 없습니다. MaxEventAgeSeconds=60은 예시 수신 age 기준이며 backend retention이 아닙니다. 시작·throttling·중단 시 오래된 event를 버릴 수 있고 재조회·restart로 관측이 중복될 수도 있습니다. Event 횟수로 운영 결정을 내리기 전에 필요한 update 처리·buffer·영구 목적지를 선택하고 시험합니다.
+확인한 v1.7 watcher는 add notification을 처리하고 update·delete callback을 무시합니다. 따라서 반복 Event의 count·series update를 내보낸 발생 횟수로 신뢰할 수 없습니다. MaxEventAgeSeconds=60은 예시 수신 age 기준이며 backend retention이 아닙니다. 시작·throttling·중단 시 오래된 event를 버릴 수 있고 재조회·restart로 관측이 중복될 수도 있습니다. Event 횟수로 운영 결정을 내리기 전에 필요한 update 처리·buffer·영구 목적지를 선택하고 시험합니다.
 
 Log뿐 아니라 watch·discard counter도 확인합니다. 예제의 exporter metric listener는 loopback에 bind되므로 권한 있는 운영자가 로컬 port-forward로 확인할 수 있습니다. Prometheus에 endpoint를 자동으로 추가하지는 않습니다:
 
@@ -1625,7 +1625,7 @@ Webhook URL만 바꿔 원문 Kubernetes Event 객체를 Alertmanager로 보내�
 
 #### PagerDuty 통합
 
-Events API v2 integration은 notification-credentials의 pagerduty-routing-key key를 준비합니다. Routing_key_file은 일반 PagerDuty REST API token이 아닌 integration key를 가리킵니다. Critical만 paging하려면 검토한 하위 route로 critical 경보를 연결합니다:
+Events API v2 integration을 위해 notification-credentials의 pagerduty-routing-key key를 준비합니다. Routing_key_file은 일반 PagerDuty REST API token이 아닌 integration key를 가리킵니다. Critical만 paging하려면 검토한 하위 route로 critical 경보를 연결합니다:
 
 ```yaml
 name: pagerduty-notifications
@@ -1892,11 +1892,11 @@ aws cloudtrail lookup-events --region "$AWS_REGION" \
   --cli-input-json file://cloudtrail-lookup.json --max-items 50 --output json
 ```
 
-CLI가 NextToken을 반환하면 같은 요청·시간 구간에 --starting-token을 사용해 나머지를 확인합니다. 전체 신원·request·error 필드는 CloudTrailEvent JSON 문자열을 파싱하며 Username만으로 호출자를 완전히 식별하지 않습니다. Event history는 장기 보존 계획이 아니며 모든 data-event 범주를 포함하지 않습니다.
+CLI가 NextToken을 반환하면 같은 요청·시간 구간에 --starting-token을 사용해 나머지를 확인합니다. 전체 신원·request·error 필드는 CloudTrailEvent JSON 문자열을 파싱해 확인하며 Username만으로 호출자를 완전히 식별하지 않습니다. Event history는 장기 보존 계획이 아니며 모든 data-event 범주를 포함하지 않습니다.
 
 #### 사용 자격이 있는 기존 고객의 CloudTrail Lake
 
-CloudTrail Lake는 2026년 5월 31일부터 신규 고객에게 닫혔고 현재는 중요 bug·security update를 제공합니다. 기존 고객은 문서화된 조건에 따라 계속 사용할 수 있습니다. 조직 event data store는 신규 member account를 포함할 수 있지만 기존 계정 단위 store가 새로 추가한 계정까지 Lake 수집을 자동 확장하지는 않습니다. CloudTrail Trails·Insights·Aggregated Events는 계속 지원됩니다. 신규 분석 설계는 새 Lake 가입을 요구하지 말고 AWS의 현재 CloudWatch migration·ingestion 가이드를 검토합니다.
+CloudTrail Lake는 2026년 5월 31일부터 신규 고객의 가입이 중단됐고 현재는 중요 bug·security update를 제공합니다. 기존 고객은 문서화된 조건에 따라 계속 사용할 수 있습니다. 조직 event data store는 신규 member account를 포함할 수 있지만 기존 계정 단위 store가 새로 추가한 계정까지 Lake 수집을 자동 확장하지는 않습니다. CloudTrail Trails·Insights·Aggregated Events는 계속 지원됩니다. 신규 분석 설계는 새 Lake 가입을 요구하지 말고 AWS의 현재 CloudWatch migration·ingestion 가이드를 검토합니다.
 
 사용 가능한 기존 store에서는 EVENT_DATA_STORE_ID를 Lake query editor에서 선택한 실제 ID로 바꿉니다. Eks_events 같은 임의 table alias가 아닙니다. 다음은 원래 예시의 2025년 7월 1–11일 구간을 유지합니다. 이번 감사에서 실행한 query가 아니며 해당 store가 실제로 그 기간을 보존하고 있어야 합니다:
 
@@ -1965,7 +1965,7 @@ public final class CorrelationContext {
 }
 ```
 
-추출한 request header·실제 작업으로 CorrelationContext.run을 호출합니다. Encoder·pattern에서 correlation_id를 포함하도록 구성해야 하며 MDC에 값을 넣는 것만으로 log 형식이 바뀌지는 않습니다. 호출자가 제공한 correlation ID는 추적 metadata이지 인증 정보가 아닙니다. MDC context는 thread에 연결되므로 executor·reactive 경계에서는 backend·framework가 지원하는 방법으로 전파·복원해야 합니다. Helper는 source 검토를 했으며 이 환경에는 Java compiler·runtime이 없었습니다.
+추출한 request header·실제 작업으로 CorrelationContext.run을 호출합니다. Encoder·pattern에서 correlation_id를 포함하도록 구성해야 하며 MDC에 값을 넣는 것만으로 log 형식이 바뀌지는 않습니다. 호출자가 제공한 correlation ID는 추적 metadata이지 인증 정보가 아닙니다. MDC context는 thread에 연결되므로 executor·reactive 경계에서는 backend·framework가 지원하는 방법으로 전파·복원해야 합니다. Helper의 source를 검토했으며 이 환경에는 Java compiler·runtime이 없었습니다.
 
 참고: [SLF4J MDC API](https://www.slf4j.org/apidocs/org/slf4j/MDC.html), [Logback MDC·thread pool](https://logback.qos.ch/manual/mdc.html).
 
@@ -1981,7 +1981,7 @@ public final class CorrelationContext {
 
 #### 로그 보존 정책
 
-승인된 운영·데이터 접근·보존 요구에 맞게 retention을 선택합니다. 보존 기간을 줄이면 기존 저장 데이터가 만료될 수 있으며 기간 값 자체가 규정 준수·불변 hold를 보장하지는 않습니다. 다음은 소유 CloudWatch log group의 단순 조회가 아니라 보존 기간을 변경합니다:
+승인된 운영·데이터 접근·보존 요구에 맞게 retention을 선택합니다. 보존 기간을 줄이면 기존 저장 데이터가 만료될 수 있으며 기간 값 자체가 규정 준수·불변 hold를 보장하지는 않습니다. 다음 예제는 소유 CloudWatch log group을 단순히 조회하는 것이 아니라 보존 기간을 변경합니다:
 
 ```bash
 set -euo pipefail
@@ -2375,7 +2375,7 @@ kubectl port-forward --address 127.0.0.1 -n "$NAMESPACE" \
 
 #### NetworkPolicy와 진단 Context
 
-Source egress·destination ingress, namespace·Pod selector, DNS 접근과 강제하는 CNI를 모두 확인합니다. Security group·route·network ACL·service-mesh policy·TLS도 추가 계층일 수 있습니다. 임의의 임시 Pod는 실패한 workload와 label·ServiceAccount·security group·sidecar가 다를 수 있습니다.
+Source egress·destination ingress, namespace·Pod selector, DNS 접근과 이를 강제하는 CNI를 모두 확인합니다. Security group·route·network ACL·service-mesh policy·TLS도 추가 계층일 수 있습니다. 임의의 임시 Pod는 실패한 workload와 label·ServiceAccount·security group·sidecar가 다를 수 있습니다.
 
 승인된 조사에서는 restricted profile과 호환되는 검토한 non-root image로 선택한 Pod에 ephemeral 진단 container를 추가할 수 있습니다. 오래된 BusyBox tag·검토하지 않은 latest 대신 DEBUG_IMAGE에 승인된 digest를 지정합니다:
 
@@ -2428,7 +2428,7 @@ kubectl port-forward --address 127.0.0.1 -n monitoring \
   svc/monitoring-kube-prometheus-prometheus 9090:9090
 ```
 
-Forward 실행 중 `http://127.0.0.1:9090/targets`를 확인합니다. 실제 Pod log·target error·인증서 신뢰·이름 있는 Service port·namespace·label selector·rule·최근 sample을 확인합니다. ServiceMonitor 객체만으로 Prometheus가 선택하거나 endpoint에 연결된다고 증명되지는 않습니다. AMP는 remote-write 실패·backlog와 대상 workspace를 별도로 확인합니다.
+Forward 실행 중 `http://127.0.0.1:9090/targets`를 확인합니다. 실제 Pod log·target error·인증서 신뢰·이름 있는 Service port·namespace·label selector·rule·최근 sample을 확인합니다. ServiceMonitor 객체만으로 Prometheus가 이를 선택하거나 endpoint에 연결된다고 증명되지는 않습니다. AMP는 remote-write 실패·backlog와 대상 workspace를 별도로 확인합니다.
 
 #### Grafana 문제 해결
 
@@ -2445,9 +2445,9 @@ kubectl port-forward --address 127.0.0.1 -n monitoring \
 
 #### ImagePullBackOff 오류
 
-Pull error·image repository·digest·architecture·registry 권한·노드 네트워크 경로를 확인합니다. 적절한 private endpoint·route가 있으면 인터넷 접근이 항상 필요한 것은 아닙니다. ECR은 EC2 node 또는 Fargate Pod execution 신원과 repository policy를 검증합니다. 앱 IRSA·Pod Identity가 kubelet image pull 신원은 아닙니다.
+Pull error·image repository·digest·architecture·registry 권한·노드 네트워크 경로를 확인합니다. 적절한 private endpoint·route가 있으면 인터넷 접근이 항상 필요한 것은 아닙니다. ECR에서는 EC2 node 또는 Fargate Pod execution 신원과 repository policy를 검증합니다. 앱 IRSA·Pod Identity가 kubelet image pull 신원은 아닙니다.
 
-Pull Secret을 사용하는 private registry는 승인된 자격 증명 절차로 보호된 독립 Docker auth JSON file을 준비합니다. Credential-helper 참조만 있는 file은 Kubernetes imagePullSecret으로 충분하지 않습니다. 신규 소유 Secret은 명령 인수에 password를 넣지 않고 file path를 전달합니다:
+Pull Secret을 사용하는 private registry에는 승인된 자격 증명 절차로 보호된 독립 Docker auth JSON file을 준비합니다. Credential-helper 참조만 있는 file은 Kubernetes imagePullSecret으로 충분하지 않습니다. 신규 소유 Secret을 만들 때는 명령 인수에 password를 넣지 않고 file path를 전달합니다:
 
 ```bash
 set -euo pipefail

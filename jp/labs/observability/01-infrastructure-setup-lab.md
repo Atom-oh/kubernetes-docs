@@ -28,8 +28,8 @@
 <span id="verification-5"></span>
 
 > **難易度**: 上級
-> **最終更新**: September 13, 2026
-2 つの EKS クラスターと、このラボ専用のデータベース/メッセージ経路を準備します。実行可能ファイルは[アプリケーション例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)にあります。課金対象リソースを作成する前に、アカウント、Region、ネットワーク、権限、クリーンアップを確認してください。この監査では AWS リソースを作成していません。
+> **最終更新日**: 2026年9月13日
+2 つの EKS クラスターと、このラボ専用のデータベース/メッセージ経路を準備します。実行ファイルは[アプリケーション例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)にあります。課金対象リソースを作成する前に、AWS アカウント、リージョン、ネットワーク、権限、クリーンアップ手順を確認してください。この監査では AWS リソースを作成していません。
 
 ![管理/サービスクラスターと専用ラボリソース](../../.gitbook/assets/en-labs-observability-01-infrastructure-setup-lab-0.png)
 
@@ -37,7 +37,7 @@
 
 ## 1. 環境と所有権を確認する {#prerequisites}
 
-例は AWS CLI v2、eksctl 0.229.0、kubectl 1.36.2、Helm 3.21.3、Python 3.12、Docker、Git、jq でレビューしました。レビュー時点で EKS 1.36 は標準サポート期間内でした。古い 1.31 の例は延長サポート期間内であり、すでにサポート終了ではありませんでした。実行時にはバージョンおよび Region の可用性を再確認してください。
+この例は AWS CLI v2、eksctl 0.229.0、kubectl 1.36.2、Helm 3.21.3、Python 3.12、Docker、Git、jq を使用してレビューしました。レビュー時点で EKS 1.36 は標準サポート期間内でした。古い 1.31 の例は延長サポート期間内であり、すでにサポート終了ではありませんでした。実行時にはバージョンとリージョンでの提供状況を再確認してください。
 
 ```bash
 aws --version
@@ -58,7 +58,7 @@ test "$(aws sts get-caller-identity --query Account --output text)" = "$EXPECTED
 
 ## 2. ネットワークと 2 つのクラスター {#clusters}
 
-この例では、レビュー済みの VPC と異なる AZ にある 2 つのプライベートサブネットを再利用します。最初に NAT/必要な VPC エンドポイント、DNS、アドレス容量、SG/NACL ルールを準備してください。Kubernetes の Service CIDR172.20.0.0/16 および172.21.0.0/16 は、実際の VPC/接続済みネットワークと重複してはなりません。別々の VPC では、追加のピアリング/TGW、双方向ルート、DNS、送信元 IP の検証が必要です。
+この例では、レビュー済みの VPC と、異なる AZ にある2つのプライベートサブネットを再利用します。最初に NAT/必要な VPC エンドポイント、DNS、アドレス容量、SG/NACL ルールを準備してください。Kubernetes の Service CIDR `172.20.0.0/16` および `172.21.0.0/16` は、実際の VPC や接続済みネットワークと重複してはなりません。別々の VPC では、追加のピアリング/TGW、双方向ルート、DNS、送信元 IP の検証が必要です。
 
 ```bash
 cd examples/labs/observability/application
@@ -79,11 +79,11 @@ aws eks update-kubeconfig --name "$LAB_PREFIX-service" --alias service --kubecon
 kubectl --context managed get nodes
 kubectl --context service get nodes
 ```
-[EKS 作成ガイド](../../eks/02-eks-cluster-creation-part1.md)および[クラスタ―ラボ](../eks/01-eks-cluster-creation-lab.md)にあるアカウント/エンドポイント/所有権のチェックを適用してください。両方の context が意図した別個のクラスターを選択していることを確認してください。
+[EKS 作成ガイド](../../eks/02-eks-cluster-creation-part1.md)および[クラスターラボ](../eks/01-eks-cluster-creation-lab.md)にあるアカウント/エンドポイント/所有権のチェックを適用してください。両方の kubeconfig context が、意図した別々のクラスターを選択していることを確認してください。
 
 ## 3. ストレージ、ロードバランサー、OIDC の前提条件 {#platform-prerequisites}
 
-EBS CSI、レビュー済みの `gp3` StorageClass、実際に NetworkPolicy を強制する CNI、AWS Load Balancer Controller（`service.k8s.aws/nlb`）をインストールします。共有 StorageClass を無造作に上書きしないでください。各クラスターの OIDC issuer と対応する IAM provider ARN を取得してください。https:// を除いた issuer の host/path は、provider ARN のサフィックスと一致する必要があります。
+EBS CSI、レビュー済みの `gp3` StorageClass、実際に NetworkPolicy を強制する CNI、AWS Load Balancer Controller（`service.k8s.aws/nlb`）をインストールします。共有 StorageClass を無造作に上書きしないでください。各クラスターの OIDC issuer と対応する IAM provider ARN を取得してください。`https://` を除いた issuer のホスト名とパスは、provider ARN のサフィックスと一致する必要があります。
 
 ```bash
 aws eks describe-cluster --name "$LAB_PREFIX-managed" --query cluster.identity.oidc.issuer --output text
@@ -94,20 +94,20 @@ kubectl --context service get storageclass gp3
 
 ## 4. Aurora、SNS/SQS、ロール {#managed-resources}
 
-`application/infra.yaml` は、プライベート Aurora writer、マネージド master Secret、SNS fanout、個別の consumer queue/DLQ、CloudWatch log group、ロールを作成します。DB ingress は実際の service-node SG のみを許可します。単一 writer の演習は Multi-AZ HA ではありません。Region でサポートされている Aurora engine version を検出して明示的に指定してください。
+`application/infra.yaml` は、プライベートな Aurora writer、マネージド master Secret、SNS ファンアウト、個別の consumer queue/DLQ、CloudWatch Logs グループ、ロールを作成します。DB ingress は実際の service-node SG のみを許可します。writer が1つの演習構成は Multi-AZ の高可用性構成ではありません。リージョンでサポートされている Aurora エンジンバージョンを確認し、明示的に指定してください。
 
 ```bash
 aws rds describe-db-engine-versions --engine aurora-postgresql \
   --query "DBEngineVersions[].EngineVersion" --output table
 ```
-VpcId、PrivateSubnetIds、ServiceNodeSecurityGroupId、AuroraEngineVersion、両方の OIDC provider/issuer ペアを指定し、CloudFormation change set をレビューして実行してください。アカウント、ARN、ServiceAccount の整合性を確認してください。アプリの runtime role、KEDA の queue-read identity、management Collector の log identity はそれぞれ別です。
+VpcId、PrivateSubnetIds、ServiceNodeSecurityGroupId、AuroraEngineVersion、両方の OIDC provider/issuer ペアを指定し、CloudFormation change set をレビューして実行してください。アカウント、ARN、ServiceAccount の整合性を確認してください。アプリケーションの実行ロール、KEDA のキュー読み取り用 ID、管理 Collector のログ用 ID は、それぞれ別のものです。
 
 ```bash
 aws cloudformation describe-stacks --stack-name "$LAB_STACK" \
   --query "Stacks[0].Outputs" --output json > "$LAB_STATE/infra-outputs.json"
 ```
 
-ここでパート2用の Collector identity 入力を生成します。イメージリポジトリとイミュータブルなタグをここで選択してください。イメージのビルド/プッシュはパート3で行います。
+ここでパート2用の Collector ID 情報を生成します。コンテナイメージのリポジトリと変更不能なタグを選んでください。イメージのビルドとプッシュはパート3で行います。
 
 ```bash
 python3.12 -m venv .venv
@@ -117,9 +117,9 @@ python3.12 -m venv .venv
 
 ## 5. Runtime DB アカウントと次のステップ {#database-and-next}
 
-master Secret は承認済みの環境でのみ読み取り、プライベートな JSON 接続ファイルに保存してください。RDS CA bundle と `sslmode=verify-full` を使用してください。[bootstrap_db.py の手順](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application#infrastructure-and-credentials)では、既存のパスワードを上書きせずに、専用の `lab_runtime` DML アクセスを作成します。Pod CA path を `/run/database-ca/global-bundle.pem` に設定してください。
+master Secret は許可された環境内でのみ読み取り、非公開の JSON 接続ファイルに保存してください。RDS CA バンドルと `sslmode=verify-full` を使用してください。[bootstrap_db.py の手順](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application#infrastructure-and-credentials)では、既存のパスワードを上書きせずに、専用の `lab_runtime` DML アクセスを作成します。Pod 内の CA ファイルパスを `/run/database-ca/global-bundle.pem` に設定してください。
 
-所有権インベントリに、スタック、クラスター、保持された snapshot、IAM attachment、LB、PVC を記録してください。実際の Region と使用量に対する EKS/node/NAT/EBS/Aurora/Logs/SNS/SQS/KMS/transfer のコストを見積もってください。固定の時間あたり合計を提示したり、AMG のユーザーあたり月額料金を workspace の時間あたり料金に換算したりしないでください。[パート2](./02-observability-stack-lab.md)に進んでください。
+リソース所有台帳に、スタック、クラスター、保持するスナップショット、IAM の関連付け、ロードバランサー、PVC を記録してください。実際のリージョンと使用量に基づき、EKS、ノード、NAT、EBS、Aurora、Logs、SNS、SQS、KMS、データ転送のコストを見積もってください。固定の時間料金を提示したり、AMG のユーザー単位の月額料金をワークスペースの時間料金に換算したりしないでください。[パート2](./02-observability-stack-lab.md)に進んでください。
 
 ## 検証範囲
 

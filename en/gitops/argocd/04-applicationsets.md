@@ -764,7 +764,7 @@ spec:
 
 ## Progressive Sync
 
-Progressive Syncs is Beta since 3.3 and must still be explicitly enabled in 3.5.4. Merge `applicationsetcontroller.enable.progressive.syncs: "true"` into the existing `argocd-cmd-params-cm.data`, then restart the ApplicationSet controller. For Helm, manage the corresponding key under `configs.params`.
+Progressive Syncs has been in Beta since 3.3 and must still be explicitly enabled in 3.5.4. Merge `applicationsetcontroller.enable.progressive.syncs: "true"` into the existing `argocd-cmd-params-cm.data`, then restart the ApplicationSet controller. For Helm, manage the corresponding key under `configs.params`.
 
 RollingSync selects **labels on generated Applications** and waits for every Application in a group to become Healthy before proceeding. It disables child autosync and requests syncs through the ApplicationSet controller, respecting sync windows and Application retry settings. Applications matching no step require manual sync.
 

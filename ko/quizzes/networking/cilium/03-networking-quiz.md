@@ -1,6 +1,6 @@
 # Cilium 네트워킹 검증 실습
 
-기대 결과가 있는 여덟 가지 실습입니다. 기준은 Cilium 1.20.3, CLI 0.20.1, 지원 Kubernetes 1.33–1.36이며 2026년 10월 16일 검토했습니다. “1.30 이상” 모든 버전의 호환성을 주장하지 않습니다.
+기대 결과가 있는 여덟 가지 실습입니다. 기준은 Cilium 1.20.3, CLI 0.20.1, 지원 Kubernetes 1.33–1.36이며 2026년 10월 16일 검토했습니다. “1.30 이상”인 모든 버전과의 호환성을 주장하지 않습니다.
 
 ## 사전 요구 사항
 
@@ -143,7 +143,7 @@ BACKEND_IP=$(kubectl -n cilium-net-lab get service backend -o jsonpath='{.spec.c
 test -n "$BACKEND_IP"
 ```
 
-Backend Pending은 anti-affinity 조건을 만족하는 노드 부족일 수 있으며 정책 실패로 해석하지 않습니다. 새 정책 적용 전에 **두 클라이언트 모두** 정상 backend에 도달하는지 확인합니다. DNS 실패를 ingress 테스트에서 분리하기 위해 Service IP를 사용합니다.
+Backend Pending은 anti-affinity 조건을 만족하는 노드가 부족하기 때문일 수 있으며 정책 실패로 해석하지 않습니다. 새 정책 적용 전에 **두 클라이언트 모두** 정상 backend에 도달하는지 확인합니다. DNS 실패를 ingress 테스트에서 분리하기 위해 Service IP를 사용합니다.
 
 ```bash
 kubectl -n cilium-net-lab exec frontend -- \
@@ -310,7 +310,7 @@ kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
   cilium-dbg endpoint get pod-name:cilium-net-lab:frontend
 ```
 
-Ingress 거부는 backend의 에이전트·endpoint도 확인합니다. 의도한 정책, 실현 상태, 경로·backend 상태와 관측 플로우를 비교합니다. 제거된 `policy trace`나 따옴표 없는 `<pod-name>` 셸 자리표시자로 사람이 읽는 표를 파싱하지 않습니다.
+Ingress 거부 시에는 backend의 에이전트·endpoint도 확인합니다. 의도한 정책, 실현 상태, 경로·backend 상태와 관측 플로우를 비교합니다. 제거된 `policy trace`나 따옴표 없는 `<pod-name>` 셸 자리표시자로 사람이 읽는 표를 파싱하지 않습니다.
 
 필요하면 `cilium sysdump`로 진단 정보를 수집하고 공유 전에 로그·리소스 내용을 확인합니다. `cilium clustermesh status`는 Cluster Mesh를 구성한 경우에만 해당하며 Relay는 연결 설정 후 `hubble status`로 확인합니다.
 
@@ -332,7 +332,7 @@ test "$LAB_OWNER" = cilium-networking-03
 kubectl delete namespace cilium-net-lab
 ```
 
-CLI suite를 실행했다면 생성된 `cilium-net-smoke-1` / `cilium-net-perf-1`도 소유를 별도로 확인한 후 정리합니다. 무관한 namespace를 일괄 삭제하거나 애플리케이션 정리 목적으로 Cilium을 제거하지 않습니다. 로컬 port-forward는 Ctrl-C로 종료합니다.
+CLI suite를 실행했다면 생성된 `cilium-net-smoke-1` / `cilium-net-perf-1`도 소유 여부를 별도로 확인한 후 정리합니다. 무관한 namespace를 일괄 삭제하거나 애플리케이션 정리 목적으로 Cilium을 제거하지 않습니다. 로컬 port-forward는 Ctrl-C로 종료합니다.
 
 <details>
 <summary>기대 결과와 확인 문제</summary>

@@ -32,7 +32,7 @@
 
 ## 3. 경계를 연결할 때 확인할 서비스 제약
 
-독립 판정은 서비스별 배치·권한 제약을 함께 고려해야 합니다. 제약에서 유일한 조직 구조가 자동으로 도출되지는 않습니다.
+독립적으로 판정할 때는 서비스별 배치·권한 제약을 함께 고려해야 합니다. 제약에서 유일한 조직 구조가 자동으로 도출되지는 않습니다.
 
 1. **EKS 클러스터의 구성 subnet은 하나의 VPC에 속해야 합니다.** 두 독립 클러스터를 같은 VPC에 둘 수 있습니다. VPC까지 분리할지는 공유 route·DNS·IP 공간의 장애 범위를 기준으로 추가 판단합니다.
 2. **Pod Identity association의 기본 IAM role은 클러스터 Account에 있어야 합니다.** target role 기능을 선택하면 association role → target role의 역할 연결을 사용합니다. S3 등 지원 서비스의 resource policy로 source role을 직접 허용하거나, IRSA로 대상 Account role에 직접 연합하는 다른 경로도 있으므로 모든 cross-account 접근에 두 role이 필수인 것은 아닙니다.

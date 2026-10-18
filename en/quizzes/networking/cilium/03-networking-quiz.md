@@ -4,7 +4,7 @@ This chapter provides eight guided exercises with expected outcomes. The baselin
 
 ## Prerequisites
 
-Use a disposable cluster prepared through the [networking guide](../../../networking/cilium/03-networking.md) and [installation profiles](../../../networking/cilium/README.md), with two schedulable Linux nodes. Use architecture-appropriate tools and image pulls. Keep kubectl within the documented version skew. These exercises do not migrate an existing CNI or change provider-managed networking.
+Use a disposable cluster prepared through the [networking guide](../../../networking/cilium/03-networking.md) and [installation profiles](../../../networking/cilium/README.md), with two schedulable Linux nodes. Use architecture-appropriate tools and pull architecture-appropriate images. Keep kubectl within the documented version skew. These exercises do not migrate an existing CNI or change provider-managed networking.
 
 The manual policy lab needs permission to create a new namespace, Pods, a Deployment, Service and namespaced CiliumNetworkPolicy. Review existing cluster-wide policy/admission constraints: a separate namespace does not override them. Run shell blocks in the same shell so variables persist.
 
@@ -198,7 +198,7 @@ else
 fi
 ```
 
-Nonzero exit is **not** automatically a passing denial test. It can also mean exec/RBAC, missing curl, routing, backend or other failures. A curl timeout is often exit 28, but correlate the source/destination/port and policy-denied flow with the successful baseline and still-working frontend. The namespace-scoped rule does not prevent other policies from independently allowing traffic.
+A nonzero exit is **not** automatically a passing denial test. It can also mean exec/RBAC, missing curl, routing, backend or other failures. A curl timeout is often exit 28, but correlate the source/destination/port and policy-denied flow with the successful baseline and still-working frontend. The namespace-scoped rule does not prevent other policies from independently allowing traffic.
 
 <details>
 <summary>Expected result and self-check</summary>
@@ -227,7 +227,7 @@ Generate fresh requests while observing. Event loss/aggregation and filters affe
 <details>
 <summary>Expected result and self-check</summary>
 
-Relay is reachable, flows identify the intended endpoints, and the negative test's evidence matches its request. Explain why no HTTP records in this L4-only lab is not proof that Hubble is broken.
+Relay is reachable, flows identify the intended endpoints, and the negative test's evidence matches its request. Explain why the absence of HTTP records in this L4-only lab is not proof that Hubble is broken.
 
 </details>
 
@@ -235,7 +235,7 @@ Relay is reachable, flows identify the intended endpoints, and the negative test
 
 Run the [guide's maintained `cilium connectivity perf` example](../../../networking/cilium/03-networking.md), which provisions matching client/server workloads. Keep same-node and cross-node results separate and record node placement, versions, route MTUs and policy/encryption settings.
 
-The former test combined unrelated `netperf-*` Pod names with an iperf3 image and a TCP-only Service. For an independently supplied iperf3 setup, a UDP test requires **TCP control plus UDP data** on the configured ports. Merely requesting `-b 1G` does not prove 1 Gbit/s delivered.
+The former test combined unrelated `netperf-*` Pod names with an iperf3 image and a TCP-only Service. For an independently supplied iperf3 setup, a UDP test requires **TCP control plus UDP data** on the configured ports. Merely requesting `-b 1G` does not prove that 1 Gbit/s is delivered.
 
 <details>
 <summary>Expected result and self-check</summary>

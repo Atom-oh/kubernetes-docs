@@ -2,174 +2,164 @@
 
 > **関連ドキュメント**: [インフラストラクチャセットアップ](../../ops/01-infrastructure-setup.md)
 
-## 選択問題
+## 多肢選択問題
 
-### 1. Terraform 3-Layer アーキテクチャの主な目的は何ですか？
+### 1. このガイドで使う3つの運用レイヤーは何ですか？
 
-- A) Terraform ファイルの数を減らすため
-- B) ライフサイクルと影響範囲ごとにインフラストラクチャを分離するため
-- C) デプロイ時間を短縮するため
-- D) state 管理の必要性をなくすため
+- A) Network → Cluster → Platform
+- B) Foundation → Workload → Database
+- C) VPC → Pod → Container
+- D) すべてのリソースを1つのstateで管理する
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) ライフサイクルと影響範囲ごとにインフラストラクチャを分離するため**
+**回答: A) Network → Cluster → Platform**
 
-**解説:**
-3-Layer アーキテクチャは、インフラストラクチャを Foundation (VPC, IAM)、Platform (EKS cluster)、Workload (applications) レイヤーに分離します。各レイヤーは変更頻度と影響範囲が異なるため、より安全で管理しやすいインフラストラクチャ変更が可能になります。
+00-sharedは別のブートストラップレイヤーです。NetworkはVPC、ClusterはEKS、PlatformはCoreDNS、Pod Identity、チームのアクセス権を管理します。stateを分離しても、VPCやDNSの障害が他のレイヤーに影響することはあります。
 
 </details>
 
-### 2. Terraform S3 backend 設定において、DynamoDB table の目的は何ですか？
+### 2. Terraform 1.10以降でS3バックエンドのネイティブロックを有効にする設定はどれですか？
 
-- A) Terraform state ファイルを保存するため
-- B) state locking と整合性を提供するため
-- C) Terraform 設定をバックアップするため
-- D) Terraform 操作をログに記録するため
+- A) use_lockfile = true
+- B) 常にDynamoDBテーブルを作成する
+- C) バケットのバージョニングだけを有効にする
+- D) すべてのレイヤーで同じkeyを使う
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) state locking と整合性を提供するため**
+**回答: A) use_lockfile = true**
 
-**解説:**
-DynamoDB table は state locking を有効にし、同じ state ファイルへの同時変更を防ぎます。これにより、複数のユーザーまたは CI/CD pipeline が同時にインフラストラクチャを変更しようとしたときの race condition を防止します。
+ネイティブロックにはS3の条件付き書き込みを使います。DynamoDBロックは既存構成からの移行などで関係しますが、S3のネイティブロックには不要です。ロック方式だけを変えても、stateの保存場所は移動しません。
 
 </details>
 
-### 3. `terraform_remote_state` data source では何ができますか？
+### 3. terraform_remote_state のセキュリティについて、正しい説明はどれですか？
 
-- A) state ファイルをリモートの場所に保存する
-- B) 別の Terraform state から outputs を参照する
-- C) backend 間で state を移行する
-- D) state ファイルを自動的に暗号化する
+- A) 読み取り側はoutputsにしかアクセスできない
+- B) バックエンドへのアクセスでstate全体を取得できる場合があるため、信頼境界を考慮する
+- C) sensitive=true にするとIAMの読み取り権限が取り消される
+- D) stateに機密値が含まれることはない
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) 別の Terraform state から outputs を参照する**
+**回答: B) バックエンドへのアクセスでstate全体を取得できる場合があるため、信頼境界を考慮する**
 
-**解説:**
-`terraform_remote_state` data source を使用すると、ある Terraform 設定が別の state ファイルから output 値を読み取ることができます。これにより、Platform レイヤーが Foundation レイヤーから VPC ID を読み取るような、レイヤー間参照が可能になります。
+式を通じて公開するのはroot outputsですが、元のstateにはそれ以外の情報も含まれます。信頼境界を越えて値を共有する場合は、必要な値だけを別途公開する方法も検討してください。
 
 </details>
 
-### 4. 本番用 EKS cluster に推奨される VPC CIDR block size はどれですか？
+### 4. 標準的なリージョンEKSクラスターと組み込みAuto Modeプールについて、正しい説明はどれですか？
 
-- A) /24 (256 addresses)
-- B) /20 (4,096 addresses)
-- C) /16 (65,536 addresses)
-- D) /8 (16 million addresses)
+- A) コントロールプレーン用のサブネットは1つのAZだけでよい
+- B) クラスター名をblueにするとワーカーがAZ-aに固定される
+- C) EKSのサブネットは異なるAZを少なくとも2つ含む必要があり、ワーカーの配置制約は別に設計する
+- D) サブネットにCluster=blueタグを付けるとノードが固定される
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: C) /16 (65,536 addresses)**
+**回答: C) EKSのサブネットは異なるAZを少なくとも2つ含む必要があり、ワーカーの配置制約は別に設計する**
 
-**解説:**
-/16 CIDR block は 65,536 個の IP addresses を提供し、本番用 EKS cluster に推奨されます。これにより、Pod IP 割り当て（特に VPC CNI 使用時）、将来の拡張、multi-AZ deployment に対応でき、IP 枯渇の懸念を避けられます。
+組み込みプールは、設定された複数のAZを利用できます。ワーカーを単一AZのセルに限定する場合は、NodePool/NodeClassで配置を設計し、他のセルに復旧用の容量を確保してください。
 
 </details>
 
-### 5. Managed Node Groups と比較した EKS Auto Mode の主な特徴は何ですか？
+### 5. 組み込み compute_config.node_pools にgpuを追加するとどうなりますか？
 
-- A) Auto Mode では手動での node provisioning が必要である
-- B) Auto Mode は node lifecycle と scaling を自動的に管理する
-- C) Auto Mode は Spot instances のみをサポートする
-- D) Auto Mode は Pod の必要性をなくす
+- A) 正式な組み込みGPUプールが作成される
+- B) gpuは組み込みプール名ではないため、適切なカスタムNodePoolを設定する
+- C) 既存のノードがすぐGPUノードになる
+- D) すべてのクラスターがGPU専用になる
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Auto Mode は node lifecycle と scaling を自動的に管理する**
+**回答: B) gpuは組み込みプール名ではないため、適切なカスタムNodePoolを設定する**
 
-**解説:**
-EKS Auto Mode は、workload demand に基づいて node provisioning、scaling、lifecycle management を自動的に処理します。Managed Node Groups とは異なり、運用者が Auto Scaling Groups を設定したり、node updates を手動で管理したりする必要はありません。
+組み込み名はgeneral-purposeとsystemです。この入力はプール名のリストであり、GPUプールを定義する任意のmapではありません。このガイドでは、カスタムNodePoolはGitOps側で管理します。
 
 </details>
 
-### 6. Pod Identity は IRSA (IAM Roles for Service Accounts) とどのように異なりますか？
+### 6. EKS Pod Identityの目的と必要条件について、正しい説明はどれですか？
 
-- A) Pod Identity は IAM roles をサポートしない
-- B) Pod Identity は OIDC provider setup なしで EKS-managed credentials を使用する
-- C) Pod Identity では手動の token rotation が必要である
-- D) Pod Identity は Fargate でのみ動作する
+- A) ECRからのPodイメージ取得を自動的に解決する
+- B) 常にOIDCプロバイダーが必要である
+- C) 対応するSDK呼び出しにロール認証情報を提供するため、association、trust、ノードのサポートが必要である
+- D) associationによってServiceAccountとESOがインストールされる
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Pod Identity は OIDC provider setup なしで EKS-managed credentials を使用する**
+**回答: C) 対応するSDK呼び出しにロール認証情報を提供するため、association、trust、ノードのサポートが必要である**
 
-**解説:**
-Pod Identity は、OIDC provider を設定する必要をなくすことで IAM 統合を簡素化します。AWS は Pod Identity Agent を通じて credential injection を管理するため、IRSA と比較してセットアップと保守が容易になります。
+Auto Modeにはエージェント機能が含まれます。通常のEKSノードでは別途エージェントが必要な場合があります。対応するnamespace/ServiceAccountを設定し、kubeletがイメージをpullする権限と、アプリケーションがSDKで使う権限を区別してください。
 
 </details>
 
-### 7. 3-Layer アーキテクチャでは、どのレイヤーに EKS cluster resource が含まれますか？
+### 7. 環境とクラスターのblue/greenごとにstateを分けるにはどうしますか？
 
-- A) Foundation Layer
-- B) Platform Layer
-- C) Workload Layer
-- D) Network Layer
+- A) TF_DATA_DIRだけで、共有S3 keyを分離する
+- B) バックエンドのbucket/keyと、それに対応する初期化ディレクトリをそれぞれ選ぶ
+- C) 環境変数を変えるとprodのstateがdevへ移動する
+- D) S3のバージョニングを無効にする
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Platform Layer**
+**回答: B) バックエンドのbucket/keyと、それに対応する初期化ディレクトリをそれぞれ選ぶ**
 
-**解説:**
-Platform Layer には EKS cluster、node groups、cluster add-ons が含まれます。これは Foundation Layer (VPC, subnets) に依存し、Workload Layer (applications, services) のための platform を提供します。
+実際のstateの保存場所はバックエンド設定で決まります。TF_DATA_DIRは初期化メタデータ、モジュール、プロバイダーキャッシュを分けるもので、state keyの代わりにはなりません。ブートストラップ用のローカルstateも、アカウントと環境ごとに分離してください。
 
 </details>
 
-### 8. Terraform state を保存する S3 buckets では何を有効にすべきですか？
+### 8. このAuto Modeの例では、CoreDNSとStorageClassをどのように扱いますか？
 
-- A) Public access
-- B) Versioning and encryption
-- C) Static website hosting
-- D) Cross-region replication only
+- A) どちらも設定なしで常に作成される
+- B) Auto Modeのみの構成ではnode-local DNSを使い、混在ノードではCoreDNS Deploymentが必要で、StorageClassは別途作成する
+- C) EBS CSIとPod Identityのエージェントを常に重複してインストールする
+- D) CoreDNSのバージョンをlatestという文字列に固定する
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Versioning and encryption**
+**回答: B) Auto Modeのみの構成ではnode-local DNSを使い、混在ノードではCoreDNS Deploymentが必要で、StorageClassは別途作成する**
 
-**解説:**
-Terraform state ファイルには機密情報が含まれるため、versioning（破損や誤変更から復旧するため）と encryption（保存時の secrets を保護するため）で保護する必要があります。Public access は常にブロックすべきです。
+Auto Modeのみの構成では、CoreDNSはノードのシステムサービスとして動作します。ノードが混在するクラスターではDeploymentが残るため、Kubernetesとリージョンの互換性を確認し、アドオンのバージョンを固定してください。Auto ModeのStorageClassではebs.csi.eks.amazonaws.comを使います。
 
 </details>
 
-### 9. 複数環境管理に Terraform workspaces を使用する場合、主な制限は何ですか？
+### 9. 管理者用のaccess entryを作るだけでkubectlアクセスは完了しますか？
 
-- A) Workspaces は variables を使用できない
-- B) すべての環境が同じ backend configuration を共有する
-- C) Workspaces は modules をサポートしない
-- D) 使用できる workspaces は 2 つだけである
+- A) IAMのDescribeCluster権限とネットワークアクセスも自動的に付与される
+- B) いいえ。該当principalとして認証し、IAM権限とプライベートAPIへの接続も準備する
+- C) Terraformの呼び出し元は常に自動で管理者になる
+- D) Platformレイヤーでも同じaccess entryを再作成する必要がある
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) すべての環境が同じ backend configuration を共有する**
+**回答: B) いいえ。該当principalとして認証し、IAM権限とプライベートAPIへの接続も準備する**
 
-**解説:**
-Terraform workspaces は同じ backend configuration と code を共有するため、development で作業しているときに誤って production に変更を加える可能性があります。多くのチームは、より強い分離のために、環境ごとに別々の directories または repositories を使用することを好みます。
+この例では、クラスター作成者への自動管理者権限付与を無効にしています。EKS access policyが制御するKubernetes権限は、IAM権限とは別です。各principalのaccess entryは、いずれか1つのレイヤーで管理してください。
 
 </details>
 
-### 10. Terraform provider versions を管理する推奨アプローチは何ですか？
+### 10. スモークテスト失敗時の処理として正しいものはどれですか？
 
-- A) 制約なしで常に最新 version を使用する
-- B) required_providers block で exact version constraints を使用する
-- C) Terraform に providers を自動更新させる
-- D) provider versions の指定を避ける
+- A) Pod作成エラーを `|| true` で隠す
+- B) 既存のスモークテスト用namespaceを必ず削除する
+- C) 失敗時はゼロ以外を返し、検証済みの一時namespaceだけをクリーンアップする
+- D) PodがRunningなら常に正常とみなす
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) required_providers block で exact version constraints を使用する**
+**回答: C) 失敗時はゼロ以外を返し、検証済みの一時namespaceだけをクリーンアップする**
 
-**解説:**
-`required_providers` block で exact または pessimistic version constraints（例: `~> 5.0`）を指定すると、再現性のあるデプロイが保証され、provider updates による予期しない破壊的変更を防げます。これは本番環境では特に重要です。
+このテストで確認するのはワークロードのスケジューリングとクラスターDNSであり、外部ロードバランサーの通信やすべてのアプリケーション依存関係ではありません。コンテナのREADY数とPodのReady conditionも別の状態です。
 
 </details>

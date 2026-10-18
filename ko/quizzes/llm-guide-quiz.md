@@ -86,7 +86,7 @@
 **정답: B) 각 문서 앞에 `Source: <URL>`이 들어간 구분자 블록이 붙어 있기 때문에**
 
 **설명:**
-형식 안내에 따르면 full 파일은 "문서마다 아래 구분자 블록이 앞에 붙습니다". 이는 대시 줄, `Source: https://www.atomai.click/kubernetes-docs/ko/core/01-cluster-architecture` 같은 원본 URL, 다시 대시 줄로 이루어진 블록입니다. RAG 예시의 주석도 "각 문서는 `Source: <URL>` 구분자로 나뉘어 있어 문서 단위 청킹이 쉽습니다"라고 설명합니다. 파일 자체는 마크다운 텍스트이며 ZIP이나 JSON이 아닙니다.
+형식 안내에서는 full 파일에 대해 "문서마다 아래 구분자 블록이 앞에 붙습니다"라고 설명합니다. 이는 대시 줄, `Source: https://www.atomai.click/kubernetes-docs/ko/core/01-cluster-architecture` 같은 원본 URL, 다시 대시 줄로 이루어진 블록입니다. RAG 예시의 주석도 "각 문서는 `Source: <URL>` 구분자로 나뉘어 있어 문서 단위 청킹이 쉽습니다"라고 설명합니다. 파일 자체는 마크다운 텍스트이며 ZIP이나 JSON이 아닙니다.
 
 </details>
 

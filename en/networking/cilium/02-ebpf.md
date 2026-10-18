@@ -109,7 +109,7 @@ In the kernel, the verifier checks a program for its type, context, helpers and 
 5. **Run/observe:** events invoke the program; userspace reads maps/buffers. Sampling and capacity limits can lose observations.
 6. **Update/unload:** keep compatible maps/links/pins only deliberately. Destroy this lab's link and close its object to release resources.
 
-In Linux 6.12, program length is limited to up to 1,000,000 instructions for the BPF-capable loading path and 4,096 for the unprivileged path. The verifier separately has a 1,000,000-instruction **analysis complexity** limit. Smaller programs can fail verification. Unprivileged BPF is often disabled; token/capability and program-type checks still apply.
+In Linux 6.12, program length is limited to 1,000,000 instructions for the BPF-capable loading path and 4,096 for the unprivileged path. The verifier separately has a 1,000,000-instruction **analysis complexity** limit. Smaller programs can fail verification. Unprivileged BPF is often disabled; token/capability and program-type checks still apply.
 
 ### eBPF Program Types and Characteristics
 
@@ -511,7 +511,7 @@ cc -O2 -Wall -Wextra run_bpf.c -o run_bpf \
 sudo ./run_bpf hello.bpf.o
 ```
 
-In terminal B read `sudo cat /sys/kernel/tracing/trace_pipe`; run an external executable such as `/usr/bin/true` in terminal C. Stop the hello loader with Ctrl-C, then run `sudo ./run_bpf exec_count.bpf.o`. Observe changing name/count pairs while executing commands in another terminal. The observer and other host activity also generate events, so no fixed total/PID is promised. Failed `execve` attempts can appear in hello output but should not emit `sched_process_exec`.
+In terminal B, run `sudo cat /sys/kernel/tracing/trace_pipe`; run an external executable such as `/usr/bin/true` in terminal C. Stop the hello loader with Ctrl-C, then run `sudo ./run_bpf exec_count.bpf.o`. Observe changing name/count pairs while executing commands in another terminal. The observer and other host activity also generate events, so no fixed total/PID is promised. Failed `execve` attempts can appear in hello output but should not emit `sched_process_exec`.
 
 `bpftool prog load OBJECT PIN` alone does not attach this tracepoint. The example deliberately owns a link. Explicit pinning/reuse is a separate lifecycle decision: `pinmaps` and `map ... pinned ...` are not interchangeable syntax. Closing this loader releases its unpinned resources.
 

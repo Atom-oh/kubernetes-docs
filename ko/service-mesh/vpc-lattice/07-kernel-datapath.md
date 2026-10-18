@@ -6,7 +6,7 @@
 ## 이 문서에서 다루는 것
 
 - Pod가 Lattice 주소로 보낸 패킷이 커널 안에서 실제로 어떤 경로를 지나는가
-- 사이드카 메시의 iptables 인터셉트와 Lattice 트래픽이 충돌하는 지점을 커널 계층에서 정확히 어디인가
+- 사이드카 메시의 iptables 인터셉트와 Lattice 트래픽이 충돌하는 지점은 커널 계층에서 정확히 어디인가
 - conntrack이 이 구성에서 어떻게 동작하고, 왜 egress proxy 방식이 규칙 순서에 민감한가
 
 ## 왜 이 문서가 필요한가
@@ -44,7 +44,7 @@ graph TB
     style LAT fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-주목할 점 세 가지입니다.
+주목할 점은 세 가지입니다.
 
 **① IP stack은 일반 연결을 사용합니다.** 인증은 별개이며 앱이나 signing proxy가 선택한 Lattice 요청 인증 경로를 구현해야 합니다.
 

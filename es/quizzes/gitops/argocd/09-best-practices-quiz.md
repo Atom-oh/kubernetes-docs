@@ -2,19 +2,19 @@
 
 Este cuestionario evalúa tu comprensión de las mejores prácticas y los patrones operativos de ArgoCD.
 
-1. ¿Cuál es el enfoque recomendado para gestionar la propia configuración de ArgoCD?
+1. ¿Qué patrón usa un repositorio raíz administrado por un administrador para declarar varias Applications secundarias?
    - A) Configuración manual a través de la UI
-   - B) Gestionar ArgoCD con ArgoCD (patrón app-of-apps)
+   - B) App of Apps
    - C) Usar kubectl apply directamente
    - D) La configuración nunca debe cambiar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Gestionar ArgoCD con ArgoCD (patrón app-of-apps)**
+**Respuesta: B) App of Apps**
 
 **Explicación:**
-El patrón "app-of-apps" consiste en que ArgoCD gestione su propia configuración y otras Applications de ArgoCD. Esto garantiza que la configuración de ArgoCD esté controlada por versiones y siga los principios de GitOps.
+App of Apps usa una Application raíz para administrar Applications secundarias. No es sinónimo de que Argo CD se administre a sí mismo ni es obligatorio en todas las instalaciones. Considérelo una capacidad administrativa, restrinja las escrituras al repositorio y conserve una ruta independiente de arranque/recuperación.
 
 </details>
 
@@ -30,7 +30,7 @@ El patrón "app-of-apps" consiste en que ArgoCD gestione su propia configuració
 **Respuesta: B) Repositorios separados para el código de la aplicación y los manifiestos de deployment**
 
 **Explicación:**
-Separar el código de la aplicación de los manifiestos de deployment proporciona registros de auditoría más claros, permite que distintos equipos gestionen cada uno e impide que los cambios de deployment activen CI.
+Separar el código de la aplicación de los manifiestos de despliegue proporciona registros de auditoría más claros, permite que distintos equipos administren cada uno y puede evitar reconstruir el código de la aplicación para cambios que solo afectan al despliegue. Aun así, hay que diseñar explícitamente los activadores de CI, los filtros de rutas y los límites de los repositorios.
 
 </details>
 

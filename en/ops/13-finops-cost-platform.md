@@ -605,7 +605,7 @@ curl --fail --silent --show-error --get \
 
 ### 3.3 Shared-cost allocation and conservation
 
-These are **synthetic USD inputs for calculation validation, not an actual bill**. Non-overlapping pools contain 6,500 direct, 2,500 shared and 1,000 idle cost. Shared cost is weighted by direct cost; idle cost is divided equally. Fractional cents use the largest-remainder method with lexical team-name tie-breaking.
+These are **synthetic USD inputs for calculation validation, not an actual bill**. Non-overlapping pools contain direct costs of 6,500, shared costs of 2,500 and idle costs of 1,000. Shared cost is weighted by direct cost; idle cost is divided equally. Fractional cents use the largest-remainder method with lexical team-name tie-breaking.
 
 ![Synthetic USD 10,000 allocation preserving the total after rounding](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
 
@@ -876,7 +876,7 @@ resource "aws_ce_anomaly_subscription" "immediate" {
 }
 ```
 
-Creating resources and subscriptions has real cost and notification effects. For KMS-encrypted SNS, also configure the necessary key permissions for `costalerts.amazonaws.com` and constrain SourceAccount/SourceArn. Adjust the example USD 100 threshold to the organization.
+Creating resources and subscriptions has real cost and notification effects. For KMS-encrypted SNS, also configure the necessary key permissions for `costalerts.amazonaws.com` and constrain SourceAccount/SourceArn. Adjust the example USD 100 threshold to suit the organization.
 
 AWS Budgets Actions can perform supported EC2/RDS actions as well as IAM/SCP actions. Update delays and action scope still apply; this is not a hard cap that immediately stops all spending.
 
@@ -1088,7 +1088,7 @@ python3 report_costs.py \
   --report cost-report.json --slack-payload slack-payload.json
 ```
 
-Synthetic data verified total model cost of **USD 1,610.10** and a linear month-end estimate of **USD 4,391.18**. These are not costs from the reader's account. The estimate uses 11 completed days in a 30-day September, rather than a fixed 730-hour projection.
+Synthetic data verified a total model cost of **USD 1,610.10** and a linear month-end estimate of **USD 4,391.18**. These are not costs from the reader's account. The estimate uses 11 completed days in a 30-day September, rather than a fixed 730-hour projection.
 
 ### 5.3 Run as a CronJob
 

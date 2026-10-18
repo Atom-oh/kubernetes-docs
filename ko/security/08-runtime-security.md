@@ -19,7 +19,7 @@
 | 네트워크 flow | 연결·drop·정책 verdict | 포트나 암호화된 연결만으로 악성 여부를 확정하지 못함 |
 | 이미지/배포 정책 | 취약점·서명·Pod 보안 설정 | 배포 이후의 행위를 모두 탐지하지 못함 |
 
-eBPF라는 이유만으로 비용이 항상 낮거나 안전성이 보장되는 것은 아닙니다. hook·event rate·필터·출력량·CPU와 메모리를 해당 노드에서 측정합니다. 공격 명령 이름이 보였다는 이유만으로 운영 프로세스를 자동 종료하지 않습니다.
+eBPF를 사용한다는 이유만으로 비용이 항상 낮거나 안전성이 보장되는 것은 아닙니다. hook·event rate·필터·출력량·CPU와 메모리를 해당 노드에서 측정합니다. 공격 명령 이름이 보였다는 이유만으로 운영 프로세스를 자동 종료하지 않습니다.
 
 <span id="기본-제공-규칙-예시"></span>
 
@@ -35,7 +35,7 @@ Falco는 event source의 데이터를 규칙으로 평가합니다. 일반적인
 
 관리 가능한 Linux EC2 노드에 설치하는 예제입니다. Fargate나 호스트 접근이 제한된 노드에 DaemonSet을 배치할 수 있다고 가정하지 않습니다. modern eBPF의 커널·BTF·capability 요구사항과 사용 OS를 확인합니다. chart 9.2.0의 명시적 driver 종류는 `modern_ebpf` 또는 `kmod`이며 예전 `ebpf` 값을 그대로 사용하지 않습니다.
 
-아래 명령은 [예제 디렉터리](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security)를 내려받고 `examples/security/runtime-security`에서 실행합니다. 세 values 파일과 규칙 파일의 역할은 [예제 README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md)에 정리되어 있습니다.
+아래 명령은 [예제 디렉터리](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security)를 내려받은 뒤 `examples/security/runtime-security`에서 실행합니다. 세 values 파일과 규칙 파일의 역할은 [예제 README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md)에 정리되어 있습니다.
 
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts

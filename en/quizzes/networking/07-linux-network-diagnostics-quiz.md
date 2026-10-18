@@ -82,7 +82,7 @@ Curl debug output is generated at the client and can expose data protected on th
 **Answer: C) The listener has three connections waiting for accept with a maximum backlog of 128; the established socket has six unread in-order bytes**
 
 **Explanation:**
-Queue-column units depend on socket state. LISTEN columns describe the accept queue, not the incomplete SYN queue. ESTABLISHED columns describe stream bytes; its Send-Q includes bytes not yet acknowledged. Filter on the test port and distinguish the client and server endpoints.
+Queue-column units depend on socket state. LISTEN columns describe the accept queue, not the incomplete SYN queue. ESTABLISHED columns describe stream bytes; the socket's Send-Q includes bytes not yet acknowledged. Filter on the test port and distinguish the client and server endpoints.
 
 </details>
 
@@ -114,7 +114,7 @@ The client consumes each six-byte response before its next request. This is an o
 **Answer: A) A MAC for `192.0.2.3`, with no client neighbor entry needed for `198.51.100.3`**
 
 **Explanation:**
-Route lookup selects the on-link next hop before neighbor resolution. The Ethernet frame targets the router's MAC, while the IP destination remains the server. At the right network, the router performs its own lookup and neighbor resolution. The server also needs its explicit return route.
+Route lookup selects the on-link next hop before neighbor resolution. The Ethernet frame targets the router's MAC, while the IP destination remains the server. On the right network, the router performs its own lookup and neighbor resolution. The server also needs its explicit return route.
 
 </details>
 

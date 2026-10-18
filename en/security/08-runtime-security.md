@@ -406,7 +406,7 @@ Hubble `--verdict DROPPED` shows drops; not every drop is a NetworkPolicy denial
 
 ### Pod Isolation Procedure
 
-Standard NetworkPolicy allows combine as a union. Adding a policy with empty ingress/egress lists does not override connections allowed by another policy. An app label can select multiple Pods belonging to the application.
+Standard NetworkPolicy allow rules combine as a union. Adding a policy with empty ingress/egress lists does not override connections allowed by another policy. An app label can select multiple Pods belonging to the application.
 
 1. Identify namespace, Pod UID, node, owner, and existing network policies.
 2. Choose an approved isolation mechanism. For a CNI-specific explicit deny or changes to existing allows, review exact targets, impact, and recovery.

@@ -97,5 +97,5 @@ Cross-AZ는 물리적 거리로 인해 레이턴시를 늘리지만(실측 기�
 **정답: B) Credential이나 connection pool이 cold이면 수립 작업이 추가될 수 있으므로 첫 요청·웜업 후 지연을 별도 기록하고 콜드 스타트가 잦으면 둘 다 평가하기 때문이다**
 
 **설명:**
-Cache나 connection pool이 cold 상태이면 첫 요청에 credential 획득·연결 수립이 포함될 수 있습니다. 획득 경로는 provider에 따라 IRSA는 STS, EKS Pod Identity는 node agent와 EKS Auth를 사용합니다. TLS handshake 작업은 TLS 연결에만 적용됩니다. 첫 요청과 웜업 후 지연을 provider/cache/transport 상태와 함께 별도 기록하며, 모든 첫 요청이 직접 STS를 호출하거나 TLS를 수립한다고 가정하지 않습니다. 콜드 스타트가 잦으면 두 조건을 모두 평가합니다.
+Cache나 connection pool이 cold 상태이면 첫 요청에 credential 획득·연결 수립이 포함될 수 있습니다. credential 획득 시 provider에 따라 IRSA는 STS를, EKS Pod Identity는 node agent와 EKS Auth를 사용합니다. TLS handshake 작업은 TLS 연결에만 적용됩니다. 첫 요청과 웜업 후 지연을 provider/cache/transport 상태와 함께 별도 기록하며, 모든 첫 요청이 직접 STS를 호출하거나 TLS를 수립한다고 가정하지 않습니다. 콜드 스타트가 잦으면 두 조건을 모두 평가합니다.
 </details>

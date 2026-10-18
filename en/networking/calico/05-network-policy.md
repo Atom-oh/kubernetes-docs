@@ -423,7 +423,7 @@ For normal endpoint policy, evaluate tiers by increasing `order`, then policies 
 
 This is not “no rule matches, therefore always move to the next tier.” Also, an Allow at one endpoint does not bypass the other endpoint's policy. Pre-DNAT and untracked host policy have different fall-through behavior, covered below.
 
-The built-in `default` tier has fixed order **1,000,000**, not 1,000 or infinity. Kubernetes NetworkPolicy and Calico policies without an explicit tier belong there. Current `kube-admin` and `kube-baseline` tiers use 1,000 and 10,000,000 with Pass defaults for the corresponding Kubernetes cluster-policy integration; therefore `default` is not universally the last possible tier.
+The built-in `default` tier has a fixed order of **1,000,000**, not 1,000 or infinity. Kubernetes NetworkPolicy and Calico policies without an explicit tier belong there. Current `kube-admin` and `kube-baseline` tiers use 1,000 and 10,000,000 with Pass defaults for the corresponding Kubernetes cluster-policy integration; therefore `default` is not universally the last possible tier.
 
 ### Separate Security, Platform and Application Decisions
 
@@ -675,7 +675,7 @@ On Open Source, use an explicit egress proxy/gateway with its own application au
 
 Calico Open Source 3.32 supports HTTP policy through the documented **Istio + Dikastes** integration. Merely installing an arbitrary Envoy proxy or adding an `http` field to a normal CNI policy does not enable Layer 7 enforcement.
 
-Prerequisites include the Felix Policy Sync API, the Calico CSI socket mount, Dikastes injection and Envoy external authorization on the relevant traffic path. The current integration guide describes Kubernetes native-sidecar Istio injection and recommends Istio 1.28.1; that statement is not a blanket compatibility promise for every newer Istio. Check the maintained [Istio installation guide](../../service-mesh/istio/01-installation.md), both projects' support windows and the actual integration before selecting a production combination. No such integration deployment was run here.
+Prerequisites include the Felix Policy Sync API, the Calico CSI socket mount, Dikastes injection and Envoy external authorization on the relevant traffic path. The current integration guide describes Kubernetes native-sidecar Istio injection and recommends Istio 1.28.1; that statement is not a blanket compatibility promise for every newer Istio version. Check the maintained [Istio installation guide](../../service-mesh/istio/01-installation.md), both projects' support windows and the actual integration before selecting a production combination. No such integration deployment was run here.
 
 These are **ingress Allow** examples on an already integrated workload. HTTPS methods/paths require the enforcement proxy to see the HTTP request after TLS termination. Source Pod labels identify workloads, not authenticated end users; configure the integration's trusted workload identity/mTLS path and preserve the network access needed by DNS and the Istio control plane. Validate allowed and denied requests, including proxy/authorization-service failure behavior, before relying on the policy.
 
@@ -827,11 +827,11 @@ This can affect all eligible nodes. Automatic endpoints normally carry a default
 
 ### Local and Forwarded Traffic
 
-Normal host policy defaults `applyOnForward` to false. With true it also applies to forwarded traffic, which must still pass the relevant workload policy. If no forward policy selects the endpoint/direction, forwarded traffic is allowed by default; selected forward policy with no allow denies it. Locally terminated host traffic has a different default-deny behavior (subject to profiles/failsafes).
+Normal host policy defaults `applyOnForward` to false. With this set to true, it also applies to forwarded traffic, which must still pass the relevant workload policy. If no forward policy selects the endpoint/direction, forwarded traffic is allowed by default; a selected forward policy with no allow denies it. Locally terminated host traffic has a different default-deny behavior (subject to profiles/failsafes).
 
 ## DoNotTrack and PreDNAT Policies
 
-These are Linux host-policy patterns. They apply to HostEndpoints, not a way to disable tracking on ordinary selected Pods. Confirm support on the chosen dataplane. `doNotTrack` and `preDNAT` cannot both be true, and either requires `applyOnForward: true`.
+These are Linux host-policy patterns. They apply to HostEndpoints; they are not a way to disable tracking on ordinary selected Pods. Confirm support on the chosen dataplane. `doNotTrack` and `preDNAT` cannot both be true, and either requires `applyOnForward: true`.
 
 ### DoNotTrack
 

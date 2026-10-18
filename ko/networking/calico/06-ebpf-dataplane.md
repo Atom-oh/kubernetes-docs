@@ -34,7 +34,7 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### 실행 지점과 커널 경로
 
-iptables와 eBPF 패킷 처리는 모두 커널에서 수행합니다. iptables 규칙 하나를 검사할 때마다 사용자 공간으로 전환하는 것은 아닙니다. iptables 모드의 kube-proxy는 Service 규칙을 만드는 제어 평면 프로세스이며 패킷이 그 프로세스를 통과하지 않습니다.
+iptables와 eBPF 패킷 처리는 모두 커널에서 수행됩니다. iptables 규칙 하나를 검사할 때마다 사용자 공간으로 전환하는 것은 아닙니다. iptables 모드의 kube-proxy는 Service 규칙을 만드는 제어 평면 프로세스이며 패킷이 그 프로세스를 통과하지 않습니다.
 
 | 구성 | 역할·범위 |
 | --- | --- |
@@ -43,7 +43,7 @@ iptables와 eBPF 패킷 처리는 모두 커널에서 수행합니다. iptables 
 | XDP | 지원·설정된 조기 패킷 처리. classic 데이터 평면 가속과 전체 eBPF 데이터 평면 내부 동작을 구분 |
 | 프로그램·IP-set·counter map | 컴파일한 프로그램과 상태 지원. 모든 정책이 tuple→action 맵 하나에 담기는 것은 아님 |
 
-서로 다른 실행 문맥이며 XDP → TC → sockops → sk_msg → TC를 모든 패킷이 통과하는 파이프라인이 아닙니다. Calico CTLB가 sk_msg로 HTTP 메서드를 검사하지는 않으며 L7에는 별도의 [Istio/Dikastes 통합](05-network-policy.md)이 필요합니다.
+서로 다른 실행 문맥이며 XDP → TC → sockops → sk_msg → TC는 모든 패킷이 통과하는 파이프라인이 아닙니다. Calico CTLB가 sk_msg로 HTTP 메서드를 검사하지는 않으며 L7에는 별도의 [Istio/Dikastes 통합](05-network-policy.md)이 필요합니다.
 
 해시 조회, longest-prefix match, 정책 명령어, tail call, conntrack의 비용은 서로 다릅니다. “모든 eBPF 정책은 O(1)”이나 “규칙·연결 수와 무관하게 메모리가 일정”하다는 결론은 틀립니다. iptables도 IP set을 활용할 수 있고 NAT 규칙 선택은 보통 연결 첫 패킷에서 수행하며 이후 변환은 conntrack 상태를 사용합니다.
 
@@ -141,7 +141,7 @@ IPv4 route key의 앞 4바이트는 little-endian 접두사 길이이고 뒤에�
 | `Tunnel` (기본) | 요청·응답이 ingress 노드/터널 경로 사용 |
 | `DSR` | 요청을 원격 노드로 터널링하고 응답은 클라이언트 방향으로 직접 반환 |
 
-이 필드에 `Disabled`나 `IPIP` 값은 없습니다. Calico의 해당 Service 전달은 VXLAN을 사용하므로 양쪽 모드 모두 MTU·underlay를 고려해야 합니다. DSR에는 원래 frontend/ingress 노드 주소를 소스로 보내는 트래픽을 fabric이 허용해야 합니다. Calico의 AWS 가이드는 노드가 같은 서브넷에 있고 source/destination check가 비활성화되어야 한다고 명시하므로 임의의 서브넷 간 배치로 일반화하지 마세요.
+이 필드에 `Disabled`나 `IPIP` 값은 없습니다. Calico의 해당 Service 전달은 VXLAN을 사용하므로 양쪽 모드 모두 MTU·underlay를 고려해야 합니다. DSR을 사용하려면 원래 frontend/ingress 노드 주소를 소스로 사용하는 트래픽을 fabric이 허용해야 합니다. Calico의 AWS 가이드는 노드가 같은 서브넷에 있고 source/destination check가 비활성화되어야 한다고 명시하므로 임의의 서브넷 간 배치로 일반화하지 마세요.
 
 현재 Calico 문제 해결 가이드는 원래 target을 통한 반환이 필요한 AWS/GCP 외부 로드 밸런서 경로를 제외합니다. 같은 서브넷·source-check 조건만으로 그 트래픽에 DSR을 활성화하지 마세요.
 
@@ -220,7 +220,7 @@ BTF는 CO-RE와 도구의 타입 정보이며 verifier 자체나 모든 커널 �
 
 현재 Calico 가이드는 자체 관리/kubeadm, kOps, OpenShift, EKS, MKE와 조건이 있는 AKS/RKE 경로를 설명합니다. GKE, eBPF와 표준 데이터 평면/Windows를 계속 혼용하는 클러스터, SCTP 정책·Service는 지원하지 않습니다. IPv6와 IPv6-only 경로가 문서화되어 있으므로 “IPv6 미지원은 dual-stack으로 해결”하는 설명은 맞지 않습니다.
 
-AKS Azure CNI는 관리되는 kube-proxy를 끌 수 없으며 Calico networking을 사용하는 AKS 경로는 별도로 테스트 중이라고 명시합니다. OS 이름·Ubuntu 이미지·커널 버전만으로 플랫폼 지원을 보장할 수 없습니다. EKS 노드 모드, CNI 조합, OS variant는 해당 Calico/EKS 절차를 따라야 하며 필요한 privileged 노드 컴포넌트를 실행할 수 없는 환경이나 관리형 네트워킹 모드까지 지원된다고 확대하지 마세요.
+AKS Azure CNI는 관리되는 kube-proxy를 끌 수 없으며 Calico networking을 사용하는 AKS 경로는 별도로 테스트 중이라고 명시되어 있습니다. OS 이름·Ubuntu 이미지·커널 버전만으로 플랫폼 지원을 보장할 수 없습니다. EKS 노드 모드, CNI 조합, OS variant는 해당 Calico/EKS 절차를 따라야 하며 필요한 privileged 노드 컴포넌트를 실행할 수 없는 환경이나 관리형 네트워킹 모드까지 지원된다고 확대하지 마세요.
 
 Windows는 Linux iptables가 아닌 HNS 데이터 평면을 사용합니다. Windows/표준 노드와 eBPF canary 노드를 지속적으로 혼합하지 마세요. 별도 대표 테스트 클러스터에서 검증한 뒤 문서화된 전체 전환을 따릅니다.
 
@@ -265,7 +265,7 @@ data:
   KUBERNETES_SERVICE_PORT: "6443"
 ```
 
-operator 설치는 `tigera-operator`, 독립 manifest 설치는 `kube-system`에 둡니다. 이름은 복수형 **`kubernetes-services-endpoint`**입니다. Calico가 변경을 받아 주소를 해석·연결하는지 확인한 뒤 Service 데이터 평면을 바꾸세요. DNS bootstrap·보안 규칙·도달성은 플랫폼별 전제입니다.
+operator 설치는 `tigera-operator`, 독립 manifest 설치는 `kube-system`에 둡니다. 이름은 복수형 **`kubernetes-services-endpoint`입니다**. Calico가 변경을 받아 주소를 해석·연결하는지 확인한 뒤 Service 데이터 평면을 바꾸세요. DNS bootstrap·보안 규칙·도달성은 플랫폼별 전제입니다.
 
 kube-proxy가 IPVS라면 공식 절차에 따라 iptables로 전환하고 계획된 노드 재시작을 먼저 수행해야 합니다. 별도의 통제된 변경으로 다루세요.
 
@@ -321,11 +321,11 @@ kubectl patch felixconfiguration.projectcalico.org default --type=merge \
   -p '{"spec":{"bpfEnabled":false}}'
 ```
 
-자동 bootstrap은 operator가 kube-proxy를 복원합니다. 수동으로 비활성화했다면 원래 selector와 다른 설정을 유지하며 임시 변경만 소유자를 통해 복원합니다. Service 규칙과 트래픽을 다시 확인하세요. eBPF 비활성화나 외부 Service 모드 변경은 기존 연결을 끊을 수 있으며 노드 재시작이 모든 애플리케이션 상태를 정리한다고 보장하지 않습니다.
+자동 bootstrap에서는 operator가 kube-proxy를 복원합니다. 수동으로 비활성화했다면 원래 selector와 다른 설정을 유지하며 임시 변경만 소유자를 통해 복원합니다. Service 규칙과 트래픽을 다시 확인하세요. eBPF 비활성화나 외부 Service 모드 변경은 기존 연결을 끊을 수 있으며 노드 재시작이 모든 애플리케이션 상태를 정리한다는 보장은 없습니다.
 
 ## eBPF 디버깅
 
-Calico node 이미지에는 **`calico-node -bpf`**로 실행하는 진단 도구가 포함됩니다. 별도 `calico-bpf` 소스 entry point도 있지만 node 이미지에 독립 바이너리가 설치되었다고 가정하지 마세요. 내장 도구에는 `help`를 사용합니다. wrapper가 BPF 하위 명령보다 먼저 `--help`를 처리할 수 있습니다.
+Calico node 이미지에는 **`calico-node -bpf`로** 실행하는 진단 도구가 포함됩니다. 별도 `calico-bpf` 소스 entry point도 있지만 node 이미지에 독립 바이너리가 설치되었다고 가정하지 마세요. 내장 도구에는 `help`를 사용합니다. wrapper가 BPF 하위 명령보다 먼저 `--help`를 처리할 수 있습니다.
 
 ```bash
 CALICO_NAMESPACE=calico-system

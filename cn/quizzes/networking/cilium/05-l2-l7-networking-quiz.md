@@ -1,255 +1,219 @@
-# Cilium L2-L7 网络与负载均衡测验
+# Cilium L2–L7 网络与负载均衡测验
 
-本测验用于测试你对 Cilium 的 L2-L7 网络功能、负载均衡架构、伪装（masquerading）、Service Mesh 集成等方面的理解。
+> **Cilium 1.20.3 · CLI 0.20.1 · 2026-10-16**
 
 ## 选择题
 
-1. 在 OSI 模型中，HTTP、gRPC 和 DNS 等协议工作在哪一层？
-   - A) L3（网络层）
-   - B) L4（传输层）
-   - C) L5（会话层）
-   - D) L7（应用层）
+1. **HTTP、DNS 和 gRPC 应用行为在概念上属于 OSI 哪一层？**
+   - A) L1
+   - B) L2
+   - C) L3
+   - D) L7
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：D) L7**
 
-**答案：D) L7（应用层）**
+   从概念上说，应用协议映射到 L7。这并不意味着 Cilium 为每种应用协议都提供原生策略解析器；Kafka L7 规则已移除。
 
-**说明：**
-在 OSI 模型中，L7（应用层）是最接近用户的一层，HTTP、HTTPS、gRPC、DNS、FTP 和 Kafka 等应用协议都在此层工作。Cilium 在 L7 层提供 API 感知过滤，可基于 HTTP 方法/路径/请求头、gRPC 方法、Kafka 主题等实现细粒度的网络策略。这对于在微服务架构中精细控制服务间通信至关重要。
-</details>
+   </details>
 
-2. Cilium 的 DSR（Direct Server Return）模式的主要优势是什么？
-   - A) 可以隐藏客户端 IP
-   - B) 响应流量绕过负载均衡器，从而提升性能
-   - C) 对所有流量进行加密
-   - D) 自动应用 L7 策略
+2. **DSR 的直接返回特性是什么？**
+   - A) 它会加密每个响应
+   - B) 远程后端可以在不经由入口负载均衡节点返回的情况下响应
+   - C) 它会验证客户端 IP
+   - D) 它会恢复已被上游代理改写的客户端 IP
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：B) 远程后端可以在不经由入口负载均衡节点返回的情况下响应**
 
-**答案：B) 响应流量绕过负载均衡器，从而提升性能**
+   网络必须支持非对称返回路径。DSR 可以减少响应路径上的跳数；性能和客户端 IP 保留情况取决于实际拓扑。
 
-**说明：**
-在 DSR（Direct Server Return）模式下，只有客户端请求经过负载均衡器，而服务器响应会绕过负载均衡器直接发送给客户端。这消除了负载均衡器瓶颈，节省网络带宽，并降低响应延迟。它在处理大型响应（文件下载、流式传输等）时尤其有效。即使在外部负载均衡器之后，DSR 模式也能保留客户端 IP。
-</details>
+   </details>
 
-3. Cilium 中哪个组件提供 L7 代理功能？
+3. **哪个组件负责处理 Cilium 支持的 HTTP/gRPC 策略？**
    - A) kube-proxy
-   - B) Hubble
+   - B) Hubble Relay
    - C) Envoy
    - D) CoreDNS
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：C) Envoy**
 
-**答案：C) Envoy**
+   Envoy 是否部署取决于安装配置值。DNS 策略使用 Cilium 的 DNS 代理，而声明不受支持的 Kafka 规则并不会安装 Kafka 解析器。
 
-**说明：**
-Cilium 集成 Envoy 代理来提供 L7 代理功能。当你在 CiliumNetworkPolicy 中定义 L7 规则（HTTP、gRPC、Kafka、DNS 等）时，Cilium 会自动以透明方式部署 Envoy 代理，无需 sidecar。Envoy 提供 HTTP/gRPC 流量处理、高级负载均衡、流量拆分和指标收集。由于不需要部署独立的 sidecar 代理，这种方法可降低资源开销。
-</details>
+   </details>
 
-4. 以下哪项不是 Cilium 支持的负载均衡算法？
-   - A) Round Robin
-   - B) Maglev Consistent Hashing
-   - C) Source IP Hash
-   - D) Weighted Response Time
+4. **哪一组选项描述了 Cilium 文档中所述的 BPF Service 后端选择算法？**
+   - A) 轮询和最少连接
+   - B) 随机和 Maglev
+   - C) 源 IP 哈希和加权响应时间
+   - D) 所有 Envoy 算法
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：B) 随机和 Maglev**
 
-**答案：D) Weighted Response Time**
+   BPF 选择和 Envoy L7 负载均衡属于不同的组件。Maglev 在指定的外部路径上受支持；普通的 socket-LB E–W 流量不适用该算法。
 
-**说明：**
-Cilium 支持 Round Robin、Least Connection、Source IP Hash、Random 和 Maglev Consistent Hashing 等负载均衡算法。Maglev 是 Google 开发的一种一致性哈希算法，即使添加或移除后端服务器也能保持连接一致性。Weighted Response Time 不是 Cilium 直接支持的算法。不过，可以通过 Envoy 代理实现更高级的负载均衡策略。
-</details>
+   </details>
 
-5. 以下哪项不是 Cilium 基于 eBPF 实现伪装的优势？
-   - A) 处理速度快于 iptables
-   - B) 更好的可扩展性
-   - C) 支持所有 Linux kernel 版本
-   - D) 在 kernel space 中直接处理
+5. **关于伪装实现，哪项说法正确？**
+   - A) 对所有工作负载而言，BPF 总是更快
+   - B) 所有 Linux 内核都支持当前版本的 Cilium
+   - C) 两种实现都在内核中运行，并且都有配置和平台要求
+   - D) 选择 BPF 后就不再需要路由
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：C) 两种实现都在内核中运行，并且都有配置和平台要求**
 
-**答案：C) 支持所有 Linux kernel 版本**
+   仅凭产品名称或在内核中执行，并不能得出性能结论。此版本的 BPF 伪装有功能和设备依赖项，IPv6 支持仍处于 beta 阶段。
 
-**说明：**
-基于 eBPF 的伪装比 iptables 更快、可扩展性更好，并且由于直接在 kernel space 中处理而更加高效。但是，基于 eBPF 的伪装仅在较新的 Linux kernel（4.19 及以上）中得到完全支持。在较旧的 kernel 上，你需要回退到基于 iptables 的伪装。你可以在 Cilium 设置中使用 `enable-bpf-masquerade: true` 选项启用基于 eBPF 的伪装。
-</details>
+   </details>
 
-6. Cilium 中哪种模式可完全替代 Kubernetes Service 的 kube-proxy？
-   - A) kube-proxy-replacement: partial
-   - B) kube-proxy-replacement: strict
-   - C) kube-proxy-replacement: hybrid
-   - D) kube-proxy-replacement: disabled
+6. **哪个当前值可以启用 kube-proxy 替换？**
+   - A) kubeProxyReplacement: partial
+   - B) kubeProxyReplacement: true
+   - C) kubeProxyReplacement: strict
+   - D) kubeProxyReplacement: hybrid
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：B) kubeProxyReplacement: true**
 
-**答案：B) kube-proxy-replacement: strict**
+   使用布尔值/当前的 true 值，并满足完整替换所需的前提条件，包括 API 可达性。旧的 strict/partial 术语不属于当前约定。
 
-**说明：**
-`kube-proxy-replacement: strict` 设置使 Cilium 完全替代所有 kube-proxy 功能。在此模式下，Cilium 处理所有 ClusterIP、NodePort、LoadBalancer 和 ExternalIP Service。严格模式下，必须移除或禁用 kube-proxy。`partial` 模式仅替代部分功能，而 `disabled` 会禁用 kube-proxy 替代功能。使用 DSR、Maglev 哈希和 socket-level load balancing 等高级功能时，需要严格模式。
-</details>
+   </details>
 
-7. 以下哪项不能用于在 Cilium L7 策略中过滤 HTTP 请求？
-   - A) HTTP 方法（GET、POST 等）
-   - B) URL 路径
-   - C) HTTP 请求头
-   - D) 请求正文
+7. **以下哪项不是内置的 Cilium HTTP 策略谓词？**
+   - A) 方法
+   - B) 路径
+   - C) 受支持的标头条件
+   - D) 任意请求正文内容
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：D) 任意请求正文内容**
 
-**答案：D) 请求正文**
+   方法/路径表达式与受支持的标头条件有所不同。带有值的 headers 字符串是字面匹配，并非通用的标头值正则表达式。检查负载需要单独设计应用或代理功能。
 
-**说明：**
-Cilium L7 HTTP 策略可基于 HTTP 方法（GET、POST、PUT、DELETE 等）、URL 路径（支持正则表达式）和 HTTP 请求头（支持正则表达式）进行过滤。但是，由于显著的性能开销和复杂性，Cilium 不直接支持检查请求正文。如果需要检查请求正文，应使用 WAF（Web Application Firewall）或独立的应用层安全解决方案。
-</details>
+   </details>
 
-8. 将 Cilium 与 Istio 集成的主要好处是什么？
-   - A) 完全替代所有 Istio 功能
-   - B) 通过基于 eBPF 的数据平面减少 sidecar 开销
+8. **本指南中 Cilium/Istio 集成的预期模式是什么？**
+   - A) 自动绕过 Istio sidecar
+   - B) 保留 Istio 拦截，并结合 Cilium 网络控制与 Istio 的 L7/mTLS 职责
    - C) 自动禁用 mTLS
-   - D) 无需 Istio 即可实现 Service Mesh
+   - D) 让每条 Cilium HTTP 规则都检查加密的 Istio 流量
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：B) 保留 Istio 拦截，并结合 Cilium 网络控制与 Istio 的 L7/mTLS 职责**
 
-**答案：B) 通过基于 eBPF 的数据平面减少 sidecar 开销**
+   配置 CNI/socket-LB 互操作性，并测试拓扑。此示例保留 Istio mTLS，并使用 Cilium L3/L4 策略，而不是对加密流量执行明文 HTTP 检查。
 
-**说明：**
-将 Cilium 与 Istio 集成后，可以通过基于 eBPF 的数据平面替代部分 Envoy sidecar 功能，从而降低资源开销。Cilium 使用 eBPF 处理 L3/L4 流量和网络策略，只将必要的 L7 流量转发给 Envoy。这可提升性能并降低延迟。但是，Cilium 不会替代所有 Istio 功能，mTLS 等高级 Istio 功能仍由 Istio 处理。
-</details>
+   </details>
 
-9. Cilium 中 socket-level load balancing 的好处是什么？
-   - A) 在数据包处理前，在 kernel 中将 Service IP 转换为后端 IP
-   - B) 自动应用 L7 策略
-   - C) 仅处理加密流量
-   - D) 需要外部负载均衡器
+9. **套接字级负载均衡可以做什么？**
+   - A) 在受支持的套接字钩子处、构造数据包之前选择后端
+   - B) 自动验证 HTTP 标头
+   - C) 解密所有流量
+   - D) 创建外部负载均衡器
 
-<details>
+   <details>
+   <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+   **答案：A) 在受支持的套接字钩子处、构造数据包之前选择后端**
 
-**答案：A) 在数据包处理前，在 kernel 中将 Service IP 转换为后端 IP**
+   TCP connect 和受支持的 UDP 套接字路径可以提前将 Service 转换为后端。这并不保证普遍降低延迟；与 sidecar 拦截配合时可能还需要特殊处理。
 
-**说明：**
-Socket-level load balancing 会在发送数据包之前的 connect() 系统调用中，将 Service IP 转换为后端 Pod IP。这比传统的基于数据包的 NAT（Network Address Translation）高效得多。其优势包括减少 conntrack（连接跟踪）开销、保留源 IP、降低延迟以及更好的可扩展性。Socket-level LB 从应用程序的角度来看是透明的，使应用程序看起来像是直接与后端 Pod 通信。
-</details>
+   </details>
 
-10. 关于 Cilium 中 IPv4 分片处理，推荐的最佳实践是什么？
-    - A) 始终禁用分片跟踪
-    - B) 一致地配置 MTU 以防止分片
-    - C) 阻止所有分片
-    - D) 将分片大小设为最大值
+10. **以下哪项是恰当的分片处理原则？**
+    - A) 跟踪可保证防御所有分片攻击
+    - B) 规划有效路径 MTU，并验证所需的错误信令
+    - C) 必须始终丢弃所有分片
+    - D) Cilium 的 MTU 始终表示最终的 Pod 负载大小
 
-<details>
+    <details>
+    <summary>显示答案</summary>
 
-<summary>显示答案</summary>
+    **答案：B) 规划有效路径 MTU，并验证所需的错误信令**
 
-**答案：B) 一致地配置 MTU 以防止分片**
+    Cilium 的 MTU 会覆盖底层网络的值。分片跟踪保留 L4 上下文，但不负责重组负载，也不保证防止攻击；如果所需的信令或路径行为异常，PMTUD 可能会失效。
 
-**说明：**
-IPv4 分片可能导致性能下降和安全问题，因此应尽可能避免。为此，应在整个网络中一致地配置 MTU（Maximum Transmission Unit）；使用 overlay network（VXLAN 等）时，应调整 MTU 以计入封装开销（约 50 字节）。启用 Path MTU Discovery（PMTUD）可以自动检测最佳 MTU。启用分片跟踪（`enable-ipv4-fragment-tracking`）可防止基于分片的攻击。
-</details>
+    </details>
 
 ## 简答题
 
-11. 列出 Cilium 支持用于 L7 网络策略的 4 种协议。
+11. **说出当前内置的 L7 策略组，并说明 gRPC 属于哪一类。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** HTTP、gRPC、Kafka、DNS
+HTTP 和 DNS。受支持的 gRPC 约束通过 Envoy 使用 HTTP/2 路径/标头匹配。DNS 使用 Cilium 的 DNS 代理；Kafka L7 规则已移除。必须配置 TLS 可见性，不能想当然地认为它已具备。
 
-**说明：**
-Cilium L7 策略支持的主要协议包括：
-- **HTTP/HTTPS**：REST API 和 Web 流量，支持基于方法/路径/请求头的过滤
-- **gRPC**：微服务之间的 RPC 通信，支持基于 Service/方法的过滤
-- **Kafka**：消息队列协议，支持基于主题/clientID/API key 的过滤
-- **DNS**：DNS 查询和响应过滤，支持基于 FQDN 的策略
-此外，还可以通过 Envoy filter 支持自定义协议。
 </details>
 
-12. Cilium 负载均衡器中用于检查后端服务器健康状况的机制叫什么？
+12. **区分 Service 后端就绪状态与通用主动健康检查引擎。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** Health Check
+Kubernetes endpoint/readiness 状态会影响后端是否符合条件，但具体取决于 Service 和终止语义，并存在传播延迟。这并不意味着每个 BPF Service 都会独立执行 TCP/HTTP 健康探测。Cilium 连通性健康检查、应用探测和代理健康检查是不同的机制。
 
-**说明：**
-Cilium 负载均衡器支持多种健康检查机制：
-- **TCP health checks**：验证端口连通性
-- **HTTP health checks**：验证 HTTP 响应代码（200 OK 等）
-- **Kubernetes Readiness/Liveness Probe 集成**：利用 Pod 状态探针结果
-不健康的后端会自动从负载均衡池中移除，并在恢复后重新添加。这可确保 Service 的高可用性。
 </details>
 
-13. Cilium 中将外部流量的源 IP 转换为内部 IP 的功能叫什么？
+13. **对于外部路径，哪个操作会改变 Pod 的出站源地址？**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** Masquerading 或 SNAT（Source NAT）
+源 NAT / 伪装。它不同于将目标地址转换为 Service 后端。所选接口、排除的 CIDR、节点例外情况以及后续的云 NAT 都可能影响实际观察到的源地址；仅凭外部 HTTP 请求成功，并不能证明具体使用了哪种实现。
 
-**说明：**
-Masquerading 是将集群内 Pod 发出的出站流量的源 IP 转换为节点 IP 的功能。这是 SNAT（Source Network Address Translation）的一种形式。伪装的目的是向外部网络隐藏内部集群 IP，并允许访问集群外的 Service。Cilium 同时支持基于 iptables 和基于 eBPF 的伪装，其中基于 eBPF 的伪装性能更高。
 </details>
 
-14. 当 Cilium 替代 kube-proxy 时，用于会话持久性的哈希算法叫什么？
+14. **说明 Maglev 和 sessionAffinity: ClientIP 为什么不能互换。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** Maglev（一致性哈希）
+Maglev 会在其支持的路径上，使用兼容的表/状态/种子提供一致的后端选择。ClientIP 亲和性则维护单独的客户端 Service 亲和性和超时行为，并使用 IP 或适用的 socket-LB 命名空间 cookie。两者都无法将会话保留在已失败或已移除的后端上。
 
-**说明：**
-Maglev 是 Google 开发的一种一致性哈希算法。在 Cilium 中使用 Maglev 时，即使添加或移除后端服务器，大多数现有连接仍会保持连接到同一后端。这对于需要 session affinity 的应用程序非常重要。Maglev 具有较高的负载分布均匀性和较低的连接重新分配率，因此在大规模负载均衡环境中非常有效。
 </details>
 
-15. TCP 和 UDP 协议在 OSI 模型中工作在哪一层？请给出该层的名称和编号。
+15. **什么是 L4？TCP 和 UDP 之间哪项可靠性差异值得注意？**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** L4（传输层）
+L4 是传输层。TCP 提供可靠、有序的字节流；UDP 提供数据报，但不保证送达或顺序。UDP 并非对每种应用都自动更快，而端口/协议策略也不能提供应用身份验证。
 
-**说明：**
-L4（传输层）是 OSI 模型的第 4 层，负责端到端连接和可靠性。TCP（Transmission Control Protocol）和 UDP（User Datagram Protocol）在这一层工作。TCP 是面向连接的，提供可靠通信；UDP 是无连接的，速度快但不保证可靠性。Cilium L4 策略可基于端口号和协议（TCP/UDP）过滤流量。
 </details>
 
-## 实操题
+## 动手题
 
-16. 编写一个 CiliumNetworkPolicy：仅允许访问 `/api/v1/users` 路径的 HTTP GET 请求，并且仅当存在 `X-Auth-Token` 请求头时，才允许访问 `/api/v1/data` 路径的 POST 请求。
+16. **为 `l7-exercise` 中监听 TCP8080 的 API 编写策略：仅允许 frontend 执行 GET /api/v1/users 和 POST /api/v1/data，并且必须包含 X-Auth-Token。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "l7-http-policy"
-  namespace: default
+  name: api-http
+  namespace: l7-exercise
 spec:
   endpointSelector:
     matchLabels:
@@ -257,73 +221,95 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: l7-exercise
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "80"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/users"
-        - method: "POST"
-          path: "/api/v1/data"
-          headers:
-          - "X-Auth-Token: .*"
+        - method: ^GET$
+          path: ^/api/v1/users$
+        - method: ^POST$
+          path: ^/api/v1/data$
+          headerMatches:
+          - name: x-auth-token
 ```
 
-**说明：**
-此 CiliumNetworkPolicy 使用 L7 HTTP 规则实现细粒度访问控制。`rules.http` 部分定义了两条规则：第一条允许对 `/api/v1/users` 路径使用 GET 方法，第二条仅在存在 `X-Auth-Token` 请求头时允许对 `/api/v1/data` 路径使用 POST 方法。请求头值可以使用正则表达式指定，因此 `.*` 允许任何值。应用此策略时，Cilium 会自动以透明方式部署 Envoy 代理来检查 L7 流量。
+工作负载标签/命名空间和监听端口是前提条件。只指定名称的 headerMatches 条目会检查标头是否存在；它不会验证令牌。旧的 `X-Auth-Token: .*` 字符串表示按字面值匹配，并非匹配任意值。请检查其他适用策略和实际生效的代理状态。
+
 </details>
 
-17. 编写一条 Helm 命令，以启用 DSR 模式和 Maglev 哈希的 kube-proxy 替代模式安装 Cilium。
+17. **在新建且已准备好的无 kube-proxy IPv4 测试集群上，安装文档所述的 DSR/Maglev 配置。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
-```bash
-# Add Helm repo
-helm repo add cilium https://helm.cilium.io/
-helm repo update
+**lb-values.yaml**
 
-# Install Cilium with kube-proxy replacement + DSR + Maglev settings
-helm install cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=true \
-  --set k8sServiceHost=<API_SERVER_IP> \
-  --set k8sServicePort=6443 \
-  --set loadBalancer.mode=dsr \
-  --set loadBalancer.algorithm=maglev \
-  --set maglev.tableSize=65521 \
-  --set bpf.masquerade=true
-
-# Disable existing kube-proxy (delete or scale down DaemonSet)
-kubectl -n kube-system delete ds kube-proxy
-# Or modify kube-proxy ConfigMap to disable
-
-# Verify installation
-cilium status --verbose
-kubectl -n kube-system exec ds/cilium -- cilium status | grep KubeProxyReplacement
-```
-
-**说明：**
-`kubeProxyReplacement=true` 将 Cilium 配置为替代 kube-proxy 功能。`k8sServiceHost` 和 `k8sServicePort` 指定 API server 地址（无需 kube-proxy 即可访问 API server 时必需）。`loadBalancer.mode=dsr` 启用 Direct Server Return 模式，`loadBalancer.algorithm=maglev` 使用 Maglev 一致性哈希。`maglev.tableSize` 设置哈希表大小（建议使用质数）。`bpf.masquerade=true` 启用基于 eBPF 的伪装。
-</details>
-
-18. 编写一个 CiliumNetworkPolicy，对 Kafka 流量应用 L7 策略：仅允许向 `orders` 主题执行 produce 操作，并且仅允许从 `payments` 主题执行 consume 操作。
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：**
 ```yaml
-apiVersion: "cilium.io/v2"
+kubeProxyReplacement: true
+routingMode: tunnel
+tunnelProtocol: geneve
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+loadBalancer:
+  mode: dsr
+  dsrDispatch: geneve
+  algorithm: maglev
+  acceleration: disabled
+maglev:
+  tableSize: 65521
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+l7Proxy: true
+envoy:
+  enabled: true
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+```
+
+```bash
+: "${API_SERVER_HOST:?Set the real reachable API server host}"
+: "${API_SERVER_PORT:?Set its actual port}"
+: "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+helm install cilium cilium/cilium --version 1.20.3 --namespace kube-system \
+  --values lb-values.yaml \
+  --set-string k8sServiceHost="$API_SERVER_HOST" \
+  --set k8sServicePort="$API_SERVER_PORT" \
+  --set-string maglev.hashSeed="$MAGLEV_SEED"
+cilium status --wait
+```
+
+此配置使用 Geneve 覆盖网络和 Geneve DSR 分发。必须预先准备好 API 端点、网络返回路径和持久化的通用 Maglev 种子。65521 是允许的表大小，并非通用要求。不要在任意安装之后删除 kube-proxy，也不要为了走捷径测试而切换运行中集群的转发模式。
+
+</details>
+
+18. **需求是 order-service 需要 orders-produce 权限，payment-processor 需要 payments-consume 权限。当前 Cilium 策略可以实施什么控制？Broker 必须实施什么控制？**
+
+<details>
+<summary>显示答案</summary>
+
+```yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "kafka-l7-policy"
+  name: broker-connectivity
   namespace: messaging
 spec:
   endpointSelector:
@@ -332,121 +318,78 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: order-service
-    toPorts:
-    - ports:
-      - port: "9092"
-        protocol: TCP
-      rules:
-        kafka:
-        - apiKey: "produce"
-          topic: "orders"
-  - fromEndpoints:
+        k8s:io.kubernetes.pod.namespace: messaging
+        k8s:app: order-service
     - matchLabels:
-        app: payment-processor
+        k8s:io.kubernetes.pod.namespace: messaging
+        k8s:app: payment-processor
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: "fetch"
-          topic: "payments"
 ```
 
-**说明：**
-此 CiliumNetworkPolicy 使用 Kafka L7 规则实现细粒度访问控制。第一条 ingress 规则仅允许 `order-service` Pod 对 `orders` 主题执行 produce（`apiKey: produce`）操作。第二条规则仅允许 `payment-processor` Pod 对 `payments` 主题执行 consume（`apiKey: fetch`）操作。Kafka API key 包括 `produce`、`fetch`、`metadata`、`offsets` 等；还可以添加 `clientID`，以仅允许特定客户端。
+这只允许这两个源工作负载访问假定的 Broker 监听器 TCP9092；请将端口替换为实际配置的监听端口。它无法实施主题操作权限。在 Kafka 中验证不同的 Broker 主体身份，并配置所需的生产/消费权限和消费者组授权。`rules.kafka` 已移除，因此将旧 YAML 作为完整授权配置是不正确的。
+
 </details>
 
-19. 编写一个配置，在 Cilium 中启用基于 eBPF 的伪装，同时对特定 CIDR 范围（10.0.0.0/8）排除伪装。
+19. **给出一段 BPF 伪装配置，用于排除目标位于实际可路由的 10.0.0.0/8 范围内的流量。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
 ```yaml
-# ConfigMap settings
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-ipv4-masquerade: "true"
-  enable-bpf-masquerade: "true"
-  ipv4-native-routing-cidr: "10.0.0.0/8"
-  enable-ipv6-masquerade: "false"
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+ipv4NativeRoutingCIDR: 10.0.0.0/8
 ```
 
-```bash
-# Install/upgrade using Helm
-helm upgrade cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
-  --set bpf.masquerade=true \
-  --set enableIPv4Masquerade=true
+将其合并到适当的预备配置中。BPF NodePort/设备前提条件和返回路由仍然适用。ipv4NativeRoutingCIDR 控制相关的伪装排除；它不会创建路由，也不会切换 routingMode。请检查所选节点上的 `cilium-dbg status --verbose` 和 `cilium-dbg bpf nat list`，并进行受控的外部观察。
 
-# Verify settings
-kubectl -n kube-system exec ds/cilium -- cilium status --verbose | grep -i masquerade
-
-# Check masquerading rules
-kubectl -n kube-system exec ds/cilium -- cilium bpf nat list
-```
-
-**说明：**
-`enable-bpf-masquerade: true` 启用基于 eBPF 的伪装。`ipv4-native-routing-cidr: 10.0.0.0/8` 将到此 CIDR 范围的流量配置为使用原生路由而不进行伪装。当需要为集群内通信或 VPC 内通信保留源 IP 时，这非常有用。如果集群 Pod CIDR 和 Service CIDR 包含在此范围内，则不会对内部流量应用伪装。
 </details>
 
-20. 编写在 Cilium 中诊断 L7 策略未按预期工作的问题所需的命令。应包括 Envoy 代理状态、策略应用状态和实时流量监控。
+20. **给出一个不会造成中断的排查步骤序列，用于调查意外的 L7 策略行为。**
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
 ```bash
-# 1. Check overall Cilium status
 cilium status --verbose
-
-# 2. Check Envoy proxy status
-kubectl -n kube-system exec ds/cilium -- cilium status | grep -i proxy
-kubectl -n kube-system exec ds/cilium -- cilium bpf proxy list
-
-# 3. Check policy application status
-cilium policy get
-kubectl get cnp -A -o wide
-kubectl get ccnp -A -o wide
-
-# 4. Check policy status for a specific endpoint
-cilium endpoint list
-cilium endpoint get <endpoint_id> -o json | jq '.status.policy'
-
-# 5. Real-time traffic monitoring (including L7)
-cilium monitor --type l7
-cilium monitor --type policy-verdict
-cilium monitor --type drop
-
-# 6. Observe L7 flows through Hubble
-hubble observe --protocol http
-hubble observe --verdict DROPPED
-hubble observe --pod <namespace>/<pod-name>
-
-# 7. Check Envoy logs
-kubectl -n kube-system logs ds/cilium | grep -i envoy
-kubectl -n kube-system logs ds/cilium | grep -i proxy
-
-# 8. Regenerate endpoint (reapply policy)
-kubectl -n kube-system exec ds/cilium -- cilium endpoint regenerate <endpoint_id>
-
-# 9. Network policy troubleshooting
-cilium policy trace --src-identity <src_id> --dst-identity <dst_id> --dport <port>
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+kubectl -n kube-system get pods -l k8s-app=cilium-envoy -o wide
+kubectl -n cilium-l2l7-demo get pods -o wide
+export APP_POD=REPLACE-WITH-APP1-POD
+export CILIUM_POD=REPLACE-WITH-AGENT-ON-APP-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
+  cilium-dbg endpoint get "pod-name:cilium-l2l7-demo:$APP_POD"
+kubectl -n cilium-l2l7-demo get cnp -o yaml
+kubectl get ccnp -o yaml
+kubectl -n kube-system logs "$CILIUM_POD" -c cilium-agent --tail=100
 ```
 
-**说明：**
-排查 L7 策略问题需要采用系统化方法。首先，使用 `cilium status` 检查整体系统状态，并确认 Envoy 代理正常运行。使用 `cilium policy get` 检查已应用的策略，并使用 `cilium endpoint get` 验证策略是否正确应用到特定 Pod。使用 `cilium monitor` 和 `hubble observe` 监控实时流量和策略判定。`policy trace` 命令会模拟特定流量流的策略决策过程。
+对于显式启用的 Envoy DaemonSet：
+
+```bash
+export ENVOY_POD=REPLACE-WITH-ENVOY-POD-ON-APP-NODE
+kubectl -n kube-system logs "$ENVOY_POD" --all-containers=true --tail=100
+```
+
+```bash
+cilium hubble port-forward
+```
+
+```bash
+hubble observe --namespace cilium-l2l7-demo --protocol http --last 20
+hubble observe --namespace cilium-l2l7-demo --verdict DROPPED --last 20
+```
+
+选择工作负载所在节点上的 agent/Envoy Pod，而不是随意选择一个 DaemonSet Pod。对于显式部署的 Envoy DaemonSet，请检查该 Pod 有限范围内的日志；对于内嵌 Envoy，请检查 agent 已配置的日志。将 Relay 转发进程保留在单独的终端中。比较期望规则和实际生效规则、明文/TLS 可见性、应用响应和流量。HTTP403 不等于数据包被丢弃，缺少观察结果也可能是过滤或丢失所致。策略 trace 已移除，强制重新生成 endpoint 也不是必要的首要步骤。
+
 </details>
 
 ---
 
-[返回学习资料](../../../networking/cilium/05-l2-l7-networking.md) | [下一测验：安全与可观测性](./06-security-visibility-quiz.md)
+[返回学习资料](../../../networking/cilium/05-l2-l7-networking.md) | [下一测验：安全与可见性](./06-security-visibility-quiz.md)

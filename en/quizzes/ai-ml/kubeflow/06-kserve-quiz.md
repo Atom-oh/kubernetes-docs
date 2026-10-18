@@ -61,7 +61,7 @@ Transformer and explainer are optional; runtime/protocol compatibility and actua
 
 **Answer: B) No; KServe defaults minReplicas to 1 and scale-to-zero requires supported autoscaler/policy settings such as minReplicas 0**
 
-Scale-from-zero includes capacity, image and model loading. Pod zero does not guarantee node termination.
+Scale-from-zero includes capacity, image and model loading. A Pod count of zero does not guarantee node termination.
 </details>
 
 5. Which statement about Standard mode is correct?
@@ -106,7 +106,7 @@ Inspect the actual annotation and config. Code fallback is Standard; the inspect
 
 **Answer: B) KServe sets Knative revision traffic targets; Knative networking routes requests**
 
-Standard rolling update is not the same revision-percentage mechanism. Promotion/rollback and retained artifacts need separate validation.
+A Standard rolling update is not the same revision-percentage mechanism. Promotion/rollback and retained artifacts need separate validation.
 </details>
 
 8. Does requesting nvidia.com/gpu guarantee GPU inference?

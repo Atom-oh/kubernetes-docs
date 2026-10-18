@@ -1284,7 +1284,7 @@ For Pending Pods, inspect quota, node, PVC and scheduling events. Changing gp3 R
 - **StepAction**: The feature is stable in 1.17, but the release's storage API remains `tekton.dev/v1beta1`. Connect actual tools, credentials and result paths to the consuming Task.
 - **Catalogs**: Hub service deprecation and CLI internalization are distinct. Hub commands in tkn 0.46 do not guarantee long-term service availability. Manage approved definitions at fixed commits or verified OCI bundle digests and restrict resolver access.
 - **Networking**: NetworkPolicy `to: []` with TCP 443 allows that port to all destinations; it is not an ECR/GitHub domain allowlist. Restrict required DNS, STS/ECR/S3, registry and API paths through the actual CNI/proxy/VPC design.
-- **Spot and cost**: Karpenter uses `karpenter.sh/capacity-type: spot`; EKS Managed Node Groups use their actual `eks.amazonaws.com/capacityType` labels. Account for interruption, retries, quota and storage. No running build Pods does not mean zero total cost.
+- **Spot and cost**: Karpenter uses `karpenter.sh/capacity-type: spot`; EKS Managed Node Groups use their actual `eks.amazonaws.com/capacityType` labels. Account for interruption, retries, quota and storage. Having no running build Pods does not mean zero total cost.
 - **Caches**: Measure workload-specific reuse. Do not promise a universal 40–60% improvement. Different trust levels must not share writable caches.
 
 ## 10. References

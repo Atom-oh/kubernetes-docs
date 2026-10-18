@@ -111,7 +111,7 @@ Cluster 범위는 최종 사용자 identity나 애플리케이션 인가 경계�
 
 ### Microservice 예제
 
-별도의 이 예제에는 `production`의 mesh frontend/API/PostgreSQL workload, `app: frontend/api/postgres`, 아래에 선언한 port, 대응하는 ServiceAccount가 필요합니다. `ingress` namespace에는 `edge-gateway` ServiceAccount로 실행하는 mesh ingress workload를 준비합니다. 이름만 적어 gateway를 설치하거나 인증하는 것은 아닙니다.
+이 별도의 예제에는 `production`의 mesh frontend/API/PostgreSQL workload, `app: frontend/api/postgres`, 아래에 선언한 port, 대응하는 ServiceAccount가 필요합니다. `ingress` namespace에는 `edge-gateway` ServiceAccount로 실행하는 mesh ingress workload를 준비합니다. 이름만 적어 gateway를 설치하거나 인증하는 것은 아닙니다.
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta3
@@ -203,7 +203,7 @@ spec:
 
 Linkerd는 Server에 명시적인 route가 연결되지 않았다면 선언된 HTTP health/readiness probe의 인가를 보통 자동 추가합니다. HTTPRoute/GRPCRoute를 연결하면 이 기본 probe 허용은 생성되지 않으므로 필요한 probe route와 제한된 접근을 명시해야 합니다. Probe 하나를 성공시키려고 business port 전체에 비인증 접근을 허용하지 않습니다.
 
-참고용으로 다음 **이전 방식의 대안 정책**은 API에 대한 frontend 허용과 같은 목적입니다. 위 AuthorizationPolicy와 함께 적용할 필요는 없습니다.
+참고용으로 다음 **이전 방식의 대안 정책**은 API에 대한 frontend 허용과 같은 목적을 가집니다. 위 AuthorizationPolicy와 함께 적용할 필요는 없습니다.
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta1
@@ -306,7 +306,7 @@ openssl x509 -in current-issuer.pem -noout -checkend 86400
 
 기본 `linkerd.io/tls` scheme의 issuer Secret은 `crt.pem`/`key.pem`, `kubernetes.io/tls`는 `tls.crt`/`tls.key`를 사용합니다. 위 명령은 공개 인증서 데이터만 선택합니다. 변경 전 설정한 scheme과 리소스 소유자를 확인합니다.
 
-Bundle의 모든 root를 확인합니다. `openssl x509` 단독 실행은 첫 인증서만 확인하므로 여러 root의 전체 만료 검사가 아닙니다. 날짜뿐 아니라 의도한 trust anchor에 대한 issuer chain도 검증하고 체인에 필요하면 intermediate 인증서도 제공합니다. 파싱/API 조회 실패를 “인증서 정상”으로 처리하지 않습니다.
+Bundle의 모든 root를 확인합니다. `openssl x509` 단독 실행은 첫 인증서만 확인하므로 여러 root의 전체 만료 검사가 아닙니다. 날짜뿐 아니라 의도한 trust anchor에 대한 issuer chain도 검증하고 필요하면 체인에 intermediate 인증서도 제공합니다. 파싱/API 조회 실패를 “인증서 정상”으로 처리하지 않습니다.
 
 ### Trust anchor가 같은 issuer 갱신
 

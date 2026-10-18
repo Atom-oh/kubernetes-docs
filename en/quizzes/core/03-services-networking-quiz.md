@@ -175,7 +175,7 @@ ExternalName services provide an alias for an external service. This service typ
 **Answer: EndpointSlice**
 
 **Explanation:**
-EndpointSlices store Service backend addresses and ports. The controller manages them for selector-based Services. Legacy Endpoints serve a similar purpose but are deprecated since v1.33.
+EndpointSlices store Service backend addresses and ports. The controller manages them for selector-based Services. Legacy Endpoints serve a similar purpose but have been deprecated since v1.33.
 </details>
 
 2. What is the name of the ingress controller used to provision Application Load Balancers in AWS EKS?
@@ -228,7 +228,7 @@ EndpointSlice is a scalable alternative to Endpoints, providing better performan
 
 ## Advanced Questions
 
-1. Explain how a service mesh (e.g., Istio) is used to manage communication between microservices in Kubernetes and its benefits.
+1. Explain how a service mesh (e.g., Istio) is used to manage communication between microservices in Kubernetes and describe its benefits.
 
 <details>
 

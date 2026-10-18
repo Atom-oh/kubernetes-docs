@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-例では S3 1.12.1 / IAM 1.9.0 の CRD を使用します。先にインフラ、controller、ServiceAccount、IAM 権限を準備してください。バケット名、アカウント、リージョン、ARN は承認済みの値に置き換えてください。その Role を参照するバケットポリシーを適用する前に、IAM Policy と Role を同期させてください。S3 は存在しないプリンシパルを拒否することがあります。
+例では S3 1.13.1 / IAM 1.10.1 の CRD を使用します。先にインフラ、controller、ServiceAccount、IAM 権限を準備してください。バケット名、アカウント、リージョン、ARN は承認済みの値に置き換えてください。その Role を参照するバケットポリシーを適用する前に、IAM Policy と Role を同期させてください。S3 は存在しないプリンシパルを拒否することがあります。
 
 これらのバージョンでは、独立した BucketPolicy や RolePolicyAttachment の CRD は使用しません。Bucket.spec.policy と Role.spec.policyRefs を使用します。S3 Block Public Access の 4 つの設定はすべて有効化され、AES256 は明示的に指定されています。オブジェクト/バケットの ARN をポリシーのアクションに合わせてください。
 
@@ -87,5 +87,5 @@ spec:
 
 各フィールドは公式のバージョン付き CRD と照合して確認しました。スキーマの検証が通っても、IAM 権限、AWS サービスの制約、リソースの作成、接続性、復旧が保証されるわけではありません。適用する前に、保持されるリソースについて所有者、コスト、クリーンアップ、バックアップの責任を割り当ててください。
 
-- [s3 v1.12.1 CRDs](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases)
-- [iam v1.9.0 CRDs](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases)
+- [s3 v1.13.1 CRDs](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/config/crd/bases)
+- [iam v1.10.1 CRDs](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.10.1/config/crd/bases)

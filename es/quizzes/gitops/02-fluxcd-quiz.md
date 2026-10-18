@@ -78,7 +78,7 @@ El CRD HelmRelease se utiliza para gestionar declarativamente los releases de He
 **Respuesta: B) Actualizar automáticamente los tags de imagen en Git cuando se detectan nuevas versiones**
 
 **Explicación:**
-ImageUpdateAutomation trabaja con ImageRepository e ImagePolicy para detectar nuevos tags de imágenes de contenedor y hacer commit automáticamente de las actualizaciones en el repositorio Git, lo que permite despliegues automatizados.
+El image-reflector-controller analiza las etiquetas de ImageRepository y evalúa ImagePolicy. El image-automation-controller edita Git con el resultado seleccionado y los marcadores de política YAML. Se necesitan ambos controladores, acceso de escritura a Git y los marcadores. Si se envían los cambios a una rama separada, también hace falta un flujo de trabajo de solicitud de cambios (PR) y fusión.
 
 </details>
 
@@ -110,7 +110,7 @@ El comando `flux bootstrap` instala los componentes de FluxCD y configura el rep
 **Respuesta: B) Mediante aislamiento de namespace y Kubernetes RBAC**
 
 **Explicación:**
-FluxCD admite multi-tenancy mediante el aislamiento de namespace, donde cada tenant tiene su propio namespace con recursos de Flux, combinado con Kubernetes RBAC nativo para el control de acceso.
+FluxCD combina los namespaces de los tenants con Kubernetes RBAC. La separación por namespace no basta: también hay que configurar la suplantación de identidad mediante spec.serviceAccountName y las restricciones del controlador para las referencias entre namespaces.
 
 </details>
 

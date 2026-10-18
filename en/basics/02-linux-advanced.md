@@ -380,7 +380,7 @@ curl --fail --silent --show-error --cacert "$CACERT" \
 unset TOKEN
 ```
 
-The ServiceAccount needs pods list RBAC permission in that namespace. These files may be absent with automountServiceAccountToken: false. Projected tokens rotate, so long-lived clients must reread the file; do not log tokens.
+The ServiceAccount needs RBAC permission to list pods in that namespace. These files may be absent with automountServiceAccountToken: false. Projected tokens rotate, so long-lived clients must reread the file; do not log tokens.
 
 ### 7.3 Useful curl Options
 

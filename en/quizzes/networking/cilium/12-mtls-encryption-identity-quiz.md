@@ -127,7 +127,7 @@ Global keys were deprecated in 1.16 (GHSA-pwqm-x5x6-5586). `encryption.ipsec.int
 
 **Answer: A) `doublewrite-readkvstore`, then `doublewrite-readcrd`, then `crd`**
 
-Both stores are written throughout; reads move from kvstore to CRD, then the kvstore is dropped. Watch the `cilium_operator_doublewrite_*` metrics until the `*_only_identities` values reach zero before each step.
+Both stores are written to throughout; reads move from kvstore to CRD, then the kvstore is dropped. Watch the `cilium_operator_doublewrite_*` metrics until the `*_only_identities` values reach zero before each step.
 
 </details>
 

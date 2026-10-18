@@ -26,7 +26,7 @@ Shared VPC(AWS RAM으로 subnet을 여러 Account에 공유)를 도입할 때 �
 
 Security Group은 allow rule만 지원하고, 여러 SG의 rule은 합쳐집니다. 다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없습니다. 기본 SG당 rule은 60개(inbound/outbound × IPv4/IPv6 각각), ENI당 SG는 5개이며 두 quota는 조정 가능하고, **"rule 수 × ENI당 SG 수 ≤ 1,000"** 제약이 있습니다. Firewall Manager의 공통 SG 정책도 이 예산을 소비합니다.
 
-Participant의 ENI·SG quota는 해당 participant Account에 계산됩니다. 기본 ENI 5,000/AZ와 SG 2,500/Region은 각 Account에서 여전히 병목이 될 수 있으며 조정 가능합니다. quota 용량과 SG 권한 통제는 별도로 검토합니다.
+Participant의 ENI·SG quota는 해당 participant Account를 기준으로 계산됩니다. 기본 ENI 5,000/AZ와 SG 2,500/Region은 각 Account에서 여전히 병목이 될 수 있으며 조정 가능합니다. quota 용량과 SG 권한 통제는 별도로 검토합니다.
 
 <span id="_2-shared-vpc의-실제-상한-—-cidr이-아니다"></span>
 
@@ -88,9 +88,9 @@ VPC CNI custom networking은 AZ ID로 owner subnet과 participant node의 물리
 | Zonal → Regional 전환 | connection reset, IP 변경 발생 가능 |
 | Constrained AZ | **지원되지 않음** (사전 확인 필요) |
 
-Regional NAT Gateway는 Zonal보다 IP·연결 한도가 유리합니다. Regional은 AZ당 IP 32개(Zonal은 8개), IP 1개당 동일 목적지(dest IP+port+protocol)로 동시 연결 55,000개가 늘어납니다. 이건 특정 SaaS·외부 API처럼 **소수 목적지로 대량 연결이 몰리는 패턴**(결제 대행사, 배송 연동사 등)에서 port exhaustion을 방지하는 데 직접적인 효과가 있습니다.
+Regional NAT Gateway는 Zonal보다 IP·연결 한도가 유리합니다. Regional은 AZ당 IP 32개(Zonal은 8개), IP 1개당 동일 목적지(dest IP+port+protocol)로의 동시 연결 수가 55,000개씩 늘어납니다. 이건 특정 SaaS·외부 API처럼 **소수 목적지로 대량 연결이 몰리는 패턴**(결제 대행사, 배송 연동사 등)에서 port exhaustion을 방지하는 데 직접적인 효과가 있습니다.
 
-Automatic mode(AWS가 IP/AZ 확장을 관리, 권장)와 Manual mode(직접 관리) 중 하나를 선택할 수 있습니다. **고정 egress IP를 외부 파트너의 allowlist에 등록해야 한다면 Manual mode 또는 IPAM public IPv4 allocation policy 연동이 필요**합니다. Regional NAT Gateway의 라우팅 테이블은 TGW를 유효한 route로 지원하므로, 중앙 TGW inspection과 Regional NAT를 함께 조합할 수 있습니다. 서로 배타적이지 않습니다.
+Automatic mode(AWS가 IP/AZ 확장을 관리, 권장)와 Manual mode(직접 관리) 중 하나를 선택할 수 있습니다. **고정 egress IP를 외부 파트너의 allowlist에 등록해야 한다면 Manual mode 또는 IPAM public IPv4 allocation policy 연동이 필요**합니다. Regional NAT Gateway의 라우팅 테이블은 TGW를 유효한 route로 지원하므로, 중앙 TGW inspection과 Regional NAT를 조합할 수 있습니다. 서로 배타적이지 않습니다.
 
 ## 5. TGW + Network Firewall (중앙 inspection)
 
@@ -111,7 +111,7 @@ AWS 관점에서 중앙 inspection이 무조건 필수인 조건은 없습니다
 
 Route 53 Profile에는 Private Hosted Zone, Resolver rule(forwarding/system), DNS Firewall rule group, **interface VPC endpoint**, VPC Resolver query logging config를 연결할 수 있습니다. VPC에는 Profile을 1개만 연결할 수 있습니다.
 
-**가장 오해하기 쉬운 부분은 우선순위 규칙입니다.** "local VPC가 항상 우선"이 아니라, **"더 구체적인(specific) 이름이 우선"**입니다.
+**가장 오해하기 쉬운 부분은 우선순위 규칙입니다.** "local VPC가 항상 우선"이 아니라, "**더 구체적인(specific) 이름이 우선**"입니다.
 
 | DNS query | Profile rule | VPC local rule | 적용되는 rule |
 |---|---|---|---|
@@ -119,7 +119,7 @@ Route 53 Profile에는 Private Hosted Zone, Resolver rule(forwarding/system), DN
 | `test.example.com` | `test.example.com` | `example.com` | **Profile (더 구체적인 이름 우선)** |
 | `marketing.example.com` | 없음 | `marketing.example.com` | Local VPC |
 
-두 번째 행에서 보듯, **중앙 Profile에 등록된 더 구체적인 이름이 워크로드의 local rule을 덮어씁니다.** 이를 모르고 설계하면 워크로드가 원인 불명의 이름 해석 오류를 겪게 됩니다. **"중앙 Profile은 워크로드가 위임받은 namespace보다 구체적인 이름을 갖지 않는다"를 명문 규칙으로 두는 것을 권장합니다.** 실무적으로는 namespace governance는 중앙에서, 그 하위 subdomain은 워크로드 팀에 위임하는 조합이 잘 맞습니다. Route 53 Profiles는 서울 리전에서 지원됩니다.
+두 번째 행에서 보듯, **중앙 Profile에 등록된 더 구체적인 이름이 워크로드의 local rule을 덮어씁니다.** 이를 모르고 설계하면 워크로드가 원인 불명의 이름 해석 오류를 겪게 됩니다. **"중앙 Profile은 워크로드가 위임받은 namespace보다 구체적인 이름을 갖지 않는다"를 명문 규칙으로 두는 것을 권장합니다.** 실무적으로는 namespace governance를 중앙에서 관리하고, 그 하위 subdomain은 워크로드 팀에 위임하는 조합이 잘 맞습니다. Route 53 Profiles는 서울 리전에서 지원됩니다.
 
 ## 8. VPC 간 Connectivity 선택지
 

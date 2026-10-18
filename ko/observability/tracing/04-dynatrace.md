@@ -44,7 +44,7 @@ flowchart LR
 
 | 대상 | 검토 시점의 범위 |
 |---|---|
-| 지원 Linux EC2 노드의 EKS 1.35 | OneAgent/ActiveGate **1.329+**, Operator **1.6+**가 필요하고 Operator **1.9+**를 권장합니다. 이 가이드는 1.10.2를 고정합니다. |
+| 지원 Linux EC2 노드의 EKS 1.35 | OneAgent/ActiveGate **1.329+**, Operator **1.6**+가 필요하고 Operator **1.9**+를 권장합니다. 이 가이드는 1.10.2를 고정합니다. |
 | Kubernetes 1.36 | OneAgent/ActiveGate 최소 버전은 **1.335**입니다. 플랫폼·버전 조합을 별도로 확인합니다. |
 | Kubernetes 1.37 | OneAgent/ActiveGate 최소 버전은 **1.335**입니다. 이 가이드의 검증 범위가 아니므로 플랫폼·버전 조합을 별도로 확인합니다. |
 | EKS Fargate | [Fargate용 EKS 절차](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto)의 **CSI 없는 application monitoring**만 적용하며 호스트 OneAgent는 사용하지 않습니다. |
@@ -427,7 +427,7 @@ if __name__ == "__main__":
 python3 deployment_event.py --entity-id SERVICE-0123456789ABCDEF --version 2.3.0
 ```
 
-위 ID는 예시입니다. 전송 전에 환경에서 확인한 entity로 바꿉니다. 전송하려면 `--send --environment-url https://ENVIRONMENTID.live.dynatrace.com --token-file /protected/path/events-token`과 올바른 scheme을 명시적으로 추가합니다. 별도 CI 책임에 Operator 자격 증명을 재사용하지 않습니다.
+위 ID는 예시입니다. 전송 전에 환경에서 확인한 entity로 바꿉니다. 전송하려면 `--send --environment-url https://ENVIRONMENTID.live.dynatrace.com --token-file /protected/path/events-token`과 올바른 scheme을 명시적으로 추가합니다. 별도 CI 작업에 Operator 자격 증명을 재사용하지 않습니다.
 
 ## 자동 계측
 
@@ -482,7 +482,7 @@ kubectl get pods -n observability-demo \
 
 ### 클러스터 메트릭
 
-ActiveGate의 `kubernetes-monitoring` capability는 Kubernetes API에서 클러스터·워크로드 상태를 조회합니다. 범위는 애플리케이션 주입과 별개입니다. ActiveGate-only 설치에는 필수 환경 URL을 포함한 아래 완전한 대안을 사용할 수 있습니다. 앞의 같은 이름 DynaKube에 의도 없이 덮어쓰지 않습니다.
+ActiveGate의 `kubernetes-monitoring` capability는 Kubernetes API에서 클러스터·워크로드 상태를 조회합니다. 범위는 애플리케이션 주입과 별개입니다. ActiveGate-only 설치에는 필수 환경 URL을 포함한 아래 완전한 대안을 사용할 수 있습니다. 앞의 같은 이름 DynaKube를 의도 없이 덮어쓰지 않습니다.
 
 ```yaml
 # dynakube-platform.yaml
@@ -571,11 +571,11 @@ Full-stack은 무제한 로그 수집·보관·쿼리·RUM·합성 테스트를 
 - 필요한 애플리케이션 주입과 신호 수집을 선택합니다. 네임스페이스 주입 selector는 호스트·클러스터 모니터링 사용량의 상한이 아닙니다.
 - 에이전트 리소스는 텔레메트리 양에 맞게 조정합니다. 에이전트 컨테이너 메모리 limit은 관측 대상 호스트 RAM의 과금 한도가 아닙니다.
 - 현재 capability 설정과 개인정보 요구에 맞춰 로그량·보존 기간·쿼리 패턴·선택적인 session replay를 관리합니다.
-- Application-only는 별도의 메모리 측정·최솟값 규칙을 적용하며 호스트 인프라 모니터링이 포함되지 않는 점을 계산합니다.
+- Application-only는 별도의 메모리 측정·최솟값 규칙을 적용하며 호스트 인프라 모니터링이 포함되지 않는 점을 고려합니다.
 
 ### Host Unit 계산
 
-기존 `max(memory/16, vCPU/1.5)` 공식은 잘못되었습니다. [Classic Full-Stack host unit](https://docs.dynatrace.com/docs/license/classic-licensing/application-and-infrastructure-monitoring)은 RAM 구간을 사용합니다. 아래는 현재 DPS 가격 모델이 아닌 **Classic 예시**로 구분합니다.
+기존 `max(memory/16, vCPU/1.5)` 공식은 잘못되었습니다. [Classic Full-Stack host unit](https://docs.dynatrace.com/docs/license/classic-licensing/application-and-infrastructure-monitoring)은 RAM 구간을 사용합니다. 아래는 현재 DPS 가격 모델이 아닌 **Classic 예시**입니다.
 
 | 호스트 예시 | Classic Full-Stack 가중치 | 정각 기준 한 시간 전체의 DPS host Full-Stack 사용량 |
 |---|---:|---:|
@@ -635,7 +635,7 @@ service:
 otelcol-contrib validate --config=otel-collector.yaml
 ```
 
-시작 전에 **설치한 배포판의 binary**로 validate합니다. File provider는 headers map 전체를 읽으며 `:key` suffix로 하위 키를 선택하지 않습니다. 기본 TLS 검증을 유지합니다. Exporter가 `/v1/traces`, `/v1/metrics`, `/v1/logs`를 붙이므로 base endpoint에 suffix를 중복하지 않습니다.
+시작 전에 **설치한 배포판의 binary**로 validate합니다. File provider는 headers map 전체를 읽으며 `:key` suffix로 하위 키를 선택하지 않습니다. 기본 TLS 검증을 유지합니다. Exporter가 `/v1/traces`, `/v1/metrics`, `/v1/logs`를 붙이므로 base endpoint에 suffix를 중복해서 붙이지 않습니다.
 
 ActiveGate 수집 endpoint는 포트·경로와 capability·storage 조건이 다릅니다. `routing`만 켠다고 모든 OTLP 수집 pipeline이 생성되지는 않습니다. Collector validate나 로컬 HTTP 테스트로 테넌트의 수락·quota·종단 전달을 입증할 수 없습니다. 승인된 배포 후 partial-success 응답과 서버 측 표시를 확인합니다.
 

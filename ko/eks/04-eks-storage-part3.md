@@ -216,7 +216,7 @@ WaitForFirstConsumer는 스케줄 가능한 소비자가 topology를 결정할 �
 
 ### 마운트 실패
 
-Attach 오류·node publish/mount 오류·파일 시스템 client 누락·신원/권한 오류·애플리케이션 권한을 구분합니다. 로그는 관련 CSI 드라이버/sidecar 컨테이너를 선택하며 다중 컨테이너 Pod의 기본 로그가 모든 구성 요소를 포함하지는 않습니다. 필요하면 VolumeAttachment·바인딩 PV의 driver/handle·배정된 노드를 확인합니다.
+Attach 오류·node publish/mount 오류·파일 시스템 client 누락·신원/권한 오류·애플리케이션 권한을 구분합니다. 로그를 확인할 때는 관련 CSI 드라이버/sidecar 컨테이너를 선택하며 다중 컨테이너 Pod의 기본 로그가 모든 구성 요소를 포함하지는 않습니다. 필요하면 VolumeAttachment·바인딩 PV의 driver/handle·배정된 노드를 확인합니다.
 
 노드 로그는 소유자가 지원하는 접근·진단 경로를 사용합니다. Bottlerocket·Auto Mode·다른 관리형 컴퓨팅에서 ec2-user SSH·journalctl이 보편적인 방법은 아닙니다. 특권 amazonlinux:2 helper가 올바른 CSI/client 설정을 대체하지 않으며 AL2의2026년 OS 지원은 종료되었습니다. 별도 승인된 노드 수동 마운트 전에 본문의 지원 CSI 소비자 테스트·이벤트를 사용합니다.
 
@@ -290,7 +290,7 @@ gp3 StorageClass 생성·기본 class 지정은 **기존 gp2 볼륨을 이전하
 
 VolumeSnapshotClass는 드라이버·보존 동작을 정의하며 스냅샷 예약·나이별 삭제를 수행하지 않습니다. 백업 소유자의 schedule·보존 정책을 사용하세요. Part2는 원래 class가 Retain이어도 삭제될 수 있는 Velero CSI snapshot 수명을 설명합니다.
 
-PV가 Available·Released라고 자동으로 폐기 가능하지 않으며 Bound도 실제 사용의 증거는 아닙니다. 정리 전에 claimRef/UID·워크로드 소유자·snapshot·보존 의무·실제 백엔드를 조사합니다. Retain은 과금 리소스를 남길 수 있고 Delete 동작은 드라이버에 따라 다릅니다. EFS access point 삭제와 파일 시스템·데이터 삭제는 다릅니다. S3/Archive 계층화에도 앱과 호환되는 복구·접근 계획이 필요합니다.
+PV가 Available·Released라고 해서 자동으로 폐기 가능한 것은 아니며 Bound도 실제 사용의 증거는 아닙니다. 정리 전에 claimRef/UID·워크로드 소유자·snapshot·보존 의무·실제 백엔드를 조사합니다. Retain은 과금 리소스를 남길 수 있고 Delete 동작은 드라이버에 따라 다릅니다. EFS access point 삭제와 파일 시스템·데이터 삭제는 다릅니다. S3/Archive 계층화에도 앱과 호환되는 복구·접근 계획이 필요합니다.
 
 ### EFS 비용 최적화
 
@@ -312,7 +312,7 @@ put-lifecycle-configuration은 파일 시스템 구성을 변경하므로 의도
 
 ### FSx for Lustre와 비용 할당
 
-Scratch는 재생성 가능한 데이터에만 선택하고 필요한 수명에는 persistent 배포·스토리지를 사용합니다. LZ4가 물리 데이터 크기를 줄일 수 있어도 이미 프로비저닝한 SSD 할당 요금이 자동으로 줄지는 않습니다. 선택한 요금 모델·압축률·처리량/CPU 영향을 평가하세요. S3 repository 통합은 버킷 이름만이 아닌 import/export/release 동작 구성이 필요합니다.
+Scratch는 재생성 가능한 데이터에만 선택하고 필요한 수명에는 persistent 배포·스토리지를 사용합니다. LZ4가 물리 데이터 크기를 줄일 수 있어도 이미 프로비저닝한 SSD 할당 요금이 자동으로 줄지는 않습니다. 선택한 요금 모델·압축률·처리량/CPU 영향을 평가하세요. S3 repository 통합에는 버킷 이름뿐 아니라 import/export/release 동작 구성도 필요합니다.
 
 Cost Explorer·Kubernetes 비용 도구에는 과금 데이터 설정·필요한 비용 할당 tag 활성화·PVC/PV와 클라우드 ID의 검증한 매핑이 필요합니다. 네임스페이스 레이블만으로 모든 AWS 요금에 tag가 자동 부여되지는 않습니다. 보존 볼륨·snapshot·요청/전송·관측 데이터 보존 비용을 추적합니다. EC2 Reserved Instance/Compute Savings Plans는 적격 컴퓨팅 비용에 영향을 주며 별도 EBS/EFS/FSx 스토리지 요금을 자동으로 낮추지는 않습니다.
 
@@ -413,7 +413,7 @@ roleRef:
 
 ### 파드 보안 컨텍스트
 
-아래 완전한 예제는 Pod 수준 runAsUser/runAsGroup/fsGroup/seccomp와 컨테이너 수준 allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem을 구분합니다. 선언되지 않은 data volume·쓰기 경로가 준비되지 않은 nginx 대신 준비한 암호화 class와 선언한 PVC를 사용합니다. 네임스페이스 정책 버전은 검토한 Kubernetes1.36 예제에 맞추었으므로 실제 클러스터에 적절한 버전을 사용하세요.
+아래 완전한 예제는 Pod 수준 runAsUser/runAsGroup/fsGroup/seccomp와 컨테이너 수준 allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem을 구분합니다. data volume이 선언되지 않고 쓰기 경로가 준비되지 않은 nginx 대신 준비한 암호화 class와 선언한 PVC를 사용합니다. 네임스페이스 정책 버전은 검토한 Kubernetes1.36 예제에 맞추었으므로 실제 클러스터에 적절한 버전을 사용하세요.
 
 ```yaml
 apiVersion: v1
@@ -515,7 +515,7 @@ spec:
     message: EBS StorageClasses must explicitly request encryption.
 ```
 
-이 정책은 Auto Mode provisioner를 포함한 **EBS StorageClass 생성·변경의 선언된 암호화 파라미터**를 검사합니다. 기존 AWS 볼륨·정적 PV·snapshot 내용·match 밖의 우회 경로를 검사하지 않습니다. Admission과 함께 StorageClass/PV 관리 권한 제한·백엔드 준수 검사를 사용하세요. 전체 강제 적용 전에 대표 리소스로 검증하고 정책 report·webhook 상태를 확인합니다. 기존 데이터 암호화에는 별도 이전 절차가 필요합니다.
+이 정책은 Auto Mode provisioner를 포함한 **EBS StorageClass 생성·변경 시 선언된 암호화 파라미터**를 검사합니다. 기존 AWS 볼륨·정적 PV·snapshot 내용·match 밖의 우회 경로를 검사하지 않습니다. Admission과 함께 StorageClass/PV 관리 권한 제한·백엔드 준수 검사를 사용하세요. 전체 강제 적용 전에 대표 리소스로 검증하고 정책 report·webhook 상태를 확인합니다. 기존 데이터 암호화에는 별도 이전 절차가 필요합니다.
 
 ## 스토리지 관리 모범 사례
 
@@ -525,11 +525,11 @@ spec:
 
 ### 계획과 용량
 
-지연·IOPS/처리량·용량 증가·읽기/쓰기 패턴·동시성·가용성·내구성·RPO/RTO를 구분해 기록합니다. 그 요구로 블록·공유 NFS·병렬 Lustre·객체 접근을 선택합니다. 측정한 여유와 상한이 있는 확장 절차를 사용하며 autoscaler·PVC resize가 앱 복제·임의 용량 축소를 제공하지는 않습니다.
+지연·IOPS/처리량·용량 증가·읽기/쓰기 패턴·동시성·가용성·내구성·RPO/RTO를 구분해 기록합니다. 그 요구에 따라 블록·공유 NFS·병렬 Lustre·객체 접근을 선택합니다. 측정한 여유와 상한이 있는 확장 절차를 사용하며 autoscaler·PVC resize가 앱 복제·임의 용량 축소를 제공하지는 않습니다.
 
 ### 백업과 재해 복구
 
-고유 백업 신원·보존 소유자가 있는 지원 schedule을 사용합니다. 고정 이름 snapshot을 반복 생성하는 shell cron은 첫 객체 생성 후 실패하며 daily-backup이라는 일회성 Velero 백업은 schedule이 아닙니다. Part2의 검토한 Velero/CSI 설치·DB 일관성 요구와 함께 다음 명령으로 일일 schedule을 검토용 출력합니다:
+고유 백업 신원·보존 소유자가 있는 지원 schedule을 사용합니다. 고정 이름 snapshot을 반복 생성하는 shell cron은 첫 객체 생성 후 실패하며 daily-backup이라는 일회성 Velero 백업은 schedule이 아닙니다. Part2의 검토한 Velero/CSI 설치·DB 일관성 요구와 함께 다음 명령으로 일일 schedule을 검토용으로 출력합니다:
 
 ```bash
 velero schedule create storage-daily --schedule="0 0 * * *" \
@@ -569,7 +569,7 @@ resource "aws_efs_file_system" "example" {
 
 ### 지속적인 검토
 
-워크로드 변화에 따라 병목·프로비저닝 한도·보존 비용·보안 제어를 검토합니다. 소유권·백업/복구·삭제 영향을 확인하기 전까지 정리 보고서는 읽기 전용으로 유지합니다. 자동화 전에 경보·상한이 있는 변경 제안을 사용하세요. 본문 예제는 로컬 검사한 참고 구성이며 실제 백엔드 성능·admission 배포·복구는 대상 환경에서 검증해야 합니다.
+워크로드 변화에 따라 병목·프로비저닝 한도·보존 비용·보안 제어를 검토합니다. 소유권·백업/복구·삭제 영향을 확인하기 전까지 정리 보고서는 읽기 전용으로 유지합니다. 자동화 전에 경보·상한이 있는 변경 제안을 사용하세요. 본문 예제는 로컬에서 검사한 참고 구성이며 실제 백엔드 성능·admission 배포·복구는 대상 환경에서 검증해야 합니다.
 
 ## 결론
 

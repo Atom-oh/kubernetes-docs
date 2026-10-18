@@ -130,7 +130,7 @@ envoy.filters.http.local_ratelimit uses a token bucket with explicit enabled/enf
 
 </details>
 
-### 9. Which filter type is used to configure HTTP -> HTTPS redirect in Gateway API?
+### 9. Which filter type is used to configure an HTTP -> HTTPS redirect in Gateway API?
 
 - **A.** URLRewrite
 - **B.** RequestMirror

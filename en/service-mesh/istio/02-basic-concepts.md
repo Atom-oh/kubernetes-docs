@@ -420,7 +420,7 @@ Istio consists of two main components: **Control Plane** and **Data Plane**.
 | **Control Plane (istiod)**   | Central control system responsible for service discovery, configuration distribution, certificate management |
 | **Data Plane (Envoy Proxy)** | Envoy sidecars, or ambient ztunnel plus optional waypoints; handles mesh traffic                             |
 
-**For detailed architecture structure, internal operation principles, and traffic interception mechanisms**, refer to the [Architecture document](03-architecture.md).
+**For detailed architecture structure, internal operating principles, and traffic interception mechanisms**, refer to the [Architecture document](03-architecture.md).
 
 ## Core Resources
 

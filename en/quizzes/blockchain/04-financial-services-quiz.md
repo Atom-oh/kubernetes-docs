@@ -100,7 +100,7 @@ Use fencing and preserved slashing-protection history. A deliberately distribute
 The immutability marketed as a strength is a problem in financial operations. Incorrect transactions, mistaken transfers, and system errors happen, and institutions have obligations and procedures to correct them. The answer is issuing a compensating transaction rather than "rolling back the chain," and review needs that procedure and its approval authority documented. This also connects to the absence of atomicity when integrating with existing infrastructure (Saga/outbox patterns).
 </details>
 
-7. Which two items are identified as most underprepared in financial-services review?
+7. Which two items are identified as least prepared for in financial-services review?
    - A) Performance measurement and cost estimation
    - B) Error correction procedures and an exit strategy
    - C) Network configuration and firewall policy
@@ -116,7 +116,7 @@ The immutability marketed as a strength is a problem in financial operations. In
 For error correction, "it cannot be reversed" becomes a weakness in review, and the answer must be prepared as process (compensating transactions) rather than technology. The exit strategy is almost never prepared: on consortium dissolution, member withdrawal, or system shutdown, financial data carries retention obligations so **"we turned off the chain" is not the end.** The ledger's export format, retention party, withdrawing-member data handling, and record access must be in the consortium agreement, with the technical design supporting it.
 </details>
 
-8. What is the most substantive difficulty integrating with existing financial infrastructure, and the direction of response?
+8. What is the most substantive difficulty in integrating with existing financial infrastructure, and how should it be addressed?
    - A) The throughput gap: solved by adding chain nodes
    - B) The absence of atomicity: an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early
    - C) Time synchronization: solved with NTP configuration

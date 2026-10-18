@@ -135,7 +135,7 @@ kubectl get node ip-10-0-1-10.ec2.internal -o json | \
 
 **4단계: Envoy가 Locality 기반 라우팅**
 
-Envoy는 받은 EDS 정보를 바탕으로 자신의 Locality와 비교하여 라우팅:
+Envoy는 받은 EDS 정보를 자신의 Locality와 비교하여 라우팅합니다:
 
 ```bash
 # Envoy의 Locality 확인 (자신이 실행 중인 노드 기준)
@@ -198,7 +198,7 @@ kubectl get nodes -L topology.kubernetes.io/zone,topology.kubernetes.io/region
 # ip-10-0-3-30.ec2.internal      us-east-1c   us-east-1
 ```
 
-EC2 기반 Node는 cloud/bootstrap 통합이 AWS 인스턴스 배치 정보를 사용합니다. `spec.providerID`는 provider 인스턴스 식별자이며 EC2 instance ID 자체가 아닙니다. Workload의 IMDS 접근은 제한될 수 있고 IMDSv2에는 token이 필요합니다. 필요하면 뒤의 읽기 전용 EC2 진단을 사용합니다. Fargate Node는 해당 platform 진단이 필요합니다.
+EC2 기반 Node에서는 cloud/bootstrap 통합이 AWS 인스턴스 배치 정보를 사용합니다. `spec.providerID`는 provider 인스턴스 식별자이며 EC2 instance ID 자체가 아닙니다. Workload의 IMDS 접근은 제한될 수 있고 IMDSv2에는 token이 필요합니다. 필요하면 뒤의 읽기 전용 EC2 진단을 사용합니다. Fargate Node는 해당 platform 진단이 필요합니다.
 
 ## 기본 설정
 

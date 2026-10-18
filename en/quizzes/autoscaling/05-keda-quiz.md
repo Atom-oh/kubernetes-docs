@@ -20,7 +20,7 @@ KEDA (Kubernetes Event-driven Autoscaling) is an open source project that enable
 5. **Cloud Agnostic**: Runs in compatible Kubernetes environments with required APIs, identity and connectivity.
 6. **Deployment Model**: Standard installation includes an operator, metrics API server and admission webhooks.
 
-KEDA2.21 examples use its published Kubernetes1.34–1.36 tested window. Kubernetes1.37 HPA also supports beta scale-to-zero for object/external metrics; zero is not uniquely possible with KEDA.
+KEDA 2.21 examples use its published Kubernetes 1.34–1.36 tested window. Kubernetes 1.37 HPA also supports beta scale-to-zero for object/external metrics; zero is not uniquely possible with KEDA.
 </details>
 
 ## Question 2: KEDA Architecture
@@ -234,7 +234,7 @@ spec:
       desiredReplicas: '50'
 ```
 
-Cron windows supply a replica floor; the HPA chooses the largest recommendation rather than adding them. Scale-to-zero waits for cooldown/controller timing. The second example is an annual November24 schedule, not an automatic Black Friday calculation; Cron has no year field. Review or remove one-off schedules after use.
+Cron windows supply a replica floor; the HPA chooses the largest recommendation rather than adding them. Scale-to-zero waits for cooldown/controller timing. The second example is an annual November 24 schedule, not an automatic Black Friday calculation; Cron has no year field. Review or remove one-off schedules after use.
 </details>
 
 ## Question 7: ScaledJob Configuration
@@ -361,7 +361,7 @@ spec:
   maxReplicaCount: 10
 ```
 
-RPS totals use AverageValue (total/target). Service-wide p95 latency and error ratio use Value (current replicas × metric/target), which is a different feedback loop. These examples assume destination-side metrics for the named namespace and representative nonempty samples. Guard missing/NaN series, bound scaling and test whether added replicas actually help; latency/errors can originate downstream and are often safer alert signals. No production scaling result has been measured.
+RPS totals use AverageValue (total/target). Service-wide p95 latency and error ratio use Value (current replicas × metric/target), which is a different feedback loop. These examples assume destination-side metrics for the named namespace and representative nonempty samples. Guard against missing/NaN series, bound scaling and test whether added replicas actually help; latency/errors can originate downstream and are often safer alert signals. No production scaling result has been measured.
 </details>
 
 ## Question 9: Monitoring and Troubleshooting
@@ -413,7 +413,7 @@ RPS totals use AverageValue (total/target). Service-wide p95 latency and error r
    kubectl get secret <auth-secret> -o json | jq '{name: .metadata.name, type: .type, keys: ((.data // {}) | keys)}'
    ```
 
-The second manager process has been removed: starting another /manager inside an operator Pod is not a connectivity test. Use existing logs, resource conditions and APIService status. The listed KEDA metrics are verified for2.20; HPA replica metrics require kube-state-metrics and a configured scraper.
+The second manager process has been removed: starting another /manager inside an operator Pod is not a connectivity test. Use existing logs, resource conditions and APIService status. The listed KEDA metrics are verified for 2.20; HPA replica metrics require kube-state-metrics and a configured scraper.
 </details>
 
 ## Question 10: Amazon EKS Integration

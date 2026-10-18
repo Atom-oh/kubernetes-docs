@@ -292,7 +292,7 @@ spec:
                     exact: free
 ```
 
-Tier descriptor는 로컬 프록시의 등급별 공유 bucket이며 사용자 한 명마다의 bucket이 아닙니다. 인증된 upstream이 외부 tier 헤더를 제거하고 신뢰할 등급을 넣어야 하며 서비스로의 우회 경로도 막아야 합니다. 없거나 알 수 없는 등급은 제한된 fallback을 사용합니다. Premium 헤더 자체가 인증은 아닙니다.
+Tier descriptor는 로컬 프록시의 등급별 공유 bucket이며 사용자별 bucket이 아닙니다. 인증된 upstream이 외부 tier 헤더를 제거하고 신뢰할 등급을 넣어야 하며 서비스로의 우회 경로도 막아야 합니다. 등급이 없거나 알 수 없는 경우에는 제한된 fallback을 사용합니다. Premium 헤더 자체가 인증은 아닙니다.
 
 ## 글로벌 Rate Limiting
 

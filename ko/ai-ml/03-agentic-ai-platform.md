@@ -51,7 +51,7 @@ MIG는 지원 장치에서 GPU instance를 분할하며, 같은 MIG instance를 
 
 GPU Operator의 Helm values는 ConfigMap/HelmRelease 매니페스트와 다릅니다. Flux HelmRelease를 helm --values에 넣으면 원하는 설정이 적용되지 않습니다. MIG 설정에는 manager의 ConfigMap 참조, MIG profile 선택 node label과 device plugin 전략이 맞아야 합니다. device-plugin.config node label 값은 ConfigMap 이름이 아닌 내부 configuration key입니다. MIG 재구성은 실행 workload를 방해할 수 있어 별도 운영 절차가 필요하며 이번 검토에서는 실행하지 않았습니다.
 
-가격은 리전·OS·구매 방식·시점·할당량 조건을 명시해 확인해야 합니다. 이전 표의 출처 없는 시간당 가격과 고정 절감률은 현재 가격으로 사용하지 않습니다. 자체 추론은 GPU 유휴 시간, 스토리지·전송·운영·실패 복구를 포함한 총비용을 실제 처리량으로 나눠 비교하세요.
+가격은 리전·OS·구매 방식·시점·할당량 조건을 명시해 확인해야 합니다. 이전 표의 출처 없는 시간당 가격과 고정 절감률은 현재 가격으로 사용하지 않습니다. 자체 추론에서는 GPU 유휴 시간, 스토리지·전송·운영·실패 복구를 포함한 총비용을 실제 처리량으로 나눠 비교하세요.
 
 ## 3. 모델 서빙 (vLLM)
 
@@ -320,11 +320,11 @@ Token 가격표 기반 추정 비용은 청구서와 다릅니다. cache hit/wri
 
 Ragas 0.4.3은 이번에 함께 설치된 langchain-community 0.4.2에서 제거된 vertexai 모듈을 import하며 실패했습니다. 별도 환경에서 langchain 0.3.27, core 0.3.79, community 0.3.31, openai integration 0.3.35를 고정하면 import와 SingleTurnSample/EvaluationDataset 구성이 통과했습니다. 이를 최신 LangGraph 환경과 무조건 하나로 합치지 마세요.
 
-현재 collection API의 Faithfulness, AnswerRelevancy 등에는 명시적 LLM/embedding adapter가 필요합니다. 이전 ragas.metrics 전역 객체 경로는 deprecated 경고가 있습니다. 평가 실행은 모델 호출·비용과 실패 처리, dataset·judge·prompt revision, missing/NaN 결과 처리가 필요합니다. 이번 검토는 metric import와 schema만 검사했으며0.92 같은 품질 점수를 측정하지 않았습니다.
+현재 collection API의 Faithfulness, AnswerRelevancy 등에는 명시적 LLM/embedding adapter가 필요합니다. 이전 ragas.metrics 전역 객체 경로는 deprecated 경고가 있습니다. 평가 실행에는 모델 호출·비용과 실패 처리, dataset·judge·prompt revision, missing/NaN 결과 처리가 필요합니다. 이번 검토는 metric import와 schema만 검사했으며0.92 같은 품질 점수를 측정하지 않았습니다.
 
 A/B 실험 설정 ConfigMap만 만들어서는 라우팅이 일어나지 않습니다. 실제 consumer/controller, 안정된 실험군 배정, 동일한 권한·데이터 조건, 충분한 표본과 guardrail 지표를 구현해야 합니다. model별 비용·품질 점수를 임의로 정해 “30–50% 절감”을 결과처럼 제시하지 마세요.
 
-금융 상담 같은 예제도 코드의 compliance_check 함수가 법규 준수를 증명하지 않습니다. 인증된 account 범위, 민감 정보 분기와 승인 조건을 단조롭게 결합하고(기존 true를 뒤에서 false로 덮어쓰지 않음), 외부 작업의 멱등성·감사·사람에게 전달할 기준을 설계해야 합니다.
+금융 상담 같은 예제에서도 코드의 compliance_check 함수가 법규 준수를 증명하지 않습니다. 인증된 account 범위, 민감 정보 분기와 승인 조건을 단조롭게 결합하고(기존 true를 뒤에서 false로 덮어쓰지 않음), 외부 작업의 멱등성·감사·사람에게 전달할 기준을 설계해야 합니다.
 
 
 ## 9. 검토 기준과 검증 범위

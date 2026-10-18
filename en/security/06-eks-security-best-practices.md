@@ -176,7 +176,7 @@ A supported Pod SDK uses the local agent path; the agent obtains temporary crede
 
 ### Pod Identity Setup
 
-EKS Auto Mode includes the agent. For other supported platforms, select a currently compatible addon version and manage it through the existing owner. Replace the account/cluster/namespace/ServiceAccount values below and constrain role trust with the intended namespace/ServiceAccount session-tag conditions. Installing the addon and association does not validate SDK compatibility, credential precedence or network access.
+EKS Auto Mode includes the agent. For other supported platforms, select a currently compatible addon version and manage it through the existing owner. Replace the account/cluster/namespace/ServiceAccount values below and constrain role trust with the intended namespace/ServiceAccount session-tag conditions. Installing the addon and creating the association does not validate SDK compatibility, credential precedence or network access.
 
 
 
@@ -480,7 +480,7 @@ python ecr_scan_gate.py --region ap-northeast-2 \
 
 `PUBLISHED_IMAGE_DIGEST` must be the registry-confirmed `sha256:...` value after build/push. Replace the example account/repository and install boto3. Twelve regression tests use real boto3/botocore Stubber and fake time, without AWS requests or actual waiting.
 
-A GitHub Actions integration needs an approved OIDC-trusted role ARN, `permissions: id-token: write`, least-privilege reads, the registry from ECR login outputs, and propagation of the built digest. An undefined `$ECR_REGISTRY`, credential configuration without a role, and a fixed60-second sleep are not a complete workflow. For multi-architecture indexes, define scanning policy for the deployed child digests. Manage exceptions, expiry/ownership and result-freshness requirements separately.
+A GitHub Actions integration needs an approved OIDC-trusted role ARN, `permissions: id-token: write`, least-privilege reads, the registry from ECR login outputs, and propagation of the built digest. An undefined `$ECR_REGISTRY`, credential configuration without a role, and a fixed 60-second sleep are not a complete workflow. For multi-architecture indexes, define scanning policy for the deployed child digests. Manage exceptions, expiry/ownership and result-freshness requirements separately.
 
 Enhanced finding events use `aws.inspector2` / `Inspector2 Finding`, distinct from Basic ECR image-scan events. The [validated alerting CloudFormation example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml) has separate key, permission and receiver prerequisites.
 
@@ -490,7 +490,7 @@ Enhanced finding events use `aws.inspector2` / `Inspector2 Finding`, distinct fr
 
 ### Running kube-bench
 
-The reviewed upstream release is kube-bench **0.16.0**. It includes `eks-1.5.0`, `eks-1.7.0` and `eks-1.8.0`, but not the old example's `eks-1.4.0` directory. Select the CIS EKS edition required by your organization and compatible cluster/node OS/tool support; the highest number is not automatically the right choice. The upstream sample job itself still uses `latest` and1.5.0, so review and pin image digest, profile, host mounts and permissions instead of applying it blindly.
+The reviewed upstream release is kube-bench **0.16.0**. It includes `eks-1.5.0`, `eks-1.7.0` and `eks-1.8.0`, but not the old example's `eks-1.4.0` directory. Select the CIS EKS edition required by your organization and compatible cluster/node OS/tool support; the highest number is not automatically the right choice. The upstream sample job itself still uses `latest` and 1.5.0, so review and pin image digest, profile, host mounts and permissions instead of applying it blindly.
 
 Some checks require host PID/filesystem access and conflict with Restricted application namespaces. Use an approved scanner operating path and record inspected nodes, omissions and warnings. This audit did not execute kube-bench on actual nodes.
 
@@ -524,7 +524,7 @@ Encryption at rest does not stop authorized API reads or a compromised applicati
 
 Bottlerocket is a container-host OS option, not a guarantee that every workload is secure. Verify the supported combination of cluster Kubernetes version, CPU architecture, managed-node-group/Auto Mode model, CNI, storage and agents. Follow managed-node-group bootstrap merge rules instead of blindly overwriting cluster/API/CA settings.
 
-Operate updates/reboots/replacements, control/admin-container access, SSM permissions, image provenance and recovery. The old example's network-buffer sysctls were not evidence of security hardening. AMI type and instance architecture must agree; no node group or OS was executed by this audit.
+Manage updates/reboots/replacements, control/admin-container access, SSM permissions, image provenance and recovery. The old example's network-buffer sysctls were not evidence of security hardening. AMI type and instance architecture must agree; no node group or OS was executed by this audit.
 
 ### Node Security Hardening
 
@@ -554,9 +554,9 @@ A bastion adds its own access, patching and audit responsibilities. Do not defau
 
 ### Namespace-based Multi-tenancy
 
-Namespaces are an administrative scope in a shared cluster, not a complete boundary between mutually hostile tenants. Combine PSS, RBAC, quota, NetworkPolicy, storage, workload identity and node/administrator boundaries. The example uses a Kubernetes1.35 policy baseline; verify compatibility with the actual cluster.
+Namespaces are an administrative scope in a shared cluster, not a complete boundary between mutually hostile tenants. Combine PSS, RBAC, quota, NetworkPolicy, storage, workload identity and node/administrator boundaries. The example uses a Kubernetes 1.35 policy baseline; verify compatibility with the actual cluster.
 
-Same-namespace peers are permitted, while DNS uses the kube-system namespace **and** kube-dns Pod selector in one peer. Both UDP and TCP53 are included. Verify actual DNS labels, NodeLocal DNS, CNI enforcement, other additive policies and hostNetwork/node traffic separately. No live connectivity test was performed.
+Same-namespace peers are permitted, while DNS uses the kube-system namespace **and** kube-dns Pod selector in one peer. Both UDP and TCP 53 are included. Verify actual DNS labels, NodeLocal DNS, CNI enforcement, other additive policies and hostNetwork/node traffic separately. No live connectivity test was performed.
 
 ```yaml
 apiVersion: v1

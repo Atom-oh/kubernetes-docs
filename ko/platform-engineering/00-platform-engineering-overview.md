@@ -6,7 +6,7 @@
 
 ### 정의
 
-Platform Engineering은 **개발자 셀프서비스를 위한 도구, 워크플로우, 인프라를 설계하고 구축하며 운영하는 분야**입니다. 플랫폼 엔지니어링 팀은 개발자가 인프라의 복잡성을 직접 다루지 않고도 애플리케이션을 빠르고 안전하게 배포할 수 있도록 **Internal Developer Platform(IDP)**을 구축합니다.
+Platform Engineering은 **개발자 셀프서비스를 위한 도구, 워크플로우, 인프라를 설계하고 구축하며 운영하는 분야**입니다. 플랫폼 엔지니어링 팀은 개발자가 인프라의 복잡성을 직접 다루지 않고도 애플리케이션을 빠르고 안전하게 배포할 수 있도록 **Internal Developer Platform**(IDP)을 구축합니다.
 
 ### Internal Developer Platform (IDP)
 
@@ -56,7 +56,7 @@ AWS의 platform engineering 상세 가이드는 Start·Advance·Excel로 개선 
 
 #### START: 기반 구축
 
-기초 인프라를 수립하고 보안 가드레일을 설정하는 단계입니다.
+기초 인프라를 구축하고 보안 가드레일을 설정하는 단계입니다.
 
 | 역량 | 설명 | Kubernetes 생태계 매핑 |
 |------|------|----------------------|

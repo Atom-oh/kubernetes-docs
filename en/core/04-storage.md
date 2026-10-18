@@ -334,9 +334,9 @@ RWO restricts writable mounting to one **node**, not one Pod: multiple Pods on t
 
 PVs can have the following reclaim policies:
 
-- **Retain**: When PVC is deleted, PV and data are retained. Administrator must manually clean up.
-- **Delete**: When PVC is deleted, PV and external storage assets are automatically deleted.
-- **Recycle**: When PVC is deleted, data in PV is deleted and PV becomes available again (deprecated).
+- **Retain**: When the PVC is deleted, the PV and data are retained. The administrator must manually clean up.
+- **Delete**: When the PVC is deleted, the PV and external storage assets are automatically deleted.
+- **Recycle**: When the PVC is deleted, data in the PV is deleted and the PV becomes available again (deprecated).
 
 ### PV Status
 
@@ -1121,7 +1121,7 @@ Follow the [EKS driver installation guide](https://docs.aws.amazon.com/eks/lates
 
 #### Create EFS File System
 
-To create an EFS file system, you can use AWS Management Console, AWS CLI, or AWS CloudFormation.
+To create an EFS file system, you can use the AWS Management Console, the AWS CLI, or AWS CloudFormation.
 
 AWS CLI example:
 
@@ -1344,7 +1344,7 @@ spec:
 
 2. **Optimize Storage Capacity**: Allocate sufficient storage capacity considering model size and dataset size.
 
-3. **Network Optimization**: Ensure FSx for Lustre file system and EKS nodes are in the same availability zone.
+3. **Network Optimization**: Ensure the FSx for Lustre file system and EKS nodes are in the same availability zone.
 
 4. **Instance Type Selection**: Use GPU instances (e.g., g5.12xlarge) to optimize vLLM workload performance.
 

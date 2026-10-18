@@ -13,13 +13,13 @@
 
 **Respuesta: B**
 
-El ejemplo de retorno único produce un ObjectRef; ray.get lee su valor.
+El ejemplo que devuelve un único valor produce un ObjectRef; ray.get lee ese valor.
 </details>
 
 2. ¿Todas las tareas de Ray son independientes y no tienen efectos secundarios?
    - A) Sí; Ray nunca rastrea dependencias
    - B) No; se deben considerar las dependencias de ObjectRef, los efectos secundarios y los reintentos
-   - C) Solo los actors devuelven ObjectRefs
+   - C) Solo los actores devuelven ObjectRefs
    - D) Cada función se ejecuta exactamente una vez
 
 <details>
@@ -33,7 +33,7 @@ Una unidad de ejecución sin estado no garantiza pureza ni ejecución exactament
 3. ¿Qué afirmación sobre el estado de un actor es correcta?
    - A) La memoria de la instancia persiste entre llamadas; la recuperación ante fallos es independiente
    - B) Todo el estado es automáticamente duradero
-   - C) Los actors se ejecutan solo en el head
+   - C) Los actores se ejecutan solo en el nodo principal
    - D) Habilitar reinicios restaura la memoria anterior
 
 <details>
@@ -41,12 +41,12 @@ Una unidad de ejecución sin estado no garantiza pureza ni ejecución exactament
 
 **Respuesta: A**
 
-max_restarts vuelve a ejecutar el constructor; no reemplaza la recuperación mediante checkpoints.
+max_restarts vuelve a ejecutar el constructor; no reemplaza la recuperación mediante puntos de control.
 </details>
 
-4. ¿Qué alcance de zero-copy se verificó?
+4. ¿Qué alcance del acceso sin copia (zero-copy) se verificó?
    - A) Todos los objetos de Python y la memoria de GPU
-   - B) Una RAM física compartida por cada nodo
+   - B) Una única memoria RAM física compartida entre todos los nodos
    - C) Vistas de memoria compartida de NumPy de solo lectura en el mismo nodo
    - D) Costo de transferencia de red cero en todos los casos
 
@@ -55,11 +55,11 @@ max_restarts vuelve a ejecutar el constructor; no reemplaza la recuperación med
 
 **Respuesta: C**
 
-La mutación requiere una copia. No lo generalices a otros objetos, GPU ni transferencias entre nodos.
+La mutación requiere una copia. No lo generalice a otros objetos, GPU ni transferencias entre nodos.
 </details>
 
 5. ¿Cuál es el nombre y la función de GCS?
-   - A) Global Control Service; metadatos del clúster, como actors, nodos y placement groups
+   - A) Global Control Service; metadatos del clúster, como actores, nodos y grupos de ubicación (placement groups)
    - B) GPU Copy Store para todos los pesos
    - C) Global Control Store; el único propietario de todos los metadatos de ObjectRef
    - D) Reemplazo del servidor de API de Kubernetes
@@ -72,10 +72,10 @@ La mutación requiere una copia. No lo generalices a otros objetos, GPU ni trans
 Los metadatos de propiedad de objetos pertenecen al proceso que crea el ObjectRef original, no universalmente al GCS.
 </details>
 
-6. ¿Pueden dos nodos con una CPU libre cada uno ejecutar una tarea de dos CPU?
+6. ¿Pueden dos nodos con una CPU libre cada uno ejecutar una tarea que requiere dos CPU?
    - A) Siempre, porque su suma es dos
    - B) Ray divide automáticamente la tarea por la mitad
-   - C) No; la tarea debe caber en un único nodo viable
+   - C) No; la tarea debe caber en un único nodo con recursos suficientes
    - D) Los requisitos de CPU nunca importan si hay memoria disponible
 
 <details>
@@ -83,13 +83,13 @@ Los metadatos de propiedad de objetos pertenecen al proceso que crea el ObjectRe
 
 **Respuesta: C**
 
-La selección a nivel de clúster sigue dependiendo de la viabilidad de recursos a nivel de nodo.
+La selección a nivel de clúster sigue dependiendo de que los recursos de un nodo sean suficientes.
 </details>
 
 7. ¿Qué significa num_cpus=1?
-   - A) El SO fija todos los threads a un core
-   - B) Un requisito lógico de scheduling/admisión de Ray, independiente de los límites del SO
-   - C) Un core físico dedicado garantizado
+   - A) El SO fija todos los hilos a un núcleo
+   - B) Un requisito lógico de planificación y admisión de Ray, independiente de los límites del SO
+   - C) Un núcleo físico dedicado garantizado
    - D) Un límite automático de memoria de GPU
 
 <details>
@@ -97,12 +97,12 @@ La selección a nivel de clúster sigue dependiendo de la viabilidad de recursos
 
 **Respuesta: B**
 
-Los límites del contenedor y la configuración de threads de las bibliotecas son independientes.
+Los límites del contenedor y la configuración de hilos de las bibliotecas son independientes.
 </details>
 
 8. ¿Qué hace KubeRay?
    - A) Elige automáticamente Train, Tune o Serve para la aplicación
-   - B) Reconcilia los CR de Ray y los ciclos de vida de los Pod en Kubernetes
+   - B) Reconcilia los recursos personalizados de Ray y los ciclos de vida de los pods en Kubernetes
    - C) Reemplaza kube-scheduler
    - D) Crea una nueva instancia EC2 para cada tarea de Ray
 
@@ -111,7 +111,7 @@ Los límites del contenedor y la configuración de threads de las bibliotecas so
 
 **Respuesta: B**
 
-El scheduling del trabajo de Ray, la ubicación de Pod y el aprovisionamiento de EC2 son capas independientes.
+La planificación del trabajo de Ray, la ubicación de los pods y el aprovisionamiento de EC2 son capas independientes.
 </details>
 
 ## Preguntas de respuesta corta
@@ -121,15 +121,15 @@ El scheduling del trabajo de Ray, la ubicación de Pod y el aprovisionamiento de
 <details>
 <summary>Mostrar respuesta</summary>
 
-Una instancia remota explícita posee el estado. No dependas para la corrección de la reutilización incidental de la caché global del task-worker. Los fallos de actor siguen requiriendo un diseño de checkpoints y recuperación.
+Una instancia remota explícita posee el estado. No dependa de que los workers de tareas reutilicen de forma incidental una caché global para garantizar la corrección. Los fallos de los actores siguen requiriendo un diseño de puntos de control y recuperación.
 </details>
 
-10. ¿Por qué separar la recuperación de GCS de la recuperación de objetos y actors de la aplicación?
+10. ¿Por qué separar la recuperación de GCS de la recuperación de objetos y actores de la aplicación?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Los metadatos duraderos del clúster, la recuperación de propiedad/linaje/valor de objetos y los checkpoints de actors resuelven problemas diferentes. La configuración de Redis o RocksDB alpha por sí sola no restaura todos los valores ni el estado de la aplicación.
+Los metadatos duraderos del clúster, la recuperación de la propiedad, el linaje y los valores de los objetos, y los puntos de control de los actores resuelven problemas distintos. La configuración de Redis o de RocksDB en fase alfa, por sí sola, no restaura todos los valores ni el estado de la aplicación.
 </details>
 
 ---

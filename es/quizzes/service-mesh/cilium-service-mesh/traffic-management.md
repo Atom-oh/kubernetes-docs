@@ -1,209 +1,195 @@
-# Cuestionario sobre la gestión de tráfico de Cilium Service Mesh
+# Cuestionario de gestión de tráfico de Cilium Service Mesh
 
-Este cuestionario evalúa tu comprensión de la gestión de tráfico L7, CiliumEnvoyConfig, balanceo de carga, división de tráfico e integración de Gateway API en Cilium Service Mesh.
+Revisado con Cilium 1.20.3 y Gateway API 1.6.3. Consulta la [guía de tráfico](../../../service-mesh/cilium-service-mesh/02-traffic-management.md) para ver ejemplos completos y referencias primarias.
 
-## Preguntas del cuestionario
+### 1. ¿Qué filtro de Envoy define reglas de enrutamiento HTTP en CiliumEnvoyConfig?
 
-### 1. ¿Qué filtro de Envoy se utiliza para definir reglas de enrutamiento HTTP en CiliumEnvoyConfig?
-
-A. envoy.filters.network.tcp_proxy
-B. envoy.filters.network.http_connection_manager
-C. envoy.filters.http.fault
-D. envoy.filters.network.redis_proxy
+- **A.** `envoy.filters.network.tcp_proxy`
+- **B.** `envoy.filters.network.http_connection_manager`
+- **C.** `envoy.filters.http.fault`
+- **D.** `envoy.filters.network.redis_proxy`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. envoy.filters.network.http_connection_manager**
+**Respuesta: B. `envoy.filters.network.http_connection_manager`**
 
-**Explicación:**
-El HTTP Connection Manager es el filtro principal de Envoy para procesar tráfico HTTP. Dentro de este filtro, puedes definir reglas de enrutamiento basadas en rutas, encabezados y métodos mediante route_config.
+HTTP Connection Manager procesa tráfico HTTP y obtiene las rutas de `route_config` en línea o de RDS. También se necesitan el filtro HTTP router y los recursos Cluster referenciados; enumerar solo los Services backend no basta.
 
 </details>
 
-### 2. ¿Qué campo NO está disponible al definir reglas HTTP L7 en CiliumNetworkPolicy?
+### 2. ¿Qué campo no se puede usar para definir reglas HTTP L7 en CiliumNetworkPolicy?
 
-A. method
-B. path
-C. headers
-D. body
+- **A.** `method`
+- **B.** `path`
+- **C.** `headers`
+- **D.** `body`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. body**
+**Respuesta: D. `body`**
 
-**Explicación:**
-Las reglas HTTP L7 de CiliumNetworkPolicy permiten filtrar según method (método HTTP), path (ruta URL) y headers (encabezados HTTP). body (cuerpo de la solicitud) no es compatible con las reglas L7.
+La política HTTP puede coincidir con el método, la ruta y los encabezados, incluidos los campos estructurados `headerMatches`. No autoriza campos arbitrarios del cuerpo de una solicitud. La autenticación y la autorización a nivel de aplicación se gestionan por separado.
 
 </details>
 
-### 3. ¿Cuál NO es un apiKey válido al aplicar políticas Kafka L7 en Cilium?
+### 3. ¿Cómo se controla el acceso por tema de Kafka con Cilium 1.20.3?
 
-A. produce
-B. fetch
-C. delete
-D. metadata
+- **A.** Usando sin cambios `rules.kafka` de Cilium
+- **B.** Inspeccionando mensajes Kafka con una regla HTTP sobre el cuerpo
+- **C.** Usando ACL del broker Kafka y, por separado, una política L4 para controlar la conectividad
+- **D.** Eliminando todas las reglas y suponiendo que se conservan los permisos por tema
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. delete**
+**Respuesta: C. Usando ACL del broker Kafka y, por separado, una política L4 para controlar la conectividad**
 
-**Explicación:**
-Las políticas Kafka L7 de Cilium admiten apiKeys como produce (producción de mensajes), fetch (consumo de mensajes), metadata (consultas de metadatos), offsetcommit, offsetfetch, joingroup, etc. 'delete' no es una clave de API de Kafka compatible.
+El esquema de reglas L7 de Cilium 1.20.3 admite HTTP y DNS, y rechaza el objeto heredado `rules.kafka`. Usa una política de red L4 para la conectividad al broker y Kafka TLS/SASL con ACL del broker para temas, grupos y operaciones. Eliminar reglas Kafka obsoletas no conserva la autorización por tema.
 
 </details>
 
-### 4. ¿Cuál es la ventaja del hash Maglev en el balanceo de carga L4 basado en eBPF de Cilium?
+### 4. ¿Qué proporciona Maglev para el balanceo eBPF de Cilium en los casos admitidos?
 
-A. Distribución completamente aleatoria
-B. Persistencia de sesión incluso cuando cambian los backends
-C. Menor uso de memoria
-D. Compatibilidad con enrutamiento L7
+- **A.** Distribución completamente aleatoria
+- **B.** Selección consistente de backends con menos reasignaciones cuando cambian los miembros
+- **C.** Garantía de que sobrevivan las conexiones a backends eliminados
+- **D.** El menor consumo de memoria posible
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Persistencia de sesión incluso cuando cambian los backends**
+**Respuesta: B. Selección consistente de backends con menos reasignaciones cuando cambian los miembros**
 
-**Explicación:**
-Maglev es un algoritmo de hash consistente que mantiene la mayoría de las conexiones existentes en el mismo backend incluso cuando se agregan o eliminan servidores backend. Esto es útil para aplicaciones con estado o cuando se requiere afinidad de sesión.
+Maglev minimiza la reasignación de flujos cuando cambia el conjunto de backends para el balanceo externo admitido. Es independiente de la afinidad de sesión ClientIP y no conserva conexiones a backends no disponibles. La ruta este-oeste a nivel de socket de Cilium no usa esta selección Maglev.
 
 </details>
 
-### 5. ¿Cuál es la forma correcta de configurar la división de tráfico basada en pesos en Gateway API HTTPRoute?
+### 5. ¿Cuál es la forma correcta de configurar la división del tráfico por peso en HTTPRoute de Gateway API?
 
-A. Usar el campo split
-B. Especificar el campo weight en backendRefs
-C. Usar trafficPolicy
-D. Usar destinationRule
+- **A.** Usar el campo `split`
+- **B.** Especificar el campo `weight` en `backendRefs`
+- **C.** Usar `trafficPolicy`
+- **D.** Usar `destinationRule`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Especificar el campo weight en backendRefs**
+**Respuesta: B. Especificar el campo `weight` en `backendRefs`**
 
-**Explicación:**
-En Gateway API HTTPRoute, la división de tráfico se configura especificando el campo weight para cada backend en el array backendRefs. Por ejemplo, usar `weight: 90` y `weight: 10` divide el tráfico en una proporción de 90:10.
+Los pesos de `backendRefs` expresan probabilidades relativas de selección. Los valores 90 y 10 expresan una proporción de 90:10, no un recuento exacto en cada grupo de diez solicitudes ni una garantía de sesión por usuario. Los Services, puertos y listener principal deben ser válidos y aceptar la ruta.
 
 </details>
 
-### 6. ¿Cuál NO es una condición válida para el campo retry_on al configurar políticas de reintento en CiliumEnvoyConfig?
+### 6. ¿Cuál no es una condición válida para el campo `retry_on` al configurar reintentos en CiliumEnvoyConfig?
 
-A. 5xx
-B. reset
-C. timeout
-D. connect-failure
+- **A.** `5xx`
+- **B.** `reset`
+- **C.** `timeout`
+- **D.** `connect-failure`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. timeout**
+**Respuesta: C. `timeout`**
 
-**Explicación:**
-Las condiciones retry_on de Envoy incluyen 5xx (errores del servidor), reset (restablecimiento de conexión), connect-failure (fallo de conexión), retriable-4xx, etc. 'timeout' no es una condición retry_on directa; per_try_timeout se utiliza para establecer el tiempo de espera de cada intento de reintento.
+`timeout` no es un valor de `retry_on`. `per_try_timeout` limita cada intento hacia el upstream, incluido el primero; no es un intervalo de espera entre reintentos. La guía habilita reintentos solo para operaciones GET seguras, desactiva explícitamente los de otros métodos y elimina las anulaciones de reintento o tiempo de espera de Envoy proporcionadas por el cliente antes del enrutamiento.
 
 </details>
 
-### 7. ¿Cuál es el principal beneficio de usar políticas DNS L7 en Cilium?
+### 7. ¿Cuál es la función principal de las políticas DNS L7 de Cilium?
 
-A. Mejor rendimiento del servidor DNS
-B. Permitir únicamente consultas DNS para dominios específicos
-C. Invalidación de la caché DNS
-D. Compatibilidad con DNS sobre HTTPS
+- **A.** Mejorar el rendimiento del servidor DNS
+- **B.** Permitir solo consultas DNS para dominios específicos
+- **C.** Invalidar la caché DNS
+- **D.** Admitir DNS sobre HTTPS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Permitir únicamente consultas DNS para dominios específicos**
+**Respuesta: B. Permitir solo consultas DNS para dominios específicos**
 
-**Explicación:**
-Las políticas DNS L7 permiten restringir qué dominios pueden consultar las cargas de trabajo. Mediante matchPattern o matchName, puedes garantizar que solo se consulten los dominios permitidos, evitando la exfiltración de datos o el acceso a dominios maliciosos.
+Las reglas DNS limitan los nombres consultados en el resolver de confianza seleccionado. Por sí solas no permiten conexiones a las direcciones devueltas ni garantizan impedir la exfiltración o DoH. Agrega políticas separadas de destino y puerto, y considera UDP/TCP y el comportamiento real del resolver y de su lista de búsqueda.
 
 </details>
 
-### 8. ¿Qué filtro se utiliza para configurar Rate Limiting local en CiliumEnvoyConfig?
+### 8. ¿Qué filtro configura la limitación de tasa local en CiliumEnvoyConfig?
 
-A. envoy.filters.http.ratelimit
-B. envoy.filters.http.local_ratelimit
-C. envoy.filters.http.bandwidth_limit
-D. envoy.filters.http.throttle
+- **A.** `envoy.filters.http.ratelimit`
+- **B.** `envoy.filters.http.local_ratelimit`
+- **C.** `envoy.filters.http.bandwidth_limit`
+- **D.** `envoy.filters.http.throttle`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. envoy.filters.http.local_ratelimit**
+**Respuesta: B. `envoy.filters.http.local_ratelimit`**
 
-**Explicación:**
-Rate Limiting local utiliza el filtro envoy.filters.http.local_ratelimit. Este filtro limita las tasas de solicitudes mediante la configuración token_bucket. envoy.filters.http.ratelimit se utiliza para Rate Limiting global que se comunica con servicios externos de Rate Limit.
+`envoy.filters.http.local_ratelimit` usa un bucket de tokens con fracciones `enabled` y `enforced` explícitas. Esas fracciones empiezan en 0 %, incluidas las anulaciones por ruta. Los ejemplos usan un bucket por proceso de Envoy, compartido por sus hilos de trabajo; no es una cuota para todo el clúster ni por usuario.
 
 </details>
 
-### 9. ¿Qué tipo de filtro se utiliza para configurar la redirección HTTP -> HTTPS en Gateway API?
+### 9. ¿Qué tipo de filtro configura una redirección de HTTP a HTTPS en Gateway API?
 
-A. URLRewrite
-B. RequestMirror
-C. RequestRedirect
-D. ResponseHeaderModifier
+- **A.** `URLRewrite`
+- **B.** `RequestMirror`
+- **C.** `RequestRedirect`
+- **D.** `ResponseHeaderModifier`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. RequestRedirect**
+**Respuesta: C. `RequestRedirect`**
 
-**Explicación:**
-En Gateway API, el filtro RequestRedirect se utiliza para redirigir de HTTP a HTTPS. Establecer scheme: https y statusCode: 301 configura una redirección permanente.
+`RequestRedirect` puede devolver una redirección con `scheme: https`. Una respuesta 301 es permanente, pero algunos clientes pueden cambiar el método de la solicitud. Configura por separado la ruta del listener HTTP y prepara un listener HTTPS y su certificado operativos; evita redirigir silenciosamente operaciones de escritura con una semántica que cambie el método.
 
 </details>
 
-### 10. ¿Cuál es el propósito del mirroring de tráfico (shadowing) en Cilium Service Mesh?
+### 10. ¿Para qué sirve el espejado de tráfico en Cilium Service Mesh?
 
-A. Cifrado de tráfico
-B. Replicar tráfico de producción en el entorno de pruebas
-C. Optimización del balanceo de carga
-D. Invalidación de caché
+- **A.** Cifrar el tráfico
+- **B.** Enviar una copia del tráfico de producción a un entorno de prueba
+- **C.** Optimizar el balanceo de carga
+- **D.** Invalidar la caché
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Replicar tráfico de producción en el entorno de pruebas**
+**Respuesta: B. Enviar una copia del tráfico de producción a un entorno de prueba**
 
-**Explicación:**
-El mirroring de tráfico envía una copia del tráfico de producción a otro Service (por ejemplo, a un entorno de pruebas con una nueva versión). Esto permite probar nuevas versiones con tráfico real sin afectar a los usuarios. Se configura mediante request_mirror_policies.
+`request_mirror_policies` envía una copia a un backend de prueba en sombra e ignora su respuesta al determinar el resultado que recibe el cliente. Aun así, copia datos, consume recursos y puede causar efectos secundarios. La guía espeja solicitudes GET/HEAD aprobadas a un backend aislado y deja sin espejar los otros métodos; no garantiza que el usuario no note ningún impacto.
 
 </details>
 
-### 11. ¿Cuál es el rol de total_weight en una implementación canary que usa weighted_clusters en CiliumEnvoyConfig?
+### 11. ¿Cómo determina Envoy actual el total de pesos para `weighted_clusters`?
 
-A. Limitar el número total de solicitudes
-B. Definir el valor de referencia para la suma de pesos
-C. Configuración de tiempo de espera
-D. Límite de conexiones
+- **A.** Limita la cantidad total de solicitudes
+- **B.** Usa la suma de los pesos de Cluster; `total_weight` está obsoleto
+- **C.** Trata los pesos como tiempos de espera
+- **D.** Exige que cada solicitud use el Cluster de menor peso
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Definir el valor de referencia para la suma de pesos**
+**Respuesta: B. Usa la suma de los pesos de Cluster; `total_weight` está obsoleto**
 
-**Explicación:**
-total_weight define el valor de referencia para la suma de los pesos de los clústeres individuales. Por ejemplo, establecer total_weight: 100 y asignar 90 al clúster A y 10 al clúster B genera respectivamente un 90 % y un 10 % de tráfico.
+Envoy actual usa la suma de los pesos individuales de Cluster. `total_weight` está obsoleto y se omite en el ejemplo actualizado. Los pesos 90 y 10 expresan una proporción de selección de 90:10; no implementan promoción o reversión automática ni una cuota estricta de solicitudes por intervalo.
 
 </details>
 
-### 12. ¿Qué campo se utiliza en la sección matches para configurar el enrutamiento basado en encabezados en Gateway API HTTPRoute?
+### 12. ¿Qué campo de la sección `matches` configura coincidencias por encabezado en HTTPRoute de Gateway API?
 
-A. headerMatchers
-B. headers
-C. requestHeaders
-D. matchHeaders
+- **A.** `headerMatchers`
+- **B.** `headers`
+- **C.** `requestHeaders`
+- **D.** `matchHeaders`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. headers**
+**Respuesta: B. `headers`**
 
-**Explicación:**
-En la sección matches de HTTPRoute, el campo headers se utiliza para configurar el enrutamiento basado en encabezados. Al especificar name y value para cada encabezado, puedes enrutar las solicitudes con valores de encabezado específicos a diferentes backends.
+`HTTPRoute.matches.headers` expresa las condiciones de coincidencia de encabezados. En una misma coincidencia, varios encabezados se combinan con AND; las reglas de precedencia de ruta y encabezado de Gateway API determinan cuál se selecciona. Un encabezado de versión o canary enviado por el cliente no autentica al usuario.
 
 </details>

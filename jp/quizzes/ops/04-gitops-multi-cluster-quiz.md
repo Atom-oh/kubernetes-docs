@@ -1,61 +1,58 @@
-# GitOps Multi-Cluster クイズ
+# GitOps マルチクラスタークイズ
 
-> **関連ドキュメント**: [GitOps Multi-Cluster](../../ops/04-gitops-multi-cluster.md)
+> **関連ドキュメント**: [GitOps マルチクラスター](../../ops/04-gitops-multi-cluster.md)
 
 ## 選択問題
 
-### 1. multi-cluster GitOps における hub-spoke model (ハブ＆スポークモデル) とは何ですか？
+### 1. マルチクラスター GitOps におけるハブ・スポークモデルとは何ですか？
 
-- A) network topology のパターン
-- B) central management cluster が複数の workload cluster を制御するモデル
-- C) data replication 戦略
-- D) load balancing アルゴリズム
+- A) ネットワークトポロジーのパターン
+- B) 中央の管理クラスターが複数のワークロードクラスターを管理するモデル
+- C) データレプリケーション方式
+- D) ロードバランシングアルゴリズム
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) central management cluster が複数の workload cluster を制御するモデル**
+**解答: B) 中央の管理クラスターが複数のワークロードクラスターを管理するモデル**
 
-**解説:**
-hub-spoke model では、中央の「hub」cluster が ArgoCD を実行し、複数の「spoke」workload cluster への deployment を管理します。これにより、workload を cluster 間で分離したまま、GitOps operations を一元化できます。
+ハブ・スポークモデルでは、中央の「ハブ」クラスターで Argo CD を動かし、複数の「スポーク」ワークロードクラスターへのデプロイを管理します。GitOps 運用を一元化しながら、各クラスターのワークロードは分離できます。
 
 </details>
 
-### 2. ArgoCD はどのように High Availability (HA) を実現しますか？
+### 2. Argo CD はどのように高可用性（HA）を実現しますか？
 
-- A) auto-restart 付きの単一 replica を実行する
-- B) leader election を使用して各 component の複数 replica を実行する
-- C) 外部 database replication を使用する
-- D) 複数 region にまたがって deploy する
+- A) 自動再起動を設定してレプリカを 1 つだけ動かす
+- B) コンポーネントごとのレプリカ構成、コントローラーのシャーディング、障害に強い配置を組み合わせる
+- C) 外部データベースのレプリケーションを使う
+- D) 複数リージョンにデプロイする
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) leader election を使用して各 component の複数 replica を実行する**
+**解答: B) コンポーネントごとのレプリカ構成、コントローラーのシャーディング、障害に強い配置を組み合わせる**
 
-**解説:**
-ArgoCD HA は、application-controller、repo-server、server component の複数 replica を deploy します。application-controller は leader election を使用して、各 application を処理する instance が 1 つだけになるようにし、他の instance は待機します。
+Application Controller は対象クラスターをシャーディングし、他のレプリカをすべて待機状態にするわけではありません。ApplicationSet は別のリーダー選出を使い、Server はステートレスです。Redis HA、配置、キャパシティ、PDB はそれぞれ異なる障害に対処します。レプリカを増やすだけで可用性が保証されるわけではありません。
 
 </details>
 
-### 3. ArgoCD における ApplicationSet とは何ですか？
+### 3. Argo CD の ApplicationSet とは何ですか？
 
-- A) 手動で作成された Application のグループ
-- B) generator に基づいて Application を動的に生成する template
-- C) Application configuration の backup
-- D) Helm chart の collection
+- A) 手動で作成した Application のグループ
+- B) generator に基づいて Application を動的に生成するテンプレート
+- C) Application 設定のバックアップ
+- D) Helm chart のコレクション
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) generator に基づいて Application を動的に生成する template**
+**解答: B) generator に基づいて Application を動的に生成するテンプレート**
 
-**解説:**
-ApplicationSet は、generator (List、Cluster、Git、Matrix など) を使用して、単一の template から複数の ArgoCD Application を自動的に作成および管理する controller です。これにより、スケーラブルな multi-cluster および multi-environment deployment が可能になります。
+ApplicationSet は List、Cluster、Git、Matrix などの generator を使い、1 つのテンプレートから複数の Argo CD Application を自動作成・管理するコントローラーです。マルチクラスターや複数環境へのデプロイを拡張しやすくします。
 
 </details>
 
-### 4. 登録済み cluster secret に基づいて Application を作成する ApplicationSet generator はどれですか？
+### 4. 登録済みクラスターの Secret に基づいて Application を作成する ApplicationSet generator はどれですか？
 
 - A) List generator
 - B) Git generator
@@ -63,113 +60,106 @@ ApplicationSet は、generator (List、Cluster、Git、Matrix など) を使用�
 - D) Matrix generator
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C) Cluster generator**
+**解答: C) Cluster generator**
 
-**解説:**
-Cluster generator は、ArgoCD に登録されたすべての cluster (secret として保存) を反復処理し、それぞれに対して Application を生成します。これにより、ApplicationSet を変更せずに新しい cluster へ自動 deploy できます。
+Cluster generator は、構成した selector で登録済みクラスターを選び、そのメタデータを渡します。既定のローカルクラスターには Secret がない場合があるため、Secret のラベルによる選択では除外されることがあります。新しいクラスターも、登録内容とラベルが selector に一致した場合にだけ選ばれます。
 
 </details>
 
-### 5. IAM Identity Center (SSO) は ArgoCD とどのように統合できますか？
+### 5. IAM Identity Center（SSO）を Argo CD と統合するにはどうしますか？
 
-- A) 直接 database connection
-- B) group-based RBAC を使用した SAML または OIDC authentication
-- C) SSH key authentication
-- D) API key management
+- A) データベースに直接接続する
+- B) Dex 経由の SAML を使い、検証済み assertion 属性を Argo CD RBAC に割り当てる
+- C) SSH 鍵で認証する
+- D) API キーを管理する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) group-based RBAC を使用した SAML または OIDC authentication**
+**解答: B) Dex 経由の SAML を使い、検証済み assertion 属性を Argo CD RBAC に割り当てる**
 
-**解説:**
-ArgoCD は SSO integration のために SAML と OIDC をサポートしています。IAM Identity Center group を ArgoCD RBAC role に map できるため、permission を identity provider 経由で制御する一元的な access management が可能になります。
+この章では、文書化された Identity Center SAML と Dex の連携方法を使います。SAML の URL は OIDC issuer ではありません。グループを割り当てただけで groups claim が届くとは限らず、上流ガイドではグループ属性マッピングを回避策として説明しています。最小構成の例では、検証済みのメール ID を明示的にマッピングします。
 
 </details>
 
 ### 6. GitOps における External Secrets Operator の目的は何ですか？
 
-- A) git repository を暗号化する
-- B) external provider (AWS Secrets Manager) から Kubernetes へ secret を同期する
-- C) TLS certificate を rotate する
-- D) git access 用の SSH key を管理する
+- A) Git リポジトリを暗号化する
+- B) AWS Secrets Manager などの外部プロバイダーから Kubernetes に Secret を同期する
+- C) TLS 証明書をローテーションする
+- D) Git アクセス用の SSH 鍵を管理する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) external provider (AWS Secrets Manager) から Kubernetes へ secret を同期する**
+**解答: B) AWS Secrets Manager などの外部プロバイダーから Kubernetes に Secret を同期する**
 
-**解説:**
-External Secrets Operator は、AWS Secrets Manager、HashiCorp Vault、Azure Key Vault などの external secret management system から Kubernetes secret を自動的に作成します。これにより、GitOps workflow を維持しながら、機密 data を git の外に置くことができます。
+External Secrets Operator は、AWS Secrets Manager、HashiCorp Vault、Azure Key Vault などの外部シークレット管理システムから Kubernetes Secret を自動作成します。機密データを Git の外に置いたまま、GitOps のワークフローを維持できます。
 
 </details>
 
-### 7. ArgoCD project configuration で `sourceRepos` は何を制限しますか？
+### 7. Argo CD の Project 設定にある `sourceRepos` は何を制限しますか？
 
-- A) deployment の target cluster
-- B) application に許可される git repository
-- C) Namespace selection
-- D) Resource quota
+- A) デプロイ先のクラスター
+- B) Application のソースとして許可する Git リポジトリ
+- C) namespace の選択
+- D) リソースクォータ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) application に許可される git repository**
+**解答: B) Application のソースとして許可する Git リポジトリ**
 
-**解説:**
-ArgoCD Project の `sourceRepos` field は、その project 内の Application の source として使用できる git repository を指定します。これにより、未承認の repository access を防止する security boundary が提供されます。
+Argo CD Project の `sourceRepos` フィールドは、その Project 内の Application がソースとして使える Git リポジトリを制限します。ただし、リポジトリの認証情報、デプロイ先の RBAC、信頼できないコードのサンドボックスを提供するものではありません。
 
 </details>
 
-### 8. ApplicationSet で Matrix generator を使用する利点は何ですか？
+### 8. ApplicationSet で Matrix generator を使う利点は何ですか？
 
-- A) 数学的計算を実行する
-- B) 複数の generator を組み合わせて parameter の Cartesian product を作成する
-- C) application manifest を暗号化する
-- D) YAML syntax を検証する
+- A) 数学的な計算を行う
+- B) 2 つの子 generator を組み合わせ、一致するパラメーターの組を生成する
+- C) Application manifest を暗号化する
+- D) YAML 構文を検証する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 複数の generator を組み合わせて parameter の Cartesian product を作成する**
+**解答: B) 2 つの子 generator を組み合わせ、一致するパラメーターの組を生成する**
 
-**解説:**
-Matrix generator は 2 つ以上の generator を組み合わせ、それらの output のすべての組み合わせに対して Application を作成します。たとえば、Cluster generator と List generator を組み合わせると、複数の service を複数の cluster に deploy できます。
+Matrix generator の子 generator はちょうど 2 つです。対応するキーと、サポートされるネストの制限に従って、両方の出力パラメーターを組み合わせます。たとえば Cluster generator と List generator を組み合わせると、複数のサービスを複数のクラスターにデプロイできます。
 
 </details>
 
-### 9. GitOps を通じて NodePools を管理する場合、重要な考慮事項は何ですか？
+### 9. GitOps で NodePool を管理するとき、重要な考慮事項は何ですか？
 
-- A) NodePools は GitOps 経由では管理できない
-- B) 実行中の workload を中断しないよう、変更は段階的に行うべきである
-- C) NodePools は ArgoCD と同じ namespace に存在する必要がある
-- D) Spot instance のみ管理できる
+- A) NodePool は GitOps で管理できない
+- B) 実行中のワークロードへの影響を避けるため、変更を慎重に進める
+- C) NodePool は Argo CD と同じ namespace に置かなければならない
+- D) Spot インスタンスだけを管理できる
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 実行中の workload を中断しないよう、変更は段階的に行うべきである**
+**解答: B) 実行中のワークロードへの影響を避けるため、変更を慎重に進める**
 
-**解説:**
-GitOps を通じた NodePool の変更は、node replacement を引き起こす可能性があるため、慎重に管理する必要があります。Progressive Sync や node management 用の個別 Application などの戦略を使用すると、中断を避けるのに役立ちます。
+GitOps 経由の NodePool 変更は、ノード置き換えを引き起こすことがあるため、慎重に管理してください。変更内容、置き換え後のキャパシティ、適用される disruption budget、削除時の動作を確認します。インフラ用 Application を分け、手動で同期する方法は意図しない変更を抑えるのに役立ちますが、どの同期方式でもノード置き換えによる中断がなくなる保証はありません。
 
 </details>
 
-### 10. remote cluster を ArgoCD に追加する推奨方法は何ですか？
+### 10. リモートクラスターを Argo CD に追加する推奨方法は何ですか？
 
-- A) ArgoCD ConfigMap を直接編集する
-- B) `argocd cluster add` を使用する、または credential を含む cluster Secret を作成する
-- C) 各 cluster に ArgoCD を install する
-- D) kubectl port-forward を使用する
+- A) Argo CD ConfigMap を直接編集する
+- B) `argocd cluster add` を使うか、認証情報を含むクラスター Secret を作成する
+- C) 各クラスターに Argo CD をインストールする
+- D) `kubectl port-forward` を使う
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) `argocd cluster add` を使用する、または credential を含む cluster Secret を作成する**
+**解答: B) `argocd cluster add` を使うか、認証情報を含むクラスター Secret を作成する**
 
-**解説:**
-remote cluster は、`argocd cluster add` CLI command を使用するか、cluster の API server URL と credential を含む Secret を作成することで追加します。ArgoCD はこれらの credential を使用して、application を remote cluster に deploy および同期します。
+`argocd cluster add` CLI コマンドを使うか、クラスターの API server URL と認証情報を含む Secret を作成して、リモートクラスターを登録します。CLI は接続先の RBAC を変更する場合があります。宣言的な AWS 構成では、ロールの信頼関係、EKS Access Entry／RBAC、実際のエンドポイントと CA 情報、ネットワーク接続が事前に必要です。Secret を作成しただけでは、これらの前提条件は満たされません。
 
 </details>

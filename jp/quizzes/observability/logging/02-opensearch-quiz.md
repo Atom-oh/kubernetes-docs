@@ -1,156 +1,156 @@
 # Amazon OpenSearch Service クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 
-[ガイド](../../../observability/logging/02-opensearch.md)の managed domain および collector の例に基づいています。
+[ガイド](../../../observability/logging/02-opensearch.md)にあるマネージドドメインとデータ収集の例に基づいています。
 
 ---
 
 1. OpenSearch と Amazon OpenSearch Service の違いを正しく説明しているのはどれですか？
 
-   - A) すべての Elasticsearch client/plugin が互換のまま利用できる
-   - B) AWS はすべての upstream リリースを即座にサポートする
-   - C) OpenSearch は Apache-2.0 のプロジェクトであり、managed service は選定されたエンジンバージョンをサポートする
-   - D) このサービスは Kibana のホスティング製品にすぎない
+   - A) すべての Elasticsearch クライアントやプラグインとの互換性が保たれる
+   - B) AWS は上流のすべてのリリースを即座にサポートする
+   - C) OpenSearch は Apache-2.0 ライセンスのプロジェクトであり、マネージドサービスは選定されたエンジンバージョンをサポートする
+   - D) このサービスは Kibana をホスティングするだけの製品である
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-Elasticsearch 7.10 系の系譜は、包括的な互換性の保証ではありません。AWS のバージョンサポート状況と、実際に使う client/plugin を確認してください。以前の 2.11 ベースラインは 2027 年 11 月 7 日まで標準サポートが継続されます。
+Elasticsearch 7.10 から派生したというだけで、あらゆるクライアントとの互換性が保証されるわけではありません。AWS がサポートするバージョンと、実際に使うクライアントやプラグインを確認してください。旧基準の 2.11 は、2027年11月7日まで標準サポートの対象です。
 
 </details>
 
 ---
 
-2. 専用の cluster-manager node を構成した場合、cluster state と shard 割り当ての管理を担うロールはどれですか？
+2. 専用の cluster-manager ノードを構成した場合、クラスター状態とシャード割り当てを管理するのはどのロールですか？
 
-   - A) 専用の cluster-manager node
-   - B) UltraWarm storage
-   - C) Cold storage
-   - D) log collector
+   - A) 専用の cluster-manager ノード
+   - B) UltraWarm ストレージ
+   - C) コールドストレージ
+   - D) ログ収集エージェント
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: A**
 
-AWS の設定フィールドでは今も dedicated_master という名称が使われています。manager の数は data replica の数とは別物であり、zone awareness だけでは Multi-AZ with Standby は有効になりません。
+AWS の設定フィールドでは、現在も `dedicated_master` という名前が使われています。マネージャーノードの数とデータレプリカ数は別の設定です。また、ゾーン認識を有効にするだけでは Multi-AZ with Standby にはなりません。
 
 </details>
 
 ---
 
-3. 従来の UltraWarm と cold storage について正しい記述はどれですか？
+3. 従来の UltraWarm とコールドストレージについて、正しい記述はどれですか？
 
-   - A) UltraWarm はすべてを EBS 上にのみ保存する
-   - B) いずれも S3 backed であり、cold index はクエリする前に UltraWarm へ attach する必要がある
-   - C) すべてのワークロードでちょうど 75% 削減できる
-   - D) すべての instance / エンジンの組み合わせが両方の tier をサポートする
+   - A) UltraWarm はすべてのデータを EBS だけに保存する
+   - B) どちらも S3 を利用しており、コールドインデックスは検索前に UltraWarm へ接続する必要がある
+   - C) どのワークロードでも必ず 75% のコストを削減できる
+   - D) すべてのインスタンスとエンジンの組み合わせが両方の階層に対応する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-hot→UltraWarm→cold のポリシーには、該当するサービスの前提条件と移行のためのキャパシティが必要です。コストとクエリレイテンシはワークロードによって変わり、tier の名称が一定の削減率を保証するものではありません。
+hot→UltraWarm→cold のライフサイクルを設定するには、サービス側の前提条件を満たし、移行に必要な容量を確保する必要があります。コストと検索遅延はワークロードによって異なり、階層の名称だけで一定の削減率が保証されるわけではありません。
 
 </details>
 
 ---
 
-4. managed な OpenSearch Service の cold storage から index を削除する ISM アクションはどれですか？
+4. OpenSearch Service のマネージドコールドストレージからインデックスを削除する ISM アクションはどれですか？
 
-   - A) すべての storage tier における delete
-   - B) force_merge
-   - C) warm_migration
-   - D) cold_delete
+   - A) すべてのストレージ階層で使う `delete`
+   - B) `force_merge`
+   - C) `warm_migration`
+   - D) `cold_delete`
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-managed な cold storage では cold_delete が必要です。ポリシーは 1 つの action オブジェクトにつき 1 アクションを使用し、非同期に実行されます。例に出てくる 7/30/90 日という index の経過日数は、イベント発生時刻を基準にした厳密な保持期間の保証ではありません。
+マネージドコールドストレージから削除するには `cold_delete` が必要です。ポリシーの各アクションオブジェクトには1つのアクションを指定し、処理は非同期で実行されます。例の7/30/90日はインデックスの経過日数であり、イベント発生時刻から正確にその期間だけデータを保持する保証ではありません。
 
 </details>
 
 ---
 
-5. Fluent Bit からの直接配信と Amazon Data Firehose はどのように比較すべきですか？
+5. Fluent Bit による直接配信と Amazon Data Firehose は、どのように比較すべきですか？
 
-   - A) Firehose が常に最も安価な選択肢である
-   - B) Fluent Bit からの直接配信では AWS に対して認証できない
-   - C) 運用要件、スキーマ、buffering/retry/backup、アクセス、そして実測コストを比較する
-   - D) どちらも同一の Kubernetes メタデータを自動的に作成する
+   - A) Firehose が常に最も安価である
+   - B) Fluent Bit による直接配信では AWS 認証を利用できない
+   - C) 運用要件、データ形式、バッファリング/再試行/バックアップ、アクセス制御、実測コストを比較する
+   - D) どちらも同じ Kubernetes メタデータを自動的に付与する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C**
 
-Firehose は managed な配信経路を提供しますが、ロール、接続性、互換性のあるレコードが必要です。backup モードは FailedDocumentsOnly で選択するものであり、failed/ という名前の prefix だけでその挙動が選ばれるわけではありません。
+Firehose はマネージドな配信経路を提供しますが、適切なロール、接続性、対応する形式のレコードが必要です。バックアップ方式は `FailedDocumentsOnly` で選択します。`failed/` という名前のプレフィックスを使うだけでは、その方式は有効になりません。
 
 </details>
 
 ---
 
-6. DLS と FLS を正しく説明しているのはどれですか？
+6. DLS と FLS を正しく説明しているものはどれですか？
 
-   - A) DLS はドキュメントを絞り込み、FLS は返されるフィールドを制御する。実効ロールと信頼できるメタデータは依然として重要である
-   - B) FLS が Kubernetes namespace を自動的に認証する
-   - C) URI ベースの IAM だけで、bulk body の内部で指定されたすべての index を制限できる
-   - D) security group のルールがドキュメントレベルの読み取りアクセスを付与する
+   - A) DLS は返すドキュメントを絞り込み、FLS は返すフィールドを制御する。適用されるロールと信頼できるメタデータも重要である
+   - B) FLS が Kubernetes の namespace を自動的に認証する
+   - C) URI ベースの IAM だけで、bulk body 内に指定されたすべてのインデックスを制限できる
+   - D) セキュリティグループのルールでドキュメント単位の読み取り権限を付与できる
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: A**
 
-ガイドでは信頼できる kubernetes.namespace_name メタデータを使用しています。制限されたロールを付与しても、既存のより広い権限は打ち消されません。また FLS は、許可された message の中にある機微なテキストをマスクしたり、保存済みのデータや backup を削除したりはしません。
+ガイドでは信頼できる `kubernetes.namespace_name` メタデータを使っています。制限付きロールを追加しても、すでに付与されている広範な権限は取り消されません。また、FLS は許可されたメッセージ内の機微なテキストを伏せたり、保存済みデータやバックアップを削除したりする機能ではありません。
 
 </details>
 
 ---
 
-7. 完全一致の検索と一般的なフィールド集計をサポートする、mapping 上の文字列型はどれですか？
+7. 完全一致検索と一般的なフィールド集計に対応する、マッピング上の文字列型はどれですか？
 
-   - A) subfield のない text
-   - B) keyword
-   - C) OpenSearch の型としての LowCardinality
-   - D) mapping されていないフィールドのみ
+   - A) サブフィールドのない `text`
+   - B) `keyword`
+   - C) OpenSearch の型である LowCardinality
+   - D) マッピングされていないフィールドのみ
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-keyword は、analyze される text とも ClickHouse の LowCardinality とも異なります。keyword や数値の集計の多くは列指向の doc values を使うため、常に完全な _source ドキュメントをすべて scan するわけではありません。
+`keyword` は、解析処理を行う `text` とも、ClickHouse の LowCardinality とも異なります。keyword 型や数値型の集計の多くは列指向の doc values を使うため、毎回すべての `_source` ドキュメントを読み取るわけではありません。
 
 </details>
 
 ---
 
-8. Logstash_Format On と prefix logs-production の設定では、例に示された Fluent Bit の output はどこへ書き込みますか？
+8. `Logstash_Format On` と `logs-production` プレフィックスを設定した場合、例の Fluent Bit 出力先はどこですか？
 
-   - A) 常に rollover alias へ
-   - B) 自動的に Serverless collection へ
-   - C) detach された cold index へ直接
-   - D) 日付ベースの logs-production-YYYY.MM.DD index へ
+   - A) 常にロールオーバー用エイリアスへ書き込む
+   - B) 自動的に Serverless コレクションへ書き込む
+   - C) 切り離されたコールドインデックスへ直接書き込む
+   - D) 日付を含む `logs-production-YYYY.MM.DD` インデックスへ書き込む
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-alias が存在するだけで、それが選ばれるわけではありません。ガイドでは日次 index の経路と、rollover alias の設定・番号付き index・write alias を必要とする rollover-logs-* の経路を区別しています。
+エイリアスが存在するだけでは、そのエイリアスは選択されません。ガイドでは日次インデックスへの出力と、ロールオーバー用エイリアスの設定、番号付きインデックス、書き込みエイリアスを必要とする `rollover-logs-*` への出力を区別しています。
 
 </details>
 
 ---
 
-9. 直近 1 時間の、mapping された error ログ行を絞り込む Query DSL はどれですか？
+9. マッピング済みのエラーログ行を直近1時間に絞り込む Query DSL はどれですか？
 
    - A) `{"query":{"match":{"app.level":"error","time":"1h"}}}`
    - B) `{"filter":{"app.level":"error","time":"last-hour"}}`
@@ -162,24 +162,24 @@ alias が存在するだけで、それが選ばれるわけではありませ�
 
 **回答: C**
 
-例の mapping ではアプリケーションのフィールドを app 配下にネストし、@timestamp を使用しています。filter context では、関連度スコアリングを必要とせずに keyword の完全一致と時間範囲を組み合わせられます。
+例のマッピングでは、アプリケーションのフィールドを `app` の下に配置し、`@timestamp` を使います。filter コンテキストでは、関連度スコアを計算せずに `keyword` の完全一致と時間範囲を組み合わせられます。
 
 </details>
 
 ---
 
-10. ログのワークロードに対して OpenSearch、Loki、ClickHouse を選定する際の妥当な判断基準は何ですか？
+10. ログ処理に OpenSearch、Loki、ClickHouse のどれを選ぶか、妥当に判断する基準は何ですか？
 
-   - A) 1 日 100GB という普遍的な切り替え基準
-   - B) すべての組織でクエリの構成は同じだという主張
-   - C) コストは 3〜5 倍、削減率は 60〜80% という固定のルール
-   - D) 代表的なクエリに加えて、保持期間、耐久性、権限、運用能力、そして実測コスト
+   - A) 1日100 GB という、どこにでも当てはまる切り替え基準
+   - B) どの組織でもクエリの種類や割合は同じだという前提
+   - C) コストは3〜5倍、削減率は60〜80%という固定ルール
+   - D) 代表的なクエリを使い、保持期間、耐久性、権限、運用体制、実測コストも含めて比較する
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: D**
 
-3 つはいずれも indexing / クエリのモデルと運用上のトレードオフが異なります。同等の要件で比較し、移行・整合性確認・ロールバックを検証してください。コンプライアンスや最小コストを自動的に成立させる製品はありません。
+3つの製品はそれぞれ、インデックス化や検索の方式、運用上のトレードオフが異なります。同等の要件を基に比較し、移行、データの突き合わせ、ロールバックを検証してください。どの製品を選んでも、コンプライアンスへの適合や最低コストが自動的に保証されるわけではありません。
 
 </details>

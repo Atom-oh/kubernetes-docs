@@ -36,7 +36,7 @@ cert-manager graduated on September 29, 2024. September 19, 2022 was its Incubat
 
 **Answer: C) controller**
 
-The controller reconciles certificate lifecycle. The webhook validates, defaults, and converts custom resources; cainjector injects CA bundles into supported API/webhook configurations.
+The controller reconciles the certificate lifecycle. The webhook validates, defaults, and converts custom resources; cainjector injects CA bundles into supported API/webhook configurations.
 
 </details>
 

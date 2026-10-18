@@ -148,6 +148,6 @@
 
     **정답: D) `kvstore`, `doublewrite-readkvstore`, `doublewrite-readcrd`, `crd`**
 
-    두 Double Write 단계는 operator를 먼저, 그다음 agent를 재배포하고, 마지막 `crd` 단계는 agent를 먼저, 그다음 operator를 재배포합니다. 이 기능은 beta이며 일회성 `migrate-identity` 도구는 1.21 pre-release에서 deprecated입니다.
+    두 Double Write 단계에서는 operator를 먼저, 그다음 agent를 재배포하고, 마지막 `crd` 단계에서는 agent를 먼저, 그다음 operator를 재배포합니다. 이 기능은 beta이며 일회성 `migrate-identity` 도구는 1.21 pre-release에서 deprecated입니다.
 
     </details>

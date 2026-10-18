@@ -25,7 +25,7 @@ Istio의 sidecar와 ambient는 L4/L7 기능과 정책 부착 방식이 다릅니
 - **Ambient 모드**는 노드별 ztunnel의 L4 전송·identity와 지원되는 L7 기능용 선택적 Envoy waypoint를 사용합니다.
 - **Gateway**는 선택한 ingress/egress 경로를 처리합니다. Deployment/controller와 라우팅 설정 객체는 별개입니다.
 
-“모든 트래픽을 가로챈다”는 주장은 제외 경로, 프로토콜과 enrollment 확인이 필요합니다. 보편적인 85% 절감은 없습니다. 실제 proxy 수, request·limit, 사용량, waypoint 용량, 노드 수용과 운영 비용을 비교해야 합니다. [아키텍처](../../service-mesh/istio/03-architecture.md)와 [ambient 리소스 모델](../../service-mesh/istio/advanced/01-ambient-mode.md)을 참고하세요.
+“모든 트래픽을 가로챈다”는 주장을 검증하려면 제외 경로, 프로토콜과 enrollment 확인이 필요합니다. 보편적인 85% 절감은 없습니다. 실제 proxy 수, request·limit, 사용량, waypoint 용량, 노드 수용과 운영 비용을 비교해야 합니다. [아키텍처](../../service-mesh/istio/03-architecture.md)와 [ambient 리소스 모델](../../service-mesh/istio/advanced/01-ambient-mode.md)을 참고하세요.
 
 </details>
 
@@ -500,7 +500,7 @@ kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
 2. Load balancer controller를 구분하세요. AWS Load Balancer Controller, EKS Auto Mode와 기존 provisioning은 소유·설정이 다릅니다. Service selector·port를 실제 gateway와 맞추고 NLB 또는 gateway의 TLS 종료 위치를 결정합니다. 평문을 TLS listener로 보내거나 의도하지 않은 이중 TLS를 만들지 마세요.
 3. AWS API를 호출하는 load balancer controller·telemetry collector 같은 구성 요소에 권한을 부여합니다. Envoy가 트래픽을 전달한다는 이유만으로 IAM role이 필요하지는 않습니다. IRSA 또는 지원되는 EKS Pod Identity의 trust·permission을 구성해야 하며 annotation 하나로 끝나지 않습니다.
 4. 필요한 방향의 네트워크 경로만 허용하세요. Proxy intercept port는 security group에 무차별 노출할 목록이 아닙니다. 실제 webhook/xDS, health check와 ingress/ambient 경로를 고려합니다.
-5. Workload 근거로 Istiod/proxy를 크기 조정하고 scheduling·가용 용량을 준비하세요. PDB는 일부 자발적 disruption을 다루며 replica 수만으로 zone 분산이나 모든 장애 보호를 보장하지 않습니다.
+5. Workload를 근거로 Istiod/proxy를 크기 조정하고 scheduling·가용 용량을 준비하세요. PDB는 일부 자발적 disruption을 다루며 replica 수만으로 zone 분산이나 모든 장애 보호를 보장하지 않습니다.
 6. Metrics, logs와 tracing을 각각 구성하세요. Fluent Bit cloudwatch_logs output 조각만으로 Container Insights나 완전한 CRI input/parser/IAM/log-stream pipeline이 되지는 않습니다.
 
 Control-plane HPA와 proxy request/limit의 설치 입력 예시입니다:
@@ -606,7 +606,7 @@ spec:
 
 실패 측정, provider error, inconclusive, abort와 이전 revision 재배포는 서로 다른 상태입니다. AnalysisRun/Rollout 상태를 확인하고 모두 즉시 rollback으로 부르지 마세요. Abort가 DB 쓰기나 애플리케이션 부작용을 되돌리지도 않습니다. Controller 간격, stable backend 가용성과 설정 전파가 복구를 제한합니다.
 
-자동화는 반복 판단을 줄일 수 있지만 metric gate가 보편적인 안전한 배포나 사람의 진단 불필요를 입증하지는 않습니다. 무트래픽, 메트릭 누락, 전부 실패, NaN/infinity와 복구를 검사하세요. [전체 롤아웃 가이드](../../service-mesh/istio/advanced/08-argo-rollouts.md)에 주변 리소스와 검증 경계가 있습니다.
+자동화는 반복 판단을 줄일 수 있지만 metric gate가 보편적으로 안전한 배포나 사람의 진단이 불필요함을 입증하지는 않습니다. 무트래픽, 메트릭 누락, 전부 실패, NaN/infinity와 복구를 검사하세요. [전체 롤아웃 가이드](../../service-mesh/istio/advanced/08-argo-rollouts.md)에 주변 리소스와 검증 경계가 있습니다.
 
 </details>
 

@@ -243,7 +243,7 @@ test -s sealed-secret.yaml
 
 ### External Secrets Operator
 
-ESO는 Git의 시크릿을 암호화하는 도구가 아니라 외부 저장소의 값을 대상 클러스터 Secret으로 동기화합니다. 2.12.0 예제는 external-secrets.io/v1을 사용합니다. 아래 AWS jwt.serviceAccountRef는 IRSA 방식이며, 해당 Namespace의 ServiceAccount에 IAM 역할 주석과 OIDC trust를 준비해야 합니다. Pod Identity를 쓰면 컨트롤러 SA 연결과 SDK credential chain을 사용하며 이 jwt 설정과 혼동하지 않습니다.
+ESO는 Git의 시크릿을 암호화하는 도구가 아니라 외부 저장소의 값을 대상 클러스터 Secret으로 동기화하는 도구입니다. 2.12.0 예제는 external-secrets.io/v1을 사용합니다. 아래 AWS jwt.serviceAccountRef는 IRSA 방식이며, 해당 Namespace의 ServiceAccount에 IAM 역할 주석과 OIDC trust를 준비해야 합니다. Pod Identity를 쓰면 컨트롤러 SA 연결과 SDK credential chain을 사용하며 이 jwt 설정과 혼동하지 않습니다.
 
 외부 시크릿 관리 시스템과 통합합니다:
 
@@ -567,7 +567,7 @@ kubectl create secret tls argocd-server-tls -n argocd \
   | kubectl apply --server-side -f -
 ```
 
-테스트용 자체 서명 인증서도 CN만으로는 충분하지 않습니다. 예를 들어 openssl req에 `-addext "subjectAltName=DNS:argocd.example.com"`을 넣고 클라이언트에 공개 인증서를 신뢰시킵니다. --insecure로 검증을 끄는 방법을 운영 기본값으로 사용하지 않습니다.
+테스트용 자체 서명 인증서도 CN만으로는 충분하지 않습니다. 예를 들어 openssl req에 `-addext "subjectAltName=DNS:argocd.example.com"`을 넣고 클라이언트가 공개 인증서를 신뢰하도록 설정합니다. --insecure로 검증을 끄는 방법을 운영 기본값으로 사용하지 않습니다.
 
 ### cert-manager 예시
 
@@ -665,7 +665,7 @@ data:
   git.example.com: REPLACE_WITH_VERIFIED_PUBLIC_CA_PEM
 ```
 
-repo-server RPC는 기본적으로 암호화되지만 서버 인증서를 검증하지 않는 연결일 수 있습니다. 지속적인 argocd-repo-server-tls Secret에 서비스 DNS SAN을 가진 인증서를 준비하고 repo-server를 재시작합니다. server/application-controller/applicationset-controller에는 CA 파일을 마운트하고 --repo-server-ca-cert-path를, notifications-controller에는 --argocd-repo-server-ca-cert-path를 설정합니다. legacy strict-tls 플래그 대신 이 CA 경로 방식을 사용합니다. 이것만으로 상호 TLS가 되는 것은 아니며 클라이언트 인증서는 [공식 mTLS 구성](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/mtls.md)을 따릅니다.
+repo-server RPC는 기본적으로 암호화되지만 서버 인증서를 검증하지 않는 연결일 수 있습니다. 지속적인 argocd-repo-server-tls Secret에 서비스 DNS SAN을 가진 인증서를 준비하고 repo-server를 재시작합니다. server/application-controller/applicationset-controller에는 CA 파일을 마운트하고 --repo-server-ca-cert-path를, notifications-controller에는 --argocd-repo-server-ca-cert-path를 설정합니다. legacy strict-tls 플래그 대신 이 CA 경로 방식을 사용합니다. 이것만으로 상호 TLS가 되는 것은 아니며 클라이언트 인증서 구성은 [공식 mTLS 구성](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/mtls.md)을 따릅니다.
 
 ## 감사 로깅
 

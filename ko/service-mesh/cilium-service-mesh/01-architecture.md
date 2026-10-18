@@ -199,7 +199,7 @@ spec:
 
 ### CiliumClusterwideEnvoyConfig
 
-다음 독립 예시는 기존 **`default/rate-limited-service:8080`**을 대상으로 합니다. 초기 1,000개 요청의 burst와 초당 100개 토큰 보충을 갖는 로컬 버킷을 적용하며, 요청 100%에 대해 필터 활성화와 강제 적용을 명시합니다.
+다음 독립 예시는 기존 **`default/rate-limited-service:8080`을** 대상으로 합니다. 초기 1,000개 요청의 burst를 허용하고 초당 100개 토큰을 보충하는 로컬 버킷을 적용하며, 요청 100%에 대해 필터 활성화와 강제 적용을 명시합니다.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -263,7 +263,7 @@ spec:
     lb_policy: ROUND_ROBIN
 ```
 
-CCEC가 클러스터 범위라고 해서 `"*"`가 Service·네임스페이스 와일드카드가 되지는 않습니다. `nodeSelector`를 생략하면 해당되는 모든 노드에 설정을 배포하지만, 모든 Service를 선택하는 의미는 아닙니다.
+CCEC가 클러스터 범위라고 해서 `"*"`가 Service·네임스페이스 와일드카드가 되지는 않습니다. `nodeSelector`를 생략하면 해당되는 모든 노드에 설정을 배포하지만, 모든 Service를 선택한다는 의미는 아닙니다.
 
 위 버킷은 **각 Envoy 프로세스 내부의 worker thread 사이에서** 공유되며, 클러스터의 모든 프록시가 공유하지는 않습니다. 전체 허용량은 트래픽 분포와 참여 프로세스 수에 따라 달라지므로 클러스터 전체의 글로벌 쿼터가 아닙니다. `filter_enabled`와 `filter_enforced`의 기본값은 모두 0%이므로 버킷만 추가해서는 제한이 적용되지 않습니다.
 

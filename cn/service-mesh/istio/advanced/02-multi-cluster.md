@@ -1,126 +1,126 @@
 # 多集群
 
-> **最后更新**：2026 年 9 月 11 日 · Istio1.31 · Kubernetes1.32–1.36。下方安装示例描述 **Sidecar** 拓扑，彼此为独立备选方案。Ambient 有不同支持限制。本次审计未执行集群、AWS 或生产负载部署。
+> **最后更新**：October 16, 2026 · Istio1.31 · Kubernetes1.32–1.37。以下安装示例描述的是 **sidecar** 拓扑，彼此为独立的替代方案。Ambient 的支持限制有所不同。本次审计未执行任何集群、AWS 或生产负载部署。
 
-多集群服务网格将多个 Kubernetes 集群连接为统一服务网格。
+多集群 Service Mesh 将多个 Kubernetes 集群连接为一个统一的服务网格。
 
 ## 目录
 
-1. [真的需要多集群吗？](02-multi-cluster.md#do-you-really-need-multi-cluster)
+1. [你真的需要多集群吗？](02-multi-cluster.md#do-you-really-need-multi-cluster)
 2. [架构选择指南](02-multi-cluster.md#architecture-selection-guide)
 3. [Istio 与 AWS VPC Lattice](02-multi-cluster.md#istio-vs-aws-vpc-lattice)
 4. [拓扑](02-multi-cluster.md#topology)
-5. [主-远程设置](02-multi-cluster.md#primary-remote-setup)
-6. [多主设置](02-multi-cluster.md#multi-primary-setup)
+5. [主集群-远程集群设置](02-multi-cluster.md#primary-remote-setup)
+6. [多主集群设置](02-multi-cluster.md#multi-primary-setup)
 7. [跨集群通信](02-multi-cluster.md#cross-cluster-communication)
 8. [与 VPC Lattice 配合使用](02-multi-cluster.md#using-with-vpc-lattice)
-9. [实际示例](02-multi-cluster.md#practical-examples)
-10. [性能和成本比较](02-multi-cluster.md#performance-and-cost-comparison)
-11. [故障排除](02-multi-cluster.md#troubleshooting)
+9. [实用示例](02-multi-cluster.md#practical-examples)
+10. [性能与成本比较](02-multi-cluster.md#performance-and-cost-comparison)
+11. [故障排查](02-multi-cluster.md#troubleshooting)
 
-## 真的需要多集群吗？ {#do-you-really-need-multi-cluster}
+## 你真的需要多集群吗？ {#do-you-really-need-multi-cluster}
 
-多集群服务网格功能强大，但增加复杂度和成本。采用前需要仔细考虑。
+多集群 Service Mesh 功能强大，但会增加复杂性和成本。采用之前需要仔细考虑。
 
 ### 决策流程
 
-将下方要求作为约束；没有检查清单分数能使某架构普遍更优。
+请将以下要求作为约束条件；清单得分并不能让某种架构在所有情况下都更可取。
 
 
 ### 何时需要多集群
 
 #### 1. 地理分布和延迟优化
 
-![统一 Istio 网格将配置同步到美国、欧洲和亚洲的三个区域 EKS 集群，集群之间也通过跨区域 mTLS 直接组成网格。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
+![统一的 Istio 网格将配置同步推送到美国、欧洲和亚洲的三个区域 EKS 集群，这些集群还通过跨区域 mTLS 彼此直接组网。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-1.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-1.html)
 
-**适用情况**：
+**适用场景**：
 
 * 面向全球用户的服务（延迟目标 <100ms）
-* 工作负载专属数据放置义务；网格本身不确立合规
+* 工作负载特定的数据放置义务；网格本身并不能确保合规
 * 区域流量路由和故障隔离
 
 #### 2. 灾难恢复（DR）
 
-![Route 53 通常将全部用户流量发送到活动集群生产工作负载，备用集群接收实时配置复制；灾难触发故障转移后，流量全部切到备用集群。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
+![Route 53 通常会将所有用户流量发送到活动集群的生产工作负载，而备用集群接收实时配置复制；灾难触发故障转移后，则切换为将所有流量发送到备用集群。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-2.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-2.html)
 
-**适用情况**：
+**适用场景**：
 
 * RTO（恢复时间目标）<1 小时
 * RPO（恢复点目标）<15 分钟
 * 区域故障时自动故障转移
 
-上方 RTO/RPO 是示例要求，不是网格保证的结果。DR 图假定另外实现部署/数据复制及 DNS 健康路由；客户端、缓存和现有连接影响切换。
+上述 RTO/RPO 数值是示例要求，并非网格保证的结果。DR 示意图假设部署/数据复制和 DNS 健康路由已单独实现；客户端、缓存和现有连接都会影响切换过程。
 
-#### 3. 环境分离和分阶段部署
+#### 3. 环境隔离和分阶段部署
 
-**适用情况**：
+**适用场景**：
 
-* 开发/预发布/生产集群分离并统一管理
-* 集群级蓝绿部署
-* 逐步扩大区域范围的金丝雀部署
+* 通过统一管理实现 Dev/Staging/Prod 集群隔离
+* 在集群级别进行蓝绿部署
+* 逐步扩展到更多区域的金丝雀部署
 
 #### 4. 组织边界和安全隔离
 
-**适用情况**：
+**适用场景**：
 
-* 每团队/部门独立运维集群
+* 各团队/部门独立运营集群
 * 增强多租户能力
-* 明确评估隔离边界；共享网格信任是独立决策
+* 明确评估隔离边界；共享网格信任是另一项独立决策
 
 ### 何时不需要多集群
 
-#### 1. 单区域、小规模服务
+#### 1. 单一区域、小规模服务
 
-![单个 EKS 集群的 Istio 控制平面管理三个命名空间（prod、staging、dev），足以满足不需要多集群的单区域小规模服务。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
+![单个 EKS 集群的 Istio 控制平面管理三个命名空间（prod、staging、dev），这种方案足以满足不需要多集群的单一区域小规模服务。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-3.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-3.html)
 
-**替代方式**：
+**可改用**：
 
-* Kubernetes Namespace 分离
-* NetworkPolicy 实现网络隔离
-* RBAC 实现访问控制
+* Kubernetes Namespace 隔离
+* 使用 NetworkPolicy 实现网络隔离
+* 使用 RBAC 控制访问
 
-#### 2. 无法应对运维复杂度时
+#### 2. 无法应对运维复杂性的情况
 
 **多集群运维要求**：
 
-* 有明确责任的团队，能够运维网络、PKI、升级和跨集群事件
-* 东西向网关管理和监控
+* 有负责团队能够运维网络、PKI、升级和跨集群事件
+* 管理和监控 East-West Gateway
 * 跨集群证书管理
 * 跨集群调试能力
 
-**团队较小时**：
+**如果团队规模较小**：
 
-* 单集群 Istio，或
-* AWS VPC Lattice（托管服务）
+* 使用单集群 Istio，或
+* 使用 AWS VPC Lattice（托管服务）
 
-#### 3. 成本是关键考虑时
+#### 3. 成本是关键考量时
 
-**多集群额外成本**：
+**多集群的额外成本**：
 
-* 所选平台的东西向负载均衡器小时/容量和处理费用
-* 可计费跨区域字节及方向/区域专属费率
-* 控制平面/网关副本和可观测性/存储容量
+* 所选平台的东西向负载均衡器运行时长/容量及处理费用
+* 按量计费的跨区域流量字节数，以及因流向/区域而异的费率
+* 控制平面/网关副本，以及可观测性/存储容量
 
 ### 检查清单
 
-采用前回答以下问题：
+采用之前请回答以下问题：
 
 **架构**：
 
-* [ ] 是否已有 2 个或更多集群运行？
+* [ ] 是否已在运行 2 个或更多集群？
 * [ ] 是否需要多区域部署？
 * [ ] 跨集群服务调用是否频繁？
 
 **业务要求**：
 
 * [ ] 是否面向全球用户？
-* [ ] 灾难恢复（DR）是否必需？
+* [ ] 灾难恢复（DR）是否至关重要？
 * [ ] RTO/RPO 要求是否严格？
 
 **安全与合规**：
@@ -131,134 +131,134 @@
 **运维能力**：
 
 * [ ] 是否有 Istio 专家？
-* [ ] 是否能调试复杂网络问题？
+* [ ] 是否能调试复杂的网络问题？
 * [ ] 是否能承担额外成本？
 
 **结果**：
 
-将答案作为设计输入，不作为数字推荐分数。区域、信任、API、恢复和运维约束可能排除某个选项，无论勾选多少项。
+请将答案作为设计输入，而不是数值化的推荐评分。无论勾选了多少项，区域、信任、API、恢复和运维约束都可能排除某个选项。
 
 ## 架构选择指南 {#architecture-selection-guide}
 
 | 决策 | 所需证据 |
 |---|---|
-| 区域高可用与区域灾难恢复 | 控制平面/工作负载放置、复制数据和已测试恢复流程 |
-| 跨集群网格 | 可达 API/网关、共同信任设计、命名空间/服务身份及独立分发配置 |
-| 区域 Lattice 连接 | 区域服务网络、VPC 关联/端点、监听器/身份验证模式和目标可达性 |
-| 跨区域连接 | 明确的全球网络/端点及应用/数据设计；直接区域 VPC 关联不是全球网络 |
-| 成本和人员 | 实测工作负载、相同流量假设、实际计费和运维工作量 |
+|区域 HA 与区域灾难恢复|控制平面/工作负载放置、复制的数据和经过测试的恢复流程|
+|跨集群网格|可访问的 API/网关、共同的信任设计、命名空间/服务身份以及独立分发的配置|
+|区域 Lattice 连接|区域服务网络、VPC 关联/端点、监听器/身份验证模式和目标可达性|
+|跨区域连接|明确的全局网络/端点和应用/数据设计；直接的区域 VPC 关联并非全球网络架构|
+|成本与人员配置|已测量的工作负载、相同的流量假设、实际账单和运维投入|
 
-### 各方案比较
+### 各方案对比
 
 #### 单集群 Istio
 
 **优点**：
 
 * 管理最简单
-* 组件较少可简化成本模型；测量实际工作负载
-* 调试快
+* 组件较少可能简化成本模型；应测量实际工作负载
+* 调试快捷
 * 可使用所有 Istio 功能
 
 **缺点**：
 
-* 共享集群故障域；仍可配置区域高可用
-* 依赖区域，除非另有恢复架构
-* 单个 EKS 控制平面是区域级；更广故障域分布需要额外设计
+* 集群故障域共享；仍可配置区域 HA
+* 如果没有单独的恢复架构，则依赖单一区域
+* 单个 EKS 控制平面属于区域级；要分散到更广的故障域，需要额外设计
 
-**适用情况**：
+**适用场景**：
 
 * 单区域服务
-* 团队区域可靠性目标适合此运维范围
-* 无需跨区域 DR 即可实现区域高可用
+* 区域可靠性目标符合此运维范围的团队
+* 无需跨区域 DR 即可实现区域 HA
 
 #### 多集群 Istio
 
 **优点**：
 
-* 完整地理分布
-* 为显式设计的流量故障转移提供基础；应用/数据 DR 仍独立
-* 所有 L7 功能（重试、超时、断路器）
-* 细粒度流量控制
+* 完整的地理分布
+* 可作为明确设计流量故障转移的基础；应用/数据 DR 仍需单独处理
+* 所有 L7 功能（Retry、Timeout、Circuit Breaker）
+* 精细化流量控制
 * 统一可观测性
 
 **缺点**：
 
 * 运维复杂度高
-* 需要东西向网关管理
+* 需要管理 East-West Gateway
 * 跨区域数据传输成本
 * 调试困难
 
-**适用情况**：
+**适用场景**：
 
 * 全球服务
-* 需要强 DR 能力
-* 细粒度 L7 控制必不可少
+* 需要强大的 DR
+* 必须具备精细化 L7 控制
 
 #### AWS VPC Lattice
 
 **优点**：
 
-* AWS 完全托管
+* AWS 全托管
 * 设置简单
 * 运维负担低
-* 通过显式关联和访问策略实现跨 VPC 连接
-* 为实际工作负载建立服务/请求/数据及运维成本模型
+* 通过明确的关联和访问策略实现跨 VPC 连接
+* 根据实际工作负载对服务/请求/数据和运维成本建模
 
 **缺点**：
 
-* 韧性控制不同；监听器规则 API 没有等效逐跳重试/异常检测配置
-* 依赖 AWS
-* 标头/方法/路径和加权目标路由，匹配类型和限制不同于 Istio
-* 指标/日志接口不同；完整追踪需要应用集成
+* 弹性控制方式不同；监听器规则 API 中没有与逐跳重试/异常检测配置等效的功能
+* 受 AWS 锁定
+* 支持 Header/方法/路径和加权目标路由，但匹配类型和限制与 Istio 不同
+* 指标/日志接口不同；完整链路追踪需要应用集成
 
-**适用情况**：
+**适用场景**：
 
 * 以 AWS 为中心的架构
-* 仅需简单服务连接
+* 只需要简单的服务连接
 * 优先简化运维
 
 ## Istio 与 AWS VPC Lattice {#istio-vs-aws-vpc-lattice}
 
-### 功能比较
+### 功能对比
 
-| 领域 | Istio Sidecar 网格 | VPC Lattice 服务 |
+| 领域 | Istio sidecar 网格 | VPC Lattice 服务 |
 |---|---|---|
-| 路由 | VirtualService/DestinationRule 策略 | HTTP 标头精确/前缀/包含匹配、路径精确/前缀、方法及加权目标组规则 |
-| 韧性 | 逐跳重试/超时、连接池断路器和异常检测 | 托管服务/连接限制；不是相同的可配置逐跳重试/异常检测 API |
-| TLS 身份 | 兼容网格信任下的工作负载 mTLS | HTTPS 在 Lattice 终止；TLS 透传可承载应用 mTLS，但不是托管 SPIFFE 身份 |
-| 授权 | Istio/应用策略 | HTTP(S) 身份验证策略及按需 IAM/SigV4；仅 SourceVpc 允许可包含匿名调用方 |
-| TLS 透传限制 | 取决于网关配置 | 自定义域名 SNI、TCP 目标组且仅默认规则；匿名主体身份验证策略，不是 HTTP 标头 IAM 身份验证 |
-| 可观测性 | 配置的代理/应用指标、日志和追踪 | CloudWatch 指标和访问日志；应用追踪/上下文仍是独立集成 |
-| 成本 | 计算、网关、数据传输和运维 | 服务时间、请求/数据处理及适用资源/端点费用；没有普遍更便宜的赢家 |
+|路由|VirtualService/DestinationRule 策略|HTTP Header 精确匹配/前缀匹配/包含匹配、路径精确匹配/前缀匹配、方法和加权目标组规则|
+|弹性|逐跳重试/超时、连接池熔断和异常检测|托管服务/连接限制；并非相同的可配置逐跳重试/异常检测 API|
+|TLS 身份|使用兼容网格信任的工作负载 mTLS|HTTPS 在 Lattice 终止；TLS 透传可以承载应用 mTLS，但不管理 SPIFFE 身份|
+|授权|Istio/应用策略|需要时使用 HTTP(S) 身份验证策略和 IAM/SigV4；仅允许 SourceVpc 的规则可能包含匿名调用方|
+|TLS 透传限制|取决于配置的网关|仅支持自定义域名 SNI、TCP 目标组和默认规则；使用匿名主体身份验证策略，不支持 HTTP Header IAM 身份验证|
+|可观测性|配置的代理/应用指标、日志和链路追踪|CloudWatch 指标和访问日志；应用链路追踪/上下文仍需单独集成|
+|成本|计算、网关、数据传输和运维|服务运行时长、请求/数据处理和适用的资源/端点费用；没有普遍更便宜的赢家|
 
-Lattice 服务、资源配置和服务网络是区域级资源。跨区域/本地网络客户端需要明确受支持的网络/端点路径；对等/中转流量需要适当服务网络 VPC 端点，不只是关联。TLS 透传和 HTTPS 终止有不同路由/身份验证约定。混合方案必须明确每个 TLS 和身份边界。
+Lattice 服务、资源配置和服务网络均为区域级。跨区域/本地客户端需要明确且受支持的网络/端点路径；对等连接/传输流量需要相应的服务网络 VPC 端点，不能仅靠关联。TLS 透传和 HTTPS 终止具有不同的路由/身份验证约定。混合架构必须说明每个 TLS 和身份边界。
 
-### 架构模式比较
+### 架构模式对比
 
-#### 模式 1：仅 Istio 多集群
+#### 模式 1：仅使用 Istio 多集群
 
 
 **优点**：
 
-* 完整 Istio 功能
+* 完整的 Istio 功能
 * 统一可观测性
-* 细粒度控制
+* 精细化控制
 
 **缺点**：
 
-* 需要东西向网关管理
+* 需要管理 East-West Gateway
 * 复杂度高
 * 跨区域数据传输成本
 
-#### 模式 2：仅 VPC Lattice
+#### 模式 2：仅使用 VPC Lattice
 
-![两个独立 VPC 中的应用服务分别注册为 VPC Lattice 服务，两者通过共享 Lattice 服务网络路由，而非 Istio 网格。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
+![两个独立 VPC 中的应用服务各自注册为 VPC Lattice 服务，两个服务都通过共享的 Lattice 服务网络路由，而不是通过 Istio 网格。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-5.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-5.html)
 
 **优点**：
 
-* AWS 完全托管
+* AWS 全托管
 * 设置简单
 * 运维负担低
 
@@ -266,74 +266,74 @@ Lattice 服务、资源配置和服务网络是区域级资源。跨区域/本�
 
 * 无法使用 Istio 功能
 * 流量控制有限
-* Kubernetes 集成需要 AWS Gateway API Controller 及其受支持 API
+* Kubernetes 集成需要 AWS Gateway API Controller 及其支持的 API
 
-#### 模式 3：混合（区域连接选项）
+#### 模式 3：混合架构（区域连接方案）
 
-![各集群内部的 Istio 网格为 Service A 和 Service B 提供完整 mTLS 及重试，而各集群 Service B 仅通过共享 VPC Lattice 服务网络访问另一集群。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
+![在每个集群内部，Istio 网格为 Service A 和 Service B 之间提供完整的 mTLS 和重试能力；而每个集群中的 Service B 仅通过共享的 VPC Lattice 服务网络访问另一个集群。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-6.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-6.html)
 
 **优点**：
 
-* 集群内：全部高级 Istio 功能（重试、断路器、细粒度路由）
-* 跨集群：简单的 VPC Lattice 管理和稳定性
-* 降低运维复杂度（无东西向网关）
-* 成本必须测量；选择 Lattice 本身不会减少所需跨区域字节
+* 集群内：所有高级 Istio 功能（Retry、Circuit Breaker、精细化路由）
+* 跨集群：VPC Lattice 管理简单、稳定
+* 降低运维复杂性（无需 East-West Gateway）
+* 必须测量成本；选择 Lattice 本身并不会减少所需的跨区域传输字节数
 
 **缺点**：
 
-* 需要理解两套技术栈
-* 跨集群仅限 Lattice 功能
+* 需要了解两套技术栈
+* 跨集群功能受限于 Lattice
 
-**适用情况**：
+**适用场景**：
 
 * AWS 环境
 * 集群内需要复杂流量控制
-* 跨集群仅需简单连接
+* 跨集群只需要简单连接
 
-## 多集群概述
+## 多集群概览
 
-多集群服务网格可用于：
+通过多集群 Service Mesh，您可以实现：
 
 * 多区域部署
 * 灾难恢复（DR）
-* 环境分离（dev/staging/prod）
+* 环境隔离（dev/staging/prod）
 * 跨集群服务发现和通信
 
 ## 拓扑 {#topology}
 
-这些是 Sidecar 拓扑。当前 Ambient 多集群支持 Beta 多主/多网络，具有独立限制；不要将主/远程说明用于 Ambient。每个主控制平面读取获授权 Kubernetes API。Istiod 不会向另一主控制平面复制其他 Istio CRD、应用配置或数据库；这些应单独分发。共享信任域使不同集群中的相同命名空间/ServiceAccount 具有相同身份，因此仅集群分离不等于授权隔离。
+以下均为 sidecar 拓扑。目前 Ambient 多集群支持 Beta 版多主集群/多网络，但有单独的限制；不要将主集群/远程集群的操作说明用于 Ambient。每个主集群都会读取已授权的 Kubernetes API。Istiod 不会将其他 Istio CRD、应用配置或数据库复制到另一个主集群；这些内容需要单独分发。共享信任域会使不同集群中相同命名空间/ServiceAccount 具有相同身份，因此仅靠集群隔离并不能实现授权隔离。
 
-一个主安装可有多个副本。主控制平面故障影响发现、注入和证书操作；现有代理可保留配置，因此不代表即时全面流量故障。多主降低该依赖，但不消除所有共享故障模式。
+一个主集群安装可以有多个副本。主集群故障会影响服务发现、注入和证书操作；现有代理可以保留配置，因此不会立即导致所有流量中断。多主集群可以减少这种依赖，但并不能消除所有共享故障模式。
 
 
-### 主-远程
+### 主集群-远程集群
 
-![主集群 Istiod 向远程集群两个服务下发配置；主集群 Service A 与两个远程服务通过 mTLS 通信，该拓扑具有单一控制平面及单点故障。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
+![一个主集群的 Istiod 将配置推送到远程集群中的两个服务；主集群上的 Service A 与远程集群中的两个服务通过 mTLS 通信。该拓扑只有一个控制平面，因此存在单点故障。](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-7.html)
+[🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-7.html)
 
 **特点**：
 
-* 单控制平面（Primary）
-* 多数据平面（Remote）
+* 单个控制平面（主集群）
+* 多个数据平面（远程集群）
 * 管理简单
-* 发现/注入/证书操作共同依赖主部署
+* 服务发现/注入/证书操作共同依赖主集群部署
 
-### 多主
+### 多主集群
 
 
 **特点**：
 
-* 多控制平面
-* 高可用
+* 多个控制平面
+* 高可用性
 * 管理复杂
 * 区域自治
 
 ### 共同前提条件
 
-在 Istio1.31 发行版目录操作，具有两个现有兼容集群和已审核 kubeconfig 上下文。示例假定默认修订；若安装修订不同，在命名空间标签和网关生成中保留实际修订。两个 Kubernetes API 及所需数据/控制平面路径必须可达。安装前规划共享信任：多主签发者必须链至可信共同根（或明确受支持信任设计）；meshID 字符串相同不建立证书信任。遵循[官方前提条件和 CA 准备](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)，保护私有 CA 材料。独立分发应用/网格配置；远程 Secret 不复制它们。
+请在 Istio1.31 发行版目录中操作，并准备好两个现有的兼容集群以及已审核的 kubeconfig 上下文。这些示例假设使用默认 revision；如果实际安装使用了其他 revision，请在命名空间标签和网关生成时保留该 revision。两个 Kubernetes API 以及所需的数据/控制平面路径都必须可访问。安装前规划共享信任：多主集群签发者必须链接到受信任的共同根证书（或明确支持的信任设计）；meshID 字符串相同并不能建立证书信任。请遵循[官方前提条件和 CA 准备说明](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)，并妥善保护私有 CA 材料。请单独分发应用/网格配置；远程 Secret 不会复制这些配置。
 
 ```bash
 export CTX_CLUSTER1=cluster1
@@ -342,11 +342,11 @@ kubectl --context="$CTX_CLUSTER1" get nodes
 kubectl --context="$CTX_CLUSTER2" get nodes
 ```
 
-## 主-远程设置 {#primary-remote-setup}
+## 主集群-远程集群设置 {#primary-remote-setup}
 
-这是官方**基于 IP、同网络的 Sidecar** 拓扑：Pod 必须跨集群直接可达，主集群必须能访问远程 API。它不是 EKS NLB 主机名方案。1.31 chart 可用 ExternalName Service 表示 DNS 值 remotePilotAddress；此流程中的 IP 查找不是完整基于 DNS 的 EKS 设计。注入 URL、签名 DNS 证书和实际控制平面可达性参阅[外部控制平面指南](https://istio.io/latest/docs/setup/install/external-controlplane/)。渲染 DNS 值不验证该部署。下方 IstioOperator 是 istioctl 输入，不是集群内 Operator 资源。
+这是官方的 **基于 IP、同网络的 sidecar** 拓扑：Pod 必须能够跨集群直接访问，且远程 API 必须可从主集群访问。这不是 EKS NLB 主机名配置方案。1.31 chart 可以使用 ExternalName Service 表示 DNS 值的 remotePilotAddress；本指南中的 IP 查找并非完整的基于 DNS 的 EKS 设计。请使用[外部控制平面指南](https://istio.io/latest/docs/setup/install/external-controlplane/)配置注入 URL、签名 DNS 证书和实际控制平面可达性。渲染 DNS 值并不能验证该部署。下面的 IstioOperator 是 istioctl 的输入，而不是集群内的 operator 资源。
 
-### 1. 主集群设置
+### 1. 设置主集群
 
 ```bash
 # Context setup
@@ -376,7 +376,7 @@ kubectl apply --context="${CTX_CLUSTER1}" -f \
   samples/multicluster/expose-istiod.yaml
 ```
 
-### 2. 远程集群设置
+### 2. 设置远程集群
 
 ```bash
 # Context setup
@@ -418,9 +418,9 @@ istioctl create-remote-secret \
   kubectl apply -f - --context="${CTX_CLUSTER1}"
 ```
 
-## 多主设置 {#multi-primary-setup}
+## 多主集群设置 {#multi-primary-setup}
 
-对于此独立网络拓扑，每个主控制平面必须能访问对端 API 和东西向网关。安装 Istiod 前预置符合拓扑的 CA Secret。为真实平台配置 L4 负载均衡器、网关可达性和限定范围访问；ALB 或其他终止 TLS 的 L7 跳点不兼容 AUTO_PASSTHROUGH。EKS 负载均衡器前提条件参阅 [AWS 集成](../04-aws-integration.md)。
+对于这种独立网络拓扑，每个主集群都必须能够访问对等集群的 API 和 East-West Gateway。安装 Istiod 前，请配置符合该拓扑要求的 CA Secret。请为实际平台配置 L4 负载均衡器、网关可达性和范围受限的访问；ALB 或其他会终止 TLS 的 L7 跳点与 AUTO_PASSTHROUGH 不兼容。有关 EKS 负载均衡器前提条件，请参阅 [AWS 集成](../04-aws-integration.md)。
 
 ### 1. 将两个集群都设为主集群
 
@@ -483,9 +483,9 @@ istioctl create-remote-secret \
 
 ## 跨集群通信 {#cross-cluster-communication}
 
-使用远程发现，配合匹配的 Service/命名空间名称及所需 DNS 可见性。Istiod 不在集群间复制 Service 对象或 Deployment。本实验在两个集群定义 Service，仅在 cluster2 部署后端，并从 cluster1 的注入客户端调用。不同网络中，Istio 选择东西向网关和 SNI/mTLS 路径；不要用发往端口 15443 的 HTTP ServiceEntry 替代。
+使用远程发现，并确保 Service/命名空间名称匹配且 DNS 可见性符合要求。Istiod 不会在集群之间复制 Service 对象或 Deployment。本实验在两个集群中都定义 Service，只在 cluster2 中部署后端，并从 cluster1 中注入的客户端调用它。在不同网络中，Istio 会选择 East-West Gateway 和 SNI/mTLS 路径；不要将其替换为指向 port15443 的 HTTP ServiceEntry。
 
-将以下保存为 `shared-httpbin-service.yaml`：
+将以下内容保存为 `shared-httpbin-service.yaml`：
 
 ```yaml
 apiVersion: v1
@@ -517,19 +517,19 @@ istioctl proxy-config endpoints deployment/curl --context="$CTX_CLUSTER1" -n mul
 kubectl --context="$CTX_CLUSTER1" exec -n multicluster-demo deploy/curl -c curl -- curl -sS --max-time 5 http://httpbin:8000/headers
 ```
 
-HTTP 响应测试应用路径，本身不测试证书信任。按安全章节检查调用方/接收方 TLS 配置及身份证据。[官方多集群验证](https://istio.io/latest/docs/setup/install/multicluster/verify/)提供其他场景。这些命令假定信任、网络、策略和发现前提条件已满足。
+HTTP 响应测试的是应用路径，本身不能证明证书信任。请按照安全章节中的说明检查调用方/接收方 TLS 配置和身份凭据。[官方多集群验证指南](https://istio.io/latest/docs/setup/install/multicluster/verify/)提供了其他场景。这些命令假设信任、网络、策略和服务发现前提条件均已满足。
 
 ## 与 VPC Lattice 配合使用 {#using-with-vpc-lattice}
 
-### 混合约定和配置片段
+### 混合架构约定和配置片段
 
-此替代方案从独立 Istio 网格及区域 Lattice 服务路径开始。更改 `meshID` 或设置所谓 `multiCluster.enabled` 开关，不是安全断开已加入网格的方法。更改拓扑时，应使用安装指南及审核过的信任/远程 Secret/策略迁移。
+此替代方案从相互独立的 Istio 网格和区域 Lattice 服务路径开始。更改 `meshID` 或设置所谓的 `multiCluster.enabled` 开关，都不是安全断开现有已加入网格的方法。更改拓扑时，请遵循安装指南，并采用经过审核的信任/远程 Secret/策略迁移方案。
 
-以下命令是配置示例，不是端到端生产部署。它们假定获授权管理身份、实际 VPC/安全组 ID、已安装 AWS Gateway API Controller/CRD 和正常 HTTPS Lattice 服务。这些命令的管理凭证独立于只需预期数据平面权限的应用调用方角色。Lattice 服务/网络是区域级；通过对等/中转到达的客户端需要受支持服务网络端点/网络路径。同区域两个 VPC 的直接关联不会创建三区域网络。
+以下命令是配置示例，并非端到端的生产部署。这些示例假设已经具备经授权的管理身份、实际 VPC/安全组 ID、已安装的 AWS Gateway API Controller/CRD，以及可正常工作的 HTTPS Lattice 服务。这些命令使用的管理凭证与应用调用方角色分开；应用调用方角色只需要预期的数据平面权限。Lattice 服务/网络是区域级的；通过对等连接/传输到达的客户端需要使用受支持的服务网络端点/网络路径。直接关联两个同一区域的 VPC 并不会创建跨三个区域的网络。
 
 #### 1. 创建或选择区域服务网络
 
-新网络应捕获返回的 ID，不要查找有歧义的名称。若网络已存在，使用已验证 ID，不再创建。VPC 关联启用客户端路径；不发布 Kubernetes Service，也不授权每个请求。
+创建新网络时，请记录返回的 ID，而不是查找含义不明确的名称。如果网络已存在，请使用经过验证的 ID，而不是再创建一个。VPC 关联会启用客户端路径；但不会发布 Kubernetes Service，也不会自动授权所有请求。
 
 ```bash
 # Both VPCs below are in this Region; use real reviewed VPC/security-group IDs
@@ -543,11 +543,11 @@ aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION
 aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION"   --service-network-identifier "$SERVICE_NETWORK_ID" --vpc-identifier "$VPC2_ID"   --security-group-ids "$LATTICE_SG2_ID"
 ```
 
-#### 2. 通过控制器发布，并定义入口边界
+#### 2. 通过 Controller 发布，并定义入口边界
 
-控制器的 `amazon-vpc-lattice` GatewayClass 和 Gateway 按名称引用服务网络。名为 `my-service-network` 的 Gateway 可引用上方独立管理网络。受支持 HTTPRoute/GRPCRoute 提供服务/监听器/目标路由及自身分配端点；Gateway 不是一个通用服务 DNS 端点。
+Controller 的 `amazon-vpc-lattice` GatewayClass 和 Gateway 通过名称引用服务网络。名为 `my-service-network` 的 Gateway 可以引用上面单独管理的网络。受支持的 HTTPRoute/GRPCRoute 会提供服务/监听器/目标路由，并分配各自的端点；Gateway 并不是一个通用的服务 DNS 端点。
 
-`ServiceExport` 是有效控制器专属 API，但创建的是**目标组**，不是完整 Lattice 服务/网络关联。旧 `lattice-service-network` 注解未提供该流程。下方可选导出假定现有 `lattice-entry` 入口 Service 使用端口 80；仅创建它不会暴露完整路由：
+`ServiceExport` 是有效的 Controller 专用 API，但它创建的是**目标组**，而不是完整的 Lattice 服务/网络关联。旧的 `lattice-service-network` 注释并未提供该工作流。下面的可选导出假设 istio-system 中已存在一个端口为80的 `lattice-entry` 入口 Service；仅创建它并不能提供完整路由：
 
 ```yaml
 # Optional target-group export only; assumes this ingress Service already exists
@@ -562,13 +562,13 @@ spec:
     routeType: HTTP
 ```
 
-实际发布需完成 [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)、[HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/)及适用 ServiceImport 配置。匹配安装的控制器/CRD 版本；exportedPorts 已对 v2.1.3 检查。
+要实际发布服务，请完成 [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)、[HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/)以及适用情况下的 ServiceImport 配置。请确保与已安装的 Controller/CRD 版本相匹配；已对照 v2.1.3 检查 exportedPorts。
 
-Lattice 不会向 STRICT 后端发起 Istio SPIFFE mTLS。提供单独配置的入口边界，接受预期 Lattice 流量、限制绕过，并向后端发起网格 mTLS，或显式设计其他受支持后端安全约定。不要默默削弱后端策略。后端可能看到入口身份而非原始 IAM 调用方；可信身份传播需要自身设计。本文不预置该边界、IAM 角色、ACM 证书或 DNS。
+Lattice 不会为 STRICT 后端发起 Istio SPIFFE mTLS。请单独配置入口边界，以接受预期的 Lattice 流量、限制绕过入口的访问，并向后端发起网格 mTLS；也可以明确设计另一种受支持的后端安全约定。不要默默削弱后端策略。后端看到的身份可能是入口身份，而不是原始 IAM 调用方；可信身份传递需要单独设计。本文档不会配置该边界、IAM 角色、ACM 证书或 DNS。
 
 #### 3. 发现并调用实际 HTTPS 端点
 
-提供方路由和服务网络关联就绪后，获取服务真实 DNS 名称。应用必须使用 HTTPS、验证匹配证书，并在需要认证访问时对实际主机/路径/载荷签名。不要虚构 `.lattice.svc.cluster.local` 名称，也不要在应用 TLS 外再加 SIMPLE TLS。
+提供方路由和服务网络关联就绪后，获取服务的实际 DNS 名称。应用必须使用 HTTPS、验证匹配的证书，并在需要经过身份验证的访问时，对实际主机/路径/负载进行签名。不要虚构 `.lattice.svc.cluster.local` 名称，也不要在应用 TLS 外再添加 SIMPLE TLS。
 
 ```bash
 # Obtain the real service ID from the reconciled provider configuration
@@ -587,11 +587,11 @@ jq -n --arg host "$LATTICE_SERVICE_DNS" '{
 kubectl --context="$CTX_CLUSTER1" apply -f lattice-service-entry.json
 ```
 
-此 ServiceEntry 仅使调用方 Istio 注册表知道外部服务；不预置 Lattice 连接、策略或签名器。应用发起的 HTTPS 对 Sidecar 不透明，因此 HTTP 级代理路由/指标需要另一条显式设计的 TLS 终止路径。
+此 ServiceEntry 只会将外部服务加入调用方的 Istio 注册表；它不会配置 Lattice 连接、策略或签名程序。应用发起的 HTTPS 对 sidecar 来说是不透明的，因此如果需要 HTTP 层的代理路由/指标，就必须明确设计另一种 TLS 终止路径。
 
-#### 4. 要求目标 IAM 调用方
+#### 4. 要求使用预期的 IAM 调用方
 
-`AWS_IAM` 启用策略评估。仅带 SourceVpc 条件的通配 Principal 可允许匿名请求；不证明 IAM 身份验证。此示例改为指定 IAM 角色，将访问限定到一个服务及两个直接关联 VPC。
+`AWS_IAM` 会启用策略评估。只包含 SourceVpc 条件的通配符 Principal 可能允许匿名请求；这并不能证明请求经过了 IAM 身份验证。此示例会指定一个 IAM 角色，并将访问范围限定到一个服务和两个直接关联的 VPC。
 
 ```bash
 : "${CALLER_ROLE_ARN:?Set the explicitly authorized caller IAM role ARN}"
@@ -606,25 +606,25 @@ jq -cn --arg role "$CALLER_ROLE_ARN" --arg service "$LATTICE_SERVICE_ARN"   --ar
 aws vpc-lattice put-auth-policy --region "$LATTICE_REGION"   --resource-identifier "$SERVICE_NETWORK_ID" --policy file://lattice-auth-policy.json
 ```
 
-调用方角色还需要适当基于身份的 Invoke 权限。每个启用的服务网络/服务身份验证策略都必须允许请求，显式拒绝优先。若启用服务级身份验证，也管理该策略；避免 CLI/控制器策略所有者竞争。使用受支持应用 SDK/签名器，或具有工作负载凭证的已验证签名代理。Istio TLS 设置不生成 SigV4 签名；签名后改变主机/路径/正文可能使签名失效。
+调用方角色还需要相应的基于身份的 Invoke 权限。每个已启用的服务网络/服务身份验证策略都必须允许该请求，并且显式拒绝优先级最高。如果启用了服务级身份验证，也要管理相应策略；避免同时由 CLI/Controller 管理策略。请使用受支持的应用 SDK/签名程序，或使用带工作负载凭证且经过验证的签名代理。Istio TLS 设置不会生成 SigV4 签名；签名后更改主机/路径/请求体可能导致签名失效。
 
-### 流量流程和可观测性
+### 流量流向和可观测性
 
-预期流程为：调用方签名并建立 HTTPS → Lattice 授权并终止 HTTPS → 配置的入口边界进入后端网格 → 应用接收请求。TLS 透传是不同约定：自定义域名 SNI/TCP 目标、仅默认规则及匿名主体身份验证策略；可承载应用 mTLS，但不提供 HTTP 标头 IAM 身份验证。
+预期流量路径为：调用方签名并建立 HTTPS → Lattice 授权并终止 HTTPS → 配置好的入口边界进入后端网格 → 应用接收请求。TLS 透传属于另一种约定：使用自定义域名 SNI/TCP 目标、仅有默认规则和匿名主体身份验证策略；它可以承载应用 mTLS，但不提供 HTTP Header IAM 身份验证。
 
-保持应用间追踪上下文及 Collector/后端配置兼容。跨集群或 Lattice 边界不会天然拆分追踪。验证实际身份、TLS 和遥测路径，不要假定原始双集群图是完整部署。
+确保各应用的链路追踪上下文和 Collector/后端配置兼容。跨越集群或 Lattice 边界本身并不会拆分链路追踪。请验证实际身份、TLS 和遥测路径，不要假设原来的双集群示意图就代表完整部署。
 
-## 实际示例 {#practical-examples}
+## 实用示例 {#practical-examples}
 
-### 示例 1：全球电商（多主 + VPC Lattice）
+### 示例 1：全球电子商务（多主集群 + VPC Lattice）
 
-全球应用可部署区域网格和区域 Lattice 服务网络。一个区域内，本地 Order 服务可通过定义的 Lattice/入口约定调用本地 Payment 服务。跨区域调用需要独立受支持网络/端点设计；已移除图表将三个区域放在一个服务网络周围，并未建立该路径。数据复制和区域故障转移仍是应用/基础设施职责。
+全球应用可以部署区域网格和区域 Lattice 服务网络。在某个区域内，本地 Order 服务可以通过定义好的 Lattice/入口约定调用本地 Payment 服务。跨区域调用需要单独设计受支持的网络/端点；已删除的示意图并未因为把三个区域放在一个服务网络周围就建立了这条路径。数据复制和区域故障转移仍由应用/基础设施负责。
 
-以下集群内示例假定真实 cart Service 和匹配 v1/v2 Pod 标签。user-type 标头选择路由；不是身份验证。由于购物车操作可能有副作用，禁用网格重试。
+以下集群内示例假设实际存在 cart Service，并且 v1/v2 Pod 标签匹配。user-type Header 用于选择路由，不代表身份验证。由于 cart 操作可能产生副作用，网格重试已禁用。
 
 #### 配置示例
 
-**集群 1/2：Frontend -> Cart（Istio）**
+**Cluster 1/2：Frontend -> Cart（Istio）**
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -683,15 +683,15 @@ spec:
       version: v2
 ```
 
-**通过 Lattice 的区域 Order → Payment**
+**通过 Lattice 访问区域 Order → Payment**
 
-使用混合章节实际 HTTPS DNS 和渲染的 ServiceEntry，配合有效提供方路由、兼容入口边界及 SigV4 调用方。不要在应用 HTTPS 流外加 SIMPLE TLS，也不要虚构 Kubernetes `.svc.cluster.local` 别名。区域 Lattice 路径不独立解决全球路由或数据恢复。
+使用混合架构章节中的实际 HTTPS DNS 和已渲染的 ServiceEntry，并确保提供方路由可用、入口边界兼容且 SigV4 调用方已配置。不要在应用 HTTPS 流外再添加 SIMPLE TLS，也不要虚构 Kubernetes `.svc.cluster.local` 别名。区域 Lattice 路径本身无法解决全局路由或数据恢复问题。
 
 ### 示例 2：灾难恢复（DR）场景
 
-这是针对两个现有区域 NLB 的**手动 Route53 别名故障转移配置**。它不部署工作负载、负载均衡器、TLS 监听器、复制或健康服务。先配置各目标组真实应用就绪/健康检查。不要将此记录所有者与此前不完整 ExternalDNS 注解组合，也不要虚构健康检查 ID。
+这是针对两个现有区域 NLB 的**手动 Route53 别名故障转移配置**。它不会部署工作负载、负载均衡器、TLS 监听器、复制机制或健康服务。请先为每个目标组配置实际的应用就绪/健康检查。不要将此记录所有者与前面不完整的 ExternalDNS 注释结合，也不要虚构健康检查 ID。
 
-示例对 NLB 别名使用 `EvaluateTargetHealth`，不另建公共 HTTPS 健康检查。若需更深应用/数据健康，应设计合适端点/警报健康信号；旧 HTTP80 Service 与 HTTPS443 探针不匹配。仅私有端点不能简单由公共 Route53 HTTP 检查器测试。
+此示例对 NLB 别名使用 `EvaluateTargetHealth`，不另配公共 HTTPS 健康检查。如果需要更深入的应用/数据健康检查，请设计合适的端点/告警健康信号；旧的 HTTP80 Service 与 HTTPS443 探测并不匹配。仅限私有网络的端点不能简单地由公共 Route53 HTTP 检查器进行检测。
 
 ```bash
 # Existing, healthy NLBs and a DNS zone controlled by this workflow
@@ -726,23 +726,23 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --change-batch file://failover-config.json
 ```
 
-更改 DNS 前，检查现有记录及恢复/回滚计划。A 别名记录不是完整 IPv6 配置；双栈还需适当 AAAA 记录和可达性。DNS 缓存、连接复用、目标组健康语义和全部不健康行为影响故障转移。将其与应用/数据恢复一并测试。DNS 和 Istio 本身都不能确立 15 分钟 RPO 或一小时 RTO。
+更改 DNS 前，请检查现有记录以及恢复/回滚计划。别名 A 记录并不构成完整的 IPv6 配置；使用 dualstack 还需要适当的 AAAA 记录和可达性。DNS 缓存、连接复用、目标组健康语义以及所有目标均不健康时的行为都会影响故障转移。请与应用/数据恢复一并测试。DNS 或 Istio 本身都无法单独保证15分钟 RPO 或1小时 RTO。
 
-## 性能和成本比较 {#performance-and-cost-comparison}
+## 性能与成本比较 {#performance-and-cost-comparison}
 
-旧延迟/RPS/CPU/内存表没有可复现基准来源、版本、硬件或负载条件。成本表还比较不同流量（10TB 与 5TB）及任意人员预算。它们不能证明哪种架构更便宜/更快，也不会被重新标成当前测量。
+旧版延迟/RPS/CPU/内存表没有可复现的基准测试来源、发行版本、硬件或负载条件。成本表还比较了不同的流量规模（10TB 对比5TB）和随意设定的人员预算。因此这些表无法证明哪种架构更便宜/更快，也不能通过修改标签冒充最新测量结果。
 
-| 组成 | 显式测量或定价 |
+| 组件 | 明确测量或定价 |
 |---|---|
-| 应用延迟/吞吐量 | 相同区域、载荷、并发、TLS、策略、应用容量和百分位定义 |
-| 网格计算 | 实际 Istiod/代理/网关/遥测副本及资源消耗；单独包含 Kubernetes/EKS 成本 |
-| 网络 | 相同计费字节/方向、区域传输、负载均衡器/端点/TGW/对等连接处理和容量 |
-| Lattice 服务 | 预置服务时间、请求和数据处理；资源配置/端点有自身模型 |
-| 运维/DR | 观测工程工作量、事件/恢复演练和业务影响假设 |
+|应用延迟/吞吐量|区域、负载、并发、TLS、策略、应用容量和百分位定义相同|
+|网格计算资源|实际 Istiod/代理/网关/遥测副本和资源消耗；单独计入 Kubernetes/EKS 成本|
+|网络|相同的计费字节数/流向、区域传输、LB/端点/TGW/对等连接处理和容量|
+|Lattice 服务|预置服务时长、请求数和数据处理量；资源配置/端点有各自的计费模型|
+|运维/DR|实际工程投入、事件/恢复演练以及业务影响假设|
 
-使用 [Lattice 定价](https://aws.amazon.com/vpc/lattice/pricing/)和实际计费数据。VPC 对等连接不会自动消除跨区域传输费用。Lattice 文档说明服务内部不额外收取跨可用区数据传输费，这不同于数据处理成本为零。Ambient 不保证节省 90% 资源；使用等效策略测量。固定人员数或 $1,000/小时停机阈值都不能决定架构。
+请使用 [Lattice 定价](https://aws.amazon.com/vpc/lattice/pricing/)和实际账单数据。VPC 对等连接不会自动免除跨区域传输费用。Lattice 文档说明其服务内不会额外收取跨 AZ 数据传输费，但这不等于没有数据处理成本。Ambient 并不保证节省90%资源；请使用相同策略进行测量。固定的人员数量或每小时$1,000的停机损失门槛都不能决定架构选择。
 
-## 故障排除 {#troubleshooting}
+## 故障排查 {#troubleshooting}
 
 ```bash
 # Verify cross-cluster connectivity
@@ -761,8 +761,8 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 ### 官方文档
 
 * [Istio 多集群](https://istio.io/latest/docs/setup/install/multicluster/)
-* [多主](https://istio.io/latest/docs/setup/install/multicluster/multi-primary/)
-* [主-远程](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/)
+* [多主集群](https://istio.io/latest/docs/setup/install/multicluster/multi-primary/)
+* [主集群-远程集群](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/)
 * [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 * [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/)
 
@@ -779,9 +779,9 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 ### 相关文档
 
 * [Ambient 模式](01-ambient-mode.md) - 资源优化
-* [mTLS](../security/01-mtls.md) - 安全跨集群通信
+* [mTLS](../security/01-mtls.md) - 安全的跨集群通信
 * [VPC Lattice](../../../networking/02-vpc-lattice.md) - AWS 托管服务网络
 
 ## 总结
 
-根据实际信任、网络、API 和恢复要求选择拓扑。单个区域集群可提供多可用区高可用。Sidecar 多集群在前提条件满足时可扩展发现和网格 mTLS，但不复制应用状态。Lattice 是托管区域应用网络，TLS/身份验证约定因监听器而异。混合方案必须定义每个身份/终止边界及任何跨区域路径。推荐选项前，验证行为及相同工作负载成本。
+请根据实际的信任、网络、API 和恢复要求选择拓扑。单个区域集群可以提供多 AZ HA。满足前提条件时，sidecar 多集群可以扩展服务发现和网格 mTLS，但不会复制应用状态。Lattice 是托管式区域应用网络，其 TLS/身份验证约定因监听器而异。混合架构必须定义每个身份/终止边界及任何跨区域路径。推荐方案前，请验证实际行为并比较相同工作负载下的成本。

@@ -1,41 +1,130 @@
-# Scaling Strategies
+# 扩缩容策略
 
-> **支持版本**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+ **最后更新**: February 19, 2026
+> **生产验证**：采用 Spot 之前，请使用 [EKS Spot 生产实验与结果评估](./17-spot-production-experiments.md) 验证回收、回退、正确性和成本。配置示例和预估节省额并非测量结果。
 
-< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./README.md) | [下一篇: 运维告警配置](07-observability-alerts.md) >
+> **审查基线**：Prometheus Adapter 0.12.0 / chart 5.3.0、KEDA 2.21.0、VPA 1.8.0 / 官方 chart 0.14.0、Goldilocks 4.16.2 / chart 11.2.0\
+> **最后审查时间**：2026 年 10 月 16 日。已检查版本化 chart、CRD、Kubernetes OpenAPI 和本地渲染。未执行实时安装、负载测试、SQS/数据库访问或 Pod 调整大小。
 
-***
+< [上一章：GitOps 自动化](05-gitops-automation.md) | [目录](README.md) | [下一章：运维告警](07-observability-alerts.md) >
 
-## Introduction
+将自定义指标 HPA、KEDA、VPA 和 Spot 放置策略分开处理。**一个自动扩缩器必须负责一个工作负载的副本数。** 目标为 `podinfo` 的 HPA、RPS ScaledObject 和 Cron ScaledObject 是互斥选项；不要同时应用它们。
 
-有效的伸缩需要超越基本的 CPU/memory 指标。本指南介绍高级伸缩策略，包括通过 Prometheus Adapter 使用自定义指标、使用 KEDA 进行事件驱动伸缩、Vertical Pod Autoscaler，以及优化 Spot instance 利用率。
+KEDA 2.21 的官方部署文档列出的已测试 Kubernetes 版本范围为 1.34–1.36。请检查该范围，并单独验证更新的发行版。本章对原生对象的检查使用 Kubernetes 1.36.2 OpenAPI；这并非实时兼容性测试。
 
-***
+## 1. HPA 和自定义指标
 
-## 1. HPA with Custom Metrics
+![抓取的指标值、Adapter 查询响应、API 聚合以及 HPA 控制器对 Deployment 的 scale 更新。](../.gitbook/assets/en-ops-06-scaling-strategies-0.png)
 
-Horizontal Pod Autoscaler (HPA，水平 Pod 自动伸缩器) 可以基于来自 Prometheus 的自定义指标进行伸缩，从而支持基于 RPS、队列长度或业务指标的伸缩。
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-06-scaling-strategies-0.html)
 
-### 1.1 Prometheus Adapter Architecture
+| API | 本例中的提供方 | 职责 |
+|---|---|---|
+| `metrics.k8s.io` | metrics-server | CPU 和内存资源指标 |
+| `custom.metrics.k8s.io` | Prometheus Adapter | 与 Kubernetes 对象（如 Pod）相关的指标 |
+| `external.metrics.k8s.io` | 选择 KEDA 时使用 KEDA metrics API server | 外部事件指标 |
 
-![Custom Metrics Pipeline](../.gitbook/assets/custom_metrics_pipeline.png)
+Prometheus Adapter 也可以提供资源/外部 API，但本例仅启用自定义指标。避免由多个组件竞争同一个 APIService 的所有权。仅安装 CloudWatch Exporter 并不会创建 Kubernetes 外部指标 API。
 
-### 1.2 Prometheus Adapter Installation
+### 前提条件和演示应用
+
+准备好 metrics-server、Prometheus Operator/Prometheus 和 cert-manager。将 values 中的 Prometheus Service 地址替换为实际端点。其 `serviceMonitorSelector` 和 `serviceMonitorNamespaceSelector` 必须能够选中 `scaling-demo` 中的 ServiceMonitor。验证采集到的时间序列具有预期的 `namespace`、`pod` 和 `service` 目标标签。
+
+下方已验证 Podinfo 6.15.0 公共多平台镜像的 digest。将本例改用于其他应用时，请替换为经过批准、实现实际指标、探针和关闭契约的应用。
 
 ```yaml
-# prometheus-adapter-values.yaml
+# fixtures/application.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scaling-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo@sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da
+          ports:
+            - name: http
+              containerPort: 9898
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+  labels:
+    app: podinfo
+spec:
+  selector:
+    app: podinfo
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  namespaceSelector:
+    matchNames: [scaling-demo]
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+```
+
+Podinfo 的 `http_requests_total` 是 HTTP 请求计数器。健康检查等运维请求也可能计入，因此不要假定它只衡量生产业务流量。避免再添加一条基于 annotation 的抓取路径，以免重复采集同一目标。
+
+### Adapter 配置
+
+```yaml
+# fixtures/adapter-values.yaml
 replicas: 2
-
 prometheus:
-  url: http://prometheus-server.monitoring.svc
-  port: 80
-
-# Service account for RBAC
-serviceAccount:
-  create: true
-  name: prometheus-adapter
-
-# Resource configuration
+  url: http://prometheus.monitoring.svc
+  port: 9090
+certManager:
+  enabled: true
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  maxUnavailable: null
 resources:
   requests:
     cpu: 100m
@@ -43,20 +132,11 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-
-# Pod disruption budget
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1
-
-# Rules for custom metrics
 rules:
   default: false
-
-  # Custom metric rules
+  external: []
   custom:
-    # RPS (Requests Per Second) per pod
-    - seriesQuery: 'http_requests_total{namespace!="",pod!=""}'
+    - seriesQuery: 'http_requests_total{namespace="scaling-demo",pod!=""}'
       resources:
         overrides:
           namespace:
@@ -64,312 +144,56 @@ rules:
           pod:
             resource: pod
       name:
-        matches: "^(.*)_total$"
-        as: "${1}_per_second"
-      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
-
-    # HTTP request rate by service
-    - seriesQuery: 'http_server_requests_seconds_count{namespace!="",pod!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          pod:
-            resource: pod
-      name:
-        matches: "^(.*)_count$"
-        as: "requests_per_second"
-      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
-
-    # Queue depth
-    - seriesQuery: 'queue_messages_total{namespace!="",pod!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          pod:
-            resource: pod
-      name:
-        matches: "^(.*)_total$"
-        as: "${1}_depth"
-      metricsQuery: '<<.Series>>{<<.LabelMatchers>>}'
-
-    # Active connections
-    - seriesQuery: 'active_connections{namespace!="",pod!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          pod:
-            resource: pod
-      name:
-        matches: "^(.*)$"
-        as: "${1}"
-      metricsQuery: '<<.Series>>{<<.LabelMatchers>>}'
-
-    # Custom business metric
-    - seriesQuery: 'active_users{namespace!="",service!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          service:
-            resource: service
-      name:
-        matches: "^(.*)$"
-        as: "${1}"
-      metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
-
-  # External metrics (e.g., CloudWatch, SQS)
-  external:
-    # SQS Queue Length
-    - seriesQuery: 'aws_sqs_approximate_number_of_messages_visible_average{queue_name!=""}'
-      resources:
-        overrides:
-          queue_name:
-            group: "sqs.aws"
-            resource: "queue"
-      name:
-        matches: "^aws_sqs_(.*)$"
-        as: "sqs_${1}"
-      metricsQuery: 'avg(<<.Series>>{<<.LabelMatchers>>})'
-
-    # CloudWatch custom metric
-    - seriesQuery: 'cloudwatch_custom_metric{metric_name!=""}'
-      resources:
-        overrides:
-          metric_name:
-            group: "cloudwatch.aws"
-            resource: "metric"
-      name:
-        matches: "^cloudwatch_(.*)$"
-        as: "cw_${1}"
-      metricsQuery: '<<.Series>>{<<.LabelMatchers>>}'
-
-# Logging
-logLevel: 4
-
-# TLS configuration (for production)
-tls:
-  enable: false
+        matches: "^http_requests_total$"
+        as: http_requests_per_second
+      metricsQuery: 'sum(rate(http_requests_total{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
 ```
-
-安装 Prometheus Adapter：
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
+helm upgrade --install prometheus-adapter prometheus-community/prometheus-adapter \
+  --version 5.3.0 --namespace monitoring --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values adapter-values.yaml
 
-helm install prometheus-adapter prometheus-community/prometheus-adapter \
-  --namespace monitoring \
-  --values prometheus-adapter-values.yaml
-
-# Verify installation
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq .
-kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1" | jq .
+kubectl --context "$TARGET_CONTEXT" get --raw \
+  /apis/custom.metrics.k8s.io/v1beta1
 ```
 
-### 1.3 RPS-Based HPA Configuration
+cert-manager 会管理证书和 APIService CA 注入。不要仅凭 `tls.enable=false` 之类的 Helm 选项名称推断传输加密；请检查渲染后的 APIService、证书和验证设置。本例未配置外部规则，因此预期不存在由 Adapter 管理的外部 API。
+
+Helm `rules.custom` 与 Adapter 服务端的原始配置结构不同。创建任意 ConfigMap 并不会让现有 chart 自动读取它。只保留一个配置所有者。
+
+### 使用每 Pod RPS 和 CPU 的 HPA
 
 ```yaml
-# hpa/api-server-hpa.yaml
+# fixtures/hpa.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: api-server
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-server
-
+    name: podinfo
   minReplicas: 3
-  maxReplicas: 50
-
+  maxReplicas: 20
   metrics:
-    # Primary: RPS per pod
     - type: Pods
       pods:
         metric:
           name: http_requests_per_second
         target:
           type: AverageValue
-          averageValue: "100"  # 100 RPS per pod
-
-    # Secondary: CPU as fallback
+          averageValue: "100"
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: 70
-
-    # Tertiary: Memory
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80
-
-  # Scaling behavior configuration
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0  # Scale up immediately
-      policies:
-        - type: Percent
-          value: 100  # Double capacity
-          periodSeconds: 15
-        - type: Pods
-          value: 4  # Or add 4 pods
-          periodSeconds: 15
-      selectPolicy: Max  # Use whichever adds more pods
-
-    scaleDown:
-      stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
-      policies:
-        - type: Percent
-          value: 10  # Remove 10% of pods
-          periodSeconds: 60
-        - type: Pods
-          value: 2  # Or remove 2 pods
-          periodSeconds: 60
-      selectPolicy: Min  # Use whichever removes fewer pods
-
----
-# HPA with external metrics (CloudWatch)
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: worker-processor
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: worker-processor
-
-  minReplicas: 2
-  maxReplicas: 100
-
-  metrics:
-    # External metric: SQS queue depth
-    - type: External
-      external:
-        metric:
-          name: sqs_approximate_number_of_messages_visible_average
-          selector:
-            matchLabels:
-              queue_name: "my-processing-queue"
-        target:
-          type: AverageValue
-          averageValue: "50"  # 50 messages per pod
-
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Percent
-          value: 200
-          periodSeconds: 30
-    scaleDown:
-      stabilizationWindowSeconds: 600
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 120
-```
-
-### 1.4 Custom PromQL for Complex Metrics
-
-```yaml
-# prometheus-adapter-rules-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-adapter-rules
-  namespace: monitoring
-data:
-  config.yaml: |
-    rules:
-      custom:
-        # Error rate percentage
-        - seriesQuery: 'http_requests_total{namespace!="",pod!=""}'
-          resources:
-            overrides:
-              namespace: {resource: namespace}
-              pod: {resource: pod}
-          name:
-            as: "error_rate_percent"
-          metricsQuery: |
-            100 * (
-              sum(rate(http_requests_total{status=~"5..",<<.LabelMatchers>>}[5m])) by (<<.GroupBy>>)
-              /
-              sum(rate(http_requests_total{<<.LabelMatchers>>}[5m])) by (<<.GroupBy>>)
-            )
-
-        # P99 latency
-        - seriesQuery: 'http_request_duration_seconds_bucket{namespace!="",pod!=""}'
-          resources:
-            overrides:
-              namespace: {resource: namespace}
-              pod: {resource: pod}
-          name:
-            as: "latency_p99_seconds"
-          metricsQuery: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket{<<.LabelMatchers>>}[5m])) by (le, <<.GroupBy>>)
-            )
-
-        # Concurrent requests
-        - seriesQuery: 'http_requests_in_flight{namespace!="",pod!=""}'
-          resources:
-            overrides:
-              namespace: {resource: namespace}
-              pod: {resource: pod}
-          name:
-            as: "concurrent_requests"
-          metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
-
-        # Business metric: orders per minute
-        - seriesQuery: 'orders_processed_total{namespace!="",service!=""}'
-          resources:
-            overrides:
-              namespace: {resource: namespace}
-              service: {resource: service}
-          name:
-            as: "orders_per_minute"
-          metricsQuery: |
-            sum(rate(orders_processed_total{<<.LabelMatchers>>}[1m]) * 60) by (<<.GroupBy>>)
-```
-
-### 1.5 HPA Behavior Patterns
-
-```yaml
-# hpa/behavior-patterns.yaml
-
-# Pattern 1: Fast scale-up, slow scale-down (web servers)
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: web-frontend
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-frontend
-  minReplicas: 5
-  maxReplicas: 100
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 60
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 0
@@ -377,2216 +201,706 @@ spec:
         - type: Percent
           value: 100
           periodSeconds: 15
-    scaleDown:
-      stabilizationWindowSeconds: 600  # 10 minute window
-      policies:
-        - type: Percent
-          value: 5
-          periodSeconds: 60
-
-# Pattern 2: Aggressive scale-up, aggressive scale-down (batch workers)
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: batch-worker
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: batch-worker
-  minReplicas: 0  # Scale to zero when idle
-  maxReplicas: 200
-  metrics:
-    - type: External
-      external:
-        metric:
-          name: sqs_approximate_number_of_messages_visible_average
-          selector:
-            matchLabels:
-              queue_name: "batch-queue"
-        target:
-          type: Value
-          value: "100"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Percent
-          value: 500  # 5x increase
+        - type: Pods
+          value: 4
           periodSeconds: 15
-    scaleDown:
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Percent
-          value: 50
-          periodSeconds: 30
-
-# Pattern 3: Conservative scaling (database connections)
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: db-proxy
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: db-proxy
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-    - type: Pods
-      pods:
-        metric:
-          name: active_connections
-        target:
-          type: AverageValue
-          averageValue: "100"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 120  # Wait 2 minutes
-      policies:
-        - type: Pods
-          value: 2  # Add at most 2 pods
-          periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 900  # Wait 15 minutes
-      policies:
-        - type: Pods
-          value: 1  # Remove 1 pod at a time
-          periodSeconds: 300
-
-# Pattern 4: Time-based stabilization (avoid flapping)
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: api-gateway
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-gateway
-  minReplicas: 10
-  maxReplicas: 100
-  metrics:
-    - type: Pods
-      pods:
-        metric:
-          name: http_requests_per_second
-        target:
-          type: AverageValue
-          averageValue: "200"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Percent
-          value: 50
-          periodSeconds: 60
       selectPolicy: Max
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
         - type: Percent
           value: 10
-          periodSeconds: 120
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
       selectPolicy: Min
 ```
 
-### 1.6 Verifying Custom Metrics
+多个指标并非优先级列表，也不是简单的“CPU 回退”。HPA 会计算各项建议，并选择**副本数要求最大**的结果。某个指标不可用可能会阻止缩容；若有效指标要求扩容，仍可能增加副本数。
+
+假设所有目标 Pod/指标都已就绪，基本计算公式为 `ceil(currentReplicas × currentMetric / targetMetric)`。4 个 Pod 的平均 RPS 为 250、目标值为 100 时，计算得出的目标副本数为 10。最小值/最大值、未就绪的 Pod、缺失的指标、容差和行为配置都可能改变实际决策。
+
+| 设置 | 含义 |
+|---|---|
+| 扩容稳定窗口 | 参考近期较低的建议值，以抑制快速扩容 |
+| 缩容稳定窗口 | 参考近期较高的建议值，以抑制快速缩容 |
+| `periodSeconds` | 允许变更幅度的回看窗口 |
+| `selectPolicy: Max` | 允许变更幅度更大的策略 |
+| 缩容时的 `Min` | 允许删除 Pod 较少的策略 |
+
+稳定窗口并不是每次观测后都重新开始一段固定时长的休眠。`periodSeconds` 支持 1–1,800，稳定窗口支持 0–3,600；300 秒的策略有效。增加 500% 表示**在当前数量基础上额外增加 500%**，最多达到当前数量的 6 倍。
+
+当前有 20 个副本时，本例缩容配置中的 Percent 10% 和 Pods 2 策略各自最多允许删除 2 个。历史记录、建议值和其他限制仍会生效；这并不保证某个特定时刻恰好有 18 个就绪 Pod。
+
+通用 HPA 的 `minReplicas: 0` 取决于 Kubernetes 版本、`HPAScaleToZero` 和指标前提条件。本例使用 3；通过 KEDA 实现外部队列缩容至零的方式另行展示。指标 API 响应成功并不能消除镜像拉取、节点容量或应用启动延迟。
+
+### 外部指标和检查
+
+队列深度是 gauge。将累计的 `*_total` 计数器重命名，并不会使其变成当前积压量。对于使用每 Pod 工作目标值的全局队列，`AverageValue` 通常是相关的目标类型；不要假定 `Value` 的计算方式相同。
+
+CloudWatch 集成需要直接使用 KEDA scaler，或配置完整的 Exporter → Prometheus → Adapter 外部规则链路。实际 Exporter 名称/标签必须与 HPA 一致，并避免 APIService 所有权冲突。不要为 `AWS/ApplicationELB RequestCount` 随意添加 TargetGroup 维度。请参阅[经过审查的 KEDA 指南](../autoscaling/01-keda.md)中的 CloudWatch 示例。
 
 ```bash
-# List available custom metrics
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq '.resources[].name'
-
-# Query specific metric for a pod
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second" | jq .
-
-# Query metric for all pods in deployment
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second?labelSelector=app=api-server" | jq .
-
-# Check external metrics
-kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/production/sqs_approximate_number_of_messages_visible_average?labelSelector=queue_name=my-queue" | jq .
-
-# Debug HPA status
-kubectl describe hpa api-server -n production
-
-# Watch HPA scaling events
-kubectl get hpa api-server -n production -w
+kubectl --context "$TARGET_CONTEXT" get --raw \
+  '/apis/custom.metrics.k8s.io/v1beta1/namespaces/scaling-demo/pods/*/http_requests_per_second'
+kubectl --context "$TARGET_CONTEXT" describe hpa podinfo -n scaling-demo
+kubectl --context "$TARGET_CONTEXT" get deployment,pods -n scaling-demo
 ```
 
-***
+请在单独的测试环境中运行有界负载测试，不要使用过时的 BusyBox 镜像运行无界循环。确保 GitOps 对 Deployment `replicas` 的管理与自动扩缩器的所有权一致。
 
-## 2. KEDA Event-Driven Scaling
+## 2. KEDA 事件驱动扩缩容
 
-KEDA (Kubernetes Event-Driven Autoscaling) 提供事件驱动伸缩，并支持大量事件源。
+KEDA operator 管理 ScaledObject/HPA 以及激活/缩容至零的转换。HPA 会参与零以上的水平扩缩容。ScaledJob 会单独创建 Job；HPA 不会更改 Job 的副本数字段。
 
-> **交叉引用**: 有关 KEDA 基础知识和安装，请参阅 [KEDA 自动伸缩](../autoscaling/01-keda.md)
+### 安装和 AWS 身份
 
-### 2.1 KEDA Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      KEDA Architecture                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    Event Sources                              │  │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │  │
-│  │  │   SQS    │ │ Kafka    │ │Prometheus│ │ PostgreSQL       │ │  │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────────┬─────────┘ │  │
-│  └───────┼────────────┼────────────┼────────────────┼───────────┘  │
-│          │            │            │                │              │
-│          ▼            ▼            ▼                ▼              │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    KEDA Components                            │  │
-│  │  ┌─────────────────────┐  ┌─────────────────────────────┐   │  │
-│  │  │  KEDA Operator      │  │  KEDA Metrics Server        │   │  │
-│  │  │  (ScaledObject CR)  │  │  (external-metrics API)     │   │  │
-│  │  └──────────┬──────────┘  └──────────────┬──────────────┘   │  │
-│  └─────────────┼────────────────────────────┼──────────────────┘  │
-│                │                            │                      │
-│                ▼                            ▼                      │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │              Kubernetes Components                            │  │
-│  │  ┌─────────────────────┐  ┌─────────────────────────────┐   │  │
-│  │  │        HPA          │  │      Deployment/Job         │   │  │
-│  │  │  (created by KEDA)  │  │  (scaled by HPA)            │   │  │
-│  │  └─────────────────────┘  └─────────────────────────────┘   │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 RPS-Based ScaledObject with Prometheus
+通用安装、兼容性和网络配置请参阅 [KEDA 指南](../autoscaling/01-keda.md)。AWS 示例明确使用 **KEDA operator 上的 IRSA**。请先准备集群 OIDC provider、精确的 namespace/ServiceAccount 信任配置和队列读取角色。
 
 ```yaml
-# keda/rps-scaledobject.yaml
+# fixtures/keda-values.yaml
+# This example explicitly uses IRSA on the KEDA operator.
+# Prepare the cluster OIDC provider, scoped trust and queue-read role first.
+podIdentity:
+  aws:
+    irsa:
+      enabled: true
+      roleArn: arn:aws:iam::123456789012:role/KedaQueueReadRole
+```
+
+```bash
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+helm upgrade --install keda kedacore/keda \
+  --version 2.21.0 --namespace keda --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values keda-values.yaml
+```
+
+请将角色 ARN 替换为经过批准的角色。旧版 `provider: aws-eks` 选项并不代表 EKS Pod Identity。IRSA 和 Pod Identity 是不同的配置；若选择其他方法，必须具备相应的 operator SDK 凭证链、关联和信任配置。
+
+### RPS ScaledObject
+
+移除冲突的 HPA 所有权或遵循受支持的迁移流程后，再选择这个**替代方案**。
+
+```yaml
+# fixtures/keda-rps.yaml
+# Alternative to hpa.yaml. Do not let both own podinfo's replica count.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: api-server
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-server
-
-  # Scaling limits
+    name: podinfo
   minReplicaCount: 3
-  maxReplicaCount: 100
-
-  # Scale to zero configuration
-  idleReplicaCount: 0  # Optional: scale to zero when idle
-
-  # Polling configuration
-  pollingInterval: 15  # Check every 15 seconds
-  cooldownPeriod: 300  # Wait 5 minutes before scaling down
-
-  # Fallback configuration
+  maxReplicaCount: 20
+  pollingInterval: 15
+  cooldownPeriod: 300
   fallback:
     failureThreshold: 3
     replicas: 5
-
-  # Advanced scaling behavior
   advanced:
     horizontalPodAutoscalerConfig:
-      name: api-server-keda-hpa
       behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-            - type: Percent
-              value: 100
-              periodSeconds: 15
         scaleDown:
           stabilizationWindowSeconds: 300
-          policies:
-            - type: Percent
-              value: 10
-              periodSeconds: 60
-
   triggers:
-    # Primary: RPS from Prometheus
     - type: prometheus
+      name: requests
+      metricType: AverageValue
       metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: http_requests_per_second
-        query: |
-          sum(rate(http_requests_total{
-            namespace="production",
-            deployment="api-server"
-          }[2m]))
-        threshold: "1000"  # Total 1000 RPS triggers scaling
-        activationThreshold: "100"  # Start scaling above 100 RPS
-
-    # Secondary: Error rate threshold
-    - type: prometheus
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(rate(http_requests_total{namespace="scaling-demo",service="podinfo"}[2m]))
+        threshold: "100"
+        activationThreshold: "0"
+        ignoreNullValues: "false"
+    - type: cpu
+      metricType: Utilization
       metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: error_rate
-        query: |
-          100 * sum(rate(http_requests_total{
-            namespace="production",
-            deployment="api-server",
-            status=~"5.."
-          }[5m])) / sum(rate(http_requests_total{
-            namespace="production",
-            deployment="api-server"
-          }[5m]))
-        threshold: "5"  # Scale up if error rate > 5%
-        activationThreshold: "1"
-
----
-# TriggerAuthentication for secure Prometheus access
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: prometheus-auth
-  namespace: production
-spec:
-  secretTargetRef:
-    - parameter: bearerToken
-      name: prometheus-token
-      key: token
+        value: "70"
 ```
 
-### 2.3 PostgreSQL Session-Based Scaling
+`AverageValue` 阈值 100 表示**每个 Pod 的目标值为 100 RPS**，并不是无条件按总流量触发扩容的阈值。例如，总流量为 1,000 RPS 时，在其他限制生效前，意味着需要 10 个副本。激活阈值控制激活，与 HPA 目标值不同。
+
+`ignoreNullValues=false` 可以避免将缺失的查询结果默默视为正常的零负载。请返回一个聚合值，并有意处理错误、NaN 和零流量。针对受支持指标的重复故障，fallback 可提供应对方式；但它无法恢复所有指标提供方、HPA 或节点故障。
+
+HTTP 示例会保留 3 个 Pod。如果所有 Pod 都被移除，而唯一的活动信号又来自这些 Pod，新 HTTP 流量可能没有可供观测/激活的路径。缩容至零需要外部队列或其他激活机制。
+
+### SQS 队列
+
+请准备实际的 `sqs-worker` Deployment 及其专属队列消费者权限。KEDA 读取队列属性所需的权限，与 worker 接收/删除/更改可见性所需的权限不同。
 
 ```yaml
-# keda/postgres-scaledobject.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: db-worker
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: db-worker
-
-  minReplicaCount: 1
-  maxReplicaCount: 20
-  pollingInterval: 30
-  cooldownPeriod: 300
-
-  triggers:
-    - type: postgresql
-      metadata:
-        # Connection string from secret
-        connectionFromEnv: POSTGRES_CONNECTION_STRING
-        query: |
-          SELECT COUNT(*)
-          FROM pg_stat_activity
-          WHERE state = 'active'
-          AND query NOT LIKE '%pg_stat_activity%'
-        targetQueryValue: "5"  # 5 active queries per pod
-        activationTargetQueryValue: "1"
-
-    # Alternative: pending jobs in queue table
-    - type: postgresql
-      metadata:
-        connectionFromEnv: POSTGRES_CONNECTION_STRING
-        query: |
-          SELECT COUNT(*)
-          FROM job_queue
-          WHERE status = 'pending'
-          AND created_at > NOW() - INTERVAL '1 hour'
-        targetQueryValue: "50"  # 50 pending jobs per pod
-
----
-# Secret for PostgreSQL connection
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-credentials
-  namespace: production
-type: Opaque
-stringData:
-  connection_string: "host=mydb.cluster-xxx.ap-northeast-2.rds.amazonaws.com port=5432 user=app dbname=production password=secret sslmode=require"
-
----
-# Deployment with connection string
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: db-worker
-  namespace: production
-spec:
-  selector:
-    matchLabels:
-      app: db-worker
-  template:
-    metadata:
-      labels:
-        app: db-worker
-    spec:
-      containers:
-        - name: worker
-          image: myregistry/db-worker:v1.0
-          env:
-            - name: POSTGRES_CONNECTION_STRING
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: connection_string
-```
-
-### 2.4 SQS Queue-Based Scaling
-
-```yaml
-# keda/sqs-scaledobject.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: queue-processor
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: queue-processor
-
-  minReplicaCount: 0  # Scale to zero when queue is empty
-  maxReplicaCount: 100
-  pollingInterval: 15
-  cooldownPeriod: 60
-
-  triggers:
-    - type: aws-sqs-queue
-      authenticationRef:
-        name: aws-credentials
-      metadata:
-        queueURL: https://sqs.ap-northeast-2.amazonaws.com/123456789012/my-processing-queue
-        queueLength: "10"  # 10 messages per pod
-        awsRegion: ap-northeast-2
-        activationQueueLength: "1"  # Start scaling at 1 message
-        scaleOnInFlight: "true"  # Include in-flight messages
-
----
-# TriggerAuthentication for AWS
+# fixtures/keda-sqs.yaml
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
-  name: aws-credentials
-  namespace: production
-spec:
-  podIdentity:
-    provider: aws-eks  # Use EKS Pod Identity
-
----
-# Alternative: Using IAM Role for Service Account (IRSA)
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: aws-credentials-irsa
-  namespace: production
+  name: keda-aws
+  namespace: scaling-demo
 spec:
   podIdentity:
     provider: aws
-    identityId: arn:aws:iam::123456789012:role/keda-sqs-role
-```
-
-### 2.5 Cron-Based Scaling
-
-```yaml
-# keda/cron-scaledobject.yaml
+    identityOwner: keda
+---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: api-server-scheduled
-  namespace: production
+  name: sqs-worker
+  namespace: scaling-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-server
+    name: sqs-worker
+  minReplicaCount: 0
+  maxReplicaCount: 50
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: keda-aws
+      metadata:
+        queueURL: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/my-queue
+        queueLength: "10"
+        activationQueueLength: "0"
+        scaleOnInFlight: "true"
+        scaleOnDelayed: "false"
+        awsRegion: ap-northeast-2
+```
 
+`activationQueueLength: "0"` 表示队列长度大于零时激活。值为 `"1"` 表示**大于一**，而非大于等于一。请审查处理中/延迟消息的处理方式和可见性超时。DLQ 积压不会自动计入。
+
+轮询指 KEDA 的检查，而非 HPA 同步周期或 Pod 启动时长。从一个副本扩到多个，与扩缩至零的转换不同；`cooldownPeriod` 并非适用于所有情况的缩容休眠时间。对于长时间运行的工作，需要周全处理终止、重试、去重和可见性。
+
+### PostgreSQL 工作队列
+
+由于数据库连接数增加而扩展应用，可能会加剧连接压力。本例使用 worker 实际消费的待处理工作量。
+
+```yaml
+# fixtures/keda-postgresql.yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: queue-database
+  namespace: scaling-demo
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: queue-database
+      key: connection
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: database-worker
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: database-worker
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+    - type: postgresql
+      authenticationRef:
+        name: queue-database
+      metricType: AverageValue
+      metadata:
+        query: SELECT count(*) FROM public.job_queue WHERE status = 'pending'
+        targetQueryValue: "50"
+        activationTargetQueryValue: "0"
+```
+
+`queue-database` Secret 的 `connection` 键必须包含有效的 DSN。在 KEDA operator 环境中使用 `sslmode=verify-full` 和所需的 CA 路径，配置主机名/CA 验证。不要将凭证提交到 Git。应单独授予 KEDA 对队列表的读取权限，而 worker 的写入权限应另行配置。
+
+请返回一个数值。过滤掉所有超过一小时的待处理任务可能会掩盖积压。worker 仍需具备原子认领、去重和完成状态管理能力。
+
+### Cron 和多个指标
+
+```yaml
+# fixtures/keda-cron.yaml
+# Alternative to the preceding podinfo HPA/ScaledObject.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    name: podinfo
   minReplicaCount: 3
   maxReplicaCount: 50
-
   triggers:
-    # Business hours scaling (Mon-Fri 9AM-6PM KST)
     - type: cron
       metadata:
         timezone: Asia/Seoul
-        start: 0 9 * * 1-5    # 9 AM weekdays
-        end: 0 18 * * 1-5     # 6 PM weekdays
+        start: "0 9 * * 1-5"
+        end: "0 18 * * 1-5"
         desiredReplicas: "20"
-
-    # Peak hours scaling (Mon-Fri 11AM-2PM KST)
     - type: cron
       metadata:
         timezone: Asia/Seoul
-        start: 0 11 * * 1-5
-        end: 0 14 * * 1-5
+        start: "30 11 * * 1-5"
+        end: "30 13 * * 1-5"
         desiredReplicas: "40"
-
-    # Weekend scaling
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 0 10 * * 0,6   # Saturday, Sunday 10 AM
-        end: 0 22 * * 0,6     # Saturday, Sunday 10 PM
-        desiredReplicas: "15"
-
-    # Combine with metric-based trigger
     - type: prometheus
+      metricType: AverageValue
       metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: rps
-        query: sum(rate(http_requests_total{deployment="api-server"}[2m]))
-        threshold: "500"
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(rate(http_requests_total{namespace="scaling-demo",service="podinfo"}[2m]))
+        threshold: "100"
+        ignoreNullValues: "false"
 ```
 
-### 2.6 Composite Triggers
+工作时间内的 20 个副本和午餐时段的 40 个副本会与基于指标的需求进行比较。有效需求中最大的值胜出；Cron 和 Prometheus 没有任意优先级。上述时段之外的最小值为 3。添加跨夜/周末计划时，请在配置时区中测试时间边界和重叠时段。
+
+当前 KEDA 支持 `advanced.scalingModifiers`。将公式说成尚未推出的功能，或声称目前仅支持 OR 行为，都是不正确的。本例将一个 worker 消费的两个**单位相同的队列 gauge** 组合起来：
 
 ```yaml
-# keda/composite-scaledobject.yaml
+# fixtures/keda-composite.yaml
+# Requires a worker that consumes both queues and the two named gauge series.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: multi-trigger-worker
-  namespace: production
+  name: shared-queue-worker
+  namespace: scaling-demo
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: multi-worker
-
-  minReplicaCount: 2
-  maxReplicaCount: 100
-  pollingInterval: 15
-  cooldownPeriod: 300
-
-  # Use formula to combine triggers
+    name: shared-queue-worker
+  minReplicaCount: 1
+  maxReplicaCount: 30
   advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 30
-          selectPolicy: Max
-          policies:
-            - type: Percent
-              value: 100
-              periodSeconds: 30
-
+    scalingModifiers:
+      formula: queue_a + queue_b
+      target: "50"
+      activationTarget: "0"
+      metricType: AverageValue
   triggers:
-    # Trigger 1: SQS Queue
-    - type: aws-sqs-queue
-      name: sqs-trigger
-      authenticationRef:
-        name: aws-credentials
-      metadata:
-        queueURL: https://sqs.ap-northeast-2.amazonaws.com/123456789012/task-queue
-        queueLength: "20"
-        awsRegion: ap-northeast-2
-
-    # Trigger 2: Kafka Consumer Lag
-    - type: kafka
-      name: kafka-trigger
-      metadata:
-        bootstrapServers: kafka.production:9092
-        consumerGroup: my-consumer-group
-        topic: events
-        lagThreshold: "100"
-        activationLagThreshold: "10"
-
-    # Trigger 3: Prometheus metric
     - type: prometheus
-      name: cpu-trigger
+      name: queue_a
       metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: cpu_usage
-        query: |
-          avg(rate(container_cpu_usage_seconds_total{
-            namespace="production",
-            pod=~"multi-worker-.*"
-          }[5m])) * 100
-        threshold: "70"
-
-    # Trigger 4: Memory pressure
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(queue_messages_pending{queue="a"})
+        threshold: "50"
+        ignoreNullValues: "false"
     - type: prometheus
-      name: memory-trigger
+      name: queue_b
       metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: memory_usage
-        query: |
-          avg(container_memory_working_set_bytes{
-            namespace="production",
-            pod=~"multi-worker-.*"
-          } / container_spec_memory_limit_bytes{
-            namespace="production",
-            pod=~"multi-worker-.*"
-          }) * 100
-        threshold: "80"
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(queue_messages_pending{queue="b"})
+        threshold: "50"
+        ignoreNullValues: "false"
 ```
 
-### 2.7 ScaledJob for Batch Processing
+触发器名称必须能够在表达式中使用，且公式必须返回数值指标。不要随意组合资源触发器或单位不兼容的指标。如需实现类似 AND 的行为，请设计条件数值结果，并测试饥饿、激活和故障处理。
+
+### ScaledJob
+
+这是一个模板，需要提供实际的 worker 镜像和 `batch-worker` ServiceAccount。
 
 ```yaml
-# keda/scaledjob.yaml
+# fixtures/keda-job.yaml
+# Supply an actual bounded, idempotent SQS consumer image and worker identity.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
   name: batch-processor
-  namespace: production
+  namespace: scaling-demo
 spec:
+  pollingInterval: 30
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  scalingStrategy:
+    strategy: default
   jobTargetRef:
     parallelism: 1
     completions: 1
     activeDeadlineSeconds: 600
-    backoffLimit: 3
+    backoffLimit: 2
     template:
-      metadata:
-        labels:
-          app: batch-processor
       spec:
+        serviceAccountName: batch-worker
         restartPolicy: Never
-        serviceAccountName: batch-processor
         containers:
           - name: processor
-            image: myregistry/batch-processor:v1.0
+            image: REPLACE_WITH_APPROVED_WORKER_IMAGE
             env:
-              - name: QUEUE_URL
-                value: https://sqs.ap-northeast-2.amazonaws.com/123456789012/batch-queue
+              - name: SQS_QUEUE_URL
+                value: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/batch-queue
             resources:
               requests:
-                cpu: 500m
-                memory: 512Mi
-              limits:
-                cpu: 2000m
-                memory: 2Gi
-
-  pollingInterval: 30
-  successfulJobsHistoryLimit: 5
-  failedJobsHistoryLimit: 10
-
-  # Maximum concurrent jobs
-  maxReplicaCount: 50
-
-  # Scaling strategy
-  scalingStrategy:
-    strategy: accurate  # Options: default, custom, accurate
-    # For custom strategy:
-    # customScalingQueueLengthDeduction: 1
-    # customScalingRunningJobPercentage: "0.5"
-
-  # Scale to zero
-  minReplicaCount: 0
-
-  # Rollout strategy
-  rollout:
-    strategy: gradual
-    propagationPolicy: Foreground
-
+                cpu: 250m
+                memory: 256Mi
   triggers:
     - type: aws-sqs-queue
       authenticationRef:
-        name: aws-credentials
+        name: keda-aws
       metadata:
-        queueURL: https://sqs.ap-northeast-2.amazonaws.com/123456789012/batch-queue
-        queueLength: "1"  # One job per message
+        queueURL: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/batch-queue
+        queueLength: "1"
         awsRegion: ap-northeast-2
-        activationQueueLength: "0"
-
----
-# ScaledJob with Cron trigger for scheduled batch
-apiVersion: keda.sh/v1alpha1
-kind: ScaledJob
-metadata:
-  name: scheduled-report
-  namespace: production
-spec:
-  jobTargetRef:
-    parallelism: 1
-    completions: 1
-    template:
-      spec:
-        restartPolicy: Never
-        containers:
-          - name: report-generator
-            image: myregistry/report-generator:v1.0
-            resources:
-              requests:
-                cpu: 1000m
-                memory: 2Gi
-
-  pollingInterval: 60
-  maxReplicaCount: 1
-
-  triggers:
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 0 6 * * *    # 6 AM daily
-        end: 0 7 * * *      # 7 AM daily
-        desiredReplicas: "1"
 ```
 
-### 2.8 KEDA Tuning Parameters
+历史记录限制表示**数量**，而非秒数。`queueLength: "1"` 并不能保证某个特定消息恰好只被分配给一个 Job 一次。worker 必须接收/处理/删除消息，并能容忍重试。default、accurate、custom 和 eager 策略对队列以及运行中/待处理 Job 如何影响创建的处理方式各不相同。
+
+ScaledJob 的 Cron 触发器可能会在活动时段内重复创建 Job。对于“每天执行一次”的任务，请使用 Kubernetes CronJob，并明确配置 schedule/timeZone、并发和重试策略。不要在调优示例中意外保留启用状态的 `autoscaling.keda.sh/paused-replicas`。
+
+## 3. VPA 和原地调整大小
+
+VPA 主要用于推荐**资源 requests**。limits 取决于 controlledValues 和现有比例；它不会在所有情况下都独立计算最优 limit。
+
+### 官方 chart 和推荐模式
+
+使用官方 VPA chart 0.14.0 和 VPA 1.8.0。不要在现有 VPA 安装之上再安装第二个 VPA；应先审查 CRD/RBAC/配置迁移。以下配置使用 cert-manager/cainjector 管理 webhook 证书。
 
 ```yaml
-# keda/tuning-example.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: tuned-worker
-  namespace: production
-  annotations:
-    # Disable auto-scaling temporarily
-    # autoscaling.keda.sh/paused: "true"
-    # Custom replica annotation
-    autoscaling.keda.sh/paused-replicas: "5"
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: tuned-worker
-
-  # Core tuning parameters
-  pollingInterval: 15       # How often to check triggers (seconds)
-  cooldownPeriod: 300       # Time to wait after last trigger before scaling down
-  idleReplicaCount: 0       # Replicas when idle (scale to zero)
-  minReplicaCount: 2        # Minimum replicas when active
-  maxReplicaCount: 100      # Maximum replicas
-
-  # Fallback when trigger fails
-  fallback:
-    failureThreshold: 5     # Number of failures before fallback
-    replicas: 10            # Fallback replica count
-
-  # Advanced HPA configuration
-  advanced:
-    restoreToOriginalReplicaCount: true  # Restore on ScaledObject deletion
-    horizontalPodAutoscalerConfig:
-      name: tuned-worker-hpa
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-            - type: Percent
-              value: 100
-              periodSeconds: 15
-            - type: Pods
-              value: 10
-              periodSeconds: 15
-          selectPolicy: Max
-        scaleDown:
-          stabilizationWindowSeconds: 300
-          policies:
-            - type: Percent
-              value: 10
-              periodSeconds: 60
-          selectPolicy: Min
-
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus-server.monitoring:80
-        metricName: queue_depth
-        query: sum(queue_messages_pending{app="tuned-worker"})
-        threshold: "100"
-        activationThreshold: "10"  # Don't scale until threshold is met
-        # Metric type affects scaling calculation
-        # AverageValue (default): totalMetric / desiredReplicas
-        # Value: scale based on absolute metric value
-        metricType: AverageValue
-```
-
-***
-
-## 3. VPA (Vertical Pod Autoscaler)
-
-VPA 会根据实际使用情况自动调整 CPU 和 memory requests。
-
-### 3.1 VPA Installation
-
-```bash
-# Clone VPA repository
-git clone https://github.com/kubernetes/autoscaler.git
-cd autoscaler/vertical-pod-autoscaler
-
-# Install VPA components
-./hack/vpa-up.sh
-
-# Verify installation
-kubectl get pods -n kube-system | grep vpa
-```
-
-或使用 Helm 安装：
-
-```yaml
-# vpa-values.yaml
+# fixtures/vpa-values.yaml
 admissionController:
-  enabled: true
-  replicaCount: 2
-
+  replicas: 2
+  certGen:
+    enabled: false
+  certManager:
+    enabled: true
+    createSelfSignedIssuer:
+      enabled: true
 recommender:
-  enabled: true
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 50m
-      memory: 500Mi
-
+  replicas: 2
 updater:
-  enabled: true
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 50m
-      memory: 500Mi
-
-# Minimum resources for VPA recommendations
-resourcePolicy:
-  minAllowed:
-    cpu: 10m
-    memory: 50Mi
-  maxAllowed:
-    cpu: 8
-    memory: 32Gi
+  replicas: 2
+  extraArgs:
+    - --in-place-skip-disruption-budget=false
 ```
 
 ```bash
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install vpa fairwinds-stable/vpa \
-  --namespace kube-system \
+helm upgrade --install vpa \
+  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.14.0/vertical-pod-autoscaler-0.14.0.tgz \
+  --namespace vpa --create-namespace --kube-context "$TARGET_CONTEXT" \
   --values vpa-values.yaml
 ```
 
-### 3.2 VPA Update Modes
+此 chart 使用 `replicas`；不要将其他 chart 的 `replicaCount` 或 extraArgs 结构混用进来。它会为多个 recommender/updater 副本启用 leader election。此处明确禁用了跳过 disruption budget 的行为。添加未记录的 Prometheus 历史数据选项，并不会自动建立可用的历史数据管道。
 
 ```yaml
-# vpa/update-modes.yaml
-
-# Mode: Off - Recommendations only, no auto-update
----
+# fixtures/vpa.yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: api-server-vpa-off
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-server
+    name: podinfo
   updatePolicy:
-    updateMode: "Off"  # Only provide recommendations
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: api-server
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-
-# Mode: Initial - Set resources only at pod creation
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: api-server-vpa-initial
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-  updatePolicy:
-    updateMode: "Initial"  # Only set on pod creation
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api-server
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        controlledResources: ["cpu", "memory"]
-
-# Mode: Auto - Full automatic adjustment (causes pod restarts)
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: api-server-vpa-auto
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-  updatePolicy:
-    updateMode: "Auto"
-    minReplicas: 2  # Minimum replicas during updates
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api-server
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits  # Or RequestsOnly
-
----
-# Check VPA recommendations
-# kubectl describe vpa api-server-vpa-off -n production
-```
-
-### 3.3 VPA Resource Policies
-
-```yaml
-# vpa/resource-policies.yaml
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: multi-container-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: multi-container-app
-  updatePolicy:
-    updateMode: "Auto"
-  resourcePolicy:
-    containerPolicies:
-      # Main application container
-      - containerName: app
-        minAllowed:
-          cpu: 200m
-          memory: 256Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits
-
-      # Sidecar - fixed resources (not controlled by VPA)
-      - containerName: envoy-proxy
-        mode: "Off"  # Don't adjust this container
-
-      # Log shipper - only control memory
-      - containerName: fluentbit
-        minAllowed:
-          memory: 64Mi
-        maxAllowed:
-          memory: 512Mi
-        controlledResources: ["memory"]  # Only memory, not CPU
+      - containerName: podinfo
+        controlledResources: [cpu, memory]
         controlledValues: RequestsOnly
-
-      # Init container - use wildcard for all init containers
-      - containerName: "*"
-        mode: "Off"
-```
-
-### 3.4 In-Place Pod Resize (KEP-1287)
-
-从 Kubernetes 1.27（beta）开始，in-place pod resize 允许 VPA 在不重启 pods 的情况下调整资源。
-
-```yaml
-# vpa/inplace-resize.yaml
-# Requires: Kubernetes 1.27+ with InPlacePodVerticalScaling feature gate
-
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: api-server-inplace
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-  updatePolicy:
-    updateMode: "Auto"
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api-server
         minAllowed:
           cpu: 100m
           memory: 128Mi
         maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        controlledResources: ["cpu", "memory"]
-
----
-# Deployment with resizePolicy for in-place updates
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      containers:
-        - name: api-server
-          image: myregistry/api-server:v1.0
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 2
-              memory: 2Gi
-          # Resize policy for in-place updates
-          resizePolicy:
-            - resourceName: cpu
-              restartPolicy: NotRequired  # CPU can be changed without restart
-            - resourceName: memory
-              restartPolicy: RestartContainer  # Memory change requires restart
+          cpu: "1"
+          memory: 512Mi
 ```
 
-### 3.5 Goldilocks Dashboard
+`Off` 会生成建议，但不会将建议应用到 Pod。在应用建议前，请检查 requests/limits、配额和节点容量。不要在同一个 Deployment 上安装多个互为替代的 VPA。
 
-Goldilocks 提供一个 dashboard，用于可视化 VPA recommendations。
+| 模式 | VPA 1.8.0 行为 |
+|---|---|
+| `Off` | 仅生成建议 |
+| `Initial` | 在创建 Pod 时应用 |
+| `Recreate` | 需要时通过驱逐/重新创建应用 |
+| `InPlaceOrRecreate` | 尝试原地更新，失败时回退到重新创建 |
+| `InPlace` | 重试原地更新，不回退到驱逐；需要单独启用功能门控 |
+| `Auto` | 已弃用，目前等同于 Recreate；请选择明确的模式 |
+
+请检查 VPA 1.8.0 原地模式对 Kubernetes 1.33+ 及其他前提条件的要求。旧版 `InPlaceOrRecreate` VPA 功能门控已在 1.7 中移除，但 `InPlace` 需要 `--feature-gates=InPlace=true`。`minReplicas` 是 updater 的资格条件，并不保证一定有这么多可用的 Pod。
+
+### Kubernetes 调整大小
+
+Pod 原地调整大小在 1.27 中以 alpha 形式推出，在 1.33 中升级为 beta，并在 1.35 中达到稳定状态。这不意味着所有 1.27+ 集群都默认支持无中断更新。请检查受支持的节点/运行时、QoS 和调整大小策略。
+
+```yaml
+# Container fragment; select the restart behavior required by the application.
+resizePolicy:
+  - resourceName: cpu
+    restartPolicy: NotRequired
+  - resourceName: memory
+    restartPolicy: RestartContainer
+```
+
+此补丁会更改演示 Pod 的 CPU request。使用 resize 子资源前，请确认实际 Pod 名称。
+
+```json
+{
+  "spec": {
+    "containers": [
+      {
+        "name": "podinfo",
+        "resources": {
+          "requests": {"cpu": "200m"},
+          "limits": {"cpu": "1"}
+        }
+      }
+    ]
+  }
+}
+```
 
 ```bash
-# Install Goldilocks
+kubectl --context "$TARGET_CONTEXT" patch pod "$POD_NAME" -n scaling-demo \
+  --subresource=resize --type=strategic --patch-file=resize-patch.json
+kubectl --context "$TARGET_CONTEXT" get pod "$POD_NAME" -n scaling-demo -o json |
+  jq '.status.conditions[]? | select(.type | startswith("PodResize"))'
+```
+
+检查 `PodResizePending` 上的 Deferred/Infeasible 原因以及 `PodResizeInProgress`。不要仅依赖已过时的 `.status.resize` 字段。采用 `RestartContainer` 策略时，Pod 可以保持不变，但其容器会重启。QoS 变化、不受支持的 init/ephemeral container、节点策略和操作系统都会带来更多限制。
+
+直接调整 Pod 大小不会永久更新 Deployment 模板。若替换 Pod 时应保留预期设置，请通过 VPA 或 Git 持久化这些设置。
+
+### Goldilocks 和与 HPA 共存
+
+```yaml
+# fixtures/goldilocks-values.yaml
+vpa:
+  enabled: false
+controller:
+  enabled: true
+dashboard:
+  enabled: true
+  service:
+    type: ClusterIP
+```
+
+```bash
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install goldilocks fairwinds-stable/goldilocks \
-  --namespace goldilocks \
-  --create-namespace \
-  --set dashboard.enabled=true \
-  --set dashboard.service.type=LoadBalancer
+helm repo update
+helm upgrade --install goldilocks fairwinds-stable/goldilocks \
+  --version 11.2.0 --namespace goldilocks --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values goldilocks-values.yaml
 ```
+
+复用现有的 VPA 安装，并让 dashboard 保持为 ClusterIP。请使用经过身份验证的内部路由或 localhost 端口转发来进行审查。在 namespace 中启用 Goldilocks 可能会创建 VPA；避免它与现有手动管理的 VPA 目标产生所有权冲突。
+
+基于 CPU 利用率的 HPA 与 VPA 对 CPU request 的调整会通过利用率分母相互影响。`Initial` 仍会更改新 Pod 的 requests。可以先仅生成建议，或让 HPA 使用 RPS/积压等工作负载指标，同时由 VPA 负责资源配置，并验证二者组合后的行为。CPU HPA 加上仅调整内存的 VPA，仍会对重启/调度产生影响。
+
+## 4. Pod 删除成本
+
+该 annotation 是一种**尽力而为的 ReplicaSet 缩容偏好**。它并不是适用于节点中断、驱逐、Job、StatefulSet 或不同 Deployment 间副本比例的全局优先级。
 
 ```yaml
-# goldilocks/namespace-label.yaml
-# Label namespaces for Goldilocks to monitor
-apiVersion: v1
-kind: Namespace
 metadata:
-  name: production
-  labels:
-    goldilocks.fairwinds.com/enabled: "true"
-    goldilocks.fairwinds.com/vpa-update-mode: "Off"
+  annotations:
+    controller.kubernetes.io/pod-deletion-cost: "100"
 ```
 
-### 3.6 VPA + HPA Coexistence Strategy
+当前 ReplicaSet 的排序逻辑会先比较分配情况、Pod 阶段和就绪状态，然后再比较删除成本。之后才会考虑节点副本密度、就绪时长、重启次数和创建时间。较低的成本并不总能让某个 Pod 排在所有其他候选者之前。
 
-当 VPA 和 HPA 都尝试管理 CPU 时可能会发生冲突。请使用以下策略：
+取值范围为有符号 32 位整数，默认值为零。更改偏好前，请核实**同一 ReplicaSet** 中 Pod 的所有权和当前状态：
+
+```bash
+kubectl --context "$TARGET_CONTEXT" get pod "$POD_A" "$POD_B" \
+  -n scaling-demo -o json |
+  jq '.items[] | {name:.metadata.name,node:.spec.nodeName,
+    owners:.metadata.ownerReferences,phase:.status.phase}'
+
+kubectl --context "$TARGET_CONTEXT" annotate pod "$POD_A" -n scaling-demo \
+  controller.kubernetes.io/pod-deletion-cost=-100 --overwrite
+kubectl --context "$TARGET_CONTEXT" annotate pod "$POD_B" -n scaling-demo \
+  controller.kubernetes.io/pod-deletion-cost=100 --overwrite
+```
+
+在每个 Pod 模板中设置相同的成本，无法区分这些 Pod。CREATE 准入 webhook 通常无法知道未来分配到的节点。`preStop` 会在 Pod 被选中删除后运行，来不及影响这次选择。
+
+真正的动态控制器需要在绑定后处理、精确检查控制器所有权/UID、范围受限的 patch 权限、处理 annotation 为空的情况、watch 重连以及 API 错误处理。Pod 就绪并不能证明工作已完成；为 Job 进度添加 annotation 也不会让 Job 终止遵循 ReplicaSet 删除成本规则。
+
+## 5. Spot 放置和终止
+
+以下配置假定使用一个带有现有 `default` NodeClass 的演示 Auto Mode 集群。两个池都提供相同的工作负载标签，因此两种容量类型都符合条件。
 
 ```yaml
-# vpa-hpa-coexistence.yaml
-
-# Strategy 1: VPA manages memory, HPA manages CPU
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: api-server-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-  updatePolicy:
-    updateMode: "Auto"
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api-server
-        controlledResources: ["memory"]  # Only memory
-        minAllowed:
-          memory: 256Mi
-        maxAllowed:
-          memory: 8Gi
-
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: api-server-hpa
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-  minReplicas: 3
-  maxReplicas: 50
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-
-# Strategy 2: VPA in "Off" mode for recommendations, manual apply
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: batch-worker-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: batch-worker
-  updatePolicy:
-    updateMode: "Off"  # Recommendations only
-  resourcePolicy:
-    containerPolicies:
-      - containerName: worker
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 8
-          memory: 16Gi
-
-# Strategy 3: VPA "Initial" mode + HPA for dynamic workloads
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: web-frontend-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-frontend
-  updatePolicy:
-    updateMode: "Initial"  # Only at pod creation
-  resourcePolicy:
-    containerPolicies:
-      - containerName: frontend
-        controlledResources: ["cpu", "memory"]
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 2
-          memory: 4Gi
-
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: web-frontend-hpa
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-frontend
-  minReplicas: 5
-  maxReplicas: 100
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 60
-```
-
-***
-
-## 4. Custom Scheduler and Pod Deletion Cost
-
-Pod deletion cost 可让你影响在 scale-down 期间哪些 pods 优先被终止。
-
-> **交叉引用**: 有关调度基础知识，请参阅 [Scheduling, Preemption, and Eviction](../core/08-scheduling-preemption-eviction.md)
-
-### 4.1 Pod Deletion Cost Annotation
-
-```yaml
-# pod-deletion-cost/examples.yaml
-
-# Lower cost = deleted first (range: -2147483648 to 2147483647)
-# Default cost is 0
-
-# Example 1: Spot instance pods (delete first)
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: worker-spot
-  namespace: production
-spec:
-  replicas: 10
-  selector:
-    matchLabels:
-      app: worker
-      instance-type: spot
-  template:
-    metadata:
-      labels:
-        app: worker
-        instance-type: spot
-      annotations:
-        controller.kubernetes.io/pod-deletion-cost: "-100"  # Delete first
-    spec:
-      nodeSelector:
-        kubernetes.io/capacity-type: spot
-      containers:
-        - name: worker
-          image: myregistry/worker:v1.0
-
-# Example 2: On-demand instance pods (delete last)
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: worker-ondemand
-  namespace: production
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: worker
-      instance-type: ondemand
-  template:
-    metadata:
-      labels:
-        app: worker
-        instance-type: ondemand
-      annotations:
-        controller.kubernetes.io/pod-deletion-cost: "100"  # Delete last
-    spec:
-      nodeSelector:
-        kubernetes.io/capacity-type: on-demand
-      containers:
-        - name: worker
-          image: myregistry/worker:v1.0
-
-# Example 3: Data-intensive pods (high cost to preserve)
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cache-server
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: cache-server
-  template:
-    metadata:
-      labels:
-        app: cache-server
-      annotations:
-        controller.kubernetes.io/pod-deletion-cost: "1000"  # Very last to delete
-    spec:
-      containers:
-        - name: cache
-          image: myregistry/cache:v1.0
-          volumeMounts:
-            - name: cache-data
-              mountPath: /data
-      volumes:
-        - name: cache-data
-          emptyDir:
-            sizeLimit: 10Gi
-```
-
-### 4.2 Dynamic Pod Deletion Cost Controller
-
-```yaml
-# pod-deletion-cost/controller.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: deletion-cost-controller
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: deletion-cost-controller
-  template:
-    metadata:
-      labels:
-        app: deletion-cost-controller
-    spec:
-      serviceAccountName: deletion-cost-controller
-      containers:
-        - name: controller
-          image: myregistry/deletion-cost-controller:v1.0
-          env:
-            - name: PROMETHEUS_URL
-              value: "http://prometheus-server.monitoring:80"
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: deletion-cost-controller
-  namespace: kube-system
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: deletion-cost-controller
-rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch", "patch"]
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "list", "watch"]
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: deletion-cost-controller
-subjects:
-  - kind: ServiceAccount
-    name: deletion-cost-controller
-    namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: deletion-cost-controller
-  apiGroup: rbac.authorization.k8s.io
-```
-
-```python
-#!/usr/bin/env python3
-# deletion-cost-controller/controller.py
-"""
-Dynamically adjusts pod deletion cost based on:
-- Node type (Spot vs On-demand)
-- Pod age
-- Data locality
-- Job completion status
-"""
-
-import os
-import time
-import requests
-from kubernetes import client, config, watch
-
-PROMETHEUS_URL = os.environ.get('PROMETHEUS_URL', 'http://prometheus-server:80')
-
-def calculate_deletion_cost(pod: client.V1Pod) -> int:
-    """Calculate deletion cost based on multiple factors."""
-    cost = 0
-
-    # Factor 1: Node type
-    node_name = pod.spec.node_name
-    if node_name:
-        v1 = client.CoreV1Api()
-        node = v1.read_node(node_name)
-        capacity_type = node.metadata.labels.get('karpenter.sh/capacity-type', 'on-demand')
-        if capacity_type == 'spot':
-            cost -= 100  # Prefer deleting Spot pods
-        else:
-            cost += 100  # Preserve On-demand pods
-
-    # Factor 2: Pod age (older = higher cost)
-    if pod.status.start_time:
-        age_hours = (time.time() - pod.status.start_time.timestamp()) / 3600
-        cost += int(min(age_hours * 10, 500))  # Max +500 for old pods
-
-    # Factor 3: Data locality (pods with PVCs)
-    if pod.spec.volumes:
-        for volume in pod.spec.volumes:
-            if volume.persistent_volume_claim:
-                cost += 200  # Higher cost for pods with data
-
-    # Factor 4: Job completion (check if pod is processing work)
-    labels = pod.metadata.labels or {}
-    if 'batch.kubernetes.io/job-name' in labels:
-        # Check if job is near completion via metrics
-        job_progress = get_job_progress(pod.metadata.namespace, labels['batch.kubernetes.io/job-name'])
-        if job_progress > 0.8:
-            cost += 500  # Very high cost if job is 80%+ complete
-
-    # Factor 5: Leader election (preserve leaders)
-    annotations = pod.metadata.annotations or {}
-    if annotations.get('is-leader') == 'true':
-        cost += 1000  # Never delete leaders first
-
-    return max(-2147483648, min(2147483647, cost))
-
-
-def get_job_progress(namespace: str, job_name: str) -> float:
-    """Query Prometheus for job progress."""
-    query = f'job_progress{{namespace="{namespace}", job="{job_name}"}}'
-    try:
-        response = requests.get(
-            f'{PROMETHEUS_URL}/api/v1/query',
-            params={'query': query}
-        )
-        data = response.json()
-        if data['status'] == 'success' and data['data']['result']:
-            return float(data['data']['result'][0]['value'][1])
-    except Exception:
-        pass
-    return 0.0
-
-
-def update_pod_deletion_cost(pod: client.V1Pod, cost: int):
-    """Update the pod's deletion cost annotation."""
-    v1 = client.CoreV1Api()
-
-    current_cost = pod.metadata.annotations.get(
-        'controller.kubernetes.io/pod-deletion-cost', '0'
-    )
-
-    if current_cost != str(cost):
-        body = {
-            'metadata': {
-                'annotations': {
-                    'controller.kubernetes.io/pod-deletion-cost': str(cost)
-                }
-            }
-        }
-        v1.patch_namespaced_pod(
-            pod.metadata.name,
-            pod.metadata.namespace,
-            body
-        )
-        print(f"Updated {pod.metadata.namespace}/{pod.metadata.name} deletion cost: {cost}")
-
-
-def main():
-    config.load_incluster_config()
-    v1 = client.CoreV1Api()
-
-    # Label selector for pods to manage
-    label_selector = 'deletion-cost-managed=true'
-
-    while True:
-        pods = v1.list_pod_for_all_namespaces(
-            label_selector=label_selector
-        )
-
-        for pod in pods.items:
-            if pod.status.phase == 'Running':
-                cost = calculate_deletion_cost(pod)
-                update_pod_deletion_cost(pod, cost)
-
-        time.sleep(60)  # Update every minute
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 4.3 Use Cases for Pod Deletion Cost
-
-```yaml
-# pod-deletion-cost/use-cases.yaml
-
-# Use Case 1: Spot pods deleted before On-demand
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mixed-capacity-app
-  namespace: production
-spec:
-  replicas: 20
-  selector:
-    matchLabels:
-      app: mixed-app
-  template:
-    metadata:
-      labels:
-        app: mixed-app
-    spec:
-      topologySpreadConstraints:
-        - maxSkew: 5
-          topologyKey: karpenter.sh/capacity-type
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: mixed-app
-      containers:
-        - name: app
-          image: myregistry/app:v1.0
-      # Deletion cost set by mutating webhook based on node type
-
----
-# Mutating webhook to set deletion cost
-apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
-metadata:
-  name: deletion-cost-webhook
-webhooks:
-  - name: deletion-cost.example.com
-    clientConfig:
-      service:
-        name: deletion-cost-webhook
-        namespace: kube-system
-        path: /mutate
-      caBundle: ${CA_BUNDLE}
-    rules:
-      - operations: ["CREATE"]
-        apiGroups: [""]
-        apiVersions: ["v1"]
-        resources: ["pods"]
-    namespaceSelector:
-      matchLabels:
-        deletion-cost-managed: "true"
-
-# Use Case 2: Batch job completion priority
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: data-processing
-  namespace: production
-spec:
-  parallelism: 10
-  completions: 100
-  template:
-    metadata:
-      annotations:
-        # Will be updated dynamically as job progresses
-        controller.kubernetes.io/pod-deletion-cost: "0"
-    spec:
-      restartPolicy: Never
-      containers:
-        - name: processor
-          image: myregistry/processor:v1.0
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-          # Update deletion cost based on progress
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    # Increase deletion cost as job progresses
-                    while true; do
-                      PROGRESS=$(cat /tmp/progress || echo 0)
-                      COST=$((PROGRESS * 10))
-                      kubectl annotate pod $POD_NAME \
-                        controller.kubernetes.io/pod-deletion-cost="$COST" \
-                        --overwrite
-                      sleep 30
-                    done &
-```
-
-***
-
-## 5. Spot Node Utilization
-
-在保持可靠性的同时，通过有效使用 Spot instances 来优化成本。
-
-### 5.1 EKS Auto Mode with Spot NodePools
-
-```yaml
-# spot/auto-mode-nodepools.yaml
+# fixtures/nodepools.yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-spot
+  name: web-spot
 spec:
-  template:
-    metadata:
-      labels:
-        capacity-type: spot
-        workload-type: general
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["large", "xlarge", "2xlarge"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-
-  limits:
-    cpu: 1000
-    memory: 2000Gi
-
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 1m
-    budgets:
-      - nodes: "20%"
-
-  # Weight for scheduling preference (higher = preferred)
-  weight: 100  # Prefer Spot
-
----
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: general-ondemand
-spec:
-  template:
-    metadata:
-      labels:
-        capacity-type: on-demand
-        workload-type: general
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-
-  limits:
-    cpu: 200
-    memory: 400Gi
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30m
-
-  # Lower weight = fallback
-  weight: 10  # Use only when Spot unavailable
-
----
-# EC2NodeClass for both pools
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: default
-spec:
-  amiSelectorTerms:
-    - alias: al2023@latest
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: "production-cluster"
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: "production-cluster"
-
-  # Spot configuration
-  instanceStorePolicy: RAID0
-
-  # Block device mapping
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 100Gi
-        volumeType: gp3
-        iops: 3000
-        throughput: 125
-        encrypted: true
-```
-
-### 5.2 Spot Interruption Handler
-
-```yaml
-# spot/interruption-handler.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: spot-interruption-handler
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      app: spot-interruption-handler
-  template:
-    metadata:
-      labels:
-        app: spot-interruption-handler
-    spec:
-      nodeSelector:
-        karpenter.sh/capacity-type: spot
-      serviceAccountName: spot-interruption-handler
-      hostNetwork: true
-      containers:
-        - name: handler
-          image: myregistry/spot-handler:v1.0
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: SLACK_WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: slack-webhook
-                  key: url
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-      tolerations:
-        - operator: Exists
-
----
-# Karpenter handles interruptions automatically
-# This is supplementary for custom handling
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: spot-handler-config
-  namespace: kube-system
-data:
-  config.yaml: |
-    # Actions on interruption notice
-    on_interruption:
-      - drain_node: true
-      - cordon_node: true
-      - notify_slack: true
-
-    # Grace period actions
-    grace_period_seconds: 120
-
-    # Pod priority for eviction order
-    eviction_order:
-      - priority_class: low-priority
-      - label_selector: "batch=true"
-      - annotation: "spot-evictable=true"
-```
-
-### 5.3 PDB + Pod Deletion Cost Combination
-
-```yaml
-# spot/pdb-deletion-cost.yaml
-# Ensure high availability while preferring Spot termination
-
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: api-server-pdb
-  namespace: production
-spec:
-  minAvailable: 3  # Always keep 3 pods running
-  selector:
-    matchLabels:
-      app: api-server
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
-  namespace: production
-spec:
-  replicas: 10
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      # Spread across capacity types
-      topologySpreadConstraints:
-        - maxSkew: 3
-          topologyKey: karpenter.sh/capacity-type
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: api-server
-        - maxSkew: 2
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: api-server
-
-      # Prefer Spot nodes
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: karpenter.sh/capacity-type
-                    operator: In
-                    values: ["spot"]
-
-      containers:
-        - name: api-server
-          image: myregistry/api-server:v1.0
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-          # Graceful shutdown
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "sleep 15"]
-          terminationGracePeriodSeconds: 30
-```
-
-### 5.4 Topology Spread with Spot
-
-```yaml
-# spot/topology-spread.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: resilient-app
-  namespace: production
-spec:
-  replicas: 12
-  selector:
-    matchLabels:
-      app: resilient-app
-  template:
-    metadata:
-      labels:
-        app: resilient-app
-    spec:
-      topologySpreadConstraints:
-        # Spread across zones
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: resilient-app
-
-        # Spread across capacity types (Spot vs On-demand)
-        - maxSkew: 4
-          topologyKey: karpenter.sh/capacity-type
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: resilient-app
-
-        # Spread across instance types (Spot diversification)
-        - maxSkew: 2
-          topologyKey: node.kubernetes.io/instance-type
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: resilient-app
-
-      containers:
-        - name: app
-          image: myregistry/app:v1.0
-          resources:
-            requests:
-              cpu: 250m
-              memory: 256Mi
-```
-
-### 5.5 Graceful Shutdown Configuration
-
-```yaml
-# spot/graceful-shutdown.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: graceful-app
-  namespace: production
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: graceful-app
-  template:
-    metadata:
-      labels:
-        app: graceful-app
-    spec:
-      terminationGracePeriodSeconds: 120  # 2 minutes for graceful shutdown
-
-      containers:
-        - name: app
-          image: myregistry/app:v1.0
-
-          # Health checks
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
-
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-
-          # Graceful shutdown handling
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    # Signal application to stop accepting new requests
-                    curl -X POST http://localhost:8080/admin/drain
-
-                    # Wait for in-flight requests to complete
-                    sleep 30
-
-                    # Signal shutdown
-                    curl -X POST http://localhost:8080/admin/shutdown
-
-                    # Wait for graceful shutdown
-                    sleep 10
-
-          env:
-            - name: GRACEFUL_SHUTDOWN_TIMEOUT
-              value: "90s"
-```
-
-### 5.6 Spot Cost Analysis
-
-```yaml
-# spot/cost-analysis-job.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: spot-cost-analyzer
-  namespace: monitoring
-spec:
-  schedule: "0 9 * * 1"  # Weekly on Monday 9 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: cost-analyzer
-          containers:
-            - name: analyzer
-              image: myregistry/cost-analyzer:v1.0
-              env:
-                - name: PROMETHEUS_URL
-                  value: "http://prometheus-server:80"
-                - name: SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: slack-webhook
-                      key: url
-          restartPolicy: OnFailure
-```
-
-```python
-#!/usr/bin/env python3
-# cost-analyzer/analyze.py
-"""
-Analyzes Spot vs On-demand cost savings.
-"""
-
-import os
-import requests
-from datetime import datetime, timedelta
-
-PROMETHEUS_URL = os.environ['PROMETHEUS_URL']
-SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
-
-# Instance pricing (example, update with actual prices)
-PRICING = {
-    'm5.large': {'spot': 0.034, 'ondemand': 0.096},
-    'm5.xlarge': {'spot': 0.068, 'ondemand': 0.192},
-    'c5.large': {'spot': 0.030, 'ondemand': 0.085},
-    'c5.xlarge': {'spot': 0.060, 'ondemand': 0.170},
-    'r5.large': {'spot': 0.038, 'ondemand': 0.126},
-}
-
-
-def get_node_hours(capacity_type: str, days: int = 7) -> dict:
-    """Get node-hours by instance type for given capacity type."""
-
-    query = f'''
-    sum by (instance_type) (
-      increase(
-        karpenter_nodes_total_daemon_requests_cpu_cores{{
-          capacity_type="{capacity_type}"
-        }}[{days}d]
-      )
-    )
-    '''
-
-    response = requests.get(
-        f'{PROMETHEUS_URL}/api/v1/query',
-        params={'query': query}
-    )
-
-    result = {}
-    data = response.json()
-    if data['status'] == 'success':
-        for item in data['data']['result']:
-            instance_type = item['metric'].get('instance_type', 'unknown')
-            hours = float(item['value'][1]) / (days * 24)  # Normalize to hours
-            result[instance_type] = hours * days * 24
-
-    return result
-
-
-def calculate_savings():
-    """Calculate cost savings from Spot usage."""
-
-    spot_hours = get_node_hours('spot', 7)
-    ondemand_hours = get_node_hours('on-demand', 7)
-
-    spot_cost = 0
-    ondemand_equivalent_cost = 0
-
-    for instance_type, hours in spot_hours.items():
-        if instance_type in PRICING:
-            spot_cost += hours * PRICING[instance_type]['spot']
-            ondemand_equivalent_cost += hours * PRICING[instance_type]['ondemand']
-
-    actual_ondemand_cost = 0
-    for instance_type, hours in ondemand_hours.items():
-        if instance_type in PRICING:
-            actual_ondemand_cost += hours * PRICING[instance_type]['ondemand']
-
-    total_cost = spot_cost + actual_ondemand_cost
-    total_if_all_ondemand = ondemand_equivalent_cost + actual_ondemand_cost
-    savings = total_if_all_ondemand - total_cost
-    savings_percent = (savings / total_if_all_ondemand) * 100 if total_if_all_ondemand > 0 else 0
-
-    return {
-        'spot_cost': spot_cost,
-        'ondemand_cost': actual_ondemand_cost,
-        'total_cost': total_cost,
-        'savings': savings,
-        'savings_percent': savings_percent,
-        'spot_hours': sum(spot_hours.values()),
-        'ondemand_hours': sum(ondemand_hours.values()),
-    }
-
-
-def send_report(data: dict):
-    """Send weekly cost report to Slack."""
-
-    message = f"""
-*Weekly Spot Instance Cost Report*
-
-:moneybag: *Cost Summary (Last 7 Days)*
-- Spot Instance Cost: ${data['spot_cost']:.2f}
-- On-Demand Instance Cost: ${data['ondemand_cost']:.2f}
-- *Total Cost: ${data['total_cost']:.2f}*
-
-:chart_with_upwards_trend: *Savings*
-- Estimated Savings: ${data['savings']:.2f}
-- Savings Percentage: {data['savings_percent']:.1f}%
-
-:bar_chart: *Usage*
-- Spot Node-Hours: {data['spot_hours']:.0f}
-- On-Demand Node-Hours: {data['ondemand_hours']:.0f}
-- Spot Ratio: {data['spot_hours'] / (data['spot_hours'] + data['ondemand_hours']) * 100:.1f}%
-"""
-
-    requests.post(SLACK_WEBHOOK_URL, json={
-        'text': message,
-        'mrkdwn': True
-    })
-
-
-def main():
-    data = calculate_savings()
-    print(f"Weekly cost analysis: {data}")
-
-    if SLACK_WEBHOOK_URL:
-        send_report(data)
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 5.7 Fallback Strategy
-
-```yaml
-# spot/fallback-strategy.yaml
-# Strategy: Primary Spot, fallback to On-demand with Karpenter
-
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: spot-primary
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: karpenter.k8s.aws/instance-family
-          operator: In
-          values: ["c5", "c6i", "m5", "m6i", "r5", "r6i"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 30s
-
   weight: 100
-
----
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: ondemand-fallback
-spec:
   template:
+    metadata:
+      labels:
+        workload-type: web
     spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
       requirements:
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["on-demand"]
-        - key: karpenter.k8s.aws/instance-family
+          values: [spot]
+        - key: kubernetes.io/arch
           operator: In
-          values: ["c5", "m5", "r5"]  # Fewer options for On-demand
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-
+          values: [amd64, arm64]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge, c7i.large, c7g.large]
   limits:
-    cpu: 100  # Limit On-demand capacity
-
+    cpu: "100"
+    memory: 200Gi
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 5m
-
-  weight: 10  # Low priority
-
+    budgets:
+      - nodes: "10%"
 ---
-# Application deployment with fallback handling
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
-  name: critical-app
-  namespace: production
+  name: web-ondemand
 spec:
-  replicas: 10
-  selector:
-    matchLabels:
-      app: critical-app
+  weight: 10
   template:
     metadata:
       labels:
-        app: critical-app
-      annotations:
-        # Prefer Spot but allow On-demand
-        karpenter.sh/do-not-disrupt: "false"
+        workload-type: web
     spec:
-      # Soft preference for Spot
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand]
+        - key: kubernetes.io/arch
+          operator: In
+          values: [amd64, arm64]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge, c7i.large, c7g.large]
+  limits:
+    cpu: "50"
+    memory: 100Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 10m
+    budgets:
+      - nodes: "10%"
+```
+
+更高的权重表示更倾向于优先配置该资源。它不能保证只有在 Spot 容量全部耗尽后才使用 On-Demand，也不能保证固定的 Spot 百分比或预留备用容量。现有节点、调度约束、AZ/实例类型可用性、配额和容量都会影响结果。
+
+Auto Mode/Karpenter 使用 `karpenter.sh/capacity-type`，取值为 `spot`/`on-demand`。请将其与托管节点组的 `eks.amazonaws.com/capacityType` 和自定义 taint 区分开来。本例使用的标签不是 `kubernetes.io/capacity-type`。
+
+### 放置补丁和 PDB
+
+```yaml
+# fixtures/placement-patch.yaml
+# Kustomize strategic-merge patch for application.yaml; not standalone.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  template:
+    spec:
+      nodeSelector:
+        workload-type: web
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 90
+            - weight: 80
               preference:
                 matchExpressions:
                   - key: karpenter.sh/capacity-type
                     operator: In
-                    values: ["spot"]
-            - weight: 10
-              preference:
-                matchExpressions:
-                  - key: karpenter.sh/capacity-type
-                    operator: In
-                    values: ["on-demand"]
-
-      # Spread for resilience
+                    values: [spot]
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: critical-app
-
-      containers:
-        - name: app
-          image: myregistry/critical-app:v1.0
+              app: podinfo
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: podinfo
 ```
 
-***
-
-## Summary
-
-| Strategy               | Use Case                          | Key Configuration                  |
-| ---------------------- | --------------------------------- | ---------------------------------- |
-| **HPA Custom Metrics** | RPS-based scaling, queue depth    | Prometheus Adapter + Custom PromQL |
-| **KEDA**               | Event-driven, scale-to-zero       | ScaledObject + Triggers            |
-| **VPA**                | Right-sizing, memory optimization | UpdateMode + Resource Policies     |
-| **Pod Deletion Cost**  | Spot preference, job completion   | Annotation + Custom Controller     |
-| **Spot Utilization**   | Cost optimization                 | NodePools + Topology Spread        |
-
-**伸缩决策矩阵：**
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Scaling Decision Matrix                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Workload Type           │ Primary      │ Secondary    │ Notes     │
-│  ─────────────────────────────────────────────────────────────────  │
-│  Web API                 │ HPA (RPS)    │ VPA (memory) │ Fast up   │
-│  Queue Consumer          │ KEDA (SQS)   │ -            │ Scale 0   │
-│  Batch Processing        │ ScaledJob    │ Spot nodes   │ Cost opt  │
-│  Database Proxy          │ HPA (conn)   │ VPA (both)   │ Conserve  │
-│  ML Inference            │ HPA (GPU)    │ KEDA (queue) │ GPU aware │
-│  Event Stream            │ KEDA (Kafka) │ -            │ Lag-based │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+```yaml
+# fixtures/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: podinfo
 ```
 
-***
+```yaml
+# fixtures/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - application.yaml
+  - hpa.yaml
+  - nodepools.yaml
+  - pdb.yaml
+patches:
+  - path: placement-patch.yaml
+```
 
-< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./README.md) | [下一篇: 运维告警配置](07-observability-alerts.md) >
+将这些文件放在一起，并检查 `kustomize build .` 的输出。此补丁不是独立的 Deployment。`ScheduleAnyway` 是软约束，而 `DoNotSchedule` 仍取决于符合条件的拓扑域。拓扑分布约束不会创建任意的 80/20 比例，也不会预留节点。
+
+PDB 只会约束受其支持的自愿驱逐。它无法阻止 HPA/ReplicaSet 减少副本，也无法阻止 Spot 节点实际丢失。`minAvailable: 2` 并不保证任何时候总有两个 Pod 在运行。
+
+### 中断和优雅关闭
+
+不要在 Auto Mode 已管理的中断处理机制之上再添加一个 drain controller。自管理的 Karpenter 需要中断队列/EventBridge 配置和相应权限。只有在节点模式明确且前提条件齐全时，才使用 Node Termination Handler。
+
+不要将 Spot 通知理解为应用程序有 120 秒的保证剩余时间。请考虑休眠例外、检测/drain/终止延迟以及实际截止时间。
+
+`terminationGracePeriodSeconds` 属于 **Pod spec**，而且 preStop 会占用这段时间。请实现实际的 SIGTERM/drain 行为，并在移除就绪状态后验证连接、消息和重试处理。操作 `/tmp/unhealthy` 不会自动导致 HTTP 探针失败，输出“close connections”也不会关闭数据库连接池。
+
+外部通知/Pushgateway 调用不得无限期阻塞终止。Priority class 和删除成本都无法阻止 Spot 资源回收。
+
+### 成本和容量
+
+对 CPU request gauge 使用 `increase()` 并不等于节点运行时长。请使用实际运行时间，以及对应的时间/AZ/平台/购买类型成本数据。不得将缺失的价格视为免费。
+
+将实际支出与使用量等效且定义明确的 On-Demand 基线进行比较。请说明 Savings Plans/RI、EKS/Auto Mode、存储、网络、重试和闲置容量的计算方式。固定的“70% 折扣”或“80/20 组合至少节省 50%”都不是保证值。
+
+创建定向 Capacity Reservation 并不会让 NodePool 自动使用它。请检查受支持的 NodeClass 选择器、AZ/实例类型匹配、定价和未使用容量。请通过符合可用性要求的负载测试和故障测试验证回退设计。
+
+## 参考资料
+
+- [HPA 行为](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [KEDA 2.21 ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/)
+- [KEDA 2.21 ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/)
+- [VPA 1.8.0 功能](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
+- [Pod 调整大小](https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/)
+- [ReplicaSet 删除成本](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
+- [本章测验](../quizzes/ops/06-scaling-strategies-quiz.md)
+
+< [上一章：GitOps 自动化](05-gitops-automation.md) | [目录](README.md) | [下一章：运维告警](07-observability-alerts.md) >

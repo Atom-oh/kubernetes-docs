@@ -1,51 +1,51 @@
 # FinOps 成本可见性平台
 
-> **最后更新**：2026 年 9 月 12 日。OpenCost 1.121.2 / chart 2.5.31、Kubecost 3.2.4、Kyverno 1.19.1。
-> **验证**：Helm 渲染、Kubernetes 模式、Terraform 模拟提供程序、本地成本计算和策略评估。这不代表已在生产集群安装，也不代表已与实际 AWS 账单核对。
+> **最后更新**：October 16, 2026。OpenCost 1.121.3 / chart 2.5.33，Kubecost 3.2.4，Kyverno 1.19.1。
+> **验证**：Helm 渲染、Kubernetes schemas、Terraform mock providers、本地成本计算和策略评估。本文不代表已在生产集群上安装，也不代表已与实际 AWS 账单对账。
 
-< [上一篇：活动容量规划](./12-event-capacity-planning.md) | [目录](./README.md) | [下一篇：Tekton 流水线](./14-tekton-pipelines.md) >
+< [上一章：活动容量规划](./12-event-capacity-planning.md) | [目录](./README.md) | [下一章：Tekton Pipelines](./14-tekton-pipelines.md) >
 
 ## 概述
 
-FinOps 让工程、财务、产品和业务团队共同管理技术支出的价值。仅降低成本不是成功标准：服务水平、增长、单位经济效益和可靠归属同样重要。
+FinOps 将工程、财务、产品和业务团队凝聚在一起，共同管理技术支出的价值。仅降低成本并不是成功标准：服务级别、增长、单位经济效益和可靠的成本归属同样重要。
 
-本章区分 Kubernetes 分摊模型、AWS 计费数据和团队预算，再将它们连接。部署前替换示例集群名、命名空间、桶和 IAM 角色。安装命令会创建真实资源；本文报告的验证在本地进行。
+本章区分 Kubernetes 分摊模型、AWS 账单数据和团队预算，然后将它们关联起来。部署前，请替换示例中的集群名称、命名空间、存储桶和 IAM 角色。安装命令会创建真实资源；本文报告的验证是在本地完成的。
 
-## 1. FinOps 运营模型
+## 1. FinOps 运营模式
 
-Inform 阶段涵盖数据采集、分摊和可见性。Optimize 阶段将测量转化为改进。Operate 阶段持续维护所有权、预算和审查。这些阶段循环进行。
+Inform 阶段负责数据收集、成本分摊和可见性。Optimize 阶段将度量结果转化为改进。Operate 阶段持续落实所有权、预算和审查。这些阶段会反复进行。
 
-![迭代的可见性、经审查的优化、预算和所有权](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
+![迭代式可见性、经过审查的优化、预算和所有权](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-0.html)
 
 | 角色 | 职责 |
 | --- | --- |
-| 平台 | 可靠采集、成本数据访问控制、升级 |
-| 服务团队 | 标签、资源 requests、性能测试、变更审查 |
-| 财务 / FinOps | 账单核对、共享成本规则、预算和预测 |
+| 平台 | 可靠的数据收集、成本数据访问控制、升级 |
+| 服务团队 | 标签、资源请求、性能测试、变更审查 |
+| 财务 / FinOps | 账单对账、共享成本规则、预算和预测 |
 | 产品 / 业务 | 单位经济效益、价值和投资优先级 |
 
-Crawl/Walk/Run 描述特定领域的能力。它们不是通用的 1–3 或 6–12 个月时间表。在自动内部计费或删除前，先建立数据质量和所有权。
+Crawl/Walk/Run 描述的是特定领域的能力，而非通用的 1–3 个月或 6–12 个月时间表。在自动执行分摊计费或删除操作之前，应先确保数据质量和所有权明确。
 
-## 2. 成本数据和安装
+## 2. 成本数据与安装
 
-### 2.1 区分测量口径
+### 2.1 区分不同度量
 
-| 测量 | 含义 | 限制 |
+| 度量 | 含义 | 局限性 |
 | --- | --- | --- |
-| 当前分摊费率，USD/小时 | 当前分摊和定价模型 | 不是实际月支出 |
-| 时间窗口内分摊模型成本 | 明确时段内的 Kubernetes 归属 | 取决于覆盖、保留期和模型 |
-| CUR 2.0 / Cost Explorer | 基于 AWS 计费的成本 | 刷新延迟、折扣、抵扣、税费及摊销选择 |
-| 线性月末估算 | 截至目前成本 / 已完成天数 × 当月天数 | 不模拟季节性或变化需求 |
+| 当前成本分摊费率，USD/hour | 当前成本分摊和定价模型 | 不是实际月度支出 |
+| 时间窗口内的分摊模型成本 | 在明确时段内进行 Kubernetes 成本归属 | 取决于覆盖范围、保留期限和模型 |
+| CUR 2.0 / Cost Explorer | 基于 AWS 账单的成本 | 刷新延迟、折扣、抵扣额、税费和摊销选择 |
+| 线性月末估算 | 截至目前的成本 / 已过去的天数 × 当月天数 | 不会考虑季节性或需求变化 |
 
-EC2 CPU 和内存通常不是独立计费产品。OpenCost 的每核和每 GiB 价格用于分摊实例成本。不要将任意 CPU/RAM 价格或第二次统一合同折扣当作账单。对同一基础设施将 Cloud Cost 总额与 Allocation 总额相加，可能重复统计支出。
+EC2 CPU 和内存通常不是单独计费的产品。OpenCost 的每核和每 GiB 价格用于分摊实例成本。不要将任意 CPU/RAM 价格或另一个笼统的合同折扣说成账单金额。对同一基础设施，将 Cloud Cost 总额与 Allocation 总额相加可能造成重复计算。
 
 ### 2.2 安装 OpenCost
 
-此处假定已有[可观测性技术栈](./09-observability-stack.md)中的 Prometheus Operator 和 ServiceMonitor CRD，以及合适的 `gp3` StorageClass。EKS 存储可使用 EBS CSI 驱动或 Auto Mode 的 StorageClass 配置。示例 `release: prometheus` 必须匹配实际 Prometheus ServiceMonitor 选择器。
+此配置假设已安装 [可观测性堆栈](./09-observability-stack.md) 中的 Prometheus Operator 和 ServiceMonitor CRD，并且有合适的 `gp3` StorageClass。EKS 存储可以使用 EBS CSI driver，也可以使用 Auto Mode 的 StorageClass 配置。示例中的 `release: prometheus` 必须与实际 Prometheus ServiceMonitor selector 相匹配。
 
-之前的七天 Prometheus 保留期无法重建完整月份。月度分析需要足够保留期和存储。延长保留期不能恢复已删除数据。下方 exporter PVC 不替代 Prometheus 存储。
+此前 Prometheus 的七天数据保留期无法重建完整月份的数据。月度分析需要足够的数据保留期限和存储空间。延长保留期限无法恢复已删除的数据。下面的 exporter PVC 不能取代 Prometheus 存储。
 
 **`opencost-values.yaml`**
 
@@ -98,19 +98,19 @@ opencost:
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
 helm repo update opencost
 helm upgrade --install opencost opencost/opencost \
-  --version 2.5.31 --namespace opencost --create-namespace \
+  --version 2.5.33 --namespace opencost --create-namespace \
   -f opencost-values.yaml --wait --timeout 10m
 kubectl -n opencost get pods,pvc,svc,servicemonitor
 kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
 ```
 
-本地 UI 使用端口 `9090`；API 使用 `9003`。`opencost.prometheus` 和 `opencost.cloudCost` 不属于 exporter 的子项。Chart 2.5.31 默认启用 MCP，因此本基线显式禁用。若通过 MCP 暴露成本工具，应单独设计身份验证和访问范围；成本数据 MCP 不同于文档搜索 MCP。
+本地 UI 使用端口 `9090`；API 使用 `9003`。`opencost.prometheus` 和 `opencost.cloudCost` 不是 exporter 的子项。Chart 2.5.33 默认启用 MCP，因此此基线配置会明确禁用它。如果要通过 MCP 暴露成本工具，请单独设计身份验证和访问范围；成本数据 MCP 与文档搜索 MCP 不同。
 
 ### 2.3 选择 Kubecost 3.x
 
-Kubecost 是独立产品和部署选择。3.x 使用 ClickHouse 存储和 `finops-agent` 采集。不要原样复制 2.x `kubecostModel`、Prometheus 或 ETL 设置。现有 2.x 安装需要官方迁移流程，包括中间代理、重新导入和功能约束。
+Kubecost 是单独的产品和部署选项。3.x 版本使用 ClickHouse 存储和 `finops-agent` 数据收集。不要原样照搬 2.x 的 `kubecostModel`、Prometheus 或 ETL 设置。现有 2.x 安装需要遵循官方迁移流程，包括中间 agent、重新摄取数据以及功能限制。
 
-当前 chart 仓库为 `https://kubecost.github.io/kubecost/`。这是功能受限的安装基线，显式禁用 Cluster Controller、Admission Controller 和预测。不要将其作为现有安装和存储的原地替换命令。
+当前的 chart 仓库是 `https://kubecost.github.io/kubecost/`。这是一个功能受限的安装基线。它会明确禁用 Cluster Controller、Admission Controller 和 forecasting。不要将其用作现有安装和存储的原位替换命令。
 
 **`kubecost-values.yaml`**
 
@@ -158,17 +158,17 @@ helm install kubecost kubecost/kubecost --version 3.2.4 \
   --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 
-检查 SSO、细粒度 RBAC 和多集群功能的产品许可。存在 SAML/OIDC values 不会为每个部署启用这些功能。`global.acknowledged` 关乎 Enterprise 主版本升级确认，不是一般许可接受。内部 ALB 不验证用户身份。
+检查产品授权是否包含 SSO、细粒度 RBAC 和多集群功能。存在 SAML/OIDC 配置值并不意味着每种部署都启用了这些功能。`global.acknowledged` 用于确认 Enterprise 主版本升级，而非通用许可证接受。内部 ALB 不会对用户进行身份验证。
 
 ### 2.4 CUR 2.0、Athena 和 OpenCost Cloud Cost
 
-以下 Terraform 定义**新的 CUR 2.0 导出、两个 S3 桶、一个 Athena 工作组和一个 OpenCost IRSA 角色**。管理现有资源前检查所有权和导入。组织范围计费数据需要适当管理账户权限。
+以下 Terraform 定义了**一个新的 CUR 2.0 导出、两个 S3 存储桶、一个 Athena workgroup 和一个 OpenCost IRSA 角色**。管理现有资源之前，请检查其所有权并考虑导入。组织范围的账单数据需要适当的管理账户权限。
 
-不包含 Glue 爬网程序和表创建。遵循 Data Exports Athena 处理流程：等待首次交付，再使用导出的**数据目录**创建和刷新 Glue 表及分区。不要将清单和元数据与数据表混合。提供生成的数据库和表名。Lake Formation 保护需要额外授权。
+其中不包括 Glue crawler 和表的创建。请遵循 Data Exports Athena 处理流程：等待初始数据交付，然后使用导出的**数据目录**创建并刷新 Glue 表和分区。不要将清单和元数据与数据表混在一起。提供生成的数据库和表名称。Lake Formation 保护需要额外的授权。
 
-`COST_AND_USAGE_REPORT` 是 Data Exports SQL 源，不是通用 Athena Glue 表名。检查生成模式：CUR 2.0 使用 `billing_period` 分区，不应假定旧 CUR 的 `year`/`month` 布局。
+`COST_AND_USAGE_REPORT` 是 Data Exports SQL 数据源，并非通用的 Athena Glue 表名。请检查生成的 schema：CUR 2.0 使用 `billing_period` 分区，而不应假设沿用旧版 CUR 的 `year`/`month` 布局。
 
-Data Exports 使用 SSE-S3 交付。不要复制要求直接 KMS 加密交付的配置。若要求 KMS，应同时设计文档规定的交付后加密流程和使用方权限。需要还原的归档存储可能破坏对活动数据的查询。
+Data Exports 使用 SSE-S3 交付数据。不要照搬要求直接使用 KMS 加密交付的配置。如果需要 KMS，请一并设计文档所述的交付后加密流程和使用方权限。需要先恢复才能访问的归档存储可能会导致针对活动数据的查询失败。
 
 **`cur.tf`**
 
@@ -178,7 +178,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -428,9 +428,9 @@ output "athena_results" {
 }
 ```
 
-`glue_database` 和 `glue_table` 标识查询目标，不创建它。示例 Athena 扫描限制为每查询 10 GiB：调查失败并按数据集调整。每小时记录不意味着每小时交付报告。
+`glue_database` 和 `glue_table` 用于指定查询目标；它们不会创建目标。示例 Athena 扫描上限为每次查询 10 GiB：请调查查询失败的原因，并根据数据集大小调整上限。按小时记录不代表报告也会按小时交付。
 
-此示例使用 **IRSA**。提供现有 OIDC 提供程序 ARN 和签发者，并让信任策略 `sub` 匹配实际 `opencost/opencost` ServiceAccount。EKS Pod Identity 使用不同信任策略和关联，不使用 IRSA 注解。
+本例使用 **IRSA**。请提供现有的 OIDC provider ARN 和 issuer，并确保信任策略中的 `sub` 与实际的 `opencost/opencost` ServiceAccount 相匹配。EKS Pod Identity 使用不同的信任策略和关联方式，而非 IRSA annotation。
 
 **`cloud-integration.json`**
 
@@ -474,23 +474,23 @@ opencost:
 kubectl -n opencost create secret generic opencost-cloud-integrations \
   --from-file=cloud-integration.json=cloud-integration.json \
   --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade opencost opencost/opencost --version 2.5.31 \
+helm upgrade opencost opencost/opencost --version 2.5.33 \
   --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
-JSON `bucket` 是 **Athena 查询结果桶**，不是 CUR 源桶。`AWSServiceAccount` 使用 AWS SDK 默认凭证链，不使用静态访问密钥。声称计费集成正常前，应验证源读取、结果写入、Secret 挂载和导入器数据新鲜度。
+JSON 中的 `bucket` 是 **Athena 查询结果存储桶**，不是 CUR 源存储桶。`AWSServiceAccount` 使用 AWS SDK 默认凭证链，而非静态访问密钥。在声称账单集成正常工作之前，请验证源数据读取、结果写入、Secret 挂载和导入器数据新鲜度。
 
-成本分摊标签键在激活前可能缺失。AWS 当前支持管理账户回填最多 12 个月，条件是该期间标签实际存在于资源上，并存在处理延迟。现在添加标签不会制造历史标签记录。
+成本分摊标签键在激活之前可能不存在。目前 AWS 支持由管理账户回填最多 12 个月的数据，但前提是该期间资源上实际存在这些标签，且还需考虑处理延迟。现在添加标签并不会凭空生成历史标签记录。
 
-## 3. 成本展示和内部计费
+## 3. Showback 和 Chargeback
 
-成本展示让使用团队看到支出。内部计费按约定会计规则分摊并收费。模型值不会自动成为内部账单。先定义时段、币种、直接/共享/闲置/未分配类别、税费、抵扣、退款和取整。
+Showback 会让消费团队了解支出情况。Chargeback 则根据约定的会计规则分摊费用并向其计费。模型值不会自动成为内部账单。应先明确周期、币种、直接/共享/闲置/未分配类别、税费、抵扣额、退款和舍入规则。
 
 ### 3.1 标签和策略
 
-使用命名空间 `team` 标签进行团队聚合，使用 Pod 模板 `team` / `cost-center` 标签做更细归属。Kubernetes 标签和 AWS 成本分摊标签是独立数据。没有团队标签时命名空间分摊仍可能工作，但不保证团队映射。
+使用命名空间 `team` 标签进行团队聚合，并使用 Pod 模板中的 `team` / `cost-center` 标签实现更精细的成本归属。Kubernetes 标签和 AWS 成本分摊标签是两种独立的数据。即使没有团队标签，仍可按命名空间进行成本分摊，但无法保证能映射到团队。
 
-Kyverno 1.19.1 警告 ClusterPolicy 已弃用。新示例使用 `policies.kyverno.io/v1` 的 CEL `ValidatingPolicy`，要求对应 CRD 和控制器版本。它们针对带 `finops.example.com/enabled=true` 标签的命名空间，并为 Pod 控制器模板生成检查。
+Kyverno 1.19.1 会警告 ClusterPolicy 已弃用。新示例使用 `policies.kyverno.io/v1` 中的 CEL `ValidatingPolicy`，需要相应版本的 CRD 和 controller。示例面向带有 `finops.example.com/enabled=true` 标签的命名空间，并为 Pod controller 模板生成检查。
 
 **`cost-labels.yaml`**
 
@@ -561,9 +561,9 @@ spec:
       message: "Set positive CPU and memory requests for each regular container."
 ```
 
-`Audit` 不阻止违规。审核后台报告和范围，与所有者解决问题，再将选定策略切换为 `Deny`。若需要面向用户的警告，单独选择 `Warn`。本地 CLI 可对 Audit 策略返回测试失败；这不能证明准入会被拒绝。
+`Audit` 不会阻止违规操作。请审查后台报告和作用范围，与负责人一起解决问题，然后将选定策略切换为 `Deny`。如果需要面向用户的警告，请单独选择 `Warn`。本地 CLI 可能会因 Audit 策略而返回测试失败；这并不能证明 admission 会拒绝请求。
 
-request 策略检查**每个普通容器的 CPU 和内存 requests 均为正**。初始化容器、Pod 级预算和 limit 策略需要独立策略。统一四核 / 8 GiB limits 不能证明应用容量配置正确。
+请求策略会检查**每个常规容器是否设置了正数的 CPU 和内存请求**。Init-container 和 Pod 级预算及 limit 策略需要单独制定。对所有应用统一设置四核 / 8 GiB 限制，并不能证明应用已正确配置资源。
 
 ```yaml
 apiVersion: v1
@@ -588,11 +588,11 @@ spec:
     pods: "100"
 ```
 
-此配额是示例资源上限，不是美元预算，也不是所有云支出的上限。根据当前用量和自动扩缩最大值调整，并为创建请求被拒绝做好计划。
+此配额只是资源上限示例，并非美元预算，也不是所有云支出的上限。请结合当前用量和自动扩缩容最大值来确定配额，并为创建请求被拒绝的情况做好准备。
 
 ### 3.2 时间窗口分摊 API
 
-此处使用 OpenCost 1.121.2 的 `/allocation/compute`。验证该产品和版本的时段、聚合和响应结构。`includeIdle` 和 `shareIdle` 是布尔值；`shareIdle=weighted` 不是文档规定的布尔形式。
+此示例使用 OpenCost 1.121.3 的 `/allocation/compute`。请根据产品和版本验证周期、聚合方式及响应结构。`includeIdle` 和 `shareIdle` 是布尔值；`shareIdle=weighted` 并非文档规定的布尔值形式。
 
 ```bash
 curl --fail --silent --show-error --get \
@@ -603,11 +603,11 @@ curl --fail --silent --show-error --get \
   --data-urlencode 'shareIdle=false'
 ```
 
-### 3.3 共享成本分摊和总额守恒
+### 3.3 共享成本分摊与守恒
 
-这些是**用于计算验证的合成 USD 输入，不是实际账单**。不重叠成本池包含 6,500 直接成本、2,500 共享成本和 1,000 闲置成本。共享成本按直接成本加权；闲置成本平均分配。小数美分使用最大余数法，同余数时按团队名字典序决胜。
+这些是**用于验证计算的合成 USD 输入，并非实际账单**。互不重叠的成本池包含 6,500 直接成本、2,500 共享成本和 1,000 闲置成本。共享成本按直接成本加权分摊；闲置成本平均分配。对于不足一分的金额，使用最大余数法，并以团队名称的字典序打破平局。
 
-![合成 USD 10,000 分摊，取整后保留总额](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
+![经过舍入后总额仍保持不变的合成 USD 10,000 分摊](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-1.html)
 
@@ -728,13 +728,13 @@ if __name__=="__main__":
 python3 allocate_costs.py allocation-example.json
 ```
 
-将无法归属金额保留为 `unallocated`。此计算器不会自动重新分配负成本或退款。实际会计需要独立抵扣、退款和币种转换规则。示例策略并非对每个组织都天然最公平。
+将无法归属的金额保留为 `unallocated`。此计算器不会自动重新分配负成本或退款。实际会计工作需要单独制定抵扣额、退款和货币转换规则。示例策略并非对所有组织都天然最公平的选择。
 
 ### 3.4 Prometheus 和 Grafana
 
-这些规则假定使用**一个集群的 Prometheus**。集中式 Prometheus/Thanos 查询必须在每次聚合和连接中保留真实集群标识符。仅按节点名连接多个集群可能混合成本。
+这些规则假设使用的是**单个集群的 Prometheus**。中央 Prometheus/Thanos 查询必须在每次聚合和联接中保留真实的集群标识符。仅按节点名称联接多个集群可能会混淆成本。
 
-`node_cpu_hourly_cost` 是每核每小时成本，`node_ram_hourly_cost` 是每 GiB 每小时成本。乘以分摊指标，并用 `max` 对重复抓取去重。不要虚构 `kubecost_container_cpu_cost` 等指标。连接标签前，将此 kube-state-metrics 设置合并到现有可观测性 chart values。
+`node_cpu_hourly_cost` 的单位是每核每小时，`node_ram_hourly_cost` 的单位是每 GiB 每小时。将其与分摊指标相乘，并使用 `max` 去重重复抓取的数据。不要虚构 `kubecost_container_cpu_cost` 之类的指标。将此 kube-state-metrics 设置合并到现有的可观测性 chart values 中，然后再联接标签。
 
 ```yaml
 kube-state-metrics:
@@ -789,17 +789,17 @@ groups:
           summary: "Allocated compute model exceeds the example USD 20/hour threshold"
 ```
 
-文件采用 Prometheus 规则文件格式。使用 Operator 时，将其放入 `PrometheusRule.spec`，并设置匹配实际规则选择器的元数据标签。USD 20/小时持续 30 分钟是基于模型数据的示例审查阈值。`for` 要求条件持续存在；不消除误报。
+此文件采用 Prometheus 规则文件格式。使用 Operator 时，请将其放在 `PrometheusRule.spec` 下，并将 metadata 标签设置为与实际规则 selector 相匹配。每小时 20 美元、持续 30 分钟，是基于模型数据的示例审查阈值。`for` 要求条件持续成立；它并不能消除误报。
 
-Grafana 面板可使用 `finops:namespace_compute_cost_per_hour` 和 `finops:team_compute_cost_per_hour`，标注为 **USD/小时**。这些是分摊的 CPU/RAM 费率，不是包含所有存储、网络、控制平面和闲置成本的账单。将任何 `* 730` 面板标为固定 730 小时估算。缺失价格必须显示为缺失数据，不能显示为零成本。
+Grafana 面板可以使用 `finops:namespace_compute_cost_per_hour` 和 `finops:team_compute_cost_per_hour`，并标注为 **USD/hour**。这些是已分摊的 CPU/RAM 费率，不是包含所有存储、网络、控制平面和闲置成本的账单。如果面板使用 `* 730`，应将其标注为固定的 730 小时估算。缺失的价格必须显示为缺失数据，而不是零成本。
 
-无团队标签的命名空间可能从团队聚合中消失。比较完整命名空间总额与团队总额。仪表板变量和文件夹不强制执行数据源授权。使用服务器端数据源权限或独立租户隔离团队，并测试跨团队查询被拒绝。
+没有团队标签的命名空间可能不会出现在团队聚合结果中。请将完整的命名空间总额与团队总额进行比较。Dashboard variables 和文件夹不会强制执行数据源授权。应使用服务端数据源权限或单独租户来隔离团队，并测试跨团队查询是否会被拒绝。
 
-## 4. 基于计费的异常检测
+## 4. 基于账单的异常检测
 
-`DIMENSIONAL` / `SERVICE` Cost Anomaly Detection 监视器覆盖 AWS 服务支出。将其命名为“EKS”不会把范围限制到 EKS。对于使用标签、关联账户或 Cost Categories 的 CUSTOM 监视器，验证支持范围及数据可用性。适当时复用现有监视器 ARN。
+`DIMENSIONAL` / `SERVICE` Cost Anomaly Detection monitor 会监控 AWS 服务支出。将其命名为 “EKS” 并不会将范围限定为 EKS。对于使用标签、关联账户或 Cost Categories 的 CUSTOM monitor，请确认其支持的范围和数据可用性。适当时可复用现有 monitor ARN。
 
-此可选配置与前面的 Terraform 文件放在一起。区分 `DAILY` EMAIL 摘要和 `IMMEDIATE` SNS 通知。SNS 交付仍遵循计费更新及异常检测；不是即时支出停止。主题需要单独批准的订阅者。此示例不创建 Slack 订阅。
+此可选配置应与前面的 Terraform 文件放在一起。将 `DAILY` EMAIL 摘要与 `IMMEDIATE` SNS 通知分开。SNS 通知仍遵循账单更新和异常检测流程；它不会立即停止支出。该 topic 需要经单独批准的订阅者。此示例不会创建 Slack 订阅。
 
 **`anomaly.tf`**
 
@@ -876,15 +876,15 @@ resource "aws_ce_anomaly_subscription" "immediate" {
 }
 ```
 
-创建资源和订阅会产生真实成本及通知影响。对于 KMS 加密 SNS，还需为 `costalerts.amazonaws.com` 配置必要密钥权限，并限制 SourceAccount/SourceArn。按组织情况调整示例 USD 100 阈值。
+创建资源和订阅会产生实际费用并触发实际通知。如果 SNS 使用 KMS 加密，还要为 `costalerts.amazonaws.com` 配置必要的密钥权限，并限制 SourceAccount/SourceArn。请根据组织情况调整示例中的 100 美元阈值。
 
-AWS Budgets Actions 可执行受支持的 EC2/RDS 操作及 IAM/SCP 操作。更新延迟和操作范围仍适用；这不是立即停止所有支出的硬上限。
+AWS Budgets Actions 可以执行受支持的 EC2/RDS 操作以及 IAM/SCP 操作。更新延迟和操作范围仍然适用；这不是一个能立即停止所有支出的硬性上限。
 
-## 5. 团队预算和定时报告
+## 5. 团队预算和定时报表
 
-### 5.1 显式数值预算
+### 5.1 明确的数值预算
 
-`label_replace` 不会将命名空间注解字符串变成数值时间序列。此示例从 JSON 解析显式 USD 预算。缺失预算产生 `null` 比率；零、负数和无效数值预算被拒绝。
+`label_replace` 不会将命名空间 annotation 中的字符串转换为数值时间序列。本示例从 JSON 读取明确的 USD 预算。缺少预算时，比例为 `null`；零、负数和无效数值预算会被拒绝。
 
 **`budgets.json`**
 
@@ -898,11 +898,11 @@ AWS Budgets Actions 可执行受支持的 EC2/RDS 操作及 IAM/SCP 操作。更
 }
 ```
 
-### 5.2 月度模型报告和可选 Slack 交付
+### 5.2 月度模型报告和可选的 Slack 发送
 
-此脚本仅使用 Python 3.12 标准库。它查询已完成的 UTC 日期；`--as-of` 是**不包含在内的结束日期**。每月第一天报告上一个完整月份。空数据或多个时间步会失败，不会变为错误的 USD 0 结果。脚本不能证明完整历史覆盖；检查 API 警告和导入器数据新鲜度。
+此脚本仅使用 Python 3.12 标准库。它查询已完成的 UTC 日期；`--as-of` 是**不包含在内的结束日期**。在每月第一天运行时，它会报告上一个完整月份。数据为空或包含多个时间步时，脚本会失败，而不会返回虚假的 USD 0 结果。脚本无法证明历史数据覆盖完整：请检查 API warnings 和导入器数据新鲜度。
 
-默认创建 JSON 文件，不发送 Slack 消息。交付同时需要 `--send` 和 `--webhook-file`。不同频道需要独立传入 webhook；不使用载荷 `channel` 覆盖。
+默认情况下，它只会创建 JSON 文件，不会发送 Slack 消息。发送需要同时指定 `--send` 和 `--webhook-file`。不同频道需要不同的 incoming webhook；不会使用 payload 中的 `channel` 覆盖值。
 
 **`report_costs.py`**
 
@@ -1088,11 +1088,11 @@ python3 report_costs.py \
   --report cost-report.json --slack-payload slack-payload.json
 ```
 
-合成数据验证模型总成本为 **USD 1,610.10**，线性月末估算为 **USD 4,391.18**。这些不是读者账户中的成本。估算使用九月 30 天中的 11 个已完成日期，而非固定 730 小时预测。
+使用合成数据验证得到的模型成本总额为 **USD 1,610.10**，线性月末估算为 **USD 4,391.18**。这些并非读者账户中的实际成本。该估算使用了 30 天的 9 月中已完成的 11 天，而非固定的 730 小时预测。
 
 ### 5.3 作为 CronJob 运行
 
-将脚本和预算存入 ConfigMap。此 CronJob 每天 **09:00 Asia/Seoul** 运行，将报告打印到 stdout，不发送 Slack 消息。报告边界仍为 UTC。日志含内部成本信息，应配置访问和保留。`emptyDir` 中输出文件随 Pod 删除而消失。
+将脚本和预算存储在 ConfigMap 中。此 CronJob 按 **Asia/Seoul 时间每天 09:00** 运行，将报告打印到 stdout，不会发送 Slack 消息。报告边界仍使用 UTC。日志包含内部成本信息，因此请配置访问权限和保留期限。Pod 删除后，`emptyDir` 中的输出文件也会消失。
 
 ```bash
 kubectl -n opencost create configmap finops-report-code \
@@ -1169,15 +1169,15 @@ spec:
               emptyDir: {}
 ```
 
-部署前验证镜像摘要和平台支持，再固定摘要。Python 版本和标准库代码已在本地测试；未拉取容器镜像或在集群执行 CronJob。
+部署前请验证镜像 digest 和平台支持情况，然后固定 digest。Python 版本和标准库代码已在本地测试；未执行容器镜像拉取或集群 CronJob 运行。
 
-要启用运维 Slack 交付，将 webhook 作为 Secret 文件挂载，并添加 `--send --webhook-file /secrets/webhook`。绝不要将其放入文档、Git 或日志。`concurrencyPolicy: Forbid` 和 `backoffLimit: 0` 降低重复风险，但不提供恰好一次交付。确认丢失后重试可能重复消息；应决定是否需要交付台账和去重。
+如需启用 Slack 实际发送，请将 webhook 作为 Secret 文件挂载，并添加 `--send --webhook-file /secrets/webhook`。切勿将其放在文档、Git 或日志中。`concurrencyPolicy: Forbid` 和 `backoffLimit: 0` 可以降低重复发送的风险，但无法保证恰好投递一次。确认丢失后重试可能会重复发送消息；请决定是否需要投递记录表和去重机制。
 
-## 6. 调整资源规格
+## 6. 资源优化
 
 ### 6.1 收集 VPA 建议
 
-此处假定 VPA recommender 和 CRD 已安装。以 `Off` 模式观察，避免多个 VPA 针对同一工作负载。若 Goldilocks 管理 VPA，不要用手动示例重复创建。`target` 是推荐 request；`upperBound` 不是强制容器 limit。
+此示例假设 VPA recommender 和 CRD 已安装。请以 `Off` 模式进行观察，并避免多个 VPA 指向同一工作负载。如果 Goldilocks 管理 VPA，请勿再使用手动示例重复创建。`target` 是建议的 request；`upperBound` 并非强制的容器 limit。
 
 **`vpa.yaml`**
 
@@ -1201,13 +1201,13 @@ spec:
         controlledValues: RequestsOnly
 ```
 
-Goldilocks 是可选的按命名空间选择启用的 VPA 建议仪表板。安装前检查当前 chart 依赖、控制器权限和仪表板访问；不要添加重复 recommender。为命名空间添加 `goldilocks.fairwinds.com/enabled=true` 标签，本身不会省钱或批准更改。
+Goldilocks 是一个可选的 dashboard，用于展示选择启用该功能的命名空间中的 VPA 建议。安装前请检查当前 chart 依赖项、controller 权限和 dashboard 访问权限；不要重复添加 recommender。为命名空间添加 `goldilocks.fairwinds.com/enabled=true` 标签本身并不会节省成本或批准变更。
 
-### 6.2 生成变更提案
+### 6.2 生成变更建议
 
-此脚本**不修改集群，也不创建 PR**。它读取 `kubectl` JSON 快照，按名称匹配 Deployment/StatefulSet 容器，并建议至少减少 20% 的 requests。它要求 `kubernetes==36.0.3`，该版本数量解析器已用示例测试。
+此脚本**不会修改集群或创建 PR**。它读取 `kubectl` JSON 快照，按名称匹配 Deployment/StatefulSet 容器，并建议将 request 至少降低 20%。它需要 `kubernetes==36.0.3`，示例中使用的 quantity parser 已经过测试。
 
-检查建议是否覆盖足够流量、峰值和恢复场景，以及 CPU request 更改是否影响 HPA 利用率计算。初始化容器和 Pod 级资源仍是独立审查项。不会猜测重复 VPA、未知容器或缺失 requests。
+请检查建议是否覆盖了充足的流量、峰值和恢复场景，以及 CPU requests 变更是否会影响 HPA utilization 计算。Init containers 和 Pod 级资源仍需单独审查。脚本不会猜测重复的 VPA、未知容器或缺失的 requests。
 
 ```bash
 python3 -m venv .venv
@@ -1324,17 +1324,17 @@ if __name__ == "__main__":
                              json.loads(args.vpas.read_text()), args.threshold), indent=2))
 ```
 
-![只读提案之后，由所有者准备清单、PR 并验证](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
+![只读变更建议，之后由负责人准备 manifests、PR 并进行验证](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
 
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-2.html)
 
-`estimatedBillingSavings` 为 `null`：更小 requests 不保证节点更少或承诺成本更低。所有者编辑真实 Git 清单、运行性能测试、审核 PR，并在发布后观察 SLO。自动化此过程需要仓库文件映射、身份验证、重复 PR 处理、CI 和批准规则。
+`estimatedBillingSavings` 为 `null`：减少 requests 并不保证节点数量或承诺成本会降低。负责人应修改实际 Git manifests、运行性能测试、审查 PR，并在 rollout 后观察 SLO。要实现自动化，还需要将代码映射到仓库文件、配置身份验证、处理重复 PR、设置 CI 和审批规则。
 
-## 7. 闲置候选和治理
+## 7. 闲置资源候选项与治理
 
-### 7.1 审查列表，而非删除指令
+### 7.1 审查列表，而非直接删除
 
-此单集群查询寻找没有当前 Pod 卷引用的 Bound PVC。它将 gauge 与 1 比较，同时匹配命名空间和 claim 名称。
+此单集群查询会查找当前没有 Pod volume 引用的 Bound PVC。它会将 gauge 与 1 比较，并同时匹配命名空间和 claim 名称。
 
 ```promql
 (kube_persistentvolumeclaim_status_phase{phase="Bound"} == 1)
@@ -1342,38 +1342,38 @@ unless on (namespace, persistentvolumeclaim)
 kube_pod_spec_volumes_persistentvolumeclaims_info
 ```
 
-其中可能包含缩至零的 StatefulSet 数据、恢复卷或暂停任务。删除前检查所有权、恢复要求、最近使用、快照和保留策略。Deployment 七天前创建，不证明它连续七天为零副本。验证连续历史、覆盖和缺口。
+其中可能包含已缩容至零副本的 StatefulSet、恢复卷或暂停作业的数据。删除前，请检查所有权、恢复要求、最近使用时间、快照和保留策略。Deployment 创建于七天前，并不能证明它已连续七天保持零副本。请验证历史数据是否连续、覆盖是否完整以及是否存在缺口。
 
-低 CPU 或内存用量可能适合突发或备用工作负载。将 Pod 聚合为 Deployment 需要所有者关系（ReplicaSet → Deployment）、命名空间和集群标识符。仅网络接收量不能识别业务流量或确定资源是否需要。
+低 CPU 或内存用量可能是突发型或备用工作负载的合理情况。将 Pod 聚合到 Deployment 时，需要 owner 关系（ReplicaSet → Deployment）、命名空间和集群标识符。仅凭网络接收量无法判断业务流量，也无法判断资源是否仍有用途。
 
 ### 7.2 定期审查
 
 | 频率 | 审查内容 |
 | --- | --- |
-| 每日 | 采集缺口、导入器数据新鲜度、异常、预算估算 |
-| 每周 | 闲置候选所有权、VPA 提案、SLO 影响 |
-| 每月 | 账单核对、折扣、抵扣、无法归属成本、共享规则、单位经济效益 |
+| 每日 | 数据收集缺口、导入器数据新鲜度、异常、预算估算 |
+| 每周 | 闲置候选项的所有权、VPA 建议、SLO 影响 |
+| 每月 | 账单对账、折扣、抵扣额、未归属成本、共享规则、单位经济效益 |
 
-记录时段、币种、模型或计费来源、刷新时间、分摊策略、无法归属金额和批准者。不要假定标签完整就完全准确、减少 requests 就等于节省，或仪表板过滤器能强制团队访问控制。
+记录周期、币种、模型或账单数据源、刷新时间、成本分摊策略、未归属金额和审批人。不要假设标签完整就代表准确无误，也不要认为减少 requests 就等同于节省成本，或认为 dashboard 筛选器能够强制执行团队访问控制。
 
 ## 8. 参考资料
 
 - [FinOps Foundation 定义](https://www.finops.org/introduction/what-is-finops/)
-- [OpenCost 1.121.2 发布](https://github.com/opencost/opencost/releases/tag/v1.121.2)
+- [OpenCost 1.121.3 发布版本](https://github.com/opencost/opencost/releases/tag/v1.121.3)
 - [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart)
 - [OpenCost API](https://opencost.io/docs/integrations/api/)
-- [OpenCost AWS 授权器源码](https://github.com/opencost/opencost/blob/v1.121.2/pkg/cloud/aws/authorizer.go)
+- [OpenCost AWS authorizer 源码](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
 - [Kubecost chart 和迁移](https://github.com/kubecost/cost-analyzer-helm-chart)
 - [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 - [Data Exports 加密](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)
-- [Data Exports 桶策略](https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html)
+- [Data Exports 存储桶策略](https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html)
 - [成本分摊标签回填](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html)
-- [成本异常 SNS 权限](https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html)
+- [Cost anomaly SNS 权限](https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html)
 - [Kyverno CEL 迁移](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ValidatingPolicy](https://kyverno.io/docs/policy-types/validating-policy/)
 - [Goldilocks](https://goldilocks.docs.fairwinds.com/)
 
 
-- [可观测性技术栈](./09-observability-stack.md)
+- [可观测性堆栈](./09-observability-stack.md)
 - [资源优化](./10-resource-optimization.md)
 - [活动容量规划](./12-event-capacity-planning.md)

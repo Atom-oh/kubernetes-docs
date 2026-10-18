@@ -151,7 +151,7 @@ spec:
 
 #### 변수 치환
 
-`substituteFrom`은 뒤의 항목이 앞의 값을 덮어쓰고 inline `substitute`가 우선합니다. Secret 치환값은 렌더링된 manifest에 들어가므로 출력/권한을 관리합니다. 이 버전(Flux 2.9.6)에 포함된 kustomize-controller 1.9.6은 `StrictPostBuildSubstitutions`가 기본 true여서 기본값 없는 누락 변수에 실패합니다. 기존 배포에서 이 gate를 false로 지정했는지도 확인합니다. 숫자 필드는 치환 후에도 Kubernetes가 기대하는 숫자 타입이어야 합니다.
+`substituteFrom`은 뒤의 항목이 앞의 값을 덮어쓰고 inline `substitute`가 우선합니다. Secret 치환값은 렌더링된 manifest에 들어가므로 출력/권한을 관리합니다. 이 버전(Flux 2.9.6)에 포함된 kustomize-controller 1.9.6은 `StrictPostBuildSubstitutions`가 기본 true여서 기본값 없는 변수가 누락되면 실패합니다. 기존 배포에서 이 gate를 false로 지정했는지도 확인합니다. 숫자 필드는 치환 후에도 Kubernetes가 기대하는 숫자 타입이어야 합니다.
 
 FluxCD는 `postBuild`를 사용한 변수 치환을 지원합니다:
 
@@ -493,7 +493,7 @@ flux --version
 
 ### 부트스트랩
 
-bootstrap은 Git 저장소에 구성을 기록하고 클러스터에 controller를 설치합니다. kubecontext와 저장소 권한을 먼저 확인하고 GitHub/GitLab 중 한 절차만 선택합니다. my-org는 조직/그룹이며 개인 계정일 때만 --personal을 사용합니다. 토큰은 안전하게 환경 변수로 주입합니다. 아래는 이미지 자동화 controller도 설치합니다. 같은 bootstrap 저장소를 이미지 자동화로 수정한다면 deploy key 쓰기 권한도 별도로 준비해야 합니다.
+bootstrap은 Git 저장소에 구성을 기록하고 클러스터에 controller를 설치합니다. kubecontext와 저장소 권한을 먼저 확인하고 GitHub/GitLab 중 한 절차만 선택합니다. my-org는 조직/그룹이며 개인 계정일 때만 --personal을 사용합니다. 토큰은 안전하게 환경 변수로 주입합니다. 아래 예제는 이미지 자동화 controller도 설치합니다. 같은 bootstrap 저장소를 이미지 자동화로 수정한다면 deploy key 쓰기 권한도 별도로 준비해야 합니다.
 
 ```bash
 kubectl config current-context
@@ -625,7 +625,7 @@ spec:
 | kustomize-controller | SOPS KMS 복호화 또는 원격 EKS 적용 |
 | helm-controller | 원격 EKS에 Helm release 적용 |
 
-서로 다른 controller의 역할을 source-controller 하나에 부여했다고 모두 공유하지는 않습니다. 멀티 테넌시는 지원되는 object-level workload identity와 해당 feature gate/ServiceAccount/RBAC 설정까지 별도로 검토합니다.
+서로 다른 controller의 역할을 source-controller 하나에 부여했다고 다른 controller가 모두 공유하지는 않습니다. 멀티 테넌시는 지원되는 object-level workload identity와 해당 feature gate/ServiceAccount/RBAC 설정까지 별도로 검토합니다.
 
 bootstrap 경로의 `flux-system/kustomization.yaml`에 다음 patch를 병합해 Git에서 관리합니다. 기존 patch/리소스 목록을 유지합니다. 이미 실행 중인 Pod는 ServiceAccount 변경만으로 IRSA 환경이 다시 주입되지 않으므로 변경 반영 후 해당 controller를 rollout합니다.
 

@@ -17,7 +17,7 @@ Las versiones de los artefactos identifican las fuentes usadas para comprobar ej
 8. [Coste y licencias](#cost-and-licensing)
 9. [Selección y validación](#selection-and-validation)
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 Un service mesh desplaza funciones de comunicación seleccionadas a componentes de infraestructura. La interceptación del tráfico puede ser transparente para el código de la aplicación, pero la selección de protocolos, propiedad del tráfico, identidad de las cargas de trabajo y políticas aún requieren configuración. El tracing distribuido también necesita propagación/instrumentación de contexto. Un mesh no hace que reintentos arbitrarios de una aplicación sean seguros.
 
@@ -75,7 +75,7 @@ Cilium combina un datapath de red eBPF con proxies como Envoy para el análisis/
 
 Cilium 1.20.1 también proporciona una [beta independiente de cifrado transparente ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), seleccionada con `encryption.type: ztunnel`. Proporciona mTLS de cargas de trabajo TCP con inscripción por namespace; ambos endpoints deben estar inscritos. Excluye ClusterMesh y Pods con red de host, y la guía publicada advierte que las políticas L4 normales no funcionan en esta ruta salvo al dirigirse al puerto HBONE 15008. Es una elección de despliegue distinta, con sus propios requisitos de CA/bootstrap.
 
-## Evidencia de rendimiento
+## Evidencia de rendimiento {#performance-evidence}
 
 ### Cifras originales: históricas y no verificadas
 
@@ -99,7 +99,7 @@ Mantenga las versiones reales de producto/proxy/Kubernetes, hardware y configura
 
 Compare el comportamiento equivalente de HA y fallos, incluidos rollout, drenaje, reutilización de conexiones, telemetría ausente y pérdida del plano de control. Mida los errores sin procesar por separado de los resultados visibles para el cliente tras los reintentos. No adelante las etiquetas de versión históricas sin volver a ejecutar y conservar el experimento.
 
-## Gestión de tráfico
+## Gestión de tráfico {#traffic-management}
 
 | Capacidad | Qué comparar de forma concreta |
 |---|---|
@@ -347,7 +347,7 @@ spec:
 Estas son las formas CRD de Kubernetes de las entradas de configuración de Consul y requieren el controlador/RBAC de Consul configurado. Los metadatos de Service en el catálogo de Consul deben contener realmente `version=v1/v2`; una etiqueta de Pod de Kubernetes por sí sola no prueba que existan metadatos en el catálogo. El protocolo HTTP y los subsets del resolver completan la definición de división. Revise el mapeo Kubernetes-a-Consul de namespace/Service y los endpoints saludables en lugar de aplicar varios propietarios a la misma entrada de configuración.
 
 
-## Seguridad
+## Seguridad {#security}
 
 El cifrado, la identidad de pares, la autorización del llamador y la autenticación de la aplicación son controles independientes. El mTLS automático entre proxies inscritos no significa que se deniegue todo el tráfico sin mesh ni que todos los llamadores estén autorizados.
 
@@ -513,7 +513,7 @@ Las identidades de Service de Consul y la configuración del protocolo HTTP debe
 
 La versión mínima de TLS de una entrada de configuración de mesh cambia una configuración TLS; no inscribe una aplicación, instala un proxy ni crea una configuración completa de CA/ACL. Las extensiones de Envoy y las API de escape también requieren los permisos de la versión real de Consul; la versión 2.0.4 refuerza los requisitos mesh:write para extensiones que ejecutan código.
 
-## Observabilidad
+## Observabilidad {#observability}
 
 El recuento de métricas no es una clasificación fija significativa: las estadísticas, dimensiones, política, scraping e instrumentación de aplicación habilitados afectan tanto a la señal como a la sobrecarga. EnvoyFilter no es una API de extensión de telemetría ilimitada, y todos los backends de tracing no son intercambiables sin protocolos/exportadores compatibles.
 
@@ -554,7 +554,7 @@ Los límites originales de «máximo aproximado de diez clústeres de Linkerd» 
 
 Compruebe la accesibilidad de API/gateway remota, confianza de certificados, DNS, identidad de namespace/Service, servicios exportados y comportamiento ante fallos en ambas direcciones. Prefiera la [guía mantenida de multiclúster de Istio](../advanced/02-multi-cluster.md) a los dos comandos de instalación anteriores con etiquetas meshID y un secreto: esos comandos no constituían una configuración completa de mesh.
 
-## Instalación y operaciones
+## Instalación y operaciones {#installation-and-operations}
 
 ### Las versiones son entradas independientes
 
@@ -649,7 +649,7 @@ kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 Ejecute comandos específicos de producto solo en el entorno instalado previsto. Inspeccione nombres y logs de componentes reales en lugar de asumir que cada sidecar de Consul tiene un nombre de contenedor histórico fijo. Los logs de tap/debug pueden exponer información de solicitudes; limite y restaure la configuración de diagnóstico temporal. Mida el trabajo del equipo en el flujo de trabajo real en lugar de afirmar una instalación de ocho horas o cinco minutos para cada organización.
 
 
-## Coste y licencias
+## Coste y licencias {#cost-and-licensing}
 
 ### Las entradas de coste originales no son un presupuesto
 
@@ -679,7 +679,7 @@ Un modelo de costes significativo usa capacidad retenida real, restricciones de 
 
 El chart Helm de Consul anuncia una licencia MPL para ese artefacto; no anula la licencia del binario de la aplicación. Revise los términos exactos de artefacto/versión. La configuración HA del plano de control de Linkerd no es inherentemente una característica exclusiva de enterprise; el soporte/SLA de pago y las características del producto deben distinguirse de las capacidades upstream. No infiera soporte de un nombre de proveedor o una clasificación por signos de dólar.
 
-## Selección y validación
+## Selección y validación {#selection-and-validation}
 
 | Situación | Preguntas que determinan la elección |
 |---|---|

@@ -69,7 +69,7 @@ kubectl create namespace sched-lab
 
 **Step 1.3: Pin filler pods to create uneven CPU utilization**
 
-We use `spec.nodeName` (which bypasses the scheduler entirely) to put the three workers at different starting utilization: the first worker at 75%, the second at ~37%, the third at 0%.
+We use `spec.nodeName` (which bypasses the scheduler entirely) to put the three workers at different starting utilization levels: the first worker at 75%, the second at ~37%, the third at 0%.
 
 ```bash
 {

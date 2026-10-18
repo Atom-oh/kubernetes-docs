@@ -57,7 +57,7 @@ Choose one answer and name the positive control that would distinguish a valid n
 
 **Answer: A**
 
-**Explanation:** Relate each route type to the service model. Generate host traffic before expecting host learning, inspect replication/FDB state for L2, and trace Type-5 import for Stage B. A type not required by the chosen model can be justified N/A, not falsely passed.
+**Explanation:** Relate each route type to the service model. Generate host traffic before expecting host learning, inspect replication/FDB state for L2, and trace Type-5 import for Stage B. A type not required by the chosen model can be justified as N/A, not falsely passed.
 
 </details>
 

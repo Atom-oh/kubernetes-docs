@@ -67,7 +67,7 @@ Karpenter can provision for eligible Pending Pods and matching NodePools, subjec
 
 The reviewed spawner defaults `allowCustomImage` to `true`. A UI dropdown restriction alone cannot enforce image selection for users who can call the Notebook API directly. Apply required constraints through RBAC and admission too.
 
-Images must satisfy server port, `/notebook/<namespace>/<name>/` prefix or rewrite configuration, UID/GID, writable home, probes and runtime dependencies. A Jupyter Docker Stacks image does not automatically include every Kubeflow convention or SDK. Build pinned dependencies, reference an image digest from ECR or another registry, and verify CPU architecture and GPU driver compatibility.
+Images must satisfy requirements for server port, `/notebook/<namespace>/<name>/` prefix or rewrite configuration, UID/GID, writable home, probes and runtime dependencies. A Jupyter Docker Stacks image does not automatically include every Kubeflow convention or SDK. Build pinned dependencies, reference an image digest from ECR or another registry, and verify CPU architecture and GPU driver compatibility.
 
 An identical tag does not guarantee identical bytes. Even an identical digest does not make environments identical when PVC user packages/settings, startup scripts or runtime installation differ.
 

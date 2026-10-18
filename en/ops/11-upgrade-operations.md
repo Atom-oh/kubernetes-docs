@@ -442,7 +442,7 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
 ```
 
 Exit 0 means Successful, 1 means failure/cancellation/query error, and 2 means a client timeout.
-Timeout does not cancel AWS; resume observing the same ID.
+Timeout does not cancel the AWS operation; resume observing the same ID.
 A control-plane upgrade cannot be arbitrarily paused/stopped after it starts.
 cluster-active alone does not establish completion of node replacement.
 Recheck actual version, nodes and applications afterward.
@@ -723,7 +723,7 @@ A zero-weight TG can still be referenced by a listener.
 Auto Mode TGB/cluster deletion affects the associated TG lifecycle. Remove Blue TG references
 from shared listeners, then review ownership, IaC and deletion order before cleanup.
 Distinguish this from self-managed LB Controller external-TG ownership.
-Do not automatically terraform destroy immediately after shifting traffic.
+Do not automatically run terraform destroy immediately after shifting traffic.
 
 If workers already run in AZ-separated clusters, upgrading one cluster at a time is an option.
 That does not make each EKS control plane single-AZ.

@@ -4,7 +4,7 @@
 
 1. ¿Qué inicia la instalación del operador KubeRay?
    - A) Todas las cargas de trabajo de Ray automáticamente
-   - B) El reconciler; aún deben crearse los CR de carga de trabajo
+   - B) El reconciliador; aún deben crearse los CR de las cargas de trabajo
    - C) Todos los nodos GPU
    - D) Un Deployment para cada worker
 
@@ -16,10 +16,10 @@
 La instalación del operador es independiente de la creación de recursos RayCluster, RayJob o RayService.
 </details>
 
-2. ¿Qué instala el chart 1.7.0 y cuál es el estado predeterminado de RayCronJob?
+2. ¿Qué instala el chart 1.7.1 y cuál es el estado predeterminado de RayCronJob?
    - A) Solo existen tres CRD
    - B) Un CRD RayCronJob instalado siempre habilita la programación
-   - C) Cuatro CRD, con el feature gate de RayCronJob deshabilitado de forma predeterminada
+   - C) Cuatro CRD, con la compuerta de funcionalidad de RayCronJob deshabilitada de forma predeterminada
    - D) No existe API v1
 
 <details>
@@ -34,19 +34,19 @@ Distinga entre RayCluster, RayJob, RayService y RayCronJob.
    - A) Omitir shutdownAfterJobFinishes habilita la limpieza
    - B) TTL 0 elimina cada instancia EC2 y PVC
    - C) shutdownAfterJobFinishes tiene el valor predeterminado false; configure la limpieza y la preservación
-   - D) Los clusters externos siempre se eliminan
+   - D) Los clústeres externos siempre se eliminan
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C**
 
-Verifique TTL, deletionStrategy y la propiedad de los clusters compartidos frente a los creados.
+Verifique TTL, deletionStrategy y la propiedad de los clústeres compartidos frente a los creados.
 </details>
 
 4. ¿Qué requiere la actualización incremental de RayService?
-   - A) Un feature gate por sí solo garantiza que no haya tiempo de inactividad
-   - B) Estrategia, Gateway API/implementación, capacidad, preparación y drenaje
+   - A) Una compuerta de funcionalidad por sí sola garantiza que no haya tiempo de inactividad
+   - B) Estrategia, Gateway API/implementación, capacidad, estado de disponibilidad y drenaje
    - C) Solo editar la imagen de un Pod existente
    - D) Un RayJob obligatorio
 
@@ -55,14 +55,14 @@ Verifique TTL, deletionStrategy y la propiedad de los clusters compartidos frent
 
 **Respuesta: B**
 
-Desplaza el tráfico entre clusters; no es simplemente una actualización gradual in situ de un Pod.
+Desplaza el tráfico entre clústeres; no es simplemente una actualización gradual in situ de un Pod.
 </details>
 
 5. ¿Qué secuencia de escalado es adecuada?
-   - A) El autoscaler de Ray aprovisiona directamente toda la capacidad EC2
-   - B) Demanda de Ray → reconciliación de Pod de KubeRay → colocación/aprovisionamiento de capacidad de Kubernetes
+   - A) El autoescalador de Ray aprovisiona directamente toda la capacidad EC2
+   - B) Demanda de Ray → reconciliación de pods por KubeRay → colocación y aprovisionamiento de capacidad de Kubernetes
    - C) Karpenter llama a métodos de actor de Ray
-   - D) Ambos controladores son propietarios del recurso idéntico
+   - D) Ambos controladores son propietarios del mismo recurso
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -97,10 +97,10 @@ La duración de la configuración y la finalización real de la eliminación son
 
 **Respuesta: B**
 
-Alinee los recursos lógicos de Ray con los device plugins, drivers y hardware visible.
+Alinee los recursos lógicos de Ray con los complementos de dispositivos, los controladores y el hardware visible.
 </details>
 
-8. ¿Una actualización de chart Helm actualiza automáticamente los esquemas CRD existentes?
+8. ¿Una actualización del chart de Helm actualiza automáticamente los esquemas de CRD existentes?
    - A) Siempre los actualiza y elimina
    - B) No; verifique la compatibilidad de los CR almacenados y el procedimiento independiente de actualización de CRD
    - C) Los CRD son Pods ordinarios
@@ -111,17 +111,17 @@ Alinee los recursos lógicos de Ray con los device plugins, drivers y hardware v
 
 **Respuesta: B**
 
-Comprenda los límites del ciclo de vida de Helm crds/ y el impacto de eliminar CRD.
+Comprenda las limitaciones del ciclo de vida del directorio crds/ de Helm y las consecuencias de eliminar CRD.
 </details>
 
 ## Preguntas de respuesta corta
 
-9. ¿Por qué el número de réplicas de worker y el número de Ray Pods no siempre son iguales?
+9. ¿Por qué el número de réplicas de worker y el número de pods de Ray no siempre son iguales?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Con numOfHosts, una réplica de grupo puede corresponder a varios hosts/Pods. Compare el spec real con los recursos generados.
+Con numOfHosts, una réplica de grupo puede corresponder a varios hosts y pods. Compare la especificación real con los recursos generados.
 </details>
 
 10. ¿Por qué habilitar la autenticación mediante token de Ray no completa la configuración de seguridad?
@@ -129,7 +129,7 @@ Con numOfHosts, una réplica de grupo puede corresponder a varios hosts/Pods. Co
 <details>
 <summary>Mostrar respuesta</summary>
 
-Es independiente de TLS y no reemplaza la autenticación/autorización para cada endpoint de aplicación. Revise las rutas de acceso, la entrega de secretos, el soporte de versiones y la política organizativa.
+Es independiente de TLS y no reemplaza la autenticación ni la autorización para cada endpoint de aplicación. Revise las rutas de acceso, la entrega de secretos, el soporte de versiones y la política organizativa.
 </details>
 
 ---

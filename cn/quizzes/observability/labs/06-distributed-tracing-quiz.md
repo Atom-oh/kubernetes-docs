@@ -1,6 +1,6 @@
 # 可观测性实验第 6 部分测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 1. 如何区分整条 trace（链路）的耗时与单个 span 的耗时？
    - A) 两者始终完全相同。
@@ -38,16 +38,16 @@
 
 3. A >> B 会筛选出什么？
    - A) A 之前的所有日志。
-   - B) 作为 A span 后代的 B span。
+   - B) A span 的后代 B span。
    - C) A 与 B 的平均值。
    - D) B 必然与 A 是同一个 span。
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 作为 A span 后代的 B span。**
+**答案: B) A span 的后代 B span。**
 
-将服务选择器放在左侧、数据库选择器放在右侧，即可找到作为后代的数据库操作。
+将服务选择器放在左侧、数据库选择器放在右侧，即可找到下游的数据库操作。
 
 </details>
 
@@ -64,7 +64,7 @@
 
 **答案: B) 使用有效的 TraceQL，配合 Grafana 搜索的排序/条数限制设置。**
 
-实际的 Tempo3.0.3 解析器会拒绝那些旧的 sort/order-by/limit 示例。
+实际的 Tempo 3.0.3 解析器会拒绝那些旧的 sort/order-by/limit 示例。
 
 </details>
 
@@ -104,16 +104,16 @@
 
 ---
 
-7. 在 Grafana provisioning 中，派生字段（derived field）的链接表达式应如何书写？
+7. 在 Grafana 自动配置中，派生字段（derived field）的链接表达式应如何书写？
    - A) 用 envsubst 移除所有美元符号变量。
-   - B) 使用 $${__value.raw} 转义 provisioning 的变量替换。
+   - B) 使用 $${__value.raw} 转义自动配置时的变量替换。
    - C) 为每个流标签都加上 trace ID。
    - D) 以 LogQL SQL 子句的形式添加时间范围。
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 使用 $${__value.raw} 转义 provisioning 的变量替换。**
+**答案: B) 使用 $${__value.raw} 转义自动配置时的变量替换。**
 
 实际的 trace ID 字段名和数据源 UID 也必须匹配。
 

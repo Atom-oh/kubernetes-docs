@@ -238,7 +238,7 @@ service:
 
 #### 2. 파일 로깅과 공유 볼륨
 
-제공자의 파일 경로만으로 볼륨이 생성·마운트되지 않습니다. 선택적인 아래 예제는 크기가 제한된 `emptyDir`을 주입된 프록시에 마운트하며 애플리케이션 이미지를 교체해야 합니다. 별도 reader가 같은 볼륨을 마운트하고 순환·전송을 처리해야 합니다. 파일은 `kubectl logs`에 나오지 않으며 파드가 사라지면 `emptyDir`도 사라집니다. 이 문서의 기본 수집 예제는 stdout을 사용합니다.
+제공자의 파일 경로만으로 볼륨이 생성·마운트되지 않습니다. 아래 선택적 예제는 크기가 제한된 `emptyDir`을 주입된 프록시에 마운트하며 애플리케이션 이미지를 교체해야 합니다. 별도 reader가 같은 볼륨을 마운트하고 순환·전송을 처리해야 합니다. 파일은 `kubectl logs`에 나오지 않으며 파드가 사라지면 `emptyDir`도 사라집니다. 이 문서의 기본 수집 예제는 stdout을 사용합니다.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -606,7 +606,7 @@ spec:
 
 ## Alloy + Loki 통합
 
-Promtail은 **2026년 3월 2일** 지원이 종료되었습니다. 새 배포에는 Alloy 또는 지원되는 클라이언트를 사용합니다. 아래는 기존 Promtail 파일 tail 설정을 Alloy의 Kubernetes API 로그 수집으로 대체하며 Docker 경로·privileged 컨테이너·노드 파일시스템 마운트가 필요하지 않습니다.
+Promtail은 **2026년 3월 2일** 지원이 종료되었습니다. 새 배포에는 Alloy 또는 지원되는 클라이언트를 사용합니다. 아래 예제는 기존 Promtail 파일 tail 설정을 Alloy의 Kubernetes API 로그 수집으로 대체하며 Docker 경로·privileged 컨테이너·노드 파일시스템 마운트가 필요하지 않습니다.
 
 ### 1. Loki 설치 (Single Binary)
 
@@ -1422,7 +1422,7 @@ spec:
             path: fake/istio-logging-alerts.yaml
 ```
 
-단일 tenant Loki의 ID는 `fake`이므로 로컬 규칙 파일을 `fake/` 아래에 배치합니다. 로컬 rule storage는 ruler API로 수정할 수 없습니다. 이 알림은 전체 access-log stream을 전제합니다. 에러만 또는 샘플링된 stream으로는 편향 없는 에러율·지연 분위수를 얻을 수 없습니다. 데이터 부재·전송 실패 모니터링도 별도로 구성합니다.
+단일 tenant Loki의 ID는 `fake`이므로 로컬 규칙 파일을 `fake/` 아래에 배치합니다. 로컬 rule storage는 ruler API로 수정할 수 없습니다. 이 알림은 전체 access-log stream을 전제합니다. 에러만 기록한 stream 또는 샘플링된 stream으로는 편향 없는 에러율·지연 분위수를 얻을 수 없습니다. 데이터 부재·전송 실패 모니터링도 별도로 구성합니다.
 
 <span id="로그와-메트릭트레이스-연동"></span>
 
@@ -1534,7 +1534,7 @@ curl -fsSG http://localhost:3100/loki/api/v1/query_range \
 
 ### 로그 볼륨과 카디널리티
 
-`kubectl top`은 로그량이 아닌 자원 사용량입니다. 보관된 로그의 byte rate를 조회하고 제한된 시간의 실제 stream 집합을 검사합니다. `/labels`는 stream 수가 아닌 레이블 이름 수이며 대규모 환경에서 제한 없는 고카디널리티 `/series` 조회를 피합니다.
+`kubectl top`은 로그량이 아닌 자원 사용량을 보여 줍니다. 보관된 로그의 byte rate를 조회하고 제한된 시간의 실제 stream 집합을 검사합니다. `/labels`는 stream 수가 아닌 레이블 이름 수이며 대규모 환경에서 제한 없는 고카디널리티 `/series` 조회를 피합니다.
 
 ```logql
 topk(10, sum by (namespace, app) (bytes_rate({container="istio-proxy"} [5m])))

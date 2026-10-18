@@ -398,7 +398,7 @@ if ENCRYPTION_UPDATE_ID=$(aws eks associate-encryption-config \
 fi
 ```
 
-Record the update ID and check until `Successful` or a failure; request acceptance alone is not completion. The retained `resources: ["secrets"]` field is accepted for compatibility. On EKS 1.28+, it does **not** restrict encryption to Secrets: the field is deprecated and all Kubernetes API data is envelope encrypted. Current APIs also accept an omitted/null/empty resources list, while responses retain the legacy `["secrets"]` value. The old `enable-kms` walkthrough for Kubernetes 1.27 and earlier is historical guidance, not a supported-version migration target.
+Record the update ID and check until the update reports `Successful` or a failure; request acceptance alone is not completion. The retained `resources: ["secrets"]` field is accepted for compatibility. On EKS 1.28+, it does **not** restrict encryption to Secrets: the field is deprecated and all Kubernetes API data is envelope encrypted. Current APIs also accept an omitted/null/empty resources list, while responses retain the legacy `["secrets"]` value. The old `enable-kms` walkthrough for Kubernetes 1.27 and earlier is historical guidance, not a supported-version migration target.
 
 Do not disable or delete an associated key as lab cleanup while the cluster exists. Key unavailability can degrade the control plane, and permanent key loss can make the cluster unrecoverable. Review key recovery, access and monitoring before choosing a CMK. Default AWS owned key encryption needs no customer key setup; a CMK has separate KMS charges.
 
@@ -1407,7 +1407,7 @@ kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
 
 Both clients must reach the backend before policies are applied. If baseline connectivity fails, resolve that first rather than treating the failure as proof of network-policy enforcement.
 
-**4. Apply default deny plus the required allow rules.** This is the same policy design as basic question 3, scoped to the generated namespace. It permits frontend-to-backend TCP 8080 and conventional CoreDNS traffic in both UDP/TCP. Service and container ports match.
+**4. Apply default deny plus the required allow rules.** This is the same policy design as basic question 3, scoped to the generated namespace. It permits frontend-to-backend TCP 8080 and conventional CoreDNS traffic over both UDP and TCP. Service and container ports match.
 
 ```bash
 cat > "${SECURITY_LAB_DIR:?}/networkpolicies.yaml" << EOF
@@ -1510,7 +1510,7 @@ kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
 kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" get networkpolicies
 ```
 
-PSA enforces the namespace's Restricted standard. Kyverno or Gatekeeper is optional for requirements beyond PSA; use the current APIs from basic question 6 and adapt their namespace match if testing them here. A successfully created policy outside this namespace would not enforce this lab's workloads.
+PSA enforces the namespace's Restricted standard. Kyverno or Gatekeeper is optional for requirements beyond PSA; use the current APIs from basic question 6 and adapt their namespace match if testing them here. A successfully created policy outside this namespace would not enforce its rules on this lab's workloads.
 
 **6. Review related controls without substituting incomplete recipes.** A read-only `Describe*` IAM policy cannot operate AWS Load Balancer Controller; use its version-matched official policy and reviewed resource/tag conditions. Inspect node IAM, IMDS, security groups and add-on identities. `maxUnavailable` controls an initiated managed-node update's disruption; it does not schedule periodic replacement. Use a separately reviewed maintenance/upgrade plan.
 
@@ -2026,7 +2026,7 @@ For persistent application data, prefer the appropriate CSI/PV lifecycle instead
 
 **Labels, taints and security:** use managed node-group label/taint fields and a domain you control; do not overwrite provider-owned topology/node-group labels. Use a reviewed AMI and security-group/CNI design for host hardening. Ad hoc SSH/firewall edits during bootstrap can conflict with existing rules or sever access and are not a complete hardening procedure.
 
-**Launch-template user data:** with an EKS-selected AL2023 AMI and no custom `ImageId`, EKS supplies the required default NodeConfig. A minimal MIME customization can look like:
+**Launch-template user data:** with an EKS-selected AL2023 AMI and no custom `ImageId`, EKS supplies the required default NodeConfig. A minimal MIME customization can look like this:
 
 ```text
 MIME-Version: 1.0

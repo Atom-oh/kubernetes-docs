@@ -17,7 +17,7 @@ Traffic Mirroring(또는 Shadow Traffic)은 프로덕션 트래픽을 실시간�
 
 ## 기본 설정
 
-Sidecar 예제에는 `reviews` Service와 파드 레이블에 일치하는 DestinationRule subset `v1`/`v2`가 필요합니다. 이 호스트의 VirtualService는 대안 중 하나씩 적용하세요. Mirror는 주 경로 가중치의 일부가 아니라 추가 복사본을 받습니다.
+Sidecar 예제에는 `reviews` Service와 파드 레이블에 일치하는 DestinationRule subset `v1`/`v2`가 필요합니다. 이 호스트에는 VirtualService 대안 중 하나씩 적용하세요. Mirror는 주 경로 가중치의 일부가 아니라 추가 복사본을 받습니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1

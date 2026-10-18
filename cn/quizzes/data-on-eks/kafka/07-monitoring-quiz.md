@@ -1,222 +1,139 @@
 # 第 7 部分：监控测验
 
-本测验考查你对 Strimzi 如何暴露指标、核心 broker 指标含义、如何衡量消费者延迟，以及如何配置 KEDA Kafka scaler 的理解。
+请核对实际指标名称、抓取范围和缺失数据、消费者延迟，以及经过身份验证的 KEDA 行为。
 
-## 选择题
-
-1. Strimzi 在每个 broker 容器内运行什么组件，用于将 JMX 指标转换为 Prometheus 可以抓取的形式？
-   - A) Fluent Bit sidecar
-   - B) Prometheus JMX Exporter（JVM Java agent）
-   - C) OpenTelemetry Collector DaemonSet
-   - D) cAdvisor
+## 1. 本章的 JMX 方案如何运行？它是 Strimzi 唯一支持的指标方案吗？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) Prometheus JMX Exporter（JVM Java agent）**
+JMX Exporter 作为 Java agent 在同一个 JVM 中运行。Strimzi 也支持 strimziMetricsReporter。切换方案时，应核对指标命名、配置和仪表板。
 
-**解释：**
-当在 `Kafka` CR 上配置 `metricsConfig` 时，Strimzi 会自动在每个 broker（以及 Connect 等）容器内启用 Prometheus JMX Exporter——它不是单独的 sidecar 容器，而是作为加载到同一 JVM 进程中的 Java agent。该 exporter 读取 JVM 内部的 JMX MBean 值，根据重新标记规则重命名它们，并在 `/metrics` HTTP 端点以 Prometheus 文本格式暴露。Fluent Bit 是日志收集器，cAdvisor 收集容器资源指标——二者都不用于这个目的。
 </details>
 
-2. `Kafka.spec.kafka.metricsConfig` 引用哪种资源来获取 JMX Exporter 的重新标记规则？
-   - A) Secret
-   - B) PersistentVolumeClaim
-   - C) ConfigMap
-   - D) CustomResourceDefinition
+## 2. JMX MBean 映射规则与 PodMonitor 的 relabeling 有何不同？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) ConfigMap**
+ConfigMap 中的 JMX 规则将 MBean 映射为指标名称和标签。PodMonitor 的 relabeling 是独立的发现步骤，用于补充目标上下文，例如 namespace、kafka_cluster 和 role。
 
-**解释：**
-`metricsConfig.valueFrom.configMapKeyRef` 指向包含重新标记规则（YAML 格式）的 `ConfigMap` 的名称和 key。Strimzi 将这个规则文件挂载到运行 JMX Exporter Java agent 的容器中，使其知道哪些 JMX MBean 映射到哪些 Prometheus 指标名称和标签。`Secret` 用于证书或凭证等敏感值，不用于这个目的。
 </details>
 
-3. `kafka_server_replicamanager_underreplicatedpartitions` 指标的健康值是多少？
-   - A) 它应该等于 broker 的数量
-   - B) 它应该等于分区的数量
-   - C) 它应该始终为 0
-   - D) 它应该始终为 1
+## 3. UnderReplicatedPartitions 大于零是否表示数据已经丢失？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) 它应该始终为 0**
+不表示。健康稳态值为零，但故障、延迟或计划内操作都可能使其升高。请检查持续时间、under-min-ISR 和离线分区情况，以及造成变化的原因。
 
-**解释：**
-该指标统计由给定 broker 作为 leader 的分区中，其同步副本（ISR）集合小于已配置复制因子的分区数量。在正常运行时，每个 follower 都应该跟上 leader，因此该值应为 0。大于 0 的值表示某些副本正在落后——通常是由于网络延迟、broker 过载或磁盘 I/O 瓶颈——如果 leader 随后在 ISR 不足的情况下失败，这会直接威胁数据持久性。
 </details>
 
-4. 在健康运行状态下，`kafka_controller_kafkacontroller_activecontrollercount` 的集群范围总和应该是多少？
-   - A) 0
-   - B) 等于 broker 的数量
-   - C) 恰好为 1
-   - D) 等于 controller 候选者的数量
+## 4. active-controller 指标总和为 2，是否可以立即判定发生了 split brain？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 恰好为 1**
+不能。应先检查集群范围、重复抓取目标、陈旧样本和抓取时序。单个集群控制器的预期稳态总和为 1。
 
-**解释：**
-每个 broker/controller 会以 0 或 1 暴露它当前是否为 active controller。对整个集群求和后，在健康运行状态下应恰好为 1。总和为 0 表示没有 active controller（leader 选举正在进行，或出现故障）；总和为 2 或更多则提示存在严重异常，例如 split-brain 状态，需要立即调查。
 </details>
 
-5. 如果 Request Handler Idle Ratio 持续偏低（例如低于 10%），你首先应该怀疑什么？
-   - A) 磁盘容量即将耗尽
-   - B) broker 正接近 CPU/thread 资源饱和
-   - C) ZooKeeper 连接已断开
-   - D) 某个消费者组正在重新均衡
+## 5. BrokerRequestHandlerAvgIdlePercent 偏低时，应结合检查哪些指标？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) broker 正接近 CPU/thread 资源饱和**
+应同时检查 CPU、GC、I/O、请求延迟和队列，以及吞吐量。该指标表示处理程序繁忙，但不足以单独证明 CPU 是原因，也不自动意味着应该增加线程或 broker。
 
-**解释：**
-Request Handler Idle Ratio 是 broker 的请求处理线程池处于空闲状态的时间比例。较低的值表示线程池一直忙于处理请求，说明 broker 正接近其 CPU 或线程容量上限。持续偏低的值提示应考虑横向扩展 broker、重新均衡分区，或调优线程池大小。
 </details>
 
-6. 为什么 Strimzi 默认暴露的 broker 指标不包含消费者组延迟？
-   - A) 消费者延迟是敏感信息，出于安全原因不能暴露
-   - B) 计算延迟需要将消费者组已提交 offset 与 topic 的最新 offset 相关联，但 JMX Exporter 只读取 broker 自身的 JMX MBean
-   - C) 使用的 Strimzi 版本太旧，不支持它
-   - D) 消费者延迟只能从客户端侧测量
+## 6. 仅靠 broker 的 JMX 映射能否计算消费者组延迟？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 计算延迟需要将消费者组已提交 offset 与 topic 的最新 offset 相关联，但 JMX Exporter 只读取 broker 自身的 JMX MBean**
+不能。计算延迟需要消费者组已提交的 offset 和分区末尾 offset。本章使用 Strimzi Kafka Exporter；KEDA 则独立查询 Kafka API。
 
-**解释：**
-JMX Exporter Java agent 只读取并暴露 broker 进程内部的 JMX MBean（复制状态、吞吐量、controller 状态等）。消费者延迟是消费者组最后提交的 offset 与 topic 最新（log end）offset 之间的差值，这需要通过 Kafka Admin API 分别查询这两个值。因此，消费者延迟通常使用专用工具（例如 `kafka-lag-exporter`）来测量。
 </details>
 
-7. 本文档介绍了哪个社区 exporter 用于测量消费者延迟？
-   - A) node-exporter
-   - B) kafka-lag-exporter
-   - C) blackbox-exporter
-   - D) kube-state-metrics
+## 7. 本章选用的 Kafka Exporter 延迟指标及消费者组标签是什么？旧项目目前处于什么状态？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) kafka-lag-exporter**
+本章使用 `kafka_consumergroup_lag` 和 `consumergroup`。较早的 seglo/kafka-lag-exporter 项目已归档；不要把它的 kafka_consumergroup_group_lag 指标或 group 标签约定与本章使用的 exporter 混淆。
 
-**解释：**
-`kafka-lag-exporter` 是一个社区项目，它会通过 Kafka Admin API 定期查询消费者组已提交的 offset 以及每个 topic 的最新 offset，然后以 Prometheus 格式暴露指标，例如 `kafka_consumergroup_group_lag`。`node-exporter` 收集主机系统指标，`blackbox-exporter` 探测端点，`kube-state-metrics` 报告 Kubernetes 对象状态——这些都不用于这个目的。
 </details>
 
-8. 在 Prometheus Operator 环境中抓取由 Strimzi 管理的 Kafka broker Pod 时，哪个 CRD 比定位固定的 `Service` 更可靠？
-   - A) ServiceMonitor
-   - B) PodMonitor
-   - C) Probe
-   - D) AlertmanagerConfig
+## 8. PodMonitor 是否总比 ServiceMonitor 可靠？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) PodMonitor**
+不是。只要 Service 和选择器配置正确，ServiceMonitor 就能工作。本章选择直接发现 Pod；请核对 Prometheus 的标签和命名空间选择器、RBAC、网络连通性以及是否发生重复抓取。
 
-**解释：**
-broker 作为由 Strimzi 管理的独立 Pod 运行。直接按标签（例如 `strimzi.io/cluster`）选择 Pod 的 `PodMonitor`，比定位固定 `Service` 端点的 `ServiceMonitor` 更可靠地发现抓取目标。`Probe` 用于 blackbox 风格的端点检查，`AlertmanagerConfig` 配置告警路由——二者都不用于 Pod 级别的指标抓取。
 </details>
 
-9. 在针对 under-replicated partitions 的 `PrometheusRule` 告警中，`for: 5m` 有什么作用？
-   - A) 每 5 分钟抓取一次指标
-   - B) 条件必须连续为 true 达到 5 分钟，告警才会真正触发
-   - C) 告警触发后会在 5 分钟后自动恢复
-   - D) 它会计算该值的 5 分钟平均值
+## 9. 解释 PrometheusRule 中 for: 5m 的作用，以及如何处理缺失数据。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 条件必须连续为 true 达到 5 分钟，告警才会真正触发**
+告警条件必须持续存在且为真五分钟，之后才会触发。它不是抓取间隔，也不是平均时间。某个指标族缺失时，sum 比较可能得到空结果，因此还要检查 absent 和抓取覆盖率。
 
-**解释：**
-在 Prometheus 告警规则中，`for` 字段表示 `expr` 中的条件必须在指定持续时间内保持为 true，告警才会从 `pending` 转换为 `firing`。设置 `for: 5m` 可以减少由瞬时尖峰造成的噪声告警，并确保告警只针对真正持续存在的问题触发。
 </details>
 
-10. KEDA 的 Kafka scaler 如何确定消费者组延迟？
-    - A) 通过抓取 kafka-lag-exporter 暴露的 Prometheus 指标
-    - B) 通过直接查询 Kafka Admin API
-    - C) 通过解析 broker 的 JMX Exporter `/metrics` 端点
-    - D) 通过读取存储在 ZooKeeper 中的 offset
+## 10. KEDA Kafka scaler 是否需要 Prometheus 延迟 exporter？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过直接查询 Kafka Admin API**
+不需要。它直接查询 Kafka API，但需要自行具备 broker 网络连通性、TLS、身份验证和 Secret 访问权限。这条查询路径与仪表板使用的 exporter 不同。
 
-**解释：**
-KEDA 的 Kafka scaler 会直接调用 Kafka Admin API，使用 `bootstrapServers`、`consumerGroup` 和 `topic` 等 trigger 参数来确定消费者组延迟。这意味着单独的 Prometheus exporter（例如 `kafka-lag-exporter`）对于扩缩容决策并非严格必需（尽管它对于仪表板和告警仍然有用）。在 KRaft 模式下，ZooKeeper 不再存储 offset。
 </details>
 
-## 简答题
-
-11. 用一句话定义消费者延迟。
+## 11. 延迟为 0 是否能证明业务处理已经完成？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：按分区计算，最新生产 offset（log end offset）与消费者组最后提交的 offset 之间的差值。**
+不能。该值通常是日志末尾的下一个 offset 减去已提交的下一个 offset。提前提交，或数据及采集条件的差异，都可能使它与业务处理完成情况不同。压缩和事务也会使它不同于物理记录数。
 
-**解释：**
-消费者延迟以 offset 为单位，衡量消费者尚未处理的消息数量。延迟为 0 表示消费者已经追上最新消息；持续增加的延迟表示消费者的处理速率跟不上生产速率。
 </details>
 
-12. Strimzi 使用哪个组件将 Kafka broker 的 JMX 指标转换为 `/metrics` HTTP 端点？
+## 12. 应如何查询 bytesin_total 和 idle_percent？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：Prometheus JMX Exporter（一个 JVM Java agent）**
+对 bytesin_total 这个 counter 使用 rate(...[5m])，计算每秒速率。idle_percent 已经是比率型 gauge，应直接观察，不要再次对它使用 rate。
 
-**解释：**
-JMX Exporter 读取 JVM JMX MBean 值，根据已配置规则对其重命名并重新标记，然后在 `/metrics` 路径以 Prometheus 可抓取的文本格式暴露。当设置了 `metricsConfig` 时，Strimzi 会在 broker 等组件容器内的同一 JVM 进程中自动将它作为 Java agent 启用——而不是作为单独的 sidecar 容器。
 </details>
 
-13. 在 KEDA `ScaledObject` 的 Kafka trigger 中，哪个参数设置每分区延迟阈值，超过该值后会增加额外副本？
+## 13. 如何理解 lagThreshold=50 与 minReplicaCount=1？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：`lagThreshold`**
+目标是每个副本承担的有效总延迟为 50；可粗略按 ceil(总延迟/50) 估算副本数，但实际结果受 HPA/scaler 调整和限制影响。这不会为每个分区单独创建多个消费者。minReplicaCount 为 1 时，应检查 HPA 缩容行为，而不是缩至零的激活或冷却设置。
 
-**解释：**
-`lagThreshold` 是可接受的每分区延迟值；每当实际延迟跨过该值的一个倍数时，KEDA 管理的 HPA 就会添加另一个副本。例如，使用 `lagThreshold: "50"` 且分区延迟为 120 时，大致会计算出需要 2-3 个副本。另外，`activationLagThreshold` 决定是否会发生从 0 到 1 个副本的初始扩容。
 </details>
 
-14. 哪一对指标可以在 under-replicated partitions 增加之前作为先行指标，用来描述副本离开或重新加入 ISR 集合的频率？
+## 14. ISR 变化和 topic 吞吐量能说明什么？它们有哪些局限？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：ISR Shrink Rate 和 ISR Expand Rate（`isrshrinkspersec`、`isrexpandspersec`）**
+ISR shrink/expand counter 的速率可以反映变化频度，便于结合复制健康状况进行分析。仅有 topic 聚合吞吐量无法识别热点分区；还需查看分区和客户端层面的数据。
 
-**解释：**
-ISR Shrink Rate 是副本退出 ISR 集合的每秒速率，ISR Expand Rate 是它们重新加入的速率。频繁 shrink 表明 follower 反复落后于 leader，这通常先于 under-replicated partitions 上升出现——因此它是一个有用的早期预警信号。
 </details>
 
-## 实践题
-
-15. 编写一个 `Kafka` CR 的 `metricsConfig` YAML，使其引用名为 `kafka-metrics`、key 为 `kafka-metrics-config.yml` 的 `ConfigMap`。
+## 15. 编写补丁，将本章的 metricsConfig 和 Kafka Exporter 添加到现有 Kafka 资源中。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
-kind: Kafka
-metadata:
-  name: my-cluster
-  namespace: kafka
 spec:
   kafka:
     metricsConfig:
@@ -225,72 +142,71 @@ spec:
         configMapKeyRef:
           name: kafka-metrics
           key: kafka-metrics-config.yml
+  kafkaExporter:
+    topicRegex: ^orders$
+    groupRegex: ^order-processor$
+    showAllOffsets: true
+    template:
+      pod:
+        metadata:
+          labels:
+            docs.example.com/kafka-monitor: lag
 ```
 
-**解释：**
-`type: jmxPrometheusExporter` 是 Strimzi 当前支持的唯一指标暴露类型，`valueFrom.configMapKeyRef` 指定保存重新标记规则的 `ConfigMap` 以及其中的 key。应用后，Strimzi Cluster Operator 会自动在 broker 容器内启用 JMX Exporter Java agent，并挂载引用的规则文件。
+请先创建 metrics-config.yaml，再使用 `kubectl -n kafka patch kafka my-cluster --type=merge --patch-file metrics.patch.yaml`。这不是完整的 Kafka 创建清单，并且会保留已有的身份验证和 listeners 配置。
+
 </details>
 
-16. 编写一个 KEDA `ScaledObject`，基于 topic `orders` 上消费者组 `order-consumer-group` 的延迟，将 `order-consumer` `Deployment` 在 1 到 10 个副本之间扩缩容，并使用每分区延迟阈值 50。
+## 16. 编写一个使用 TLS/SCRAM 和同一命名空间中 TriggerAuthentication 的 ScaledObject。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：**
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: order-consumer-scaler
-  namespace: default
+  namespace: kafka
 spec:
   scaleTargetRef:
     name: order-consumer
   minReplicaCount: 1
   maxReplicaCount: 10
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
   triggers:
-    - type: kafka
-      metadata:
-        bootstrapServers: my-cluster-kafka-bootstrap.kafka.svc:9092
-        consumerGroup: order-consumer-group
-        topic: orders
-        lagThreshold: "50"
+  - type: kafka
+    metadata:
+      bootstrapServers: my-cluster-kafka-bootstrap.kafka.svc:9093
+      version: 4.3.1
+      consumerGroup: order-processor
+      topic: orders
+      tls: enable
+      sasl: scram_sha512
+      lagThreshold: '50'
+      allowIdleConsumers: 'false'
+      offsetResetPolicy: earliest
+    authenticationRef:
+      name: kafka-lag-auth
 ```
 
-**解释：**
-`scaleTargetRef.name` 标识目标 `Deployment`，而 `minReplicaCount`/`maxReplicaCount` 限定扩缩容范围。`triggers` 下的 `type: kafka` 选择 Kafka scaler，其 `metadata` 提供 bootstrap servers、消费者组、topic 和延迟阈值。KEDA Operator 使用此资源创建并管理标准 Kubernetes HPA。
+这要求本章的 keda-auth.yaml 和已有的 kafka/order-consumer Deployment。应用必须以 order-processor 作为消费者组运行。最大副本数 10 适用于第 2 部分所示的 12 个分区；其他拓扑应据此调整。
+
 </details>
 
-17. 编写一个 `PrometheusRule`，当 under-replicated partitions 持续高于 0 至少 5 分钟时，触发 `warning` 级别的告警。
+## 17. 对于副本不足告警，应如何分别处理集群范围、for 条件和缺失数据？
 
 <details>
 <summary>显示答案</summary>
 
-**答案：**
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: kafka-broker-alerts
-  namespace: kafka
-spec:
-  groups:
-    - name: kafka-broker.rules
-      rules:
-        - alert: KafkaUnderReplicatedPartitions
-          expr: sum(kafka_server_replicamanager_underreplicatedpartitions) > 0
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Kafka cluster has under-replicated partitions"
-            description: "Under-replicated partitions have been above 0 for over 5 minutes."
-```
+将 gauge 限定为 namespace="kafka"、kafka_cluster="my-cluster"，按集群求和，并对大于 0 的条件应用 for:5m。另设节点抓取覆盖率和控制器指标缺失告警。对于延迟，还要监控 exporter 故障、预期消费者组缺失和负的已提交 offset。
 
-**解释：**
-`expr` 对整个集群的 under-replicated partitions 求和，并检查总数是否大于 0。`for: 5m` 要求条件保持 5 分钟后，告警才会转换为 `firing`，从而减少瞬时尖峰造成的噪声。`labels.severity` 对告警严重级别进行分类，以便用于 Alertmanager 路由。
 </details>
 
 ---
 
-[返回学习资料](../../../data-on-eks/kafka/07-monitoring.md) | [上一测验：MSK 集成](./06-msk-integration-quiz.md) | [下一测验：最佳实践](./08-best-practices-quiz.md)
+[返回学习资料](../../../data-on-eks/kafka/07-monitoring.md) | [上一测验](./06-msk-integration-quiz.md) | [下一测验](./08-best-practices-quiz.md)

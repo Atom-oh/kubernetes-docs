@@ -923,7 +923,7 @@ istioctl proxy-config clusters <pod-name> -o json | jq '.[] | select(.name=="out
 
 ### Subset 충돌
 
-Istio는 동일 호스트에 적용되는 DestinationRule 조각을 병합할 수 있습니다. 아래처럼 다른 이름의 두 subset 자체가 충돌하지는 않습니다. 중복 subset 이름은 내용을 병합하지 않고 첫 정의를 사용하며 최상위 trafficPolicy가 여러 개면 먼저 처리한 것만 사용합니다. 네임스페이스 조회 범위와 가시성도 영향을 주므로 한 관리 주체의 규칙 하나가 이해하기 쉽습니다.
+Istio는 동일 호스트에 적용되는 DestinationRule 조각을 병합할 수 있습니다. 아래처럼 다른 이름의 두 subset 자체가 충돌하지는 않습니다. subset 이름이 중복되면 내용을 병합하지 않고 첫 정의를 사용하며 최상위 trafficPolicy가 여러 개면 먼저 처리한 것만 사용합니다. 네임스페이스 조회 범위와 가시성도 영향을 주므로 한 관리 주체의 규칙 하나가 이해하기 쉽습니다.
 
 **문제**:
 

@@ -1,6 +1,6 @@
 # ログコレクター比較クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 1. コレクターのリソース要件はどのように比較すべきですか？
 
@@ -86,7 +86,7 @@ kubernetes filter には正しいタグと、認可されたメタデータア�
 
 **回答: C) Receivers → Processors → Exporters**
 
-Connectors はパイプライン同士を接続できます。現在の Loki 向け経路は OTLP HTTP を使用し、削除された loki exporter は Contrib0.160.0 には存在しません。
+Connectors はパイプライン同士を接続できます。現在の Loki 向け経路は OTLP HTTP を使用し、削除された loki exporter は Contrib 0.160.0 には存在しません。
 
 </details>
 

@@ -1,166 +1,156 @@
 # EKS 集成测验
 
-> **相关文档**: [EKS 集成](../../../networking/calico/08-eks-integration.md)
-> **最后更新**: February 22, 2026
+> **相关文档**：[EKS 集成](../../../networking/calico/08-eks-integration.md)
+> **最后更新**：2026 年 9 月 12 日
 
 ## 测验
 
-1. 在 EKS 上将 VPC CNI 与 Calico 配合使用时，典型的职责划分是什么？
-   - A) VPC CNI 处理策略，Calico 处理网络
-   - B) VPC CNI 处理网络（IP 分配），Calico 处理网络策略
-   - C) VPC CNI 和 Calico 都重复处理网络
-   - D) Calico 完全取代 VPC CNI
+1. 本指南中，在普通 Linux EC2 上使用 VPC CNI 与 Calico 时，二者如何分工？
+   - A) VPC CNI 执行策略，Calico 分配 VPC IP
+   - B) VPC CNI 负责 Pod 网络，Calico 执行网络策略
+   - C) 两个 CNI 各自配置所有 Pod 接口
+   - D) Calico 取代 AWS 管理的 EKS 控制平面
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) VPC CNI 处理网络（IP 分配），Calico 处理网络策略**
+**答案：B) VPC CNI 负责 Pod 网络，Calico 执行网络策略**
 
-**说明：**
-在最常见的 EKS 配置中，AWS VPC CNI 通过从 VPC 分配 IP 来处理 Pod 网络，而 Calico 则以“仅策略”模式安装，以提供网络策略强制执行。这将原生 VPC 集成与 Calico 强大的策略功能相结合。
+VPC CNI 管理 ENI、Pod IP 分配和网络连通性；Calico 配置策略规则。本指南继续使用 Iptables 和 kube-proxy。选择其他数据平面需要单独规划。
 
 </details>
 
-2. 在 EKS 上安装 Calico 的三种主要方法是什么？
-   - A) kubectl apply、Docker、AWS CLI
-   - B) EKS Add-on、Tigera Operator、Helm chart
-   - C) CloudFormation、Terraform、Pulumi
-   - D) eksctl、AWS Console、SDK
+2. 以下哪项准确描述了在 EKS 上安装 Calico？
+   - A) 启用 VPC CNI 网络策略就会安装 Calico
+   - B) 可通过清单或 Helm chart 安装固定版本的 Tigera Operator
+   - C) 每个 EKS 集群都有 AWS 支持的 calico 附加组件
+   - D) Helm 回滚总能撤销 Calico CRD 和数据迁移
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) EKS Add-on、Tigera Operator、Helm chart**
+**答案：B) 可通过清单或 Helm chart 安装固定版本的 Tigera Operator**
 
-**说明：**
-可使用以下方式在 EKS 上安装 Calico：1) EKS 托管附加组件（对于仅策略模式最简单），2) Tigera Operator（推荐用于完整的 Calico 功能），或 3) Helm chart（配置灵活）。每种方法在简易性与可定制性方面各有不同的权衡。
+Helm chart 安装的是 Tigera Operator。AWS VPC CNI 网络策略是另一种实现。对于 Marketplace 或社区产品，应核实实际目录信息及支持责任方，并明确由一种安装方式负责管理。
 
 </details>
 
-3. 从哪个 EKS 版本开始可以使用原生 Network Policy Controller？
-   - A) EKS 1.12
-   - B) EKS 1.14
-   - C) EKS 1.18
-   - D) EKS 1.24
+3. 以下哪项符合当前 AWS 原生网络策略指南？
+   - A) EKS 1.14 引入了所有当前网络策略功能
+   - B) VPC CNI 1.21 及更高版本在满足文档规定的平台和内核前提时支持标准策略与 Admin 策略
+   - C) 原生策略永久只支持命名空间范围的策略
+   - D) 原生策略和 Calico 必须同时对相同端点执行策略
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) EKS 1.14**
+**答案：B) VPC CNI 1.21 及更高版本在满足文档规定的平台和内核前提时支持标准策略与 Admin 策略**
 
-**说明：**
-EKS 从 1.14 版本开始引入原生 Network Policy Controller。该控制器提供基本的 Kubernetes NetworkPolicy 支持。不过，Calico 还提供 GlobalNetworkPolicy 和策略层级等额外策略功能，超出了原生控制器的能力范围。
+标准网络策略支持始于 VPC CNI 1.14，而不是 EKS 1.14。当前 AWS 指南涵盖 VPC CNI 1.21 及更高版本中的 NetworkPolicy 和 AWS ClusterNetworkPolicy；同时还要求兼容的 EKS/平台版本和 Linux 内核 5.10 或更高版本。这些 API 与 Calico 的 API 不同。
 
 </details>
 
-4. 在 EKS Fargate 上运行 Calico 的一个关键限制是什么？
-   - A) Fargate 不支持任何网络功能
-   - B) Calico 无法在 Fargate Pod 上强制执行网络策略
-   - C) Fargate 仅支持 IPv6
-   - D) Calico 需要 root 访问权限，而 Fargate 提供该权限
+4. EKS Fargate 上的网络策略有哪些限制？
+   - A) Fargate 不提供网络功能
+   - B) Calico 节点代理策略和 VPC CNI 原生网络策略都不会在 Fargate Pod 内执行
+   - C) 只要 kubernetesProvider 是 EKS，所有 Calico 功能都可用
+   - D) Fargate 只支持 IPv6
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Calico 无法在 Fargate Pod 上强制执行网络策略**
+**答案：B) Calico 节点代理策略和 VPC CNI 原生网络策略都不会在 Fargate Pod 内执行**
 
-**说明：**
-Fargate Pod 在由 AWS 管理的隔离 microVM 中运行，用户无法安装 DaemonSet 或修改底层主机。由于 Calico 的 Felix agent 以 DaemonSet 形式运行，因此无法将其部署到 Fargate 节点，这意味着 Fargate Pod 无法使用网络策略强制执行功能。
+Fargate 不运行这些节点代理。Pod 安全组是另一种控制措施。Calico 仍可限制涉及 Fargate 对等端的连接在 EC2 端点上的流量，但这不等于在 Fargate 内部执行策略。
 
 </details>
 
-5. 在 EKS 上使用 Calico 的场景中，IRSA 是什么？
-   - A) Internal Route Service Allocation
-   - B) IAM Roles for Service Accounts - 允许 Pod 承担 AWS IAM role
-   - C) Ingress Resource Security Association
-   - D) IP Range Subnet Assignment
+5. 在此配置中，应在何处授予 AWS IAM 权限？
+   - A) 给每个 calico-node 广泛的 EC2 Describe 和 CloudWatch 权限
+   - B) 授予实际调用 AWS API 的组件所需权限；基础 Calico 策略使用 Kubernetes RBAC
+   - C) Installation 的 nodeMetadata 字段会创建 IRSA 角色
+   - D) 创建 IAM 策略就会自动将其关联到每个 ServiceAccount
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) IAM Roles for Service Accounts - 允许 Pod 承担 AWS IAM role**
+**答案：B) 授予实际调用 AWS API 的组件所需权限；基础 Calico 策略使用 Kubernetes RBAC**
 
-**说明：**
-IRSA（IAM Roles for Service Accounts）允许 Kubernetes Service Account 承担 AWS IAM role。当 Calico 组件需要访问 AWS API（例如，用于 cloud provider 集成）时，IRSA 可提供安全、细粒度的访问权限，而无需在 Pod 中嵌入凭证。
+VPC CNI 需要自己的 AWS 权限。exporter 或云集成也可能需要独立角色。应使用实际负责组件所支持的 IRSA 或 Pod Identity 配置；仅启用策略的基础 Calico 不需要广泛的 AWS 角色。
 
 </details>
 
-6. Security Group 和 Calico 网络策略在作用范围上有何不同？
-   - A) 它们在功能上完全相同
-   - B) Security Group 在 VPC/ENI 层级运行，Calico 策略在 Pod/container 层级运行
-   - C) Security Group 仅用于 ingress，Calico 仅用于 egress
-   - D) Security Group 已被弃用，转而使用 Calico
+6. 将 Pod 安全组与 Calico 策略结合使用时，AWS 有哪些要求？
+   - A) 只需设置 POD_SECURITY_GROUP_ENFORCING_MODE=strict
+   - B) VPC CNI 1.11 或更高版本、POD_SECURITY_GROUP_ENFORCING_MODE=standard，以及此功能的其他前提条件
+   - C) 只需为 EC2 实例添加标签
+   - D) EKS Auto Mode 也支持 Pod 安全组
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Security Group 在 VPC/ENI 层级运行，Calico 策略在 Pod/container 层级运行**
+**答案：B) VPC CNI 1.11 或更高版本、POD_SECURITY_GROUP_ENFORCING_MODE=standard，以及此功能的其他前提条件**
 
-**说明：**
-AWS Security Group 在 VPC 网络层运行，控制往返 ENI（Elastic Network Interface）的流量。Calico 网络策略在 Kubernetes Pod 层级运行，并使用基于 label 的 selector。两者可以结合使用以实现纵深防御：SG 提供 VPC 层级的控制，Calico 提供应用层级的策略。
+strict 模式下，这些 Pod 不受 Calico 策略执行。请核实受支持的实例类型和 branch ENI；更改模式后，应替换受影响的 Pod。在 standard 模式且使用常规外部 SNAT 时，离开 VPC 的流量使用节点安全组。
 
 </details>
 
-7. 升级运行 Calico 的 EKS cluster 时，应考虑什么？
-   - A) 升级前必须卸载 Calico
-   - B) 验证 Calico 版本与目标 EKS 版本的兼容性
-   - C) EKS 升级会自动升级 Calico
-   - D) Calico 仅支持版本号以偶数结尾的特定 EKS 版本
+7. 升级 EKS/Calico 时，正确做法是什么？
+   - A) 无论兼容性如何，总是在 EKS 升级后再升级 Calico
+   - B) 选择兼容迁移的 Calico 版本，并检查 EKS、节点、附加组件和 CRD 要求
+   - C) EKS 会自动升级并回滚所有第三方组件
+   - D) 应用较旧的 Operator 就能保证安全降级
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 验证 Calico 版本与目标 EKS 版本的兼容性**
+**答案：B) 选择兼容迁移的 Calico 版本，并检查 EKS、节点、附加组件和 CRD 要求**
 
-**说明：**
-升级 EKS 时，应验证当前 Calico 版本与目标 Kubernetes/EKS 版本兼容。请查阅 Calico 的兼容性矩阵，并在 EKS 升级前或升级后根据需要升级 Calico，同时遵循文档化的升级流程。
+请同时检查升级前后两侧的兼容性。当前 EKS 提供有条件的七天回滚窗口，可回到前一个次要版本，但不会自动回滚 Calico 或 EKS 附加组件。恢复仍需验证兼容性和集群就绪状态。
 
 </details>
 
-8. 对于 EKS 安装，kubernetesProvider 设置应配置为什么？
-   - A) kubernetesProvider: AWS
-   - B) kubernetesProvider: EKS
-   - C) kubernetesProvider: Amazon
-   - D) kubernetesProvider: None (auto-detected)
+8. 本指南所审阅的 Installation 使用哪个 provider 值？
+   - A) AWS
+   - B) EKS
+   - C) AmazonEKS
+   - D) None
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) kubernetesProvider: EKS**
+**答案：B) EKS**
 
-**说明：**
-在 EKS 上安装 Calico 时，应在 Installation resource 中将 `kubernetesProvider` 设为 `EKS`。这会告知 Calico 使用 EKS 专用配置和优化，确保与托管 Kubernetes service 正确集成。
+使用 `spec.kubernetesProvider: EKS`；若通过 Helm values 配置，则使用 `installation.kubernetesProvider: EKS`。该值用于选择 provider 配置，并不能证明每种节点类型、CNI、数据平面或版本都受支持。
 
 </details>
 
-9. 对于 EKS，Calico 的 Installation resource 中 cni.type 设置控制什么？
-   - A) 要使用的 CNI 规范版本
-   - B) Calico 是管理 CNI，还是交由另一个 CNI plugin 管理
-   - C) 网络加密的类型
-   - D) Container runtime 集成模式
+9. 哪种 CNI 类型会将网络功能委托给 Amazon VPC CNI？
+   - A) Calico
+   - B) AmazonVPC
+   - C) AWSCNI
+   - D) VPC
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Calico 是管理 CNI，还是交由另一个 CNI plugin 管理**
+**答案：B) AmazonVPC**
 
-**说明：**
-`cni.type` 设置决定 Calico 的 CNI 行为。设置 `cni.type: AmazonVPC` 会告知 Calico 将网络功能交由 VPC CNI 处理，而 Calico 仅处理策略。设置 `cni.type: Calico` 则使 Calico 同时处理网络和策略。
+在 Installation 中设置 `spec.cni.type: AmazonVPC`。仅启用 Calico 策略还需要文档规定的 Pod IP annotation 和 RBAC，并确保只有一个策略引擎；单独设置 `bgp: Disabled` 不足以选择这种 CNI。
 
 </details>
 
-10. EKS 上 Calico 的“仅策略模式”是什么？
-    - A) 仅强制执行 GlobalNetworkPolicy 的模式
-    - B) Calico 处理网络策略但不处理 Pod 网络的模式
-    - C) 禁用所有 egress 策略的模式
-    - D) 仅用于策略评估审计的模式
+10. 为什么后端 selector 和 TCP 端口必须放在同一个 destination 映射中？
+   - A) YAML 要求重复列出每个字段
+   - B) 重复的 destination 键可能会丢弃 selector，导致意外端点被允许
+   - C) 端口会自动匹配后端 Pod 标签
+   - D) Kubernetes 总会因重复键而拒绝配置
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Calico 处理网络策略但不处理 Pod 网络的模式**
+**答案：B) 重复的 destination 键可能会丢弃 selector，导致意外端点被允许**
 
-**说明：**
-仅策略模式是一种 Calico 部署配置：VPC CNI 继续处理 Pod IP 分配和路由，而 Calico 仅负责网络策略强制执行。这是 EKS 上最常见的 Calico 部署模式，因为它保留了原生 VPC 网络的优势。
+有些 YAML 解析器只保留重复键中的最后一个值。应将 selector 和端口放在一起，在验证时拒绝重复键，并测试允许和拒绝的流量。节点处于 Ready 状态并不能证明策略执行正确。
 
 </details>

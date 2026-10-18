@@ -18,7 +18,7 @@ Los ejemplos de configuración presuponen recursos existentes y autorizados, as�
 7. [Diseño híbrido y multicloud](#hybrid-and-multicloud-design)
 8. [Criterios de selección](#selection-criteria)
 
-## Arquitectura y plataformas
+## Arquitectura y plataformas {#architecture-and-platforms}
 
 ### Istio
 
@@ -50,7 +50,7 @@ Las asociaciones VPC y las asociaciones de endpoints tienen comportamientos dife
 
 «Sin sidecar obligatorio» es una propiedad de implementación, no una prueba de latencia, CPU, trabajo de firma/controlador o costo total de infraestructura nulos.
 
-## Gestión del tráfico
+## Gestión del tráfico {#traffic-management}
 
 ### Enrutamiento ponderado y condicional
 
@@ -315,7 +315,7 @@ Lattice usa automáticamente los destinos saludables. Si todos los destinos del 
 
 El idleTimeoutSeconds del servicio es configurable de 60 a 600 segundos. No es el mismo control que un timeout de solicitud por ruta o un presupuesto de reintentos. Pruebe los límites de conexión/solicitud y el comportamiento ante fallos para la ruta HTTP, gRPC o TLS elegida en vez de asignar un ganador genérico.
 
-## Seguridad e identidad
+## Seguridad e identidad {#security-and-identity}
 
 ### Istio: exigir juntas las condiciones previstas
 
@@ -482,7 +482,7 @@ La autorización de Lattice no se limita a L4/nombres de servicio. Las condicion
 La lista actual de recursos de WAF AssociateWebACL no incluye un servicio/red de Lattice. Un componente WAF compatible puede formar parte de una ruta diseñada por separado, pero no se justifica la anterior afirmación del diagrama de «integración directa de Lattice WAF». IAM, WAF, aislamiento de red y autorización de aplicación siguen siendo controles distintos.
 
 
-## Observabilidad
+## Observabilidad {#observability}
 
 ### Métricas y trazas de Istio
 
@@ -618,7 +618,7 @@ aws logs get-query-results --region "$AWS_REGION" --query-id "$QUERY_ID"
 
 Una consulta aún puede estar Scheduled o Running; un resultado vacío inmediato no prueba que no se produjeron errores. Limite el acceso y el intervalo de tiempo a la investigación. Los dashboards de Kiali/Grafana o CloudWatch requieren sus fuentes de datos reales y configuración de acceso; los nombres de dashboards no prueban visibilidad equivalente.
 
-## Instalación y operaciones
+## Instalación y operaciones {#installation-and-operations}
 
 ### Elegir y verificar la plataforma
 
@@ -674,7 +674,7 @@ aws vpc-lattice list-targets --region "$AWS_REGION" --target-group-identifier "$
 list-services no acepta un filtro de red de servicios. Las herramientas de análisis de red inspeccionan sus recursos de red compatibles; pasar un ID de servicio Lattice como destino de network-insights de EC2 no es un diagnóstico completo de aplicación/IAM. De estos comandos no se deduce ningún proceso fijo de tres capas, tiempo de reparación de cinco minutos ni garantía de «auto healing» administrado.
 
 
-## Costos y evidencia histórica
+## Costos y evidencia histórica {#cost-and-historical-evidence}
 
 ### Comparar el mismo límite de costos
 
@@ -724,7 +724,7 @@ Estos valores siguen siendo afirmaciones históricas no verificadas en vez de nu
 
 Las historias originales anónimas de clientes y la presunta encuesta de satisfacción de re:Invent no tenían publicación ni metodología rastreables. Pueden sugerir preguntas sobre migración, personal y propiedad híbrida, pero no tasas de éxito medidas. La identificada **CNCF 2024 Annual Survey** pregunta sobre desafíos de contenedores, uso de proyectos y uso de service mesh; no fundamenta la afirmada «falla de adopción de Istio del 40%» ni los porcentajes listados de causas de fallo. Use la pregunta, muestra y significado reales al citar una encuesta.
 
-## Diseño híbrido y multicloud
+## Diseño híbrido y multicloud {#hybrid-and-multicloud-design}
 
 ![Un posible diseño híbrido usa Istio dentro del clúster y una ruta de servicio Lattice configurada por separado fuera de él. Deben completarse los contratos de firmador, red, TLS y gateway de salida opcional.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
@@ -751,7 +751,7 @@ Los endpoints de red de servicios pueden proporcionar una ruta de entrada compat
 
 Para una migración, mapee las API, identidades, confianza de certificados, rutas, telemetría y propiedad de recuperación. Mover una etiqueta de namespace no es un cambio completo de IAM de Lattice a identidad de mesh. Consulte la [guía de VPC Lattice](../../../networking/02-vpc-lattice.md), la [integración de AWS](../04-aws-integration.md) y la [guía multicluster](../advanced/02-multi-cluster.md) para sus contratos específicos.
 
-## Criterios de selección
+## Criterios de selección {#selection-criteria}
 
 | Requisito | Evidencia de decisión |
 |---|---|

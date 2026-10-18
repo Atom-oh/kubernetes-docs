@@ -1,7 +1,7 @@
 # Operational Alert Configuration
 
 > **Review baseline**: Prometheus 3.15.0, Alertmanager 0.34.1, kube-prometheus-stack 92.9.0 / Prometheus Operator 0.94.1\
-> **Last reviewed**: October 16, 2026. Rule evaluation, templates, routing, inhibition scope and chart wiring were validated locally. No real cluster alert configuration or Slack/PagerDuty notification was performed.
+> **Last reviewed**: October 16, 2026. Rule evaluation, templates, routing, inhibition scope and chart wiring were validated locally. No real cluster alert configuration was performed, and no Slack/PagerDuty notification was sent.
 
 < [Previous: Scaling](06-scaling-strategies.md) | [Contents](README.md) | [Next: Observability Analysis](08-observability-analysis.md) >
 
@@ -37,7 +37,7 @@ Distinguish rule evaluation from notification delivery. `Firing` does not establ
 
 Alerts activate for **returned vector elements**, including elements whose numeric value is zero. `Ready == 0` intentionally returns such elements. Do not accidentally retain false comparisons by adding `bool` to an alert expression.
 
-A disappeared series can remove expression results without a real service recovery. `ALERTS` is useful for observing pending/firing state, but is not a complete history of node termination or operator actions.
+A series that has disappeared can remove expression results without a real service recovery. `ALERTS` is useful for observing pending/firing state, but is not a complete history of node termination or operator actions.
 
 ## Validated Baseline Rules
 
@@ -348,7 +348,7 @@ Do not add an absent `status="failed"` label to `awscni_add_ip_req_count` or inv
 (sum by (cluster) (rate(coredns_dns_responses_total[5m])) > 0)
 ```
 
-Failed scraping and failed DNS queries are different conditions. `absent(up{job="coredns"} == 1)` alone does not prove cluster DNS is impossible. **Pure EKS Auto Mode runs CoreDNS as a node system service**; do not impose conventional CoreDNS Deployment assumptions. Check the DNS architecture of mixed-node installations.
+Failed scraping and failed DNS queries are different conditions. `absent(up{job="coredns"} == 1)` alone does not prove cluster DNS cannot function. **Pure EKS Auto Mode runs CoreDNS as a node system service**; do not impose conventional CoreDNS Deployment assumptions. Check the DNS architecture of mixed-node installations.
 
 ### Network-policy drops
 

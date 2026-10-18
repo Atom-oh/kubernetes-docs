@@ -22,7 +22,7 @@ PSS はポリシーを定義し、PSA はそれらを適用する組み込みの
 
 ---
 
-## PSP から PSS への進化
+## PSP から PSS への進化 {#evolution-from-psp-to-pss}
 
 ### PodSecurityPolicy (PSP) の歴史
 
@@ -97,7 +97,7 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 
 ---
 
-## セキュリティレベル
+## セキュリティレベル {#security-levels}
 
 PSS は 3 つのセキュリティレベル（プロファイル）を定義します。各レベルは段階的により厳しいセキュリティ制約を適用します。
 
@@ -265,7 +265,7 @@ spec:
 
 ---
 
-## 適用モード
+## 適用モード {#enforcement-modes}
 
 PSA には 3 つの適用モードがあります。これらのモードは、個別にも組み合わせても使用できます。
 
@@ -417,7 +417,7 @@ metadata:
 
 ---
 
-## Namespace レベルの設定
+## Namespace レベルの設定 {#namespace-level-configuration}
 
 ### 基本的な Label 設定
 
@@ -509,7 +509,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## PSP から PSS への移行
+## PSP から PSS への移行 {#migration-from-psp-to-pss}
 
 ### 移行の概要
 
@@ -697,7 +697,7 @@ subprocess.run(base + [
 
 ---
 
-## EKS のデフォルトと設定
+## EKS のデフォルトと設定 {#eks-defaults-and-configuration}
 
 ### EKS における PSA のデフォルト設定
 
@@ -778,7 +778,7 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## セキュリティプロファイルの詳細
+## セキュリティプロファイルの詳細 {#security-profile-details}
 
 ### Privileged プロファイルの詳細
 
@@ -1009,7 +1009,7 @@ data:
 
 ---
 
-## 例外設定
+## 例外設定 {#exemptions-configuration}
 
 ### Cluster レベルの例外設定
 
@@ -1076,7 +1076,7 @@ Kyverno は PSA の拒否を許可に変更できません。host agent に例�
 
 ---
 
-## 段階的導入のベストプラクティス
+## 段階的導入のベストプラクティス {#best-practices-for-gradual-adoption}
 
 ### ステップ 1: 現在の状態を分析する
 

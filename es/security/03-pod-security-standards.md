@@ -22,7 +22,7 @@ PSS define políticas; PSA es la implementación de admisión integrada que las 
 
 ---
 
-## Evolución de PSP a PSS
+## Evolución de PSP a PSS {#evolution-from-psp-to-pss}
 
 ### Historia de PodSecurityPolicy (PSP)
 
@@ -65,7 +65,7 @@ Los estándares de seguridad de Pod (PSS) y Pod Security Admission (PSA) se intr
 
 ---
 
-## Controlador de Pod Security Admission (PSA)
+## Controlador de Pod Security Admission (PSA) {#pod-security-admission-psa-controller}
 
 ### Arquitectura de PSA
 
@@ -97,7 +97,7 @@ Utilice los controles de dry-run de Pod positivos/negativos de abajo para probar
 
 ---
 
-## Niveles de seguridad
+## Niveles de seguridad {#security-levels}
 
 PSS define tres niveles de seguridad (perfiles). Cada nivel aplica restricciones de seguridad progresivamente más estrictas.
 
@@ -265,7 +265,7 @@ Los controles se aplican a los contenedores normales, init y efímeros aplicable
 
 ---
 
-## Modos de aplicación
+## Modos de aplicación {#enforcement-modes}
 
 PSA proporciona tres modos de aplicación. Estos modos se pueden usar de forma independiente o conjunta.
 
@@ -417,7 +417,7 @@ metadata:
 
 ---
 
-## Configuración a nivel de Namespace
+## Configuración a nivel de Namespace {#namespace-level-configuration}
 
 ### Configuración básica de etiquetas
 
@@ -509,7 +509,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## Migración de PSP a PSS
+## Migración de PSP a PSS {#migration-from-psp-to-pss}
 
 ### Descripción general de la migración
 
@@ -697,7 +697,7 @@ subprocess.run(base + [
 
 ---
 
-## Valores predeterminados y configuración de EKS
+## Valores predeterminados y configuración de EKS {#eks-defaults-and-configuration}
 
 ### Configuración predeterminada de PSA en EKS
 
@@ -778,7 +778,7 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## Detalles del perfil de seguridad
+## Detalles del perfil de seguridad {#security-profile-details}
 
 ### Detalles del perfil Privileged
 
@@ -1009,7 +1009,7 @@ data:
 
 ---
 
-## Configuración de exenciones
+## Configuración de exenciones {#exemptions-configuration}
 
 ### Configuración de exenciones a nivel de clúster
 
@@ -1076,7 +1076,7 @@ Consulte [Gestión de políticas de Kyverno](./01-kyverno-policy-management.md) 
 
 ---
 
-## Prácticas recomendadas para la adopción gradual
+## Prácticas recomendadas para la adopción gradual {#best-practices-for-gradual-adoption}
 
 ### Paso 1: Analizar el estado actual
 

@@ -1198,7 +1198,7 @@ A binary instruction format designed to run in web browsers. In Istio, it is use
 3. **Advanced Routing**: Custom routing logic
 4. **Metric Collection**: Specialized telemetry
 
-The registry URLs, digests, credentials, and pluginConfig fields below are placeholders for your own built plugin; Istio does not supply those example images or interpret plugin-specific options. A file:// module must exist inside the proxy container.
+The registry URLs, digests, credentials, and pluginConfig fields below are placeholders for a plugin you have built yourself; Istio does not supply those example images or interpret plugin-specific options. A file:// module must exist inside the proxy container.
 
 **WASM Plugin Example**:
 ```yaml

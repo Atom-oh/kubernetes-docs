@@ -168,9 +168,9 @@ spec:
 
 ## 실전 예제
 
-기본 거부와 예외는 빈 ALLOW 정책과 의도한 구체적 ALLOW 규칙만 조합합니다. 명시적 DENY의 rules: [{}]는 어떤 ALLOW도 해제할 수 없는 전체 차단입니다. selector 없는 정책은 해당 네임스페이스에 적용되며 root namespace와 targetRefs 연결 규칙도 따로 확인하세요.
+기본 거부와 예외를 구성할 때는 빈 ALLOW 정책과 의도한 구체적 ALLOW 규칙만 조합합니다. 명시적 DENY의 rules: [{}]는 어떤 ALLOW도 해제할 수 없는 전체 차단입니다. selector 없는 정책은 해당 네임스페이스에 적용되며 root namespace와 targetRefs 연결 규칙도 따로 확인하세요.
 
-서비스 계정/네임스페이스 조건은 인증한 mTLS 피어 ID가 필요합니다. JWT role 예제는 일치하는 RequestAuthentication과 의도한 issuer/audience 검증이 필요합니다. 클라이언트 헤더는 두 ID를 대체하지 않습니다. 일반 TCP에는 HTTP 메서드/JWT 대신 ID·IP·포트를 사용하세요. DENY 규칙의 누락된 HTTP 속성은 TCP와 예상치 않게 일치할 수 있습니다.
+서비스 계정/네임스페이스 조건은 인증된 mTLS 피어 ID가 필요합니다. JWT role 예제는 일치하는 RequestAuthentication과 의도한 issuer/audience 검증이 필요합니다. 클라이언트 헤더는 두 ID를 대체하지 않습니다. 일반 TCP에는 HTTP 메서드/JWT 대신 ID·IP·포트를 사용하세요. DENY 규칙의 누락된 HTTP 속성은 TCP와 예상치 않게 일치할 수 있습니다.
 
 ## 모범 사례
 

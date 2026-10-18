@@ -48,7 +48,7 @@ NodePool disruption budget을 `0`으로 설정해도 EC2 회수를 중지시키�
 | 관측성 | 수집 간격, 대시보드·로그 쿼리, 클라이언트 원시 결과, clock 동기화, 보존 위치 |
 | 비용 | 노드별 실제 사용 시간·요금 기준, 약정 할인 적용 방식, 부대 비용의 배분 규칙 |
 
-계정 ID·내부 endpoint·고객 데이터는 공개 결과에 넣지 않고 별도 접근 통제된 원본에서 추적합니다. 모든 그룹에 같은 이미지 아키텍처를 사용합니다. 여러 인스턴스 타입을 허용할 때 MNG+CA는 유사한 vCPU·메모리 크기로 묶고, 아키텍처나 크기 변경의 효과를 Spot 효과와 섞지 않습니다. [S2]
+계정 ID·내부 endpoint·고객 데이터는 공개 결과에 넣지 않고 별도로 접근 통제된 원본에서 추적합니다. 모든 그룹에 같은 이미지 아키텍처를 사용합니다. 여러 인스턴스 타입을 허용할 때 MNG+CA는 유사한 vCPU·메모리 크기로 묶고, 아키텍처나 크기 변경의 효과를 Spot 효과와 섞지 않습니다. [S2]
 
 ### 비교 그룹
 
@@ -70,7 +70,7 @@ On-Demand 최소 용량은 임의 비율 대신 다음 가정으로 산정합니
 조건: 장애 후 생존 replicas >= 필요 생존 replicas
 ```
 
-예를 들어 Pod당 100 RPS가 SLO를 만족하고 장애 중 300 RPS를 유지해야 한다는 **가정**이면 최소 3 replicas가 살아 있어야 합니다. 이는 CPU·메모리·연결 풀·다운스트림 용량까지 충족한다는 가정의 계산일 뿐, 3 replicas가 실제로 충분하다는 실험 결과가 아닙니다. AZ 장애까지 범위에 넣으면 해당 AZ의 On-Demand도 생존 용량에서 제외합니다.
+예를 들어 Pod당 100 RPS가 SLO를 만족하고 장애 중 300 RPS를 유지해야 한다는 **가정**이면 최소 3 replicas가 살아 있어야 합니다. 이는 CPU·메모리·연결 풀·다운스트림 용량까지 충족한다는 가정에 따른 계산일 뿐, 3 replicas가 실제로 충분하다는 실험 결과가 아닙니다. AZ 장애까지 범위에 넣으면 해당 AZ의 On-Demand도 생존 용량에서 제외합니다.
 
 처음에는 HPA와 자발적 consolidation 설정을 고정해 변수를 줄이고, 이후 운영 설정을 복원해 상호작용을 별도로 시험합니다. hostname/AZ topology spread, `DoNotSchedule`, `minDomains`, PV의 AZ 제약은 복구를 막을 수 있으므로 실제 노드 배치를 저장합니다. [S8]
 
@@ -134,7 +134,7 @@ Guaranteed를 유지하면 리소스 설정과 QoS 조건을 보존할 수 있�
 | StatefulSet Pod | `200m → 50m` | `64Mi` 유지 | `Guaranteed → Guaranteed` | `0 → 0` / 동일 |
 | DaemonSet Pod | `200m → 50m` | `64Mi` 유지 | `Guaranteed → Guaranteed` | `0 → 0` / 동일 |
 
-Argo Rollouts는 **구조상 적용 가능한 예시**와 **실제 검증 결과**를 구분합니다. 원문 도입부는 네 종류를 함께 언급하지만, 구체적인 실측 표는 위 세 종류이며 Argo 설명은 동일한 Pod 소유 구조를 근거로 합니다. 로그에 `ReplicaSet`이 보인다는 것만으로 Deployment인지 Rollout인지, Rollout 검증까지 끝났는지 판정하지 않습니다. Stable/canary의 실제 상위 소유 관계를 기록하고 승격·중단·롤백, 트래픽·Analysis 지표, CPU requests 변경 영향을 별도로 검증합니다.
+Argo Rollouts는 **구조상 적용 가능한 예시**와 **실제 검증 결과**를 구분합니다. 원문 도입부는 네 종류를 함께 언급하지만, 구체적인 실측 표의 대상은 위 세 종류이며 Argo 설명은 동일한 Pod 소유 구조를 근거로 합니다. 로그에 `ReplicaSet`이 보인다는 것만으로 Deployment인지 Rollout인지, Rollout 검증까지 끝났는지 판정하지 않습니다. Stable/canary의 실제 상위 소유 관계를 기록하고 승격·중단·롤백, 트래픽·Analysis 지표, CPU requests 변경 영향을 별도로 검증합니다.
 
 원문의 클러스터 범위 watch, `resized` 마커와 `sync.Map`은 당시 구현입니다. **현재 로드맵의 namespace 제한·관리 label·CPU 하한·실제 startupProbe·UID/resourceVersion 검사와 재시도 queue 조건을 유지**하며 원문 코드를 현행 배포 규격으로 대체하지 않습니다. ContainerID·restartCount 보존만으로 cgroup 적용이나 요청 손실 부재를 입증하지 않으므로, 위 원문 보고와 실제 리소스·SLO 관측, 아직 미실행인 E10 Spot 결합 시험도 구분합니다.
 
@@ -259,7 +259,7 @@ jq -e '[.Reservations[].Instances[]] |
   "$SPOT_RESULT_DIR/instance-before.json"
 ```
 
-`caller.json`, `cluster.json`의 계정·리전·클러스터가 지정한 테스트 환경과 일치하는지, 대상 노드가 실험 전용인지 확인한 다음 템플릿을 작성합니다. 다음 JSON을 `$SPOT_RESULT_DIR/fis-template.example.json`에 저장합니다. 실행 전 아래 명령이 예시 ARN을 검증한 입력값으로 교체합니다. **명시적 ARN 1개와 COUNT(1)**을 유지합니다.
+`caller.json`, `cluster.json`의 계정·리전·클러스터가 지정한 테스트 환경과 일치하는지, 대상 노드가 실험 전용인지 확인한 다음 템플릿을 작성합니다. 다음 JSON을 `$SPOT_RESULT_DIR/fis-template.example.json`에 저장합니다. 실행 전 아래 명령이 예시 ARN을 검증한 입력값으로 교체합니다. **명시적 ARN 1개와 COUNT**(1)을 유지합니다.
 
 ```json
 {
@@ -476,7 +476,7 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 
 수동 On-Demand 전환은 **47.05초**에 rollout을 완료했고, 전환 대상 Pod의 실제 노드 label도 On-Demand로 확인했습니다. EC2 용량 부족 응답은 주입하지 않았으므로 **자동 폴백은 미검증**입니다.
 
-2026-09-12 14:08:41 UTC 가격 조회에서 `c6g.large` Linux의 On-Demand 공개 단가는 **$0.077/시간**, 해당 AZ의 Spot 단가는 **$0.0248/시간**이었습니다. 단가 차이는 **67.79%**이지만, 이는 실제 청구나 서비스 절감률이 아닙니다. EBS·EKS·FIS·관측성·약정 할인·재시도·대체 용량의 비용과 동일한 가용성 조건을 함께 비교해야 합니다.
+2026-09-12 14:08:41 UTC 가격 조회에서 `c6g.large` Linux의 On-Demand 공개 단가는 **$0.077/시간**, 해당 AZ의 Spot 단가는 **$0.0248/시간**이었습니다. 단가 차이는 **67.79**%이지만, 이는 실제 청구나 서비스 절감률이 아닙니다. EBS·EKS·FIS·관측성·약정 할인·재시도·대체 용량의 비용과 동일한 가용성 조건을 함께 비교해야 합니다.
 
 운영 확대 전에는 다음 검증이 필요합니다.
 
@@ -486,7 +486,7 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 4. On-Demand 최소 생존 용량, AZ 배치, 실제 공급 부족 폴백과 동시 회수를 검증합니다.
 5. 대표 업무 부하·정합성·여러 시간대의 반복 실행·실효 비용 증거를 확보합니다.
 
-실험용 namespace, NodePool 2개, EC2NodeClass, 신규 인스턴스 프로파일, FIS 템플릿·역할, 알람, EventBridge rule, SQS 큐를 삭제했습니다. **실험의 실행 중 EC2 인스턴스·잔존 EBS 볼륨·Kubernetes 자원은 0개**로 확인했습니다. AWS가 보존하는 FIS 실행 이력과 metric 데이터는 남습니다.
+실험용 namespace, NodePool 2개, EC2NodeClass, 신규 인스턴스 프로파일, FIS 템플릿·역할, 알람, EventBridge rule, SQS 큐를 삭제했습니다. **실험용으로 실행 중인 EC2 인스턴스·잔존 EBS 볼륨·Kubernetes 자원은 0개**로 확인했습니다. AWS가 보존하는 FIS 실행 이력과 metric 데이터는 남습니다.
 
 [측정 도구와 테스트](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/eks/spot-production), [요청별 원시 데이터·집계·시계열](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/eks/spot-production/results/2026-09-12)을 제공합니다. 공개 데이터에서 계정·노드·네트워크 식별자는 제외했으며, 상세 인프라 원본은 별도 보관했습니다.
 

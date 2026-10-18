@@ -16,7 +16,7 @@ EKS 수명은 별도이며 일반적으로 EKS 출시 후 표준 지원 14개월
 정확한 날짜·지원 정책·리전 가용성은 조회 시점의 API와 공식 수명주기를 확인합니다.
 
 일반 EKS 기본 제어 플레인 요금은 표준 지원 $0.10/시간,
-연장 지원 **총 $0.60/시간($0.10 + $0.50)**입니다. $0.60이 추가분은 아닙니다.
+연장 지원 **총 $0.60/시간**($0.10 + $0.50)입니다. $0.60이 추가분은 아닙니다.
 Auto Mode·컴퓨팅·스토리지·네트워크와 별도 control plane capacity 요금은 포함되지 않습니다.
 
 ```bash
@@ -441,7 +441,7 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
 
 exit 0은 update Successful, 1은 실패/취소/조회 오류, 2는 클라이언트 timeout입니다.
 timeout은 AWS 작업 취소가 아닙니다. 같은 ID로 관찰을 재개합니다.
-컨트롤 플레인 업그레이드는 시작 후 임의 pause/stop할 수 없습니다.
+컨트롤 플레인 업그레이드는 시작 후 임의로 pause/stop할 수 없습니다.
 `aws eks wait cluster-active`만으로 노드 교체 완료까지 판정하지 않습니다.
 마지막에 실제 cluster version과 노드·앱을 다시 확인합니다.
 

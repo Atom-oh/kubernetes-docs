@@ -84,7 +84,7 @@ Cloud-init으로 Ubuntu Autoinstall 구성을 전달할 수 있으며 RHEL은 Ki
 
 **설명:**
 
-이는 EKS Hybrid 지원 범위이며 모든 Bottlerocket 제품 variant에 대한 설명이 아닙니다. Hybrid bare metal은 지원되는 Ubuntu/RHEL 호스트를 검토합니다. AL2023도 온프레미스 가상화 guest 선택지이며 일반 bare-metal 지원 경로가 아닙니다. Kubernetes variant 가용성과 현재 수명주기 조건을 따로 확인합니다.
+이는 EKS Hybrid 지원 범위이며 모든 Bottlerocket 제품 variant에 대한 설명이 아닙니다. Hybrid bare metal용으로는 지원되는 Ubuntu/RHEL 호스트를 검토합니다. AL2023도 온프레미스 가상화 guest 선택지이며 일반 bare-metal 지원 경로가 아닙니다. Kubernetes variant 가용성과 현재 수명주기 조건을 따로 확인합니다.
 
 </details>
 

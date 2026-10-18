@@ -1,143 +1,135 @@
 # Tekton Pipelines 测验
 
-1. 与 Jenkins 或 GitHub Actions 相比，Tekton 在 Kubernetes 环境中有什么优势？
-   - A) Tekton 提供更多插件
-   - B) 基于 CRD 的 pipelines 作为 Kubernetes resources 进行管理，从而支持 GitOps、RBAC 和 namespace 隔离
-   - C) Tekton 提供更快的执行速度
-   - D) Tekton 是免费的，而其他工具是付费的
+1. 哪项正确描述了 Task、TaskRun 和 Workspace？
+   - A) Task 定义本身就是一个正在运行的 Pod
+   - B) TaskRun 执行一个 Task；Workspace 是一个卷绑定字段
+   - C) Workspace 始终是一个独立的 CRD
+   - D) 同一 Pod 中的 Steps 彼此完全隔离
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 基于 CRD 的 pipelines 作为 Kubernetes resources 进行管理，从而支持 GitOps、RBAC 和 namespace 隔离**
+**答案：B) TaskRun 执行一个 Task；Workspace 是一个卷绑定字段**
 
-**解释：**
-Tekton 将 Tasks、Pipelines 和 PipelineRuns 定义为 Kubernetes CRDs。这支持在 Git 中进行声明式 pipeline 管理（GitOps）、通过 Kubernetes RBAC 进行访问控制、namespace 级别隔离，以及通过 kubectl 进行管理。每个 Step 都在单独的 container 中运行，以实现强隔离。
+Tasks/Pipelines 是定义，Runs 是执行过程。同一 Pod 中的 Steps 共享网络和卷，因此它们不是信任边界。
 
 </details>
 
 ---
 
-2. 如何在 Tekton Pipeline 中的 Tasks 之间共享数据？
-   - A) 通过 environment variables 传递
-   - B) 通过 Workspaces (PVC) 共享 file systems，并通过 Results 传递小型数据
-   - C) 存储在 ConfigMaps 中
-   - D) Tasks 之间进行直接 network communication
+2. 在 TaskRuns 之间共享源代码时，哪项正确？
+   - A) emptyDir 会在多个 Pod 之间共享相同的文件
+   - B) 可以使用每次运行专属的 PVC；RWO/RWX 本身不是信任边界
+   - C) 使用不同的 subPaths，就能安全地让外部 PR 和发布共用一个 PVC
+   - D) Results 始终是无限长度的字符串
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过 Workspaces (PVC) 共享 file systems，并通过 Results 传递小型数据**
+**答案：B) 可以使用每次运行专属的 PVC；RWO/RWX 本身不是信任边界**
 
-**解释：**
-Workspaces 是基于 PVC 的 Tasks 之间 file system 共享方式，非常适合先 clone source code 再 build 之类的模式。Results 用于在 Tasks 之间传递小型 string 数据（image tags、commit SHAs 等），引用方式为 `$(tasks.task-name.results.result-name)`。
+使用 volumeClaimTemplate 为每次运行提供存储，并在不同信任级别之间隔离可写数据。小型值使用 Results，大型报告使用制品存储。
 
 </details>
 
 ---
 
-3. Tekton Triggers 的 EventListener 做什么？
-   - A) 生成 events 并将它们发送到 external systems
-   - B) 接收 webhook requests，并通过 TriggerBinding/TriggerTemplate 自动创建 PipelineRuns
-   - C) 监控 pipeline 执行结果
-   - D) 定期轮询 Git repositories
+3. GitHub HMAC 验证通过后，应如何处理外部 PR？
+   - A) 使用发布流水线的 IRSA 和签名权限
+   - B) 使用权限受限的独立执行信任级别
+   - C) 由于 HMAC 验证通过，直接将其 shell 命令插入脚本
+   - D) 已验证的请求始终是来自 main 分支的推送
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 接收 webhook requests，并通过 TriggerBinding/TriggerTemplate 自动创建 PipelineRuns**
+**答案：B) 使用权限受限的独立执行信任级别**
 
-**解释：**
-EventListener 是一个 HTTP endpoint，用于接收 webhook requests（GitHub Push、PR events 等）。Interceptors 会验证/过滤 request，TriggerBinding 从 payload 中提取 parameters，TriggerTemplate 使用这些 parameters 创建 PipelineRun。
+HMAC 验证的是交付来源，而非代码是否有权部署。本章中具有特权的 CI 路径仅限于获准仓库受保护的 main 分支推送。
 
 </details>
 
 ---
 
-4. Tekton Chains 提供了什么 Supply Chain Security 功能？
-   - A) 扫描 container images 中的 vulnerabilities
-   - B) 自动签名 TaskRun/PipelineRun artifacts（images）并生成 SLSA Provenance
-   - C) 加密 network traffic
-   - D) 自动生成 RBAC policies
+4. Chains 的 slsa/v1 格式化器会生成哪个版本的来源证明？
+   - A) SLSA 来源证明 v1.0
+   - B) SLSA 来源证明 v0.2；v1.0 使用 slsa/v2alpha3 或 slsa/v2alpha4
+   - C) 签名密钥会自动选择任意版本
+   - D) 始终与 Kubernetes v1 API 版本相同
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 自动签名 TaskRun/PipelineRun artifacts（images）并生成 SLSA Provenance**
+**答案：B) SLSA 来源证明 v0.2；v1.0 使用 slsa/v2alpha3 或 slsa/v2alpha4**
 
-**解释：**
-Tekton Chains 会在 TaskRun 完成后，使用 Cosign/Sigstore 自动签名 OCI images，并生成 SLSA Provenance（build metadata、source information、build steps 等）。这可以增强 software supply chain security，并支持验证 image 的来源和完整性。
+格式化器名称与 SLSA 规范版本并不相同。Pipeline 级别的来源证明会在 Pipeline 完成后创建，并且需要单独进行验证/晋级。
 
 </details>
 
 ---
 
-5. Tekton Pipeline 中 `finally` Tasks 的用途是什么？
-   - A) 作为 pipeline 中的第一个 Task 执行
-   - B) 无论 pipeline 成功还是失败，始终最后运行的 cleanup tasks
-   - C) 条件执行的 Tasks
-   - D) 并行运行的 Tasks
+5. 关于 finally Tasks，哪项说法正确？
+   - A) 遇到任何错误、取消和超时时，它们都会执行
+   - B) 它们会在普通 Tasks 之后运行，但缺少 Results、取消或超时可能导致它们被跳过/无法执行
+   - C) 它们始终按声明顺序依次执行
+   - D) 它们会自动为缺失的 image Results 提供默认值
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 无论 pipeline 成功还是失败，始终最后运行的 cleanup tasks**
+**答案：B) 它们会在普通 Tasks 之后运行，但缺少 Results、取消或超时可能导致它们被跳过/无法执行**
 
-**解释：**
-`finally` Tasks 会在 pipeline 中所有其他 Tasks 完成后运行，无论成功还是失败。由于它们即使在 build 失败时也会执行，因此非常适合 temporary resource cleanup、发送 notifications 和 test result reporting。类似于 try-catch-finally 模式。
+最终报告只引用运行名称和 tasks.status。不要假设 finally Tasks 之间存在执行顺序；应考虑超时行为。
 
 </details>
 
 ---
 
-6. 为什么在 ArgoCD + Tekton 集成架构中要分离 CI/CD？
-   - A) 因为 Tekton 不支持 CD
-   - B) 分离 CI（build/test）和 CD（deploy）关注点可以提升 security、auditing 和 rollback
-   - C) 因为 ArgoCD 不支持 CI
-   - D) 因为这些工具的 licenses 不同
+6. CI 成功并观察到 chains.tekton.dev/signed=true 后，还需要做什么？
+   - A) 立即将任意标签部署到生产环境
+   - B) 验证可信密钥、摘要、构建器和源代码来源证明，然后审核 GitOps 变更
+   - C) 只需对签名 JSON 进行 base64 解码，无需验证
+   - D) 检查 ArgoCD 本身是否拉取了应用镜像
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 分离 CI（build/test）和 CD（deploy）关注点可以提升 security、auditing 和 rollback**
+**答案：B) 验证可信密钥、摘要、构建器和源代码来源证明，然后审核 GitOps 变更**
 
-**解释：**
-Tekton 处理 CI（source clone、test、build、image push），而 ArgoCD 处理 CD（基于 Git 的声明式 deployment）。CI 将 image tag 提交到 Git，ArgoCD 检测到此 change 后进行 deploy。这支持 deployment permission 分离、基于 Git 的 audit trails，以及声明式 rollback。
+签名注解不等于经过密码学验证或批准。ArgoCD 同步清单；kubelet/运行时负责拉取镜像。
 
 </details>
 
 ---
 
-7. Tekton 中 CEL Interceptor 的一个 use case 是什么？
-   - A) 验证 GitHub signatures
-   - B) 使用 CEL expressions（特定 branches、file paths 等）过滤和转换 webhook payloads
-   - C) 验证 GitLab tokens
-   - D) 处理 Bitbucket events
+7. 在 Pipelines 1.17 中，控制器的 ServiceMonitor 端口和计数器分别是什么？
+   - A) metrics / pipelinerun_count
+   - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
+   - C) http / 每个命名空间的自动计数器
+   - D) 9097 / 运行时长直方图
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用 CEL expressions（特定 branches、file paths 等）过滤和转换 webhook payloads**
+**答案：B) http-metrics / tekton_pipelines_controller_pipelinerun_total**
 
-**解释：**
-CEL（Common Expression Language）Interceptor 使用 CEL expressions 对 webhook payloads 进行过滤和转换。例如，`body.ref == 'refs/heads/main'` 只过滤 main branch pushes，或者 `body.commits.exists(c, c.modified.exists(f, f.startsWith('src/')))` 仅在特定 path 变更时触发。
+请匹配实际的 Service 标签/端口和 Prometheus 选择器。当前的完成计数器仅包含状态，不包含命名空间标签。
 
 </details>
 
 ---
 
-8. Tekton PipelineRuns 的适当 cleanup strategy 是什么？
-   - A) 永久保留所有 PipelineRuns
-   - B) 设置基于 TTL 的 auto-deletion，并为 success/failure 使用不同 retention periods 来管理 resources
-   - C) 仅手动删除
-   - D) PipelineRuns 会自动删除
+8. 对于 coschedule=workspaces 的 volumeClaimTemplate PVC，默认的完成后行为是什么？
+   - A) 始终立即删除
+   - B) 保留；可以使用值精确为 true 的自动清理注解，在完成后清理
+   - C) 用户预先提供的 PVC 也始终会被删除
+   - D) PipelineRuns 默认有七天的 TTL
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 设置基于 TTL 的 auto-deletion，并为 success/failure 使用不同 retention periods 来管理 resources**
+**答案：B) 保留；可以使用值精确为 true 的自动清理注解，在完成后清理**
 
-**解释：**
-PipelineRuns 和 TaskRuns 在执行后会保留在 etcd 中并消耗 storage。使用 Tekton 的 cleanup settings（`keep`、`keep-since`）或基于 CronJob 的 cleanup scripts 来自动删除旧的 execution records。Failed runs 通常会保留更长时间，以便 debugging。
+其他 coschedule 模式和预先存在的 PVC 有不同的生命周期。在删除运行记录前，请检查完成时间、保留策略以及日志/签名归档。
 
 </details>

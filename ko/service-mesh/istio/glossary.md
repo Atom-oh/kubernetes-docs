@@ -1196,7 +1196,7 @@ spec:
 3. **고급 라우팅**: 커스텀 라우팅 로직
 4. **메트릭 수집**: 특화된 텔레메트리
 
-아래 레지스트리 URL·다이제스트·자격 증명·pluginConfig는 직접 빌드한 플러그인으로 교체할 예시입니다. Istio는 예시 이미지를 제공하거나 플러그인 전용 옵션을 해석하지 않습니다. file:// 모듈은 프록시 컨테이너 내부에 있어야 합니다.
+아래 레지스트리 URL·다이제스트·자격 증명·pluginConfig는 직접 빌드한 플러그인에 맞게 교체할 예시 값입니다. Istio는 예시 이미지를 제공하거나 플러그인 전용 옵션을 해석하지 않습니다. file:// 모듈은 프록시 컨테이너 내부에 있어야 합니다.
 
 **WASM 플러그인 예시**:
 ```yaml
@@ -1280,14 +1280,14 @@ impl HttpContext for CustomFilter {
 
 **빌드 및 배포 사전 요구사항**:
 
-호환 `proxy-wasm` 의존성과 잠근 의존성 버전을 가진 Rust `cdylib` 크레이트를 준비하세요. 위 콜백은 [공식 Rust SDK 예제](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)의 인터페이스를 따릅니다. `wasm32-unknown-unknown` 타깃으로 모듈을 빌드한 후 `.wasm`을 지원되는 OCI Wasm 이미지로 패키징해 WasmPlugin에서 참조하세요. Dockerfile 없는 일반 `docker build`만으로 패키징되지는 않습니다.
+호환되는 `proxy-wasm` 의존성과 고정된 의존성 버전을 가진 Rust `cdylib` 크레이트를 준비하세요. 위 콜백은 [공식 Rust SDK 예제](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)의 인터페이스를 따릅니다. `wasm32-unknown-unknown` 타깃으로 모듈을 빌드한 후 `.wasm`을 지원되는 OCI Wasm 이미지로 패키징해 WasmPlugin에서 참조하세요. Dockerfile 없는 일반 `docker build`만으로 패키징되지는 않습니다.
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-시작 시간·메모리·요청당 오버헤드는 플러그인별로 측정하세요. Wasm은 프록시 프로세스 내부 런타임 샌드박스에서 실행되며 별도 프로세스나 무조건적인 보안·성능 보장이 아닙니다.
+시작 시간·메모리·요청당 오버헤드는 플러그인별로 측정하세요. Wasm은 프록시 프로세스 내부 런타임 샌드박스에서 실행되며 별도 프로세스에서 실행되는 것은 아니고 보안·성능이 무조건 보장되는 것도 아닙니다.
 
 **Ambient Mode 지원**:
 
@@ -1334,7 +1334,7 @@ istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@t
 **제한사항**:
 - 일부 시스템 콜 제한
 - 파일 I/O 제한적
-- 네트워크 호출은 Envoy API 통해서만 가능
+- 네트워크 호출은 Envoy API를 통해서만 가능
 
 **관련 항목**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
 

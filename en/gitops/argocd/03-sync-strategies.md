@@ -95,7 +95,7 @@ syncPolicy:
     prune: true
 ```
 
-**Use case**: Ensure cluster state exactly matches Git repository. Removes orphaned resources.
+**Use case**: Ensure the cluster state exactly matches the Git repository. Removes orphaned resources.
 
 Prune affects the Application's tracked resources, not every orphan in the cluster. PruneLast changes ordering; it does not protect data or replace review of deletions.
 

@@ -100,7 +100,7 @@ Three differences stand out.
 
 ### Why you must not read this as a one-to-one table
 
-**The VirtualNode row is the problem.** An App Mesh VirtualNode expressed three things at once: who this workload is (identity, including backend TLS settings), where it goes (backends), and where it receives (listeners, health checks, connection pools, outlier detection). In Lattice those three scatter to different places.
+**The VirtualNode row is the problem.** An App Mesh VirtualNode expressed three things at once: who this workload is (identity, including backend TLS settings), where it goes (backends), and where it receives traffic (listeners, health checks, connection pools, outlier detection). In Lattice those three are distributed across different places.
 
 - Only **part of "where it receives"** (the target set, health checks) becomes a Target Group
 - **"Where it goes"** stops being a resource and becomes a matter of **auth policies and IAM permissions**
@@ -127,7 +127,7 @@ An important migration task is **observability**: inventory the metrics, access 
 
 Circuit breakers and retries have a clear alternative ("add a library to the application") with a cost you can estimate. Observability looks like it has a clear alternative too, but it is a different kind of work. In AS-IS, the spans Envoy produced automatically came **without touching application code.** Getting the same level of tracing in TO-BE means adding OpenTelemetry instrumentation to every service, and that becomes a work item for application teams.
 
-A client span normally encloses the downstream server span, so subtracting the caller span end from the receiver span start is not a network-latency measurement. Correlate application spans with Lattice log fields such as `requestId`, `duration`, and `requestToTargetDuration` and `responseFromTargetDuration`; clock skew, instrumentation boundaries and network time limit causal attribution. Lattice adds `x-amzn-requestid` for HTTP correlation; that is not an OpenTelemetry span.
+A client span normally encloses the downstream server span, so subtracting the caller span end from the receiver span start is not a network-latency measurement. Correlate application spans with Lattice log fields such as `requestId`, `duration`, `requestToTargetDuration` and `responseFromTargetDuration`; clock skew, instrumentation boundaries and network time limit causal attribution. Lattice adds `x-amzn-requestid` for HTTP correlation; that is not an OpenTelemetry span.
 
 ## The Role of the AWS Gateway API Controller
 
@@ -153,7 +153,7 @@ Two practical points follow.
 
 **First, if the controller stops, the routing targets go stale.** Lattice keeps forwarding traffic, but newly started Pods are never registered as Targets and dead Pods are never deregistered. The availability and IAM permissions of the controller Deployment are directly tied to the reliability of the data path.
 
-**Second, you can use Pod readiness gates.** You can make a Pod not be marked Ready until its Lattice Target Group health is `Healthy`, which makes a rolling update **not terminate old Pods until new Pods are healthy from Lattice's point of view.** This is an important mechanism for zero-downtime during migration.
+**Second, you can use Pod readiness gates.** You can make a Pod not be marked Ready until its Lattice Target Group health is `Healthy`, which makes a rolling update **not terminate old Pods until new Pods are healthy from Lattice's point of view.** This is an important mechanism for zero downtime during migration.
 
 ### Scope limits of the controller
 

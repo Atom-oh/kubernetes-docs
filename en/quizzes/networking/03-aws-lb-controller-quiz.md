@@ -94,7 +94,7 @@ spec:
     protocol: TCP
 ```
 
-Replace the certificate ARN and provide matching backend pods listening on 8080. Client-facing TLS terminates at NLB; tcp here leaves the backend connection without TLS. Use the appropriate certificate/security policy and network controls. Auto Mode uses its own loadBalancerClass and supported annotation set.
+Replace the certificate ARN and provide matching backend pods listening on 8080. Client-facing TLS terminates at the NLB; tcp here leaves the backend connection without TLS. Use the appropriate certificate/security policy and network controls. Auto Mode uses its own loadBalancerClass and supported annotation set.
 
 </details>
 

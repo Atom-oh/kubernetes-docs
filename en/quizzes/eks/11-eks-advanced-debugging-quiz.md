@@ -107,7 +107,7 @@ D. An assumed container_cpu_percent metric
 
 **Answer: C. CPU usage in cores / the matching positive CPU limit in cores**
 
-rate(cpu_usage_seconds_total) is CPU cores, not a percentage on its own. Join by cluster scope, namespace, Pod and container and use matching positive limits; an unlimited/missing-limit container is not 0% utilization. HPA utilization is normally relative to requests, which is a different calculation. These queries assume the source chapter’s single-cluster/label/scrape contract and show a fraction above0.8.
+rate(cpu_usage_seconds_total) is CPU cores, not a percentage on its own. Join by cluster scope, namespace, Pod and container and use matching positive limits; an unlimited/missing-limit container is not 0% utilization. HPA utilization is normally relative to requests, which is a different calculation. These queries assume the source chapter’s single-cluster/label/scrape contract and show a fraction above 0.8.
 
 ```promql
 (sum by (namespace,pod,container) (
@@ -345,7 +345,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
 <details>
 <summary>View Answer</summary>
 
-`rate()` estimates the per-second counter increase over the selected range, adjusts resets and extrapolates to the range boundaries. `irate()` uses only the last two samples in that range and adjusts resets. Both need enough samples; neither sees an unsampled spike. Apply the function before aggregation so each series reset remains detectable. Usually use `rate()` for alerts; `irate()` can help inspect volatile counters but does not guarantee better incident detection. These are counter functions, not generic gauge derivatives. The first two examples use an instrumented application counter; the last returns CPU cores, not a percentage. Use one cluster and the source chapter’s label/scrape contract.
+`rate()` estimates the per-second counter increase over the selected range, adjusts for resets and extrapolates to the range boundaries. `irate()` uses only the last two samples in that range and adjusts for resets. Both need enough samples; neither sees an unsampled spike. Apply the function before aggregation so each series reset remains detectable. Usually use `rate()` for alerts; `irate()` can help inspect volatile counters but does not guarantee better incident detection. These are counter functions, not generic gauge derivatives. The first two examples use an instrumented application counter; the last returns CPU cores, not a percentage. Use one cluster and the source chapter’s label/scrape contract.
 
 ```promql
 sum by (namespace,service) (

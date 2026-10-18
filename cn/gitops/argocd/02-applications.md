@@ -1,23 +1,23 @@
-# ArgoCD 应用程序
+# ArgoCD 应用
 
-> **审查基线**：Argo CD 3.5.2；经发布说明审查后更新至补丁版本 3.5.4（示例未重新运行）
-> **最后更新**：October 12, 2026
+> **审查基线**：Argo CD 3.5.2；发布说明审查后更新至补丁版本 3.5.4（未重新运行示例）
+> **最后更新**：October 16, 2026
 
 ## 目录
-- [Application CRD 概述](#application-crd-overview)
+- [Application CRD 概览](#application-crd-overview)
 - [源类型](#source-types)
 - [多个源](#multiple-sources)
 - [目标配置](#destination-configuration)
-- [健康状况评估](#health-assessment)
-- [资源 Hook](#resource-hooks)
+- [健康状态评估](#health-assessment)
+- [资源钩子](#resource-hooks)
 - [忽略差异](#ignore-differences)
-- [App of Apps 模式](#app-of-apps-pattern)
+- [应用集合模式](#app-of-apps-pattern)
 
-## Application CRD 概述
+## Application CRD 概览 {#application-crd-overview}
 
-示例为相互独立的配置。请将 myorg/accounts/clusters/paths 替换为实际已获授权的源。请根据场景选择 source/sources、渲染器和 destination.server/name，而非一次性启用所有替代方案。
+这些示例是相互独立的配置。请将 myorg/accounts/clusters/paths 替换为实际获准使用的源。根据具体场景选择 source/sources、渲染器和 destination.server/name，而不要一次启用所有备选项。
 
-Application CRD 是 ArgoCD 中定义如何及在何处部署应用程序的核心资源。它将源代码仓库连接到目标 Kubernetes 集群。
+Application CRD 是 ArgoCD 的核心资源，用于定义如何以及在何处部署应用。它将源代码仓库连接到目标 Kubernetes 集群。
 
 ### 完整规范
 
@@ -78,27 +78,27 @@ spec:
   revisionHistoryLimit: 10
 ```
 
-Application.status 是由控制器报告的状态。若要在控制平面命名空间外创建 Application，管理员必须启用 application.namespaces 和 AppProject sourceNamespaces，并配置适当的 RBAC。
+Application.status 是由控制器报告的状态。要在控制平面命名空间之外创建 Application，管理员必须启用 application.namespaces 和 AppProject 的 sourceNamespaces，并配置适当的 RBAC。
 
 ### 关键字段说明
 
 | 字段 | 说明 |
 |-------|-------------|
-| `project` | 此应用程序所属的 AppProject |
-| `source` | 获取清单的位置 |
+| `project` | 此应用所属的 AppProject |
+| `source` | 从何处获取清单 |
 | `destination` | 目标集群和命名空间 |
 | `syncPolicy` | 自动同步和重试行为 |
-| `ignoreDifferences` | 比较时要忽略的字段 |
+| `ignoreDifferences` | 比较时忽略的字段 |
 | `info` | 用于显示的自定义元数据 |
-| `revisionHistoryLimit` | 要保留的部署修订版本数量 |
+| `revisionHistoryLimit` | 保留的部署修订版本数量 |
 
-## 源类型
+## 源类型 {#source-types}
 
-ArgoCD 支持多种用于获取 Kubernetes 清单的源类型。
+ArgoCD 支持多种源类型来获取 Kubernetes 清单。
 
 ### 纯 YAML/JSON 目录
 
-最简单的源类型：包含 Kubernetes 清单的目录：
+最简单的源类型——包含 Kubernetes 清单的目录：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -160,7 +160,7 @@ spec:
 
 #### 来自 Helm 仓库
 
-固定版本的小型 podinfo chart 用于说明源格式。最终的 replicaCount 为 3，因为 parameters 会覆盖 valuesObject。valuesObject 提供结构化内联值；它不会自动读取环境变量。
+固定版本的小型 podinfo Chart 示例展示了源格式。最终的 replicaCount 为 3，因为 parameters 会覆盖 valuesObject。valuesObject 提供结构化内联值；它不会自动读取环境变量。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -193,11 +193,11 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-优先级为 parameters → valuesObject → values → valueFiles → chart 默认值。首选使用一种内联表示形式；存在 valuesObject 时，它提供内联值。仅在需要时启用 passCredentials，因为它可能会将凭据转发到其他域。此基线使用内置 Helm 4；请勿随意选择 v2/v3。
+优先级为 parameters → valuesObject → values → valueFiles → Chart 默认值。建议只使用一种内联表示；如果存在 valuesObject，它将提供内联值。只有在确有需要时才启用 passCredentials，因为它可能会将凭据转发到其他域。此基线使用捆绑的 Helm 4；不要随意选择 v2/v3。
 
 #### 使用外部文件中的值
 
-$values 引用要求 spec.sources 中存在匹配的 ref 源。值仓库/文件必须存在且已获授权。
+$values 引用需要在 spec.sources 中存在匹配的 ref 源。值仓库/文件必须存在且已获授权。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -268,9 +268,9 @@ spec:
     namespace: production
 ```
 
-### OCI 制品
+### OCI 工件
 
-通用 OCI 源使用 oci:// URI 及已展开制品内部的路径。请将此账户/仓库/tag 替换为已发布的制品。普通容器镜像不会自动成为清单源。
+通用 OCI 源使用 oci:// URI 和已展开工件中的路径。请将此账号/仓库/标签替换为已发布的工件。普通容器镜像不会自动成为清单源。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -291,9 +291,9 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-Argo CD 3.5.4 要求一个具有受支持媒体类型的层：默认是 application/vnd.oci.image.layer.v1.tar+gzip 或 Helm chart 内容 tar+gzip。请使用 ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES 和制品结构验证其他类型。截至 3.5.4，大于 4 MiB 的 OCI 清单会被拒绝（GHSA-w996-f2wq-x9c6）。
+Argo CD 3.5.4 要求包含一个具有受支持媒体类型的层：默认情况下为 application/vnd.oci.image.layer.v1.tar+gzip 或 Helm Chart 内容 tar+gzip。其他类型请通过 ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES 和工件结构进行验证。截至 3.5.4，超过 4 MiB 的 OCI 清单将被拒绝（GHSA-w996-f2wq-x9c6）。
 
-Helm OCI 形式使用 chart 字段和**不含 oci:// 的**仓库 URL。这是 Application.spec 下的源片段。
+Helm OCI 格式使用 chart 字段，且仓库 URL **不带 oci://**。这是 Application.spec 下的源片段。
 
 ```yaml
 source:
@@ -305,7 +305,7 @@ source:
       replicaCount: 2
 ```
 
-请将凭据与源类型相匹配：通用 OCI 使用 type: oci 和 oci:// URL；Helm OCI 使用 type: helm、enableOCI: "true" 和不带 scheme 的 URL。ECR 需要注册表权限以及对其 12 小时 token 的续期/应用；授予 IRSA 权限本身不会更新 Secret。
+凭据配置应与源类型匹配：通用 OCI 使用 type: oci 和 oci:// URL；Helm OCI 使用 type: helm、enableOCI: "true" 和不带协议的 URL。ECR 需要注册表权限，并且需要续期/应用其 12 小时令牌；授予 IRSA 权限本身不会更新 Secret。
 
 ### Jsonnet
 
@@ -344,9 +344,9 @@ spec:
     namespace: production
 ```
 
-## 多个源
+## 多个源 {#multiple-sources}
 
-存在 sources 时，会忽略单数形式的 source。请针对一个相关应用程序组合配置，例如 chart 加值仓库；对于独立管理的平台堆栈，请使用 ApplicationSet/App of Apps。
+如果存在 sources，单数形式的 source 将被忽略。可将一个相关应用的配置组合在一起，例如 Chart 加值仓库；对于独立管理的平台栈，请使用 ApplicationSet/App of Apps。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -373,11 +373,11 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-ref: values 会将 $values 映射到该 Git 仓库根目录。不含 path 时，它只提供值；包含 path 时，它还会在该位置生成清单。ref 源不能同时指定 chart。重复的 group/kind/name/namespace 资源使用最后一个源，并引发 RepeatedResourceWarning；这不是自动逐字段合并。
+ref: values 会将 $values 映射到该 Git 仓库根目录。不设置 path 时，它只提供值；设置 path 时，它也会在该路径下生成清单。ref 源不能同时指定 chart。重复的 group/kind/name/namespace 资源将采用最后一个源，并触发 RepeatedResourceWarning；这不是自动的逐字段合并。
 
-## 目标配置
+## 目标配置 {#destination-configuration}
 
-为已注册目标选择 server 或 name。destination.namespace 为缺少自身命名空间的命名空间范围资源提供默认值；CreateNamespace 仅创建该目标命名空间，而不是创建 chart 中显式嵌入的每个命名空间。请结合命名空间创建使用 managedNamespaceMetadata，并在更新现有命名空间前审查所有权。
+对于已注册的目标，请选择 server 或 name。destination.namespace 为未指定自身命名空间的命名空间级资源提供默认命名空间；CreateNamespace 只会创建该目标命名空间，不会创建 Chart 中明确嵌入的所有命名空间。使用 managedNamespaceMetadata 时，应同时配置命名空间创建，并在更新现有命名空间前审查其所有权。
 
 ### 使用 Server URL
 
@@ -403,28 +403,28 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-## 健康状况评估
+## 健康状态评估 {#health-assessment}
 
-Synced 描述比较后的期望/实时字段，而非服务可处理请求的证明。Healthy 遵循为每个资源配置的检查。没有检查的自定义资源可能会从应用程序健康状况中省略，因此需要适当的定义。
+Synced 表示期望字段与实际字段的比较结果，并不证明服务能够处理请求。Healthy 状态取决于配置的各资源检查。没有检查的自定义资源可能不会纳入应用健康状态，需要为其定义适当的检查。
 
 ### 内置健康检查
 
-以下总结了重要的 3.5.4 实现检查，而非基于单个副本计数的完整谓词。
+以下内容概述了 3.5.4 实现中的重要检查，并非仅基于副本计数器的完整判定条件。
 
 | 资源 | 重要检查 |
 |---|---|
-| Deployment | 已观察的 generation、rollout 进度/失败、已更新/可用副本 |
-| StatefulSet | generation、更新策略/partition、修订版本和副本状态 |
+| Deployment | 已观测到的 generation、发布进度/失败状态、已更新/可用副本 |
+| StatefulSet | generation、更新策略/分区、修订版本和副本状态 |
 | DaemonSet | generation 以及期望/已更新/可用 Pod 数量 |
-| Pod | phase、就绪状态以及容器终止/失败 |
-| Service | LoadBalancer 等待地址；其他类型不验证端点 |
-| Ingress | 由控制器报告的 loadBalancer 地址状态 |
-| PVC | Bound 状态 |
-| Job | 未完成为 Progressing，失败为 Degraded，完成为 Healthy，暂停为 Suspended |
+| Pod | 阶段、就绪状态和容器终止/失败状态 |
+| Service | LoadBalancer 会等待地址；其他类型不会验证端点 |
+| Ingress | 控制器报告的 loadBalancer 地址状态 |
+| PVC | 绑定状态 |
+| Job | 未完成时为 Progressing，失败时为 Degraded，完成时为 Healthy，暂停时为 Suspended |
 
 ### 自定义健康检查
 
-请勿用简单的 phase 比较替换内置的 Rollout/cert-manager Certificate 检查。Certificate group 是 cert-manager.io；其内置检查会在 Ready 之前处理 Issuing。以下 ACK 示例会对缺少 status/conditions 的资源返回 Progressing，也不会将 ARN 存在等同于 Healthy。请验证 ACK 版本提供的 Ready/ACK.ResourceSynced 和错误条件。该示例在 Ready 存在时优先使用它，否则回退到 ACK.ResourceSynced。
+不要用简单的阶段比较替换捆绑的 Rollout/cert-manager Certificate 检查。Certificate 组为 cert-manager.io；其捆绑检查会在 Ready 之前处理 Issuing。下面的 ACK 示例会在状态/条件缺失时返回 Progressing，并且不会将 ARN 存在等同于 Healthy。请根据你的 ACK 版本验证其提供的 Ready/ACK.ResourceSynced 和错误条件。示例优先使用 Ready（若存在），否则回退到 ACK.ResourceSynced。
 
 ```yaml
 apiVersion: v1
@@ -471,35 +471,35 @@ data:
     return hs
 ```
 
-这会解释由控制器报告的状态；它不会直接查询 AWS。请将该键合并到现有 argocd-cm 中，并使用真实 CR 测试缺失/等待/就绪/错误/新规范状态。EKS 托管的 Argo CD 提供 ACK/kro 检查，因此请先检查其现有检查和受支持的配置。
+此检查解释的是控制器报告的状态；它不会直接查询 AWS。请将此键合并到现有的 argocd-cm 中，并使用真实 CR 测试缺失/等待/就绪/错误/新规格等状态。EKS 托管的 Argo CD 提供 ACK/kro 检查，因此请先检查现有检查项和支持的配置。
 
-## 资源 Hook
+## 资源钩子 {#resource-hooks}
 
-PostSync 会等待成功的 Sync 和相关的 Healthy 资源。显式资源选择性同步不会运行 Hook。在 3.5.4 中，ApplyOutOfSyncOnly 仍会运行 Hook 并记录历史记录。SyncFail 处理符合条件的同步失败；请勿将其视为每个错误（包括清单生成失败）的有保障清理/备份路径。
+PostSync 会等待 Sync 成功，并等待相关 Healthy 资源就绪。显式选择资源进行同步时不会运行钩子。在 3.5.4 中，ApplyOutOfSyncOnly 仍会运行钩子并记录历史。SyncFail 用于处理符合条件的同步失败；不要依赖它作为所有错误（包括清单生成失败）的可靠清理/备份路径。
 
-资源 Hook 允许在同步期间的特定时点运行 Job。
+资源钩子可在同步期间的特定阶段运行 Job。
 
-### Hook 类型
+### 钩子类型
 
-| Hook | 执行时机 |
+| 钩子 | 执行时机 |
 |------|---------------|
-| `PreSync` | 同步开始之前 |
+| `PreSync` | 同步开始前 |
 | `Sync` | 同步期间（PreSync 之后） |
-| `PostSync` | Sync 成功且资源为 Healthy 后 |
+| `PostSync` | Sync 成功且资源 Healthy 之后 |
 | `SyncFail` | 同步失败后 |
 | `Skip` | 跳过清单应用 |
 | `PreDelete` | 随 Application 删除资源之前 |
-| `PostDelete` | Application 资源删除后 |
+| `PostDelete` | Application 资源删除之后 |
 
-### Hook 删除策略
+### 钩子删除策略
 
 | 策略 | 行为 |
 |--------|----------|
-| `HookSucceeded` | Hook 成功后删除 |
-| `HookFailed` | Hook 失败后删除 |
-| `BeforeHookCreation` | 新 Hook 运行前删除 |
+| `HookSucceeded` | 钩子成功后删除 |
+| `HookFailed` | 钩子失败后删除 |
+| `BeforeHookCreation` | 新钩子运行前删除 |
 
-### 数据库迁移 Hook
+### 数据库迁移钩子
 
 ```yaml
 apiVersion: batch/v1
@@ -527,7 +527,7 @@ spec:
                   key: url
 ```
 
-### Slack 通知 Hook
+### Slack 通知钩子
 
 ```yaml
 apiVersion: batch/v1
@@ -543,7 +543,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -559,7 +559,7 @@ spec:
                   key: url
 ```
 
-### 健康检查 Hook
+### 健康检查钩子
 
 ```yaml
 apiVersion: batch/v1
@@ -576,7 +576,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -593,11 +593,11 @@ spec:
               exit 1
 ```
 
-固定名称的 Job 需要诸如 BeforeHookCreation 的生命周期规则，以支持重复运行。请在清理前于外部保留失败日志；HookSucceeded 清理遵循 Argo 同步阶段/结果语义。请准备迁移镜像、数据库 Secret 和 ServiceAccount，并分别验证幂等性、锁定和回滚兼容性。Hook 失败不会自动还原数据库或现有 Deployment。PreDelete/PostDelete 适用于 Application 删除，而不是常规同步修剪。
+固定名称的 Job 需要 BeforeHookCreation 等生命周期规则才能重复运行。清理前，请将失败日志保存到外部；HookSucceeded 清理遵循 Argo 的同步阶段/结果语义。请准备好迁移镜像、数据库 Secret 和 ServiceAccount，并单独验证幂等性、锁定行为和回滚兼容性。钩子失败不会自动回退数据库或现有 Deployment。PreDelete/PostDelete 适用于删除 Application，不适用于普通同步修剪。
 
-## 忽略差异
+## 忽略差异 {#ignore-differences}
 
-仅排除由已知其他控制器拥有的特定字段。此 Application.spec 片段会忽略 production 中由 HPA 管理的 my-deployment 副本数。
+仅排除由其他已知控制器管理的特定字段。此 Application.spec 片段会忽略生产环境中 my-deployment 上由 HPA 管理的副本数。
 
 ```yaml
 spec:
@@ -613,9 +613,9 @@ spec:
     - RespectIgnoreDifferences=true
 ```
 
-ignoreDifferences 通常会影响比较。RespectIgnoreDifferences=true 将其扩展至同步，但在没有实时资源的初始创建期间，仍会应用期望的清单。广泛的镜像、Secret、整个资源或所有 manager 规则可能隐藏重要的偏差。
+ignoreDifferences 通常只影响比较。RespectIgnoreDifferences=true 会将其扩展到同步，但在没有实际资源的情况下首次创建时，仍会应用期望清单。针对镜像、Secret、整个资源或所有管理器设置宽泛规则，可能会掩盖重要的配置漂移。
 
-对于 webhook 数组，请按名称而非固定索引选择，并同时限定资源名称。仅在已知 CA 注入控制器和 webhook 身份时使用此方法。
+对于 webhook 数组，请按名称而不是固定索引进行选择，并限定资源名称。只有在已知 CA 注入控制器和 webhook 身份时才使用此规则。
 
 ```yaml
 spec:
@@ -627,13 +627,13 @@ spec:
     - '.webhooks[]? | select(.name == "admission.example.com") | .clientConfig.caBundle'
 ```
 
-全局 resource.customizations.ignoreDifferences 设置会影响每个 Application。首选应用程序范围的规则；只有在检查该 manager 实际拥有的字段后，才选择 managedFieldsManagers。
+全局 resource.customizations.ignoreDifferences 设置会影响每个 Application。优先使用应用级规则；只有在检查过 managedFieldsManagers 实际管理的字段之后，才选择它。
 
-## App of Apps 模式
+## 应用集合模式 {#app-of-apps-pattern}
 
-App of Apps 是一种管理引导模式。父源写入者可影响管理命名空间中权限强大的 Applications/AppProjects；请限制写入/审查/目标权限。父/子 finalizer 和修剪可能会级联删除。按顺序创建子 Application 本身并不能确保子工作负载就绪；请验证 Application 健康状况传播、同步策略和 wave 行为。
+App of Apps 是一种管理性引导模式。父级源的写入者可能会影响管理命名空间中权限强大的 Application/AppProject；请限制写入、审查和目标权限。父级/子级 finalizer 和修剪可能导致级联删除。按顺序创建子 Application 本身并不能确保子工作负载就绪；请验证 Application 健康状态传播、同步策略和 wave 行为。
 
-App of Apps 模式允许从单个父应用程序管理多个应用程序。
+App of Apps 模式可通过单个父 Application 管理多个应用。
 
 ### 目录结构
 
@@ -680,7 +680,7 @@ spec:
 
 ### 子 Application 模板
 
-此 monitoring 子项固定使用 kube-prometheus-stack 90.0.0。请审查该 chart 的升级/CRD 要求，并单独配置监控容量。在 namespace monitoring 中预先创建包含 admin-user/admin-password 键且受保护的 grafana-admin Secret；请勿将管理员凭据放入父 Git values 中。
+此监控子应用固定使用 kube-prometheus-stack 90.0.0。请审查该 Chart 的升级/CRD 要求，并单独配置监控容量。在 monitoring 命名空间中预先创建受保护的 grafana-admin Secret，其中包含 admin-user/admin-password 键；不要将管理员凭据放入父级 Git 值中。
 
 ```yaml
 ---
@@ -740,9 +740,9 @@ ingress:
   class: alb
 ```
 
-### App of Apps 的同步 Wave
+### App of Apps 的同步 Waves
 
-以下为仅含元数据的片段；请将它们与完整的子 Application 规范结合使用。对子 Application 创建进行排序并不保证子工作负载就绪：请配置/验证子 Application 健康状况传播和同步策略。
+以下是仅包含元数据的片段；请将它们与完整的子级 spec 合并。对子 Application 的创建顺序并不能保证子工作负载就绪：请配置/验证子 Application 健康状态传播和同步策略。
 
 ```yaml
 # Merge into the corresponding complete child Application metadata.
@@ -764,9 +764,9 @@ metadata:
 
 ## 修订历史和回滚
 
-启用自动同步时，无法使用历史回滚。请先审查其实际的 Git/ApplicationSet 所有者中的策略。回滚不会更新 Git，因此后续协调可能恢复 Git 状态。请通过获批准的 Git revert/修订版本更改来持久化预期变更；数据库/外部状态恢复另行处理。
+启用自动同步时不能使用历史回滚。请先在实际的 Git/ApplicationSet 所有者中审查策略。回滚不会更新 Git，因此后续协调可能会恢复 Git 状态。请通过获批的 Git revert/修订版本更改来持久化预期更改；数据库/外部状态恢复需要另行处理。
 
-### 查看历史记录
+### 查看历史
 
 ```bash
 # CLI
@@ -785,7 +785,7 @@ ID  DATE                           REVISION
 
 ### 回滚
 
-从实际历史记录中选择一个 ID。应用先前的清单修订版本和修剪额外资源是两个独立决策。
+请从实际历史记录中选择一个 ID。应用先前的清单修订版本与修剪多余资源是两个独立的决定。
 
 ```bash
 # Rollback to specific revision
@@ -816,14 +816,14 @@ spec:
 
 ## 测验
 
-为测试所学内容，请尝试 [ArgoCD 应用程序测验](../../quizzes/gitops/argocd/02-applications-quiz.md)。
+测试一下你学到的内容，试试 [ArgoCD 应用测验](../../quizzes/gitops/argocd/02-applications-quiz.md)。
 
-## 版本化审查来源
+## 版本审查来源
 
 - [3.5.4 源和 Helm](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
 - [多个源](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
 - [OCI 源规则](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
 - [同步选项](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
-- [阶段、wave 和 Hook](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
-- [Service 健康状况实现](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
+- [阶段、Wave 和钩子](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [Service 健康状态实现](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
 - [ACK 条件定义](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

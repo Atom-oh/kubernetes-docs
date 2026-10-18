@@ -1,8 +1,8 @@
 {
   "AI/ML": {
-    "cn": "人工智能/机器学习",
-    "es": "Inteligencia artificial y aprendizaje automático",
-    "jp": "人工知能／機械学習"
+    "cn": "AI/ML",
+    "es": "IA/ML",
+    "jp": "AI/ML"
   },
   "Amazon EKS": {
     "cn": "Amazon EKS",
@@ -24,10 +24,30 @@
     "es": "Conceptos básicos",
     "jp": "基本概念"
   },
+  "Blockchain": {
+    "cn": "区块链",
+    "es": "Blockchain",
+    "jp": "ブロックチェーン"
+  },
+  "Container Registry": {
+    "cn": "容器镜像仓库",
+    "es": "Registro de contenedores",
+    "jp": "コンテナレジストリ"
+  },
+  "Data Pipeline": {
+    "cn": "数据管道",
+    "es": "Canalización de datos",
+    "jp": "データパイプライン"
+  },
   "Data on EKS": {
     "cn": "EKS 上的数据",
     "es": "Datos en EKS",
     "jp": "EKS 上のデータ"
+  },
+  "Database": {
+    "cn": "数据库",
+    "es": "Bases de datos",
+    "jp": "データベース"
   },
   "EKS Auto Mode": {
     "cn": "EKS 自动模式",
@@ -39,20 +59,40 @@
     "es": "Nodos híbridos de EKS",
     "jp": "EKS Hybrid Nodes"
   },
+  "Enterprise Cloud Governance": {
+    "cn": "企业云治理",
+    "es": "Gobernanza de la nube empresarial",
+    "jp": "エンタープライズクラウドガバナンス"
+  },
   "GitOps": {
     "cn": "GitOps",
     "es": "GitOps",
     "jp": "GitOps"
   },
+  "Introduction": {
+    "cn": "简介",
+    "es": "Introducción",
+    "jp": "はじめに"
+  },
   "Kubernetes Core Concepts": {
     "cn": "Kubernetes 核心概念",
     "es": "Conceptos básicos de Kubernetes",
-    "jp": "Kubernetes の中核概念"
+    "jp": "Kubernetes コアコンセプト"
   },
   "Lab Guides": {
     "cn": "实验指南",
     "es": "Guías de laboratorio",
     "jp": "ラボガイド"
+  },
+  "Linux & Container": {
+    "cn": "Linux 与容器",
+    "es": "Linux y contenedores",
+    "jp": "Linux とコンテナ"
+  },
+  "Linux Kernel": {
+    "cn": "Linux 内核",
+    "es": "Kernel de Linux",
+    "jp": "Linux カーネル"
   },
   "Networking": {
     "cn": "网络",
@@ -67,7 +107,7 @@
   "Observability": {
     "cn": "可观测性",
     "es": "Observabilidad",
-    "jp": "可観測性"
+    "jp": "オブザーバビリティ"
   },
   "Operations Guide": {
     "cn": "运维指南",
@@ -91,7 +131,7 @@
   },
   "Security & Policy": {
     "cn": "安全与策略",
-    "es": "Seguridad y política",
+    "es": "Seguridad y políticas",
     "jp": "セキュリティとポリシー"
   },
   "Service Mesh": {
@@ -107,6 +147,11 @@
   "Table of Contents": {
     "cn": "目录",
     "es": "Tabla de contenido",
+    "jp": "目次"
+  },
+  "Table of contents": {
+    "cn": "目录",
+    "es": "Tabla de contenidos",
     "jp": "目次"
   }
 }

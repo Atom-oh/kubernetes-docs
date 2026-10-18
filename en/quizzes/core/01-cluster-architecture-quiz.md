@@ -33,7 +33,7 @@ kube-proxy is a node component, not a control plane component. The core control 
 **Answer: B) etcd**
 
 **Explanation:**
-etcd is a consistent and highly available key-value store that stores Kubernetes API state and acts as Kubernetes' "source of truth". All cluster state, configuration, and metadata are stored in etcd, and all other control plane components interact through kube-apiserver to read and write information from etcd.
+etcd is a consistent and highly available key-value store that stores Kubernetes API state and acts as Kubernetes' "source of truth". All cluster state, configuration, and metadata are stored in etcd, and all other control plane components interact through kube-apiserver to read information from and write information to etcd.
 </details>
 
 3. Which of the following is NOT a Kubernetes node component?
@@ -49,7 +49,7 @@ etcd is a consistent and highly available key-value store that stores Kubernetes
 **Answer: D) kube-controller-manager**
 
 **Explanation:**
-kube-controller-manager is a control plane component, not a node component. Node components are kubelet, kube-proxy, and container runtime (containerd, CRI-O, etc.). kube-controller-manager runs on the control plane and executes various controller processes such as node controller and replication controller.
+kube-controller-manager is a control plane component, not a node component. Node components are kubelet, kube-proxy, and a container runtime (containerd, CRI-O, etc.). kube-controller-manager runs on the control plane and executes various controller processes such as the node controller and replication controller.
 </details>
 
 4. Which control plane component in Kubernetes selects nodes to run newly created pods?
@@ -113,7 +113,7 @@ kubelet is an agent that runs on each node and manages the execution of containe
 **Answer: B) kube-proxy**
 
 **Explanation:**
-kube-proxy is a network proxy that runs on each node and is responsible for implementing the Kubernetes service concept. It maintains network rules on nodes and performs connection forwarding. Key functions include maintaining network rules for service IPs and ports, connection forwarding, implementing load balancing, and supporting service discovery. kube-proxy supports several operating modes including iptables and nftables on Linux and kernelspace on Windows. IPVS is deprecated since v1.35, and userspace mode was removed.
+kube-proxy is a network proxy that runs on each node and is responsible for implementing the Kubernetes service concept. It maintains network rules on nodes and performs connection forwarding. Key functions include maintaining network rules for service IPs and ports, connection forwarding, implementing load balancing, and supporting service discovery. kube-proxy supports several operating modes including iptables and nftables on Linux and kernelspace on Windows. IPVS has been deprecated since v1.35, and userspace mode was removed.
 </details>
 
 8. What is the standard interface for running containers in Kubernetes?
@@ -199,7 +199,7 @@ etcd uses the Raft consensus algorithm to ensure strong consistency of data in d
 **Answer: iptables**
 
 **Explanation:**
-The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic to service IPs to pods. nftables is another Linux mode (stable since v1.33); check kernel and CNI compatibility before migration. IPVS is deprecated since v1.35 (default disablement planned for v1.40 and removal for v1.43); userspace mode is removed. Windows uses kernelspace mode.
+The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic destined for service IPs to pods. nftables is another Linux mode (stable since v1.33); check kernel and CNI compatibility before migration. IPVS has been deprecated since v1.35 (default disablement planned for v1.40 and removal for v1.43); userspace mode is removed. Windows uses kernelspace mode.
 </details>
 
 14. What is the name of the configuration file for communicating with the API server in a Kubernetes cluster?

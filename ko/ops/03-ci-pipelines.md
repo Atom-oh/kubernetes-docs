@@ -207,7 +207,7 @@ output "github_publish_role_arn" { value = aws_iam_role.github_publish.arn }
 
 - Lifecycle의 여러 prefix/pattern은 한 이미지의 태그에 대한 **AND 조건**이며 브랜치 OR 목록이 아닙니다. ECR은 EKS에서 사용하는 이미지나 필요한 롤백 버전을 알지 못합니다. 태그 이미지 만료 규칙을 추가하기 전에 정책 preview와 보존 요구를 검토합니다.
 - Registry scanning 설정은 계정·리전 전체 설정입니다. Basic ECR scan 이벤트와 Inspector enhanced finding은 스키마가 다릅니다. 겹치는 규칙에서는 continuous가 우선하므로 `*` continuous 규칙 아래의 dev 규칙이 push-only로 남는다고 가정하지 않습니다.
-- High와 Critical은 대안적인 severity 값이며 두 필드가 동시에 양수여야 하는 조건이 아닙니다. 스캔 실패·미완료는 깨끗한 이미지가 아닙니다. 아래 Trivy 게이트와 ECR/Inspector 알림도 별개입니다.
+- High와 Critical은 대안적인 severity 값이며 두 필드가 동시에 양수여야 하는 조건이 아닙니다. 스캔 실패·미완료는 이미지가 깨끗하다는 뜻이 아닙니다. 아래 Trivy 게이트와 ECR/Inspector 알림도 별개입니다.
 - 교차 계정 pull에는 리포지터리 정책과 호출 주체의 ECR 인증 토큰 권한 등이 모두 필요합니다. 계정 전체 위임보다 구체적인 역할을 검토합니다.
 - 교차 계정 복제는 대상 registry 권한도 필요합니다. 복제는 비동기이며 기존 이미지와 모든 lifecycle/scanning/repository 설정을 자동으로 복사하지 않습니다.
 
@@ -367,7 +367,7 @@ helm upgrade --install gitlab-arm64 gitlab-runner \
 
 ### CI 도구 이미지와 파이프라인
 
-기본 Docker 이미지에 파이프라인의 모든 AWS 도구가 들어 있다고 가정하지 않습니다. 아래 이미지를 신뢰하는 bootstrap 환경에서 두 아키텍처로 빌드·스캔·게시하고 `CI_TOOLS_IMAGE`에 승인한 불변 index digest를 넣습니다. Alpine 3.24에는 AMD64·ARM64용 AWS CLI가 있습니다. 나중에 같은 APK 명령을 실행해도 동일한 바이트라고 가정하지 말고 완성된 이미지 digest를 기록합니다.
+기본 Docker 이미지에 파이프라인의 모든 AWS 도구가 들어 있다고 가정하지 않습니다. 아래 이미지를 신뢰하는 bootstrap 환경에서 두 아키텍처로 빌드·스캔·게시하고 `CI_TOOLS_IMAGE`에 승인한 불변 index digest를 넣습니다. Alpine 3.24에는 AMD64·ARM64용 AWS CLI가 있습니다. 나중에 같은 APK 명령을 실행해도 동일한 바이트를 얻는다고 가정하지 말고 완성된 이미지 digest를 기록합니다.
 
 ```dockerfile
 # Dockerfile.ci-tools
@@ -928,7 +928,7 @@ Spot은 빌드를 중단시킬 수 있으므로 capacity type과 재시도를 �
 
 ### Next.js standalone 이미지
 
-Node 20은 2026년 4월 지원 종료됐습니다. 아래 npm 예제는 Node 24, lockfile이 있는 단일 Next.js 앱 root를 전제로 합니다. 빌드에는 dev dependencies도 필요하며 최종 traced output에서 실행에 필요한 파일을 선택합니다. standalone을 명시적으로 설정합니다.
+Node 20은 2026년 4월 지원이 종료됐습니다. 아래 npm 예제는 Node 24, lockfile이 있는 단일 Next.js 앱 root를 전제로 합니다. 빌드에는 dev dependencies도 필요하며 최종 traced output에서 실행에 필요한 파일을 선택합니다. standalone을 명시적으로 설정합니다.
 
 ```javascript
 export default {
@@ -992,7 +992,7 @@ Shallow checkout의 `HEAD~1`이나 실패를 숨길 수 있는 bare `wait` 대�
 
 ### Kaniko와 rootless BuildKit
 
-Google Kaniko 저장소는 보관 상태입니다. Daemonless라는 이유만으로 모든 Dockerfile이 root 없이 실행되거나 빌드가 완전히 격리되는 것은 아닙니다. 신규 구성은 유지되는 builder를 선택하고 실제 권한·커널 지원·인증·게시 경로를 확인합니다.
+Google Kaniko 저장소는 보관 상태입니다. Daemonless라는 이유만으로 모든 Dockerfile이 root 없이 실행되거나 빌드가 완전히 격리되는 것은 아닙니다. 신규 구성은 유지보수되는 builder를 선택하고 실제 권한·커널 지원·인증·게시 경로를 확인합니다.
 
 아래 선택적 발췌는 BuildKit 0.33.0, AWS CLI, jq, Bash가 포함된 이미지와 **별도로 검증한 비-privileged runner**용입니다. 위 privileged DinD 설정의 image만 바꾸는 대체품이 아닙니다. 노드의 user namespace/mount와 클러스터 보안 정책이 해당 rootless 방식을 허용해야 합니다.
 

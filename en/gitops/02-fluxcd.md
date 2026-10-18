@@ -361,7 +361,7 @@ FluxCD can automatically update container image tags in Git repositories.
 
 #### ImageRepository
 
-The image-reflector-controller scans tags and evaluates ImagePolicy. It does not build images, scan vulnerabilities, or perform workload image pulls.
+The image-reflector-controller scans tags and evaluates ImagePolicy. It does not build images, scan for vulnerabilities, or perform workload image pulls.
 
 Scan container registries for new tags:
 
@@ -401,7 +401,7 @@ spec:
 
 #### ImageUpdateAutomation
 
-YAML fields need policy markers to be updated. IfNotPresent reflects a selected tag’s digest; it is not signature/vulnerability validation. This automation pushes to a dedicated flux/image-updates branch. PR creation/approval into main is a separate CI/operator workflow, not automatically supplied by Flux. Reserve the branch for automation and grant its Git credential write access.
+YAML fields need policy markers to be updated. IfNotPresent reflects a selected tag’s digest; it is not signature/vulnerability validation. This automation pushes to a dedicated flux/image-updates branch. Creation/approval of PRs targeting main is a separate CI/operator workflow, not automatically supplied by Flux. Reserve the branch for automation and grant its Git credential write access.
 
 ```yaml
 # Deployment Pod-template fragment; the policy marker is required.
@@ -655,7 +655,7 @@ kubectl rollout status deployment/source-controller -n flux-system --timeout=180
 
 ### GitOps Artifacts in ECR
 
-These source-controller permissions read a dedicated gitops-artifacts repository. GetAuthorizationToken does not support repository-ARN scoping, so its resource is * with a requested-region condition. Content-read actions are scoped to the repository ARN. Replace the account/region/repository values.
+These source-controller permissions allow reading from a dedicated gitops-artifacts repository. GetAuthorizationToken does not support repository-ARN scoping, so its resource is * with a requested-region condition. Content-read actions are scoped to the repository ARN. Replace the account/region/repository values.
 
 ```json
 {

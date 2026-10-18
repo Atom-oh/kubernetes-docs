@@ -65,7 +65,7 @@ kubectl get nodes
 
 ## istioctl을 사용한 설치
 
-istioctl은 Istio의 공식 CLI 도구로, 가장 간단한 설치 방법입니다.
+istioctl은 Istio의 공식 CLI 도구로, 가장 간단한 설치 방법을 제공합니다.
 
 ### 1. istioctl 설치
 
@@ -325,7 +325,7 @@ kubectl get validatingwebhookconfiguration
 
 Istio에는 Bookinfo라는 샘플 애플리케이션이 포함되어 있습니다.
 
-압축을 푼 `istio-1.31.2` 디렉터리에서 기본 네임스페이스를 선택한 후 실행하세요 (`kubectl config set-context --current --namespace=default`). Helm 경로는 위의 선택적 게이트웨이 설치를 먼저 완료하세요. 뒤의 대시보드 명령은 별도로 설치한 텔레메트리 애드온이 필요합니다.
+압축을 푼 `istio-1.31.2` 디렉터리에서 기본 네임스페이스를 선택한 후 실행하세요 (`kubectl config set-context --current --namespace=default`). Helm을 사용하는 경우에는 위의 선택적 게이트웨이 설치를 먼저 완료하세요. 뒤의 대시보드 명령은 별도로 설치한 텔레메트리 애드온이 필요합니다.
 
 ### 1. 네임스페이스에 Sidecar 자동 주입 활성화
 
@@ -428,7 +428,7 @@ curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 
 ## Istio 제거
 
-아래 정리는 폐기 가능한 실습 환경용입니다. Purge는 공유 메시 리소스를 삭제합니다. 운영 메시 제거 전에 주입된 워크로드를 제거하거나 주입 없이 재시작하세요. Helm 제거는 CRD를 남깁니다.
+아래 제거 절차는 폐기 가능한 실습 환경용입니다. Purge는 공유 메시 리소스를 삭제합니다. 운영 메시 제거 전에 주입된 워크로드를 제거하거나 주입 없이 재시작하세요. Helm 제거는 CRD를 남깁니다.
 
 ### istioctl을 사용한 제거
 

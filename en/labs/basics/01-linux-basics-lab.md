@@ -170,7 +170,7 @@ ps aux --sort=-%mem | head -10
 
 **Step 3.3: Apply a limit to a transient service**
 
-On a VM with systemd and the memory controller available in cgroup v2, this creates an automatically named service with a128MiB memory maximum and no swap allowance. It touches16MiB without deliberately causing OOM, then `--wait --collect` waits for completion and unloads the transient unit. Ancestor limits can be more restrictive.
+On a VM with systemd and the memory controller available in cgroup v2, this creates an automatically named service with a 128MiB memory maximum and no swap allowance. It touches 16MiB without deliberately causing OOM, then `--wait --collect` waits for completion and unloads the transient unit. Ancestor limits can be more restrictive.
 
 ```bash
 sudo systemd-run --wait --collect --pipe \
@@ -188,7 +188,7 @@ print("Touched allocation bytes:", len(data))
 '
 ```
 
-The configured `memory.max` should be134217728 bytes for128M; the allocation is16777216 bytes. These are configuration/arithmetic expectations, not measured results from this audit. The next manifest is printed only and does not create a Kubernetes Pod.
+The configured `memory.max` should be 134217728 bytes for 128M; the allocation is 16777216 bytes. These are configuration/arithmetic expectations, not measured results from this audit. The next manifest is printed only and does not create a Kubernetes Pod.
 
 **Step 3.4: Connection to Kubernetes resource limits**
 ```bash
@@ -251,7 +251,7 @@ ls -la "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 chmod 0644 "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
-Adding the execute bit does not turn arbitrary text into a valid program. Mode0644 includes read permission for group/others when directory traversal is allowed; the private mktemp directory restricts access in this lab. Kubernetes Secret volumes default to0644, but real secret permissions must match the consuming user/group and required access.
+Adding the execute bit does not turn arbitrary text into a valid program. Mode 0644 includes read permission for group/others when directory traversal is allowed; the private mktemp directory restricts access in this lab. Kubernetes Secret volumes default to 0644, but real secret permissions must match the consuming user/group and required access.
 
 **Step 4.3: Change ownership**
 ```bash

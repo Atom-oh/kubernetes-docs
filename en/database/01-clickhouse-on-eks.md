@@ -230,7 +230,7 @@ ALTER TABLE logs MATERIALIZE INDEX trace_bf;  -- asynchronous; wait for system.m
 | Data read | 3.82 GiB | 42.6 MiB |
 | Index size | - | 119.7 MiB (1.5% of table) |
 
-"Jump to a trace ID" is the most common query against an observability log store, and it costs 1.5% extra storage plus a 20-second materialize to get 31×. If you run Grafana on a ClickHouse log backend, evaluate this index against real selectivity, false positives, write/merge costs and query plans.
+"Jump to a trace ID" is the most common query against an observability log store, and it costs 1.5% extra storage plus a 20-second materialization to get 31×. If you run Grafana on a ClickHouse log backend, evaluate this index against real selectivity, false positives, write/merge costs and query plans.
 
 ## In cost terms
 

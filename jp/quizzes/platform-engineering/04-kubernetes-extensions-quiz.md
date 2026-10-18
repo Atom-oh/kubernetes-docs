@@ -1,6 +1,6 @@
 # Kubernetes 拡張メカニズム クイズ
 
-[Kubernetes extensions](../../platform-engineering/04-kubernetes-extensions.md)
+[Kubernetes 拡張メカニズム](../../platform-engineering/04-kubernetes-extensions.md)
 
 元の 20 の問題トピックは、現在の API と挙動に照らしてレビュー済みです。
 

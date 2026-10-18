@@ -104,7 +104,7 @@ mode=once는 실행 후 off로 바뀌며 essential=true인 container가 실패�
 
 parameter 수×정밀도 byte는 가중치 하한일 뿐입니다. GQA/MQA·KV cache·activation·workspace·통신 buffer와 fragmentation, sharding 제약을 포함해야 합니다.13B FP16 weight≈26GB는24GB GPU에 들어가지 않고70B FP16≈140GB는4×24GB의 합보다 큽니다. CPU가 많은 g5 variant도 GPU가 같다면 VRAM은 늘지 않습니다.
 
-p4d.24xlarge는8×40GB, p4de는8×80GB A100을 구분합니다. g5g는 Arm/T4G이므로 amd64 image나 kernel 호환을 가정하지 않습니다. Inf2.48xlarge의192vCPU/768GiB host RAM,12chip/24NeuronCore/384GiB HBM은 [검토한 표](04-inference-frameworks.md)를 참고하세요. P5라는 family 이름만으로 모든 크기의 GPU 수를 고정하지 않습니다. 최신 세대·region availability·quota·가격은 실제 선택 시 확인합니다.
+p4d.24xlarge의 8×40GB와 p4de의 8×80GB A100을 구분합니다. g5g는 Arm/T4G이므로 amd64 image나 kernel 호환을 가정하지 않습니다. Inf2.48xlarge의192vCPU/768GiB host RAM,12chip/24NeuronCore/384GiB HBM은 [검토한 표](04-inference-frameworks.md)를 참고하세요. P5라는 family 이름만으로 모든 크기의 GPU 수를 고정하지 않습니다. 최신 세대·region availability·quota·가격은 실제 선택 시 확인합니다.
 
 LoRA는 trainable adapter 상태를 줄이지만 base weights·activation이 남으며 QLoRA와 다릅니다. “LoRA면 대부분의 모델이24GB에 들어감” 같은 선택 함수를 사용하지 않습니다. 실제 peak memory·latency·throughput과 재시작을 측정해야 합니다.
 
@@ -226,7 +226,7 @@ VPA Off는 CPU/memory 추천을 제공할 뿐 GPU instance 자동 선택기가 �
 
 S3 ListBucket과 GetObject는 bucket/object ARN과 지원 condition key를 각각 사용합니다. 일반 목적 버킷도 ABAC를 명시적으로 활성화하면 aws:ResourceTag/Environment 같은 버킷 태그 조건으로 접근을 제어할 수 있습니다. 기본값은 비활성화이므로 기존 예제의 태그 조건만 복사하지 말고 버킷의 ABAC 상태, 태그 변경 권한, identity/bucket policy와 action/resource 조합을 검토하세요. 활성화 자체가 필요한 Allow를 생성하거나 다른 Deny를 무효화하지는 않습니다. IAM trust의 ServiceAccount namespace/name, SDK credential chain과 실제 요청 identity를 확인합니다. vLLM이 모든 S3 model URI를 자동 다운로드하는 것은 아닙니다.
 
-ESO2.10.0의 확인한 CRD는 **v1이 served**, v1beta1은 served=false입니다. 다음 예시는 미리 승인된 같은 namespace SecretStore를 참조합니다. remote key·권한·rotation과 target lifecycle은 별도로 준비해야 합니다.
+확인한 ESO2.10.0 CRD는 **v1이 served**, v1beta1은 served=false입니다. 다음 예시는 미리 승인된 같은 namespace SecretStore를 참조합니다. remote key·권한·rotation과 target lifecycle은 별도로 준비해야 합니다.
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -256,7 +256,7 @@ CloudTrail의 Secrets Manager API 기록은 app의 모든 로컬 Secret 파일 �
 
 NetworkPolicy는 실제 CNI가 적용해야 하며 namespaceSelector와podSelector의 AND/OR, 기본 namespace name label과 DNS TCP/UDP를 확인합니다.10.0.0.0/8을 health check용으로 여는 규칙이나 인터넷443허용을 S3전용이라고 부르는 규칙은 제거했습니다. 모델이 사전 준비됐으면 runtime egress를 필요한 내부 경로로 제한하고 gateway에서 API/관리 endpoint를 구분합니다.
 
-감사 로그는 user/workload identity·model revision·행위·결과·request ID를 기록하고 prompt/secret는 필요에 따라 마스킹합니다. containerd CRI log를 Docker parser로 읽거나 request라는 문자열만 남기는 필터는 감사 누락을 만들 수 있습니다. Fluent Bit config만 만들지 말고 실제 collector·parser·IAM·buffer·보존·전송 실패를 검증하세요.
+감사 로그는 user/workload identity·model revision·행위·결과·request ID를 기록하고 prompt/secret은 필요에 따라 마스킹합니다. containerd CRI log를 Docker parser로 읽거나 request라는 문자열만 남기는 필터는 감사 누락을 만들 수 있습니다. Fluent Bit config만 만들지 말고 실제 collector·parser·IAM·buffer·보존·전송 실패를 검증하세요.
 
 ## 검증 범위
 

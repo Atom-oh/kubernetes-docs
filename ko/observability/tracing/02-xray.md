@@ -21,7 +21,7 @@ AWS X-Ray는 분산 애플리케이션의 요청을 추적하고 분석하는 AW
 
 ## 아키텍처
 
-아래는 이 문서의 두 가지 수집 경로입니다. Daemon은 AWS에 서명한 HTTPS 요청을 보내며 UDP/TCP2000은 앱과 연결하는 legacy protocol입니다. 여기서 구성한 ADOT awsxray exporter는 native CloudWatch OTLP endpoint가 아니라 PutTraceSegments를 사용합니다.
+아래는 이 문서의 두 가지 수집 경로입니다. Daemon은 서명한 HTTPS 요청을 AWS에 보내며 UDP/TCP2000은 앱과 연결하는 legacy protocol입니다. 여기서 구성한 ADOT awsxray exporter는 native CloudWatch OTLP endpoint가 아니라 PutTraceSegments를 사용합니다.
 
 ```mermaid
 flowchart LR
@@ -117,7 +117,7 @@ Maintenance 경로의 이미지는 공식 3.7.0 멀티 아키텍처 manifest(Lin
 
 ### IRSA 설정
 
-기존 소유자의 절차로 `amazon-cloudwatch` namespace를 준비합니다. Legacy daemon의 `xray-daemon` ServiceAccount에는 별도로 준비한 전용 role을 연결합니다. 다음 permission policy는 segment/telemetry 전송과 중앙 sampling 호출을 포함하며 Region을 실제 배포 위치로 바꿉니다.
+기존 소유자의 절차로 `amazon-cloudwatch` namespace를 준비합니다. Legacy daemon의 `xray-daemon` ServiceAccount에는 별도로 준비한 전용 role을 연결합니다. 다음 permission policy는 segment/telemetry 전송과 중앙 sampling 호출을 포함하며 Region은 실제 배포 위치로 바꿉니다.
 
 ```json
 {
@@ -184,7 +184,7 @@ IAM/인프라 소유자가 의도한 role을 생성·갱신하고 해당 permiss
 
 - 앞 절의 namespace·IRSA role을 준비하고 subject를 `system:serviceaccount:amazon-cloudwatch:adot-collector`로 제한합니다.
 - 승인된 인증서 전달 절차로 기존 Kubernetes Secret `adot-collector-tls`를 준비합니다. `server.crt`, `server.key`, `ca.crt`가 필요합니다. 서버 인증서는 실제 Service DNS(예: `adot-collector.amazon-cloudwatch.svc.cluster.local`)를 포함해야 하며 CA는 의도한 client 인증서를 신뢰해야 합니다.
-- Producer에는 승인한 CA/client 인증서·개인 키 파일을 mount합니다. Secret 접근, workload의4317/4318 연결과 health endpoint를 제한하고 인증서 rotation을 계획합니다. 개인 키 내용이나 AWS credential을 환경 변수에 넣지 않습니다.
+- Producer에는 승인한 CA/client 인증서·개인 키 파일을 mount합니다. Secret 접근, workload의 4317/4318 연결과 health endpoint를 제한하고 인증서 rotation을 계획합니다. 개인 키 내용이나 AWS credential을 환경 변수에 넣지 않습니다.
 - Cluster/account/Region 값을 교체하고 최종 workload identity를 확인합니다. Resource processor는 cluster 이름 하나를 명시적으로 지정하며 모든 Pod/node metadata를 자동 발견하지 않습니다. 다른 cluster의 telemetry까지 같은 cluster로 표시하지 않습니다.
 
 아래 ADOT pipeline은 exporter telemetry를 비활성화하고 classic X-Ray `PutTraceSegments` 경로만 사용하므로 workload permission policy는 다음과 같습니다.
@@ -563,7 +563,7 @@ if __name__ == "__main__":
 
 ### 애플리케이션 설정 (Go)
 
-별도 예제 디렉터리에 다음 `go.mod`·`main.go`를 저장하고 `go mod tidy`로 고정한 의존성을 준비한 뒤 의도한 collector/TLS 환경에서만 실행합니다. 예제는 유한한 span2개를 만듭니다. `DEMO_TRACEPARENT`는 선택적인 설명용 carrier이며 실제 HTTP handler는 요청 header에서 context를 추출하고 outgoing request에 주입해야 합니다. SDK 생성만으로 모든 HTTP/DB library에 instrumentation이 추가되지는 않습니다.
+별도 예제 디렉터리에 다음 `go.mod`·`main.go`를 저장하고 `go mod tidy`로 고정한 의존성을 준비한 뒤 의도한 collector/TLS 환경에서만 실행합니다. 예제는 유한한 span 2개를 만듭니다. `DEMO_TRACEPARENT`는 선택적인 설명용 carrier이며 실제 HTTP handler는 요청 header에서 context를 추출하고 outgoing request에 주입해야 합니다. SDK 생성만으로 모든 HTTP/DB library에 instrumentation이 추가되지는 않습니다.
 
 ```text
 module example.invalid/xray-otel-demo
@@ -662,7 +662,7 @@ func main() {
 }
 ```
 
-Python은 대소문자가 섞인 header, parent/child identity, unsampled parent, 민감 payload 미수집과 실제 loopback mTLS OTLP POST를 포함한13검사를 통과했습니다. Go는 mTLS/protobuf 전송·W3C identity·unsampled parent·평문 거부·TLS 파일 누락을 다루는 native test4개를 통과했습니다. AWS에 접속하거나 운영 앱 성능을 입증한 시험은 아닙니다. Java import·lifecycle·TLS autoconfiguration은 source 확인 범위입니다.
+Python은 대소문자가 섞인 header, parent/child identity, unsampled parent, 민감 payload 미수집과 실제 loopback mTLS OTLP POST를 포함한 13개 검사를 통과했습니다. Go는 mTLS/protobuf 전송·W3C identity·unsampled parent·평문 거부·TLS 파일 누락을 다루는 native test 4개를 통과했습니다. AWS에 접속하거나 운영 앱 성능을 입증한 시험은 아닙니다. Java import·lifecycle·TLS autoconfiguration은 source 확인 범위입니다.
 
 여기서는 W3C Trace Context를 사용합니다. X-Amzn-Trace-Id 연동에는 언어·통합 경로에 맞는 AWS propagator가 필요할 수 있지만 W3C trace에 X-Ray 전용 ID generator가 언제나 필요한 것은 아닙니다. 여러 형식을 수용하면 무조건 propagator를 합성하지 말고 우선순위·신뢰 경계를 정합니다. 비동기 작업은 parent context를 명시적으로 전달해야 합니다.
 
@@ -762,7 +762,7 @@ aws xray create-sampling-rule --region "$AWS_REGION"   --cli-input-json file://s
 
 소유한 기존 규칙에는 `update-sampling-rule`을 사용하고 이전 구성을 보관합니다. `delete-sampling-rule`로 제거할 대상도 명시적으로 폐기한 소유 규칙만 선택합니다. 조회 실패나 추측한 이름은 안전한 제거의 근거가 아닙니다.
 
-오류·지연으로 완료 trace를 선택하려면 별도로 설계한 tail-sampling pipeline을 검토합니다. 앞단 head sampling에서 버리기 전에 관련 span을 받아야 하며 trace별 sampler 일관성, 늦은 span과 제한된 memory를 고려해야 합니다. 이미 버린 span을 복원하거나 모든 오류를 무손실로 수집할 수는 없습니다.
+오류·지연을 기준으로 완료된 trace를 선택하려면 별도로 설계한 tail-sampling pipeline을 검토합니다. 앞단 head sampling에서 버리기 전에 관련 span을 받아야 하며 trace별 sampler 일관성, 늦은 span과 제한된 memory를 고려해야 합니다. 이미 버린 span을 복원하거나 모든 오류를 무손실로 수집할 수는 없습니다.
 
 ## 서비스 맵 시각화
 
@@ -864,7 +864,7 @@ Group은 수집한 trace를 필터링하고 관련 metric을 제공하며 IAM �
 
 ### 필터 표현식 예시
 
-다음은 X-Ray query UI/API의 filter 표현식이며 셸 명령이나 Logs Insights 문법이 아닙니다. Duration 단위는 초이며 `> 2`는2초 초과입니다. Producer가 실제로 내보내고 색인한 annotation을 선택합니다.
+다음은 X-Ray query UI/API의 filter 표현식이며 셸 명령이나 Logs Insights 문법이 아닙니다. Duration 단위는 초이며 `> 2`는 2초 초과입니다. Producer가 실제로 내보내고 색인한 annotation을 선택합니다.
 
 ```text
 service("order-service")
@@ -902,7 +902,7 @@ try (Segment segment = AWSXRay.beginSegment("ProcessOrder")) {
 
 ### 2. 주석(Annotation)과 메타데이터 활용
 
-X-Ray는 **trace당 annotation 최대50개**를 색인하며 segment마다 독립적으로50개가 아닙니다. 필요한 low-cardinality 필드만 선택합니다. Metadata는 annotation으로 색인되지 않지만 저장되고 접근할 수 있으므로 redaction이나 개인정보 보호 경계가 아닙니다. 수집 전에 token·cookie·private key·원문 요청/응답·사용자 식별자·SQL parameter를 제거합니다. Transaction Search의 span/log 접근·보존도 검토해야 합니다. Collector의 index_all_attributes=false가 색인하지 않은 속성을 삭제하지는 않습니다.
+X-Ray는 **trace당 annotation 최대 50개**를 색인하며 segment마다 독립적으로 50개가 아닙니다. 필요한 low-cardinality 필드만 선택합니다. Metadata는 annotation으로 색인되지 않지만 저장되고 접근할 수 있으므로 redaction이나 개인정보 보호 경계가 아닙니다. 수집 전에 token·cookie·private key·원문 요청/응답·사용자 식별자·SQL parameter를 제거합니다. Transaction Search의 span/log 접근·보존도 검토해야 합니다. Collector의 index_all_attributes=false가 색인하지 않은 속성을 삭제하지는 않습니다.
 
 ```java
 // Synthetic, bounded examples. Never attach complete request/response bodies.
@@ -916,7 +916,7 @@ segment.putMetadata("diagnostics", Map.of(
 
 ### 3. 비용 최적화
 
-선택한 SDK/remote sampler·collector의 실제 구성을 사용합니다. 임의의 sampling.default/errors YAML은 X-Ray API나 ADOT 설정이 아닙니다. Health-check 제외를 넓은 API 규칙보다 앞에 두고 실제 영향을 측정합니다. Head sampling으로 나중에 발생할 모든 오류를100%수집한다고 보장할 수 없습니다. 기록·조회/scan·Transaction Search 수집/색인·CloudWatch 보존·collector 용량을 현재 요금과 각각 비교합니다. Index sampling과 producer sampling은 별도 제어이므로 하나를 낮춰도 모든 span 저장량·요금이 동일하게 줄어드는 것은 아닙니다.
+선택한 SDK/remote sampler·collector의 실제 구성을 사용합니다. 임의의 sampling.default/errors YAML은 X-Ray API나 ADOT 설정이 아닙니다. Health-check 제외를 넓은 API 규칙보다 앞에 두고 실제 영향을 측정합니다. Head sampling으로 나중에 발생할 모든 오류를 100% 수집한다고 보장할 수 없습니다. 기록·조회/scan·Transaction Search 수집/색인·CloudWatch 보존·collector 용량을 현재 요금과 각각 비교합니다. Index sampling과 producer sampling은 별도 제어이므로 하나를 낮춰도 모든 span 저장량·요금이 동일하게 줄어드는 것은 아닙니다.
 
 ## 퀴즈
 

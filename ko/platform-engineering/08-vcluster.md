@@ -248,7 +248,7 @@ snapshot create는 비동기 요청입니다. snapshot 요청 성공과 ready/�
 
 팀 개발, CI, PR preview, 교육과 SaaS는 서로 다른 trust·성능·수명 요구를 갖습니다. “개발 환경이면 Spot 중단을 견딘다”거나 “SaaS 고객이 서로 영향을 주지 않는다”고 일반화하지 않습니다.
 
-CI에서는 host 접근 identity, 신뢰한 event/branch와 OIDC permissions를 먼저 구성합니다. fork의 신뢰하지 않은 코드에 host credential을 주지 않습니다. 생성·접속·test·cleanup마다 정확한 namespace와 context를 사용하고 port-forward lifetime을 test와 연결합니다. 독립 cleanup job에도 필요한 tools·identity가 있어야 하며 모든 exit code를 확인합니다.
+CI에서는 host 접근 identity, 신뢰한 event/branch와 OIDC permissions를 먼저 구성합니다. fork의 신뢰하지 않는 코드에 host credential을 주지 않습니다. 생성·접속·test·cleanup마다 정확한 namespace와 context를 사용하고 port-forward lifetime을 test와 연결합니다. 독립 cleanup job에도 필요한 tools·identity가 있어야 하며 모든 exit code를 확인합니다.
 
 아래 ApplicationSet은 누락됐던 $values sourceRef를 포함합니다. vclusters/team-alpha/config.yaml에 gitops-config.yaml 내용, 같은 디렉터리에 검토한 vcluster.yaml을 둡니다. repo와 AppProject/destination 권한을 실제 승인된 값으로 바꿉니다.
 
@@ -312,7 +312,7 @@ requests는 사용량이나 청구 비용이 아닙니다. CPU 1과 250m, memory
 kubectl --context HOST_CONTEXT get pods -n vcluster-team-alpha -o json | go run .
 ```
 
-이 도구는 종료된 Pod를 제외한 spec 기준 요청 합계이며 실제 RSS/CPU, resize status, PVC 비용을 계산하지 않습니다. 3개의 합성 사례로 검증했고 실제 cluster 조회는 실행하지 않았습니다.
+이 도구는 종료된 Pod를 제외한 spec 기준 요청 합계를 계산하며 실제 RSS/CPU, resize status, PVC 비용을 계산하지 않습니다. 3개의 합성 사례로 검증했고 실제 cluster 조회는 실행하지 않았습니다.
 
 168시간에서 50시간으로 active time이 줄었다고 node·EBS·load balancer·라이선스 비용이 같은 비율로 줄지는 않습니다. node scale-down과 잔여 storage, 약정, 최소 용량을 실제 청구 자료와 비교하세요. Kubernetes label이 자동으로 AWS cost-allocation tag가 되는 것도 아닙니다.
 
@@ -322,7 +322,7 @@ EKS의 API server/etcd replica나 instance type을 사용자가 직접 조정할
 
 한국어 1,998줄·영어 2,171줄과 각 퀴즈 143줄, 고유 code block 106개를 읽었습니다. 0.37.0의 schema와 Helm profile, lifecycle/network policy 렌더링, 공식 checksum과 image index, Kubernetes resource 계산을 검증했습니다. schema와 runtime 제약이 다른 사례도 기록했습니다.
 
-0.36.1에서 deprecated 연결 옵션을 확인하려던 두 시도는 기존 cluster에 read-only 조회를 시도했으나 Unauthorized로 실패했습니다. 리소스 변경은 없었고 이후 0.37 검증은 version/help/source와 오프라인 chart로 제한했습니다. 실제 vCluster 생성, image 실행, sleep/delete/snapshot/restore, 네트워크 격리·IAM 인증·부하·비용 절감은 검증하지 않았습니다.
+0.36.1에서 deprecated 연결 옵션을 확인하려던 두 시도에서는 기존 cluster에 read-only 조회를 했으나 Unauthorized로 실패했습니다. 리소스 변경은 없었고 이후 0.37 검증은 version/help/source와 오프라인 chart로 제한했습니다. 실제 vCluster 생성, image 실행, sleep/delete/snapshot/restore, 네트워크 격리·IAM 인증·부하·비용 절감은 검증하지 않았습니다.
 
 - [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
 - [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)

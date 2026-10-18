@@ -1,22 +1,22 @@
 # vCluster
 
-> **最后更新**：2026 年 9 月 13 日 · 审查基线：vCluster 0.37.0
+> **最后更新**：October 16, 2026 · 已审阅基线：vCluster 0.37.3
 
-## 概念和隔离边界
+## 概念与隔离边界
 
-vCluster 可为租户提供独立 Kubernetes API、控制器和数据存储。在此**共享节点**示例中，工作负载运行于宿主集群节点，共享内核、CNI、CSI 和容量。独立 API/RBAC 不等于完整硬件、网络或性能隔离。
+vCluster 可以为租户提供独立的 Kubernetes API、控制器和数据存储。在此**共享节点**示例中，工作负载运行在宿主集群节点上，共享内核、CNI、CSI 和容量。独立的 API/RBAC 并不能建立完整的硬件、网络或性能隔离。
 
-| 模式 | 需评估的边界 |
+| 模式 | 需要评估的边界 |
 | --- | --- |
-| 命名空间 | 共享 API 服务器、集群资源和节点；需要 RBAC、配额和网络策略。 |
-| 共享节点 vCluster | 分离租户 API，同时共享工作负载节点、CNI 和 CSI。 |
-| 专用/私有节点 | 验证节点放置及实际 Private Nodes CNI/CSI 边界。 |
-| Standalone | 在没有宿主控制平面集群的基础设施上运行的另一部署模式。 |
+| Namespace | 共享 API server、集群资源和节点；需要 RBAC、配额和网络策略。 |
+| 共享节点 vCluster | 隔离租户 API，但共享工作负载节点、CNI 和 CSI。 |
+| 专用/私有节点 | 验证节点放置以及实际的私有节点 CNI/CSI 边界。 |
+| 独立部署 | 在没有宿主控制平面集群的基础设施上采用的另一种部署模式。 |
 | 独立 Kubernetes 集群 | 隔离仍取决于共享账户、VPC、管理员和硬件。 |
 
-公共仓库使用 Apache 2.0。单独检查发行镜像、Platform 功能、支持和许可。原先“自 2024 年 11 月起为 CNCF Sandbox”的说法无法从官方项目页面确认，已移除。Kubernetes 一致性不同于 CNCF 项目成员资格。
+公开仓库使用 Apache 2.0 许可证。请分别检查发行镜像、Platform 功能、支持和使用授权。官方项目页面无法证实原先“自 2024 年 11 月起成为 CNCF Sandbox”的说法，因此已将其删除。Kubernetes 一致性认证与 CNCF 项目成员身份不同。
 
-不要承诺 30 秒内创建、100–200MiB 开销、数百集群或节省 60–70%。测量实际配置、宿主 API 负载、PVC、镜像拉取、工作负载和计费模型。
+不要承诺创建时间少于 30 秒、开销为 100–200MiB、支持数百个集群或节省 60–70%。请根据实际配置、宿主 API 负载、PVC、镜像拉取、工作负载和计费模式进行测量。
 
 ![共享节点控制平面和共享工作节点](../.gitbook/assets/en-platform-engineering-08-vcluster-10.png)
 
@@ -24,11 +24,11 @@ vCluster 可为租户提供独立 Kubernetes API、控制器和数据存储。�
 
 ## 当前版本和基线
 
-审查时，GitHub latest 端点返回 0.36.1，但已验证 2026 年 9 月 8 日的显式稳定 0.37.0 发布。因此示例针对 CLI/chart 0.37.0 和已验证 ghcr.io/loft-sh/kubernetes:v1.36.3 镜像。镜像执行及完整运行时兼容性仍需单独检查。
+截至 2026 年 10 月 16 日，GitHub 的 latest 端点返回稳定版 0.37.3，该版本于 2026 年 10 月 5 日发布。因此，此示例针对 CLI/chart 0.37.3 和已验证的 ghcr.io/loft-sh/kubernetes:v1.36.3 镜像。镜像是否能运行以及运行时是否完全兼容，仍需分别检查。
 
-当前模式没有旧 k3s/k0s 发行版设置。区分 k8s 配置、后备存储和确切版本。默认 chart 镜像为 vcluster-pro；仅名称不决定源码许可或免费使用权。
+当前 schema 不再包含旧的 k3s/k0s 发行版设置。请区分 k8s 配置、后端存储和确切版本。默认 chart 镜像为 vcluster-pro；仅凭名称无法确定源代码许可或免费使用授权。
 
-此共享节点配置使用一个副本、嵌入式数据库和 PVC。操作员必须准备 gp3 存储/CSI、配额、身份和宿主策略。
+此共享节点配置使用一个副本、内嵌数据库和 PVC。运维人员必须准备 gp3 存储/CSI、配额、身份和宿主策略。
 
 ```yaml
 controlPlane:
@@ -97,47 +97,47 @@ telemetry:
   enabled: false
 ```
 
-配置通过实际模式和 Helm 检查。但 Helm 也能渲染运行时源码拒绝的嵌入式数据库/三副本组合。高可用需要受支持存储、法定人数、存储及恢复验证；仅增加副本不够。
+该配置通过了实际的 schema 和 Helm 检查。不过，Helm 也会渲染出内嵌数据库与三个副本的组合，而运行时源码会拒绝此配置。高可用需要受支持的存储、仲裁、存储空间和恢复验证；仅增加副本并不足够。
 
-configMaps、serviceAccounts 和 persistentVolumeClaims 等键区分大小写。StorageClass/CSI 自动默认值取决于部署模式，因此不会普遍同步。此配置显式禁用 Ingress、ServiceAccount 和 NetworkPolicy 同步。
+configMaps、serviceAccounts 和 persistentVolumeClaims 等键区分大小写。StorageClass/CSI 的自动默认值取决于部署模式，因此并非总会同步。此配置会明确禁用 Ingress、ServiceAccount 和 NetworkPolicy 同步。
 
-![Pod 和被引用资源同步](../.gitbook/assets/en-platform-engineering-08-vcluster-11.png)
+![Pod 和所引用资源的同步](../.gitbook/assets/en-platform-engineering-08-vcluster-11.png)
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html)
 
-区分虚拟 Deployment/ReplicaSet 控制器和实际宿主 Pod。Syncer 名称/标签转换取决于模式、长度和版本；不要在 IRSA 信任或运维脚本猜测名称。fromHost.nodes 可见性不会自动强制工作负载节点隔离。
+请区分虚拟 Deployment/ReplicaSet 控制器与实际的宿主 Pods。Syncer 的命名/标签转换取决于模式、长度和版本；不要在 IRSA 信任配置或运维脚本中猜测名称。fromHost.nodes 可见并不会自动实现工作负载节点隔离。
 
 ## 安装和访问
 
-为正确操作系统/架构选择 CLI 制品，并验证官方校验和。这些示例命令可影响真实集群；先验证 HOST_CONTEXT 和命名空间。本审计未执行 create/delete/snapshot 操作。
+请选择适用于正确操作系统/架构的 CLI 构件，并验证官方校验和。以下示例命令可能会影响真实集群；请先确认 HOST_CONTEXT 和 namespace。本次审计未执行创建/删除/快照操作。
 
 ```bash
 helm repo add loft-sh https://charts.loft.sh
 helm repo update
-helm template team-alpha loft-sh/vcluster   --version 0.37.0 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
+helm template team-alpha loft-sh/vcluster   --version 0.37.3 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
 
 # After the reviewed host prerequisites are ready:
-vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.0   --values examples/platform/vcluster/vcluster.yaml --connect=false
+vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.3   --values examples/platform/vcluster/vcluster.yaml --connect=false
 
 # Keep the forwarding lifetime tied to the child command:
 vcluster connect team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --background-proxy=false --   kubectl get namespaces
 ```
 
-connect 管理访问路径和 kubeconfig。旧 --update-current/--kube-config 选项是已弃用别名，不是已移除标志。--print 可输出凭证；应存入受限文件，而非聊天、日志或 PR。
+connect 用于管理访问路径和 kubeconfig。旧的 --update-current/--kube-config 选项是已弃用的别名，并非已移除的标志。--print 可能会输出凭据；请将凭据存放在访问受限的文件中，不要放在聊天、日志或 PR 中。
 
-可复用外部 kubeconfig 需要可达 API 端点、匹配证书 SAN/CA 和适当凭证到期。保存 localhost 转发地址不会在转发停止后保留访问。后台代理可能需要 Docker 和另一镜像。使用每用户最小权限 ServiceAccount，审核 --token-expiration，不共享管理员凭证。
+可复用的外部 kubeconfig 需要可访问的 API 端点、匹配的证书 SAN/CA 以及适当的凭据过期时间。保存 localhost 转发地址并不能在转发停止后继续保持访问。后台代理可能需要 Docker 和另一个镜像。请使用每位用户各自的最小权限 ServiceAccount，并检查 --token-expiration；不要共享管理员凭据。
 
-宿主操作使用 --context HOST_CONTEXT，避免命名空间删除/备份意外指向租户上下文。并行预置培训环境时收集每个退出状态，不要失败后仍报告全部就绪。
+执行宿主操作时使用 --context HOST_CONTEXT，以免命名空间删除/备份操作意外指向租户上下文。并行配置培训环境时，应收集每项操作的退出状态；有操作失败时，不要报告所有环境都已就绪。
 
 ## EKS 存储、Ingress 和 IAM
 
-共享节点模式下，PVC 同步到宿主，由宿主 CSI 处理卷。一起检查 StorageClass、volumeBindingMode、拓扑、回收和保留。当前配置使用 statefulSet.persistence.volumeClaim.storageClass/size。
+使用共享节点时，PVC 会同步到宿主，由宿主 CSI 处理卷。请一并检查 StorageClass、volumeBindingMode、拓扑、回收策略和保留策略。当前配置使用 statefulSet.persistence.volumeClaim.storageClass/size。
 
-同步 Ingress 需要真实宿主 LBC/IngressClass、Service 引用、TLS、安全组和获准访问路径。将宿主 LBC webhook Service 复制到租户不建立 ALB 集成。Service 注解放在 controlPlane.service.annotations；service.spec.annotations 不是 Kubernetes ServiceSpec 字段。
+同步 Ingress 需要真实的宿主 LBC/IngressClass、Service 引用、TLS、安全组和获批的访问路径。将宿主 LBC webhook Service 复制到租户中并不能建立 ALB 集成。请将 Service 注释放在 controlPlane.service.annotations 下；service.spec.annotations 不是 Kubernetes ServiceSpec 字段。
 
-禁用 ServiceAccount 同步时，适用宿主工作负载 ServiceAccount 行为；启用时验证实际转换和同步。仅复制虚拟 Pod 注解不配置 IRSA。检查宿主 ServiceAccount、令牌 issuer/subject/audience、角色信任和注入。限制租户控制的 IAM 角色注解。
+禁用 ServiceAccount 同步时，适用的是宿主工作负载 ServiceAccount 行为；启用时，请验证实际转换和同步行为。仅复制虚拟 Pod 注释并不能配置 IRSA。请检查宿主 ServiceAccount、令牌颁发者/主题/受众、角色信任关系和注入行为。限制租户控制的 IAM 角色注释。
 
-## 隔离和治理
+## 隔离与治理
 
 ```yaml
 apiVersion: v1
@@ -187,13 +187,13 @@ spec:
         ephemeral-storage: 1Gi
 ```
 
-LimitRange 还为省略 ephemeral-storage requests/limits 的普通及初始化容器提供默认值。没有该 limit 的 Pod 可能逃过临时存储配额执行；检查最终转换的租户 Pod 和控制平面初始化容器。这些示例值支持配额记账，不是容量预留或性能保证。
+LimitRange 还会为未设置 ephemeral-storage 请求/限制的普通容器和 init 容器设置默认值。不带此限制的 Pod 可能绕过 ephemeral-storage 配额执行；请检查最终转换后的租户 Pods 和控制平面 init 容器。这些示例值用于配额核算，不代表容量预留或性能保证。
 
-Chart 将控制平面 Syncer 渲染为 UID 0。盲目对宿主命名空间应用 restricted 可能拒绝控制平面。宿主 baseline 准入和配置中的 policies.podSecurityStandard: restricted 针对不同层：宿主 Pod 与虚拟工作负载验证。根据实际宿主策略检查转换后的 Pod。
+chart 渲染出的控制平面 Syncer UID 为 0。盲目地对宿主命名空间应用 restricted，可能会导致控制平面被拒绝。宿主 baseline 准入策略和配置中的 policies.podSecurityStandard: restricted 作用于不同层：前者针对宿主 Pods，后者针对虚拟工作负载验证。请根据实际宿主策略检查转换后的 Pods。
 
-配额预算包含控制平面、CoreDNS、租户工作负载和存储。配额不预留节点容量，也不保证性能。检查生成 Role/ClusterRole 和 Secret 访问；不要授予租户任意宿主 Secret/Role 修改权限。
+配额预算包含控制平面、CoreDNS、租户工作负载和存储。配额不会预留任何节点容量，也不保证性能。请检查生成的 Roles/ClusterRoles 和 Secret 访问权限；不要允许租户任意修改宿主 Secret/Role。
 
-可选使用这些 values 渲染 chart 网络策略。
+如需启用 chart 的网络策略，请使用以下配置进行渲染。
 
 ```yaml
 policies:
@@ -204,19 +204,19 @@ policies:
         enabled: false
 ```
 
-实际渲染禁用工作负载公共出站，但保留包括 443/8443/6443 在内的宽泛控制平面出站。这里不将其描述为完整阻断宿主 API。NetworkPolicy 允许规则可叠加；添加独立“拒绝”策略无法削减现有允许。
+实际渲染结果禁用了工作负载的公共出站流量，但保留了控制平面在包括 443/8443/6443 在内端口上的宽泛出站流量。此配置并不声称能完全阻止访问宿主 API。NetworkPolicy 的允许规则是累加的；添加单独的“拒绝”策略无法缩小现有允许规则的范围。
 
-Syncer 需要宿主 API 访问。对控制平面应用相同拒绝出站可能停止同步。验证 DNS、端点 IP/DNAT、所需应用/数据库/仓库路径和 CNI 行为。默认拒绝及例外使用可信控制平面/工作负载分类。
+Syncer 需要访问宿主 API。对控制平面应用相同的拒绝出站策略可能会中断同步。请验证 DNS、端点 IP/DNAT、所需的应用程序/数据库/注册表路径以及 CNI 行为。默认拒绝及其例外规则应使用可信的控制平面/工作负载分类。
 
-![每团队 API 和共享资源预算](../.gitbook/assets/en-platform-engineering-08-vcluster-12.png)
+![各团队的 API 和共享资源预算](../.gitbook/assets/en-platform-engineering-08-vcluster-12.png)
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html)
 
 ## 暂停、休眠、删除和快照
 
-当前 CLI pause 缩减虚拟控制平面并移除工作负载，resume 时重建。PVC 和 Service 遵循独立保留行为。这不是保留 Pod 内存的挂起，也不是数据备份。区分手动 pause 和自动休眠/唤醒条件。
+当前 CLI 的 pause 操作会缩减虚拟控制平面，并移除工作负载；恢复时会重新创建这些工作负载。PVC 和 Service 遵循各自的保留行为。这并非保留 Pod 内存的挂起操作，也不是数据备份。请区分手动暂停与自动休眠/唤醒条件。
 
-这些生命周期设置可选。先验证产品许可、控制器和工作负载行为。此处不启用自动删除。
+以下生命周期设置为可选项。请先验证产品使用授权、控制器和工作负载行为。此处未启用自动删除。
 
 ```yaml
 # Optional configuration: verify product entitlement and workload behavior first.
@@ -232,13 +232,13 @@ deletion:
   prevent: true
 ```
 
-当前设置使用 sleep.auto 和 deletion.auto 等路径。旧虚构 management.loft.sh/VirtualCluster 字段不是当前配置约定。仅 TTL 标签/注解不会触发删除；使用实际控制器策略并审核所有权、活动工作负载和备份。
+当前设置使用 sleep.auto 和 deletion.auto 等路径。此前杜撰的 management.loft.sh/VirtualCluster 字段并非当前配置约定。仅设置 TTL 标签/注释不会触发删除；请使用实际的控制器策略，并检查资源所有权、活动工作负载和备份。
 
-删除命名空间可移除 PVC 和剩余工作负载。区分 vcluster delete、Helm uninstall 和 ArgoCD Application 移除，包括 PVC 保留、PV 回收及外部资源。防删除设置不一定阻止宿主管理员直接删除命名空间。
+删除命名空间可能会移除 PVC 和剩余工作负载。请区分 vcluster delete、Helm uninstall 和 ArgoCD Application 删除，并考虑 PVC 保留、PV 回收和外部资源。删除防护设置未必能阻止宿主管理员直接删除命名空间。
 
-snapshot create 提交异步请求。请求成功不等于 ready 状态或恢复成功。PV 名不是 EBS 卷 ID；EBS 应验证 spec.csi.driver 和 volumeHandle。在线数据库快照需要一致性、静默和恢复测试。
+snapshot create 会提交异步请求。请求成功不代表状态已就绪或恢复成功。PV 名称不是 EBS 卷 ID；对于 EBS，请验证 spec.csi.driver 和 volumeHandle。对运行中的数据库创建快照时，需要保证一致性、静止处理并测试恢复。
 
-Chart 0.37 拒绝 deploy.volumeSnapshotController，但再次支持成对 volumeSnapshots/volumeSnapshotContents 同步。过时模式注释不被视为所有快照同步已移除的证明。准备 CSI 快照控制器/类和两个选项，再单独测试恢复。Secret 明文导出不是完整备份策略。
+Chart 0.37 会拒绝 deploy.volumeSnapshotController，但再次支持成对同步 volumeSnapshots/volumeSnapshotContents。不能将过时的 schema 注释视为所有快照同步都已移除的证据。请准备 CSI 快照控制器/类以及这两个选项，然后单独测试恢复。以明文导出 Secret 并不是完整的备份策略。
 
 ![生命周期操作和保留边界](../.gitbook/assets/en-platform-engineering-08-vcluster-14.png)
 
@@ -246,11 +246,11 @@ Chart 0.37 拒绝 deploy.volumeSnapshotController，但再次支持成对 volume
 
 ## Backstage、ArgoCD 和临时环境
 
-团队开发、CI、预览、培训和 SaaS 有不同信任、性能及生命周期要求。不要假定开发工作负载容忍每次 Spot 中断，或 SaaS 租户无法相互影响。
+团队开发、CI、预览、培训和 SaaS 有着不同的信任、性能和生命周期要求。不要假定开发工作负载能容忍任何 Spot 中断，也不要假定 SaaS 租户不会相互影响。
 
-CI 中配置宿主身份、可信事件/分支和 OIDC 权限。不要向不可信 fork 代码暴露宿主凭证。在创建、连接、测试和清理全过程使用显式命名空间/上下文，将转发生命周期绑定测试。独立清理任务也需要工具和身份；检查全部退出状态。
+对于 CI，请配置宿主身份、可信事件/分支和 OIDC 权限。不要向不受信任的 fork 代码暴露宿主凭据。创建、连接、测试和清理时都要明确指定 namespace/context，并让转发的生命周期与测试保持一致。独立的清理任务也需要工具和身份；请检查所有退出状态。
 
-此 ApplicationSet 包含此前缺失的 $values sourceRef。将 gitops-config.yaml 保存为 vclusters/team-alpha/config.yaml，将已审核 vcluster.yaml 放在旁边。用获准值替换仓库和 AppProject/目标权限。
+此 ApplicationSet 包含先前缺失的 $values sourceRef。将 gitops-config.yaml 存储为 vclusters/team-alpha/config.yaml，并将审阅过的 vcluster.yaml 放在其旁边。请将仓库以及 AppProject/目标权限替换为获批的值。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -277,7 +277,7 @@ spec:
       sources:
         - repoURL: https://charts.loft.sh
           chart: vcluster
-          targetRevision: "0.37.0"
+          targetRevision: "0.37.3"
           helm:
             releaseName: "{{ .name }}"
             valueFiles:
@@ -295,38 +295,38 @@ spec:
         syncOptions: [CreateNamespace=true]
 ```
 
-preserveResourcesOnDeletion 和 prune:false 是有意选择，避免将配置移除视为立即删除数据。跟踪保留资源所有权/成本，并建立独立退役流程。Backstage debug:log 操作不实现审批或等待部署。
+preserveResourcesOnDeletion 和 prune:false 是有意为之，目的是避免将配置移除视为立即删除数据。请跟踪保留资源的所有权/成本，并设置单独的退役流程。Backstage 的 debug:log action 并不能实现审批或等待部署完成。
 
-![经审核的请求和限定范围访问](../.gitbook/assets/en-platform-engineering-08-vcluster-13.png)
+![经过审查的请求和受限访问](../.gitbook/assets/en-platform-engineering-08-vcluster-13.png)
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html)
 
 ## 可观测性、资源和成本
 
-不要对有意暂停、期望副本为零的 StatefulSet 自动警报。单个聚合 absent() 可能在一个集群失败、另一个健康时漏报。使用实际 job/namespace/pod/container 标签、指标端点和期望状态清单。Chart 容器名为 syncer；不要虚构 vcluster_syncer_* 指标。
+不要对有意暂停且期望副本数为零的 StatefulSet 自动触发告警。单个汇总的 absent() 可能漏掉某个失败的集群，而其他集群仍然健康。请使用实际的 job/namespace/pod/container 标签、指标端点和期望状态清单。chart 容器名为 syncer；不要杜撰 vcluster_syncer_* 指标。
 
-Requests 不是利用率或账单。CPU 1 与 250m，或内存 1Gi 与 512Mi，不能作为裸数字字符串相加。examples/platform/vcluster/usage 使用 Kubernetes PodRequests 处理单位、初始化容器、开销和 Pod 级 requests。
+请求值并非利用率或账单金额。不能将 CPU 1 和 250m，或 memory 1Gi 和 512Mi 当作纯数字字符串相加。examples/platform/vcluster/usage 使用 Kubernetes PodRequests 来正确处理单位、init 容器、开销和 Pod 级请求。
 
 ```bash
 # Run inside examples/platform/vcluster/usage with the pinned Go dependencies:
 kubectl --context HOST_CONTEXT get pods -n vcluster-team-alpha -o json | go run .
 ```
 
-工具汇总非终态 Pod 基于 spec 的 requests，不是实际 RSS/CPU、resize 状态或 PVC 成本。测试了三个合成用例；未对工具执行真实集群查询。
+该工具汇总非终止状态 Pods 的 spec 请求值，不包括实际 RSS/CPU、调整大小状态或 PVC 成本。已测试三个合成案例；此工具未查询任何实时集群。
 
-将活动时间从 168 降为 50 小时，不会同比减少节点、EBS、负载均衡器和许可成本。将实际节点缩容、保留存储、承诺和最小容量与账单比较。Kubernetes 标签不会自动成为 AWS 成本分摊标签。
+将活跃时间从 168 小时减少到 50 小时，并不会按比例降低节点、EBS、负载均衡器和许可证成本。请根据账单比较实际的节点缩容、保留的存储、承诺用量和最低容量。Kubernetes 标签不会自动转化为 AWS 成本分配标签。
 
-不要指示 EKS 用户直接调整托管 API 服务器/etcd 副本或实例大小。审核受支持托管控制平面设置/配额和请求负载。固定 chart/CLI/Kubernetes/存储组合，验证备份/预发布，并考虑不同命名空间中的相同 Helm 发布名。
+不要指导 EKS 用户直接调整托管 API server/etcd 的副本数或实例。请检查受支持的托管控制平面设置/配额和请求负载。固定 chart/CLI/Kubernetes/存储组合的版本，验证备份和暂存环境，并考虑不同命名空间中相同的 Helm release 名称。
 
-## 已执行检查
+## 已执行的检查
 
-阅读了 1,998 行韩文和 2,171 行英文指南、两份各 143 行的测验及 106 个唯一代码块。验证了 0.37.0 模式、Helm 配置、生命周期/网络策略渲染、官方校验和/镜像索引及 Kubernetes 资源记账。记录模式与运行时验证的差异。
+已阅读韩文指南（1,998 行）、英文指南（2,171 行）、两个 143 行的测验以及 106 个唯一代码块。已验证 0.37.0 schema、Helm 配置、生命周期/网络策略渲染、官方校验和/镜像索引以及 Kubernetes 资源核算。已记录 schema 与运行时验证之间的差异。
 
-两次使用 0.36.1 检查已弃用连接标志的尝试，以只读方式查询现有集群并因 Unauthorized 失败。未更改资源；后续 0.37 检查限于 version/help/源码和离线 chart。未验证 vCluster 创建、镜像执行、休眠/删除/快照/恢复、网络隔离、IAM 身份验证、负载或成本节省。
+两次使用 0.36.1 检查已弃用连接标志的尝试，都以只读方式查询现有集群并因 Unauthorized 失败。未更改任何资源；后续 0.37 检查仅限于版本/帮助信息/源码和离线 chart。未验证 vCluster 创建、镜像运行、休眠/删除/快照/恢复、网络隔离、IAM 身份验证、负载或成本节省。
 
-- [vCluster 0.37.0](https://github.com/loft-sh/vcluster/releases/tag/v0.37.0)
-- [带版本配置](https://github.com/loft-sh/vcluster/blob/v0.37.0/config/values.yaml)
-- [带版本模式](https://github.com/loft-sh/vcluster/blob/v0.37.0/chart/values.schema.json)
+- [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
+- [指定版本的配置](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)
+- [指定版本的 schema](https://github.com/loft-sh/vcluster/blob/v0.37.3/chart/values.schema.json)
 - [架构](https://www.vcluster.com/docs/vcluster/introduction/architecture)
 - [休眠配置](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
 

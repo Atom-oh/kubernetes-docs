@@ -69,7 +69,7 @@ kubectl auth can-i patch pods --all-namespaces \
   --as=system:serviceaccount:kube-system:aws-node
 ```
 
-이 검사는 해당 ServiceAccount를 impersonate할 권한이 필요합니다. 권한이 없다면 별도 바인딩으로 기존 규칙을 교체하지 않고 필요한 권한만 추가할 수 있습니다. 표준 설치가 아니라면 실제 ServiceAccount 이름으로 변경하세요.
+이 검사를 수행하려면 해당 ServiceAccount를 impersonate할 권한이 필요합니다. 권한이 없다면 별도 바인딩으로 기존 규칙을 교체하지 않고 필요한 권한만 추가할 수 있습니다. 표준 설치가 아니라면 실제 ServiceAccount 이름으로 변경하세요.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -250,7 +250,7 @@ Hybrid 전용 CNI 가이드는 AWS 유지 Cilium 빌드를 나열하고 Calico �
 
 EC2 엔드포인트에 적용한 Calico 정책이 Fargate 상대와의 트래픽을 제한할 수는 있습니다. 이것이 Fargate 내부에서 정책을 적용한다는 뜻은 아닙니다. 혼합 컴퓨팅 클러스터에서는 모든 워커를 “Calico 전체 지원”으로 표시하는 대신 스케줄링과 정책 적용 경계를 정의해야 합니다.
 
-VPC CNI의 `enableNetworkPolicy`를 false로 바꿔도 전체 Calico CNI가 활성화되지 않습니다. Tigera의 새 클러스터 절차는 워커 추가 전에 경쟁 CNI를 제거합니다. 기존 프로덕션 클러스터에서 `aws-node`를 삭제하는 것을 간단한 전환 방법으로 사용하지 마세요. 문서화된 overlay 구성은 admission webhook 같은 API 서버→Pod 경로도 별도 고려해야 합니다. 신뢰할 수 있는 컴포넌트의 `hostNetwork` 사용은 문서화된 우회 방법 중 하나입니다. Pod CIDR, 반환 경로, MTU, 필요한 경우 노드 IAM과 source/destination check, AWS/Tigera 지원 경계를 검토한 후 선택하세요.
+VPC CNI의 `enableNetworkPolicy`를 false로 바꿔도 전체 Calico CNI가 활성화되지 않습니다. Tigera의 새 클러스터 절차는 워커 추가 전에 경쟁 CNI를 제거합니다. 기존 프로덕션 클러스터에서 `aws-node`를 삭제하는 것을 간단한 전환 방법으로 사용하지 마세요. 문서화된 overlay 구성에서는 admission webhook 같은 API 서버→Pod 경로도 별도로 고려해야 합니다. 신뢰할 수 있는 컴포넌트의 `hostNetwork` 사용은 문서화된 우회 방법 중 하나입니다. Pod CIDR, 반환 경로, MTU, 필요한 경우 노드 IAM과 source/destination check, AWS/Tigera 지원 경계를 검토한 후 선택하세요.
 
 Auto Mode의 관리형 네트워킹은 VPC CNI 환경변수나 ENIConfig로 설정되지 않습니다. NodeClass를 사용합니다. Auto Mode는 CoreDNS를 노드 시스템 서비스로 실행하므로 순수 Auto Mode 클러스터에는 기존 CoreDNS Deployment가 필요하지 않지만, non-Auto 노드가 섞인 클러스터에서는 유지해야 합니다. 최초 DNS 질의가 로컬이어도 업스트림 전달은 노드 밖으로 나갈 수 있습니다.
 
@@ -268,13 +268,13 @@ IRSA는 클러스터 OIDC provider와 적절히 제한된 trust policy를 사용
 
 이 그림은 계층의 개념도이며 고정 평가 순서를 뜻하지 않습니다. Calico는 tier/order와 규칙 의미에 따라 평가하므로 NetworkPolicy가 항상 GlobalNetworkPolicy보다 먼저 실행되지는 않습니다. CloudTrail은 AWS API 활동을 기록하며 패킷 허용·거부 로그가 아닙니다. VPC Flow Logs와 정책 로깅 도구는 서로 다른 트래픽 근거를 제공합니다. 애플리케이션 mTLS/인가도 별도로 배포해야 합니다.
 
-Security Group은 ENI에 연결됩니다. **Security Groups for Pods**는 SecurityGroupPolicy로 워크로드를 선택할 수 있으므로 “Security Group은 인스턴스만 선택한다”는 설명은 틀립니다. SG-for-Pods와 Calico 정책을 조합하려면 AWS는 VPC CNI 1.11 이상과 `POD_SECURITY_GROUP_ENFORCING_MODE=standard`를 요구합니다. strict 모드에서는 해당 Pod 트래픽에 Calico 정책이 적용되지 않습니다. branch ENI/인스턴스 지원을 확인하고 모드 변경 후 해당 Pod를 재생성해야 합니다. Windows와 Auto Mode에서는 SG-for-Pods를 지원하지 않습니다.
+Security Group은 ENI에 연결됩니다. **Security Groups for Pods**는 SecurityGroupPolicy로 워크로드를 선택할 수 있으므로 “Security Group은 인스턴스만 선택한다”는 설명은 틀립니다. AWS는 SG-for-Pods와 Calico 정책을 조합할 때 VPC CNI 1.11 이상과 `POD_SECURITY_GROUP_ENFORCING_MODE=standard`를 요구합니다. strict 모드에서는 해당 Pod 트래픽에 Calico 정책이 적용되지 않습니다. branch ENI/인스턴스 지원을 확인하고 모드 변경 후 해당 Pod를 재생성해야 합니다. Windows와 Auto Mode에서는 SG-for-Pods를 지원하지 않습니다.
 
 standard 모드에서 VPC CNI의 일반적인 외부 SNAT가 활성화되어 있으면(`AWS_VPC_K8S_CNI_EXTERNALSNAT=false`) VPC 외부 트래픽은 노드 기본 ENI IP와 Security Group을 사용합니다. Pod Security Group egress 규칙이 모든 경로에 적용된다고 가정하지 마세요. [AWS의 정확한 조건](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)을 확인하세요.
 
 ### 네임스페이스 범위 애플리케이션 정책
 
-다음 예제는 준비된 `calico-eks-demo` 네임스페이스의 `app=frontend` Pod만 선택합니다. 같은 네임스페이스의 **클러스터 내부 gateway Pod**가 TCP 8080으로 접근하도록 허용하고 frontend가 같은 네임스페이스의 backend Pod TCP 8080에 연결하도록 허용합니다. DNS는 `k8s-app=kube-dns`인 일반 CoreDNS Pod를 전제로 하므로 NodeLocal DNS나 다른 resolver에는 목적지 조정이 필요합니다. 다른 정책/tier가 결과를 바꿀 수 있으므로 전체 유효 정책 집합을 확인하세요.
+다음 예제는 준비된 `calico-eks-demo` 네임스페이스의 `app=frontend` Pod만 선택합니다. 같은 네임스페이스의 **클러스터 내부 gateway Pod**가 TCP 8080으로 접근하도록 허용하고 frontend가 같은 네임스페이스의 backend Pod의 TCP 8080에 연결하도록 허용합니다. DNS는 `k8s-app=kube-dns`인 일반 CoreDNS Pod를 전제로 하므로 NodeLocal DNS나 다른 resolver에는 목적지 조정이 필요합니다. 다른 정책/tier가 결과를 바꿀 수 있으므로 전체 유효 정책 집합을 확인하세요.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -312,7 +312,7 @@ spec:
         ports: [53]
 ```
 
-목적지 selector와 포트는 **동일한 `destination` 매핑**에 두어야 합니다. YAML 키가 중복되면 selector가 조용히 사라져 의도하지 않은 엔드포인트 TCP 8080까지 허용될 수 있습니다. ALB/NLB는 `app=load-balancer` 레이블이 있는 Kubernetes Pod가 아닙니다. [로드 밸런서 가이드](../03-aws-lb-controller.md)에 따라 target mode, 상태 검사, 실제 관측 출발지 주소를 별도로 고려하세요.
+목적지 selector와 포트는 **동일한 `destination` 매핑**에 두어야 합니다. YAML 키가 중복되면 selector가 조용히 사라져 의도하지 않은 엔드포인트의 TCP 8080까지 허용될 수 있습니다. ALB/NLB는 `app=load-balancer` 레이블이 있는 Kubernetes Pod가 아닙니다. [로드 밸런서 가이드](../03-aws-lb-controller.md)에 따라 target mode, 상태 검사, 실제 관측 출발지 주소를 별도로 고려하세요.
 
 `all()`을 선택하는 빈 클러스터 전체 GlobalNetworkPolicy는 DNS, API, 모니터링, 애플리케이션 트래픽을 끊을 수 있습니다. 선택한 테스트 네임스페이스에서 의존성 허용을 명시한 default-deny 동작부터 구성하세요. [네트워크 정책](05-network-policy.md)을 참고하세요.
 

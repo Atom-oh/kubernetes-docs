@@ -1079,7 +1079,7 @@ spec:
           storage: 10Gi
 ```
 
-복제와 리더 승격은 DB 오퍼레이터 또는 별도로 검증한 복제 운영 절차가 필요합니다. StatefulSet 자체는 이를 제공하지 않습니다. [업스트림 복제 튜토리얼](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/)도 교육용 비보안 기본값을 사용하며 운영용 구성이 아니라고 명시합니다.
+복제와 리더 승격에는 DB 오퍼레이터 또는 별도로 검증한 복제 운영 절차가 필요합니다. StatefulSet 자체는 이를 제공하지 않습니다. [업스트림 복제 튜토리얼](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/)도 교육용 비보안 기본값을 사용하며 운영용 구성이 아니라고 명시합니다.
 
 ## 데몬셋
 
@@ -1459,7 +1459,7 @@ spec:
               claimName: backup-pvc
 ```
 
-CronJob 일정 실행은 정확히 한 번을 보장하지 않으므로 중복 실행을 견디도록 작성하세요. `Forbid`는 같은 CronJob이 만든 Job에만 적용됩니다. 이력 제한은 Job/Pod 객체를 삭제하며 백업 파일을 지우지 않습니다. 백업 예시는 UTC 02:00에 실행되며 `backup-pvc`, `postgres-secret`, 접근 가능한 DB가 필요합니다. `pg_dump` 메이저 버전은 서버 이상이어야 하며 DB 이름이 `PGUSER`와 다르면 `PGDATABASE`를 지정하세요. 실제 복원 검증은 별도로 수행해야 합니다.
+CronJob 일정 실행은 정확히 한 번의 실행을 보장하지 않으므로 중복 실행을 견디도록 작업을 작성하세요. `Forbid`는 같은 CronJob이 만든 Job에만 적용됩니다. 이력 제한은 Job/Pod 객체를 삭제하며 백업 파일을 지우지 않습니다. 백업 예시는 UTC 02:00에 실행되며 `backup-pvc`, `postgres-secret`, 접근 가능한 DB가 필요합니다. `pg_dump` 메이저 버전은 서버의 메이저 버전 이상이어야 하며 DB 이름이 `PGUSER`와 다르면 `PGDATABASE`를 지정하세요. 실제 복원 검증은 별도로 수행해야 합니다.
 
 ## 결론
 

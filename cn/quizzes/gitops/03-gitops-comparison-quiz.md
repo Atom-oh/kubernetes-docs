@@ -18,19 +18,19 @@ ArgoCD 包含一个功能丰富的内置 Web UI，用于管理应用程序。Flu
 
 </details>
 
-2. 哪个工具对 OCI 制品作为部署源提供了更好的原生支持？
-   - A) ArgoCD
-   - B) FluxCD
-   - C) 两者提供同等支持
+2. 哪项说法描述了当前对基于 OCI 的部署源的支持？
+   - A) 只有 ArgoCD 支持 OCI
+   - B) 只有 FluxCD 支持 OCI
+   - C) 两者都支持 OCI，但源、层和验证设置有所不同
    - D) 两者都不支持 OCI
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) FluxCD**
+**答案：C) 两者都支持 OCI，但源、层和验证设置有所不同**
 
 **说明：**
-FluxCD 通过其 OCIRepository 源类型为 OCI 制品提供一等支持，使你能够从兼容 OCI 的 registry 存储和部署。ArgoCD 对 OCI 的支持仅限于 Helm chart。
+FluxCD 通过其 OCIRepository 源类型为 OCI 制品提供一等支持，使你能够在兼容 OCI 的 registry 中存储制品并将其用作部署源。当前的 Argo CD 也支持通用的 OCI Application 源。应比较版本、媒体类型、认证和验证要求。
 
 </details>
 
@@ -46,7 +46,7 @@ FluxCD 通过其 OCIRepository 源类型为 OCI 制品提供一等支持，使�
 **答案：B) FluxCD（原生）**
 
 **说明：**
-FluxCD 通过其 Image Reflector 和 Image Automation controllers 提供内置 Image Automation。ArgoCD 需要单独的 Argo Image Updater 项目才能实现类似功能。
+Flux 提供可选的 Image Reflector 和 Image Automation 控制器。默认 bootstrap 并不总会安装这些控制器。ArgoCD 需要单独的 Argo Image Updater 项目才能实现类似功能。
 
 </details>
 
@@ -78,6 +78,6 @@ ArgoCD 在团队需要通过其 Web UI 获得可视化反馈、全面的 RBAC �
 **答案：B) 可以，它们可以相互补充**
 
 **说明：**
-ArgoCD 和 FluxCD 可以一起使用。一种常见模式是使用 FluxCD 进行基础设施管理和镜像自动化，同时使用 ArgoCD 通过其 UI 进行应用程序部署。
+ArgoCD 和 FluxCD 可以在资源所有权明确分离的前提下共存；不要让两者协调或清理同一批对象。一种常见模式是使用 FluxCD 进行基础设施管理和镜像自动化，同时使用 ArgoCD 通过其 UI 进行应用程序部署。
 
 </details>

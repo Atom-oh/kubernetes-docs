@@ -679,7 +679,7 @@ An `automation-definition/...` ARN is not a supported direct `AlarmActions` targ
 
 ### Cost Factors
 
-The figures below are **US East examples** from the official pricing page checked on 2026-09-13, not a quote for Seoul. Check the target Region's current pricing. Metric alarms are charged by evaluated metrics, while composites are charged per alarm. Anomaly detection includes the actual metric and two band metrics. Adding a composite retains the child alarm charges: it reduces notification noise, not automatically cost.
+The figures below are **US East examples** from the official pricing page checked on 2026-09-13, not a quote for Seoul. Check the target Region's current pricing. Metric alarms are charged by evaluated metrics, while composites are charged per alarm. Anomaly detection includes the actual metric and two band metrics. Adding a composite retains the child alarm charges: it reduces notification noise, but does not automatically reduce cost.
 
 
 | Item | Cost |
@@ -738,7 +738,7 @@ Metrics stored in AMP are not automatically copied into classic CloudWatch metri
 
 - **Alerts inside AMP**: configure workspace Prometheus alerting rules → managed Alertmanager → a supported receiver (SNS or PagerDuty).
 - **CloudWatch PromQL alarms**: evaluate metrics ingested through the CloudWatch OTLP endpoint. This is not direct querying of an AMP workspace.
-- **Republishing classic CloudWatch metrics**: define only the required aggregates in a separate exporter. Sign with one consistent frozen temporary-credential set and validate timeouts, HTTP status, result type, finite values, timestamps, and dimensions. Do not turn empty results, NaN, or failures into zero or success. This adds query, custom metric, runtime costs, and delay.
+- **Republishing classic CloudWatch metrics**: define only the required aggregates in a separate exporter. Sign with one consistent frozen temporary-credential set and validate timeouts, HTTP status, result type, finite values, timestamps, and dimensions. Do not turn empty results, NaN, or failures into zero or success. This adds query, custom metric, and runtime costs, as well as delay.
 
 The former CPU mode average was not total CPU utilization; a ratio of memory averages across unrelated or unlimited Pods was not each Pod's limit utilization. Select PromQL that preserves the required labels and reset semantics, then test the rule and validate actual collected data.
 

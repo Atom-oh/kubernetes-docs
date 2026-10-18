@@ -1,8 +1,8 @@
-# Cuestionario de la Parte 5 del laboratorio de Observabilidad: Alertas y AIOps
+# Cuestionario de la Parte 5 del laboratorio de observabilidad: alertas y AIOps
 
 <span id="observability-lab-part-5-alerting-and-aiops-quiz"></span>
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 1. ¿Qué componente evalúa las alertas de PrometheusRule?
    - A) Alertmanager
@@ -59,7 +59,7 @@ Valida una ruta de incidentes/notificaciones con soporte y la entrega real para 
    - A) Para cambiar las unidades de las métricas.
    - B) Para evitar que el generador de informes procese sus propios resultados en un bucle.
    - C) Porque SNS solo admite un tema.
-   - D) Para publicar los logs de forma pública.
+   - D) Para publicar los registros de forma pública.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -74,14 +74,14 @@ Limita las suscripciones y los permisos de publicación de IAM al mismo límite.
 
 5. ¿Qué debe tener en cuenta el analizador con la salida `{{ . | toJson }}` de Alertmanager?
    - A) Siempre es texto plano.
-   - B) Las claves en minúscula/camelCase etiquetadas para JSON difieren del acceso a campos capitalizados en las plantillas de Go.
+   - B) Las claves con etiquetas JSON en minúsculas o camelCase no coinciden con el acceso a campos capitalizados en las plantillas de Go.
    - C) JSON nunca necesita análisis.
    - D) Todos los mensajes de SNS tienen campos idénticos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Las claves en minúscula/camelCase etiquetadas para JSON difieren del acceso a campos capitalizados en las plantillas de Go.**
+**Respuesta: B) Las claves con etiquetas JSON en minúsculas o camelCase no coinciden con el acceso a campos capitalizados en las plantillas de Go.**
 
 Se probaron la serialización real de plantillas de la versión 0.34.0 y las cargas útiles válidas e inválidas.
 
@@ -107,7 +107,7 @@ La llamada al modelo puede omitirse cuando la evidencia es insuficiente.
 ---
 
 7. ¿Qué aporta la idempotencia de Powertools en este ejemplo?
-   - A) Entrega exactly-once de extremo a extremo en SNS.
+   - A) Entrega de extremo a extremo exactamente una vez en SNS.
    - B) Suprime el trabajo exitoso repetido para el mismo ID de mensaje durante 24 horas.
    - C) Cada nuevo ID de mensaje es la misma operación.
    - D) Combina de forma atómica la publicación y el commit en la base de datos.

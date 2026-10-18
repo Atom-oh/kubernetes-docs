@@ -190,6 +190,6 @@ IPsec keyRotationDuration controls the transition/old-key-removal grace period a
 
 **Answer: B. hubble observe --verdict DROPPED**
 
-DROPPED selects dropped flows from multiple causes. Add --drop-reason-desc POLICY_DENIED when examining reported policy-denied drops, and inspect L7/application failures separately. AUDIT is a separate verdict. --last is bounded history and may be returned per Hubble instance through Relay.
+DROPPED selects dropped flows from multiple causes. Add --drop-reason-desc POLICY_DENIED when examining reported policy-denied drops, and inspect L7/application failures separately. AUDIT is a separate verdict. The history selected by --last is bounded and may be returned per Hubble instance through Relay.
 
 </details>

@@ -1,6 +1,6 @@
 # Cuestionario de Amazon OpenSearch Service
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Basado en los ejemplos de dominio gestionado y de recolector de la [guía](../../../observability/logging/02-opensearch.md).
 
@@ -18,7 +18,7 @@ Basado en los ejemplos de dominio gestionado y de recolector de la [guía](../..
 
 **Respuesta: C**
 
-El linaje de Elasticsearch 7.10 no es una garantía general de compatibilidad. Verifique el soporte de versiones de AWS y el cliente/plugin concreto. La línea base anterior 2.11 sigue con soporte estándar hasta el 7 de noviembre de 2027.
+El linaje de Elasticsearch 7.10 no constituye una garantía general de compatibilidad. Verifique las versiones compatibles con AWS y el cliente o complemento concreto. La versión 2.11, utilizada como línea base anterior, mantiene el soporte estándar hasta el 7 de noviembre de 2027.
 
 </details>
 
@@ -82,7 +82,7 @@ El almacenamiento en frío gestionado requiere cold_delete. Las políticas usan 
 
    - A) Firehose es siempre la opción más económica
    - B) Fluent Bit directo no puede autenticarse ante AWS
-   - C) Compare las necesidades operativas, el esquema, el buffering/retry/backup, el acceso y el costo medido
+   - C) Compare las necesidades operativas, el esquema, el búfer, los reintentos, las copias de seguridad, el acceso y el costo medido
    - D) Ambos crean automáticamente metadatos de Kubernetes idénticos
 
 <details>
@@ -90,7 +90,7 @@ El almacenamiento en frío gestionado requiere cold_delete. Las políticas usan 
 
 **Respuesta: C**
 
-Firehose ofrece una ruta de entrega gestionada, pero requiere roles, conectividad y registros compatibles. FailedDocumentsOnly selecciona su modo de backup; un prefijo llamado failed/ por sí solo no selecciona ese comportamiento.
+Firehose ofrece una ruta de entrega gestionada, pero requiere roles, conectividad y registros compatibles. FailedDocumentsOnly selecciona su modo de copia de seguridad; un prefijo llamado failed/ por sí solo no activa ese comportamiento.
 
 </details>
 
@@ -99,8 +99,8 @@ Firehose ofrece una ruta de entrega gestionada, pero requiere roles, conectivida
 6. ¿Qué afirmación describe correctamente DLS y FLS?
 
    - A) DLS filtra documentos; FLS controla los campos devueltos, y los roles efectivos y los metadatos de confianza siguen siendo importantes
-   - B) FLS autentica automáticamente el namespace de Kubernetes
-   - C) El IAM basado en URI por sí solo restringe todos los índices nombrados dentro de un cuerpo bulk
+   - B) FLS autentica automáticamente el espacio de nombres de Kubernetes
+   - C) El IAM basado en URI por sí solo restringe todos los índices nombrados dentro del cuerpo de una solicitud bulk
    - D) Una regla de security group otorga acceso de lectura a nivel de documento
 
 <details>

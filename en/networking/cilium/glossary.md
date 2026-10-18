@@ -43,7 +43,7 @@ An alphabetical reference for Cilium, eBPF, Kubernetes and networking. Repeated 
 **CGroup (Control Group)** - Kubernetes
 
 - Linux control groups organize processes and account for or control resources such as CPU and memory.
-- Container runtimes use cgroups; they are not, by themselves, process/network namespace isolation.
+- Container runtimes use cgroups; they do not, by themselves, provide process/network namespace isolation.
 
 **CIDR (Classless Inter-Domain Routing)** - Networking
 

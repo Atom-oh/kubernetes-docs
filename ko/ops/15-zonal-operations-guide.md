@@ -175,7 +175,7 @@ spec:
 
 ### Redis/Valkey (ElastiCache): AZ Affinity Read 전략
 
-[Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/)에서 이 가이드가 비교하는 주요 `ReadFrom` 전략입니다. GLIDE 2.5.2에는 `ALL_NODES`도 있으므로 전체 enum 목록으로 해석하지 않습니다.
+다음은 [Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/)에서 이 가이드가 비교하는 주요 `ReadFrom` 전략입니다. GLIDE 2.5.2에는 `ALL_NODES`도 있으므로 전체 enum 목록으로 해석하지 않습니다.
 
 | 전략 | 동작 |
 |------|------|
@@ -184,7 +184,7 @@ spec:
 | `AZ_AFFINITY` | 같은 AZ의 replica 우선, 없으면 다른 replica 또는 primary |
 | `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | 같은 AZ의 replica → 같은 AZ의 primary → 다른 AZ의 replica 또는 primary |
 
-replica 읽기의 지연된 데이터를 허용할 때 AZ 친화 전략을 검토합니다. read 비율만으로 선택하지 않습니다. 서버의 AZ 메타데이터 지원·설정, primary 부하, 장애 시 폴백을 확인합니다. **최신성이나 read-after-write가 필요한 요청**은 해당 데이터 모델에 맞게 primary 읽기 등을 별도로 설계합니다.
+replica 읽기에서 지연된 데이터를 허용할 때 AZ 친화 전략을 검토합니다. read 비율만으로 선택하지 않습니다. 서버의 AZ 메타데이터 지원·설정, primary 부하, 장애 시 폴백을 확인합니다. **최신성이나 read-after-write가 필요한 요청**은 해당 데이터 모델에 맞게 primary 읽기 등을 별도로 설계합니다.
 
 아래는 `valkey-glide==2.5.2`의 **cluster mode용 설정 생성 함수**입니다. 네트워크 연결은 만들지 않습니다. TLS를 사용하며 인증이 필요한 환경에서는 `credentials`를 전달합니다. cluster mode가 꺼져 있으면 `GlideClientConfiguration`과 `GlideClient`를 사용합니다.
 

@@ -248,7 +248,7 @@ kubectl --context "$TARGET_CONTEXT" describe hpa podinfo -n scaling-demo
 kubectl --context "$TARGET_CONTEXT" get deployment,pods -n scaling-demo
 ```
 
-Run bounded load tests in a separate test environment rather than an obsolete BusyBox image with an unbounded loop. Align GitOps ownership of Deployment `replicas` with the autoscaler.
+Run bounded load tests in a separate test environment rather than using an obsolete BusyBox image with an unbounded loop. Align GitOps ownership of Deployment `replicas` with the autoscaler.
 
 ## 2. KEDA Event-Driven Scaling
 
@@ -324,7 +324,7 @@ spec:
         value: "70"
 ```
 
-An `AverageValue` threshold of 100 is a **per-Pod 100-RPS target**, not an unconditional scale-up threshold for total traffic. For example, total 1,000 RPS implies ten replicas before other limits. Activation thresholds control activation and are different from HPA targets.
+An `AverageValue` threshold of 100 is a **per-Pod 100-RPS target**, not an unconditional scale-up threshold for total traffic. For example, a total of 1,000 RPS implies ten replicas before other limits. Activation thresholds control activation and are different from HPA targets.
 
 `ignoreNullValues=false` avoids silently treating missing query results as healthy zero load. Return one aggregated value and handle errors, NaN and zero traffic deliberately. Fallback addresses repeated failures of supported metrics; it does not recover every metric-provider, HPA or node outage.
 
@@ -879,7 +879,7 @@ PDBs constrain supported voluntary eviction. They do not prevent HPA/ReplicaSet 
 
 Avoid adding another drain controller over Auto Mode's managed interruption handling. Self-managed Karpenter requires interruption-queue/EventBridge configuration and permissions. Use Node Termination Handler only with a clearly identified node mode and complete prerequisites.
 
-Do not interpret Spot notification as 120 seconds guaranteed to remain for the application. Account for hibernation exceptions, detection/drain/termination delays and the actual deadline.
+Do not interpret a Spot notification as a guarantee that 120 seconds remain for the application. Account for hibernation exceptions, detection/drain/termination delays and the actual deadline.
 
 `terminationGracePeriodSeconds` belongs to the **Pod spec**, and preStop consumes that budget. Implement actual SIGTERM/drain behavior and verify connection, message and retry handling after readiness removal. Touching `/tmp/unhealthy` does not automatically fail an HTTP probe, and echoing “close connections” does not close a database pool.
 

@@ -171,7 +171,7 @@ sum by (namespace, pod, container) (
 ) > 0)
 ```
 
-이 쿼리는 kubelet/cAdvisor와 kube-state-metrics 스크레이프가 필요하며 Istio 메트릭이 아닙니다. 중복 스크레이프 대상을 피하고 멀티 클러스터 집계에는 cluster 레이블도 포함합니다. 제한 대비 사용량 외에 throttling·대기열·미처리 작업도 확인합니다.
+이 쿼리에는 kubelet/cAdvisor와 kube-state-metrics 스크레이프가 필요하며 조회 대상은 Istio 메트릭이 아닙니다. 중복 스크레이프 대상을 피하고 멀티 클러스터 집계에는 cluster 레이블도 포함합니다. 제한 대비 사용량 외에 throttling·대기열·미처리 작업도 확인합니다.
 
 
 
@@ -221,11 +221,11 @@ spec:
     randomSamplingPercentage: 1.0
 ```
 
-`1.0`은 100%가 아닌 **1%**입니다. 트래픽량·조사 목적·수집기와 백엔드 용량에 맞춰 선택합니다. 작은 테스트 환경은 100%를 사용할 수 있지만 운영의 낮은 비율도 유효성을 검증해야 합니다. Context 전파는 여전히 필요합니다. 같은 네임스페이스에 selector 없는 Telemetry를 둘 이상 생성하지 말고 아래 로깅 예제와 함께 사용할 때는 하나에 병합합니다.
+`1.0`은 100%가 아닌 **1**%입니다. 트래픽량·조사 목적·수집기와 백엔드 용량에 맞춰 선택합니다. 작은 테스트 환경에서는 100%를 사용할 수 있지만 운영 환경의 낮은 샘플링 비율도 유효성을 검증해야 합니다. Context 전파는 여전히 필요합니다. 같은 네임스페이스에 selector 없는 Telemetry를 둘 이상 생성하지 말고 아래 로깅 예제와 함께 사용할 때는 하나에 병합합니다.
 
 ### 3. Access Log 최적화
 
-다음은 필드가 아니라 요청을 필터링합니다. 필드 선택·마스킹은 access-log 제공자에 구성합니다. 이 HTTP 필터는 성공 요청을 생략하므로 전체 접근 감사 기록으로 사용할 수 없습니다:
+다음 예제는 필드가 아니라 요청을 필터링합니다. 필드 선택·마스킹은 access-log 제공자에 구성합니다. 이 HTTP 필터는 성공 요청을 생략하므로 전체 접근 감사 기록으로 사용할 수 없습니다:
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -271,7 +271,7 @@ Prometheus 로컬 TSDB는 오래된 데이터를 자동 다운샘플링하지 �
 
 ### 1. 메트릭 (Metrics)
 
-**[메트릭 가이드](01-metrics.md)**에서 다음을 학습합니다:
+**[메트릭 가이드](01-metrics.md)에서** 다음을 학습합니다:
 - Istio 표준 메트릭
 - Prometheus 통합
 - OpenTelemetry 통합
@@ -287,7 +287,7 @@ Prometheus 로컬 TSDB는 오래된 데이터를 자동 다운샘플링하지 �
 
 ### 2. 분산 추적 (Distributed Tracing)
 
-**[분산 추적 가이드](02-tracing.md)**에서 다음을 학습합니다:
+**[분산 추적 가이드](02-tracing.md)에서** 다음을 학습합니다:
 - Jaeger 통합
 - Zipkin 통합
 - 트레이스 샘플링
@@ -303,7 +303,7 @@ Prometheus 로컬 TSDB는 오래된 데이터를 자동 다운샘플링하지 �
 
 ### 3. 로깅 (Logging)
 
-**[로깅 가이드](03-logging.md)**에서 다음을 학습합니다:
+**[로깅 가이드](03-logging.md)에서** 다음을 학습합니다:
 - Access Log 설정
 - 로그 포맷 커스터마이징
 - Grafana Loki 통합
@@ -319,7 +319,7 @@ Prometheus 로컬 TSDB는 오래된 데이터를 자동 다운샘플링하지 �
 
 ### 4. 대시보드 (Dashboards)
 
-**[대시보드 가이드](04-dashboards.md)**에서 다음을 학습합니다:
+**[대시보드 가이드](04-dashboards.md)에서** 다음을 학습합니다:
 - Grafana 대시보드
 - Kiali 서비스 그래프
 - 커스텀 대시보드 생성

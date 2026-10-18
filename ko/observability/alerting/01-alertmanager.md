@@ -34,7 +34,7 @@ Prometheus Alertmanager는 Prometheus 서버에서 전송된 알림을 처리하
 
 ### Prometheus 알림 흐름
 
-Prometheus는 규칙을 평가하고 Alertmanager는 통지를 처리합니다. 아래는 역할 요약이며 전달 지연의 보장이 아닙니다.
+Prometheus는 규칙을 평가하고 Alertmanager는 통지를 처리합니다. 아래는 역할 요약이며 전달 지연을 보장하지 않습니다.
 
 ```mermaid
 sequenceDiagram
@@ -402,7 +402,7 @@ kubectl -n monitoring create secret generic notification-credentials \
 kubectl -n monitoring create configmap alertmanager-config   --from-file=alertmanager.yml=alertmanager.yaml
 ```
 
-Secret 읽기·exec 권한과 통지 내용도 보호합니다. 활성화한 통합에 필요한 파일만 추가합니다. ConfigMap 투영이 Alertmanager의 자동 reload를 뜻하지는 않으므로 소유자의 검토된 reload·rollout 절차를 사용합니다. 잘못된 reload는 기존 정상 설정을 유지하는지 확인합니다.
+Secret 읽기·exec 권한과 통지 내용도 보호합니다. 활성화한 통합에 필요한 파일만 추가합니다. ConfigMap 투영이 Alertmanager의 자동 reload를 뜻하지는 않으므로 소유자의 검토된 reload·rollout 절차를 사용합니다. 잘못된 reload 시 기존 정상 설정이 유지되는지 확인합니다.
 
 ## 알림 규칙 정의
 
@@ -669,7 +669,7 @@ receivers:
 
 ### 다중 수신자 구성
 
-한 receiver에서 `continue` 없이 여러 통합에 통지할 수 있습니다. Provider별 실패·재시도는 독립적이며 하나의 성공이 전체 성공을 뜻하지 않습니다. 아래는 나열한 모든 provider 파일과 SMTP/TLS 설정이 필요합니다. 완전한 설정에 넣는 receiver 조각입니다.
+한 receiver에서 `continue` 없이 여러 통합에 통지할 수 있습니다. Provider별 실패·재시도는 독립적이며 하나의 성공이 전체 성공을 뜻하지 않습니다. 아래 예제에는 나열한 모든 provider 파일과 SMTP/TLS 설정이 필요합니다. 완전한 설정에 넣는 receiver 조각입니다.
 
 ```yaml
 receivers:
@@ -1264,7 +1264,7 @@ kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-k
 
 ### Alertmanager에서 AlertmanagerConfig 선택
 
-이는 Alertmanager API 객체가 아니라 **kube-prometheus-stack values overlay**입니다. 선택한 stack profile에 병합합니다. 과거 `team-a`·`enabled` 레이블 불일치는 설정을 선택하지 못했습니다. 명시적 네임스페이스 레이블로 의도 없이 전체 네임스페이스를 선택하지 않도록 합니다.
+이는 Alertmanager API 객체가 아니라 **kube-prometheus-stack values overlay**입니다. 선택한 stack profile에 병합합니다. 과거 `team-a`·`enabled` 레이블 불일치로 설정을 선택하지 못했습니다. 명시적 네임스페이스 레이블로 의도 없이 전체 네임스페이스를 선택하지 않도록 합니다.
 
 ```yaml
 alertmanager:
@@ -1357,7 +1357,7 @@ spec:
 
 ### Pod 및 Container 알림
 
-`PodCrashLooping`은 각 metric series에 `max_over_time(waiting_reason[5m])`을 **UID·node 보강 전에** 적용하고, 그 관측 조건을 `10m` 동안 요구합니다. 재시도 사이에는 순간 waiting reason이 사라질 수 있으며, 제한된 window가 5분보다 짧은 빈 구간을 연결합니다. 일회성 waiting 샘플은 10분 유지 조건을 만족하기 전에 window에서 만료됩니다. 이는 10분 내내 waiting이었다는 뜻이 아닌 반복 관측의 탐지입니다. 해제는 마지막 관측 후 최대 5분에 scrape·평가 지연을 더한 만큼 늦어질 수 있습니다.
+`PodCrashLooping`은 각 metric series에 `max_over_time(waiting_reason[5m])`을 **UID·node 보강 전에** 적용하고, 그 관측 조건을 `10m` 동안 요구합니다. 재시도 사이에는 순간 waiting reason이 사라질 수 있으며, 제한된 window가 5분보다 짧은 빈 구간을 연결합니다. 일회성 waiting 샘플은 10분 유지 조건을 만족하기 전에 window에서 만료됩니다. 이는 10분 내내 waiting이었다는 뜻이 아니라 반복 관측을 탐지했다는 뜻입니다. 해제는 마지막 관측 후 최대 5분에 scrape·평가 지연을 더한 만큼 늦어질 수 있습니다.
 
 Readiness는 Pod phase만으로 판단할 수 없습니다. 완료·삭제 중인 Pod를 제외하고 CrashLoopBackOff와 일반 재시작을 구분하며 최근 재시작과 마지막 OOM reason을 결합합니다. kube-state-metrics 2.20.0의 마지막 종료·삭제 timestamp 메트릭은 experimental이므로 가용성을 확인합니다. Pod UID로 node를 보강하고 정보가 없으면 알림을 유지합니다. 메모리 limit은 양수여야 하며 CFS 주기 throttling 비율은 CPU 시간 비율이 아닙니다.
 
@@ -1462,7 +1462,7 @@ spec:
 
 ### API Server 알림
 
-검증한 stack ServiceMonitor의 job은 `apiserver`이며 실제 target 레이블을 확인합니다. 성공 scrape가 없다는 것은 발견·RBAC·TLS·네트워크 문제일 수 있어 API 서버 장애로 단정하지 않습니다. 오류 비율은 전체 요청이 있을 때만 누락된 5xx 분자를 0으로 보강하고 트래픽0을 제외하며 퍼센트는100을 곱합니다. Kubernetes1.35의 client-certificate histogram은 ALPHA이며 요청 인증서를 관측합니다. 최근 quantile은 전체 인증서 목록이나 AWS IAM 자격 증명 만료 모니터가 아닙니다.
+검증한 stack ServiceMonitor의 job은 `apiserver`이며 실제 target 레이블을 확인합니다. 성공 scrape가 없다는 것은 발견·RBAC·TLS·네트워크 문제일 수 있어 API 서버 장애로 단정하지 않습니다. 오류 비율은 전체 요청이 있을 때만 누락된 5xx 분자를 0으로 보강하고 트래픽 0을 제외하며 퍼센트로 나타낼 때는 100을 곱합니다. Kubernetes 1.35의 client-certificate histogram은 ALPHA이며 요청 인증서를 관측합니다. 최근 quantile은 전체 인증서 목록이나 AWS IAM 자격 증명 만료 모니터가 아닙니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1531,7 +1531,7 @@ spec:
 
 ### etcd 알림
 
-아래 선택적 규칙은 예상 멤버3개와 `job="etcd"`를 명시적으로 수집하는 **자체 관리 etcd**용입니다. EKS 관리형 etcd 검사로 배포하지 않습니다. 검토한3.6.5 source에 `etcd_server_id`는 실제 존재합니다. 고유 관측 ID와 데이터 없음 상태를 다루되 scrape 수로 Raft quorum을 입증하지 않습니다. DB 압력은 고정6GB가 아니라 양수인 실제 quota를 사용하며 물리 할당량과 논리 사용량은 다릅니다.
+아래 선택적 규칙은 예상 멤버 3개와 `job="etcd"`를 명시적으로 수집하는 **자체 관리 etcd**용입니다. EKS 관리형 etcd 검사로 배포하지 않습니다. 검토한 3.6.5 source에 `etcd_server_id`는 실제 존재합니다. 고유 관측 ID와 데이터 없음 상태를 다루되 scrape 수로 Raft quorum을 입증하지 않습니다. DB 압력은 고정 6GB가 아니라 양수인 실제 quota를 사용하며 물리 할당량과 논리 사용량은 다릅니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1642,7 +1642,7 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 
 ### 메트릭 확인
 
-첫6개 설명은 합성 로컬 트래픽으로 실제0.34.0 `/metrics` HELP와 대조했습니다. Counter는 누적값이므로 사고 분석에는 적절한 rate/increase 구간과 reset 처리가 필요합니다. 통지 시도 수를 성공 전달 수로 표시하지 않습니다.
+첫 6개 설명은 합성 로컬 트래픽으로 실제 0.34.0 `/metrics` HELP와 대조했습니다. Counter는 누적값이므로 사고 분석에는 적절한 rate/increase 구간과 reset 처리가 필요합니다. 통지 시도 수를 성공 전달 수로 표시하지 않습니다.
 
 | 메트릭 | 의미 |
 |---|---|

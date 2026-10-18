@@ -20,7 +20,7 @@
 | Deployment density | Few tenants | Dozens of per-tenant databases stamped out via GitOps |
 | Control requirements | Check offered regions, encryption and audit capabilities | Own both the additional control and operational responsibility |
 
-The key question is **who owns database lifecycle and recovery responsibilities**. A validated operator can automate parts of that work, but installation alone does not establish HA/backups. Verify supported engine/Kubernetes combinations and recovery features. A team using raw StatefulSets must implement the corresponding automation and operational responsibilities itself.
+The key question is **who owns database lifecycle and recovery responsibilities**. A validated operator can automate parts of that work, but installation alone does not establish HA/backups. Verify supported engine/Kubernetes combinations and recovery features. A team using raw StatefulSets must implement the corresponding automation and fulfill the operational responsibilities itself.
 
 ## The operator landscape (2026)
 

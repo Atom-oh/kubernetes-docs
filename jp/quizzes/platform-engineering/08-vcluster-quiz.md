@@ -18,7 +18,7 @@
 <details>
 <summary>解答を表示</summary>
 
-設定した仮想resource/参照をhost resourceへ変換し、観測状態を戻します。defaultと命名はmode/版次第で、全resourceが常に双方向同期するわけではありません。
+設定した仮想resource/参照をhost resourceへ変換し、観測状態を戻します。defaultと命名はmode/versionによって異なり、全resourceが常に双方向同期するわけではありません。
 
 </details>
 
@@ -36,7 +36,7 @@
 <details>
 <summary>解答を表示</summary>
 
-現pauseはworkloadを除去しresumeで再作成し、PVC/Service保持は別です。メモリ保存suspendやbackupではありません。自動wake、利用権、実節約を別々に検証します。
+現在のpause動作ではworkloadを除去し、resume時に再作成します。、PVC/Service保持は別です。メモリ保存suspendやbackupではありません。自動wake、利用権、実節約を別々に検証します。
 
 </details>
 

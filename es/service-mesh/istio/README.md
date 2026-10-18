@@ -1,16 +1,20 @@
 # Istio
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 Una guía práctica para utilizar Istio Service Mesh en Amazon EKS.
 
 ### Revisión de octubre de 2026: versiones compatibles
 
-Istio 1.31.0 es GA; su [anuncio de lanzamiento](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) se publicó el 31 de agosto de 2026. El parche actual es **1.31.1**, publicado el 21 de septiembre. Su [anuncio de lanzamiento](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) documenta una corrección que evita que una referencia de CA `BackendTLSPolicy` sin resolver recurra a conexiones de backend en texto plano.
+Istio 1.31.0 está disponible con carácter general (GA); su [anuncio de lanzamiento](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) se publicó el 31 de agosto de 2026. El parche actual es **1.31.2**, publicado el 15 de octubre, que incluye las correcciones de seguridad de [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) ([anuncio de lanzamiento](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). El parche anterior, 1.31.1, se publicó el 21 de septiembre; su [anuncio de lanzamiento](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) documenta una corrección para evitar que una referencia de CA `BackendTLSPolicy` sin resolver recurra a conexiones de backend en texto plano.
 
-Los comandos de instalación nueva de esta guía usan 1.31.1. El rango de soporte de Kubernetes publicado para Istio 1.31 es 1.32–1.37; el soporte estándar de EKS actualmente cubre 1.34–1.37. Su superposición de soporte estándar es 1.34–1.37; de las versiones de soporte extendido de EKS (1.31–1.33), 1.32 y 1.33 también están dentro del rango de Istio 1.31. Vuelva a comprobar la [matriz de soporte de Istio](https://istio.io/latest/docs/releases/supported-releases/) y el [ciclo de vida de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) antes de la instalación.
+Los comandos de instalación nueva de esta guía usan 1.31.2. El rango de versiones de Kubernetes compatible publicado para Istio 1.31 es 1.32–1.37; el soporte estándar de EKS actualmente abarca 1.34–1.37. El período de soporte estándar compartido es 1.34–1.37; de las versiones con soporte extendido de EKS (1.31–1.33), 1.32 y 1.33 también están dentro del rango de Istio 1.31. Antes de instalar, vuelve a consultar la [matriz de soporte de Istio](https://istio.io/latest/docs/releases/supported-releases/) y el [ciclo de vida de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html).
 
-Istio 1.30 y 1.29 siguen figurando como compatibles en la matriz en el momento de esta revisión; la fecha prevista de fin de vida de 1.29 es hoy, 12 de octubre de 2026. Verifique su estado antes de instalar o actualizar. Las instalaciones existentes en esas ramas necesitan al menos 1.30.4 o 1.29.7 para [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), que cubre vulnerabilidades de Envoy, una conmutación por error abierta de BackendTLSPolicy y una denegación de servicio del Control Plane mediante EnvoyFilter. Istio 1.28 está fuera de soporte. Los charts de Istio 1.31 usan `https://blob.istio.io/istio-release/charts`; el repositorio anterior alojado en Google ya no recibe nuevas versiones.
+Istio 1.30 y 1.29 aún aparecen como compatibles en la matriz a la fecha de esta revisión; la fecha de fin de vida de 1.29 figura como el 12 de octubre de 2026 (prevista). Verifica el estado antes de instalar o actualizar. Las instalaciones existentes de esas ramas necesitan al menos 1.30.4 o 1.29.7 para [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), que cubre vulnerabilidades de Envoy, una conmutación por error abierta de BackendTLSPolicy y una denegación de servicio del plano de control mediante EnvoyFilter. [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/), publicado el 15 de octubre, afecta a las versiones 1.31.0–1.31.1, 1.30.0–1.30.5 y 1.29.0–1.29.8; las primeras versiones que la matriz indica sin CVE conocidas son 1.31.2, 1.30.6 y 1.29.9. Istio 1.28 está fuera de soporte. Los charts de Istio 1.31 usan `https://blob.istio.io/istio-release/charts`; el repositorio anterior alojado en Google ya no recibe versiones nuevas.
+
+### Actualización de septiembre de 2026: versiones de parche 1.31.1, 1.30.5 y 1.29.8
+
+El 21 de septiembre de 2026 se publicaron versiones de parche para las tres ramas compatibles: [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/), 1.30.5 y 1.29.8. La versión 1.31.1 incluye la corrección de seguridad [GHSA-qm8v-g4f9-qhjx](https://github.com/istio/istio/security/advisories/GHSA-qm8v-g4f9-qhjx) (CVSS 6.8, Moderada): en los proxies sidecar, `BackendTLSPolicy` recurre a texto plano si no se resuelve su referencia de CA. Otras correcciones abordan el cambio entre backends de iptables (heredado y nft) que el agente CNI de ambient detecta automáticamente cuando se reinicia; el aumento del uso de CPU de istiod a medida que crece el número de `AuthorizationPolicies`; y una fuga de memoria en el modo multiclúster ambient al rotar las credenciales de un clúster remoto. Las instalaciones nuevas y las instalaciones existentes de 1.31 deben actualizarse a 1.31.1.
 
 ## Tabla de contenido
 
@@ -50,9 +54,9 @@ Un service mesh es una capa de infraestructura que gestiona la comunicación ent
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Aplicación con Istio"><br><em>Aplicación con Istio - Envoy Proxy desplegado como Sidecar en cada servicio</em></p>
 
-Estos diagramas de Bookinfo ilustran el modo sidecar. La inyección automática añade Envoy solo a los pods recién creados en namespaces o workloads que se adhieren; el modo ambient no inyecta un sidecar.
+Estos diagramas de Bookinfo ilustran el modo sidecar. La inyección automática añade Envoy solo a los pods recién creados en namespaces o workloads donde se habilita la inyección; el modo ambient no inyecta un sidecar.
 
-## ¿Realmente necesita un Service Mesh?
+## ¿Realmente necesita un Service Mesh? {#do-you-really-need-a-service-mesh}
 
 Los umbrales de cantidad de servicios y las puntuaciones de la lista de verificación siguientes son puntos para debatir, no requisitos de Istio. Un mesh pequeño aún puede justificarse por necesidades de seguridad. Los diagramas de decisión utilizan los mismos umbrales ilustrativos.
 

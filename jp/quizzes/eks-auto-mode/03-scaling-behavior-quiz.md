@@ -1,93 +1,80 @@
-# EKS Auto Mode スケーリング動作クイズ
+# EKS Auto Mode のスケーリング動作クイズ
 
 > **関連ドキュメント**: [スケーリング動作](../../eks-auto-mode/03-scaling-behavior.md)
 
 ## 選択問題
 
-### 1. NodePool の `consolidationPolicy: WhenEmptyOrUnderutilized` はどのように動作しますか？
+### 1. `consolidationPolicy: WhenEmptyOrUnderutilized` で許可されるのはどれですか？
 
-- A) 空の node (ノード) のみを削除する
-- B) 空の node と利用率の低い node の両方を統合する
-- C) 常にすべての node を維持する
-- D) 特定の時刻にのみ node を削除する
+- A) 空のノードだけを削除する
+- B) 対象となる空または空でないノードを、コスト削減のために統合する
+- C) すべてのノードを無期限に維持する
+- D) 固定時刻に限って削除する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B) 空の node と利用率の低い node の両方を統合する**
+**解答: B) 対象となる空または空でないノードを、コスト削減のために統合する**
 
 **解説:**
-`WhenEmptyOrUnderutilized` ポリシーは、コストを最適化するために、空の node だけでなく利用率の低い node も統合します。これにより、複数の利用率の低い node 上の workload を、より少ない node に統合できます。
+関連する制約の下でワークロードをスケジュール可能な状態に保てる場合に、ノードの削除や、より低コストな構成への置き換えが許可されます。リソース要求、PDB、予算、アノテーションが影響します。実測 CPU 使用率だけで決まるわけではありません。
 
 ```yaml
+# Fragment inside a NodePool; eligibility delay, not a deletion deadline
 disruption:
   consolidationPolicy: WhenEmptyOrUnderutilized
-  consolidateAfter: 1m  # Consolidate 1 minute after condition is met
+  consolidateAfter: 1m
 ```
 
-**比較:**
-- `WhenEmpty`: 空の node のみを削除する（保守的）
-- `WhenEmptyOrUnderutilized`: 空の node + 利用率の低い node を統合する（積極的）
+Pod が追加または削除されるとタイマーはリセットされます。1 分は処理対象になり得るまでの安定待ち時間であり、削除や置き換えが 1 分以内に完了する保証ではありません。現在の AWS API は `Balanced` もサポートしており、コスト削減とあわせて中断のコストを考慮します。
 
 </details>
 
-### 2. NodeClaim のステータスを確認する kubectl コマンドはどれですか？
+### 2. NodeClaim を一覧表示するコマンドはどれですか？
 
-- A) `kubectl get nodes --show-claims`
-- B) `kubectl get nodeclaims`
-- C) `kubectl describe karpenter claims`
-- D) `kubectl get ec2-nodes`
+- A) kubectl get nodes --show-claims
+- B) kubectl get nodeclaims
+- C) kubectl describe karpenter claims
+- D) kubectl get ec2-nodes
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B) `kubectl get nodeclaims`**
+**解答: B) kubectl get nodeclaims**
 
 **解説:**
-NodeClaim は、プロビジョニング中の node の状態を表す resource です。
+NodeClaim には、希望するノード構成とプロバイダーのライフサイクルやステータスが記録されます。プロビジョニングの瞬間だけを表すものではありません。condition と関連付けられたノード名を確認してください。`Drifted` は condition であり、かつて存在すると誤って説明された `karpenter.sh/drift-hash` ノードアノテーションではありません。
 
 ```bash
-# List NodeClaims
-kubectl get nodeclaims
-
-# Detailed information for specific NodeClaim
-kubectl describe nodeclaim <name>
-
-# View NodeClaims with node information
-kubectl get nodeclaims -o wide
+kubectl --context "$CLUSTER_NAME" --request-timeout=15s get nodeclaims -o wide
+: "${NODECLAIM_NAME:?Select a NodeClaim from the list}"
+kubectl --context "$CLUSTER_NAME" --request-timeout=15s describe nodeclaim "$NODECLAIM_NAME"
 ```
 
 </details>
 
-### 3. Auto Mode で Pending Pod が発生したとき、どの条件で node のプロビジョニングが開始されますか？
+### 3. スケジュール不能な Pod によって、Auto Mode がキャパシティをプロビジョニングするのはどのような場合ですか？
 
-- A) Pod が 5 分を超えて Pending になっている場合
-- B) NodePool の要件を満たす node がない場合
-- C) node の総数がしきい値を下回った場合
-- D) 手動のスケールアップコマンドが実行された場合
+- A) すべての Pod が 5 分間 Pending になった場合
+- B) 既存のキャパシティに Pod を配置できず、適合する利用可能なプールやキャパシティが Pod の制約を満たせる場合
+- C) ノード数が固定のグローバルなしきい値を下回った場合
+- D) オペレーターが手動のスケールコマンドを実行した後に限る
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B) NodePool の要件を満たす node がない場合**
+**解答: B) 既存のキャパシティに Pod を配置できず、適合する利用可能なプールやキャパシティが Pod の制約を満たせる場合**
 
 **解説:**
-Auto Mode は Pending Pod の要件を分析し、適切な node が存在しない場合はすぐに新しい node をプロビジョニングします。
-
-**プロビジョニングフロー:**
-1. Pod が Pending 状態になる
-2. Karpenter が Pod のリソースリクエスト、nodeSelector、affinity を分析する
-3. 適切な NodePool の要件を確認する
-4. 最適なインスタンスタイプを選択する
-5. EC2 instance を起動する（40〜90 秒）
+スケジューラーが Pod を配置できるか、NodePool と NodeClass の制約に適合するか、クォータと実際のキャパシティがあるか、すべてが関係します。スケジュール自体は済んでいても、イメージの取得や init container の完了を待つ Pod は Pending になることがあり、その場合は新しいノードが必要とは限りません。Auto Mode は即時の割り当てを保証しません。また、以前の未検証の「40～90 秒」という見積もりも保証値ではありません。
 
 </details>
 
-### 4. Consolidation が発生しないのはどのケースですか？
+### 4. 統合候補ノードの統合を妨げる可能性があるものはどれですか？
 
-- A) node に do-not-disrupt annotation がある場合
-- B) node に DaemonSet Pod しかない場合
-- C) consolidateAfter の時間が経過していない場合
+- A) 対象ノードまたは Pod に適用される do-not-disrupt アノテーション
+- B) PDB によって必要なワークロードの退避が阻止されること
+- C) `consolidateAfter` で指定された安定待ち時間が経過していないこと
 - D) 上記すべて
 
 <details>
@@ -96,65 +83,51 @@ Auto Mode は Pending Pod の要件を分析し、適切な node が存在しな
 **解答: D) 上記すべて**
 
 **解説:**
-Consolidation は次の状況では発生しません。
-
-1. **do-not-disrupt annotation**: この annotation がある node または Pod は Consolidation から除外されます
-2. **DaemonSet Pod のみ**: DaemonSet はすべての node で実行されるため、空の node として扱われます
-3. **consolidateAfter が経過していない**: 条件が満たされた後、指定された時間待機する必要があります
+いずれも統合作業を妨げたり遅らせたりする可能性があります。以前の選択肢には「DaemonSet だけが実行されているノード」も妨げになるとありましたが、そうしたノードも空とみなされ、統合対象になり得ます。
 
 ```yaml
+# Metadata fragment on the intended Node or Pod, not NodePool metadata
 metadata:
   annotations:
     karpenter.sh/do-not-disrupt: "true"
 ```
 
+このアノテーションがあらゆる理由による中断を防ぐわけではありません。有効期限、割り込み、終了猶予時間の上限は別途考慮が必要です。一時的な保護は、保守上必要な期間が終わったら解除してください。
+
 </details>
 
-### 5. Drift 検出をトリガーする状況はどれですか？
+### 5. Drift や置き換えの要因になり得るものはどれですか？
 
-- A) NodeClass spec が変更された場合
-- B) 新しい AMI が利用可能になった場合
-- C) security group が変更された場合
-- D) 上記すべて
+- A) 希望する NodeClass の関連設定が、ノードの状態と一致しなくなること
+- B) AWS が Auto Mode 管理の新しい AMI を選択すること
+- C) 解決されるサブネットまたはセキュリティグループの選択が変わること
+- D) 上記のすべてが要因になり得る
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D) 上記すべて**
+**解答: D) 上記のすべてが要因になり得る**
 
 **解説:**
-Drift 検出は、node の現在の状態が望ましい状態と異なる場合にトリガーされます。
-
-- **NodeClass の変更**: AMI family、subnet、security group などが変更された
-- **新しい AMI**: EKS optimized AMI が更新された
-- **security group の変更**: 参照されている security group が変更された
-
-Drift が検出されると、node は順番に置き換えられます。
+実際の NodeClaim condition とプロバイダーの判断を確認してください。設定を変更すれば必ず Drift が発生するわけではありません。要件を広げても既存インスタンスが引き続き適合する場合があり、weight、limits、disruption の設定は動作に影響する項目です。同じセキュリティグループ内のルールを編集することと、解決されるセキュリティグループ自体が変わることも異なります。スケジューリングと予算の条件を満たせば、正常な置き換えは複数ノードで並行して進む場合があり、常に一度に 1 ノードずつ順番に行われるわけではありません。
 
 </details>
 
-### 6. node のプロビジョニング速度を最適化するために推奨される AMI family はどれですか？
+### 6. Auto Mode の起動レイテンシーを改善するには、どうすればよいですか？
 
-- A) AL2023
-- B) Bottlerocket
-- C) Ubuntu
-- D) Amazon Linux 2
+- A) `amiFamily` を AL2023 に切り替える
+- B) ワークロードの処理経路を計測し、サポートされるキャパシティ、イメージ、ストレージの変更を検証する
+- C) 可能な限り小さいボリュームが常に最速だと仮定する
+- D) 40～90 秒をエンドツーエンドの SLO として保証値のように扱う
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B) Bottlerocket**
+**解答: B) ワークロードの処理経路を計測し、サポートされるキャパシティ、イメージ、ストレージの変更を検証する**
 
 **解説:**
-Bottlerocket は container 専用に設計された OS で、AL2023 よりも高速な起動時間を提供します。
+AWS は Auto Mode が管理する Bottlerocket イメージを選択します。Auto Mode には、以前の `amiFamily` 比較用設定はありません。ノード登録、イメージ取得と初期化、アプリケーションの準備完了を分けて計測し、失敗やタイムアウトも測定に含めてください。
 
-**起動時間の比較:**
-- **AL2023**: 20-40 seconds
-- **Bottlerocket**: 15-25 seconds
-
-Bottlerocket の追加の利点:
-- 攻撃対象領域が小さい
-- immutable file system
-- 自動 security update
+以前のクイズに記載されていた **AL2023 の 20～40 秒** と **Bottlerocket の 15～25 秒** は、未検証の過去の教材上の推定値としてここに残しています。実測された Auto Mode の結果ではなく、現在の起動時間の優位性やサポート対象の AMI 選択を示すものではありません。
 
 </details>

@@ -18,7 +18,7 @@
 - [ ] An approved public IPv4 client CIDR, normally your workstation's current egress `/32`. The generator rejects ranges broader than `/24`; use your organization's narrower limit where required.
 - [ ] Completed [EKS Cluster Creation](../../eks/02-eks-cluster-creation-part1.md).
 
-This lab uses an EKS 1.36 managed node group. On the review date, AWS lists 1.36 in standard support; the former 1.31 example is in extended support. Check the current AWS support calendar before running the lab. Use a kubectl minor version within one of the API server, preferably 1.36 for this example.
+This lab uses an EKS 1.36 managed node group. On the review date, AWS lists 1.36 in standard support; the former 1.31 example is in extended support. Check the current AWS support calendar before running the lab. Use a kubectl minor version within one minor version of the API server's version, preferably 1.36 for this example.
 
 The examples were checked with eksctl 0.229.0 and kubectl 1.36.2 using schemas and local mocks. **This audit did not provision a cluster or measure deployment time.** Account permissions, quotas, instance availability and network access still require validation in your lab account.
 

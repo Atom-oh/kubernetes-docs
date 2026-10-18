@@ -20,7 +20,7 @@ Prepare host, network, credentials and cluster access before joining a hybrid no
 
 These floors do not make old Kubernetes releases currently EKS-supported. Choose an active EKS version and matching OS/runtime/CNI cohort. AWS supports Ubuntu/RHEL hybrid integration, not the vendor's OS maintenance itself.
 
-SSM new installations/upgrades require **nodeadm 1.0.19+** because older binaries contain an outdated SSM signing key. The reviewed release is **v1.0.20**. Use hybrid nodeadm, not the similarly named EC2 EKS AMI tool.
+New SSM installations/upgrades require **nodeadm 1.0.19+** because older binaries contain an outdated SSM signing key. The reviewed release is **v1.0.20**. Use hybrid nodeadm, not the similarly named EC2 EKS AMI tool.
 
 EKS kube-proxy 1.31+ on ARM requires ARMv8.2+crypto. Pre-Pi-5/Cortex-A72 hardware fails that requirement; a Pi 5 CPU alone does not validate the complete stack. The old kube-proxy 1.30 workaround ended EKS extended support in July 2026.
 
@@ -114,7 +114,7 @@ Hybrid Nodes requires reliable **private bidirectional connectivity**, including
 
 AWS recommends **100 Mbps bandwidth and RTT of 200ms or less** as general connectivity guidance. Set bandwidth, latency and packet-loss targets according to workload needs, and measure them over the actual connection path. Configure MTU after accounting for tunnel encapsulation overhead and the sizes supported by devices along the path.
 
-Remote node/Pod CIDRs use IPv4 RFC1918 or CGNAT, without overlap with each other, VPC or service networks. Up to 15 CIDRs of each remote kind fit inside **one** remote-node-network and **one** remote-pod-network wrapper. Pod routing across clusters also needs deliberate separation.
+Remote node/Pod CIDRs use IPv4 RFC1918 or CGNAT, without overlap with each other or with VPC or service networks. Up to 15 CIDRs of each remote kind fit inside **one** remote-node-network and **one** remote-pod-network wrapper. Pod routing across clusters also needs deliberate separation.
 
 Save a reviewed `network-plan.json`:
 
@@ -308,7 +308,7 @@ SSM uses an `mi-...` node name and fixed one-hour credentials. Refresh backoff c
 
 ### Roles Anywhere trust and duration
 
-Use a provider-appropriate role, trust anchor and profile. Bind session name to certificate identity/nodeName; the previous PrincipalTag/RequestTag comparison did not do this.
+Use a provider-appropriate role, trust anchor and profile. Bind the session name to the certificate identity/nodeName; the previous PrincipalTag/RequestTag comparison did not do this.
 
 ```json
 {

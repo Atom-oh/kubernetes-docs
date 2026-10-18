@@ -21,7 +21,7 @@ Compare failure recovery, actual query behavior, storage/request/transfer cost a
 
 ### Ingest storage and the classic write path
 
-Since Mimir 3.0, ingest storage is stable and the preferred architecture. Distributors validate incoming samples and append records to Kafka. A successful write is acknowledged after the Kafka write succeeds under the configured durability/replication conditions; it does not mean that a block has already reached S3.
+Since Mimir 3.0, ingest storage has been stable and the preferred architecture. Distributors validate incoming samples and append records to Kafka. A successful write is acknowledged after the Kafka write succeeds under the configured durability/replication conditions; it does not mean that a block has already reached S3.
 
 ```mermaid
 flowchart TB

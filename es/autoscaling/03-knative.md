@@ -1,242 +1,155 @@
 # Knative
 
-> **Versiones compatibles**: Knative v1.16+, Kourier v1.16+
-> **Última actualización**: June 2025
+> **Versiones de ejemplo**: Serving/Eventing/Kourier 1.23.0; Operator 1.23.1. Verifique la compatibilidad de Kubernetes/EKS antes de la instalación.
+> **Última actualización**: October 16, 2026
 
-## Table of Contents
+## Tabla de contenido
 
-- [Overview and Learning Objectives](#overview-and-learning-objectives)
-- [Knative Architecture](#knative-architecture)
-- [EKS Installation and Configuration](#eks-installation-and-configuration)
-- [Knative Serving Deep Dive](#knative-serving-deep-dive)
-- [Knative Eventing Deep Dive](#knative-eventing-deep-dive)
-- [KEDA vs Knative Comparison](#keda-vs-knative-comparison)
-- [Production Operations](#production-operations)
-- [Best Practices](#best-practices)
-- [References](#references)
+- [Descripción general y objetivos de aprendizaje](#overview-and-learning-objectives)
+- [Arquitectura de Knative](#knative-architecture)
+- [Instalación y configuración en EKS](#eks-installation-and-configuration)
+- [Análisis detallado de Knative Serving](#knative-serving-deep-dive)
+- [Análisis detallado de Knative Eventing](#knative-eventing-deep-dive)
+- [Comparación entre KEDA y Knative](#keda-vs-knative-comparison)
+- [Operaciones en producción](#production-operations)
+- [Buenas prácticas](#best-practices)
+- [Referencias](#references)
 
 ---
 
-## Overview and Learning Objectives
+## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
-### What Is Knative?
+### ¿Qué es Knative?
 
-Knative es un proyecto **Graduado de CNCF** que extiende Kubernetes para proporcionar un conjunto de componentes de middleware para crear, desplegar y administrar workloads serverless modernos. En lugar de reemplazar las primitivas de Kubernetes, Knative se construye sobre ellas y ofrece abstracciones de mayor nivel que simplifican patrones comunes como el autoscaling impulsado por solicitudes, la entrega de eventos y la gestión de tráfico.
+Knative es un proyecto **Graduado de CNCF** que amplía Kubernetes para ofrecer un conjunto de componentes de middleware con los que se pueden crear, implementar y administrar cargas de trabajo serverless modernas. En lugar de reemplazar las primitivas de Kubernetes, Knative se construye sobre ellas y ofrece abstracciones de nivel superior que simplifican patrones habituales, como el escalado automático basado en solicitudes, la entrega de eventos y la administración del tráfico.
+
+CNCF aceptó Knative en el nivel Incubating el 2 de marzo de 2022 y lo graduó el 11 de septiembre de 2025. La madurez del proyecto no establece que una implementación particular esté lista para producción.
 
 Knative consta de dos componentes que se pueden instalar de forma independiente:
 
-- **Knative Serving** -- Administra el ciclo de vida de workloads serverless. Automatiza el deployment, el escalado (incluido scale-to-zero), el seguimiento de revisiones y el enrutamiento de tráfico.
-- **Knative Eventing** -- Proporciona infraestructura para producir, enrutar y consumir eventos siguiendo la especificación CloudEvents. Desacopla los productores de eventos de los consumidores, lo que permite arquitecturas event-driven débilmente acopladas.
+- **Knative Serving** -- Administra el ciclo de vida de las cargas de trabajo serverless. Automatiza la implementación, el escalado (incluido el escalado a cero), el seguimiento de revisiones y el enrutamiento del tráfico.
+- **Knative Eventing** -- Proporciona infraestructura para producir, enrutar y consumir eventos conforme a la especificación CloudEvents. Desacopla a los productores de eventos de los consumidores, lo que permite crear arquitecturas basadas en eventos con bajo acoplamiento.
 
-### Serverless on Kubernetes
+### Serverless en Kubernetes
 
-Los Deployments tradicionales de Kubernetes requieren que los operadores configuren previamente los conteos de replicas, los umbrales de HPA y los presupuestos de recursos. Knative desplaza esta carga:
+Los Deployments tradicionales de Kubernetes requieren que los operadores configuren de antemano los recuentos de réplicas, los umbrales de HPA y los presupuestos de recursos. Knative reduce esta carga:
 
-1. Los workloads escalan automáticamente de cero a muchas replicas según la concurrencia de solicitudes entrantes o RPS.
-2. Las Revisions capturan snapshots inmutables de cada deployment, lo que permite rollbacks instantáneos y cambios graduales de tráfico.
-3. Las fuentes de eventos y los triggers permiten arquitecturas reactivas sin polling ni código glue personalizado.
+1. Las cargas de trabajo escalan automáticamente desde cero hasta muchas réplicas según la concurrencia de solicitudes entrantes o las solicitudes por segundo (RPS).
+2. Las especificaciones de las revisiones guardan una instantánea de la plantilla de la carga de trabajo; el tráfico se puede dirigir a Revisions conservadas y listas. Las Secrets/ConfigMaps referenciadas, el acceso al registro y el estado externo no quedan congelados, y el enrutamiento o la reversión requieren tiempo de reconciliación.
+3. Los Sources/adaptadores y los Triggers separan la ingesta de eventos de su entrega. Algunos adaptadores sondean sistemas externos, y la aplicación sigue necesitando implementar el procesamiento, la autenticación y la gestión de errores.
 
-El resultado es una plataforma que conserva toda la potencia de Kubernetes (scheduling, RBAC, networking, storage) mientras proporciona una experiencia de desarrollo más cercana a la de una plataforma serverless completamente administrada.
+El resultado es una plataforma que conserva toda la potencia de Kubernetes (programación, RBAC, redes y almacenamiento) y, a la vez, ofrece una experiencia para desarrolladores más cercana a la de una plataforma serverless completamente administrada.
 
-### Knative Serving vs Eventing
+### Knative Serving frente a Eventing
 
 | Aspecto | Knative Serving | Knative Eventing |
 |--------|----------------|-----------------|
-| Propósito principal | Ciclo de vida de workloads impulsado por solicitudes | Enrutamiento y entrega de eventos |
-| Trigger de escalado | Concurrencia de solicitudes HTTP / RPS | Volumen de eventos (mediante Broker/Trigger) |
-| Scale-to-zero | Sí (integrado) | Depende del consumidor (los consumidores respaldados por Serving pueden hacerlo) |
+| Propósito principal | Ciclo de vida de las cargas de trabajo impulsado por solicitudes | Enrutamiento y entrega de eventos |
+| Desencadenante de escalado | Concurrencia de solicitudes HTTP / RPS | Específico del consumidor/adaptador; un Broker/Trigger no escala de forma genérica a todos los suscriptores |
+| Escalado a cero | Sí (integrado) | Depende del consumidor (los consumidores respaldados por Serving pueden hacerlo) |
 | Recursos principales | Service, Configuration, Revision, Route | Broker, Trigger, Channel, Subscription, Source |
-| Caso de uso típico | APIs, aplicaciones web, microservices | Pipelines asíncronos, webhooks, streams CDC |
+| Caso de uso habitual | API, aplicaciones web y microservicios | Canalizaciones asíncronas, webhooks y flujos CDC |
 
-### Knative vs AWS Lambda and AWS Fargate
+### Knative frente a AWS Lambda y AWS Fargate
 
-| Característica | Knative on EKS | AWS Lambda | AWS Fargate |
-|---------|---------------|------------|-------------|
-| Entorno de runtime | Cualquier contenedor OCI | Runtimes de Lambda o imágenes de contenedor | Cualquier contenedor OCI |
-| Tiempo máximo de ejecución | Sin límite estricto | 15 minutos | Sin límite estricto |
-| Scale-to-zero | Sí | Sí | No (tareas mínimas) |
-| Control de cold start | Configurable (minScale, initialScale) | Limitado (SnapStart, provisioned concurrency) | N/A |
-| Networking personalizado | Control completo de VPC / CNI | Requiere adjuntar VPC | Nativo de VPC |
-| Soporte de GPU | Sí (mediante node selectors) | No | No |
-| Fuentes de eventos | CloudEvents, Kafka, SQS, personalizadas | Fuentes de eventos nativas de AWS | N/A (basado en pull) |
-| Vendor lock-in | Bajo (estándar CNCF, portable) | Alto (propietario de AWS) | Medio (API ECS/Fargate) |
-| Nativo de Kubernetes | Sí | No | Parcialmente (EKS on Fargate) |
-| Observability | Prometheus, OpenTelemetry, cualquier tooling de k8s | CloudWatch, X-Ray | CloudWatch, X-Ray |
-| Modelo de costos | Recursos del cluster consumidos | Por invocación + duración | Por vCPU/memory-second |
+| Característica | Knative Serving en EKS | AWS Lambda (cómputo estándar) | AWS Fargate |
+|---|---|---|---|
+| Entorno de ejecución | Contenedores que cumplen el contrato de ejecución de Serving | Entornos de ejecución de Lambda compatibles o imágenes que implementan su API de ejecución | Tareas de ECS/Pods de EKS compatibles; se aplican restricciones de la plataforma |
+| Duración de la solicitud/ejecución | Tiempo de espera de solicitud configurable; el valor predeterminado es 300 s y el máximo permitido es 600 s, salvo que se reconfigure | Tiempo de espera de función estándar de hasta 900 s | Regida por el ciclo de vida de la tarea/Pod, no por un límite de invocación al estilo de Lambda |
+| Escalado a cero | KPA admite el escalado a cero de Revisions inactivas | Ejecución bajo demanda | Las tareas deseadas de ECS o las réplicas de Kubernetes pueden ser 0; la activación requiere un controlador/métrica apropiado |
+| Arranques en frío | Réplicas de referencia, ajuste de imágenes/inicio/preparación | Optimización específica del entorno de ejecución y concurrencia aprovisionada | Inicio de tareas/Pods y configuración de imagen/red; no hay una comparación de tiempos fija |
+| Memoria | Capacidad asignable del nodo, solicitudes de contenedor y sidecars | 128–10 240 MB configurables | Slots de EKS Fargate de hasta 120 GB; se aplican la sobrecarga de la plataforma y las combinaciones compatibles de CPU/memoria |
+| GPU | Requiere nodos adecuados, complementos de dispositivos, solicitudes de recursos y funciones de PodSpec habilitadas | No hay GPU en el cómputo estándar de Lambda | Las GPU no están disponibles en Fargate |
+| Redes | Kubernetes/CNI y configuración de la gateway | La conexión a la VPC del cliente es opcional | Redes de VPC; EKS Fargate tiene restricciones de plataforma |
+| Portabilidad | API de Kubernetes/Knative; las integraciones de identidad/almacenamiento en la nube siguen siendo relevantes | API de servicios/entorno de ejecución específicas de AWS | Integración con ECS o EKS y API de plataforma compatibles |
+| Entrada de eventos | HTTP/CloudEvents y adaptadores configurados | Integraciones de eventos de AWS compatibles | Integraciones de aplicación/controlador; no es un servicio genérico de enrutamiento de eventos |
+| Pruebas locales | Kubernetes local es útil, pero el comportamiento en la nube aún debe validarse | Las herramientas/emuladores locales son opcionales y tienen límites de fidelidad | La lógica del contenedor se puede probar localmente; el comportamiento de la plataforma es distinto |
+| Observabilidad | Configurar exportadores de métricas, registros y trazas | CloudWatch e integraciones de trazas compatibles | Configurar la recopilación compatible de AWS/OpenTelemetry |
+| Base de costos | Recursos asignados del clúster, almacenamiento, balanceador de carga y recursos auxiliares | Solicitudes/duración más las funciones seleccionadas | CPU y memoria asignadas a tareas/Pods, más los recursos asociados |
 
-### Learning Objectives
+Esta tabla se limita a Lambda con cómputo estándar. Las invocaciones asíncronas o desde fuentes de eventos que cumplen los requisitos en Lambda Managed Instances pueden permitir hasta 90 minutos (con excepciones específicas del servicio); tienen restricciones operativas distintas. El escalado de Pods a cero no elimina por sí mismo los cargos de nodos EC2, almacenamiento persistente ni balanceadores de carga.
 
-Al finalizar este documento, podrás:
+### Objetivos de aprendizaje
 
-1. Explicar la arquitectura de Knative y cómo Serving y Eventing se complementan.
+Al finalizar este documento, podrá:
+
+1. Explicar la arquitectura de Knative y cómo se complementan Serving y Eventing.
 2. Instalar y configurar Knative en Amazon EKS con Kourier, DNS y TLS.
-3. Desplegar workloads serverless con autoscaling detallado basado en concurrencia.
-4. Implementar estrategias de traffic splitting (canary, blue-green) usando Revisions y Routes.
-5. Crear pipelines event-driven con Brokers, Triggers y CloudEvents.
-6. Comparar KEDA y Knative y decidir cuándo usar cada uno (o ambos).
-7. Operar Knative en producción con monitoreo, alta disponibilidad y políticas de garbage collection.
+3. Implementar cargas de trabajo serverless con escalado automático detallado basado en la concurrencia.
+4. Implementar estrategias de división del tráfico (canary, blue-green) con Revisions y Routes.
+5. Crear canalizaciones basadas en eventos con Brokers, Triggers y CloudEvents.
+6. Comparar KEDA y Knative, y decidir cuándo usar cada uno (o ambos).
+7. Operar Knative en producción con supervisión, alta disponibilidad y políticas de recolección de basura.
 
 ---
 
-## Knative Architecture
+## Arquitectura de Knative {#knative-architecture}
 
-### Serving Architecture
+### Arquitectura de Serving
 
-Knative Serving despliega cinco componentes clave dentro del namespace `knative-serving`. Juntos administran el ciclo de vida completo de un workload serverless, desde recibir una solicitud inicial hasta escalar la aplicación y enrutar el tráfico.
+Serving tiene componentes del plano de control en `knative-serving` y un Queue Proxy en el namespace de la carga de trabajo de cada Pod de Revision. Sus responsabilidades incluyen la reconciliación, el enrutamiento, la admisión y el escalado; no son cinco Deployments en un mismo namespace.
 
-```mermaid
-flowchart TD
-    Client([Client Request])
+![Los componentes del plano de control de Serving se ejecutan en el namespace de Serving, mientras que cada Pod de Revision tiene un Queue Proxy en su namespace de carga de trabajo. El enrutamiento puede incluir Activator cuando está en cero o para gestionar capacidad ante ráfagas; el escalador automático reconcilia la escala objetivo.](../.gitbook/assets/en-autoscaling-03-knative-0.png)
 
-    subgraph INGRESS["Ingress Layer (Kourier / Istio)"]
-        GW[Gateway]
-    end
-
-    subgraph KS["knative-serving Namespace"]
-        AC[Activator]
-        AS[Autoscaler]
-        CT[Controller]
-        WH[Webhook]
-    end
-
-    subgraph APP["Application Namespace"]
-        QP1["Queue Proxy
-        (sidecar)"]
-        C1["User Container
-        Revision v1"]
-        QP2["Queue Proxy
-        (sidecar)"]
-        C2["User Container
-        Revision v2"]
-    end
-
-    Client --> GW
-    GW -->|"Scale > 0"| QP1
-    GW -->|"Scale = 0"| AC
-    AC -->|"Buffer & activate"| QP1
-    AC -->|"Report metrics"| AS
-    QP1 --> C1
-    QP2 --> C2
-    QP1 -->|"Concurrency metrics"| AS
-    QP2 -->|"Concurrency metrics"| AS
-    AS -->|"Scale decision"| CT
-    CT -->|"Manage Deployments"| APP
-    WH -->|"Validate & default"| CT
-
-    style Client fill:#e1f5fe
-    style GW fill:#fff3e0
-    style AC fill:#f3e5f5
-    style AS fill:#f3e5f5
-    style CT fill:#f3e5f5
-    style WH fill:#f3e5f5
-    style QP1 fill:#e8f5e9
-    style QP2 fill:#e8f5e9
-    style C1 fill:#e8f5e9
-    style C2 fill:#e8f5e9
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-0.html)
 
 **Responsabilidades de los componentes:**
 
-| Componente | Rol |
+| Componente | Función |
 |-----------|------|
-| **Activator** | Recibe solicitudes cuando una Revision está escalada a cero. Almacena solicitudes en buffer, activa el scale-up y luego proxya las solicitudes en buffer una vez que los pods están listos. También actúa como load balancer cuando el sistema está en modo "burst capacity". |
-| **Autoscaler** | Recopila métricas de concurrencia y RPS desde los sidecars Queue Proxy. Calcula el número deseado de replicas usando el algoritmo Knative Pod Autoscaler (KPA) o delega en Kubernetes HPA. Comunica las decisiones de escalado al Controller. |
-| **Queue Proxy** | Se inyecta como sidecar en cada pod de Knative. Aplica los límites de `containerConcurrency`, reporta concurrencia en tiempo real al Autoscaler, realiza health checks y gestiona el graceful shutdown durante el scale-down. |
-| **Controller** | Reconcilia CRDs de Knative (Service, Configuration, Revision, Route) en recursos subyacentes de Kubernetes (Deployments, Services, objetos Ingress). Administra la creación de revisiones y el garbage collection. |
-| **Webhook** | Valida y aplica valores predeterminados a las especificaciones de recursos de Knative durante la admisión. Garantiza que las configuraciones inválidas se rechacen antes de llegar al Controller. |
+| **Activator** | Recibe solicitudes cuando una Revision se escala a cero. Almacena las solicitudes en búfer, activa el escalado y, una vez que los Pods están listos, reenvía las solicitudes almacenadas. También actúa como balanceador de carga cuando el sistema está en modo de «capacidad para ráfagas». |
+| **Autoscaler** | Recopila métricas de concurrencia y RPS de los sidecars Queue Proxy. KPA y su reconciliador determinan la escala objetivo; la integración opcional con HPA administra los recursos HPA de Kubernetes. El Serving Controller reconcilia los recursos de la carga de trabajo; no es un intermediario universal para cada decisión de escalado. |
+| **Queue Proxy** | Se inyecta como sidecar en cada Pod de Knative. Aplica los límites de `containerConcurrency`, informa la concurrencia en tiempo real al Autoscaler, realiza comprobaciones de estado y gestiona el apagado ordenado durante el escalado hacia abajo. |
+| **Controller** | Reconcilia las CRD de Knative (Service, Configuration, Revision, Route) con los recursos subyacentes de Kubernetes (Deployments, Services y objetos Ingress). Administra la creación de revisiones y la recolección de basura. |
+| **Webhook** | Valida y aplica valores predeterminados a las especificaciones de recursos de Knative durante la admisión. Se asegura de que las configuraciones no válidas se rechacen antes de que lleguen al Controller. |
 
-### Eventing Architecture
+### Arquitectura de Eventing
 
-Knative Eventing proporciona una forma declarativa de vincular fuentes de eventos con consumidores. Soporta dos patrones de entrega: **Broker/Trigger** (enrutamiento basado en contenido) y **Channel/Subscription** (pub-sub directo).
+Knative Eventing proporciona una forma declarativa de vincular fuentes de eventos con consumidores. Admite dos patrones de entrega: **Broker/Trigger** (enrutamiento basado en contenido) y **Channel/Subscription** (pub-sub directo).
 
-```mermaid
-flowchart LR
-    subgraph SOURCES["Event Sources"]
-        S1[ApiServerSource]
-        S2[KafkaSource]
-        S3[SinkBinding]
-        S4[SQSSource]
-    end
+![Patrón Broker/Trigger de Knative, en el que un Broker enruta eventos según el filtro de Trigger a los servicios consumidores y envía las entregas fallidas a un Dead Letter Sink, junto al patrón Channel/Subscription, en el que un Channel distribuye los eventos a las Subscriptions.](../.gitbook/assets/en-autoscaling-03-knative-1.png)
 
-    subgraph BROKER_PATTERN["Broker / Trigger Pattern"]
-        BR[Broker]
-        T1["Trigger
-        filter: type=order.created"]
-        T2["Trigger
-        filter: type=payment.processed"]
-        DLS[Dead Letter Sink]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-1.html)
 
-    subgraph CHANNEL_PATTERN["Channel / Subscription Pattern"]
-        CH[Channel]
-        SUB1[Subscription 1]
-        SUB2[Subscription 2]
-    end
-
-    subgraph CONSUMERS["Consumers (Knative Services)"]
-        KS1[Order Service]
-        KS2[Payment Service]
-        KS3[Notification Service]
-        KS4[Analytics Service]
-    end
-
-    S1 & S2 --> BR
-    S3 --> CH
-    S4 --> BR
-    BR --> T1
-    BR --> T2
-    T1 --> KS1
-    T2 --> KS2
-    T1 -.->|"delivery failure"| DLS
-    T2 -.->|"delivery failure"| DLS
-
-    CH --> SUB1
-    CH --> SUB2
-    SUB1 --> KS3
-    SUB2 --> KS4
-
-    style BR fill:#fff3e0
-    style CH fill:#e1f5fe
-    style DLS fill:#ffebee
-```
-
-**Conceptos principales de Eventing:**
+**Conceptos centrales de Eventing:**
 
 | Concepto | Descripción |
 |---------|-------------|
-| **Event Source** | Un recurso que genera o importa eventos. Knative proporciona fuentes integradas (ApiServerSource, PingSource) y la comunidad mantiene fuentes para Kafka, AWS SQS, GitHub y más. |
-| **Broker** | Una malla de eventos que recibe eventos y los distribuye a los Triggers coincidentes. Respaldado por un channel en memoria (predeterminado) o Kafka para durabilidad. |
-| **Trigger** | Un filtro asociado a un Broker. Cada Trigger selecciona eventos por atributos de CloudEvent (type, source, extensions) y enruta coincidencias a un subscriber. |
-| **Channel** | Un transporte de eventos duradero o en memoria. A diferencia de los Brokers, los Channels no filtran -- cada Subscription recibe cada evento. |
-| **Subscription** | Conecta un Channel con un subscriber y, opcionalmente, un destino de respuesta. |
-| **Dead Letter Sink** | Un destino de fallback para eventos que no se pueden entregar después de agotar las políticas de retry. |
-| **CloudEvents** | El formato de envoltura estándar de CNCF (v1.0) usado por todos los componentes de Knative Eventing. Proporciona interoperabilidad entre fuentes y consumidores. |
+| **Event Source** | Recurso que genera o importa eventos. Knative proporciona fuentes integradas (ApiServerSource, PingSource) y la comunidad mantiene fuentes para Kafka, AWS SQS, GitHub y otros sistemas. |
+| **Broker** | Recibe eventos y los entrega a los Triggers coincidentes mediante la implementación seleccionada. El almacenamiento en búfer, la persistencia y el comportamiento ante errores dependen de la clase/transporte subyacente. |
+| **Trigger** | Filtro asociado a un Broker. Cada Trigger selecciona eventos mediante atributos de CloudEvent (type, source, extensiones) y enruta las coincidencias a un suscriptor. |
+| **Channel** | Transporte de eventos duradero o en memoria. A diferencia de los Brokers, los Channels no filtran: cada Subscription recibe todos los eventos. |
+| **Subscription** | Conecta un Channel con un suscriptor y, de forma opcional, un destino de respuesta. |
+| **Dead Letter Sink** | Destino alternativo para los eventos que no se pueden entregar tras agotar las políticas de reintento. |
+| **CloudEvents** | Formato estándar de sobre de CNCF (v1.0) que usan todos los componentes de Knative Eventing. Proporciona interoperabilidad entre fuentes y consumidores. |
 
 ---
 
-## EKS Installation and Configuration
+## Instalación y configuración en EKS {#eks-installation-and-configuration}
 
-### Prerequisites
+Los fragmentos de instalación están destinados a un entorno de prueba aislado y contienen marcadores de posición. Aplicar Serving con un LoadBalancer puede aprovisionar recursos de AWS mediante el controlador instalado; en esta auditoría no se ejecutó ninguna acción de ese tipo. Los ConfigMaps, Services y cargas de trabajo propiedad de Operator se configuran a través de los recursos KnativeServing/KnativeEventing. Al preparar parches de combinación, conserve la configuración existente, especialmente los campos de tipo lista. Cree los namespaces de las aplicaciones, ServiceAccounts, Secrets, imágenes, recursos Kafka/SQS y roles de IAM referenciados antes de usar los ejemplos posteriores. Las comprobaciones de esquema no establecen que algo esté listo para producción.
 
-- Un cluster de EKS ejecutando Kubernetes 1.28 o posterior.
-- `kubectl` configurado con acceso de administrador al cluster.
-- (Opcional) `helm` v3.12+ para instalaciones basadas en Helm.
+### Requisitos previos
 
-### Step 1: Install Knative Operator
+- Una versión de EKS existente y compatible con el proveedor, cuya compatibilidad se haya validado con los componentes de Knative seleccionados. Los ejemplos utilizan Serving/Eventing/Kourier 1.23.0 y Operator 1.23.1; esto no constituye una afirmación abierta de compatibilidad con Kubernetes 1.28 o versiones posteriores.
+- `kubectl` configurado con acceso de administrador al clúster.
+- (`helm` v3.12+ opcional para instalaciones basadas en Helm).
 
-El Knative Operator administra la instalación y el ciclo de vida de los componentes Knative Serving y Eventing. Usar el Operator simplifica las actualizaciones de versión y la gestión de configuración.
+### Paso 1: Instalar Knative Operator
+
+Knative Operator administra la instalación y el ciclo de vida de los componentes de Knative Serving y Eventing. El uso de Operator simplifica las actualizaciones de versión y la administración de la configuración.
 
 ```bash
-# Install the Knative Operator v1.16
-kubectl apply -f https://github.com/knative/operator/releases/download/knative-v1.16.0/operator.yaml
-
-# Verify the Operator is running
-kubectl get deployment knative-operator -n default
+# Fresh installation on the intended test cluster; review versioned upgrade guidance for existing installs.
+kubectl config current-context
+kubectl apply --server-side -f https://github.com/knative/operator/releases/download/knative-v1.23.1/operator.yaml
+kubectl wait --for=condition=Established crd/knativeservings.operator.knative.dev crd/knativeeventings.operator.knative.dev --timeout=120s
+kubectl wait --for=condition=Available deployment/knative-operator deployment/operator-webhook -n knative-operator --timeout=300s
 ```
 
-### Step 2: Install Knative Serving via the Operator
+### Paso 2: Instalar Knative Serving mediante Operator
 
-Crea un recurso personalizado `KnativeServing` para desplegar los componentes de Serving:
+Cree un recurso personalizado `KnativeServing` para implementar los componentes de Serving:
 
 ```yaml
 apiVersion: operator.knative.dev/v1beta1
@@ -245,7 +158,7 @@ metadata:
   name: knative-serving
   namespace: knative-serving
 spec:
-  version: "1.16.0"
+  version: 1.23.0
   ingress:
     kourier:
       enabled: true
@@ -253,206 +166,192 @@ spec:
     network:
       ingress-class: kourier.ingress.networking.knative.dev
     autoscaler:
-      # KPA is the default; set to "hpa" to use Kubernetes HPA
-      class: kpa.autoscaling.knative.dev
-      # Target 70% average concurrency per pod
-      target-utilization-percentage: "70"
+      pod-autoscaler-class: kpa.autoscaling.knative.dev
+      container-concurrency-target-percentage: '70'
+      enable-scale-to-zero: 'true'
     defaults:
-      # All new Revisions default to these values
-      revision-timeout-seconds: "300"
-      container-concurrency: "0"
+      revision-timeout-seconds: '300'
+      max-revision-timeout-seconds: '600'
     deployment:
-      # Queue proxy resource requests
-      queue-sidecar-cpu-request: "25m"
-      queue-sidecar-memory-request: "50Mi"
+      queue-sidecar-cpu-request: 25m
+      queue-sidecar-memory-request: 400Mi
+      queue-sidecar-memory-limit: 800Mi
+  services:
+  - name: kourier
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: external
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 ```
 
 ```bash
-# Create the namespace and apply
-kubectl create namespace knative-serving
+kubectl create namespace knative-serving --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace knative-demo --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f knative-serving.yaml
-
-# Wait for all Serving pods to become ready
-kubectl wait --for=condition=Ready pods --all -n knative-serving --timeout=300s
+kubectl wait --for=condition=Ready knativeserving/knative-serving -n knative-serving --timeout=600s
+kubectl get deployments,pods,services -n knative-serving
 ```
 
-### Step 3: Install Kourier (Lightweight Ingress)
+### Paso 3: Instalar Kourier (Ingress ligero)
 
-Kourier es el ingress ligero recomendado para Knative en EKS. Es más simple que Istio y tiene una huella de recursos menor.
+Kourier es una implementación de redes basada en Envoy para Knative. Es una opción adecuada cuando sus funciones compatibles satisfacen las necesidades de la carga de trabajo; cualquier ventaja en recursos o latencia requiere mediciones.
 
-Si instalaste Serving mediante el Operator con la sección `kourier` anterior, Kourier se instala automáticamente. Para instalación manual:
+Operator instala Kourier a partir del paquete de Serving seleccionado. En este flujo de trabajo, el Service de la gateway está en `knative-serving`. Un manifiesto independiente de Kourier instalado manualmente normalmente usa `kourier-system`; no lo aplique sobre la instalación administrada por Operator. Inspeccione los recursos administrados:
 
 ```bash
-# Install Kourier
-kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.16.0/kourier.yaml
-
-# Patch the config-network ConfigMap to use Kourier
-kubectl patch configmap/config-network \
-  --namespace knative-serving \
-  --type merge \
-  --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
-
-# Verify Kourier is running
-kubectl get pods -n kourier-system
-kubectl get svc kourier -n kourier-system
+# Operator-managed Kourier uses the KnativeServing namespace.
+kubectl get deployment net-kourier-controller 3scale-kourier-gateway -n knative-serving
+kubectl get service kourier -n knative-serving -o yaml
 ```
 
-En EKS, el service de Kourier se expone como un `LoadBalancer`, lo que aprovisiona un AWS Network Load Balancer (NLB) de forma predeterminada. Para usar un Application Load Balancer (ALB) en su lugar, anota el service según corresponda:
+El recurso KnativeServing base anterior configura anotaciones del Service de Kourier para un **NLB administrado por AWS Load Balancer Controller**. El controlador, IAM y las subredes seleccionadas deben estar preparados previamente. Una anotación de Service no crea un ALB; para un ALB se necesita un controlador L7 y un diseño de enrutamiento adecuados. EKS Auto Mode utiliza otra ruta de administración de balanceadores de carga. Verifique la clase/anotaciones reales en lugar de asumir que todos los Services LoadBalancer de EKS tienen NLB de forma predeterminada:
+
+```bash
+kubectl get service kourier -n knative-serving -o jsonpath='{.spec.loadBalancerClass}{"\n"}{.metadata.annotations}{"\n"}'
+```
+
+### Paso 4: Configuración de DNS
+
+Knative genera URL para cada Service con el formato `<service>.<namespace>.<domain>`. Debe configurar DNS para que estas URL se resuelvan en la gateway de Ingress.
+
+#### Opción A: Magic DNS (sslip.io) -- Solo para desarrollo
+
+sslip.io resuelve nombres compatibles con direcciones IP codificadas y resulta útil en entornos de desarrollo adecuados. Un nombre de host de balanceador de carga de AWS y las IP de backend que cambian no constituyen un mapeo DNS de producción duradero. Este flujo de trabajo de Operator usa un dominio explícito; el asistente de dominio predeterminado independiente no debe competir con la configuración propiedad de Operator.
+
+```bash
+# Inspect the address type; this Operator workflow uses an explicitly configured domain.
+kubectl get service kourier -n knative-serving -o jsonpath='{.status.loadBalancer.ingress}'
+kubectl get ksvc -n knative-demo
+```
+
+#### Opción B: DNS real con Amazon Route 53 -- Producción
+
+Prepare un dominio/zona alojada que controle e inspeccione el cambio generado antes de aplicarlo. Al ejecutarse, los comandos siguientes actualizan esa zona; esta auditoría no los ejecutó. Use un único propietario de DNS (manual/IaC o ExternalDNS) por registro. ExternalDNS requiere su fuente `knative-serving`, permisos y un nombre de host que coincida con la Route/DomainMapping real; una anotación de nombre de host por sí sola no crea una ruta nueva de Knative.
+
+```bash
+# Review the intended zone/domain and wait for the NLB hostname before preparing a DNS change.
+set -euo pipefail
+export KOURIER_HOST
+KOURIER_HOST=$(kubectl get service kourier -n knative-serving -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+: "${KOURIER_HOST:?Wait for the load-balancer hostname}"
+export KNATIVE_DOMAIN="knative.example.com"
+export HOSTED_ZONE_ID="REPLACE_WITH_HOSTED_ZONE_ID"
+python3 - <<'PYDNS'
+import json, os
+from pathlib import Path
+host = os.environ["KOURIER_HOST"].strip()
+if not host or any(c.isspace() for c in host):
+    raise SystemExit("Invalid load-balancer hostname")
+change = {"Changes": [{"Action": "UPSERT", "ResourceRecordSet": {
+    "Name": "*." + os.environ["KNATIVE_DOMAIN"], "Type": "CNAME", "TTL": 300,
+    "ResourceRecords": [{"Value": host}]
+}}]}
+Path("knative-dns-change.json").write_text(json.dumps(change, indent=2))
+patch = {"spec": {"config": {"domain": {os.environ["KNATIVE_DOMAIN"]: ""}}}}
+Path("knative-domain.patch.json").write_text(json.dumps(patch))
+PYDNS
+# These commands change the selected DNS zone and Operator configuration when run.
+aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch file://knative-dns-change.json
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file knative-domain.patch.json
+```
+
+### Paso 5: TLS con cert-manager
+
+Serving 1.23 incluye la integración con cert-manager en su controlador. El antiguo repositorio net-certmanager independiente está archivado; no instale desde allí una versión 1.16/1.23 inexistente. Instale y configure por separado una versión compatible de cert-manager antes de habilitar la integración, incluida su propia identidad DNS01 de Route53 y acceso a la zona con privilegios mínimos.
+
+```bash
+kubectl get deployments -n cert-manager
+kubectl get crd certificates.cert-manager.io clusterissuers.cert-manager.io
+```
+
+Guarde este parche de combinación para el recurso KnativeServing existente como `serving-tls.patch.yaml`. No es un ConfigMap independiente que deba aplicarse sobre el estado administrado por Operator:
 
 ```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: kourier
-  namespace: kourier-system
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 spec:
-  type: LoadBalancer
+  config:
+    network:
+      certificate-class: cert-manager.certificate.networking.knative.dev
+      external-domain-tls: Enabled
+      http-protocol: Redirected
+    certmanager:
+      issuerRef: |
+        group: cert-manager.io
+        kind: ClusterIssuer
+        name: letsencrypt-staging
 ```
 
-### Step 4: DNS Configuration
-
-Knative genera URLs para cada Service con el formato `<service>.<namespace>.<domain>`. Debes configurar DNS para que estas URLs resuelvan al Ingress gateway.
-
-#### Option A: Magic DNS (sslip.io) -- Development Only
-
-Magic DNS usa `sslip.io` para resolver automáticamente cualquier hostname a la dirección IP integrada. Esto es adecuado solo para desarrollo y pruebas.
-
-```bash
-# Configure Knative to use sslip.io
-kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.16.0/serving-default-domain.yaml
-
-# Verify: a service "my-app" in namespace "default" would get the URL:
-# http://my-app.default.<EXTERNAL-IP>.sslip.io
-```
-
-#### Option B: Real DNS with Amazon Route 53 -- Production
-
-Para producción, configura un dominio real con Route 53:
-
-```bash
-# 1. Get the Kourier external IP / hostname
-KOURIER_LB=$(kubectl get svc kourier -n kourier-system \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-# 2. Create a wildcard CNAME record in Route 53
-#    *.knative.example.com -> $KOURIER_LB
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z0123456789ABCDEFGHIJ \
-  --change-batch '{
-    "Changes": [{
-      "Action": "UPSERT",
-      "ResourceRecordSet": {
-        "Name": "*.knative.example.com",
-        "Type": "CNAME",
-        "TTL": 300,
-        "ResourceRecords": [{"Value": "'$KOURIER_LB'"}]
-      }
-    }]
-  }'
-
-# 3. Configure Knative to use this domain
-kubectl patch configmap/config-domain \
-  --namespace knative-serving \
-  --type merge \
-  --patch '{"data":{"knative.example.com":""}}'
-```
-
-### Step 5: TLS with cert-manager
-
-Integra cert-manager para aprovisionar y renovar automáticamente certificados TLS para Knative Services.
-
-```bash
-# Install the Knative cert-manager integration
-kubectl apply -f https://github.com/knative/net-certmanager/releases/download/knative-v1.16.0/release.yaml
-```
-
-Configura Knative para solicitar certificados automáticamente:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-network
-  namespace: knative-serving
-data:
-  ingress-class: kourier.ingress.networking.knative.dev
-  auto-tls: "Enabled"
-  http-protocol: "Redirected"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-certmanager
-  namespace: knative-serving
-data:
-  issuerRef: |
-    kind: ClusterIssuer
-    name: letsencrypt-prod
-```
-
-Crea el ClusterIssuer (asume que cert-manager ya está instalado):
+Para la primera validación de DNS/IAM, utilice un ClusterIssuer de pruebas. Sustituya el contacto, la zona alojada y la región por valores revisados. Los certificados de pruebas no son de confianza pública; cambie a un emisor de producción solo después de validar el flujo del desafío y el ciclo de vida del certificado:
 
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+  name: letsencrypt-staging
 spec:
   acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: platform-team@example.com
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: REPLACE_WITH_CERTIFICATE_CONTACT_EMAIL
     privateKeySecretRef:
-      name: letsencrypt-prod-key
+      name: letsencrypt-staging-key
     solvers:
-      - dns01:
-          route53:
-            region: us-west-2
-            hostedZoneID: Z0123456789ABCDEFGHIJ
+    - dns01:
+        route53:
+          region: us-west-2
+          hostedZoneID: REPLACE_WITH_HOSTED_ZONE_ID
 ```
 
-### Step 6: HPA vs KPA Autoscaler Selection
+Guarde el emisor como `cluster-issuer.yaml` y el parche de Operator anterior como `serving-tls.patch.yaml`; luego aplíquelos en este orden:
 
-Knative soporta dos implementaciones de autoscaler. La elección afecta significativamente el comportamiento de escalado.
+```bash
+# cert-manager and its Route 53 identity must already be configured.
+kubectl apply -f cluster-issuer.yaml
+kubectl wait --for=condition=Ready clusterissuer/letsencrypt-staging --timeout=180s
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-tls.patch.yaml
+# The integration starts in the Serving controller after the setting is effective.
+kubectl get configmap config-network -n knative-serving -o yaml
+kubectl rollout restart deployment/controller -n knative-serving
+kubectl rollout status deployment/controller -n knative-serving --timeout=300s
+```
+
+### Paso 6: Selección del escalador automático HPA o KPA
+
+Knative admite dos implementaciones de escalador automático. La elección afecta significativamente el comportamiento del escalado.
 
 | Característica | KPA (Knative Pod Autoscaler) | HPA (Kubernetes HPA) |
 |---------|------------------------------|----------------------|
-| Scale-to-zero | Sí | No |
-| Métricas | Concurrencia, RPS | CPU, Memory, Custom metrics |
-| Velocidad de escalado | Rápida (ventanas panic/stable) | Intervalos HPA estándar |
-| Configuración | Annotations de Knative | Spec HPA estándar |
-| Ideal para | Workloads HTTP, sensibles a latencia | Workloads limitados por CPU/memory |
+| Escalado a cero | Sí | No |
+| Métricas | Concurrencia, RPS | CPU, memoria, métricas personalizadas |
+| Velocidad de escalado | Rápida (ventanas panic/stable) | Intervalos estándar de HPA |
+| Configuración | Anotaciones de Knative | Especificación estándar de HPA |
+| Ideal para | Cargas de trabajo HTTP y sensibles a la latencia | Cargas de trabajo limitadas por CPU/memoria |
 
-Configura la clase de autoscaler predeterminada en todo el cluster:
+Configure la clase predeterminada del escalador automático mediante Operator. La extensión HPA opcional y una API funcional de métricas de recursos de Kubernetes son requisitos previos para las Revisions de clase HPA; este parche incluye un manifiesto HPA fijado a una versión. Evite la administración duplicada si su distribución ya lo proporciona:
 
 ```yaml
-# In config-autoscaler ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-autoscaler
-  namespace: knative-serving
-data:
-  # "kpa.autoscaling.knative.dev" or "hpa.autoscaling.knative.dev"
-  class: "kpa.autoscaling.knative.dev"
-
-  # KPA-specific settings
-  stable-window: "60s"
-  panic-window-percentage: "10"
-  panic-threshold-percentage: "200"
-  scale-to-zero-grace-period: "30s"
-  scale-to-zero-pod-retention-period: "0s"
-
-  # Target defaults
-  target-burst-capacity: "200"
-  requests-per-second-target-default: "200"
-  container-concurrency-target-default: "100"
+spec:
+  additionalManifests:
+  - URL: https://github.com/knative/serving/releases/download/knative-v1.23.0/serving-hpa.yaml
+  config:
+    autoscaler:
+      pod-autoscaler-class: kpa.autoscaling.knative.dev
+      stable-window: 60s
+      panic-window-percentage: '10'
+      panic-threshold-percentage: '200'
+      scale-to-zero-grace-period: 30s
+      scale-to-zero-pod-retention-period: 0s
+      target-burst-capacity: '211'
+      requests-per-second-target-default: '200'
+      container-concurrency-target-default: '100'
 ```
 
-Sobrescribe por Revision usando annotations:
+Guárdelo como `serving-autoscaler.patch.yaml` y combínelo con el recurso Operator existente. Al preparar el parche, conserve las demás entradas de `additionalManifests`:
+
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-autoscaler.patch.yaml
+kubectl get deployment autoscaler-hpa -n knative-serving
+```
+
+Anule la configuración por Revision en `spec.template.metadata.annotations` del Knative Service (lo siguiente es un fragmento de plantilla):
 
 ```yaml
 metadata:
@@ -462,7 +361,7 @@ metadata:
     autoscaling.knative.dev/target: "70"
 ```
 
-### Step 7: Install Knative Eventing
+### Paso 7: Instalar Knative Eventing
 
 ```yaml
 apiVersion: operator.knative.dev/v1beta1
@@ -471,76 +370,54 @@ metadata:
   name: knative-eventing
   namespace: knative-eventing
 spec:
-  version: "1.16.0"
+  version: 1.23.0
+  defaultBrokerClass: MTChannelBasedBroker
   config:
     default-ch-webhook:
-      default-ch-config: |
-        clusterDefault:
-          apiVersion: messaging.knative.dev/v1
-          kind: InMemoryChannel
+      default-ch-config: "clusterDefault:\n  apiVersion: messaging.knative.dev/v1\n\
+        \  kind: InMemoryChannel\n"
+  sinkBindingSelectionMode: inclusion
 ```
 
 ```bash
-kubectl create namespace knative-eventing
+kubectl create namespace knative-eventing --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f knative-eventing.yaml
-kubectl wait --for=condition=Ready pods --all -n knative-eventing --timeout=300s
+kubectl wait --for=condition=Ready knativeeventing/knative-eventing -n knative-eventing --timeout=600s
+kubectl get deployments,pods -n knative-eventing
+kubectl get crd inmemorychannels.messaging.knative.dev integrationsources.sources.knative.dev
 ```
 
 ---
 
-## Knative Serving Deep Dive
+## Análisis detallado de Knative Serving {#knative-serving-deep-dive}
 
-### Resource Model
+### Modelo de recursos
 
-Knative Serving introduce cuatro recursos personalizados principales que trabajan juntos para administrar el ciclo de vida completo de un workload serverless.
+Knative Serving introduce cuatro recursos personalizados principales que trabajan en conjunto para administrar el ciclo de vida completo de una carga de trabajo serverless.
 
-```mermaid
-flowchart TD
-    SVC["Knative Service
-    (ksvc)"]
-    CFG[Configuration]
-    RT[Route]
-    REV1["Revision v1
-    (immutable)"]
-    REV2["Revision v2
-    (immutable)"]
-    REV3["Revision v3
-    (latest)"]
+![Un Service es propietario de una Configuration y una Route; los cambios en la plantilla de la carga de trabajo crean especificaciones de Revision inmutables, mientras que las referencias externas pueden cambiar. Route envía porcentajes de tráfico configurados a Revisions conservadas; no siempre dirige el 100 % a la más reciente.](../.gitbook/assets/en-autoscaling-03-knative-2.png)
 
-    SVC --> CFG
-    SVC --> RT
-    CFG -->|"creates on change"| REV1
-    CFG -->|"creates on change"| REV2
-    CFG -->|"creates on change"| REV3
-    RT -->|"100% traffic"| REV3
-    RT -.->|"0% (available for rollback)"| REV2
-    RT -.->|"0% (available for rollback)"| REV1
-
-    style SVC fill:#e1f5fe
-    style CFG fill:#fff3e0
-    style RT fill:#f3e5f5
-    style REV1 fill:#e8f5e9
-    style REV2 fill:#e8f5e9
-    style REV3 fill:#e8f5e9
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-2.html)
 
 | Recurso | Descripción |
 |----------|-------------|
-| **Service** (`ksvc`) | El recurso de nivel superior. Administra todo el ciclo de vida al poseer una Configuration y una Route. La mayoría de los usuarios interactúan solo con Services. |
-| **Configuration** | Describe el estado deseado de un workload (imagen de contenedor, variables de entorno, límites de recursos). Cada actualización de una Configuration crea una nueva Revision. |
-| **Revision** | Un snapshot inmutable y puntual de una Configuration. Las Revisions se nombran automáticamente (por ejemplo, `my-app-00001`). Las Revisions antiguas se retienen para traffic splitting y rollback. |
-| **Route** | Asigna tráfico de red a una o más Revisions. Permite deployments canary, releases blue-green y traffic splitting basado en porcentajes. |
+| **Service** (`ksvc`) | Recurso de nivel superior. Administra todo el ciclo de vida al ser propietario de una Configuration y una Route. La mayoría de los usuarios solo interactúa con Services. |
+| **Configuration** | Describe la plantilla de la carga de trabajo; los cambios pertinentes en la plantilla crean una Revision. Los cambios solo en los metadatos o en el tráfico no necesariamente crean una. |
+| **Revision** | Especificación inmutable de la carga de trabajo, con referencias externas que aún pueden cambiar. La retención/recolección de basura determina si una Revision antigua sigue disponible. |
+| **Route** | Asigna el tráfico de red a una o varias Revisions. Permite implementaciones canary, versiones blue-green y la división del tráfico por porcentaje. |
 
-### Complete Knative Service YAML
+### YAML completo de Knative Service
 
-El siguiente ejemplo despliega un Knative Service listo para producción con autoscaling explícito, límites de recursos, health checks y límites de escalado:
+Proporcione primero la imagen, ServiceAccount y Secret referenciados. El controlador de Serving debe resolver las etiquetas/digest de los registros, mientras que el nodo debe poder descargar la imagen por separado; las credenciales del nodo de EKS por sí solas no establecen el acceso del controlador al registro. Las rutas de preparación y actividad deben coincidir con la aplicación real y no deberían causar reinicios en cascada por interrupciones de servicios dependientes.
+
+Lo siguiente es un ejemplo de configuración, no una implementación de producción probada. Define un Knative Service con escalado automático explícito, límites de recursos, comprobaciones de estado y límites de escalado:
 
 ```yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: order-api
-  namespace: production
+  namespace: knative-demo
   labels:
     app.kubernetes.io/name: order-api
     app.kubernetes.io/part-of: ecommerce
@@ -549,208 +426,186 @@ spec:
   template:
     metadata:
       annotations:
-        # Autoscaling configuration
-        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
-        autoscaling.knative.dev/metric: "concurrency"
-        autoscaling.knative.dev/target: "100"
-        autoscaling.knative.dev/target-utilization-percentage: "70"
-        autoscaling.knative.dev/min-scale: "2"
-        autoscaling.knative.dev/max-scale: "50"
-        autoscaling.knative.dev/initial-scale: "3"
-        autoscaling.knative.dev/scale-down-delay: "15m"
-        autoscaling.knative.dev/window: "60s"
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: '100'
+        autoscaling.knative.dev/target-utilization-percentage: '70'
+        autoscaling.knative.dev/min-scale: '2'
+        autoscaling.knative.dev/max-scale: '50'
+        autoscaling.knative.dev/initial-scale: '3'
+        autoscaling.knative.dev/scale-down-delay: 15m
+        autoscaling.knative.dev/window: 60s
+      name: order-api-v1
     spec:
       containerConcurrency: 0
       timeoutSeconds: 300
       containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v1.2.3
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-          env:
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: db-credentials
-                  key: host
-            - name: LOG_LEVEL
-              value: "info"
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "1000m"
-              memory: "1Gi"
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 20
+      - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v1.2.3
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: host
+        - name: LOG_LEVEL
+          value: info
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
       serviceAccountName: order-api-sa
 ```
 
-### Traffic Splitting: Canary Deployments
+### División del tráfico: implementaciones canary
 
-Traffic splitting te permite mover gradualmente tráfico entre Revisions. Esta es la base para estrategias de deployment canary y blue-green.
+La división del tráfico permite trasladarlo gradualmente entre Revisions. Es la base de las estrategias de implementación canary y blue-green.
 
-#### Canary Deployment
+#### Implementación canary
 
-Enruta un pequeño porcentaje de tráfico a la nueva Revision y auméntalo con el tiempo:
+Estos son ejercicios alternativos que parten del Service base completo anterior y de su Revision `order-api-v1` lista. Reemplace las imágenes y los nombres por artefactos verificados; cada cambio de plantilla necesita un nombre de Revision nuevo y sin usar. El parche JSON conserva las variables de entorno, ServiceAccount, sondas y configuración de recursos en lugar de reemplazar toda la lista de contenedores. Presupone que el ejemplo base tiene un único contenedor de entrada en el índice 0. Una etiqueta con el 0 % hace que una ruta esté disponible para las pruebas; no garantiza que haya toda la capacidad lista.
 
-```yaml
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: order-api
-  namespace: production
-spec:
-  template:
-    metadata:
-      # The new Revision is created from this template
-      annotations:
-        autoscaling.knative.dev/min-scale: "2"
-    spec:
-      containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v1.3.0
-          ports:
-            - containerPort: 8080
-  traffic:
-    # 90% to the current stable Revision
-    - revisionName: order-api-00005
-      percent: 90
-    # 10% canary to the latest Revision
-    - latestRevision: true
-      percent: 10
-      tag: canary
+Guárdelo como `canary-template.patch.json`:
+
+```json
+[
+  {
+    "op": "add",
+    "path": "/spec/traffic",
+    "value": [
+      {
+        "revisionName": "order-api-v1",
+        "percent": 100
+      },
+      {
+        "revisionName": "order-api-v2",
+        "percent": 0,
+        "tag": "canary"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/metadata/name",
+    "value": "order-api-v2"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/image",
+    "value": "123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v1.3.0"
+  }
+]
 ```
-
-Aumenta gradualmente el tráfico canary:
 
 ```bash
-# Increase canary to 50%
-kubectl patch ksvc order-api -n production --type merge --patch '
-spec:
-  traffic:
-    - revisionName: order-api-00005
-      percent: 50
-    - latestRevision: true
-      percent: 50
-      tag: canary
-'
+kubectl wait --for=condition=Ready revision/order-api-v1 -n knative-demo --timeout=300s
+kubectl patch ksvc order-api -n knative-demo --type json --patch-file canary-template.patch.json
+kubectl wait --for=jsonpath='{.status.latestCreatedRevisionName}'=order-api-v2 ksvc/order-api -n knative-demo --timeout=180s
+kubectl wait --for=condition=Ready revision/order-api-v2 -n knative-demo --timeout=300s
+kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.traffic}'
 
-# Promote canary to 100%
-kubectl patch ksvc order-api -n production --type merge --patch '
-spec:
-  traffic:
-    - latestRevision: true
-      percent: 100
-'
+# Route10%, then50%, then100% only after validating each stage.
+kubectl patch ksvc order-api -n knative-demo --type merge --patch '{"spec":{"traffic":[{"revisionName":"order-api-v1","percent":90},{"revisionName":"order-api-v2","percent":10,"tag":"canary"}]}}'
+kubectl patch ksvc order-api -n knative-demo --type merge --patch '{"spec":{"traffic":[{"revisionName":"order-api-v1","percent":50},{"revisionName":"order-api-v2","percent":50,"tag":"canary"}]}}'
+kubectl patch ksvc order-api -n knative-demo --type merge --patch '{"spec":{"traffic":[{"revisionName":"order-api-v1","percent":0},{"revisionName":"order-api-v2","percent":100,"tag":"canary"}]}}'
 ```
 
-Cada objetivo de tráfico etiquetado obtiene su propia URL: `https://canary-order-api.production.knative.example.com`. Esto permite probar directamente la Revision canary.
+Lea la URL de etiqueta real desde `status.traffic`; depende de las plantillas de dominio/etiqueta y de la configuración TLS. Compruebe que Route esté lista, la configuración observada y las señales de la aplicación entre los cambios. Los porcentajes se aplican a la política de enrutamiento, no representan un recuento exacto en una muestra pequeña de solicitudes.
 
-#### Blue-Green Deployment
+#### Implementación blue-green
 
-En una estrategia blue-green, ambas Revisions se ejecutan a plena capacidad y el tráfico se cambia de forma atómica:
+Use esto como ejercicio independiente de `order-api-v1` base, o actualice el nombre estable para que coincida con la Revision que sirve actualmente de referencia verificada. Guarde lo siguiente como `green-template.patch.json`:
 
-```yaml
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: order-api
-  namespace: production
-spec:
-  template:
-    spec:
-      containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v2.0.0
-          ports:
-            - containerPort: 8080
-  traffic:
-    # Blue (current) receives 100% of production traffic
-    - revisionName: order-api-00005
-      percent: 100
-      tag: blue
-    # Green (new) is deployed but receives 0% traffic; accessible via tag URL
-    - latestRevision: true
-      percent: 0
-      tag: green
+```json
+[
+  {
+    "op": "add",
+    "path": "/spec/traffic",
+    "value": [
+      {
+        "revisionName": "order-api-v1",
+        "percent": 100
+      },
+      {
+        "revisionName": "order-api-green",
+        "percent": 0,
+        "tag": "green"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/metadata/name",
+    "value": "order-api-green"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/image",
+    "value": "123456789012.dkr.ecr.us-west-2.amazonaws.com/order-api:v2.0.0"
+  }
+]
 ```
-
-Después de validar el entorno green mediante `https://green-order-api.production.knative.example.com`, cambia el tráfico:
 
 ```bash
-# Instant switch to green
-kubectl patch ksvc order-api -n production --type merge --patch '
-spec:
-  traffic:
-    - revisionName: order-api-00005
-      percent: 0
-      tag: blue
-    - latestRevision: true
-      percent: 100
-      tag: green
-'
+kubectl patch ksvc order-api -n knative-demo --type json --patch-file green-template.patch.json
+kubectl wait --for=jsonpath='{.status.latestCreatedRevisionName}'=order-api-green ksvc/order-api -n knative-demo --timeout=180s
+kubectl wait --for=condition=Ready revision/order-api-green -n knative-demo --timeout=300s
+kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.traffic}'
+# Validate the green tag URL and capacity before requesting this switch.
+kubectl patch ksvc order-api -n knative-demo --type merge --patch '{"spec":{"traffic":[{"revisionName":"order-api-v1","percent":0},{"revisionName":"order-api-green","percent":100,"tag":"green"}]}}'
 ```
 
-### Scale-to-Zero Behavior
+El cambio de tráfico se reconcilia de forma asíncrona; las conexiones y solicitudes en curso todavía pueden usar la Revision anterior. Conserve la Revision antigua y sus dependencias externas para poder revertir, y mida la propagación/preparación reales. Estos comandos no se ejecutaron en un clúster.
 
-Scale-to-zero es una característica definitoria de Knative Serving. Cuando una Revision no recibe tráfico, sus pods se terminan después de un periodo de gracia configurable. Cuando llega una nueva solicitud, el Activator la almacena en buffer, activa un scale-up y proxya la solicitud una vez que un pod está listo.
+### Comportamiento del escalado a cero
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Activator
-    participant Autoscaler
-    participant Pod as Queue Proxy + App
+El escalado a cero es una característica definitoria de Knative Serving. Cuando una Revision puede escalarse a cero, su ventana de inactividad, demora de escalado hacia abajo, retención y disponibilidad interna del enrutamiento influyen en el momento en que se elimina el último Pod. Cuando llega una solicitud nueva, Activator la almacena en búfer, activa el escalado y la reenvía cuando un Pod está listo.
 
-    Note over Pod: No traffic for 60s
-    Autoscaler->>Pod: Scale to 0
-    Note over Pod: Pods terminated
+![El escalado a cero prepara la ruta de Activator antes de eliminar el último Pod. Una nueva solicitud puede esperar a que haya capacidad lista dentro de los límites de búfer/tiempo de espera; Activator puede permanecer en la ruta según la configuración de capacidad para ráfagas.](../.gitbook/assets/en-autoscaling-03-knative-3.png)
 
-    Client->>Activator: HTTP Request
-    Note over Activator: Revision at 0 replicas
-    Activator->>Autoscaler: Request scale-up
-    Autoscaler->>Pod: Scale to 1
-    Note over Pod: Pod starting...
-    Pod-->>Activator: Ready
-    Activator->>Pod: Forward buffered request
-    Pod-->>Client: HTTP Response
-    Note over Pod: Subsequent requests go directly
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-3.html)
 
-Parámetros clave que controlan scale-to-zero:
+Parámetros clave que controlan el escalado a cero:
 
-| Annotation / Config | Predeterminado | Descripción |
+| Anotación / configuración | Valor predeterminado | Descripción |
 |---------------------|---------|-------------|
-| `scale-to-zero-grace-period` (global) | 30s | Tiempo que el sistema espera después de que el último pod de una Revision queda idle antes de eliminarlo. |
-| `scale-to-zero-pod-retention-period` (global) | 0s | Tiempo mínimo que se mantiene un pod después de la última solicitud, incluso si ya está idle. |
-| `autoscaling.knative.dev/scale-to-zero-pod-retention-period` (por Revision) | heredado | Sobrescritura por Revision del periodo de retención global. |
-| `enable-scale-to-zero` (global) | true | Interruptor maestro. Establécelo en false para deshabilitar scale-to-zero en todo el cluster. |
+| `scale-to-zero-grace-period` (global) | 30 s | Límite superior para la preparación interna del enrutamiento desde cero antes de eliminar la última réplica; no es un temporizador garantizado de retención por inactividad. |
+| `scale-to-zero-pod-retention-period` (global) | 0 s | Retención mínima del último Pod después de que el escalador automático decide escalar a cero. |
+| `autoscaling.knative.dev/scale-to-zero-pod-retention-period` (por Revision) | heredado | Anulación por Revision del período de retención global. |
+| `enable-scale-to-zero` (global) | true | Interruptor principal. Establezca el valor en false para deshabilitar el escalado a cero en todo el clúster. |
 
-### Concurrency-Based Scaling
+### Escalado basado en la concurrencia
 
-El KPA de Knative escala según la concurrencia observada (solicitudes en curso) o solicitudes por segundo (RPS). El algoritmo mantiene dos ventanas:
+KPA de Knative escala según la concurrencia observada (solicitudes en curso) o las solicitudes por segundo (RPS). El algoritmo mantiene dos ventanas:
 
-- **Stable window** (predeterminado 60s): La concurrencia promedio durante este periodo impulsa la decisión de escalado en estado estable.
-- **Panic window** (predeterminado 6s, es decir, 10% de stable): Si la concurrencia promedio en esta ventana supera el umbral de panic (predeterminado 200% del objetivo), el sistema escala hacia arriba agresivamente.
+- **Ventana estable** (60 s de forma predeterminada): la concurrencia media durante este período determina la decisión de escala en estado estable.
+- **Ventana de pánico** (6 s de forma predeterminada, es decir, el 10 % de la ventana estable): si la concurrencia media en esta ventana supera el umbral de pánico (el 200 % del objetivo de forma predeterminada), el sistema escala rápidamente hacia arriba.
 
-**Annotations clave:**
+**Anotaciones clave:**
 
-| Annotation | Ejemplo | Descripción |
+| Anotación | Ejemplo | Descripción |
 |------------|---------|-------------|
-| `autoscaling.knative.dev/metric` | `"concurrency"` o `"rps"` | Qué métrica usar para escalar. |
-| `autoscaling.knative.dev/target` | `"100"` | Valor objetivo para la métrica (por ejemplo, 100 solicitudes concurrentes por pod). |
-| `autoscaling.knative.dev/target-utilization-percentage` | `"70"` | El Autoscaler intenta mantener la utilización promedio en este porcentaje del objetivo. Objetivo efectivo = target * utilization / 100. |
-| `spec.containerConcurrency` | `0` (ilimitado) | Límite estricto de solicitudes concurrentes por contenedor. El Queue Proxy lo aplica y encola las solicitudes excedentes. Establécelo en 0 para no tener límite. Un valor de 1 habilita procesamiento de un solo hilo. |
+| `autoscaling.knative.dev/metric` | `"concurrency"` o `"rps"` | Métrica que se usará para el escalado. |
+| `autoscaling.knative.dev/target` | `"100"` | Valor objetivo de la métrica (por ejemplo, 100 solicitudes concurrentes por Pod). |
+| `autoscaling.knative.dev/target-utilization-percentage` | `"70"` | El Autoscaler intenta mantener el uso medio en este porcentaje del objetivo. Objetivo efectivo = objetivo * uso / 100. |
+| `spec.template.spec.containerConcurrency` | `0` | Límite de concurrencia de las solicitudes reenviadas por Pod; `0` deshabilita este límite estricto. Se siguen aplicando la espera/rechazo limitados y el escalado automático. El valor `1` no hace que los hilos de la aplicación ni todas las réplicas sean seriales a escala global. |
 
 **Fórmula de escalado:**
 
@@ -764,122 +619,199 @@ Por ejemplo, con `target=100`, `targetUtilization=70%` y 350 solicitudes concurr
 desiredReplicas = ceil(350 / (100 * 0.70)) = ceil(350 / 70) = ceil(5.0) = 5
 ```
 
-### Cold Start Optimization
+### Optimización de arranques en frío
 
-Los cold starts -- la penalización de latencia al escalar desde cero -- son una preocupación común. Knative proporciona varios mecanismos para mitigarlos:
+Los arranques en frío —la penalización de latencia al escalar desde cero— son una preocupación habitual. Knative ofrece varios mecanismos para mitigarlos:
 
 | Estrategia | Configuración | Compensación |
 |----------|---------------|-----------|
-| **minScale** | `autoscaling.knative.dev/min-scale: "2"` | Mantiene un número mínimo de pods en ejecución. Elimina los cold starts pero incurre en costo base. |
-| **initialScale** | `autoscaling.knative.dev/initial-scale: "3"` | Número de pods creados cuando una nueva Revision se despliega por primera vez. No impide scale-to-zero después. |
-| **scale-down-delay** | `autoscaling.knative.dev/scale-down-delay: "15m"` | Retrasa las decisiones de scale-down. Útil para workloads con ráfagas para evitar cold starts frecuentes. |
-| **Container image caching** | Usa caching de imágenes a nivel de nodo de EKS o DaemonSets de pre-pull | Reduce el tiempo de pull del contenedor durante el cold start. |
-| **Lightweight base images** | Usa imágenes basadas en distroless o Alpine | Reduce el tamaño de la imagen y el tiempo de pull. |
-| **Application warmup** | Implementa readiness probes que esperen caches/conexiones | Garantiza que el pod reporte ready solo después de poder manejar tráfico a plena velocidad. |
+| **minScale** | `autoscaling.knative.dev/min-scale: "2"` | Mantiene capacidad de referencia durante la inactividad normal; las Revisions nuevas, los reinicios y el escalado hacia arriba aún pueden inicializarse en frío. |
+| **initialScale** | `autoscaling.knative.dev/initial-scale: "3"` | Número de Pods que se crean al implementar por primera vez una Revision. No evita que posteriormente se escale a cero. |
+| **scale-down-delay** | `autoscaling.knative.dev/scale-down-delay: "15m"` | Retrasa las decisiones de escalado hacia abajo. Es útil para cargas de trabajo con ráfagas, ya que evita arranques en frío frecuentes. |
+| **Almacenamiento en caché de imágenes de contenedor** | Use el almacenamiento en caché de imágenes a nivel de nodo de EKS o DaemonSets de descarga previa | Reduce el tiempo de descarga del contenedor durante el arranque en frío. |
+| **Imágenes base ligeras** | Use imágenes distroless o basadas en Alpine | Reduce el tamaño de la imagen y el tiempo de descarga. |
+| **Calentamiento de la aplicación** | Implemente sondas de preparación que cumplan el contrato de preparación real | Evita anunciar la preparación antes de tiempo; el rendimiento con carga completa aún debe medirse. |
 
 ```yaml
-# Example: latency-sensitive service with cold start mitigation
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: latency-critical-api
-  namespace: production
+  namespace: knative-demo
 spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/min-scale: "3"
-        autoscaling.knative.dev/initial-scale: "5"
-        autoscaling.knative.dev/scale-down-delay: "10m"
-        autoscaling.knative.dev/target: "50"
-        autoscaling.knative.dev/window: "30s"
+        autoscaling.knative.dev/min-scale: '3'
+        autoscaling.knative.dev/initial-scale: '5'
+        autoscaling.knative.dev/scale-down-delay: 10m
+        autoscaling.knative.dev/target: '50'
+        autoscaling.knative.dev/window: 30s
     spec:
       containerConcurrency: 100
       containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/api:v1.0.0
-          ports:
-            - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 3
-            periodSeconds: 5
+      - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/api:v1.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
 ```
 
-### Private and Public Services
+### Services privados y públicos
 
-De forma predeterminada, Knative Services se exponen externamente a través del ingress gateway. Puedes hacer que un Service sea solo interno del cluster:
+De forma predeterminada, los Knative Services se exponen externamente a través de la gateway de Ingress. Puede hacer que un Service solo sea interno al clúster:
 
 ```yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: internal-processor
-  namespace: production
+  namespace: knative-demo
   labels:
     networking.knative.dev/visibility: cluster-local
 spec:
   template:
     spec:
       containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/processor:v1.0.0
+      - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/processor:v1.0.0
 ```
 
-La label `cluster-local` hace que Knative genere una URL interna (por ejemplo, `http://internal-processor.production.svc.cluster.local`) en lugar de una públicamente enrutable. Esto es útil para microservices internos que no deben ser accesibles desde fuera del cluster.
+La etiqueta cluster-local cambia la visibilidad del enrutamiento de Knative y las URL internas generadas. No es una política de autenticación ni un límite completo de aislamiento de red; las rutas de red privadas, NetworkPolicy y la autorización de la aplicación siguen siendo importantes.
 
-También puedes establecer la visibilidad predeterminada en todo el cluster:
+La versión seleccionada no incluye una configuración `config-network.visibility`. Aplique la etiqueta de visibilidad a cada Service o aplíquela mediante una política de admisión adecuada. `default-external-scheme` solo afecta los esquemas de URL externas generadas; por sí solo no hace que un Service sea privado ni configura TLS. Lo siguiente es un fragmento de metadatos de Service:
 
 ```yaml
-# config-network ConfigMap
-data:
-  default-external-scheme: "https"
-  visibility: "cluster-local"  # All services are private by default
+metadata:
+  labels:
+    networking.knative.dev/visibility: cluster-local
 ```
 
 ---
 
-## Knative Eventing Deep Dive
+## Análisis detallado de Knative Eventing {#knative-eventing-deep-dive}
 
-### Event Sources
+### Fuentes de eventos
 
-Event Sources son recursos de Knative que conectan sistemas externos con la malla de eventing. Cada Source emite CloudEvents a un sink configurado (un Broker, Channel o directamente a un Knative Service).
+Las fuentes de eventos son recursos de Knative que conectan sistemas externos con la malla de eventos. Cada Source emite CloudEvents a un sink configurado (un Broker, Channel o Knative Service directamente).
 
 #### ApiServerSource
 
-Observa el Kubernetes API server en busca de eventos de recursos y los reenvía como CloudEvents:
+Observa el servidor de API de Kubernetes para detectar eventos de recursos y los reenvía como CloudEvents:
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-events-sa
+  namespace: knative-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: k8s-events-reader
+  namespace: knative-demo
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: k8s-events-reader
+  namespace: knative-demo
+subjects:
+- kind: ServiceAccount
+  name: k8s-events-sa
+  namespace: knative-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: k8s-events-reader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: knative-demo-namespace-discovery
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: knative-demo-namespace-discovery
+subjects:
+- kind: ServiceAccount
+  name: k8s-events-sa
+  namespace: knative-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: knative-demo-namespace-discovery
+---
 apiVersion: sources.knative.dev/v1
 kind: ApiServerSource
 metadata:
-  name: pod-event-source
-  namespace: production
+  name: k8s-events
+  namespace: knative-demo
 spec:
-  serviceAccountName: event-watcher-sa
-  mode: Resource
+  serviceAccountName: k8s-events-sa
+  mode: Reference
   resources:
-    - apiVersion: v1
-      kind: Pod
-    - apiVersion: apps/v1
-      kind: Deployment
+  - apiVersion: v1
+    kind: Pod
+  - apiVersion: apps/v1
+    kind: Deployment
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
       kind: Broker
       name: default
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: knative-demo
 ```
 
 #### SinkBinding
 
-Inyecta variables de entorno (específicamente `K_SINK`) en cualquier workload de Kubernetes para que pueda enviar eventos a un sink sin codificar el destino en la aplicación:
+La configuración de Eventing seleccionada usa el modo inclusion. Incluya solo el namespace de demostración en la inyección de bindings y asegúrese de que el Deployment sujeto exista en ese namespace con las etiquetas/nombre de metadatos correspondientes. Los cambios en una carga de trabajo que ya está en ejecución pueden requerir su ciclo normal de implementación antes de que se usen las nuevas variables de entorno inyectadas:
+
+```bash
+kubectl label namespace knative-demo bindings.knative.dev/include=true --overwrite
+```
+
+Inyecta variables de entorno (específicamente, `K_SINK`) en cualquier carga de trabajo de Kubernetes para que pueda enviar eventos a un sink sin codificar el destino:
 
 ```yaml
 apiVersion: sources.knative.dev/v1
 kind: SinkBinding
 metadata:
   name: order-producer-binding
-  namespace: production
+  namespace: knative-demo
 spec:
   subject:
     apiVersion: apps/v1
@@ -892,60 +824,84 @@ spec:
       name: default
   ceOverrides:
     extensions:
-      source: order-system
+      producer: order-system
 ```
 
-Tu aplicación lee `K_SINK` y envía CloudEvents con POST a ese endpoint:
+La aplicación debe leer `K_SINK` y aplicar `K_CE_OVERRIDES`; SinkBinding no reescribe solicitudes Python arbitrarias salientes. El productor siguiente usa codificación HTTP estructurada (el cuerpo completo de CloudEvent con el tipo de contenido correspondiente), un tiempo de espera limitado y comprobaciones de estado. Mantenga un solo `event_id` en los reintentos del mismo evento lógico:
 
 ```python
-import os, requests, json
-from datetime import datetime
+import json
+import os
+import re
 
-sink_url = os.environ["K_SINK"]
+import requests
+from cloudevents.http import CloudEvent
+from cloudevents.conversion import to_structured
 
-event = {
-    "specversion": "1.0",
-    "type": "com.example.order.created",
-    "source": "/orders/api",
-    "id": "order-12345",
-    "time": datetime.utcnow().isoformat() + "Z",
-    "datacontenttype": "application/json",
-    "data": {"orderId": "12345", "amount": 99.99}
-}
+CORE_ATTRIBUTES = {"specversion", "id", "source", "type", "time", "subject", "datacontenttype", "dataschema"}
 
-headers = {
-    "Content-Type": "application/cloudevents+json",
-    "ce-specversion": event["specversion"],
-    "ce-type": event["type"],
-    "ce-source": event["source"],
-    "ce-id": event["id"],
-}
 
-requests.post(sink_url, json=event["data"], headers=headers)
+def emit_order_event(order_id, event_type, data, event_id):
+    """Use one stable event_id for retries of the same logical event."""
+    attributes = {
+        "specversion": "1.0", "id": event_id,
+        "type": f"com.example.order.{event_type}",
+        "source": "/orders/api", "subject": f"order/{order_id}",
+        "datacontenttype": "application/json",
+    }
+    overrides = json.loads(os.environ.get("K_CE_OVERRIDES", "{}"))
+    for key, value in overrides.get("extensions", {}).items():
+        if key in CORE_ATTRIBUTES or not re.fullmatch(r"[a-z0-9]+", key):
+            raise ValueError("Only valid extension attributes may be overridden")
+        attributes[key] = value
+    event = CloudEvent(attributes, data)
+    headers, body = to_structured(event)
+    response = requests.post(
+        os.environ["K_SINK"], data=body, headers=headers, timeout=(3, 10)
+    )
+    response.raise_for_status()
+    return response.status_code
 ```
 
 #### KafkaSource
 
-Consume mensajes de topics de Apache Kafka y los entrega como CloudEvents:
+KafkaSource/KafkaChannel requieren la extensión Kafka correspondiente y un clúster Kafka existente y configurado (incluidos bootstrap/TLS/SASL y suficientes brokers para el factor de replicación solicitado). Combine estas URL de addons 1.23.2 con los elementos `additionalManifests` existentes en el recurso KnativeEventing; no habilite simultáneamente otra vía de administración para el mismo addon. Guárdelo como eventing-kafka.patch.yaml:
 
 ```yaml
-apiVersion: sources.knative.dev/v1beta1
+spec:
+  additionalManifests:
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-controller.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-source.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-channel.yaml
+```
+
+```bash
+kubectl patch knativeeventing knative-eventing -n knative-eventing --type merge --patch-file eventing-kafka.patch.yaml
+GENERATION=$(kubectl get knativeeventing knative-eventing -n knative-eventing -o jsonpath='{.metadata.generation}')
+kubectl wait --for=jsonpath='{.status.observedGeneration}'="$GENERATION" knativeeventing/knative-eventing -n knative-eventing --timeout=600s
+kubectl wait --for=condition=Ready knativeeventing/knative-eventing -n knative-eventing --timeout=600s
+kubectl get crd kafkasources.sources.knative.dev kafkachannels.messaging.knative.dev
+```
+
+Consume mensajes de temas de Apache Kafka y los entrega como CloudEvents:
+
+```yaml
+apiVersion: sources.knative.dev/v1
 kind: KafkaSource
 metadata:
   name: payment-events
-  namespace: production
+  namespace: knative-demo
 spec:
   consumerGroup: knative-payment-consumer
   bootstrapServers:
-    - kafka-bootstrap.kafka.svc.cluster.local:9092
+  - kafka-bootstrap.kafka.svc.cluster.local:9092
   topics:
-    - payment-events
+  - payment-events
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
       kind: Broker
       name: default
-  # Optional: configure SASL/TLS for MSK
   net:
     sasl:
       enable: true
@@ -967,33 +923,37 @@ spec:
 
 #### SQSSource (AWS)
 
-Consume mensajes de colas de Amazon SQS. Esto requiere el controlador de fuentes de eventos de AWS:
+IntegrationSource de core 1.23 admite SQS y reemplaza aquí el ejemplo archivado de TriggerMesh. Es una API alfa; verifique la CRD instalada y las imágenes del adaptador. La cola dedicada y su rol de IAM deben existir de antemano. Esta fuente consume/elimina mensajes cuando se ejecuta; durante la auditoría no se implementó ninguna fuente:
 
 ```bash
-# Install AWS event sources
-kubectl apply -f https://github.com/triggermesh/aws-event-sources/releases/latest/download/aws-event-sources.yaml
+# Verify the core IntegrationSource CRD
+kubectl get crd integrationsources.sources.knative.dev
 ```
 
 ```yaml
-apiVersion: sources.triggermesh.io/v1alpha1
-kind: AWSSQSSource
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: order-queue-source
-  namespace: production
+  name: sqs-event-source
+  namespace: knative-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/KnativeSqsSourceRole
+---
+apiVersion: sources.knative.dev/v1alpha1
+kind: IntegrationSource
+metadata:
+  name: sqs-order-events
+  namespace: knative-demo
 spec:
-  arn: arn:aws:sqs:us-west-2:123456789012:order-events
-  receiveOptions:
-    visibilityTimeout: 60s
-  auth:
-    credentials:
-      accessKeyID:
-        valueFromSecret:
-          name: aws-credentials
-          key: access-key-id
-      secretAccessKey:
-        valueFromSecret:
-          name: aws-credentials
-          key: secret-access-key
+  aws:
+    sqs:
+      arn: arn:aws:sqs:us-west-2:123456789012:knative-demo-orders
+      region: us-west-2
+      autoCreateQueue: false
+      deleteAfterRead: true
+      visibilityTimeout: 120
+    auth:
+      serviceAccountName: sqs-event-source
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
@@ -1001,45 +961,53 @@ spec:
       name: default
 ```
 
-Para producción en EKS, prefiere IAM Roles for Service Accounts (IRSA) en lugar de credenciales estáticas.
+El ejemplo usa un ServiceAccount dedicado con un rol IRSA existente. Limite los permisos ReceiveMessage/DeleteMessage/GetQueueAttributes/GetQueueUrl a la cola de prueba y valide los acuses de recibo, los tiempos de espera de visibilidad y el comportamiento ante errores. autoCreateQueue es false. El tipo/source de CloudEvent emitido proviene del adaptador; inspecciónelo antes de copiar los filtros manuales de Trigger para eventos de pedido. EKS Pod Identity es otra opción de credenciales cuando el cómputo EKS seleccionado, el agente y el SDK la admiten; Fargate no admite EKS Pod Identity.
 
-### Broker/Trigger Pattern
+### Patrón Broker/Trigger
 
-El patrón Broker/Trigger proporciona enrutamiento de eventos basado en contenido. Un Broker actúa como event hub; los Triggers filtran eventos por atributos de CloudEvent y los enrutan a subscribers.
+El patrón Broker/Trigger proporciona enrutamiento de eventos basado en contenido. Un Broker actúa como concentrador de eventos; los Triggers filtran eventos por atributos de CloudEvent y los enrutan a suscriptores.
 
-#### Complete Broker/Trigger Example
+#### Ejemplo completo de Broker/Trigger
 
 ```yaml
-# 1. Create the Broker
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-broker-channel
+  namespace: knative-demo
+data:
+  channel-template-spec: |
+    apiVersion: messaging.knative.dev/v1
+    kind: InMemoryChannel
+---
 apiVersion: eventing.knative.dev/v1
 kind: Broker
 metadata:
   name: default
-  namespace: production
+  namespace: knative-demo
   annotations:
     eventing.knative.dev/broker.class: MTChannelBasedBroker
 spec:
   config:
     apiVersion: v1
     kind: ConfigMap
-    name: config-br-default-channel
-    namespace: knative-eventing
+    name: demo-broker-channel
+    namespace: knative-demo
   delivery:
     retry: 5
     backoffPolicy: exponential
-    backoffDelay: "PT2S"
+    backoffDelay: PT2S
     deadLetterSink:
       ref:
         apiVersion: serving.knative.dev/v1
         kind: Service
         name: dead-letter-handler
 ---
-# 2. Trigger for order.created events -> Order Service
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: order-created-trigger
-  namespace: production
+  namespace: knative-demo
 spec:
   broker: default
   filter:
@@ -1052,12 +1020,11 @@ spec:
       kind: Service
       name: order-processor
 ---
-# 3. Trigger for payment.processed events -> Payment Service
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: payment-processed-trigger
-  namespace: production
+  namespace: knative-demo
 spec:
   broker: default
   filter:
@@ -1071,19 +1038,18 @@ spec:
   delivery:
     retry: 10
     backoffPolicy: exponential
-    backoffDelay: "PT5S"
+    backoffDelay: PT5S
     deadLetterSink:
       ref:
         apiVersion: serving.knative.dev/v1
         kind: Service
         name: payment-dead-letter
 ---
-# 4. Trigger for all events -> Analytics (no filter = catch-all)
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: analytics-trigger
-  namespace: production
+  namespace: knative-demo
 spec:
   broker: default
   subscriber:
@@ -1093,46 +1059,76 @@ spec:
       name: analytics-collector
 ```
 
-### CloudEvents Standard
+### Estándar CloudEvents
 
-Todos los componentes de Knative Eventing se comunican usando la especificación [CloudEvents](https://cloudevents.io/) (v1.0). CloudEvents define una envoltura común con atributos requeridos y opcionales:
+La entrega de eventos de Knative Eventing utiliza la especificación [CloudEvents](https://cloudevents.io/) (v1.0); las operaciones del plano de control de Kubernetes mantienen sus propias API. CloudEvents define un sobre común con atributos obligatorios y opcionales:
 
-| Atributo | Requerido | Ejemplo | Descripción |
+| Atributo | Obligatorio | Ejemplo | Descripción |
 |-----------|----------|---------|-------------|
 | `specversion` | Sí | `"1.0"` | Versión de la especificación CloudEvents. |
-| `type` | Sí | `"com.example.order.created"` | Tipo de evento. Usado para enrutamiento por Triggers. |
-| `source` | Sí | `"/orders/api"` | Origen del evento. Se combina con type para filtrado. |
-| `id` | Sí | `"evt-abc123"` | Identificador único del evento para deduplicación. |
-| `time` | No | `"2025-06-15T10:30:00Z"` | Timestamp de la ocurrencia del evento. |
+| `type` | Sí | `"com.example.order.created"` | Tipo de evento. Se usa para el enrutamiento mediante Triggers. |
+| `source` | Sí | `"/orders/api"` | Origen del evento. Se combina con el tipo para filtrar. |
+| `id` | Sí | `"evt-abc123"` | Identificador único dentro de su origen; deduplique con `(source, id)`. |
+| `time` | No | `"2025-06-15T10:30:00Z"` | Marca de tiempo de la ocurrencia del evento. |
 | `datacontenttype` | No | `"application/json"` | Tipo de contenido del atributo `data`. |
-| `subject` | No | `"order-12345"` | Sujeto del evento en el contexto de la fuente. |
-| `data` | No | `{"orderId": "12345"}` | Payload del evento. |
+| `subject` | No | `"order-12345"` | Asunto del evento en el contexto del origen. |
+| `data` | No | `{"orderId": "12345"}` | Carga del evento. |
 
-### Channel/Subscription Pattern
+#### Ejemplo de consumidor que solo confirma la recepción
 
-El patrón Channel/Subscription proporciona pub-sub directo sin filtrado basado en contenido. Cada Subscription en un Channel recibe cada evento.
+Guarde esta aplicación Flask independiente como `app.py` y ejecútela con un servidor WSGI. Valida CloudEvents y confirma su recepción; no implementa transacciones de pedidos/pagos ni procesamiento duradero. Los consumidores de aplicaciones deben completar la transacción/idempotencia prevista antes de confirmar.
+
+```python
+import json
+
+from flask import Flask, request
+from cloudevents.http import from_http
+
+
+def create_app():
+    app = Flask(__name__)
+    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+
+    @app.post("/")
+    def receive_event():
+        try:
+            event = from_http(request.headers, request.get_data())
+            metadata = {key: event[key] for key in ("source", "id", "type")}
+        except Exception:
+            # This boundary converts malformed input into a client error.
+            return "invalid CloudEvent", 400
+        app.logger.info("Received CloudEvent metadata: %s", json.dumps(metadata))
+        # Receipt-only demo. Real consumers must commit processing before acknowledging.
+        return "", 204
+
+    return app
+```
+
+### Patrón Channel/Subscription
+
+Cree primero todos los suscriptores/Channels de respuesta referenciados. Un destino de respuesta recibe un CloudEvent válido devuelto por el suscriptor; una respuesta vacía 204 de confirmación no genera un evento de respuesta. La durabilidad de Kafka también depende de la replicación/retención/confirmaciones del broker y de la gestión de errores, no solo del tipo KafkaChannel.
+
+El patrón Channel/Subscription proporciona pub-sub directo sin filtrado basado en contenido. Cada Subscription de un Channel recibe todos los eventos.
 
 ```yaml
-# 1. Create a Channel backed by Kafka for durability
-apiVersion: messaging.knative.dev/v1beta1
+apiVersion: messaging.knative.dev/v1
 kind: KafkaChannel
 metadata:
   name: audit-events
-  namespace: production
+  namespace: knative-demo
 spec:
   numPartitions: 6
   replicationFactor: 3
-  retentionDuration: PT168H  # 7 days
+  retentionDuration: PT168H
 ---
-# 2. Subscription: forward to audit logging service
 apiVersion: messaging.knative.dev/v1
 kind: Subscription
 metadata:
   name: audit-log-subscription
-  namespace: production
+  namespace: knative-demo
 spec:
   channel:
-    apiVersion: messaging.knative.dev/v1beta1
+    apiVersion: messaging.knative.dev/v1
     kind: KafkaChannel
     name: audit-events
   subscriber:
@@ -1146,15 +1142,14 @@ spec:
       kind: Service
       name: audit-response-handler
 ---
-# 3. Subscription: forward to compliance service
 apiVersion: messaging.knative.dev/v1
 kind: Subscription
 metadata:
   name: compliance-subscription
-  namespace: production
+  namespace: knative-demo
 spec:
   channel:
-    apiVersion: messaging.knative.dev/v1beta1
+    apiVersion: messaging.knative.dev/v1
     kind: KafkaChannel
     name: audit-events
   subscriber:
@@ -1170,41 +1165,140 @@ spec:
         name: dead-letter-handler
     retry: 3
     backoffPolicy: linear
-    backoffDelay: "PT10S"
+    backoffDelay: PT10S
 ```
 
 ### Dead Letter Sink
 
-Cuando la entrega de eventos falla después de agotar todos los retries, el evento se reenvía a un Dead Letter Sink (DLS). El DLS suele ser un Knative Service que persiste los eventos fallidos para análisis o replay posterior.
+Cuando la política de entrega configurada no puede entregar un evento a su suscriptor, la implementación puede intentar enviarlo al DLS configurado. El controlador debe persistirlo/procesarlo antes de confirmar; el nombre de un Service DLS o una variable S3_BUCKET por sí solos no crean comportamiento de almacenamiento, permisos ni una garantía de que no se pierdan datos.
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dead-letter-writer
+  namespace: knative-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/KnativeDeadLetterWriterRole
+---
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: dead-letter-handler
-  namespace: production
+  namespace: knative-demo
+  labels:
+    networking.knative.dev/visibility: cluster-local
 spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/min-scale: "1"
+        autoscaling.knative.dev/min-scale: '1'
     spec:
       containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/dead-letter:v1.0.0
-          env:
-            - name: S3_BUCKET
-              value: "failed-events-production"
-            - name: AWS_REGION
-              value: "us-west-2"
+      - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/dead-letter:v1.0.0
+        env:
+        - name: S3_BUCKET
+          value: REPLACE_WITH_EXISTING_BUCKET
+        - name: AWS_REGION
+          value: us-west-2
+        ports:
+        - containerPort: 8080
+        command:
+        - gunicorn
+        args:
+        - --bind
+        - 0.0.0.0:8080
+        - --workers
+        - '1'
+        - --threads
+        - '4'
+        - --timeout
+        - '90'
+        - --graceful-timeout
+        - '60'
+        - app:create_app()
+      serviceAccountName: dead-letter-writer
+      timeoutSeconds: 60
 ```
 
-Configura DLS a nivel de Broker (se aplica a todos los Triggers) o a nivel individual de Trigger/Subscription para control detallado.
+La configuración de entrega puede existir en los niveles de Broker, Trigger y Subscription, con compatibilidad y herencia específicas de la implementación. Verifique la clase seleccionada y su estado, incluido el DLS resuelto. Un DLS configurado también puede fallar; no garantiza que no se pierdan datos.
 
-### Event Filtering
+#### Ejemplo de controlador de mensajes fallidos respaldado por S3
 
-Los Triggers soportan filtrado por atributos y extensiones de CloudEvent.
+Compile este archivo `app.py` independiente con Flask, CloudEvents, boto3 y Gunicorn. Use un bucket protegido existente, un ServiceAccount de carga de trabajo dedicado con permiso `s3:PutObject` limitado, los permisos KMS necesarios y una ruta de red verificada. Configure `S3_BUCKET` y `AWS_REGION`; no incruste credenciales estáticas de AWS. El contenedor debe ejecutar `gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 --timeout 90 --graceful-timeout 60 app:create_app()`. Ajuste estos tiempos de espera de ejemplo a los valores de terminación de Knative/proxy/Pod.
 
-#### Attribute Filtering
+```python
+import base64
+import hashlib
+import json
+import os
+
+import boto3
+from botocore.config import Config
+from botocore.exceptions import BotoCoreError, ClientError
+from cloudevents.http import from_http
+from flask import Flask, request
+
+
+def create_app(s3_client=None):
+    app = Flask(__name__)
+    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+    bucket = os.environ["S3_BUCKET"]
+    if s3_client is None:
+        # Create once per application worker; IRSA/Pod Identity uses the credential chain.
+        s3_client = boto3.client(
+            "s3", region_name=os.environ["AWS_REGION"],
+            config=Config(connect_timeout=3, read_timeout=10,
+                          retries={"mode": "standard", "total_max_attempts": 2}),
+        )
+
+    @app.post("/")
+    def store_dead_letter():
+        raw_body = request.get_data()
+        try:
+            event = from_http(request.headers, raw_body)
+            source, event_id = str(event["source"]), str(event["id"])
+        except Exception:
+            return "invalid CloudEvent", 400
+        identity = json.dumps([source, event_id], ensure_ascii=False,
+                              separators=(",", ":")).encode("utf-8")
+        key = "dead-letters/" + hashlib.sha256(identity).hexdigest() + ".json"
+        record = {
+            "source": source, "id": event_id,
+            "content_type": request.headers.get("Content-Type", "application/octet-stream"),
+            # Preserve CloudEvents transport attributes, never Authorization/Cookie headers.
+            "ce_headers": {k.lower(): v for k, v in request.headers.items()
+                           if k.lower().startswith("ce-")},
+            "body_base64": base64.b64encode(raw_body).decode("ascii"),
+        }
+        try:
+            s3_client.put_object(
+                Bucket=bucket, Key=key,
+                Body=json.dumps(record, ensure_ascii=False).encode("utf-8"),
+                ContentType="application/json", IfNoneMatch="*",
+            )
+        except ClientError as exc:
+            # HTTP boundary: acknowledge a stored duplicate; retry other storage failures.
+            status = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+            if status == 412:
+                return "", 204
+            app.logger.error("DLS storage failed: %s", exc.response.get("Error", {}).get("Code"))
+            return "storage unavailable", 503
+        except BotoCoreError as exc:
+            app.logger.error("DLS storage unavailable: %s", type(exc).__name__)
+            return "storage unavailable", 503
+        return "", 204
+
+    return app
+```
+
+El controlador almacena el cuerpo original en Base64 y solo los encabezados de transporte de CloudEvents, por lo que conserva los eventos binarios y excluye los encabezados Authorization/Cookie. Una clave determinista `(source, id)` junto con una escritura condicional evita sobrescribir un evento existente; 412 confirma la existencia de una clave, mientras que 409 y otros errores de almacenamiento devuelven 503 para que se reintente según la política de entrega. La retención/eliminación y la reutilización de ID por parte del productor afectan la deduplicación; esto no garantiza un procesamiento empresarial exactamente una vez. Se rechazan las solicitudes de más de 1 MiB. El código se probó con simulaciones locales, no con un bucket activo ni una implementación de Eventing.
+
+### Filtrado de eventos
+
+Los Triggers admiten el filtrado por atributos y extensiones de CloudEvent.
+
+#### Filtrado de atributos
 
 ```yaml
 spec:
@@ -1214,11 +1308,11 @@ spec:
       source: /orders/api
 ```
 
-Este Trigger se activa solo cuando tanto `type` COMO `source` coinciden (AND lógico).
+Este Trigger se activa solo cuando coinciden `type` Y `source` (AND lógico).
 
-#### Extension Filtering
+#### Filtrado de extensiones
 
-Puedes filtrar por extensiones personalizadas de CloudEvent establecidas por los productores:
+Puede filtrar por extensiones personalizadas de CloudEvent establecidas por los productores:
 
 ```yaml
 spec:
@@ -1228,16 +1322,16 @@ spec:
       myextension: priority-high
 ```
 
-#### Multiple Triggers for OR Logic
+#### Varios Triggers para la lógica OR
 
-Dado que el filtro de un solo Trigger es solo AND, usa múltiples Triggers en el mismo subscriber para lógica OR:
+`spec.filter.attributes` heredado combina atributos con AND. El `spec.filters` actual admite expresiones más avanzadas, como `any`, `all` y `not`. Los Triggers múltiples son otra opción, pero las coincidencias superpuestas pueden producir duplicados. Use una forma de filtro a la vez y verifique la compatibilidad del broker:
 
 ```yaml
-# Trigger 1: react to order.created
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: order-created
+  namespace: knative-demo
 spec:
   broker: default
   filter:
@@ -1249,11 +1343,11 @@ spec:
       kind: Service
       name: notification-service
 ---
-# Trigger 2: also react to order.cancelled
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: order-cancelled
+  namespace: knative-demo
 spec:
   broker: default
   filter:
@@ -1268,413 +1362,529 @@ spec:
 
 ---
 
-## KEDA vs Knative Comparison
+## Comparación entre KEDA y Knative {#keda-vs-knative-comparison}
 
-Tanto KEDA como Knative permiten escalado event-driven en Kubernetes, pero operan en distintos niveles de abstracción y cumplen roles complementarios.
+Tanto KEDA como Knative permiten el escalado basado en eventos en Kubernetes, pero operan en distintos niveles de abstracción y cumplen funciones complementarias.
 
-### Scaling Model Differences
+### Diferencias en el modelo de escalado
 
 | Aspecto | KEDA | Knative |
 |--------|------|---------|
-| **Nivel de abstracción** | Extiende HPA con fuentes de métricas personalizadas | Plataforma serverless completa (deployment, routing, scaling) |
-| **Mecanismo de escalado** | Crea/administra recursos HPA | Controller KPA personalizado o delegación a HPA |
-| **Métrica principal** | Métricas externas (profundidad de cola, filas DB, personalizadas) | Concurrencia HTTP / RPS |
-| **Tipo de workload** | Cualquier Deployment, StatefulSet, Job | Knative Service (administra su propio Deployment) |
-| **CRDs** | ScaledObject, ScaledJob, TriggerAuthentication | Service, Configuration, Revision, Route |
-| **Routing integrado** | No | Sí (traffic splitting, revisions, canary) |
-| **Eventing integrado** | No (se centra solo en escalado) | Sí (Broker/Trigger, Channel/Subscription) |
+| **Nivel de abstracción** | Amplía HPA con fuentes de métricas personalizadas | Plataforma serverless completa (implementación, enrutamiento, escalado) |
+| **Mecanismo de escalado** | ScaledObject: activación del operador más HPA; ScaledJob: creación directa de Jobs | KPA o la extensión HPA opcional |
+| **Métrica principal** | Métricas externas (profundidad de colas, filas de BD, personalizadas) | Concurrencia HTTP / RPS |
+| **Tipo de carga de trabajo** | Cualquier Deployment, StatefulSet o Job | Knative Service (administra su propio Deployment) |
+| **CRD** | ScaledObject, ScaledJob, TriggerAuthentication | Service, Configuration, Revision, Route |
+| **Enrutamiento integrado** | No | Sí (división del tráfico, revisiones, canary) |
+| **Eventing integrado** | No (se centra solo en el escalado) | Sí (Broker/Trigger, Channel/Subscription) |
 
-### Scale-to-Zero Behavior Differences
+### Diferencias en el comportamiento del escalado a cero
 
 | Comportamiento | KEDA | Knative (KPA) |
 |----------|------|---------------|
-| Trigger de scale-to-zero | El valor de la métrica cae a 0 o por debajo del umbral | Sin solicitudes HTTP durante un periodo de gracia configurable |
-| Mecanismo de activación | KEDA Operator establece replicas de 0 a `minReplicaCount` cuando métrica > 0 | Activator almacena solicitudes HTTP en buffer y activa scale-up |
-| Buffering de solicitudes | No (no es consciente de HTTP) | Sí (Activator almacena en buffer durante cold start) |
-| Periodo de cool-down | `cooldownPeriod` en ScaledObject | `scale-to-zero-grace-period` + `stable-window` |
-| Scale-to-zero para Jobs | Sí (ScaledJob) | No (Serving solo maneja procesos de larga duración) |
+| Desencadenante del escalado a cero | Los desencadenantes de activación configurados quedan inactivos con cero habilitado; también importan el comportamiento de cooldown/errores | Elegibilidad por inactividad/escalado hacia abajo, retención y preparación del enrutamiento |
+| Mecanismo de activación | El operador activa las réplicas distintas de cero según la configuración de desencadenador/mínimo/inactividad | Activator almacena solicitudes en búfer dentro de límites y activa el escalado |
+| Almacenamiento de solicitudes en búfer | KEDA principal no almacena solicitudes HTTP en búfer; existe un complemento HTTP independiente | Activator las almacena en búfer dentro de los límites de capacidad y tiempo de espera |
+| Período de cooldown | `cooldownPeriod` en ScaledObject | `scale-to-zero-grace-period` + `stable-window` |
+| Jobs | ScaledJob deja de crear Jobs mientras está inactivo; los Jobs existentes pueden continuar | Serving administra Revisions de cargas de trabajo HTTP, no el ciclo de vida de Jobs por lotes |
 
-### Roles in Event-Driven Architecture
+### Funciones en una arquitectura basada en eventos
 
-```mermaid
-flowchart LR
-    subgraph EVENTS["Event Sources"]
-        SQS[Amazon SQS]
-        KAFKA[Apache Kafka]
-        HTTP[HTTP Requests]
-    end
+![ScaledObject de KEDA usa la activación del operador y HPA para las réplicas distintas de cero de workers; ScaledJob crea Jobs por separado. Knative Eventing enruta CloudEvents a los consumidores configurados, cuyo escalado y almacenamiento en búfer dependen de su implementación.](../.gitbook/assets/en-autoscaling-03-knative-4.png)
 
-    subgraph KEDA_DOMAIN["KEDA Domain"]
-        SO[ScaledObject]
-        HPA[HPA]
-        WORKER[Worker Deployment]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-4.html)
 
-    subgraph KNATIVE_DOMAIN["Knative Domain"]
-        BR[Broker]
-        TR[Trigger]
-        KSVC[Knative Service]
-    end
+### Cuándo usar KEDA o Knative
 
-    SQS -->|"Queue depth metric"| SO
-    SO --> HPA --> WORKER
-
-    KAFKA -->|"CloudEvents"| BR
-    HTTP -->|"CloudEvents"| BR
-    BR --> TR --> KSVC
-
-    style KEDA_DOMAIN fill:#e1f5fe
-    style KNATIVE_DOMAIN fill:#e8f5e9
-```
-
-### When to Use KEDA vs Knative
-
-| Caso de uso | Recomendado | Razón |
+| Caso de uso | Recomendación | Motivo |
 |----------|-------------|--------|
-| Escalar workers según profundidad de cola SQS | **KEDA** | KEDA tiene un scaler SQS nativo; no se necesita routing HTTP. |
-| Desplegar APIs HTTP con auto-scaling y traffic splitting | **Knative** | Serving proporciona gestión de revisiones, traffic splitting y autoscaling consciente de HTTP. |
-| Escalar según métricas de Prometheus | **KEDA** | El scaler de Prometheus de KEDA es maduro y bien probado. |
-| Microservices event-driven con CloudEvents | **Knative** | Eventing proporciona Broker/Trigger, gestión de dead letter y soporte de CloudEvents. |
-| Escalar CronJobs o workloads batch | **KEDA** | ScaledJob está diseñado para esto. Knative Serving es para procesos de larga duración. |
-| Escalar según CPU/memory con scale-to-zero | **KEDA** | El KPA de Knative se centra en concurrencia/RPS, no en CPU/memory. |
-| Plataforma serverless para desarrolladores | **Knative** | Abstracción de mayor nivel; los desarrolladores despliegan con `kn service create`. |
+| Escalar workers según la profundidad de la cola SQS | **KEDA** | KEDA tiene un escalador SQS nativo; no se necesita enrutamiento HTTP. |
+| Implementar API HTTP con escalado automático y división del tráfico | **Knative** | Serving proporciona administración de revisiones, división del tráfico y escalado automático compatible con HTTP. |
+| Escalar según métricas de Prometheus | **KEDA** | El escalador de Prometheus de KEDA es maduro y está bien probado. |
+| Microservicios basados en eventos con CloudEvents | **Knative** | Eventing proporciona Broker/Trigger, gestión de mensajes fallidos y compatibilidad con CloudEvents. |
+| Jobs programados / procesamiento por lotes basado en eventos | **CronJob / KEDA** | Use CronJob de Kubernetes para un Job programado; ScaledJob crea Jobs según la demanda de eventos. Un Trigger Cron de KEDA proporciona un objetivo de réplicas basado en una ventana, no escala un CronJob. |
+| CPU/memoria más activación desde cero | **Requiere una señal de activación externa** | Las métricas que solo usan CPU/memoria no pueden medir un worker ausente; combine un desencadenante de eventos apropiado en lugar de prometer activación desde cero con esas métricas por sí solas. |
+| Plataforma serverless para desarrolladores | **Knative** | Abstracción de nivel superior; los desarrolladores implementan mediante `kn service create`. |
 
-### Using KEDA and Knative Together
+### Uso conjunto de KEDA y Knative
 
-KEDA y Knative no son mutuamente excluyentes. Una arquitectura común usa:
+KEDA y Knative no se excluyen mutuamente. Una arquitectura habitual usa:
 
-- **Knative Serving** para services orientados a HTTP (APIs, aplicaciones web) con autoscaling basado en concurrencia.
-- **KEDA** para workers en segundo plano (consumidores de colas, procesadores batch) con autoscaling basado en métricas externas.
-- **Knative Eventing** para enrutar eventos entre services, incluidos workers escalados por KEDA mediante SinkBinding.
+- **Knative Serving** para servicios orientados a HTTP (API y aplicaciones web) con escalado automático basado en la concurrencia.
+- **KEDA** para workers en segundo plano (consumidores de colas y procesadores por lotes) con escalado automático basado en métricas externas.
+- **Knative Eventing** para el enrutamiento de eventos. SinkBinding configura el destino/anulaciones de los productores; no permite activar un worker HTTP arbitrario con cero réplicas. Use una ruta adecuada de cola/adaptador y un único responsable del escalado por carga de trabajo.
 
 ```yaml
-# Knative Service: receives HTTP events from Broker
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-aws-credentials
+  namespace: knative-demo
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda
+---
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: event-enricher
+  namespace: knative-demo
 spec:
   template:
     spec:
       containers:
-        - image: event-enricher:v1
+      - image: event-enricher:v1
 ---
-# KEDA ScaledObject: scales a Deployment based on SQS queue depth
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: sqs-worker-scaler
+  namespace: knative-demo
 spec:
   scaleTargetRef:
     name: sqs-worker
   minReplicaCount: 0
   maxReplicaCount: 100
   triggers:
-    - type: aws-sqs-queue
-      metadata:
-        queueURL: https://sqs.us-west-2.amazonaws.com/123456789012/enriched-events
-        queueLength: "5"
-        awsRegion: us-west-2
-      authenticationRef:
-        name: keda-aws-credentials
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: https://sqs.us-west-2.amazonaws.com/123456789012/enriched-events
+      queueLength: '5'
+      awsRegion: us-west-2
+    authenticationRef:
+      name: keda-aws-credentials
 ```
 
 ---
 
-## Production Operations
+## Operaciones en producción {#production-operations}
 
-### Resource Limits and QoS
+### Límites de recursos y QoS
 
-En producción, establece siempre resource requests y limits tanto para el contenedor de tu aplicación como para el sidecar Queue Proxy. Esto garantiza que los pods obtengan una clase QoS `Guaranteed` o `Burstable`, evitando OOM kills y problemas de noisy-neighbor.
-
-```yaml
-# Global Queue Proxy resources (config-deployment ConfigMap)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-deployment
-  namespace: knative-serving
-data:
-  queue-sidecar-cpu-request: "50m"
-  queue-sidecar-cpu-limit: "500m"
-  queue-sidecar-memory-request: "100Mi"
-  queue-sidecar-memory-limit: "256Mi"
-  # Enforce resource limits on all revisions
-  queue-sidecar-token-audiences: ""
-```
-
-### Revision Garbage Collection
-
-Con el tiempo, se acumulan Revisions antiguas. Configura garbage collection para limitar el número de Revisions retenidas:
+Planifique las solicitudes y límites para los contenedores de la aplicación y Queue Proxy según las necesidades de la carga de trabajo medidas. QoS depende de todos los contenedores relevantes: Guaranteed requiere solicitudes y límites de CPU/memoria coincidentes y distintos de cero; otros presupuestos especificados suelen ser Burstable. Ninguna de las clases evita OOM, desalojos o interferencias, y un límite de memoria puede provocar un OOM kill.
 
 ```yaml
-# config-gc ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-gc
-  namespace: knative-serving
-data:
-  # Minimum number of non-active Revisions to retain
-  min-non-active-revisions: "2"
-  # Maximum number of non-active Revisions to retain
-  max-non-active-revisions: "10"
-  # Duration to retain non-active Revisions (Go duration format)
-  retain-since-create-time: "48h"
-  retain-since-last-active-time: "24h"
-  # Minimum staleness before a Revision is eligible for GC
-  min-stale-revision-create-delay: "24h"
-```
-
-### High Availability Configuration
-
-Para workloads de producción, configura los componentes de Knative Serving para alta disponibilidad:
-
-```yaml
-apiVersion: operator.knative.dev/v1beta1
-kind: KnativeServing
-metadata:
-  name: knative-serving
-  namespace: knative-serving
 spec:
-  version: "1.16.0"
+  config:
+    deployment:
+      queue-sidecar-cpu-request: 50m
+      queue-sidecar-cpu-limit: 500m
+      queue-sidecar-memory-request: 400Mi
+      queue-sidecar-memory-limit: 800Mi
+```
+
+Guárdelo como serving-deployment.patch.yaml y combínelo con el recurso Operator; no es un ConfigMap independiente.
+
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-deployment.patch.yaml
+```
+
+### Recolección de basura de Revisions
+
+Con el tiempo, se acumulan Revisions antiguas. Configure la recolección de basura para limitar el número de Revisions conservadas:
+
+```yaml
+spec:
+  config:
+    gc:
+      min-non-active-revisions: '2'
+      max-non-active-revisions: '10'
+      retain-since-create-time: 48h
+      retain-since-last-active-time: 24h
+```
+
+Guárdelo como serving-gc.patch.yaml y combínelo con el recurso Operator; no es un ConfigMap independiente.
+
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-gc.patch.yaml
+```
+
+### Configuración de alta disponibilidad
+
+Para cargas de trabajo de producción, configure los componentes de Knative Serving para obtener alta disponibilidad:
+
+```yaml
+spec:
+  version: 1.23.0
   high-availability:
     replicas: 3
   ingress:
     kourier:
       enabled: true
   workloads:
-    - name: activator
-      replicas: 3
-      resources:
-        requests:
-          cpu: "300m"
-          memory: "256Mi"
-        limits:
-          cpu: "1000m"
-          memory: "512Mi"
-    - name: controller
-      replicas: 2
-    - name: webhook
-      replicas: 2
+  - name: activator
+    replicas: 3
+    resources:
+    - container: activator
+      requests:
+        cpu: 300m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+  - name: controller
+    replicas: 2
+  - name: webhook
+    replicas: 2
 ```
 
-Además, configura Pod Disruption Budgets para los componentes del sistema Knative:
+Guarde este parche de combinación de Operator como serving-ha.patch.yaml; conserve las entradas/listas de cargas de trabajo existentes. Verifique la ubicación, los recursos y el comportamiento ante errores, en vez de asumir que las réplicas por sí solas proporcionan alta disponibilidad.
 
-```yaml
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: activator-pdb
-  namespace: knative-serving
-spec:
-  minAvailable: 2
-  selector:
-    matchLabels:
-      app: activator
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: controller-pdb
-  namespace: knative-serving
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: controller
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-ha.patch.yaml
 ```
 
-Distribuye los pods del sistema entre Availability Zones usando topology constraints:
+Además, configure Pod Disruption Budgets para los componentes del sistema de Knative:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: activator
-  namespace: knative-serving
 spec:
-  template:
-    spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: activator
+  podDisruptionBudgets:
+  - name: activator-pdb
+    minAvailable: 2
+  - name: webhook-pdb
+    minAvailable: 1
 ```
 
-### Monitoring with Prometheus
+Guárdelo como serving-pdb.patch.yaml y aplíquelo al recurso KnativeServing. Esto reemplaza los PDB existentes administrados por Operator; limita los desalojos voluntarios y no garantiza la disponibilidad del servicio.
 
-Knative Serving y Eventing exponen métricas de Prometheus. Configura un ServiceMonitor (para Prometheus Operator) o una scrape config para recopilarlas.
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-pdb.patch.yaml
+```
+
+Distribuya los Pods del sistema entre las zonas de disponibilidad mediante restricciones de distribución de topología:
 
 ```yaml
-# ServiceMonitor for Knative Serving components
+spec:
+  workloads:
+  - name: activator
+    topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app: activator
+      minDomains: 3
+```
+
+Este fragmento de Operator requiere tres zonas aptas y capacidad suficiente; DoNotSchedule puede dejar Pods pendientes. Combínelo con las anulaciones existentes de cargas de trabajo antes de aplicarlo.
+
+### Supervisión con Prometheus
+
+Knative 1.23 usa OpenTelemetry y la exportación de métricas está desactivada de forma predeterminada. Este ejemplo presupone que existe una implementación de Prometheus/Prometheus Operator. Habilite su receptor OTLP (`--web.enable-otlp-receiver` o la configuración equivalente admitida por Operator), restrinja adecuadamente el acceso y configure la promoción de atributos de recursos. Lo siguiente es un **fragmento de configuración nativa de Prometheus**, no valores de Helm; compruebe la compatibilidad con la versión de Prometheus instalada:
+
+```yaml
+otlp:
+  translation_strategy: UnderscoreEscapingWithSuffixes
+  convert_histograms_to_nhcb: false
+  promote_resource_attributes:
+  - k8s.namespace.name
+  - k8s.pod.name
+  - kn.service.name
+  - kn.configuration.name
+  - kn.revision.name
+```
+
+Configure el recurso Serving administrado por Operator con este parche de combinación, guardado como `serving-metrics.patch.yaml`. Reemplace el endpoint por el receptor OTLP real; no se garantiza que exista de antemano un Service con ese nombre. Esta configuración recopila métricas del plano de control y envía métricas de solicitudes, por lo que no recopila el puerto administrativo de Queue Proxy:
+
+```yaml
+spec:
+  config:
+    observability:
+      metrics-protocol: prometheus
+      request-metrics-protocol: http/protobuf
+      request-metrics-endpoint: http://prometheus-operated.monitoring.svc.cluster.local:9090/api/v1/otlp/v1/metrics
+      request-metrics-export-interval: 10s
+```
+
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-metrics.patch.yaml
+kubectl patch knativeeventing knative-eventing -n knative-eventing --type merge --patch '{"spec":{"config":{"observability":{"metrics-protocol":"prometheus"}}}}'
+kubectl get service prometheus-operated -n monitoring
+```
+
+El selector ServiceMonitor siguiente coincide con los Services del plano de control publicados y su puerto de Service `http-metrics`. El namespace/las etiquetas también deben coincidir con los selectores de monitor del recurso Prometheus. Verifique los endpoints instalados después de la configuración o de cualquier rollout necesario:
+
+```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: knative-serving
+  name: knative-serving-control-plane
   namespace: monitoring
   labels:
     release: prometheus
 spec:
   namespaceSelector:
     matchNames:
-      - knative-serving
+    - knative-serving
   selector:
-    matchLabels:
-      app.kubernetes.io/part-of: knative
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - controller
+      - webhook
+      - autoscaler
+      - activator
   endpoints:
-    - port: metrics
-      interval: 15s
-      path: /metrics
----
-# ServiceMonitor for application-level metrics (Queue Proxy)
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: knative-revisions
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  namespaceSelector:
-    any: true
-  selector:
-    matchLabels:
-      serving.knative.dev/service: ""
-  endpoints:
-    - port: http-usermetric
-      interval: 10s
-      path: /metrics
-    - port: http-queueadm
-      interval: 10s
-      path: /metrics
+  - port: http-metrics
+    path: /metrics
+    interval: 30s
+    honorLabels: true
 ```
 
-**Métricas clave para monitorear:**
+**Vocabulario actual de métricas** (nombres de instrumentos OTel; la traducción seleccionada de Prometheus sustituye los puntos y agrega sufijos de unidad reales):
 
-| Métrica | Componente | Descripción |
-|--------|-----------|-------------|
-| `revision_app_request_count` | Queue Proxy | Conteo total de solicitudes por Revision. |
-| `revision_app_request_latencies` | Queue Proxy | Histograma de latencia de solicitudes. |
-| `revision_request_concurrency` | Queue Proxy | Conteo actual de solicitudes en curso por pod. |
-| `activator_request_count` | Activator | Solicitudes gestionadas por el Activator (indica cold starts). |
-| `autoscaler_desired_pods` | Autoscaler | Conteo deseado de replicas por Revision. |
-| `autoscaler_actual_pods` | Autoscaler | Conteo actual real de replicas. |
-| `autoscaler_panic_mode` | Autoscaler | Si el Autoscaler está en modo panic (1 = sí). |
-| `controller_reconcile_count` | Controller | Conteo de reconciliación por tipo de recurso y resultado. |
-| `broker_event_count` | Eventing | Eventos procesados por cada Broker. |
-| `trigger_filter_event_count` | Eventing | Eventos que pasaron/fallaron el filtro del Trigger. |
+| Instrumento | Significado |
+|---|---|
+| `kn.serving.invocation.duration` | Histograma de duración de finalización de solicitudes en segundos; su recuento permite derivar la tasa de solicitudes completadas. |
+| `kn.serving.queue.depth` | Muestra de cola/solicitudes en curso de Queue Proxy; no es un recuento global exacto y siempre actualizado de la concurrencia. |
+| `kn.revision.pods.desired` / `kn.revision.pods.requested` / `kn.revision.pods.count` | Indicadores de Pods deseados, solicitados y actualmente asignados por Autoscaler. |
+| `kn.revision.pods.not_ready.count` / `kn.revision.pods.pending.count` | Indicadores de Pods no listos/pendientes. |
+| `kn.revision.concurrency.stable` / `kn.revision.concurrency.panic` | Promedios de concurrencia por Pod observado durante las dos ventanas; no los vuelva a dividir por el recuento de Pods. |
+| `kn.revision.request.concurrency` | Solicitudes enrutadas a través de Activator; el tráfico de Activator no equivale a un contador de arranques en frío. |
+| `kn.workqueue.depth` / `kn.workqueue.process.duration` | Profundidad de cola y duración de procesamiento de las colas del controlador. |
 
-### Grafana Dashboard
+Las métricas de Eventing para brokers/fuentes/backend varían según la implementación. Su página oficial de métricas advierte que algunas partes de la antigua tabla de OpenCensus aún no han completado la migración; no suponga que existen `broker_event_count` o `trigger_filter_event_count`. Inspeccione las métricas exportadas y el estado de entrega de la implementación seleccionada. En esta auditoría no se realizó ninguna recopilación en tiempo real ni exportación de trazas.
 
-Importa o crea un dashboard de Grafana que visualice las métricas de Knative anteriores. A continuación se muestra un modelo JSON para un dashboard básico de resumen de Knative:
+### Dashboard de Grafana
+
+Esta es una definición JSON de dashboard, no el contenedor `dashboard` de la API HTTP. Reemplace el UID de la fuente de datos antes de importarlo. Las consultas presuponen la estrategia de traducción, los buckets de histogramas clásicos y los atributos promocionados anteriores; deben comprobarse el endpoint/las etiquetas de recopilación y la agregación en su implementación. La serie de la ventana panic no es un indicador booleano del modo de pánico, y puede haber actividad de Activator aunque las réplicas no sean cero:
 
 ```json
 {
-  "dashboard": {
-    "title": "Knative Overview",
-    "panels": [
-      {
-        "title": "Request Rate by Revision",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "sum(rate(revision_app_request_count[5m])) by (revision_name)",
-            "legendFormat": "{{revision_name}}"
-          }
-        ]
+  "id": null,
+  "uid": "knative-demo-overview",
+  "title": "Knative Demo Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Completed Request Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
       },
-      {
-        "title": "Request Latency P99",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(revision_app_request_latencies_bucket[5m])) by (le, revision_name))",
-            "legendFormat": "{{revision_name}}"
-          }
-        ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
       },
-      {
-        "title": "Concurrency per Pod",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "avg(revision_request_concurrency) by (revision_name)",
-            "legendFormat": "{{revision_name}}"
-          }
-        ]
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
       },
-      {
-        "title": "Desired vs Actual Pods",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "autoscaler_desired_pods",
-            "legendFormat": "desired - {{revision_name}}"
-          },
-          {
-            "expr": "autoscaler_actual_pods",
-            "legendFormat": "actual - {{revision_name}}"
-          }
-        ]
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (k8s_namespace_name, kn_revision_name) (rate(kn_serving_invocation_duration_seconds_count{k8s_namespace_name=\"knative-demo\"}[5m]))",
+          "legendFormat": "{{kn_revision_name}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Request Duration P99",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
       },
-      {
-        "title": "Activator Requests (Cold Starts)",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "sum(rate(activator_request_count[5m])) by (revision_name)",
-            "legendFormat": "{{revision_name}}"
-          }
-        ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
       },
-      {
-        "title": "Autoscaler Panic Mode",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "autoscaler_panic_mode",
-            "legendFormat": "{{revision_name}}"
-          }
-        ]
-      }
-    ]
-  }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.99, sum by (le, k8s_namespace_name, kn_revision_name) (rate(kn_serving_invocation_duration_seconds_bucket{k8s_namespace_name=\"knative-demo\"}[5m])))",
+          "legendFormat": "{{kn_revision_name}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Queue Depth Sample",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_serving_queue_depth{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "{{kn_revision_name}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Desired and Actual Pods",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_revision_pods_desired{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "{{kn_revision_name}}"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_revision_pods_count{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "actual {{kn_revision_name}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Stable and Panic Window Concurrency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_revision_concurrency_stable{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "{{kn_revision_name}}"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_revision_concurrency_panic{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "panic window {{kn_revision_name}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Requests Through Activator",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (k8s_namespace_name, kn_revision_name) (kn_revision_request_concurrency{k8s_namespace_name=\"knative-demo\"})",
+          "legendFormat": "{{kn_revision_name}}"
+        }
+      ]
+    }
+  ]
 }
 ```
 
-### Troubleshooting
+Guárdelo como `knative-overview.json`. Un sidecar de Grafana puede cargarlo desde un ConfigMap solo si está configurada la selección de etiquetas/namespace; no incruste un contenedor `dashboard` adicional. La representación en Grafana y la ingesta real de métricas siguen sin verificarse.
 
-#### Cold Start Latency Is Too High
+```bash
+kubectl create configmap knative-serving-dashboard -n monitoring --from-file=knative-serving.json=knative-overview.json --dry-run=client -o yaml | kubectl apply -f -
+kubectl label configmap knative-serving-dashboard -n monitoring grafana_dashboard=1 --overwrite
+```
 
-**Síntomas:** La primera solicitud después de un periodo idle tarda varios segundos.
+### Solución de problemas
+
+Los cambios en anotaciones con alcance de Revision deben borrar el valor existente de `spec.template.metadata.name` (`null` en un parche de combinación JSON) o usar un nombre de Revision nuevo y sin usar. Para aplicar la nueva configuración a todo el Service de demostración, establezca `spec.traffic` en `[{"latestRevision": true, "percent": 100}]`. Esto reemplaza cualquier división canary o enrutamiento fijado a una Revision; si esas rutas deben conservarse, valide la nueva Revision en una ruta de prueba independiente antes de cambiar el tráfico.
+
+#### La latencia de arranque en frío es demasiado alta
+
+**Síntomas:** La primera solicitud tras un período de inactividad tarda varios segundos.
 
 **Diagnóstico:**
 
 ```bash
 # Check if the Revision is scaled to zero
-kubectl get ksvc order-api -n production -o jsonpath='{.status.conditions}' | jq .
+kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.conditions}' | jq .
 
 # Check Activator logs for buffering duration
 kubectl logs -l app=activator -n knative-serving --tail=50
 
 # Check pod startup time
-kubectl get pods -l serving.knative.dev/service=order-api -n production \
+kubectl get pods -l serving.knative.dev/service=order-api -n knative-demo \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions}{"\n"}{end}'
 ```
 
 **Soluciones:**
-1. Establece `autoscaling.knative.dev/min-scale: "1"` para mantener al menos un pod warm.
-2. Reduce el tamaño de la imagen del contenedor.
-3. Usa readiness probes con intervalos cortos.
-4. Pre-pull de imágenes usando un DaemonSet.
+1. Establezca `autoscaling.knative.dev/min-scale: "1"` para mantener al menos un Pod listo.
+2. Reduzca el tamaño de la imagen del contenedor.
+3. Use sondas de preparación con intervalos cortos.
+4. Descargue previamente las imágenes mediante un DaemonSet.
 
-#### Scaling Is Too Slow or Oscillating
+#### El escalado es demasiado lento o presenta oscilaciones
 
-**Síntomas:** El conteo de pods no sigue la carga, o escala hacia arriba y abajo repetidamente.
+**Síntomas:** El recuento de Pods no se mantiene al ritmo de la carga o escala repetidamente hacia arriba y hacia abajo.
 
 **Diagnóstico:**
 
@@ -1683,17 +1893,17 @@ kubectl get pods -l serving.knative.dev/service=order-api -n production \
 kubectl logs -l app=autoscaler -n knative-serving --tail=100
 
 # View current scale decisions
-kubectl get podautoscaler -n production
-kubectl describe podautoscaler order-api-00001 -n production
+kubectl get podautoscaler -n knative-demo
+kubectl describe podautoscaler order-api-00001 -n knative-demo
 ```
 
 **Soluciones:**
-1. Reduce `stable-window` para reacciones más rápidas (por ejemplo, `30s`).
-2. Aumenta `target-utilization-percentage` para permitir más headroom antes de escalar hacia arriba.
-3. Ajusta `panic-window-percentage` y `panic-threshold-percentage` para manejar ráfagas.
-4. Si usas la clase HPA, aumenta `--horizontal-pod-autoscaler-sync-period`.
+1. Reduzca `stable-window` para lograr una respuesta más rápida (por ejemplo, `30s`).
+2. Baje el uso objetivo cuando necesite más capacidad disponible; subirlo generalmente hace que cada Pod gestione más carga antes de escalar.
+3. Ajuste `panic-window-percentage` y `panic-threshold-percentage` para gestionar ráfagas.
+4. La sincronización de HPA es una configuración independiente del plano de control; aumentar su período ralentiza el muestreo. No dé por hecho que EKS expone esa marca. Inspeccione el comportamiento de HPA compatible, la disponibilidad de métricas y los límites de la carga de trabajo.
 
-#### Events Not Being Delivered
+#### Los eventos no se entregan
 
 **Síntomas:** Se producen eventos, pero los Triggers no se activan.
 
@@ -1701,28 +1911,28 @@ kubectl describe podautoscaler order-api-00001 -n production
 
 ```bash
 # Verify Broker is ready
-kubectl get broker default -n production -o yaml
+kubectl get broker default -n knative-demo -o yaml
 
 # Check Trigger status
-kubectl get triggers -n production
-kubectl describe trigger order-created-trigger -n production
+kubectl get triggers -n knative-demo
+kubectl describe trigger order-created-trigger -n knative-demo
 
 # Inspect Eventing controller logs
 kubectl logs -l app=eventing-controller -n knative-eventing --tail=100
 
 # Check dead letter sink for failed events
-kubectl logs -l serving.knative.dev/service=dead-letter-handler -n production --tail=50
+kubectl logs -l serving.knative.dev/service=dead-letter-handler -n knative-demo --tail=50
 ```
 
 **Soluciones:**
-1. Verifica que los atributos del filtro del Trigger coincidan exactamente con los atributos de CloudEvent (sensible a mayúsculas/minúsculas).
-2. Comprueba que el subscriber Service esté ready y sea alcanzable.
-3. Asegúrate de que el backing channel del Broker esté saludable.
-4. Confirma que RBAC permita al ServiceAccount de la fuente de eventos enviar eventos al Broker.
+1. Verifique que los atributos de filtro del Trigger coincidan exactamente con los atributos del CloudEvent (distinguen mayúsculas de minúsculas).
+2. Compruebe que el Service suscriptor esté listo y sea accesible.
+3. Asegúrese de que el Channel subyacente del Broker esté en buen estado.
+4. Distinga los permisos de la API de Kubernetes para leer recursos de la fuente de la autenticación y autorización HTTP/Eventing en el Broker. Inspeccione el error HTTP real y el mecanismo de identidad/EventPolicies configurado.
 
-#### DNS Resolution Failures
+#### Errores de resolución DNS
 
-**Síntomas:** Las URLs de Knative Service devuelven `NXDOMAIN` o tiempos de espera de conexión.
+**Síntomas:** Las URL de Knative Service devuelven `NXDOMAIN` o se agotan los tiempos de espera de conexión.
 
 **Diagnóstico:**
 
@@ -1734,153 +1944,187 @@ kubectl get svc kourier -n kourier-system
 kubectl get cm config-domain -n knative-serving -o yaml
 
 # Test DNS resolution
-nslookup order-api.production.knative.example.com
+nslookup order-api.knative-demo.knative.example.com
 
 # Check the Knative Service URL
-kubectl get ksvc order-api -n production -o jsonpath='{.status.url}'
+kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.url}'
 ```
 
 **Soluciones:**
-1. Para sslip.io: asegúrate de que la IP externa sea alcanzable y que el puerto 80/443 no esté bloqueado por security groups.
-2. Para Route 53: verifica que el registro CNAME wildcard resuelva al load balancer de Kourier.
-3. Comprueba que `config-domain` tenga la entrada de dominio correcta.
+1. Para sslip.io: asegúrese de que la IP externa sea accesible y que los grupos de seguridad no bloqueen los puertos 80/443.
+2. Para Route 53: verifique que el registro CNAME comodín se resuelva en el balanceador de carga de Kourier.
+3. Compruebe que `config-domain` tenga la entrada de dominio correcta.
 
 ---
 
-## Best Practices
+## Buenas prácticas {#best-practices}
 
-### Service Design Patterns
+### Patrones de diseño de Service
 
-1. **Un contenedor por Knative Service.** Knative Services están diseñados para un único contenedor de aplicación más el sidecar Queue Proxy. Evita pods multi-container salvo que sea absolutamente necesario (Knative sí los soporta, pero el modelo de escalado asume un único contenedor principal).
+1. **Un contenedor por Knative Service.** Los Knative Services están diseñados para un único contenedor de aplicación más el sidecar Queue Proxy. Evite los Pods con varios contenedores salvo que sea absolutamente necesario (Knative los admite, pero el modelo de escalado presupone un contenedor principal).
 
-2. **Usa `containerConcurrency` deliberadamente.** Establécelo en `0` (ilimitado) para aplicaciones thread-safe que manejan muchas solicitudes concurrentes. Establécelo en `1` para procesadores single-threaded (por ejemplo, inferencia ML en una sola GPU) donde las solicitudes concurrentes degradarían el rendimiento.
+2. **Use `containerConcurrency` deliberadamente.** Establézcalo en `0` (sin límite) para aplicaciones seguras para hilos que gestionan muchas solicitudes concurrentes. Establézcalo en `1` para procesadores de un solo hilo (por ejemplo, inferencia de ML en una sola GPU) en los que las solicitudes concurrentes reducirían el rendimiento.
 
-3. **Separa rutas de lectura y escritura.** Despliega APIs con mucha lectura y procesadores con mucha escritura como Knative Services separados con perfiles de escalado diferentes. Los services de lectura pueden tener un `target` alto (100+ de concurrencia), mientras que los services de escritura pueden necesitar un `target` bajo (10-20) para evitar saturar la base de datos.
+3. **Separe las rutas de lectura y escritura.** Implemente API con muchas lecturas y procesadores con muchas escrituras como Knative Services independientes con perfiles de escalado distintos. Los servicios de lectura pueden tener un `target` alto (100 o más de concurrencia), mientras que los servicios de escritura pueden necesitar un `target` bajo (10-20) para evitar sobrecargar la base de datos.
 
-4. **Etiqueta Revisions para rollback.** Etiqueta siempre la última Revision conocida como buena para poder hacer rollback instantáneamente:
+4. **Conserve objetivos de reversión probados.** Mantenga las Revisions que se sabe que funcionan referenciadas/conservadas según sea necesario y verifique sus dependencias. El cambio de ruta requiere tiempo de reconciliación:
 
 ```bash
-kn service update order-api --tag order-api-00005=stable --tag @latest=canary
+kn service update order-api --namespace knative-demo --tag order-api-v1=stable --tag @latest=canary
 ```
 
-5. **Usa services privados para comunicación interna.** Aplica `networking.knative.dev/visibility: cluster-local` a services que no deben exponerse a internet. Esto reduce la superficie de ataque y evita costos innecesarios de load balancer.
+5. **Controle la visibilidad del enrutamiento interno.** Aplique la etiqueta cluster-local cuando corresponda y, por separado, exija autorización de red/aplicación. Es posible que siga existiendo una gateway/balanceador de carga compartido de Knative, por lo que la etiqueta no garantiza una reducción independiente de los costos del balanceador de carga.
 
-### Event-Driven Microservices Patterns
+### Patrones de microservicios basados en eventos
 
-1. **Usa Brokers para enrutamiento multi-consumidor.** Cuando varios services necesitan reaccionar al mismo tipo de evento, usa un solo Broker con múltiples Triggers en lugar de duplicar la fuente de eventos.
+Para CQRS/abastecimiento de eventos, la ruta de comandos debe confirmar el evento autoritativo o una outbox transaccional antes de confirmar el comando. Un Broker es una capa de entrega, no el almacén de eventos autoritativo. Un consumidor de archivo asíncrono por sí solo no hace transaccional la gestión de comandos; valide el orden, la idempotencia, la reproducción y las ventanas de fallo.
 
-2. **Configura siempre Dead Letter Sinks.** Los eventos no entregables nunca deben descartarse silenciosamente. Configura un DLS a nivel de Broker como red de seguridad y a niveles individuales de Trigger para rutas críticas.
+1. **Use Brokers para el enrutamiento a varios consumidores.** Cuando varios servicios deban reaccionar al mismo tipo de evento, use un único Broker con varios Triggers en vez de duplicar la fuente del evento.
 
-3. **Adopta una convención de nombres de CloudEvents.** Usa notación reverse-DNS para tipos de eventos: `com.<company>.<domain>.<action>` (por ejemplo, `com.example.order.created`). Esto evita colisiones de nombres y hace claros los filtros de Trigger.
+2. **Configure siempre Dead Letter Sinks.** Los eventos que no se puedan entregar nunca deben descartarse silenciosamente. Configure un DLS en el nivel de Broker como protección y en los niveles de Trigger individuales para las rutas críticas.
 
-4. **Consumidores idempotentes.** Dado que los eventos pueden entregarse más de una vez (semántica at-least-once), diseña consumidores idempotentes. Usa el atributo `id` de CloudEvent para deduplicación.
+3. **Adopte una convención de nomenclatura para CloudEvents.** Use la notación DNS inversa para los tipos de eventos: `com.<company>.<domain>.<action>` (por ejemplo, `com.example.order.created`). Esto evita colisiones de nombres y aclara los filtros de Trigger.
 
-5. **Usa Channels respaldados por Kafka para durabilidad.** El InMemoryChannel predeterminado pierde eventos al reiniciar el pod. Para producción, instala KafkaChannel y configúralo como predeterminado:
+4. **Consumidores idempotentes.** Los reintentos pueden entregar duplicados. Use el par CloudEvent `(source, id)` y un diseño duradero de transacciones/desduplicación de la aplicación; `id` no es necesariamente único de forma global y Eventing no garantiza un procesamiento empresarial exactamente una vez.
+
+5. **Planifique un transporte duradero antes de la ingesta.** InMemoryChannel no es duradero. Un transporte basado en Kafka configurado correctamente puede conservar eventos, pero cambiar la configuración subyacente de un Broker activo no es una migración de datos. Cree y valide una configuración/Broker independiente, y planifique la reproducción/vaciado de colas para cualquier transición. Lo siguiente es un fragmento de plantilla de Channel para esa nueva configuración:
 
 ```yaml
 # config-br-default-channel ConfigMap
 data:
   channel-template-spec: |
-    apiVersion: messaging.knative.dev/v1beta1
+    apiVersion: messaging.knative.dev/v1
     kind: KafkaChannel
     spec:
       numPartitions: 6
       replicationFactor: 3
 ```
 
-### Cost Optimization with Scale-to-Zero
+### Optimización de costos con escalado a cero
 
-1. **Habilita scale-to-zero para services no críticos.** Los services de desarrollo, staging y producción con bajo tráfico deberían escalar a cero cuando estén idle. Esto puede reducir costos de cómputo entre 60-80% para entornos con tráfico esporádico.
+1. **Habilite el escalado a cero para servicios no críticos.** Los servicios de desarrollo, pruebas y producción con poco tráfico deberían escalar a cero cuando estén inactivos. La cifra original del 60–80 % se conserva únicamente como estimación histórica sin fuente, no como resultado medido ni promesa de ahorro actual. Los costos asignados de nodos/almacenamiento/balanceadores de carga y los compromisos deben evaluarse por separado.
 
-2. **Usa `scale-down-delay` para workloads con ráfagas.** Si el tráfico llega en ráfagas separadas por periodos idle cortos, establecer un retraso de scale-down (por ejemplo, 5-15 minutos) evita cold starts repetidos sin mantener pods ejecutándose indefinidamente.
+2. **Use `scale-down-delay` para cargas de trabajo con ráfagas.** Si el tráfico llega en ráfagas separadas por breves períodos de inactividad, configurar una demora de escalado hacia abajo (por ejemplo, 5-15 minutos) evita arranques en frío repetidos sin mantener los Pods en ejecución indefinidamente.
 
-3. **Combínalo con Karpenter para eficiencia a nivel de nodo.** Cuando Knative escala pods a cero, la capacidad liberada permite a Karpenter consolidar o terminar nodos subutilizados:
+3. **Combine con Karpenter para optimizar a nivel de nodo.** Cuando Knative escala Pods a cero, la capacidad liberada permite que Karpenter consolide o termine los nodos infrautilizados:
 
 | Capa | Herramienta | Acción |
 |-------|------|--------|
-| Application (Pods) | Knative Serving | Escala pods a cero cuando están idle |
-| Infrastructure (Nodes) | Karpenter | Consolida y termina nodos vacíos |
-| Cost visibility | AWS Cost Explorer / Kubecost | Rastrea ahorros de scale-to-zero |
+| Aplicación (Pods) | Knative Serving | Escalar Pods a cero cuando están inactivos |
+| Infraestructura (nodos) | Karpenter | Consolidar y terminar nodos vacíos |
+| Visibilidad de costos | AWS Cost Explorer / Kubecost | Seguir los ahorros del escalado a cero |
 
-4. **Establece `minScale` solo donde sea necesario.** Reserva `minScale > 0` para rutas críticas en latencia. Para todo lo demás, deja que los pods escalen a cero.
+4. **Establezca `minScale` solo donde sea necesario.** Reserve `minScale > 0` para rutas críticas para la latencia. Para todo lo demás, permita que los Pods escalen a cero.
 
-### Knative with GPU Workloads
+### Ilustraciones originales de costos (sin verificar)
 
-Knative puede servir workloads acelerados por GPU (por ejemplo, inferencia ML) programando pods en nodos GPU. Consideraciones clave:
+Las cifras ilustrativas originales siguientes se conservan sin tratarlas como mediciones ni precios actuales. Las horas de Pod no son lo mismo que las horas de nodo facturadas, y estas cifras omiten los costos del plano de control, el almacenamiento, el balanceador de carga y los compromisos.
+
+| Entorno | Services | Supuesto de ejecución permanente | Supuesto de escalado a cero | Ahorro indicado originalmente |
+|---|---|---|---|---|
+| Desarrollo | 30 | 30 Pods × 24 h | Promedio de 5 Pods × 8 h | ~83 % |
+| Pruebas | 20 | 20 Pods × 24 h | Promedio de 3 Pods × 12 h | ~92 % |
+| Producción por la noche | 10 | 10 Pods × 24 h | 2 Pods × 8 h durante la noche | ~33 % |
+
+Los porcentajes indicados no se deducen todos de los supuestos mostrados. Con cero Pods durante las horas restantes, desarrollo pasa de 720 a 40 horas de Pod (94,4 %) y pruebas, de 480 a 36 (92,5 %). Si producción significa 10 Pods durante 16 horas diurnas más 2 durante 8 horas nocturnas, pasa de 240 a 176 (26,7 %). Son comprobaciones aritméticas condicionales, no pruebas de rendimiento repetidas.
+
+La ilustración original de GPU suponía una instancia p3.2xlarge a 3,06 $/hora: 24 horas = 73,44 $/día; 4 horas = 12,24 $/día, aproximadamente un 83 % menos. Aquí no se ha verificado la procedencia por región/fecha de la tarifa y no es una cotización actual. Un Service con cero réplicas no garantiza la terminación inmediata del nodo GPU; tenga en cuenta las demoras de retención, las réplicas de referencia, el almacenamiento de modelos y los costos de nodo/compromiso.
+
+### Knative con cargas de trabajo de GPU
+
+Para un PVC de modelo, llénelo primero y utilice CSI/modos de acceso compatibles con Pods/nodos/AZ simultáneos (como un almacenamiento ReadOnlyMany/ReadWriteMany adecuado), o copias por Pod. RWO no significa un solo Pod, pero puede bloquear la asociación entre nodos. El ejemplo monta los modelos como solo lectura, por lo que no se habilita persistent-volume-write. min-scale 0 permite la activación en frío; elija una referencia positiva solo cuando lo requiera la política de latencia/costo. La ventana de promediado no es el tiempo de espera de la solicitud.
+
+Las extensiones de PodSpec siguientes deben habilitarse para los selectores de nodo, las tolerations y el ejemplo opcional de PVC de solo lectura. Guárdelo como serving-gpu-features.patch.yaml y combínelo con el recurso Operator existente. El NodePool gpu referenciado debe proporcionar suficiente capacidad asignable de CPU/memoria/GPU después de considerar la sobrecarga del sistema y Queue Proxy, además del controlador/complemento de dispositivos necesarios. Son ejemplos de inferencia de modelos sin verificar, no estimaciones de dimensionamiento de GPU basadas en mediciones.
+
+```yaml
+spec:
+  config:
+    features:
+      kubernetes.podspec-nodeselector: enabled
+      kubernetes.podspec-tolerations: enabled
+      kubernetes.podspec-persistent-volume-claim: enabled
+```
+
+```bash
+kubectl patch knativeserving knative-serving -n knative-serving --type merge --patch-file serving-gpu-features.patch.yaml
+```
+
+Knative puede servir cargas de trabajo aceleradas por GPU (por ejemplo, inferencia de ML) programando Pods en nodos GPU. Consideraciones clave:
 
 ```yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: llm-inference
-  namespace: ai
+  namespace: knative-demo
 spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
-        autoscaling.knative.dev/metric: "concurrency"
-        autoscaling.knative.dev/target: "1"
-        autoscaling.knative.dev/min-scale: "1"
-        autoscaling.knative.dev/max-scale: "4"
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: '1'
+        autoscaling.knative.dev/min-scale: '1'
+        autoscaling.knative.dev/max-scale: '4'
     spec:
-      # Single-request processing for GPU workloads
       containerConcurrency: 1
       timeoutSeconds: 600
       containers:
-        - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/llm-server:v1
-          ports:
-            - containerPort: 8080
-          resources:
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-              nvidia.com/gpu: "1"
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-              nvidia.com/gpu: "1"
+      - image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/llm-server:v1
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: '4'
+            memory: 16Gi
+            nvidia.com/gpu: '1'
+          limits:
+            cpu: '6'
+            memory: 24Gi
+            nvidia.com/gpu: '1'
       nodeSelector:
-        node.kubernetes.io/instance-type: g5.xlarge
+        karpenter.sh/nodepool: gpu
       tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
 ```
 
 **Consejos específicos para GPU:**
-- Establece `containerConcurrency: 1` si el modelo no puede agrupar solicitudes concurrentes en batches. Auméntalo si el serving framework soporta batching dinámico (por ejemplo, vLLM, Triton Inference Server).
-- Establece `min-scale: 1` o superior para evitar cold starts, ya que las imágenes de contenedor GPU son grandes y la carga del modelo es lenta.
-- Usa Karpenter con GPU NodePools para aprovisionar dinámicamente nodos GPU a medida que Knative escala hacia arriba.
-- Monitorea la utilización de GPU con DCGM Exporter y métricas de NVIDIA GPU Operator.
+- Establezca `containerConcurrency: 1` si el modelo no puede procesar lotes de solicitudes concurrentes. Auméntelo si el framework de servicio admite el procesamiento dinámico por lotes (por ejemplo, vLLM o Triton Inference Server).
+- Considere un min-scale positivo como referencia activa. Las Revisions nuevas, los reinicios y las réplicas GPU adicionales aún pueden cargarse en frío; mida el inicio de la imagen/modelo.
+- Use Karpenter con NodePools GPU para aprovisionar nodos GPU dinámicamente a medida que Knative escala hacia arriba.
+- Supervise la utilización de GPU con DCGM Exporter y las métricas de NVIDIA GPU Operator.
 
 ---
 
-## References
+## Referencias {#references}
 
-### Official Documentation
+### Documentación oficial
 
 - [Documentación oficial de Knative](https://knative.dev/docs/)
-- [Organización GitHub de Knative](https://github.com/knative)
+- [Organización de Knative en GitHub](https://github.com/knative)
 - [Referencia de API de Knative Serving](https://knative.dev/docs/reference/api/serving-api/)
 - [Referencia de API de Knative Eventing](https://knative.dev/docs/reference/api/eventing-api/)
-- [Repositorio GitHub de Kourier](https://github.com/knative-extensions/net-kourier)
+- [Repositorio de Kourier en GitHub](https://github.com/knative-extensions/net-kourier)
 - [Especificación CloudEvents](https://cloudevents.io/)
 - [Página del proyecto Knative en CNCF](https://www.cncf.io/projects/knative/)
 
-### AWS and EKS Resources
+### Recursos de AWS y EKS
 
-- [Blog de AWS: Serverless Containers with Knative and EKS](https://aws.amazon.com/blogs/containers/)
-- [Guía de mejores prácticas de EKS](https://aws.github.io/aws-eks-best-practices/)
+- [Blog de AWS: contenedores serverless con Knative y EKS](https://aws.amazon.com/blogs/containers/)
+- [Guía de buenas prácticas de EKS](https://aws.github.io/aws-eks-best-practices/)
 - [Guía para desarrolladores de Amazon Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/)
 - [cert-manager en EKS](https://cert-manager.io/docs/installation/compatibility/)
 
-### Related Internal Documentation
+### Documentación interna relacionada
 
-- [KEDA -- Kubernetes Event-driven Autoscaling](./01-keda.md)
-- [Karpenter -- Cluster Autoscaler](./02-karpenter.md)
+- [KEDA -- Autoescalado basado en eventos de Kubernetes](./01-keda.md)
+- [Karpenter -- Autoescalador de clúster](./02-karpenter.md)
 - [Optimización de costos de EKS](../eks/07-eks-cost-optimization.md)
 
 ---
 
-**Anterior:** [Karpenter](./02-karpenter.md) | **Siguiente:** None
+**Anterior:** [Karpenter](./02-karpenter.md) | **Siguiente:** Ninguno
+
+Referencias principales verificadas para esta revisión: [Serving 1.23](https://github.com/knative/serving/releases/tag/knative-v1.23.0), [Operator 1.23.1](https://github.com/knative/operator/releases/tag/knative-v1.23.1), [hito de CNCF](https://www.cncf.io/projects/knative/), [configuración de Operator](https://knative.dev/docs/install/operator/configuring-serving-cr/), [semántica del escalado a cero](https://knative.dev/docs/serving/autoscaling/scale-to-zero/), [implementación de HPA](https://github.com/knative/serving/blob/knative-v1.23.0/pkg/reconciler/autoscaling/hpa/resources/hpa.go), [SQS IntegrationSource](https://knative.dev/docs/eventing/sources/integration-source/aws_sqs/), [vinculación HTTP de CloudEvents](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/bindings/http-protocol-binding.md), [escritura condicional de S3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_object.html), [métricas de Serving](https://knative.dev/docs/serving/observability/metrics/serving-metrics/), [configuración OTLP de Prometheus](https://github.com/prometheus/prometheus/blob/main/docs/configuration/configuration.md).

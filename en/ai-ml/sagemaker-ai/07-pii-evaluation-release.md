@@ -213,7 +213,7 @@ This chapter does not implement or deploy an endpoint or strict release wrapper.
 
 ## Check your understanding
 
-1. Why not immediately deploy the higher-F1 candidate? **It adds masking on a negative document, and two synthetic documents are not representative evaluation.**
+1. Why not immediately deploy the higher-F1 candidate? **It adds masking on a negative document, and two synthetic documents do not constitute a representative evaluation.**
 2. Does 100% round-trip mean all PII was removed? **No. Only restoration of the replaced values may have succeeded.**
 3. What if the same test selected several ranks? **It participated in selection and is no longer an independent final test.**
 4. Is a source-matching candidate necessarily PII? **No; the document number is a counterexample.**

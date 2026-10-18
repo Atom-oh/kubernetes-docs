@@ -77,7 +77,7 @@ Use the documented `*` wildcard, with at most four stars per string. Do not assu
 **Answer: B) Cannot express OR/union logic across tag patterns in a single rule**
 
 **Explanation:**
-A single ECR lifecycle rule with multiple patterns in `tagPatternList` applies AND logic (image must match all patterns). To achieve OR logic (match any pattern), you must create separate rules for each pattern. This limitation requires careful rule design when you want to apply the same retention policy to images matching different tag patterns.
+A single ECR lifecycle rule with multiple patterns in `tagPatternList` applies AND logic (an image must match all patterns). To achieve OR logic (match any pattern), you must create separate rules for each pattern. This limitation requires careful rule design when you want to apply the same retention policy to images matching different tag patterns.
 
 </details>
 

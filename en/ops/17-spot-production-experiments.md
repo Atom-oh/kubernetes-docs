@@ -134,7 +134,7 @@ The following are **before/after values reported by the source**. Its stated env
 | StatefulSet Pod | `200m → 50m` | Remains `64Mi` | `Guaranteed → Guaranteed` | `0 → 0` / unchanged |
 | DaemonSet Pod | `200m → 50m` | Remains `64Mi` | `Guaranteed → Guaranteed` | `0 → 0` / unchanged |
 
-Distinguish **structural applicability** from **observed validation** for Argo Rollouts. The source introduction mentions all four kinds, but its detailed measurement table contains the three above; its Argo argument relies on the shared Pod ownership structure. A `ReplicaSet` log label alone identifies neither Deployment versus Rollout nor a completed Rollout test. Record the actual stable/canary ownership chain and separately validate promotion, abort/rollback, traffic/Analysis metrics, and the effect of changing CPU requests.
+Distinguish **structural applicability** from **observed validation** for Argo Rollouts. The source introduction mentions all four kinds, but its detailed measurement table contains the three above; its Argo argument relies on the shared Pod ownership structure. A `ReplicaSet` log label alone neither distinguishes Deployment from Rollout nor identifies a completed Rollout test. Record the actual stable/canary ownership chain and separately validate promotion, abort/rollback, traffic/Analysis metrics, and the effect of changing CPU requests.
 
 The source's cluster-wide watch, `resized` marker, and `sync.Map` belong to that earlier implementation. **Retain the current roadmap prototype's namespace scope, management label, CPU floor, real startupProbe, UID/resourceVersion tests, and retry queue** instead of substituting the older code as the current deployment specification. Unchanged containerID/restartCount alone does not establish cgroup application or absence of request loss: keep the source report, actual resource/SLO observations, and the still-unexecuted combined Spot E10 test separate.
 
@@ -321,7 +321,7 @@ spot_aws fis list-experiment-resolved-targets \
   > "$SPOT_RESULT_DIR/targets.json"
 ```
 
-Query `get-experiment` until a terminal state and confirm that the resolved target is exactly the intended instance. `completed` means the fault action completed, **not that the service passed its SLO**. Do not pass a `failed`, `stopped`, or empty-target run. [S7]
+Query `get-experiment` until the experiment reaches a terminal state and confirm that the resolved target is exactly the intended instance. `completed` means the fault action completed, **not that the service passed its SLO**. Do not pass a `failed`, `stopped`, or empty-target run. [S7]
 
 ## 5. Measurement and result records
 

@@ -134,7 +134,7 @@ WEB_CONCURRENCY를 코드가 읽어야 적용됩니다. Tokio의 명시적 worke
 
 - A) reason gauge에 increase를 적용해 정확한 OOM 횟수를 센다
 - B) Pending 시계열 개수를 count하면 현재 Pending 수가 된다
-- C) 0/1 gauge의 값을 평가하며 reason은 마지막 상태라는 한계를 유지한다
+- C) 0/1 gauge의 값을 평가하며 reason은 마지막 상태라는 한계를 고려한다
 - D) Pending은 항상 CPU 부족이다
 
 <details>

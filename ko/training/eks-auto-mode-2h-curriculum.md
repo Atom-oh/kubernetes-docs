@@ -98,7 +98,7 @@ Compute Savings Plans뿐 아니라 적격 EC2 Instance Savings Plans/RI도 조�
 
 [workload 최적화](../eks-auto-mode/08-workload-optimization.md)에서 웹·배치·GPU·시스템 workload의 requests, image·architecture, storage와 SLO를 비교합니다. HPA는 replica, VPA는 CPU/memory recommendation/update, Auto Mode는 node 공급으로 역할을 나눕니다. GPU 자원은 모델·driver 조건이 필요하며 VPA가 GPU instance를 자동 선택하지 않습니다.
 
-생산 환경의 VPA Off는 추천값 검토용입니다. node pool 분리는 팀·가용성·권한·capacity 요구에 따라 선택하며 taint나 label을 tenant 보안 경계로 사용하지 않습니다.
+운영 환경의 VPA Off는 추천값 검토용입니다. node pool 분리는 팀·가용성·권한·capacity 요구에 따라 선택하며 taint나 label을 tenant 보안 경계로 사용하지 않습니다.
 
 ### 2-4. Node lifecycle (5분)
 
@@ -155,7 +155,7 @@ CloudTrail은 기록된 API 행위를 보여주며 모든 scheduling 실패의 �
 
 ### 4-2. GitOps 운영 (5분)
 
-[ArgoCD Application](../gitops/argocd/02-applications.md), [ApplicationSet](../gitops/argocd/04-applicationsets.md)의 권한·generator·sync policy를 비교합니다. Auto Sync/self-heal/prune은 자동으로 안전한 rollout이 아니며 NodePool/NodeClass 삭제 영향과 drift ownership을 검토해야 합니다. Progressive Sync의 활성화·지원 범위도 선택한 버전에서 확인합니다.
+[ArgoCD Application](../gitops/argocd/02-applications.md), [ApplicationSet](../gitops/argocd/04-applicationsets.md)의 권한·generator·sync policy를 비교합니다. Auto Sync/self-heal/prune이 안전한 rollout을 자동으로 보장하지는 않으며 NodePool/NodeClass 삭제 영향과 drift ownership을 검토해야 합니다. Progressive Sync의 활성화·지원 범위도 선택한 버전에서 확인합니다.
 
 ## 강의 후 평가와 실습 준비
 

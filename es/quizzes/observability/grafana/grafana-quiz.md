@@ -1,16 +1,16 @@
 # Cuestionario de Dashboards de Grafana
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Pon a prueba tu comprensión de la configuración y operación de Grafana 13.2.1.
 
 ---
 
-1. ¿Cuál NO es un método utilizado para el provisioning de data sources (fuentes de datos) en Grafana?
+1. ¿Cuál NO es un método para aprovisionar fuentes de datos en Grafana?
    - A) ConfigMap con sidecar
    - B) API de Grafana
    - C) Variables de entorno
-   - D) Directorio provisioning
+   - D) Directorio de aprovisionamiento
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -18,7 +18,7 @@ Pon a prueba tu comprensión de la configuración y operación de Grafana 13.2.1
 **Respuesta: C) Variables de entorno**
 
 **Explicación:**
-Los data sources de Grafana se pueden aprovisionar mediante archivos YAML en el directorio provisioning, con el enfoque sidecar usando ConfigMaps, o a través de la API de Grafana. Las variables de entorno pueden proporcionar valores de configuración de grafana.ini y valores como URLs o credenciales dentro del YAML de provisioning del data source. Las variables por sí solas no crean un objeto data source.
+Las fuentes de datos de Grafana se pueden aprovisionar mediante archivos YAML en el directorio de aprovisionamiento, con un sidecar que use ConfigMaps o a través de la API de Grafana. Las variables de entorno pueden proporcionar ajustes de grafana.ini y valores, como URL o credenciales, dentro del YAML de aprovisionamiento de fuentes de datos. Las variables por sí solas no crean un objeto de fuente de datos.
 
 </details>
 
@@ -44,17 +44,17 @@ El Método RED es una metodología para analizar métricas a nivel de servicio. 
 
 3. ¿Qué configuración se necesita para implementar la correlación trace-to-log conectando Tempo y Loki en Grafana?
    - A) Usar la misma base de datos
-   - B) Configurar tracesToLogsV2 en el data source de Tempo
+   - B) Configurar tracesToLogsV2 en la fuente de datos de Tempo
    - C) Instalar un plugin aparte
    - D) Licencia de Grafana Enterprise
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar tracesToLogsV2 en el data source de Tempo**
+**Respuesta: B) Configurar tracesToLogsV2 en la fuente de datos de Tempo**
 
 **Explicación:**
-Configurar la sección tracesToLogsV2 en los ajustes del data source de Tempo permite navegar directamente desde las trazas hasta los logs relacionados. Se debe especificar Loki con datasourceUid y mapear los atributos reales de la traza a las labels de Loki mediante tags. Los campos de log como trace_id deben coincidir con el contrato del pipeline. Esta es una funcionalidad integrada de Grafana que no requiere plugins adicionales.
+Configurar la sección tracesToLogsV2 en los ajustes de la fuente de datos de Tempo permite navegar directamente desde las trazas hasta los logs relacionados. Se debe especificar Loki con datasourceUid y asignar los atributos reales de la traza a las etiquetas de Loki mediante tags. Los campos de log como trace_id deben coincidir con el contrato del pipeline. Esta es una funcionalidad integrada de Grafana que no requiere plugins adicionales.
 
 </details>
 
@@ -126,7 +126,7 @@ Las 4 Golden Signals son Latency (latencia), Traffic (tráfico), Errors (errores
 **Respuesta: B) Mayor reutilización del dashboard mediante filtrado dinámico**
 
 **Explicación:**
-El uso de variables de dashboard permite monitorear múltiples clusters, namespaces y Services con un solo dashboard. Cuando seleccionas un valor del desplegable, todas las consultas de los paneles se actualizan dinámicamente. Esto reduce la cantidad de dashboards y simplifica el mantenimiento.
+El uso de variables de dashboard permite monitorizar varios clústeres, espacios de nombres y servicios con un solo dashboard. Cuando seleccionas un valor del desplegable, todas las consultas de los paneles se actualizan dinámicamente. Esto reduce la cantidad de dashboards y simplifica el mantenimiento.
 
 </details>
 
@@ -144,7 +144,7 @@ El uso de variables de dashboard permite monitorear múltiples clusters, namespa
 **Respuesta: B) Vinculación de métricas y datos de trazas**
 
 **Explicación:**
-Los Exemplars vinculan observaciones seleccionadas de métricas con TraceIDs; no capturan cada solicitud. Al almacenar TraceIDs de muestra en métricas de tipo histogram o counter, hacer clic en un punto concreto de un gráfico de métricas en Grafana permite consultar inmediatamente los datos de traza de ese momento.
+Los Exemplars vinculan observaciones seleccionadas de métricas con TraceIDs; no capturan cada solicitud. Al almacenar TraceIDs de muestra en métricas de tipo histograma o contador, hacer clic en un punto concreto de un gráfico de métricas en Grafana permite consultar inmediatamente los datos de la traza correspondiente.
 
 </details>
 
@@ -162,7 +162,7 @@ Los Exemplars vinculan observaciones seleccionadas de métricas con TraceIDs; no
 **Respuesta: C) Grafana Cloud es gestionado y su SLA depende del contrato**
 
 **Explicación:**
-Consulta el plan de Cloud real y el acuerdo de servicio para conocer su SLA, límites de uso y funcionalidades. Los operadores de Self-hosted gestionan las bases de datos, las copias de seguridad, las actualizaciones y la compatibilidad de plugins y la política de firmas. No asumas que un SLA fijo del 99,9 % se aplica a todos los planes de Cloud.
+Consulta el plan de Cloud real y el acuerdo de servicio para conocer su SLA, límites de uso y funcionalidades. Quienes operan una instalación autogestionada administran las bases de datos, las copias de seguridad, las actualizaciones y la compatibilidad de los plugins y sus políticas de firma. No asumas que un SLA fijo del 99,9 % se aplica a todos los planes de Cloud.
 
 </details>
 
@@ -180,7 +180,7 @@ Consulta el plan de Cloud real y el acuerdo de servicio para conocer su SLA, lí
 **Respuesta: B) grafana_dashboard: "true"**
 
 **Explicación:**
-Este perfil selecciona `grafana_dashboard: "true"`. Tanto label como labelValue son configurables y no son requisitos universales de Grafana. El perfil opcional observa únicamente los ConfigMaps del namespace monitoring.
+Este perfil selecciona `grafana_dashboard: "true"`. Tanto label como labelValue son configurables y no son requisitos universales de Grafana. El perfil opcional observa únicamente los ConfigMaps del espacio de nombres monitoring.
 
 </details>
 

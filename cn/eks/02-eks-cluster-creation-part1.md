@@ -17,7 +17,7 @@
 5. [访问、验证、升级和删除](02-eks-cluster-creation-part5.md)
 6. [完整指南和 CDK](02-eks-cluster-creation.md)
 
-## 先决条件
+## 先决条件 {#prerequisites}
 
 创建 EKS 集群前，需要满足以下先决条件：
 

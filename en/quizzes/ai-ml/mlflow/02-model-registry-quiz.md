@@ -97,7 +97,7 @@ Registering after logging with register_model is another path. Registration does
 
 **Answer: C**
 
-A tag string replaces neither approval workflow nor access control.
+A tag string replaces neither an approval workflow nor access control.
 </details>
 
 8. What happens to an already-loaded model immediately after an alias changes?

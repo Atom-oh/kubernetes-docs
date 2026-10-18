@@ -1,1739 +1,1400 @@
-# Amazon EKS 监控和日志记录测验
+# Amazon EKS 监控与日志测验
 
-本测验测试你对 Amazon EKS 监控和日志记录功能、工具以及最佳实践的理解。
+> **最后更新**：October 16, 2026
+
+本测验用于检验你对 Amazon EKS 监控和日志功能、工具及最佳实践的理解。
 
 ## 测验概览
-- EKS Cluster 监控
-- Container 和 Application 日志记录
-- Performance Metrics 收集与分析
-- Alerting 和异常检测
-- 监控和日志记录架构
+- EKS 集群监控
+- 容器和应用程序日志记录
+- 性能指标收集与分析
+- 告警和异常检测
+- 监控与日志架构
 - 最佳实践和工具
 
 ## 选择题
 
-### 1. 为 Amazon EKS cluster 构建全面监控解决方案的最有效方法是什么？
+### 1. 哪项原则正确地指导了 EKS 监控解决方案的设计？
 
-A. 仅使用 CloudWatch
-B. 仅使用 Prometheus 和 Grafana
-C. 集成使用 CloudWatch、Prometheus、Grafana 和 X-Ray
-D. 编写自定义监控脚本
+- A. CloudWatch 无法收集应用程序跟踪数据。
+- B. 仅安装 Grafana 就会自动收集所有 Pod 指标。
+- C. 选择所需信号，配置由你负责的收集器和数据源，并验证数据传送和覆盖范围。
+- D. 安装 CloudWatch、Prometheus、Grafana 和 X-Ray 始终可以保证全面可见性。
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：C. 集成使用 CloudWatch、Prometheus、Grafana 和 X-Ray**
+**答案：C. 选择并验证信号/收集器/后端设计。**
 
-**解释：**
-为 Amazon EKS cluster 构建全面监控解决方案的最有效方法是集成 CloudWatch、Prometheus、Grafana 和 X-Ray。这种集成方法可在基础设施、cluster、application 和分布式追踪层面提供完整可见性。
+**说明：**
 
-**集成监控解决方案的主要优势：**
+组合使用多种工具可能很有用，但所需信号和运维约束决定了设计。CloudWatch 支持的不只是基本基础设施指标，还包括受支持工作负载上的 Application Signals 跟踪/APM。Grafana 可以查询 AWS 和跟踪数据源，但 UI 本身不会收集所有信号。必须显式连接收集器、检测、身份、可访问的端点和兼容配置；任何产品清单都不能保证全面覆盖。
 
-1. **多层监控**：
-   - AWS 基础设施级 metrics (CloudWatch)
-   - Kubernetes cluster 级 metrics (Prometheus)
-   - Application 级 metrics (CloudWatch, Prometheus)
-   - 分布式追踪 (X-Ray)
+**保留有用的层次：**
 
-2. **全面的数据收集**：
-   - System metrics (CPU, memory, disk, network)
-   - Kubernetes resource metrics (pods, nodes, controllers)
-   - 自定义 application metrics
-   - 分布式 Service transaction tracing
+| 层 | 信号示例 | 重要依赖项 |
+| --- | --- | --- |
+| 基础设施 | 节点 CPU/内存、磁盘、网络 | 受支持的节点收集器和正确的指标维度 |
+| Kubernetes | 对象状态、就绪状态、API 活动 | Exporter/API/审计权限和实际目标 |
+| 应用程序 | 请求延迟、错误、业务指标 | 应用程序检测和有界指标架构 |
+| 分布式请求 | 跟踪 Span 和服务关系 | 上下文传播、采样和成功导出 |
 
-3. **灵活的可视化和分析**：
-   - 预配置 dashboard (CloudWatch, Grafana)
-   - 自定义 dashboard (Grafana)
-   - 高级查询和 alert (PromQL, CloudWatch Alarms)
-   - Service map 和 trace analysis (X-Ray)
+**实施顺序：**
 
-**实施方法：**
+1. 按照[源章节](../../eks/06-eks-monitoring-logging.md)检查由你负责的 CloudWatch add-on 目录/架构/身份。必须检查 Version5+ Auto Monitor 和重启设置；在已检测的工作负载上再叠加其他代理之前，应先检查冲突。
+2. 如果需要 Prometheus 收集/查询，请使用源文档中的 KPS92.9.0 值和已准备好的存储、Grafana Secret 及 kubelet 服务 CA 前提条件。Operator 提供 ServiceMonitor/PrometheusRule 处理能力；独立安装 Prometheus 并不等价。安装后验证实际目标。
+3. 对于显式 ADOT 路径，请使用源文档中的 Operator0.158/Collector0.50 v1beta1 示例，该示例使用对象值配置、TLS 和已准备好的 ServiceAccount。Collector 发布包不包含 Operator 安装清单。这条仅跟踪数据的路径会将 Span 发送到 X-Ray；应用程序仍需检测和上下文传播。
+4. 对于 AMP，请配置实际的工作区 remote-write 端点和写入者身份。单独配置 Grafana/AMG 数据源/查询身份；AMG12+ 使用 AMP 插件。awsemf exporter 通过 CloudWatch 发布数据，不会自动发布到 AMP。
 
-1. **设置 CloudWatch Container Insights**：
-   ```bash
-   # Install CloudWatch agent
-   kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml
-   ```
+**数据路径示例：**
 
-2. **安装 Prometheus 和 Grafana**：
-   ```bash
-   # Create Prometheus namespace
-   kubectl create namespace prometheus
+```text
+EKS control-plane logs -------------------------------> CloudWatch Logs
+Container stdout/stderr -> chosen log collector ------> configured log store
+Application spans ------> ADOT OTLP receiver ----------> X-Ray
+Metric targets ----------> Prometheus -----------------> local TSDB
+                              |-- SigV4 remote_write -> AMP
+Grafana/AMG -- configured queries --> Prometheus / AMP / CloudWatch / X-Ray
+```
 
-   # Install Prometheus using Helm
-   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-   helm install prometheus prometheus-community/prometheus \
-     --namespace prometheus \
-     --set alertmanager.persistentVolume.storageClass="gp2" \
-     --set server.persistentVolume.storageClass="gp2"
+这些是可选的数据路径，并不表示每个收集器都会将数据导出到每个后端。在依赖仪表板之前，请验证权限、TLS、发现/选择器、丢弃的数据和有代表性的查询。定义告警优先级/升级流程，并控制基数、采样和保留期；任何自动响应都应单独测试。
 
-   # Install Grafana
-   helm repo add grafana https://grafana.github.io/helm-charts
-   helm install grafana grafana/grafana \
-     --namespace prometheus \
-     --set persistence.storageClassName="gp2" \
-     --set persistence.enabled=true \
-     --set adminPassword='EKS!sAWSome' \
-     --set datasources."datasources\\.yaml".apiVersion=1 \
-     --set datasources."datasources\\.yaml".datasources[0].name=Prometheus \
-     --set datasources."datasources\\.yaml".datasources[0].type=prometheus \
-     --set datasources."datasources\\.yaml".datasources[0].url=http://prometheus-server.prometheus.svc.cluster.local \
-     --set datasources."datasources\\.yaml".datasources[0].access=proxy \
-     --set datasources."datasources\\.yaml".datasources[0].isDefault=true
-   ```
+**Terraform 规划示例：**
 
-3. **设置 AWS Distro for OpenTelemetry (ADOT) 和 X-Ray**：
-   ```bash
-   # Install ADOT operator
-   kubectl apply -f https://github.com/aws-observability/aws-otel-collector/releases/latest/download/opentelemetry-operator.yaml
+以下资源示例使用 AWS provider 6.69.1。假设所选账户/Region、已有且经过审核的 Grafana 工作区角色、受支持的 AMG 版本，以及符合条件的 IAM Identity Center 设置均已准备就绪。已有资源需要遵循其所有者的导入/变更流程。应用程序日志组名称与源收集器路径相匹配；如果某个组已由 add-on 或其他堆栈管理，请勿再创建第二个所有者。
 
-   # Configure ADOT collector with X-Ray integration
-   cat <<EOF | kubectl apply -f -
-   apiVersion: opentelemetry.io/v1alpha1
-   kind: OpenTelemetryCollector
-   metadata:
-     name: adot-collector
-   spec:
-     mode: deployment
-     serviceAccount: adot-collector
-     config: |
-       receivers:
-         otlp:
-           protocols:
-             grpc:
-               endpoint: 0.0.0.0:4317
-             http:
-               endpoint: 0.0.0.0:4318
-       processors:
-         batch:
-           timeout: 1s
-       exporters:
-         awsxray:
-           region: ${AWS_REGION}
-         awsemf:
-           region: ${AWS_REGION}
-       service:
-         pipelines:
-           traces:
-             receivers: [otlp]
-             processors: [batch]
-             exporters: [awsxray]
-           metrics:
-             receivers: [otlp]
-             processors: [batch]
-             exporters: [awsemf]
-   EOF
-   ```
+```hcl
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
+    }
+  }
+}
 
-4. **将 CloudWatch 与 Prometheus 集成**：
-   ```bash
-   # Create Amazon Managed Prometheus workspace
-   aws amp create-workspace --alias eks-monitoring
+variable "region" {
+  type = string
+}
 
-   # Configure CloudWatch agent
-   cat <<EOF | kubectl apply -f -
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: prometheus-cwagent-config
-     namespace: amazon-cloudwatch
-   data:
-     cwagentconfig.json: |
-       {
-         "logs": {
-           "metrics_collected": {
-             "prometheus": {
-               "prometheus_config_path": "/etc/prometheusconfig/prometheus.yaml",
-               "emf_processor": {
-                 "metric_declaration": [
-                   {
-                     "source_labels": ["job", "pod_name"],
-                     "label_matcher": "^kubernetes-pods;.*$",
-                     "dimensions": [["ClusterName", "Namespace", "PodName"]],
-                     "metric_selectors": ["^.*$"]
-                   }
-                 ]
-               }
-             }
-           }
-         }
-       }
-   EOF
-   ```
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the approved 12-digit AWS account ID."
+  }
+}
 
-**关键监控组件：**
+variable "cluster_name" {
+  type = string
+}
 
-1. **CloudWatch Container Insights**：
-   - Cluster、node、pod 级 metrics
-   - Container log 收集
-   - 自动 dashboard 和 alert
+variable "grafana_workspace_role_arn" {
+  type = string
+}
 
-2. **Prometheus 和 Grafana**：
-   - 细粒度 Kubernetes metrics
-   - 自定义 metrics 和 dashboard
-   - 高级查询和 alert
+variable "grafana_version" {
+  type        = string
+  description = "A reviewed AMG version supported in the selected Region."
+}
 
-3. **AWS X-Ray**：
-   - 分布式追踪
-   - Service map
-   - Request path analysis
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
 
-4. **AWS Distro for OpenTelemetry**：
-   - 标准化 telemetry 收集
-   - 支持多种 backend
-   - Vendor-neutral instrumentation
+resource "aws_prometheus_workspace" "eks_monitoring" {
+  alias = "${var.cluster_name}-monitoring"
+}
 
-**最佳实践：**
+resource "aws_grafana_workspace" "eks_monitoring" {
+  name                     = "${var.cluster_name}-monitoring"
+  account_access_type      = "CURRENT_ACCOUNT"
+  authentication_providers = ["AWS_SSO"]
+  permission_type          = "CUSTOMER_MANAGED"
+  role_arn                 = var.grafana_workspace_role_arn
+  grafana_version          = var.grafana_version
+}
 
-1. **实施分层监控策略**：
-   - Infrastructure level: nodes, network, storage
-   - Cluster level: control plane, nodes, pods
-   - Application level: services, endpoints, business metrics
+resource "aws_cloudwatch_log_group" "application" {
+  name              = "/aws/containerinsights/${var.cluster_name}/application"
+  log_group_class   = "STANDARD"
+  retention_in_days = 30
+}
 
-2. **建立有效的 Alerting 策略**：
-   - 根据优先级设置 alert
-   - 防止 alert fatigue
-   - 定义 escalation path
+output "amp_workspace_id" {
+  value = aws_prometheus_workspace.eks_monitoring.id
+}
 
-3. **实施自动化响应**：
-   - Auto-scaling trigger
-   - Self-healing mechanism
-   - 主动维护
+output "amp_prometheus_endpoint" {
+  value = aws_prometheus_workspace.eks_monitoring.prometheus_endpoint
+}
 
-4. **成本优化**：
-   - 仅收集必要 metrics
-   - 适当的 sampling 和 aggregation
-   - 优化 data retention policy
+output "grafana_workspace_id" {
+  value = aws_grafana_workspace.eks_monitoring.id
+}
+```
 
-**实际实施示例：**
+这段配置定义了资源，但没有定义可正常运行的收集或登录路径。请为角色配置针对实际工作区 ARN 的查询权限，分配用户/组，添加数据源，并使用返回的 ID/端点连接收集器。CUSTOMER_MANAGED 明确表示 IAM 管理由所有者负责；旧的 SERVICE_MANAGED/data_sources 片段不能证明通过 API 创建的工作区已拥有这些角色和连接。请另行审核加密、保留期、访问权限和成本要求。本次审计没有执行 Terraform plan/apply、登录或实时遥测查询。
 
-1. **全面监控架构**：
-   ```
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  EKS Cluster      |    |  CloudWatch       |    |  Amazon Managed   |
-   |                   |    |                   |    |  Prometheus       |
-   +-------------------+    +-------------------+    +-------------------+
-           |                        ^                        ^
-           |                        |                        |
-           v                        |                        |
-   +-------------------+            |                        |
-   |                   |            |                        |
-   |  ADOT Collector   |------------+                        |
-   |                   |                                     |
-   +-------------------+                                     |
-           |                                                 |
-           v                                                 |
-   +-------------------+                                     |
-   |                   |                                     |
-   |  Prometheus       |------------------------------------|
-   |                   |
-   +-------------------+
-           |
-           v
-   +-------------------+    +-------------------+
-   |                   |    |                   |
-   |  Grafana          |    |  X-Ray           |
-   |                   |    |                   |
-   +-------------------+    +-------------------+
-   ```
+**其他选项为何不正确**：A 低估了 CloudWatch 当前的功能；B 混淆了可视化和收集；D 将安装误当作覆盖范围保证。当脚本的所有权、错误和范围明确时，自定义脚本仍可用于有界自动化和检查。
 
-2. **使用 Terraform 配置监控基础设施**：
-   ```hcl
-   # Amazon Managed Prometheus workspace
-   resource "aws_prometheus_workspace" "eks_monitoring" {
-     alias = "eks-monitoring"
-   }
-
-   # Amazon Managed Grafana workspace
-   resource "aws_grafana_workspace" "eks_monitoring" {
-     name                     = "eks-monitoring"
-     account_access_type      = "CURRENT_ACCOUNT"
-     authentication_providers = ["AWS_SSO"]
-     permission_type          = "SERVICE_MANAGED"
-     data_sources             = ["PROMETHEUS", "CLOUDWATCH", "XRAY"]
-   }
-
-   # CloudWatch log group
-   resource "aws_cloudwatch_log_group" "eks_logs" {
-     name              = "/aws/eks/my-cluster/logs"
-     retention_in_days = 30
-   }
-   ```
-
-其他选项的问题：
-- **A. 仅使用 CloudWatch**：CloudWatch 提供 AWS infrastructure 和基本 container metrics，但在 Kubernetes-specific metrics 或细粒度 application-level monitoring 方面有限制。
-- **B. 仅使用 Prometheus 和 Grafana**：这种组合提供强大的 Kubernetes monitoring，但缺少与 AWS services 或 distributed tracing 功能的集成。
-- **D. 编写自定义监控脚本**：自定义脚本难以维护、扩展性差，并且无法利用行业标准工具的丰富功能。
 </details>
-### 2. 在 Amazon EKS 中有效收集和分析 container logs 的最佳方法是什么？
 
-A. 从每个 node 手动检索 log files
-B. 直接从 containers 内部读取 log files
-C. 使用 Fluentd/Fluent Bit 将 logs 发送到 CloudWatch Logs 或 Elasticsearch
-D. 仅将 logs 发送到 standard output
+### 2. 哪种方法可以正确地将容器日志连接到集中式保留和分析？
+
+- A. 将定期手动复制节点文件视为完整且持久的日志流水线。
+- B. 假设容器内的文件始终能在容器和节点替换后保留。
+- C. 使用由你负责的收集器，并配置正确的运行时解析器、权限、存储和后端。
+- D. 为同一批文件安装两个收集器，并假设这样就能保证无损传送。
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：C. 使用 Fluentd/Fluent Bit 将 logs 发送到 CloudWatch Logs 或 Elasticsearch**
+**答案：C. 配置并验证由你负责的收集路径。**
 
-**解释：**
-在 Amazon EKS 中有效收集和分析 container logs 的最佳方法是使用 Fluentd 或 Fluent Bit 等 log collector，将 logs 发送到 CloudWatch Logs、Amazon OpenSearch Service（以前称为 Elasticsearch Service）或其他 log analysis systems。此方法提供可扩展性、集中化以及搜索和分析能力。
+**说明：**
 
-**基于 Fluentd/Fluent Bit 的日志记录的主要优势：**
+应用程序通常应将适当的结构化记录写入 stdout/stderr，而平台则负责收集和保留。stdout 是一个良好的接口，但它本身不是持久的集中式存储。收集器可以添加解析、筛选、缓冲和路由；轮转、有限缓冲区、节点丢失和重试仍会影响覆盖范围并导致重复。应控制访问、敏感字段和保留期，而不要声称收集器能保证完整性或无损传送。
 
-1. **集中式 Log Management**：
-   - 在单一位置收集所有 container logs
-   - Cluster-wide log search and analysis
-   - 长期 log retention 和归档
+**已连线的 Fluent Bit 基线：**
 
-2. **可扩展性和可靠性**：
-   - 支持大规模 clusters
-   - Buffering 和 retry mechanism
-   - 尽量减少 log loss
+请使用[源章节](../../eks/06-eks-monitoring-logging.md)，不要直接应用无关的 master 分支原始清单。其中的独立示例使用 AWS chart0.2.0/image3.4.14、原生 cloudWatchLogs 设置、CRI 解析、只读节点日志、独立状态/缓冲区，以及经过审核的 RBAC 后置渲染器。请准备实际日志组和 IAM 身份。如果 CloudWatch add-on 已负责管理 Fluent Bit，请使用该所有者的配置，而不要意外创建第二个读取器。
 
-3. **灵活的 Log Processing**：
-   - Log filtering 和 transformation
-   - 支持 structured logging
-   - 支持多种 output destination
+对于 OpenSearch 扇出，请在所有者的安装/升级流程中，将此源覆盖层与完整的基础值及后置渲染器结合使用：
 
-4. **集成分析和可视化**：
-   - CloudWatch Logs Insights
-   - OpenSearch Dashboards（以前称为 Kibana）
-   - 高级搜索和查询
+```yaml
+opensearch:
+  enabled: true
+  host: vpc-eks-logs-EXAMPLE.us-west-2.es.amazonaws.com
+  port: '443'
+  tls: 'On'
+  awsAuth: 'On'
+  awsRegion: us-west-2
+  index: eks-logs
+  generateId: 'On'
+  suppressTypeName: 'On'
+  extraOutputs: 'tls.verify On
 
-**实施方法：**
+    storage.total_limit_size 512M
 
-1. **Fluent Bit 与 CloudWatch Logs 集成**：
-   ```bash
-   # Create Fluent Bit namespace
-   kubectl create namespace amazon-cloudwatch
+    '
+```
 
-   # Install AWS for Fluent Bit
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/cloudwatch-namespace.yaml
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/fluent-bit-service-account.yaml
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/fluent-bit-role.yaml
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/fluent-bit-role-binding.yaml
+请将端点/Region 替换为经过检查的域值。SigV4 权限、域策略、FGAC 角色映射和 TLS 验证是独立要求。不要在同一个请求中将基本身份验证凭证与 SigV4 混用。每个输出都有独立的成功/重试行为；CloudWatch 成功并不能证明 OpenSearch 已收到数据。请使用受支持的记录访问器模板和备用流名称；log_stream_prefix 不是可任意使用 shell 风格语法展开 Kubernetes 记录字段的配置项。
 
-   # Deploy Fluent Bit ConfigMap and DaemonSet
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/fluent-bit-configmap.yaml
-   kubectl apply -f https://raw.githubusercontent.com/aws/aws-for-fluent-bit/master/eks/fluent-bit-ds.yaml
-   ```
+**Fluentd 替代方案：明确插件和输入约定：**
 
-2. **Fluentd 与 Amazon OpenSearch Service 集成**：
-   ```yaml
-   # Fluentd ConfigMap
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: fluentd-config
-     namespace: kube-system
-   data:
-     fluent.conf: |
-       <source>
-         @type tail
-         path /var/log/containers/*.log
-         pos_file /var/log/fluentd-containers.log.pos
-         tag kubernetes.*
-         read_from_head true
-         <parse>
-           @type json
-           time_format %Y-%m-%dT%H:%M:%S.%NZ
-         </parse>
-       </source>
+如果由你负责的镜像包含所需的解析器、Kubernetes 元数据和 OpenSearch 插件，Fluentd 仍然是一种选择。将应用程序正文视为 JSON 之前，必须先解码 containerd/CRI-O 封装。请配置 tail 输入、元数据权限、每个收集器的位置/缓冲区存储以及已挂载的配置；以下仅是 OpenSearch 输出片段，并非完整的 ConfigMap/DaemonSet 安装配置：
 
-       <filter kubernetes.**>
-         @type kubernetes_metadata
-         @id filter_kube_metadata
-       </filter>
+```text
+<match kubernetes.**>
+  @type opensearch
+  ssl_verify true
+  logstash_format false
+  include_timestamp true
+  index_name eks-logs
+  suppress_type_name true
+  <endpoint>
+    url "#{ENV.fetch('OPENSEARCH_URL')}"
+    region "#{ENV.fetch('AWS_REGION')}"
+    assume_role_arn "#{ENV.fetch('AWS_ROLE_ARN')}"
+    assume_role_web_identity_token_file "#{ENV.fetch('AWS_WEB_IDENTITY_TOKEN_FILE')}"
+  </endpoint>
+  <buffer>
+    @type file
+    path /var/lib/fluentd/opensearch
+    total_limit_size 256m
+    chunk_limit_size 2m
+    retry_timeout 1h
+    overflow_action block
+  </buffer>
+</match>
+```
 
-       <match kubernetes.**>
-         @type elasticsearch
-         host search-eks-logs.us-west-2.es.amazonaws.com
-         port 443
-         scheme https
-         ssl_verify false
-         index_name fluentd.${record['kubernetes']['namespace_name']}.${record['kubernetes']['pod_name']}
-         type_name fluentd
-         logstash_format true
-         logstash_prefix fluentd.${record['kubernetes']['namespace_name']}
-         <buffer>
-           @type file
-           path /var/log/fluentd-buffers/kubernetes.system.buffer
-           flush_mode interval
-           retry_type exponential_backoff
-           flush_thread_count 2
-           flush_interval 5s
-           retry_forever
-           retry_max_interval 30
-           chunk_limit_size 2M
-           queue_limit_length 8
-           overflow_action block
-         </buffer>
-       </match>
-   ```
+此配置使用官方 fluent-plugin-opensearch IRSA 端点字段和固定索引。请准备 OPENSEARCH_URL 以及 IRSA 注入的角色/令牌文件环境变量。设置 logstash_format=true 会忽略 index_name；任意的、按 Pod 定义的索引表达式不能取代经过验证的路由/保留设计。请选择有界索引/别名，并审核滚动策略。文件缓冲区需要适当且可写、隔离的存储路径；即使使用阻塞/重试，在轮转或节点丢失后仍可能丢失尚未读取的日志。本次审计未运行该插件/输入组合。
 
-3. **使用 AWS Distro for OpenTelemetry (ADOT) 收集 Logs**：
-   ```yaml
-   # ADOT collector configuration
-   apiVersion: opentelemetry.io/v1alpha1
-   kind: OpenTelemetryCollector
-   metadata:
-     name: adot-collector
-   spec:
-     mode: daemonset
-     serviceAccount: adot-collector
-     config: |
-       receivers:
-         filelog:
-           include: [ /var/log/containers/*.log ]
-           start_at: beginning
-           include_file_path: true
-           operators:
-             - type: json_parser
-               timestamp:
-                 parse_from: attributes.time
-                 layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-       processors:
-         batch:
-           timeout: 1s
-       exporters:
-         awscloudwatchlogs:
-           log_group_name: "/aws/eks/my-cluster/logs"
-           log_stream_name: "{pod_name}.{container_name}"
-           region: us-west-2
-       service:
-         pipelines:
-           logs:
-             receivers: [filelog]
-             processors: [batch]
-             exporters: [awscloudwatchlogs]
-   ```
+**所选组件支持 ADOT 日志收集：**
 
-**Log 收集和分析最佳实践：**
+ADOT0.50.0 包含 filelog、file_storage 和 awscloudwatchlogs。对应的上游0.158 CloudWatch Logs exporter 被标记为 alpha；这是带有明确运行时前提条件的特定版本示例，并不代表已达到生产就绪状态。请将其用作所选数据集的替代收集器，避免意外与 Fluent Bit 重复收集。
 
-1. **实施 Structured Logging**：
-   - 使用 JSON 格式 logs
-   - 一致的 log fields 和 formats
-   - 包含 correlation IDs
+请准备 Operator0.158、日志命名空间和 ServiceAccount adot-logs，并为其配置经过审核的 IRSA 角色和 AWS 日志写入权限。将信任范围限制为此集群的 OIDC provider、sub=system:serviceaccount:logging:adot-logs 和 aud=sts.amazonaws.com；并提供所需的 STS/Logs 网络路径。此示例适用于标准 Linux EC2 节点，并且需要允许以 root 运行节点代理的准入权限；该代理会只读挂载 /var/log/pods，并使用专用可写状态目录。默认命名空间包含过滤器限制了导出的数据；它不会将节点级 host 挂载变成文件系统安全边界。请审核节点放置/污点、文件所有权和命名空间策略。部署前请设置实际 Region/日志组值：
 
-2. **优化 Log Levels**：
-   - 设置适当的 log levels
-   - 在生产环境中尽量减少 debug logs
-   - 为重要事件提供足够上下文
+```yaml
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: adot-logs
+  namespace: logging
+spec:
+  mode: daemonset
+  image: public.ecr.aws/aws-observability/aws-otel-collector:v0.50.0
+  serviceAccount: adot-logs
+  nodeSelector:
+    kubernetes.io/os: linux
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: eks.amazonaws.com/compute-type
+            operator: NotIn
+            values: [fargate, auto, hybrid]
+  env:
+  - name: AWS_REGION
+    value: us-west-2
+  - name: AWS_EC2_METADATA_DISABLED
+    value: "true"
+  - name: K8S_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: LOG_GROUP_NAME
+    value: /aws/containerinsights/my-owned-cluster/application
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: [ALL]
+  volumes:
+  - name: pod-logs
+    hostPath:
+      path: /var/log/pods
+      type: Directory
+  - name: collector-state
+    hostPath:
+      path: /var/lib/adot-logs
+      type: DirectoryOrCreate
+  volumeMounts:
+  - name: pod-logs
+    mountPath: /var/log/pods
+    readOnly: true
+  - name: collector-state
+    mountPath: /var/lib/adot-logs
+  config:
+    extensions:
+      file_storage:
+        directory: /var/lib/adot-logs/checkpoints
+        create_directory: true
+      health_check:
+        endpoint: 0.0.0.0:13133
+    receivers:
+      filelog:
+        include: [/var/log/pods/default_*/*/*.log]
+        include_file_path: true
+        start_at: end
+        storage: file_storage
+        retry_on_failure:
+          enabled: true
+          max_elapsed_time: 5m
+        operators:
+        - type: container
+          add_metadata_from_filepath: true
+          max_log_size: 1MiB
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 384
+        spike_limit_mib: 64
+      batch: {}
+    exporters:
+      awscloudwatchlogs:
+        region: us-west-2
+        log_group_name: ${env:LOG_GROUP_NAME}
+        log_stream_name: ${env:K8S_NODE_NAME}
+        log_retention: 30
+        raw_log: false
+        sending_queue:
+          num_consumers: 2
+          queue_size: 100
+    service:
+      extensions: [file_storage, health_check]
+      pipelines:
+        logs:
+          receivers: [filelog]
+          processors: [memory_limiter, batch]
+          exporters: [awscloudwatchlogs]
+```
 
-3. **Log Retention 和归档策略**：
-   - 平衡成本和合规要求
-   - 使用分层存储
-   - 配置自动归档
+container operator 会处理 CRI 封装/部分记录，并从 log.file.path 派生 Pod 元数据。对原始 CRI 行使用通用 JSON 解析器是不正确的。流名称通过 Downward API 节点名称和 Collector 环境变量替换获取，而不是使用不受支持的 {pod_name}.{container_name} 占位符。
 
-4. **Log Security Considerations**：
-   - 过滤敏感信息
-   - 控制 log access
-   - 确保 log integrity
+Exporter 可以创建日志组/流，log_retention 适用于新建的日志组；现有保留期应由日志组所有者配置。其文档所述的 EMF 处理可能覆盖已配置的组/流名称，因此应限制 IAM 目标范围并检查实际数据格式。单靠配置字符串不能形成授权边界。
 
-**实际实施示例：**
+file_storage 保存接收器偏移量，而不是每个尚未导出的批次。此示例使用内存发送队列和有限重试；检查点状态、批次和 hostPath 数据的故障/生命周期行为各不相同。首次读取时，start_at=end 会跳过已有内容，除非存在已保存的偏移量。请监控重试、队列/丢弃/存储错误和节点轮转。本次未测试 Collector 进程、挂载、AWS 凭证流或数据摄取。
 
-1. **包含多个 Output Destinations 的 Fluent Bit 配置**：
-   ```
-   [INPUT]
-       Name                tail
-       Tag                 kube.*
-       Path                /var/log/containers/*.log
-       Parser              docker
-       DB                  /var/log/flb_kube.db
-       Mem_Buf_Limit       5MB
-       Skip_Long_Lines     On
-       Refresh_Interval    10
+**分析和基础设施检查：**
 
-   [FILTER]
-       Name                kubernetes
-       Match               kube.*
-       Kube_URL            https://kubernetes.default.svc:443
-       Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-       Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-       Merge_Log           On
-       K8S-Logging.Parser  On
-       K8S-Logging.Exclude Off
+对于源 Fluent Bit 架构，请使用实际的命名空间/容器字段检查结构化错误。ADOT 包装器或其他收集器可能会生成不同的存储架构：
 
-   [OUTPUT]
-       Name                cloudwatch_logs
-       Match               kube.*
-       region              us-west-2
-       log_group_name      /aws/eks/my-cluster/logs
-       log_stream_prefix   ${kubernetes['namespace_name']}.${kubernetes['pod_name']}.
-       auto_create_group   true
+```
+fields @timestamp, @log, kubernetes.pod_name, data.level, data.message
+| filter kubernetes.namespace_name = "default"
+| filter toupper(data.level) = "ERROR"
+| sort @timestamp desc
+| limit 100
+```
 
-   [OUTPUT]
-       Name                es
-       Match               kube.*
-       Host                search-eks-logs.us-west-2.es.amazonaws.com
-       Port                443
-       TLS                 On
-       Index               eks-logs
-       Suppress_Type_Name  On
-   ```
+以下独立 Terraform 检查示例读取一个已存在且经过批准的 OpenSearch 域：
 
-2. **用于 Log Analysis 的 CloudWatch Logs Insights Query**：
-   ```
-   fields @timestamp, @message, kubernetes.pod_name, kubernetes.namespace_name, log
-   | filter kubernetes.namespace_name = "production"
-   | filter @message like /ERROR/
-   | sort @timestamp desc
-   | limit 100
-   ```
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.69.1"
+    }
+  }
+}
 
-3. **使用 Terraform 配置 Logging Infrastructure**：
-   ```hcl
-   # CloudWatch log group
-   resource "aws_cloudwatch_log_group" "eks_logs" {
-     name              = "/aws/eks/my-cluster/logs"
-     retention_in_days = 30
-     tags = {
-       Environment = "production"
-       Application = "eks-cluster"
-     }
-   }
+variable "aws_region" {
+  type    = string
+  default = "us-west-2"
+}
 
-   # OpenSearch domain
-   resource "aws_elasticsearch_domain" "eks_logs" {
-     domain_name           = "eks-logs"
-     elasticsearch_version = "OpenSearch_1.3"
+variable "opensearch_domain_name" {
+  type        = string
+  description = "Existing domain approved for this workload's logs"
+}
 
-     cluster_config {
-       instance_type  = "m5.large.elasticsearch"
-       instance_count = 3
-     }
+provider "aws" {
+  region = var.aws_region
+}
 
-     ebs_options {
-       ebs_enabled = true
-       volume_size = 100
-     }
+data "aws_opensearch_domain" "eks_logs" {
+  domain_name = var.opensearch_domain_name
+}
 
-     encrypt_at_rest {
-       enabled = true
-     }
+output "opensearch_endpoint" {
+  value = coalesce(
+    data.aws_opensearch_domain.eks_logs.endpoint_v2,
+    data.aws_opensearch_domain.eks_logs.endpoint
+  )
+}
 
-     node_to_node_encryption {
-       enabled = true
-     }
+output "opensearch_domain_arn" {
+  value = data.aws_opensearch_domain.eks_logs.arn
+}
+```
 
-     domain_endpoint_options {
-       enforce_https       = true
-       tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
-     }
+此数据源不会配置网络、IAM/域策略、FGAC 或数据传送。请将管理与数据摄取分开，不要在代码/状态中存放主密码，并审核任何资源/地址迁移。查询和访问测试需要真实环境；Terraform 验证不会执行这些检查。
 
-     advanced_security_options {
-       enabled                        = true
-       internal_user_database_enabled = true
-       master_user_options {
-         master_user_name     = "admin"
-         master_user_password = var.opensearch_master_password
-       }
-     }
-   }
-   ```
+**其他选项为何不正确**：手动检查文件有助于诊断，但不是完整的集中式流水线。文件能否保留取决于容器/节点生命周期和卷类型。重复读取器可能导致数据/成本重复，而且仍可能失败；必须测量缓冲和重试的容量，并进行故障测试。
 
-其他选项的问题：
-- **A. 从每个 node 手动检索 log files**：不可扩展、没有自动化，并且如果 nodes 发生故障，logs 可能会丢失。
-- **B. 直接从 containers 内部读取 log files**：当 containers 终止时无法访问 logs，并且集中分析很困难。
-- **D. 仅将 logs 发送到 standard output**：将 logs 发送到 standard output 是一种良好实践，但如果没有收集并集中这些 logs 的机制，就很难进行有效分析。
+参考资料：[ADOT 组件](https://github.com/aws-observability/aws-otel-collector/tree/v0.50.0)、[容器解析器](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.158.0/pkg/stanza/docs/operators/container.md)、[CloudWatch Logs exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awscloudwatchlogsexporter)、[Fluentd OpenSearch 插件](https://github.com/fluent/fluent-plugin-opensearch)。
+
 </details>
-### 3. 在 Amazon EKS 中构建有效 alerting system 的最佳方法是什么？
 
-A. 手动审查 log files
-B. 仅使用 CloudWatch Alarms
-C. 仅使用 Prometheus AlertManager
-D. 集成 CloudWatch Alarms、Prometheus AlertManager 和 EventBridge，以支持多种 notification channels
+### 3. 哪种方法可以为 EKS 构建有效且可验证的告警路径？
+
+- A. 假设手动查看日志可以保证立即发现问题。
+- B. 创建一个 CloudWatch 告警，并假设它可以覆盖所有 Kubernetes/应用程序故障。
+- C. 创建任意 alertmanager-config ConfigMap，并假设 Operator 会使用它。
+- D. 选择所需信号，将指标/事件规则连接到已授权的接收方，并测试每条传送路径。
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：D. 集成 CloudWatch Alarms、Prometheus AlertManager 和 EventBridge，以支持多种 notification channels**
+**答案：D. 连接并验证所需的告警路径。**
 
-**解释：**
-在 Amazon EKS 中构建有效 alerting system 的最佳方法是集成 CloudWatch Alarms、Prometheus AlertManager 和 EventBridge，以支持多种 notification channels。这种集成方法在 infrastructure、cluster 和 application 层面提供全面 alerting，并支持多种 notification channels 和 response mechanisms。
+**说明：**
 
-**集成 Alerting System 的主要优势：**
+CloudWatch 告警、Prometheus/Alertmanager 和 EventBridge 分别满足不同的信号/路由需求，可以经过规划后组合使用。CloudWatch 也支持应用程序/自定义指标，而 Prometheus 可以使用适当的 AWS exporter；不应以笼统的“仅限基础设施”说法否定任何一方。仅安装工具并不能建立指标覆盖范围、正确阈值、发布者权限或成功传送能力。
 
-1. **多层 Alerting**：
-   - AWS infrastructure-level alerts (CloudWatch)
-   - Kubernetes cluster-level alerts (Prometheus)
-   - Application-level alerts (custom metrics)
-   - Event-based alerts (EventBridge)
+**指标规则必须匹配实际序列和单位：**
 
-2. **支持多种 Notification Channels**：
-   - Email, SMS (SNS)
-   - Slack, Microsoft Teams (webhooks)
-   - PagerDuty, OpsGenie (incident management)
-   - 自定义 Lambda functions
+以下 PrometheusRule 使用源章节中的 KPS 选择器和实际的 node-exporter/kube-state-metrics 序列。CPU 和可用内存计算结果明确为百分比，因此 80 阈值有意义。CrashLoopBackOff 使用 waiting reason，而非任意重启；包括处于 Running 状态但 Ready=false 的 Pod，同时排除终止状态的 Pod。合并多个集群时应添加稳定的集群标识，并在部署重复规则前检查是否已有等效的捆绑规则：
 
-3. **智能 Alert Management**：
-   - Alert grouping 和 deduplication
-   - Alert routing 和 escalation
-   - Alert suppression 和 silencing
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: eks-observability-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: eks-observability-example
+    rules:
+    - alert: NodeHighCPU
+      expr: (100 * (1 - avg by (cluster, instance) (max by (cluster, instance, cpu) (rate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m]))))) > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High non-idle CPU on {{ $labels.instance }}
+        description: The node-exporter percentage has exceeded the example threshold; inspect workload and metric health.
+    - alert: NodeMemoryFilling
+      expr: (100 * (1 - max by (cluster, instance) (node_memory_MemAvailable_bytes{job="node-exporter"}) / max by (cluster, instance) (node_memory_MemTotal_bytes{job="node-exporter"}))) > 80 and on (cluster, instance) (max by (cluster, instance) (node_memory_MemTotal_bytes{job="node-exporter"}) > 0)
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Low available memory on {{ $labels.instance }}
+        description: This is a MemAvailable-based estimate, not a MemoryPressure condition or Pod request utilization.
+    - alert: KubernetesPodCrashLooping
+      expr: max by (cluster, namespace, pod, uid, container) (max_over_time(kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="CrashLoopBackOff"}[5m])) >= 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: CrashLoopBackOff observed for {{ $labels.namespace }}/{{ $labels.pod }}
+        description: Inspect container {{ $labels.container }} logs and events; the rule tracks recent waiting reasons, not a restart-count guarantee.
+    - alert: PodNotReady
+      expr: (max by (cluster, namespace, pod, uid) (kube_pod_status_ready{job="kube-state-metrics",condition="true"}) == 0) and on (cluster, namespace, pod, uid) (max by (cluster, namespace, pod, uid) (kube_pod_status_phase{job="kube-state-metrics",phase=~"Pending|Running|Unknown"}) == 1)
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Active Pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready
+        description: Inspect Ready conditions and probes; terminal Succeeded/Failed Pods are excluded from this example.
+```
 
-**实施方法：**
+这些阈值和持续时间仅供说明。MemAvailable 用于估算可回收的可用内存；它不是 kubelet 的 MemoryPressure 条件，也不是 Pod 请求量的百分比。缺失或过期的序列并不代表健康/用量为零。请单独监控抓取失败和规则评估。
 
-1. **设置 CloudWatch Alarms**：
-   ```bash
-   # Create CloudWatch alarm for node CPU usage
-   aws cloudwatch put-metric-alarm \
-     --alarm-name EKS-Node-High-CPU \
-     --alarm-description "Alarm when CPU exceeds 80%" \
-     --metric-name CPUUtilization \
-     --namespace AWS/EC2 \
-     --dimensions Name=AutoScalingGroupName,Value=eks-node-group-1 \
-     --statistic Average \
-     --period 300 \
-     --threshold 80 \
-     --comparison-operator GreaterThanThreshold \
-     --evaluation-periods 2 \
-     --alarm-actions arn:aws:sns:us-west-2:123456789012:eks-alerts
-   ```
+**连接实际的 Alertmanager 配置：**
 
-2. **配置 Prometheus AlertManager**：
-   ```yaml
-   # alertmanager-config.yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: alertmanager-config
-     namespace: prometheus
-   data:
-     alertmanager.yml: |
-       global:
-         resolve_timeout: 5m
-       route:
-         group_by: ['alertname', 'job', 'severity']
-         group_wait: 30s
-         group_interval: 5m
-         repeat_interval: 12h
-         receiver: 'sns-forwarder'
-         routes:
-         - match:
-             severity: critical
-           receiver: 'pagerduty-critical'
-         - match:
-             severity: warning
-           receiver: 'slack-warnings'
-       receivers:
-       - name: 'sns-forwarder'
-         webhook_configs:
-         - url: 'http://sns-forwarder.monitoring.svc.cluster.local:9087/alert'
-       - name: 'pagerduty-critical'
-         pagerduty_configs:
-         - service_key: '<PAGERDUTY_SERVICE_KEY>'
-       - name: 'slack-warnings'
-         slack_configs:
-         - api_url: '<SLACK_WEBHOOK_URL>'
-           channel: '#eks-alerts'
-           title: '{{ .GroupLabels.alertname }}'
-           text: '{{ .CommonAnnotations.description }}'
-   ```
+请使用源文档中的 alertmanager-routing Secret（其键为 alertmanager.yaml）、alertmanager-values.yaml 以及 notification-credentials 挂载。请在该 Secret 中准备实际的 Slack webhook 和 PagerDuty Events API v2 路由密钥。对于原生 SNS，请为实际的 Alertmanager ServiceAccount 准备 AWS 身份，并授予限定主题范围的发布权限和适用的 KMS 权限；其他组件的 IRSA 角色不会自动共享。
 
-3. **定义 Prometheus Alert Rules**：
-   ```yaml
-   # prometheus-rules.yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: prometheus-rules
-     namespace: prometheus
-   data:
-     alert-rules.yml: |
-       groups:
-       - name: node-alerts
-         rules:
-         - alert: NodeHighCPU
-           expr: instance:node_cpu_utilization:rate5m > 80
-           for: 5m
-           labels:
-             severity: warning
-           annotations:
-             summary: "High CPU usage on {{ $labels.instance }}"
-             description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
+使用前请替换示例 SNS 账户/Region/主题。此完整路由示例会将严重告警发送到 PagerDuty，将警告发送到 Slack，并将未匹配告警发送到 SNS；示例 Watchdog 路由会被丢弃，直到单独配置心跳监视器：
 
-         - alert: NodeMemoryFilling
-           expr: instance:node_memory_utilization:rate5m > 80
-           for: 5m
-           labels:
-             severity: warning
-           annotations:
-             summary: "High memory usage on {{ $labels.instance }}"
-             description: "Memory usage is above 80% for 5 minutes on {{ $labels.instance }}"
+```yaml
+global:
+  resolve_timeout: 5m
+route:
+  group_by:
+  - cluster
+  - namespace
+  - alertname
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: sns-notifications
+  routes:
+  - matchers:
+    - alertname="Watchdog"
+    receiver: discard
+  - matchers:
+    - severity="critical"
+    receiver: pagerduty-notifications
+  - matchers:
+    - severity="warning"
+    receiver: slack-notifications
+receivers:
+- name: discard
+- name: slack-notifications
+  slack_configs:
+  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-url
+    channel: '#eks-alerts'
+    send_resolved: true
+    title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+    text: "{{ range .Alerts }}{{ .Annotations.summary }} \u2014 {{ .Annotations.description }}{{ \"\\n\" }}{{ end }}"
+- name: sns-notifications
+  sns_configs:
+  - sigv4:
+      region: us-west-2
+    topic_arn: arn:aws:sns:us-west-2:123456789012:eks-alerts
+    send_resolved: true
+    subject: EKS {{ .CommonLabels.alertname }}
+- name: pagerduty-notifications
+  pagerduty_configs:
+  - routing_key_file: /etc/alertmanager/secrets/notification-credentials/pagerduty-routing-key
+    send_resolved: true
+    severity: '{{ if eq .CommonLabels.severity "critical" }}critical{{ else }}warning{{ end }}'
+    description: '{{ .CommonLabels.alertname }}'
+```
 
-       - name: pod-alerts
-         rules:
-         - alert: PodCrashLooping
-           expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
-           for: 10m
-           labels:
-             severity: warning
-           annotations:
-             summary: "Pod {{ $labels.pod }} is crash looping"
-             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+默认接收方是备用接收方；当子路由匹配时，它不会自动扇出通知。只有确实需要扇出时，才配置 continue/显式的同级路由。请使用匹配版本的 amtool 验证完整文件，并测试路由标签。不需要未定义的 sns-forwarder 服务或包含凭证的 ConfigMap。
 
-         - alert: PodNotReady
-           expr: sum by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Unknown"}) > 0
-           for: 15m
-           labels:
-             severity: warning
-           annotations:
-             summary: "Pod {{ $labels.pod }} is not ready"
-             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in non-ready state for more than 15 minutes"
-   ```
+**CloudWatch 和 EventBridge 发布者权限：**
 
-4. **设置 EventBridge Rules**：
-   ```bash
-   # Create EventBridge rule for EKS events
-   aws events put-rule \
-     --name EKS-Control-Plane-Events \
-     --event-pattern '{"source":["aws.eks"],"detail-type":["EKS Cluster Control Plane Health"]}'
+- 对于 Container Insights 告警，请使用源章节中的实际指标和维度。托管节点组名称不一定是 EC2 Auto Scaling 组名称；不要编造 AWS/EC2 维度值。
+- CloudWatch 告警发布者需要相应的 SNS 主题策略。如果主题经过加密，AWS 文档指出 alias/aws/sns 不足以供 CloudWatch 告警使用；应使用客户托管的 KMS 密钥，其策略允许所需的发布者操作并附带适当限制。
+- EventBridge 使用已发布的 EKS add-on 运行状况事件或受支持的 CloudTrail API 事件。EKS Cluster Control Plane Health 不在 EKS 直接事件目录中。API 调用成功不等于更新已完成。
+- 对于 SNS 目标，请准备 EventBridge 执行角色或文档所述的资源策略替代方案。检查 PutTargets 失败和传送指标。主题存在或规则 API 调用成功都不能证明已成功传送。
 
-   # Set SNS topic as target
-   aws events put-targets \
-     --rule EKS-Control-Plane-Events \
-     --targets 'Id"="1","Arn"="arn:aws:sns:us-west-2:123456789012:eks-alerts"'
-   ```
+**Terraform 规划示例：**
 
-**Alert Integration 和 Routing：**
+此独立示例引用一个由现有所有者管理的标准 SNS 主题和已准备好的目标角色。主题/密钥策略、订阅和实际 ContainerInsights 数据都是前提条件。节点 CPU 告警对所选 ClusterName 序列取 Maximum，而 add-on 事件规则覆盖整个账户/Region。告警操作和规则均已禁用，以供审核：
 
-1. **通过 SNS Topics 集成 Alert**：
-   ```bash
-   # Create SNS topic
-   aws sns create-topic --name eks-alerts
+```hcl
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
+    }
+  }
+}
 
-   # Add email subscription
-   aws sns subscribe \
-     --topic-arn arn:aws:sns:us-west-2:123456789012:eks-alerts \
-     --protocol email \
-     --notification-endpoint ops-team@example.com
+variable "region" {
+  type = string
+}
 
-   # Add Lambda subscription
-   aws sns subscribe \
-     --topic-arn arn:aws:sns:us-west-2:123456789012:eks-alerts \
-     --protocol lambda \
-     --notification-endpoint arn:aws:lambda:us-west-2:123456789012:function:process-eks-alerts
-   ```
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the approved 12-digit AWS account ID."
+  }
+}
 
-2. **使用 Lambda 进行 Alert Processing 和 Routing**：
-   ```python
-   import json
-   import boto3
-   import requests
+variable "cluster_name" {
+  type = string
+}
 
-   def lambda_handler(event, context):
-       message = json.loads(event['Records'][0]['Sns']['Message'])
+variable "sns_topic_arn" {
+  type        = string
+  description = "Prepared standard SNS topic with reviewed publisher/subscription/key permissions."
+}
 
-       # Route to different channels based on alert severity
-       if 'AlarmName' in message:
-           severity = get_alarm_severity(message['AlarmName'])
-       else:
-           severity = 'info'
+variable "eventbridge_role_arn" {
+  type        = string
+  description = "Prepared target execution role allowed to publish to the selected topic."
+}
 
-       if severity == 'critical':
-           send_to_pagerduty(message)
-       elif severity == 'warning':
-           send_to_slack(message, '#eks-warnings')
-       else:
-           send_to_slack(message, '#eks-info')
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
 
-       return {
-           'statusCode': 200,
-           'body': json.dumps('Alert processed successfully!')
-       }
+resource "aws_cloudwatch_metric_alarm" "node_cpu" {
+  alarm_name          = "${var.cluster_name}-node-cpu-warning"
+  alarm_description   = "Example node CPU Maximum threshold; confirm actual ContainerInsights data."
+  namespace           = "ContainerInsights"
+  metric_name         = "node_cpu_utilization"
+  dimensions          = { ClusterName = var.cluster_name }
+  statistic           = "Maximum"
+  period              = 300
+  evaluation_periods  = 2
+  datapoints_to_alarm = 2
+  threshold           = 80
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "missing"
+  actions_enabled     = false
+  alarm_actions       = [var.sns_topic_arn]
+}
 
-   def get_alarm_severity(alarm_name):
-       if 'Critical' in alarm_name:
-           return 'critical'
-       elif 'Warning' in alarm_name:
-           return 'warning'
-       else:
-           return 'info'
+resource "aws_cloudwatch_event_rule" "addon_health" {
+  name_prefix = "eks-addon-health-"
+  description = "Account/Region add-on health events; not filtered to a single cluster."
+  state       = "DISABLED"
+  event_pattern = jsonencode({
+    source      = ["aws.eks"]
+    account     = [var.account_id]
+    region      = [var.region]
+    detail-type = ["EKS Addon Health Degraded", "EKS Addon Health Restored"]
+  })
+}
 
-   def send_to_pagerduty(message):
-       # Implement PagerDuty API call
-       pass
+resource "aws_cloudwatch_event_target" "sns" {
+  rule      = aws_cloudwatch_event_rule.addon_health.name
+  target_id = "ops-sns"
+  arn       = var.sns_topic_arn
+  role_arn  = var.eventbridge_role_arn
+}
+```
 
-   def send_to_slack(message, channel):
-       # Implement Slack webhook call
-       pass
-   ```
+CPU 示例要求两个五分钟最大值都超出阈值，并不表示 80% 用量持续了十分钟。缺失数据不会被自动视为健康。在通过所有者的受控变更启用之前，请审核资源所有权、发布者访问权限、指标数据和预期通知。此片段不会创建/替换主题策略，也不会配置订阅；本次审计未针对 AWS 执行 plan/apply。
 
-**Alerting 最佳实践：**
+**SNS 订阅和可选 Lambda 处理：**
 
-1. **防止 Alert Fatigue**：
-   - 仅关注重要 alert
-   - 对 alert 进行 grouping 和 deduplication
-   - 限制 alert frequency
+电子邮件订阅需要确认。Lambda 订阅需要在函数上授予针对预期 SNS 主题的权限；仅创建订阅并不会授予调用权限。对于标准主题，SNS 会异步调用 Lambda，并且可能发生重复处理。自定义适配器需要实际的传送代码、打包依赖项、受保护的凭证、输入验证、幂等性、失败/重试处理和可观测结果。
 
-2. **提供清晰的 Alert Content**：
-   - 问题描述和影响
-   - 推荐的解决操作
-   - 相关资源和上下文
+不要部署旧的占位处理程序：其中的发送函数只有 pass，然后返回“处理成功”。对于异步 SNS 调用，类似 HTTP 的 statusCode 返回值不是通知确认。应正确呈现传送失败，检查文档所述的 SNS 记录格式，并且不要根据任意 AlarmName 子字符串推断严重性。应分别配置订阅传送失败和 Lambda 执行失败。SQS 缓冲是另一种可选设计，需要实际的队列/事件源映射及其自身故障控制；架构示意图并不意味着已配置这些内容。
 
-3. **Alert Priority 和 Escalation**：
-   - 根据 severity 对 alerts 分类
-   - 清晰的 escalation paths
-   - 设置 response time targets
+**正确区分的路径：**
 
-4. **测试和验证 Alerts**：
-   - 定期测试 alerts
-   - 监控 false positives 和 negatives
-   - 审查 alert effectiveness
+```text
+CloudWatch alarm -----------------------------> SNS -> confirmed subscribers
+EventBridge rule -- authorized target role ---> SNS -> confirmed subscribers
+Prometheus -> Alertmanager -- default --------> SNS
+                         |-- warning --------> Slack
+                         |-- critical -------> PagerDuty
+Optional SNS subscriber -> implemented Lambda adapter -> chosen external channel
+```
 
-**实际实施示例：**
+对相关告警进行分组，限制重复通知频率，明确定义严重性/响应时限，包含证据和影响，并在获批的测试目标中测试具有代表性的触发/解决及故障路径。安装一组工具并不意味着实现了完整覆盖或成功传送。本次审计未创建/执行任何主题、订阅、告警、Lambda 调用或通知。
 
-1. **全面 Alerting 架构**：
-   ```
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  CloudWatch       |    |  Prometheus       |    |  EventBridge      |
-   |  Alarms           |    |  AlertManager     |    |  Rules            |
-   +-------------------+    +-------------------+    +-------------------+
-           |                        |                        |
-           v                        v                        v
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  SNS Topic        |<---|  Lambda           |<---|  SQS Queue        |
-   |                   |    |  Forwarder        |    |                   |
-   +-------------------+    +-------------------+    +-------------------+
-           |
-           v
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  Email/SMS        |    |  Slack/Teams      |    |  PagerDuty        |
-   |                   |    |                   |    |                   |
-   +-------------------+    +-------------------+    +-------------------+
-   ```
+参考资料：[源章节](../../eks/06-eks-monitoring-logging.md)、[Alertmanager 接收方](https://prometheus.io/docs/alerting/latest/configuration/)、[EKS 事件](https://docs.aws.amazon.com/eventbridge/latest/ref/events-ref-eks.html)、[SNS/Lambda](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)、[CloudWatch 告警使用加密 SNS](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns)。
 
-2. **使用 Terraform 配置 Alerting Infrastructure**：
-   ```hcl
-   # SNS topic
-   resource "aws_sns_topic" "eks_alerts" {
-     name = "eks-alerts"
-   }
-
-   # CloudWatch alarm
-   resource "aws_cloudwatch_metric_alarm" "node_cpu" {
-     alarm_name          = "EKS-Node-High-CPU"
-     comparison_operator = "GreaterThanThreshold"
-     evaluation_periods  = 2
-     metric_name         = "CPUUtilization"
-     namespace           = "AWS/EC2"
-     period              = 300
-     statistic           = "Average"
-     threshold           = 80
-     alarm_description   = "This metric monitors EC2 CPU utilization for EKS nodes"
-     alarm_actions       = [aws_sns_topic.eks_alerts.arn]
-     dimensions = {
-       AutoScalingGroupName = "eks-node-group-1"
-     }
-   }
-
-   # EventBridge rule
-   resource "aws_cloudwatch_event_rule" "eks_events" {
-     name        = "EKS-Control-Plane-Events"
-     description = "Capture EKS control plane events"
-     event_pattern = jsonencode({
-       source      = ["aws.eks"]
-       detail-type = ["EKS Cluster Control Plane Health"]
-     })
-   }
-
-   resource "aws_cloudwatch_event_target" "sns" {
-     rule      = aws_cloudwatch_event_rule.eks_events.name
-     target_id = "SendToSNS"
-     arn       = aws_sns_topic.eks_alerts.arn
-   }
-   ```
-
-其他选项的问题：
-- **A. 手动审查 log files**：手动审查不可扩展，不能提供实时 alerting，也不支持自动响应。
-- **B. 仅使用 CloudWatch Alarms**：CloudWatch Alarms 对 AWS infrastructure-level alerting 很有用，但在 Kubernetes-specific metrics 或详细 application-level alerting 方面有限制。
-- **C. 仅使用 Prometheus AlertManager**：Prometheus AlertManager 为 Kubernetes metrics 提供强大的 alerting，但与 AWS service events 或 infrastructure-level alerting 的集成有限。
 </details>
-### 4. 在 Amazon EKS 中进行 application performance monitoring 的最有效方法是什么？
 
-A. 仅监控基本 system metrics
-B. 收集并分析自定义 application metrics
-C. 实施包含 distributed tracing、metrics 和 logs 的集成 observability
-D. 定期执行手动 performance tests
+### 4. 哪种应用程序可观测性设计能够保留有用的证据？
+
+- A. 将节点 CPU 单独视为能够证明所有应用程序延迟原因的依据。
+- B. 将所有传入的 service.name 属性覆盖为同一个共享的 Collector 名称。
+- C. 关联所选指标、日志和跟踪数据，同时保留服务身份并验证其实际路径。
+- D. 假设 10% 的头部采样器始终会保留每个错误请求和慢请求。
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：C. 实施包含 distributed tracing、metrics 和 logs 的集成 observability**
+**答案：C. 关联经过验证的信号路径，同时不合并服务身份。**
 
-**解释：**
-在 Amazon EKS 中进行 application performance monitoring 的最有效方法是实施包含 distributed tracing、metrics 和 logs 的集成 observability。这种全面方法可提供 application performance 的完整可见性，并为 troubleshooting 和 optimization 提供详细信息。
+**说明：**
 
-**集成 Observability 的关键组件：**
+指标描述速率/分布/资源状态，日志提供事件细节，跟踪数据则连接经过检测的操作。它们有助于调查，但不能保证全面可见性或证明根本原因。如果显式启用并审核，性能剖析可以补充 CPU/分配/堆证据；并非每个跟踪收集器都会自动提供此功能。
 
-1. **Distributed Tracing**：
-   - 跟踪 services 之间的 request flow
-   - 识别 latency bottlenecks
-   - 理解 error propagation paths
+**使用正确的 Collector 和信号路由：**
 
-2. **Metrics**：
-   - System 和 resource usage
-   - Application performance indicators
-   - Business metrics
+使用源章节中由你负责的 Operator0.158/ADOT0.50 TLS 仅跟踪配置，以及问题 2 中单独限定范围的日志替代方案。Operator 清单来自 Operator 自身的发布包，而非 Collector 发布资源。应在应用程序边界保留 service.name；共享资源处理器不得用一个全局值覆盖 order-service、payment-service 和其他调用方的名称。
 
-3. **Logs**：
-   - 详细 application events
-   - Error 和 exception information
-   - Debugging context
+对于 Prometheus 指标，请使用源文档中已连线的 ServiceMonitor/Service 路径，或单独验证 Prometheus receiver。仅靠注解发现并不会配置正确的端口/路径、RBAC 或副本目标分布。awsemf 会导出到 CloudWatch，而 AMP 需要真实的 remote-write 端点和 SigV4 身份。如果配置中只有 awsemf，就不要画出 AMP 路径。
 
-4. **Profiling**：
-   - CPU 和 memory usage analysis
-   - 识别 hotspots 和 bottlenecks
-   - 发现 code-level optimization opportunities
+**Java 检测示例：**
 
-**实施方法：**
+OpenTelemetry Java agent 上游版本是 Spring Boot starter 的一种替代方案。经过检查的版本为 2.31.1；请通过应用程序构建流程准备经过审核的 JAR 和兼容的应用程序/JVM。这样可以避免在 Java 源代码块中混合 Gradle 声明和 application.properties，也避免复制与版本不匹配的 1.18-alpha starter。对于已由 CloudWatch Auto Monitor 或其他所有者检测的进程，不要再添加另一个 agent。
 
-1. **设置 AWS Distro for OpenTelemetry (ADOT)**：
-   ```bash
-   # Install ADOT operator
-   kubectl apply -f https://github.com/aws-observability/aws-otel-collector/releases/latest/download/opentelemetry-operator.yaml
+这是应用程序运行时配置，不是审计测试命令。它为源文档中的 TLS receiver 选择 OTLP/HTTP 跟踪数据，并关闭这些独立路径的 SDK 指标/日志导出。请挂载可信 CA，并保留其他必需的 JVM 启动选项：
 
-   # Configure ADOT collector
-   cat <<EOF | kubectl apply -f -
-   apiVersion: opentelemetry.io/v1alpha1
-   kind: OpenTelemetryCollector
-   metadata:
-     name: adot-collector
-   spec:
-     mode: deployment
-     serviceAccount: adot-collector
-     config: |
-       receivers:
-         otlp:
-           protocols:
-             grpc:
-               endpoint: 0.0.0.0:4317
-             http:
-               endpoint: 0.0.0.0:4318
-         prometheus:
-           config:
-             scrape_configs:
-             - job_name: 'kubernetes-pods'
-               kubernetes_sd_configs:
-               - role: pod
-               relabel_configs:
-               - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-                 action: keep
-                 regex: true
+```bash
+set -euo pipefail
+: "${OTEL_JAVA_AGENT_JAR:?Set the reviewed OpenTelemetry Java agent 2.31.1 JAR path}"
+: "${APP_JAR:?Set the application JAR path}"
+test -r "$OTEL_JAVA_AGENT_JAR"
+test -r "$APP_JAR"
+export OTEL_SERVICE_NAME=order-service
+export OTEL_RESOURCE_ATTRIBUTES=k8s.cluster.name=my-owned-cluster
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
+export OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://adot-traces-collector.tracing-demo.svc:4318/v1/traces
+export OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE=/etc/otel/ca.crt
+export OTEL_PROPAGATORS=tracecontext,baggage
+export OTEL_TRACES_SAMPLER=parentbased_traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.1
+java "-javaagent:$OTEL_JAVA_AGENT_JAR" -jar "$APP_JAR"
+```
 
-       processors:
-         batch:
-           timeout: 1s
-         resource:
-           attributes:
-           - key: service.name
-             action: upsert
-             value: "${SERVICE_NAME}"
+Java agent2.x 默认使用 http/protobuf；此示例明确指定了该选择。特定信号的 HTTP 端点包含 /v1/traces。4317 gRPC 端点使用不同协议，不能只更改端口就代替使用。已验证发布/配置元数据；本次未运行 Java agent、JDK 或应用程序。
 
-       exporters:
-         awsxray:
-           region: "${AWS_REGION}"
-         awsemf:
-           region: "${AWS_REGION}"
-           namespace: EKSApplicationMetrics
-         awscloudwatchlogs:
-           region: "${AWS_REGION}"
-           log_group_name: "/aws/eks/my-cluster/application-logs"
+**Python 检测示例：**
 
-       service:
-         pipelines:
-           traces:
-             receivers: [otlp]
-             processors: [batch, resource]
-             exporters: [awsxray]
-           metrics:
-             receivers: [otlp, prometheus]
-             processors: [batch, resource]
-             exporters: [awsemf]
-           logs:
-             receivers: [otlp]
-             processors: [batch, resource]
-             exporters: [awscloudwatchlogs]
-   EOF
-   ```
+请将源文档中的 RequestTracing 适配器与 Python3.10+ 及匹配的 SDK/HTTP exporter1.44.0 配合使用。在 payment 应用程序环境中设置以下值，替换示例集群名称并挂载可信 CA：
 
-2. **Application Instrumentation**：
-   ```java
-   // Java application example (Spring Boot)
+```bash
+export OTEL_SERVICE_NAME=payment-service
+export CLUSTER_NAME=my-owned-cluster
+export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://adot-traces-collector.tracing-demo.svc:4318/v1/traces
+export OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE=/etc/otel/ca.crt
+```
 
-   // build.gradle
-   dependencies {
-       implementation 'io.opentelemetry:opentelemetry-api'
-       implementation 'io.opentelemetry:opentelemetry-sdk'
-       implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
-       implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:1.18.0-alpha'
-   }
+下面再次列出此适配器，以明确其生命周期和请求边界：
 
-   // application.properties
-   otel.service.name=order-service
-   otel.exporter.otlp.endpoint=http://adot-collector:4317
-   ```
+```python
+import os
+from urllib.parse import urlsplit
 
-   ```python
-   # Python application example
-   from opentelemetry import trace
-   from opentelemetry.sdk.trace import TracerProvider
-   from opentelemetry.sdk.trace.export import BatchSpanProcessor
-   from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-   from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+from opentelemetry.trace import SpanKind
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-   # Set up resource and tracer
-   resource = Resource(attributes={
-       SERVICE_NAME: "payment-service"
-   })
 
-   tracer_provider = TracerProvider(resource=resource)
-   processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="adot-collector:4317"))
-   tracer_provider.add_span_processor(processor)
-   trace.set_tracer_provider(tracer_provider)
+class RequestTracing:
+    def __init__(self):
+        endpoint = os.environ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"]
+        parsed = urlsplit(endpoint)
+        if parsed.scheme != "https" or parsed.path != "/v1/traces":
+            raise ValueError("Set the HTTPS OTLP/HTTP traces endpoint including /v1/traces")
+        self.provider = TracerProvider(
+            resource=Resource.create({
+                "service.name": os.environ["OTEL_SERVICE_NAME"],
+                "k8s.cluster.name": os.environ["CLUSTER_NAME"],
+            }),
+            sampler=ParentBased(TraceIdRatioBased(0.1)),
+        )
+        exporter = OTLPSpanExporter(
+            endpoint=endpoint,
+            certificate_file=os.environ["OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE"],
+            timeout=10,
+        )
+        self.provider.add_span_processor(BatchSpanProcessor(exporter))
+        self.tracer = self.provider.get_tracer("example.request-handler")
+        self.propagator = TraceContextTextMapPropagator()
 
-   # Use tracer
-   tracer = trace.get_tracer(__name__)
+    def handle_request(self, incoming_headers, operation):
+        parent = self.propagator.extract(incoming_headers)
+        with self.tracer.start_as_current_span("request", context=parent, kind=SpanKind.SERVER):
+            outgoing_headers = {}
+            self.propagator.inject(outgoing_headers)
+            return operation(outgoing_headers)
 
-   @app.route('/process-payment', methods=['POST'])
-   def process_payment():
-       with tracer.start_as_current_span("process-payment") as span:
-           span.set_attribute("payment.amount", request.json.get('amount'))
-           # Perform business logic
-           result = process_transaction(request.json)
-           span.set_attribute("payment.status", result['status'])
-           return jsonify(result)
-   ```
+    def close(self):
+        self.provider.shutdown()
+```
 
-3. **设置 Amazon Managed Grafana Dashboard**：
-   ```bash
-   # Create Amazon Managed Grafana workspace
-   aws grafana create-workspace \
-     --name eks-monitoring \
-     --authentication-providers AWS_SSO \
-     --permission-type SERVICE_MANAGED \
-     --data-sources PROMETHEUS CLOUDWATCH XRAY
-   ```
+在应用程序启动时创建一个实例，在真实框架处理程序中使用规范化的传入标头名称和实际业务操作调用 handle_request，并在正常关闭时调用 close。这不是 Flask 服务器或支付业务实现；不会默认假设 app/request/jsonify/process_transaction 存在。应通过框架支持的机制，将给定上下文传播到真实的出站调用和异步工作中。
 
-4. **X-Ray Service Map 和 Trace Analysis**：
-   ```bash
-   # Create X-Ray group
-   aws xray create-group \
-     --group-name "EKS-Applications" \
-     --filter-expression "service(\"order-service\") OR service(\"payment-service\")"
-   ```
+本次审计在禁用 SDK 导出的情况下测试了此适配器，包括业务结果/错误保留以及纯上下文传播/采样检查。这并不能证明实时 Span 导出或已部署 Collector 正常工作。
 
-**关键 Observability Metrics 和 Dimensions：**
+**匹配 IRSA 信任、权限和 ServiceAccount：**
 
-1. **核心 Application Performance Indicators**：
-   - Request latency (p50, p90, p99)
-   - Request throughput (RPS)
-   - Error rate
-   - Saturation (resource utilization)
+以下独立 Terraform 示例与源 Collector 的 tracing-demo/adot-traces 身份相匹配。它使用声明的输入和一个针对实际集群签发者、已存在的 IAM OIDC provider。信任条件同时包含 sub 和 aud。X-Ray PutTraceSegments 没有资源级 ARN 范围，因此策略使用必需的通配符资源，同时限制操作/Region 并限定信任范围。此配置不会授予无关的 CloudWatch 或 AMP 权限：
 
-2. **关键 Dimensions 和 Labels**：
-   - Service 和 endpoint
-   - Cluster, namespace, pod
-   - Version 和 environment
-   - Customer 或 tenant ID
+```hcl
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
+    }
+  }
+}
 
-3. **User Experience Metrics**：
-   - Page load time
-   - API response time
-   - User interaction latency
-   - Client error rate
+variable "region" {
+  type = string
+}
 
-**最佳实践：**
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the approved 12-digit AWS account ID."
+  }
+}
 
-1. **实施标准化 Instrumentation**：
-   - 使用 OpenTelemetry 等标准
-   - 一致的 naming conventions 和 labels
-   - 结合 automatic 和 manual instrumentation
+variable "cluster_oidc_issuer_url" {
+  type        = string
+  description = "The actual EKS cluster OIDC issuer URL; its IAM OIDC provider must already exist."
+  validation {
+    condition     = startswith(var.cluster_oidc_issuer_url, "https://")
+    error_message = "Use the HTTPS issuer returned by the owned cluster."
+  }
+}
 
-2. **确保 Context Propagation**：
-   - 在 services 之间传递 trace context
-   - 在 asynchronous operations 中保持 context
-   - 与 external systems 集成
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
 
-3. **优化 Sampling Strategy**：
-   - 平衡成本和可见性
-   - 基于 error 和 latency 的 sampling
-   - 优先处理 critical transactions
+data "aws_partition" "current" {}
 
-4. **关联 Observability Data**：
-   - 连接 traces、metrics 和 logs
-   - 使用 common identifiers 和 labels
-   - 集成 dashboard 和 analysis
+locals {
+  oidc_hostpath     = trimsuffix(trimprefix(var.cluster_oidc_issuer_url, "https://"), "/")
+  oidc_provider_arn = "arn:${data.aws_partition.current.partition}:iam::${var.account_id}:oidc-provider/${local.oidc_hostpath}"
+}
 
-**实际实施示例：**
+resource "aws_iam_role" "adot_traces" {
+  name = "adot-traces-example"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = local.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.oidc_hostpath}:aud" = "sts.amazonaws.com"
+          "${local.oidc_hostpath}:sub" = "system:serviceaccount:tracing-demo:adot-traces"
+        }
+      }
+    }]
+  })
+}
 
-1. **Microservices Architecture 的集成 Observability**：
-   ```
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  Frontend         |    |  Order Service    |    |  Payment Service  |
-   |  (React)          |    |  (Java)           |    |  (Python)         |
-   +-------------------+    +-------------------+    +-------------------+
-           |                        |                        |
-           v                        v                        v
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  Browser SDK      |    |  OpenTelemetry    |    |  OpenTelemetry    |
-   |  (RUM)            |    |  SDK              |    |  SDK              |
-   +-------------------+    +-------------------+    +-------------------+
-           |                        |                        |
-           v                        v                        v
-   +---------------------------------------------------------------+
-   |                                                               |
-   |                  ADOT Collector                               |
-   |                                                               |
-   +---------------------------------------------------------------+
-           |                        |                        |
-           v                        v                        v
-   +-------------------+    +-------------------+    +-------------------+
-   |                   |    |                   |    |                   |
-   |  AWS X-Ray        |    |  Amazon           |    |  CloudWatch       |
-   |  (Traces)         |    |  Managed Service  |    |  Logs             |
-   |                   |    |  for Prometheus   |    |                   |
-   +-------------------+    +-------------------+    +-------------------+
-                                     |
-                                     v
-                            +-------------------+
-                            |                   |
-                            |  Amazon           |
-                            |  Managed Grafana  |
-                            |                   |
-                            +-------------------+
-   ```
+resource "aws_iam_role_policy" "xray_write" {
+  name = "xray-trace-write"
+  role = aws_iam_role.adot_traces.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["xray:PutTraceSegments"]
+      Resource = "*"
+      Condition = {
+        StringEquals = { "aws:RequestedRegion" = var.region }
+      }
+    }]
+  })
+}
 
-2. **使用 Terraform 配置 Observability Infrastructure**：
-   ```hcl
-   # Amazon Managed Service for Prometheus workspace
-   resource "aws_prometheus_workspace" "eks_monitoring" {
-     alias = "eks-monitoring"
-   }
+resource "aws_xray_group" "applications" {
+  group_name        = "EKS-Applications"
+  filter_expression = "service(\"order-service\") OR service(\"payment-service\")"
+}
 
-   # Amazon Managed Grafana workspace
-   resource "aws_grafana_workspace" "eks_monitoring" {
-     name                     = "eks-monitoring"
-     account_access_type      = "CURRENT_ACCOUNT"
-     authentication_providers = ["AWS_SSO"]
-     permission_type          = "SERVICE_MANAGED"
-     data_sources             = ["PROMETHEUS", "CLOUDWATCH", "XRAY"]
-   }
+output "adot_traces_role_arn" {
+  value = aws_iam_role.adot_traces.arn
+}
+```
 
-   # X-Ray group
-   resource "aws_xray_group" "eks_applications" {
-     group_name        = "EKS-Applications"
-     filter_expression = "service(\"order-service\") OR service(\"payment-service\")"
-   }
+创建 Collector 之前，可以在已准备好的命名空间中以原子方式创建新的、由你负责的 ServiceAccount，并为其添加角色注解。已有 ServiceAccount/角色需要遵循其所有者的更新/导入流程；不要覆盖其他身份或关联不相关的 Pod Identity：
 
-   # CloudWatch log group
-   resource "aws_cloudwatch_log_group" "application_logs" {
-     name              = "/aws/eks/my-cluster/application-logs"
-     retention_in_days = 30
-   }
+```bash
+set -euo pipefail
+: "${ADOT_ROLE_ARN:?Set the reviewed role ARN from the owned Terraform stack}"
+python3 - "$ADOT_ROLE_ARN" <<'PY' | kubectl create -f -
+import json
+import sys
+print(json.dumps({
+    "apiVersion": "v1",
+    "kind": "ServiceAccount",
+    "metadata": {
+        "name": "adot-traces",
+        "namespace": "tracing-demo",
+        "annotations": {"eks.amazonaws.com/role-arn": sys.argv[1]},
+    },
+}))
+PY
+```
 
-   # IAM role and policy
-   resource "aws_iam_role" "adot_collector" {
-     name = "adot-collector"
-     assume_role_policy = jsonencode({
-       Version = "2012-10-17",
-       Statement = [{
-         Effect = "Allow",
-         Principal = {
-           Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${module.eks.oidc_provider}"
-         },
-         Action = "sts:AssumeRoleWithWebIdentity",
-         Condition = {
-           StringEquals = {
-             "${module.eks.oidc_provider}:sub" = "system:serviceaccount:opentelemetry:adot-collector"
-           }
-         }
-       }]
-     })
-   }
-   ```
+更改注解不会将凭证追溯性地注入正在运行的 Pod；请审核是否需要重新部署。验证实际签发者/provider、令牌受众、被代入角色和网络路径。X-Ray group 会筛选匹配的跟踪数据；它不会检测应用程序，也不会授予 Collector 权限。请使用问题 1 中的工作区/数据源设置，而不要重复一个不完整的 AMG 创建命令。本次审计未创建 IAM 角色/group/ServiceAccount。
 
-其他选项的问题：
-- **A. 仅监控基本 system metrics**：System metrics 对理解 infrastructure status 很重要，但不足以识别 application performance issues 的 root causes。
-- **B. 收集并分析自定义 application metrics**：Application metrics 很重要，但理解 distributed systems 中的 service interactions 还需要 tracing 和 logs。
-- **D. 定期执行手动 performance tests**：Performance tests 很重要，但它们无法替代实时生产环境中的持续监控，也无法完全模拟真实 user patterns。
+**Browser RUM 是独立路径：**
+
+CloudWatch RUM web 客户端会将 PutRumEvents 数据发送到 CloudWatch RUM，而不会自动发送到 ADOT OTLP receiver。启用 X-Ray 跟踪时，它可以向允许的 HTTP 请求添加 X-Amzn-Trace-Id。客户端/服务器跟踪默认不会关联：请审核受支持的服务器传播/桥接方式和 CORS 允许的标头。上面的纯 W3C 示例不会自动使用 X-Ray 标头。通用 OpenTelemetry 浏览器客户端需要单独设计受支持的 OTLP 端点/身份验证/CORS。
+
+```text
+Browser CloudWatch RUM client -----> CloudWatch RUM
+                 | optional X-Ray header/segment integration
+Java order-service <--- propagated requests ---> Python payment-service
+       | OTLP/HTTP TLS                              | OTLP/HTTP TLS
+       +--------------> ADOT traces collector <-----+
+                              |
+                              v
+                            X-Ray
+Application metrics -> configured Prometheus -> optional SigV4 remote_write -> AMP
+Application stdout  -> chosen log collector -> configured log store
+Grafana/AMG         -> queries the configured data sources
+```
+
+**覆盖范围、采样和隐私：**
+
+- 使用明确定义的样本总体/时间窗口测量延迟分布、吞吐量、错误率和饱和度。采样后的跟踪数据集不会自动成为无偏的指标分布。
+- 使用有界服务名称、规范化路由、版本/环境以及集群/命名空间身份。客户/租户 ID 和原始请求 URL 可能导致基数和隐私问题；不应将它们设为默认指标标签。
+- 头部采样会在请求最终结果确定之前做出决定，无法保证保留所有错误/慢请求；尾部采样也无法恢复已在上游丢弃的 Span。尾部采样需要按跟踪亲和性路由，并需要足够的缓冲区/时间窗口。
+- RUM 会话/用户数据、日志、Span 和性能剖析数据需要适当的访问控制、同意/收集策略和保留期。关联 ID 是元数据，不是身份验证。
+- 性能测试和性能剖析可补充运行时信号。此处示例不表示已取得任何新的基准测试或生产性能结果。
+
+参考资料：[Java agent 配置](https://opentelemetry.io/docs/zero-code/java/agent/configuration/)、[Java SDK 配置](https://opentelemetry.io/docs/languages/java/configuration/)、[CloudWatch RUM/X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-RUM.html)、[源章节](../../eks/06-eks-monitoring-logging.md)。
+
 </details>
-### 5. 在 Amazon EKS 中有效监控 control plane logs 的最佳方式是什么？
 
-A. 通过 SSH 直接访问 control plane nodes
-B. 启用 EKS control plane logging 并发送到 CloudWatch Logs
-C. 部署自定义 log collectors
-D. 定期向 AWS support team 请求 logs
+### 5. 应如何监控 AWS 托管的 EKS 控制平面日志？
+
+- A. 直接 SSH 到 AWS 托管的控制平面节点。
+- B. 配置所需的 EKS 日志类型，验证日志是否传送到 CloudWatch Logs，并应用适当的查询/访问控制。
+- C. 假设工作节点上的 DaemonSet 可以读取托管控制平面文件系统。
+- D. 创建日志仪表板，并假设它会自动发布 ErrorCount 指标。
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：B. 启用 EKS control plane logging 并发送到 CloudWatch Logs**
+**答案：B. 配置并验证托管日志路径。**
 
-**解释：**
-在 Amazon EKS 中有效监控 control plane logs 的最佳方式是启用 EKS control plane logging，并将 logs 发送到 CloudWatch Logs。此方法利用 EKS 作为 managed service 的特性，能够轻松访问和分析 control plane component logs。
+**说明：**
 
-**EKS Control Plane Logging 的主要优势：**
+EKS 会将选定的控制平面日志类型直接发送到账户中的 CloudWatch Logs。工作节点收集器不是这些托管日志的来源。这样可以在无需 SSH 到控制平面的情况下获取诊断/审计证据，但不能保证记录每次 API 调用，也不能证明符合要求。审计策略、阶段、启用时间、摄取和保留期决定了哪些内容可用。
 
-1. **全面 Log Collection**：
-   - API server logs
-   - Audit logs
-   - Authenticator logs
-   - Controller manager logs
-   - Scheduler logs
+**日志类型及范围：**
 
-2. **Managed Solution**：
-   - AWS-managed log collection
-   - 无需额外 agents
-   - 无需直接访问 control plane
+| 类型 | 用途 |
+| --- | --- |
+| api | API server 诊断和错误；不是完整的请求/响应存档 |
+| audit | 记录的 Kubernetes API 审计事件以及身份/资源/状态字段 |
+| authenticator | IAM 身份验证/映射诊断；应区分身份验证和 RBAC 授权 |
+| controllerManager | 控制器协调诊断 |
+| scheduler | 调度决策/失败及相关诊断 |
 
-3. **集成分析和 Alerting**：
-   - 通过 CloudWatch Logs Insights 进行查询和分析
-   - 与 CloudWatch Alarms 集成
-   - 长期 log retention 和归档
+请先检查现有集群配置。对于获批的全部五种类型变更，源章节中的更新操作会捕获更新 ID 并检查状态；请继续检查直到成功，然后验证实际日志传送：
 
-**实施方法：**
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the owned cluster name}"
+: "${AWS_REGION:?Set the cluster Region}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{ARN:arn,Status:status,Logging:logging}'
+```
 
-1. **创建 EKS Cluster 时启用 Logging**：
-   ```bash
-   # Create EKS cluster with all log types enabled
-   aws eks create-cluster \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/EKSClusterRole \
-     --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345 \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-   ```
 
-2. **为现有 EKS Cluster 启用 Logging**：
-   ```bash
-   # Enable all log types for existing cluster
-   aws eks update-cluster-config \
-     --name my-cluster \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-   ```
 
-3. **仅启用特定 Log Types**：
-   ```bash
-   # Enable only API server and audit logs
-   aws eks update-cluster-config \
-     --name my-cluster \
-     --logging '{"clusterLogging":[{"types":["api","audit"],"enabled":true},{"types":["authenticator","controllerManager","scheduler"],"enabled":false}]}'
-   ```
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the reviewed cluster name}"
+: "${AWS_REGION:?Set the cluster Region}"
+UPDATE_ID=$(aws eks update-cluster-config \
+  --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query 'update.id' --output text)
+if [[ -z "$UPDATE_ID" || "$UPDATE_ID" == None ]]; then
+  printf '%s\n' 'No update ID returned; inspect the request result.' >&2
+  exit 1
+fi
+aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID" \
+  --query 'update.{ID:id,Status:status,Errors:errors}'
+```
 
-**关键 Log Types 和用途：**
+最后的 DescribeUpdate 调用只是状态检查，不是等待器或摄取测试。只选择部分类型时，请保留所有现有的必需类型；不要为了启用 api/audit 而复制一个显式禁用 authenticator/controllerManager/scheduler 的代码块。对于新集群，请在经过审核的创建/IaC 配置中包含日志记录设置。不要仅为了配置监控而再创建一个不完整的集群。源文档中说明了 EKS Capabilities controller logs 使用的独立传送路径。
 
-1. **API Server Logs (api)**：
-   - API requests 和 responses
-   - Resource creation、modification、deletion
-   - Error 和 warning messages
+**查询实际 JSON 字段：**
 
-2. **Audit Logs (audit)**：
-   - 所有 API calls 的详细记录
-   - 跟踪 who、what、when 和 where
-   - 满足 security 和 compliance requirements
+选择由你负责的 /aws/eks/CLUSTER/cluster 组和有界时间范围。以下是已记录的 5xx 响应示例：
 
-3. **Authenticator Logs (authenticator)**：
-   - 使用 AWS IAM credentials 的 authentication requests
-   - Authentication successes 和 failures
-   - 调试 permission issues
+```
+fields @timestamp, auditID, user.username, verb, objectRef.resource, responseStatus.code
+| filter apiVersion = "audit.k8s.io/v1" and stage = "ResponseComplete"
+| filter responseStatus.code >= 500
+| sort @timestamp desc
+| limit 100
+```
 
-4. **Controller Manager Logs (controllerManager)**：
-   - Controller operations 和 status
-   - Resource reconciliation activities
-   - Controller errors 和 retries
+对于已知审计用户名，应使用嵌套 JSON 字段，而不是解析字面的 user.username 字符串。请将示例用户名替换为记录中实际观察到的身份：
 
-5. **Scheduler Logs (scheduler)**：
-   - Pod scheduling decisions
-   - Scheduling failures 和 reasons
-   - Resource allocation issues
+```
+fields @timestamp, auditID, user.username, verb, objectRef.resource, responseStatus.code
+| filter apiVersion = "audit.k8s.io/v1"
+| filter user.username = "example-user"
+| sort @timestamp desc
+| limit 100
+```
 
-**Log Analysis 和 Monitoring：**
+在定义特定格式的失败筛选条件之前，请先检查 authenticator 记录。包含 failed/denied 的子字符串可能会漏掉实际案例或匹配无关文本；单独一条 IAM 身份验证消息也无法说明所有 Kubernetes 授权结果。
 
-1. **使用 CloudWatch Logs Insights 查询**：
-   ```
-   # Search for API server errors
-   fields @timestamp, @message
-   | filter @logStream like /kube-apiserver-/
-   | filter @message like /Error/
-   | sort @timestamp desc
-   | limit 100
+**仪表板不会发布指标：**
 
-   # Search audit logs for specific user
-   fields @timestamp, @message
-   | filter @logStream like /kube-apiserver-audit/
-   | parse @message "user.username*:*" as user_prefix, username
-   | filter username like /admin/
-   | sort @timestamp desc
-   | limit 100
+Logs Insights 小组件会运行查询。自定义指标上的告警需要实际发布者，例如指标筛选器。下面的独立 Terraform 示例将 STANDARD 日志组、筛选器、指标、告警和仪表板连接起来。使用此配置之前，请通过实际所有者管理/导入已有日志组；KMS 密钥以及 SNS 主题/发布者权限必须已准备好。它不会创建新的 EKS 集群或 KMS 密钥。
 
-   # Search for authentication failures
-   fields @timestamp, @message
-   | filter @logStream like /authenticator/
-   | filter @message like /failed/
-   | sort @timestamp desc
-   | limit 100
-   ```
+```hcl
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
+    }
+  }
+}
 
-2. **创建 CloudWatch Dashboard**：
-   ```bash
-   # Create dashboard monitoring API server error rate
-   aws cloudwatch put-dashboard \
-     --dashboard-name EKS-Control-Plane-Monitoring \
-     --dashboard-body '{
-       "widgets": [
-         {
-           "type": "log",
-           "x": 0,
-           "y": 0,
-           "width": 24,
-           "height": 6,
-           "properties": {
-             "query": "SOURCE \'/aws/eks/my-cluster/cluster\' | fields @timestamp, @message\n| filter @logStream like /kube-apiserver-/\n| filter @message like /Error/\n| stats count() as errorCount by bin(5m)",
-             "region": "us-west-2",
-             "title": "API Server Errors",
-             "view": "timeSeries"
-           }
-         }
-       ]
-     }'
-   ```
+variable "region" {
+  type = string
+}
 
-3. **设置 CloudWatch Alarms**：
-   ```bash
-   # Create API server error alarm
-   aws cloudwatch put-metric-alarm \
-     --alarm-name EKS-APIServer-Errors \
-     --alarm-description "Alarm when API server errors exceed threshold" \
-     --metric-name ErrorCount \
-     --namespace EKS \
-     --statistic Sum \
-     --period 300 \
-     --threshold 10 \
-     --comparison-operator GreaterThanThreshold \
-     --evaluation-periods 1 \
-     --alarm-actions arn:aws:sns:us-west-2:123456789012:eks-alerts \
-     --dimensions Name=ClusterName,Value=my-cluster
-   ```
+variable "account_id" {
+  type = string
+}
 
-**最佳实践：**
+variable "cluster_name" {
+  type = string
+}
 
-1. **Selective Log Enablement**：
-   - 仅启用必要的 log types
-   - 根据 compliance requirements 启用 audit logs
-   - 平衡成本和可见性
+variable "logs_kms_key_arn" {
+  type        = string
+  description = "Prepared symmetric key in the log-group Region with reviewed Logs/caller permissions."
+}
 
-2. **设置 Log Retention Policy**：
-   ```bash
-   # Set CloudWatch log group retention period
-   aws logs put-retention-policy \
-     --log-group-name /aws/eks/my-cluster/cluster \
-     --retention-in-days 90
-   ```
+variable "sns_topic_arn" {
+  type        = string
+  description = "Prepared standard SNS topic with confirmed subscriptions and publisher/key permissions."
+}
 
-3. **配置 Log Encryption**：
-   ```bash
-   # Set CloudWatch log group encryption
-   aws logs associate-kms-key \
-     --log-group-name /aws/eks/my-cluster/cluster \
-     --kms-key-id arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab
-   ```
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
 
-4. **控制 Log Access**：
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "logs:GetLogEvents",
-           "logs:FilterLogEvents",
-           "logs:StartQuery",
-           "logs:GetQueryResults"
-         ],
-         "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/eks/my-cluster/cluster:*"
-       }
-     ]
-   }
-   ```
+locals {
+  metric_namespace = "EKS/ControlPlane"
+  metric_name      = "${var.cluster_name}-AuditResponse5xxCount"
+  filter_pattern   = "{ ($.apiVersion = \"audit.k8s.io/v1\") && ($.stage = \"ResponseComplete\") && ($.responseStatus.code >= 500) }"
+}
 
-**实际实施示例：**
+resource "aws_cloudwatch_log_group" "control_plane" {
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  log_group_class   = "STANDARD"
+  retention_in_days = 90
+  kms_key_id        = var.logs_kms_key_arn
+}
 
-1. **使用 Terraform 配置 EKS Cluster Logging**：
-   ```hcl
-   resource "aws_eks_cluster" "main" {
-     name     = "my-cluster"
-     role_arn = aws_iam_role.eks_cluster.arn
+resource "aws_cloudwatch_log_metric_filter" "audit_5xx" {
+  name           = "${var.cluster_name}-audit-response-5xx"
+  log_group_name = aws_cloudwatch_log_group.control_plane.name
+  pattern        = local.filter_pattern
 
-     vpc_config {
-       subnet_ids         = var.subnet_ids
-       security_group_ids = [aws_security_group.eks_cluster.id]
-     }
+  metric_transformation {
+    namespace     = local.metric_namespace
+    name          = local.metric_name
+    value         = "1"
+    default_value = 0
+    unit          = "Count"
+  }
+}
 
-     enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+resource "aws_cloudwatch_metric_alarm" "audit_5xx" {
+  alarm_name          = "${var.cluster_name}-audit-response-5xx"
+  alarm_description   = "Example threshold for ingested audit ResponseComplete records with code>=500."
+  namespace           = local.metric_namespace
+  metric_name         = local.metric_name
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = 10
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "missing"
+  actions_enabled     = false
+  alarm_actions       = [var.sns_topic_arn]
+}
 
-     depends_on = [
-       aws_iam_role_policy_attachment.eks_cluster_policy,
-       aws_cloudwatch_log_group.eks_logs
-     ]
-   }
+resource "aws_cloudwatch_dashboard" "control_plane" {
+  dashboard_name = "${var.cluster_name}-control-plane"
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "log"
+        x      = 0
+        y      = 0
+        width  = 24
+        height = 6
+        properties = {
+          region = var.region
+          title  = "Recorded audit 5xx responses per five minutes"
+          view   = "timeSeries"
+          query  = "SOURCE '${aws_cloudwatch_log_group.control_plane.name}' | fields @timestamp\n| filter apiVersion = \"audit.k8s.io/v1\" and stage = \"ResponseComplete\" and responseStatus.code >= 500\n| stats count(*) as recordedResponses by bin(5m)"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 24
+        height = 6
+        properties = {
+          region  = var.region
+          title   = "Metric filter: new ingested audit 5xx records"
+          view    = "timeSeries"
+          metrics = [[local.metric_namespace, local.metric_name]]
+          period  = 300
+          stat    = "Sum"
+        }
+      }
+    ]
+  })
+}
+```
 
-   resource "aws_cloudwatch_log_group" "eks_logs" {
-     name              = "/aws/eks/my-cluster/cluster"
-     retention_in_days = 90
-     kms_key_id        = aws_kms_key.eks_logs.arn
-   }
+此筛选器会统计新摄取的、responseStatus.code>=500 的审计 ResponseComplete 记录。以集群名称为前缀的指标名称可以区分集群，而无需虚构审计 JSON 中不存在的 ClusterName 维度。筛选器、告警和指标小组件使用完全相同的命名空间/名称，且不带维度。仪表板查询可能涵盖较早记录，但指标筛选器不会回填历史数据。这些是已记录事件的计数，不是 API 错误率或去重后的请求总数；可能会发生重复传送。
 
-   resource "aws_kms_key" "eks_logs" {
-     description             = "KMS key for EKS cluster logs encryption"
-     deletion_window_in_days = 7
-     enable_key_rotation     = true
-   }
-   ```
+当日志到达但没有任何匹配记录时，会发出 default_value 为 0 的值；没有传入日志时，数据仍可能缺失。指标筛选器不能同时使用默认值和维度。此处的告警会在禁用操作的情况下启动，明确处理缺失数据，并使用示例阈值。启用之前，请验证新的指标数据点、权限、订阅和受控传送测试。
 
-2. **CloudWatch Logs Insights Dashboard**：
-   ```hcl
-   resource "aws_cloudwatch_dashboard" "eks_control_plane" {
-     dashboard_name = "EKS-Control-Plane-Monitoring"
+jsonencode 避免了旧仪表板命令中错误的 shell 引号。如果改用 CLI，请传入有效 JSON 文件，并使用 --dashboard-body file://dashboard.json，然后检查 DashboardValidationMessages。PutDashboard 会替换现有内容；请保留其所有者的组件和配置。本地 HCL/JSON 验证并未执行 AWS 筛选器/查询引擎。
 
-     dashboard_body = jsonencode({
-       widgets = [
-         {
-           type = "log"
-           x    = 0
-           y    = 0
-           width = 24
-           height = 6
-           properties = {
-             query = "SOURCE '/aws/eks/my-cluster/cluster' | fields @timestamp, @message\n| filter @logStream like /kube-apiserver-/\n| filter @message like /Error/\n| stats count() as errorCount by bin(5m)"
-             region = "us-west-2"
-             title = "API Server Errors"
-             view = "timeSeries"
-           }
-         },
-         {
-           type = "log"
-           x    = 0
-           y    = 6
-           width = 24
-           height = 6
-           properties = {
-             query = "SOURCE '/aws/eks/my-cluster/cluster' | fields @timestamp, @message\n| filter @logStream like /kube-apiserver-audit/\n| stats count() as auditCount by bin(5m)"
-             region = "us-west-2"
-             title = "Audit Events"
-             view = "timeSeries"
-           }
-         }
-       ]
-     })
-   }
-   ```
+**KMS 和保留期：**
 
-其他选项的问题：
-- **A. 通过 SSH 直接访问 control plane nodes**：EKS 是 managed service，因此你无法直接访问 control plane nodes。
-- **C. 部署自定义 log collectors**：由于 control plane 由 AWS 管理，部署自定义 log collectors 不会让你访问 control plane logs。
-- **D. 定期向 AWS support team 请求 logs**：这种方式效率低，不能提供实时监控，也不支持自动分析和 alerting。
+CloudWatch Logs 默认会加密日志数据。关联客户托管的对称 KMS 密钥会更改新摄取数据的加密方式；它并不是第一层加密，也不会重新加密旧记录。请使用位于日志组所在 Region 的密钥，在仍需要旧数据时保留旧密钥/权限，并区分关联密钥的权限和读取权限。取消关联后，新数据会恢复为默认加密方式；禁用/删除旧密钥可能会使其保留的数据无法读取。
+
+Logs 区域服务需要使用密钥的权限。以下只是供密钥所有者合并到现有策略中的语句片段；请保留管理员/委派语句。请一致地替换每个示例标识符；不要将它用作完整替代密钥策略：
+
+```json
+{
+  "Sid": "AllowLogsServiceForOneGroup",
+  "Effect": "Allow",
+  "Principal": {
+    "Service": "logs.us-west-2.amazonaws.com"
+  },
+  "Action": [
+    "kms:Encrypt",
+    "kms:Decrypt",
+    "kms:ReEncrypt*",
+    "kms:GenerateDataKey*",
+    "kms:DescribeKey"
+  ],
+  "Resource": "*",
+  "Condition": {
+    "ArnEquals": {
+      "kms:EncryptionContext:aws:logs:arn": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/eks/my-cluster/cluster"
+    }
+  }
+}
+```
+
+加密上下文中的日志组 ARN 末尾没有 :*。关联密钥的操作者需要文档所述的 Logs 权限和 kms:DescribeKey。读取/写入调用方需要通过区域 Logs 服务获得其操作所需的 KMS 权限。轮换密钥或设置较短的删除等待期并不会消除为历史数据保留解密访问权限的要求。保留期 90 天仅为示例，并不代表符合规范或不可变保证。
+
+**正确限定读取访问权限：**
+
+以下示例身份策略允许访问选定组及其流，并允许通过 Logs 解密一个密钥。密钥策略也必须允许预期主体使用该密钥。它不会授予日志管理或密钥管理操作：
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadAndQueryThisLogGroup",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogStreams",
+        "logs:FilterLogEvents",
+        "logs:StartQuery",
+        "logs:GetQueryResults"
+      ],
+      "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/eks/my-cluster/cluster:*"
+    },
+    {
+      "Sid": "ReadThisGroupStreams",
+      "Effect": "Allow",
+      "Action": "logs:GetLogEvents",
+      "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/eks/my-cluster/cluster:log-stream:*"
+    },
+    {
+      "Sid": "DecryptThisGroupsDataViaLogs",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "arn:aws:kms:us-west-2:123456789012:key/11111111-2222-3333-4444-555555555555",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "logs.us-west-2.amazonaws.com"
+        },
+        "ArnEquals": {
+          "kms:EncryptionContext:aws:logs:arn": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/eks/my-cluster/cluster"
+        }
+      }
+    }
+  ]
+}
+```
+
+当前 AWS 授权文档支持对 StartQuery 和 GetQueryResults 进行日志组范围限定；不要因旧假设而将其范围扩大到 Resource:*。DescribeLogStreams 和 FilterLogEvents 是组级操作，而 GetLogEvents 是流级操作。对于大多数 IAM 操作，AWS 的 LogGroup ARN 格式包含 :*；logGroupArn 以及加密上下文/标签用途则不包含。控制台/发现工作流可能需要额外的读取操作；DescribeLogGroups 是单独限定范围的权限，不支持资源级 ARN，且上面的策略并未隐式授予该权限。
+
+本次审计未更改/执行集群日志、日志保留期、密钥策略、指标筛选器、仪表板、告警或云端查询。参考资料：[CloudWatch 指标筛选器](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html)、[LogGroup ARN 格式](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html)、[Logs IAM 操作](https://docs.aws.amazon.com/service-authorization/latest/reference/list_logs.html)、[KMS 日志加密](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html)。
+
 </details>
-### 6. 在 Amazon EKS 中用于成本优化的最有效监控策略是什么？
 
-A. 收集所有可能的 metrics
-B. 专注于监控 resource usage、cost allocation tags 和 idle resources
-C. 只关注 performance，不进行 cost monitoring
-D. 只查看每月 AWS bills
+### 6. 哪种监控策略最有助于优化 Amazon EKS 的成本？
+
+- A. 无论是否有用，都收集所有可用指标
+- B. 结合资源使用情况、账单分摊和经所有者审核的浪费候选项
+- C. 监控性能，但不检查支出
+- D. 只查看最终月度账单
 
 <details>
-<summary>查看答案</summary>
+<summary>显示答案</summary>
 
-**答案：B. 专注于监控 resource usage、cost allocation tags 和 idle resources**
+**答案：B. 结合资源使用情况、账单分摊和经所有者审核的浪费候选项**
 
-**解释：**
-在 Amazon EKS 中用于成本优化的最有效监控策略是专注于监控 resource usage、cost allocation tags 和 idle resources。这种方法可确保 cluster resources 的高效使用，明确 cost allocation，并通过识别浪费资源来优化成本。
+**说明**：将 CPU、内存、存储、请求、限制和工作负载趋势与分摊成本进行比较。与资源所有者一起调查异常和预算偏差。这些信号可以帮助发现优化机会，但不能保证节省成本，也不能证明可以删除某项资源。
 
-**Cost Optimization Monitoring 的关键组件：**
+**资源效率和成本分摊**
 
-1. **Resource Usage Monitoring**：
-   - CPU、memory、storage utilization
-   - Actual usage vs. requests and limits
-   - Resource usage trends and patterns
+复用源指南中的 kube-prometheus-stack 安装、kube-state-metrics 和经过验证服务证书的 kubelet ServiceMonitor。cAdvisor 使用 kubelet HTTPS 指标端口上的 `/metrics/cadvisor`；它不是名为 `cadvisor` 的独立 Service 端口。不要添加重复的 monitor，也不要为了让抓取正常运行而禁用 TLS 验证。
 
-2. **Cost Allocation 和 Tagging**：
-   - 按 namespace、service、team 进行 cost analysis
-   - 实施并监控 cost allocation tags
-   - 按 cost center 和 project 跟踪支出
+以下 CPU 和内存表达式返回**每个容器的使用量/请求量比率**，而不是节点容量利用率或货币成本。比率可能大于 1。请求量为零/缺失时，不会产生比率，而不是产生零用量。`max` 会根据列出的身份信息删除重复抓取副本；请确认这些副本实际上代表同一工作负载。此示例针对单个集群的本地 Prometheus。对于共享后端，两个指标系列都必须带有一致的集群标签。解读时间范围时还需注意 Pod 名称重用和容器重启。这些容器指标并不描述 Pod 级资源、init 容器或 Pod 开销的完整调度预留量。
 
-3. **识别 Idle 和 Wasted Resources**：
-   - 未使用的 EBS volumes
-   - Over-provisioned resources
-   - Idle nodes 和 pods
+```promql
+max by (cluster, namespace, pod, container) (
+  rate(container_cpu_usage_seconds_total{job="kubelet",metrics_path="/metrics/cadvisor",namespace!="",container!="",container!="POD"}[5m])
+)
+/ on (cluster, namespace, pod, container)
+(
+  max by (cluster, namespace, pod, container) (
+    kube_pod_container_resource_requests{job="kube-state-metrics",resource="cpu",unit="core",container!=""}
+  ) > 0
+)
+```
 
-4. **Cost Anomaly Detection**：
-   - 对 unexpected cost increases 发出 alert
-   - Cost trend analysis
-   - 监控 actual spending vs. budget
+```promql
+max by (cluster, namespace, pod, container) (
+  container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",namespace!="",container!="",container!="POD"}
+)
+/ on (cluster, namespace, pod, container)
+(
+  max by (cluster, namespace, pod, container) (
+    kube_pod_container_resource_requests{job="kube-state-metrics",resource="memory",unit="byte",container!=""}
+  ) > 0
+)
+```
 
-**实施方法：**
+在 Grafana 中使用现有的 Prometheus 数据源和这些查询创建两个面板；将仪表板命名为**资源使用量与请求量对比**，使用比率/百分比单位，并保留 cluster、namespace、Pod 和 container 身份。包含未指定 `cost-dashboard.json` 的 ConfigMap 不会创建可用的仪表板。使用源指南中的 Grafana sidecar 时，要通过预配方式提供经过审核的 JSON 仪表板，还必须使用已配置的 `grafana_dashboard: "1"` 标签。
 
-1. **监控 Kubernetes Resource Usage**：
-   ```yaml
-   # Monitor resource usage with Prometheus
-   apiVersion: monitoring.coreos.com/v1
-   kind: ServiceMonitor
-   metadata:
-     name: kubernetes-resources
-     namespace: monitoring
-   spec:
-     selector:
-       matchLabels:
-         k8s-app: kubelet
-     namespaceSelector:
-       matchNames:
-       - kube-system
-     endpoints:
-     - port: https-metrics
-       scheme: https
-       interval: 30s
-       tlsConfig:
-         insecureSkipVerify: true
-       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-     - port: cadvisor
-       scheme: https
-       interval: 30s
-       tlsConfig:
-         insecureSkipVerify: true
-       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-       metricRelabelings:
-       - action: keep
-         sourceLabels: [__name__]
-         regex: container_cpu_usage_seconds_total|container_memory_working_set_bytes|container_fs_usage_bytes
-   ```
+**OpenCost 或 Kubecost**
 
-2. **实施 Cost Allocation Tags**：
-   ```bash
-   # Enable cost allocation tags
-   aws ce update-cost-allocation-tags-status \
-     --cost-allocation-tags-status '[{"TagKey": "kubernetes.io/cluster/my-cluster", "Status": "Active"}, {"TagKey": "kubernetes.io/namespace", "Status": "Active"}, {"TagKey": "app", "Status": "Active"}, {"TagKey": "team", "Status": "Active"}]'
+对于使用源指南中现有 Prometheus 进行新的 OpenCost 评估，请将以下内容保存为 `opencost-values.yaml`。检查过的 chart 版本为 **2.5.31**，应用程序版本为 **1.121.2**。请设置实际集群 ID 和 Prometheus URL。其 ServiceMonitor 标签必须与 Prometheus 选择器匹配；命名空间选择范围必须允许 `opencost` 命名空间。此配置不会再安装一套 Prometheus/node exporter。
 
-   # Tag nodes
-   aws ec2 create-tags \
-     --resources i-1234567890abcdef0 \
-     --tags Key=team,Value=platform Key=environment,Value=production
-   ```
+```yaml
+service:
+  type: ClusterIP
+opencost:
+  exporter:
+    defaultClusterId: my-cluster
+  prometheus:
+    internal:
+      enabled: false
+    external:
+      enabled: true
+      url: http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
+  metrics:
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+  cloudCost:
+    enabled: false
+  mcp:
+    enabled: false
+  ui:
+    enabled: true
+    ingress:
+      enabled: false
+```
 
-3. **部署 Kubecost**：
-   ```bash
-   # Install Kubecost using Helm
-   helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-   helm install kubecost kubecost/cost-analyzer \
-     --namespace kubecost \
-     --create-namespace \
-     --set kubecostToken="<YOUR_KUBECOST_TOKEN>" \
-     --set prometheus.server.persistentVolume.size=100Gi \
-     --set prometheus.nodeExporter.enabled=true \
-     --set serviceMonitor.enabled=true
-   ```
+```bash
+helm repo add opencost https://opencost.github.io/opencost-helm-chart
+helm repo update opencost
+helm template opencost opencost/opencost --version 2.5.31 \
+  --namespace opencost -f opencost-values.yaml > opencost-rendered.yaml
+# After reviewing RBAC, images, resources, selectors, and network access:
+helm install opencost opencost/opencost --version 2.5.31 \
+  --namespace opencost --create-namespace -f opencost-values.yaml
+kubectl -n opencost port-forward --address 127.0.0.1 svc/opencost 9090:9090
+```
 
-4. **设置 AWS Cost Explorer Dashboard**：
-   ```bash
-   # Create AWS Cost Explorer dashboard
-   aws ce create-cost-category \
-     --name EKS-Clusters \
-     --rule-version "CostCategoryExpression.v1" \
-     --rules '[{"Value": "my-cluster-prod", "Rule": {"Tags": {"Key": "kubernetes.io/cluster/my-cluster-prod", "Values": ["owned", "shared"], "MatchOptions": ["EQUALS"]}}}, {"Value": "my-cluster-dev", "Rule": {"Tags": {"Key": "kubernetes.io/cluster/my-cluster-dev", "Values": ["owned", "shared"], "MatchOptions": ["EQUALS"]}}}]'
-   ```
+port-forward 运行时，请打开 `http://localhost:9090`。此基线使用临时 exporter 缓存，禁用 Cloud Cost 摄取和 MCP，并且只公开 ClusterIP Service。在共享使用之前，请审核持久性、容量、身份验证/网络访问、RBAC 和抓取运行状况；ClusterIP 不是租户授权边界。按需价格估算需要根据实际账单、折扣、Spot 价格、抵扣额、共享成本、存储和网络费用进行核对。AWS 账单集成需要单独配置；受支持的 AWS 服务账户/默认 SDK 身份验证不需要嵌入长期访问密钥。
 
-**关键 Monitoring Metrics 和 Dimensions：**
+Kubecost 是另一种独立选择。检查过的 **3.3.1** chart 来自 `https://kubecost.github.io/kubecost/` 中的 `kubecost/kubecost`。旧的 `cost-analyzer` 存储库和 2.x Prometheus 值并不是 3.x 安装方案：3.x 使用 ClickHouse 和 finops-agent 直接收集。请在安装或升级前审核其许可证、存储、Kubernetes 兼容性以及文档所述的 2.x 迁移。请参阅配套的 [FinOps 平台指南](../../ops/13-finops-cost-platform.md)和 [Kubecost chart 文档](https://github.com/kubecost/cost-analyzer-helm-chart)。
 
-1. **Resource Efficiency Metrics**：
-   - CPU utilization = used CPU / requested CPU
-   - Memory utilization = used memory / requested memory
-   - Resource requests vs. limits ratio
+**标签、账单标签和类别**
 
-2. **Cost Allocation Dimensions**：
-   - Cluster
-   - Namespace
-   - Deployment/StatefulSet
-   - Labels (team, application, environment)
+命名空间标签有助于 Kubernetes 侧的分组：
 
-3. **Waste Identification Metrics**：
-   - Idle pods 的数量（CPU/memory utilization < 5%）
-   - Unattached EBS volumes
-   - 未使用的 load balancers
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    team: team-a
+    cost-center: cc-123
+    environment: production
+```
 
-**最佳实践：**
+这些标签不会自动标记 EC2/EBS 资源，也不会激活 AWS 账单标签。账单所有者必须应用实际的 AWS 资源标签，然后激活符合条件的成本分摊键。请考虑账单处理延迟，并在 Cost Explorer/CUR 中验证标签是否出现。AWS split cost allocation 是一条单独的选择启用路径，会生成 EKS Pod 级记录和 AWS 生成的属性（例如 `aws:eks:namespace`）；它不会将每个命名空间标签都变成 EC2 标签。请审核其数据源前提条件以及增加的报告量。
 
-1. **优化 Resource Requests 和 Limits**：
-   - 根据 actual usage 设置 resource requests
-   - 使用 Vertical Pod Autoscaler
-   - 定期审查 resource requests
+只在资源过去确实已标记的情况下，成本分摊标签回填才能涵盖最多 12 个月；它无法生成缺失的历史标签。Cost Category 使用经过审核的规则对账单记录分类；它不是仪表板。其 CLI 创建操作为 `aws ce create-cost-category-definition`，而非 `create-cost-category`。请使用账单数据集中实际出现的键和值，并单独配置已保存的 Cost Explorer 报告或仪表板。
 
-2. **实施有效的 Tagging Strategy**：
-   ```yaml
-   # Namespace labels example
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: team-a
-     labels:
-       team: team-a
-       cost-center: cc-123
-       environment: production
-   ```
+**未挂载卷的只读清单**
 
-3. **优化 Auto-scaling**：
-   - 调整 Cluster Autoscaler configuration
-   - 使用 Karpenter
-   - 使用 spot instances
+仅在目标账户/Region 和已有所有权标签符合预期时运行以下命令。它会保留 AWS CLI 分页功能，并输出 JSON 候选列表。有限的标签语法是有意设置的；如果实际标签包含其他字符，请调整 JSON 筛选条件。
 
-4. **定期成本审查和优化**：
-   - 每周/每月成本审查会议
-   - 设置成本降低目标
-   - 跟踪优化操作
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the reviewed Region}"
+: "${EXPECTED_ACCOUNT_ID:?Set the reviewed 12-digit account ID}"
+: "${OWNER_TAG_KEY:?Set an existing ownership tag key}"
+: "${OWNER_TAG_VALUE:?Set its exact value}"
+[[ "$EXPECTED_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+# This example accepts a restricted literal subset, excluding wildcards/shorthand separators.
+[[ "$OWNER_TAG_KEY" =~ ^[a-zA-Z0-9_./:@+-]+$ ]]
+[[ "$OWNER_TAG_VALUE" =~ ^[a-zA-Z0-9_./:@+-]+$ ]]
+actual_account=$(aws sts get-caller-identity --region "$AWS_REGION" \
+  --query Account --output text --no-cli-pager)
+[[ "$actual_account" == "$EXPECTED_ACCOUNT_ID" ]] || {
+  echo "Account mismatch" >&2
+  exit 1
+}
+aws ec2 describe-volumes --region "$AWS_REGION" --page-size 100 \
+  --filters Name=status,Values=available \
+    "Name=tag:$OWNER_TAG_KEY,Values=$OWNER_TAG_VALUE" \
+  --query 'Volumes[].{id:VolumeId,zone:AvailabilityZone,sizeGiB:Size,created:CreateTime,state:State}' \
+  --output json --no-cli-pager
+```
 
-**实际实施示例：**
+`available` 表示当前未挂载，不代表未使用或可以安全删除。创建时间不是最后使用时间。请与所有者一起检查 PV/PVC 所有权、回收策略、待处理工作负载、备份、快照和灾难恢复要求。同样，CPU/内存用量低（包括任意的 5% 截止值）并不能证明某个 Pod 或负载均衡器没有必要。请使用具有代表性的历史数据和应用程序/SLO 信号；不要将缺失指标替换为空的“空闲 Pod”结果。
 
-1. **Grafana Cost Dashboard**：
-   ```bash
-   # Import Grafana dashboard
-   kubectl -n monitoring create configmap cost-dashboard \
-     --from-file=cost-dashboard.json
-   ```
+**预算示例**
 
-2. **Resource Request vs. Usage Monitoring Queries**：
-   ```
-   # Prometheus query examples
-   # CPU utilization vs. requests
-   sum(rate(container_cpu_usage_seconds_total{namespace="production"}[5m])) by (pod) /
-   sum(kube_pod_container_resource_requests{resource="cpu", namespace="production"}) by (pod)
+此独立 Terraform 示例使用真实且已激活的账单标签和经过批准的接收方。**每月 1,000 USD 限额和 80% 告警**仅为示例设置，并非观察到的成本。请导入/核对已有预算，而不是创建冲突的所有者。验证所选成本计算依据和标签覆盖情况；标签筛选器可能会漏掉未标记/共享费用。应用此示例会创建真实通知配置。
 
-   # Memory utilization vs. requests
-   sum(container_memory_working_set_bytes{namespace="production"}) by (pod) /
-   sum(kube_pod_container_resource_requests{resource="memory", namespace="production"}) by (pod)
-   ```
+```hcl
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
+    }
+  }
+}
 
-3. **Cost Optimization Automation Script**：
-   ```python
-   # Script example for identifying and reporting idle resources
-   import boto3
-   import kubernetes
-   from kubernetes import client, config
+variable "account_id" {
+  type = string
+}
 
-   # Set up Kubernetes client
-   config.load_kube_config()
-   v1 = client.CoreV1Api()
+variable "region" {
+  type = string
+}
 
-   # Set up AWS client
-   ec2 = boto3.client('ec2')
-   elb = boto3.client('elb')
+variable "budget_name" {
+  type = string
+}
 
-   def find_unused_volumes():
-       volumes = ec2.describe_volumes(
-           Filters=[
-               {'Name': 'status', 'Values': ['available']},
-               {'Name': 'tag:kubernetes.io/cluster/my-cluster', 'Values': ['owned']}
-           ]
-       )
-       return volumes['Volumes']
+variable "activated_tag_key" {
+  type = string
+}
 
-   def find_underutilized_pods():
-       pods = v1.list_pod_for_all_namespaces(watch=False)
-       underutilized = []
-       for pod in pods.items:
-           # Get usage data from metrics API or Prometheus
-           # Identify pods with low utilization
-           pass
-       return underutilized
+variable "tag_value" {
+  type = string
+}
 
-   # Main function
-   def main():
-       unused_volumes = find_unused_volumes()
-       underutilized_pods = find_underutilized_pods()
+variable "notification_email" {
+  type        = string
+  description = "Approved budget owner; applying this example configures real email notifications."
+}
 
-       # Generate report and alert
-       generate_report(unused_volumes, underutilized_pods)
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
 
-   if __name__ == "__main__":
-       main()
-   ```
+resource "aws_budgets_budget" "eks_monthly" {
+  account_id   = var.account_id
+  name         = var.budget_name
+  budget_type  = "COST"
+  limit_amount = "1000"
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
 
-4. **使用 Terraform 配置 Cost Monitoring Infrastructure**：
-   ```hcl
-   # AWS budget alert setup
-   resource "aws_budgets_budget" "eks_monthly" {
-     name              = "eks-monthly-budget"
-     budget_type       = "COST"
-     limit_amount      = "1000"
-     limit_unit        = "USD"
-     time_unit         = "MONTHLY"
-     time_period_start = "2023-01-01_00:00"
+  cost_filter {
+    name   = "TagKeyValue"
+    values = [join("$", [var.activated_tag_key, var.tag_value])]
+  }
 
-     cost_filter {
-       name = "TagKeyValue"
-       values = [
-         "kubernetes.io/cluster/my-cluster$owned"
-       ]
-     }
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = [var.notification_email]
+  }
+}
+```
 
-     notification {
-       comparison_operator        = "GREATER_THAN"
-       threshold                  = 80
-       threshold_type             = "PERCENTAGE"
-       notification_type          = "ACTUAL"
-       subscriber_email_addresses = ["team@example.com"]
-     }
-   }
+预算使用经过处理的账单数据，不会强制执行支出上限。Budget Actions 可以应用 IAM/SCP 控制或针对受支持的 EC2/RDS 实例执行操作，但需要单独的权限和运维审核。上面的资源效率仪表板不是账单仪表板。
 
-   # CloudWatch dashboard
-   resource "aws_cloudwatch_dashboard" "eks_cost" {
-     dashboard_name = "EKS-Cost-Monitoring"
+请结合 VPA 建议以及峰值/SLO 历史审核请求，并协调 HPA 与节点扩缩容。只有在工作负载、中断、容量和干扰约束允许时，Karpenter/Cluster Autoscaler 和 Spot 才可能降低成本。仅缩小请求量并不会减少账单，除非已预置的容量或定价发生变化。请在定期所有者审核中跟踪商定的操作和测量结果。
 
-     dashboard_body = jsonencode({
-       widgets = [
-         {
-           type   = "metric"
-           x      = 0
-           y      = 0
-           width  = 12
-           height = 6
-           properties = {
-             metrics = [
-               ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", "eks-node-group-1", {"stat": "Average"}]
-             ]
-             period = 300
-             region = "us-west-2"
-             title  = "Node Group CPU Utilization"
-           }
-         },
-         {
-           type   = "metric"
-           x      = 12
-           y      = 0
-           width  = 12
-           height = 6
-           properties = {
-             metrics = [
-               ["AWS/EC2", "NetworkIn", "AutoScalingGroupName", "eks-node-group-1", {"stat": "Sum"}],
-               ["AWS/EC2", "NetworkOut", "AutoScalingGroupName", "eks-node-group-1", {"stat": "Sum"}]
-             ]
-             period = 300
-             region = "us-west-2"
-             title  = "Node Group Network Traffic"
-           }
-         }
-       ]
-     })
-   }
-   ```
+其他选项无法形成此反馈闭环：收集所有数据会增加遥测成本/噪声；仅关注性能无法显示支出；等到最终月度账单才查看会错过及时调查的时机。
 
-其他选项的问题：
-- **A. 收集所有可能的 metrics**：收集所有 metrics 会增加存储成本，重要的 cost optimization signals 可能被埋没在噪音中，并且分析会变得更复杂。
-- **C. 只关注 performance，不进行 cost monitoring**：Performance 很重要，但如果没有 cost optimization，可能会产生不必要的支出。
-- **D. 只查看每月 AWS bills**：每月账单审查是被动的，不能提供详细的 cost allocation 信息，并且可能错过实时 optimization opportunities。
+**主要参考资料：**[OpenCost 安装](https://opencost.io/docs/installation/helm)、[AWS 标签激活](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html)、[标签回填](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html)、[split cost allocation](https://docs.aws.amazon.com/cur/latest/userguide/split-cost-allocation-data.html)、[Budget Actions](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html)。
+
 </details>

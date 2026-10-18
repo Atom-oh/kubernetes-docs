@@ -49,7 +49,7 @@ Kubernetes는 Pod마다 net namespace를 하나 만들고(pause 컨테이너가 
 **정답: B) `memory.current`에 page cache가 포함되며, page cache는 회수 가능하므로 limit에 닿으면 커널이 버려서 공간을 만든다**
 
 **설명:**
-애플리케이션이 실제 붙잡은 메모리(anon/RSS)가 limit보다 훨씬 낮아도 파일을 많이 읽으면 page cache가 쌓여 `memory.current`가 limit에 닿습니다. 그런데 page cache는 회수 가능하므로 정상적인 경우 커널이 버려서 공간을 만들고 OOM은 나지 않습니다. 문제는 **회수 속도가 할당 속도를 못 따라갈 때**이고 이때 OOM killer가 동작합니다. 그래서 진단에는 `memory.stat`의 `anon`, `memory.events`의 `oom`, 그리고 PSI(`memory.pressure`)를 함께 봐야 합니다.
+애플리케이션이 실제 붙잡은 메모리(anon/RSS)가 limit보다 훨씬 낮아도 파일을 많이 읽으면 page cache가 쌓여 `memory.current`가 limit에 닿습니다. 그런데 page cache는 회수 가능하므로 정상적인 경우 커널이 버려서 공간을 만들고 OOM은 나지 않습니다. 문제는 **회수 속도가 할당 속도를 못 따라갈 때**이고 이때 OOM killer가 동작합니다. 그래서 진단할 때는 `memory.stat`의 `anon`, `memory.events`의 `oom`, 그리고 PSI(`memory.pressure`)를 함께 봐야 합니다.
 </details>
 
 4. CPU 사용률이 20%로 낮은데 p99 지연이 튀는 경우, CPU limit이 원인인지 확인하는 방법은?
@@ -84,7 +84,7 @@ CPU limit은 대역폭 제한입니다. `cpu.max`가 `20000 100000`이면 "100ms
 nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1) 조회와 증분 규칙 갱신을 제공합니다(워커 노드에 커널 5.13+ 필요, AL2023은 충족). IPVS 모드는 **1.35(2025년 12월)에서 deprecated**되었으며 upstream은 1.40 기본 비활성화와 1.43 제거를 계획합니다. 미래 목표이므로 최신 [KEP-5495 일정](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)을 확인합니다. 권장 대체는 nftables이지만 **기본값은 여전히 iptables**이므로 전환은 명시적 결정입니다.
 </details>
 
-6. Conntrack 포화 의심은 어떻게 검증해야 합니까?
+6. Conntrack 포화가 의심될 때는 어떻게 검증해야 합니까?
    - A) 명확한 커널 패닉: `dmesg`에서 즉시 확인
    - B) Conntrack count/max·insert/drop counter·kernel log를 연결하며 insert_failed만으로 포화를 확정하지 않는다
    - C) 모든 기존 연결이 즉시 끊김
@@ -116,7 +116,7 @@ NAT 없는 트래픽에도 tracking이 적용될 수 있습니다. Headless Serv
 kube-proxy도 conntrack 값을 관리하며, EKS에는 `kube-proxy-config` ConfigMap이 기본으로 존재하고 이것이 커맨드라인 인자보다 우선합니다. 따라서 올바른 경로는 ConfigMap의 `conntrack.maxPerCore`·`conntrack.min`을 조정하고 kube-proxy DaemonSet을 재시작하는 것입니다. `maxPerCore`를 쓰는 이유는 절대값이 아니라 코어당 값이라 노드 크기가 달라도 비례 조정되기 때문입니다. D는 틀렸습니다. `nf_conntrack_max`는 노드 전역이라 Pod 스펙으로 바꿀 수 없습니다.
 </details>
 
-8. overlayfs의 copy-up이 운영에 만드는 문제는?
+8. overlayfs의 copy-up이 운영에서 일으키는 문제는?
    - A) 이미지 계층이 중복 저장되어 레지스트리 용량이 늘어난다
    - B) lowerdir의 파일을 수정하면 파일 전체가 upperdir로 복사되므로, 큰 파일의 작은 수정도 전체 복사 비용을 낸다
    - C) 컨테이너 시작 시간이 계층 수에 비례해 늘어난다

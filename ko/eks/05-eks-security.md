@@ -43,7 +43,7 @@ Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행
 
 ### 신원과 네트워크 제어
 
-IRSA·Pod Identity는 워크로드 AWS 자격 증명, NetworkPolicy는 지원 네트워크 필터링, admission 엔진은 설정한 Kubernetes 요청 검사를 제공합니다. 호환되는 유지보수 중인 서비스 메시로 mTLS·앱 트래픽 정책을 추가할 수 있습니다. AWS App Mesh는2026년9월30일 지원 종료이므로 신규 기본 권장 대상이 아니라 기존 배포의 이전 계획이 필요합니다.
+IRSA·Pod Identity는 워크로드 AWS 자격 증명, NetworkPolicy는 지원 네트워크 필터링, admission 엔진은 설정한 Kubernetes 요청 검사를 제공합니다. 호환되며 유지보수 중인 서비스 메시로 mTLS·앱 트래픽 정책을 추가할 수 있습니다. AWS App Mesh는 2026년9월30일 지원 종료이므로 신규 기본 권장 대상이 아니며 기존 배포의 이전 계획이 필요합니다.
 
 ### 공급망 보안
 
@@ -55,7 +55,7 @@ SLSA 같은 검토한 빌드·provenance 절차, SBOM 구성 요소 목록, 대�
 
 GuardDuty EKS Protection은 독립적인 EKS audit-log stream을 분석합니다. Runtime Monitoring은 별도 agent 기반 기능이며 현재 EC2·Auto Mode EKS를 지원하고 플랫폼/agent 조건이 있으며 EKS Fargate·Hybrid Nodes는 제외됩니다. CloudWatch 감사 로그 전달은 별도 설정입니다. Security Hub CSPM은 설정한 제어를 평가하고 Security Hub는 findings를 연계할 수 있습니다. 앱 권한·모든 규제 요구 평가를 대체하지는 않습니다.
 
-필요한 kernel·controller·API·metadata 통합을 갖춘 Falco·Gatekeeper·Kyverno 같은 지원 런타임/정책 도구를 사용합니다. gVisor/Kata 같은 추가 sandbox runtime에는 호환 노드·런타임 설계가 필요하며 모든 EKS 컴퓨팅 경로에서 쓸 수는 없습니다. 정책·이미지·OS 강화는 특정 위험을 줄이며 모든 탈출·악성 작업을 불가능하게 보장하지는 않습니다.
+필요한 kernel·controller·API·metadata 통합을 갖춘 Falco·Gatekeeper·Kyverno 같은 지원 런타임/정책 도구를 사용합니다. gVisor/Kata 같은 추가 sandbox runtime에는 호환 노드·런타임 설계가 필요하며 모든 EKS 컴퓨팅 경로에서 쓸 수는 없습니다. 정책·이미지·OS 강화는 특정 위험을 줄이며 모든 탈출·악성 작업이 불가능하다고 보장하지는 않습니다.
 
 Policy-as-code 도구의 단계도 다릅니다. Gatekeeper/Kyverno는 Kubernetes admission, CloudFormation Guard·Sentinel은 인프라 변경, AWS Config는 지원되는 배포 리소스 구성을 평가할 수 있습니다. Detective 같은 조사 도구는 설정한 데이터 소스에 의존합니다. 이를 런타임 방지 기능과 구분합니다.
 
@@ -229,7 +229,7 @@ IAM eks:DescribeCluster/ListClusters는 AWS 관리·검색 작업용입니다. e
 
 ## OIDC Provider 심화
 
-EKS는 클러스터 OIDC issuer와 공개 서명 키를 게시합니다. Endpoint만으로 IAM OIDC provider가 생성되거나 역할 전환이 허용되지는 않습니다. IRSA는 역할 계정의 대상 IAM OIDC provider, 올바른 issuer/subject/audience 신뢰 조건과 호환 SDK가 필요합니다.
+EKS는 클러스터 OIDC issuer와 공개 서명 키를 게시합니다. Endpoint만으로 IAM OIDC provider가 생성되거나 역할 전환이 허용되지는 않습니다. IRSA에는 역할 계정의 대상 IAM OIDC provider, 올바른 issuer/subject/audience 신뢰 조건과 호환 SDK가 필요합니다.
 
 ![파드가 Kubernetes API 서버에서 받은 서비스 계정 JWT를 AWS STS에 AssumeRoleWithWebIdentity로 제시하면 STS가 EKS OIDC Provider의 JWKS로 서명을 검증하고 IAM 역할의 신뢰 정책을 확인한 뒤 임시 자격 증명을 발급하고, 파드가 그 자격 증명으로 AWS 서비스 API를 호출하는 순서를 보여주는 시퀀스 다이어그램이다.](../.gitbook/assets/ko-eks-05-eks-security-3.png)
 
@@ -264,7 +264,7 @@ IRSA webhook은 대상 Pod에 projected token·role 설정을 추가합니다. S
 }
 ```
 
-JSON decode 성공만이 아니라 issuer·audience·만료·예상 subject를 검증합니다. 실제 토큰·AWS secret access key·session token을 예제·로그에 출력하지 않습니다. 역할이 명시적으로 허용한 여러 ServiceAccount·issuer를 신뢰할 수 있으며 IRSA가 ServiceAccount당 역할 하나를 강제하지는 않습니다.
+JSON decode 성공 여부뿐 아니라 issuer·audience·만료·예상 subject를 검증합니다. 실제 토큰·AWS secret access key·session token을 예제·로그에 출력하지 않습니다. 역할이 명시적으로 허용한 여러 ServiceAccount·issuer를 신뢰할 수 있으며 IRSA가 ServiceAccount당 역할 하나를 강제하지는 않습니다.
 
 ### Discovery와 JWKS 조회
 
@@ -363,7 +363,7 @@ PY
 }
 ```
 
-security-demo 네임스페이스·역할 준비 후 다음 ServiceAccount와 제한 시간의 목록 조회 Job을 생성합니다. 공식 AWS CLI 이미지에는 client가 있지만 임의 amazonlinux:2 이미지에 있다고 보장되지 않습니다. 버킷·리전·역할 값을 교체하세요. Job은 비밀 값 출력 없이 접두사 목록을 조회하며 성공이 모든 앱 GetObject/KMS 권한의 증거는 아닙니다.
+security-demo 네임스페이스·역할 준비 후 다음 ServiceAccount와 제한 시간이 있는 목록 조회 Job을 생성합니다. 공식 AWS CLI 이미지에는 client가 있지만 임의 amazonlinux:2 이미지에 있다고 보장되지 않습니다. 버킷·리전·역할 값을 교체하세요. Job은 비밀 값 출력 없이 접두사 목록을 조회하며 성공이 모든 앱 GetObject/KMS 권한의 증거는 아닙니다.
 
 ```yaml
 apiVersion: v1
@@ -470,7 +470,7 @@ Association이 있는 새 Pod에는 EKS가 audience가 pods.eks.amazonaws.com인
 
 ### 역할과 Association 준비
 
-일반 관리형 agent 설치는 소유자를 통해 실제 클러스터 버전·호환 add-on catalog를 조회합니다. 이전v1.0.0 build를 하드코딩하거나 Auto Mode·다른 소유자의 설치에 agent를 중복 설치하지 마세요:
+일반 관리형 agent를 설치할 때는 소유자를 통해 실제 클러스터 버전·호환 add-on catalog를 조회합니다. 이전v1.0.0 build를 하드코딩하거나 Auto Mode·다른 소유자의 설치에 agent를 중복 설치하지 마세요:
 
 ```bash
 set -euo pipefail
@@ -482,7 +482,7 @@ aws eks describe-addon-versions --addon-name eks-pod-identity-agent \
   --kubernetes-version "$EKS_VERSION" --region "$AWS_REGION" --output json
 ```
 
-앞의 범위가 제한된 S3 읽기 정책과 다음 신뢰 관계로 같은 계정의 IAM 역할을 준비합니다. 계정·클러스터 값을 함께 교체하세요. 이 예제는 기본 session tag에 의존하므로 tag를 비활성화하면 조건을 재검토해야 합니다. 호출자에는 해당 association 권한·대상 역할의 iam:PassRole이 필요합니다:
+앞의 범위가 제한된 S3 읽기 정책과 다음 신뢰 관계로 같은 계정의 IAM 역할을 준비합니다. 계정·클러스터 값을 함께 교체하세요. 이 예제는 기본 session tag에 의존하므로 tag를 비활성화하면 조건을 재검토해야 합니다. 호출자에게는 해당 association 권한·대상 역할의 iam:PassRole이 필요합니다:
 
 ```json
 {
@@ -529,7 +529,7 @@ aws eks create-pod-identity-association --cluster-name "$CLUSTER_NAME" --region 
   --namespace security-demo --service-account podid-reader --role-arn "$POD_ID_ROLE_ARN"
 ```
 
-Association 전파 후 ServiceAccount·새 제한 시간 테스트 Job을 생성합니다. IAM 역할 신뢰·네임스페이스·계정 이름·버킷 접두사를 맞추세요. Association보다 먼저 생성된 Pod는 주입 설정을 받기 위해 재생성이 필요할 수 있습니다. 실제 선택한 provider·대표 권한을 검증하고 자격 증명·token 파일은 출력하지 않습니다.
+Association 전파 후 ServiceAccount·제한 시간이 있는 새 테스트 Job을 생성합니다. IAM 역할 신뢰·네임스페이스·계정 이름·버킷 접두사를 맞추세요. Association보다 먼저 생성된 Pod는 주입 설정을 받기 위해 재생성이 필요할 수 있습니다. 실제 선택한 provider·대표 권한을 검증하고 자격 증명·token 파일은 출력하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -633,13 +633,13 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 3. 범위가 제한된 association과 의도한 Pod Identity 신원 경로만 사용하는 별도 ServiceAccount의 canary를 준비합니다. 검증 전에 운영 IRSA annotation을 지우거나 운영 Deployment를 재시작하지 않습니다.
 4. 토큰·비밀 값을 출력하지 않고 실제 선택된 credential provider와 필요한 AWS 접근을 검증합니다. Association 생성 후에도 SDK 체인의 앞선 신원이 계속 사용될 수 있습니다. 같은 IAM 역할이 표시되는 get-caller-identity 성공만으로 IRSA·Pod Identity를 구별할 수는 없습니다.
 5. 통제된 rollout으로 대상 워크로드를 이전하고 주입 설정에 필요한 Pod 재생성과 앱 동작·갱신을 확인합니다. ServiceAccount annotation 변경이 기존 Pod 환경을 다시 작성하지는 않습니다.
-6. 워크로드 구성을 되돌릴 검증한 경로를 유지합니다. 모든 남은 소비자를 조사하고 이전 완료를 확인한 뒤에만 이전 IRSA 신뢰를 제거합니다.
+6. 워크로드 구성을 되돌릴 검증된 경로를 유지합니다. 모든 남은 소비자를 조사하고 이전 완료를 확인한 뒤에만 이전 IRSA 신뢰를 제거합니다.
 
 대상 환경에서 검증할 이전 절차이며 이번 문서 검토에서 실제 이전을 실행했다는 뜻이 아닙니다.
 
 ## Cluster Endpoint 접근 제어
 
-Endpoint 구성은 네트워크 도달성을 정하며 API 작업에는 별도로 인증·권한이 필요합니다. 운영 요구로 접근 경로를 선택하고 도구 기본값을 가정하지 말고 실제 설정을 조회합니다.
+Endpoint 구성은 네트워크 도달성을 정하며 API 작업에는 별도로 인증·권한이 필요합니다. 운영 요구에 따라 접근 경로를 선택하고 도구 기본값을 가정하지 말고 실제 설정을 조회합니다.
 
 | Public | Private | 네트워크 동작 |
 |---|---|---|
@@ -741,7 +741,7 @@ aws ssm start-session --region "$AWS_REGION" --target "$MANAGED_INSTANCE_ID" \
   --parameters "file://$ENDPOINT_REVIEW_DIR/ssm-remote-host.json"
 ```
 
-두 번째 터미널은 같은 클러스터의 kubeconfig·CA·의도한 IAM exec 인증을 유지합니다. 로컬로 연결하되 실제 TLS 서버 이름을 지정하며 hostname 불일치를 숨기려고 인증서 검증을 끄지 않습니다:
+두 번째 터미널에서는 같은 클러스터의 kubeconfig·CA·의도한 IAM exec 인증을 유지합니다. 로컬로 연결하되 실제 TLS 서버 이름을 지정하며 hostname 불일치를 숨기려고 인증서 검증을 끄지 않습니다:
 
 ```bash
 set -euo pipefail
@@ -901,7 +901,7 @@ eks:controlPlaneEgressMode는 CreateCluster/UpdateClusterConfig 요청에 지정
 }
 ```
 
-의도한 요청 제어이며 기존 클러스터 자동 이전 기능이 아닙니다. 이 예제 아래에서 기존 AWS_MANAGED 클러스터는 관련 없는 update를 계속 받을 수 있습니다. 조직이 다른 rollout 정책을 요구하면 별도로 설계해야 합니다. SCP가 IAM 권한·routing/DNS를 구성하지는 않습니다. 배포 전에 조직 소유자와 정책 상속·대표 허용/거부 요청을 검증합니다.
+의도한 요청 제어이며 기존 클러스터 자동 이전 기능이 아닙니다. 이 예제를 적용한 상태에서 기존 AWS_MANAGED 클러스터는 관련 없는 update를 계속 받을 수 있습니다. 조직이 다른 rollout 정책을 요구하면 별도로 설계해야 합니다. SCP가 IAM 권한·routing/DNS를 구성하지는 않습니다. 배포 전에 조직 소유자와 정책 상속·대표 허용/거부 요청을 검증합니다.
 
 ## 네트워크 보안
 
@@ -1307,11 +1307,11 @@ enabled = false
 
 ### SELinux 및 파일 시스템 무결성
 
-SELinux는 enforcing 모드에서 process·file label에 따라 접근을 제한합니다. 필요한 호스트 서비스에는 여전히 높은 권한이 필요하며 충분한 권한을 가진 사용자는 일부 label을 변경할 수 있습니다. 이 제어는 위험을 줄이지만 모든 컨테이너 탈출 방지를 보장하지는 않습니다.
+SELinux는 enforcing 모드에서 process·file label에 따라 접근을 제한합니다. 필요한 호스트 서비스에는 여전히 높은 권한이 필요하며 충분한 권한을 가진 사용자는 일부 label을 변경할 수 있습니다. 이 제어는 위험을 줄이지만 모든 컨테이너 탈출을 방지한다고 보장하지는 않습니다.
 
 EKS Kubernetes 1.37에서는 지원되는 구성에서 SELinux volume mount가 stable이며 기본 활성화됩니다. Pod에 `seLinuxOptions`가 있고 CSI driver가 `seLinuxMount: true`를 선언한 경우 적용됩니다. 하나의 mount에는 SELinux label을 하나만 붙일 수 있으므로, 같은 노드의 다른 Pod가 이미 다른 SELinux label·`seLinuxChangePolicy`·권한 수준으로 그 volume을 사용 중이면 Pod가 `ContainerCreating`에 머물 수 있습니다. SELinux가 비활성화된 노드는 영향을 받지 않습니다. 업그레이드 전에 `seLinuxMount: true`인 driver를 찾고 volume을 공유하는 Pod의 `seLinuxOptions.level`과 `seLinuxChangePolicy`를 맞추세요(`Recursive`는 기존 relabeling 동작을 유지합니다). 자세한 내용은 [EKS 표준 지원 릴리스 노트](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)의 Kubernetes 1.37 항목을 참고하세요.
 
-루트 파일 시스템은 dm-verity를 사용해 보호 블록을 읽을 때 hash tree와 검증합니다. 부팅 시 모든 파일을 이미 검사했다는 뜻은 아닙니다. 로그·컨테이너 이미지·앱 volume·설정에는 변경 가능한 저장 공간이 있으며 `/etc`의 일부는 ephemeral이므로 지원하는 구성 경로를 사용해야 합니다.
+루트 파일 시스템은 dm-verity를 사용해 보호 블록을 읽을 때 hash tree와 대조하여 검증합니다. 부팅 시 모든 파일을 이미 검사했다는 뜻은 아닙니다. 로그·컨테이너 이미지·앱 volume·설정에는 변경 가능한 저장 공간이 있으며 `/etc`의 일부는 ephemeral이므로 지원하는 구성 경로를 사용해야 합니다.
 
 ![루트 파일시스템에서 블록을 읽고 해시를 계산해 Merkle Tree에 저장된 해시와 대조하는 dm-verity 검증 과정에서 해시가 일치하면 접근을 허용하고 불일치하면 접근을 차단하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-11.png)
 
@@ -1520,7 +1520,7 @@ SCP는 member account의 적용 대상 principal 권한을 제한하며 권한�
 | `eks:deletionProtection` | Bool | CreateCluster, UpdateClusterConfig |
 | `eks:zonalShiftEnabled` | Bool | CreateCluster, UpdateClusterConfig |
 
-아래는 전체 조직 정책이 아닌 **요청 통제 예제**입니다. 생성 시 명시적인 private-only endpoint 설정과 customer-managed key를 요구하고 업데이트에서 명시적으로 endpoint 통제를 약화하는 요청을 거부합니다. 승인 버전 목록은 이번 검토 시점의 예시입니다. 조직 정책·지원 기간에 따라 목록을 관리하며 기존 클러스터를 업그레이드하라는 명령이 아닙니다.
+아래는 전체 조직 정책이 아닌 **요청 통제 예제**입니다. 생성 시 명시적인 private-only endpoint 설정과 customer-managed key를 요구하고 업데이트에서 명시적으로 endpoint 통제를 약화하는 요청을 거부합니다. 승인 버전 목록은 이번 검토 시점의 예시입니다. 목록은 조직 정책·지원 기간에 따라 관리해야 하며 기존 클러스터를 업그레이드하라는 명령이 아닙니다.
 
 ```json
 {
@@ -1647,7 +1647,7 @@ helm install external-secrets external-secrets/external-secrets \
   --set installCRDs=true --wait --timeout 5m
 ```
 
-승인된 secret 입력 절차로 `username`·`password` 속성이 있는 Secrets Manager JSON secret을 준비합니다. 모든 예제에서 정확한 secret ARN·계정·Region·역할로 바꿉니다. 역할의 IRSA trust는 실제 IAM OIDC provider와 정확한 namespace·service-account subject를 사용해야 합니다. Dual-stack 형식 등을 포함한 **issuer hostname·path 전체**를 실제 값으로 바꾸세요:
+승인된 secret 입력 절차로 `username`·`password` 속성이 있는 Secrets Manager JSON secret을 준비합니다. 모든 예제의 값을 정확한 secret ARN·계정·Region·역할로 바꿉니다. 역할의 IRSA trust는 실제 IAM OIDC provider와 정확한 namespace·service-account subject를 사용해야 합니다. Dual-stack 형식 등을 포함한 **issuer hostname·path 전체**를 실제 값으로 바꾸세요:
 
 ```json
 {
@@ -1803,7 +1803,7 @@ test -s "$review_dir/secret.yaml"
 
 ### EKS 컨트롤 플레인 감사 로그
 
-Kubernetes audit log는 audit policy·level이 선택한 요청을 기록하며 모든 요청 본문이나 워크로드 내부 작업을 빠짐없이 기록하는 보장이 아닙니다. CloudTrail은 AWS API 활동을 기록하고 앱 데이터 접근에는 앱·서비스별 log가 필요할 수 있습니다. 각 자료는 상호 보완합니다.
+Kubernetes audit log는 audit policy·level이 선택한 요청을 기록하며 모든 요청 본문이나 워크로드 내부 작업을 빠짐없이 기록한다고 보장하지는 않습니다. CloudTrail은 AWS API 활동을 기록하고 앱 데이터 접근에는 앱·서비스별 log가 필요할 수 있습니다. 각 자료는 상호 보완합니다.
 
 먼저 실제 클러스터 logging 설정을 확인하세요. EKS의 CloudWatch control plane log 전달은 best effort이며 보통 수분 이내에 이루어지고 수집·저장 비용이 발생합니다. 보존 기간·접근 제어·후속 전달·log 누락 탐지를 구성합니다. Export를 켠다고 이전에 내보내지 않은 이벤트가 소급 생성되지는 않습니다.
 
@@ -1840,7 +1840,7 @@ aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'update.{ID:id,Status:status,Errors:errors}'
 ```
 
-마지막 DescribeUpdate는 waiter가 아닌 상태 조회입니다. Successful 또는 최종 실패가 될 때까지 재조회한 뒤 설정한 유형과 `/aws/eks/CLUSTER_NAME/cluster`의 실제 log 도착을 확인합니다. UpdateClusterConfig가 ID를 반환했다는 이유만으로 완료를 보고하지 않습니다.
+마지막 DescribeUpdate는 waiter가 아닌 상태 조회입니다. 상태가 Successful 또는 최종 실패가 될 때까지 재조회한 뒤 설정한 유형과 `/aws/eks/CLUSTER_NAME/cluster`의 실제 log 도착을 확인합니다. UpdateClusterConfig가 ID를 반환했다는 이유만으로 완료를 보고하지 않습니다.
 
 ### AWS Config와 Security Hub CSPM
 
@@ -1883,7 +1883,7 @@ aws guardduty get-detector --region "$AWS_REGION" --detector-id "$DETECTOR_ID" \
 aws guardduty list-coverage --region "$AWS_REGION" --detector-id "$DETECTOR_ID"
 ```
 
-검토한 feature 구성에서 현재 이름은 다음처럼 구분합니다:
+검토한 feature 구성에서 현재 이름을 다음처럼 구분합니다:
 
 ```json
 [
@@ -1906,7 +1906,7 @@ aws guardduty list-coverage --region "$AWS_REGION" --detector-id "$DETECTOR_ID"
 
 Falco는 runtime event를 규칙으로 평가합니다. 아래 교육용 values는 stable chart 9.2.0·Falco 0.45.0, modern eBPF를 지원하는 Linux EC2 노드와 chart의 container metadata plugin을 전제로 합니다. Fargate·Hybrid Nodes·모든 Auto Mode 구성의 배포 검증 결과가 아닙니다. 설치 전에 render된 privileged·host 접근, runtime socket, kernel·BTF 요건, scheduling과 namespace admission 예외를 검토합니다.
 
-`falco-demo-values.yaml`로 저장합니다. 배포된 Terminal shell in container 규칙을 재정의하는 대신 고유 이름의 shell audit 규칙을 추가합니다. 성공한 exec event·terminal 조건을 포함하며 정상적인 관리자 shell도 matching될 수 있습니다. 출력은 명령 인수를 제외하고 Kubernetes metadata enrichment가 활성화되었다고 가정하지 않습니다:
+`falco-demo-values.yaml`로 저장합니다. 배포된 Terminal shell in container 규칙을 재정의하는 대신 고유 이름의 shell audit 규칙을 추가합니다. 성공한 exec event·terminal 조건을 포함하며 정상적인 관리자 shell도 matching될 수 있습니다. 출력에서 명령 인수를 제외하며 Kubernetes metadata enrichment가 활성화되었다고 가정하지 않습니다:
 
 ```yaml
 driver:
@@ -1934,7 +1934,7 @@ customRules:
 
 검토를 마친 신규 소유 설치에서는 `falcosecurity` repository를 `https://falcosecurity.github.io/charts`로 구성한 뒤 `helm install falco falcosecurity/falco --version 9.2.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`을 사용합니다. 기존 release는 소유자의 upgrade 절차를 따릅니다.
 
-Artifact follow를 꺼도 Pod 시작 시 설정된 rule·plugin artifact는 설치합니다. Chart 기본 `falco-rules:5`는 major version tag이므로 chart 고정만으로 불변 rule bundle이 되지 않습니다. 운영 rollout에서는 실제 OCI artifact를 검토·고정합니다. Pod·namespace 출력에는 호환 Kubernetes metadata collector·plugin과 RBAC가 필요하며 규칙에 `%k8s.pod.name`만 쓰면 제공되는 기능이 아닙니다.
+Artifact follow를 꺼도 Pod 시작 시 설정된 rule·plugin artifact는 설치합니다. Chart 기본 `falco-rules:5`는 major version tag이므로 chart 고정만으로 불변 rule bundle이 되지 않습니다. 운영 rollout에서는 실제 OCI artifact를 검토·고정합니다. Pod·namespace 출력에는 호환 Kubernetes metadata collector·plugin과 RBAC가 필요하며 규칙에 `%k8s.pod.name`만 쓰는 것으로 제공되지는 않습니다.
 
 실제 Falco 0.45.0·container plugin 0.7.4의 `--validate` 모드에서 모든 runtime collector를 끈 상태로 custom rule과 undefined-macro 거부 사례를 확인했습니다. Parser 경고에 따라 obsolete `evt.dir` 조건도 제거했습니다. Helm render는 확인했지만 syscall capture·kernel driver·BPF attachment·클러스터 설치·실제 알림은 실행하지 않았습니다.
 

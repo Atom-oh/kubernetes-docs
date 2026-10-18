@@ -238,7 +238,7 @@ Rollouts is a separate controller and can be used without Argo CD. This review u
 
 ### EKS Managed Argo CD Capability
 
-EKS Capability for Argo CD is a distinct operating model from a self-managed installation. Its custom configuration applies only to **supported** argocd-cm keys, in the capability-configured namespace and with label `app.kubernetes.io/part-of: argocd`. Unsupported keys/flags are ignored; do not assume standard Lua libraries or arbitrary execution plugins are available. See the [managed configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
+EKS Capability for Argo CD is a distinct operating model from a self-managed installation. Its custom configuration applies only to **supported** argocd-cm keys, in the capability-configured namespace and with the label `app.kubernetes.io/part-of: argocd`. Unsupported keys/flags are ignored; do not assume standard Lua libraries or arbitrary execution plugins are available. See the [managed configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
 
 ## Next Steps
 

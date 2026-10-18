@@ -13,7 +13,7 @@ Esta descripción general mantiene utilizable la URL del capítulo anterior. El 
 - [Inicio rápido](#quick-start)
 - [Recursos de aprendizaje](#learning-resources)
 
-## Introducción
+## Introducción {#introduction}
 
 Istio es una plataforma de service mesh de código abierto para aplicaciones de microservicios. Un service mesh es una capa de infraestructura que gestiona la comunicación entre servicios, lo que permite el control y la observación de esa comunicación a nivel de infraestructura. La propagación de trace-context de la aplicación, el apagado controlado y la idempotencia de negocio aún requieren la participación de la aplicación.
 
@@ -34,7 +34,7 @@ Un service mesh proporciona las siguientes capacidades principales:
 - **Métricas detalladas**: Métricas detalladas de la comunicación entre servicios
 - **Aplicación de políticas**: Control de acceso y rate limiting local/global configurado explícitamente
 
-## Características principales
+## Características principales {#key-features}
 
 ### 1. Gestión de tráfico
 
@@ -74,7 +74,7 @@ Patrones de resiliencia de servicios:
 - **Outlier Detection**: Excluye las instancias no saludables
 - **Rate Limiting**: Token buckets locales configurados o un servicio global de rate limiting
 
-## Descripción general de la arquitectura
+## Descripción general de la arquitectura {#architecture-overview}
 
 Istio consta de un **Control Plane** y un **Data Plane**. El siguiente diagrama muestra la forma sidecar, no la topología ambient.
 
@@ -101,7 +101,7 @@ En el modo sidecar, Envoy se ejecuta junto a cada Pod de aplicación inscrito:
 
 Ambient utiliza ztunnel a nivel de nodo para el transporte L4 y waypoints opcionales de Envoy para las características L7 compatibles. No inyecta un Envoy en cada Pod de aplicación. La compatibilidad de características, la asociación de políticas y el uso de recursos difieren según el modo; de esta topología no se deduce ni un porcentaje fijo de ahorro de recursos ni una superioridad de rendimiento universal. Consulte [Modo Ambient](istio/advanced/01-ambient-mode.md).
 
-## Documentación detallada
+## Documentación detallada {#detailed-documentation}
 
 Los enlaces siguientes son un mapa de aprendizaje hacia el subárbol mantenido. Su índice incluye temas adicionales y añadidos recientemente.
 
@@ -173,7 +173,7 @@ Los enlaces siguientes son un mapa de aprendizaje hacia el subárbol mantenido. 
 |----------|-------------|
 | [Prácticas recomendadas](istio/best-practices.md) | Lista de verificación y recomendaciones de producción |
 
-## Inicio rápido
+## Inicio rápido {#quick-start}
 
 1. Compruebe la intersección exacta de compatibilidad de Istio/Kubernetes/EKS en la [guía de instalación](istio/01-installation.md). Un requisito previo genérico de “Kubernetes 1.28+” no es suficiente para una versión actual de Istio.
 2. Elija sidecar o ambient y siga el CLI/chart fijado, el namespace aislado y los requisitos previos de la plataforma de esa guía. No descargue un CLI latest no especificado para después cambiar a un directorio de una versión antigua.
@@ -191,7 +191,7 @@ istioctl proxy-status
 
 El estado del proxy es solo una entrada de diagnóstico. La inscripción en ambient y ztunnel necesitan sus propias comprobaciones, y un resultado limpio del analizador no es una prueba de tráfico de extremo a extremo.
 
-## Recursos de aprendizaje
+## Recursos de aprendizaje {#learning-resources}
 
 ### Documentación oficial
 

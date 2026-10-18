@@ -1,6 +1,6 @@
 # 추론 프레임워크 퀴즈
 
-현재 API와 실행 경계를 확인하는15문항입니다.
+현재 API와 실행 경계를 확인하는 15문항입니다.
 
 ## 1. NIM의 주요 이점과 배포 시 확인할 조건은 무엇인가요?
 
@@ -23,7 +23,7 @@ prefill과 decode를 별도 worker로 나누고 호환되는 KV transfer로 연�
 <details>
 <summary>정답 및 설명</summary>
 
-ModelAdapter의 baseModel, podSelector, artifactURL 등을 사용합니다. replicas 생략은 모든 matching Pod,1은 한 Pod이며 임의 숫자는 허용되지 않습니다. adapter 이름은 tenant 인증이 아닙니다.
+ModelAdapter의 baseModel, podSelector, artifactURL 등을 사용합니다. replicas를 생략하면 모든 matching Pod에 적용되고, 1이면 한 Pod에 적용되며 임의 숫자는 허용되지 않습니다. adapter 이름은 tenant 인증이 아닙니다.
 </details>
 
 ## 4. Ray Serve를 Kubernetes에서 운영하는 controller와 확장 계층은 무엇인가요?
@@ -119,7 +119,7 @@ PodAutoscaler의 scaleTargetRef, metricsSources와 HPA/KPA/APA 전략을 사용�
 <details>
 <summary>정답 및 설명</summary>
 
-runtime의 사용할 코어를 선택하며 Kubernetes가 할당하지 않은 장치를 추가하지 않습니다. inf2.xlarge의 전체 장치는1개이므로 neuron:2 요청은 배치되지 않습니다. SDK2.32의 Inf2용 NxD와 Trn2/3용 베타 경로도 구분합니다.
+runtime에서 사용할 코어를 선택하며 Kubernetes가 할당하지 않은 장치를 추가하지 않습니다. inf2.xlarge의 전체 장치는1개이므로 neuron:2 요청은 배치되지 않습니다. SDK2.32의 Inf2용 NxD와 Trn2/3용 베타 경로도 구분합니다.
 </details>
 
 [본문으로 돌아가기](../../ai-ml/04-inference-frameworks.md)

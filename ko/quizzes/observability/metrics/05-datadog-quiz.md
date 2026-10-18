@@ -126,7 +126,7 @@ Sum aggregation과 같은 grouping을 사용합니다. Helper는 good/error 0도
 
 **정답: D**
 
-Helper는 application 오류가 나도 기존 context를 복원하며 동기 범위입니다. 자동 주입/parsing·service tag·실제 trace 존재도 별도로 확인합니다.
+Helper는 application 오류가 나도 기존 context를 복원하며 동기 범위에서 동작합니다. 자동 주입/parsing·service tag·실제 trace 존재도 별도로 확인합니다.
 
 </details>
 

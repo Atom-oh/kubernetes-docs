@@ -240,7 +240,7 @@ Consistent Hash provides soft affinity for the same key while endpoint views rem
 
 ### 1. HTTP Header-based
 
-Calculates hash from a specific HTTP header value.
+Calculates a hash from a specific HTTP header value.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -262,7 +262,7 @@ spec:
 
 ### 2. HTTP Cookie-based
 
-Calculates hash from cookie value and auto-generates cookie if missing.
+Calculates a hash from a cookie value and auto-generates a cookie if missing.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -286,7 +286,7 @@ spec:
 
 ### 3. Source IP-based
 
-Calculates hash from client's source IP address.
+Calculates a hash from the client's source IP address.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -312,7 +312,7 @@ spec:
 
 ### 4. HTTP Query Parameter-based
 
-Calculates hash from query parameter value.
+Calculates a hash from a query parameter value.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -518,7 +518,7 @@ spec:
 
 ## Connection Pool Settings
 
-Configure Connection Pool alongside load balancing to optimize performance.
+Configure the Connection Pool alongside load balancing to optimize performance.
 
 ### HTTP/1.1 Connection Pool
 

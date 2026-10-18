@@ -5,7 +5,7 @@
 
 Apache Spark는 배치·SQL·스트리밍 등의 분산 데이터를 처리합니다.
 Kubernetes 네이티브 지원은 Spark 2.3, client mode 지원은 2.4부터입니다.
-Spark 4.2.0 공식 문서는 **Kubernetes 1.34+**를 전제로 합니다.
+Spark 4.2.0 공식 문서는 **Kubernetes 1.34**+를 전제로 합니다.
 kubectl도 오래된 고정 최솟값 대신 실제 EKS 버전과 호환되게 선택합니다.
 
 별도의 Spark Standalone master나 YARN ResourceManager 없이 기존 Kubernetes

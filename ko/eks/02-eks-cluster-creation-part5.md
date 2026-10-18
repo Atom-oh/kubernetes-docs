@@ -165,7 +165,7 @@ NODE_DELETE_ALLOWED=$(kubectl --kubeconfig "$DEVELOPER_KUBECONFIG" auth can-i de
   exit 1
 }
 ```
-액세스 엔트리는 전파 시간이 필요하므로 오류를 확인하고 전파를 고려해 재시도합니다. `kubectl --as`·`--as-group`은 IAM 주체의 EKS 접근 정책 권한이 아닌 Kubernetes RBAC를 테스트합니다. `auth can-i --list`도 EKS 접근 정책 권한 전체 목록은 아닙니다. IAM 사용자도 지원되지만 임시 자격 증명의 역할을 우선하며 기존 사용자는 별도의 올바른 자격 증명 경로가 필요합니다.
+액세스 엔트리는 전파 시간이 필요하므로 오류를 확인하고 전파를 고려해 재시도합니다. `kubectl --as`·`--as-group`은 IAM 주체의 EKS 접근 정책 권한이 아닌 Kubernetes RBAC를 테스트합니다. `auth can-i --list`도 EKS 접근 정책 권한 전체 목록은 아닙니다. IAM 사용자도 지원되지만 임시 자격 증명을 사용하는 역할을 우선하며 기존 사용자는 별도의 올바른 자격 증명 경로가 필요합니다.
 ### 방법 2: 기존 aws-auth 마이그레이션
 
 ![IAM 주체가 EKS 액세스 엔트리 또는 aws-auth ConfigMap을 통해 쿠버네티스 API에 매핑되는 두 방식을 비교한 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-1.png)
@@ -333,7 +333,7 @@ aws logs describe-log-streams --region "$EXAMPLE_REGION" \
   --order-by LastEventTime --descending --max-items 5 \
   --query 'logStreams[].{stream:logStreamName,lastEvent:lastEventTimestamp}'
 ```
-워커 kubelet·컨테이너 로그에는 별도 수집 경로가 필요하며 EKS 제어 플레인 로깅만 켠다고 활성화되지는 않습니다.
+워커 kubelet·컨테이너 로그에는 별도 수집 경로가 필요하며 EKS 제어 플레인 로깅만 켠다고 해당 로그 수집이 활성화되지는 않습니다.
 ## 클러스터 업그레이드
 
 <!-- Audit 2026-09-11: parent asset repair required. Materialcorrection:footerincorrectlydeniesEKScontrolplanerollback;currentAWSsupportsconditionalpreviousminorrollbackwithin7days. Stale1.31copytarget/1.29→1.30→1.31; trackupdateIDSuccessful,notACTIVEalone. Preservecompatiblecomponentsequence/preflight.
@@ -443,7 +443,7 @@ aws eks list-capabilities --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_R
 ```bash
 eksctl delete cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" --wait
 ```
-Terraform·CloudFormation 소유 리소스를 API로 삭제한 뒤 상태·스택이 일치한다고 가정하면 안 됩니다. API 소유 클러스터는 최종 클러스터 삭제 전에 모든 소유 관리형 그룹·Fargate 프로필·EKS Capabilities를 처리합니다. ACK·Argo CD·kro 같은 Capability에는 별도 정리 정책이 있습니다. 삭제 보호는 검토한 소유자 절차를 통해서만 해제하며 아래 검사는 여전히 활성화되어 있으면 중단합니다.
+Terraform·CloudFormation 소유 리소스를 API로 삭제한 뒤 상태·스택이 일치한다고 가정하면 안 됩니다. API 소유 클러스터는 최종 클러스터 삭제 전에 모든 소유 관리형 그룹·Fargate 프로필·EKS Capabilities를 처리합니다. ACK·Argo CD·kro 같은 Capability에는 별도 정리 정책이 있습니다. 삭제 보호는 검토한 소유자 절차를 통해서만 해제하며 아래 검사는 삭제 보호가 여전히 활성화되어 있으면 중단합니다.
 
 ```bash
 check_retirement_cluster() {
@@ -488,7 +488,7 @@ if [ "${RETIREMENT_REVIEWED:?}" = yes ]; then
     --fargate-profile-name "$FARGATE_PROFILE_TO_DELETE"
 fi
 ```
-검토한 소유 항목별로 반복하며 Fargate 프로필은 순차적으로 삭제합니다. Capability·자체 관리 인프라는 문서화된 소유자를 통해 정리합니다. 이후 기록된 클러스터 신원과 관리 리소스 목록이 비었는지 검증하고 마지막 API를 호출하세요:
+검토한 소유 항목별로 반복하며 Fargate 프로필은 순차적으로 삭제합니다. Capability·자체 관리 인프라는 문서화된 소유자를 통해 정리합니다. 이후 기록된 클러스터 신원을 확인하고 관리 리소스 목록이 비었는지 검증한 뒤 마지막 API를 호출하세요:
 
 ```bash
 # Final API-owned-cluster step. It does not disable deletion protection or delete capabilities.

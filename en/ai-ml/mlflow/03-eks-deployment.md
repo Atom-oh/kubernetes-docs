@@ -12,7 +12,7 @@ This chapter is based on a downloaded chart, native Helm rendering, and MLflow 3
 
 You can reuse Kubernetes deployment, observability, and IAM patterns while taking responsibility for servers, databases, artifacts, access control, backups, and upgrades. SageMaker MLflow Apps and other managed registries are alternatives; their supported versions, authentication, features, and cost are not necessarily identical.
 
-Sharing with a team does not automatically require provisioning separate new RDS and S3 resources. Small SQLite/PVC exercises are possible; choose production architecture from concurrency, durability, and recovery requirements.
+Sharing with a team does not automatically require provisioning separate new RDS and S3 resources. Small SQLite/PVC exercises are possible; choose production architecture based on concurrency, durability, and recovery requirements.
 
 ## Architecture
 

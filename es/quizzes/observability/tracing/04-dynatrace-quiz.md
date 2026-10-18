@@ -1,6 +1,6 @@
 # Cuestionario de Dynatrace
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ---
 
@@ -32,7 +32,7 @@ El descubrimiento automático no elimina los privilegios de instalación, los re
 
 **Respuesta: B) Dynatrace Operator.**
 
-Helm o los manifiestos instalan el Operator; no son modos de monitorización que compitan entre sí. El Operator/chart revisado es la versión 1.10.2. Su CRD publicado sirve v1beta5 y v1beta6, con v1beta6 como almacenamiento; el ejemplo antiguo de v1beta2 no es una API servida actualmente. Aún deben revisarse las versiones de los componentes y el comportamiento de actualización.
+Helm o los manifiestos instalan el Operator; no son modos de monitorización que compitan entre sí. El Operator/chart revisado es la versión 1.10.2. Su CRD publicado ofrece las versiones v1beta5 y v1beta6; v1beta6 es la versión de almacenamiento; el ejemplo antiguo de v1beta2 no es una API servida actualmente. Aún deben revisarse las versiones de los componentes y el comportamiento de actualización.
 
 </details>
 
@@ -49,7 +49,7 @@ Helm o los manifiestos instalan el Operator; no son modos de monitorización que
 
 **Respuesta: C) Los cambios de código de producción no revisados se autorizan automáticamente.**
 
-La terminología Davis permanece en material anterior; la documentación actual utiliza Dynatrace Intelligence. Se pueden configurar acciones/flujos de trabajo agénticos aprobados, incluidas las funcionalidades Preview, por lo que «la IA nunca puede tomar medidas» también es una afirmación demasiado amplia. La detección por sí sola no concede autoridad de remediación ni prueba que un diagnóstico sea correcto.
+La terminología Davis permanece en material anterior; la documentación actual utiliza Dynatrace Intelligence. Es posible configurar acciones y flujos de trabajo de agentes con aprobación, incluidas funciones en vista previa (Preview), por lo que «la IA nunca puede tomar medidas» también es una afirmación demasiado amplia. La detección por sí sola no concede autoridad de remediación ni prueba que un diagnóstico sea correcto.
 
 </details>
 
@@ -100,7 +100,7 @@ La visibilidad de trazas y código depende de las tecnologías compatibles, la i
 
 **Respuesta: B) GiB-horas de memoria monitorizada según la tarifa aplicable.**
 
-El proveedor documenta intervalos de facturación de 15 minutos, redondeo de RAM a 0.25 GiB y un mínimo de host de 4 GiB. La monitorización de aplicaciones solo basada en contenedores tiene reglas diferentes de memoria/mínimos. La antigua fórmula máxima de CPU/RAM no es el cálculo actual de DPS. La aritmética de uso no es una factura: importan el compromiso, la tarifa, las asignaciones y las capacidades facturadas por separado.
+El proveedor documenta intervalos de facturación de 15 minutos, redondeo de RAM a 0.25 GiB y un mínimo de host de 4 GiB. La monitorización de aplicaciones solo basada en contenedores tiene reglas diferentes de memoria/mínimos. La antigua fórmula máxima de CPU/RAM no es el cálculo actual de DPS. Los cálculos de consumo no equivalen a una factura: importan el compromiso, la tarifa, las asignaciones y las capacidades facturadas por separado.
 
 </details>
 
@@ -117,7 +117,7 @@ El proveedor documenta intervalos de facturación de 15 minutos, redondeo de RAM
 
 **Respuesta: C) Actuar como lakehouse de datos analíticos a largo plazo.**
 
-El enrutamiento/la monitorización y el almacenamiento en búfer local son diferentes del almacenamiento backend a largo plazo. Algunas configuraciones de ingesta de ActiveGate en contenedores requieren un PVC. Una ruta SaaS aún necesita conectividad; un proxy no permite que una red completamente desconectada alcance SaaS.
+El enrutamiento/la monitorización y el almacenamiento en búfer local son diferentes del almacenamiento de backend a largo plazo. Algunas configuraciones de ingesta de ActiveGate en contenedores requieren un PVC. Una ruta SaaS aún necesita conectividad; un proxy no permite que una red completamente desconectada alcance SaaS.
 
 </details>
 
@@ -151,7 +151,7 @@ El selector y las anotaciones de inyección de Pod controlan la inyección de we
 
 **Respuesta: B) HTTP con Protocol Buffers binarios.**
 
-El endpoint nativo admite HTTP/protobuf, no gRPC ni JSON de protobuf. Un Collector puede aceptar gRPC y exportar HTTP a Dynatrace. Utilice la base /api/v2/otlp y el sufijo de señal correctos, TLS y el tipo/los alcances de token requeridos por el endpoint seleccionado. No sustituya una URL de navegador .apps.
+El endpoint nativo admite HTTP/protobuf, no gRPC ni JSON de Protocol Buffers. Un Collector puede aceptar gRPC y exportar HTTP a Dynatrace. Utilice la ruta base /api/v2/otlp y el sufijo de señal correctos, TLS y el tipo/los alcances de token requeridos por el endpoint seleccionado. No sustituya una URL de navegador .apps.
 
 </details>
 

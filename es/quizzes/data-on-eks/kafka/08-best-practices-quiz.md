@@ -1,267 +1,172 @@
-# Parte 8: Cuestionario de mejores prácticas
+# Parte 8: Cuestionario sobre mejores prácticas
 
-Este cuestionario evalúa tu comprensión de las mejores prácticas que abarcan toda la serie de profundización en Kafka: diseño de partitions, ajuste de producers/consumers, seguridad (mTLS/SASL) y optimización de costos.
+Evalúa las particiones, los clientes, la seguridad, la capacidad y la recuperación según las condiciones reales.
 
-## Preguntas de opción múltiple
-
-1. ¿Qué deberías considerar primero al dimensionar el número de partitions de un topic?
-   - A) El número total de brokers en el cluster
-   - B) El paralelismo máximo esperado del consumer group
-   - C) El número de instancias de producer
-   - D) El tamaño disponible del volumen EBS
+## 1. ¿Qué se debe tener en cuenta al dimensionar las particiones para un grupo de consumidores convencional?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El paralelismo máximo esperado del consumer group**
+Mide el paralelismo de los miembros del grupo, el rendimiento por partición, el sesgo en la distribución de claves, el tamaño de los registros, la ubicación de las réplicas y la recuperación. Se asigna una partición a un miembro del grupo; los share groups y el paralelismo interno de la aplicación funcionan de otra manera.
 
-**Explicación:**
-Una sola partition solo puede ser consumida por una instancia de consumer dentro de un group a la vez, por lo que necesitas decidir hasta qué punto esperas escalar un consumer group y aprovisionar al menos esa cantidad de partitions. Si planeas escalar a 20 instancias de consumer en el pico, necesitas al menos 20 partitions. El número de brokers y el tamaño del volumen EBS son preocupaciones de capacidad sobre qué tan bien el cluster puede alojar un número determinado de partitions, no el factor principal de ese número en sí.
 </details>
 
-2. Según la regla práctica clásica de Confluent, ¿cuál era el límite flexible aproximado de partitions por broker?
-   - A) 400
-   - B) 4,000
-   - C) 40,000
-   - D) 400,000
+## 2. ¿Se pueden tratar las reglas históricas sobre el número de particiones como límites universales actuales?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) 4,000**
+No. Los límites dependen de las versiones, los brokers y controladores, el número de réplicas y la carga de trabajo. Distingue las particiones lógicas de la ubicación de las réplicas en cada broker y prueba tanto el funcionamiento normal como los casos de fallo.
 
-**Explicación:**
-La guía clásica de Confluent sugería un límite flexible de alrededor de 4,000 partitions por broker y 200,000 por cluster. Esto se remonta a cuando el controller basado en ZooKeeper era el cuello de botella de metadata. Los clusters basados en KRaft manejan muchas más partitions gracias a una ruta de metadata del controller mucho más rápida, pero el principio subyacente — no sobreparticionar solo porque puedes — sigue aplicando, y el límite real para una workload determinada debe confirmarse con pruebas de carga.
 </details>
 
-3. ¿Cuál de los siguientes NO es un costo real de sobreparticionar un topic?
-   - A) Más file handles abiertos por broker
-   - B) Mayor uso de memoria en buffers de producer/broker
-   - C) Mayor tiempo de leader election y rebalance ante una falla de broker
-   - D) El throughput del consumer group siempre disminuye
+## 3. ¿Contar las líneas que contienen PartitionCount da el número total de particiones?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) El throughput del consumer group siempre disminuye**
+No. Cuenta las líneas de resumen de cada topic. Lee las filas `Partition:`, como hace `partition_summary.py`, para contar por separado las particiones lógicas y las ubicaciones de réplicas. Comprueba también los resultados vacíos, la visibilidad y los filtros.
 
-**Explicación:**
-Sobreparticionar sí agrega overhead en file handles, memoria y tiempo de recuperación ante fallas, pero no siempre reduce el throughput; si el paralelismo de consumers puede mantenerse al ritmo, el throughput no necesariamente empeora. De hecho, tener muy pocas partitions limita el throughput al restringir cuántos consumers pueden trabajar en paralelo. El número de partitions es un balance entre paralelismo y overhead, no una pregunta simple de "más siempre es peor/mejor".
 </details>
 
-4. ¿Qué garantía se rompe de forma más directa cuando aumentas el número de partitions en un topic con keys?
-   - A) El replication factor
-   - B) El orden de los mensajes para una key determinada
-   - C) Los commits de offsets del consumer group
-   - D) La lista ISR entre brokers
+## 4. ¿Deben moverse todas las claves al aumentar el número de particiones de un topic con claves?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El orden de los mensajes para una key determinada**
+No todas las claves tienen que moverse, pero algunas pueden reasignarse. Los registros antiguos permanecen donde estaban, lo que afecta al orden de las claves, al estado y a las suposiciones sobre joins co-particionados. Revisa los serializadores, los partitioners y la topología.
 
-**Explicación:**
-El partitioner predeterminado calcula `hash(key) % partition_count`, por lo que cambiar el número de partitions cambia a qué partition se asigna la misma key. Como Kafka solo garantiza el orden dentro de una sola partition, los mensajes para la misma key pueden terminar divididos entre partitions antiguas y nuevas, y los consumers ya no pueden confiar en el orden a nivel de key. Los joins basados en co-partitioning en Kafka Streams también pueden romperse como resultado.
 </details>
 
-5. ¿A partir de qué versión de Kafka `enable.idempotence` tiene el valor predeterminado `true` sin necesidad de configurarlo explícitamente?
-   - A) Kafka 1.0
-   - B) Kafka 2.0
-   - C) Kafka 3.0
-   - D) Kafka 4.0
+## 5. ¿Configurar explícitamente acks o retries siempre deshabilita la idempotencia predeterminada?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Kafka 3.0**
+No. El problema surge cuando los valores son incompatibles. Si se establece explícitamente `enable.idempotence=true`, `acks`, `retries` y `max.in.flight` deben ser compatibles; los conflictos producen un error de configuración.
 
-**Explicación:**
-`enable.idempotence=true` ha sido el valor predeterminado del producer desde Kafka 3.0, salvo que `acks` o `retries` se sobrescriban explícitamente de una forma incompatible. Asigna al producer un producer ID único y números de secuencia por partition para que el broker pueda deduplicar automáticamente los reintentos.
 </details>
 
-6. ¿Qué evita la idempotencia del producer?
-   - A) Rebalances del consumer group
-   - B) Escrituras duplicadas en el broker causadas por reintentos de red
-   - C) Fallas del partition leader
-   - D) Errores de compatibilidad del schema registry
+## 6. ¿La idempotencia o un transactional.id por sí solos proporcionan semántica exactly-once de extremo a extremo?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Escrituras duplicadas en el broker causadas por reintentos de red**
+No. Los reintentos del producer no son lo mismo que los reenvíos de la aplicación ni que los efectos en sistemas externos. Las transacciones de Kafka requieren commits atómicos de las salidas y los offsets de entrada, fencing, `read_committed` y un ciclo de vida correcto; los sistemas externos necesitan su propia estrategia.
 
-**Explicación:**
-Cuando un producer no recibe un ack y reintenta el mismo record, sin idempotencia el broker podría terminar almacenando el record dos veces. El PID y los números de secuencia de un producer idempotente permiten que el broker detecte y descarte el duplicado. Ten en cuenta que esto solo deduplica el salto de producer a broker; exactamente una vez de extremo a extremo aún requiere la transactional API además de la idempotencia.
 </details>
 
-7. ¿Cuál es el efecto combinado de configurar `acks=all` y `min.insync.replicas=2` en un topic con `replication.factor=3`?
-   - A) Las escrituras siempre esperan a las 3 replicas
-   - B) Una escritura no se considera completa hasta que al menos 2 replicas (incluido el leader) la tienen
-   - C) La compresión se habilita automáticamente
-   - D) La partition leader election se deshabilita
+## 7. ¿Qué ocurre cuando el ISR baja a uno con RF=3, acks=all y min.insync.replicas=2?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una escritura no se considera completa hasta que al menos 2 replicas (incluido el leader) la tienen**
+Se rechazan las escrituras. `acks=all` espera al ISR actual, y el ISR mínimo es un ajuste del topic o del broker. No garantiza incondicionalmente que las escrituras continúen ni que no haya pérdida después de un fallo si la replicación ya está degradada.
 
-**Explicación:**
-`acks=all` hace que el producer espere confirmación del conjunto actual de in-sync replicas (ISR), y `min.insync.replicas=2` fuerza que las escrituras sean rechazadas directamente si el ISR se reduce por debajo de 2 (leader incluido). Juntas, esta es la configuración estándar de durabilidad que permite que las escrituras continúen de forma segura incluso si falla un solo broker.
 </details>
 
-8. ¿Qué sucede cuando un consumer no termina de procesar dentro de `max.poll.interval.ms`?
-   - A) El partition leader se reemplaza inmediatamente
-   - B) El consumer es expulsado forzosamente del group, lo que dispara un rebalance
-   - C) El broker deshabilita automáticamente la compresión para ese topic
-   - D) Nada: el consumer simplemente espera el siguiente poll
+## 8. ¿Qué distinciones importan para max.poll.interval.ms y los ajustes de heartbeat/session?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El consumer es expulsado forzosamente del group, lo que dispara un rebalance**
+Comprueba el tiempo real de procesamiento entre llamadas a `poll()`. La reasignación de un miembro estático puede esperar hasta que venza la sesión. Distingue los ajustes clásicos de heartbeat/session del cliente de los ajustes controlados por el broker para el protocolo de consumidor.
 
-**Explicación:**
-`max.poll.interval.ms` limita cuánto tiempo puede tardar un consumer entre llamadas sucesivas a `poll()`. Superarlo hace que el broker trate al consumer como muerto, lo expulse del group y dispare un rebalance. Si varios consumers se ralentizan a la vez, esto puede convertirse en cascada en una "tormenta de rebalances".
 </details>
 
-9. ¿Cuál es el propósito principal de configurar `group.instance.id` para habilitar static group membership?
-   - A) Aumentar automáticamente el throughput del consumer
-   - B) Evitar rebalances innecesarios durante reinicios breves de pods
-   - C) Mejorar el ratio de compresión del producer
-   - D) Acelerar la partition leader election
+## 9. ¿La pertenencia estática garantiza que un reinicio no provoque un rebalance?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Evitar rebalances innecesarios durante reinicios breves de pods**
+No. Importan la identidad estable y única, el tiempo de reconexión, la topología, las suscripciones y la pertenencia al grupo. Los ID activos duplicados pueden provocar fencing; además, las sesiones más largas retrasan la recuperación ante fallos reales.
 
-**Explicación:**
-Los consumer pods se reinician con frecuencia en Kubernetes debido a rolling deploys, eventos OOMKilled y situaciones similares. Configurar `group.instance.id` habilita static membership: siempre que el consumer se reconecte dentro de `session.timeout.ms`, reanuda con su asignación de partitions anterior intacta, sin ningún rebalance. Esto evita que los reinicios breves y frecuentes disparen un rebalance completo del group cada vez.
 </details>
 
-10. Cuando un `KafkaUser` en Strimzi especifica `authentication.type: tls`, ¿quién firma el certificado de cliente resultante?
-    - A) AWS Certificate Manager
-    - B) Un certificado autofirmado generado por el propio cliente
-    - C) La cluster CA gestionada por Strimzi
-    - D) Un cert-manager Issuer desplegado por separado
+## 10. En Strimzi predeterminado, ¿qué CA firma los certificados de cliente mTLS de KafkaUser?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) La cluster CA gestionada por Strimzi**
+La CA de clientes. La CA del clúster se usa para los certificados de los brokers y de los componentes internos. Distingue las credenciales del cliente de la cadena de CA que se usa para confiar en el broker.
 
-**Explicación:**
-Strimzi aprovisiona automáticamente su propia cluster CA cuando se despliega un cluster Kafka y rota los certificados según una programación. Configurar el `authentication.type` de un `KafkaUser` como `tls` hace que Strimzi emita un certificado de cliente firmado por esa cluster CA en un Secret, listo para usarse en conexiones mTLS.
 </details>
 
-## Preguntas de respuesta corta
-
-11. ¿Qué término único describe el problema que surge al usar directamente un campo de baja cardinalidad (por ejemplo, `country`) como partition key?
+## 11. ¿La alta cardinalidad o los salts aleatorios resuelven por sí solos y de forma segura el sesgo de claves?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Hot partition**
+No. Una clave dominante y muy solicitada aún puede sesgar el tráfico. Añadir salts cambia el orden, los joins y la identidad usada en la compactación; primero verifica que el contrato lo permita y planifica cómo recombinar los resultados.
 
-**Explicación:**
-El partitioner predeterminado calcula `hash(key) % partition_count`, por lo que una key de baja cardinalidad con solo un puñado de valores distintos concentrará el tráfico en un pequeño subconjunto de partitions cuando la mayor parte del tráfico comparta el valor dominante, dejando otras partitions inactivas. Esto puede mitigarse eligiendo una key de mayor cardinalidad o agregando salt a una de baja cardinalidad para forzar una distribución más uniforme.
 </details>
 
-12. Para pipelines donde importa el procesamiento at-least-once, ¿qué enfoque de commit de offsets (y configuración) debería reemplazar al auto-commit?
+## 12. ¿Es seguro omitir el commit después de una excepción de procesamiento y simplemente seguir haciendo poll?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Commits manuales con `enable.auto.commit=false`, llamando a `consumer.commitSync()` (o `commitAsync()`) solo después de que termine el procesamiento**
+No. Es posible que la posición de lectura ya haya avanzado. Detén y recupera el procesamiento, o busca la posición correcta; confirma solo después del procesamiento duradero. Diseña para la repetición de mensajes y para que los efectos externos sean idempotentes.
 
-**Explicación:**
-Auto-commit puede confirmar un offset antes de que el record correspondiente haya terminado realmente de procesarse, por lo que un crash en medio del procesamiento puede hacer que ese record se pierda efectivamente desde el punto de vista del pipeline, aunque Kafka lo considere "committed". Configurar `enable.auto.commit=false` y hacer commit solo después de que finalice la lógica de negocio garantiza que un crash resulte en que el record se entregue de nuevo y se reprocese, preservando la semántica at-least-once.
 </details>
 
-13. ¿Qué recurso importa más que la CPU para la mayoría de las workloads de Kafka broker, y por qué?
+## 13. ¿Se puede determinar la capacidad de Kafka solo a partir de la memoria o de un tamaño fijo de heap?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Memoria — específicamente, OS page cache**
+No. Mide la caché de páginas del sistema operativo (page cache), la CPU para TLS/compresión, la red, las IOPS/el rendimiento, la memoria de cgroup y la recuperación. Las ventajas de costo del codec y de la instancia dependen de los datos y de la carga de trabajo.
 
-**Explicación:**
-Kafka está diseñado para servir la mayoría de las lecturas desde la page cache, por lo que, en el caso común de consumers que leen datos recientes, la RAM que queda después del heap del broker determina directamente el throughput de lectura. Por eso las instancias optimizadas para memoria (`r6g`/`r7g`, por ejemplo) suelen ofrecer mejor precio/rendimiento para Kafka brokers que las optimizadas para cómputo.
 </details>
 
-14. ¿Qué campo de listener de Strimzi restringe qué pods/namespaces pueden llegar al puerto del broker?
+## 14. ¿Cómo se combinan namespaceSelector y podSelector dentro de una entrada networkPolicyPeers?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `networkPolicyPeers`**
+Se combinan con AND dentro de un peer; las entradas peer separadas se combinan con OR. Las NetworkPolicies son aditivas y requieren verificar la aplicación de políticas por el CNI y el egreso. Esta entrada no deniega el tráfico que permita otra política.
 
-**Explicación:**
-Configurar `networkPolicyPeers` en un listener de Strimzi hace que Strimzi genere una `NetworkPolicy` estándar de Kubernetes que solo permite tráfico a ese puerto de listener desde pods/namespaces que coincidan con el `podSelector`/`namespaceSelector` especificado. Esto te permite controlar declarativamente qué workloads pueden siquiera llegar al listener de Kafka.
 </details>
 
-15. ¿El cifrado de volúmenes EBS ocurre automáticamente solo porque estás usando el EBS CSI driver? Nombra dos formas de activarlo explícitamente.
+## 15. Explica el cifrado de StorageClass, Auto Mode y los volúmenes existentes.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: No, no ocurre automáticamente. (1) Habilita la configuración "EBS encryption by default" a nivel de cuenta/región, o (2) configura `encrypted: "true"` (y opcionalmente `kmsKeyId`) en los parámetros de `StorageClass`**
+Establece `encrypted:true` y los permisos reales de KMS para el provisionador seleccionado; luego verifica el volumen EBS. No deduzcas que todos los PVC dinámicos están cifrados por los discos de nodos o efímeros de Auto Mode. Los cambios en StorageClass o en el cifrado predeterminado de la cuenta no cifran retroactivamente los volúmenes existentes.
 
-**Explicación:**
-El EBS CSI driver no fuerza el cifrado por sí solo: una `StorageClass` sin cifrado produce volúmenes sin cifrar. Necesitas habilitar la configuración "EBS encryption by default" a nivel de cuenta/región para que cada volumen nuevo se cifre automáticamente, o configurar explícitamente `encrypted: "true"` en la `StorageClass` usada para los PVCs de brokers. Como los clusters Kafka con frecuencia transportan datos sensibles para cumplimiento, tratar esto como el valor predeterminado en lugar de una idea tardía es la opción más segura.
 </details>
 
-## Preguntas prácticas
-
-16. Escribe configuraciones de producer para un topic crítico para la durabilidad (por ejemplo, procesamiento de pedidos), cubriendo `acks`, la consideración de `min.insync.replicas`, idempotencia y compresión.
+## 16. Escribe el perfil de ajuste del producer y explica batch.size y el ISR mínimo.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
 ```properties
-# Producer settings (assuming the topic has replication.factor=3, min.insync.replicas=2)
 acks=all
 enable.idempotence=true
+max.in.flight.requests.per.connection=5
 compression.type=lz4
 linger.ms=10
 batch.size=32768
-retries=2147483647
 delivery.timeout.ms=120000
 ```
 
-**Explicación:**
-`acks=all` espera confirmación de todo el ISR, garantizando durabilidad, y combinado con el `min.insync.replicas=2` del topic (asumiendo `replication.factor=3`), el pipeline tolera una falla de un solo broker sin pérdida de datos. `enable.idempotence=true` (el valor predeterminado de Kafka 3.0+) evita escrituras duplicadas por reintentos, y `compression.type=lz4` ofrece un buen equilibrio entre overhead de CPU y ratio de compresión para la mayoría de las workloads. `linger.ms`/`batch.size` intercambian un poco de latencia por batches más grandes y eficientes.
+`batch.size` controla la agrupación de registros y la asignación por partición; no es un límite estricto para el tamaño de cada registro o solicitud. Configura `min.insync.replicas` en el topic o el broker. Mide las opciones de codec/linger y gestiona los fallos de envío y los tiempos de espera de entrega.
+
 </details>
 
-17. Escribe un recurso `KafkaUser` usando autenticación TLS para una aplicación llamada `order-service` que necesita acceso de lectura/escritura al topic `orders` y acceso de lectura al consumer group `order-service-group`.
+## 17. Escribe un KafkaUser mTLS independiente sin modificar el usuario SCRAM existente.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
-  name: order-service
+  name: order-service-mtls
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
@@ -270,51 +175,39 @@ spec:
   authorization:
     type: simple
     acls:
-      - resource:
-          type: topic
-          name: orders
-          patternType: literal
-        operations: ["Read", "Write", "Describe"]
-      - resource:
-          type: group
-          name: order-service-group
-        operations: ["Read"]
+    - resource:
+        type: topic
+        name: orders
+        patternType: literal
+      operations:
+      - Read
+      - Write
+      - Describe
+    - resource:
+        type: group
+        name: order-processor-mtls
+        patternType: literal
+      operations:
+      - Read
+    - resource:
+        type: cluster
+      operations:
+      - IdempotentWrite
 ```
 
-**Explicación:**
-Configurar `authentication.type: tls` hace que Strimzi emita automáticamente un certificado de cliente firmado por la cluster CA en un Secret. `authorization.type: simple` con una lista `acls` otorga declarativamente Read/Write/Describe en el topic `orders` y Read en el consumer group `order-service-group`. La label `strimzi.io/cluster` indica al Strimzi Operator a qué cluster `Kafka` pertenece este `KafkaUser`.
+También se necesita un listener con `tls:true` y `authentication.type:tls`; no existe ningún tipo de exposición llamado `tls`. Distribuye y rota las credenciales de la CA de clientes y la cadena de confianza del broker, y verifica las acciones permitidas y denegadas.
+
 </details>
 
-18. Escribe configuraciones de consumer para que los reinicios breves de pods no disparen un rebalance y los offsets solo se confirmen después de que termine el procesamiento.
+## 18. ¿Cómo se combina un ID de miembro estático basado en una variable de entorno con los commits manuales?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-```properties
-group.instance.id=${POD_NAME}
-session.timeout.ms=45000
-heartbeat.interval.ms=15000
-enable.auto.commit=false
-max.poll.records=200
-max.poll.interval.ms=600000
-```
+Java Properties no expande `${POD_NAME}`. Resuelve un ID único y estable y pásalo a `setStaticIdentity` antes de crear el consumer. Usa `enable.auto.commit=false` y `processOneBatch`; no ocultes los errores para luego seguir haciendo poll. La retención, la recuperación y la gestión de duplicados siguen siendo necesarias.
 
-```java
-while (true) {
-    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-    for (ConsumerRecord<String, String> record : records) {
-        process(record);
-    }
-    consumer.commitSync();
-}
-```
-
-**Explicación:**
-`group.instance.id` (configurado de forma única, por ejemplo a partir del nombre del pod) habilita static group membership, por lo que el consumer conserva su asignación de partitions existente sin rebalance siempre que se reconecte dentro de `session.timeout.ms`. `enable.auto.commit=false` combinado con `commitSync()` llamado solo después de que termina el procesamiento garantiza que solo los records completamente procesados tengan sus offsets confirmados, preservando la semántica at-least-once. `max.poll.records`/`max.poll.interval.ms` se ajustan al tiempo real de procesamiento por batch para evitar aún más rebalances innecesarios.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../data-on-eks/kafka/08-best-practices.md) | [Volver al inicio de la profundización en Kafka](../../../data-on-eks/kafka/README.md)
+[Volver al material de aprendizaje](../../../data-on-eks/kafka/08-best-practices.md) | [Siguiente cuestionario](./09-kafka-benchmark-quiz.md)

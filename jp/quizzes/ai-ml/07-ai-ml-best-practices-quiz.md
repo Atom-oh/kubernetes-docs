@@ -1,61 +1,61 @@
-# AI/ML ベストプラクティスクイズ
+# AI/ML のベストプラクティス クイズ
 
-測定、リカバリ、現行 API に関する15問。
+測定、復旧、現行 API に関する 15 問。
 
-## 1. TTFT は何を測定し、いつ利用できませんか？
+## 1. TTFT は何を測定し、どのような場合に測定できませんか？
 
 <details>
 <summary>回答と解説</summary>
 
-リクエストから最初の空でない出力までの時間です。最初の HTTP フレームとトークンは異なる場合があります。非ストリーミング応答では実際の TTFT/ITL を測定できません。tokenizer、失敗、および warmup の境界を明示してください。
+リクエストから最初の空でない出力までの時間です。最初の HTTP フレームと最初のトークンが届く時刻は異なる場合があります。非ストリーミング応答では、実際の TTFT/ITL を測定できません。tokenizer、失敗、ウォームアップの対象範囲を明示してください。
 </details>
 
-## 2. startup optimization を組み合わせると、常に 80～95% 改善しますか？
+## 2. 起動時の最適化を組み合わせれば、常に 80～95% 改善しますか？
 
 <details>
 <summary>回答と解説</summary>
 
-いいえ。image fetch/unpack、model download/loading、readiness、および node preparation を個別に測定してください。固定の削減率ではなく、prefetch/lazy-loading のコスト、cache、および full-weight read を評価してください。
+いいえ。イメージの取得と展開、モデルのダウンロードと読み込み、準備完了までの時間、ノードの準備時間を個別に測定してください。一定の削減率を前提にせず、事前取得や遅延読み込みのコスト、キャッシュ、重み全体の読み込みを評価してください。
 </details>
 
-## 3. 大規模な分散 training 用の GPU はどのように選択すべきですか？
+## 3. 大規模な分散学習に使う GPU はどのように選ぶべきですか？
 
 <details>
 <summary>回答と解説</summary>
 
-正確な instance-size の device/memory、CPU/RAM/network、model state/activation、communication、価格、および quota を確認してください。family 名だけでは GPU 数は決まらず、普遍的に最適な選択を証明するものでもありません。
+インスタンスタイプごとの正確な GPU 数とメモリ、CPU/RAM/ネットワーク、モデルの状態と活性化、通信、価格、クォータを確認してください。インスタンスファミリー名だけでは GPU 数は分からず、どの環境にも最適な選択を示すものでもありません。
 </details>
 
-## 4. EFA と placement group は常に必要ですか？
+## 4. EFA とプレイスメントグループは常に必要ですか？
 
 <details>
 <summary>回答と解説</summary>
 
-EFA は適した workload 向けの high-performance path であり、すべての DDP の前提条件ではありません。EFA communication には同じ AZ が必要です。cluster placement group はパフォーマンスのために推奨されます。driver/plugin/security group/interface を確認してください。
+EFA は適したワークロード向けの高性能な通信経路であり、すべての DDP に必須ではありません。EFA を使った通信では同じ AZ に配置する必要があります。パフォーマンスを高めるにはクラスター・プレイスメントグループが推奨されます。ドライバー、プラグイン、セキュリティグループ、ネットワークインターフェイスを確認してください。
 </details>
 
-## 5. 10TB を超える dataset には常に FSx が必要ですか？
+## 5. 10 TB を超えるデータセットには常に FSx が必要ですか？
 
 <details>
 <summary>回答と解説</summary>
 
-単一のサイズ閾値では決まりません。I/O、concurrency、metadata、latency、durability、mount semantics、および cost を比較してください。EFS/FSx/S3/instance store と現行の gp3 制限を区別してください。
+サイズだけで一律には決まりません。I/O、同時実行性、メタデータ処理、レイテンシー、耐久性、マウント時の動作、コストを比較してください。EFS、FSx、S3、インスタンスストアの特性と、現行 gp3 の制限を確認してください。
 </details>
 
-## 6. temperature だけで throttling または hardware failure を判断できますか？
+## 6. 温度だけでスロットリングやハードウェア障害を判断できますか？
 
 <details>
 <summary>回答と解説</summary>
 
-いいえ。device 固有の制限、clock、power、throttle reason、および workload を確認してください。DCGMFB_USED は MiB であり、XID_ERRORS は最後の code を示す gauge です。すべての XID が hardware failure を意味するわけではありません。
+いいえ。デバイス固有の上限、クロック、電力、スロットリングの理由、ワークロードを確認してください。DCGMFB_USED の単位は MiB で、XID_ERRORS は最後に発生したコードを示すゲージです。XID が発生しても、必ずハードウェア障害とは限りません。
 </details>
 
-## 7. Spot inference には 120 秒の grace と a/drain call で十分ですか？
+## 7. Spot 上の推論では、120 秒の猶予と /drain の呼び出しで十分ですか？
 
 <details>
 <summary>回答と解説</summary>
 
-EC2 は常に 120 秒を保証するわけではなく、任意の vLLM/drain API を想定することもできません。gateway readiness、SIGTERM、stream、retry、duplicate、および cache reload をテストしてください。
+EC2 が常に 120 秒を保証するわけではなく、任意の vLLM の /drain API が存在するとも限りません。ゲートウェイの準備状態、SIGTERM の処理、ストリーム、再試行、重複処理、キャッシュの再読み込みをテストしてください。
 </details>
 
 ## 8. 平均 ITL はどのように計算しますか？
@@ -63,63 +63,63 @@ EC2 は常に 120 秒を保証するわけではなく、任意の vLLM/drain AP
 <details>
 <summary>回答と解説</summary>
 
-実際の token timestamp と少なくとも2つの token を使用して、(last-first)/(tokens-1) と計算します。multi-token chunk と空または single-token の出力を考慮し、tool 固有の TPOT 定義を区別してください。
+実際のトークン時刻を使い、トークンが 2 個以上ある場合は (last-first)/(tokens-1) で計算します。複数トークンを含むチャンクや、出力が空または 1 トークンの場合を考慮し、ツール固有の TPOT の定義と区別してください。
 </details>
 
-## 9. saturation test は何を示しますか？
+## 9. 飽和度テストで何が分かりますか？
 
 <details>
 <summary>回答と解説</summary>
 
-load に応じて throughput、latency、error、および goodput がどのように変化するかを示します。それだけでは CPU/GPU/memory の bottleneck を証明できません。arrival rate と concurrency を区別し、client、profiling、および queue を調査してください。
+負荷に応じてスループット、レイテンシー、エラー、goodput がどう変化するかを示します。それだけで CPU/GPU/メモリのボトルネックを特定できるわけではありません。到着率と同時実行数を区別し、クライアント、プロファイリング結果、キューを調べてください。
 </details>
 
-## 10. SOCI 0.15 standalone はどの input を使用しますか？
+## 10. SOCI 0.15 standalone が入力として使うものは何ですか？
 
 <details>
 <summary>回答と解説</summary>
 
-汎用の docker-save tar ではなく、ローカルの OCI image-layout directory/archive を使用します。convert --standalone には containerd は不要です。実際の lazy-start の利点には runtime/registry/workload の検証が必要です。
+汎用の docker-save tar ではなく、ローカルの OCI イメージレイアウトのディレクトリまたはアーカイブを使います。convert --standalone の実行に containerd は不要です。遅延起動による実際の効果は、ランタイム、レジストリ、ワークロードで検証してください。
 </details>
 
-## 11. 09～17 UTC の business-hour budget はどのように設定しますか？
+## 11. UTC 9～17 時の営業時間に対する予算はどう設定しますか？
 
 <details>
 <summary>回答と解説</summary>
 
-8h の duration で 0 9 * * 1-5 を使用します。0 9-17 * * 1-5 は毎時開始され、翌日の01:00まで延長されます。budget は自発的な disruption を制限しますが、Spot reclamation、failure、または強制的な expiration は制限しません。
+期間を 8 時間に設定し、0 9 * * 1-5 を使います。0 9-17 * * 1-5 は 1 時間ごとに開始し、最後の実行は翌日の 01:00 まで続きます。予算で制限できるのは自発的な中断であり、Spot の回収、障害、強制的な有効期限切れは防げません。
 </details>
 
-## 12. ESO refresh は自動的に credential を発行し、app を reload し、すべての read を audit しますか？
+## 12. ESO の更新によって、認証情報のローテーション、アプリの再読み込み、全読み取りの監査が自動的に行われますか？
 
 <details>
 <summary>回答と解説</summary>
 
-いいえ。provider rotation、Secret synchronization、および app reread を区別してください。subPath/env の値は自動で refresh されず、CloudTrail はすべての local read を記録しません。ESO 2.10 は v1 を提供し、v1beta1 ではありません。
+いいえ。プロバイダー側のローテーション、Secret への同期、アプリによる再読み込みを区別してください。subPath や環境変数の値は自動更新されず、CloudTrail はローカルでの読み取りをすべて記録するわけではありません。ESO 2.10 が提供するのは v1 であり、v1beta1 ではありません。
 </details>
 
-## 13. 30B FP16 model の GPU memory はどのように見積もるべきですか？
+## 13. 30B FP16 モデルの GPU メモリはどう見積もるべきですか？
 
 <details>
 <summary>回答と解説</summary>
 
-weight だけで約60GBです。KV、activation、workspace、および communication を加算してください。4基の 24GB GPU は合計96GBですが、sharding/peak-memory/throughput の確認が必要です。13B FP16 は 24GB を超え、70B FP16 は 96GB を超えます。
+重みだけで約 60 GB です。KV キャッシュ、活性化、ワークスペース、通信に必要なメモリも加算してください。24 GB の GPU 4 基で合計 96 GB になりますが、分割方法、ピークメモリ、スループットを確認する必要があります。13B FP16 は 24 GB を超え、70B FP16 は 96 GB を超えます。
 </details>
 
-## 14. 現在の vLLM KV-cache occupancy が高い場合、常に request を reject しますか？
+## 14. vLLM の KV キャッシュ使用率が高いと、必ずリクエストが拒否されますか？
 
 <details>
 <summary>回答と解説</summary>
 
-vllm:kv_cache_usage_perc を使用します。occupancy を queue、preemption、および memory state と併せて解釈してください。即時の rejection は保証されません。古い gpu_cache_usage_perc や未検証の hit-rate 名は避けてください。
+vllm:kv_cache_usage_perc を使います。使用率はキュー、プリエンプション、メモリの状態とあわせて解釈してください。直ちに拒否されるとは限りません。古い gpu_cache_usage_perc や、検証されていない hit-rate 名は使わないでください。
 </details>
 
-## 15. Karpenter の placement group は tag を通じて設定しますか？
+## 15. Karpenter のプレイスメントグループはタグで設定しますか？
 
 <details>
 <summary>回答と解説</summary>
 
-Version 1.14.1 は EC2NodeClass.spec.placementGroupSelector name/id を使用します。aws:ec2:placement-group tag は placement API ではありません。AZ、capacity、および networking を確認し、single-AZ recovery のリスクを評価してください。
+Version 1.14.1 では EC2NodeClass.spec.placementGroupSelector の name/id を使います。aws:ec2:placement-group タグはプレイスメントグループを指定する API ではありません。AZ、容量、ネットワークを確認し、単一 AZ 障害時の復旧リスクを評価してください。
 </details>
 
 [ガイドに戻る](../../ai-ml/07-ai-ml-best-practices.md)

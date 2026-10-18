@@ -1,6 +1,6 @@
 # Runtime Security クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年10月16日
 
 このクイズでは、Falco、Seccomp、AppArmor、eBPF ベースのセキュリティ、および EKS の Runtime Security に関する理解を確認します。
 
@@ -19,7 +19,7 @@
 **回答: B. System call (syscall) の監視**
 
 **解説:**
-Falco は一般に Linux の syscall event をルールと照合して評価します。plugin は他の event source を提供できます。0.44.1 では、container field は container plugin から取得されます。modern_ebpf の kernel/BTF 要件と metadata collection を確認してください。
+Falco は一般に Linux の syscall event をルールと照合して評価します。plugin は他の event source を提供できます。0.45.0 では、container field は container plugin から取得されます。modern_ebpf の kernel/BTF 要件と metadata collection を確認してください。
 
 </details>
 

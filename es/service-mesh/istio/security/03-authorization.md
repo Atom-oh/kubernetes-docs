@@ -1,74 +1,42 @@
 # Autorización
 
-AuthorizationPolicy permite controlar de forma detallada los permisos de acceso a los servicios.
+AuthorizationPolicy permite controlar con precisión los permisos de acceso a los servicios.
 
 ## Tabla de contenido
 
 1. [Descripción general de la autorización](#authorization-overview)
 2. [Políticas básicas](#basic-policies)
 3. [Políticas avanzadas](#advanced-policies)
-4. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#practical-examples)
-5. [Mejores prácticas (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#best-practices)
+4. [Ejemplos prácticos](#practical-examples)
+5. [Prácticas recomendadas](#best-practices)
 
-<span id="authorization-overview"></span>
-
-## Descripción general de la autorización
+## Descripción general de la autorización {#authorization-overview}
 
 <p align="center">
   <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Autorización de Istio" width="700">
 </p>
 
-Istio AuthorizationPolicy proporciona control de acceso detallado para los servicios. El diagrama anterior muestra cómo funciona Authorization Policy:
+AuthorizationPolicy de Istio proporciona control de acceso detallado para los servicios. El diagrama anterior muestra cómo funciona la política de autorización:
 
-1. **Recepción de solicitudes**: Envoy recibe solicitudes entrantes
-2. **Evaluación de políticas**: Las reglas de AuthorizationPolicy se evalúan en orden
-3. **Decisión de acceso**: Se aplica la acción ALLOW, DENY o CUSTOM
-4. **Registro de auditoría**: Todas las decisiones se registran
+1. **Recepción de la solicitud**: Envoy recibe la solicitud entrante.
+2. **Evaluación de políticas**: se evalúan primero las políticas CUSTOM coincidentes, después DENY y, por último, ALLOW; el orden de creación del YAML no influye.
+3. **Decisión de acceso**: se aplica la acción ALLOW, DENY o CUSTOM.
+4. **Registro de auditoría**: requiere que se configure el registro de acceso/auditoría; AUDIT por sí solo solo marca una solicitud.
 
 **Condiciones compatibles**:
-- **Origen**: Origen de la solicitud (ServiceAccount, Namespace, IP)
-- **Operación**: Método HTTP, ruta, puerto
-- **Condiciones**: Condiciones personalizadas (encabezados, claims de JWT, etc.)
+- **Origen**: origen de la solicitud (ServiceAccount, namespace, IP)
+- **Operación**: método HTTP, ruta, puerto
+- **Condiciones**: condiciones personalizadas (cabeceras, claims de JWT, etc.)
 
-```mermaid
-flowchart TB
-    Request[Request]
+![Diagrama de flujo de una política AuthorizationPolicy de Istio que evalúa una solicitud mediante tres comprobaciones secuenciales (ServiceAccount, namespace y método HTTP): si las tres coinciden, permite la solicitud; ante cualquier discrepancia, la deniega de inmediato.](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
 
-    subgraph AuthZ["Authorization Policy"]
-        Check1{Service Account<br/>Check}
-        Check2{Namespace<br/>Check}
-        Check3{HTTP Method<br/>Check}
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-03-authorization-0.html)
 
-    Allow[Allow]
-    Deny[Deny]
+## Políticas básicas {#basic-policies}
 
-    Request --> Check1
-    Check1 -->|Match| Check2
-    Check1 -.->|No Match| Deny
-    Check2 -->|Match| Check3
-    Check2 -.->|No Match| Deny
-    Check3 -->|Match| Allow
-    Check3 -.->|No Match| Deny
+El diagrama ilustra una regla conjuntiva. Dentro de una regla se combinan las restricciones `from`, `to` y `when`; las reglas separadas y las políticas ALLOW coincidentes son alternativas. Si una carga de trabajo no tiene ninguna política ALLOW, las solicitudes se permiten salvo que CUSTOM/DENY las rechace. Cuando se aplica una política ALLOW, se requiere al menos una coincidencia ALLOW. Los ejemplos siguientes son alternativas; permitir todo ampliaría una política limitada a `get`.
 
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef deny fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Check1,Check2,Check3 check;
-    class Allow result;
-    class Deny deny;
-```
-
-<span id="basic-policies"></span>
-
-## Políticas básicas
-
-### Denegación predeterminada (Denegar todo)
+### Denegación predeterminada (denegar todo)
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -77,12 +45,11 @@ metadata:
   name: deny-all
   namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}  # Deny all requests
+  action: ALLOW
+  rules: []  # Default deny with room for specific ALLOW exceptions
 ```
 
-### Permitir de forma predeterminada (Permitir todo)
+### Permiso predeterminado (permitir todo)
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -96,7 +63,7 @@ spec:
   - {}  # Allow all requests
 ```
 
-### Basada en método HTTP
+### Basada en el método HTTP
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -115,9 +82,7 @@ spec:
         methods: ["GET"]  # Allow only GET
 ```
 
-<span id="advanced-policies"></span>
-
-## Políticas avanzadas
+## Políticas avanzadas {#advanced-policies}
 
 ### Basada en ServiceAccount
 
@@ -138,7 +103,7 @@ spec:
         principals: ["cluster.local/ns/default/sa/reviews"]  # Allow only reviews SA
 ```
 
-### Basada en Namespace
+### Basada en namespace
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -200,6 +165,19 @@ spec:
     - key: request.auth.claims[role]
       values: ["admin", "superuser"]  # role claim is admin or superuser
 ```
+
+## Ejemplos prácticos {#practical-examples}
+
+Para establecer una denegación predeterminada con excepciones, aplique la política ALLOW vacía y solo las reglas ALLOW específicas previstas. Un DENY explícito con `rules: [{}]` es un bloqueo estricto que ninguna regla ALLOW puede anular. Una política sin selector se aplica a su namespace; la asociación con el namespace raíz y las reglas de conexión mediante `targetRefs` requieren atención aparte.
+
+Las coincidencias de ServiceAccount/namespace requieren una identidad de par autenticada mediante mTLS. El ejemplo del rol JWT requiere un RequestAuthentication coincidente y la validación prevista del emisor/audiencia. Las cabeceras del cliente no sustituyen ninguna de esas identidades. Para TCP nativo, haga coincidencias por identidad/IP/puertos en lugar de métodos HTTP o claims de JWT; si faltan atributos HTTP en reglas DENY, estas pueden coincidir inesperadamente con TCP.
+
+## Prácticas recomendadas {#best-practices}
+
+- Limite las políticas a la carga de trabajo/recurso previsto y revise en conjunto todas las reglas ALLOW aplicables.
+- Use `targetRefs` de waypoint para las políticas L7 de ambient; un selector de sidecar no asocia una política a un waypoint.
+- Valide los casos de ausencia de política, falta de coincidencia, denegación explícita y solicitud permitida, incluidos los límites entre namespaces.
+- Configure el registro de forma explícita e inspeccione las políticas efectivas con `istioctl x authz check <pod> -n <namespace>`.
 
 ## Referencias
 

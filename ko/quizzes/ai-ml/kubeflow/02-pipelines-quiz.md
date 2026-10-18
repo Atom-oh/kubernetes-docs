@@ -33,7 +33,7 @@
 **정답: B) v1은 Argo Workflow YAML로 직접 컴파일하고, v2는 백엔드에 종속되지 않는 중간 표현(IR) YAML로 컴파일한다**
 
 **설명:**
-v1 SDK의 `dsl-compile`은 Argo에 특화된 `Workflow` YAML 매니페스트를 직접 생성했습니다. v2 SDK는 DAG, 컴포넌트, 타입이 지정된 아티팩트를 기술하는 백엔드 종속적이지 않은 IR YAML(`PipelineSpec`)로 컴파일하며, 이 장의 백엔드가 Run 생성 시 IR을 Argo `Workflow`로 변환하며, 백엔드 버전·플랫폼 확장 호환성이 필요합니다.
+v1 SDK의 `dsl-compile`은 Argo에 특화된 `Workflow` YAML 매니페스트를 직접 생성했습니다. v2 SDK는 DAG, 컴포넌트, 타입이 지정된 아티팩트를 기술하는 백엔드에 종속되지 않는 IR YAML(`PipelineSpec`)로 컴파일합니다. 이 장의 백엔드가 Run 생성 시 IR을 Argo `Workflow`로 변환합니다. 백엔드 버전·플랫폼 확장 호환성이 필요합니다.
 </details>
 
 3. 등록된 실행과 입출력 아티팩트 관계를 기록하여 KFP UI에서 리니지 추적을 가능하게 하는 컴포넌트는 무엇인가요?
@@ -113,7 +113,7 @@ KFP v2는 아티팩트에 `Dataset`, `Model`, `Metrics` 등 1급 타입을 부�
 **정답: B) `train_model(input_dataset=prep_task.outputs["output_dataset"])`을 통해 첫 번째 컴포넌트의 선언된 출력을 두 번째 컴포넌트의 타입이 지정된 입력에 연결한다**
 
 **설명:**
-`@dsl.pipeline`로 데코레이트된 함수 안에서 `prep_task.outputs["output_dataset"]`은 `prepare_data`가 선언한 `Output[Dataset]` 파라미터(이름은 `output_dataset`)를 참조하며, 이를 `train_model`의 `input_dataset: Input[Dataset]` 파라미터에 넘기는 것이 SDK가 독립적으로 실행되는 두 Pod 사이의 아티팩트 의존성을 배선하는 방법입니다.
+`@dsl.pipeline`로 데코레이트된 함수 안에서 `prep_task.outputs["output_dataset"]`은 `prepare_data`가 선언한 `Output[Dataset]` 파라미터(이름은 `output_dataset`)를 참조하며, 이를 `train_model`의 `input_dataset: Input[Dataset]` 파라미터에 넘기는 것이 SDK가 독립적으로 실행되는 두 Pod 사이의 아티팩트 의존성을 설정하는 방법입니다.
 </details>
 
 8. KFP는 컴포넌트를 다시 실행하는 대신 캐시된 결과를 재사용할지 어떻게 판단하나요?

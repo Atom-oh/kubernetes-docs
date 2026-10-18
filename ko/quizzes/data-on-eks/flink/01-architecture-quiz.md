@@ -64,7 +64,7 @@ Flink 2.2.1 / Operator 1.15.0 기준의 실행 역할과 자원 경계를 확인
 
 **정답:** Flink Kubernetes ResourceManager가 API로 TM Pod를 요청하고, Karpenter/Cluster Autoscaler 등은 별도로 node capacity를 관리합니다.
 
-**설명:** TM 해제는 idle timeout·resource profile·수요에 따릅니다. Job 종료 즉시 모든 Pod/node가 사라지는 보장은 없습니다.
+**설명:** TM 해제는 idle timeout·resource profile·수요에 따릅니다. Job 종료 즉시 모든 Pod/node가 사라진다는 보장은 없습니다.
 
 </details>
 

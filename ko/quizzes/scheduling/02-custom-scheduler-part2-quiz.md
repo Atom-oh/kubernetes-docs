@@ -212,7 +212,7 @@ func MatchesRequired(pod *v1.Pod, node *v1.Node) (bool, error) {
 }
 ```
 
-`nodeSelector`와 required node affinity는 모두 일치해야 합니다. term 사이는 OR, 한 term의 expression 사이는 AND이며 빈 term은 어느 노드에도 일치하지 않습니다. `NotIn`은 키가 없는 노드도 일치하므로 존재가 필수이면 `Exists`도 추가하세요. `Gt`·`Lt`는 비교할 정수 값 하나와 정수 노드 레이블 값을 요구합니다. `IgnoredDuringExecution`은 이후 레이블 변경만으로 배치된 Pod를 축출하지 않는다는 뜻입니다. 프로필의 `addedAffinity`는 스케줄러 플러그인이 계속 처리합니다.
+`nodeSelector`와 required node affinity는 모두 일치해야 합니다. term 사이는 OR, 한 term의 expression 사이는 AND이며 빈 term은 어느 노드에도 일치하지 않습니다. `NotIn`은 키가 없는 노드에도 일치하므로 키의 존재가 필수이면 `Exists`도 추가하세요. `Gt`·`Lt`는 비교할 정수 값 하나와 정수 노드 레이블 값을 요구합니다. `IgnoredDuringExecution`은 이후 레이블 변경만으로 배치된 Pod를 축출하지 않는다는 뜻입니다. 프로필의 `addedAffinity`는 스케줄러 플러그인이 계속 처리합니다.
 
 **다른 옵션들의 설명:**
 - A. In: 유효한 노드 어피니티 연산자입니다.
@@ -421,7 +421,7 @@ D. 외부 프로세스로 실행
 **정답: C. 스케줄러 코드베이스와 직접 통합**
 
 **설명:**
-Kubernetes에서 스케줄러 익스텐더(Scheduler Extender)의 주요 특징이 아닌 것은 "스케줄러 코드베이스와 직접 통합"입니다. 스케줄러 익스텐더는 스케줄러 코드베이스와 직접 통합되지 않고, HTTP 웹훅을 통해 외부 프로세스로 실행됩니다. 이는 스케줄링 프레임워크 플러그인과의 주요 차이점입니다.
+Kubernetes에서 스케줄러 익스텐더(Scheduler Extender)의 주요 특징이 아닌 것은 "스케줄러 코드베이스와 직접 통합"입니다. 스케줄러 익스텐더는 스케줄러 코드베이스와 직접 통합되지 않고, 외부 프로세스로 실행되며 HTTP 웹훅을 통해 스케줄러와 통신합니다. 이는 스케줄링 프레임워크 플러그인과의 주요 차이점입니다.
 
 **스케줄러 익스텐더의 주요 특징:**
 1. **HTTP 웹훅**: 스케줄러는 HTTP 요청을 통해 익스텐더와 통신합니다.
@@ -666,7 +666,7 @@ spec:
 
 이 예시에서:
 1. **파드 어피니티**: 웹 서버 파드는 `app=cache` 레이블이 있는 파드와 같은 노드(`kubernetes.io/hostname`)에 스케줄링되어야 합니다.
-2. **파드 안티-어피니티**: 웹 서버 파드는 가능하면 다른 `app=web` 레이블이 있는 파드와 다른 노드에 스케줄링되는 것이 좋습니다.
+2. **파드 안티-어피니티**: 웹 서버 파드는 가능하면 `app=web` 레이블이 있는 다른 파드와 다른 노드에 스케줄링되는 것이 좋습니다.
 
 **일반적인 토폴로지 키:**
 1. **kubernetes.io/hostname**: 노드 수준 관계
@@ -689,7 +689,7 @@ spec:
 **커스텀 스케줄러 처리:**
 전처리·점수 계산을 포함한 `InterPodAffinity`를 유지합니다. 신규 Pod의 필수 조건, 기존 Pod의 required anti-affinity, 네임스페이스 선택, 토폴로지 레이블, self-affinity의 첫 Pod 처리까지 고려해야 합니다. 항상 true인 stub은 잘못된 배치를 허용하거나 anti-affinity에서 반전될 때 모든 노드를 거부합니다.
 
-`namespaces`와 `namespaceSelector`로 선택한 네임스페이스는 합집합이며 둘 다 생략하면 신규 Pod의 네임스페이스입니다. `namespaceSelector: {}`는 전체 네임스페이스를 선택합니다. 예제의 필수 `app=cache` Pod는 선택한 네임스페이스의 적격 노드에 이미 있어야 합니다. preferred anti-affinity는 분리를 보장하지 않으며 `IgnoredDuringExecution`은 레이블·다른 Pod가 바뀔 때 계속 재배치하지 않는다는 뜻입니다.
+`namespaces`와 `namespaceSelector`로 선택한 네임스페이스의 합집합을 사용하며 둘 다 생략하면 신규 Pod의 네임스페이스를 사용합니다. `namespaceSelector: {}`는 전체 네임스페이스를 선택합니다. 예제의 필수 `app=cache` Pod는 선택한 네임스페이스의 적격 노드에 이미 있어야 합니다. preferred anti-affinity는 분리를 보장하지 않으며 `IgnoredDuringExecution`은 레이블·다른 Pod가 바뀔 때 계속 재배치하지 않는다는 뜻입니다.
 
 **다른 옵션들의 문제점:**
 - A. 파드와 노드 간의 관계 정의: 이는 노드 어피니티(nodeAffinity)의 역할입니다.
@@ -716,7 +716,7 @@ Kubernetes 스케줄링 프레임워크에서 "QueueSort" 확장 포인트의 �
 스케줄러는 스케줄링 큐에 있는 파드를 하나씩 처리합니다. QueueSort 플러그인은 이 큐에서 파드의 순서를 결정합니다. 기본적으로 Kubernetes는 `PrioritySort` 플러그인을 사용하여 파드의 우선순위(priority)에 따라 정렬합니다.
 
 **버전별 인터페이스:**
-Kubernetes 1.35.8의 QueueSort는 `Less(fwk.QueuedPodInfo, fwk.QueuedPodInfo) bool`을 구현합니다. 인자는 getter로 접근하는 인터페이스입니다. 기본 `PrioritySort`는 어드미션된 우선순위 다음 큐 타임스탬프를 비교합니다.
+Kubernetes 1.35.8의 QueueSort는 `Less(fwk.QueuedPodInfo, fwk.QueuedPodInfo) bool`을 구현합니다. 인자는 getter로 접근하는 인터페이스입니다. 기본 `PrioritySort`는 어드미션된 우선순위를 먼저 비교한 다음 큐 타임스탬프를 비교합니다.
 
 **전체 커스텀 예제 (`quizplugins/queue.go`):**
 실습용 동률 처리보다 어드미션된 우선순위를 먼저 유지합니다. 네임스페이스·레이블 선호는 동일 우선순위 Pod 사이의 공정성을 해칠 수 있습니다. 신뢰할 수 없는 레이블을 어드미션으로 통제하는 PriorityClass 대신 사용하지 마세요.
@@ -981,7 +981,7 @@ Kubernetes는 다음과 같은 기본 PreFilter 플러그인을 제공합니다:
 6. **VolumeBinding**: 볼륨 바인딩 요구 사항을 처리합니다.
 
 **전체 PreFilter + Filter 예제 (`quizplugins/prefilter.go`):**
-일반적인 pool 레이블 조건은 required node affinity가 더 간단합니다. 아래는 검증된 사이클별 상태와 `Clone()` 예제입니다. 다른 Pod에 의존하지 않으므로 AddPod·RemovePod 확장이 필요하지 않습니다. PreFilter 상태가 없으면 배치를 허용하지 않고 오류를 반환합니다.
+일반적인 pool 레이블 조건에는 required node affinity를 사용하는 것이 더 간단합니다. 아래는 검증된 사이클별 상태와 `Clone()` 예제입니다. 다른 Pod에 의존하지 않으므로 AddPod·RemovePod 확장이 필요하지 않습니다. PreFilter 상태가 없으면 배치를 허용하지 않고 오류를 반환합니다.
 
 ```go
 package quizplugins
@@ -1162,7 +1162,7 @@ spec:
 **노드 컨트롤러와 축출 시간:**
 고정한 upstream 1.35.8에서 `--node-monitor-period` 기본값은 5초, `--node-monitor-grace-period`는 40초가 아닌 **50초**입니다. 과거 `--pod-eviction-timeout` 플래그가 현재 taint 기반 축출을 제어하지 않습니다. 일치하는 Pod toleration과 taint-eviction controller가 이를 처리하며, 감지·taint 게시·컨트롤러 속도 제한·삭제에 추가 시간이 걸릴 수 있습니다.
 
-Kubernetes 1.29부터 taint 기반 축출은 별도 `taint-eviction-controller`가 담당하며 기본 활성화되지만 자체 관리 컨트롤 플레인에서는 별도로 설정할 수 있습니다. 이 값은 EKS 설정 지침이나 장애 전환 시간 보장이 아닙니다. 도달 불가능한 노드의 stateful Pod를 강제로 제거하기 전에 기존 writer가 중지·fencing됐는지 확인하여 동시 writer를 방지해야 합니다.
+Kubernetes 1.29부터 taint 기반 축출은 별도 `taint-eviction-controller`가 담당하며 기본적으로 활성화되지만 자체 관리 컨트롤 플레인에서는 별도로 설정할 수 있습니다. 이 값은 EKS 설정 지침이나 장애 전환 시간 보장이 아닙니다. 도달 불가능한 노드의 stateful Pod를 강제로 제거하기 전에 기존 writer가 중지·fencing됐는지 확인하여 동시 writer를 방지해야 합니다.
 
 **노드 상태 및 테인트 확인:**
 ```bash

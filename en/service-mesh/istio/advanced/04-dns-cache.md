@@ -77,7 +77,7 @@ Pod-network-namespace DNS redirection varies by installation mode and CNI. Do no
 
 ## ServiceEntry Integration
 
-DNS Proxy works closely integrated with ServiceEntry.
+DNS Proxy is closely integrated with ServiceEntry.
 
 ### Basic ServiceEntry
 
@@ -139,7 +139,7 @@ spec:
   resolution: DNS
 ```
 
-A wildcard such as `*.example.com` with `resolution: DNS` and no concrete endpoints cannot resolve every subdomain. Sidecar wildcard forwarding to the application's original destination uses a separate `resolution: NONE` pattern and does not supply DNS answers. Istio 1.31 `DYNAMIC_DNS` is a distinct Host/SNI-based mode; ambient requires a waypoint and raw TCP is unsupported. Choose against the current API and generated configuration.
+A wildcard such as `*.example.com` with `resolution: DNS` and no concrete endpoints cannot resolve every subdomain. Sidecar wildcard forwarding to the application's original destination uses a separate `resolution: NONE` pattern and does not supply DNS answers. Istio 1.31 `DYNAMIC_DNS` is a distinct Host/SNI-based mode; ambient requires a waypoint and raw TCP is unsupported. Choose based on the current API and generated configuration.
 
 ### Explicit Endpoints
 
@@ -373,7 +373,7 @@ spec:
 
 ### 3. DNS Cache TTL Configuration
 
-Observe record TTL, application cache, the agent name table and Envoy endpoint refresh separately. Do not assign 300 seconds to every CDN or 10 seconds to every API cluster merely by category. For DNS zones you control, choose TTL against failover objectives and query load. ServiceEntry `exportTo`/Sidecar scope can reduce unnecessary per-proxy discovery; neither is a network security boundary.
+Observe record TTL, application cache, the agent name table and Envoy endpoint refresh separately. Do not assign 300 seconds to every CDN or 10 seconds to every API cluster merely by category. For DNS zones you control, choose TTL based on failover objectives and query load. ServiceEntry `exportTo`/Sidecar scope can reduce unnecessary per-proxy discovery; neither is a network security boundary.
 
 For a specific DNS cluster's failure refresh, use the workload/host/port-scoped example above and verify its effective configuration and failure behavior.
 

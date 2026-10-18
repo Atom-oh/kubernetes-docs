@@ -161,7 +161,7 @@ An instantaneous node gauge is not node-hours, and node-hours are not dollars wi
 
 ### CloudWatch billing overview
 
-After enabling billing alerts/metrics, `AWS/Billing` estimated charges are published in **us-east-1** for worldwide account charges. They are cumulative estimated charges for the current month, not daily EC2 spend, an EKS-cluster total or a forecast. A payer account has its own linked-account scope. This local dashboard definition uses the required currency dimension and region:
+After billing alerts/metrics are enabled, `AWS/Billing` estimated charges are published in **us-east-1** for worldwide account charges. They are cumulative estimated charges for the current month, not daily EC2 spend, an EKS-cluster total or a forecast. A payer account has its own linked-account scope. This local dashboard definition uses the required currency dimension and region:
 
 ```json
 {
@@ -196,7 +196,7 @@ Use Cost Explorer/CUR or Data Exports for service/cluster allocation and daily c
 
 ### Kubecost
 
-The reviewed stable chart/app is **3.2.4**, chart name `kubecost` in the new repository below; a newer release candidate is not used as a blind upgrade target. Version 3 uses its FinOps agent and ClickHouse-based architecture. Do not reuse the old `cost-analyzer` repository, `kubecostToken` command-line example or assumptions from a version-2 Prometheus deployment.
+The reviewed stable chart/app is **3.2.4**, with the chart name `kubecost` in the new repository below; a newer release candidate is not used as a blind upgrade target. Version 3 uses its FinOps agent and ClickHouse-based architecture. Do not reuse the old `cost-analyzer` repository, `kubecostToken` command-line example or assumptions from a version-2 Prometheus deployment.
 
 Prepare a version-specific values file for licensing, cluster identity, billing integration, scoped workload IAM, authentication, retention and storage. An Auto Mode EBS StorageClass uses `ebs.csi.eks.amazonaws.com`; choose it explicitly where needed and review encryption. This chart has persistent-data retention/keep annotations, so uninstalling is not proof all chargeable storage was deleted. Keep access private and review collector/telemetry behavior. Render locally before any installation:
 
@@ -461,7 +461,7 @@ spec:
     ManagedBy: eks-auto-mode
 ```
 
-Reference `tagged-nodeclass` deliberately from the intended pool to use this example. `amiFamily: AL2023` is not an Auto Mode NodeClass field. Verify tags on actual resources and activate the relevant keys in Billing. User-defined keys can take up to 24 hours to appear for activation and a further up to 24 hours to activate; reporting freshness is separate. Do not promise all data exactly 24 hours later.
+Reference `tagged-nodeclass` deliberately from the intended pool to use this example. `amiFamily: AL2023` is not an Auto Mode NodeClass field. Verify tags on actual resources and activate the relevant keys in Billing. User-defined keys can take up to 24 hours to appear for activation and up to a further 24 hours to activate; reporting freshness is separate. Do not promise all data exactly 24 hours later.
 
 ```yaml
 apiVersion: v1

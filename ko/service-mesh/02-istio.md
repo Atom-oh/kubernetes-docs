@@ -92,7 +92,7 @@ istiod는 Istio의 중앙 제어 구성 요소로 다음을 제공합니다:
 
 ### Data Plane: Sidecar와 Ambient
 
-Sidecar 모드에서는 등록된 애플리케이션 Pod 옆에 Envoy가 실행되어:
+Sidecar 모드에서는 등록된 애플리케이션 Pod 옆에 Envoy가 실행되어 다음 기능을 제공합니다:
 
 - **트래픽 라우팅**: 서비스 간 트래픽 제어
 - **로드 밸런싱**: 서비스 인스턴스 간 분산
@@ -175,7 +175,7 @@ Ambient는 노드별 ztunnel의 L4 전송과 지원되는 L7 기능용 선택적
 
 ## 빠른 시작
 
-1. [설치 가이드](istio/01-installation.md)에서 정확한 Istio/Kubernetes/EKS 호환 범위의 교집합을 확인하세요. 현재 Istio 릴리스에 “Kubernetes 1.28 이상”만으로는 충분하지 않습니다.
+1. [설치 가이드](istio/01-installation.md)에서 정확한 Istio/Kubernetes/EKS 호환 범위의 교집합을 확인하세요. 현재 Istio 릴리스에서는 “Kubernetes 1.28 이상”이라는 조건만으로는 충분하지 않습니다.
 2. Sidecar 또는 ambient를 선택하고 고정한 CLI/chart, 격리된 namespace와 플랫폼 전제 조건을 따릅니다. 버전을 지정하지 않은 최신 CLI를 받은 뒤 과거 버전 디렉터리로 이동하지 않습니다.
 3. 유지 관리되는 가이드의 같은 버전 Bookinfo와 gateway 절차를 사용하세요. Default profile은 ingress gateway Deployment를 자동 제공하지 않으며 Gateway 설정 객체 하나로 모든 설치 방식의 gateway/LoadBalancer가 생성되지 않습니다.
 4. 실제 gateway 주소, Service port, route 상태와 HTTP 응답을 확인합니다. Load balancer는 IP나 hostname을 제공할 수 있으므로 AWS hostname 필드나 특정 port 이름만 가정하지 않습니다.

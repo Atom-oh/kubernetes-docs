@@ -13,9 +13,9 @@ Expiration, 관리형 이미지 갱신과 애플리케이션 복구는 노드 �
 
 | 개념 | Auto Mode 동작 |
 |------|----------------|
-| 기본 expiration | AWS 문서상 **336h(14일)**이며 7일·21일이 아님 |
+| 기본 expiration | AWS 문서상 **336h**(14일)이며 7일·21일이 아님 |
 | Termination grace | NodePool에서 생략하면 Auto Mode가 **NodeClaim에 24h**를 기본 적용; pool에 없더라도 claim 확인 |
-| 관리형 인스턴스 최대 수명 | AWS가 **21일(504h)**을 적용; 그때까지 노드 가용성을 보장한다는 뜻은 아님 |
+| 관리형 인스턴스 최대 수명 | AWS가 **21일**(504h)을 적용; 그때까지 노드 가용성을 보장한다는 뜻은 아님 |
 
 Upstream Karpenter의 기본 720h를 Auto Mode 기본값으로 대신 사용하지 마세요. 큰 duration이나 upstream `Never` 문법이 Auto Mode 관리형 인스턴스의 무기한 보존을 제공하지는 않습니다. 504h에 긴 drain을 더해 AWS 최대 수명을 연장할 수 있다고 생각해서도 안 됩니다.
 
@@ -238,7 +238,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
 | Drift | 기존 claim이 관리형 desired state와 불일치; graceful 제어 적용 |
 | Expiration | Claim이 저장된 정책 나이에 도달; forceful trigger이며 NodePool budget 대상 아님 |
 
-Graceful disruption controller는 consolidation보다 drift를 먼저 평가하지만 expiration은 별도 forceful 경로입니다. 보편적인 “drift > expiration > consolidation” 우선순위나 먼저 조건을 충족한 작업 승리 계약은 없습니다. 5일 된 노드는 7일 만료 전에 consolidate될 수 있고 8일 된 만료 노드는 저활용 상태가 아니어도 종료를 시작할 수 있습니다.
+Graceful disruption controller는 consolidation보다 drift를 먼저 평가하지만 expiration은 별도 forceful 경로입니다. 보편적인 “drift > expiration > consolidation” 우선순위나 먼저 조건을 충족한 작업이 우선한다는 보장은 없습니다. 5일 된 노드는 7일 만료 전에 consolidate될 수 있고 8일 된 만료 노드는 저활용 상태가 아니어도 종료를 시작할 수 있습니다.
 
 ![기존 Consolidation과 Expiration 개념 그림. Consolidation은 단순 CPU 사용률 임계값이 아닌 requests 기반 배치·비용 가능성을 평가하고 expiration은 별도 forceful 경로다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-2.png)
 
@@ -369,7 +369,7 @@ print(json.dumps({"observedAt": now.isoformat(), "nodes": rows, "distribution": 
 PY
 ```
 
-Bucket은 `[0,1)`, `[1,3)`, `[3,7)`, `>=7`일이며 정확히 7일은 마지막 bucket입니다. 성공한 빈 Node 목록과 API 오류를 구분합니다. Snapshot 진단이며 실시간 dashboard나 patch compliance 검사가 아닙니다.
+Bucket은 `[0,1)`, `[1,3)`, `[3,7)`, `>=7`일이며 정확히 7일인 경우는 마지막 bucket에 속합니다. 성공한 빈 Node 목록과 API 오류를 구분합니다. Snapshot 진단이며 실시간 dashboard나 patch compliance 검사가 아닙니다.
 
 ### Prometheus와 Grafana
 

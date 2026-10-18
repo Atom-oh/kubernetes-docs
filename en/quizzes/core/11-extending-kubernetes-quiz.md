@@ -16,7 +16,7 @@ This quiz tests your conceptual and practical knowledge about Kubernetes extensi
 **Answer: B) Create a CustomResourceDefinition (CRD)**
 
 **Explanation:**
-The most common way to define custom resources in Kubernetes is to create a CustomResourceDefinition (CRD). CRD is a mechanism that allows you to extend the Kubernetes API by defining new resource types.
+The most common way to define custom resources in Kubernetes is to create a CustomResourceDefinition (CRD). A CRD is a mechanism that allows you to extend the Kubernetes API by defining new resource types.
 
 Using CRDs provides the following benefits:
 - You can add new resource types without modifying the existing Kubernetes API server.
@@ -180,7 +180,7 @@ Common use cases for admission webhooks:
 - Applying namespace-based policies
 
 Issues with other options:
-- Handling authentication for API server is the role of Authentication Plugins.
+- Handling authentication for the API server is the role of Authentication Plugins.
 - Monitoring cluster events and sending alerts is the role of event listeners or monitoring tools.
 - Providing APIs for integration with external systems is a general purpose of API extensions, but not the main function of admission webhooks.
 </details>
@@ -406,7 +406,7 @@ Benefits of enabling the status subresource:
    - This separation clarifies the responsibilities of users and controllers.
 
 2. **RBAC Control**:
-   - Status update permissions can be granted only to controllers while giving regular users read-only permissions.
+   - Status update permissions can be granted only to controllers while regular users are given read-only permissions.
    - This prevents unauthorized modification of status information.
 
 3. **Conflict Prevention**:
@@ -707,7 +707,7 @@ make deploy
 
 Explanations of other options:
 - Operator Framework is Red Hat's comprehensive operator development toolkit.
-- Kubebuilder is a Go-based controller development framework developed by Kubernetes SIG.
+- Kubebuilder is a Go-based controller development framework developed by a Kubernetes SIG.
 - Metacontroller is a lightweight webhook-based operator framework.
 </details>
 
@@ -778,7 +778,7 @@ Issues with other options:
 
 ## Short Answer Questions
 
-1. Explain how to define custom resources using CustomResourceDefinition (CRD) and how to set validation rules for those resources.
+1. Explain how to define custom resources using a CustomResourceDefinition (CRD) and how to set validation rules for those resources.
 
 <details>
 <summary>Show Answer</summary>
@@ -787,7 +787,7 @@ Issues with other options:
 
 **How to Define CustomResourceDefinition (CRD):**
 
-CRD is a mechanism that extends the Kubernetes API to define new resource types. When you create a CRD, a new RESTful API endpoint is created, and you can manage that resource using standard tools like `kubectl`.
+A CRD is a mechanism that extends the Kubernetes API to define new resource types. When you create a CRD, a new RESTful API endpoint is created, and you can manage that resource using standard tools like `kubectl`.
 
 **1. Basic CRD Structure:**
 
@@ -836,7 +836,7 @@ spec:
 
 **2. Setting Validation Rules:**
 
-Validation rules for CRDs are set through the `openAPIV3Schema` field. This schema follows OpenAPI v3 format and defines the structure and field types of resources.
+Validation rules for CRDs are set through the `openAPIV3Schema` field. This schema follows the OpenAPI v3 format and defines the structure and field types of resources.
 
 **Basic Validation Rules Example:**
 
@@ -1086,7 +1086,7 @@ make deploy IMG="$OPERATOR_IMAGE"
 
 **2. Using Kubebuilder:**
 
-[Kubebuilder](https://book.kubebuilder.io/) is a framework developed by Kubernetes SIG that provides tools for controller development.
+[Kubebuilder](https://book.kubebuilder.io/) is a framework developed by a Kubernetes SIG that provides tools for controller development.
 
 ```bash
 : "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
@@ -1396,7 +1396,7 @@ webhooks:
 
 **3. Webhook Implementation Methods:**
 
-Admission webhooks are implemented as services that provide HTTPS endpoints. These services receive `AdmissionReview` requests, process them, and return `AdmissionResponse`.
+Admission webhooks are implemented as services that provide HTTPS endpoints. These services receive `AdmissionReview` requests, process them, and return an `AdmissionResponse`.
 
 **Basic Webhook Server Implementation Example (Go):**
 
@@ -1633,7 +1633,7 @@ spec:
 **5. Best Practices:**
 
 - **Performance Optimization**: Webhooks are in the API server request path, so they must respond quickly.
-- **Error Handling**: Consider behavior when webhook server fails and set `failurePolicy` appropriately.
+- **Error Handling**: Consider behavior when the webhook server fails and set `failurePolicy` appropriately.
 - **Scope Limitation**: Apply webhooks only to necessary resources and operations.
 - **Testing**: Thoroughly test webhook behavior in various scenarios.
 - **Monitoring**: Monitor webhook server performance and errors.
@@ -1743,7 +1743,7 @@ This CRD has the following characteristics:
    - `status.availableReplicas` and `status.phase` fields are defined.
 
 4. **Additional Printer Columns**:
-   - When running `kubectl get webapps`, Replicas, Image, and Age columns are displayed.
+   - When you run `kubectl get webapps`, Replicas, Image, and Age columns are displayed.
 
 5. **Name Configuration**:
    - Plural: `webapps`

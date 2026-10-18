@@ -474,7 +474,7 @@ resources:
 
 对于自行管理的集群，请使用 `--encryption-provider-config` 加载此文件，保护加密密钥，并重写现有 Secret 以将其加密。它不是可通过 `kubectl apply` 应用的资源。EKS 会管理自己的加密（见下文）。
 
-## 环境变量
+## 环境变量 {#environment-variables}
 
 环境变量是向容器传递配置信息的简单方式。Kubernetes 提供多种设置环境变量的方法。
 
@@ -585,7 +585,7 @@ spec:
   restartPolicy: Never
 ```
 
-## 通过卷挂载配置
+## 通过卷挂载配置 {#mounting-configuration-through-volumes}
 
 通过卷将配置文件挂载到容器中，与环境变量相比，能提供更加灵活的配置管理方式。
 
@@ -708,7 +708,7 @@ spec:
   restartPolicy: Never
 ```
 
-## 配置最佳实践
+## 配置最佳实践 {#configuration-best-practices}
 
 在 Kubernetes 中管理配置时，请考虑以下最佳实践：
 
@@ -788,7 +788,7 @@ kubectl rollout restart deployment/my-deployment
 
 Requests 指导调度和运行时资源分配，但不会强制应用程序使用相应数量的资源。CPU 限制会限制 CPU 使用，而内存限制可能触发 OOM 终止。对于测验中的容器级示例，Guaranteed 要求每个容器的 CPU 和内存 requests/limits 相等；BestEffort 不设置这两者，其他配置则属于 Burstable。Pod 级资源也会影响 QoS。节点压力驱逐还会考虑优先级以及相对于 requests 的资源使用量。请参阅[资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)和[Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)。
 
-## Amazon EKS 中的配置管理
+## Amazon EKS 中的配置管理 {#configuration-management-in-amazon-eks}
 
 在 Amazon EKS 中，除了 Kubernetes 的基本配置管理功能外，还可以使用 AWS 的各种服务来管理配置和 Secret。本节将介绍在 EKS 中管理配置的多种方式，以及与 AWS 服务的集成。
 
@@ -1012,7 +1012,7 @@ fargateProfiles:
   - subnet-0abcdef1234567890
 ```
 
-### 使用 AWS KMS 加密 Secret
+### 使用 AWS KMS 加密 Secret {#secret-encryption-with-aws-kms}
 
 运行 Kubernetes 1.28 或更高版本的 EKS 集群会使用 AWS 所有者密钥，对[所有 Kubernetes API 数据默认进行信封加密](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)，其中包括 Secret 和 ConfigMap。客户管理的 KMS 密钥是可选项；启用加密不需要客户管理的密钥。
 

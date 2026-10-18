@@ -192,7 +192,7 @@ storage_kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/lab-pvc --timeou
 storage_kubectl get pvc lab-pvc
 kubectl --context "${STORAGE_LAB_CONTEXT:?}" get pv "$STORAGE_LAB_PV"
 ```
-Expect the claim to bind to the PV stored in `STORAGE_LAB_PV`. The request is500Mi and the matching PV advertises1Gi, but hostPath capacity is not a filesystem quota. ReadWriteOnce means single-node access semantics, not one-Pod exclusivity or an application lock.
+Expect the claim to bind to the PV stored in `STORAGE_LAB_PV`. The request is 500Mi and the matching PV advertises 1Gi, but hostPath capacity is not a filesystem quota. ReadWriteOnce means single-node access semantics, not one-Pod exclusivity or an application lock.
 
 **Step 2.3: Create a Pod using PVC**
 ```bash

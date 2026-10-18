@@ -1,175 +1,163 @@
-# Cuestionario sobre operaciones de actualización
+# Cuestionario sobre las operaciones de actualización de EKS
 
-> **Documento relacionado**: [Operaciones de actualización](../../ops/11-upgrade-operations.md)
+> **Documento relacionado**: [Actualizaciones de EKS](../../ops/11-upgrade-operations.md)
 
-## Preguntas de opción múltiple
+## 1. ¿Cuántas versiones menores intermedias puede omitir una actualización del plano de control de EKS?
 
-### 1. ¿Durante cuánto tiempo AWS da soporte a cada versión de EKS Kubernetes bajo soporte estándar?
-
-- A) 6 meses
-- B) 12 meses
-- C) 14 meses
-- D) 24 meses
+- A) Ninguna: avance a la siguiente versión menor cada vez
+- B) Una
+- C) Dos
+- D) Todas las que quiera
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) 14 meses**
+**Respuesta: A**
 
-**Explicación:**
-AWS proporciona 14 meses de soporte estándar para cada versión de Kubernetes en EKS. Después de eso, los clusters pueden migrarse a soporte extendido (con costo adicional) o deben actualizarse. Se recomienda planificar las actualizaciones dentro del período de soporte estándar.
+Por ejemplo, una actualización de 1.34 a 1.36 debe pasar por 1.35. Las tolerancias de desfase de kubelet son distintas de los pasos de actualización del plano de control.
 
 </details>
 
-### 2. ¿Qué herramienta detecta APIs de Kubernetes obsoletas en tu cluster?
+## 2. ¿Cómo debe interpretarse la ausencia de un Deployment de CoreDNS en Auto Mode puro?
 
-- A) kubectl
-- B) Pluto
-- C) Helm
-- D) Terraform
+- A) Siempre significa que DNS no funciona
+- B) Compruebe el servicio DNS del sistema de los nodos y el comportamiento real
+- C) Instale siempre un Karpenter autoadministrado
+- D) Elimine los Deployments de CoreDNS de todos los clústeres
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Pluto**
+**Respuesta: B**
 
-**Explicación:**
-Pluto escanea manifests de Kubernetes, releases de Helm y clusters activos en busca de versiones de API obsoletas o eliminadas. Ayuda a identificar recursos que deben actualizarse antes de actualizar a una versión en la que esas APIs ya no existen.
+Los clústeres mixtos deben conservar los Deployments de DNS y los complementos que necesiten los nodos que no son de Auto Mode.
 
 </details>
 
-### 3. ¿Cuál es el propósito de Velero en las operaciones de actualización de EKS?
+## 3. ¿Qué afirmación sobre `restore create -o json` de Velero 1.18.4 es correcta?
 
-- A) Actualizar la versión de Kubernetes
-- B) Hacer backup y restaurar recursos del cluster antes de la actualización
-- C) Monitorear el rendimiento del cluster
-- D) Administrar node groups
+- A) Completa una restauración real
+- B) Se ejecuta completamente sin conexión
+- C) No crea el objeto, pero puede realizar operaciones de descubrimiento y leer el Backup
+- D) Solo es válido junto con `--dry-run`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Hacer backup y restaurar recursos del cluster antes de la actualización**
+**Respuesta: C**
 
-**Explicación:**
-Velero proporciona capacidades de backup y restauración para recursos de Kubernetes y persistent volumes. Realizar un backup de Velero antes de las actualizaciones permite la recuperación si la actualización causa problemas, proporcionando una red de seguridad para la operación.
+`restore create` no tiene una opción `--dry-run`. Revisar solo la salida y probar una restauración real en un entorno aislado son acciones distintas.
 
 </details>
 
-### 4. En la arquitectura Terraform de 3 capas, ¿cuál es el orden correcto de actualización?
+## 4. ¿Qué debe hacer una herramienta de comprobación previa ante un error de API o un kubecontext incorrecto?
 
-- A) Workload -> Platform -> Foundation
-- B) Platform -> Foundation -> Workload
-- C) Foundation -> Platform -> Workload
-- D) Todas las capas simultáneamente
+- A) Tratar los resultados vacíos como estado correcto
+- B) Informar estado desconocido o contexto no coincidente e investigar
+- C) Cambiar de contexto y actualizar automáticamente
+- D) Eliminar los PDB
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Foundation -> Platform -> Workload**
+**Respuesta: B**
 
-**Explicación:**
-El orden de actualización sigue las dependencias: primero Foundation (VPC, IAM), ya que Platform depende de ella; luego Platform (cluster de EKS), ya que Workload depende de ella; y finalmente Workload (aplicaciones). Esto asegura que las dependencias de cada capa ya estén actualizadas.
+Que un Pod esté en ejecución por sí solo no demuestra que esté listo; también se deben comprobar la generación del Deployment y el estado del rollout.
 
 </details>
 
-### 5. En EKS Auto Mode, ¿qué ocurre con los nodes durante una actualización de versión de Kubernetes?
+## 5. ¿Cuál es una condición básica de elegibilidad para la reversión nativa de EKS?
 
-- A) Los nodes se actualizan in-place sin reinicio
-- B) Los nodes se reemplazan automáticamente por nodes de la nueva versión
-- C) Los nodes deben eliminarse manualmente
-- D) Los nodes no se ven afectados por las actualizaciones de versión
+- A) Que cualquier clúster se haya creado recientemente con su versión actual
+- B) Cumplir los requisitos, incluida la iniciación dentro de los siete días posteriores a finalizar la actualización del plano de control para volver a la versión menor anterior
+- C) Que se admita volver a cualquier versión anterior en cualquier momento
+- D) Que una copia de seguridad de etcd anule todas las restricciones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los nodes se reemplazan automáticamente por nodes de la nueva versión**
+**Respuesta: B**
 
-**Explicación:**
-Después de actualizar el control plane de EKS, Auto Mode rota automáticamente los nodes para que coincidan con la nueva versión. Este proceso cordona los nodes antiguos, drena los workloads y aprovisiona nuevos nodes con la versión actualizada de kubelet.
+Compruebe también que la versión de destino sea compatible, que la política de soporte sea `EXTENDED`, que el estado sea `ACTIVE` y que no haya funciones incompatibles de EKS.
 
 </details>
 
-### 6. ¿Qué debe verificarse con los Pod Disruption Budgets (PDBs) antes de la actualización?
+## 6. Si el estado del clúster es ACTIVE durante la reversión de nodos de Auto Mode, ¿qué significa?
 
-- A) Que no existan PDBs
-- B) Que los PDBs permitan suficiente disrupción para el reemplazo progresivo de nodes
-- C) Que los PDBs estén configurados en cero
-- D) Que los PDBs referencien versiones de API correctas
+- A) La reversión se completó por completo
+- B) El plano de control aún puede servir la versión actual; inspeccione el ID de actualización
+- C) No es posible revertir los nodos
+- D) Elimine de inmediato el clúster anterior
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Que los PDBs permitan suficiente disrupción para el reemplazo progresivo de nodes**
+**Respuesta: B**
 
-**Explicación:**
-Los PDBs demasiado restrictivos (por ejemplo, maxUnavailable: 0 con minAvailable: 100%) pueden bloquear el drenado de nodes durante las actualizaciones. Antes de actualizar, asegúrate de que los PDBs permitan suficiente disrupción para que el proceso de reemplazo progresivo pueda continuar.
+Auto Mode ajusta primero los nodos. El timeout predeterminado para los nodos es de 720 minutos; un timeout de espera del cliente no cancela la operación en AWS.
 
 </details>
 
-### 7. ¿Cuál es la estrategia de actualización blue/green para clusters de EKS?
+## 7. ¿Qué omite `rollback --force`?
 
-- A) Actualizar ambos clusters simultáneamente
-- B) Crear un nuevo cluster con la nueva versión y desplazar gradualmente el tráfico
-- C) Actualizar in-place con capacidad de rollback
-- D) Ejecutar ambas versiones en los mismos nodes
+- A) La ventana de siete días y todos los PDB
+- B) Todas las interrupciones y la compatibilidad de datos
+- C) Las comprobaciones de Insights, pero no la elegibilidad ni los controles de interrupción de Auto Mode
+- D) La conservación de datos de etcd
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Crear un nuevo cluster con la nueva versión y desplazar gradualmente el tráfico**
+**Respuesta: C**
 
-**Explicación:**
-La actualización blue/green crea un nuevo cluster "green" que ejecuta la versión objetivo de Kubernetes junto al cluster "blue" existente. El tráfico se desplaza gradualmente usando enrutamiento ponderado, lo que permite un rollback sencillo al devolver el tráfico a blue si surgen problemas.
+Los estados ERROR y UNKNOWN bloquean la reversión, mientras que WARNING es informativo. Force no es la ruta de recuperación de referencia.
 
 </details>
 
-### 8. ¿Qué validación posterior a la actualización debe realizarse?
+## 8. ¿Qué no se restaura automáticamente a su estado histórico con una reversión nativa de versión?
 
-- A) Solo comprobar si los pods están en ejecución
-- B) Verificar el estado de los nodes, la salud de los pods, la funcionalidad de los addons y el comportamiento de la aplicación
-- C) No se necesita validación
-- D) Solo ejecutar Pluto de nuevo
+- A) La versión menor del servidor de API
+- B) El ajuste de versión de los nodos de Auto Mode
+- C) Los complementos, las aplicaciones, los objetos de etcd y los datos de PV
+- D) Las versiones de los componentes del plano de control
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Verificar el estado de los nodes, la salud de los pods, la funcionalidad de los addons y el comportamiento de la aplicación**
+**Respuesta: C**
 
-**Explicación:**
-La validación posterior a la actualización debe incluir: todos los nodes en Ready, pods en Running, addons del cluster (CoreDNS, kube-proxy, CNI) funcionales, ingress/egress funcionando, operaciones de storage exitosas y health checks específicos de la aplicación aprobados.
+Los grupos de nodos administrados normales requieren una gestión independiente mediante `UpdateNodegroupVersion`. Revertir la versión no equivale a restaurar una instantánea.
 
 </details>
 
-### 9. ¿En qué se diferencia el soporte extendido de EKS del soporte estándar?
+## 9. ¿Qué afirmación sobre establecer en cero el peso de un grupo de destino de NLB es correcta?
 
-- A) El soporte extendido es gratuito
-- B) El soporte extendido proporciona meses adicionales más allá del estándar con costo adicional
-- C) El soporte extendido solo cubre parches de seguridad
-- D) El soporte extendido es solo para Fargate
+- A) Siempre se preservan las conexiones existentes hasta que terminan
+- B) Las conexiones existentes pueden cerrarse al cabo de poco tiempo; pruebe el comportamiento de reintentos/sesiones
+- C) Los pesos deben sumar 100
+- D) NLB no admite grupos de destino ponderados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El soporte extendido proporciona meses adicionales más allá del estándar con costo adicional**
+**Respuesta: B**
 
-**Explicación:**
-El soporte extendido de EKS permite que los clusters se ejecuten en versiones antiguas de Kubernetes más allá del período estándar de 14 meses, pero con un costo adicional por hora por cluster. Esto proporciona flexibilidad para organizaciones que necesitan más tiempo para actualizar.
+Los pesos son valores relativos de 0 a 999. Distinga los cambios ordinarios de la transición a peso cero; los listeners TLS no admiten afinidad de grupo de destino.
 
 </details>
 
-### 10. Al actualizar, ¿por qué es importante comprobar la compatibilidad de los addons?
+## 10. ¿Qué debe comprobarse antes de retirar Blue?
 
-- A) Los addons se actualizan automáticamente
-- B) Algunas versiones de addons solo son compatibles con versiones específicas de Kubernetes
-- C) Los addons no afectan las actualizaciones
-- D) Los addons deben eliminarse antes de la actualización
+- A) Destruirlo de inmediato cuando el peso sea cero
+- B) Revisar los recursos compartidos y sus referencias a grupos de destino, la compatibilidad de datos, el período de recuperación y la propiedad
+- C) Que una respuesta HTTP 200 demuestra que todos los datos son coherentes
+- D) Que EFS compartido elimina la necesidad de revisar escritores simultáneos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Algunas versiones de addons solo son compatibles con versiones específicas de Kubernetes**
+**Respuesta: B**
 
-**Explicación:**
-Los addons administrados de EKS (VPC CNI, CoreDNS, kube-proxy) y los addons de terceros tienen matrices de compatibilidad de versiones con versiones de Kubernetes. Actualizar a una versión incompatible de un addon puede romper la funcionalidad del cluster. Comprueba y planifica las actualizaciones de addons junto con la actualización del cluster.
+Tenga en cuenta el ciclo de vida del grupo de destino al eliminar un TGB de Auto Mode o el clúster, así como los listeners compartidos. Los cambios de espacio de nombres no garantizan el aislamiento de consumidores, bases de datos o DNS.
 
 </details>

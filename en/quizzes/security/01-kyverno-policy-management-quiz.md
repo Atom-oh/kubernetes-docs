@@ -2,7 +2,7 @@
 
 > **Last Updated**: September 13, 2026
 
-These questions use the reviewed Kyverno 1.19.1 CEL policies. Examples are local fixtures; no cluster or destructive cleanup was executed.
+These questions use the reviewed Kyverno 1.19.1 CEL policies. Examples are local fixtures; no cluster operations or destructive cleanup were executed.
 
 ## Quiz Questions
 

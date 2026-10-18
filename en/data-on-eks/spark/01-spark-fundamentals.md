@@ -111,7 +111,7 @@ permissions. Executor pods use a separate service account with API token automou
 disabled. Only trusted job code/submitters should use a namespace where the driver
 can create pods; RBAC alone is not a sandbox for untrusted application code.
 
-Save these as **Pod templates**, not standalone pods to `kubectl apply`.
+Save these as **Pod templates**, not as standalone pods to apply with `kubectl apply`.
 Spark fills in its image, commands and other fields:
 
 Driver template, `driver-template.yaml`:

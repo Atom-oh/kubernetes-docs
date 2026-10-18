@@ -50,10 +50,10 @@
 
 또한 kubelet은 기본적으로 "안전하지 않은" sysctl을 거부합니다. 필요하면 `--allowed-unsafe-sysctls`로 명시적으로 허용해야 하고, 이것은 노드 설정입니다.
 
-**둘째, conntrack은 kube-proxy가 덮어씁니다.** [컨테이너 커널 기능](./01-container-primitives.md)에서 언급한 내용인데, 실무에서 가장 자주 걸리는 함정이라 다시 씁니다. EKS에는 `kube-proxy-config` ConfigMap이 기본 존재하고 **커맨드라인 인자보다 우선**합니다. 부트스트랩에서 sysctl로 올려놔도 kube-proxy가 자기 값으로 되돌릴 수 있습니다.
+**둘째, conntrack은 kube-proxy가 덮어씁니다.** [컨테이너 커널 기능](./01-container-primitives.md)에서 언급한 내용인데, 실무에서 가장 자주 걸리는 함정이라 다시 씁니다. EKS에는 `kube-proxy-config` ConfigMap이 기본적으로 존재하고 **커맨드라인 인자보다 우선**합니다. 부트스트랩에서 sysctl로 올려놔도 kube-proxy가 자기 값으로 되돌릴 수 있습니다.
 
 ::: warning 확인 필요
-Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문입니다.
+Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**한다는 점입니다.
 
 Kube-proxy 설정 파일을 사용하며 상한 관리를 node sysctl에 의도적으로 맡기려면 파일의 **`conntrack.maxPerCore`/`conntrack.min` 필드**를 변경합니다. 둘을 0으로 설정하더라도 `--config`가 무시하는 CLI flag에 의존하면 안 됩니다. Rollout 전 관리형 add-on 조정 동작과 메모리 여유를 확인합니다.
 
@@ -121,7 +121,7 @@ Linux 6.6에서 CFS의 태스크 선택 로직이 **EEVDF**(Earliest Eligible Vi
 | `sched_wakeup_granularity_ns` | **제거됨** (동일) |
 | **`/sys/kernel/debug/sched/base_slice_ns`** | **현재의 대응 튜너블.** 내부 변수는 `sysctl_sched_base_slice`이고 debugfs에 `base_slice_ns`로 노출됨 |
 
-즉 CFS 시절의 지연·선점 휴리스틱 튜너블은 사라지고, **기본 타임슬라이스 하나(`base_slice_ns`)**로 정리되었습니다. 이름에 `sched_` 접두어가 없다는 점에 주의하십시오. 경로는 `/sys/kernel/debug/sched/base_slice_ns`입니다.
+즉 CFS 시절의 지연·선점 휴리스틱 튜너블은 사라지고, **기본 타임슬라이스 하나(`base_slice_ns`)로** 정리되었습니다. 이름에 `sched_` 접두어가 없다는 점에 주의하십시오. 경로는 `/sys/kernel/debug/sched/base_slice_ns`입니다.
 
 EEVDF는 이와 별개로 `sched_setattr()` 시스템 콜로 **태스크가 자기 타임슬라이스를 직접 요청**할 수 있게 했습니다. 지연 민감 애플리케이션에는 전역 튜너블을 건드리는 것보다 이 경로가 맞습니다.
 
@@ -162,7 +162,7 @@ cat cpu.stat
 | `vm.max_map_count` | **Elasticsearch/OpenSearch 등에서 실제로 필요한 조정.** 기본값이 낮아 mmap 한도에 걸림 |
 | `kernel.pid_max` | 고밀도 노드에서 PID 고갈 시 |
 
-`vm.max_map_count`가 실제 사례로 자주 등장합니다. OpenSearch 계열은 많은 파일을 mmap하므로 기본값에서 시작 실패합니다. 이것은 "근거 있는 튜닝"의 좋은 예입니다: 증상이 명확하고, 해당 파라미터가 직접 원인이며, 벤더 문서가 값을 제시합니다.
+`vm.max_map_count`가 실제 사례로 자주 등장합니다. OpenSearch 계열은 많은 파일을 mmap하므로 기본값에서 시작에 실패합니다. 이것은 "근거 있는 튜닝"의 좋은 예입니다: 증상이 명확하고, 해당 파라미터가 직접 원인이며, 벤더 문서가 값을 제시합니다.
 
 ### kubelet의 예약: 커널 파라미터보다 먼저
 
@@ -293,7 +293,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 - 선택한 AMI와 실행 중 kernel을 확인합니다. 기본 AMI 계열은 바뀔 수 있지만 고정 AMI ID가 노드 교체 시 자동 변경되는 것은 아닙니다.
 - CPU throttling의 근본 원인은 대개 **애플리케이션이 인식하는 CPU 수와 할당량의 불일치**입니다. `GOMAXPROCS`/`ActiveProcessorCount`부터 맞추십시오.
 - 노드 안정성에는 커널 튜닝보다 **kubelet 예약과 축출 임계**가 효과적입니다. 축출이 커널 OOM보다 낫습니다.
-- 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`**입니다. 모두 직접적인 증거 카운터가 있습니다.
+- 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`입니다**. 모두 직접적인 증거 카운터가 있습니다.
 - TCP sysctl 범위와 socket별 autotuning override는 다르며 측정 근거로만 조정합니다.
 - **IPVS 모드를 쓰고 있으면 이전 계획이 필요합니다** (1.35 deprecated; 1.40 기본 비활성화·1.43 제거 계획). Rollout 전에 아래 KEP-5495 링크에서 최신 일정을 확인합니다.
 

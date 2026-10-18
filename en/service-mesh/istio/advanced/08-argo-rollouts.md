@@ -431,9 +431,9 @@ spec:
       - pause: {}
 ```
 
-Released 1.10 generates this header route without copying the primary route’s retry policy. Use this fragment only for idempotent demo requests and inspect the generated route; it does not enforce read-only methods or guarantee that writes cannot retry. A write-serving deployment needs a separately controlled and validated retry/authorization design.
+Release 1.10 generates this header route without copying the primary route’s retry policy. Use this fragment only for idempotent demo requests and inspect the generated route; it does not enforce read-only methods or guarantee that writes cannot retry. A write-serving deployment needs a separately controlled and validated retry/authorization design.
 
-An `x-beta-user` header is not authenticated tester identity. Use a trusted authentication boundary if exposure must be restricted. A manually written header route outside Rollouts' managed-route list will not automatically disappear on abort/completion and can keep reaching canary endpoints.
+An `x-beta-user` header is not an authenticated tester identity. Use a trusted authentication boundary if exposure must be restricted. A manually written header route outside Rollouts' managed-route list will not automatically disappear on abort/completion and can keep reaching canary endpoints.
 
 ### 3. Managed Mirror Traffic
 

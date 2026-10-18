@@ -20,7 +20,7 @@ El código incluye manifiestos completos y fragmentos de especificación/valores
 - [Observabilidad y alertas](#observability-and-alerting)
 - [Prácticas recomendadas para producción](#production-best-practices)
 
-## Descripción general y objetivos de aprendizaje
+## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
 El RollingUpdate de Kubernetes Deployment ya reemplaza los Pods gradualmente. Flagger agrega control explícito del tráfico de revisiones y promoción basada en métricas/pruebas. Este capítulo abarca la propiedad de recursos, tres estrategias, métricas/puertas, GitOps y observabilidad.
 
@@ -43,7 +43,7 @@ Blue-Green no garantiza exactamente el doble de recursos, rollback instantáneo 
 
 La integración de ecosistema no es un acoplamiento exclusivo. No permita que dos controladores de entrega progresiva administren la misma carga de trabajo.
 
-## Arquitectura de Flagger
+## Arquitectura de Flagger {#flagger-architecture}
 
 ![Flagger observa los recursos Canary/carga de trabajo y conecta enrutamiento, métricas y notificaciones.](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
@@ -81,7 +81,7 @@ El soporte de AWS App Mesh **finalizó el 2026-09-30**; AWS indica que su consol
 
 La disponibilidad de un adaptador no es una garantía de mantenimiento para nuevo uso en producción. Verifique la compatibilidad de A/B, mirroring y afinidad de sesión por implementación.
 
-## Instalación y configuración de EKS
+## Instalación y configuración de EKS {#eks-installation-and-configuration}
 
 La base requiere EKS/Kubernetes admitidos, un entorno de sidecar Istio instalado y Prometheus recopilando las métricas requeridas. Reemplace su URL por el Service real. Flagger no instala Istio ni la instrumentación. La imagen de Prometheus incluida en el chart es la antigua 2.41.0, por lo que está deshabilitada.
 
@@ -321,7 +321,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
-## Estrategia de despliegue Canary
+## Estrategia de despliegue Canary {#canary-deployment-strategy}
 
 Estos son la carga de trabajo de Istio y el HPA base; Metrics Server es obligatorio. Omita las réplicas de Deployment de Git para que HPA/Flagger puedan controlar el escalado, y no cree un Service que compita. Elija estos manifiestos o la alternativa HelmRelease posterior.
 
@@ -477,7 +477,7 @@ kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --pr
 
 Después de la configuración estable inicial, aplique mediante Git un cambio revisado de imagen/tag/digest o de plantilla de Pod para iniciar el análisis. Reemplazar contenido remoto tras la misma etiqueta no sustituye un cambio de Git. No edite directamente los recursos generados de primary, Service o enrutamiento.
 
-## Estrategia de despliegue Blue-Green
+## Estrategia de despliegue Blue-Green {#blue-green-deployment-strategy}
 
 ![Blue-Green valida canary, actualiza primary y luego reduce canary.](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
@@ -648,7 +648,7 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
 
-## Métricas personalizadas y Webhooks
+## Métricas personalizadas y Webhooks {#custom-metrics-and-webhooks}
 
 ### Prometheus MetricTemplate
 
@@ -1276,7 +1276,7 @@ image:
 
 Un marcador solo de tag no fija un digest. Verifique la compatibilidad de digest del chart o la inmutabilidad y validación de etiquetas del registro. No sobrescriba una imagen de forma inconsistente mediante Kustomize images y un marcador de Deployment. ECR necesita autenticación AWS independiente de image-reflector y autorización real para extraer imágenes de Pod.
 
-## Observabilidad y alertas
+## Observabilidad y alertas {#observability-and-alerting}
 
 Las métricas de Flagger y las métricas de Istio/aplicación son destinos de recopilación diferentes. Las anotaciones no hacen que cada instalación de Prometheus recopile automáticamente. Para Prometheus Operator, alinee el serviceMonitor.enabled del chart con los selectores, namespaces y acceso mTLS reales.
 
@@ -1431,7 +1431,7 @@ NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.st
 
 Los eventos de Kubernetes tienen límites de retención; conserve el historial duradero externamente. changes(status[7d]) cuenta transiciones, no despliegues. Interprete los contadores de resultados considerando skipped/completed y las revisiones reales.
 
-## Prácticas recomendadas para producción
+## Prácticas recomendadas para producción {#production-best-practices}
 
 Comience con cargas de trabajo no críticas/de laboratorio y pruebe éxito, fallo, datos ausentes, espera de aprobación y fallo de promoción de primary. Un umbral de fallo mayor puede retrasar el rollback en lugar de mejorar la seguridad. Un stepWeight mayor expone a más usuarios; intervalos de análisis más largos pueden retrasar la detección.
 

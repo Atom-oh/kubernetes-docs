@@ -41,7 +41,7 @@ GPU 배치 정책과 선택적인 메트릭 연동을 표현한 설계 예시입
 
 이 사례에서는 스케줄러 프레임워크 플러그인 접근 방식을 사용합니다.
 
-1. **레이블 전에 실제 목록을 검증합니다.** 아래 `training.example.com` 키는 관리자 정의 실습 레이블이며 NVIDIA 탐색 레이블이 아닙니다. 메모리는 공유하지 않는 동종 GPU 노드에서 각 적격 장치의 최소 메모리를 나타내야 합니다. GPU 수량은 `status.allocatable`에서 확인하며 개수 레이블은 남은 용량이 아닙니다.
+1. **레이블을 지정하기 전에 실제 목록을 검증합니다.** 아래 `training.example.com` 키는 관리자 정의 실습 레이블이며 NVIDIA 탐색 레이블이 아닙니다. 메모리는 공유하지 않는 동종 GPU 노드에서 각 적격 장치의 최소 메모리를 나타내야 합니다. GPU 수량은 `status.allocatable`에서 확인하며 개수 레이블은 남은 용량이 아닙니다.
 
 ```bash
 kubectl get nodes -o custom-columns='NAME:.metadata.name,GPUS:.status.allocatable.nvidia\.com/gpu'
@@ -608,7 +608,7 @@ class DeletionCostManager:
 
 ### 모니터링 및 디버깅
 
-다음은 어노테이션을 조회하고 복제본 수를 바꾸지 않은 채 축소 요청을 검증합니다. 서버 dry run은 **ReplicaSet의 삭제 대상 선택을 시뮬레이션하지 않습니다.** 실제 축소 실험은 제어 가능한 격리 워크로드에서 진행하고 복제본 수를 다시 덮어쓸 HPA를 고려하며 전후 Pod UID·소유 ReplicaSet을 비교하세요. kubelet의 `Killing` 이벤트 하나로 비용 순서를 입증할 수 없습니다.
+다음 명령은 어노테이션을 조회하고 복제본 수를 바꾸지 않은 채 축소 요청을 검증합니다. 서버 dry run은 **ReplicaSet의 삭제 대상 선택을 시뮬레이션하지 않습니다.** 실제 축소 실험은 제어 가능한 격리 워크로드에서 진행하고 복제본 수를 다시 덮어쓸 HPA를 고려하며 전후 Pod UID·소유 ReplicaSet을 비교하세요. kubelet의 `Killing` 이벤트 하나로 비용 순서를 입증할 수 없습니다.
 
 ```bash
 kubectl -n deletion-cost-lab get pods -l app=cache-app \
@@ -775,7 +775,7 @@ kubectl -n scheduler-lab get events --field-selector involvedObject.name=<pod-na
 
 ### 메트릭 수집
 
-아래는10259에서 HTTPS 메트릭을 직접 제공하는 **보조 스케줄러**를 모니터링합니다. 메트릭 사이드카가 필수는 아닙니다. 그림의 AMP·CloudWatch·로그 수집기·알림 경로는 별도 설정이 필요합니다.
+아래 예제는 10259에서 HTTPS 메트릭을 직접 제공하는 **보조 스케줄러**를 모니터링합니다. 메트릭 사이드카가 필수는 아닙니다. 그림의 AMP·CloudWatch·로그 수집기·알림 경로는 별도 설정이 필요합니다.
 
 전제 조건은 탐색 권한이 있는 기존 Prometheus Operator 스택과 `custom-scheduler.scheduler-lab.svc`용 서버 인증서·개인 키가 들어 있는 `scheduler-lab/custom-scheduler-serving-tls` Secret입니다. 공개 CA는 `monitoring/custom-scheduler-ca`의 `ca.crt`에 둡니다. `monitoring/scheduler-scrape-token` Secret에는 Prometheus ServiceAccount의 유효하고 **교체되는 단기 토큰**이 필요합니다. 발급·교체는 이 예제에 구현하지 않았습니다.
 

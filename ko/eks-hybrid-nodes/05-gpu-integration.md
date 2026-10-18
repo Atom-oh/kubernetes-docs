@@ -5,7 +5,7 @@
 > **지원 버전**: DRA GPU 예제는 지원되는 EKS 버전의 Kubernetes 1.34.2 이상 필요. 확인한 인터페이스: GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0.
 > **마지막 업데이트**: 2026년 10월 18일
 
-이 문서는 준비한 NVIDIA GPU 호스트를 EKS Hybrid Nodes에 통합하며 할당, GPU Operator 소유권, MIG와 time-slicing을 다룹니다. **이번 감사에서 GPU 실행, 드라이버 설치, 모델 다운로드, 추론 벤치마크를 수행하지 않았습니다.** 예제에는 승인한 OS·커널·드라이버·toolkit·런타임·이미지 조합과 실제 하드웨어 시험이 필요합니다.
+이 문서는 준비한 NVIDIA GPU 호스트를 EKS Hybrid Nodes에 통합하는 절차와 할당, GPU Operator 소유권, MIG와 time-slicing을 다룹니다. **이번 감사에서 GPU 실행, 드라이버 설치, 모델 다운로드, 추론 벤치마크를 수행하지 않았습니다.** 예제에는 승인한 OS·커널·드라이버·toolkit·런타임·이미지 조합과 실제 하드웨어 시험이 필요합니다.
 
 ## GPU마다 할당 관리자 하나 선택
 
@@ -29,7 +29,7 @@ AWS는 지원되는 정적 용량 프로비저닝을 사용하는 신규 EKS 1.3
 - DRA 0.5.0 GPU 할당의 릴리스 사전 요구 사항은 Kubernetes **1.34.2 이상**, 독립 설치 드라이버 **565 이상**, Toolkit **1.18 이상**, CDI 활성 런타임입니다. GPU Operator DRA 방식은 드라이버 **580 이상**을 요구합니다. 이는 호환성 하한이며 현재 패치·branch 권고값이 아닙니다.
 - 승인한 NFD/GFD 설치나 호스트 인벤토리 절차로 discovery label을 준비합니다. 예제에 활성화 옵션이 있다고 두 번째 discovery 컨트롤러를 배포하지 않습니다.
 
-다음은 운영자가 실행하는 호스트 GPU 메타데이터 읽기이며 CUDA·LLM 벤치마크가 아닙니다.
+다음은 운영자가 호스트 GPU 메타데이터를 읽는 작업이며 CUDA·LLM 벤치마크가 아닙니다.
 
 ```bash
 nvidia-smi --query-gpu=name,driver_version,uuid,memory.total --format=csv,noheader
@@ -137,7 +137,7 @@ helm install hybrid-gpu-dra \
   --values dra-values.yaml --wait --timeout 10m
 ```
 
-이 차트는 GPU 리소스에 여전히 `gpuResourcesEnabledOverride=true`를 요구합니다. 옵션 존재가 모든 GPU 기능이 Alpha라는 뜻은 아닙니다. 최소 예제에서는 선택적 admission webhook을 끕니다. 이를 켜려면 접근 가능한 webhook 엔드포인트와 검증된 TLS/cert-manager 또는 기존 Secret 구성이 필요합니다.
+이 차트는 GPU 리소스에 여전히 `gpuResourcesEnabledOverride=true`를 요구합니다. 옵션이 존재한다고 모든 GPU 기능이 Alpha라는 뜻은 아닙니다. 최소 예제에서는 선택적 admission webhook을 끕니다. 이를 켜려면 접근 가능한 webhook 엔드포인트와 검증된 TLS/cert-manager 또는 기존 Secret 구성이 필요합니다.
 
 ### GPU Operator 대안과 소유권
 
@@ -367,7 +367,7 @@ sharing:
 
 이 구성을 이름 있는 ConfigMap/config 선택으로 plugin과 대상 노드에 연결합니다. 연결되지 않은 ConfigMap만으로 동작은 바뀌지 않습니다. `renameByDefault: true`이면 게시되는 리소스는 `nvidia.com/gpu.shared`입니다. 전용 GPU smoke 요청을 그대로 공유 리소스에 사용하지 않습니다.
 
-Replica 4개는 독립적인 메모리 영역 4개를 예약하지 않으며 더 많은 슬롯 요청이 비례하는 compute를 보장하지 않습니다. 경합, context switch와 워크로드 동작이 지연·처리량에 영향을 줄 수 있으므로 원인을 하나로 단정하지 않고 측정합니다. Time-slicing replica 사이에는 메모리·장애 격리가 없습니다. 추론이라고 초과 할당이 자동으로 안전하거나 학습이 항상 공유와 호환되지 않는 것은 아닙니다.
+Replica 4개는 독립적인 메모리 영역 4개를 예약하지 않으며 더 많은 슬롯을 요청해도 그에 비례하는 compute를 보장하지 않습니다. 경합, context switch와 워크로드 동작이 지연·처리량에 영향을 줄 수 있으므로 원인을 하나로 단정하지 않고 측정합니다. Time-slicing replica 사이에는 메모리·장애 격리가 없습니다. 추론이라고 초과 할당이 자동으로 안전하거나 학습이 항상 공유와 호환되지 않는 것은 아닙니다.
 
 ## H100/H200 사양의 범위
 

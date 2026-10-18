@@ -643,7 +643,7 @@ some DNS work and cryptography. It does not cover all network I/O.
 More threads can increase stack and concurrent-operation memory. Set it before startup and
 test with the real workload.
 
-If using Node cluster, prefer `isPrimary` and explicitly bound worker count.
+If using Node cluster, prefer `isPrimary` and explicitly bound the worker count.
 Do not assume `os.cpus().length`, PM2 `instances: max` or `availableParallelism()` is an exact
 formula for every cgroup quota. Restart loops need backoff and must not recreate workers during
 shutdown. Combining Pod replicas and process replicas multiplies worker and memory budgets.

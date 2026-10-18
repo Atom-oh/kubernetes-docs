@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-These are separate schema examples for ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3. They do not place NLB in front of Aurora. The internal NLB/DNS serves an application, while Aurora is a separate application dependency. An end-to-end connected deployment was not tested.
+These are separate schema examples for ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3. They do not place an NLB in front of Aurora. The internal NLB/DNS serves an application, while Aurora is a separate application dependency. An end-to-end connected deployment was not tested.
 
 Prepare infra and authentication/permissions for all three controllers. Replace VPC, private subnets, security groups and hosted-zone IDs with approved values. NLB and database security groups should allow only required sources/ports. An internal NLB does not replace authorization or network controls.
 
@@ -10,7 +10,7 @@ Creating a TargetGroup does not register targets. ACK targets can manage fixed I
 
 NLB and TargetGroup ARNs are at status.ackResourceMetadata.arn. Listener uses supported references. Route 53 uses recordType, not type. Populate alias DNS and canonicalHostedZoneID from actual NLB status. The record's hosted zone and the NLB alias target's hosted-zone ID are different values.
 
-Aurora PostgreSQL 17.10 was announced in August 2026. Verify the engine/class combination and upgrade path for the actual account/region with describe-db-engine-versions and describe-orderable-db-instance-options. The former 15.4 is not a new default. Prepare database subnets across at least two supported AZs and verify placement/availability.
+Aurora PostgreSQL 17.10 was announced in August 2026. Verify the engine/class combination and upgrade path for the actual account/region with describe-db-engine-versions and describe-orderable-db-instance-options. The former version, 15.4, is not a new default. Prepare database subnets across at least two supported AZs and verify placement/availability.
 
 manageMasterUserPassword=true requests RDS Secrets Manager integration without a plaintext password example. Prepare required KMS/Secrets Manager permissions, costs and approved file delivery to applications. deletionProtection and retain protect different lifecycle layers.
 

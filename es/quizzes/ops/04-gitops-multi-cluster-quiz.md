@@ -1,175 +1,175 @@
-# Cuestionario de GitOps Multi-Cluster
+# Cuestionario de GitOps multiclúster
 
-> **Documento relacionado**: [GitOps Multi-Cluster](../../ops/04-gitops-multi-cluster.md)
+> **Documento relacionado**: [GitOps multiclúster](../../ops/04-gitops-multi-cluster.md)
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Qué es el modelo hub-spoke en GitOps multi-cluster?
+### 1. ¿Qué es el modelo hub-spoke en GitOps multiclúster?
 
 - A) Un patrón de topología de red
-- B) Un cluster central de gestión que controla varios clusters de workloads
+- B) Un clúster central de gestión que controla varios clústeres de cargas de trabajo
 - C) Una estrategia de replicación de datos
 - D) Un algoritmo de balanceo de carga
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un cluster central de gestión que controla varios clusters de workloads**
+**Respuesta: B) Un clúster central de gestión que controla varios clústeres de cargas de trabajo**
 
 **Explicación:**
-En el modelo hub-spoke, un cluster central "hub" ejecuta ArgoCD y gestiona deployments hacia varios clusters de workloads "spoke". Esto centraliza las operaciones de GitOps mientras mantiene los workloads aislados entre clusters.
+En el modelo hub-spoke, un clúster central, el «hub», ejecuta ArgoCD y gestiona los despliegues en varios clústeres de cargas de trabajo, los «spokes». Así se centralizan las operaciones de GitOps y se mantienen aisladas las cargas entre clústeres.
 
 </details>
 
-### 2. ¿Cómo logra ArgoCD High Availability (HA)?
+### 2. ¿Cómo consigue ArgoCD alta disponibilidad (HA)?
 
 - A) Ejecutando una sola réplica con reinicio automático
-- B) Ejecutando varias réplicas de cada componente con leader election
-- C) Usando replicación de base de datos externa
-- D) Desplegando en varias regiones
+- B) Combinando replicación específica de cada componente, fragmentación del controller y ubicación resiliente
+- C) Usando replicación de una base de datos externa
+- D) Desplegándose en varias regiones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Ejecutando varias réplicas de cada componente con leader election**
+**Respuesta: B) Combinando replicación específica de cada componente, fragmentación del controller y ubicación resiliente**
 
 **Explicación:**
-ArgoCD HA despliega varias réplicas de los componentes application-controller, repo-server y server. El application-controller usa leader election para garantizar que solo una instancia procese cada application mientras las demás permanecen en espera.
+El Application Controller distribuye los clústeres de destino entre fragmentos; no mantiene todas las réplicas restantes en espera. ApplicationSet usa una elección de líder independiente y Server no conserva estado. La alta disponibilidad de Redis, la ubicación, la capacidad y los PDB atienden modos de fallo distintos; añadir réplicas por sí solo no garantiza la disponibilidad.
 
 </details>
 
 ### 3. ¿Qué es un ApplicationSet en ArgoCD?
 
 - A) Un grupo de Applications creadas manualmente
-- B) Una plantilla que genera Applications dinámicamente según generadores
-- C) Una copia de seguridad de configuraciones de Application
+- B) Una plantilla que genera Applications dinámicamente a partir de generadores
+- C) Una copia de seguridad de las configuraciones de Application
 - D) Una colección de charts de Helm
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una plantilla que genera Applications dinámicamente según generadores**
+**Respuesta: B) Una plantilla que genera Applications dinámicamente a partir de generadores**
 
 **Explicación:**
-ApplicationSet es un controller que usa generadores (List, Cluster, Git, Matrix, etc.) para crear y gestionar automáticamente varias ArgoCD Applications desde una sola plantilla. Esto habilita deployments escalables multi-cluster y multi-entorno.
+ApplicationSet es un controller que usa generadores (List, Cluster, Git, Matrix, entre otros) para crear y gestionar automáticamente varias Applications de ArgoCD a partir de una sola plantilla. Esto permite escalar los despliegues en varios clústeres y entornos.
 
 </details>
 
-### 4. ¿Qué generador de ApplicationSet crea Applications basadas en secrets de clusters registrados?
+### 4. ¿Qué generador de ApplicationSet crea Applications a partir de los secretos de clústeres registrados?
 
-- A) Generador List
-- B) Generador Git
-- C) Generador Cluster
-- D) Generador Matrix
+- A) El generador List
+- B) El generador Git
+- C) El generador Cluster
+- D) El generador Matrix
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Generador Cluster**
+**Respuesta: C) El generador Cluster**
 
 **Explicación:**
-El generador Cluster itera sobre todos los clusters registrados en ArgoCD (almacenados como secrets) y genera una Application para cada uno. Esto permite el deployment automático en nuevos clusters sin modificar el ApplicationSet.
+El generador Cluster selecciona los clústeres registrados mediante el selector configurado y proporciona sus metadatos. Es posible que el clúster local predeterminado no tenga un Secret, por lo que el selector basado en etiquetas de Secret podría excluirlo. Solo se seleccionan los clústeres nuevos si coinciden sus datos de registro y etiquetas.
 
 </details>
 
 ### 5. ¿Cómo se puede integrar IAM Identity Center (SSO) con ArgoCD?
 
-- A) Conexión directa a la base de datos
-- B) Autenticación SAML u OIDC con RBAC basado en grupos
-- C) Autenticación con clave SSH
-- D) Gestión de claves de API
+- A) Mediante una conexión directa a la base de datos
+- B) Mediante SAML a través de Dex, asignando a RBAC de Argo CD los atributos verificados de la aserción
+- C) Mediante autenticación con claves SSH
+- D) Mediante la gestión de claves de API
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Autenticación SAML u OIDC con RBAC basado en grupos**
+**Respuesta: B) Mediante SAML a través de Dex, asignando a RBAC de Argo CD los atributos verificados de la aserción**
 
 **Explicación:**
-ArgoCD admite SAML y OIDC para la integración con SSO. Los grupos de IAM Identity Center pueden asignarse a roles RBAC de ArgoCD, lo que permite una gestión de acceso centralizada donde los permisos se controlan mediante tu proveedor de identidad.
+Este capítulo sigue la integración documentada de Identity Center con SAML y Dex. Una URL de SAML no es un emisor de OIDC. Asignar grupos no garantiza que se incluya una declaración de grupos; la guía de origen señala la asignación del atributo de grupo como solución alternativa. El ejemplo mínimo asigna explícitamente identidades de correo electrónico verificadas.
 
 </details>
 
 ### 6. ¿Cuál es el propósito de External Secrets Operator en GitOps?
 
-- A) Cifrar repositorios git
-- B) Sincronizar secrets desde proveedores externos (AWS Secrets Manager) hacia Kubernetes
+- A) Cifrar repositorios de Git
+- B) Sincronizar secretos de proveedores externos, como AWS Secrets Manager, con Kubernetes
 - C) Rotar certificados TLS
-- D) Gestionar claves SSH para acceso a git
+- D) Gestionar claves SSH para acceder a Git
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Sincronizar secrets desde proveedores externos (AWS Secrets Manager) hacia Kubernetes**
+**Respuesta: B) Sincronizar secretos de proveedores externos, como AWS Secrets Manager, con Kubernetes**
 
 **Explicación:**
-External Secrets Operator crea automáticamente Kubernetes secrets desde sistemas externos de gestión de secrets como AWS Secrets Manager, HashiCorp Vault o Azure Key Vault. Esto mantiene los datos sensibles fuera de git mientras conserva los workflows de GitOps.
+External Secrets Operator crea automáticamente secretos de Kubernetes a partir de sistemas externos de gestión de secretos, como AWS Secrets Manager, HashiCorp Vault o Azure Key Vault. Así se mantienen los datos confidenciales fuera de Git y se conservan los flujos de trabajo de GitOps.
 
 </details>
 
-### 7. En la configuración de proyectos de ArgoCD, ¿qué restringe `sourceRepos`?
+### 7. En la configuración de un proyecto de ArgoCD, ¿qué restringe `sourceRepos`?
 
-- A) Clusters de destino para deployment
-- B) Repositorios git permitidos para applications
-- C) Selección de namespace
-- D) Cuotas de recursos
+- A) Los clústeres de destino para los despliegues
+- B) Los repositorios de Git permitidos como origen de las Applications
+- C) La selección de espacios de nombres
+- D) Las cuotas de recursos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Repositorios git permitidos para applications**
+**Respuesta: B) Los repositorios de Git permitidos como origen de las Applications**
 
 **Explicación:**
-El campo `sourceRepos` en ArgoCD Projects especifica qué repositorios git pueden usarse como fuentes para Applications en ese proyecto. Esto proporciona límites de seguridad al evitar el acceso no autorizado a repositorios.
+El campo `sourceRepos` de los proyectos de ArgoCD especifica qué repositorios de Git pueden servir como origen de las Applications de ese proyecto. Restringe la selección de origen, pero por sí solo no proporciona credenciales del repositorio, permisos RBAC en el destino ni un entorno aislado para código no confiable.
 
 </details>
 
-### 8. ¿Cuál es el beneficio de usar el generador Matrix en ApplicationSets?
+### 8. ¿Qué ventaja ofrece el generador Matrix de ApplicationSet?
 
 - A) Realiza cálculos matemáticos
-- B) Combina varios generadores para crear el producto cartesiano de parámetros
-- C) Cifra los manifests de application
-- D) Valida la sintaxis YAML
+- B) Combina dos generadores secundarios para producir combinaciones compatibles de parámetros
+- C) Cifra los manifiestos de las Applications
+- D) Valida la sintaxis de YAML
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Combina varios generadores para crear el producto cartesiano de parámetros**
+**Respuesta: B) Combina dos generadores secundarios para producir combinaciones compatibles de parámetros**
 
 **Explicación:**
-El generador Matrix combina dos o más generadores y crea Applications para cada combinación de sus salidas. Por ejemplo, combinar un generador Cluster con un generador List despliega varios services en varios clusters.
+El generador Matrix tiene exactamente dos generadores secundarios. Combina los parámetros que estos producen, sujeto a que las claves sean compatibles y a las restricciones de anidamiento admitidas. Por ejemplo, combinar un generador Cluster con uno List permite desplegar varios servicios en varios clústeres.
 
 </details>
 
-### 9. Al gestionar NodePools mediante GitOps, ¿cuál es una consideración clave?
+### 9. Al gestionar NodePools mediante GitOps, ¿qué aspecto es importante?
 
-- A) Los NodePools no se pueden gestionar mediante GitOps
-- B) Los cambios deben ser graduales para evitar interrumpir workloads en ejecución
-- C) Los NodePools deben estar en el mismo namespace que ArgoCD
+- A) No se pueden gestionar NodePools mediante GitOps
+- B) Los cambios deben hacerse gradualmente para evitar interrumpir las cargas de trabajo en ejecución
+- C) Los NodePools deben estar en el mismo espacio de nombres que ArgoCD
 - D) Solo se pueden gestionar instancias Spot
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los cambios deben ser graduales para evitar interrumpir workloads en ejecución**
+**Respuesta: B) Los cambios deben hacerse gradualmente para evitar interrumpir las cargas de trabajo en ejecución**
 
 **Explicación:**
-Los cambios de NodePool mediante GitOps deben gestionarse cuidadosamente porque las modificaciones pueden activar reemplazos de nodes. Usar estrategias como Progressive Sync o Applications separadas para la gestión de nodes ayuda a evitar interrupciones.
+Gestiona con cuidado los cambios de NodePool mediante GitOps, porque pueden provocar el reemplazo de nodos. Revisa los cambios, la capacidad para reemplazos, los presupuestos de interrupción aplicables y el comportamiento de eliminación. Separar las Applications de infraestructura con sincronización manual puede limitar cambios accidentales; ninguna estrategia de sincronización garantiza reemplazos de nodos sin interrupciones.
 
 </details>
 
-### 10. ¿Cuál es la forma recomendada de añadir un cluster remoto a ArgoCD?
+### 10. ¿Cuál es la forma recomendada de añadir un clúster remoto a ArgoCD?
 
 - A) Editar directamente el ConfigMap de ArgoCD
-- B) Usar `argocd cluster add` o crear un Secret de cluster con credenciales
-- C) Instalar ArgoCD en cada cluster
-- D) Usar kubectl port-forward
+- B) Usar `argocd cluster add` o crear un Secret de clúster con credenciales
+- C) Instalar ArgoCD en cada clúster
+- D) Usar `kubectl port-forward`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usar `argocd cluster add` o crear un Secret de cluster con credenciales**
+**Respuesta: B) Usar `argocd cluster add` o crear un Secret de clúster con credenciales**
 
 **Explicación:**
-Los clusters remotos se añaden usando el comando CLI `argocd cluster add` o creando un Secret con la URL del servidor API del cluster y las credenciales. ArgoCD usa estas credenciales para desplegar y sincronizar applications en clusters remotos.
+Los clústeres remotos se añaden con el comando de CLI `argocd cluster add` o mediante un Secret que incluya la URL del servidor de API del clúster y las credenciales. La CLI puede modificar el RBAC del clúster de destino. La ruta declarativa de AWS requiere que ya existan la relación de confianza de roles, las EKS Access Entries/RBAC, la URL y la CA reales del endpoint y la conectividad de red; un Secret por sí solo no proporciona ninguno de esos requisitos previos.
 
 </details>

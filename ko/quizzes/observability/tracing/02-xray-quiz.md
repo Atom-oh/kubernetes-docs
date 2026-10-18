@@ -114,7 +114,7 @@ Receiver·processor·exporter를 적절한 log/metric/trace pipeline에 연결�
 
 **설명:**
 
-Red는 server fault, yellow는 client error, purple은 HTTP429 같은 throttle, green은 성공을 나타냅니다. 임의 지연 임계값이나 모든 red service가 사용자 정의 오류율 알람 기준을 초과했다는 의미는 아닙니다.
+Red는 server fault, yellow는 client error, purple은 HTTP429 같은 throttle, green은 성공을 나타냅니다. 임의 지연 임계값을 초과했거나 모든 red service가 사용자 정의 오류율 알람 기준을 초과했다는 의미는 아닙니다.
 
 </details>
 

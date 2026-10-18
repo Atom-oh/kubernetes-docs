@@ -14,7 +14,7 @@
 **回答: B) アプリケーションの望ましい状態と同期設定を指定する**
 
 **解説:**
-ArgoCD Application は、アプリケーションのソース（Git リポジトリ、パス、リビジョン）とデプロイ先（クラスター、namespace）を、同期ポリシーおよびヘルスチェックとともに定義する Kubernetes カスタムリソースです。
+ArgoCD Application は、アプリケーションのソース（Git リポジトリ、パス、リビジョン）とデプロイ先（クラスター、namespace）、同期ポリシーを定義する Kubernetes カスタムリソースです。ヘルスはコントローラーが報告するステータスです。カスタムリソースのヘルスチェックは `argocd-cm` で別途設定します。
 
 </details>
 
@@ -62,23 +62,23 @@ ArgoCD Application は、アプリケーションのソース（Git リポジト
 **回答: B) CreateNamespace=true を指定して syncPolicy.syncOptions を使用する**
 
 **解説:**
-`syncPolicy.syncOptions` で `CreateNamespace=true` を設定すると、アプリケーションリソースを同期する前に、ターゲット namespace が存在しない場合は ArgoCD が自動的に作成します。
+`syncPolicy.syncOptions` で `CreateNamespace=true` を設定すると、アプリケーションリソースを同期する前に、ターゲット namespace が存在しない場合は ArgoCD が自動的に作成します。AppProject/RBAC の認可が適用されます。マニフェストに記載された別の namespace がすべて作成されるわけではありません。
 
 </details>
 
 5. `targetRevision: HEAD` と `targetRevision: main` の違いは何ですか？
    - A) 違いはない
-   - B) HEAD は常にデフォルトブランチを指し、main は明示的に指定する
+   - B) HEAD はリモート HEAD をたどり、main は特定のブランチ名を指定する
    - C) HEAD の方が高速である
    - D) main は webhook をサポートするが、HEAD はサポートしない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) HEAD は常にデフォルトブランチを指し、main は明示的に指定する**
+**回答: B) HEAD はリモート HEAD をたどり、main は特定のブランチ名を指定する**
 
 **解説:**
-`HEAD` はリポジトリのデフォルトブランチを指すシンボリック参照である一方、`main` は main ブランチを明示的に指定します。デフォルトブランチが変更される場合、`HEAD` を使用する方が柔軟です。
+`HEAD` はリポジトリのデフォルトブランチを指すシンボリック参照である一方、`main` はそのブランチを明示的に指定します。デフォルトブランチが変更されると、デプロイ先も変わる可能性があります。再現性が必要なリリースでは、検証済みのコミットまたはタグを指定してください。
 
 </details>
 
@@ -110,7 +110,7 @@ Helm リポジトリからデプロイする場合は、Helm リポジトリを�
 **回答: B) デフォルトのリリース名（Application 名）を上書きする**
 
 **解説:**
-デフォルトでは、ArgoCD は Application 名を Helm リリース名として使用します。`releaseName` を明示的に設定すると、Helm リリースに別の名前を使用できます。
+デフォルトでは、ArgoCD は Application 名を Helm リリース名として使用します。`releaseName` はテンプレートで使われる `Release.Name` を変更しますが、ArgoCD がリソースのライフサイクルを管理する点は変わりません。通常の Helm リリースとして管理されるわけではありません。ラベルベースの追跡を使う場合は、チャートの selector と追跡ラベルの相互作用を確認してください。
 
 </details>
 
@@ -126,6 +126,6 @@ Helm リポジトリからデプロイする場合は、Helm リポジトリを�
 **回答: C) values ファイルとインライン values の両方を使用する**
 
 **解説:**
-ArgoCD では、`spec.source.helm.valueFiles`（リポジトリ内のファイルを参照）および／または `spec.source.helm.values`（インライン YAML）を通じて Helm values を指定できます。両方を併用でき、インライン values が優先されます。
+ArgoCD では、`spec.source.helm.valueFiles`（リポジトリ内のファイルを参照）および／または `spec.source.helm.values`（インライン YAML）を通じて Helm values を指定できます。両方を併用できます。優先順位は `parameters` > `valuesObject` > `values` > `valueFiles` > chart のデフォルト値です。`valuesObject` と `values` の値を重複させず、インライン表現はどちらか一方を使うことを推奨します。
 
 </details>

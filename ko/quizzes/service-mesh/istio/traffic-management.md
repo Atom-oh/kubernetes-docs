@@ -432,7 +432,7 @@ retries:
 <details>
 <summary>예시 답안</summary>
 
-Service, stable/canary subset의 DestinationRule, VirtualService 라우트, AnalysisTemplate, 완전한 Rollout을 사용합니다. Argo는 라우트 가중치와 subset 파드 템플릿 해시를 변경하지만 참조할 Istio 리소스를 생성하지 않습니다. Host 기반 통합은 별도의 stable/canary Service를 사용합니다. routes 목록을 명시하면 해당 이름과 일치해야 하며 라우트가 하나면 목록을 생략할 수 있습니다.
+Service, stable/canary subset의 DestinationRule, VirtualService 라우트, AnalysisTemplate, 완전한 Rollout을 사용합니다. Argo는 라우트 가중치와 subset 파드 템플릿 해시를 변경하지만 참조할 Istio 리소스를 생성하지 않습니다. Host 기반 통합은 별도의 stable/canary Service를 사용합니다. routes 목록을 명시하면 라우트 이름이 목록의 이름과 일치해야 하며 라우트가 하나면 목록을 생략할 수 있습니다.
 
 Sidecar 주입과 호환 Argo Rollouts 컨트롤러/CLI가 준비된 새 실습 네임스페이스를 사용하세요 (검토한 가이드는 v1.10.0). Prometheus Pod 스크래핑에 아래 relabel 규칙을 추가하고 실제 트래픽에 rollout_hash와 reporter="destination" 레이블이 있는지 확인합니다. 안정 버전과 섞인 평균이 아닌 최신 ReplicaSet을 측정합니다.
 
@@ -642,7 +642,7 @@ spec:
               podTemplateHashValue: Latest
 ```
 
-최초 배포는 안정 버전을 만들며 이미지 업데이트에서 Canary 단계를 검증합니다. 각 가중치 단계에는 유한한 inline analysis가 있습니다. failureLimit 0이므로 실패 측정 하나로 진행 중인 롤아웃을 중단하며 누락/NaN은 성공하지 않습니다. 성공하면 다음 단계로 진행합니다. 시간은 트래픽, 수집/분석 간격과 reconciliation에 따라 달라져 수초 이내를 보장하지 않습니다.
+최초 배포는 안정 버전을 만들며 이미지 업데이트에서 Canary 단계를 검증합니다. 각 가중치 단계에는 유한한 inline analysis가 있습니다. failureLimit이 0이므로 한 번의 실패 측정으로 진행 중인 롤아웃을 중단하며 누락/NaN은 성공으로 처리되지 않습니다. 성공하면 다음 단계로 진행합니다. 소요 시간은 트래픽, 수집/분석 간격과 reconciliation에 따라 달라져 수초 이내에 완료된다고 보장할 수 없습니다.
 
 ```bash
 kubectl argo rollouts get rollout reviews --watch
@@ -1037,7 +1037,7 @@ TLS 종료 방식을 하나 선택합니다. 게이트웨이 워크로드는 ist
 
 **1. Istio에서 TLS 종료**
 
-NLB는 TCP 패스스루를 사용합니다. 실습용 인증서는 DNS SAN을 넣고 클라이언트가 명시적으로 신뢰하도록 합니다. 예시 호스트를 관리하는 도메인으로 바꾸세요:
+NLB는 TCP 패스스루를 사용합니다. 실습용 인증서에는 DNS SAN을 넣고 클라이언트가 명시적으로 신뢰하도록 합니다. 예시 호스트를 관리하는 도메인으로 바꾸세요:
 
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -1222,7 +1222,7 @@ spec:
 kubectl wait --for=condition=Ready certificate/bookinfo-cert -n istio-system --timeout=120s
 ```
 
-Istio는 결과 Secret을 감시하며 갱신은 cert-manager가 수행합니다. 수동 Secret 관리와 충돌하지 않게 하세요. 공개 인바운드는 클라이언트가 신뢰하는 인증서가 필요합니다. 위 자체 서명은 실습 신뢰 설정이며 내부 PKI는 별도의 신뢰 배포와 수명 주기 관리가 필요합니다.
+Istio는 결과 Secret을 감시하며 갱신은 cert-manager가 수행합니다. 수동 Secret 관리와 충돌하지 않게 하세요. 공개 인바운드에는 클라이언트가 신뢰하는 인증서가 필요합니다. 위 자체 서명은 실습 신뢰 설정이며 내부 PKI는 별도의 신뢰 배포와 수명 주기 관리가 필요합니다.
 
 - [Istio cert-manager 통합](https://istio.io/latest/docs/ops/integrations/certmanager/)
 - [cert-manager 지원 릴리스](https://cert-manager.io/docs/releases/)

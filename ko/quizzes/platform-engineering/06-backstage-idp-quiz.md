@@ -18,7 +18,7 @@ Component이며 spec.type으로 service 등을 구분합니다. Catalog의 Resou
 <details>
 <summary>정답 보기</summary>
 
-등록한 action과 제공한 skeleton이 구현한 파일·외부 작업만 실행합니다. 본문의 작은 예제는 catalog/TechDocs 세 파일을 생성하며 runtime 앱이나 DB를 배포하지 않습니다. Golden Path도 승인·권한·필수 정책을 대신하지 않습니다.
+등록한 action과 제공한 skeleton이 구현한 파일 생성·외부 작업만 실행합니다. 본문의 작은 예제는 catalog/TechDocs 세 파일을 생성하며 runtime 앱이나 DB를 배포하지 않습니다. Golden Path도 승인·권한·필수 정책을 대신하지 않습니다.
 
 </details>
 

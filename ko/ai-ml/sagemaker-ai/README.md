@@ -19,7 +19,7 @@
 
 Python 3.12와 JSONL을 읽을 수 있으면 데이터·평가 실습부터 시작할 수 있습니다. 이 두 CPU 실습에는 AWS 계정이나 모델 weights가 필요하지 않습니다. QLoRA 장의 학습기 해설과 GPU 점검 절차는 실제 GPU 학습 성공 기록과 구분합니다.
 
-새 증강 실습은 40개 합성 family를 먼저 분리하고 train만 증강하는 별도 데이터셋입니다. 기존 generator 1.0.0의 2,200개 레코드를 덮어쓰지 않습니다. 작은 실습 세트의 수치나 oracle 결과를 실제 업무 모델의 성능으로 제시하지 않습니다.
+새 증강 실습에서는 40개 합성 family를 먼저 분리하고 train만 증강하는 별도 데이터셋을 사용합니다. 기존 generator 1.0.0의 2,200개 레코드를 덮어쓰지 않습니다. 작은 실습 세트의 수치나 oracle 결과를 실제 업무 모델의 성능으로 제시하지 않습니다.
 
 ## SageMaker 실행 준비 상태
 
@@ -27,7 +27,7 @@ Python 3.12와 JSONL을 읽을 수 있으면 데이터·평가 실습부터 시�
 
 단, 생성 검사는 합성 검증 문서 4개뿐입니다. 원본 모델은 entity F1 1.0000이지만 형식 준수는 2/4였고, 튜닝 모델은 F1 0.8125·형식 준수 4/4와 함께 불필요한 후보 6개를 추가했습니다. **실행 성공이 성능 개선을 뜻하지 않습니다.** 같은 날 600스텝 본 학습을 제출했으며, 이 기록에는 최종 테스트 결과가 아직 포함되지 않습니다. 본 학습은 validation loss로 checkpoint를 선택한 다음 별도 테스트 400개를 평가하도록 구성했습니다. [실행 설정과 결과 보관 방식](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/README.md#recorded-gpu-execution-september-16-2026)을 참고하세요.
 
-현재 역사적 실행 패키지는 Qwen/Qwen3-30B-A3B-Instruct-2507을 관리형 SageMaker Training Job 또는 임시 EKS GPU Job으로 학습하도록 설계되어 있습니다. 두 GPU 경로의 end-to-end 성공은 기록되어 있지 않습니다.
+과거 실행 패키지는 현재 Qwen/Qwen3-30B-A3B-Instruct-2507을 관리형 SageMaker Training Job 또는 임시 EKS GPU Job으로 학습하도록 설계되어 있습니다. 두 GPU 경로의 end-to-end 성공은 기록되어 있지 않습니다.
 
 이 과거 경로의 고정된 PyTorch 2.8 DLC는 2026-08-06 패치 지원 종료로 자원 생성·GPU 실행이 차단됩니다. [QLoRA 실습의 런타임 설명](05-qlora-finetuning-workshop.md)과 [실행 계약](03-sagemaker-mlflow-execution.md)을 따라 이미지·의존성·MLflow 조합을 함께 검증해야 합니다. 지원 확인 코드만 제거하는 절차는 제공하지 않습니다.
 

@@ -177,7 +177,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-2.html)
 
-그림의 ‘격리 없음’은 네트워크 네임스페이스 공유를 뜻하며 모든 프로세스·파일 시스템 등 다른 컨테이너 격리가 제거된다는 뜻은 아닙니다.
+그림의 ‘격리 없음’은 네트워크 네임스페이스 공유를 뜻하며 프로세스·파일 시스템 등 다른 모든 컨테이너 격리가 제거된다는 뜻은 아닙니다.
 
 #### 3. 오버레이 네트워킹
 
@@ -213,7 +213,7 @@ Kubernetes 모델은 **의도적 네트워크 분할을 제외하고** 직접 Po
 2. 노드 에이전트는 **해당 노드의 Pod**에 접근할 수 있어야 합니다. 모든 호스트가 모든 Pod에 접근해야 한다는 보편적 요구가 아닙니다.
 3. 외부 연결은 클러스터 라우팅·보안 정책을 따르며 무제한 인터넷 접근은 요구되지 않습니다.
 
-NetworkPolicy 집행에는 지원 네트워크 구현이 필요합니다. 설치한 플러그인이 집행하지 않아도 API는 존재할 수 있습니다.
+NetworkPolicy 집행에는 이를 지원하는 네트워크 구현이 필요합니다. 설치한 플러그인이 집행하지 않아도 API는 존재할 수 있습니다.
 
 #### Kubernetes 네트워크 구성 요소:
 
@@ -232,7 +232,7 @@ Cilium은 eBPF를 활용하여 고성능, 확장 가능한 컨테이너 네트�
 4. **네트워크 정책**: L3-L7 수준의 세분화된 정책
 5. **통합 IPAM**: 다양한 IP 주소 할당 전략 지원
 
-플랫폼 재정의가 없는 일반 Helm 설치의 기본 IPAM은 cluster-pool입니다. Operator가 노드 CIDR을, 에이전트가 노드 풀의 Pod IP를 할당합니다. `ipam.mode: kubernetes`는 Node의 `spec.podCIDR`/`spec.podCIDRs`를 사용합니다. ENI 모드는 EC2 인터페이스와 VPC 주소를 사용하며 모든 EKS 컴퓨팅 모드의 보편적인 권장은 아닙니다. [IPAM과 정책](04-ipam-policy.md)을 참고합니다.
+플랫폼 재정의가 없는 일반 Helm 설치의 기본 IPAM은 cluster-pool입니다. Operator가 노드 CIDR을, 에이전트가 노드 풀의 Pod IP를 할당합니다. `ipam.mode: kubernetes`는 Node의 `spec.podCIDR`/`spec.podCIDRs`를 사용합니다. ENI 모드는 EC2 인터페이스와 VPC 주소를 사용하며 모든 EKS 컴퓨팅 모드에 대한 보편적인 권장 사항은 아닙니다. [IPAM과 정책](04-ipam-policy.md)을 참고합니다.
 
 ## 오버레이 네트워크
 
@@ -264,7 +264,7 @@ VXLAN 패킷 구조:
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-5.html)
 
-일반 VXLAN 전송 형식입니다. UDP 4789와 24비트 VNI는 표준 설명이며 Cilium은 기본 UDP 8472와 ID용 오버레이 메타데이터를 사용합니다. 필드 폭이 클러스터 용량 보장은 아닙니다.
+일반 VXLAN 전송 형식입니다. UDP 4789와 24비트 VNI는 표준 설명이며 Cilium은 기본 UDP 8472와 ID용 오버레이 메타데이터를 사용합니다. 필드 폭이 클러스터 용량을 보장하는 것은 아닙니다.
 
 #### GENEVE(Generic Network Virtualization Encapsulation)
 
@@ -382,7 +382,7 @@ PAT는 IP 주소와 포트 번호를 모두 수정합니다. 이를 통해 여�
 
 **Twice NAT**는 트래픽이 주소 영역을 지날 때 출발지와 목적지 주소를 모두 바꾸며 중복 주소 영역을 조정하는 데 사용할 수 있습니다. 주소 매핑, DNS·애플리케이션 가정과 반환 경로를 함께 설계해야 합니다.
 
-RFC 2663의 **양방향 NAT(Bi-directional NAT)**는 양쪽 영역에서 세션을 시작할 수 있다는 뜻입니다. 각 패킷의 두 주소를 모두 바꾼다는 정의가 아닙니다.
+RFC 2663의 **양방향 NAT**(Bi-directional NAT)는 양쪽 영역에서 세션을 시작할 수 있다는 뜻입니다. 각 패킷의 두 주소를 모두 바꾼다는 정의가 아닙니다.
 
 ### NAT의 장단점
 
@@ -604,7 +604,7 @@ DNS는 사람이 읽을 수 있는 도메인 이름을 IP 주소로 변환하는
 
 #### DNS 해석 과정
 
-일반적인 캐시 미적중 질의는 애플리케이션의 stub resolver와 재귀 resolver를 구분합니다.
+일반적인 캐시 미적중 질의 과정에서는 애플리케이션의 stub resolver와 재귀 resolver를 구분합니다.
 
 | 단계 | 질의·응답 |
 | --- | --- |
@@ -932,7 +932,7 @@ Cilium은 eBPF를 활용하여 효율적인 로드 밸런싱을 구현합니다:
 
 BPF Service 알고리즘은 기본값 **random**과 **Maglev**입니다. Maglev는 흐름 정보를 해싱하며 단순한 출발지 IP 어피니티가 아닙니다. 일반 소켓 수준 east-west 선택 경로와 Maglev가 적용되는 외부 패킷 경로도 구분합니다.
 
-`ClientIP` 세션 어피니티는 Service에 별도로 설정합니다. 어피니티 시간 제한은 ‘Maglev 타임아웃’이 아니며 Maglev가 주기적으로 세션을 재분배하는 타이머는 없습니다. 구성원·시드·테이블 변경으로 선택이 바뀔 수 있고 일관된 해싱이라고 제거된 백엔드가 연결을 계속 처리할 수는 없습니다.
+`ClientIP` 세션 어피니티는 Service에 별도로 설정합니다. 어피니티 시간 제한은 ‘Maglev 타임아웃’이 아니며 Maglev가 주기적으로 세션을 재분배하는 타이머는 없습니다. 구성원·시드·테이블 변경으로 선택이 바뀔 수 있고 일관된 해싱을 사용한다고 해서 제거된 백엔드가 연결을 계속 처리할 수는 없습니다.
 
 #### 3. L7 로드 밸런싱
 
@@ -953,7 +953,7 @@ Cilium은 여러 클러스터에 걸친 로드 밸런싱을 지원합니다:
 
 #### Cilium 로드 밸런싱 구성 예제:
 
-준비된 설치용 Helm 값입니다. 해시 시드는 유효한 **12바이트 base64 학습용 값**입니다. 배포에는 참여 노드가 공유할 임의 시드를 생성·보존하고 시드·테이블 변경의 연결 영향을 검토합니다. [준비된 로드 밸런싱 프로필](05-l2-l7-networking.md)을 참고합니다.
+준비된 설치용 Helm 값입니다. 해시 시드는 유효한 **12바이트 base64 학습용 값**입니다. 배포에는 참여 노드가 공유할 임의 시드를 생성·보존하고 시드·테이블 변경이 연결에 미치는 영향을 검토합니다. [준비된 로드 밸런싱 프로필](05-l2-l7-networking.md)을 참고합니다.
 
 ```yaml
 # load-balancing-values.yaml

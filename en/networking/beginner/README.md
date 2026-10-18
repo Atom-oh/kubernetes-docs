@@ -109,7 +109,7 @@ apt-cache policy "$TOOL_PACKAGE"
 sudo apt-get --simulate install "$TOOL_PACKAGE"
 ```
 
-“No packages found” in the local query is expected for an absent package. After a successful repository-index refresh, inspect the `Candidate` version and simulated dependencies, upgrades, and removals. No candidate or repository errors mean stop and check the configured Ubuntu repositories/management path. If a package is already installed but its command is missing, investigate its files and command search path rather than installing a conflicting provider.
+“No packages found” in the local query is expected for an absent package. After a successful repository-index refresh, inspect the `Candidate` version and simulated dependencies, upgrades, and removals. If there is no candidate or there are repository errors, stop and check the configured Ubuntu repositories/management path. If a package is already installed but its command is missing, investigate its files and command search path rather than installing a conflicting provider.
 
 Only when that **selected command is absent** and the preview contains the intended package/dependencies, install on the **Ubuntu guest**:
 
@@ -139,7 +139,7 @@ dnf info "$TOOL_PACKAGE"
 sudo dnf --assumeno install "$TOOL_PACKAGE"
 ```
 
-Check the available package, architecture, repository, and proposed dependencies/removals. `--assumeno` declines the transaction without installing; a nonzero status for the declined transaction is not a failed network probe. No candidate means investigate the configured Rocky 9 repositories. The mandatory table does not require EPEL. Then, **only for the selected missing command**, install on the **Rocky guest**:
+Check the available package, architecture, repository, and proposed dependencies/removals. `--assumeno` declines the transaction without installing; a nonzero status for the declined transaction is not a failed network probe. If there is no candidate, investigate the configured Rocky 9 repositories. The mandatory table does not require EPEL. Then, **only for the selected missing command**, install on the **Rocky guest**:
 
 ```bash
 sudo dnf install "$TOOL_PACKAGE"

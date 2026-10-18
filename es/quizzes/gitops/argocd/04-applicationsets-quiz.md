@@ -46,7 +46,7 @@ El Cluster generator genera automáticamente Applications para cada cluster regi
 **Respuesta: B) Crea Applications para cada directorio en una ruta especificada**
 
 **Explicación:**
-El Git directory generator analiza un directorio especificado en un repositorio de Git y crea una Application para cada subdirectorio encontrado. Esto es útil para configuraciones de monorepo.
+El generador de directorios de Git recorre un directorio especificado en un repositorio de Git y crea una Application por cada directorio que coincida con los patrones glob y las reglas de exclusión configurados. Esto resulta útil en repositorios monolíticos.
 
 </details>
 
@@ -62,7 +62,7 @@ El Git directory generator analiza un directorio especificado en un repositorio 
 **Respuesta: D) Tanto A como B**
 
 **Explicación:**
-El Matrix generator crea combinaciones (producto cartesiano) de parámetros de múltiples generators. El Merge generator combina parámetros de múltiples generators, fusionando las entradas coincidentes. Ambos pueden usarse para combinar generators.
+El generador Matrix crea combinaciones (producto cartesiano) de parámetros de exactamente dos generadores secundarios. El generador Merge combina parámetros de varios generadores y fusiona las entradas que coinciden. Ambos permiten combinar generadores.
 
 </details>
 
@@ -78,7 +78,7 @@ El Matrix generator crea combinaciones (producto cartesiano) de parámetros de m
 **Respuesta: B) Usar la sintaxis de plantillas de Go para una creación de plantillas más compleja**
 
 **Explicación:**
-Configurar `goTemplate: true` habilita la sintaxis de plantillas de Go, que proporciona capacidades de creación de plantillas más potentes, como condicionales, bucles y funciones, en comparación con la sustitución de variables simple predeterminada.
+Configurar `goTemplate: true` habilita la sintaxis de plantillas de Go, que ofrece condicionales, bucles y funciones, entre otras capacidades más potentes que la sustitución simple predeterminada. Cada campo de tipo cadena se evalúa por separado: las instrucciones de control no pueden abarcar varios campos YAML, y los campos booleanos u objetos no se pueden representar directamente mediante plantillas.
 
 </details>
 
@@ -110,22 +110,22 @@ El Pull Request generator crea Applications para cada pull request abierto en un
 **Respuesta: B) Se eliminan todas las Applications generadas**
 
 **Explicación:**
-De forma predeterminada, los ApplicationSets tienen una política de eliminación en cascada, lo que significa que, al eliminar un ApplicationSet, también se eliminarán todas las Applications que generó. Esto se puede cambiar usando la política `preserveResourcesOnDeletion`.
+De forma predeterminada, los ApplicationSets aplican una política de eliminación en cascada: al eliminar un ApplicationSet, también se eliminan todas las Applications que generó. `preserveResourcesOnDeletion` controla la eliminación de los recursos desplegados; no impide que la recolección de basura elimine los objetos Application.
 
 </details>
 
 8. ¿Cómo puedes evitar que un ApplicationSet elimine las Applications generadas cuando se elimina el ApplicationSet?
-   - A) Configurar `syncPolicy.preserveResourcesOnDeletion: true`
-   - B) Usar el finalizer `orphan`
+   - A) Eliminarlo con `kubectl delete applicationset NAME --cascade=orphan`
+   - B) Configurar únicamente `syncPolicy.preserveResourcesOnDeletion: true`
    - C) Configurar la anotación de la política de eliminación
-   - D) Eliminar manualmente la referencia de propietario
+   - D) Reducir a cero las réplicas del controlador ApplicationSet
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Configurar `syncPolicy.preserveResourcesOnDeletion: true`**
+**Respuesta: A) Eliminarlo con `kubectl delete applicationset NAME --cascade=orphan`**
 
 **Explicación:**
-Configurar `preserveResourcesOnDeletion: true` en el syncPolicy del ApplicationSet garantiza que las Applications generadas (y sus recursos desplegados) se conserven cuando se elimina el ApplicationSet.
+`--cascade=orphan` deja los objetos Application generados al eliminar su ApplicationSet padre. `preserveResourcesOnDeletion: true` evita añadir el finalizer que elimina los recursos desplegados; no protege los objetos Application de la recolección de basura. Si una Application huérfana conserva un finalizer, sus recursos aún pueden eliminarse cuando se borre esa Application más adelante.
 
 </details>

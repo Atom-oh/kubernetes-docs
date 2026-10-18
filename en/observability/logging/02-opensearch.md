@@ -1116,7 +1116,7 @@ This is a payload example, not an end-to-end SSO deployment. Validate metadata t
 
 Price the selected Region, node families/counts, replicas, EBS, warm-node compute/storage, cold storage and data-transfer/ingestion paths. The earlier 100GB/day dollar totals and fixed savings percentages lacked enough assumptions to reproduce; they are not a current budget or measured comparison.
 
-Index compression, refresh interval, shard counts and field mappings trade storage/CPU, search freshness, query capability and recovery cost. Set static options such as `index.codec` in the creation template; do not blindly send static-setting changes to every open production index. Dropping text positions or disabling fields can break queries.
+Index compression, refresh interval, shard counts and field mappings trade off storage/CPU, search freshness, query capability and recovery cost. Set static options such as `index.codec` in the creation template; do not blindly send static-setting changes to every open production index. Dropping text positions or disabling fields can break queries.
 
 Reserved Instance savings depend on eligible usage, Region, term and payment choice. A one-year horizon alone does not justify a purchase, and a node discount does not make all storage/delivery charges disappear. Use current pricing and measured demand rather than the old fixed 21/24/36% figures.
 
@@ -1131,7 +1131,7 @@ OpenSearch combines inverted indexes with **column-oriented doc values** for man
 
 The original OpenSearch/ClickHouse latency and compression figures had no reproducible hardware, versions, data or queries. Do not turn them into a universal 100GB migration threshold or an assertion that 90% of all organizations' queries have one pattern.
 
-Compare representative full-text, filter, aggregation and investigative queries on the same data, retention, durability and concurrency requirements. Evaluate ingest/backfill cost, schema evolution, permissions, dashboards, operational skills and rollback. A dual-write experiment needs reconciliation and cost controls; a fixed two-week or two-month schedule is not a guarantee.
+Compare representative full-text, filter, aggregation and investigative queries using the same data and the same retention, durability and concurrency requirements. Evaluate ingest/backfill cost, schema evolution, permissions, dashboards, operational skills and rollback. A dual-write experiment needs reconciliation and cost controls; a fixed two-week or two-month schedule is not a guarantee.
 
 <span id="feature-comparison"></span>
 <span id="recommendations-by-use-case"></span>

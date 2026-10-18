@@ -245,7 +245,7 @@ spec:
 
 이 예제에는 **parent Service의 retry annotation이 없어야 하며**, 충돌하는 ServiceProfile이나 신뢰할 수 없는 요청의 정책 override도 없어야 합니다. 그렇지 않으면 기본 route가 retry 정책을 상속할 수 있습니다. 유효 정책과 쓰기 요청을 별도로 확인해야 하며 쓰기가 전달되었다는 사실만으로 모든 계층에서 재시도를 금지했다고 판단할 수 없습니다.
 
-Annotation은 최대 2회 재시도, 즉 최대 3회 시도와 400ms retry timeout, 2s 전체 request timeout을 지정합니다. 전체 deadline 때문에 재시도 횟수를 모두 사용하기 전에 종료될 수 있습니다. 현재 참조 문서에서 body가 64KiB보다 큰 요청은 재시도하지 않습니다.
+Annotation은 최대 2회 재시도, 즉 최대 3회 시도와 400ms retry timeout, 2s 전체 request timeout을 지정합니다. 전체 deadline 때문에 재시도 횟수를 모두 사용하기 전에 종료될 수 있습니다. 현재 참조 문서에 따르면 body가 64KiB보다 큰 요청은 재시도하지 않습니다.
 
 **edge-26.10.1에서 `retry.linkerd.io/limit:"0"`을 비활성화 스위치로 사용하지 않습니다.** [해당 버전 parser](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/policy-controller/k8s/index/src/outbound/index/http.rs)를 기준으로 합니다. 해당 버전 parser는 0을 미지정 값으로 처리하므로 retry 조건이 있으면 1회 재시도로 돌아갑니다. 빈 HTTP retry 조건 문자열도 지원되는 재시도 금지 정책이 아닙니다. 여러 method를 처리하는 Service의 기본값에는 retry 설정을 두지 않고 검증한 읽기 route에만 정책을 연결합니다.
 
@@ -330,7 +330,7 @@ spec:
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-1.html)
 
-실패한 원래 시도, 추가 upstream 전달, 최종 결과를 구분해 관찰합니다. 그림은 한 번의 성공적인 재시도 예시이며 모든 실패를 감추겠다는 보장이 아닙니다.
+실패한 원래 시도, 추가 upstream 전달, 최종 결과를 구분해 관찰합니다. 그림은 한 번의 성공적인 재시도 예시이며 모든 실패를 감춘다는 보장은 아닙니다.
 
 ### Profile 생성과 관찰
 
@@ -357,7 +357,7 @@ linkerd viz stat deploy/client -n profile-demo --to svc/api
 
 ## 로드 밸런싱과 Failure Accrual
 
-Linkerd는 HTTP 요청에 지연 시간을 고려한 EWMA 동작을 사용하며 TCP는 connection 단위로 분산합니다. 정상적이고 빠른 후보를 선호하지만 모든 요청이 화면에 표시된 전체 endpoint 중 최저 점수를 결정적으로 선택한다는 뜻은 아닙니다. Pod 단위 통계와 source-to-Service 통계는 집계 대상도 다릅니다.
+Linkerd는 HTTP 요청에 지연 시간을 고려한 EWMA 동작을 사용하며 TCP는 connection 단위로 분산합니다. 정상적이고 빠른 후보를 선호하지만 모든 요청이 화면에 표시된 전체 endpoint 중 최저 점수를 가진 endpoint를 결정적으로 선택한다는 뜻은 아닙니다. Pod 단위 통계와 source-to-Service 통계는 집계 대상도 다릅니다.
 
 ### 명시적으로 활성화하는 Circuit Breaking
 
@@ -392,7 +392,7 @@ Consecutive 정책의 기본 임계값은 7이며 “자동으로 connection이 
 | Unavailable | 가능하면 일반 요청을 다른 endpoint로 전달 |
 | Probation | Backoff 후 실제 애플리케이션 요청으로 복구 여부를 시험 |
 
-Probation은 Kubernetes health probe를 주기적으로 생성하는 동작이 아닙니다. 대상 애플리케이션 트래픽 없이 `/ready`가 성공했다는 사실만으로 endpoint가 복구되지 않습니다. Backoff에는 설정한 시간과 jitter가 적용됩니다. 사용할 수 있는 endpoint가 모두 실패하면 요청이 실패하거나 다른 설정된 backend가 선택될 수 있습니다.
+Probation은 Kubernetes health probe를 주기적으로 생성하는 동작이 아닙니다. 대상 애플리케이션 트래픽 없이 `/ready`가 성공했다는 사실만으로 endpoint가 복구되지 않습니다. Backoff에는 설정한 시간과 jitter가 적용됩니다. 사용할 수 있는 endpoint가 모두 실패하면 요청이 실패하거나 설정된 다른 backend가 선택될 수 있습니다.
 
 ```bash
 linkerd diagnostics policy -n circuit-demo svc/api 80 -o json

@@ -296,7 +296,7 @@ Typha는 별도 Pod 집합에서 업데이트를 캐시·분배해 Felix의 직�
 
 ## Calico·kube-proxy·성능
 
-kube-proxy는 Service 전달을 구현하며 CNI 네트워킹이나 NetworkPolicy 엔진이 아닙니다. 이 실습처럼 Calico 표준 데이터플레인은 kube-proxy와 함께 동작할 수 있고 eBPF는 구성 시 Service 처리를 대체할 수 있습니다.
+kube-proxy는 Service 전달을 구현하며 CNI 네트워킹이나 NetworkPolicy 엔진이 아닙니다. 이 실습에서처럼 Calico 표준 데이터플레인은 kube-proxy와 함께 동작할 수 있고 eBPF는 구성 시 Service 처리를 대체할 수 있습니다.
 
 | 관심사 | 비교 대상 |
 |---|---|

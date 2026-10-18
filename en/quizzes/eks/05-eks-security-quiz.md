@@ -126,7 +126,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-The group name in the access entry must match the RoleBinding subject. This role permits the listed operations only in security-demo; other existing grants can broaden access. Creating Deployments/Jobs can indirectly use Secrets, PVCs and ServiceAccounts in that namespace, so absence of a direct Secret-read rule is not a tenant security boundary. Separate tenants and constrain workload identity/resource use through admission and ownership controls.
+The group name in the access entry must match the RoleBinding subject. This role permits the listed operations only in security-demo; other existing grants can broaden access. Creating Deployments/Jobs can indirectly use Secrets, PVCs and ServiceAccounts in that namespace, so the absence of a direct Secret-read rule is not a tenant security boundary. Separate tenants and constrain workload identity/resource use through admission and ownership controls.
 
 A separately reviewed viewer can instead use a namespace-scoped AmazonEKSViewPolicy association. Inspect existing access policies before adding it; it does not revoke broader RBAC or other access-policy grants. `eks:namespaces` filters access-policy association requests, not general kubectl requests.
 
@@ -547,7 +547,7 @@ spec:
     message: Use a sha256 digest from the approved team/app repository in security-demo.
 ```
 
-Validation: 20 mocked pipeline failure/order/artifact cases and nine actual Kyverno CLI string-policy cases. Buildspec/Bash/Python/JSON and the released policy CRD were checked. No image was built/scanned/pushed, no real AWS signature was produced or verified, and no admission webhook was deployed. This is a reviewed teaching workflow with explicit environment assumptions, not tested production readiness.
+Validation: 20 mocked pipeline failure/order/artifact cases and nine actual Kyverno CLI string-policy cases. Buildspec/Bash/Python/JSON and the released policy CRD were checked. No image was built/scanned/pushed, no real AWS signature was produced or verified, and no admission webhook was deployed. This is a reviewed teaching workflow with explicit environment assumptions, not a workflow tested for production readiness.
 
 References: [Signer signing](https://docs.aws.amazon.com/signer/latest/developerguide/image-signing-steps.html), [Signer verification](https://docs.aws.amazon.com/signer/latest/developerguide/image-verification.html), [ECR managed signing](https://docs.aws.amazon.com/AmazonECR/latest/userguide/managed-signing.html), [EKS admission verification](https://docs.aws.amazon.com/eks/latest/userguide/image-verification.html), [CodeBuild buildspec](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html), [Trivy image flags](https://trivy.dev/docs/latest/references/configuration/cli/trivy_image/).
 
@@ -567,7 +567,7 @@ References: [Signer signing](https://docs.aws.amazon.com/signer/latest/developer
 
 **Explanation:**
 
-Pod Security Standards define Privileged, Baseline and Restricted profiles. Pod Security Admission enforces namespace-selected profiles. PSA is stable since Kubernetes 1.25; PodSecurityPolicy was deprecated in 1.21 and **removed in 1.25**. A current cluster cannot deploy that removed API. Kyverno/Gatekeeper policies are separate resources, even if an older example uses “PSP” in a constraint name.
+Pod Security Standards define Privileged, Baseline and Restricted profiles. Pod Security Admission enforces namespace-selected profiles. PSA has been stable since Kubernetes 1.25; PodSecurityPolicy was deprecated in 1.21 and **removed in 1.25**. A current cluster cannot deploy that removed API. Kyverno/Gatekeeper policies are separate resources, even if an older example uses “PSP” in a constraint name.
 
 An isolated Linux demonstration with a reviewed v1.36 profile is:
 

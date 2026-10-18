@@ -1,175 +1,163 @@
-# Upgrade Operations クイズ
+# EKS アップグレード運用クイズ
 
-> **関連ドキュメント**: [Upgrade Operations](../../ops/11-upgrade-operations.md)
+> **関連ドキュメント**: [EKS upgrades](../../ops/11-upgrade-operations.md)
 
-## 選択問題
+## 1. EKS control plane のアップグレードでは、中間の minor version をいくつスキップできますか？
 
-### 1. AWS は各 EKS Kubernetes version を standard support でどのくらいの期間サポートしますか？
-
-- A) 6 か月
-- B) 12 か月
-- C) 14 か月
-- D) 24 か月
+- A) 0。毎回、次の minor version に進む
+- B) 1
+- C) 2
+- D) 無制限
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) 14 か月**
+**回答: A**
 
-**解説:**
-AWS は EKS 上の各 Kubernetes version に対して 14 か月の standard support を提供します。その後、clusters は extended support（追加費用）に移行するか、upgrade する必要があります。standard support window 内で upgrade を計画することが推奨されます。
+たとえば、1.34 から 1.36 へ進むには、1.35 を経由する必要があります。kubelet の skew 許容範囲は、control plane のアップグレード手順とは別のものです。
 
 </details>
 
-### 2. cluster 内の deprecated Kubernetes APIs を検出する tool は何ですか？
+## 2. Auto Mode のみのクラスターで CoreDNS Deployment が見当たらない場合、どう解釈すべきですか？
 
-- A) kubectl
-- B) Pluto
-- C) Helm
-- D) Terraform
+- A) 常に DNS が壊れていることを意味する
+- B) node のシステムサービスによる DNS と実際の動作を確認する
+- C) 常にセルフマネージドの Karpenter をインストールする
+- D) すべてのクラスターから CoreDNS Deployment を削除する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Pluto**
+**回答: B**
 
-**解説:**
-Pluto は Kubernetes manifests、Helm releases、live clusters を scan し、deprecated または削除された API versions を検出します。これにより、それらの APIs が存在しなくなる version へ upgrade する前に、更新が必要な resources を特定できます。
+Auto Mode 以外の node が混在するクラスターでは、それらの node が必要とする DNS Deployment と add-on を残してください。
 
 </details>
 
-### 3. EKS upgrade operations における Velero の目的は何ですか？
+## 3. Velero 1.18.4 の `restore create -o json` について、正しい説明はどれですか？
 
-- A) Kubernetes version を upgrade するため
-- B) upgrade 前に cluster resources を backup および restore するため
-- C) cluster performance を monitor するため
-- D) node groups を管理するため
+- A) 実際の restore を完了する
+- B) 完全にオフラインで実行される
+- C) オブジェクトは作成しないが、リソースの検出や Backup の読み取りを行う場合がある
+- D) `--dry-run` と組み合わせた場合にのみ有効である
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) upgrade 前に cluster resources を backup および restore するため**
+**回答: C**
 
-**解説:**
-Velero は Kubernetes resources と persistent volumes の backup および restore 機能を提供します。upgrades の前に Velero backup を取得しておくことで、upgrade によって問題が発生した場合に recovery が可能になり、operation の safety net を提供します。
+`restore create` に `--dry-run` フラグはありません。出力だけを確認することと、隔離した環境で実際の restore をテストすることは別です。
 
 </details>
 
-### 4. Terraform 3-Layer architecture では、正しい upgrade order は何ですか？
+## 4. API エラーが発生した場合や kubecontext が想定と異なる場合、preflight ツールはどう動作すべきですか？
 
-- A) Workload -> Platform -> Foundation
-- B) Platform -> Foundation -> Workload
-- C) Foundation -> Platform -> Workload
-- D) すべての layers を同時に実施する
+- A) 結果が空なら正常とみなす
+- B) 不明または context の不一致として失敗し、調査する
+- C) context を自動で切り替えてアップグレードする
+- D) PDB を削除する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) Foundation -> Platform -> Workload**
+**回答: B**
 
-**解説:**
-upgrade order は dependencies に従います。Platform は Foundation に依存するため Foundation (VPC, IAM) が最初、Workload は Platform に依存するため次に Platform (EKS cluster)、最後に Workload (applications) です。これにより、各 layer の dependencies がすでに upgrade されていることを保証します。
+preflight が単独で実行できても、Pod の readiness が確認できたことにはなりません。Deployment の generation と rollout status も確認してください。
 
 </details>
 
-### 5. EKS Auto Mode では、Kubernetes version upgrade 中に nodes はどうなりますか？
+## 5. EKS ネイティブの rollback を実行する基本的な適格条件はどれですか？
 
-- A) nodes は restart なしで in-place upgrade される
-- B) nodes は新しい version の nodes に自動的に置き換えられる
-- C) nodes は手動で削除する必要がある
-- D) nodes は version upgrades の影響を受けない
+- A) 現在の version で新規作成されたクラスターであること
+- B) アップグレード完了から 7 日以内に開始するなど、適格条件を満たすこと
+- C) 以前の任意の version に、いつでも戻せること
+- D) etcd backup があれば、すべての制限を回避できること
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) nodes は新しい version の nodes に自動的に置き換えられる**
+**回答: B**
 
-**解説:**
-EKS control plane を upgrade した後、Auto Mode は新しい version に合わせて nodes を自動的に rotate します。この process では古い nodes を cordon し、workloads を drain して、更新された kubelet version を持つ新しい nodes を provision します。
+戻し先 version のサポート状況、EXTENDED policy、クラスターの ACTIVE 状態、互換性のない EKS 機能も確認してください。
 
 </details>
 
-### 6. upgrade 前に Pod Disruption Budgets (PDBs) で何を確認すべきですか？
+## 6. Auto Mode の node rollback 中にクラスターの status が ACTIVE の場合、何を意味しますか？
 
-- A) PDBs が存在しないこと
-- B) PDBs が rolling node replacement に十分な disruption を許可していること
-- C) PDBs が zero に設定されていること
-- D) PDBs が正しい API versions を参照していること
+- A) rollback が完全に完了した
+- B) control plane はまだ現在の version で動作している可能性があるため、update ID を確認する
+- C) node rollback は実行できない
+- D) 直ちに以前のクラスターを削除する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) PDBs が rolling node replacement に十分な disruption を許可していること**
+**回答: B**
 
-**解説:**
-制約が強すぎる PDBs（例: maxUnavailable: 0 かつ minAvailable: 100%）は、upgrades 中の node draining を block する可能性があります。upgrade 前に、PDBs が rolling replacement process を進めるために十分な disruption を許可していることを確認してください。
+Auto Mode は最初に node を調整します。node の timeout のデフォルトは 720 分です。クライアント側の待機 timeout が発生しても、AWS 側の処理はキャンセルされません。
 
 </details>
 
-### 7. EKS clusters の blue/green upgrade strategy とは何ですか？
+## 7. rollback の `--force` は何を回避しますか？
 
-- A) 両方の clusters を同時に upgrade すること
-- B) 新しい version の新しい cluster を作成し、traffic を段階的に移行すること
-- C) rollback capability を備えて in-place upgrade すること
-- D) 同じ nodes 上で両方の versions を実行すること
+- A) 7 日間の期限とすべての PDB
+- B) あらゆる中断とデータ互換性の問題
+- C) Insight のチェック。適格条件や Auto Mode の中断制御は回避しない
+- D) etcd データの保持
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 新しい version の新しい cluster を作成し、traffic を段階的に移行すること**
+**回答: C**
 
-**解説:**
-blue/green upgrade は、既存の「blue」cluster と並行して、target Kubernetes version を実行する新しい「green」cluster を作成します。weighted routing を使用して traffic を段階的に移行し、問題が発生した場合は traffic を blue に戻すことで簡単に rollback できます。
+ERROR または UNKNOWN の Insight は rollback をブロックしますが、WARNING は参考情報です。`--force` は標準的な復旧手順の代わりにはなりません。
 
 </details>
 
-### 8. upgrade 後にはどのような validation を実施すべきですか？
+## 8. ネイティブの version rollback で、過去の状態に自動復元されないものはどれですか？
 
-- A) pods が running であることだけを確認する
-- B) node status、pod health、addon functionality、application behavior を verify する
-- C) validation は不要である
-- D) Pluto をもう一度実行するだけ
+- A) API server の minor version
+- B) Auto Mode による node version の調整
+- C) add-on、アプリケーション、etcd 内のオブジェクト、PV データ
+- D) control plane コンポーネントの version
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) node status、pod health、addon functionality、application behavior を verify する**
+**回答: C**
 
-**解説:**
-upgrade 後の validation には、すべての nodes が Ready、pods が Running、cluster addons (CoreDNS, kube-proxy, CNI) が functional、ingress/egress が動作、storage operations が成功、application-specific health checks が pass していることを含めるべきです。
+通常の managed node group では、`UpdateNodegroupVersion` を別途処理する必要があります。version rollback は snapshot の復元とは異なります。
 
 </details>
 
-### 9. EKS extended support は standard support とどのように異なりますか？
+## 9. NLB の target group weight を 0 に設定した場合、正しい説明はどれですか？
 
-- A) extended support は無料である
-- B) extended support は追加費用で standard を超える追加月数を提供する
-- C) extended support は security patches のみを対象とする
-- D) extended support は Fargate 専用である
+- A) 既存の接続は常に最後まで維持される
+- B) 既存の接続が短時間で閉じることがあるため、retry と session の動作をテストする
+- C) weight の合計は 100 でなければならない
+- D) NLB は weight 付き target group をサポートしない
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) extended support は追加費用で standard を超える追加月数を提供する**
+**回答: B**
 
-**解説:**
-EKS extended support により、clusters は 14 か月の standard window を超えて古い Kubernetes versions で実行できますが、追加の per-cluster-hour cost が発生します。これにより、upgrade により多くの時間を必要とする organizations に flexibility が提供されます。
+weight は 0〜999 の相対値です。通常の変更と weight を 0 にする変更を区別してください。また、TLS listener では target group stickiness はサポートされません。
 
 </details>
 
-### 10. upgrade 時に addon compatibility を確認することが重要なのはなぜですか？
+## 10. Blue を廃止する前に、何を確認すべきですか？
 
-- A) addons は自動的に upgrade されるため
-- B) 一部の addon versions は特定の Kubernetes versions とのみ compatible であるため
-- C) addons は upgrades に影響しないため
-- D) addons は upgrade 前に削除する必要があるため
+- A) weight が 0 になったら直ちに削除する
+- B) 共有リソースと target group の参照、データ互換性、復旧期間、所有関係を確認する
+- C) HTTP 200 が 1 回返れば、すべてのデータ整合性が証明される
+- D) EFS を共有していれば、同時書き込みを確認する必要はない
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 一部の addon versions は特定の Kubernetes versions とのみ compatible であるため**
+**回答: B**
 
-**解説:**
-EKS managed addons (VPC CNI, CoreDNS, kube-proxy) と third-party addons には、Kubernetes versions との version compatibility matrices があります。compatible でない addon version に upgrade すると、cluster functionality が壊れる可能性があります。cluster upgrade とあわせて addon upgrades を確認し、計画してください。
+Auto Mode の TGB またはクラスターを削除する際の target group のライフサイクルと、listener の共有を考慮してください。namespace を変更しても、consumer、DB、DNS が分離されるとは限りません。
 
 </details>

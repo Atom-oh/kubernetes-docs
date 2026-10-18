@@ -1,209 +1,195 @@
-# Linkerd Observability クイズ
+# Linkerd 可観測性クイズ
 
-このクイズでは、Linkerd の observability 機能に関する理解度を確認します。
+[可観測性ガイド](../../../service-mesh/linkerd/05-observability.md) に基づいています（2026 年 9 月 11 日確認）。
 
-## クイズ問題
+### 1. Linkerd の主要な HTTP サービスメトリクス 3 種に含まれないものはどれですか？
 
-### 1. Linkerd によって自動的に収集される golden metric ではないものはどれですか？
-
-A. Success rate
-B. Request rate (RPS)
-C. Latency
-D. CPU usage
+- A. 成功率
+- B. リクエスト率
+- C. レイテンシー
+- D. CPU 使用率
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. CPU usage**
+**解答: D**
 
-**解説:**
-Linkerd は、success rate、request rate (RPS)、latency（p50、p95、p99）の 3 つの golden metric を自動的に収集します。CPU usage は Kubernetes の metric であり、別途収集する必要があります。
+**解説:** 3 種のメトリクスは、プロキシが分類する成功率、リクエスト率、レイテンシーです。CPU やキャパシティは追加の運用情報です。これは、プロキシや別の収集機構からプロセス／リソースメトリクスを取得できないという意味ではありません。暗号化された TCP トラフィックから、HTTP サービスメトリクスが自動的に得られるわけでもありません。
 
 </details>
 
-### 2. `linkerd viz stat` コマンドの出力に含まれないものはどれですか？
+### 2. `linkerd viz stat` の標準テーブル列ではないものはどれですか？
 
-A. SUCCESS (success rate)
-B. RPS (request rate)
-C. LATENCY_P99
-D. ERROR_TYPE
+- A. SUCCESS
+- B. RPS
+- C. LATENCY_P99
+- D. ERROR_TYPE
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. ERROR_TYPE**
+**解答: D**
 
-**解説:**
-`linkerd viz stat` は MESHED、SUCCESS、RPS、LATENCY_P50/P95/P99 を表示します。エラータイプは `linkerd viz tap` またはログで確認する必要があります。
+**解説:** このガイドが対象とするリリースでは、`MESHED`、`SUCCESS`、`RPS`、レイテンシーの各パーセンタイル、`TCP_CONN` が表示されます。wide 出力ではプロキシのバージョン一覧ではなく、トランスポートのバイトレートが追加されます。エラーの調査には、適切なポリシー、Tap、ログ、メトリクスを使ってください。
 
 </details>
 
-### 3. `linkerd viz tap` コマンドの目的は何ですか？
+### 3. `linkerd viz tap` でできることは何ですか？
 
-A. Network packet capture
-B. リアルタイムの request stream を表示する
-C. proxy configuration を変更する
-D. certificate を更新する
+- A. ネットワークパケットを完全にキャプチャする
+- B. 対応するリクエストをライブストリームで観察する
+- C. プロキシのポリシーを自動変更する
+- D. 証明書を更新する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. リアルタイムの request stream を表示する**
+**解答: B**
 
-**解説:**
-`linkerd viz tap` は request をリアルタイムでストリーミングします。request method、path、status code、latency、mTLS status などを表示します。
+**解説:** Tap は対象を限定した、またはサンプリングされたトラフィックの観察機能であり、完全な監査記録ではありません。`max-rps` は Tap で観察するレートの上限で、アプリケーションの全トラフィックを制限するものではありません。現在の Tap には `--from` や `--show-headers` フラグはありません。対応するセレクターを使い、リクエストメタデータへのアクセスを保護してください。
 
 </details>
 
-### 4. ServiceProfile を定義することで、どの追加 metric を取得できますか？
+### 4. 従来の ServiceProfile でルートに名前を付けると、何が可能になりますか？
 
-A. Pod resource usage
-B. route ごとの metric
-C. Network bandwidth
-D. Disk I/O
+- A. ディスク I/O の計測
+- B. ルート単位のメトリクス収集
+- C. 分散トレース全体の自動生成
+- D. すべてのメソッドで必須のリトライ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. route ごとの metric**
+**解答: B**
 
-**解説:**
-ServiceProfile を定義すると、route ごと（例: GET /api/users、POST /api/orders）の success rate、request rate、latency metric を収集できるようになります。`linkerd viz routes` コマンドで確認できます。
+**解説:** ServiceProfile はルート単位のメトリクスと `viz routes` ビューを提供します。これは互換性のために残されているインターフェイスであり、現在の outbound HTTPRoute の信頼性設定より優先されることがあります。可観測性のためにプロファイルを追加しても、安全でないリトライを暗黙に有効化したり、既存ポリシーを上書きしたりしないでください。
 
 </details>
 
-### 5. Viz extension の Prometheus にアクセスするデフォルトの方法は何ですか？
+### 5. ガイドでは、既存の既定 Viz Prometheus にローカルからどうアクセスしますか？
 
-A. NodePort service
-B. LoadBalancer service
-C. kubectl port-forward
-D. Public URL
+- A. 認証なしの NodePort を公開する
+- B. パブリック LoadBalancer を作成する
+- C. loopback に bind して `kubectl port-forward` を使う
+- D. パブリック URL があると仮定する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. kubectl port-forward**
+**解答: C**
 
-**解説:**
-Viz の Prometheus は ClusterIP service としてデプロイされます。`kubectl port-forward -n linkerd-viz svc/prometheus 9090:9090` でアクセスします。セキュリティ上、外部公開は推奨されません。
+**解説:** 例では、既存の Prometheus Service を `127.0.0.1` に port-forward します。Prometheus を新規インストールしたり、パブリックアクセス用の認証を構成したりはしません。他のワークロードからアクセスする場合は、該当するネットワーク設定と Linkerd の認可設定も必要です。
 
 </details>
 
-### 6. distributed tracing の propagation に必要ではない header はどれですか？
+### 6. アプリケーションの例で使う W3C trace context の組み合わせはどれですか？
 
-A. x-b3-traceid
-B. x-request-id
-C. x-linkerd-proxy
-D. x-b3-spanid
+- A. `x-request-id` と `Authorization`
+- B. `x-b3-traceid` と `x-b3-spanid`
+- C. `traceparent` と `tracestate`
+- D. `x-linkerd-proxy` と `Cookie`
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. x-linkerd-proxy**
+**解答: C**
 
-**解説:**
-distributed tracing に必要な header: x-request-id、x-b3-traceid、x-b3-spanid、x-b3-parentspanid、x-b3-sampled、b3 など。x-linkerd-proxy は存在しません。
+**解説:** Linkerd は W3C と B3 の両方をサポートし、両方が存在する場合は W3C を優先します。`x-request-id` は相関 ID であり、必須のトレース形式ではありません。ヘッダーを伝播させるだけではアプリケーション span は作られず、サンプリングやエクスポートも構成されません。これらの処理には適切なトレーシングライブラリを使ってください。
 
 </details>
 
-### 7. `linkerd viz top` コマンドは何を表示しますか？
+### 7. `linkerd viz top` は何を集計しますか？
 
-A. 最も多くの resource を使用している Pod
-B. 最もアクティブな request path
-C. 主な error message
-D. 最新の log entry
+- A. CPU 使用率順に並べた Pod
+- B. Tap で観察したライブのリクエスト経路／ルート
+- C. 過去のすべてのエラーメッセージ
+- D. 最新のコンテナログ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. 最もアクティブな request path**
+**解答: B**
 
-**解説:**
-`linkerd viz top` は、最もアクティブな request path をリアルタイムで表示します。Source、Destination、Method、Path、Count、Latency、Success Rate などが表示されます。
+**解説:** `top` は、サンプリング／レート制限と対応フィルターの範囲内でライブトラフィックを集計します。`hide-sources` は送信元の列を隠す設定であり、ヘッダーを制御するものではありません。ここでの観察結果は、保持された Prometheus メトリクスや完全なリクエスト監査の代わりにはなりません。
 
 </details>
 
-### 8. proxy log level を設定する annotation はどれですか？
+### 8. プロキシの診断ログレベルを変更するアノテーションはどれですか？
 
-A. config.linkerd.io/log-level
-B. config.linkerd.io/proxy-log-level
-C. linkerd.io/proxy-log
-D. proxy.linkerd.io/log-level
+- A. `config.linkerd.io/log-level`
+- B. `config.linkerd.io/proxy-log-level`
+- C. `linkerd.io/proxy-log`
+- D. `proxy.linkerd.io/log-level`
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. config.linkerd.io/proxy-log-level**
+**解答: B**
 
-**解説:**
-`config.linkerd.io/proxy-log-level` annotation は proxy log level を設定します。例: "warn,linkerd=info,linkerd_proxy=debug"
+**解説:** `proxy-log-level` は診断ログのフィルターを制御し、`proxy-log-format` は診断ログの形式を制御します。HTTP アクセスログは `config.linkerd.io/access-log:json` または `apache` で別途有効にします。Pod template の一部だけを示したものはパッチ／断片であり、完全な Deployment ではありません。
 
 </details>
 
-### 9. Linkerd の success rate を計算する正しい Prometheus query はどれですか？
+### 9. 期間を区切った成功率は、どのように計算すべきですか？
 
-A. `sum(response_total{classification="success"}) / sum(response_total)`
-B. `rate(success_total[5m]) / rate(request_total[5m])`
-C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`
-D. `avg(success_rate)`
+- A. 累積成功カウンターと累積総数を rate なしで割る
+- B. 存在しない `success_total` カウンターを使う
+- C. 同じ対象範囲で成功レスポンス率を総レスポンス率で割り、成功系列の欠落と総数が正である場合を適切に扱う
+- D. 存在しない `success_rate` メトリクスの平均を取る
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`**
+**解答: C**
 
-**解説:**
-success rate は、成功した response rate を合計 response rate で割って計算します。rate() 関数は時間範囲内の 1 秒あたりの rate を計算し、sum() は集計を行います。
+**解説:** 対象とする通信方向と、ワークロード／クラスターの範囲を揃えてください。成功がない期間でも、成功系列が存在しない場合の成功率は 0 になる必要があります。データが欠落している、またはアイドル状態であることを 100% の成功として扱ってはいけません。プロキシの HTTP 分類では 400 が成功に数えられる場合があるため、ビジネス上の SLI と照らして意図的に選んでください。
 
 </details>
 
-### 10. Jaeger extension の主な機能は何ですか？
+### 10. 現在のトレーシング構成で Jaeger はどのような役割を担えますか？
 
-A. Metrics collection
-B. Log aggregation
-C. Distributed tracing
-D. Traffic splitting
+- A. Kubernetes メトリクスの検出を置き換える
+- B. アプリケーションのアクセスログだけを集約する
+- C. 別途運用するバックエンドとして分散トレースを収集、保存、検索する
+- D. トラフィックを自動的に分割する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. Distributed tracing**
+**解答: C**
 
-**解説:**
-Jaeger extension は distributed tracing を提供します。複数の Service を通過する request の完全な path を可視化し、各ステップの latency を分析します。
+**解説:** Linkerd-Jaeger 拡張機能は 2.19 で削除されました。現在の Linkerd では OpenTelemetry 対応コレクターを構成し、ここで示す Helm chart の手順ではメッシュ ID も設定します。バックエンドの UI が表示できるだけでは、アプリケーション／プロキシの span が届いていることや、トレースが完全であることの証明にはなりません。
 
 </details>
 
-### 11. linkerd viz dashboard コマンドで提供されない view はどれですか？
+### 11. Viz がコンテナログビューアーだと仮定せず、`kubectl logs` またはログシステムから確認すべきものは何ですか？
 
-A. Topology
-B. Deployments
-C. Pod Logs
-D. Routes
+- A. ワークロードのトポロジー
+- B. Deployment のメトリクス
+- C. Pod のコンテナログ
+- D. ServiceProfile のルートメトリクス
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. Pod Logs**
+**解答: C**
 
-**解説:**
-Viz dashboard は Namespace、Deployments、Pods、TCP、Routes、Topology、Tap view を提供します。Pod log は kubectl logs または別の logging system で確認する必要があります。
+**解説:** Viz はワークロードやトラフィックのビュー、トポロジー、Tap を提供します。診断ログとアクセスログは別のデータです。これらのビューを調べる手順だけでは、原因特定、修正、検証までは完了しません。インシデントが自動解決されるわけではありません。
 
 </details>
 
-### 12. external Grafana と統合する際に使用する Viz installation option はどれですか？
+### 12. Viz をブラウザーからアクセスできる既存の外部 Grafana に接続する設定はどれですか？
 
-A. `--set grafana.external=true`
-B. `--set grafana.enabled=false`
-C. `--set grafana.url=external`
-D. `--set monitoring=external`
+- A. `grafana.external:true`
+- B. `grafana.externalUrl:https://grafana.example.com/`
+- C. `grafana.enabled:false`
+- D. `monitoring:external`
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `--set grafana.enabled=false`**
+**解答: B**
 
-**解説:**
-external Grafana を使用する場合は、Viz の組み込み Grafana を無効にします。`helm install linkerd-viz linkerd/linkerd-viz --set grafana.enabled=false` を使用するか、values file で設定します。
+**解説:** 現在の Viz は Grafana をインストールしません。外部リンクには `externalUrl` を指定します。`grafana.url` はクラスター内の reverse proxy を使う設定で、root／subpath の追加構成が必要です。どちらの設定も Grafana の作成、データソースの構成、Prometheus へのアクセス許可は行いません。
 
 </details>

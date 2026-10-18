@@ -317,7 +317,7 @@ cd examples/platform/extensions/webhook
 go test ./...
 ```
 
-이번 검증은 httptest로 handler를 호출했으며 실제 TLS listener를 열지 않았습니다. 배포하려면 image, Service, 인증서/키 파일, 실제 CA bundle, API server 연결 경로와 호출자 인증·network policy를 구성해야 합니다. 위 서버의 TLS는 기본적으로 client 인증을 구성하지 않습니다. webhook configuration의 resource/operation/path가 handler와 일치해야 합니다.
+이번 검증에서는 httptest로 handler를 호출했으며 실제 TLS listener를 열지 않았습니다. 배포하려면 image, Service, 인증서/키 파일, 실제 CA bundle, API server 연결 경로와 호출자 인증·network policy를 구성해야 합니다. 위 서버의 TLS는 기본적으로 client 인증을 구성하지 않습니다. webhook configuration의 resource/operation/path가 handler와 일치해야 합니다.
 
 failurePolicy, timeoutSeconds, sideEffects와 dryRun, reinvocationPolicy, namespace/object selector를 검토합니다. unavailable webhook의 Fail 정책은 API 요청을 차단할 수 있고 Ignore는 검증을 건너뛸 수 있습니다. None은 선언만 적는 것이 아니라 실제로 외부 side effect가 없어야 합니다.
 

@@ -56,7 +56,7 @@
 
 ### Grafana OnCall 구성 요소
 
-도식은 논리 역할이며 각각 별도 Deployment가 있다는 뜻은 아닙니다. 실제 database.type, broker.type, Redis, engine/Celery 배치와 plugin 연결을 설치 profile에서 확인합니다.
+도식은 논리적 역할을 나타내며 각각 별도 Deployment가 있다는 뜻은 아닙니다. 실제 database.type, broker.type, Redis, engine/Celery 배치와 plugin 연결을 설치 profile에서 확인합니다.
 
 
 
@@ -154,7 +154,7 @@ CloudWatch 전용 integration의 SNS 확인·서명·payload 처리 요건을 �
 
 Public API는 문서화된 **raw Authorization token**을 사용하며 Bearer를 임의로 붙이지 않습니다. Grafana service-account token 방식에는 X-Grafana-URL도 필요합니다. API origin과 integration webhook은 별개의 인증 경로입니다.
 
-[읽기 전용 inventory 도구](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall)는 GET만 사용하고 pagination의 origin·collection·count, TLS, redirect, 파일 권한을 검사합니다. 출력에는 integration URL과 개인정보가 포함될 수 있으며 전체 DB/암호화 키/이력 백업이나 원자적 이전 snapshot은 아닙니다. 실제 계정은 조회하지 않았고 로컬 TLS fixture로 12개 검사를 통과했습니다.
+[읽기 전용 inventory 도구](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall)는 GET만 사용하고 pagination의 origin·collection·count, TLS, redirect, 파일 권한을 검사합니다. 출력에는 integration URL과 개인정보가 포함될 수 있으며 출력 자체는 전체 DB/암호화 키/이력 백업이나 원자적 이전 snapshot은 아닙니다. 실제 계정은 조회하지 않았고 로컬 TLS fixture로 12개 검사를 통과했습니다.
 
 ---
 
@@ -280,7 +280,7 @@ Integration별 실제 payload, route 순서, 일치하지 않을 때의 default 
 
 ### 라우트 생성
 
-다음은 source가 지원하는 route 필드 예시입니다. Slack은 `slack.channel_id`/`enabled` 중첩 구조이고 기존 flat `slack_channel_id`가 아닙니다. 실제 integration/chain/channel ID와 사용 권한이 필요합니다. 정규식은 설명용 payload에 한정한 예시이며 모든 provider의 표준 템플릿이 아닙니다.
+다음은 source가 지원하는 route 필드 예시입니다. Slack 설정은 `slack.channel_id`/`enabled` 중첩 구조이고 기존 flat `slack_channel_id`가 아닙니다. 실제 integration/chain/channel ID와 사용 권한이 필요합니다. 정규식은 설명용 payload에 한정한 예시이며 모든 provider의 표준 템플릿이 아닙니다.
 
 ```json
 {
@@ -335,7 +335,7 @@ Microsoft의 현재 지원 webhook/workflow와 카드 형식을 확인합니다.
 
 ### Telegram 통합
 
-archived chart는 `oncall.telegram` 아래의 token/existingSecret/tokenKey와 별도 telegramPolling을 사용합니다. 최상위 generic `telegram.enabled` 블록을 Bash로 표시한 기존 예시는 올바른 Helm 설정이 아닙니다. Bot token, webhook/polling 소유자, 사용자 연결과 실제 사용 가능 여부를 확인합니다. Bot 생성·사용자 메시지는 실행하지 않았습니다.
+archived chart는 `oncall.telegram` 아래의 token/existingSecret/tokenKey와 별도 telegramPolling을 사용합니다. 최상위 generic `telegram.enabled` 블록을 Bash로 표시한 기존 예시는 올바른 Helm 설정이 아닙니다. Bot token, webhook/polling 소유자, 사용자 연결과 실제 사용 가능 여부를 확인합니다. Bot 생성·사용자 메시지 전송은 실행하지 않았습니다.
 
 
 ---
@@ -395,7 +395,7 @@ Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다
 
 ### 마이그레이션 고려사항
 
-이제 검토 방향은 PagerDuty/Opsgenie에서 새로운 OnCall OSS 설치로 이동하는 기본 권장이 아닙니다. 기존 OnCall/종료 예정 도구의 데이터·의존성을 파악하고 유지보수되는 목적지와 기능 차이·복구를 검증합니다. 무료 코드가 호스팅·운영·지원·통신 비용이 없다는 뜻은 아닙니다.
+이제 PagerDuty/Opsgenie에서 새로운 OnCall OSS 설치로 이동하는 것을 기본 검토 방향으로 권장하지 않습니다. 기존 OnCall/종료 예정 도구의 데이터·의존성을 파악하고 유지보수되는 목적지와 기능 차이·복구를 검증합니다. 코드가 무료라는 것이 호스팅·운영·지원·통신 비용이 없다는 뜻은 아닙니다.
 
 ![목록화·백업·계약 검토·전달/복구 시험을 거쳐 유지보수되는 목적지로 통제된 전환을 수행한다. Cloud Connection은 2026-03-24에 종료되었으며 별도 지원 채널을 확인해야 한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png)
 

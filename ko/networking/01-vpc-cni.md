@@ -71,7 +71,7 @@ Linux EC2 노드 (일반 secondary-IPv4 예제)
 | c5.4xlarge | 8 | 30 | 234 |
 | m5.8xlarge | 8 | 30 | 234 |
 
-과거 공식은 **`ENI 수 × (ENI당 IPv4 슬롯 − 1) + 2`**입니다. `+2`는 해당 bootstrap 계산의 host-network 시스템 Pod 2개를 반영하므로 m5.large는 `3 × 9 + 2 = 29`입니다. 현재 모든 배포에 host-network Pod가 정확히 2개라는 뜻은 아닙니다.
+과거 공식은 **`ENI 수 × (ENI당 IPv4 슬롯 − 1) + 2`입니다**. `+2`는 해당 bootstrap 계산의 host-network 시스템 Pod 2개를 반영하므로 m5.large는 `3 × 9 + 2 = 29`입니다. 현재 모든 배포에 host-network Pod가 정확히 2개라는 뜻은 아닙니다.
 
 이 값은 과거 bootstrap 값이며 현재 모든 환경의 Pod 밀도 권장값이 아닙니다. Prefix delegation, custom networking, branch 인터페이스, 다중 네트워크 카드, CPU·메모리, kubelet `maxPods`를 함께 고려합니다. EKS 관리형 노드 그룹은 vCPU 30개 미만에서 `maxPods` 110, 그 외에는 250을 상한으로 적용합니다. 실제 노드의 allocatable 용량을 확인합니다.
 
@@ -90,7 +90,7 @@ Linux IPv4 prefix 모드의 EKS 관리형 add-on 설정 조각입니다.
 
 아래 관리 절차로 의도한 add-on 설정과 합칩니다. Helm 관리 설치에서는 같은 `env` 매핑을 Helm values에 둡니다. 직접 `kubectl set env`로 바꾼 값은 관리 주체가 다시 조정할 수 있습니다.
 
-IPv4 할당에는 단순히 양수 `AvailableIpAddressCount`가 아니라 적절한 연속 `/28` 블록이 필요합니다. 서브넷 예약·단편화와 Nitro 지원을 확인합니다. Prefix를 켜도 기존 kubelet Pod 상한이나 branch-ENI Pod 상한이 모두 자동으로 증가하지는 않습니다.
+IPv4 할당에는 단순히 양수인 `AvailableIpAddressCount`가 아니라 적절한 연속 `/28` 블록이 필요합니다. 서브넷 예약·단편화와 Nitro 지원을 확인합니다. Prefix를 켜도 기존 kubelet Pod 상한이나 branch-ENI Pod 상한이 모두 자동으로 증가하지는 않습니다.
 
 ## 설치 및 구성
 
@@ -273,7 +273,7 @@ aws ec2 describe-vpcs --region "$EKS_REGION" --vpc-ids "$VPC_ID" \
   --query 'Vpcs[0].CidrBlockAssociationSet'
 ```
 
-다음 ID·주소 공간은 예제이며 검토한 VPC 계획의 일부로만 수행합니다.
+다음 ID·주소 공간은 예제이며, 작업은 검토한 VPC 계획의 일부로만 수행합니다.
 
 ```bash
 aws ec2 associate-vpc-cidr-block --region "$EKS_REGION" \
@@ -463,7 +463,7 @@ Multus는 meta-plugin입니다. AWS 지원 구성은 VPC CNI를 **주 delegate**
 | 조정된 IPAM | 공유 `host-local` 범위는 여러 노드에서 중복 주소를 할당할 수 있음 |
 | 인터페이스별 정책 시험 | 추가 인터페이스·IPv4 보조 경로가 모든 주 인터페이스 정책에 자동 포함되지는 않음 |
 
-NetworkAttachmentDefinition의 `spec.config`는 지원 버전, 플러그인, 실제 parent 인터페이스, IPAM을 포함한 CNI JSON입니다. 이전 범용 `ipvlan`/`eth1`/`host-local` 매니페스트는 위 전제를 누락하여 구현 요구사항으로 대체했습니다. 이 문서는 실제 배포한 Multus/IPAM 솔루션이라고 주장하지 않습니다.
+NetworkAttachmentDefinition의 `spec.config`는 지원 버전, 플러그인, 실제 parent 인터페이스, IPAM을 포함한 CNI JSON입니다. 이전 범용 `ipvlan`/`eth1`/`host-local` 매니페스트는 위 전제를 누락하여 구현 요구사항으로 대체되었습니다. 이 문서는 실제 배포한 Multus/IPAM 솔루션이라고 주장하지 않습니다.
 
 ### Windows
 

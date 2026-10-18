@@ -49,7 +49,7 @@
 **정답: B) 상태 트리(Merkle Patricia Trie 등)를 탐색·갱신하는 작업이 흩어진 키를 건드리는 랜덤 접근 패턴이기 때문**
 
 **설명:**
-블록체인 노드의 디스크 사용은 랜덤 읽기·쓰기가 많습니다. 용량이 남아도 IOPS가 부족하면 동기화가 따라가지 못하고, 뒤처진 노드는 서비스할 수 없습니다. 그래서 gp3의 **IOPS와 throughput을 용량과 독립적으로 설정**할 수 있는 특성이 핵심 이점입니다. gp2는 용량당 IOPS가 정해져 있어 IOPS를 늘리려면 필요 없는 용량을 사야 했습니다.
+블록체인 노드의 디스크 사용 패턴에는 랜덤 읽기·쓰기가 많습니다. 용량이 남아도 IOPS가 부족하면 동기화가 따라가지 못하고, 뒤처진 노드는 서비스할 수 없습니다. 그래서 gp3의 **IOPS와 throughput을 용량과 독립적으로 설정**할 수 있는 특성이 핵심 이점입니다. gp2는 용량당 IOPS가 정해져 있어 IOPS를 늘리려면 필요 없는 용량을 사야 했습니다.
 </details>
 
 4. liveness probe에 동기화 상태를 넣으면 안 되는 이유는?
@@ -113,7 +113,7 @@ Kubelet·CNI/CSI·monitoring·OS 서비스는 남습니다. 앱 CPU limit을 생
 **정답: B) EIP-7251은 해당 validator의 consolidation을 허용하지만 validator key와 process/VM은 일대일이 아니다**
 
 **설명:**
-Validator client는 여러 키를 관리할 수 있습니다. Validator record/키 관리 감소가 비례하는 인프라·비용 감소를 증명하지는 않습니다.
+Validator client는 여러 키를 관리할 수 있습니다. Validator record/키 관리 감소가 그에 비례하는 인프라·비용 감소를 증명하지는 않습니다.
 </details>
 
 8. 어떤 유지보수 조치가 Fabric MSP/TLS 인증서 만료에 대응합니까?

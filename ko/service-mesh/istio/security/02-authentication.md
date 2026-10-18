@@ -117,7 +117,7 @@ spec:
     jwksUri: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_EXAMPLE/.well-known/jwks.json"
 ```
 
-Cognito API 접근은 token_use=access와 의도한 client_id를 검증하세요. ID token의 aud는 앱 클라이언트 ID이며 access token의 aud는 resource binding을 요청한 경우에만 있으므로 ID token의 audience 규칙을 그대로 복사하지 마세요. API별 scope/group 인가도 필요한 대로 추가하고 예시 풀/클라이언트 값을 교체하세요.
+Cognito API에 접근할 때는 token_use=access와 의도한 client_id를 검증하세요. ID token의 aud는 앱 클라이언트 ID이며 access token의 aud는 resource binding을 요청한 경우에만 있으므로 ID token의 audience 규칙을 그대로 복사하지 마세요. API별 scope/group 인가도 필요한 대로 추가하고 예시 풀/클라이언트 값을 교체하세요.
 
 ```yaml
 apiVersion: security.istio.io/v1

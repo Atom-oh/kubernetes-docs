@@ -25,7 +25,7 @@ Airflow 3.2.2와 CeleryExecutor입니다. 본문의 3.3.1/KubernetesExecutor는 
 <details>
 <summary>정답 보기</summary>
 
-그렇게 가정하면 안 됩니다. 현재는 Helm 3.19.0+를 사용하고 호환 Kubernetes/Airflow를 확인합니다. Chart 1.16 README는 Kubernetes 1.29+였으며, 검토한 1.22 템플릿도 1.29 대상으로 렌더링됐지만 지원 증명은 아닙니다.
+그렇게 가정하면 안 됩니다. 현재는 Helm 3.19.0+를 사용하고 호환 Kubernetes/Airflow를 확인합니다. Chart 1.16 README에는 Kubernetes 1.29+가 명시되어 있었으며, 검토한 1.22 템플릿도 1.29 대상으로 렌더링됐지만 지원 증명은 아닙니다.
 
 </details>
 

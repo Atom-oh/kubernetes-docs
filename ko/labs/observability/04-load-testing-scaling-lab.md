@@ -28,7 +28,7 @@
 - [Part 3](./03-msa-deployment-lab.md)의 API가 준비되어 있어야 합니다. `/orders` POST는 `201`과 `id`, `/payments` POST는 `200/201`과 `status: completed`, `/orders/{id}` GET은 같은 `id`를 반환해야 합니다. 다른 API라면 경로·payload·assertion을 함께 변경합니다.
 - 서비스 클러스터 context는 `service`입니다. 명령마다 context를 명시합니다.
 - k6 **2.2.0**, Locust **2.46.5**/Python **3.12**로 예제 동작을 확인했습니다. [공식 설치 안내](https://grafana.com/docs/k6/latest/set-up/install-k6/)에서 운영체제·CPU 아키텍처에 맞는 설치 방법을 선택합니다.
-- KEDA ScaledObject와 Karpenter NodePool/EC2NodeClass는 [Part 3](./03-msa-deployment-lab.md)에서 구성합니다. Prometheus에 kube-state-metrics·cAdvisor가 실제 수집되어 있어야 인프라 쿼리가 나옵니다.
+- KEDA ScaledObject와 Karpenter NodePool/EC2NodeClass는 [Part 3](./03-msa-deployment-lab.md)에서 구성합니다. Prometheus에 kube-state-metrics·cAdvisor의 메트릭이 실제 수집되어 있어야 인프라 쿼리 결과가 나옵니다.
 
 ![부하·Pod·노드 스케일링의 관찰 흐름](../../.gitbook/assets/ko-labs-observability-04-load-testing-scaling-lab-0.png)
 

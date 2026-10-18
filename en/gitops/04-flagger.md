@@ -83,7 +83,7 @@ Adapter availability is not a maintenance guarantee for new production use. Veri
 
 ## EKS Installation and Configuration
 
-The baseline requires supported EKS/Kubernetes, an installed Istio sidecar environment, and Prometheus scraping the required metrics. Replace its URL with the actual Service. Flagger does not install Istio or instrumentation. The chart’s bundled Prometheus image is old 2.41.0, so it is disabled.
+The baseline requires supported EKS/Kubernetes, an installed Istio sidecar environment, and Prometheus scraping the required metrics. Replace its URL with the actual Service. Flagger does not install Istio or instrumentation. The chart’s bundled Prometheus image uses the old version 2.41.0, so it is disabled.
 
 Choose one release/management method. Installing independent Flagger instances in different namespaces can make both control the same Canary. Examples use flagger-system for controllers and flagger-demo for workloads. Adapt injection labels to the actual Istio revision.
 
@@ -947,7 +947,7 @@ spec:
       timeout: 5s
 ```
 
-The rollback endpoint normally returns 403 for no signal and 200 when requested. A notification receiver’s success response here can cause unintended rollback. The following requests rollback during normally reconciling analysis/promotion-approval waiting; it is not an instant recovery switch for every phase.
+The rollback endpoint normally returns 403 for no signal and 200 when requested. A notification receiver’s success response here can cause unintended rollback. The following requests rollback during normal reconciliation in analysis or while waiting for promotion approval; it is not an instant recovery switch for every phase.
 
 ```bash
 kubectl get canary podinfo -n flagger-demo -o jsonpath='{.status.phase}{"\n"}'

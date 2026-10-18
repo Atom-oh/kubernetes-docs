@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 10월 16일
 
-이 가이드북은 [llms.txt 제안 형식](https://llmstxt.org/)과 문서별 Markdown을 제공합니다. URL을 읽을 수 있는 AI 도구에는 색인을 전달하고, LLM Wiki나 RAG에는 문서 목록과 원문을 수집하며, 로컬 MCP 클라이언트에는 검색·본문 조회 도구를 연결할 수 있습니다. `llms.txt`가 존재한다고 모든 AI가 자동으로 발견하거나 검색하는 것은 아닙니다. 사용하는 도구에 웹 가져오기 기능이나 MCP 연결이 필요합니다.
+이 가이드북은 [llms.txt 제안 형식](https://llmstxt.org/)과 문서별 Markdown을 제공합니다. URL을 읽을 수 있는 AI 도구에는 색인을 전달하고, LLM Wiki나 RAG를 위해 문서 목록과 원문을 수집하며, 로컬 MCP 클라이언트에는 검색·본문 조회 도구를 연결할 수 있습니다. `llms.txt`가 존재한다고 모든 AI가 자동으로 발견하거나 검색하는 것은 아닙니다. 사용하는 도구에 웹 가져오기 기능이나 MCP 연결이 필요합니다.
 
 ## 엔드포인트
 
@@ -31,7 +31,7 @@ curl -fL https://www.atomai.click/kubernetes-docs/llms/manifest.json -o manifest
 jq -r '.documents[] | select(.locale == "ko" and .section == "storage") | .markdownUrl' manifest.json
 ```
 
-manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. VitePress와 이 색인은 현재 한국어·영어를 게시하며, cn/jp/es 번역은 포함하지 않습니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
+manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. VitePress는 다섯 언어를 게시하도록 구성되어 있으며, 이 색인과 MCP 검색은 한국어·영어를 대상으로 합니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
 
 ## MCP로 검색하고 본문 읽기
 

@@ -118,7 +118,7 @@
 
    **Answer: A) It reads the tunnel ID (VNI) with `bpf_skb_get_tunnel_key`, which the sender set to its source identity**
 
-   An identity of host in the tunnel ID is rejected with `DROP_INVALID_IDENTITY`. In native routing there is no VNI, so the source identity comes from `cilium_ipcache_v2` by source IP (or from marks with IPsec/WireGuard).
+   A host identity in the tunnel ID is rejected with `DROP_INVALID_IDENTITY`. In native routing there is no VNI, so the source identity comes from `cilium_ipcache_v2` by source IP (or from marks with IPsec/WireGuard).
 
    </details>
 

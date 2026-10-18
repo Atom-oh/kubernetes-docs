@@ -45,7 +45,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 | sidecar echo | istio-proxy | `spiffe://cluster.local/ns/mesh-test-sidecar/sa/default` | 동일 |
 
 
-표의 ID는 **네임스페이스/ServiceAccount identity**입니다. 같은 default ServiceAccount를 사용하는 echo와 client Pod는 identity를 공유하므로 Pod마다 고유한 SPIFFE ID가 아닙니다. Istiod 또는 구성한 CA가 워크로드 인증서를 제공합니다.
+표의 ID는 **네임스페이스/ServiceAccount identity**입니다. 같은 default ServiceAccount를 사용하는 echo와 client Pod는 identity를 공유하므로 SPIFFE ID가 Pod마다 고유하지는 않습니다. Istiod 또는 구성한 CA가 워크로드 인증서를 제공합니다.
 
 보고된 실패·성공 대조군은 검사한 경로의 STRICT 적용과 일치합니다. 모든 경로, 프로토콜, 출발지와 우회 가능성을 검증한 것은 아닙니다. Ambient는 Istio CNI의 네트워크 네임스페이스 트래픽 캡처와 TCP 15008 HBONE을 사용하고, sidecar 모드는 워크로드 프록시를 사용합니다. 적용 경계는 [mTLS 가이드](../security/01-mtls.md)를 참고하세요.
 
@@ -78,7 +78,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 ## 3. Latency: 실험 결과 (T5)
 
-보고서는 같은 Graviton 클러스터에서 Fortio 요청 설정 200 QPS, 60초, 연결 16개로 정상 상태를 측정했고, 케이스마다 성공 요청 12,000건을 기록했다고 설명합니다:
+보고서는 같은 Graviton 클러스터에서 Fortio 요청 설정 200 QPS, 60초, 연결 16개로 정상 상태를 측정하고, 케이스마다 성공 요청 12,000건을 기록했다고 설명합니다:
 
 | 케이스 | P50 | P75 | P90 | P99 | P99.9 |
 |---|---|---|---|---|---|
@@ -99,7 +99,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 Pod 종료, endpoint 전파, 애플리케이션·프록시 drain, 연결 풀과 timeout 모두 롤아웃 실패에 영향을 줄 수 있습니다. 원문의 목적지 IP 재사용 경쟁과 ztunnel 알림 누락 설명은 **가설**입니다. 표시된 집계만으로 원인이 확정되지 않습니다. 응답 플래그, 실제 upstream host, endpoint/Pod UID 시간선과 연결 근거를 확인해야 합니다.
 
-보고서는 메시 네임스페이스마다 echo 6개 replica와 Fortio client를 두고, 요청 설정 100 QPS로 600초 동안 대상 Deployment를 반복 재시작했다고 설명합니다. 애플리케이션 매니페스트는 동일하게 의도했지만 주입·공유 프록시 리소스와 실제 롤아웃 노출은 모드마다 달랐습니다.
+보고서는 메시 네임스페이스마다 echo 6개 replica와 Fortio client를 두고, 요청 설정 100 QPS로 600초 동안 대상 Deployment를 반복 재시작했다고 설명합니다. 애플리케이션 매니페스트는 동일하게 구성하려 했지만 주입·공유 프록시 리소스와 실제 롤아웃 노출은 모드마다 달랐습니다.
 
 ### 결과
 
@@ -138,7 +138,7 @@ Pod 종료, endpoint 전파, 애플리케이션·프록시 drain, 연결 풀과 
 해석할 때 다음 한계를 적용합니다:
 
 1. 집계된 호출 수 기준 HTTP 503 비율은 324/60,000 = 0.54%, 1,528/59,913 ≈ 2.55%이며 비율의 비는 약 4.72입니다. 원문의 반올림 0.5%/2.6%와 “약 5배”는 이 표본의 설명이며 제품 고유 배수가 아닙니다.
-2. Ambient L4에는 비HTTP 오류 195건이 있어 HTTP 503 0건이 전체 실패 0건을 뜻하지 않습니다. Fortio -1의 구체적인 reset/EOF/timeout 원인은 실제 오류 기록이 필요합니다.
+2. Ambient L4에는 비HTTP 오류 195건이 있어 HTTP 503 0건이 전체 실패 0건을 뜻하지 않습니다. Fortio -1의 구체적인 reset/EOF/timeout 원인을 확인하려면 실제 오류 기록이 필요합니다.
 3. 명목 60,000건과의 차이 87건만으로 이미 시작한 요청 87개가 완료되지 않았다고 결론 내릴 수 없습니다. 시간 기반 실행은 집계 수가 적을 수 있습니다. 보고된 59,913건과 평균 50.4ms는 보존하되 누락 요청의 상태를 만들지 않습니다.
 4. Fortio SocketCount는 클라이언트 소켓 수이며 waypoint upstream 연결 풀의 직접 측정값이 아닙니다. 소켓 16개는 연결 재사용 시 설정한 동시성과 일치할 수 있지만 모든 upstream 연결이 정상이라는 증거는 아닙니다.
 5. baseline 완료 롤아웃은 42/64/65회로 ambient L7이 가장 많습니다. L4가 아닙니다. 서로 다른 롤아웃 노출과 리소스·시간선 증거 부족으로 인과 비교에는 제약이 있습니다.
@@ -335,7 +335,7 @@ mkdir -p "$RUN_DIR"
 
 공유 current-context에 의존하지 않도록 하지만 동시 클러스터·자격 증명 변경을 모두 방지하지는 못합니다. 전용 파일을 통제하고 확인한 클러스터 식별 정보를 보관하세요.
 
-보고된 버전은 Istio 1.30.2입니다. 이전 부록의 Gateway API 1.1.0 호환 주장은 설치 번들 아카이브가 없었습니다. 릴리스 1.30.2의 의존성과 conformance는 1.5.1을 사용합니다. 수정 예시의 Gateway/HTTPRoute에는 다른 설치 controller와의 호환성을 확인한 뒤 해당 standard 번들을 사용하며, 최신 카탈로그 항목만으로 호환성을 판단하지 않습니다.
+보고된 버전은 Istio 1.30.2입니다. 이전 부록의 Gateway API 1.1.0 호환 주장을 뒷받침할 설치 번들 아카이브가 없었습니다. 릴리스 1.30.2의 의존성과 conformance는 1.5.1을 사용합니다. 수정 예시의 Gateway/HTTPRoute에는 다른 설치 controller와의 호환성을 확인한 뒤 해당 standard 번들을 사용하며, 최신 카탈로그 항목만으로 호환성을 판단하지 않습니다.
 
 ```bash
 # Only for a new dedicated lab needing this compatible bundle.
@@ -671,7 +671,7 @@ jq -e '.DurationHistogram.Count > 0 and (.RetCodes | type == "object")' \
 
 결과 JSON, 두 stderr 로그, 롤아웃 구간, Pod/endpoint 시간선과 프록시 설정을 보관합니다. Timeout이나 롤아웃 실패는 불완전한 실행이며 부분 출력을 정상 표본으로 취급하지 않습니다. SocketCount는 Fortio의 클라이언트 소켓을 측정합니다.
 
-후속 실험은 아래에서 적절한 조각을 기존 echo Deployment에 병합합니다. 완전한 Deployment가 아닌 **strategic-merge 조각**입니다. 첫 번째는 공통 애플리케이션 변경이고 두 번째는 sidecar 종료 설정도 바꿉니다.
+후속 실험에서는 아래의 적절한 조각을 기존 echo Deployment에 병합합니다. 완전한 Deployment가 아닌 **strategic-merge 조각**입니다. 첫 번째는 공통 애플리케이션 변경이고 두 번째는 sidecar 종료 설정도 바꿉니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -902,7 +902,7 @@ data:
 
 주문 서버의 0.1초 지연은 기록 **이전**에 있어 트랜잭션 commit 이후 응답 소실 실험이 아닙니다. Collector timeout·오류에는 503을 반환하고 결과는 미확정입니다. Observer가 기록한 뒤 응답만 잃었을 수도 있습니다. Client 성공은 이 예시의 observer 확인 응답이며 실제 업무의 exactly-once 실행 증명이 아닙니다.
 
-처음 네 리소스를 t2-servers.yaml, 마지막 Job을 order-client-job.yaml로 저장합니다. 각 케이스는 이전 client가 없는 새 collector에서 시작하고 모든 metadata.namespace를 일관되게 변경하세요. 짧은 Service 이름은 선택한 네임스페이스 안에서 호출하도록 합니다.
+처음 네 리소스를 t2-servers.yaml, 마지막 Job을 order-client-job.yaml로 저장합니다. 각 케이스를 이전 client가 없는 새 collector에서 시작하고 모든 metadata.namespace를 일관되게 변경하세요. 짧은 Service 이름은 선택한 네임스페이스 안에서 호출하도록 합니다.
 
 <details>
 <summary>Collector/order Deployment·Service와 제한된 client Job</summary>

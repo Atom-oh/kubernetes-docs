@@ -140,7 +140,7 @@ Attach the template AlertmanagerPublishPolicyArn only to the existing **Alertman
 ![Validation from SNS message ID through diagnostic output](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-2.html)
-Successful SNS message IDs deduplicate in DynamoDB for **24 hours**. A changed payload under the same ID is rejected. SNS delivery is at least once; failure between publication and idempotency commit can duplicate a notification. This is not exactly-once delivery.
+Successful SNS message IDs are deduplicated in DynamoDB for **24 hours**. A changed payload under the same ID is rejected. SNS delivery is at least once; failure between publication and idempotency commit can duplicate a notification. This is not exactly-once delivery.
 
 Lambda reserved concurrency is two, async retries are two and maximum event age is one hour after Lambda accepts the event. SNS delivery retries are separate. Inspect results, failure queues and replay procedures. Do not print raw events or credentials.
 

@@ -1,209 +1,195 @@
-# Linkerd Traffic Management クイズ
+# Linkerd トラフィック管理クイズ
 
-このクイズでは、Linkerd Traffic Management の理解度を確認します。
+[メンテナンス対象のトラフィック管理ガイド](../../../service-mesh/linkerd/03-traffic-management.md)に基づいています（2026 年 10 月 16 日確認）。
 
-## クイズ問題
+### 1. ServiceProfile でルートごとに設定できないものはどれですか？
 
-### 1. ServiceProfile で Route ごとに設定できないものはどれですか？
-
-A. Timeout
-B. Retryability
-C. Load balancer algorithm
-D. Path condition
+- A. タイムアウト
+- B. リトライ可否
+- C. ロードバランサーのアルゴリズム
+- D. パス条件
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. Load balancer algorithm**
+**解答: C**
 
-**解説:**
-ServiceProfile では、Route ごとに timeout、retryability（isRetryable）、および path condition（method、pathRegex）を設定できます。Load balancer algorithm は、EWMA を使用する Linkerd のグローバル設定です。
+**解説:** ServiceProfile のルートでは、タイムアウト、`isRetryable`、method／path 条件を指定できます。ロードバランサーのアルゴリズムは選択できません。これは、あらゆる構成で使えるグローバルなアルゴリズム切り替えが存在するという意味ではありません。
 
 </details>
 
-### 2. Linkerd はどの Load balancing algorithm を使用しますか？
+### 2. Linkerd の HTTP ロードバランシングを説明しているのはどれですか？
 
-A. Round Robin
-B. Least Connections
-C. EWMA (Exponentially Weighted Moving Average)
-D. Random
+- A. 厳密なラウンドロビン
+- B. 常に接続数が最少の宛先を選ぶ
+- C. レイテンシーを考慮した EWMA の動作
+- D. レイテンシー情報を使わず、常にランダムな宛先を選ぶ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. EWMA (Exponentially Weighted Moving Average)**
+**解答: C**
 
-**解説:**
-Linkerd は EWMA algorithm を使用し、より速い response latency を持つ endpoint を優先します。endpoint の状態にリアルタイムで適応し、遅い endpoint への traffic を自動的に削減します。
+**解説:** EWMA はレイテンシーの低い候補を選びやすくしますが、すべてのリクエストで、表示上のスコアが最小の宛先が必ず選ばれるわけではありません。HTTP はリクエスト単位で、TCP は接続単位で負荷分散します。
 
 </details>
 
-### 3. TrafficSplit はどの標準仕様に従っていますか？
+### 3. 従来の TrafficSplit リソースを定義する仕様はどれですか？
 
-A. CNCF
-B. SMI (Service Mesh Interface)
-C. OpenAPI
-D. gRPC
+- A. CNCF
+- B. SMI（Service Mesh Interface）
+- C. OpenAPI
+- D. gRPC
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. SMI (Service Mesh Interface)**
+**解答: B**
 
-**解説:**
-TrafficSplit は、SMI (Service Mesh Interface) 標準に従う CRD です。SMI は、異なる mesh implementation 間の互換性を提供するために、service mesh 用の共通 interface を定義します。
+**解説:** TrafficSplit は SMI リソースです。Linkerd の TrafficSplit／linkerd-smi は非推奨で、拡張機能と CRD が必要です。新しい構成では、メンテナンス対象のガイドに従ってサポートされている Gateway API HTTPRoute を使います。古いリソースを適用しただけでは、その拡張機能はインストールされません。
 
 </details>
 
-### 4. retryBudget の retryRatio が 0.2 であることは何を意味しますか？
+### 4. ServiceProfile の `retryRatio: 0.2` はリトライ予算にどう加算されますか？
 
-A. すべての request のうち 20% のみが retry される
-B. 失敗した request のうち 20% のみが retry される
-C. 元の request に対して最大 20% の追加 retry が許可される
-D. Retry budget は 20 秒ごとにリセットされる
+- A. すべてのリクエストのちょうど 20% をリトライする
+- B. 失敗したリクエストのうち、20% だけをリトライできる
+- C. `minRetriesPerSecond` に加えて、元のリクエスト数に比例した許容量を加える
+- D. 20 秒ごとに予算をリセットする
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. 元の request に対して最大 20% の追加 retry が許可される**
+**解答: C**
 
-**解説:**
-retryRatio が 0.2 の場合、元の request 数に対して最大 20% の追加 retry が許可されます。例: 100 request に対して最大 20 回の追加 retry が許可されます。これにより、retry による overload を防止します。
+**解説:** `minRetriesPerSecond` も許容量を加えるため、比率の分は合計リトライ数を厳密に 20% までに制限する上限ではありません。`ttl` は参照・保持する時間窓であり、定期リセットの間隔ではありません。実際のリトライは適格性、バッファリング、deadline によっても制限されます。
 
 </details>
 
-### 5. ServiceProfile を auto-generate する方法ではないものはどれですか？
+### 5. ServiceProfile に必要なアプリケーション操作を推測する情報として、単独では不十分なものはどれですか？
 
-A. OpenAPI/Swagger spec から generate する
-B. live traffic tap から generate する
-C. Protobuf definition から generate する
-D. Kubernetes Service から auto-generate する
+- A. OpenAPI 仕様
+- B. Tap で観察したライブトラフィック
+- C. Protobuf のサービス定義
+- D. Kubernetes Service の selector とポート一覧
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. Kubernetes Service から auto-generate する**
+**解答: D**
 
-**解説:**
-ServiceProfile は、`linkerd profile --open-api`、`linkerd viz profile --tap`、および `linkerd profile --proto` command を使用して generate できます。Kubernetes Service から auto-generate されることはなく、明示的に定義する必要があります。
+**解説:** CLI は OpenAPI／Protobuf からの生成をサポートし、Viz は Tap に基づく生成をサポートします。短い Service 名と `-n` を使ってください。Tap コマンドには位置引数として Service 名も必要です。サンプリングされたトラフィックは API の完全な一覧ではないため、生成された match とリトライの安全性を確認してください。
 
 </details>
 
-### 6. canary deployment において、TrafficSplit backend weight の合計はいくつにすべきですか？
+### 6. backend の weight について正しい説明はどれですか？
 
-A. 必ず 100 でなければならない
-B. 必ず 1 でなければならない
-C. 任意の値でよい（ratio として計算される）
-D. 必ず 1000 でなければならない
+- A. 合計は必ず 100 にする
+- B. 合計は必ず 1 にする
+- C. 有効な非負の相対値を使い、合計は正の値にする。90/10 と 9/1 は同じ比率を表す
+- D. 負の weight や合計 0 も常に使える
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. 任意の値でよい（ratio として計算される）**
+**解答: C**
 
-**解説:**
-TrafficSplit weight は相対 ratio として計算されます。weight: 90 と weight: 10 は、weight: 9 と weight: 1 と同等です。合計を 100 にする必要はありません。
+**解説:** weight は相対値です。選択したリソースの schema と backend の有効性にも従います。合計を 100 にする必要はなく、設定した比率が短時間のリクエスト数に厳密に反映される保証もありません。新しい例では HTTPRoute を使い、TrafficSplit は従来の SMI 経路です。
 
 </details>
 
-### 7. HTTPRoute (Gateway API) でサポートされていない routing condition はどれですか？
+### 7. HTTPRoute のリクエスト条件に含まれないものはどれですか？
 
-A. Header-based routing
-B. Path-based routing
-C. Cookie-based routing
-D. Source IP-based routing
+- A. HTTP header
+- B. HTTP path
+- C. HTTP method
+- D. 送信元 IP
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. Source IP-based routing**
+**解答: D**
 
-**解説:**
-HTTPRoute は、header、path、method、cookie（header 経由）に基づく routing をサポートします。Source IP-based routing は L7 routing の範囲外であり、NetworkPolicy またはその他の mechanism によって処理されます。
+**解説:** HTTPRoute は header／path／method による条件をサポートします。Cookie header の完全一致では header 全体の値が比較され、個々の Cookie ペアを比較するわけではありません。呼び出し元が指定できる cohort／debug header は認可手段ではありません。送信元アドレスの制限には、適切なネットワーク／セキュリティポリシーを使ってください。
 
 </details>
 
-### 8. Flagger を Linkerd と統合する際に使用される metrics server はどれですか？
+### 8. このガイドの Linkerd 用カスタム Flagger MetricTemplate が使う provider はどれですか？
 
-A. Metrics Server
-B. Prometheus
-C. InfluxDB
-D. Datadog
+- A. Kubernetes Metrics Server
+- B. Prometheus
+- C. 宣言されていない InfluxDB Service
+- D. 必須の Datadog backend
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. Prometheus**
+**解答: B**
 
-**解説:**
-Flagger は、canary analysis のために Linkerd Viz の Prometheus から metrics（success rate、latency など）を取得します。Flagger を install する際は、`--set metricsServer=http://prometheus.linkerd-viz:9090` を使用して接続します。
+**解説:** これらの template は、namespace／Deployment／通信方向を明示して Linkerd Viz Prometheus に問い合わせます。Flagger は他の provider にも対応しています。この例は `gatewayapi:v1` routing とカスタムメトリクス名を使います。Flagger 1.45.0 では `meshProvider:linkerd` は引き続き従来の SMI router を選択します。
 
 </details>
 
-### 9. ServiceProfile の isRetryable が false である Route では何が起こりますか？
+### 9. ServiceProfile の route に一致する `isRetryable: false` は何を意味しますか？
 
-A. すべての request が失敗する
-B. retry は発生しない
-C. timeout が無視される
-D. Route が無効になる
+- A. 一致するリクエストはすべて失敗する
+- B. ServiceProfile の仕組みでは、その route をリトライしない
+- C. タイムアウトポリシーをすべて無視する
+- D. route を無効にする
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. retry は発生しない**
+**解答: B**
 
-**解説:**
-isRetryable: false は、その Route 上の request が失敗しても retry されないことを意味します。これは、POST request のような non-idempotent operation に適しています。request 自体は通常どおり処理されます。
+**解説:** リクエストは通常どおり転送されます。この設定は、クライアント、SDK、別のプロキシによるリトライを止めません。現在の annotation 経路では、`limit:0` は edge-26.10.1 で確実な無効化手段ではありません。Service の既定設定ではリトライを使わず、対象の read route にだけ明示的に有効化してください。
 
 </details>
 
-### 10. Linkerd では Circuit Breaker pattern はどのように実装されますか？
+### 10. Linkerd の HTTP circuit breaking はどのように構成しますか？
 
-A. Circuit Breaker CRD
-B. Failure Accrual
-C. Rate Limiter
-D. Timeout Policy
+- A. 自動インストールされる CircuitBreaker CRD
+- B. 明示的に有効化する Service failure-accrual annotation
+- C. 接続に 5 回失敗すると必ず動く既定ルール
+- D. 定期的な合成 readiness probe のループ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. Failure Accrual**
+**解答: B**
 
-**解説:**
-Linkerd は、failure accrual を通じて circuit breaker pattern を実装します。連続した failure が発生すると endpoint を一時的に除外し、exponential backoff で retry し、成功すると通常の状態に戻ります。
+**解説:** Failure accrual は既定では無効で、対象 Service に ServiceProfile がある場合は併用できません。連続失敗のポリシーでは、サポート対象の応答失敗が既定で 7 回続くと対象になります。backoff 後の回復確認は、合成 probe の定期実行ではなく、実際のアプリケーションリクエストで行います。
 
 </details>
 
-### 11. traffic splitting を使用せずに mirror service へ traffic を送信するにはどうしますか？
+### 11. マルチクラスターの mirror Service として表される公開サービスを、クライアントが明示的に呼び出すにはどうしますか？
 
-A. TrafficMirror CRD を使用する
-B. mirror service の DNS を直接呼び出す
-C. すべての traffic は自動的に mirror される
-D. Linkerd は traffic mirroring をサポートしていない
+- A. 架空の TrafficMirror CRD を適用する
+- B. 必要な接続性とポリシーを用意し、mirror Service の DNS 名を呼び出す
+- C. すべてのローカルリクエストが自動的に複製される
+- D. mirror Service は呼び出せない
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. mirror service の DNS を直接呼び出す**
+**解答: B**
 
-**解説:**
-Linkerd 自体には、Istio のような traffic mirroring 機能はありません。multi-cluster mirror service（例: web-west）は、DNS 経由で直接呼び出すか、TrafficSplit weight を使用して設定する必要があります。
+**解説:** マルチクラスターのサービスミラーリングは、リモートサービスの検出とルーティングを提供します。その DNS 名を呼び出すとリクエストはリモートに送られますが、シャドーテストのために自動複製されるわけではありません。リクエストのミラーリングは別機能であり、選択した実装とバージョンでサポート状況を確認してください。
 
 </details>
 
-### 12. ServiceProfile の timeout が設定されていない Route では何が起こりますか？
+### 12. ServiceProfile の route で timeout を省略した場合、どうなりますか？
 
-A. デフォルトの 5 秒 timeout が適用される
-B. timeout なし（無制限）
-C. request が即座に失敗する
-D. グローバル timeout が適用される
+- A. profile に自動で 5 秒 timeout が設定される
+- B. ServiceProfile のその field では timeout を追加しない
+- C. 直ちに失敗する
+- D. ほかのレイヤーの timeout もすべて解除される
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. timeout なし（無制限）**
+**解答: B**
 
-**解説:**
-ServiceProfile で timeout が指定されていない Route は、timeout なしで無期限に待機します。これは streaming または long-running operation に適していますが、一般的には明示的に timeout を設定することが推奨されます。
+**解説:** その field による route timeout は追加されませんが、アプリケーション、クライアント、transport、proxy、load balancer の制限は別に適用される場合があります。エンドツーエンドの無期限実行が保証されるわけではありません。ストリーミングの deadline とキャンセルは、アプリケーションの動作を考慮して明示的に設計してください。
 
 </details>

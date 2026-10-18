@@ -650,7 +650,7 @@ KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 
 ## 选择 CNI 设计：仅 Cilium 或与 VPC CNI 混合使用
 
-VPC CNI 与混合节点不兼容，因此**混合节点始终运行 Cilium（或 Calico）。**所以，“仅用 Cilium 还是与 VPC CNI 混合使用？”这个问题实际上是在问**集群是否包含云端节点；如果包含，它们运行哪种 CNI。**
+VPC CNI 与混合节点不兼容，因此**混合节点始终运行 Cilium（或 Calico**）。所以，“仅用 Cilium 还是与 VPC CNI 混合使用？”这个问题实际上是在问**集群是否包含云端节点；如果包含，它们运行哪种 CNI。**
 
 | 标准 | ① 仅混合节点的集群（仅 Cilium） | ② 混合模式（云端使用 VPC CNI + 混合节点使用 Cilium） | ③ 云端节点也使用 Cilium |
 |---|---|---|---|
@@ -662,16 +662,16 @@ VPC CNI 与混合节点不兼容，因此**混合节点始终运行 Cilium（或
 
 选择方法：
 
-- **有云端节点：②。**这是 AWS 支持范围内的混合设计。在云端运行 webhook，并使用扩容和 Hybrid Nodes gateway。在混合模式下，两侧都至少运行一个 CoreDNS 副本；控制平面或 VPC 需要访问混合 Pod IP 的功能（ALB/NLB IP target、Metrics Server、AMP collection）需要可路由的本地 Pod CIDR（[混合模式 Webhook 运维](08-operations.md#mixed-mode-webhook-operations)）。
-- **仅有本地部署节点：①。**使用单一 CNI 更简单，但 webhook 在混合节点上运行，因此需要[可路由的 Pod CIDR](#routable-pod-cidr-configuration)。
-- **谨慎考虑 ③。**云端节点上的 Cilium 不在 AWS 支持范围内，而且不能使用 Hybrid Nodes gateway 和 Auto Mode。只有在有供应商支持协议且单一 CNI 的优势超过这些限制时才考虑。
+- **有云端节点：②**。这是 AWS 支持范围内的混合设计。在云端运行 webhook，并使用扩容和 Hybrid Nodes gateway。在混合模式下，两侧都至少运行一个 CoreDNS 副本；控制平面或 VPC 需要访问混合 Pod IP 的功能（ALB/NLB IP target、Metrics Server、AMP collection）需要可路由的本地 Pod CIDR（[混合模式 Webhook 运维](08-operations.md#mixed-mode-webhook-operations)）。
+- **仅有本地部署节点：①**。使用单一 CNI 更简单，但 webhook 在混合节点上运行，因此需要[可路由的 Pod CIDR](#routable-pod-cidr-configuration)。
+- **谨慎考虑 ③**。云端节点上的 Cilium 不在 AWS 支持范围内，而且不能使用 Hybrid Nodes gateway 和 Auto Mode。只有在有供应商支持协议且单一 CNI 的优势超过这些限制时才考虑。
 
 参考资料：
 - [为混合节点配置 CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 - [为混合节点配置 webhook：混合模式集群注意事项](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [开始使用 EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
-## 可路由的 Pod CIDR 配置
+## 可路由的 Pod CIDR 配置 {#routable-pod-cidr-configuration}
 
 ![远程 Pod CIDR 和本地路由器示意图。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 

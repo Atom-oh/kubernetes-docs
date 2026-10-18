@@ -265,7 +265,7 @@ spec:
 
 ---
 
-## Security Groups para Pods
+## Security Groups para Pods {#security-groups-for-pods}
 
 ### Descripción general
 
@@ -342,7 +342,7 @@ Proporcione subredes existentes, tablas de rutas, security groups de cliente apr
 
 ---
 
-## Registro del plano de control
+## Registro del plano de control {#control-plane-logging}
 
 ### Tipos de registros del plano de control de EKS
 
@@ -403,7 +403,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## Protección de EKS de GuardDuty
+## Protección de EKS de GuardDuty {#guardduty-eks-protection}
 
 ### Descripción general de la protección de EKS de GuardDuty
 
@@ -486,7 +486,7 @@ Los eventos de hallazgos mejorados usan `aws.inspector2` / `Inspector2 Finding`,
 
 ---
 
-## Benchmark CIS de Kubernetes
+## Benchmark CIS de Kubernetes {#cis-kubernetes-benchmark}
 
 ### Ejecución de kube-bench
 
@@ -506,7 +506,7 @@ El CronJob anterior carecía de montajes de host y suponía que la imagen de kub
 
 ---
 
-## Cifrado del clúster
+## Cifrado del clúster {#cluster-encryption}
 
 ### Cifrado de Secrets de EKS (KMS)
 
@@ -518,7 +518,7 @@ El cifrado en reposo no impide las lecturas de API autorizadas ni el uso de un v
 
 ---
 
-## Seguridad de nodos
+## Seguridad de nodos {#node-security}
 
 ### SO Bottlerocket
 
@@ -534,7 +534,7 @@ Utilice identidades no root adecuadas, sin escalada de privilegios, capacidades 
 
 ---
 
-## Clústeres privados
+## Clústeres privados {#private-clusters}
 
 ### Configuración completamente privada de EKS
 
@@ -550,7 +550,7 @@ Un bastion agrega sus propias responsabilidades de acceso, aplicación de parche
 
 ---
 
-## Patrones de multi-tenancy
+## Patrones de multi-tenancy {#multi-tenancy-patterns}
 
 ### Multi-tenancy basada en namespaces
 
@@ -674,7 +674,7 @@ Para el acceso de usuarios de EKS, evalúe las entradas de acceso actuales con p
 
 ---
 
-## Seguridad perimetral y rutas de inspección
+## Seguridad perimetral y rutas de inspección {#perimeter-security-and-inspection-paths}
 
 Junto con las políticas de IAM y Pod, verifique por separado las aplicaciones públicas, los webhooks de admisión, el acceso de administradores, el tráfico saliente y las rutas entre VPC. El WAF externo no protege automáticamente los webhooks internos; la inspección central de TGW cubre el tráfico que realmente se enruta a través de ella. Conecte los controles existentes de IAM, CNI y tiempo de ejecución a estas guías.
 

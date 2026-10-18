@@ -16,7 +16,7 @@ This quiz tests your conceptual and practical knowledge about managing Windows n
 **Answer: A) containerd with Windows CRI support**
 
 **Explanation:**
-The officially supported container runtimes for Windows nodes in Kubernetes are containerd with Windows CRI support.
+The officially supported container runtime for Windows nodes in Kubernetes is containerd with Windows CRI support.
 
 
 - **containerd**: This is the currently recommended container runtime for Windows nodes. containerd is a lightweight and stable runtime that has official support for Windows nodes in Kubernetes 1.20 and later.
@@ -82,7 +82,7 @@ Windows also provides an alternative isolation mode called Hyper-V Isolation:
 - Can use different kernel versions than the host OS.
 - Provides a higher level of isolation but has more overhead.
 
-**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion is Windows OS background knowledge.
+**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion provides background information on Windows OS.
 
 Virtual machine isolation is not an official isolation mode for Windows containers, and sandbox isolation is not a term used for Windows containers.
 </details>
@@ -322,7 +322,7 @@ spec:
 ```
 
 Considerations when using DNS on Windows nodes:
-- DNS client behavior inside Windows containers may be slightly different from Linux.
+- DNS client behavior inside Windows containers may be slightly different from that on Linux.
 - Some DNS-related tools (e.g., nslookup, Resolve-DnsName) are available by default in Windows containers.
 - You should verify that the network plugin correctly supports DNS resolution.
 
@@ -411,7 +411,7 @@ Characteristics of resource management for Windows containers:
 - **Resource monitoring**: kubelet monitors resource usage of Windows containers and reports to the Kubernetes API.
 
 Considerations for resource management of Windows containers:
-- Default resource overhead for Windows containers may be greater than Linux containers.
+- Default resource overhead for Windows containers may be greater than that for Linux containers.
 - The exact implementation of resource limits may vary depending on the Windows version.
 - Setting memory limits too low may prevent Windows containers from working properly.
 - Hyper-V isolation is unsupported by Kubernetes.
@@ -1064,7 +1064,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **Security Monitoring:**
    - Collect and analyze Windows security event logs
    - Monitor permission changes and login attempts
-Provide the monitoring namespace, Prometheus Operator/ServiceMonitor discovery configuration and a tested release tag. Restrict HostProcess PSS exceptions and port 9182 firewall sources. Confirm host log paths/channels per distribution; EKS records kubelet/kube-proxy in EKS Windows. The Elasticsearch example also requires trusted CA and authentication configuration.
+Provide the monitoring namespace, Prometheus Operator/ServiceMonitor discovery configuration and a tested release tag. Restrict HostProcess PSS exceptions and port 9182 firewall sources. Confirm host log paths/channels per distribution; EKS records kubelet/kube-proxy in EKS Windows. The Elasticsearch example also requires a trusted CA and authentication configuration.
 </details>
 
 5. Explain the storage options and volume mount configuration methods for Windows containers in Kubernetes.
@@ -1326,7 +1326,7 @@ Create the example StorageClasses first. A Windows EBS class needs NTFS and Wait
 
 ## Hands-on Questions
 
-1. Write a Deployment manifest that meets the following requirements for a mixed Windows and Linux node Kubernetes cluster:
+1. Write a Deployment manifest that meets the following requirements for a Kubernetes cluster with mixed Windows and Linux nodes:
    - Application name: web-app
    - Windows container image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
    - Replicas: 2
@@ -1663,7 +1663,7 @@ First create the chapter’s `gmsa-cred-spec` resource, `windows-app` ServiceAcc
 4. Write NetworkPolicy manifests that meet the following requirements in a cluster with mixed Windows and Linux nodes:
    - Windows web application pods (label: app=windows-web) can only access Linux database pods (label: app=linux-db)
    - Database pods allow access only on port 3306
-   - Web application pods are accessible from external on port 80
+   - Web application pods are accessible externally on port 80
 
 <details>
 <summary>Show Answer</summary>
@@ -1795,7 +1795,7 @@ spec:
               name: mysql-secret
               key: password
 ```
-NetworkPolicy allows are additive; another policy can grant additional access. A policy does not create an external LoadBalancer/Ingress. Applications using DNS also need UDP/TCP 53 egress to cluster DNS. The database example below is nonpersistent teaching material; a real service needs persistent storage and backups.
+NetworkPolicy allow rules are additive; another policy can grant additional access. A policy does not create an external LoadBalancer/Ingress. Applications using DNS also need UDP/TCP 53 egress to cluster DNS. The database example below is nonpersistent teaching material; a real service needs persistent storage and backups.
 </details>
 
 5. Write a Deployment manifest for a .NET Framework application running on Windows nodes. The application requires a connection string as an environment variable to access Azure Blob Storage. Also configure a persistent volume for logs.
@@ -1999,7 +1999,7 @@ Main benefits of Hyper-V isolation mode:
    - Each container has its own Windows kernel instance.
    - This provides kernel-level isolation so that kernel issues in one container do not affect other containers or the host.
 
-**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion is Windows OS background knowledge.
+**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion provides background information on Windows OS.
 
 Disadvantages of Hyper-V isolation mode:
 - Uses more resources (memory, CPU).
@@ -2009,7 +2009,7 @@ Disadvantages of Hyper-V isolation mode:
 Issues with other options:
 - Hyper-V isolation actually has lower performance and higher resource usage (A is incorrect).
 - Network communication between containers is actually faster in process isolation mode (C is incorrect).
-- Windows API and feature support depends on the container OS version, Hyper-V isolation itself does not provide more APIs (D is incorrect).
+- Windows API and feature support depends on the container OS version; Hyper-V isolation itself does not provide more APIs (D is incorrect).
 </details>
 
 3. Which statement about pod networking when using Windows nodes in Kubernetes is correct?
@@ -2040,7 +2040,7 @@ Pod networking characteristics on Windows nodes:
 
 3. **Configuration Differences**:
    - Windows nodes use HNS (Host Network Service) to manage network configuration.
-   - Network endpoint creation and management methods differ from Linux.
+   - Network endpoint creation and management methods differ from those on Linux.
    - Some advanced networking features may be limited on Windows.
 
 Example - Flannel CNI configuration:
@@ -2174,7 +2174,7 @@ Issues with other options:
 Reasons why this option is inappropriate:
 
 1. **Privileged Mode Not Supported**:
-   - Windows containers do not support the concept of privileged mode like Linux containers.
+   - Windows containers do not support the concept of privileged mode, unlike Linux containers.
    - Windows uses HostProcess for trusted host-level agents; it is distinct from the privileged flag.
 
 2. **Violates Principle of Least Privilege**:

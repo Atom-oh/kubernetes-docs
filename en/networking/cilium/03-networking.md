@@ -42,7 +42,7 @@ Host namespaces, bridges and inter-node transports describe different aspects of
 
 ### Cilium Networking Modes
 
-Cilium's `routingMode` is `tunnel` or `native`. VXLAN/Geneve choose the tunnel protocol. Cloud IPAM integrations are another configuration dimension, often paired with a native datapath; they are not a third `routingMode` value. BGP is a route-advertisement mechanism, not a separate packet-forwarding mode.
+Cilium's `routingMode` is `tunnel` or `native`. VXLAN/Geneve are the tunnel protocol options. Cloud IPAM integrations are another configuration dimension, often paired with a native datapath; they are not a third `routingMode` value. BGP is a route-advertisement mechanism, not a separate packet-forwarding mode.
 
 ## VXLAN Technology Deep Dive
 

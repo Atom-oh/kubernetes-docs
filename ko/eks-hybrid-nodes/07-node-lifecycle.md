@@ -59,7 +59,7 @@ kubelet:
     evictionMaxPodGracePeriod: 60
 ```
 
-> **참고**: Hard 임계값에는 soft 관찰 유예 기간이 없으며 종료 유예 없이 처리됩니다. Soft 임계값은 evictionSoftGracePeriod 동안 지속되어야 하고, Pod 종료 유예의 상한은 별도 evictionMaxPodGracePeriod로 정합니다. Soft 설정으로 이후 hard 축출이나 OOM이 방지되지는 않습니다. evictionHard를 변경하면 inode를 포함한 전체 의도한 임계값을 명시합니다. 지원되는 기본값 병합을 명시적으로 켜지 않으면 누락한 기본 임계값은 0이 됩니다.
+> **참고**: Hard 임계값에는 soft 관찰 유예 기간이 없으며 종료 유예 없이 처리됩니다. Soft 임계값은 evictionSoftGracePeriod 동안 지속되어야 하고, Pod 종료 유예의 상한은 별도 evictionMaxPodGracePeriod로 정합니다. Soft 설정으로 이후 hard 축출이나 OOM이 방지되지는 않습니다. evictionHard를 변경하면 inode를 포함한 의도한 전체 임계값을 명시합니다. 지원되는 기본값 병합을 명시적으로 켜지 않으면 누락한 기본 임계값은 0이 됩니다.
 
 #### maxPods 계산
 
@@ -207,7 +207,7 @@ kubectl taint nodes hybrid-node-005 maintenance=true:NoSchedule
 
 ### 전체 NodeConfig 검토용 템플릿
 
-실행 검증하지 않은 설정 템플릿이며 운영 준비 완료를 뜻하지 않습니다. 앞의 kubelet/containerd fragment는 spec 아래에 배치합니다. 실제 cluster name과 Region을 지정하면 nodeadm이 권한 있는 discovery 경로로 메타데이터를 가져옵니다. 실제 activation 값은 승인된 비공개 NodeConfig 파일로 전달하며 containerd 문법과 자원 값을 호스트에 맞게 선택합니다.
+실행으로 검증하지 않은 설정 템플릿이며 운영 준비 완료를 뜻하지 않습니다. 앞의 kubelet/containerd fragment는 spec 아래에 배치합니다. 실제 cluster name과 Region을 지정하면 nodeadm이 권한 있는 discovery 경로로 메타데이터를 가져옵니다. 실제 activation 값은 승인된 비공개 NodeConfig 파일로 전달하며 containerd 문법과 자원 값을 호스트에 맞게 선택합니다.
 
 ```yaml
 apiVersion: node.eks.aws/v1alpha1
@@ -607,13 +607,13 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id "$TRUST_ANCHOR_ID" \
   --output json > trust-anchor-update.private.json
 ```
 
-의도한 anchor를 다시 조회하고 카나리의 새 자격 증명 발급을 검증한 뒤 rollover를 마칩니다. API 오류는 실패·확인 불가이며 기존 신뢰가 유효하다는 증거가 아닙니다. 발급받은 자격 증명을 로그에 남기거나 anchor 하나를 교체하면 모든 기존 인증서의 접근이 자동 보존된다고 가정하지 않습니다.
+의도한 anchor를 다시 조회하고 카나리의 새 자격 증명 발급을 검증한 뒤 rollover를 마칩니다. API 오류는 실패·확인 불가이며 기존 신뢰가 유효하다는 증거가 아닙니다. 발급받은 자격 증명을 로그에 남기지 않으며 anchor 하나를 교체하면 모든 기존 인증서의 접근이 자동 보존된다고 가정하지 않습니다.
 
 ## 5. 노드 헬스체크 자동화 (Health Monitoring)
 
 ### 자동화된 헬스체크 CronJob
 
-이 관측기는 2절의 Node 스냅샷 검사를 실행합니다. 호스트에서 nodeadm을 실행하거나 AWS 자격 증명을 검증하는 Job이 **아닙니다**. Bash·kubectl·jq를 포함하고 클러스터와 호환되며 UID10001로 실행 가능한 검토한 이미지를 준비해야 합니다. 배포 전 이미지 자리표시자를 교체해야 하며 이 장에서 이미지·클러스터 실행은 검증하지 않았습니다. monitoring namespace도 먼저 있어야 합니다.
+이 관측기는 2절의 Node 스냅샷 검사를 실행합니다. 호스트에서 nodeadm을 실행하거나 AWS 자격 증명을 검증하는 Job이 **아닙니다**. Bash·kubectl·jq를 포함하고 클러스터와 호환되며 UID10001로 실행 가능한 이미지를 검토하여 준비해야 합니다. 배포 전 이미지 자리표시자를 교체해야 하며 이 장에서 이미지·클러스터 실행은 검증하지 않았습니다. monitoring namespace도 먼저 있어야 합니다.
 
 저장한 check-fleet.sh와 승인한 expected-nodes.json으로 ConfigMap manifest를 만든 뒤 아래 ServiceAccount/RBAC/CronJob과 함께 검토·적용합니다. ClusterRole은 모든 Node를 나열할 수 있습니다. label selector는 조회 필터이며 권한 경계가 아닙니다. ConfigMap 수정과 이 ServiceAccount로 Pod를 실행할 수 있는 namespace 사용자의 권한도 검토합니다.
 
@@ -776,7 +776,7 @@ ProtectSystem=strict
 ProtectHome=yes
 ```
 
-특정 네트워크·자격 증명 문제를 진단할 때 운영자가 root 권한으로 `nodeadm debug -c file:///etc/eks/nodeconfig.yaml`을 별도로 실행할 수 있습니다. AWS와 클러스터에 접속하고 진단 문맥을 출력하므로 결과는 비공개로 보관합니다. 매 타이머마다 조용히 실행해 오류를 버리거나 장애별 판단 없이 kubelet/containerd를 자동 재시작하지 않습니다.
+특정 네트워크·자격 증명 문제를 진단할 때 운영자가 root 권한으로 `nodeadm debug -c file:///etc/eks/nodeconfig.yaml`을 별도로 실행할 수 있습니다. AWS와 클러스터에 접속하고 진단 문맥을 출력하므로 결과는 비공개로 보관합니다. 타이머가 실행될 때마다 조용히 실행해 오류를 버리거나 장애별 판단 없이 kubelet/containerd를 자동 재시작하지 않습니다.
 
 ## 검증 범위와 근거
 

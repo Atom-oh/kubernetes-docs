@@ -157,7 +157,7 @@ Only CloudFront is public; the ALB is internal and its security group admits onl
 
 </details>
 
-### 10. What does v1.0.6 change for a Sandbox named with 70 characters and `spec.service: true`?
+### 10. What does v1.0.6 change for a Sandbox with a 70-character name and `spec.service: true`?
 
 - A. Nothing; it keeps working as before
 - B. A CEL rule rejects it at admission, and an existing object fails every update until `spec.service` is unset or the Sandbox is re-created with a name of 63 characters or fewer

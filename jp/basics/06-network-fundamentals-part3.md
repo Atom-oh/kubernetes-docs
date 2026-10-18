@@ -107,7 +107,7 @@ AWS Systems Manager Session Managerは、管理対象ノード、IAM権限、サ
 
 HTTPバージョン間で、メソッド、status code、field semanticsは共有されます。HTTP/1.1では、これらの概念が**start line → header field lines → blank line → optional body**として可視化されます。bodyにはテキストまたはバイナリデータを含められます。「textual HTTP/1.1」はstart lineとheaderを表すものであり、すべてのpayloadを表すものではありません。
 
-以下は**例示的なHTTP/1.1メッセージであり、キャプチャ出力やコマンドレシピではありません**。読みやすさのため、表示ではLF改行を使用しています。wire上では、start lineと各header lineは**CRLF（`\r\n`）**で終わり、追加のCRLFがheader sectionを終了します。以下の各bodyは末尾の改行なしで、正確に**5 ASCII bytes**である`hello`です。閉じフェンス前に表示される改行はbodyの一部ではありません。
+以下は**例示的なHTTP/1.1メッセージであり、キャプチャ出力やコマンドレシピではありません**。読みやすさのため、表示ではLF改行を使用しています。wire上では、start lineと各header lineは**CRLF（`\r\n`）で終わり**、追加のCRLFがheader sectionを終了します。以下の各bodyは末尾の改行なしで、正確に**5 ASCII bytes**である`hello`です。閉じフェンス前に表示される改行はbodyの一部ではありません。
 
 クライアント → サーバー:
 

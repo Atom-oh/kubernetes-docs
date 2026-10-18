@@ -1,64 +1,64 @@
 # Entrenamiento de modelos en EKS
 
-> **Última actualización**: September 12, 2026
-> **Líneas base**: Slinky1.2.2, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
+> **Última actualización**: October 16, 2026
+> **Versiones de referencia**: Slinky1.2.3, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
 
-El entrenamiento distribuido requiere código de modelo compatible, particionado de datos (data sharding), lanzadores, asignación de dispositivos, comunicación y checkpoints. Un manifiesto válido o un Pod en estado Running no demuestra que el entrenamiento o la recuperación funcionen.
+El entrenamiento distribuido requiere código de modelo compatible, particionado de datos, launchers, asignación de dispositivos, comunicación y checkpoints. Un manifiesto válido o un Pod en ejecución no demuestra que el entrenamiento o la recuperación funcionen.
 
-Para QLoRA en una sola GPU y la comparación entre SageMaker AI y EKS, consulte la [guía de Qwen](sagemaker-ai/README.md), incluidas sus restricciones de ejecución y el ciclo de vida de soporte de la imagen.
+Para comparar QLoRA con una sola GPU y SageMaker AI/EKS, consulta la [guía de Qwen](sagemaker-ai/README.md), que incluye sus restricciones sobre el ciclo de vida de soporte de las imágenes y la ejecución.
 
-## Pipeline de entrenamiento
+## Flujo de entrenamiento
 
-![Entrenamiento con datos/código versionados, validación de checkpoints completos y posterior evaluación y registro. Las rutas de parameter-server y de comunicación colectiva dependen del algoritmo.](../.gitbook/assets/en-ai-ml-05-model-training-0.png)
+![Entrenamiento con datos y código versionados, validación de checkpoints completos y, después, evaluación y registro. Las rutas de servidor de parámetros y colectivas dependen del algoritmo.](../.gitbook/assets/en-ai-ml-05-model-training-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-0.html)
 
 ## Estrategias de entrenamiento distribuido
 
-![Comparación de los patrones de particionamiento y comunicación de DP, TP, PP y expert parallelism.](../.gitbook/assets/en-ai-ml-05-model-training-1.png)
+![Comparación de los patrones de particionado y comunicación de DP, TP, PP y paralelismo de expertos.](../.gitbook/assets/en-ai-ml-05-model-training-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-1.html)
 
-| Estrategia | Unidad particionada | Restricciones que validar |
+| Estrategia | Unidad particionada | Restricciones que se deben validar |
 | --- | --- | --- |
-| DDP | Distintos lotes de datos; réplicas del modelo | Memoria de estado de entrenamiento/activaciones y sincronización de gradientes |
+| DDP | Diferentes lotes de datos; réplicas del modelo | Memoria del estado de entrenamiento/activaciones y sincronización de gradientes |
 | FSDP / ZeRO | Parámetros, gradientes y estados del optimizador | Comunicación y formatos de checkpoint específicos de cada etapa |
-| TP | Operaciones tensoriales dentro de las capas | Dimensiones de heads/hidden, backend y topología |
-| PP | Etapas de capas | Microlotes, burbujas de pipeline y transferencia de activaciones |
-| Paralelismo de expertos | Expertos MoE y despacho de tokens | Desbalanceo, all-to-all y capacidad de enrutamiento |
-| Combinaciones | Grupos DP/TP/PP/contexto/expertos | Malla de dispositivos soportada y número total de ranks |
+| TP | Operaciones tensoriales dentro de las capas | Dimensiones de las cabezas y ocultas, backend y topología |
+| PP | Etapas de capas | Microbatches, burbujas de pipeline y transferencia de activaciones |
+| Paralelismo de expertos | Expertos MoE y distribución de tokens | Desequilibrio, all-to-all y capacidad de enrutamiento |
+| Combinaciones | Grupos DP/TP/PP/contexto/expertos | Malla de dispositivos compatible y número total de ranks |
 
-No suponga que3D siempre es lo mejor por encima de100B parámetros. Considere la memoria del optimizador, los gradientes, las activaciones y la comunicación más allá de los pesos, y luego compare el rendimiento (throughput) y el costo de recuperación. El all-reduce de DDP no requiere un parameter server.
+No des por sentado que3D siempre es lo mejor por encima de100B parámetros. Ten en cuenta la memoria del optimizador, los gradientes, las activaciones y la comunicación, además de los pesos; después, compara el rendimiento y el costo de recuperación. El all-reduce de DDP no requiere un servidor de parámetros.
 
-TP8×PP4×DP2 significa64ranks. El lote global es **microlote × acumulación × réplicas DP**:1×32×2=64, no2048 que resultaría de multiplicar de nuevo todos los ranks de TP/PP. Con empaquetado de longitud variable, lleve la cuenta de muestras y tokens por separado.
+TP8×PP4×DP2 significa64ranks. El lote global es **microbatch × acumulación × réplicas DP**:1×32×2=64, no2048 por volver a multiplicar todos los ranks de TP/PP. Con empaquetado de longitud variable, lleva un seguimiento separado de las muestras y los tokens.
 
 ## Slurm y Slinky
 
-El repositorio oficial es SlinkyProject/slurm-operator. Se verificaron la etiqueta1.2.2 y sus charts OCI; GitHub releases/latest devolvió404, por lo que no se describe como la última release de GitHub. La documentación de1.2 indica como mínimo Kubernetes1.29 y Slurm25.11(data parser0.0.44). La compatibilidad mínima no es una garantía de ciclo de vida de soporte operativo.
+El repositorio oficial es SlinkyProject/slurm-operator. Se verificaron la etiqueta1.2.3 y sus charts OCI; las versiones de GitHub y latest devolvieron404, por lo que no se describe como la versión más reciente de GitHub. La documentación de1.2 indica como requisitos mínimos Kubernetes1.29 y Slurm25.11(data parser0.0.44). La compatibilidad mínima no garantiza el ciclo de vida de soporte operativo.
 
 ![Funciones de Slinky Controller, NodeSet, Accounting y RestApi/LoginSet, junto con el almacenamiento externo y el aprovisionamiento de nodos.](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-2.html)
 
-### APIs reales y ciclo de vida
+### API y ciclo de vida reales
 
-La versión1.2.2 define Controller, NodeSet, Accounting, LoginSet, RestApi y Token en `slinky.slurm.net/v1beta1`. Los antiguos ejemplos de SlurmCluster/SlurmNodeSet no corresponden a esta API. NodeSet usa un controllerRef y una plantilla de Pod. Su scalingMode predeterminado se comporta como un StatefulSet; el modo DaemonSet crea un Pod por cada nodo de Kubernetes coincidente e ignora replicas. Estos son modos del controlador NodeSet, no una prueba de que slurmd siempre se ejecute como un recurso DaemonSet de Kubernetes.
+La versión1.2.3 define Controller, NodeSet, Accounting, LoginSet, RestApi y Token en `slinky.slurm.net/v1beta1`. Los antiguos ejemplos de SlurmCluster/SlurmNodeSet no corresponden a esta API. NodeSet usa controllerRef y una plantilla de Pod. Su modo de escalado predeterminado se comporta como StatefulSet; el modo DaemonSet crea un Pod por cada nodo de Kubernetes coincidente e ignora replicas. Estos son modos del controlador de NodeSet, no una prueba de que slurmd siempre se ejecute como un recurso DaemonSet de Kubernetes.
 
-slurmctld gestiona el estado y la planificación de jobs/nodos/particiones; conserve su StateSaveLocation. slurmdbd se encarga del acceso a la base de datos de accounting y de los registros, y no sustituye el estado del controlador. Diseñe de forma conjunta las identidades de login/REST/jobs, los permisos del sistema de archivos, las claves de Slurm/JWT y la entrega/rotación de credenciales de la base de datos. La exposición pública de SSH mediante un NLB no es un prerrequisito predeterminado.
+slurmctld administra el estado de los jobs/nodos/particiones y la planificación; conserva su StateSaveLocation. slurmdbd gestiona el acceso a la base de datos de accounting y sus registros; no sustituye el estado del controller. Diseña conjuntamente las identidades de login/REST/job, los permisos del sistema de archivos, las claves/JWT de Slurm y la entrega/rotación de credenciales de la base de datos. Exponer SSH mediante un NLB público no es un requisito previo predeterminado.
 
-Renderice primero los charts reales. Estos comandos solo generan archivos locales. Un despliegue operativo requiere además el orden correcto de cert-manager/CRD/operator/Slurm, persistencia/base de datos, identidad de usuario e imágenes de Slurm compatibles.
+Primero, renderiza los charts reales. Estos comandos solo generan archivos locales. Una implementación operativa requiere por separado el orden adecuado de cert-manager/CRD/operator/Slurm, persistencia/base de datos, identidad de usuario e imágenes de Slurm compatibles.
 
 ```bash
-helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.2 > slurm-crds.yaml
-helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.2 --namespace slinky > slurm-operator.yaml
-helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.2 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
+helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.3 > slurm-crds.yaml
+helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.3 --namespace slinky > slurm-operator.yaml
+helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.3 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
 ```
 
-Una Application de Argo CD debe referenciar una ruta/revisión de chart real y valores reales. Ajustes inventados como compute.partitions/efa.enabled no la configuran. Revise el pruning, la eliminación de CRD/PVC, el draining/requeue de Slurm y los timeouts de terminación de jobs. El scale-in de NodeSet y la terminación de EC2 son bucles de control independientes.
+Una aplicación de Argo CD debe hacer referencia a una ruta/revisión real del chart y a valores reales. Los parámetros inventados compute.partitions/efa.enabled no lo configuran. Revisa la poda, la eliminación de CRD/PVC, el drenaje/reencolado de Slurm y los tiempos de espera de terminación de jobs. La reducción de escala de NodeSet y la terminación de EC2 son ciclos de control separados.
 
-### Lanzar torchrun desde Slurm
+### Lanzamiento de torchrun desde Slurm
 
-Ejecute un lanzador torchrun por nodo y deje que este cree un proceso por GPU. Las ocho tareas de Slurm anteriores lanzaban ocho procesos cada una, produciendo64procesos por nodo. Este ejemplo pretende4nodos×8procesos; en esta auditoría no se ejecutó ninguna asignación real de Slurm/GPU.
+Ejecuta un launcher de torchrun por nodo y deja que cree procesos por GPU. Las ocho tareas anteriores de Slurm iniciaban ocho procesos cada una, lo que producía64procesos por nodo. Este ejemplo tiene como objetivo4nodos×8procesos; en esta auditoría no se ejecutó ninguna asignación real de Slurm/GPU.
 
 ```bash
 #!/bin/bash
@@ -91,53 +91,53 @@ srun --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash -c '
 '
 ```
 
-Si Slurm restringe la visibilidad de GPU por tarea, asegúrese de que cada lanzador reciba las ocho GPU previstas. train.py debe implementar LOCAL_RANK/RANK/WORLD_SIZE, el binding de dispositivos, DDP/sampler, datos/modelos versionados y la reanudación. El fixture de shell verificó cuatro lanzadores, ranks de nodo distintos y un endpoint de rendezvous común.
+Si Slurm limita la visibilidad de las GPU por tarea, asegúrate de que cada launcher reciba las ocho GPU previstas. train.py debe implementar LOCAL_RANK/RANK/WORLD_SIZE, vinculación de dispositivos, DDP/sampler, datos/modelos versionados y reanudación. El fixture de shell verificó cuatro launchers, ranks de nodo distintos y un endpoint de rendezvous común.
 
-## Comunicación entre GPU y EFA
+## Comunicación de GPU y EFA
 
-FI_PROVIDER=efa selecciona un proveedor de libfabric; no instala EFA, no adjunta interfaces ni realiza la integración con NCCL. Valide de forma conjunta las instancias compatibles con EFA, el driver/libfabric, aws-ofi-nccl, el device plugin y la asignación al Pod, los security groups y el transporte real. RAID0 o una etiqueta de subred no habilitan EFA.
+FI_PROVIDER=efa selecciona un proveedor libfabric; no instala EFA, conecta interfaces ni integra NCCL. Valida conjuntamente las instancias compatibles con EFA, el controlador/libfabric, aws-ofi-nccl, el device plugin/la asignación del Pod, los grupos de seguridad y el transporte real. RAID0 o una etiqueta de subred no habilitan EFA.
 
-Los nodos que se comunican deben compartir la misma AZ; se recomienda un cluster placement group por rendimiento. Asegúrese de que los Pods de entrenamiento usen realmente el NodePool restringido. El ancho de banda y el número de dispositivos EFA varían según la instancia;400Gbps no es universal. Forzar a ciegas los ajustes antiguos Ring/Simple, IB_DISABLE, SOCKET_IFNAME o FI_EFA_USE_DEVICE_RDMA puede interferir con los plugins actuales. Verifique la documentación de la release, los logs y las pruebas de colectivos.
+Los nodos que se comunican deben compartir una AZ; se recomienda un grupo de ubicación de clúster para mejorar el rendimiento. Asegúrate de que los Pods de entrenamiento usen realmente el NodePool restringido. El ancho de banda y el número de dispositivos EFA varían según la instancia;400Gbps no es un valor universal. Forzar a ciegas configuraciones antiguas de Ring/Simple, IB_DISABLE, SOCKET_IFNAME o FI_EFA_USE_DEVICE_RDMA puede interferir con los plugins actuales. Verifica la documentación de la versión, los registros y las pruebas colectivas.
 
-budgets.nodes=0 en Karpenter restringe las vías de disrupción voluntaria; no evita la reclamación de Spot, el fallo de un nodo, la terminación forzada ni todos los casos de expiración. Revise la interacción de do-not-disrupt/PDB con terminationGracePeriod/expireAfter y preserve la recuperación desde checkpoints. Evite descargar instaladores de driver flotantes en cada bootstrap o fijar de forma rígida las frecuencias de GPU entre distintos tipos de dispositivo.
+Karpenter budgets.nodes=0 restringe las rutas de interrupción voluntaria; no impide la recuperación de instancias Spot, los fallos de nodo, la terminación forzada ni todas las expiraciones. Comprueba la interacción entre do-not-disrupt/PDB y terminationGracePeriod/expireAfter, y conserva la capacidad de recuperación desde checkpoints. Evita descargar instaladores de controladores flotantes en cada bootstrap o fijar a ciegas las frecuencias de GPU en distintos tipos de dispositivo.
 
 ## BioNeMo
 
-La versión3.0.0 inspeccionada es **BioNeMo Recipes**, que proporciona modelos/checkpoints basados en TransformerEngine y recetas para PyTorch, Accelerate y Lightning. Compruebe el soporte específico de cada receta para ESM-2, AMPLIFY, Geneformer y otros. No ejecute un módulo MegaMolBART de BioNeMo1.5 como si fuera la API de3.0. La evaluación biológica y los permisos de modelos/datos siguen siendo requisitos aparte; la asignación de GPU por sí sola no prepara la receta.
+La versión inspeccionada3.0.0 es **BioNeMo Recipes**, que proporciona modelos/checkpoints basados en TransformerEngine y recetas para PyTorch, Accelerate y Lightning. Comprueba la compatibilidad específica de cada receta para ESM-2, AMPLIFY, Geneformer y otros. No ejecutes un módulo MegaMolBART de BioNeMo1.5 como si fuera la API de3.0. La evaluación biológica y los permisos de modelos/datos siguen siendo requisitos independientes; asignar una GPU no prepara por sí solo la receta.
 
 ## Trainium y Neuron
 
-Distinga entre las vías torch-neuronx del SDK2.32.0, NeuronX Distributed Training y sus implementaciones de modelos, y Optimum Neuron. El soporte de inferencia de transformers-neuronx no equivale a soporte general de entrenamiento. Compruebe las versiones de TensorFlow/JAX/PyTorch frente al hardware/SDK elegido en lugar de añadir paquetes pip arbitrarios a un DLC antiguo de2.18.
+Distingue entre torch-neuronx de SDK2.32.0, las implementaciones de NeuronX Distributed Training/modelos y las rutas de Optimum Neuron. La compatibilidad de inferencia de transformers-neuronx no equivale a compatibilidad general con el entrenamiento. Comprueba las versiones de TensorFlow/JAX/PyTorch con el hardware/SDK seleccionados, en vez de añadir paquetes pip arbitrarios a un DLC antiguo2.18.
 
-Optimum Neuron0.4.5 incluye NeuronTrainer/NeuronTrainingArguments e implementaciones de modelos de entrenamiento dedicadas para Neuron. Cargar un BertForPreTraining genérico y pasar variables de dataset/tokenizer no definidas no constituye un entrenamiento TP completo. Prepare el modelo/configuración soportados, las labels/collator, el tokenizer y sus revisiones, los formatos de optimizador/checkpoint y el lanzador. El PyTorch2.14 del ejemplo de CPU no afirma compatibilidad con el Neuron SDK.
+Optimum Neuron0.4.5 incluye NeuronTrainer/NeuronTrainingArguments e implementaciones específicas de modelos de entrenamiento para Neuron. Cargar un BertForPreTraining genérico y pasar variables de dataset/tokenizer no definidas no constituye un entrenamiento TP completo. Prepara un modelo/configuración compatibles, etiquetas/collator, tokenizer/revisiones, formatos de optimizador/checkpoint y launcher. El ejemplo de CPU con PyTorch2.14 no afirma que sea compatible con Neuron SDK.
 
 ### Jobs multinodo y precompilación
 
-Un parallelism=4 en un Job solo inicia cuatro Pods; no configura ranks ni rendezvous. Los Jobs indexados necesitan completionMode/index y un único endpoint master compartido. Fijar el MASTER_ADDR de cada Pod a su propio status.podIP hace que los workers apunten a masters distintos. Use una topología de coordinador/controlador y lanzadores soportados, y prepare train_lora.py, los datos, la caché de compilación y los dispositivos.
+El paralelismo=4 de un Job solo inicia cuatro Pods; no configura ranks ni rendezvous. Los Jobs indexados necesitan completionMode/index y un endpoint master compartido. Si estableces MASTER_ADDR de cada Pod en su propio status.podIP, los workers apuntarán a masters distintos. Usa una topología de coordinador/controller y launchers compatibles, y prepara train_lora.py, los datos, la caché de compilación y los dispositivos.
 
-neuron_parallel_compile extrae/compila grafos; no sustituye al entrenamiento real. Ejecute el entrenamiento por separado después y verifique los aciertos de caché, las formas (shapes) y las revisiones del compilador/SDK. Consulte las [distinciones de unidades de Neuron](04-inference-frameworks.md) para cores frente a dispositivos.
+neuron_parallel_compile extrae/compila grafos; no sustituye el entrenamiento real. Ejecuta el entrenamiento por separado después y verifica los aciertos de caché, las formas y las revisiones del compilador/SDK. Consulta [Distinciones entre unidades de Neuron](04-inference-frameworks.md) para diferenciar cores de dispositivos.
 
 ## Ray Train, MPI y Volcano
 
-Use la [guía de Train](ray/03-ray-train-tune.md) auditada con Ray2.58/KubeRay1.7. Haga coincidir el número de llamadas a report entre workers y reporte objetos Checkpoint reales. get_checkpoint() recupera el estado previo de recuperación; no es un context manager para un nuevo guardado. resources_per_worker con GPU8 no lanza automáticamente ocho procesos DDP dentro de un worker.
+Usa la [guía de Train](ray/03-ray-train-tune.md) auditada para Ray2.58/KubeRay1.7. Haz coincidir el número de llamadas a report entre los workers e informa objetos Checkpoint reales. get_checkpoint() recupera el estado previo para la recuperación; no es un administrador de contexto para guardar uno nuevo. resources_per_worker GPU8 no inicia automáticamente ocho procesos DDP dentro de un worker.
 
-MPI Operator0.8.2 usa kubeflow.org/v2beta1. slotsPerWorker declara los slots del hostfile; no determina por sí solo el valor de mpirun -np, el mapping ni el binding de GPU. Prepare el código de Launcher/Worker, la implementación de MPI/SSH, imágenes soportadas y CRD/RBAC. Cuatro workers×ocho slots no garantiza por sí mismo32procesos GPU.
+MPI Operator0.8.2 usa kubeflow.org/v2beta1. slotsPerWorker declara los slots del hostfile; no determina por sí solo mpirun -np, el mapeo ni la vinculación de GPU. Prepara el código de Launcher/Worker, la implementación de MPI/SSH, las imágenes compatibles y CRD/RBAC. Cuatro workers×ocho slots no garantizan por sí solos32procesos de GPU.
 
-El minAvailable de Volcano1.15.2 cuenta **Pods/miembros**, no nodos EC2. Tres nodos suficientemente aprovisionados pueden alojar cuatro Pods. El plugin gang aplica condiciones de miembros/recursos mínimos, pero no garantiza el arranque simultáneo de los contenedores ni el éxito del entrenamiento. Revise los workers adicionales, el soporte de runtime elástico y el comportamiento de RestartJob/requeue.
+Volcano1.15.2 minAvailable cuenta **Pods/miembros**, no nodos EC2. Tres nodos con recursos suficientes pueden alojar cuatro Pods. El plugin gang aplica condiciones de recursos y de número mínimo de miembros, pero no garantiza el inicio simultáneo de los contenedores ni el éxito del entrenamiento. Revisa los workers adicionales, la compatibilidad con elastic-runtime y el comportamiento de RestartJob/requeue.
 
-Los perfiles de GPU de JupyterHub deben coincidir con las imágenes/etiquetas de dispositivo reales y con la autorización. g5.xlarge es A10G, no un perfil A100. Integre la configuración en el Hub en ejecución y configure el almacenamiento por usuario, las cuotas, la red y el idle culling.
+Los perfiles de GPU de JupyterHub deben coincidir con las imágenes/etiquetas de dispositivos reales y con la autorización. g5.xlarge es A10G, no un perfil A100. Integra la configuración en el Hub en ejecución y configura almacenamiento por usuario, cuotas, redes y eliminación de sesiones inactivas.
 
 ## Almacenamiento de entrenamiento y checkpoints
 
-Use las vías CSI auditadas en la [guía de GPU/almacenamiento](01-ai-ml-workloads.md). Montar un sistema de archivos FSx existente mediante un PV estático es distinto de crear uno nuevo con aprovisionamiento dinámico. No invente campos dataRepositoryAssociations de FileSystem ni mezcle SCRATCH_2 con ajustes de throughput exclusivos de sistemas persistentes. Verifique por separado las APIs de DRA/import/export, las políticas y su finalización.
+Usa las rutas CSI auditadas en la [guía de GPU/almacenamiento](01-ai-ml-workloads.md). Montar un sistema de archivos FSx existente mediante un PV estático es distinto de crear uno nuevo mediante aprovisionamiento dinámico. No inventes campos FileSystem dataRepositoryAssociations ni combines SCRATCH_2 con configuraciones de rendimiento exclusivas para almacenamiento persistente. Verifica por separado las API de DRA/importación/exportación, las políticas y la finalización.
 
-Una solicitud de capacidad en un PVC de EFS no es una cuota de almacenamiento físico. Valide el UID/GID del access point, los permisos de directorio, la identidad CSI, la red y los mount targets. Un checkpoint local no es durable de forma remota hasta que se completa la transferencia a S3.
+Una solicitud de capacidad de PVC de EFS no es una cuota de almacenamiento físico. Valida el UID/GID del punto de acceso, los permisos de directorio, la identidad CSI, las redes y los objetivos de montaje. Un checkpoint local no es duradero de forma remota hasta que finalice la transferencia a S3.
 
-La recuperación necesita el modelo, el optimizador, el scheduler, el RNG, el scaler cuando se use, el cursor de datos/sampler y todos los estados particionados. Evite que varios ranks sobrescriban un mismo archivo; use el guardado distribuido propio del framework. Valide los manifiestos/checksums de finalización, la transferencia remota y la restauración antes de eliminar checkpoints válidos anteriores. Una imagen inventada de gestor de checkpoints o un ConfigMap con auto_resume=true no implementan estas funciones.
+La recuperación necesita el modelo, el optimizador, el scheduler, RNG, scaler cuando se use, el cursor de datos/sampler y todos los estados particionados. Evita que varios ranks sobrescriban un mismo archivo; usa guardado distribuido compatible con el framework. Valida los manifiestos de finalización/checksums, la transferencia remota y la restauración antes de eliminar checkpoints válidos anteriores. Una imagen inventada de checkpoint-manager o un ConfigMap con auto_resume=true no implementa estas funciones.
 
-### Ejemplo mínimo ejecutable en CPU
+### Ejemplo ejecutable mínimo de CPU
 
-Este ejemplo sintético de16muestras y un solo hilo de CPU realiza cuatro actualizaciones del optimizador. Demuestra la acumulación, un schedule cosine acotado, el reemplazo mediante archivo temporal y la restauración del optimizador/RNG. PyTorch2.14.0+cpu produjo resultados idénticos en el entrenamiento sin interrupciones y al reanudar tras dos pasos. Esto no es una prueba de GPU, distribución ni durabilidad remota.
+Este ejemplo sintético de16muestras y un hilo de CPU realiza cuatro actualizaciones del optimizador. Muestra acumulación, un scheduler coseno acotado, reemplazo de archivo temporal y restauración del optimizador/RNG. PyTorch2.14.0+cpu produjo resultados idénticos para el entrenamiento ininterrumpido y la reanudación después de dos pasos. Esto no es una prueba de GPU, entrenamiento distribuido ni durabilidad remota.
 
 ```python
 from pathlib import Path
@@ -223,38 +223,38 @@ if __name__ == "__main__":
     print("Completed four CPU optimizer updates, including checkpoint resume.")
 ```
 
-El ejemplo demuestra el reemplazo de archivos completados en un solo sistema de archivos, no la durabilidad frente a caídas del sistema de archivos o de los metadatos de directorio, ni transacciones de S3 ni protocolos de checkpoint distribuido. Su orden fijo de datos tampoco implementa una recuperación general del sampler. Elija los intervalos y la retención de checkpoints en función de la latencia de guardado, la tasa de fallos, el trabajo perdido aceptable y el costo, en lugar de una regla universal de500pasos y cinco copias.
+El ejemplo demuestra el reemplazo de un archivo completado en un solo sistema de archivos, no la durabilidad ante fallos del sistema de archivos/metadatos de directorio, las transacciones de S3 ni los protocolos de checkpoint distribuido. Su orden fijo de datos tampoco implementa una recuperación general del sampler. Elige los intervalos y la retención de checkpoints teniendo en cuenta la latencia de guardado, la tasa de fallos, el trabajo perdido aceptable y el costo, en vez de aplicar una regla universal de500pasos/cinco copias.
 
 ## Precisión numérica y optimización de memoria
 
-Las APIs actuales de PyTorch usan torch.amp.autocast y torch.amp.GradScaler. BF16 comparte el número de bits de exponente de FP32, pero no su precisión de mantisa ni su valor finito máximo exacto. Habitualmente evita el loss scaling propio de FP16, pero verifique el hardware, las operaciones y la convergencia. Autocast no convierte todos los pesos ni el estado del optimizador a BF16.
+Las API actuales de PyTorch usan torch.amp.autocast y torch.amp.GradScaler. BF16 comparte con FP32 la cantidad de bits del exponente, no la precisión de la mantisa ni el valor máximo finito exacto. A menudo evita el escalado de pérdida propio de FP16, pero verifica el hardware, las operaciones y la convergencia. Autocast no convierte todos los pesos/estados del optimizador a BF16.
 
-El activation checkpointing recalcula las activaciones durante el backward, intercambiando cómputo por memoria. Es distinto de los checkpoints en disco y no garantiza ni un ahorro de3–4x ni una ralentización del30%. Especifique use_reentrant de forma explícita y valide los gradientes, el dropout/RNG y las capas con estado.
+El checkpointing de activaciones vuelve a calcular las activaciones durante el backward, lo que intercambia cómputo por memoria. No es lo mismo que los checkpoints en disco y no garantiza un ahorro de3–4x ni una ralentización de30%. Especifica use_reentrant de forma explícita y valida los gradientes, dropout/RNG y las capas con estado.
 
-La selección del backend de Flash Attention/SDPA depende del dtype, el tamaño de head, el dispositivo y las máscaras. Defina el estado de entrenamiento y pase dropout_p=0 durante la evaluación. Compruebe el soporte de la API para combinaciones de máscaras explícitas/causales; use_cache=False por sí solo no instala un backend de atención.
+La selección del backend de Flash Attention/SDPA depende del dtype, el tamaño de las cabezas, el dispositivo y las máscaras. Define el estado de entrenamiento y pasa dropout_p=0 durante la evaluación. Comprueba la compatibilidad de la API con combinaciones de máscaras explícitas/causales; use_cache=False por sí solo no instala un backend de atención.
 
-En DeepSpeed0.19.6, ZeRO1 particiona el estado del optimizador;2 añade los gradientes;3 añade los parámetros. El offload a CPU/NVMe se configura por separado; la Stage3 no lo habilita automáticamente. Distinga las integraciones de nivel superior que reemplazan valores auto de la configuración pura de DeepSpeed. Los buffers, las activaciones y la capa más grande impiden una reducción ilimitada de memoria.
+DeepSpeed0.19.6 ZeRO1 particiona el estado del optimizador;2 añade gradientes;3 añade parámetros. El offload a CPU/NVMe se configura por separado; Stage3 no lo habilita automáticamente. Distingue las integraciones de nivel superior que reemplazan los valores auto de la configuración pura de DeepSpeed. Los buffers, las activaciones y la capa de mayor tamaño impiden una reducción ilimitada de memoria.
 
-Avance los schedulers por actualizaciones del optimizador, no por micropasos de acumulación. Acote el progreso para que el cosine no vuelva a subir después del horizonte de entrenamiento, y valide los límites de warmup y de pasos totales como en el ejemplo.
+Avanza los schedulers con las actualizaciones del optimizador, no con los microsteps de acumulación. Limita el progreso para que el coseno no vuelva a subir después del horizonte de entrenamiento y valida los límites de warmup/total-step como en el ejemplo.
 
 ## Alcance de la verificación
 
-Se revisaron toda la prosa de la guía y del quiz y76bloques de código originales únicos. Las comprobaciones abarcan los Helm/CRDs oficiales de Slinky, las APIs de MPI/Volcano y las fuentes del SDK, el entrenamiento/reanudación mínimos en CPU y un fixture de lanzador en shell. No se ejecutó ningún recurso de GPU/Neuron/EFA, cluster de Slurm/MPI, modelo preentrenado real ni recurso en la nube. La verificación local de código/esquemas es distinta de la validación de un despliegue en producción.
+Se revisaron toda la prosa de la guía/el cuestionario y76bloques de código originales únicos. Las comprobaciones abarcan los Helm/CRD oficiales de Slinky, las API de MPI/Volcano y las fuentes del SDK, el entrenamiento/reanudación de CPU mínimo y un fixture de launcher de shell. No se ejecutaron GPU/Neuron/EFA, clústeres Slurm/MPI, modelos preentrenados reales ni recursos de la nube. La verificación local del código/esquema es distinta de la validación de una implementación de producción.
 
 ## Referencias
 
-- [Slinky 1.2.2](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.2)
-- [Controlador de Slurm](https://slurm.schedmd.com/slurmctld.html)
+- [Slinky 1.2.3](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.3)
+- [Controller de Slurm](https://slurm.schedmd.com/slurmctld.html)
 - [Daemon de accounting de Slurm](https://slurm.schedmd.com/slurmdbd.html)
 - [MPI Operator 0.8.2](https://github.com/kubeflow/mpi-operator/tree/v0.8.2)
 - [Plugin gang de Volcano 1.15.2](https://github.com/volcano-sh/volcano/blob/v1.15.2/pkg/scheduler/plugins/gang/gang.go)
-- [Redes con EFA en EKS](https://docs.aws.amazon.com/eks/latest/best-practices/aiml-networking.html)
-- [Recetas de BioNeMo 3.0.0](https://github.com/NVIDIA/bionemo-framework/tree/v3.0.0)
+- [Redes EFA de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/aiml-networking.html)
+- [Recetas BioNeMo 3.0.0](https://github.com/NVIDIA/bionemo-framework/tree/v3.0.0)
 - [Optimum Neuron 0.4.5](https://github.com/huggingface/optimum-neuron/tree/v0.4.5)
 - [Neuron SDK 2.32.0](https://github.com/aws-neuron/aws-neuron-sdk/tree/v2.32.0)
-- [Lanzador de PyTorch 2.14](https://github.com/pytorch/pytorch/blob/v2.14.0/torch/distributed/run.py)
-- [Configuración de ZeRO en DeepSpeed 0.19.6](https://github.com/deepspeedai/DeepSpeed/blob/v0.19.6/deepspeed/runtime/zero/config.py)
+- [Launcher de PyTorch 2.14](https://github.com/pytorch/pytorch/blob/v2.14.0/torch/distributed/run.py)
+- [Configuración ZeRO de DeepSpeed 0.19.6](https://github.com/deepspeedai/DeepSpeed/blob/v0.19.6/deepspeed/runtime/zero/config.py)
 
-## Quiz
+## Cuestionario
 
-[Quiz de entrenamiento de modelos](../quizzes/ai-ml/05-model-training-quiz.md)
+[Cuestionario sobre entrenamiento de modelos](../quizzes/ai-ml/05-model-training-quiz.md)

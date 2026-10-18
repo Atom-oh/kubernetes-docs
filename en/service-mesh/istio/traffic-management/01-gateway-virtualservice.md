@@ -11,7 +11,7 @@ Gateway and VirtualService are core resources for managing traffic in Istio.
 5. [Advanced Patterns](#advanced-patterns)
 6. [Troubleshooting](#troubleshooting)
 
-This chapter uses `networking.istio.io/v1` Gateway, distinct from Kubernetes Gateway API. These examples assume an existing gateway workload/Service labeled `istio=ingressgateway` in `istio-system`, application Services in `default`, and matching service ports. An Istio Gateway configures an existing proxy; it does not provision one. Create each TLS Secret in the gateway **workload namespace** and bind a VirtualService to the Gateway being tested. Examples with overlapping hosts are alternatives.
+This chapter uses the `networking.istio.io/v1` Gateway, distinct from the Kubernetes Gateway API. These examples assume an existing gateway workload/Service labeled `istio=ingressgateway` in `istio-system`, application Services in `default`, and matching service ports. An Istio Gateway configures an existing proxy; it does not provision one. Create each TLS Secret in the gateway **workload namespace** and bind a VirtualService to the Gateway being tested. Examples with overlapping hosts are alternatives.
 
 ## Gateway Overview
 
