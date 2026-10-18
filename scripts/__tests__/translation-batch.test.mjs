@@ -153,6 +153,26 @@ test('structurally invalid translation is restored and retried', async t => {
   assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
 })
 
+test('a fatal provider error stops new calls, restores originals and leaves unattempted files queued', async t => {
+  const f = fixture(t, {
+    'en/topic/a.md': source, 'en/topic/b.md': source, 'en/topic/c.md': source,
+    'cn/topic/a.md': translated, 'cn/topic/b.md': translated, 'cn/topic/c.md': translated
+  })
+  for (const name of ['a', 'b', 'c']) f.write(`en/topic/${name}.md`, source + '\nNew source information.\n')
+  f.commit()
+  const pairs = prepareBatch(f.root, { before: f.before })
+  let calls = 0
+  await assert.rejects(() => translateBatch(f.root, pairs, (src, file) => {
+    calls++
+    f.write(file, '# Partial\n')
+    throw Object.assign(new Error('model unavailable'), { fatal: true })
+  }), /model unavailable/)
+  assert.equal(calls, 1)
+  for (const name of ['a', 'b', 'c']) assert.equal(f.read(`cn/topic/${name}.md`), translated)
+  assert.deepEqual(f.state().pending, ['cn/topic/a.md', 'cn/topic/b.md', 'cn/topic/c.md'])
+  assert.deepEqual(f.state().sources, {})
+})
+
 test('main changes during translation invalidate affected outputs and queue newly changed pages', t => {
   const f = fixture(t, {
     'en/topic/page.md': source, 'cn/topic/page.md': translated,

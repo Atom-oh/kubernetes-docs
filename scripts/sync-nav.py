@@ -42,11 +42,8 @@ def save_heading_map(m):
     HEADING_MAP_PATH.write_text(json.dumps(m, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _clean_kiro_line(ln):
-    """Strip ANSI color codes and kiro-cli's leading '> ' response marker
-    (only present on the first line of output, and only visible once ANSI
-    codes are stripped -- easy to miss, caught via a real run that leaked
-    "> " into translated titles, e.g. "[> Linux 基础知识]")."""
+def _clean_translation_line(ln):
+    """Strip accidental response formatting from a translated title."""
     ln = re.sub(r"\x1b\[[0-9;]*m", "", ln)
     ln = re.sub(r"^>\s*", "", ln)
     return ln.strip()
@@ -56,8 +53,8 @@ _title_cache = {}
 SUFFIX_RE = re.compile(r"^(.+) (Quiz|Lab)$")
 
 
-def _run_kiro_batch(prompt, n, lang):
-    """Shared kiro-cli batch call: send prompt, expect exactly n lines back.
+def _run_translation_batch(prompt, n, lang):
+    """Shared Bedrock Mantle batch call: expect exactly n translated lines.
     Retries once on any failure before giving up -- a real run under
     concurrent runner load (another section's backfill in parallel) hit a
     transient failure here and silently kept a heading/title in English for
@@ -68,15 +65,21 @@ def _run_kiro_batch(prompt, n, lang):
     for attempt in (1, 2):
         try:
             result = subprocess.run(
-                ["kiro-cli", "chat", prompt, "--model", "gpt-6-luna",
-                 "--no-interactive", "--trust-tools=", "--wrap", "never"],
-                capture_output=True, text=True, timeout=90,
+                [sys.executable, str(Path(__file__).with_name("bedrock-translation.py")), "titles", lang],
+                input=prompt, capture_output=True, text=True, timeout=100,
             )
-            lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
+            if result.returncode == 78:
+                raise RuntimeError(result.stderr.strip())
+            if result.returncode != 0:
+                print(f"::warning::sync-nav: title translation attempt {attempt} failed", file=sys.stderr)
+                continue
+            lines = [_clean_translation_line(ln) for ln in result.stdout.splitlines()]
             lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
             if len(lines) == n:
                 return lines
             print(f"::warning::sync-nav: title translation attempt {attempt} returned {len(lines)}/{n} lines", file=sys.stderr)
+        except RuntimeError:
+            raise
         except Exception as e:
             print(f"::warning::sync-nav: title translation attempt {attempt} failed ({e})", file=sys.stderr)
     print(f"::warning::sync-nav: title translation failed after retry, keeping English", file=sys.stderr)
@@ -104,7 +107,7 @@ def _translate_batch(titles, lang):
             f"title per line, in the same order, with no numbering and no extra "
             f"commentary:\n{numbered}"
         )
-        lines = _run_kiro_batch(prompt, len(uncached), lang) or uncached
+        lines = _run_translation_batch(prompt, len(uncached), lang) or uncached
         for t, translated in zip(uncached, lines):
             _title_cache[(t, lang)] = translated
     return [_title_cache[t, lang] for t in titles]
@@ -136,7 +139,7 @@ def _translate_suffixed_batch(entries, lang):
         f"EXACTLY {len(uncached)} lines, one title per line, same order, no numbering, no "
         f"extra commentary:\n{numbered}"
     )
-    lines = _run_kiro_batch(prompt, len(uncached), lang)
+    lines = _run_translation_batch(prompt, len(uncached), lang)
     if lines is None:
         _translate_batch([full for full, _, _ in uncached], lang)
         return
@@ -460,7 +463,7 @@ def resolve_dst_heading(heading, lang, heading_map, dst_text, present_paths, blo
     and appended a second, brand-new "## 测验集合" block at EOF re-listing
     every ops quiz already present two lines above (issue #172, score 48).
     The paths under a heading never get translated, so they're the stable
-    handle for the block. (2) also short-circuits the kiro-cli call in (3) for
+    handle for the block. (2) also short-circuits the translation call in (3) for
     a heading the map has never seen but the file already has (e.g. en
     renamed "Basic" -> "Linux & Container" while cn still says "## 基础").
 
@@ -590,7 +593,7 @@ def _translate_readme_lines(lines, lang):
     ('4. **Calico Deep Dive**' -- the locales already carry those translated,
     '**Calico 深入解析**') in README ToC lines. Bare "Quiz"/"Lab" labels stay
     English here (the caller swaps in the file's own wording); only real
-    titles go through kiro-cli, in one batch."""
+    titles go through Bedrock Mantle, in one batch."""
     titles = re.findall(r"\[([^\]]+)\]\([^)]+\)", "\n".join(lines))
     labels = [m.group(2) for m in map(_GROUP_LABEL_RE.match, lines) if m]
     real_titles = list(dict.fromkeys([t for t in titles if t not in ("Quiz", "Lab")] + labels))

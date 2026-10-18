@@ -1,6 +1,6 @@
 """Regression tests for scripts/sync-nav.py (issue #172, quality-gate score 48).
 
-Pure python, no kiro-cli: translate_titles is patched to identity and
+Pure python, no model calls: translate_titles is patched to identity and
 REPO_ROOT is pointed at a throwaway tree of empty placeholder files (only
 existence matters to sync-nav).
 
@@ -12,6 +12,7 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 _SPEC = importlib.util.spec_from_file_location(
     "sync_nav", Path(__file__).resolve().parents[1] / "sync-nav.py")
@@ -21,6 +22,32 @@ _SPEC.loader.exec_module(sync_nav)
 
 def _dedent(s):
     return textwrap.dedent(s).lstrip("\n")
+
+
+class TranslationProviderTests(unittest.TestCase):
+    def test_titles_use_mantle_helper_with_prompt_on_stdin(self):
+        result = Mock(returncode=0, stdout="1. 网络\n2. 存储\n", stderr="")
+        with patch.object(sync_nav.subprocess, "run", return_value=result) as run:
+            self.assertEqual(sync_nav._run_translation_batch("English titles", 2, "cn"), ["网络", "存储"])
+        self.assertEqual(run.call_args.args[0][-3:],
+                         [str(Path(sync_nav.__file__).with_name("bedrock-translation.py")), "titles", "cn"])
+        self.assertEqual(run.call_args.kwargs["input"], "English titles")
+
+    def test_model_or_credential_error_stops_without_english_fallback_or_retry(self):
+        result = Mock(returncode=78, stdout="", stderr="::error::Model unavailable")
+        with patch.object(sync_nav.subprocess, "run", return_value=result) as run:
+            with self.assertRaisesRegex(RuntimeError, "Model unavailable"):
+                sync_nav._run_translation_batch("English title", 1, "jp")
+        self.assertEqual(run.call_count, 1)
+
+    def test_transient_failure_retries_without_accepting_error_output_as_a_title(self):
+        results = [
+            Mock(returncode=1, stdout="HTTP error", stderr="temporary error"),
+            Mock(returncode=0, stdout="Redes\n", stderr=""),
+        ]
+        with patch.object(sync_nav.subprocess, "run", side_effect=results) as run:
+            self.assertEqual(sync_nav._run_translation_batch("Networking", 1, "es"), ["Redes"])
+        self.assertEqual(run.call_count, 2)
 
 
 class SyncNavCase(unittest.TestCase):

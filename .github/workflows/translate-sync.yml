@@ -10,6 +10,8 @@ on:
       - 'scripts/translation-batch.mjs'
       - 'scripts/translate.sh'
       - 'scripts/sync-nav.py'
+      - 'scripts/bedrock-translation.py'
+      - 'scripts/requirements-translation.txt'
   workflow_dispatch: {}
 
 permissions:
