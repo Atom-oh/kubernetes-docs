@@ -73,7 +73,9 @@ Unroutable이 Pod의 모든 AWS API 호출 불가를 뜻하지는 않습니다. 
 | VPN gateway transport | UDP500/4500 및 해당 IPsec transport 요구 |
 | 앱/AWS credential·registry service | 실제 목적지·port만 |
 
-Network owner가 connection tracking·기존 rule을 보존하며 변경합니다. 이전의 광범위한 `10.0.0.0/8` INPUT, 무제한 DNS/VXLAN, 전체 ruleset 저장은 재사용할 안전한 정책이 아니었습니다. 인증 없는 kubelet 10255를 현대적인 선택 요구로 열지 마세요.
+방화벽 규칙은 네트워크 담당자가 기존 규칙과 연결 추적(connection tracking)을 유지하면서 변경합니다. 통신이 필요한 IP·CIDR과 포트만 허용하고, `10.0.0.0/8` 전체에 대한 INPUT 허용이나 출발지·목적지 제한 없는 DNS/VXLAN 허용은 피하세요. 규칙을 영구 적용할 때는 전체 규칙을 일괄 저장하지 말고, 저장할 규칙의 범위를 먼저 검토하세요.
+
+kubelet API에는 인증과 권한 검사를 적용한 TCP `10250`을 사용합니다. 인증 없이 접근할 수 있는 레거시 읽기 전용 포트인 TCP `10255`는 열지 마세요.
 
 ## AWS 엔드포인트 접근
 
