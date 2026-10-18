@@ -1,195 +1,92 @@
-# Part 6: eBPF Dataplane
+# パート6：eBPFデータプレーン
 
-> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **レビュー基準**：Calico 3.32.2。Calico 3.32ではKubernetes 1.34～1.36をテストしています。**最終更新日**：2026年9月12日。
+>
+> 例は、互換性のあるLinux上のCalicoクラスターと標準のCalico APIサーバーがすでにあることを前提としています。インストールの管理者が採用している手順を選んでください。以下は互いに代替となる設定例であり、すべてのクラスターに順番に適用する手順ではありません。このレビューではBPFプログラムのロード、クラスターの移行、報告されているベンチマークの再現は行っていません。
 
 ## はじめに
 
-Calico の eBPF dataplane は Kubernetes ネットワーキングにおける重要な進化であり、従来の iptables ベースのパケット処理を最新の eBPF プログラムに置き換えます。このアプローチにより、大幅なパフォーマンス向上、レイテンシー削減、そして強化された可観測性機能が実現します。
+CalicoのeBPFデータプレーンは、BPFプログラムとマップを使ってワークロードのネットワーク、ポリシー、Kubernetes Serviceを処理します。適した通信経路ではオーバーヘッドを減らせますが、性能はワークロードと設定によって異なります。Calicoには従来型のLinuxデータプレーンとWindows HNSもあります。eBPFがすべてのプラットフォームにとって常に優れた選択肢とは限りません。
 
-この詳細解説では、ネットワーキングの観点から eBPF の基礎、Calico の eBPF アーキテクチャ、移行戦略、パフォーマンス最適化手法を扱います。
-
-***
-
-## eBPF の基礎
-
-### eBPF とは？
-
-eBPF（extended Berkeley Packet Filter）は、カーネルのソースコードを変更したりカーネルモジュールをロードしたりすることなく、Linux カーネル内でサンドボックス化されたプログラムを実行できる革新的な技術です。
-
-![eBPF プログラムがユーザー空間から libbpf ローダー、カーネル検証器、JIT コンパイラを経由してカーネルフックへ移動し、検証アプリケーションと BPF マップを共有する様子を示す図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
-
-### ネットワーキングにおける主要な eBPF の概念
-
-| 概念      | 説明                              | Calico での用途                       |
-| ------------ | ---------------------------------------- | ----------------------------------- |
-| **プログラム** | カーネルフックで実行されるバイトコード        | パケットフィルタリング、ルーティング           |
-| **マップ**     | プログラム間で共有されるキー・バリューストア | ルートテーブル、ポリシールール          |
-| **フック**    | カーネル内のアタッチポイント              | XDP、TC、ソケット                     |
-| **ヘルパー**  | eBPF から呼び出せるカーネル関数      | パケット操作、マップ操作 |
-| **BTF**      | マップ/プログラムの型情報       | デバッグ情報、CO-RE                   |
-
-### eBPF と iptables の比較
-
-| 観点               | iptables                  | eBPF              |
-| -------------------- | ------------------------- | ----------------- |
-| **アーキテクチャ**     | 逐次的なルールチェーン    | 直接実行  |
-| **複雑性**       | O(n) ルール照合        | O(1) マップ検索   |
-| **カーネル境界の通過** | パケットごとに複数回       | 最小限           |
-| **プログラム可能性**  | 固定されたルールタイプ          | 柔軟なプログラム |
-| **可観測性**    | 限定的なカウンター          | 豊富なメトリクス      |
-| **CPU 効率**   | より高い割り込みオーバーヘッド | より低いオーバーヘッド    |
+この詳細ガイドでは、ネットワークの観点からeBPFの基礎、CalicoのeBPFアーキテクチャ、移行方法、性能の最適化について説明します。
 
 ***
 
-## Calico eBPF アーキテクチャ
+## eBPFの基礎
 
-![Calico の dataplane の比較: iptables モードでは、パケットは PREROUTING、FORWARD、kube-proxy ルール、POSTROUTING を通過して Pod に到達します。eBPF モードでは、connect-time LB がソケットでバックエンドを選択し、1 つの TC-hook BPF プログラムが転送します。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
+### eBPFとは
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
+eBPF（extended Berkeley Packet Filter）は、カーネルのソースコードを変更したりカーネルモジュールをロードしたりせずに、サンドボックス化されたプログラムをLinuxカーネル内で実行できる技術です。
 
-### アーキテクチャの比較
+![汎用的なBPFのロードとフックのモデル。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-1.png)
 
-![7 つの逐次的な iptables チェーンを通過するパケットと、TC ingress および egress フックの間で BPF マップを参照する単一の eBPF プログラムを通過する同じパケットを対比する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-1.html)
 
-### Calico における eBPF プログラムのタイプ
+> VMは抽象的な命令モデルです。JITを使うと、ロードされたプログラムはフック位置でネイティブコードとして実行されます。JIT後もゲストVM内で動くわけではありません。この図はCalicoのフックをすべて網羅したものではありません。
 
-Calico は異なる機能のために複数の eBPF プログラムタイプを使用します。
+### ネットワークにおけるeBPFの主な概念
 
-![XDP および TC ingress フックがソケットレベルの sockops と sk_msg プログラムに入力し、それらが TC egress フックへ渡す様子と、cgroup スコーププログラムが未接続のソケットレベルプリミティブとして示された図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
+| 概念 | 説明 | Calicoでの用途 |
+| --- | --- | --- |
+| **プログラム** | カーネルのフックで実行されるバイトコード | パケットのフィルタリング、ルーティング |
+| **マップ** | プログラム間で共有するキーと値のストア | ルートテーブル、ポリシールール |
+| **フック** | カーネル内の接続ポイント | XDP、TC、ソケット |
+| **ヘルパー** | eBPFから呼び出せるカーネル関数 | パケット操作、マップ操作 |
+| **BTF** | マップやプログラムの型情報 | デバッグ情報、CO-RE |
 
-### TC（Traffic Control）プログラム
+### eBPFとiptablesの違い
 
-TC プログラムは Calico の主要な dataplane フックです。
+iptablesによるパケット処理もeBPFプログラムもカーネル内で実行されます。iptablesのルールをたどっても、通常はユーザー空間との間を行き来しません。iptablesモードでは、kube-proxyはServiceのルールを設定するコントロールプレーンプロセスです。パケット自体がkube-proxyを通過するわけではありません。
 
-```
-Ingress TC Program Functions:
-├── Policy enforcement (allow/deny)
-├── Connection tracking lookup
-├── Service load balancing (DNAT)
-├── Tunnel decapsulation
-└── Metrics collection
+ハッシュマップの検索、最長一致プレフィックス検索、コンパイル済みポリシー、テールコール、コネクショントラッキングでは、それぞれ処理コストが異なります。「すべてのeBPFポリシーはO(1)で評価される」「ルールやフローが増えてもメモリ使用量は一定」といった結論は妥当ではありません。iptablesでもインデックス付きIPセットを使えます。また、NATルールの選択は通常コネクションの最初のパケットで行われ、それ以降はconntrackが既存の変換を適用します。
 
-Egress TC Program Functions:
-├── Policy enforcement (egress rules)
-├── SNAT for masquerade
-├── Tunnel encapsulation
-└── DSR return path handling
-```
+## CalicoのeBPFアーキテクチャ
 
-### XDP（eXpress Data Path）プログラム
+| 機構 | 役割と範囲 |
+| --- | --- |
+| TCパケットフック | ポリシー、ルーティング、接続状態、パケット単位のService処理を担います。インターフェースのingress/egressとワークロードのingress/egressは、常に同じ意味になるわけではありません。 |
+| cgroupのsocket-addressフック | 接続時にService宛先を変換します。リリース済みのローダーはconnectフックに加え、UDPで有効にした場合はsendmsg/recvmsgフックを接続します。 |
+| XDP | 対応し設定された場合の早期パケット処理に使います。従来型データプレーンでのCalicoのXDP高速化と、完全なeBPFデータプレーン独自のアタッチ処理を区別してください。 |
+| プログラム、IPセット、カウンターの各マップ | コンパイル済みプログラムや状態を支えます。ポリシー全体が単一の「タプルからアクションへのマップ」で表されるわけではありません。 |
 
-XDP は最も早いパケット処理フックを提供します。
+これらは異なる実行コンテキストであり、XDP → TC → sockops → sk_msg → TCという必須の処理パイプラインではありません。Calicoの接続時ロードバランシングは、sk_msgを使ってHTTPメソッドを調べるものでもありません。アプリケーション層のポリシーには、別の[Istio/Dikastes連携](05-network-policy.md)を使用します。
 
-![ネットワークカードから XDP プログラムへ到着したパケットが、4 つの判定のいずれかを返すフローチャート。DDoS 保護のための drop、通常の TC 処理への pass、直接 TX return、または別のインターフェイスへの redirect。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
+## BPFマップの構造
 
-### ソケットプログラム
+以下は**Calico 3.32.2におけるバージョン固有のIPv4レイアウト**です。安定した公開ABIでも、カーネルマップに書き込むための手順でもありません。
 
-Service mesh 統合のためのソケットレベル eBPF:
+| マップの種類 | 型 | キー／値のバイト数 | 用途 |
+| --- | --- | --- | --- |
+| ルート | LPM trie | 8 / 8 | 宛先プレフィックス、フラグ、ネクストホップまたはインターフェースの共用領域 |
+| NATフロントエンド | LPM trie | 16 / 20 | Service／送信元プレフィックスの照合、バックエンドグループ／件数、アフィニティ、フラグ |
+| NATバックエンド | Hash | 8 / 8 | バックエンドグループ／序数からアドレスとポートへの対応付け |
+| Conntrack v4形式 | LRU hash | 16 / 88 | プロトコル、アドレスの組、ポート、状態、NATメタデータ |
+| アフィニティ | LRU hash | バージョン固有 | クライアントとバックエンドの選択結果をキャッシュ |
 
-```yaml
-# sockops: Intercept socket operations
-- connect() -> Redirect to local sidecar
-- accept() -> Apply connection policies
-- close() -> Cleanup connection state
+IPv4ルートキーでは、先頭の4バイトにプレフィックス長をリトルエンディアンで格納し、その後にIPv4アドレスのバイト列を格納します。値にはフラグと、ネクストホップまたはインターフェースインデックスを表す4バイトの共用領域が含まれます。MACアドレスではありません。Conntrackでは32ビットのプロトコルフィールドの後にアドレスとポートが続きます。以前示されていた単純な5タプル構造は実際のレイアウトではありません。IPv6ではレイアウトが異なります。
 
-# sk_msg: Process socket data
-- sendmsg() -> Apply L7 policy
-- recvmsg() -> Inspect response
-```
-
-***
-
-## BPF マップ構造
-
-### Calico で使用されるマップタイプ
-
-| マップタイプ          | 目的              | 使用例         |
-| ----------------- | -------------------- | ------------------- |
-| **Hash Map**      | キー・バリュー検索     | Connection tracking |
-| **LRU Hash**      | 自動退避キャッシュ  | NAT テーブル           |
-| **Array**         | 固定サイズのインデックス   | Endpoint 設定     |
-| **LPM Trie**      | 最長プレフィックス一致 | ルート検索        |
-| **Per-CPU Array** | スケーラブルなカウンター    | 統計情報          |
-
-### ルートマップ構造
-
-```c
-// Simplified route map entry
-struct calico_route_key {
-    __be32 prefix;
-    __u32 prefix_len;
-};
-
-struct calico_route_value {
-    __u32 flags;          // LOCAL, REMOTE, HOST, etc.
-    __be32 next_hop;      // Next hop IP
-    __u32 ifindex;        // Interface index
-    __u8 mac[6];          // Destination MAC
-};
-```
-
-### Connection Tracking マップ
-
-```c
-// Connection tracking key
-struct calico_ct_key {
-    __be32 src_ip;
-    __be32 dst_ip;
-    __be16 src_port;
-    __be16 dst_port;
-    __u8 protocol;
-};
-
-// Connection tracking value
-struct calico_ct_value {
-    __u64 created;        // Timestamp
-    __u64 last_seen;      // Last packet
-    __be32 orig_dst;      // Pre-DNAT destination
-    __be16 orig_port;     // Pre-DNAT port
-    __u32 flags;          // Connection state
-};
-```
-
-### ポリシーマップ構造
-
-```c
-// Policy rule entry
-struct calico_policy_key {
-    __u32 policy_id;
-    __u32 rule_index;
-};
-
-struct calico_policy_value {
-    __u32 action;         // ALLOW, DENY, PASS
-    __u32 flags;
-    __be32 src_net;
-    __be32 src_mask;
-    __be32 dst_net;
-    __be32 dst_mask;
-    __be16 port_start;
-    __be16 port_end;
-};
-```
-
-***
+ポリシーはBPF命令にコンパイルされ、マップが補助します。ルールカウンターのマップ自体がポリシーなのではありません。生のバイト列を解釈する前に、対応するCalicoデバッグツールで現在のマップをデコードし、実際の型、容量、バージョンを確認してください。
 
 ## Direct Server Return（DSR）
 
-### DSR の概要
+![Ingress Kubernetesノードを経由するServiceトラフィックと、DSRによる戻り経路の代替方法。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-6.png)
 
-DSR は応答トラフィックがロードバランサーをバイパスできるようにし、レイテンシーとロードバランサーのリソース消費を削減します。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-6.html)
 
-![通常のロードバランシングフローではサーバーの応答がロードバランサーを経由してクライアントへ戻るのに対し、Direct Server Return フローでは応答がロードバランサーをバイパスしてサーバーからクライアントへ直接送られることを比較する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
+> フロントエンドにはNodePortや別のServiceアドレスを使用できます。Calicoは戻りパケットの送信元を変換します。図には外部クラウドロードバランサーを示していないため、その戻り経路に関する制約は別途考慮してください。
 
-### Calico の DSR モード
+ここでいう「ロードバランサーノード」とは、Serviceの転送を行うKubernetesノードです。DSRでは戻り経路でこのノードを迂回できますが、外部クラウドロードバランサーまで自動的に迂回するわけではありません。アプリケーションPodにVIPをバインドさせるのではなく、Calicoが戻りパケットの送信元を変換します。
 
-| モード         | 説明              | ユースケース                  |
-| ------------ | ------------------------ | ------------------------- |
-| **無効** | すべてのトラフィックが LB を通過   | デフォルト、すべての環境 |
-| **IPIP**     | IPIP トンネル経由の応答 | サブネット間              |
-| **DSR**      | 直接応答          | 同一 L2 ネットワーク           |
+| `bpfExternalServiceMode` | リモートバックエンドへの経路 |
+| --- | --- |
+| `Tunnel`（デフォルト） | リクエストと応答がIngressノード／トンネル経路を使用します。 |
+| `DSR` | リクエストはリモートノードへトンネルされ、応答はクライアントへ直接返ります。 |
 
-### DSR の有効化
+このフィールドに`Disabled`や`IPIP`という値はありません。CalicoはこのService転送にVXLANを使用するため、どちらのモードでもMTUとアンダーレイの要件を満たす必要があります。DSRではさらに、元のフロントエンド／Ingressノードの送信元アドレスを使ってノードが送信できることをネットワーク側で許可する必要があります。CalicoのAWSガイダンスでは、ノードを同じサブネットに配置し、送信元／送信先チェックを無効にすることを求めています。これを任意のクロスサブネット構成にも適用できると一般化しないでください。
+
+現在のCalicoトラブルシューティングガイドでは、外部ロードバランサーが元のターゲットを通る戻り経路を必要とするAWS／GCPの構成は対象外とされています。同じサブネットや送信元チェックの条件を満たしていても、そのようなトラフィックにDSRを有効にしないでください。
+
+すでに正常稼働している互換性のあるeBPF経路では、次の設定を使います。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -197,69 +94,22 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
   bpfExternalServiceMode: DSR
 ```
 
-### DSR の要件
+設定の管理者と調整したうえで変更を反映し、戻りルーティング、送信元検証、既存接続をテストしてください。モードの変更により接続が切れることがあります。DSRと接続時ロードバランシングは別々の最適化です。
 
-* サーバーとクライアントが同一の L2 ネットワークにあること、または
-* サブネット間では IPIP/VXLAN カプセル化を使用すること
-* 外部クライアント IP がサーバーからルーティング可能であること
-* ingress パスに SNAT がないこと
+## 接続時ロードバランシング
 
-***
+![接続時のService変換とパケット単位のService変換の比較。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
 
-## Connect-Time Load Balancing
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-7.html)
 
-### 従来方式と Connect-Time LB の比較
+> kube-proxyはカーネルのルールを設定しますが、パケットを転送するプロセスではありません。iptablesを使う既存の接続では、最初のルール選択後にconntrackが処理します。CTLBが迂回するのはServiceのDNAT経路であり、すべてのパケット処理ではありません。
 
-![kube-proxy のパケット単位のアプローチではすべての SYN、データ、FIN パケットが Pod A に DNAT されるのに対し、eBPF connect-time load balancing では 1 回の connect() syscall で Pod B が選択され、その接続のすべてのパケットが直接送られることを比較する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
+この図は概念を示しています。kube-proxyはカーネルの状態を設定し、その後のパケットはServiceルール全体からバックエンドを再選択するのではなく、conntrackを使います。接続時ロードバランシングは、対応するソケットのパケット処理前にService宛先を変換します。ルーティング、ポリシー、コネクショントラッキング、その他すべてのNATをなくす機能ではありません。
 
-### Connect-Time LB の利点
-
-| 観点                  | パケット単位          | Connect-Time          |
-| ----------------------- | ------------------- | --------------------- |
-| **NAT オーバーヘッド**        | すべてのパケット        | 接続設定時のみ |
-| **Connection tracking** | 必要            | 最小限               |
-| **レイテンシー**             | 高い（NAT 検索） | 低い（直接）        |
-| **CPU 使用量**           | 高い              | 低い                 |
-
-### Connect-Time LB の仕組み
-
-```c
-// Simplified connect-time LB logic
-int bpf_connect4(struct bpf_sock_addr *ctx) {
-    // Check if destination is a Service IP
-    struct lb_backend *backend = lookup_service(ctx->user_ip4, ctx->user_port);
-
-    if (backend) {
-        // Rewrite destination to backend pod
-        ctx->user_ip4 = backend->pod_ip;
-        ctx->user_port = backend->pod_port;
-    }
-
-    return 1; // Allow connection
-}
-```
-
-***
-
-## XDP アクセラレーション
-
-### XDP 処理レベル
-
-![NIC にオフロードされた XDP プログラムが最速であり、ドライバー内でネイティブ実行されるプログラムは高速、汎用ネットワークスタックで実行されるプログラムは最も低速だが任意の NIC で動作することを示す図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
-
-### XDP モード
-
-| モード        | 場所      | パフォーマンス | 要件   |
-| ----------- | ------------- | ----------- | -------------- |
-| **Offload** | NIC ハードウェア  | 最速     | SmartNIC       |
-| **Native**  | NIC ドライバー    | 高速        | ドライバーサポート |
-| **Generic** | ネットワークスタック | ベースライン    | 任意の NIC        |
-
-### Calico で XDP を有効にする
+現在のフィールドは`bpfConnectTimeLoadBalancing`で、値は`TCP`（デフォルト）、`Enabled`、`Disabled`です。以前のブール値`bpfConnectTimeLoadBalancingEnabled`は非推奨ですが、引き続き受け付けられます。両方の形式をむやみに同時設定せず、古い上書き設定を管理者と確認して削除してください。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -267,77 +117,108 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
-
-  # XDP mode: Disabled, Enabled, Offload
-  xdpEnabled: Enabled
-
-  # Interfaces for XDP
-  # Uses same detection as BPF dataplane interface
+  bpfConnectTimeLoadBalancing: TCP
+  bpfHostNetworkedNATWithoutCTLB: Enabled
 ```
 
-### Calico における XDP のユースケース
+`Enabled`ではUDPソケットの処理も含められます。`TCP`ではCTLBをTCPに限定します。`bpfHostNetworkedNATWithoutCTLB`は、ホストネットワークのNAT経路を補完的に制御するもので、ClusterIP全般のサポートを切り替える設定ではありません。Serviceアドレスを維持する必要があるサービスメッシュではCTLBを無効にする必要がある場合があります。ソケット書き換えが常に互換性を持つと仮定せず、テスト済みの連携手順に従ってください。
 
-1. **DDoS 保護**: NIC で悪意のあるトラフィックをドロップ
-2. **ブロックリスト適用**: ブロックされた IP を早期に拒否
-3. **レート制限**: スタック処理前のパケットレート制限
-4. **メトリクス収集**: ワイヤスピードでのパケットカウント
+## XDPによる高速化
+
+![受信パケットに対する汎用XDPの判定。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-3.html)
+
+> これはフレームワーク上のアクションです。ネイティブ、汎用、オフロードの各実行方式には異なる前提条件があります。この図は、Calicoがすべてのアクションやハードウェア機能を提供することを保証するものではありません。
+
+これらは汎用XDPのアクションであり、図示したオフロードやレート制限機能をすべてCalicoが提供するという意味ではありません。ネイティブのドライバーXDPはskbの割り当て前に動作できます。Generic XDPはskbを使って後段で実行されます。ハードウェアオフロードの可否はNIC、ドライバー、プログラムに依存します。モード名だけから一律の速度順位を導くことはできません。
+
+Felixの`xdpEnabled`フィールドは、従来型のiptablesデータプレーンで、対象となる未追跡のIngress拒否を高速化するための**ブール値**です。`genericXDPEnabled`のデフォルトはfalseであり、汎用モードへのフォールバックが常に保証されるわけではありません。これらの設定は、完全なeBPFデータプレーン内部のXDPプログラムとは別のものです。
+
+```yaml
+# Separate classic iptables-dataplane acceleration example.
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  xdpEnabled: true
+  genericXDPEnabled: false
+```
+
+対象のインターフェースでドライバーが対応するか、実際にプログラムがアタッチされているかを確認してください。`xdpEnabled: Enabled`、`Offload`、`BestEffort`は有効な列挙値ではありません。
 
 ***
 
-## eBPF モードの要件
+## eBPFモードの要件
 
-### カーネル要件
+過去の最低要件ではなく、選択したリリースの現在の要件を確認してください。
 
-| 要件      | 最低バージョン | 注記                     |
-| ---------------- | --------------- | ------------------------- |
-| **Linux Kernel** | 5.3+            | 5.8+ を推奨          |
-| **BTF サポート**  | 必須        | `CONFIG_DEBUG_INFO_BTF=y` |
-| **BPF Syscall**  | 必須        | `CONFIG_BPF_SYSCALL=y`    |
-| **BPF JIT**      | 必須        | `CONFIG_BPF_JIT=y`        |
+| 要件 | Calico 3.32のeBPFでの範囲 |
+| --- | --- |
+| 基本となるLinuxカーネル | 5.10以降。文書化されたRHELの例外は、カーネル4.18.0-305以降を使用するRHEL 8.4です。 |
+| アーキテクチャ | x86-64またはリトルエンディアンのarm64 |
+| データストア | Kubernetes。今回のモードではetcdデータストアは非対応です。 |
+| 追加機能 | eBPFログルールにはカーネル5.16、文書化されたQoS帯域制御には6.6／TCXが必要です。 |
+| アンダーレイ | Podプールがカプセル化されていない場合も含め、NodePort転送に必要なノード間VXLAN通信を許可します。 |
+| ランタイム | 必要なBPF／cgroup機能、権限、書き込み可能なマウントが必要です。不変OSでは適切な`CgroupV2Path`が必要です。 |
 
-### カーネルサポートの確認
+BTFはCO-REやツール向けの型情報を提供するものであり、検証器そのものでも、すべてのカーネルとの互換性を保証するものでもありません。Calicoのリリース済みローダーは、対応状況に応じてCO-RE／非CO-REのオブジェクトを選択するため、`/sys/kernel/btf/vmlinux`の存在だけでは準備状況を判断できません。リリース要件、ノード設定、実際のロード診断を確認してください。bpffsにピン留めされたオブジェクトは、作成元プロセスの終了後も残りますが、ホストの再起動後まで永続するディスクデータではありません。
+
+### プラットフォームの対象範囲
+
+現在のCalicoガイドでは、セルフマネージド／kubeadm、kOps、OpenShift、EKS、MKE、および要件を満たしたAKS／RKEの構成が列挙されています。GKE、通常運用中のeBPFと標準データプレーンまたはWindowsの混在、SCTPのポリシー／Serviceは明示的に対象外です。IPv6とIPv6のみの運用は文書化されています。「IPv6サポートが不十分ならdual-stackにする」という方法が一般に解決策になるわけではありません。
+
+Azure CNIを使うAKSでは、管理対象のkube-proxyを無効にできません。Calicoガイドでは、Calicoネットワークを使うAKSは別の経路として扱われ、引き続きテスト中です。OS名、Ubuntuイメージ、カーネルバージョンだけではプラットフォームのサポートを確認できません。EKSのノードモード、CNIの組み合わせ、OSの種類は、Calico／EKS固有の手順に従う必要があります。管理対象のネットワークモードや必要な特権付きノードコンポーネントを実行できない環境までサポートされると推測しないでください。
+
+WindowsではLinuxのiptablesではなくWindows HNSデータプレーンを使います。Windowsや標準データプレーンのノードを含めたまま、ノードごとにeBPFを継続的に段階導入する計画は立てないでください。代表的な別クラスターで検証してから、文書化された一括移行手順に従ってください。
+
+### 読み取り専用の事前確認
 
 ```bash
-# Check kernel version
-uname -r
-
-# Check BTF support
-ls /sys/kernel/btf/vmlinux
-
-# Check BPF support
-cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
-
-# Required output:
-# CONFIG_BPF=y
-# CONFIG_BPF_SYSCALL=y
-# CONFIG_BPF_JIT=y
-# CONFIG_DEBUG_INFO_BTF=y
+kubectl get nodes -o wide
+kubectl -n kube-system get daemonset kube-proxy -o yaml
+kubectl get installation.operator.tigera.io default -o yaml
+kubectl get felixconfiguration.projectcalico.org default -o yaml
 ```
 
-### ディストリビューションのサポート
+インストール先の名前空間を使い、Calico／Operatorの実際のイメージバージョンを調べてください。各ノードでは、ホストのマウント名前空間で`uname -r`、利用可能なBTF、bpffs、cgroupのマウントを確認します。デバッグコンテナから見えるファイルシステムがホストと同じとは限りません。データプレーンを切り替えるためだけに、既存Helmリリースの名前を推測してアップグレードしたり、値を破棄したりしないでください。
 
-| ディストリビューション      | eBPF 対応 | 注記                        |
-| ----------------- | ---------- | ---------------------------- |
-| Ubuntu 20.04+     | はい        | Kernel 5.4+                  |
-| Ubuntu 22.04+     | はい        | Kernel 5.15+（推奨）   |
-| RHEL/CentOS 8.2+  | はい        | バックポート付き Kernel 4.18+  |
-| Amazon Linux 2    | 一部    | Kernel のアップグレードが必要な場合あり      |
-| Amazon Linux 2023 | はい        | Kernel 6.1+                  |
-| Bottlerocket      | はい        | コンテナ専用に構築 |
+## iptablesからeBPFへの移行
 
-### Calico バージョンの要件
+### Operatorによる自動ブートストラップ：限定された前提条件
+
+この方法は、Tigera Operatorを使ってインストールしたセルフマネージドのkubeadmベースクラスターが対象です。kube-proxyが`kube-system`にあり、**Helm、Argo CDなどのリコンサイラーが管理していないこと**、さらにOperatorがKubernetes Serviceとエンドポイントを参照できることが条件です。
+
+```bash
+kubectl get installation.operator.tigera.io default -o yaml
+# Only when every automatic-bootstrap prerequisite above is met:
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF","bpfNetworkBootstrap":"Enabled","kubeProxyManagement":"Enabled"}}}'
+```
+
+移行中、OperatorはAPIへの直接アクセスを設定し、kube-proxyを管理します。ローリング更新の間はノードごとにモードが異なり、公式ガイドでもNodePortが一時的に中断する可能性が明記されています。中断のない移行が保証されるかのように説明しないでください。
+
+### 手動での事前準備と管理者
+
+それ以外のサポート対象インストールでは、置き換え対象のService実装に依存しない、安定した**APIサーバーへの直接アクセス**を先に確保します。実際のAPIロードバランサーのホスト名またはアドレスとポートを使ってください。EKSではクラスターのAPIエンドポイントホスト名を使い、通常はポート443を使用します。以下はセルフマネージドAPIエンドポイントのプレースホルダー例です。
 
 ```yaml
-# Minimum Calico versions for eBPF features
-eBPF dataplane basic:     v3.13.0
-Connect-time LB:          v3.16.0
-XDP acceleration:         v3.18.0
-Dual-stack eBPF:         v3.20.0
-Host-networked pods:      v3.13.0 (with limitations)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-services-endpoint
+  namespace: tigera-operator
+data:
+  KUBERNETES_SERVICE_HOST: api.internal.example.com
+  KUBERNETES_SERVICE_PORT: "6443"
 ```
 
-### Node の設定
+Operatorを使う場合は`tigera-operator`、スタンドアロンマニフェストを使う場合は`kube-system`を指定します。**名前は`kubernetes-services-endpoint`（複数形）です**。Serviceデータプレーンを切り替える前に、Calicoがこのエンドポイントを認識し、名前解決して到達できることを確認してください。DNSのブートストラップ、セキュリティルール、到達性はプラットフォームごとに異なる前提条件です。
+
+kube-proxyがIPVSを使っている場合、公式の移行手順では、まずiptablesモードへ切り替えてから計画的にノードを再起動する必要があります。これは別の管理された変更として対応してください。
+
+kube-proxyの実際の管理者と調整してください。文書化されているAzure CNIのAKS構成のようにkube-proxyを稼働させ続ける場合は、以下の値を既存のFelix設定に統合します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -345,505 +226,224 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  # Enable eBPF dataplane
-  bpfEnabled: true
+  bpfKubeProxyIptablesCleanupEnabled: false
+  bpfKubeProxyHealthzPort: 0
+```
 
-  # Data interface detection
-  # Auto-detect: first interface with default route
-  # Or specify pattern: "eth*"
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
+このクリーンアップフラグだけではService処理は有効になりません。クリーンアップを有効にしたままkube-proxyを稼働させると、コンポーネント間でiptablesを取り合います。両方のヘルスサーバーを10256で稼働させた場合も競合します。既存のFelix設定で無関係な項目を維持してください。
 
-  # External service mode: Tunnel or DSR
+データプレーンの有効化には、次の**いずれか1つ**の管理経路を使います。
+
+```bash
+# Operator installation:
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF"}}}'
+```
+
+```bash
+# Alternative: standalone manifest installation, without operator ownership:
+kubectl patch felixconfiguration.projectcalico.org default --type=merge \
+  -p '{"spec":{"bpfEnabled":true}}'
+```
+
+管理者が手動でkube-proxyを無効化するインストールでは、計画された移行時間帯に、プラットフォームで文書化された手順に従ってください。まず現在の望ましい設定を保存します。一時的なnodeSelectorを使う場合は、未使用のキーを選び、どのノードにも一致しないことを確認してから、追加したキーだけを後で削除してください。既存のセレクターマップ全体をnullで置き換えてはいけません。DaemonSetを削除したり、存在しないkube-proxy Deploymentのスケールを変更したりする方法は、一般的な移行手順ではありません。
+
+### プログラムのロードだけでなく通信を検証する
+
+ロールアウトの状態と、対象ノードに実際にあるBPFプログラム／マップを調べてください。ノード間の新しいPod間通信、DNS、ClusterIP、NodePort／外部通信、ポリシーによる拒否、必要なホストネットワーク接続をテストします。プログラム一覧やiptables行数が少ないことだけでは、それらの経路が機能する証明になりません。
+
+Kubernetes APIは通常HTTPではなくHTTPSを使います。正しいTLS信頼設定と適切な認証情報でAPI通信をテストしてください。認証エラーとネットワーク障害は別の問題です。接続性を確認する場合は、認証なしのAPIリクエストを成功基準とせず、テスト用のアプリケーションServiceを使ってください。
+
+### ロールバック
+
+モード変更を戻すときも、同じ管理者を通してください。
+
+```bash
+# Operator installation: use its owner/GitOps source for the same change.
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'
+```
+
+```bash
+# Alternative for standalone manifest installations:
+kubectl patch felixconfiguration.projectcalico.org default --type=merge \
+  -p '{"spec":{"bpfEnabled":false}}'
+```
+
+自動ブートストラップを使った場合、Operatorからkube-proxyを復元できます。手動で無効化した場合は、元のセレクターやその他の設定を維持しながら、管理者を通じて一時的な変更だけを元に戻してください。Serviceルールと通信を再確認します。eBPFを無効にしたり外部Serviceモードを変更したりすると、既存の接続が中断される可能性があります。ノードを再起動すれば、すべてのアプリケーション状態が正常に戻ると約束してはいけません。
+
+***
+
+## 報告された性能記録
+
+以前の英語ガイドと韓国語ガイドには、**互いに異なる未検証の記録**がありました。元の数値を以下に残しますが、この監査で測定した値でもCalico 3.32.2の性能保証でもありません。どちらにも生データ、テスト日、Calico／Kubernetes／カーネルの正確なバージョン、トポロジー、NIC／CPUの詳細、接続状態の設定、完全なテスト方法は記載されていません。
+
+### 記録A：以前の英語ガイド
+
+| 報告されたレイテンシー | iptables | eBPF | 元資料にある丸めた削減率 |
+| --- | --- | --- | --- |
+| 同一ノードのPod | 45 μs | 25 μs | 44% |
+| ノード間のPod | 120 μs | 80 μs | 33% |
+| ClusterIP | 150 μs | 60 μs | 60% |
+| NodePort | 180 μs | 70 μs | 61% |
+
+| 報告されたスループット | iptables | eBPF | 元資料にある丸めた増加率 |
+| --- | --- | --- | --- |
+| TCP単一ストリーム | 15 Gbps | 23 Gbps | 53% |
+| TCP複数ストリーム | 35 Gbps | 48 Gbps | 37% |
+| UDP単一ストリーム | 8 Gbps | 18 Gbps | 125% |
+| 64バイトパケット | 2M pps | 5M pps | 150% |
+
+| 報告されたルール数 | iptables：コネクション／秒 | eBPF：コネクション／秒 |
+| --- | --- | --- |
+| 1,000 | 50,000 | 120,000 |
+| 5,000 | 35,000 | 115,000 |
+| 10,000 | 20,000 | 110,000 |
+
+レイテンシーのパーセンタイルは明記されていません。1秒あたりのコネクション数はCPU使用率を直接示す値ではなく、この3点だけで任意の規模におけるポリシー処理コストが一定とは証明できません。
+
+### 記録B：以前の韓国語ガイド
+
+| 報告された指標 | iptables | eBPF | 元資料にある丸めた変化 |
+| --- | --- | --- | --- |
+| スループット | 1.2M pps | 2.0M pps | +67% |
+| レイテンシー | 120 μs | 75 μs | −38% |
+| Service 1,000個時のCPU | 70% | 30% | −57% |
+| 接続確立 | 絶対値の記載なし | 絶対値の記載なし | −50%との主張 |
+
+記録Bは記録Aと同じ実験ではありません。メモリや複雑さに関する記述は測定データではなく、接続確立の割合にも根拠となる所要時間がありません。2つの記録を1つのベンチマークとしてまとめたり、「20～40%の改善」を期待値として使ったりしないでください。
+
+### 再現可能な比較
+
+クライアント／サーバーのテストイメージ、ノード、トラフィック経路、CPU／NIC割り当て、MTU、負荷を揃えてください。データプレーン、カーネル、ソフトウェアのバージョン、テスト時間、サンプル数、ウォームアップ、並行数、conntrackの状態、ログ設定を記録します。PodのIPへの直接通信とは別に、アプリケーションServiceをテストしてください。
+
+```bash
+# Requires ready test Pods with netperf/netserver and an appropriate test policy.
+CLIENT_POD=netperf-client
+SERVER_POD=netperf-server
+SERVER_IP="$(kubectl -n calico-demo get pod "$SERVER_POD" -o jsonpath='{.status.podIP}')"
+test -n "$SERVER_IP"
+kubectl -n calico-demo exec "$CLIENT_POD" -- \
+  netperf -H "$SERVER_IP" -t TCP_RR -l 30
+kubectl -n calico-demo exec "$CLIENT_POD" -- \
+  netperf -H "$SERVER_IP" -t TCP_STREAM -l 30
+```
+
+`TCP_RR`が通常報告するのは**トランザクション毎秒**であり、レイテンシーのパーセンタイルではありません。適切なテスト条件のもとなら逆数から平均トランザクション時間を表せる場合がありますが、ネットワークのp99レイテンシーではありません。netperfは制御接続とデータ接続を使うため、隔離されたテスト環境でそれらを許可する必要があります。運用者のワークステーションにnetperfをインストールしても、クライアントPodにはインストールされません。この手順は今回の監査でCalicoクラスター上では実施していません。
+
+***
+
+## eBPFのデバッグ
+
+Calicoノードイメージには、**`calico-node -bpf`としてデバッグツールが組み込まれています**。ソースツリーにはスタンドアロンの`calico-bpf`エントリーポイントもありますが、ノードイメージに独立したバイナリがインストール済みとは限りません。組み込みツールでは`help`を使います。ラッパーが`--help`を先に処理し、BPFサブコマンドまで渡さないことがあります。
+
+```bash
+CALICO_NAMESPACE=calico-system
+CALICO_NODE=demo-worker
+CALICO_POD="$(kubectl -n "$CALICO_NAMESPACE" get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')"
+test -n "$CALICO_POD"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf help
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf routes dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf conntrack dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf nat dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf counters dump
+```
+
+```bash
+# Choose an interface actually attached on this node.
+BPF_INTERFACE=eth0
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf policy dump "$BPF_INTERFACE" all
+# IPv6, when enabled: put the debug-tool flag after its subcommand.
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf routes dump --ipv6
+```
+
+```bash
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool prog show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool map show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool net show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  tc filter show dev "$BPF_INTERFACE" ingress
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  tc filter show dev "$BPF_INTERFACE" egress
+```
+
+`policy dump`では、インターフェースとフック（`ingress`、`egress`、`xdp`、`all`）の両方を指定する必要があります。ポリシーのデバッグ情報が利用可能でなければなりません。`bpfPolicyDebugEnabled`のデフォルトはtrueです。ワークロードのingressは、ホスト側vethのTC／TCX **egress**フックにアタッチされます。ホストのingressではホストインターフェースのingressフックを使います。インターフェース名にある方向だけから、ワークロードの通信方向を推測しないでください。
+
+`nat dump`は引数なし、またはIP／ポート／プロトコルの組を受け付けます。確認したCLIに`nat frontend list`コマンドはありません。bpftoolのID指定コマンドを使う前に、実際のプログラムID／マップIDを確認してください。生のマップ検索キーは、バージョンごとのマップ全体のレイアウトに依存します。IPv4アドレスの4バイトだけではルートマップのキーになりません。
+
+bpftoolが報告するマップの実際の`max_entries`とサイズを確認してください。`/proc/sys/kernel/bpf_map_max_entries`はLinux共通のマップ容量設定ではありません。`run_cnt`や`run_time_ns`など、実行時のプログラムカウンターを利用するには統計を有効にする必要があります。また、これらはリクエスト全体のレイテンシーではありません。TCXのアタッチ状態は、従来の`tc filter show`に加えてbpftool link／attachmentでも調べる必要がある場合があります。
+
+### ログとパケットキャプチャ
+
+`bpfLogLevel`が受け付ける値は**Off、Info、Debug**であり、Warn／Warningではありません。BPFプログラムのログはBPF trace pipeに出力されます。一方、Felixコンポーネントのログはコンテナの標準出力に出力されます。プログラム／ポリシーログを調べる際は、適切なトレースツールとノードを使ってください。Podのロールアウトに成功しただけでは、パケットが許可される経路が機能する証明になりません。
+
+Calicoはワークロードのピアに直接リダイレクトできるため、ホスト側vethのパケットキャプチャではそのフックを通らないトラフィックを取得できない場合があります。実際の通信経路でキャプチャし、ポリシー状態、ルート、conntrack、Serviceバックエンドと照合してください。
+
+## Kubernetes Serviceの置き換えと制限
+
+Calico eBPFはServiceを転送しますが、外部クラウドロードバランサーをプロビジョニングするものではありません。AWSなどのクラウドコントローラーの役割とは分けて考えてください。現在の実装にはIPv4／IPv6のNATマップ、ローカルトラフィックのフラグ、アフィニティ処理があります。古い「IPv6／Localは非対応」という表を現在の機能一覧として扱わないでください。また、検証せずにkube-proxyのすべてのオプションが同じように動作すると仮定しないでください。
+
+リリース済みWireGuardの機能テストにはBPFモードとIPv4／IPv6構成が含まれているため、WireGuardがeBPFと一律に非互換というわけではありません。実際のCNI、トラフィック種別、カーネル、MTU、暗号化経路を確認してください。暗号化の一般ガイドにある古い制限やインストール例を、現在のOSにそのまま適用しないでください。
+
+ホストネットワークを使うワークロードでは、CTLB／ホストNATの設定とHostEndpointポリシーを個別に確認してください。現在のeBPFガイドではSCTPと、eBPF／標準／Windowsを通常運用中に混在させる構成は対象外です。Windowsではサポート対象のHNSアーキテクチャを使用します。
+
+AWS／GCPのロードバランサー経路について、現在のCalicoトラブルシューティングガイドでは、外部ロードバランサーが元のターゲットを通る戻り経路を必要とする場合、DSRが正しく動作しないと明記されています。文書化されたサポート対象モードを使って経路全体を検証してください。同じサブネットや送信元チェックの前提条件を満たすだけでは、クラウドLBとの互換性は確認できません。
+
+## 設定と可観測性
+
+測定に基づいて変更するまでは、リリースのデフォルト値を優先してください。次のフィールドは、すでに有効化されたeBPFインストールで使われる現在の名前と値の例です。設定の管理者を通じて統合してください。
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  bpfLogLevel: "Off"
   bpfExternalServiceMode: Tunnel
-
-  # Log level for BPF programs
-  bpfLogLevel: Info
-
-  # Kube-proxy replacement
-  bpfKubeProxyIptablesCleanupEnabled: true
-
-  # Connection tracking
-  bpfConnectTimeLoadBalancingEnabled: true
+  bpfConnectTimeLoadBalancing: TCP
+  bpfHostNetworkedNATWithoutCTLB: Enabled
 ```
 
-***
+`bpfDataIfacePattern`を任意の`eth*`や範囲の狭い正規表現で上書きしないでください。これは正規表現であり、ワークロード用やCalico専用のデバイスを除きつつ、実際のアンダーレイ／Service用インターフェースを対象にする必要があります。インターフェース名だけではXDPオフロード対応を証明できません。
 
-## iptables から eBPF への移行
+`bpfKubeProxyEndpointSlicesEnabled`は現在のFelixフィールドではありません。旧CTLBブール値は削除済みではなく、非推奨です。conntrackタイムアウトを調整する場合、現在のキーには`tcpEstablished`、`tcpFinsSeen`、`tcpResetSeen`、`udpTimeout`、`genericTimeout`、`icmpTimeout`があります。`tcpClosing`、`udp`、`icmp`はこれらのキーではありません。すべてのデプロイでマップ容量を100万エントリーに設定するのではなく、マップの占有率とメモリ使用量を測定してください。
 
-### 移行前チェックリスト
+リリース済みのエンドポイントマネージャーは、次の実在するゲージを登録します。
 
-```bash
-# 1. Verify kernel requirements
-uname -r  # Should be 5.3+
-ls /sys/kernel/btf/vmlinux  # BTF must exist
+| メトリクス | 意味 |
+| --- | --- |
+| `felix_bpf_dataplane_endpoints` | 管理対象のBPFエンドポイント |
+| `felix_bpf_dirty_dataplane_endpoints` | 障害後もdirty状態にあるエンドポイント |
+| `felix_bpf_happy_dataplane_endpoints` | BPFへの設定に成功したエンドポイント |
 
-# 2. Check Calico version
-kubectl get deployment -n kube-system calico-kube-controllers -o jsonpath='{.spec.template.spec.containers[0].image}'
-# Should be v3.13.0+
+管理者を通じて文書化されたFelixメトリクスエンドポイントを有効にし、実際のスクレイプ結果とメトリクスのHELP／TYPEを確認してください。以前の`calico_bpf_*`一覧がエクスポート対象であることは確認できていません。エンドポイントのゲージは、マップ使用量、パケット拒否カウンター、アプリケーションレイテンシーを直接代替するものではありません。
 
-# 3. Verify CNI plugin
-kubectl get ds -n kube-system calico-node -o jsonpath='{.spec.template.spec.containers[0].env}' | grep -i cni
-
-# 4. Check existing networking mode
-calicoctl get felixconfiguration default -o yaml | grep -i bpf
-
-# 5. Verify no conflicting CNI
-ls /etc/cni/net.d/
-```
-
-### 移行手順
-
-**ステップ 1: FelixConfiguration を更新（dry-run）**
-
-```yaml
-# Save current configuration
-kubectl get felixconfiguration default -o yaml > felix-backup.yaml
-
-# Create eBPF configuration
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  bpfEnabled: false  # Not enabled yet
-  bpfLogLevel: Debug  # For troubleshooting
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
-  bpfExternalServiceMode: Tunnel
-  bpfKubeProxyIptablesCleanupEnabled: false  # Don't cleanup yet
-```
-
-**ステップ 2: kube-proxy を無効化（Calico を代替として使用する場合）**
-
-```bash
-# Option A: Scale down kube-proxy
-kubectl -n kube-system patch daemonset kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico":"true"}}}}}'
-
-# Option B: Add calico node selector to skip kube-proxy nodes
-# Only if running both temporarily
-```
-
-**ステップ 3: テスト Node で eBPF を有効化**
-
-```bash
-# Label test node
-kubectl label node test-node-1 calico-ebpf=enabled
-
-# Apply node-specific config
-calicoctl apply -f - <<EOF
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: node.test-node-1
-spec:
-  bpfEnabled: true
-EOF
-```
-
-**ステップ 4: テスト Node を検証**
-
-```bash
-# Check BPF programs loaded
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  bpftool prog list
-
-# Verify connectivity
-kubectl run test-pod --image=busybox --restart=Never --overrides='{"spec":{"nodeName":"test-node-1"}}' -- sleep 3600
-kubectl exec test-pod -- wget -O- http://kubernetes.default.svc
-
-# Check logs
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i bpf
-```
-
-**ステップ 5: すべての Node にロールアウト**
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  bpfEnabled: true
-  bpfLogLevel: Info
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
-  bpfExternalServiceMode: Tunnel
-  bpfKubeProxyIptablesCleanupEnabled: true
-  bpfConnectTimeLoadBalancingEnabled: true
-```
-
-**ステップ 6: iptables ルールをクリーンアップ**
-
-```bash
-# After confirming eBPF is working
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfKubeProxyIptablesCleanupEnabled":true}}'
-
-# Verify iptables rules are minimal
-iptables -L -n | wc -l  # Should be significantly reduced
-```
-
-### ロールバック手順
-
-```bash
-# Disable eBPF
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfEnabled":false}}'
-
-# Restore kube-proxy if disabled
-kubectl -n kube-system patch daemonset kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":null}}}}'
-
-# Wait for calico-node restart
-kubectl rollout status ds/calico-node -n kube-system
-
-# Verify iptables rules restored
-iptables -L -n -v
-```
-
-***
-
-## パフォーマンスベンチマーク
-
-### レイテンシーの比較
-
-| シナリオ                | iptables | eBPF  | 改善率 |
-| ----------------------- | -------- | ----- | ----------- |
-| Pod 間（同一 Node）  | 45 μs    | 25 μs | 44%         |
-| Pod 間（異なる Node） | 120 μs   | 80 μs | 33%         |
-| Service（ClusterIP）     | 150 μs   | 60 μs | 60%         |
-| Service（NodePort）      | 180 μs   | 70 μs | 61%         |
-
-### スループットの比較
-
-| シナリオ            | iptables | eBPF    | 改善率 |
-| ------------------- | -------- | ------- | ----------- |
-| TCP 単一ストリーム   | 15 Gbps  | 23 Gbps | 53%         |
-| TCP 複数ストリーム    | 35 Gbps  | 48 Gbps | 37%         |
-| UDP 単一ストリーム   | 8 Gbps   | 18 Gbps | 125%        |
-| 小さいパケット（64B） | 2M pps   | 5M pps  | 150%        |
-
-### CPU 効率
-
-```
-Connection rate test (connections/sec):
-
-iptables dataplane:
-├── 1000 rules: 50,000 conn/s
-├── 5000 rules: 35,000 conn/s
-└── 10000 rules: 20,000 conn/s
-
-eBPF dataplane:
-├── 1000 rules: 120,000 conn/s
-├── 5000 rules: 115,000 conn/s
-└── 10000 rules: 110,000 conn/s
-
-Note: eBPF performance remains nearly constant regardless of rule count
-```
-
-### 独自ベンチマークの実行
-
-```bash
-# Install netperf
-apt-get install netperf
-
-# Pod-to-Pod latency (TCP_RR)
-kubectl exec client-pod -- netperf -H server-pod-ip -t TCP_RR -l 30
-
-# Throughput (TCP_STREAM)
-kubectl exec client-pod -- netperf -H server-pod-ip -t TCP_STREAM -l 30
-
-# Service latency
-kubectl exec client-pod -- netperf -H service-cluster-ip -t TCP_RR -l 30
-
-# Compare with iperf3
-kubectl exec client-pod -- iperf3 -c server-pod-ip -t 30
-```
-
-***
-
-## eBPF のデバッグ
-
-### bpftool コマンド
-
-```bash
-# List loaded BPF programs
-bpftool prog list
-
-# Show program details
-bpftool prog show id 123
-
-# Dump program instructions
-bpftool prog dump xlated id 123
-
-# List BPF maps
-bpftool map list
-
-# Dump map contents
-bpftool map dump id 456
-
-# Show map entries
-bpftool map lookup id 456 key 0x0a 0x00 0x01 0x0a
-```
-
-### TC フィルターの調査
-
-```bash
-# Show TC filters on interface
-tc filter show dev eth0 ingress
-tc filter show dev eth0 egress
-
-# Show BPF program attached to TC
-tc filter show dev eth0 ingress | grep bpf
-
-# Detailed filter info
-tc -s filter show dev eth0 ingress
-```
-
-### Calico BPF のデバッグ
-
-```bash
-# Enable debug logging
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfLogLevel":"Debug"}}'
-
-# View BPF debug logs
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i "bpf\|ebpf"
-
-# Check BPF map contents via calico-node
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf conntrack dump
-
-# Show routes in BPF map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf routes dump
-
-# Show NAT entries
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat dump
-```
-
-### 一般的なデバッグシナリオ
-
-**接続性の問題:**
-
-```bash
-# Check if BPF programs are loaded
-bpftool prog list | grep calico
-
-# Verify route is in BPF map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf routes dump | grep "10.244.1.5"
-
-# Check conntrack entries
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf conntrack dump | grep "10.244.1.5"
-
-# Verify policy is allowing traffic
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf policy dump
-```
-
-**Service Load Balancing の問題:**
-
-```bash
-# Check service backends in NAT map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat dump | grep "10.96.0.1"
-
-# Verify frontend entry exists
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat frontend list
-```
-
-***
-
-## 制限事項と既知の問題
-
-### 現在の制限事項
-
-| 制限事項              | 説明            | 回避策                      |
-| ----------------------- | ---------------------- | ------------------------------- |
-| **Host-networked pods** | ポリシーサポートが限定的 | Host Pod には iptables を使用      |
-| **IPv6**                | 部分的なサポート        | dual-stack モードを使用             |
-| **Wireguard**           | eBPF とは併用不可          | IPsec を使用するか暗号化を無効化 |
-| **Service topology**    | サポートが限定的        | 標準の kube-proxy を使用         |
-| **Windows nodes**       | 非対応          | iptables dataplane を使用          |
-
-### 既知の問題
-
-```yaml
-# Issue: BPF program fails to load
-# Cause: Kernel too old or BTF missing
-# Solution: Upgrade kernel or enable BTF
-
-# Issue: Services not accessible
-# Cause: kube-proxy and Calico BPF conflict
-# Solution: Fully disable kube-proxy
-
-# Issue: NodePort not working
-# Cause: DSR mode with non-routable client IPs
-# Solution: Use Tunnel mode instead of DSR
-
-# Issue: High memory usage
-# Cause: Large conntrack table
-# Solution: Tune conntrack limits
-```
-
-### 問題の確認
-
-```bash
-# Check for BPF verifier errors
-dmesg | grep -i "bpf\|verifier"
-
-# Check Felix logs for BPF errors
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i error
-
-# Verify BPF map limits
-cat /proc/sys/kernel/bpf_map_max_entries
-```
-
-***
-
-## Kube-proxy の置き換え
-
-### Kube-proxy の完全な置き換え
-
-Calico eBPF は Service load balancing において kube-proxy を完全に置き換えられます。
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  bpfEnabled: true
-  bpfKubeProxyIptablesCleanupEnabled: true
-  bpfKubeProxyMinSyncPeriod: 1s
-
-  # Disable kube-proxy IPVS/iptables cleanup
-  # (Calico will manage service rules)
-```
-
-### kube-proxy を無効化する
-
-```bash
-# Method 1: Scale to zero
-kubectl -n kube-system scale deployment kube-proxy --replicas=0
-
-# Method 2: Delete DaemonSet
-kubectl -n kube-system delete ds kube-proxy
-
-# Method 3: Prevent scheduling (reversible)
-kubectl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico":"true"}}}}}'
-```
-
-### 置き換えの検証
-
-```bash
-# Check no kube-proxy rules in iptables
-iptables -t nat -L KUBE-SERVICES 2>/dev/null | wc -l
-# Should be 0 or minimal
-
-# Verify Calico is handling services
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat frontend list
-
-# Test service connectivity
-kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.svc
-```
-
-### Service 機能の比較
-
-| 機能         | kube-proxy（iptables） | kube-proxy（IPVS） | Calico eBPF |
-| --------------- | --------------------- | ----------------- | ----------- |
-| ClusterIP       | はい                   | はい               | はい         |
-| NodePort        | はい                   | はい               | はい         |
-| LoadBalancer    | はい                   | はい               | はい         |
-| ExternalIPs     | はい                   | はい               | はい         |
-| SessionAffinity | はい                   | はい               | はい         |
-| Topology        | はい                   | はい               | 限定的     |
-| ProxyMode       | iptables              | IPVS              | eBPF        |
-
-***
-
-## ベストプラクティス
-
-### Deployment の推奨事項
-
-1. eBPF を有効化する前に**カーネル要件を確認**する
-2. まず**非本番**クラスターでテストする
-3. Node selector を使用して**段階的に有効化**する
-4. ロールアウト中に**パフォーマンスを監視**する
-5. **ロールバック計画を準備**しておく
-
-### 設定のベストプラクティス
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Production settings
-  bpfEnabled: true
-  bpfLogLevel: Warn  # Reduce logging in production
-
-  # Interface detection
-  bpfDataIfacePattern: "^((en|eth)[0-9]+)"
-
-  # Service mode based on topology
-  bpfExternalServiceMode: Tunnel  # Safe default
-
-  # Connection tracking
-  bpfConnectTimeLoadBalancingEnabled: true
-
-  # Cleanup legacy rules
-  bpfKubeProxyIptablesCleanupEnabled: true
-```
-
-### eBPF Dataplane の監視
-
-```yaml
-# Prometheus metrics to monitor
-calico_bpf_num_maps                    # Number of BPF maps
-calico_bpf_map_size_bytes              # Size of each map
-calico_bpf_conntrack_entries           # Active connections
-calico_bpf_nat_frontend_entries        # Service frontends
-calico_bpf_nat_backend_entries         # Service backends
-felix_bpf_dataplane_apply_time_seconds # Dataplane sync time
-```
-
-***
-
-## まとめ
-
-Calico の eBPF dataplane は Kubernetes ネットワーキングにおける重要な進歩です。
-
-| 利点           | 影響                      |
-| ----------------- | --------------------------- |
-| **パフォーマンス**   | 最大 60% のレイテンシー削減 |
-| **スケーラビリティ**   | O(n) に対して O(1) のルール検索    |
-| **効率**    | CPU 使用量の削減             |
-| **可観測性** | 豊富な BPF ベースのメトリクス      |
-| **シンプルさ**    | kube-proxy を置き換え         |
-
-### eBPF Dataplane を使用する場合
-
-* 高スループットのワークロード
-* レイテンシーに敏感なアプリケーション
-* 多数の Service を持つ大規模クラスター
-* 詳細な可観測性を必要とする環境
-* Linux kernel 5.3+ が利用可能
-
-### iptables を継続して使用する場合
-
-* Windows Node のサポートが必要
-* 古い kernel バージョン
-* Wireguard 暗号化が必要
-* 複雑な Service topology の要件
-* 実績のある技術を必要とするリスク回避的な環境
+現在のプラットフォーム互換性、必要なService／ポリシー／暗号化機能、実測したワークロードの動作に基づいてデータプレーンを選択してください。移行とロールバックの両方をリハーサルしてください。eBPFとiptablesのどちらかが、すべてのクラスターにとって本質的に適切というわけではありません。
 
 ***
 
 ## 参考資料
 
-* [Calico eBPF ドキュメント](https://docs.tigera.io/calico/latest/operations/ebpf/)
-* [Linux eBPF ドキュメント](https://ebpf.io/what-is-ebpf/)
-* [BPF と XDP リファレンスガイド](https://docs.cilium.io/en/stable/bpf/)
-* [Calico eBPF 移行ガイド](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
-* [bpftool マニュアル](https://man7.org/linux/man-pages/man8/bpftool.8.html)
+* [Calico 3.32 eBPFのインストール要件](https://docs.tigera.io/calico/latest/operations/ebpf/install)
+* [Calico eBPFの移行とロールバック](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+* [Calico eBPFのトラブルシューティングとCLI](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
+* [Felixの設定](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
+* [OperatorのインストールAPI](https://docs.tigera.io/calico/latest/reference/installation/api)
+* [カーネルBTF](https://docs.kernel.org/bpf/btf.html)
+* [libbpfとCO-RE](https://docs.kernel.org/bpf/libbpf/libbpf_overview.html)
+* [Calico 3.32.2のルートマップレイアウト](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/routes/map.go)
+* [Calico 3.32.2のNATマップ](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/maps.go)
+* [Calico 3.32.2のconntrack v4レイアウト](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/conntrack/v4/map.go)
+* [Calico 3.32.2の接続時ローダー](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/connecttime.go)
+* [Calico 3.32.2のWireGuard機能テスト](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/fv/wireguard_test.go)
+* [bpftoolのプログラムリファレンス](https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-prog.rst)
+* [bpftoolのマップリファレンス](https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-map.rst)

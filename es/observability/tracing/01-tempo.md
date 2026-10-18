@@ -1,28 +1,28 @@
 # Grafana Tempo
 
-> **Línea base revisada**: Tempo 3.0.3; chart `tempo-distributed` 3.6.0 (appVersion 3.0.3)
-> **Última actualización**: September 13, 2026
+> **Versiones de referencia revisadas**: Tempo 3.0.3; chart `tempo-distributed` 3.6.0 (appVersion 3.0.3)
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Introducción
 
-Grafana Tempo almacena y consulta trazas distribuidas mediante almacenamiento de objetos, bloques Parquet y TraceQL. Un TraceID localiza **datos retenidos e ingeridos correctamente**; no puede recuperar spans perdidos por muestreo, exportaciones fallidas o retención. Tempo evita una base de datos de búsqueda independiente de propósito general, pero las columnas dedicadas, los metadatos, las cachés, el cómputo y las solicitudes al almacenamiento de objetos siguen teniendo costos.
+Grafana Tempo almacena y consulta trazas distribuidas mediante almacenamiento de objetos, bloques Parquet y TraceQL. Un TraceID permite encontrar **los datos que se ingirieron correctamente y siguen retenidos**; no recupera spans perdidos por muestreo, fallos de exportación o vencimiento de la retención. Tempo prescinde de una base de datos de búsqueda general independiente, aunque las columnas dedicadas, los metadatos, las cachés, el cómputo y las solicitudes al almacenamiento de objetos también generan costos.
 
-Este capítulo separa un ejemplo monolítico local de una línea base de configuración distribuida para EKS. Se comprobaron el binario local, el compilador de consultas, el renderizado de Helm y el análisis de configuración. Un despliegue en EKS, la autenticación de Kafka, la autorización de S3, la alta disponibilidad y el dimensionamiento de producción **no** se probaron.
+Este capítulo presenta por separado un ejemplo monolítico local y una configuración distribuida de referencia para EKS. Se comprobaron el binario local, el compilador de consultas, el renderizado de Helm y el análisis de la configuración. **No** se probaron el despliegue en EKS, la autenticación de Kafka, la autorización de S3, la alta disponibilidad ni el dimensionamiento para producción.
 
 ## Características principales
 
 | Característica | Alcance |
 |---------|-------|
 | Almacenamiento de objetos | S3, GCS y Azure Blob; almacenamiento local para un ejemplo de desarrollo acotado |
-| TraceQL | Consultas de atributos, duración, estado y estructura; las funciones de métricas son distintas de las agregaciones por traza |
-| Protocolos | OTLP, más receivers opcionales como Jaeger y Zipkin; habilite los puertos correspondientes del chart |
-| Correlación | Grafana vincula trazas, logs, métricas y ejemplares cuando los identificadores y los UID de las fuentes de datos coinciden |
-| Modos de despliegue | `target: all` monolítico, o microservicios con una cola de ingesta compatible con Kafka |
-| Generación de métricas | Métricas de span y grafos de servicio opcionales; requiere processors y un destino de remote-write funcional |
+| TraceQL | Consultas de atributos, duración, estado y estructura; las funciones de métricas se distinguen de las agregaciones por traza |
+| Protocolos | OTLP y receptores opcionales, como Jaeger y Zipkin; deben habilitarse los puertos correspondientes del chart |
+| Correlación | Grafana vincula trazas, logs, métricas y exemplars cuando coinciden los identificadores y los UID de las fuentes de datos |
+| Modos de despliegue | Modo monolítico con `target: all`, o microservicios con una cola de ingesta compatible con Kafka |
+| Generación de métricas | Métricas de spans y grafos de servicios opcionales; requieren procesadores habilitados y un destino funcional para remote write |
 
 ## Arquitectura
 
-**Los microservicios de Tempo 3 requieren Kafka. El modo monolítico no.** El distributor confirma la ingesta después de confirmar en Kafka; los live-stores, block-builders y metrics-generators consumen de forma independiente. Los live-stores sirven datos recientes; los block-builders escriben bloques de largo plazo. Los query-frontends dividen el trabajo y los queriers leen almacenes recientes o almacenamiento de objetos.
+**Los microservicios de Tempo 3 requieren Kafka; el modo monolítico no.** El distributor confirma la ingesta una vez que los datos quedan confirmados en Kafka. Los live-stores, block-builders y metrics-generators consumen esos datos de forma independiente. Los live-stores atienden consultas sobre datos recientes y los block-builders escriben los bloques de almacenamiento a largo plazo. Los query-frontends dividen el trabajo, mientras que los queriers consultan los almacenes recientes o el almacenamiento de objetos.
 
 ```mermaid
 flowchart LR
@@ -36,7 +36,7 @@ flowchart LR
   W["Backend scheduler / worker"] -->|compaction and retention| S
 ```
 
-Ruta de lectura (los mismos componentes de almacenamiento y métricas):
+Ruta de lectura, con los mismos componentes de almacenamiento y métricas:
 
 ```mermaid
 flowchart LR
@@ -47,22 +47,22 @@ flowchart LR
   G -->|metrics query| P["Metrics backend"]
 ```
 
-Las flechas muestran solicitudes y flujo de datos, no cada respuesta ni conexión del plano de control. Grafana **consulta** el backend de métricas; un metrics-generator no almacena métricas en Grafana.
+Las flechas representan solicitudes y flujos de datos; omiten algunas respuestas y conexiones del plano de control. Grafana **consulta** el backend de métricas. El metrics-generator no almacena métricas en Grafana.
 
 ### Detalles de componentes
 
-| Componente | Responsabilidad en Tempo 3 | Consideración operativa |
+| Componente | Responsabilidad en Tempo 3 | Aspectos operativos |
 |-----------|-------------------------|---------------------------|
-| Distributor | Validar y enrutar trazas a particiones de Kafka | Backpressure, bytes y spans aceptados/rechazados |
-| Live-store | Consultas de trazas recientes y WAL local | Consumer lag, capacidad local y propiedad de particiones |
-| Block-builder | Consumir Kafka y escribir bloques Parquet | Asignación de particiones y rendimiento del almacenamiento de objetos |
-| Query-frontend / querier | Dividir, programar y ejecutar consultas | Encolamiento, bytes escaneados, concurrencia y cachés |
-| Backend scheduler / worker | Compactación, retención y tareas en segundo plano | Coordinación del scheduler, recursos de worker y tareas fallidas |
-| Metrics-generator | Derivar métricas de span y grafos de servicio | Cardinalidad, activación de processors y salud de remote-write |
+| Distributor | Validar las trazas y enviarlas a particiones de Kafka | Presión de retorno (backpressure), bytes y spans aceptados o rechazados |
+| Live-store | Consultar trazas recientes y mantener un WAL local | Retraso de los consumidores, capacidad local y asignación de particiones |
+| Block-builder | Consumir datos de Kafka y escribir bloques Parquet | Asignación de particiones y rendimiento del almacenamiento de objetos |
+| Query-frontend / querier | Dividir, programar y ejecutar consultas | Colas, bytes examinados, concurrencia y cachés |
+| Backend scheduler / worker | Compactación, retención y tareas en segundo plano | Coordinación del planificador, recursos de los workers y tareas fallidas |
+| Metrics-generator | Generar métricas de spans y grafos de servicios | Cardinalidad, activación de procesadores y funcionamiento de remote write |
 
-La configuración de `ingester` y `compactor` de Tempo 2 no es una receta de instalación para Tempo 3. Una migración distribuida de **2→3 se realiza en paralelo**, con bloques existentes compatibles (`vParquet4` o posterior), una nueva ruta de ingesta y un cambio de tráfico controlado. No se admite una reversión de 3→2. No dirija instalaciones en competencia a los mismos datos escribibles sin el [procedimiento de migración oficial](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/).
+La configuración de `ingester` y `compactor` de Tempo 2 no sirve como guía de instalación de Tempo 3. Una migración distribuida de **2→3 requiere instalaciones en paralelo**, bloques existentes compatibles (`vParquet4` o posteriores), una nueva ruta de ingesta y un cambio de tráfico controlado. La reversión de 3→2 no está admitida. Evite que dos instalaciones compitan por escribir en los mismos datos; siga el [procedimiento oficial de migración](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/).
 
-La replicación de Kafka, las réplicas en sincronía, la retención y la capacidad de disco determinan la durabilidad de la ruta de escritura. Un número de réplicas de Tempo no establece la durabilidad de Kafka ni garantiza pérdida cero. En el chart 3.6.0, los volúmenes de datos de live-store y block-builder son `emptyDir`; tres réplicas no implican tres PVC persistentes.
+La durabilidad de la ruta de escritura depende de la replicación de Kafka, las réplicas sincronizadas, la retención y la capacidad de disco. El número de réplicas de Tempo no determina la durabilidad de Kafka ni garantiza que no haya pérdidas. En el chart 3.6.0, los volúmenes de datos de live-store y block-builder son `emptyDir`: tres réplicas no equivalen a tres PVC persistentes.
 
 ## Instalación con Helm (modo distribuido)
 
@@ -77,11 +77,11 @@ helm show chart grafana-community/tempo-distributed --version 3.6.0
 helm show values grafana-community/tempo-distributed --version 3.6.0 > tempo-defaults.yaml
 ```
 
-El chart declara Kubernetes `^1.25.0-0`. Es una restricción del chart, **no** una matriz de pruebas para cada combinación de versión de Kubernetes/EKS o add-on.
+El chart declara la restricción Kubernetes `^1.25.0-0`. **No** equivale a una matriz de pruebas que cubra todas las versiones de Kubernetes/EKS y combinaciones de add-ons.
 
 ### 2. Configuración de values.yaml
 
-Guarde lo siguiente como `tempo-distributed-values.yaml`. Es un **punto de partida solo para renderizado**, con nombres de cuenta/bucket de marcador de posición y una dirección de Kafka para pruebas aisladas.
+Guarde el siguiente contenido como `tempo-distributed-values.yaml`. Es una **configuración inicial para renderizar y revisar**, con nombres de cuenta y bucket que debe reemplazar y una dirección de Kafka destinada a pruebas aisladas.
 
 ```yaml
 # Render-only baseline. Read the Kafka security/deployment gates first.
@@ -141,17 +141,17 @@ tempo:
           burst_size_bytes: 20000000
 ```
 
-Antes de un despliegue, resuelva estos requisitos:
+Antes de desplegar, resuelva estos requisitos:
 
-- Aprovisione y posea el topic de Kafka por separado. Las tres réplicas predeterminadas de live-store/block-builder y `partitions_per_instance: 1` necesitan un diseño de particiones correspondiente; escalar solo los Pods no redistribuye cada asignación de block-builder.
-- Verifique de extremo a extremo el transporte y la autenticación de Kafka. El cliente Kafka de Tempo **3.0.3 expone SASL/PLAIN, pero no configuración de TLS de Kafka, SCRAM ni MSK IAM**. PLAIN no es cifrado. Este ejemplo no es una receta segura y lista para usar con MSK. Una solución de red/proxy debe cubrir todos los endpoints de broker anunciados, no solo bootstrap, y debe probarse de forma independiente antes del uso en producción.
-- Proporcione el bucket de S3 y el role de la siguiente sección. Establezca el nombre exacto de ServiceAccount y la anotación del role; crear un ServiceAccount no relacionado es insuficiente.
-- Restrinja el acceso OTLP, de consultas, memberlist y RPC de componentes mediante los controles de red reales del clúster y transporte autenticado. Un balanceador de carga interno o el encabezado `X-Scope-OrgID` por sí solos no son autenticación.
-- Establezca recursos, programación, presupuestos de interrupción y política de almacenamiento/recuperación para la carga de trabajo. Un PodDisruptionBudget restringe las expulsiones voluntarias; la anti-affinity controla la ubicación. Ninguno demuestra disponibilidad.
+- Aprovisione y administre el topic de Kafka por separado. Las tres réplicas predeterminadas de live-store/block-builder, junto con `partitions_per_instance: 1`, requieren un diseño de particiones coherente. Aumentar los Pods no redistribuye por sí solo todas las asignaciones de los block-builders.
+- Verifique de extremo a extremo el transporte y la autenticación de Kafka. El cliente Kafka de Tempo **3.0.3 ofrece SASL/PLAIN, pero no opciones para TLS de Kafka, SCRAM ni MSK IAM**. PLAIN no cifra el tráfico. Este ejemplo no constituye una configuración segura de MSK lista para desplegar. Una solución de red o proxy debe cubrir todos los endpoints anunciados por los brokers, incluido bootstrap, y probarse por separado antes de usarla en producción.
+- Proporcione el bucket de S3 y el rol de la siguiente sección. Configure el nombre exacto del ServiceAccount y la anotación del rol; crear otro ServiceAccount no asigna esa identidad a los Pods.
+- Restrinja los accesos OTLP, de consultas, memberlist y RPC de los componentes mediante los controles de red del clúster y un transporte autenticado. Un balanceador interno o el encabezado `X-Scope-OrgID` por sí solos no autentican a quien accede.
+- Defina recursos, planificación, presupuestos de interrupción y políticas de almacenamiento y recuperación acordes con la carga. Un PodDisruptionBudget limita los desalojos voluntarios y la antiafinidad controla la ubicación; ninguno demuestra por sí solo la disponibilidad.
 
-El límite de tamaño de recepción está en **MiB**; los campos de tasa/ráfaga de ingesta están en **bytes**. Los valores de 16 MiB y 15/20 MB son límites ilustrativos, no capacidad medida.
+El límite de tamaño de recepción se expresa en **MiB**, mientras que los campos de tasa y ráfaga de ingesta se expresan en **bytes**. Los valores de 16 MiB y 15/20 MB ilustran límites de configuración; no representan capacidad medida.
 
-La generación de métricas opcional necesita tanto activación como un receiver autenticado existente. Combine este segundo archivo solo después de crear el Secret `tempo-metrics-client` con los tres archivos de certificado nombrados y reemplazar la URL:
+La generación opcional de métricas requiere habilitar los procesadores y disponer de un receptor autenticado. Combine el segundo archivo solo después de crear el Secret `tempo-metrics-client` con los tres archivos de certificado indicados y sustituir la URL:
 
 ```yaml
 metricsGenerator:
@@ -180,13 +180,13 @@ overrides:
       generate_native_histograms: both
 ```
 
-El receiver debe aceptar Prometheus remote write; los ejemplares y los histogramas nativos también necesitan compatibilidad en el destino. El WAL predeterminado del generator de este chart es efímero. Valide por separado el comportamiento de reproducción/cola/almacenamiento; no interprete `send_exemplars: true` como una garantía de entrega.
+El receptor debe admitir Prometheus remote write. El destino también debe admitir exemplars e histogramas nativos si se utilizan. El WAL del generador es efímero de forma predeterminada en este chart. Verifique por separado la reproducción del WAL, las colas y el almacenamiento: `send_exemplars: true` no garantiza la entrega.
 
 ### 3. Configuración de IRSA
 
-El ejemplo usa la identidad exacta `system:serviceaccount:monitoring:tempo`. La confianza de su role está limitada tanto por los claims OIDC `sub` como `aud`. El role permite acceso únicamente al bucket de Tempo poseído. Evite claves de acceso estáticas en variables de entorno o valores de Helm.
+El ejemplo utiliza la identidad exacta `system:serviceaccount:monitoring:tempo`. La política de confianza del rol exige los valores OIDC `sub` y `aud`, y el rol solo permite acceder al bucket de Tempo administrado para esta instalación. Evite claves de acceso estáticas en variables de entorno o valores de Helm.
 
-IRSA es la ruta concreta mostrada aquí, no la única identidad posible para cargas de trabajo de EKS. Debe comprobarse una alternativa de Pod Identity con el proveedor de credenciales usado por la imagen de Tempo fijada. Verifique también la conectividad de STS, las políticas de bucket, los endpoints de VPC y cualquier política de clave KMS; un renderizado YAML correcto no demuestra nada de ello.
+Aquí se muestra una configuración concreta con IRSA; EKS dispone de otras opciones de identidad para las cargas de trabajo. Antes de elegir Pod Identity, compruebe su compatibilidad con el proveedor de credenciales de la imagen de Tempo fijada. Verifique además la conectividad con STS, las políticas del bucket, los endpoints de VPC y, si corresponde, la política de la clave KMS. Renderizar correctamente el YAML no comprueba estos requisitos.
 
 ### 4. Ejecutar la instalación
 
@@ -198,13 +198,13 @@ helm template tempo grafana-community/tempo-distributed \
   -f tempo-distributed-values.yaml > tempo-rendered.yaml
 ```
 
-`--kube-version` selecciona las capacidades de renderizado; no certifica compatibilidad con EKS 1.36.2. Inspeccione los puertos de Service, las identidades de Pod, los ConfigMaps, la configuración de recursos y la configuración opcional del generator. Extraiga el `tempo.yaml` renderizado y valídelo con el binario **correspondiente**:
+`--kube-version` selecciona las capacidades usadas durante el renderizado; no certifica compatibilidad con EKS 1.36.2. Revise los puertos de los Services, las identidades de los Pods, los ConfigMaps, los recursos y la configuración opcional del generador. Extraiga el archivo `tempo.yaml` renderizado y valídelo con el binario de la **misma versión**:
 
 ```bash
 tempo -config.file=tempo.yaml -config.verify=true
 ```
 
-Esto finaliza antes de la inicialización del servicio. No se conecta a Kafka/S3 ni prueba por completo una configuración arbitraria de receiver. **No ejecute una instalación de Helm hasta que se hayan resuelto los requisitos de despliegue anteriores.** Después, use los values revisados y un release/namespace propio según su proceso de despliegue, incluido un plan de reversión/migración.
+La validación termina antes de inicializar el servicio. No se conecta a Kafka ni a S3, ni prueba por completo cualquier configuración de receptores. **Instale con Helm una vez resueltos los requisitos de despliegue anteriores.** Utilice entonces los valores revisados y una release y un namespace bajo su administración, siguiendo un proceso que incluya un plan de reversión o migración.
 
 Para una comprobación local de un solo proceso, guarde este archivo separado como `tempo-local.yaml` y use el binario oficial verificado de Tempo 3.0.3 para su SO/arquitectura:
 
@@ -257,13 +257,13 @@ tempo -config.file=tempo-local.yaml
 curl --fail http://127.0.0.1:3200/ready
 ```
 
-Se vincula a loopback, deshabilita los informes de uso y escribe bajo `./tempo-data`. Detenga este proceso con Ctrl-C. Esta es una instancia local sin Kafka, S3, gateway de autenticación ni afirmación de HA.
+La instancia escucha solo en loopback, desactiva los informes de uso y escribe en `./tempo-data`. Deténgala con Ctrl-C. Es una instancia local sin Kafka, S3 ni gateway de autenticación; el ejemplo no demuestra alta disponibilidad.
 
 ## Consultas TraceQL
 
 ### Sintaxis básica
 
-Use el modo TraceID de Grafana Explore para una búsqueda directa, o un ID completo de 32 caracteres hexadecimales en una intrínseca TraceQL:
+Para buscar una traza directamente, use el modo TraceID de Grafana Explore o un ID completo de 32 caracteres hexadecimales en una expresión intrínseca de TraceQL:
 
 ```traceql
 { trace:id = "4bf92f3577b34da6a3ce929d0e0e4736" }
@@ -273,7 +273,7 @@ Use el modo TraceID de Grafana Explore para una búsqueda directa, o un ID compl
 { status = error }
 ```
 
-Estas son consultas separadas. El estado `error` de un span no es idéntico a cada estado HTTP ≥400. Los nombres de atributos reflejan la versión de convención semántica del SDK emisor: los datos antiguos de `http.status_code` y `db.system` siguen siendo consultables bajo sus nombres originales; Tempo no cambia automáticamente el nombre de los atributos almacenados.
+Cada línea es una consulta independiente. El estado `error` de un span no equivale a cualquier código HTTP ≥400. Los nombres de atributos dependen de la versión de las convenciones semánticas del SDK que los emite. Los datos antiguos de `http.status_code` y `db.system` conservan sus nombres al consultarlos: Tempo no renombra automáticamente los atributos almacenados.
 
 ### Ejemplos de consultas avanzadas
 
@@ -289,13 +289,13 @@ Estas son consultas separadas. El estado `error` de un span no es idéntico a ca
 { } | avg_over_time(duration) by (resource.service.name)
 ```
 
-- `A >> B` devuelve los **descendientes B** coincidentes de A; `A > B` devuelve los hijos directos B coincidentes. Para obtener padres, use la relación inversa correspondiente en lugar de describir a los hijos como padres.
-- `A ~ B` coincide con elementos hermanos. No establece una llamada de red A→B.
-- `count()` cuenta spans en el **spanset actual**. Filtrar primero hasta los errores contaría spans de error, no todos los spans de la traza. `traceSpanCount` no es una intrínseca válida.
-- `nestedSetParent` es aceptado por esta versión, pero es un marcador interno de padre de conjunto anidado, no un contador de profundidad de anidamiento.
-- `by(...) | avg(...) > ...` filtra spansets por traza; `rate()` y `avg_over_time(...)` producen series temporales. El primero es una tasa de spans de error, **no una proporción de errores**. Seleccione el intervalo de tiempo en Grafana o en la API de consultas; un filtro de duración no es un rango de tiempo de reloj.
+- `A >> B` devuelve los **descendientes B** de A que cumplen la consulta; `A > B` devuelve los hijos directos B que la cumplen. Para obtener los padres, use la relación inversa correspondiente.
+- `A ~ B` identifica spans hermanos; no demuestra una llamada de red A→B.
+- `count()` cuenta los spans del **spanset actual**. Si primero filtra los errores, contará spans con error y no todos los spans de la traza. `traceSpanCount` no es una expresión intrínseca válida.
+- Esta versión acepta `nestedSetParent`, pero representa el padre en el conjunto anidado interno; no mide la profundidad de anidamiento.
+- `by(...) | avg(...) > ...` filtra spansets dentro de cada traza. En cambio, `rate()` y `avg_over_time(...)` producen series temporales. El primero calcula una tasa de spans con error, **no una proporción de errores**. Seleccione el intervalo temporal en Grafana o en la API de consultas; filtrar por duración no fija el período de búsqueda.
 
-Una consulta como `{ span.user.id = "synthetic-user-123" }` requiere ese atributo emitido explícitamente. Use identificadores sintéticos o seudónimos aprobados; no convierta los datos personales en un requisito de trazado. Prefiera `http.route` de baja cardinalidad a URL literales que contienen ID de usuario o cadenas de consulta.
+Una consulta como `{ span.user.id = "synthetic-user-123" }` necesita que ese atributo se haya emitido explícitamente. Use identificadores sintéticos o seudónimos aprobados, sin exigir datos personales para obtener trazas. Prefiera `http.route` de baja cardinalidad a URL concretas que incluyan identificadores de usuarios o parámetros de consulta.
 
 ### Uso de TraceQL en Grafana
 
@@ -305,13 +305,13 @@ Cree la fuente de datos de Tempo con la URL de query-frontend en el puerto **320
 
 ### Configuración del bucket S3
 
-Use un bucket dedicado con Block Public Access, propiedad aplicada por el propietario del bucket y cifrado. Mantenga su propiedad en un solo estado de infraestructura; no cree el mismo bucket con un fragmento de CLI y Terraform.
+Use un bucket dedicado con Block Public Access, cifrado y el modo de propiedad bucket-owner-enforced. Adminístrelo desde un único estado de infraestructura; evite crear el mismo bucket tanto mediante un fragmento de CLI como mediante Terraform.
 
-El `block_retention: 336h` de Tempo es un objetivo de retención aplicado de forma asíncrona por su procesamiento en segundo plano, no una fecha límite exacta de eliminación. Una política general de S3 de «eliminar cada objeto después de 30 días» puede entrar en conflicto con la compactación y los metadatos. No agregue una sin un diseño de ciclo de vida documentado y consciente del backend. Si el versionado está habilitado, eliminar un objeto actual puede dejar versiones no actuales y cargos; defina por separado sus requisitos de retención y recuperación.
+En Tempo, `block_retention: 336h` fija un objetivo de retención que las tareas en segundo plano aplican de forma asíncrona; no establece una hora exacta de eliminación. Una política general de S3 que elimine todos los objetos a los 30 días puede interferir con la compactación y los metadatos. Añádala solo si existe un diseño de ciclo de vida documentado que contemple el funcionamiento del backend. Con el versionado habilitado, eliminar la versión actual de un objeto puede dejar versiones anteriores y cargos de almacenamiento. Defina por separado la retención y la recuperación de esas versiones.
 
 ### Configuración de S3 e IRSA con Terraform
 
-Este ejemplo del proveedor de AWS **6.64.0** usa SSE-S3 y un proveedor OIDC de clúster **existente**. Reemplace las entradas de cuenta, nombre de bucket globalmente único y emisor. Intencionalmente no crea un clúster EKS, Kafka ni una clave KMS.
+Este ejemplo usa el proveedor de AWS **6.69.1**, SSE-S3 y un proveedor OIDC **existente** del clúster. Sustituya la cuenta, el nombre de bucket globalmente único y los datos del emisor. El ejemplo no crea un clúster EKS, Kafka ni una clave KMS.
 
 ```hcl
 terraform {
@@ -319,7 +319,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -420,13 +420,13 @@ output "tempo_role_arn" { value = aws_iam_role.tempo.arn }
 output "tempo_bucket" { value = aws_s3_bucket.tempo.id }
 ```
 
-Use `tempo_role_arn` y `tempo_bucket` en los values de Helm. El formato/la validación de esquema de Terraform son útiles antes de un plan; revise el plan real y la propiedad antes de aplicar. Para SSE-KMS, proporcione explícitamente una clave propia, configuraciones de bucket/Tempo compatibles, permisos con alcance para `kms:GenerateDataKey`/`kms:Decrypt` y una política de clave que permita la carga de trabajo. Una referencia `aws_kms_key` no definida no es una configuración completa.
+Asigne `tempo_role_arn` y `tempo_bucket` a los valores de Helm. Antes de generar un plan, revise el formato y el esquema de Terraform; antes de aplicarlo, revise el plan real y quién administra los recursos. Para SSE-KMS, proporcione una clave administrada para esta instalación, opciones compatibles en el bucket y Tempo, permisos limitados para `kms:GenerateDataKey` y `kms:Decrypt`, y una política de clave que autorice a la carga de trabajo. Referenciar un `aws_kms_key` que no se ha definido deja la configuración incompleta.
 
 ## Correlación de trazas a logs (integración de Loki)
 
 ### Configuración de la fuente de datos de Grafana
 
-Este es un **archivo de aprovisionamiento de Grafana**, no un `values.yaml` específico de un chart. Móntelo mediante el mecanismo admitido por su chart de Grafana. Las tres URL internas son marcadores de posición para servicios existentes con acceso controlado:
+Este es un **archivo de aprovisionamiento de Grafana**, no un `values.yaml` específico de un chart. Móntelo mediante el mecanismo que admita el chart de Grafana utilizado. Sustituya las tres URL internas por las de servicios existentes cuyo acceso esté controlado:
 
 ```yaml
 apiVersion: 1
@@ -480,15 +480,15 @@ datasources:
           datasourceUid: tempo
 ```
 
-El `tracesToLogsV2` de Tempo implementa **Trace→Logs**; los `derivedFields` de Loki implementan **Logs→Trace**. El ejemplo asigna el atributo OTel `service.name` a la etiqueta existente `service_name` de Loki. Verifique la asignación de su collector; el enlace no puede crear una etiqueta ni un registro de log. El filtrado de span está deshabilitado porque no todos los logs tienen un ID de span.
+`tracesToLogsV2` de Tempo enlaza **Trace→Logs**, mientras que `derivedFields` de Loki enlaza **Logs→Trace**. El ejemplo asigna el atributo OTel `service.name` a la etiqueta `service_name` existente en Loki. Compruebe el mapeo de su collector: el enlace no crea etiquetas ni registros de log. Se desactiva el filtro por span porque no todos los logs incluyen un ID de span.
 
-En el YAML de aprovisionamiento, `$$` preserva un `$` literal para las macros de tiempo de ejecución de Grafana. `__tags` se expande a un conjunto de selectores de etiquetas; no lo incruste como el valor de `service="..."`. La proporción de errores completa una serie de errores ausente a partir de la serie total y divide solo cuando la tasa total es positiva. El tráfico cero y la telemetría ausente permanecen vacíos.
+En el YAML de aprovisionamiento, `$$` conserva un `$` literal para las macros que Grafana evalúa en ejecución. `__tags` se expande a un conjunto de selectores de etiquetas, por lo que no debe usarse como valor de `service="..."`. El cálculo de la proporción de errores completa una serie de errores ausente a partir de la serie total y solo divide cuando la tasa total es positiva. Sin tráfico o sin telemetría, el resultado permanece vacío.
 
-La etiqueta de métricas de span `service` y el valor de estado `STATUS_CODE_ERROR` deben coincidir con las series generadas reales. Los ejemplares usan el nombre de etiqueta de ejemplar observado (`traceID` para la configuración de generator ilustrada); otros productores pueden usar `trace_id`. El muestreo puede hacer que estas métricas difieran de los conteos completos de solicitudes de la aplicación.
+La etiqueta `service` de las métricas de spans y el estado `STATUS_CODE_ERROR` deben coincidir con las series que se generan realmente. Los exemplars utilizan el nombre de etiqueta observado: `traceID` en la configuración de generador del ejemplo; otros productores pueden utilizar `trace_id`. Debido al muestreo, estas métricas pueden diferir del total de solicitudes de la aplicación.
 
 ### Registro de aplicaciones
 
-Para Python con OpenTelemetry API 1.44, compruebe la validez del contexto en vez de `span.is_recording()`. Un span válido no registrable puede seguir correlacionando logs:
+Con la API de OpenTelemetry 1.44 para Python, compruebe si el contexto es válido en lugar de consultar `span.is_recording()`. Un span válido puede correlacionar logs aunque no esté grabando datos:
 
 ```python
 import datetime
@@ -525,31 +525,31 @@ if not logger.handlers:
     logger.addHandler(handler)
 ```
 
-Esto preserva las marcas de tiempo UTC, el formato de mensajes y las excepciones, y omite ID no válidos en lugar de fabricar trazas con todos ceros. Configure el handler una vez; propague el contexto OTel a través de límites asíncronos y elimine mensajes/excepciones sensibles en su origen.
+El formateador conserva las marcas temporales UTC, el formato del mensaje y las excepciones. Omite los ID no válidos en lugar de crear identificadores de traza compuestos por ceros. Configure el handler una sola vez, propague el contexto OTel entre operaciones asíncronas y elimine los datos sensibles de mensajes y excepciones en el origen.
 
-Para Java, use el [helper MDC con alcance en la descripción general de tracing (English)](https://www.atomai.click/kubernetes-docs/en/observability/tracing/#linking-logs-via-traceid): valide el `SpanContext` actual, establezca los ID para el ámbito de logging y restaure los valores MDC previos en `finally`. El simple hecho de escribir `MDC.put` puede filtrar los ID de una solicitud anterior en hilos reutilizados. Se comprobó el contrato de la API de Java; no se ejecutó ninguna aplicación Java para este capítulo.
+Para Java, utilice el [helper de MDC con ámbito delimitado de la introducción al tracing](README.md#linking-logs-via-traceid): valide el `SpanContext` actual, asigne los ID para ese ámbito de logging y restaure los valores anteriores de MDC en `finally`. Añadir únicamente `MDC.put` puede dejar los ID de una solicitud anterior en un hilo reutilizado. Se comprobó el contrato de la API de Java; este capítulo no incluyó la ejecución de una aplicación Java.
 
 ## Ajuste de rendimiento
 
 ### Optimización de la tasa de ingesta
 
-Mida bytes y spans aceptados/rechazados, reintentos del exporter, errores del producer de Kafka y consumer lag. Aumentar el tamaño del receiver, los límites de ingesta o los conteos de réplicas sin capacidad de memoria y cola puede desplazar el cuello de botella en lugar de eliminarlo. Preserve los supuestos de muestreo ascendentes al interpretar las métricas generadas.
+Mida los bytes y spans aceptados o rechazados, los reintentos de los exporters, los errores de producción en Kafka y el retraso de los consumidores. Aumentar el tamaño admitido por el receptor, los límites de ingesta o las réplicas sin suficiente memoria y capacidad de cola puede desplazar el cuello de botella. Tenga en cuenta el muestreo aplicado antes de Tempo al interpretar las métricas generadas.
 
-Use `overrides.defaults.ingestion` para límites de tenant y el campo `max_recv_msg_size_mib` del receiver para el tamaño de mensajes gRPC. El bloque antiguo `distributor.rate_limit` y el bloque de ajuste de `ingester` de Tempo 2 no configuran Tempo 3.
+Configure los límites por tenant mediante `overrides.defaults.ingestion` y el tamaño máximo de los mensajes gRPC mediante `max_recv_msg_size_mib` del receptor. Los antiguos bloques `distributor.rate_limit` y de ajuste del `ingester` de Tempo 2 no configuran Tempo 3.
 
 ### Optimización de compactación
 
-Configure la retención mediante los ajustes `backendScheduler.config.provider.compaction.compaction` del chart y la configuración correspondiente de backend-worker. Observe la antigüedad y los fallos de las tareas, las solicitudes al almacenamiento de objetos y el espacio de trabajo temporal. Una mayor concurrencia de compactación puede aumentar el tráfico al almacenamiento de objetos y la memoria; no existe una regla universal de «un compactor por clúster» para la arquitectura anterior.
+Configure la retención con `backendScheduler.config.provider.compaction.compaction` en el chart y las opciones correspondientes del backend-worker. Observe la antigüedad y los fallos de las tareas, las solicitudes al almacenamiento de objetos y el espacio temporal disponible. Aumentar la concurrencia de compactación puede elevar el tráfico al almacenamiento y el consumo de memoria. La regla de «un compactor por clúster» de la arquitectura anterior no es universal.
 
 ### Optimización del rendimiento de consultas
 
-Reduzca primero el rango de tiempo y la selectividad; después inspeccione los bytes escaneados, el encolamiento, la concurrencia de querier y los roles de caché pertinentes. Configure los campos de caché desde el chart/configuración fijado en lugar de copiar diseños `cache:` eliminados. El hedging del almacenamiento de objetos puede mejorar la latencia de cola a costa de solicitudes adicionales; valide esa compensación con mediciones.
+Reduzca primero el intervalo temporal y acote la búsqueda; luego examine los bytes leídos, las colas, la concurrencia de los queriers y la función de cada caché. Use las opciones de la versión fijada del chart y la configuración, en lugar de copiar estructuras `cache:` eliminadas. El envío de solicitudes redundantes al almacenamiento de objetos (hedging) puede reducir la latencia de las consultas más lentas a costa de más solicitudes. Evalúe esa relación mediante mediciones.
 
-El `fail_on_high_lag` de live-store de Tempo 3 tiene como valor predeterminado true y el `query_end_cutoff` de query-frontend tiene como valor predeterminado 30s. La visibilidad de búsquedas muy recientes puede retrasarse respecto a una búsqueda directa de TraceID. No deshabilite estas protecciones solo para que un dashboard vacío parezca saludable.
+En Tempo 3, `fail_on_high_lag` de live-store vale true de forma predeterminada y `query_end_cutoff` de query-frontend vale 30s. Las búsquedas pueden mostrar datos muy recientes más tarde que una consulta directa por TraceID. Mantenga estas protecciones; desactivarlas para que un dashboard vacío parezca funcionar no resuelve la causa.
 
 ### Recomendaciones de recursos
 
-Dimensione los distributors según la entrada, los live-stores según el volumen/lag de trazas recientes, los block-builders según las particiones asignadas y el tamaño de bloque, los queriers según la concurrencia de consultas y los generators según las series activas. La tabla antigua y no medida de CPU y disco para Ingester/Compactor de Tempo 2 no es una recomendación de capacidad para Tempo 3. Mida CPU, RSS, uso local/WAL, lag de Kafka, costo de solicitudes y saturación bajo tráfico representativo.
+Dimensione los distributors según la ingesta; los live-stores, según el volumen de trazas recientes y el retraso; los block-builders, según las particiones asignadas y el tamaño de los bloques; los queriers, según la concurrencia de consultas; y los generadores, según las series activas. La antigua tabla de CPU y disco para Ingester/Compactor de Tempo 2 carece de mediciones y no sirve para dimensionar Tempo 3. Mida CPU, RSS, uso local y del WAL, retraso de Kafka, costo de solicitudes y saturación con tráfico representativo.
 
 ## Solución de problemas
 
@@ -557,11 +557,11 @@ Dimensione los distributors según la entrada, los live-stores según el volumen
 
 #### 1. Los datos de trazas no se muestran
 
-Compruebe errores de exportación del SDK, muestreo, contexto propagado, colas de collector, transporte OTLP, enrutamiento de tenant y retención. Una solicitud GET a `/v1/traces` no es una prueba de ingesta; envíe un POST OTLP válido y luego consulte su TraceID sintético conocido. Un sondeo `/ready` exitoso por sí solo no demuestra que cada etapa funcione.
+Revise los errores de exportación del SDK, el muestreo, la propagación del contexto, las colas del collector, el transporte OTLP, el enrutamiento por tenant y la retención. Un GET a `/v1/traces` no comprueba la ingesta: envíe un POST OTLP válido y consulte después el TraceID sintético conocido. Que `/ready` responda correctamente no demuestra que funcionen todas las etapas.
 
 #### 2. Errores de permisos de S3
 
-Inspeccione el ServiceAccount exacto, la confianza del role, la política de bucket, el acceso al endpoint y la política KMS si corresponde. No vuelque variables de entorno ni tokens proyectados de Pod. No suponga que la imagen de Tempo contiene una AWS CLI o shell.
+Revise el ServiceAccount exacto, la política de confianza del rol, la política del bucket, el acceso a los endpoints y, si corresponde, la política KMS. Evite volcar las variables de entorno o los tokens proyectados de los Pods. Compruebe las herramientas de la imagen de Tempo antes de intentar usar AWS CLI o un shell.
 
 ```bash
 kubectl get serviceaccount tempo -n monitoring -o yaml
@@ -574,11 +574,11 @@ Restrinja el acceso a la salida de diagnóstico: los logs pueden contener metada
 
 #### 3. Tiempos de espera de consultas
 
-Compruebe los logs de query-frontend/querier, el rango de tiempo, el lag de Kafka, las particiones de live-store disponibles y la limitación de S3. Aumente la concurrencia solo después de medir la memoria y los límites del backend. Trate un resultado vacío, un tiempo de espera y telemetría ausente como estados diferentes.
+Revise los logs de query-frontend/querier, el intervalo de búsqueda, el retraso de Kafka, las particiones disponibles de live-store y la limitación de solicitudes de S3. Aumente la concurrencia después de medir la memoria y los límites del backend. Distinga un resultado vacío de un timeout y de la ausencia de telemetría.
 
 #### 4. Presión de memoria de live-store
 
-Para Tempo 3, inspeccione la memoria de live-store, las ventanas de datos recientes, la rotación de bloques y la propiedad de particiones. Para un despliegue de Tempo 2 que aún se está ejecutando, use su documentación versionada de ingester durante la migración; copiar `ingester.max_block_duration: 30m` a Tempo 3 no ajustará live-store.
+En Tempo 3, examine la memoria de live-store, las ventanas de datos recientes, la rotación de bloques y la asignación de particiones. Si todavía opera un despliegue de Tempo 2, consulte la documentación de su versión de ingester durante la migración. Copiar `ingester.max_block_duration: 30m` en Tempo 3 no modifica el comportamiento de live-store.
 
 ### Comandos de depuración útiles
 
@@ -592,7 +592,7 @@ curl --fail http://127.0.0.1:3200/metrics
 curl --fail http://127.0.0.1:3200/api/traces/4bf92f3577b34da6a3ce929d0e0e4736
 ```
 
-El ID final debe existir realmente en ese despliegue. Los endpoints de ring/status de solo lectura son específicos de cada componente; verifique la API fijada antes de usarlos. Los comandos de `/ingester/ring`, `/compactor/ring` y forced-flush eliminados no son diagnósticos generales de Tempo 3.
+El ID de la última consulta debe existir en ese despliegue. Los endpoints de ring/status de solo lectura dependen del componente; verifique la API de la versión fijada antes de usarlos. Las rutas eliminadas `/ingester/ring` y `/compactor/ring`, junto con los comandos de vaciado forzado eliminados, no constituyen herramientas generales de diagnóstico de Tempo 3.
 
 ### Dashboard de monitorización
 
@@ -604,7 +604,7 @@ sum(process_resident_memory_bytes{job=~"tempo.*"})
 histogram_quantile(0.99, sum by (le) (rate(tempo_request_duration_seconds_bucket{route="api_search"}[5m])))
 ```
 
-Estos paneles indican **spans recibidos/s**, **bytes RSS del proceso** y **p99 de segundos de solicitudes HTTP de búsqueda**. El selector de memoria presupone el nombre de su job de scrape; inspeccione primero las etiquetas. Un contador de escritura de bytes no es memoria y un conteo de spans no es un conteo de trazas. El histograma/ruta de solicitudes se observó en la prueba de humo local de Tempo 3.0.3; no es una medición de latencia distribuida de extremo a extremo.
+Estos paneles muestran **spans recibidos por segundo**, **memoria RSS del proceso en bytes** y **latencia p99 de las solicitudes HTTP de búsqueda en segundos**. El selector de memoria depende del nombre de los jobs de scrape: compruebe primero las etiquetas. Un contador de bytes escritos no mide memoria y un recuento de spans no equivale a un recuento de trazas. El histograma y la ruta de solicitudes se observaron en la prueba local de funcionamiento de Tempo 3.0.3; no miden la latencia de extremo a extremo de un despliegue distribuido.
 
 ## Referencias
 

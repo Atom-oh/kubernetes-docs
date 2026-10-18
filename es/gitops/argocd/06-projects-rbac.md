@@ -1,33 +1,33 @@
-# Proyectos y RBAC de ArgoCD
+# Proyectos y RBAC de Argo CD
 
-> **Revisado con respecto a**: Argo CD 3.5.2; actualizado al parche 3.5.4 tras revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Revisado con respecto a**: Argo CD 3.5.2; actualizado al parche 3.5.5 tras revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
+> **Última actualización**: 16 de octubre de 2026
 
-## Tabla de contenidos
+## Tabla de contenido
 - [Descripción general de AppProject](#appproject-overview)
 - [Proyecto predeterminado](#default-project)
 - [Proyectos personalizados](#custom-projects)
 - [Configuración de RBAC](#rbac-configuration)
-- [Patrones de multi-tenancy](#multi-tenancy-patterns)
+- [Patrones multiinquilino](#multi-tenancy-patterns)
 - [Tokens JWT para CI/CD](#jwt-tokens-for-cicd)
-- [Monitoreo de recursos huérfanos](#orphaned-resource-monitoring)
+- [Supervisión de recursos huérfanos](#orphaned-resource-monitoring)
 
-## Descripción general de AppProject
+## Descripción general de AppProject {#appproject-overview}
 
-Los AppProjects proporcionan agrupación lógica de Applications y definen controles de acceso para los recursos que se pueden desplegar, dónde se pueden desplegar y quién puede administrarlos.
+Los AppProject agrupan Applications de forma lógica y definen controles de acceso para determinar qué recursos pueden desplegarse, dónde y quién puede administrarlos.
 
-AppProject restringe las fuentes, los destinos, los tipos de recursos renderizados y los permisos de la API de Argo CD. No reemplaza Kubernetes RBAC, Pod Security Admission, NetworkPolicy ni ResourceQuota. Denegar el tipo Pod no evita que un Deployment cree Pods privilegiados.
+Un AppProject restringe los repositorios de origen, los destinos, los tipos de recursos renderizados y los permisos de la API de Argo CD. No sustituye RBAC de Kubernetes, Pod Security Admission, NetworkPolicy ni ResourceQuota. Denegar el tipo de recurso Pod no impide que un Deployment cree Pods privilegiados.
 
-Proporcione URL reales de repositorios, grupos, clústeres registrados y namespaces. Los administradores de la plataforma crean previamente los namespaces de aplicación y son responsables de sus políticas de seguridad/cuotas. Los proyectos de equipo/entorno siguientes no permiten recursos con ámbito de clúster; el proyecto de plataforma independiente es para administradores de confianza. Los ejemplos completos de proyectos son alternativas independientes, incluidos aquellos que comparten un nombre.
+Usa URL reales de repositorios, grupos, clústeres registrados y espacios de nombres. Los administradores de la plataforma crean de antemano los espacios de nombres de las aplicaciones y son responsables de sus políticas de seguridad y cuotas. Los proyectos de equipo y entorno que aparecen a continuación no permiten recursos con ámbito de clúster; el proyecto de plataforma independiente es para administradores de confianza. Los ejemplos completos de proyectos son alternativas independientes, incluso cuando comparten un nombre.
 
-### Capacidades clave
+### Capacidades principales
 
 | Característica | Descripción |
 |---------|-------------|
-| Restricciones de fuente | Limitan qué repositorios Git se pueden usar |
-| Restricciones de destino | Limitan los clústeres y namespaces de destino |
-| Lista de permitidos/lista de denegados de recursos | Controla qué recursos de K8s se pueden crear |
-| Definiciones de roles | Define roles de RBAC específicos del proyecto |
+| Restricciones de origen | Limita qué repositorios Git se pueden usar |
+| Restricciones de destino | Limita los clústeres y espacios de nombres de destino |
+| Lista de permitidos/denegados de recursos | Controla qué recursos de Kubernetes se pueden crear |
+| Definiciones de roles | Define roles RBAC específicos del proyecto |
 | Ventanas de sincronización | Define cuándo se pueden sincronizar las aplicaciones |
 
 ### Ejemplo de configuración de AppProject
@@ -82,9 +82,9 @@ spec:
       name: kube-root-ca.crt
 ```
 
-## Proyecto predeterminado
+## Proyecto predeterminado {#default-project}
 
-ArgoCD crea un proyecto predeterminado que permite todas las fuentes, destinos y tipos de recursos. Se puede restringir, pero no eliminar.
+Argo CD crea un proyecto predeterminado que permite todos los orígenes, destinos y tipos de recursos. Se puede restringir, pero no eliminar.
 
 ### Especificación del proyecto predeterminado
 
@@ -110,11 +110,11 @@ spec:
 
 - Entornos de desarrollo
 - Pruebas rápidas
-- Equipos pequeños sin requisitos de multi-tenancy
+- Equipos pequeños sin requisitos multiinquilino
 
 ### Restricción del proyecto predeterminado
 
-Para producción, restrinja el proyecto predeterminado:
+En producción, restringe el proyecto predeterminado:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -133,9 +133,9 @@ spec:
     kind: '*'
 ```
 
-## Proyectos personalizados
+## Proyectos personalizados {#custom-projects}
 
-### Proyecto basado en equipos
+### Proyecto por equipo
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -180,7 +180,7 @@ spec:
     - myorg:frontend-viewers
 ```
 
-### Proyecto basado en entornos
+### Proyecto por entorno
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -288,16 +288,16 @@ spec:
 
 ### Interpretación del ámbito y verificación
 
-- Un destino de AppProject coincide con `(server OR registered name) AND namespace`; especificar ambos identificadores de clúster no agrega una restricción AND. Estos ejemplos usan solo server. El destino de una Application requiere, en cambio, elegir server o name.
-- ResourceQuota y LimitRange tienen ámbito de namespace; clusterResourceBlacklist no puede bloquearlos. Use namespaceResourceBlacklist para la ruta de despliegue de Argo CD.
-- Omitir namespaceResourceWhitelist permite tipos con ámbito de namespace de forma predeterminada; las listas explícitas de permitidos/denegados se evalúan conjuntamente. Los tipos con ámbito de clúster requieren una lista de permitidos. Argo CD 3.5.4 también admite patrones de nombre en listas de recursos de clúster.
-- Si delega la administración de Namespace, restrinja también su nombre (group:'', kind:Namespace, name:team-a-*). Esto aún permite cambios de etiquetas de Namespace; el aprovisionamiento previo y los controles de admisión son más seguros para los límites de tenants.
-- manualSync permite excepciones manuales fuera de una ventana de autorización; no deshabilita la sincronización automatizada ni limita la excepción a un rol de guardia. Revise las ventanas de denegación superpuestas y las zonas horarias explícitas en el capítulo de sincronización.
-- Mueva las Applications existentes a proyectos explícitos y verifique el acceso antes de restringir default.
+- Un destino de AppProject coincide con `(server OR registered name) AND namespace`; indicar ambos identificadores de clúster no añade una condición AND. Estos ejemplos usan solo server. En cambio, el destino de una Application requiere elegir server o name.
+- ResourceQuota y LimitRange tienen ámbito de espacio de nombres; clusterResourceBlacklist no puede bloquearlos. Usa namespaceResourceBlacklist para la ruta de despliegue de Argo CD.
+- Si se omite namespaceResourceWhitelist, se permiten de forma predeterminada los tipos con ámbito de espacio de nombres; las listas explícitas de permitidos y denegados se evalúan conjuntamente. Los tipos con ámbito de clúster requieren una lista de permitidos. Argo CD 3.5.4 también admite patrones de nombre en las listas de recursos de clúster.
+- Si delegas la gestión de Namespace, restringe también su nombre (group:'', kind:Namespace, name:team-a-*). Aun así se pueden cambiar las etiquetas de Namespace; el aprovisionamiento previo y los controles de admisión ofrecen límites multiinquilino más seguros.
+- manualSync permite excepciones manuales fuera de una ventana permitida; no deshabilita la sincronización automática ni limita la excepción a un rol de guardia. Revisa las ventanas de denegación superpuestas y las zonas horarias explícitas en el capítulo de sincronización.
+- Migra las Applications existentes a proyectos explícitos y verifica el acceso antes de restringir el proyecto predeterminado.
 
-## Configuración de RBAC
+## Configuración de RBAC {#rbac-configuration}
 
-ArgoCD RBAC se configura en el ConfigMap `argocd-rbac-cm`.
+RBAC de Argo CD se configura en el ConfigMap `argocd-rbac-cm`.
 
 ### Sintaxis de la política RBAC
 
@@ -311,7 +311,7 @@ g, <subject>, <role>
 | `subject` | Usuario, grupo o rol |
 | `resource` | applications, clusters, repositories, etc. |
 | `action` | get, create, update, delete, sync, etc. |
-| `object` | Identificador de recurso (project/app o *) |
+| `object` | Identificador del recurso (project/app o *) |
 | `effect` | allow o deny |
 
 ### Roles integrados
@@ -323,7 +323,7 @@ g, <subject>, <role>
 
 ### Configuración completa de RBAC
 
-Este ejemplo no concede acceso implícito a las aplicaciones y asigna permisos explícitos a grupos. Los desarrolladores están limitados a team-frontend. Deje role:authenticated sin entradas de política. Los permisos concedidos por la política predeterminada no se pueden eliminar mediante una denegación de usuario; establecer role:readonly como predeterminado expone lecturas entre proyectos. No copie ni redefina reglas de roles integrados en policy.csv.
+Este ejemplo no concede acceso implícito a las aplicaciones y asigna permisos explícitos a los grupos. El acceso de los desarrolladores se limita a team-frontend. Deja role:authenticated sin entradas de política. Los permisos concedidos por la política predeterminada no se pueden revocar mediante una denegación del usuario; usar role:readonly como rol predeterminado expone lecturas entre proyectos. No copies ni redefinas en policy.csv las reglas de los roles integrados.
 
 ```yaml
 apiVersion: v1
@@ -370,13 +370,13 @@ data:
     p, role:sre, projects, get, production, allow
 ```
 
-Combine fragmentos de políticas adicionales en los datos existentes del ConfigMap mediante Kustomize/Helm. Argo CD agrega las claves policy.example-N.csv a policy.csv. No aplique cada fragmento como un reemplazo de todo el ConfigMap ni acumule ejemplos de autorización amplios no relacionados.
+Combina fragmentos adicionales de política con los datos del ConfigMap existente mediante Kustomize o Helm. Argo CD agrega las claves policy.example-N.csv a policy.csv. No apliques cada fragmento como sustitución de todo el ConfigMap ni acumules ejemplos amplios de permisos allow que no estén relacionados.
 
-El RBAC de la API de Argo CD es independiente del Kubernetes RBAC. El objeto project/app no identifica un namespace de destino; las Applications fuera del namespace del plano de control también usan project/application-namespace/app. La coincidencia glob no trata la barra inclinada como separador, así que incluya rutas completas de recurso-acción.
+El RBAC de la API de Argo CD es independiente del RBAC de Kubernetes. El objeto project/app no identifica un espacio de nombres de destino; las Applications que están fuera del espacio de nombres del plano de control también usan project/application-namespace/app. La coincidencia glob no trata la barra como separador, por lo que debes incluir las rutas completas de recurso y acción.
 
-Con el valor predeterminado de 3.x, los permisos de actualización/eliminación de Application no conceden automáticamente la misma operación sobre los recursos secundarios de Kubernetes. Use `update/<group>/<kind>/<namespace>/<name>` o `delete/...` para esas operaciones, teniendo en cuenta `server.rbac.disableApplicationFineGrainedRBACInheritance`.
+Con el valor predeterminado de 3.x, los permisos de actualización y eliminación de una Application no conceden automáticamente las mismas operaciones sobre sus recursos secundarios de Kubernetes. Usa `update/<group>/<kind>/<namespace>/<name>` o `delete/...` para esas operaciones y ten en cuenta `server.rbac.disableApplicationFineGrainedRBACInheritance`.
 
-sync puede crear, actualizar y eliminar mediante prune los recursos desplegados. Denegar la eliminación de Application no evita la eliminación mediante sync/prune. La API de rollback también verifica sync; no existe un permiso independiente action/rollback ni uno exclusivo para rollback. override permite el reemplazo de fuentes, como manifests locales, no solo force sync. application.sync.requireOverridePrivilegeForRevisionSync puede requerir override cuando se proporciona una revisión.
+sync puede crear, actualizar y eliminar mediante prune los recursos desplegados. Denegar la eliminación de una Application no impide que se eliminen recursos mediante sync/prune. La API de rollback también comprueba sync; no existe un permiso independiente action/rollback ni otro exclusivo para rollback. override permite reemplazar el origen, por ejemplo con manifiestos locales, no se limita a forzar una sincronización. application.sync.requireOverridePrivilegeForRevisionSync puede exigir override cuando se proporciona una revisión.
 
 ### Permisos específicos de recursos
 
@@ -421,11 +421,11 @@ policy.example-2.csv: |
   p, role:operator, applications, get, production/*, allow
 ```
 
-## Patrones de multi-tenancy
+## Patrones multiinquilino {#multi-tenancy-patterns}
 
-### Un namespace por equipo
+### Un espacio de nombres por equipo
 
-![El equipo A, el equipo B y el equipo de plataforma reciben roles de aplicación en un AppProject de ArgoCD cuyos destinos restringen los despliegues de Argo CD a sus propios namespaces, team-a, team-b y los namespaces compartidos de monitoring y logging.](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
+![Los equipos A, B y de plataforma reciben roles de aplicación en un AppProject de Argo CD cuyos destinos limitan los despliegues a sus propios espacios de nombres, team-a y team-b, y a los espacios compartidos de monitorización y registro.](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-06-projects-rbac-0.html)
 
@@ -521,11 +521,11 @@ spec:
 
 ## Tokens JWT para CI/CD
 
-Cree tokens con ámbito de proyecto para la automatización.
+Crea tokens con ámbito de proyecto para la automatización.
 
-### Crear token JWT
+### Crear un token JWT
 
-Un operador autorizado para actualizar el proyecto emite/revoca tokens; el propio rol de CI solo tiene get/sync. Prepare primero my-project, su rol ci-deployer y la Application my-app. Rote antes de la expiración; el valor predeterminado de la CLI no tiene expiración.
+Un operador autorizado para actualizar el proyecto emite y revoca los tokens; el rol de CI solo tiene get/sync. Prepara primero my-project, su rol ci-deployer y la Application my-app. Rota el token antes de que venza; de forma predeterminada, la CLI no establece una fecha de expiración.
 
 ```bash
 set -euo pipefail
@@ -536,11 +536,11 @@ argocd proj role create-token my-project ci-deployer \
 # Store this file's value in the approved CI secret store; do not commit or print it.
 ```
 
-Use `--id UNIQUE_ID` cuando se necesite un identificador explícito; --token-id no es una opción de 3.5.4. expires-in acepta una duración como 24h. El valor del token firmado se devuelve en la emisión, no se almacena para recuperarlo más adelante.
+Usa `--id UNIQUE_ID` cuando necesites un identificador explícito; --token-id no es una opción de la versión 3.5.4. expires-in acepta una duración, como 24h. El valor del token firmado se devuelve al emitirlo y no se almacena para recuperarlo después.
 
-### Usar token en CI/CD
+### Usar el token en CI/CD
 
-Combine este rol en el AppProject my-project existente; no crea por sí solo permisos de fuente/destino ni una Application:
+Integra este rol en el AppProject my-project existente; por sí solo no crea permisos de origen o destino ni una Application:
 
 ```yaml
 spec:
@@ -551,7 +551,7 @@ spec:
     - p, proj:my-project:ci-deployer, applications, sync, my-project/*, allow
 ```
 
-El flujo de trabajo sincroniza la revisión declarada por la Application, en lugar de forzar el SHA del flujo de trabajo. Fije targetRevision en Git cuando se requieran revisiones inmutables. Revise la configuración de override del servidor antes de usar --revision. Configure por separado las reglas de aprobación/protección del Environment de producción.
+El workflow sincroniza la revisión declarada por la Application, en lugar de forzar el SHA del propio workflow. Fija targetRevision en Git cuando necesites revisiones inmutables. Revisa la opción override del servidor antes de usar --revision. Configura aparte las reglas de aprobación y protección del entorno de producción.
 
 ```yaml
 name: Sync declared Argo CD application
@@ -574,7 +574,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.4
+        ARGOCD_VERSION=v3.5.5
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;
@@ -603,7 +603,7 @@ jobs:
 
 ### Gestión de tokens
 
-Los metadatos del token se almacenan/normalizan en los registros de rol/status del proyecto. Declarar manualmente iat/exp/id no emite un token firmado. Los cambios en la política de rol afectan a los tokens ya emitidos. Use credenciales de operador para revocar un token por su entero ISSUED AT, no por su etiqueta ID:
+Los metadatos del token se guardan y normalizan en los registros de roles y status del proyecto. Declarar manualmente iat/exp/id no emite un token firmado. Los cambios en la política del rol afectan a los tokens que ya se emitieron. Usa credenciales de operador para revocar un token por el valor entero del campo ISSUED AT, no por la etiqueta ID:
 
 ```bash
 argocd proj role list-tokens my-project ci-deployer --unixtime
@@ -613,22 +613,22 @@ argocd proj role list-tokens my-project ci-deployer --unixtime
 argocd proj role delete-token my-project ci-deployer "$SELECTED_ISSUED_AT"
 ```
 
-### Almacenamiento de tokens para CI dentro del clúster
+### Guardar tokens para CI dentro del clúster
 
-Un Secret de Kubernetes puede almacenar un token emitido previamente para un trabajo de CI. No es un emisor de tokens de Argo CD y no existe un tipo especial de Secret argocd-token. Use el namespace del trabajo de CI y una entrada de archivo segura, por ejemplo:
+Un Secret de Kubernetes puede guardar un token emitido previamente para un trabajo de CI. No emite tokens de Argo CD y no existe un tipo especial de Secret argocd-token. Usa el espacio de nombres del trabajo de CI y una entrada segura desde archivo, por ejemplo:
 
 ```bash
 kubectl create secret generic argocd-ci-token -n ci \
   --from-file=token=./argocd-ci.token
 ```
 
-Aprovisione primero el namespace ci y el RBAC del trabajo. Monte/lea el Secret solo en el trabajo de CI autorizado y rote su valor antes de la expiración del token. No coloque el valor del token en Git.
+Aprovisiona primero el espacio de nombres ci y el RBAC del trabajo. Monta y lee el Secret solo desde el trabajo de CI autorizado, y rota su valor antes de que venza el token. No pongas el valor del token en Git.
 
-## Monitoreo de recursos huérfanos
+## Supervisión de recursos huérfanos {#orphaned-resource-monitoring}
 
-Detecte recursos en namespaces de destino que no administra ArgoCD.
+Detecta recursos en espacios de nombres de destino que Argo CD no gestiona.
 
-### Habilitar el monitoreo de recursos huérfanos
+### Activar la supervisión de recursos huérfanos
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -664,17 +664,17 @@ curl --fail --silent --show-error --max-time 30 \
   | jq '.orphanedNodes'
 ```
 
-Las advertencias son opcionales: warn:false aún permite ver candidatos huérfanos. Los recursos denegados por el proyecto y los objetos predeterminados integrados tienen excepciones; limite los namespaces monitoreados para evitar análisis grandes de kube-system.
+Las advertencias son opcionales: warn:false sigue permitiendo ver candidatos huérfanos. Los recursos denegados por el proyecto y los objetos integrados por defecto tienen excepciones; limita los espacios de nombres supervisados para evitar un análisis excesivo de kube-system.
 
 ### Revisar antes de limpiar
 
-El monitoreo de huérfanos informa recursos de nivel superior con ámbito de namespace que no son rastreados por una Application de Argo CD. Aun así, pueden pertenecer a otro operador o administrarse intencionalmente fuera de GitOps. El selector de etiquetas `managed-by!=argocd` también coincide con recursos sin dicha etiqueta y no implementa el seguimiento de Argo CD. No convierta ese selector en un trabajo de eliminación PostSync.
+La supervisión de huérfanos informa sobre recursos de nivel superior con ámbito de espacio de nombres que no rastrea ninguna Application de Argo CD. Aun así, pueden pertenecer a otro operador o gestionarse intencionalmente fuera de GitOps. El selector `managed-by!=argocd` también coincide con recursos que no tienen esa etiqueta y no aplica el seguimiento de Argo CD. No conviertas ese selector en un trabajo PostSync que elimine recursos.
 
-Inspeccione la lista de huérfanos, las referencias de propietario, los metadatos reales de seguimiento de Argo CD y el controlador propietario antes de decidir si un recurso está obsoleto. Excluya recursos legítimos con reglas de ignorar del monitoreo de huérfanos de alcance limitado. Cualquier eliminación debe usar una lista de recursos revisada explícitamente y el procedimiento adecuado de copia de seguridad/recuperación; los ejemplos de aquí solo informan candidatos.
+Antes de decidir si un recurso está obsoleto, inspecciona la lista de huérfanos, las referencias de propietario, los metadatos reales de seguimiento de Argo CD y el controlador responsable. Excluye los recursos legítimos mediante reglas de omisión de alcance limitado para la supervisión de huérfanos. Cualquier eliminación debe usar una lista de recursos revisada explícitamente y el procedimiento de copia de seguridad y recuperación adecuado; los ejemplos de aquí solo informan de candidatos.
 
 ## Validación de políticas
 
-Guarde el ejemplo base de ConfigMap como argocd-rbac-cm.yaml. La CLI también inicializa un kubeconfig válido, pero las comprobaciones de archivos de políticas no modifican configuraciones activas. Compruebe por separado los roles dinámicos de AppProject, las reclamaciones SSO reales y la admisión de Kubernetes.
+Guarda el ejemplo base del ConfigMap como argocd-rbac-cm.yaml. La CLI también inicializa un kubeconfig válido, pero las comprobaciones de los archivos de política no modifican la configuración activa. Comprueba por separado los roles dinámicos de AppProject, las claims de SSO reales y la admisión de Kubernetes.
 
 ```bash
 argocd admin settings rbac validate --policy-file ./argocd-rbac-cm.yaml
@@ -685,15 +685,15 @@ argocd admin settings rbac can developers get applications team-b/my-app \
   --policy-file ./argocd-rbac-cm.yaml
 ```
 
-validate puede advertir que el role:admin integrado está ausente del CSV del usuario. can incluye la política integrada de forma predeterminada; no duplique roles integrados para silenciar la advertencia. Compruebe las colisiones de usuario local/grupo SSO y las reclamaciones de grupo reales. Una política exec no habilita por sí misma la terminal: compruebe también exec.enabled y los permisos subyacentes de Kubernetes.
+validate puede advertir que role:admin, un rol integrado, no aparece en el CSV del usuario. can incluye la política integrada de forma predeterminada; no dupliques roles integrados para silenciar esa advertencia. Comprueba colisiones entre usuarios locales y grupos de SSO, así como las claims reales de grupo. Una política exec no habilita por sí sola la terminal: comprueba también exec.enabled y los permisos subyacentes de Kubernetes.
 
 ## Referencias
 
-- [Argo CD 3.5.4 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/rbac.md)
+- [RBAC de Argo CD 3.5.4](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/rbac.md)
 - [Coincidencia y validación de proyectos](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/app_project_types.go)
-- [Integridad de la fuente](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
+- [Integridad del origen](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
 - [CLI de tokens de proyecto](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/project_role.go)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido, pruebe el [cuestionario de proyectos y RBAC de ArgoCD](../../quizzes/gitops/argocd/06-projects-rbac-quiz.md).
+Para comprobar lo que aprendiste, prueba el [cuestionario de proyectos y RBAC de Argo CD](../../quizzes/gitops/argocd/06-projects-rbac-quiz.md).

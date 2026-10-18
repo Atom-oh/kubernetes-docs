@@ -1,6 +1,6 @@
 # FinOps 成本可见性平台
 
-> **最后更新**：October 16, 2026。OpenCost 1.121.3 / chart 2.5.33，Kubecost 3.2.4，Kyverno 1.19.1。
+> **最后更新**：2026 年 10 月 16 日。OpenCost 1.121.3 / chart 2.5.33，Kubecost 3.2.4，Kyverno 1.19.1。
 > **验证**：Helm 渲染、Kubernetes schemas、Terraform mock providers、本地成本计算和策略评估。本文不代表已在生产集群上安装，也不代表已与实际 AWS 账单对账。
 
 < [上一章：活动容量规划](./12-event-capacity-planning.md) | [目录](./README.md) | [下一章：Tekton Pipelines](./14-tekton-pipelines.md) >

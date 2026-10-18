@@ -1,147 +1,69 @@
 # ロードバランシング
 
-Istio は Envoy を通じてさまざまなロードバランシングアルゴリズムを提供し、トラフィックを効率的に分散します。
+IstioはEnvoyを通じて複数のロードバランシングアルゴリズムを提供し、トラフィックを効率よく分散します。
 
 ## 目次
 
 1. [ロードバランシングが必要な理由](#why-load-balancing)
 2. [ロードバランシングの概要](#load-balancing-overview)
-3. [ロードバランシングアルゴリズム](#load-balancing-algorithms)
-4. [Consistent Hash の詳細](#consistent-hash-details)
-5. [ローカリティベースのロードバランシング](#locality-based-load-balancing)
-6. [Connection Pool の設定](#connection-pool-settings)
+3. [ロードバランシングのアルゴリズム](#load-balancing-algorithms)
+4. [Consistent Hashの詳細](#consistent-hash-details)
+5. [Localityベースのロードバランシング](#locality-based-load-balancing)
+6. [コネクションプールの設定](#connection-pool-settings)
 7. [実践例](#practical-examples)
-8. [アルゴリズム選択ガイド](#algorithm-selection-guide)
+8. [アルゴリズムの選択ガイド](#algorithm-selection-guide)
 9. [ベストプラクティス](#best-practices)
 10. [トラブルシューティング](#troubleshooting)
 
-<span id="why-load-balancing"></span>
+## ロードバランシングが必要な理由 {#why-load-balancing}
 
-## ロードバランシングが必要な理由
+### リソースの効率的な利用
 
-### 効率的なリソース活用
+ロードバランシングは複数のインスタンスに通信を分散し、システム全体のスループットと安定性を高めます。
 
-ロードバランシングは複数のインスタンスにトラフィックを分散し、システム全体のスループットと安定性を向上させます。
+![ロードバランシングがない場合、1つのサービスにすべてのリクエストが集中し、残り2つはほぼアイドル状態になります。ロードバランサーを前段に置くと同じリクエストが分散され、各サービスがおおむね同じ負荷を受けます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Load Balancing"]
-        C1[All Requests] -->|Overload| S1[Service 1<br/>100% Load]
-        S2[Service 2<br/>0% Load]
-        S3[Service 3<br/>0% Load]
-    end
-
-    subgraph With["With Load Balancing"]
-        C2[Distributed Requests] --> LB[Load Balancer]
-        LB -->|33%| S4[Service 1<br/>33% Load]
-        LB -->|33%| S5[Service 2<br/>33% Load]
-        LB -->|34%| S6[Service 3<br/>34% Load]
-    end
-
-    %% Style definitions
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef idle fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef balanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class C1,C2 client;
-    class S1 overload;
-    class S2,S3 idle;
-    class LB lb;
-    class S4,S5,S6 balanced;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### 主な利点
 
-| 問題 | ロードバランシングなし | ロードバランシングあり |
-|---------|------------------------|---------------------|
-| **可用性** | Single Point of Failure (SPOF) | 障害発生時の自動フェイルオーバー |
-| **パフォーマンス** | 特定インスタンスの過負荷 | 均等な負荷分散 |
-| **スケーラビリティ** | 水平スケーリングが困難 | 容易なスケールアウト |
-| **レスポンスタイム** | 不安定（0～1000ms以上） | 一貫したレスポンスタイム |
-| **リソース活用** | 非効率（部分的な使用） | 効率的なリソース使用 |
+| 課題 | ロードバランシングなし | ロードバランシングあり |
+| --- | --- | --- |
+| **可用性** | 単一障害点（SPOF） | 障害時に自動フェイルオーバー |
+| **性能** | 特定のインスタンスに負荷が集中 | 負荷を分散 |
+| **スケーラビリティ** | 水平スケーリングが難しい | 容易にスケールアウトできる |
+| **応答時間** | ばらつきが大きい（0～1,000 ms超） | 応答時間を均一化 |
+| **リソース使用率** | 一部しか使われず非効率 | リソースを効率的に利用 |
 
-<span id="load-balancing-overview"></span>
+## ロードバランシングの概要 {#load-balancing-overview}
 
-## ロードバランシングの概要
+![クライアントのリクエストをIstioのロードバランシングアルゴリズムが受け取り、ラウンドロビン、最小リクエスト数、ランダム選択などを用いて、その時点の負荷が異なる3つのPodから1つを選びます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-1.png)
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
-    subgraph LB["Load Balancer"]
-        Algorithm[Load Balancing<br/>Algorithm]
-    end
+## ロードバランシングのアルゴリズム {#load-balancing-algorithms}
 
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Load: 30%]
-        Pod2[Pod 2<br/>Load: 50%]
-        Pod3[Pod 3<br/>Load: 20%]
-    end
+リリース済みIstio 1.31.0のデフォルトはLEAST_REQUESTです。各例は独立したDestinationRuleであり、同じホストに組み合わせて適用する設定ではありません。結果はエンドポイントの健全性、リクエストの処理コスト、接続の再利用、Proxyの配置によって異なります。CPU負荷を均等にしたり、レイテンシーを一定にしたりするアルゴリズムはありません。`consistentHash`は別の設定分岐であり、`simple: CONSISTENT_HASH`という列挙値ではありません。
 
-    Client --> Algorithm
-    Algorithm -->|Round Robin| Pod1
-    Algorithm -->|Least Request| Pod3
-    Algorithm -->|Random| Pod2
+Istioは次のロードバランシングアルゴリズムを提供します。
 
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### アルゴリズムの比較
 
-    %% Class applications
-    class Client client;
-    class Algorithm lb;
-    class Pod1,Pod2,Pod3 pod;
-```
+| アルゴリズム | 説明 | 用途 | 長所 | 短所 |
+| --- | --- | --- | --- | --- |
+| **ROUND_ROBIN** | 順番に分散（明示的な選択肢） | ステートレスサービス | 単純で公平 | 負荷が偏る可能性 |
+| **LEAST_REQUEST** | アクティブなリクエストが最も少ない宛先 | 高性能API、DB接続 | 負荷を均等化 | 少しオーバーヘッドがある |
+| **RANDOM** | ランダムに分散 | 大量のトラフィック | 単純で高速 | 短期的な偏りが生じる場合がある |
+| **PASSTHROUGH** | 元の宛先へ転送 | TCP Proxy、SNIルーティング | 柔軟性がある | 制御が限定的 |
+| **CONSISTENT_HASH** | ハッシュに基づく固定性 | セッション維持、キャッシュ | セッションの親和性 | 偏りが生じる可能性 |
 
-<span id="load-balancing-algorithms"></span>
+### 1. ROUND_ROBIN
 
-## ロードバランシングアルゴリズム
+各エンドポイントに順番にリクエストを配分します。
 
-Istio は以下のロードバランシングアルゴリズムを提供します。
+![ROUND_ROBINでは4つのクライアントリクエストが、Pod 1、Pod 2、Pod 3、Pod 1の順に各Podへ巡回して転送されます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-2.png)
 
-### アルゴリズム比較
-
-| アルゴリズム | 説明 | ユースケース | 長所 | 短所 |
-|-----------|-------------|-----------|------|------|
-| **ROUND_ROBIN** | 順次分散（デフォルト） | ステートレスサービス | シンプルで公平 | 負荷が不均衡になる可能性 |
-| **LEAST_REQUEST** | アクティブリクエスト数が最少 | 高性能 API、DB 接続 | 負荷の均等化 | わずかなオーバーヘッド |
-| **RANDOM** | ランダム分散 | 大量トラフィック | シンプルで高速 | 短期的な不均衡の可能性 |
-| **PASSTHROUGH** | 元の宛先 | TCP プロキシ、SNI ルーティング | 柔軟性 | 制御が限定的 |
-| **CONSISTENT_HASH** | Hash ベースのスティッキー | セッション維持、キャッシュ | スティッキーセッション | 不均衡になる可能性 |
-
-### 1. ROUND_ROBIN（デフォルト）
-
-各エンドポイントに順番にリクエストを分散します。
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LB as Load Balancer<br/>(ROUND_ROBIN)
-    participant Pod1 as Pod 1
-    participant Pod2 as Pod 2
-    participant Pod3 as Pod 3
-
-    Client->>LB: Request 1
-    LB->>Pod1: Route
-    Pod1-->>Client: Response
-
-    Client->>LB: Request 2
-    LB->>Pod2: Route
-    Pod2-->>Client: Response
-
-    Client->>LB: Request 3
-    LB->>Pod3: Route
-    Pod3-->>Client: Response
-
-    Client->>LB: Request 4
-    LB->>Pod1: Route (cycle)
-    Pod1-->>Client: Response
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **設定例：**
 
@@ -157,52 +79,24 @@ spec:
       simple: ROUND_ROBIN
 ```
 
-**ユースケース：**
-- ステートレス REST API
-- 同一のパフォーマンスを持つ Pod
+**用途：**
+- ステートレスなREST API
+- Podの性能が同等の場合
 - デフォルト設定で十分な場合
 
 **長所：**
-- シンプルで予測可能な実装
-- 公平な分散
+- 実装が単純で予測しやすい
+- 公平に分散する
 
 **短所：**
-- Pod ごとの負荷差を考慮しない
-- 長時間のリクエストにより不均衡が生じる可能性
+- Podごとの負荷の違いを考慮しない
+- リクエストが長時間続くと負荷が偏ることがある
 
-### 2. LEAST_REQUEST
+### 2. LEAST_REQUEST（デフォルト）
 
-アクティブリクエスト数が最も少ないエンドポイントへルーティングします。
+重みが同じエンドポイントの場合、Envoyは通常、利用可能なホストを2つサンプリングし、アクティブなリクエストが少ない方を選びます。すべてのPodを走査したり、CPU／データベースクエリの負荷を測定したりするわけではありません。重みが異なる場合は別の重み付きアルゴリズムを使います。
 
-```mermaid
-flowchart LR
-    Client[Client<br/>New Request]
-    LB[Load Balancer<br/>LEAST_REQUEST]
-
-    subgraph Pods[Pod Status]
-        Pod1[Pod 1<br/>Active Requests: 5]
-        Pod2[Pod 2<br/>Active Requests: 2 ✅]
-        Pod3[Pod 3<br/>Active Requests: 8]
-    end
-
-    Client --> LB
-    LB -.->|Check| Pod1
-    LB -.->|Check| Pod2
-    LB -.->|Check| Pod3
-    LB -->|Route to<br/>Least Loaded| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef selected fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% Class applications
-    class Client client;
-    class LB lb;
-    class Pod1,Pod3 pod;
-    class Pod2 selected;
-```
+重みが同じ場合のデフォルトLEAST_REQUESTは、ランダムに選んだ候補エンドポイント2つのうち、負荷が低い方を選択します。
 
 **設定例：**
 
@@ -216,7 +110,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 60 second warmup (optional)
+      warmup:
+        duration: 60s  # 60 second warmup (optional)
 ```
 
 **詳細設定：**
@@ -231,26 +126,27 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 120  # New pod warmup
+      warmup:
+        duration: 120s  # New pod warmup
     connectionPool:
       http:
         http2MaxRequests: 100
         maxRequestsPerConnection: 10
 ```
 
-**ユースケース：**
-- レスポンスタイムが変動する API
-- Database 接続プール
+**用途：**
+- 応答時間にばらつきがあるAPI
+- データベース接続プール
 - 重い処理を行うサービス
 - リアルタイムの負荷分散が重要な場合
 
 **長所：**
-- リアルタイムの負荷に適応
-- レスポンスタイムの一貫性を向上
-- Pod ごとのパフォーマンス差を吸収
+- 実際の負荷に応じて適応する
+- 応答時間のばらつきを抑えやすい
+- Podごとの性能差を吸収する
 
 **短所：**
-- わずかなオーバーヘッド（アクティブリクエストの追跡）
+- アクティブリクエストを追跡する分、わずかなオーバーヘッドがある
 
 ### 3. RANDOM
 
@@ -268,23 +164,23 @@ spec:
       simple: RANDOM
 ```
 
-**ユースケース：**
-- 大量トラフィック（統計的に均等）
-- シンプルかつ高速な選択が必要な場合
-- Pod のパフォーマンスが同一の場合
+**用途：**
+- 大量のトラフィック（統計的に均等化される）
+- 単純で高速な選択が必要な場合
+- Podの性能が同等の場合
 
 **長所：**
-- 非常に高速な選択
-- シンプルな実装
-- 大規模環境では統計的に均等
+- 選択が非常に高速
+- 実装が単純
+- 大規模では統計的に均等になる
 
 **短所：**
-- 短期的な不均衡が生じる可能性
-- 予測不能
+- 短期的な負荷の偏りが生じることがある
+- 結果を予測しにくい
 
 ### 4. PASSTHROUGH
 
-クライアントが指定した元の宛先に直接接続します。
+クライアントが指定した元の宛先へ直接接続します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -298,22 +194,24 @@ spec:
       simple: PASSTHROUGH
 ```
 
-**ユースケース：**
-- TCP プロキシ
-- SNI ベースのルーティング
+**用途：**
+- TCP Proxy
+- SNIベースのルーティング
 - 外部サービスへの直接接続
-- TLS PASSTHROUGH モード
+- TLS PASSTHROUGHモード
 
 **長所：**
-- 元の宛先アドレスを保持
-- 柔軟なルーティング
+- 元の宛先アドレスを維持する
+- 柔軟にルーティングできる
 
 **短所：**
-- ロードバランシング制御が限定的
+- ロードバランシングの制御が限定される
 
-### 5. LEAST_CONN（非推奨 -> LEAST_REQUEST）
+DestinationRuleのPASSTHROUGHは、元の宛先へのロードバランシングを使います。Gatewayの`tls.mode: PASSTHROUGH`はTLS終端を制御する別の設定です。SNIルーティングにはTLS VirtualService routeが必要です。
 
-**注記**：`LEAST_CONN` は**非推奨**であり、`LEAST_REQUEST` に置き換えられました。
+### 5. LEAST_CONN（非推奨 → LEAST_REQUEST）
+
+**注記：**`LEAST_CONN`は**非推奨**で、`LEAST_REQUEST`に置き換えられています。
 
 **移行：**
 ```yaml
@@ -321,62 +219,28 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: LEAST_CONN
+```
 
+```yaml
 # New version
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
 
-<span id="consistent-hash-details"></span>
+## Consistent Hashの詳細 {#consistent-hash-details}
 
-## Consistent Hash の詳細
+Consistent Hashは、エンドポイントの一覧が安定している間、同じキーに対して緩やかな親和性を提供します。エンドポイントの追加／削除、健全性の変化、localityの違いによってリクエストの割当先が変わることがあります。永続的なセッションストレージではありません。
 
-Consistent Hash は特定の属性に基づいて同じエンドポイントへルーティングし、セッション維持を保証します。
+### Consistent Hashの動作原理
 
-### Consistent Hash の動作原理
+![各リクエストのキーをハッシュしてリング上の値に対応付けます。同じCookieを使うUser Aの2回のリクエストはどちらもPod 1へ、異なるCookieを使うUser BのリクエストはPod 2へ送られます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-4.png)
 
-```mermaid
-flowchart TD
-    subgraph Requests[Requests]
-        R1[User A<br/>Cookie: abc123]
-        R2[User B<br/>Cookie: def456]
-        R3[User A<br/>Cookie: abc123]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
-    subgraph Hash[Hash Calculation]
-        H1[Hash abc123<br/>-> 0x1A2B]
-        H2[Hash def456<br/>-> 0x7C8D]
-        H3[Hash abc123<br/>-> 0x1A2B]
-    end
+### 1. HTTPヘッダーベース
 
-    subgraph Ring[Consistent Hash Ring]
-        P1[Pod 1<br/>0x0000-0x4FFF]
-        P2[Pod 2<br/>0x5000-0x9FFF]
-        P3[Pod 3<br/>0xA000-0xFFFF]
-    end
-
-    R1 -->|1| H1
-    H1 -->|2| P1
-    R2 -->|1| H2
-    H2 -->|2| P2
-    R3 -->|1| H3
-    H3 -->|2| P1
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef hash fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class R1,R2,R3 request;
-    class H1,H2,H3 hash;
-    class P1,P2,P3 pod;
-```
-
-### 1. HTTP Header ベース
-
-特定の HTTP Header 値から Hash を計算します。
+特定のHTTPヘッダーの値からハッシュを計算します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -391,14 +255,14 @@ spec:
         httpHeaderName: "x-user-id"
 ```
 
-**ユースケース：**
+**用途：**
 - ユーザーごとのセッション維持
-- API key ベースのルーティング
-- テナントごとの分離
+- APIキーに基づくルーティング
+- テナントキーによる親和性。ただし分離は別途強制する必要があります。
 
-### 2. HTTP Cookie ベース
+### 2. HTTP Cookieベース
 
-Cookie 値から Hash を計算し、存在しない場合は Cookie を自動生成します。
+Cookie値からハッシュを計算します。Cookieがない場合は自動生成します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -415,14 +279,14 @@ spec:
           ttl: 3600s  # 1 hour TTL
 ```
 
-**ユースケース：**
-- Web アプリケーションのセッション維持
+**用途：**
+- Webアプリケーションのセッション維持
 - ショッピングカートの維持
-- ユーザー体験の一貫性
+- 一貫したユーザー体験
 
-### 3. Source IP ベース
+### 3. 送信元IPベース
 
-クライアントの送信元 IP アドレスから Hash を計算します。
+クライアントの送信元IPアドレスからハッシュを計算します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -437,18 +301,18 @@ spec:
         useSourceIp: true
 ```
 
-**ユースケース：**
-- IP ベースのセッション維持
-- レート制限（IP ごと）
-- リージョナルキャッシュ
+**用途：**
+- IPアドレスに基づくセッション維持
+- IPごとの外部rate limiterとの親和性。ただしハッシュ自体はレート制限を行いません。
+- 地域キャッシュ
 
-**注意事項：**
-- NAT 配下のクライアントは同じ Pod にルーティングされる可能性があります
-- プロキシを使用する場合は、実際のクライアント IP を確認してください
+**注意点：**
+- NAT配下の複数クライアントが同じPodへルーティングされる可能性があります。
+- Proxyを使う場合は、実際のクライアントIPを確認してください。
 
-### 4. HTTP Query Parameter ベース
+### 4. HTTPクエリパラメータベース
 
-Query Parameter 値から Hash を計算します。
+クエリパラメータの値からハッシュを計算します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -463,14 +327,14 @@ spec:
         httpQueryParameterName: "user_id"
 ```
 
-**ユースケース：**
-- RESTful API におけるリソース ID ベースのルーティング
-- キャッシュフレンドリーなルーティング
+**用途：**
+- REST APIのリソースIDに基づくルーティング
+- キャッシュに適したルーティング
 - シャーディング戦略
 
-### 5. 最小 Ring Size の設定
+### 5. リングの最小サイズ設定
 
-再分散を最小化するため、Consistent Hash Ring の最小サイズを設定します。
+リングの仮想ノード数を調整すると、異なるキーの分散を改善できます。割当先の変更やホットキーの再マッピングをなくすものではありません。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -483,20 +347,21 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 1024  # Default: 1024
+        ringHash:
+          minimumRingSize: 1024  # Default: 1024
 ```
 
 **説明：**
-- Ring Size を大きくすると、より均等に分散されます
-- Pod の追加・削除時に再分散される key の割合を削減します
-- メモリ使用量がわずかに増加します
+- リングを大きくすると異なるキーをより均等に分散できる
+- エンドポイント変更時に再マッピングされる割合が低下する保証はない
+- メモリ使用量がわずかに増える
 
-**推奨値：**
-- 小規模（Pod 10 未満）：1024（デフォルト）
-- 中規模（Pod 10～50）：2048
-- 大規模（Pod 50 以上）：4096
+**ベンチマーク用の参考値（普遍的な容量基準ではありません）：**
+- 小規模（Pod 10個未満）：1024（デフォルト）
+- 中規模（Pod 10～50個）：2048
+- 大規模（Pod 50個超）：4096
 
-### Consistent Hash の組み合わせ例
+### Consistent Hashの組み合わせ例
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -512,49 +377,30 @@ spec:
           name: "session-id"
           path: "/api"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       http:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
 ```
 
-### Consistent Hash の注意事項
+### Consistent Hashの注意点
 
-#### 1. 不均衡のリスク
+#### 1. 偏りのリスク
 
-```mermaid
-flowchart LR
-    subgraph Problem[Problem Situation]
-        Users[1000 Users]
-        P1[Pod 1<br/>800 users ⚠️]
-        P2[Pod 2<br/>150 users]
-        P3[Pod 3<br/>50 users]
-    end
+![多くのユーザーが同じハッシュ範囲に集中すると、Consistent Hash特有のリスクとして1つのPodに大部分のトラフィックが集まり、他のPodはほとんど使われないことがあります。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
-    Users -->|80%| P1
-    Users -->|15%| P2
-    Users -->|5%| P3
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Users user;
-    class P1 overload;
-    class P2,P3 normal;
-```
-
-**原因**：特定の Hash 値へのトラフィック集中
+**原因**：特定のハッシュ値にトラフィックが集中すること
 
 **解決策：**
-- `minimumRingSize` を増やす
-- 複数の Hash key を組み合わせて使用する
-- Bounded Load アルゴリズムを検討する（Envoy では未サポート）
+- `ringHash.minimumRingSize`を増やすのは異なるキーの分散が不均一な場合です。単一のホットキーは引き続き1つのホストに割り当てられます。
+- 複数のハッシュキーを組み合わせる
+- Envoyは`hash_balance_factor`によるbounded-load hashingをサポートしますが、Istio DestinationRuleではその設定を直接公開していません。
 
-#### 2. Pod の追加・削除時の再分散
+#### 2. Pod追加／削除時の再分散
 
 ```yaml
 # On pod scale out
@@ -563,18 +409,18 @@ flowchart LR
 # - Result: ~25% of sessions redistributed to different pods
 ```
 
-**軽減策：**
-- グレースフルシャットダウンを使用する
-- 外部セッションストレージ（Redis、Memcached）を使用する
+**影響を抑える方法：**
+- graceful shutdownを使う
+- 外部セッションストレージ（Redis、Memcached）を使う
 - 段階的にスケールする
 
-<span id="locality-based-load-balancing"></span>
+## Localityベースのロードバランシング {#locality-based-load-balancing}
 
-## ローカリティベースのロードバランシング
+同じ設定で使うのはlocalityの`distribute`割合か明示的な`failover`のどちらか一方です。両方を同時に指定しないでください。failoverにはヘルス検出と到達可能な健全エンドポイントが必要です。region／zoneラベルはトポロジーを示すもので、実測距離ではありません。DestinationRuleだけではリージョン間ネットワークやサービス検出は構築されません。EKSでは実際のNode topology値を使ってください。
 
-ローカリティベースのロードバランシングは、地理的に近いエンドポイントを優先します。
+Localityベースのロードバランシングでは、地理的に近いエンドポイントを優先します。
 
-### 基本的なローカリティ設定
+### 基本的なLocality設定
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -589,7 +435,7 @@ spec:
         enabled: true
 ```
 
-### ローカリティ分散比率
+### Localityの分散比率
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -609,9 +455,9 @@ spec:
             "us-west/zone-2/*": 20  # 20% to other zone
 ```
 
-### ローカリティフェイルオーバー
+### Locality failover
 
-一方のリージョンで障害が発生すると、別のリージョンへ自動的に切り替えます。
+1つのリージョンに障害が起きた場合、別のリージョンへ自動的に切り替えます。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -627,6 +473,10 @@ spec:
         failover:
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### マルチリージョンの例
@@ -654,30 +504,23 @@ spec:
           to:
             "us-east/*": 90
             "us-west/*": 10
-        failover:
-        - from: us-west
-          to: us-east
-        - from: us-east
-          to: us-west
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**ユースケース：**
-- マルチリージョン Deployment
-- レイテンシの最小化
+**用途：**
+- マルチリージョンデプロイ
+- レイテンシーの最小化
 - リージョン間の災害復旧
-- コスト最適化（同一 AZ 通信）
+- コスト最適化（同一AZ内の通信）
 
-<span id="connection-pool-settings"></span>
+## コネクションプールの設定 {#connection-pool-settings}
 
-## Connection Pool の設定
+性能を最適化するには、ロードバランシングとあわせてコネクションプールを設定します。
 
-パフォーマンスを最適化するため、ロードバランシングと併せて Connection Pool を設定します。
-
-### HTTP/1.1 Connection Pool
+### HTTP/1.1コネクションプール
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -699,7 +542,7 @@ spec:
         idleTimeout: 300s             # Idle connection timeout
 ```
 
-### HTTP/2 Connection Pool
+### HTTP/2コネクションプール
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -720,11 +563,9 @@ spec:
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
 
-<span id="practical-examples"></span>
+## 実践例 {#practical-examples}
 
-## 実践例
-
-### 例 1：高性能 API サービス
+### 例1：高性能APIサービス
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -737,7 +578,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
     connectionPool:
       tcp:
         maxConnections: 200
@@ -747,18 +589,18 @@ spec:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
 
-**利用シナリオ：**
-- 高性能 REST API
-- レスポンスタイムが変動するリクエスト
-- Pod ごとにパフォーマンス差がある環境
+**利用場面：**
+- 高性能なREST API
+- 応答時間が変動するリクエスト
+- Podごとの性能差がある環境
 
-### 例 2：ユーザーセッションベースのルーティング
+### 例2：ユーザーセッションに基づくルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -773,7 +615,8 @@ spec:
         httpCookie:
           name: "session-id"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       tcp:
         maxConnections: 500
@@ -782,12 +625,12 @@ spec:
         maxRequestsPerConnection: 50
 ```
 
-**利用シナリオ：**
-- Web アプリケーションのセッション維持
+**利用場面：**
+- Webアプリケーションのセッション維持
 - ショッピングカートの一貫性
-- ユーザーごとのキャッシュ活用
+- ユーザーごとのキャッシュ利用
 
-### 例 3：マルチリージョンのグローバルサービス
+### 例3：マルチリージョンのグローバルサービス
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -819,29 +662,26 @@ spec:
           to:
             "eu-central-1/*": 90
             "eu-west-1/*": 10
-        failover:
-        - from: us-west-1
-          to: us-west-2
-        - from: us-east-1
-          to: us-east-2
     connectionPool:
       tcp:
         maxConnections: 1000
       http:
         http2MaxRequests: 2000
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 60s
 ```
 
-**利用シナリオ：**
-- グローバル SaaS サービス
-- レイテンシの最小化
+**利用場面：**
+- グローバルSaaSサービス
+- レイテンシーの最小化
 - リージョンごとの災害復旧
-- AZ 間トラフィックコストの削減
+- AZ間通信コストの削減
 
-### 例 4：Cache Service の最適化
+### 例4：キャッシュサービスの最適化
+
+これは`x-cache-key`を受け付けるHTTPキャッシュサービスを前提とします。ネイティブRedis通信にはHTTPヘッダーがありません。Redisキーの扱いにはRedis対応クライアント／クラスターシャーディング機構を使ってください。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -849,12 +689,13 @@ kind: DestinationRule
 metadata:
   name: cache-service-optimized
 spec:
-  host: redis-cache
+  host: http-cache
   trafficPolicy:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 4096  # Large ring size to minimize redistribution
+        ringHash:
+          minimumRingSize: 4096  # Large ring size to minimize redistribution
     connectionPool:
       tcp:
         maxConnections: 100
@@ -864,17 +705,17 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 600s
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
 ```
 
-**利用シナリオ：**
+**利用場面：**
 - キャッシュヒット率の最大化
-- 一貫したキャッシュ key のルーティング
+- キャッシュキーに応じた一貫したルーティング
 - シャーディング戦略
 
-### 例 5：Database Connection Pool
+### 例5：データベースの接続プール
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -885,26 +726,23 @@ spec:
   host: postgres-primary
   trafficPolicy:
     loadBalancer:
-      simple: LEAST_REQUEST
+      simple: ROUND_ROBIN
     connectionPool:
       tcp:
         maxConnections: 50  # DB connection limit
         connectTimeout: 5s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
 ```
 
-**利用シナリオ：**
-- Database 接続プール管理
-- 遅い Query の分散
-- 接続制限の適用
+**利用場面：**
+- データベース接続プールの管理
+- 接続先の選択のみ。実行中のSQLクエリは再分散されません。
+- 接続数の上限管理
 
-### 例 6：高トラフィック処理
+### 例6：大量トラフィック処理
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -925,97 +763,63 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 60s
     outlierDetection:
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 20  # Limited ejection at scale
 ```
 
-**利用シナリオ：**
+**利用場面：**
 - イベント収集（Analytics）
 - ログ収集
 - 大規模データ処理
 
-<span id="algorithm-selection-guide"></span>
+## アルゴリズムの選択ガイド {#algorithm-selection-guide}
 
-## アルゴリズム選択ガイド
+### 判断の流れ
 
-### 決定木
-
-```mermaid
-flowchart TD
-    Start[Load Balancing Needed]
-
-    Q1{Session<br/>Persistence<br/>Required?}
-    Q2{Very High<br/>Traffic?}
-    Q3{Variable<br/>Response Times?}
-    Q4{Geographic<br/>Distribution?}
-    Q5{TCP<br/>Proxy?}
-
-    R1[CONSISTENT_HASH<br/>httpCookie or<br/>httpHeaderName]
-    R2[RANDOM]
-    R3[LEAST_REQUEST]
-    R4[LEAST_REQUEST +<br/>Locality Setting]
-    R5[PASSTHROUGH]
-    R6[ROUND_ROBIN<br/>Default]
-
-    Start --> Q1
-    Q1 -->|Yes| R1
-    Q1 -->|No| Q2
-    Q2 -->|Yes| R2
-    Q2 -->|No| Q3
-    Q3 -->|Yes| Q4
-    Q3 -->|No| Q4
-    Q4 -->|Yes| R4
-    Q4 -->|No| Q5
-    Q5 -->|Yes| R5
-    Q5 -->|No| R6
-
-    %% Style definitions
-    classDef question fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class Start start;
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class R1,R2,R3,R4,R5,R6 result;
-```
+HTTPトラフィックではまずLEAST_REQUESTを使います。ソフトな親和性が必要な場合にConsistent Hashを選び、その他のアルゴリズムは代表的な負荷で測定してください。
 
 ### サービス種別ごとの推奨アルゴリズム
 
 | サービス種別 | 推奨アルゴリズム | 理由 |
-|-------------|----------------------|--------|
-| **REST API** | LEAST_REQUEST | レスポンスタイムの一貫性 |
-| **GraphQL API** | LEAST_REQUEST | 複雑な Query の分散 |
-| **gRPC** | LEAST_REQUEST | ストリーミングの負荷分散 |
-| **Web Frontend** | CONSISTENT_HASH（cookie） | セッション維持 |
-| **WebSocket** | CONSISTENT_HASH（header） | 接続の維持 |
+| --- | --- | --- |
+| **REST API** | LEAST_REQUEST | 応答時間の一貫性 |
+| **GraphQL API** | LEAST_REQUEST | 複雑なクエリの分散 |
+| **gRPC** | LEAST_REQUEST | Streaming負荷の分散 |
+| **Web Frontend** | CONSISTENT_HASH（Cookie） | セッション維持 |
+| **WebSocket** | 必要に応じて再接続時の親和性 | 既存接続は同じ上流にとどまる |
 | **Cache Service** | CONSISTENT_HASH（header） | キャッシュヒット率 |
-| **Analytics/Log Collection** | RANDOM | 大規模処理 |
-| **Database** | LEAST_REQUEST | Connection Pool 管理 |
-| **Static Content** | ROUND_ROBIN | シンプルで十分 |
-| **Message Queue** | LEAST_REQUEST | Queue の負荷分散 |
-| **Batch Processing** | LEAST_REQUEST | Job の分散 |
+| **Analytics／ログ収集** | RANDOM | 大規模処理 |
+| **Database** | DB対応クライアント／Pool。必要ならTCPポリシー | primary／replicaの意味を保つ |
+| **Static Content** | ROUND_ROBIN | 単純で十分 |
+| **Message Queue** | Broker／Clientのconsumer割当 | HTTPのアクティブリクエスト数はQueue負荷の指標ではない |
+| **Batch Processing** | LEAST_REQUEST | Jobの分散 |
 
-### トラフィックパターン別の選択
+### トラフィックパターンによる選択
 
 ```yaml
 # 1. Uniform small requests (< 10ms)
 trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN  # Simple and efficient
+```
 
+```yaml
 # 2. Variable requests (10ms ~ 1s+)
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST  # Load adaptive
+```
 
+```yaml
 # 3. Very high traffic (10,000+ RPS)
 trafficPolicy:
   loadBalancer:
     simple: RANDOM  # Minimize overhead
+```
 
+```yaml
 # 4. Session-based (user state)
 trafficPolicy:
   loadBalancer:
@@ -1023,7 +827,9 @@ trafficPolicy:
       httpCookie:
         name: "session-id"
         ttl: 3600s
+```
 
+```yaml
 # 5. Multi-region
 trafficPolicy:
   loadBalancer:
@@ -1032,9 +838,7 @@ trafficPolicy:
       enabled: true
 ```
 
-<span id="best-practices"></span>
-
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
 ### 1. アルゴリズム選択の原則
 
@@ -1050,7 +854,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST  # Load adaptive
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
 ```
 
 **悪い例：**
@@ -1067,9 +872,9 @@ spec:
       simple: ROUND_ROBIN  # Causes load imbalance
 ```
 
-### 2. Connection Pool の必須設定
+### 2. コネクションプールの調整
 
-ロードバランシングでは常に Connection Pool を設定してください。
+需要を測定してから任意のコネクションプール上限を調整してください。上限はProxyごとの値であり、サービス全体の接続数上限ではありません。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1081,7 +886,7 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    connectionPool:  # Required
+    connectionPool:  # Optional tuning
       tcp:
         maxConnections: 100
       http:
@@ -1089,9 +894,9 @@ spec:
         maxRequestsPerConnection: 100
 ```
 
-### 3. Outlier Detection との組み合わせ
+### 3. Outlier Detectionとの組み合わせ
 
-Circuit Breaker と組み合わせて使用し、障害が発生している Pod を除外します。
+障害中のPodを除外するため、Circuit Breakerと組み合わせて使います。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1103,13 +908,13 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Health-based ejection
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 4. Consistent Hash 使用時の注意事項
+### 4. Consistent Hashを使う際の注意
 
 ```yaml
 # Good example: Using session storage
@@ -1150,7 +955,7 @@ spec:
     # Warning: Sessions lost on pod restart
 ```
 
-### 5. マルチリージョン Deployment
+### 5. マルチリージョンデプロイ
 
 ```yaml
 # Good example: Locality + Failover
@@ -1165,56 +970,41 @@ spec:
       simple: LEAST_REQUEST
       localityLbSetting:
         enabled: true
-        distribute:
-        - from: us-west/*
-          to:
-            "us-west/*": 80
-            "us-east/*": 20
         failover:  # Required
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### 6. 監視とメトリクス
 
 ロードバランシングの有効性を監視します。
 
-```yaml
-# Prometheus queries
-# Request distribution per pod
-sum by (destination_workload) (rate(istio_requests_total[5m]))
+```promql
+# Per-pod inbound request distribution (assumes scrape labels retain namespace/pod)
+sum by (namespace, pod) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# Response time per pod
+# Per-pod inbound P95 latency
 histogram_quantile(0.95,
-  sum by (destination_workload, le) (
-    rate(istio_request_duration_milliseconds_bucket[5m])
+  sum by (namespace, pod, le) (
+    rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])
   )
 )
 
-# Active connection count
-sum by (destination_workload) (envoy_cluster_upstream_cx_active)
+# Raw Envoy connection statistics do not have Istio destination_workload labels
+sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 ```
 
 ### 7. 段階的な適用
 
-```yaml
-# Step 1: Default ROUND_ROBIN
-simple: ROUND_ROBIN
+まず現在のLEAST_REQUESTデフォルトから始めます。代表的なトラフィックを測定してから、選択したアルゴリズム、コネクションプール、warmup、outlier detectionを別々に調整してください。例の値は出発点であり、性能のしきい値を保証するものではありません。
 
-# Step 2: LEAST_REQUEST after monitoring
-simple: LEAST_REQUEST
+### 8. ドキュメント
 
-# Step 3: Add Connection Pool
-simple: LEAST_REQUEST
-connectionPool: ...
-
-# Step 4: Add Outlier Detection
-simple: LEAST_REQUEST
-connectionPool: ...
-outlierDetection: ...
-```
-
-### 8. ドキュメント化
+以下のannotation値は例示です。サンプルのレイテンシー／負荷値を実測値に置き換えてください。今回の監査で測定したベンチマーク値ではありません。Redisセッションストレージには、DestinationRule annotationだけでなくアプリケーションとの連携も必要です。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1228,7 +1018,7 @@ metadata:
     # Algorithm selection basis
     algorithm-rationale: |
       - LEAST_REQUEST: Response times vary 10ms-500ms
-      - warmupDurationSecs: New pods need 60s to warm up cache
+      - warmup.duration: New pods need 60s to warm up cache
 
     # Test results
     test-results: |
@@ -1240,13 +1030,13 @@ metadata:
     monitoring: |
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
+spec:
+  host: api-service
 ```
 
-<span id="troubleshooting"></span>
+## トラブルシューティング {#troubleshooting}
 
-## トラブルシューティング
-
-### 不均衡な負荷分散
+### 負荷分散の偏り
 
 **症状：**
 ```bash
@@ -1255,9 +1045,9 @@ kubectl top pods -n production
 
 # Output:
 # NAME                CPU    MEMORY
-# api-pod-1           80%    2Gi
-# api-pod-2           20%    1Gi
-# api-pod-3           15%    1Gi
+# api-pod-1           800m   2048Mi
+# api-pod-2           200m   1024Mi
+# api-pod-3           150m   1024Mi
 ```
 
 **原因と解決策：**
@@ -1275,16 +1065,17 @@ spec:
       simple: LEAST_REQUEST  # Changed
 
 # 2. Add Warmup
-      warmupDurationSecs: 60
+      warmup:
+        duration: 60s
 
 # 3. Add Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### Consistent Hash の不均衡
+### Consistent Hashの偏り
 
 **症状：**
 ```bash
@@ -1308,39 +1099,31 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-user-id"
-        minimumRingSize: 4096  # Increase 2048 -> 4096
+        ringHash:
+          minimumRingSize: 4096  # Increase 2048 -> 4096
 ```
 
-### ローカリティベースのルーティングが機能しない
+### Localityベースのルーティングが機能しない
 
-**確認手順：**
+ワークロードが動作するNode topologyと、Envoyのエンドポイント設定にあるlocalityを確認してください。Kubernetes／EKSでは通常、アプリケーションPodではなくNodeにregion／zoneラベルが設定されます。実際のNode／provisioner設定を修正してください。ルーティングを強制するためにクラウドのregion／zoneラベルを捏造しないでください。
 
 ```bash
-# 1. Check pod locality labels
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.topology\.kubernetes\.io/region}{"\t"}{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}{end}'
-
-# 2. Check Istio Proxy configuration
-istioctl proxy-config endpoints pod-name | grep locality
-
-# 3. Check DestinationRule application
-istioctl proxy-config clusters pod-name --fqdn api-service.default.svc.cluster.local -o json | jq '.[] | .localityLbEndpoints'
-```
-
-**修正：**
-
-```yaml
-# Check and add node labels
-apiVersion: v1
-kind: Node
-metadata:
-  labels:
-    topology.kubernetes.io/region: us-west
-    topology.kubernetes.io/zone: us-west-1
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
+istioctl proxy-config clusters <pod-name> --fqdn api-service.default.svc.cluster.local -o json
 ```
 
 ## 参考資料
 
-- [Istio Load Balancing](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
-- [Envoy Load Balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
+- [Istioロードバランシング](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
+- [Envoyロードバランシング](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
 - [Consistent Hashing](https://www.toptal.com/big-data/consistent-hashing)
-- [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+- [Localityロードバランシング](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+- [主要な参考資料1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主要な参考資料2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)
+- [主要な参考資料3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
+- [主要な参考資料4](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
+- [主要な参考資料5](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [主要な参考資料6](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/)

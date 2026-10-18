@@ -1,7 +1,7 @@
 # 基于 Istio 指标的 KEDA 自动扩缩容
 
 > **验证基线**：KEDA/chart 2.20.2、Istio 1.31.0、Kubernetes 1.32–1.37
-> **最后审阅日期**：October 16, 2026
+> **最后审阅日期**：2026 年 10 月 16 日
 
 本指南介绍扩缩容信号及其局限。它假设工作负载已存在、指标已验证且集群容量充足。针对同一 Deployment 的示例是**互斥方案**：为每个目标选择一个 ScaledObject/HPA 所有者，而不是使用本页中的所有对象。
 
@@ -49,8 +49,8 @@ KEDA 会为扩缩容目标创建/配置 HPA，并公开外部指标。HPA 控制
 
 忽略 HPA 容差、缺失/未就绪的 Pod、限制和行为策略时：
 
-- **AverageValue + 总需求量**：期望副本数 ≈ `ceil(总指标值 / 每个 Pod 的目标值)`。
-- **Value + 工作负载范围的值**：期望副本数 ≈ `ceil(当前副本数 × 观测值 / 目标值)`。
+- **AverageValue + 总需求量**：期望副本数 ≈ `ceil(total metric / target per Pod)`。
+- **Value + 工作负载范围的值**：期望副本数 ≈ `ceil(current replicas × observed value / target value)`。
 
 对于每 Pod 100 RPS、总计 600 RPS 的情况，AverageValue 会要求 6 个副本。若先将查询结果除以 3 个 Pod，就会得到 200，并错误地只要求 2 个副本。`count(up)` 统计的是抓取目标数，也不是安全的副本除数。
 
@@ -668,7 +668,7 @@ spec:
 
 ### 2. 明确在非工作时段缩容到零
 
-对于允许在办公时间以外不可用的工作负载，可在时间窗口内设置大于零的期望副本数，并将 `minReplicaCount` 设为 0：
+对于允许在办公时间以外不可用的工作负载，可在时间窗口内设置大于零的期望副本数，并将 `minReplicaCount: 0` 作为最小副本设置：
 
 ```yaml
 apiVersion: keda.sh/v1alpha1

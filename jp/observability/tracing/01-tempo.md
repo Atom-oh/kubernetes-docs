@@ -1,7 +1,7 @@
 # Grafana Tempo
 
 > **確認済みベースライン**: Tempo 3.0.3; `tempo-distributed` chart 3.6.0 (appVersion 3.0.3)
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 ## はじめに
 
@@ -311,7 +311,7 @@ Tempo の `block_retention: 336h` は、バックグラウンド処理によっ�
 
 ### Terraform による S3 および IRSA のセットアップ
 
-この AWS provider **6.64.0** の例では SSE-S3 と**既存の** cluster OIDC provider を使用します。account、グローバルに一意な bucket 名、および issuer input を置き換えてください。EKS cluster、Kafka、または KMS key は意図的に作成しません。
+この AWS provider **6.69.1** の例では SSE-S3 と**既存の** cluster OIDC provider を使用します。account、グローバルに一意な bucket 名、および issuer input を置き換えてください。EKS cluster、Kafka、または KMS key は意図的に作成しません。
 
 ```hcl
 terraform {
@@ -319,7 +319,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -422,7 +422,7 @@ output "tempo_bucket" { value = aws_s3_bucket.tempo.id }
 
 Helm values では `tempo_role_arn` と `tempo_bucket` を使用します。plan 前に Terraform の format/schema validation を行うことは有用です。適用前に実際の plan と ownership を確認してください。SSE-KMS では、所有する key、互換性のある bucket/Tempo 設定、スコープを限定した `kms:GenerateDataKey`/`kms:Decrypt` permission、および workload を許可する key policy を明示的に指定してください。未定義の `aws_kms_key` reference は完全な構成ではありません。
 
-## Trace-to-Log Correlation（Loki Integration）
+## Trace-to-Log の相関（Loki との統合）
 
 ### Grafana Data Source 構成
 
@@ -486,7 +486,7 @@ provisioning YAML では、`$$` により Grafana runtime macro 用のリテラ�
 
 span-metrics label の `service` と status 値の `STATUS_CODE_ERROR` は、実際に生成された series と一致する必要があります。exemplar は観測された exemplar label 名を使用します（図示した generator 構成では `traceID`）。他の producer は `trace_id` を使用する場合があります。sampling により、これらの metrics が完全な application request count と異なることがあります。
 
-### Application Logging
+### アプリケーションのログ記録
 
 OpenTelemetry API 1.44 を使う Python では、`span.is_recording()` ではなく context validity を確認してください。有効な nonrecording span でも log を相関できます。
 
@@ -527,7 +527,7 @@ if not logger.handlers:
 
 これは UTC timestamp、message formatting、および exception を保持し、すべてゼロの trace を生成する代わりに無効な ID を省略します。handler は application startup 時に 1 回設定してください。非同期境界をまたいで OTel context を伝播し、機密 message/exception は発生元で redact してください。
 
-Java では、[tracing overview の scoped MDC helper (English)](https://www.atomai.click/kubernetes-docs/en/observability/tracing/#linking-logs-via-traceid)を使用します。現在の `SpanContext` を検証し、logging scope に ID を設定して、`finally` で以前の MDC 値を復元します。単に `MDC.put` を書くだけでは、再利用される thread で以前の request の ID が漏洩する可能性があります。Java API contract は確認済みですが、この章では Java application を実行していません。
+Java では、[tracing overview の scoped MDC helper](README.md#linking-logs-via-traceid)を使用します。現在の `SpanContext` を検証し、logging scope に ID を設定して、`finally` で以前の MDC 値を復元します。単に `MDC.put` を書くだけでは、再利用される thread で以前の request の ID が漏洩する可能性があります。Java API contract は確認済みですが、この章では Java application を実行していません。
 
 ## パフォーマンスチューニング
 
@@ -594,7 +594,7 @@ curl --fail http://127.0.0.1:3200/api/traces/4bf92f3577b34da6a3ce929d0e0e4736
 
 最後の ID は、その Deployment に実際に存在している必要があります。read-only ring/status endpoint は component 固有です。使用前に pin した API を確認してください。削除された `/ingester/ring`、`/compactor/ring`、および forced-flush command は一般的な Tempo 3 診断ではありません。
 
-### Monitoring Dashboard
+### モニタリングダッシュボード
 
 Deployment が発行する実際の series を使用し、その target label を追加します。
 

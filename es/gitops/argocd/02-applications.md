@@ -1,7 +1,7 @@
 # Aplicaciones de ArgoCD
 
 > **Referencia de revisión**: Argo CD 3.5.2; actualizado al parche 3.5.4 tras revisar las notas de la versión (no se volvieron a ejecutar los ejemplos)
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenido
 - [Descripción general del CRD Application](#application-crd-overview)
