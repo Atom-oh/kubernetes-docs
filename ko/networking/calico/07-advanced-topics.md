@@ -54,7 +54,7 @@ spec:
 
 ### Host-Local IPAM
 
-Host-local은 노드 로컬 할당 상태와 Kubernetes가 제공하는 노드별 PodCIDR 구성을 사용합니다. operator의 선택 필드는 **`spec.cni.ipam.type: HostLocal`**입니다.
+Host-local은 노드 로컬 할당 상태와 Kubernetes가 제공하는 노드별 PodCIDR 구성을 사용합니다. operator의 선택 필드는 **`spec.cni.ipam.type: HostLocal`입니다**.
 
 ```yaml
 # Installation fragment: preserve other settings through the configuration owner.

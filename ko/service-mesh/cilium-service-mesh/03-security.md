@@ -30,7 +30,7 @@ Cilium 1.20.3은 out-of-band 방식을 여전히 **베타·미완성 기능**으
 
 ### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
 
-Cilium 1.20.3에는 **Ztunnel Transparent Encryption (Beta)**가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
+Cilium 1.20.3에는 **Ztunnel Transparent Encryption** (Beta)가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
 
 ```yaml
 encryption:

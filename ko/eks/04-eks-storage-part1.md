@@ -711,7 +711,7 @@ parameters:
 * **Retain**: PVC가 삭제되어도 PV와 데이터는 유지됩니다. 관리자가 수동으로 정리해야 합니다.
 * **Recycle**: 사용되지 않는 정책으로, 대신 동적 프로비저닝과 스토리지 클래스를 사용하는 것이 좋습니다.
 
-StorageClass 필드는 **`reclaimPolicy`**이며 **`persistentVolumeReclaimPolicy`**는 PV spec의 필드입니다. Class는 새 PV의 초기 정책을 정하며 이를 바꿔도 기존 PV 정책이 자동 변경되지는 않습니다. 클레임 삭제 전에 실제 PV와 백업을 확인하세요:
+StorageClass 필드는 **`reclaimPolicy`이며** **`persistentVolumeReclaimPolicy`는** PV spec의 필드입니다. Class는 새 PV의 초기 정책을 정하며 이를 바꿔도 기존 PV 정책이 자동 변경되지는 않습니다. 클레임 삭제 전에 실제 PV와 백업을 확인하세요:
 
 ```yaml
 apiVersion: storage.k8s.io/v1

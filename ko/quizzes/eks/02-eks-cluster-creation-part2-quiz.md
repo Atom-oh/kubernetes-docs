@@ -523,7 +523,7 @@ sudo journalctl -u nodeadm-config -u nodeadm-run -u kubelet --since '-15 min' --
 
 **정답: B) Pod Security Admission과 필요에 맞는 호환 정책 엔진**
 
-PodSecurityPolicy는 Kubernetes 1.21에서 사용 중단되었고 1.25에서 제거되었습니다. 기본 **Pod Security Admission(PSA)**으로 **Pod Security Standards(PSS)**를 적용하고, 그 이상의 요구사항에는 적절한 정책 엔진을 사용합니다.
+PodSecurityPolicy는 Kubernetes 1.21에서 사용 중단되었고 1.25에서 제거되었습니다. 기본 **Pod Security Admission**(PSA)으로 **Pod Security Standards**(PSS)를 적용하고, 그 이상의 요구사항에는 적절한 정책 엔진을 사용합니다.
 
 **PSA:** Privileged·Baseline·Restricted는 PSS의 세 수준이며 `enforce`·`audit`·`warn`은 별도의 모드입니다. 새 실습 네임스페이스에서 다음 예제는 Baseline을 강제하면서 Restricted 위반을 보고합니다. 정책 버전은 EKS 1.36 예제에 맞춰 고정했으며 실제 클러스터가 지원하는 버전을 선택해야 합니다.
 

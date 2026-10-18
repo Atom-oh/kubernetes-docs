@@ -595,7 +595,7 @@ sum by (service) (rate(http_requests_total[5m]))
 histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))
 ```
 
-Histogram rate를 원하는 식별 label과 **`le`**로 집계한 뒤 quantile을 계산합니다. 이미 계산된 quantile끼리 다시 quantile을 내는 것은 전체 요청의 quantile이 아닙니다.
+Histogram rate를 원하는 식별 label과 **`le`로** 집계한 뒤 quantile을 계산합니다. 이미 계산된 quantile끼리 다시 quantile을 내는 것은 전체 요청의 quantile이 아닙니다.
 
 ### MetricsQL 확장 기능
 

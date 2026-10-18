@@ -543,7 +543,7 @@ spec:
 
 ### 가중치 대상 그룹
 
-아래 Service는 자신의 암시적 대상 그룹에 가중치 90, 기존 `service-canary:8080` 백엔드에 10을 줍니다. 두 Service에는 의도한 준비된 엔드포인트와 호환 대상 설정이 필요하며 어노테이션이 카나리 워크로드를 만들지는 않습니다. 어노테이션 접미사는 리스너 프로토콜과 포트인 **`actions.TCP-80`**입니다.
+아래 Service는 자신의 암시적 대상 그룹에 가중치 90, 기존 `service-canary:8080` 백엔드에 10을 줍니다. 두 Service에는 의도한 준비된 엔드포인트와 호환 대상 설정이 필요하며 어노테이션이 카나리 워크로드를 만들지는 않습니다. 어노테이션 접미사는 리스너 프로토콜과 포트인 **`actions.TCP-80`입니다**.
 
 가중치는 **0~999**의 상대값으로 새 연결에 적용됩니다. 일반적인 가중치 변경은 기존 연결을 유지하지만, **대상 그룹의 가중치를 0으로 설정하면 잠시 후 기존 연결도 닫히고** 새 연결도 중단됩니다. 무중단 드레이닝을 보장한다고 설명하면 안 됩니다. TLS 리스너에는 호환되는 대상 그룹 프로토콜이 필요하며 대상 그룹 고정 세션은 지원하지 않습니다.
 
@@ -939,7 +939,7 @@ spec:
 - **v3.5.0 (2026-08-03):** Gateway API v1.6.0 적합성과 안정 v1 TCPRoute/UDPRoute 지원. LBC Gateway 구성 리소스는 `gateway.k8s.aws/v1`을 사용하며, 여전히 제공되는 v1beta1은 deprecated입니다.
 - **v3.6.0 (2026-10-05):** Gateway API CRD 기준은 v1.6.0으로 그대로이며, 업그레이드 전 최신 AWS 제공 LBC CRD 적용을 권장합니다. 교차 계정 TargetGroupBinding의 파드 AZ 기반 IP 등록(opt-in)과 Ingress `frontend-nlb-status-only` 어노테이션이 추가되었습니다.
 
-현재 v3.6은 QUIC/TCP_QUIC 구성과 ALB JWT 검증을 지원합니다. 서로 다른 기능이며 프로토콜별 제약이 있습니다. JWT 검증은 HTTPS 전용이고 JSON은 `jwksUri`가 아니라 **`jwksEndpoint`**를 사용합니다. 유효한 인증서, 도달 가능하고 신뢰할 수 있는 JWKS 엔드포인트와 검토된 issuer/claim을 갖춘 HTTPS Ingress 어노테이션에 다음을 추가하세요.
+현재 v3.6은 QUIC/TCP_QUIC 구성과 ALB JWT 검증을 지원합니다. 서로 다른 기능이며 프로토콜별 제약이 있습니다. JWT 검증은 HTTPS 전용이고 JSON은 `jwksUri`가 아니라 **`jwksEndpoint`를** 사용합니다. 유효한 인증서, 도달 가능하고 신뢰할 수 있는 JWKS 엔드포인트와 검토된 issuer/claim을 갖춘 HTTPS Ingress 어노테이션에 다음을 추가하세요.
 
 ```yaml
 alb.ingress.kubernetes.io/jwt-validation: >-

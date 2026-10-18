@@ -59,7 +59,7 @@ BUM은 broadcast, unknown unicast, multicast를 뜻합니다. Type-3 경로와 �
 
 ## 3. 재현 가능한 upstream 실습 선택
 
-[netlab 홈페이지](https://netlab.tools/)에서 연결한 예제 저장소의 revision **`7c4fa0dac160d3cc2eac41e11f20b74d083bb896`**을 사용합니다.
+[netlab 홈페이지](https://netlab.tools/)에서 연결한 예제 저장소의 revision **`7c4fa0dac160d3cc2eac41e11f20b74d083bb896`을** 사용합니다.
 
 | 단계 | 정확한 upstream 경로 | 의도한 기준 동작 |
 |---|---|---|

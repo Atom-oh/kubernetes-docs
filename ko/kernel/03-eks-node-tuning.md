@@ -121,7 +121,7 @@ Linux 6.6에서 CFS의 태스크 선택 로직이 **EEVDF**(Earliest Eligible Vi
 | `sched_wakeup_granularity_ns` | **제거됨** (동일) |
 | **`/sys/kernel/debug/sched/base_slice_ns`** | **현재의 대응 튜너블.** 내부 변수는 `sysctl_sched_base_slice`이고 debugfs에 `base_slice_ns`로 노출됨 |
 
-즉 CFS 시절의 지연·선점 휴리스틱 튜너블은 사라지고, **기본 타임슬라이스 하나(`base_slice_ns`)**로 정리되었습니다. 이름에 `sched_` 접두어가 없다는 점에 주의하십시오. 경로는 `/sys/kernel/debug/sched/base_slice_ns`입니다.
+즉 CFS 시절의 지연·선점 휴리스틱 튜너블은 사라지고, **기본 타임슬라이스 하나(`base_slice_ns`)로** 정리되었습니다. 이름에 `sched_` 접두어가 없다는 점에 주의하십시오. 경로는 `/sys/kernel/debug/sched/base_slice_ns`입니다.
 
 EEVDF는 이와 별개로 `sched_setattr()` 시스템 콜로 **태스크가 자기 타임슬라이스를 직접 요청**할 수 있게 했습니다. 지연 민감 애플리케이션에는 전역 튜너블을 건드리는 것보다 이 경로가 맞습니다.
 
@@ -293,7 +293,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 - 선택한 AMI와 실행 중 kernel을 확인합니다. 기본 AMI 계열은 바뀔 수 있지만 고정 AMI ID가 노드 교체 시 자동 변경되는 것은 아닙니다.
 - CPU throttling의 근본 원인은 대개 **애플리케이션이 인식하는 CPU 수와 할당량의 불일치**입니다. `GOMAXPROCS`/`ActiveProcessorCount`부터 맞추십시오.
 - 노드 안정성에는 커널 튜닝보다 **kubelet 예약과 축출 임계**가 효과적입니다. 축출이 커널 OOM보다 낫습니다.
-- 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`**입니다. 모두 직접적인 증거 카운터가 있습니다.
+- 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`입니다**. 모두 직접적인 증거 카운터가 있습니다.
 - TCP sysctl 범위와 socket별 autotuning override는 다르며 측정 근거로만 조정합니다.
 - **IPVS 모드를 쓰고 있으면 이전 계획이 필요합니다** (1.35 deprecated; 1.40 기본 비활성화·1.43 제거 계획). Rollout 전에 아래 KEP-5495 링크에서 최신 일정을 확인합니다.
 

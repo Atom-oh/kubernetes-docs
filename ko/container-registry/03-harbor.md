@@ -682,7 +682,7 @@ curl --fail-with-body --user "$HARBOR_USER"   'https://harbor.example.com/api/v2
 
 ### Tag Retention Policy
 
-프로젝트의 Policy → Tag Retention에서 **보존할** 조건을 설정합니다. 예를 들어 최근 push 10개와 최근 30일 조건을 추가하면 **OR(합집합)**으로 보존하므로 10개보다 많이 남을 수 있습니다. 규칙에 맞지 않는 태그·아티팩트와 서명 관계, 실행 중인 digest·롤백 버전에 미치는 영향을 Dry Run으로 확인합니다.
+프로젝트의 Policy → Tag Retention에서 **보존할** 조건을 설정합니다. 예를 들어 최근 push 10개와 최근 30일 조건을 추가하면 **OR**(합집합)으로 보존하므로 10개보다 많이 남을 수 있습니다. 규칙에 맞지 않는 태그·아티팩트와 서명 관계, 실행 중인 digest·롤백 버전에 미치는 영향을 Dry Run으로 확인합니다.
 
 API 생성 경로는 `/api/v2.0/retentions`이며 프로젝트별 가상의 `/tag-retention` 경로가 아닙니다. 운영 정책을 임의의 프로젝트 ID로 만들지 말고 UI에서 구성한 정책을 조회·시험할 수 있습니다.
 

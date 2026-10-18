@@ -306,7 +306,7 @@ Masquerading은 클러스터를 떠나는 Pod 트래픽의 출발지를 노드 I
 | 부가 기능 | `enableMasqueradeRouteSource` | ip-masq-agent, `enableRemoteNodeMasquerade` |
 | 포트 범위 | 커널 | NodePort 최댓값+1 .. 65535(`bpf/lib/nat.h`), NAT table `bpf.natMax` 기본 524288 |
 
-기본값: `enableIPv4Masquerade: true`이지만 `eni.enabled=true`이면 **false**입니다(1.18부터). `enableIPv6Masquerade: true`이며 **[1.21 pre-release]**에서는 "ENI IPAM이 아니면 true"가 됩니다. `egressMasqueradeInterfaces`는 iptables masquerade에만 영향을 주므로 masquerade가 꺼진 ENI 프로필에서는 아무 효과가 없습니다.
+기본값: `enableIPv4Masquerade: true`이지만 `eni.enabled=true`이면 **false**입니다(1.18부터). `enableIPv6Masquerade: true`이며 **[1.21 pre-release]에서는** "ENI IPAM이 아니면 true"가 됩니다. `egressMasqueradeInterfaces`는 iptables masquerade에만 영향을 주므로 masquerade가 꺼진 ENI 프로필에서는 아무 효과가 없습니다.
 
 ### BPF masquerade 결정 순서
 

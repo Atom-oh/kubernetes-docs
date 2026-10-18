@@ -60,7 +60,7 @@ Landing Zone 3.1 이상에서 설정/API로 auto-enrollment를 먼저 활성화�
 - Enrollment는 최종적 일관성(eventual consistency) 모델이라 이동하는 Account 수에 따라 수 분에서 수 시간이 걸릴 수 있습니다.
 - **auto-enrollment는 Service Catalog provisioned product를 생성·수정·종료하지 않습니다.** Account Factory로 만든 Account를 unenroll하면, 그 provisioned product가 management Account에 고아 리소스로 남습니다.
 
-내부 파이프라인이 "Account 이동 → 자동 enrollment → workload bootstrap" 순서로 자동화를 구성한다면, 시작 조건은 "이동 이벤트"가 아니라 **"baseline 적용 완료 확인"**으로 잡아야 합니다.
+내부 파이프라인이 "Account 이동 → 자동 enrollment → workload bootstrap" 순서로 자동화를 구성한다면, 시작 조건은 "이동 이벤트"가 아니라 "**baseline 적용 완료 확인**"으로 잡아야 합니다.
 
 ## 3. OU와 조직 Control 정책 유형별 quota
 

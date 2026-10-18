@@ -24,7 +24,7 @@ Spot 용량은 회수될 수 있으므로 상관된 용량 손실에 대비해�
 
 PodDisruptionBudget은 자발적인 Eviction API 작업을 제한합니다. EC2 중단·node 장애·직접 Pod 삭제·모든 controller update를 막지는 않습니다. 아래 PDB는 Rollouts가 생성·관리하는 리소스가 아니며 앱 운영자가 정의하고 Kubernetes가 status를 계산합니다.
 
-건강한 Pod 9개에 **정수 `minAvailable: 6`**이라면 설명용 자발적 disruption 여유는 3개입니다. 건강한 Pod가 6개로 줄면 여유는 0개입니다. “33% minimum이 6개를 요구”하는 계산이 아닙니다. Expected Pod 9개에서 `minAvailable: "33%"`는 올림하여 3개이며, percentage `maxUnavailable`는 의미와 controller scale 조건이 다릅니다.
+건강한 Pod 9개에 **정수 `minAvailable: 6`이라면** 설명용 자발적 disruption 여유는 3개입니다. 건강한 Pod가 6개로 줄면 여유는 0개입니다. “33% minimum이 6개를 요구”하는 계산이 아닙니다. Expected Pod 9개에서 `minAvailable: "33%"`는 올림하여 3개이며, percentage `maxUnavailable`는 의미와 controller scale 조건이 다릅니다.
 
 이를 zone마다 `minAvailable: 1`로 나누면 보호 수준도 바뀝니다. 한 zone이 사라지면 나머지 두 budget은 전체 6개를 유지하는 대신 zone마다 건강한 Pod 1개까지 자발적 eviction을 허용할 수 있습니다. 독립 운영에 유용할 수 있지만 다른 가용성·용량 정책입니다. Stable과 canary를 함께 선택하는 budget은 각 weighted destination의 용량을 따로 보장하지도 않습니다.
 

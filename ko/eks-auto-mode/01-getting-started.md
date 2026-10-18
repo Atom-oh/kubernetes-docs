@@ -238,7 +238,7 @@ terraform apply "$WORK_DIR/tfplan"
 
 승인된 계정과 `ap-northeast-2`를 대상으로 하는 CDK 애플리케이션에서 사용합니다. CloudFormation 파라미터 `ClusterName`, `ClusterRoleArn`, `NodeRoleArn`, `OperatorRoleArn`, `ApiClientCidr`를 지정하세요. Operator 파라미터에는 kubectl에 사용할 자격 증명의 검토된 IAM 역할 ARN을 입력합니다. STS assumed-role 세션 ARN을 사용하지 않습니다.
 
-실제 **L1 `eks.CfnCluster`**를 사용합니다. 기존 `eks.Cluster` L2의 `defaultChild`를 `CfnCluster`로 형 변환해도 해당 custom resource가 `AWS::EKS::Cluster`로 바뀌거나 Auto Mode가 올바르게 설정되는 것은 아닙니다. 여기서는 세 Auto Mode 기능, API 접근과 노드 역할을 명시합니다. Access entry로 검토된 실습 운영자에게 Kubernetes 관리자 접근을 부여하며, CloudFormation 실행 주체의 bootstrap 접근은 비활성화합니다. 프로덕션에서는 이 실습용 클러스터 전체 권한을 적절한 접근 범위로 대체하세요. 참조한 IAM 역할은 이 스택의 수명 주기에 포함되지 않습니다.
+실제 **L1 `eks.CfnCluster`를** 사용합니다. 기존 `eks.Cluster` L2의 `defaultChild`를 `CfnCluster`로 형 변환해도 해당 custom resource가 `AWS::EKS::Cluster`로 바뀌거나 Auto Mode가 올바르게 설정되는 것은 아닙니다. 여기서는 세 Auto Mode 기능, API 접근과 노드 역할을 명시합니다. Access entry로 검토된 실습 운영자에게 Kubernetes 관리자 접근을 부여하며, CloudFormation 실행 주체의 bootstrap 접근은 비활성화합니다. 프로덕션에서는 이 실습용 클러스터 전체 권한을 적절한 접근 범위로 대체하세요. 참조한 IAM 역할은 이 스택의 수명 주기에 포함되지 않습니다.
 
 ```typescript
 import * as cdk from 'aws-cdk-lib/core';

@@ -71,7 +71,7 @@ Linux EC2 노드 (일반 secondary-IPv4 예제)
 | c5.4xlarge | 8 | 30 | 234 |
 | m5.8xlarge | 8 | 30 | 234 |
 
-과거 공식은 **`ENI 수 × (ENI당 IPv4 슬롯 − 1) + 2`**입니다. `+2`는 해당 bootstrap 계산의 host-network 시스템 Pod 2개를 반영하므로 m5.large는 `3 × 9 + 2 = 29`입니다. 현재 모든 배포에 host-network Pod가 정확히 2개라는 뜻은 아닙니다.
+과거 공식은 **`ENI 수 × (ENI당 IPv4 슬롯 − 1) + 2`입니다**. `+2`는 해당 bootstrap 계산의 host-network 시스템 Pod 2개를 반영하므로 m5.large는 `3 × 9 + 2 = 29`입니다. 현재 모든 배포에 host-network Pod가 정확히 2개라는 뜻은 아닙니다.
 
 이 값은 과거 bootstrap 값이며 현재 모든 환경의 Pod 밀도 권장값이 아닙니다. Prefix delegation, custom networking, branch 인터페이스, 다중 네트워크 카드, CPU·메모리, kubelet `maxPods`를 함께 고려합니다. EKS 관리형 노드 그룹은 vCPU 30개 미만에서 `maxPods` 110, 그 외에는 250을 상한으로 적용합니다. 실제 노드의 allocatable 용량을 확인합니다.
 

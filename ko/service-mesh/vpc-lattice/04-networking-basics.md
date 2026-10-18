@@ -20,7 +20,7 @@ link-local 주소는 **하나의 링크(같은 브로드캐스트 도메인) 안
 | `169.254.0.0/16` | IPv4 | link-local | RFC 3927 |
 | `fe80::/10` | IPv6 | link-local | RFC 4291 |
 
-이 대역이 존재하는 이유는 **"DHCP 서버가 없어도, 라우팅 설정이 없어도, 인접한 것과는 통신할 수 있어야 한다"**는 요구입니다. 그래서 이 주소는 전역적으로 유일할 필요가 없고, 각 링크마다 같은 주소가 재사용될 수 있습니다.
+이 대역이 존재하는 이유는 "**DHCP 서버가 없어도, 라우팅 설정이 없어도, 인접한 것과는 통신할 수 있어야 한다**"는 요구입니다. 그래서 이 주소는 전역적으로 유일할 필요가 없고, 각 링크마다 같은 주소가 재사용될 수 있습니다.
 
 ### AWS에서 이미 쓰이고 있는 곳
 
@@ -211,7 +211,7 @@ VPC 내부 통신이므로 외부 관찰자를 걱정할 상황은 아니지만,
 
 ### ECH: SNI 평문 노출에 대한 해법
 
-**Encrypted Client Hello (ECH)**는 `ClientHello` 자체를 암호화해 SNI 노출을 막는 표준입니다. 서버의 공개키를 DNS로 미리 배포해 그 키로 `ClientHello`의 민감한 부분을 암호화하는 방식으로, 앞의 닭-달걀 문제를 **DNS를 이용해 우회**합니다.
+**Encrypted Client Hello** (ECH)는 `ClientHello` 자체를 암호화해 SNI 노출을 막는 표준입니다. 서버의 공개키를 DNS로 미리 배포해 그 키로 `ClientHello`의 민감한 부분을 암호화하는 방식으로, 앞의 닭-달걀 문제를 **DNS를 이용해 우회**합니다.
 
 ::: note TLS passthrough 요구 사항
 AWS는 TLS listener의 ECH·ESNI 미지원, custom domain 필요, SNI 기반 서비스 선택을 명시합니다. 장시간 연결 프로토콜을 옮기기 전에 idle/lifetime 제한과 target TCP health check를 확인합니다.

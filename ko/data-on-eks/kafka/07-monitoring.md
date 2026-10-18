@@ -13,7 +13,7 @@
 | Prometheus / Prometheus Operator | 대상 탐색·수집, 규칙 평가와 Alertmanager 전달 |
 | KEDA Kafka scaler | Kafka API를 직접 조회해 스케일링; lag exporter의 Prometheus endpoint 불필요 |
 
-이 장은 **`jmxPrometheusExporter`**를 선택합니다. MBean 변환 규칙과 Prometheus의
+이 장은 **`jmxPrometheusExporter`를** 선택합니다. MBean 변환 규칙과 Prometheus의
 대상 relabeling은 다른 단계입니다. `strimziMetricsReporter`도 지원되므로 JMX가
 유일한 방법이라는 설명은 틀립니다. exporter 종류를 바꾸면 이름과 대시보드도 검토합니다.
 
@@ -57,7 +57,7 @@ data:
       type: COUNTER
 ```
 
-다음은 **`metrics.patch.yaml`**입니다. 기존 Kafka에 적용하는 merge patch이며
+다음은 **`metrics.patch.yaml`입니다**. 기존 Kafka에 적용하는 merge patch이며
 완전한 생성·apply용 리소스가 아닙니다. 기존 listener·인증·스토리지 등의 설정을
 유지합니다.
 

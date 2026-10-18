@@ -393,7 +393,7 @@ Cluster Mesh는 여러 Kubernetes 클러스터의 control plane을 연결해 ide
 구성 요소(v1.20.2 `intro.rst`, `values.yaml`):
 
 - **clustermesh-apiserver**는 컨테이너 세 개를 가진 Deployment입니다. `etcd`는 영속 스토리지 없는 단일 내장 인스턴스로, 시작 시 Kubernetes API 서버에서 상태를 다시 구성하며 mTLS로 노출됩니다. `apiserver`는 로컬 Cilium/Kubernetes 상태(node, endpoint, identity, service)를 그 etcd로 동기화합니다(`etcdQPS: 50`). `kvstoremesh`는 각 원격 클러스터의 상태를 로컬 etcd 캐시로 가져옵니다(`etcdQPS: 100`).
-- **KVStoreMesh**: agent는 원격 상태를 로컬 캐시에서만 읽으므로 agent마다 모든 원격 etcd에 연결을 열지 않습니다. 1.16부터 기본 활성이고, `clustermesh.apiserver.kvstoremesh.enabled` 값은 1.18에서 deprecated되었으며, **[1.21 pre-release]**에서는 무조건 활성이고 값이 제거됩니다.
+- **KVStoreMesh**: agent는 원격 상태를 로컬 캐시에서만 읽으므로 agent마다 모든 원격 etcd에 연결을 열지 않습니다. 1.16부터 기본 활성이고, `clustermesh.apiserver.kvstoremesh.enabled` 값은 1.18에서 deprecated되었으며, **[1.21 pre-release]에서는** 무조건 활성이고 값이 제거됩니다.
 - **Replica**: `clustermesh.apiserver.replicas` 기본값은 1입니다. replica마다 자체 etcd 클러스터를 실행하며 원격 client는 Service를 통해 하나를 고릅니다. `service.enableSessionAffinity`(`HAOnly` 기본, `Always`, `Never`)는 재연결 후 전체 resync를 줄입니다. `podDisruptionBudget`은 기본 비활성입니다.
 - **KVStore 모드**: Cilium이 이미 외부 etcd를 identity/상태 저장소로 쓴다면 Cluster Mesh가 이를 재사용할 수 있습니다(`clustermesh.apiserver.kvstoremesh.kvstoreMode: external`). `external`은 `crd` identity 할당 모드와 함께 쓸 수 없습니다.
 - **단일 trust domain**(1.20.2 `intro.rst`): 침해된 클러스터가 다른 클러스터를 오염시킬 수 있으므로 서로 신뢰하고 보안 수준이 동등한 클러스터만 연결하세요.

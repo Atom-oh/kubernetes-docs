@@ -533,7 +533,7 @@ exclude 설정·backend pipeline filter가 모두 수집에 영향을 줍니다.
 
 ### Pipeline 요청 구조
 
-실제 API field는 **`match_rules`와 `support_rules`**입니다.
+실제 API field는 **`match_rules`와 `support_rules`입니다**.
 기존 camelCase field는 Logs API model과 맞지 않습니다. Sample message가 기대하는
 line format을 정의합니다. 실제 application format/timezone과 unmatched/multiline/
 error 사례를 시험합니다. 요청 model이 유효해도 Datadog tenant에서 Grok parsing이나

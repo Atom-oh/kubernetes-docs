@@ -786,7 +786,7 @@ Frontend → backend는 애플리케이션에 도달하고 frontend → database
 
 ### 문제 7: JWT + mTLS 이중 인증
 
-Istio에서 \*\*최종 사용자 인증(JWT)\*\*과 \*\*서비스 간 인증(mTLS)\*\*을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
+Istio에서 **최종 사용자 인증**(JWT)과 **서비스 간 인증**(mTLS)을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
 
 <details>
 
@@ -1151,7 +1151,7 @@ istioctl x authz check <egress-pod>.istio-system
 
 ### 문제 9: 보안 감사 및 로깅
 
-Istio에서 보안 관련 이벤트를 \*\*감사(Audit)\*\*하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
+Istio에서 보안 관련 이벤트를 **감사**(Audit)하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
 
 <details>
 

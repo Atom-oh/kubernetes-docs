@@ -85,7 +85,7 @@ Resources:
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-새 노드 그룹이 필요할 때 `eksctl create nodegroup`은 **`--subnet-ids`**를 사용하며 이전 `--vpc-private-subnets`는 이 명령의 올바른 플래그가 아닙니다. 아래 명령은 프라이빗 API·서비스 경로가 준비된 후 과금되는 관리형 노드를 생성합니다. eksctl이 의도한 소유자이고 기존 `private-ng`가 없을 때만 사용합니다. 인스턴스 크기는 용량 권장값이 아닌 예시입니다.
+새 노드 그룹이 필요할 때 `eksctl create nodegroup`은 **`--subnet-ids`를** 사용하며 이전 `--vpc-private-subnets`는 이 명령의 올바른 플래그가 아닙니다. 아래 명령은 프라이빗 API·서비스 경로가 준비된 후 과금되는 관리형 노드를 생성합니다. eksctl이 의도한 소유자이고 기존 `private-ng`가 없을 때만 사용합니다. 인스턴스 크기는 용량 권장값이 아닌 예시입니다.
 ```bash
 set -euo pipefail
 : "${CLUSTER_NAME:?Set the existing cluster name}"

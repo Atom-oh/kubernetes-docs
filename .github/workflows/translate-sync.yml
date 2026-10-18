@@ -11,6 +11,7 @@ on:
       - 'scripts/sync-nav.py'
       - 'scripts/bedrock-translation.py'
       - 'scripts/validate-translation.py'
+      - 'scripts/repair-markdown-emphasis.py'
       - 'scripts/validate-gitbook-coverage.mjs'
       - 'scripts/review-translation-batch.mjs'
       - 'scripts/requirements-translation.txt'

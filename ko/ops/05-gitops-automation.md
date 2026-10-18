@@ -570,7 +570,7 @@ image:
 
 실제 앱 차트는 위 `image.repository`, `tag`, `digest`를 컨테이너 image에 사용해야 합니다. values에 digest key만 추가한다고 기존 차트가 이를 자동 사용하지는 않습니다. 생성된 manifest의 image URI가 승인 digest를 가리키는지 확인합니다. Setters의 경로와 policy marker, GitRepository 이름이 서로 맞아야 합니다.
 
-현재 ImageUpdateAutomation의 commit template은 **`.Changed`**를 사용합니다. 제거된 `.Updated`로 바꾸지 않습니다. Automation은 전용 `flux/image-updates` 브랜치에 push하며 main으로의 PR 생성·승인은 별도 절차입니다. Git 쓰기 권한과 branch protection을 함께 구성합니다. 새 태그 선택은 취약점·서명 검증을 대신하지 않습니다.
+현재 ImageUpdateAutomation의 commit template은 **`.Changed`를** 사용합니다. 제거된 `.Updated`로 바꾸지 않습니다. Automation은 전용 `flux/image-updates` 브랜치에 push하며 main으로의 PR 생성·승인은 별도 절차입니다. Git 쓰기 권한과 branch protection을 함께 구성합니다. 새 태그 선택은 취약점·서명 검증을 대신하지 않습니다.
 
 ### Source·Helm·알림의 주의점
 

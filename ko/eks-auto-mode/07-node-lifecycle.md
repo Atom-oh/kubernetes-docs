@@ -13,9 +13,9 @@ Expiration, 관리형 이미지 갱신과 애플리케이션 복구는 노드 �
 
 | 개념 | Auto Mode 동작 |
 |------|----------------|
-| 기본 expiration | AWS 문서상 **336h(14일)**이며 7일·21일이 아님 |
+| 기본 expiration | AWS 문서상 **336h**(14일)이며 7일·21일이 아님 |
 | Termination grace | NodePool에서 생략하면 Auto Mode가 **NodeClaim에 24h**를 기본 적용; pool에 없더라도 claim 확인 |
-| 관리형 인스턴스 최대 수명 | AWS가 **21일(504h)**을 적용; 그때까지 노드 가용성을 보장한다는 뜻은 아님 |
+| 관리형 인스턴스 최대 수명 | AWS가 **21일**(504h)을 적용; 그때까지 노드 가용성을 보장한다는 뜻은 아님 |
 
 Upstream Karpenter의 기본 720h를 Auto Mode 기본값으로 대신 사용하지 마세요. 큰 duration이나 upstream `Never` 문법이 Auto Mode 관리형 인스턴스의 무기한 보존을 제공하지는 않습니다. 504h에 긴 drain을 더해 AWS 최대 수명을 연장할 수 있다고 생각해서도 안 됩니다.
 

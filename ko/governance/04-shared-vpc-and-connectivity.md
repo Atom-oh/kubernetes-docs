@@ -111,7 +111,7 @@ AWS 관점에서 중앙 inspection이 무조건 필수인 조건은 없습니다
 
 Route 53 Profile에는 Private Hosted Zone, Resolver rule(forwarding/system), DNS Firewall rule group, **interface VPC endpoint**, VPC Resolver query logging config를 연결할 수 있습니다. VPC에는 Profile을 1개만 연결할 수 있습니다.
 
-**가장 오해하기 쉬운 부분은 우선순위 규칙입니다.** "local VPC가 항상 우선"이 아니라, **"더 구체적인(specific) 이름이 우선"**입니다.
+**가장 오해하기 쉬운 부분은 우선순위 규칙입니다.** "local VPC가 항상 우선"이 아니라, "**더 구체적인(specific) 이름이 우선**"입니다.
 
 | DNS query | Profile rule | VPC local rule | 적용되는 rule |
 |---|---|---|---|

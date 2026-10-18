@@ -78,7 +78,7 @@ print(model.model_id, model.status)  # PENDING
 
 ## GenAI와 LLM 관찰성: 트레이싱(Tracing)
 
-MLflow Tracing은 **2.14.0(2024-06-17)**에 이미 도입됐습니다. 3.x에서 모델·평가·GenAI UI 연계를 확장했으며, 3.16.0에는 span link와 새 trace UI가 추가됐습니다. “3부터 처음 tracing이 가능하다”는 설명은 정확하지 않습니다.
+MLflow Tracing은 **2.14.0**(2024-06-17)에 이미 도입됐습니다. 3.x에서 모델·평가·GenAI UI 연계를 확장했으며, 3.16.0에는 span link와 새 trace UI가 추가됐습니다. “3부터 처음 tracing이 가능하다”는 설명은 정확하지 않습니다.
 
 Trace는 요청의 retrieval·tool·LLM 호출 같은 작업을 span으로 표현합니다. parent/child 구조와 span link를 구분합니다. 토큰 수집은 integration과 provider 응답에 의존하며, 검색·도구 span에 항상 LLM 토큰/비용이 있는 것은 아닙니다. 비용 추정은 모델 식별·사용량·가격 정보가 있어야 하며 실제 청구 총액과 동일하지 않습니다.
 

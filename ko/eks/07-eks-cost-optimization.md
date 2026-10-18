@@ -250,7 +250,7 @@ EC2 Instance Savings Plans는 특정 리전의 인스턴스 패밀리에 대해 
 
 #### 예약 인스턴스
 
-AWS가 현재 안내하는 RI 할인은 최대 **72%**입니다. Standard/Convertible RI의 변경·교환 규칙과 Regional/Zonal 범위는 다릅니다. Zonal RI는 해당 AZ의 용량 예약을 포함하지만 Regional RI는 포함하지 않습니다. RI는 일치하는 사용량에 적용되는 청구 혜택이며 Kubernetes 스케줄러가 아니고 최고 할인을 보장하지 않습니다.
+AWS가 현재 안내하는 RI 할인은 최대 **72**%입니다. Standard/Convertible RI의 변경·교환 규칙과 Regional/Zonal 범위는 다릅니다. Zonal RI는 해당 AZ의 용량 예약을 포함하지만 Regional RI는 포함하지 않습니다. RI는 일치하는 사용량에 적용되는 청구 혜택이며 Kubernetes 스케줄러가 아니고 최고 할인을 보장하지 않습니다.
 
 Savings Plans는 1년 또는 3년 동안 시간당 적격 지출을 약정하고, RI는 적격 인스턴스 사용을 약정합니다. 적정 크기 조정 후 안정적인 기준 사용량에 맞춰 약정하고 미사용 약정 위험을 검토합니다. Spot 사용에 추가 할인을 중첩하지 않으며, 광고된 최대 할인율은 이 클러스터의 실측 절감률이 아닙니다.
 

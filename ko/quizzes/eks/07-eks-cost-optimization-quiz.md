@@ -2063,7 +2063,7 @@ Kubernetes 레이블, AWS 리소스 태그, 활성화한 청구 태그는 서로
 
 **할당 비용률 추정 대시보드**
 
-이 예시는 한 클러스터 Prometheus의 순간 **CPU+메모리 할당 비용률 추정치(USD/hour)**이며 청구서나 namespace 전체 비용이 아닙니다. 입력은 OpenCost 할당/가격 메트릭(예시 `job="opencost"`)과 kube-state-metrics의 Pod 레이블(`job="kube-state-metrics"`)입니다. 실제 job 레이블과 CPU·메모리·가격 데이터 수집 범위를 확인합니다. 적절한 ServiceMonitor honor-label 설정으로 exporter의 워크로드 namespace 레이블을 유지하세요. 공유 백엔드에서는 모든 집계/join에 일치하는 cluster 식별자가 필요합니다.
+이 예시는 한 클러스터 Prometheus의 순간 **CPU+메모리 할당 비용률 추정치**(USD/hour)이며 청구서나 namespace 전체 비용이 아닙니다. 입력은 OpenCost 할당/가격 메트릭(예시 `job="opencost"`)과 kube-state-metrics의 Pod 레이블(`job="kube-state-metrics"`)입니다. 실제 job 레이블과 CPU·메모리·가격 데이터 수집 범위를 확인합니다. 적절한 ServiceMonitor honor-label 설정으로 exporter의 워크로드 namespace 레이블을 유지하세요. 공유 백엔드에서는 모든 집계/join에 일치하는 cluster 식별자가 필요합니다.
 
 첫 values fragment는 소유한 kube-prometheus-stack 릴리스에 병합합니다. team 레이블 값은 제한하고 Pod template에 실제로 넣어야 하며 namespace 레이블만으로 생성되지 않습니다. team 누락은 `unassigned`로 집계합니다. 동일 수집본은 중복 제거하지만 상충하는 가격/소유권 소스는 별도로 해결해야 합니다. GPU·스토리지·네트워크·컨트롤 플레인·유휴/공유 할당·할인·크레딧·세금은 이 두 구성 요소에 포함되지 않습니다. 누락은 비용 0이 아니며 시간당 비용률은 월별 금액이 아닙니다.
 

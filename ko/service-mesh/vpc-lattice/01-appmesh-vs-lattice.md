@@ -103,8 +103,8 @@ graph TB
 **VirtualNode 행이 문제입니다.** App Mesh의 VirtualNode는 세 가지를 동시에 표현했습니다. 이 워크로드가 누구인지(신원, backend TLS 설정 포함), 어디로 나가는지(backends), 어디서 받는지(listeners, health check, connection pool, outlier detection). Lattice에서 이 셋은 서로 다른 곳으로 흩어집니다.
 
 - **"어디서 받는지"의 일부**(대상 집합, health check)만 Target Group으로 갑니다
-- **"어디로 나가는지"**는 리소스가 아니라 **auth policy와 IAM 권한**의 문제가 됩니다
-- **"누구인지"**는 SVID가 아니라 **IAM Role**이 됩니다 ([05번 문서](./05-spiffe-to-iam.md))
+- "**어디로 나가는지**"는 리소스가 아니라 **auth policy와 IAM 권한**의 문제가 됩니다
+- "**누구인지**"는 SVID가 아니라 **IAM Role**이 됩니다 ([05번 문서](./05-spiffe-to-iam.md))
 - **connection pool과 outlier detection**은 **대응되는 리소스가 없습니다**
 
 즉 매핑표에서 오른쪽 칸이 채워져 있어도, 왼쪽 리소스가 갖고 있던 속성 전부가 옮겨가는 것은 아닙니다. **표는 리소스 이름의 대응이고, 기능의 대응이 아닙니다.**

@@ -259,7 +259,7 @@ jq -e '[.Reservations[].Instances[]] |
   "$SPOT_RESULT_DIR/instance-before.json"
 ```
 
-`caller.json`, `cluster.json`의 계정·리전·클러스터가 지정한 테스트 환경과 일치하는지, 대상 노드가 실험 전용인지 확인한 다음 템플릿을 작성합니다. 다음 JSON을 `$SPOT_RESULT_DIR/fis-template.example.json`에 저장합니다. 실행 전 아래 명령이 예시 ARN을 검증한 입력값으로 교체합니다. **명시적 ARN 1개와 COUNT(1)**을 유지합니다.
+`caller.json`, `cluster.json`의 계정·리전·클러스터가 지정한 테스트 환경과 일치하는지, 대상 노드가 실험 전용인지 확인한 다음 템플릿을 작성합니다. 다음 JSON을 `$SPOT_RESULT_DIR/fis-template.example.json`에 저장합니다. 실행 전 아래 명령이 예시 ARN을 검증한 입력값으로 교체합니다. **명시적 ARN 1개와 COUNT**(1)을 유지합니다.
 
 ```json
 {
@@ -476,7 +476,7 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 
 수동 On-Demand 전환은 **47.05초**에 rollout을 완료했고, 전환 대상 Pod의 실제 노드 label도 On-Demand로 확인했습니다. EC2 용량 부족 응답은 주입하지 않았으므로 **자동 폴백은 미검증**입니다.
 
-2026-09-12 14:08:41 UTC 가격 조회에서 `c6g.large` Linux의 On-Demand 공개 단가는 **$0.077/시간**, 해당 AZ의 Spot 단가는 **$0.0248/시간**이었습니다. 단가 차이는 **67.79%**이지만, 이는 실제 청구나 서비스 절감률이 아닙니다. EBS·EKS·FIS·관측성·약정 할인·재시도·대체 용량의 비용과 동일한 가용성 조건을 함께 비교해야 합니다.
+2026-09-12 14:08:41 UTC 가격 조회에서 `c6g.large` Linux의 On-Demand 공개 단가는 **$0.077/시간**, 해당 AZ의 Spot 단가는 **$0.0248/시간**이었습니다. 단가 차이는 **67.79**%이지만, 이는 실제 청구나 서비스 절감률이 아닙니다. EBS·EKS·FIS·관측성·약정 할인·재시도·대체 용량의 비용과 동일한 가용성 조건을 함께 비교해야 합니다.
 
 운영 확대 전에는 다음 검증이 필요합니다.
 

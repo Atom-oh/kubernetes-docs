@@ -85,6 +85,23 @@ test('translation validation rejects changed code and link targets even when cou
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })
 
+test('complete Chinese prose can be shorter than English without accepting an empty summary', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-chinese-size-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    fs.mkdirSync(path.join(root, 'cn'))
+    const source = '# Source\n\nThe operator reconciles the declared cluster state. It observes resource changes, creates the required workload objects, and reports status. Use matching software versions and verify permissions before deployment. A successful reconciliation does not prove that every application request succeeds.\n'
+    const translated = '# 说明\n\nOperator 将实际集群状态协调至声明状态，观察资源变化，创建所需的工作负载对象并报告状态。部署前，应使用匹配的软件版本并验证权限。协调成功并不能证明每个应用请求都能成功。\n'
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'cn/page.md')
+    assert.ok(translated.length / source.length < 0.4)
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    fs.writeFileSync(dst, '# 说明\n\n略。\n')
+    assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }))
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
 test('image path repair changes only link destinations, preserving repeated paths in inline code and labels', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-target-spans-'))
   try {

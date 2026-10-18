@@ -24,7 +24,7 @@ Amazon VPC Lattice는 VPC와 AWS 계정 간 애플리케이션을 연결합니�
 
 VPC Lattice는 각 애플리케이션 옆에 프록시를 배치하지 않아도 애플리케이션 네트워킹을 제공합니다. **서비스 네트워크**는 서비스와 리소스 구성을 묶고 허용된 소비자와 연결합니다. 서비스는 리스너, 라우팅 규칙, 대상 그룹, 서비스 DNS 이름을 제공합니다.
 
-현재 제품은 리소스 게이트웨이와 **리소스 구성(resource configuration)**을 통해 TCP를 사용하는 RDS 데이터베이스 같은 리소스도 연결합니다. 이 접근 모델은 대상 그룹을 사용하는 HTTP 서비스와 구분해야 합니다. 서비스 네트워크/서비스의 IAM 인증 정책은 리소스 구성 트래픽을 인가하지 않습니다. PrivateLink 기반 **서비스 네트워크 VPC 엔드포인트**를 사용하면 피어링, Transit Gateway, Direct Connect, VPN을 거치는 클라이언트에도 접근 경로를 제공할 수 있습니다. 직접 VPC 연결만으로는 Transit Gateway나 피어링 너머의 클라이언트까지 접근이 확장되지 않습니다.
+현재 제품은 리소스 게이트웨이와 **리소스 구성**(resource configuration)을 통해 TCP를 사용하는 RDS 데이터베이스 같은 리소스도 연결합니다. 이 접근 모델은 대상 그룹을 사용하는 HTTP 서비스와 구분해야 합니다. 서비스 네트워크/서비스의 IAM 인증 정책은 리소스 구성 트래픽을 인가하지 않습니다. PrivateLink 기반 **서비스 네트워크 VPC 엔드포인트**를 사용하면 피어링, Transit Gateway, Direct Connect, VPN을 거치는 클라이언트에도 접근 경로를 제공할 수 있습니다. 직접 VPC 연결만으로는 Transit Gateway나 피어링 너머의 클라이언트까지 접근이 확장되지 않습니다.
 
 대표적인 용도는 계정 간 애플리케이션 API, EKS와 다른 컴퓨팅 서비스 간 통신, 공유 데이터 리소스 접근입니다. 연결 관계, 라우팅, 보안 그룹, 인증과 애플리케이션 인가는 여전히 구성해야 합니다.
 
@@ -515,7 +515,7 @@ lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVI
 
 ### 서명된 HTTPS 클라이언트
 
-다음을 `lattice_get.py`로 저장하세요. 기본 AWS 자격 증명 공급자 체인을 사용하고 요청별로 자격 증명을 고정한 뒤, **`vpc-lattice-svcs`** 서비스 이름으로 서명합니다. VPC Lattice가 요구하는 **`UNSIGNED-PAYLOAD`**를 지정하며 TLS를 검증합니다. 이전 URL의 서명으로 리다이렉트를 따라가거나 요청을 자동 재시도하지 않습니다.
+다음을 `lattice_get.py`로 저장하세요. 기본 AWS 자격 증명 공급자 체인을 사용하고 요청별로 자격 증명을 고정한 뒤, **`vpc-lattice-svcs`** 서비스 이름으로 서명합니다. VPC Lattice가 요구하는 **`UNSIGNED-PAYLOAD`를** 지정하며 TLS를 검증합니다. 이전 URL의 서명으로 리다이렉트를 따라가거나 요청을 자동 재시도하지 않습니다.
 
 ```python
 import argparse

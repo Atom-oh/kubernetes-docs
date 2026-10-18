@@ -27,6 +27,7 @@ for ATTEMPT in 1 2; do
     exit 78
   fi
   if [ "$status" -eq 0 ] && [ -s "$REPO_ROOT/$DST" ] && \
+      python3 "$REPO_ROOT/scripts/repair-markdown-emphasis.py" "$REPO_ROOT/$DST" && \
       python3 "$REPO_ROOT/scripts/validate-translation.py" "$REPO_ROOT/$SRC" "$REPO_ROOT/$DST"; then
     echo "ok: $DST (attempt $ATTEMPT)"
     exit 0

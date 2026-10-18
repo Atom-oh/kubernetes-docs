@@ -459,7 +459,7 @@ kubectl -n bench-net exec -it dns-default -c sniffer -- \
   tcpdump -l -i eth0 -nn '(udp or tcp) and port 53'
 ```
 
-터미널 2에서 로컬 헬퍼를 만들고 **`kubectl exec -i`**로 입력을 전달합니다. first 모드는 리졸버를 정확히 한 번 호출합니다. warm 모드는 같은 프로세스에서 준비 호출 1회 후 20회를 측정합니다. 이 보완 절차는 캡처 범위를 명확히 구분합니다.
+터미널 2에서 로컬 헬퍼를 만들고 **`kubectl exec -i`로** 입력을 전달합니다. first 모드는 리졸버를 정확히 한 번 호출합니다. warm 모드는 같은 프로세스에서 준비 호출 1회 후 20회를 측정합니다. 이 보완 절차는 캡처 범위를 명확히 구분합니다.
 
 ```bash
 cat > dns-probe.py <<'PY'

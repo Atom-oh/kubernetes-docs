@@ -121,9 +121,9 @@ SigV4 서명에는 access key, secret key, session token이 필요합니다. Pod
 
 SigV4 서명은 세 단계로 진행됩니다.
 
-**먼저 canonical request를 만듭니다.** 메서드·경로·query·서명할 header를 정규화합니다. Lattice는 **`x-amz-content-sha256: UNSIGNED-PAYLOAD`**를 요구하며 payload signing을 지원하지 않습니다. 본문 전송은 HTTPS로 보호하고 필요하면 애플리케이션 무결성 검증을 추가합니다.
+**먼저 canonical request를 만듭니다.** 메서드·경로·query·서명할 header를 정규화합니다. Lattice는 **`x-amz-content-sha256: UNSIGNED-PAYLOAD`를** 요구하며 payload signing을 지원하지 않습니다. 본문 전송은 HTTPS로 보호하고 필요하면 애플리케이션 무결성 검증을 추가합니다.
 
-**둘째, signing key를 파생합니다.** secret key에서 시작해 날짜 → 리전 → **서비스명** → 종료 문자열 순으로 HMAC-SHA256을 4회 연쇄 적용합니다. Lattice의 서비스명은 **`vpc-lattice-svcs`**입니다.
+**둘째, signing key를 파생합니다.** secret key에서 시작해 날짜 → 리전 → **서비스명** → 종료 문자열 순으로 HMAC-SHA256을 4회 연쇄 적용합니다. Lattice의 서비스명은 **`vpc-lattice-svcs`입니다**.
 
 이 서비스명은 서명 자체의 입력값이므로 **틀리면 서명이 검증되지 않습니다.** `vpc-lattice`(Lattice 제어 평면 API의 서비스명)와 혼동하기 쉬운데, 데이터 평면 요청의 서명에는 `vpc-lattice-svcs`를 써야 합니다. 서비스 DNS 이름 자체가 `<service>-<id>.<hash>.vpc-lattice-svcs.<region>.on.aws` 형태인 것과 일관됩니다.
 
@@ -236,7 +236,7 @@ on resource: arn:aws:vpc-lattice:us-west-2:111122223333:service/svc-0b13d4b53748
 because no identity-based policy allows the vpc-lattice-svcs:Invoke action
 ```
 
-마지막 줄 **`because no identity-based policy allows...`**가 진단의 핵심입니다. 메시지가 어느 정책이 부족한지 알려주므로, 403을 만나면 먼저 이 문구를 확인하십시오.
+마지막 줄 **`because no identity-based policy allows...`가** 진단의 핵심입니다. 메시지가 어느 정책이 부족한지 알려주므로, 403을 만나면 먼저 이 문구를 확인하십시오.
 
 ### 403 진단 순서
 
@@ -283,7 +283,7 @@ Client-to-Lattice HTTPS 연결은 Lattice에서 종료됩니다. Target protocol
 ## 정리
 
 - Lattice가 요청 서명 방식을 택한 이유는 EKS·ECS·EC2·Lambda가 **모두 이미 갖고 있는 IAM/STS 기반**을 재사용하기 위함입니다. 그 체계는 연결 단위가 아니라 요청 단위로 동작합니다.
-- 서명의 서비스명은 **`vpc-lattice-svcs`**이며 서명 입력값이므로 틀리면 검증되지 않습니다.
+- 서명의 서비스명은 **`vpc-lattice-svcs`이며** 서명 입력값이므로 틀리면 검증되지 않습니다.
 - 실무 함정 3개: **Host 헤더가 서명 대상**(custom domain 주의), **x-amz-date 5분 오차**(노드 시각 동기화), **서명은 최종 홉에서**(중간 프록시 변조 금지).
 - TLS passthrough는 암호화된 HTTP SigV4 header를 인증하지 못하지만 AWS는 해당 경로의 익명 네트워크 문맥 auth policy를 지원합니다.
 - Invoke 권한 누락은 가능한 403 원인 중 하나입니다. 근거 없는 빈도 순위 대신 반환 사유와 상관 log를 사용합니다.

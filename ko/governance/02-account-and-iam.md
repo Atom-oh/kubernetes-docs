@@ -41,7 +41,7 @@ Account partitioning을 정한 뒤에는 Kubernetes 워크로드를 어느 Accou
 | Public endpoint 접근 가능 CIDR / cluster | 40 | 불가 |
 | **Access entry / cluster** | **3,000** | **불가** |
 
-대부분의 EKS quota는 여유가 있지만, **access entry 3,000개(조정 불가)**는 수십 개 팀의 CI/CD role을 워크로드×환경별로 개별 발급하면 사용량이 빠르게 근접하는 실제 상한입니다. Permission Set이나 팀 단위 role로 접근 경로를 집약하고, access entry는 principal 유형별로 묶어서 관리하는 설계를 권장합니다.
+대부분의 EKS quota는 여유가 있지만, **access entry 3,000개**(조정 불가)는 수십 개 팀의 CI/CD role을 워크로드×환경별로 개별 발급하면 사용량이 빠르게 근접하는 실제 상한입니다. Permission Set이나 팀 단위 role로 접근 경로를 집약하고, access entry는 principal 유형별로 묶어서 관리하는 설계를 권장합니다.
 
 Managed node group 30개는 기본값이며 조정 가능합니다. tenant당 node group 하나를 쓰더라도 30 tenant의 고정 상한으로 해석하지 않습니다. Karpenter NodePool과 taint/toleration은 배치 수단이며 그 자체가 강한 보안 경계는 아닙니다. 승인된 quota·권한·커널 공유·노드 agent 권한을 함께 검토합니다.
 

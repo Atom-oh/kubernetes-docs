@@ -128,7 +128,7 @@ cgroup v2에서 반드시 알아야 할 사실입니다.
 | `memory.events`의 `high` / `max` | 소프트/하드 한계에 닿은 횟수 |
 | `memory.pressure` (PSI) | 메모리 압박으로 **지연된 시간의 비율** |
 
-**PSI가 특히 유용합니다.** 사용량(얼마나 쓰는가)이 아니라 **압박(그래서 얼마나 기다렸는가)**을 알려주기 때문입니다. `memory.pressure`의 `some avg10`이 올라가고 있으면 회수에 시간을 쓰고 있다는 뜻이고, 이는 사용량 그래프만으로는 보이지 않습니다.
+**PSI가 특히 유용합니다.** 사용량(얼마나 쓰는가)이 아니라 **압박**(그래서 얼마나 기다렸는가)을 알려주기 때문입니다. `memory.pressure`의 `some avg10`이 올라가고 있으면 회수에 시간을 쓰고 있다는 뜻이고, 이는 사용량 그래프만으로는 보이지 않습니다.
 
 ### CPU limit과 throttling: 사용률이 낮은데 느린 이유
 
@@ -257,7 +257,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 
 - 커널에 "컨테이너"는 없습니다. namespace(격리) + cgroup(제한) + capabilities/seccomp/LSM(권한) + overlayfs(파일시스템) + netfilter(네트워크)의 **조합**입니다. 그래서 격리는 선택적이고, 빠뜨린 격리는 조용한 구멍이 됩니다.
 - **net namespace가 Pod의 경계**입니다. 같은 IP·포트 공간, `localhost` 통신, Pod 범위의 netfilter 규칙이 모두 여기서 나옵니다.
-- cgroup v2에서 **`memory.current`는 page cache를 포함**합니다. OOM 진단은 `memory.stat`의 `anon`과 `memory.events`, 그리고 **PSI(`memory.pressure`)**를 함께 봐야 합니다.
+- cgroup v2에서 **`memory.current`는 page cache를 포함**합니다. OOM 진단은 `memory.stat`의 `anon`과 `memory.events`, 그리고 **PSI(`memory.pressure`)를** 함께 봐야 합니다.
 - CPU limit은 **대역폭 제한**이라 사용률이 낮아도 throttling으로 지연이 튑니다. `cpu.stat`의 `nr_throttled`가 증거입니다.
 - kube-proxy의 모드 중 **nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated**이며 upstream은 IPVS의 1.40 기본 비활성화와 1.43 제거를 계획합니다. 기본값은 여전히 iptables입니다.
 - Conntrack 포화는 신규 연결을 드롭할 수 있습니다. Count/max·drop/insert counter·log로 진단하고 상한 변경 전 유효 kube-proxy 설정을 확인합니다.

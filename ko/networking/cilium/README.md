@@ -358,7 +358,7 @@ cilium connectivity perf --help
 
 성능 runner는 `cilium connectivity perf`입니다. `connectivity test --test=performance`는 테스트 이름 filter일 뿐 성능 runner가 아닙니다. 처리량/지연 비교 전에 소프트웨어 버전, 토폴로지, 트래픽, 원본 결과를 기록하세요.
 
-조회 시 관리 CLI와 **에이전트 내부 `cilium-dbg`**를 구분합니다.
+조회 시 관리 CLI와 **에이전트 내부 `cilium-dbg`를** 구분합니다.
 
 ```bash
 cilium status --verbose

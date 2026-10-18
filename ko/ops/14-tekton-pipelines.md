@@ -958,7 +958,7 @@ Pipeline-level provenance는 Pipeline 종료 후 생성됩니다. 같은 Pipelin
 
 ### 6.2 KMS 기반 구성
 
-기존 비대칭 `SIGN_VERIFY` KMS 키를 사용합니다. 키 ARN과 `builder.id`를 실제 값으로 바꿉니다. **Chains 컨트롤러의 ServiceAccount `tekton-chains/tekton-chains-controller`**에는 별도의 IRSA 역할을 설정하고 후보 리포지터리 ECR 쓰기 권한과 다음 KMS 권한을 줍니다. 빌드 Pod의 IRSA 역할을 설정했다고 컨트롤러까지 같은 자격 증명을 받지는 않습니다.
+기존 비대칭 `SIGN_VERIFY` KMS 키를 사용합니다. 키 ARN과 `builder.id`를 실제 값으로 바꿉니다. **Chains 컨트롤러의 ServiceAccount `tekton-chains/tekton-chains-controller`에는** 별도의 IRSA 역할을 설정하고 후보 리포지터리 ECR 쓰기 권한과 다음 KMS 권한을 줍니다. 빌드 Pod의 IRSA 역할을 설정했다고 컨트롤러까지 같은 자격 증명을 받지는 않습니다.
 
 현재 OCI 저장 구현은 Kubernetes credential 조회와 기본/ECR credential helper 체인을 사용합니다. 컨트롤러의 ambient AWS 자격 증명을 구성하고 실제 서명 업로드를 확인해야 합니다. 빌드 Task의 `/auth` emptyDir는 Chains에서 읽을 수 있는 공용 Secret이 아닙니다.
 
@@ -1194,7 +1194,7 @@ PVC 생명 주기는 `coschedule` 모드별로 다릅니다.
 
 ### 8.2 모니터링
 
-Pipelines 1.17의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`**입니다. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
+Pipelines 1.17의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`입니다**. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
 
 **`servicemonitor.yaml`**
 

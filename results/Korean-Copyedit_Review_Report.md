@@ -6,7 +6,7 @@
 |---|---|
 | Review type | GitBook Markdown copyedit batch |
 | Model | `openai.gpt-6.1-sol` via Amazon Bedrock Mantle |
-| Scope | 693 Korean Markdown pages; final diff covers 570 files |
+| Scope | 693 Korean Markdown pages; final diff covers 578 files |
 | Iteration | 1 |
 | Scale | 90 points; visual testing is exempt for Markdown |
 | Score | 90 / 90 |
@@ -24,11 +24,11 @@
 
 ## Review evidence
 
-GPT-6.1-Sol inspected 693 Korean Markdown files. It proposed 2,184 edits; 60 were excluded by validation guards for multiline replacements, numeric changes, inline-code changes, ambiguous source matches, or unchanged text. A second pass reviewed all 2,124 accepted edits for shifts in technical meaning. Thirty-two risky edits were reverted, and ten awkward grammar or spacing results were corrected. The final diff changes 570 files with 2,001 insertions and 2,001 deletions.
+GPT-6.1-Sol inspected 693 Korean Markdown files. It proposed 2,184 edits; 60 were excluded by validation guards for multiline replacements, numeric changes, inline-code changes, ambiguous source matches, or unchanged text. A second pass reviewed all 2,124 accepted edits for shifts in technical meaning. Thirty-two risky edits were reverted, and ten awkward grammar or spacing results were corrected. Including the separately validated emphasis repairs below, the final diff changes 578 files with 2,111 insertions and 2,111 deletions.
 
-The edit validator preserved URLs, Markdown link destinations, inline code, numeric values, table delimiters, and list markers. `git diff --check` passes. No visual review is applicable to source-only Markdown. This review covers the copyedit diff; it does not re-audit technical claims that were already present in the source pages.
+The edit validator preserved URLs, Markdown link destinations, inline code, numeric values, table delimiters, and list markers. `git diff --check` passes. This review covers the copyedit diff; it does not re-audit technical claims that were already present in the source pages.
 
-The original pages were used as the source comparison. The task was copyediting only, so no sections were intentionally removed. Visual testing is exempt because the reviewed artifact is Markdown source without a rendered preview.
+The original pages were used as the source comparison. No sections were intentionally removed. A supplementary VitePress Markdown parser scan identified 121 regions in 83 documents where bold markers appeared as text. Repairs in 82 documents changed only delimiter placement, and two escaped markers in one quiz were corrected against the English source. The complete post-repair scan of 693 Korean pages found zero literal bold-marker regions. Fenced code bytes and languages, links, heading counts, fence counts and explicit anchors remain identical to the original source. Browser screenshot testing is exempt for this Markdown artifact; actual parser rendering and Vue compilation are covered by regression tests. All 163 repository tests pass.
 
 ## Next steps
 

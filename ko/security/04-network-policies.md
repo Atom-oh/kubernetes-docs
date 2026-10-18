@@ -1515,7 +1515,7 @@ Standard 시작 모드는 새 Pod에 정책이 프로그래밍될 때까지 일�
 
 > **발표일**: 2025년 12월 15일 · [출처](https://aws.amazon.com/ko/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-실제 제공되는 기능이지만 리소스 API 그룹은 **`networking.k8s.aws/v1alpha1`**입니다. 클러스터 범위 `ClusterNetworkPolicy`는 `tier`가 필수이며, 아래 네임스페이스 DNS egress 예제는 `ApplicationNetworkPolicy`를 사용합니다. EC2 Linux의 표준·관리자 VPC CNI 정책 지원을 모든 compute mode 지원으로 확대 해석하면 안 됩니다. DNS 규칙은 혼합 클러스터에서도 **Auto Mode가 시작한 EC2 인스턴스**에서만 적용됩니다.
+실제 제공되는 기능이지만 리소스 API 그룹은 **`networking.k8s.aws/v1alpha1`입니다**. 클러스터 범위 `ClusterNetworkPolicy`는 `tier`가 필수이며, 아래 네임스페이스 DNS egress 예제는 `ApplicationNetworkPolicy`를 사용합니다. EC2 Linux의 표준·관리자 VPC CNI 정책 지원을 모든 compute mode 지원으로 확대 해석하면 안 됩니다. DNS 규칙은 혼합 클러스터에서도 **Auto Mode가 시작한 EC2 인스턴스**에서만 적용됩니다.
 
 **Auto Mode 선행 조건:** 아래 정책을 적용하기 전에 Auto Mode Network Policy Controller를 활성화해야 합니다. EKS 관리형 `vpc-cni` add-on 갱신은 별도 경로이며 순수 Auto Mode 클러스터의 정책 집행을 활성화하지 않습니다. 필요한 설정은 ConfigMap `kube-system/amazon-vpc-cni`의 `data.enable-network-policy-controller: "true"`입니다. 아래 절차는 기존 data를 merge patch로 보존하고 객체가 없을 때만 생성하며 읽기·쓰기 실패 시 중단합니다. 실행 전 cluster context와 기존 설정을 검토하세요.
 

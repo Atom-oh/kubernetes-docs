@@ -94,7 +94,7 @@ ipv6:
 
 ### Multi-Pool과 CiliumPodIPPool
 
-문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]**에서는 `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
+문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]에서는** `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
 
 **`multi-pool-values.yaml`**
 

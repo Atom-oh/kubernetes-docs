@@ -52,7 +52,7 @@ EKS는 여러 네트워킹 모드를 지원하며, 각 모드는 성능 특성�
 
 ### MTU 최적화
 
-실제 VPC CNI 환경 변수는 `ENI_MTU`가 아닌 **`AWS_VPC_ENI_MTU`**입니다. 1.23.2 기본값은 9001이며 `POD_MTU`는 Pod 가상 인터페이스를 제어하고 미설정 시 ENI MTU에서 값을 가져옵니다. 구성 변경 전 init/main 컨테이너를 모두 확인합니다:
+실제 VPC CNI 환경 변수는 `ENI_MTU`가 아닌 **`AWS_VPC_ENI_MTU`입니다**. 1.23.2 기본값은 9001이며 `POD_MTU`는 Pod 가상 인터페이스를 제어하고 미설정 시 ENI MTU에서 값을 가져옵니다. 구성 변경 전 init/main 컨테이너를 모두 확인합니다:
 ```bash
 kubectl -n kube-system get daemonset aws-node -o json > aws-node-current.json
 python3 - <<'PY'

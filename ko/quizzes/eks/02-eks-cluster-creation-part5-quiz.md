@@ -74,7 +74,7 @@ Pod 보안 그룹에는 지원 인스턴스·CNI 설정과 정책 선택이 필�
 
 **정답: A) IAM Roles for Service Accounts(IRSA)**
 
-**IAM Roles for Service Accounts(IRSA)**는 projected ServiceAccount 토큰, 클러스터 OIDC 발급자와 IAM 신뢰를 이용해 STS 임시 자격 증명을 얻습니다. 대상 audience(`sts.amazonaws.com`)와 정확한 네임스페이스·ServiceAccount subject로 신뢰를 제한하고 필요한 AWS 작업·리소스만 허용하세요.
+**IAM Roles for Service Accounts**(IRSA)는 projected ServiceAccount 토큰, 클러스터 OIDC 발급자와 IAM 신뢰를 이용해 STS 임시 자격 증명을 얻습니다. 대상 audience(`sts.amazonaws.com`)와 정확한 네임스페이스·ServiceAccount subject로 신뢰를 제한하고 필요한 AWS 작업·리소스만 허용하세요.
 
 Pod에서 의도한 ServiceAccount와 호환 SDK 자격 증명 체인을 사용합니다. 다른 자격 증명으로 AWS 접근에 성공했을 수도 있으므로 실제 assumed role을 확인하세요. IRSA만으로 노드 IMDS 자격 증명 접근을 막지는 않습니다.
 

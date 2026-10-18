@@ -14,7 +14,7 @@ Serve의 **Deployment**는 actor replica를 관리하는 논리 단위이며 Kub
 
 **Application**은 하나 이상의 deployment와 ingress deployment를 포함합니다. DeploymentHandle을 사용해 전처리와 추론 등을 연결할 수 있습니다. 모든 내부 호출이 HTTP를 다시 거치거나 Kubernetes Service를 하나씩 생성하는 구조는 아닙니다.
 
-Controller는 Serve control 상태와 actor 수명주기를 관리합니다. Proxy는 HTTP/gRPC 진입 요청을 받아 적절한 deployment로 전달합니다. 2.58.0의 기본 proxy 위치는 **replica가 있는 node의 `EveryNode`**이며 `HeadOnly`, `Disabled`도 명시적으로 선택할 수 있습니다. 문서의 오래된 “head에 하나가 기본” 설명을 현재 API 기본값으로 사용하지 않습니다.
+Controller는 Serve control 상태와 actor 수명주기를 관리합니다. Proxy는 HTTP/gRPC 진입 요청을 받아 적절한 deployment로 전달합니다. 2.58.0의 기본 proxy 위치는 **replica가 있는 node의 `EveryNode`이며** `HeadOnly`, `Disabled`도 명시적으로 선택할 수 있습니다. 문서의 오래된 “head에 하나가 기본” 설명을 현재 API 기본값으로 사용하지 않습니다.
 
 Proxy 또는 DeploymentHandle의 queue와 replica에 전달된 ongoing 요청을 구분합니다. 요청 처리 함수의 동기/async 동작, blocking 작업, timeout과 취소 전파도 application에서 검토해야 합니다.
 

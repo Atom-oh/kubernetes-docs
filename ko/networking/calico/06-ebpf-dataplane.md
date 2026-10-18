@@ -265,7 +265,7 @@ data:
   KUBERNETES_SERVICE_PORT: "6443"
 ```
 
-operator 설치는 `tigera-operator`, 독립 manifest 설치는 `kube-system`에 둡니다. 이름은 복수형 **`kubernetes-services-endpoint`**입니다. Calico가 변경을 받아 주소를 해석·연결하는지 확인한 뒤 Service 데이터 평면을 바꾸세요. DNS bootstrap·보안 규칙·도달성은 플랫폼별 전제입니다.
+operator 설치는 `tigera-operator`, 독립 manifest 설치는 `kube-system`에 둡니다. 이름은 복수형 **`kubernetes-services-endpoint`입니다**. Calico가 변경을 받아 주소를 해석·연결하는지 확인한 뒤 Service 데이터 평면을 바꾸세요. DNS bootstrap·보안 규칙·도달성은 플랫폼별 전제입니다.
 
 kube-proxy가 IPVS라면 공식 절차에 따라 iptables로 전환하고 계획된 노드 재시작을 먼저 수행해야 합니다. 별도의 통제된 변경으로 다루세요.
 
@@ -325,7 +325,7 @@ kubectl patch felixconfiguration.projectcalico.org default --type=merge \
 
 ## eBPF 디버깅
 
-Calico node 이미지에는 **`calico-node -bpf`**로 실행하는 진단 도구가 포함됩니다. 별도 `calico-bpf` 소스 entry point도 있지만 node 이미지에 독립 바이너리가 설치되었다고 가정하지 마세요. 내장 도구에는 `help`를 사용합니다. wrapper가 BPF 하위 명령보다 먼저 `--help`를 처리할 수 있습니다.
+Calico node 이미지에는 **`calico-node -bpf`로** 실행하는 진단 도구가 포함됩니다. 별도 `calico-bpf` 소스 entry point도 있지만 node 이미지에 독립 바이너리가 설치되었다고 가정하지 마세요. 내장 도구에는 `help`를 사용합니다. wrapper가 BPF 하위 명령보다 먼저 `--help`를 처리할 수 있습니다.
 
 ```bash
 CALICO_NAMESPACE=calico-system

@@ -28,7 +28,7 @@
 
 DNS는 분산 데이터베이스입니다. **A** 레코드는 IPv4 주소를, **AAAA**는 IPv6 주소를 나타내고, **CNAME**은 다른 이름을 가리키는 별칭이며, **PTR**은 역방향 조회에 사용됩니다. 어떤 레코드도 목적지 애플리케이션의 실행 여부를 증명하지 않습니다.
 
-**재귀 resolver**는 클라이언트를 대신해 캐시를 이용하거나 다른 DNS 서버에 물어 답을 구합니다. **권한 있는 서버(authoritative server)**는 자신이 담당하는 zone의 공개 데이터를 보유합니다. 캐시는 허용된 수명 동안 긍정·부정 응답을 재사용할 수 있습니다. DNS **TTL**은 초 단위 수명이며 IP TTL의 홉 제한과는 다릅니다. 지금 DNS TTL을 줄여도 이전 TTL로 이미 저장된 캐시가 즉시 사라지지는 않습니다. [DNS 개념](https://www.rfc-editor.org/rfc/rfc1034.html), [부정 응답 캐시](https://www.rfc-editor.org/rfc/rfc2308.html)를 참고하세요.
+**재귀 resolver**는 클라이언트를 대신해 캐시를 이용하거나 다른 DNS 서버에 물어 답을 구합니다. **권한 있는 서버**(authoritative server)는 자신이 담당하는 zone의 공개 데이터를 보유합니다. 캐시는 허용된 수명 동안 긍정·부정 응답을 재사용할 수 있습니다. DNS **TTL**은 초 단위 수명이며 IP TTL의 홉 제한과는 다릅니다. 지금 DNS TTL을 줄여도 이전 TTL로 이미 저장된 캐시가 즉시 사라지지는 않습니다. [DNS 개념](https://www.rfc-editor.org/rfc/rfc1034.html), [부정 응답 캐시](https://www.rfc-editor.org/rfc/rfc2308.html)를 참고하세요.
 
 Linux 애플리케이션은 C 라이브러리의 **NSS(Name Service Switch)** 경로로 이름을 요청할 수 있습니다. `/etc/nsswitch.conf`가 조회 소스를 정합니다. `files`는 `/etc/hosts`, `dns`는 DNS, `resolve`는 설치·설정된 systemd-resolved를 사용합니다. 다른 모듈과 대괄호 안 반환 규칙에 따라 경로가 달라질 수 있습니다. DNS over HTTPS를 사용하는 브라우저처럼 자체 resolver를 가진 프로그램은 다르게 동작할 수도 있습니다.
 

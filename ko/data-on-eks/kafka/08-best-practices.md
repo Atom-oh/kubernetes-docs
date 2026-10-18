@@ -148,7 +148,7 @@ delivery.timeout.ms=120000
 
 ## 컨슈머 처리와 멤버십
 
-다음은 **`group.protocol=classic`**을 명시하여 클라이언트 heartbeat/session
+다음은 **`group.protocol=classic`을** 명시하여 클라이언트 heartbeat/session
 설정을 적용하는 프로필입니다. `group.protocol=consumer`에서는 해당 간격을
 브로커의 consumer-group 설정으로 제어합니다.
 

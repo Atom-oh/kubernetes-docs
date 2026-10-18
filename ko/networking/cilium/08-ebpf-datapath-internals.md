@@ -175,7 +175,7 @@ policy 갱신은 `cilium_policy_v3_<id>`에 대한 map 연산입니다(`applyPol
 
 proxy 포트는 `--proxy-portrange-min/max`(10000-20000)에서 할당됩니다. CT entry에 `proxy_redirect`가 기록되어 응답이 proxy로 돌아갑니다. L7 이벤트는 BPF가 아니라 Envoy와 DNS proxy가 agent에 보고하는 access-log 레코드입니다.
 
-mutual authentication(`auth_type`)은 **1.20에서 deprecated**(ztunnel 사용)이고, **[1.21 pre-release]**에서는 `--bpf-auth-map-max`와 `cilium_auth_map`이 제거되며 entry의 auth 비트는 reserved가 됩니다.
+mutual authentication(`auth_type`)은 **1.20에서 deprecated**(ztunnel 사용)이고, **[1.21 pre-release]에서는** `--bpf-auth-map-max`와 `cilium_auth_map`이 제거되며 entry의 auth 비트는 reserved가 됩니다.
 
 ## 4. Map 카탈로그
 

@@ -73,7 +73,7 @@ Reflector의 ORIGINATOR_ID와 CLUSTER_LIST는 루프 방지에 쓰이며, reflec
 
 ## 4. 이 실습의 환경 준비
 
-선정한 upstream은 **`bgplab/bgplab`의 `policy/5-local-preference/topology.yml`**, revision **`5a9fab68658ce69317b147396481714ee3478482`**입니다.
+선정한 upstream은 **`bgplab/bgplab`의 `policy/5-local-preference/topology.yml`**, revision **`5a9fab68658ce69317b147396481714ee3478482`입니다**.
 라우터 네 대 중 c1/c2는 AS65000, x1/x2는 AS65100에 속합니다.
 토폴로지가 OSPF, eBGP, iBGP와 경로 광고를 구성하며 학습자는 고객 측 정책을 변경합니다.
 [원본 토폴로지](https://github.com/bgplab/bgplab/blob/5a9fab68658ce69317b147396481714ee3478482/policy/5-local-preference/topology.yml)는 **netlab 2.0.0 이상**을 요구합니다.
@@ -197,7 +197,7 @@ c2에서 6절을 다시 실행합니다. c1 경로가 유효하고 LOCAL_PREF 20
 
 ## 8. Peer 하나의 장애 측정
 
-선호도 실험 상태를 유지합니다. 사전 상태는 **c1의 이웃 `10.1.0.2`**가 established이고 `shutdown` 설정이 없는 것입니다.
+선호도 실험 상태를 유지합니다. 사전 상태는 **c1의 이웃 `10.1.0.2`가** established이고 `shutdown` 설정이 없는 것입니다.
 역연산은 같은 BGP instance에서 `no neighbor 10.1.0.2 shutdown`입니다.
 이 실험은 관리 명령으로 발생시킨 peer 장애이며 케이블 단절, 무응답 패킷 손실, BFD 실험이 아닙니다.
 

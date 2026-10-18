@@ -247,7 +247,7 @@ savings_percent = 100 * savings_amount / reference_total  (reference_total > 0)
 
 ### Cost Explorer 읽기 전용 조회
 
-먼저 AWS 생성 태그 **`aws:eks:cluster-name`**을 활성화합니다. `eks:cluster-name`은 문서화된 청구 key가 아닙니다. 참여 EC2 인스턴스 비용을 할당하며 **control-plane 요금이나 모든 클러스터 관련 서비스를 포함하지는 않습니다**. 계정/payer 범위와 태그 coverage를 검토하세요. Cost Explorer API 조회 자체에도 요금이 발생할 수 있습니다.
+먼저 AWS 생성 태그 **`aws:eks:cluster-name`을** 활성화합니다. `eks:cluster-name`은 문서화된 청구 key가 아닙니다. 참여 EC2 인스턴스 비용을 할당하며 **control-plane 요금이나 모든 클러스터 관련 서비스를 포함하지는 않습니다**. 계정/payer 범위와 태그 coverage를 검토하세요. Cost Explorer API 조회 자체에도 요금이 발생할 수 있습니다.
 
 시작 포함·종료 제외 기간을 명시합니다. 다음 요청은 금액인 `AmortizedCost`를 사용하며 다른 단위의 `UsageQuantity`를 더하거나 노드 비율을 달러로 바꾸지 않습니다.
 

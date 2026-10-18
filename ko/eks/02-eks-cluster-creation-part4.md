@@ -789,8 +789,8 @@ module "eks" {
 
 ### 핵심 사항
 
-- **`compute_config.enabled = true`**를 통해 이 모듈이 컴퓨팅·로드 밸런싱·블록 스토리지를 함께 활성화합니다. 고정 모듈이 생성하는 IAM 정책을 검토하세요.
-- **`node_pools`**는 활성화할 내장 노드 풀을 지정합니다 (`general-purpose`, `system`).
+- **`compute_config.enabled = true`를** 통해 이 모듈이 컴퓨팅·로드 밸런싱·블록 스토리지를 함께 활성화합니다. 고정 모듈이 생성하는 IAM 정책을 검토하세요.
+- **`node_pools`는** 활성화할 내장 노드 풀을 지정합니다 (`general-purpose`, `system`).
 - 모듈 v21은 기반 리소스의 `bootstrap_self_managed_addons`를 `false`로 고정하며 모듈 입력으로 받지 않습니다. 현재 Auto Mode는 클러스터 DNS·네트워킹·스토리지·Pod Identity 기능을 포함하므로 Auto Mode 컴퓨팅에 대응하는 기존 애드온을 중복 설치할 필요가 없습니다.
 - 이 대안은 관리형 노드 그룹을 사용하지 않습니다. 혼합 컴퓨팅도 지원하지만 Auto Mode 이외 노드는 해당 애드온과 배치 구성이 필요합니다.
 - Auto Mode는 노드 풀에서 EC2 인스턴스를 프로비저닝하고 OS 패치, 스케일링, 라이프사이클을 처리합니다.
@@ -926,7 +926,7 @@ resource "aws_iam_role_policy" "hybrid_lifecycle" {
 
 ### 핵심 사항
 
-- **`remote_network_config`**는 중복되지 않는 원격 노드·Pod CIDR을 선언하며 VPN·라우팅·방화벽·CNI를 만들지 않습니다. 모듈 v21은 `cidrs`를 담은 객체를 받으며 해당 객체의 목록을 받는 것은 아닙니다.
+- **`remote_network_config`는** 중복되지 않는 원격 노드·Pod CIDR을 선언하며 VPN·라우팅·방화벽·CNI를 만들지 않습니다. 모듈 v21은 `cidrs`를 담은 객체를 받으며 해당 객체의 목록을 받는 것은 아닙니다.
 - Hybrid 노드는 `HYBRID_LINUX` 유형의 액세스 엔트리가 있는 IAM 역할을 통해 인증합니다.
 - Hybrid 노드는 TCP 443으로 프라이빗 API에 연결하고 제어 플레인은 TCP 10250으로 **Hybrid kubelet에 아웃바운드 연결**합니다. 온프레미스 방화벽과 필요한 Pod·웹훅 경로도 구성해야 하며 SG 규칙 두 개가 전체 네트워크 설계는 아닙니다.
 - Hybrid 노드에서는 VPC CNI가 사용되지 않으므로 온프레미스 측에서 대체 CNI(예: Cilium)를 구성해야 합니다.

@@ -47,7 +47,7 @@ Image·namespace처럼 지정한 비어 있지 않은 값은 일반적으로 ove
 | Metadata labels | Key별로 병합 |
 | init container | 같은 이름끼리 병합하고 나머지는 추가 |
 
-Kubernetes 자원 설정은 **container_resources=V1ResourceRequirements(...)**로
+Kubernetes 자원 설정은 **container_resources=V1ResourceRequirements**(...)로
 전달합니다. 일반 resources 인자를 Kubernetes container 자원 설정과 혼동하지
 않습니다. dry_run과 실제 생성된 Pod를 확인하며 admission 이후 설정까지 검증합니다.
 

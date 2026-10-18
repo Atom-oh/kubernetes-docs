@@ -199,7 +199,7 @@ spec:
 
 ### CiliumClusterwideEnvoyConfig
 
-다음 독립 예시는 기존 **`default/rate-limited-service:8080`**을 대상으로 합니다. 초기 1,000개 요청의 burst를 허용하고 초당 100개 토큰을 보충하는 로컬 버킷을 적용하며, 요청 100%에 대해 필터 활성화와 강제 적용을 명시합니다.
+다음 독립 예시는 기존 **`default/rate-limited-service:8080`을** 대상으로 합니다. 초기 1,000개 요청의 burst를 허용하고 초당 100개 토큰을 보충하는 로컬 버킷을 적용하며, 요청 100%에 대해 필터 활성화와 강제 적용을 명시합니다.
 
 ```yaml
 apiVersion: cilium.io/v2

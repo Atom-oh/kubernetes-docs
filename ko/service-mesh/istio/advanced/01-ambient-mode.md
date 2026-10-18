@@ -18,7 +18,7 @@ Ambient는 2022년 실험적 preview로 소개되어 Istio 1.18에 Alpha로 처�
 ## 개요
 
 
-Ambient Mode는 애플리케이션 파드에 Sidecar 프록시를 주입하지 않고도 Service Mesh 기능을 제공하는 새로운 방식입니다. Ambient Mode는 **두 계층(Layered Architecture)**으로 구성됩니다:
+Ambient Mode는 애플리케이션 파드에 Sidecar 프록시를 주입하지 않고도 Service Mesh 기능을 제공하는 새로운 방식입니다. Ambient Mode는 **두 계층**(Layered Architecture)으로 구성됩니다:
 
 1. **Secure Overlay Layer (L4)**: ztunnel을 통한 mTLS 및 기본 텔레메트리
 2. **L7 Processing Layer**: Waypoint Proxy를 통한 고급 트래픽 관리
@@ -229,7 +229,7 @@ spec:
 ### HBONE 프로토콜
 
 
-**HBONE (HTTP-Based Overlay Network Environment)**는 Ambient Mode에서 사용하는 터널링 프로토콜입니다:
+**HBONE** (HTTP-Based Overlay Network Environment)는 Ambient Mode에서 사용하는 터널링 프로토콜입니다:
 
 - **HTTP/2 기반**: 기존 인프라와의 호환성
 - **mTLS 내장**: 보안 통신
