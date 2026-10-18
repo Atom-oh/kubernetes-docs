@@ -1,8 +1,8 @@
 # Cuestionario de autenticación y autorización de Kubernetes
 
-> **Documento relacionado**: [Kubernetes Authentication and Authorization System](../../security/02-kubernetes-auth-authz.md)
+> **Documento relacionado**: [Sistema de autenticación y autorización de Kubernetes](../../security/02-kubernetes-auth-authz.md)
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
@@ -321,7 +321,7 @@ spec:
 ```
 
 **Explicación:**
-El valor mínimo solicitado de `expirationSeconds` es 600; el servidor determina la expiración real. La audiencia de ejemplo debe estar configurada y validada por el servicio receptor; no es aceptada automáticamente por la API de Kubernetes. Para las llamadas a la API de Kubernetes, use una audiencia que acepte el servidor de API. El montaje automático está deshabilitado y solo el token explícito se monta como de solo lectura. Este Pod pause ilustra el volumen; no usa el token ni sirve HTTP. Una aplicación real debe volver a cargar el archivo después de que Kubelet lo rote.
+El valor mínimo solicitado de `expirationSeconds` es 600; el servidor determina la expiración real. La audiencia de ejemplo debe estar configurada y validada por el servicio receptor; no es aceptada automáticamente por la API de Kubernetes. Para las llamadas a la API de Kubernetes, use una audiencia que acepte el servidor de API. El montaje automático está deshabilitado y solo el token explícito se monta como de solo lectura. Este Pod basado en la imagen pause ilustra el volumen; no usa el token ni sirve HTTP. Una aplicación real debe volver a cargar el archivo después de que Kubelet lo rote.
 
 </details>
 
@@ -349,20 +349,20 @@ kubectl auth can-i create pods --as=developer@example.com --as-group=developers 
 ```
 
 **Explicación:**
-La persona que llama necesita permiso `impersonate` para el usuario/ServiceAccount y cada grupo usado. No suponga que la pertenencia a grupos se reconstruye automáticamente. `--list` no siempre es un inventario completo de permisos efectivos y omite los permisos de políticas de acceso de EKS. La suplantación en EKS fuerza la evaluación de RBAC; pruebe por separado el rol de IAM real. Un resultado positivo de `can-i` no garantiza la admisión, el acceso a la red ni la aceptación de cuotas.
+Quien realiza la solicitud necesita permiso `impersonate` para el usuario/ServiceAccount y cada grupo usado. No suponga que la pertenencia a grupos se reconstruye automáticamente. `--list` no siempre es un inventario completo de permisos efectivos y omite los permisos de políticas de acceso de EKS. La suplantación en EKS fuerza la evaluación de RBAC; pruebe por separado el rol de IAM real. Un resultado positivo de `can-i` no garantiza la admisión, el acceso a la red ni la aceptación de cuotas.
 
 </details>
 
 ## Preguntas avanzadas
 
-### 1. Diseñe una estrategia de seguridad para el aislamiento de tenants en un clúster de Kubernetes multi-tenant.
+### 1. Diseñe una estrategia de seguridad para el aislamiento entre inquilinos en un clúster de Kubernetes compartido por varios inquilinos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Diseño de Namespace y RBAC:**
 
-- Cree namespaces separados por tenant
+- Cree namespaces separados por inquilino
 - Aplique Pod Security Standards
 - Implemente NetworkPolicy para el aislamiento de red
 - Configure ResourceQuota para los límites de recursos
@@ -432,16 +432,16 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-La versión de PSS fijada `v1.35` es una referencia de aprendizaje; seleccione y valide una versión de política compatible con el clúster de destino. La denegación predeterminada también bloquea DNS y dependencias externas, por lo que se deben revisar las excepciones explícitas. El CNI debe aplicar las políticas. Los tenants no deben cambiar las etiquetas de namespace, NetworkPolicy, ResourceQuota ni RBAC, y se deben revisar otras asociaciones existentes.
+La versión de PSS fijada `v1.35` es una referencia de aprendizaje; seleccione y valide una versión de política compatible con el clúster de destino. La denegación predeterminada también bloquea DNS y dependencias externas, por lo que se deben revisar las excepciones explícitas. El CNI debe aplicar las políticas. Los inquilinos no deben cambiar las etiquetas de namespace, NetworkPolicy, ResourceQuota ni RBAC, y se deben revisar otras asociaciones existentes.
 
-**La creación/edición de Deployment puede permitir que los Pods usen otras ServiceAccounts o Secrets en el namespace.** Eliminar solo el permiso de get de Secret no cierra esta vía. Separe identidades/secrets con distintos niveles de confianza en diferentes namespaces, restrinja las identidades permitidas mediante admisión cuando sea necesario o use clústeres separados. Este ejemplo no demuestra un aislamiento sólido de tenants.
+**La creación/edición de Deployment puede permitir que los Pods usen otras ServiceAccounts o Secrets en el namespace.** Eliminar solo el permiso de get de Secret no cierra esta vía. Separe identidades/secrets con distintos niveles de confianza en diferentes namespaces, restrinja las identidades permitidas mediante admisión cuando sea necesario o use clústeres separados. Este ejemplo no demuestra un aislamiento sólido entre inquilinos.
 
 **Medidas de seguridad adicionales:**
 
 - Use ServiceAccounts separadas por aplicación
 - Implemente el registro de auditoría
 - Use webhooks de admisión para la aplicación de políticas
-- Defina explícitamente la propiedad de sub-tenants y la propagación de políticas; los namespaces ordinarios de Kubernetes son planos
+- Defina explícitamente la propiedad de subinquilinos y la propagación de políticas; los namespaces ordinarios de Kubernetes son planos
 
 </details>
 
@@ -452,7 +452,7 @@ La versión de PSS fijada `v1.35` es una referencia de aprendizaje; seleccione y
 
 1. **Cliente**: kubectl lee el kubeconfig/context seleccionado y valida el certificado TLS del servidor. El archivo predeterminado es `~/.kube/config`, pero `--kubeconfig` y `KUBECONFIG` pueden cambiarlo. Obtiene credenciales de certificados, tokens o un plugin exec; el acceso de IAM de EKS suele usar `aws eks get-token`.
 2. **Autenticación**: El servidor de API verifica las credenciales para establecer la identidad de usuario/grupo. Usa el primer resultado de autenticación exitoso sin garantizar un orden de evaluación fijo. OIDC, los proxies y los webhooks tienen requisitos de verificación y confianza diferentes.
-3. **Autorización**: Los autorizadores configurados se ejecutan en orden hasta el primer Allow o Deny. NoOpinion continúa; todos los resultados NoOpinion provocan una denegación 403. RBAC agrega permisos de las asociaciones aplicables y no tiene una regla de denegación explícita. La omisión de `system:masters` es un riesgo independiente.
+3. **Autorización**: Los autorizadores configurados se ejecutan en orden hasta el primer Allow o Deny. NoOpinion continúa; todos los resultados NoOpinion provocan una denegación 403. RBAC agrega permisos de las asociaciones aplicables y no tiene una regla de denegación explícita. La elusión de autorización mediante `system:masters` es un riesgo independiente.
 4. **Manejo de solicitudes**: Las solicitudes ordinarias de recursos CREATE/UPDATE pasan primero por la admisión de mutación y luego por la de validación; ambas pueden rechazar. Los cambios exitosos se almacenan después de la validación del objeto, las comprobaciones de conflictos y otras comprobaciones pertinentes. `get/list/watch` omite la admisión. Las API de ejecución en seco, DELETE, CONNECT y agregadas no se pueden representar todas mediante la misma secuencia de escritura en etcd.
 5. **Respuesta**: El servidor de API devuelve un resultado o error. El éxito de la API no significa que un controlador haya terminado de procesar ni que una aplicación esté lista.
 
@@ -468,9 +468,9 @@ La autenticación establece la identidad, la autorización permite operaciones d
 
 ## Referencias oficiales
 
-- [Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-- [Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [Autenticación](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Autorización](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
 - [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [ServiceAccount](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
-- [Admission](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
-- [EKS access policies](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
+- [Cuenta de servicio (ServiceAccount)](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+- [Controladores de admisión](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+- [Políticas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)

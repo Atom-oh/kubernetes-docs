@@ -1,7 +1,7 @@
 # ArgoCD Projects 和 RBAC
 
 > **审阅依据**：Argo CD 3.5.2；经发布说明审阅后更新至补丁版本 3.5.5（未重新运行示例）
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [AppProject 概述](#appproject-overview)

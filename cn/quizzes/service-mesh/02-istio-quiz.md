@@ -451,7 +451,7 @@ spec:
 <details>
 <summary>局部性偏好提供什么，又不能保证什么？</summary>
 
-局部性使用端点/来源拓扑信息优先选择合适目的地。此前 reviews DestinationRule 的这个**替代方案**使用区域/可用区优先级并结合异常检测：
+局部性使用端点/来源拓扑信息优先选择合适目的地。这里给出一种不同于前文 reviews 服务 DestinationRule 的**替代方案**，按区域/可用区优先级分流并结合异常检测：
 
 ```yaml
 apiVersion: networking.istio.io/v1

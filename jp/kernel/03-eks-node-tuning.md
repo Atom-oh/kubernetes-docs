@@ -1,7 +1,7 @@
 # EKSノードのカーネルチューニング
 
 > **対象バージョン**: Amazon Linux 2023（カーネル6.1／6.12／6.18）、Kubernetes 1.33以降（Amazon EKS）
-> **最終更新日**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 
 ## このドキュメントで扱うこと
 
@@ -121,7 +121,7 @@ Linux 6.6では、CFSのタスク選択ロジックが**EEVDF**（Earliest Eligi
 | `sched_wakeup_granularity_ns` | **削除済み**（同上） |
 | **`/sys/kernel/debug/sched/base_slice_ns`** | **現在の相当値**。内部変数は`sysctl_sched_base_slice`で、debugfsでは`base_slice_ns`として公開 |
 
-そのため、CFS時代の遅延／プリエンプションに関するチューナブルはなくなり、**単一の基本タイムスライス（`base_slice_ns`）に統合されています。名前に**`sched_`の接頭辞はありません。パスは`/sys/kernel/debug/sched/base_slice_ns`です。
+そのため、CFS時代の遅延／プリエンプションに関するチューナブルはなくなり、調整対象は基本タイムスライス（`base_slice_ns`）に集約されています。この値は`/sys/kernel/debug/sched/base_slice_ns`で公開され、名前に`sched_`の接頭辞は付きません。
 
 別の方法として、EEVDFではタスク自身が`sched_setattr()`システムコールで**タイムスライスを要求**できます。遅延に敏感なアプリケーションでは、グローバルなチューナブルを変更するより適しています。
 
@@ -204,7 +204,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 | 項目 | 内容 |
 |---|---|
 | 症状 | 新規接続が通知なく破棄され、アプリケーションにはタイムアウト／拒否だけが見える |
-| 照合する証拠 | `conntrack -S`**の`insert_failed`増加**。これだけではテーブル枯渇の証明にならない |
+| 照合する証拠 | `conntrack -S`で`insert_failed`が増加していること。これだけではテーブル枯渇の証明にならない |
 | 補助シグナル | `dmesg`の`nf_conntrack: table full`、`nf_conntrack_count`／`nf_conntrack_max`の比率 |
 | 調整経路 | **`kube-proxy-config` ConfigMapの`conntrack.maxPerCore`／`conntrack.min`**（EKSでは優先される） |
 | コスト | エントリーごとにノードメモリを使用。無制限に引き上げられない |

@@ -1,7 +1,7 @@
 # ゾーン単位のクラスター運用：トラフィック切り替え、アップグレードのロールバック、データ層の AZ アフィニティ
 
-> **レビュー基準**: EKS のロールバックと ARC のドキュメント、Strimzi 1.2.0、Valkey GLIDE 2.5.2、AWS Advanced JDBC Wrapper 4.4.0
-> **最終レビュー**: September 11, 2026。設定例は確認しましたが、稼働中クラスターの切り替えや障害実験は実施していません。
+> **レビュー基準**: EKS のロールバックと ARC のドキュメント、Strimzi 1.3.0、Valkey GLIDE 2.5.2、AWS Advanced JDBC Wrapper 4.4.0
+> **最終レビュー**: 2026年10月16日。設定例は確認しましたが、稼働中クラスターの切り替えや障害実験は実施していません。
 
 < [前へ：Tekton Pipelines](14-tekton-pipelines.md) | [目次](./README.md) | [次へ：トラブルシューティングプレイブック](16-troubleshooting-playbook.md) >
 
@@ -97,13 +97,13 @@ Route 53 の加重レコードが選択するのは**LB の DNS エンドポイ�
 
 **計画的な切り替えと障害対応：** 重みの変更は計画的な移行を支援しますが、自動障害検出は提供しません。[ARC zonal shift](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html)はオペレーターが開始します。**Zonal autoshift** には、別途の有効化、練習、アラーム設定が必要です。EKS リソースのシフトは、そのクラスター内で障害 AZ のエンドポイント／ノードの扱いを変更しますが、別のクラスターのターゲットグループの重みを書き換えるわけではありません。LB リソースのシフトも別途計画してください。
 
-> **EKS Auto Mode のサポート：** [July 2026 のリリース](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)以降、クラスターの zonal shift を有効にすると、シフト中の障害 AZ で Auto Mode が新規プロビジョニングと自発的な中断を制限できます。これだけでは autoshift は有効になりません。**ワーカーが存在する唯一の AZ からシフトすると、サービス停止を引き起こす可能性があります。** EKS のシフトには、正常な AZ のレプリカ、CoreDNS、余剰容量が必要です。ワーカーが一つの AZ にあるセルでは、復旧の一部としてセル外部のルーティングが必要です。
+> **EKS Auto Mode のサポート：** [2026年7月のリリース](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)以降、クラスターの zonal shift を有効にすると、シフト中の障害 AZ で Auto Mode が新規プロビジョニングと自発的な中断を制限できます。これだけでは autoshift は有効になりません。**ワーカーが存在する唯一の AZ からシフトすると、サービス停止を引き起こす可能性があります。** EKS のシフトには、正常な AZ のレプリカ、CoreDNS、余剰容量が必要です。ワーカーが一つの AZ にあるセルでは、復旧の一部としてセル外部のルーティングが必要です。
 
 ***
 
 ## アップグレード：インプレース更新とネイティブロールバックの条件 {#upgrades-conditions-for-in-place-and-native-rollback}
 
-July 2026 に導入された [EKS のネイティブバージョンロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)は、**アップグレード完了後七日以内に開始した場合、直前のマイナーバージョンに戻せます**。七日間は利用資格の期間であり、復旧時間の保証ではありません。作成時のバージョン、サポート状態、その後のアップグレード、機能の互換性、Rollback Readiness Insights を確認してください。
+2026年7月に導入された [EKS のネイティブバージョンロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)は、**アップグレード完了後七日以内に開始した場合、直前のマイナーバージョンに戻せます**。七日間は利用資格の期間であり、復旧時間の保証ではありません。作成時のバージョン、サポート状態、その後のアップグレード、機能の互換性、Rollback Readiness Insights を確認してください。
 
 - **Auto Mode：** EKS は Auto Mode ノードを先に、その後コントロールプレーンをロールバックします。PDB と NodePool の中断予算は引き続き適用されます。ロールバックは即時ではありません。
 - **マネージドノードグループ：** `UpdateNodegroupVersion` で別途ロールバックします。セルフマネージドノードと Hybrid ノードはオペレーターが別途準備します。ノードはコントロールプレーンより新しいバージョンで動作してはいけません。
@@ -149,7 +149,7 @@ Kafka 2.4 で導入された [KIP-392](https://cwiki.apache.org/confluence/displ
 
 - **ブローカー：** `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` と `broker.rack` を設定します。
 - **コンシューマー：** `client.rack` にコンシューマーのラックを設定します。適切なローカルレプリカがない場合は、リーダーにフォールバックします。
-- **Strimzi 1.2.0：** 以下は**既存の Kafka CR にマージする設定抜粋**であり、完全なデプロイではありません。KafkaNodePool、リスナー、ストレージ、その他の設定も必要です。Strimzi 1.0 以降、CR API は `v1` です。ラックの種類も指定してください。
+- **Strimzi 1.3.0：** 以下は**既存の Kafka CR にマージする設定抜粋**であり、完全なデプロイではありません。KafkaNodePool、リスナー、ストレージ、その他の設定も必要です。Strimzi 1.0 以降、CR API は `v1` です。ラックの種類も指定してください。
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1
@@ -165,7 +165,7 @@ spec:
       replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
 ```
 
-これによりブローカーの `broker.rack` が設定されます。通常のアプリケーションコンシューマーの `client.rack` は別途設定してください。KafkaConnect、MirrorMaker 2、Bridge には、それぞれ CR のラック設定があります。[Strimzi ドキュメント](https://strimzi.io/docs/operators/1.2.0/configuring.html)に従ってブローカーの配置も分散させてください。フォロワーからの読み取りは、レプリケーション遅延によって読み取りレイテンシーが増加することがあります。
+これによりブローカーの `broker.rack` が設定されます。通常のアプリケーションコンシューマーの `client.rack` は別途設定してください。KafkaConnect、MirrorMaker 2、Bridge には、それぞれ CR のラック設定があります。[Strimzi ドキュメント](https://strimzi.io/docs/operators/1.3.0/configuring.html)に従ってブローカーの配置も分散させてください。フォロワーからの読み取りは、レプリケーション遅延によって読み取りレイテンシーが増加することがあります。
 
 [KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers)はラックを考慮したパーティション割り当てに関するもので、別の仕組みです。コンシューマーのバージョンと assignor のサポートを確認してください。デプロイ方法は [EKS 上の Kafka](../data-on-eks/kafka/README.md)を参照してください。
 
@@ -220,7 +220,7 @@ Aurora の[デフォルトのリーダーエンドポイント](https://docs.aws
 
 2. **AWS Advanced JDBC Wrapper 4.4.0：** [`fastestResponse`](https://github.com/aws/aws-advanced-jdbc-wrapper/blob/4.4.0/docs/using-the-jdbc-driver/HostSelectionStrategies.md)は測定した応答時間でホストを選択します。`fastestResponseStrategy` プラグインも読み込んでください。これは AZ ラベルによる制約ではなく、最速のホストがローカルである保証はありません。
 
-[Issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139)は、2.5.5 の応答時間機能が要望を満たすという議論を経て、**May 2025 にクローズ**されました。カスタムエンドポイントだけが解決策であることを示す未解決の機能要求ではありません。
+[Issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139)は、2.5.5 の応答時間機能が要望を満たすという議論を経て、**2025年5月にクローズ**されました。カスタムエンドポイントだけが解決策であることを示す未解決の機能要求ではありません。
 
 ### 補完的な Kubernetes Service 層の選択肢
 

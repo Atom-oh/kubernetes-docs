@@ -1,7 +1,7 @@
 # ArgoCD のインストール
 
-> **レビュー基準**: Argo CD 3.5.2 / Helm Chart 10.8.4。リリースノートのレビュー後、manifest と CLI のピンをパッチ 3.5.4 に更新しました（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **レビュー基準**: Argo CD 3.5.2 / Helm Chart 10.8.4。リリースノートのレビュー後、マニフェストとCLIのピンをパッチ3.5.5に更新しました（例は再実行していません）
+> **最終更新日**: 2026年10月16日
 
 ## 目次
 - [前提条件](#prerequisites)
@@ -13,7 +13,7 @@
 - [宣言的セットアップ](#declarative-setup)
 - [ArgoCD のアップグレード](#upgrading-argocd)
 
-## 前提条件
+## 前提条件 {#prerequisites}
 
 これはセルフマネージド型のインストールガイドです。EKS managed Argo CD では機能作成、認可、設定が分離されているため、そこにセルフマネージド型のインストールを重ねないでください。[概要の互換性表](README.md)および EKS のサポート期間を確認してください。Chart の最小 kubeVersion は、テスト済みまたはサポート対象である保証ではありません。
 
@@ -27,7 +27,7 @@ kubectl auth can-i create customresourcedefinitions.apiextensions.k8s.io
 kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 ```
 
-## インストール方法
+## インストール方法 {#installation-methods}
 
 インストールの管理者として manifests、Helm、Kustomize のいずれか 1 つを選択してください。以下の非 HA/HA コマンドは順番に実行する手順ではなく、代替手段です。カスタム namespace では、ClusterRoleBindings の ServiceAccount subject も更新する必要があります。
 
@@ -40,7 +40,7 @@ kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 kubectl create namespace argocd
 
 # Install ArgoCD (non-HA)
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 ```
 
@@ -48,7 +48,7 @@ kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argop
 
 ```bash
 # Install HA manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/ha/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml
 ```
 
 ### 方法 2: Helm Chart（本番環境に推奨）
@@ -72,7 +72,7 @@ helm install argocd argo/argo-cd --version 10.8.4 \
   --values values.yaml
 ```
 
-Chart 10.8.4 は、manifest の例でピン留めした 3.5.4 パッチではなく Argo CD v3.5.2（その `appVersion`）を deploy するため、3.5.4 のセキュリティ修正を含みません。Argo CD 3.5.4 が最初に提供されるのは chart 10.9.7 ですが、これはこのガイドでレビューしていない chart のマイナーアップデートです。ピンを変更する前に chart の changelog を読んでください。
+Chart 10.8.4 は、マニフェスト例で指定した 3.5.5 パッチではなく Argo CD v3.5.2（その `appVersion`）をデプロイするため、3.5.5 のセキュリティ修正を含みません。Argo CD 3.5.5 が初めて含まれるのは chart 10.10.3 ですが、これはこのガイドでレビューしていない chart のマイナーアップデートです。バージョン指定を変更する前に chart の changelog を確認してください。
 
 本番環境用の `values.yaml` の例:
 
@@ -160,7 +160,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 patches:
   - patch: |-
@@ -190,7 +190,7 @@ configMapGenerator:
 kubectl apply --server-side -k .
 ```
 
-## CLI のインストール
+## CLI のインストール {#cli-installation}
 
 ### Linux / macOS
 
@@ -199,7 +199,7 @@ kubectl apply --server-side -k .
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-ARGOCD_VERSION=v3.5.4
+ARGOCD_VERSION=v3.5.5
 case "$(uname -s)" in
   Linux) ARGOCD_OS=linux ;;
   Darwin) ARGOCD_OS=darwin ;;
@@ -232,7 +232,7 @@ argocd version --client
 
 ### Windows
 
-v3.5.4 リリースから `argocd-windows-amd64.exe` と `cli_checksums.txt` をダウンロードしてください。`Get-FileHash -Algorithm SHA256` を対応する checksum エントリと比較してください。System32 をデフォルトとして使用せず、ユーザーが所有する directory にインストールしてユーザー PATH に追加してください。
+v3.5.5 リリースから `argocd-windows-amd64.exe` と `cli_checksums.txt` をダウンロードしてください。`Get-FileHash -Algorithm SHA256` を対応する checksum エントリと比較してください。System32 をデフォルトとして使用せず、ユーザーが所有する directory にインストールしてユーザー PATH に追加してください。
 
 ### 補完
 
@@ -243,7 +243,7 @@ source <(argocd completion bash)
 # source <(argocd completion zsh)
 ```
 
-## 初期アクセス
+## 初期アクセス {#initial-access}
 
 ### オプション 1: Port Forwarding（開発環境）
 
@@ -289,7 +289,7 @@ argocd account update-password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
-## 高可用性のセットアップ
+## 高可用性のセットアップ {#high-availability-setup}
 
 ### HA アーキテクチャ
 
@@ -306,7 +306,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 - PDB は任意の eviction を制限しますが、node 障害やすべての rollout を対象とするものではありません。分散、readiness、dependency、reconciliation の復旧をテストしてください。
 - 実際の manifest-generation/memory 負荷に基づいて Repo Server の concurrency、HPA、CPU limit を調整してください。「100 apps は 2 shard」という普遍的な閾値はありません。
 
-## Amazon EKS 上の ArgoCD
+## Amazon EKS 上の ArgoCD {#argocd-on-amazon-eks}
 
 ### ALB と TLS
 
@@ -393,7 +393,7 @@ argocd cluster list
 
 命令的な `argocd cluster add` は kubeconfig context 名を受け取ります。EKS のデフォルト context は ARN の場合がありますが、これは任意の ARN を受け付ける AWS API ではありません。target ServiceAccount/RBAC object を作成する場合があるため、必要な namespace と権限に scope を限定してください。
 
-## 宣言的セットアップ
+## 宣言的セットアップ {#declarative-setup}
 
 Helm では values 内の `configs.cm`/`configs.params` を管理してください。manifest では、以下の必須 key を既存の設定に merge してください。Helm と別の kubectl 管理者が同じ field を競合して管理しないようにしてください。
 
@@ -472,7 +472,7 @@ kubectl -n argocd label secret github-app-creds \
   argocd.argoproj.io/secret-type=repo-creds
 ```
 
-## ArgoCD のアップグレード
+## ArgoCD のアップグレード {#upgrading-argocd}
 
 ### アップグレード前のチェックリスト
 
@@ -492,7 +492,7 @@ kubectl -n argocd label secret github-app-creds \
 
 ```bash
 # Apply new version manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 # Wait for rollout
 kubectl rollout status deployment argocd-server -n argocd
@@ -565,9 +565,9 @@ kubectl get secret -n argocd "$ARGOCD_TLS_SECRET" -o jsonpath='{.data.tls\.crt}'
 
 ### 参照ソース
 
-- [Argo CD 3.5.4 のインストール](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/installation.md)
-- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
-- [EKS と repository のセットアップ](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/declarative-setup.md)
-- [Ingress と gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/ingress.md)
+- [Argo CD 3.5.5 のインストール](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/installation.md)
+- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)
+- [EKS と repository のセットアップ](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/declarative-setup.md)
+- [Ingress と gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/ingress.md)
 - [Chart 10.8.4](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.8.4)
 - [Ingress NGINX の廃止](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

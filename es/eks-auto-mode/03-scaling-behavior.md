@@ -1,25 +1,25 @@
 # Comprender el comportamiento de escalado
 
 > **Versiones compatibles**: EKS Auto Mode GA; referencia de ejemplo EKS 1.36
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Este capítulo separa el aprovisionamiento, la consolidación, la deriva y la expiración. Use la cuenta/el contexto revisado de [Primeros pasos](./01-getting-started.md). Los manifiestos suponen un NodeClass `default` configurado y usan capacidad On-Demand para centrarse en el comportamiento del ciclo de vida. Los límites son ilustrativos y aun así pueden permitir un costo considerable.
+Este capítulo separa el aprovisionamiento, la consolidación, la deriva y la expiración. Use la cuenta y el contexto ya revisados en [Primeros pasos](./01-getting-started.md). Los manifiestos suponen un NodeClass `default` configurado y usan capacidad On-Demand para centrarse en el comportamiento del ciclo de vida. Los límites son ilustrativos y aun así pueden permitir un costo considerable.
 
-No se ejecutó ningún benchmark de clúster, carga de trabajo o latencia durante esta auditoría. Las configuraciones y transformaciones de diagnóstico se comprobaron localmente; valide el comportamiento de admisión, IAM, programación e interrupción en un entorno controlado antes de producción.
+Durante esta auditoría no se hicieron pruebas de rendimiento con un clúster ni con cargas de trabajo, ni se midió la latencia. Las configuraciones y transformaciones de diagnóstico se comprobaron localmente; valide el comportamiento de admisión, IAM, programación e interrupciones en un entorno controlado antes de llevarlas a producción.
 
-## De un Pod no programable a capacidad
+## De un Pod que no se puede programar a capacidad
 
-Auto Mode observa los Pods que el scheduler no puede ubicar en la capacidad existente. Deben existir un NodePool/NodeClass adecuado, restricciones compatibles, cuota disponible y capacidad EC2 antes de que el aprovisionamiento pueda tener éxito. Las solicitudes, afinidad, taints, topología, ubicación de volúmenes y arquitectura son factores importantes. HPA/KEDA u otro controlador de aplicación es responsable de aumentar las réplicas; la automatización de Nodes no es un autoscaler de utilización de CPU de aplicaciones.
+Auto Mode observa los Pods que el planificador no puede ubicar en la capacidad existente. Para que el aprovisionamiento tenga éxito, deben existir un NodePool/NodeClass adecuado, restricciones compatibles, cuota disponible y capacidad EC2. También influyen las solicitudes de recursos, la afinidad, los taints, la topología, la ubicación de volúmenes y la arquitectura. HPA/KEDA u otro controlador de aplicación se encarga de aumentar las réplicas; la automatización de nodos no escala las aplicaciones según su utilización de CPU.
 
-`Pending` por sí solo no demuestra una escasez de Nodes. Un Pod ya puede estar asignado a un Node mientras espera imágenes o inicialización. El diagrama muestra una ruta de capacidad exitosa y omite las ramas de error; una selección de instancias compatibles no constituye un óptimo global ni una garantía de tiempo de preparación. `Running` tampoco significa que la aplicación esté lista.
+`Pending` por sí solo no demuestra una escasez de nodos. Un Pod puede estar asignado a un nodo y seguir esperando las imágenes o la inicialización. El diagrama muestra una ruta de aprovisionamiento exitosa y omite las ramas de error; elegir una instancia compatible no garantiza el óptimo global ni cuándo estará listo el nodo. `Running` tampoco significa que la aplicación esté lista.
 
-![Ruta conceptual de aprovisionamiento exitoso para un Pod programable en nueva capacidad; la compatibilidad del NodePool y la capacidad disponible son requisitos previos.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-0.png)
+![Ruta conceptual de aprovisionamiento exitoso para un Pod que puede planificarse en capacidad nueva; la compatibilidad del NodePool y la capacidad disponible son requisitos previos.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-auto-mode-03-scaling-behavior-0.html)
 
-### Estimaciones didácticas históricas
+### Estimaciones históricas con fines didácticos
 
-La guía anterior publicó los siguientes números sin observaciones sin procesar ni un benchmark reproducible. Se conservan como **estimaciones históricas no verificadas**, no como tiempos medidos con EKS 1.36 ni como un SLO de AWS. Las definiciones de las etapas pueden superponerse; no las sume como si fueran una traza medida.
+La guía anterior publicó estas cifras sin datos en bruto ni una prueba de rendimiento reproducible. Se conservan como **estimaciones históricas no verificadas**, no como tiempos medidos con EKS 1.36 ni como un SLO de AWS. Las definiciones de las etapas pueden superponerse; no las sume como si fueran una traza medida.
 
 | Fase en la ilustración anterior | Duración publicada |
 |---------------------------------|--------------------|
@@ -33,13 +33,13 @@ La guía anterior publicó los siguientes números sin observaciones sin procesa
 
 ## Consolidación: elegibilidad, no una garantía de temporizador
 
-La consolidación busca una eliminación o sustitución que ahorre costos y siga siendo programable. No la modele como un umbral fijo y medido de utilización de CPU o memoria: las solicitudes de recursos y las restricciones de ubicación son importantes. Los PDB, presupuestos de interrupción, anotaciones, capacidad de sustitución y el progreso del drenaje pueden impedir o retrasar una acción.
+La consolidación busca eliminar o sustituir nodos para ahorrar costos y mantener la capacidad de programar las cargas. No la modele como un umbral fijo y medido de utilización de CPU o memoria: las solicitudes de recursos y las restricciones de ubicación son importantes. Los PDB, los presupuestos de interrupción, las anotaciones, la capacidad de sustitución y el progreso del drenaje pueden impedir o retrasar una acción.
 
 `consolidateAfter` es un retraso de estabilidad/elegibilidad. Las adiciones/eliminaciones de Pods reinician el temporizador. Un valor de 30 segundos no promete la eliminación 30 segundos después, ni limita el tiempo de preparación de la sustitución.
 
 ### WhenEmpty
 
-Esta política considera Nodes vacíos elegibles. «Vacío» no implica necesariamente cero Pods en `kubectl get pods`: los Nodes que solo ejecutan DaemonSet pueden cumplir los requisitos. Es conservadora para la consolidación, pero no deshabilita otros motivos de interrupción como la deriva, la expiración o la interrupción de Spot.
+Esta política considera los nodos vacíos aptos para consolidación. «Vacío» no implica necesariamente cero Pods en `kubectl get pods`: los nodos que solo ejecutan Pods de DaemonSet pueden considerarse vacíos para este fin. Es conservadora para la consolidación, pero no deshabilita otros motivos de interrupción como la deriva, la expiración o la interrupción de Spot.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -75,7 +75,7 @@ spec:
 
 ### WhenEmptyOrUnderutilized
 
-Esto permite la consolidación de Nodes no vacíos cuando sus cargas de trabajo pueden reempaquetarse de forma más económica bajo las restricciones pertinentes. Puede eliminar Nodes usando capacidad libre existente o sustituir Nodes por capacidad más económica; no siempre es necesario un Node nuevo.
+Esto permite consolidar nodos no vacíos cuando sus cargas de trabajo pueden reubicarse a menor costo dentro de las restricciones aplicables. Puede eliminar nodos al usar capacidad libre existente o sustituirlos por capacidad más económica; no siempre hace falta crear un nodo nuevo.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -147,15 +147,15 @@ spec:
 
 ### Interpretar un diagrama de empaquetado
 
-![Consolidación ilustrativa de cargas de trabajo de tres Nodes de igual capacidad en uno; los porcentajes no son mediciones ni umbrales de utilización.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-1.png)
+![Consolidación ilustrativa de cargas de trabajo de tres nodos de igual capacidad en uno; los porcentajes no son mediciones ni umbrales de utilización.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-auto-mode-03-scaling-behavior-1.html)
 
-El 20/15/10 % de CPU y el 30/25/20 % de memoria de la figura suman 45 % y 75 % en Nodes de igual capacidad. Estos son valores de empaquetado ilustrativos, no datos medidos para un umbral de consolidación universal. La ubicación real también debe satisfacer requisitos de solicitudes, topología, almacenamiento y disponibilidad. Los Pods son expulsados y recreados por los controladores de carga de trabajo; no se migran en vivo.
+El 20/15/10 % de CPU y el 30/25/20 % de memoria de la figura suman 45 % y 75 % en nodos de igual capacidad. Estos son valores de empaquetado ilustrativos, no datos medidos para un umbral de consolidación universal. La ubicación real también debe satisfacer requisitos de solicitudes, topología, almacenamiento y disponibilidad. Los Pods son expulsados y recreados por los controladores de carga de trabajo; no se migran en vivo.
 
 ## Detección y sustitución de deriva
 
-La deriva significa que un NodeClaim ya no coincide con la configuración deseada o resuelta relevante. Inspeccione su condición `Drifted`; la antigua consulta de anotación de Node `karpenter.sh/drift-hash` no era una comprobación válida del estado público de deriva. Una condición ausente se informa a continuación como `NotReported`, no se inventa como un resultado falso definitivo.
+La deriva significa que un NodeClaim ya no coincide con la configuración deseada o resuelta pertinente. Inspeccione su condición `Drifted`; la antigua consulta de la anotación del nodo `karpenter.sh/drift-hash` no era una comprobación válida del estado público de deriva. Una condición ausente se informa a continuación como `NotReported`, no se inventa como un resultado falso definitivo.
 
 ```bash
 kubectl --context "$CLUSTER_NAME" --request-timeout=15s get nodeclaims -o json |
@@ -175,17 +175,17 @@ kubectl --context "$CLUSTER_NAME" --request-timeout=15s get nodeclaims -o json |
 | Los requisitos se amplían pero aún permiten la instancia | No causa necesariamente deriva |
 | Se modifican configuraciones relevantes de NodeClass o selecciones resueltas de subred/grupo de seguridad | Puede causar deriva; inspeccione las condiciones reales |
 | AWS selecciona una nueva AMI administrada de Auto Mode | Puede causar sustitución; los usuarios no eligen un `amiFamily` |
-| Edición de reglas en un grupo de seguridad ya referenciado | No equivale a seleccionar un grupo diferente; no suponga que siempre causa deriva de Node |
-| Peso, límites o comportamiento de interrupción de NodePool | No son deriva de plantilla de Node por sí mismos; pueden cambiar qué acciones están permitidas |
+| Edición de reglas en un grupo de seguridad ya referenciado | No equivale a seleccionar un grupo diferente; no suponga que siempre causa deriva de nodo |
+| Peso, límites o comportamiento de interrupción de NodePool | No son deriva de plantilla de nodo por sí mismos; pueden cambiar qué acciones están permitidas |
 | Cambios en `expireAfter` o `terminationGracePeriod` | Los campos existentes de NodeClaim no se reescriben; las sustituciones obtienen los nuevos valores |
 
-Una ruta gradual típica comprueba presupuestos y la viabilidad de programación, evita nuevas ubicaciones en los Nodes seleccionados, prepara capacidad de sustitución **si es necesario** y luego expulsa/drena y termina los Nodes antiguos. La capacidad de sustitución puede solaparse con la capacidad antigua e incurrir en costos. El paralelismo está limitado por los presupuestos; la sustitución no es necesariamente secuencial. Las rutas de interrupción/expiración forzosa no deben describirse como si siempre esperaran primero una sustitución en buen estado.
+Una ruta gradual típica comprueba los presupuestos y la viabilidad de programación, impide nuevas asignaciones en los nodos seleccionados, prepara capacidad de sustitución **si es necesario** y luego expulsa, drena y termina los nodos anteriores. La capacidad de sustitución puede solaparse con la capacidad antigua e incurrir en costos. El paralelismo está limitado por los presupuestos; la sustitución no es necesariamente secuencial. Las rutas de interrupción/expiración forzosa no deben describirse como si siempre esperaran primero una sustitución en buen estado.
 
 ## Expiración y período de gracia de terminación
 
-AWS documenta una duración máxima de 21 días para los Nodes de Auto Mode. La expiración predeterminada es de 336 horas y Auto Mode configura de forma predeterminada `terminationGracePeriod` en 24 horas en NodeClaims cuando se omite de un NodePool personalizado. No importe el valor predeterminado genérico upstream de 720 horas como recomendación para Auto Mode.
+AWS documenta una vida útil máxima de 21 días para los nodos de Auto Mode. La expiración predeterminada es de 336 horas y Auto Mode configura de forma predeterminada `terminationGracePeriod` en 24 horas en NodeClaims cuando se omite de un NodePool personalizado. No use el valor predeterminado genérico de 720 horas del proyecto upstream como recomendación para Auto Mode.
 
-Lo siguiente solicita la expiración después de 168 horas con un período de gracia explícito. La expiración inicia el drenaje; no promete una sustitución en buen estado exactamente siete días después. Los Nodes pueden interrumpirse antes por otros motivos.
+La configuración siguiente solicita que el nodo expire después de 168 horas y especifica un período de gracia. La expiración inicia el drenaje; no promete una sustitución en buen estado exactamente siete días después. Los nodos pueden interrumpirse antes por otros motivos.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -226,11 +226,11 @@ spec:
 | 24–72 horas | Política opcional de corta duración, con más rotación; no prueba que exista un nuevo parche en cada ciclo |
 | 168 horas | El ejemplo de siete días anterior; evalúe la disponibilidad y la sobrecarga de sustitución |
 | 336 horas | Expiración predeterminada documentada de Auto Mode |
-| 720 horas / 30 días | Supera el máximo documentado de 21 días de Auto Mode; no lo use como promesa de reutilización de Nodes |
+| 720 horas / 30 días | Supera el máximo documentado de 21 días de Auto Mode; no lo use como promesa de reutilización de nodos |
 
 Los presupuestos de interrupción de NodePool limitan la tasa de los métodos graduales; no son un escudo universal contra la expiración, la interrupción o la reparación. Los PDB y `do-not-disrupt` afectan las decisiones de drenaje/interrupción, pero no garantizan una retención indefinida. Tras un período de gracia de terminación configurado, los Pods restantes pueden eliminarse de forma forzosa. Elija políticas que consideren cargas de trabajo con estado, la desconexión de almacenamiento, los períodos de gracia de la aplicación y los escenarios de fallo.
 
-## Diagnosticar la latencia sin inventar un benchmark
+## Diagnosticar la latencia sin inventar mediciones
 
 Los siguientes comandos capturan metadatos y estado seleccionados, no especificaciones completas de Pods. Mantenga las evidencias privadas. La última transición de condición de una instantánea puede reflejar una transición posterior o una oscilación, no el primer hito de inicio.
 
@@ -262,7 +262,7 @@ kubectl --context "$CLUSTER_NAME" --request-timeout=15s -n "$WORKLOAD_NAMESPACE"
          {type, status, reason, lastTransitionTime}]}' > "$WORK_DIR/pod-summary.json"
 ```
 
-Para un benchmark real, inicie una observación controlada al crear la carga de trabajo, correlacione los UID de los objetos y las asignaciones de NodeClaim/Node, y registre por separado la primera programación, la preparación del Node y la preparación de la aplicación. Incluya intentos fallidos/timeouts y el entorno, las imágenes y la configuración de la carga de trabajo. Los datos de instantáneas y los eventos de Kubernetes conservados por sí solos no pueden establecer una distribución de latencia completa.
+Para una medición real, inicie una observación controlada al crear la carga de trabajo, correlacione los UID de los objetos y las asignaciones de NodeClaim/nodo, y registre por separado la primera programación, la preparación del nodo y la preparación de la aplicación. Incluya los intentos fallidos, los tiempos de espera agotados, el entorno, las imágenes y la configuración de la carga de trabajo. Los datos de instantáneas y los eventos de Kubernetes conservados por sí solos no pueden establecer una distribución de latencia completa.
 
 ### Ajuste de almacenamiento compatible
 
@@ -295,7 +295,7 @@ Opciones más amplias de instancias/AZ compatibles pueden mejorar las opciones d
 
 ## Observar las señales adecuadas
 
-Inspeccione los Pods explícitamente informados como no programables, en lugar de tratar cada Pod Pending como una solicitud de capacidad:
+Inspeccione los Pods que se informan explícitamente como imposibles de programar; no trate cada Pod Pending como una solicitud de capacidad:
 
 ```bash
 kubectl --context "$CLUSTER_NAME" --request-timeout=15s \
@@ -320,31 +320,31 @@ kubectl --context "$CLUSTER_NAME" --request-timeout=15s \
 
 | Señal | Consideración de evidencia y diseño de alertas |
 |--------|----------------------------------------|
-| Pods no programables sostenidos | Condiciones de Kubernetes más un recopilador configurado; el umbral anterior de >10 durante 5 minutos era solo un ejemplo |
-| Tasa de creación/error de NodeClaim | Eventos/logs duraderos o instrumentación; una instantánea de objetos actuales omite intentos eliminados |
+| Pods que permanecen sin poder planificarse | Condiciones de Kubernetes más un recopilador configurado; el umbral anterior de >10 durante 5 minutos era solo un ejemplo |
+| Tasa de creación/error de NodeClaim | eventos y registros duraderos, o instrumentación; una instantánea de objetos actuales omite intentos eliminados |
 | Latencia de aprovisionamiento/aplicación | Observaciones correlacionadas que incluyen fallos; el umbral anterior de p99 >120 segundos no era un SLO de AWS |
 | Recursos del pool próximos a los límites | Estado de NodePool, comprobaciones de cuota y capacidad; diferencie los recursos solicitados/reservados de la utilización real |
 
 No suponga que los nombres de tabla `karpenter_*` anteriores son métricas integradas de CloudWatch para Auto Mode. Las métricas de Prometheus de Karpenter autogestionado, las métricas del plano de control de EKS y sus propios recopiladores son interfaces independientes; seleccione los nombres y dimensiones de las métricas del publicador configurado real.
 
-### Logs de componentes administrados por AWS
+### Registros de componentes administrados por AWS
 
-Auto Mode expone logs de componentes administrados mediante la entrega de CloudWatch Vended Logs. Esto se configura por separado del logging ordinario del plano de control de EKS:
+Auto Mode expone registros de componentes administrados mediante el servicio CloudWatch Vended Logs. Esto se configura por separado del registro ordinario del plano de control de EKS:
 
 - `AUTO_MODE_COMPUTE_LOGS` para decisiones de Karpenter administrado
 - `AUTO_MODE_BLOCK_STORAGE_LOGS`
 - `AUTO_MODE_LOAD_BALANCING_LOGS`
 - `AUTO_MODE_IPAM_LOGS`
 
-La configuración documentada usa una fuente de entrega, un destino de entrega y una entrega. Revise los permisos de destino y los cargos de entrega/almacenamiento antes de habilitarla. Los logs de auditoría existentes del plano de control también pueden mostrar eventos de Kubernetes como `DisruptionBlocked`, `Unconsolidatable`, `FailedScheduling`, `NodeClassNotReady` y errores de terminación; use la referencia de solución de problemas de AWS y un intervalo de tiempo acotado. Estos son eventos de diagnóstico, no automáticamente un histograma de latencia publicado.
+La configuración documentada usa una fuente de entrega, un destino de entrega y una entrega. Revise los permisos de destino y los cargos de entrega/almacenamiento antes de habilitarla. Los registros de auditoría existentes del plano de control también pueden mostrar eventos de Kubernetes como `DisruptionBlocked`, `Unconsolidatable`, `FailedScheduling`, `NodeClassNotReady` y errores de terminación; use la referencia de solución de problemas de AWS y un intervalo de tiempo acotado. Estos son eventos de diagnóstico, no automáticamente un histograma de latencia publicado.
 
 ## Referencias
 
-- [Comportamiento de EKS Auto Mode y duración máxima de Node](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
+- [Comportamiento de EKS Auto Mode y duración máxima de nodo](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
 - [Políticas de NodePool y período de gracia de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
 - [Interrupción y deriva de Karpenter v1.14](https://karpenter.sh/v1.14/concepts/disruption/)
 - [Campos de NodeClass de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html)
 - [Solución de problemas de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)
-- [Entrega de logs de componentes administrados por AWS](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
+- [Entrega de registros de componentes administrados por AWS](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
 
 < [Anterior: Configuración de NodePool](./02-nodepool-configuration.md) | [Tabla de contenidos](./README.md) | [Siguiente: Estrategias de Spot](./04-spot-strategies.md) >
