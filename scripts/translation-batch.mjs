@@ -366,14 +366,41 @@ export function publishBatch(root, { draft = true } = {}) {
       const args = ['pr', 'create', '--base', 'main', '--head', batchBranch, '--title',
         'docs: sync GitBook translations (cn/jp/es)', '--label', 'automated-translation', '--body-file', body]
       if (draft) args.push('--draft')
-      gh(root, ...args)
-      number = openBatches(root).find(pr => pr.headRefName === batchBranch).number
+      // Search/list indexes can lag behind PR creation; use its returned URL.
+      const created = gh(root, ...args).match(/\/pull\/(\d+)\s*$/)
+      if (!created) throw new Error('PR created but its number could not be parsed')
+      number = Number(created[1])
     }
   } finally { fs.rmSync(directory, { recursive: true, force: true }) }
   // Close only same-repository legacy automation PRs after their changes/queue
   // have been persisted in the replacement branch. Never delete their branches.
   for (const pr of prior.filter(pr => legacyBranch.test(pr.headRefName))) gh(root, 'pr', 'close', String(pr.number))
   return number
+}
+
+export function checkpointBatch(root) {
+  run(root, 'git', ['fetch', 'origin', 'main'])
+  refreshBatch(root)
+  publishBatch(root, { draft: true })
+  const snapshot = git(root, 'rev-parse', 'HEAD')
+  run(root, 'git', ['checkout', '--detach', 'origin/main'])
+  // Keep the complete pending diff visible for the next chunk and final review.
+  prepareBatch(root, { refs: [snapshot] })
+}
+
+function syncNewNavigation(root, pairs) {
+  const sections = new Map()
+  for (const [src, file, lang] of pairs) {
+    if (!current(root, file)) continue
+    const parts = src.split('/')
+    const section = ['labs', 'quizzes'].includes(parts[1]) ? parts[2] : parts[1]
+    if (!/^[a-z0-9-]+$/.test(section)) continue
+    if (!sections.has(section)) sections.set(section, new Set())
+    sections.get(section).add(lang)
+  }
+  for (const [section, langs] of sections) {
+    for (const lang of langs) run(root, 'python3', ['scripts/sync-nav.py', section, lang])
+  }
 }
 
 async function main() {
@@ -403,12 +430,7 @@ async function main() {
     })
     fs.writeFileSync(pairsPath, pairs.map(pair => pair.join(' ')).join('\n') + (pairs.length ? '\n' : ''))
     if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `pair_count=${pairs.length}\n`)
-    publishBatch(root, { draft: true })
-    // Publishing the queued snapshot creates a commit; restore its pending diff
-    // over main so the final review includes carried-over, not only new, work.
-    const snapshot = git(root, 'rev-parse', 'HEAD')
-    run(root, 'git', ['checkout', '--detach', 'origin/main'])
-    prepareBatch(root, { refs: [snapshot] })
+    checkpointBatch(root)
     console.log(`Translation batch prepared: ${pairs.length} targets`)
   } else if (command === 'record') {
     const pairs = fs.readFileSync(pairsPath, 'utf8').trim().split('\n').filter(Boolean).map(line => line.split(' '))
@@ -416,7 +438,18 @@ async function main() {
     recordBatch(root, pairs, failures)
   } else if (command === 'translate') {
     const pairs = fs.readFileSync(pairsPath, 'utf8').trim().split('\n').filter(Boolean).map(line => line.split(' '))
-    const failures = await translateBatch(root, pairs)
+    const failures = []
+    // Long queues can exceed runner lifetime. Persist validated results after
+    // each 12 destinations, retaining draft status until the whole diff review.
+    for (let index = 0; index < pairs.length; index += 12) {
+      const chunk = pairs.slice(index, index + 12)
+      const missing = chunk.filter(([, file]) => !current(root, file))
+      failures.push(...await translateBatch(root, chunk))
+      syncNewNavigation(root, missing)
+      run(root, 'node', ['scripts/sync-translated-assets.mjs'])
+      checkpointBatch(root)
+      console.log(`Saved draft progress: ${Math.min(index + 12, pairs.length)}/${pairs.length} targets`)
+    }
     fs.writeFileSync(failuresPath, failures.join('\n') + (failures.length ? '\n' : ''))
   } else if (command === 'refresh') {
     run(root, 'git', ['fetch', 'origin', 'main'])

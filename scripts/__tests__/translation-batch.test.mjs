@@ -5,7 +5,7 @@ import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import { prepareBatch, translateBatch, refreshBatch, publishBatch, statePath, batchBranch } from '../translation-batch.mjs'
+import { prepareBatch, translateBatch, refreshBatch, publishBatch, checkpointBatch, statePath, batchBranch } from '../translation-batch.mjs'
 
 const source = '# Source\n\nA complete paragraph about Kubernetes Pod scheduling and networking.\n'
 const translated = source.replace('Source', 'Translated')
@@ -237,10 +237,10 @@ function remoteAndGh(f) {
 const fs = require('fs'), cp = require('child_process')
 const file = ${JSON.stringify(ghState)}, state = JSON.parse(fs.readFileSync(file)), args = process.argv.slice(2)
 state.calls.push(args)
-if (args[0] === 'pr' && args[1] === 'list') console.log(JSON.stringify(state.prs))
+if (args[0] === 'pr' && args[1] === 'list') console.log(JSON.stringify(state.prs.filter(pr => !state.hideNewFromList || pr.number !== 2)))
 else if (args[0] === 'pr' && args[1] === 'create') {
   state.prs.push({ number: 2, headRefName: ${JSON.stringify(batchBranch)}, isDraft: args.includes('--draft'), isCrossRepository: false, createdAt: '2026-01-02' })
-  console.log('https://example.invalid/pr/2')
+  console.log('https://github.com/Fixture/repo/pull/2')
 } else if (args[0] === 'pr' && args[1] === 'close') {
   if (!state.prs.some(pr => pr.number === 2)) throw Error('closed before replacement PR')
   if (!cp.execFileSync('git', ['ls-remote', 'origin', ${JSON.stringify(batchBranch)}]).length) throw Error('closed before push')
@@ -251,7 +251,12 @@ fs.writeFileSync(file, JSON.stringify(state))
 `, { mode: 0o755 })
   const oldPath = process.env.PATH
   process.env.PATH = `${bin}:${oldPath}`
-  return { remote, state: () => JSON.parse(fs.readFileSync(ghState)), restore: () => { process.env.PATH = oldPath } }
+  return {
+    remote,
+    state: () => JSON.parse(fs.readFileSync(ghState)),
+    update: values => fs.writeFileSync(ghState, JSON.stringify({ ...JSON.parse(fs.readFileSync(ghState)), ...values })),
+    restore: () => { process.env.PATH = oldPath }
+  }
 }
 
 test('publishing persists replacement before closing old PRs and updates the same branch/PR on rerun', t => {
@@ -289,6 +294,37 @@ test('publishing refuses a newly advanced main and never closes legacy PRs', t =
   prepareBatch(f.root)
   assert.throws(() => publishBatch(f.root), /main changed/)
   assert.equal(gh.state().calls.length, 0)
+})
+
+test('PR creation succeeds even while GitHub list search cannot see the new PR', t => {
+  const f = fixture(t)
+  const gh = remoteAndGh(f)
+  t.after(gh.restore)
+  gh.update({ hideNewFromList: true })
+  prepareBatch(f.root)
+  assert.equal(publishBatch(f.root), 2)
+  assert.equal(gh.state().prs[0].number, 2)
+  assert.equal(gh.state().calls.filter(call => call[0] === 'pr' && call[1] === 'list').length, 1)
+})
+
+test('chunk checkpoint preserves completed work and retry queue when the next run resumes', async t => {
+  const f = fixture(t)
+  const gh = remoteAndGh(f)
+  t.after(gh.restore)
+  const pairs = prepareBatch(f.root, { section: 'topic', langs: ['jp', 'es'] })
+  checkpointBatch(f.root)
+  await translateBatch(f.root, [pairs[0]], (src, file) => f.write(file, translated))
+  checkpointBatch(f.root)
+  const saved = f.git('rev-parse', `origin/${batchBranch}`)
+  assert.equal(gh.state().prs[0].isDraft, true)
+  assert.deepEqual(JSON.parse(f.git('show', `${saved}:${statePath}`)).pending, ['jp/topic/page.md'])
+  // A fresh checkout should only translate the unfinished target, while the
+  // final review still sees the completed chunk.
+  f.git('restore', '--worktree', '--', 'cn', 'jp', 'es', '.github/i18n-heading-map.json')
+  fs.rmSync(path.join(f.root, statePath), { force: true })
+  fs.rmSync(path.join(f.root, 'es/topic/page.md'), { force: true })
+  assert.deepEqual(prepareBatch(f.root, { refs: [saved] }), [['en/topic/page.md', 'jp/topic/page.md', 'jp']])
+  assert.equal(f.read('es/topic/page.md'), translated)
 })
 
 test('publishing rejects a translation branch edited since the prepared snapshot', t => {
