@@ -3,7 +3,7 @@
 < [이전: 베어메탈 서버 OS 설치](./09-bare-metal-os-setup.md) | [목차](./README.md) >
 
 > **검토 기준**: Gateway/chart 1.0.2. EKS가 지원하는 Kubernetes 버전과 Gateway 전제 조건을 충족하는 AWS 유지 관리 Cilium 릴리스를 사용합니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 18일
 
 이 문서에서는 EKS Hybrid Nodes Gateway의 아키텍처, 설치, 구성, 운영 방법을 다룹니다. Hybrid Nodes Gateway는 EKS 클러스터 VPC의 Pod와 온프레미스 Hybrid Node의 Pod 간 네트워크 연결을 VXLAN 터널로 자동화하는 오픈소스 솔루션입니다.
 
@@ -45,7 +45,7 @@ EKS Hybrid Nodes Gateway는 **2026년 4월 21일 정식 출시(GA)** 된 오픈�
 | 비용 | Cluster·연결·인프라·운영 비용 | Gateway 소프트웨어 요금 없음. EC2·해당 Auto Mode·전송·storage 등은 별도 |
 | 복잡도 | BGP 구성, 방화벽 규칙, NAT 등 | Helm 차트 하나로 설치 |
 
-> **핵심 가치**: Hybrid Nodes Gateway는 추가 요금 없이 사용 가능한 오픈소스 프로젝트입니다. EC2·해당 Auto Mode 관리 요금·storage·데이터 전송·private 연결·관측성 비용은 별도입니다.
+> **핵심 가치**: Hybrid Nodes Gateway는 추가 요금 없이 사용 가능한 오픈소스 프로젝트입니다. EC2·storage·데이터 전송·private 연결·관측성 비용은 별도이며, Gateway 노드를 Auto Mode로 운영할 때만 해당 노드의 Auto Mode 관리 요금이 더해집니다. Gateway 노드는 Auto Mode와 관리형/자체 관리 노드 그룹 모두 가능합니다.
 
 ---
 
@@ -653,6 +653,31 @@ ALB/NLB IP target과 AMP managed collector의 scraper처럼 VPC에서 Hybrid end
 
 [Hybrid add-on 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html)는 해당 endpoint/네트워크 전제 조건을 충족한 AMP managed collection을 지원합니다. 이 scraper와 자체 관리 remote_write를 구분하며 Gateway 설치만으로 둘 중 어느 것도 자동 구성되지 않습니다.
 
+#### 실측: ALB IP target에 Hybrid Pod 연결 (2026-10-18)
+
+시뮬레이션 환경(온프레미스를 별도 VPC와 TGW로 대체, Gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB)에서 확인한 값입니다. 프로덕션 지원 구성이 아니며 보장값이 아닙니다.
+
+| 검증 | 결과 |
+|---|---|
+| Target 등록 | LBC가 Hybrid Pod IP(`172.17.0.202`, `172.17.0.48`)를 `ip` target으로 등록. VPC 밖 IP라 `AvailabilityZone`은 `all`, health check는 Gateway 경로로 healthy |
+| 호출 | VPC client → internal ALB → VPC route `172.17.0.0/16`(leader ENI) → VXLAN → Hybrid Pod, 20/20 |
+| Pod 교체 | 부하 중 rollout restart, 새 Pod IP로 target이 54초에 수렴, 276건 중 실패 0 (preStop 15초, deregistration delay 10초) |
+| Leader 교체 | 부하 중 leader Pod 삭제, 인계 4초, 191건 중 실패 1 (재시도 없는 client) |
+
+Pod IP가 바뀔 때 target을 갱신하는 주체는 Gateway가 아니라 **AWS Load Balancer Controller**입니다. Gateway는 VPC 밖 Pod IP까지 가는 경로만 제공하므로 Pod CIDR이 VPC에서 라우팅 가능해야 합니다. 설치 중 LBC 3.6.0 chart의 `kind: List`(IngressClassParams와 IngressClass) 객체가 client 측 OpenAPI 검증에서 `the server is currently unable to handle the request`로 실패해 `--disable-openapi-validation`으로 우회했습니다. Health check interval을 5초로 줄이면 timeout도 5초 미만으로 지정해야 target group 생성이 성공합니다.
+
+### 패턴 5: 온프레미스에서 리전 Pod로 (역방향)
+
+온프레미스 client가 LB를 거쳐 리전(VPC) 노드의 Pod로 들어오는 방향입니다. 이 방향의 기본 경로는 Gateway가 아니라 VPC 자체 경로입니다.
+
+| 경로 | 동작 | 실측 (2026-10-18) |
+|---|---|---|
+| 온프레미스 → internal ALB → VPC CNI Pod | 온프레미스 DNS가 ALB 이름을 private IP로 해석(Route 53 Resolver inbound endpoint), DX/VPN/TGW로 VPC에 진입, ALB가 VPC CNI Pod IP로 전달. Gateway 미경유 | 20/20 |
+| 온프레미스 → internal ALB → Hybrid Pod | 위 경로에 Gateway를 거쳐 온프레미스로 되돌아오는 hairpin. DX를 두 번 지나 지연과 전송 비용 증가 | 20/20 |
+| 온프레미스 → Hybrid NodePort → VPC CNI Pod | kube-proxy가 노드 IP로 SNAT한 뒤 host routing으로 underlay를 지나므로 Gateway(VTEP)를 타지 않음. 리전 노드 SG가 remote node CIDR에서 오는 앱 포트를 허용해야 함 | 실패 (cluster SG가 remote node CIDR에 443만 허용) |
+
+[AWS Ingress 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html)는 리전에서 시작하는 트래픽에는 ALB와 Load Balancer Controller를, 온프레미스에서 시작하는 트래픽에는 온프레미스 쪽 Ingress를 권장합니다. Gateway를 사용하면 Cilium `l7Proxy=false`가 필요해 Cilium Ingress와 Gateway API를 같은 설치에서 쓸 수 없으므로, 온프레미스 진입은 L4 `LoadBalancer` Service(Cilium LB IPAM/BGP 등)나 기존 하드웨어 LB와 NodePort 조합을 검토합니다.
+
 ---
 
 ## 고가용성 및 페일오버
@@ -715,6 +740,25 @@ kubectl --context "$KUBE_CONTEXT" get ciliumvtepconfig hybrid-gateway -o yaml
 ```
 
 두 Gateway가 모두 실패하면 별도 underlay/API/Cilium 장애와 구분합니다. Gateway를 거치지 않는 node/control-plane 또는 intra-Hybrid 경로도 자체 네트워크·DNS·종속성이 정상일 때만 유지됩니다. 리더 복구 후 실제 VPC route ENI와 양방향 앱 probe를 다시 확인합니다.
+
+### 단일 Gateway 장애와 여러 데이터센터
+
+Gateway(1.0.2)는 클러스터당 한 세트이며 활성 leader는 항상 하나입니다. Leader가 `podCIDRs`(CSV)의 **각 CIDR마다** 설정한 route table에 route를 만들고, 터널 엔트리는 Hybrid `CiliumNode`마다 따로 관리합니다. 따라서 데이터센터마다 Pod CIDR 대역이 달라도(예: DC A `10.85.0.0/16`, DC B `10.86.0.0/16`) 클러스터 `remotePodNetworks`와 Gateway `podCIDRs`에 모두 등록하면 하나의 Gateway가 전부 처리합니다. 대역이 연속일 필요는 없습니다.
+
+| 항목 | 내용 |
+|---|---|
+| CIDR 수 | Remote Pod network는 최대 15개 CIDR (EKS 한도). Route table당 CIDR 수만큼 route가 생기므로 route table route 한도(기본 50)도 함께 확인 |
+| 처리량 | 모든 데이터센터의 VPC↔Hybrid Pod 트래픽이 leader 한 대를 지남. Active/standby라 수평 확장이 아니라 인스턴스 크기와 네트워크 성능으로 대응 |
+| 방화벽 | 모든 데이터센터의 Hybrid 노드가 leader와 standby **양쪽** 노드 IP의 UDP 8472에 도달해야 함 |
+| 데이터센터별 분리 | 한 클러스터 안에서 데이터센터마다 Gateway를 따로 두는 구성은 문서에 없음. 1.0.2는 Lease(`hybrid-gateway-leader`)와 CiliumVTEPConfig(`hybrid-gateway`) 이름이 고정이라 복수 release는 충돌 가능성이 높음 (미검증) |
+
+Gateway Pod가 하나뿐이거나 둘 다 실패하면 **모든 데이터센터**의 Hybrid Pod CIDR과 VPC 사이 Pod 트래픽이 함께 끊깁니다. Runtime은 `DeleteRoute`를 호출하지 않으므로 VPC route는 실패한 ENI를 계속 가리킵니다.
+
+| 끊기는 경로 | 유지되는 경로 (자체 네트워크·DNS가 정상일 때) |
+|---|---|
+| VPC Pod ↔ Hybrid Pod 양방향, Hybrid Pod의 webhook, Hybrid Pod를 target으로 하는 ALB/NLB, AMP scraper → Hybrid endpoint | Control plane ↔ kubelet (node CIDR 경로), 같은 데이터센터 안의 Hybrid 간 통신, 온프레미스 라우팅이 있는 데이터센터 간 Hybrid 통신, 노드 IP 기반 경로(NodePort, hostNetwork) |
+
+그래서 replica 2개와 서로 다른 AZ의 적격 노드가 사실상 필수입니다. 같은 Service의 Pod가 VPC에도 있으면 LB target group에 cloud target이 함께 들어가므로, health check가 Hybrid target을 제외한 뒤에는 cloud target으로 응답을 이어 갈 수 있습니다(이 조합은 실측하지 않음).
 
 ### Multi-AZ 배포 전략
 
@@ -1052,7 +1096,7 @@ done
 
 #### 1. 인스턴스 비용 추정
 
-Gateway 소프트웨어 요금은 없지만 EC2/storage·해당 Auto Mode 관리 요금·cross-AZ 전송·private 연결·관측성과 cluster/Hybrid Nodes 요금은 별도입니다. 같은 VPC라도 cross-AZ 전송이 무료인 것은 아닙니다.
+Gateway 소프트웨어 요금은 없지만 EC2/storage·(Gateway 노드가 Auto Mode일 때만) Auto Mode 관리 요금·cross-AZ 전송·private 연결·관측성과 cluster/Hybrid Nodes 요금은 별도입니다. 같은 VPC라도 cross-AZ 전송이 무료인 것은 아닙니다. 활성 leader는 하나이므로 Gateway 노드를 여러 AZ에 두어도 leader와 다른 AZ의 Pod·ALB·scraper가 보내는 Hybrid 트래픽은 모두 leader AZ로 건너갑니다([AWS 운영 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). 트래픽이 큰 경로는 Cilium BGP로 Pod CIDR을 직접 라우팅해 Pod가 있는 AZ의 TGW/VGW로 바로 나가게 하고, Gateway는 webhook이나 적은 양의 Pod 간 통신에 두는 구성을 검토합니다.
 
 **아래는 출처를 재확인할 수 없는 이전 가격·할인·인건비 추정입니다.** 원 수치를 보존하지만 현재 견적이나 측정한 절감 효과가 아닙니다. 실제 Region·사용량·약정·데이터 경로를 [EKS 가격](https://aws.amazon.com/eks/pricing/)과 관련 요금에 대조하여 새로 산정합니다.
 
