@@ -1,47 +1,47 @@
 # 高级主题测验
 
 > **相关文档**: [高级主题](../../../networking/calico/07-advanced-topics.md)
-> **最后更新**: February 22, 2026
+> **最后更新**: 2026 年 9 月 12 日
 
 ## 测验
 
 1. 在 Calico 基于块的 IPAM 中，一个 /26 CIDR 块提供多少个 IP 地址？
-   - A) 32 个 IP
-   - B) 64 个 IP
-   - C) 128 个 IP
-   - D) 256 个 IP
+   - A) 32 个 IP 地址
+   - B) 64 个 IP 地址
+   - C) 128 个 IP 地址
+   - D) 256 个 IP 地址
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 64 个 IP**
+**答案：B) 64 个 IP 地址**
 
 **说明：**
-一个 /26 CIDR 块提供 64 个 IP 地址 (2^(32-26) = 2^6 = 64)。Calico 向 Node 分配可配置大小的 IP 块，然后从这些块中为 Pod 分配单独的 IP。默认块大小为 /26，可在效率与 IP 利用率之间取得平衡。
+一个 IPv4 /26 包含 64 个地址，但这并不总是表示有 64 个可用的 Pod 地址：Calico Windows 会在自己拥有的每个块中预留四个地址。IPv6 默认使用 /122，同样包含 64 个地址。创建地址池时设置 blockSize；不能通过原地修改来调整它。
 
 </details>
 
-2. Calico 的 IPAM 中的 IP 块亲和性是什么？
-   - A) 具有相同标签的 Pod 始终从同一块获取 IP
-   - B) Node 认领并优先使用特定 IP 块
+2. Calico IPAM 中的 IP 块亲和性是什么？
+   - A) 具有相同标签的 Pod 始终从同一个块获取 IP
+   - B) 节点认领特定 IP 块，并优先从中分配地址
    - C) 为 Service 分配靠近其端点的 IP
    - D) 按可用区对 IP 地址分组
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Node 认领并优先使用特定 IP 块**
+**答案：B) 节点认领特定 IP 块，并优先从中分配地址**
 
 **说明：**
-IP 块亲和性意味着，当 Node 需要分配 Pod IP 时，它会认领一个或多个 IP 块，并优先从这些块中进行分配。这可提高路由效率，因为一个 Node 上的所有 Pod 通常共享相同的 IP 前缀，从而能够进行路由聚合。
+节点会优先从与自己具有关联关系的块中分配地址，但仍受地址池选择和限制约束。一个节点可以有多个块；允许借用地址时也可能生成更具体的路由。块亲和性不等同于 Node.spec.podCIDR，也不保证节点上的每个 Pod 都使用同一个前缀。
 
 </details>
 
-3. 如何在 Calico 中激活 WireGuard 加密？
+3. 如何在 Calico 中启用 WireGuard 加密？
    - A) 安装单独的 WireGuard operator
    - B) 在 FelixConfiguration 中设置 wireguardEnabled: true
    - C) 应用 WireGuard NetworkPolicy
-   - D) 在 Kubernetes API server 标志中启用它
+   - D) 在 Kubernetes API server 参数中启用
 
 <details>
 <summary>显示答案</summary>
@@ -49,126 +49,126 @@ IP 块亲和性意味着，当 Node 需要分配 Pod IP 时，它会认领一个
 **答案：B) 在 FelixConfiguration 中设置 wireguardEnabled: true**
 
 **说明：**
-通过在 FelixConfiguration 资源中设置 `wireguardEnabled: true` 启用 WireGuard 加密。Calico 会自动管理 Node 之间的 WireGuard 密钥生成和分发，为跨 Node 的 Pod 间流量创建加密隧道。
+wireguardEnabled 启用受支持的 IPv4 路径；wireguardEnabledV6 是单独的设置。两端节点都需要兼容的内核和网络支持。Calico 会管理节点密钥并发布公钥。同一节点内的流量和不受支持的对端，不会自动通过节点间隧道加密。
 
 </details>
 
-4. 与使用 IPsec 加密 Pod 流量相比，WireGuard 的一项关键优势是什么？
+4. 哪项描述符合 WireGuard 的设计，同时没有宣称其性能普遍优越？
    - A) WireGuard 支持更多加密算法
-   - B) WireGuard 配置更简单且 CPU 开销更低
-   - C) WireGuard 无需内核支持即可工作
+   - B) WireGuard 使用刻意精简的密码学设计和密钥配置
+   - C) Calico WireGuard 无需节点或运行时前置条件
    - D) WireGuard 提供更好的压缩
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) WireGuard 配置更简单且 CPU 开销更低**
+**答案：B) WireGuard 使用刻意精简的密码学设计和密钥配置**
 
 **说明：**
-与 IPsec 相比，WireGuard 提供更简单的配置和更少的选项（可降低配置错误风险），并且通常具有更低的 CPU 开销。它使用现代加密原语，代码库更小，因此更易于审计和维护。
+WireGuard 刻意限制了可选的密码学方案。CPU 成本、吞吐量、漫游和卸载方面的比较取决于具体实现和工作负载。未经版本限定的代码行数，以及本章中未经验证的性能范围，都不能作为普遍的安全性或速度排名。
 
 </details>
 
-5. Calico 的 Egress Gateway 功能的主要使用场景是什么？
+5. 文档所述 Calico Enterprise Egress Gateway 的主要用途是什么？
    - A) 对进入 Service 的流量进行负载均衡
-   - B) 为访问外部 Service 的 Pod 提供一致的源 IP
+   - B) 为访问外部 Service 的 Pod 提供稳定一致的源 IP
    - C) 缓存 DNS 响应以加快解析
    - D) 限制出站 API 调用的速率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 为访问外部 Service 的 Pod 提供一致的源 IP**
+**答案：B) 为访问外部 Service 的 Pod 提供稳定一致的源 IP**
 
 **说明：**
-Egress Gateway 允许 Pod 使用一致且可预测的源 IP 地址访问外部 Service。当外部 Service 使用基于 IP 的允许列表时，这一点至关重要，因为它可确保来自特定 Pod 的流量始终显示为来自已知的网关 IP。
+transit gateway Pod 会为所选客户端执行 SNAT，从而暴露一组受控的源地址。实际观察到的地址取决于地址池、上游 NAT 和可用性。NetworkPolicy Allow 和 BGP serviceExternalIPs 并不会创建这种路由/SNAT 行为。按源地址设置允许列表并不等于满足完整的合规要求或实现应用授权。
 
 </details>
 
-6. Calico 的多集群联邦提供什么能力？
-   - A) 在集群之间自动故障转移
-   - B) 跨集群共享网络策略和 Service 发现
-   - C) 为所有集群提供集中式日志记录
+6. 当前 Calico Enterprise Federation 功能提供什么？
+   - A) 自动复制应用数据库并实现故障转移
+   - B) 远端端点身份和所选 Service 发现，同时仍在本地应用策略
+   - C) 为所有集群集中记录日志
    - D) 跨集群统一计费
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 跨集群共享网络策略和 Service 发现**
+**答案：B) 远端端点身份和所选 Service 发现，同时仍在本地应用策略**
 
 **说明：**
-多集群联邦使 Calico 能够共享网络策略、启用跨集群 Service 发现，并在多个 Kubernetes 集群中提供一致的网络。这使不同集群中的工作负载能够使用统一策略安全通信。
+Federated endpoint identity 会将远端端点信息纳入本地策略计算；它不会把远端策略复制到本地端点。单独的 Federated Services Controller 会读取远端 Kubernetes API。使用该功能的前提包括可路由且保留源地址的 Pod 路径，以及控制器凭证和配置；Typha 不是共享的 Federation Controller。
 
 </details>
 
-7. 关于 Calico 的 Windows 支持，哪项陈述是正确的？
-   - A) Windows Node 需要不同的 CNI plugin
-   - B) Calico 支持 Windows Node，但存在一些功能限制
-   - C) Windows 支持仅在 Calico Enterprise 中提供
-   - D) Windows Node 无法参与 BGP peering
+7. 关于 Calico 对 Windows 的支持，哪项说法正确？
+   - A) Windows 节点必须使用不同的 CNI 插件
+   - B) Calico 支持 Windows 节点，但部分功能受限
+   - C) 只有 Calico Enterprise 支持 Windows
+   - D) Windows 节点不能参与 BGP 对等连接
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Calico 支持 Windows Node，但存在一些功能限制**
+**答案：B) Calico 支持 Windows 节点，但部分功能受限**
 
 **说明：**
-Calico 支持 Kubernetes 集群中的 Windows Node，从而支持混合 Linux/Windows 环境。不过，由于操作系统差异，Windows 上不支持 eBPF dataplane 等部分功能。Windows 支持涵盖基本网络和网络策略执行。
+Calico Windows 使用 HNS/HostProcess，并有平台和版本限制。可使用 IPv4 VXLAN 或受支持的非 overlay BGP；当前审查的 Windows 指南不支持 IPv6/双栈、eBPF、WireGuard、HostEndpoint 策略和 Service 宣告。应匹配操作系统/容器版本，并确认实际供应商配置。
 
 </details>
 
-8. Calico Enterprise 与 Calico Open Source 之间的一项关键差异是什么？
-   - A) Enterprise 使用不同的 dataplane 技术
-   - B) Enterprise 包含额外的安全性、合规性和可观测性功能
-   - C) Enterprise 仅适用于特定 Kubernetes 发行版
+8. Calico Enterprise 与 Calico Open Source 的主要区别是什么？
+   - A) Enterprise 使用不同的数据平面技术
+   - B) Enterprise 提供额外的安全、合规和可观测性功能
+   - C) Enterprise 只能用于特定 Kubernetes 发行版
    - D) Enterprise 不支持 BGP
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Enterprise 包含额外的安全性、合规性和可观测性功能**
+**答案：B) Enterprise 提供额外的安全、合规和可观测性功能**
 
 **说明：**
-Calico Enterprise 构建于开源项目之上，并添加了分层策略层级、流量可视化、合规性报告、威胁防御和企业支持等功能。两个版本使用相同的核心网络 dataplane。
+Open Source 3.32 已包含策略层级、Whisker/流量可视化、暂存策略，以及通过 Istio/Dikastes 实现的 HTTP 策略。商业版本会增加特定产品功能，例如域策略、出口网关、远端身份/服务和报告。具体功能与支持条款取决于所选产品及版本。
 
 </details>
 
-9. 大型 Calico 部署的 Typha 容量规划公式是什么？
-   - A) 每 100 个 Node 使用 1 个 Typha
-   - B) 每 500 个 Node 使用 1 个 Typha，HA 至少使用 3 个
-   - C) Typha 副本数 = Node 数 / 200，建议用于 1000+ Node 集群
-   - D) 无论集群大小如何，固定为 5 个副本
+9. Tigera Operator 1.42.6 对 1,000 个计数节点计算出的 Typha 副本目标是多少？
+   - A) 5 个副本
+   - B) 3 个副本
+   - C) 7 个副本
+   - D) 10 个副本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Typha 副本数 = Node 数 / 200，建议用于 1000+ Node 集群**
+**答案：C) 7 个副本**
 
 **说明：**
-对于拥有 1000+ 个 Node 的集群，Typha 对于可扩展性至关重要。通用容量规划公式约为每 200 个 Node 配置 1 个 Typha 副本，且高可用性至少需要 3 个副本。Typha 将 datastore 更新扇出到 Felix 实例，从而降低 API server 负载。
+对于 N>4，经审查的 Operator 使用 max(3, floor(N/200)+2)，因此 N 为 1,000 时计算结果为 7。N<=2 时为 1，N<=4 时为 2。这是带有节点计数和放置条件的实现目标，并不保证“每 200 个节点配一个 Typha”就能达到某种实测容量。
 
 </details>
 
-10. Calico 支持 IPv6 和双栈网络需要什么？
-    - A) 单独进行特定于 IPv6 的安装
-    - B) 为 IPv4 和 IPv6 地址范围配置 IPPool
-    - C) 仅使用 eBPF dataplane
+10. 使用 Calico-IPAM 部署双栈时，需要满足哪项地址池前置条件？
+    - A) 单独进行 IPv6 专用安装
+    - B) 为 IPv4 和 IPv6 地址范围都配置 IPPool
+    - C) 只能使用 eBPF 数据平面
     - D) 禁用网络策略执行
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 为 IPv4 和 IPv6 地址范围配置 IPPool**
+**答案：B) 为 IPv4 和 IPv6 地址范围都配置 IPPool**
 
 **说明：**
-Calico 中的双栈支持要求同时为 IPv4 和 IPv6 CIDR 范围配置 IPPool。之后，Pod 可以从两个池中获取地址。集群还必须在 Kubernetes 层面启用双栈，底层基础设施也必须支持 IPv6。
+Calico-IPAM 双栈需要 IPv4 和 IPv6 地址池；Kubernetes、CNI、节点寻址和底层网络也必须同时支持这两个地址族。仅 IPv6 部署不需要 IPv4 地址池。Felix ipv6Support 是布尔值；只添加该标志或地址池，不能把现有集群的 IP 地址族配置转换为双栈。
 
 </details>
 
-11. 如何检测 Calico IPAM 中的 IP 地址耗尽？
+11. 如何检测 Calico IPAM 的 IP 地址耗尽？
     - A) 检查 kube-apiserver 日志
     - B) 使用 calicoctl ipam show 查看分配状态
-    - C) 监控 Node 内存使用情况
+    - C) 监控节点内存用量
     - D) 检查 Pod 重启次数
 
 <details>
@@ -177,22 +177,22 @@ Calico 中的双栈支持要求同时为 IPv4 和 IPv6 CIDR 范围配置 IPPool�
 **答案：B) 使用 calicoctl ipam show 查看分配状态**
 
 **说明：**
-`calicoctl ipam show` 命令显示 IPAM 分配状态，包括所有池和块中的 IP 总数、已分配 IP 和可用 IP。`--show-blocks` 标志提供详细的每 Node 块分配信息，有助于识别耗尽问题。
+ipam show 会报告地址分配用量；添加 --show-blocks 可查看块详情。可以通过 BlockAffinity 查看节点关联情况，并同时考虑符合条件的地址池、预留地址和亲和性/主机限制。其他地址池有空闲地址不代表本次分配一定成功。只有在生成最新的恢复报告并确认分配确实陈旧后才能清理，不能照抄示例 IP。
 
 </details>
 
-12. 何时应选择 etcd 作为 Calico 的 datastore，而不是 Kubernetes API？
-    - A) 对于少于 100 个 Node 的集群
-    - B) 在托管 Kubernetes Service 中运行时
-    - C) 对于非常大的集群或非 Kubernetes 部署
-    - D) 使用 eBPF dataplane 时
+12. 哪种情况适合考虑 Calico 直接使用 etcd 的配置？
+    - A) 集群少于 100 个节点时
+    - B) 使用托管 Kubernetes 服务时
+    - C) 在受支持的非 Kubernetes 部署中，并有明确的 etcd 运维与恢复计划
+    - D) 使用 eBPF 数据平面时
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 对于非常大的集群或非 Kubernetes 部署**
+**答案：C) 在受支持的非 Kubernetes 部署中，并有明确的 etcd 运维与恢复计划**
 
 **说明：**
-etcd datastore 建议用于 Kubernetes API server 负载令人担忧的超大型集群，或非 Kubernetes 部署（裸机、VM）。对于大多数 Kubernetes 部署，Kubernetes datastore 更简单，因为无需管理单独的 etcd 集群。
+对于单独设计且受支持的部署，直接使用 etcd 可能合适。对许多 Kubernetes 安装而言，Kubernetes datastore 更简单；当前 eBPF 数据平面也要求使用它。是否采用 etcd 不由固定的 5,000 节点门槛或所谓通用读取速度对比决定。
 
 </details>

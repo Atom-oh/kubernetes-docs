@@ -1,233 +1,218 @@
-# Cuestionario de gestión de costos de EKS Auto Mode
+# Cuestionario sobre gestión de costos de EKS Auto Mode
 
 > **Documento relacionado**: [Gestión de costos](../../eks-auto-mode/06-cost-management.md)
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Aproximadamente qué porcentaje de ahorro de costos se puede lograr al incluir instancias Graviton (ARM) para la optimización de costos?
+### 1. ¿Cómo se debe interpretar el ejemplo anterior de un «ahorro del 20 % con Graviton» al permitir nodos ARM?
 
-- A) 5%
-- B) 10%
-- C) 20%
-- D) 50%
+- A) Como una garantía universal de AWS
+- B) Como un descuento en la factura completa
+- C) Como un ejemplo no verificado; compara cargas de trabajo compatibles y tarifas reales
+- D) Como prueba de que todas las imágenes funcionan en ARM
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) 20%**
+**Respuesta: C) Como un ejemplo no verificado; compara cargas de trabajo compatibles y tarifas reales**
 
 **Explicación:**
-Las instancias basadas en procesadores AWS Graviton (arm64) son aproximadamente un 20% más baratas que las instancias x86 comparables, a la vez que ofrecen un rendimiento excelente.
-
-```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        # Include Graviton (ARM) instances
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-```
-
-**Estrategias de optimización de costos:**
-- Usar instancias Graviton (ARM): ~20% de ahorro
-- Usar instancias Spot: hasta 70-90% de ahorro
-- Consolidation agresiva: consolidar nodes infrautilizados
-- Resource requests adecuados: prevenir el sobreaprovisionamiento
+Las cifras anteriores de aproximadamente un 20 % para ARM y un 70–90 % para Spot eran ejemplos de planificación, no una comparación verificada para esta carga de trabajo. Comprueba las imágenes multiarquitectura, las dependencias, el rendimiento por unidad de trabajo útil, las tarifas regionales actuales y los cargos de Auto Mode y otros servicios. Permitir `amd64` y `arm64` no valida la compatibilidad de la aplicación ni garantiza que se seleccione una arquitectura determinada.
 
 </details>
 
-### 2. ¿Qué significa que el CPU limit esté establecido en 500 en la configuración `limits` de NodePool?
+### 2. ¿Qué limita `limits.cpu: 500` en un NodePool dinámico?
 
-- A) El CPU máximo por node es de 500 cores
-- B) NodePool puede aprovisionar hasta 500 vCPU en total
-- C) Máximo de 500m CPU por Pod
-- D) CPU limit para todo el cluster
+- A) Cada nodo a 500 núcleos
+- B) Los recursos de CPU agregados que aprovisiona ese pool
+- C) Cada Pod a 500m
+- D) Todo el gasto de AWS de la cuenta
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) NodePool puede aprovisionar hasta 500 vCPU en total**
+**Respuesta: B) Los recursos de CPU agregados que aprovisiona ese pool**
 
 **Explicación:**
-`limits` de NodePool restringe la cantidad total de resources que NodePool puede aprovisionar.
-
+Es un límite de recursos a nivel del pool, que puede superarse temporalmente durante un aprovisionamiento rápido con consistencia eventual. `1Ti` equivale a 1 TiB (1024 GiB), no a un TB decimal. Los límites de recursos ayudan a restringir el crecimiento, pero no asignan precios a las instancias, no incluyen otros servicios ni imponen un presupuesto monetario estricto.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: compute-optimized
 spec:
-  limits:
-    cpu: 500      # Maximum 500 vCPU
-    memory: 1Ti   # Maximum 1TB memory
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c"]
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+        - on-demand
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '500'
+    memory: 1Ti
 ```
 
-Esto ayuda a prevenir sobrecostos y a gestionar presupuestos.
 
 </details>
 
-### 3. ¿Qué política de Consolidation limpia automáticamente los nodes infrautilizados para optimizar los costos?
+### 3. ¿Qué política permite consolidar nodos vacíos y subutilizados cuando lo permiten las condiciones de reprogramación y costo?
 
-- A) `consolidationPolicy: WhenEmpty`
-- B) `consolidationPolicy: WhenEmptyOrUnderutilized`
-- C) `consolidationPolicy: Always`
-- D) `consolidationPolicy: Aggressive`
+- A) `WhenEmpty`
+- B) `WhenEmptyOrUnderutilized`
+- C) `Always`
+- D) `Aggressive`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `consolidationPolicy: WhenEmptyOrUnderutilized`**
+**Respuesta: B) `WhenEmptyOrUnderutilized`**
 
 **Explicación:**
-La política `WhenEmptyOrUnderutilized` apunta tanto a los nodes vacíos como a los infrautilizados para consolidation.
-
-```yaml
-disruption:
-  consolidationPolicy: WhenEmptyOrUnderutilized
-  consolidateAfter: 5m
-```
-
-**Comparación de políticas:**
-- `WhenEmpty`: solo elimina nodes vacíos (conservadora, prioriza la estabilidad)
-- `WhenEmptyOrUnderutilized`: optimización de costos agresiva
-
-Efecto de ahorro de costos: consolidar nodes infrautilizados para reducir el recuento total de nodes y los costos de infraestructura
+Evalúa la viabilidad de la programación basada en solicitudes de recursos y el costo; no elimina todos los nodos que estén por debajo de un umbral de CPU medido. `consolidateAfter` es un periodo de espera para evitar cambios repetidos, y los PDB, los presupuestos y las restricciones de ubicación pueden impedir la consolidación. `WhenEmpty` es más restrictiva; ninguna de las dos políticas garantiza ahorros ni desactiva todos los demás métodos de disrupción.
 
 </details>
 
-### 4. ¿Cuál es el enfoque recomendado al usar Savings Plans con EKS Auto Mode?
+### 4. ¿Qué opción ofrece flexibilidad de facturación si el uso de EC2 que reúne los requisitos puede cambiar de familia o región?
 
-- A) Compute Savings Plans para flexibilidad de familia de instancias
-- B) EC2 Instance Savings Plans para tipos de instancia específicos
-- C) Usar solo Reserved Instances
-- D) No usar Savings Plans
+- A) Compute Savings Plans
+- B) Un EC2 Instance Savings Plan limitado a una familia y región
+- C) Solo una Standard RI de tamaño exacto
+- D) Excluir todos los descuentos por compromiso
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Compute Savings Plans para flexibilidad de familia de instancias**
+**Respuesta: A) Compute Savings Plans**
 
 **Explicación:**
-Auto Mode usa varios tipos de instancia según los workloads, por lo que Compute Savings Plans son los más adecuados.
-
-**Comparación de Savings Plans:**
-| Tipo | Flexibilidad | Descuento |
-|------|-------------|----------|
-| Compute Savings Plans | Familia de instancias, tamaño, región y OS flexibles | Hasta 66% |
-| EC2 Instance Savings Plans | Familia de instancias específica fija | Hasta 72% |
-
-```
-Recommended Strategy:
-1. Analyze baseline workload volume (3-month baseline)
-2. Cover 70% of minimum usage with Compute Savings Plans
-3. Run remainder flexibly with Spot/On-Demand
-```
+Compute Savings Plans ofrece flexibilidad de familia, tamaño, región, sistema operativo y tenencia; EC2 Instance Savings Plans fija la familia y la región, pero permite flexibilidad de tamaño, sistema operativo y tenencia. Los máximos anunciados siguen siendo de hasta el 66 % y el 72 %, no son tarifas esperadas. Ajusta el compromiso en USD por hora al uso elegible, sostenido y no cubierto, a los compromisos existentes y a los cambios previstos. La antigua estrategia de tres meses y cobertura del 70 % es un ejemplo de planificación no verificado. Spot y el cargo separado de Auto Mode no reciben descuentos de EC2 Savings Plans; no existe un plan especial para ARM ni una exclusión universal para GPU.
 
 </details>
 
-### 5. ¿Qué se requiere para la asignación de costos a nivel de Pod en el análisis de costos usando Kubecost?
+### 5. ¿Qué hace falta para obtener una asignación útil de costos por Pod en Kubecost?
 
-- A) Se admite automáticamente sin configuración
-- B) Agregar la etiqueta cost-center a los Pods
-- C) Instalar el agente de Kubecost e integrar el cluster
-- D) AWS Cost Explorer es suficiente
+- A) Ninguna configuración ni fuente de datos
+- B) Solo una etiqueta de centro de costos en el Pod
+- C) Una integración configurada con agente/clúster y datos de costos adecuados
+- D) Solo Cost Explorer, sin datos de asignación de Kubernetes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Instalar el agente de Kubecost e integrar el cluster**
+**Respuesta: C) Una integración configurada con agente/clúster y datos de costos adecuados**
 
 **Explicación:**
-Kubecost es una herramienta de monitoreo de costos nativa de Kubernetes que proporciona análisis de costos detallados.
-
+El chart de Kubecost 3.2.4 revisado es `kubecost/kubecost`, del nuevo repositorio. La arquitectura de agente FinOps/ClickHouse de la versión 3 es distinta del antiguo despliegue cost-analyzer. Configura la licencia, el acceso privado, el almacenamiento y su retención, IAM de las cargas de trabajo y la conciliación de facturación. Renderiza los valores revisados antes de la instalación; las etiquetas por sí solas no generan datos de costos reales.
 ```bash
-# Kubecost installation (Helm)
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm install kubecost kubecost/cost-analyzer \
-    --namespace kubecost \
-    --create-namespace
+: "${KUBECOST_VALUES:?Set the reviewed Kubecost 3.2.4 values file}"
+test -f "$KUBECOST_VALUES"
+helm repo add kubecost https://kubecost.github.io/kubecost/
+helm repo update kubecost
+helm show chart kubecost/kubecost --version 3.2.4
+helm template cost-review kubecost/kubecost --version 3.2.4 \
+  --namespace kubecost --values "$KUBECOST_VALUES" \
+  > "$WORK_DIR/kubecost-rendered.yaml"
 ```
 
-Características de Kubecost:
-- Análisis de costos por namespace/workload
-- Recomendaciones de eficiencia de resources
-- Configuración de alertas de presupuesto
-- Integración con AWS para precisión de costos reales
 
 </details>
 
-### 6. ¿Cuál es la mejor práctica para prevenir el sobreaprovisionamiento al configurar resource requests?
+### 6. ¿Qué datos deben orientar los cambios en las solicitudes de recursos?
 
-- A) Establecer siempre limits y requests iguales
-- B) Consultar recomendaciones de VPA basadas en el uso real
-- C) Establecer requests lo más altos posible
-- D) Omitir la configuración de requests
+- A) Hacer siempre iguales las solicitudes y los límites
+- B) Las recomendaciones de VPA junto con datos representativos de la carga de trabajo y los SLO
+- C) Maximizar todas las solicitudes
+- D) Eliminar las solicitudes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Consultar recomendaciones de VPA basadas en el uso real**
+**Respuesta: B) Las recomendaciones de VPA junto con datos representativos de la carga de trabajo y los SLO**
 
 **Explicación:**
-Use Vertical Pod Autoscaler (VPA) para analizar el uso real de resources y establecer valores de requests adecuados.
-
+El modo `Off` no aplica las recomendaciones y aun así requiere componentes de VPA y métricas funcionales. Comprueba cada contenedor, la confianza y el historial, los picos de inicio, los límites de memoria y la limitación de CPU. Una recomendación no garantiza el rendimiento, no evita todos los OOM ni demuestra un ahorro. No elimines los sufijos de unidades de Kubernetes al comparar cantidades.
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: my-app-vpa
+  name: cost-app-vpa
+  namespace: cost-lab
 spec:
   targetRef:
-    apiVersion: "apps/v1"
+    apiVersion: apps/v1
     kind: Deployment
-    name: my-app
+    name: cost-efficient-app
   updatePolicy:
-    updateMode: "Off"  # Only provide recommendations, no auto-apply
+    updateMode: 'Off'
+  resourcePolicy:
+    containerPolicies:
+    - containerName: '*'
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: '4'
+        memory: 8Gi
 ```
 
-Consultar recomendaciones:
-```bash
-kubectl describe vpa my-app-vpa
-```
-
-Esto permite:
-- Prevenir el sobreaprovisionamiento (ahorro de costos)
-- Prevenir el subaprovisionamiento (garantía de rendimiento)
 
 </details>
 
-### 7. ¿Cuál es la estrategia de separación de NodePool eficiente en costos para workloads multi-tier?
+### 7. Si los niveles tienen requisitos realmente distintos de interrupción o arquitectura, ¿qué diseño permite expresarlos?
 
-- A) Colocar todos los workloads en un único NodePool
-- B) Separar NodePool por tier (frontend/API/batch/ML)
-- C) Separar NodePool por tamaño de instancia
-- D) Separar NodePool por availability zone
+- A) Exigir la misma ubicación para todos los niveles
+- B) Usar pools adecuados por nivel y las restricciones de carga de trabajo correspondientes
+- C) Crear un pool distinto para cada tamaño de instancia
+- D) Suponer que cada AZ ofrece un descuento de facturación independiente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separar NodePool por tier (frontend/API/batch/ML)**
+**Respuesta: B) Usar pools adecuados por nivel y las restricciones de carga de trabajo correspondientes**
 
 **Explicación:**
-Separar NodePools según las características del workload logra un equilibrio óptimo entre costo y rendimiento.
+Los pools separados pueden expresar restricciones reales, pero la fragmentación puede aumentar el costo ocioso. Un pool de procesamiento por lotes exclusivo de Spot no tiene alternativa On-Demand; úsalo solo para trabajos compatibles y tolerantes a interrupciones que cuenten con recuperación. El nombre de un pool no dirige las cargas de trabajo: configura los selectores y las tolerancias indicados en la guía.
 
-| Tier | Estrategia | Ahorro esperado |
-|------|----------|-----------------|
+| Nivel | Estrategia anterior | Ahorro original no verificado |
+|------|----------------|----------------------------|
 | Frontend | On-Demand + Graviton | ~20% |
 | API | Spot mixto + Graviton | ~40% |
-| Batch | Solo Spot + diversificación | ~70% |
-| ML | Selección de tamaño de instancia adecuado | ~30% |
+| Procesamiento por lotes | Spot + diversidad | ~70% |
+| ML | Dimensionamiento de instancias | ~30% |
 
 ```yaml
-# Batch tier example - Maximum cost savings
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -236,47 +221,66 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]  # Spot only
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]  # Include Graviton
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
+
 
 </details>
 
-### 8. ¿Qué se necesita para categorizar los costos de EKS Auto Mode por tag en AWS Cost Explorer?
+### 8. ¿Qué se necesita para que las etiquetas personalizadas de NodeClass permitan asignar costos de AWS?
 
-- A) Todos los tags se aplican automáticamente
-- B) Es necesario establecer el campo tags en NodeClass
-- C) Configurar en AWS Organizations
-- D) La categorización basada en tags no es posible
+- A) Todas las etiquetas de Kubernetes se propagan automáticamente
+- B) Permisos válidos de NodeClass/etiquetado, etiquetas reales en los recursos y activación en Billing
+- C) Solo crear una organización de AWS
+- D) No se pueden asignar costos a etiquetas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Es necesario establecer el campo tags en NodeClass**
+**Respuesta: B) Permisos válidos de NodeClass/etiquetado, etiquetas reales en los recursos y activación en Billing**
 
 **Explicación:**
-Aplique tags de asignación de costos a los nodes aprovisionados mediante el campo tags en NodeClass.
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: production-nodeclass
-spec:
-  tags:
-    Environment: production
-    Team: platform
-    CostCenter: engineering-001
-    Project: kubernetes-platform
-```
-
-Configuración de AWS Cost Explorer:
-1. Habilitar Cost Allocation Tags en Billing Console
-2. Seleccionar las claves de tag deseadas
-3. Disponible en Cost Explorer después de 24 horas
+La guía relacionada proporciona un NodeClass completo con selectores de identidad y red. Revisa las entradas de acceso de los nodos y los permisos de etiquetado, referencia esa clase desde el pool previsto, verifica las etiquetas reales y activa las claves en Billing. Las claves definidas por el usuario pueden tardar hasta 24 horas en aparecer y otras 24 horas en activarse; la latencia de los informes es independiente. La clave de clúster EC2 generada por AWS es `aws:eks:cluster-name`; no incluye los cargos del plano de control. Las etiquetas de espacios de nombres no se propagan por sí solas ni asignan todos los costos de AWS.
 
 </details>
+
+## Referencias
+
+- [Precios de EKS](https://aws.amazon.com/eks/pricing/)
+- [Tipos de Savings Plans](https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html)
+- [Etiquetas de facturación de EKS](https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html)

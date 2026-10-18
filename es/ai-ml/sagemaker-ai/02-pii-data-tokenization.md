@@ -1,8 +1,8 @@
 # Parte 2: Datos sintéticos de PII y tokenización determinista
 
-Para una ruta de aprendizaje práctica, empieza con el [taller de aumento de datos](06-data-augmentation-workshop.md). Este capítulo documenta la implementación existente y el contrato operativo.
+Para una ruta de aprendizaje práctica, empiece con el [taller de aumento de datos](06-data-augmentation-workshop.md). Este capítulo documenta la implementación existente y el contrato operativo.
 
-La regeneración de CPU del 2026-09-15 conservó los hashes históricos y también comprobó la superposición exacta de fuentes NFC: 22 fuentes compartidas entre train/validation, 36 entre train/test y 9 entre validation/test; 51 grupos de fuentes únicos abarcan al menos dos particiones. El nuevo taller divide las familias antes de aumentar solo los datos de entrenamiento en un ejemplo separado. No vuelve a etiquetar este corpus histórico como libre de filtraciones.
+La regeneración en CPU del 2026-09-15 conservó los hashes históricos y también comprobó las coincidencias exactas del texto de origen normalizado a NFC: 22 textos de origen compartidos entre train/validation, 36 entre train/test y 9 entre validation/test; 51 grupos de textos de origen distintos aparecen en al menos dos particiones. El nuevo taller divide las familias antes de aumentar solo los datos de entrenamiento en un ejemplo separado. No vuelve a etiquetar este corpus histórico como libre de filtraciones.
 
 > Implementación y documentación revisadas: 2026-09-12. Se conservan Generator 1.0.0, la semilla 42 y los hashes existentes del conjunto de datos.
 
@@ -19,7 +19,7 @@ Estos son ejemplos sintéticos. El modelo no edita el documento de origen.
 Las comprobaciones del tipo y de coincidencia con el origen rechazan algunas
 candidaturas no válidas, pero no demuestran que un valor sea PII, que su tipo
 sea correcto ni que se hayan encontrado todas las entidades PII.
-Trata el mapeo de reemplazo como información sensible.
+Trate el mapeo de reemplazo como información sensible.
 
 ## Alcance del conjunto de datos y de la evaluación
 
@@ -48,27 +48,27 @@ Estas son reglas de anotación específicas del experimento. Por ejemplo, las pa
 No constituyen una taxonomía universal de sensibilidad.
 
 El generador usa plantillas fijas, vocabularios pequeños de nombres y números sintéticos.
-Los valores RRN/CARD no superan las funciones de suma de comprobación de ejemplo; eso, por sí solo, no demuestra la validez de los identificadores oficiales ni que no se hayan asignado.
+Las funciones de suma de verificación del ejemplo rechazan los valores RRN/CARD; eso, por sí solo, no demuestra la validez de los identificadores oficiales ni que no se hayan asignado.
 Los valores PHONE son marcadores de posición sintéticos, no formatos nacionales validados ni rangos oficialmente reservados.
 No se usan datos de clientes, pero eso no equivale a validar identificadores con fuentes autorizadas.
 
-Que los registros y los hashes sean diferentes no garantiza la independencia de las plantillas o los vocabularios de entidades entre train/validation/test. No presentes este conjunto de datos como una referencia de generalización para cargas de trabajo reales. Para ese fin, usa conjuntos de evaluación separados y anotaciones revisadas.
+Que los registros y los hashes sean diferentes no garantiza la independencia de las plantillas o los vocabularios de entidades entre train/validation/test. No presente este conjunto de datos como una referencia de generalización para cargas de trabajo reales. Para ese fin, use conjuntos de evaluación separados y anotaciones revisadas.
 
 ## Reemplazo reversible de la grafía de origen
 
 La implementación ahora sigue esta secuencia:
 
-1. Normaliza el origen/los valores a NFC y recorta los espacios en blanco externos de tipo/valor.
-2. Elimina los bloques completos `<think>...</think>` y, después, lee los tipos permitidos separados por tabuladores y los valores no vacíos.
-3. Deduplica las candidaturas y exige que una coincidencia literal o una variante limitada coincida con el origen.
+1. Normalice el origen/los valores a NFC y recorte los espacios en blanco externos de tipo/valor.
+2. Elimine los bloques completos `<think>...</think>` y, después, lea los tipos permitidos separados por tabuladores y los valores no vacíos.
+3. Elimine los duplicados de las candidaturas y exija que una coincidencia literal o una variante limitada coincida con el origen.
    El análisis y el reemplazo usan los mismos límites numéricos.
-4. Da prioridad a las predicciones literales frente a las variantes generadas a partir de otras predicciones.
+4. Dé prioridad a las predicciones literales frente a las variantes generadas a partir de otras predicciones.
    Una prioridad de tipos fija resuelve los casos en que hay varios tipos para un mismo valor; no infiere la veracidad semántica.
-5. Recorre el origen una sola vez, empezando por los patrones más largos.
-6. Asigna tokens en el orden real en que aparecen en el origen, según **el tipo y la grafía NFC coincidente**.
+5. Recorra el origen una sola vez, empezando por los patrones más largos.
+6. Asigne tokens en el orden real en que aparecen en el origen, según **el tipo y la grafía NFC coincidente**.
    Las grafías idénticas reutilizan un token; las diferencias de espaciado/separadores reciben tokens distintos.
-7. Omite los nombres de token que ya estén presentes en el origen original.
-8. Almacena en el mapeo la grafía coincidente real y registra los tramos de reemplazo semiabiertos
+7. Omita los nombres de token que ya estén presentes en el origen original.
+8. Almacene en el mapeo la grafía coincidente real y registre los tramos de reemplazo semiabiertos
    `[start, end)` en coordenadas de origen NFC.
 
 ```text
@@ -84,7 +84,7 @@ Las variantes de `PERSON` abarcan formas limitadas y uniformes con espacios/tabu
 
 `reassemble_text` realiza una pasada de reemplazo para los tokens conocidos y conserva los tokens desconocidos. El evaluador comprueba los viajes de ida y vuelta. La igualdad se verifica respecto del texto de origen NFC, no de una restauración idéntica byte a byte de una representación NFD original.
 
-## Mide los tramos de origen restantes, no el contenido de los marcadores de posición
+## Mida los tramos de origen restantes, no el contenido de los marcadores de posición
 
 El evaluador anterior buscaba cadenas completas de referencia en el texto enmascarado.
 Esto producía dos resultados incorrectos:
@@ -95,7 +95,7 @@ Esto producía dos resultados incorrectos:
 El evaluador corregido comprueba si la unión de los tramos de reemplazo reales cubre por completo cada aparición coincidente de cada valor de referencia o variante permitida.
 También examina las apariciones repetidas. La cobertura parcial, incluida la de un separador sin cubrir, se considera sin cubrir según esta métrica conservadora. Los caracteres dentro de los nombres de tokens generados no se consideran exposición del origen.
 
-Los registros de referencia contienen valores, no desplazamientos de anotación, por lo que estos tramos se infieren mediante la coincidencia con el origen. Esto no es una detección nueva de PII y puede coincidir con una aparición que no sea sensible en su contexto, aunque la misma cadena sí lo sea en otro. Interpreta la cobertura según la política de anotación, no como una garantía de privacidad.
+Los registros de referencia contienen valores, no desplazamientos de anotación, por lo que estos tramos se infieren mediante la coincidencia con el origen. Esto no es una detección nueva de PII y puede coincidir con una aparición que no sea sensible en su contexto, aunque la misma cadena sí lo sea en otro. Interprete la cobertura según la política de anotación, no como una garantía de privacidad.
 
 ## Significado exacto de las métricas
 
@@ -119,7 +119,7 @@ Los denominadores cero devuelven cero, incluido F1 para conjuntos de entidades v
 
 ## Registros de entrenamiento y validación
 
-Los registros JSONL contienen `source_text`, `entities` y `target_tsv`. El cargador construye prompts de sistema/usuario y completados del asistente. El entrenador solicita una pérdida solo para completados; valida el tokenizador/la plantilla reales, el truncamiento y la máscara de pérdida durante la ejecución. Mantén el origen, los completados y los mapeos fuera de los registros ordinarios y de los parámetros/etiquetas de MLflow.
+Los registros JSONL contienen `source_text`, `entities` y `target_tsv`. El cargador construye prompts de sistema/usuario y completados del asistente. El entrenador solicita una pérdida solo para completados; valida el tokenizador/la plantilla reales, el truncamiento y la máscara de pérdida durante la ejecución. Mantenga el origen, los completados y los mapeos fuera de los registros ordinarios y de los parámetros/etiquetas de MLflow.
 
 Las pruebas de regresión reprodujeron colisiones de tokens, restauración con pérdida de variantes, aceptación excesiva de variantes numéricas y errores de evaluación antes de las correcciones.
 Las 50 pruebas locales pasan. Una comprobación con oráculo de verdad de referencia sobre 2,200 registros también verifica la conservación de hashes, el determinismo, la restauración y la cobertura.

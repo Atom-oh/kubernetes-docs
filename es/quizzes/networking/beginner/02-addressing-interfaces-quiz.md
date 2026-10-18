@@ -5,7 +5,7 @@
 
 [Volver a la lección](../../../networking/beginner/02-addressing-interfaces.md) | [Preparación del curso](../../../networking/beginner/README.md)
 
-Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una respuesta antes de abrir su explicación. Los ejemplos sirven para interpretar, no para reconfigurar el host.
+Use el contrato del laboratorio aislado con dos máquinas virtuales. Elija una respuesta antes de abrir su explicación. Los ejemplos sirven para interpretar, no para reconfigurar el host.
 
 1. El cliente envía una solicitud HTTP directamente al servidor en `192.0.2.20:8080`. ¿Qué descripción es correcta?
 
@@ -51,7 +51,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: B**
 
-**Explicación:** `/26` deja 6 bits para hosts, así que los bloques contienen 64 direcciones y comienzan en `.0`, `.64`, `.128` y `.192`. `.70` y `.100` pertenecen al segundo bloque. `.130` pertenece al tercero. Compara el prefijo real en lugar de suponer que todas las redes son `/24`.
+**Explicación:** `/26` deja 6 bits para hosts, así que los bloques contienen 64 direcciones y comienzan en `.0`, `.64`, `.128` y `.192`. `.70` y `.100` pertenecen al segundo bloque. `.130` pertenece al tercero. Compare el prefijo real en lugar de suponer que todas las redes son `/24`.
 
 </details>
 
@@ -67,7 +67,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: B**
 
-**Explicación:** La ruta conectada es más específica. No se necesita gateway ni DNS del laboratorio para el tráfico con una IP literal dentro de la misma subred. Conserva la ruta predeterminada de administración existente. Una gateway debe existir y ser accesible; una dirección que termina en `.1` no es intrínsecamente un router.
+**Explicación:** La ruta conectada es más específica. No se necesita gateway ni DNS del laboratorio para el tráfico con una IP literal dentro de la misma subred. Conserve la ruta predeterminada de administración existente. Una gateway debe existir y ser accesible; una dirección que termina en `.1` no es intrínsecamente un router.
 
 </details>
 
@@ -99,7 +99,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: C**
 
-**Explicación:** Los nombres y el orden de los dispositivos invitados varían. Registra por separado las MAC de administración y del laboratorio de cada máquina virtual, y compáralas con `ip -br link`. Una ruta predeterminada suele identificar la ruta de administración, que debe quedar intacta. La NIC del laboratorio también debe cumplir el requisito previo de no tener una IPv4 existente antes de que el ejercicio agregue una dirección.
+**Explicación:** Los nombres y el orden de los dispositivos invitados varían. Registre por separado las MAC de administración y del laboratorio de cada máquina virtual, y compárelas con `ip -br link`. Una ruta predeterminada suele identificar la ruta de administración, que debe quedar intacta. La NIC del laboratorio también debe cumplir el requisito previo de no tener una IPv4 existente antes de que el ejercicio agregue una dirección.
 
 </details>
 
@@ -115,7 +115,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: B**
 
-**Explicación:** `a` es una abreviatura del objeto address; para agregar una dirección se necesita la operación `add`. La habilitación administrativa, la portadora, la asignación de direcciones, el enrutamiento y la accesibilidad de servicios son observaciones distintas. Si falta portadora, inspecciona el cable virtual y la conexión de red antes de modificar la configuración IP.
+**Explicación:** `a` es una abreviatura del objeto address; para agregar una dirección se necesita la operación `add`. La habilitación administrativa, la portadora, la asignación de direcciones, el enrutamiento y la accesibilidad de servicios son observaciones distintas. Si falta portadora, inspeccione el cable virtual y la conexión de red antes de modificar la configuración IP.
 
 </details>
 
@@ -131,7 +131,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: B**
 
-**Explicación:** La selección de ruta es evidencia local. Después de un ping acotado, inspecciona los vecinos para distinguir entre la resolución local del enlace que no se completa y una ruta donde se resuelve la MAC, pero quizá se filtra ICMP. No confundas una decisión de enrutamiento con el éxito de extremo a extremo ni deshabilites un firewall para ocultar el síntoma.
+**Explicación:** La selección de ruta es evidencia local. Después de un ping acotado, inspeccione los vecinos para distinguir entre la resolución local del enlace que no se completa y una ruta donde se resuelve la MAC, pero quizá se filtra ICMP. No confunda una decisión de enrutamiento con el éxito de extremo a extremo ni deshabilite un firewall para ocultar el síntoma.
 
 </details>
 
@@ -139,7 +139,7 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
    - A) La interfaz ha quedado inutilizable permanentemente.
    - B) Hay una asociación en caché que debe volver a confirmarse cuando se use; esto no indica un fallo inmediato.
-   - C) Alguien necesariamente falsificó la identidad del par.
+   - C) Alguien necesariamente suplantó al par.
    - D) Hay que vaciar todas las entradas de vecinos.
 
 <details>
@@ -147,27 +147,27 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 **Respuesta: B**
 
-**Explicación:** El estado del vecino cambia según se confirme su accesibilidad. `REACHABLE` significa que se confirmó hace poco, `INCOMPLETE` indica que se está resolviendo y `FAILED` que falló la resolución. Una tabla vacía antes del tráfico puede ser normal. Compara las MAC con tus registros y usa observaciones del tráfico en vez de exigir que todas las entradas en caché siempre indiquen `REACHABLE`.
+**Explicación:** El estado del vecino cambia según se confirme su accesibilidad. `REACHABLE` significa que se confirmó hace poco, `INCOMPLETE` indica que se está resolviendo y `FAILED` que falló la resolución. Una tabla vacía antes del tráfico puede ser normal. Compare las MAC con sus registros y use observaciones del tráfico en vez de exigir que todas las entradas en caché siempre indiquen `REACHABLE`.
 
 </details>
 
-10. Agregaste una dirección manual y se muestra `valid_lft forever`. ¿Sobrevivirá al reinicio y qué debe eliminar la limpieza?
+10. Agregó manualmente una dirección y se muestra `valid_lft forever`. ¿Sobrevivirá al reinicio y qué debe eliminar la limpieza?
 
-   - A) Sí; elimina toda la tabla de direcciones del sistema invitado.
-   - B) No significa que sea persistente; elimina la IP/prefijo exactos que se agregaron correctamente de la NIC de laboratorio identificada y restaura el estado down solo si esa NIC estaba down originalmente.
+   - A) Sí; elimine toda la tabla de direcciones del sistema invitado.
+   - B) No significa que sea persistente; elimine la IP/prefijo exactos que se agregaron correctamente de la NIC de laboratorio identificada y restaure el estado down solo si esa NIC estaba down originalmente.
    - C) Sí; solo reinstalar Linux puede eliminarla.
-   - D) Elimina primero la ruta predeterminada de administración.
+   - D) Elimine primero la ruta predeterminada de administración.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B**
 
-**Explicación:** `forever` significa que no hay un temporizador de expiración en tiempo de ejecución, no que se haya guardado una configuración. Si se cumple el requisito previo de la lección de no tener IPv4, quitar la única dirección IPv4 del laboratorio también elimina su ruta conectada creada automáticamente. Si un reinicio o un administrador ya quitó la dirección, confirma su ausencia y omite la eliminación. Recupera las variables registradas y el estado original en vez de adivinar.
+**Explicación:** `forever` significa que no hay un temporizador de expiración en tiempo de ejecución, no que se haya guardado una configuración. Si se cumple el requisito previo de la lección de no tener IPv4, quitar la única dirección IPv4 del laboratorio también elimina su ruta conectada creada automáticamente. Si un reinicio o un administrador ya quitó la dirección, confirme su ausencia y omita la eliminación. Recupere las variables registradas y el estado original en vez de adivinar.
 
 </details>
 
-11. Ves una dirección IPv6 que empieza por `fe80:` en la NIC del laboratorio. ¿Qué respuesta es adecuada?
+11. En la NIC del laboratorio aparece una dirección IPv6 que empieza por `fe80:`. ¿Qué respuesta es adecuada?
 
    - A) Deshabilitar IPv6 globalmente para que funcione IPv4.
    - B) Considerarla probablemente de enlace local, dejar intacto el IPv6 existente y continuar con el ejercicio IPv4.
@@ -199,4 +199,4 @@ Usa el acuerdo del laboratorio aislado con dos máquinas virtuales. Elige una re
 
 </details>
 
-Vuelve a comprobar cualquier resultado incierto en la [lección](../../../networking/beginner/02-addressing-interfaces.md) y luego continúa con la [configuración persistente](../../../networking/beginner/03-persistent-configuration.md).
+Vuelva a comprobar cualquier resultado incierto en la [lección](../../../networking/beginner/02-addressing-interfaces.md) y luego continúe con la [configuración persistente](../../../networking/beginner/03-persistent-configuration.md).

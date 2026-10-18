@@ -126,7 +126,7 @@ CloudWatch Anomaly Detection 使用机器学习算法分析历史指标数据，
 - `ignore`：保持当前状态
 - `missing`：当所有评估数据都缺失时为 INSUFFICIENT_DATA
 
-应根据指标语义进行选择。`notBreaching` 可能适合稀疏的错误计数，但可能掩盖缺失的心跳信号。对于具有 EC2 变更操作的告警，请使用 `missing`，并且仅在 ALARM 状态触发它们。足够的额外真实数据点优先于缺失数据填充。
+应根据指标语义进行选择。`notBreaching` 可能适合稀疏的错误计数，但可能掩盖缺失的心跳信号。对于会执行 EC2 操作的告警，请将缺失数据设为 `missing`，并将操作配置为仅在 ALARM 状态触发。当评估窗口中有足够的实际数据点时，CloudWatch 会优先使用这些数据点，而不是应用缺失数据填充值。
 
 </details>
 
@@ -182,7 +182,7 @@ Container Insights 中的关键 EKS 指标：
 
 9. 以下哪项不是 CloudWatch Alarms 成本优化的推荐做法？
    - A) 对非关键告警使用 Standard Resolution（60 秒）
-   - B) 考虑已评估指标和保留的子告警费用
+   - B) 将参与评估的指标费用和保留子告警产生的费用都纳入考量
    - C) 对所有告警使用 High Resolution（10 秒）
    - D) 定期删除未使用的告警
 

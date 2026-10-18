@@ -1,7 +1,7 @@
 # Introducción a EKS
 
 > **Versiones compatibles**: soporte estándar de Amazon EKS 1.34–1.37; soporte extendido 1.31–1.33 (verificado el 12 de octubre de 2026)
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 Amazon Elastic Kubernetes Service (EKS) es un servicio administrado para ejecutar Kubernetes en AWS. En este capítulo, exploraremos los conceptos básicos de EKS, su arquitectura y las diferencias con Kubernetes estándar.
 

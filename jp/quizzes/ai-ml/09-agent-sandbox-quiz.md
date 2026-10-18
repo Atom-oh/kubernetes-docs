@@ -143,14 +143,14 @@ v1.0.0 では `v1alpha1` と conversion webhook が削除され、v0.5.0 より�
 ### 9. `sandbox-router` を通じて sandbox にブラウザーからアクセスさせたい場合、章の EKS ガイダンスに沿う設計はどれですか？
 
 - A. インターネット向け NLB を持つ `LoadBalancer` 型の `Service` を使い、router の既定の `AllowAll` authorizer を使う
-- B. CloudFront → CloudFront VPC origin → 内部 ALB → `sandbox-router-svc` の経路を使い、scope を限定した token v2 認可を設定し、ALB または Envoy 層でレート制限を行う
+- B. CloudFront → CloudFront VPC origin → 内部 ALB → `sandbox-router-svc` の経路を使い、スコープを限定したトークン v2 認可を設定し、ALB または Envoy 層でレート制限を行う
 - C. 各 sandbox Pod にパブリック IP を付ける
 - D. 本番環境で、すべてのユーザーのノート PC から port-forward する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. CloudFront → CloudFront VPC origin → 内部 ALB → `sandbox-router-svc` の経路を使い、scope を限定した token v2 認可を設定し、ALB または Envoy 層でレート制限を行う**
+**解答: B. CloudFront → CloudFront VPC origin → 内部 ALB → `sandbox-router-svc` の経路を使い、スコープを限定したトークン v2 認可を設定し、ALB または Envoy 層でレート制限を行う**
 
 **解説:**
 パブリックなのは CloudFront だけです。ALB は内部向けで、そのセキュリティグループでは CloudFront VPC origin のセキュリティグループまたはマネージドプレフィックスリストからの通信だけを許可します。router の既定の authorizer は `AllowAll` で、WebSocket などアップグレードされた接続の接続数を制限しません。そのため、公開する前に認可と制限を構成する必要があります。

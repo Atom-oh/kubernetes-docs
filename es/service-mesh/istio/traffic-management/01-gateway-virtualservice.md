@@ -1,8 +1,8 @@
 # Gateway y VirtualService
 
-Gateway y VirtualService son recursos fundamentales para gestionar el tráfico en Istio.
+Gateway y VirtualService son recursos fundamentales para gestionar el tráfico de Istio.
 
-## Tabla de contenido
+## Índice
 
 1. [Descripción general de Gateway](#gateway-overview)
 2. [Descripción general de VirtualService](#virtualservice-overview)
@@ -11,11 +11,11 @@ Gateway y VirtualService son recursos fundamentales para gestionar el tráfico e
 5. [Patrones avanzados](#advanced-patterns)
 6. [Solución de problemas](#troubleshooting)
 
-<span id="gateway-overview"></span>
+Este capítulo usa el recurso Gateway de Istio `networking.istio.io/v1`, distinto de la Kubernetes Gateway API. Los ejemplos presuponen que ya existe una carga de trabajo/Service de gateway con la etiqueta `istio=ingressgateway` en `istio-system`, que los Services de las aplicaciones están en `default` y que los puertos de servicio coinciden. Un Gateway de Istio configura un proxy existente; no crea ni aprovisiona uno. Cree cada Secret TLS en el **namespace de la carga de trabajo del gateway** y vincule el VirtualService al Gateway que se está probando. Los ejemplos con hosts superpuestos son alternativas entre sí.
 
-## Descripción general de Gateway
+## Descripción general de Gateway {#gateway-overview}
 
-Gateway define el punto de entrada para el tráfico externo hacia la malla.
+Gateway define el punto de entrada del tráfico externo a la malla.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -39,16 +39,14 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: myapp-tls-secret
+      credentialName: myapp-tls
     hosts:
     - "myapp.example.com"
 ```
 
-<span id="virtualservice-overview"></span>
+## Descripción general de VirtualService {#virtualservice-overview}
 
-## Descripción general de VirtualService
-
-VirtualService define cómo enrutar el tráfico que entra a través de Gateway.
+VirtualService define el enrutamiento para los sidecars de la malla o para los gateways a los que se hace referencia explícitamente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -77,9 +75,7 @@ spec:
           number: 3000
 ```
 
-<span id="basic-configuration"></span>
-
-## Configuración básica
+## Configuración básica {#basic-configuration}
 
 ### Tráfico HTTP
 
@@ -88,6 +84,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: http-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -107,7 +104,7 @@ spec:
   hosts:
   - "*"
   gateways:
-  - http-gateway
+  - istio-system/http-gateway
   http:
   - route:
     - destination:
@@ -118,7 +115,7 @@ spec:
 
 ### Tráfico HTTPS
 
-```yaml
+```bash
 # Create TLS certificate Secret
 kubectl create secret tls myapp-tls \
   --cert=myapp.crt \
@@ -147,9 +144,7 @@ spec:
     - "myapp.example.com"
 ```
 
-<span id="practical-examples"></span>
-
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 ### Enrutamiento basado en rutas
 
@@ -162,7 +157,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   # API traffic
   - match:
@@ -226,6 +221,8 @@ spec:
         subset: v1
 ```
 
+Antes de usar el ejemplo de enrutamiento por encabezados, cree los subconjuntos `mobile-v2`, `v3` y `v1` de DestinationRule con etiquetas de Pod coincidentes. Los encabezados de enrutamiento proporcionados por el cliente no son un mecanismo de autorización. Los encabezados de respuesta estáticos que aparecen abajo son ejemplos; no representan latencias medidas.
+
 ### Configuración multidominio
 
 ```yaml
@@ -233,6 +230,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: multi-domain-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -264,7 +262,7 @@ spec:
   hosts:
   - "api.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
@@ -278,16 +276,14 @@ spec:
   hosts:
   - "admin.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
         host: admin-service
 ```
 
-<span id="advanced-patterns"></span>
-
-## Patrones avanzados
+## Patrones avanzados {#advanced-patterns}
 
 ### Redirección de HTTP a HTTPS
 
@@ -296,6 +292,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: secure-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -332,7 +329,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -344,7 +341,7 @@ spec:
         host: api-service
 ```
 
-### Adición/modificación de encabezados
+### Adición o modificación de encabezados
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -362,14 +359,14 @@ spec:
       request:
         add:
           x-custom-header: "custom-value"
-          x-forwarded-proto: "https"
+          x-demo-stage: "gateway"
         set:
           x-api-version: "v2"
         remove:
           - x-internal-header
       response:
         add:
-          x-response-time: "100ms"
+          x-demo-response: "configured-value"
 ```
 
 ### Redirección
@@ -383,7 +380,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -393,27 +390,25 @@ spec:
       authority: "newapp.example.com"
 ```
 
-<span id="troubleshooting"></span>
-
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### Gateway no funciona
 
 ```bash
 # 1. Check Gateway status
-kubectl get gateway -n istio-system
+kubectl get gateways.networking.istio.io -n istio-system
 
 # 2. Check Ingress Gateway pods
 kubectl get pods -n istio-system -l istio=ingressgateway
 
 # 3. Check Gateway configuration
-kubectl describe gateway my-gateway -n istio-system
+kubectl describe gateways.networking.istio.io my-gateway -n istio-system
 
 # 4. Check Envoy configuration
 istioctl proxy-config listeners -n istio-system istio-ingressgateway-xxx
 ```
 
-### Error de enrutamiento de VirtualService
+### Fallo de enrutamiento de VirtualService
 
 ```bash
 # 1. Check VirtualService
@@ -444,14 +439,14 @@ istioctl proxy-config secret -n istio-system istio-ingressgateway-xxx
 
 ## Prácticas recomendadas
 
-1. **Separación de Namespace**: Gateway en `istio-system`, VirtualService en el Namespace de la aplicación
-2. **TLS obligatorio**: Use siempre HTTPS en entornos de producción
-3. **Especificación explícita de Host**: Use dominios explícitos en lugar de comodines (`*`)
-4. **Orden de las condiciones de coincidencia**: Primero las condiciones específicas; al final, las generales
-5. **Nomenclatura de recursos**: Use convenciones de nomenclatura coherentes
+1. **Separación de namespaces**: Gateway en `istio-system` y VirtualService en el namespace de la aplicación
+2. **TLS obligatorio**: use siempre HTTPS en entornos de producción
+3. **Especificación explícita de host**: use dominios explícitos en lugar de comodines (`*`)
+4. **Orden de las condiciones de coincidencia**: primero las condiciones específicas y al final las generales
+5. **Nombres de recursos**: use convenciones de nomenclatura coherentes
 
 ## Referencias
 
 - [Istio Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/)
 - [Istio VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
-- [Ingress Traffic](https://istio.io/latest/docs/tasks/traffic-management/ingress/)
+- [Tráfico de entrada](https://istio.io/latest/docs/tasks/traffic-management/ingress/)

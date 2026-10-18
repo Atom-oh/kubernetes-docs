@@ -29,7 +29,7 @@
 <span id="verification-5"></span>
 
 > **难度**: 高级
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 将 service 集群的应用与 management 集群的 metrics（指标）、logs（日志）和 traces（链路追踪）连接起来。请使用[技术栈示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)中已固定版本的 chart/TLS/身份文件。[第 1 部分](./01-infrastructure-setup-lab.md)必须已经提供 context、gp3/EBS CSI、LBC、DNS/路由、IRSA 以及 `helm-inputs/collector-identity.yaml`。
 
 ![已连通的 metrics、logs 与 traces 路径](../../.gitbook/assets/en-labs-observability-02-observability-stack-lab-0.png)
@@ -38,9 +38,9 @@
 
 ## 1. 版本与基线路径 {#baseline}
 
-| Component | Chart | Application |
+| 组件 | Chart | 应用 |
 |---|---|---|
-| kube-prometheus-stack | 90.0.0 | Operator0.93.1; inspect component images |
+| kube-prometheus-stack | 90.0.0 | Operator 0.93.1；需检查各组件镜像 |
 | Tempo | 3.0.0 | 3.0.3 |
 | Loki | 18.13.0 | 3.7.7 |
 | OTel Collector | 0.173.1 | contrib0.160.0 |

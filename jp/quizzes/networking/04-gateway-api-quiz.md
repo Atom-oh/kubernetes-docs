@@ -1,389 +1,347 @@
 # Gateway API クイズ
 
-このクイズでは、Kubernetes Gateway API のリソースモデル、実装、および Ingress からの移行に関する理解を確認します。
+v1.6 API の基準と、ガイドに記載された実装固有の前提に基づいています。各コード例はそれぞれ独立したシナリオです。
 
-## クイズ問題
+## 1. Gateway API の設計目標ではないものはどれですか？
 
-### 1. Gateway API が既存の Ingress API を改善している点ではないものはどれですか？
-
-A. ロールベースのリソース分離（インフラストラクチャプロバイダー、クラスターオペレーター、アプリケーション開発者）
-B. TCP、UDP、gRPC などのさまざまなプロトコルのネイティブサポート
-C. アノテーションではなく標準化されたフィールドによる機能実装
-D. すべてのネットワーク機能を単一のリソースに統合
+- A. インフラストラクチャ、operator、アプリケーションの各リソース所有者をより明確に分ける
+- B. 複数のトラフィックプロトコルに対応した API 型を提供する
+- C. サポートレベルが定義された標準フィールドを提供する
+- D. すべてのネットワーク機能を 1 つのオブジェクトに統合する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. すべてのネットワーク機能を単一のリソースに統合**
-
-**解説:**
-Gateway API の改善点:
-- **ロール分離**: GatewayClass（インフラストラクチャ）、Gateway（オペレーター）、Routes（開発者）に責任を分離
-- **複数プロトコル**: HTTPRoute、GRPCRoute、TCPRoute、TLSRoute、UDPRoute
-- **標準化**: アノテーションを使用せず、明示的なフィールドで機能を定義
-- **拡張性**: CRD に基づき新機能を容易に追加
-
-Gateway API は複数のリソースに分離されているため、「単一リソースへの統合」は誤りです。
+D. GatewayClass、Gateway、Route リソースは責務を分離します。controller は、該当する API バージョン、profile、機能を実装する必要があり、RBAC／admission が所有権を強制します。標準フィールドによって移植性は高まりますが、実装固有の拡張がなくなるわけではありません。
 
 </details>
 
-### 2. Gateway API のロール分離において、GatewayClass を管理するのは誰ですか？
+## 2. ロール別モデルでは、通常、誰が GatewayClass を管理しますか？
 
-A. アプリケーション開発者
-B. クラスターオペレーター
-C. インフラストラクチャプロバイダー
-D. セキュリティ管理者
+- A. 各アプリケーション開発者が個別に管理する
+- B. backend Service の所有者だけが管理する
+- C. インフラストラクチャ提供者またはプラットフォーム／ネットワークチームが管理する
+- D. 認証されていないアプリケーションクライアントが管理する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. インフラストラクチャプロバイダー**
-
-**解説:**
-Gateway API のロール分離:
-
-| ロール | 管理対象リソース | 責任 |
-|------|------------------|----------------|
-| **インフラストラクチャプロバイダー** | GatewayClass | 基本インフラストラクチャ設定の定義、controller の指定 |
-| **クラスターオペレーター** | Gateway, ReferenceGrant | Load Balancer のプロビジョニング、namespace 権限の管理 |
-| **アプリケーション開発者** | HTTPRoute, GRPCRoute, etc. | アプリケーションルーティングルールの定義 |
-
-GatewayClass はクラウドプロバイダーまたはネットワークチームによって定義されます。
+C. GatewayClass は、インストール済みの controller と、サポートされる実装固有のパラメーターを選択します。プラットフォーム運用者は Gateway と Route の接続ポリシーを管理し、開発者は Route を管理します。参照先 namespace の所有者は ReferenceGrant を管理します。これらは運用上の役割であり、Kubernetes 権限が自動的に付与されるわけではありません。
 
 </details>
 
-### 3. Gateway における TLS termination と passthrough の正しい違いは何ですか？
+## 3. TLS termination と passthrough の違いは何ですか？
 
-A. Terminate は TLS を backend に渡し、Passthrough は Gateway で termination する
-B. Terminate は Gateway で TLS を termination し、Passthrough は TLS を backend に渡す
-C. 両方のモードは同じ動作をする
-D. Terminate は HTTP のみをサポートし、Passthrough は HTTPS のみをサポートする
+- A. Terminate は暗号化済みバイト列をそのまま通し、Passthrough では backend に TLS を終了させる
+- B. Terminate は downstream TLS を Gateway で終了し、Passthrough は backend で終了させる
+- C. どちらも同じ HTTPS listener を使い、モードだけ切り替える
+- D. Termination では backend が必ず平文を受信する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Terminate は Gateway で TLS を termination し、Passthrough は TLS を backend に渡す**
-
-**解説:**
-TLS モード:
-
-| モード | 説明 | ユースケース |
-|------|-------------|----------|
-| **Terminate** | TLS は Gateway で termination され、backend は平文を受信 | 標準 HTTPS、証明書の一元管理 |
-| **Passthrough** | TLS はそのまま backend に渡される | エンドツーエンド暗号化、backend による証明書管理 |
+B. HTTPS termination と TLS passthrough では listener の設定が異なります。termination 後に backend まで暗号化するかどうかは別の判断であり、サポート対象の BackendTLSPolicy または実装設定を使います。
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-tls
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
     protocol: HTTPS
+    port: 443
     tls:
-      mode: Terminate  # or Passthrough
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
+  - name: tls-passthrough
+    protocol: TLS
+    port: 8443
+    tls:
+      mode: Passthrough
 ```
+
+参照先の TLS Secret と適切な Route／backend が存在している必要があります。HTTPS listener の mode を変えるだけでは passthrough を有効にできません。
 
 </details>
 
-### 4. HTTPRoute でトラフィック分割（weight）を実装するにはどうしますか？
+## 4. HTTPRoute で重み付き backend の振り分けを表すには、どの方法を使いますか？
 
-A. `trafficSplit` フィールドを使用する
-B. 複数の `backendRefs` に `weight` フィールドを指定する
-C. `canary` アノテーションを使用する
-D. 個別の TrafficSplit CRD を作成する
+- A. `trafficSplit` フィールド
+- B. 複数の `backendRefs` に設定する `weight`
+- C. 必須の canary annotation
+- D. 別 API の TrafficSplit CRD
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. 複数の `backendRefs` に `weight` フィールドを指定する**
-
-**解説:**
-HTTPRoute でのトラフィック分割:
+B. ガイドの Gateway／Namespace 設定と、既存の backend Service を使います。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
+metadata:
+  name: quiz-split
+  namespace: production
 spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
   rules:
-    - backendRefs:
-        - name: app-stable
-          port: 80
-          weight: 90  # 90%
-        - name: app-canary
-          port: 80
-          weight: 10  # 10%
+  - backendRefs:
+    - name: app-stable
+      port: 80
+      weight: 90
+    - name: app-canary
+      port: 80
+      weight: 10
 ```
 
-ユースケース:
-- Canary Deployment
-- A/B テスト
-- Blue-green Deployment
-
-weight の合計は 100 である必要はなく、比率として計算されます。
+weight は相対的な振り分け比率を表し、合計を 100 にする必要はありません。少ないリクエスト数では、実際の割合が指定値と一致しないことがあります。この設定は同じ Gateway の背後にある backend を選びます。旧 Ingress frontend と新 Gateway frontend の間でクライアントを切り替えるものではありません。
 
 </details>
 
-### 5. ReferenceGrant の主な目的は何ですか？
+## 5. namespace をまたぐ backend 参照の ReferenceGrant は、どこに作成しますか？
 
-A. Gateway リソースの権限管理
-B. namespace をまたぐ参照を許可する
-C. API バージョンの互換性管理
-D. TLS 証明書の認可
+- A. 常に Route の namespace に作成する
+- B. 参照先 backend の namespace に、その所有者が作成する
+- C. kube-system にだけ作成できる
+- D. クライアントのワークステーションに作成する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. namespace をまたぐ参照を許可する**
-
-**解説:**
-ReferenceGrant の使用方法:
+B. 参照を受け入れる側が許可します。例:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: allow-routes
+  name: allow-shared-api
   namespace: backend-services
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: frontend
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: production
   to:
-    - group: ""
-      kind: Service
+  - group: ''
+    kind: Service
+    name: shared-api
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: shared-api
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /shared
+    backendRefs:
+    - name: shared-api
+      namespace: backend-services
+      port: 80
 ```
 
-ユースケース:
-- 他の namespace にある Service の参照を許可
-- Gateway が他の namespace にある Secret（TLS 証明書）を参照
-- セキュリティのための明示的な認可
-
-namespace をまたぐ参照はデフォルトでブロックされます。
+shared-api Service は backend-services に存在する必要があります。`to.name` により許可対象はその Service に限定されます。Route から Gateway への接続には `parentRefs` と `allowedRoutes` を使い、その接続自体に ReferenceGrant は不要です。ReferenceGrant はアプリケーションユーザーを認証しません。
 
 </details>
 
-### 6. Gateway API の Standard channel に含まれないリソースはどれですか？
+## 6. Gateway API v1.6 Standard bundle に含まれないリソースはどれですか？
 
-A. GatewayClass
-B. Gateway
-C. HTTPRoute
-D. TCPRoute
+- A. GatewayClass
+- B. GRPCRoute
+- C. TCPRoute
+- D. Istio VirtualService
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. TCPRoute**
-
-**解説:**
-Gateway API の channel 分類:
-
-**Standard Channel (GA)**:
-- GatewayClass
-- Gateway
-- HTTPRoute
-- ReferenceGrant
-
-**Experimental Channel (Beta/Alpha)**:
-- GRPCRoute
-- TCPRoute
-- TLSRoute
-- UDPRoute
-
-Standard channel のリソースは `gateway.networking.k8s.io/v1` API バージョンを使用し、Experimental では `v1alpha2` または `v1beta1` を使用します。
+D. VirtualService は Istio API です。v1.6 Standard bundle には、HTTPRoute、GRPCRoute、TCPRoute、TLSRoute、UDPRoute などが含まれます。TCPRoute が Experimental という古い解答は、現在は正しくありません。channel と API version は別の概念です。ReferenceGrant v1beta1 は v1 とともに Standard で引き続き提供されますが、Experimental bundle では v1 リソースに実験的フィールドが含まれることがあります。
 
 </details>
 
-### 7. リクエストを別の URL に変更する HTTPRoute filter type はどれですか？
+## 7. クライアントへの redirect を返さず、upstream request を書き換える filter はどれですか？
 
-A. RequestHeaderModifier
-B. ResponseHeaderModifier
-C. URLRewrite
-D. RequestMirror
+- A. RequestHeaderModifier
+- B. ResponseHeaderModifier
+- C. URLRewrite
+- D. RequestMirror
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. URLRewrite**
-
-**解説:**
-HTTPRoute filter type:
-
-| Filter | 説明 |
-|--------|-------------|
-| RequestHeaderModifier | リクエストヘッダーの追加、変更、削除 |
-| ResponseHeaderModifier | レスポンスヘッダーの追加、変更、削除 |
-| **URLRewrite** | URL のパスまたは host を変更 |
-| RequestRedirect | 別の URL へリダイレクト（3xx レスポンス） |
-| RequestMirror | トラフィックをミラーリング（shadow Service にコピー） |
+C. URLRewrite は upstream の path／Host を変更します。宛先 backend は引き続き `backendRefs` で選択します。RequestRedirect はクライアントに 3xx response を返します。
 
 ```yaml
-filters:
-  - type: URLRewrite
-    urlRewrite:
-      path:
-        type: ReplacePrefixMatch
-        replacePrefixMatch: /new-api
-      hostname: "new-api.example.com"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: quiz-rewrite
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /old-api
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /new-api
+        hostname: new-api.example.com
+    backendRefs:
+    - name: new-api-service
+      port: 80
 ```
 
+この場合、`/old-api/users` は `/new-api/users` になります。ReplaceFullPath は path 全体を置き換えます。legacy rewrite を移行するときは、両者の動作の違いに注意してください。
+
 </details>
 
-### 8. Gateway API をサポートする実装ではないものはどれですか？
+## 8. Gateway API リソースを reconcile しないコンポーネントはどれですか？
 
-A. Istio
-B. Cilium
-C. kube-proxy
-D. Envoy Gateway
+- A. Istio の Gateway controller
+- B. Cilium の Gateway controller
+- C. kube-proxy
+- D. Envoy Gateway
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. kube-proxy**
-
-**解説:**
-Gateway API の実装:
-
-| 実装 | Controller |
-|----------------|------------|
-| **Istio** | istio.io/gateway-controller |
-| **Cilium** | io.cilium/gateway-controller |
-| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller |
-| **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller |
-| **Contour** | projectcontour.io/gateway-controller |
-| **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller |
-
-kube-proxy は Service の ClusterIP/NodePort ルーティングを処理するものであり、Gateway API とは無関係です。
+C. kube-proxy は Service の転送を処理し、backend へのネットワーク経路に関与する場合もありますが、GatewayClass／Gateway／Route リソースを reconcile しません。Gateway API の CRD をインストールしただけでは、ここに挙げた controller はインストールされません。
 
 </details>
 
-### 9. Ingress から Gateway API へ移行する際、Ingress annotation に対応する Gateway API の機能は何ですか？
+## 9. legacy Ingress 設定の HTTP path rewrite を Gateway API で表す construct はどれですか？
 
-A. Gateway metadata
-B. HTTPRoute matches と filters
-C. GatewayClass parameters
-D. ReferenceGrant spec
+- A. Gateway オブジェクト名
+- B. HTTPRoute の URLRewrite filter
+- C. 任意の namespace からの ReferenceGrant
+- D. namespace label だけ
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. HTTPRoute matches と filters**
-
-**解説:**
-Ingress annotation → Gateway API の対応:
-
-| Ingress annotation | Gateway API |
-|-------------------|-------------|
-| `nginx.ingress.kubernetes.io/rewrite-target` | HTTPRoute filter: URLRewrite |
-| `nginx.ingress.kubernetes.io/ssl-redirect` | HTTPRoute filter: RequestRedirect |
-| `nginx.ingress.kubernetes.io/canary-weight` | HTTPRoute backendRefs weight |
-| パスベースのルーティング | HTTPRoute matches path |
-| ヘッダーベースのルーティング | HTTPRoute matches headers |
-
-Gateway API はアノテーションではなく明示的なフィールドを使用するため、より高い移植性を実現します。
+B. `ReplaceFullPath` と `ReplacePrefixMatch` のどちらを選ぶかは、移行前に元の rewrite の動作を確認してください。ガイドにある固定値 `rewrite-target: /` では、suffix を残すのではなく path 全体を置き換える必要があります。ほかの Ingress annotation は Gateway 設定または controller policy CRD に対応する場合もありますが、サポート対象の代替がないものもあります。HTTP から HTTPS への redirect は HTTP listener に bind する必要があります。
 
 </details>
 
-### 10. Gateway で特定の namespace からの Routes のみを許可する設定は何ですか？
+## 10. Gateway に Route を接続できる namespace を制限するには、どう設定しますか？
 
-A. `allowedRoutes.namespaces.from: All`
-B. `allowedRoutes.namespaces.from: Same`
-C. `allowedRoutes.namespaces.from: Selector`
-D. B と C の両方が可能
+- A. `from: All` は接続元を 1 つの namespace に制限する
+- B. `from: Same` は Gateway 自身の namespace を許可する
+- C. `from: Selector` は Namespace label で選択する
+- D. B と C はどちらも有効で、許可範囲が異なる
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. B と C の両方が可能**
-
-**解説:**
-Gateway の allowedRoutes 設定:
+D. `from` には、次のいずれか 1 つを選びます。Selector の場合:
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-namespace-selector
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
     allowedRoutes:
       namespaces:
-        from: All  # All namespaces
-        # or
-        from: Same  # Only same namespace as Gateway
-        # or
-        from: Selector  # Select by label selector
+        from: Selector
         selector:
           matchLabels:
-            gateway-access: "true"
+            gateway-access: 'true'
 ```
 
-- **All**: すべての namespace からの Routes を許可
-- **Same**: Gateway と同じ namespace からのみ許可
-- **Selector**: 特定のラベルを持つ namespace からのみ許可
+label を付ける対象は Route や Pod ではなく Namespace です。Namespace label を変更できる主体を制御してください。`allowedRoutes` が制限するのは Route の接続先です。namespace をまたぐ backend 参照を許可するものでも、アプリケーション要求を認可するものでもありません。
 
 </details>
 
-### 11. GRPCRoute で特定の Service の特定の method へルーティングするための matches 設定は何ですか？
+## 11. GRPCRoute で特定の service の特定の method を選択する match はどれですか？
 
-A. `path.service` と `path.method`
-B. `method.service` と `method.method`
-C. `grpc.service` と `grpc.method`
-D. `rpc.service` と `rpc.method`
+- A. `path.service` と `path.method`
+- B. `method.service` と `method.method`
+- C. `grpc.service` と `grpc.method`
+- D. `rpc.service` と `rpc.method`
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. `method.service` と `method.method`**
-
-**解説:**
-GRPCRoute のマッチング:
+B. ガイドの gRPC listener では、次のように指定します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GRPCRoute
+metadata:
+  name: quiz-grpc
+  namespace: production
 spec:
+  parentRefs:
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: grpc
+  hostnames:
+  - grpc.example.com
   rules:
-    - matches:
-        - method:
-            service: "myapp.UserService"
-            method: "GetUser"
-      backendRefs:
-        - name: user-service
-          port: 50051
+  - matches:
+    - method:
+        service: myapp.UserService
+        method: GetUser
+    backendRefs:
+    - name: user-service
+      port: 50051
 ```
 
-gRPC のルーティングオプション:
-- Service のみ: その Service のすべての method
-- Service + method: 特定の method のみ
-- ヘッダーベースのルーティングもサポート
+既定の Exact match では、method 名の大文字と小文字が区別されます。backend は想定する gRPC transport を提供し、適切な TLS 設定を備えている必要があります。port 番号だけでは、それらを確認できません。service だけを指定した method match は、その service の全 method を対象にします。
 
 </details>
 
-### 12. Gateway API と Ingress API の比較として正しくないものはどれですか？
+## 12. Ingress との比較で、正しくない説明はどれですか？
 
-A. Gateway API はロールベースの分離をサポートするが、Ingress はサポートしない
-B. Gateway API は TCP/UDP をネイティブサポートするが、Ingress はサポートしない
-C. Gateway API はトラフィック分割をネイティブサポートするが、Ingress ではアノテーションが必要
-D. Gateway API は Ingress より少ないリソースタイプを使用する
+- A. Gateway API は listener と Route の所有権をより明確に分離する
+- B. Gateway API は専用の TCP／UDP／gRPC routing type を定義する
+- C. Standard routing field には実装上のサポート要件がある
+- D. Gateway API のリソース型は Ingress より少ない
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. Gateway API は Ingress より少ないリソースタイプを使用する**
-
-**解説:**
-Gateway API と Ingress の比較:
-
-| 機能 | Ingress | Gateway API |
-|---------|---------|-------------|
-| リソース数 | 1 (Ingress) | 複数（GatewayClass、Gateway、Routes など） |
-| ロール分離 | なし | 3 層分離 |
-| TCP/UDP | 非対応 | ネイティブサポート |
-| トラフィック分割 | Annotation | ネイティブ（weight） |
-| 拡張性 | 制限あり | CRD ベース |
-
-Gateway API はより多くのリソースタイプを使用しますが、これによりロール分離と柔軟性が実現されます。
+D. Gateway API は複数のリソース型を導入しています。Ingress にも IngressClass があり、RBAC／admission を利用できます。Ingress に認可や所有権の制御がないとするのは正確ではありません。Gateway API では、いくつかの責務分担や namespace をまたぐ参照の handshakes が、より明示的になっています。すべての API field があらゆる実装で同じ動作をすると仮定せず、controller とバージョンのサポート状況を確認してください。
 
 </details>
 
----
-
-## 追加学習リソース
-
-- [Gateway API 公式ドキュメント](https://gateway-api.sigs.k8s.io/)
-- [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [実装固有のガイド](https://gateway-api.sigs.k8s.io/implementations/)
+[ガイドに戻る](../../networking/04-gateway-api.md)

@@ -1,7 +1,7 @@
 # パート 5: Kubeflow Trainer と分散トレーニング
 
 > **レビューのベースライン**: Trainer 2.2.0 / Community Distribution 26.03.1; 2.3.0 へのアップグレード比較を別途実施
-> **最終更新**: September 12, 2026
+> **最終更新日**: 2026年9月12日
 
 ## ラボ環境のセットアップ
 
@@ -9,7 +9,7 @@
 
 ## フレームワーク固有の Operator から統一 API へ
 
-Kubernetes 上の分散トレーニングは Kubeflow project 内で実際のアーキテクチャ上の転換を経験しており、これは YAML を扱う前に理解すべき最も重要な点です。
+Kubeflow プロジェクトでは Kubernetes 上の分散トレーニングのアーキテクチャが大きく変わりました。YAML を扱う前に、まずこの変化を理解することが重要です。
 
 ### 当初の Training Operator (v1)
 

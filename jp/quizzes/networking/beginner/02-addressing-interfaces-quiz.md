@@ -1,7 +1,7 @@
 # クイズ 2. アドレス、サブネット、インターフェイス
 
 > **サポート対象バージョン**: Ubuntu Server 24.04 LTS（主環境）、Rocky Linux 9（代替環境）
-> **最終更新日**: 2026 年 9 月 15 日
+> **最終更新日**: 2026年9月15日
 
 [レッスンに戻る](../../../networking/beginner/02-addressing-interfaces.md) | [コースの準備](../../../networking/beginner/README.md)
 

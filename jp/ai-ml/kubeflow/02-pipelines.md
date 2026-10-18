@@ -1,8 +1,8 @@
 # パート 2: Kubeflow Pipelines
 
 > **サポート対象バージョン**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
-> **確認済みの最新独立リリース**: KFP 2.17.2 (September 4, 2026; PyPI 上の最新 `kfp` SDK: 2.17.0), checked October 12, 2026; examples use 2.16.1
-> **最終更新**: October 12, 2026
+> **確認済みの最新独立リリース**: KFP 2.17.2（2026年9月4日、PyPI 上の最新 `kfp` SDK: 2.17.0）。2026年10月12日確認。例では 2.16.1 を使用
+> **最終更新**: 2026年10月12日
 
 ## ラボ環境のセットアップ
 

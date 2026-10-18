@@ -20,20 +20,20 @@
 <span id="verification"></span>
 
 > **难度**：中级 · **预计时间**：45 分钟
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 使用 k6 和 Locust 运行相同的订单/支付/读取流程，然后说明观察到的 Pod 和节点变化。仅针对可随时销毁的实验 API 进行测试。VU 数量和延迟阈值是练习设置，并非实测吞吐量或扩缩容结果。
 
 ## 前提条件 {#prerequisites}
 
 - [第 3 部分](./03-msa-deployment-lab.md)中的 API 必须已就绪：`POST /orders` 返回 `201` 和 `id`；`POST /payments` 返回 `200/201` 和 `status: completed`；`GET /orders/{id}` 返回该 ID。若使用其他 API，请同时更改路径、payload 和断言。
-- 服务集群 context 为 `service`；每条命令都会显式选择它。
+- 服务集群 context 为 `service`；每条命令都会显式指定该 context。
 - 示例已使用 k6 **2.2.0** 和 Locust **2.46.5**/Python **3.12** 验证。请根据你的操作系统/CPU 架构遵循[官方安装指南](https://grafana.com/docs/k6/latest/set-up/install-k6/)。
 - 在[第 3 部分](./03-msa-deployment-lab.md)中配置 KEDA ScaledObject 和 Karpenter NodePool/EC2NodeClass。基础设施查询需要实际采集 kube-state-metrics/cAdvisor 数据。
 
 ![观察负载、Pod 扩缩容和节点扩缩容](../../.gitbook/assets/en-labs-observability-04-load-testing-scaling-lab-0.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-04-load-testing-scaling-lab-0.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-04-load-testing-scaling-lab-0.html)
 
 ## 1. 使用小型测试验证 API {#smoke-test}
 
@@ -97,7 +97,7 @@ kubectl --context service get nodes -L karpenter.sh/nodepool,karpenter.sh/capaci
 kubectl --context service -n msa get events --sort-by=.metadata.creationTimestamp
 ```
 
-SQS scaler 会读取队列属性；它不会消费消息。请检查 consumer 队列和 ScaledObject URL 是否匹配。`queueLength` 是每个 Pod 的目标值；消息计数、in-flight/delayed 设置、副本边界和 HPA 行为都会影响结果。仅扩缩容 API producer 无法解决 consumer 积压。
+SQS scaler 会读取队列属性；它不会消费消息。请检查 consumer 队列和 ScaledObject URL 是否匹配。`queueLength` 是每个 Pod 的目标值；队列消息数、在途/延迟消息配置、副本边界和 HPA 行为都会影响结果。仅扩缩容 API producer 无法解决 consumer 积压。
 
 Karpenter 会为无法调度、且其要求可由 NodePool 满足的 Pod 提供容量。还应诊断镜像拉取、PVC 和 taint：增加节点未必能解决这些问题。请使用实际的 NodePool 标签选择节点，而不是 hostname 子字符串。
 
