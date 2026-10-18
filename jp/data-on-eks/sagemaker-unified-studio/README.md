@@ -1,6 +1,6 @@
 # SageMaker Unified Studio のガバナンス
 
-> ドキュメント確認日: 2026-09-12。実験結果は、2026-09-01 の記録と、2026年9月2日時点の過去のドキュメントに基づきます。
+> ドキュメント確認日: 2026年9月12日。実験結果は、2026年9月1日の記録と、2026年9月2日時点の過去のドキュメントに基づきます。
 
 Amazon SageMaker Unified Studio は、データ/AI チーム向けのコラボレーション、ツール、カタログアセットを管理します。このセクションでは、EKS パイプラインのアセット、ユーザー、実行権限に関するドメインとプロジェクトの境界について説明します。
 ここで扱う **Unified Studio/DataZone project** は、SageMaker AI MLOps Project や SageMaker AI Studio domain と同じ API オブジェクトではありません。

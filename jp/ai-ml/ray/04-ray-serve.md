@@ -1,6 +1,6 @@
 # パート 4: Ray Serve
 
-> **検証基準**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
+> **検証基準**: Ray 2.58.0 · KubeRay 1.7.1 · 2026-10-16
 
 ## 環境と検証範囲
 
@@ -116,6 +116,6 @@ API/dashboard/client entry point、model-artifact access、application-user acce
 - [Serve API と proxy のデフォルト](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
 - [Serve 設定](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
 - [Replica/queue 設定](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
-- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
 
 [メインページ](README.md) · [クイズ](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

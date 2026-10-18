@@ -55,7 +55,7 @@ Se conservan los hashes existentes de generator-1.0.0; distinga las pruebas con 
    - A) Informar siempre cero porque desapareció la cadena completa
    - B) Detectar una parte no cubierta del intervalo del texto de origen en gold
    - C) Buscar únicamente nombres de marcador
-   - D) Forzar la filtración a cero después de un viaje de ida y vuelta correcto
+   - D) Forzar la filtración a cero después de un ciclo de ida y vuelta correcto
 
 <details>
 <summary>Mostrar respuesta</summary>

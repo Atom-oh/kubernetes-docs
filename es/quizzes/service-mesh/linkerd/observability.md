@@ -1,209 +1,195 @@
 # Cuestionario de observabilidad de Linkerd
 
-Este cuestionario evalúa tu comprensión de las características de observabilidad de Linkerd.
+Basado en la [guía de observabilidad](../../../service-mesh/linkerd/05-observability.md), revisada el 11 de septiembre de 2026.
 
-## Preguntas del cuestionario
+### 1. ¿Cuál no es una de las tres métricas HTTP principales de los servicios en Linkerd?
 
-### 1. ¿Cuál NO es una métrica dorada recopilada automáticamente por Linkerd?
-
-A. Tasa de éxito
-B. Tasa de solicitudes (RPS)
-C. Latencia
-D. Uso de CPU
+- A. Tasa de éxito
+- B. Tasa de solicitudes
+- C. Latencia
+- D. Uso de CPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Uso de CPU**
+**Respuesta: D**
 
-**Explicación:**
-Linkerd recopila automáticamente tres métricas doradas: tasa de éxito, tasa de solicitudes (RPS) y latencia (p50, p95, p99). El uso de CPU es una métrica de Kubernetes que debe recopilarse por separado.
+**Explicación:** Las tres métricas son la tasa de éxito clasificada por el proxy, la tasa de solicitudes y la latencia. CPU y capacidad son información operativa adicional; esto no significa que el proxy u otro recolector no pueda exponer métricas de proceso o recursos. El TCP opaco no proporciona automáticamente métricas HTTP de los servicios.
 
 </details>
 
-### 2. ¿Qué NO se incluye en la salida del comando `linkerd viz stat`?
+### 2. ¿Cuál no es una columna estándar de la tabla `linkerd viz stat`?
 
-A. SUCCESS (tasa de éxito)
-B. RPS (tasa de solicitudes)
-C. LATENCY_P99
-D. ERROR_TYPE
+- A. SUCCESS
+- B. RPS
+- C. LATENCY_P99
+- D. ERROR_TYPE
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. ERROR_TYPE**
+**Respuesta: D**
 
-**Explicación:**
-`linkerd viz stat` muestra MESHED, SUCCESS, RPS, LATENCY_P50/P95/P99. Los tipos de errores deben comprobarse mediante `linkerd viz tap` o los logs.
+**Explicación:** La versión seleccionada incluye MESHED, SUCCESS, RPS, percentiles y TCP_CONN. La salida amplia agrega tasas de bytes de transporte, no un inventario de versiones del proxy. Para investigar errores, usa las políticas, Tap, los registros y las métricas que correspondan.
 
 </details>
 
-### 3. ¿Cuál es el propósito del comando `linkerd viz tap`?
+### 3. ¿Qué proporciona `linkerd viz tap`?
 
-A. Captura de paquetes de red
-B. Ver el flujo de solicitudes en tiempo real
-C. Cambiar la configuración del proxy
-D. Renovar certificados
+- A. Captura completa de paquetes de red
+- B. Un flujo de observación en vivo de las solicitudes compatibles
+- C. Cambios automáticos en las políticas del proxy
+- D. Renovación de certificados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Ver el flujo de solicitudes en tiempo real**
+**Respuesta: B**
 
-**Explicación:**
-`linkerd viz tap` transmite solicitudes en tiempo real. Muestra el método de solicitud, la ruta, el código de estado, la latencia, el estado de mTLS y más.
+**Explicación:** Tap ofrece observación limitada o muestreada del tráfico; no es una auditoría completa. `max-rps` limita la tasa de solicitudes observadas por Tap y no limita todo el tráfico de la aplicación. La versión actual de Tap no tiene las opciones `--from` ni `--show-headers`; usa los selectores admitidos y protege el acceso a los metadatos de las solicitudes.
 
 </details>
 
-### 4. ¿Qué métricas adicionales se pueden obtener al definir un ServiceProfile?
+### 4. ¿Qué permiten los nombres de ruta de un ServiceProfile heredado?
 
-A. Uso de recursos de Pod
-B. Métricas por ruta
-C. Ancho de banda de red
-D. E/S de disco
+- A. Contabilizar la E/S del disco
+- B. Obtener métricas por ruta
+- C. Generar automáticamente trazas distribuidas completas
+- D. Hacer reintentos obligatorios en todos los métodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Métricas por ruta**
+**Respuesta: B**
 
-**Explicación:**
-Definir un ServiceProfile permite recopilar métricas por ruta (p. ej., GET /api/users, POST /api/orders) de tasa de éxito, tasa de solicitudes y latencia. Visualízalas con el comando `linkerd viz routes`.
+**Explicación:** Los ServiceProfile admiten métricas por ruta y la vista `viz routes`. Siguen siendo una interfaz de compatibilidad y pueden prevalecer sobre la configuración de confiabilidad de una HTTPRoute de salida actual. Agregar un perfil para observar métricas no debe habilitar reintentos inseguros ni anular silenciosamente una política existente.
 
 </details>
 
-### 5. ¿Cuál es el método predeterminado para acceder al Prometheus de la extensión Viz?
+### 5. ¿Cómo accede localmente la guía al Prometheus de Viz que ya está instalado?
 
-A. Servicio NodePort
-B. Servicio LoadBalancer
-C. kubectl port-forward
-D. URL pública
+- A. Exponer un NodePort sin autenticación
+- B. Crear un LoadBalancer público
+- C. Usar `kubectl port-forward` enlazado a la interfaz de loopback
+- D. Suponer que hay una URL pública
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. kubectl port-forward**
+**Respuesta: C**
 
-**Explicación:**
-El Prometheus de Viz se implementa como un servicio ClusterIP. Accede mediante `kubectl port-forward -n linkerd-viz svc/prometheus 9090:9090`. No se recomienda la exposición externa por seguridad.
+**Explicación:** El ejemplo reenvía el Service de Prometheus existente a `127.0.0.1`. No instala Prometheus ni configura autenticación pública. Para acceder desde otras cargas de trabajo también hay que configurar los ajustes de red y autorización de Linkerd que correspondan.
 
 </details>
 
-### 6. ¿Qué header NO es necesario para la propagación de tracing distribuido?
+### 6. ¿Qué par corresponde al contexto de trazas W3C que usan los ejemplos de la aplicación?
 
-A. x-b3-traceid
-B. x-request-id
-C. x-linkerd-proxy
-D. x-b3-spanid
+- A. x-request-id y Authorization
+- B. x-b3-traceid y x-b3-spanid
+- C. traceparent y tracestate
+- D. x-linkerd-proxy y Cookie
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. x-linkerd-proxy**
+**Respuesta: C**
 
-**Explicación:**
-Los headers necesarios para el tracing distribuido son: x-request-id, x-b3-traceid, x-b3-spanid, x-b3-parentspanid, x-b3-sampled, b3, etc. x-linkerd-proxy no existe.
+**Explicación:** Linkerd admite W3C y B3, y prefiere W3C cuando están presentes ambos formatos. `x-request-id` es un identificador de correlación, no un formato de traza obligatorio. Propagar encabezados no crea spans de aplicación ni configura el muestreo o la exportación; para esas tareas se necesita una biblioteca de trazas adecuada.
 
 </details>
 
-### 7. ¿Qué muestra el comando `linkerd viz top`?
+### 7. ¿Qué resume `linkerd viz top`?
 
-A. Pods que utilizan más recursos
-B. Rutas de solicitud más activas
-C. Mensajes de error principales
-D. Entradas de log más recientes
+- A. Los Pods ordenados por uso de CPU
+- B. Las rutas o los recorridos de solicitudes observados en vivo
+- C. Todos los mensajes de error históricos
+- D. Los registros de contenedor más recientes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Rutas de solicitud más activas**
+**Respuesta: B**
 
-**Explicación:**
-`linkerd viz top` muestra las rutas de solicitud más activas en tiempo real. Muestra Source, Destination, Method, Path, Count, Latency, Success Rate, etc.
+**Explicación:** `top` resume el tráfico en vivo y admite límites de muestreo y tasa, además de filtros compatibles. `hide-sources` controla la columna de origen, no los encabezados. Estas observaciones no sustituyen las métricas de Prometheus retenidas ni una auditoría completa de las solicitudes.
 
 </details>
 
-### 8. ¿Qué annotation establece el nivel de log del proxy?
+### 8. ¿Qué anotación cambia el nivel de los registros de diagnóstico del proxy?
 
-A. config.linkerd.io/log-level
-B. config.linkerd.io/proxy-log-level
-C. linkerd.io/proxy-log
-D. proxy.linkerd.io/log-level
+- A. config.linkerd.io/log-level
+- B. config.linkerd.io/proxy-log-level
+- C. linkerd.io/proxy-log
+- D. proxy.linkerd.io/log-level
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. config.linkerd.io/proxy-log-level**
+**Respuesta: B**
 
-**Explicación:**
-La annotation `config.linkerd.io/proxy-log-level` establece el nivel de log del proxy. Ejemplo: "warn,linkerd=info,linkerd_proxy=debug"
+**Explicación:** `proxy-log-level` controla el filtro de diagnóstico y `proxy-log-format` controla el formato de esos registros. El registro de acceso HTTP se habilita por separado con `config.linkerd.io/access-log:json` o `apache`. Una plantilla parcial de Pod es un fragmento o parche, no un Deployment completo.
 
 </details>
 
-### 9. ¿Cuál es la consulta correcta de Prometheus para calcular la tasa de éxito de Linkerd?
+### 9. ¿Cómo se calcula una proporción de éxito durante un intervalo?
 
-A. `sum(response_total{classification="success"}) / sum(response_total)`
-B. `rate(success_total[5m]) / rate(request_total[5m])`
-C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`
-D. `avg(success_rate)`
+- A. Dividir los contadores acumulados de éxitos y del total desde el inicio sin calcular una tasa
+- B. Usar el contador inventado `success_total`
+- C. Dividir la tasa de respuestas exitosas por la tasa total, con el mismo ámbito, el tratamiento de éxitos ausentes y un total positivo
+- D. Calcular el promedio de una métrica inventada `success_rate`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. `sum(rate(response_total{classification="success"}[5m])) / sum(rate(response_total[5m]))`**
+**Respuesta: C**
 
-**Explicación:**
-La tasa de éxito se calcula dividiendo la tasa de respuestas exitosas por la tasa total de respuestas. La función rate() calcula la tasa por segundo dentro del intervalo de tiempo, y sum() agrega los resultados.
+**Explicación:** Usa una sola dirección de observación y un ámbito de carga de trabajo y clúster coherente. Aunque no haya una serie de éxitos en un intervalo en que todas las respuestas fallaron, el resultado debe ser 0; los datos ausentes o inactivos no deben convertirse en un 100 % de éxito. La clasificación HTTP del proxy puede contar las respuestas 400 como exitosas, así que define la SLI de acuerdo con el objetivo de negocio.
 
 </details>
 
-### 10. ¿Cuál es la función principal de la extensión Jaeger?
+### 10. ¿Qué función puede cumplir Jaeger en la configuración actual de trazas?
 
-A. Recopilación de métricas
-B. Agregación de logs
-C. Tracing distribuido
-D. División de tráfico
+- A. Sustituir el descubrimiento de métricas de Kubernetes
+- B. Agregar únicamente registros de acceso de las aplicaciones
+- C. Recopilar, almacenar y consultar trazas distribuidas como backend administrado por separado
+- D. Dividir el tráfico automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Tracing distribuido**
+**Respuesta: C**
 
-**Explicación:**
-La extensión Jaeger proporciona tracing distribuido. Visualiza la ruta completa de las solicitudes a través de varios servicios y analiza la latencia en cada paso.
+**Explicación:** La extensión de Linkerd para Jaeger se eliminó en la versión 2.19. Linkerd ahora configura un recolector compatible con OpenTelemetry y, en la ruta de instalación de Helm mostrada, la identidad de malla para ese recolector. Que haya una interfaz de backend no demuestra que lleguen spans de la aplicación o del proxy ni que formen trazas completas.
 
 </details>
 
-### 11. ¿Qué vista NO proporciona el comando linkerd viz dashboard?
+### 11. ¿Qué información se debe obtener con `kubectl logs` o con un sistema de registros, en vez de suponer que Viz muestra los registros de contenedores?
 
-A. Topology
-B. Deployments
-C. Pod Logs
-D. Routes
+- A. La topología de las cargas de trabajo
+- B. Las métricas de Deployment
+- C. Los registros de los contenedores de los Pods
+- D. Las métricas de ruta de ServiceProfile
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Pod Logs**
+**Respuesta: C**
 
-**Explicación:**
-El dashboard de Viz proporciona las vistas Namespace, Deployments, Pods, TCP, Routes, Topology y Tap. Los logs de Pod deben comprobarse mediante kubectl logs o un sistema de logging independiente.
+**Explicación:** Viz ofrece vistas de cargas de trabajo y tráfico, topología y Tap. Los registros de diagnóstico y de acceso son datos independientes. Aunque un flujo de trabajo consulte esas vistas, todavía necesita determinar la causa, aplicar una solución y verificarla; las vistas no resuelven un incidente por sí solas.
 
 </details>
 
-### 12. ¿Qué opción de instalación de Viz se utiliza al integrarlo con Grafana externo?
+### 12. ¿Qué opción enlaza Viz con una instancia externa de Grafana a la que se accede desde el navegador?
 
-A. `--set grafana.external=true`
-B. `--set grafana.enabled=false`
-C. `--set grafana.url=external`
-D. `--set monitoring=external`
+- A. grafana.external:true
+- B. grafana.externalUrl:https://grafana.example.com/
+- C. grafana.enabled:false
+- D. monitoring:external
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `--set grafana.enabled=false`**
+**Respuesta: B**
 
-**Explicación:**
-Al usar Grafana externo, desactiva el Grafana integrado de Viz. Usa `helm install linkerd-viz linkerd/linkerd-viz --set grafana.enabled=false` o configúralo en el archivo de values.
+**Explicación:** Viz no instala Grafana actualmente. `externalUrl` proporciona el enlace externo; `grafana.url` configura la opción de proxy inverso dentro del clúster, junto con los ajustes adicionales de raíz o subruta. Ninguna de las dos opciones crea Grafana, configura su origen de datos ni concede acceso a Prometheus.
 
 </details>

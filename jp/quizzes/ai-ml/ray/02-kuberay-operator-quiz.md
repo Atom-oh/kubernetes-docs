@@ -16,7 +16,7 @@
 Operator のインストールは、RayCluster、RayJob、または RayService resource の作成とは別です。
 </details>
 
-2. chart 1.7.0 は何をインストールし、RayCronJob のデフォルト状態は何ですか？
+2. chart 1.7.1 は何をインストールし、RayCronJob のデフォルト状態は何ですか？
    - A) 3 つの CRD のみが存在する
    - B) インストールされた RayCronJob CRD は常に scheduling を有効にする
    - C) 4 つの CRD。RayCronJob feature gate はデフォルトで無効
@@ -73,7 +73,7 @@ image、PVC、または authorization に関連する Pending state は、node �
 </details>
 
 6. idleTimeoutSeconds 60 はどのように解釈すべきですか？
-   - A) すべての worker は ちょうど 60 秒後に消える
+   - A) すべての worker がちょうど 60 秒後に消える
    - B) 確認済みの global default。group override、bound、activity、drain condition を考慮する
    - C) RayJob 全体の TTL
    - D) Karpenter の固定 provisioning time

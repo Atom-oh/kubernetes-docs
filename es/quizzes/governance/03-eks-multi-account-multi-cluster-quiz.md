@@ -22,7 +22,7 @@ La contención de fallos específica del clúster puede justificar el diseño. L
 
 ---
 
-2. ¿Qué afirmación describe correctamente el comportamiento de seguridad ante una zonal shift de ARC?
+2. ¿Qué afirmación describe correctamente el comportamiento de seguridad ante fallos de ARC zonal shift?
    - A) El tráfico se bloquea de inmediato para cualquier carga de trabajo cuando ocurre una zonal shift
    - B) Si los endpoints de una carga de trabajo solo existen en la AZ afectada, EKS sigue enviando tráfico a esa AZ
    - C) Todas las cargas de trabajo se reubican automáticamente en otra AZ
@@ -34,7 +34,7 @@ La contención de fallos específica del clúster puede justificar el diseño. L
 **Respuesta: B) Si los endpoints de una carga de trabajo solo existen en la AZ afectada, EKS sigue enviando tráfico a esa AZ**
 
 **Explicación:**
-Este es el comportamiento de seguridad: una carga de trabajo implementada en una sola AZ no queda protegida por zonal shift. Pruebe la carga N-1 y las excepciones de una sola AZ; esto no significa que una prueba práctica siempre detenga esa carga de trabajo.
+Este es el comportamiento de seguridad ante fallos: una carga de trabajo implementada en una sola AZ no queda protegida por zonal shift. Pruebe la carga N-1 y las excepciones de una sola AZ; esto no significa que una prueba práctica siempre detenga esa carga de trabajo.
 
 </details>
 

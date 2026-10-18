@@ -1,47 +1,47 @@
 # Calico アーキテクチャクイズ
 
-> **関連ドキュメント**: [Calico アーキテクチャ](../../../networking/calico/02-architecture.md)
-> **最終更新**: February 22, 2026
+> **関連ドキュメント**: [Calico Architecture](../../../networking/calico/02-architecture.md)
+> **最終更新日**: 2026年9月12日
 
 ## クイズ
 
 1. Calico のアーキテクチャにおける Felix の主な役割は何ですか？
-   - A) BGP ルート配布
-   - B) 各 node での Policy 適用とインターフェース管理
-   - C) Datastore 接続の集約
+   - A) BGP ルートの配布
+   - B) 各ノードでのポリシー適用とインターフェース管理
+   - C) データストア接続の集約
    - D) 設定テンプレートの処理
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 各 node での Policy 適用とインターフェース管理**
+**回答: B) 各ノードでのポリシー適用とインターフェース管理**
 
 **解説:**
-Felix は Calico cluster の各 node で実行されるコアエージェントです。主な責務には、インターフェース管理（Pod veth ペアの作成）、ルーティングテーブルのプログラミング、iptables/eBPF ルール管理、NetworkPolicy の適用が含まれます。Felix は、意図した NetworkPolicy を実装するために dataplane が正しく設定されるようにします。
+Felix は、エンドポイントのインターフェース設定、該当するルート、およびカーネルポリシーを調整します。Calico Linux ネットワーキングの全構成では、コンテナランタイムが CNI/IPAM チェーンを呼び出してアドレスを割り当て、Pod の veth インターフェースを作成します。Felix が CNI ADD で直接呼び出されることはなく、Pod IP の割り当ても担当しません。
 
 </details>
 
 2. BIRD は何の略で、Calico ではどのような役割を果たしますか？
-   - A) Basic Internet Routing Daemon - DNS 解決を処理する
-   - B) BIRD Internet Routing Daemon - BGP ルーティングを処理する
-   - C) Binary Internet Relay Daemon - パケット転送を処理する
-   - D) Bridge Internet Routing Device - VXLAN トンネリングを処理する
+   - A) Basic Internet Routing Daemon — DNS 解決を処理する
+   - B) BIRD Internet Routing Daemon — BGP ルーティングを処理する
+   - C) Binary Internet Relay Daemon — パケット転送を処理する
+   - D) Bridge Internet Routing Device — VXLAN トンネリングを処理する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) BIRD Internet Routing Daemon - BGP ルーティングを処理する**
+**回答: B) BIRD Internet Routing Daemon — BGP ルーティングを処理する**
 
 **解説:**
-BIRD（BIRD Internet Routing Daemon）は、BGP peer 接続の管理、node 間でのルートの交換と伝播、および任意で Route Reflector としての機能を担う、Calico の BGP エージェントです。BIRD により、Calico はカプセル化なしの直接ルーティングを実現するネイティブ BGP 機能を提供します。
+BIRD は、そのバックエンドが有効な場合に BGP セッションとルート交換を管理します。ルートリフレクターとして動作し、カーネルプロトコルを通じてカーネルとルートを同期することもできます。BGP はカプセル化と併用できるため、BGP を有効にしただけでカプセル化されない転送が保証されるわけではありません。ワークロードのパケットが BIRD プロセスを通過することもありません。
 
 </details>
 
-3. Calico のアーキテクチャにおける confd の目的は何ですか？
-   - A) container 設定の管理
+3. Calico のアーキテクチャにおける confd の役割は何ですか？
+   - A) コンテナ設定の管理
    - B) BIRD 設定ファイルの動的な生成
-   - C) NetworkPolicy の保存
-   - D) トラフィックの Load Balancing
+   - C) ネットワークポリシーの保存
+   - D) トラフィックの負荷分散
 
 <details>
 <summary>回答を表示</summary>
@@ -49,27 +49,27 @@ BIRD（BIRD Internet Routing Daemon）は、BGP peer 接続の管理、node 間�
 **回答: B) BIRD 設定ファイルの動的な生成**
 
 **解説:**
-confd は、テンプレートに基づいて BIRD 設定ファイルを動的に生成します。Calico datastore における BGP 設定、node 情報、peer 設定の変更を監視し、手動介入なしでこれらの変更を反映するよう BIRD の設定を自動的に更新します。
+confd は関連するデータストアの状態を監視し、インストール済みの BIRD テンプレートから設定を生成します。生成結果を確認して、設定された reload コマンドを実行します。生成ファイルは永続的な設定元ではありません。生成済みの bird.cfg を編集するのではなく、BGP API リソースを変更してください。
 
 </details>
 
-4. Calico cluster で Typha はいつ Deployment すべきですか？
-   - A) cluster の規模にかかわらず常に
-   - B) 50 を超える node を持つ cluster でのみ
-   - C) eBPF mode を使用する場合のみ
-   - D) multi-cluster Deployment の場合のみ
+4. Typha のデプロイに関する正しい説明はどれですか？
+   - A) クラスター規模にかかわらず常に必要
+   - B) Operator によるインストールでは 50 ノード未満でもデプロイされることがある。使用中のバージョンのスケーリングロジックと実際のワークロード要件に従う
+   - C) eBPF モードを使用する場合に限り必要
+   - D) マルチクラスター構成の場合に限り必要
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 50 を超える node を持つ cluster でのみ**
+**回答: B) Operator によるインストールでは 50 ノード未満でもデプロイされることがある。使用中のバージョンのスケーリングロジックと実際のワークロード要件に従う**
 
 **解説:**
-Typha は 50 以上の node を持つ cluster で推奨されます。Typha がない場合、各 Felix instance は datastore に直接接続するため、大規模 cluster では API server に過剰な負荷がかかる可能性があります。Typha は datastore 接続を集約し、Felix instance にキャッシュされたデータを提供することで、API server の負荷を大幅に削減します。
+Typha は、データストアの更新が各 Felix に直接配信される際の負荷を軽減します。Typha が常に 50 ノードを超えた場合にのみ必須というわけではなく、Operator を使わないすべてのインストールで必要なわけでもありません。Operator 1.42.6 は、小規模クラスターでも Typha のレプリカ数を調整します。その際、カウント対象のノード数を使い、Linux ノードへの配置可能性も確認します。
 
 </details>
 
-5. Calico はどのような datastore オプションをサポートしていますか？
+5. Calico がサポートするデータストアの選択肢は何ですか？
    - A) MySQL と PostgreSQL
    - B) etcd と Kubernetes API
    - C) MongoDB と Redis
@@ -81,43 +81,43 @@ Typha は 50 以上の node を持つ cluster で推奨されます。Typha が�
 **回答: B) etcd と Kubernetes API**
 
 **解説:**
-Calico は、専用 etcd cluster または Kubernetes API（CRD を使用）という 2 つの datastore オプションをサポートしています。Kubernetes API datastore は、既存の Kubernetes infrastructure を使用して運用を簡素化するため、ほとんどの Deployment で推奨されます。etcd datastore は、非 Kubernetes Deployment、または特定の etcd 機能が必要な場合に使用されます。
+Calico には、機能やインストール方式に応じて、Kubernetes API と直接接続する etcdv3 データストアの経路があります。Kubernetes API を使う場合も Kubernetes 自体のストレージは使用しますが、Calico 専用の etcd クラスターは不要です。直接 etcd を使う場合は、TLS、認証情報、可用性、バックアップを別途設計する必要があります。ノード数だけを理由に切り替えるものではありません。
 
 </details>
 
-6. kube-controllers にはどの controllers が含まれていますか？
-   - A) Policy Controller のみ
-   - B) Policy、Namespace、ServiceAccount、WorkloadEndpoint、Node Controllers
-   - C) Node と Policy Controllers のみ
-   - D) WorkloadEndpoint Controller のみ
+6. Operator 1.42.6 は、標準的な Open Source kube-controllers のデプロイでどのコントローラーを選択しますか？
+   - A) Policy のみ
+   - B) node と loadbalancer
+   - C) Node と Policy のみ
+   - D) WorkloadEndpoint のみ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Policy、Namespace、ServiceAccount、WorkloadEndpoint、Node Controllers**
+**回答: B) node と loadbalancer**
 
 **解説:**
-kube-controllers には、Kubernetes と Calico datastore の間を同期する複数の controller が含まれています。Policy Controller（NetworkPolicy の同期）、Namespace Controller（namespace profile の管理）、ServiceAccount Controller（service account の同期）、WorkloadEndpoint Controller（endpoint のクリーンアップ）、Node Controller（node 情報の同期）です。
+固定された Operator のレンダラーは、通常の Open Source デプロイでは node と loadbalancer を起動します。Policy、namespace、serviceaccount、workloadendpoint の各コントローラーも、該当するデータストアや設定経路では利用できますが、常にすべて有効になるわけではありません。ServiceAccount profile に Kubernetes RBAC 権限を付与する機能はありません。
 
 </details>
 
-7. 大規模 cluster で Typha replicas を算出する推奨式は何ですか？
-   - A) 50 node あたり 1 replica
-   - B) node 数を 200 で割り、最小 3
-   - C) 常に 5 replicas
-   - D) 100 node あたり 1 replica、最小 1
+7. カウント対象のノードが 500 台の場合、Operator 1.42.6 のスケーリング関数が返す Typha の望ましいレプリカ数はいくつですか？
+   - A) 50 ノードごとに 1 レプリカ
+   - B) floor(500 / 200) + 2 による 4 レプリカ
+   - C) 常に 5 レプリカ
+   - D) 100 ノードごとに 1 レプリカ、最小 1
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) node 数を 200 で割り、最小 3**
+**回答: B) floor(500 / 200) + 2 による 4 レプリカ**
 
 **解説:**
-Typha replicas の推奨式は、node 数 / 200 であり、高可用性のため最小 3 replicas とします。たとえば、500-node cluster では少なくとも 3 replicas（500/200 = 2.5 で、最小値の 3 に切り上げ）が必要であり、1000-node cluster では 5 replicas が必要です。
+カウント対象が 4 ノードを超えると、このバージョンは max(3, floor(N / 200) + 2) を計算するため、500 ノードでは 4 になります。1～2 ノードでは 1、3～4 ノードでは 2 です。1,000 ノードの場合は 7 になります。オートスケーラーはスケジュール不可のノードと AKS 仮想ノードを除外し、利用可能な Linux ノードも確認します。この結果はスループットを保証するものではありません。
 
 </details>
 
-8. Calico のパケットフローで、node 上のルーティングテーブルをプログラミングする役割を担う component はどれですか？
+8. ローカルのワークロードルートとカーネルポリシーの状態を調整する Calico エージェントはどれですか？
    - A) BIRD
    - B) confd
    - C) Felix
@@ -129,11 +129,11 @@ Typha replicas の推奨式は、node 数 / 200 であり、高可用性のた�
 **回答: C) Felix**
 
 **解説:**
-Felix は各 node 上のルーティングテーブルをプログラミングします。BIRD が node 間の BGP ルート交換を処理する一方で、Felix はルート情報を取得し、Linux kernel のルーティングテーブルにプログラミングします。Felix は Policy 適用のために iptables/eBPF ルールも管理します。
+Felix はローカルのワークロードに関するルートとポリシーを調整します。ただし、ルートを扱うのが Felix だけという意味ではありません。CNI は初期インターフェースとルートを作成し、BIRD のカーネルプロトコルは BGP で学習したルートをインストールできます。confd は BIRD の設定を生成し、Typha はキャッシュした状態を配信します。
 
 </details>
 
-9. Typha は Felix instance との通信にどの port を使用しますか？
+9. Typha が Felix インスタンスとの通信に使用するポートは何番ですか？
    - A) 443
    - B) 5473
    - C) 8080
@@ -145,15 +145,15 @@ Felix は各 node 上のルーティングテーブルをプログラミング�
 **回答: B) 5473**
 
 **解説:**
-Typha は Felix instance からの接続に対して port 5473（calico-typha）で listen します。これは、cluster 内の各 node で実行される calico-node pods からの接続を受け付けるために、Typha Deployment で設定されるデフォルト port です。
+TCP 5473 は、Felix などのクライアント向けに Typha が使用するデフォルトの同期用リスナーポートです。メトリクス用やヘルスチェック用のポートとは別であり、アプリケーショントラフィックを中継するものではありません。Operator は TLS の信頼設定とクライアント ID も構成します。
 
 </details>
 
-10. eBPF mode を有効にする FelixConfiguration 設定はどれですか？
-    - A) ebpfEnabled: true
-    - B) bpfEnabled: true
-    - C) dataplaneMode: ebpf
-    - D) useEbpf: true
+10. eBPF モードを有効にする FelixConfiguration の設定はどれですか？
+   - A) ebpfEnabled: true
+   - B) bpfEnabled: true
+   - C) dataplaneMode: ebpf
+   - D) useEbpf: true
 
 <details>
 <summary>回答を表示</summary>
@@ -161,31 +161,31 @@ Typha は Felix instance からの接続に対して port 5473（calico-typha）
 **回答: B) bpfEnabled: true**
 
 **解説:**
-Calico で eBPF mode を有効にするには、FelixConfiguration resource で `bpfEnabled: true` を設定します。これにより dataplane が iptables から eBPF に切り替わり、パフォーマンスが向上するとともに、Direct Server Return（DSR）や kube-proxy replacement などの機能が有効になります。
+bpfEnabled は、FelixConfiguration で有効な低レベルのフィールドです。Operator が管理するインストールでは、サポート対象の Installation linuxDataplane 設定を使用し、kube-proxy と API の到達性を調整してください。このブール値を変更するだけでは、検証済みの移行を完了したことにも、すべての eBPF 機能が利用可能であることにもなりません。
 
 </details>
 
-11. 大規模 cluster で Typha が Deployment されていない場合、Felix instance はどうなりますか？
-    - A) Felix instance は起動に失敗する
-    - B) 各 Felix が datastore に直接接続し、API server に過剰な負荷がかかる可能性がある
-    - C) NetworkPolicy が適用されない
-    - D) BGP peering が失敗する
+11. 大規模クラスターに Typha がデプロイされていない場合、Felix インスタンスには何が起こりますか？
+   - A) Felix インスタンスの起動に失敗する
+   - B) 各 Felix がデータストアに直接接続し、API サーバーに過剰な負荷がかかる可能性がある
+   - C) ネットワークポリシーが適用されなくなる
+   - D) BGP ピアリングに失敗する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 各 Felix が datastore に直接接続し、API server に過剰な負荷がかかる可能性がある**
+**回答: B) 各 Felix がデータストアに直接接続し、API サーバーに過剰な負荷がかかる可能性がある**
 
 **解説:**
-Typha がない場合、すべての node 上のすべての Felix instance は、それぞれ datastore（Kubernetes API server）への独自の接続を維持します。数百の node を持つ大規模 cluster では、watch 接続とデータ転送により API server に過剰な負荷がかかる可能性があります。Typha は接続を集約し、データをキャッシュすることでこれを解決します。
+ノード数や更新量が増えると、データストアへの直接 watch によって API の負荷が高まる可能性があります。これは容量上の懸念であり、Typha がないとポリシー適用や BGP が必ず停止するという意味ではありません。Typha がある場合でも、ほかのコンポーネントは Kubernetes API にアクセスします。
 
 </details>
 
-12. デフォルトで Felix の health check port はどれですか？
-    - A) 8080
-    - B) 9091
-    - C) 9099
-    - D) 10250
+12. Felix のデフォルトのヘルスチェックポートは何番ですか？
+   - A) 8080
+   - B) 9091
+   - C) 9099
+   - D) 10250
 
 <details>
 <summary>回答を表示</summary>
@@ -193,10 +193,10 @@ Typha がない場合、すべての node 上のすべての Felix instance は�
 **回答: C) 9099**
 
 **解説:**
-デフォルトでは、FelixConfiguration で `healthEnabled: true` が設定されている場合、Felix の health check endpoint は port 9099 で listen します。この port は、Felix が各 node で正しく実行されていることを検証するために Kubernetes liveness probe と readiness probe によって使用されます。
+ヘルスチェックの提供が有効な場合、Felix のデフォルトのヘルスポートは 9099 で、バインド先はデフォルトで localhost です。Probe とネットワークの設定は実際のデプロイに合わせる必要があります。管理者の PC から localhost にリクエストしても、ノードを調べることにはなりません。通常のメトリクスポートは 9091 です。
 
 </details>
 
 ---
 
-[学習教材に戻る](../../../networking/calico/02-architecture.md) | [前のクイズ: はじめに](./01-introduction-quiz.md) | [次のクイズ: ネットワークモード](./03-networking-modes-quiz.md)
+[学習資料](../../../networking/calico/02-architecture.md) | [前のクイズ](01-introduction-quiz.md) | [次のクイズ](03-networking-modes-quiz.md)

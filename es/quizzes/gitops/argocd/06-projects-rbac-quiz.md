@@ -14,23 +14,23 @@ Este cuestionario evalúa tu comprensión de los proyectos de ArgoCD y el contro
 **Respuesta: B) Proporcionar una agrupación lógica de aplicaciones con restricciones de acceso**
 
 **Explicación:**
-Los AppProjects proporcionan una agrupación lógica de Applications con restricciones sobre qué fuentes, destinos y recursos están permitidos. Habilitan la multi-tenencia al limitar lo que cada equipo puede desplegar.
+Los AppProjects agrupan lógicamente las Applications y restringen las fuentes, los destinos y los recursos permitidos. Limitan el alcance de los despliegues de Argo CD; Kubernetes RBAC, Pod Security Admission, el aislamiento de red y las cuotas siguen siendo controles independientes.
 
 </details>
 
 2. ¿Qué controla el campo `sourceRepos` en un AppProject?
    - A) Las ramas Git que se pueden usar
-   - B) Los repositorios Git desde los que las Applications pueden obtener manifiestos
+   - B) Los repositorios fuente permitidos (Git/Helm/OCI)
    - C) Los repositorios de imágenes de contenedor
    - D) Las versiones de Helm charts
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los repositorios Git desde los que las Applications pueden obtener manifiestos**
+**Respuesta: B) Los repositorios fuente permitidos (Git/Helm/OCI)**
 
 **Explicación:**
-El campo `sourceRepos` restringe qué repositorios Git pueden usar como fuentes las Applications de este proyecto. Usar `*` permite cualquier repositorio, mientras que las URL específicas limitan el acceso únicamente a esos repositorios.
+El campo `sourceRepos` restringe qué repositorios Git, Helm y OCI pueden usar como fuentes las Applications; no selecciona ramas de Git ni registros de imágenes de contenedor. Usar `*` permite cualquier repositorio, mientras que las URL específicas limitan las fuentes permitidas a esos repositorios.
 
 </details>
 
@@ -46,7 +46,7 @@ El campo `sourceRepos` restringe qué repositorios Git pueden usar como fuentes 
 **Respuesta: A) Mediante el campo `destinations`**
 
 **Explicación:**
-El campo `destinations` define las combinaciones permitidas de cluster y namespace. Cada entrada especifica un `server` (URL del cluster o `*`) y un `namespace` (namespace específico o `*`) a los que pueden dirigirse las Applications.
+El campo `destinations` define las combinaciones permitidas de clúster y namespace. Cada entrada compara un servidor o nombre de clúster registrado con un namespace. Este ámbito del destino de despliegue es distinto de `sourceNamespaces`, que controla dónde se ubican los recursos Application.
 
 </details>
 
@@ -62,7 +62,7 @@ El campo `destinations` define las combinaciones permitidas de cluster y namespa
 **Respuesta: A) Permitir que se administren recursos específicos con ámbito de cluster**
 
 **Explicación:**
-De forma predeterminada, los proyectos no pueden administrar recursos con ámbito de cluster. `clusterResourceWhitelist` permite que las Applications del proyecto administren tipos específicos (como Namespaces o ClusterRoles).
+Un proyecto personalizado nuevo sin una lista de permitidos no puede administrar recursos con ámbito de clúster. El proyecto predeterminado, que inicialmente es permisivo, constituye una excepción porque permite explícitamente todos los tipos. `clusterResourceWhitelist` permite que las Applications del proyecto administren tipos específicos, como Namespaces o ClusterRoles.
 
 </details>
 
@@ -78,6 +78,6 @@ De forma predeterminada, los proyectos no pueden administrar recursos con ámbit
 **Respuesta: B) Mediante el campo `roles` en la especificación de AppProject**
 
 **Explicación:**
-Los roles de proyecto se definen en el campo `spec.roles` de un AppProject. Cada rol tiene un nombre, una descripción, políticas (qué acciones están permitidas) y tokens JWT opcionales o asociaciones de grupos.
+Los roles del proyecto se definen en `spec.roles` de un AppProject. Cada rol tiene nombre, descripción, políticas (las acciones permitidas) y metadatos para emitir tokens o asociaciones de grupos. Los JWT firmados se emiten mediante la CLI o la API; declarar los metadatos por sí solo no emite ningún token.
 
 </details>

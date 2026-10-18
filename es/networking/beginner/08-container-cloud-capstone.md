@@ -1,18 +1,18 @@
-# 8. Capstone: From Web Service Failures to Containers and Cloud
+# 8. Proyecto final: de los fallos de un servicio web a los contenedores y la nube
 
-> **Learning baseline**: Ubuntu Server 24.04 LTS, with an alternate Rocky Linux 9 path
+> **Base de aprendizaje**: Ubuntu Server 24.04 LTS, con una ruta alternativa para Rocky Linux 9
 >
-> **Last Updated**: September 15, 2026
+> **Última actualización**: 15 de septiembre de 2026
 
-**Prerequisites:** [Lessons 1–7](README.md#course-map), both VMs' lab addresses, verified SSH key login, and a TCP 8000 rule allowing the lab client. Stop the lesson 7 web server first.
+**Requisitos previos:** [Lecciones 1–7](README.md#course-map), las direcciones de laboratorio de ambas máquinas virtuales, inicio de sesión SSH con clave verificado y una regla TCP 8000 que permita el acceso del cliente de laboratorio. Detenga primero el servidor web de la lección 7.
 
-**Outcomes:** Record a small web service's healthy state, then reproduce, diagnose and recover from failures at different layers one at a time. Apply the same questions to Docker and Kubernetes afterward. Allow approximately 3–4 hours.
+**Objetivos:** Registrar el estado correcto de un pequeño servicio web y, después, reproducir, diagnosticar y recuperar fallos de distintas capas, uno por uno. A continuación, aplicar las mismas preguntas a Docker y Kubernetes. Dedique aproximadamente entre 3 y 4 horas.
 
-## Task and healthy baseline {#baseline}
+## Tarea y estado correcto de referencia {#baseline}
 
-The task is “the client reads `/health.txt` from the server”. No web framework or cloud account is required.
+La tarea es «el cliente lee `/health.txt` del servidor». No se necesita ningún framework web ni una cuenta en la nube.
 
-**Server console A:**
+**Consola A del servidor:**
 
 ```bash
 LAB_WEB=$(mktemp -d /tmp/net-capstone.XXXXXX)
@@ -21,9 +21,9 @@ timeout 300 python3 -m http.server 8000 \
   --bind 192.0.2.20 --directory "$LAB_WEB"
 ```
 
-Restart with the same command when the five-minute limit expires. Check the console so an intentionally stopped server is not mistaken for a network fault. Keep only the exercise file in this directory.
+Cuando venza el límite de cinco minutos, reinicie el servidor con el mismo comando. Compruebe la consola para no confundir un servidor detenido intencionalmente con un fallo de red. Mantenga únicamente el archivo del ejercicio en este directorio.
 
-**Server console B:**
+**Consola B del servidor:**
 
 ```bash
 ip -br address
@@ -31,7 +31,7 @@ ip route get 192.0.2.10
 sudo ss -ltnp 'sport = :8000'
 ```
 
-**Client:**
+**Cliente:**
 
 ```bash
 ip route get 192.0.2.20
@@ -42,17 +42,17 @@ curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
   -i http://lesson.test:8000/health.txt
 ```
 
-Both routes must use the lab NICs, the listener must be `192.0.2.20:8000`, and both requests must return HTTP 200 with `healthy` in the body. `--resolve` provides a **host/port address mapping for this curl invocation**. It changes neither system DNS nor other applications.
+Ambas rutas deben usar las NIC de laboratorio, el proceso de escucha debe estar en `192.0.2.20:8000` y ambas solicitudes deben devolver HTTP 200 con `healthy` en el cuerpo. `--resolve` proporciona **una asignación de dirección de host/puerto para esta invocación de curl**. No cambia el DNS del sistema ni el de otras aplicaciones.
 
-If the baseline fails, check configuration and rules from lessons 4–6 first. Do not introduce a new fault until the baseline works.
+Si falla esta comprobación de referencia, revise primero la configuración y las reglas de las lecciones 4–6. No introduzca un fallo nuevo hasta que funcione el estado de referencia.
 
-## Reproduce one fault at a time {#faults}
+## Reproduzca un fallo por vez {#faults}
 
-Start each experiment from the healthy baseline and repeat the healthy request after recovery. Ordinary `curl` requests can return exit status 0 even for HTTP 404, so read the HTTP status line. Automation that must treat HTTP errors as failures can explicitly select a supported option such as `--fail-with-body`.
+Comience cada experimento desde el estado de referencia correcto y repita la solicitud correcta después de recuperarse. Las solicitudes ordinarias de `curl` pueden devolver el estado de salida 0 incluso ante HTTP 404, así que lea la línea de estado HTTP. La automatización que deba tratar los errores HTTP como fallos puede seleccionar explícitamente una opción compatible, como `--fail-with-body`.
 
-### A. Separate name resolution from IP connectivity
+### A. Separe la resolución de nombres de la conectividad IP
 
-On the client, compare a request without `--resolve`.
+En el cliente, compare una solicitud sin `--resolve`.
 
 ```bash
 getent ahostsv4 lesson.test
@@ -60,31 +60,31 @@ curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
   -i http://lesson.test:8000/health.txt
 ```
 
-With no separate registration of `lesson.test`, name resolution will normally fail in this lab. If you already configured it in `/etc/hosts` or local DNS, record the actual mapping instead of expecting failure. Check whether the earlier IP and `--resolve` requests succeed in the same environment.
+Si no registró `lesson.test` por separado, lo normal es que falle la resolución de nombres en este laboratorio. Si ya lo configuró en `/etc/hosts` o en el DNS local, anote la asignación real en lugar de esperar que falle. Compruebe si las solicitudes anteriores por IP y con `--resolve` funcionan en el mismo entorno.
 
-**Diagnosis:** If the IP request works but name lookup fails, investigate name resolution first. This does not establish a specific DNS server failure or an internet-wide outage. **Recovery:** Reuse the healthy request's `--resolve` mapping; no system resolver overwrite is needed for this temporary experiment.
+**Diagnóstico:** Si funciona la solicitud por IP, pero falla la búsqueda del nombre, investigue primero la resolución de nombres. Esto no demuestra que haya fallado un servidor DNS específico ni que exista una interrupción general de Internet. **Recuperación:** Vuelva a usar la asignación `--resolve` de la solicitud de referencia; para este experimento temporal no hace falta sobrescribir el resolver del sistema.
 
-### B. An application path error
+### B. Error en la ruta de la aplicación
 
-Request a missing file from the client.
+Desde el cliente, solicite un archivo inexistente.
 
 ```bash
 curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
   -i http://192.0.2.20:8000/missing.txt
 ```
 
-**Diagnosis:** Receiving HTTP 404 means that request elicited an HTTP response from the server. There is no reason to reset all routing and firewall settings. Compare the requested path with the server log. **Recovery:** Request `/health.txt` again.
+**Diagnóstico:** Recibir HTTP 404 significa que esa solicitud obtuvo una respuesta HTTP del servidor. No hay motivo para restablecer toda la configuración de enrutamiento y firewall. Compare la ruta solicitada con el registro del servidor. **Recuperación:** Vuelva a solicitar `/health.txt`.
 
-### C. The wrong listening address
+### C. Dirección de escucha incorrecta
 
-Stop your server with Ctrl+C in server console A. In **the same terminal**, change only its bind address.
+Detenga el servidor con Ctrl+C en la consola A. En **la misma terminal**, cambie solo la dirección de enlace.
 
 ```bash
 timeout 300 python3 -m http.server 8000 \
   --bind 127.0.0.1 --directory "$LAB_WEB"
 ```
 
-Server console B:
+Consola B del servidor:
 
 ```bash
 sudo ss -ltnp 'sport = :8000'
@@ -92,15 +92,15 @@ curl --disable --noproxy '*' --max-time 5 \
   -i http://127.0.0.1:8000/health.txt
 ```
 
-Check that the client's original `192.0.2.20:8000` request fails while the server's own loopback request succeeds. Firewall behavior also affects whether failure appears as refusal or timeout. The `127.0.0.1` listener shown by `ss` is the key evidence.
+Compruebe que falla la solicitud original del cliente a `192.0.2.20:8000` y que funciona la solicitud de bucle local del propio servidor. El comportamiento del firewall también influye en que el fallo aparezca como rechazo o como tiempo de espera. El proceso de escucha `127.0.0.1` que muestra `ss` es la evidencia clave.
 
-**Recovery:** Press Ctrl+C in console A and restart the healthy command with `--bind 192.0.2.20`. One VM's loopback is not another VM's loopback.
+**Recuperación:** Pulse Ctrl+C en la consola A y reinicie el comando correcto con `--bind 192.0.2.20`. El bucle local de una VM no es el bucle local de otra VM.
 
-### D. Test a firewall hypothesis with evidence {#firewall-fault}
+### D. Compruebe una hipótesis sobre el firewall con evidencia {#firewall-fault}
 
-Use **only the manager selected in lesson 6**, from the server's hypervisor console. This fault removes only the course-owned TCP 8000 allow. The TCP 22 allow, lab deny, default policies, zones/profile assignments, and management NIC stay in place. Finish the optional Fail2ban experiment first so no background ban change confounds this test.
+Use **únicamente el gestor seleccionado en la lección 6**, desde la consola del hipervisor del servidor. Este fallo quita solo la regla de permiso TCP 8000 que administra el curso. La regla de permiso TCP 22, la denegación del laboratorio, las políticas predeterminadas, las asignaciones de zona/perfil y la NIC de administración permanecen intactas. Termine primero el experimento opcional con Fail2ban para que ningún cambio de bloqueo en segundo plano confunda esta prueba.
 
-**Server console B, normal user:** re-identify both NICs by their recorded hypervisor MACs; variables from lesson 6 are not assumed to survive.
+**Consola B del servidor, usuario normal:** vuelva a identificar ambas NIC mediante las MAC registradas en el hipervisor; no dé por hecho que siguen existiendo las variables de la lección 6.
 
 ```bash
 ip -br link
@@ -112,9 +112,9 @@ ip -4 route
 sudo ss -ltnp 'sport = :8000'
 ```
 
-Verify `.20/24` on the lab NIC, distinct NIC names, unchanged management, and the healthy `.20:8000` listener. Record the current rules as instructed below. If the server's timer expired, restart **only** `timeout 300 python3 -m http.server 8000 --bind 192.0.2.20 --directory "${LAB_WEB:?missing existing web directory}"` in server console A with its existing directory. Do not introduce a stopped-server fault at the same time.
+Verifique que la NIC de laboratorio tenga `.20/24`, que los nombres de las NIC sean distintos, que la administración no haya cambiado y que el proceso de escucha correcto siga en `.20:8000`. Registre las reglas actuales como se indica más abajo. Si venció el temporizador del servidor, reinicie **solo** `timeout 300 python3 -m http.server 8000 --bind 192.0.2.20 --directory "${LAB_WEB:?missing existing web directory}"` en la consola A del servidor, con el directorio que ya tiene. No introduzca a la vez el fallo de un servidor detenido.
 
-**Client, normal user:** recover the existing lesson-5 key directory and normal server account from your records. Do not create a new key or bypass the verified host record.
+**Cliente, usuario normal:** recupere de sus registros el directorio de claves de la lección 5 y la cuenta normal del servidor. No cree una clave nueva ni eluda el registro de host ya verificado.
 
 ```bash
 read -r -p 'Existing lesson-5 client key directory: ' SSH_LAB_DIR
@@ -123,7 +123,7 @@ ls -l -- "${SSH_LAB_DIR:?missing key directory}/id_ed25519" \
   "${SSH_LAB_DIR:?missing key directory}/known_hosts"
 ```
 
-Define this short shell function once in that client terminal. Calling `check_lab_ssh` runs a **new** SSH connection, prints the remote account/connection, and returns to the client; it creates no file or service.
+Defina una sola vez esta función breve de shell en esa terminal del cliente. Al ejecutar `check_lab_ssh`, se abre una conexión SSH **nueva**, se imprime la cuenta/remoto y se vuelve al cliente; no crea archivos ni servicios.
 
 ```bash
 check_lab_ssh() {
@@ -141,20 +141,20 @@ check_lab_ssh() {
 check_lab_ssh
 ```
 
-The private-key **passphrase prompt is allowed**; an unlocked agent is not required. Remote account-password fallback is disabled. `-F /dev/null` avoids unrelated client configuration, and disabling multiplexing prevents reuse of an old authenticated connection. Expect the normal account and a connection from `.10` to `.20` port 22. If this **before-fault** check or healthy HTTP fails, stop before changing any rule. Also preserve/recheck any separately required management SSH path.
+**Se permite que aparezca la solicitud de frase de contraseña de la clave privada**; no se necesita un agente desbloqueado. La alternativa de autenticación con contraseña de la cuenta remota está deshabilitada. `-F /dev/null` evita la configuración ajena del cliente y la desactivación de la multiplexación impide reutilizar una conexión autenticada anterior. Se espera la cuenta normal y una conexión de `.10` a `.20`, puerto 22. Si falla esta comprobación **previa al fallo** o falla HTTP en estado correcto, deténgase antes de cambiar reglas. Conserve y vuelva a comprobar también cualquier ruta SSH de administración necesaria por separado.
 
-#### UFW: change only the saved/applied HTTP allow
+#### UFW: cambie solo la regla HTTP guardada/aplicada
 
-**Ubuntu server console B, sudo:**
+**Consola B del servidor Ubuntu, sudo:**
 
 ```bash
 sudo ufw status numbered
 sudo ufw show added
 ```
 
-Proceed only with active UFW and lesson 6's three course rules in this order: **1: `.10`→`.20` TCP 22 allow on `LAB_IF`; 2: the separate TCP 8000 allow; 3: the same-interface/destination TCP `22,8000` deny**. Record their full specifications. If you still have an older combined `22,8000` allow or the order differs, reconcile the lesson-6 setup first; deleting one port is not an inverse of a multiport rule.
+Continúe solo si UFW está activo y las tres reglas del curso de la lección 6 aparecen en este orden: **1: permiso TCP 22 de `.10` a `.20` en `LAB_IF`; 2: permiso TCP 8000 por separado; 3: denegación TCP `22,8000` en la misma interfaz/destino**. Registre sus especificaciones completas. Si aún tiene una regla de permiso combinada antigua `22,8000` o el orden es diferente, corrija primero la configuración de la lección 6; eliminar un puerto no es la operación inversa de una regla para varios puertos.
 
-Remove only HTTP:
+Quite solo HTTP:
 
 ```bash
 sudo ufw delete allow in on "$LAB_IF" proto tcp \
@@ -163,9 +163,9 @@ sudo ufw status numbered
 sudo ufw show added
 ```
 
-Confirm the TCP 22 allow remains first and the lab deny is now second. This changes both saved and applied UFW state. Leave those two rules and the default policies alone. Now perform the **during-fault checks** below.
+Confirme que el permiso TCP 22 sigue primero y que la denegación del laboratorio ahora está segunda. Esto cambia el estado guardado y el aplicado de UFW. No modifique esas dos reglas ni las políticas predeterminadas. Ahora realice las siguientes **comprobaciones durante el fallo**.
 
-**Restore from the same Ubuntu console:** verify the deny is still second, then insert HTTP at position 2, **ahead of that deny**:
+**Restauración desde la misma consola Ubuntu:** compruebe que la denegación siga segunda y, a continuación, inserte HTTP en la posición 2, **antes de esa denegación**:
 
 ```bash
 sudo ufw insert 2 allow in on "$LAB_IF" proto tcp \
@@ -174,11 +174,11 @@ sudo ufw status numbered
 sudo ufw show added
 ```
 
-Expect the original SSH allow → HTTP allow → lab deny order and original source/interface/destination scope. Appending an allow after the deny would still block HTTP; the deletion's inverse includes restoring placement. If another rule changed the positions, stop and re-establish the recorded order instead of using a stale number. Continue with the after-recovery checks below.
+Se espera el orden original: permiso SSH → permiso HTTP → denegación del laboratorio, con el ámbito original de origen/interfaz/destino. Si se añade el permiso después de la denegación, HTTP seguirá bloqueado; la operación inversa de la eliminación también debe restaurar la ubicación. Si otra regla cambió las posiciones, deténgase y restablezca el orden registrado en lugar de usar un número obsoleto. Continúe con las comprobaciones posteriores a la recuperación.
 
-#### firewalld: remove HTTP only at runtime and preserve the saved policy
+#### firewalld: quite solo HTTP del estado de ejecución y conserve la política guardada
 
-**Rocky server console B, normal user for assignments, sudo for firewall queries:**
+**Consola B del servidor Rocky, usuario normal para las asignaciones y sudo para las consultas del firewall:**
 
 ```bash
 RULE22='rule family="ipv4" source address="192.0.2.10/32" destination address="192.0.2.20/32" port port="22" protocol="tcp" accept'
@@ -193,9 +193,9 @@ sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
 sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
 ```
 
-Expect only the lab NIC in `network-beginner`, the original management zone, and all four queries returning `yes`. This requires lesson 6's retained permanent rules, not its expiring trial. Record both configurations and inspect any broader policy that could still accept HTTP.
+Se espera únicamente la NIC de laboratorio en `network-beginner`, la zona de administración original y que las cuatro consultas devuelvan `yes`. Esto requiere las reglas permanentes conservadas de la lección 6, no su prueba temporal que vence. Registre ambas configuraciones e inspeccione cualquier política más amplia que todavía pudiera aceptar HTTP.
 
-Remove **only the runtime HTTP rule**:
+Quite **solo la regla HTTP en tiempo de ejecución**:
 
 ```bash
 sudo firewall-cmd --zone=network-beginner --remove-rich-rule="$RULE8000"
@@ -205,9 +205,9 @@ sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
 sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
 ```
 
-Expect `no`, `yes`, `yes`, `yes`; `no` has a nonzero status and is expected here. Run the during-fault checks. Do not reload, reboot, or use `--runtime-to-permanent`: a reload would reintroduce the saved HTTP rule, while copying runtime to permanent would unintentionally persist the fault.
+Se espera `no`, `yes`, `yes`, `yes`; el `no` tiene un estado de salida distinto de cero, como corresponde. Ejecute las comprobaciones durante el fallo. No recargue, reinicie ni use `--runtime-to-permanent`: una recarga volvería a introducir la regla HTTP guardada, mientras que copiar el estado de ejecución al permanente haría persistente el fallo sin querer.
 
-**Restore from the same Rocky console**, without a global reload or permanent change:
+**Restauración desde la misma consola Rocky**, sin recarga global ni cambio permanente:
 
 ```bash
 sudo firewall-cmd --zone=network-beginner --add-rich-rule="$RULE8000"
@@ -217,11 +217,11 @@ sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
 sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
 ```
 
-All four queries should again say `yes`. Compare the runtime/permanent lists with your recorded baseline: the saved rules were never changed, and runtime HTTP has been restored with the same scope. An unexpected saved-policy change needs investigation against that record, not a bulk overwrite.
+Las cuatro consultas deberían volver a indicar `yes`. Compare las listas de tiempo de ejecución y permanentes con el estado de referencia registrado: las reglas guardadas nunca se cambiaron y la regla HTTP en tiempo de ejecución se restauró con el mismo ámbito. Si la política guardada cambió inesperadamente, investigue comparándola con ese registro; no la sobrescriba en bloque.
 
-#### Checks during the fault and after recovery
+#### Comprobaciones durante el fallo y después de recuperarse
 
-**Client, normal user, same terminal:** run this pair **after HTTP removal and again after restoration**, in addition to the before-fault check.
+**Cliente, usuario normal, misma terminal:** ejecute este par **después de quitar HTTP y otra vez tras restaurarlo**, además de la comprobación previa al fallo.
 
 ```bash
 check_lab_ssh
@@ -229,74 +229,74 @@ curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
   -i http://192.0.2.20:8000/health.txt
 ```
 
-During the fault, the fresh key-only SSH check must still succeed. HTTP should fail under the recorded course policy while the server listener remains `.20:8000`. If SSH fails, recover only the removed HTTP permission from the server console, compare the unchanged SSH rule/path, and stop: you have not demonstrated an HTTP-only fault. If HTTP still succeeds, inspect other matching accepts, zone/default behavior, listener and packet evidence; do not claim a block merely because one rule was removed.
+Durante el fallo, la comprobación SSH nueva que usa solo la clave debe seguir funcionando. HTTP debería fallar según la política del curso registrada, mientras el proceso de escucha del servidor permanece en `.20:8000`. Si falla SSH, restaure únicamente el permiso HTTP eliminado desde la consola del servidor, compare la regla/ruta SSH que no cambió y deténgase: no ha demostrado un fallo exclusivo de HTTP. Si HTTP sigue funcionando, inspeccione otras reglas coincidentes de aceptación, el comportamiento de zonas/políticas predeterminadas, el proceso de escucha y la evidencia de paquetes; no afirme que hay un bloqueo solo porque se quitó una regla.
 
-After recovery, require a fresh successful key-only SSH check and HTTP 200 with `healthy`. On server console B, repeat `sudo ss -ltnp 'sport = :8000'`, the relevant rule queries/listing, `ip -4 -br address show dev "$MGMT_IF"`, and `ip -4 route`; compare with the before-fault record and recheck required management access. Record observations for all three stages separately. These instructions are not a claim that guest execution was performed when writing the document.
+Después de la recuperación, exija una nueva comprobación correcta de SSH con clave y HTTP 200 con `healthy`. En la consola B del servidor, repita `sudo ss -ltnp 'sport = :8000'`, las consultas/listas de reglas pertinentes, `ip -4 -br address show dev "$MGMT_IF"` e `ip -4 route`; compárelas con el registro previo al fallo y vuelva a comprobar el acceso de administración necesario. Registre por separado las observaciones de las tres etapas. Estas instrucciones no afirman que se haya ejecutado el entorno invitado al redactar el documento.
 
-## Report and completion criteria {#capstone-report}
+## Informe y criterios para completar {#capstone-report}
 
-Record lab addresses and results, not passwords, private keys or real user traffic.
+Registre las direcciones y los resultados del laboratorio, no contraseñas, claves privadas ni tráfico real de usuarios.
 
-| Field | What to record |
+| Campo | Qué registrar |
 |---|---|
-| Environment | Distribution, kernel, lab NICs, client/server addresses, firewall manager |
-| Healthy state | Routes, listener, HTTP status and body |
-| Symptom | Which host sent which request and received which result |
-| Hypothesis | Name resolution, route, listener, firewall or HTTP |
-| Evidence | Relevant command, time, address/port and observation |
-| Falsification | What you would expect if the hypothesis were wrong |
-| Change and recovery | The single change and exact restoration procedure |
-| Recheck | Healthy HTTP 200, SSH key access, lab/management NIC state |
+| Entorno | Distribución, kernel, NIC de laboratorio, direcciones de cliente/servidor y gestor del firewall |
+| Estado correcto | Rutas, proceso de escucha, estado HTTP y cuerpo |
+| Síntoma | Qué host envió qué solicitud y qué resultado recibió |
+| Hipótesis | Resolución de nombres, ruta, proceso de escucha, firewall o HTTP |
+| Evidencia | Comando pertinente, hora, dirección/puerto y observación |
+| Refutación | Qué esperaría si la hipótesis fuera incorrecta |
+| Cambio y recuperación | El único cambio y el procedimiento exacto para restaurarlo |
+| Nueva comprobación | HTTP 200 correcto, acceso SSH con clave y estado de las NIC de laboratorio/administración |
 
-**Pass:** Distinguish and recover from A–C and explain whether the actual rules and observations support D. Meet all five criteria: environment identification, layered hypothesis, evidence, narrow change/recovery, and post-recovery verification. Return to the relevant lesson for any missing criterion. Faster completion is not the assessment.
+**Aprobado:** Distinga y recupérese de A–C y explique si las reglas y observaciones reales respaldan D. Cumpla los cinco criterios: identificación del entorno, hipótesis por capas, evidencia, cambio/restauración acotados y verificación posterior a la recuperación. Vuelva a la lección pertinente si falta algún criterio. Terminar más rápido no forma parte de la evaluación.
 
-## Apply the questions to Docker and Kubernetes {#container-cloud-map}
+## Aplique las preguntas a Docker y Kubernetes {#container-cloud-map}
 
-Add containers after you understand diagnosis between VMs. This table maps roles for subsequent study; it does not imply that every packet crosses each row in order.
+Añada contenedores después de comprender el diagnóstico entre VM. Esta tabla asigna funciones para el estudio posterior; no implica que todos los paquetes atraviesen cada fila en orden.
 
-| What you learned | Docker | Kubernetes | Cloud |
+| Lo aprendido | Docker | Kubernetes | Nube |
 |---|---|---|---|
-| Process address/port | Listener inside a container network namespace | Pod listener and networking shared within a Pod | Backend process and load-balancer target port |
-| Link and route | veth, Linux bridge and environment-dependent NAT | CNI-configured Pod paths, overlay or native routing | VPC subnets, routes and connectivity boundaries |
-| Name resolution | Container names on user-defined bridges | Service names and cluster DNS | Organizational/cloud DNS and private names |
-| Access rules | Published ports and host forwarding rules | NetworkPolicy and implementation enforcement | Layer-specific controls such as Security Groups |
-| Observation point | Host versus container namespace | Node, Pod and Service implementation | Client, load balancer, node and AZ boundaries |
+| Dirección/puerto del proceso | Proceso de escucha dentro del espacio de nombres de red del contenedor | Proceso de escucha y red del Pod compartidos dentro de un Pod | Proceso de backend y puerto de destino del balanceador de carga |
+| Enlace y ruta | veth, bridge de Linux y NAT según el entorno | Rutas de Pod configuradas por CNI, enrutamiento superpuesto o nativo | Subredes de VPC, rutas y límites de conectividad |
+| Resolución de nombres | Nombres de contenedor en bridges definidos por el usuario | Nombres de Service y DNS del clúster | DNS organizativo/de la nube y nombres privados |
+| Reglas de acceso | Puertos publicados y reglas de reenvío del host | NetworkPolicy y aplicación de la implementación | Controles por capa, como los grupos de seguridad |
+| Punto de observación | Host frente al espacio de nombres del contenedor | Nodo, Pod e implementación del Service | Límites del cliente, balanceador de carga, nodo y AZ |
 
-A Docker **bridge** commonly connects containers on one host; an **overlay** builds a virtual network over an underlying network. Docker Swarm overlay practice requires additional preparation such as multiple hosts. Kubernetes CNI is a separate interface/plugin ecosystem: copying a Docker bridge topology does not produce a Kubernetes cluster.
+Un **bridge** de Docker suele conectar contenedores en un host; un **overlay** construye una red virtual sobre una red subyacente. Para practicar overlays de Docker Swarm se requiere preparación adicional, como varios hosts. CNI de Kubernetes es un ecosistema independiente de interfaces/plugins: copiar una topología de bridge de Docker no crea un clúster de Kubernetes.
 
-Likewise, `localhost`, Pod IP, Service IP and an external entry point are different observation targets. Host firewall rules, container forwarding rules and CNI policies are not one interchangeable rule list.
+Del mismo modo, `localhost`, la IP de un Pod, la IP de un Service y un punto de entrada externo son objetivos de observación distintos. Las reglas del firewall del host, las reglas de reenvío del contenedor y las políticas de CNI no forman una única lista de reglas intercambiable.
 
-## Next practical steps {#next-path}
+## Próximos pasos prácticos {#next-path}
 
-For a structured continuation, follow the [expert networking path](../expert/README.md). It connects the individual guides below to a reading, experiment and assessment progression.
+Para continuar de forma estructurada, siga la [ruta de redes para expertos](../expert/README.md). Esta conecta las guías individuales siguientes con una progresión de lectura, experimentos y evaluaciones.
 
-1. Use [container technology](../../basics/03-container-technology.md) to study namespaces, bridges and published ports.
-2. Measure next hops, ICMP and PMTU in [Linux network diagnostics](../07-linux-network-diagnostics.md). First read that guide's Docker prerequisites, scope and cleanup.
-3. Learn the [Kubernetes introduction](../../basics/04-kubernetes-introduction.md) and [Pods/workloads](../../core/02-pods-and-workloads.md), then follow the [Service/DNS lab](../../labs/core/03-services-networking-lab.md).
-4. Study [eBPF fundamentals](../../basics/05-ebpf-fundamentals.md), then compare [Cilium](../cilium/README.md) and [Calico](../calico/README.md).
-5. When you need AWS, study [EKS networking](../../eks/03-eks-networking-part1.md), [VPC CNI](../01-vpc-cni.md) and [load balancing](../03-aws-lb-controller.md). Check each guide's cost, permission and cleanup conditions separately before creating resources.
-6. For performance work, read the measurement conditions in the [kernel networking stack](../../kernel/02-network-stack.md) and [Pod benchmark](../06-pod-network-benchmark.md). Do not generalize the small HTTP exercise into a cloud-throughput result.
+1. Use [tecnología de contenedores](../../basics/03-container-technology.md) para estudiar espacios de nombres, bridges y puertos publicados.
+2. Mida los siguientes saltos, ICMP y PMTU en [diagnóstico de redes Linux](../07-linux-network-diagnostics.md). Lea primero los requisitos previos de Docker, el alcance y la limpieza de esa guía.
+3. Aprenda la [introducción a Kubernetes](../../basics/04-kubernetes-introduction.md) y [Pods/cargas de trabajo](../../core/02-pods-and-workloads.md); después siga el [laboratorio de Service/DNS](../../labs/core/03-services-networking-lab.md).
+4. Estudie los [fundamentos de eBPF](../../basics/05-ebpf-fundamentals.md) y luego compare [Cilium](../cilium/README.md) y [Calico](../calico/README.md).
+5. Si necesita AWS, estudie las [redes de EKS](../../eks/03-eks-networking-part1.md), [VPC CNI](../01-vpc-cni.md) y [balanceo de carga](../03-aws-lb-controller.md). Antes de crear recursos, compruebe por separado las condiciones de costos, permisos y limpieza de cada guía.
+6. Para trabajar con el rendimiento, lea las condiciones de medición en la [pila de redes del kernel](../../kernel/02-network-stack.md) y el [benchmark de Pod](../06-pod-network-benchmark.md). No generalice este pequeño ejercicio HTTP como resultado del rendimiento de una nube.
 
-## Cleanup
+## Limpieza
 
-Stop the exercise server in console A, then remove its file in the same terminal.
+Detenga el servidor del ejercicio en la consola A y, a continuación, elimine su archivo en la misma terminal.
 
 ```bash
 rm -- "${LAB_WEB:?}/health.txt"
 rmdir -- "${LAB_WEB:?}"
 ```
 
-Record whether lesson 6's rules will remain for subsequent practice. When ending the entire course, use each lesson's recovery procedure or return to **your VM snapshot**. Verify the management NIC and existing SSH access, then shut down the VMs normally.
+Registre si las reglas de la lección 6 permanecerán para las prácticas posteriores. Al terminar el curso completo, use el procedimiento de recuperación de cada lección o vuelva a **la instantánea de su VM**. Verifique la NIC de administración y el acceso SSH existente; después apague las VM normalmente.
 
-## References
+## Referencias
 
 - [Python http.server](https://docs.python.org/3.12/library/http.server.html)
-- [curl address mapping](https://curl.se/docs/manpage.html)
-- [Ubuntu 24.04 UFW: rule order, multiport rules and deletion](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html)
-- [firewalld: runtime/permanent configuration and rich-rule operations](https://firewalld.org/documentation/man-pages/firewall-cmd.html)
-- [OpenSSH client options and connection sharing](https://man.openbsd.org/ssh_config)
-- [Docker bridge](https://docs.docker.com/engine/network/drivers/bridge/)
-- [Docker overlay](https://docs.docker.com/engine/network/drivers/overlay/)
-- [Kubernetes networking model](https://kubernetes.io/docs/concepts/services-networking/)
+- [Asignación de direcciones de curl](https://curl.se/docs/manpage.html)
+- [UFW de Ubuntu 24.04: orden de reglas, reglas para varios puertos y eliminación](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html)
+- [firewalld: configuración de tiempo de ejecución/permanente y operaciones con reglas enriquecidas](https://firewalld.org/documentation/man-pages/firewall-cmd.html)
+- [Opciones del cliente OpenSSH y uso compartido de conexiones](https://man.openbsd.org/ssh_config)
+- [Bridge de Docker](https://docs.docker.com/engine/network/drivers/bridge/)
+- [Overlay de Docker](https://docs.docker.com/engine/network/drivers/overlay/)
+- [Modelo de redes de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/)
 
-[Previous: Monitoring and performance](07-monitoring-performance.md) · [Quiz](../../quizzes/networking/beginner/08-container-cloud-capstone-quiz.md) · [Back to course](README.md)
+[Anterior: supervisión y rendimiento](07-monitoring-performance.md) · [Cuestionario](../../quizzes/networking/beginner/08-container-cloud-capstone-quiz.md) · [Volver al curso](README.md)

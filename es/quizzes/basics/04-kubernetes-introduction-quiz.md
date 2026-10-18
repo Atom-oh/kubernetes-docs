@@ -1,26 +1,26 @@
 # Cuestionario de introducción a Kubernetes
 
-Este cuestionario evalúa tu comprensión de los conceptos básicos, la arquitectura y las características de Kubernetes.
+Este cuestionario evalúa su comprensión de los conceptos básicos, la arquitectura y las funciones de Kubernetes.
 
 ## Preguntas de opción múltiple
 
-1. ¿Qué significa el nombre Kubernetes en griego?
+1. ¿Qué significa la palabra Kubernetes en griego?
    - A) Capitán
-   - B) Timonel o Piloto
+   - B) Timonel o piloto
    - C) Contenedor
    - D) Administrador
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Timonel o Piloto**
+**Respuesta: B) Timonel o piloto**
 
 **Explicación:**
-Kubernetes significa 'timonel' o 'piloto' en griego, lo que simboliza su función de guiar aplicaciones en contenedores.
+En griego, Kubernetes significa «timonel» o «piloto», en alusión a su función de guiar aplicaciones en contenedores.
 
 </details>
 
-2. ¿Cuál de los siguientes NO es un componente del control plane de Kubernetes?
+2. ¿Cuál de los siguientes no es un componente del plano de control de Kubernetes?
    - A) kube-apiserver
    - B) etcd
    - C) kubelet
@@ -32,12 +32,12 @@ Kubernetes significa 'timonel' o 'piloto' en griego, lo que simboliza su funció
 **Respuesta: C) kubelet**
 
 **Explicación:**
-kubelet es un agente que se ejecuta en cada node y no es un componente del control plane.
+kubelet es un agente que se ejecuta en cada nodo y no es un componente del plano de control.
 
 </details>
 
-3. ¿Cuál es la unidad desplegable más pequeña en Kubernetes?
-   - A) Container
+3. ¿Cuál es la unidad desplegable más pequeña de Kubernetes?
+   - A) Contenedor
    - B) Pod
    - C) Deployment
    - D) Service
@@ -48,11 +48,11 @@ kubelet es un agente que se ejecuta en cada node y no es un componente del contr
 **Respuesta: B) Pod**
 
 **Explicación:**
-Un Pod es la unidad desplegable más pequeña en Kubernetes.
+Un Pod es la unidad desplegable más pequeña de Kubernetes.
 
 </details>
 
-4. ¿Cuál de los siguientes NO es un tipo de Service de Kubernetes?
+4. ¿Cuál de los siguientes no es un tipo de Service de Kubernetes?
    - A) ClusterIP
    - B) NodePort
    - C) LoadBalancer
@@ -68,7 +68,7 @@ Los tipos de Service incluyen ClusterIP, NodePort, LoadBalancer y ExternalName.
 
 </details>
 
-5. ¿Qué recurso administra el número de réplicas de Pod?
+5. ¿Qué recurso administra el número de réplicas de un Pod?
    - A) Service
    - B) ConfigMap
    - C) ReplicaSet
@@ -80,11 +80,11 @@ Los tipos de Service incluyen ClusterIP, NodePort, LoadBalancer y ExternalName.
 **Respuesta: C) ReplicaSet**
 
 **Explicación:**
-ReplicaSet garantiza que siempre se ejecute un número especificado de réplicas de Pod.
+ReplicaSet reconcilia el número deseado de Pods; no garantiza que todos estén en estado Ready si fallan las imágenes, la programación o las aplicaciones.
 
 </details>
 
-6. ¿Qué recurso de workload está diseñado para aplicaciones con estado?
+6. ¿Qué recurso de carga de trabajo está diseñado para aplicaciones con estado?
    - A) Deployment
    - B) StatefulSet
    - C) DaemonSet
@@ -96,11 +96,13 @@ ReplicaSet garantiza que siempre se ejecute un número especificado de réplicas
 **Respuesta: B) StatefulSet**
 
 **Explicación:**
-StatefulSet proporciona identificadores únicos y almacenamiento persistente para aplicaciones con estado.
+StatefulSet proporciona identificadores únicos y almacenamiento persistente para las aplicaciones con estado.
+
+El almacenamiento de StatefulSet requiere PVC/controladores y no configura automáticamente la replicación ni las copias de seguridad de la base de datos.
 
 </details>
 
-7. ¿Qué recurso garantiza que un Pod se ejecute en todos los nodes?
+7. ¿Qué recurso garantiza que un Pod se ejecute en todos los nodos?
    - A) Deployment
    - B) StatefulSet
    - C) DaemonSet
@@ -112,11 +114,11 @@ StatefulSet proporciona identificadores únicos y almacenamiento persistente par
 **Respuesta: C) DaemonSet**
 
 **Explicación:**
-DaemonSet garantiza que una copia de un Pod se ejecute en todos los nodes (o en nodes específicos).
+DaemonSet reconcilia un Pod por cada nodo apto, sujeto a las restricciones de programación y admisión.
 
 </details>
 
-8. ¿Qué recurso ejecuta tareas periódicamente según una programación?
+8. ¿Qué recurso ejecuta tareas periódicamente según un horario?
    - A) Job
    - B) CronJob
    - C) Deployment
@@ -128,11 +130,11 @@ DaemonSet garantiza que una copia de un Pod se ejecute en todos los nodes (o en 
 **Respuesta: B) CronJob**
 
 **Explicación:**
-CronJob ejecuta Jobs periódicamente según una programación especificada.
+CronJob ejecuta Jobs periódicamente según un horario especificado.
 
 </details>
 
-9. ¿Qué proporciona aislamiento de recursos dentro de un cluster?
+9. ¿Qué proporciona aislamiento de recursos dentro de un clúster?
    - A) Label
    - B) Annotation
    - C) Namespace
@@ -144,20 +146,20 @@ CronJob ejecuta Jobs periódicamente según una programación especificada.
 **Respuesta: C) Namespace**
 
 **Explicación:**
-Namespace proporciona una forma de aislar grupos de recursos dentro de un único cluster.
+Namespace delimita los nombres y la organización de los recursos; RBAC, las cuotas y NetworkPolicy ofrecen controles adicionales de acceso, recursos y red.
 
 </details>
 
-10. ¿Cuál NO es una diferencia clave entre EKS y Kubernetes autogestionado?
-    - A) Gestión del control plane
-    - B) API principal de Kubernetes
+10. ¿Cuál de las siguientes no es una diferencia clave entre EKS y Kubernetes autoadministrado?
+    - A) Administración del plano de control
+    - B) API central de Kubernetes
     - C) Configuración de alta disponibilidad
     - D) Aplicación de parches de seguridad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) API principal de Kubernetes**
+**Respuesta: B) API central de Kubernetes**
 
 **Explicación:**
 Ambos usan la misma API estándar de Kubernetes.
@@ -166,7 +168,7 @@ Ambos usan la misma API estándar de Kubernetes.
 
 ## Preguntas de respuesta corta
 
-11. ¿Qué almacén clave-valor guarda todos los datos del cluster?
+11. ¿Qué almacén de clave-valor guarda los objetos de la API de Kubernetes y el estado del clúster, excluido el contenido de los volúmenes de las aplicaciones?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -175,7 +177,7 @@ Ambos usan la misma API estándar de Kubernetes.
 
 </details>
 
-12. ¿Qué componente selecciona un node para los Pods recién creados?
+12. ¿Qué componente selecciona un nodo para los Pods recién creados?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -184,7 +186,7 @@ Ambos usan la misma API estándar de Kubernetes.
 
 </details>
 
-13. ¿Qué tipo de volumen temporal se elimina cuando se elimina el Pod?
+13. ¿Qué tipo de volumen temporal se elimina al eliminar el Pod?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -202,7 +204,7 @@ Ambos usan la misma API estándar de Kubernetes.
 
 </details>
 
-15. ¿Qué objeto almacena información sensible como contraseñas?
+15. ¿Qué objeto almacena información confidencial, como contraseñas?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -213,7 +215,7 @@ Ambos usan la misma API estándar de Kubernetes.
 
 ## Preguntas prácticas
 
-16. Escribe un YAML de Deployment para nginx con 3 réplicas.
+16. Escriba un Deployment de nginx con 3 réplicas, puerto 80, solicitudes de CPU 100m/memoria 128Mi y límites de CPU 200m/memoria 256Mi.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -223,6 +225,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-deployment
+  labels:
+    app: nginx
 spec:
   replicas: 3
   selector:
@@ -235,14 +239,22 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
 ```
 
+Añada a este Deployment comprobaciones de disponibilidad de la aplicación cuando corresponda.
 </details>
 
-17. Escribe un YAML de Service LoadBalancer.
+17. Escriba un YAML de Service LoadBalancer.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -261,9 +273,10 @@ spec:
     app: nginx
 ```
 
+Requiere una implementación de LoadBalancer y la configuración de red local o en la nube. Si la dirección externa permanece en Pending, normalmente necesita esa implementación; para aprender localmente, puede usar port-forward.
 </details>
 
-18. Escribe un YAML de ConfigMap con DATABASE_URL y LOG_LEVEL.
+18. Guarde `DATABASE_URL` sin credenciales y `LOG_LEVEL` en un ConfigMap, y coloque las credenciales de la base de datos y `API_KEY` en un Secret independiente.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -274,15 +287,26 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  DATABASE_URL: "mysql://localhost:3306/db"
-  LOG_LEVEL: "INFO"
+  DATABASE_URL: mysql://mysql.default.svc.cluster.local:3306/db
+  LOG_LEVEL: INFO
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+stringData:
+  DB_USERNAME: replace-from-protected-source
+  DB_PASSWORD: replace-from-protected-source
+  API_KEY: replace-from-protected-source
 ```
 
+Los valores de Secret son marcadores de posición ilustrativos. Proporcione los valores reales mediante una entrada protegida o un administrador de secretos; no los confirme en el repositorio. `stringData` no sustituye al cifrado en reposo.
 </details>
 
 ## Preguntas avanzadas
 
-19. Escribe un Role/RoleBinding de RBAC para conceder acceso de lectura a pods.
+19. Escriba un Role y un RoleBinding de RBAC para conceder acceso de lectura a Pods.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -291,12 +315,23 @@ data:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: development
   name: pod-reader
+  namespace: development
 rules:
-- apiGroups: [""]
-  resources: ["pods", "pods/log"]
-  verbs: ["get", "watch", "list"]
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -306,15 +341,17 @@ metadata:
 subjects:
 - kind: User
   name: jane
+  apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role
   name: pod-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
+El namespace `development` y la identidad `jane`, autenticada externamente, deben existir. RoleBinding no crea una cuenta de usuario.
 </details>
 
-20. Escribe una NetworkPolicy que permita solo tráfico de backend a database en el puerto 3306.
+20. Escriba una NetworkPolicy que permita solo el tráfico de backend a la base de datos por el puerto 3306.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -324,6 +361,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: db-network-policy
+  namespace: production
 spec:
   podSelector:
     matchLabels:
@@ -340,8 +378,35 @@ spec:
       port: 3306
 ```
 
+Requiere el namespace `production` y un plugin de red que aplique NetworkPolicy. Las reglas de permiso se acumulan, así que otras políticas pueden conceder accesos adicionales. Esta política no aísla el tráfico de salida.
 </details>
 
 ---
 
-[Volver a los materiales de estudio](../../basics/04-kubernetes-introduction.md) | [Siguiente cuestionario: arquitectura de cluster](../core/01-cluster-architecture-quiz.md)
+[Volver a los materiales de estudio](../../basics/04-kubernetes-introduction.md) | [Siguiente cuestionario: arquitectura del clúster](../core/01-cluster-architecture-quiz.md)
+
+## Referencias de verificación
+
+- https://kubernetes.io/releases/version-skew-policy/
+- https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+- https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+- https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+- https://kubernetes.io/docs/reference/networking/virtual-ips/
+- https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
+- https://coredns.io/plugins/kubernetes/
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.3
+- https://github.com/fluent/fluent-bit/blob/v5.1.3/conf/parsers.conf
+- https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
+- https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://eksctl.io/installation/
+- https://minikube.sigs.k8s.io/docs/tutorials/multi_node/
+- https://kind.sigs.k8s.io/docs/user/quick-start/
+- https://github.com/kubernetes/dashboard/blob/master/README.md
+- https://headlamp.dev/docs/latest/installation/in-cluster/
+- https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml

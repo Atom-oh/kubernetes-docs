@@ -96,3 +96,25 @@ test('HTML anchors and fragments in fenced code do not cause changes, and broken
   assert.match((await syncTranslatedAnchors(root, { renderer, locales: ['es'] })).failures[0].reason,
     /Unresolved canonical IDs: custom/)
 })
+
+test('unreferenced pages preserve heading hierarchy without adding unnecessary IDs', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translated-unreferenced-headings-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  for (const locale of ['en', 'cn']) fs.mkdirSync(path.join(root, locale))
+  fs.writeFileSync(path.join(root, 'en/page.md'), '# Page\n\n## Section\n\n```md\n### Example\n```\n')
+  const target = path.join(root, 'cn/page.md')
+  const incorrect = '# 页面\n\n### 章节\n\n```md\n### Example\n```\n'
+  fs.writeFileSync(target, incorrect)
+  const renderer = await createMarkdownRenderer(root, { html: true }, '/kubernetes-docs/')
+  const failed = await syncTranslatedAnchors(root, { renderer, locales: ['cn'] })
+  assert.deepEqual(failed.changed, [])
+  assert.equal(failed.failures.length, 1)
+  assert.match(failed.failures[0].reason, /Heading structure differs/)
+  assert.equal(fs.readFileSync(target, 'utf8'), incorrect)
+  const correct = incorrect.replace('### 章节', '## 章节')
+  fs.writeFileSync(target, correct)
+  const passed = await syncTranslatedAnchors(root, { renderer, locales: ['cn'] })
+  assert.deepEqual(passed.failures, [])
+  assert.deepEqual(passed.changed, [])
+  assert.equal(fs.readFileSync(target, 'utf8'), correct)
+})

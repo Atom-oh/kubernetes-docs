@@ -7,7 +7,7 @@
 <details>
 <summary>回答を表示</summary>
 
-EMR に EKS namespace を論理的に登録したものです。コンピューティング容量は作成しませんが、初回のサービスリンクロールと CAM アクセスエントリ/ポリシーの設定が発生する場合があります。
+EMR に EKS の名前空間を論理的に登録したものです。コンピューティング容量は作成しませんが、初回のサービスリンクロールと CAM のアクセスエントリ/ポリシーが設定される場合があります。
 
 </details>
 
@@ -16,7 +16,7 @@ EMR に EKS namespace を論理的に登録したものです。コンピュー�
 <details>
 <summary>回答を表示</summary>
 
-StartJobRun は仮想クラスターを対象とする AWS API です。別途インストールした Operator は SparkApplication CR を受け取ります。これは StartJobRun の内部委譲オプションではありません。
+StartJobRun は仮想クラスターを対象とする AWS API です。別途インストールした Operator は SparkApplication CR を受け取ります。これは StartJobRun に組み込まれた委譲オプションではありません。
 
 </details>
 
@@ -34,7 +34,7 @@ StartJobRun は仮想クラスターを対象とする AWS API です。別途�
 <details>
 <summary>回答を表示</summary>
 
-EMR 6.10.0 以降です。ドキュメントに記載された EMR chart と互換性のあるランタイムをインストールし、kubectl apply で送信します。パート 2 の現行上流 chart と同じ配布物だと考えないでください。
+EMR 6.10.0 以降です。ドキュメントに記載された EMR chart と互換性のある実行環境をインストールし、kubectl apply で送信します。パート 2 の現行上流 chart と同じ配布物だと考えないでください。
 
 </details>
 
@@ -43,7 +43,7 @@ EMR 6.10.0 以降です。ドキュメントに記載された EMR chart と互�
 <details>
 <summary>回答を表示</summary>
 
-4.0.2-amzn-0 です。2026年5月のこのリリースで Spark 4.x が GA になりました。8.0.0 は EMR ランタイムのリリース名です。
+4.0.2-amzn-0 です。2026年5月のこのリリースで Spark 4.x が一般提供されました。8.0.0 は EMR 実行環境のリリース名です。
 
 </details>
 
@@ -61,7 +61,7 @@ EMR 6.10.0 以降です。ドキュメントに記載された EMR chart と互�
 <details>
 <summary>回答を表示</summary>
 
-id フィールドです。StartJobRun の virtualClusterId に指定し、登録された namespace と RUNNING 状態を確認してください。
+id フィールドです。StartJobRun の virtualClusterId に指定し、登録された名前空間と RUNNING 状態を確認してください。
 
 </details>
 
@@ -79,7 +79,7 @@ id フィールドです。StartJobRun の virtualClusterId に指定し、登�
 <details>
 <summary>回答を表示</summary>
 
-IRSA の場合、実行ロールの信頼ポリシーを更新し、クラスターの OIDC プロバイダー、namespace、EMR が管理するサービスアカウント ID を信頼させます。S3 権限や呼び出し元権限は自動的に付与しません。
+IRSA の場合、実行ロールの信頼ポリシーを更新し、クラスターの OIDC プロバイダー、名前空間、EMR が管理するサービスアカウント ID を信頼させます。S3 権限や呼び出し元権限は自動的に付与しません。
 
 </details>
 
@@ -97,7 +97,7 @@ IRSA の場合、実行ロールの信頼ポリシーを更新し、クラスタ
 <details>
 <summary>回答を表示</summary>
 
-実行ロールと、EMR の送信側、ドライバー、エグゼキューターのサービスアカウント間に 3 つの関連付けを作成します。現行の CLI ヘルパーを使い、namespace/ロールを廃止する際には未使用の関連付けを別途削除してください。
+実行ロールと、EMR ジョブ送信用、ドライバー用、エグゼキューター用のサービスアカウントとの間に 3 つの関連付けを作成します。現行の CLI ヘルパーを使い、名前空間やロールを廃止する際には未使用の関連付けを別途削除してください。
 
 </details>
 
@@ -106,7 +106,7 @@ IRSA の場合、実行ロールの信頼ポリシーを更新し、クラスタ
 <details>
 <summary>回答を表示</summary>
 
-いいえ。ジョブ数の上限です。maxInQueueJobRuns はキューに入れられるジョブ数を制限します。CPU/メモリのクォータやジョブごとのエグゼキューター上限は別です。
+いいえ。ジョブ数を制限します。maxInQueueJobRuns はキューに入れられるジョブ数を制限します。CPU/メモリのクォータやジョブごとのエグゼキューター上限は別に設定します。
 
 </details>
 
@@ -133,7 +133,7 @@ API リクエストは重複排除されますが、アプリケーションの�
 <details>
 <summary>回答を表示</summary>
 
-はい。サポート対象の Pod テンプレート/カスタムイメージの経路を通じてカスタマイズできます。リリース固有の制約を守り、StartJobRun が管理する namespace、サービスアカウント、Pod 名を任意に上書きしないでください。
+はい。サポート対象の Pod テンプレート/カスタムイメージの方法でカスタマイズできます。リリース固有の制約を守り、StartJobRun が管理する名前空間、サービスアカウント、Pod 名を任意に上書きしないでください。
 
 </details>
 
@@ -160,7 +160,7 @@ CreateManagedEndpoint エンドポイントが Jupyter Enterprise Gateway を使
 <details>
 <summary>回答を表示</summary>
 
-先に対象のジョブ/エンドポイントを確認してクリーンアップしてください。EKS、namespace、S3、ログ、IAM ロール、Pod Identity の関連付けはそれぞれ別のライフサイクルです。削除状態と権限エラーも調査してください。
+先に対象のジョブ/エンドポイントを確認してクリーンアップしてください。EKS、名前空間、S3、ログ、IAM ロール、Pod Identity の関連付けはそれぞれ別のライフサイクルです。削除状態と権限エラーも調査してください。
 
 </details>
 

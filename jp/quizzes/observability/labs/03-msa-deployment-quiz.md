@@ -2,7 +2,7 @@
 
 <span id="observability-lab-part-3-msa-deployment-and-canary-quiz"></span>
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 1. order/outbox のトランザクション境界とは何ですか？
    - A) order をコミットしてから、失敗したメッセージングを無視する。
@@ -57,7 +57,7 @@ SNS fanout と各コンシューマーの event-ID の重複排除は、別々�
 
 4. 同一の synthetic payment が繰り返された場合、どうなりますか？
    - A) 常に新しい payment を作成する。
-   - B) 保存済みの結果を再利用し、競合する値には return409 を返す。
+   - B) 保存済みの結果を再利用し、競合する値には 409 を返す。
    - C) 実際のカードに課金する。
    - D) order がなくても常に成功する。
 

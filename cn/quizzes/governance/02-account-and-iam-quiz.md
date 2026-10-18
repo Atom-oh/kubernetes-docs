@@ -22,7 +22,7 @@
 
 ---
 
-2. 规划从使用 Shared VPC 的 Account 中拆分出来时，哪些事项很重要？
+2. 计划将使用 Shared VPC 的 Account 剥离出去时，应关注哪些事项？
    - A) 所有资源都会立即删除
    - B) 规划迁移，以满足必须位于同一 Organization 的要求，并考虑取消共享后的创建/替换限制
    - C) RAM 子网会继续与外部 Organization 共享

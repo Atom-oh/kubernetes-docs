@@ -6,7 +6,7 @@
 
    - A) GPU driver だけを選択する
    - B) blueprint を組み合わせ、作成時またはオンデマンドで使うツールを設定する
-   - C) All capabilities によって、すべてのツールが直ちに使用可能になる
+   - C) All capabilities なら、すべてのツールがすぐに利用可能になる
    - D) あらゆる IAM 権限を置き換える
 
 <details>

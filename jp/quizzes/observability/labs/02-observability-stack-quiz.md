@@ -2,7 +2,7 @@
 
 <span id="observability-lab-part-2-observability-stack-quiz"></span>
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 1. クロスクラスター収集ではどの endpoint を使用すべきですか？
    - A) 他方のクラスターの Service DNS のみ。

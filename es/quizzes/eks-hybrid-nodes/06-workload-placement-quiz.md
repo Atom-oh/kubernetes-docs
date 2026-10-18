@@ -1,14 +1,16 @@
-# Cuestionario de ubicación de workloads de EKS Hybrid Nodes
+# Cuestionario sobre la ubicación de cargas de trabajo en EKS Hybrid Nodes
 
-> **Documento relacionado**: [Workload Placement](../../eks-hybrid-nodes/06-workload-placement.md)
+> **Documento relacionado**: [Ubicación de cargas de trabajo](../../eks-hybrid-nodes/06-workload-placement.md)
+> **Última actualización**: 13 de septiembre de 2026
 
-## Preguntas de opción múltiple
+### 1. ¿Cuál no es un mecanismo directo para seleccionar o habilitar la ubicación de un Pod?
 
-### 1. ¿Cuál NO es un método usado para ubicar Pods en nodos específicos en Kubernetes?
+A. `nodeSelector`
 
-A. nodeSelector
-B. Node Affinity
-C. Taints/Tolerations
+B. Afinidad de nodo
+
+C. Taints y tolerations
+
 D. PodDisruptionBudget
 
 <details>
@@ -16,284 +18,177 @@ D. PodDisruptionBudget
 
 **Respuesta: D. PodDisruptionBudget**
 
-**Explicación:**
-PodDisruptionBudget (PDB) se usa para garantizar una disponibilidad mínima durante interrupciones voluntarias, no para la ubicación de Pods.
-
-**Métodos de ubicación de Pods:**
-- **nodeSelector**: Selección simple de nodos basada en labels
-- **Node Affinity**: Selección compleja de nodos basada en reglas
-- **Taints/Tolerations**: Restringen los nodos para aceptar solo Pods específicos
-- **Pod Affinity/Anti-Affinity**: Definen relaciones de ubicación entre Pods
-
-```yaml
-# nodeSelector example
-spec:
-  nodeSelector:
-    location: onprem
-
-# Node Affinity example
-spec:
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: gpu
-            operator: In
-            values: ["nvidia-a100"]
-```
+**Explicación:** Un PDB limita las solicitudes de expulsión voluntaria admitidas; no selecciona nodos ni garantiza la disponibilidad ante todas las rutas de eliminación. La selección de nodos, la afinidad y los taints cumplen distintas funciones de programación.
 
 </details>
 
-### 2. ¿Cuál es el comando correcto para establecer un Taint en Hybrid Nodes de modo que solo se ubiquen allí workloads de GPU?
+### 2. ¿Qué implica `dedicated=gpu:NoSchedule`?
 
-A. kubectl label node hybrid-node-1 gpu=true
-B. kubectl taint node hybrid-node-1 dedicated=gpu:NoSchedule
-C. kubectl annotate node hybrid-node-1 gpu=nvidia
-D. kubectl cordon hybrid-node-1
+A. Solo pueden ejecutarse allí contenedores que soliciten una GPU
+
+B. Los Pods nuevos necesitan una toleration aplicable; eso por sí solo no demuestra que usen una GPU ni obliga a ubicarlos allí
+
+C. Los Pods existentes se expulsan inmediatamente
+
+D. El nodo anuncia automáticamente recursos de GPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. kubectl taint node hybrid-node-1 dedicated=gpu:NoSchedule**
+**Respuesta: B. Los Pods nuevos necesitan una toleration aplicable; eso por sí solo no demuestra que usen una GPU ni obliga a ubicarlos allí**
 
-**Explicación:**
-Los Taints restringen la programación solo a Pods que toleran el taint.
-
-```bash
-# Set Taint
-kubectl taint node hybrid-node-1 dedicated=gpu:NoSchedule
-
-# Verify Taint
-kubectl describe node hybrid-node-1 | grep Taints
-```
-
-```yaml
-# Toleration that allows the Taint
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-workload
-spec:
-  tolerations:
-  - key: "dedicated"
-    operator: "Equal"
-    value: "gpu"
-    effect: "NoSchedule"
-  containers:
-  - name: cuda-app
-    image: nvidia/cuda:12.0-runtime
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-```
-
-**Tipos de efecto de Taint:**
-- **NoSchedule**: Impide la programación de nuevos Pods
-- **PreferNoSchedule**: Evita la programación si es posible
-- **NoExecute**: También desaloja Pods existentes
+**Explicación:** Un Pod que solo usa CPU también puede tolerar el taint. Las solicitudes de recursos de GPU y las políticas de admisión son independientes. `NoSchedule` afecta a la programación nueva; `NoExecute` tiene semántica de expulsión distinta.
 
 </details>
 
-### 3. En una estrategia de cloud bursting, ¿qué método se usa para mover workloads a nodos de cloud cuando los recursos on-premises son insuficientes?
+### 3. ¿Qué ofrece la afinidad de nodo preferida a una carga de trabajo que puede ampliarse a la nube?
 
-A. Eliminar y volver a crear Pods manualmente
-B. Usar preferredDuringSchedulingIgnoredDuringExecution de Node Affinity
-C. Ubicar todos los Pods en cloud
-D. Eliminar y volver a crear el cluster
+A. Migrar automáticamente a las cargas ya programadas en la nube de vuelta a las instalaciones locales
+
+B. Mantener una proporción fija de réplicas locales y en la nube
+
+C. Preferir determinados nodos aptos, sujeto a las demás restricciones y a la capacidad disponible
+
+D. Capacidad ilimitada de AWS después del octavo Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Usar preferredDuringSchedulingIgnoredDuringExecution de Node Affinity**
+**Respuesta: C. Preferir determinados nodos aptos, sujeto a las demás restricciones y a la capacidad disponible**
 
-**Explicación:**
-Cloud bursting implementa una estrategia de preferencia on-premises y respaldo en cloud.
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: burst-workload
-spec:
-  replicas: 10
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          # Prefer on-premises (not required)
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: location
-                operator: In
-                values: ["onprem"]
-          - weight: 50
-            preference:
-              matchExpressions:
-              - key: location
-                operator: In
-                values: ["cloud"]
-      containers:
-      - name: app
-        image: myapp:v1
-```
-
-**Patrón de cloud bursting:**
-```
-[On-premises capacity: 8 nodes]    [Cloud capacity: Unlimited]
-      | Preferred                       | Fallback
-  Pods 1-8 placed -----------------> Pods 9+ overflow
-```
+**Explicación:** La afinidad preferida no detecta cuándo se agota la capacidad, no impone un orden estricto ni actúa como controlador de migración. La cantidad de nodos no equivale a la capacidad de Pods. Karpenter y el escalador de réplicas son ciclos de control separados; las cuotas, las ofertas, las IP y las dependencias de la carga de trabajo pueden impedir la ampliación.
 
 </details>
 
-### 4. ¿Qué significa maxSkew al usar TopologySpreadConstraints para distribuir Pods uniformemente entre zonas?
+### 4. Con `DoNotSchedule`, ¿cómo se interpreta `maxSkew` de topología?
 
-A. Conteo mínimo de Pods
-B. Diferencia máxima en el conteo de Pods entre zonas
-C. Conteo total de Pods
-D. Máximo de Pods por nodo
+A. Como límite de la cantidad total de Pods del clúster
+
+B. En relación con el mínimo global entre los dominios aptos, incluido el comportamiento de `minDomains` cuando está configurado
+
+C. Como garantía de distribución uniforme con `ScheduleAnyway`
+
+D. Como recuento de cuentas de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Diferencia máxima en el conteo de Pods entre zonas**
+**Respuesta: B. En relación con el mínimo global entre los dominios aptos, incluido el comportamiento de `minDomains` cuando está configurado**
 
-**Explicación:**
-`maxSkew` define el desequilibrio máximo en el conteo de Pods entre dominios de topología (por ejemplo, zonas).
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: distributed-app
-spec:
-  replicas: 6
-  template:
-    spec:
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app: distributed-app
-```
-
-**Ejemplo de maxSkew=1:**
-```
-Zone A: 2 Pods  |  Zone B: 2 Pods  |  Zone C: 2 Pods  (Balanced)
-Zone A: 3 Pods  |  Zone B: 2 Pods  |  Zone C: 2 Pods  (Skew=1, Allowed)
-Zone A: 4 Pods  |  Zone B: 2 Pods  |  Zone C: 2 Pods  (Skew=2, Not Allowed)
-```
-
-**Opciones de whenUnsatisfiable:**
-- **DoNotSchedule**: Rechaza la programación si se infringe la restricción
-- **ScheduleAnyway**: Programa incluso si se infringe la restricción (mejor esfuerzo)
+**Explicación:** Los dominios aptos dependen de las restricciones del Pod y de la política de topología. `ScheduleAnyway` usa una puntuación flexible y puede superar `maxSkew`. Si faltan dominios o las reglas son estrictas, los Pods pueden quedarse en estado Pending.
 
 </details>
 
-### 5. ¿Cómo ubicas Pods en nodos donde residen los datos por consideraciones de localidad de datos?
+### 5. ¿Qué método conviene usar para datos persistentes locales?
 
-A. Programación aleatoria
-B. Usar labels de nodo y nodeSelector para ubicación por proximidad a los datos
-C. Seleccionar siempre nodos de cloud
-D. Orden alfabético del nombre del Pod
+A. Usar una etiqueta de nodo y suponer que los bytes ya están presentes
+
+B. Usar PV y PVC locales administrados con su topología y vinculación, y planificar por separado el acceso o la replicación de datos para ubicarlos en la nube
+
+C. Montar `/mnt/data` con `hostPath` y tratarlo como almacenamiento portátil
+
+D. Mover el Pod a cualquier nodo de la nube sin comprobar el volumen
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Usar labels de nodo y nodeSelector para ubicación por proximidad a los datos**
+**Respuesta: B. Usar PV y PVC locales administrados con su topología y vinculación, y planificar por separado el acceso o la replicación de datos para ubicarlos en la nube**
 
-**Explicación:**
-Para la localidad de datos, etiqueta los nodos donde se almacenan los datos y ubica los Pods usando esos labels.
-
-```bash
-# Label nodes with data location
-kubectl label node storage-node-1 data-location=primary-storage
-kubectl label node storage-node-2 data-location=replica-storage
-```
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: data-processor
-spec:
-  template:
-    spec:
-      nodeSelector:
-        data-location: primary-storage
-      containers:
-      - name: processor
-        image: data-processor:v1
-        volumeMounts:
-        - name: local-data
-          mountPath: /data
-      volumes:
-      - name: local-data
-        hostPath:
-          path: /mnt/data
-```
-
-**Beneficios de la localidad de datos:**
-- Minimiza la latencia de red
-- Reduce los costos de transferencia de datos
-- Mejora el rendimiento de procesamiento
+**Explicación:** Las etiquetas no crean ni replican datos. La afinidad de nodo de un PV local y `WaitForFirstConsumer` coordinan la ubicación; un volumen local vinculado no queda disponible automáticamente en un nodo EC2 de respaldo.
 
 </details>
 
-### 6. ¿Por qué usar Pod Anti-Affinity para evitar que los Pods de la misma aplicación se ubiquen en el mismo nodo?
+### 6. ¿Qué ayuda a conseguir la antiafinidad requerida por hostname?
 
-A. Ahorro de costos
-B. Alta disponibilidad y aislamiento de fallas
-C. Mejora de la velocidad de red
-D. Ahorro de almacenamiento
+A. Una garantía completa de disponibilidad de la aplicación
+
+B. Separar réplicas coincidentes entre nodos de Kubernetes aptos cuando hay capacidad suficiente
+
+C. Separación garantizada entre fuentes de alimentación física independientes
+
+D. Reparar réplicas automáticamente sin otros controladores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Alta disponibilidad y aislamiento de fallas**
+**Respuesta: B. Separar réplicas coincidentes entre nodos de Kubernetes aptos cuando hay capacidad suficiente**
 
-**Explicación:**
-Pod Anti-Affinity distribuye Pods de la misma aplicación entre distintos nodos para mantener la disponibilidad del servicio incluso durante fallas de un solo nodo.
+**Explicación:** Reduce una fuente de fallos correlacionados. Las réplicas restantes aún requieren disponibilidad, dependencias y capacidad de servicio suficientes, y distintos nodos de Kubernetes pueden compartir un host físico o dominio de fallo.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ha-webapp
-spec:
-  replicas: 3
-  template:
-    metadata:
-      labels:
-        app: ha-webapp
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values: ["ha-webapp"]
-            topologyKey: kubernetes.io/hostname
-      containers:
-      - name: web
-        image: nginx:1.25
-```
+</details>
 
-**Resultado:**
-```
-Node 1: ha-webapp-pod-1
-Node 2: ha-webapp-pod-2
-Node 3: ha-webapp-pod-3
-(Only 1 placed per node)
-```
+### 7. ¿Puede eliminarse un Pod local con `deletion-cost: 1000` antes que un Pod en la nube con coste 0?
 
-Si un nodo falla, solo se ve afectado 1 Pod, y los 2 restantes continúan proporcionando servicio.
+A. No; el valor 1000 hace que no se pueda expulsar
+
+B. No; el coste es el primer criterio que compara ReplicaSet
+
+C. Sí; en el controlador revisado, la asignación, la fase y la disponibilidad preceden al coste de eliminación
+
+D. Solo si la anotación de coste no existe
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Sí; en el controlador revisado, la asignación, la fase y la disponibilidad preceden al coste de eliminación**
+
+**Explicación:** Los criterios de Pod sin asignar, Pending/Unknown y NotReady pueden tener prioridad. El coste de eliminación es una preferencia de mejor esfuerzo entre los Pods del mismo ReplicaSet, no una protección frente a todos los controladores, despliegues, expulsiones o fallos.
+
+</details>
+
+### 8. ¿Por qué es incompleto el antiguo webhook mutante de ubicación que solo responde a CREATE?
+
+A. Las solicitudes de creación de Pods nunca admiten webhooks
+
+B. La nube no tiene etiquetas
+
+C. Normalmente, una solicitud CREATE aún no está vinculada a un nodo, por lo que la ubicación final en un nodo no está disponible
+
+D. El coste de eliminación solo se puede cambiar antes de programar el Pod
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Normalmente, una solicitud CREATE aún no está vinculada a un nodo, por lo que la ubicación final en un nodo no está disponible**
+
+**Explicación:** Un proceso posterior a la vinculación puede inspeccionar `spec.nodeName`. Un webhook de producción también necesita un backend, un Service, TLS y una política de alcance válidos; uno incompleto con modo de fallo cerrado puede bloquear la creación de Pods.
+
+</details>
+
+### 9. ¿Karpenter 1.14.1 lee `pod-deletion-cost`?
+
+A. No; solo ReplicaSet puede leerlo
+
+B. Sí; como parte de una heurística de coste de expulsión normalizada junto con otros datos, pero no prohíbe las interrupciones
+
+C. Sí; 1000 garantiza una protección 1000 veces mayor
+
+D. Sí; sustituye los PDB y todos los presupuestos de interrupción
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. Sí; como parte de una heurística de coste de expulsión normalizada junto con otros datos, pero no prohíbe las interrupciones**
+
+**Explicación:** El código fuente etiquetado de Karpenter incluye la anotación en el coste de expulsión del Pod. Aún se tienen en cuenta la evaluación de candidatos, el estado del nodo, la prioridad y las restricciones del ciclo de vida; las anotaciones de coste no garantizan que un nodo vacío se elimine de inmediato.
+
+</details>
+
+### 10. ¿Qué hace más seguro el parche de anotación para un Pod individual que el antiguo CronJob de todo el clúster?
+
+A. Suprimir todos los errores de API
+
+B. Inferir la ubicación en la nube cuando faltan etiquetas
+
+C. Comprobar el propietario previsto de ReplicaSet, la clasificación del nodo, el UID del Pod y `resourceVersion`, y luego revisar un parche acotado
+
+D. Eliminar las pruebas de actualizaciones concurrentes después del primer conflicto
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Comprobar el propietario previsto de ReplicaSet, la clasificación del nodo, el UID del Pod y `resourceVersion`, y luego revisar un parche acotado**
+
+**Explicación:** El ejemplo rechaza estados desconocidos o Pods sin programar y genera un parche revisable. Las comprobaciones de UID, `resourceVersion` y nodo rechazan estados obsoletos, y se conservan las anotaciones que no guardan relación. No recorre ni modifica todos los espacios de nombres.
 
 </details>

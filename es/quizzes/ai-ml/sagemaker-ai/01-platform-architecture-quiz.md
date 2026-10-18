@@ -6,7 +6,7 @@
 
    - A) El modelo elimina con certeza todos los datos personales
    - B) El modelo genera un TSV candidato y el código lo valida y reemplaza; la detección de elementos omitidos se evalúa por separado
-   - C) Un viaje de ida y vuelta demuestra el anonimato
+   - C) Un ciclo de ida y vuelta demuestra el anonimato
    - D) El modelo elimina proyectos
 
 <details>
@@ -46,7 +46,7 @@ El registro del 2026-09-01 se detuvo antes del entrenamiento. Las pruebas locale
 
 **Respuesta: B**
 
-Fijar directamente las versiones de los paquetes no equivale a bloquear todas las dependencias transitivas, y la determinación de resultados en GPU tiene requisitos adicionales.
+Fijar directamente las versiones de los paquetes no equivale a bloquear todas las dependencias transitivas, y el determinismo en GPU tiene requisitos adicionales.
 
 </details>
 

@@ -1,43 +1,48 @@
-# Kubernetes 版本特性和路线图测验
+# Kubernetes 版本特性与路线图测验
 
-1. Kubernetes 的发布节奏是什么？
-   - A) 每年一次，包含主要特性
-   - B) 每年大约 3 个版本，约每 4 个月一次
-   - C) 每月发布补丁版本，每季度发布特性版本
-   - D) 每年两次，与 AWS re:Invent 和 Summit 对齐
+> **最后更新**：2026 年 9 月 12 日
+
+请参阅[源章节](../../eks/12-kubernetes-version-roadmap.md)，了解各版本的前提条件以及审计证据的局限。
+
+1. Kubernetes 次要版本的发布节奏是什么？
+
+   - A) 每年发布一个特性版本
+   - B) 每年大约发布三个次要版本，间隔约四个月
+   - C) 每月发布次要版本
+   - D) 按 AWS 大会日程固定发布
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 每年大约 3 个版本，约每 4 个月一次**
+**答案：B) 每年大约发布三个次要版本，间隔约四个月**
 
-**解析:**
-Kubernetes 遵循约 4 个月的发布周期，每年大约发布 3 个 minor version。每个版本都会经历 enhancement freeze、code freeze 和 release candidate 阶段。近期版本包括：1.33 (Apr 2025)、1.34 (Aug 2025)、1.35 (Dec 2025)、1.36 (Apr 2026)。之后，每个版本都会通过 patch release 维护大约 14 个月。
+上游次要版本通常每年发布约三次；补丁版本遵循另一套节奏。上游补丁支持政策大致为 14 个月（12 个月常规支持，加 2 个月维护支持）。EKS 标准支持也持续 14 个月，但从该版本在 EKS 上正式可用时开始计算，因此这两个日历不能混为一谈。
 
 </details>
 
 ---
 
-2. EKS Standard Support 和 Extended Support 有什么区别？
-   - A) Standard 是免费的，Extended 需要 Enterprise license
-   - B) Standard 持续 14 个月，费用为 $0.10/cluster/hour；Extended 额外增加 12 个月，费用为 $0.60/cluster/hour
-   - C) Standard 支持 3 个版本，Extended 支持所有版本
-   - D) Standard 每月提供补丁，Extended 每周提供补丁
+2. EKS 标准支持和扩展版本支持的费用有何不同？
+
+   - A) 标准支持免费
+   - B) 标准支持：14 个月，每集群小时 $0.10；扩展支持：再延长 12 个月，每集群小时总计 $0.60
+   - C) 扩展支持意味着所有旧版本都会永久受支持
+   - D) 扩展支持不提供安全补丁
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Standard 持续 14 个月，费用为 $0.10/cluster/hour；Extended 额外增加 12 个月，费用为 $0.60/cluster/hour**
+**答案：B) 标准支持：14 个月，每集群小时 $0.10；扩展支持：再延长 12 个月，每集群小时总计 $0.60**
 
-**解析:**
-EKS 上的每个 Kubernetes 版本都会获得 14 个月的 standard support（$0.10/cluster/hour），随后是 12 个月的 extended support（$0.60/cluster/hour — 成本为 6 倍）。每个版本的总支持期为 26 个月。Extended support 默认启用。当某个版本退出 extended support 时，cluster 会自动升级。这种定价差异旨在鼓励保持在受支持的版本上。
+这些是版本支持费用，不包含计算、存储和网络等全部账单。`EXTENDED` 是默认升级策略；标准支持结束后，`STANDARD` 策略可能导致集群自动升级。扩展支持期间也会提供相关安全补丁。请参考当前版本日历，并结合实际支持结束日期和工作负载风险进行规划。
 
 </details>
 
 ---
 
-3. Sidecar Containers 在哪个 Kubernetes 版本中升级到 GA？
-   - A) 1.28（首次作为 alpha 引入时）
+3. 原生 sidecar 容器何时达到稳定版？
+
+   - A) 1.28
    - B) 1.31
    - C) 1.33
    - D) 1.35
@@ -45,99 +50,98 @@ EKS 上的每个 Kubernetes 版本都会获得 14 个月的 standard support（$
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 1.33**
+**答案：C) 1.33**
 
-**解析:**
-原生 Sidecar Containers (KEP-753) 遵循以下升级路径：v1.28 (Aug 2023) 中为 alpha，v1.29 (Dec 2023) 中为 beta，v1.33 (Apr 2025) 中为 GA。Sidecar 被定义为带有 `restartPolicy: Always` 的 init containers，确保它们在 application containers 之前启动，在整个 Pod 生命周期中运行，并在 main containers 之后终止，从而解决 Jobs 中长期存在的 “zombie sidecar” 问题。
+其发布路径为：1.28 Alpha → 1.29 Beta → 1.33 稳定版。可重启的 init container 使用 `restartPolicy:Always`。启动顺序取决于 `started`/`startupProbe` 状态；优雅终止使用 Pod 共享的终止时间预算。功能达到 GA 并不保证每个辅助容器都能优雅退出，也不代表代理镜像配置正确。
 
 </details>
 
 ---
 
-4. In-Place Pod Resize 特性是什么，它何时达到 GA？
-   - A) 无需重新部署即可更改 Pod replicas；在 1.30 中达到 GA
-   - B) 无需重启即可修改正在运行的 Pods 上的 CPU/memory requests 和 limits；在 1.35 中达到 GA
-   - C) 在线调整 PersistentVolumes 大小的能力；在 1.31 中达到 GA
-   - D) 更改正在运行的 Pods 上的 container images 的能力；在 1.34 中达到 GA
+4. 容器原地调整大小可以做什么，何时达到稳定版？
+
+   - A) 扩缩副本；1.30
+   - B) 调整现有 Pod 的 CPU/内存分配；1.35，但受重启和运行时限制
+   - C) 扩展 PVC；1.31
+   - D) 不重启进程就更新镜像；1.34
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 无需重启即可修改正在运行的 Pods 上的 CPU/memory requests 和 limits；在 1.35 中达到 GA**
+**答案：B) 调整现有 Pod 的 CPU/内存分配；1.35，但受重启和运行时限制**
 
-**解析:**
-In-Place Pod Resize (KEP-1287) 让正在运行的 Pods 上的 CPU 和 memory requests/limits 可变。升级路径：v1.27 中为 alpha，v1.33 中为 beta，v1.35 (Dec 2025) 中为 GA。从 v1.33 开始，修改使用 `/resize` subresource。`resizePolicy` 字段控制每种 resource type 是否需要重启 container。此特性对 VPA 集成具有变革性意义，可在不中断 Pod 的情况下实现 resource right-sizing。
+此功能在 1.27 为 Alpha、1.33 为 Beta、1.35 达到稳定版。容器的 `resizePolicy` 控制重启行为，资源调整也可能保持待处理或无法满足。PATCH 请求被接受或 `containerID` 未变化，都不能证明 cgroup 调整已经完成或没有造成中断。请对比期望资源与上报资源、generation 和 conditions。VPA 模式各有自己的版本与功能门控。
 
 </details>
 
 ---
 
-5. Kubernetes 1.31 中 Dynamic Resource Allocation (DRA) 发生了什么重大变化？
-   - A) DRA 被弃用，并由 Device Plugins v2 取代
-   - B) Classic DRA 被移除；只保留 Structured Parameters DRA（后者随后在 1.34 中达到 GA）
-   - C) DRA 直接从 alpha 升级到 GA
-   - D) DRA 在 GPUs 之外增加了对 network devices 的支持
+5. Kubernetes 1.31 中的 DRA 状态是什么？
+
+   - A) 经典 DRA 被 Device Plugins v2 取代
+   - B) DRA 仍处于 Alpha；结构化 API 持续演进，而经典分配仍由单独的功能门控控制
+   - C) DRA 已经达到 GA
+   - D) 稳定版 v1 请求语法与所有旧版 Alpha API 完全相同
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Classic DRA 被移除；只保留 Structured Parameters DRA（后者随后在 1.34 中达到 GA）**
+**答案：B) DRA 仍处于 Alpha；结构化 API 持续演进，而经典分配仍由单独的功能门控控制**
 
-**解析:**
-DRA 经历了一次重大重新设计。Classic DRA（KEP-3063，自 v1.26 起为 alpha）使用不透明的 vendor parameters，scheduler 和 cluster autoscaler 无法对其进行推理。Structured Parameters DRA (KEP-4381) 用 Kubernetes-native 格式替代了它，该格式使用 `ResourceSlice` objects。在 v1.31 中，classic DRA 被完全移除。Structured DRA 的进展为：v1.32 中为 beta，v1.34 中为 GA。这对于 AI/ML workloads 中的 GPU/accelerator scheduling 至关重要。
+1.31 版本及源章节显示，`DRAControlPlaneController` 仍是默认禁用的 Alpha 功能门控；它在 1.32 中被移除。DRA 核心功能在 1.32 达到 Beta，并在 1.34 达到稳定版。当前 v1 请求使用 `exactly`；还必须核验实际驱动程序、ResourceSlices 和属性。原测验中关于“1.31 已移除”的答案是错误的。
 
 </details>
 
 ---
 
-6. 哪个特性在 Kubernetes 1.30 中升级到 GA，使无需 webhooks 的声明式 admission control 成为可能？
+6. 哪项原生 CEL admission validation 功能在 1.30 达到稳定版？
+
    - A) OPA Gatekeeper v4
-   - B) Kyverno Native Policies
-   - C) 使用 CEL expressions 的 ValidatingAdmissionPolicy
-   - D) Pod Security Standards enforcement
+   - B) 强制要求参数 CRD
+   - C) ValidatingAdmissionPolicy
+   - D) 所有变更型 admission 机制
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 使用 CEL expressions 的 ValidatingAdmissionPolicy**
+**答案：C) ValidatingAdmissionPolicy**
 
-**解析:**
-ValidatingAdmissionPolicy (KEP-3488) 使用 Common Expression Language (CEL) expressions 提供进程内验证，消除了对外部 webhook servers 的需求。升级路径：v1.26 中为 alpha，v1.28 中为 beta，v1.30 (Apr 2024) 中为 GA。它使用三种 resource types：ValidatingAdmissionPolicy（rules）、ValidatingAdmissionPolicyBinding（binding to resources）以及可选的 parameter CRDs。与基于 webhook 的 admission control 相比，这降低了延迟、复杂性和 failure domains。
+ValidatingAdmissionPolicy 由 policy 和 binding 组成；它可以使用参数对象，但参数对象不一定要是 CRD。对于适用的逻辑，它可以避免使用外部验证 webhook，但错误或 `failurePolicy` 仍可能影响请求。请限定 binding 的作用范围，并区分 Audit 与 Deny。MAP 变更功能是另一项独立特性，于 1.36 达到稳定版。
 
 </details>
 
 ---
 
-7. KYAML 是什么，它当前的状态是什么？
-   - A) Kubernetes YAML linter；在 1.35 中达到 GA
-   - B) 一个用于 Kubernetes 的更安全、歧义更少的 YAML 子集，使用严格格式；在 1.35 中为 beta，默认启用
-   - C) YAML-to-JSON converter tool；在 1.34 中为 alpha
-   - D) Kubernetes manifest validation schema；自 1.30 起稳定
+7. 根据已核实的发布历史，KYAML 是什么？
+
+   - A) API server 验证器，会拒绝所有普通 YAML anchor
+   - B) kubectl 的输出格式：1.34 Alpha、1.35–1.36 Beta、1.37 稳定版
+   - C) 需要通过支持工单启用的 EKS 服务端新特性
+   - D) 要求将每份输入 manifest 转换为 YAML 1.2
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 一个用于 Kubernetes 的更安全、歧义更少的 YAML 子集，使用严格格式；在 1.35 中为 beta，默认启用**
+**答案：B) kubectl 的输出格式：1.34 Alpha、1.35–1.36 Beta、1.37 稳定版**
 
-**解析:**
-KYAML 是专为 Kubernetes 设计的更严格 YAML 子集，可消除 YAML 臭名昭著的歧义。它使用花括号 ({}) 表示 maps，方括号 ([]) 表示 lists，并对所有 strings 使用双引号。它在 v1.34 中作为 alpha 引入，在 v1.35 (Dec 2025) 中升级到 beta，并默认启用。可以使用 `KUBECTL_KYAML=false` 禁用它。这解决了 YAML 中长期存在的问题，例如 “Norway problem”（NO 被解释为 boolean false）。
+KYAML 对应 KEP-5295。原生 `kubectl 1.36.2` 测试接受了普通 YAML anchor，并输出 KYAML。`KUBECTL_KYAML=false` 会禁用该输出打印器；即使如此，KYAML 输入仍可解析并输出为 JSON。格式化与 schema/admission validation 是两个不同环节。审查时，上游 1.37 已经发布；这并不意味着 EKS 已提供 1.37。
 
 </details>
 
 ---
 
-8. EKS clusters 推荐的版本升级规划策略是什么？
-   - A) 跳过版本以尽量减少升级频率（例如，1.29 → 1.33）
-   - B) 每次升级一个 minor version，在 staging 中测试 feature gates，在生产前验证 API 兼容性和 add-on 对齐
-   - C) 始终使用最新版本，并依赖 extended support 进行 rollback
-   - D) 等到某个版本进入 extended support 后再升级，以确保稳定性
+8. 适当的 EKS 升级规划方式是什么？
+
+   - A) 跳过次要版本以节省时间
+   - B) 逐个演练次要版本升级，核实实际兼容性和资源所有权，并准备恢复方案
+   - C) 将扫描器返回码为 0 视为完整证明
+   - D) 控制平面升级后始终按固定顺序更新所有 add-on
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 每次升级一个 minor version，在 staging 中测试 feature gates，在生产前验证 API 兼容性和 add-on 对齐**
+**答案：B) 逐个演练次要版本升级，核实实际兼容性和资源所有权，并准备恢复方案**
 
-**解析:**
-EKS 要求按顺序进行 minor version upgrades（1.33 → 1.34 → 1.35；不支持跳过）。最佳实践：(1) 首先在 staging environments 中测试新的 feature gates 和 API changes，(2) 验证 add-on compatibility 是否符合目标版本，(3) 运行 `kubectl convert` 检查 deprecated APIs，(4) 先升级 control plane，然后升级 add-ons，最后升级 node groups。保持在 standard support 上可以避免 extended support 带来的 6 倍成本增加，并确保能够获得最新的 security patches。
+请使用当前支持日历、manifest 与客户端使用情况证据、准确的 add-on 兼容性信息，以及适合具体计算类型的操作顺序。有些前置条件必须在控制平面更新前满足。记录实际 update ID；验证就绪状态和数据，并区分 Pod 原地调整、节点替换和扩缩容。EKS 原生回滚有条件：必须在原地升级完成后的 7 天内执行。它不等同于数据库回滚，也不能作为绕过其他控制措施的许可。
 
 </details>

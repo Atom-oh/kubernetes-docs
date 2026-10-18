@@ -4,10 +4,10 @@
 
 このガイドでは、EKS上でKafkaを自己管理する選択肢としてStrimzi Operatorを使用します。OperatorはPod、ストレージ、リスナー、証明書、アップグレードを調整しますが、データ、可用性、セキュリティ方針への責任をなくすものではありません。第6部ではAmazon MSKなどのマネージドな代替サービスを比較します。
 
-> **最終更新**: September 12, 2026。Strimzi 1.2.0 / Kafka 4.3.1。
+> **最終更新**: 2026年10月16日。Strimzi 1.3.0 / Kafka 4.3.1。
 > **アップグレード要件**: Strimzi 1.0以降はCRD API `v1`のみをサポートします。Operatorのアップグレード前に、公式移行手順に従って既存の`v1beta2` / `v1beta1` / `v1alpha1`リソースを変換し、CRDを準備してください。バージョン番号を変更するだけではアップグレード計画になりません。
 
-Strimzi 1.2.0はKafka 4.2.0、4.2.1、4.3.0、4.3.1をサポートし、デフォルトは4.3.1です。このガイドは互換性のある組み合わせに固定しています。インストール前にはディストリビューション、Kubernetesバージョン、アップグレード経路も確認してください。
+Strimzi 1.3.0はKafka 4.2.0、4.2.1、4.2.2、4.3.0、4.3.1をサポートし、デフォルトは4.3.1です。このガイドは互換性のある組み合わせに固定しています。インストール前にはディストリビューション、Kubernetesバージョン、アップグレード経路も確認してください。
 
 ## アーキテクチャの主要概念
 
@@ -74,9 +74,9 @@ KRaftは2.8で早期アクセスとして登場し、3.3で本番利用可能に
 
 ## 参考資料
 
-- [Strimzi 1.2.0のリリース](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0のリリース](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 
-- [Strimziドキュメント](https://strimzi.io/docs/operators/1.2.0/overview.html)
+- [Strimziドキュメント](https://strimzi.io/docs/operators/1.3.0/overview.html)
 - [Apache Kafkaドキュメント](https://kafka.apache.org/43/design/design/)
 - [KRaft運用ガイド](https://kafka.apache.org/43/operations/kraft/)
 - [AWS Data on EKSプロジェクト](https://awslabs.github.io/data-on-eks/)

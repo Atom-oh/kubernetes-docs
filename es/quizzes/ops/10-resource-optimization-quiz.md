@@ -1,175 +1,163 @@
-# Quiz de optimización de recursos
+# Cuestionario de optimización de recursos
 
 > **Documento relacionado**: [Optimización de recursos](../../ops/10-resource-optimization.md)
 
-## Preguntas de opción múltiple
+## 1. ¿Qué afirmación describe correctamente la expulsión por presión de memoria?
 
-### 1. ¿Cuál es la diferencia entre resource requests y limits en Kubernetes?
-
-- A) Requests son solo para CPU, limits son solo para memoria
-- B) Requests son recursos garantizados para la programación; limits son el máximo permitido
-- C) Requests y limits son lo mismo
-- D) Limits están garantizados, requests son opcionales
+- A) La clase QoS determina por sí sola el orden
+- B) Importan el uso por encima de las solicitudes, la prioridad del Pod y el uso relativo
+- C) Los Pods Guaranteed nunca pueden ser expulsados
+- D) Los PDB impiden cualquier expulsión por presión del nodo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Requests son recursos garantizados para la programación; limits son el máximo permitido**
+**Respuesta: B**
 
-**Explicación:**
-Requests son los recursos que Kubernetes garantiza a un container y usa para las decisiones de programación. Limits son los recursos máximos que un container puede usar. Superar los CPU limits provoca throttling; superar los memory limits puede provocar OOM kills.
+QoS es útil, pero no establece un orden absoluto de expulsión. Distinga entre OOM por límite de contenedor, expulsión por presión de memoria y DiskPressure.
 
 </details>
 
-### 2. ¿Qué clase de QoS obtiene la prioridad más alta durante la presión de recursos del node?
+## 2. ¿Qué mide la proporción de períodos con throttling de CPU?
 
-- A) BestEffort
-- B) Burstable
-- C) Guaranteed
-- D) Todas las clases tienen la misma prioridad
+- A) La fracción exacta de tiempo de CPU perdido
+- B) La fracción de períodos de cuota en los que hubo throttling
+- C) El uso de la solicitud de CPU
+- D) El uso medio de memoria
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Guaranteed**
+**Respuesta: B**
 
-**Explicación:**
-Los pods Guaranteed (requests=limits tanto para CPU como para memoria) tienen la prioridad más alta y son los últimos en ser desalojados durante la presión de recursos. Los pods BestEffort (sin requests/limits) son desalojados primero, seguidos por los pods Burstable.
+Los threads comparten la cuota. La proporción de períodos por sí sola no determina el tiempo perdido ni demuestra que aumentar el límite sea la solución correcta.
 
 </details>
 
-### 3. ¿Qué causa CPU throttling en los containers de Kubernetes?
+## 3. ¿Qué afirmación sobre el heap de JVM y la memoria del contenedor es correcta?
 
-- A) Memoria insuficiente
-- B) Que el container supere su CPU limit durante un período de CFS
-- C) Congestión de red
-- D) Cuello de botella de E/S de disco
+- A) El 75 % siempre es óptimo
+- B) Al elegir una proporción, mida la memoria no heap y RSS
+- C) MaxRAMPercentage siempre sigue de inmediato los cambios en el límite activo del Pod
+- D) SIGKILL del kernel siempre produce un volcado de heap
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Que el container supere su CPU limit durante un período de CFS**
+**Respuesta: B**
 
-**Explicación:**
-El Linux CFS (Completely Fair Scheduler) aplica CPU limits en períodos de 100 ms. Si un container usa su cuota al inicio del período, se le aplica throttling (se pausa) hasta que comienza el siguiente período. Esto se registra en `cpu.cfs_throttled_us`.
+Metaspace, stacks, búferes directos y JNI necesitan memoria. Distinga la ergonomía de JVM de los límites de cgroup, y una excepción Java OOME de SIGKILL.
 
 </details>
 
-### 4. ¿Cuál es la configuración recomendada de JVM MaxRAMPercentage para containers?
+## 4. ¿Por qué puede no surtir efecto establecer JAVA_OPTS?
 
-- A) 100%
-- B) 90%
-- C) 75%
-- D) 50%
+- A) Es una opción de seguridad que la JVM debe rechazar
+- B) La JVM no la lee automáticamente a menos que el punto de entrada se la pase
+- C) Kubernetes no admite variables de entorno
+- D) Java 21 no puede ejecutarse en contenedores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) 75%**
+**Respuesta: B**
 
-**Explicación:**
-Configurar MaxRAMPercentage en 75% deja el 25% de la memoria del container para uso fuera del heap: metaspace, stacks de threads, memoria nativa y sobrecarga del OS. Usar valores más altos implica riesgo de OOM kills cuando la memoria fuera del heap crece inesperadamente.
+Use `JAVA_TOOL_OPTIONS` o argumentos explícitos de `java` y verifique la salida real de `VM.flags`.
 
 </details>
 
-### 5. En VPA, ¿qué hace el modo de actualización "Initial"?
+## 5. ¿Qué afirmación sobre `upperBound` de VPA es correcta?
 
-- A) Actualiza los pods continuamente
-- B) Solo establece recursos cuando los pods se crean por primera vez
-- C) Elimina todos los pods existentes
-- D) Deshabilita VPA por completo
+- A) Cópielo siempre al límite de memoria del contenedor
+- B) Forma parte del rango de recomendaciones de solicitudes, no es el límite del contenedor
+- C) Es el número máximo de réplicas de HPA
+- D) Es la cantidad de memoria que garantiza que no haya OOM
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Solo establece recursos cuando los pods se crean por primera vez**
+**Respuesta: B**
 
-**Explicación:**
-El modo "Initial" aplica las recomendaciones de VPA solo en el momento de creación del pod, no a los pods en ejecución. Esto es útil con HPA porque evita conflictos: VPA establece el tamaño inicial, HPA gestiona el escalado y los pods existentes no se interrumpen.
+Distinga `target`, `lowerBound`, `upperBound` y `uncappedTarget`. El modo inicial aún puede afectar el denominador de HPA mediante las nuevas solicitudes.
 
 </details>
 
-### 6. ¿Qué configuración del runtime de Go debe configurarse según los CPU limits del container?
+## 6. ¿Qué afirmación sobre el valor predeterminado de GOMAXPROCS en Go 1.25 o posterior es correcta?
 
-- A) GOGC
-- B) GOMAXPROCS
-- C) GOPATH
-- D) GOROOT
+- A) Siempre usa las CPU del host y requiere una biblioteca externa
+- B) Sujeto a los valores predeterminados de versión del lenguaje/compatibilidad, tiene en cuenta la cuota y la afinidad; los ajustes explícitos deshabilitan las actualizaciones automáticas
+- C) Solo usa las solicitudes de CPU
+- D) 500m siempre produce 1 en todos los entornos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) GOMAXPROCS**
+**Respuesta: B**
 
-**Explicación:**
-GOMAXPROCS controla el número de threads del OS que ejecutan código Go. De forma predeterminada, Go usa todas las CPU del host, no los límites del container. Configurar GOMAXPROCS para que coincida con los CPU limits del container (usando la biblioteca automaxprocs) evita el cambio de contexto excesivo.
+El ejemplo se probó con Go 1.27.2 y go.mod 1.25 o posterior. Importan el redondeo de la cuota y las condiciones del valor mínimo.
 
 </details>
 
-### 7. ¿Para qué se usa GOMEMLIMIT en aplicaciones Go?
+## 7. ¿Qué limitación comparten GOMEMLIMIT y el límite antiguo de espacio de objetos de Node?
 
-- A) Establecer la asignación mínima de memoria
-- B) Proporcionar una sugerencia de límite de memoria suave al garbage collector
-- C) Limitar el número de goroutines
-- D) Configurar la memoria swap
+- A) No acotan por completo el RSS del proceso
+- B) Liberan por la fuerza toda la memoria nativa
+- C) Garantizan que el contenedor no sufra OOM
+- D) Cambian automáticamente las solicitudes del Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Proporcionar una sugerencia de límite de memoria suave al garbage collector**
+**Respuesta: A**
 
-**Explicación:**
-GOMEMLIMIT indica al garbage collector de Go el techo de memoria objetivo. El GC se activa antes a medida que la memoria se acerca a este límite, lo que reduce el riesgo de OOM kills y, aun así, utiliza la memoria disponible de manera eficiente.
+El valor de Go es un límite flexible administrado por el runtime; la opción de Node controla el espacio antiguo de V8. Tenga en cuenta por separado las asignaciones nativas y los procesos worker múltiples.
 
 </details>
 
-### 8. Para workers de Python Gunicorn en containers, ¿cuál es la fórmula recomendada para el número de workers?
+## 8. ¿Cómo se deben elegir los números de workers de Gunicorn/Tokio?
 
-- A) 2 * CPU_CORES + 1
-- B) Basada en el CPU limit del container, no en los cores del host
-- C) Usar siempre 1 worker
-- D) Usar 100 workers para el máximo throughput
+- A) Basta con usar un múltiplo fijo del número de CPU del host
+- B) Verifique los ajustes reales y pruebe el comportamiento de la cuota, la memoria y la carga de trabajo
+- C) Rust no necesita límites de concurrencia porque no tiene GC
+- D) La cantidad de threads/procesos no afecta la memoria
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Basada en el CPU limit del container, no en los cores del host**
+**Respuesta: B**
 
-**Explicación:**
-La fórmula clásica (2*cores+1) usa el número de CPU del host, lo que provoca sobreasignación en containers. El número de workers debe basarse en los CPU limits del container (por ejemplo, 2-4 workers por CPU limit) para evitar contención de recursos y problemas de OOM.
+La configuración debe leer realmente `WEB_CONCURRENCY`. `worker_threads` explícito de Tokio prevalece sobre la variable de entorno; el grupo de tareas bloqueantes es independiente.
 
 </details>
 
-### 9. ¿Qué le sucede a un container que supera su memory limit?
+## 9. ¿Cómo se deben interpretar las métricas de motivo OOM y de fase Pending?
 
-- A) Se le aplica CPU throttling
-- B) El kernel lo finaliza por OOM
-- C) Escala horizontalmente de forma automática
-- D) Toma memoria prestada de otros containers
+- A) Sume la métrica de motivo para obtener un conteo exacto de OOM
+- B) Cuente todas las series Pending para obtener el total Pending actual
+- C) Evalúe los valores 0/1 y conserve en la interpretación la limitación de último estado de las métricas de motivo
+- D) Pending siempre significa que falta CPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El kernel lo finaliza por OOM**
+**Respuesta: C**
 
-**Explicación:**
-A diferencia de la CPU (a la que se le aplica throttling), los memory limits se aplican de forma estricta. Cuando un container supera su memory limit, el OOM killer de Linux termina procesos en el container. Luego Kubernetes reinicia el container según su restart policy.
+Existen series Pending con valor cero. Combinar reinicios recientes con el último motivo OOM no reconstruye todos los OOM del intervalo.
 
 </details>
 
-### 10. ¿Cuál es el propósito del componente VPA Recommender?
+## 10. ¿Qué afirmación sobre el empaquetado compacto y los Pods marcadores de EKS Auto Mode es correcta?
 
-- A) Reiniciar pods con nuevos recursos
-- B) Analizar el uso de recursos y generar recomendaciones de recursos
-- C) Gestionar el escalado de nodes
-- D) Validar configuraciones de recursos
+- A) Una instancia de 4 vCPU siempre admite cuatro CPU de solicitudes de aplicaciones
+- B) Un Pod marcador es una reserva de capacidad de EC2
+- C) Tenga en cuenta los recursos asignables, la sobrecarga y las restricciones de programación; los Pods marcadores no garantizan capacidad
+- D) `preemptionPolicy: Never` impide que se pueda desalojar el Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Analizar el uso de recursos y generar recomendaciones de recursos**
+**Respuesta: C**
 
-**Explicación:**
-El VPA Recommender observa el uso real de recursos de los containers a lo largo del tiempo y genera recomendaciones para requests y limits. Considera patrones de uso de CPU y memoria, picos y variación para sugerir valores adecuados.
+`Never` impide que este Pod desaloje otros. NodePool usa `karpenter.sh/v1`; el grupo de NodeClass de Auto Mode es `eks.amazonaws.com`.
 
 </details>

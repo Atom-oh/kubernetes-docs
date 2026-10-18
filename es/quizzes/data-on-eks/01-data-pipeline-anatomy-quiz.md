@@ -1,6 +1,6 @@
 # Cuestionario sobre la anatomía de una canalización de datos moderna
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 1. ¿Qué debe comprobarse antes de volver a procesar offsets de Kafka?
    - A) Si los registros necesarios siguen disponibles tras la retención/compactación
@@ -43,7 +43,7 @@ Mover datos depurados a un data warehouse no convierte por sí solo el proceso e
 
 **Respuesta: C) Depende de los datos tardíos, los duplicados, el estado y los contratos de salida; los resultados provisionales rápidos pueden ir seguidos de una finalización**
 
-Diseñe el tiempo de evento, los watermarks, la latencia permitida y la semántica del sink. Spark y Flink no se limitan cada uno a un solo modo de procesamiento.
+Diseñe el tiempo de evento, los watermarks, el retraso permitido y la semántica del sink. Spark y Flink no se limitan cada uno a un solo modo de procesamiento.
 
 </details>
 

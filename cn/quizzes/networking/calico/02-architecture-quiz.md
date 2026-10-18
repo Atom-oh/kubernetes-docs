@@ -1,39 +1,39 @@
 # Calico 架构测验
 
-> **相关文档**: [Calico 架构](../../../networking/calico/02-architecture.md)
-> **最后更新**: February 22, 2026
+> **相关文档**：[Calico 架构](../../../networking/calico/02-architecture.md)
+> **最后更新**：2026 年 9 月 12 日
 
 ## 测验
 
-1. Felix 在 Calico 架构中的主要职责是什么？
-   - A) BGP 路由分发
-   - B) 在每个节点上执行策略强制实施和接口管理
+1. Felix 在 Calico 架构中的主要作用是什么？
+   - A) 分发 BGP 路由
+   - B) 在每个节点上执行策略并管理网络接口
    - C) 聚合数据存储连接
    - D) 处理配置模板
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在每个节点上执行策略强制实施和接口管理**
+**答案：B) 在每个节点上执行策略并管理网络接口**
 
-**说明：**
-Felix 是在 Calico 集群中每个节点上运行的核心代理。其主要职责包括接口管理（创建 Pod veth 对）、路由表编程、iptables/eBPF 规则管理以及网络策略强制实施。Felix 确保数据平面得到正确配置，以实施所需的网络策略。
+**说明**：
+Felix 会协调 endpoint 接口设置、适用路由和内核策略。在完整的 Calico Linux 网络中，容器运行时会调用 CNI/IPAM 链来分配地址并创建 Pod veth 接口。Felix 不会直接通过 CNI ADD 调用，也不负责分配 Pod IP。
 
 </details>
 
-2. BIRD 的全称是什么，它在 Calico 中的作用是什么？
-   - A) Basic Internet Routing Daemon - 处理 DNS 解析
-   - B) BIRD Internet Routing Daemon - 处理 BGP 路由
-   - C) Binary Internet Relay Daemon - 处理数据包转发
-   - D) Bridge Internet Routing Device - 处理 VXLAN 隧道
+2. BIRD 的全称是什么？它在 Calico 中发挥什么作用？
+   - A) Basic Internet Routing Daemon，负责 DNS 解析
+   - B) BIRD Internet Routing Daemon，负责 BGP 路由
+   - C) Binary Internet Relay Daemon，负责数据包转发
+   - D) Bridge Internet Routing Device，负责 VXLAN 隧道
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) BIRD Internet Routing Daemon - 处理 BGP 路由**
+**答案：B) BIRD Internet Routing Daemon，负责 BGP 路由**
 
-**说明：**
-BIRD（BIRD Internet Routing Daemon）是 Calico 中的 BGP 代理，负责管理 BGP 对等连接、在节点之间交换和传播路由，并可选择作为 Route Reflector 运行。BIRD 使 Calico 能够使用原生 BGP 功能进行无需封装的直接路由。
+**说明**：
+启用相应后端时，BIRD 会管理 BGP 会话和路由交换。它可以充当 route reflector，并通过自身的 kernel 协议与内核同步路由。BGP 可以与封装同时使用；仅启用 BGP 并不保证流量不经封装转发。工作负载数据包不会经过 BIRD 进程。
 
 </details>
 
@@ -48,24 +48,24 @@ BIRD（BIRD Internet Routing Daemon）是 Calico 中的 BGP 代理，负责管�
 
 **答案：B) 动态生成 BIRD 配置文件**
 
-**说明：**
-confd 负责根据模板动态生成 BIRD 配置文件。它会监控 Calico 数据存储中 BGP 配置、节点信息和对等设置的变更，然后自动更新 BIRD 的配置以反映这些变更，无需手动干预。
+**说明**：
+confd 会监视相关数据存储状态，并根据已安装的 BIRD 模板生成配置。它会检查生成结果，并调用配置的重新加载命令。生成的文件并非持久配置来源；应修改 BGP API 资源，而不是直接编辑生成的 bird.cfg。
 
 </details>
 
-4. 何时应在 Calico 集群中部署 Typha？
-   - A) 无论集群规模如何，始终部署
-   - B) 仅适用于超过 50 个节点的集群
-   - C) 仅在使用 eBPF 模式时
-   - D) 仅适用于多集群部署
+4. 关于部署 Typha，哪种说法正确？
+   - A) 无论集群规模如何，都必须部署
+   - B) Operator 安装即使在少于 50 个节点时也可能部署 Typha；应依据所安装版本的扩缩容逻辑和实际工作负载需求
+   - C) 仅在使用 eBPF 模式时部署
+   - D) 仅在多集群部署时部署
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 仅适用于超过 50 个节点的集群**
+**答案：B) Operator 安装即使在少于 50 个节点时也可能部署 Typha；应依据所安装版本的扩缩容逻辑和实际工作负载需求**
 
-**说明：**
-建议在具有 50 个或更多节点的集群中使用 Typha。如果没有 Typha，每个 Felix 实例都会直接连接到数据存储，这可能会使大型集群中的 API server 不堪重负。Typha 会聚合数据存储连接，并向 Felix 实例提供缓存数据，从而显著降低 API server 的负载。
+**说明**：
+Typha 可减少向 Felix 扇出数据存储更新时的直接连接。它并非仅在节点数超过 50 时才普遍必需，也不是每种非 Operator 安装都必需。Operator 1.42.6 也会为小型集群扩缩 Typha；它依据计入扩缩容的节点数进行计算，并检查 Linux 节点的放置容量。
 
 </details>
 
@@ -80,44 +80,44 @@ confd 负责根据模板动态生成 BIRD 配置文件。它会监控 Calico 数
 
 **答案：B) etcd 和 Kubernetes API**
 
-**说明：**
-Calico 支持两种数据存储选项：专用 etcd 集群或 Kubernetes API（使用 CRDs）。对于大多数部署，建议使用 Kubernetes API 数据存储，因为它通过利用现有 Kubernetes 基础设施简化了运维。etcd 数据存储用于非 Kubernetes 部署，或在需要特定 etcd 功能时使用。
+**说明**：
+Calico 支持 Kubernetes API 和直接连接 etcdv3 两种数据存储路径，但各自受功能和安装方式限制。Kubernetes API 路径仍使用 Kubernetes 后端存储，无需单独部署 Calico etcd 集群。直接使用 etcd 则需要自行设计 TLS、凭证、高可用性和备份；节点数量本身并不是切换到 etcd 的理由。
 
 </details>
 
-6. kube-controllers 包含哪些控制器？
+6. Operator 1.42.6 为标准 Open Source kube-controllers 部署选择哪些 controller？
    - A) 仅 Policy Controller
-   - B) Policy、Namespace、ServiceAccount、WorkloadEndpoint 和 Node Controllers
-   - C) 仅 Node 和 Policy Controllers
+   - B) node 和 loadbalancer
+   - C) 仅 Node 和 Policy Controller
    - D) 仅 WorkloadEndpoint Controller
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Policy、Namespace、ServiceAccount、WorkloadEndpoint 和 Node Controllers**
+**答案：B) node 和 loadbalancer**
 
-**说明：**
-kube-controllers 包含多个在 Kubernetes 和 Calico 数据存储之间进行同步的控制器：Policy Controller（NetworkPolicy 同步）、Namespace Controller（命名空间配置文件管理）、ServiceAccount Controller（服务账户同步）、WorkloadEndpoint Controller（端点清理）和 Node Controller（节点信息同步）。
+**说明**：
+固定版本的 Operator renderer 会为其常规 Open Source 部署启动 node 和 loadbalancer。Policy、namespace、serviceaccount 和 workloadendpoint controller 也存在，适用于相应的数据存储和配置路径，但不一定都会启用。ServiceAccount profile 不会授予 Kubernetes RBAC 权限。
 
 </details>
 
-7. 在大型集群中计算 Typha 副本数的推荐公式是什么？
+7. 对于 500 个计入扩缩容的节点，Operator 1.42.6 的扩缩容函数会返回多少个期望 Typha 副本？
    - A) 每 50 个节点 1 个副本
-   - B) 节点数量除以 200，最少 3 个
+   - B) 4 个副本，计算方式为 floor(500 / 200) + 2
    - C) 固定为 5 个副本
    - D) 每 100 个节点 1 个副本，最少 1 个
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 节点数量除以 200，最少 3 个**
+**答案：B) 4 个副本，计算方式为 floor(500 / 200) + 2**
 
-**说明：**
-Typha 副本数的推荐公式为：节点数量 / 200，且为实现高可用性至少需要 3 个副本。例如，一个包含 500 个节点的集群至少需要 3 个副本（500/200 = 2.5，向上取整后最少为 3 个），而一个包含 1000 个节点的集群则需要 5 个副本。
+**说明**：
+当计入扩缩容的节点数大于 4 时，此版本使用 max(3, floor(N / 200) + 2) 计算副本数，因此 500 个节点得到 4 个副本。1 或 2 个节点时为 1 个；3 或 4 个节点时为 2 个。1,000 个节点时结果为 7 个。扩缩容计算会排除不可调度节点和 AKS 虚拟节点，并检查可用 Linux 节点；这个结果不代表吞吐量保证。
 
 </details>
 
-8. 在 Calico 的数据包流中，哪个组件负责在节点上编写路由表？
+8. Calico 的哪个 agent 会协调本地工作负载路由和内核策略状态？
    - A) BIRD
    - B) confd
    - C) Felix
@@ -128,8 +128,8 @@ Typha 副本数的推荐公式为：节点数量 / 200，且为实现高可用�
 
 **答案：C) Felix**
 
-**说明：**
-Felix 负责在每个节点上编写路由表。尽管 BIRD 负责节点之间的 BGP 路由交换，Felix 会获取路由信息并将其编写到 Linux 内核的路由表中。Felix 还管理用于策略强制实施的 iptables/eBPF 规则。
+**说明**：
+Felix 负责协调本地工作负载路由和策略。这不表示只有 Felix 会操作路由：CNI 会创建初始接口和路由，BIRD 的 kernel 协议也可以安装通过 BGP 学到的路由。confd 生成 BIRD 配置；Typha 则分发缓存的状态。
 
 </details>
 
@@ -144,12 +144,12 @@ Felix 负责在每个节点上编写路由表。尽管 BIRD 负责节点之间�
 
 **答案：B) 5473**
 
-**说明：**
-Typha 在端口 5473（calico-typha）上监听来自 Felix 实例的连接。这是在 Typha 部署中配置的默认端口，用于接收集群中每个节点上运行的 calico-node Pod 的连接。
+**说明**：
+TCP 5473 是 Typha 默认的同步监听端口，供 Felix 等客户端连接。该端口与 metrics 和 health 端口分开，也不是代理应用流量的端口。Operator 还会配置 TLS 信任和客户端身份。
 
 </details>
 
-10. 哪项 FelixConfiguration 设置可启用 eBPF 模式？
+10. 哪个 FelixConfiguration 设置可以启用 eBPF 模式？
     - A) ebpfEnabled: true
     - B) bpfEnabled: true
     - C) dataplaneMode: ebpf
@@ -160,28 +160,28 @@ Typha 在端口 5473（calico-typha）上监听来自 Felix 实例的连接。�
 
 **答案：B) bpfEnabled: true**
 
-**说明：**
-要在 Calico 中启用 eBPF 模式，需要在 FelixConfiguration 资源中设置 `bpfEnabled: true`。这会将数据平面从 iptables 切换到 eBPF，提升性能，并启用 Direct Server Return (DSR) 和 kube-proxy 替代等功能。
+**说明**：
+bpfEnabled 是有效的底层 FelixConfiguration 字段。对于由 Operator 管理的安装，请使用受支持的 Installation linuxDataplane 设置，并协调 kube-proxy 与 API 可达性。只更改一个布尔值并不等于完成经过验证的迁移，也不能保证所有 eBPF 功能都可用。
 
 </details>
 
-11. 当大型集群中未部署 Typha 时，Felix 实例会发生什么？
+11. 大型集群未部署 Typha 时，Felix 实例会怎样？
     - A) Felix 实例无法启动
-    - B) 每个 Felix 都会直接连接到数据存储，可能使 API server 不堪重负
-    - C) 不会强制实施网络策略
-    - D) BGP 对等连接失败
+    - B) 每个 Felix 都直接连接数据存储，可能使 API server 不堪重负
+    - C) 网络策略不会执行
+    - D) BGP 对等连接会失败
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 每个 Felix 都会直接连接到数据存储，可能使 API server 不堪重负**
+**答案：B) 每个 Felix 都直接连接数据存储，可能使 API server 不堪重负**
 
-**说明：**
-如果没有 Typha，每个节点上的每个 Felix 实例都会与数据存储（Kubernetes API server）保持自己的连接。在拥有数百个节点的大型集群中，这可能会因 watch 连接和数据传输而使 API server 不堪重负。Typha 通过聚合连接和缓存数据来解决此问题。
+**说明**：
+随着节点数和更新量增加，直接建立 watch 连接会增加数据存储/API 的负载。这是容量问题，并不表示没有 Typha 就一定无法执行策略或运行 BGP。即使部署了 Typha，其他组件仍会访问 Kubernetes API。
 
 </details>
 
-12. Felix 默认使用的健康检查端口是什么？
+12. Felix 默认使用哪个健康检查端口？
     - A) 8080
     - B) 9091
     - C) 9099
@@ -192,11 +192,11 @@ Typha 在端口 5473（calico-typha）上监听来自 Felix 实例的连接。�
 
 **答案：C) 9099**
 
-**说明：**
-默认情况下，当在 FelixConfiguration 中设置 `healthEnabled: true` 时，Felix 的健康检查端点会监听端口 9099。Kubernetes 存活探针和就绪探针使用此端口来验证 Felix 是否在每个节点上正确运行。
+**说明**：
+启用 health serving 时，Felix 的默认 health 端口为 9099，默认绑定地址为 localhost。探针和网络设置必须与实际部署一致；在管理员笔记本电脑上请求 localhost 并不能检查节点。常用 metrics 端口为 9091。
 
 </details>
 
 ---
 
-[返回学习材料](../../../networking/calico/02-architecture.md) | [上一份测验：简介](./01-introduction-quiz.md) | [下一份测验：网络模式](./03-networking-modes-quiz.md)
+[学习材料](../../../networking/calico/02-architecture.md) | [上一份测验](01-introduction-quiz.md) | [下一份测验](03-networking-modes-quiz.md)

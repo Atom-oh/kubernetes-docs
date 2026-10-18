@@ -1,6 +1,6 @@
 # Cuestionario sobre fundamentos de redes, parte 4: el recorrido y la nube
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 Compruebe su comprensión del recorrido completo de una solicitud y de su correspondencia con la nube y Kubernetes.
 

@@ -3,7 +3,7 @@
 Apache Flink は、有界および無界の stream を処理する、状態を持つ分散エンジンです。
 JobManager は実行と recovery を調整し、TaskManager は operator task を実行してデータを交換します。Checkpoint の一貫性と、外部 sink での exactly-once 動作には、それぞれ別の要件があります。第3章では source、state、sink を合わせて説明します。
 
-> **最終更新日**: September 12, 2026
+> **最終更新日**: 2026年9月12日
 > 統合の基準: **Flink 2.2.1 / Java 17 / Operator 1.15.0**。
 
 第3章の Iceberg の例では、runtime との整合性を取るため、別途 **Flink 2.1.3 / Iceberg 1.11.0** を使用します。

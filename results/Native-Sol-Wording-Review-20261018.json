@@ -299,6 +299,96 @@
         }
       ],
       "unresolvedFindings": []
+    },
+    {
+      "targetPath": "cn/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+      "sourcePath": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+      "sourceBlob": "b0013c58c9de8763b739282f052c242ea7dc9a23",
+      "sourceSha256": "35e59d390af0c582c1216acaf05b1f3c338da91aa4085da14ce3e1f7c647ab6b",
+      "beforeTargetSha256": "c3cefe780a66d8aba44788f39927b99d2e3d1ab4798806cac6182fb93fe42b25",
+      "beforeSnapshot": "/tmp/native-sol-cn-wording-before-c3cefe780a66d8aba44788f39927b99d2e3d1ab4798806cac6182fb93fe42b25.md",
+      "targetSha256": "1674756fdce41d63ee852b018c77f8a9566e87a09fa6140d58cedeab7afa0646",
+      "currentTargetSha256": "1674756fdce41d63ee852b018c77f8a9566e87a09fa6140d58cedeab7afa0646",
+      "afterTargetSha256": "1674756fdce41d63ee852b018c77f8a9566e87a09fa6140d58cedeab7afa0646",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/1674756fdce41d63ee852b018c77f8a9566e87a09fa6140d58cedeab7afa0646.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100 qualitative native source/target review; qualityScore is the lower of fidelity/readability, not a structural-check proxy",
+      "findings": [
+        {
+          "sourceQuote": "Governance is this experiment's chosen procedure; 3.3B active does not represent total model memory",
+          "beforeQuote": "治理流程是本实验选择的程序；3.3B 激活参数不代表模型的总内存需求",
+          "afterQuote": "治理流程由本实验选定；3.3B 激活参数不代表模型的总内存需求",
+          "finding": "The repeated 流程/程序 phrasing was stilted and could read like governance was executable code.",
+          "resolution": "Expressed the experiment-selected governance procedure directly as 治理流程由本实验选定. The 3.3B clause and correct answer B remain unchanged."
+        }
+      ],
+      "resolvedFindings": 1,
+      "unresolvedFindings": [],
+      "fullPageRationale": "Read and compared every question, all twenty options, five disclosed answers/explanations and the learning-material link against the complete English source. Verified the TSV/code/missed-detection distinction; target-design versus 2026-09-01 validation limits; reproducibility prerequisites; private logging disclosures; selected governance procedure and 30.5B total/3.3B active model distinction. The one stilted wording issue was resolved. No facts, versions, options, answer letters or technical terms were added or omitted.",
+      "validation": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+          "cn/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md"
+        ],
+        "exitCode": 0,
+        "headingsUnchanged": true,
+        "codeBlocksUnchanged": true,
+        "linkTargetsUnchanged": true,
+        "numericTokensUnchanged": true,
+        "correctAnswersUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:01:48.377953+00:00"
+    },
+    {
+      "targetPath": "cn/quizzes/governance/02-account-and-iam-quiz.md",
+      "sourcePath": "en/quizzes/governance/02-account-and-iam-quiz.md",
+      "sourceBlob": "3bb7c06fde5adf9c3b929a8c44d7b5ea43f5054e",
+      "sourceSha256": "979ab2bd08634d9a4ac5768ffcd6694eca7a969ac833d1acf2a709aafc3c3386",
+      "beforeTargetSha256": "595b2cbebcb124da0ef505b93077526b11b677d71f9da0fbfb2a4ce201353795",
+      "beforeSnapshot": "/tmp/native-sol-cn-wording-before-595b2cbebcb124da0ef505b93077526b11b677d71f9da0fbfb2a4ce201353795.md",
+      "targetSha256": "733d999341abef6b78558b527b9d0bbd27020fec94f77ce3d538a3bfb642a008",
+      "currentTargetSha256": "733d999341abef6b78558b527b9d0bbd27020fec94f77ce3d538a3bfb642a008",
+      "afterTargetSha256": "733d999341abef6b78558b527b9d0bbd27020fec94f77ce3d538a3bfb642a008",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/733d999341abef6b78558b527b9d0bbd27020fec94f77ce3d538a3bfb642a008.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100 qualitative native source/target review; qualityScore is the lower of fidelity/readability, not a structural-check proxy",
+      "findings": [
+        {
+          "sourceQuote": "What matters when planning a carve-out of an Account using Shared VPC?",
+          "beforeQuote": "规划从使用 Shared VPC 的 Account 中拆分出来时，哪些事项很重要？",
+          "afterQuote": "计划将使用 Shared VPC 的 Account 剥离出去时，应关注哪些事项？",
+          "finding": "从…Account 中拆分出来 made the unspecified actor something removed from within the Account, whereas English makes the Account itself the carve-out object.",
+          "resolution": "Made Account the explicit object of 将…Account 剥离出去. Shared VPC, same-Organization migration/exit context, option B and all answer explanations remain unchanged."
+        }
+      ],
+      "resolvedFindings": 1,
+      "unresolvedFindings": [],
+      "fullPageRationale": "Read and compared every question, all sixteen options, four disclosed answers/explanations and the source-material link against the complete English source. Verified the 100-group permission-set/Account scope; Shared VPC same-Organization requirement and post-unsharing creation/replacement limitations; existing-resource continuity and preparation before exit; role/resource-policy/IRSA choices; primary Pod Identity role Account scope; and additive Access Policies/RBAC grants. The Account carve-out actor drift was resolved. No option, correct answer or explanation changed.",
+      "validation": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/governance/02-account-and-iam-quiz.md",
+          "cn/quizzes/governance/02-account-and-iam-quiz.md"
+        ],
+        "exitCode": 0,
+        "headingsUnchanged": true,
+        "codeBlocksUnchanged": true,
+        "linkTargetsUnchanged": true,
+        "numericTokensUnchanged": true,
+        "correctAnswersUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:01:48.377953+00:00"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -375,5 +465,27 @@
   "japaneseRestoredNavigationEntriesReviewed": 23,
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
-  "snapshotScope": "These exact reviewed target bytes before subsequent deterministic anchor-only normalization; final multilingual review must validate final hashes separately."
+  "snapshotScope": "Five genuine complete-page reviews. These do not certify the remaining multilingual pages; current target hashes are verified independently.",
+  "additionalReviewBatches": [
+    {
+      "reviewedAt": "2026-10-18T10:01:48.377953+00:00",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "scope": [
+        "cn/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+        "cn/quizzes/governance/02-account-and-iam-quiz.md"
+      ],
+      "changes": "Exactly one minimal prose-line correction in each authorized file.",
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+          "cn/quizzes/governance/02-account-and-iam-quiz.md"
+        ],
+        "exitCode": 0
+      }
+    }
+  ]
 }

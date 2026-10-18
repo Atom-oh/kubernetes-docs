@@ -147,12 +147,15 @@ export async function syncTranslatedAnchors(root, { locales = ['cn', 'jp', 'es']
   const inventory = canonicalAnchorRequirements(root, renderer)
   const changed = [], failures = []
   for (const locale of locales) {
-    for (const [source, required] of inventory.required) {
+    // Every translated page must preserve the English heading hierarchy,
+    // including pages that have no authored fragment links or explicit IDs.
+    for (const [source, sourceDocument] of inventory.documents) {
+      const required = inventory.required.get(source) ?? new Set()
       const target = path.join(root, locale, path.relative(path.join(root, 'en'), source))
       if (!fs.existsSync(target)) continue // The separate coverage gate handles missing pages.
       const markdown = fs.readFileSync(target, 'utf8')
       try {
-        const result = repairTranslatedAnchors(inventory.documents.get(source), required, markdown, renderer,
+        const result = repairTranslatedAnchors(sourceDocument, required, markdown, renderer,
           path.relative(root, target))
         if (result.markdown === markdown) continue
         if (apply) {

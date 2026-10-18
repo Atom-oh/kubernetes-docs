@@ -18,19 +18,19 @@ ArgoCD には、アプリケーションを管理するための機能豊富な�
 
 </details>
 
-2. デプロイソースとして OCI artifacts をネイティブでより適切にサポートしているツールはどれですか？
-   - A) ArgoCD
-   - B) FluxCD
-   - C) 両方とも同等にサポートしている
-   - D) どちらも OCI をサポートしていない
+2. OCI ベースのデプロイソースの現在のサポートについて、正しい説明はどれですか？
+   - A) ArgoCD だけが OCI をサポートする
+   - B) FluxCD だけが OCI をサポートする
+   - C) 両方ともサポートするが、ソース、レイヤー、検証の設定が異なる
+   - D) どちらも OCI をサポートしない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) FluxCD**
+**回答: C) 両方ともサポートするが、ソース、レイヤー、検証の設定が異なる**
 
 **解説:**
-FluxCD は OCIRepository ソースタイプを通じて OCI artifacts をファーストクラスでサポートしており、OCI 準拠のレジストリから保存およびデプロイできます。ArgoCD の OCI サポートは Helm charts に限定されています。
+FluxCD は `OCIRepository` source type を通じて OCI artifact を第一級の機能としてサポートしています。現在の Argo CD も、一般的な OCI Application source をサポートしています。バージョン、media type、認証、検証要件を比較してください。
 
 </details>
 
@@ -46,7 +46,7 @@ FluxCD は OCIRepository ソースタイプを通じて OCI artifacts をファ�
 **回答: B) FluxCD (ネイティブ)**
 
 **解説:**
-FluxCD には Image Reflector および Image Automation controllers による組み込みの Image Automation があります。ArgoCD では、同様の機能のために別プロジェクトである Argo Image Updater が必要です。
+FluxCD には Image Reflector と Image Automation controller がありますが、これらはオプションであり、デフォルトの bootstrap で常にインストールされるわけではありません。Argo CD で同様の機能を使うには、別プロジェクトの Argo Image Updater が必要です。
 
 </details>
 
@@ -78,6 +78,6 @@ ArgoCD は、チームが Web UI による視覚的なフィードバック、�
 **回答: B) はい、互いを補完できます**
 
 **解説:**
-ArgoCD と FluxCD は併用できます。一般的なパターンは、インフラストラクチャ管理と image automation には FluxCD を使用し、UI を備えたアプリケーションのデプロイには ArgoCD を使用することです。
+ArgoCD と FluxCD は、管理するリソースを分ければ併用できます。同じオブジェクトを両方に reconcile または prune させないでください。一般的なパターンは、インフラストラクチャ管理と image automation に FluxCD を使い、UI を備えたアプリケーションのデプロイに ArgoCD を使う方法です。
 
 </details>

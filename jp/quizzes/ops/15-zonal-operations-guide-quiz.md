@@ -4,104 +4,98 @@
 
 ## 選択式問題
 
-### 1. Amazon EKS のネイティブ Kubernetes バージョンロールバック（2026年7月に GA）の対象期間はどれですか？
+### 1. EKS の7日間のネイティブロールバック期間は何を意味しますか？
 
-- A) 24時間
-- B) 7日間
-- C) 30日間
-- D) 無制限
+- A) ロールバックの実行にかけられる時間
+- B) アップグレード完了後にロールバックを開始できる期限
+- C) ノードの最大稼働期間
+- D) アドオンが自動的に復元される期間
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 7日間**
+**回答: B) アップグレード完了後にロールバックを開始できる期限**
 
-**解説:**
-EKS のネイティブロールバックでは、アップグレードから7日以内であれば、一度に1つのマイナーバージョンを戻せます。対象バージョンで作成されたクラスター、7日を超過したクラスター、またはすでに再アップグレードされたクラスターは対象外です。
+直前のマイナーバージョンへのロールバックを開始できる期間です。クラスターの作成時のバージョン、サポート状況、その後のアップグレード、互換性も影響します。Auto Mode では最初にノードがロールバックされますが、アドオン、アプリケーション、データの変更は自動的には復元されません。
 
 </details>
 
-### 2. Zonal In-Place アップグレード中にゾーンからトラフィックを退避させるには、どの仕組みを使用しますか？
+### 2. NLB ターゲットグループの重みを0にした後、何を確認する必要がありますか？
 
-- A) `kubectl drain`
-- B) Target Group の重みを調整する
-- C) DNS TTL の期限切れを待つ
-- D) クラスターを再作成する
+- A) 既存の接続がすべて直ちに終了すること
+- B) TargetGroupBinding が別のクラスターへ移動すること
+- C) 新規フローの減少と既存フローのドレインを別々に確認すること
+- D) ARC が他のすべてのクラスターの重みを自動的に書き換えること
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Target Group の重みを調整する**
+**回答: C) 新規フローの減少と既存フローのドレインを別々に確認すること**
 
-**解説:**
-クラスター内の何かに手を加える代わりに、TargetGroupBinding を通じて関連付けられた Target Group の重みを調整し、特定のゾーンへのトラフィックを削減または停止します。AZ 障害のような計画外の状況では、ARC Zonal Shift がこの役割を自動的に実行します。
+通常、重みの変更が影響するのは新しいフローですが、現在の NLB ガイドによると、重みを0にすると短時間後に既存の接続も閉じられます。自然なドレインだけを前提にせず、再接続とリトライの動作をテストしてください。ノードを変更する前に NewFlowCount、ActiveFlowCount、エラーを確認します。TGB に重みのフィールドはなく、EKS の Zonal Shift がクラスター間の重みを自動的に変更することもありません。
 
 </details>
 
-### 3. KIP-392（Follower Fetching）を有効化するために、Kafka broker に設定する必要があるものはどれですか？
+### 3. Kafka KIP-392 を正しく構成する組み合わせはどれですか？
 
-- A) `auto.leader.rebalance.enable=true`
-- B) `replica.selector.class=RackAwareReplicaSelector`
-- C) `unclean.leader.election.enable=true`
-- D) `min.insync.replicas=2`
+- A) `broker.rack` だけで、すべての consumer が自動的に構成される
+- B) RackAwareReplicaSelector、`broker.rack`、一致する consumer の `client.rack`
+- C) `unclean.leader.election.enable=true` だけ
+- D) AZ 名と AZ ID の文字列は相互に置き換えられる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `replica.selector.class=RackAwareReplicaSelector`**
+**回答: B) RackAwareReplicaSelector、`broker.rack`、一致する consumer の `client.rack`**
 
-**解説:**
-Broker では `replica.selector.class` を `RackAwareReplicaSelector` に設定し、`broker.rack`（AZ ID）を割り当てる必要があります。consumer 側では、同じ rack の follower に fetch がリダイレクトされるよう、`client.rack` プロパティを consumer 自身の AZ ID に設定する必要があります。
+`replica.selector.class` の完全な値は `org.apache.kafka.common.replica.RackAwareReplicaSelector` です。Strimzi の Kafka CR は broker を構成しますが、通常のアプリケーション consumer は別途構成する必要があります。適切なローカル replica がない場合、選択先は leader にフォールバックします。
 
 </details>
 
-### 4. 読み取りが99%を超えるワークロードに推奨される Valkey GLIDE の `ReadFrom` 戦略はどれですか？
+### 4. GLIDE の `AZ_AFFINITY_REPLICAS_AND_PRIMARY` の優先順位はどれですか？
 
-- A) `PRIMARY`
-- B) `PREFER_REPLICA`
-- C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`
-- D) ランダム分散
+- A) Primary のみ
+- B) ローカル replica → ローカル primary → 他の AZ の replica または primary
+- C) リモート replica のみ
+- D) ローカルノードがなければ常にエラー
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`**
+**回答: B) ローカル replica → ローカル primary → 他の AZ の replica または primary**
 
-**解説:**
-まず同じ AZ の replica を優先し、次に同じ AZ の primary へフォールバックし、他の AZ へアクセスするのは最後の手段です。読み取り主体のワークロードでは、コスト削減と可用性の推奨されるバランスを実現します。HotelTrader はこれを採用後、AZ 間転送コストを95%削減しました。
+サーバー側の AZ メタデータを `client_az` と一致させる必要があります。古い replica からの読み取りを許容できるか評価してください。読み取り割合だけでは判断できません。HotelTrader が報告した改善には、AZ を考慮したルーティングに加えてリクエストのバッチ処理も含まれています。
 
 </details>
 
-### 5. Amazon Aurora のデフォルトの reader endpoint について正しい記述はどれですか？
+### 5. Aurora のデフォルト reader endpoint について正しい説明はどれですか？
 
-- A) 同じ AZ の replica を自動的に優先する
-- B) AZ を認識しないラウンドロビン DNS である
-- C) 常に primary にルーティングする
-- D) AWS Advanced JDBC Wrapper なしでは使用できない
+- A) 各 SQL クエリを別々の replica に分散する
+- B) 同じ AZ の reader を保証する
+- C) 接続を分散し、replica がなければ writer を使用する場合がある
+- D) 接続には JDBC Wrapper が必須である
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) AZ を認識しないラウンドロビン DNS である**
+**回答: C) 接続を分散し、replica がなければ writer を使用する場合がある**
 
-**解説:**
-Aurora のデフォルトの reader endpoint には AZ affinity がありません。AZ ごとの custom endpoint または AWS Advanced JDBC Wrapper の `fastestResponse` 戦略で回避できますが、真の AZ affinity 自体は `aws-advanced-jdbc-wrapper` リポジトリで未解決の機能リクエストのままです。
+AZ が優先される保証はありません。AZ ごとの READER カスタムエンドポイントでは、メンバーシップとフォールバックの管理が必要です。JDBC の `fastestResponse` は応答時間を使う方式で、厳密な AZ 制約ではありません。機能リクエスト #1139 は2025年にクローズされました。
 
 </details>
 
-### 6. Pod が自身の AZ を判定する方法について、誤っている記述はどれですか？
+### 6. Pod の AZ を特定する方法について、誤っている説明はどれですか？
 
-- A) EC2 IMDS を介して直接調べられる
-- B) Kyverno の mutating policy により、node label を Pod annotation にコピーできる
-- C) Kubernetes Downward API は、デフォルトで node の zone label を Pod に注入する
-- D) Strimzi のような operator は、組み込み機能として rack-awareness を提供できる
+- A) 通常の Pod 作成時の admission 処理では、scheduler が選んだ node が常に分かる
+- B) AWS MSK の Kyverno 例は Pod と binding のリクエストを処理する
+- C) Downward API を使って `spec.nodeName` を初期化コンポーネントに渡せる
+- D) IMDS へのアクセス可否は環境とセキュリティ設定によって異なる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Kubernetes Downward API は、デフォルトで node の zone label を Pod に注入する**
+**回答: A) 通常の Pod 作成時の admission 処理では、scheduler が選んだ node が常に分かる**
 
-**解説:**
-Downward API は、node の `topology.kubernetes.io/zone` label を Pod に自動的には注入しません。そのため、他の方法、すなわち IMDS の直接参照、Kyverno ベースの admission 時の label コピー、または Strimzi のような operator の組み込みサポートが必要です。
+通常、Pod 作成時点では node はまだ選択されていません。binding 時の値注入、またはスケジューリング後の参照を使ってください。Downward API は node label を直接参照するものではなく、Strimzi が無関係なアプリケーション consumer を自動構成するわけでもありません。
 
 </details>

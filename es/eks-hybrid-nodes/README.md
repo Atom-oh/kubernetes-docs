@@ -1,9 +1,9 @@
 # Nodos híbridos de EKS
 
 > **Versiones compatibles**: Versiones actuales compatibles con EKS; ejemplos revisados para EKS 1.36 / nodeadm 1.0.20
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Amazon EKS Hybrid Nodes conecta nodos locales o de edge operados por el cliente a un plano de control de EKS administrado por AWS. Usted continúa operando los hosts, los sistemas operativos, la conectividad y las cargas de trabajo. Esta guía distingue las interfaces compatibles de las configuraciones de ejemplo; no demuestra que se haya probado una implementación de producción local en particular.
+Amazon EKS Hybrid Nodes conecta nodos locales o perimetrales operados por el cliente a un plano de control de EKS administrado por AWS. Usted continúa operando los hosts, los sistemas operativos, la conectividad y las cargas de trabajo. Esta guía distingue las interfaces compatibles de las configuraciones de ejemplo; no demuestra que se haya probado una implementación de producción local en particular.
 
 EKS 1.37 estuvo disponible el 1 de octubre de 2026. Los ejemplos de esta guía siguen revisados con EKS 1.36 y nodeadm 1.0.20.
 
@@ -25,7 +25,7 @@ Antes de elegir una versión, consulte el [calendario de versiones de EKS](https
 
 ## ¿Qué son los Hybrid Nodes?
 
-Los Hybrid Nodes pueden compartir un clúster con nodos de computación de AWS comunes. Registrar una máquina en la nube como nodo **híbrido** es diferente: AWS no admite infraestructura de nodos híbridos en las regiones de AWS, Local Zones, Outposts ni otras nubes, y el uso de EC2 sigue generando tarifas de Hybrid Nodes.
+Los Hybrid Nodes pueden compartir un clúster con nodos de cómputo estándar de AWS. Registrar una máquina en la nube como nodo **híbrido** es diferente: AWS no admite infraestructura de nodos híbridos en las regiones de AWS, Local Zones, Outposts ni otras nubes, y el uso de EC2 sigue generando tarifas de Hybrid Nodes.
 
 ![Diagrama de visión general de la red de nodos híbridos de EKS que se extiende desde el router y gateway locales hasta la ENI del plano de control en la VPC del clúster de AWS.](../.gitbook/assets/en-eks-hybrid-nodes-highlevel-0.png)
 
@@ -43,7 +43,7 @@ Para las revisiones de los equipos de seguridad, use la [guía de revisión de s
 
 ## Casos de uso y límites de datos
 
-Las GPU locales, los conjuntos de datos locales de gran tamaño, el procesamiento de edge y el hardware existente pueden ser motivos para usar Hybrid Nodes. Los requisitos de localidad de datos aún necesitan controles de aplicación, almacenamiento, egreso y registro. Los objetos de la API de Kubernetes y los metadatos del plano de control se administran en AWS; un selector de nodos por sí solo no establece la soberanía de los datos ni el cumplimiento normativo.
+Las GPU locales, los conjuntos de datos locales de gran tamaño, el procesamiento perimetral y el hardware existente pueden ser motivos para usar Hybrid Nodes. Los requisitos de localidad de datos aún necesitan controles de aplicación, almacenamiento, egreso y registro. Los objetos de la API de Kubernetes y los metadatos del plano de control se administran en AWS; un selector de nodos por sí solo no establece la soberanía de los datos ni el cumplimiento normativo.
 
 Use la etiqueta de computación híbrida real y una etiqueta de organización mantenida explícitamente para la colocación, en lugar de suponer que existe una zona de AWS denominada `on-premises`:
 
@@ -54,7 +54,7 @@ nodeSelector:
   example.com/data-location: on-premises
 ```
 
-Este fragmento no crea una etiqueta, una aplicación completa, un límite de seguridad ni una política de retención de datos. Valide la compatibilidad de la imagen/runtime y las rutas de datos reales.
+Este fragmento no crea una etiqueta, una aplicación completa, un límite de seguridad ni una política de retención de datos. Valide la compatibilidad de la imagen y el entorno de ejecución y las rutas de datos reales.
 
 ## Arquitectura y responsabilidad
 
@@ -89,7 +89,7 @@ Ambos proveedores necesitan acceso a puntos de enlace de servicios de AWS para r
 | Bootstrap | ID/código de activación y rol preparado que confía en SSM | PKI, certificado/clave por nodo, trust anchor, perfil y rol |
 | Nomenclatura | Nombre `mi-...` generado por SSM | Nombre de nodo personalizado vinculado a la identidad del certificado |
 | Duración de la sesión | Una hora fija, renovada por SSM | Una hora de forma predeterminada; duraciones de solicitud/perfil compatibles de 15 minutos a 12 horas, sujetas a la duración efectiva y al máximo del rol |
-| Desconexión | No se puede renovar; el retroceso de reintentos puede retrasar la reconexión después de la recuperación de la red | No se pueden obtener credenciales nuevas sin conexión; el proceso de credenciales las obtiene bajo demanda cuando vuelve la conectividad |
+| Desconexión | No se puede renovar; la espera entre reintentos puede retrasar la reconexión después de la recuperación de la red | No se pueden obtener credenciales nuevas sin conexión; el proceso de credenciales las obtiene bajo demanda cuando vuelve la conectividad |
 | Escala / costo | Sin cargo de registro de nodo de SSM ni de administración por nodo; el precio por uso de la característica es independiente | Revise las cuotas de IAM Roles Anywhere y los requisitos operativos de PKI |
 | Opción habitual | Sin PKI existente; registro más sencillo | PKI existente y ciclo de vida de certificados administrado |
 
@@ -101,7 +101,7 @@ El perfil de Roles Anywhere debe aceptar un nombre de sesión de rol personaliza
 
 1. Entrenamiento o inferencia de GPU local con un runtime y un plan de recuperación verificados.
 2. Procesamiento de datos local con rutas de metadatos/telemetría/egreso de AWS revisadas por separado.
-3. Aplicaciones de fábrica/edge con conectividad confiable y comportamiento de desconexión probado.
+3. Aplicaciones de fábrica y del perímetro con conectividad confiable y comportamiento de desconexión probado.
 4. Procesamiento de medios cerca de grandes conjuntos de datos existentes.
 
 ## Siguientes pasos

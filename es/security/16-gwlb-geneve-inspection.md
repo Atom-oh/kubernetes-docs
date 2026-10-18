@@ -1,26 +1,26 @@
-# GWLB and GENEVE: Symmetric Inspection Paths and Failure Validation
+# GWLB y GENEVE: rutas de inspección simétricas y validación de fallos
 
-> **Review basis**: Official AWS Gateway Load Balancer, PrivateLink, TGW and NAT documentation, RFC 8926 and vendor integration guides.
-> **Last Updated**: October 15, 2026
+> **Base de revisión**: documentación oficial de AWS sobre Gateway Load Balancer, PrivateLink, TGW y NAT, RFC 8926 y guías de integración de proveedores.
+> **Última actualización**: 15 de octubre de 2026
 
-GWLB distributes original IP flows to GENEVE-compatible security appliances. GWLBE is a route target in the consumer VPC; inspection policies reside in appliances. This guide follows [Palo Alto/Fortinet selection](./15-ngfw-paloalto-fortinet.md) with path, session and failure verification. Route tables and acceptance criteria are design examples, not complete IaC or deployed results. [S24] [S27]
+GWLB distribuye los flujos IP originales a dispositivos de seguridad compatibles con GENEVE. GWLBE es un destino de ruta en la VPC consumidora; las políticas de inspección residen en los dispositivos. Esta guía continúa la [selección de Palo Alto/Fortinet](./15-ngfw-paloalto-fortinet.md) con la verificación de rutas, sesiones y fallos. Las tablas de rutas y los criterios de aceptación son ejemplos de diseño, no IaC completo ni resultados de un despliegue. [S24] [S27]
 
-## 1. Components and responsibilities
+## 1. Componentes y responsabilidades
 
-| Component | Role | Check |
+| Componente | Función | Comprobación |
 |---|---|---|
-| GWLB | Deliver IP flows to targets | AZs, target groups, stickiness and failover |
-| GENEVE target group | Appliance registration, health and attributes | GENEVE port 6081 and supported IP/instance targets |
-| Appliance | Decapsulate, inspect and reencapsulate | Policies, sessions, licenses, metadata and MTU |
-| Endpoint service | Expose provider GWLB to consumer VPCs | Allowed principals, acceptance and ownership |
-| GWLBE | Zonal route target in the consumer VPC | Subnet, AZ, state and routes |
-| TGW appliance mode | One inspection-attachment ENI/AZ per flow, used for both directions | Effective setting on the inspection VPC attachment |
+| GWLB | Entrega flujos IP a los destinos | Zonas de disponibilidad, grupos de destino, persistencia y conmutación por error |
+| Grupo de destino GENEVE | Registro, estado y atributos de los dispositivos | Puerto GENEVE 6081 y destinos IP/de instancia compatibles |
+| Dispositivo | Desencapsula, inspecciona y vuelve a encapsular | Políticas, sesiones, licencias, metadatos y MTU |
+| Servicio de endpoints | Expone el GWLB del proveedor a las VPC consumidoras | Principales permitidos, aceptación y propiedad |
+| GWLBE | Destino de ruta zonal en la VPC consumidora | Subred, AZ, estado y rutas |
+| Modo de dispositivo de TGW | Una ENI del attachment de inspección por AZ para cada flujo, usada en ambas direcciones | Configuración efectiva del attachment de la VPC de inspección |
 
-Endpoint-service permissions/acceptance govern connection establishment, not application authorization or appliance policies. Compare physical zones across accounts using **AZ IDs**, not account-specific AZ names. Check [PrivateLink requirements][S27].
+Los permisos/aceptación del servicio de endpoints gobiernan el establecimiento de la conexión, no la autorización de aplicaciones ni las políticas del dispositivo. Compare las zonas físicas entre cuentas usando los **ID de AZ**, no los nombres de AZ específicos de cada cuenta. Consulte los [requisitos de PrivateLink][S27].
 
-GWLB does not receive an ALB-style security group. **GWLBE also does not support SGs.** ELB API security-group parameters apply to ALB/NLB, and endpoint SG parameters apply to interface endpoints. Review appliance/workload ENIs, NACLs, routes and policies. [S39] [S40]
+GWLB no recibe un grupo de seguridad como un ALB. **GWLBE tampoco admite grupos de seguridad.** Los parámetros de grupo de seguridad de las API de ELB se aplican a ALB/NLB, y los parámetros de grupo de seguridad de los endpoints se aplican a los endpoints de interfaz. Revise las ENI del dispositivo/carga de trabajo, las NACL, las rutas y las políticas. [S39] [S40]
 
-## 2. GENEVE is inspection transport, not encryption
+## 2. GENEVE es un transporte de inspección, no cifrado
 
 ```text
 Outer IP
@@ -29,13 +29,13 @@ Outer IP
           └─ Original encapsulated traffic
 ```
 
-RFC 8926 defines GENEVE headers, VNI, variable options and UDP transport. AWS GWLB uses TLV metadata with Option Class `0x0108`; appliances must process the TLV pairs, and GWLB uses that metadata to select the return GWLBE. Preserve the required metadata through supported integration. General GENEVE support alone does not establish GWLB compatibility. [S31] [S42] [S29]
+RFC 8926 define las cabeceras GENEVE, el VNI, las opciones de longitud variable y el transporte UDP. AWS GWLB usa metadatos TLV con la clase de opción `0x0108`; los dispositivos deben procesar los pares TLV y GWLB utiliza esos metadatos para seleccionar el GWLBE de retorno. Conserve los metadatos requeridos mediante la integración compatible. La compatibilidad general con GENEVE no demuestra por sí sola la compatibilidad con GWLB. [S31] [S42] [S29]
 
-GENEVE does not encrypt payloads like TLS/IPsec. Cilium overlay and GWLB encapsulation have different purposes and paths even when using the same port. TLS payload inspection needs appliance decryption or controls at the termination point. [S31] [S24]
+GENEVE no cifra las cargas útiles como TLS/IPsec. El overlay de Cilium y la encapsulación de GWLB tienen objetivos y rutas distintos, aunque usen el mismo puerto. Para inspeccionar cargas útiles TLS, el dispositivo necesita descifrarlas o se requieren controles en el punto de terminación. [S31] [S24]
 
-## 3. Logical zonal egress flow
+## 3. Flujo lógico de salida zonal
 
-This sequence shows **one direction** of central egress. Actual TGW, GWLBE, appliance and NAT paths are selected by AZ; responses must traverse a consistent inspection path for the session.
+Esta secuencia muestra **una dirección** de la salida centralizada. TGW, GWLBE, el dispositivo y NAT seleccionan las rutas reales según la AZ; las respuestas deben recorrer una ruta de inspección coherente para la sesión.
 
 ```mermaid
 sequenceDiagram
@@ -58,93 +58,93 @@ sequenceDiagram
     Note over N,P: Return routes must traverse inspection consistently
 ```
 
-TGW-attachment, endpoint and NAT subnet route tables serve different purposes. Pointing every subnet’s default route at GWLBE can loop inspected traffic back into inspection. Review AWS TGW inspection and NAT integration together. [S29] [S30]
+Las tablas de rutas de las subredes de attachment de TGW, endpoints y NAT tienen funciones distintas. Enviar la ruta predeterminada de todas las subredes a GWLBE puede devolver a inspección el tráfico que ya fue inspeccionado y crear un bucle. Revise conjuntamente la integración de inspección de TGW y NAT de AWS. [S29] [S30]
 
-## 4. Central inspection route review
+## 4. Revisión de rutas de inspección centralizada
 
-This is one pattern for central IPv4 egress and inter-VPC inspection. Review actual CIDRs, AZs, endpoint/attachment IDs, prefix precedence and existing routes. Consumer connectivity does not establish inspection in every direction.
+Este es un patrón de salida centralizada IPv4 e inspección entre VPC. Revise los CIDR, las AZ, los ID de endpoints/attachments, la precedencia de prefijos y las rutas existentes reales. La conectividad de las VPC consumidoras no demuestra que se inspeccionen todas las direcciones.
 
-| Location | Selected destination | Example next hop/purpose |
+| Ubicación | Destino seleccionado | Siguiente salto/finalidad de ejemplo |
 |---|---|---|
-| Spoke workload subnet | Other spoke CIDRs/external default | TGW |
-| TGW table associated with spokes | Inspected spoke/external traffic | Inspection VPC attachment |
-| Inspection VPC TGW-attachment subnet | Inspected destinations | GWLBE in the selected AZ |
-| GWLBE subnet | Spoke CIDRs | TGW |
-| GWLBE subnet | External `0.0.0.0/0` | NAT Gateway in that AZ |
-| NAT subnet | External `0.0.0.0/0` | Internet Gateway |
-| NAT subnet | Return spoke CIDRs | Inspection GWLBE |
-| TGW table associated with inspection attachment | Spoke CIDRs | Correct spoke attachment, not the inspection attachment again |
+| Subred de carga de trabajo del spoke | Otros CIDR de spokes/ruta externa predeterminada | TGW |
+| Tabla de TGW asociada a los spokes | Tráfico inspeccionado de spokes/externo | Attachment de la VPC de inspección |
+| Subred del attachment de TGW en la VPC de inspección | Destinos inspeccionados | GWLBE en la AZ seleccionada |
+| Subred de GWLBE | CIDR de spokes | TGW |
+| Subred de GWLBE | `0.0.0.0/0` externo | NAT Gateway en esa AZ |
+| Subred de NAT | `0.0.0.0/0` externo | Internet Gateway |
+| Subred de NAT | CIDR de spokes para el retorno | GWLBE de inspección |
+| Tabla de TGW asociada al attachment de inspección | CIDR de spokes | Attachment de spoke correcto, no otra vez el attachment de inspección |
 
-Requests are inspected before NAT; responses traverse inspection after reverse translation and return through TGW. Omitting the NAT subnet’s return route can leave only one direction inspected or break stateful sessions. Moving NAT requires revisiting tuples and routes. [S29] [S30]
+Las solicitudes se inspeccionan antes de NAT; las respuestas atraviesan la inspección después de la traducción inversa y regresan por TGW. Si se omite la ruta de retorno de la subred de NAT, puede quedar inspeccionada una sola dirección o interrumpirse las sesiones con estado. Al mover NAT hay que volver a revisar las tuplas y rutas. [S29] [S30]
 
-Verify TGW appliance mode on the central inspection attachment. It selects an inspection-attachment ENI/AZ consistently for both directions of a flow, replacing TGW's default origin-AZ preference and allowing cross-AZ routing. It does not replicate firewall sessions. Validate it separately from GWLB target selection. [S29] [S25] [S32]
+Verifique el modo de dispositivo de TGW en el attachment central de inspección. Selecciona de forma coherente una ENI/AZ del attachment de inspección para ambas direcciones de un flujo, reemplaza la preferencia predeterminada de TGW por la AZ de origen y permite el enrutamiento entre AZ. No replica las sesiones del firewall. Valídelo por separado de la selección de destinos de GWLB. [S29] [S25] [S32]
 
-### Internet ingress needs a separate design
+### La entrada desde Internet requiere un diseño independiente
 
-For ingress insertion, review IGW edge-associated routes, protected-subnet routes, GWLBE subnet routes and return paths together. An unordered diagram of ALB/IGW/GWLBE is insufficient. AWS documents gateway-route-table constraints for IGW/VGW. Trace ALB proxy frontend/backend connections as separate flows. [S28]
+Para insertar inspección en la entrada, revise conjuntamente las rutas asociadas al borde de IGW, las rutas de las subredes protegidas, las rutas de las subredes de GWLBE y las rutas de retorno. Un diagrama sin orden de ALB/IGW/GWLBE no es suficiente. AWS documenta restricciones de tablas de rutas de gateway para IGW/VGW. Trace las conexiones de frontend/backend del proxy ALB como flujos independientes. [S28]
 
-## 5. Paths outside central inspection
+## 5. Rutas fuera de la inspección centralizada
 
-| Path | Reason for separate validation | Proposed complementary control |
+| Ruta | Motivo para validarla por separado | Control complementario propuesto |
 |---|---|---|
-| Same-node Pod traffic | May never reach VPC/TGW | CNI, NetworkPolicy and service authorization |
-| VPC-local/other subnet | Local prefix is more specific than default | Supported local-route design or CNI/SG controls |
-| Peering/other TGW attachment | May use a different route | Effective routes and connection inventory |
-| PrivateLink/gateway endpoints | Different from public default egress | IAM, endpoint/resource policies and application authorization |
-| IPv6/NAT64/proxy | Not covered by IPv4 `0.0.0.0/0` alone | Service/appliance support and `::/0` paths |
-| Management/health | Different purpose from inspected data | Restricted sources and records |
+| Tráfico entre Pods del mismo nodo | Puede no llegar nunca a VPC/TGW | CNI, NetworkPolicy y autorización del servicio |
+| VPC local/otra subred | El prefijo local es más específico que la ruta predeterminada | Diseño de rutas locales compatible o controles de CNI/SG |
+| Peering/otro attachment de TGW | Puede utilizar otra ruta | Rutas efectivas e inventario de conexiones |
+| PrivateLink/endpoints de gateway | Distintos de la salida pública predeterminada | IAM, políticas del endpoint/recurso y autorización de aplicaciones |
+| IPv6/NAT64/proxy | No queda cubierto únicamente por IPv4 `0.0.0.0/0` | Compatibilidad del servicio/dispositivo y rutas `::/0` |
+| Administración/estado | Finalidad distinta del tráfico de datos inspeccionado | Orígenes restringidos y registros |
 
-Local VPC routes can be redirected to appliances under specified conditions; neither “impossible” nor “automatically centralized” is accurate. Verify route type, supported targets and CIDR constraints. [S28]
+En ciertas condiciones, las rutas locales de VPC se pueden redirigir a dispositivos; no es correcto afirmar que sea «imposible» ni que se centralice «automáticamente». Verifique el tipo de ruta, los destinos admitidos y las restricciones de CIDR. [S28]
 
-EKS Pod/node addresses, CNI SNAT and Security Groups for Pods modes affect visibility and paths. Pod policies and VPC inspection routes are different configurations. [S33] [S34] [S44]
+Las direcciones de Pods/nodos de EKS, SNAT de CNI y los modos de Security Groups for Pods afectan la visibilidad y las rutas. Las políticas de Pod y las rutas de inspección de VPC son configuraciones distintas. [S33] [S34] [S44]
 
-## 6. Stickiness and idle timeout
+## 6. Persistencia y tiempo de espera por inactividad
 
-Default stickiness is the **five-tuple**: source/destination addresses, source/destination ports and protocol. Supported alternatives use **three-tuple** address pair/protocol or **two-tuple** address pair, but **these modes are unsupported with TGW appliance mode enabled**. This central pattern uses five-tuple stickiness. Reduced-tuple modes can concentrate load; review their deployment constraints and capacity. [S25]
+La persistencia predeterminada es de **cinco tuplas**: direcciones de origen/destino, puertos de origen/destino y protocolo. Las alternativas compatibles usan el **par de direcciones/protocolo de tres tuplas** o el **par de direcciones de dos tuplas**, pero **estos modos no son compatibles cuando está habilitado el modo de dispositivo de TGW**. Este patrón central usa persistencia de cinco tuplas. Los modos con menos tuplas pueden concentrar la carga; revise sus restricciones de despliegue y capacidad. [S25]
 
-TCP idle timeout defaults to 350 seconds and can be changed to 60–6000 seconds with five-tuple stickiness. UDP timeout is fixed at 120 seconds. Do not assume TCP customization works with two/three-tuple modes. Independently inspect appliance, NAT, application, TGW and target ENI `TcpEstablishedTimeout`; a shorter ENI tracking timeout can cause drops while GWLB still considers the connection active. [S24]
+El tiempo de espera TCP por inactividad predeterminado es 350 segundos y puede cambiarse a entre 60 y 6000 segundos con persistencia de cinco tuplas. El tiempo de espera UDP es fijo, de 120 segundos. No dé por hecho que la personalización TCP funciona con modos de dos/tres tuplas. Inspeccione por separado `TcpEstablishedTimeout` del dispositivo, NAT, la aplicación, TGW y la ENI de destino; un tiempo de seguimiento menor en la ENI puede causar descartes mientras GWLB todavía considera activa la conexión. [S24]
 
-After TCP idle expiry, a new SYN starts a new flow, while data packets on the old connection are dropped. A UDP packet after expiry can form a new flow. Longer timeouts differ from cross-appliance state sharing. Test keepalive, idle resumption, long-lived gRPC/WebSocket and UDP. [S24]
+Después de vencer el tiempo de espera TCP por inactividad, un SYN nuevo inicia un flujo nuevo y los paquetes de datos de la conexión anterior se descartan. Un paquete UDP después del vencimiento puede formar un flujo nuevo. Los tiempos de espera más largos no equivalen a compartir estado entre dispositivos. Pruebe keepalive, reanudación tras inactividad, gRPC/WebSocket de larga duración y UDP. [S24]
 
-## 7. Health, failover and fail open
+## 7. Estado, conmutación por error y fail-open
 
-| State/setting | Documented AWS behavior | Operational check |
+| Estado/configuración | Comportamiento documentado de AWS | Comprobación operativa |
 |---|---|---|
-| One unhealthy target | New flows use available healthy targets | Configured behavior for existing flows |
-| `target_failover.on_unhealthy=no_rebalance` | Existing flows remain assigned | Possible blackholing at unhealthy target |
-| `target_failover.on_unhealthy=rebalance` | Existing flows are redistributed | Session loss on independent appliances |
-| Deregistration | Behavior follows `on_deregistration` | Draining, scale-in and upgrades |
-| All targets unhealthy | GWLB randomly selects an unhealthy target per flow and keeps it until reset/timeout; AWS documents drops until it becomes healthy | Verify the documented outcome; a health-only fault that still forwards is a PoC hypothesis |
-| No registered targets | No target for new flows; verify drops | Empty-fleet recovery; distinguish existing draining flows |
+| Un destino en mal estado | Los flujos nuevos utilizan los destinos sanos disponibles | Comportamiento configurado para los flujos existentes |
+| `target_failover.on_unhealthy=no_rebalance` | Los flujos existentes permanecen asignados | Posibles descartes silenciosos en el destino no sano |
+| `target_failover.on_unhealthy=rebalance` | Se redistribuyen los flujos existentes | Pérdida de sesión en dispositivos independientes |
+| Cancelación del registro | El comportamiento depende de `on_deregistration` | Drenaje, reducción de escala y actualizaciones |
+| Todos los destinos en mal estado | GWLB selecciona al azar un destino no sano por flujo y lo conserva hasta un reset/vencimiento; AWS documenta que el tráfico se descarta hasta que el destino vuelva a estar sano | Verifique el resultado documentado; que una prueba de fallo exclusivo de estado siga reenviando es una hipótesis de PoC |
+| No hay destinos registrados | No hay destino para los flujos nuevos; verifique los descartes | Recuperación de un grupo vacío; distinga los flujos existentes que aún se drenan |
 
-`target_failover.on_unhealthy` and `target_failover.on_deregistration` must have the same value. The default is `no_rebalance`. Health checks support TCP, HTTP and HTTPS; match protocol, port and path to the appliance. [S25] [S26]
+`target_failover.on_unhealthy` y `target_failover.on_deregistration` deben tener el mismo valor. El valor predeterminado es `no_rebalance`. Las comprobaciones de estado admiten TCP, HTTP y HTTPS; haga coincidir el protocolo, el puerto y la ruta con el dispositivo. [S25] [S26]
 
-Current documentation also provides `send_tcp_reset.on_unhealthy.enabled` and `send_tcp_reset.on_deregistration.enabled`. They default to `false`, apply only to TCP and require five-tuple stickiness (`stickiness.enabled=false`) with `no_rebalance`. They cannot be enabled with `rebalance` or reduced-tuple stickiness. Test reconnection, retries and duplicate business operations after RST; this is not uninterrupted session migration. Review deregistration drain time. [S25]
+La documentación actual también proporciona `send_tcp_reset.on_unhealthy.enabled` y `send_tcp_reset.on_deregistration.enabled`. De forma predeterminada son `false`, se aplican solo a TCP y requieren persistencia de cinco tuplas (`stickiness.enabled=false`) junto con `no_rebalance`. No se pueden habilitar con `rebalance` ni con persistencia de menos tuplas. Pruebe la reconexión, los reintentos y la duplicación de operaciones de negocio tras un RST; esto no migra sesiones sin interrupción. Revise el tiempo de drenaje al cancelar el registro. [S25]
 
-**GWLB does not directly bypass appliances when all targets are unhealthy.** AWS documents random per-flow target selection and traffic drops until the chosen target becomes healthy. Decisions are independent among zones; with cross-zone disabled, review the eligible targets in each AZ. Cross-zone expands the eligible target set while existing/new-flow semantics remain relevant. [S26]
+**GWLB no omite directamente los dispositivos cuando todos los destinos están en mal estado.** AWS documenta la selección aleatoria de un destino por flujo y los descartes del tráfico hasta que el destino elegido vuelva a estar sano. Las decisiones son independientes por zona; si está deshabilitado el balanceo entre zonas, revise los destinos aptos de cada AZ. El balanceo entre zonas amplía el conjunto de destinos aptos, sin dejar de ser relevantes la semántica para flujos existentes/nuevos. [S26]
 
-The older deployment blog uses “fail-open mode” for existing flows remaining on failed targets. That term is not an availability guarantee or a direct-bypass feature; distinguish it from appliance-local fail-open settings. Whether a health-only fault still forwards traffic is an experiment to perform, not the documented recovery expectation. [S32] [S25] [S26]
+El blog de despliegue antiguo usa «modo fail-open» para describir que los flujos existentes permanecen en destinos fallidos. Ese término no es una garantía de disponibilidad ni una función de omisión directa; distíngalo de la configuración fail-open local del dispositivo. Que el tráfico siga pasando durante un fallo exclusivo de estado es algo que habría que experimentar, no la expectativa de recuperación documentada. [S32] [S25] [S26]
 
-Cross-zone balancing can use healthy targets in another AZ but does not replicate state or repair a zonal endpoint. Review cross-AZ costs, capacity and session disruption. Test GWLBE/AZ loss separately from target loss. Prefer current target-group attributes over older deployment-blog statements that GWLB never sends RST. [S24] [S25] [S27] [S32]
+El balanceo entre zonas puede usar destinos sanos de otra AZ, pero no replica estado ni repara un endpoint zonal. Revise los costos entre AZ, la capacidad y las interrupciones de sesión. Pruebe por separado la pérdida de GWLBE/AZ y la pérdida de un destino. Dé prioridad a los atributos actuales del grupo de destino frente a afirmaciones antiguas de blogs de despliegue según las cuales GWLB nunca envía RST. [S24] [S25] [S27] [S32]
 
-## 8. MTU, fragments, NACLs and health paths
+## 8. MTU, fragmentos, NACL y rutas de estado
 
-AWS documents a maximum packet size of 8500 bytes and 68 bytes of GENEVE overhead. GWLB does not provide fragmentation or Path MTU Discovery on behalf of the path. A large workload MTU does not establish equivalent support through TGW, NAT and appliances. [S24] [S32]
+AWS documenta un tamaño máximo de paquete de 8500 bytes y 68 bytes de sobrecarga de GENEVE. GWLB no proporciona fragmentación ni Path MTU Discovery en nombre de la ruta. Una MTU de carga de trabajo grande no demuestra que se admita lo mismo a través de TGW, NAT y los dispositivos. [S24] [S32]
 
-Review:
+Revise:
 
-- End-to-end MTU, appliance GENEVE-interface headroom and TCP MSS handling.
-- Large packets, UDP datagrams, TLS/HTTP2, uploads and fragments.
-- Outer UDP 6081 versus inner payload protocols in SGs, NACLs and appliance policies.
-- Health-port reachability/response and a real inspection canary.
-- Request/return ports and actual outer tuples through stateless NACLs.
-- Current IPv6, encapsulation and ICMP/ICMPv6 requirements by product.
+- La MTU de extremo a extremo, el margen de la interfaz GENEVE del dispositivo y el tratamiento de MSS de TCP.
+- Paquetes grandes, datagramas UDP, TLS/HTTP2, cargas y fragmentos.
+- UDP 6081 externo frente a los protocolos de carga útil interna en SG, NACL y políticas del dispositivo.
+- La alcanzabilidad/respuesta del puerto de estado y una prueba canaria de inspección real.
+- Los puertos de solicitud/retorno y las tuplas externas reales a través de NACL sin estado.
+- Los requisitos actuales de IPv6, encapsulación e ICMP/ICMPv6 según el producto.
 
-An open port or a healthy target alone does not establish inspection. [S26] [S32]
+Un puerto abierto o un destino sano por sí solos no demuestran que haya inspección. [S26] [S32]
 
-## 9. Read-only checks in an approved environment
+## 9. Comprobaciones de solo lectura en un entorno aprobado
 
-These AWS CLI examples are read-only. Set task-specific variables to owned resources and an explicit Region. They were not executed during this research.
+Estos ejemplos de AWS CLI son de solo lectura. Asigne las variables específicas de la tarea a recursos propios e indique la región explícitamente. No se ejecutaron durante esta investigación.
 
 ```bash
 aws elbv2 describe-load-balancer-attributes \
@@ -167,53 +167,53 @@ aws ec2 describe-transit-gateway-vpc-attachments \
   --transit-gateway-attachment-ids "$INSPECTION_TGW_ATTACHMENT_ID"
 ```
 
-Compare cross-zone attributes, target stickiness/failover, health, endpoint state/AZ, routes/associations and attachment `ApplianceModeSupport`. TGW route-table associations, propagation and effective routes need additional queries; these six commands alone do not prove symmetry.
+Compare los atributos de balanceo entre zonas, persistencia/conmutación por error de destinos, estado, estado/AZ de endpoints, rutas/asociaciones y `ApplianceModeSupport` del attachment. Las asociaciones de tablas de rutas de TGW, la propagación y las rutas efectivas necesitan consultas adicionales; estos seis comandos por sí solos no demuestran simetría.
 
-## 10. Failure experiments and acceptance criteria
+## 10. Experimentos de fallos y criterios de aceptación
 
-Run the following plan in an isolated, approved environment.
+Ejecute el siguiente plan en un entorno aislado y aprobado.
 
-| Experiment | Required observations |
+| Experimento | Observaciones requeridas |
 |---|---|
-| Allowed/denied benign canary | Request/response five-tuples, target, policy/profile and application result |
-| Single-target health failure | Old/new sessions and `no_rebalance` versus `rebalance` |
-| All-unhealthy | Delivery to unhealthy targets, inspection/errors; no assumption of direct bypass |
-| Empty fleet | New-flow drops versus existing drains, detection and recovery |
-| TCP RST feature | Five-tuple/no-rebalance constraints, reconnection and retries |
-| AZ/endpoint-path loss | Endpoint versus target failure, failover and recovery |
-| Scale-in/rolling upgrade | Draining, interruptions, readiness and policy consistency |
-| NAT/route changes | Before/after translation, return paths and loops |
-| MTU/idle/IPv6 | Large packets, long-lived sessions and supported paths |
-| Paths outside central inspection | Local, endpoint, peering and Pod paths with complementary controls |
+| Canary benigno permitido/denegado | Tuplas de cinco elementos de solicitud/respuesta, destino, política/perfil y resultado de la aplicación |
+| Fallo del estado de un destino | Sesiones antiguas/nuevas y `no_rebalance` frente a `rebalance` |
+| Todos los destinos no sanos | Entrega a destinos no sanos, inspección/errores; no suponga que se omiten directamente |
+| Grupo vacío | Descartes de flujos nuevos frente al drenaje de los existentes, detección y recuperación |
+| Función TCP RST | Restricciones de cinco tuplas/no-rebalance, reconexión y reintentos |
+| Pérdida de AZ/ruta de endpoint | Fallo de endpoint frente a destino, conmutación por error y recuperación |
+| Reducción de escala/actualización continua | Drenaje, interrupciones, disponibilidad y coherencia de políticas |
+| Cambios de NAT/ruta | Traducción antes/después, rutas de retorno y bucles |
+| MTU/inactividad/IPv6 | Paquetes grandes, sesiones de larga duración y rutas compatibles |
+| Rutas fuera de la inspección centralizada | Rutas locales, endpoints, peering y Pods con controles complementarios |
 
-Acceptance should combine **business SLOs, observed inspection/blocking, old/new session behavior, N-1 capacity, documented bypass paths and rollback/recovery owners**. This update did not deploy infrastructure, inject failures or measure performance.
+La aceptación debe combinar **SLO de negocio, inspección/bloqueo observado, comportamiento de sesiones antiguas/nuevas, capacidad N-1, rutas documentadas de omisión y responsables de reversión/recuperación**. Esta actualización no desplegó infraestructura, inyectó fallos ni midió el rendimiento.
 
-## Continue learning
+## Continúe aprendiendo
 
-- [Palo Alto and Fortinet NGFW](./15-ngfw-paloalto-fortinet.md)
-- [WAF and Origin Protection](./14-waf-edge-api-security.md)
-- [Incident-driven Defense in Depth](./13-defense-in-depth-incident-response.md)
-- [Chapter quiz](../quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+- [NGFW de Palo Alto y Fortinet](./15-ngfw-paloalto-fortinet.md)
+- [WAF y protección del origen](./14-waf-edge-api-security.md)
+- [Defensa en profundidad basada en incidentes](./13-defense-in-depth-incident-response.md)
+- [Cuestionario del capítulo](../quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
-## References and Research Basis
+## Referencias y base de investigación
 
-Primary sources accessed on 2026-10-15. Recheck advisories and constraints for the selected product/branch before changes.
+Fuentes primarias consultadas el 15-10-2026. Antes de realizar cambios, vuelva a comprobar los avisos y las restricciones del producto/rama seleccionados.
 
 - [S24: AWS: Gateway Load Balancers][S24]
-- [S25: AWS GWLB: Target group attributes][S25]
-- [S26: AWS GWLB: Health checks][S26]
-- [S27: AWS PrivateLink: Gateway Load Balancer endpoints][S27]
-- [S28: AWS VPC: Route table options][S28]
-- [S29: AWS: Centralized inspection with GWLB and TGW][S29]
-- [S30: AWS: NAT Gateway scenarios][S30]
+- [S25: AWS GWLB: atributos del grupo de destino][S25]
+- [S26: AWS GWLB: comprobaciones de estado][S26]
+- [S27: AWS PrivateLink: endpoints de Gateway Load Balancer][S27]
+- [S28: AWS VPC: opciones de tablas de rutas][S28]
+- [S29: AWS: inspección centralizada con GWLB y TGW][S29]
+- [S30: AWS: escenarios de NAT Gateway][S30]
 - [S31: RFC 8926: GENEVE][S31]
-- [S32: AWS: GWLB deployment best practices][S32]
-- [S33: EKS: Network security][S33]
+- [S32: AWS: prácticas recomendadas de despliegue de GWLB][S32]
+- [S33: EKS: seguridad de red][S33]
 - [S34: Kubernetes: Network Policies][S34]
-- [S39: AWS ELB API: CreateLoadBalancer parameters][S39]
-- [S40: AWS EC2 API: CreateVpcEndpoint parameters][S40]
-- [S42: AWS GWLB: Target groups][S42]
-- [S44: EKS: Outbound internet access and SNAT][S44]
+- [S39: API de AWS ELB: parámetros de CreateLoadBalancer][S39]
+- [S40: API de AWS EC2: parámetros de CreateVpcEndpoint][S40]
+- [S42: AWS GWLB: grupos de destino][S42]
+- [S44: EKS: acceso a Internet saliente y SNAT][S44]
 
 [S24]: https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/gateway-load-balancers.html
 [S25]: https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html

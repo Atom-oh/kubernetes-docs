@@ -1,7 +1,7 @@
 # EKS 上の Airflow 詳細ガイド
 
 > **レビュー基準**: Airflow 3.3.1 · 公式 Helm chart 1.22.0
-> **確認済みの最新 upstream patch**: Airflow 3.3.2 (September 17, 2026); examples は3.3.1のまま · October 12, 2026
+> **確認済みの最新 upstream patch**: Airflow 3.3.2（2026年9月17日）。example は3.3.1のまま（2026年10月12日に確認）
 
 Apache Airflow は、workflow の依存関係を DAG として定義し、task の schedule、実行、監視を行います。EKS では、task ごとの pod の動作は、Helm chart をインストールしただけで決まるのではなく、**executor と operator** に依存します。
 

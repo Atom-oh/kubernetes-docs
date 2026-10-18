@@ -1,52 +1,25 @@
 # Afinidad de sesión
 
-La afinidad de sesión (o Sticky Session) es una técnica que enruta las solicitudes del mismo usuario al mismo Pod.
+La afinidad de sesión (o sesión persistente) es una técnica que proporciona afinidad flexible a las solicitudes que comparten la misma clave hash; no garantiza la asignación permanente a un Pod.
 
-## Tabla de contenidos
+## Tabla de contenido
 
 1. [Descripción general de la afinidad de sesión](#session-affinity-overview)
-2. [Basado en hash consistente](#consistent-hash-based)
-3. [Basado en cookies](#cookie-based)
-4. [Basado en encabezados (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#http-header-based)
-5. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#consistent-hash-based)
-
-<span id="session-affinity-overview"></span>
+2. [Basada en hash consistente](#consistent-hash-based)
+3. [Basada en cookies](#cookie-based)
+4. [Basada en encabezado HTTP](#http-header-based)
+5. [Basada en IP de origen](#source-ip-based)
+6. [Consideraciones operativas](#operational-considerations)
 
 ## Descripción general de la afinidad de sesión
 
-```mermaid
-flowchart TB
-    User[User A]
+![Diagrama de afinidad de sesión por hash consistente: el balanceador aplica un hash a una solicitud del cliente que contiene un ID de usuario y siempre la enruta al mismo Pod; las demás réplicas de Pod no reciben solicitudes de esa sesión.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
-    subgraph LB["Load Balancer"]
-        Hash[Consistent Hash<br/>Based on User ID]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-10-session-affinity-0.html)
 
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Session A]
-        Pod2[Pod 2]
-        Pod3[Pod 3]
-    end
+## Basada en hash consistente
 
-    User -->|user_id=123| Hash
-    Hash -->|Always Same| Pod1
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class Hash lb;
-    class Pod1,Pod2,Pod3 pod;
-```
-
-<span id="consistent-hash-based"></span>
-
-## Basado en hash consistente
-
-### Basado en encabezado HTTP
+### Basada en encabezado HTTP
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -61,9 +34,7 @@ spec:
         httpHeaderName: "x-user-id"
 ```
 
-<span id="cookie-based"></span>
-
-### Basado en cookies
+### Basada en cookies
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -80,7 +51,7 @@ spec:
           ttl: 0s  # Cookie expiration time (0s = session cookie)
 ```
 
-### Basado en IP de origen
+### Basada en IP de origen
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -94,6 +65,14 @@ spec:
       consistentHash:
         useSourceIp: true
 ```
+
+## Consideraciones operativas
+
+El diagrama supone que el conjunto de endpoints no cambia y que cada proxy ve los mismos endpoints. Agregar o quitar Pods, o las diferencias de endpoints debidas a la localidad, puede reasignar solicitudes. Almacene el estado de sesión de forma que una reasignación o un fallo de Pod no cause problemas.
+
+Elija una de estas DestinationRules para el mismo host. El hash de encabezado HTTP o de cookie requiere procesamiento HTTP; un encabezado ausente no permite identificar al usuario. `ttl: 0s` crea una cookie de sesión si no existe, pero el navegador debe devolverla. Los atributos y la duración de la cookie deben ajustarse a los requisitos de la aplicación.
+
+El hash por IP de origen usa la dirección que ve el proxy. NAT y los balanceadores de carga intermedios pueden hacer que varios clientes compartan una sola dirección; compruebe cómo se gestionan los proxies y las IP de cliente de confianza antes de depender de este método. Estos ejemplos de DestinationRule describen el comportamiento de sidecars; verifique por separado la compatibilidad de la función con waypoints.
 
 ## Referencias
 

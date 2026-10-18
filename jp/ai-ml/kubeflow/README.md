@@ -2,7 +2,7 @@
 
 > **レビュー基準**: Kubeflow Community Distribution 26.03.1
 > **確認済みの最新ディストリビューション**: Community Distribution 26.03.1。コンポーネントのリリースは個別に追跡
-> **最終確認**: October 12, 2026
+> **最終確認**: 2026年10月12日
 
 ## 概要
 

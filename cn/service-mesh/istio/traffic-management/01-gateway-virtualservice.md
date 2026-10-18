@@ -11,6 +11,8 @@ Gateway 和 VirtualService 是 Istio 中用于管理流量的核心资源。
 5. [高级模式](#advanced-patterns)
 6. [故障排除](#troubleshooting)
 
+本章使用 `networking.istio.io/v1` 中的 Gateway 资源，它不同于 Kubernetes Gateway API。以下示例假设 `istio-system` 中已有带 `istio=ingressgateway` 标签的 gateway 工作负载/Service，应用 Service 位于 `default` namespace，且 Service 端口相匹配。Istio Gateway 配置的是现有代理，不会替你创建代理。请在 gateway 工作负载所在的 namespace 中创建每个 TLS Secret，并将 VirtualService 绑定到正在测试的 Gateway。具有重叠主机名的示例是可选方案，应择一使用。
+
 <span id="gateway-overview"></span>
 
 ## Gateway 概述
@@ -39,7 +41,7 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: myapp-tls-secret
+      credentialName: myapp-tls
     hosts:
     - "myapp.example.com"
 ```
@@ -48,7 +50,7 @@ spec:
 
 ## VirtualService 概述
 
-VirtualService 定义如何路由通过 Gateway 进入的流量。
+VirtualService 定义网格 sidecar 和/或被显式引用的 gateway 的流量路由。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -88,6 +90,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: http-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -107,7 +110,7 @@ spec:
   hosts:
   - "*"
   gateways:
-  - http-gateway
+  - istio-system/http-gateway
   http:
   - route:
     - destination:
@@ -118,7 +121,7 @@ spec:
 
 ### HTTPS 流量
 
-```yaml
+```bash
 # Create TLS certificate Secret
 kubectl create secret tls myapp-tls \
   --cert=myapp.crt \
@@ -162,7 +165,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   # API traffic
   - match:
@@ -226,6 +229,8 @@ spec:
         subset: v1
 ```
 
+在使用此请求头路由示例前，请先创建名为 `mobile-v2`、`v3` 和 `v1` 的 DestinationRule subset，并确保它们与 Pod 标签相匹配。客户端提供的路由请求头不能作为授权机制。下方的静态响应请求头只是示例，并非测得的延迟数据。
+
 ### 多域名配置
 
 ```yaml
@@ -233,6 +238,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: multi-domain-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -264,7 +270,7 @@ spec:
   hosts:
   - "api.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
@@ -278,7 +284,7 @@ spec:
   hosts:
   - "admin.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
@@ -296,6 +302,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: secure-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -332,7 +339,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -362,14 +369,14 @@ spec:
       request:
         add:
           x-custom-header: "custom-value"
-          x-forwarded-proto: "https"
+          x-demo-stage: "gateway"
         set:
           x-api-version: "v2"
         remove:
           - x-internal-header
       response:
         add:
-          x-response-time: "100ms"
+          x-demo-response: "configured-value"
 ```
 
 ### 重定向
@@ -383,7 +390,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -401,13 +408,13 @@ spec:
 
 ```bash
 # 1. Check Gateway status
-kubectl get gateway -n istio-system
+kubectl get gateways.networking.istio.io -n istio-system
 
 # 2. Check Ingress Gateway pods
 kubectl get pods -n istio-system -l istio=ingressgateway
 
 # 3. Check Gateway configuration
-kubectl describe gateway my-gateway -n istio-system
+kubectl describe gateways.networking.istio.io my-gateway -n istio-system
 
 # 4. Check Envoy configuration
 istioctl proxy-config listeners -n istio-system istio-ingressgateway-xxx

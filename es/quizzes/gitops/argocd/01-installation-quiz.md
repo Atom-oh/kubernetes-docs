@@ -2,7 +2,7 @@
 
 Este cuestionario evalúa tu comprensión de la instalación y configuración de ArgoCD.
 
-1. ¿Cuál es el método recomendado para instalar ArgoCD en un entorno de producción?
+1. ¿Qué método de instalación se ajusta a un equipo que quiere versionar HA y otros ajustes mediante valores del chart?
    - A) kubectl apply desde la URL raw de GitHub
    - B) Helm chart con valores personalizados
    - C) Docker Compose
@@ -14,7 +14,7 @@ Este cuestionario evalúa tu comprensión de la instalación y configuración de
 **Respuesta: B) Helm chart con valores personalizados**
 
 **Explicación:**
-Aunque ArgoCD puede instalarse mediante kubectl apply desde los manifests oficiales, se recomienda usar un Helm chart para entornos de producción porque permite una personalización, actualizaciones y gestión de valores de configuración más sencillas.
+Helm encaja con un flujo de trabajo basado en valores del chart. Los manifiestos oficiales de HA y Kustomize también son métodos viables de instalación para producción. Elija un solo responsable de la instalación y mantenga las actualizaciones bajo ese mismo responsable.
 
 </details>
 
@@ -62,7 +62,7 @@ El Repo Server se encarga de clonar repositorios Git y generar manifests de Kube
 **Respuesta: B) Desde un Secret llamado argocd-initial-admin-secret**
 
 **Explicación:**
-La contraseña inicial de admin se genera automáticamente y se almacena en un Secret de Kubernetes llamado `argocd-initial-admin-secret`. Puedes recuperarla mediante: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+En el flujo normal que genera una contraseña de arranque, la contraseña inicial de admin se genera y se almacena en un Secret de Kubernetes llamado `argocd-initial-admin-secret`. Puedes recuperarla mediante: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
 
 </details>
 

@@ -2,11 +2,11 @@
 
 [ACK](../02-ack.md)
 
-Los ejemplos usan los CRD de S3 1.12.1 / IAM 1.9.0. Primero prepare la infraestructura, los controllers, los ServiceAccounts y los permisos de IAM. Reemplace el nombre del bucket, la cuenta, la región y los ARN por valores aprobados. Sincronice la Policy y el Role de IAM antes de aplicar la policy del bucket que hace referencia a ese Role; S3 puede rechazar principals inexistentes.
+Los ejemplos usan los CRD de S3 1.13.1 / IAM 1.10.1. Primero prepare la infraestructura, los controladores y las cuentas de servicio (ServiceAccounts) y los permisos de IAM. Reemplace el nombre del bucket, la cuenta, la región y los ARN por valores aprobados. Sincronice la política y el rol de IAM antes de aplicar la política del bucket que hace referencia a ese Role; S3 puede rechazar principales inexistentes.
 
-Estas versiones no usan CRD de BucketPolicy o RolePolicyAttachment independientes. Use Bucket.spec.policy y Role.spec.policyRefs. Las cuatro configuraciones de S3 Block Public Access están habilitadas y AES256 se especifica explícitamente. Haga coincidir los ARN de objetos/bucket con las acciones de la policy.
+Estas versiones no usan CRD independientes de BucketPolicy ni RolePolicyAttachment. Use Bucket.spec.policy y Role.spec.policyRefs. Están habilitados los cuatro ajustes de S3 Block Public Access y AES256 se especifica explícitamente. Haga coincidir los ARN de objetos y buckets con las acciones de la política.
 
-Este Role confía en EC2. No es un role de IRSA/Pod Identity; el uso de EC2 también requiere una asociación de InstanceProfile. Su policy de lectura de datos no es una policy completa para el controller de ACK.
+Este rol confía en EC2. No es un rol de IRSA ni de Pod Identity; el uso de EC2 también requiere asociar un InstanceProfile. Su política de lectura de datos no es una política completa para el controlador de ACK.
 
 ## Bucket — bucket-app-data
 
@@ -85,7 +85,7 @@ spec:
 
 ## Verificación y requisitos operativos
 
-Los campos se comprobaron con los CRD oficiales versionados. El éxito del schema no establece los permisos de IAM, las restricciones del servicio de AWS, la creación, la conectividad ni la recuperación. Asigne responsabilidades de propiedad, costes, limpieza y backups para los recursos retenidos antes de aplicar.
+Los campos se comprobaron con los CRD oficiales versionados. La validación del esquema no demuestra que los permisos de IAM sean suficientes, que se cumplan las restricciones del servicio de AWS, ni que se hayan completado la creación, la conectividad o la recuperación. Antes de aplicar, asigne responsables y confirme las responsabilidades de propiedad, costos, limpieza y copias de seguridad de los recursos retenidos.
 
-- [CRD de s3 v1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases)
-- [CRD de iam v1.9.0](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases)
+- [CRD de s3 v1.13.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/config/crd/bases)
+- [CRD de iam v1.10.1](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.10.1/config/crd/bases)

@@ -50,7 +50,7 @@ Triggers は、notifications を送信するタイミングを決定する条件
 
 </details>
 
-4. notifications を受信するように Application を subscribe するにはどうしますか？
+4. 特定の Application の metadata に通知の subscription を直接定義するにはどうしますか？
    - A) notifications ConfigMap を編集する
    - B) notification subscriptions を含む annotations を Application に追加する
    - C) NotificationSubscription CRD を作成する
@@ -62,7 +62,7 @@ Triggers は、notifications を送信するタイミングを決定する条件
 **回答: B) notification subscriptions を含む annotations を Application に追加する**
 
 **解説:**
-Applications は、`notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel` のような annotations を使用して notifications を subscribe します。これにより trigger、service、recipient を指定します。
+Application は、`notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel` のような annotation で通知を購読します。これは trigger、service、recipient を指定します。ConfigMap の `subscriptions` と AppProject の annotation もサポートされています。複数の recipient はセミコロンで区切ります。
 
 </details>
 
@@ -78,6 +78,6 @@ Applications は、`notifications.argoproj.io/subscribe.on-sync-succeeded.slack:
 **回答: C) Slack、Teams、email、webhooks などを含む複数のサービス**
 
 **解説:**
-ArgoCD notifications は、Slack、Microsoft Teams、Telegram、Opsgenie、Grafana、PagerDuty、GitHub、email (SMTP)、generic webhooks など、多くの services をサポートしています。
+Argo CD は Slack、Teams Workflows、GitHub、email、generic webhook、SQS などのサービス形式をサポートしています。通知を配信するには、認証情報、trigger、template、subscription を設定する必要があります。複数サービス形式を含む template を作成しても、それらすべてへ自動的に通知されるわけではありません。Opsgenie の既存連携には、発表済みのサービス終了に備えた移行計画が必要です。
 
 </details>

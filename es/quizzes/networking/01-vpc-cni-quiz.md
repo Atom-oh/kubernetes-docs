@@ -1,147 +1,131 @@
 # Cuestionario de Amazon VPC CNI
 
-Las siguientes preguntas evalúan tu comprensión de Amazon VPC CNI.
+Revisado el 11 de septiembre de 2026 según la [guía de VPC CNI](../../networking/01-vpc-cni.md) y sus referencias primarias.
 
----
+## 1. ¿Qué hace IPAMD en los nodos Linux EC2 estándar de EKS?
 
-1. ¿Cuál es la función principal de IPAMD (L-IPAM Daemon) en VPC CNI?
-   - A) Gestionar la configuración de DNS de los Pod
-   - B) Preasignar y gestionar ENIs y direcciones IP
-   - C) Aplicar Network Policies
-   - D) Cifrar el tráfico entre nodos
+- A. Administra todos los ajustes DNS de las aplicaciones de los Pods
+- B. Mantiene los grupos normales de asignación de ENI e IP para la red de los Pods
+- C. Sustituye al controlador de políticas de red
+- D. Cifra todo el tráfico entre nodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Preasignar y gestionar ENIs y direcciones IP**
+**Respuesta: B. Mantiene los grupos normales de asignación de ENI e IP para la red de los Pods**
 
-**Explicación:**
-IPAMD (L-IPAM Daemon) es un daemon que se ejecuta en cada nodo y gestiona ENIs (Elastic Network Interfaces), además de preasignar direcciones IP para que estas puedan asignarse rápidamente cuando se crean Pods. kubelet llama al CNI Binary, que recibe IPs de IPAMD y configura los espacios de nombres de red de los Pod.
+El entorno de ejecución del contenedor invoca el binario CNI, que solicita direcciones y configura el entorno de red del Pod. IPAMD mantiene los grupos de direcciones pertinentes. Las rutas administradas para Windows, Fargate y Auto Mode son diferentes.
 
 </details>
 
----
+## 2. ¿Cuál es la diferencia de asignación IPv4 entre los modos de IP secundaria y de prefijos?
 
-2. ¿Cuál es la diferencia clave entre el modo Secondary IP y el modo Prefix Delegation?
-   - A) Secondary IP admite solo IPv6; Prefix Delegation admite solo IPv4
-   - B) Secondary IP asigna IPs individuales; Prefix Delegation asigna prefijos /28 (16 IPs)
-   - C) Secondary IP es solo para EKS; Prefix Delegation es solo para clústeres autogestionados
-   - D) Secondary IP usa redes overlay; Prefix Delegation usa enrutamiento directo
+- A. Solo el modo de IP secundaria admite IPv6
+- B. El modo de IP secundaria asigna direcciones individuales; el modo de prefijos IPv4 asigna bloques /28 con 16 direcciones
+- C. El modo de prefijos elimina los límites de Pods de kubelet
+- D. El modo de prefijos crea espacio libre en una subred agotada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Secondary IP asigna IPs individuales; Prefix Delegation asigna prefijos /28 (16 IPs)**
+**Respuesta: B. El modo de IP secundaria asigna direcciones individuales; el modo de prefijos IPv4 asigna bloques /28 con 16 direcciones**
 
-**Explicación:**
-El modo Secondary IP asigna direcciones IP individuales, una a la vez, a cada ENI, mientras que el modo Prefix Delegation asigna prefijos IPv4 /28 (16 IPs) de una vez. Esto permite ejecutar más Pods por nodo y también mejora la velocidad de asignación de IPs.
+El modo de prefijos requiere hardware compatible y bloques contiguos. La asignación sigue consumiendo espacio de subred, y los objetivos de reserva pueden dejar direcciones sin usar. IPv6 usa prefijos /80; EKS no ofrece Pods y Services de doble pila.
 
 </details>
 
----
+## 3. ¿Cómo llega a 29 el cálculo heredado de arranque de IPv4 secundaria para m5.large?
 
-3. ¿Por qué el número máximo de Pods para una instancia m5.large es 29 con VPC CNI?
-   - A) Porque Kubernetes tiene un límite predeterminado de 29
-   - B) Máximo de 3 ENIs × 10 IPs por ENI = 30, menos el número de ENIs (3) para IPs primarias
-   - C) Está limitado por un límite flexible de AWS
-   - D) Está limitado por el tamaño de la subred VPC
+- A. Kubernetes siempre limita todos los nodos a 29
+- B. 3 × (10 − 1) + 2 = 29
+- C. 3 × 10 − 3 = 29
+- D. 29 es el tamaño de todas las subredes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Máximo de 3 ENIs × 10 IPs por ENI = 30, menos el número de ENIs (3) para IPs primarias**
+**Respuesta: B. 3 × (10 − 1) + 2 = 29**
 
-**Explicación:**
-El número máximo de Pods en VPC CNI se calcula como (número de ENIs × IPs por ENI) - número de ENIs. La m5.large admite hasta 3 ENIs con 10 direcciones IPv4 por ENI. Dado que la Primary IP de cada ENI la utiliza el nodo, (3 × 10) - 3 = 27. El número real puede variar ligeramente debido a los Pods con redes de host y otros factores adicionales.
+Hay tres ENI con diez espacios IPv4 cada una. Al quitar el espacio primario de cada ENI quedan 27 direcciones secundarias ordinarias; la fórmula histórica suma dos Pods de sistema que usan la red del host. No es un límite universal de capacidad vigente: los prefijos, SGPP, los límites de kubelet y los recursos cambian la interpretación.
 
 </details>
 
----
+## 4. ¿Qué especifica `WARM_IP_TARGET`?
 
-4. ¿Cuál es el propósito de la variable de entorno WARM_IP_TARGET?
-   - A) Establecer el número máximo de IPs que se pueden asignar a los Pods
-   - B) Establecer el número de IPs de reserva que se deben preasignar en cada nodo
-   - C) Limitar el número total de IPs en todo el clúster
-   - D) Establecer el TTL (Time To Live) de las direcciones IP
+- A. La cantidad máxima de Pods
+- B. La cantidad objetivo de direcciones libres disponibles para asignaciones ordinarias
+- C. La cuota de direcciones de todo el clúster
+- D. El TTL de una dirección
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Establecer el número de IPs de reserva que se deben preasignar en cada nodo**
+**Respuesta: B. La cantidad objetivo de direcciones libres disponibles para asignaciones ordinarias**
 
-**Explicación:**
-WARM_IP_TARGET controla el número de IPs de reserva que IPAMD preasigna en cada nodo. Esto garantiza que las IPs estén disponibles de inmediato cuando se crean nuevos Pods. Un valor mayor acelera el inicio de los Pods, pero utiliza más IPs, mientras que un valor menor mejora la eficiencia de IPs, pero puede ralentizar el inicio de los Pods.
+`MINIMUM_IP_TARGET` establece el mínimo de direcciones asignadas en total. Estos objetivos IP prevalecen sobre la estrategia de reserva de ENI o prefijos; la asignación de tamaño de prefijo sigue aplicándose. Elige los valores según la demanda y rotación medidas, el espacio de direcciones y el comportamiento de la API.
 
 </details>
 
----
+## 5. ¿Qué afirmación sobre la política de red nativa de EKS es correcta?
 
-5. ¿Qué afirmación sobre la compatibilidad nativa de VPC CNI con Network Policy es correcta?
-   - A) Usa Calico internamente para aplicar Network Policies
-   - B) Admite Network Policy nativa basada en eBPF a partir de v1.14
-   - C) Network Policy no es compatible con EKS
-   - D) Usa iptables para aplicar Network Policies
+- A. VPC CNI ejecuta Calico internamente
+- B. La política estándar basada en eBPF se introdujo en 1.14, pero siguen aplicándose las condiciones actuales de plataforma, versión y habilitación
+- C. Se aplica automáticamente a Windows y Fargate
+- D. Habilitarla garantiza la aplicación fiable a todos los Pods independientes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Admite Network Policy nativa basada en eBPF a partir de v1.14**
+**Respuesta: B. La política estándar basada en eBPF se introdujo en 1.14, pero siguen aplicándose las condiciones actuales de plataforma, versión y habilitación**
 
-**Explicación:**
-A partir de VPC CNI v1.14, se admite Network Policy nativa de Kubernetes basada en eBPF. Antes era necesario un motor de Network Policy independiente como Calico, pero ahora VPC CNI puede procesar recursos estándar de Kubernetes NetworkPolicy por sí mismo.
+La configuración 1.23 revisada usa el controlador de políticas configurado y `aws-eks-nodeagent`. La guía actual de EKS incluye Linux EC2, Pods administrados por el controlador y condiciones de Service y puerto de contenedor. El modo estándar de inicio permite el tráfico mientras se resuelven las reglas; el inicio estricto es una decisión aparte e intencional.
 
 </details>
 
----
+## 6. ¿Qué ofrece la red personalizada con ENIConfig?
 
-6. ¿Cuál es el propósito principal de usar Custom Networking (ENIConfig)?
-   - A) Personalizar la configuración del servidor DNS de los Pod
-   - B) Asignar IPs de Pod desde una subred diferente a la del nodo
-   - C) Instalar plugins de CNI personalizados
-   - D) Cambiar el nombre de la interfaz de red del nodo
+- A. Sustituir el servidor DNS
+- B. Asignar direcciones de Pods desde subredes o grupos de seguridad seleccionados, distintos de la configuración predeterminada del nodo
+- C. Migrar automáticamente los Pods existentes después de agregar un CIDR
+- D. Eliminar automáticamente las rutas que se superponen
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Asignar IPs de Pod desde una subred diferente a la del nodo**
+**Respuesta: B. Asignar direcciones de Pods desde subredes o grupos de seguridad seleccionados, distintos de la configuración predeterminada del nodo**
 
-**Explicación:**
-Custom Networking usa CRDs de ENIConfig para asignar IPs de Pod desde una subred diferente a la del nodo. Esto resulta útil cuando las IPs de la subred de los nodos son insuficientes, cuando se deben aplicar diferentes Security Groups a los Pods o cuando las redes de nodos y Pods necesitan estar separadas. Normalmente se usa con Secondary CIDRs (por ejemplo, 100.64.0.0/16).
+Configura recursos reales de la misma zona de disponibilidad, habilita la red personalizada y selecciona ENIConfig mediante la etiqueta o anotación prevista del nodo. Una anotación explícita prevalece sobre la etiqueta. Crear una subred o un CIDR nuevo no mueve los Pods existentes ni proporciona por sí mismo todas las rutas y permisos necesarios.
 
 </details>
 
----
+## 7. ¿Cómo funcionan las interfaces trunk y branch para SGPP en los nodos EC2 compatibles?
 
-7. ¿Cuáles son las funciones de Trunk ENI y Branch ENI en la característica de Security Group por Pod?
-   - A) Trunk ENI gestiona el tráfico externo; Branch ENI gestiona el tráfico interno
-   - B) Trunk ENI es la ENI principal del nodo que aloja Branch ENIs; Branch ENIs son ENIs virtuales asignadas a cada Pod
-   - C) Trunk ENI es para IPv4; Branch ENI es para IPv6
-   - D) Trunk ENI y Branch ENI desempeñan funciones idénticas
+- A. La trunk siempre es la interfaz eth0 principal
+- B. El controlador adjunta una ENI trunk adicional y asocia interfaces branch usadas por los Pods seleccionados
+- C. Los dos nombres representan IPv4 e IPv6, respectivamente
+- D. La delegación de prefijos multiplica por 16 el límite de Pods branch
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Trunk ENI es la ENI principal del nodo que aloja Branch ENIs; Branch ENIs son ENIs virtuales asignadas a cada Pod**
+**Respuesta: B. El controlador adjunta una ENI trunk adicional y asocia interfaces branch usadas por los Pods seleccionados**
 
-**Explicación:**
-Los Security Groups por Pod usan una arquitectura Trunk/Branch ENI. Trunk ENI es la ENI principal conectada al nodo que aloja varias Branch ENIs. Las Branch ENIs son interfaces de red virtuales asignadas a cada Pod, lo que permite aplicar AWS Security Groups de forma independiente. Esto permite un control de seguridad de red granular en el nivel de Pod.
+La trunk es una interfaz adicional, no la ENI principal. Se requieren tipos de instancia compatibles, el controlador y sus permisos de IAM, y reglas reales de grupos de seguridad. Fargate sigue una ruta administrada distinta. SGPP no se admite en Windows ni Auto Mode; la guía del servicio de EKS documenta compatibilidad con IPv6 bajo sus condiciones.
 
 </details>
 
----
+## 8. ¿Cuál es una respuesta predeterminada inadecuada ante el agotamiento de direcciones IP?
 
-8. ¿Cuál NO es una solución eficaz para los problemas de agotamiento de IPs?
-   - A) Habilitar Prefix Delegation
-   - B) Agregar Secondary CIDR
-   - C) Cambiar todos los Pods al modo de red de host
-   - D) Usar Custom Networking con subredes dedicadas para Pods
+- A. Revisar que haya espacio contiguo para prefijos y hardware compatible antes de considerar la delegación de prefijos
+- B. Planificar CIDR o subredes adicionales y la migración de las cargas de trabajo si falta capacidad
+- C. Cambiar todas las cargas de trabajo a `hostNetwork` para evitar la asignación ordinaria de direcciones de Pods
+- D. Considerar la red personalizada y ajustar los objetivos de reserva según mediciones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Cambiar todos los Pods al modo de red de host**
+**Respuesta: C. Cambiar todas las cargas de trabajo a `hostNetwork` para evitar la asignación ordinaria de direcciones de Pods**
 
-**Explicación:**
-Ejecutar todos los Pods en el modo de red de host (`hostNetwork: true`) resolvería técnicamente los problemas de asignación de IPs, pero elimina el aislamiento de red entre Pods y puede provocar conflictos de puertos, lo que lo convierte en una solución poco práctica. Las soluciones adecuadas para el agotamiento de IPs incluyen habilitar Prefix Delegation, agregar Secondary CIDRs, usar Custom Networking y ajustar WARM_IP_TARGET.
+Cambiar todas las cargas de trabajo a `hostNetwork` modifica el aislamiento y el comportamiento de los puertos; no es una solución general de capacidad. Diagnostica por separado el agotamiento de direcciones, la fragmentación de prefijos, los límites de ENI, la capacidad de kubelet y los errores de API. La delegación de prefijos no puede crear direcciones de subred que no existen.
 
 </details>
