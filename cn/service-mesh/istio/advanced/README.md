@@ -1,6 +1,6 @@
 # 高级主题
 
-> **最后更新**：2026 年 9 月 11 日 · Istio1.31。这些独立示例假定命名的工作负载、Service 和控制器已存在。安装/兼容性及验证遵循各详细章节；片段不是经生产测试的技术栈。
+> **最后更新**：2026 年 9 月 11 日 · Istio 1.31。这些独立示例假定命名的工作负载、Service 和控制器已存在。安装/兼容性及验证遵循各详细章节；片段不是经生产测试的技术栈。
 
 本节涵盖 Ambient 模式、多集群、EnvoyFilter、gRPC/WebSocket 支持等 Istio 高级功能。
 
@@ -27,7 +27,7 @@
 
 ## 1. Ambient 模式
 
-Ambient 首次在 Istio1.18 中作为 alpha 交付，在 1.24 达到 GA。它将节点级 L4 安全覆盖层与可选 waypoint L7 处理分离。
+Ambient 首次在 Istio 1.18 中作为 alpha 交付，在 1.24 达到 GA。它将节点级 L4 安全覆盖层与可选 waypoint L7 处理分离。
 
 ### Sidecar 模式与 Ambient 模式
 
@@ -194,7 +194,7 @@ spec:
 
 ## 6. WebSocket 支持
 
-Istio 支持 HTTP WebSocket 升级。此处假定 `default` 中存在用于 `ws.example.com` 的 `my-gateway`，以及提供 `/ws` 的 HTTP8080 后端 Service。无需精确且区分大小写的 Upgrade 标头匹配。
+Istio 支持 HTTP WebSocket 升级。此处假定 `default` 中存在用于 `ws.example.com` 的 `my-gateway`，以及提供 `/ws` 的 HTTP 8080 后端 Service。无需精确且区分大小写的 Upgrade 标头匹配。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -291,11 +291,11 @@ spec:
 | 主题 | Kubernetes HPA | KEDA |
 |---|---|---|
 | 指标输入 | 资源/自定义/外部指标 API | Scaler 向 HPA 暴露后端指标 |
-| 扩缩职责 | 调整副本，通常 minReplicas 为 1 | 激活/停用，加负责 1→N 的托管 HPA |
+| 扩缩职责 | 调整副本，通常 minReplicas 为 1 | 激活/停用，并负责 1→N 的托管 HPA |
 | 外部指标 | 需要外部指标适配器 | 提供自身指标 API 适配器 |
 | 查询逻辑 | 使用数值指标值 | 根据 scaler 使用 PromQL 或 CloudWatch 指标/数学/Metrics Insights 查询 |
 
-Metrics Server 提供资源指标；不是通用外部指标适配器。KEDA2.20 要求 Kubernetes≥1.30；应独立于 Istio 验证所选版本、API 和平台支持。缩至零还需要零副本时仍可观察的信号及可行激活路径。CloudWatch Metrics Insights 不同于 CloudWatch Logs Insights。
+Metrics Server 提供资源指标；不是通用外部指标适配器。KEDA 2.20 要求 Kubernetes ≥ 1.30；应独立于 Istio 验证所选版本、API 和平台支持。缩至零还需要零副本时仍可观察的信号及可行激活路径。CloudWatch Metrics Insights 不同于 CloudWatch Logs Insights。
 
 ### KEDA 架构
 
@@ -305,7 +305,7 @@ Metrics Server 提供资源指标；不是通用外部指标适配器。KEDA2.20
 
 ### 主要扩缩策略
 
-此 KEDA2.20 API 示例假定 `default` 中有现有 `reviews` Deployment，已采集目标工作负载指标，并有可访问的私有 Prometheus 端点。为后端配置受支持身份验证/TLS。查询返回一个聚合值，使用每副本 100 请求/秒的 AverageValue 目标。
+此 KEDA 2.20 API 示例假定 `default` 中有现有 `reviews` Deployment，已采集目标工作负载指标，并有可访问的私有 Prometheus 端点。为后端配置受支持身份验证/TLS。查询返回一个聚合值，使用每副本 100 请求/秒的 AverageValue 目标。
 
 
 ```yaml

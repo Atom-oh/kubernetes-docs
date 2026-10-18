@@ -1,19 +1,19 @@
 # Helm パッケージマネージャー
 
-> **最終更新**: September 12, 2026
+> **最終更新日**: 2026年9月12日
 > **ローカル検証**: Helm 3.21.3 / Helm 4.3.0
 
-Helm は chart をレンダリングし、Kubernetes リソースと release 履歴を管理します。Chart version、appVersion、image tag/digest、release revision はそれぞれ異なる値です。Helm 4 は既存の apiVersion:v2 chart を受け入れますが、CLI/apply/wait の動作は対象バージョンで確認する必要があります。
+Helm は chart をレンダリングし、Kubernetes リソースと release 履歴を管理します。chart version、appVersion、image tag／digest、release revision はそれぞれ別の値です。Helm 4 は apiVersion:v2 の既存 chart を受け付けますが、CLI、apply、wait の動作は使用するバージョンごとに確認してください。
 
 ## 基本概念と権限
 
-Helm 3 では Tiller が削除され、client は自身の Kubernetes credentials/RBAC を使用します。Chart-repository/OCI-registry との通信は Kubernetes API へのアクセスとは別です。Tiller を削除しても、安全でない chart や広範な権限が無害になるわけではありません。
+Helm 3 では Tiller が削除され、クライアントは自身の Kubernetes credentials／RBAC を使います。chart repository／OCI registry との通信は Kubernetes API へのアクセスとは別です。Tiller を削除しても、安全でない chart や広すぎる権限が無害になるわけではありません。
 
-release storage はデフォルトで release namespace 内の Secrets です。ConfigMap/SQL backend などの代替手段も設定できます。保存される release data には manifests/values が含まれ、機密情報が露出するおそれがあります。Base64 は暗号化ではありません。release Secrets へのアクセスを制限してください。
+release の保存先は、既定では release の namespace 内にある Secret です。ConfigMap や SQL backend などに変更することもできます。保存される release data には manifest や values が含まれ、機密情報が露出するおそれがあります。Base64 は暗号化ではありません。release Secret へのアクセスを制限してください。
 
-## 完全なローカル Chart の例
+## ローカル chart の全体例
 
-`examples/platform/helm/reviewed-app` には、以下の 8 ファイルが含まれています。Helm 3/4 での lint/render 出力、packaging、value overrides、無効な replicaCount の拒否をテストしました。Kubernetes のインストールや container の実行は行っていません。操作前に image digests、namespaces、hardware、policies を確認してください。
+`examples/platform/helm/reviewed-app` には、次の 8 ファイルがあります。Helm 3／4 での lint／render 出力、package 作成、values の上書き、無効な replicaCount の拒否をテストしました。Kubernetes へのインストールやコンテナの実行は行っていません。実際に操作する前に、image digest、namespace、ハードウェア、policy を確認してください。
 
 ### Chart.yaml
 
@@ -32,7 +32,7 @@ appVersion: "1.30.4"
 replicaCount: 1
 image:
   repository: nginxinc/nginx-unprivileged
-  tag: "1.30.4-alpine"
+  tag: "1.30.6-alpine"
 service:
   port: 8080
 resources:
@@ -202,11 +202,11 @@ Namespace: {{ .Release.Namespace }}
 *.private
 ```
 
-すべての helper が定義され、Service は名前付き container port を対象とし、securityContext は manifest 内にあり、resources/env は values から templates へ接続されています。未使用の values entry は影響しません。この基本 chart は database、Ingress、autoscaler を作成しません。
+helper はすべて定義済みで、Service は名前付き container port を参照し、manifest には securityContext があります。resources と env は values から template に渡されます。使われない values entry に効果はありません。この基本 chart は database、Ingress、autoscaler を作成しません。
 
 ### ローカルチェック
 
-repository root から実行し、`helm version --short` で選択された binary を確認してください。
+repository root から実行し、`helm version --short` で使う binary を確認してください。
 
 ```bash
 helm lint examples/platform/helm/reviewed-app
@@ -215,47 +215,47 @@ helm template demo examples/platform/helm/reviewed-app   --set replicaCount=3 --
 helm package examples/platform/helm/reviewed-app --destination ./chart-packages
 ```
 
-lint/template の成功は、admission、CEL、RBAC、image execution、Service connectivity、readiness を検証しません。test hooks は実際に cluster で実行する必要があります。`helm template --api-versions` は offline capabilities を提供しますが、CRDs をインストールしません。
+lint／template の成功だけでは、admission、CEL、RBAC、image の実行、Service 接続、readiness は検証できません。test hook は実際の cluster で実行する必要があります。`helm template --api-versions` はオフラインで利用可能な API 情報を渡しますが、CRD をインストールするものではありません。
 
-## コマンドと Helm 3/4 の違い
+## Helm 3／4 のコマンドと違い
 
-| 目的 | 例と制限事項 |
+| 用途 | 例と制約 |
 | --- | --- |
-| Repositories | `helm repo add/update/list/remove`, `helm search repo`; OCI registries には別の login/pull フローがあります |
-| Install | `helm install demo ./chart -n example --create-namespace`; namespace/release の存在を確認します |
-| Install または upgrade | `helm upgrade --install`; hooks、random values、external state は必ずしも冪等ではありません |
-| Inspect | `helm list -n example`, status/history/get values/get manifest; 機密性の高い出力を保護します |
-| Computed values | `helm get values demo -n example --all` には chart defaults が含まれます |
-| Rollback | `helm rollback demo REVISION -n example`; revision は image tag ではありません |
-| Uninstall | `helm uninstall demo -n example`; PVC/CRD/hook/external-resource lifecycle を確認します |
+| Repository | `helm repo add/update/list/remove`、`helm search repo`。OCI registry には別の login／pull 手順があります |
+| Install | `helm install demo ./chart -n example --create-namespace`。namespace と release の存在を確認してください |
+| Install または upgrade | `helm upgrade --install`。hook、ランダムな値、外部状態は必ずしも冪等ではありません |
+| 状態確認 | `helm list -n example`、status／history／get values／get manifest。機密情報を含む出力を保護してください |
+| 計算後の values | `helm get values demo -n example --all` には chart の既定値も含まれます |
+| Rollback | `helm rollback demo REVISION -n example`。revision は image tag ではありません |
+| Uninstall | `helm uninstall demo -n example`。PVC／CRD／hook／外部リソースのライフサイクルを確認してください |
 
-古い stable repository はアーカイブであり、現在の default ではありません。外部 chart/image の可用性、licensing、support、security を確認し、chart versions を pin してください。古い Bitnami PostgreSQL12/Redis17 dependencies は、もはやこの例の defaults ではありません。
+古い stable repository はアーカイブであり、現在の既定値ではありません。外部 chart／image の提供状況、ライセンス、サポート、セキュリティを確認し、chart version を固定してください。以前の Bitnami PostgreSQL 12／Redis 17 の依存関係は、この例の現行既定値ではありません。
 
-### Dry Run と Waiting
+### Dry run と wait
 
-Helm 4.3 は `--dry-run=client` と `--dry-run=server` を区別します。この環境では、4.3 の client mode は cluster なしで成功しました。3.21.3 の install client dry-run は cluster access を試行して失敗しました。offline rendering には、検証済みの `helm template` パスを使用してください。server mode には cluster access/permissions が必要であり、すべての webhook/external side effects を証明するものではありません。
+Helm 4.3 では `--dry-run=client` と `--dry-run=server` が区別されます。この環境では 4.3 の client mode は cluster なしで成功しましたが、3.21.3 の install client dry-run は cluster への接続を試みて失敗しました。オフラインでのレンダリングには、検証済みの `helm template` を使ってください。server mode には cluster へのアクセスと権限が必要で、すべての webhook や外部副作用を検証できるわけではありません。
 
-Helm 4.3 では、省略した --wait はデフォルトで hookOnly となり、--wait を指定すると watcher がデフォルトになります。legacy も利用できます。`--rollback-on-failure` は失敗した upgrades を以前に成功した release へ rollback します。その名前は Helm 3 の --atomic とは異なります。`--force-replace` と `--force-conflicts` はそれぞれ replacement と server-side-apply conflicts を制御します。対象バージョンの help を確認してください。
+Helm 4.3 では、`--wait` を省略すると既定で hookOnly となり、指定すると watcher が既定になります。legacy mode も選択できます。`--rollback-on-failure` は失敗した upgrade を以前に成功した release に戻しますが、名前も Helm 3 の `--atomic` とは異なります。`--force-replace` と `--force-conflicts` は、それぞれ置き換えと server-side apply の競合を制御します。正確な挙動は対象バージョンの help で確認してください。
 
-Rollback は、DB migrations、external API effects、削除済み data を元に戻す transaction ではありません。timeout、Pod readiness、Job completion、application SLOs を区別してください。
+Rollback は DB migration、外部 API の副作用、削除済みデータを元に戻す transaction ではありません。timeout、Pod readiness、Job completion、application SLO を区別してください。
 
-## Templates と Values
+## Template と values
 
-Chart、Release、Values、Capabilities は context objects です。range/with は dot context を変更するため、root が必要な場合は `$` を使用してください。Capabilities は提供された discovery information を反映するものであり、普遍的な互換性を示すものではありません。
+Chart、Release、Values、Capabilities は context object です。range／with は dot context を変えるため、root context が必要な場合は `$` を使ってください。Capabilities が反映するのは渡された discovery 情報であり、あらゆる環境との互換性を示すものではありません。
 
-include は named-template の出力を string として返し、nindent に pipe できます。nindent は newline も挿入します。subchart collisions を避けるため helper names に prefix を付け、upgrades をまたぐ不必要な selector changes を避けてください。
+include は名前付き template の出力を string として返し、nindent に渡せます。nindent は改行も挿入します。subchart 間の衝突を避けるため helper 名に prefix を付け、upgrade をまたぐ不要な selector 変更は避けてください。
 
-default/coalesce は false、zero、empty strings、collections を空として扱います。明示的な false/zero を保持する場合は、存在/type を別途確認してください。default は、parent map が存在しない nested lookup のすべてを保護するわけではありません。
+default／coalesce は false、zero、空文字列、collection を空として扱います。明示的な false／zero を維持するには、存在と型を別に確認してください。default は、親 map がない場合のすべての nested lookup を保護するわけではありません。
 
-values.yaml は data です。埋め込まれた <code v-pre>{{ .Values... }}</code> が自動的に再評価されることはありません。Chart authors は必要に応じて明示的に tpl を使用できますが、input trust と template privileges を確認する必要があります。以前の subchart storageClass と Blue/Green selector strings は自動的に接続されませんでした。
+values.yaml は data です。埋め込まれた <code v-pre>{{ .Values... }}</code> が自動的に再評価されることはありません。chart author は必要な箇所で明示的に tpl を使えますが、入力の信頼性と template の権限を確認してください。以前の subchart storageClass と Blue／Green selector の文字列は、自動的には接続されませんでした。
 
-繰り返し指定する files/overrides では、最も右側の values が優先されます。map merging と list replacement を理解してください。1 つの YAML document 内で keys を重複させるのではなく、dev/staging/prod を別々の files として保存してください。数値のように見える strings には --set-string を使用し、structures にはバージョンでサポートされる --set-json を使用してください。
+複数の values file や override を指定すると、右側にある値が優先されます。map の merge と list の置換を理解してください。1 つの YAML document で key を重複させず、dev／staging／prod は別ファイルに分けてください。数値に見える文字列には `--set-string` を使い、構造化データには対象バージョンが対応している `--set-json` を使ってください。
 
---reuse-values、--reset-values、--reset-then-reuse-values は、以前の release values と新しい defaults を異なる方法で組み合わせます。暗黙的な動作に依存せず、computed values と rendered diffs を確認してください。
+`--reuse-values`、`--reset-values`、`--reset-then-reuse-values` は、以前の release values と新しい既定値をそれぞれ異なる方法で組み合わせます。暗黙の動作に頼らず、計算後の values とレンダリング結果の差分を確認してください。
 
-## Dependency Management
+## 依存関係の管理
 
-Chart.yaml は dependency names、versions、repositories、optional aliases/conditions を宣言します。この fragment は、**準備済みのローカル helper subchart** を前提としています。
+Chart.yaml では dependency 名、version、repository、任意の alias／condition を宣言します。この設定例は、**準備済みのローカル helper subchart** を前提としています。
 
 ```yaml
 dependencies:
@@ -266,51 +266,51 @@ dependencies:
   condition: cache.enabled
 ```
 
-alias を使用する場合は、values を cache の下に置き、対応する condition を使用します。condition path が存在しない場合の動作をテストしてください。Global values は subchart がそれらを使用する場合にのみ重要です。import-values には一致する child/parent export structure が必要です。
+alias を使う場合は values を `cache` の下に置き、対応する condition を指定してください。condition path がない場合の動作をテストします。global values は subchart が参照する場合にだけ影響します。import-values を使うには、child と parent の export 構造が対応している必要があります。
 
-dependency update は Chart.yaml constraints を解決し、Chart.lock を書き込みます。build は locked versions を使用します。lock がない場合は、update と同様に解決できます。lock だけでは、tamper resistance、pinned runtime images、完全な reproducibility は確立されません。chart digests/signatures、supply paths、image revisions を管理してください。ローカル file-dependency update/build と alias on/off は Helm 3/4 で実施しました。
+`dependency update` は Chart.yaml の制約を解決し、Chart.lock を書き出します。`build` は lock に記録された version を使います。lock がない場合は update と同様に解決できます。lock だけでは改ざん防止、実行時 image の固定、完全な再現性は保証されません。chart digest／signature、供給元の経路、image revision を管理してください。ローカルの file dependency に対する update／build と、alias の有効／無効は Helm 3／4 で実行済みです。
 
-## Hooks、CRDs、Tests
+## Hook、CRD、テスト
 
-pre/post install、upgrade、rollback、delete、test hooks は lifecycle stages で実行されます。weight が低いものから先に実行されます。ties については kind/name ordering を確認してください。pre-install migration は、chart の通常の database resource が存在する前に実行される場合があります。
+pre／post install、upgrade、rollback、delete、test の hook は、それぞれのライフサイクル段階で実行されます。weight が小さいものから先に実行されます。同じ weight の場合は kind／name の順序を確認してください。pre-install migration は chart の通常の database resource が作られる前に実行されることがあります。
 
-Hook Jobs/Pods には、実際の executables、images、Services/Secrets、permissions、timeouts、repeat-safe behavior が必要です。before-hook-creation/hook-succeeded/hook-failed と Job TTLs による cleanup を計画してください。uninstall はすべての hook resources を削除するとは限りません。post-install readiness は --wait と併せて解釈してください。
+Hook の Job／Pod には、実際に動く executable、image、Service／Secret、権限、timeout、繰り返し実行に耐える動作が必要です。before-hook-creation／hook-succeeded／hook-failed と Job TTL を使った cleanup を計画してください。uninstall しても、すべての hook resource が削除されるとは限りません。post-install readiness は `--wait` と併せて解釈してください。
 
-crds/ 配下の CRDs は通常の templates と異なります。CRD schemas の自動 upgrade/deletion や rollback を想定しないでください。明示的な migration と custom-resource retention plans を使用してください。CRD を削除すると custom-resource data が削除される場合があります。
+`crds/` 内の CRD は通常の template とは扱いが異なります。CRD schema の自動 upgrade／削除や rollback を前提にしないでください。明示的な migration と custom resource の保持計画を用意してください。CRD を削除すると custom resource のデータも失われる場合があります。
 
-helm test は宣言された hooks を実行します。単純な HTTP connectivity では databases、security、load、recovery を検証できません。Blue/Green/canary には実際の Deployments、Services/mesh routes、controllers、metric/rollback conditions が必要です。Values だけでは progressive delivery を実装しません。
+`helm test` は宣言された hook を実行します。単純な HTTP 接続テストでは、database、セキュリティ、負荷、復旧は検証できません。Blue／Green／canary には、実際の Deployment、Service／mesh route、controller、metric／rollback 条件が必要です。values だけでは段階的なリリースは実装されません。
 
-## GitOps と Security
+## GitOps とセキュリティ
 
-Argo CD は一般に Helm を template renderer として使用し、Helm release lifecycle の管理とは異なります。Flux helm-controller は HelmRelease を reconcile します。source/chart revisions、valuesFrom namespace/precedence、hook mapping、pruning、ownership を確認し、競合する controllers を避けてください。
+Argo CD は一般に Helm を template renderer として使い、Helm release のライフサイクル管理とは区別されます。Flux helm-controller は HelmRelease を継続的に調整します。source／chart revision、valuesFrom の namespace／優先順位、hook mapping、pruning、ownership を確認し、管理が競合する controller を避けてください。
 
-secrets を chart defaults、--set arguments、debug output に配置しないでください。--hide-secret は dry-run 中の Kubernetes Secret output を対象とし、すべての values/logs を一般的に redaction するものではありません。app environment variables を介して提供される既存の Secret references も、file-credential policies に違反します。承認済みの Secret volumes と file reread/rotation paths を使用してください。
+secret を chart の既定値、`--set` 引数、debug 出力に含めないでください。`--hide-secret` が隠すのは dry-run 中の Kubernetes Secret 出力であり、すべての values／log を一般的にマスクする機能ではありません。既存 Secret を app の環境変数経由で渡す方法も、ファイル credential の方針に違反します。承認済みの Secret volume と、ファイルの再読み込み／rotation 経路を使ってください。
 
-ESO v1 などの current APIs とその controllers は別途準備してください。Sealed Secrets/helm-secrets には controller/plugin、key/KMS access、decryption workflow が必要であり、Helm core features ではありません。decrypted values が release records や logs に入るかを確認してください。
+ESO v1 などの現行 API と controller は別途準備してください。Sealed Secrets／helm-secrets には controller／plugin、key／KMS へのアクセス、復号手順が必要で、Helm core の機能ではありません。復号後の values が release record や log に残るか確認してください。
 
-ServiceAccounts/Roles だけでは workload permissions は付与されません。必要に応じて RoleBindings と serviceAccountName を接続し、Secret volume のためだけにすべての Secret への get/list/watch を付与しないでください。この demo web chart は Kubernetes API credentials を必要とせず、token automount を無効にしています。
+ServiceAccount／Role だけでは workload に権限は付与されません。必要な場合は RoleBinding と serviceAccountName を接続してください。Secret volume を使うだけの目的で、すべての Secret に対する get／list／watch を与えないでください。この demo web chart は Kubernetes API credential を必要とせず、token automount を無効にしています。
 
-## Troubleshooting の順序
+## トラブルシューティングの順序
 
 | 症状 | 調査と修正 |
 | --- | --- |
-| 再利用した release name | namespace/state/history を確認し、意図した upgrade または新しい name を選択します |
-| Existing-resource collision | owner annotations/labels/controllers を確認し、レビュー済みの adoption/migration を使用するか rename します |
-| Failed release | causes/events/history を確認し、検証済みの revision/configuration で retry します |
-| Missing helper | definitions、names、scope、root context を確認します |
-| Schema failure | 最終的にマージされた values、types、required fields、ranges を確認します |
+| release 名を再利用した | namespace／state／history を確認し、意図した upgrade を行うか、新しい name を選びます |
+| 既存リソースとの衝突 | owner annotation／label／controller を確認し、レビュー済みの adoption／migration を行うか、name を変更します |
+| release の失敗 | 原因、event、history を確認し、検証済みの revision／configuration で再試行します |
+| helper が見つからない | 定義、名前、scope、root context を確認します |
+| schema 検証の失敗 | 最終的に merge された values、型、必須 field、範囲を確認します |
 
-Deletion/force flags は万能な修正ではありません。mutation を選択する前に、diffs、immutable fields、data retention、他の controllers を確認してください。
+削除や force の flag は万能な修正ではありません。変更を選ぶ前に、diff、変更不可の field、データ保持、他の controller を確認してください。
 
 ## 検証と参照
 
-全 764 ガイド行、locale ごとの 462 quiz 行、58 の一意な blocks をレビューしました。チェックでは、完全な chart の Helm 3/4 lint/template/package、overrides/negative schemas、local dependencies/aliases を対象としました。4.3 client dry-run は成功しました。3.21.3 install dry-run の cluster-access failure は記録されています。実際の Kubernetes installation、upgrade、rollback、hooks、app HTTP behavior は検証していません。
+ガイド全 764 行、各 locale の quiz 462 行、58 個の一意な block をレビューしました。検証対象は、chart 全体に対する Helm 3／4 の lint／template／package、override／不正 schema、ローカル依存関係／alias です。4.3 の client dry-run は成功しました。3.21.3 の install dry-run が cluster access で失敗したことも記録しています。実際の Kubernetes install、upgrade、rollback、hook、アプリケーションの HTTP 動作は検証していません。
 
-- [Helm install](https://helm.sh/docs/helm/helm_install/)
-- [Helm upgrade](https://helm.sh/docs/helm/helm_upgrade/)
-- [Charts と values](https://helm.sh/docs/topics/charts/)
-- [Chart hooks](https://helm.sh/docs/topics/charts_hooks/)
+- [Helm の install](https://helm.sh/docs/helm/helm_install/)
+- [Helm の upgrade](https://helm.sh/docs/helm/helm_upgrade/)
+- [Chart と values](https://helm.sh/docs/topics/charts/)
+- [Chart hook](https://helm.sh/docs/topics/charts_hooks/)
 - [Dependency build](https://helm.sh/docs/helm/helm_dependency_build/)
-- [Helm 4.3.0 release](https://github.com/helm/helm/releases/tag/v4.3.0)
+- [Helm 4.3.0 のリリース](https://github.com/helm/helm/releases/tag/v4.3.0)
 
 [Helm クイズ](../quizzes/platform-engineering/01-helm-quiz.md)

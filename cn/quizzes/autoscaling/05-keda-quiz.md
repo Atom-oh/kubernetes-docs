@@ -1,6 +1,6 @@
 # KEDA 测验
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 本测验用于检验你对 KEDA（Kubernetes 事件驱动自动伸缩）的理解。
 
@@ -15,12 +15,12 @@ KEDA（Kubernetes 事件驱动自动伸缩）是一个开源项目，可根据�
 **主要优势：**
 1. **事件驱动伸缩**：根据各种事件源（消息队列、数据库、流等）进行伸缩
 2. **缩容至零**：支持的触发器会根据最小副本数、激活阈值和冷却时间激活或停用工作负载。
-3. **支持多种 Scaler**：提供 50 多种内置 Scaler，并支持自定义 Scaler
+3. **支持多种伸缩器**：内置 50 多种 Scaler，并支持自定义伸缩器
 4. **Kubernetes 原生**：可与现有的 Kubernetes HPA 集成
-5. **云平台无关**：可在兼容的 Kubernetes 环境中运行，但需要相应的 API、身份凭证和网络连接。
+5. **不绑定特定云平台**：可在满足所需 API、身份机制和网络连通条件的 Kubernetes 环境中运行。
 6. **部署模型**：标准安装包括 operator、指标 API 服务器和准入 Webhook。
 
-KEDA2.21 示例使用其公布的 Kubernetes1.34–1.36 测试范围。Kubernetes1.37 HPA 也支持对对象/外部指标进行 beta 版缩容至零；缩容至零并非 KEDA 独有的能力。
+KEDA 2.21 示例使用其公布的 Kubernetes 1.34–1.36 测试范围。Kubernetes 1.37 HPA 也支持对对象/外部指标进行 beta 版缩容至零；缩容至零并非 KEDA 独有的能力。
 </details>
 
 ## 问题 2：KEDA 架构
@@ -29,11 +29,11 @@ KEDA2.21 示例使用其公布的 Kubernetes1.34–1.36 测试范围。Kubernete
 <summary>KEDA 的主要组件有哪些？</summary>
 
 **答案：**
-- **KEDA Operator**：管理 ScaledObject 和 ScaledJob 资源
-- **指标适配器**：通过 Kubernetes API 聚合和 operator 指标服务向 HPA 提供外部指标。
+- **KEDA Operator 控制器**：管理 ScaledObject 和 ScaledJob 资源
+- **指标适配器**：通过 Kubernetes API 聚合机制和 Operator 指标服务向 HPA 提供外部指标。
 - **准入 Webhook**：验证受支持的 KEDA 资源配置。
 - **ScaledObject**：定义伸缩目标和触发器
-- **ScaledJob**：由 operator 创建的 Job；它们不会由 HPA 伸缩。
+- **ScaledJob**：由 Operator 创建的 Job；HPA 不负责伸缩这些 Job。
 - **TriggerAuthentication**：外部系统的身份验证信息
 - **ClusterTriggerAuthentication**：集群级身份验证
 
@@ -58,7 +58,7 @@ ScaledObject 伸缩时，KEDA 负责激活和缩容至零，HPA 负责非零副�
 - Prometheus、InfluxDB
 
 **其他 Scaler：**
-- Cron（基于时间）、metrics-api（数值型 HTTP 端点）；请求拦截/缓冲功能属于独立的 HTTP add-on
+- Cron（按时间伸缩）、metrics-api（数值型 HTTP 端点）；请求拦截/缓冲功能属于独立的 HTTP 扩展组件
 - CPU/Memory、External Push
 
 **自定义 Scaler：**
@@ -114,7 +114,7 @@ spec:
     key: password
 ```
 
-假设已有一个启用了 TLS 的 Kafka listener、受信任的 CA，以及包含有效 SASL 设置/凭证的 kafka-secrets。如果 broker 使用私有 CA，请添加 CA 引用。消费者应用也必须使用兼容的身份验证和 offset 行为。默认情况下，allowIdleConsumers=false，因此副本数受分区数限制；使用 latest/无效 offset 的新 consumer group 在激活方面存在注意事项。
+假设已存在启用 TLS 的 Kafka 监听器和受信任的 CA，且 kafka-secrets 中包含有效的 SASL 配置和凭证。如果 broker 使用私有 CA，请添加 CA 引用。消费者应用也必须采用兼容的身份验证和 offset 处理方式。默认情况下，allowIdleConsumers=false，因此副本数受分区数限制；使用 latest 或无效 offset 的新 consumer group 在激活时还需注意相关限制。
 </details>
 
 ## 问题 5：自定义指标伸缩
@@ -177,7 +177,7 @@ spec:
   maxReplicaCount: 10
 ```
 
-这些是使用源章节中 HTTP 收集器的不同替代方案。固定的 Cron 计划不会读取 Google Calendar，而 external-push 需要一个实际的 KEDA gRPC 服务。请确保收集器能够独立运行；指标缺失或过期属于错误，不应视为零。
+这些是使用源章节中 HTTP 收集器的不同替代方案。固定的 Cron 计划不会读取 Google Calendar，而 external-push 需要实际运行的 KEDA gRPC 服务。请确保 HTTP 收集器能够独立运行；指标缺失或过期都应视为错误，而不是零。
 </details>
 
 ## 问题 6：基于 Cron 的伸缩
@@ -299,7 +299,7 @@ spec:
   maxReplicaCount: 10
 ```
 
-使用源章节中的 rabbitmq-auth/credentials 和 aws-credentials（provider: aws, identityOwner: keda），并根据这些队列进行调整。请提供真实的 worker 镜像、消费者身份、确认机制、可见性超时和幂等性保障。jobTargetRef 是一个包含单个模板的 JobSpec；ScaledJob 不使用 HPA。
+使用本章中的 rabbitmq-auth 及其凭证，以及 aws-credentials（provider: aws, identityOwner: keda），并按这些队列调整配置。请提供实际工作进程镜像、消费者身份、消息确认机制、可见性超时和幂等性保障。jobTargetRef 是包含一个模板的 JobSpec；ScaledJob 不使用 HPA。
 </details>
 
 ## 问题 8：Istio 指标伸缩
@@ -413,7 +413,7 @@ RPS 总量使用 AverageValue（总量/目标值）。服务级 p95 延迟和错
    kubectl get secret <auth-secret> -o json | jq '{name: .metadata.name, type: .type, keys: ((.data // {}) | keys)}'
    ```
 
-已移除第二个管理进程：在 operator Pod 中再启动一个 /manager 并不能用于测试连通性。请使用现有日志、资源状态条件和 APIService 状态。所列 KEDA 指标已在2.20版本中验证；HPA 副本指标需要 kube-state-metrics 和已配置的 scraper。
+已从示例中移除第二个管理进程：在 Operator Pod 中另行启动 /manager 并不能测试连通性。请使用现有日志、资源状态条件和 APIService 状态。所列 KEDA 指标已在 2.20 版本中验证；HPA 副本指标需要 kube-state-metrics 和已配置的采集器。
 </details>
 
 ## 问题 10：Amazon EKS 集成
@@ -481,7 +481,7 @@ RPS 总量使用 AverageValue（总量/目标值）。服务级 p95 延迟和错
    - 利用缩容至零节省成本
    - 设置合适的伸缩阈值
 
-YAML 中的触发器列表是用于不同 ScaledObject 的片段，并假设使用源章节中的 aws-credentials 身份验证。CloudWatch RequestCount 配合 Sum/60seconds 表示每个周期内的计数，而不是 RPS。IRSA 需要已存在且作用域配置正确的 OIDC 信任关系和读取权限；消费者权限需单独配置。仅添加 scrape 注解并不会安装或配置 CloudWatch Container Insights：还需配置 collector/IAM/导出目标。工作负载缩容至零不会自动移除节点或消除所有成本。
+YAML 中的触发器列表是用于不同 ScaledObject 的片段，并假设使用源章节中的 aws-credentials 身份验证。CloudWatch 的 RequestCount 指标按 Sum 统计、周期设为 60 秒时，结果是每周期的请求计数，而不是 RPS。IRSA 需要已存在且作用域正确的 OIDC 信任关系和读取权限；消费者权限需单独配置。仅添加指标抓取注解并不会安装或配置 CloudWatch Container Insights：还需配置采集器、IAM 权限和导出目标。工作负载缩容至零不会自动移除节点或消除所有成本。
 </details>
 
 ---

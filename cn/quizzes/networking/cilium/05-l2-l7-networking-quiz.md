@@ -203,7 +203,7 @@ L4 是传输层。TCP 提供可靠、有序的字节流；UDP 提供数据报，
 
 ## 动手题
 
-16. **为 `l7-exercise` 中监听 TCP8080 的 API 编写策略：仅允许 frontend 执行 GET /api/v1/users 和 POST /api/v1/data，并且必须包含 X-Auth-Token。**
+16. **为 l7-exercise 中监听 TCP8080 的 API 编写策略：仅允许 frontend 执行 GET /api/v1/users 和 POST /api/v1/data，并且必须包含 X-Auth-Token。**
 
 <details>
 <summary>显示答案</summary>

@@ -3,7 +3,7 @@
 > **Versiones compatibles**: Istio 1.31
 > **Última actualización**: 11 de septiembre de 2026
 
-Los proxies Istio generan telemetría del tráfico que observan. Deben configurarse scraping, logs de acceso, proveedores de trazas y almacenamiento. Las aplicaciones deben propagar contexto entre solicitudes entrantes y salientes para unir spans; spans internos y excepciones necesitan instrumentación/logging de aplicación.
+Los proxies Istio generan telemetría del tráfico que observan. Deben configurarse scraping, logs de acceso, proveedores de trazas y almacenamiento. Las aplicaciones deben propagar el contexto de trazado de las solicitudes entrantes a las salientes para conectar los spans; los spans internos y las excepciones requieren instrumentación y registros de la propia aplicación.
 
 ## Índice
 
@@ -21,7 +21,7 @@ Los proxies Istio generan telemetría del tráfico que observan. Deben configura
   <img src="https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png" alt="Dashboard de observabilidad Istio" width="900">
 </p>
 
-Sidecars y waypoints pueden informar HTTP, spans y accesos sin añadir instrumentación de proxy al código. ztunnel ambient proporciona L4; HTTP necesita waypoint. CPU, memoria y paquetes de host proceden de exporters Kubernetes/nodo, no de métricas de solicitudes Istio. La captura muestra un dashboard configurado, no un componente instalado automáticamente.
+Los sidecars y los waypoints pueden generar métricas HTTP, spans y registros de acceso sin añadir instrumentación de proxy al código de la aplicación. ztunnel en ambient proporciona telemetría L4; la observación HTTP requiere un waypoint. Las métricas de CPU, memoria y paquetes del host proceden de los exporters de Kubernetes y de los nodos, no de las métricas de solicitudes de Istio. La captura muestra un dashboard configurado, no un componente instalado automáticamente.
 
 ## Tres pilares de observabilidad {#three-pillars-of-observability}
 
@@ -171,7 +171,7 @@ sum by (namespace, pod, container) (
 ) > 0)
 ```
 
-Requieren kubelet/cAdvisor y kube-state-metrics; no son métricas Istio. Evite targets duplicados e incluya clúster en agregaciones multiclúster. Uso relativo a un limit es solo una señal; revise también throttling, colas y trabajo pendiente.
+Estas consultas requieren recopilar métricas de kubelet/cAdvisor y kube-state-metrics; no son métricas de Istio. Evite targets de recopilación duplicados e incluya una etiqueta de clúster en las agregaciones multiclúster. El consumo respecto a un límite es solo una señal de capacidad; revise también la limitación por CPU, las colas y el trabajo pendiente.
 
 
 
@@ -192,7 +192,7 @@ Requieren kubelet/cAdvisor y kube-state-metrics; no son métricas Istio. Evite t
 
 Configure tasas apropiadas para producción:
 
-Debe existir un Service collector OTLP en la dirección siguiente y exportar al backend elegido. Combine el proveedor con la instalación y configure muestreo mediante Telemetry:
+Debe existir previamente un Service para el collector OTLP en la dirección indicada y este debe exportar al backend elegido. Integre el proveedor en la configuración de instalación y ajuste el muestreo mediante Telemetry:
 
 ```yaml
 # istioctl install -f input, not kubectl apply

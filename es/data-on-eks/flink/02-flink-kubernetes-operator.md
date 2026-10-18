@@ -13,7 +13,7 @@ El Operator reconcilia el estado deseado de clústeres/trabajos y administra act
 | FlinkStateSnapshot | Administración de savepoints/checkpoints de un Deployment/SessionJob vinculado |
 | FlinkBlueGreenDeployment | Transiciones blue/green mediante dos implementaciones secundarias |
 
-SessionJobs tienen especificaciones independientes, pero comparten capacidad JM/TM y los fallos del clúster subyacente. Los clústeres Application no están completamente aislados de los nodos, la red, el almacenamiento ni las cuotas de EKS compartidos. Un CR blue/green no garantiza automáticamente transiciones seguras de grupos de consumidores de Kafka, ID transaccionales ni escrituras en sinks. Valide la compatibilidad del estado/ruta de datos, el procesamiento duplicado y la capacidad adicional temporal.
+SessionJobs tienen especificaciones independientes, pero comparten capacidad JM/TM y los fallos del clúster subyacente. Los clústeres Application no están completamente aislados de los nodos, la red, el almacenamiento ni las cuotas de EKS compartidos. Un CR blue/green no garantiza automáticamente transiciones seguras de grupos de consumidores de Kafka, identificadores transaccionales ni escrituras en sinks. Valide la compatibilidad del estado/ruta de datos, el procesamiento duplicado y la capacidad adicional temporal.
 
 ## 2. Instalación: preparar cert-manager y los espacios de nombres
 
@@ -114,7 +114,7 @@ Una URL de S3 y una anotación de cuenta de servicio no bastan por sí solas par
 - Instale el complemento del sistema de archivos S3 y el proveedor de credenciales apropiados en las imágenes JM/TM.
 - Verifique la confianza/asociación de IRSA o Pod Identity, Agent/SDK y los permisos del prefijo del bucket/KMS.
 - Configure los intervalos de checkpoints, el almacenamiento accesible de checkpoints/savepoints y los metadatos/la recuperación de alta disponibilidad.
-- Verifique los serializadores de estado, los UID del operador, el paralelismo máximo y la compatibilidad del estado de los conectores.
+- Verifique los serializadores de estado, los UID asignados a los operadores de Flink y el paralelismo máximo. Compruebe también la compatibilidad del estado de los conectores.
 
 La parte 3 trata la configuración del backend/complemento/checkpoint; la parte 4 trata la alta disponibilidad. RocksDB usa E/S de disco local y la recuperación puede requerir descargar el estado. Mida la capacidad de memoria/disco/red de TM y el tiempo de reubicación. Distribuir entre nodos/AZ por sí solo no garantiza la continuidad de los trabajos; planifique solicitudes, taints, afinidad y capacidad de reserva.
 
@@ -132,7 +132,7 @@ Last-state no garantiza la recuperación después de perder los metadatos ni des
 
 ## 6. Autoscaler: empezar por la observación
 
-El objetivo principal del autoscaler es el paralelismo de los vértices del trabajo. Su modelo de rendimiento usa la ingesta/retraso de origen, la tasa/tiempo ocupado de procesamiento y las proporciones de salida de las aristas. Para los vértices descendentes, suma **la tasa objetivo ascendente × la proporción de salida de esa arista**. Esto difiere de sumar sin más las tasas de salida ascendentes observadas.
+El objetivo principal del autoscaler es el paralelismo de los vértices del trabajo. Su modelo de rendimiento usa la ingesta/retraso de origen, la tasa/tiempo ocupado de procesamiento y las proporciones de salida de las aristas. Para los vértices descendentes, suma **la tasa objetivo del vértice ascendente × la proporción de salida de esa arista**. Esto difiere de sumar sin más las tasas de salida ascendentes observadas.
 
 Se diferencia del HPA basado en CPU, pero no ignora todas las señales de CPU/memoria. El código revisado comprueba la presión de GC/memoria y las cuotas de CPU/memoria, y puede ajustar opcionalmente la memoria de TM. El ajuste de memoria está deshabilitado de forma predeterminada.
 
@@ -157,7 +157,7 @@ Las claves actuales son `utilization.target/min/max`; los ajustes antiguos `targ
 
 Una ventana de métricas de 3–60 minutos es un punto de partida para ajustar el sistema, no un requisito universal. Ajústela junto con la estabilización, los intervalos de reducción de escala y los SLO. Un paralelismo máximo con muchos divisores puede ayudar a alinear grupos de claves/particiones del autoscaler, pero **Flink no exige que todos los valores de paralelismo dividan uniformemente el máximo**. El modo de alineación, las particiones de origen y las entradas con/sin clave afectan a la selección.
 
-El escalado aplica anulaciones de paralelismo y, cuando es posible, usa localmente la API de requisitos de recursos del planificador adaptativo. Según la compatibilidad, el tipo de cambio, la configuración y el resultado, puede volver a una implementación completa. No siempre es una actualización last-state. El escalado in situ aún puede reiniciar tareas y recuperar el estado. Habilite `scaling.enabled` solo después de revisar las recomendaciones y probar la recuperación con estado y la carga máxima.
+El escalado aplica anulaciones de paralelismo y, cuando es posible, usa la API de requisitos de recursos del planificador adaptativo para hacerlo in situ. Según la compatibilidad, el tipo de cambio, la configuración y el resultado, puede volver a una implementación completa. No siempre es una actualización last-state. El escalado in situ aún puede reiniciar tareas y recuperar el estado. Habilite `scaling.enabled` solo después de revisar las recomendaciones y probar la recuperación con estado y la carga máxima.
 
 ![Ciclo de vida del Flink Operator y escalado basado en métricas con requisitos previos de recuperación.](../../.gitbook/assets/en-data-on-eks-flink-02-flink-kubernetes-operator-0.png)
 

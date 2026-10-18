@@ -1,6 +1,6 @@
 # Cilium 服务网格概览
 
-> **最后更新**：October 16, 2026 · Cilium/chart 1.20.3 · CLI 0.20.1 · Hubble CLI 1.20.2
+> **最后更新**：2026年10月16日 · Cilium/chart 1.20.3 · CLI 0.20.1 · Hubble CLI 1.20.2
 
 Cilium 将 Kubernetes 网络、eBPF 策略/负载均衡以及可选的应用层代理功能结合在一起。选定的 L7 流量由 Cilium 的 Envoy 集成处理；移除每个应用的 sidecar 并不会移除代理、内核要求或运维组件。
 

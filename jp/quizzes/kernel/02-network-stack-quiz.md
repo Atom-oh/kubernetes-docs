@@ -1,229 +1,229 @@
-# カーネルネットワークスタックのクイズ
+# カーネルネットワークスタックの理解度チェック
 
-このクイズでは、socket／VFS の入口、TCP buffer と window、状態に応じて異なる queue の観測方法、hook の位置、Pod 間 routing の理解を確認します。
+このクイズでは、ソケットと VFS の入口、TCP のバッファーとウィンドウ、接続状態ごとのキューの見方、フックの位置、Pod 間のルーティングについて理解を確認します。
 
 ## 選択問題
 
-1. NIC に送られる前の outgoing packet を queue し、`tc -s qdisc` で drop を確認できるのはどのコンポーネントですか。
+1. NIC に送信する前のパケットをキューイングし、`tc -s qdisc` で破棄数を確認できるのはどの機構ですか。
    - A) NIC の物理層
-   - B) qdisc: node 内での drop は `tc -s qdisc` の `dropped` に表示される
-   - C) VPC network
-   - D) アプリケーションの socket buffer
+   - B) qdisc。ノード内での破棄は `tc -s qdisc` の `dropped` に表示される
+   - C) VPC ネットワーク
+   - D) アプリケーションのソケットバッファー
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) qdisc: node 内での drop は `tc -s qdisc` の `dropped` に表示される**
+**正解: B) qdisc。ノード内での破棄は `tc -s qdisc` の `dropped` に表示される**
 
 **解説:**
-qdisc は outgoing packet を queue／schedule し、queue 上限や active queue management によって drop することがあります。`dropped` counter の増加は、その qdisc での drop を示しますが、経路上のあらゆる loss を示すわけではありません。影響を受けた時間帯と traffic を、interface、driver、stack、remote 側の証拠と照合してください。`overlimits` は drop を伴わない shaping を示すこともあり、`dropped` と同じ意味ではありません。
+qdisc は送信パケットをキューイングしてスケジューリングし、キューの上限や AQM（アクティブキュー管理）によってパケットを破棄することがあります。`dropped` カウンターが増えていれば、その qdisc でパケットが破棄されたことを示しますが、通信経路上の損失すべてを説明するものではありません。影響を受けた時間帯とトラフィックを、インターフェイス、ドライバー、ネットワークスタック、相手側の証拠と照合してください。`overlimits` はパケットを破棄せずにシェーピングした場合にも増えるため、`dropped` と同じ意味ではありません。
 </details>
 
-2. packet を早期に drop する性能について話すとき、XDP のどの mode の違いが重要ですか。
-   - A) kernel module ではなく hardware 上で動作する
-   - B) Native／driver XDP は skb allocation の前に動作し、generic XDP はすでに skb を使う
-   - C) JIT compile される
+2. パケットを早期に破棄する場合、XDP のどのモードの違いが性能に関係しますか。
+   - A) カーネルモジュールではなくハードウェア上で動作する
+   - B) ネイティブ／ドライバーモードの XDP は skb の確保前に動作するが、汎用 XDP はすでに skb を使っている
+   - C) JIT コンパイルされる
    - D) conntrack を参照する必要がない
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) Native／driver XDP は skb allocation の前に動作し、generic XDP はすでに skb を使う**
+**正解: B) ネイティブ／ドライバーモードの XDP は skb の確保前に動作するが、汎用 XDP はすでに skb を使っている**
 
 **解説:**
-早期 drop の利点は mode によって異なります。BPF map は状態を保持できます。性能は kernel、program、driver、hardware に依存するため、あらゆる環境で最速になるという保証はありません。
+早期破棄の利点はモードによって異なります。BPF map を使えば状態を保持できます。性能はカーネル、プログラム、ドライバー、ハードウェアに左右されるため、どの環境でも最速になるとは限りません。
 </details>
 
-3. 受信 traffic が多い状況で、CPU 1つだけが100%になり、ほかの CPU は idle です。考えられる原因と関連する仕組みとして、何を調べるべきですか。
-   - A) qdisc queue が不足しているため、queue 長を増やす
-   - B) 受信処理が偏っているため、RSS queue／IRQ の分配、RPS による software steering、RFS の cache locality を調べる
-   - C) socket buffer が不足しているため、`tcp_rmem` を増やす
-   - D) TCP congestion control の不一致なので、bbr に切り替える
+3. 受信トラフィックが多いとき、1つの CPU だけが 100% に達し、ほかの CPU はアイドル状態です。考えられる原因を調べるには、どの仕組みを確認すべきですか。
+   - A) qdisc のキュー不足。キュー長を増やす
+   - B) 受信処理の偏り。RSS キューと IRQ の分散、RPS によるソフトウェア振り分け、RFS によるキャッシュ局所性を確認する
+   - C) ソケットバッファーの不足。`tcp_rmem` を増やす
+   - D) TCP 輻輳制御の不一致。bbr に切り替える
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) 受信処理が偏っているため、RSS queue／IRQ の分配、RPS による software steering、RFS の cache locality を調べる**
+**正解: B) 受信処理の偏り。RSS キューと IRQ の分散、RPS によるソフトウェア振り分け、RFS によるキャッシュ局所性を確認する**
 
 **解説:**
-RSS は flow を受信 queue に hash します。IRQ affinity はどの CPU が処理するかに影響します。RPS は後続の受信処理を software で振り分け、RFS は処理を application の実行場所に近づけようとします。これらがすべて hardware interrupt を移動させるわけではなく、単一 flow が1つの queue にとどまる場合もあります。原因を決める前に `/proc/interrupts`、`mpstat -P ALL` の CPU ごとの `%soft`、application の CPU 使用率を確認してください。
+RSS はフローをハッシュして受信キューに振り分けます。IRQ affinity は、どの CPU が IRQ を処理するかに影響します。RPS は後続の受信処理をソフトウェアで振り分け、RFS はその処理をアプリケーションの実行 CPU に近づけようとします。これらすべてがハードウェア割り込みを移動させるわけではなく、単一フローが1つのキューに割り当てられ続けることもあります。原因を決めつける前に、`/proc/interrupts`、`mpstat -P ALL` に表示される CPU ごとの `%soft`、アプリケーションの CPU 使用率を確認してください。
 </details>
 
-4. 通常の interrupt-driven NAPI は、どのように packet ごとの処理 overhead を減らしますか。
-   - A) kernel が CPU frequency を自動的に上げる
-   - B) driver が対象 queue の interrupt を mask し、上限付き polling を schedule して、batch ごとに処理することで作業をまとめる
-   - C) 処理前に packet を圧縮する
+4. 通常の割り込み駆動型 NAPI は、どのようにパケットごとの処理オーバーヘッドを減らしますか。
+   - A) カーネルが CPU 周波数を自動的に上げる
+   - B) ドライバーが対象キューの割り込みをマスクし、処理数に上限のあるポーリングをスケジュールして、複数パケットをまとめて処理する
+   - C) 処理前にパケットを圧縮する
    - D) GRO を自動的に有効化する
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) driver が対象 queue の interrupt を mask し、上限付き polling を schedule して、batch ごとに処理することで作業をまとめる**
+**正解: B) ドライバーが対象キューの割り込みをマスクし、処理数に上限のあるポーリングをスケジュールして、複数パケットをまとめて処理する**
 
 **解説:**
-Batch 処理で interrupt と処理の overhead を分散できます。Polling が schedule される間、driver は対象 interrupt を mask し、polling が終わったときに解除できます。すべての CPU interrupt を無効にするわけではありません。Polling には work budget があり、過負荷では遅延や drop が増える場合があります。Busy polling と threaded NAPI は別の実行方式です。
+バッチ処理により、割り込みとパケット処理のオーバーヘッドを複数のパケットに分散できます。ポーリングがスケジュールされている間、ドライバーは対象の割り込みをマスクし、ポーリングの完了後に再び有効にできます。すべての CPU 割り込みを無効にするわけではありません。ポーリングには処理予算があり、過負荷になると遅延や破棄が増えることがあります。ビジーポーリングとスレッド化された NAPI は、これとは異なる実行方式です。
 </details>
 
-5. CPU がボトルネックなのに、同一 node 内の Pod 間 traffic が単一 flow で29.97 Gbpsに達したのはなぜですか。
-   - A) node 内に専用の高速 network がある
-   - B) 図示した一般的な veth／routed の同一 node 経路では、物理 NIC を通らず kernel memory 内に packet がとどまる場合がある
-   - C) kernel が packet を圧縮する
-   - D) 同一 node の traffic では TCP を使わない
+5. CPU がボトルネックであるにもかかわらず、同じノード上の Pod 間通信が単一フローで 29.97 Gbps に達したのはなぜですか。
+   - A) ノード内に専用の高速ネットワークがある
+   - B) 図示された一般的な veth／ルーティングの経路では、同じノード上のパケットが物理 NIC を通らず、カーネルメモリー内だけを通る場合がある
+   - C) カーネルがパケットを圧縮する
+   - D) 同じノード上の通信では TCP を使わない
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) 図示した一般的な veth／routed の同一 node 経路では、物理 NIC を通らず kernel memory 内に packet がとどまる場合がある**
+**正解: B) 図示された一般的な veth／ルーティングの経路では、同じノード上のパケットが物理 NIC を通らず、カーネルメモリー内だけを通る場合がある**
 
 **解説:**
-Virtual device にも driver 処理はあります。CNI、SR-IOV、overlay、service／policy による迂回経路が異なれば通信経路も変わるため、実際の構成に照らして判断してください。
+仮想デバイスにもドライバー処理はあります。CNI、SR-IOV、オーバーレイ、サービスやポリシーによる迂回の有無によって経路は変わるため、実際の構成に照らして判断してください。
 </details>
 
-6. 小さな handshake packet は通過しますが、DF が設定された大きな IPv4 packet が低 MTU の hop で drop され、戻りの ICMP も遮断されています。どの仕組みで通信が停止しますか。
+6. 小さなハンドシェイク用パケットは通過しますが、DF が設定された大きな IPv4 パケットは MTU の小さいホップで破棄され、返送される ICMP も遮断されています。通信が停止する原因として考えられる仕組みは何ですか。
    - A) conntrack の枯渇
-   - B) PMTUD の失敗。path MTU を通知する ICMP が遮断されるため、大きな packet だけが drop される
-   - C) TCP congestion control の不一致
-   - D) socket receive buffer の不足
+   - B) PMTUD の失敗。経路 MTU を通知する ICMP が遮断され、大きなパケットだけが破棄される
+   - C) TCP 輻輳制御の不一致
+   - D) ソケット受信バッファーの不足
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) PMTUD の失敗。path MTU を通知する ICMP が遮断されるため、大きな packet だけが drop される**
+**正解: B) PMTUD の失敗。経路 MTU を通知する ICMP が遮断され、大きなパケットだけが破棄される**
 
 **解説:**
-DF が設定されていると、IPv4 router は大きすぎる packet を fragment 化できず、通常は ICMP の「fragmentation needed」を返します。この通知が遮断されると PMTUD が壊れ、black hole が生じることがあります。IPv6 router は fragment 化せず、ICMPv6 の「Packet Too Big」を使います。設問に示された証拠がなければ、handshake の後に通信が停止することは手掛かりに過ぎず、証明ではありません。probe によって回復する場合もあります。
+DF が設定されていると、IPv4 ルーターは大きすぎるパケットをフラグメント化できず、通常は ICMP の「fragmentation needed」を返します。この通知が遮断されると PMTUD が失敗し、パケットが届かないブラックホール状態になることがあります。IPv6 ルーターはパケットをフラグメント化せず、ICMPv6 の「Packet Too Big」を使います。設問に示された証拠がなければ、ハンドシェイク後に通信が止まる現象は手掛かりに過ぎず、原因の証明にはなりません。プローブで復旧する場合もあります。
 </details>
 
-7. Network 障害を診断するとき、推奨される順序はどれですか。
-   - A) 上から下へ、application から NIC まで順に調べる
-   - B) drop counter から始める: `conntrack -S` の `insert_failed`、`tc -s qdisc` の `dropped`、`ethtool -S` の NIC drop
-   - C) 必ず最初に `tcpdump` で packet capture する
+7. ネットワーク障害の診断で、最初に確認するものとして推奨されるのはどれですか。
+   - A) アプリケーションから NIC まで、上から順に調べる
+   - B) 破棄カウンターから調べる。`conntrack -S` の `insert_failed`、`tc -s qdisc` の `dropped`、`ethtool -S` の NIC 破棄数を確認する
+   - C) 必ず最初に `tcpdump` でパケットをキャプチャーする
    - D) CPU 使用率から始める
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) drop counter から始める: `conntrack -S` の `insert_failed`、`tc -s qdisc` の `dropped`、`ethtool -S` の NIC drop**
+**正解: B) 破棄カウンターから調べる。`conntrack -S` の `insert_failed`、`tc -s qdisc` の `dropped`、`ethtool -S` の NIC 破棄数を確認する**
 
 **解説:**
-これらの counter は調査候補を示しますが、診断を完了させるものではありません。変化を対象 flow と時間帯に関連付けてください。conntrack では `insert_failed` が枯渇だけを意味するわけではないため、count／max と kernel log も確認します。集約 counter には無関係な traffic が含まれることがあります。ローカル counter に変化がなくても、remote 側の drop、認証、application の失敗は除外できません。症状に応じて、`ss -tin` の RTT／cwnd、返された error、経路上のほかの証拠も確認してください。
+これらのカウンターは調査の手掛かりであり、それだけで診断が完了するわけではありません。カウンターの変化を、対象のフローと時間帯に関連付けてください。conntrack の `insert_failed` は枯渇だけを意味するわけではないため、現在数と上限、およびカーネルログも確認します。集約カウンターには無関係なトラフィックが含まれることがあります。ローカルのカウンターに変化がなくても、相手側での破棄、認証エラー、アプリケーションの失敗は否定できません。症状に応じて、`ss -tin` の RTT／cwnd、返されたエラー、経路上のほかの証拠も確認してください。
 </details>
 
-8. workload の benchmark がなくても正しい、`cubic` と `bbr` の比較はどれですか。
+8. ワークロードのベンチマークを行わなくても妥当と言える、`cubic` と `bbr` の比較はどれですか。
    - A) cubic は UDP 用、bbr は TCP 用
-   - B) cubic は loss／ECN などの event に応じて congestion window を調整し、bbr は delivery rate と RTT の推定値を使う。結果は実装と経路に左右される
+   - B) cubic は損失や ECN などのイベントに応じて輻輳ウィンドウを調整し、bbr は配信レートと RTT の推定値を使う。結果は実装と経路に左右される
    - C) bbr は常に cubic より高速
-   - D) kernel 6.x で cubic は削除された
+   - D) カーネル 6.x では cubic が削除された
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) cubic は loss／ECN などの event に応じて congestion window を調整し、bbr は delivery rate と RTT の推定値を使う。結果は実装と経路に左右される**
+**正解: B) cubic は損失や ECN などのイベントに応じて輻輳ウィンドウを調整し、bbr は配信レートと RTT の推定値を使う。結果は実装と経路に左右される**
 
 **解説:**
-これらの model は制御動作の違いを説明するもので、性能順位を保証しません。BBR にも loss／recovery の挙動があり、どちらの algorithm も receive-window や application の制限をなくすものではありません。比較を解釈する前に、kernel 実装、有効な algorithm、RTT／cwnd、workload、経路を特定してください。
+ここでの説明は制御方式の違いを示すもので、性能の優劣を保証するものではありません。BBR にも損失検出や回復の動作があります。また、どちらのアルゴリズムも受信ウィンドウやアプリケーション側の制約を取り除くものではありません。比較結果を解釈する前に、カーネル実装、有効なアルゴリズム、RTT／cwnd、ワークロード、経路を特定してください。
 </details>
 
-9. Process が TCP socket に対して `write(fd, ...)` と `send(fd, ...)` の両方を使います。Linux の socket／VFS bridge を正しく説明しているのはどれですか。
-   - A) どちらの呼び出しも TCP に入る前に disk filesystem を通る必要がある
-   - B) `send()` は常に `vfs_write()` を呼び、socket は disk file である
-   - C) FD は socket に関連付けられた `struct file` を参照する。`write()` は VFS の socket file operation を使い、`send()` は socket 専用の入口経路を使う
-   - D) Socket に file descriptor table の entry はない
+9. プロセスが TCP ソケットに対して `write(fd, ...)` と `send(fd, ...)` の両方を使います。Linux のソケットと VFS の連携を正しく説明しているのはどれですか。
+   - A) どちらの呼び出しも TCP に渡る前にディスク上のファイルシステムを通る必要がある
+   - B) `send()` は必ず `vfs_write()` を呼び、ソケットはディスク上のファイルである
+   - C) FD はソケットに関連付けられた `struct file` を参照する。`write()` は VFS のソケット用ファイル操作を使い、`send()` はソケット専用の入口経路を使う
+   - D) ソケットにはファイルディスクリプターテーブルのエントリーがない
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: C) FD は socket に関連付けられた `struct file` を参照する。`write()` は VFS の socket file operation を使い、`send()` は socket 専用の入口経路を使う**
+**正解: C) FD はソケットに関連付けられた `struct file` を参照する。`write()` は VFS のソケット用ファイル操作を使い、`send()` はソケット専用の入口経路を使う**
 
 **解説:**
-version が固定された Linux の例では、`file->private_data` が `struct socket` に結び付いています。VFS の `write()` は `socket_file_ops.write_iter` から `sock_write_iter` に dispatch します。`send()` は独自の syscall 経路で FD から socket を取得します。どちらも socket／protocol operation に到達します。File abstraction を共有していても disk I/O を意味するわけではなく、送信が成功しても peer application が受信したとは限りません。[VFS bridge](../../kernel/02-network-stack.md#socket-vfs-bridge)を参照してください。
+特定バージョンの Linux では、`file->private_data` が `struct socket` に結び付いています。VFS の `write()` は `socket_file_ops.write_iter` から `sock_write_iter` にディスパッチされます。一方、`send()` は専用のシステムコール経路で FD からソケットを取得します。どちらもソケットやプロトコルの操作に到達します。ファイル抽象化を共有していてもディスク I/O が発生するわけではなく、送信が成功しても相手側のアプリケーションがデータを受信したとは限りません。[VFS との連携](../../kernel/02-network-stack.md#socket-vfs-bridge)を参照してください。
 </details>
 
-10. 確立済み TCP 接続に未読 payload があり、`ss -m` の receive memory が `Recv-Q` より大きい場合、正しい説明はどれですか。
-   - A) Memory accounting には allocation overhead と、順序が前後した data が含まれる場合がある。`Recv-Q` は未読の in-order stream byte 数を表す
-   - B) 各 `sk_buff` が socket receive buffer 全体である
-   - C) Receive memory、`Recv-Q`、`rwnd`、`cwnd` は常に同じ値である
-   - D) 各 skb が必ず wire 上の packet 1つに対応する
+10. 確立済み TCP 接続に未読データがあり、`ss -m` の受信メモリー値が `Recv-Q` より大きい場合、正しい説明はどれですか。
+   - A) メモリーの計上値には確保のオーバーヘッドや順序が前後したデータが含まれる場合がある。`Recv-Q` は順序どおりに並んだ未読ストリームのバイト数を表す
+   - B) 各 `sk_buff` がソケットの受信バッファー全体を表す
+   - C) 受信メモリー、`Recv-Q`、`rwnd`、`cwnd` は常に同じ値である
+   - D) 1つの skb は必ず通信路上の1つのパケットに対応する
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: A) Memory accounting には allocation overhead と、順序が前後した data が含まれる場合がある。`Recv-Q` は未読の in-order stream byte 数を表す**
+**正解: A) メモリーの計上値には確保のオーバーヘッドや順序が前後したデータが含まれる場合がある。`Recv-Q` は順序どおりに並んだ未読ストリームのバイト数を表す**
 
 **解説:**
-skb は packet data と metadata を表します。fragment を参照したり、clone されたり、結合／分割された data を表したりすることがあります。Socket memory budget、application payload、receiver が通知する window、sender の congestion window は、それぞれ異なる上限や量を表します。`ss -m` の memory 値を `rwnd` の代わりに使うことはできず、ローカル buffer を増やしても `cwnd` が直接増えるわけではありません。[Queue の観測](../../kernel/02-network-stack.md#ss-tcp-queues)を参照してください。
+skb はパケットデータとメタデータを保持します。フラグメントを参照したり、複製されたり、結合または分割されたデータを表したりすることがあります。ソケットのメモリー予算、アプリケーションのペイロード、受信側が通知するウィンドウ、送信側の輻輳ウィンドウは、それぞれ別の量や上限です。`ss -m` のメモリー値を `rwnd` の代わりにはできません。また、ローカルのバッファーを増やしても `cwnd` が直接大きくなるわけではありません。[キューの確認方法](../../kernel/02-network-stack.md#ss-tcp-queues)を参照してください。
 </details>
 
-11. 確立済みの TCP 接続で `ss` が `LISTEN` に `Recv-Q=3, Send-Q=128`、`ESTABLISHED` に `Recv-Q=4096, Send-Q=8192` と表示します。これらの値は何を意味しますか。
-   - A) どちらの行も NIC ring 内の packet 数を数える
-   - B) Listener は3 byte 受信し、128 byte 送信した
-   - C) Listener には accept 待ちの SYN が3つあり、確立済み接続の8192 byte はすべて wire 上にあると分かる
-   - D) Listener には accept 待ちの接続が3つあり、backlog の最大値は128。確立済み socket には未読の in-order byte が4096あり、書き込み済みで cumulative acknowledgement を受けていない byte が8192ある
+11. `ss` に、`LISTEN` の `Recv-Q=3, Send-Q=128` と、`ESTABLISHED` の `Recv-Q=4096, Send-Q=8192` が表示されています。これらの値の意味はどれですか。
+   - A) どちらの行も NIC のリング内にあるパケット数を示す
+   - B) リスナーは3バイト受信し、128バイト送信した
+   - C) リスナーには SYN queue 待ちが3つあり、確立済み接続の8192バイトはすべて通信路上にある
+   - D) リスナーには accept 待ちの接続が3つあり、backlog の上限は128。確立済みソケットには順序どおりに並んだ未読データが4096バイトあり、書き込み済みで累積 ACK を受け取っていないデータが8192バイトある
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: D) Listener には accept 待ちの接続が3つあり、backlog の最大値は128。確立済み socket には未読の in-order byte が4096あり、書き込み済みで cumulative acknowledgement を受けていない byte が8192ある**
+**正解: D) リスナーには accept 待ちの接続が3つあり、backlog の上限は128。確立済みソケットには順序どおりに並んだ未読データが4096バイトあり、書き込み済みで累積 ACK を受け取っていないデータが8192バイトある**
 
 **解説:**
-Listener では列が接続数を示し、SYN queue の使用量は示しません。確立済み TCP では stream byte 数を示します。`Send-Q` には未送信と送信済み／未 ack の byte の両方が含まれる場合があります。これらは socket memory budget ではなく、packet loss の証拠でもありません。[状態によって異なる TCP queue](../../kernel/02-network-stack.md#ss-tcp-queues)を参照してください。
+リスナーでは各列が接続数を示し、SYN キューの使用量を示すものではありません。確立済み TCP 接続ではストリームのバイト数を示します。`Send-Q` には未送信のバイトと、送信済みでも ACK を受け取っていないバイトの両方が含まれる場合があります。これらはソケットのメモリー予算を示す値ではなく、パケット損失の証拠でもありません。[TCP キューの状態別の見方](../../kernel/02-network-stack.md#ss-tcp-queues)を参照してください。
 </details>
 
-12. Application が `SO_RCVBUF` と `SO_SNDBUF` を明示的に設定しました。その後、Operator が `tcp_rmem[2]` と `tcp_wmem[2]` だけを増やしました。何が起こると考えるのが正しいですか。
-   - A) 既存 socket はすべて新しい最大値をただちに確保する
-   - B) 明示された socket 設定は、それぞれの方向の通常の自動調整に対して lock されたままである
-   - C) Linux は `tcp_rmem[2]` を2倍にし、その値を `rwnd` として直接広告する
-   - D) Send-buffer policy を変更すると peer の receive window が直接広がる
+12. アプリケーションが `SO_RCVBUF` と `SO_SNDBUF` を明示的に設定した後、運用担当者が `tcp_rmem[2]` と `tcp_wmem[2]` だけを増やしました。何が起こると考えるのが正しいですか。
+   - A) 既存のすべてのソケットが、新しい上限まで直ちにメモリーを確保する
+   - B) 明示的に設定したソケットバッファーは、それぞれの方向の通常の自動調整の対象外のままである
+   - C) Linux は `tcp_rmem[2]` を2倍にし、その値を `rwnd` として直接通知する
+   - D) 送信バッファーの設定を変えると、相手側の受信ウィンドウが直接大きくなる
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: B) 明示された socket 設定は、それぞれの方向の通常の自動調整に対して lock されたままである**
+**正解: B) 明示的に設定したソケットバッファーは、それぞれの方向の通常の自動調整の対象外のままである**
 
 **解説:**
-Socket option は `SOCK_RCVBUF_LOCK` と `SOCK_SNDBUF_LOCK` を設定します。これは policy flag であり、mutex ではありません。通常の option request は `net.core.rmem_max`／`wmem_max` の制約を受けます。Linux は通常、受け入れた request を bookkeeping のために2倍にし、その値を `getsockopt()` で返しますが、その memory がすべて確保済み、または payload として使用可能という意味ではありません。Sysctl による自動調整の上限と、明示的な option 上限は別の制御です。[TCP buffer policy](../../kernel/02-network-stack.md#tcp-buffer-policy)を確認してください。
+ソケットオプションを設定すると `SOCK_RCVBUF_LOCK` と `SOCK_SNDBUF_LOCK` が有効になります。これはポリシーフラグであり、mutex ではありません。通常のオプション要求は `net.core.rmem_max`／`wmem_max` の制約を受けます。Linux は通常、受け付けた要求値を管理用に2倍し、その値を `getsockopt()` で返します。ただし、メモリーがすべて確保済み、あるいはペイロードに使える状態という意味ではありません。sysctl による自動調整の上限と、明示的に指定するオプション値は別の制御です。[TCP バッファーポリシー](../../kernel/02-network-stack.md#tcp-buffer-policy)を確認してください。
 </details>
 
-13. 仮定上の経路は1 Gbit/s、RTT 40 ms です。どの BDP 計算と結論が妥当ですか。
-   - A) 40 MB。すべての socket の send buffer をこの値に設定する
-   - B) 5 byte。millisecond と bit/s をそのまま掛ければよい
-   - C) 5,000,000 byte（約4.77 MiB）。この規模を byte 単位に換算した window、application の進行状況、memory overhead と比較する
-   - D) 5 MB。したがって、すべての host で buffer がボトルネックだと証明される
+13. 仮定上の経路の速度は 1 Gbit/s、RTT は 40 ms です。妥当な BDP の計算と解釈はどれですか。
+   - A) 40 MB。すべてのソケットの送信バッファーをこの値に設定する
+   - B) 5 バイト。ミリ秒と bit/s をそのまま掛ければよい
+   - C) 5,000,000 バイト（約 4.77 MiB）。この値をバイト単位に換算したウィンドウ、アプリケーションの進行状況、メモリーのオーバーヘッドと比較する
+   - D) 5 MB。したがって、すべてのホストでバッファーがボトルネックだと証明される
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: C) 5,000,000 byte（約4.77 MiB）。この規模を byte 単位に換算した window、application の進行状況、memory overhead と比較する**
+**正解: C) 5,000,000 バイト（約 4.77 MiB）。この値をバイト単位に換算したウィンドウ、アプリケーションの進行状況、メモリーのオーバーヘッドと比較する**
 
 **解説:**
-`1,000,000,000 bit/s × 0.040 s ÷ 8 bit/byte = 5,000,000 bytes` です。RTT を使い、理想的な定常状態での in-flight payload を概算しています。`ss` は通常 `cwnd` を segment 数で表示するため、byte 単位の値と比べるには MSS を使ってください。Receive-window の制限、pacing、loss、CPU、application の挙動は引き続き影響します。BDP は一律に適用する tuning 指示ではありません。[BDP の考え方](../../kernel/02-network-stack.md#tcp-bdp-reasoning)と[TCP buffer lab](../../networking/07-linux-network-diagnostics.md#tcp-buffer-lab)を参照してください。
+`1,000,000,000 bit/s × 0.040 s ÷ 8 bit/byte = 5,000,000 bytes` です。RTT を使って、定常状態で経路上に存在するペイロード量を理想化して見積もっています。`ss` は通常 `cwnd` をセグメント数で表示するため、バイト単位の値と比較するには MSS を使って換算してください。受信ウィンドウの制約、ペーシング、損失、CPU、アプリケーションの動作も引き続き影響します。BDP は、すべての環境に一律に適用するチューニング指示ではありません。[BDP の考え方](../../kernel/02-network-stack.md#tcp-bdp-reasoning)と[TCP バッファーのラボ](../../networking/07-linux-network-diagnostics.md#tcp-buffer-lab)を参照してください。
 </details>
 
-14. Interface の IP MTU は1500です。Host 上の capture では、1500 byte を超える TCP unit と、不正に見える送信 checksum が記録されています。最初にどう判断すべきですか。
-   - A) Capture 位置と offload を調べる。option がなければ IPv4 の TCP payload は1460 byte 以下だが、host の GSO／GRO unit と未計算 checksum は wire 上の packet と異なる場合がある
-   - B) TCP MSS は IP header を含むため1500 byte である
-   - C) Remote の IPv6 router が packet を fragment 化したに違いない
-   - D) Capture により wire 上の破損が証明され、PMTUD が無効だと分かる
+14. インターフェイスの IP MTU は 1500 です。ホスト上のキャプチャーには、1500 バイトを超える TCP 単位と、不正に見える送信チェックサムが記録されています。まず何を確認すべきですか。
+   - A) キャプチャー位置とオフロードを調べる。オプションがなければ IPv4 の TCP ペイロードは 1460 バイト以下だが、ホスト上の GSO／GRO 単位や未計算のチェックサムは、実際に通信路を流れるパケットとは異なる場合がある
+   - B) TCP MSS は IP ヘッダーを含むため 1500 バイトである
+   - C) 相手側の IPv6 ルーターがパケットをフラグメント化したに違いない
+   - D) キャプチャーによって通信路上の破損が証明され、PMTUD が無効だと分かる
 
 <details>
 
 <summary>解答を表示</summary>
 
-**正解: A) Capture 位置と offload を調べる。option がなければ IPv4 の TCP payload は1460 byte 以下だが、host の GSO／GRO unit と未計算 checksum は wire 上の packet と異なる場合がある**
+**正解: A) キャプチャー位置とオフロードを調べる。オプションがなければ IPv4 の TCP ペイロードは 1460 バイト以下だが、ホスト上の GSO／GRO 単位や未計算のチェックサムは、実際に通信路を流れるパケットとは異なる場合がある**
 
 **解説:**
-MSS は IP／TCP header を除いた値で、PMTU は経路全体に依存します。option がなければ IPv4 は `1500 - 20 - 20 = 1460`、IPv6 は base header を除いて1440 byte です。Offload によって segmentation／checksum の計算が後回しになったり、受信 packet が結合されたりすることがあります。Host の capture だけでは wire 上の packet size や破損は証明できません。[MTU／MSS lab](../../networking/07-linux-network-diagnostics.md#mtu-mss-lab)へ進んでください。
+MSS は IP／TCP ヘッダーを除いた値で、PMTU は経路全体に依存します。オプションがなければ IPv4 は `1500 - 20 - 20 = 1460`、IPv6 は基本ヘッダーを除いて 1440 バイトです。オフロードによりセグメント化やチェックサム計算が後回しになったり、受信パケットが結合されたりする場合があります。ホスト上のキャプチャーだけでは、通信路上のパケットサイズや破損を証明できません。[MTU／MSS のラボ](../../networking/07-linux-network-diagnostics.md#mtu-mss-lab)を参照してください。
 </details>

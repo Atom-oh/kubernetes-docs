@@ -84,7 +84,7 @@ Algunos puntos no se pueden cerrar sobre el papel y requieren mediciones reales.
 | Detección automática de subredes del controlador ALB en una subred compartida | Comprobar si falla la detección automática basada en etiquetas → si es así, normalizar el uso de anotaciones explícitas |
 | Tasa de crecimiento de las entradas de acceso | (Aumento por carga de trabajo añadida) × número de cargas de trabajo objetivo < 3,000 |
 | Número de grupos de nodos administrados | Margen frente al valor predeterminado de 30 y la cuota aplicada; distinguir ubicación de aislamiento de seguridad |
-| Tiempo de respuesta principal entre la cuenta del clúster y la cuenta de cargas de trabajo | Tiempo para determinar «problema de CNI frente a problema de aplicación» |
+| Tiempo hasta la primera respuesta entre la cuenta del clúster y la cuenta de cargas de trabajo | Tiempo para determinar «problema de CNI frente a problema de aplicación» |
 | Tiempo de detección/bloqueo de reglas Allow demasiado amplias de grupos de seguridad de participantes | Tiempo desde la detección hasta el bloqueo mediante una política de auditoría de Firewall Manager |
 
 ### PoC-2: Runtime EKS A/B y configuración de AZ (requisito previo: definir RTO/RPO por CUJ)
@@ -119,14 +119,14 @@ Algunos puntos no se pueden cerrar sobre el papel y requieren mediciones reales.
 Este marco no se limita a decisiones de topología como cuenta/VPC/EKS; se puede ampliar hasta convertirlo en un principio operativo aplicado a cada ADR (registro de decisión de arquitectura). Las vías de ejecución para automatizar cambios de infraestructura suelen ser:
 
 - **Solo IaC**: cambios únicamente mediante IaC escrito y revisado por personas. Ofrece la mayor reproducibilidad, pero es lento para el trabajo urgente o exploratorio.
-- **IaC asistido por IA**: un agente genera propuestas de cambios de IaC que se ejecutan mediante el proceso existente de revisión → plan → aplicación. Reduce el costo de autoría, pero conlleva el riesgo de diferencias generadas grandes y desviación con respecto al estado real.
-- **Política/intención + plan generado**: un agente lee el estado actual y genera un plan de ejecución. Separa la intención del backend, pero esquemas débiles de intención y conciliación de estado producen resultados incoherentes.
+- **IaC asistido por IA**: un agente genera propuestas de cambios de IaC que se ejecutan mediante el proceso existente de revisión → plan → aplicación. Reduce el costo de autoría, pero conlleva el riesgo de diferencias generadas extensas y desviación con respecto al estado real.
+- **Política/intención + plan generado**: un agente lee el estado actual y genera un plan de ejecución. Separa la intención del backend, pero los esquemas de intención poco definidos y la conciliación deficiente del estado producen resultados incoherentes.
 - **MCP/CLI/API directa del agente**: un agente aprobado realiza los cambios directamente y luego los verifica. Es la opción más rápida, pero conlleva riesgos de permisos demasiado amplios, fallos parciales e inyección de prompts.
 - **Híbrida por nivel de riesgo**: IaC para cambios de configuración persistentes y de alto riesgo; ejecución directa limitada del agente para tareas de bajo riesgo y reversibles. Esta es la dirección realista para la mayoría de las organizaciones.
 
 Para cada vía de ejecución, defina controles adecuados a su riesgo: intención legible por máquinas, instantánea previa a la ejecución, plan, comprobaciones deterministas de políticas, aprobación, identidad temporal de alcance limitado, comprobación posterior, registros de CloudTrail, conciliación del estado real y un contrato de recuperación.
 
-> **Alcance de AWS MCP Server**: según la comprobación del 12 de octubre de 2026, la tabla de endpoints enumera ocho regiones (us-east-1, us-west-2, ap-northeast-1, ap-southeast-1/2, eu-central-1 y eu-west-1/2) y ningún endpoint de Seúl (ap-northeast-2). La ubicación del endpoint difiere de la región de un recurso administrado. La ejecución de API usa IAM y permisos posteriores, y los registros de CloudTrail están disponibles para revisión. Evalúe el endpoint, la autenticación, los registros y las rutas de datos según los requisitos de la organización; la mera ausencia de un endpoint de Seúl no demuestra una infracción normativa.
+> **Alcance de AWS MCP Server**: según la comprobación del 12 de octubre de 2026, la tabla de endpoints enumera ocho regiones (us-east-1, us-west-2, ap-northeast-1, ap-southeast-1/2, eu-central-1 y eu-west-1/2) y ningún endpoint de Seúl (ap-northeast-2). La ubicación del endpoint difiere de la región de un recurso administrado. La ejecución de API usa IAM y los permisos de los servicios posteriores, y los registros de CloudTrail están disponibles para revisión. Evalúe el endpoint, la autenticación, los registros y las rutas de datos según los requisitos de la organización; la mera ausencia de un endpoint de Seúl no demuestra una infracción normativa.
 
 ## Documentos relacionados
 

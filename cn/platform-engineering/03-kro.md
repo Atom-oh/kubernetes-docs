@@ -1,10 +1,10 @@
 # Kube Resource Orchestrator (kro)
 
-> **最后更新**: September 12, 2026 · **基准版本**: kro 0.9.4
+> **最后更新**：2026年9月12日 · **基准版本**：kro 0.9.4
 
 ## 概念与范围
 
-官方名称为 Kube Resource Orchestrator，它是 Kubernetes SIG Cloud Provider 的一个子项目。ResourceGraphDefinition (RGD) 定义 Kubernetes 资源之间的输入架构、关系和状态。经过验证和编译后，kro 会动态协调生成的 CRD 实例。
+官方名称为 Kube Resource Orchestrator，它是 Kubernetes SIG Cloud Provider 的一个子项目。ResourceGraphDefinition (RGD) 定义 Kubernetes 资源之间的输入模式、关系和状态。经过验证和编译后，kro 会动态协调生成的 CRD 实例。
 
 RGD 定义的是 API 和资源图，而不是应用实例。实例的 spec 提供输入，spec.resources 模板则创建 Deployment 和 Service 等对象。现有 CRD（例如 ACK 资源）可以参与其中，但 kro 不提供这些资源的控制器或 AWS IAM 权限。
 
