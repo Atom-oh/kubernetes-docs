@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const SITE = 'https://www.atomai.click/kubernetes-docs'
+const SITE = 'https://docs.atomai.click/kubernetes-docs'
 const LOCALES = ['ko', 'en']
 const EXCLUDE = [/^quizzes\//, /\/quizzes\//, /^news\//, /^SUMMARY\.md$/, /^README\.md$/]
 const MAX_CHUNK_CHARS = 2400

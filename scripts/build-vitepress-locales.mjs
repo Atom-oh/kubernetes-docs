@@ -167,7 +167,7 @@ export async function markArchmapsNoindex(destination) {
   return marked
 }
 
-const SITE_ROOT = 'https://www.atomai.click/kubernetes-docs/'
+const SITE_ROOT = 'https://docs.atomai.click/kubernetes-docs/'
 
 // Locales that were once published here (five-locale build, .html URLs) and
 // still sit in search indexes; those URLs now 404. Only ko/en are built, so

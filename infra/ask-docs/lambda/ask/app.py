@@ -38,11 +38,12 @@ INDEX_RECHECK_SECONDS = 600  # re-check the S3 ETag at most every 10 minutes
 
 
 def _tokenize(text):
+    """Latin tokens as words; Hangul words as character bigrams so attached particles
+    (e.g. "Karpenter와", "차이는") still match. Single Hangul characters are dropped."""
     tokens = []
     for word in re.findall(r"[a-z0-9][a-z0-9._/-]*|[가-힣]+", text.lower()):
         if re.match(r"[가-힣]", word):
-            tokens.append(word)
-            tokens.extend(word[i : i + 2] for i in range(len(word) - 1))  # Hangul bigrams
+            tokens.extend(word[i : i + 2] for i in range(len(word) - 1))
         else:
             tokens.append(word)
     return tokens
@@ -86,16 +87,21 @@ def _search(index, query, locale, k):
         if d["chunk"]["locale"] != locale:
             continue
         score = 0.0
+        matched = 0
         for t in q_tokens:
             f = d["tf"].get(t, 0)
-            if not f:
+            in_title = t in d["title_tokens"]
+            if not f and not in_title:
                 continue
+            matched += 1
             idf = math.log(1 + (index["n"] - index["df"][t] + 0.5) / (index["df"][t] + 0.5))
-            score += idf * f * (k1 + 1) / (f + k1 * (1 - b + b * d["len"] / index["avg_len"]))
-            if t in d["title_tokens"]:
-                score += idf * 0.5  # title/heading match boost
+            if f:
+                score += idf * f * (k1 + 1) / (f + k1 * (1 - b + b * d["len"] / index["avg_len"]))
+            if in_title:
+                score += idf * 1.5  # title/heading match boost
         if score > 0:
-            scored.append((score, d["chunk"]))
+            # Prefer chunks that cover more of the question's distinct terms.
+            scored.append((score * (matched / len(q_tokens)) ** 2, d["chunk"]))
     scored.sort(key=lambda x: x[0], reverse=True)
     return [c for _, c in scored[:k]]
 

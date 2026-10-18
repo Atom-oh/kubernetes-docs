@@ -4,8 +4,8 @@ import { createDocViewTracker, GA_ID } from '../../.vitepress/theme/analytics.mj
 
 test('document views cover initial load and SPA navigation without duplicating GA4 page_view', () => {
   const events = []
-  const first = 'https://www.atomai.click/kubernetes-docs/ko/llm-guide'
-  const second = 'https://www.atomai.click/kubernetes-docs/ko/roadmap'
+  const first = 'https://docs.atomai.click/kubernetes-docs/ko/llm-guide'
+  const second = 'https://docs.atomai.click/kubernetes-docs/ko/roadmap'
   const track = createDocViewTracker('https://www.google.com/', (...args) => events.push(args))
   assert.equal(events.length, 0)
   track(first, 'LLM과 함께 읽기')
@@ -29,7 +29,7 @@ test('document views cover initial load and SPA navigation without duplicating G
 
 test('same-document renders and outline anchors do not inflate page views', () => {
   const events = []
-  const url = 'https://www.atomai.click/kubernetes-docs/ko/roadmap'
+  const url = 'https://docs.atomai.click/kubernetes-docs/ko/roadmap'
   const track = createDocViewTracker('', (...args) => events.push(args))
   track(url + '#intro', 'Roadmap')
   track(url, 'Roadmap')

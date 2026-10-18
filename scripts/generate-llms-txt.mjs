@@ -14,7 +14,7 @@ import { extractDescription, extractLastUpdated } from '../.vitepress/seo.mjs'
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
 
-export const SITE_BASE = 'https://www.atomai.click/kubernetes-docs'
+export const SITE_BASE = 'https://docs.atomai.click/kubernetes-docs'
 // Images and other non-page assets are referenced relatively from the source
 // tree and get content-hashed by VitePress, so the raw repo is the only stable
 // absolute address for them.

@@ -35,8 +35,8 @@ test('retrieval corpus excludes answers, labs, missing pages, and duplicate navi
     'en/storage/benchmark.md', 'en/networking/cilium.md'
   ])
   const doc = docs[0]
-  assert.equal(doc.url, 'https://www.atomai.click/kubernetes-docs/ko/storage/benchmark')
-  assert.equal(doc.markdownUrl, 'https://www.atomai.click/kubernetes-docs/llms/ko/storage/benchmark.md')
+  assert.equal(doc.url, 'https://docs.atomai.click/kubernetes-docs/ko/storage/benchmark')
+  assert.equal(doc.markdownUrl, 'https://docs.atomai.click/kubernetes-docs/llms/ko/storage/benchmark.md')
   assert.equal(doc.lastUpdated, '2026-09-10')
   assert.deepEqual(doc.headings, ['EBS gp2 gp3', 'Measured result'])
   assert.equal(doc.sha256, createHash('sha256').update(doc.content).digest('hex'))

@@ -22,7 +22,7 @@ test('Markdown discovery is managed by VitePress across client navigation, witho
     {
       rel: 'alternate',
       type: 'text/markdown',
-      href: 'https://www.atomai.click/kubernetes-docs/llms/ko/llm-guide.md'
+      href: 'https://docs.atomai.click/kubernetes-docs/llms/ko/llm-guide.md'
     }
   ]])
   assert.ok(pageData.frontmatter.head.some(([, attrs]) => attrs.name === 'test-existing-head'))
@@ -40,11 +40,11 @@ test('canonical, language alternates and article metadata follow the current pag
     }
     await config.transformPageData(pageData, { siteConfig: config })
     const head = pageData.frontmatter.head
-    const url = `https://www.atomai.click/kubernetes-docs/ko/${name}`
+    const url = `https://docs.atomai.click/kubernetes-docs/ko/${name}`
     assert.equal(head.find(([, attrs]) => attrs.rel === 'canonical')?.[1].href, url)
     assert.equal(head.find(([, attrs]) => attrs.property === 'og:url')?.[1].content, url)
     assert.equal(head.find(([, attrs]) => attrs.hreflang === 'en')?.[1].href,
-      `https://www.atomai.click/kubernetes-docs/en/${name}`)
+      `https://docs.atomai.click/kubernetes-docs/en/${name}`)
     const json = JSON.parse(head.find(([, attrs]) => attrs.type === 'application/ld+json')[2])
     assert.equal(json['@graph'][0].mainEntityOfPage['@id'], url)
     assert.deepEqual(await config.transformHead({ pageData }), [])

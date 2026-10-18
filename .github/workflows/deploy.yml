@@ -41,6 +41,28 @@ jobs:
         run: python3 -B -m unittest discover -s examples/networking/foundations -p 'test_*.py' -v
       - run: npm run docs:build
       - run: mkdir -p .vitepress/dist/assets && cp assets/*.html .vitepress/dist/assets/
+      # The same build is also published to docs.atomai.click (CloudFront + private S3, see
+      # infra/ask-docs). GitHub Pages stays up and sends its visitors there (head script in config).
+      - if: github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::180294183052:role/kubernetes-docs-github-deploy
+          aws-region: us-east-1
+      - if: github.ref == 'refs/heads/main'
+        name: Publish to docs.atomai.click
+        env:
+          SITE_BUCKET: atomai-docs-site-180294183052-us-east-1
+          DISTRIBUTION_ID: EM9WBM64HICQ3
+        run: |
+          aws s3 sync .vitepress/dist "s3://$SITE_BUCKET/kubernetes-docs/" --delete --only-show-errors
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths '/kubernetes-docs/*' --query 'Invalidation.Id' --output text
+      - if: github.ref == 'refs/heads/main'
+        name: Publish the docs Q&A index
+        env:
+          INDEX_BUCKET: atomai-ask-docs-180294183052-ap-northeast-2
+        run: |
+          node scripts/build-ask-index.mjs
+          aws s3 cp build/ask-index/chunks.json.gz "s3://$INDEX_BUCKET/index/chunks.json.gz" --sse AES256 --region ap-northeast-2 --only-show-errors
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
