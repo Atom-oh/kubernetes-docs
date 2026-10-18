@@ -1,7 +1,7 @@
 # 在 EKS 上进行模型训练
 
-> **最后更新**：October 16, 2026
-> **基线版本**：Slinky1.2.3、MPI Operator0.8.2、Volcano1.15.2、PyTorch2.14.0、Neuron SDK2.32.0
+> **最后更新**：2026 年 10 月 16 日
+> **基线版本**：Slinky 1.2.3、MPI Operator 0.8.2、Volcano 1.15.2、PyTorch 2.14.0、Neuron SDK 2.32.0
 
 分布式训练需要兼容的模型代码、数据分片、启动器、设备分配、通信和检查点。有效的清单或处于 Running 状态的 Pod，并不能证明训练或恢复功能正常。
 
@@ -34,7 +34,7 @@ TP8×PP4×DP2 表示 64 个 rank。全局批次大小为 **微批次 × 累积�
 
 ## Slurm 和 Slinky
 
-官方仓库为 SlinkyProject/slurm-operator。已验证 Tag1.2.3 及其 OCI charts；GitHub releases/latest 返回 404，因此不会将其描述为最新 GitHub release。1.2 文档列出的最低要求为 Kubernetes1.29 和 Slurm25.11（data parser0.0.44）。最低兼容性并不保证实际支持生命周期。
+官方仓库为 SlinkyProject/slurm-operator。已验证 Git 标签 1.2.3 及其 OCI Helm charts；GitHub 的 releases/latest 返回 404，因此不将其称为 GitHub 上的最新发布版本。1.2 文档列出的最低要求为 Kubernetes 1.29 和 Slurm 25.11（data parser 0.0.44）。最低兼容性并不保证实际支持生命周期。
 
 ![Slinky Controller、NodeSet、Accounting 和 RestApi/LoginSet 的作用，以及外部存储和节点预置。](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
@@ -42,11 +42,11 @@ TP8×PP4×DP2 表示 64 个 rank。全局批次大小为 **微批次 × 累积�
 
 ### 实际 API 和生命周期
 
-Version1.2.3 在 `slinky.slurm.net/v1beta1` 中定义了 Controller、NodeSet、Accounting、LoginSet、RestApi 和 Token。以前的 SlurmCluster/SlurmNodeSet 示例并非此 API。NodeSet 使用 controllerRef 和 Pod 模板。其默认 scalingMode 的行为类似 StatefulSet；DaemonSet 模式会为每个匹配的 Kubernetes 节点创建一个 Pod，并忽略 replicas。这些是 NodeSet-controller 模式，并不能证明 slurmd 始终以 Kubernetes DaemonSet 资源的形式运行。
+1.2.3 版本在 `slinky.slurm.net/v1beta1` 中定义了 Controller、NodeSet、Accounting、LoginSet、RestApi 和 Token。以前的 SlurmCluster/SlurmNodeSet 示例并非此 API。NodeSet 使用 controllerRef 和 Pod 模板。其默认 scalingMode 的行为类似 StatefulSet；DaemonSet 模式会为每个匹配的 Kubernetes 节点创建一个 Pod，并忽略 replicas。这些是 NodeSet 控制器的运行模式，并不能证明 slurmd 始终以 Kubernetes DaemonSet 资源的形式运行。
 
 slurmctld 管理作业/节点/分区状态和调度；应保留其 StateSaveLocation。slurmdbd 处理记账数据库的访问和记录，并不能替代 controller 状态。应一并设计 login/REST/job 身份、文件系统权限、Slurm 密钥/JWT 和数据库凭证的交付/轮换。公开 NLB SSH 暴露并非默认前提条件。
 
-先渲染实际 charts。这些命令只会生成本地文件。实际部署还需要分别处理 cert-manager/CRD/operator/Slurm 的部署顺序、持久化/数据库、用户身份和兼容的 Slurm 镜像。
+先渲染实际要用的 Helm charts。这些命令只会生成本地文件。实际部署还需要分别处理 cert-manager/CRD/operator/Slurm 的部署顺序、持久化/数据库、用户身份和兼容的 Slurm 镜像。
 
 ```bash
 helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.3 > slurm-crds.yaml
@@ -97,19 +97,19 @@ srun --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash -c '
 
 FI_PROVIDER=efa 用于选择 libfabric provider；它不会安装 EFA、附加接口或集成 NCCL。应一并验证支持 EFA 的实例、驱动/libfabric、aws-ofi-nccl、device plugin/Pod 分配、安全组和实际传输。RAID0 或子网标签不会启用 EFA。
 
-通信节点必须位于同一个 AZ；建议使用集群 placement group 以提升性能。确保训练 Pods 确实使用受限的 NodePool。带宽和 EFA 设备数量因实例而异；400Gbps 并非通用值。盲目强制使用过时的 Ring/Simple、IB_DISABLE、SOCKET_IFNAME 或 FI_EFA_USE_DEVICE_RDMA 设置，可能会干扰当前插件。请核对版本文档、日志和集合通信测试。
+通信节点必须位于同一个 AZ；建议使用集群 placement group 以提升性能。确保训练 Pods 确实使用受限的 NodePool。带宽和 EFA 设备数量因实例而异；400 Gbps 并非通用值。盲目强制使用过时的 Ring/Simple、IB_DISABLE、SOCKET_IFNAME 或 FI_EFA_USE_DEVICE_RDMA 设置，可能会干扰当前插件。请核对版本文档、日志和集合通信测试。
 
 Karpenter 的 budgets.nodes=0 会限制主动中断路径；它无法阻止 Spot 回收、节点故障、强制终止或所有过期事件。检查 do-not-disrupt/PDB 与 terminationGracePeriod/expireAfter 的交互，并确保能够通过检查点恢复。避免在每次引导时下载浮动版本的驱动安装程序，也不要对不同设备类型硬编码 GPU 时钟频率。
 
 ## BioNeMo
 
-已检查的 3.0.0 版本是 **BioNeMo Recipes**，提供基于 TransformerEngine 的模型/检查点，以及适用于 PyTorch、Accelerate 和 Lightning 的 recipes。应针对 ESM-2、AMPLIFY、Geneformer 等模型逐一检查 recipe 特定的支持情况。不要将 BioNeMo1.5 的 MegaMolBART 模块当作 3.0 API 来执行。生物学评估以及模型/数据权限仍是独立要求；仅分配 GPU 并不能完成 recipe 的准备工作。
+已检查的 3.0.0 版本是 **BioNeMo Recipes**，提供基于 TransformerEngine 的模型/检查点，以及适用于 PyTorch、Accelerate 和 Lightning 的 recipes。应针对 ESM-2、AMPLIFY、Geneformer 等模型逐一检查 recipe 特定的支持情况。不要将 BioNeMo 1.5 的 MegaMolBART 模块当作 3.0 API 来执行。生物学评估以及模型/数据权限仍是独立要求；仅分配 GPU 并不能完成 recipe 的准备工作。
 
 ## Trainium 和 Neuron
 
-应区分 SDK2.32.0 torch-neuronx、NeuronX Distributed Training/模型实现和 Optimum Neuron 路径。transformers-neuronx 的推理支持并不等于通用训练支持。应根据所选硬件/SDK 检查 TensorFlow/JAX/PyTorch 版本，而不是向旧版 2.18 DLC 随意添加 pip 包。
+应区分 SDK 2.32.0 torch-neuronx、NeuronX Distributed Training/模型实现和 Optimum Neuron 路径。transformers-neuronx 的推理支持并不等于通用训练支持。应根据所选硬件/SDK 检查 TensorFlow/JAX/PyTorch 版本，而不是向旧版 2.18 DLC 随意添加 pip 包。
 
-Optimum Neuron0.4.5 包含 NeuronTrainer/NeuronTrainingArguments 和专用的 Neuron 训练模型实现。加载通用的 BertForPreTraining 并传入未定义的数据集/分词器变量，并不构成完整的 TP 训练。应准备受支持的模型/配置、标签/collator、分词器/修订版本、优化器/检查点格式和启动器。CPU 示例中的 PyTorch2.14 并不代表其与 Neuron SDK 兼容。
+Optimum Neuron 0.4.5 包含 NeuronTrainer/NeuronTrainingArguments 和专用的 Neuron 训练模型实现。加载通用的 BertForPreTraining 并传入未定义的数据集/分词器变量，并不构成完整的 TP 训练。应准备受支持的模型/配置、标签/collator、分词器/修订版本、优化器/检查点格式和启动器。CPU 示例中的 PyTorch 2.14 并不代表其与 Neuron SDK 兼容。
 
 ### 多节点作业和预编译
 
@@ -119,11 +119,11 @@ neuron_parallel_compile 用于提取/编译计算图；它不能替代实际训�
 
 ## Ray Train、MPI 和 Volcano
 
-请使用经过审计的 Ray2.58/KubeRay1.7 [Train 指南](ray/03-ray-train-tune.md)。确保各 worker 的 report 调用次数一致，并报告实际的 Checkpoint 对象。get_checkpoint() 用于获取先前的恢复状态，并不是新的保存上下文管理器。resources_per_worker GPU8 不会自动在一个 worker 内启动八个 DDP 进程。
+请使用经过审计的 Ray 2.58/KubeRay 1.7 [Train 指南](ray/03-ray-train-tune.md)。确保各 worker 的 report 调用次数一致，并报告实际的 Checkpoint 对象。get_checkpoint() 用于获取先前的恢复状态，并不是新的保存上下文管理器。resources_per_worker GPU 8 不会自动在一个 worker 内启动八个 DDP 进程。
 
-MPI Operator0.8.2 使用 kubeflow.org/v2beta1。slotsPerWorker 声明 hostfile slots；它不会单独决定 mpirun -np、映射方式或 GPU 绑定。应准备 Launcher/Worker 代码、MPI/SSH 实现、受支持的镜像以及 CRD/RBAC。四个 workers × 八个 slots 本身并不能保证创建 32 个 GPU 进程。
+MPI Operator 0.8.2 使用 kubeflow.org/v2beta1。slotsPerWorker 声明 hostfile slots；它不会单独决定 mpirun -np、映射方式或 GPU 绑定。应准备 Launcher/Worker 代码、MPI/SSH 实现、受支持的镜像以及 CRD/RBAC。四个 workers × 八个 slots 本身并不能保证创建 32 个 GPU 进程。
 
-Volcano1.15.2 的 minAvailable 计算的是 **Pods/成员**，而不是 EC2 节点。三个资源充足的节点可能足以容纳四个 Pods。gang plugin 会应用最小成员数/资源条件，但无法保证容器同时启动或训练成功。应检查额外 workers、elastic-runtime 支持以及 RestartJob/重新排队行为。
+Volcano 1.15.2 的 minAvailable 计算的是 **Pods/成员**，而不是 EC2 节点。三个资源充足的节点可能足以容纳四个 Pods。gang plugin 会应用最小成员数/资源条件，但无法保证容器同时启动或训练成功。应检查额外 workers、elastic-runtime 支持以及 RestartJob/重新排队行为。
 
 JupyterHub GPU profiles 必须与实际镜像/设备标签和授权相匹配。g5.xlarge 使用的是 A10G，而不是 A100 profile。应将配置接入正在运行的 Hub，并配置每用户存储、配额、网络和空闲回收。
 
@@ -133,11 +133,11 @@ JupyterHub GPU profiles 必须与实际镜像/设备标签和授权相匹配。g
 
 EFS PVC 容量请求并不是物理存储配额。应验证访问点 UID/GID、目录权限、CSI 身份、网络和挂载目标。S3 传输完成之前，本地检查点并不具备远程持久性。
 
-恢复需要模型、优化器、scheduler、RNG、使用时的 scaler、数据/sampler 游标以及所有分片状态。避免多个 rank 覆盖同一个文件；应使用支持框架的分布式保存方式。在删除之前有效的检查点之前，应验证完成清单/校验和、远程传输和恢复。臆造的 checkpoint-manager 镜像或 auto_resume=true ConfigMap 并不能实现这些功能。
+恢复需要模型、优化器、学习率调度器、RNG、使用时的损失缩放器、数据/sampler 游标以及所有分片状态。避免多个 rank 覆盖同一个文件；应使用支持框架的分布式保存方式。删除此前仍有效的检查点前，应先验证完成清单/校验和、远程传输和恢复。臆造的 checkpoint-manager 镜像或 auto_resume=true ConfigMap 并不能实现这些功能。
 
 ### 可执行的微型 CPU 示例
 
-此合成示例使用 16 个样本和一个 CPU 线程，执行四次优化器更新。它演示梯度累积、有界余弦调度、临时文件替换以及优化器/RNG 恢复。在 PyTorch2.14.0+cpu 上，不间断训练与两步后恢复训练得到了相同结果。这并不是 GPU、分布式或远程持久性测试。
+此合成示例使用 16 个样本和一个 CPU 线程，执行四次优化器更新。它演示梯度累积、有界余弦调度、临时文件替换以及优化器/RNG 恢复。在 PyTorch 2.14.0+cpu 上，不间断训练与两步后恢复训练得到了相同结果。这并不是 GPU、分布式或远程持久性测试。
 
 ```python
 from pathlib import Path
@@ -231,11 +231,11 @@ if __name__ == "__main__":
 
 激活检查点会在反向传播期间重新计算激活值，以计算量换取内存。它不同于磁盘检查点，也不能保证节省 3–4 倍内存或只造成 30% 的减速。应明确指定 use_reentrant，并验证梯度、dropout/RNG 和有状态层。
 
-Flash Attention/SDPA 后端的选择取决于 dtype、head size、设备和掩码。应定义训练状态，并在评估期间传入 dropout_p=0。应检查 API 是否支持显式掩码/因果掩码组合；仅设置 use_cache=False 并不会安装 attention 后端。
+Flash Attention/SDPA 后端的选择取决于 dtype、注意力头大小、设备和掩码。应定义训练状态，并在评估期间传入 dropout_p=0。应检查 API 是否支持显式掩码/因果掩码组合；仅设置 use_cache=False 并不会安装注意力后端。
 
-DeepSpeed0.19.6 ZeRO1 会分区优化器状态；ZeRO2 还会分区梯度；ZeRO3 则还会分区参数。CPU/NVMe offload 需要单独配置，不会因使用 Stage3 而自动启用。应区分会替换 auto 值的上层集成和纯 DeepSpeed 配置。缓冲区、激活值和最大层会限制内存缩减幅度，无法无限减少内存占用。
+DeepSpeed 0.19.6 ZeRO 1 会分区优化器状态；ZeRO 2 还会分区梯度；ZeRO 3 则还会分区参数。CPU/NVMe offload 需要单独配置，不会因使用 Stage 3 而自动启用。应区分会替换 auto 值的上层集成和纯 DeepSpeed 配置。缓冲区、激活值和最大层会限制内存缩减幅度，无法无限减少内存占用。
 
-应按优化器更新而不是累积微步来推进 scheduler。应限制进度，使余弦曲线在训练周期结束后不会再次上升，并像示例中那样验证预热步数/总步数范围。
+应按优化器更新而不是累积微步来推进学习率调度器。应限制进度，使余弦曲线在训练周期结束后不会再次上升，并像示例中那样验证预热步数/总步数范围。
 
 ## 验证范围
 

@@ -1,7 +1,7 @@
 # NodePool 配置与优化
 
 > **支持的版本**：EKS Auto Mode GA；示例基线 EKS 1.36
-> **最后更新**：September 12, 2026
+> **最后更新**：2026 年 9 月 12 日
 
 本章区分 AWS 托管默认值、自定义 NodePool 约束以及 AWS 专属的 NodeClass API。请先完成[入门](./01-getting-started.md)，使用预期的账户/上下文，并在应用模板前检查所有 IAM/配置文件名称和网络标签。此处显示的容量限制仅供参考，仍可能产生大量费用。
 
@@ -143,7 +143,7 @@ spec:
 
 Auto Mode 使用 `eks.amazonaws.com/v1` 和 `NodeClass` 类型。其字段不同于自托管的 AWS Karpenter `EC2NodeClass`：不要将 `amiFamily`、`blockDeviceMappings`、任意 shell `userData` 或 `metadataOptions` 复制到此 API 中。AWS 会选择其托管的 Bottlerocket 变体。
 
-将以下内容保存为 `custom-nodeclass.yaml`，并将示例配置文件和选择器值替换为经过审查的资源。支持 `instanceProfile`；其名称必须以 `eks` 开头。也可以将 `role` 设置为节点 IAM 角色名称。**`role` 和 `instanceProfile` 必须恰好指定其中一个。配置文件中包含的角色需要相应的** Auto Mode EKS 访问条目和权限；重复使用已配置的角色无需添加重复条目。对于新角色，请按照 AWS NodeClass 参考中的访问条目流程操作。
+将以下内容保存为 `custom-nodeclass.yaml`，并将示例配置文件和选择器值替换为经过审查的资源。支持 `instanceProfile`；其名称必须以 `eks` 开头。也可以将 `role` 设置为节点 IAM 角色名称。**`role` 和 `instanceProfile` 必须恰好指定其中一个。** 配置文件中包含的角色需要相应的 Auto Mode EKS 访问条目和权限；重复使用已配置的角色无需添加重复条目。对于新角色，请按照 AWS NodeClass 参考中的访问条目流程操作。
 
 子网标签用于选择资源，但不会建立路由或隔离。请验证 VPC、AZ 可用性、路由表和安全组规则。`associatePublicIPAddress: false` 会阻止分配公有 IP；节点仍需要适当的出站连接。
 

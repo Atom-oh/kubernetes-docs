@@ -2,7 +2,7 @@
 
 > **関連ドキュメント**: [Kubernetes 認証・認可システム](../../security/02-kubernetes-auth-authz.md)
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 ## 選択問題
 

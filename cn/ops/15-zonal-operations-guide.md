@@ -1,7 +1,7 @@
 # 可用区集群运维：流量切换、升级回滚和数据层 AZ 亲和性
 
 > **审查基线**：EKS 回滚和 ARC 文档、Strimzi 1.3.0、Valkey GLIDE 2.5.2、AWS Advanced JDBC Wrapper 4.4.0
-> **最后审核日期**：October 16, 2026。已检查配置示例；未执行线上集群流量切换和故障实验。
+> **最后审核日期**：2026 年 10 月 16 日。已检查配置示例；未执行线上集群流量切换和故障实验。
 
 < [上一章：Tekton Pipelines](14-tekton-pipelines.md) | [目录](./README.md) | [下一章：故障排查手册](16-troubleshooting-playbook.md) >
 

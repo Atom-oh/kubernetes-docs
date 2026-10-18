@@ -1,7 +1,7 @@
 # AI/ML 工作负载
 
 > **审查基线**：GPU Operator 26.7.2 / NVIDIA device plugin 0.20.1 / FSx CSI 1.11.0
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 Kubernetes 是运行 AI/ML 工作负载的强大平台。本章将介绍如何在 EKS 上运行 AI/ML 工作负载，并探讨最佳实践。
 

@@ -1,17 +1,17 @@
 # 第 6 部分：MSK 集成
 
-> **审查基线**：MSK Standard/Express Provisioned、MSK Serverless、MSK Connect；Java IAM helper 2.3.9\
-> **最后审查时间**：October 16, 2026
+> **审查基线**：MSK Standard/Express Provisioned、MSK Serverless、MSK Connect；Java IAM 辅助库 2.3.9\
+> **最后审查时间**：2026 年 10 月 16 日
 
 ## 职责和先决条件
 
 Amazon MSK 在 AWS 托管的基础设施上、EKS 集群之外运行 Kafka broker。
 Strimzi 则将它们作为由团队负责运维的 Kubernetes 工作负载运行。两者都需要
-对应用程序、topic、访问控制、保留和恢复作出决策。托管 broker 并不意味着
+对应用程序、主题、访问控制、数据保留和恢复作出决策。托管 broker 并不意味着
 无需了解 Kafka 的行为。
 
 使用 AWS CLI v2，以及与 EKS 集群兼容的 kubectl。IAM 客户端需要受支持的
-身份验证 helper 和可正常工作的工作负载凭证链。EKS Pod Identity 或 IRSA
+身份验证辅助库和可正常工作的工作负载凭证链。EKS Pod Identity 或 IRSA
 可以提供临时凭证；External Secrets Operator 可用于其他密钥管理工作流，
 但不是 IAM 的先决条件。
 
@@ -21,7 +21,7 @@ Strimzi 则将它们作为由团队负责运维的 Kubernetes 工作负载运行
 | --- | --- | --- |
 | MSK Provisioned Standard | 选择 broker 和存储；如有需要，配置存储自动扩缩；只能编辑受支持的 broker 设置 | Broker 时长、预置存储、可选的吞吐量/分层存储和网络费用 |
 | MSK Provisioned Express | 选择 broker 计算资源；存储自动扩缩并按使用量计费；强制执行配置/吞吐量护栏 | Broker 时长、流入数据量、已用存储和适用的网络费用 |
-| MSK Serverless | AWS 管理 broker 容量；用户仍需规划 topic、分区、保留和服务配额 | **集群时长**、分区时长、流入/流出数据量、已用存储和适用的网络费用 |
+| MSK Serverless | AWS 管理 broker 容量；用户仍需规划主题、分区、保留期限和服务配额 | **集群时长**、分区时长、流入/流出数据量、已用存储和适用的网络费用 |
 | EKS 上的 Strimzi | 运维节点、磁盘、broker/controller 拓扑和受支持的 Operator 配置 | EKS/EC2/EBS、网络、备用容量、可观测性和运维工作量 |
 
 Express 是一种 **Provisioned broker 类型**，而不是 Serverless。当前文档
@@ -30,15 +30,15 @@ Express 是一种 **Provisioned broker 类型**，而不是 Serverless。当前�
 功能的行为都完全相同。
 
 Serverless 要求使用 IAM 身份验证/授权；不支持 Kafka ACL。它只允许使用
-列出的 topic 设置。例如，可以配置保留期限，而 `cleanup.policy` 只能在
-创建 topic 时设置。其默认保留还包括**每个分区 250 GiB 的限制**，不只是
+列出的主题设置。例如，可以配置保留期限，而 `cleanup.policy` 只能在
+创建主题时设置。其默认保留还包括**每个分区 250 GiB 的限制**，不只是
 七天。流量较大时，数据可能在达到时间限制前先达到该大小。容量自动扩缩
 并不意味着任意分区数量或突发速率都不受限制。
 
 这些产品都提供 CloudWatch 指标，但 Serverless 监控并不等同于 Provisioned
 提供的 broker 级 Prometheus/开放监控接口。对于 Serverless 多租户环境，
-IAM topic/group policy 仍由你负责。在 Strimzi 中，Kubernetes namespace
-本身并不能授权 Kafka topic 访问。
+IAM 主题/消费者组策略仍由你负责。在 Strimzi 中，Kubernetes namespace
+本身并不能授权 Kafka 主题访问。
 
 MSK 可以通过 API 和基础设施即代码进行管理；GitOps 并非 Strimzi 独有。
 Strimzi 部署的可移植性仍取决于存储、网络、身份和受支持的 Operator 版本。
@@ -97,26 +97,26 @@ aws ec2 authorize-security-group-ingress \
 
 | 客户端 | 支持的 IAM 机制 |
 | --- | --- |
-| Java | `AWS_MSK_IAM`，或使用 AWS Java helper 的 `OAUTHBEARER` |
-| Python、JavaScript、Go、.NET | 使用相应官方 AWS signer/helper 的 `OAUTHBEARER` |
+| Java | `AWS_MSK_IAM`，或使用 AWS Java 辅助库的 `OAUTHBEARER` |
+| Python、JavaScript、Go、.NET | 使用相应官方 AWS 签名器/辅助库的 `OAUTHBEARER` |
 
 `AWS_MSK_IAM` 并非所有语言的 Kafka 客户端都提供的通用机制。非 Java
-helper 是 AWS 官方项目，并非仅仅是社区替代品。对于 Provisioned 集群，
+辅助库是 AWS 官方项目，并非仅仅是社区替代品。对于 Provisioned 集群，
 也可能可以使用 SCRAM 或双向 TLS；请配置受支持的密钥/证书和 Kafka ACL
 工作流。它们不能替代 Serverless 上的 IAM。
 
 在测试 Kafka 之前，应配置工作负载角色关联/信任关系和临时凭证刷新。不要
 假设继承的节点角色就是 Pod 预期使用的身份。私有环境还必须能够访问所选
-凭证提供程序所需的身份服务。应在凭证刷新后测试重新身份验证。Java helper
-文档说明了某些提供程序（包括 Pod Identity）存在 session name 一致性问题；
+凭证提供程序所需的身份服务。应在凭证刷新后测试重新身份验证。Java 辅助库
+文档说明了某些提供程序（包括 Pod Identity）存在会话名称一致性问题；
 如果遇到该问题，请采用文档中说明的解决办法。
 
-### 分离 producer 和 consumer policy
+### 区分生产者和消费者权限策略
 
 以下脚本从现有集群 ARN 推导出精确的资源 ARN。将其保存为 `policies.py`；
-它会在本地生成 policy，但不会附加 policy。它省略旧的 `AlterCluster` 和
-`*Topic*` 管理授权，包含 consumer-group 操作，并区分集群范围的幂等写入
-权限与 topic 范围的写入权限。
+它会在本地生成权限策略，但不会附加策略。它省略旧的 `AlterCluster` 和
+`*Topic*` 管理授权，包含消费者组操作，并区分集群范围的幂等写入
+权限与主题范围的写入权限。
 
 ```python
 import json
@@ -167,15 +167,15 @@ python3 policies.py "$DOCS_MSK_CLUSTER_ARN"
 # then attach each to the appropriate workload role through your IAM workflow.
 ```
 
-现有 topic 为 `orders`，consumer 必须使用 group `orders-consumer`。创建
-topic 应由单独的管理身份负责。Producer policy 通过文档所述的 IAM 操作集
-涵盖**非事务性幂等**写入。事务性 producer 还需要范围受限的事务 ID 操作，
+现有主题为 `orders`，消费者必须使用 group `orders-consumer`。创建
+主题应由单独的管理身份负责。生产者策略通过文档所述的 IAM 操作集
+涵盖**非事务性幂等**写入。事务性生产者还需要范围受限的事务 ID 操作，
 并且 broker 必须兼容；MSK Kafka 3.8 及更高版本的 IAM 支持
 `WriteTxnMarkers`。不要授予所有事务 ID 的权限，也不要仅仅为了掩盖授权
 错误而禁用幂等性。
 
-有效访问权限还取决于其他附加的 policy、显式拒绝、SCP、权限边界和跨账户
-资源 policy。这些文档本身并不构成完整的授权边界。诸如
+有效访问权限还取决于其他附加的策略、显式拒绝、SCP、权限边界和跨账户
+资源策略。这些文档本身并不构成完整的授权边界。诸如
 `kafka:GetBootstrapBrokers` 这样的 MSK 控制面操作，与
 `kafka-cluster:*` 数据面操作相互独立，可以归属于部署者/运维者身份。
 
@@ -203,8 +203,8 @@ sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMOAuthBearerLo
 ssl.endpoint.identification.algorithm=https
 ```
 
-在应用程序中添加所选的 `bootstrap.servers`、key/value serializer 或
-deserializer，以及 consumer 的 `group.id`。JVM 必须信任 broker 的 TLS
+在应用程序中添加所选的 `bootstrap.servers`、key/value 序列化器或
+反序列化器，以及消费者的 `group.id`。JVM 必须信任 broker 的 TLS
 证书链；保持主机名验证启用。这些属性用于配置机制，但无法创建缺失的
 工作负载凭证或 IAM 权限。
 
@@ -214,7 +214,7 @@ MSK Connect 运行托管的 Kafka Connect worker，并可连接到独立托管�
 集群。**仅有网络可达性并不足够**。当前的
 `KafkaClusterClientAuthentication` API 接受 `NONE` 或 `IAM`；broker 信任、
 身份验证和受支持的 worker 设置必须相互匹配。第 2 部分中的 TLS/SCRAM
-Strimzi listener 并非只要主机名可以解析就能直接用作目标。不要为了强行
+Strimzi 监听器并非只要主机名可以解析就能直接用作目标。不要为了强行
 集成而移除其身份验证。
 
 该服务文档列出的 Connect 运行时为 **2.7.1 / Java 11** 和
@@ -260,8 +260,8 @@ MSK Connect 默认使用 StringConverter 作为 key/value converter；必须有�
 
 MSK Connect 会在创建插件时复制 S3 对象。覆盖该对象不会更新插件，且不能
 就地编辑自定义插件。应使用新的版本化插件资源和经过测试的 connector
-切换计划；替换活动数据管道之前，保留并验证 offsets。自动扩缩也有配置
-限制，并且无法并行处理单任务 source。
+切换计划；替换活动数据管道之前，保留并验证 offset。自动扩缩也有配置
+限制，并且无法并行处理只有一个任务的 source connector。
 
 ## Kafka 和 Kinesis Data Streams
 
@@ -271,9 +271,9 @@ Kinesis Data Streams 使用自己的 API；将 `bootstrap.servers` 替换为 Kin
 
 | 方面 | Kafka / MSK / Strimzi | Kinesis Data Streams |
 | --- | --- | --- |
-| 并行度 | Topic 分区；增加分区数不会重新分配旧记录，也不支持原地减少分区数 | Shard；Provisioned 模式下手动调整容量，按需模式下由服务管理容量 |
+| 并行度 | 主题分区；增加分区数不会重新分配旧记录，也不支持原地减少分区数 | Shard；Provisioned 模式下手动调整容量，按需模式下由服务管理容量 |
 | 容量选项 | 取决于 Standard、Express、Serverless 或自管理部署 | Provisioned、On-demand Standard 和 On-demand Advantage |
-| 保留 | Topic/服务设置、存储和清理策略；时间和大小限制都很重要 | 默认 24 小时；可配置至多 365 天 |
+| 保留 | 主题/服务设置、存储和清理策略；时间和大小限制都很重要 | 默认 24 小时；可配置至多 365 天 |
 | AWS 集成 | 包括与 MSK 的原生 Lambda 和 Firehose 集成，以及 connectors | 原生 Lambda、Firehose 和 Managed Service for Apache Flink 集成 |
 
 “Kafka 只能通过 Connect 与 AWS 集成”是不正确的。另外，应使用当前名称
@@ -301,7 +301,7 @@ connector 部署或数据传递能力。
 - [MSK 定价维度](https://aws.amazon.com/msk/pricing/)
 - [MSK 多 VPC 私有连接](https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html)
 - [MSK 端口信息](https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html)
-- [IAM 客户端机制和官方语言 helper](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
+- [IAM 客户端机制和官方语言辅助库](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
 - [MSK IAM 操作/资源依赖关系](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
 - [IAM 使用案例](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
 - [aws-msk-iam-auth 2.3.9](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.9)

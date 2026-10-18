@@ -1,12 +1,12 @@
 # Amazon Managed Blockchain
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 ## Qué cubre este documento
 
 - Qué cargas de [operar por cuenta propia](./02-nodes-on-eks.md) asume Amazon Managed Blockchain (AMB), y qué no puede hacer
 - Criterios para elegir entre servicios gestionados y operación propia, y una variable que debes incluir en esa evaluación
-- Qué implicaciones tiene para las decisiones de arquitectura el cambio en la cartera de servicios de ledger y blockchain de AWS
+- Qué implica para las decisiones de arquitectura el cambio en la oferta de servicios de libro mayor y blockchain de AWS
 
 ## De qué se compone AMB
 
@@ -22,12 +22,12 @@ AMB no es un solo servicio, sino un conjunto de componentes con características
 Estas ofertas tienen distintos modelos de aprovisionamiento, API, facturación y responsabilidades. Primero elige la red y el método que necesitas; no consideres AMB un único servicio universal con precios por nodo.
 
 ::: warning Requiere verificación
-Los **frameworks y las cadenas compatibles con AMB, la disponibilidad regional y el estado de vista previa/GA varían con el tiempo en cada componente.** Entre los cambios confirmados figuran el fin del soporte para la red de pruebas Ethereum Goerli (1 de abril de 2024) y la red de pruebas Polygon Mumbai (15 de abril de 2024); en un momento dado, Polygon PoS mainnet se ofreció en **vista previa pública**.
+Los **marcos de trabajo y las cadenas compatibles con AMB, la disponibilidad regional y el estado de vista previa/GA varían con el tiempo en cada componente.** Entre los cambios confirmados figuran el fin del soporte para la red de pruebas Ethereum Goerli (1 de abril de 2024) y la red de pruebas Polygon Mumbai (15 de abril de 2024); en un momento dado, Polygon PoS mainnet se ofreció en **vista previa pública**.
 
 **Antes de finalizar un diseño, consulta directamente la [documentación oficial de AMB](https://docs.aws.amazon.com/managed-blockchain/) y la disponibilidad regional.** Este documento no afirma cuál es el estado actual de compatibilidad de ninguna cadena específica.
 :::
 
-## Qué asume
+## Qué responsabilidades asume AMB
 
 La comparación con las cargas cubiertas en el [documento sobre operación propia](./02-nodes-on-eks.md) deja claro el límite.
 
@@ -51,7 +51,7 @@ Este es el punto clave de la decisión.
 | Elemento | Limitación |
 |---|---|
 | **Elección del cliente** | Limitada a los clientes y versiones que ofrece AMB. No puedes controlar directamente una estrategia de [diversidad de clientes](./02-nodes-on-eks.md) |
-| **Ajustes detallados** | No se pueden ajustar los tamaños de caché, los modos de pruning ni los parámetros del kernel |
+| **Ajustes detallados** | No se pueden ajustar los tamaños de caché, los modos de poda ni los parámetros del kernel |
 | **Cadenas compatibles** | Solo las que admite AMB. En general, las cadenas nuevas o pequeñas no son compatibles |
 | **Modo de archivo** | La cobertura puede ser limitada |
 | **Operación de validadores** | Por lo general, los nodos gestionados sirven para **consultas y envío de transacciones**. Ejecutar un validador de staking es otra cuestión |
@@ -83,13 +83,13 @@ Este es el punto clave de la decisión.
 
 **Paso 4: ¿puedes combinar opciones?** Por lo general, sí, y en la práctica suele ser razonable; por ejemplo, usar el servicio gestionado para consultas generales y operar por cuenta propia para fines especiales.
 
-## El cambio en la cartera de servicios de ledger y blockchain de AWS: una variable que debes considerar
+## El cambio en la oferta de servicios de libro mayor y blockchain de AWS: una variable que debes considerar
 
 Esta es la parte más importante de este documento. **Decidir basándose únicamente en una comparación técnica pasa por alto un riesgo.**
 
 ### El fin de Amazon QLDB
 
-Amazon QLDB (Quantum Ledger Database) era una base de datos de ledger gestionada que ofrecía **un registro de transacciones inmutable y verificable criptográficamente.** Se anunció en re:Invent 2018 y pasó a GA en 2019.
+Amazon QLDB (Quantum Ledger Database) era una base de datos de libro mayor gestionada que ofrecía **un registro de transacciones inmutable y verificable criptográficamente.** Se anunció en re:Invent 2018 y pasó a GA en 2019.
 
 | Fecha | Evento |
 |---|---|
@@ -98,7 +98,7 @@ Amazon QLDB (Quantum Ledger Database) era una base de datos de ledger gestionada
 | Julio de 2024 | Se anunció el fin del soporte |
 | **31 de julio de 2025** | **Fin del servicio** |
 
-La ruta de migración que ofreció AWS fue **Amazon Aurora PostgreSQL.** Pero hay un aspecto importante: **migrar a Aurora PostgreSQL hace perder la verificabilidad criptográfica, que era el valor central de QLDB.** Se puede implementar una funcionalidad similar a un ledger con extensiones, pero no se sustituye la parte que «demuestra matemáticamente que no se ha manipulado nada».
+La ruta de migración que ofreció AWS fue **Amazon Aurora PostgreSQL.** Pero hay un aspecto importante: **migrar a Aurora PostgreSQL hace perder la verificabilidad criptográfica, que era el valor central de QLDB.** Se pueden implementar funciones similares a las de un libro mayor con extensiones, pero no se sustituye la parte que «demuestra matemáticamente que no se ha manipulado nada».
 
 ### Implicaciones
 
@@ -128,7 +128,7 @@ Este riesgo no se puede eliminar, solo **mitigar.**
 | **Usar protocolos estándar** | Con protocolos abiertos como Ethereum o Fabric, puedes pasar a operarlo por cuenta propia o a otro proveedor si desaparece la oferta gestionada |
 | **Una capa de abstracción** | Evita que la aplicación dependa directamente de las API de AMB. Abstraer la interfaz RPC facilita cambiar los backends |
 | **Independencia de los datos** | Conserva también los datos de la cadena en tu propio índice o almacén de datos. Los datos históricos sobreviven al cambio de proveedor |
-| **Recuperación de claves y salida** | Las claves privadas de firma de KMS no se pueden exportar. Planifica la recuperación y la salida antes de financiar o registrar una identidad; distingue entre la descarga de claves públicas, las copias de seguridad de claves importadas, las reglas de copia de seguridad/envoltura de CloudHSM y las opciones de rotación de cuentas/contratos |
+| **Recuperación de claves y salida** | Las claves privadas de firma de KMS no se pueden exportar. Planifica la recuperación y la salida antes de financiar o registrar una identidad; distingue entre la descarga de claves públicas, las copias de seguridad de claves importadas, las reglas de respaldo y envoltura de claves de CloudHSM y las opciones de rotación de cuentas/contratos |
 | **Estimar el tiempo de migración** | Medir cuánto tardan la resincronización de nodos y la migración de datos permite determinar si podrías responder dentro del plazo de aviso |
 
 **La «capa de abstracción» es la respuesta más eficaz.** Si la aplicación usa una interfaz RPC estándar (Ethereum JSON-RPC y similares), el backend puede ser AMB, una solución operada por cuenta propia o un tercero. Acoplarse directamente a las API específicas de AMB hace perder esa flexibilidad.

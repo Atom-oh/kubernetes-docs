@@ -35,12 +35,12 @@ B. Los listeners y las reglas pertenecen a servicios individuales. Una asociaci�
 - A) Lattice requiere un sidecar Envoy por Pod
 - B) App Mesh usa proxies Envoy, mientras que Lattice proporciona un plano de datos administrado sin requerir sidecars de aplicación
 - C) Todas las demás mallas requieren sidecars
-- D) App Mesh sigue disponible para nuevos Deployments
+- D) App Mesh sigue disponible para nuevas implementaciones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-B. App Mesh usaba proxies sidecar Envoy, mientras que Lattice proporciona un plano de datos administrado sin sidecars de aplicación. D es falsa: el soporte de AWS App Mesh terminó el 2026-09-30, y su consola y recursos ya no son accesibles, así que migra los Deployments existentes en lugar de crear uno nuevo. Los requisitos de sidecar difieren entre otros modos de malla.
+B. App Mesh usaba proxies sidecar Envoy, mientras que Lattice proporciona un plano de datos administrado sin sidecars de aplicación. D es falsa: el soporte de AWS App Mesh terminó el 2026-09-30, y su consola y recursos ya no son accesibles, así que migra las implementaciones existentes en lugar de crear una nueva. Los requisitos de sidecar difieren entre otros modos de malla.
 
 </details>
 
@@ -86,7 +86,7 @@ C. VPC Lattice admite SigV4 y SigV4A. Usa vpc-lattice-svcs y UNSIGNED-PAYLOAD al
 
 </details>
 
-## 7. ¿Cuál no es un tipo de target group de servicio Lattice con nombre?
+## 7. ¿Cuál no corresponde a uno de los tipos de grupo de destino de un servicio Lattice?
 
 - A) INSTANCE
 - B) IP
@@ -96,7 +96,7 @@ C. VPC Lattice admite SigV4 y SigV4A. Usa vpc-lattice-svcs y UNSIGNED-PAYLOAD al
 <details>
 <summary>Mostrar respuesta</summary>
 
-D. Los tipos de target group de servicio incluyen INSTANCE, IP, LAMBDA y ALB. Esto no significa que Lattice no pueda conectar una base de datos RDS: las configuraciones de recursos y los resource gateways proporcionan un modelo separado de acceso a recursos TCP. Las políticas de autenticación de servicio no rigen ese tráfico de recursos.
+D. Los tipos de grupo de destino de servicios incluyen INSTANCE, IP, LAMBDA y ALB. Esto no significa que Lattice no pueda conectar una base de datos RDS: las configuraciones de recursos y los resource gateways proporcionan un modelo separado de acceso a recursos TCP. Las políticas de autenticación de servicio no rigen ese tráfico de recursos.
 
 </details>
 
@@ -110,7 +110,7 @@ D. Los tipos de target group de servicio incluyen INSTANCE, IP, LAMBDA y ALB. Es
 <details>
 <summary>Mostrar respuesta</summary>
 
-B. backendRefs.weight nativo configura una distribución relativa; una muestra pequeña de solicitudes no tiene por qué coincidir exactamente. Ambos backends deben existir y estar en buen estado. Observa errores y latencia antes de aumentar la proporción de canary.
+B. La propiedad nativa backendRefs.weight configura una distribución relativa; una muestra pequeña de solicitudes no tiene por qué coincidir exactamente. Ambos backends deben existir y estar en buen estado. Observa errores y latencia antes de aumentar la proporción de canary.
 
 </details>
 
@@ -123,7 +123,7 @@ El propietario crea un recurso compartido de RAM para el ARN de la red y una cue
 
 </details>
 
-## 10. Escribe una política de health check de Kubernetes para el backend de demostración.
+## 10. Escribe una política de comprobación de estado de Kubernetes para el backend de demostración.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -156,7 +156,7 @@ spec:
     statusMatch: '200'
 ```
 
-El backend realmente debe escuchar en 8080 y devolver 200 en /health. Los umbrales ayudan a determinar la preparación; no garantizan disponibilidad ni cero tiempo de inactividad. Revisa el comportamiento específico del tipo de target y del protocolo.
+El backend realmente debe escuchar en 8080 y devolver 200 en /health. Los umbrales ayudan a determinar la preparación; no garantizan disponibilidad ni cero tiempo de inactividad. Revisa el comportamiento según el tipo de destino y el protocolo.
 
 </details>
 
@@ -209,7 +209,7 @@ StringEquals coincidiría literalmente con /api/*. Esta política se refiere a r
 <details>
 <summary>Mostrar respuesta</summary>
 
-Verifica la versión de Kubernetes compatible con el clúster, la compatibilidad con Gateway API, el proveedor IAM OIDC y la conectividad de red/webhook. Revisa la política recomendada de la versión para la cuenta y las características previstas; sus amplios permisos upstream no son una garantía de privilegio mínimo. Usa una service account dedicada para el controlador y el chart OCI publicado:
+Verifica la versión de Kubernetes compatible con el clúster, la compatibilidad con Gateway API, el proveedor IAM OIDC y la conectividad de red/webhook. Revisa la política recomendada de la versión para la cuenta y las características previstas; sus amplios permisos upstream no son una garantía de privilegio mínimo. Usa una cuenta de servicio dedicada para el controlador y el chart OCI publicado:
 
 ```bash
 curl --fail --location --output controller-policy-upstream.json \
@@ -258,7 +258,7 @@ kubectl -n aws-application-networking-system logs \
   -l control-plane=gateway-api-controller -c manager --tail=100
 ```
 
-El rol del controlador administra recursos; no es el rol del llamador de la aplicación. Las service accounts/releases existentes requieren una actualización que tenga en cuenta la propiedad. Helm no actualiza automáticamente sus CRD. Consulta la guía para la configuración independiente de service network/política de autenticación.
+El rol del controlador administra recursos; no es el rol del llamador de la aplicación. Las cuentas de servicio y las versiones existentes requieren una actualización que tenga en cuenta quién las administra. Helm no actualiza automáticamente sus CRD. Consulta la guía para la configuración independiente de service network/política de autenticación.
 
 </details>
 
@@ -267,7 +267,7 @@ El rol del controlador administra recursos; no es el rol del llamador de la apli
 <details>
 <summary>Mostrar respuesta</summary>
 
-Requisitos previos: el Gateway HTTPS my-network de la guía en lattice-demo, su service network existente y su política de autenticación activa, ambos Deployments/Services de backend en 8080 y las políticas de estado de target group. Luego aplica:
+Requisitos previos: el Gateway HTTPS my-network de la guía en lattice-demo, su service network existente y su política de autenticación activa, ambas implementaciones y ambos Services de backend en el puerto 8080 y las políticas de comprobación de estado de los grupos de destino. Luego aplica:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -293,7 +293,7 @@ spec:
       weight: 10
 ```
 
-Aplica también IAMAuthPolicy de la guía a esta Route e inspecciona la reconciliación. No se necesita ninguna anotación de peso. Usa el dominio asignado de la Route y solicitudes HTTPS firmadas; una aplicación exitosa no prueba que los backends estén en buen estado.
+Aplica también IAMAuthPolicy de la guía a esta Route e inspecciona la reconciliación. No se necesita ninguna anotación de peso. Usa el dominio asignado de la Route y solicitudes HTTPS firmadas; que el comando `kubectl apply` termine correctamente no demuestra que los backends estén en buen estado.
 
 </details>
 

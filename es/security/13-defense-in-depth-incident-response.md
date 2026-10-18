@@ -10,7 +10,7 @@ Un diseño de seguridad debe cubrir la entrada, el movimiento lateral, la exfilt
 | Caso y fecha de publicación/retiro | Alcance establecido por fuentes primarias | Consecuencia para el diseño |
 |---|---|---|
 | ingress-nginx CVE-2025-1974, 2025-03-24 | Ataque a través del controlador de admisión de validación, accesible desde la red de Pods; las correcciones históricas fueron 1.11.5 y 1.12.1 | Revise la accesibilidad del webhook y los permisos del controlador sobre Secrets junto con la protección WAF externa |
-| Retiro de ingress-nginx, 2026-03 | Kubernetes Steering/SRC advirtió el 2026-01-29 que las actualizaciones de seguridad cesarían después del retiro | Migre a una implementación mantenida; las correcciones históricas de CVE no son una nueva recomendación de versión para 2026 |
+| Retiro de ingress-nginx, 2026-03 | Kubernetes Steering/SRC advirtió el 2026-01-29 que las actualizaciones de seguridad cesarían después del retiro | Migre a una implementación con mantenimiento activo; las correcciones históricas de CVE no son una nueva recomendación de versión para 2026 |
 | PAN-OS CVE-2025-0108, 2025-02-12 | Omisión de autenticación en la interfaz web de administración con intentos observados de encadenamiento | Separe el acceso de administración de las rutas de aplicaciones públicas |
 | PAN-OS CVE-2026-0322, 2026-10-14 | RCE autenticado como root en la interfaz de administración; se observó explotación limitada; afectados PA-Series, VM-Series y Panorama | Proteja las credenciales de administrador, las sesiones y la accesibilidad de administración; distinga las familias de productos |
 | FortiCloud SSO CVE-2026-24858, inclusión en CISA KEV 2026-01-27 | Acceso entre cuentas con FortiCloud SSO habilitado, cambios de cuenta/VPN y una nueva ruta que afecta a dispositivos corregidos para CVE de SSO anteriores | Audite los cambios administrativos; adoptar SSO por sí solo no basta |
@@ -20,7 +20,7 @@ Evidencia: [aviso CVE de Kubernetes][S01], [comunicado de retiro][S02], [aviso d
 
 CISA añadió CVE-2026-0322 el 2026-10-14 y CVE-2026-24858 el 2026-01-27. Al priorizar, revise la inclusión en KEV junto con los productos afectados indicados por el proveedor. No generalice los plazos de corrección del gobierno federal de EE. UU. como obligaciones legales universales. [S06]
 
-La divulgación de una vulnerabilidad no demuestra que todas las instalaciones hayan sido comprometidas. Compruebe el producto, la rama, los hotfix, las funciones habilitadas, la exposición y la evidencia. Cloud NGFW y Prisma Access quedan excluidos del aviso PAN-OS de 2026; esta exclusión no se extiende a todas las CVE. Una fecha estimada para el parche es distinta de la disponibilidad de una versión confirmada. [S03]
+La divulgación de una vulnerabilidad no demuestra que todas las instalaciones hayan sido comprometidas. Compruebe el producto, la rama, las correcciones urgentes, las funciones habilitadas, la exposición y la evidencia. Cloud NGFW y Prisma Access quedan excluidos del aviso PAN-OS de 2026; esta exclusión no se extiende a todas las CVE. Una fecha estimada para el parche es distinta de la disponibilidad de una versión confirmada. [S03]
 
 ## 2. Responsabilidades de los controles y cobertura pendiente
 
@@ -47,7 +47,7 @@ Use esta plantilla de modelado de amenazas, complete los principales, CIDR e ID 
 
 | Flujo | Rutas de entrada o salida que se investigarán | Control y evidencia |
 |---|---|---|
-| Usuario → web/API | CloudFront, ALB, balanceadores de carga/dominios/NodePorts adicionales | Asociación de Web ACL, solicitudes legítimas, canario benigno de bloqueo y resultado del acceso directo al origen |
+| Usuario → web/API | CloudFront, ALB, balanceadores de carga/dominios/NodePorts adicionales | Asociación de Web ACL, solicitudes legítimas, solicitud de prueba inocua que debe bloquearse y resultado del acceso directo al origen |
 | Operador → administración | PAN-OS/FortiGate, Panorama/FortiManager, API de EKS, GitOps | Ruta de administración de confianza, autenticación, registros de cambios administrativos/de políticas |
 | Servidor de API → webhook | Plano de control y Service de admisión | Acceso del servidor de API, restricciones de cargas de trabajo normales, certificados y RBAC |
 | Pod → externo | SNAT del nodo, NAT Gateway, TGW, IPv4/IPv6, proxies | Destinos permitidos/denegados, direcciones antes/después de la traducción y sesiones de firewall |
@@ -94,9 +94,9 @@ NIST SP 800-61r3 conecta la detección, la respuesta y la recuperación con una 
 1. **Clasificar**: establezca el producto, la rama, la función, la exposición y el alcance de la investigación afectados. Distinga los recursos vulnerables de aquellos con evidencia de compromiso.
 2. **Preservar evidencia**: registre horas UTC, revisiones de configuración, cuentas de administrador/VPN, registros de autenticación/sistema/amenazas y cambios en la nube. Contenga al mismo tiempo si retrasar la contención aumentaría el daño; documente la decisión.
 3. **Contener**: restrinja las rutas de administración y las cargas afectadas mientras identifica las dependencias de plano de control, DNS, registro y recuperación aprobada.
-4. **Eliminar el acceso**: siga los procedimientos del proveedor para cuentas no autorizadas, ajustes y cambios en el sistema de archivos. Cuando sea necesario, reconstruya a partir de imágenes verificadas y una configuración conocida como limpia; no restaure a ciegas ajustes sospechosos.
+4. **Eliminar el acceso**: siga los procedimientos del proveedor para cuentas no autorizadas, ajustes y cambios en el sistema de archivos. Cuando sea necesario, reconstruya a partir de imágenes verificadas y una configuración cuya limpieza se haya verificado; no restaure a ciegas ajustes sospechosos.
 5. **Sustituir secretos**: según la exposición, revise las credenciales, certificados y sesiones de administrador/VPN/LDAP/AD/API/nube. Cambiar la contraseña de un firewall no basta.
-6. **Demostrar la recuperación**: vuelva a probar el acceso de administración denegado, las funciones de negocio legítimas, los canarios benignos de bloqueo, la salida, los fallos de AZ y la recopilación de registros.
+6. **Demostrar la recuperación**: vuelva a probar el acceso de administración denegado, las funciones de negocio legítimas, las solicitudes de prueba inocuas que deben bloquearse, la salida, los fallos de AZ y la recopilación de registros.
 7. **Mejorar**: analice las causas, la duración de la exposición, las excepciones, los retrasos de detección y los permisos de cambio; actualice los controles y los playbooks.
 
 Fortinet recomienda tratar el sistema/configuración como comprometido cuando se confirman indicadores, restaurar o auditar la configuración y rotar las credenciales conectadas. El análisis de persistencia también exige revisar la configuración. [S05] [S07]

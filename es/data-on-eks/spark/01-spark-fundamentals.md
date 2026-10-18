@@ -5,7 +5,7 @@
 
 ## Modo clúster y modo cliente
 
-Kubernetes admite **los dos** modos de implementación de Spark. El modo cliente es compatible desde Spark 2.4 y no está restringido a los blocs de notas.
+Kubernetes admite **los dos** modos de implementación de Spark. El modo cliente es compatible desde Spark 2.4 y no está restringido a los cuadernos interactivos.
 
 | Modo | Ubicación del controlador | Consecuencia operativa |
 | --- | --- | --- |

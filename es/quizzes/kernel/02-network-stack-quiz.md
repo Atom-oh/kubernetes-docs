@@ -213,7 +213,7 @@ Las opciones del socket establecen `SOCK_RCVBUF_LOCK` y `SOCK_SNDBUF_LOCK`; son 
 </details>
 
 14. Una interfaz tiene una MTU de IP de 1500, pero una captura en el host muestra una unidad TCP de más de 1500 bytes con una suma de comprobación de transmisión aparentemente incorrecta. ¿Qué debería concluir primero?
-   - A) Compruebe el punto de captura y las descargas de trabajo; sin opciones, la carga útil TCP de IPv4 cabe en 1460 bytes, pero las unidades GSO/GRO del host y las sumas de comprobación sin finalizar pueden diferir de los paquetes en la red
+   - A) Compruebe el punto de captura y las funciones de offload; sin opciones, la carga útil TCP de IPv4 cabe en 1460 bytes, pero las unidades GSO/GRO del host y las sumas de comprobación sin finalizar pueden diferir de los paquetes en la red
    - B) MSS de TCP debe ser de 1500 bytes porque incluye el encabezado IP
    - C) El enrutador IPv6 remoto debe haber fragmentado el paquete
    - D) La captura demuestra corrupción en la red e invalida PMTUD
@@ -222,8 +222,8 @@ Las opciones del socket establecen `SOCK_RCVBUF_LOCK` y `SOCK_SNDBUF_LOCK`; son 
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Compruebe el punto de captura y las descargas de trabajo; sin opciones, la carga útil TCP de IPv4 cabe en 1460 bytes, pero las unidades GSO/GRO del host y las sumas de comprobación sin finalizar pueden diferir de los paquetes en la red**
+**Respuesta: A) Compruebe el punto de captura y las funciones de offload; sin opciones, la carga útil TCP de IPv4 cabe en 1460 bytes, pero las unidades GSO/GRO del host y las sumas de comprobación sin finalizar pueden diferir de los paquetes en la red**
 
 **Explicación:**
-MSS no incluye los encabezados IP/TCP y PMTU depende de la ruta completa. Sin opciones, `1500 - 20 - 20 = 1460` para IPv4; el encabezado base de IPv6 deja 1440. Las descargas de trabajo pueden aplazar la segmentación o el cálculo de la suma de comprobación, o combinar paquetes recibidos. Una captura en el host por sí sola no demuestra el tamaño ni la corrupción de los paquetes en la red. Continúe con el [laboratorio de MTU/MSS](../../networking/07-linux-network-diagnostics.md#mtu-mss-lab).
+MSS no incluye los encabezados IP/TCP y PMTU depende de la ruta completa. Sin opciones, `1500 - 20 - 20 = 1460` para IPv4; el encabezado base de IPv6 deja 1440. Las funciones de offload pueden aplazar la segmentación o el cálculo de la suma de comprobación, o combinar paquetes recibidos. Una captura en el host por sí sola no demuestra el tamaño ni la corrupción de los paquetes en la red. Continúe con el [laboratorio de MTU/MSS](../../networking/07-linux-network-diagnostics.md#mtu-mss-lab).
 </details>
