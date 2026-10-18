@@ -3,7 +3,7 @@
 < [Anterior: Configuración de red](./02-network-configuration.md) | [Tabla de contenido](./README.md) | [Siguiente: Inicio de nodos](./04-node-bootstrap.md) >
 
 > **Versiones compatibles**: EKS Hybrid Nodes; se verificó el código fuente de nodeadm v1.0.20. Seleccione el conjunto de versiones de Kubernetes, SO, runtime y complementos para su clúster.
-> **Última actualización**: September 16, 2026
+> **Última actualización**: 16 de septiembre de 2026
 
 Este capítulo prepara Hybrid Nodes cuyo acceso público a Internet está restringido. **Hybrid Nodes aún necesitan conectividad con el plano de control de EKS alojado en AWS y con los servicios de AWS que se usan para las credenciales.** La transferencia física de software no convierte Hybrid Nodes en una distribución de Kubernetes desconectada.
 
@@ -407,7 +407,7 @@ nodeadm instala el helper de ECR en `/etc/eks/image-credential-provider/ecr-cred
 
 ### Transferencia de imágenes sin conexión
 
-Seleccione un digest aprobado y las plataformas necesarias. Para un archivo mult plataforma, conserve el índice y los digests cuando lo permitan los formatos de origen/destino:
+Seleccione un digest aprobado y las plataformas necesarias. Para un archivo multiplataforma, conserve el índice y los digests cuando lo permitan los formatos de origen/destino:
 
 ```bash
 # Preparation host: downloads images; requires reviewed registry authentication.

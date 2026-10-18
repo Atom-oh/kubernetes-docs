@@ -1,20 +1,20 @@
 # GitBook translation progress
 
-Checkpoint: 2026-10-18T09:18:17.768835+00:00
+Checkpoint: 2026-10-18T09:27:23.223931+00:00
 
 Local translation uses three managed Codex subagents running `openai.gpt-6-luna`. The former local API helpers and duplicate Translate Sync run were stopped. Existing validated translations are retained with their original provenance.
 
 | Locale | English source pages | Present | Missing | Changed files in this checkpoint | Existing pages still failing structure checks |
 |---|---:|---:|---:|---:|---:|---:|
-| cn | 693 | 683 | 10 | 13 | 105 |
-| jp | 693 | 686 | 7 | 12 | 320 |
-| es | 693 | 693 | 0 | 6 | 258 |
+| cn | 693 | 686 | 7 | 3 | 105 |
+| jp | 693 | 690 | 3 | 4 | 320 |
+| es | 693 | 693 | 0 | 5 | 257 |
 
-31 additional changed Markdown files pass exact fenced-code, link-target, heading/fence-count and size validation. Six edited legacy Japanese pages were excluded because they still need complete source reconciliation; their in-progress edits remain local. The previous checkpoints retained 452, 132, 96, 53, 29 and 25 validated changes.
+12 additional changed Markdown files pass exact fenced-code, link-target, heading/fence-count and size validation. Six edited legacy Japanese pages were excluded because they still need complete source reconciliation; their in-progress edits remain local. The previous checkpoints retained 452, 132, 96, 53, 29, 25 and 31 validated changes.
 
 **Quality review: IN PROGRESS.** Structural validation does not certify source fidelity or wording. Native agents still need to review all retained translations, repair stale technical prose, and complete missing pages. This checkpoint has not been deployed.
 
-Spanish now has all 693 English counterparts. Its agent is reconciling legacy EKS Hybrid Nodes pages first, including the firewall and networking guidance identified by the user. Offline review bundles contain complete English/translated prose and source/target hashes; they make no model calls and assign no quality scores. Final review aggregation and translation-state updates refuse incomplete or stale native review evidence.
+Spanish now has all 693 English counterparts. Its agent is reconciling legacy EKS Hybrid Nodes pages first, including the firewall and networking guidance identified by the user. The prerequisites, networking, restricted-internet, node-bootstrap and GPU pages received complete native comparisons; obsolete bootstrap instructions and ambiguous firewall wording were corrected. Offline review bundles contain complete English/translated prose and source/target hashes; they make no model calls and assign no quality scores. Final review aggregation and translation-state updates refuse incomplete or stale native review evidence.
 
 An asset checkpoint copied 208 referenced locale images from the English source, with identical bytes and no Markdown edits. The asset-only scan found no unresolved image destinations in the pages present at that checkpoint. Missing-page translations may add further references.
 
@@ -32,8 +32,8 @@ The latest local Markdown link scan found broken destinations only for pages mis
 
 Changes to the unified translation workflow now trigger the normal PR validation workflow even when no document or script changes accompany them. YAML syntax and the single translation-job/model/concurrency settings were checked locally.
 
-The `f79992db` validation job exposed a test that assumed the Japanese kernel page was missing. That page is now translated. The Markdown fallback test now uses an isolated file inventory through the existing file-existence lookup; its five tests and the complete `docs:validate` command pass, including all 174 tests, 94 news records, source-language links/parity, and referenced PNG checks for all five locales. CI validation at `498c37f0` also passes; the full five-locale build is running at this checkpoint.
+The `f79992db` validation job exposed a test that assumed the Japanese kernel page was missing. That page is now translated. The Markdown fallback test now uses an isolated file inventory through the existing file-existence lookup; its five tests and the complete `docs:validate` command pass, including all 174 tests, 94 news records, source-language links/parity, and referenced PNG checks for all five locales. All five CI validation/build jobs at `498c37f0` pass. The full five-locale build completed in 18:24.43, with a 4,557 MB site and peak RSS of 7,667 MB. It emitted 47 untranslated-page redirects for that older snapshot; the later checkpoint's remaining missing pages are listed above.
 
-The latest asset-only checkpoint copied 13 further referenced images with identical English bytes, zero unresolved image destinations and no Markdown rewrites.
+The two latest asset-only checkpoints copied 13 and three further referenced images with identical English bytes, zero unresolved image destinations and no Markdown rewrites.
 
-Two lines in the Spanish Cilium eBPF page have trailing spaces inside an ASCII code diagram. They are byte-identical to the English protected code and are retained intentionally. The whitespace findings include no changed prose.
+Two lines in each translated Cilium eBPF page have trailing spaces inside an ASCII code diagram. The complete fenced blocks are byte-identical to the English protected code and are retained intentionally. The staged CN/JP diff adds four such findings; it includes no unexpected prose whitespace.

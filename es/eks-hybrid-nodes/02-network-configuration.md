@@ -73,7 +73,9 @@ No enrutable no significa que un Pod no pueda iniciar ninguna llamada de API de 
 | Transporte de gateway VPN | UDP500/4500 y requisitos aplicables de transporte IPsec |
 | Aplicaciones / servicios de credenciales y registro de AWS | Solo sus destinos y puertos reales |
 
-Aplique cambios de firewall mediante el propietario de la red, preservando el seguimiento de conexiones y las reglas existentes. Las antiguas reglas INPUT amplias de `10.0.0.0/8`, los permisos DNS/VXLAN sin alcance y los guardados de conjuntos de reglas completos no eran una política de firewall reutilizable y segura. No abra kubelet 10255 sin autenticación como requisito moderno opcional.
+El administrador de red debe modificar las reglas del firewall sin eliminar las reglas existentes ni el seguimiento de conexiones. Permita solo las direcciones IP, los CIDR y los puertos necesarios para la comunicación. Evite reglas INPUT que permitan todo el rango `10.0.0.0/8` o reglas DNS/VXLAN sin restricciones de origen y destino. Antes de guardar los cambios, revise qué reglas debe persistir en lugar de guardar indiscriminadamente todo el conjunto de reglas.
+
+Use TCP `10250` para la API de kubelet, con autenticación y autorización. No abra TCP `10255`, el antiguo puerto de solo lectura de kubelet que permite acceso sin autenticación.
 
 ## Acceso a endpoints de AWS
 
@@ -655,16 +657,16 @@ VPC CNI no es compatible con nodos híbridos, por lo que **los nodos híbridos s
 | Criterio | ① Clúster solo híbrido (solo Cilium) | ② Modo mixto (VPC CNI en la nube + Cilium en híbrido) | ③ Cilium también en nodos de la nube |
 |---|---|---|---|
 | Compatibilidad con AWS | Compatible (Cilium en nodos híbridos) | Compatible. Es el diseño de modo mixto recomendado por AWS | El lado de la nube no es compatible: AWS no admite Cilium en ejecución en nodos de AWS Cloud |
-| Ubicación de webhooks | Se ejecutan en nodos híbridos. El plano de control se conecta a las IP de Pod, por lo que el CIDR de Pods local debe ser enrutable mediante BGP o rutas estáticas | Se ejecutan en nodos de la nube. No es necesario enrutar el CIDR de Pods local | Depende de IPAM y del enrutamiento de Cilium en la nube; debes validarlo por tu cuenta |
-| Tráfico de la nube a Pods locales | No corresponde | CIDR de Pods locales enrutable o el [gateway de Hybrid Nodes](10-hybrid-nodes-gateway.md) | Diseña los túneles o el enrutamiento por tu cuenta. El gateway de Hybrid Nodes requiere VPC CNI (o la red integrada de Auto Mode) en los nodos de la nube, incluidos los nodos del gateway, por lo que no se puede usar |
-| Ampliación de capacidad y Auto Mode | No es posible sin capacidad en la nube | Karpenter puede añadir nodos de la nube. Auto Mode usa la red integrada | Auto Mode no permite reemplazar su CNI. Cilium en nodos de Karpenter también queda bajo tu gestión |
-| Políticas y observabilidad | Un CNI (NetworkPolicy, políticas de Cilium, Hubble) | Cada CNI aplica NetworkPolicy estándar de Kubernetes. Las políticas específicas de Cilium y Hubble solo están disponibles en el lado híbrido | Un CNI, pero tú o un proveedor os encargáis de la respuesta a incidentes y las actualizaciones del lado de la nube |
+| Ubicación de webhooks | Se ejecutan en nodos híbridos. El plano de control se conecta a las IP de Pod, por lo que el CIDR de Pods local debe ser enrutable mediante BGP o rutas estáticas | Se ejecutan en nodos de la nube. No es necesario enrutar el CIDR de Pods local | Depende de IPAM y del enrutamiento de Cilium en la nube; debe validarlo por su cuenta |
+| Tráfico de la nube a Pods locales | No corresponde | CIDR de Pods locales enrutable o el [gateway de Hybrid Nodes](10-hybrid-nodes-gateway.md) | Diseñe los túneles o el enrutamiento por su cuenta. El gateway de Hybrid Nodes requiere VPC CNI (o la red integrada de Auto Mode) en los nodos de la nube, incluidos los nodos del gateway, por lo que no se puede usar |
+| Ampliación de capacidad y Auto Mode | No es posible sin capacidad en la nube | Karpenter puede añadir nodos de la nube. Auto Mode usa la red integrada | Auto Mode no permite reemplazar su CNI. Cilium en nodos de Karpenter también requiere operación propia |
+| Políticas y observabilidad | Un CNI (NetworkPolicy, políticas de Cilium, Hubble) | Cada CNI aplica NetworkPolicy estándar de Kubernetes. Las políticas específicas de Cilium y Hubble solo están disponibles en el lado híbrido | Un CNI, pero usted o un proveedor se encargan de la respuesta a incidentes y las actualizaciones del lado de la nube |
 
 Cómo elegir:
 
-- **Hay nodos en la nube: ②.** El diseño mixto cuenta con el soporte de AWS. Ejecuta los webhooks en la nube y usa la ampliación de capacidad y el gateway de Hybrid Nodes. En modo mixto, ejecuta al menos una réplica de CoreDNS en cada lado; las funciones que requieren que el plano de control o la VPC accedan a las IP de Pods híbridos (destinos IP de ALB/NLB, Metrics Server, recopilación de AMP) necesitan que el CIDR de Pods local sea enrutable ([Operaciones de webhooks en modo mixto](08-operations.md#mixed-mode-webhook-operations)).
+- **Hay nodos en la nube: ②.** El diseño mixto cuenta con el soporte de AWS. Ejecute los webhooks en la nube y use la ampliación de capacidad y el gateway de Hybrid Nodes. En modo mixto, ejecute al menos una réplica de CoreDNS en cada lado; las funciones que requieren que el plano de control o la VPC accedan a las IP de Pods híbridos (destinos IP de ALB/NLB, Metrics Server, recopilación de AMP) necesitan que el CIDR de Pods local sea enrutable ([Operaciones de webhooks en modo mixto](08-operations.md#mixed-mode-webhook-operations)).
 - **Solo instalaciones locales: ①.** Es más sencillo con un solo CNI, pero los webhooks se ejecutan en nodos híbridos, por lo que se necesita un [CIDR de Pods enrutable](#routable-pod-cidr-configuration).
-- **Evalúa cuidadosamente ③.** AWS no admite Cilium en nodos de la nube, y no se pueden usar el gateway de Hybrid Nodes ni Auto Mode. Considéralo solo si tienes un acuerdo de soporte con un proveedor y necesitas un único CNI por encima de estas limitaciones.
+- **Evalúe cuidadosamente ③.** AWS no admite Cilium en nodos de la nube, y no se pueden usar el gateway de Hybrid Nodes ni Auto Mode. Considérelo solo si tiene un acuerdo de soporte con un proveedor y necesita un único CNI a pesar de estas limitaciones.
 
 Referencias:
 - [Configurar CNI para nodos híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
@@ -1138,7 +1140,7 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 
 `available` es un estado de recurso VPN, no el estado del túnel. TunnelState es 1 para UP/static o ESTABLISHED/BGP y 0 para otros estados; los agregados pueden ser fraccionarios. Mantenga los datos ausentes separados de DOWN y verifique ambos túneles, las rutas y el comportamiento real de los workloads. La consulta evita volcar configuraciones de customer gateway/clave precompartida.
 
-La recomendación general de conectividad de AWS es un ancho de banda de **100 Mbps y un RTT de 200 ms o menos**. Al elegir VPN o Direct Connect, evalúa la latencia real de ida y vuelta, la pérdida de paquetes, las rutas de conmutación por error y los tiempos de respuesta de las cargas de trabajo, además del ancho de banda nominal del circuito.
+La recomendación general de conectividad de AWS es un ancho de banda de **100 Mbps y un RTT de 200 ms o menos**. Al elegir VPN o Direct Connect, evalúe la latencia real de ida y vuelta, la pérdida de paquetes, las rutas de conmutación por error y los tiempos de respuesta de las cargas de trabajo, además del ancho de banda nominal del circuito.
 
 ## Referencias
 
