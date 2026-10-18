@@ -1,6 +1,6 @@
 # Linkerd可観測性
 
-> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Prometheus Operator例は0.93.1で確認
+> **最終更新**: 2026年10月16日 · Linkerd edge-26.10.1 / charts 2026.10.1 · Prometheus Operatorの例は0.94.1で検証
 
 Linkerdはproxy/protocolメトリクスを公開し、VizがPrometheus、metrics-api、tap、tap-injector、web dashboardを追加します。現VizチャートはGrafanaを導入**しません**。分散トレースには設定collector/backend、コンテキスト、サンプリングも必要で、metrics dashboard導入だけでは有効になりません。
 
@@ -150,7 +150,7 @@ scrape_configs:
     regex: __tmp_pod_label_(.+)
 ```
 
-旧`admin-http`フィルターは`dest-admin`/`ident-admin`など現portを見逃しました。proxy filterは対象制御の`linkerd-proxy`/`linkerd-admin`を保持します。Pod検出はinitも含むため、`__meta_kubernetes_pod_container_init`がtrueだけで捨てないでください。既定native sidecarはそこにあります。
+以前の`admin-http` controller-port filterでは、`dest-admin`や`ident-admin`など現在のportを見落としていました。proxy filterでは、対象control plane用に名前付きの`linkerd-proxy`/`linkerd-admin` targetを保持します。KubernetesのPod検出にはinit containerも含まれます。既定のnative sidecarはここに含まれるため、`__meta_kubernetes_pod_container_init`がtrueであることだけを理由にtargetを除外しないでください。
 
 ラベルは示すworkload queryを支えます。追加Viz/dashboardが必要とするラベルを保持し、mappedアプリラベルのcardinality/機密性を確認します。検出RBAC、API、metrics port到達性を設定します。有効YAMLは検出/収集成功の証明ではありません。
 
@@ -330,9 +330,9 @@ request_totalに汎用`retry="true"`はありません。ServiceProfileはroute_
 
 ## Grafana
 
-GrafanaはLinkerd 2.12から別導入です。現デフォルトVizにport-forwardする`svc/grafana`はなく、`grafana.enabled:false`では対応統合は設定されません。
+GrafanaはLinkerd 2.12以降、別途インストールする必要があります。現在のViz標準構成にはport-forwardできる`svc/grafana`はなく、`grafana.enabled:false`を指定してもサポート対象の統合は設定されません。
 
-必要metricsのPrometheusデータソースを持つ既存Grafanaを使います。`monitoring`のServiceAccount `grafana`で動くメッシュGrafanaには既存Viz Prometheusへの次の許可を使います。
+必要なメトリクスを含むPrometheus data sourceを設定した既存Grafanaを使ってください。`monitoring` namespaceのServiceAccount `grafana`で動くメッシュ内Grafanaから既存Viz Prometheusへアクセスする場合は、次の許可を設定します。
 
 ```yaml
 apiVersion: policy.linkerd.io/v1alpha1
@@ -602,7 +602,7 @@ def get_data():
         return Response("Upstream request failed\n", status=502)
 ```
 
-connect/read timeoutは接続待ちと読み取り非活動時間で、end-to-end総時間ではありません。継続的に少量ずつ届く応答やcaller取消には、この同期例を超えるアプリ/server期限設計が必要です。応答bufferは上限があり、redirectは明示拒否します。
+connect/read timeoutが制限するのは接続の待ち時間と読み取りが停止している時間であり、end-to-endの総所要時間ではありません。応答が少しずつ届き続ける場合や呼び出し元がcancelした場合に備えるには、この同期処理例の範囲を超えたapplication/server deadlineの設計が必要です。response bufferには上限を設け、redirectは明示的に拒否しています。
 
 既存HTTP server向けGo handler:
 
@@ -681,7 +681,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 ## 診断ログとアクセスログ
 
-proxy診断level/formatとHTTPアクセスログは別設定です。既存メッシュDeploymentへの**マージパッチ**を`proxy-logging-patch.yaml`に保存します。単独Deploymentではありません。
+proxyの診断log level/formatとHTTP access logは別の設定です。既存のメッシュ参加Deploymentへ適用する**merge patch**として`proxy-logging-patch.yaml`に保存してください。単独で使えるDeployment manifestではありません。
 
 ```yaml
 spec:
@@ -702,13 +702,13 @@ kubectl -n my-app rollout status deployment/api --timeout=5m
 kubectl -n my-app logs deployment/api -c linkerd-proxy --tail=100
 ```
 
-`config.linkerd.io/access-log:json`はHTTPアクセス記録、`proxy-log-format:json`は診断形式だけを変更します。無差別debug/traceやheader記録を避け、調査に範囲を限定します。opaque TCPをHTTP要求ログにはしません。
+`config.linkerd.io/access-log:json`はHTTP access recordを有効にします。一方、`proxy-log-format:json`が変更するのは診断logの形式だけです。debug/traceやheaderのログを無差別に有効化せず、調査の目的に合わせて診断情報の収集とデータの取り扱いを限定してください。opaque TCPの通信がHTTP request logになるわけではありません。
 
 `mesh-required:true` Podラベルは下のalert用に健全proxyを意図的に要求する印で、注入はしません。参加は導入/namespace方針に従います。
 
 ## ServiceProfileとPolicy Routeメトリクス
 
-ServiceProfileは互換目的で対応を継続します。追加で同Serviceの現HTTPRoute信頼性設定より優先し得るため、dashboardを埋めるだけのために競合profileを追加しないでください。
+ServiceProfileは互換性のため引き続きサポートされています。ただし追加すると、そのServiceに現在設定されているoutbound HTTPRouteのreliability設定より優先される場合があります。dashboardにデータを表示するだけの目的で、競合するprofileを追加しないでください。
 
 既存api-serviceに対する別の旧metrics演習では、再試行なしでroute名を加えます。
 
@@ -771,7 +771,7 @@ sum by (dst, rt_route) (rate(route_request_total{namespace="my-app",deployment="
 
 ## アラートと調査
 
-PrometheusRuleはselectorラベルが受理され、示すLinkerd jobを収集し、kube-state-metricsがPodラベルと通常/init両runningメトリクスを公開する前提です。metric-labels許可リストで`mesh-required`を有効にします。なければ対象Pod selectorにデータがありません。
+次のPrometheusRuleはselector labelが受け入れられ、例に示すLinkerd jobがscrapeされていることを前提とします。また、kube-state-metricsがPod labelと、通常container/init containerの両方についてrunning状態のmetricsを公開している必要があります。metric-labels allowlistで`mesh-required`を有効にしてください。有効でなければ、対象Podを選ぶselectorからデータを取得できません。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -826,7 +826,7 @@ spec:
         summary: A discovered Linkerd metrics target cannot be scraped
 ```
 
-proxy alertは注入有無だけでなく**実行すべきRunning Podに稼働proxyがない状態**を確認します。通常/native init両方を扱い、mesh必須印のないPodは無視します。kube-state-metrics収集欠損で期待一覧も消えるため、収集healthは別監視です。
+proxy alertが検知するのは、単にproxyがinjectされていない状態ではなく、**稼働中であるべきPodに稼働中のproxyがない状態**です。通常のsidecarとnative init sidecarの両方を扱い、mesh必須labelのないPodは対象外にします。kube-state-metricsのscrapeが欠けると、proxyが必要なPodの一覧自体が失われることがあります。メトリクス収集のhealthは別途監視してください。
 
 遅延しきい値1000msはTTFBで、要求全体時間ではありません。分類エラーしきい値をSLIへ合わせます。`up == 0`は検出済みtarget失敗で、未検出全targetではありません。
 
@@ -839,7 +839,7 @@ proxy alertは注入有無だけでなく**実行すべきRunning Podに稼働pr
 - [Proxyメトリクス](https://linkerd.io/docs/reference/proxy-metrics/)と[proxy設定](https://linkerd.io/docs/reference/proxy-configuration/)
 - [トレーシング](https://linkerd.io/docs/tasks/distributed-tracing/)
 - [リリースのメトリクス時刻実装](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
-- [リリースViz scrape設定](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
-- [リリースGrafana dashboard群](https://github.com/linkerd/linkerd2/tree/edge-26.9.1/grafana/dashboards)
+- [リリース済みVizのscrape設定](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
+- [リリース済みGrafana dashboard群](https://github.com/linkerd/linkerd2/tree/edge-26.10.1/grafana/dashboards)
 - [kube-state-metrics Podメトリクス](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
 - [W3C trace context](https://www.w3.org/TR/trace-context/)

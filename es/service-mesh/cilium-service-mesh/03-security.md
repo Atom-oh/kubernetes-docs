@@ -1,12 +1,12 @@
-# Seguridad de la malla de servicios Cilium
+# Seguridad de Cilium Service Mesh
 
-> **Última actualización**: 11 de septiembre de 2026 · Cilium/chart 1.20.1 · SPIRE incluido 1.15.2. Consulte la [descripción general](./README.md) para versiones Kubernetes/EKS probadas y requisitos de plataforma.
+> **Última actualización**: 16 de octubre de 2026 · Cilium/chart 1.20.3 · SPIRE incluido 1.15.3. Consulta la [descripción general](./README.md) para ver las versiones probadas de Kubernetes/EKS y los requisitos de plataforma.
 
 ## Descripción general
 
-Evalúe tres controles separados: autorización de cargas, autenticación de peers y cifrado de datos de aplicación. La autenticación mutua fuera de banda de Cilium, el cifrado WireGuard/IPsec y la beta mTLS ztunnel independiente tienen requisitos y límites distintos.
+Evalúa tres controles distintos: autorización de cargas de trabajo, autenticación entre pares y cifrado de datos de aplicación. La autenticación mutua fuera de banda de Cilium, el cifrado de transporte WireGuard/IPsec y la beta independiente de mTLS de ztunnel tienen requisitos y limitaciones diferentes.
 
-Los ejemplos describen la ruta ordinaria de políticas/autenticación fuera de banda. **No asuma que mantienen la misma aplicación L4 al habilitar cifrado ztunnel**; su limitación beta se explica abajo.
+Los ejemplos de políticas siguientes describen la ruta ordinaria de políticas/autenticación fuera de banda de Cilium. **No des por sentado que conservan la misma aplicación L4 al habilitar el cifrado de ztunnel**; la limitación beta se explica abajo.
 
 ## Arquitectura de seguridad
 
@@ -14,23 +14,23 @@ Los ejemplos describen la ruta ordinaria de políticas/autenticación fuera de b
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
-Los recuadros agrupan responsabilidades, no certifican que cada combinación preserve todas las políticas. En particular, ztunnel beta usa otra ruta de identidad/datos y su CA predeterminada no necesita la integración SPIRE mostrada para autenticación fuera de banda.
+Estos bloques agrupan responsabilidades; no certifican que todas las combinaciones conserven todas las políticas. En particular, la beta de ztunnel usa una ruta de identidad/datos distinta y su CA predeterminada no requiere la integración SPIRE mostrada para la autenticación fuera de banda.
 
 ## Autenticación mutua y cifrado de datos
 
 ### Autenticación mutua Cilium existente
 
-El mecanismo fuera de banda sigue documentado como **beta/incompleto** en Cilium 1.20.1. Los agentes autentican identidades de seguridad Cilium mediante SVID de SPIRE; una regla de red que exija autenticación no convierte la propia conexión de aplicación en TLS.
+El mecanismo fuera de banda sigue documentado como **beta/incompleto** en Cilium 1.20.3. Los agentes de Cilium autentican las identidades de seguridad de Cilium mediante SVID proporcionados por SPIRE; exigir autenticación mediante una regla de política de red no convierte por sí mismo la conexión de la aplicación en TLS.
 
-![Intercambio ilustrativo de autenticación fuera de banda entre agentes antes de permitir tráfico protegido por políticas.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
+![Intercambio ilustrativo de autenticación fuera de banda entre agentes antes de que continúe el tráfico protegido por políticas.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
-Los registros de autenticación se cachean para relaciones de identidad. El diagrama no significa un certificado/handshake nuevo por solicitud HTTP ni necesariamente por conexión. Aplique reglas explícitas de autorización además de requisitos de autenticación.
+Los registros de autenticación se almacenan en caché para relaciones de identidad. El diagrama no representa un certificado/handshake nuevo para cada solicitud HTTP ni necesariamente para cada conexión de aplicación. Además de los requisitos de autenticación, aplica reglas explícitas de autorización.
 
-### mTLS nativo mediante ztunnel (actualización 2026)
+### mTLS nativo mediante ztunnel (actualización de 2026)
 
-Cilium 1.20.1 contiene **Cifrado transparente Ztunnel (Beta)**. Selecciónelo con este fragmento tras preparar material bootstrap/CA:
+Cilium 1.20.3 incluye **Ztunnel Transparent Encryption (Beta)**. Selecciónalo con este fragmento de modo después de preparar el material bootstrap/CA necesario:
 
 ```yaml
 encryption:
@@ -41,21 +41,21 @@ encryption:
       type: internal
 ```
 
-El valor publicado usa la CA interna Cilium. Un Secret `cilium-ztunnel-secrets` aporta `bootstrap-private.key`, `bootstrap-root.crt`, `ca-private.key` y `ca-root.crt`; el script oficial es un ejemplo, no un diseño PKI/rotación productivo completo. `bootstrapRootCert` del chart solo aporta certificado público y no genera claves privadas de la CA interna.
+El valor predeterminado publicado usa la opción de CA interna de Cilium. Un Secret `cilium-ztunnel-secrets` proporciona `bootstrap-private.key`, `bootstrap-root.crt`, `ca-private.key` y `ca-root.crt`; el script oficial de generación es un ejemplo, no un diseño completo de PKI/rotación para producción. La opción `bootstrapRootCert` del chart solo proporciona un certificado público; no genera las claves privadas que necesita la CA interna.
 
-El agente configura redirección iptables en namespaces de red de Pods inscritos, envía estado al ztunnel del nodo y sirve interfaces de control/certificados. El chart crea DaemonSet `ztunnel-cilium`. La inscripción usa `io.cilium/mtls-enabled=true`; instalar el modo no inscribe todos los namespaces.
+El agente de Cilium configura la redirección iptables en los namespaces de red de los pods inscritos, envía el estado de la carga de trabajo al ztunnel del nodo y sirve sus interfaces de control/certificados. El chart crea el DaemonSet `ztunnel-cilium`. La inscripción del namespace usa `io.cilium/mtls-enabled=true`; instalar el modo no inscribe todos los namespaces.
 
-La guía publicada especifica:
+La guía publicada establece estos límites:
 
-- Ambas cargas, origen y destino, deben estar inscritas; no se admite comunicación inscrita→no inscrita.
-- La inscripción es por namespace, no por Pod. Pods host-network no pueden inscribirse.
-- Solo TCP se redirige para mTLS; UDP y otros protocolos quedan fuera.
-- ClusterMesh no está soportado y el kernel debe admitir las operaciones iptables necesarias.
-- El cifrado ocurre antes de salir del Pod. Por ello, las políticas L4 ordinarias no funcionan en esta ruta salvo si apuntan directamente al puerto HBONE 15008.
+- Deben estar inscritos tanto el origen como el destino; no se admite la comunicación entre una carga inscrita y otra no inscrita.
+- La inscripción se configura por namespace, no por pod. Los pods que usan la red del host no se pueden inscribir.
+- Solo se redirige TCP para mTLS; UDP y otros protocolos quedan fuera de esta ruta de cifrado.
+- ClusterMesh no es compatible y el kernel debe admitir las operaciones iptables requeridas.
+- El cifrado tiene lugar antes de que los paquetes salgan del pod. Por ello, las políticas L4 ordinarias no funcionan en esta ruta, excepto cuando apuntan directamente al puerto HBONE 15008.
 
-La integración usa identidad de carga por namespace/cuenta de servicio, distinta de la ruta SPIFFE numérica `/identity/<id>` de la autenticación fuera de banda.
+Esta integración usa un modelo de identidad de carga de trabajo por namespace/cuenta de servicio. Es distinto de la ruta SPIFFE numérica `/identity/<id>` que usa la autenticación fuera de banda.
 
-Comprobaciones de solo lectura para una instalación de prueba preparada:
+Las comprobaciones de solo lectura para una instalación de prueba preparada incluyen:
 
 ```bash
 kubectl -n kube-system get daemonset ztunnel-cilium
@@ -63,17 +63,17 @@ kubectl get namespaces -l io.cilium/mtls-enabled=true
 kubectl -n kube-system get configmap cilium-config -o yaml
 ```
 
-Una etiqueta namespace, proxy saludable o paquete en 15008 no demuestra que todo el tráfico previsto esté cifrado y autorizado. Revise inscripción efectiva, ambos extremos, identidad/confianza del certificado y casos no admitidos.
+Una etiqueta de namespace, un proxy saludable o un paquete observado en el puerto 15008, por sí solos, no demuestran que todo el tráfico esperado esté cifrado y autorizado. Comprueba que la inscripción se completó, ambos extremos de la ruta elegida, la identidad/confianza del certificado y los casos de tráfico no admitidos.
 
 ### Cuándo elegir Cilium o Istio para mTLS
 
-Elija según identidad, autorización y cobertura requeridas. Un Cilium existente puede usar políticas de identidad más WireGuard/IPsec o evaluar ztunnel beta dentro de sus límites. Cuente proxies, CA y dependencias operativas realmente habilitados.
+Elige según la identidad, la autorización y la cobertura del tráfico que necesites. Una instalación de Cilium existente puede usar políticas de identidad junto con WireGuard/IPsec o evaluar la beta independiente de ztunnel dentro de sus límites. Ten en cuenta los proxies, la CA y las dependencias operativas adicionales que estén habilitados realmente.
 
-Istio proporciona mTLS de proxy de carga en sidecar y ambient con límites propios. `PeerAuthentication` `STRICT` exige mTLS entrante; por sí solo no emite identidades, no instala proxies ni autoriza a todos. No reduzca la comparación a un interruptor de cifrado. El [capítulo sidecar/ambient](../istio/comparison/03-sidecar-vs-ambient.md) conserva versiones y escenarios realmente medidos.
+Istio proporciona mTLS mediante proxies de carga de trabajo en los modos sidecar y ambient, cada uno con sus propios límites de funcionalidad/plataforma. `PeerAuthentication` `STRICT` exige mTLS entrante; por sí sola no emite identidades, instala proxies ni autoriza a todos los llamantes. No reduzcas la comparación a un único interruptor de cifrado. El [capítulo de sidecar/ambient](../istio/comparison/03-sidecar-vs-ambient.md) conserva las versiones y los escenarios medidos realmente.
 
-### Configuración de autenticación mutua con SPIRE
+### Configuración de autenticación mutua basada en SPIRE
 
-Para autenticación **fuera de banda**, combine este overlay con values revisados:
+Para la autenticación **fuera de banda**, combina este overlay con los valores de instalación revisados:
 
 ```yaml
 authentication:
@@ -91,13 +91,13 @@ authentication:
             size: 1Gi
 ```
 
-Prepare StorageClass/PV adecuado para StatefulSet SPIRE. Una clase `gp3` no existe automáticamente en todo EKS. Se requiere `authentication.enabled`; trust domain y socket del agente van bajo `authentication.mutual.spire`, no `install.server`/`install.agent`. El chart incluido no implementa los antiguos `server.replicas`, `server.nodeAttestor`, `agent.workloadAttestor` o `server.ca.ttl`.
+Prepara una StorageClass/PV adecuada para el StatefulSet de SPIRE. Una clase llamada `gp3` no está presente automáticamente en todos los clústeres EKS. Se requiere `authentication.enabled`; el trust domain y la configuración del socket del agente deben ir dentro de `authentication.mutual.spire`, no bajo `install.server` ni `install.agent`. El chart incluido no implementa los antiguos ejemplos `server.replicas`, `server.nodeAttestor`, `agent.workloadAttestor` ni `server.ca.ttl`.
 
-SPIRE Server verifica agentes y firma SVID. Los agentes atestiguan cargas; Cilium además delega obtención y registra entradas de identidades de seguridad. Habilitar SPIRE solo no exige autenticación en todo tráfico ni activa WireGuard/IPsec.
+SPIRE Server atestigua a los agentes y firma SVID. Los agentes realizan la atestación de cargas de trabajo; la integración de Cilium también delega la recuperación y registra entradas para las identidades de seguridad de Cilium. Habilitar SPIRE por sí solo no exige autenticación en todo el tráfico ni habilita WireGuard/IPsec.
 
 ### Aplicación de políticas de autenticación mutua
 
-`authentication` es un **objeto dentro de una regla de permiso ingress/egress**. No es array ni interruptor raíz `spec.authentication`. Esta política de clúster selecciona deliberadamente una aplicación/namespace:
+`authentication` es un **objeto dentro de una regla de permiso ingress/egress**. No es un array ni un interruptor de nivel superior `spec.authentication`. Esta política de ámbito de clúster selecciona deliberadamente una aplicación/namespace:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -124,7 +124,7 @@ spec:
 
 ### Autenticación mutua por namespace
 
-El ejemplo selecciona cargas en `production` y permite peers autenticados del mismo namespace por TCP 8080:
+Este ejemplo namespaced selecciona las cargas de trabajo en `production` y permite pares autenticados de ese namespace por TCP 8080:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -146,7 +146,7 @@ spec:
       mode: required
 ```
 
-Es un permiso ilustrativo dentro del namespace, no mínimo privilegio universal. Evalúe otros puertos, clientes, probes y permisos existentes por separado. Afecta a ingress; no configura silenciosamente todas las dependencias egress.
+Es un permiso ilustrativo dentro del mismo namespace, no un ejemplo de mínimo privilegio válido para todas las aplicaciones. Evalúa por separado otros puertos, clientes, sondas y permisos concedidos por políticas existentes. Afecta a ingress; no configura implícitamente una política completa de dependencias egress.
 
 ### Autenticación mutua por servicio
 
@@ -174,11 +174,11 @@ spec:
       mode: required
 ```
 
-Las etiquetas origen/destino describen cargas, no login de usuarios. Los permisos Kubernetes deben controlar quién crea cargas, cambia etiquetas o usa sus cuentas de servicio.
+Aquí las etiquetas de origen y destino describen cargas de trabajo, no el inicio de sesión de un usuario final. Los permisos de Kubernetes deben controlar quién puede crear cargas, cambiar esas etiquetas o usar sus cuentas de servicio.
 
-## Reglas L7 CiliumNetworkPolicy
+## Reglas L7 de CiliumNetworkPolicy
 
-### Política HTTP L7
+### Política de seguridad HTTP L7
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -234,13 +234,13 @@ spec:
           path: ^/metrics$
 ```
 
-Las reglas HTTP dentro de una regla son alternativas. `headers: [Authorization]` solo exige presencia: no valida bearer token, firma, caducidad ni permisos. La antigua cadena `Authorization: Bearer .*` no verificaba JWT ni era coincidencia regex general de valores. Implemente autenticación y autorización de aplicación independientemente.
+Las reglas HTTP dentro de una regla son alternativas. `headers: [Authorization]` solo exige que la cabecera esté presente: no valida un bearer token, su firma, caducidad ni permisos. La antigua cadena `Authorization: Bearer .*` no era un verificador JWT ni una coincidencia general de valores mediante expresión regular. Implementa la autenticación y autorización de la aplicación por separado.
 
-Una política de ruta HTTP necesita una ruta L7 inspeccionable admitida. TLS de aplicación, probes y otras dependencias requieren configuración; un número de puerto no activa TLS.
+Una política de ruta HTTP requiere una ruta L7 inspeccionable compatible. El TLS de la aplicación, las sondas y el tráfico de otras dependencias requieren la configuración pertinente; indicar un número de puerto no activa TLS.
 
-### Política Kafka L7
+### Política de seguridad Kafka L7
 
-El esquema L7 de Cilium 1.20.1 rechaza `rules.kafka` antiguo. La sustitución limita **solo conectividad de red**:
+El esquema L7 de Cilium 1.20.3 rechaza el antiguo objeto `rules.kafka`. La sustitución siguiente limita **solo la conectividad de red**:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -272,9 +272,9 @@ spec:
         protocol: TCP
 ```
 
-Configure TLS/SASL del listener Kafka y ACL de brokers para produce/fetch, temas y grupos. Retirar una regla L7 obsoleta deja acceso L4; no conserva autorización por tema.
+Configura TLS/SASL en el listener Kafka real y las ACL del broker para producción/consumo, temas y grupos de consumidores. Eliminar una regla L7 obsoleta deja acceso L4; no conserva la autorización por tema.
 
-### Política DNS L7
+### Política de seguridad DNS L7
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -312,27 +312,27 @@ spec:
         protocol: TCP
 ```
 
-Se suponen endpoints CoreDNS con `k8s-app=kube-dns` en `kube-system` y sufijo `cluster.local`. Permite DNS UDP y TCP. Un FQDN Service incluye servicio y namespace, por lo que `*.*.svc.cluster.local` difiere del anterior `*.svc.cluster.local`.
+El ejemplo presupone endpoints de CoreDNS etiquetados `k8s-app=kube-dns` en `kube-system`, además del sufijo DNS ordinario `cluster.local`. Permite DNS por UDP y TCP. El FQDN de un Service contiene las etiquetas del servicio y del namespace, por lo que `*.*.svc.cluster.local` difiere del antiguo `*.svc.cluster.local`.
 
-Permitir HTTPS externo es independiente de permitir consultas DNS. `sts.us-east-1.amazonaws.com` es un endpoint regional específico; AWS no usa `api.aws.amazon.com` como endpoint universal. Seleccione endpoints SDK reales de región/servicio, incluidas variantes IPv6/doble pila o privadas pertinentes. Una respuesta DNS interna no concede conexión automática a todos los Services internos.
+El permiso de HTTPS externo es independiente del permiso para consultar DNS. `sts.us-east-1.amazonaws.com` es un endpoint regional específico de AWS; AWS no usa el antiguo `api.aws.amazon.com` como endpoint universal de API. Elige los endpoints reales de región/servicio del SDK, incluidas las variantes IPv6/doble pila o de endpoint privado que correspondan. Las respuestas del DNS interno no conceden automáticamente acceso a todos los Services internos.
 
-Revise search list del resolvedor y NodeLocal DNS si se usa. Comodines S3 amplios pueden permitir más que el bucket previsto; políticas DNS/IP no garantizan evitar exfiltración mediante destinos permitidos.
+Revisa el comportamiento de la lista de búsqueda del resolvedor y NodeLocal DNS, si están habilitados. Los comodines S3 amplios pueden permitir destinos adicionales al bucket previsto, y una política DNS/IP no garantiza que se impida la exfiltración mediante destinos permitidos.
 
 ## Autenticación mutua
 
 ### Modos de autenticación
 
-| Modo | Significado en la API fuera de banda |
+| Modo | Significado en la API de políticas fuera de banda |
 |---|---|
-| `required` | Exige autenticación exitosa para tráfico permitido coincidente |
-| `disabled` | Exención explícita para esa regla |
-| `test-always-fail` | Modo de prueba que fuerza fallo de autenticación |
+| `required` | Exige autenticación correcta para el tráfico permitido coincidente |
+| `disabled` | Exención explícita de autenticación para esa regla coincidente |
+| `test-always-fail` | Modo de prueba que provoca deliberadamente un fallo de autenticación |
 
-No existe `optional` en el esquema. La ausencia de requisito explícito difiere de una exención cuidadosamente acotada si se superponen reglas; inspeccione el resultado, sin asumir que se comportan como permisos independientes ordinarios.
+El esquema publicado no tiene modo `optional`. La ausencia de un requisito explícito no equivale a una exención cuidadosamente delimitada cuando hay reglas superpuestas; inspecciona la política resultante en lugar de suponer que las reglas de autenticación funcionan como permisos independientes ordinarios.
 
-### Ejemplos de políticas
+### Ejemplos de políticas de autenticación mutua
 
-Una exención debe ser explícita, limitada y justificada:
+Una exención debe ser explícita, acotada y estar justificada:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -368,21 +368,21 @@ spec:
       mode: disabled
 ```
 
-La regla Prometheus es **autenticación desactivada**, no «autenticar si es posible». Solo permite la carga/puerto de monitorización indicados. TLS en los listeners de cualquiera de las aplicaciones se configura por separado.
+La regla de Prometheus especifica **autenticación deshabilitada**, no «autenticar si es posible». Solo concede acceso a la carga de monitorización y al puerto indicados. El TLS en el puerto de escucha de cualquiera de las aplicaciones es una configuración aparte.
 
 ### Autenticación basada en SPIFFE ID
 
-En el dominio SPIRE predeterminado **fuera de banda**, una identidad Cilium tiene esta forma:
+Para el trust domain SPIRE predeterminado de autenticación **fuera de banda**, una identidad de seguridad de Cilium tiene esta forma:
 
 ```text
 spiffe://spiffe.cilium/identity/<numeric-security-identity>
 ```
 
-Seleccione peers mediante políticas endpoint/identidad; `authentication` no tiene un campo allowlist arbitrario de SPIFFE ID. Cambiar un comentario a URI `/ns/.../sa/...` de estilo Istio no restringe acceso. ztunnel beta usa otro modelo de identidad.
+Selecciona los pares permitidos mediante políticas de endpoint/identidad; el objeto `authentication` no tiene un campo arbitrario de lista permitida de SPIFFE ID. Cambiar un comentario por un URI de estilo Istio `/ns/.../sa/...` no restringe el acceso. La beta de ztunnel descrita arriba usa otro modelo de identidad de carga de trabajo.
 
 ## Cifrado
 
-### Cifrado transparente WireGuard
+### Cifrado transparente con WireGuard
 
 ```yaml
 encryption:
@@ -390,19 +390,19 @@ encryption:
   type: wireguard
 ```
 
-Cilium crea claves por nodo y distribuye las públicas mediante CiliumNode. El tráfico admitido entre Pods gestionados en **nodos distintos** se cifra; intranodo no. El kernel debe soportar WireGuard. No existe `encryption.wireguard.userspaceFallback` en el chart.
+Cilium crea pares de claves por nodo y distribuye las claves públicas mediante información de CiliumNode. Se cifra el tráfico compatible entre pods gestionados por Cilium en **nodos distintos**; el tráfico en el mismo nodo no se cifra. El kernel debe admitir WireGuard. El chart no tiene una opción `encryption.wireguard.userspaceFallback`.
 
-Permita UDP 51871 entre nodos y considere MTU/encapsulación. AWS VPC CNI chaining tiene requisitos adicionales, incluido `cni.enableRouteMTUForCNIChaining`; siga el modo elegido, no lo aplique a ciegas.
+Permite la ruta UDP 51871 necesaria entre nodos y ten en cuenta MTU/encapsulación. El encadenamiento con AWS VPC CNI tiene requisitos adicionales de MTU, entre ellos la opción documentada `cni.enableRouteMTUForCNIChaining`; sigue el modo de instalación elegido en vez de aplicarla a ciegas.
 
 #### Arquitectura WireGuard
 
-![Gestión lógica de WireGuard entre nodos por agentes Cilium; el cifrado lo realizan interfaces WireGuard del kernel.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
+![Gestión lógica de WireGuard entre nodos a cargo de los agentes Cilium; el cifrado lo realizan las interfaces WireGuard del kernel.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
 
-Agent representa gestión/distribución de claves, no un salto userspace por paquete. Capturar en la interfaz WireGuard puede mostrar paquetes interiores en claro; verifique la ruta exterior correcta al evaluar cifrado.
+El bloque Agent representa la gestión/distribución de claves, no un salto de tránsito en userspace para cada paquete. Una captura en la interfaz WireGuard puede mostrar los paquetes internos sin cifrar; para evaluar el cifrado, verifica la ruta de red exterior correcta.
 
-La cobertura entre nodos es otra opción beta:
+La cobertura entre nodos es una opción beta aparte:
 
 ```yaml
 encryption:
@@ -411,7 +411,7 @@ encryption:
   nodeEncryption: true
 ```
 
-Los nodos del plano de control se excluyen por defecto para evitar fallos de arranque por actualización de claves. La matriz publicada identifica exclusiones de aceleración XDP, DSR no Geneve y respuestas de egress gateway. El tramo cliente→clúster de una solicitud externa no lo cifra WireGuard de nodo.
+Los nodos del plano de control se excluyen del cifrado de nodos de forma predeterminada para evitar fallos de bootstrap al actualizar claves. La matriz de tráfico publicada también identifica exclusiones relacionadas con aceleración XDP, DSR sin Geneve y respuestas de egress gateway. WireGuard de nodo no cifra el tramo cliente-clúster de una solicitud externa.
 
 ### Cifrado IPsec
 
@@ -426,35 +426,35 @@ encryption:
     keyRotationDuration: 5m
 ```
 
-El Secret debe existir en el namespace Cilium. En el ejemplo AES-GCM documentado, `keys` tiene esta forma:
+El Secret debe existir en el namespace de Cilium. En el ejemplo AES-GCM documentado, la entrada `keys` tiene esta estructura:
 
 ```text
 3+ rfc4106(gcm(aes)) <fresh-20-byte-random-value-in-hex> 128
 ```
 
-`+` selecciona claves derivadas por túnel. La forma global sin `+` quedó obsoleta por seguridad; no la copie como recomendación actual. Genere y proteja material nuevo con el flujo CLI/Secret documentado, no reutilice una clave de muestra.
+El signo `+` selecciona claves derivadas por túnel. La forma antigua de clave global sin `+` quedó obsoleta por motivos de seguridad; no la copies como recomendación actual. Genera y protege material de clave nuevo mediante el flujo documentado de CLI/Secret en vez de reutilizar una clave de ejemplo.
 
-`keyRotationDuration: 5m` es una gracia de transición/limpieza de claves antiguas tras cambiar una clave, **no un planificador que genere una clave cada cinco minutos**. Actualice IDs/material con el procedimiento admitido, coordine todos los clústeres si usa ClusterMesh y no rote con versiones de nodo mezcladas durante una actualización.
+`keyRotationDuration: 5m` es un período de transición/limpieza de la clave antigua tras un cambio de clave, **no un planificador que genera una clave nueva cada cinco minutos**. Actualiza los ID y el material de claves mediante el procedimiento compatible, coordina todos los clústeres si usas ClusterMesh y no rotes mientras haya nodos con versiones mezcladas durante una actualización.
 
-Compruebe ESP/firewall, interfaces de cifrado y CIDR de routing nativo. IPsec actual exige el comportamiento DNS proxy transparente documentado con L7, no admite CNI chaining ni políticas de host y no cifra tráfico intranodo.
+Comprueba la compatibilidad de ESP/firewall, las interfaces de cifrado reales y el CIDR de enrutamiento nativo. El IPsec actual requiere el comportamiento documentado de proxy DNS transparente con L7, no admite encadenamiento CNI ni políticas de host y no cifra el tráfico dentro del mismo nodo.
 
 ### Comparación de cifrado
 
 | Tema | WireGuard | IPsec | ztunnel beta |
 |---|---|---|---|
-| Claves/identidad | Pares generados por nodo | Material distribuido con derivación por túnel | Certificados mTLS de cargas y material bootstrap/CA |
-| Ruta de datos | Interfaces WireGuard del kernel | IPsec/XFRM del kernel | Proxy TLS por nodo y redirección en namespace Pod |
-| Intranodo/cobertura | Intranodo sin cifrar; consulte matriz publicada | Intranodo sin cifrar; límites de modo | Ambos extremos inscritos; solo TCP; límites de políticas |
-| Cifrados | ChaCha20-Poly1305 del protocolo WireGuard | Algoritmos configurados admitidos por kernel, como AES-GCM | TLS negociado por el proxy compatible |
-| Rendimiento | Medir CPU, MTU y mezcla de tráfico reales | Medir algoritmo/hardware, túnel y restricciones de descifrado por túnel | Medir sobrecarga de proxy, TLS y carga; no forma parte de benchmarks antiguos |
+| Claves/identidad | Pares de claves generados por nodo | Material de clave distribuido con derivación por túnel | Certificados mTLS de cargas de trabajo y material bootstrap/CA |
+| Ruta de datos | Interfaces WireGuard del kernel | IPsec/XFRM del kernel | Proxy TLS por nodo y redirección en el namespace del pod |
+| Tráfico en el mismo nodo/cobertura | Tráfico del mismo nodo sin cifrar; consulta la matriz de tráfico publicada | Tráfico del mismo nodo sin cifrar; se aplican límites del modo | Ambos extremos inscritos; solo TCP; se aplican límites de políticas |
+| Configuración de cifrado | Suite ChaCha20-Poly1305 del protocolo WireGuard | Algoritmos configurados compatibles con el kernel, como AES-GCM | TLS negociado por el proxy compatible |
+| Rendimiento | Mide la CPU, MTU y mezcla de tráfico reales | Mide el algoritmo/hardware, el túnel y las limitaciones de descifrado por túnel | Mide la sobrecarga del proxy/TLS y de la carga de trabajo; no forma parte de los benchmarks de la comparación anterior |
 
-El cifrado transparente puede tener una ventana de descubrimiento donde un destino permitido desconocido se trata como externo. Cilium documenta egress restringido y modos de cifrado estricto como mitigaciones con límites: egress estricto depende de IPv4/CIDR; ingress estricto requiere WireGuard e interfaces gestionadas y no admite CNI chaining. «Cifrado habilitado» no demuestra protección fail-closed en toda ruta.
+El cifrado transparente también puede tener una ventana de descubrimiento de endpoints durante la cual un destino permitido desconocido se trata como externo. Cilium documenta los modos de egress restringido y de cifrado estricto como mitigaciones, con límites concretos: egress estricto depende de IPv4/CIDR; ingress estricto requiere WireGuard e interfaces gestionadas y no es compatible con encadenamiento CNI. No interpretes «cifrado habilitado» como prueba de protección fail-closed para todas las rutas.
 
 ## Seguridad basada en identidad
 
 ### Identidad Cilium
 
-Cilium asigna identidad numérica a un conjunto de etiquetas relevantes; varios Pods pueden compartirla. No es un hash calculado por el usuario ni un ID Pod permanente.
+Cilium asigna una identidad numérica a cada conjunto de etiquetas relevantes para la identidad; varios pods pueden compartirla. No es un hash calculado por el usuario ni un identificador permanente del pod.
 
 ### Componentes de identidad
 
@@ -468,7 +468,7 @@ kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status -
 kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg encrypt status
 ```
 
-Pueden contribuir namespace, cuenta de servicio y etiquetas elegidas. IDs 1–6 corresponden a host, world, unmanaged, health, init y remote-node; los IDs asignados dependen de la instalación. Inspeccione el agente del nodo pertinente y conserve fallos/estado completos.
+Pueden contribuir el namespace, la cuenta de servicio y las etiquetas de carga de trabajo seleccionadas. Los ID 1–6 corresponden a host, world, unmanaged, health, init y remote-node; los ID de cargas de trabajo asignados dependen de la instalación. Inspecciona el agente del nodo pertinente y conserva completos los errores/estado de los comandos.
 
 ### Política basada en identidad
 
@@ -503,19 +503,19 @@ spec:
         protocol: TCP
 ```
 
-### Comparación IP frente a identidad
+### Comparación de IP e identidad
 
-![Los selectores de identidad evitan reescribir listas de direcciones por cada cambio Pod, pero Cilium sigue manteniendo estado dirección-identidad.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
+![Los selectores de identidad evitan reescribir manualmente listas de direcciones con cada cambio de pod, mientras Cilium sigue manteniendo el estado de asignación de dirección a identidad.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
-Los selectores pueden permanecer estables ante cambios IP. Cilium debe actualizar endpoints/caché IP y una identidad puede liberarse y reasignarse; el diagrama no promete ID numérico inmutable tras todo reinicio.
+Los selectores de políticas pueden mantenerse estables aunque cambien las IP. Cilium sigue teniendo que actualizar el estado del endpoint/caché IP; una identidad puede liberarse y reasignarse. El diagrama no promete que el ID numérico sea inmutable después de cada reinicio.
 
-## Integración PKI externa
+## Integración con PKI externa
 
-### Integración cert-manager
+### Integración con cert-manager
 
-Los objetos ilustran crear un Secret CA upstream. **No conectan por sí solos ese Secret a SPIRE**:
+Estos objetos ilustran la creación de un Secret de CA upstream. **No conectan por sí mismos ese Secret a SPIRE**:
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -553,15 +553,15 @@ spec:
     group: cert-manager.io
 ```
 
-Prepare CA/clave válida en `cilium-ca-secret` en el namespace de recursos de clúster configurado para cert-manager, con vida suficiente. Valide restricciones CA, usos de firma y cadenas. Un año es ejemplo de CA subordinada, no recomendación universal.
+Prepara una CA/clave de firma válida en `cilium-ca-secret`, dentro del namespace de recursos de clúster configurado para cert-manager, y con vida restante suficiente. Valida las restricciones de la CA, los usos de firma y las cadenas de confianza. La duración de un año es un ejemplo de vida útil de una CA subordinada, no una recomendación universal.
 
-Un servidor SPIRE externo debe usar UpstreamAuthority admitida y acceder al material montado o API del issuer. Para autoridad de disco en PKI existente, SPIRE requiere `cert_file_path`, `key_file_path` y `bundle_file_path` de raíz confiable; planifique recarga/rotación y solapamiento de confianza. Actualizar un Secret no demuestra que cada consumidor haya adoptado la CA.
+Un servidor SPIRE gestionado externamente debe usar un UpstreamAuthority compatible y acceder al material montado o a la API del emisor. Para una autoridad de disco que se une a una PKI existente, SPIRE requiere `cert_file_path`, `key_file_path` y `bundle_file_path` de la raíz de confianza; planifica la recarga/rotación y el solapamiento de confianza. Actualizar un Secret de Kubernetes no demuestra por sí solo que todos los consumidores de certificados hayan adoptado la CA nueva.
 
-No sustituya el ConfigMap SPIRE incluido por un archivo parcial ajeno. Para SPIRE externo, revise por separado dirección externa Cilium, dominio de confianza, registro delegado de identidades y autenticación.
+No sustituyas el ConfigMap de SPIRE incluido por un archivo parcial no relacionado. Para SPIRE operado externamente, revisa por separado la dirección del servidor externo de Cilium, el trust domain, el registro delegado de identidades y los requisitos previos de autenticación.
 
-### Integración Vault
+### Integración con Vault
 
-Lo siguiente es solo un **fragmento de plugin** para un servidor SPIRE 1.15.2 configurado independientemente, no configuración completa ni Deployment:
+Lo siguiente es solo un **fragmento de plugin** para un servidor SPIRE 1.15.4 configurado de forma independiente, no una configuración completa de servidor ni un Deployment de Kubernetes:
 
 ```hcl
 plugins {
@@ -580,15 +580,15 @@ plugins {
 }
 ```
 
-Los plugins pertenecen a `plugins` de nivel superior, no dentro de `server`. El campo es `pki_mount_point`; `token_path` va dentro de `k8s_auth`. El token es una proyección ServiceAccount Kubernetes para el rol auth Vault, no un archivo genérico de token Vault.
+Los plugins van en `plugins` de nivel superior, no dentro de `server`. El campo es `pki_mount_point`; aquí, `token_path` va dentro de `k8s_auth`. El token es un token de cuenta de servicio de Kubernetes proyectado para el rol de autenticación Vault configurado, no un archivo de token Vault genérico.
 
-Prepare proyección/audience y autenticación Kubernetes de Vault, vincule el rol a la carga SPIRE prevista, monte CA TLS para verificar Vault y conceda PKI sign-intermediate. Coordine `ca_ttl` de SPIRE, TTL PKI Vault, confianza y rotación. La guía no afirma que se hayan desplegado o probado esas dependencias.
+Prepara la proyección/audience del token y la configuración de autenticación Kubernetes de Vault, vincula el rol a la carga de trabajo SPIRE prevista, monta la CA TLS usada para verificar Vault y concede la operación PKI `sign-intermediate` requerida. Coordina `ca_ttl` de SPIRE, los TTL de PKI de Vault, la confianza de las cargas y la rotación. Esta guía no afirma que esas dependencias externas se hayan desplegado o probado.
 
-## Redes zero trust
+## Redes Zero Trust
 
-### Política de denegación por defecto
+### Política de denegación predeterminada
 
-Este recurso de clúster apunta deliberadamente al namespace aislado `policy-lab`:
+Este recurso de ámbito de clúster apunta deliberadamente al namespace aislado `policy-lab`:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -606,9 +606,9 @@ spec:
   egress: []
 ```
 
-Los flags `enableDefaultDeny` son explícitos: un array ingress/egress Cilium vacío no aporta por sí solo reglas que activen denegación por defecto. No traslade esa suposición de ejemplos Kubernetes NetworkPolicy.
+Los indicadores `enableDefaultDeny` son explícitos: un array Cilium ingress/egress vacío por sí solo no proporciona reglas que activen la denegación predeterminada. No traslades a Cilium esa suposición de los ejemplos de Kubernetes NetworkPolicy.
 
-Añada dependencias específicas, como DNS, en reglas separadas:
+Añade dependencias concretas, como DNS, en reglas de permiso separadas:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -631,11 +631,11 @@ spec:
         protocol: TCP
 ```
 
-No hay requisito universal de permitir todo host-network. Evalúe kubelet/probes, resolvedor y políticas de host reales. Los ejemplos no cambian la gestión de hosts de Cilium ni defienden de un nodo privilegiado comprometido.
+No existe un requisito universal de permitir todo el tráfico de red del host. Evalúa el comportamiento real de kubelet/sondas, el resolvedor y las políticas de host. Estos ejemplos no cambian el tratamiento de host de Cilium ni protegen frente a un nodo privilegiado comprometido.
 
 ### Acceso de mínimo privilegio
 
-Se supone un gateway gestionado por Cilium con `app=ingress-gateway` en `edge`, frontend/database en `production` e integración SPIRE funcional:
+Este ejemplo presupone una carga de trabajo gateway gestionada por Cilium, etiquetada `app=ingress-gateway` en `edge`, cargas de frontend/base de datos en `production` e integración SPIRE operativa:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -690,11 +690,11 @@ spec:
       mode: required
 ```
 
-Use etiquetas/identidades observadas en el gateway elegido. La ruta ingress/Gateway Envoy de nodo de Cilium y balanceadores externos pueden mostrar otras identidades; una etiqueta Pod arbitraria no equivale a `reserved:ingress` ni a la dirección de cliente externa. El antiguo ingress-nginx retirado no es dependencia obligatoria.
+Usa las etiquetas e identidades observadas realmente en la implementación de gateway elegida. La ruta ingress/Gateway Envoy propia del nodo de Cilium y los balanceadores de carga externos pueden exponer identidades distintas; una etiqueta Pod arbitraria no es intercambiable con `reserved:ingress` ni con la dirección de un cliente externo. El ejemplo antiguo de ingress-nginx ya retirado no es una dependencia requerida.
 
 ### Microsegmentación
 
-Las políticas por capa conservan DNS explícito para capas que consultan Services. Suponen el mismo gateway y puertos indicados:
+Estas políticas por capa de aplicación conservan el acceso DNS explícito para las capas que inician búsquedas de Services. Presuponen el mismo modelo de gateway y los puertos de escucha indicados:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -807,15 +807,15 @@ spec:
   egress: []
 ```
 
-La DB habilita explícitamente default-deny egress sin permiso de salida; las respuestas stateful a conexiones permitidas siguen admitidas. Añada deliberadamente backups, replicación, autenticación u otras dependencias reales. Restringir rutas no impide por completo extraer datos mediante solicitudes DB/aplicación autorizadas.
+La base de datos habilita explícitamente la denegación predeterminada de egress sin una regla de permiso egress; aun así, se permiten las respuestas stateful a conexiones autorizadas. Añade deliberadamente dependencias reales de backup, replicación, autenticación u otro tipo. Restringir las rutas de red no impide por completo extraer datos mediante una solicitud de base de datos/aplicación que sí esté autorizada.
 
 ## Auditoría y monitorización de seguridad
 
 ### Modo de auditoría de políticas
 
-`cilium.io/audit-mode: "true"` no es un interruptor de auditoría por política admitido. Una política con esa anotación arbitraria puede seguir aplicándose normalmente.
+`cilium.io/audit-mode: "true"` no es un interruptor de auditoría por política compatible. Una política con esa anotación arbitraria puede seguir aplicándose normalmente.
 
-Para una **prueba de endpoint aislada**, la opción mutable real es `PolicyAuditMode`. Inspeccione el endpoint local, actívela temporalmente y restaure aplicación tras observar de forma controlada:
+Para una **prueba de endpoint aislada**, la opción mutable real del endpoint es `PolicyAuditMode`. Inspecciona el endpoint local, habilita temporalmente la opción y restaura la aplicación de políticas tras la observación controlada:
 
 ```bash
 kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
@@ -826,9 +826,9 @@ kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint
 kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID" PolicyAuditMode=false
 ```
 
-Esto cambia la aplicación de políticas en ese endpoint, no añade auditoría a un objeto concreto. No deduzca que toda denegación L7 o fallo de seguridad se permite como auditoría; verifique la ruta/proxy. `enableDefaultDeny: false` tampoco equivale a auditoría L7.
+Esto cambia la aplicación de políticas en ese endpoint; no adjunta un comportamiento de auditoría a un único objeto de política. No deduzcas que toda denegación L7 o fallo de seguridad se convierte en un evento de auditoría permitido; verifica el comportamiento concreto del datapath/proxy. `enableDefaultDeny: false` tampoco es un modo de auditoría L7 equivalente.
 
-### Monitorización de infracciones
+### Monitorización de infracciones de políticas
 
 ```bash
 # Terminal 1
@@ -839,9 +839,9 @@ hubble observe --server localhost:4245 --namespace production --verdict DROPPED 
 hubble observe --server localhost:4245 --namespace policy-lab --verdict AUDIT --last 100
 ```
 
-`DROPPED` incluye causas distintas de denegación. La consulta filtrada por motivo se centra en descartes por política; fallos L7/autorización de aplicación necesitan observación propia. `AUDIT` difiere de `DROPPED`. `--last 100` limita historial y Relay puede devolver esa cantidad por instancia Hubble conectada; no cuenta todo el tráfico del clúster. Añada `--follow` solo para observación continua deliberada.
+`DROPPED` incluye causas distintas de la denegación por política. La consulta filtrada por motivo se centra en los descartes informados como denegados por una política; los fallos L7/de autorización de aplicación necesitan observación propia. `AUDIT` es distinto de `DROPPED`. `--last 100` limita el historial y Relay puede devolver esa cantidad por cada instancia Hubble conectada; no es un contador completo del tráfico del clúster. Añade `--follow` solo si quieres una observación en streaming.
 
-### Métricas Prometheus
+### Métricas de Prometheus
 
 ```yaml
 prometheus:
@@ -859,12 +859,12 @@ hubble:
     - tcp
 ```
 
-Además de flags, el agente y exporter Hubble necesitan descubrimiento/scraping Prometheus. `httpV2` sustituye `http` obsoleto; no habilite ambos. HTTP requiere visibilidad L7 correspondiente.
+Además de estos indicadores de habilitación, el agente y el exporter Hubble necesitan descubrimiento/scraping de Prometheus. `httpV2` sustituye a `http`, obsoleto; no habilites ambos. Las métricas HTTP requieren la visibilidad L7 correspondiente.
 
-- `cilium_drop_count_total` cuenta paquetes descartados por causa/dirección, no solo infracciones.
-- `cilium_forward_count_total` cuenta paquetes reenviados, no solicitudes exitosas.
-- El exporter `drop` de Hubble expone descartes de flujo como `hubble_drop_total`; su unidad no es la del contador de paquetes del agente.
-- `cilium_policy_verdict` no era un nombre documentado. Use eventos reales de veredicto o métricas del exporter elegido.
+- `cilium_drop_count_total` cuenta paquetes descartados por motivo/dirección, no exclusivamente infracciones de políticas.
+- `cilium_forward_count_total` cuenta paquetes reenviados, no solicitudes de aplicación exitosas.
+- El exporter `drop` de Hubble expone información de flujos descartados como `hubble_drop_total`; usa una unidad de contabilidad distinta del contador de paquetes del agente.
+- El nombre de métrica anterior `cilium_policy_verdict` no era una métrica documentada. En su lugar, utiliza eventos reales de veredictos de políticas o las métricas que exponga el exporter seleccionado.
 
 ## Siguientes pasos
 
@@ -875,26 +875,26 @@ Además de flags, el agente y exporter Hubble necesitan descubrimiento/scraping 
 
 ## Referencias
 
-- [Autenticación mutua Cilium1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [Ejemplo de autenticación y estructura API](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
-- [Esquema CNP Cilium1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
-- [ztunnel beta Cilium1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
-- [Implementación CA Ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go)
-- [Ejemplo de bootstrap Ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh)
-- [Alcance de cifrado y modo estricto](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst)
-- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [IPsec y rotación de claves](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [Valores Helm](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Políticas HTTP/DNS](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
-- [Comportamiento default-deny](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst)
-- [API explícita default-deny](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go)
-- [Opción mutable de auditoría de endpoint](https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go)
-- [CLI de configuración de endpoints](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md)
-- [Métricas](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [Configuración del servidor SPIRE1.15.2](https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md)
-- [Autoridad Vault de SPIRE](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md)
-- [Autoridad de disco SPIRE](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md)
-- [ACL Kafka](https://kafka.apache.org/41/security/authorization-and-acls/)
-- [Endpoints AWS STS](https://docs.aws.amazon.com/general/latest/gr/sts.html)
+- [Autenticación mutua de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Ejemplo/forma de API de autenticación](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
+- [Esquema CNP de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Beta de ztunnel de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)
+- [Implementación de CA de ztunnel](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ztunnel/ca/ca_server.go)
+- [Ejemplo de bootstrap de ztunnel](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes-ztunnel/generate-secrets.sh)
+- [Alcance del cifrado/modo estricto](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption.rst)
+- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec y rotación de claves](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [Valores Helm](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Políticas HTTP/DNS](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
+- [Comportamiento de denegación predeterminada](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/intro.rst)
+- [API explícita de denegación predeterminada](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/rule.go)
+- [Opción mutable de auditoría de endpoint](https://github.com/cilium/cilium/blob/v1.20.3/pkg/option/endpoint.go)
+- [CLI de configuración de endpoints](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/cmdref/cilium-dbg_endpoint_config.md)
+- [Métricas](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [Configuración del servidor SPIRE 1.15.4](https://github.com/spiffe/spire/blob/v1.15.4/doc/spire_server.md)
+- [Autoridad Vault de SPIRE](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_vault.md)
+- [Autoridad de disco de SPIRE](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_disk.md)
+- [ACL de Kafka](https://kafka.apache.org/41/security/authorization-and-acls/)
+- [Endpoints STS de AWS](https://docs.aws.amazon.com/general/latest/gr/sts.html)
 - [Protocolo WireGuard](https://www.wireguard.com/protocol/)
-- [Arquitectura Zero Trust NIST: lectura adicional](https://www.nist.gov/publications/zero-trust-architecture)
+- [Arquitectura Zero Trust de NIST (lectura adicional)](https://www.nist.gov/publications/zero-trust-architecture)

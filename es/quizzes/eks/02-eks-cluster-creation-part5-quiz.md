@@ -1,388 +1,352 @@
-# Cuestionario sobre la creación de clústeres EKS - Parte 5
+# Cuestionario sobre creación de clústeres EKS - Parte 5
 
-Este cuestionario evalúa tu comprensión de la configuración avanzada, la optimización y las mejores prácticas operativas para clústeres de Amazon EKS. Se centra en la optimización de costos, el diseño de alta disponibilidad, la mejora de la seguridad y la automatización operativa.
+> **Última actualización**: 11 de septiembre de 2026
+
+Este cuestionario cubre operaciones de EKS, logging, aplicación de políticas y aislamiento de tenants. Las preguntas finales conectan estos temas con la validación de acceso y la retirada de recursos del capítulo conceptual. Los comandos requieren clúster/Región/kubeconfig, IAM y requisitos previos de controladores revisados; en esta revisión no se desplegó en la nube ni se hicieron pruebas en producción.
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es la forma más efectiva de optimizar costos en un clúster de Amazon EKS?
-
-A. Ejecutar todos los worker nodes como instancias On-Demand B. Usar una combinación de instancias Spot e instancias On-Demand C. Ejecutar todos los worker nodes como instancias Reserved D. Ejecutar todos los worker nodes en Fargate
+1. ¿Qué enfoque puede combinar una base On-Demand que no sea Spot con capacidad interrumpible?
+   * A) Todos los nodos On-Demand
+   * B) Grupos separados On-Demand y Spot, con colocación de cargas de trabajo
+   * C) Seleccionar Reserved como `capacityType` de todos los grupos
+   * D) Todas las cargas de trabajo deben usar Fargate
 
 <details>
+<summary>Mostrar respuesta</summary>
 
-<summary>Respuesta y explicación</summary>
+**Respuesta: B) Grupos separados On-Demand y Spot, con colocación de cargas de trabajo**
 
-**Respuesta: B. Usar una combinación de instancias Spot e instancias On-Demand**
+Una combinación puede servir para una base sensible a interrupciones más capacidad tolerante a ellas. Usa grupos administrados separados para On-Demand y Spot, con colocación explícita de cargas de trabajo. No es una estrategia universalmente «más eficaz» para reducir costes: la utilización, los requisitos de fiabilidad, los precios de Región/tipo de instancia y la carga operativa determinan el resultado.
 
-**Explicación:** La forma más efectiva de optimizar costos en un clúster EKS es usar una combinación de instancias Spot e instancias On-Demand:
+AWS anuncia ahorros de Spot de hasta el 90 % frente a On-Demand; no garantiza ese descuento para cada grupo de capacidad ni que esta guía haya medido ahorros. On-Demand evita la recuperación de capacidad Spot, pero sigue sujeto a mantenimiento/fallos. Para Spot importan los checkpoints, los reintentos y la capacidad de reserva.
 
-* **Instancias Spot**: Hasta un 90% más baratas que los precios On-Demand, pero pueden interrumpirse cuando AWS reclama capacidad. Adecuadas para cargas de trabajo sin estado y tolerantes a fallos.
-* **Instancias On-Demand**: Precio más alto pero estables, adecuadas para cargas de trabajo críticas con estado o aplicaciones sensibles a interrupciones.
-
-Mediante este enfoque mixto:
-
-1. Ejecuta cargas de trabajo críticas en instancias On-Demand
-2. Ejecuta cargas de trabajo tolerantes a fallos en instancias Spot
-3. Controla la ubicación de cargas de trabajo usando node affinity, tolerations y taints
-
-Las estrategias adicionales de optimización de costos incluyen el auto-scaling usando Karpenter o Cluster Autoscaler, seleccionar tamaños de instancia adecuados, usar instancias Graviton (ARM) y utilizar Reserved Instances o Savings Plans.
+El dimensionamiento adecuado, Cluster Autoscaler/Karpenter, imágenes Graviton compatibles y los descuentos por compromiso apropiados son otras opciones. Reserved Instances/Savings Plans son acuerdos de facturación, no otro ajuste de capacidad ordinario de un grupo administrado. Fargate puede encajar en algunos patrones de demanda; compara la capacidad aprovisionada y el coste total en vez de suponer que siempre gana un tipo de cómputo.
 
 </details>
 
-### 2. ¿Cuál es la razón principal para desplegar nodes en múltiples Availability Zones (AZs) en un clúster EKS?
-
-A. Reducir la latencia de red B. Aumentar el throughput de datos C. Mejorar la alta disponibilidad y la tolerancia a fallos D. Habilitar la replicación de datos entre regiones de AWS
+2. ¿Por qué distribuir cargas de trabajo adecuadas entre varias AZ?
+   * A) Para reducir siempre la latencia
+   * B) Para garantizar un throughput superior
+   * C) Para reducir la exposición al fallo de una sola AZ
+   * D) Para replicar automáticamente entre Regiones
 
 <details>
+<summary>Mostrar respuesta</summary>
 
-<summary>Respuesta y explicación</summary>
+**Respuesta: C) Para reducir la exposición al fallo de una sola AZ**
 
-**Respuesta: C. Mejorar la alta disponibilidad y la tolerancia a fallos**
+Varias AZ reducen la dependencia de un único dominio de fallo. El plano de control administrado de EKS se distribuye entre AZ, pero la disponibilidad de la aplicación también requiere réplicas distribuidas correctamente, endpoints saludables, capacidad de reserva y almacenamiento/red compatibles.
 
-**Explicación:** La razón principal para desplegar nodes en múltiples Availability Zones (AZs) en un clúster EKS es mejorar la alta disponibilidad y la tolerancia a fallos:
+Los controladores de Kubernetes pueden crear pods de reemplazo; los pods independientes no se recrean automáticamente. La falta de capacidad, una afinidad estricta o volúmenes EBS zonales pueden impedir la recuperación. Enumerar varias subredes no garantiza que todas las réplicas de la aplicación se distribuyan entre ellas. Revisa Topology Spread/anti-afinidad y la colocación real.
 
-1. **Respuesta ante fallos de AZ**: Si una AZ falla, los nodes en otras AZs continúan operando, manteniendo la disponibilidad de la aplicación.
-2. **Redundancia de infraestructura**: Distribuir cargas de trabajo entre múltiples AZs añade una capa de protección contra fallos de infraestructura física.
-3. **Recuperación automática**: Kubernetes reprograma automáticamente pods desde nodes fallidos a nodes saludables, minimizando la interrupción del servicio.
-4. **Estabilidad de rolling updates**: La disponibilidad se mantiene durante las actualizaciones porque las cargas de trabajo se distribuyen entre múltiples AZs.
-
-EKS despliega el control plane en múltiples AZs de forma predeterminada, pero desplegar worker nodes en múltiples AZs también es una mejor práctica para garantizar la alta disponibilidad general del clúster. Puedes especificar múltiples subnets (cada una ubicada en diferentes AZs) al crear node groups.
+Los PDB regulan las expulsiones voluntarias, no las interrupciones de AZ. Las actualizaciones rolling y el failover entre AZ requieren validación a nivel de aplicación y un diseño de recuperación de datos. Varias AZ no replican automáticamente entre Regiones y pueden añadir costes de transferencia entre AZ.
 
 </details>
 
-### 3. ¿Cuál es el plugin CNI predeterminado para networking de pods en un clúster EKS?
-
-A. Calico B. Flannel C. Amazon VPC CNI D. Weave Net
+3. ¿Cuál es el CNI predeterminado para los nodos EC2 convencionales de EKS?
+   * A) Calico
+   * B) Flannel
+   * C) Amazon VPC CNI
+   * D) Weave Net
 
 <details>
+<summary>Mostrar respuesta</summary>
 
-<summary>Respuesta y explicación</summary>
+**Respuesta: C) Amazon VPC CNI**
 
-**Respuesta: C. Amazon VPC CNI**
+Amazon VPC CNI es el CNI predeterminado para los nodos EC2 convencionales de EKS. Asigna direcciones VPC mediante modos compatibles de IP secundaria o prefijos. Auto Mode proporciona sus propias capacidades de red administradas; Hybrid Nodes usa un CNI alternativo compatible. No instales un sustituto sin configurar encima de un CNI existente.
 
-**Explicación:** El plugin CNI (Container Network Interface) predeterminado para networking de pods en clústeres de Amazon EKS es Amazon VPC CNI. Las características principales de este plugin son:
+Los grupos de seguridad para pods requieren su propia configuración compatible de instancia/CNI y selección de políticas; no hay automáticamente un grupo único para cada pod. NetworkPolicy nativa también requiere cómputo compatible y habilitación explícita.
 
-1. **Networking nativo de VPC**: Cada pod recibe una dirección IP única dentro de la VPC, utilizando directamente el networking de AWS VPC.
-2. **Integración con Security Groups**: Los security groups de AWS se pueden aplicar a nivel de pod, lo que permite un control de seguridad de red detallado.
-3. **Gestión de direcciones IP**: A cada node se le asignan direcciones IP secundarias de las subnets de VPC para proporcionarlas a los pods.
-4. **Rendimiento**: El rendimiento de red mejora al no usar overlay networks.
-5. **Integración con servicios de AWS**: Se integra sin problemas con otros servicios de AWS como AWS Load Balancer Controller y AWS App Mesh.
-
-Amazon VPC CNI es de código abierto y se gestiona en GitHub. Se puede reemplazar por otros plugins CNI como Calico o Cilium según sea necesario, pero Amazon VPC CNI es la opción predeterminada para EKS y está oficialmente soportada por AWS.
+El enrutamiento nativo de VPC evita una superposición convencional en este diseño, pero no garantiza un rendimiento medido. Valida el ancho de banda, el enrutamiento, la capacidad de IP, el comportamiento de las políticas y los requisitos de la aplicación. Integraciones como Load Balancer Controller también necesitan su propia instalación y permisos.
 
 </details>
 
-### 4. ¿Cuál es el nombre de la característica que vincula roles de IAM con service accounts de Kubernetes en un clúster EKS?
-
-A. IAM for Service Accounts (IRSA) B. Pod Identity Webhook C. Kubernetes IAM Authenticator D. EKS Identity Manager
+4. ¿Qué mecanismo de identidad de carga de trabajo usa el emisor OIDC de EKS y un token de ServiceAccount proyectado?
+   * A) IAM Roles for Service Accounts (IRSA)
+   * B) Una política de acceso de EKS
+   * C) Solo un RoleBinding de Kubernetes
+   * D) Una etiqueta de nodo
 
 <details>
+<summary>Mostrar respuesta</summary>
 
-<summary>Respuesta y explicación</summary>
+**Respuesta: A) IAM Roles for Service Accounts (IRSA)**
 
-**Respuesta: A. IAM for Service Accounts (IRSA)**
+**IAM Roles for Service Accounts (IRSA)** usa un token de ServiceAccount proyectado, el emisor OIDC del clúster y una relación de confianza IAM para obtener credenciales temporales de STS. Limita la confianza a la audiencia prevista (`sts.amazonaws.com`) y al `subject` exacto de namespace/ServiceAccount; después concede solo las acciones/recursos AWS necesarios.
 
-**Explicación:** La característica que vincula roles de IAM con service accounts de Kubernetes en un clúster EKS es IAM for Service Accounts (IRSA). Las características principales de esta característica son:
+Usa la ServiceAccount prevista en el pod y una cadena de credenciales SDK compatible. Verifica la identidad del rol asumido; el acceso satisfactorio a AWS podría venir de otras credenciales. IRSA no impide por sí sola el acceso a credenciales IMDS del nodo.
 
-1. **Control de permisos detallado**: Controla el acceso a recursos de AWS a nivel de pod, evitando concesiones de permisos amplias a nivel de node.
-2. **Autenticación basada en OIDC**: EKS usa un proveedor OpenID Connect (OIDC) para establecer relaciones de confianza entre service accounts de Kubernetes y roles de IAM.
-3. **Seguridad mejorada**: Permite implementar el principio de privilegio mínimo al conceder solo los permisos mínimos requeridos por aplicación.
-4. **Método de implementación**:
-   * Crear un proveedor OIDC para el clúster EKS
-   * Crear un rol de IAM que confíe en la service account
-   * Crear una service account de Kubernetes con una annotation específica
-   * Desplegar el pod usando esa service account
-
-Con IRSA, las aplicaciones que usan el AWS SDK pueden acceder de forma segura a servicios de AWS usando su propio rol de IAM en lugar de depender del rol de IAM del node.
+EKS Pod Identity es otro mecanismo para asociar roles a ServiceAccounts, con un flujo distinto de agente/asociación. Es compatible con EC2/Auto Mode aptos y Hybrid Nodes configurados específicamente; Fargate necesita otro mecanismo compatible, como IRSA. Ninguno de los dos es una entrada de acceso de EKS: los permisos AWS de la carga de trabajo y el acceso a la API de Kubernetes son distintos.
 
 </details>
 
-### 5. ¿Cuál es la herramienta nativa de Kubernetes que gestiona Auto Scaling de node groups en un clúster EKS?
-
-A. Horizontal Pod Autoscaler B. Vertical Pod Autoscaler C. Cluster Autoscaler D. Node Autoscaler
+5. ¿Qué controlador escala los ASG de grupos de nodos administrados EKS existentes según la demanda de programación de Kubernetes?
+   * A) Horizontal Pod Autoscaler
+   * B) Vertical Pod Autoscaler
+   * C) Cluster Autoscaler
+   * D) ResourceQuota
 
 <details>
+<summary>Mostrar respuesta</summary>
 
-<summary>Respuesta y explicación</summary>
+**Respuesta: C) Cluster Autoscaler**
 
-**Respuesta: C. Cluster Autoscaler**
+Cluster Autoscaler ajusta grupos de nodos/ASG existentes que descubre. Requiere instalación compatible, RBAC de Kubernetes, permisos AWS dedicados y etiquetas de descubrimiento correctas; no se instala al configurar los valores mínimo/máximo.
 
-**Explicación:** La herramienta nativa de Kubernetes que gestiona Auto Scaling de node groups en un clúster EKS es Cluster Autoscaler. Las características principales de esta herramienta son:
+Para escalar hacia arriba considera las solicitudes/restricciones de programación; para reducir escala, las condiciones de reubicación/interrupción. No todos los pods Pending se pueden programar añadiendo nodos y la lógica de utilización para scale-down no equivale al umbral de uso de CPU de HPA.
 
-1. **Escalado automático**: Añade nodes automáticamente cuando los pods no pueden programarse por falta de recursos, y elimina nodes cuando están infrautilizados.
-2. **Integración con AWS Auto Scaling Groups**: Funciona integrado con AWS Auto Scaling Groups en EKS.
-3. **Cómo funciona**:
-   * Scale Out: Añade nodes cuando los pods están en estado Pending debido a restricciones de recursos
-   * Scale In: Elimina nodes cuando la utilización es baja y los pods pueden moverse a otros nodes
-4. **Opciones de configuración**:
-   * Establecer umbrales de scale up/down
-   * Especificar el método de descubrimiento de node groups
-   * Establecer el retraso de scale down
-   * Respetar Pod Disruption Budgets (PDB)
-
-Horizontal Pod Autoscaler (HPA) ajusta automáticamente la cantidad de pods, y Vertical Pod Autoscaler (VPA) ajusta automáticamente las solicitudes de recursos de los pods, pero ajustar la cantidad de nodes es la función de Cluster Autoscaler.
-
-Ten en cuenta que AWS también ofrece Karpenter como una nueva herramienta de aprovisionamiento de nodes, que proporciona capacidades de aprovisionamiento de nodes más rápidas y flexibles.
+HPA ajusta réplicas y VPA recomienda/cambia las solicitudes de recursos de los pods; ambos pueden cambiar indirectamente la demanda de nodos. Karpenter es otro aprovisionador de capacidad que usa NodePools/NodeClaims, no un sustituto universalmente más rápido ni un controlador de ASG. Valida los bucles de control y las restricciones de las cargas.
 
 </details>
 
 ## Preguntas de respuesta corta
 
-### 6. ¿Qué configuración se necesita para habilitar logs del control plane de Kubernetes y enviarlos a CloudWatch Logs en un clúster EKS?
+6. ¿Cómo se habilita y verifica el logging del plano de control de EKS en CloudWatch?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Para enviar logs del control plane de Kubernetes a CloudWatch Logs en un clúster EKS, debes habilitar tipos de log específicos durante la creación del clúster o en un clúster existente.
+Habilita los tipos de log del plano de control necesarios: `api`, `audit`, `authenticator`, `controllerManager` y `scheduler`. En la consola de EKS usa **Observabilidad → Registro del plano de control → Administrar registro**, no la antigua instrucción de la pestaña Logging.
 
-**Configuración requerida:**
-
-1. **Habilitar tipos de log**: Habilita uno o más de los siguientes tipos de log:
-   * `api`: logs del Kubernetes API server
-   * `audit`: logs de auditoría de Kubernetes
-   * `authenticator`: logs del autenticador de AWS IAM
-   * `controllerManager`: logs del controller manager
-   * `scheduler`: logs del scheduler
-2. **Habilitar mediante AWS Management Console**:
-   * Selecciona el clúster en la consola de EKS
-   * Selecciona la pestaña "Logging"
-   * Habilita los tipos de log deseados
-3. **Habilitar mediante AWS CLI**:
+Este ejemplo habilita los cinco; elige el conjunto revisado para tu entorno:
 
 ```bash
-aws eks update-cluster-config \
-    --region region-code \
-    --name cluster-name \
-    --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+set -euo pipefail
+LOG_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$LOG_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-4. **Habilitar mediante eksctl**:
+Consulta el ID de actualización devuelto hasta que el estado sea `Successful`; resuelve los fallos antes de hacer otro cambio. La alternativa con eksctl requiere `--approve` para aplicar el cambio de logging:
 
 ```bash
-eksctl utils update-cluster-logging \
-    --region=region-code \
-    --cluster=cluster-name \
-    --enable-types=api,audit,authenticator,controllerManager,scheduler
+# Alternative to the AWS CLI update, not a second concurrent update.
+eksctl utils update-cluster-logging --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" \
+  --enable-types=api,audit,authenticator,controllerManager,scheduler --approve
 ```
 
-Los logs habilitados se envían automáticamente al log group de CloudWatch Logs `/aws/eks/cluster-name/cluster`. Cada tipo de log se almacena como un log stream separado.
-
-**Notas:**
-
-* Habilitar logs genera costos adicionales (se aplica el precio de CloudWatch Logs).
-* Los logs de auditoría en particular pueden generar grandes cantidades de datos, así que ten en cuenta la gestión de costos.
-* Establece períodos de retención de logs para gestionar costos.
+Los logs se envían a `/aws/eks/<cluster-name>/cluster` en la Región del clúster. Los streams rotan y puede haber varios por tipo; la entrega es de mejor esfuerzo y suele tardar unos minutos. Verifica la configuración habilitada, las marcas de tiempo actuales de los streams y los eventos pertinentes reales. La existencia de un log group no lo demuestra. Configura la retención y los controles de acceso, contempla los costes de ingesta/almacenamiento y evita publicar eventos de auditoría sensibles. Los logs de nodos y aplicaciones requieren colectores distintos.
 
 </details>
 
-### 7. ¿Cómo envías logs de kubelet desde worker nodes a CloudWatch Logs en un clúster EKS?
+7. ¿Cómo se recopilan en CloudWatch los logs de kubelet de nodos Linux convencionales de EKS?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Para enviar logs de kubelet desde worker nodes a CloudWatch Logs en un clúster EKS, debes instalar y configurar el agente de CloudWatch. A diferencia de los logs del control plane, los logs de worker nodes no se envían automáticamente a CloudWatch.
+Los logs de kubelet son logs de nodo, distintos del logging del plano de control de EKS. En la ruta Linux AL2023 optimizada para EKS, inspecciona el journal de systemd de `kubelet.service`; no supongas que existe `/var/log/kubelet.log` o `/var/log/kube-proxy.log`. kube-proxy suele registrar logs como contenedor. Los archivos/stdout de VPC CNI dependen de su configuración.
 
-**Pasos de implementación:**
+El **add-on de Amazon CloudWatch Observability para EKS administrado** instala el agente/operator y Fluent Bit. Un manifiesto quickstart sin procesar no es ese add-on administrado. No sobrescribas ServiceAccounts existentes ni reemplaces todo un ConfigMap de Fluent Bit sin revisar quién lo administra.
 
-1. **Instalar CloudWatch Agent**: Despliega CloudWatch agent como DaemonSet en Kubernetes.
-2. **Configurar Fluentd o Fluent Bit**: Configura el recolector de logs para enviar logs de kubelet a CloudWatch Logs.
-3.  **Método recomendado: usar Amazon EKS Add-on**:
+Este ejemplo es para un **laboratorio Linux en EC2**, con Pod Identity Agent listo y un rol existente aprobado cuya confianza incluye la ServiceAccount `amazon-cloudwatch/cloudwatch-agent` de este clúster. Revisa sus permisos CloudWatch; `CloudWatchAgentServerPolicy` es la base administrada por AWS, no la afirmación de que todos sus permisos sean mínimos para el ámbito de logs. Fluent Bit del chart actual usa esa misma ServiceAccount; esta configuración no requiere otra ServiceAccount IAM `fluent-bit`.
 
-    ```bash
-    # Create namespace for CloudWatch log collection
-    kubectl create namespace amazon-cloudwatch
+Primero elige un build compatible del add-on e inspecciona su esquema. La versión del chart y la cadena del build del add-on EKS son distintas:
 
-    # Create service account for AWS observability access
-    eksctl create iamserviceaccount \
-        --name cloudwatch-agent \
-        --namespace amazon-cloudwatch \
-        --cluster my-cluster \
-        --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
-        --approve \
-        --override-existing-serviceaccounts
+```bash
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?}" "${EXAMPLE_REGION:?}"
+CLUSTER_VERSION=$(aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster.version --output text)
+aws eks describe-addon-versions --region "$EXAMPLE_REGION" \
+  --addon-name amazon-cloudwatch-observability --kubernetes-version "$CLUSTER_VERSION"
+: "${CLOUDWATCH_ADDON_VERSION:?Choose a reviewed compatible build with the configuration fields below}"
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
+  --addon-name amazon-cloudwatch-observability --addon-version "$CLOUDWATCH_ADDON_VERSION" \
+  --query configurationSchema --output text > cloudwatch-addon-schema.json
+```
 
-    # Create service account for Fluent Bit
-    eksctl create iamserviceaccount \
-        --name fluent-bit \
-        --namespace amazon-cloudwatch \
-        --cluster my-cluster \
-        --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
-        --approve \
-        --override-existing-serviceaccounts
+Guarda lo siguiente como `cloudwatch-addon-values.yaml`. Se renderizó con el chart oficial 6.6.0. La anulación completa Linux de `dataplane-log.conf` recopila solo registros del journal de kubelet; los archivos vacíos de aplicación/host deshabilitan esas rutas de logs predeterminadas. El resto de las secciones globales de Fluent Bit conserva sus valores. El add-on también recopila métricas de Container Insights; no es una instalación de agente solo para logs. El auto-monitoring de Application Signals está deshabilitado explícitamente para no instrumentar automáticamente servicios en este ejercicio.
 
-    # Install CloudWatch agent and Fluent Bit
-    kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml
-    ```
-4.  **Personalizar configuración**: Modifica ConfigMap para recopilar rutas y formatos de log específicos.
+```yaml
+manager:
+  applicationSignals:
+    autoMonitor:
+      monitorAllServices: false
+containerLogs:
+  fluentBit:
+    config:
+      extraFiles:
+        application-log.conf: ''
+        host-log.conf: ''
+        dataplane-log.conf: |
+          [INPUT]
+            Name                systemd
+            Tag                 dataplane.kubelet
+            Systemd_Filter      _SYSTEMD_UNIT=kubelet.service
+            DB                  /var/fluent-bit/state/kubelet.db
+            Path                /var/log/journal
+            Read_From_Tail      On
 
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: fluent-bit-config
-      namespace: amazon-cloudwatch
-    data:
-      fluent-bit.conf: |
-        [INPUT]
-            Name tail
-            Path /var/log/kubelet.log
-            Tag kubelet
-        [OUTPUT]
-            Name cloudwatch
-            Match kubelet
-            region region-name
-            log_group_name /aws/eks/my-cluster/nodes
-            log_stream_prefix kubelet-
-            auto_create_group true
-    ```
-5. **Verificar logs**: Revisa el log group `/aws/eks/my-cluster/nodes` en la consola de CloudWatch Logs.
+          [FILTER]
+            Name                modify
+            Match               dataplane.kubelet
+            Rename              _HOSTNAME hostname
+            Rename              MESSAGE message
 
-**Objetivos clave de recopilación de logs:**
+          [OUTPUT]
+            Name                cloudwatch_logs
+            Match               dataplane.kubelet
+            region              ${AWS_REGION}
+            log_group_name      /aws/containerinsights/${CLUSTER_NAME}/dataplane
+            log_stream_prefix   ${HOST_NAME}-
+            auto_create_group   true
+```
 
-* `/var/log/kubelet.log`: logs de kubelet
-* `/var/log/kube-proxy.log`: logs de kube-proxy
-* `/var/log/aws-routed-eni/ipamd.log`: logs de VPC CNI
-* `/var/log/containers/*.log`: logs de containers
+Confirma la ruta del journal montado y el directorio de estado con permisos de escritura en los nodos previstos. Estas anulaciones Linux no configuran la recopilación en Windows; los entornos mixtos, Hybrid y Auto Mode requieren las rutas documentadas para ellos. Comprueba el esquema del add-on elegido y conserva las configuraciones existentes no relacionadas antes de adaptar esto a una actualización.
 
-**Métodos alternativos:**
+```bash
+# New installation only, after the schema/role/configuration review.
+: "${CLOUDWATCH_ROLE_ARN:?Existing approved Pod Identity role}"
+CW_ASSOCIATIONS=$(jq -cn --arg role "$CLOUDWATCH_ROLE_ARN" \
+  '[{serviceAccount:"cloudwatch-agent",roleArn:$role}]')
+aws eks create-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name amazon-cloudwatch-observability --addon-version "$CLOUDWATCH_ADDON_VERSION" \
+  --pod-identity-associations "$CW_ASSOCIATIONS" \
+  --configuration-values file://cloudwatch-addon-values.yaml --resolve-conflicts NONE
+aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name amazon-cloudwatch-observability --query 'addon.{status:status,health:health,version:addonVersion}'
+```
 
-* Usar AWS Distro for OpenTelemetry (ADOT)
-* Usar Amazon OpenSearch con una combinación de Fluent Bit
-* Crear una solución de logging personalizada (por ejemplo, stack ELK)
-
-**Mejores prácticas:**
-
-* Gestionar costos con ajustes de período de retención de logs
-* Recopilar selectivamente solo los logs necesarios
-* Recopilar solo información importante mediante filtrado de logs
-* Hacer seguimiento de costos etiquetando log groups
+Espera a que termine la operación específica del add-on e inspecciona errores de estado, pods del agente/Fluent Bit y eventos recientes bajo `/aws/containerinsights/<cluster>/dataplane`. Un render correcto de Helm o que exista el log group no demuestra la recopilación. Revisa IAM, endpoints de red, retención y costes de ingesta/métricas. Las instalaciones de observabilidad existentes requieren una migración planificada; no ejecutes un segundo colector que duplique logs ni habilites silenciosamente reinicios de aplicaciones. Aquí no se instaló ningún agente activo, no se recopiló el journal ni se verificó la entrega a CloudWatch.
 
 </details>
 
-### 8. ¿Por qué Pod Security Policy (PSP) ya no se usa en clústeres EKS y cuáles son las alternativas?
+8. ¿Qué sustituyó a PSP y cómo deben evaluarse los controles de admisión equivalentes?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Pod Security Policy (PSP) está obsoleto desde Kubernetes versión 1.21 y fue eliminado por completo en Kubernetes 1.25. En consecuencia, EKS ya no soporta PSP.
+PodSecurityPolicy quedó obsoleto en Kubernetes 1.21 y se eliminó en 1.25. Las versiones de EKS compatibles actualmente no proporcionan esa API. Pod Security Admission (PSA) aplica los perfiles de Pod Security Standards (PSS), pero no sustituye campo por campo todas las funciones de PSP.
 
-**Razones de la obsolescencia:**
+Para un namespace de laboratorio EKS 1.36 nuevo, fija la versión del perfil para que una futura actualización del clúster no cambie silenciosamente la versión de política elegida:
 
-1. **Complejidad**: PSP era difícil de configurar y comprender.
-2. **Dificultad de debugging**: No proporcionaba mensajes de error claros cuando ocurrían infracciones de PSP, lo que dificultaba la solución de problemas.
-3. **Flexibilidad limitada**: El control detallado era difícil en ciertos escenarios.
-4. **Falta de consistencia**: La integración con otros mecanismos de seguridad de Kubernetes no era fluida.
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: psa-lab
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.36
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.36
+```
 
-**Alternativas:**
+En namespaces de producción existentes, evalúa los resultados de audit/warn y la compatibilidad de las aplicaciones antes de aplicar Restricted. PSA valida, pero no proporciona el comportamiento antiguo de mutación/valores predeterminados de PSP. Asocia los controles antiguos de namespaces del host, capacidades, volúmenes, ID y seccomp a los reemplazos adecuados.
 
-1. **Pod Security Standards (PSS) / Pod Security Admission (PSA)**:
-   * Alternativa oficial introducida desde Kubernetes 1.22
-   * Proporciona tres niveles de seguridad: Privileged, Baseline, Restricted
-   * Se aplica mediante labels de namespace
-   *   Ejemplo:
+**Alternativa con Kyverno:** lo siguiente usa la `ValidatingPolicy` CEL actual `policies.kyverno.io/v1`, disponible en la ruta revisada Kyverno 1.19.1/chart 3.9.1. `ClusterPolicy` heredada está obsoleta en 1.19; no se afirma que ya se haya eliminado. Instala por separado el controlador/CRD compatible y usa un namespace revisado `policy-engine-lab`. Se comprueban los contenedores normales, init y efímeros:
 
-       ```yaml
-       apiVersion: v1
-       kind: Namespace
-       metadata:
-         name: my-namespace
-         labels:
-           pod-security.kubernetes.io/enforce: restricted
-           pod-security.kubernetes.io/audit: restricted
-           pod-security.kubernetes.io/warn: restricted
-       ```
-2. **Kyverno**:
-   * Policy engine con definiciones de políticas basadas en YAML
-   * Proporciona características más flexibles y potentes que PSP
-   * Soporta políticas de validación, mutación, generación y limpieza
-   *   Ejemplo:
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-privileged-lab
+spec:
+  validationActions:
+  - Deny
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-engine-lab'
+  validations:
+  - expression: object.spec.containers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged)
+    message: Privileged containers are not allowed.
+  - expression: '!has(object.spec.initContainers) || object.spec.initContainers.all(c, !has(c.securityContext) ||
+      !has(c.securityContext.privileged) || !c.securityContext.privileged)'
+    message: Privileged initContainers are not allowed.
+  - expression: '!has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c, !has(c.securityContext)
+      || !has(c.securityContext.privileged) || !c.securityContext.privileged)'
+    message: Privileged ephemeralContainers are not allowed.
+```
 
-       ```yaml
-       apiVersion: kyverno.io/v1
-       kind: ClusterPolicy
-       metadata:
-         name: restrict-privileged
-       spec:
-         validationFailureAction: enforce
-         rules:
-         - name: privileged-containers
-           match:
-             resources:
-               kinds:
-               - Pod
-           validate:
-             message: "Privileged containers are not allowed"
-             pattern:
-               spec:
-                 containers:
-                   - name: "*"
-                     securityContext:
-                       privileged: false
-       ```
-3. **OPA Gatekeeper**:
-   * Policy controller basado en Open Policy Agent
-   * Definiciones de políticas usando el lenguaje Rego
-   * Usa conceptos de ConstraintTemplate y Constraint
-   *   Ejemplo:
+**Alternativa con Gatekeeper:** un `ConstraintTemplate` por sí solo no aplica una regla. La plantilla y el `Constraint` de abajo son un ejemplo revisado para Gatekeeper 3.23.1; `templates.gatekeeper.sh/v1` y la API `Constraint` generada tienen versiones distintas:
 
-       ```yaml
-       apiVersion: templates.gatekeeper.sh/v1beta1
-       kind: ConstraintTemplate
-       metadata:
-         name: k8spsprivilegedcontainer
-       spec:
-         crd:
-           spec:
-             names:
-               kind: K8sPSPPrivilegedContainer
-         targets:
-           - target: admission.k8s.gatekeeper.sh
-             rego: |
-               package k8spsprivilegedcontainer
-               violation[{"msg": msg}] {
-                 c := input.review.object.spec.containers[_]
-                 c.securityContext.privileged
-                 msg := "Privileged containers are not allowed"
-               }
-       ```
-4. **Características de seguridad integradas de AWS**:
-   * Amazon GuardDuty for EKS Protection
-   * Estándares de seguridad de EKS de AWS Security Hub
-   * Amazon Inspector for EKS
+```yaml
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8snoprivilegedlab
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNoPrivilegedLab
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    rego: |
+      package k8snoprivilegedlab
 
-**Estrategia de migración:**
+      containers[c] {
+        c := input.review.object.spec.containers[_]
+      }
+      containers[c] {
+        c := input.review.object.spec.initContainers[_]
+      }
+      containers[c] {
+        c := input.review.object.spec.ephemeralContainers[_]
+      }
+      violation[{"msg": msg}] {
+        c := containers[_]
+        c.securityContext.privileged == true
+        msg := sprintf("Privileged container is not allowed: %v", [c.name])
+      }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sNoPrivilegedLab
+metadata:
+  name: no-privileged-lab
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    namespaces:
+    - policy-engine-lab
+    kinds:
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+```
 
-1. Analizar y documentar las políticas PSP actuales
-2. Seleccionar una solución de reemplazo (PSA, Kyverno, OPA Gatekeeper, etc.)
-3. Desplegar nuevas políticas en modo audit para evaluar el impacto
-4. Aplicar políticas gradualmente (transición a modo enforce)
-5. Hacer seguimiento de infracciones de políticas con ajustes de monitoreo y logging
-
-Es importante migrar desde PSP a una solución alternativa antes de actualizar a EKS 1.25 o superior.
+Estos dos ejemplos de motores son alternativas y demuestran un control, no la paridad completa con PSP ni una política completa de hardening para producción. Prueba los casos permitidos/sin `securityContext` y los contenedores privilegiados normales/init/efímeros. Ten en cuenta la política de fallos de admisión, la disponibilidad del webhook y las exenciones. GuardDuty, Security Hub e Inspector complementan la detección de amenazas, la postura y la vulnerabilidad de recursos compatibles; no sustituyen el rechazo de pods en la admisión.
 
 </details>
 
 ## Preguntas prácticas
 
-### 9. Escribe una configuración de node group que use una combinación de instancias Spot e instancias On-Demand para optimización de costos en un clúster EKS. Debe cumplir los siguientes requisitos:
-
-* Node group On-Demand para cargas de trabajo críticas (2-5 nodes)
-* Node group Spot para cargas de trabajo generales (2-10 nodes)
-* Node labels y taints adecuados
-* Ejemplo de node affinity y tolerations para ubicación de cargas de trabajo
+9. Configura grupos On-Demand y Spot separados, con controles de colocación y requisitos previos de autoescalado.
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Una configuración de node group que usa una combinación de instancias Spot e instancias On-Demand para optimización de costos en un clúster EKS es la siguiente:
+Usa grupos administrados **separados**: On-Demand con 2–5 nodos para cargas críticas y Spot con 2–10 para cargas tolerantes a interrupciones. Son ejemplos, no ahorros medidos ni garantías de capacidad. Elige un método de creación y nombres de grupo no utilizados; verifica primero el egress/endpoints de subredes privadas, IAM y compatibilidad de AMI/imágenes.
 
-#### 1. Configuración de Node Group On-Demand (para cargas de trabajo críticas)
-
-**Configuración usando eksctl:**
+La configuración de eksctl usa los campos compatibles `managedNodeGroups` y `spot`. No concedas a todos los nodos los permisos del controlador de autoescalado:
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -390,100 +354,66 @@ kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-nodeGroups:
-  - name: critical-workloads
-    instanceType: m5.xlarge
-    desiredCapacity: 2
-    minSize: 2
-    maxSize: 5
-    capacityType: ON_DEMAND
-    labels:
-      workload-type: critical
-      node-lifecycle: on-demand
-    tags:
-      k8s.io/cluster-autoscaler/enabled: "true"
-      k8s.io/cluster-autoscaler/my-cluster: "owned"
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-    ssh:
-      allow: false
+managedNodeGroups:
+- name: critical-workloads
+  amiFamily: AmazonLinux2023
+  instanceType: m5.xlarge
+  privateNetworking: true
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  spot: false
+  labels:
+    workload-type: critical
+    node-lifecycle: on-demand
+- name: general-workloads
+  amiFamily: AmazonLinux2023
+  instanceTypes: [m5.large, m5a.large, m5d.large, m5ad.large]
+  privateNetworking: true
+  desiredCapacity: 3
+  minSize: 2
+  maxSize: 10
+  spot: true
+  labels:
+    workload-type: general
+    node-lifecycle: spot
+  taints:
+  - key: spot
+    value: "true"
+    effect: PreferNoSchedule
 ```
 
-**Configuración usando AWS CLI:**
+Guarda y revisa el archivo; luego usa `eksctl create nodegroup -f nodegroups.yaml` para el clúster existente. A continuación se muestra la alternativa con AWS CLI. Los efectos de taint en la API EKS usan nombres en mayúscula y valores estructurados, a diferencia de CamelCase en Kubernetes/eksctl:
 
 ```bash
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name critical-workloads \
-  --scaling-config minSize=2,maxSize=5,desiredSize=2 \
-  --instance-types m5.xlarge \
-  --capacity-type ON_DEMAND \
-  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
-  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
-  --labels workload-type=critical,node-lifecycle=on-demand \
-  --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
+set -euo pipefail
+# Alternative to eksctl; use unused group names and approved role/subnet IDs.
+aws eks create-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${CRITICAL_NODEGROUP_NAME:?}" --scaling-config minSize=2,maxSize=5,desiredSize=2 \
+  --instance-types m5.xlarge --capacity-type ON_DEMAND --ami-type AL2023_x86_64_STANDARD \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" --node-role "${NODE_ROLE_ARN:?}" \
+  --labels workload-type=critical,node-lifecycle=on-demand
+aws eks wait nodegroup-active --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$CRITICAL_NODEGROUP_NAME"
+
+aws eks create-nodegroup --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "${GENERAL_NODEGROUP_NAME:?}" --scaling-config minSize=2,maxSize=10,desiredSize=3 \
+  --instance-types m5.large m5a.large m5d.large m5ad.large --capacity-type SPOT \
+  --ami-type AL2023_x86_64_STANDARD --subnets "$PRIVATE_SUBNET_A" "$PRIVATE_SUBNET_B" \
+  --node-role "$NODE_ROLE_ARN" --labels workload-type=general,node-lifecycle=spot \
+  --taints '[{"key":"spot","value":"true","effect":"PREFER_NO_SCHEDULE"}]'
+aws eks wait nodegroup-active --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$GENERAL_NODEGROUP_NAME"
 ```
 
-#### 2. Configuración de Node Group Spot (para cargas de trabajo generales)
-
-**Configuración usando eksctl:**
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-nodeGroups:
-  - name: general-workloads
-    instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-    desiredCapacity: 3
-    minSize: 2
-    maxSize: 10
-    capacityType: SPOT
-    labels:
-      workload-type: general
-      node-lifecycle: spot
-    taints:
-      - key: spot
-        value: "true"
-        effect: PreferNoSchedule
-    tags:
-      k8s.io/cluster-autoscaler/enabled: "true"
-      k8s.io/cluster-autoscaler/my-cluster: "owned"
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-    ssh:
-      allow: false
-```
-
-**Configuración usando AWS CLI:**
-
-```bash
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name general-workloads \
-  --scaling-config minSize=2,maxSize=10,desiredSize=3 \
-  --instance-types m5.large m5a.large m5d.large m5ad.large \
-  --capacity-type SPOT \
-  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
-  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
-  --labels workload-type=general,node-lifecycle=spot \
-  --taints "spot=true:PreferNoSchedule" \
-  --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
-```
-
-#### 3. Ejemplo de Node Affinity y Tolerations para ubicación de cargas de trabajo
-
-**Ejemplo de Deployment de carga de trabajo crítica (prefiere nodes On-Demand):**
+En un namespace nuevo y revisado `placement-lab`, estos contenedores inactivos solo demuestran la programación. Sustitúyelos por imágenes reales revisadas de la aplicación antes de afirmar que se ha probado su comportamiento. El selector crítico requiere etiquetas On-Demand. La carga general prefiere Spot, pero puede caer en otro lugar; una toleration permite la colocación, no la fuerza, y `PreferNoSchedule` es un control flexible.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: critical-app
+  namespace: placement-lab
 spec:
   replicas: 3
   selector:
@@ -494,6 +424,7 @@ spec:
       labels:
         app: critical-app
     spec:
+      automountServiceAccountToken: false
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -507,25 +438,36 @@ spec:
                 operator: In
                 values:
                 - on-demand
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: critical-app
-        image: my-critical-app:latest
+      - name: placement-check
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command:
+        - sleep
+        - '3600'
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            cpu: 500m
+            memory: 1Gi
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
-```
-
-**Ejemplo de Deployment de carga de trabajo general (permite nodes Spot):**
-
-```yaml
+            cpu: 1000m
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: general-app
+  namespace: placement-lab
 spec:
   replicas: 5
   selector:
@@ -536,6 +478,7 @@ spec:
       labels:
         app: general-app
     spec:
+      automountServiceAccountToken: false
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -546,226 +489,183 @@ spec:
                 operator: In
                 values:
                 - spot
-      tolerations:
-      - key: "spot"
-        operator: "Equal"
-        value: "true"
-        effect: "PreferNoSchedule"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: general-app
-        image: my-general-app:latest
+      - name: placement-check
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command:
+        - sleep
+        - '3600'
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            cpu: 250m
+            memory: 512Mi
           limits:
-            memory: "1Gi"
-            cpu: "500m"
-```
-
-#### 4. Ajustes adicionales de optimización
-
-**Deployment de Cluster Autoscaler:**
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
+            cpu: 500m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      tolerations:
+      - key: spot
+        operator: Equal
+        value: 'true'
+        effect: PreferNoSchedule
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
 metadata:
-  name: cluster-autoscaler
-  namespace: kube-system
-  labels:
-    app: cluster-autoscaler
+  name: critical-app-pdb
+  namespace: placement-lab
 spec:
-  replicas: 1
+  minAvailable: 2
   selector:
     matchLabels:
-      app: cluster-autoscaler
-  template:
-    metadata:
-      labels:
-        app: cluster-autoscaler
-    spec:
-      serviceAccountName: cluster-autoscaler
-      containers:
-      - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-        name: cluster-autoscaler
-        command:
-        - ./cluster-autoscaler
-        - --v=4
-        - --stderrthreshold=info
-        - --cloud-provider=aws
-        - --skip-nodes-with-local-storage=false
-        - --expander=least-waste
-        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-        - --balance-similar-node-groups
-        - --skip-nodes-with-system-pods=false
+      app: critical-app
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: general-app-hpa
+  namespace: placement-lab
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: general-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
 ```
 
-**AWS Node Termination Handler (manejo de interrupciones de instancias Spot):**
+Los valores de solicitudes/límites conservados son ilustrativos. La protección PDB se aplica a expulsiones voluntarias y no detiene la recuperación Spot ni los fallos de AZ. HPA requiere Metrics Server y una relación significativa entre carga/métrica; la demostración inactiva no es un benchmark de escalado.
+
+Prepara una ServiceAccount/rol dedicado para Cluster Autoscaler, con permisos AWS limitados por etiquetas y etiquetas de descubrimiento ASG reales. Las etiquetas del grupo de nodos no demuestran que estén las etiquetas del ASG. Para EKS 1.36, renderiza el par revisado de chart/imagen e inspecciónalo antes de instalar:
 
 ```bash
-helm repo add eks https://aws.github.io/eks-charts
-helm install aws-node-termination-handler \
-  --namespace kube-system \
-  --set enableSpotInterruptionDraining=true \
-  --set enableRebalanceMonitoring=true \
-  --set enableRebalanceDraining=true \
-  eks/aws-node-termination-handler
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm template cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --set-string autoDiscovery.clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string awsRegion="${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  > cluster-autoscaler-reviewed.yaml
 ```
 
-#### 5. Mejores prácticas y consideraciones
-
-1. **Usar varios tipos de instancia**: Usar múltiples tipos de instancia en node groups Spot distribuye el riesgo de interrupción.
-2.  **Configurar Pod Disruption Budgets (PDB)**: Configura PDBs para aplicaciones críticas a fin de limitar la cantidad de pods interrumpidos simultáneamente.
-
-    ```yaml
-    apiVersion: policy/v1
-    kind: PodDisruptionBudget
-    metadata:
-      name: critical-app-pdb
-    spec:
-      minAvailable: 2
-      selector:
-        matchLabels:
-          app: critical-app
-    ```
-3. **Establecer requests y limits de recursos adecuados**: Establece requests y limits de recursos de containers adecuados para utilizar eficientemente los recursos de los nodes.
-4.  **Utilizar Horizontal Pod Autoscaler**: Ajusta automáticamente la cantidad de pods según la demanda de la carga de trabajo.
-
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: general-app-hpa
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: general-app
-      minReplicas: 3
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 70
-    ```
-5. **Monitoreo y optimización de costos**: Monitorea y optimiza los costos del clúster usando herramientas como AWS Cost Explorer y Kubecost.
+Mantén las protecciones de almacenamiento local/pods de sistema salvo que otra revisión justifique cambiarlas. Las formas de CPU/memoria/GPU comparables importan dentro de grupos gestionados por CA con tipos mixtos. Los grupos de nodos administrados ya gestionan el rebalanceo de Spot y el drain; no añadas a ciegas otro Node Termination Handler. La capacidad autogestionada necesita su propia gestión del ciclo de vida revisada. Valida la recuperación ante interrupciones, la colocación, la persistencia de datos y el coste total bajo condiciones representativas de carga.
 
 </details>
 
 ## Preguntas avanzadas
 
-### 10. Explica estrategias para implementar multi-tenancy en un clúster EKS y compara las ventajas y desventajas de cada enfoque.
+10. Compara los enfoques de aislamiento de tenants en EKS y sus límites reales.
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Implementar multi-tenancy en un clúster EKS significa garantizar aislamiento y gestión de recursos adecuados mientras múltiples equipos, aplicaciones o clientes comparten la misma infraestructura de Kubernetes. Las siguientes son las principales estrategias para implementar multi-tenancy en EKS y las ventajas y desventajas de cada enfoque.
+Elige el límite de tenant según los requisitos reales de confianza, datos, disponibilidad y gobernanza. Los siguientes son **diseños alternativos**, no instrucciones para combinar todos los ejemplos en un único namespace compartido.
 
-### 1. Separación a nivel de clúster (Hard Multi-tenancy)
+**Clústeres/cuentas separados:** los recursos dedicados de API/plano de control reducen el acoplamiento y permiten elegir ciclos de vida independientes, con un coste operativo mayor. No aíslan automáticamente IAM, VPC, almacenamiento, cuotas ni servicios externos compartidos, ni garantizan que un tenant nunca pueda afectar a otro. Usa la guía revisada de creación de clústeres en vez de ejecutar dos comandos `eksctl create cluster` sin calificar.
 
-**Descripción**: Aprovisionar clústeres EKS separados por tenant.
-
-**Método de implementación**:
-
-```bash
-# Create cluster for Tenant A
-eksctl create cluster --name tenant-a-cluster --region us-west-2
-
-# Create cluster for Tenant B
-eksctl create cluster --name tenant-b-cluster --region us-west-2
-```
-
-**Ventajas**:
-
-* Garantiza aislamiento completo (seguridad, networking, recursos)
-* Versiones y configuraciones de clúster personalizables por tenant
-* Los problemas de un tenant no afectan a otros
-* Adecuado para entornos con requisitos regulatorios estrictos
-
-**Desventajas**:
-
-* Alta sobrecarga operativa (gestionar múltiples clústeres)
-* Menor utilización de recursos (control plane y componentes del sistema duplicados por clúster)
-* Costos más altos (costo de control plane por clúster)
-* Dificultad en la gestión centralizada y la aplicación de políticas
-
-### 2. Separación a nivel de namespace (Soft Multi-tenancy)
-
-**Descripción**: Separar tenants usando namespaces de Kubernetes dentro de un único clúster EKS.
-
-**Método de implementación**:
+**Namespaces con controles aplicados:** los namespaces separan nombres, no toda la seguridad o capacidad. Un administrador de plataforma crea los namespaces nuevos de tenants y administra sus límites de etiquetas de política, cuotas y RBAC:
 
 ```yaml
-# Create namespace for Tenant A
 apiVersion: v1
 kind: Namespace
 metadata:
   name: tenant-a
   labels:
     tenant: a
-
-# Create namespace for Tenant B
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: tenant-b
   labels:
     tenant: b
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
 ```
 
-**Ventajas**:
-
-* Gestión simplificada con un solo clúster
-* Mejor utilización de recursos
-* Eficiencia de costos (control plane compartido)
-* Gestión centralizada y aplicación de políticas más sencillas
-
-**Desventajas**:
-
-* Difícil garantizar aislamiento completo
-* Riesgos de seguridad debido al uso compartido de recursos a nivel de clúster
-* El uso excesivo de recursos por un tenant puede afectar a otros
-* Las actualizaciones del clúster afectan a todos los tenants
-
-### 3. Separación a nivel de namespace + controles de seguridad adicionales
-
-**Descripción**: Aplicar mecanismos adicionales de seguridad y control de recursos a la separación por namespace.
-
-**Método de implementación**:
-
-1. **Network Policies**:
+El siguiente ejemplo completo para tenant A incluye el Role que faltaba en el antiguo RoleBinding, permisos explícitos de carga, tráfico dentro del namespace más DNS acotado, ResourceQuota y LimitRange. Configura el grupo autenticado `tenant-a-users` y, por separado, recursos equivalentes revisados para tenant B:
 
 ```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-workloads
+  namespace: tenant-a
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "deployments/scale", "statefulsets/scale"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-a-access
+  namespace: tenant-a
+subjects:
+- kind: Group
+  name: tenant-a-users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-workloads
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: deny-cross-tenant-traffic
+  name: tenant-boundary
   namespace: tenant-a
 spec:
   podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
+  policyTypes: [Ingress, Egress]
   ingress:
   - from:
-    - namespaceSelector:
-        matchLabels:
-          tenant: a
+    - podSelector: {}
   egress:
+  - to:
+    - podSelector: {}
   - to:
     - namespaceSelector:
         matchLabels:
-          tenant: a
-```
-
-2. **Resource Quotas**:
-
-```yaml
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -778,150 +678,167 @@ spec:
     limits.cpu: "20"
     limits.memory: 40Gi
     pods: "50"
+    services: "20"
+    persistentvolumeclaims: "30"
+    secrets: "100"
+    configmaps: "100"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-limits
+  namespace: tenant-a
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    type: Container
 ```
 
-3. **Control de permisos RBAC**:
+La política requiere un motor de aplicación compatible y supone las etiquetas ordinarias de CoreDNS; adáptala para las rutas NodeLocal DNSCache. Las cuotas son límites de admisión, no nodos reservados ni ancho de banda garantizado. Las cargas pueden usar ServiceAccounts y Secrets locales al namespace, así que limita su creación mediante admisión y mantén las credenciales de plataforma fuera de los namespaces de tenants. Los recursos de kernel/plano de control compartidos aún requieren revisión del modelo de amenazas.
+
+**Clústeres virtuales:** una API/plano de control virtual puede separar la configuración de ámbito de clúster, mientras las cargas en nodos compartidos siguen compartiendo el kernel/CNI/CSI del host. La configuración revisada de vCluster 0.36.1 usa los campos actuales `sync.fromHost.nodes` y deja deshabilitada la sincronización de nodos del host. No es obligatorio crear un tenant; habilitarla puede exponer metadatos del host. Las arquitecturas con nodos privados/dedicados tienen requisitos y propiedades de aislamiento distintos.
+
+Guarda lo siguiente como `vcluster-values.yaml` y sustituye la StorageClass por una clase aprobada y operativa. Usa namespaces de host independientes controlados por la plataforma para que los tenants no puedan editar el syncer/controlador privilegiado mediante un RoleBinding del host:
 
 ```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: tenant-admin
-  namespace: tenant-a
-subjects:
-- kind: Group
-  name: tenant-a-admins
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: tenant-admin-role
-  apiGroup: rbac.authorization.k8s.io
+sync:
+  fromHost:
+    nodes:
+      enabled: false
+controlPlane:
+  statefulSet:
+    persistence:
+      volumeClaim:
+        enabled: true
+        storageClass: REPLACE_WITH_APPROVED_STORAGE_CLASS
+        size: 5Gi
+        retentionPolicy: Retain
+    imagePullPolicy: IfNotPresent
 ```
-
-**Ventajas**:
-
-* Mantiene las ventajas de la separación por namespace
-* Seguridad y aislamiento de recursos mejorados
-* Control de acceso y asignación de recursos por tenant
-* Mantiene la eficiencia de costos
-
-**Desventajas**:
-
-* Mayor complejidad de configuración y gestión
-* Aún carece de aislamiento completo de recursos a nivel de clúster
-* Se requiere esfuerzo adicional para configurar y mantener políticas
-
-### 4. Virtual Clusters
-
-**Descripción**: Crear control planes virtuales de Kubernetes dentro de un único clúster EKS físico, proporcionando a cada tenant su propio "clúster".
-
-**Método de implementación**:
 
 ```bash
-# Install vcluster
 helm repo add vcluster https://charts.loft.sh
-helm repo update
-
-# Create virtual cluster for Tenant A
-helm install vcluster-tenant-a vcluster/vcluster \
-  --namespace tenant-a \
-  --create-namespace \
-  --set sync.nodes.enabled=true
-
-# Create virtual cluster for Tenant B
-helm install vcluster-tenant-b vcluster/vcluster \
-  --namespace tenant-b \
-  --create-namespace \
-  --set sync.nodes.enabled=true
+helm repo update vcluster
+helm template vcluster-tenant-a vcluster/vcluster --version 0.36.1 --kube-version 1.36.0 \
+  --namespace vcluster-a-host -f vcluster-values.yaml > tenant-a-reviewed.yaml
+helm template vcluster-tenant-b vcluster/vcluster --version 0.36.1 --kube-version 1.36.0 \
+  --namespace vcluster-b-host -f vcluster-values.yaml > tenant-b-reviewed.yaml
 ```
 
-**Ventajas**:
+Inspecciona el RBAC renderizado, almacenamiento, solicitudes de recursos, imagen y configuración de sincronización; después despliega mediante el propietario de Helm/GitOps revisado. El chart publicado renderiza `vcluster-pro:0.36.1` de forma predeterminada; revisa la edición elegida, la disponibilidad de funciones y las licencias antes del despliegue. Renderizar no verifica derechos de uso, persistencia, arranque del clúster ni aislamiento en producción. Haz copias de seguridad del estado del tenant y comprende la retención de PVC/PV antes de eliminar un clúster virtual o su namespace de host.
 
-* Combina ventajas de la separación a nivel de clúster y a nivel de namespace
-* Proporciona un Kubernetes API server y control plane dedicados por tenant
-* Mejor utilización de recursos y eficiencia de costos
-* Versiones y configuraciones de clúster personalizables por tenant
+**Identidad y gobernanza AWS:** usa roles IRSA o Pod Identity compatibles por tenant, con confianza y permisos de recursos limitados. Estas identidades AWS complementan la autorización de Kubernetes. Una SCP fija permisos máximos para principales de cuentas miembro cubiertas; no concede acceso ni distingue namespaces de Kubernetes.
 
-**Desventajas**:
-
-* Sobrecarga y complejidad adicionales
-* Madurez y soporte limitados para la tecnología de virtual cluster
-* Soporte limitado para algunas características de Kubernetes
-* Complejidad en debugging y troubleshooting
-
-### 5. Multi-tenancy utilizando integración con servicios de AWS
-
-**Descripción**: Mejorar la multi-tenancy de clústeres EKS usando servicios de AWS como AWS IAM, AWS Organizations y AWS Resource Access Manager.
-
-**Método de implementación**:
-
-1. **IAM Roles for Service Accounts (IRSA)**:
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tenant-a-sa
-  namespace: tenant-a
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/tenant-a-role
-```
-
-2. **AWS Organizations y SCP (Service Control Policies)**:
+La denegación S3 siguiente ilustra una SCP asociada solo a la **cuenta/OU miembro de tenant A**, con como objetivo un bucket revisado de tenant B. No la asocies a una cuenta compartida esperando que distinga entre A y B:
 
 ```json
 {
   "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "DenyAccessToOtherTenantsResources",
-      "Effect": "Deny",
-      "Action": ["s3:*"],
-      "Resource": ["arn:aws:s3:::tenant-b-*"]
-    }
-  ]
+  "Statement": [{
+    "Sid": "DenyTenantBStoreFromTenantAAccount",
+    "Effect": "Deny",
+    "Action": ["s3:*"],
+    "Resource": [
+      "arn:aws:s3:::amzn-s3-demo-tenant-b",
+      "arn:aws:s3:::amzn-s3-demo-tenant-b/*"
+    ]
+  }]
 }
 ```
 
-**Ventajas**:
-
-* Control de acceso detallado para servicios de AWS
-* Gobernanza mejorada utilizando estructura organizativa y políticas
-* Capa adicional de aislamiento a nivel de servicio de AWS
-* Integración con el modelo de seguridad existente de AWS
-
-**Desventajas**:
-
-* Mayor dependencia de servicios de AWS
-* Mayor complejidad de configuración y gestión
-* Portabilidad limitada al ser una solución específica de AWS
-* Posibles costos adicionales de servicios de AWS
-
-### Mejores prácticas para la implementación de multi-tenancy
-
-1. **Analizar requisitos**:
-   * Evaluar el nivel requerido de aislamiento entre tenants
-   * Considerar requisitos regulatorios y de compliance
-   * Considerar sobrecarga operativa y restricciones de costos
-2. **Considerar un enfoque híbrido**:
-   * Proporcionar clústeres dedicados para tenants críticos
-   * Agrupar tenants menos críticos con separación a nivel de namespace
-3. **Automatización e IaC (Infrastructure as Code)**:
-   * Automatizar el aprovisionamiento de clústeres y namespaces usando Terraform, AWS CDK o eksctl
-   * Gestionar configuraciones mediante flujos de trabajo GitOps
-4. **Monitoreo y asignación de costos**:
-   * Monitorear el uso de recursos por tenant
-   * Hacer seguimiento de costos por tenant usando cost allocation tags
-   * Analizar costos usando Kubecost o AWS Cost Explorer
-5. **Mejora de seguridad**:
-   * Auditorías de seguridad y escaneo de vulnerabilidades regulares
-   * Aplicar el principio de privilegio mínimo
-   * Utilizar network policies y service mesh
-
-### Conclusión
-
-La estrategia óptima para implementar multi-tenancy en EKS varía según los requisitos específicos de la organización, las necesidades de seguridad, las capacidades operativas y las restricciones de costos. Muchas organizaciones adoptan un enfoque híbrido que combina múltiples estrategias en lugar de un único enfoque. Por ejemplo, usar clústeres dedicados para cargas de trabajo críticas o reguladas mientras se aplica separación a nivel de namespace para entornos de desarrollo y prueba.
-
-Al seleccionar una estrategia de multi-tenancy, debes equilibrar factores como seguridad, aislamiento, utilización de recursos, sobrecarga operativa y costo. También es importante evaluar si la estrategia elegida puede adaptarse a los requisitos cambiantes de la organización con el tiempo.
+Las SCP no restringen la cuenta de administración ni los roles vinculados a servicios, y no limitan directamente a principales no relacionados de cuentas externas. Siguen siendo necesarios las políticas de recursos, permisos IAM y protecciones de datos. Esta es una barrera de protección a nivel de cuenta, no una política completa de aislamiento de tenants. Prueba el acceso efectivo y la reversión/retención según el diseño elegido; aquí no se crearon clústeres, clústeres virtuales ni SCP.
 
 </details>
+
+## Comprobaciones de acceso y ciclo de vida
+
+11. ¿`update-kubeconfig` concede permisos de Kubernetes?
+   * A) Sí, concede cluster-admin automáticamente
+   * B) No; configura el cliente, mientras las entradas/políticas de acceso y RBAC determinan los permisos
+   * C) Sí, mediante el certificado CA
+   * D) Solo para un namespace nuevo
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) No; configura el cliente, mientras las entradas/políticas de acceso y RBAC determinan los permisos**
+
+La administración inicial depende de la configuración de bootstrap/herramientas. Conserva una identidad administradora conocida y prueba explícitamente el rol previsto.
+
+</details>
+
+12. ¿Un RoleBinding de namespace puede reducir el alcance de una política de acceso EKS cluster-admin?
+   * A) Sí, RBAC siempre la anula
+   * B) No, los permisos se acumulan
+   * C) Sí, si el nombre del grupo es `system:masters`
+   * D) Solo con `kubectl --as`
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) No, los permisos se acumulan**
+
+Usa el ámbito de la política de acceso previsto o un grupo RBAC personalizado. `--as`/`--as-group` fuerza RBAC de Kubernetes y no prueba los permisos concedidos por una política de acceso EKS.
+
+</details>
+
+13. ¿Qué hace falta además de que la fase de un pod sea `Running`?
+   * A) Nada
+   * B) Solo el nombre de un log group
+   * C) Readiness, salud/rollout y la ruta prevista de la aplicación
+   * D) Que todo Job siga ejecutándose para siempre
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Readiness, salud/rollout y la ruta prevista de la aplicación**
+
+`Running` puede incluir contenedores no preparados; los Jobs completados pueden estar correctamente en `Succeeded`. Valida el cómputo esperado y el comportamiento real de DNS/Service.
+
+</details>
+
+14. ¿Cuál es un plan adecuado de actualización de EKS?
+   * A) Usar cualquier versión upstream más reciente
+   * B) Saltar directamente dos versiones menores
+   * C) Usar la información de publicación/preparación de EKS y avanzar una versión menor cada vez
+   * D) Suponer que la reversión restaura todos los datos persistentes
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Usar la información de publicación/preparación de EKS y avanzar una versión menor cada vez**
+
+La reversión condicional dentro de siete días no restaura etcd, las cargas de trabajo ni los datos. Revisa por separado la compatibilidad de componentes y las copias de seguridad.
+
+</details>
+
+15. ¿Qué se debe hacer antes de retirar un clúster?
+   * A) Eliminar todos los PVC de inmediato
+   * B) Eliminar por nombre los roles IAM genéricos
+   * C) Eliminar primero la VPC
+   * D) Revisar identidad/propiedad, copias de seguridad/política de recuperación, dependencias, protección y capacidades
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D) Revisar identidad/propiedad, copias de seguridad/política de recuperación, dependencias, protección y capacidades**
+
+Usa el propietario original de IaC, recursos explícitos revisados y comprobaciones de finalización. Conserva los recursos compartidos y la evidencia de recuperación.
+
+</details>
+
+## Referencias
+
+- [Add-on CloudWatch Observability](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [Políticas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
+- [Grupos de nodos administrados de EKS](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
+- [Cluster Autoscaler para EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)
+- [Multi-tenancy de Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/)
+- [Configuración de vCluster 0.36.1](https://github.com/loft-sh/vcluster/blob/v0.36.1/chart/values.yaml)
+- [Ámbito de las SCP](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)
+- [Reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)

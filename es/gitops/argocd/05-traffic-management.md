@@ -1,45 +1,45 @@
-# Gestión del tráfico de ArgoCD
+# Gestión del tráfico con Argo CD
 
-> **Revisado con respecto a**: Argo CD 3.5.2, Argo Rollouts 1.10.0, Helm chart 2.43.1; actualizado a Argo CD 3.5.4 y chart 2.43.6 (aún Rollouts 1.10.0) tras revisar las notas de lanzamiento (ejemplos no ejecutados de nuevo)
-> **Última actualización**: October 12, 2026
+> **Versiones de referencia**: Argo CD 3.5.2, Argo Rollouts 1.10.0 y chart de Helm 2.43.1. Tras revisar las notas de las versiones, se actualizaron las referencias a Argo CD 3.5.4 y al chart 2.43.6, manteniendo Rollouts 1.10.0. Los ejemplos no se volvieron a ejecutar.
+> **Última actualización**: 12 de octubre de 2026
 
-## Tabla de contenidos
+## Índice
 - [Descripción general de Argo Rollouts](#argo-rollouts-overview)
 - [Instalación](#installation)
-- [Despliegues Blue-Green](#blue-green-deployments)
-- [Despliegues Canary](#canary-deployments)
+- [Despliegues blue-green](#blue-green-deployments)
+- [Despliegues canary](#canary-deployments)
 - [Análisis y verificación](#analysis-and-verification)
-- [Integración de Ingress](#ingress-integration)
-- [Estrategias de rollback](#rollback-strategies)
+- [Integración con Ingress](#ingress-integration)
+- [Estrategias de reversión](#rollback-strategies)
 - [Experimentos](#experiments)
 - [Notificaciones](#notifications)
 
-## Descripción general de Argo Rollouts
+## Descripción general de Argo Rollouts {#argo-rollouts-overview}
 
-Argo Rollouts es un controlador de Kubernetes que proporciona capacidades avanzadas de despliegue, incluidos despliegues blue-green, despliegues canary y funciones de entrega progresiva.
+Argo Rollouts es un controlador de Kubernetes que incorpora despliegues blue-green, despliegues canary y otras funciones de entrega progresiva.
 
 ### ¿Por qué Argo Rollouts?
 
-Los Deployment de Kubernetes admiten RollingUpdate y Recreate, así como pausa/reanudación. La tabla compara el comportamiento del controlador nativo; los controladores adicionales o varios Deployment pueden implementar otros patrones:
+Los Deployment de Kubernetes admiten RollingUpdate y Recreate, además de pausar y reanudar un despliegue. La tabla compara el comportamiento de los controladores nativos; otros controladores o una combinación de varios Deployment pueden implementar patrones adicionales:
 
-| Función | Deployment de K8s | Argo Rollouts |
+| Función | Deployment de Kubernetes | Argo Rollouts |
 |---------|----------------|---------------|
-| Rolling Update | Sí | Sí |
-| Blue-Green | No | Sí |
+| Actualización gradual | Sí | Sí |
+| Blue-green | No | Sí |
 | Canary | No | Sí |
-| División del tráfico | No | Sí |
-| Rollback automatizado | No | Sí |
-| Análisis/verificación | No | Sí |
-| Pausa/reanudación | Sí | Sí |
+| Distribución del tráfico | No | Sí |
+| Reversión automática | No | Sí |
+| Análisis y verificación | No | Sí |
+| Pausa y reanudación | Sí | Sí |
 | Experimentos | No | Sí |
 
 ### Arquitectura
 
-![El controlador de Argo Rollouts ejecuta estrategias blue-green, canary y de experimentos, desplaza el tráfico mediante el controlador de Ingress y la service mesh, y consulta un proveedor de análisis cuyo resultado hace avanzar, aborta o pausa el rollout.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
+![El controlador de Argo Rollouts ejecuta estrategias blue-green, canary y de experimentos; distribuye el tráfico mediante el controlador de Ingress y la malla de servicios, y consulta a un proveedor de análisis cuyo resultado permite avanzar, abortar o pausar el despliegue.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-0.html)
 
-## Instalación
+## Instalación {#installation}
 
 ### Instalar el controlador de Argo Rollouts
 
@@ -91,7 +91,7 @@ kubectl argo rollouts version
 
 ### Instalar mediante Helm
 
-Elija la instalación mediante manifiesto anterior o Helm para gestionar la propiedad del controlador. Guarde esta configuración como `rollouts-values.yaml`. `AWS_REGION` corresponde al **controlador de Rollouts** que consulta CloudWatch y puede omitirse si no se utiliza ese proveedor.
+Elija uno de los dos métodos para gestionar el controlador: la instalación mediante manifiestos anterior o Helm. Guarde estos ajustes en `rollouts-values.yaml`. `AWS_REGION` corresponde al **controlador de Rollouts** que consulta CloudWatch; puede omitirse si no utiliza ese proveedor.
 
 ```yaml
 controller:
@@ -119,11 +119,11 @@ helm upgrade --install argo-rollouts argo/argo-rollouts \
   --values rollouts-values.yaml --wait --timeout 5m
 ```
 
-Habilite ServiceMonitor solo después de configurar su CRD y los selectores de Prometheus. Un Dashboard compartido requiere una capa independiente de autenticación/autorización. El comando `dashboard` de la CLI 1.10.0 se enlaza a todas las interfaces y usa los privilegios de su kubeconfig; la URL de localhost que imprime no restringe el acceso.
+Habilite ServiceMonitor cuando estén configurados su CRD y los selectores de Prometheus. Si comparte el panel, añada una capa de autenticación y autorización. El comando `dashboard` de la CLI 1.10.0 escucha en todas las interfaces y utiliza los privilegios de su kubeconfig; que muestre una URL de localhost no limita el acceso.
 
-### Acceso al Dashboard (instalación con Helm)
+### Acceso al panel con una instalación de Helm
 
-Para las instalaciones con Helm, habilite el Dashboard ClusterIP de solo lectura y realice port-forward a una dirección de loopback:
+En una instalación de Helm, habilite el panel de solo lectura con un Service ClusterIP y reenvíe su puerto a una dirección local de loopback:
 
 ```bash
 helm upgrade --install argo-rollouts argo/argo-rollouts \
@@ -136,17 +136,17 @@ kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
   service/argo-rollouts-dashboard 3100:3100
 ```
 
-Abra `http://127.0.0.1:3100/rollouts`. El acceso compartido requiere un proxy independiente autenticado y autorizado.
+Abra `http://127.0.0.1:3100/rollouts`. Para compartir el acceso, utilice un proxy independiente que autentique a los usuarios y compruebe sus permisos.
 
-## Despliegues Blue-Green
+## Despliegues blue-green {#blue-green-deployments}
 
-Sustituya las imágenes de ejemplo `myapp`/registry, la cuenta/etiqueta de ECR y los nombres de métricas por la configuración de su aplicación. Prepare namespaces, acceso a las imágenes, respuestas de readiness, recopilación de métricas y AnalysisTemplates; ejecute cada escenario de forma independiente. Un despliegue inicial no tiene un ReplicaSet estable anterior. Despliegue correctamente v1 y, a continuación, cambie la imagen a v2 en Git para observar un rollout.
+Sustituya las imágenes y el registro de ejemplo de `myapp`, la cuenta y la etiqueta de ECR, y los nombres de las métricas por los de su aplicación. Prepare los espacios de nombres, el acceso a las imágenes, las respuestas de las sondas de disponibilidad, la recopilación de métricas y los AnalysisTemplate. Ejecute cada escenario por separado. En el despliegue inicial no existe un ReplicaSet estable anterior: despliegue v1 correctamente y después cambie la imagen a v2 en Git para observar el proceso de actualización.
 
-Argo CD aplica la especificación de Rollout desde Git; el controlador de Rollouts independiente gestiona los ReplicaSet y el tráfico. Abortar y devolver el tráfico a estable no revierte el commit de Git ni una migración de base de datos.
+Argo CD aplica la especificación del Rollout desde Git. El controlador de Rollouts, que es independiente, gestiona los ReplicaSet y el tráfico. Abortar el despliegue y devolver el tráfico a la versión estable no revierte el commit de Git ni una migración de la base de datos.
 
-Blue-green conserva los ReplicaSet anterior y nuevo de un Rollout y después cambia el selector del Service activo. No duplica un entorno de clúster completo. La propagación del plano de datos y el drenaje de conexiones requieren tiempo.
+En un despliegue blue-green se conservan el ReplicaSet anterior y el nuevo del Rollout, y después se cambia el selector del Service activo. Esto no duplica todo el entorno del clúster. La propagación de los cambios en el plano de datos y el vaciado de las conexiones requieren tiempo.
 
-### Rollout Blue-Green básico
+### Rollout blue-green básico
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -227,15 +227,15 @@ spec:
     targetPort: 8080
 ```
 
-`previewReplicaCount` limita la capacidad de preview; el nuevo ReplicaSet escala a `spec.replicas` antes de la promoción. `autoPromotionSeconds` se ignora cuando autoPromotionEnabled es false. El ejemplo de análisis previo a la promoción requerido también omite autoPromotionSeconds, con lo que se mantiene separado del ejemplo de promoción automática basada en tiempo. Este ejemplo omite scaleDownDelaySeconds, de modo que un plazo de reducción fijo no cancele el análisis posterior a la promoción. El registro/anulación del registro de destinos de ALB y el drenaje de conexiones aún pueden causar interrupciones; verifique el plano de datos real.
+`previewReplicaCount` limita las réplicas de la versión de vista previa; el nuevo ReplicaSet aumenta hasta `spec.replicas` antes de promoverse. `autoPromotionSeconds` se ignora cuando autoPromotionEnabled es false. El ejemplo que exige un análisis previo a la promoción también omite autoPromotionSeconds, por lo que se mantiene separado del ejemplo de promoción automática por tiempo. Se omite scaleDownDelaySeconds para evitar que un plazo fijo de reducción de réplicas cancele el análisis posterior a la promoción. El registro y la retirada de destinos del ALB, junto con el vaciado de conexiones, todavía pueden causar interrupciones; compruebe el comportamiento real del plano de datos.
 
-### Flujo Blue-Green
+### Flujo de un despliegue blue-green
 
-![Antes del cambio blue-green, el balanceador de carga envía tráfico a Blue v1.0.0 mientras Green v2.0.0 espera como preview; después del cambio, el selector del Service activo pasa a Green v2.0.0 y el Blue v1.0.0 anterior se reduce según la configuración de análisis y retraso.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
+![Antes del cambio blue-green, el balanceador envía el tráfico a Blue v1.0.0 mientras Green v2.0.0 espera como versión de vista previa. Después, el selector del Service activo pasa a Green v2.0.0 y se reducen las réplicas de Blue v1.0.0 según los ajustes del análisis y del período de espera.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-1.html)
 
-### Blue-Green con promoción automática
+### Blue-green con promoción automática
 
 ```yaml
 strategy:
@@ -247,17 +247,17 @@ strategy:
     previewReplicaCount: 3
 ```
 
-## Despliegues Canary
+## Despliegues canary {#canary-deployments}
 
-`setWeight` cambia los pesos relativos del router cuando se configura trafficRouting. Sin un router, aproxima la proporción mediante los recuentos de ReplicaSet; no se garantiza un porcentaje exacto de solicitudes. Con un router, la capacidad de réplicas estables es independiente del peso del tráfico.
+`setWeight` cambia los pesos relativos del enrutador cuando se configura trafficRouting. Sin un enrutador, se aproxima la proporción mediante el número de réplicas de los ReplicaSet, sin garantizar un porcentaje exacto de solicitudes. Con un enrutador, la capacidad de la versión estable es independiente del peso de tráfico asignado.
 
-El despliegue canary desplaza gradualmente el tráfico a la nueva versión.
+Un despliegue canary dirige gradualmente el tráfico a la nueva versión.
 
-Los canary con enrutamiento de tráfico mantienen el 100 % de la capacidad estable de forma predeterminada, por lo que debe planificar conjuntamente la capacidad estable y canary. maxSurge controla la aritmética de réplicas deseadas para canary básico sin trafficRouting; no es un límite total de Pod en modo de enrutamiento de tráfico. maxUnavailable aún puede limitar la reducción del ReplicaSet antiguo.
+Los despliegues canary con enrutamiento de tráfico mantienen, de forma predeterminada, el 100 % de la capacidad de la versión estable. Planifique la capacidad de ambas versiones conjuntamente. maxSurge controla el cálculo del número deseado de réplicas en un canary básico sin trafficRouting; con enrutamiento de tráfico, no establece un límite para el total de pods. maxUnavailable sí puede limitar la reducción de réplicas del ReplicaSet anterior.
 
-### Rollout Canary básico
+### Rollout canary básico
 
-Este ejemplo requiere el plugin Gateway API 0.17.0, el HTTPRoute `myapp-route`, un Gateway listo y los Service estable/canary coincidentes que se muestran más adelante. Compruebe HTTPRoute Accepted/ResolvedRefs y la disponibilidad del plano de datos.
+Este ejemplo requiere el plugin Gateway API 0.17.0, el HTTPRoute `myapp-route`, un Gateway disponible y los Service de las versiones estable y canary correspondientes, que se muestran más adelante. Compruebe las condiciones Accepted y ResolvedRefs del HTTPRoute, así como la disponibilidad del plano de datos.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -345,17 +345,17 @@ spec:
     targetPort: 8080
 ```
 
-### Explicación de los pasos Canary
+### Explicación de los pasos canary
 
 | Tipo de paso | Descripción |
 |-----------|-------------|
-| `setWeight` | Establecer el porcentaje de tráfico para canary |
-| `pause` | Esperar una duración o aprobación manual |
-| `analysis` | Ejecutar AnalysisTemplate |
-| `setCanaryScale` | Establecer el número de réplicas canary |
-| `setHeaderRoute` | Enrutar por encabezado (para routers de tráfico) |
+| `setWeight` | Asigna al canary su porcentaje de tráfico |
+| `pause` | Espera durante un período determinado o hasta recibir aprobación manual |
+| `analysis` | Ejecuta un AnalysisTemplate |
+| `setCanaryScale` | Establece el número de réplicas canary |
+| `setHeaderRoute` | Enruta por cabecera cuando el proveedor de tráfico lo permite |
 
-### Canary con controles manuales
+### Canary con aprobación manual
 
 ```yaml
 strategy:
@@ -370,7 +370,7 @@ strategy:
       - setWeight: 100
 ```
 
-Promover manualmente:
+Promueva el despliegue manualmente:
 
 ```bash
 # Promote to next step
@@ -381,19 +381,19 @@ kubectl argo rollouts promote myapp-canary -n myapp
 # kubectl argo rollouts promote myapp-canary -n myapp --full
 ```
 
-### Flujo de tráfico Canary
+### Flujo de tráfico canary
 
-![Diagrama que muestra solicitudes de cliente divididas en el balanceador de carga: el peso relativo 90 se dirige al Service estable con 10 Pod y el peso 10 se dirige al Service canary con 1 Pod en el paso de 10 % del ejemplo bajo la política predeterminada de capacidad de enrutamiento de tráfico.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
+![El balanceador distribuye las solicitudes con un peso relativo de 90 al Service estable, que tiene 10 pods, y de 10 al Service canary, que tiene 1 pod. Corresponde al paso del 10 % del ejemplo con la política de capacidad predeterminada para el enrutamiento de tráfico.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
-## Análisis y verificación
+## Análisis y verificación {#analysis-and-verification}
 
-Los AnalysisTemplates definen cómo verificar el estado del despliegue.
+Los AnalysisTemplate definen cómo comprobar el estado del despliegue.
 
-Las métricas http_requests_total/http_request_duration_seconds_bucket y las etiquetas de servicio/versión requieren instrumentación de la aplicación y configuración de scrape. Sustituya prometheus.monitoring.svc.cluster.local:9090 por el Service real. Los umbrales/ventanas son ilustrativos; defina también los requisitos mínimos de tráfico y SLO.
+Las métricas http_requests_total/http_request_duration_seconds_bucket y las etiquetas service/version requieren instrumentar la aplicación y configurar la recopilación de métricas. Sustituya prometheus.monitoring.svc.cluster.local:9090 por el Service real. Los umbrales y las ventanas son orientativos; defina también el tráfico mínimo necesario y los requisitos del SLO.
 
-failureLimit cuenta las **mediciones fallidas** toleradas: un valor de 3 se supera con la cuarta medición fallida. Los errores del proveedor usan consecutiveErrorLimit y los resultados indeterminados usan inconclusiveLimit. Las condiciones a continuación evitan que los valores ausentes, vectores vacíos, NaN e Infinity superen el control. count es un número de mediciones, no un número de solicitudes HTTP; las ventanas de consulta superpuestas no son muestras independientes.
+failureLimit indica cuántas **mediciones fallidas** se toleran: un valor de 3 se supera con la cuarta medición fallida. Los errores del proveedor se controlan con consecutiveErrorLimit, y los resultados indeterminados, con inconclusiveLimit. Las condiciones siguientes impiden que valores ausentes, vectores vacíos, NaN o Infinity superen la comprobación. count es el número de mediciones, no de solicitudes HTTP; las ventanas de consulta que se solapan no son muestras independientes.
 
 ### Análisis de Prometheus
 
@@ -467,9 +467,9 @@ spec:
     inconclusiveLimit: 0
 ```
 
-### Análisis web (endpoint HTTP)
+### Análisis web mediante un endpoint HTTP
 
-El Service debe devolver una respuesta HTTP correcta con JSON `{"status":"OK"}`. jsonPath extrae la cadena de estado, por lo que debe comparar result directamente, no result.status. Ajuste la condición al contrato real de la respuesta.
+El Service debe devolver una respuesta HTTP satisfactoria con el JSON `{"status":"OK"}`. Como jsonPath extrae la cadena de estado, compare directamente result, en lugar de result.status. Ajuste la condición al contrato de respuesta real.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -496,7 +496,7 @@ spec:
 
 ### Análisis de Datadog
 
-Las fórmulas v2 de Datadog usan consultas y campos de fórmula independientes. Aprovisione el Secret datadog con address/api-key/app-key en este namespace de AnalysisTemplate. asFloat(default(result, -1)) distingue los datos ausentes de una tasa de error cero válida y evita pasar nil a funciones tipadas.
+Las fórmulas de Datadog v2 separan las consultas del campo de fórmula. Cree el Secret datadog con address/api-key/app-key en el mismo espacio de nombres que el AnalysisTemplate. asFloat(default(result, -1)) distingue la ausencia de datos de una tasa de error válida de cero y evita pasar nil a funciones con tipos definidos.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -533,7 +533,7 @@ spec:
     inconclusiveLimit: 0
 ```
 
-### Análisis basado en Job
+### Análisis mediante un Job
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -569,7 +569,7 @@ spec:
 
 ### ClusterAnalysisTemplate
 
-Comparta plantillas de análisis entre namespaces:
+Comparta plantillas de análisis entre espacios de nombres:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -608,22 +608,22 @@ spec:
     inconclusiveLimit: 0
 ```
 
-## Integración de Ingress
+## Integración con Ingress {#ingress-integration}
 
-Argo Rollouts admite proveedores de tráfico nativos y extensiones mediante plugins. Los proveedores sin integración nativa, como Kong, se admiten mediante el **plugin Gateway API** en su lugar.
+Argo Rollouts admite proveedores de tráfico nativos y extensiones mediante plugins. Para los proveedores que carecen de integración nativa, como Kong, se utiliza el **plugin Gateway API**.
 
 | Proveedor | Integración | Notas |
 |---|---|---|
-| NGINX Ingress | Nativa (`trafficRouting.nginx`) | Manipula directamente la anotación `canary-weight` |
-| AWS ALB | Nativa (`trafficRouting.alb`) | El puerto de backend de Ingress debe ser `use-annotation`; consulte los [resultados de verificación](#verification-results-on-eks) |
-| Istio | Nativa (`trafficRouting.istio`) | Manipula directamente VirtualService/DestinationRule |
-| SMI | Nativa (`trafficRouting.smi`) | El proyecto SMI está en la práctica sin mantenimiento; no se recomienda para adopciones nuevas |
-| Ambassador, Apache APISIX, Traefik | Nativa | No se abordan en este documento; consulte la [documentación oficial](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
-| **Kong** y otras implementaciones compatibles con Gateway API (kgateway, etc.) | **Plugin Gateway API** (`trafficRouting.plugins`) | No existe un campo nativo `trafficRouting.kong` |
+| NGINX Ingress | Nativa (`trafficRouting.nginx`) | Modifica directamente la anotación `canary-weight` |
+| AWS ALB | Nativa (`trafficRouting.alb`) | El puerto de backend del Ingress debe ser `use-annotation`; consulte los [resultados de verificación](#verification-results-on-eks) |
+| Istio | Nativa (`trafficRouting.istio`) | Modifica directamente el VirtualService y el DestinationRule |
+| SMI | Nativa (`trafficRouting.smi`) | El proyecto SMI prácticamente carece de mantenimiento; no se recomienda adoptarlo en proyectos nuevos |
+| Ambassador, Apache APISIX, Traefik | Nativa | No se abordan en esta guía; consulte la [documentación oficial](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
+| **Kong** y otras implementaciones compatibles con Gateway API, como kgateway | **Plugin Gateway API** (`trafficRouting.plugins`) | No existe el campo nativo `trafficRouting.kong` |
 
 ### NGINX Ingress (instalaciones existentes)
 
-El ingress-nginx de la comunidad se retiró en marzo de 2026; esta es una referencia de migración para instalaciones existentes. Los ejemplos nuevos usan la ruta de Gateway API. Cada ejemplo de enrutamiento requiere los Service estable/canary coincidentes en su namespace.
+El proyecto comunitario ingress-nginx se retiró en marzo de 2026. Esta sección sirve como referencia de migración para instalaciones existentes; los ejemplos nuevos utilizan Gateway API. Cada ejemplo de enrutamiento necesita los Service de las versiones estable y canary correspondientes en su espacio de nombres.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -698,7 +698,7 @@ spec:
               number: 80
 ```
 
-### AWS ALB Ingress
+### Ingress de AWS ALB {#aws-alb-ingress}
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -791,9 +791,9 @@ spec:
   ingressClassName: alb
 ```
 
-> **Comprobación de configuración de ALB**: El rootService de Rollout (o stableService cuando se omite), el nombre de la anotación de acción y el nombre de backend de Ingress deben coincidir. El puerto de backend `name: use-annotation` selecciona la acción ponderada. Un puerto numérico selecciona en cambio un backend de Service normal; según ese Service, la reconciliación puede fallar o producir un enrutamiento diferente. Compruebe los eventos del controlador y el ForwardConfig real con `aws elbv2 describe-rules`.
+> **Comprobación de la configuración del ALB**: Deben coincidir el rootService del Rollout (o stableService si se omite), el nombre de la anotación de acción y el nombre de backend del Ingress. El puerto de backend `name: use-annotation` selecciona la acción con pesos. Un puerto numérico selecciona un backend Service ordinario; según ese Service, la reconciliación puede fallar o producir un enrutamiento diferente. Compruebe los eventos del controlador y el ForwardConfig real con `aws elbv2 describe-rules`.
 
-### División de tráfico de Istio
+### Distribución del tráfico con Istio
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -871,13 +871,13 @@ spec:
       weight: 0
 ```
 
-### Plugin Gateway API (HTTPRoute)
+### Plugin Gateway API (HTTPRoute) {#gateway-api-plugin-httproute}
 
-Las rutas de Gateway API para Kong, kgateway y otras implementaciones compatibles utilizan el [plugin Gateway API](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi) mantenido por argoproj-labs. Traefik también tiene una integración nativa de TraefikService; su ruta de Gateway API puede usar este plugin. Este capítulo usa el plugin 0.17.0, publicado el 2026-09-01. Actualiza los pesos de backend de HTTPRoute. Otros tipos de Route y el enrutamiento por encabezado dependen de los CRD instalados y de las capacidades de implementación; verifique el estado de la ruta y la distribución real de solicitudes.
+Kong, kgateway y otras implementaciones compatibles utilizan el [plugin Gateway API](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi), mantenido por argoproj-labs. Traefik también dispone de una integración nativa con TraefikService; para Gateway API puede utilizar este plugin. La guía toma como referencia el plugin 0.17.0, publicado el 1 de septiembre de 2026, que actualiza los pesos de backend del HTTPRoute. La compatibilidad con otros tipos de Route y con el enrutamiento por cabeceras depende de los CRD instalados y de la implementación. Compruebe el estado de la ruta y la distribución real de solicitudes.
 
-El binario siguiente está destinado al **nodo Linux amd64 que ejecuta el Pod del controlador**. En arm64, use gatewayapi-plugin-linux-arm64 y SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`. Para Helm, gestione las mismas entradas en controller.trafficRouterPlugins. Para instalaciones mediante manifiestos, incorpórelo a los datos existentes de ConfigMap y reinicie el controlador. El Role mostrado limita las actualizaciones de peso de HTTPRoute a un namespace; otros tipos de Route/la creación de rutas por encabezado necesitan una revisión de permisos adicional.
+El binario siguiente corresponde al **nodo Linux amd64 en el que se ejecuta el pod del controlador**. En arm64, utilice gatewayapi-plugin-linux-arm64 y la suma SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`. Con Helm, gestione las mismas entradas en controller.trafficRouterPlugins. Si instaló mediante manifiestos, incorpórelas a los datos del ConfigMap existente y reinicie el controlador. El Role mostrado limita las actualizaciones de pesos del HTTPRoute a un espacio de nombres; revise los permisos adicionales antes de utilizar otros tipos de Route o crear rutas por cabecera.
 
-Instale el plugin registrándolo en el ConfigMap `argo-rollouts-config` para que el controlador descargue el binario al iniciarse:
+Registre el plugin en el ConfigMap `argo-rollouts-config` para que el controlador descargue el binario al iniciarse:
 
 ```yaml
 apiVersion: v1
@@ -989,11 +989,11 @@ spec:
       weight: 0
 ```
 
-En cada paso `setWeight`, el plugin actualiza directamente estos dos valores `backendRefs[].weight`.
+En cada paso `setWeight`, el plugin actualiza directamente los dos valores `backendRefs[].weight` siguientes.
 
 ### Kong (mediante el plugin Gateway API)
 
-El Kong Ingress Controller (KIC) no tiene integración nativa con Argo Rollouts; utiliza el plugin Gateway API anterior. La configuración siguiente es para KIC independiente que gestiona un plano de datos de Kong Gateway existente sin Kong Operator. Esa configuración utiliza la anotación unmanaged; los Gateways gestionados por Kong Operator tienen un ciclo de vida diferente:
+Kong Ingress Controller (KIC) carece de integración nativa con Argo Rollouts y utiliza el plugin Gateway API anterior. La configuración siguiente corresponde a un KIC independiente que gestiona un plano de datos existente de Kong Gateway, sin Kong Operator. Este modo requiere la anotación unmanaged; los Gateway gestionados por Kong Operator tienen un ciclo de vida distinto:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1001,29 +1001,29 @@ kind: GatewayClass
 metadata:
   name: kong
   annotations:
-    konghq.com/gatewayclass-unmanaged: "true"   # required — without it the Gateway stays stuck on "Waiting for controller"
+    konghq.com/gatewayclass-unmanaged: "true"   # required: without it the Gateway stays stuck on "Waiting for controller"
 spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-Desde aquí, aplique la misma configuración del [plugin Gateway API](#gateway-api-plugin-httproute) anterior; los YAML de Rollout y HTTPRoute son idénticos.
+Aplique después la configuración del [plugin Gateway API](#gateway-api-plugin-httproute) anterior; los YAML del Rollout y del HTTPRoute son idénticos.
 
-### Resultados de verificación en EKS
+### Resultados de verificación en EKS {#verification-results-on-eks}
 
-El documento anterior informó de estos resultados con EKS 1.36, Rollouts 1.9.0, AWS Load Balancer Controller 3.2.1, Istio 1.30, KIC 3.5 y plugin0.16.0. No se adjuntan logs sin procesar, recuentos de solicitudes, duración de las mediciones ni manifiestos ejecutados, por lo que esta revisión estática no pudo reproducir el informe. Estas son observaciones históricas, no resultados nuevos de 1.10.0/0.17.0 ni garantías de transiciones instantáneas sin tiempo de inactividad.
+La versión anterior de la guía informó de estos resultados con EKS 1.36, Rollouts 1.9.0, AWS Load Balancer Controller 3.2.1, Istio 1.30, KIC 3.5 y el plugin 0.16.0. No adjuntó los registros originales, el número de solicitudes, la duración de las mediciones ni los manifiestos ejecutados, por lo que esta revisión estática no pudo reproducirlos. Son observaciones históricas: no corresponden a pruebas nuevas de 1.10.0/0.17.0 ni garantizan transiciones instantáneas o sin interrupciones.
 
-| Proveedor | Qué se comprobó | Resultado |
+| Proveedor | Comprobación realizada | Resultado informado |
 |---|---|---|
-| NGINX | Transición de la anotación `canary-weight` 20→50→100 % | ✅ Confirmado: la proporción de tráfico curl en vivo coincidió con el valor de la anotación |
-| Istio | Transición de peso de VirtualService 20→50→100 % y reversión inmediata a 0 % en `abort` | ✅ Confirmado: la proporción de curl coincidió con el peso y el tráfico volvió a la versión estable anterior justo después de abortar |
-| AWS ALB | Transición del peso de reenvío de la regla de listener, verificada de forma cruzada con el estado de AWS en vivo mediante `aws elbv2 describe-rules` | ✅ Confirmado (pero requiere la salvedad de [`use-annotation`](#aws-alb-ingress) anterior) |
-| Kong (plugin Gateway API) | Transición de `HTTPRoute.backendRefs[].weight` y tráfico real a través del plano de datos de Kong | ✅ Confirmado, aunque es fácil equivocarse con la anotación `gatewayclass-unmanaged` y el `controllerName` exacto (véase arriba) |
+| NGINX | Cambio de la anotación `canary-weight` de 20→50→100 % | ✅ Confirmado: la proporción del tráfico observado con curl coincidió con el valor de la anotación |
+| Istio | Cambio del peso del VirtualService de 20→50→100 % y retorno inmediato al 0 % al ejecutar `abort` | ✅ Confirmado: la proporción observada con curl coincidió con el peso y el tráfico volvió a la versión estable anterior justo después de abortar |
+| AWS ALB | Cambio del peso de reenvío de la regla del listener, contrastado con el estado real de AWS mediante `aws elbv2 describe-rules` | ✅ Confirmado, con la condición de utilizar [`use-annotation`](#aws-alb-ingress) descrita anteriormente |
+| Kong mediante el plugin Gateway API | Cambio de `HTTPRoute.backendRefs[].weight` y tráfico real a través del plano de datos de Kong | ✅ Confirmado, aunque es fácil configurar incorrectamente la anotación `gatewayclass-unmanaged` o el valor exacto de `controllerName`; consulte la sección anterior |
 
-Cuando Argo CD gestiona recursos de enrutamiento, revise exclusiones de diff limitadas para campos propiedad de Rollouts: la anotación de acción ALB relevante, los pesos de ruta de Istio, los pesos de backend de HTTPRoute y el selector de Service rollouts-pod-template-hash. Evite ignorar especificaciones/gestores completos. Conservar valores durante sync también requiere RespectIgnoreDifferences=true y su limitación de recursos existentes.
+Cuando Argo CD gestione los recursos de enrutamiento, limite las exclusiones de diferencias a los campos que controla Rollouts: la anotación de acción del ALB correspondiente, los pesos de las rutas de Istio, los pesos de backend del HTTPRoute y el selector rollouts-pod-template-hash del Service. Evite excluir especificaciones completas o todos los campos de un gestor. Para conservar esos valores durante la sincronización también se necesita RespectIgnoreDifferences=true, cuya aplicación está limitada a recursos ya existentes.
 
-## Estrategias de rollback
+## Estrategias de reversión {#rollback-strategies}
 
-### Rollback automático ante un fallo de análisis
+### Reversión automática cuando falla el análisis
 
 ```yaml
 strategy:
@@ -1039,7 +1039,7 @@ strategy:
     # Analysis failure automatically triggers rollback
 ```
 
-### Rollback manual
+### Reversión manual
 
 ```bash
 # Abort current rollout and rollback
@@ -1052,11 +1052,11 @@ kubectl argo rollouts undo myapp -n myapp
 kubectl argo rollouts undo myapp -n myapp --to-revision=2
 ```
 
-Abort devuelve el tráfico a estable, pero deja sin cambios la plantilla de Pod deseada. undo cambia la plantilla de Pod en vivo; una carga de trabajo gestionada por Argo CD también requiere un cambio de Git revisado para que la autocorrección no restaure la revisión defectuosa. Ninguna operación revierte los efectos en la base de datos. El análisis Inconclusive se pausa para su investigación; no es lo mismo que Failed/Error.
+Abortar devuelve el tráfico a la versión estable, pero no cambia la plantilla de pod deseada. undo modifica la plantilla del recurso activo; si Argo CD gestiona la carga de trabajo, también debe revisar y aplicar el cambio correspondiente en Git para que la autocorrección no restaure la revisión defectuosa. Ninguna de estas operaciones revierte los efectos sobre la base de datos. Un resultado Inconclusive pausa el proceso para investigarlo; se diferencia de los estados Failed y Error.
 
-### Configuración de rollback
+### Configuración de la reversión
 
-Este es un fragmento de especificación para un Rollout existente con trafficRouting. dynamicStableScale reduce la capacidad estable y puede requerir volver a escalarla al abortar; intercambia capacidad de recuperación por uso de recursos. Los bloques de análisis en línea solo bloquean este paso, mientras que el análisis de fondo se configura en strategy.canary.analysis.
+Este fragmento de especificación corresponde a un Rollout existente con trafficRouting. dynamicStableScale reduce la capacidad de la versión estable y puede exigir aumentarla de nuevo al abortar: ahorra recursos a costa de reducir la capacidad disponible para recuperarse. El análisis en línea solo bloquea ese paso; el análisis en segundo plano se configura en strategy.canary.analysis.
 
 ```yaml
 spec:
@@ -1074,17 +1074,17 @@ spec:
             value: myapp-canary
 ```
 
-## Experimentos
+## Experimentos {#experiments}
 
-En 1.10.0, si todos los análisis `requiredForCompletion: true` tienen éxito, pueden finalizar un Experiment antes de `duration`. No trate duration como una ventana mínima de validación. Verifique explícitamente los selectores de Service/router para el aislamiento del tráfico del experimento. Consulte el [análisis detallado](10-rollouts-experiment.md) para las transiciones de estado y los retrasos de limpieza.
+En 1.10.0, si terminan correctamente todos los análisis con `requiredForCompletion: true`, el Experiment puede finalizar antes de `duration`. Por tanto, duration no establece un período mínimo de validación. Compruebe los selectores de los Service y del enrutador para aislar el tráfico del experimento. Consulte el [análisis detallado](10-rollouts-experiment.md) para conocer las transiciones de estado y los períodos de espera antes de limpiar recursos.
 
 Ejecute pruebas A/B con varias versiones simultáneamente.
 
-> Para conocer el comportamiento detallado (cadena de creación de recursos, reglas de nomenclatura, aislamiento del tráfico y veredictos de AnalysisRun), consulte el [análisis detallado de Experimentos de Rollouts](10-rollouts-experiment.md).
+> Para conocer la creación encadenada de recursos, las reglas de nombres, el aislamiento del tráfico y los resultados de AnalysisRun, consulte el [análisis detallado de los experimentos de Rollouts](10-rollouts-experiment.md).
 
-**Requisitos previos:** Un Experiment no genera tráfico de usuario. Proporcione tráfico de prueba y scraping, y exponga `rollouts-pod-template-hash` del Pod como la etiqueta de métrica `rollouts_pod_template_hash`. La comparación siguiente usa un aumento ilustrativo de un punto porcentual en la tasa de error; no sustituye las pruebas de significancia ni la validación de muestras mínimas. Los datos ausentes permanecen Inconclusive. `progressDeadlineSeconds` limita la disponibilidad de ReplicaSet, no un retraso antes del análisis.
+**Requisitos previos:** Un Experiment no genera tráfico de usuario. Proporcione tráfico de prueba y recopilación de métricas, y exponga el valor `rollouts-pod-template-hash` del pod como etiqueta de métrica `rollouts_pod_template_hash`. La comparación siguiente utiliza, como ejemplo, un aumento de un punto porcentual en la tasa de error; no sustituye las pruebas de significación estadística ni la validación de un tamaño mínimo de muestra. La ausencia de datos mantiene el resultado en Inconclusive. `progressDeadlineSeconds` limita el tiempo para que el ReplicaSet esté disponible; no establece una espera antes del análisis.
 
-Cree el AnalysisTemplate referenciado en el mismo namespace:
+Cree el AnalysisTemplate al que se hace referencia en el mismo espacio de nombres:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1193,13 +1193,13 @@ spec:
     requiredForCompletion: true
 ```
 
-## Notificaciones
+## Notificaciones {#notifications}
 
-Integre los eventos de rollout con sistemas de notificación.
+Integre los eventos del despliegue con los sistemas de notificación.
 
 ### Configurar notificaciones en un Rollout existente
 
-Lo siguiente es un fragmento de metadata que debe fusionarse en un Rollout existente, no un manifiesto de recurso completo.
+Incorpore el siguiente fragmento de metadatos a un Rollout existente; no constituye un manifiesto de recurso completo.
 
 ```yaml
 metadata:
@@ -1209,9 +1209,9 @@ metadata:
     notifications.argoproj.io/subscribe.on-analysis-run-failed.slack: alerts
 ```
 
-### Triggers y plantillas de notificación
+### Activadores y plantillas de notificación
 
-Configure argo-rollouts-notification-secret en el namespace del controlador con slack-token mediante su proceso de gestión de secretos. Los eventos de Rollout integrados seleccionan estos nombres de trigger; Degraded por sí solo no demuestra que un rollout fue abortado. Configure todos los triggers/plantillas referenciados, incluido el fallo de análisis.
+Configure argo-rollouts-notification-secret en el espacio de nombres del controlador, con slack-token, mediante su proceso de gestión de secretos. Los eventos integrados de Rollout seleccionan estos nombres de activador; el estado Degraded por sí solo no demuestra que se haya abortado un despliegue. Configure todos los activadores y las plantillas a los que se hace referencia, incluido el del fallo de análisis.
 
 ```yaml
 apiVersion: v1
@@ -1252,4 +1252,4 @@ data:
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido, pruebe el [cuestionario de gestión de tráfico de ArgoCD](../../quizzes/gitops/argocd/05-traffic-management-quiz.md).
+Compruebe lo aprendido con el [cuestionario de gestión del tráfico con Argo CD](../../quizzes/gitops/argocd/05-traffic-management-quiz.md).

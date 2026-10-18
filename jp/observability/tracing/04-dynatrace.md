@@ -1,6 +1,6 @@
 # Dynatrace
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年10月16日
 
 ## はじめに
 
@@ -48,7 +48,7 @@ flowchart LR
 |---|---|
 | サポート対象 Linux EC2 ノード上の EKS 1.35 | マトリクスでは OneAgent/ActiveGate **1.329+** および Operator **1.6+** が必要で、Operator **1.9+** を推奨しています。このガイドでは 1.10.2 に固定します。 |
 | Kubernetes 1.36 | OneAgent/ActiveGate の最小バージョンは **1.335** です。プラットフォームとバージョンの組み合わせは別途確認してください。 |
-| Kubernetes 1.37 | 確認した Dynatrace マトリクスには記載されていません。新しい Kubernetes リリースがベンダーサポートを確立するわけではありません。 |
+| Kubernetes 1.37 | OneAgent/ActiveGate の最小バージョンは **1.335** です。このガイドで検証した対象外のため、プラットフォームとバージョンの組み合わせを別途確認してください。 |
 | EKS Fargate | [Fargate 固有の EKS ワークフロー](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto)を使用する、**CSI なし**のアプリケーションモニタリング。ホスト OneAgent はありません。 |
 | Bottlerocket | アプリケーションモニタリングと ActiveGate Kubernetes monitoring。引用したディストリビューション表では OneAgent ホストモニタリングはサポートされていません。 |
 | EKS Auto Mode | 一般的な EKS エントリから完全なホストエージェントサポートを推測しないでください。マネージドノードの OS、権限、ベンダーサポートを確認してください。このレシピは Auto Mode では検証していません。 |
