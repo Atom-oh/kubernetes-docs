@@ -49,11 +49,11 @@ jobs:
           name: docs-site
           path: docs-site.tar
           retention-days: 1
-      # GitHub Pages (www.atomai.click) only forwards visitors to docs.atomai.click
-      # (head script in .vitepress/config.ts), so it keeps the ko/en pages and
-      # stays near its old size. Its 404 page carries the same script, so
-      # cn/jp/es URLs on www still end up on the right docs.atomai.click page.
-      - run: rm -rf .vitepress/dist/cn .vitepress/dist/jp .vitepress/dist/es
+      # GitHub Pages (www.atomai.click) only forwards visitors to docs.atomai.click.
+      # ko/en keep their full pages (head script in .vitepress/config.ts); cn/jp/es
+      # pages become 0-second redirects to the same docs.atomai.click URL, which
+      # keeps www near its old size.
+      - run: node scripts/www-redirect-stubs.mjs .vitepress/dist cn jp es
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
