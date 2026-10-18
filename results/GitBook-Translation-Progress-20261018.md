@@ -14,4 +14,6 @@ Local translation uses three managed Codex subagents running `openai.gpt-6-luna`
 
 **Quality review: IN PROGRESS.** Structural validation does not certify source fidelity or wording. Native agents still need to review all retained translations, repair stale technical prose, and complete missing pages. This checkpoint is local and has not been deployed.
 
+An additional asset checkpoint copied 208 referenced locale images from the English source, with identical bytes and no Markdown edits. The asset-only scan found no unresolved image destinations in the pages present at that checkpoint. Missing-page translations may add further references.
+
 The unified Actions workflow scans all English pages for cn/jp/es together, preserves retry checkpoints, and accumulates one translation PR. Reviewed translations on main supersede obsolete draft retry queues during import and refresh. All 164 repository tests pass. This report records a snapshot, not live coverage.
