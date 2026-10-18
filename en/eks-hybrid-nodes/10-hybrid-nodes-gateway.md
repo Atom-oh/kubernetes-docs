@@ -3,7 +3,7 @@
 < [Previous: Bare Metal OS Setup](./09-bare-metal-os-setup.md) | [Table of Contents](./README.md) >
 
 > **Validation baseline**: Gateway/chart 1.0.2; use an EKS-supported Kubernetes version and an AWS-maintained Cilium release meeting the gateway prerequisites.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 18, 2026
 
 ---
 
@@ -16,7 +16,7 @@ The gateway works by establishing VXLAN tunnels between dedicated EC2 gateway in
 **Key characteristics:**
 
 - **Open source**: Fully available at [github.com/aws/eks-hybrid-nodes-gateway](https://github.com/aws/eks-hybrid-nodes-gateway)
-- **No gateway software charge**: EC2, storage, applicable Auto Mode fees, cross-AZ traffic, connectivity and observability still contribute to cost
+- **No gateway software charge**: EC2, storage, Auto Mode fees (only when the gateway nodes run on Auto Mode; managed or self-managed node groups also work), cross-AZ traffic, connectivity and observability still contribute to cost
 - **Automated route management**: The leader programs configured aggregate VPC Pod routes; each replica separately reconciles per-CiliumNode local tunnel state
 - **High availability**: Supports a 2-replica Deployment with lease-based leader election for failover
 - **Cilium integration**: Leverages Cilium's VTEP feature to enable transparent Pod-to-Pod routing across the VXLAN tunnel
@@ -711,7 +711,32 @@ The configured remote Pod network, control-plane subnet routes, webhook Service/
 
 The [Hybrid add-on guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html) explicitly supports AMP managed collection when these endpoint and network prerequisites are satisfied. Distinguish that scraper from self-managed remote_write; neither appears merely because the gateway was installed.
 
-### Pattern 5: Comparison --- With vs Without Gateway
+#### Measured: ALB IP Targets on Hybrid Pods (2026-10-18)
+
+Measured in a simulated environment (on-premises replaced by a separate VPC over TGW, gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB). This is not a supported production setup and the numbers are not guarantees.
+
+| Check | Result |
+|---|---|
+| Target registration | LBC registered the Hybrid Pod IPs (`172.17.0.202`, `172.17.0.48`) as `ip` targets. They are outside the VPC, so `AvailabilityZone` is `all`; health checks passed through the gateway path |
+| Request | VPC client → internal ALB → VPC route `172.17.0.0/16` (leader ENI) → VXLAN → Hybrid Pod, 20/20 |
+| Pod replacement | Rollout restart under load; targets converged on the new Pod IPs in 54 s, 0 of 276 requests failed (preStop 15 s, deregistration delay 10 s) |
+| Leader change | Leader Pod deleted under load; handover 4 s, 1 of 191 requests failed (client without retries) |
+
+The **AWS Load Balancer Controller**, not the gateway, updates targets when Pod IPs change. The gateway only provides the path to Pod IPs outside the VPC, so the Pod CIDR must be routable from the VPC. During installation, the LBC 3.6.0 chart's `kind: List` object (IngressClassParams and IngressClass) failed client-side OpenAPI validation with `the server is currently unable to handle the request`; `--disable-openapi-validation` worked around it. If you lower the health check interval to 5 s, also set the timeout below 5 s or target group creation fails.
+
+### Pattern 5: On-Premises Clients to Region Pods (Reverse Direction)
+
+An on-premises client enters through a load balancer and reaches Pods on Region (VPC) nodes. The default path in this direction is the VPC's own routing, not the gateway.
+
+| Path | Behavior | Measured (2026-10-18) |
+|---|---|---|
+| On-premises → internal ALB → VPC CNI Pod | On-premises DNS resolves the ALB name to private IPs (Route 53 Resolver inbound endpoint); traffic enters the VPC over DX/VPN/TGW and the ALB forwards to VPC CNI Pod IPs. No gateway hop | 20/20 |
+| On-premises → internal ALB → Hybrid Pod | The same path plus a hairpin back to on-premises through the gateway; it crosses DX twice, adding latency and transfer cost | 20/20 |
+| On-premises → Hybrid NodePort → VPC CNI Pod | kube-proxy SNATs to the node IP and host routing sends it over the underlay, so the gateway (VTEP) is not used. Region node security groups must allow the app port from the remote node CIDR | Failed (cluster SG allowed only 443 from the remote node CIDR) |
+
+The [AWS Ingress guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recommends ALB with the Load Balancer Controller for traffic that originates in the Region and on-premises Ingress for traffic that originates on-premises. Because the gateway requires Cilium `l7Proxy=false`, Cilium Ingress and Gateway API are not available in the same installation; for on-premises entry consider an L4 `LoadBalancer` Service (Cilium LB IPAM/BGP) or an existing hardware LB with NodePort.
+
+### Pattern 6: Comparison --- With vs Without Gateway
 
 Native/BGP/static routing and this gateway are different owned datapaths. The gateway adds an active-standby VXLAN hop and aggregate route automation while keeping underlay, CIDR, firewall, IAM and application responsibilities. The comparison and migration sections below describe their boundaries; neither approach automatically guarantees webhook/LB availability.
 
@@ -751,6 +776,25 @@ During the failover window:
 - **VPC-to-hybrid traffic**: Drops until VPC routes are updated (packets go to the failed gateway's ENI)
 - **Hybrid-to-VPC traffic**: Drops until CiliumVTEPConfig is updated (Cilium sends to old gateway IP)
 - **Intra-hybrid and node/control-plane paths**: Paths that do not traverse the gateway can continue only if their own underlay, CNI, DNS and dependencies remain healthy; a shared AZ/network failure can affect them too.
+
+### Single Gateway Failure and Multiple Data Centers
+
+The gateway (1.0.2) is one set per cluster with a single active leader. The leader creates a route in each configured route table **for every CIDR** in `podCIDRs` (CSV), and tunnel entries are managed per Hybrid `CiliumNode`. Data centers with different Pod CIDRs (for example DC A `10.85.0.0/16`, DC B `10.86.0.0/16`) are all served by one gateway as long as each CIDR is listed in both the cluster `remotePodNetworks` and the gateway `podCIDRs`. The ranges do not need to be contiguous.
+
+| Item | Details |
+|---|---|
+| Number of CIDRs | Up to 15 remote Pod network CIDRs (EKS limit). Each CIDR adds a route per route table, so also check the routes-per-route-table quota (default 50) |
+| Throughput | VPC↔Hybrid Pod traffic from every data center passes through one leader. Active/standby does not scale out; size the instance and its network performance instead |
+| Firewall | Hybrid nodes in every data center must reach UDP 8472 on **both** the leader and standby node IPs |
+| Per-data-center split | Running a separate gateway per data center inside one cluster is not documented. In 1.0.2 the Lease (`hybrid-gateway-leader`) and CiliumVTEPConfig (`hybrid-gateway`) names are fixed, so multiple releases are likely to conflict (not verified) |
+
+If only one gateway Pod exists, or both fail, Pod traffic between the VPC and the Hybrid Pod CIDRs of **all** data centers stops together. The runtime never calls `DeleteRoute`, so VPC routes keep pointing at the failed ENI.
+
+| Paths that break | Paths that remain (when their own network and DNS are healthy) |
+|---|---|
+| VPC Pod ↔ Hybrid Pod in both directions, webhooks on Hybrid Pods, ALB/NLB targets on Hybrid Pods, AMP scraper → Hybrid endpoints | Control plane ↔ kubelet (node CIDR path), Hybrid-to-Hybrid inside one data center, Hybrid traffic between data centers routed on-premises, node-IP paths (NodePort, hostNetwork) |
+
+Two replicas on eligible nodes in different AZs are therefore effectively required. If the same Service also has Pods in the VPC, the target group contains cloud targets too, so after health checks drop the Hybrid targets the load balancer can keep answering from cloud targets (this combination was not measured).
 
 ### Multi-AZ Deployment Recommendations
 
@@ -1040,7 +1084,7 @@ Remove the controller-owned `ciliumvtepconfig/hybrid-gateway` only after confirm
 | CNI | Choose a supported routable-Pod design | Requires the AWS-maintained Cilium VTEP integration with L7 proxy disabled |
 | Capacity | Actual router/link/CNI/host limits | One active gateway's capacity plus all underlying link/path limits |
 | HA | Owned network/convergence design | Active-standby Lease and route/VTEP convergence; temporary interruption possible |
-| Costs | Cluster/Hybrid Nodes, connectivity, infrastructure and operations | Those costs plus gateway EC2/storage, applicable Auto Mode fees and possible added cross-AZ traffic |
+| Costs | Cluster/Hybrid Nodes, connectivity, infrastructure and operations | Those costs plus gateway EC2/storage, Auto Mode fees when the gateway nodes use Auto Mode, and possible added cross-AZ traffic |
 | Removal | Reconcile owned routes/resources | Helm does not delete external AWS routes, IAM associations or dedicated capacity |
 
 ### When to Use the Gateway
@@ -1122,7 +1166,7 @@ done
 
 #### Gateway Costs
 
-There is no gateway software charge. Count EC2, storage, applicable Auto Mode management fees, cross-AZ data transfer, private connectivity and observability as well as normal cluster/Hybrid Nodes costs. “Inside the same VPC” does not imply free cross-AZ transfer. Routing through another AZ can add traffic charges.
+There is no gateway software charge. Count EC2, storage, Auto Mode management fees (only for gateway nodes running on Auto Mode), cross-AZ data transfer, private connectivity and observability as well as normal cluster/Hybrid Nodes costs. “Inside the same VPC” does not imply free cross-AZ transfer. Routing through another AZ can add traffic charges. There is only one active leader, so even with gateway nodes in several AZs, Hybrid traffic from Pods, ALBs or scrapers in other AZs crosses into the leader's AZ ([AWS operations guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). For high-volume paths, route the Pod CIDRs directly with Cilium BGP so traffic leaves through the TGW/VGW in the Pod's own AZ, and keep the gateway for webhooks and low-volume Pod-to-Pod traffic.
 
 **Historical estimates, not current quotes or measured savings:** the following original prices/discounts have no recoverable verification source. They are preserved for context; rebuild a dated regional estimate from actual usage and the [EKS pricing page](https://aws.amazon.com/eks/pricing/), EC2 terms and data-transfer paths before making a commitment.
 

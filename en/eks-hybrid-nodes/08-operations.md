@@ -3,7 +3,7 @@
 < [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) | [Next: Bare Metal OS Setup](./09-bare-metal-os-setup.md) >
 
 > **Validation baseline**: nodeadm 1.0.20; Cilium 1.18.3 CRDs; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. These are reviewed references, not a universal supported-version matrix.
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 18, 2026
 
 This document covers day-to-day operations and maintenance tasks for EKS Hybrid Nodes environments, including monitoring, backup procedures, and troubleshooting.
 
@@ -368,6 +368,72 @@ With two eligible domains and at least two replicas, strict spreading constrains
 | Metrics Server | Cloud placement or a reachable Hybrid Pod endpoint | Control-plane-to-Pod and Metrics-Server-to-kubelet paths |
 | CoreDNS | Verify replicas on cloud and Hybrid nodes | Eligible domains, capacity and actual DNS traffic |
 | Cilium/Calico | Hybrid nodes in the AWS-supported mixed-CNI design | Preserve VPC CNI on cloud nodes |
+
+## Behavior and Preparation for Network Disconnections
+
+This section describes what keeps running and what stops when Direct Connect or VPN drops briefly or the network stops responding. Hybrid Nodes are not intended for DDIL environments with frequent disconnections and assume a reliable connection to AWS (see the [overview](./README.md)).
+
+### Cluster and Workloads During a Disconnection
+
+| Area | Behavior |
+|---|---|
+| Running pods | Keep running on the node. The kubelet cannot renew its Lease, so the Node's Ready condition becomes `Unknown` and the `node.kubernetes.io/unreachable` taint is added (`NoSchedule`, and `NoExecute` when conditions are met). |
+| Pod failover | Pods without a toleration are evicted by the control plane after the default 300 seconds and replacement pods are created on other nodes. DaemonSet pods tolerate this taint by default and stay on the node. |
+| Zone label | If nodes carry `topology.kubernetes.io/zone`, Kubernetes cancels evictions for a zone when all nodes in that zone are unreachable. Hybrid nodes have no cloud-controller-manager, so set a per-data-center zone with nodeadm `--node-labels`. |
+| Cilium | Agent health is coupled with control plane access, so the agent keeps restarting during a disconnection and Cilium BGP Control Plane sessions can go down (CFP #31702, opt-in improvement in Cilium 1.17). The MetalLB L2 mode used in the AWS example remained stable during disconnections. |
+| AWS service dependencies | Regional services such as ECR image pulls, CloudWatch and Amazon Managed Service for Prometheus, ALB/NLB, S3, and RDS are unavailable during the disconnection. |
+| Local troubleshooting | The API server is unreachable, so use `crictl pods`, `crictl ps`, and `crictl logs <container>` on the host instead of `kubectl`. |
+
+### Credentials and Reconnection
+
+| Item | SSM hybrid activations | IAM Roles Anywhere |
+|---|---|---|
+| Temporary credentials | Fixed at one hour (cannot be changed). Rotated automatically before expiry, without affecting nodes or applications in normal operation. | One hour by default, up to 12 hours with the profile's `durationSeconds`. The node IAM role's `MaxSessionDuration` must be greater. |
+| During the disconnection | Refresh fails because the SSM Regional endpoint is unreachable; credentials can expire during a long disconnection. | New credentials cannot be obtained without AWS. |
+| After restoration | Retries use exponential backoff, capped at 30 minutes in SSM agent **3.3.808.0 and later**. **Nodes might not reconnect for up to 30 minutes after the network is restored**, and nodes reconnect at different times, so pods can fail over to nodes that reconnected first. | The kubelet obtains credentials on demand through `aws_signing_helper credential-process`, so reconnection typically happens **within seconds**. |
+| Faster recovery | Restart the SSM agent to force a refresh (commands below). | No action is needed while the certificate is valid. Configure certificate expiry notifications. |
+
+SSM agent version, restart, and logs:
+
+```bash
+# Version (AL2023, RHEL / Ubuntu)
+yum info amazon-ssm-agent
+snap list amazon-ssm-agent
+
+# Force a credential refresh after the network is restored
+systemctl restart amazon-ssm-agent                          # AL2023, RHEL
+systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent    # Ubuntu
+
+# Watch the CredentialRefresher lines
+tail -f /var/log/amazon/ssm/amazon-ssm-agent.log
+```
+
+During a disconnection the log repeats `Retrieve credentials produced error: RequestError: send request failed` and `Sleeping for ... before retrying retrieve credentials`; `Credentials ready` is logged once the refresh succeeds.
+
+### Preparation Checklist
+
+- **Redundant connectivity:** Make Direct Connect redundant or keep a Site-to-Site VPN as a backup.
+- **Detect disconnections:** Enable EKS control plane Controller Manager logs and create a CloudWatch metric filter and alarm for the `Recording status change event message for node` message with `status="NodeNotReady"`. Alarm on TGW `BytesIn`/`BytesOut` or VGW `TunnelDataIn`/`TunnelDataOut` dropping below normal. CloudWatch Network Monitor shows loss and latency.
+- **SSM agent version:** Keep 3.3.808.0 or later so the retry interval is capped at 30 minutes.
+- **Zone label:** Set a per-data-center `topology.kubernetes.io/zone`.
+- **Tune eviction:** For applications that cannot move easily, increase `tolerationSeconds`. Longer values also delay moving pods off nodes that have really failed.
+
+```yaml
+# Fragment under the Deployment's spec.template.spec
+tolerations:
+  - key: "node.kubernetes.io/unreachable"
+    operator: "Exists"
+    effect: "NoExecute"
+    tolerationSeconds: 1800
+```
+
+- **Credential provider:** If disconnections are frequent and fast reconnection matters, consider IAM Roles Anywhere with a longer `durationSeconds`. Use a single provider within a cluster.
+- **Secondary observability path:** Configure the ADOT collector to send to multiple backends so you keep visibility when Regional services are unreachable.
+
+References:
+- [Host credentials through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
+- [Best practices for stability through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html)
+- [Kubernetes pod failover through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html)
 
 ## Common Troubleshooting
 
