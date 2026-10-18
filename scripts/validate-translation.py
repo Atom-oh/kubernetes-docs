@@ -57,7 +57,7 @@ def code_blocks(text):
 def link_targets(text):
     patterns = [
         r"!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))",
-        # A linked image has two destinations: its image and its enclosing link.
+        # Linked images also have an enclosing destination, such as a video URL.
         r"\[\s*!\[[^\]]*]\([^)]*\)\s*]\(\s*(?:<([^>]+)>|([^\s)]+))",
         r"<(?:a|img)\b[^>]*?\b(?:href|src)=[\"']([^\"']+)[\"']",
         r"^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))",
@@ -70,12 +70,74 @@ def link_targets(text):
 
 
 def introduced_document_wrappers(source, translated):
-    """Reject model response wrappers while retaining documented XML examples."""
-    markers = (
-        "<source_document>", "</source_document>",
-        "<translated_document>", "</translated_document>",
+    """Reject response envelopes without rejecting XML documented in the source."""
+    # A truncated closing tag (for example "</final" without ">") also reaches
+    # the Vue compiler as malformed HTML.
+    pattern = r"<(/?)(source_document|translated_document|final|analysis|response)\b[^>\n]*(>|(?=\n|$))"
+    # Count the tag's identity and terminator, rather than localized prose
+    # following a documented unterminated tag.
+    def tags(text):
+        return Counter(
+            f"<{closing}{name.lower()}{terminator}"
+            for closing, name, terminator in re.findall(pattern, text, re.IGNORECASE)
+        )
+    source_tags = tags(source)
+    translated_tags = tags(translated)
+    return list((translated_tags - source_tags).elements())
+
+
+def answer_tag_counts(text):
+    """Preserve GitBook quiz answer containers without counting anchor spans."""
+    return Counter(
+        (closing, name.lower())
+        for closing, name in re.findall(r"<(/?)(details|summary)\b[^>]*>", text, re.IGNORECASE)
     )
-    return [marker for marker in markers if translated.count(marker) > source.count(marker)]
+
+
+def table_shapes(text):
+    """Keep pipe-table row/column counts, excluding fenced examples."""
+    tables = []
+    previous = None
+    active = None
+    fence = None
+    for original in text.splitlines():
+        line = re.sub(r"^\s*(?:>\s*)*", "", original).strip()
+        marker = re.match(r"(`{3,}|~{3,})(.*)$", line)
+        if fence is not None:
+            if (marker and marker.group(1)[0] == fence[0]
+                    and len(marker.group(1)) >= len(fence) and not marker.group(2).strip()):
+                fence = None
+            continue
+        if marker:
+            fence = marker.group(1)
+            previous = active = None
+            continue
+        # An escaped pipe is cell content; an even number of backslashes does
+        # not escape the separator.
+        cells = []
+        start = 0
+        escaped = False
+        for index, char in enumerate(line):
+            if char == "|" and not escaped:
+                cells.append(line[start:index].strip())
+                start = index + 1
+            escaped = char == "\\" and not escaped
+        cells.append(line[start:].strip())
+        if line.startswith("|"):
+            cells.pop(0)
+        if line.endswith("|") and not escaped and cells[-1] == "":
+            cells.pop()
+        is_row = len(cells) > 1
+        is_separator = is_row and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
+        if is_separator and previous is not None:
+            active = [len(previous), len(cells)]
+            tables.append(active)
+        elif active is not None and is_row:
+            active.append(len(cells))
+        else:
+            active = None
+        previous = cells if is_row else None
+    return tables
 
 
 def main():
@@ -118,6 +180,12 @@ def main():
     wrappers = introduced_document_wrappers(src, dst)
     if wrappers:
         print(f"unexpected translation wrapper {wrappers[0]}: {dst_path}", file=sys.stderr)
+        return 1
+    if answer_tag_counts(src) != answer_tag_counts(dst):
+        print(f"answer container tag mismatch: {dst_path}", file=sys.stderr)
+        return 1
+    if table_shapes(src) != table_shapes(dst):
+        print(f"table row/column mismatch: {dst_path}", file=sys.stderr)
         return 1
 
     ratio = len(dst) / max(len(src), 1)

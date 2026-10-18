@@ -158,6 +158,82 @@ test('complete Chinese prose can be shorter than English without accepting an em
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })
 
+test('translation validation rejects introduced response tags while preserving documented XML examples', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-wrappers-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Source\n\nA complete source paragraph.\nExplain `</final` without closing bracket.\n\n```xml\n<final>documented example</final>\n```\n'
+    const translated = source.replace('# Source', '# Translated')
+      .replace('Explain `</final` without closing bracket.', 'Explicar `</final` sin cierre.')
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const tag of ['source_document', 'translated_document', 'final', 'analysis', 'response']) {
+      for (const wrapper of [`<${tag}>`, `</${tag}>`, `</${tag.toUpperCase()}>`, `</${tag}`]) {
+        fs.writeFileSync(dst, `${translated}\n${wrapper}\n`)
+        assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+          error => error.stderr.toString().includes('unexpected translation wrapper'))
+      }
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
+test('translation validation preserves answer containers and permits canonical anchor spans', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-answer-containers-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Source\n\nA complete source paragraph.\n\n<details>\n<summary>Show answer</summary>\n\nAnswer paragraph.\n\n</details>\n'
+    const translated = source.replace('# Source', '# Translated').replace('Show answer', 'Mostrar respuesta') +
+      '\n<span id="source"></span>\n'
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const broken of [translated + '\n</details>\n', translated.replace('<details>\n', '')]) {
+      fs.writeFileSync(dst, broken)
+      assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+        error => error.stderr.toString().includes('answer container tag mismatch'))
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
+test('translation validation preserves video destinations enclosing thumbnail images', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-video-link-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Source\n\nA complete source paragraph.\n\n[![Video](../assets/thumbnail.jpg)](https://example.org/video)\n'
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, source.replace('# Source', '# Translated'))
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    fs.writeFileSync(dst, source.replace('example.org/video', 'example.org/different'))
+    assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+      error => error.stderr.toString().includes('link/image target mismatch'))
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
+test('translation validation rejects missing checklist columns and rows while retaining escaped pipes and fenced examples', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-table-shape-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Source\n\nA complete source paragraph.\n\n| Done | Check | Reference |\n| --- | :--- | ---: |\n| [ ] | Govern automatically? | Policy |\n| [ ] | Value with \\| a pipe | Reference |\n\n```md\n| literal | example |\n| --- | --- |\n```\n'
+    const translated = source.replace('# Source', '# Translated')
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const broken of [
+      translated.replace('| [ ] | Govern automatically?', '| [ ] Govern automatically?'),
+      translated.replace('| [ ] | Govern automatically? | Policy |\n', '')
+    ]) {
+      fs.writeFileSync(dst, broken)
+      assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+        error => error.stderr.toString().includes('table row/column mismatch'))
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
 test('image path repair changes only link destinations, preserving repeated paths in inline code and labels', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-target-spans-'))
   try {
