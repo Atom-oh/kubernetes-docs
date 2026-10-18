@@ -350,7 +350,7 @@ helm get values calico -n tigera-operator -o yaml
 
 ### Prefix Delegation
 
-通常の VPC CNI node では、`ENABLE_PREFIX_DELEGATION`、`WARM_PREFIX_TARGET`、`MINIMUM_IP_TARGET`、`WARM_IP_TARGET` を add-on の**`env`**設定、またはその owner である DaemonSet/Helm 構成で設定します。ConfigMap 内の小文字の `enable-prefix-delegation` entry では IPAMD は構成されません。
+通常の VPC CNI node では、`ENABLE_PREFIX_DELEGATION`、`WARM_PREFIX_TARGET`、`MINIMUM_IP_TARGET`、`WARM_IP_TARGET` を add-on **の`env`設定**、またはその owner である DaemonSet/Helm 構成で設定します。ConfigMap 内の小文字の `enable-prefix-delegation` entry では IPAMD は構成されません。
 
 文書化された 1 つの allocation strategy から始めてください。`WARM_IP_TARGET` と `MINIMUM_IP_TARGET` は `WARM_PREFIX_TARGET` を上書きします。すべてを設定しても効果が積み重なることはありません。IPv4 prefix には連続した `/28` subnet space と適切な instance が必要です。subnet fragmentation、reservation、max-Pods/kubelet configuration、rollout plan を確認してください。[AWS prefix procedure](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html) を参照してください。
 

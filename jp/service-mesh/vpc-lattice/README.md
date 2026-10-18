@@ -11,7 +11,7 @@
 
 ## このセクションを独立させている理由
 
-このセクションでは**概念の理解**を扱います。Lattice リソースの作成方法と AWS Gateway API Controller のインストール方法は、[VPC Lattice](../../networking/02-vpc-lattice.md) で既に説明しています。Istio との機能ごとの比較は、[Istio と VPC Lattice](../istio/comparison/02-istio-vs-lattice.md) にあります。これら 2 つのドキュメントで扱っていない内容が、このセクションの対象です。すなわち、**「なぜこのように設計されたのか」と「その設計から何が生じるのか」**です。
+このセクションでは**概念の理解**を扱います。Lattice リソースの作成方法と AWS Gateway API Controller のインストール方法は、[VPC Lattice](../../networking/02-vpc-lattice.md) で既に説明しています。Istio との機能ごとの比較は、[Istio と VPC Lattice](../istio/comparison/02-istio-vs-lattice.md) にあります。これら 2 つのドキュメントで扱っていない内容が、このセクションの対象です。すなわち、「**なぜこのように設計されたのか」と「その設計から何が生じるのか**」です。
 
 急いで対応すべき背景があります。**AWS App Mesh のサポートは 2026年9月30日に終了**し、App Mesh コンソールと App Mesh リソースにはアクセスできなくなりました。新規顧客のオンボーディングは 2024年9月24日から停止されていました。App Mesh を使用していた組織にとって、この移行はもはや任意ではなく、期限も過ぎています。
 

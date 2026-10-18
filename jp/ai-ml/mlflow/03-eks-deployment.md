@@ -6,7 +6,7 @@
 
 サポート対象の EKS Kubernetes バージョン、互換性のある kubectl、Helm 3、メタデータデータベース、Artifact ストレージを準備します。`kubectl >=1.34` のような下限値だけでは、すべての API server との互換性は確立されません。実際の cluster の client/server version-skew policy を確認してください。
 
-この章は、ダウンロードした chart、native Helm rendering、MLflow 3.16.0 server source に基づいています。**AWS provisioning、RDS 接続、S3 upload、または EKS deployment が成功することを確立するものではありません。**ローカルの SQLite/API チェックについては[パート 1](01-tracking.md)を、Registry チェックについては[パート 2](02-model-registry.md)を参照してください。
+この章は、ダウンロードした chart、native Helm rendering、MLflow 3.16.0 server source に基づいています。**AWS provisioning、RDS 接続、S3 upload、または EKS deployment が成功することを確立するものではありません**。ローカルの SQLite/API チェックについては[パート 1](01-tracking.md)を、Registry チェックについては[パート 2](02-model-registry.md)を参照してください。
 
 ## MLflow の Tracking Server を EKS で実行する理由
 
@@ -58,7 +58,7 @@ helm template mlflow ./vendor/mlflow --namespace mlflow -f values.reference.yaml
 ### 重要な Chart 1.11.7 の Default
 
 - Default には `replicaCount: 1`、`auth.enabled: false`、`ingress.enabled: false` が含まれます。
-- `backendStore.defaultSqlitePath: ":memory:"` は in-memory metadata を設定します。**これは upstream CLI の新しい SQLite-file default とは異なります。**default chart installation は durable な production service ではありません。
+- `backendStore.defaultSqlitePath: ":memory:"` は in-memory metadata を設定します。**これは upstream CLI の新しい SQLite-file default とは異なります**。default chart installation は durable な production service ではありません。
 - External PostgreSQL には `backendStore.postgres.*` を使用し、credential reference には `backendStore.existingDatabaseSecret.*` を使用します。
 - `artifactRoot.s3.*` は `artifactRoot.proxiedArtifactStorage: true` とともに確認してください。native rendering は `--artifacts-destination=s3://...` と `--serve-artifacts` を生成しました。
 - Basic-auth database setting は `auth.postgres.*` 配下で別に設定します。tracking database を変更しても authentication state が自動的に共有されるわけではありません。
