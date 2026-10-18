@@ -73,7 +73,9 @@ Unroutable does not mean a Pod cannot initiate any AWS API call. For direct hybr
 | VPN gateway transport | UDP500/4500 and applicable IPsec transport requirements |
 | Applications / AWS credential and registry services | Only their actual destinations and ports |
 
-Apply firewall changes through the network owner, preserving connection tracking and existing rules. The old broad `10.0.0.0/8` INPUT rules, unscoped DNS/VXLAN permits and whole ruleset saves were not a safe reusable firewall policy. Do not open unauthenticated kubelet 10255 as an optional modern requirement.
+The network administrator should change firewall rules while preserving existing rules and connection tracking. Allow only the IP addresses, CIDRs and ports needed for communication. Avoid INPUT rules that allow the entire `10.0.0.0/8` range or DNS/VXLAN rules without source and destination restrictions. Before persisting changes, review which rules to save rather than saving the entire ruleset indiscriminately.
+
+Use TCP `10250` for the kubelet API with authentication and authorization. Do not open TCP `10255`, the legacy read-only kubelet port that allows unauthenticated access.
 
 ## AWS Endpoint Access
 
