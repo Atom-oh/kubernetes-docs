@@ -1623,6 +1623,7 @@ not guarantee an audit record of every evaluation.
 
 Use the validated services, triggers, and templates in [ArgoCD notifications](./argocd/08-notifications.md).
 Do not overwrite an existing notifications ConfigMap with a separate abbreviated example.
+
 ---
 
 ## Production Best Practices
