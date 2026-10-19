@@ -12,7 +12,7 @@
 - [クイックスタート](#quick-start)
 - [バージョン互換性](#version-compatibility)
 
-## ArgoCDとは？
+## ArgoCDとは？ {#what-is-argocd}
 
 ArgoCDは、Kubernetes向けの宣言型GitOps継続的デリバリーツールです。Gitリポジトリで定義された望ましい状態とクラスター内の実際の状態を同期することで、Kubernetesクラスターへのアプリケーションのデプロイを自動化します。
 
@@ -22,7 +22,7 @@ Argo CDは、CNCFのGraduatedプロジェクトであるArgoの一部です。�
 
 [🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
-## 主なメリット
+## 主なメリット {#key-benefits}
 
 ### GitOpsネイティブ
 
@@ -51,7 +51,7 @@ Argo CDは、CNCFのGraduatedプロジェクトであるArgoの一部です。�
 - **通知**: Slack、Teams、メール、Webhookとの連携
 - **ヘルスモニタリング**: 組み込みおよびカスタムのヘルスチェック
 
-## アーキテクチャの概要
+## アーキテクチャの概要 {#architecture-overview}
 
 ### 主要コンポーネント
 
@@ -71,7 +71,7 @@ Argo CDは、CNCFのGraduatedプロジェクトであるArgoの一部です。�
 
 [🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
-## 主要な概念
+## 主要な概念 {#core-concepts}
 
 ### Application
 
@@ -103,7 +103,7 @@ ApplicationSetを使うと、Generatorによって単一の定義から複数の
 - **Self-Heal**: ドリフトを自動的に修正
 - **Prune**: 孤立したリソースを削除
 
-## サブガイドの案内
+## サブガイドの案内 {#sub-guide-navigation}
 
 | ガイド | 説明 |
 |-------|-------------|
@@ -118,7 +118,7 @@ ApplicationSetを使うと、Generatorによって単一の定義から複数の
 | [ベストプラクティス](09-best-practices.md) | リポジトリのパターン、パフォーマンス調整、トラブルシューティング、EKSのヒント |
 | [Rollouts Experimentsの詳細](10-rollouts-experiment.md) | Experiment CRD、一時的なReplicaSetの検証、AnalysisRunの判定 |
 
-## クイックスタート
+## クイックスタート {#quick-start}
 
 ### 1. ArgoCDをインストールする
 
@@ -205,7 +205,7 @@ spec:
       - CreateNamespace=true
 ```
 
-## バージョン互換性
+## バージョン互換性 {#version-compatibility}
 
 レビュー対象の基準は**Argo CD 3.5.2 / Helm chart 10.8.4**です。リリースノートの確認後、マニフェストの例をパッチバージョン3.5.5に更新しました（再実行していません）。Chart 10.8.4がデプロイするのは引き続きArgo CD v3.5.2であり、3.5.5が初めて含まれるのはChart 10.10.3です。アプリケーションとインストール用Chartのバージョンは異なります。Argo CDがパッチを提供するのは直近の3つのマイナー系列で、これより古い系列はEOLです。
 

@@ -379,7 +379,7 @@ spec:
 
 #### 自动生成 PodDisruptionBudget
 
-此可选 Deployment 示例要求期望副本数至少为 2，并复制**完整的 spec.selector**（包括 matchExpressions），而不是可能不存在的顶层 app 标签。它不能证明两个副本都已就绪。由于禁用了同步，此静态实验环境预算在扩容或选择器更改后需要单独决定是否继续使用并进行审查。PDB 限制符合条件的主动驱逐，但不限制每次滚动更新或非主动故障。
+此可选 Deployment 示例要求期望副本数至少为 2，并复制**完整的 spec.selector**（包括 matchExpressions），而不是可能不存在的顶层 app 标签。它不能证明两个副本都已就绪。此静态实验环境预算在扩缩容或选择器更改后，需要单独确定其管理责任并进行审查，尤其是在禁用同步时。PDB 限制符合条件的主动驱逐，但不限制每次滚动更新或非主动故障。
 
 ```yaml
 apiVersion: policies.kyverno.io/v1

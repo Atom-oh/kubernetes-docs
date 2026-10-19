@@ -1987,7 +1987,7 @@
     "jp/scheduling/01-custom-scheduler-part1.md": "bef9674135ee7c0245803fa59b65e830a5cd703a",
     "jp/scheduling/02-custom-scheduler-part2.md": "e3434221ae7389aec876a282060f55dd1a26571e",
     "jp/scheduling/03-custom-scheduler-part3.md": "b5f0a673f42dc6826392566262e6093667379504",
-    "jp/security/01-kyverno-policy-management.md": "c7fa24e9b9940e7df4d15ff1feac77f8fa8a2257",
+    "jp/security/01-kyverno-policy-management.md": "cfe8583cab20699c531055d313a153e1737072e6",
     "jp/security/02-kubernetes-auth-authz.md": "5e96516d6d6123420b49b113efef00eaaa528586",
     "jp/security/03-pod-security-standards.md": "e95e7a90550d02d043d37b593878e75316be5073",
     "jp/security/04-network-policies.md": "37bf7eaea5a78cef8264d9053f50b82120e527f6",
@@ -2082,7 +2082,5 @@
     "jp/SUMMARY.md": "5e037cb45bb7286c021d57d1e66e4605102856fa",
     "jp/training/eks-auto-mode-2h-curriculum.md": "803e8cfa299d52220aa9680c3f6ba5274e015fe7"
   },
-  "pending": [
-    "jp/security/01-kyverno-policy-management.md"
-  ]
+  "pending": []
 }

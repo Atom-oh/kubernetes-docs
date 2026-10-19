@@ -4,7 +4,7 @@
 
 ## Qué abarca este documento
 
-- Por qué algunos libros mayores replican la validación y en qué se diferencian los modelos de nodo completo, cliente ligero y permiso
+- Por qué algunos libros mayores replican la validación y en qué se diferencian los modelos de nodo completo, cliente ligero y con permisos
 - El papel del consenso, los árboles de Merkle, P2P y la finalidad, y la restricción que cada uno impone a las operaciones de infraestructura
 - Por qué un nodo de blockchain debe tratarse de forma distinta a un servicio con estado convencional
 
@@ -129,7 +129,7 @@ Los patrones de incidentes que esto genera son:
 
 Lo que puede hacer la infraestructura:
 
-- **Incluir el estado de sincronización en la comprobación de estado**: definir la disponibilidad como «estar a N bloques de la cabeza de la cadena», no como «estar activo»
+- **Incluir el estado de sincronización en la comprobación de estado**: definir la preparación para atender solicitudes (readiness) como «estar a N bloques de la cabeza de la cadena», no como «estar activo»
 - **Supervisar la divergencia en la altura de la cadena entre nodos**: retirarlos del balanceo de carga cuando la divergencia aumente
 - **Exponer las reorganizaciones como una métrica**, para que la aplicación pueda responder
 
@@ -182,7 +182,7 @@ Reproducir y verificar cada bloque desde el génesis (sincronización completa) 
 
 ### Actualización de octubre de 2026: instantáneas de blockchain en AWS
 
-Según el [anuncio del 14 de octubre de 2026](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/), AWS lanzó **Blockchain Snapshots on AWS**, que publica datos de cadenas de bloques públicas pre sincronizados para nodos. Las instantáneas abarcan Ethereum y Solana, están disponibles sin costo y se actualizan con la misma frecuencia que el proveedor ascendente. Es una opción para reducir el tiempo de inicialización: añadir capacidad a una flota de RPC, recuperar un nodo fallido o volver a sincronizar una base de datos dañada. Para ello, vuelve a publicar la instantánea de cada red en un formato optimizado para la extracción paralela. Está disponible en EE. UU. Este (Norte de Virginia), Europa (Irlanda) y Asia-Pacífico (Tokio), y el acceso requiere una instancia EC2 en la misma región con un punto de conexión de VPC de puerta de enlace de S3. Esto corresponde a «Restauración de una instantánea» en la tabla anterior, por lo que se aplican los mismos supuestos de confianza sobre la procedencia y la actualidad de la instantánea.
+Según el [anuncio del 14 de octubre de 2026](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/), AWS lanzó **Blockchain Snapshots on AWS**, que publica datos de cadenas de bloques públicas presincronizados para nodos. Las instantáneas abarcan Ethereum y Solana, están disponibles sin costo y se actualizan con la misma frecuencia que el proveedor de origen. Es una opción para reducir el tiempo de inicialización: añadir capacidad a una flota de RPC, recuperar un nodo fallido o volver a sincronizar una base de datos dañada. Para ello, vuelve a publicar la instantánea de cada red en un formato optimizado para la extracción paralela. Está disponible en EE. UU. Este (Norte de Virginia), Europa (Irlanda) y Asia-Pacífico (Tokio), y el acceso requiere una instancia EC2 en la misma región con un punto de conexión de VPC de puerta de enlace de S3. Esto corresponde a «Restauración de una instantánea» en la tabla anterior, por lo que se aplican los mismos supuestos de confianza sobre la procedencia y la actualidad de la instantánea.
 
 ### Nodos de archivo: una consideración aparte
 
@@ -212,7 +212,7 @@ Estas son las características operativas que generan los conceptos anteriores:
 |---|---|---|
 | Validación replicada de nodos completos | Añadir réplicas no aumenta por sí solo la capacidad de escritura de la cadena base | Puede aumentar la capacidad agregada de RPC/lectura y la disponibilidad |
 | El estado se acumula localmente | **Reemplazar un Pod es muy costoso** | StatefulSet + volumen persistente obligatorios; conviene considerar la afinidad de nodos |
-| La sincronización de la cadena se retrasa | **«Activo» y «capaz de atender solicitudes» no son lo mismo** | Incluir el estado de sincronización en la comprobación de disponibilidad |
+| La sincronización de la cadena se retrasa | **«Activo» y «capaz de atender solicitudes» no son lo mismo** | Incluir el estado de sincronización en la comprobación de preparación para atender solicitudes (readiness) |
 | La finalidad no es inmediata | **Los datos más recientes no son datos finalizados** | La profundidad de confirmación debe formar parte del acuerdo con la aplicación |
 | Difusión P2P | **Necesita conexiones entrantes e identidad estable** | Service sin cabecera y diseño de exposición adicional |
 | Las bifurcaciones duras activan reglas en un momento definido | Actualizar los binarios compatibles antes de la activación | Los despliegues canarios y progresivos pueden preparar la flota con antelación |
@@ -244,7 +244,7 @@ Ethereum implementó Pectra y Fusaka en 2025 y ha avanzado hacia actualizaciones
 - Muchos diseños de nodo completo replican la verificación; los modelos de cliente ligero y con permisos son diferentes, y la capacidad de RPC/lectura puede escalar por separado de las escrituras en la cadena base.
 - La cadena de `prev_hash` propaga la manipulación, y los **árboles de Merkle** permiten pruebas de inclusión cuyo tamaño es logarítmico respecto del número de transacciones (la base de los clientes ligeros).
 - El consenso necesita un costo para **defenderse de los ataques Sybil**. Restringir a los participantes (consorcio) elimina esa necesidad, lo que permite usar BFT con mayor rendimiento y finalidad a costa de la descentralización.
-- **La finalidad es el concepto más importante desde el punto de vista operativo.** Los datos más recientes no son datos finalizados, así que incluye el estado de sincronización en la comprobación de disponibilidad y establece la profundidad de confirmación como parte del acuerdo con la aplicación.
+- **La finalidad es el concepto más importante desde el punto de vista operativo.** Los datos más recientes no son datos finalizados, así que incluye el estado de sincronización en la comprobación de preparación para atender solicitudes (readiness) y establece la profundidad de confirmación como parte del acuerdo con la aplicación.
 - El estado se puede reproducir, pero **la reproducción lleva mucho tiempo**, por lo que los volúmenes persistentes son obligatorios.
 - Una bifurcación dura tiene un punto de activación coordinado externamente; prepara por adelantado clientes compatibles y evalúa por separado la reversión posterior a la activación.
 

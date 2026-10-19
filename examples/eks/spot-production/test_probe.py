@@ -234,6 +234,12 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(final["success"], 2)
         self.assertEqual(final["skipped"], 4)
         self.assertEqual(final["errors"], 0)
+        # Busy slots are logged without a latency; only completed requests
+        # contribute raw samples to each final nearest-rank percentile.
+        latencies = sorted(record["latency_ms"] for record in requests)
+        for percent in (50, 95, 99):
+            expected = latencies[math.ceil(len(latencies) * percent / 100) - 1]
+            self.assertEqual(final["p{}_ms".format(percent)], expected)
         with self.server.lock:
             self.assertEqual(self.server.peak["/hold"], 2)
             self.assertEqual(sum(path == "/hold" for path, _ in self.server.hits), 2)
@@ -352,7 +358,13 @@ class ProbeTests(unittest.TestCase):
         final = summaries[-1]
         for key in ("launched", "completed", "success", "errors", "skipped"):
             self.assertEqual(sum(interval[key] for interval in intervals), final[key])
-        latencies = sorted(record["latency_ms"] for record in records)
+        requests = [record for record in records if record["kind"] == "request"]
+        skips = [record for record in records if record["kind"] == "skip"]
+        self.assertGreater(len(requests), 0)
+        self.assertEqual(len(requests), final["completed"])
+        self.assertEqual(len(skips), final["skipped"])
+        self.assertEqual(len(requests) + len(skips), len(records))
+        latencies = sorted(record["latency_ms"] for record in requests)
         for percent in (50, 95, 99):
             # Nearest rank: independently index the actual JSONL samples.
             expected = latencies[math.ceil(len(latencies) * percent / 100) - 1]

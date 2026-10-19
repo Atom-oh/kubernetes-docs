@@ -51,7 +51,7 @@ Cilium proporciona redes, seguridad y observabilidad para entornos Kubernetes co
 
 El kernel verifica los programas eBPF antes de cargarlos y puede compilarlos con JIT para ejecutarlos en hooks compatibles. Esto permite el procesamiento de paquetes y la observabilidad sin un módulo de kernel personalizado; el verificador no demuestra que la aplicación o la política sean correctas. El rendimiento real, la latencia y el consumo de memoria dependen de los programas, la plataforma y la carga de trabajo.
 
-Cilium ofrece políticas L3/L4, políticas L7 mediante la integración con Envoy/proxy DNS, WireGuard/IPsec opcionales, balanceo de carga de Service, visibilidad de flujos con Hubble, ClusterMesh y anuncios BGP. La aceleración XDP es opcional y depende del dispositivo y la configuración. Las funciones L7 pueden utilizar Envoy por nodo; la identidad de cargas de trabajo mediante ztunnel requiere una configuración beta independiente. Instalar solo el agente no habilita todo el comportamiento de malla, cifrado o multinube.
+Cilium ofrece políticas L3/L4, políticas L7 mediante la integración con Envoy/proxy DNS, WireGuard/IPsec opcionales, balanceo de carga de Service, visibilidad de flujos con Hubble, ClusterMesh y anuncios BGP. La aceleración XDP es opcional y depende del dispositivo y la configuración. Las funciones L7 pueden utilizar Envoy por nodo; la identidad de cargas de trabajo mediante ztunnel requiere una configuración beta independiente. Instalar solo el agente no habilita todo el comportamiento de malla, cifrado o multiclúster.
 
 ### Comparación con otros proyectos de redes
 
@@ -328,7 +328,7 @@ El comodín DNS permite consultas al resolver seleccionado, no conexiones a toda
 
 ## Observabilidad con Hubble
 
-Los valores de cluster-pool anteriores habilitan Relay/UI y las métricas de los componentes. Para una instalación existente, aplica los valores de Hubble previstos a través de quien gestione su configuración; `cilium hubble enable --ui` es un comando de conveniencia compatible, pero `cilium hubble enable --metrics=...` no es una opción compatible de CLI 0.20.1. En su lugar, configura `hubble.metrics.enabled` en los valores de Helm. No habilites simultáneamente los controladores heredados `http` y `httpV2`.
+Los valores de cluster-pool anteriores habilitan Relay/UI y las métricas de los componentes. Para una instalación existente, aplica los valores de Hubble previstos a través de quien gestione su configuración; `cilium hubble enable --ui` es un comando de conveniencia compatible, pero `cilium hubble enable --metrics=...` no es una opción compatible de CLI 0.20.1. En su lugar, configura `hubble.metrics.enabled` en los valores de Helm. No habilites simultáneamente el controlador heredado `http` y el controlador `httpV2`.
 
 Mantén el port-forward de Relay en ejecución en una terminal:
 

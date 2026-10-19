@@ -12,7 +12,7 @@
 - [快速入门](#quick-start)
 - [版本兼容性](#version-compatibility)
 
-## 什么是 ArgoCD？
+## 什么是 ArgoCD？ {#what-is-argocd}
 
 ArgoCD 是一款面向 Kubernetes 的声明式 GitOps 持续交付工具。它通过将 Git 仓库中定义的期望状态与集群中的实际状态同步，自动将应用部署到 Kubernetes 集群。
 
@@ -22,7 +22,7 @@ Argo CD 是 CNCF 毕业项目 Argo 的一部分。仅凭采用情况，并不能
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
-## 主要优势
+## 主要优势 {#key-benefits}
 
 ### 原生支持 GitOps
 
@@ -51,7 +51,7 @@ Argo CD 是 CNCF 毕业项目 Argo 的一部分。仅凭采用情况，并不能
 - **通知**：集成 Slack、Teams、电子邮件和 webhook
 - **健康监控**：内置和自定义健康检查
 
-## 架构概览
+## 架构概览 {#architecture-overview}
 
 ### 核心组件
 
@@ -71,7 +71,7 @@ Argo CD 是 CNCF 毕业项目 Argo 的一部分。仅凭采用情况，并不能
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
-## 核心概念
+## 核心概念 {#core-concepts}
 
 ### Application
 
@@ -103,7 +103,7 @@ ApplicationSet 使用生成器，通过单一定义管理多个应用：
 - **自愈**：自动纠正状态偏差
 - **修剪**：移除孤立资源
 
-## 子指南导航
+## 子指南导航 {#sub-guide-navigation}
 
 | 指南 | 描述 |
 |-------|-------------|
@@ -118,7 +118,7 @@ ApplicationSet 使用生成器，通过单一定义管理多个应用：
 | [最佳实践](09-best-practices.md) | 仓库模式、性能调优、故障排查、EKS 提示 |
 | [Rollouts 实验深入解析](10-rollouts-experiment.md) | Experiment CRD、临时 ReplicaSet 验证、AnalysisRun 判定 |
 
-## 快速入门
+## 快速入门 {#quick-start}
 
 ### 1. 安装 ArgoCD
 
@@ -205,7 +205,7 @@ spec:
       - CreateNamespace=true
 ```
 
-## 版本兼容性
+## 版本兼容性 {#version-compatibility}
 
 审查基线为 **Argo CD 3.5.2 / Helm Chart 10.8.4**；审阅发布说明后，清单示例已更新至补丁版本 3.5.5（未重新运行）。Chart 10.8.4 仍会部署 Argo CD v3.5.2；3.5.5 首次随 Chart 10.10.3 发布。Application 版本与安装 Chart 版本不同。Argo CD 为最近三个次版本系列提供补丁；更早的系列已停止维护。
 

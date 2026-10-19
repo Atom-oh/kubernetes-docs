@@ -12,7 +12,7 @@
 - [Inicio rápido](#quick-start)
 - [Compatibilidad de versiones](#version-compatibility)
 
-## ¿Qué es ArgoCD?
+## ¿Qué es ArgoCD? {#what-is-argocd}
 
 ArgoCD es una herramienta declarativa de entrega continua basada en GitOps para Kubernetes. Automatiza el despliegue de aplicaciones en clústeres de Kubernetes al sincronizar el estado deseado definido en repositorios Git con el estado real del clúster.
 
@@ -22,7 +22,7 @@ Argo CD forma parte del proyecto Argo de la CNCF, que se graduó. La adopción p
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
-## Ventajas principales
+## Ventajas principales {#key-benefits}
 
 ### Nativo de GitOps
 
@@ -51,7 +51,7 @@ Argo CD forma parte del proyecto Argo de la CNCF, que se graduó. La adopción p
 - **Notificaciones**: integraciones con Slack, Teams, correo electrónico y webhooks
 - **Supervisión del estado**: comprobaciones de estado integradas y personalizadas
 
-## Descripción general de la arquitectura
+## Descripción general de la arquitectura {#architecture-overview}
 
 ### Componentes principales
 
@@ -71,7 +71,7 @@ Argo CD forma parte del proyecto Argo de la CNCF, que se graduó. La adopción p
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
-## Conceptos básicos
+## Conceptos básicos {#core-concepts}
 
 ### Application
 
@@ -103,7 +103,7 @@ La sincronización hace que el estado del clúster coincida con el estado desead
 - **Autorreparación**: corrige automáticamente las divergencias
 - **Poda**: elimina los recursos huérfanos
 
-## Navegación por las guías
+## Navegación por las guías {#sub-guide-navigation}
 
 | Guía | Descripción |
 |-------|-------------|
@@ -118,7 +118,7 @@ La sincronización hace que el estado del clúster coincida con el estado desead
 | [Prácticas recomendadas](09-best-practices.md) | Patrones de repositorio, optimización del rendimiento, resolución de problemas y consejos para EKS |
 | [Análisis detallado de los experimentos de Rollouts](10-rollouts-experiment.md) | CRD Experiment, validación de ReplicaSet efímeros y veredictos de AnalysisRun |
 
-## Inicio rápido
+## Inicio rápido {#quick-start}
 
 ### 1. Instalar ArgoCD
 
@@ -205,7 +205,7 @@ spec:
       - CreateNamespace=true
 ```
 
-## Compatibilidad de versiones
+## Compatibilidad de versiones {#version-compatibility}
 
 La base de revisión es **Argo CD 3.5.2 / Helm chart 10.8.4**; los ejemplos de manifiestos se actualizaron para usar el parche 3.5.5 tras revisar las notas de la versión (no se volvieron a ejecutar). Chart 10.8.4 sigue desplegando Argo CD v3.5.2; la versión 3.5.5 aparece por primera vez en chart 10.10.3. Las versiones de la aplicación y del chart de instalación son distintas. Argo CD aplica parches a las tres líneas de versiones menores más recientes; las líneas anteriores están fuera de servicio (EOL).
 
@@ -232,7 +232,7 @@ Esta es la matriz de pruebas upstream registrada en el repositorio 3.5.5. Difier
 
 ### Actualización de octubre de 2026: comienza la planificación de Argo CD 4.0
 
-Según la [publicación de la CNCF del 30 de septiembre](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), la comunidad de Argo ha comenzado el proceso de planificación de Argo CD 4.0, y ArgoCon North America 2026 (un evento de jornada completa y dos sesiones simultáneas, celebrado junto con KubeCon NA) comenzará con ponencias principales de los mantenedores sobre novedades recientes y próximas versiones. Esta es una orientación inicial de la hoja de ruta; todavía no se han confirmado las funciones ni los plazos de la versión 4.0.
+Según la [publicación de la CNCF del 30 de septiembre](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), la comunidad de Argo ha comenzado el proceso de planificación de Argo CD 4.0, y ArgoCon North America 2026 (un evento de jornada completa y dos itinerarios paralelos, celebrado junto con KubeCon NA) comenzará con ponencias principales de los mantenedores sobre novedades recientes y próximas versiones. Esta es una orientación inicial de la hoja de ruta; todavía no se han confirmado las funciones ni los plazos de la versión 4.0.
 
 ### Argo Rollouts
 

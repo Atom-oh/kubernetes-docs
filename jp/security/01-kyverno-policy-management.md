@@ -1,7 +1,7 @@
 # Kyvernoによるポリシー管理
 
 > **検証ベースライン**: Kyverno/CLI 1.19.1、Helm chart 3.9.1。現在のリリースガイドでは Kubernetes 1.33～1.35 がテスト対象として掲載されています。chart のより広範なインストール制約は互換性の保証ではありません。
-> **最終更新**: 2026年9月13日
+> **最終更新**: 2026年10月19日
 
 Kyverno は Kubernetes policy を評価し、明示的に設定された mutation、generation、deletion を実行します。これらの例は、実際の CLI とリリース済みの schema/chart を使用してローカルで確認しました。live cluster へのインストール、admission、network isolation、cleanup、AWS integration は実行していません。
 
@@ -35,6 +35,10 @@ validating policy は、既存の非準拠 resource を削除または修復し�
 ### KyvernoとOPA Gatekeeperの比較
 
 Kyverno の現行 policy では YAML/JSON manifest 内で CEL を使用します。従来の policy では pattern と JMESPath も使用します。Kubernetes-native packaging により policy expression の学習が不要になるわけではありません。Gatekeeper は ConstraintTemplates/Constraints と、その version でサポートされる policy engine を使用し、admission/audit/mutation 機能はそれぞれ別です。必要な feature、expression language、policy test、controller availability、測定済みの workload impact を比較してください。以前の「easy/complex」と「good/very good performance」という評価は、benchmark ではなく根拠のない比較でした。
+
+### 2026年10月の更新: Admission を超えるランタイムでのポリシー適用
+
+[10月15日の CNCF 投稿](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/)で、Kyverno の開発元である Nirmata は Admission control の限界を説明しています。Admission control が判断するのは「この spec は適切に見えるか」までであり、起動後に取得される第2段階のペイロードや未承認の宛先への通信など、実行中の workload が spec から逸脱する動作は検出できません。この投稿では、eBPF と Linux Security Modules (LSM) を使用してカーネルレベルでポリシーを適用するオープンソース実装 **Nirmata Runtime for Kyverno** が紹介されています。この方式は、AI agent のような非決定的な workload のランタイムセキュリティを対象とします。本章の Admission/background policy とは異なる、独自の権限を必要とする別コンポーネントです。また、この投稿はベンダーである Nirmata による紹介であるため、採用前に機能の対象範囲とカーネル/プラットフォームの要件を確認してください。
 
 ## Kyvernoのインストール
 

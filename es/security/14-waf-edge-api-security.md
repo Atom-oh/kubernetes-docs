@@ -43,7 +43,7 @@ Combina controles según el ejemplo de AWS para restringir el acceso de CloudFro
 4. Gestiona HTTPS al origen, la rotación del secreto del encabezado y los permisos de lectura de la configuración.
 5. Prueba los nombres DNS del ALB, los dominios alternativos, las direcciones, los listeners, otros balanceadores de carga y los NodePort.
 
-**Los rangos de direcciones de CloudFront no identifican tu distribución.** El encabezado permite distinguirla de otras rutas de CloudFront, pero su valor es un secreto compartido cuya eficacia disminuye si se divulga. No incluyas valores reales en el código fuente, las capturas de pantalla ni los registros habituales. Que una aplicación confíe en un encabezado reenviado no equivale a que un listener restrinja el acceso al origen. [S16]
+**Los rangos de direcciones de CloudFront no identifican tu distribución.** El encabezado permite distinguirla de otras rutas de CloudFront, pero su valor es un secreto compartido que pierde su eficacia cuando se divulga. No incluyas valores reales en el código fuente, las capturas de pantalla ni los registros habituales. Que una aplicación confíe en un encabezado reenviado no equivale a que un listener restrinja el acceso al origen. [S16]
 
 ### Opción B: Origen de VPC de CloudFront
 

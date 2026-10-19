@@ -501,7 +501,7 @@ spec:
 
 ### Flujo de trabajo para aplicar políticas
 
-Revise quién administra las políticas y su alcance; pruebe localmente casos positivos, negativos y omitidos; inspeccione los objetos generados/modificados y, luego, prepare por etapas la admisión activa y los permisos de los controladores. Audit es una acción de validación; no hace que la mutación, la generación o la eliminación sean inocuas. La autogeneración de controladores de Pod y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opciones independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de suponer que se cubren todas las plantillas de controladores.
+Revise quién administra las políticas y su alcance; pruebe localmente casos positivos, negativos y omitidos; inspeccione los objetos generados/modificados y, luego, prepare por etapas la admisión activa y los permisos de los controladores. Audit es una acción de validación; no hace que la mutación, la generación o la eliminación sean inocuas. La autogeneración de políticas para los controladores de Pod y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opciones independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de suponer que se cubren todas las plantillas de controladores.
 
 ### Simulación de políticas
 

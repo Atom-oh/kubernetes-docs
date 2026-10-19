@@ -762,7 +762,7 @@ spec:
 |---|---|
 | 旧版 Jaeger/Zipkin 客户端 | 其 receiver 组件仍可用；只启用所需协议/端口，并在流水线中匹配 receiver ID。通过 OTLP 导出到 Jaeger，不要使用已移除的 Jaeger exporter。 |
 | Collector 自身的指标 | `service.telemetry.metrics.readers` 用于配置当前的 Prometheus reader。旧的 `address` 字段已移除。通过经过专门设计的监控路径抓取 loopback 端点。 |
-| Kubernetes 集群指标 | 运行一个有效的 `k8s_cluster` receiver，或配置其 leader-elector 扩展。提供 API 凭据和经过审查的 RBAC，然后将其接入 metrics 流水线。上述默认的无 token 工作负载并不具备这些前提条件。 |
+| Kubernetes 集群指标 | 仅运行一个处于活动状态的 `k8s_cluster` receiver，或配置其 leader-elector 扩展。提供 API 凭据和经过审查的 RBAC，然后将其接入 metrics 流水线。上述默认的无 token 工作负载并不具备这些前提条件。 |
 | 节点/容器日志或主机指标 | 添加相应的 receiver、挂载和权限；仅使用 DaemonSet 并不会收集这些数据。 |
 | EC2/EKS 资源检测 | 有意配置所需的 detector 及其元数据/API 访问；不要用 Collector 主机身份替换工作负载身份。 |
 | 基于 Span 派生的指标 | 使用 `span_metrics` connector，并明确指定持续时间单位和有界维度。旧的 spanmetrics processor 已移除。 |

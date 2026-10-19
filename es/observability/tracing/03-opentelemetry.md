@@ -316,7 +316,7 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-Estos ejemplos establecen deliberadamente `OTEL_LOGS_EXPORTER=none`. Habilitar un exporter de registros no supervisa la salida estándar de la aplicación: instala el puente/manejador de registros adecuado o un recopilador de registros, y revisa primero la exposición del contenido. El sampler `parentbased_always_on` sigue respetando un elemento padre no muestreado. Si en su lugar eliges un muestreo de cabecera del 10 %, el Collector de cola no puede recuperar las trazas descartadas.
+Estos ejemplos establecen deliberadamente `OTEL_LOGS_EXPORTER=none`. Habilitar un exporter de registros no supervisa la salida estándar de la aplicación: instala el puente/manejador de registros adecuado o un recopilador de registros, y revisa primero la exposición del contenido. El sampler `parentbased_always_on` sigue respetando un elemento padre no muestreado. Si en su lugar eliges un muestreo al inicio (head sampling) del 10 %, el Collector de cola no puede recuperar los spans descartados.
 
 ### Instrumentación manual
 
@@ -456,7 +456,7 @@ Rutas de señales para la configuración que aparece más abajo. El recuadro de 
 
 ### Configuración de Collector
 
-Guárdala como `otel-collector-config.yaml`. Es una única instancia activa de muestreo/agregación con estado para un laboratorio, no una garantía de alta disponibilidad/capacidad. Una canalización de trazas independiente deriva métricas **antes del muestreo de cola**. Los spans muestreados en cabecera o filtrados tampoco estarán presentes en esas métricas. Estos contadores cuentan spans observados, no solicitudes únicas de usuarios finales; selecciona tipos de span y dimensiones acotadas adecuadas para los SLI de solicitudes. Los contadores acumulativos de métricas de spans se exportan inicialmente como cero en 0.160.0; evalúa los siguientes envíos antes de interpretar el primer valor como ausencia de tráfico.
+Guárdala como `otel-collector-config.yaml`. Es una única instancia activa de muestreo/agregación con estado para un laboratorio, no una garantía de alta disponibilidad/capacidad. Una canalización de trazas independiente deriva métricas **antes del muestreo de cola**. Los spans muestreados al inicio (head sampling) o filtrados tampoco estarán presentes en esas métricas. Estos contadores cuentan spans observados, no solicitudes únicas de usuarios finales; selecciona tipos de span y dimensiones acotadas adecuadas para los SLI de solicitudes. Los contadores acumulativos de métricas de spans se exportan inicialmente como cero en 0.160.0; evalúa los siguientes envíos antes de interpretar el primer valor como ausencia de tráfico.
 
 Prepara Tempo con OTLP habilitado, un receptor de escritura remota compatible con Prometheus y la ingesta OTLP nativa de Loki, con gateways TLS/autenticación proporcionados por los operadores. Los nombres de gateway de ejemplo que aparecen más abajo no son Service creados por esta guía. Prometheus necesita que su receptor de escritura remota esté habilitado (`--web.enable-remote-write-receiver` si se usa Prometheus). La URL base del exporter de Loki termina en `/otlp`; el exporter HTTP añade `/v1/logs`. Configura los metadatos estructurados de Loki y la asignación de tenant de confianza según sea necesario; una cabecera de tenant no es autenticación.
 
@@ -1491,7 +1491,7 @@ Este es un inventario de atributos, no YAML de procesador de Collector. Un Resou
 
 ### 2. Estrategia de muestreo
 
-Para un ejemplo avanzado (errores, latencia >2 segundos, una condición del 50 % para servicios críticos y una línea de base del 5 %), considera cada regla positiva como una condición OR, no como una prioridad de primera coincidencia ni como una cuota reservada. Otra regla puede conservar una traza. Si necesitas clases exclusivas o un presupuesto de tasa de spans, diseña y prueba explícitamente esa política. El muestreo de cabecera, los spans descartados, los cambios de fragmento y las llegadas tardías siguen siendo límites independientes.
+Para un ejemplo avanzado (errores, latencia >2 segundos, una condición del 50 % para servicios críticos y una línea de base del 5 %), considera cada regla positiva como una condición OR, no como una prioridad de primera coincidencia ni como una cuota reservada. Otra regla puede conservar una traza. Si necesitas clases exclusivas o un presupuesto de tasa de spans, diseña y prueba explícitamente esa política. El muestreo al inicio (head sampling), los spans descartados, los cambios en los shards de muestreo y las llegadas tardías siguen siendo límites independientes.
 
 
 ```yaml

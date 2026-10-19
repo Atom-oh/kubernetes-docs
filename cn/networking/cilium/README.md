@@ -49,7 +49,7 @@ Cilium 为受支持的 Linux Kubernetes 环境提供网络、安全和可观测�
 
 ### eBPF 与关键能力
 
-内核会在加载 eBPF 程序前对其进行验证，并可将其 JIT 编译，以便在受支持的挂载点执行。这使得数据包处理和可观测性无需自定义内核模块即可实现；但验证器并不能证明应用程序或策略正确。实际吞吐量、延迟和内存用量取决于程序、平台和工作负载。
+内核会在加载 eBPF 程序前对其进行验证，并可将其 JIT 编译，以便在受支持的挂接点执行。这使得数据包处理和可观测性无需自定义内核模块即可实现；但验证器并不能证明应用程序或策略正确。实际吞吐量、延迟和内存用量取决于程序、平台和工作负载。
 
 Cilium 提供 L3/L4 策略、通过 Envoy/DNS 代理集成实现的 L7 策略、可选的 WireGuard/IPsec、Service 负载均衡、Hubble 流可见性、ClusterMesh 和 BGP 通告。XDP 加速为可选功能，具体取决于设备和配置。L7 功能可能会使用每节点 Envoy；通过 ztunnel 实现工作负载身份则需要单独配置 Beta 功能。仅安装 Agent 并不会启用所有网格、加密或多集群行为。
 
@@ -82,7 +82,7 @@ Cilium 提供 L3/L4 策略、通过 Envoy/DNS 代理集成实现的 L7 策略、
 
 原生路由需要底层网络可达；隧道模式使用 VXLAN 或 Geneve。AWS ENI 和 Azure IPAM 是有各自平台要求的分配/集成选项。Cilium 的 BGP Control Plane 会向路由器通告可达性，**不会配置数据路径，也不会提供集群内部路由**。
 
-不存在普遍适用的 XDP→TC→Pod 顺序。Socket 负载均衡可以在数据包产生之前起作用，TC/netkit 挂载点取决于数据路径，可选的 XDP 会加速选定流量，而 L7 流量可能会经过 Envoy。返回流量也取决于 NAT、conntrack 和 DSR 选项。有关所选配置文件，请参阅网络和 eBPF 章节。
+不存在普遍适用的 XDP→TC→Pod 顺序。Socket 负载均衡可以在数据包产生之前起作用，TC/netkit 挂接点取决于数据路径，可选的 XDP 会加速选定流量，而 L7 流量可能会经过 Envoy。返回流量也取决于 NAT、conntrack 和 DSR 选项。有关所选配置文件，请参阅网络和 eBPF 章节。
 
 ## 与 Amazon EKS 集成
 
@@ -435,7 +435,7 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 - 未来路线图与开发方向
 
 **[eBPF 数据路径内部机制](08-ebpf-datapath-internals.md)**
-- 程序集、挂载点和尾调用
+- 程序集、挂接点和尾调用
 - BPF 映射目录、大小调整及编译/加载流程
 - 策略强制执行路径与 Hubble 事件管道
 
