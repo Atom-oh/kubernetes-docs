@@ -85,6 +85,7 @@
   * [베어메탈 서버 OS 설치](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
   * [보안팀 관점의 망분리 검토](eks-hybrid-nodes/11-network-separation-security.md)
+  * [SNAT 없는 Pod 연결과 PrivateLink 검증](eks-hybrid-nodes/12-connectivity-validation.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
   * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
   * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -535,6 +536,7 @@
   * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway 퀴즈](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
   * [보안팀 관점의 망분리 검토 퀴즈](quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+  * [SNAT 없는 Pod 연결과 PrivateLink 검증 퀴즈](quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 * EKS Auto Mode
   * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool 구성 퀴즈](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)

@@ -91,6 +91,7 @@ This training content provides quizzes for each topic along with the learning ma
 10. [Bare Metal OS Setup](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 12. [Network Separation Security Review](./eks-hybrid-nodes/11-network-separation-security.md) | [Quiz](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+13. [Pod Connectivity Without SNAT and PrivateLink](./eks-hybrid-nodes/12-connectivity-validation.md) | [Quiz](./quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode Introduction](./eks-auto-mode/README.md)

@@ -91,6 +91,7 @@
 10. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 12. [보안팀 관점의 망분리 검토](./eks-hybrid-nodes/11-network-separation-security.md) | [퀴즈](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+13. [SNAT 없는 Pod 연결과 PrivateLink 검증](./eks-hybrid-nodes/12-connectivity-validation.md) | [퀴즈](./quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
