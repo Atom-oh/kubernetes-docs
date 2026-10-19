@@ -1,6 +1,6 @@
 # Cuestionario de creación de clústeres EKS - Parte 1
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 > Los comandos son ejemplos independientes, no un script que deba ejecutarse de arriba abajo. Use una cuenta o un clúster de formación dedicados, permisos de IAM revisados y un kubeconfig temporal privado (`EXAMPLE_KUBECONFIG`). Sustituya los ID de ejemplo y las variables obligatorias. Los comandos de creación generan cargos. Esta auditoría comprobó las fuentes, la sintaxis y los elementos locales; no aprovisionó recursos de AWS ni verificó la disponibilidad de aplicaciones.
 
@@ -943,7 +943,7 @@ fi
 
 </details>
 
-## Temas avanzados
+## Temas avanzados {#advanced-topics}
 
 Las siguientes son preguntas sobre temas avanzados relacionados con la creación de clústeres de Amazon EKS. Esta sección evalúa su comprensión de conceptos avanzados y prácticas recomendadas para la creación de clústeres de EKS.
 
@@ -1337,7 +1337,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: nginx
-          image: nginx:1.30.4
+          image: nginx:1.30.6
           ports:
             - containerPort: 80
           readinessProbe:

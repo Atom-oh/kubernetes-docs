@@ -1,7 +1,7 @@
 # Prometheus Alertmanager
 
-> **Base de revisión**: Alertmanager 0.34.0; kube-prometheus-stack 90.0.0 / Operator 0.93.1; chart independiente 1.43.1
-> **Last Updated**: September 13, 2026
+> **Configuración de referencia revisada**: Alertmanager 0.34.0; kube-prometheus-stack 90.0.0 / Operator 0.93.1; chart independiente 1.43.1
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Tabla de contenidos
 
@@ -58,7 +58,7 @@ sequenceDiagram
 
 ### Estructura interna de Alertmanager
 
-El dispatcher crea los grupos **después de seleccionar la ruta**. La inhibición, las comprobaciones de silenciamiento/tiempo y la eliminación de duplicados mediante el registro de notificaciones se ejecutan en el pipeline de notificación; no forman una cadena fija anterior a la agrupación. Gossip no sustituye el envío de alertas de Prometheus a todas las réplicas. Las alertas no se persisten como los silenciamientos y nflog.
+El dispatcher crea los grupos **después de seleccionar la ruta**. La inhibición, las comprobaciones de silenciamientos e intervalos de tiempo y la eliminación de duplicados mediante el registro de notificaciones se realizan en la canalización de notificaciones; no forman una secuencia fija anterior a la agrupación. Gossip no sustituye el envío de alertas de Prometheus a todas las réplicas. Las alertas no se guardan de forma persistente como los silenciamientos y nflog.
 
 ```mermaid
 flowchart TB
@@ -90,13 +90,13 @@ flowchart TB
 
 ## Instalación y configuración
 
-Estos son ejemplos alternativos para una base de Kubernetes 1.35 con nodos de trabajo Linux. Los dos charts de Helm y el StatefulSet manual tienen **responsables de instalación diferentes**; elige uno. Los charts se renderizaron y las configuraciones, plantillas y reglas sintéticas se ejecutaron localmente, pero no se realizó ninguna instalación de Kubernetes, aplicación real de políticas de CNI, entrega a SaaS ni prueba de capacidad de producción. Las instalaciones existentes necesitan un plan de actualización y combinación de values revisado por su responsable, no una sustitución ciega por este tutorial.
+Estos son ejemplos alternativos para una base de Kubernetes 1.35 con nodos de trabajo Linux. Los dos charts de Helm y el StatefulSet manual tienen **herramientas de instalación distintas**; elige uno. Los charts se renderizaron y las configuraciones, plantillas y reglas sintéticas se ejecutaron localmente, pero no se realizó ninguna instalación de Kubernetes, aplicación real de políticas de CNI, entrega a SaaS ni prueba de capacidad de producción. Las instalaciones existentes necesitan un plan de actualización y integración de los valores de configuración revisado por su responsable, no una sustitución directa por la configuración de este tutorial.
 
-Prepara el namespace `monitoring`, tres nodos programables para la antiafinidad obligatoria, una StorageClass RWO predeterminada adecuada, las credenciales de notificación y las rutas de red aprobadas. EKS Fargate/Auto Mode y las métricas del plano de control administrado tienen restricciones de recopilación/almacenamiento diferentes. En particular, el etcd administrado por EKS no es un endpoint disponible para que el cliente recopile métricas. Este perfil deshabilita Grafana y el ServiceMonitor de etcd para acotar el ejemplo; no indica que debas deshabilitar esos componentes en una pila existente.
+Prepara el espacio de nombres `monitoring`, tres nodos en los que se puedan asignar Pods para la antiafinidad obligatoria, una StorageClass RWO predeterminada adecuada, las credenciales de notificación y las rutas de red aprobadas. EKS Fargate/Auto Mode y las métricas del plano de control administrado tienen restricciones de recopilación/almacenamiento diferentes. En particular, el etcd administrado por EKS no es un endpoint disponible para que el cliente recopile métricas. Este perfil deshabilita Grafana y el ServiceMonitor de etcd para centrarse en el alcance de este ejemplo; no indica que debas deshabilitar esos componentes en una pila existente.
 
 ### Instalación mediante Helm (kube-prometheus-stack)
 
-Usa el perfil de pila con versión fijada de abajo para una **nueva release**. La versión 90.0.0 contiene Operator 0.93.1 y Alertmanager 0.34.0. Es una base comprobada, no una afirmación de que no exista un chart más reciente. Inspecciona el RBAC del clúster, los CRD, los PVC, los namespaces y los ajustes del responsable antes de instalar.
+Usa el perfil de la pila con versiones fijadas que aparece a continuación para una **instalación nueva**. La versión 90.0.0 contiene Operator 0.93.1 y Alertmanager 0.34.0. Es una base comprobada, no una afirmación de que no exista un chart más reciente. Inspecciona el RBAC del clúster, los CRD, los PVC, los espacios de nombres y la configuración de la herramienta que gestiona la instalación antes de instalar.
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -108,7 +108,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack   --version 9
 
 ### Chart de Helm dedicado de Alertmanager
 
-Esta es la **alternativa independiente**, no un paso adicional de instalación de la pila. Usa `replicaCount`, `resources`, `persistence` y `config` en el nivel superior; la pila usa `alertmanager.alertmanagerSpec` para réplicas, recursos y almacenamiento. Los values mezclados anteriormente no configuraban ninguno de los charts como se describía.
+Esta es la **alternativa independiente**, no un paso adicional de instalación de la pila. Usa `replicaCount`, `resources`, `persistence` y `config` en el nivel superior; la pila usa `alertmanager.alertmanagerSpec` para réplicas, recursos y almacenamiento. Los valores de configuración mezclados en el ejemplo anterior no configuraban ninguno de los charts como se describía.
 
 ```bash
 helm template alertmanager prometheus-community/alertmanager   --version 1.43.1 --namespace monitoring --kube-version 1.35.0   -f alertmanager-values.yaml > alertmanager-rendered.yaml
@@ -119,7 +119,7 @@ helm install alertmanager prometheus-community/alertmanager   --version 1.43.1 -
 
 La configuración principal es `alertmanager.yaml`, que aparece abajo. Las credenciales de sus receptores son referencias a archivos, no valores de tokens. Crea `notification-credentials` y `alertmanager-templates` antes de que se inicie la carga de trabajo seleccionada. Un renderizado correcto de Helm no resuelve un archivo ausente, un canal incorrecto ni una credencial de proveedor no válida.
 
-Crea **dos URL distintas de incoming webhooks de Slack**, cada una configurada previamente en Slack para su canal: `slack-normal-webhook-url` para `#alerts` y `slack-critical-webhook-url` para `#critical-alerts`. Un incoming webhook no puede reemplazar su canal configurado mediante un campo `channel`. Los dos archivos corresponden a claves de `notification-credentials`, montadas por los perfiles de pila, independiente y manual. La asociación entre URL y canal es un requisito previo del proveedor; el análisis local no comprueba la entrega a Slack.
+Crea **dos URL distintas de webhooks entrantes de Slack**, cada una configurada previamente en Slack para su canal: `slack-normal-webhook-url` para `#alerts` y `slack-critical-webhook-url` para `#critical-alerts`. Un webhook entrante no puede reemplazar su canal configurado mediante un campo `channel`. Los dos archivos corresponden a claves de `notification-credentials`, montadas por los perfiles de pila, independiente y manual. La asociación entre URL y canal es un requisito previo del proveedor; la validación sintáctica local no comprueba la entrega a Slack.
 
 **Perfil de pila — `kube-prometheus-stack-values.yaml`:**
 
@@ -325,11 +325,11 @@ extraVolumeMounts:
 hostUsers: true
 ```
 
-`hostUsers: true` mantiene la base independiente en el namespace de usuario tradicional; habilitar namespaces de usuario de Pod requiere comprobaciones adicionales del entorno de ejecución y la plataforma. Los requests/limits de recursos y los PVC de 10Gi son ejemplos de dimensionamiento, no afirmaciones de capacidad probada. La antiafinidad obligatoria necesita tres nodos elegibles. Los PDB limitan las interrupciones voluntarias, no todos los fallos.
+`hostUsers: true` mantiene la configuración de referencia independiente en el espacio de nombres de usuario tradicional; habilitar espacios de nombres de usuario para Pods requiere comprobaciones adicionales del entorno de ejecución y la plataforma. Las solicitudes y los límites de recursos y los PVC de 10Gi son ejemplos de dimensionamiento, no afirmaciones de capacidad probada. La antiafinidad obligatoria necesita tres nodos que cumplan los requisitos. Los PDB limitan las interrupciones voluntarias, no todos los fallos.
 
 ### Configuración directa mediante ConfigMap
 
-La configuración principal completa de abajo también está incorporada en los perfiles de chart. Para el despliegue manual, guárdala como `alertmanager.yaml` y coloca su contenido en la clave `alertmanager.yml` del ConfigMap. El ConfigMap contiene rutas y metadatos de enrutamiento, **no credenciales**. No mezcles esta gestión manual con el Secret generado por Operator.
+La configuración principal completa de abajo también está incorporada en los perfiles de los charts. Para el despliegue manual, guárdala como `alertmanager.yaml` y coloca su contenido en la clave `alertmanager.yml` del ConfigMap. El ConfigMap contiene rutas y metadatos de enrutamiento, **no credenciales**. No mezcles esta herramienta de gestión manual con el Secret generado por Operator.
 
 ```yaml
 global:
@@ -408,7 +408,7 @@ kubectl -n monitoring create secret generic notification-credentials \
 kubectl -n monitoring create configmap alertmanager-config   --from-file=alertmanager.yml=alertmanager.yaml
 ```
 
-Protege los permisos de lectura/exec de Secret y el propio contenido de las notificaciones. Añade solo los archivos de credenciales que necesitan las integraciones habilitadas. La proyección de un ConfigMap no recarga automáticamente Alertmanager: usa el mecanismo de recarga/despliegue gradual revisado para el responsable de instalación elegido; una recarga no válida debe dejar funcionando la última configuración correcta.
+Protege los permisos de lectura de Secrets y de ejecución de comandos y el propio contenido de las notificaciones. Añade solo los archivos de credenciales que necesitan las integraciones habilitadas. La proyección de un ConfigMap no recarga automáticamente Alertmanager: usa el mecanismo de recarga/despliegue gradual revisado por el responsable de la herramienta de instalación elegida; una recarga no válida debe dejar funcionando la última configuración correcta.
 
 <span id="defining-alert-rules"></span>
 
@@ -416,7 +416,7 @@ Protege los permisos de lectura/exec de Secret y el propio contenido de las noti
 
 ### CRD PrometheusRule
 
-Un PrometheusRule debe coincidir con los **selectores de labels de reglas y de namespaces** de la instancia de Prometheus. Estos ejemplos usan `release: prometheus` en `monitoring`, conforme a los values explícitos de la pila. Instalar un CR no demuestra que se haya seleccionado o cargado correctamente. Compara las reglas activas y las labels de recopilación después del despliegue. Evita alertas duplicadas con las reglas existentes de la pila.
+Un PrometheusRule debe coincidir con los **selectores de etiquetas de reglas y de espacios de nombres** de la instancia de Prometheus. Estos ejemplos usan `release: prometheus` en `monitoring`, conforme a los valores de configuración explícitos de la pila. Instalar un CR no demuestra que se haya seleccionado o cargado correctamente. Compara las reglas activas y las etiquetas de los destinos de recopilación después del despliegue. Evita alertas duplicadas con las reglas existentes de la pila.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -450,9 +450,9 @@ spec:
 
 ### Estados de alerta
 
-Ilustración del estado de Prometheus con una duración for positiva y sin configurar keep_firing_for; las reglas con for igual a cero pueden activarse inmediatamente en la evaluación que cumpla la condición.
+Ilustración de los estados de Prometheus con una duración positiva de for y sin configurar keep_firing_for; las reglas con for igual a cero pueden activarse en la primera evaluación que cumpla la condición.
 
-![Ilustración del estado de Prometheus con una duración for positiva y sin configurar keep_firing_for; las reglas con for igual a cero pueden activarse inmediatamente en la evaluación que cumpla la condición.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
+![Ilustración de los estados de Prometheus con una duración positiva de for y sin configurar keep_firing_for; las reglas con for igual a cero pueden activarse en la primera evaluación que cumpla la condición.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
@@ -495,15 +495,15 @@ receivers:
 
 ### Flujo de enrutamiento
 
-Enrutamiento basado solo en labels con continue=false. El diagrama usa la notación antigua match/match_re; la configuración equivalente comprobada usa matchers. La elegibilidad de la ventana temporal se evalúa por separado.
+Enrutamiento basado solo en labels con continue=false. El diagrama usa la notación antigua match/match_re; la configuración equivalente comprobada usa matchers. La habilitación según la ventana temporal se evalúa por separado.
 
-![Enrutamiento basado solo en labels con continue=false. El diagrama usa la notación antigua match/match_re; la configuración equivalente comprobada usa matchers. La elegibilidad de la ventana temporal se evalúa por separado.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
+![Enrutamiento basado solo en labels con continue=false. El diagrama usa la notación antigua match/match_re; la configuración equivalente comprobada usa matchers. La habilitación según la ventana temporal se evalúa por separado.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-3.html)
 
 ### Matchers
 
-Usa cadenas de matcher entre comillas con `=`, `!=`, `=~` o `!~`. Los matchers de una ruta se combinan mediante AND; las expresiones regulares están ancladas por completo. Las labels vacías o ausentes importan. Los campos antiguos `match`/`match_re` siguen aceptándose en esta versión, pero están obsoletos. Los temporizadores de grupo se heredan de las rutas padre; los intervalos de tiempo active/mute no.
+Usa cadenas de matcher entre comillas con `=`, `!=`, `=~` o `!~`. Los matchers de una ruta se combinan mediante AND; las expresiones regulares están ancladas por completo. Las etiquetas vacías o ausentes afectan al resultado. Los campos antiguos `match`/`match_re` siguen aceptándose en esta versión, pero están obsoletos. Los temporizadores de grupo se heredan de las rutas padre; los intervalos de activación o silenciamiento no se heredan.
 
 ```yaml
 # Alternative child-route fragments; attach to a complete configuration.
@@ -516,7 +516,7 @@ routes:
 
 ### Ejemplo de enrutamiento avanzado
 
-Divide los intervalos nocturnos en la medianoche y especifica la zona horaria en **cada** entrada de intervalo. El intervalo anterior `18:00→09:00` no supera la validación nativa. Este ejemplo plano coloca las restricciones temporales en las rutas de los receptores reales. La ruta crítica fuera del horario laboral usa `continue: true`: una ruta inactiva sigue coincidiendo con las labels y, de lo contrario, detiene las rutas hermanas posteriores, por lo que no debe impedir que se alcance la ruta del horario laboral. Las integraciones vacías de los receptores son sustitutos de prueba intencionales.
+Divide los intervalos nocturnos en la medianoche y especifica la zona horaria en **cada** entrada de intervalo. El intervalo anterior `18:00→09:00` no supera la validación nativa. Este ejemplo sin rutas anidadas coloca las restricciones temporales en las rutas de los receptores reales. La ruta crítica fuera del horario laboral usa `continue: true`: una ruta inactiva sigue coincidiendo con las labels y, de lo contrario, detiene las rutas hermanas posteriores, por lo que no debe impedir que se alcance la ruta del horario laboral. Las integraciones vacías de los receptores son elementos vacíos utilizados deliberadamente para las pruebas.
 
 ```yaml
 route:
@@ -587,7 +587,7 @@ Las pruebas nativas de rutas por labels no evalúan el calendario. Este se compr
 
 ### Receptor de Slack
 
-Usa `api_url_file` para un archivo protegido con una URL de incoming webhook ya asociada al canal de Slack previsto. El ejemplo normal de abajo usa `slack-normal-webhook-url`; las rutas críticas usan el archivo crítico distinto. [Slack documenta que los incoming webhooks no permiten reemplazar el canal](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/). La plantilla personalizada comprobada imprime un subconjunto aprobado de campos; no vuelques todas las labels/annotations. Pueden contener datos de usuarios o secretos, y truncar no equivale a eliminar u ocultar información sensible. Estos son fragmentos de receptor para una configuración completa.
+Usa `api_url_file` para un archivo protegido con una URL de webhook entrante ya asociada al canal de Slack previsto. El ejemplo normal de abajo usa `slack-normal-webhook-url`; las rutas críticas usan el archivo crítico distinto. [Slack documenta que los webhooks entrantes no permiten reemplazar el canal](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/). La plantilla personalizada comprobada imprime un subconjunto aprobado de campos; no incluyas todas las etiquetas y anotaciones. Pueden contener datos de usuarios o secretos, y truncar no equivale a eliminar u ocultar información sensible. Estos son fragmentos de receptor para una configuración completa.
 
 ```yaml
 receivers:
@@ -642,7 +642,7 @@ receivers:
 
 ### Receptor de OpsGenie
 
-Esta es una **referencia de migración para clientes existentes**. Según [Atlassian](https://www.atlassian.com/licensing/opsgenie), las ventas de Opsgenie finalizaron el June 4, 2025, y el soporte/acceso termina el April 5, 2027. No diseñes una nueva dependencia duradera en torno a este servicio. Usa la forma actual de `responders` y un archivo de clave protegido. Estos son fragmentos de receptor para una configuración completa.
+Esta es una **referencia de migración para clientes existentes**. Según [Atlassian](https://www.atlassian.com/licensing/opsgenie), las ventas de Opsgenie finalizaron el 4 de junio de 2025 y el soporte y el acceso terminan el 5 de abril de 2027. No diseñes una dependencia nueva a largo plazo en torno a este servicio. Usa la forma actual de `responders` y un archivo de clave protegido. Estos son fragmentos de receptor para una configuración completa.
 
 ```yaml
 receivers:
@@ -661,7 +661,7 @@ receivers:
 
 ### Receptor de Webhook
 
-La autenticación básica necesita HTTPS; `insecure_skip_verify: false` no cifra una URL `http://`. Proporciona un receptor bajo tu control, un certificado y una configuración de confianza TLS coincidentes y archivos de credenciales montados. Con `max_alerts: 10`, el payload puede omitir alertas e indica `truncatedAlerts`; los consumidores deben manejarlo. Un receptor debe implementar el contrato de webhook de Alertmanager, no limitarse a devolver una respuesta genérica de salud. Estos son fragmentos de receptor para una configuración completa.
+La autenticación básica necesita HTTPS; `insecure_skip_verify: false` no cifra una URL `http://`. Proporciona un receptor bajo tu control junto con su certificado TLS, la configuración de confianza correspondiente y los archivos de credenciales montados. Con `max_alerts: 10`, el cuerpo de la notificación puede omitir alertas e indica `truncatedAlerts`; los consumidores deben manejarlo. Un receptor debe implementar el contrato de webhook de Alertmanager, no limitarse a devolver una respuesta genérica de comprobación de estado. Estos son fragmentos de receptor para una configuración completa.
 
 ```yaml
 receivers:
@@ -801,7 +801,7 @@ El orden de la lista **no es un sistema de prioridades**. Cualquier regla de inh
 
 ### Creación de silenciamientos
 
-Crear o expirar un silenciamiento cambia el comportamiento de notificación. Revisa el endpoint, los matchers exactos, el autor, el motivo y la ventana finita. `--end` requiere elegir deliberadamente una fecha futura en RFC3339; la ventana fija anterior de 2025 no puede silenciar alertas actuales. Protege el acceso HTTP con la configuración admitida de TLS/autenticación; `amtool --http.config.file` acepta un archivo protegido de configuración del cliente.
+Crear un silenciamiento o hacer que venza cambia el comportamiento de notificación. Revisa el endpoint, los matchers exactos, el autor, el motivo y el intervalo de duración limitada. `--end` requiere elegir deliberadamente una fecha futura en RFC3339; la ventana fija anterior de 2025 no puede silenciar alertas actuales. Protege el acceso HTTP con la configuración admitida de TLS/autenticación; `amtool --http.config.file` acepta un archivo protegido de configuración del cliente.
 
 #### Uso de la CLI amtool
 
@@ -817,7 +817,7 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence expire "$SILENCE_ID"
 
 #### Creación de silenciamiento mediante API
 
-Guarda la salida de este asistente como `silence.json`, revísala y envíala mediante POST al endpoint aprobado `/api/v2/silences` usando la autenticación configurada. No pongas valores de credenciales en los argumentos del comando ni compartas payloads de API sin filtrar que contengan datos operativos.
+Guarda la salida de este programa auxiliar como `silence.json`, revísala y envíala mediante POST al endpoint aprobado `/api/v2/silences` usando la autenticación configurada. No pongas valores de credenciales en los argumentos del comando ni compartas cuerpos de solicitudes de API sin filtrar que contengan datos operativos.
 
 ```python
 # Generates a payload only; it makes no API call.
@@ -838,7 +838,7 @@ print(json.dumps({
 
 ### Prácticas recomendadas para la gestión de silenciamientos
 
-Usa la ventana de mantenimiento/despliegue aprobada más corta y un período de investigación acotado. «Hasta que se solucione» también necesita una hora de finalización finita y la revisión del responsable; cuatro horas es una política de equipo de ejemplo, no un límite de Alertmanager. La expiración detiene la supresión, pero el registro expirado permanece hasta la retención/GC. Las pruebas locales de API verificaron esa distinción. Los recordatorios de expiración necesitan un flujo de trabajo configurado por separado.
+Usa la ventana de mantenimiento/despliegue aprobada más corta y un período de investigación acotado. «Hasta que se solucione» también necesita una fecha y hora de finalización definidas y la revisión del responsable; el límite de cuatro horas es una política de equipo usada como ejemplo, no un límite de Alertmanager. La expiración detiene la supresión, pero el registro expirado permanece hasta su eliminación según la retención y la recolección de registros caducados. Las pruebas locales de API verificaron esa distinción. Los recordatorios de expiración necesitan un flujo de trabajo configurado por separado.
 
 ```mermaid
 stateDiagram-v2
@@ -856,11 +856,11 @@ stateDiagram-v2
 
 ### Conceptos básicos de las plantillas Go
 
-Las plantillas de notificación reciben `Data`: usa `.CommonLabels`, `.CommonAnnotations`, `.GroupLabels` y `.Alerts` en la raíz. Dentro de `range .Alerts`, el punto representa una Alert individual con `.Labels`, `.Annotations` y `.StartsAt`. Esto difiere de las plantillas de annotations de reglas de Prometheus (`$labels`, `$value`). No uses `safeHtml`/`safeUrl` con datos no confiables para omitir el escape. Las plantillas deben estar montadas e incluidas en la configuración.
+Las plantillas de notificación reciben `Data`: usa `.CommonLabels`, `.CommonAnnotations`, `.GroupLabels` y `.Alerts` en la raíz. Dentro de `range .Alerts`, el punto representa una alerta individual con `.Labels`, `.Annotations` y `.StartsAt`. Esto difiere de las plantillas de anotaciones de reglas de Prometheus (`$labels`, `$value`). No uses `safeHtml`/`safeUrl` con datos no confiables para desactivar el escape de caracteres. Las plantillas deben estar montadas e incluidas en la configuración.
 
 ### Ejemplo de plantilla de Slack
 
-Guarda el archivo como `slack.tmpl`. El recorte de espacios mantiene el resultado del color como una única cadena de color válida. Solo se imprimen campos aprobados; esta plantilla no elimina datos sensibles arbitrarios de los valores de annotations.
+Guarda el archivo como `slack.tmpl`. La eliminación de espacios en blanco mantiene el resultado del color como una única cadena de color válida. Solo se imprimen campos aprobados; esta plantilla no elimina datos sensibles arbitrarios de los valores de annotations.
 
 ```text
 {{ define "slack.custom.title" -}}
@@ -891,9 +891,9 @@ Guarda el archivo como `slack.tmpl`. El recorte de espacios mantiene el resultad
 
 ### Funciones de plantilla
 
-Usa `if`, `range`, pipes y funciones como `toUpper`, `title`, `printf` y `date`. Las plantillas Go no tienen expresiones ternarias de estilo JavaScript. `printf "%.100s"` limita una cadena por runes; un `slice` por bytes puede dividir caracteres coreanos UTF-8. La plantilla anterior muestra el contexto raíz frente al de cada alerta y el formato numérico.
+Usa `if`, `range`, canalizaciones y funciones como `toUpper`, `title`, `printf` y `date`. Las plantillas Go no tienen expresiones ternarias de estilo JavaScript. `printf "%.100s"` limita una cadena según sus puntos de código Unicode (runes); un `slice` por bytes puede cortar un carácter coreano codificado en UTF-8. La plantilla anterior muestra el contexto raíz frente al de cada alerta y el formato numérico.
 
-Prueba con Data de notificación sintética, no con payloads de producción:
+Prueba con datos sintéticos de notificación de tipo Data, no con cuerpos de notificación de producción:
 
 Guarda esta entrada sintética, destinada solo a plantillas, como `synthetic-notification.json`; sus marcas de tiempo no crean ni envían una alerta.
 
@@ -938,7 +938,7 @@ amtool template render --template.glob=slack.tmpl   --template.data=synthetic-no
 
 ### Gestión de plantillas mediante ConfigMap
 
-El perfil de pila monta este ConfigMap mediante `alertmanagerSpec.configMaps`; el perfil independiente usa un volumen explícito. Ambos configuran `/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl`. Crear un ConfigMap sin un montaje/ruta coincidente no produce ningún efecto. Recarga mediante el responsable de instalación seleccionado.
+El perfil de pila monta este ConfigMap mediante `alertmanagerSpec.configMaps`; el perfil independiente usa un volumen explícito. Ambos configuran `/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl`. Crear un ConfigMap sin un montaje/ruta coincidente no produce ningún efecto. Recarga la configuración mediante la herramienta que gestiona la instalación seleccionada.
 
 ```yaml
 apiVersion: v1
@@ -1005,7 +1005,7 @@ data:
 
 ## Configuración de alta disponibilidad
 
-### Arquitectura de clustering
+### Arquitectura del clúster
 
 Ejemplo de HA en buen estado, tras la convergencia: todas las réplicas reciben las alertas. La entrega única ilustrada no es una garantía universal; las particiones o los reintentos pueden generar duplicados.
 
@@ -1017,7 +1017,7 @@ Ejemplo de HA en buen estado, tras la convergencia: todas las réplicas reciben 
 
 Esta es la **alternativa manual**, que usa el ConfigMap, las plantillas y el Secret de credenciales anteriores. Los puertos de API/UI y gossip son servicios internos, pero no están autenticados solo por ser ClusterIP. Aplica el acceso de red adecuado y revisa la [configuración admitida de TLS/autenticación](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/https.md) antes de producción. Gossip no está cifrado por defecto; su transporte experimental de TLS mutuo tiene un comportamiento distinto, solo TCP. La base siguiente muestra gossip TCP/UDP normal, no una topología segura de producción validada.
 
-Se explicitan el arranque paralelo de Pods, el DNS headless para peers que aún no están listos, ambos protocolos gossip y el estado persistente. `publishNotReadyAddresses` ayuda a descubrir peers; no convierte en saludable a un miembro no preparado. Las alertas no se persisten; Prometheus debe reenviarlas. Revisa la asociación StorageClass/AZ, las interrupciones y el dimensionamiento de recursos.
+La configuración define explícitamente el arranque paralelo de Pods, el DNS headless para miembros del clúster que aún no están listos, ambos protocolos gossip y el estado persistente. `publishNotReadyAddresses` ayuda a descubrir miembros del clúster; no convierte en un miembro en buen estado a uno que aún no está listo. Las alertas no se persisten; Prometheus debe reenviarlas. Revisa la asociación StorageClass/AZ, las interrupciones y el dimensionamiento de recursos.
 
 ```yaml
 apiVersion: apps/v1
@@ -1165,7 +1165,7 @@ spec:
 
 ### Configuración de integración con Prometheus
 
-Combina este fragmento con la configuración completa del **responsable de la instancia manual de Prometheus**. Elige descubrimiento DNS o una lista explícita de todas las réplicas, no ambas listas duplicadas. No balancees las notificaciones entre réplicas. La pila Operator gestiona su propio descubrimiento de alertas.
+Combina este fragmento con la configuración completa del **gestor de la instalación manual de Prometheus**. Elige descubrimiento DNS o una lista explícita de todas las réplicas, no ambas listas duplicadas. No distribuyas mediante un balanceador las notificaciones entre réplicas. La pila Operator gestiona su propio descubrimiento de alertas.
 
 Elimina `prometheus_replica` solo cuando sea la label distintiva configurada para servidores HA de Prometheus equivalentes en todo lo demás. Conserva las labels de clúster/tenant; eliminarlas indiscriminadamente puede combinar alertas no relacionadas. Este ejemplo usa registros DNS A de IPv4; para IPv6, usa la configuración de familia de direcciones desplegada.
 
@@ -1191,7 +1191,7 @@ alerting:
 
 ### Configuración con ámbito de namespace
 
-El CRD incluido con Operator 0.93.1 sigue ofreciendo y almacenando **v1alpha1**. Alinea la label del objeto con la superposición de selección de abajo y selecciona explícitamente namespaces aprobados. La coincidencia predeterminada/por namespace restringe las rutas/inhibiciones importadas al namespace del objeto; no autentica las labels de alerta proporcionadas por el cliente. Protege la escritura de CRD/Secret y la entrada de alertas confiables. `alertmanagerConfiguration` global es un modo aparte que no se muestra aquí.
+El CRD incluido con Operator 0.93.1 sigue ofreciendo y almacenando **v1alpha1**. Alinea la label del objeto con la configuración adicional de selección de abajo y selecciona explícitamente namespaces aprobados. La coincidencia predeterminada/por namespace restringe las rutas/inhibiciones importadas al namespace del objeto; no autentica las labels de alerta proporcionadas por el cliente. Protege la escritura de CRD/Secret y la recepción de alertas de fuentes confiables. `alertmanagerConfiguration` global es un modo aparte que no se muestra aquí.
 
 ```yaml
 apiVersion: v1
@@ -1286,7 +1286,7 @@ kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-k
 
 ### Selección de AlertmanagerConfig de Alertmanager
 
-Esta es una **superposición de values de kube-prometheus-stack**, no un objeto de la API de Alertmanager. Combínala con el perfil de pila seleccionado. La discrepancia anterior entre las labels `team-a` y `enabled` no seleccionaba ninguna configuración. La label explícita de namespace evita seleccionar accidentalmente todos los namespaces.
+Esta es una **configuración adicional de valores de kube-prometheus-stack**, no un objeto de la API de Alertmanager. Combínala con el perfil de pila seleccionado. La discrepancia anterior entre las labels `team-a` y `enabled` no seleccionaba ninguna configuración. La label explícita de namespace evita seleccionar accidentalmente todos los namespaces.
 
 ```yaml
 alertmanager:
@@ -1305,7 +1305,7 @@ alertmanager:
 
 ## Ejemplos de reglas de alerta para producción
 
-### Alertas de Node
+### Alertas de nodos
 
 Un fallo al recopilar node-exporter no prueba que un nodo esté físicamente caído; `NodeExporterUnavailable` refleja esa distinción. El espacio del sistema de archivos no es la condición DiskPressure de Kubernetes, por lo que la regla se llama `NodeFilesystemSpaceLow`. Comprueba las labels reales de job/instance/device y los sistemas de archivos de solo lectura. Los umbrales son ejemplos de política, no límites universales de producción.
 
@@ -1379,11 +1379,11 @@ spec:
     interval: 30s
 ```
 
-### Alertas de Pod y Container
+### Alertas de Pods y contenedores
 
-Para `PodCrashLooping`, aplica `max_over_time(waiting_reason[5m])` a cada serie de métricas **antes del enriquecimiento con UID/node** y exige que la condición de observación resultante se mantenga durante `10m`. Los intervalos entre reintentos pueden hacer desaparecer el motivo instantáneo de espera; la ventana acotada cubre intervalos inferiores a cinco minutos. Una muestra aislada de espera expira antes de satisfacer la retención de diez minutos. Esto detecta observaciones recurrentes, no diez minutos de espera continua. La desactivación puede retrasarse hasta cinco minutos desde la última observación, más la demora de recopilación/evaluación.
+Para `PodCrashLooping`, aplica `max_over_time(waiting_reason[5m])` a cada serie de métricas **antes del enriquecimiento con UID/node** y exige que la condición de observación resultante se mantenga durante `10m`. Los intervalos entre reintentos pueden hacer desaparecer el motivo instantáneo de espera; la ventana acotada cubre intervalos inferiores a cinco minutos. Una muestra aislada de espera expira antes de satisfacer el período de permanencia de diez minutos. Esto detecta observaciones recurrentes, no diez minutos de espera continua. La desactivación puede retrasarse hasta cinco minutos desde la última observación, más la demora de recopilación/evaluación.
 
-Readiness no es solo la fase del Pod. Las reglas excluyen Pods terminados/en eliminación, distinguen CrashLoopBackOff de los reinicios ordinarios y combinan un reinicio reciente con el último motivo OOM. Las métricas de última terminación/eliminación son experimentales en kube-state-metrics 2.20.0; comprueba su disponibilidad. El enriquecimiento de nodo une los datos por UID de Pod y conserva la alerta cuando falta información. Los límites de memoria deben ser positivos; el porcentaje de períodos CFS limitados no es un porcentaje de tiempo de CPU.
+El estado de preparación no equivale únicamente a la fase del Pod. Las reglas excluyen Pods terminados/en eliminación, distinguen CrashLoopBackOff de los reinicios ordinarios y combinan un reinicio reciente con el último motivo OOM. Las métricas de última terminación/eliminación son experimentales en kube-state-metrics 2.20.0; comprueba su disponibilidad. La incorporación de información del nodo une los datos por UID de Pod y conserva la alerta cuando falta información. Los límites de memoria deben ser positivos; el porcentaje de períodos CFS limitados no es un porcentaje de tiempo de CPU.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1555,7 +1555,7 @@ spec:
 
 ### Alertas de etcd
 
-Estas reglas opcionales son para un despliegue de **etcd autogestionado** recopilado explícitamente, con tres miembros esperados y `job="etcd"`. No las despliegues como comprobaciones del etcd administrado por EKS. `etcd_server_id` existe en el código 3.6.5 inspeccionado; cuenta los ID observados distintos y maneja la ausencia de datos, en lugar de afirmar que el número de destinos recopilados demuestra el quorum de Raft. La presión de la base de datos usa la cuota positiva configurada, no un umbral fijo de 6GB. La asignación física y el tamaño lógico en uso son diferentes.
+Estas reglas opcionales son para un despliegue de **etcd autogestionado** del que se recopilan métricas explícitamente, con tres miembros esperados y `job="etcd"`. No las despliegues como comprobaciones del etcd administrado por EKS. `etcd_server_id` existe en el código 3.6.5 inspeccionado; cuenta los ID observados distintos y maneja la ausencia de datos, en lugar de afirmar que el número de destinos recopilados demuestra el quorum de Raft. La presión de la base de datos usa la cuota positiva configurada, no un umbral fijo de 6GB. La asignación física y el tamaño lógico en uso son diferentes.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1633,7 +1633,7 @@ spec:
 
 #### Las alertas no se envían
 
-Comprueba las reglas seleccionadas/cargadas, el estado firing, el descubrimiento de Alertmanager, la configuración de receptores/archivos, la supresión y los fallos de entrega. No vuelques a los logs la configuración generada de Alertmanager ni el Secret: pueden contener credenciales de proveedores. Antes de compartir un conjunto acotado de logs de componentes, revísalos y elimina u oculta los datos sensibles. Usa la API autenticada configurada para inspeccionar el estado.
+Comprueba las reglas seleccionadas/cargadas, el estado firing, el descubrimiento de Alertmanager, la configuración de receptores/archivos, la supresión y los fallos de entrega. No escribas en los registros la configuración generada de Alertmanager ni el Secret: pueden contener credenciales de proveedores. Antes de compartir un conjunto acotado de logs de componentes, revísalos y elimina u oculta los datos sensibles. Usa la API autenticada configurada para inspeccionar el estado.
 
 ```bash
 # Read-only checks against explicitly selected existing workloads.
@@ -1656,7 +1656,7 @@ Prueba localmente el conjunto exacto de labels y los receptores esperados; despu
 
 ### Referencia de comandos de amtool
 
-Las comprobaciones locales de configuración/rutas/plantillas son distintas de las lecturas autenticadas de API y las modificaciones de silenciamientos. Nunca canalices una consulta amplia directamente a la expiración de silenciamientos sin revisar los ID exactos.
+Las comprobaciones locales de configuración/rutas/plantillas son distintas de las lecturas autenticadas de API y las modificaciones de silenciamientos. Nunca uses directamente el resultado de una consulta amplia para hacer vencer silenciamientos sin revisar los ID exactos.
 
 ```bash
 amtool check-config alertmanager.yaml
@@ -1668,7 +1668,7 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 
 ### Verificación de métricas
 
-Las primeras seis descripciones se comprobaron con la salida real de HELP de `/metrics` de 0.34.0, usando tráfico local sintético. Un contador es acumulativo; usa una ventana adecuada de rate/increase para analizar incidentes y considera los reinicios del contador. No etiquetes los intentos de notificación como entregas correctas.
+Las primeras seis descripciones se comprobaron con la salida real de HELP de `/metrics` de 0.34.0, usando tráfico local sintético. Un contador es acumulativo; usa una ventana adecuada para rate/increase para analizar incidentes y considera los reinicios del contador. No etiquetes los intentos de notificación como entregas correctas.
 
 | Métrica | Significado |
 |---|---|
@@ -1682,19 +1682,19 @@ Las primeras seis descripciones se comprobaron con la salida real de HELP de `/m
 
 ### Consejos de depuración
 
-Usa alertas sintéticas y un receptor local/de prueba bajo tu control antes de habilitar rutas de proveedores. No reenvíes payloads de alertas de producción a un servicio público de request-bin. Un receptor `localhost` se refiere al namespace de red del proceso de Alertmanager, no a tu portátil. Los logs de depuración pueden exponer datos operativos: limita su alcance y revierte la configuración mediante el responsable correspondiente.
+Usa alertas sintéticas y un receptor local/de prueba bajo tu control antes de habilitar rutas de proveedores. No reenvíes cuerpos de notificaciones de producción a un servicio público de request-bin. Un receptor `localhost` se refiere al espacio de nombres de red del proceso de Alertmanager, no a tu portátil. Los logs de depuración pueden exponer datos operativos: limita su alcance y restaura la configuración anterior mediante la herramienta que gestiona la instalación.
 
-Mantén las solicitudes de API de shell fuera de las cercas YAML. Publicar una alerta de prueba o recargar la configuración es una modificación deliberada; hazlo solo contra el endpoint de prueba aprobado. Una respuesta del webhook demuestra que esa solicitud llegó al receptor de prueba, no que la gestión de incidentes de producción funcione de extremo a extremo.
+Mantén las solicitudes de API de shell fuera de los bloques de código YAML. Publicar una alerta de prueba o recargar la configuración es una modificación deliberada; hazlo solo contra el endpoint de prueba aprobado. Una respuesta del webhook demuestra que esa solicitud llegó al receptor de prueba, no que la gestión de incidentes de producción funcione de extremo a extremo.
 
 ## Referencias
 
-- [Configuración de Alertmanager0.34](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [Configuración de Alertmanager 0.34](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
 - [Alta disponibilidad](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/high_availability.md)
 - [Datos de plantillas de notificación](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
 - [Alertas de Prometheus Operator](https://prometheus-operator.dev/docs/developer/alerting/)
-- [values de kube-prometheus-stack90](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
-- [values de Alertmanager independiente1.43.1](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
-- [Métricas de Pod de kube-state-metrics2.20](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
+- [Valores de kube-prometheus-stack 90](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
+- [Valores de Alertmanager independiente 1.43.1](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
+- [Métricas de Pod de kube-state-metrics 2.20](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
 
 ## Cuestionario
 

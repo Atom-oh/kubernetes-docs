@@ -1,1136 +1,936 @@
-# Cuestionario de creación de clústeres EKS - Parte 2
+# Cuestionario de creación de clústeres de EKS - Parte 2
 
-Este cuestionario evalúa tu comprensión de conceptos avanzados, configuraciones de seguridad y configuraciones de red relacionadas con la creación de clústeres Amazon EKS. Cubre temas como seguridad del clúster, network policies y service accounts.
+> **Última actualización**: 11 de septiembre de 2026
+
+> Los ejemplos de las preguntas son alternativas independientes. Usa los requisitos previos de la Parte 1 y selecciona explícitamente una cuenta/clúster de formación. Dentro de cada ejercicio, ejecuta los pasos en orden y en la misma sesión de Bash. Los comandos de nube/host que aparecen a continuación se revisaron, pero no se ejecutaron en AWS ni en nodos durante esta auditoría.
+
+Este cuestionario evalúa tus conocimientos sobre conceptos avanzados, ajustes de seguridad y configuraciones de red relacionados con la creación de clústeres de Amazon EKS. Trata temas como la seguridad del clúster, las políticas de red y las cuentas de servicio.
 
 ## Preguntas de conceptos básicos
 
-1. ¿Cuál es el propósito principal de IRSA (IAM Roles for Service Accounts) en un clúster Amazon EKS?
-   * A) Conceder permisos de IAM a los administradores del clúster
-   * B) Asignar IAM roles a worker nodes
-   * C) Conceder permisos de acceso a servicios de AWS a Kubernetes service accounts
-   * D) Conceder permisos de IAM al EKS control plane
+1. ¿Cuál es el propósito principal de IRSA en un clúster de EKS?
+   * A) Conceder acceso de administrador de Kubernetes
+   * B) Asignar el rol de IAM del nodo EC2
+   * C) Conceder permisos temporales de AWS a las cargas de trabajo mediante su cuenta de servicio de Kubernetes
+   * D) Modificar el rol del plano de control de EKS
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Conceder permisos de acceso a servicios de AWS a Kubernetes service accounts**
+**Respuesta: C) Conceder permisos temporales de AWS a las cargas de trabajo mediante su cuenta de servicio de Kubernetes**
 
-**Explicación:** El propósito principal de IRSA (IAM Roles for Service Accounts) es conceder permisos de acceso a servicios de AWS a Kubernetes service accounts. Esta característica permite proporcionar permisos detallados a nivel de Pod y, en lugar de compartir IAM roles a nivel de node, puedes conceder solo los permisos mínimos necesarios a cada aplicación.
+IRSA permite que una carga de trabajo obtenga credenciales temporales de AWS mediante la identidad de su cuenta de servicio de Kubernetes. La política de permisos del rol de IAM determina qué operaciones de AWS puede realizar. Esto es independiente de RBAC de Kubernetes y de los roles de IAM usados por el plano de control de EKS o los nodos EC2.
 
-**Cómo funciona IRSA:**
+**Flujo de confianza:** EKS emite un token proyectado de cuenta de servicio. Registra como proveedor OIDC de IAM el emisor OIDC real del clúster y, después, establece la confianza para la audiencia y el sujeto namespace/cuenta de servicio previstos. La cadena de credenciales predeterminada de un SDK de AWS compatible intercambia ese token mediante STS `AssumeRoleWithWebIdentity`. En este ejemplo usa el ARN/proveedor y emisor reales, así como la identidad exacta de la cuenta de servicio:
 
-1.  **Configuración del proveedor OpenID Connect (OIDC)**:
-
-    * El clúster EKS se configura como un proveedor OIDC.
-    * Esto permite que los tokens de Kubernetes service account se conviertan en un mecanismo de autenticación confiable en AWS IAM.
-
-    ```bash
-    # Associate OIDC provider
-    eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
-    ```
-2.  **Crear IAM Role y configurar la trust policy**:
-
-    * Crea un IAM role que la Kubernetes service account pueda asumir.
-    * La trust policy restringe la asunción del role solo a service accounts específicos en namespaces específicos.
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
-          },
-          "Action": "sts:AssumeRoleWithWebIdentity",
-          "Condition": {
-            "StringEquals": {
-              "oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:default:my-service-account"
-            }
-          }
-        }
-      ]
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE:aud": "sts.amazonaws.com",
+        "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE:sub": "system:serviceaccount:irsa-lab:my-service-account"
+      }
     }
-    ```
-3.  **Crear Service Account y asociar IAM Role**:
-
-    * Agrega el ARN del IAM role como annotation a la service account.
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: my-service-account
-      namespace: default
-      annotations:
-        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-role
-    ```
-4.  **Usar Service Account en el Pod**:
-
-    * Especifica la service account en el manifiesto del Pod.
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: my-pod
-    spec:
-      serviceAccountName: my-service-account
-      containers:
-      - name: my-container
-        image: my-image
-    ```
-
-**Beneficios de IRSA:**
-
-1. **Principio de privilegio mínimo**:
-   * Puedes conceder solo los permisos mínimos necesarios a cada aplicación.
-   * Configuraciones de permisos diferentes por Pod en lugar de compartir IAM roles a nivel de node
-2. **Seguridad mejorada**:
-   * No es necesario almacenar credenciales de AWS en el código ni en variables de entorno.
-   * Menor riesgo de filtración de credenciales
-3. **Aislamiento de permisos**:
-   * Diferentes Pods que se ejecutan en el mismo node pueden tener diferentes permisos de IAM.
-   * Importante en entornos multi-tenant
-4. **Gestión simplificada de credenciales**:
-   * No es necesario gestionar directamente credenciales de AWS.
-   * La rotación de credenciales se gestiona automáticamente.
-
-**Ejemplo de configuración de IRSA usando eksctl:**
-
-```bash
-# Create service account and IAM role
-eksctl create iamserviceaccount \
-  --name my-service-account \
-  --namespace default \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
-  --approve
-
-# Verify created service account
-kubectl get serviceaccount my-service-account -o yaml
+  }]
+}
 ```
 
-**Problemas con otras opciones:**
+Anota la cuenta de servicio con el ARN del rol y haz que el Pod la use. Primero crea un namespace `irsa-lab` que no esté en uso. Estos dos manifiestos son una alternativa a la creación de cuentas de servicio administrada por eksctl que aparece más abajo; no sobrescribas la cuenta de servicio de otra aplicación:
 
-* **Conceder permisos de IAM a los administradores del clúster**: Este no es el propósito de IRSA. Los permisos de administrador del clúster normalmente se gestionan mediante el ConfigMap aws-auth.
-* **Asignar IAM roles a worker nodes**: Esto se hace mediante IAM roles de node y está separado de IRSA. Los IAM roles de node son compartidos por todos los Pods, lo que puede vulnerar el principio de privilegio mínimo.
-* **Conceder permisos de IAM al EKS control plane**: Los permisos del EKS control plane se gestionan mediante el IAM role del clúster y no están relacionados con IRSA.
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+  namespace: irsa-lab
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ReviewedIrsaRole
+```
 
-IRSA es una característica importante que permite que los workloads de Kubernetes accedan de forma segura a servicios de AWS, y es el enfoque recomendado al ejecutar aplicaciones en clústeres EKS.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: irsa-identity-check
+  namespace: irsa-lab
+spec:
+  serviceAccountName: my-service-account
+  restartPolicy: Never
+  containers:
+    - name: aws-cli
+      image: public.ecr.aws/aws-cli/aws-cli:2.36.43
+      command: ["aws"]
+      args: ["sts", "get-caller-identity"]
+```
+
+El Pod usa una etiqueta verificada de imagen de AWS CLI v2 e imprime la identidad del llamador, no claves de acceso secretas ni el token de identidad web. Confirma que el rol devuelto sea el rol de carga de trabajo previsto. Que la identidad STS se resuelva correctamente no demuestra acceso a S3 ni a otro recurso de destino; prueba por separado la operación requerida, como en el ejercicio 1.
+
+**Alternativa con eksctl:** limita la política a los recursos/acciones previstos; no uses una política amplia de S3 administrada por AWS para una tarea limitada a un único bucket. Revisa primero las cuentas de servicio y la titularidad de los roles existentes; no agregues `--override-existingserviceaccounts` como solución genérica.
+
+```bash
+# For a new service account and dedicated role, with a reviewed scoped policy.
+eksctl utils associate-iam-oidc-provider \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" --approve
+KUBECONFIG="${EXAMPLE_KUBECONFIG:?}" eksctl create iamserviceaccount \
+  --name "${IRSA_SERVICE_ACCOUNT:?}" --namespace "${IRSA_NAMESPACE:?}" \
+  --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --attach-policy-arn "${SCOPED_POLICY_ARN:?}" --approve
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  get serviceaccount "$IRSA_SERVICE_ACCOUNT" -o yaml
+```
+
+**Límites y responsabilidades:**
+
+- Usa un SDK compatible y su cadena de credenciales. Las credenciales codificadas en el programa o proveedores anteriores en la cadena pueden prevalecer sobre IRSA. El webhook inyecta la configuración del rol/archivo de token y el SDK renueva las credenciales temporales. No imprimas ni copies valores de tokens o credenciales.
+- IRSA por sí solo no bloquea el acceso a IMDS del nodo, y los contenedores que comparten nodo no forman una frontera de seguridad estricta. Restringe IMDS y los permisos del nodo por separado; los Pods con `hostNetwork` aún pueden llegar a IMDS.
+- Las condiciones de IAM limitan la asunción del rol, pero cualquier persona autorizada a crear un Pod que use esa cuenta de servicio podría obtener sus permisos de AWS. Controla también la administración de cargas de trabajo/cuentas de servicio de Kubernetes.
+- EKS Pod Identity es otra opción de identidad de carga de trabajo y tiene sus propios requisitos de compatibilidad. Su flujo de credenciales mediante EKS Auth/agente es distinto del flujo OIDC/STS de IRSA.
+- Los usuarios del clúster usan entradas/políticas de acceso de EKS o, cuando esté configurado, el mapeo heredado `aws-auth`. Estos mecanismos autorizan el acceso a Kubernetes; no sustituyen las políticas de permisos de IAM de las cargas de trabajo.
+
+Referencias: [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html), [asignación de un rol a una cuenta de servicio](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html), [requisitos del SDK](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-minimum-sdk.html), [Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html).
 
 </details>
 
-2\. ¿Cuál es el rol principal de los security groups en un clúster Amazon EKS? - A) Controlar el tráfico de red entre Pods - B) Controlar el tráfico entre el cluster API server y los nodes - C) Aplicar políticas Kubernetes RBAC - D) Gestionar la autenticación de usuarios
+2. ¿Qué controlan los grupos de seguridad de AWS en un diseño de EKS?
+   * A) La autorización de recursos de Kubernetes
+   * B) El tráfico de red permitido en las interfaces asociadas, incluidas las interfaces compatibles de Pods
+   * C) Las audiencias de los tokens de cuentas de servicio
+   * D) La cantidad de réplicas de un Deployment
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Controlar el tráfico entre el cluster API server y los nodes**
+**Respuesta: B) El tráfico de red permitido en las interfaces asociadas, incluidas las interfaces compatibles de Pods**
 
-**Explicación:** El rol principal de los security groups en un clúster Amazon EKS es controlar el tráfico entre el cluster API server y los nodes. Los security groups son firewalls virtuales de AWS que controlan el tráfico entrante y saliente a nivel de instancia EC2. En EKS, existen security groups de clúster y security groups de node, que protegen la comunicación entre los componentes del clúster.
+Los grupos de seguridad son filtros de red con estado asociados a interfaces de red. En EKS ayudan a controlar el tráfico entre interfaces del clúster y nodos y, con la función compatible Security Groups for Pods, de determinados Pods. No implementan RBAC de Kubernetes ni autentican usuarios.
 
-**Tipos de Security Groups en clústeres EKS:**
+**Las reglas predeterminadas y las necesarias son distintas.** EKS crea `eks-cluster-sg-<cluster>-<id>` con reglas de entrada autorreferenciadas, acceso de salida amplio y una regla de salida autorreferenciada usada por EFA. Son valores predeterminados que debes inspeccionar, no una receta de privilegio mínimo. EKS asocia el grupo del clúster a sus interfaces y normalmente a las interfaces de nodos administrados; los grupos de seguridad personalizados en una plantilla de lanzamiento cambian ese comportamiento.
 
-1. **Cluster Security Group**:
-   * Se aplica al EKS control plane.
-   * Permite la comunicación entre worker nodes y el control plane.
-   * Se crea automáticamente de forma predeterminada al crear un clúster EKS.
-   * Reglas clave:
-     * Permitir tráfico entrante en el puerto 443 desde el node security group
-     * Permitir tráfico saliente hacia el node security group
-2. **Node Security Group**:
-   * Se aplica a worker nodes.
-   * Permite la comunicación entre nodes y entre nodes y el control plane.
-   * Reglas clave:
-     * Permitir todo el tráfico entre nodes
-     * Permitir tráfico saliente en el puerto 443 hacia el cluster security group
-     * Permitir tráfico entrante desde el cluster security group
-     * Permitir el puerto 10250 para kubelet
+Si restringes las reglas de salida predeterminadas, conserva el tráfico mínimo documentado y las dependencias adicionales de tus cargas de trabajo reales:
 
-**Ejemplos de configuración de Security Groups:**
+| Tráfico de salida necesario del grupo del clúster | Destino |
+| --- | --- |
+| TCP 443 | Grupo de seguridad del clúster |
+| TCP 10250 | Grupo de seguridad del clúster |
+| TCP y UDP 53 | Grupo de seguridad del clúster |
 
-**Reglas del Cluster Security Group**:
+Esta tabla no es por sí sola un diseño de red completo. Revisa los puertos entre nodos y de aplicaciones, el acceso a la API y a registros, S3, las rutas DNS y las reglas IPv4/IPv6. Los endpoints privados pueden proporcionar conectividad con AWS sin salida general a Internet. EKS puede volver a crear reglas autorreferenciadas durante las actualizaciones del clúster; por eso, no describas su eliminación como una restricción permanente.
 
-```
-Inbound:
-- Protocol: TCP
-- Port Range: 443
-- Source: Node Security Group
+**Grupos adicionales:** los grupos indicados en `resourcesVpcConfig.securityGroupIds` del clúster se adjuntan a las interfaces de red del plano de control; no se adjuntan automáticamente a los grupos de nodos. Si la plantilla de lanzamiento de un nodo proporciona grupos de seguridad personalizados, EKS no agrega también el grupo del clúster y esos grupos personalizados deben permitir el tráfico necesario entre nodos y API.
 
-Outbound:
-- Protocol: All Traffic
-- Port Range: All Ports
-- Destination: 0.0.0.0/0
-```
-
-**Reglas del Node Security Group**:
-
-```
-Inbound:
-- Protocol: All Traffic
-- Source: Node Security Group itself (node-to-node communication)
-
-- Protocol: TCP
-- Port Range: 10250
-- Source: Cluster Security Group (kubelet communication)
-
-Outbound:
-- Protocol: All Traffic
-- Port Range: All Ports
-- Destination: 0.0.0.0/0
-```
-
-**Personalización de Security Groups:**
-
-Puedes especificar security groups personalizados al crear un clúster EKS:
+El siguiente ejemplo de AWS CLI muestra cómo seleccionar un grupo adicional para un nuevo plano de control. No crea capacidad de nodos ni entradas de acceso para operadores. La identidad que aprovisiona el clúster necesita permiso para crear la entrada de acceso del operador porque el acceso de administrador automático del creador está desactivado:
 
 ```bash
-# Specifying custom security groups using AWS CLI
-aws eks create-cluster \
-  --name my-cluster \
-  --role-arn arn:aws:iam::123456789012:role/EksClusterRole \
-  --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345
+# Cluster creation fragment: use reviewed roles/subnets/groups and a new name.
+aws eks create-cluster --name "${NEW_CLUSTER_NAME:?}" \
+  --region "${EXAMPLE_REGION:?}" --kubernetes-version 1.36 \
+  --role-arn "${CLUSTER_ROLE_ARN:?}" \
+  --access-config authenticationMode=API,bootstrapClusterCreatorAdminPermissions=false \
+  --resources-vpc-config "subnetIds=${PRIVATE_SUBNET_A:?},${PRIVATE_SUBNET_B:?},securityGroupIds=${ADDITIONAL_CONTROL_PLANE_SG:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"
+```
 
-# Specifying custom security groups using eksctl
+Los campos de red equivalentes de eksctl forman parte de la configuración completa revisada de la [Parte 2](../../eks/02-eks-cluster-creation-part2.md). Sustituye el CIDR de documentación y todos los ID:
+
+```yaml
+# Networking example; merge into a reviewed full ClusterConfig.
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
+  version: "1.36"
 vpc:
-  id: vpc-12345
-  securityGroup: sg-12345
+  id: vpc-0123456789abcdef0
+  controlPlaneSecurityGroupIDs:
+    - sg-0123456789abcdef0
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs:
+    - 203.0.113.10/32
   subnets:
     private:
-      us-west-2a: subnet-12345
-      us-west-2b: subnet-67890
+      us-west-2a:
+        id: subnet-0123456789abcdef0
+      us-west-2b:
+        id: subnet-0123456789abcdef1
 ```
 
-**Security Groups para Pods:**
+**API pública y privada:** el endpoint público de Kubernetes se restringe con `publicAccessCidrs`, no mediante el grupo de seguridad del clúster. Las reglas del grupo de seguridad del clúster rigen el tráfico del endpoint privado. Ni una lista de CIDR permitidos ni una regla de grupo de seguridad conceden autorización de IAM/RBAC.
 
-Recientemente, EKS también admite security groups a nivel de Pod (característica SecurityGroupsForPods). Esto permite aplicar security groups a Pods individuales:
+**Grupos de seguridad para Pods:** en capacidad compatible, configura la función y los ajustes necesarios de IAM/VPC CNI antes de crear una `SecurityGroupPolicy`. Comprueba la compatibilidad de trunking de instancias, la versión de CNI, el modo de aplicación, DNS y las reglas reales del grupo de seguridad. Windows y EKS Auto Mode no admiten esta función; las familias de instancias EC2 `t` tampoco. Fargate tiene su propia configuración compatible.
 
 ```yaml
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy
 metadata:
-  name: my-security-group-policy
-  namespace: default
+  name: application-sg
+  namespace: sg-lab
 spec:
   podSelector:
     matchLabels:
       app: my-app
   securityGroups:
     groupIds:
-      - sg-12345
+      - sg-0123456789abcdef0
 ```
 
-**Problemas con otras opciones:**
+La política selecciona Pods de un namespace `sg-lab` creado aparte; la existencia de un objeto CRD no demuestra que se haya adjuntado el grupo de seguridad. Los modos estándar/estricto de los grupos de seguridad de Pods y SNAT influyen en qué grupo filtra el tráfico fuera de la VPC. Comprueba el comportamiento documentado para el modo de tu configuración.
 
-* **Controlar el tráfico de red entre Pods**: De forma predeterminada, el tráfico de red entre Pods se controla mediante Kubernetes Network Policies (NetworkPolicy), no mediante security groups de AWS. Aunque la característica SecurityGroupsForPods permite aplicar security groups a nivel de Pod, este no es el rol principal de los security groups.
-* **Aplicar políticas Kubernetes RBAC**: RBAC (Role-Based Access Control) es un mecanismo para controlar el acceso a recursos de la Kubernetes API y está separado de los security groups de AWS.
-* **Gestionar la autenticación de usuarios**: La autenticación de usuarios en clústeres EKS se gestiona mediante la integración de AWS IAM y Kubernetes RBAC, y no está relacionada con los security groups.
+Kubernetes NetworkPolicy es un mecanismo distinto, aplicado por un complemento de red configurado. El tráfico de Pods no se deniega de forma predeterminada solo porque el clúster admita NetworkPolicy. Consulta la pregunta 3 para ver una configuración intencional de políticas.
 
-Los security groups desempeñan un rol importante en la seguridad de red de los clústeres EKS, protegiendo la comunicación entre los componentes del clúster y bloqueando tráfico innecesario. Una configuración adecuada de security groups es esencial para fortalecer la postura de seguridad de los clústeres EKS.
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" \
+  --query 'cluster.resourcesVpcConfig.{clusterSG:clusterSecurityGroupId,additionalSGs:securityGroupIds,publicAccess:endpointPublicAccess,privateAccess:endpointPrivateAccess,cidrs:publicAccessCidrs}'
+aws ec2 describe-security-groups --region "$EXAMPLE_REGION" \
+  --group-ids "${REVIEWED_SECURITY_GROUP_ID:?}"
+```
+
+Referencias: [grupos de seguridad del clúster](https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html), [acceso al endpoint de la API](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html), [grupos de seguridad para Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html).
 
 </details>
 
-3. ¿Qué se requiere para implementar Kubernetes Network Policies en un clúster Amazon EKS?
-   * A) Configuración de AWS security groups
-   * B) Un CNI plugin que admita network policies, como Calico o Cilium
-   * C) Configuración de AWS Network Firewall
-   * D) VPC Flow Logs habilitado
+3. ¿Qué se necesita para aplicar Kubernetes NetworkPolicy en EKS?
+   * A) Solo una regla de grupo de seguridad
+   * B) Una implementación de políticas compatible y habilitada, como Amazon VPC CNI, Calico o Cilium
+   * C) Solo VPC Flow Logs
+   * D) Un objeto NetworkPolicy sin implementación que lo aplique
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un CNI plugin que admita network policies, como Calico o Cilium**
+**Respuesta: B) Una implementación de políticas compatible y habilitada, como Amazon VPC CNI, Calico o Cilium**
 
-**Explicación:** Para implementar Kubernetes Network Policies en un clúster Amazon EKS, necesitas un CNI (Container Network Interface) plugin que admita network policies, como Calico o Cilium. El Amazon VPC CNI plugin predeterminado no admite network policies, por lo que deben instalarse componentes adicionales.
+Se necesita una implementación de políticas de red configurada; crear solamente un objeto `NetworkPolicy` no hace que se apliquen las reglas de tráfico. **Amazon VPC CNI admite NetworkPolicy**, así que Calico o Cilium no son obligatorios para habilitar esta función.
 
-**Opciones de CNI con soporte para Network Policy:**
+**Opción Amazon VPC CNI:** comprueba que sean compatibles el clúster/plataforma, el kernel Linux y la versión de CNI; después habilita la función de políticas de red mediante la configuración que administra el complemento. La guía actual de AWS usa VPC CNI 1.21.0+ para políticas estándar y de administración, y Linux kernel 5.10+. Las versiones mínimas históricas anteriores no son objetivos de actualización para un clúster actual.
 
-1. **Calico**:
-   * Solución open-source de networking y seguridad de red ampliamente utilizada
-   * Puede usarse junto con Amazon VPC CNI en EKS
-   *   Método de instalación:
+```bash
+aws eks describe-addon --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --addon-name vpc-cni \
+  --query 'addon.{version:addonVersion,status:status,configuration:configurationValues}'
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
+  --addon-name vpc-cni --addon-version "${REVIEWED_CNI_VERSION:?}" \
+  --query configurationSchema --output text
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system \
+  get daemonset aws-node -o jsonpath='{.spec.template.spec.containers[*].name}{"\n"}'
+```
 
-       ```bash
-       # Install Calico using Helm
-       helm repo add projectcalico https://docs.projectcalico.org/charts
-       helm install calico projectcalico/tigera-operator --namespace tigera-operator --create-namespace
+Para el complemento administrado por EKS, el valor de configuración relevante es:
 
-       # Or install using manifest files
-       kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-       ```
-2. **Cilium**:
-   * Solución de networking, seguridad y observabilidad basada en eBPF
-   * Proporciona alto rendimiento y características avanzadas
-   *   Método de instalación:
+```json
+{
+  "enableNetworkPolicy": "true"
+}
+```
 
-       ```bash
-       # Install Cilium using Helm
-       helm repo add cilium https://helm.cilium.io/
-       helm install cilium cilium/cilium --namespace kube-system
-       ```
-3. **AWS CNI con Cilium**:
-   * Enfoque híbrido que usa Amazon VPC CNI y Cilium juntos
-   * VPC CNI gestiona el networking de Pods, y Cilium gestiona las network policies
-   *   Método de instalación:
+Combina esto con la **configuración completa revisada**, conservando los ajustes existentes necesarios; proporcionar un nuevo documento `configurationValues` no es un parche JSON. No degrades el complemento ni sobrescribas un DaemonSet administrado por EKS con un manifiesto upstream antiguo. Si usas una instalación de Helm/autoadministrada, sigue su configuración documentada.
 
-       ```bash
-       # Install Cilium in network policy only mode
-       helm install cilium cilium/cilium --namespace kube-system \
-         --set enableIPv4Masquerade=false \
-         --set tunnel=disabled \
-         --set installIptablesRules=false \
-         --set autoDirectNodeRoutes=false \
-         --set policyEnforcementMode=default
-       ```
+En el modo de inicio estándar, un Pod nuevo puede permitir tráfico al principio, antes de que se programe su política. El modo estricto comienza con denegación predeterminada, pero requiere preparar todas las conexiones necesarias, incluidas las dependencias de CoreDNS. No cambies un clúster existente al modo estricto sin revisar antes sus requisitos.
 
-**Ejemplos de Network Policy:**
+**Implementaciones alternativas:**
+
+- **Calico con redes de Amazon VPC:** conserva AWS IPAM/CNI y configura `Installation` del operador para `AmazonVPC`. Sigue las instrucciones de operador/CRD fijadas y los requisitos previos oficiales de EKS para la anotación de IP del Pod de AWS y RBAC. Desactiva la aplicación de políticas propia de AWS para esta vía Calico; instalar solo el operador o un manifiesto VXLAN arbitrario no equivale a este diseño.
 
 ```yaml
-# Default deny policy
+# Installation resource for the Amazon VPC networking path, after operator/CRDs.
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  kubernetesProvider: EKS
+  cni:
+    type: AmazonVPC
+  calicoNetwork:
+    bgp: Disabled
+```
+
+- **Cilium con Amazon VPC CNI:** se necesita la configuración documentada de encadenamiento; desactivar túneles/masquerading por sí solo no lo configura. Los siguientes valores son una referencia de la guía publicada 1.20.1. Comprueba la compatibilidad con la versión y el clúster y completa sus requisitos previos. Para aplicar la nueva ruta de encadenamiento, los Pods existentes deben recrearse mediante un despliegue controlado.
+
+```yaml
+# Relevant Helm values from the Cilium 1.20.1 AWS-CNI chaining guide.
+# This is not a complete install or migration command.
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
+```
+
+Elige y valida la implementación prevista en lugar de apilar instalaciones de CNI/políticas no revisadas. Sustituir una implementación puede dejar reglas a nivel de nodo y requiere una migración planificada.
+
+**Ejemplo de política:** en un namespace `policy-lab` recién creado, permite TCP 8080 desde frontend a backend y el tráfico DNS, y deniega el resto. El backend debe escuchar realmente en el puerto 8080. Para la implementación de AWS, usa el mismo Service y puerto de contenedor. Los selectores DNS siguientes presuponen Pods de CoreDNS convencionales en `kube-system`; NodeLocal DNSCache o un DNS personalizado requiere reglas revisadas distintas.
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny
-  namespace: default
+  namespace: policy-lab
 spec:
   podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
-# Allow communication between specific applications
+  policyTypes: [Ingress, Egress]
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend-to-backend
-  namespace: default
+  name: backend-ingress
+  namespace: policy-lab
 spec:
   podSelector:
     matchLabels:
       app: backend
+  policyTypes: [Ingress]
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - protocol: TCP
-      port: 8080
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-egress
+  namespace: policy-lab
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dns-egress
+  namespace: policy-lab
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 ```
 
-**Verificación de la implementación de Network Policy:**
+Se permite la salida de frontend y la entrada de backend porque ambos extremos quedan aislados de lo contrario. Varias NetworkPolicy estándar suman el tráfico permitido; el objeto de denegación predeterminada no anula una regla de autorización. Se permite DNS para el namespace de prueba, para que no se confunda una conexión de aplicación denegada con un fallo de DNS.
 
-```bash
-# Verify network policy support
-kubectl get pods -n kube-system | grep -E 'calico|cilium'
+**Verificación significativa:** usa Pods frontend, backend y cliente no relacionado administrados por Deployments. AWS advierte que la aplicación puede ser poco fiable para Pods independientes sin `metadata.ownerReferences`; no uses un Pod creado únicamente con `kubectl run` como prueba. Comprueba la conectividad inicial, aplica las políticas y luego confirma que frontend funciona y el cliente no relacionado falla mientras DNS sigue funcionando. Prueba conexiones nuevas una vez convergidas las políticas. Encontrar Pods de CNI o aplicar YAML correctamente no basta.
 
-# Apply test network policy
-kubectl apply -f test-network-policy.yaml
+La aplicación de políticas de AWS VPC CNI se limita a nodos EC2 Linux compatibles, no a Windows ni Fargate. Se aplica a la interfaz principal del Pod y a la familia de IP del clúster; hay limitaciones para interfaces adicionales y salida IPv4 desde Pods IPv6. Los grupos de seguridad, Network Firewall y los registros de flujo cumplen otras funciones y no sustituyen esta configuración de políticas de Kubernetes.
 
-# Test connectivity
-kubectl run -it --rm --restart=Never busybox --image=busybox -- wget -O- --timeout=2 http://service-name
-```
-
-**Problemas con otras opciones:**
-
-* **Configuración de AWS security groups**: Los security groups de AWS operan a nivel de instancia EC2 y no pueden usarse para implementar network policies detalladas entre Kubernetes Pods. Aunque la característica SecurityGroupsForPods permite aplicar security groups a Pods, este es un mecanismo diferente de Kubernetes NetworkPolicy.
-* **Configuración de AWS Network Firewall**: AWS Network Firewall opera a nivel de VPC y no puede usarse para implementar network policies detalladas entre Kubernetes Pods.
-* **VPC Flow Logs habilitado**: VPC Flow Logs se usa para monitorear y registrar tráfico de red, pero no puede usarse para implementar network policies.
-
-Las network policies son una herramienta importante para controlar la comunicación entre microservices y mejorar la seguridad dentro de los clústeres Kubernetes. Para implementar network policies en EKS, debes instalar CNI plugins adicionales como Calico o Cilium.
+Referencias: [configuración de políticas VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html), [limitaciones de políticas de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html), [Calico en EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks), [encadenamiento de Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst), [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 
 </details>
 
-4. ¿Cuál es la forma correcta de configurar el cifrado de Secrets en un clúster Amazon EKS?
-   * A) Habilitar el cifrado usando una AWS KMS key al crear el clúster EKS
-   * B) Migrar Kubernetes Secrets a AWS Secrets Manager
-   * C) Codificar todos los Secrets en Base64
-   * D) Implementar un encryption sidecar container en el clúster EKS
+4. ¿Qué afirmación describe correctamente el cifrado en reposo de los datos de la API de Kubernetes en EKS 1.28 o posterior?
+   * A) El cifrado de sobre está habilitado de forma predeterminada; una clave KMS administrada por el cliente es opcional
+   * B) Siempre hay que volver a crear el clúster antes de cifrar Secrets
+   * C) La codificación Base64 proporciona cifrado en reposo
+   * D) Un sidecar de aplicación debe cifrar la base de datos del plano de control de EKS
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Habilitar el cifrado usando una AWS KMS key al crear el clúster EKS**
+**Respuesta: A) El cifrado de sobre está habilitado de forma predeterminada; una clave KMS administrada por el cliente es opcional**
 
-**Explicación:** La forma correcta de configurar el cifrado de Secrets en un clúster Amazon EKS es habilitar el cifrado usando una AWS KMS (Key Management Service) key al crear el clúster EKS o en un clúster existente. Este método garantiza que Kubernetes Secrets se cifren cuando se almacenan en etcd.
+Los clústeres EKS con Kubernetes **1.28 o posterior** tienen habilitado de forma predeterminada el cifrado de sobre KMS v2 para **todos los datos de la API de Kubernetes**, con una clave propiedad de AWS, salvo que se asocie una clave KMS administrada por el cliente. Esto incluye Secrets, ConfigMaps y otros recursos almacenados de la API. Se suma al cifrado de disco de etcd y no cifra datos de aplicaciones en nodos ni volúmenes EBS.
 
-**Pasos para configurar el cifrado de EKS Secrets:**
+**Inspecciona antes de cambiar nada.** Que no aparezca el ARN de una clave administrada por el cliente en `encryptionConfig` no significa que Secrets no esté cifrado. La consola identifica el modo de clave propiedad de AWS sin revelar el ARN de esa clave.
 
-1.  **Crear una KMS Key o usar una Key existente**:
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" \
+  --query 'cluster.{version:version,status:status,encryption:encryptionConfig}'
 
-    ```bash
-    # Create KMS key
-    aws kms create-key --description "EKS Secrets Encryption Key"
+# Optional CMK inspection, only when a customer-managed key is required.
+aws kms describe-key --key-id "${KMS_KEY_ARN:?Reviewed customer-managed key ARN}" \
+  --region "$EXAMPLE_REGION" \
+  --query 'KeyMetadata.{arn:Arn,state:KeyState,spec:KeySpec,usage:KeyUsage}'
+```
 
-    # Store the created key ID
-    KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
-    ```
-2.  **Habilitar el cifrado al crear un nuevo clúster**:
+**Clave administrada por el cliente (CMK) opcional.** Si tus requisitos necesitan control del cliente sobre las claves, usa una clave de cifrado simétrica en la región del clúster. Comprueba la disponibilidad de la clave, los permisos IAM del llamador, la política/concesiones de la clave y, si corresponde, los permisos entre cuentas. Una política genérica que concede varias acciones KMS solo a `eks.amazonaws.com` no configura todo: la identidad que aprovisiona/asocia el clúster necesita los permisos documentados `kms:DescribeKey` y `kms:CreateGrant`. La condición `kms:GrantIsForAWSResource` no se admite para controlar `CreateGrant` durante `CreateCluster`.
 
-    ```bash
-    # Enable encryption using AWS CLI
-    aws eks create-cluster \
-      --name my-cluster \
-      --role-arn arn:aws:iam::123456789012:role/EksClusterRole \
-      --resources-vpc-config subnetIds=subnet-12345,subnet-67890 \
-      --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:region:123456789012:key/'$KEY_ID'"}}]'
+Puedes proporcionar un proveedor en `CreateCluster` o asociar una CMK a un clúster existente apto mediante `AssociateEncryptionConfig`; no es obligatorio crear otro clúster. No uses esto como mecanismo genérico para reemplazar claves o desactivar el cifrado. Los clústeres que ya tienen una CMK asociada deben seguir el procedimiento de administración de claves compatible.
 
-    # Enable encryption using eksctl
-    cat > cluster.yaml << EOF
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    secretsEncryption:
-      keyARN: arn:aws:kms:us-west-2:123456789012:key/$KEY_ID
-    EOF
+```bash
+# Optional CMK association for an eligible existing cluster.
+# Review current configuration, key policy/grants and recovery procedures first.
+KMS_CONFIG_DIR=$(mktemp -d /tmp/eks-kms-config.XXXXXX)
+: "${KMS_CONFIG_DIR:?}"
+jq -n --arg arn "${KMS_KEY_ARN:?}" \
+  '[{resources:["secrets"],provider:{keyArn:$arn}}]' \
+  > "$KMS_CONFIG_DIR/encryption.json" || exit 1
+if ENCRYPTION_UPDATE_ID=$(aws eks associate-encryption-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --encryption-config "file://$KMS_CONFIG_DIR/encryption.json" \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --update-id "$ENCRYPTION_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+fi
+```
 
-    eksctl create cluster -f cluster.yaml
-    ```
-3.  **Habilitar el cifrado en un clúster existente**:
+Registra el ID de actualización y comprueba hasta que indique `Successful` o un error; aceptar la solicitud no significa que haya finalizado. El campo `resources: ["secrets"]` conservado se acepta por compatibilidad. En EKS 1.28+, **no** limita el cifrado a Secrets: está obsoleto y se cifran todos los datos de la API de Kubernetes. Las API actuales también aceptan una lista `resources` omitida, nula o vacía, mientras que las respuestas conservan el valor heredado `['secrets']`. El antiguo procedimiento `enable-kms` para Kubernetes 1.27 y anteriores es una referencia histórica, no un objetivo de migración con versiones admitidas.
 
-    ```bash
-    # For existing clusters, you cannot update the encryption configuration, so you need to create a new cluster and migrate workloads.
-    ```
-4.  **Verificar la configuración de cifrado**:
+No desactives ni elimines una clave asociada como limpieza del laboratorio mientras exista el clúster. La indisponibilidad de la clave puede degradar el plano de control y su pérdida permanente puede hacer que el clúster sea irrecuperable. Revisa recuperación, acceso y monitoreo antes de elegir una CMK. El cifrado predeterminado con clave propiedad de AWS no requiere configurar una clave del cliente; una CMK sí tiene cargos KMS propios.
 
-    ```bash
-    # Check cluster information
-    aws eks describe-cluster --name my-cluster --query cluster.encryptionConfig
-    ```
-
-**Uso de Secrets cifrados:**
-
-Una vez habilitado el cifrado, el método para crear y usar Secrets no cambia. Todo el cifrado y descifrado lo gestiona automáticamente el EKS control plane.
+**El uso de Secrets no cambia.** Los clientes autorizados de la API y los Pods reciben valores utilizables; el cifrado en reposo no sustituye RBAC, identidad de carga de trabajo ni la protección de registros/copias de seguridad. El siguiente manifiesto contiene deliberadamente datos ficticios públicos y no representa un secreto de producción:
 
 ```yaml
-# Create Secret
+# Public dummy data for a newly created secrets-lab namespace only.
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-secret
+  name: example-credentials
+  namespace: secrets-lab
 type: Opaque
-data:
-  username: YWRtaW4=  # base64 encoded "admin"
-  password: cGFzc3dvcmQ=  # base64 encoded "password"
+stringData:
+  username: example-user
+  password: public-training-placeholder
 ```
 
 ```bash
-# Create Secret
-kubectl create secret generic my-secret --from-literal=username=admin --from-literal=password=password
-
-# Verify Secret
-kubectl get secret my-secret -o yaml
+# Inspect keys and metadata without printing values.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  -n secrets-lab get secret example-credentials -o json |
+  jq '{name:.metadata.name,type:.type,keys:(.data|keys)}'
 ```
 
-**Configuración de permisos de KMS Key:**
+Para credenciales reales, evita confirmar manifiestos con valores en texto plano o Base64, literales en el historial del shell y diagnósticos que impriman valores. Base64 es codificación reversible. AWS Secrets Manager puede integrarse con archivos montados mediante CSI o con un controlador que sincronice Kubernetes Secrets; no necesariamente hay que modificar todas las aplicaciones para que usen el SDK. Un Secret sincronizado sigue sujeto a los controles de acceso de Kubernetes. Un sidecar no puede configurar el cifrado en reposo del servidor de API administrado.
 
-Necesitas configurar permisos adecuados para que el clúster EKS pueda usar la KMS key:
+Referencias: [cifrado de sobre predeterminado](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [AssociateEncryptionConfig](https://docs.aws.amazon.com/eks/latest/APIReference/API_AssociateEncryptionConfig.html), [procedimiento KMS heredado y permisos](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html), [Secrets Manager en EKS](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html).
+
+</details>
+
+5. ¿Cómo se deben personalizar los ajustes de kubelet para nodos administrados EC2 con AL2023?
+   * A) Editar kubelet del plano de control de EKS en la consola
+   * B) Usar un NodeConfig compatible de nodeadm mediante eksctl o datos de usuario de una plantilla de lanzamiento
+   * C) Cambiar `status.capacity` con `kubectl edit node`
+   * D) Ejecutar el script AL2 `bootstrap.sh` en cada arranque de AL2023
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Usar un NodeConfig compatible de nodeadm mediante eksctl o datos de usuario de una plantilla de lanzamiento**
+
+Para **nodos EC2 con AL2023**, usa `NodeConfig` de `nodeadm` y la integración compatible de eksctl/plantilla de lanzamiento. No uses el procedimiento AL2 `/etc/eks/bootstrap.sh` ni des por supuesto que existe la opción `eksctl create nodegroup --kubelet-extra-args`. El mapa heredado `kubeletExtraArgs` no es el campo compatible de grupo de nodos administrado que se muestra aquí.
+
+**eksctl:** en AL2023, `overrideBootstrapCommand` contiene YAML `NodeConfig`, pese a su nombre. eksctl antepone esa configuración a los datos de usuario para que nodeadm la combine con la configuración de nodo generada. Con una AMI nativa seleccionada por EKS, EKS proporciona la configuración predeterminada del clúster necesaria. Revisa los ajustes combinados efectivos en un nodo de prueba antes de ampliar el despliegue:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: custom-kubelet
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 5
+    labels:
+      example.com/environment: test
+    overrideBootstrapCommand: |
+      apiVersion: node.eks.aws/v1alpha1
+      kind: NodeConfig
+      spec:
+        kubelet:
+          config:
+            kubeReserved:
+              cpu: 100m
+              memory: 300Mi
+            systemReserved:
+              cpu: 200m
+              memory: 512Mi
+            evictionHard:
+              memory.available: 500Mi
+            mergeDefaultEvictionSettings: true
+```
+
+Las reservas de recursos y el umbral de desalojo de 500 MiB anteriores son **ilustrativos**, no recomendaciones medidas. Reducen los recursos asignables a Pods y pueden provocar desalojos si no son adecuados. `mergeDefaultEvictionSettings: true` se admite en Kubernetes 1.36 y conserva las señales de desalojo predeterminadas no especificadas cuando kubelet procesa un mapa parcial. Sin la combinación apropiada, especificar una sola señal puede poner accidentalmente a cero otros umbrales predeterminados.
+
+**Vía de AMI/plantilla de lanzamiento personalizada:** si proporcionas tu propio ID de AMI fuera de la configuración generada por eksctl, incluye metadatos completos del clúster: nombre, endpoint de API, CA en base64 y CIDR de servicios. Reutiliza el procedimiento para generar metadatos de la [pregunta avanzada 5 del cuestionario de la Parte 1](02-eks-cluster-creation-part1-quiz.md#advanced-topics) y añade los ajustes revisados `spec.kubelet.config` a ese NodeConfig. Un objeto parcial que solo contenga kubelet no es una configuración de arranque independiente completa.
+
+En AL2023, `nodeadm-config` se ejecuta antes de los datos de usuario y `nodeadm-run` después. No vuelvas a ejecutar `nodeadm init` ni inicies/reconfigures kubelet manualmente de forma que entre en conflicto con esos servicios. Otras familias de sistemas operativos, incluidas Bottlerocket y Windows, usan mecanismos distintos; estos ejemplos no se aplican a los nodos EKS Auto Mode.
+
+| Ajuste | Qué verificar |
+| --- | --- |
+| `maxPods` / `maxPodsExpression` de nodeadm | Límites de ENI/IP de la instancia, modo de CNI, delegación de prefijos y densidad compatible; no impongas el valor universal 110 |
+| Etiquetas y taints de nodos | Prefiere los campos del grupo de nodos administrado; usa tu propio prefijo de etiquetas en vez de sobrescribir etiquetas de EKS/AZ |
+| `kubeReserved`, `systemReserved` | Requisitos reales del host/cargas del sistema y Node Allocatable |
+| `evictionHard`, umbrales soft | Señales de memoria/disco/inodos y combinación con valores predeterminados; no desactives otras protecciones |
+| Controlador cgroup | Compatibilidad con el sistema operativo y el entorno de ejecución elegidos; conserva los valores probados de la AMI salvo que haga falta un cambio revisado |
+
+**Validación:** inspecciona `capacity`/`allocatable` del nodo y la configuración/registros efectivos del servicio. Que el nodo esté listo no demuestra que se haya aplicado cada valor personalizado. Esta auditoría comprobó la sintaxis de configuración y las definiciones oficiales de los campos; no arrancó un nodo con estos ajustes.
+
+```bash
+# Kubernetes-side checks through the intended cluster context.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" describe node "${EXAMPLE_NODE_NAME:?}"
+
+# Run separately on a specifically authorized AL2023 test node.
+sudo systemctl status nodeadm-config nodeadm-run kubelet --no-pager
+sudo systemctl cat kubelet
+sudo journalctl -u nodeadm-config -u nodeadm-run -u kubelet --since '-15 min' --no-pager
+```
+
+Usa la ruta de configuración real del servicio configurado, en lugar de suponer que cada AMI tiene `/etc/systemd/system/kubelet.service.d/10-kubelet-args.conf`. Limita y protege los registros de diagnóstico según corresponda.
+
+`kubectl edit node` puede cambiar metadatos del objeto Node, pero no define la configuración de inicio de kubelet. SSM puede ejecutar comandos en el host, pero una modificación puntual no es una configuración duradera para sustituir nodos administrados y puede exigir reinicios disruptivos. Incluye los ajustes revisados en la configuración de aprovisionamiento y sustituye/prueba los nodos de forma planificada.
+
+Referencias: [arranque de AL2023 en eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/node-bootstrapping.html), [servicios de AL2023](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html), [API de nodeadm](https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/), [KubeletConfiguration](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/), [definiciones de campos de Kubernetes 1.36](https://github.com/kubernetes/kubelet/blob/v0.36.0/config/v1beta1/types.go).
+
+</details>
+
+6. ¿Qué mecanismos pueden sustituir los controles eliminados de PodSecurityPolicy en EKS?
+   * A) Solo grupos de seguridad de EC2
+   * B) Pod Security Admission y, cuando haga falta, un motor de políticas compatible
+   * C) Solo la retención de registros de CloudWatch
+   * D) Una clave de acceso de un usuario de IAM guardada en cada Pod
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Pod Security Admission y, cuando haga falta, un motor de políticas compatible**
+
+PodSecurityPolicy quedó obsoleto en Kubernetes 1.21 y se eliminó en 1.25. Usa **Pod Security Admission (PSA)**, integrado, para aplicar **Pod Security Standards (PSS)**; para requisitos que excedan esos controles, usa un motor de políticas adecuado.
+
+**PSA:** Privileged, Baseline y Restricted son los tres niveles de PSS; `enforce`, `audit` y `warn` son modos separados. Para un namespace de laboratorio nuevo, este ejemplo aplica Baseline e informa de las infracciones de Restricted. La versión de política se fija para el ejemplo de EKS 1.36; elige una versión compatible con el clúster real.
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policy-engine-lab
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: v1.36
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.36
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.36
+```
+
+No cambies etiquetas a ciegas en un namespace compartido existente. Primero usa audit/warn, corrige manifiestos de cargas de trabajo y, después, endurece la aplicación. PSA no modifica Pods para que cumplan ni expulsa Pods que ya se están ejecutando. Evalúa la admisión de Pods; las advertencias/auditorías de plantillas de carga de trabajo ayudan a detectar infracciones antes de que sus controladores intenten crear Pods.
+
+**Kyverno:** el chart 3.9.1 incluye el controlador 1.19.1 en este ejemplo auditado. Kyverno 1.19 declara obsoletos los tipos heredados `ClusterPolicy`/`Policy` y su guía de migración programa su eliminación en 1.20. Los ejemplos nuevos deben usar las API de políticas actuales basadas en CEL. Migra las políticas existentes antes de una actualización incompatible, en vez de cambiar solo la versión del controlador.
+
+```bash
+# Optional new installation; review existing controllers and release compatibility.
+helm repo add kyverno https://kyverno.github.io/kyverno/
+helm repo update kyverno
+helm install kyverno kyverno/kyverno --version 3.9.1 \
+  --namespace kyverno --create-namespace \
+  --kubeconfig "${EXAMPLE_KUBECONFIG:?}" --wait --timeout 5m
+```
+
+La siguiente **ValidatingPolicy** de `policies.kyverno.io/v1` rechaza `privileged: true` en contenedores normales, de inicialización y efímeros y solo coincide con el namespace de laboratorio. Permite que el campo esté ausente o sea falso:
+
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-privileged-lab
+spec:
+  validationActions:
+  - Deny
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-engine-lab'
+  validations:
+  - expression: object.spec.containers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged)
+    message: Privileged containers are not allowed.
+  - expression: '!has(object.spec.initContainers) || object.spec.initContainers.all(c, !has(c.securityContext) ||
+      !has(c.securityContext.privileged) || !c.securityContext.privileged)'
+    message: Privileged initContainers are not allowed.
+  - expression: '!has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c, !has(c.securityContext)
+      || !has(c.securityContext.privileged) || !c.securityContext.privileged)'
+    message: Privileged ephemeralContainers are not allowed.
+```
+
+Esto demuestra un control, no todo el estándar Baseline o Restricted. El motor/CRD de políticas debe estar listo antes de aplicar la política, y hay que verificar la admisión activa y el comportamiento de subrecursos en el clúster previsto. La evaluación en segundo plano informa de infracciones existentes, pero no expulsa cargas en ejecución.
+
+**Alternativa OPA Gatekeeper:** instala una versión revisada de Gatekeeper si su modelo de políticas satisface tus requisitos. Este ejemplo fija el chart/controlador 3.23.1:
+
+```bash
+# Alternative policy-engine example, not a prerequisite for the Kyverno example.
+helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+helm repo update gatekeeper
+helm install gatekeeper gatekeeper/gatekeeper --version 3.23.1 \
+  --namespace gatekeeper-system --create-namespace \
+  --kubeconfig "${EXAMPLE_KUBECONFIG:?}" --wait --timeout 5m
+```
+
+Gatekeeper necesita primero una ConstraintTemplate `templates.gatekeeper.sh/v1`. Espera a que la plantilla y el CRD de restricción generado estén establecidos antes de aplicar la Constraint correspondiente. El ejemplo Rego siguiente comprueba las mismas tres listas de contenedores y limita la Constraint al namespace del laboratorio:
+
+```yaml
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8snoprivilegedlab
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNoPrivilegedLab
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    rego: "package k8snoprivilegedlab\n\ncontainers[c] {\n  c := input.review.object.spec.containers[_]\n\
+      }\ncontainers[c] {\n  c := input.review.object.spec.initContainers[_]\n}\ncontainers[c]\
+      \ {\n  c := input.review.object.spec.ephemeralContainers[_]\n}\nviolation[{\"\
+      msg\": msg}] {\n  c := containers[_]\n  c.securityContext.privileged == true\n\
+      \  msg := sprintf(\"Privileged container is not allowed: %v\", [c.name])\n}\n"
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sNoPrivilegedLab
+metadata:
+  name: no-privileged-lab
+spec:
+  enforcementAction: deny
+  match:
+    scope: Namespaced
+    namespaces:
+    - policy-engine-lab
+    kinds:
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+```
+
+`enforcementAction: deny` de Gatekeeper rechaza infracciones coincidentes; `dryrun` o `warn` permiten una implementación gradual. Una plantilla sin su Constraint no aplica ninguna política. Usa el esquema de API y modo Rego compatibles con la versión instalada.
+
+**Validación y límites:** la CLI Kyverno 1.19.1 (con advertencias tratadas como errores) y Gator de Gatekeeper 3.23.1 se ejecutaron localmente con seis casos cada uno: valor explícitamente falso, campo omitido, contenedores normales/de inicialización/efímeros privilegiados y un namespace fuera de alcance. Ambas implementaciones dieron los resultados locales previstos. No se instaló ningún clúster ni se probó admisión activa.
+
+```bash
+# Offline policy logic checks using locally reviewed fixture files.
+kyverno apply kyverno-policy.yaml --resource test-pod.yaml --warnings-as-errors
+gator test --filename gatekeeper-policy.yaml --filename test-pod.yaml --output=json
+```
+
+No deduzcas que un rechazo activo provino de un motor específico si PSA u otro webhook también lo habría rechazado. Verifica el estado del controlador/política, el alcance, las respuestas de admisión reales y los informes. Usa el conjunto completo de controles para namespaces del host, hostPath, capacidades, escalada de privilegios y otros requisitos PSS.
+
+AWS Security Hub, AWS Config y los grupos de seguridad de EC2 tienen funciones distintas; habilitarlos no sustituye la aplicación de políticas de admisión de Pods de Kubernetes.
+
+Referencias: [PSA](https://kubernetes.io/docs/concepts/security/pod-security-admission/), [PSS](https://kubernetes.io/docs/concepts/security/pod-security-standards/), [migración de Kyverno CEL](https://kyverno.io/docs/guides/migration-to-cel/), [Kyverno 1.19.1](https://github.com/kyverno/kyverno/releases/tag/v1.19.1), [guía de Gatekeeper 3.23.1](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/howto.md).
+
+</details>
+
+7. ¿Qué requisito de proveedor de identidad de IAM necesita la relación de confianza de identidad web de IRSA?
+   * A) Una clave de acceso de usuario IAM almacenada en cada Pod
+   * B) Un RoleBinding de administrador del clúster
+   * C) Un proveedor OIDC de IAM que coincida con el emisor del clúster
+   * D) Una IP pública en cada nodo de trabajo
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Un proveedor OIDC de IAM que coincida con el emisor del clúster**
+
+IRSA necesita un proveedor OIDC de IAM que coincida con el emisor del clúster de destino. Comprueba si ya existe; no crees proveedores duplicados ni reutilices el emisor de otro clúster. Este requisito debe cumplirse antes de que la carga de trabajo asuma el rol de IAM, aunque la cuenta de servicio puede crearse antes que el rol y anotarse después. No hay un orden universal obligatorio para crear todos los recursos.
+
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --query cluster.identity.oidc.issuer --output text
+eksctl utils associate-iam-oidc-provider \
+  --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --approve
+```
+
+Usa eksctl o el procedimiento actual para proveedores OIDC de IAM, en vez de copiar una huella digital de certificado fija y antigua. Configura `sts.amazonaws.com` como ID de cliente/audiencia previsto. En una VPC sin salida a Internet, configurar el proveedor desde dentro de la VPC puede requerir el endpoint de interfaz `oidc-eks`/DNS privado independiente u otra ruta de administración accesible. El intercambio de tokens de IRSA también necesita conectividad regional con STS.
+
+Después crea la política de rol con alcance limitado y la política de confianza de la pregunta 1 con `aud` y `sub`; anota la cuenta de servicio correcta y crea un Pod nuevo que la use. Los Pods existentes no reciben la configuración inyectada recién modificada solo porque cambie la anotación de la cuenta; recréalos mediante el despliegue habitual de su controlador.
+
+Para comprobar la identidad, usa el manifiesto explícito de Pod de la pregunta 1. `kubectl run --serviceaccount` no es una opción compatible actual:
+
+```bash
+# After deploying the identity-check Pod from question 1.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n irsa-lab \
+  get pod irsa-identity-check -o jsonpath='{.status.phase}{"\n"}'
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n irsa-lab logs irsa-identity-check
+```
+
+Comprueba el estado de salida del Pod y compara la cuenta/identidad del rol asumido devuelto con el rol esperado. La identidad del rol del nodo no demuestra que IRSA funcione. Prueba después únicamente la operación acotada de la aplicación; `aws s3 ls` sin bucket intentaría enumerar todos los buckets y no corresponde a una política limitada a uno solo.
+
+EKS Pod Identity usa otro mecanismo y no requiere crear un proveedor OIDC de IAM por cada clúster. Mantén separados sus requisitos de asociación de cuenta de servicio, agente y confianza IAM de los de IRSA.
+
+Referencias: [crear un proveedor OIDC de IAM](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html), [conectividad privada de IRSA](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [configuración de Pods](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html).
+
+</details>
+
+8. ¿Cómo se habilita la exportación de registros del plano de control de EKS?
+   * A) Instalar un agente en los hosts del plano de control administrado
+   * B) Configurar los registros del clúster mediante las API de EKS, la consola o eksctl
+   * C) Instalar Fluentd únicamente en los nodos de trabajo
+   * D) Conectarse por SSH al servidor API administrado y editar su configuración
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Configurar los registros del clúster mediante las API de EKS, la consola o eksctl**
+
+Habilita la exportación de registros del plano de control de EKS mediante la API de EKS, la consola o eksctl. AWS opera los hosts del plano de control; instalar agentes de CloudWatch/Fluentd en nodos de trabajo no habilita esos registros. Los operadores no pueden conectarse por SSH a los hosts administrados del plano de control.
+
+**AWS CLI:** inspecciona la configuración actual y elige los tipos necesarios. Es una actualización asíncrona: registra su ID y vuelve a ejecutar `describe-update` hasta que tenga éxito o indique un error. EKS puede necesitar hasta cinco direcciones IP libres en cada subred del clúster para actualizar los registros.
+
+```bash
+# Enable the reviewed set of log types; this example enables all five.
+if LOG_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --update-id "$LOG_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+fi
+```
+
+Para habilitar solo API/audit y desactivar explícitamente los otros tres tipos, usa la siguiente carga de registro **alternativa** después de revisar los requisitos de auditoría/retención. No ejecutes ambas configuraciones en secuencia ni desactives registros requeridos solo para reducir costes:
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowEKSToUseKMSKey",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "eks.amazonaws.com"
-      },
-      "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    }
+  "clusterLogging": [
+    {"types": ["api", "audit"], "enabled": true},
+    {"types": ["authenticator", "controllerManager", "scheduler"], "enabled": false}
   ]
 }
 ```
 
-**Problemas con otras opciones:**
+**Alternativa eksctl:** las operaciones de vista previa y aplicación son distintas; `--approve` es obligatorio para aplicar el cambio revisado. `--disable-types` puede desactivar expresamente tipos seleccionados cuando esa sea la intención.
 
-* **Migrar Kubernetes Secrets a AWS Secrets Manager**: Este es un enfoque posible, pero tiene menos compatibilidad con la API estándar de Kubernetes Secrets y requiere configuración e integración adicionales. Además, todas las aplicaciones deben modificarse para recuperar secretos desde AWS Secrets Manager.
-* **Codificar todos los Secrets en Base64**: Kubernetes Secrets ya están codificados en Base64 de forma predeterminada. Sin embargo, Base64 es un método de codificación, no cifrado, y no proporciona seguridad.
-* **Implementar un encryption sidecar container en el clúster EKS**: Este no es un enfoque estándar, y agregar sidecars a todos los Pods introduce complejidad. También requiere integración con el Kubernetes API server.
+```bash
+# Alternative interface; do not submit a second update while one is running.
+# Without --approve this previews the logging change.
+eksctl utils update-cluster-logging \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --enable-types api,audit,authenticator,controllerManager,scheduler
 
-El cifrado de EKS Secrets usando AWS KMS es la forma más eficaz e integrada de proteger Secrets almacenados en etcd. Esto te permite proteger datos confidenciales en reposo y aprovechar las potentes capacidades de gestión de keys de AWS.
+# Apply the reviewed change.
+eksctl utils update-cluster-logging \
+  --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --enable-types api,audit,authenticator,controllerManager,scheduler --approve
+```
+
+**Consola:** selecciona el clúster, abre **Observabilidad** y ve a **Control plane logging → Manage logging**. Elige cada tipo de registro y guarda la configuración revisada.
+
+| Tipo | Propósito | Prefijo del flujo |
+| --- | --- | --- |
+| `api` | Diagnóstico de componentes del servidor API; los parámetros de inicio solo están disponibles si se capturan antes de rotar el registro | `kube-apiserver-` |
+| `audit` | Actividad de la API de Kubernetes registrada conforme a la política de auditoría administrada | `kube-apiserver-audit-` |
+| `authenticator` | Diagnóstico de autenticación IAM | `authenticator-` |
+| `controllerManager` | Diagnóstico del bucle de control integrado de Kubernetes | `kube-controller-manager-` |
+| `scheduler` | Diagnóstico de planificación de Pods | `kube-scheduler-` |
+
+Los registros de auditoría no documentan cada solicitud de aplicación ni cada proceso/acción de red en un nodo. CloudTrail registra por separado la actividad pertinente de la API de AWS. La entrega de registros del plano de control es de mejor esfuerzo, normalmente en unos minutos; habilitarla no recupera registros ya rotados.
+
+**Verifica la exportación:** los registros están en `/aws/eks/<cluster-name>/cluster` de la cuenta/región del clúster. Los sufijos de los flujos rotan; inspecciona las horas de eventos recientes en vez de suponer un único nombre permanente.
+
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --query cluster.logging
+aws logs describe-log-streams --region "$EXAMPLE_REGION" \
+  --log-group-name "/aws/eks/$EXAMPLE_CLUSTER/cluster" \
+  --order-by LastEventTime --descending --max-items 10
+```
+
+La ingesta, el almacenamiento y las consultas de CloudWatch tienen coste. Configura la retención y los controles de acceso según tus requisitos y verifica que lleguen los tipos de registro requeridos. Que la actualización de configuración tenga éxito no demuestra que estén presentes todos los eventos históricos esperados. Los recolectores de registros de nodos/aplicaciones son una preocupación distinta del plano de datos.
+
+Referencia: [registros del plano de control de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html).
 
 </details>
 
-5\. ¿Cuál es la forma correcta de personalizar la configuración de kubelet para worker nodes en un clúster Amazon EKS? - A) Modificar la configuración del clúster en la consola de EKS - B) Usar el parámetro --kubelet-extra-args al crear el node group - C) Usar el comando kubectl edit node - D) Usar AWS Systems Manager para cambiar la configuración del node
+9. ¿Cómo se cambian los tipos de instancia especificados en la solicitud del grupo de nodos administrado de EKS, cuando no se usa un tipo de instancia de una plantilla personalizada?
+   * A) Editar el campo `instanceTypes` directamente en la consola
+   * B) Crear un grupo de nodos de sustitución y validar la migración de cargas de trabajo
+   * C) Usar `kubectl edit node` para cambiar el hardware EC2
+   * D) Pasar nuevos tipos de instancia a `update-nodegroup-config`
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usar el parámetro --kubelet-extra-args al crear el node group**
+**Respuesta: B) Crear un grupo de nodos de sustitución y validar la migración de cargas de trabajo**
 
-**Explicación:** La forma correcta de personalizar la configuración de kubelet para worker nodes en un clúster Amazon EKS es usar el parámetro `--kubelet-extra-args` al crear el node group. Este método permite pasar argumentos adicionales a kubelet cuando se inicializa el node.
+Esta pregunta trata los tipos de instancia especificados en la **solicitud del grupo de nodos administrado**, no en una plantilla de lanzamiento personalizada. Esos tipos no se pueden cambiar con `update-nodegroup-config`; crea un grupo nuevo y migra las cargas de trabajo.
 
-**Métodos para personalizar la configuración de kubelet:**
+Hay otra vía si el grupo se creó con una plantilla de lanzamiento personalizada y el tipo de instancia está definido allí: revisa una versión nueva de **la misma** plantilla y aplícala mediante `update-nodegroup-version`. Aun así, se sustituyen instancias. No modifiques plantillas generadas por EKS, no especifiques tipos en ambos lugares ni supongas que una arquitectura de CPU distinta funcionará con la misma AMI/imágenes.
 
-1.  **Uso de Launch Templates con Managed Node Groups**:
-
-    * Personaliza el bootstrap script en la sección user data del launch template.
-
-    ```bash
-    #!/bin/bash
-    set -o xtrace
-    /etc/eks/bootstrap.sh my-cluster \
-      --kubelet-extra-args '--max-pods=110 --kube-reserved memory=0.3Gi,cpu=100m --system-reserved memory=0.5Gi,cpu=200m --eviction-hard memory.available<500Mi'
-    ```
-2. **Creación de Node Groups usando eksctl**:
+**1. Crear capacidad de sustitución.** Comprueba ofertas de instancias, cuotas, arquitectura, capacidad de CNI/IP, AZ, almacenamiento y permisos del rol de nodo. Los dos comandos son alternativas para un clúster de pruebas existente:
 
 ```bash
-# Create node group with kubelet arguments
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --node-type m5.large \
-  --nodes 3 \
-  --kubelet-extra-args "--max-pods=110 --kube-reserved memory=0.3Gi,cpu=100m"
+# Alternative 1: eksctl, for an unused managed node-group name.
+eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --name "${NEW_NODEGROUP_NAME:?}" \
+  --managed --node-ami-family AmazonLinux2023 --node-private-networking \
+  --node-type m5.large --nodes 3 --nodes-min 1 --nodes-max 5 \
+  --node-labels "example.com/migration-target=true"
+
+# Alternative 2: AWS CLI; do not run both for the same node group.
+aws eks create-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --instance-types m5.large --ami-type AL2023_x86_64_STANDARD \
+  --scaling-config minSize=1,maxSize=5,desiredSize=3 \
+  --node-role "${NODE_ROLE_ARN:?}" \
+  --labels '{"example.com/migration-target":"true"}'
 ```
 
-3.  **Uso de archivo de configuración de eksctl**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: my-nodegroup
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 5
-        kubeletExtraArgs:
-          max-pods: "110"
-          kube-reserved: "memory=0.3Gi,cpu=100m"
-          system-reserved: "memory=0.5Gi,cpu=200m"
-          eviction-hard: "memory.available<500Mi"
-    ```
-4.  **Uso de user data script para self-managed node groups**:
-
-    ```bash
-    #!/bin/bash
-    set -o xtrace
-    /etc/eks/bootstrap.sh my-cluster \
-      --kubelet-extra-args '--max-pods=110 --node-labels=node.kubernetes.io/role=worker,environment=prod'
-    ```
-
-**Parámetros de kubelet comúnmente personalizados:**
-
-1. **max-pods**:
-   * Establece el número máximo de Pods por node
-   * Ejemplo: `--max-pods=110`
-2. **node-labels**:
-   * Agrega labels al node
-   * Ejemplo: `--node-labels=environment=prod,node-type=worker`
-3. **kube-reserved**:
-   * Reserva recursos para componentes del sistema Kubernetes
-   * Ejemplo: `--kube-reserved=cpu=100m,memory=0.3Gi,ephemeral-storage=1Gi`
-4. **system-reserved**:
-   * Reserva recursos para daemons del sistema operativo
-   * Ejemplo: `--system-reserved=cpu=100m,memory=0.5Gi,ephemeral-storage=1Gi`
-5. **eviction-hard**:
-   * Establece umbrales estrictos de eviction
-   * Ejemplo: `--eviction-hard=memory.available<500Mi,nodefs.available<10%`
-6. **cgroup-driver**:
-   * Establece el cgroup driver
-   * Ejemplo: `--cgroup-driver=systemd`
-
-**Cómo verificar la configuración:**
+**2. Verificar el grupo nuevo.** Espera a que esté `ACTIVE`, haya nodos `Ready` sanos y funcionen CNI/DNS. Enumerar etiquetas no demuestra que la aplicación esté lista:
 
 ```bash
-# SSH into the node
-ssh -i ~/.ssh/id_rsa ec2-user@<node-ip>
-
-# Check kubelet service configuration
-sudo systemctl status kubelet
-sudo cat /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
-
-# Check running kubelet process arguments
-ps aux | grep kubelet
+aws eks describe-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
+  --query 'nodegroup.{status:status,health:health,types:instanceTypes,subnets:subnets}'
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -l example.com/migration-target=true -o wide
 ```
 
-**Problemas con otras opciones:**
+**3. Migrar y probar.** Elige un plan de actualización gradual o blue/green específico de la aplicación. Un Service envía tráfico a endpoints de Pods listos seleccionados, no directamente al nombre de un grupo de nodos. Conserva la capacidad antigua hasta entender las necesidades de reversión y la compatibilidad de datos.
 
-* **Modificar la configuración del clúster en la consola de EKS**: Aunque la consola de EKS permite modificar configuraciones a nivel de clúster, no proporciona opciones para modificar directamente la configuración de kubelet de nodes individuales.
-* **Usar el comando kubectl edit node**: El comando `kubectl edit node` puede modificar metadatos del objeto node, pero no puede cambiar la configuración de kubelet. La configuración de kubelet se ejecuta como un servicio en el sistema operativo del node y no puede modificarse directamente mediante la Kubernetes API.
-* **Usar AWS Systems Manager para cambiar la configuración del node**: AWS Systems Manager puede usarse para ejecutar comandos o cambiar configuraciones en nodes, pero este método se aplica después de que los nodes ya se han creado. Además, después de cambiar la configuración de kubelet, el servicio debe reiniciarse, lo que puede afectar a Pods en ejecución. Por lo tanto, configurar en el momento de creación del node group es más seguro y es el enfoque recomendado.
+Para vaciar nodos manualmente, selecciona uno antiguo, confirma su etiqueta de grupo de nodos y comprueba antes los PDB, la capacidad libre y el almacenamiento local. Este ejemplo no omite el desalojo ni descarta datos `emptyDir` intencionadamente. Si falla el vaciado, investiga la causa antes de continuar; el nodo puede quedarse acordonado.
 
-Personalizar la configuración de kubelet permite optimizar la gestión de recursos del node, la densidad de Pods, las políticas de eviction y más para cumplir con los requisitos de tus workloads. Sin embargo, los cambios deben probarse cuidadosamente, ya que pueden afectar la estabilidad del clúster.
+```bash
+# One reviewed node at a time, after validating replacement capacity.
+OLD_NODE_JSON=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get node "${OLD_NODE_NAME:?}" -o json) || exit 1
+OLD_NODE_GROUP=$(printf '%s' "$OLD_NODE_JSON" |
+  jq -er '.metadata.labels["eks.amazonaws.com/nodegroup"]') || exit 1
+if [ "$OLD_NODE_GROUP" != "${OLD_NODEGROUP_NAME:?}" ]; then
+  printf '%s\n' 'Node is not in the intended old managed node group.' >&2
+  exit 1
+fi
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" cordon "$OLD_NODE_NAME" &&
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" drain "$OLD_NODE_NAME" \
+  --ignore-daemonsets --timeout=15m
+```
 
-</details>
+Como alternativa, actualiza la plantilla Pod de la aplicación real para que seleccione el grupo de sustitución. El ejemplo completo siguiente es una demostración independiente para un namespace `migration-lab` recién creado, no un manifiesto de sustitución para una aplicación existente:
 
-6. ¿Cuál es el mecanismo recomendado para reemplazar Pod Security Policy en clústeres Amazon EKS?
-   * A) AWS Security Hub
-   * B) Pod Security Admission o policy engines como Kyverno
-   * C) AWS Config Rules
-   * D) EKS Security Groups
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Pod Security Admission o policy engines como Kyverno**
-
-**Explicación:** El mecanismo recomendado para reemplazar Pod Security Policy (PSP) en clústeres Amazon EKS es Pod Security Admission o policy engines como Kyverno. A partir de Kubernetes 1.21, PSP quedó deprecated, y fue eliminado por completo en Kubernetes 1.25. Pod Security Admission se introdujo como reemplazo, y policy engines como Kyverno u OPA Gatekeeper también pueden usarse como alternativas.
-
-**Pod Security Admission:**
-
-Pod Security Admission se introdujo como característica beta a partir de Kubernetes 1.23 y se volvió estable en la versión 1.25. Es una característica integrada de Kubernetes que proporciona tres niveles de seguridad (Privileged, Baseline, Restricted).
-
-1.  **Método de configuración**:
-
-    ```yaml
-    # Apply Pod Security standards to namespace
-    apiVersion: v1
-    kind: Namespace
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: migration-demo
+  namespace: migration-lab
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: migration-demo
+  template:
     metadata:
-      name: my-namespace
       labels:
-        pod-security.kubernetes.io/enforce: restricted
-        pod-security.kubernetes.io/audit: restricted
-        pod-security.kubernetes.io/warn: restricted
-    ```
-2. **Niveles de seguridad**:
-   * **Privileged**: Sin restricciones, todas las características permitidas
-   * **Baseline**: Previene escaladas de privilegios conocidas
-   * **Restricted**: Endurecimiento de seguridad fuerte, aplica el principio de privilegio mínimo
-3. **Modos**:
-   * **enforce**: Rechaza la creación de Pods ante una violación
-   * **audit**: Registra violaciones en audit logs
-   * **warn**: Muestra mensajes de advertencia ante una violación
-
-**Kyverno:**
-
-Kyverno es un policy engine nativo de Kubernetes que usa políticas basadas en YAML para validar, mutar y generar recursos del clúster.
-
-1.  **Método de instalación**:
-
-    ```bash
-    # Install Kyverno using Helm
-    helm repo add kyverno https://kyverno.github.io/kyverno/
-    helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
-    ```
-2.  **Ejemplo de política**:
-
-    ```yaml
-    # Policy to prevent privileged containers
-    apiVersion: kyverno.io/v1
-    kind: ClusterPolicy
-    metadata:
-      name: disallow-privileged-containers
+        app: migration-demo
     spec:
-      validationFailureAction: enforce
-      rules:
-      - name: privileged-containers
-        match:
-          resources:
-            kinds:
-            - Pod
-        validate:
-          message: "Privileged containers are not allowed"
-          pattern:
-            spec:
-              containers:
-              - name: "*"
-                securityContext:
-                  privileged: false
-    ```
-
-**OPA Gatekeeper:**
-
-OPA (Open Policy Agent) Gatekeeper es otra solución popular para gestión de políticas en Kubernetes.
-
-1.  **Método de instalación**:
-
-    ```bash
-    # Install Gatekeeper
-    kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
-    ```
-2.  **Ejemplo de política**:
-
-    ```yaml
-    # ConstraintTemplate definition
-    apiVersion: templates.gatekeeper.sh/v1beta1
-    kind: ConstraintTemplate
-    metadata:
-      name: k8spsprivilegedcontainer
-    spec:
-      crd:
-        spec:
-          names:
-            kind: K8sPSPPrivilegedContainer
-      targets:
-      - target: admission.k8s.gatekeeper.sh
-        rego: |
-          package k8spsprivilegedcontainer
-          violation[{"msg": msg}] {
-            c := input.review.object.spec.containers[_]
-            c.securityContext.privileged
-            msg := sprintf("Privileged container is not allowed: %v", [c.name])
-          }
-
-    # Apply Constraint
-    apiVersion: constraints.gatekeeper.sh/v1beta1
-    kind: K8sPSPPrivilegedContainer
-    metadata:
-      name: psp-privileged-container
-    spec:
-      match:
-        kinds:
-        - apiGroups: [""]
-          kinds: ["Pod"]
-    ```
-
-**Recomendaciones de implementación para EKS:**
-
-1. **Habilitar Pod Security Admission**:
-   * Disponible de forma predeterminada en EKS 1.23 y superior
-   * Aplica labels adecuados a namespaces
-2. **Instalar Kyverno o Gatekeeper**:
-   * Cuando se necesitan políticas más complejas
-   * Cuando se requieren políticas para múltiples tipos de recursos
-3. **Migración gradual**:
-   * Migra gradualmente de PSP a nuevas soluciones
-   * Comienza en modo audit para identificar problemas, luego cambia al modo enforce
-
-**Problemas con otras opciones:**
-
-* **AWS Security Hub**: AWS Security Hub es un servicio para monitorear la postura de seguridad de recursos de AWS, pero no puede usarse para aplicar políticas de seguridad a nivel de Pod en Kubernetes.
-* **AWS Config Rules**: AWS Config es un servicio para evaluar configuraciones de recursos de AWS, pero no puede usarse para aplicar políticas de seguridad a nivel de Pod en Kubernetes.
-* **EKS Security Groups**: Los EKS Security Groups se usan para controlar tráfico de red y no pueden usarse para restringir contextos de seguridad o privilegios de Pods.
-
-Con la eliminación de Pod Security Policy (PSP), los clústeres EKS deben usar mecanismos alternativos como Pod Security Admission, Kyverno u OPA Gatekeeper para fortalecer la seguridad de Pods. Estas herramientas pueden restringir privileged containers, acceso a host namespaces, montajes host path y más.
-
-</details>
-
-7\. ¿Cuál es el primer paso para configurar IRSA (IAM Roles for Service Accounts) con el fin de integrar la identidad de Pod con AWS IAM en un clúster Amazon EKS? - A) Crear un IAM role - B) Crear una service account - C) Asociar un proveedor OIDC - D) Modificar el manifiesto del Pod
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Asociar un proveedor OIDC**
-
-**Explicación:** El primer paso para configurar IRSA (IAM Roles for Service Accounts) en un clúster Amazon EKS es asociar un proveedor OIDC (OpenID Connect). El proveedor OIDC es necesario para establecer una relación de confianza entre AWS IAM y Kubernetes service accounts. Esto permite que los tokens de Kubernetes service account se conviertan en un mecanismo de autenticación confiable en AWS IAM.
-
-**Pasos de configuración de IRSA en orden:**
-
-1.  **Asociar proveedor OIDC**:
-
-    * Verifica la URL del issuer OIDC del clúster EKS
-    * Crea un proveedor OIDC en AWS IAM
-
-    ```bash
-    # Check OIDC issuer URL
-    aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text
-    # Example output: https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
-
-    # Associate OIDC provider
-    eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
-
-    # Or use AWS CLI
-    aws iam create-open-id-connect-provider \
-      --url https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE \
-      --thumbprint-list 9e99a48a9960b14926bb7f3b02e22da2b0ab7280 \
-      --client-id-list sts.amazonaws.com
-    ```
-2.  **Crear IAM role**:
-
-    * Crea el IAM role que asumirá la service account
-    * Incluye el proveedor OIDC y las condiciones de service account en la trust policy
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
-          },
-          "Action": "sts:AssumeRoleWithWebIdentity",
-          "Condition": {
-            "StringEquals": {
-              "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:default:my-service-account"
-            }
-          }
-        }
-      ]
-    }
-    ```
-3.  **Crear service account**:
-
-    * Crea una service account con el ARN del IAM role como annotation
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: my-service-account
-      namespace: default
-      annotations:
-        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-role
-    ```
-4.  **Modificar manifiesto del Pod**:
-
-    * Especifica la service account en el manifiesto del Pod
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: my-pod
-    spec:
-      serviceAccountName: my-service-account
+      nodeSelector:
+        example.com/migration-target: "true"
       containers:
-      - name: my-container
-        image: my-image
-    ```
-
-**Configuración simplificada de IRSA usando eksctl:**
-
-eksctl proporciona comandos que automatizan todos los pasos anteriores:
-
-```bash
-# Associate OIDC provider
-eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
-
-# Create service account and IAM role
-eksctl create iamserviceaccount \
-  --name my-service-account \
-  --namespace default \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
-  --approve
+        - name: nginx
+          image: nginx:1.30.6
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: migration-demo
+  namespace: migration-lab
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: migration-demo
 ```
 
-**Verificar que IRSA funciona:**
+El PDB exige dos Pods coincidentes sanos durante un desalojo voluntario. Con tres réplicas, normalmente se puede desalojar una por vez si se cumplen las demás condiciones. No garantiza disponibilidad, no protege ante eliminaciones directas ni conserva datos locales del nodo. Comprueba ubicación, disponibilidad, enrutamiento del servicio, afinidad de zona del volumen persistente y copias de seguridad con pruebas representativas de las cargas.
+
+**4. Retirar el grupo antiguo solo después de validar.** No ejecutes comandos de eksctl y AWS para borrar el grupo ni eludas los PDB para completar la migración. Revisa el clúster/grupo de destino y elimina únicamente el grupo propiedad de esta migración:
 
 ```bash
-# Check service account
-kubectl get serviceaccount my-service-account -o yaml
-
-# Run test pod
-kubectl run -it --rm \
-  --image amazon/aws-cli \
-  --serviceaccount my-service-account \
-  aws-cli -- s3 ls
+# Separate final step, after application/data validation and ownership review.
+if [ "${MIGRATION_VERIFIED:?Set yes only after workload and data checks}" = yes ]; then
+  eksctl delete nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+    --region "${EXAMPLE_REGION:?}" --name "${OLD_NODEGROUP_NAME:?}" --approve --wait
+fi
 ```
 
-**Problemas con otras opciones:**
+Conserva el grupo antiguo si falla la validación de la aplicación. Blue/green añade capacidad y coste temporalmente; no garantiza que sea sencillo revertir cambios con estado. `kubectl edit node` modifica metadatos de Kubernetes, no el tipo de instancia EC2 subyacente.
 
-* **Crear un IAM role**: Crear un IAM role es el segundo paso en la configuración de IRSA. Primero debe asociarse el proveedor OIDC para que la trust policy del IAM role pueda hacer referencia al proveedor OIDC.
-* **Crear una service account**: Crear una service account es el tercer paso en la configuración de IRSA. Primero debe crearse el IAM role para que el ARN del IAM role pueda añadirse como annotation a la service account.
-* **Modificar el manifiesto del Pod**: Modificar el manifiesto del Pod es el último paso en la configuración de IRSA. Primero debe crearse la service account para que el Pod pueda hacer referencia a esa service account.
-
-IRSA es una forma segura y eficiente de conceder permisos detallados a servicios de AWS para workloads de Kubernetes. Esto te permite conceder a cada aplicación solo los permisos mínimos necesarios en lugar de compartir IAM roles a nivel de node. El primer paso en la configuración de IRSA es asociar un proveedor OIDC, lo cual es esencial para establecer la relación de confianza entre AWS IAM y Kubernetes service accounts.
+Referencias: [actualizaciones de plantillas de lanzamiento](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html), [UpdateNodegroupConfig](https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateNodegroupConfig.html), [vaciado de nodos](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/).
 
 </details>
 
-8. ¿Cuál es la forma correcta de habilitar logs del control plane en un clúster Amazon EKS?
-   * A) Instalar CloudWatch agent en el EKS control plane
-   * B) Habilitar la configuración de logging del clúster mediante AWS CLI o la consola
-   * C) Configurar log forwarding usando Fluentd
-   * D) Hacer SSH en los nodes del EKS control plane para modificar la configuración de logs
+10. ¿Qué afirmación sobre los taints de grupos de nodos administrados de EKS es correcta?
+   * A) Solo `kubectl` puede configurarlos
+   * B) Usa la configuración del grupo de nodos mediante consola/API o eksctl; comprueba por separado el estado real de los objetos Node
+   * C) La consola de EKS no permite configurarlos
+   * D) Una toleration garantiza la ubicación en el grupo con el taint correspondiente
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Habilitar la configuración de logging del clúster mediante AWS CLI o la consola**
+**Respuesta: B) Usa la configuración del grupo de nodos mediante consola/API o eksctl; comprueba por separado el estado real de los objetos Node**
 
-**Explicación:** La forma correcta de habilitar logs del control plane en un clúster Amazon EKS es habilitar la configuración de logging del clúster mediante AWS CLI o AWS Management Console. Como EKS es un servicio administrado y el control plane es gestionado por AWS, no puedes acceder a él directamente ni instalar agents. En su lugar, debes configurar logging mediante APIs proporcionadas por AWS.
+Los taints de grupos de nodos administrados se configuran con la consola/API de EKS o un archivo de configuración de eksctl. La consola es válida; no marques esa opción como incorrecta porque también exista un método de CLI. `kubectl taint` directo modifica un objeto Node individual y no es la configuración persistente de nodos de sustitución de un grupo administrado.
 
-**Habilitar logs del control plane usando AWS CLI:**
+**Configuración con eksctl:** guarda esto como configuración de grupo de nodos revisada para un clúster existente y un nombre de grupo no utilizado; después usa `eksctl create nodegroup -f nodegroup.yaml`. Utiliza el campo compatible `taints`, no una opción de CLI supuesta.
 
-```bash
-# Enable all log types
-aws eks update-cluster-config \
-  --name my-cluster \
-  --region us-west-2 \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-
-# Enable only specific log types
-aws eks update-cluster-config \
-  --name my-cluster \
-  --region us-west-2 \
-  --logging '{"clusterLogging":[{"types":["api","audit"],"enabled":true},{"types":["authenticator","controllerManager","scheduler"],"enabled":false}]}'
-```
-
-**Habilitar logs del control plane usando eksctl:**
-
-```bash
-# Enable all log types
-eksctl utils update-cluster-logging \
-  --enable-types api,audit,authenticator,controllerManager,scheduler \
-  --cluster my-cluster \
-  --region us-west-2
-
-# Enable only specific log types
-eksctl utils update-cluster-logging \
-  --enable-types api,audit \
-  --disable-types authenticator,controllerManager,scheduler \
-  --cluster my-cluster \
-  --region us-west-2
-```
-
-**Habilitar logs del control plane usando AWS Management Console:**
-
-1. Inicia sesión en AWS Management Console.
-2. Navega al servicio EKS.
-3. Selecciona el clúster objetivo de la lista de clústeres.
-4. Selecciona la pestaña "Logging".
-5. Haz clic en "Manage".
-6. Selecciona los tipos de log que quieres habilitar:
-   * API server (api)
-   * Audit (audit)
-   * Authenticator (authenticator)
-   * Controller manager (controllerManager)
-   * Scheduler (scheduler)
-7. Haz clic en "Save changes".
-
-**Tipos de log disponibles:**
-
-1. **API server (api)**:
-   * Logs del Kubernetes API server
-   * Contiene información de solicitudes y respuestas de API
-2. **Audit (audit)**:
-   * Audit logs de todas las actividades del clúster
-   * Importante para fines de seguridad y cumplimiento
-3. **Authenticator (authenticator)**:
-   * Logs de AWS IAM Authenticator
-   * Útil para solucionar problemas de autenticación
-4. **Controller manager (controllerManager)**:
-   * Logs del Kubernetes controller manager
-   * Contiene información de gestión de estado de recursos
-5. **Scheduler (scheduler)**:
-   * Logs del Kubernetes scheduler
-   * Contiene información sobre decisiones de scheduling de Pods
-
-**Cómo ver los logs:**
-
-Los logs habilitados se almacenan en CloudWatch Logs y pueden verse en el siguiente log group:
-
-```
-/aws/eks/my-cluster/cluster
-```
-
-Cada tipo de log se almacena como un log stream separado:
-
-```
-kube-apiserver-xxxxx
-audit-xxxxx
-authenticator-xxxxx
-kube-controller-manager-xxxxx
-kube-scheduler-xxxxx
-```
-
-**Consideraciones de costo:**
-
-* Los logs del control plane están sujetos a los precios de CloudWatch Logs.
-* Habilitar todos los tipos de log puede generar una cantidad significativa de logs.
-* Para optimización de costos, se recomienda habilitar selectivamente solo los tipos de log que necesitas.
-* Puedes gestionar costos estableciendo períodos de retención de logs adecuados.
-
-**Problemas con otras opciones:**
-
-* **Instalar CloudWatch agent en el EKS control plane**: El EKS control plane es gestionado por AWS, por lo que no puedes acceder a él directamente ni instalar agents.
-* **Configurar log forwarding usando Fluentd**: Fluentd puede usarse para recopilar logs de worker nodes, pero no puede acceder a logs del EKS control plane.
-* **Hacer SSH en los nodes del EKS control plane para modificar la configuración de logs**: Los nodes del EKS control plane son gestionados por AWS, por lo que no puedes hacer SSH en ellos directamente.
-
-Los logs del EKS control plane proporcionan información importante para la solución de problemas del clúster, auditorías de seguridad y cumplimiento. Puedes monitorear eficazmente habilitando selectivamente los tipos de log requeridos mediante AWS CLI o AWS Management Console.
-
-</details>
-
-9. ¿Cuál es la forma correcta de cambiar el instance type de un node group en un clúster Amazon EKS?
-   * A) Modificar directamente el instance type del node group en AWS Management Console
-   * B) Crear un nuevo node group con el nuevo instance type y migrar workloads
-   * C) Modificar especificaciones de node con el comando kubectl edit
-   * D) Usar el comando AWS CLI update-nodegroup-config
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Crear un nuevo node group con el nuevo instance type y migrar workloads**
-
-**Explicación:** La forma correcta de cambiar el instance type de un node group en un clúster Amazon EKS es crear un nuevo node group con el nuevo instance type y luego migrar workloads. En EKS managed node groups, no puedes cambiar directamente el instance type después de la creación, por lo que debes crear un nuevo node group, migrar workloads y luego eliminar el node group existente.
-
-**Pasos para cambiar el instance type del node group:**
-
-1.  **Crear nuevo node group**:
-
-    ```bash
-    # Create new node group using eksctl
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-new-nodegroup \
-      --node-type m5.large \
-      --nodes 3 \
-      --nodes-min 1 \
-     --nodes-max 5 \
-     --node-labels "migration-target=true"
-    ```
-
-## Crear nuevo node group usando AWS CLI
-
-aws eks create-nodegroup\
-\--cluster-name my-cluster\
-\--nodegroup-name my-new-nodegroup\
-\--subnets subnet-12345 subnet-67890\
-\--instance-types m5.large\
-\--scaling-config minSize=1,maxSize=5,desiredSize=3\
-\--node-role arn:aws:iam::123456789012:role/EksNodeRole\
-\--labels migration-target=true
-
-````
-
-2. **Verificar el estado del nuevo node group**:
- ```bash
- # Check node group status
- aws eks describe-nodegroup \
-   --cluster-name my-cluster \
-   --nodegroup-name my-new-nodegroup \
-   --query "nodegroup.status"
-
- # Check nodes
- kubectl get nodes --label-columns migration-target
-````
-
-3.  **Migrar workloads**:
-
-    **Método 1: Usando Cordoning y Draining**
-
-    ```bash
-    # Identify nodes in the existing node group
-    OLD_NODES=$(kubectl get nodes -l alpha.eksctl.io/nodegroup-name=my-old-nodegroup -o jsonpath='{.items[*].metadata.name}')
-
-    # Cordon nodes (prevent new pod scheduling)
-    for node in $OLD_NODES; do
-      kubectl cordon $node
-    done
-
-    # Drain nodes (remove existing pods)
-    for node in $OLD_NODES; do
-      kubectl drain $node --ignore-daemonsets --delete-emptydir-data
-    done
-    ```
-
-    **Método 2: Usando Pod Selector**
-
-    ```yaml
-    # Deploy to new nodes using node selector
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: my-app
-    spec:
-      template:
-        spec:
-          nodeSelector:
-            migration-target: "true"
-    ```
-
-    **Método 3: Blue/Green Deployment**
-
-    * Implementar la nueva versión de Deployment en el nuevo node group
-    * Cambiar gradualmente el tráfico a la nueva versión
-    * Eliminar la versión existente del Deployment
-4.  **Eliminar node group existente**:
-
-    ```bash
-    # Delete node group using eksctl
-    eksctl delete nodegroup \
-      --cluster my-cluster \
-      --name my-old-nodegroup
-
-    # Delete node group using AWS CLI
-    aws eks delete-nodegroup \
-      --cluster-name my-cluster \
-      --nodegroup-name my-old-nodegroup
-    ```
-
-**Consideraciones durante la migración:**
-
-1.  **Minimizar la interrupción de workloads**:
-
-    * Configura PodDisruptionBudget
-
-    ```yaml
-    apiVersion: policy/v1
-    kind: PodDisruptionBudget
-    metadata:
-      name: my-app-pdb
-    spec:
-      minAvailable: 2  # or maxUnavailable: 1
-      selector:
-        matchLabels:
-          app: my-app
-    ```
-
-    * Usa estrategia de rolling update
-2. **Requisitos de recursos**:
-   * Verifica que el nuevo instance type cumpla con los requisitos de workload
-   * Considera requisitos de CPU, memoria, almacenamiento y networking
-3. **Stateful workloads**:
-   * Verifica la persistencia de datos para workloads que usan persistent volumes
-   * Realiza backups si es necesario
-4. **Impacto de costo**:
-   * Evalúa el impacto de costo del nuevo instance type
-   * Los costos aumentan temporalmente mientras ambos node groups se ejecutan simultáneamente durante la migración
-
-**Problemas con otras opciones:**
-
-* **Modificar directamente el instance type del node group en AWS Management Console**: En EKS managed node groups, no puedes modificar directamente el instance type después de la creación.
-* **Modificar especificaciones de node con el comando kubectl edit**: kubectl se usa para modificar objetos de la Kubernetes API, pero el instance type subyacente de un node se determina a nivel de infraestructura de AWS y no puede cambiarse mediante kubectl.
-* **Usar el comando AWS CLI update-nodegroup-config**: El comando `update-nodegroup-config` puede modificar la configuración de scaling, labels, taints, etc. del node group, pero no puede cambiar el instance type.
-
-Cambiar el instance type de un node group puede ser necesario para optimizar el rendimiento del clúster, reducir costos o cumplir con nuevos requisitos de workload. Crear un nuevo node group y migrar workloads es el enfoque recomendado para cambiar instance types de forma segura mientras se minimiza la interrupción.
-
-</details>
-
-10\. ¿Cuál es la forma correcta de aplicar Kubernetes taints a un node group en un clúster Amazon EKS? - A) Usar el comando kubectl taint - B) Usar el parámetro --taints al crear el node group - C) Configurar taints del node group en AWS Management Console - D) Modificar la configuración de kubelet en el node bootstrap script
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Usar el parámetro --taints al crear el node group**
-
-**Explicación:** La forma correcta de aplicar Kubernetes taints a un node group en un clúster Amazon EKS es usar el parámetro `--taints` al crear el node group. EKS managed node groups proporcionan la capacidad de configurar taints en el momento de creación o durante actualizaciones. Usar este método garantiza que los taints se apliquen consistentemente a todos los nodes del node group y se mantengan cuando los nodes se reemplazan.
-
-**Configuración de taints usando eksctl:**
-
-```bash
-# Create node group with taints
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name tainted-ng \
-  --node-type m5.large \
-  --nodes 3 \
-  --taints "dedicated=gpu:NoSchedule,special=true:PreferNoSchedule"
-
-# Configure taints using configuration file
-cat > nodegroup.yaml << EOF
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
@@ -1138,1361 +938,1154 @@ metadata:
   region: us-west-2
 managedNodeGroups:
   - name: tainted-ng
+    amiFamily: AmazonLinux2023
     instanceType: m5.large
+    privateNetworking: true
+    desiredCapacity: 3
     minSize: 2
     maxSize: 5
+    labels:
+      example.com/pool: batch
     taints:
       - key: dedicated
-        value: gpu
+        value: batch
         effect: NoSchedule
       - key: special
         value: "true"
         effect: PreferNoSchedule
-EOF
-
-eksctl create nodegroup -f nodegroup.yaml
 ```
 
-**Configuración de taints usando AWS CLI:**
+**Alternativa AWS CLI:** Kubernetes/eksctl usan nombres de efecto en CamelCase, mientras que la API de EKS usa nombres en mayúsculas:
+
+| Kubernetes / eksctl | API de EKS | Efecto |
+| --- | --- | --- |
+| `NoSchedule` | `NO_SCHEDULE` | El planificador rechaza Pods nuevos sin toleration coincidente; los existentes permanecen |
+| `PreferNoSchedule` | `PREFER_NO_SCHEDULE` | Preferencia de planificación flexible, no garantía |
+| `NoExecute` | `NO_EXECUTE` | También expulsa Pods existentes sin toleration coincidente; `tolerationSeconds` puede retrasar la expulsión |
 
 ```bash
-# Create node group with taints
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name tainted-ng \
-  --subnets subnet-12345 subnet-67890 \
-  --instance-types m5.large \
+# Alternative to the eksctl file: create a new group through the EKS API.
+aws eks create-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --instance-types m5.large --ami-type AL2023_x86_64_STANDARD \
   --scaling-config minSize=2,maxSize=5,desiredSize=3 \
-  --node-role arn:aws:iam::123456789012:role/EksNodeRole \
-  --taints "key=dedicated,value=gpu,effect=NoSchedule" "key=special,value=true,effect=PreferNoSchedule"
-
-# Update taints on existing node group
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name tainted-ng \
-  --taints "addOrUpdateTaints=[{key=dedicated,value=gpu,effect=NoSchedule}],removeTaints=[{key=special}]"
+  --node-role "${NODE_ROLE_ARN:?}" \
+  --labels '{"example.com/pool":"batch"}' \
+  --taints '[{"key":"dedicated","value":"batch","effect":"NO_SCHEDULE"},{"key":"special","value":"true","effect":"PREFER_NO_SCHEDULE"}]'
 ```
 
-**Configuración de taints usando AWS Management Console:**
+```bash
+# Separate update example for the intended existing group.
+if TAINT_UPDATE_ID=$(aws eks update-nodegroup-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --taints '{"addOrUpdateTaints":[{"key":"dedicated","value":"batch","effect":"NO_SCHEDULE"}],"removeTaints":[{"key":"special","value":"true","effect":"PREFER_NO_SCHEDULE"}]}' \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$TAINT_UPDATE_ID" \
+    --query 'update.{status:status,errors:errors}'
+fi
+```
 
-1. Inicia sesión en AWS Management Console.
-2. Navega al servicio EKS.
-3. Selecciona el clúster.
-4. Selecciona la pestaña "Compute".
-5. Haz clic en "Add node group".
-6. Introduce los detalles del node group.
-7. En la sección "Kubernetes taints", haz clic en "Add taint".
-8. Introduce la key, value y effect.
-9. Haz clic en "Create".
+La actualización es asíncrona: espera a que termine correctamente e inspecciona los taints reales del objeto Node. EKS **no** vuelve a añadir automáticamente a un Node existente el taint de un grupo administrado si alguien lo elimina manualmente, aunque la configuración del grupo aún lo incluya. Limita quién puede modificar nodos y verifica el estado después de los cambios.
 
-**Tipos de effect de taint:**
+**Ubicación de cargas de trabajo dedicadas:** una toleration permite la planificación, pero no obliga a ubicar un Pod en el grupo con taint. Combínala con un selector/afinidad de nodo apropiados. Esta demostración completa usa un namespace `taint-lab` nuevo:
 
-1. **NoSchedule**:
-   * Pods sin una toleration coincidente para el taint no se programarán en el node.
-   * Los Pods existentes no se ven afectados.
-2. **PreferNoSchedule**:
-   * Pods sin una toleration coincidente para el taint preferiblemente no se programarán en el node, pero esto no está garantizado.
-   * Si no pueden programarse en otros nodes, pueden programarse en este node.
-3. **NoExecute**:
-   * Pods sin una toleration coincidente para el taint no se programarán en el node.
-   * Los Pods ya en ejecución que no tengan una toleration coincidente para el taint serán expulsados.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: batch-example
+  namespace: taint-lab
+spec:
+  nodeSelector:
+    example.com/pool: batch
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: batch
+      effect: NoSchedule
+  restartPolicy: Never
+  containers:
+    - name: task
+      image: busybox:1.37
+      command: ["sh", "-c", "echo batch-example-complete"]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+```
 
-**Casos de uso comunes para taints:**
+Para grupos GPU, selecciona también instancias/AMI compatibles e instala un complemento de dispositivo admitido; las cargas deben solicitar un recurso extendido como `nvidia.com/gpu`. Un taint `dedicated=gpu` por sí solo no instala controladores ni asigna una GPU. Los taints son controles de planificación, no fronteras de seguridad entre tenants.
 
-1.  **Aislar nodes con hardware especial**:
+**Mantenimiento:** un taint temporal de nodo puede impedir la planificación ordinaria nueva, pero no vacía Pods en ejecución. Los dos comandos siguientes corresponden al inicio y final de una ventana de mantenimiento revisada:
 
-    ```bash
-    # Apply taint to GPU nodes
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name gpu-nodes \
-      --node-type p3.2xlarge \
-      --taints "dedicated=gpu:NoSchedule"
+```bash
+# Individual-node maintenance example; does not evict existing Pods.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" taint node \
+  "${EXAMPLE_NODE_NAME:?}" maintenance=planned:NoSchedule
 
-    # Add toleration to GPU workload
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: gpu-pod
-    spec:
-      tolerations:
-      - key: "dedicated"
-        operator: "Equal"
-        value: "gpu"
-        effect: "NoSchedule"
-      containers:
-      - name: gpu-container
-        image: gpu-image
-    ```
-2.  **Preparación para mantenimiento de node**:
+# After the maintenance window, remove only this exact example taint.
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" taint node \
+  "$EXAMPLE_NODE_NAME" maintenance=planned:NoSchedule-
+```
 
-    ```bash
-    # Apply taint to node
-    kubectl taint nodes node1 maintenance=planned:NoSchedule
+Si hace falta desalojar, utiliza un procedimiento de vaciado independiente que tenga en cuenta los PDB. Evita añadir `NoExecute` a un grupo poblado sin revisar el efecto de expulsión inmediato. Los indicadores de registro de node bootstrap son otro mecanismo, pero la configuración del grupo administrado resulta más clara para este caso.
 
-    # Remove taint after maintenance
-    kubectl taint nodes node1 maintenance=planned:NoSchedule-
-    ```
-3.  **Configurar nodes dedicados para workloads específicos**:
-
-    ```bash
-    # Node group dedicated to production workloads
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name prod-nodes \
-      --node-type m5.large \
-      --taints "environment=production:NoSchedule"
-
-    # Add toleration to production deployment
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: prod-app
-    spec:
-      template:
-        spec:
-          tolerations:
-          - key: "environment"
-            operator: "Equal"
-            value: "production"
-            effect: "NoSchedule"
-    ```
-
-**Problemas con otras opciones:**
-
-* **Usar el comando kubectl taint**: Puedes usar el comando `kubectl taint` para aplicar taints a nodes individuales, pero este es un cambio temporal y los taints no se mantienen cuando los nodes se reemplazan. También es difícil aplicarlos de forma consistente a todos los nodes de un node group.
-* **Configurar taints del node group en AWS Management Console**: También puedes configurar taints al crear un node group en AWS Management Console, pero este es el mismo enfoque que "usar el parámetro --taints al crear node group". Por lo tanto, esta opción podría ser una respuesta correcta, pero técnicamente es lo mismo que configurar taints al crear un node group.
-* **Modificar la configuración de kubelet en el node bootstrap script**: Puedes modificar la configuración de kubelet usando la flag `--register-with-taints` en el bootstrap script, pero este es un método complejo y propenso a errores. Tampoco se recomienda para EKS managed node groups.
-
-Los taints son una característica útil de Kubernetes para implementar workloads específicos solo en nodes específicos o excluir ciertos workloads de nodes específicos. Para EKS managed node groups, configurar taints al crear o actualizar el node group es el método más eficaz y manejable.
+Referencia: [taints de nodos administrados por EKS](https://docs.aws.amazon.com/eks/latest/userguide/node-taints-managed-node-groups.html).
 
 </details>
 
 ## Ejercicios prácticos
 
-### Ejercicio 1: Configuración de IRSA (IAM Roles for Service Accounts)
+### Ejercicio 1: Configurar IRSA (IAM Roles for Service Accounts)
 
-**Escenario:** Tienes una aplicación ejecutándose en un clúster EKS que necesita acceder a un bucket S3. Siguiendo las mejores prácticas de seguridad, quieres usar IRSA para conceder solo los permisos necesarios a Pods específicos en lugar de compartir el IAM role del node.
+**Escenario:** una carga de trabajo Linux de un clúster EKS existente necesita leer un prefijo autorizado `training/` de un bucket S3. Asígnale un rol de carga de trabajo dedicado en vez de aplicar una política amplia de S3 a todos los nodos.
 
-**Requisitos:**
-
-1. Asociar proveedor OIDC
-2. Crear IAM role con permisos de acceso a S3
-3. Crear service account y asociar IAM role
-4. Implementar Pod usando la service account
-5. Probar acceso a S3
-
-**Solución:**
+**Requisitos previos:** usa un clúster de formación autorizado en la partición comercial de AWS, AWS CLI v2, eksctl y jq. El operador necesita los permisos IAM y Kubernetes para este ejercicio. Prepara un objeto existente y no confidencial bajo `training/` en un bucket aprobado y define `S3_BUCKET`/`S3_TEST_KEY`. La política del bucket y cualquier clave de cifrado administrada por el cliente deben permitir el rol previsto; añade permisos KMS con alcance independiente solo si el cifrado del objeto los requiere. Este ejemplo no crea buckets ni objetos.
 
 <details>
-
 <summary>Mostrar solución</summary>
 
-**1. Asociar proveedor OIDC**
+**1. Preparar un namespace único, kubeconfig privado y el proveedor OIDC del clúster.** Conserva el directorio y el registro de titularidad generados hasta terminar la limpieza. Ejecuta los pasos en la misma sesión de Bash; si falla uno, inspecciona los recursos registrados antes de volver a intentarlo.
 
 ```bash
-# Get the cluster's OIDC issuer URL
-OIDC_PROVIDER=$(aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
+# Commercial AWS partition example; use an existing approved S3 training prefix.
+: "${EXAMPLE_CLUSTER:?}"
+: "${EXAMPLE_REGION:?}"
+: "${S3_BUCKET:?Existing bucket containing the approved training object}"
+: "${S3_TEST_KEY:?Existing non-sensitive object key under training/}"
+case "$S3_TEST_KEY" in training/*) ;; *) printf '%s\n' 'Use a training/ key.' >&2; exit 1 ;; esac
+IRSA_LAB_DIR=$(mktemp -d /tmp/eks-irsa-lab.XXXXXX)
+: "${IRSA_LAB_DIR:?}"
+IRSA_LAB_ID="irsa-quiz-$(date +%s)-$$"
+IRSA_NAMESPACE="$IRSA_LAB_ID"
+IRSA_ROLE_NAME="$IRSA_LAB_ID"
+IRSA_SERVICE_ACCOUNT=s3-reader
+IRSA_KUBECONFIG="$IRSA_LAB_DIR/kubeconfig"
 
-# Check if OIDC provider already exists
-aws iam list-open-id-connect-providers | grep $OIDC_PROVIDER
+aws sts get-caller-identity --output json > "$IRSA_LAB_DIR/caller.json" || exit 1
+IRSA_ACCOUNT_ID=$(jq -er '.Account' "$IRSA_LAB_DIR/caller.json") || exit 1
+jq -e '.Arn | startswith("arn:aws:")' "$IRSA_LAB_DIR/caller.json" >/dev/null || exit 1
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster --output json > "$IRSA_LAB_DIR/cluster.json" || exit 1
+IRSA_ISSUER=$(jq -er '.identity.oidc.issuer' "$IRSA_LAB_DIR/cluster.json") || exit 1
+case "$IRSA_ISSUER" in https://*) ;; *) printf '%s\n' 'Invalid OIDC issuer.' >&2; exit 1 ;; esac
+IRSA_ISSUER_HOST="${IRSA_ISSUER#https://}"
+IRSA_PROVIDER_ARN="arn:aws:iam::$IRSA_ACCOUNT_ID:oidc-provider/$IRSA_ISSUER_HOST"
 
-# Create OIDC provider if it doesn't exist
-eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
+aws eks update-kubeconfig --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubeconfig "$IRSA_KUBECONFIG" --alias "$EXAMPLE_CLUSTER" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create namespace "$IRSA_NAMESPACE" || exit 1
+IRSA_NAMESPACE_UID=$(kubectl --kubeconfig "$IRSA_KUBECONFIG" \
+  get namespace "$IRSA_NAMESPACE" -o jsonpath='{.metadata.uid}') || exit 1
+: "${IRSA_NAMESPACE_UID:?}"
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "$IRSA_NAMESPACE_UID" \
+  '{namespace:$namespace,namespaceUID:$uid}' > "$IRSA_LAB_DIR/ownership.json" || exit 1
+
+# The cluster's provider is shared infrastructure; eksctl checks/associates it.
+eksctl utils associate-iam-oidc-provider --cluster "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --approve || exit 1
+aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$IRSA_PROVIDER_ARN" \
+  --output json > "$IRSA_LAB_DIR/provider.json" || exit 1
+jq -e '.ClientIDList | index("sts.amazonaws.com") != null' \
+  "$IRSA_LAB_DIR/provider.json" >/dev/null || exit 1
 ```
 
-**2. Crear IAM Role con permisos de acceso a S3**
+La carga requiere conectividad con STS y acceso a S3. Los entornos solo privados necesitan las rutas regionales adecuadas a STS/ECR/S3; configurar el proveedor OIDC de IAM desde dentro de la VPC también puede requerir conectividad `oidc-eks`. Restringe IMDS y el uso de cuentas de servicio por separado; IRSA por sí sola no aísla Pods.
+
+**2. Crear el rol dedicado y la política con alcance limitado.** La política de confianza requiere la audiencia prevista y el sujeto exacto de namespace/cuenta de servicio. La política permite listar solo el prefijo `training/` del bucket y leer objetos solo bajo ese prefijo. No concede `ListAllMyBuckets`.
 
 ```bash
-# Create trust policy
-cat > trust-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):oidc-provider/${OIDC_PROVIDER}"
+jq -n --arg provider "${IRSA_PROVIDER_ARN:?}" --arg issuer "${IRSA_ISSUER_HOST:?}" \
+  --arg subject "system:serviceaccount:${IRSA_NAMESPACE:?}:${IRSA_SERVICE_ACCOUNT:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[{
+      Effect:"Allow",
+      Principal:{Federated:$provider},
+      Action:"sts:AssumeRoleWithWebIdentity",
+      Condition:{StringEquals:{
+        ($issuer+":aud"):"sts.amazonaws.com",
+        ($issuer+":sub"):$subject
+      }}
+    }]
+  }' > "${IRSA_LAB_DIR:?}/trust.json" || exit 1
+
+jq -n --arg bucket "${S3_BUCKET:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[
+      {
+        Effect:"Allow",Action:"s3:ListBucket",Resource:("arn:aws:s3:::"+$bucket),
+        Condition:{StringLike:{"s3:prefix":["training/","training/*"]}}
       },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:default:s3-access-sa"
+      {
+        Effect:"Allow",Action:"s3:GetObject",
+        Resource:("arn:aws:s3:::"+$bucket+"/training/*")
+      }
+    ]
+  }' > "$IRSA_LAB_DIR/s3-policy.json" || exit 1
+
+# Stop on creation failure; never attach this policy to a pre-existing role.
+aws iam create-role --role-name "${IRSA_ROLE_NAME:?}" \
+  --assume-role-policy-document "file://$IRSA_LAB_DIR/trust.json" \
+  --tags "Key=TrainingLab,Value=${IRSA_LAB_ID:?}" \
+  --query Role --output json > "$IRSA_LAB_DIR/created-role.json" || exit 1
+IRSA_ROLE_ARN=$(jq -er '.Arn' "$IRSA_LAB_DIR/created-role.json") || exit 1
+IRSA_ROLE_ID=$(jq -er '.RoleId' "$IRSA_LAB_DIR/created-role.json") || exit 1
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "${IRSA_NAMESPACE_UID:?}" \
+  --arg roleName "$IRSA_ROLE_NAME" --arg roleArn "$IRSA_ROLE_ARN" --arg roleId "$IRSA_ROLE_ID" \
+  '{namespace:$namespace,namespaceUID:$uid,roleName:$roleName,roleARN:$roleArn,roleID:$roleId}' \
+  > "$IRSA_LAB_DIR/ownership.json" || exit 1
+aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
+  --policy-name ScopedTrainingS3Read \
+  --policy-document "file://$IRSA_LAB_DIR/s3-policy.json" || exit 1
+```
+
+El rol debe ser nuevo. Si falla su creación, el script se detiene antes de adjuntar la política y registra el `RoleId` IAM inmutable para la limpieza. Así se evita adjuntar la política del laboratorio a un rol existente que casualmente tenga el mismo nombre.
+
+**3. Crear la cuenta de servicio y un Pod de prueba de corta duración.** Tres contenedores comprueban la identidad del llamador, enumeran como máximo un objeto del prefijo permitido y leen los metadatos del objeto seleccionado. El ejemplo solo muestra recuentos/longitudes y registra metadatos de identidad; no imprime tokens, claves secretas ni contenido de objetos.
+
+```bash
+# JSON construction preserves literal object keys and prevents YAML interpolation errors.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg sa "${IRSA_SERVICE_ACCOUNT:?}" \
+  --arg role "${IRSA_ROLE_ARN:?}" --arg region "${EXAMPLE_REGION:?}" \
+  --arg bucket "${S3_BUCKET:?}" --arg key "${S3_TEST_KEY:?}" '
+  {
+    apiVersion:"v1",kind:"List",items:[
+      {
+        apiVersion:"v1",kind:"ServiceAccount",
+        metadata:{name:$sa,namespace:$ns,annotations:{
+          "eks.amazonaws.com/role-arn":$role,
+          "eks.amazonaws.com/sts-regional-endpoints":"true"
+        }}
+      },
+      {
+        apiVersion:"v1",kind:"Pod",metadata:{name:"irsa-check",namespace:$ns},
+        spec:{
+          serviceAccountName:$sa,nodeSelector:{"kubernetes.io/os":"linux"},restartPolicy:"Never",
+          containers:[
+            {name:"identity",args:["--region",$region,"sts","get-caller-identity"]},
+            {name:"list-prefix",args:["--region",$region,"s3api","list-objects-v2","--bucket",$bucket,
+              "--prefix","training/","--max-keys","1","--query","KeyCount","--output","json"]},
+            {name:"object-metadata",args:["--region",$region,"s3api","head-object","--bucket",$bucket,
+              "--key",$key,"--query","ContentLength","--output","json"]}
+          ] | map(.+{
+            image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",command:["aws"],
+            resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+          })
         }
       }
-    }
-  ]
-}
-EOF
-
-# Create IAM role
-aws iam create-role --role-name s3-access-role --assume-role-policy-document file://trust-policy.json
-
-# Attach S3 access policy
-aws iam attach-role-policy --role-name s3-access-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    ]
+  }' > "${IRSA_LAB_DIR:?}/workload.json" || exit 1
+kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" create -f "$IRSA_LAB_DIR/workload.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Succeeded pod/irsa-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs irsa-check -c identity > "$IRSA_LAB_DIR/pod-identity.json" || exit 1
+jq -e --arg account "${IRSA_ACCOUNT_ID:?}" --arg role "${IRSA_ROLE_NAME:?}" \
+  '.Account == $account and (.Arn | startswith("arn:aws:sts::"+$account+":assumed-role/"+$role+"/"))' \
+  "$IRSA_LAB_DIR/pod-identity.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c list-prefix
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c object-metadata
 ```
 
-**3. Crear Service Account y asociar IAM Role**
+Los tres contenedores deben tener éxito y la comprobación de identidad debe coincidir con la cuenta y el rol previstos. La identidad del rol del nodo es un fallo. Si falla el Pod, inspecciona el estado/registros de cada contenedor, la confianza IAM, el prefijo, las políticas del bucket/clave y la conectividad; no soluciones un error de autorización adjuntando `AmazonS3ReadOnlyAccess`.
+
+Los cambios de IAM pueden tardar en propagarse. Tras resolver la causa, recrea deliberadamente el Pod de prueba en el namespace que controlas, en vez de asumir que la ejecución fallida original demostró el éxito. Que una operación permitida funcione no demuestra que todas las demás estén denegadas; revisa todas las políticas IAM/de recursos aplicables y realiza pruebas negativas autorizadas si son necesarias.
+
+**4. Limpiar el namespace y el rol que controlas.** El UID del namespace y el `RoleId` IAM evitan confusiones cuando se reutilizan nombres. Si el namespace ya no existe, la limpieza puede continuar con el rol registrado. Las políticas en línea inesperadas o las búsquedas fallidas detienen la limpieza posterior; inspecciona los fallos parciales en vez de borrar recursos ajenos.
 
 ```bash
-# Get IAM role ARN
-ROLE_ARN=$(aws iam get-role --role-name s3-access-role --query Role.Arn --output text)
+# Recover the recorded values from ownership.json if this is a later shell.
+IRSA_CLEANUP_NAMESPACE_OK=false
+if CURRENT_IRSA_UID=$(kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" \
+  get namespace "${IRSA_NAMESPACE:?}" --ignore-not-found -o jsonpath='{.metadata.uid}'); then
+  if [ -z "$CURRENT_IRSA_UID" ]; then
+    IRSA_CLEANUP_NAMESPACE_OK=true
+  elif [ "$CURRENT_IRSA_UID" = "${IRSA_NAMESPACE_UID:?Recorded UID required}" ]; then
+    if kubectl --kubeconfig "$IRSA_KUBECONFIG" delete namespace "$IRSA_NAMESPACE" --wait=true; then
+      IRSA_CLEANUP_NAMESPACE_OK=true
+    else
+      exit 1
+    fi
+  else
+    printf '%s\n' 'Namespace UID mismatch; stop and inspect.' >&2
+    exit 1
+  fi
+else
+  printf '%s\n' 'Namespace lookup failed; stop and inspect.' >&2
+  exit 1
+fi
 
-# Create service account
-cat > service-account.yaml << EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: s3-access-sa
-  namespace: default
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROLE_ARN}
-EOF
-
-kubectl apply -f service-account.yaml
+if [ "$IRSA_CLEANUP_NAMESPACE_OK" = true ]; then
+  CURRENT_IRSA_ROLE_JSON=$(aws iam get-role --role-name "${IRSA_ROLE_NAME:?}" \
+    --query Role --output json) || exit 1
+  CURRENT_IRSA_ROLE_ID=$(printf '%s' "$CURRENT_IRSA_ROLE_JSON" | jq -er '.RoleId') || exit 1
+  if [ "$CURRENT_IRSA_ROLE_ID" = "${IRSA_ROLE_ID:?Recorded IAM RoleId required}" ]; then
+    IRSA_INLINE_POLICIES=$(aws iam list-role-policies --role-name "$IRSA_ROLE_NAME" \
+      --query PolicyNames --output json) || exit 1
+    printf '%s' "$IRSA_INLINE_POLICIES" |
+      jq -e 'all(.[]; . == "ScopedTrainingS3Read")' >/dev/null || exit 1
+    if printf '%s' "$IRSA_INLINE_POLICIES" | jq -e 'index("ScopedTrainingS3Read") != null' >/dev/null; then
+      aws iam delete-role-policy --role-name "$IRSA_ROLE_NAME" \
+        --policy-name ScopedTrainingS3Read || exit 1
+    fi
+    aws iam delete-role --role-name "$IRSA_ROLE_NAME"
+  else
+    printf '%s\n' 'IAM RoleId mismatch; no IAM deletion attempted.' >&2
+    exit 1
+  fi
+fi
 ```
 
-**4. Implementar Pod usando la Service Account**
+Se conservan el clúster, su proveedor OIDC compartido, el bucket y sus objetos. Verifica la eliminación del namespace/rol y guarda el registro de titularidad si falla algún paso. Detener los Pods no implica que todas las credenciales STS emitidas con anterioridad se invaliden instantáneamente.
 
-```bash
-# Deploy test pod
-cat > pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: s3-access-pod
-  namespace: default
-spec:
-  serviceAccountName: s3-access-sa
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
+Esta auditoría no aprovisionó el rol ni ejecutó el Pod contra AWS. Las comprobaciones locales validan los manifiestos/políticas generados y las protecciones ante fallos; la propagación IAM, el alcance de red y el acceso S3 reales dependen del entorno.
 
-kubectl apply -f pod.yaml
-```
-
-**5. Probar acceso a S3**
-
-```bash
-# Verify the pod is running
-kubectl get pod s3-access-pod
-
-# Test listing S3 buckets
-kubectl exec -it s3-access-pod -- aws s3 ls
-
-# Test listing objects in a specific S3 bucket
-kubectl exec -it s3-access-pod -- aws s3 ls s3://my-bucket
-
-# Verify AWS credentials
-kubectl exec -it s3-access-pod -- aws sts get-caller-identity
-```
-
-**6. Limpieza**
-
-```bash
-# Delete pod
-kubectl delete pod s3-access-pod
-
-# Delete service account
-kubectl delete serviceaccount s3-access-sa
-
-# Clean up IAM role
-aws iam detach-role-policy --role-name s3-access-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-aws iam delete-role --role-name s3-access-role
-```
-
-**Explicación adicional:**
-
-1. **Asociación del proveedor OIDC**:
-   * El proveedor OIDC establece una relación de confianza entre AWS IAM y Kubernetes service accounts.
-   * Esto solo debe configurarse una vez por clúster.
-2. **Trust Policy de IAM Role**:
-   * La trust policy restringe la asunción del role solo a service accounts específicos en namespaces específicos.
-   * La seguridad se mejora usando condition statements.
-3. **Annotation de Service Account**:
-   * La annotation `eks.amazonaws.com/role-arn` especifica el IAM role que asumirá la service account.
-   * Esta annotation es procesada por EKS Pod Identity Webhook.
-4. **Variables de entorno**:
-   * EKS Pod Identity Webhook inyecta automáticamente las siguientes variables de entorno en el Pod:
-     * `AWS_ROLE_ARN`
-     * `AWS_WEB_IDENTITY_TOKEN_FILE`
-     * `AWS_REGION`
-   * Los AWS SDKs usan estas variables de entorno para obtener credenciales.
-5. **Principio de privilegio mínimo**:
-   * Concede solo los permisos mínimos requeridos por la aplicación.
-   * En este ejemplo, solo se concedió permiso de acceso de solo lectura a S3.
-
-Mediante este ejercicio, aprendiste a configurar IRSA para conceder permisos detallados a servicios de AWS solo a Pods específicos que se ejecutan en un clúster EKS. Este enfoque es más seguro que compartir el IAM role del node y sigue el principio de privilegio mínimo.
+Referencias: [configuración de roles IRSA](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html), [conectividad privada de IRSA](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [condiciones de políticas S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/amazon-s3-policy-keys.html).
 
 </details>
 
-\### Ejercicio 2: Fortalecimiento de la seguridad del clúster EKS
+### Ejercicio 2: Reforzar la seguridad del clúster EKS
 
-**Escenario:** Eres security engineer en tu empresa y necesitas fortalecer la seguridad de un clúster EKS recién creado. El clúster ya está creado y configurado con valores predeterminados. Quieres endurecer el clúster de acuerdo con las mejores prácticas de seguridad.
+**Escenario:** evalúa controles de seguridad concretos en un clúster EKS 1.36 de formación dedicado. Es un ejercicio de integración, no una configuración probada y lista para producción.
 
-**Requisitos:**
-
-1. Restringir el acceso al endpoint del clúster
-2. Habilitar el cifrado de Secrets
-3. Implementar network policies
-4. Aplicar Pod Security Standards
-5. Habilitar control plane logging
-
-**Solución:**
+**Requisitos previos:** administración autorizada del clúster, AWS CLI v2, kubectl y jq; nodos Linux EC2 compatibles; VPC CNI administrado por EKS con políticas de red habilitadas y compatible; y Pods de CoreDNS convencionales en `kube-system`. Usa los requisitos actuales del CNI/kernel indicados en la pregunta básica 3. El ejemplo exige que funcione la comunicación básica entre Pods; las políticas existentes de toda la organización pueden requerir otro diseño de prueba aprobado. No instales un segundo CNI solo para este ejercicio.
 
 <details>
-
 <summary>Mostrar solución</summary>
 
-**1. Restringir acceso al endpoint del clúster**
+**1. Inspeccionar el destino y guardar su configuración actual.** Define un CIDR de salida administrativa realmente autorizado, no los rangos reservados para documentación que aparecen en otros lugares. Este ejemplo comprueba EKS 1.36 y que la configuración de políticas del CNI administrado esté habilitada antes de continuar.
 
 ```bash
-# Check current cluster endpoint configuration
-aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.endpointPublicAccess"
-aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.endpointPrivateAccess"
+: "${EXAMPLE_CLUSTER:?Use a dedicated EKS 1.36 training cluster}"
+: "${EXAMPLE_REGION:?}"
+: "${APPROVED_API_CIDR:?Actual approved administration egress CIDR}"
+SECURITY_LAB_DIR=$(mktemp -d /tmp/eks-security-lab.XXXXXX)
+: "${SECURITY_LAB_DIR:?}"
+SECURITY_NAMESPACE="security-quiz-$(date +%s)-$$"
+SECURITY_KUBECONFIG="$SECURITY_LAB_DIR/kubeconfig"
 
-# Restrict public access (allow only specific CIDR blocks)
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=["203.0.113.0/24","198.51.100.0/24"]
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster --output json > "$SECURITY_LAB_DIR/before-cluster.json" || exit 1
+jq -e '.version == "1.36" and .status == "ACTIVE"' \
+  "$SECURITY_LAB_DIR/before-cluster.json" >/dev/null || exit 1
+aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name vpc-cni --query addon --output json > "$SECURITY_LAB_DIR/cni.json" || exit 1
+jq -e '(.configurationValues // "{}" | fromjson | .enableNetworkPolicy) as $enabled |
+  .status == "ACTIVE" and ($enabled == true or $enabled == "true")' \
+  "$SECURITY_LAB_DIR/cni.json" >/dev/null || exit 1
+aws eks update-kubeconfig --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubeconfig "$SECURITY_KUBECONFIG" --alias "$EXAMPLE_CLUSTER" || exit 1
 
-# Or disable public access (private cluster)
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
+# Serialize cluster configuration updates. A timeout does not cancel an AWS update.
+security_wait_update() {
+  local update_id="$1" status attempt
+  for ((attempt=1; attempt<=60; attempt++)); do
+    status=$(aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+      --update-id "$update_id" --query update.status --output text) || return 1
+    case "$status" in
+      Successful) return 0 ;;
+      Failed|Cancelled)
+        printf 'EKS update %s ended as %s\n' "$update_id" "$status" >&2
+        return 1 ;;
+      InProgress) sleep 10 ;;
+      *) printf 'Unexpected EKS update status: %s\n' "$status" >&2; return 1 ;;
+    esac
+  done
+  printf '%s\n' 'Update still pending; inspect it before another configuration change.' >&2
+  return 1
+}
 ```
 
-**2. Habilitar cifrado de Secrets**
+**2. Aplicar en serie los ajustes revisados de endpoint/registros.** Lo siguiente conserva ambas rutas de API y restringe la ruta pública al CIDR aprobado. Antes de elegir la alternativa solo privada, verifica por separado el enrutamiento/DNS/acceso a la API privados, como se describe en la Parte 1. Un timeout del auxiliar de espera no cancela la actualización de AWS; inspecciónala antes de enviar otro cambio.
+
+EKS 1.36 ya cifra mediante cifrado de sobre los datos de la API de Kubernetes, incluidos Secrets. Que la configuración de una clave administrada por el cliente esté vacía no demuestra que los datos se almacenen en texto claro. No crees otro clúster ni dupliques claves KMS para este paso. Si se necesita una CMK, sigue el procedimiento revisado y las precauciones de ciclo de vida de claves de la pregunta básica 4.
 
 ```bash
-# Create KMS key
-aws kms create-key --description "EKS Secrets Encryption Key"
-KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
+# Keep both API paths; the supplied CIDR must include the intended administration path.
+SECURITY_ENDPOINT_UPDATE=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --resources-vpc-config "endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}" \
+  --query update.id --output text) || exit 1
+security_wait_update "$SECURITY_ENDPOINT_UPDATE" || exit 1
+kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" get nodes || exit 1
 
-# Add alias to KMS key
-aws kms create-alias \
-  --alias-name alias/eks-secrets \
-  --target-key-id $KEY_ID
+# EKS 1.36 already has default envelope encryption; inspect rather than create a new cluster.
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query 'cluster.{version:version,encryption:encryptionConfig}'
 
-# Cannot enable encryption on current cluster, so a new cluster must be created
-# Get existing cluster configuration
-aws eks describe-cluster --name my-cluster > cluster-config.json
-
-# Create new cluster (more parameters are needed in practice)
-aws eks create-cluster \
-  --name my-cluster-encrypted \
-  --role-arn $(aws eks describe-cluster --name my-cluster --query cluster.roleArn --output text) \
-  --resources-vpc-config subnetIds=$(aws eks describe-cluster --name my-cluster --query cluster.resourcesVpcConfig.subnetIds --output text | tr -d '[]" ' | tr ',' ' '),securityGroupIds=$(aws eks describe-cluster --name my-cluster --query cluster.resourcesVpcConfig.securityGroupIds --output text | tr -d '[]" ') \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:'$(aws configure get region)':'$(aws sts get-caller-identity --query Account --output text)':key/'$KEY_ID'"}}]'
+SECURITY_LOGGING_UPDATE=$(aws eks update-cluster-config \
+  --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text) || exit 1
+security_wait_update "$SECURITY_LOGGING_UPDATE" || exit 1
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster.logging
 ```
 
-**3. Implementar Network Policies**
+Los registros del plano de control tienen costes de CloudWatch y se entregan con esfuerzo razonable, no garantizado. Confirma que los tipos previstos lleguen a `/aws/eks/<cluster-name>/cluster` y configura la retención/controles de acceso. Las restricciones del endpoint complementan la autorización de IAM/Kubernetes, pero no la sustituyen.
+
+**3. Crear un namespace Restricted aislado y probar las cargas.** Los tres Deployments crean Pods administrados por controladores, para probar de manera fiable las políticas del CNI de VPC. Usan un usuario no root, seccomp RuntimeDefault, capacidades descartadas, sistema de archivos raíz de solo lectura y un `emptyDir` para los archivos temporales del backend. No necesitan un token de API de cuenta de servicio.
 
 ```bash
-# Install Calico
-kubectl create namespace tigera-operator
-helm repo add projectcalico https://docs.projectcalico.org/charts
-helm install calico projectcalico/tigera-operator --namespace tigera-operator
+jq -n --arg ns "${SECURITY_NAMESPACE:?}" '{
+  apiVersion:"v1",kind:"Namespace",metadata:{name:$ns,labels:{
+    "pod-security.kubernetes.io/enforce":"restricted",
+    "pod-security.kubernetes.io/enforce-version":"v1.36",
+    "pod-security.kubernetes.io/audit":"restricted",
+    "pod-security.kubernetes.io/audit-version":"v1.36",
+    "pod-security.kubernetes.io/warn":"restricted",
+    "pod-security.kubernetes.io/warn-version":"v1.36"
+  }}
+}' > "${SECURITY_LAB_DIR:?}/namespace.json" || exit 1
+kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" \
+  create -f "$SECURITY_LAB_DIR/namespace.json" || exit 1
+SECURITY_NAMESPACE_UID=$(kubectl --kubeconfig "$SECURITY_KUBECONFIG" \
+  get namespace "$SECURITY_NAMESPACE" -o jsonpath='{.metadata.uid}') || exit 1
+: "${SECURITY_NAMESPACE_UID:?}"
+jq -n --arg ns "$SECURITY_NAMESPACE" --arg uid "$SECURITY_NAMESPACE_UID" \
+  '{namespace:$ns,uid:$uid}' > "$SECURITY_LAB_DIR/namespace-owner.json" || exit 1
 
-# Create default deny network policy
-cat > default-deny.yaml << EOF
+jq -n --arg ns "$SECURITY_NAMESPACE" '
+  def deployment($name;$command):
+    {
+      apiVersion:"apps/v1",kind:"Deployment",metadata:{name:$name,namespace:$ns},
+      spec:{replicas:1,selector:{matchLabels:{app:$name}},template:{
+        metadata:{labels:{app:$name}},
+        spec:{
+          nodeSelector:{"kubernetes.io/os":"linux"},
+          automountServiceAccountToken:false,
+          securityContext:{
+            runAsNonRoot:true,runAsUser:1000,runAsGroup:1000,fsGroup:1000,
+            seccompProfile:{type:"RuntimeDefault"}
+          },
+          volumes:[{name:"tmp",emptyDir:{}}],
+          containers:[({
+            name:"app",image:"busybox:1.37",command:$command,
+            securityContext:{
+              allowPrivilegeEscalation:false,readOnlyRootFilesystem:true,
+              capabilities:{drop:["ALL"]}
+            },
+            volumeMounts:[{name:"tmp",mountPath:"/tmp"}],
+            resources:{requests:{cpu:"50m",memory:"32Mi"},limits:{memory:"64Mi"}}
+          } + if $name == "backend" then {
+            ports:[{name:"http",containerPort:8080}],
+            readinessProbe:{httpGet:{path:"/",port:8080}}
+          } else {} end)]
+        }
+      }}
+    };
+  {
+    apiVersion:"v1",kind:"List",items:[
+      deployment("backend";["sh","-c","mkdir -p /tmp/www && printf \"policy-test-ok\\n\" > /tmp/www/index.html && exec httpd -f -p 8080 -h /tmp/www"]),
+      deployment("frontend";["sleep","3600"]),
+      deployment("outsider";["sleep","3600"]),
+      {
+        apiVersion:"v1",kind:"Service",metadata:{name:"backend",namespace:$ns},
+        spec:{selector:{app:"backend"},ports:[{name:"http",port:8080,targetPort:8080}]}
+      }
+    ]
+  }' > "$SECURITY_LAB_DIR/workloads.json" || exit 1
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" create -f "$SECURITY_LAB_DIR/workloads.json" || exit 1
+for app in backend frontend outsider; do
+  kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
+    rollout status "deployment/$app" --timeout=180s || exit 1
+done
+
+# Establish baseline connectivity before applying the policies.
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
+  exec deployment/frontend -- wget -qO- -T 5 http://backend:8080/ || exit 1
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
+  exec deployment/outsider -- wget -qO- -T 5 http://backend:8080/ || exit 1
+```
+
+Ambos clientes deben llegar al backend antes de aplicar las políticas. Si falla la conectividad básica, resuélvelo primero; no interpretes ese fallo como prueba de aplicación de NetworkPolicy.
+
+**4. Aplicar denegación predeterminada y reglas de autorización necesarias.** Este es el mismo diseño de política de la pregunta básica 3, con alcance limitado al namespace generado. Permite TCP 8080 desde frontend a backend y DNS convencional por UDP y TCP. Los puertos de servicio y contenedor coinciden.
+
+```bash
+cat > "${SECURITY_LAB_DIR:?}/networkpolicies.yaml" << EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny
-  namespace: default
+  namespace: ${SECURITY_NAMESPACE:?}
 spec:
   podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-EOF
-
-kubectl apply -f default-deny.yaml
-
-# Policy to allow communication between specific applications
-cat > allow-app-communication.yaml << EOF
+  policyTypes: [Ingress, Egress]
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend-to-backend
-  namespace: default
+  name: backend-ingress
+  namespace: ${SECURITY_NAMESPACE:?}
 spec:
   podSelector:
     matchLabels:
       app: backend
+  policyTypes: [Ingress]
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - protocol: TCP
-      port: 8080
-EOF
-
-kubectl apply -f allow-app-communication.yaml
-```
-
-**4. Aplicar Pod Security Standards**
-
-```bash
-# Apply Pod Security Standards to namespace
-cat > pod-security.yaml << EOF
-apiVersion: v1
-kind: Namespace
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: restricted-ns
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
-EOF
-
-kubectl apply -f pod-security.yaml
-
-# Add labels to existing namespace
-kubectl label namespace default \
-  pod-security.kubernetes.io/enforce=baseline \
-  pod-security.kubernetes.io/audit=restricted \
-  pod-security.kubernetes.io/warn=restricted
-
-# Install Kyverno (for additional policy enforcement)
-kubectl create namespace kyverno
-helm repo add kyverno https://kyverno.github.io/kyverno/
-helm install kyverno kyverno/kyverno --namespace kyverno
-
-# Policy to prevent privileged containers
-cat > restrict-privileged.yaml << EOF
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: disallow-privileged-containers
+  name: frontend-egress
+  namespace: ${SECURITY_NAMESPACE:?}
 spec:
-  validationFailureAction: enforce
-  rules:
-  - name: privileged-containers
-    match:
-      resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Privileged containers are not allowed"
-      pattern:
-        spec:
-          containers:
-          - name: "*"
-            securityContext:
-              privileged: false
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dns-egress
+  namespace: ${SECURITY_NAMESPACE:?}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 EOF
-
-kubectl apply -f restrict-privileged.yaml
+kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" apply -f "$SECURITY_LAB_DIR/networkpolicies.yaml" || exit 1
 ```
 
-**5. Habilitar Control Plane Logging**
+**5. Verificar conexiones nuevas y controles positivos.** Tras la convergencia de políticas, observa la solicitud denegada del cliente no relacionado y confirma luego que funcione la solicitud autorizada de frontend y siga funcionando DNS. Estas observaciones corresponden a esta topología de prueba; si hay fallos inesperados, inspecciona el estado/registros de las políticas y agentes antes de interpretarlos.
 
 ```bash
-# Enable all control plane log types
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-
-# Verify logging status
-aws eks describe-cluster --name my-cluster --query "cluster.logging"
-
-# Check logs in CloudWatch Logs
-aws logs describe-log-groups --log-group-name-prefix /aws/eks/my-cluster
-```
-
-**6. Medidas adicionales de hardening de seguridad**
-
-```bash
-# Restrict IAM policy for AWS Load Balancer Controller
-cat > alb-controller-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeVpcs",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeSecurityGroups",
-        "elasticloadbalancing:DescribeLoadBalancers",
-        "elasticloadbalancing:DescribeTargetGroups",
-        "elasticloadbalancing:DescribeListeners"
-      ],
-      "Resource": "*"
-    }
-  ]
+# Wait briefly for the expected denied fresh connection; do not treat baseline failures as success.
+SECURITY_DENY_OBSERVED=false
+for ((attempt=1; attempt<=6; attempt++)); do
+  if kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" -n "${SECURITY_NAMESPACE:?}" \
+    exec deployment/outsider -- wget -qO- -T 5 http://backend:8080/ >/dev/null 2>&1; then
+    sleep 2
+  else
+    SECURITY_DENY_OBSERVED=true
+    break
+  fi
+done
+[ "$SECURITY_DENY_OBSERVED" = true ] || {
+  printf '%s\n' 'Expected deny was not observed; inspect policy enforcement.' >&2
+  exit 1
 }
-EOF
 
-aws iam create-policy \
-  --policy-name EksAlbControllerRestrictedPolicy \
-  --policy-document file://alb-controller-policy.json
-
-# Configure node group update for periodic node replacement
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config '{"maxUnavailable": 1}'
-
-# Start node group update
-aws eks update-nodegroup-version \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup
+# Positive controls after the denial: allowed application traffic and DNS must still work.
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
+  exec deployment/frontend -- wget -qO- -T 5 http://backend:8080/ || exit 1
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" \
+  exec deployment/outsider -- nslookup backend || exit 1
+kubectl --kubeconfig "$SECURITY_KUBECONFIG" -n "$SECURITY_NAMESPACE" get networkpolicies
 ```
 
-**Explicación del hardening de seguridad:**
+PSA aplica el estándar Restricted del namespace. Kyverno o Gatekeeper son opcionales para requisitos que excedan PSA; usa las API actuales de la pregunta básica 6 y adapta aquí su coincidencia de namespace. Una política creada correctamente fuera de este namespace no aplicaría sus reglas a las cargas del laboratorio.
 
-1. **Restringir acceso al endpoint del clúster**:
-   * Restringe el acceso al endpoint público a rangos IP específicos o deshabilítalo por completo.
-   * Habilita el endpoint privado para permitir acceso al clúster desde dentro de la VPC.
-   * Esto previene acceso no autorizado al cluster API server.
-2. **Habilitar cifrado de Secrets**:
-   * Usa AWS KMS keys para cifrar Kubernetes Secrets almacenados en etcd.
-   * Protege datos confidenciales en reposo.
-   * Nota: El cifrado no puede habilitarse en clústeres existentes, por lo que necesitas crear un nuevo clúster.
-3. **Implementar Network Policies**:
-   * Instala Calico para admitir Kubernetes network policies.
-   * Aplica políticas default deny para bloquear todo el tráfico no permitido explícitamente.
-   * Implementa políticas detalladas que permitan solo la comunicación necesaria.
-4. **Aplicar Pod Security Standards**:
-   * Aplica Pod Security Standards disponibles en Kubernetes 1.23 y posteriores.
-   * Establece restricciones de seguridad a nivel de namespace.
-   * Usa policy engines como Kyverno para aplicar políticas de seguridad adicionales.
-5. **Habilitar Control Plane Logging**:
-   * Envía todos los tipos de log del control plane a CloudWatch Logs.
-   * Monitorea la actividad del clúster mediante audit logs.
-   * Mantén logs para eventos de seguridad y troubleshooting.
+**6. Revisar controles relacionados sin sustituirlos por recetas incompletas.** Una política IAM de solo lectura `Describe*` no permite operar AWS Load Balancer Controller; usa su política oficial correspondiente a la versión y revisa las condiciones de recursos/etiquetas. Inspecciona IAM del nodo, IMDS, grupos de seguridad e identidades de complementos. `maxUnavailable` controla la disrupción de una actualización de nodo administrado ya iniciada; no programa sustituciones periódicas. Usa un plan de mantenimiento/actualización revisado por separado.
 
-Mediante este ejercicio práctico, aprendiste varios métodos para fortalecer la seguridad de tu clúster EKS. Estas medidas de seguridad ayudan a mejorar la postura de seguridad de tu clúster y a protegerlo contra acceso no autorizado y actividades maliciosas.
+**7. Limpiar el namespace del laboratorio.** Usa el UID registrado; si falla la limpieza, conserva los archivos privados de titularidad/ajustes.
+
+```bash
+CURRENT_SECURITY_UID=$(kubectl --kubeconfig "${SECURITY_KUBECONFIG:?}" \
+  get namespace "${SECURITY_NAMESPACE:?}" --ignore-not-found \
+  -o jsonpath='{.metadata.uid}') || exit 1
+if [ -z "$CURRENT_SECURITY_UID" ]; then
+  printf '%s\n' 'Lab namespace is already absent.'
+elif [ "$CURRENT_SECURITY_UID" = "${SECURITY_NAMESPACE_UID:?Recorded UID required}" ]; then
+  kubectl --kubeconfig "$SECURITY_KUBECONFIG" delete namespace "$SECURITY_NAMESPACE" --wait=true
+else
+  printf '%s\n' 'Namespace UID mismatch; no deletion attempted.' >&2
+  exit 1
+fi
+```
+
+Si conservas el clúster, revisa los ajustes de endpoint/registros resultantes y la retención/coste continuos de los registros. Si eliminas el clúster de formación, sigue la guía de ciclo de vida del clúster e inspecciona los registros CloudWatch retenidos y los recursos administrados de manera independiente. No elimines una clave KMS asociada al limpiar el namespace.
+
+Esta auditoría no realizó las actualizaciones de AWS ni ejecutó la red de Pods. Las comprobaciones locales abarcan los manifiestos generados, la lógica de políticas y las protecciones ante fallos/limpieza. IAM, enrutamiento, admisión, disponibilidad y recuperación en producción requieren verificación específica del entorno.
+
+Referencias: [requisitos de NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html), [cifrado de sobre predeterminado](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [acceso al endpoint de la API](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html), [registros del plano de control](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
 
 </details>
 
 ## Temas avanzados
 
-Las siguientes son preguntas sobre temas avanzados en la creación de clústeres Amazon EKS. Esta sección evalúa tu comprensión de conceptos avanzados y mejores prácticas en la creación de clústeres EKS.
+Las siguientes preguntas tratan temas avanzados de la creación de clústeres de Amazon EKS y evalúan tu comprensión de sus conceptos y prácticas recomendadas.
 
-1. ¿Cuál de las siguientes opciones NO es un requisito para configurar soporte IPv6 en un clúster Amazon EKS?
-   * A) VPC con un bloque CIDR IPv6 asignado
-   * B) Versión del CNI plugin que admita IPv6
-   * C) Subnets dual-stack
-   * D) Instance types solo IPv6
+1. ¿Cuál de las siguientes NO es un requisito para un clúster EKS IPv6?
+   * A) VPC/subredes con direccionamiento IPv4 e IPv6
+   * B) Configuración de CNI compatible y permisos IAM IPv6
+   * C) Nodos EC2 compatibles basados en Nitro o Fargate
+   * D) Una familia de instancias EC2 independiente y solo IPv6
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Instance types solo IPv6**
+**Respuesta: D) Una familia de instancias EC2 independiente y solo IPv6**
 
-**Explicación:** "Instance types solo IPv6" NO es un requisito para configurar soporte IPv6 en un clúster Amazon EKS. No existen instance types especiales requeridos para soporte IPv6, ya que la mayoría de los instance types EC2 admiten IPv6. Los requisitos reales son una VPC con un bloque CIDR IPv6 asignado, una versión del CNI plugin que admita IPv6 y subnets dual-stack.
+EKS no exige una «familia de instancias solo IPv6» independiente. Sí requiere **nodos EC2 compatibles basados en Nitro o Fargate**, por lo que es incorrecto afirmar que funciona cualquier tipo de instancia EC2 ordinario.
 
-**Requisitos reales para soporte IPv6 en EKS:**
+**Requisitos previos:**
 
-1.  **VPC con un bloque CIDR IPv6 asignado**:
-
-    * Debes asignar un bloque CIDR IPv6 a tu VPC.
-    * Esto puede configurarse mediante AWS Management Console o AWS CLI.
-
-    ```bash
-    # Assign IPv6 CIDR block to existing VPC
-    aws ec2 associate-vpc-cidr-block \
-      --vpc-id vpc-12345 \
-      --amazon-provided-ipv6-cidr-block
-    ```
-2.  **Versión del CNI plugin que admita IPv6**:
-
-    * Se requiere Amazon VPC CNI plugin versión 1.10.0 o posterior.
-    * Se necesita configuración para soporte IPv6.
-
-    ```bash
-    # Check CNI version
-    kubectl describe daemonset aws-node --namespace kube-system | grep Image
-
-    # Update CNI
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-
-    # Enable IPv6
-    kubectl set env daemonset aws-node -n kube-system ENABLE_IPV6=true
-    ```
-3.  **Subnets dual-stack**:
-
-    * Las subnets deben tener asignados bloques CIDR tanto IPv4 como IPv6.
-    * El routing IPv6 debe configurarse en la route table.
-
-    ```bash
-    # Assign IPv6 CIDR block to subnet
-    aws ec2 associate-subnet-cidr-block \
-      --subnet-id subnet-12345 \
-      --ipv6-cidr-block 2600:1f16:d93:e900::/64
-
-    # Create IPv6 internet gateway
-    aws ec2 create-egress-only-internet-gateway --vpc-id vpc-12345
-    ```
-
-**Creación de un clúster EKS IPv6:**
+1. Selecciona la familia IP IPv6 al crear un clúster **nuevo**. Es inmutable; cambiar `ENABLE_IPV6` en un clúster IPv4 existente no lo convierte.
+2. Asocia CIDR IPv4 e IPv6 a la VPC/subredes y habilita la asignación automática de IPv6 en las subredes de nodos. Revisa rutas IPv6, grupos de seguridad, DNS y conectividad de administración. Los ID de subred deben corresponder a las VPC/AZ previstas.
+3. Usa una versión compatible de VPC CNI configurada para IPv6 y delegación de prefijos. La versión 1.10.1 es el mínimo histórico, no una instalación recomendada actualmente. No apliques un manifiesto antiguo 1.10 encima de un complemento administrado actual.
+4. Proporciona los permisos IAM IPv6 del CNI, preferiblemente mediante su propio rol de carga de trabajo. La política IPv4 `AmazonEKS_CNI_Policy` no es la política IPv6. Revisa el rol/políticas generados por el flujo IPv6/complemento de eksctl.
 
 ```bash
-# Create IPv6 cluster using eksctl
-cat > ipv6-cluster.yaml << EOF
+aws ec2 describe-subnets --region "${EXAMPLE_REGION:?}" \
+  --subnet-ids "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --query 'Subnets[].{id:SubnetId,az:AvailabilityZone,ipv4:CidrBlock,ipv6:Ipv6CidrBlockAssociationSet,autoIPv6:AssignIpv6AddressOnCreation}'
+aws eks describe-addon-versions --region "$EXAMPLE_REGION" \
+  --addon-name vpc-cni --kubernetes-version 1.36
+```
+
+**Ejemplo:** usa subredes privadas de doble pila ya preparadas y un grupo de nodos AL2023 basado en Nitro. Sustituye los ID de ejemplo y el CIDR de acceso público. La escritura `kubernetesNetworkConfig.ipFamily: IPv6` es correcta para eksctl; la API de EKS usa `ipv6` en minúsculas.
+
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: ipv6-cluster
+  name: ipv6-lab
   region: us-west-2
-  version: '1.23'
+  version: "1.36"
+kubernetesNetworkConfig:
+  ipFamily: IPv6
 vpc:
-  id: vpc-12345
+  id: vpc-0123456789abcdef0
   subnets:
     private:
       us-west-2a:
-        id: subnet-12345
+        id: subnet-0123456789abcdef0
       us-west-2b:
-        id: subnet-67890
+        id: subnet-0123456789abcdef1
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
-kubernetesNetworkConfig:
-  ipFamily: IPv6
+  publicAccessCIDRs:
+    - 203.0.113.10/32
+iam:
+  withOIDC: true
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
 managedNodeGroups:
-  - name: ng-1
+  - name: ipv6-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+```
+
+Guarda la configuración revisada como `ipv6-cluster.yaml`. Selecciona y registra las versiones exactas de complementos compatibles con tu entorno; omitir las versiones anteriores permite que la herramienta elija valores predeterminados compatibles. Esto no afirma que se deba instalar una versión histórica específica de CNI.
+
+```bash
+# After reviewing real IDs, routing, IAM, access and compatible addon versions.
+eksctl create cluster -f ipv6-cluster.yaml --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
+```
+
+La configuración no prepara por sí misma los atributos/rutas IPv6 de las subredes existentes. Confirma las entradas de acceso creadas y los permisos del CNI, así como la preparación de nodos/complementos. Esta auditoría no creó un clúster IPv6.
+
+**Direccionamiento y tráfico:**
+
+- EKS expone direcciones IPv6 de Pods y asigna ClusterIP IPv6. Una VPC de doble pila no convierte Pods/Services de EKS en doble pila.
+- Las direcciones IPv6 de Pods proceden del direccionamiento de la subred; las direcciones IPv6 de Service usan un rango local único asignado por EKS dentro de `fc00::/7`. No supongas un CIDR de servicio fijo `fd00::/108`.
+- Los nodos EC2 tienen direcciones IPv4 e IPv6. Un Pod también puede recibir una dirección IPv4 local del host que no se muestra para llegar a destinos IPv4 externos, con NAT de origen a través del nodo. El acceso IPv4 a Internet de nodos privados aún puede requerir NAT; IPv6 no elimina todas las dependencias de NAT.
+- El tráfico IPv6 nativo a Internet puede usar un internet gateway o un egress-only internet gateway, según el sentido previsto y el diseño de seguridad. El gateway de solo salida no es obligatorio en todos los clústeres IPv6.
+- El balanceo hacia Pods IPv6 requiere una configuración compatible de controlador/balanceador con destinos IP. Un frontend apropiado de doble pila aún puede atender clientes IPv4; no confundas el direccionamiento del Pod con la familia IP del cliente.
+- Windows y el networking personalizado de VPC CNI no son compatibles con clústeres EKS IPv6. Comprueba la compatibilidad de controladores de almacenamiento, complementos y dependencias externas antes de elegir la familia.
+
+```bash
+aws eks describe-cluster --name "${IPV6_CLUSTER_NAME:?}" \
+  --region "${EXAMPLE_REGION:?}" --query cluster.kubernetesNetworkConfig
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system get pods -o wide
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get services -o wide
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get nodes -o wide
+```
+
+Inspecciona las direcciones reales y prueba DNS y destinos IPv6/IPv4 necesarios. Enumerar direcciones IPv6 no demuestra conectividad ni disponibilidad. Limpia únicamente los recursos de laboratorio registrados según el procedimiento de ciclo de vida del clúster.
+
+Referencias: [comportamiento IPv6 de EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-ipv6.html), [tutorial IPv6 de eksctl](https://docs.aws.amazon.com/eks/latest/userguide/deploy-ipv6-cluster.html), [rol IAM del CNI](https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html), [respuesta de configuración de red](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigResponse.html).
+
+</details>
+
+2. ¿Qué permite principalmente el networking personalizado de VPC CNI?
+   * A) Subredes/grupos de seguridad de Pods distintos de la interfaz principal del nodo dentro de la misma VPC
+   * B) Evitar automáticamente cualquier solapamiento de CIDR
+   * C) Cifrar todas las conexiones entre nodos
+   * D) Acelerar la reconciliación del plano de control
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A) Subredes/grupos de seguridad de Pods distintos de la interfaz principal del nodo dentro de la misma VPC**
+
+El networking personalizado de VPC CNI permite que los Pods Linux IPv4 en EC2 utilicen **subredes/grupos de seguridad alternativos dentro de la misma VPC que sus nodos**. El rango de los Pods no queda fuera de los CIDR asociados a la VPC. Un CIDR secundario de VPC puede aportar espacio de direcciones, pero su uso no evita automáticamente el solapamiento con otras redes.
+
+De forma predeterminada, VPC CNI crea ENI secundarias en la subred principal del nodo y utiliza direcciones de esas ENI y de las direcciones aptas de la ENI principal. Con networking personalizado, las IP normales de Pods proceden de ENI secundarias configuradas mediante `ENIConfig`; no se usa la ENI principal para asignarlas. Los Pods `hostNetwork` siguen usando la red del host.
+
+**Secuencia de configuración:**
+
+1. Planifica el espacio IPv4 disponible, el enrutamiento y los permisos. Si agregas un CIDR secundario, comprueba las restricciones de asociación de VPC y el solapamiento con redes conectadas. Los ejemplos de espacio compartido `100.64.0.0/10` de AWS no garantizan que ese rango esté libre en tu entorno.
+2. Prepara subredes alternativas de Pods en la **misma VPC y AZ correspondiente** a cada subred principal de nodo. Revisa rutas de subred y reglas de grupos de seguridad, incluidas dependencias de API/DNS/cargas de trabajo.
+3. Crea un `ENIConfig` por cada subred de Pod prevista. Lo siguiente usa una subred por AZ; sustituye todos los ID. No sobrescribas configuraciones de alcance de clúster que pertenezcan a otro despliegue.
+
+```yaml
+apiVersion: crd.k8s.amazonaws.com/v1alpha1
+kind: ENIConfig
+metadata:
+  name: us-west-2a
+spec:
+  subnet: subnet-0123456789abcdef0
+  securityGroups:
+    - sg-0123456789abcdef0
+---
+apiVersion: crd.k8s.amazonaws.com/v1alpha1
+kind: ENIConfig
+metadata:
+  name: us-west-2b
+spec:
+  subnet: subnet-0123456789abcdef1
+  securityGroups:
+    - sg-0123456789abcdef0
+```
+
+4. Configura networking personalizado y la selección de ENIConfig usando el responsable de la instalación del CNI. Si es un complemento administrado por EKS, combina estos ajustes de entorno con la configuración completa revisada después de comprobar el esquema de la versión instalada:
+
+```yaml
+# Merge with existing managed-addon configuration; do not discard other env values.
+env:
+  AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG: "true"
+  ENI_CONFIG_LABEL_DEF: topology.kubernetes.io/zone
+```
+
+Para un DaemonSet autoadministrado, la actualización equivalente es la siguiente. Afecta al comportamiento del CNI de todo el clúster y debe formar parte de una migración planificada, no de un despliegue de aplicación informal:
+
+```bash
+# Self-managed CNI alternative, after preparing ENIConfig/subnets and a rollout plan.
+# For an EKS-managed addon, use its supported configuration-values workflow instead.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system \
+  set env daemonset/aws-node AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true \
+  ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system \
+  rollout status daemonset/aws-node --timeout=5m
+```
+
+5. Aprovisiona y valida nodos de sustitución con la configuración necesaria; luego migra las cargas con vaciado que tenga en cuenta los PDB y con pruebas de aplicaciones. Cambiar las variables de entorno no reasigna las direcciones de Pods existentes. AWS recomienda nodos nuevos para configurar networking personalizado. Conserva la capacidad anterior hasta verificar la migración.
+
+Al usar `ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone`, asigna a cada `ENIConfig` el nombre de esa AZ. Si necesitas varias subredes de Pod en una AZ, usa nombres únicos y una asignación revisada de etiqueta/anotación de nodo personalizada. La selección mediante anotación `ENIConfig` existente puede prevalecer sobre la selección por etiqueta. No cambies la etiqueta topológica real de un nodo para forzarlo a usar una subred de otra AZ.
+
+**Límites de capacidad y seguridad:**
+
+- Excluir la ENI principal reduce la capacidad de Pods en modo de IP secundaria. La delegación de prefijos puede aumentarla, pero siguen importando la disponibilidad de prefijos en la subred, los límites compatibles de la instancia y `maxPods` de kubelet. Calcula y prueba la densidad; no copies un valor universal.
+- Con `AWS_VPC_K8S_CNI_EXTERNALSNAT=false` (valor predeterminado), el tráfico fuera de los CIDR asociados a la VPC recibe NAT de origen mediante la interfaz principal del nodo y usa su subred/grupos de seguridad. No supongas que el grupo de seguridad de ENIConfig filtra todos los flujos externos.
+- Al combinarlo con Security Groups for Pods, el grupo de `SecurityGroupPolicy` del Pod tiene prioridad sobre el grupo de ENIConfig para ese Pod. Comprueba los modos de aplicación/SNAT compatibles.
+- El networking personalizado no cifra el tráfico ni establece por sí solo una frontera de aislamiento entre tenants, y no resuelve rutas con CIDR solapados sin un diseño de red apropiado.
+- No es compatible con EKS IPv6 ni nodos Windows. Fargate selecciona subredes mediante sus perfiles, no con los mapeos ENIConfig de nodos EC2.
+
+```bash
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get eniconfigs
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get nodes -L topology.kubernetes.io/zone
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "${APPLICATION_NAMESPACE:?}" get pods -o wide
+aws ec2 describe-subnets --region "${EXAMPLE_REGION:?}" \
+  --subnet-ids "${POD_SUBNET_A:?}" "${POD_SUBNET_B:?}" \
+  --query 'Subnets[].{id:SubnetId,vpc:VpcId,az:AvailabilityZone,cidr:CidrBlock,free:AvailableIpAddressCount}'
+```
+
+Verifica las IP de Pods con las subredes previstas, las AZ de nodo, la conectividad DNS/API y los flujos requeridos de aplicaciones. Enumerar `ENIConfig` no demuestra migración ni aislamiento. Este ejemplo se revisó estáticamente; no se cambió CNI, migró ningún nodo ni ejecutó una prueba de rendimiento de red.
+
+Referencias: [networking personalizado](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html), [configuración y migración](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network-tutorial.html), [consideraciones sobre networking personalizado](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html).
+
+</details>
+
+3. ¿Cuál NO es un requisito para ejecutar cargas de trabajo Windows en EKS?
+   * A) Al menos dos grupos de nodos administrados de Amazon Linux
+   * B) Capacidad Linux o Fargate para Pods del sistema que solo se ejecutan en Linux
+   * C) Una AMI Windows e imagen de contenedor compatibles
+   * D) IPAM de Windows y autenticación/IAM de nodo correctos
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A) Al menos dos grupos de nodos administrados de Amazon Linux**
+
+No se exigen dos grupos de nodos administrados de Amazon Linux. EKS sí necesita **capacidad Linux o Fargate para Pods del sistema que solo se ejecutan en Linux, como CoreDNS**; esto no requiere una distribución Linux específica ni dos grupos separados. Planifica réplicas y ubicación entre dominios de fallo para la disponibilidad; no confundas el mínimo con un diseño de alta disponibilidad.
+
+**Requisitos previos de Windows:**
+
+1. Usa un clúster IPv4 de EKS actualmente compatible y una AMI de Windows optimizada para EKS compatible. AWS publica variantes Windows Server 2019, 2022 y 2025; este ejemplo usa deliberadamente 2022, no una línea base obsoleta de Kubernetes 1.14/1.23.
+2. Confirma los permisos `AmazonEKSVPCResourceController` en el rol IAM del clúster y habilita IPAM de Windows en la configuración `kube-system/amazon-vpc-cni`.
+3. Deja que el controlador de recursos VPC administrado por EKS haga IPAM de Windows. No instales manifiestos antiguos del controlador de recursos/admission-webhook del plano de datos desde una URL `master` flotante.
+4. Usa un rol IAM de nodo Windows dedicado y la autenticación de nodo correcta. La autenticación API usa una entrada de acceso `EC2_WINDOWS`; los grupos de nodos administrados gestionan sus entradas de acceso de nodo. Con `aws-auth` heredado, conserva el grupo requerido `eks:kube-proxy-windows` además de los grupos de nodo/arranque.
+
+```bash
+aws iam list-attached-role-policies --role-name "${EKS_CLUSTER_ROLE_NAME:?}"
+
+# If missing, attach to the reviewed cluster role, not to every worker role.
+aws iam attach-role-policy --role-name "$EKS_CLUSTER_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
+```
+
+El ajuste de IPAM de Windows pertenece a la configuración existente de VPC CNI. Si EKS o Helm lo administra, usa los ajustes compatibles de ese responsable en vez de reemplazar todo el ConfigMap:
+
+```yaml
+# Relevant ConfigMap data; merge through the owning addon/Helm configuration.
+data:
+  enable-windows-ipam: "true"
+```
+
+**Ejemplo de grupo de nodos:** guarda esto como `windows-nodegroup.yaml` después de revisar el clúster existente, las subredes, disponibilidad de AMI e IAM. El taint impide que cargas Linux normales terminen accidentalmente en esos nodos; las plantillas de cargas Linux también deben seleccionar Linux explícitamente.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: windows-ng
+    amiFamily: WindowsServer2022FullContainer
     instanceType: m5.large
     desiredCapacity: 2
-EOF
-
-eksctl create cluster -f ipv6-cluster.yaml
+    minSize: 2
+    maxSize: 4
+    privateNetworking: true
+    taints:
+      - key: example.com/os
+        value: windows
+        effect: NoSchedule
 ```
-
-**Verificación de la configuración del clúster IPv6:**
 
 ```bash
-# Check cluster information
-aws eks describe-cluster --name ipv6-cluster --query "cluster.kubernetesNetworkConfig"
-
-# Verify Pod IP assignment
-kubectl get pods -o wide
-
-# Verify Service IP assignment
-kubectl get services -o wide
+# Existing, supported IPv4 cluster with Windows IPAM and IAM prerequisites ready.
+eksctl create nodegroup -f windows-nodegroup.yaml
+aws eks describe-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name windows-ng \
+  --query 'nodegroup.{status:status,ami:amiType,role:nodeRole,health:health}'
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -l kubernetes.io/os=windows -L node.kubernetes.io/windows-build
 ```
 
-**Características de clústeres IPv6:**
+**Ejemplo de carga de trabajo:** crea un namespace `windows-lab` no usado y despliega una imagen compatible con la compilación de Windows del nodo. Las AMI Windows optimizadas para EKS incluyen kubelet, **Windows kube-proxy**, containerd y otros componentes del host; kube-proxy no es exclusivo de Linux.
 
-1. **Asignación de IP de Pod**:
-   * Los Pods reciben solo direcciones IPv6.
-   * La comunicación dentro del clúster ocurre sobre IPv6.
-2. **Asignación de IP de Service**:
-   * Los Services ClusterIP usan direcciones IPv6.
-   * El service CIDR predeterminado es fd00::/108.
-3. **Configuración de DNS**:
-   * CoreDNS se configura con direcciones IPv6.
-   * La resolución de nombres de Service está disponible mediante registros AAAA.
-4. **Comunicación externa**:
-   * Se requiere un Egress-Only Internet Gateway para comunicación con internet.
-   * Se requiere un load balancer con IPv6 habilitado para comunicación entrante.
-
-**Beneficios de usar IPv6:**
-
-1. **Resolver el agotamiento de direcciones IP**:
-   * Supera las limitaciones del espacio de direcciones IPv4.
-   * Resuelve problemas de escasez de direcciones IP en clústeres a gran escala.
-2. **Networking simplificado**:
-   * No se necesita NAT, lo que simplifica la configuración de red.
-   * El routing directo puede mejorar el rendimiento de red.
-3. **Compatibilidad futura**:
-   * Prepara la transición a entornos solo IPv6.
-   * Permite aprovechar nuevas características y optimizaciones de networking.
-
-"Instance types solo IPv6" es un concepto inexistente, y la mayoría de los instance types EC2 admiten IPv6. No hay necesidad de seleccionar instance types especiales para configurar IPv6 en EKS.
-
-</details>
-
-2\. ¿Cuál es el principal beneficio de configurar custom networking en un clúster Amazon EKS? - A) Separar el rango de direcciones IP de Pod del VPC CIDR para prevenir conflictos de direcciones IP - B) Reducir el tiempo de creación del clúster - C) Mejorar el rendimiento del control plane - D) Cifrar la comunicación node-to-node
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: A) Separar el rango de direcciones IP de Pod del VPC CIDR para prevenir conflictos de direcciones IP**
-
-**Explicación:** El principal beneficio de configurar custom networking en un clúster Amazon EKS es separar el rango de direcciones IP de Pod del VPC CIDR para prevenir conflictos de direcciones IP. Esta característica facilita la integración con infraestructura de red existente y permite una gestión de direcciones IP más eficiente en clústeres a gran escala.
-
-**Cómo funciona Custom Networking:**
-
-De forma predeterminada, el Amazon VPC CNI plugin asigna direcciones IP secundarias desde la interfaz de red primaria del node para proporcionar direcciones IP a Pods. En este enfoque, las direcciones IP de Pod se asignan desde el rango VPC CIDR. En contraste, custom networking permite asignar direcciones IP de Pod desde un bloque CIDR separado del VPC CIDR.
-
-**Pasos para configurar Custom Networking:**
-
-1.  **Habilitar Custom Networking**:
-
-    ```bash
-    # Modify CNI plugin configuration
-    kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
-    ```
-2.  **Crear recursos ENIConfig**:
-
-    ```yaml
-    # Create ENIConfig for each availability zone
-    apiVersion: crd.k8s.amazonaws.com/v1alpha1
-    kind: ENIConfig
-    metadata:
-      name: us-west-2a
-    spec:
-      subnet: subnet-12345
-      securityGroups:
-      - sg-12345
-    ---
-    apiVersion: crd.k8s.amazonaws.com/v1alpha1
-    kind: ENIConfig
-    metadata:
-      name: us-west-2b
-    spec:
-      subnet: subnet-67890
-      securityGroups:
-      - sg-12345
-    ```
-3.  **Habilitar uso de ENIConfig basado en Availability Zone**:
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone
-    ```
-4.  **Verificar Node Labels**:
-
-    ```bash
-    kubectl get nodes --show-labels | grep topology.kubernetes.io/zone
-    ```
-
-**Beneficios de Custom Networking:**
-
-1. **Prevención de conflictos de direcciones IP**:
-   * Separa el rango de direcciones IP de Pod del VPC CIDR para prevenir conflictos de direcciones IP.
-   * Facilita la integración con infraestructura de red existente.
-   * Útil para conexiones de peering o VPN entre redes on-premises y VPCs.
-2. **Flexibilidad en gestión de direcciones IP**:
-   * Permite planificar y gestionar por separado los rangos de direcciones IP de Pod.
-   * Permite una gestión de direcciones IP más eficiente en clústeres a gran escala.
-3. **Segmentación de red**:
-   * Permite segmentación de red colocando Pods en subnets específicas.
-   * El control de acceso de red mediante security groups es posible.
-4. **Soporte Multi-CIDR**:
-   * Se pueden usar múltiples bloques CIDR para expandir el espacio de direcciones IP.
-   * Se pueden construir clústeres a gran escala incluso cuando el VPC CIDR existente es limitado.
-
-**Casos de uso para Custom Networking:**
-
-1. **Entornos de red híbridos**:
-   * Cuando existe conectividad entre redes on-premises y AWS VPC
-   * Cuando debe prevenirse el solapamiento del espacio de direcciones IP
-2. **Clústeres a gran escala**:
-   * Cuando se ejecuta una gran cantidad de Pods
-   * Cuando el rango VPC CIDR es limitado
-3. **Entornos multi-tenant**:
-   * Cuando se requieren subnets separadas para cada tenant
-   * Cuando se necesita aislamiento de red
-4. **Requisitos regulatorios**:
-   * Cuando las regulaciones requieren colocar workloads específicos en subnets específicas
-
-**Problemas con otras opciones:**
-
-* **Reducir el tiempo de creación del clúster**: Custom networking no afecta el tiempo de creación del clúster y, de hecho, puede aumentar el tiempo de configuración debido a la configuración adicional.
-* **Mejorar el rendimiento del control plane**: Custom networking solo afecta el networking del data plane (worker nodes y Pods) y no impacta directamente el rendimiento del control plane.
-* **Cifrar la comunicación node-to-node**: Custom networking solo cambia cómo se asignan las direcciones IP y no está relacionado con el cifrado de comunicación node-to-node. El cifrado de comunicación node-to-node debe implementarse mediante mecanismos de seguridad separados (por ejemplo, características de cifrado de Calico o Cilium).
-
-Custom networking es una característica potente que permite una configuración más flexible del networking de clústeres EKS, pero es compleja de configurar y puede implicar overhead de gestión adicional, por lo que debe usarse solo cuando realmente sea necesario.
-
-</details>
-
-3\. ¿Cuál de las siguientes opciones NO es un requisito para admitir Windows worker nodes en un clúster Amazon EKS? - A) Se requieren al menos 2 Amazon Linux-based managed node groups - B) Add-ons VPC-CNI, kube-proxy y CoreDNS instalados - C) AMI Windows Server 2019 o posterior - D) Versión del clúster 1.14 o superior
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: A) Se requieren al menos 2 Amazon Linux-based managed node groups**
-
-**Explicación:** Para admitir Windows worker nodes en un clúster Amazon EKS, se requiere al menos 1 (no 2 o más) Amazon Linux-based managed node group. Esto se debe a que Pods esenciales del sistema como CoreDNS deben ejecutarse en Linux nodes. Sin embargo, es incorrecto que se requieran al menos 2 Linux node groups.
-
-**Requisitos reales para soporte de Windows Worker Node en EKS:**
-
-1.  **Linux Node Group requerido**:
-
-    * Se requiere al menos 1 Linux node en el clúster.
-    * System Pods como CoreDNS, VPC CNI plugin y kube-proxy solo se ejecutan en Linux nodes.
-
-    ```bash
-    # Create Linux node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name linux-ng \
-      --node-type m5.large \
-      --nodes 2
-    ```
-2.  **Add-ons VPC-CNI, kube-proxy y CoreDNS instalados**:
-
-    * Estos add-ons son componentes esenciales de un clúster EKS.
-    * Pueden requerirse versiones específicas o superiores para soporte de Windows node.
-
-    ```bash
-    # Check add-on versions
-    aws eks describe-addon-versions \
-      --addon-name vpc-cni \
-      --kubernetes-version 1.23
-
-    # Update add-on
-    aws eks update-addon \
-      --cluster-name my-cluster \
-      --addon-name vpc-cni \
-      --addon-version v1.10.4-eksbuild.1
-    ```
-3.  **AMI Windows Server 2019 o posterior**:
-
-    * Los Windows worker nodes deben usar una AMI Windows Server 2019 o posterior.
-    * Se recomienda usar una AMI Windows optimizada para EKS.
-
-    ```bash
-    # Create Windows node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-ng \
-      --node-type m5.large \
-      --nodes 2 \
-      --node-ami-family WindowsServer2019FullContainer
-    ```
-4.  **Versión del clúster 1.14 o superior**:
-
-    * El soporte de Windows node fue soportado oficialmente a partir de Kubernetes 1.14.
-    * Se recomienda usar una versión superior para obtener las características más recientes.
-
-    ```bash
-    # Check cluster version
-    aws eks describe-cluster --name my-cluster --query "cluster.version"
-    ```
-
-**Pasos para habilitar soporte Windows:**
-
-1.  **Habilitar soporte Windows**:
-
-    ```bash
-    # Enable Windows support
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/vpc-resource-controller.yaml
-
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/vpc-admission-webhook.yaml
-    ```
-2.  **Crear Windows Node Group**:
-
-    ```bash
-    # Create Windows node group using eksctl
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-ng \
-      --node-type m5.large \
-      --nodes 2 \
-      --node-ami-family WindowsServer2019FullContainer
-    ```
-3.  **Verificar Windows Nodes**:
-
-    ```bash
-    # Verify nodes
-    kubectl get nodes -o wide
-
-    # Verify Windows node labels
-    kubectl get nodes -l kubernetes.io/os=windows
-    ```
-
-**Ejemplo de Deployment de Windows Container:**
+Usa la imagen oficial IIS con su punto de entrada ServiceMonitor existente. La ubicación retirada de descarga de ServiceMonitor `dotnetbinaries.blob.core.windows.net` ya no está disponible; aquí no hace falta instalar IIS ni descargar un binario cada vez que arranca el Pod.
 
 ```yaml
-# Windows Pod deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: windows-server-iis
+  name: windows-iis
+  namespace: windows-lab
 spec:
+  replicas: 2
   selector:
     matchLabels:
-      app: windows-server-iis
-      tier: backend
-      track: stable
-  replicas: 2
+      app: windows-iis
   template:
     metadata:
       labels:
-        app: windows-server-iis
-        tier: backend
-        track: stable
+        app: windows-iis
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
+        kubernetes.io/arch: amd64
+        node.kubernetes.io/windows-build: "10.0.20348"
+      tolerations:
+        - key: example.com/os
+          operator: Equal
+          value: windows
+          effect: NoSchedule
       containers:
-      - name: windows-server-iis
-        image: mcr.microsoft.com/windows/servercore:ltsc2019
-        ports:
-        - containerPort: 80
-        command:
-        - powershell.exe
-        - -command
-        - "Add-WindowsFeature Web-Server; Invoke-WebRequest -UseBasicParsing -Uri 'https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe' -OutFile 'C:\\ServiceMonitor.exe'; echo '<html><body><br/><br/><center><h1>Hello from Windows Container</h1></center></body></html>' > C:\\inetpub\\wwwroot\\default.html; C:\\ServiceMonitor.exe 'w3svc';"
+        - name: iis
+          image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
+          ports:
+            - containerPort: 80
+          startupProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
 ```
 
-**Limitaciones de Windows Node:**
+La etiqueta de imagen se verificó en el README y los metadatos de registro de Microsoft. No se descargaron sus capas ni se ejecutó la carga Windows durante esta auditoría. Los valores de recursos son ilustrativos. Antes de producción, comprueba el rollout/estado, DNS, tráfico de aplicación y compatibilidad de compilación del host/contenedor reales.
 
-1. **Limitaciones de networking**:
-   * Windows nodes no admiten los modos HostPort y HostNetwork.
-   * Windows nodes no admiten NodeLocal DNSCache.
-2. **Limitaciones de almacenamiento**:
-   * Windows nodes solo admiten ciertos storage drivers.
-   * Hay limitaciones en montajes host path volume.
-3. **Container Runtime**:
-   * Windows nodes solo admiten el runtime containerd.
-   * Linux containers no pueden ejecutarse en Windows nodes.
-4. **Limitaciones de características**:
-   * Algunas características de Kubernetes no son compatibles con Windows nodes.
-   * Hay limitaciones en privileged containers, process namespace sharing, etc.
+**Límites de funciones compatibles:**
 
-Para admitir Windows worker nodes en EKS, se requiere al menos un Linux node group, pero no son obligatorios dos o más Linux node groups. Por lo tanto, "se requieren al menos 2 Amazon Linux-based managed node groups" no es un requisito preciso.
+- Windows no se puede ejecutar como Pods de EKS Fargate, nodos EKS Auto Mode ni EKS Hybrid Nodes. No admite EKS IPv6, networking personalizado de VPC CNI ni Security Groups for Pods.
+- Los Pods Windows normales difieren de los contenedores Linux privilegiados. Los Pods Windows **HostProcess** pueden usar red del host, así que es incorrecto afirmar que Windows nunca admite `hostNetwork`. HostProcess requiere una revisión de seguridad elevada independiente.
+- El networking/capacidad IP de Windows difiere de Linux. Revisa límites de ENI única y delegación de prefijos compatible; no des por válidos los cálculos de densidad de Pods de Linux.
+- Elige controladores de almacenamiento compatibles con Windows y valida la semántica de volúmenes/rutas. No supongas que funcionan los permisos `hostPath` de Linux ni todas las funciones CSI.
+- Los nodos Windows optimizados para EKS usan containerd; las imágenes de aplicaciones Linux deben ir en nodos Linux. Verifica la ubicación de complementos del sistema y aplicaciones en clústeres con distintos sistemas operativos.
+
+Referencias: [compatibilidad Windows en EKS](https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html), [AMI Windows optimizadas](https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-windows-ami.html), [imagen IIS de Microsoft](https://github.com/microsoft/iis-docker), [Windows HostProcess](https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/).
 
 </details>
 
-3\. ¿Cuál de las siguientes opciones NO es un requisito para admitir Windows worker nodes en un clúster Amazon EKS? - A) Se requieren al menos 2 Amazon Linux-based managed node groups - B) Instalación de add-ons VPC-CNI, kube-proxy y CoreDNS - C) Uso de AMI Windows Server 2019 o posterior - D) Versión del clúster 1.14 o posterior
+4. ¿Qué ajuste hace obligatorio un token de sesión para las solicitudes de metadatos de instancia EC2?
+   * A) `HttpTokens=required` (solo IMDSv2)
+   * B) Una regla de grupo de seguridad para `169.254.169.254`
+   * C) Una etiqueta Node de Kubernetes
+   * D) El nombre de una cuenta de servicio de aplicación por sí solo
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Se requieren al menos 2 Amazon Linux-based managed node groups**
+**Respuesta: A) `HttpTokens=required` (solo IMDSv2)**
 
-**Explicación:** Para admitir Windows worker nodes en un clúster Amazon EKS, se requiere al menos un (no dos o más) Amazon Linux-based managed node group. Esto se debe a que Pods esenciales del sistema como CoreDNS deben ejecutarse en Linux nodes. Sin embargo, requerir al menos dos Linux node groups no es preciso.
+Exigir IMDSv2 (`HttpTokens: required`) deshabilita las llamadas IMDSv1 sin token y añade defensa en profundidad. **No** hace imposibles todos los SSRF ni crea una frontera de seguridad entre contenedores que comparten host.
 
-**Requisitos reales para soporte de Windows Worker Node en EKS:**
+**Ajustes de plantilla de lanzamiento:** lo siguiente es un fragmento EC2 `LaunchTemplateData`, no un campo `managedNodeGroups.metadataOptions`. El límite de saltos 1 presupone que los Pods normales usan IRSA/Pod Identity en vez de obtener credenciales del nodo:
 
-1.  **Linux Node Group requerido**:
+```json
+{
+  "MetadataOptions": {
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 1,
+    "HttpEndpoint": "enabled"
+  }
+}
+```
 
-    * El clúster requiere al menos un Linux node.
-    * System Pods como CoreDNS, VPC CNI plugin y kube-proxy solo se ejecutan en Linux nodes.
+El límite de saltos se aplica a la **respuesta PUT** del token IMDS, no a todas las solicitudes de metadatos. Un contenedor que legítimamente necesite IMDSv2 puede requerir límite 2. Inspecciona compatibilidad y traslada permisos de aplicación a roles de carga de trabajo; no aumentes el límite solo para ocultar un fallo sin explicación.
 
-    ```bash
-    # Create Linux node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name linux-ng \
-      --node-type m5.large \
-      --nodes 2
-    ```
-2.  **Instalación de add-ons VPC-CNI, kube-proxy y CoreDNS**:
-
-    * Estos add-ons son componentes fundamentales de un clúster EKS.
-    * Pueden requerirse versiones específicas o superiores para soporte de Windows node.
-
-    ```bash
-    # Check add-on versions
-    aws eks describe-addon-versions \
-      --addon-name vpc-cni \
-      --kubernetes-version 1.23
-
-    # Update add-on
-    aws eks update-addon \
-      --cluster-name my-cluster \
-      --addon-name vpc-cni \
-      --addon-version v1.10.4-eksbuild.1
-    ```
-3.  **Uso de AMI Windows Server 2019 o posterior**:
-
-    * Los Windows worker nodes deben usar una AMI Windows Server 2019 o posterior.
-    * Se recomienda usar una AMI Windows optimizada para EKS.
-
-    ```bash
-    # Create Windows node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-ng \
-      --node-type m5.large \
-      --nodes 2 \
-      --node-ami-family WindowsServer2019FullContainer
-    ```
-4.  **Versión del clúster 1.14 o posterior**:
-
-    * El soporte de Windows node estuvo disponible de forma general a partir de Kubernetes 1.14.
-    * Se recomienda usar una versión superior para obtener las características más recientes.
-
-    ```bash
-    # Check cluster version
-    aws eks describe-cluster --name my-cluster --query "cluster.version"
-    ```
-
-**Pasos para habilitar soporte Windows:**
-
-1.  **Habilitar soporte Windows**:
-
-    ```bash
-    # Enable Windows support
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/vpc-resource-controller.yaml
-
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/vpc-admission-webhook.yaml
-    ```
-2.  **Crear Windows Node Group**:
-
-    ```bash
-    # Create Windows node group using eksctl
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-ng \
-      --node-type m5.large \
-      --nodes 2 \
-      --node-ami-family WindowsServer2019FullContainer
-    ```
-3.  **Verificar Windows Nodes**:
-
-    ```bash
-    # Verify nodes
-    kubectl get nodes -o wide
-
-    # Verify Windows node labels
-    kubectl get nodes -l kubernetes.io/os=windows
-    ```
-
-**Ejemplo de Deployment de Windows Container:**
+Usa una versión de plantilla revisada existente mediante los campos compatibles `launchTemplate.id/version` de eksctl. Hay que sustituir el ID de ejemplo; `--launch-template-name` no es la interfaz documentada de `eksctl create nodegroup`:
 
 ```yaml
-# Windows Pod deployment
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 metadata:
-  name: windows-server-iis
-spec:
-  selector:
-    matchLabels:
-      app: windows-server-iis
-      tier: backend
-      track: stable
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: windows-server-iis
-        tier: backend
-        track: stable
-    spec:
-      nodeSelector:
-        kubernetes.io/os: windows
-      containers:
-      - name: windows-server-iis
-        image: mcr.microsoft.com/windows/servercore:ltsc2019
-        ports:
-        - containerPort: 80
-        command:
-        - powershell.exe
-        - -command
-        - "Add-WindowsFeature Web-Server; Invoke-WebRequest -UseBasicParsing -Uri 'https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe' -OutFile 'C:\\ServiceMonitor.exe'; echo '<html><body><br/><br/><center><h1>Hello from Windows Container</h1></center></body></html>' > C:\\inetpub\\wwwroot\\default.html; C:\\ServiceMonitor.exe 'w3svc';"
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: imds-template-ng
+    launchTemplate:
+      id: lt-0123456789abcdef0
+      version: "1"
+    privateNetworking: true
 ```
 
-**Limitaciones de Windows Node:**
+**Alternativa eksctl:** los campos compatibles `disableIMDSv1` y `disablePodIMDS` se pueden usar para un grupo de nodos nuevo. Prepara primero las identidades de carga de trabajo necesarias. `disablePodIMDS` se aplica a Pods sin red del host y no se puede combinar con `withAddonPolicies`.
 
-1. **Limitaciones de networking**:
-   * Windows nodes no admiten los modos HostPort y HostNetwork.
-   * Windows nodes no admiten NodeLocal DNSCache.
-2. **Limitaciones de almacenamiento**:
-   * Windows nodes solo admiten ciertos storage drivers.
-   * Hay limitaciones en montajes host path volume.
-3. **Container Runtime**:
-   * Windows nodes solo admiten el runtime containerd.
-   * Linux containers no pueden ejecutarse en Windows nodes.
-4. **Limitaciones de características**:
-   * Algunas características de Kubernetes no son compatibles con Windows nodes.
-   * Hay limitaciones en privileged containers, process namespace sharing, etc.
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: imds-restricted-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    disableIMDSv1: true
+    disablePodIMDS: true
+```
 
-Para admitir Windows worker nodes en EKS, se requiere al menos un Linux node group, pero no son obligatorios dos o más Linux node groups. Por lo tanto, "se requieren al menos 2 Amazon Linux-based managed node groups" no es un requisito preciso.
+Estas dos configuraciones son alternativas; revisa la plantilla generada real y los ajustes de metadatos del nodo. Los valores predeterminados dependen de la configuración de inicio de instancias, los valores predeterminados de cuenta/región y la compatibilidad de metadatos de la AMI; la configuración de lanzamiento tiene prioridad. No supongas que todas las AMI/grupos de nodos usan límite 1 por defecto.
 
-</details>
+**Nodos existentes:** una versión nueva de la misma plantilla de lanzamiento personalizada puede implementarse con una actualización de grupo de nodos administrado. También se pueden cambiar las opciones de metadatos de instancias EC2 en ejecución/detenidas, sujeto a restricciones IAM/SCP; esto por sí solo no cambia la configuración de futuras instancias de sustitución:
 
-4. ¿Cuál es la forma más efectiva de proteger el Instance Metadata Service (IMDS) de node groups en un clúster Amazon EKS?
-   * A) Deshabilitar IMDSv1 y requerir IMDSv2
-   * B) Restringir el acceso a 169.254.169.254 con reglas de security group
-   * C) Establecer permisos restrictivos en el node IAM role
-   * D) Asociar IAM roles a Pod service accounts
+```bash
+# Inspect the explicitly reviewed instance before changing its metadata settings.
+aws ec2 describe-instances --region "${EXAMPLE_REGION:?}" \
+  --instance-ids "${REVIEWED_INSTANCE_ID:?}" \
+  --query 'Reservations[].Instances[].{id:InstanceId,tags:Tags,metadata:MetadataOptions}'
 
-<details>
+# Separate transition step for a tested instance with compatible host agents.
+aws ec2 modify-instance-metadata-options --region "$EXAMPLE_REGION" \
+  --instance-id "$REVIEWED_INSTANCE_ID" --http-tokens required \
+  --http-put-response-hop-limit 1 --http-endpoint enabled
+```
 
-<summary>Mostrar respuesta</summary>
+Verifica que las opciones hayan llegado al estado `applied` y que sigan funcionando los agentes del nodo, las descargas de imágenes y las credenciales de cargas de trabajo. No deshabilites por completo el endpoint de metadatos solo porque una aplicación use IRSA: los componentes del host aún pueden depender del perfil de instancia y de los metadatos del nodo.
 
-**Respuesta: A) Deshabilitar IMDSv1 y requerir IMDSv2**
+**Controles adicionales:**
 
-**Explicación:** La forma más efectiva de proteger el Instance Metadata Service (IMDS) de node groups en un clúster Amazon EKS es deshabilitar IMDSv1 y requerir IMDSv2. IMDSv2 usa solicitudes basadas en sesión para proporcionar características de seguridad mejoradas que protegen contra Server-Side Request Forgery (SSRF) y vulnerabilidades similares.
+- Limita el rol de nodo y asigna roles propios a las aplicaciones. IRSA/Pod Identity no impide por sí solo el acceso alternativo a IMDS del nodo.
+- Los Pods `hostNetwork` pueden acceder a IMDS y una carga privilegiada del host puede eludir el aislamiento de red de Pods. Controla los privilegios y el acceso al host por separado.
+- Los grupos de seguridad no filtran el servicio de metadatos de enlace local de la instancia. Si aplicas restricciones adicionales en host/red, ten en cuenta la ruta real de Pods y el endpoint IPv6 IMDS opcional (`fd00:ec2::254`) además de IPv4. La antigua regla DNAT ad hoc `PREROUTING -i eth0` no es una restricción general fiable para IMDS de Pods.
+- Usa SDK compatibles y prueba el acceso a metadatos sin imprimir tokens de sesión ni valores de credenciales IAM. Observa las opciones reales de metadatos de la instancia; no supongas que las etiquetas Kubernetes del nodo prueban que se apliquen.
 
-**Importancia de la seguridad de IMDS:**
-
-El Instance Metadata Service proporciona información importante sobre instancias EC2, incluidas credenciales de IAM role. El acceso no autorizado a este servicio puede provocar escalada de privilegios y brechas de seguridad. En entornos Kubernetes, el riesgo de seguridad aumenta porque los Pods pueden acceder al IMDS del node.
-
-**Cómo configurar IMDSv2:**
-
-1.  **Configurar IMDSv2 usando Launch Template**:
-
-    ```bash
-    # Create launch template
-    aws ec2 create-launch-template \
-      --launch-template-name eks-imdsv2-template \
-      --version-description "IMDSv2 required" \
-      --launch-template-data '{
-        "MetadataOptions": {
-          "HttpTokens": "required",
-          "HttpPutResponseHopLimit": 1,
-          "HttpEndpoint": "enabled"
-        }
-      }'
-
-    # Create node group using launch template
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name ng-imdsv2 \
-      --node-type m5.large \
-      --nodes 3 \
-      --launch-template-name eks-imdsv2-template \
-      --launch-template-version 1
-    ```
-2.  **Configurar IMDSv2 usando archivo de configuración de eksctl**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: ng-imdsv2
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 5
-        disableIMDSv1: true
-        metadataOptions:
-          httpTokens: required
-          httpPutResponseHopLimit: 1
-    ```
-3.  **Modificar Node Groups existentes**: Para cambiar la configuración de IMDS de node groups existentes, necesitas crear un nuevo node group y migrar workloads. La configuración de IMDS de instancias EC2 existentes puede modificarse de la siguiente manera:
-
-    ```bash
-    aws ec2 modify-instance-metadata-options \
-      --instance-id i-1234567890abcdef0 \
-      --http-tokens required \
-      --http-put-response-hop-limit 1 \
-      --http-endpoint enabled
-    ```
-
-**Beneficios de seguridad de IMDSv2:**
-
-1. **Autenticación basada en sesión**:
-   * IMDSv2 usa tokens generados mediante solicitudes PUT para autenticar solicitudes posteriores.
-   * Estos tokens son válidos solo por un tiempo limitado.
-2. **Prevención de ataques SSRF**:
-   * Previene el acceso a metadata mediante vulnerabilidades Server-Side Request Forgery (SSRF).
-   * No se puede acceder a metadata sin un token.
-3. **Configuración de hop limit**:
-   * Establecer el HTTP PUT response hop limit evita que las solicitudes de metadata sean redirigidas fuera de la instancia.
-   * El valor predeterminado es 1, asegurando que las solicitudes solo se procesen dentro de la instancia.
-
-**Medidas adicionales de seguridad de IMDS:**
-
-1.  **Deshabilitar IMDS por completo**: Si IMDS no es necesario para ciertos workloads, puede deshabilitarse por completo:
-
-    ```yaml
-    metadataOptions:
-      httpEndpoint: disabled
-    ```
-2.  **Bloquear acceso de Pods a IMDS**: Si los Pods no están usando host networking, puedes agregar reglas iptables para bloquear el acceso a IMDS:
-
-    ```bash
-    iptables -t nat -A PREROUTING -d 169.254.169.254/32 -i eth0 -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:1
-    ```
-3. **Usar IRSA**: Usa IAM Roles for Service Accounts (IRSA) para proporcionar a los Pods los permisos de AWS necesarios y eliminar la dependencia del IMDS del node.
-
-**Problemas con otras opciones:**
-
-* **Restringir el acceso a 169.254.169.254 con reglas de security group**: Los security groups controlan el tráfico que llega desde fuera de la instancia, pero IMDS se accede desde dentro de la instancia, por lo que no puede restringirse con security groups.
-* **Establecer permisos restrictivos en el node IAM role**: Esta es una buena práctica de seguridad, pero no fortalece la seguridad de IMDS en sí. Si un atacante puede acceder a IMDS, incluso permisos limitados pueden ser explotados.
-* **Asociar IAM roles a Pod service accounts**: IRSA es una buena forma de asegurar que los Pods no dependan del IMDS del node, pero no fortalece directamente la seguridad del IMDS del node en sí.
-
-Deshabilitar IMDSv1 y requerir IMDSv2 es la forma más efectiva de proteger el metadata service de los EKS nodes. Esta es una mejor práctica de seguridad de AWS y es especialmente importante en entornos Kubernetes multi-tenant.
+Referencias: [opciones IMDS y precedencia](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html), [comportamiento de IMDSv2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html), [opciones de seguridad de eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/security.html), [límites de aislamiento de IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
 </details>
 
-5. ¿Cuál de las siguientes opciones NO es un propósito principal de personalizar bootstrap scripts al crear node groups en un clúster Amazon EKS?
-   * A) Modificar componentes del cluster control plane
-   * B) Instalar software adicional
-   * C) Ajustar parámetros del kernel
-   * D) Establecer node labels y taints
+5. ¿Qué tarea queda fuera del propósito de una configuración de arranque de nodos EC2?
+   * A) Modificar procesos del plano de control administrado por EKS
+   * B) Configurar software revisado que ya está instalado en una AMI personalizada
+   * C) Aplicar ajustes del host validados con cargas de trabajo
+   * D) Configurar etiquetas y taints compatibles para el grupo de nodos
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Modificar componentes del cluster control plane**
+**Respuesta: A) Modificar procesos del plano de control administrado por EKS**
 
-**Explicación:** El propósito principal de personalizar bootstrap scripts al crear node groups en un clúster Amazon EKS NO es modificar componentes del cluster control plane. EKS es un servicio administrado donde el control plane es gestionado por AWS y los usuarios no pueden modificarlo directamente. Los bootstrap scripts solo pueden modificar configuraciones de worker nodes.
+La configuración de arranque configura **hosts de nodos**, no el servidor API, scheduler, controller manager ni etcd administrados por EKS. Para AL2023 usa `nodeadm` y las vías compatibles de eksctl/plantilla de lanzamiento; los ejemplos AL2 antiguos de `bootstrap.sh`/`kubeletExtraArgs` no sirven.
 
-**Casos de uso reales para Bootstrap Scripts:**
+**Instala y configura el software de forma deliberada.** Usa un paquete verificado para el sistema operativo/arquitectura de destino, preferiblemente incorporado a una AMI revisada. Descargar al inicio de cada nodo un RPM `latest` no verificado no produce una instalación reproducible. Un agente de host también necesita los permisos IAM y la conectividad a servicios privados/públicos correspondientes.
 
-1.  **Instalar software adicional**:
+El siguiente ejemplo opcional para host AL2023 presupone que CloudWatch Agent ya está instalado. Configura métricas de memoria/swap del host e inicia el agente; si se ejecuta con acceso AWS, envía telemetría facturable. No es una instrucción para ejecutarlo en una estación de administración, Bottlerocket o Auto Mode:
 
-    * Monitoring agents (CloudWatch Agent, Prometheus Node Exporter, etc.)
-    * Logging tools (Fluentd, Fluent Bit, etc.)
-    * Security tools (Falco, Sysdig, etc.)
-    * Herramientas de optimización de rendimiento
-
-    ```bash
-    #!/bin/bash
-    # Install CloudWatch agent
-    wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-    rpm -U amazon-cloudwatch-agent.rpm
-
-    # Create configuration file
-    cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
-    {
-      "metrics": {
-        "metrics_collected": {
-          "mem": {
-            "measurement": ["mem_used_percent"]
-          },
-          "swap": {
-            "measurement": ["swap_used_percent"]
-          }
-        }
-      }
+```bash
+#!/bin/bash
+# AL2023 host example: the reviewed AMI must already contain the verified agent package.
+set -euo pipefail
+AGENT_CTL=/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+test -x "$AGENT_CTL" || {
+  printf '%s\n' 'CloudWatch agent is not installed in this AMI.' >&2
+  exit 1
+}
+cat > /opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-agent.json << 'EOF'
+{
+  "metrics": {
+    "metrics_collected": {
+      "mem": {"measurement": ["mem_used_percent"]},
+      "swap": {"measurement": ["swap_used_percent"]}
     }
-    EOF
-
-    # Start agent
-    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
-    ```
-2.  **Ajustar parámetros del kernel**:
-
-    * Optimización de configuración de red
-    * Configuraciones de gestión de memoria
-    * Configuraciones de file system e I/O
-
-    ```bash
-    #!/bin/bash
-    # Adjust kernel parameters
-    cat > /etc/sysctl.d/99-kubernetes.conf << EOF
-    net.ipv4.ip_forward = 1
-    net.bridge.bridge-nf-call-iptables = 1
-    net.ipv4.tcp_keepalive_time = 600
-    net.ipv4.tcp_max_syn_backlog = 40000
-    net.core.somaxconn = 40000
-    net.core.netdev_max_backlog = 40000
-    vm.max_map_count = 262144
-    EOF
-
-    # Apply changes
-    sysctl --system
-    ```
-3.  **Establecer Node Labels y Taints**:
-
-    * Establecer labels de rol de node
-    * Establecer labels de características de hardware
-    * Establecer taints para workloads específicos
-
-    ```bash
-    #!/bin/bash
-    # Execute EKS bootstrap script
-    /etc/eks/bootstrap.sh my-cluster \
-      --kubelet-extra-args '--node-labels=node.kubernetes.io/role=worker,environment=prod,node-type=compute --register-with-taints=dedicated=compute:NoSchedule'
-    ```
-4.  **Configuración de disco y file system**:
-
-    * Montar volúmenes adicionales
-    * Optimización de file system
-    * Configuración de almacenamiento temporal
-
-    ```bash
-    #!/bin/bash
-    # Format and mount additional EBS volume
-    mkfs -t xfs /dev/nvme1n1
-    mkdir -p /data
-    mount /dev/nvme1n1 /data
-    echo "/dev/nvme1n1 /data xfs defaults 0 0" >> /etc/fstab
-    ```
-5.  **Configuración de seguridad**:
-
-    * Establecer reglas de firewall
-    * Configuraciones de security hardening
-    * Configuración de log audit
-
-    ```bash
-    #!/bin/bash
-    # Set firewall rules
-    iptables -A INPUT -p tcp --dport 22 -s 10.0.0.0/8 -j ACCEPT
-    iptables -A INPUT -p tcp --dport 22 -j DROP
-
-    # Security hardening settings
-    sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-    systemctl restart sshd
-    ```
-
-**Cómo implementar Bootstrap Scripts:**
-
-1.  **User Data Script usando Launch Template**:
-
-    ```bash
-    # Create launch template
-    aws ec2 create-launch-template \
-      --launch-template-name eks-custom-bootstrap \
-      --version-description "Custom bootstrap script" \
-      --launch-template-data '{
-        "UserData": "BASE64_ENCODED_USER_DATA_SCRIPT"
-      }'
-
-    # Create node group using launch template
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name custom-ng \
-      --node-type m5.large \
-      --nodes 3 \
-      --launch-template-name eks-custom-bootstrap \
-      --launch-template-version 1
-    ```
-2.  **User Data Script usando archivo de configuración de eksctl**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: custom-ng
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 5
-        preBootstrapCommands:
-          - "echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.d/99-kubernetes.conf"
-          - "sysctl --system"
-        kubeletExtraArgs:
-          node-labels: "environment=prod,node-type=compute"
-    ```
-
-**Componentes del Cluster Control Plane:**
-
-Los componentes del control plane de un clúster EKS son gestionados por AWS y no pueden modificarse mediante bootstrap scripts:
-
-* API Server
-* Controller Manager
-* Scheduler
-* etcd
-* CoreDNS
-
-Para modificar estos componentes, debes configurarlos a nivel de clúster mediante APIs proporcionadas por AWS. Por ejemplo, control plane logging puede configurarse de la siguiente manera:
-
-```bash
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+  }
+}
+EOF
+"$AGENT_CTL" -a fetch-config -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-agent.json -s
 ```
 
-El bootstrap script solo puede modificar configuraciones de worker node y no puede modificar componentes del cluster control plane. Por lo tanto, "modificar componentes del cluster control plane" no es un propósito principal del bootstrap script.
+**Ajuste del kernel:** usa evidencia de las cargas y los requisitos del kernel/CNI real. Los valores de ejemplo originales se conservan como referencias de ajuste no validadas, no recomendaciones universales de rendimiento:
+
+| Ajuste de ejemplo | Valor original de ejemplo | Requisito de revisión |
+| --- | --- | --- |
+| `net.ipv4.ip_forward` | `1` | Requisitos de enrutamiento de nodo/CNI |
+| `net.bridge.bridge-nf-call-iptables` | `1` | Si el módulo bridge y el datapath de CNI lo requieren |
+| `net.ipv4.tcp_keepalive_time` | `600` | Comportamiento de timeouts de aplicación/conexión |
+| `net.ipv4.tcp_max_syn_backlog`, `net.core.somaxconn`, `net.core.netdev_max_backlog` | `40000` | Presión real de colas, memoria y mediciones de carga |
+| `vm.max_map_count` | `262144` | Requisitos de mapeo de la aplicación concreta |
+
+No apliques esta tabla como script general de nodos. Registra la línea base, valida los cambios en un grupo de prueba y conserva una ruta de reversión.
+
+**Discos:** nunca ejecutes `mkfs` sobre un `/dev/nvme1n1` supuesto. La enumeración NVMe no es un identificador estable de titularidad y el dispositivo puede contener datos necesarios. Identifica el volumen EBS previsto por ID/número de serie, confirma que sea desechable recién aprovisionado o esté preparado expresamente e inspecciona particiones/sistemas de archivos/montajes antes de formatearlo. Usa identificadores estables como UUID del sistema de archivos para configurar montajes persistentes.
+
+```bash
+# Read-only inspection on the specifically authorized test node.
+lsblk --output NAME,PATH,TYPE,SIZE,FSTYPE,UUID,MOUNTPOINTS,SERIAL
+findmnt
+sysctl net.ipv4.ip_forward vm.max_map_count
+```
+
+Para datos persistentes de aplicaciones, prefiere el ciclo de vida CSI/PV correspondiente en vez de vincularlos a discos desechables de un nodo. Los comandos de inspección anteriores no formatean ni montan nada.
+
+**Etiquetas, taints y seguridad:** usa campos de etiquetas/taints del grupo administrado y un dominio que controles; no sobrescribas etiquetas de topología/grupo de nodos propiedad del proveedor. Usa una AMI revisada y un diseño de grupos de seguridad/CNI para reforzar el host. Los cambios ad hoc de SSH/firewall durante el arranque pueden entrar en conflicto con reglas existentes o cortar el acceso y no constituyen un procedimiento completo de refuerzo.
+
+**Datos de usuario de plantilla de lanzamiento:** con una AMI AL2023 seleccionada por EKS y sin `ImageId` personalizado, EKS proporciona el NodeConfig predeterminado necesario. Una personalización MIME mínima puede verse así:
+
+```text
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="EKS_BOOTSTRAP_EXAMPLE"
+
+--EKS_BOOTSTRAP_EXAMPLE
+Content-Type: text/x-shellscript; charset="us-ascii"
+
+#!/bin/bash
+set -euo pipefail
+install -d -m 0755 /opt/company
+
+--EKS_BOOTSTRAP_EXAMPLE--
+```
+
+```bash
+# Prepare real EC2 UserData JSON from the reviewed MIME file; no placeholder base64.
+BOOTSTRAP_DIR=$(mktemp -d /tmp/eks-bootstrap-example.XXXXXX)
+: "${BOOTSTRAP_DIR:?}"
+jq -n --rawfile data "${REVIEWED_MIME_FILE:?}" \
+  '{UserData:($data|@base64)}' > "$BOOTSTRAP_DIR/launch-template-data.json" || exit 1
+aws ec2 create-launch-template --region "${EXAMPLE_REGION:?}" \
+  --launch-template-name "${NEW_LAUNCH_TEMPLATE_NAME:?}" \
+  --version-description "Reviewed AL2023 customization" \
+  --launch-template-data "file://$BOOTSTRAP_DIR/launch-template-data.json" \
+  --query 'LaunchTemplate.{id:LaunchTemplateId,version:LatestVersionNumber}'
+```
+
+Usa el ID/versión de plantilla devueltos mediante `managedNodeGroups[].launchTemplate`, como en la pregunta avanzada 4. Si especificas un ID de AMI personalizado fuera de una configuración generada por eksctl, proporciona también el NodeConfig completo del clúster descrito en la pregunta básica 5. No inicies kubelet manualmente ni vuelvas a ejecutar `nodeadm init`.
+
+**Alternativa eksctl:** la configuración siguiente usa campos compatibles del grupo de nodos y un comando inocuo de prearranque que crea un directorio. Añade únicamente personalizaciones de host revisadas. `preBootstrapCommands` contiene comandos shell; cuando haga falta personalizar NodeConfig en AL2023, `overrideBootstrapCommand` contiene YAML de NodeConfig.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: custom-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 5
+    labels:
+      example.com/environment: test
+      example.com/node-type: compute
+    taints:
+      - key: dedicated
+        value: compute
+        effect: NoSchedule
+    preBootstrapCommands:
+      - install -d -m 0755 /opt/company
+```
+
+Los ejemplos no se han arrancado como receta de nodo lista para producción. Valida en tu entorno la procedencia de paquetes, la configuración efectiva de nodeadm/kubelet, los fallos de inicio, la red y el estado de las cargas de trabajo.
+
+**CoreDNS es una carga del plano de datos/complemento**, normalmente un Deployment en capacidad Linux EC2 o Fargate compatible, no un proceso del plano de control administrado por EKS. Configúralo mediante el flujo del complemento/Kubernetes. Los ajustes expuestos de la API del plano de control de EKS, como los registros, son independientes de los datos de usuario de nodos.
+
+Referencias: [inicialización AL2023](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html), [arranque con eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/node-bootstrapping.html), [restricciones de plantillas de lanzamiento](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html), [configuración de CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html).
 
 </details>

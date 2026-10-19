@@ -1,7 +1,7 @@
 # Kubernetes クラスター管理
 
 > **サポート対象バージョン**: Kubernetes 1.34–1.37 向けの EKS 標準サポート（2026 年 10 月 12 日確認）
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月16日
 
 Kubernetes クラスター管理は、クラスターのセットアップ、保守、監視、トラブルシューティング、アップグレードを含む重要な作業です。この章では、Kubernetes クラスター管理のさまざまな側面と、Amazon EKS におけるクラスター管理のベストプラクティスを説明します。
 
@@ -46,7 +46,7 @@ apt-cache madison kubeadm
 ```
 
 
-## クラスター管理の概要
+## クラスター管理の概要 {#cluster-administration-overview}
 
 Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。これには以下の主要領域が含まれます。
 
@@ -58,7 +58,7 @@ Kubernetes クラスター管理とは、クラスターのライフサイクル
 
 次の図は、Kubernetes クラスター管理の主な領域と関連ツールを示しています。
 
-## クラスターコンポーネント管理
+## クラスターコンポーネント管理 {#cluster-component-management}
 
 Kubernetes クラスターは control plane コンポーネントと node コンポーネントで構成されます。各コンポーネントの管理は、クラスターの安定性とパフォーマンスに不可欠です。
 
@@ -230,7 +230,7 @@ spec:
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: registry.k8s.io/kube-apiserver:v1.36.4
+    image: registry.k8s.io/kube-apiserver:v1.36.5
     name: kube-apiserver
 ```
 
@@ -287,7 +287,7 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## リソース管理
+## リソース管理 {#resource-management}
 
 Kubernetes クラスターのリソースを効果的に管理することは、クラスターの安定性とパフォーマンスの維持に重要です。
 
@@ -398,7 +398,7 @@ spec:
 ```
 
 上の例では、`frontend` Deployment の Pod は実際のリソース使用量に基づいて CPU とメモリの request が自動調整されます。
-## クラスターのネットワーク
+## クラスターのネットワーク {#cluster-networking}
 
 Kubernetes クラスターのネットワークは、Pod、Service、Node 間の通信を管理します。
 
@@ -536,7 +536,7 @@ spec:
 
 上の例では、`role=db` label を持つ Pod は、`role=frontend` label を持つ Pod からの TCP port 3306 の受信トラフィック、および `role=monitoring` label を持つ Pod への TCP port 9090 の送信トラフィックのみを許可します。
 
-## 認証および認可管理
+## 認証および認可管理 {#authentication-and-authorization-management}
 
 Kubernetes の認証および認可管理は、クラスターセキュリティの中核要素です。
 
@@ -748,7 +748,7 @@ spec:
 
 上の例では、Pod は UID 1000 および GID 3000 で実行され、container は権限昇格できず、すべての Linux capability が削除され、root filesystem は読み取り専用で mount されます。
 
-## クラスターのアップグレード
+## クラスターのアップグレード {#cluster-upgrades}
 
 Kubernetes クラスターのアップグレードは、新機能、パフォーマンス向上、セキュリティパッチを適用するために必要です。
 
@@ -813,7 +813,7 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## バックアップとリカバリ
+## バックアップとリカバリ {#backup-and-recovery}
 
 Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。
 
@@ -954,7 +954,7 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## 監視とロギング
+## 監視とロギング {#monitoring-and-logging}
 
 効果的な監視とロギングはクラスター管理の中核要素です。
 
@@ -1066,7 +1066,7 @@ data:
     </match>
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な一部です。
 
@@ -1162,7 +1162,7 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Amazon EKS クラスター管理
+## Amazon EKS クラスター管理 {#amazon-eks-cluster-administration}
 
 Amazon EKS は、クラスター管理の多くの側面を自動化するマネージド Kubernetes service です。
 
@@ -1291,7 +1291,7 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## クラスター管理のベストプラクティス
+## クラスター管理のベストプラクティス {#cluster-administration-best-practices}
 
 Kubernetes と EKS クラスター管理のベストプラクティス:
 
@@ -1335,7 +1335,7 @@ Kubernetes と EKS クラスター管理のベストプラクティス:
 4. **IAM Roles for Service Accounts (IRSA)**: Pod ごとに IAM 権限を管理
 5. **VPC CNI Customization**: ネットワーク要件に応じて VPC CNI を設定
 
-## まとめ
+## まとめ {#conclusion}
 
 Kubernetes クラスター管理は、クラスターの安定性、セキュリティ、パフォーマンスを維持する上で重要な役割を担います。この章では、クラスターコンポーネント管理、リソース管理、ネットワーク、認証および認可管理、アップグレード、バックアップとリカバリ、監視とロギング、トラブルシューティングを含む、クラスター管理のさまざまな側面を取り上げました。
 
@@ -2012,7 +2012,7 @@ Amazon EKS のようなマネージド Kubernetes service を使用する場合�
 > - [Kubernetes 公式ドキュメント: クラスター管理](https://kubernetes.io/docs/tasks/administer-cluster/)
 > - [Amazon EKS ユーザーガイド](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
 > - [Kubernetes ベストプラクティス: クラスター管理](https://kubernetes.io/docs/setup/best-practices/)
-> - [etcd ドキュメント: バックアップとリカバリ](https://etcd.io/docs/v3.5/op-guide/recovery/)
+> - [etcd ドキュメント: バックアップとリカバリ](https://etcd.io/docs/v3.6/op-guide/recovery/)
 > - [Prometheus ドキュメント](https://prometheus.io/docs/introduction/overview/)
 
 ## クイズ

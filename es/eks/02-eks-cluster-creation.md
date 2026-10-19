@@ -1,12 +1,12 @@
 # Creación de clústeres de EKS
 
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 Hay varias maneras de crear un clúster de Amazon EKS. En este capítulo, aprenderemos en detalle a crear un clúster de EKS con distintas herramientas y métodos.
 
 Los métodos de creación de este capítulo son alternativas. Elija uno para un clúster nuevo y dedicado, y no administre los mismos recursos simultáneamente con varias herramientas. Reemplace los nombres, las cuentas, los roles, las VPC, las subredes y los CIDR de ejemplo por valores reales aprobados. Los ejemplos de shell usan Bash, a menos que se indique lo contrario; deténgase si falla algún requisito previo. Durante esta auditoría no se realizaron aprovisionamientos de AWS ni mediciones de cargas de trabajo.
 
-**Versión actual:** EKS 1.37 estuvo disponible el 1 de octubre de 2026.
+**Versión actual:** EKS 1.37 está disponible desde el 1 de octubre de 2026.
 
 **Configuración de referencia de los ejemplos:** Los ejemplos siguientes conservan la configuración de referencia revisada de EKS 1.36. Si selecciona otra versión, consulte el [calendario actual de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) y la documentación de compatibilidad de los componentes.
 
@@ -25,7 +25,7 @@ Los métodos de creación de este capítulo son alternativas. Elija uno para un 
 
 ## Requisitos previos {#prerequisites}
 
-Antes de crear un clúster de EKS, se requieren los siguientes requisitos previos:
+Antes de crear un clúster de EKS, prepare lo siguiente:
 
 ### 1. Cuenta de AWS
 
@@ -33,15 +33,15 @@ Se requiere una cuenta de AWS válida. Si no tiene una cuenta de AWS, puede regi
 
 ### 2. Permisos de IAM
 
-Los permisos requeridos dependen de la herramienta y de los recursos que esta administre. Una política que otorgue `eks:*`, `ec2:*`, `iam:*` y `cloudformation:*` en todos los recursos no es una política de privilegio mínimo necesaria.
+Los permisos necesarios dependen de la herramienta y los recursos que gestione. Conceder `eks:*`, `ec2:*`, `iam:*` y `cloudformation:*` sobre todos los recursos no constituye una política necesaria de privilegios mínimos.
 
 | Tarea | Alcance de los permisos que se deben revisar |
 | --- | --- |
 | Administración del clúster de EKS y de los grupos de nodos | Acciones de EKS requeridas y recursos de destino |
-| Transferencia de roles de IAM existentes | `iam:PassRole` para ARN de roles aprobados y condiciones de servicio |
+| Delegación de roles de IAM existentes a servicios | `iam:PassRole` para ARN de roles aprobados y condiciones de servicio |
 | Creación de roles/políticas/proveedores de OIDC de IAM | Recursos de IAM administrados por la herramienta y alcance de nombres/etiquetas |
 | Creación de redes | Acciones de EC2 para la nueva VPC, las subredes y los grupos de seguridad |
-| Uso de eksctl/CDK | Pilas de CloudFormation pertinentes, roles de ejecución y recursos de arranque |
+| Uso de eksctl/CDK | Pilas de CloudFormation pertinentes, roles de ejecución y recursos de bootstrap |
 
 La identidad de aprovisionamiento, el rol de servicio del clúster y el rol del nodo son distintos. También se aplican las SCP, los límites de permisos y las políticas de sesión. Revise los permisos de aprovisionamiento de su organización comparándolos con la plantilla/el plan sintetizados. Los requisitos de roles de Auto Mode difieren de los de los grupos de nodos convencionales.
 
@@ -73,7 +73,7 @@ Consulte [Autenticación de IAM Identity Center](https://docs.aws.amazon.com/cli
 
 #### kubectl y eksctl (Linux/macOS)
 
-Los ejemplos de EKS 1.36 de este capítulo usan kubectl **1.36.5** y eksctl **0.231.0** como configuración de referencia. Se recomienda usar la misma versión secundaria de kubectl que la del servidor; la diferencia admitida es de ±1 versión secundaria. No instale a ciegas la versión secundaria más reciente de `stable.txt` upstream para un clúster de EKS antiguo.
+Los ejemplos de EKS 1.36 de este capítulo utilizan kubectl **1.36.5** y eksctl **0.231.0** como referencia. Use preferentemente la misma versión secundaria de kubectl que la del servidor; se admite una diferencia de ±1 versión secundaria. Para un clúster antiguo, no instale sin comprobarla la versión secundaria más reciente que indica `stable.txt` del proyecto.
 
 Este ejemplo de Bash selecciona AMD64/ARM64 y verifica las sumas de comprobación oficiales antes de la instalación. Necesita `curl`, `tar`, `awk` y `sha256sum` o `shasum`; la instalación en `/usr/local/bin` requiere permisos de administrador. Si falla una descarga o una suma de comprobación, se detiene la instalación.
 
@@ -136,7 +136,7 @@ Prepare también `jq` para generar JSON en los ejemplos de AWS CLI. Durante esta
 
 Un clúster regional de EKS requiere al menos dos subredes en distintas AZ de la misma VPC. Cada subred del clúster necesita al menos seis direcciones IP disponibles para EKS; AWS recomienda al menos dieciséis. Planifique direcciones adicionales para los nodos, los Pods, los balanceadores de carga y las actualizaciones. Habilite los nombres de host DNS y la resolución DNS de la VPC.
 
-No todos los clústeres de EKS requieren acceso a Internet. Los nodos y las cargas de trabajo necesitan acceso a la API de Kubernetes, a las imágenes y a los servicios de AWS necesarios mediante rutas NAT/Internet o los endpoints de VPC necesarios y las imágenes reflejadas. Se puede acceder al endpoint privado de Kubernetes desde la VPC o desde redes conectadas que tengan DNS y enrutamiento adecuados.
+No todos los clústeres de EKS requieren acceso a Internet. Los nodos y las cargas de trabajo necesitan acceso a la API de Kubernetes, a las imágenes y a los servicios de AWS necesarios mediante rutas NAT/Internet o los endpoints de VPC necesarios y las copias de imágenes en repositorios accesibles. Se puede acceder al endpoint privado de Kubernetes desde la VPC o desde redes conectadas que tengan DNS y enrutamiento adecuados.
 
 #### Etiquetas de VPC para el clúster de EKS
 
@@ -145,13 +145,13 @@ La etiqueta de VPC `kubernetes.io/cluster/<cluster-name>` es un mecanismo hereda
 - Subredes para balanceadores de carga públicos: `kubernetes.io/role/elb=1`
 - Subredes para balanceadores de carga internos: `kubernetes.io/role/internal-elb=1`
 
-Las etiquetas no configuran el enrutamiento, los grupos de seguridad ni la capacidad de IP disponible. Consulte [Requisitos de VPC/subredes](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html) y [clústeres sin acceso a Internet](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html).
+Las etiquetas no configuran rutas, grupos de seguridad ni direcciones IP disponibles. Consulte los [requisitos de VPC/subredes](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html) y los [clústeres sin acceso a Internet](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html).
 
 ## Creación de un clúster con eksctl {#creating-a-cluster-using-eksctl}
 
 eksctl es la forma más sencilla de crear y administrar clústeres de EKS. eksctl usa CloudFormation para crear clústeres de EKS y recursos relacionados.
 
-Guarde el kubeconfig de eksctl en una ruta dedicada para este shell.
+Guarde el kubeconfig de eksctl en una ruta exclusiva para esta sesión de shell.
 
 ```bash
 EKS_CLIENT_DIR=$(mktemp -d /tmp/eks-client.XXXXXX)
@@ -290,19 +290,19 @@ eksctl create nodegroup -f nodegroup.yaml
 
 ### Creación de un clúster de EKS Auto Mode
 
-EKS Auto Mode estuvo disponible de forma general en 2024 y automatiza la infraestructura del clúster de Kubernetes para reducir la carga operativa. AWS administra sus capacidades de cómputo, redes y almacenamiento.
+EKS Auto Mode alcanzó la disponibilidad general en 2024. Automatiza la infraestructura de los clústeres de Kubernetes para reducir el trabajo operativo, mientras AWS gestiona el cómputo, las redes y el almacenamiento.
 
 #### Características principales de EKS Auto Mode
 
 - **Administración automatizada de nodos**: Agrega o elimina nodos automáticamente según los requisitos de las cargas de trabajo
-- **Seguridad mejorada**: AMI inmutable, modo de aplicación de SELinux y sistema de archivos raíz de solo lectura
-- **Mantenimiento de nodos**: Los nodos se reemplazan cuando vencen o presentan desviaciones. Veintiún días no es un ciclo de actualización de versiones secundarias del plano de control
+- **Seguridad mejorada**: AMI inmutable, SELinux en modo enforcing y sistema de archivos raíz de solo lectura
+- **Mantenimiento de nodos**: Los nodos se reemplazan al vencer o cuando su configuración se desvía de la deseada. Veintiún días no es un ciclo de actualización de versiones secundarias del plano de control
 - **Componentes integrados**: Redes de Pod, DNS, almacenamiento y compatibilidad con GPU proporcionados de forma predeterminada
 - **Optimización de costos**: Terminación automática de instancias sin uso y consolidación de cargas de trabajo
 
 #### Creación básica de un clúster de Auto Mode
 
-Revise primero el CIDR y la configuración de red en `auto-cluster.yaml`. No duplique las funciones de redes, DNS y almacenamiento en bloques de Auto Mode con complementos autoadministrados. Los clústeres mixtos necesitan una ubicación explícita y un alcance de componentes para cada tipo de cómputo.
+Revise primero el CIDR y la red de `auto-cluster.yaml`. Evite duplicar las funciones de redes, DNS y almacenamiento en bloques de Auto Mode con complementos autoadministrados. En clústeres mixtos, defina dónde se ejecutan las cargas y qué componentes corresponden a cada tipo de cómputo.
 
 ```bash
 eksctl create cluster --config-file auto-cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
@@ -379,9 +379,9 @@ kubectl get nodeclasses
 kubectl get pods -n kube-system
 ```
 
-#### Creación de grupos de nodos personalizados
+#### Creación de NodePool personalizados
 
-En Auto Mode, puede crear grupos de nodos personalizados además de los grupos de nodos predeterminados:
+En Auto Mode, puede crear NodePool personalizados además de los predeterminados:
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -420,15 +420,15 @@ spec:
     consolidateAfter: 30s
 ```
 
-> **Nota**: En Auto Mode no se pueden usar `EC2NodeClass`, `amiFamily` ni `userData` personalizado (`/etc/eks/bootstrap.sh`). AWS administra la AMI y el arranque de los nodos; las subredes, los grupos de seguridad y el almacenamiento efímero se definen mediante una `NodeClass` `eks.amazonaws.com/v1`.
+> **Nota**: En Auto Mode no se pueden usar `EC2NodeClass`, `amiFamily` ni `userData` personalizado (`/etc/eks/bootstrap.sh`). AWS administra la AMI y el arranque de los nodos; las subredes, los grupos de seguridad y el almacenamiento efímero se definen mediante un recurso `eks.amazonaws.com/v1` de tipo `NodeClass`.
 
-El ejemplo de GPU conserva p3, que figura en la lista oficial de compatibilidad actual. Compruebe la capacidad de las AZ, las cuotas y los requisitos de memoria/modelo de GPU. Los Pods con GPU deben solicitar `nvidia.com/gpu` y tolerar la taint anterior. Se revisó este YAML; no se aprovisionó ni evaluó el rendimiento de ningún nodo con GPU.
+El ejemplo de GPU conserva p3, que figura en la lista oficial de compatibilidad actual. Compruebe la capacidad de las AZ, las cuotas y los requisitos de memoria/modelo de GPU. Los Pods con GPU deben solicitar `nvidia.com/gpu` y tener una toleration para la taint anterior. Se revisó este YAML; no se aprovisionó ni evaluó el rendimiento de ningún nodo con GPU.
 
 #### Limitaciones de Auto Mode
 
 - No se puede acceder directamente a los nodos mediante SSH o SSM
-- El vencimiento predeterminado es de 336 horas (14 días), con una configuración máxima compatible de `expireAfter` de 21 días. Revise conjuntamente el drenaje, los bloqueos de PDB/NodePool y el período de gracia predeterminado de terminación de 24 horas
-- No se pueden modificar los grupos de nodos ni las clases de nodos predeterminados
+- El vencimiento predeterminado es de 336 horas (14 días), con una configuración máxima compatible de `expireAfter` de 21 días. Revise conjuntamente el drenaje, los impedimentos al drenaje impuestos por PDB/NodePool y el período de gracia predeterminado de terminación de 24 horas
+- No se pueden modificar los NodePool ni los NodeClass predeterminados
 - Es posible que existan restricciones para ciertos tipos de instancia
 
 #### Supervisión de Auto Mode
@@ -538,7 +538,7 @@ EKS Auto Mode reduce la configuración de la infraestructura. La identidad de la
 
 ### Creación de un clúster con configuración personalizada
 
-Si necesita un control más granular, puede usar una configuración personalizada.
+Puede elegir una configuración personalizada si necesita un control más detallado.
 
 ### Configuración del clúster
 
@@ -575,13 +575,13 @@ Si necesita un control más granular, puede usar una configuración personalizad
 
 ### Seleccione los complementos
 
-Los siguientes complementos corresponden al cómputo convencional. Auto Mode administra capacidades superpuestas de redes, DNS y almacenamiento en bloques; seleccione los componentes según los tipos de cómputo del clúster.
+Los siguientes complementos corresponden al cómputo convencional. Auto Mode ya gestiona funciones de redes, DNS y almacenamiento en bloques que pueden solaparse con ellos. Seleccione los componentes según los tipos de cómputo de su clúster.
 
 7. En la página «Select add-ons», introduzca la siguiente información:
    - **Amazon VPC CNI**: Complemento CNI para las redes de los Pods.
    - **CoreDNS**: Servicio DNS dentro del clúster.
    - **kube-proxy**: Proporciona un proxy de red y balanceo de carga.
-   - **Complementos de almacenamiento/redes**: El cómputo convencional necesita los componentes instalados y permisos de IAM adecuados. Auto Mode proporciona capacidades administradas de EBS/redes/DNS; no instale componentes superpuestos en nodos de Auto Mode.
+   - **Complementos de almacenamiento/redes**: El cómputo convencional necesita los componentes instalados y permisos de IAM adecuados. Auto Mode proporciona capacidades administradas de EBS/redes/DNS; no instale componentes que dupliquen esas funciones en nodos de Auto Mode.
    - Haga clic en el botón «Next».
 
 ### Revise y cree el clúster
@@ -619,7 +619,7 @@ Estos ejemplos crean un **clúster nuevo**. Elija Auto Mode o EKS convencional; 
 
 Las dos subredes deben estar en distintas AZ de la misma VPC. Prepare por separado el DNS, las IP disponibles, los grupos de seguridad y el acceso de los nodos a las imágenes/servicios. Los nombres reales de los campos de API son `endpointPrivateAccess` y `endpointPublicAccess`. El acceso de administrador del creador inicializa este ejemplo dedicado; administre los accesos posteriores mediante entradas de acceso.
 
-### Prepare entradas comunes
+### Prepare los parámetros comunes
 
 Cree de antemano el rol del clúster para el modo seleccionado y verifique los permisos requeridos `iam:PassRole` y para crear roles vinculados a servicios. Revise la cuenta, la región, las subredes y el CIDR aprobado antes de ejecutar un comando de creación.
 
@@ -639,9 +639,9 @@ aws sts get-caller-identity
 
 ### Creación de un clúster de EKS Auto Mode
 
-El rol del clúster necesita confianza para `sts:AssumeRole` y `sts:TagSession` con `eks.amazonaws.com`, y `AmazonEKSClusterPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicyV2`, `AmazonEKSLoadBalancingPolicy` y `AmazonEKSNetworkingPolicy`, o permisos personalizados equivalentes.
+La política de confianza del rol del clúster debe permitir `sts:AssumeRole` y `sts:TagSession` a `eks.amazonaws.com`. El rol necesita `AmazonEKSClusterPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicyV2`, `AmazonEKSLoadBalancingPolicy` y `AmazonEKSNetworkingPolicy`, o permisos personalizados equivalentes.
 
-El rol del nodo confía en `ec2.amazonaws.com` y usa `AmazonEKSWorkerNodeMinimalPolicy` más `AmazonEC2ContainerRegistryPullOnly`. Conceda permisos de AWS a las cargas de trabajo por separado mediante Pod Identity/IRSA. Habilite conjuntamente el cómputo, el balanceo de carga y el almacenamiento en bloques, y deshabilite el arranque de los complementos autoadministrados predeterminados.
+El rol del nodo permite que lo asuma `ec2.amazonaws.com` y usa `AmazonEKSWorkerNodeMinimalPolicy` más `AmazonEC2ContainerRegistryPullOnly`. Conceda permisos de AWS a las cargas de trabajo por separado mediante Pod Identity/IRSA. Habilite conjuntamente el cómputo, el balanceo de carga y el almacenamiento en bloques, y deshabilite la instalación inicial de los complementos autoadministrados predeterminados.
 
 ```bash
 : "${EKS_AUTO_NODE_ROLE_ARN:?Pre-created Auto Mode node role}"
@@ -695,7 +695,7 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 ```
 
-Auto Mode puede no tener nodos antes de que las cargas de trabajo los necesiten. Compruebe el estado de NodePool/NodeClass y la programación posterior de los Pods. Que el clúster esté `ACTIVE` no demuestra que las aplicaciones estén en buen estado ni garantiza una duración fija de creación.
+Auto Mode puede no tener nodos hasta que una carga de trabajo los requiera. Compruebe el estado de NodePool/NodeClass y la posterior asignación de los Pods. El estado `ACTIVE` del clúster no demuestra que las aplicaciones funcionen ni garantiza que la creación dure un tiempo fijo.
 
 ```bash
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodepools.karpenter.sh
@@ -704,7 +704,7 @@ kubectl --kubeconfig "$EKS_KUBECONFIG" get nodeclasses.eks.amazonaws.com
 
 ### Creación de un clúster convencional
 
-Use esta alternativa solo si no seleccionó Auto Mode. El rol del clúster necesita permisos convencionales de clúster de EKS; el rol del nodo EC2 y los permisos de CNI/complementos son independientes. El arranque de los complementos de red predeterminados no instala EBS CSI ni AWS LBC.
+Use esta alternativa solo si no seleccionó Auto Mode. El rol del clúster necesita permisos convencionales de clúster de EKS; el rol del nodo EC2 y los permisos de CNI/complementos son independientes. La instalación inicial de los complementos de red predeterminados no instala EBS CSI ni AWS LBC.
 
 ```bash
 jq -n \
@@ -754,7 +754,7 @@ kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 
 #### Cree un grupo de nodos administrado
 
-Prepare permisos de nodos de trabajo y de extracción de ECR para el rol de nodo EC2, y un rol de CNI independiente o permisos de CNI revisados en el rol del nodo. No reutilice sin cambios el rol mínimo de nodo de Auto Mode. Las subredes privadas también requieren NAT o los endpoints de VPC necesarios. Este ejemplo de AL2023 no habilita SSH de forma predeterminada.
+Prepare permisos de nodos de trabajo y de descarga de imágenes de ECR para el rol de nodo EC2, y un rol de CNI independiente o permisos de CNI revisados en el rol del nodo. No reutilice sin cambios el rol mínimo de nodo de Auto Mode. Las subredes privadas también requieren NAT o los endpoints de VPC necesarios. Este ejemplo de AL2023 no habilita SSH de forma predeterminada.
 
 ```bash
 : "${EKS_MANAGED_NODE_ROLE_ARN:?Pre-created conventional EC2 node role}"
@@ -776,19 +776,19 @@ aws eks describe-nodegroup --cluster-name "$EKS_CLUSTER_NAME" \
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 ```
 
-`minSize`/`maxSize` por sí solos no habilitan el escalado de nodos en función de la demanda de los Pods. Inspeccione los errores de estado y de salud, y luego configure un escalador automático si es necesario. Si falla la creación, inspeccione los nombres/ARN registrados y los recursos relacionados. Durante la auditoría no se ejecutaron estos comandos de creación y espera.
+`minSize`/`maxSize` por sí solos no habilitan el escalado de nodos en función de la demanda de los Pods. Inspeccione el estado y los errores de funcionamiento, y luego configure un escalador automático si es necesario. Si falla la creación, inspeccione los nombres/ARN registrados y los recursos relacionados. Durante la auditoría no se ejecutaron estos comandos de creación y espera.
 
 Referencias: [API CreateCluster](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html), [API CreateNodegroup](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html), [IAM y creación de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html).
 
 ## Creación de un clúster con Terraform {#creating-a-cluster-using-terraform}
 
-El siguiente ejemplo completo admite **un clúster nuevo** y requiere elegir Auto Mode o un grupo de nodos administrado convencional antes de la primera aplicación. No agregue la alternativa como un segundo recurso de clúster ni cambie un clúster existente sin un plan de migración. El estado de Terraform y su archivo de bloqueo del proveedor corresponden a esta implementación específica.
+El siguiente ejemplo completo crea **un clúster nuevo**. Antes de la primera aplicación, elija Auto Mode o un grupo de nodos administrado convencional. No añada la alternativa como un segundo recurso de clúster ni cambie el modo de un clúster existente sin un plan de migración. El estado de Terraform y el archivo de bloqueo del proveedor pertenecen a este despliegue concreto.
 
 ### Configuración de Terraform para un clúster de EKS Auto Mode
 
 Guárdelo como `main.tf`. El ejemplo fija el proveedor de AWS en **6.69.1** y usa EKS **1.36**. Proporcione explícitamente los ID de subredes privadas existentes; una etiqueta personalizada `Type=Private` no sustituye de manera fiable la verificación de las rutas y la conectividad. La precondición comprueba las relaciones entre VPC/AZ durante la planificación, pero no verifica el enrutamiento privado, los endpoints de servicio, el DNS, la capacidad de IP ni las etiquetas de subred para balanceadores de carga.
 
-Auto Mode requiere habilitar conjuntamente el cómputo, el balanceo de carga y el almacenamiento en bloques, con `bootstrap_self_managed_addons = false`. El rol del clúster incluye `sts:TagSession` y las cinco políticas requeridas. Las dependencias de las asociaciones de IAM conservan los permisos mientras EKS elimina la infraestructura administrada.
+Auto Mode requiere habilitar conjuntamente el cómputo, el balanceo de carga y el almacenamiento en bloques, con `bootstrap_self_managed_addons = false`. El rol del clúster incluye `sts:TagSession` y las cinco políticas requeridas. Las dependencias de las vinculaciones de políticas de IAM conservan los permisos mientras EKS elimina la infraestructura administrada.
 
 ```hcl
 terraform {
@@ -1067,15 +1067,15 @@ Para un **clúster convencional nuevo**, use el mismo `main.tf` completo y estab
 enable_auto_mode = false
 ```
 
-Esto deshabilita las tres capacidades de Auto Mode, inicia los complementos de redes convencionales, selecciona permisos convencionales para EC2 y crea el grupo de nodos administrado de AL2023. No instala EBS CSI, AWS LBC, Metrics Server ni un escalador automático de nodos; configure por separado los componentes que requiera la carga de trabajo. Cambiar este valor después de la implementación modifica la infraestructura y el IAM, por lo que se requiere una revisión de migración independiente.
+Esto deshabilita las tres capacidades de Auto Mode, inicia los complementos de redes convencionales, selecciona permisos convencionales para EC2 y crea el grupo de nodos administrado de AL2023. No instala EBS CSI, AWS LBC, Metrics Server ni un escalador automático de nodos; configure por separado los componentes que requiera la carga de trabajo. Cambiar este valor después del despliegue modifica la infraestructura y los permisos de IAM, por lo que se requiere una revisión de migración independiente.
 
-Validación: Terraform **1.16.6** con el proveedor de AWS firmado **6.69.1** superó localmente `terraform validate` sin errores ni advertencias. **No se ejecutaron planes, aplicaciones ni llamadas a la API de AWS.** Ambos modos siguen requiriendo validación de implementación; el ejemplo no demuestra que esté listo para producción.
+Validación: Terraform **1.16.6** con el proveedor de AWS firmado **6.69.1** pasó la comprobación local `terraform validate` sin errores ni advertencias. **No se ejecutaron plan, apply ni llamadas a la API de AWS.** Ambos modos requieren todavía validar el despliegue; el ejemplo no demuestra que estén listos para producción.
 
 Referencias: [Clúster EKS del proveedor de AWS](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown), [grupo de nodos administrado](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown), [requisitos de roles de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html).
 
 ## Creación de un clúster con AWS CDK {#creating-a-cluster-using-aws-cdk}
 
-Use `aws-cdk-lib/aws-eks-v2` para este ejemplo de **pila nueva**. Crea un `AWS::EKS::Cluster` nativo y una entrada de acceso; no se necesita ningún recurso personalizado de Lambda para habilitar Auto Mode. No considere que reemplazar un constructo existente ya implementado por este ejemplo sea una migración in situ.
+Use `aws-cdk-lib/aws-eks-v2` para este ejemplo de **pila nueva**. Crea un `AWS::EKS::Cluster` nativo y una entrada de acceso; no se necesita ningún recurso personalizado de Lambda para habilitar Auto Mode. No considere que reemplazar un constructo existente ya desplegado por este ejemplo sea una migración in situ.
 
 El ejemplo usa la biblioteca CDK **2.273.0**, CLI **2.1145.0** y EKS **1.36**. Importa subredes privadas existentes mediante atributos, sin una búsqueda de VPC durante la síntesis. Verifique la correspondencia de las subredes/AZ proporcionadas, el DNS de la VPC, el enrutamiento, el acceso a servicios y las etiquetas de subred para balanceadores de carga antes de la implementación. Una definición de VPC importada no valida esas condiciones.
 
@@ -1173,7 +1173,7 @@ export class EksAutoModeStack extends cdk.Stack {
 }
 ```
 
-El rol del clúster incluye explícitamente `sts:TagSession` y las cinco políticas de Auto Mode, incluida `AmazonEKSBlockStoragePolicyV2`. `withoutPolicyUpdates()` impide que CDK 2.273.0 agregue la política de almacenamiento en bloques más antigua; este ejemplo se encarga de proporcionar todos los permisos requeridos. Las dependencias conservan esos roles hasta que se completa la eliminación del clúster. El rol del nodo solo tiene las políticas mínimas de trabajo de Auto Mode y de extracción de ECR.
+El rol del clúster incluye explícitamente `sts:TagSession` y las cinco políticas de Auto Mode, incluida `AmazonEKSBlockStoragePolicyV2`. `withoutPolicyUpdates()` impide que CDK 2.273.0 agregue la política de almacenamiento en bloques más antigua; este ejemplo se encarga de proporcionar todos los permisos requeridos. Las dependencias conservan esos roles hasta que se completa la eliminación del clúster. El rol del nodo solo tiene las políticas mínimas para nodos de trabajo de Auto Mode y para descargar imágenes de ECR.
 
 `bootstrapSelfManagedAddons: false` evita la superposición de complementos de redes autoadministrados. Auto Mode administra conjuntamente el cómputo, el balanceo de carga y el almacenamiento en bloques. La entrada de acceso del operador se crea por separado del rol de ejecución del clúster.
 
@@ -1209,9 +1209,9 @@ new EksAutoModeStack(app, 'EksAutoModeStack', {
 });
 ```
 
-### Implementación con CDK
+### Despliegue con CDK
 
-Cree un proyecto nuevo, guarde los dos archivos anteriores después de inicializarlo y proporcione los valores de la cuenta/región de destino. Use un rol de AWS autenticado y autorizado. Revise la configuración sintetizada de IAM/redes y las diferencias antes de implementar. La biblioteca CDK y la CLI son paquetes separados y no comparten el mismo número de versión.
+Cree un proyecto nuevo, guarde los dos archivos anteriores después de inicializarlo y proporcione los valores de la cuenta/región de destino. Use un rol de AWS autenticado y autorizado. Revise la configuración sintetizada de IAM/redes y las diferencias antes de desplegar. La biblioteca CDK y la CLI son paquetes separados y no comparten el mismo número de versión.
 
 ```bash
 mkdir eks-auto-mode
@@ -1245,7 +1245,7 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$CDK_DEFAULT_REGI
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-La auditoría compiló ambos archivos TypeScript y sintetizó la pila localmente con identificadores ficticios: se verificaron las tres capacidades de Auto Mode, los CIDR de API delimitados, los roles requeridos y una entrada de acceso del operador. No se generó ninguna Lambda/recurso personalizado. Se rechazó la falta de entradas obligatorias. **No se ejecutaron el arranque, búsquedas, implementación, creación de clúster ni llamadas a la API de AWS**, por lo que las cuotas de cuenta, las redes y la disponibilidad de las cargas de trabajo siguen pendientes de validación durante la implementación.
+La auditoría compiló ambos archivos TypeScript y sintetizó la pila localmente con identificadores ficticios. Verificó las tres capacidades de Auto Mode, los CIDR que limitan el acceso a la API, los roles requeridos y una entrada de acceso del operador. No se generó ningún recurso Lambda ni personalizado, y se rechazaron los parámetros obligatorios ausentes. **No se ejecutaron bootstrap, búsquedas, despliegues, creación de clústeres ni llamadas a la API de AWS**. Las cuotas de la cuenta, las redes y la disponibilidad de las cargas de trabajo deben comprobarse al desplegar.
 
 Referencias: [Biblioteca de constructos EKS V2](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html), [rol del clúster de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html), [creación de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html).
 
@@ -1275,7 +1275,7 @@ aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 
 ### Configuración de RBAC
 
-Use entradas de acceso para conceder acceso nuevo a IAM. Este ejemplo otorga acceso de lectura a un rol nuevo en el espacio de nombres `dev` existente; no duplique la entrada del operador que administra su herramienta de IaC. El modo de autenticación debe ser `API` o `API_AND_CONFIG_MAP`. El método heredado `aws-auth` está obsoleto; no sobrescriba todo su ConfigMap. Si es necesario, siga el procedimiento oficial de migración.
+Use entradas de acceso para autorizar nuevas identidades de IAM. Este ejemplo concede a un rol nuevo acceso de lectura en el espacio de nombres `dev` existente; no duplique la entrada del operador gestionada por la herramienta que creó el clúster. El modo de autenticación debe ser `API` o `API_AND_CONFIG_MAP`. El método heredado `aws-auth` está obsoleto; no sobrescriba su ConfigMap completo. Siga el procedimiento oficial de migración cuando sea necesario.
 
 ```bash
 # A new reader identity, distinct from the operator already granted by IaC.
@@ -1318,11 +1318,11 @@ eks_kubectl create -f "$EKS_ACCESS_DIR/rbac.yaml"
 fi
 ```
 
-Este rol de lector no concede acceso a la API de Secret ni permisos de modificación. Autentíquese con ese rol y compruebe `kubectl auth can-i`; otros permisos de RBAC/EKS pueden agregar permisos. [Entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+Este rol de lector no concede acceso a la API de Secret ni permisos de modificación. Autentíquese con ese rol y compruebe `kubectl auth can-i`; otras autorizaciones de RBAC o de políticas de EKS pueden conceder permisos adicionales. [Entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 
 ## Validación del clúster {#cluster-validation}
 
-Use `eks_kubectl` y el mismo kubeconfig dedicado de la sección de acceso. El acceso al plano de control por sí solo no demuestra el estado de los nodos ni de las cargas de trabajo.
+Use `eks_kubectl` y el mismo kubeconfig exclusivo de la sección de acceso. Poder acceder al plano de control no basta para demostrar que los nodos y las cargas de trabajo funcionan correctamente.
 
 ### Validación básica
 
@@ -1345,7 +1345,7 @@ eks_kubectl get nodeclaims.karpenter.sh
 
 ### Implementación de una aplicación de ejemplo
 
-Use un espacio de nombres nuevo para comprobar el acceso a imágenes, la programación, la disponibilidad HTTP y un Service. Una configuración exclusiva de Fargate primero necesita un perfil que coincida con este espacio de nombres.
+Use un espacio de nombres nuevo para comprobar el acceso a imágenes, la asignación de los Pods, la disponibilidad HTTP y un Service. Una configuración exclusiva de Fargate primero necesita un perfil que coincida con este espacio de nombres.
 
 ```bash
 EKS_SAMPLE_DIR=$(mktemp -d /tmp/eks-validate.XXXXXX)
@@ -1415,7 +1415,7 @@ Mientras se ejecuta el reenvío de puertos, abra `http://127.0.0.1:8080` y luego
 
 ## Actualización del clúster {#cluster-upgrade}
 
-Primero revise los datos de actualización, las API eliminadas, la compatibilidad de los webhooks/complementos, las versiones de los nodos, las IP disponibles y el plan de recuperación. Actualice los nodos rezagados a la versión actual del plano de control y luego avance una versión secundaria admitida a la vez. Algunos componentes necesitan actualizaciones compatibles antes de la del plano de control.
+Revise primero los resultados de Upgrade Insights, las API eliminadas, la compatibilidad de webhooks y complementos, las versiones de los nodos, las IP disponibles y el plan de recuperación. Lleve los nodos rezagados a la versión actual del plano de control y después avance una versión secundaria compatible cada vez. Algunos componentes necesitan una actualización compatible antes de actualizar el plano de control.
 
 Auto Mode no actualiza las versiones secundarias del plano de control cada 21 días. Los operadores planifican las actualizaciones de versiones secundarias y tienen en cuenta las actualizaciones automáticas conforme a la política de soporte de versiones.
 
@@ -1447,13 +1447,13 @@ aws eks update-nodegroup-version --cluster-name "${EKS_CLUSTER_NAME:?}" \
   --kubernetes-version "${NEXT_MINOR_VERSION:?}"
 ```
 
-Planifique las actualizaciones de nodos autoadministrados/Hybrid, la sustitución de Pods de Fargate, las actualizaciones de complementos y las actualizaciones de kubectl según los mecanismos correspondientes. Compruebe los PDB y la capacidad disponible en lugar de ocultar fallos con indicadores de forzado. Las actualizaciones del plano de control que cumplan los requisitos pueden revertirse una versión secundaria dentro de siete días, sujetas a la compatibilidad de nodos/complementos/API y a las restricciones de la política de soporte; la reversión no sustituye la recuperación de los datos de las aplicaciones.
+Planifique las actualizaciones de nodos autoadministrados/Hybrid, la sustitución de Pods de Fargate, las actualizaciones de complementos y las actualizaciones de kubectl según los mecanismos correspondientes. Compruebe los PDB y la capacidad disponible en lugar de ocultar fallos con opciones de forzado. Las actualizaciones del plano de control que cumplan los requisitos pueden revertirse una versión secundaria dentro de siete días, si lo permiten la compatibilidad de nodos/complementos/API y las restricciones de la política de soporte; la reversión no sustituye la recuperación de los datos de las aplicaciones.
 
 [Procedimiento de actualización](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [Condiciones de reversión](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
 ## Eliminación del clúster {#cluster-deletion}
 
-Elimine el clúster mediante la herramienta/el estado que lo creó, en la cuenta y región previstas. Primero elimine las cargas de trabajo y los Services de Ingress/LoadBalancer mientras sus controladores sigan ejecutándose y, después, verifique que la eliminación se haya completado. Decida cómo conservar o recuperar los PVC/PV, las instantáneas y los registros. No omita tiempos de espera ni finalizadores con opciones de forzado.
+Elimine el clúster con la herramienta y el estado que lo crearon, en la cuenta y región previstas. Retire primero las cargas de trabajo, los recursos Ingress y los Services de tipo LoadBalancer mientras sus controladores sigan ejecutándose; después confirme que la eliminación terminó. Decida cómo conservar o recuperar los PVC/PV, las instantáneas y los registros. No eluda los tiempos de espera ni los finalizadores con opciones de forzado.
 
 ### Limpieza del espacio de nombres de ejemplo
 
@@ -1484,7 +1484,7 @@ else
 fi
 ```
 
-Deténgase e investigue si falla la limpieza. Compare el ARN de destino con el resultado de creación o el estado de IaC propietario, no solo con una búsqueda actual no revisada.
+Si la limpieza falla, deténgase e investigue. Compare el ARN de destino con el resultado de creación o con el estado de IaC que gestiona el clúster; no se base únicamente en una consulta actual sin verificar.
 
 ```bash
 : "${EKS_EXPECTED_CLUSTER_ARN:?Copy the ARN from the creation result or owning IaC state}"
@@ -1518,7 +1518,7 @@ fi
 
 ### Eliminación con AWS CLI
 
-Para un clúster creado directamente con la CLI, establezca los nombres de los grupos de nodos/perfiles propios que aparecen arriba y repita el proceso para cada recurso. Espere a que se complete la eliminación y compruebe que no quede ninguno antes de eliminar el clúster.
+Para un clúster creado directamente con la CLI, establezca los nombres de los grupos de nodos y perfiles de ese clúster que aparecen arriba y repita el proceso para cada recurso. Espere a que se complete la eliminación y compruebe que no quede ninguno antes de eliminar el clúster.
 
 ```bash
 # For a cluster created directly with the AWS CLI, after workload/data cleanup.
@@ -1570,7 +1570,7 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-Una vez completada la eliminación, verifique el estado de EKS/CloudFormation y los recursos restantes de ELB, discos, NAT, registros e IAM. Conserve los roles/políticas de Auto Mode hasta que se complete la eliminación de la infraestructura administrada. No suponga que la eliminación del clúster borra una VPC, un rol de IAM, los registros o los datos retenidos que pertenezcan a otros recursos. Durante la auditoría no se ejecutaron comandos de eliminación.
+Una vez completada la eliminación, verifique el estado de EKS/CloudFormation y los recursos restantes de ELB, discos, NAT, registros e IAM. Conserve los roles/políticas de Auto Mode hasta que se complete la eliminación de la infraestructura administrada. No suponga que la eliminación del clúster borra una VPC, un rol de IAM, los registros o los datos retenidos gestionados por otros componentes. Durante la auditoría no se ejecutaron comandos de eliminación.
 
 ## Conclusión
 
@@ -1587,4 +1587,4 @@ Para producción, elija el modelo de cómputo y la herramienta de infraestructur
 
 ### Alcance de la validación de la auditoría
 
-Se leyeron ambas versiones lingüísticas completas y se cotejaron con la documentación y los esquemas oficiales. La validación abarcó shell/JSON/YAML, compilación/síntesis de CDK, `terraform validate` y rutas de error simuladas. No se realizaron aprovisionamientos de AWS, actualizaciones, eliminaciones, pruebas de carga/ejecución de aplicaciones ni mediciones de costos.
+Se leyeron ambas versiones lingüísticas completas y se cotejaron con la documentación y los esquemas oficiales. La validación abarcó shell/JSON/YAML, compilación y síntesis de CDK, validación de Terraform y rutas de fallo simuladas. No se realizaron aprovisionamientos de AWS, actualizaciones, eliminaciones, pruebas de ejecución o carga de aplicaciones ni mediciones de costos.
