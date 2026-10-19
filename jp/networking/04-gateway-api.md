@@ -1,52 +1,52 @@
 # Kubernetes Gateway API
 
-> **API基準**: Gateway API v1.6 Standard。コントローラーがサポートする正確なバンドルを選択してください。
-> **最終更新**: September 12, 2026
+> **APIベースライン**: Gateway API v1.6 Standard。コントローラーがサポートする正確なバンドルを選択してください。
+> **最終更新日**: 2026年10月16日
 
 ## 概要
 
-Gateway APIはKubernetesの次世代Ingress APIです。既存Ingress APIの制限を克服し、より表現力と拡張性のあるネットワークルーティング機能を提供するために設計されています。SIG-Networkが開発し、Istio、Cilium、Envoy Gatewayなど多様な実装でサポートされています。
+Gateway APIは、既存のIngress APIの制限を克服し、より表現力と拡張性に優れたネットワークルーティング機能を提供するために設計された、Kubernetes向けの次世代Ingress APIです。SIG-Networkが開発しており、Istio、Cilium、Envoy Gatewayなど、さまざまな実装でサポートされています。
 
 ### Ingress APIの制限
 
 | 問題 | 説明 |
 |---------|-------------|
-| **表現力の制限** | HTTPルーティング以外のTCP/UDP/gRPCサポートが乏しい |
-| **責務の混在** | RBAC/IngressClassでアクセスを制限できるが、リスナーとルートの関心事の分離が明確でない |
-| **アノテーションの多用** | 実装固有の機能をアノテーションで扱うため移植性が低下 |
-| **拡張性の制限** | 新しいプロトコルや機能を追加しにくい |
-| **名前空間間の連携** | 名前空間をまたぐルーティングが複雑 |
+| **表現力の制限** | HTTPルーティング以外のTCP/UDP/gRPCのサポートが不十分 |
+| **責任の複合** | RBAC/IngressClassでアクセスを制限できますが、リスナーとルートに関する責務の分離が明確ではありません |
+| **アノテーションの乱用** | 実装固有の機能をアノテーションで処理するため、移植性が低下します |
+| **拡張性の制限** | 新しいプロトコルや機能を追加することが困難 |
+| **Namespaceをまたぐルーティング** | Namespaceをまたぐルーティングが複雑 |
 
-### Gateway APIの利点
+### Gateway APIのメリット
 
-![Gateway APIの4つの設計目標: 表現力、責務の分離、移植性、拡張性。](../.gitbook/assets/en-networking-04-gateway-api-0.png)
+![Gateway APIの4つの設計目標：表現力、責任の分離、移植性、拡張性。](../.gitbook/assets/en-networking-04-gateway-api-0.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-0.html)
 
-表現力、責務の分離、移植性、拡張性は独立した設計目標です。実際の機能サポートはコントローラーと適合プロファイルに依存します。各リソースを変更できる主体はKubernetes RBACとアドミッションポリシーが制御します。
+表現力、責任の分離、移植性、拡張性は、それぞれ独立した設計目標です。実際にサポートされる機能は、コントローラーと適合プロファイルによって異なります。各リソースを変更できるユーザーは、Kubernetes RBACとAdmissionポリシーによって制御されます。
 
 ## リソースモデル
 
-Gateway APIは階層的なリソースモデルを使用します。
+Gateway APIは階層型のリソースモデルを使用します。
 
-![典型的な実装におけるGatewayClass、Gateway、RouteとバックエンドServiceの関係。具体的なGatewayインフラはコントローラー固有。](../.gitbook/assets/en-networking-04-gateway-api-1.png)
+![一般的な実装におけるGatewayClass、Gateway、RouteとバックエンドServiceの関係。Gatewayインフラストラクチャの実際の構成はコントローラー固有です。](../.gitbook/assets/en-networking-04-gateway-api-1.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-1.html)
 
-図はリソースの関係と一般的なゲートウェイのデプロイモデルを示します。Gatewayが常に1つのクラウドロードバランサーであるとは限りません。IstioはプロキシのDeployment/Serviceをプロビジョニングでき、VPC Latticeはサービスネットワークに対応付けます。**参照先の名前空間**の所有者が、ReferenceGrantで名前空間をまたぐバックエンド/Secretアクセスを許可します。
+この図は、リソース間の関係と一般的なGatewayのデプロイモデルを示しています。Gatewayが常に1つのクラウドロードバランサーに対応するとは限りません。IstioではプロキシのDeployment/Serviceをプロビジョニングできますが、VPC Latticeではサービスネットワークに対応付けられます。**参照先Namespace**の所有者は、ReferenceGrantを使って、Namespaceをまたぐバックエンド/Secretへのアクセスを許可します。
 
-### ロールの分離
+### 役割の分離
 
-| ロール | 管理リソース | 責務 |
+| 役割 | 管理するリソース | 責任 |
 |------|------------------|----------------|
-| **インフラ提供者** | GatewayClass | 基本的なインフラ設定を定義 |
-| **クラスター運用者** | Gateway | GatewayインフラとRouteの接続ポリシー |
-| **参照先名前空間の所有者** | ReferenceGrant | 所有するバックエンド/Secretへの参照を認可 |
-| **アプリケーション開発者** | HTTPRoute、GRPCRouteなど | アプリケーションのルーティングルールを定義 |
+| **インフラストラクチャプロバイダー** | GatewayClass | 基本的なインフラストラクチャ構成を定義する |
+| **クラスターオペレーター** | Gateway | GatewayインフラストラクチャとRouteのアタッチポリシーを管理する |
+| **参照先Namespaceの所有者** | ReferenceGrant | 所有するバックエンド/Secretへの参照を許可する |
+| **アプリケーション開発者** | HTTPRoute、GRPCRouteなど | アプリケーションのルーティングルールを定義する |
 
 ## GatewayClass
 
-GatewayClassは、Gateway作成時に使用するコントローラーと設定を定義します。
+GatewayClassは、Gatewayの作成時に使用するコントローラーと構成を定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -58,9 +58,9 @@ spec:
   description: Istio Gateway Controller for production workloads
 ```
 
-GatewayClassはインストール済みコントローラーを選択します。クラスを作成してもコントローラーはインストールされません。以下の定義は選択肢です。`Accepted`条件がtrueのクラスを使い、例のクラス名をクラスターで受け入れられた名前に置き換えてください。
+GatewayClassは、すでにインストールされているコントローラーを選択します。このクラスを作成しても、コントローラーはインストールされません。以下の定義は代替案です。`Accepted`条件がtrueのクラスを使用し、例にあるクラス名は、クラスターで受け入れられている名前に置き換えてください。
 
-`parametersRef`のサポートとgroup/kindは実装に依存します。Istio 1.31では、GatewayごとのConfigMapをGatewayの名前空間に置き、`Gateway.spec.infrastructure.parametersRef`で指定します。クラス全体のデフォルトは、Istioのルート名前空間で`gateway.istio.io/defaults-for-class`ラベル付きConfigMapを使います。下のALB→Istio例はGatewayごとの形式を示します。
+`parametersRef`のサポートと、そのgroup/kindは実装によって異なります。Istio 1.31では、GatewayごとのConfigMapは、そのGatewayのNamespaceにある`Gateway.spec.infrastructure.parametersRef`で指定します。クラス全体のデフォルト値には、IstioのルートNamespaceにある`gateway.istio.io/defaults-for-class`ラベル付きのConfigMapを使用します。以下のALB→Istioの例では、Gatewayごとに設定する方法を示します。
 
 ### 実装ごとのGatewayClass
 
@@ -116,15 +116,15 @@ spec:
 
 ## Gateway
 
-Gatewayはトラフィック処理インフラとリスナーを記述します。プロキシワークロード、マネージドロードバランサー、サービスネットワークのどれに対応するかはコントローラーによります。
+Gatewayは、トラフィックを処理するインフラストラクチャとリスナーを記述します。プロキシのワークロード、管理対象ロードバランサー、サービスネットワークのどれに対応付けられるかは、コントローラーによって異なります。
 
-### 基本的なGateway設定
+### Gatewayの基本構成
 
-これらは別々の設定シナリオで、一括適用するRouteの集合ではありません。同じホスト/リスナーでRouteが重なると優先順位が変わる場合があります。選択したコントローラーと互換CRDを先にインストールし、`gateway-system`を作成して、指定されたService、準備済みエンドポイント、TLS Secretを用意してください。証明書は設定したDNS名をカバーする必要があります。プラットフォームに応じてデータプレーンServiceの公開、DNS、ネットワーク制御を設定します。GatewayClassや要求したIPアドレスだけでは外部アドレスは予約されません。
+以下は個別の構成例であり、すべてのRouteをまとめて適用する単一の構成ではありません。同じホスト/リスナー上でRouteが重複すると、優先順位が変わることがあります。まず、選択したコントローラーと互換性のあるCRDをインストールし、`gateway-system`を作成したうえで、指定されたService、準備完了状態のエンドポイント、TLS Secretを用意してください。証明書は構成済みのDNS名をカバーする必要があります。データプレーンのService公開設定、DNS、プラットフォームのネットワーク制御を構成してください。GatewayClassや要求されたIPアドレスだけでは、外部アドレスは予約されません。
 
-HTTP/gRPC/TCP/TLSの例はIstio 1.31を使用します。Istio 1.31はUDPリスナーを明示的に拒否するため、UDPの例は別のEnvoy Gatewayインスタンスを使用します。Envoy Gateway 1.9にはGateway API 1.6.1と公表されたKubernetesバージョンの組み合わせが必要です。バージョン/チャネル変更前に共有CRDを確認してください。
+HTTP/gRPC/TCP/TLSの例ではIstio 1.31を使用しています。UDPの例では別のEnvoy Gatewayインスタンスを使用します。Istio 1.31はUDPリスナーを明示的に拒否するためです。Envoy Gateway 1.9にはGateway API 1.6.1と、公開されているKubernetesのバージョン組み合わせが必要です。共有CRDのバージョン/チャネルを変更する前に、内容を確認してください。
 
-基本例のNamespaceには`gateway-access: "true"`があります。これは**Namespaceラベル**であり、変更権限はGatewayアクセスを制御する管理者が持つべきです。`allowedRoutes`はアプリケーションクライアントを認証しません。
+基本例のNamespaceには`gateway-access: "true"`が設定されています。これは**Namespaceラベル**であり、これを変更する権限はGatewayアクセスを管理する管理者に限定してください。`allowedRoutes`はアプリケーションのクライアントを認証しません。
 
 ```yaml
 apiVersion: v1
@@ -168,9 +168,9 @@ spec:
             gateway-access: 'true'
 ```
 
-### 高度なGateway設定
+### Gatewayの高度な構成
 
-以下は`multi-protocol-gateway`という別のGatewayです。後のgRPC、TLS、TCP Routeは、一致するリスナー名に接続します。データベースと他のTCPの例は別々のリスナーを持つため、1つのL4リスナーを競合せず両方を使用できます。
+以下は`multi-protocol-gateway`という別のGatewayです。下記のgRPC、TLS、TCPのRouteは、それぞれ対応するリスナー名にアタッチされます。データベース用とその他のTCP用には別々のリスナーがあるため、どちらも同じL4リスナーを取り合うことなく使用できます。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -263,12 +263,12 @@ spec:
 
 ### TLSモード
 
-終端モードはゲートウェイで下流TLS接続を終端します。バックエンド接続は別に設定し、例えばサポートされるBackendTLSPolicyを通じてHTTPまたはTLSを使用できます。パススルーは`mode: Passthrough`を設定した`TLS`リスナーを使い、バックエンドがTLSを終端します。`HTTPS`リスナーは`mode`だけを変更してもパススルーには切り替えられません。
+Terminateは、Gatewayで下流側のTLS接続を終端します。バックエンドへの接続は別途構成し、サポートされているBackendTLSPolicyなどを使ってHTTPまたはTLSを使用できます。Passthroughでは、`mode: Passthrough`の`TLS`リスナーを使用し、バックエンドでTLSを終端します。`mode`を変更するだけで、`HTTPS`リスナーをpassthroughに切り替えることはできません。
 
-| モード | 説明 | 用途 |
+| モード | 説明 | ユースケース |
 |------|-------------|----------|
-| **Terminate** | GatewayでTLS終端 | 標準的なHTTPS |
-| **Passthrough** | バックエンドへTLSを転送 | エンドツーエンド暗号化 |
+| **Terminate** | GatewayでTLSを終端 | 標準的なHTTPS |
+| **Passthrough** | TLSをバックエンドに転送 | エンドツーエンド暗号化 |
 
 ```yaml
 # TLS Terminate example
@@ -293,9 +293,9 @@ listeners:
 
 ## HTTPRoute
 
-HTTPRouteはHTTP/HTTPSトラフィックのルーティングルールを定義します。
+HTTPRouteは、HTTP/HTTPSトラフィックのルーティングルールを定義します。
 
-### 基本的なHTTPRoute
+### HTTPRouteの基本例
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -339,9 +339,9 @@ spec:
           port: 80
 ```
 
-### 高度な一致ルール
+### 高度なマッチングルール
 
-1つの`matches`項目内のフィールドはAND、複数の項目はORで結合されます。PathPrefixは任意の文字列プレフィックスではなくパス要素に一致します。RegularExpressionのサポートと構文は実装固有です。下のデモ用テナントヘッダーは、どのクライアントでも送れるルーティングセレクターであり、管理アプリケーションの認証ではありません。
+1つの`matches`項目内のフィールドはAND条件で評価され、複数の項目はOR条件で評価されます。PathPrefixは任意の文字列のプレフィックスではなく、パス要素に対してマッチします。RegularExpressionのサポートと構文は実装によって異なります。以下のデモ用テナントヘッダーは、どのクライアントでも指定できるルーティングセレクターであり、管理アプリケーションの認証には使えません。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -426,9 +426,9 @@ spec:
 
 ### フィルター
 
-ヘッダー修飾子はリテラル値を設定します。`X-Example-Source: gateway-demo`は静的マーカーで、生成された一意なリクエストIDではありません。IDにはプロキシ/アプリケーションのトレース機能を使ってください。ミラー例は独自の`/mirror`パスを使うため、前の`/api`ルールに隠されません。GETリクエストをシャドーバックエンドへコピーし、その応答は無視します。副作用を分離し、シャドーサービスにコピーするデータ/認証情報を確認してください。公開キャッシュヘッダーは、公開キャッシュが実際に安全なコンテンツにのみ適しています。
+ヘッダー変更機能は、リテラル値を設定します。`X-Example-Source: gateway-demo`は固定の識別子であり、一意なリクエストIDを生成するものではありません。IDには、プロキシ/アプリケーションのトレース機能を使用してください。ミラーリングの例では独自の`/mirror`パスを使うため、先行する`/api`ルールに隠されることはありません。GETリクエストをシャドウバックエンドにコピーし、そのバックエンドのレスポンスは無視します。副作用を分離し、シャドウサービスにコピーされるデータ/認証情報を確認してください。公開キャッシュヘッダーを使うのは、実際に公開キャッシュしても安全なコンテンツに限ります。
 
-フィルターでリクエスト/レスポンスを変更できます。
+フィルターを使うと、リクエスト/レスポンスを変更できます。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -551,9 +551,9 @@ spec:
 
 ### タイムアウトと再試行
 
-v1.6 Standardスキーマには`timeouts`がありますが、`HTTPRoute.rules.retry`はありません。Experimentalスキーマは再試行フィールドを追加し、別のアドミッション/実装要件があります。以下の例はGETリクエストの時間上限だけを設定します。`backendRequest`は、ゼロでない合計`request`上限を超えてはいけません。
+v1.6 Standardスキーマには`timeouts`が含まれますが、`HTTPRoute.rules.retry`は含まれません。Experimentalスキーマでは再試行フィールドが追加されますが、Admissionや実装に関する要件は別途あります。以下の例で設定するのはGETリクエストの予算だけです。`backendRequest`は、0以外に設定した合計`request`予算を超えてはなりません。
 
-再試行フィールドを省略しても、クライアント、ゲートウェイ、メッシュプロキシ、SDKが一切再試行しない証明にはなりません。特に非冪等な書き込みでは、該当する各レイヤーを設定して確認してください。Experimental v1.6の`retry.attempts`は最小値が1のため、再試行回数0は無効化する有効な方法ではありません。実装の文書化された制御とアプリケーションの冪等性動作を使用します。
+再試行フィールドを省略しても、クライアント、Gateway、メッシュプロキシ、SDKのいずれも再試行しないという保証にはなりません。特に冪等でない書き込みでは、該当する各レイヤーを構成し、動作を確認してください。再試行回数を0にしても、最小値が1であるExperimental v1.6の`retry.attempts`フィールドを無効化する有効な方法にはなりません。実装で文書化されている制御機能と、アプリケーションの冪等性動作を使用してください。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -582,7 +582,7 @@ spec:
 
 ## GRPCRoute
 
-バックエンドは想定するgRPC/HTTP2トランスポートを提供し、適切なTLS設定を持つ必要があります。ポート番号だけでは、その動作は設定されません。
+バックエンドは、想定されるgRPC/HTTP2トランスポートと適切なTLS構成を提供する必要があります。ポート番号を指定しただけでは、その動作は構成されません。
 
 gRPCトラフィックのルーティングルールを定義します。
 
@@ -667,7 +667,7 @@ spec:
 
 ## TLSRoute
 
-TLSパススルートラフィックのルーティングを定義します。
+TLSパススルーのトラフィックルーティングを定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -690,7 +690,7 @@ spec:
 
 ## UDPRoute
 
-このシナリオには、受け入れられた`envoy-gateway`クラスを持つインストール済みEnvoy Gatewayコントローラー、互換Gateway APIバンドル、`dns-service` UDPバックエンドが必要です。UDPポート5300を公開し、バックエンドポート53へルーティングします。EnvoyのUDPプロキシは透過的ではなく、バックエンドにはゲートウェイの送信元IP/ポートが見えます。プラットフォームのロードバランサー/ServiceがこのUDP公開をサポートすることを確認してください。
+このシナリオでは、`envoy-gateway`クラスが受け入れられた状態のEnvoy Gatewayコントローラー、そのコントローラーと互換性のあるGateway APIバンドル、およびUDPバックエンドの`dns-service`がインストールされている必要があります。UDPポート5300を公開し、バックエンドポート53にルーティングします。EnvoyのUDPプロキシは透過型ではないため、バックエンドからはGatewayの送信元IP/ポートが見えます。プラットフォームのロードバランサー/ServiceがこのUDP公開をサポートしていることを確認してください。
 
 UDPトラフィックのルーティングを定義します。
 
@@ -733,11 +733,11 @@ spec:
 
 ## ReferenceGrant
 
-ReferenceGrantは、**参照されるServiceまたはSecretが存在する名前空間**に、その所有者が作成します。`from`は参照元のgroup/kind/namespaceを選択し、`to.name`で参照先名を制限できます。許可は加算的で、参照を認可するものであり、アプリケーション呼び出し元を認可するものではありません。
+ReferenceGrantは、**参照されるServiceまたはSecretを含むNamespace**で、そのNamespaceの所有者が作成します。`from`は参照元のgroup/kind/namespaceを選択し、`to.name`で参照先の名前を制限できます。Grantは追加的に適用され、参照を許可するものであって、アプリケーションの呼び出し元を許可するものではありません。
 
-名前空間をまたぐRoute→Gateway接続はReferenceGrantではなく、`parentRefs`とGatewayリスナーの`allowedRoutes`による合意を使用します。バックエンドと証明書の参照は下記のReferenceGrantを使います。指定した`shared-api` Serviceと`shared-tls` Secretは存在する必要があり、許可だけでは作成されません。
+NamespaceをまたぐRoute→Gatewayのアタッチには、ReferenceGrantではなく、`parentRefs`とGatewayリスナーの`allowedRoutes`によるハンドシェイクを使用します。以下の例のように、バックエンドと証明書の参照にはReferenceGrantを使用します。指定された`shared-api` Serviceと`shared-tls` Secretは、あらかじめ存在している必要があります。Grantだけでは作成されません。
 
-ReferenceGrantは名前空間をまたぐ参照を許可します。
+ReferenceGrantは、Namespaceをまたぐ参照を許可します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
@@ -780,63 +780,63 @@ spec:
 
 | 実装 | コントローラー | 機能 |
 |----------------|------------|----------|
-| **Istio** | istio.io/gateway-controller | サービスメッシュ統合、高度なトラフィック管理 |
-| **Cilium** | io.cilium/gateway-controller | EnvoyのL7処理を組み合わせたCiliumネットワーキング |
+| **Istio** | istio.io/gateway-controller | Service Mesh統合、高度なトラフィック管理 |
+| **Cilium** | io.cilium/gateway-controller | L7処理にEnvoyを使用するCiliumネットワーキング |
 | **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Envoyベース、標準準拠 |
 | **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller | VPC Lattice統合 |
-| **Contour** | projectcontour.io/gateway-controller | Envoyベース、簡単な設定 |
+| **Contour** | projectcontour.io/gateway-controller | Envoyベース、シンプルな構成 |
 | **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller | NGINXベース |
-| **Traefik** | traefik.io/gateway-controller | 動的設定 |
+| **Traefik** | traefik.io/gateway-controller | 動的構成 |
 
-### バージョンを指定した実装の注意点
+### バージョン別の実装上の注意
 
-APIのリリースチャネル、機能のCore/Extended/実装固有というサポートレベル、コントローラーの適合プロファイルは異なる概念です。CRDがフィールドを受け入れても、コントローラーが実装している証明にはなりません。公表された適合結果と、該当する`Accepted`、`ResolvedRefs`、`Programmed`を含むリソース条件を確認してください。
+APIのリリースチャネル、機能のCore/Extended/実装固有のサポートレベル、コントローラーの適合プロファイルは、それぞれ異なる概念です。CRDがフィールドを受け付けても、コントローラーがその機能を実装しているとは限りません。該当する場合は`Accepted`、`ResolvedRefs`、`Programmed`などのリソース条件も含め、公開されている適合結果を確認してください。
 
-| 確認した実装 | 検証範囲と重要な制限 |
+| 確認済みの実装 | 検証済みの範囲と重要な制限 |
 |---|---|
-| Istio **1.31.0** | HTTP/gRPCとv1 TCP/TLSルート。UDPリスナーは明示的に未対応。設定可能なEnvoyデータプレーンであり、Gateway APIの全拡張のサポート保証ではない |
-| Cilium **1.20.1** | TCPRoute/UDPRouteを含むGateway API **1.6.1**。CiliumネットワーキングとL7処理用Envoyを組み合わせる |
-| Envoy Gateway **1.9.1** | Gateway API **1.6.1**。公表Kubernetesマトリックスは**1.33–1.36**。文書化されたトランスポート動作でUDPルーティングとTLSパススルーをサポート |
-| AWS Load Balancer Controller **3.5.0** | Gateway API **1.6.0**。ALBはHTTP/gRPC、NLBはL4ルートを処理。NLBリスナーごとに最古の接続済みL4 Routeだけが対象となるため、リスナーにつきRouteは1つにする |
-| AWS Gateway API Controller **2.1.3** | VPC Lattice統合。v2.1にはGateway API  **1.5+** が必要。HTTPRoute、GRPCRoute、TLSRouteをサポート。TCPリソースアクセスは別のLatticeリソース設定モデルであり、汎用TCPRoute/UDPRouteサポートではない |
-| Contour **1.33.7** | Gateway API **1.3.0**でビルドされ、Kubernetes **1.32–1.34**でリリーステスト済み。HTTP/gRPC/TCP/TLSルートを文書化。新しいバンドルを盲目的に適用せず、対応するチャネル/プロビジョニング設定を使用 |
-| NGINX Gateway Fabric **2.7.0** | Gateway API **1.6.1**、公表Kubernetes最小バージョン**1.32**。v1 TCPRoute/UDPRouteサポートを追加。終了したコミュニティのingress-nginxとは別製品 |
+| Istio **1.31.2** | HTTP/gRPCおよびv1 TCP/TLS Routeに対応。UDPリスナーは明示的に非サポート。構成可能なEnvoyデータプレーンですが、Gateway APIのすべての拡張がサポートされる保証はありません |
+| Cilium **1.20.3** | TCPRoute/UDPRouteを含むGateway API **1.6.3**。L7処理にはEnvoyを使用し、Ciliumネットワーキングと組み合わせます |
+| Envoy Gateway **1.9.2** | Gateway API **1.6.1**。公開されているKubernetesのバージョン範囲は**1.33–1.36**です。UDPルーティングとTLSパススルーを、文書化されたトランスポート動作とともにサポートします |
+| AWS Load Balancer Controller **3.6.0** | Gateway API **1.6.0**。ALBはHTTP/gRPCを、NLBはL4 Routeを処理します。NLBリスナーごとに、アタッチされたL4 Routeのうち最も古いものだけが対象となります。リスナーごとに1つのRouteを使用してください |
+| AWS Gateway API Controller **2.1.3** | VPC Lattice統合。v2.1にはGateway API **1.5**+が必要です。HTTPRoute、GRPCRoute、TLSRouteをサポートします。TCPリソースアクセスは、汎用的なTCPRoute/UDPRouteサポートではなく、Latticeの別個のリソース構成モデルです |
+| Contour **1.33.7** | Gateway API **1.3.0**を組み込んでおり、Kubernetes **1.32–1.34**でリリーステスト済みです。HTTP/gRPC/TCP/TLS Routeを文書化しています。新しいバンドルをそのまま適用するのではなく、対応するチャネル/プロビジョニング構成を使用してください |
+| NGINX Gateway Fabric **2.8.0** | Gateway API **1.6.3**。公開されているKubernetesの最低バージョンは**1.32**です。v1 TCPRoute/UDPRouteをサポートします（2.7.0で追加）。終了したコミュニティ版ingress-nginxとは別の製品です |
 
-これらの注意点は、バージョンのない機能の有無一覧を置き換えます。個々のフィルター、TLSポリシー、拡張、対応バージョン、運用要件は各実装の文書を確認してください。Contourに同梱された互換性ページには1.33.7専用の行がありません。上のAPI依存関係とKubernetes範囲は、その正確なリリースのモジュールファイルとリリースノートに基づきます。
+これらの注意事項は、バージョンを示さない機能の可否一覧に代わるものです。個々のフィルター、TLSポリシー、拡張機能、サポートバージョン、運用要件については、各実装のドキュメントを参照してください。Contourの同梱互換性ページには1.33.7固有の項目がありません。上記のAPI依存関係とKubernetesのバージョン範囲は、このリリースのmoduleファイルとリリースノートから取得しています。
 
 ## AWS Load Balancer ControllerのGateway APIサポート
 
-Gateway APIは**2026-01-23のLBC v3.0.0**でGAになりました。既存のIngressとService APIは引き続きサポートされるため、Gateway移行はコントローラーのアップグレードと独立して計画できます。現在のv3.5.0には、[LBCインストールガイド](./03-aws-lb-controller.md)で説明する互換Gateway APIとLBC Gateway CRDが必要です。EKS Auto Modeには別のマネージド実装があり、自己管理LBCの機能が自動的にAuto Modeにも当てはまるわけではありません。
+Gateway APIは、**2026年1月23日のLBC v3.0.0**でGAになりました。既存のIngress APIとService APIも引き続きサポートされるため、Gatewayへの移行はコントローラーのアップグレードとは別に計画できます。現行のv3.6.0には、[LBCインストールガイド](./03-aws-lb-controller.md)に記載された、互換性のあるGateway APIとLBC Gateway CRDが必要です。EKS Auto Modeには別個のマネージド実装があります。セルフマネージドLBCの機能が、そのままAuto Modeにも当てはまるわけではありません。
 
-終了したコントローラーはKubernetesコミュニティの**ingress-nginx**プロジェクトで、メンテナンスは2026年3月に終了しました。Kubernetes Ingress APIやF5の他のNGINX製品が終了したという意味ではありません。
+終了したコントローラーは、Kubernetesコミュニティの**ingress-nginx**プロジェクトです。このプロジェクトのメンテナンスは2026年3月に終了しました。これは、Kubernetes Ingress APIやF5のその他のNGINX製品が終了したという意味ではありません。
 
-v3.0リリースノートの`keepTLSSecret=false`回避策は、cert-managerの所有権バグの影響を受ける**古いバージョンに留まる**利用者向けでした。v3.0へアップグレードする利用者は、追加操作なしで修正を受け取りました。過去の回避策をすべてのアップグレードに適用せず、現在のチャートの証明書管理オプションに従ってください。
+v3.0のリリースノートにある`keepTLSSecret=false`の回避策は、cert-managerの所有権バグの影響を受ける**旧バージョンを使い続けるユーザー**を対象としたものです。v3.0にアップグレードしたユーザーには修正が適用されているため、この追加作業は不要でした。過去の回避策をすべてのアップグレードに適用せず、現行のChartにおける証明書管理オプションに従ってください。
 
 ### LBC v3.4.0の移行ツール
 
-**2026-06-03**のリリースで、実際の`lbc-migrate` CLIとMigration Consoleが導入されました。対象は動作中の**LBC Ingress**リソースであり、あらゆるIngress実装向けの汎用変換ツールではありません。
+**2026年6月3日**のリリースで、実際に使用できる`lbc-migrate` CLIとMigration Consoleが導入されました。これらの対象は、稼働中の**LBC Ingress**リソースです。すべてのIngress実装に対応する汎用コンバーターではありません。
 
-- `lbc-migrate`はファイルを読み取るか、`--from-cluster`でクラスターリソースを一覧/取得します。サポートされるアノテーションを変換し、Gateway APIリソースを出力します。デフォルト出力にはLBC Gatewayのdry-runアノテーションが付きます。
-- Migration Consoleはコントローラーが生成したリソース計画を比較します。適切な計画アノテーション、機能設定、読み取りアクセスが必要です。計画はアクセス制限や機密情報の削除が必要になり得る設定データとして扱います。
-- レビュー済みの実稼働Gatewayマニフェストを適用すると、**既存ALBと並行して新しいALB**が作成されます。それらを検証し、フロントエンドトラフィックを別途移します。1つのHTTPRoute内のバックエンド重みでは、このフロントエンド移行は行えません。
+- `lbc-migrate`はファイルを読み込みます。また、`--from-cluster`を指定すると、クラスターのリソースを一覧表示/取得します。サポート対象のアノテーションを変換し、Gateway APIリソースを出力します。デフォルトの出力にはLBC Gatewayのdry-runアノテーションが含まれます。
+- Migration Consoleは、コントローラーが生成したリソース計画を比較します。適切な計画アノテーション、機能構成、読み取りアクセスが必要です。計画はアクセス制限やマスキングが必要になる場合がある構成データとして扱ってください。
+- レビュー済みの稼働中のGatewayマニフェストを適用すると、既存のALBに加えて**新しいALB**が作成されます。これらを検証し、フロントエンドのトラフィックは別途切り替えてください。1つのHTTPRoute内のバックエンド重みでは、このフロントエンド移行は行えません。
 
-選択したLBCリリースからビルドしたバイナリでは、ファイルベースの変換を次から始められます。
+選択したLBCリリースからビルドしたバイナリを使う場合、ファイルベースの変換は次のコマンドで開始できます。
 
 ```bash
 lbc-migrate -f ingress.yaml --output-dir ./gateway-output/
 ```
 
-変換ツールは既存Deployment/Serviceを生成せず、すべてのIngressアノテーションを再検証するわけでもありません。未対応アノテーション、Service/IngressClassParamsのオーバーライド、名前空間をまたぐIngressGroup所属、ルール優先順位、TLS設定を確認します。旧ALBにすでに関連付いた外部ターゲットグループは、そのまま新ALBにも同時接続できません。互換性のある複製/切り替え戦略を計画してください。
+このコンバーターは、既存のDeployment/Serviceを生成せず、Ingressのすべてのアノテーションを再検証するわけでもありません。サポートされないアノテーション、Service/IngressClassParamsの上書き、NamespaceをまたぐIngressGroupのメンバーシップ、ルールの優先順位、TLS設定を確認してください。旧ALBにすでに関連付けられている外部ターゲットグループを、新しいALBにも同時に単純にアタッチすることはできません。互換性のある複製/切り替え戦略を計画してください。
 
-ツールは移行手順を提供しますが、無停止を保証しません。[バージョン付き移行ガイド](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md)と[CLIリファレンス](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md)を参照してください。
+このツールは移行のワークフローを提供するものであり、ダウンタイムがゼロになることを保証するものではありません。[バージョン別移行ガイド](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/migrate_from_ingress.md)と[CLIリファレンス](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/lbc_migrate_reference.md)を参照してください。
 
 ## IngressからGateway APIへの移行
 
 ### 段階的な移行ガイド
 
-#### ステップ1: 既存Ingressの分析
+#### ステップ1: 既存のIngressを分析する
 
-以下はIstio Gateway APIへの手動設定変換を説明するための、**過去のコミュニティingress-nginx入力**です。新規ingress-nginxインストールの推奨でも、上のLBC固有変換ツールへの入力でもありません。設定名だけでなく、実際のリクエスト動作を保持してください。
+以下は、Istio Gateway APIへの手動構成変換を説明するための、**過去のコミュニティ版ingress-nginxの入力例**です。新たにingress-nginxをインストールする推奨例ではなく、上記のLBC専用コンバーターへの入力でもありません。設定名だけでなく、実際のリクエスト動作を維持してください。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -873,9 +873,9 @@ spec:
               number: 80
 ```
 
-#### ステップ2: GatewayとGatewayClassの作成
+#### ステップ2: GatewayとGatewayClassを作成する
 
-新Gatewayの名前は`migration-gateway`です。既存の`api-tls` Secretは`default`に残し、その名前空間のReferenceGrantでこのGateway名前空間からの参照を明示的に許可します。`api.example.com`に有効な証明書を用意してください。`default` Namespaceの組み込み名前ラベルを、ルート接続のセレクターに使用します。
+新しいGatewayの名前は`migration-gateway`です。既存の`api-tls` Secretは`default`に残します。GatewayのNamespaceから参照できるように、Secretがある`default` NamespaceにReferenceGrantを作成して明示的に許可します。`api.example.com`に対して有効な証明書を用意してください。`default` Namespaceには、ルートアタッチメントのセレクターとして使用できる組み込みの名前ラベルがあります。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -936,11 +936,11 @@ spec:
     hostname: api.example.com
 ```
 
-#### ステップ3: HTTPRouteの作成
+#### ステップ3: HTTPRouteを作成する
 
-リダイレクトRouteはHTTPリスナーだけに接続します。HTTPS Routeはアプリケーションリクエストを転送します。旧`rewrite-target: /`例は一致したリクエストパス全体を`/`で置き換えるため、変換例は**ReplaceFullPath**を使います。ReplacePrefixMatchではサフィックスが保持され（`/api/v1/users` → `/users`）、動作が変わります。切り替え前にルートパス、サブパス、クエリ文字列、リダイレクトを旧アプリケーションと比較テストしてください。
+リダイレクトRouteはHTTPリスナーにのみアタッチします。HTTPS Routeはアプリケーションのリクエストを転送します。元の`rewrite-target: /`の例では、マッチしたリクエストパス全体が`/`に置き換わるため、変換後の例では**ReplaceFullPath**を使用します。ReplacePrefixMatchではサフィックスが保持される（`/api/v1/users` → `/users`）ため、動作が変わります。切り替え前に、ルートパス、サブパス、クエリー文字列、リダイレクトを旧アプリケーションと比較してテストしてください。
 
-以下のリダイレクトは、リクエストメソッド/本文を保持するingress-nginxのデフォルト**308**を前提とします。`http-redirect-code`のオーバーライドを確認してください。旧書き換えアノテーションはそのホストの大文字小文字を区別しない正規表現locationも有効にしますが、Gateway API PathPrefixは大文字小文字を区別してパス要素に一致します。そのため`/API/V1`や`/api/v10`では動作が異なる場合があります。この例はより厳格なPathPrefix方針を示し、完全な一致動作の同等性は示しません。旧動作に依存するクライアントがある場合、切り替え前にサポートされる正規表現一致や別の明示的な互換ルールを設計し、テストしてください。
+以下のリダイレクトでは、リクエストメソッド/ボディを維持するingress-nginxのデフォルトである**308**を想定しています。`http-redirect-code`の上書き設定がないか確認してください。また、この書き換えアノテーションは、そのホストで大文字と小文字を区別しない正規表現ロケーションも有効にします。一方、Gateway APIのPathPrefixは大文字と小文字を区別し、パス要素にマッチします。そのため、`/API/V1`や`/api/v10`の動作が異なる場合があります。この例は、より厳格なPathPrefixポリシーを示すもので、完全に同一のマッチング動作を実現するものではありません。クライアントが旧動作に依存している場合は、切り替え前に、サポートされる正規表現マッチまたは別の明示的な互換ルールを設計してテストしてください。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1007,29 +1007,29 @@ spec:
       port: 80
 ```
 
-#### ステップ4: フロントエンドトラフィックの移行
+#### ステップ4: フロントエンドのトラフィックを切り替える
 
-クライアントを移す前に、新Gatewayのアドレス、証明書、HTTPリダイレクト、ルート一致、バックエンド動作、可観測性を検証します。レビュー済みDNS/ロードバランサールーティングなど、フロントエンドに適した方法で移行し、障害とレイテンシーを監視します。DNSキャッシュ、永続接続、セッションを考慮してください。旧フロントエンドへ戻す検証済みの方法を保持します。
+クライアントを移行する前に、新しいGatewayのアドレス、証明書、HTTPリダイレクト、Routeのマッチング、バックエンドの動作、可観測性を検証してください。レビュー済みのDNS/ロードバランサールーティングなど、フロントエンドに適した方法でトラフィックを切り替え、その後、障害やレイテンシーを監視します。DNSキャッシュ、永続接続、セッションを考慮してください。旧フロントエンドにトラフィックを戻す、テスト済みの手段を確保してください。
 
-HTTPRouteのバックエンド重みは**選択したGatewayの内部**のトラフィックを制御します。その操作は専用のトラフィック分割セクションで説明します。フロントエンド移行では、クライアントの移動と必要なドレイン/ロールバック確認が完了するまで、旧Ingress/コントローラーを保持してください。
+HTTPRouteのバックエンド重みは、**選択済みのGateway内**のトラフィックを制御します。この動作については、トラフィック分割の専用セクションで説明しています。フロントエンドの移行中は、クライアントが移行し、必要なドレイン/ロールバック確認が完了するまで、旧Ingress/コントローラーを残してください。
 
 ### 移行チェックリスト
 
-- [ ] 既存Ingressのアノテーションを分析
-- [ ] 実装を選択しGatewayClassを作成
-- [ ] Gatewayリソースを作成しリスナーを設定
-- [ ] ルーティングルールをHTTPRouteへ変換
-- [ ] 接続用allowedRoutesとバックエンド/Secret参照用ReferenceGrantを設定
-- [ ] TLS証明書を移行
-- [ ] 検証済みロールバック経路を用意してフロントエンドトラフィックを検証・移行
-- [ ] 監視とログ記録を設定
-- [ ] 切り替えとドレイン/ロールバック確認後にのみ旧Ingressリソースを削除
+- [ ] 既存のIngressアノテーションを分析する
+- [ ] 実装を選択し、GatewayClassを作成する
+- [ ] Gatewayリソースを作成し、リスナーを構成する
+- [ ] ルーティングルールをHTTPRouteに変換する
+- [ ] アタッチ用のallowedRoutesと、バックエンド/Secret参照用のReferenceGrantを構成する
+- [ ] TLS証明書を移行する
+- [ ] テスト済みのロールバック手順を用意したうえで、検証し、フロントエンドのトラフィックを切り替える
+- [ ] 監視とログ記録を設定する
+- [ ] 切り替えとドレイン/ロールバック確認が完了してから、旧Ingressリソースを削除する
 
 ## EKSのパターン
 
 ### AWS Gateway API Controller（VPC Lattice）
 
-[VPC Latticeガイド](./02-vpc-lattice.md)のインストール済みコントローラー、レビュー済み`AWS_IAM`ポリシー付き`my-network`サービスネットワーク、呼び出し元権限、`service-stable:8080`バックエンドを使用します。Gateway名はネットワークを選択し、作成はしません。この別のRouteには独自のLatticeサービスとドメインがあります。以下のIAMAuthPolicyがそのサービスを保護します。調整中はネットワークレベルのポリシーを保持してください。割り当てられたRouteドメインを取得し、ガイドの署名付きHTTPSクライアントを使います。`unused`証明書参照はこのコントローラーの文書化されたAWS管理証明書の動作に従い、汎用のKubernetes Secret読み込みではありません。
+[ VPC Latticeガイド](./02-vpc-lattice.md)に従ってインストール済みコントローラー、レビュー済みの`AWS_IAM`ポリシーを持つ`my-network`サービスネットワーク、呼び出し元の権限、`service-stable:8080`バックエンドを使用します。Gateway名はネットワークを選択しますが、ネットワークを作成するわけではありません。この別個のRouteには、独自のLatticeサービスとドメインがあります。以下のIAMAuthPolicyはそのサービスを保護します。調整中もネットワークレベルのポリシーを維持してください。Routeに割り当てられたドメインを取得し、ガイドにある署名付きHTTPSクライアントを使用してください。`unused`証明書参照は、一般的なKubernetes Secretの読み込みではなく、このコントローラーで文書化されているAWS管理証明書の動作に基づいています。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1088,9 +1088,9 @@ spec:
 
 ### ALB Controllerとの併用
 
-アプリケーションがIstioのゲートウェイ動作を必要とする場合、この構成はIstioゲートウェイの前にALBを置きます。ConfigMapはIstioの文書化されたインフラパラメーターを通じて、生成ServiceをClusterIPに設定します。ALB IngressはそのServiceと**同じ名前空間**にあり、生成名`internal-gateway-istio`を参照します。
+このトポロジーでは、アプリケーションでIstio Gatewayの動作が必要な場合に、Istio Gatewayの前段にALBを配置します。ConfigMapでは、Istioに文書化されているインフラストラクチャパラメーターを使って、生成されるServiceをClusterIPに設定します。ALB Ingressは、そのServiceと**同じNamespace**にあり、生成された名前`internal-gateway-istio`を参照します。
 
-アプリケーションHTTPRouteはラベル付き`production`名前空間にあり、そこにある既存`api-service:80`を指します。ACM ARNを置き換え、LBC/ネットワークの前提条件を設定します。この例ではTLSをALBで終端し、Istioへの接続はHTTPです。実際のゲートウェイトラフィックとヘルスポートをセキュリティ制御で許可してください。15021の`/healthz/ready`はゲートウェイの準備状態を確認し、全アプリケーションの健全性は確認しません。Route条件とアプリケーション応答を別途検証します。
+アプリケーションのHTTPRouteは、ラベルが設定された`production` Namespaceにあり、そこに既存の`api-service:80`があることを前提としています。ACM ARNを置き換え、LBC/ネットワークの前提条件を構成してください。この例ではALBでTLSを終端し、Istioへの接続にはHTTPを使用します。実際のGatewayトラフィックとヘルスポートを、ネットワークのセキュリティ制御で許可してください。`15021`の`/healthz/ready`はGatewayの準備状態を確認するものであり、各アプリケーションのヘルスを確認するものではありません。Routeの条件とアプリケーションのレスポンスは別々に検証してください。
 
 ```yaml
 apiVersion: v1
@@ -1173,38 +1173,38 @@ spec:
 
 ## APIチャネルと成熟度
 
-### チャネルとAPIバージョンは別
+### チャネルとAPIバージョンは別の概念
 
 | Gateway API v1.6.0バンドル | 含まれるリソース/フィールド |
 |---|---|
 | Standard | GatewayClass、Gateway、HTTPRoute、GRPCRoute、TLSRoute、TCPRoute、UDPRoute、ReferenceGrant、BackendTLSPolicy、ListenerSet |
-| Experimental | Standardの内容に加え、HTTPRouteの再試行/セッション永続化などの実験的フィールドとXBackend、XBackendTrafficPolicy、XMesh |
+| Experimental | Standardの内容に加えて、HTTPRouteの再試行/セッション永続化などのExperimentalフィールド、およびXBackend、XBackendTrafficPolicy、XMesh |
 
-現在のStandard例はRouteタイプに`v1`を使用します。v1.6.0 Standardバンドルは、旧TLSRoute/TCPRoute/UDPRouteアルファ版をもう**提供しません**。Experimentalバンドルは一部の非推奨バージョンをまだ提供するため、そこで動くマニフェストがStandardでも動く証明にはなりません。
+現在のStandardの例では、Routeタイプに`v1`を使用しています。v1.6.0 Standardバンドルでは、以前のTLSRoute/TCPRoute/UDPRouteのalphaバージョンは、もう**提供されません**。Experimentalバンドルでは一部の非推奨バージョンが引き続き提供されるため、そこで動作するマニフェストがStandardでも動作するとは限りません。
 
-ReferenceGrantは「Standardは常にv1のみ」という見方への有用な反例です。v1.6.0バンドルは`v1`と`v1beta1`を両方提供し、ストレージバージョンは`v1beta1`です。ここでのReferenceGrant例は、提供されているベータ版を維持します。
+ReferenceGrantは、「Standardなら常にv1のみ」という考えに反する例です。v1.6.0バンドルでは`v1`と`v1beta1`の両方が提供され、ストレージバージョンは`v1beta1`です。ここにあるReferenceGrantの例では、引き続き提供されているbetaバージョンを使用しています。
 
-新しい実験的Xリソースは`gateway.networking.x-k8s.io`を使用します。既存リソースの実験的フィールドは引き続き`gateway.networking.k8s.io`に存在し得ます。Experimentalチャネル全体が別グループへ移動したわけではありません。互換性保証はStandardと異なり、アドミッションポリシーがチャネル/フィールド境界を保護します。変更を強制するために共有CRDやアドミッションポリシーを削除せず、公表されたアップグレード手順を確認してください。
+新しいExperimentalのXリソースでは`gateway.networking.x-k8s.io`を使用します。一方、既存リソースのExperimentalフィールドは引き続き`gateway.networking.k8s.io`に置かれる場合があります。Experimentalチャネル全体が別のgroupに移ったわけではありません。Experimentalの互換性保証はStandardとは異なり、Admissionポリシーによってチャネル/フィールドの境界が保護されます。変更を強制するために共有CRDやAdmissionポリシーを削除するのではなく、公開されているアップグレード手順を確認してください。
 
 ### v1.6リリースの背景
 
-Gateway API v1.6.0は**2026-06-29 UTC / 2026-06-30 KST**に公開されました。TCPRouteとUDPRouteはStandardの`v1`へ昇格しました。GRPCRouteとTLSRouteも現在のStandardバンドルに含まれます。最新カタログバージョンを互換性と同一視せず、選択した実装がサポートするバンドル/チャネルを選んでください。
+Gateway API v1.6.0は**2026年6月29日UTC / 2026年6月30日KST**に公開されました。TCPRouteとUDPRouteはStandardの`v1`に昇格しました。GRPCRouteとTLSRouteも、現在のStandardバンドルに含まれています。カタログで最新のバージョンを選ぶのではなく、選択した実装がサポートするバンドル/チャネルを選んでください。
 
 ## Ingress APIとの比較
 
-| 観点 | Ingress | Gateway API |
+| 項目 | Ingress | Gateway API |
 |---|---|---|
-| リソースモデル | IngressとIngressClass。リスナー/ルーティングの関心事は大部分が一体 | GatewayClass、Gateway、独立したRouteタイプ |
-| 認可 | Kubernetes RBAC/アドミッションで所有権を制限可能 | RBAC/アドミッションに加え、明示的な接続と参照の合意 |
-| HTTPルーティング | 標準HTTPルーティング | 個別機能のサポートレベルを持つ標準HTTPRouteフィールド |
-| TCP/UDP/gRPC | Ingress APIの範囲外のコントローラー固有拡張 | 専用APIタイプ。実際のサポートはコントローラー/バージョンに依存 |
-| TLSパススルー / トラフィック分割 / 書き換え | コントローラー固有設定 | 対応するRoute/フィルターフィールドと実装サポート要件 |
-| 名前空間をまたぐ参照 | 実装固有の動作 | バックエンド/SecretにReferenceGrant、Gateway接続にallowedRoutes |
-| 移植性 | アノテーションの意味の違いで低下 | 標準フィールドと適合性で向上するが、拡張は引き続き異なる |
+| リソースモデル | IngressとIngressClass。リスナーとルーティングの責務は大部分が一体化 | GatewayClass、Gateway、個別のRouteタイプ |
+| 認可 | Kubernetes RBAC/Admissionで所有権を制限可能 | RBAC/Admissionに加え、明示的なアタッチメントと参照のハンドシェイク |
+| HTTPルーティング | 標準的なHTTPルーティング | 標準のHTTPRouteフィールド。ただし機能ごとにサポートレベルが異なる |
+| TCP/UDP/gRPC | Ingress API以外のコントローラー固有の拡張機能 | 専用のAPIタイプ。実際のサポート状況はコントローラー/バージョンによる |
+| TLSパススルー / トラフィック分割 / 書き換え | コントローラー固有の構成 | 関連するRoute/フィルターフィールドと実装側のサポート要件 |
+| Namespaceをまたぐ参照 | 実装固有の動作 | バックエンド/SecretにはReferenceGrant、GatewayのアタッチにはallowedRoutes |
+| 移植性 | アノテーションの意味の違いによって低下 | 標準フィールドと適合性によって向上。ただし拡張機能には依然として違いがある |
 
 ## ベストプラクティス
 
-### 1. ロール分離の遵守
+### 1. 役割の分離に従う
 
 ```yaml
 # Infrastructure team: Manage GatewayClass
@@ -1212,7 +1212,7 @@ Gateway API v1.6.0は**2026-06-29 UTC / 2026-06-30 KST**に公開されました
 # App team: Manage HTTPRoute
 ```
 
-### 2. 最小権限のReferenceGrant
+### 2. ReferenceGrantに最小権限を適用する
 
 ```yaml
 # Explicitly allow only required namespaces
@@ -1232,7 +1232,7 @@ spec:
       name: specific-service  # Specific service only
 ```
 
-### 3. Gatewayの分離
+### 3. Gatewayを分離する
 
 ```yaml
 # Separate Gateway by environment
@@ -1242,7 +1242,7 @@ spec:
 # http-gateway, grpc-gateway
 ```
 
-### 4. 監視設定
+### 4. 監視を構成する
 
 ```yaml
 # Prometheus metrics collection (varies by implementation)
@@ -1257,17 +1257,17 @@ spec:
 
 - [Gateway API公式ドキュメント](https://gateway-api.sigs.k8s.io/)
 - [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [IstioのGateway APIサポート](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-- [Cilium Gateway API](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [Istio Gateway APIサポート](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
+- [Cilium Gateway API](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
 - [AWS Gateway API Controller](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)
 
 - [Gateway API 1.6のバージョン管理](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/docs/concepts/versioning.md)
-- [ReferenceGrantと接続の例外](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md)
-- [Envoy Gatewayの互換性](https://github.com/envoyproxy/gateway/blob/v1.9.1/site/content/en/news/releases/matrix.md)
-- [NGINX Gateway Fabric 2.7のリリース](https://github.com/nginx/nginx-gateway-fabric/blob/v2.7.0/CHANGELOG.md)
+- [ReferenceGrantとアタッチメントに関する例外](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md)
+- [Envoy Gatewayの互換性](https://github.com/envoyproxy/gateway/blob/v1.9.2/site/content/en/news/releases/matrix.md)
+- [NGINX Gateway Fabric 2.8のリリース](https://github.com/nginx/nginx-gateway-fabric/blob/v2.8.0/CHANGELOG.md)
 - [Contour 1.33.7のリリース](https://github.com/projectcontour/contour/releases/tag/v1.33.7)
-- [コミュニティingress-nginxの終了](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
+- [コミュニティ版ingress-nginxの終了](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
 
-- [従来のingress-nginxのリダイレクトと書き換え動作](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md)
-- [従来のingress-nginxのredirect-code設定](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md)
+- [従来のingress-nginxにおけるリダイレクトと書き換えの動作](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md)
+- [従来のingress-nginxにおけるリダイレクトコードの構成](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md)

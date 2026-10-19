@@ -3,18 +3,18 @@
 # Kubernetes と Amazon EKS のトレーニングコンテンツ
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-このリポジトリは、Linux とコンテナの基礎、Kubernetes と Amazon EKS、ネットワーキング、Service Mesh、ストレージ、データベース、データパイプライン、AI/ML、セキュリティと運用を網羅する包括的なクラウドガイドブックです。学習教材に加え、実際の AWS 環境で測定したベンチマークデータ、トピック別クイズ、厳選したハンズオンラボを提供します。
+このリポジトリは、Linux とコンテナの基礎、Kubernetes と Amazon EKS、ネットワーキング、サービスメッシュ、ストレージ、データベース、データパイプライン、AI/ML、セキュリティと運用を網羅する、包括的なクラウドガイドブックです。学習教材に加えて、実際の AWS 環境で測定したベンチマークデータ、トピック別のクイズ、厳選したハンズオンラボも提供しています。
 
 ## 学習教材とクイズ
 
-このトレーニングコンテンツでは、学習教材とともに各トピックのクイズを提供しています。クイズを通じて、学んだ内容を確認し定着させることができます。各クイズは、回答を非表示にするトグル形式で設計されているため、最初に問題へ取り組んでから回答を表示できます。
+このトレーニングコンテンツでは、学習教材とともに各トピックのクイズを提供しています。クイズを通じて、学んだ内容を確認し、定着させることができます。各クイズの回答はトグル形式で非表示になっているため、回答を表示する前に問題に挑戦できます。
 
 - [学習教材の目次](#table-of-contents) - トピック別の学習教材
 - [クイズ集](./quizzes/README.md) - トピック別のクイズ
-- [ガイドブックのロードマップ](./roadmap.md) - 学習全体マップと推奨学習パス | [クイズ](./quizzes/roadmap-quiz.md)
-- [LLM を使った閲覧](./llm-guide.md) - llms.txt、マニフェスト、MCP を通じてソース資料を見つけて読む | [クイズ](./quizzes/llm-guide-quiz.md)
+- [ガイドブックのロードマップ](./roadmap.md) - 学習マップ全体と推奨される学習パス | [クイズ](./quizzes/roadmap-quiz.md)
+- [LLM を使った読み方](./llm-guide.md) - llms.txt、マニフェスト、MCP を通じてソース教材を見つけて読む | [クイズ](./quizzes/llm-guide-quiz.md)
 
-## 目次
+## 目次 {#table-of-contents}
 
 ### ニュース
 - [週間ニュース](./news/README.md) - Kubernetes/EKS エコシステムの最新ニュースダイジェスト
@@ -23,18 +23,18 @@
 1. [Linux の基礎](./basics/01-linux-basics.md) | [クイズ](./quizzes/basics/01-linux-basics-quiz.md) | [ラボ](./labs/basics/01-linux-basics-lab.md)
 2. [Linux 運用スキル](./basics/02-linux-advanced.md) | [クイズ](./quizzes/basics/02-linux-advanced-quiz.md) | [ラボ](./labs/basics/02-linux-advanced-lab.md)
 3. [コンテナ技術](./basics/03-container-technology.md) | [クイズ](./quizzes/basics/03-container-technology-quiz.md) | [ラボ](./labs/basics/03-container-technology-lab.md)
-4. [eBPF の基礎と実践的な活用](./basics/05-ebpf-fundamentals.md) | [クイズ](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
+4. [eBPF の基礎と実践的な応用](./basics/05-ebpf-fundamentals.md) | [クイズ](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Linux カーネル
 1. [Linux カーネルの概要](./kernel/README.md)
 2. [コンテナを支えるカーネル機能](./kernel/01-container-primitives.md) | [クイズ](./quizzes/kernel/01-container-primitives-quiz.md)
-3. [カーネルのネットワークスタック](./kernel/02-network-stack.md) | [クイズ](./quizzes/kernel/02-network-stack-quiz.md)
+3. [カーネルネットワーキングスタック](./kernel/02-network-stack.md) | [クイズ](./quizzes/kernel/02-network-stack-quiz.md)
 4. [EKS Node のカーネルチューニング](./kernel/03-eks-node-tuning.md) | [クイズ](./quizzes/kernel/03-eks-node-tuning-quiz.md)
 
-### Kubernetes のコアコンセプト
+### Kubernetes のコア概念
 1. [Kubernetes 入門](./basics/04-kubernetes-introduction.md) | [クイズ](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 2. [クラスターアーキテクチャ](./core/01-cluster-architecture.md) | [クイズ](./quizzes/core/01-cluster-architecture-quiz.md)
-3. [Pod と Workload](./core/02-pods-and-workloads.md) | [クイズ](./quizzes/core/02-pods-and-workloads-quiz.md)
+3. [Pod とワークロード](./core/02-pods-and-workloads.md) | [クイズ](./quizzes/core/02-pods-and-workloads-quiz.md)
 4. [Service とネットワーキング](./core/03-services-networking.md) | [クイズ](./quizzes/core/03-services-networking-quiz.md)
 5. [ストレージ](./core/04-storage.md) | [クイズ](./quizzes/core/04-storage-quiz.md)
 6. [設定](./core/05-configuration-secrets.md) | [クイズ](./quizzes/core/05-configuration-secrets-quiz.md)
@@ -46,9 +46,9 @@
 12. [Kubernetes の拡張](./core/11-extending-kubernetes.md) | [クイズ](./quizzes/core/11-extending-kubernetes-quiz.md)
 13. カスタムスケジューラー
    - [パート 1: カスタムスケジューラーの基礎](./scheduling/01-custom-scheduler-part1.md) | [クイズ](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-   - [パート 2: Scheduler の拡張と Framework](./scheduling/02-custom-scheduler-part2.md) | [クイズ](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [パート 2: スケジューラーの拡張機能とフレームワーク](./scheduling/02-custom-scheduler-part2.md) | [クイズ](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [パート 3: カスタムスケジューラーの実装例とモニタリング](./scheduling/03-custom-scheduler-part3.md) | [クイズ](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-14. Autoscaling
+14. オートスケーリング
    - [KEDA](./autoscaling/01-keda.md) | [クイズ](./quizzes/autoscaling/05-keda-quiz.md)
    - [Karpenter](./autoscaling/02-karpenter.md) | [クイズ](./quizzes/autoscaling/06-karpenter-quiz.md)
    - [Knative](./autoscaling/03-knative.md) | [クイズ](./quizzes/autoscaling/03-knative-quiz.md)
@@ -57,112 +57,118 @@
 1. [EKS 入門](./eks/01-eks-introduction.md) | [クイズ](./quizzes/eks/01-eks-introduction-quiz.md)
 2. EKS クラスターの作成
    - [パート 1: 前提条件](./eks/02-eks-cluster-creation-part1.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
-   - [パート 2: eksctl を使用したクラスターの作成](./eks/02-eks-cluster-creation-part2.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
-   - [パート 3: AWS Management Console と CLI を使用したクラスターの作成](./eks/02-eks-cluster-creation-part3.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
-   - [パート 4: Terraform と CDK を使用したクラスターの作成](./eks/02-eks-cluster-creation-part4.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
-   - [パート 5: クラスターのアクセス、検証、アップグレード、削除](./eks/02-eks-cluster-creation-part5.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
+   - [パート 2: eksctl を使ったクラスターの作成](./eks/02-eks-cluster-creation-part2.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
+   - [パート 3: AWS Management Console と CLI を使ったクラスターの作成](./eks/02-eks-cluster-creation-part3.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
+   - [パート 4: Terraform と CDK を使ったクラスターの作成](./eks/02-eks-cluster-creation-part4.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
+   - [パート 5: クラスターへのアクセス、検証、アップグレード、削除](./eks/02-eks-cluster-creation-part5.md) | [クイズ](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. EKS ネットワーキング
-   - [パート 1: 基本コンセプトと VPC 設定](./eks/03-eks-networking-part1.md) | [クイズ](./quizzes/eks/03-eks-networking-part1-quiz.md)
-   - [パート 2: Service と負荷分散、Network Policy](./eks/03-eks-networking-part2.md) | [クイズ](./quizzes/eks/03-eks-networking-part2-quiz.md)
+   - [パート 1: 基本概念と VPC の設定](./eks/03-eks-networking-part1.md) | [クイズ](./quizzes/eks/03-eks-networking-part1-quiz.md)
+   - [パート 2: Service とロードバランシング、ネットワークポリシー](./eks/03-eks-networking-part2.md) | [クイズ](./quizzes/eks/03-eks-networking-part2-quiz.md)
    - [パート 3: パフォーマンス最適化、トラブルシューティング、高度なユースケース](./eks/03-eks-networking-part3.md) | [クイズ](./quizzes/eks/03-eks-networking-part3-quiz.md)
 4. EKS ストレージ
-   - [パート 1: 基本コンセプト、EBS、EFS](./eks/04-eks-storage-part1.md) | [クイズ](./quizzes/eks/04-eks-storage-part1-quiz.md)
+   - [パート 1: 基本概念、EBS、EFS](./eks/04-eks-storage-part1.md) | [クイズ](./quizzes/eks/04-eks-storage-part1-quiz.md)
    - [パート 2: FSx for Lustre、S3、スナップショット、ボリューム拡張、パフォーマンス最適化](./eks/04-eks-storage-part2.md) | [クイズ](./quizzes/eks/04-eks-storage-part2-quiz.md)
    - [パート 3: モニタリング、トラブルシューティング、コスト最適化、セキュリティ](./eks/04-eks-storage-part3.md) | [クイズ](./quizzes/eks/04-eks-storage-part3-quiz.md)
 5. [EKS セキュリティ](./eks/05-eks-security.md) | [クイズ](./quizzes/eks/05-eks-security-quiz.md)
-6. [EKS モニタリングとロギング](./eks/06-eks-monitoring-logging.md) | [クイズ](./quizzes/eks/06-eks-monitoring-logging-quiz.md)
-7. [EKS コスト最適化](./eks/07-eks-cost-optimization.md) | [クイズ](./quizzes/eks/07-eks-cost-optimization-quiz.md)
-8. [EKS アップグレード](./eks/08-eks-upgrades.md) | [クイズ](./quizzes/eks/08-eks-upgrades-quiz.md)
-9. [EKS トラブルシューティング](./eks/09-eks-troubleshooting.md) | [クイズ](./quizzes/eks/09-eks-troubleshooting-quiz.md)
-10. [EKS の回復性と高可用性](./eks/10-eks-resiliency.md) | [クイズ](./quizzes/eks/10-eks-resiliency-quiz.md)
+6. [EKS のモニタリングとロギング](./eks/06-eks-monitoring-logging.md) | [クイズ](./quizzes/eks/06-eks-monitoring-logging-quiz.md)
+7. [EKS のコスト最適化](./eks/07-eks-cost-optimization.md) | [クイズ](./quizzes/eks/07-eks-cost-optimization-quiz.md)
+8. [EKS のアップグレード](./eks/08-eks-upgrades.md) | [クイズ](./quizzes/eks/08-eks-upgrades-quiz.md)
+9. [EKS のトラブルシューティング](./eks/09-eks-troubleshooting.md) | [クイズ](./quizzes/eks/09-eks-troubleshooting-quiz.md)
+10. [EKS のレジリエンスと高可用性](./eks/10-eks-resiliency.md) | [クイズ](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS の高度なデバッグ](./eks/11-eks-advanced-debugging.md) | [クイズ](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
 12. [Kubernetes バージョンの機能とロードマップ](./eks/12-kubernetes-version-roadmap.md) | [クイズ](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
-### EKS Hybrid Nodes
-1. [EKS Hybrid Nodes の概要](./eks-hybrid-nodes/README.md)
+### EKS ハイブリッドノード
+1. [EKS ハイブリッドノード入門](./eks-hybrid-nodes/README.md)
 2. [前提条件](./eks-hybrid-nodes/01-prerequisites.md) | [クイズ](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 3. [ネットワーク設定](./eks-hybrid-nodes/02-network-configuration.md) | [クイズ](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-4. [制限付きインターネット環境のセットアップ](./eks-hybrid-nodes/03-airgap-setup.md) | [クイズ](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
-5. [Node Bootstrap](./eks-hybrid-nodes/04-node-bootstrap.md) | [クイズ](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
-6. [GPU サーバー統合](./eks-hybrid-nodes/05-gpu-integration.md) | [クイズ](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
-7. [Workload 配置戦略](./eks-hybrid-nodes/06-workload-placement.md) | [クイズ](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+4. [インターネット接続が制限された環境のセットアップ](./eks-hybrid-nodes/03-airgap-setup.md) | [クイズ](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [Node のブートストラップ](./eks-hybrid-nodes/04-node-bootstrap.md) | [クイズ](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [GPU サーバーの統合](./eks-hybrid-nodes/05-gpu-integration.md) | [クイズ](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [ワークロード配置戦略](./eks-hybrid-nodes/06-workload-placement.md) | [クイズ](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
 8. [Node ライフサイクル管理](./eks-hybrid-nodes/07-node-lifecycle.md) | [クイズ](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
-9. [運用と保守](./eks-hybrid-nodes/08-operations.md) | [クイズ](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+9. [運用とメンテナンス](./eks-hybrid-nodes/08-operations.md) | [クイズ](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 10. [ベアメタル OS のセットアップ](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [クイズ](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
-11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [クイズ](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+11. [ハイブリッドノードゲートウェイ](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [クイズ](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 12. [ネットワーク分離のセキュリティレビュー](./eks-hybrid-nodes/11-network-separation-security.md) | [クイズ](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 
 ### EKS Auto Mode
-1. [EKS Auto Mode の概要](./eks-auto-mode/README.md)
+1. [EKS Auto Mode 入門](./eks-auto-mode/README.md)
 2. [はじめに](./eks-auto-mode/01-getting-started.md) | [クイズ](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
 3. [NodePool の設定](./eks-auto-mode/02-nodepool-configuration.md) | [クイズ](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
-4. [スケーリング動作](./eks-auto-mode/03-scaling-behavior.md) | [クイズ](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+4. [スケーリングの動作](./eks-auto-mode/03-scaling-behavior.md) | [クイズ](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
 5. [Spot Instance 戦略](./eks-auto-mode/04-spot-strategies.md) | [クイズ](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
 6. [運用と管理](./eks-auto-mode/05-operations.md) | [クイズ](./quizzes/eks-auto-mode/05-operations-quiz.md)
 7. [コスト管理](./eks-auto-mode/06-cost-management.md) | [クイズ](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
-8. [Node ライフサイクル](./eks-auto-mode/07-node-lifecycle.md) | [クイズ](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
-9. [Workload の最適化](./eks-auto-mode/08-workload-optimization.md) | [クイズ](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+8. [Node のライフサイクル](./eks-auto-mode/07-node-lifecycle.md) | [クイズ](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+9. [ワークロードの最適化](./eks-auto-mode/08-workload-optimization.md) | [クイズ](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
 10. [移行ガイド](./eks-auto-mode/09-migration-guide.md) | [クイズ](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### ネットワーキング
 
-1. [はじめての Linux ネットワーキング](./networking/beginner/README.md)
+1. [Linux ネットワーキングを基礎から学ぶ](./networking/beginner/README.md)
    - [1. Linux と CLI](./networking/beginner/01-linux-cli.md) | [クイズ](./quizzes/networking/beginner/01-linux-cli-quiz.md)
-   - [2. アドレスとインターフェイス](./networking/beginner/02-addressing-interfaces.md) | [クイズ](./quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
+   - [2. アドレスとインターフェース](./networking/beginner/02-addressing-interfaces.md) | [クイズ](./quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
    - [3. 永続的なネットワーク設定](./networking/beginner/03-persistent-configuration.md) | [クイズ](./quizzes/networking/beginner/03-persistent-configuration-quiz.md)
    - [4. DNS と接続性](./networking/beginner/04-dns-connectivity.md) | [クイズ](./quizzes/networking/beginner/04-dns-connectivity-quiz.md)
    - [5. SSH によるリモートアクセス](./networking/beginner/05-ssh-access.md) | [クイズ](./quizzes/networking/beginner/05-ssh-access-quiz.md)
    - [6. ファイアウォールとホストセキュリティ](./networking/beginner/06-firewalls-host-security.md) | [クイズ](./quizzes/networking/beginner/06-firewalls-host-security-quiz.md)
    - [7. モニタリングとパフォーマンス](./networking/beginner/07-monitoring-performance.md) | [クイズ](./quizzes/networking/beginner/07-monitoring-performance-quiz.md)
    - [8. 総合演習とクラウド接続](./networking/beginner/08-container-cloud-capstone.md) | [クイズ](./quizzes/networking/beginner/08-container-cloud-capstone-quiz.md)
-2. [エキスパート向けネットワーキングパス](./networking/expert/README.md)
+2. [エキスパート向けネットワーキング学習パス](./networking/expert/README.md)
    - [1. プロトコルプロジェクト](./networking/expert/01-protocol-projects.md) | [クイズ](./quizzes/networking/expert/01-protocol-projects-quiz.md)
    - [2. ルーティングポリシーと収束](./networking/expert/02-routing-policy-convergence.md) | [クイズ](./quizzes/networking/expert/02-routing-policy-convergence-quiz.md)
-   - [3. データセンター EVPN/VXLAN](./networking/expert/03-datacenter-evpn.md) | [クイズ](./quizzes/networking/expert/03-datacenter-evpn-quiz.md)
-   - [4. Linux パケットパスとパフォーマンス](./networking/expert/04-linux-performance.md) | [クイズ](./quizzes/networking/expert/04-linux-performance-quiz.md)
+   - [3. データセンターの EVPN/VXLAN](./networking/expert/03-datacenter-evpn.md) | [クイズ](./quizzes/networking/expert/03-datacenter-evpn-quiz.md)
+   - [4. Linux のパケット経路とパフォーマンス](./networking/expert/04-linux-performance.md) | [クイズ](./quizzes/networking/expert/04-linux-performance-quiz.md)
    - [5. クラウドと CNI の設計](./networking/expert/05-cloud-cni-design.md) | [クイズ](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
-   - [6. 自動化と最終評価](./networking/expert/06-automation-capstone.md) | [クイズ](./quizzes/networking/expert/06-automation-capstone-quiz.md)
+   - [6. 自動化と総合評価](./networking/expert/06-automation-capstone.md) | [クイズ](./quizzes/networking/expert/06-automation-capstone-quiz.md)
 3. [Kubernetes ネットワーキングの概要](./networking/README.md) | [クイズ](./quizzes/networking/00-networking-overview-quiz.md)
-4. [ネットワークの基礎 — 25 のプロトコル](./basics/06-network-fundamentals-part1.md)
-   - [パート 1: レイヤーモデル、リンク層とルーティング層](./basics/06-network-fundamentals-part1.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
+4. [ネットワークの基礎: 25 のプロトコル](./basics/06-network-fundamentals-part1.md)
+   - [パート 1: レイヤーモデル、リンク層、ルーティング層](./basics/06-network-fundamentals-part1.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
    - [パート 2: トランスポート層と TLS](./basics/06-network-fundamentals-part2.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
    - [パート 3: アプリケーションプロトコル](./basics/06-network-fundamentals-part3.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
-   - [パート 4: リクエストの旅とクラウド](./basics/06-network-fundamentals-part4.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+   - [パート 4: リクエストの経路とクラウド](./basics/06-network-fundamentals-part4.md) | [クイズ](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
 5. [Linux ネットワーク診断の実践](./networking/07-linux-network-diagnostics.md) | [クイズ](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
 6. [VPC CNI](./networking/01-vpc-cni.md) | [クイズ](./quizzes/networking/01-vpc-cni-quiz.md)
-7. **Cilium の詳細解説**
-   - [Cilium の概要](./networking/cilium/README.md)
-   - [パート 1: 概要](./networking/cilium/01-introduction.md) | [クイズ](./quizzes/networking/cilium/01-introduction-quiz.md)
+7. **Cilium 徹底解説**
+   - [Cilium 入門](./networking/cilium/README.md)
+   - [パート 1: はじめに](./networking/cilium/01-introduction.md) | [クイズ](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [パート 2: eBPF](./networking/cilium/02-ebpf.md) | [クイズ](./quizzes/networking/cilium/02-ebpf-quiz.md)
    - [パート 3: ネットワーキング](./networking/cilium/03-networking.md) | [クイズ](./quizzes/networking/cilium/03-networking-quiz.md)
    - [パート 4: IPAM とポリシー](./networking/cilium/04-ipam-policy.md) | [クイズ](./quizzes/networking/cilium/04-ipam-policy-quiz.md)
    - [パート 5: L2-L7 ネットワーキング](./networking/cilium/05-l2-l7-networking.md) | [クイズ](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [パート 6: セキュリティと可視性](./networking/cilium/06-security-visibility.md) | [クイズ](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [パート 7: 高度なトピック](./networking/cilium/07-advanced-topics.md) | [クイズ](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
-   - [ネットワーキングのコンセプト](./networking/cilium/networking-concepts.md) | [クイズ](./quizzes/networking/cilium/networking-concepts-quiz.md)
+   - [パート 8: eBPF データパスの内部構造](./networking/cilium/08-ebpf-datapath-internals.md) | [クイズ](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [パート 9: オーバーレイとネイティブルーティング](./networking/cilium/09-overlay-native-routing.md) | [クイズ](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [パート 10: IPAM 徹底解説](./networking/cilium/10-ipam-deep-dive.md) | [クイズ](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [パート 11: BGP、ロードバランサー IP、エグレス](./networking/cilium/11-bgp-lb-egress-edge.md) | [クイズ](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [パート 12: mTLS、暗号化、ID](./networking/cilium/12-mtls-encryption-identity.md) | [クイズ](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [パート 13: バージョン、インストール/アップグレード、クラスター間メッシュ](./networking/cilium/13-clustermesh-install-upgrade.md) | [クイズ](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
+   - [ネットワーキングの概念](./networking/cilium/networking-concepts.md) | [クイズ](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [用語集](./networking/cilium/glossary.md) | [クイズ](./quizzes/networking/cilium/glossary-quiz.md)
-8. **Calico の詳細解説**
-   - [Calico の概要](./networking/calico/README.md)
-   - [パート 1: 概要](./networking/calico/01-introduction.md) | [クイズ](./quizzes/networking/calico/01-introduction-quiz.md)
+8. **Calico 徹底解説**
+   - [Calico 入門](./networking/calico/README.md)
+   - [パート 1: はじめに](./networking/calico/01-introduction.md) | [クイズ](./quizzes/networking/calico/01-introduction-quiz.md)
    - [パート 2: アーキテクチャ](./networking/calico/02-architecture.md) | [クイズ](./quizzes/networking/calico/02-architecture-quiz.md)
    - [パート 3: ネットワーキングモード](./networking/calico/03-networking-modes.md) | [クイズ](./quizzes/networking/calico/03-networking-modes-quiz.md)
-   - [パート 4: BGP の詳細解説](./networking/calico/04-bgp-deep-dive.md) | [クイズ](./quizzes/networking/calico/04-bgp-deep-dive-quiz.md)
-   - [パート 5: Network Policy](./networking/calico/05-network-policy.md) | [クイズ](./quizzes/networking/calico/05-network-policy-quiz.md)
-   - [パート 6: eBPF Dataplane](./networking/calico/06-ebpf-dataplane.md) | [クイズ](./quizzes/networking/calico/06-ebpf-dataplane-quiz.md)
+   - [パート 4: BGP 徹底解説](./networking/calico/04-bgp-deep-dive.md) | [クイズ](./quizzes/networking/calico/04-bgp-deep-dive-quiz.md)
+   - [パート 5: ネットワークポリシー](./networking/calico/05-network-policy.md) | [クイズ](./quizzes/networking/calico/05-network-policy-quiz.md)
+   - [パート 6: eBPF データプレーン](./networking/calico/06-ebpf-dataplane.md) | [クイズ](./quizzes/networking/calico/06-ebpf-dataplane-quiz.md)
    - [パート 7: 高度なトピック](./networking/calico/07-advanced-topics.md) | [クイズ](./quizzes/networking/calico/07-advanced-topics-quiz.md)
-   - [パート 8: EKS 統合](./networking/calico/08-eks-integration.md) | [クイズ](./quizzes/networking/calico/08-eks-integration-quiz.md)
+   - [パート 8: EKS との統合](./networking/calico/08-eks-integration.md) | [クイズ](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [パート 9: 運用](./networking/calico/09-operations.md) | [クイズ](./quizzes/networking/calico/09-operations-quiz.md)
    - [用語集](./networking/calico/glossary.md) | [クイズ](./quizzes/networking/calico/glossary-quiz.md)
 9. [VPC Lattice](./networking/02-vpc-lattice.md) | [クイズ](./quizzes/networking/02-vpc-lattice-quiz.md)
 10. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [クイズ](./quizzes/networking/03-aws-lb-controller-quiz.md)
 11. [Gateway API](./networking/04-gateway-api.md) | [クイズ](./quizzes/networking/04-gateway-api-quiz.md)
-12. [組織間 VPC 接続](./networking/05-cross-org-vpc-connectivity.md) | [クイズ](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+12. [組織間の VPC 接続](./networking/05-cross-org-vpc-connectivity.md) | [クイズ](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
 13. [Pod ネットワークベンチマーク](./networking/06-pod-network-benchmark.md) | [クイズ](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
-### Service Mesh
+### サービスメッシュ
 1. [Istio](./service-mesh/istio/README.md) | [クイズ](./quizzes/service-mesh/02-istio-quiz.md)
 2. **Linkerd**
-   - [Linkerd の概要](./service-mesh/linkerd/README.md)
+   - [Linkerd 入門](./service-mesh/linkerd/README.md)
    - [インストール](./service-mesh/linkerd/01-installation.md) | [クイズ](./quizzes/service-mesh/linkerd/installation.md)
    - [アーキテクチャ](./service-mesh/linkerd/02-architecture.md) | [クイズ](./quizzes/service-mesh/linkerd/architecture.md)
    - [トラフィック管理](./service-mesh/linkerd/03-traffic-management.md) | [クイズ](./quizzes/service-mesh/linkerd/traffic-management.md)
@@ -171,7 +177,7 @@
    - [マルチクラスター](./service-mesh/linkerd/06-multi-cluster.md) | [クイズ](./quizzes/service-mesh/linkerd/multi-cluster.md)
    - [ベストプラクティス](./service-mesh/linkerd/07-best-practices.md)
 3. **Cilium Service Mesh**
-   - [Cilium Service Mesh の概要](./service-mesh/cilium-service-mesh/README.md)
+   - [Cilium Service Mesh 入門](./service-mesh/cilium-service-mesh/README.md)
    - [アーキテクチャ](./service-mesh/cilium-service-mesh/01-architecture.md) | [クイズ](./quizzes/service-mesh/cilium-service-mesh/architecture.md)
    - [トラフィック管理](./service-mesh/cilium-service-mesh/02-traffic-management.md) | [クイズ](./quizzes/service-mesh/cilium-service-mesh/traffic-management.md)
    - [セキュリティ](./service-mesh/cilium-service-mesh/03-security.md) | [クイズ](./quizzes/service-mesh/cilium-service-mesh/security.md)
@@ -179,92 +185,92 @@
    - [Ingress Gateway](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [クイズ](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
    - [ベストプラクティス](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
-4. **VPC Lattice の詳細解説**
-   - [VPC Lattice 詳細解説の概要](./service-mesh/vpc-lattice/README.md)
+4. **VPC Lattice 徹底解説**
+   - [VPC Lattice 徹底解説の概要](./service-mesh/vpc-lattice/README.md)
    - [App Mesh と VPC Lattice のアーキテクチャ比較](./service-mesh/vpc-lattice/01-appmesh-vs-lattice.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
-   - [レイテンシー影響分析](./service-mesh/vpc-lattice/02-latency.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
+   - [レイテンシーへの影響分析](./service-mesh/vpc-lattice/02-latency.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
    - [IAM 認証フロー](./service-mesh/vpc-lattice/03-auth-flow.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
-   - [基礎 — Link-Local と SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
-   - [Workload Identity の移行](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
-   - [制約事項と意思決定ポイント](./service-mesh/vpc-lattice/06-constraints.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
-   - [カーネル Datapath](./service-mesh/vpc-lattice/07-kernel-datapath.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+   - [基礎: リンクローカルと SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+   - [ワークロード ID の移行](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+   - [制約と意思決定ポイント](./service-mesh/vpc-lattice/06-constraints.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+   - [カーネルデータパス](./service-mesh/vpc-lattice/07-kernel-datapath.md) | [クイズ](./quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 
 ### ストレージ
 1. [ストレージの概要](./storage/README.md)
-2. [EBS gp2 と gp3 の測定ベンチマーク](./storage/01-ebs-gp2-gp3-benchmark.md) | [クイズ](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+2. [EBS gp2 と gp3 の実測ベンチマーク](./storage/01-ebs-gp2-gp3-benchmark.md) | [クイズ](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 
 ### データベース
 1. [Kubernetes 上のデータベースの概要](./database/README.md)
-2. [EKS 上の ClickHouse 測定ベンチマーク](./database/01-clickhouse-on-eks.md) | [クイズ](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+2. [EKS 上の ClickHouse の実測ベンチマーク](./database/01-clickhouse-on-eks.md) | [クイズ](./quizzes/database/01-clickhouse-on-eks-quiz.md)
 
 ### ブロックチェーン
 1. [ブロックチェーンの概要](./blockchain/README.md)
 2. [ブロックチェーンの基礎](./blockchain/01-fundamentals.md) | [クイズ](./quizzes/blockchain/01-fundamentals-quiz.md)
 3. [EKS 上でのブロックチェーン Node の実行](./blockchain/02-nodes-on-eks.md) | [クイズ](./quizzes/blockchain/02-nodes-on-eks-quiz.md)
 4. [Amazon Managed Blockchain](./blockchain/03-managed-blockchain.md) | [クイズ](./quizzes/blockchain/03-managed-blockchain-quiz.md)
-5. [金融サービスの観点](./blockchain/04-financial-services.md) | [クイズ](./quizzes/blockchain/04-financial-services-quiz.md)
+5. [金融サービスの視点](./blockchain/04-financial-services.md) | [クイズ](./quizzes/blockchain/04-financial-services-quiz.md)
 
 ### データパイプライン
 1. [EKS 上のデータの概要](./data-on-eks/README.md)
-   - [モダンデータパイプラインの構造](./data-on-eks/01-data-pipeline-anatomy.md) | [クイズ](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+   - [最新のデータパイプラインの構造](./data-on-eks/01-data-pipeline-anatomy.md) | [クイズ](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
    - [SageMaker Unified Studio のガバナンス](./data-on-eks/sagemaker-unified-studio/README.md)
-   - [パート 4: Domain、Project、Membership のガバナンス](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [クイズ](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
-2. **EKS 上の Kafka 詳細解説**
-   - [EKS 上の Kafka の概要](./data-on-eks/kafka/README.md)
+   - [パート 4: ドメイン、プロジェクト、メンバーシップのガバナンス](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [クイズ](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+2. **EKS 上の Kafka 徹底解説**
+   - [EKS 上の Kafka 入門](./data-on-eks/kafka/README.md)
    - [パート 1: Kafka の基礎](./data-on-eks/kafka/01-kafka-fundamentals.md) | [クイズ](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
    - [パート 2: Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [クイズ](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
    - [パート 3: Kafka の運用](./data-on-eks/kafka/03-kafka-operations.md) | [クイズ](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
    - [パート 4: Schema Registry](./data-on-eks/kafka/04-schema-registry.md) | [クイズ](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
    - [パート 5: Kafka Connect と MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [クイズ](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
-   - [パート 6: MSK 統合](./data-on-eks/kafka/06-msk-integration.md) | [クイズ](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+   - [パート 6: MSK との統合](./data-on-eks/kafka/06-msk-integration.md) | [クイズ](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [パート 7: モニタリング](./data-on-eks/kafka/07-monitoring.md) | [クイズ](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [パート 8: ベストプラクティス](./data-on-eks/kafka/08-best-practices.md) | [クイズ](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
-   - [パート 9: Kafka の測定ベンチマーク](./data-on-eks/kafka/09-kafka-benchmark.md) | [クイズ](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
-3. **EKS 上の Spark 詳細解説**
-   - [EKS 上の Spark の概要](./data-on-eks/spark/README.md)
+   - [パート 9: Kafka の実測ベンチマーク](./data-on-eks/kafka/09-kafka-benchmark.md) | [クイズ](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+3. **EKS 上の Spark 徹底解説**
+   - [EKS 上の Spark 入門](./data-on-eks/spark/README.md)
    - [パート 1: Kubernetes 上の Spark の基礎](./data-on-eks/spark/01-spark-fundamentals.md) | [クイズ](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
    - [パート 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [クイズ](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
    - [パート 3: EKS 上の Amazon EMR](./data-on-eks/spark/03-emr-on-eks.md) | [クイズ](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
    - [パート 4: パフォーマンスとコストのチューニング](./data-on-eks/spark/04-performance-tuning.md) | [クイズ](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
    - [パート 5: ベストプラクティスとセキュリティ](./data-on-eks/spark/05-best-practices.md) | [クイズ](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
-4. **EKS 上の Airflow 詳細解説**
-   - [EKS 上の Airflow の概要](./data-on-eks/airflow/README.md)
+4. **EKS 上の Airflow 徹底解説**
+   - [EKS 上の Airflow 入門](./data-on-eks/airflow/README.md)
    - [パート 1: Kubernetes 上の Airflow アーキテクチャ](./data-on-eks/airflow/01-architecture.md) | [クイズ](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-   - [パート 2: Helm Deployment と Executor の選択](./data-on-eks/airflow/02-helm-deployment.md) | [クイズ](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [パート 2: Helm によるデプロイと Executor の選択](./data-on-eks/airflow/02-helm-deployment.md) | [クイズ](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
    - [パート 3: DAG パターンと KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [クイズ](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
-   - [パート 4: Amazon MWAA 統合](./data-on-eks/airflow/04-mwaa-integration.md) | [クイズ](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [パート 4: Amazon MWAA との統合](./data-on-eks/airflow/04-mwaa-integration.md) | [クイズ](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
    - [パート 5: 運用とセキュリティ](./data-on-eks/airflow/05-operations.md) | [クイズ](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
-5. **EKS 上の Flink 詳細解説**
-   - [EKS 上の Flink の概要](./data-on-eks/flink/README.md)
+5. **EKS 上の Flink 徹底解説**
+   - [EKS 上の Flink 入門](./data-on-eks/flink/README.md)
    - [パート 1: Kubernetes 上の Flink アーキテクチャ](./data-on-eks/flink/01-architecture.md) | [クイズ](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
    - [パート 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [クイズ](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-   - [パート 3: State、Checkpointing、Streaming パターン](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [クイズ](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [パート 3: 状態、チェックポイント、ストリーミングパターン](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [クイズ](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
    - [パート 4: 運用、高可用性、Managed Flink](./data-on-eks/flink/04-operations-ha.md) | [クイズ](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 
 ### AI/ML
-1. [AI/ML Workload](./ai-ml/01-ai-ml-workloads.md) | [クイズ](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+1. [AI/ML ワークロード](./ai-ml/01-ai-ml-workloads.md) | [クイズ](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [AI インフラストラクチャ](./ai-ml/06-ai-infrastructure.md) | [クイズ](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
 3. [EKS 上のモデル学習](./ai-ml/05-model-training.md) | [クイズ](./quizzes/ai-ml/05-model-training-quiz.md)
 4. [推論フレームワーク](./ai-ml/04-inference-frameworks.md) | [クイズ](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
 5. [vLLM のデプロイと最適化](./ai-ml/02-vllm-deployment.md) | [クイズ](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
-6. [EKS 上の Agentic AI Platform](./ai-ml/03-agentic-ai-platform.md) | [クイズ](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+6. [EKS 上の Agentic AI プラットフォーム](./ai-ml/03-agentic-ai-platform.md) | [クイズ](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML のベストプラクティス](./ai-ml/07-ai-ml-best-practices.md) | [クイズ](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-8. **EKS 上の Ray 詳細解説**
-   - [EKS 上の Ray の概要](./ai-ml/ray/README.md)
+8. **EKS 上の Ray 徹底解説**
+   - [EKS 上の Ray 入門](./ai-ml/ray/README.md)
    - [パート 1: Ray アーキテクチャ](./ai-ml/ray/01-architecture.md) | [クイズ](./quizzes/ai-ml/ray/01-architecture-quiz.md)
    - [パート 2: KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [クイズ](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
    - [パート 3: Ray Train と Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [クイズ](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
    - [パート 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [クイズ](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
-9. **EKS 上の Kubeflow 詳細解説**
-   - [EKS 上の Kubeflow の概要](./ai-ml/kubeflow/README.md)
-   - [パート 1: EKS 上の Kubeflow アーキテクチャとインストール](./ai-ml/kubeflow/01-architecture-installation.md) | [クイズ](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+9. **EKS 上の Kubeflow 徹底解説**
+   - [EKS 上の Kubeflow 入門](./ai-ml/kubeflow/README.md)
+   - [パート 1: EKS 上の Kubeflow のアーキテクチャとインストール](./ai-ml/kubeflow/01-architecture-installation.md) | [クイズ](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
    - [パート 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [クイズ](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
    - [パート 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [クイズ](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
-   - [パート 4: Katib — ハイパーパラメータチューニングと AutoML](./ai-ml/kubeflow/04-katib.md) | [クイズ](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [パート 4: Katib（ハイパーパラメータチューニングと AutoML）](./ai-ml/kubeflow/04-katib.md) | [クイズ](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
    - [パート 5: Kubeflow Trainer と分散学習](./ai-ml/kubeflow/05-training-operator.md) | [クイズ](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
-   - [パート 6: KServe — Kubernetes 上のモデルサービング](./ai-ml/kubeflow/06-kserve.md) | [クイズ](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
-10. **EKS 上の MLflow 詳細解説**
-   - [EKS 上の MLflow の概要](./ai-ml/mlflow/README.md)
+   - [パート 6: KServe（Kubernetes 上のモデルサービング）](./ai-ml/kubeflow/06-kserve.md) | [クイズ](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **EKS 上の MLflow 徹底解説**
+   - [EKS 上の MLflow 入門](./ai-ml/mlflow/README.md)
    - [パート 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [クイズ](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
    - [パート 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [クイズ](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
    - [パート 3: EKS への MLflow のデプロイ](./ai-ml/mlflow/03-eks-deployment.md) | [クイズ](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
@@ -275,15 +281,15 @@
    - [パート 3: SageMaker AI と MLflow の実行](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [クイズ](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
    - [パート 4: Unified Studio のガバナンス](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [クイズ](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [パート 5: 事実検証の結果](./ai-ml/sagemaker-ai/04-validation-results.md) | [クイズ](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
-12. [LLM Gateway（Inference Gateway）の詳細解説](./ai-ml/08-llm-gateway.md) | [クイズ](./quizzes/ai-ml/08-llm-gateway-quiz.md)
+12. [LLM Gateway（推論ゲートウェイ）徹底解説](./ai-ml/08-llm-gateway.md) | [クイズ](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 13. [EKS 上の Agent Sandbox](./ai-ml/09-agent-sandbox.md) | [クイズ](./quizzes/ai-ml/09-agent-sandbox-quiz.md)
 
 ### セキュリティとポリシー
 1. [Kyverno によるポリシー管理](./security/01-kyverno-policy-management.md) | [クイズ](./quizzes/security/01-kyverno-policy-management-quiz.md)
 2. [Kubernetes の認証と認可](./security/02-kubernetes-auth-authz.md) | [クイズ](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
-3. [Pod Security Standards](./security/03-pod-security-standards.md) | [クイズ](./quizzes/security/03-pod-security-standards-quiz.md)
-4. [Network Policy](./security/04-network-policies.md) | [クイズ](./quizzes/security/04-network-policies-quiz.md)
-5. [Secrets 管理](./security/05-secrets-management.md) | [クイズ](./quizzes/security/05-secrets-management-quiz.md)
+3. [Pod セキュリティ標準](./security/03-pod-security-standards.md) | [クイズ](./quizzes/security/03-pod-security-standards-quiz.md)
+4. [ネットワークポリシー](./security/04-network-policies.md) | [クイズ](./quizzes/security/04-network-policies-quiz.md)
+5. [Secret 管理](./security/05-secrets-management.md) | [クイズ](./quizzes/security/05-secrets-management-quiz.md)
 6. [EKS セキュリティのベストプラクティス](./security/06-eks-security-best-practices.md) | [クイズ](./quizzes/security/06-eks-security-best-practices-quiz.md)
 7. [イメージセキュリティ](./security/07-image-security.md) | [クイズ](./quizzes/security/07-image-security-quiz.md)
 8. [ランタイムセキュリティ](./security/08-runtime-security.md) | [クイズ](./quizzes/security/08-runtime-security-quiz.md)
@@ -291,46 +297,46 @@
 10. [cert-manager](./security/10-cert-manager.md) | [クイズ](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [クイズ](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [クイズ](./quizzes/security/12-spiffe-spire-quiz.md)
-13. [インシデント主導の多層防御と対応](./security/13-defense-in-depth-incident-response.md) | [クイズ](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+13. [インシデントを起点とした多層防御と対応](./security/13-defense-in-depth-incident-response.md) | [クイズ](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
 14. [WAF、エッジ、API、オリジンの保護](./security/14-waf-edge-api-security.md) | [クイズ](./quizzes/security/14-waf-edge-api-security-quiz.md)
 15. [Palo Alto と Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [クイズ](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
-16. [GWLB と GENEVE のパスおよび障害検証](./security/16-gwlb-geneve-inspection.md) | [クイズ](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+16. [GWLB と GENEVE の経路および障害検証](./security/16-gwlb-geneve-inspection.md) | [クイズ](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps の概要](./gitops/README.md)
 2. **ArgoCD**
-   - [ArgoCD の概要](./gitops/argocd/README.md) | [クイズ](./quizzes/gitops/01-argocd-quiz.md)
+   - [ArgoCD 入門](./gitops/argocd/README.md) | [クイズ](./quizzes/gitops/01-argocd-quiz.md)
    - [インストール](./gitops/argocd/01-installation.md) | [クイズ](./quizzes/gitops/argocd/01-installation-quiz.md)
    - [アプリケーション](./gitops/argocd/02-applications.md) | [クイズ](./quizzes/gitops/argocd/02-applications-quiz.md)
    - [同期戦略](./gitops/argocd/03-sync-strategies.md) | [クイズ](./quizzes/gitops/argocd/03-sync-strategies-quiz.md)
-   - [ApplicationSet](./gitops/argocd/04-applicationsets.md) | [クイズ](./quizzes/gitops/argocd/04-applicationsets-quiz.md)
+   - [ApplicationSets](./gitops/argocd/04-applicationsets.md) | [クイズ](./quizzes/gitops/argocd/04-applicationsets-quiz.md)
    - [トラフィック管理](./gitops/argocd/05-traffic-management.md) | [クイズ](./quizzes/gitops/argocd/05-traffic-management-quiz.md)
-   - [Project と RBAC](./gitops/argocd/06-projects-rbac.md) | [クイズ](./quizzes/gitops/argocd/06-projects-rbac-quiz.md)
+   - [プロジェクトと RBAC](./gitops/argocd/06-projects-rbac.md) | [クイズ](./quizzes/gitops/argocd/06-projects-rbac-quiz.md)
    - [セキュリティ](./gitops/argocd/07-security.md) | [クイズ](./quizzes/gitops/argocd/07-security-quiz.md)
    - [通知](./gitops/argocd/08-notifications.md) | [クイズ](./quizzes/gitops/argocd/08-notifications-quiz.md)
    - [ベストプラクティス](./gitops/argocd/09-best-practices.md) | [クイズ](./quizzes/gitops/argocd/09-best-practices-quiz.md)
-   - [Rollout 実験の詳細解説](./gitops/argocd/10-rollouts-experiment.md) | [クイズ](./quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
+   - [Rollouts Experiments 徹底解説](./gitops/argocd/10-rollouts-experiment.md) | [クイズ](./quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [クイズ](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps ツールの比較](./gitops/03-gitops-comparison.md) | [クイズ](./quizzes/gitops/03-gitops-comparison-quiz.md)
 5. [Flagger による段階的デリバリー](./gitops/04-flagger.md) | [クイズ](./quizzes/gitops/04-flagger-quiz.md)
-6. [Feature Flag と OpenFeature](./gitops/05-feature-flags.md) | [クイズ](./quizzes/gitops/05-feature-flags-quiz.md)
+6. [フィーチャーフラグと OpenFeature](./gitops/05-feature-flags.md) | [クイズ](./quizzes/gitops/05-feature-flags-quiz.md)
 
 ### エンタープライズクラウドガバナンス
 1. [ガバナンスの概要](./governance/00-governance-overview.md) | [クイズ](./quizzes/governance/00-governance-overview-quiz.md)
-2. [Landing Zone、OU、組織の制御](./governance/01-landing-zone-and-ou.md) | [クイズ](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
+2. [ランディングゾーン、OU、組織制御](./governance/01-landing-zone-and-ou.md) | [クイズ](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
 3. [アカウント構造と IAM 境界](./governance/02-account-and-iam.md) | [クイズ](./quizzes/governance/02-account-and-iam-quiz.md)
 4. [マルチアカウント・マルチクラスター EKS アーキテクチャ](./governance/03-eks-multi-account-multi-cluster.md) | [クイズ](./quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
 5. [共有 VPC と接続性](./governance/04-shared-vpc-and-connectivity.md) | [クイズ](./quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
 6. [データとセキュリティの境界](./governance/05-data-security-boundaries.md) | [クイズ](./quizzes/governance/05-data-security-boundaries-quiz.md)
-7. [意思決定フレームワークと PoC 設計](./governance/06-decision-framework-and-poc.md) | [クイズ](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
+7. [意思決定フレームワークと PoC の設計](./governance/06-decision-framework-and-poc.md) | [クイズ](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
 
 ### プラットフォームエンジニアリング
 0. [プラットフォームエンジニアリングの概要](./platform-engineering/00-platform-engineering-overview.md) | [クイズ](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [クイズ](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [Kubernetes 向け AWS Controllers（ACK）](./platform-engineering/02-ack.md) | [クイズ](./quizzes/platform-engineering/02-ack-quiz.md)
+2. [Kubernetes 用 AWS Controllers（ACK）](./platform-engineering/02-ack.md) | [クイズ](./quizzes/platform-engineering/02-ack-quiz.md)
 3. [Kubernetes Resource Operator（KRO）](./platform-engineering/03-kro.md) | [クイズ](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes の拡張メカニズム](./platform-engineering/04-kubernetes-extensions.md) | [クイズ](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
-5. [ExampleCorp: ACK + KRO 統合の例](./platform-engineering/05-example-corp-app.md)
+5. [ExampleCorp: ACK + KRO の統合例](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [クイズ](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
 7. [Crossplane](./platform-engineering/07-crossplane.md) | [クイズ](./quizzes/platform-engineering/07-crossplane-quiz.md)
 8. [vCluster](./platform-engineering/08-vcluster.md) | [クイズ](./quizzes/platform-engineering/08-vcluster-quiz.md)
@@ -349,7 +355,7 @@
    - [Prometheus](./observability/metrics/01-prometheus.md) | [クイズ](./quizzes/observability/metrics/01-prometheus-quiz.md)
    - [VictoriaMetrics](./observability/metrics/02-victoriametrics.md) | [クイズ](./quizzes/observability/metrics/02-victoriametrics-quiz.md)
    - [Grafana Mimir](./observability/metrics/03-mimir.md) | [クイズ](./quizzes/observability/metrics/03-mimir-quiz.md)
-   - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [クイズ](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
+   - [CloudWatch メトリクス](./observability/metrics/04-cloudwatch-metrics.md) | [クイズ](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
    - [Datadog](./observability/metrics/05-datadog.md) | [クイズ](./quizzes/observability/metrics/05-datadog-quiz.md)
 3. **ロギング**
    - [ロギングの概要](./observability/logging/README.md) | [クイズ](./quizzes/observability/logging/README-quiz.md)
@@ -374,7 +380,7 @@
 
 ### 運用ガイド
 1. [インフラストラクチャのセットアップ](./ops/01-infrastructure-setup.md) | [クイズ](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [高度なインフラストラクチャ](./ops/02-infrastructure-advanced.md) | [クイズ](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+2. [インフラストラクチャの応用](./ops/02-infrastructure-advanced.md) | [クイズ](./quizzes/ops/02-infrastructure-advanced-quiz.md)
 3. [CI パイプライン](./ops/03-ci-pipelines.md) | [クイズ](./quizzes/ops/03-ci-pipelines-quiz.md)
 4. [GitOps マルチクラスター](./ops/04-gitops-multi-cluster.md) | [クイズ](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
 5. [GitOps の自動化](./ops/05-gitops-automation.md) | [クイズ](./quizzes/ops/05-gitops-automation-quiz.md)
@@ -384,55 +390,55 @@
 9. [可観測性スタック](./ops/09-observability-stack.md) | [クイズ](./quizzes/ops/09-observability-stack-quiz.md)
 10. [リソース最適化](./ops/10-resource-optimization.md) | [クイズ](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [アップグレード運用](./ops/11-upgrade-operations.md) | [クイズ](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [イベントキャパシティプランニングのプレイブック](./ops/12-event-capacity-planning.md) | [クイズ](./quizzes/ops/12-event-capacity-planning-quiz.md)
+12. [イベント向けキャパシティプランニングのプレイブック](./ops/12-event-capacity-planning.md) | [クイズ](./quizzes/ops/12-event-capacity-planning-quiz.md)
 13. [FinOps コスト可視化プラットフォーム](./ops/13-finops-cost-platform.md) | [クイズ](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [クイズ](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [ゾーンクラスター運用](./ops/15-zonal-operations-guide.md) | [クイズ](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [トラブルシューティングのプレイブック](./ops/16-troubleshooting-playbook.md) | [クイズ](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
-17. [EKS Spot 本番実験と結果評価](./ops/17-spot-production-experiments.md) | [クイズ](./quizzes/ops/17-spot-production-experiments-quiz.md)
+17. [EKS Spot の本番実験と結果評価](./ops/17-spot-production-experiments.md) | [クイズ](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## ラボガイド
 
-理論を学んだ後に実際の環境で練習できる、ハンズオンラボガイドを提供しています。
+理論を学んだ後に実環境で練習できる、ハンズオンのラボガイドを提供しています。
 
 - [ラボガイド一覧](./labs/README.md)
 - 基礎: Linux の基礎、Linux 運用、コンテナラボ
-- コア: Pod、Service、Storage、ConfigMap ラボ
+- コア: Pod、Service、ストレージ、ConfigMap のラボ
 - EKS: クラスター作成ラボ
 
-### 可観測性エンドツーエンドラボ
+### 可観測性のエンドツーエンドラボ
 1. [ラボシリーズの概要](./labs/observability/README.md)
 2. [パート 1: インフラストラクチャのセットアップ](./labs/observability/01-infrastructure-setup-lab.md) | [クイズ](./quizzes/observability/labs/01-infrastructure-setup-quiz.md)
 3. [パート 2: 可観測性スタック](./labs/observability/02-observability-stack-lab.md) | [クイズ](./quizzes/observability/labs/02-observability-stack-quiz.md)
-4. [パート 3: MSA のデプロイと Canary](./labs/observability/03-msa-deployment-lab.md) | [クイズ](./quizzes/observability/labs/03-msa-deployment-quiz.md)
-5. [パート 4: 負荷テストと Autoscaling](./labs/observability/04-load-testing-scaling-lab.md) | [クイズ](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
+4. [パート 3: MSA のデプロイとカナリア](./labs/observability/03-msa-deployment-lab.md) | [クイズ](./quizzes/observability/labs/03-msa-deployment-quiz.md)
+5. [パート 4: 負荷テストとオートスケーリング](./labs/observability/04-load-testing-scaling-lab.md) | [クイズ](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
 6. [パート 5: アラートと AIOps](./labs/observability/05-alerting-aiops-lab.md) | [クイズ](./quizzes/observability/labs/05-alerting-aiops-quiz.md)
 7. [パート 6: 分散トレーシング分析](./labs/observability/06-distributed-tracing-lab.md) | [クイズ](./quizzes/observability/labs/06-distributed-tracing-quiz.md)
 
 ## 学習ガイド
 
 ### 初心者向け学習パス
-1. 次の順序で学習します: **Linux とコンテナ** -> **Kubernetes のコアコンセプト** -> **Amazon EKS**
-2. 各章を読んだ後、対応するクイズで理解度を確認します
-3. 練習環境でコマンドとサンプルコードを実際に実行します
+1. 次の順序で学習します: **Linux とコンテナ** -> **Kubernetes のコア概念** -> **Amazon EKS**
+2. 各章を読んだ後、対応するクイズを受けて理解度を確認します
+3. 練習環境でコマンドやサンプルコードを実際に実行します
 
 ### 上級者向け学習パス
-1. 次の順序で学習します: **Amazon EKS** -> **AI/ML** -> **Service Mesh** -> **セキュリティとポリシー**
-2. **Cilium** セクションでネットワーキングを深く掘り下げます
-3. 特定のツールや技術に焦点を当てて、深く学習します
+1. 次の順序で学習します: **Amazon EKS** -> **AI/ML** -> **サービスメッシュ** -> **セキュリティとポリシー**
+2. **Cilium** のセクションでネットワーキングを深く学びます
+3. 特定のツールや技術に焦点を当てて、詳細に学習します
 
-### クイズの使い方
-- 各ドキュメント末尾のクイズリンクをクリックして学習内容を確認します
-- 表示する前に、まずトグル形式の回答について考えます
-- 間違えた問題は対応するドキュメントで復習します
+### クイズの利用方法
+- 各ドキュメントの最後にあるクイズリンクをクリックして、学習内容を確認します
+- トグル形式の回答を表示する前に、まず自分で考えてみましょう
+- 間違えた問題は、対応するドキュメントを見直します
 
-## コントリビューション
+## 貢献
 
-このプロジェクトに貢献するには:
-1. 誤字やコンテンツの誤りを見つけた場合は Issue を提出します
-2. 新しいトピックや改善を提案します
-3. クイズ問題の追加や改善を提案します
+このプロジェクトへの貢献を希望する場合:
+1. 誤字や内容の誤りを見つけたら、Issue を作成してください
+2. 新しいトピックや改善案を提案してください
+3. クイズ問題の追加や改善を提案してください
 
 ## ライセンス
 
-このトレーニング教材は学習目的で自由に利用できます。
+このトレーニング教材は、学習目的で自由に利用できます。
