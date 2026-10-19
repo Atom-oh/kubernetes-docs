@@ -1,7 +1,7 @@
 # Amazon OpenSearch Service
 
 > **最終更新**: September 13, 2026
-> **サンプルのベースライン**: プロビジョニング型 OpenSearch Service 3.5、Terraform 1.15.7/AWS provider 6.64.0、AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9)。ローカル構成の確認のみを行っており、domain、collector、SAML session、またはデータ配信テストはデプロイしていません。
+> **サンプルのベースライン**: プロビジョニング型 OpenSearch Service 3.5、Terraform 1.15.7/AWS provider 6.69.1、AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9)。ローカル構成の確認のみを行っており、domain、collector、SAML session、またはデータ配信テストはデプロイしていません。
 
 Amazon OpenSearch Service は検索クラスターを管理し、選択した OpenSearch と従来の Elasticsearch OSS バージョンをサポートします。この章では、VPC domain と従来の hot/UltraWarm/cold tier を扱います。Serverless collection と新しい optimized-instance storage option には、別個の構成、API、可用性要件があります。
 
@@ -68,7 +68,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

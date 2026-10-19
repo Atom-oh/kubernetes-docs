@@ -1,7 +1,7 @@
 # KEDA (escalado automático basado en eventos de Kubernetes)
 
 > **Versión de ejemplo**: KEDA/chart de Helm 2.21.0; consulta la matriz de Kubernetes probada más abajo.
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenidos
 - [Introducción](#introduction)
@@ -25,7 +25,7 @@ KEDA (escalado automático basado en eventos de Kubernetes) es un proyecto de c�
 ### Principales ventajas de KEDA
 
 1. **Escalado basado en eventos**: escalado según diversas fuentes de eventos (colas de mensajes, bases de datos, flujos, etc.)
-2. **Escalado a cero**: los activadores de eventos compatibles pueden activar una carga de trabajo inactiva; configura el mínimo, el umbral de activación y el periodo de enfriamiento de esa carga de trabajo.
+2. **Escalado a cero**: los activadores de eventos compatibles pueden activar una carga de trabajo inactiva; configura su número mínimo de réplicas, el umbral de activación y el periodo de enfriamiento.
 3. **Compatibilidad con diversos escaladores**: más de 50 escaladores integrados y compatibilidad con escaladores personalizados
 4. **Nativo de Kubernetes**: integración con el HPA existente de Kubernetes
 5. **Independiente de la nube**: se ejecuta en distribuciones de Kubernetes compatibles que tengan las API, el acceso de red y la configuración de identidad necesarios.
@@ -71,7 +71,7 @@ KEDA se basa en el patrón de operador de Kubernetes: supervisa fuentes de métr
 
 Los ejemplos son alternativas, no un único conjunto de manifiestos. Prepara las cargas de trabajo, los Services, los Secrets y las imágenes a los que se hace referencia; sustituye los marcadores de cuenta, cola, URL e imagen. No asocies varios ScaledObjects/HPA al mismo destino. Una vez que el escalado automático administra las réplicas, coordina la propiedad de `spec.replicas` con GitOps/apply. Estas recetas no se han implementado ni medido en producción.
 
-Kubernetes 1.37 introdujo el escalado a cero beta del HPA para métricas de objetos/externas, habilitado de forma predeterminada mediante `HPAScaleToZero`; las métricas que solo utilizan CPU/memoria no pueden activar desde cero. Esto no cambia la separación entre el operador y el HPA de KEDA 2.21 ni establece compatibilidad con Kubernetes 1.37.
+Kubernetes 1.37 introdujo el escalado a cero beta del HPA para métricas de objetos/externas, habilitado de forma predeterminada mediante `HPAScaleToZero`; las métricas basadas únicamente en CPU/memoria no pueden activar una carga de trabajo desde cero. Esto no cambia la separación entre el operador y el HPA de KEDA 2.21 ni establece compatibilidad con Kubernetes 1.37.
 
 ### Requisitos previos
 
@@ -441,7 +441,7 @@ Este ejemplo utiliza el endpoint de recuentos recientes de la API v2 de X (antes
 
 ### Requisitos previos
 
-- Una aplicación de desarrollador de X con acceso a recuentos recientes de Posts y un token de portador de la aplicación; este ejemplo no implica que haya acceso a la API ni que su uso sea gratuito.
+- Una aplicación de desarrollador de X con acceso a recuentos recientes de publicaciones y un token de acceso Bearer para la aplicación; este ejemplo no implica que haya acceso a la API ni que su uso sea gratuito.
 - Un servicio para recopilar y exponer métricas
 
 ### Pasos de implementación

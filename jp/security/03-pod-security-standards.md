@@ -1,11 +1,11 @@
 # Pod Security Standards (PSS)
 
 > **検証ベースライン**: Kubernetes PSA ライブラリ `k8s.io/pod-security-admission` v0.36.2; 例の PSS ポリシー v1.35
-> **最終更新**: October 12, 2026
+> **最終更新日**: 2026年10月12日
 
 Pod Security Standards (PSS) は、Kubernetes における Pod セキュリティのための標準化されたポリシーフレームワークです。このドキュメントでは、PSS の概念、設定方法、および EKS 環境での実装について説明します。
 
-PSS はポリシーを定義し、PSA はそれらを適用する組み込みの admission 実装です。特に明記しない限り、このガイドでは**ユーザーネームスペースを使用しない通常の Linux Pod**を前提としています。ローカルのアップストリームポリシー評価とスキーマ/コマンドチェックはデプロイとは別であり、実際の cluster、EKS、またはコンテナ実行はテストしていません。例の `v1.35` は固定されたポリシー定義であり、Kubernetes/EKS がサポートする最新バージョンに関する主張ではありません。API server がアップグレードされると、`latest` の意味は変わります。
+PSS はポリシーを定義し、PSA はそれらを適用する組み込みの admission 実装です。特に断りがない限り、このガイドでは**ユーザー名前空間を使用しない一般的な Linux Pod**を対象とします。ローカルのアップストリームポリシー評価とスキーマ/コマンドチェックはデプロイとは別であり、実際の cluster、EKS、またはコンテナ実行はテストしていません。例の `v1.35` は固定されたポリシー定義であり、Kubernetes/EKS がサポートする最新バージョンに関する主張ではありません。API server がアップグレードされると、`latest` の意味は変わります。
 
 ## 目次
 
@@ -93,7 +93,7 @@ kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
 kubectl --context "$PSS_CONTEXT" get --raw /metrics
 ```
 
-実際の admission path をテストするには、以下の肯定/否定 Pod dry-run コントロールを使用してください。Deployment dry-run の成功だけから準拠を推測してはいけません。
+実際のアドミッション経路をテストするには、以下の許可／拒否ケースの Pod dry-run 検証を使用してください。Deployment の dry-run が成功しただけで準拠していると判断してはいけません。
 
 ---
 
@@ -179,7 +179,7 @@ spec:
 
 ### 3. Restricted
 
-Pod セキュリティ強化のベストプラクティスを適用する、最も制限の厳しいポリシーです。セキュリティに敏感な workload に適しています。
+Pod セキュリティ強化のベストプラクティスを適用する、最も制限の厳しいポリシーです。セキュリティ要件の厳しいワークロードに適しています。
 
 ```yaml
 apiVersion: v1
@@ -1072,7 +1072,7 @@ handler: runsc
 
 Kyverno は PSA の拒否を許可に変更できません。host agent に例外が必要な場合は、まず namespace の PSA プロファイルとデプロイ権限を設計し、次に範囲を狭めた例外を持つ独立して強制されるポリシーを追加してください。HostPath のみの除外では hostNetwork/hostPID チェックは除外されません。image tag または変更可能な Pod label だけに一致させることは authorization ではありません。
 
-レビュー済みのポリシー API とバージョン/非推奨の制限については、[Kyverno policy management](./01-kyverno-policy-management.md) を参照してください。小文字の `validationFailureAction: enforce` を持つレガシー `ClusterPolicy` をコピーしないでください。これは有効な値ではなく、ClusterPolicy は Kyverno 1.19 で非推奨です。置き換えは、通常の workload と例外 workload の両方でテストする必要があります。
+レビュー済みのポリシー API とバージョン/非推奨の制限については、[Kyverno policy management](./01-kyverno-policy-management.md) を参照してください。レガシーな `ClusterPolicy` に `validationFailureAction: enforce`（小文字の値）が含まれている場合はコピーしないでください。これは有効な値ではなく、ClusterPolicy は Kyverno 1.19 で非推奨になりました。置き換えは、通常の workload と例外 workload の両方でテストする必要があります。
 
 ---
 
@@ -1099,7 +1099,7 @@ kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
 
 ### ステップ 2: 段階的ロールアウト戦略
 
-日数の範囲は説明用の計画スケジュールであり、測定された移行期間ではありません。明示的な namespace inventory を使用し、既存のより強いポリシーをダウングレードせず、replacement Pod と rollback 能力をテストした後にのみ進めてください。
+日数の範囲は説明用の計画スケジュールであり、測定された移行期間ではありません。namespace の一覧を明示的に作成し、既存のより強いポリシーをダウングレードせず、置き換え後の Pod とロールバック手段をテストしてから次の段階へ進んでください。
 
 ```yaml
 # Gradual rollout using GitOps
@@ -1338,7 +1338,7 @@ spec:
 
 ### PSS 違反確認ツール
 
-Polaris、kube-score、Trivy は追加の静的チェックを提供しますが、cluster のバージョン化された PSA ポリシー、例外、mutation を正確に代替するものではありません。レビュー済みのバージョンをインストールし、その CLI help を参照してください。成功した server dry-run は、そのリクエスト、identity、namespace、時点に限定されます。上記の明示的な Pod control を使用してください。
+Polaris、kube-score、Trivy は追加の静的チェックを提供しますが、cluster のバージョン化された PSA ポリシー、例外、mutation を正確に代替するものではありません。レビュー済みのバージョンをインストールし、CLI のヘルプを確認してください。server dry-run の成功が示すのは、そのリクエスト、ID、namespace、実行時点における結果だけです。上記の明示的な Pod 検証ケースを使用してください。
 
 ```bash
 # Dry-run check with kubectl

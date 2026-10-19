@@ -1,7 +1,7 @@
 # Kubernetes の概要
 
-> **サポート対象バージョン**: Upstream Kubernetes 1.35–1.37、EKS standard support 1.34–1.37（2026 年 10 月 12 日時点）
-> **最終更新**: October 12, 2026
+> **サポート対象バージョン**: Upstream Kubernetes 1.35–1.37、EKS の標準サポート対象は 1.34–1.37（2026 年 10 月 12 日時点）
+> **最終更新**: 2026 年 10 月 16 日
 
 Kubernetes プロジェクトは、直近 3 つのマイナーリリース（1.35–1.37）のリリースブランチを維持しています。Upstream 1.34 はメンテナンスモードであり、2026 年 10 月 27 日の EOL までパッチリリースを受け取ります。この日は AWS の EKS サポート終了日とは別です。EKS の対象範囲と日付については、[AWS EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) を確認してください。
 
@@ -84,7 +84,7 @@ minikube start
 * [Kubernetes と Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Kubernetes を始める](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
-## Kubernetes とは？
+## Kubernetes とは？ {#what-is-kubernetes}
 
 Kubernetes はギリシャ語で「舵取り」または「操縦士」を意味し、コンテナ化されたアプリケーションのデプロイ、スケーリング、運用を自動化するオープンソースシステムです。Google の社内 Borg システムから着想を得て、2014 年にオープンソースとして公開されました。
 
@@ -109,15 +109,15 @@ Kubernetes はギリシャ語で「舵取り」または「操縦士」を意味
 * **宣言的設定**: Infrastructure as Code としてインフラストラクチャを管理
 * **マルチクラウドとハイブリッドクラウド**: さまざまな環境で一貫したデプロイと管理
 
-## Kubernetes の歴史
+## Kubernetes の歴史 {#history-of-kubernetes}
 
 ### 背景
 
 * **2003-2013**: Google は Borg というコンテナオーケストレーションシステムを社内で使用
-* **June 2014**: Google が Kubernetes をオープンソースとして公開
-* **July 2015**: Kubernetes 1.0 がリリースされ、Cloud Native Computing Foundation（CNCF）に寄贈
+* **2014 年 6 月**: Google が Kubernetes をオープンソースとして公開
+* **2015 年 7 月**: Kubernetes 1.0 がリリースされ、Cloud Native Computing Foundation（CNCF）に寄贈
 * **2016-2017**: 主要クラウドプロバイダーがマネージド Kubernetes サービスを開始
-* **2018 and beyond**: コンテナオーケストレーションの事実上の標準として確立
+* **2018 年以降**: コンテナオーケストレーションの事実上の標準として確立
 
 ### 名前の由来
 
@@ -127,7 +127,7 @@ Kubernetes（κυβερνήτης）はギリシャ語で「舵取り」また�
 
 Kubernetes のロゴは 7 本のスポークを持つ舵輪（船の操舵輪）を描いており、コンテナ化されたアプリケーションの進路を導く Kubernetes の役割を象徴しています。
 
-## Kubernetes アーキテクチャ
+## Kubernetes アーキテクチャ {#kubernetes-architecture}
 
 Kubernetes はマスター・ノードアーキテクチャに従います。マスターノード（control plane）はクラスターを管理し、ワーカーノードは実際のアプリケーションワークロードを実行します。
 
@@ -166,7 +166,7 @@ Kubernetes はマスター・ノードアーキテクチャに従います。マ
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
-## Kubernetes の主要コンポーネント
+## Kubernetes の主要コンポーネント {#kubernetes-main-components}
 
 ### API Server（kube-apiserver）
 
@@ -264,7 +264,7 @@ kube-proxy は Kubernetes Service の概念を実装する、各ノードで実�
 * **iptables mode**: Linux iptables を使用する NAT 実装（デフォルト）
 * **IPVS mode**: 1.35 から非推奨。移行を計画してください。従来の userspace mode は削除されました。
 
-## Kubernetes の基本オブジェクト
+## Kubernetes の基本オブジェクト {#kubernetes-basic-objects}
 
 Kubernetes オブジェクトは、クラスターの状態を表す永続エンティティです。これらのオブジェクトは、クラスター内で実行されているアプリケーション、利用可能なリソース、ポリシーなどを記述します。
 
@@ -292,14 +292,14 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
   - name: log-sidecar
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - /bin/sh
     - -c
@@ -411,7 +411,7 @@ status:
   # ...
 ```
 
-## Kubernetes のワークロードリソース
+## Kubernetes のワークロードリソース {#kubernetes-workload-resources}
 
 ワークロードリソースは Pod を管理および実行するために使用するオブジェクトです。これらのリソースは、Pod の作成、スケーリング、更新、終了を管理します。
 
@@ -446,7 +446,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ```
@@ -488,7 +488,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -649,7 +649,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: fluent-bit
-        image: cr.fluentbit.io/fluent/fluent-bit:5.1.2
+        image: cr.fluentbit.io/fluent/fluent-bit:5.1.3
         securityContext:
           runAsUser: 0
           allowPrivilegeEscalation: false
@@ -760,7 +760,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-## Kubernetes の Service とネットワーキング
+## Kubernetes の Service とネットワーキング {#kubernetes-services-and-networking}
 
 Kubernetes ネットワーキングモデルは、互換性のある CNI が Pod ネットワーキングを提供するという前提に基づきます。到達可能性は NetworkPolicy、firewall、トポロジーに左右されます。Service は Pod のセットに安定したエンドポイントを提供します。
 
@@ -1030,7 +1030,7 @@ spec:
       version: v2
 ```
 
-## Kubernetes ストレージ
+## Kubernetes ストレージ {#kubernetes-storage}
 
 Kubernetes はコンテナ化されたアプリケーションにさまざまなストレージオプションを提供します。Pod が再起動または再スケジュールされた場合でもデータを永続化する方法を提供します。
 
@@ -1060,7 +1060,7 @@ metadata:
 spec:
   containers:
   - name: test-container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - mountPath: /cache
       name: cache-volume
@@ -1080,7 +1080,7 @@ PersistentVolume は、クラスター内のストレージリソースを表す
 * **ReadWriteMany（RWX）**: 複数ノードに read/write でマウント可能
 * **ReadWriteOncePod（RWOP）**: 対応する CSI Volume での単一 Pod アクセス。RWO 単独では、同一ノード上の複数 Pod を依然として許可します。
 
-EBS CSI driver と IAM 権限がすでにインストールされている必要があります。既存の volume ID と実際の Availability Zone を使用してください。別の場所でまだ使用中の volume を再利用しないでください。これらのストレージ例は AWS 固有です。ローカルクラスターには独自の provisioner が必要です。
+EBS CSI ドライバーがインストール済みで、IAM 権限が設定済みである必要があります。既存の volume ID と実際の Availability Zone を使用してください。別の場所でまだ使用中の volume を再利用しないでください。これらのストレージ例は AWS 固有です。ローカルクラスターには独自の provisioner が必要です。
 
 **PersistentVolume の例**:
 
@@ -1140,7 +1140,7 @@ metadata:
 spec:
   containers:
     - name: myfrontend
-      image: nginx:1.30.4
+      image: nginx:1.30.6
       volumeMounts:
       - mountPath: "/var/www/html"
         name: mypd
@@ -1218,7 +1218,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-## Kubernetes の設定とセキュリティ
+## Kubernetes の設定とセキュリティ {#kubernetes-configuration-and-security}
 
 Kubernetes は、アプリケーション設定とセキュリティを管理するためのさまざまなオブジェクトとメカニズムを提供します。
 
@@ -1496,7 +1496,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-## Kubernetes と Amazon EKS
+## Kubernetes と Amazon EKS {#kubernetes-vs-amazon-eks}
 
 Amazon EKS（Elastic Kubernetes Service）は AWS が提供するマネージド Kubernetes サービスです。EKS は AWS 統合を備えた標準 Kubernetes API を公開します。以下の比較は従来の EC2 node group を前提としています。Auto Mode、Fargate、Hybrid Nodes では責任範囲とサポートされる機能が異なります。
 
@@ -1557,7 +1557,7 @@ EKS は次の AWS サービスと統合します:
 13. **AWS SageMaker**: 機械学習ワークロード
 14. **AWS Bedrock**: 生成 AI ワークロード
 
-## Kubernetes を始める
+## Kubernetes を始める {#getting-started-with-kubernetes}
 
 Kubernetes を始める方法はいくつかあります。ここでは、ローカル開発環境および AWS EKS で Kubernetes を開始する方法を簡単に紹介します。
 
@@ -1706,7 +1706,7 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 
 # Create deployment
-kubectl create deployment nginx --image=nginx:1.30.4
+kubectl create deployment nginx --image=nginx:1.30.6
 
 # Expose service
 kubectl expose deployment nginx --port=80 --type=ClusterIP
@@ -1827,8 +1827,8 @@ Kubernetes は進化を続け、クラウドネイティブなアプリケーシ
 - https://kubernetes.io/docs/concepts/services-networking/network-policies/
 - https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
 - https://coredns.io/plugins/kubernetes/
-- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
-- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.3
+- https://github.com/fluent/fluent-bit/blob/v5.1.3/conf/parsers.conf
 - https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
 - https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
 - https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html

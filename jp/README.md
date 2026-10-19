@@ -14,7 +14,7 @@
 - [ガイドブックのロードマップ](./roadmap.md) - 学習全体マップと推奨学習パス | [クイズ](./quizzes/roadmap-quiz.md)
 - [LLM を使った閲覧](./llm-guide.md) - llms.txt、マニフェスト、MCP を通じてソース資料を見つけて読む | [クイズ](./quizzes/llm-guide-quiz.md)
 
-## 目次
+## 目次 {#table-of-contents}
 
 ### ニュース
 - [週間ニュース](./news/README.md) - Kubernetes/EKS エコシステムの最新ニュースダイジェスト
@@ -139,6 +139,12 @@
    - [パート 5: L2-L7 ネットワーキング](./networking/cilium/05-l2-l7-networking.md) | [クイズ](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [パート 6: セキュリティと可視性](./networking/cilium/06-security-visibility.md) | [クイズ](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [パート 7: 高度なトピック](./networking/cilium/07-advanced-topics.md) | [クイズ](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [パート 8: eBPF データパスの内部構造](./networking/cilium/08-ebpf-datapath-internals.md) | [クイズ](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [パート 9: オーバーレイとネイティブルーティング](./networking/cilium/09-overlay-native-routing.md) | [クイズ](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [パート 10: IPAM の詳細解説](./networking/cilium/10-ipam-deep-dive.md) | [クイズ](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [パート 11: BGP、ロードバランサー IP、Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [クイズ](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [パート 12: mTLS、暗号化、アイデンティティ](./networking/cilium/12-mtls-encryption-identity.md) | [クイズ](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [パート 13: バージョン、インストール/アップグレード、Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [クイズ](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [ネットワーキングのコンセプト](./networking/cilium/networking-concepts.md) | [クイズ](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [用語集](./networking/cilium/glossary.md) | [クイズ](./quizzes/networking/cilium/glossary-quiz.md)
 8. **Calico の詳細解説**

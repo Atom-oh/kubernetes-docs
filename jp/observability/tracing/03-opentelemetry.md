@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **レビュー基準**: Collector Contrib 0.160.0; Operator 0.158.0; 言語バージョンは以下を参照
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026 年 10 月 12 日
 
 ## はじめに
 
@@ -56,7 +56,7 @@ Operator のデフォルトは Collector 0.158.0 です。以下のスタンド�
 
 ### Auto-instrumentation
 
-2026 年 9 月 13 日時点で、EKS ライフサイクルページは 1.34、1.35、1.36 を standard support として掲載しています。1.35 のスキーマ基準はその一覧と Operator マトリクスに含まれますが、ライブのプラットフォーム/add-on 受け入れチェックに代わるものではありません。
+2026 年 10 月 12 日時点で、EKS の標準サポート対象は 1.34–1.37 です。Kubernetes 1.35 のスキーマ基準はこの範囲と Operator の互換性マトリクスに含まれますが、稼働環境でのプラットフォームやアドオンの受け入れ確認に代わるものではありません。
 
 ゼロコード instrumentation はサポート対象ライブラリをフックしますが、任意のビジネス操作を検出するものではありません。プロセスには、直接準備した agent/launcher または Operator injection のいずれかを選んでください。すでに設定済みの provider 上で 2 つ目の SDK を初期化しないでください。以下のアプリケーションイメージは、起動コマンドと依存関係を含む、独自のビルド用プレースホルダーです。
 
@@ -1467,6 +1467,10 @@ Fan-out は atomic delivery や backends 間で同一の retention を提供し�
 ### 2026 年 8 月の更新: Slow SQL Queries を Reliability Metrics に抽出する
 
 [8 月 21 日の CNCF 記事](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)とその [lab](https://github.com/causely-oss/slow-query-lab) は、query duration、traffic-weighted impact、span-derived metrics を anomaly baselines と比較しています。記事の historical examples は、クラスタの capacity measurements ではなく例として扱ってください。記事自体も、生の SQL を metric labels に使用すること、sensitive parameters、cardinality、baseline warm-up について警告しています。lab configuration を採用する前に dimensions をサニタイズし境界付けてください。latency anomaly は症状であり、root cause の証拠ではありません。
+
+### 2026 年 10 月の更新: OTel ストリームでインシデント検知を再構築する
+
+[9 月 30 日の CNCF 記事](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)で、Atlassian は OpenTelemetry、Apache Kafka、Apache Flink を用いて、Kubernetes 上の自動インシデント作成基盤を 18 か月かけて再構築した事例を紹介しています。イベント発生からメトリクス反映までの遅延を 40 秒超から 10 秒未満へ短縮しました。記事自身が記すように、対象範囲内の再現率は約 60% から 86% に上がったものの、成績の悪い月には 64% に戻り、適合率も目標を下回っています。これらは同社での測定値であり、このアーキテクチャが保証する結果ではありません。共有キュー上のノイズの多い利用者の分離やコストなど、記事で議論されるトレードオフに注目してください。
 
 ## ベストプラクティス
 

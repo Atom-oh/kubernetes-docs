@@ -1,6 +1,6 @@
 # Prometheus
 
-> **最終更新**: September 13, 2026. 以下ではローカルでの設定／クエリ検証について説明します。クラスターやクラウドへのデプロイは実施していません。
+> **最終更新**: September 14, 2026. 以下ではローカルでの設定／クエリ検証について説明します。クラスターやクラウドへのデプロイは実施していません。
 
 ## 目次
 
@@ -35,6 +35,10 @@ Prometheus は、もともと SoundCloud で開発された CNCF の監視ツー
 チャートの `kubeVersion` ガードは `>=1.25.0-0` です。これは完全な互換性マトリクスではなく、Kubernetes 1.25 以降のすべてのバージョンが引き続きサポートされるという意味でもありません。実際のクラスター、コンポーネントのサポート状況、admission ポリシー、ストレージドライバーを確認してください。
 
 このプロファイルは **Linux EC2 ベースの EKS ワーカー** を対象としています。Fargate には DaemonSet がありません。Auto Mode、Hybrid Nodes、Windows では、プラットフォーム固有のコレクター／ストレージ確認が必要です。
+
+### 2026 年 9 月の更新
+
+[2026 年 9 月 11 日の Kubernetes ブログ](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/) と [Prometheus のネイティブヒストグラム](https://prometheus.io/docs/specs/native_histograms/) によると、Kubernetes コンポーネントメトリクス（KEP-5808）向けの Prometheus native histogram サポートは Beta に昇格し、v1.37 ではデフォルトで有効になります。高解像度でカーディナリティの低いバケットが固定の `le` バケットに置き換わることで、レイテンシメトリクスの精度が向上し、ストレージとスクレイプのオーバーヘッドが削減されます。この機能を利用するには、スクレイプする Prometheus を native histogram を取り込むように設定する必要があります。また、既存のクラシックヒストグラムのクエリやダッシュボードは別途見直してください。
 
 ### 2026 年 7 月の更新履歴
 

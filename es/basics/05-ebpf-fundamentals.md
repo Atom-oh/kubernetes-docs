@@ -1,9 +1,9 @@
 # Fundamentos de eBPF y aplicaciones en Kubernetes
 
-> **Versiones compatibles**: Requisitos de kernel/BTF/helpers específicos de cada función; consulte las matrices de compatibilidad de las herramientas y Kubernetes
-> **Última actualización**: October 16, 2026
+> **Versiones compatibles**: los requisitos de kernel, BTF y funciones auxiliares varían según la función; consulte las matrices de compatibilidad de las herramientas y de Kubernetes
+> **Última actualización**: 16 de octubre de 2026
 
-eBPF es una tecnología revolucionaria que permite ejecutar programas aislados dentro del kernel de Linux. Este documento abarca desde los conceptos básicos de eBPF hasta sus aplicaciones prácticas en entornos Kubernetes.
+eBPF es una tecnología revolucionaria que permite ejecutar programas en un entorno aislado dentro del kernel de Linux. Este documento abarca desde los conceptos básicos de eBPF hasta sus aplicaciones prácticas en entornos Kubernetes.
 
 ## Tabla de contenido
 
@@ -23,11 +23,11 @@ eBPF es una tecnología revolucionaria que permite ejecutar programas aislados d
 Para seguir los ejemplos de este documento, se necesita el siguiente entorno.
 
 ### Requisitos previos
-- Un kernel de una distribución con mantenimiento que incluya el BTF, los helpers y los tipos de conexión necesarios para cada ejemplo
+- Un kernel de distribución con soporte vigente que incluya el BTF, las funciones auxiliares y los tipos de enganche que requiere cada ejemplo
 - bpftool, bcc-tools
 - Clúster de Kubernetes (opcional)
 
-Los ejemplos de bpftrace se comprobaron con la sintaxis del lenguaje oficial0.27 (args.field). Los paquetes de las distribuciones pueden ser más antiguos; use la sintaxis y las funciones correspondientes a esos paquetes. Verifique los campos de los tracepoints con bpftrace -lv o con los archivos de formato de tracefs. Las sondas de funciones dependen de las versiones del kernel o de las bibliotecas y de la arquitectura. Durante esta auditoría no se ejecutó ningún tracing ni se realizó ninguna conexión.
+Los ejemplos de bpftrace se comprobaron con la sintaxis oficial del lenguaje en la versión 0.27 (args.field). Los paquetes de las distribuciones pueden ser más antiguos; use la sintaxis y las funciones correspondientes a esos paquetes. Verifique los campos de los tracepoints con bpftrace -lv o con los archivos de formato de tracefs. Las sondas de funciones dependen de las versiones del kernel y las bibliotecas, así como de la arquitectura. Durante esta auditoría no se ejecutó ningún trazado ni se conectó ninguna sonda.
 
 ### Configuración del entorno
 
@@ -53,7 +53,7 @@ sudo bpftool feature probe kernel
 
 ### 1.1 ¿Qué es eBPF?
 
-**eBPF (extended Berkeley Packet Filter)** es una tecnología que permite ejecutar de forma segura programas definidos por el usuario dentro del kernel de Linux. Originalmente se diseñó como BPF para filtrar paquetes de red, pero se ha ampliado y ahora se utiliza en varias áreas, como redes, seguridad, tracing y análisis del rendimiento.
+**eBPF (extended Berkeley Packet Filter)** es una tecnología que permite ejecutar de forma segura programas definidos por el usuario dentro del kernel de Linux. Originalmente se diseñó como BPF para filtrar paquetes de red, pero se ha ampliado y ahora se utiliza en varias áreas, como redes, seguridad, trazado y análisis del rendimiento.
 
 > **Concepto clave**: eBPF permite ampliar y observar el comportamiento del kernel sin modificar el código fuente del kernel ni cargar módulos del kernel.
 
@@ -67,12 +67,12 @@ sudo bpftool feature probe kernel
 - Desarrollado en UC Berkeley
 - Dedicado a la captura y el filtrado de paquetes de red
 - 2 registros de 32 bits
-- El BPF clásico de Linux suele limitar los programas a4096 instrucciones; esto no constituye una especificación histórica universal de BPF
+- El BPF clásico de Linux suele limitar los programas a 4096 instrucciones; esto no constituye una especificación histórica universal de BPF
 
 **eBPF (2014~)**:
 - Compatibilidad con arquitecturas de 64 bits
 - 11 registros
-- Almacenamiento de estado mediante Maps
+- Almacenamiento de estado mediante mapas
 - Compatibilidad con varios puntos de conexión
 - Rendimiento nativo mediante compilación JIT
 
@@ -82,7 +82,7 @@ sudo bpftool feature probe kernel
 | Límites de instrucciones | Límite habitual de Linux: 4096 | Depende del kernel y los privilegios; el tamaño del programa y la complejidad del verificador son distintos |
 | Compatibilidad con mapas | Ninguna | Varios tipos de mapas |
 | Caso de uso | Filtrado de paquetes | Programación de propósito general para el kernel |
-| Capacidades de llamada | Ninguna | Funciones helper, llamadas BPF-to-BPF |
+| Capacidades de llamada | Ninguna | Funciones auxiliares y llamadas BPF-to-BPF |
 | Estado persistente | No hay mapas persistentes (existe almacenamiento temporal durante una ejecución) | Posible mediante mapas |
 
 ### 1.3 Por qué eBPF es revolucionario
@@ -104,9 +104,9 @@ eBPF es revolucionario por las siguientes razones:
 | Aspecto | eBPF | Módulo del kernel |
 |--------|------|---------------|
 | **Seguridad** | Comprobaciones de seguridad del verificador dentro de su modelo | Puede provocar una caída del kernel |
-| **Portabilidad** | CO-RE reubica tipos de kernel compatibles; los helpers, hooks, semántica y BTF siguen limitando la portabilidad | Requiere recompilar para cada versión del kernel |
+| **Portabilidad** | CO-RE reubica tipos de kernel compatibles; las funciones auxiliares, los puntos de enganche, la semántica y BTF siguen limitando la portabilidad | Requiere recompilar para cada versión del kernel |
 | **Carga** | Carga y descarga dinámicas | Requiere insmod/rmmod |
-| **Privilegios** | CAP_BPF/CAP_SYS_ADMIN, además de permisos específicos del hook | Se requieren privilegios de root |
+| **Privilegios** | CAP_BPF/CAP_SYS_ADMIN, además de permisos específicos del punto de enganche | Se requieren privilegios de root |
 | **Depuración** | Limitada | Es posible la depuración completa del kernel |
 | **Rendimiento** | Optimizado mediante compilación JIT | Rendimiento nativo |
 | **Alcance de las funciones** | Solo puntos de conexión designados | Ilimitado |
@@ -132,7 +132,7 @@ El verificador es un mecanismo de seguridad fundamental de eBPF. Comprueba lo si
 - Terminación/flujo de control acotado; los bucles acotados son compatibles con kernels adecuados
 - Ausencia de accesos a memoria fuera de los límites
 - Ausencia de uso de variables no inicializadas
-- Llamadas correctas a funciones helper
+- Llamadas correctas a funciones auxiliares
 - Garantía de terminación del programa
 
 ```c
@@ -166,7 +166,7 @@ cat /proc/sys/net/core/bpf_jit_enable
 echo 1 | sudo tee /proc/sys/net/core/bpf_jit_enable
 ```
 
-Algunos kernels aplican CONFIG_BPF_JIT_ALWAYS_ON; la disponibilidad y la posibilidad de escritura de este sysctl dependen de la configuración del kernel. El modo de depuración2 escribe trazas en el registro del kernel y no es el valor predeterminado para producción.
+Algunos kernels aplican CONFIG_BPF_JIT_ALWAYS_ON; la disponibilidad y la posibilidad de escritura de este sysctl dependen de la configuración del kernel. El modo de depuración 2 escribe trazas en el registro del kernel y no es el valor predeterminado para producción.
 
 **Ventajas de la compilación JIT**:
 - La afirmación original de una aceleración de 4–5x no está respaldada aquí por una fuente; la aceleración real depende del programa, la arquitectura y el kernel
@@ -199,13 +199,13 @@ struct {
 } packet_count SEC(".maps");
 ```
 
-### 2.5 Funciones helper
+### 2.5 Funciones auxiliares
 
-Los programas eBPF acceden a las funciones del kernel mediante las funciones helper que proporciona el kernel.
+Los programas eBPF acceden a funciones del kernel mediante las funciones auxiliares que este proporciona.
 
-**Funciones helper principales**:
+**Funciones auxiliares principales**:
 
-Estas son firmas simplificadas de referencia de la API. En los programas reales, incluya libbpf bpf_helpers.h en lugar de volver a declararlas. La disponibilidad de los helpers depende del tipo de programa y del kernel.
+Estas son firmas simplificadas de referencia de la API. En los programas reales, incluya libbpf bpf_helpers.h en lugar de volver a declararlas. La disponibilidad de estas funciones depende del tipo de programa y del kernel.
 
 ```text
 // Map manipulation
@@ -239,7 +239,7 @@ long bpf_get_current_comm(void *buf, u32 size);  // Process name
 
 ---
 
-Los ejemplos en C son programas o fragmentos independientes. Proporcione vmlinux.h o los tipos UAPI pertinentes, y libbpf bpf_helpers.h, bpf_endian.h, bpf_tracing.h y bpf_core_read.h según sea necesario. BPF_KPROBE/BPF_UPROBE requieren la arquitectura de destino correcta y la ABI real de conexión. Valide la carga y la conexión en un entorno aislado; ninguna de las dos se realizó durante esta auditoría. Los ejemplos de LSM basados en rutas permiten el acceso si se producen errores de lectura y no abarcan alias, enlaces duros ni otros protocolos; son didácticos, no controles de acceso completos.
+Los ejemplos en C son programas o fragmentos independientes. Proporcione vmlinux.h o los tipos UAPI pertinentes, junto con libbpf bpf_helpers.h, bpf_endian.h, bpf_tracing.h y bpf_core_read.h, según sea necesario. BPF_KPROBE/BPF_UPROBE requieren la arquitectura de destino correcta y la ABI de enganche correspondiente. Valide la carga y el enganche en un entorno aislado; ninguno de los dos se realizó durante esta auditoría. Los ejemplos de LSM basados en rutas permiten el acceso si se producen errores de lectura y no abarcan alias, enlaces duros ni otros protocolos; son didácticos, no controles de acceso completos.
 
 <span id="3-ebpf-program-types"></span>
 
@@ -326,12 +326,12 @@ sudo tc filter add dev "$LAB_IFACE" egress pref 49152 bpf da obj tc_prog.o sec c
 | Ubicación de ejecución | Nivel del controlador | Pila de red |
 | Rendimiento | Máximo | Alto |
 | Acceso a SKB | No es posible | Posible |
-| Dirección | Solo ingreso | Ingreso y egreso |
+| Dirección | Solo entrada | Entrada y salida |
 | Modificación de paquetes | Limitada | Flexible |
 
 ### 3.3 Kprobes/Uprobes
 
-Kprobes y Uprobes realizan tracing dinámico de las llamadas a funciones.
+Kprobes y Uprobes permiten instrumentar dinámicamente las llamadas a funciones.
 
 ```c
 // Kprobe example: Trace tcp_connect function
@@ -359,7 +359,7 @@ int BPF_UPROBE(trace_malloc, size_t size) {
 
 ### 3.4 Tracepoints
 
-Los tracepoints son puntos de tracing estáticos predefinidos en el kernel.
+Los tracepoints son puntos de trazado estáticos predefinidos en el kernel.
 
 ```bash
 # Check available tracepoints
@@ -483,7 +483,7 @@ sudo bpftool btf list
 
 ### 4.2 bpftrace
 
-bpftrace es un lenguaje de tracing de alto nivel al estilo de DTrace.
+bpftrace es un lenguaje de trazado de alto nivel, al estilo de DTrace.
 
 ```bash
 # Installation
@@ -523,7 +523,7 @@ sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args.bytes_alloc); }'
 
 ### 4.3 BCC (BPF Compiler Collection)
 
-BCC ofrece compilación y carga de BPF en C y suele incluir BPF en C en sus herramientas de tracing en Python.
+BCC ofrece compilación y carga de BPF en C y suele incluir programas BPF en C en sus herramientas de trazado escritas en Python.
 
 ```bash
 # Installation
@@ -537,16 +537,16 @@ dpkg -L bpfcc-tools | head -40
 
 | Herramienta | Descripción |
 |------|-------------|
-| `execsnoop` | Realiza tracing de la ejecución de procesos nuevos |
-| `opensnoop` | Realiza tracing de la apertura de archivos |
+| `execsnoop` | Traza la ejecución de procesos nuevos |
+| `opensnoop` | Traza la apertura de archivos |
 | `biolatency` | Latencia de E/S de bloques |
-| `tcpconnect` | Realiza tracing de conexiones TCP |
-| `tcpaccept` | Realiza tracing de conexiones TCP entrantes |
-| `tcpretrans` | Realiza tracing de retransmisiones TCP |
+| `tcpconnect` | Traza las conexiones TCP |
+| `tcpaccept` | Traza las conexiones TCP entrantes |
+| `tcpretrans` | Traza las retransmisiones TCP |
 | `runqlat` | Latencia de la cola de ejecución de la CPU |
 | `profile` | Creación de perfiles de CPU |
 | `funccount` | Número de llamadas a funciones |
-| `trace` | Tracing general de funciones |
+| `trace` | Trazado general de funciones |
 
 ```bash
 # Usage examples
@@ -605,7 +605,7 @@ bpftool prog show id <ID> --pretty
 
 ### 5.1 Cilium: CNI basado en eBPF
 
-Cilium es el CNI de Kubernetes (Container Network Interface) más representativo que utiliza eBPF.
+Cilium es el CNI de Kubernetes basado en eBPF más destacado.
 
 ![Diagrama de arquitectura que muestra el plano de control de Cilium leyendo políticas de Kubernetes y programando un único plano de datos eBPF que implementa protección contra DDoS, políticas de red y balanceo de carga, además de enrutamiento en el nivel del socket.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-5.png)
 
@@ -803,7 +803,7 @@ Pixie usa eBPF para recopilar telemetría automáticamente, sin modificar el có
 **Funciones de Pixie**:
 - Análisis automático de protocolos (HTTP, gRPC, MySQL, PostgreSQL, Kafka, etc.)
 - Generación automática de mapas de servicios
-- Tracing distribuido
+- Trazado distribuido
 - Creación de perfiles de CPU
 - Registro dinámico
 
@@ -869,9 +869,9 @@ helm install coroot coroot/coroot-ce -n coroot --version "$COROOT_CE_VERSION"
 
 ### 6.4 Kepler: supervisión del consumo de energía
 
-Las primeras versiones de Kepler usaban eBPF, pero se **reescribió a partir de la versión 0.10.0** en torno al acceso de solo lectura al /proc y /sys del host, RAPL/powercap y la atribución de energía basada en el uso de CPU. Ya no requiere CAP_BPF, por lo que el Kepler actual no es un ejemplo que dependa de instrumentación eBPF. Las versiones0.9 y anteriores son código heredado obsoleto, con métricas y métodos de implementación distintos.
+Las primeras versiones de Kepler usaban eBPF, pero se **reescribió a partir de la versión 0.10.0** en torno al acceso de solo lectura al /proc y /sys del host, RAPL/powercap y la atribución de energía basada en el uso de CPU. Ya no requiere CAP_BPF, por lo que el Kepler actual no es un ejemplo que dependa de instrumentación eBPF. Las versiones 0.9 y anteriores son código heredado congelado, con métricas y métodos de implementación distintos.
 
-Compruebe que el hardware o la VM expongan sensores de energía. Los valores de contenedores/Pod atribuyen la energía medida en el nodo, en lugar de medir directamente cada contenedor con un medidor de energía. Sumar zonas RAPL anidadas contabiliza la energía dos veces. Verifique la compatibilidad experimental específica de cada versión con GPU/HWMon/plataforma.
+Compruebe que el hardware o la VM expongan sensores de energía. Los valores asignados a contenedores y Pods representan energía medida en el nodo y atribuida a esas cargas; no son mediciones directas de cada contenedor con un medidor de energía. Sumar zonas RAPL anidadas contabiliza la energía dos veces. Verifique la compatibilidad experimental específica de cada versión con GPU/HWMon/plataforma.
 
 ```bash
 : "${KEPLER_CHART_VERSION:?Select a reviewed current Kepler chart}"
@@ -893,13 +893,13 @@ Los valores del 5–15% y <1% conservan las afirmaciones originales, que no cita
 |--------|-------------------|---------------------|
 | **Sobrecarga** | Alta (5-15%) | Baja (<1%) |
 | **Modificación del código** | Depende del modelo de SDK/agente | A menudo innecesaria para las fuentes de datos compatibles |
-| **Cobertura** | Depende de la instrumentación y el agente | Hooks, protocolos y visibilidad compatibles; no es automáticamente completa |
+| **Cobertura** | Depende de la instrumentación y el agente | Puntos de enganche, protocolos y visibilidad compatibles; no es automáticamente completa |
 | **Implementación** | Depende de la aplicación, el nodo o el recopilador | Habitualmente agentes de nodo; también importa la compatibilidad de la aplicación |
-| **Privilegios** | Depende del agente | Capacidades y acceso al host, según el programa y el hook |
+| **Privilegios** | Depende del agente | Capacidades y acceso al host, según el programa y el punto de enganche |
 | **Profundidad de los datos** | Depende de la aplicación y el host | Kernel y sondas de espacio de usuario compatibles |
 | **Compatibilidad con protocolos** | Depende de la herramienta | Automática solo para analizadores, bibliotecas y visibilidad compatibles |
 
-![Comparación lado a lado entre la supervisión tradicional, que requiere un SDK o agente dentro del proceso, y la supervisión basada en eBPF, que observa una aplicación sin modificar desde un hook del kernel.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-7.png)
+![Comparación lado a lado entre la supervisión tradicional, que requiere un SDK o agente dentro del proceso, y la supervisión basada en eBPF, que observa una aplicación sin modificar desde un punto de enganche del kernel.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-7.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-7.html)
 
@@ -913,7 +913,7 @@ Los valores del 5–15% y <1% conservan las afirmaciones originales, que no cita
 
 Tetragon es una solución de seguridad en tiempo de ejecución basada en eBPF proporcionada por el proyecto Cilium.
 
-![Diagrama de arquitectura que muestra cómo un recurso personalizado TracingPolicy configura los sensores eBPF del agente Tetragon, que realizan tracing y aplican políticas a la ejecución de procesos, la actividad de red y el acceso a archivos en el kernel.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-8.png)
+![Diagrama de arquitectura que muestra cómo un recurso personalizado TracingPolicy configura los sensores eBPF del agente Tetragon, que trazan y aplican políticas a la ejecución de procesos, la actividad de red y el acceso a archivos en el kernel.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-8.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-8.html)
 
@@ -927,7 +927,7 @@ helm install tetragon cilium/tetragon -n kube-system --version "$TETRAGON_CHART_
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | tetra getevents -o compact
 ```
 
-Cree Pod de prueba en ebpf-lab y con la etiqueta app=ebpf-demo. Estos ejemplos usan la observación Post en lugar de enviar SIGKILL a todo el host. La denegación preventiva requiere pruebas independientes del comportamiento compatible de LSM/Override.
+Cree un espacio de nombres de prueba llamado ebpf-lab y Pods de prueba con la etiqueta app=ebpf-demo. Estos ejemplos usan la acción Post para observar, en lugar de enviar SIGKILL a procesos del host. La denegación preventiva requiere pruebas independientes del comportamiento compatible de LSM/Override.
 
 **Ejemplos de TracingPolicy**:
 
@@ -1043,7 +1043,7 @@ helm install falco falcosecurity/falco --version "$FALCO_CHART_VERSION" \
 
 ### 7.3 seccomp-bpf: filtrado de llamadas al sistema
 
-Los filtros seccomp usan la ABI de espacio de usuario de BPF clásico, no los helpers ni mapas habituales de los programas eBPF. El entorno de ejecución del contenedor interpreta los perfiles JSON de OCI para crear filtros de llamadas al sistema.
+Los filtros seccomp usan la ABI de espacio de usuario de BPF clásico, no las funciones auxiliares ni los mapas habituales de los programas eBPF. El entorno de ejecución del contenedor interpreta los perfiles JSON de OCI para crear filtros de llamadas al sistema.
 
 ```yaml
 # Apply seccomp profile in Kubernetes Pod
@@ -1132,7 +1132,7 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ### 8.1 Análisis del rendimiento del sistema con bpftrace
 
-**Tracing de conexiones TCP**:
+**Trazado de conexiones TCP**:
 
 ```bash
 # TCP connection tracing
@@ -1317,7 +1317,7 @@ END {
 | Limitación | Valor | Descripción |
 |------------|-------|-------------|
 | **Tamaño de pila** | 512 bytes | Límite de espacio de almacenamiento para variables locales |
-| **Límites de instrucciones** | Depende de los privilegios y del kernel | Los límites de longitud del programa y de instrucciones procesadas por el verificador son distintos; el presupuesto de complejidad de upstream es1million |
+| **Límites de instrucciones** | Depende de los privilegios y del kernel | Los límites de longitud del programa y de instrucciones procesadas por el verificador son distintos; el presupuesto de complejidad del kernel principal es de 1 millón |
 | **Máximo de llamadas anidadas** | 8 niveles | Profundidad de llamadas a funciones BPF-to-BPF |
 | **Número de entradas del mapa** | Varía según el tipo de mapa | Depende de los límites de memoria |
 | **Tamaño del programa** | Límites del kernel/verificador/JIT | No lo determina el tipo de mapa |
@@ -1391,11 +1391,11 @@ int main_prog(void *ctx) {
 | eBPF básico | 3.18 |
 | XDP | 4.8 |
 | BTF | 4.18 |
-| CO-RE | BTF/libbpf/helpers compatibles; no existe un mínimo universal determinado solo por la versión del kernel |
+| CO-RE | BTF/libbpf/funciones auxiliares compatibles; no existe un mínimo universal determinado solo por la versión del kernel |
 | Búfer circular BPF | 5.8 |
 | Bucles BPF | 5.3 |
 | LSM BPF | 5.7 |
-| Helper bpf_loop | 5.17 |
+| Función auxiliar bpf_loop | 5.17 |
 
 ```bash
 # Check kernel version
@@ -1547,7 +1547,7 @@ Para consultar contenido avanzado relacionado con este documento, consulte lo si
 | Análisis detallado de eBPF | [Análisis técnico detallado de eBPF](../networking/cilium/02-ebpf.md) | Técnicas avanzadas de eBPF |
 | Redes | [Redes de Cilium](../networking/cilium/03-networking.md) | Implementación de redes con eBPF |
 | Seguridad | [Seguridad de Cilium](../networking/cilium/06-security-visibility.md) | Seguridad basada en eBPF |
-| Redes de Kubernetes | [Services y redes](../core/03-services-networking.md) | Conceptos básicos de redes |
+| Redes de Kubernetes | [Servicios y redes](../core/03-services-networking.md) | Conceptos básicos de redes |
 
 ### 10.4 Lista de comprobación práctica
 
@@ -1569,7 +1569,7 @@ Lista de comprobación para aprender eBPF:
 eBPF es una tecnología revolucionaria que permite ampliar y observar de forma segura el comportamiento del kernel de Linux. A continuación se resumen los contenidos principales de este documento:
 
 1. **Conceptos básicos de eBPF**: programas aislados que se ejecutan de forma segura dentro del kernel
-2. **Arquitectura**: compuesta por el verificador, el compilador JIT, los mapas y las funciones helper
+2. **Arquitectura**: compuesta por el verificador, el compilador JIT, los mapas y las funciones auxiliares
 3. **Tipos de programas**: XDP, TC, Kprobes, Tracepoints, LSM BPF, etc.
 4. **Herramientas de desarrollo**: bpftool, bpftrace, BCC, libbpf
 5. **Aplicaciones en Kubernetes**: redes de alto rendimiento con Cilium y modo eBPF de Calico

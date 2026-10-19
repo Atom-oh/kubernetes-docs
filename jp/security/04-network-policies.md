@@ -1,7 +1,7 @@
 # Network Policies
 
-> **レビュー基準**: Kubernetes 1.35 OpenAPI、Cilium 1.20.1、Calico 3.32.2、および現行の AWS ドキュメント。オフライン確認ではクラスター互換性は確立されません。
-> **最終更新**: September 13, 2026
+> **レビュー基準**: Kubernetes 1.35 OpenAPI、Cilium 1.20.3、Calico 3.32.2、および現行の AWS ドキュメント。オフライン確認ではクラスター互換性は確立されません。
+> **最終更新**: 2026 年 10 月 16 日
 
 Kubernetes Network Policies は、Pod 間のトラフィックを制御するファイアウォールルールです。このドキュメントでは、基本的な NetworkPolicy と Cilium/Calico 拡張を扱います。各セクションは独立した例です。すべてのポリシーをマージすると、有効な権限が変わります。クラスターまたはクラウドへのデプロイ、ライブ接続テストは実施していません。
 
@@ -573,7 +573,7 @@ Kubernetes NetworkPolicy API には優先順位も明示的な拒否ルールも
 
 ## Cilium Network Policy 拡張 {#cilium-network-policy-extensions}
 
-これらの例では、リリース済みの Cilium 1.20.1 ポリシースキーマを使用しており、すべてのクラスターをアップグレードする指示ではありません。HTTP ルールには、サポートされる L7 proxy パスが必要です。AWS VPC CNI chaining には L7 ポリシーを含む、文書化された高度な機能の制約があります。このモードでこれらの HTTP 例が動作すると想定しないでください。数値の Cilium security identity はラベルセットへの割り当てであり、恒久的なアプリケーション ID ではありません。
+これらの例では、リリース済みの Cilium 1.20.3 ポリシースキーマを使用しており、すべてのクラスターをアップグレードする指示ではありません。HTTP ルールには、サポートされる L7 proxy パスが必要です。AWS VPC CNI chaining には L7 ポリシーを含む、文書化された高度な機能の制約があります。このモードでこれらの HTTP 例が動作すると想定しないでください。数値の Cilium security identity はラベルセットへの割り当てであり、恒久的なアプリケーション ID ではありません。
 
 ### CiliumNetworkPolicy
 
@@ -646,11 +646,11 @@ spec:
             value: application/json
 ```
 
-[HTTP API — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/http.go)
+[HTTP API — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
 
 ### L7 Kafka ポリシー
 
-リリース済みの Cilium 1.20.1 CNP スキーマは HTTP と DNS の L7 ルールをサポートしますが、`rules.kafka` はありません。以前の `role`、`topic`、`clientID` のレシピは、現在デプロイ可能な API ではありません。broker 接続は network policy で制限し、`orders` と `events` の producer/consumer 権限は Kafka 認証および ACL で強制してください。client ID は認証済み principal ではありません。
+リリース済みの Cilium 1.20.3 CNP スキーマは HTTP と DNS の L7 ルールをサポートしますが、`rules.kafka` はありません。以前の `role`、`topic`、`clientID` のレシピは、現在デプロイ可能な API ではありません。broker 接続は network policy で制限し、`orders` と `events` の producer/consumer 権限は Kafka 認証および ACL で強制してください。client ID は認証済み principal ではありません。
 
 この L4 例は、TCP 9093 上で既に構成された TLS broker listener、同一 namespace の client、および別途認可された client Egress/DNS を前提としています。TLS、broker ACL、topic 権限は構成しません。
 
@@ -676,7 +676,7 @@ spec:
         protocol: TCP
 ```
 
-[CNP schema — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+[CNP schema — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
 
 ### L7 DNS ポリシー
 
@@ -896,7 +896,7 @@ spec:
 
 ### Tier-Based ポリシー
 
-Tier は Enterprise のみではなく、参照している Calico Open Source release でも利用できます。選択する Tier は、ルールが action を実行しない場合、デフォルトで `Deny` になります。そのため deny-known-threats Tier は、無関係なトラフィックが後続のポリシーに到達できるよう、明示的に `defaultAction: Pass` を使用します。`Pass` は delegation であり、許可ではありません。アプリケーション Tier のポリシーを追加し、デプロイ前に最終 profile/default-tier の動作を確認してください。空の Tier を作成しても完全なアプリケーション隔離ポリシーにはなりません。 `global()` は `namespaceSelector` に指定し、別のラベルセレクターで `GlobalNetworkSet` を特定します。
+Tier は Enterprise のみではなく、参照している Calico Open Source release でも利用できます。選択する Tier は、ルールが action を実行しない場合、デフォルトで `Deny` になります。そのため deny-known-threats Tier は、無関係なトラフィックが後続のポリシーに到達できるよう、明示的に `defaultAction: Pass` を使用します。`Pass` は delegation であり、許可ではありません。アプリケーション Tier のポリシーを追加し、デプロイ前に最終 profile/default-tier の動作を確認してください。空の Tier を作成しても完全なアプリケーション隔離ポリシーにはなりません。 `global()` は `namespaceSelector` に指定し、別のラベルセレクターで GlobalNetworkSet を特定します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1659,12 +1659,12 @@ resource "aws_network_acl_rule" "database_return" {
 
 **AWS VPC CNI chaining** を選択するか、別途設計した完全な CNI/IPAM migration を選択してください。chaining mode では AWS VPC CNI が ENI/IPAM responsibility を維持し、Cilium が datapath を接続します。`aws-node` を保持してください。削除は installation shortcut ではありません。既存 add-on/Helm owner をレビューし、重複する policy-enforcement engine を避けてください。chaining policy が適用される前に既存 Pod の制御された再作成が必要です。中断と rollback を計画してください。
 
-公式の1.20.1 chaining guide はこれらの value を提供していますが、L7/IPsec の制限も文書化しています。古い例示 output を含みますが、それらは現在の EKS environment の validation ではありません。chart repository/package を準備し、provenance を確認してから render してください。
+公式の1.20.3 chaining guide はこれらの value を提供していますが、L7/IPsec の制限も文書化しています。古い例示 output を含みますが、それらは現在の EKS environment の validation ではありません。chart repository/package を準備し、provenance を確認してから render してください。
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
 # Rendering alone does not change a cluster or validate a migration.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system \
   --set cni.chainingMode=aws-cni \
   --set cni.exclusive=false \
@@ -1672,7 +1672,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
   --set routingMode=native > cilium-reviewed.yaml
 ```
 
-[AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
+[AWS VPC CNI chaining — Cilium 1.20.3](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 ## 可視化ツール {#visualization-tools}
 
@@ -1828,6 +1828,12 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
   }
 '
 ```
+
+## NetworkPolicy と境界検査の連携
+
+NetworkPolicy は、対応する CNI を通じて Pod 間の接続を制御しますが、WAF や中央ファイアウォールへの経路をすべて構成するものではありません。同一ノード内、VPC 内、PrivateLink、ピアリング、IPv6 のトラフィックが自動的に中央 TGW 検査を通ると想定しないでください。
+
+公開アプリケーションは [WAF/オリジン保護](./14-waf-edge-api-security.md) に、アウトバウンドまたは VPC 間のトラフィックは [Palo Alto/Fortinet](./15-ngfw-paloalto-fortinet.md) と [GWLB/GENEVE](./16-gwlb-geneve-inspection.md) に接続します。Pod/ノードの SNAT とリクエスト/レスポンスのタプルを確認し、ポリシーの結果とアプライアンス経由の経路を分けてテストしてください。Webhook と Secret 権限の調査については、[Defense in Depth and Incident Response](./13-defense-in-depth-incident-response.md) を参照してください。
 
 ## まとめ
 

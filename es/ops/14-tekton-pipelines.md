@@ -1,32 +1,32 @@
-# Tekton Pipelines: CI nativa de Kubernetes
+# Tekton Pipelines: integración continua sobre Kubernetes
 
-> **Última actualización**: 12 de septiembre de 2026. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
-> **Validación**: Esquemas CRD publicados, dependencias de Tasks, scripts locales y programas simulados. No se ejecutaron instalaciones EKS reales, compilaciones/push de imágenes, firmas KMS, webhooks externos ni notificaciones.
+> **Última actualización**: 16 de octubre de 2026. Pipelines 1.17.0, Triggers 0.37.1, Chains 0.29.0, Dashboard 0.73.0, tkn 0.46.1.
+> **Validación**: Esquemas CRD de las versiones indicadas, dependencias de Tasks, scripts locales y programas simulados. No se realizaron instalaciones reales en EKS, compilaciones ni publicaciones de imágenes, firmas con KMS, webhooks externos ni notificaciones.
 
 < [Anterior: FinOps](./13-finops-cost-platform.md) | [Índice](./README.md) | [Siguiente: Operaciones zonales](./15-zonal-operations-guide.md) >
 
 ## Descripción general
 
-Tekton define Tasks, Pipelines y sus ejecuciones mediante la API Kubernetes. Los operadores siguen gestionando controladores, capacidad de workers, almacenamiento, actualizaciones y acceso. Otros sistemas CI también admiten ejecutores Kubernetes, autoscaling y attestations; evite afirmar soporte exclusivo o coste operativo cero.
+Tekton define Tasks, Pipelines y sus ejecuciones mediante la API de Kubernetes. Los operadores siguen siendo responsables de los controladores, la capacidad de ejecución, el almacenamiento, las actualizaciones y el acceso. Otros sistemas de CI también pueden ofrecer ejecutores sobre Kubernetes, escalado automático y declaraciones firmadas sobre los artefactos; estas capacidades no son exclusivas de Tekton ni eliminan su coste operativo.
 
-El ejemplo ejecuta CI de Go para **la rama main protegida de un repositorio aprobado**: clonado → vet/test paralelos → publicación de imagen candidata → escaneo por digest. El procesamiento Chains y la verificación criptográfica preceden a un cambio GitOps revisado por separado. Los PR de forks externos no deben compartir roles IRSA, PVC ni privilegios de firma de esta Pipeline.
+Este ejemplo ejecuta la integración continua de una aplicación Go para **la rama main protegida de un repositorio aprobado**: clona el código, ejecuta la revisión estática y las pruebas en paralelo, publica una imagen candidata y la analiza por su digest. El procesamiento de Chains y la verificación criptográfica preceden a un cambio de GitOps que se revisa por separado. Los PR de forks externos no deben compartir los roles IRSA, los PVC ni los permisos de firma de este Pipeline.
 
 ## 1. Modelo de ejecución
 
-| Componente | Rol |
+| Componente | Función |
 | --- | --- |
-| Task / Pipeline | Definiciones reutilizables de trabajo y dependencias |
+| Task / Pipeline | Definiciones reutilizables del trabajo y sus dependencias |
 | TaskRun / PipelineRun | Ejecuciones con parámetros y estado |
-| Step / Sidecar | Trabajo secuencial / servicio auxiliar, normalmente en un Pod TaskRun |
-| Workspace / Result | Vinculación de volumen / salida pequeña; no son CRD independientes |
+| Step / Sidecar | Trabajo secuencial o servicio auxiliar, normalmente dentro del Pod de un TaskRun |
+| Workspace / Result | Vinculación de un volumen o valor de salida pequeño; no son CRD independientes |
 
-Una Task no es un Pod: ejecutar TaskRun lo crea. Results admite cadenas, arrays y objetos; use almacenamiento de artefactos para informes grandes. Los Steps del mismo Pod comparten red y volúmenes, por lo que no son una frontera fuerte entre código mutuamente no confiable.
+Definir una Task no crea un Pod; ejecutar un TaskRun sí lo crea. Los resultados admiten cadenas, arrays y objetos. Utilice almacenamiento de artefactos para los informes grandes. Los Steps del mismo Pod comparten la red y los volúmenes, de modo que no proporcionan un aislamiento fuerte entre fragmentos de código que no confían entre sí.
 
-![Definiciones, ejecuciones, campos Workspace/Result y procesamiento Chains separado](../.gitbook/assets/en-ops-14-tekton-pipelines-0.png)
+![Definiciones y ejecuciones de Tekton, campos Workspace y Result, y procesamiento independiente de Chains](../.gitbook/assets/en-ops-14-tekton-pipelines-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-0.html)
 
-![Servidor API, controladores, webhook y Pods TaskRun con Workspaces por ejecución](../.gitbook/assets/en-ops-14-tekton-pipelines-1.png)
+![Servidor de la API, controladores, webhook y Pods de TaskRun con Workspaces específicos de cada ejecución](../.gitbook/assets/en-ops-14-tekton-pipelines-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-1.html)
 
@@ -34,16 +34,16 @@ Una Task no es un Pod: ejecutar TaskRun lo crea. Results admite cadenas, arrays 
 
 ### 2.1 Versiones y vías de instalación
 
-El mínimo oficial es Kubernetes 1.28, mientras los campos de seguridad y validación de este capítulo apuntan a Kubernetes 1.36. El mínimo upstream no recomienda versiones EKS actualmente soportadas. Dashboard 0.72.0 admite explícitamente Pipelines 1.15 LTS/1.16 y Triggers 0.37 LTS.
+La instalación oficial exige como mínimo Kubernetes 1.28, mientras que los campos de seguridad y la validación de esquemas de este capítulo se han preparado para Kubernetes 1.36. Ese mínimo del proyecto no constituye una recomendación sobre las versiones de EKS que mantienen soporte. Dashboard 0.73.0 admite explícitamente Pipelines 1.15 LTS y 1.17, y Triggers 0.37 LTS.
 
-Es una instalación manual fijada. La guía oficial también remite a Tekton Operator para ciclo de vida en producción. Elija propietario antes de mezclar apply manual con recursos del Operator. Estos comandos cambian un clúster real; revise propiedad en vez de forzar conflictos a ciegas.
+Este ejemplo instala manualmente versiones fijadas. La guía oficial también remite a Tekton Operator para gestionar el ciclo de vida en producción. Determine quién administra los recursos antes de combinar la aplicación manual de manifiestos con recursos gestionados por el Operator. Los comandos modifican un clúster real: revise esa responsabilidad antes de forzar la resolución de conflictos.
 
 ```bash
 kubectl version -o yaml
 kubectl get storageclass
 
 curl --fail --location \
-  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.16.0/release.yaml \
+  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.17.0/release.yaml \
   -o pipelines-release.yaml
 kubectl apply --server-side --field-manager=tekton-install -f pipelines-release.yaml
 kubectl wait --for=condition=Established --timeout=120s \
@@ -53,38 +53,38 @@ kubectl -n tekton-pipelines wait deployment --all \
   --for=condition=Available --timeout=300s
 
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/interceptors.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/interceptors.yaml
 kubectl apply --server-side -f \
   https://infra.tekton.dev/tekton-releases/chains/previous/v0.29.0/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.72.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.73.0/release.yaml
 kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 ```
 
-`release.yaml` instala Dashboard de solo lectura; `release-full.yaml` incluye escritura. Solo lectura no autentica usuarios ni aplica automáticamente permisos por namespace. Valide proxy de autenticación/OIDC y modelo de acceso antes de exponerlo. Un ALB interno no es autenticación. Cognito requiere listener HTTPS real, endpoints Cognito/OIDC y Secret.
+`release.yaml` instala el Dashboard de solo lectura; `release-full.yaml` incluye funciones de escritura. El modo de solo lectura no autentica a los usuarios ni aplica automáticamente permisos de usuario por namespace. Antes de exponerlo para uso operativo, valide un proxy de autenticación con OIDC y el modelo de acceso. Un ALB interno no proporciona autenticación por sí solo. La integración con Cognito necesita el listener HTTPS real, los endpoints de Cognito u OIDC y el Secret correspondiente.
 
-`https://tekton.dev/helm-charts` no es un repositorio oficial funcional para este ejemplo. No instale el antiguo chart inexistente ni sus values.
+`https://tekton.dev/helm-charts` no es un repositorio oficial de charts operativo para este ejemplo. No utilice el antiguo chart inexistente ni sus valores de configuración.
 
 ### 2.2 Significado actual de la configuración
 
-| Ajuste | Significado |
+| Ajuste | Significado actual |
 | --- | --- |
-| `feature-flags.coschedule: workspaces` | Coloca conjuntamente TaskRuns que comparten Workspace PVC; consérvelo en este ejemplo RWO |
-| `disable-affinity-assistant` | Flag heredado eliminado después de v0.68 |
-| `set-security-context: true` | Predeterminado en 1.16 para contenedores inyectados; los Steps propios necesitan contextos compatibles |
-| `results-from: termination-message` | Ruta predeterminada, sujeta a límites del mensaje de terminación Kubernetes |
-| `max-result-size` | Aplica a `sidecar-logs`; cambiarlo solo no amplía el mensaje de terminación predeterminado |
-| Timeout predeterminado | Gestionado en `config-defaults`; aquí PipelineRun lo establece explícitamente |
+| `feature-flags.coschedule: workspaces` | Programa en el mismo nodo los TaskRuns que comparten un Workspace basado en PVC; conserve este ajuste para el ejemplo RWO |
+| `disable-affinity-assistant` | Opción antigua eliminada después de v0.68 |
+| `set-security-context: true` | Valor predeterminado de 1.17 para los contenedores que inyecta Tekton; los Steps definidos por el usuario necesitan contextos compatibles propios |
+| `results-from: termination-message` | Vía predeterminada, sujeta a los límites del mensaje de terminación de Kubernetes |
+| `max-result-size` | Se aplica a `sidecar-logs`; cambiarlo por sí solo no amplía el mensaje de terminación predeterminado |
+| Tiempo de espera predeterminado | Se administra en `config-defaults`; este ejemplo fija explícitamente los tiempos de espera del PipelineRun |
 
-`running-in-environment-with-injected-sidecars` no aísla Workspaces y `keep-pod-on-cancel` no es un TTL de retención PipelineRun. No sustituya un ConfigMap completo por un fragmento pequeño.
+`running-in-environment-with-injected-sidecars` no proporciona aislamiento de Workspaces, y `keep-pod-on-cancel` no define un TTL de retención de PipelineRuns. No sustituya un ConfigMap completo por un fragmento reducido.
 
 ### 2.3 ServiceAccounts y roles IAM separados
 
-Los controladores usan `tekton-pipelines` / `tekton-chains`; las compilaciones, `tekton-builds`. Las referencias simples a Task/Pipeline resuelven en el mismo namespace. No se referencia una Task de otro namespace solo por nombre.
+Los controladores utilizan `tekton-pipelines` y `tekton-chains`; las compilaciones utilizan `tekton-builds`. Las referencias a Tasks o Pipelines por su nombre se resuelven en el mismo namespace. No puede referenciar una Task de un namespace compartido únicamente por su nombre.
 
-Cree primero los roles IAM. Cada confianza IRSA debe restringir proveedor OIDC existente, `aud=sts.amazonaws.com` y el `sub=system:serviceaccount:tekton-builds:<SA name>` exacto. Cree repositorios ECR previamente; la compilación no necesita `CreateRepository`. Pese al nombre, `ci-readonly` no tiene un Role API Kubernetes aquí: es la cuenta de ejecución sin privilegios predeterminada.
+Cree primero los roles IAM. Cada política de confianza de IRSA debe limitar el acceso al proveedor OIDC existente del clúster, a `aud=sts.amazonaws.com` y al valor exacto de `sub=system:serviceaccount:tekton-builds:<SA name>`. Cree previamente los repositorios ECR; las compilaciones no necesitan `CreateRepository`. A pesar de su nombre, `ci-readonly` no tiene un Role de la API de Kubernetes en este ejemplo: es la cuenta de ejecución predeterminada sin privilegios.
 
 **`service-accounts.yaml`**
 
@@ -240,17 +240,17 @@ roleRef:
 }
 ```
 
-Adjunte la política de push a `tekton-candidate-push` y la de lectura a `tekton-candidate-read`. Sustituya cuenta, región y repositorio en todos los sitios. `GetAuthorizationToken` no admite alcance por repositorio, por lo que se separa y restringe por región solicitada.
+Asocie la política de publicación a `tekton-candidate-push` y la de lectura a `tekton-candidate-read`. Sustituya la cuenta, la región y el repositorio en todas las referencias. `GetAuthorizationToken` no admite limitar el recurso a un repositorio concreto, por lo que se configura por separado y se restringe mediante la región solicitada.
 
-IRSA autentica llamadas AWS SDK/CLI dentro del Pod. Las descargas ECR del kubelet usan roles de nodo, roles Fargate o imagePullSecrets por vías separadas. Una anotación IRSA Task no corrige por sí sola ImagePullBackOff.
+IRSA autentica las llamadas al SDK o a la CLI de AWS realizadas dentro del Pod. Kubelet descarga las imágenes de ECR mediante otras vías: los roles de los nodos, los roles de ejecución de Fargate o imagePullSecrets. Añadir una anotación IRSA a una Task no resuelve por sí solo un error ImagePullBackOff.
 
 ## 3. Definiciones completas de Tasks
 
-Estas seis Tasks forman un ejemplo coherente. El repositorio debe contener módulo Go, pruebas y Dockerfile. Sustituya la URL fija `myorg/myapp` del checkout por el repositorio aprobado y ajuste la allowlist Trigger. No acepte URL Git ni comandos shell arbitrarios de un webhook.
+Estas seis Tasks forman un ejemplo coherente. El repositorio de código debe contener un módulo Go, pruebas y un Dockerfile. Sustituya la URL fija `myorg/myapp` de la Task de clonación por el repositorio aprobado y ajuste la lista de repositorios permitidos del Trigger para que coincida. No acepte URL de Git ni comandos de shell arbitrarios procedentes de un webhook.
 
-Las sustituciones Tekton son textuales. Pase params mediante variables de entorno o argumentos, no interpolados en scripts. Valide commits completos de 40 caracteres. Los archivos de autenticación ECR usan `emptyDir` local de Task; no escriba en volúmenes Secret de solo lectura ni asuma que existen herramientas de la imagen de otro Step.
+Las sustituciones de Tekton son textuales. Pase los parámetros mediante variables de entorno o argumentos, en lugar de interpolarlos en el cuerpo de los scripts. Valide hashes completos de commit de 40 caracteres. Los archivos de autenticación de ECR utilizan un `emptyDir` local de la Task; no los escriba en volúmenes Secret de solo lectura ni suponga que una herramienta de la imagen de otro Step está disponible.
 
-BuildKit rootless requiere un entorno dedicado validado con namespaces de usuario, montajes y seccomp/AppArmor adecuados. `Unconfined` y `--oci-worker-no-process-sandbox` son compromisos explícitos de seguridad rechazados por políticas restricted. No son valores universalmente seguros. Use otro entorno para PR externos.
+BuildKit sin privilegios de root requiere un entorno de compilación dedicado y validado, con namespaces de usuario, montajes y una configuración adecuada de seccomp y AppArmor. `Unconfined` y `--oci-worker-no-process-sandbox` implican concesiones explícitas de seguridad que la política restricted del namespace rechaza. No son valores predeterminados seguros para todos los entornos. Utilice un entorno separado para los PR externos.
 
 **`tasks.yaml`**
 
@@ -273,7 +273,7 @@ spec:
     type: string
   steps:
   - name: checkout
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -324,7 +324,7 @@ spec:
   results: []
   steps:
   - name: vet
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -360,7 +360,7 @@ spec:
   results: []
   steps:
   - name: test
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -614,7 +614,7 @@ spec:
     - name: auth
       mountPath: /auth
   - name: scan
-    image: aquasec/trivy:0.74.0
+    image: aquasec/trivy:0.76.0
     script: |
       #!/bin/sh
       set -eu
@@ -684,13 +684,13 @@ spec:
       runAsGroup: 1000
 ```
 
-El repositorio original Google Kaniko está archivado; este ejemplo usa BuildKit 0.33.0. Rootless no garantiza aislamiento completo de procesos. Antes de producción, verifique/fije digests y plataformas y pruebe rutas escribibles y contextos de seguridad en nodos reales.
+El repositorio original de Google Kaniko está archivado; este nuevo ejemplo utiliza BuildKit 0.33.0. Ejecutarlo sin root no garantiza un aislamiento completo de los procesos. Antes de usarlo en producción, verifique y fije los digests y las plataformas de las imágenes, y pruebe las rutas de escritura y los contextos de seguridad en nodos reales.
 
-El código de salida 1 por hallazgos y otros códigos de error del escáner fallan la Task. Un informe ausente no debe convertirse en «cero vulnerabilidades». `/tmp/trivy-report.json` es temporal; expórtelo a almacenamiento aprobado antes de limpiar si requiere retención larga.
+El código de salida 1 del escáner, que indica hallazgos, y los demás códigos de error hacen fallar la Task. La ausencia de un informe no debe interpretarse como «cero vulnerabilidades». `/tmp/trivy-report.json` es temporal; si necesita conservarlo a largo plazo, expórtelo a un almacén de artefactos aprobado antes de limpiar la ejecución.
 
 ## 4. Pipeline y ejecución
 
-![Clonado, test/vet paralelos, publicación/escaneo candidato e informe final de mejor esfuerzo](../.gitbook/assets/en-ops-14-tekton-pipelines-2.png)
+![Clonación, revisión estática y pruebas en paralelo, publicación y análisis de la imagen candidata, e informe final sujeto a las condiciones de ejecución](../.gitbook/assets/en-ops-14-tekton-pipelines-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-2.html)
 
@@ -832,15 +832,15 @@ kubectl create -f pipelinerun.yaml
 tkn pipelinerun logs --last -n tekton-builds --follow --exit-with-pipelinerun-error
 ```
 
-Se crea un PVC nuevo por ejecución. ReadWriteOnce permite varios Pods en el mismo nodo, no RWX entre nodos. emptyDir no comparte almacenamiento entre distintos Pods TaskRun. Separe cachés por nivel de confianza y coordine escritores concurrentes.
+Se crea un PVC nuevo para cada ejecución. ReadWriteOnce permite que varios Pods lo utilicen en el mismo nodo, pero no equivale a RWX entre varios nodos. Un emptyDir no comparte almacenamiento entre Pods de TaskRun diferentes. Separe las cachés según el nivel de confianza y coordine los procesos que escriban en ellas simultáneamente.
 
-`finally` se ejecuta después de las Tasks ordinarias, pero no incondicionalmente. Referencias a Results ausentes pueden omitirlo; cancelación, timeout total, fallos de recursos y referencias sin resolver también pueden impedirlo. El ejemplo solo informa nombre y `tasks.status`, evitando Results de imagen que quizá nunca se produjeron. No asuma orden entre varias Tasks finally.
+`finally` se ejecuta después de las Tasks ordinarias, pero su ejecución no está garantizada en todas las circunstancias. Las referencias a resultados ausentes pueden provocar que se omita; el modo de cancelación, el tiempo de espera total, los fallos de recursos y las referencias sin resolver también pueden impedirla. Este ejemplo solo informa del nombre de la ejecución y de `tasks.status`, sin utilizar resultados de imágenes que quizá nunca se hayan generado. No suponga que varias Tasks finally se ejecutan en un orden determinado.
 
 ## 5. Webhooks y Triggers
 
-Este Trigger verifica primero GitHub HMAC y luego **repositorio, rama, estado de eliminación y SHA completo**. URL Git, ruta ECR, nombres Task y ServiceAccounts permanecen fijos en definiciones confiables. No conecte eventos de PR externos a esta plantilla. HMAC verifica origen de entrega; no autoriza código PR para desplegar.
+Este Trigger verifica primero el HMAC de GitHub y después comprueba **el repositorio, la rama, el estado de eliminación y el SHA completo**. La URL de Git, la ruta de ECR, los nombres de las Tasks y los ServiceAccounts permanecen fijados en definiciones de confianza. No conecte eventos de PR externos a esta plantilla. HMAC verifica el origen de la entrega; no autoriza al código de un PR a desplegar.
 
-![Entrega verificada y filtros de repositorio/rama crean una PipelineRun fija para un commit aprobado](../.gitbook/assets/en-ops-14-tekton-pipelines-3.png)
+![Una entrega verificada y los filtros de repositorio y rama crean un PipelineRun con una configuración fija para un commit aprobado](../.gitbook/assets/en-ops-14-tekton-pipelines-3.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-3.html)
 
@@ -938,29 +938,29 @@ spec:
           finally: 5m
 ```
 
-El `token` del Secret `github-webhook` debe coincidir con el secreto GitHub. Proporciónelo desde almacenamiento protegido, nunca Git. Configure por separado HTTPS externo y reintentos/deduplicación de entregas. EventListener tiene un Service interno por defecto; este YAML no crea por sí solo un endpoint Internet.
+En el Secret `github-webhook`, el campo `token` debe coincidir con el secreto del webhook de GitHub. Proporciónelo desde un almacén protegido, nunca desde Git. Configure por separado el endpoint HTTPS externo y la política de reintentos y deduplicación de entregas. EventListener dispone de un Service interno de forma predeterminada; este YAML no crea por sí solo un endpoint accesible desde Internet.
 
-Conserve el cuerpo original durante terminación TLS y procesamiento gateway/Ingress para verificar HMAC. Aplique autenticación, rate limits, disponibilidad y rutas fijas al callback. Un período silencioso no implica automáticamente una caída de webhook: inspeccione entregas reales y errores EventListener.
+Conserve el cuerpo original de la solicitud durante la terminación de TLS y el procesamiento del gateway o Ingress para poder verificar el HMAC. Configure la autenticación, los límites de solicitudes, la disponibilidad y el enrutamiento fijo adecuados para el callback. Un periodo sin actividad no demuestra que el webhook haya fallado: examine los resultados reales de las entregas y los errores de procesamiento de EventListener.
 
-No asuma que `head_commit` siempre existe ni trunque `refs/heads/feature/a` usando un solo elemento split. Los filtros de archivos deben considerar rutas añadidas, modificadas y eliminadas y límites de payload. El ejemplo no inventa un filtro específico del negocio.
+No suponga que `head_commit` siempre existe ni recorte `refs/heads/feature/a` utilizando un único elemento de una división de la cadena. Los filtros de cambios de archivos deben considerar las rutas añadidas, modificadas y eliminadas, así como los límites del contenido de la entrega. Este ejemplo no define un filtro de rutas específico de una aplicación.
 
 ## 6. Chains y verificación de firmas
 
-### 6.1 Éxito CI y finalización de firma son independientes
+### 6.1 El éxito de CI y la finalización de la firma son etapas independientes
 
-Chains es un controlador separado que procesa TaskRuns/PipelineRuns completadas. Una firma de imagen no demuestra que todas las pruebas y el escaneo pasaran. `chains.tekton.dev/signed=true` no es aprobación de despliegue ni verificación criptográfica.
+Chains es un controlador independiente que procesa los TaskRuns y PipelineRuns completados. La firma de una imagen no demuestra por sí sola que todas las pruebas y el análisis hayan finalizado correctamente. `chains.tekton.dev/signed=true` no constituye una aprobación de despliegue ni una verificación criptográfica.
 
-La procedencia a nivel Pipeline se crea después de completarla. Esperar dentro de ella a su propia attestation puede entrar en conflicto con ese orden. El ejemplo verifica y promociona por separado tras finalizar CI.
+La información de procedencia del Pipeline se crea después de que este termine. Esperar dentro del mismo Pipeline a su propia declaración firmada puede entrar en conflicto con ese orden. El ejemplo realiza la verificación y la promoción mediante un procedimiento independiente, una vez completada la integración continua.
 
-![Comprobar CI, verificar firmas/procedencia Chains y promocionar solo el digest aprobado](../.gitbook/assets/en-ops-14-tekton-pipelines-4.png)
+![Comprobar el éxito de CI, verificar las firmas y la procedencia generadas por Chains, y promover únicamente el digest aprobado](../.gitbook/assets/en-ops-14-tekton-pipelines-4.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-4.html)
 
 ### 6.2 Configuración KMS
 
-Use una clave KMS asimétrica `SIGN_VERIFY` existente. Sustituya ARN y `builder.id`. Configure un rol IRSA separado en la **ServiceAccount del controlador Chains `tekton-chains/tekton-chains-controller`**, con escritura ECR en el repositorio candidato y los permisos KMS siguientes. Dar IRSA al Pod de build no da esas credenciales al controlador.
+Utilice una clave KMS asimétrica existente de tipo `SIGN_VERIFY`. Sustituya el ARN de la clave y `builder.id`. Configure un rol IRSA independiente en el **ServiceAccount del controlador Chains `tekton-chains/tekton-chains-controller`**, con permisos de escritura de ECR en el repositorio candidato y los permisos de KMS que aparecen a continuación. Asignar un rol IRSA al Pod de compilación no proporciona esas credenciales al controlador.
 
-El backend OCI actual usa búsqueda de credenciales Kubernetes y cadenas predeterminadas/asistentes ECR. Configure la identidad AWS disponible en el entorno del controlador y verifique la subida real de firmas. El emptyDir `/auth` de una Task no es un Secret compartido legible por Chains.
+El backend OCI actual busca credenciales de Kubernetes y utiliza las cadenas predeterminadas y los asistentes de credenciales de ECR. Configure la identidad AWS disponible en el entorno del controlador y compruebe que las firmas se carguen correctamente. El emptyDir `/auth` de una Task de compilación no es un Secret compartido que Chains pueda leer.
 
 **`chains-kms-policy.json`**
 
@@ -999,15 +999,15 @@ data:
   builddefinition.buildtype: https://tekton.dev/chains/v2/slsa
 ```
 
-El formateador `slsa/v1` no significa SLSA provenance v1.0. En Chains actual, `slsa/v1` / `in-toto` corresponden a v0.2, y `slsa/v2alpha3` / `slsa/v2alpha4` a v1.0. El ejemplo usa `slsa/v2alpha3` a nivel Pipeline, desactiva almacenamiento de procedencia Task duplicado y habilita firmas de imagen por separado.
+El nombre del formateador `slsa/v1` no significa que genere procedencia SLSA v1.0. En la versión actual de Chains, `slsa/v1` y `in-toto` corresponden a v0.2; `slsa/v2alpha3` y `slsa/v2alpha4` corresponden a v1.0. Este ejemplo utiliza `slsa/v2alpha3` para la procedencia del Pipeline, desactiva su almacenamiento duplicado por Task y habilita las firmas de imágenes por separado.
 
-`storage.oci.encoding-format: dsse` conserva almacenamiento heredado `.sig` / `.att`. `sigstore-bundle` de 0.29 usa referrers OCI 1.1; cambie almacenamiento y verificación conjuntamente. Aquí no se sube a Rekor, por lo que se verifica explícitamente según una política interna de clave pública. Configure transparencia aparte si se exige, revisando metadatos de build expuestos.
+`storage.oci.encoding-format: dsse` conserva el almacenamiento antiguo `.sig` y `.att`. La opción `sigstore-bundle` de la versión 0.29 utiliza referencias OCI 1.1; cambie conjuntamente el almacenamiento y las herramientas de verificación. Aquí se han desactivado las cargas a Rekor, por lo que la verificación sigue explícitamente una política interna de clave pública. Si necesita transparencia, configúrela por separado y revise los metadatos de compilación que se expondrán.
 
-La firma keyless requiere un issuer confiable para el Fulcio real y un token válido. Poner una cadena issuer GitHub Actions en un Pod EKS no autentica. Firmas y attestations por sí solas no establecen un nivel SLSA concreto.
+La firma sin clave necesita un emisor en el que confíe el servicio Fulcio utilizado y un token válido de la carga de trabajo. Configurar el nombre de un emisor de GitHub Actions en un Pod de EKS no proporciona autenticación. Las firmas y las declaraciones firmadas no establecen por sí solas un nivel SLSA concreto.
 
-### 6.3 Verificar ejecución y artefactos independientemente
+### 6.3 Verificar por separado la ejecución y los artefactos
 
-El script comprueba una PipelineRun **leída de una API confiable** para confirmar CI correcto, Chains completado y repositorio, commit e imágenes aprobados. No verifica firmas. También se requieren las comprobaciones Cosign posteriores y revisión de política de procedencia.
+Este script comprueba un PipelineRun **obtenido de una API de confianza** para confirmar el éxito de CI, la finalización del procesamiento de Chains y el repositorio, el commit y las imágenes aprobados. No verifica firmas. También debe realizar las comprobaciones posteriores de Cosign y revisar la política de procedencia.
 
 **`check_run.py`**
 
@@ -1083,17 +1083,17 @@ cosign verify-attestation --key chains.pub --insecure-ignore-tlog=true \
   > verified-attestations.json
 ```
 
-`--insecure-ignore-tlog` elige explícitamente no exigir una entrada Rekor pública. La verificación contra la clave confiable sigue activa. Si la organización exige transparencia, configure esa cadena en vez de esta excepción.
+`--insecure-ignore-tlog` indica la decisión explícita de no exigir una entrada pública en Rekor. La verificación de la firma con la clave de confianza permanece activa. Si la política de la organización exige verificar la transparencia, configure esa cadena en lugar de utilizar esta excepción.
 
-Aplique política al digest subject de la attestation verificada, `runDetails.builder.id`, `buildDefinition.buildType`, URI/commit de origen exactos y definiciones Task/Pipeline aprobadas. Una firma válida de cualquier productor o una attestation de otro build no basta. Los comandos no implementan automáticamente esas comprobaciones organizativas.
+Aplique la política al digest del artefacto identificado en la declaración verificada, a `runDetails.builder.id`, a `buildDefinition.buildType`, a la URI y el commit exactos del código de origen y a las definiciones aprobadas de Task y Pipeline. No basta con una firma válida de un productor cualquiera ni con una declaración de otra compilación. Los comandos anteriores no implementan automáticamente estas comprobaciones específicas de la organización.
 
-Configure admisión por separado para la misma clave/identidad, digest y condiciones de procedencia. No aplique marcadores incompletos `BEGIN PUBLIC KEY ...` ni compare campos predicate inexistentes. Revise ImageValidatingPolicy de Kyverno y autenticación de registro para la versión instalada; pruebe aceptaciones/rechazos con claves correctas/erróneas, orígenes e imágenes sin firmar.
+Configure por separado la verificación en la admisión para la misma clave o identidad de confianza, digest y condiciones de procedencia. No aplique marcadores incompletos como `BEGIN PUBLIC KEY ...` ni compare campos inexistentes del predicado. Revise ImageValidatingPolicy de Kyverno y la autenticación del registro para la versión instalada; después, pruebe los casos de aceptación y rechazo con claves correctas e incorrectas, distintos orígenes e imágenes sin firmar.
 
-## 7. Relevo a GitOps
+## 7. Transferencia a GitOps
 
-Actualice Kustomize/Helm real con `repository@sha256:...` verificado. Este capítulo no incluye una Task que haga push, abra o fusione PR automáticamente. Un propietario o flujo de promoción aprobado aparte edita repositorios/archivos fijos y fusiona tras CI y revisión. Evite que despliegues kubectl de Tekton y ArgoCD gestionen los mismos manifiestos.
+Actualice la configuración real de Kustomize o Helm con la referencia verificada `repository@sha256:...`. Este capítulo no incluye una Task que publique cambios en Git, abra PR ni los fusione automáticamente. Un responsable o un flujo de promoción aprobado por separado modifica repositorios y archivos fijados, y fusiona los cambios después de CI y de su revisión. Evite que los despliegues con kubectl de Tekton y ArgoCD administren los mismos manifiestos.
 
-![Revisar cambio GitOps con digest verificado; ArgoCD sincroniza manifiestos y kubelets descargan imágenes](../.gitbook/assets/en-ops-14-tekton-pipelines-5.png)
+![Revisar un cambio de GitOps con el digest verificado; ArgoCD sincroniza los manifiestos y kubelet descarga las imágenes](../.gitbook/assets/en-ops-14-tekton-pipelines-5.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-5.html)
 
@@ -1106,17 +1106,17 @@ git diff -- kustomization.yaml
 # Run repository checks and submit the focused change for review.
 ```
 
-Separar referencias con `cut -d: -f1/2` rompe puertos de registro y digests. Pase la referencia completa. Proporcione known_hosts SSH por una vía confiable; ssh-keyscan sin verificar no es un ancla de confianza. Las credenciales copiadas al home de un Step no se comparten automáticamente con otro.
+Dividir las referencias de imagen mediante `cut -d: -f1/2` da resultados incorrectos cuando incluyen puertos de registro o digests. Pase la referencia completa a la herramienta. Configure SSH known_hosts mediante una vía de confianza: el resultado de ssh-keyscan sin verificar no establece esa confianza. Las credenciales copiadas al directorio personal de un Step no se comparten automáticamente con otro.
 
-ArgoCD sincroniza manifiestos Git; kubelets/runtimes descargan imágenes. Compruebe salud de aplicación aparte de la sincronización. La reversión no restaura automáticamente datos o cambios de esquema.
+ArgoCD sincroniza los manifiestos de Git; kubelet y los runtimes de contenedores descargan las imágenes de la aplicación. Compruebe la salud de la aplicación por separado de la finalización de la sincronización. Revertir un despliegue no restaura automáticamente los datos ni los cambios de esquema.
 
 ## 8. Operaciones y limpieza
 
 ### 8.1 Registros de ejecución y PVC
 
-`keep` y `keep-since` son opciones de herramientas como comandos de eliminación tkn, no un TTL PipelineRun integrado. tkn 0.46.0 `pipelinerun delete` no tiene `--dry-run`. Revise retención de logs, informes de escaneo, firmas/procedencia y auditoría antes de borrar. No elimine todos los Pods exitosos sin política de antigüedad.
+`keep` y `keep-since` son opciones de herramientas como los comandos de eliminación de tkn, no campos de TTL incorporados a PipelineRun. En tkn 0.46.1, `pipelinerun delete` no dispone de `--dry-run`. Revise la retención de logs, informes de análisis, firmas, procedencia y datos de auditoría antes de eliminar recursos. No elimine todos los Pods finalizados correctamente sin una política de antigüedad.
 
-La herramienta muestra **solo candidatos para revisión** en un namespace: ejecuciones exitosas terminadas hace más de siete días y fallidas hace más de catorce. Usa finalización, no creación, y exige confirmaciones Chains y de archivo. `ci.example.com/archive-complete` es una anotación del operador registrada tras archivar realmente, no un campo automático Tekton. El script no llama a Kubernetes API ni elimina recursos.
+Esta herramienta muestra **únicamente candidatos para revisión** en un namespace: ejecuciones correctas terminadas hace más de siete días y ejecuciones fallidas terminadas hace más de catorce. Utiliza la fecha de finalización, no la de creación, y exige confirmaciones de Chains y del archivado. `ci.example.com/archive-complete` es una anotación administrada por el operador que se registra después de completar realmente el archivado; no es un campo automático de Tekton. El script no llama a la API de Kubernetes ni elimina recursos.
 
 **`cleanup_candidates.py`**
 
@@ -1182,19 +1182,19 @@ kubectl -n tekton-builds get pipelineruns -o json > runs.json
 python3 cleanup_candidates.py --input runs.json --namespace tekton-builds
 ```
 
-El ciclo de vida PVC depende de `coschedule`.
+El ciclo de vida del PVC depende de `coschedule`.
 
-| Modo | PVC volumeClaimTemplate tras finalizar |
+| Modo | PVC de volumeClaimTemplate después de finalizar |
 | --- | --- |
-| `workspaces` | Se conserva por defecto; la anotación Run `tekton.dev/auto-cleanup-pvc: "true"` habilita limpieza al terminar |
+| `workspaces` | Se conserva de forma predeterminada; la anotación del Run `tekton.dev/auto-cleanup-pvc: "true"` permite limpiarlo al finalizar |
 | `pipelineruns`, `isolate-pipelinerun` | Se limpia al finalizar |
-| `disabled` | GC por referencia de propietario; verifique el comportamiento al eliminar Run |
+| `disabled` | Recolección mediante referencias de propietario; compruebe el comportamiento al eliminar el Run |
 
-La anotación no borra PVC existentes vinculados directamente a Workspaces. No active limpieza automática de datos que aún deban archivarse. Inspeccione ownerReferences antes de declarar TaskRuns huérfanas.
+Esta anotación no elimina los PVC existentes que se vinculan directamente a Workspaces. No habilite la limpieza automática de datos que todavía necesiten archivarse. Examine ownerReferences antes de considerar huérfanos los TaskRuns.
 
 ### 8.2 Monitorización
 
-Pipelines 1.16 exporta métricas con OpenTelemetry. Con `metrics-protocol: prometheus` en `config-observability`, el puerto Service del controlador se llama **`http-metrics`**. Haga coincidir selección ServiceMonitor y Prometheus.
+Pipelines 1.17 exporta métricas mediante OpenTelemetry. Con `metrics-protocol: prometheus` en `config-observability`, el puerto del Service del controlador se denomina **`http-metrics`**. Asegúrese de que coincidan tanto la selección de ServiceMonitor como la de Prometheus.
 
 **`servicemonitor.yaml`**
 
@@ -1258,9 +1258,9 @@ groups:
           summary: "No healthy scrape target for the Tekton controller"
 ```
 
-El archivo usa formato ordinario de reglas Prometheus; colóquelo bajo `PrometheusRule.spec` con el Operator. Los conteos completados usan `pipelinerun_total`; los activos, `running_pipelineruns`. Los estados del contador son `success`, `failed` y `cancelled`, sin etiqueta namespace. Aquí se comparan éxitos/fallos de todo el clúster excluyendo cancelaciones.
+El archivo utiliza el formato habitual de reglas de Prometheus; colóquelo bajo `PrometheusRule.spec` cuando utilice el Operator. Los recuentos de ejecuciones completadas usan `pipelinerun_total`, y los de ejecuciones activas usan `running_pipelineruns`. Los estados del contador son `success`, `failed` y `cancelled`; el contador no tiene una etiqueta de namespace. Este ejemplo compara los éxitos y fallos de todo el clúster, excluyendo las cancelaciones.
 
-Calcule duración media mediante **la suma de los sum de histogramas dividida por la suma de counts**. Promediar medias por serie no da la media global. Una métrica de duración completada con `status=running` no da antigüedad transcurrida de ejecuciones activas. Inspeccione startTime, condiciones y estado Pod reales.
+Calcule la duración media mediante **la suma de las sumas de los histogramas dividida por la suma de sus recuentos**. Promediar las medias de cada serie no produce la media global. Una métrica de duración de ejecuciones completadas con `status=running` no indica cuánto tiempo llevan ejecutándose las activas. Consulte sus startTime, condiciones y estados reales de los Pods.
 
 ### 8.3 Diagnóstico y logs
 
@@ -1274,32 +1274,32 @@ kubectl -n tekton-pipelines logs deployment/tekton-pipelines-controller --tail=1
 kubectl -n tekton-chains logs deployment/tekton-chains-controller --tail=100
 ```
 
-`--last` selecciona la última ejecución, no la última fallida. Lea condiciones JSON, no selectores de campo de condiciones CRD no admitidos. Consulte las etiquetas namespace/PipelineRun realmente recogidas por Loki/Alloy. Recoger solo archivos del namespace de controladores omite builds de `tekton-builds`.
+`--last` selecciona la ejecución más reciente, no la última que falló. Lea las condiciones del JSON en lugar de utilizar selectores de campos de condiciones CRD que no se admiten. Consulte las etiquetas de namespace y PipelineRun que Loki o Alloy recopilen realmente. Recoger solo archivos del namespace de los controladores omite las compilaciones que se ejecutan en `tekton-builds`.
 
-Para Pods Pending, revise cuota, nodo, PVC y eventos de planificación. Cambiar gp3 RWO por RWX en YAML no lo convierte en EFS. Más timeout no arregla Results excesivos, permisos, Tasks ausentes ni herramientas faltantes.
+Cuando los Pods estén Pending, examine las cuotas, los nodos, los PVC y los eventos de programación. Cambiar RWO por RWX en el YAML de gp3 no hace que el volumen funcione como EFS. Aumentar los tiempos de espera no corrige resultados demasiado grandes, problemas de permisos, Tasks ausentes ni herramientas que faltan.
 
 ## 9. Reutilización y decisiones operativas
 
-- **Sidecars**: Use readiness de DB y conexiones reales. Dormir no prueba disponibilidad. Revise funciones de sidecar nativo y terminación de la versión instalada.
-- **StepAction**: Es estable en 1.16, pero la API de almacenamiento sigue siendo `tekton.dev/v1beta1`. Conecte herramientas, credenciales y rutas de resultados reales a la Task consumidora.
-- **Catálogos**: La retirada del servicio Hub y su integración interna en CLI son diferentes. Los comandos Hub de tkn 0.46 no garantizan disponibilidad futura. Gestione definiciones aprobadas con commits fijos o digests OCI verificados y restrinja resolvers.
-- **Redes**: NetworkPolicy `to: []` con TCP 443 permite ese puerto a todos los destinos; no es una allowlist ECR/GitHub. Restrinja DNS, STS/ECR/S3, registros y API necesarios mediante el diseño real CNI/proxy/VPC.
-- **Spot y coste**: Karpenter usa `karpenter.sh/capacity-type: spot`; EKS Managed Node Groups usan sus etiquetas reales `eks.amazonaws.com/capacityType`. Considere interrupciones, reintentos, cuota y almacenamiento. Sin Pods de build activos no significa coste total cero.
-- **Cachés**: Mida reutilización por carga. No prometa una mejora universal de 40–60%. Niveles de confianza distintos no deben compartir cachés escribibles.
+- **Sidecars**: Compruebe que la base de datos esté lista y que las conexiones funcionen realmente. Una espera fija no demuestra disponibilidad. Revise los ajustes de las funciones de sidecar nativo y su comportamiento al terminar para la versión instalada.
+- **StepAction**: La función es estable en 1.17, pero la API de almacenamiento de esa versión sigue siendo `tekton.dev/v1beta1`. Conecte las herramientas, credenciales y rutas de resultados reales con la Task que las utiliza.
+- **Catálogos**: La retirada del servicio Hub y su integración interna en la CLI son cambios diferentes. Los comandos de Hub de tkn 0.46 no garantizan que el servicio vaya a seguir disponible. Administre las definiciones aprobadas mediante commits fijos o digests verificados de paquetes OCI y restrinja el acceso de los resolvers.
+- **Redes**: Una NetworkPolicy con `to: []` y TCP 443 permite ese puerto hacia todos los destinos; no limita el acceso a los dominios de ECR y GitHub. Restrinja las rutas necesarias de DNS, STS, ECR, S3, registros y API mediante la configuración real del CNI, el proxy y la VPC.
+- **Spot y coste**: Karpenter utiliza `karpenter.sh/capacity-type: spot`; los grupos de nodos administrados de EKS utilizan sus etiquetas reales `eks.amazonaws.com/capacityType`. Considere las interrupciones, los reintentos, las cuotas y el almacenamiento. No tener Pods de compilación activos no significa que el coste total sea cero.
+- **Cachés**: Mida la reutilización para cada carga de trabajo. No prometa una mejora universal del 40–60 %. Los niveles de confianza diferentes no deben compartir cachés con permisos de escritura.
 
 ## 10. Referencias
 
-- [Pipelines 1.16.0](https://github.com/tektoncd/pipeline/releases/tag/v1.16.0)
-- [Triggers 0.37.0](https://github.com/tektoncd/triggers/releases/tag/v0.37.0)
+- [Pipelines 1.17.0](https://github.com/tektoncd/pipeline/releases/tag/v1.17.0)
+- [Triggers 0.37.1](https://github.com/tektoncd/triggers/releases/tag/v0.37.1)
 - [Chains 0.29.0](https://github.com/tektoncd/chains/releases/tag/v0.29.0)
-- [Dashboard 0.72.0](https://github.com/tektoncd/dashboard/releases/tag/v0.72.0)
-- [Modelo de seguridad de Pipelines](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/security/README.md)
-- [Afinidad y ciclo de vida PVC](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/affinityassistants.md)
-- [Métricas de Pipelines](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/metrics.md)
-- [Configuración Chains](https://github.com/tektoncd/chains/blob/v0.29.0/docs/config.md)
+- [Dashboard 0.73.0](https://github.com/tektoncd/dashboard/releases/tag/v0.73.0)
+- [Modelo de seguridad de Pipelines](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/security/README.md)
+- [Afinidad y ciclo de vida de los PVC](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/affinityassistants.md)
+- [Métricas de Pipelines](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/metrics.md)
+- [Configuración de Chains](https://github.com/tektoncd/chains/blob/v0.29.0/docs/config.md)
 - [Formateador SLSA e indicaciones de tipos](https://github.com/tektoncd/chains/blob/v0.29.0/docs/slsa-provenance.md)
-- [Requisitos rootless de BuildKit](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
+- [Requisitos de BuildKit sin root](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
 - [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
-- [Infraestructura CI](./03-ci-pipelines.md)
+- [Infraestructura de CI](./03-ci-pipelines.md)
 - [GitOps multiclúster](./04-gitops-multi-cluster.md)
 - [Stack de observabilidad](./09-observability-stack.md)

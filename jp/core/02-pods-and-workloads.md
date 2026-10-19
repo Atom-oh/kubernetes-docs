@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -66,7 +66,7 @@ kubectl -n workloads-demo get deployments,pods
 - [DaemonSet](#daemonset)
 - [Job と CronJob](#jobs-and-cronjobs)
 
-## Pod の概念
+## Pod の概念 {#pod-concepts}
 
 > **重要な概念**: Pod は Kubernetes における最小のデプロイ可能なコンピューティング単位であり、storage と network を共有する 1 つ以上の container group から構成されます。
 
@@ -105,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     volumeMounts:
@@ -143,7 +143,7 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -197,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     resources:
@@ -235,7 +235,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
@@ -352,7 +352,7 @@ spec:
       name: app-config
 ```
 
-## Pod のライフサイクル
+## Pod のライフサイクル {#pod-lifecycle}
 
 Pod は作成から終了まで、さまざまな lifecycle stage を経ます。この lifecycle を理解することは、application の安定性と可用性を確保するうえで重要です。
 
@@ -477,7 +477,7 @@ Pod の disruption は、voluntary disruption と involuntary disruption に分�
 
 PodDisruptionBudget は Eviction API（たとえば drain）を通じて voluntary eviction を制限します。直接的な Pod deletion と Deployment rolling update はこれを回避するため、rollout の可用性は別途設定してください。Involuntary failure は防止できません。
 
-## Pod の設計パターン
+## Pod の設計パターン {#pod-design-patterns}
 
 Pod を設計する際に考慮すべきパターンと best practice がいくつかあります。これらのパターンを理解して適用すると、application の安定性、scalability、maintainability を向上できます。
 
@@ -510,7 +510,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
   # Pod template ends
@@ -552,7 +552,7 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ### Node Affinity
@@ -677,7 +677,7 @@ spec:
     image: myapp:1.0
 ```
 
-## Workload Resources の概要
+## Workload Resources の概要 {#workload-resources-overview}
 
 Kubernetes は Pod を管理するためのさまざまな workload resource を提供します。各 workload resource は、特定のユースケースと要件向けに設計されています。
 
@@ -804,7 +804,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -877,7 +877,7 @@ Deployment rollout は pause と resume が可能です。
 kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # Apply multiple changes
-kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.6-alpine
 kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # Resume rollout
@@ -922,7 +922,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
           name: web
@@ -1249,7 +1249,7 @@ spec:
           path: /
 ```
 
-## Job と CronJob
+## Job と CronJob {#jobs-and-cronjobs}
 
 Job と CronJob は、one-time task または定期 task を実行するための workload resource です。
 

@@ -1,11 +1,11 @@
 # ネットワーク設定
 
 > **サポート対象バージョン**: EKS 1.36 の例。AWS が管理する Cilium 1.18.3-0 を参照バージョンとし、互換性のあるホスト/カーネルが必要です
-> **最終更新**: September 16, 2026
+> **最終更新**: 2026年10月18日
 
 ルーティング、DNS、TLS、認証情報、アプリケーショントラフィックはそれぞれ個別に検証してください。これらの例は、モック化した Terraform provider を含むローカルのスキーマとフィクスチャで確認したものであり、AWS リソース、ルーター、ファイアウォール、稼働中の cluster は一切変更していません。図は AWS の概念に基づくこのリポジトリ独自の説明図であり、この構成に対する AWS 公式の検証結果ではありません。
 
-![Hybrid prerequisites and bidirectional routing.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+![Hybrid の前提条件と双方向ルーティング。](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
@@ -73,7 +73,9 @@ printf 'Private diagnostics: %s\n' "$WORK_DIR"
 | VPN gateway のトランスポート | UDP500/4500 と該当する IPsec トランスポート要件 |
 | アプリケーション / AWS 認証情報およびレジストリサービス | 実際の宛先とポートのみ |
 
-ファイアウォールの変更は、コネクショントラッキングと既存ルールを保持したまま、ネットワーク所有者を通じて適用してください。従来の広範な `10.0.0.0/8` INPUT ルール、範囲を絞らない DNS/VXLAN の許可、ルールセット全体の保存は、安全に再利用できるファイアウォールポリシーではありませんでした。認証なしの kubelet 10255 を、最近の任意要件として開放してはいけません。
+ネットワーク管理者は、既存ルールとコネクショントラッキングを維持しながらファイアウォールルールを変更してください。通信に必要な IP アドレス、CIDR、ポートだけを許可します。`10.0.0.0/8` 全体を許可する INPUT ルールや、送信元と宛先を制限しない DNS/VXLAN ルールは避けてください。設定を永続化する前に、ルールセット全体を無差別に保存せず、保存対象を確認してください。
+
+kubelet API には、認証と認可を有効にした TCP `10250` を使用します。未認証でアクセスできる従来の読み取り専用 kubelet ポート TCP `10255` は開放しないでください。
 
 ## AWS endpoint へのアクセス
 
@@ -128,7 +130,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -560,7 +562,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
 
 kubelet は設定された Kubernetes API endpoint を解決して接続します。プライベートアクセスとパブリックアクセスでは経路が異なり、いずれも EKS 管理用の PrivateLink endpoint と混同してはいけません。
 
-![Kubelet API access paths for public and private endpoint configurations.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
+![パブリック/プライベート endpoint 構成に応じた kubelet API のアクセス経路。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-10.html)
 
@@ -568,7 +570,7 @@ kubelet は設定された Kubernetes API endpoint を解決して接続しま�
 
 control plane は、報告されたルーティング可能なノードアドレスへ TCP10250 で接続します。この経路は logs、exec、port-forward を支えるもので、逆方向のルーティング、ファイアウォールの許可、kubelet の認証が必要です。
 
-![Control-plane connection to the routable kubelet address over TCP10250.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
+![TCP10250 を使ってルーティング可能な kubelet アドレスへ接続する control plane。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-11.html)
 
@@ -576,7 +578,7 @@ control plane は、報告されたルーティング可能なノードアドレ
 
 Kubernetes Service IP を使用する Pod では、選択した API endpoint への Service 変換が必要です。egress の SNAT が適用される場合、応答はノードのアドレス宛てになり、コネクショントラッキングが変換を戻します。SNAT がない場合は、Pod のアドレスに対する戻りルートが必要です。
 
-![Logical Service translation and optional SNAT effects; the pictured order is not a universal hook sequence.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
+![Service 変換と任意の SNAT の論理的な効果。図の順序は普遍的な hook 順序ではありません。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-12.html)
 
@@ -586,7 +588,7 @@ Kubernetes Service IP を使用する Pod では、選択した API endpoint へ
 
 API server が、選択した webhook Pod の IP/ポートに到達できる必要があります。設定されたポートを使用してください。従来の「8443+」という凡例は有効なポート範囲要件ではありません。
 
-![Control-plane path to a webhook Pod; use its actual configured TCP port and dataplane.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
+![webhook Pod への control plane 経路。実際に設定された TCP ポートとデータプレーンを使用してください。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-13.html)
 
@@ -594,7 +596,7 @@ API server が、選択した webhook Pod の IP/ポートに到達できる必�
 
 サポートされている VXLAN overlay では、宛先ノードへの到達に**外側のノード IP** を使用します。カプセル化されたパケットを運ぶだけであれば、underlay に内側の宛先 Pod CIDR へのルートは不要です。
 
-![VXLAN Pod communication. Outer forwarding uses node IPs; the older Pod-CIDR forwarding labels need correction.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
+![VXLAN による Pod 通信。外側の転送にはノード IP を使います。古い Pod CIDR 転送ラベルは修正が必要です。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-14.html)
 
@@ -608,7 +610,7 @@ VNI フィールドは 24 ビットで、Cilium はカプセル化のメタデ�
 
 Pod IP 間の直接トラフィックには、VPC、WAN、オンプレミスにわたる該当 Pod のルートが必要です。Service 変換が必要になるのは、リクエストが実際に Service の VIP を宛先としている場合だけです。
 
-![Direct cloud-to-hybrid Pod routing; kube-proxy Service translation is not required for a direct Pod-IP destination.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
+![クラウドから hybrid への Pod ルーティング。Pod IP 宛ての直接通信に kube-proxy の Service 変換は不要です。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-15.html)
 
@@ -648,15 +650,39 @@ KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 
 サポートされている API server 経由の診断手段と適切な認可を使用してください。ノードの実際の `status.addresses` が重要です。ホスト名や無関係なオブジェクトの先頭アドレスで代用してはいけません。
 
-## ルーティング可能な Pod CIDR の設定
+## CNI 設計の選択: Cilium 単独か、VPC CNI との混在か
 
-![Illustrative remote Pod CIDRs and the on-premises router.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
+VPC CNI は hybrid node と互換性がないため、**hybrid node では常に Cilium（または Calico）を実行します。** したがって「Cilium 単独か、VPC CNI との混在か」という問いは、実際には**クラウドノードがあるか、ある場合にどの CNI を実行するか**ということです。
+
+| 観点 | ① hybrid のみ（Cilium 単独） | ② 混在モード（クラウドでは VPC CNI、hybrid では Cilium） | ③ クラウドノードでも Cilium |
+|---|---|---|---|
+| AWS のサポート | サポート対象（hybrid node 上の Cilium） | サポート対象。AWS が推奨する混在モードの設計 | クラウド側はサポート対象外。AWS は AWS クラウド内のノードで動作する Cilium をサポートしていません |
+| webhook の配置 | hybrid node 上で動作します。control plane は Pod IP に接続するため、オンプレミスの Pod CIDR を BGP または静的ルートで到達可能にする必要があります | クラウドノード上で動作します。オンプレミスの Pod CIDR をルーティング可能にする必要はありません | クラウド側の Cilium の IPAM とルーティングに依存するため、自身で検証が必要です |
+| クラウドからオンプレミスの Pod への通信 | 該当なし | ルーティング可能なオンプレミスの Pod CIDR、または[Hybrid Nodes ゲートウェイ](10-hybrid-nodes-gateway.md) | トンネルまたはルーティングを独自に設計します。Hybrid Nodes ゲートウェイは、ゲートウェイノードを含むクラウドノードで VPC CNI（または Auto Mode の組み込みネットワーク）を必要とするため、利用できません |
+| バースティングと Auto Mode | クラウド側のキャパシティなしでは利用できません | Karpenter でクラウドノードを追加できます。Auto Mode は組み込みネットワークを使用します | Auto Mode はその CNI を置き換えられません。Karpenter ノード上の Cilium も利用者自身による運用が必要です |
+| ポリシーと可観測性 | CNI は1つです（NetworkPolicy、Cilium ポリシー、Hubble） | 各 CNI が標準の Kubernetes NetworkPolicy を適用します。Cilium 固有のポリシーと Hubble は hybrid 側だけで利用できます | CNI は1つですが、クラウド側のインシデント対応とアップグレードは利用者またはベンダーの責任です |
+
+選択の目安:
+
+- **クラウドノードがある場合: ②。** 混在設計は AWS のサポート範囲です。webhook をクラウドに配置し、バースティングと Hybrid Nodes ゲートウェイを利用します。混在モードでは、CoreDNS replica を各側に少なくとも1つ配置してください。control plane または VPC から hybrid Pod IP への到達が必要な機能（ALB/NLB の IP ターゲット、Metrics Server、AMP の収集）には、ルーティング可能なオンプレミスの Pod CIDR が必要です（[混在モードの webhook 運用](08-operations.md#mixed-mode-webhook-operations)）。
+- **オンプレミスのみの場合: ①。** CNI を1つにできてシンプルですが、webhook は hybrid node 上で動作するため、[ルーティング可能な Pod CIDR](#routable-pod-cidr-configuration) が必要です。
+- **③は慎重に検討してください。** クラウドノード上の Cilium は AWS のサポート範囲外で、Hybrid Nodes ゲートウェイと Auto Mode は利用できません。単一 CNI の利点がこれらの制約を上回り、ベンダーのサポート契約がある場合に限って検討してください。
+
+参考資料:
+
+- [hybrid node 向けの CNI 設定](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [hybrid node の webhook 設定: 混在モードクラスターの考慮事項](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [EKS Hybrid Nodes ゲートウェイの利用開始](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
+
+## ルーティング可能な Pod CIDR の設定 {#routable-pod-cidr-configuration}
+
+![リモート Pod CIDR とオンプレミスルーターの構成例。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-0.html)
 
 ### オプション 1: BGP（推奨）
 
-![Illustrative BGP Pod-prefix advertisements.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
+![BGP による Pod prefix アドバタイズの例。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-1.html)
 
@@ -671,7 +697,7 @@ operator:
   rollOutPods: true
 ```
 
-AWS 形式の `v2alpha1` API は、レビュー対象の 1.18.3 の CRD でも引き続き提供されています（同 CRD は `v2` も提供します）。この例を使うためだけに CRD を置き換える必要はありません。
+AWS 形式の `v2alpha1` API は、レビュー対象の Cilium 1.18.3 の CRD で引き続き提供されており、同じ CRD は `v2` も提供します。この例を使うためだけに CRD を置き換える必要はありません。Cilium 1.19 以降では `cilium.io/v2` の BGP CRD を使用してください。`v2alpha1` の BGP CRD は非推奨となり、従来の `CiliumBGPPeeringPolicy` は 1.19 で削除されています。
 
 以下では hybrid node を選択し、ピアの advertisement セレクターを advertisement のラベルに紐づけ、それらの Pod CIDR のみをアドバタイズします。
 
@@ -823,7 +849,7 @@ RouterOS 7.20 以降では BGP インスタンスを明示的に定義します�
 
 ### オプション 2: 静的ルート
 
-![Illustrative static Pod-prefix routes; derive current next hops from observed state.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
+![静的な Pod prefix ルートの例。観測した状態から現在の next hop を求めます。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-2.html)
 
@@ -917,7 +943,7 @@ ip route 10.85.0.0/25 10.80.1.10
 
 AWS は proxy ARP を L2 における選択肢の一つとして説明しています。これには適切な on-link の近隣探索の挙動と、専用に設定された CNI/ホスト側の実装が必要です。汎用的な Cilium を有効化するだけでは、この経路が使える状態であることの証明にはなりません。
 
-![Proxy ARP concept for a verified L2/on-link design; upstream routes are still required.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
+![検証済みの L2/on-link 設計における proxy ARP の概念。上流ルートも必要です。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-3.html)
 
@@ -1113,27 +1139,27 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 
 `available` は VPN リソースの状態であり、トンネルの健全性ではありません。TunnelState は UP/静的または ESTABLISHED/BGP のとき 1、それ以外の状態では 0 になります。集計値は小数になり得ます。データがないことと DOWN は区別し、両方のトンネル、ルート、実際のワークロードの挙動を確認してください。このクエリは customer gateway の設定や pre-shared key を出力しないようにしています。
 
-AWS の RTT 200ms 以下 / 100Mbps という指針は一般的なガイダンスです。従来の 50/100ms の区分や「Direct Connect は常に 10ms 未満」という記述は、検証されていない目安であり、保証ではありませんでした。
+AWS の一般的な接続推奨は、帯域幅 100 Mbps、RTT 200 ms 以下です。VPN または Direct Connect を選ぶ際は、回線の公称帯域幅に加えて、実際の往復遅延、パケット損失、フェイルオーバー経路、ワークロードの応答時間を評価してください。
 
 ## 参考資料
 
-- [Hybrid networking](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
-- [EKS PrivateLink: management, OIDC and console endpoints](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
-- [S3 interface endpoints and private DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
-- [Roles Anywhere endpoint policies](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
-- [Current hybrid CNI support](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [AWS hybrid BGP procedure](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
-- [Mixed-mode DNS and webhooks](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
-- [Hybrid routing concepts](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
-- [Hybrid traffic-flow reference](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
-- [Cilium 1.18.3 routing source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
-- [Cilium 1.18.3 DNS-policy source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
-- [RFC6996 private ASNs](https://www.rfc-editor.org/rfc/rfc6996.html)
-- [RouterOS BGP reference](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
-- [FRR 10.7.1 BGP reference source](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
-- [VPN metrics](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
-- [Kubernetes 1.36.2 kubelet server source](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/server/server.go)
-- [Kubernetes NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [ハイブリッドネットワーキング](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
+- [EKS PrivateLink: 管理、OIDC、コンソール向けエンドポイント](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
+- [S3 インターフェイスエンドポイントとプライベート DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [Roles Anywhere のエンドポイントポリシー](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
+- [hybrid node 向けの現行 CNI サポート](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [AWS の hybrid node 向け BGP 手順](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
+- [混在モードの DNS と webhook](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [hybrid node のルーティング概念](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
+- [hybrid node のトラフィックフロー参照](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+- [Cilium 1.18.3 のルーティング仕様](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
+- [Cilium 1.18.3 の DNS ポリシー仕様](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
+- [RFC6996 のプライベート ASN](https://www.rfc-editor.org/rfc/rfc6996.html)
+- [RouterOS の BGP リファレンス](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
+- [FRR 10.7.1 の BGP リファレンス](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
+- [VPN メトリクス](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
+- [Kubernetes 1.36.5 kubelet サーバーのソース](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
+- [Kubernetes NetworkPolicy の仕様](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 
 < [前へ: 前提条件](01-prerequisites.md) | [目次](./README.md) | [次へ: インターネット制限環境のセットアップ](03-airgap-setup.md) >
