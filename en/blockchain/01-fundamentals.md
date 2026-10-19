@@ -1,6 +1,6 @@
 # Blockchain Fundamentals
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 19, 2026
 
 ## What This Document Covers
 
@@ -179,6 +179,10 @@ Replaying and verifying every block from genesis (full sync) takes time proporti
 | **Snapshot restore** | Restore an operator-kept data directory | Fast, requires managing snapshot freshness and consistency |
 
 **Operational conclusion**: you must not lose state when replacing a Pod. Losing it means a long sync during which that node cannot serve. This is why a persistent volume is **not optional but mandatory** for a blockchain node.
+
+### October 2026 Update: Blockchain Snapshots on AWS
+
+Per the [October 14, 2026 announcement](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/), AWS launched **Blockchain Snapshots on AWS**, which publishes pre-synced public blockchain node chain data. Snapshots cover Ethereum and Solana, are available at no charge, and refresh on the same cadence as the upstream provider. It is an option for cutting bootstrap time — adding capacity to an RPC fleet, recovering a failed node, or re-syncing a corrupted database — republishing each network's snapshot in a format optimized for parallel extraction. It is available in US East (N. Virginia), Europe (Ireland) and Asia Pacific (Tokyo), and access requires an EC2 instance in the same Region with an S3 gateway VPC endpoint. This falls under "Snapshot restore" in the table above, so the same trust assumptions about snapshot provenance and freshness apply.
 
 ### Archive nodes: a separate consideration
 

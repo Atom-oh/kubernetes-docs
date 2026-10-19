@@ -1,6 +1,6 @@
 # 블록체인 기초 개념
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 19일
 
 ## 이 문서에서 다루는 것
 
@@ -179,6 +179,10 @@ Permissioned 설계는 알려진 membership과 명시적 governance를 활용하
 | **스냅샷 복원** | 운영자가 보관한 데이터 디렉터리 복원 | 빠름, 스냅샷 최신성·정합성 관리 필요 |
 
 **운영상 결론**: Pod를 교체할 때 상태를 잃으면 안 됩니다. 잃으면 동기화에 시간이 걸리고 그 동안 그 노드는 서비스할 수 없습니다. 이것이 블록체인 노드에서 **영구 볼륨이 선택이 아니라 필수**인 이유입니다.
+
+### 2026년 10월 업데이트: Blockchain Snapshots on AWS
+
+[2026년 10월 14일 발표](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/)에 따르면 AWS는 사전 동기화된 퍼블릭 블록체인 노드 체인 데이터를 게시하는 **Blockchain Snapshots on AWS**를 시작했습니다. Ethereum과 Solana를 지원하며 무료로 제공되고 업스트림 공급자와 같은 주기로 갱신됩니다. RPC 노드 증설, 장애 노드 복구, 손상된 데이터베이스 재동기화 같은 부트스트랩 시간을 줄이는 선택지로, 병렬 추출에 최적화된 형식으로 각 네트워크의 스냅샷을 재게시합니다. US East (N. Virginia), Europe (Ireland), Asia Pacific (Tokyo)에서 제공되며 같은 Region의 EC2 인스턴스와 S3 gateway VPC endpoint가 필요합니다. 위 표의 "스냅샷 복원"에 해당하므로 스냅샷 출처·최신성에 대한 신뢰 가정은 동일하게 적용됩니다.
 
 ### 아카이브 노드: 별도로 다뤄야 하는 존재
 

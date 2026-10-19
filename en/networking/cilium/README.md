@@ -4,7 +4,7 @@
 
 This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.3**, Cilium CLI **0.20.1** and Hubble CLI **1.20.2**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
 
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 19, 2026
 
 ### Historical Release Notes
 
@@ -25,6 +25,7 @@ The dates below are GitHub publication dates in UTC and describe those releases,
 | September 16, 2026 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | Patch releases of the older supported lines |
 | October 2, 2026 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | Latest 1.21 pre-release; **1.21 is pre-release only (no GA yet)** and items marked 1.21 in this guide may change |
 | October 15, 2026 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API dependency v1.6.3, conntrack GC and handling of CNPs with `nodeSelector`, among other fixes; this guide's current reviewed baseline |
+| October 15, 2026 | [1.19.9](https://github.com/cilium/cilium/releases/tag/v1.19.9), [1.18.15](https://github.com/cilium/cilium/releases/tag/v1.18.15) | Patch releases of the older supported lines |
 
 On September 14, 2026, the CNCF blog published a [Cilium 1.20 feature recap](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/) (Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM, and more), covering the same scope as the 1.20.0 announcement summary below.
 

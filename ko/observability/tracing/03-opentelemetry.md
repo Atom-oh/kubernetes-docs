@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **검토 기준**: Collector Contrib 0.160.0, Operator 0.158.0, 언어별 버전은 아래 참조
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 19일
 
 ## 소개
 
@@ -1471,6 +1471,10 @@ Fan-out은 backend 사이의 원자적 전달이나 동일한 보존 결과를 �
 ### 2026년 8월 업데이트: 느린 SQL 쿼리를 신뢰성 메트릭으로 정제하기
 
 [8월 21일 CNCF 글](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)과 [lab](https://github.com/causely-oss/slow-query-lab)은 query duration·트래픽 가중 영향·span 파생 메트릭과 anomaly baseline을 비교합니다. 글의 과거 예시는 현재 클러스터 용량 측정치가 아닙니다. 글 자체도 원문 SQL label·민감 parameter·cardinality·baseline 준비 시간을 경고합니다. Lab 설정을 도입하기 전에 데이터를 정제하고 dimension을 제한하며 latency anomaly를 근본 원인의 증명으로 해석하지 않습니다.
+
+### 2026년 10월 업데이트: 소프트웨어 탄소 집약도(SCI)를 OTel 신호로
+
+[10월 15일 CNCF 글](https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/)에서 Kepler 메인테이너이자 CNCF 앰배서더인 Diana Todea는 Observability Summit Europe 2026 키노트를 바탕으로, Green Software Foundation의 소프트웨어 탄소 집약도(SCI) 표준을 OpenTelemetry semantic convention으로 다뤄 탄소 배출을 워크로드·서비스 단위의 관측 신호로 연결하자는 방향을 소개합니다. 아직 표준화 논의 단계의 제안이며, 특정 OTel 릴리스에 포함된 기능이나 완성된 semantic convention이 아니므로 도입 가능 여부는 업스트림 진행 상황을 확인하세요.
 
 ### 2026년 10월 업데이트: OTel 스트림 기반 사고 감지 재구축 사례
 

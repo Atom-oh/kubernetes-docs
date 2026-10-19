@@ -1,7 +1,7 @@
 # Kyverno를 사용한 정책 관리
 
 > **검토 기준**: Kyverno/CLI 1.19.1, Helm chart 3.9.1. 현재 release 문서가 명시한 테스트 범위는 Kubernetes 1.33–1.35이며, chart의 더 넓은 설치 조건이 호환성 보장은 아닙니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 19일
 
 Kyverno는 Kubernetes 정책을 평가하고 명시적으로 구성한 mutation·generation·deletion을 수행합니다. 다음 예제는 실제 CLI와 배포된 schema/chart로 로컬 검증했습니다. 실제 cluster 설치·admission·network isolation·cleanup·AWS 연동은 실행하지 않았습니다.
 
@@ -39,6 +39,10 @@ Validating policy는 기존 위반 리소스를 삭제하거나 복구하지 않
 ### Kyverno vs OPA Gatekeeper
 
 현재 Kyverno 정책은 YAML/JSON manifest 안에서 CEL을 사용하며 레거시 정책에는 pattern·JMESPath도 있습니다. Kubernetes-native 형식이라고 표현식을 배울 필요가 없어지는 것은 아닙니다. Gatekeeper는 ConstraintTemplate/Constraint와 해당 버전이 지원하는 policy engine, 별도 admission/audit/mutation 기능을 사용합니다. 필요한 기능·표현식·테스트·controller 가용성과 실제 workload 영향을 비교합니다. 이전의 “쉬움/복잡함”, “좋음/매우 좋음” 성능 평가는 근거 없는 비교이며 benchmark가 아니었습니다.
+
+### 2026년 10월 업데이트: admission을 넘어서는 런타임 적용
+
+[10월 15일 CNCF 글](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/)에서 Kyverno를 만든 Nirmata는 admission control이 "spec이 올바른가"만 답할 뿐 실행 중 워크로드가 선언과 다르게 동작하는 경우(기동 후 2차 페이로드 다운로드, 승인되지 않은 목적지로의 통신 등)를 다루지 못한다는 한계를 설명하고, eBPF와 Linux Security Module(LSM)로 커널 수준에서 정책을 적용하는 오픈 소스 구현 **Nirmata Runtime for Kyverno**를 소개합니다. AI 에이전트처럼 비결정적인 워크로드의 런타임 보안을 겨냥한 접근입니다. 이 장의 admission·background 정책과는 별개의 구성 요소·권한이며, 글은 벤더(Nirmata) 관점의 소개이므로 도입 전 기능 범위와 커널·플랫폼 요구사항을 직접 확인하세요.
 
 ## Kyverno 설치
 
