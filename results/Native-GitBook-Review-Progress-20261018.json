@@ -1,10 +1,10 @@
 {
-  "time": "2026-10-19T05:13:51.358834+00:00",
+  "time": "2026-10-19T05:32:02.726559+00:00",
   "status": "COMPLETE",
   "sourcePages": 693,
   "modelCalls": 0,
   "reviewScope": "Complete English/native-locale document comparison",
-  "reviewLedgerDirectory": "/tmp/native-final-frozen-ledgers-0511",
+  "reviewLedgerDirectory": "/tmp/native-final-frozen-ledgers-0529",
   "locales": {
     "cn": {
       "sourcePages": 693,
@@ -7409,51 +7409,48 @@
           "sourcePath": "en/eks/12-kubernetes-version-roadmap.md",
           "sourceBlob": "99fad50d8fd2ebd415726d4870bafc7f3616ffe2",
           "sourceSha256": "265ae8632b64e236075b7fc4b0c419c51a4d99f3b9c3f3ce71df9b4675651fa9",
-          "targetSha256": "a5113473b21b2414b8fff77d9a387f2563f244fdba193364d9a5b3b28778dabc",
+          "targetSha256": "8030d700751f0c16b673de4ad5b94c68347194a9d2ed4e73de1841e360e81390",
           "reviewer": "native GPT-6 Luna",
-          "score": 95,
+          "score": 97,
           "completePageComparison": true,
           "originalNativeReview": {
             "locale": "cn",
             "path": "cn/eks/12-kubernetes-version-roadmap.md",
             "source_blob": "99fad50d8fd2ebd415726d4870bafc7f3616ffe2",
             "source_sha256": "265ae8632b64e236075b7fc4b0c419c51a4d99f3b9c3f3ce71df9b4675651fa9",
-            "target_sha256": "a5113473b21b2414b8fff77d9a387f2563f244fdba193364d9a5b3b28778dabc",
+            "initial_target_sha256": "a5113473b21b2414b8fff77d9a387f2563f244fdba193364d9a5b3b28778dabc",
+            "target_sha256": "8030d700751f0c16b673de4ad5b94c68347194a9d2ed4e73de1841e360e81390",
             "reviewer": "native GPT-6 Luna",
-            "score": 95,
-            "fidelityScore": 96,
-            "readabilityScore": 94,
+            "score": 97,
+            "fidelityScore": 98,
+            "readabilityScore": 96,
             "status": "reviewed",
             "completePageComparison": true,
             "completeFinalPageReread": true,
-            "scope": "Compared the complete frozen English page and the complete final Chinese page across the title/overview, learning objectives and audience matrix, release-cycle and gate semantics, EKS support calendar and cost model, every 1.29–1.37 versioned feature section, all timeline/deprecation tables, EKS compatibility and Auto Mode details, upgrade/rollback procedure, future outlook, references, quiz/navigation links, and all visible captions and prose. Verified the current heading hierarchy and canonical 1.36 fragment; the 67 fenced code blocks were restored byte-for-byte from the English source.",
+            "scope": "Compared the complete current frozen English roadmap with the captured pre-edit Chinese page and final Chinese page across all 90 heading sections, including the support calendar, all 1.29–1.37 feature and lifecycle sections, upgrade/rollback guidance, every table, future outlook, references and navigation. The final target was reread section by section; its only changes from the captured initial were the two listed repairs. All 67 fenced code blocks, 151 Markdown/link destinations and heading levels remain source-aligned, and the owned anchor helper made no changes.",
             "findings": [
               {
-                "location": "Previously stale roadmap body",
-                "finding": "The existing Chinese roadmap contained materially stale version guidance and a prior 1.36 controller narrative that did not match the frozen English source.",
-                "resolution": "Rebuilt the complete Chinese body from the frozen source prose, preserving current MutatingAdmissionPolicy opt-in/JSONPatch behavior, phase-aware CPU controller limitations, version history, EKS release/support distinctions, and explicit unverified snapshot caveats.",
+                "location": "Section 3, support calendar example",
+                "finding": "A full English paragraph remained untranslated after the example command.",
+                "resolution": "Translated the paragraph into natural Chinese while preserving its warning that no AWS query was executed during the audit.",
                 "resolved": true
               },
               {
-                "location": "Headings, examples, links and protected content",
-                "finding": "The source includes 67 fenced examples and an inbound fragment to the 1.36 heading.",
-                "resolution": "Restored all 67 source code fences exactly, preserved Markdown links and section structure, and applied the owned canonical-ID repair for #_4-8-kubernetes-1-36-haru-april-2026 before the final comparison.",
-                "resolved": true
-              },
-              {
-                "location": "Chinese emphasis rendering",
-                "finding": "CJK-adjacent Markdown emphasis delimiters required renderer-safe placement.",
-                "resolution": "Applied the marker-only emphasis formatter, confirmed it reports zero remaining repairs, then reran structural validation.",
+                "location": "Section 4.7, selected-version table",
+                "finding": "The Chinese table omitted the source table header and separator, causing the structural validator to report a row/column mismatch.",
+                "resolution": "Added the translated two-column header and separator; retained all eight existing feature rows and their content.",
                 "resolved": true
               }
             ],
             "resolutions": [
-              "Reconciled every visible prose section and table against the frozen English source; retained product/API names and exact technical identifiers where they are labels or syntax.",
-              "Preserved exact dates, version states, fees, compatibility caveats, examples, attribution and explicit limits on what was tested or measured.",
-              "Applied canonical anchor repair and emphasis formatting before recording the final target hash and saved content-addressed source/target snapshots."
+              "Reread the complete frozen English page and final Chinese page; checked all technical claims, qualifiers, dates, versions, examples and visible captions against the source.",
+              "Confirmed the final file equals the captured initial bytes plus exactly the two reviewed changes; no other prose, code, links or comments changed.",
+              "Ran structural validation, owned-anchor sync, emphasis check and actual VitePress rendering; verified exact source code fences, identical link destinations and heading-level sequence."
             ],
-            "source_snapshot": "/tmp/cn-native-reviewed-source-snapshots/265ae8632b64e236075b7fc4b0c419c51a4d99f3b9c3f3ce71df9b4675651fa9.md",
-            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/a5113473b21b2414b8fff77d9a387f2563f244fdba193364d9a5b3b28778dabc.md",
+            "source_snapshot": "/tmp/cn-roadmap-final-review-source-snapshots/265ae8632b64e236075b7fc4b0c419c51a4d99f3b9c3f3ce71df9b4675651fa9.md",
+            "initial_target_snapshot": "/tmp/cn-roadmap-final-review-initial-snapshots/a5113473b21b2414b8fff77d9a387f2563f244fdba193364d9a5b3b28778dabc.md",
+            "reviewed_target_snapshot": "/tmp/cn-roadmap-final-review-final-snapshots/8030d700751f0c16b673de4ad5b94c68347194a9d2ed4e73de1841e360e81390.md",
+            "final_target_snapshot": "/tmp/cn-roadmap-final-review-final-snapshots/8030d700751f0c16b673de4ad5b94c68347194a9d2ed4e73de1841e360e81390.md",
             "validation": {
               "structural_command": [
                 "python3",
@@ -7469,11 +7466,18 @@
                 "cn/eks/12-kubernetes-version-roadmap.md"
               ],
               "emphasis_check_status": "PASS",
+              "owned_anchor_sync_status": "PASS; changed=false; addedIds=0",
+              "actual_vitepress_renderer": "PASS; errors=0; literalBold=0; targetSha256=8030d700751f0c16b673de4ad5b94c68347194a9d2ed4e73de1841e360e81390",
               "protected_fenced_blocks": 67,
               "protected_fenced_code_exact": true,
               "heading_count_source_and_target": 90,
-              "markdown_link_count_source_and_target": 151
-            }
+              "heading_levels_match": true,
+              "markdown_link_count_source_and_target": 151,
+              "markdown_link_destinations_match": true,
+              "single_terminal_lf": true,
+              "preimage_delta_check": "PASS; exactly the two listed repairs"
+            },
+            "reviewed_at": "2026-10-19T05:27:58.356004Z"
           }
         },
         "cn/gitops/02-fluxcd.md": {
@@ -49935,28 +49939,56 @@
           "sourcePath": "en/networking/cilium/09-overlay-native-routing.md",
           "sourceBlob": "96b5adafef75aafe0712887df360eb71833c5dd8",
           "sourceSha256": "a89c9d0cefbb4344bbe6f794524877af88de20f507ab25259e25ccd619c53c59",
-          "targetSha256": "51a52f45181a9710d164293e4bfc8e9557bd7f66a05c707fcb9a298eedf65cf0",
+          "targetSha256": "b8d5264ccc8d990c7e537741a5512347be992dcdcfa9e95d664263be29e5788f",
           "reviewer": "nativeGPT6Luna",
-          "score": 93,
+          "score": 94,
           "completePageComparison": true,
           "originalNativeReview": {
             "path": "networking/cilium/09-overlay-native-routing.md",
+            "sourcePath": "en/networking/cilium/09-overlay-native-routing.md",
+            "targetPath": "jp/networking/cilium/09-overlay-native-routing.md",
             "sourceBlob": "96b5adafef75aafe0712887df360eb71833c5dd8",
-            "targetSha256": "51a52f45181a9710d164293e4bfc8e9557bd7f66a05c707fcb9a298eedf65cf0",
-            "completePageComparison": true,
-            "qualityScore": 93,
-            "reviewer": "nativeGPT6Luna",
-            "status": "passed",
+            "sourceSha256": "a89c9d0cefbb4344bbe6f794524877af88de20f507ab25259e25ccd619c53c59",
+            "initialTargetSha256": "51a52f45181a9710d164293e4bfc8e9557bd7f66a05c707fcb9a298eedf65cf0",
+            "targetSha256": "b8d5264ccc8d990c7e537741a5512347be992dcdcfa9e95d664263be29e5788f",
+            "fidelityScore": 96,
+            "readabilityScore": 92,
+            "qualityScore": 94,
             "findings": [
-              "Compared all 37 headings and the complete page across tunnel/native modes, encapsulation and identity, native route providers, startup errors/fallbacks, MTU, masquerading, host routing, netkit, service LB, encryption, EKS choices, labs, version matrix and troubleshooting.",
-              "Preserved configuration predicates and defaults, kernel/version boundaries, numerical MTU and port values, caveats distinguishing source-verified facts from inference, and the directional behavior of each packet path.",
-              "Preserved 13 code blocks, internal chapter links, image targets, commands, annotations, and external source references."
+              "Read the complete pinned English source, the SHA-verified true initial Japanese page, and the complete final Japanese page. Compared all 21 sections, including routing-mode behavior, version qualifications, packet paths, operational conditions, troubleshooting guidance, and source limitations.",
+              "The source and initial translation matched semantically. The initial troubleshooting table had two inline shell commands containing unescaped literal pipe characters, which caused an extra table-cell parse and failed source table-shape validation.",
+              "The Japanese prose preserves the distinctions between tunnel and native routing, masquerading, Cilium identity/VNI behavior, host routing, service load balancing, encryption, and validation limits; versions, numeric values, commands, references, and inference caveats were retained."
             ],
             "resolutions": [
-              "All 13 code blocks restored unchanged from the English source. Structural validation of headings, fences, code, image and link targets passed.",
-              "Full Japanese prose comparison completed; no omitted section or material behavior drift identified. Emphasis formatter completed with no changes."
+              "Escaped the two literal pipe characters in the inline `grep` commands for Markdown table parsing while preserving the rendered command text. All source tables now have matching row and column counts.",
+              "The 13 fenced code blocks, heading hierarchy, links, and detail containers match the pinned source. Translation validation passed; the actual VitePress renderer reported zero Vue errors and zero literal-bold findings.",
+              "Confirmed exactly one terminal LF, no trailing-whitespace lines, and `git diff --check` passed. No canonical IDs were needed."
             ],
-            "rationale": "Full-page review found the translation readable and technically accurate for Cilium operators while retaining configuration caveats, release qualifications, packet-path distinctions, and validation limits."
+            "rationale": "Independent full-page review found the Japanese translation faithful and usable for Cilium operators. The correction addressed a Markdown table parsing defect without changing technical meaning or command behavior. Scores reflect the full source/initial/final comparison, not the validators alone.",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "sourceInitialFinalAllRead": true,
+            "qualityScale": "100-point native review scale; fidelity and readability assessed separately",
+            "sourceSnapshot": "/tmp/jp-native-final-pr376/source/a89c9d0cefbb4344bbe6f794524877af88de20f507ab25259e25ccd619c53c59.md",
+            "initialTargetSnapshot": "/tmp/jp-native-final-pr376/initial/51a52f45181a9710d164293e4bfc8e9557bd7f66a05c707fcb9a298eedf65cf0.md",
+            "reviewedTargetSnapshot": "/tmp/jp-native-final-pr376/final/b8d5264ccc8d990c7e537741a5512347be992dcdcfa9e95d664263be29e5788f.md",
+            "finalTargetSnapshot": "/tmp/jp-native-final-pr376/final/b8d5264ccc8d990c7e537741a5512347be992dcdcfa9e95d664263be29e5788f.md",
+            "sourcePinCommit": "559ac62bf90adc4cd6b994e3959b95ae7a8c5e17",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "fencedBlocksByteExact": true,
+              "headingHierarchyExact": true,
+              "linkDestinationsExact": true,
+              "tableRowColumnShapesExact": true,
+              "ownedAnchorRepairChanges": 0,
+              "singleTerminalLF": true,
+              "trailingWhitespaceLines": 0,
+              "gitDiffCheck": "passed"
+            }
           }
         },
         "jp/networking/cilium/10-ipam-deep-dive.md": {
@@ -52910,29 +52942,56 @@
           "sourcePath": "en/ops/17-spot-production-experiments.md",
           "sourceBlob": "7e4910478f77a5b10d53f2bc30c91a6e271c7cee",
           "sourceSha256": "d2c3d20f87a7789e4be041b7dee4b6b537bdbe26316958c4d853a6137be00c11",
-          "targetSha256": "9cd07597523a11fe72b85f9d0daaf8c6c33bf2d80c80dad6a7ef58d742839b2c",
+          "targetSha256": "d7d87cb34e49ea1669726d79e4a0a106a0524f0c0797166beeb97ef6f3e93afe",
           "reviewer": "nativeGPT6Luna",
-          "score": 92,
+          "score": 94,
           "completePageComparison": true,
           "originalNativeReview": {
             "path": "ops/17-spot-production-experiments.md",
+            "sourcePath": "en/ops/17-spot-production-experiments.md",
+            "targetPath": "jp/ops/17-spot-production-experiments.md",
             "sourceBlob": "7e4910478f77a5b10d53f2bc30c91a6e271c7cee",
-            "targetSha256": "9cd07597523a11fe72b85f9d0daaf8c6c33bf2d80c80dad6a7ef58d742839b2c",
-            "completePageComparison": true,
-            "qualityScore": 92,
-            "reviewer": "nativeGPT6Luna",
-            "status": "passed",
+            "sourceSha256": "d2c3d20f87a7789e4be041b7dee4b6b537bdbe26316958c4d853a6137be00c11",
+            "initialTargetSha256": "9cd07597523a11fe72b85f9d0daaf8c6c33bf2d80c80dad6a7ef58d742839b2c",
+            "targetSha256": "d7d87cb34e49ea1669726d79e4a0a106a0524f0c0797166beeb97ef6f3e93afe",
+            "fidelityScore": 96,
+            "readabilityScore": 92,
+            "qualityScore": 94,
             "findings": [
-              "Compared the complete experiment guide, including compute-manager distinctions, test isolation, comparison groups, phase-aware resize and its source evidence, E0–E10 design, FIS procedure, observation timeline, rollback, measured run conditions/results, pricing and citations.",
-              "Preserved key boundaries: PDB versus EC2 reclamation, Auto Mode versus OSS Karpenter/MNG paths, replacement readiness versus service recovery, CPU request/limit changes while preserving Guaranteed QoS, source-reported workload evidence versus unrun E10 validation.",
-              "Retained every experimental value and limitation: one-run sample counts, error rates/p99, version incompatibility, unconfigured interruption queue, capacity fallback unverified, cost unit prices versus actual savings, and data/infra cleanup status.",
-              "Translated chart alt text, kept all seven protected command/JSON examples and exact references, and corrected one Markdown emphasis rendering artifact during final formatting."
+              "Read the complete pinned English source, the SHA-verified true initial Japanese page, and the complete final Japanese page. Compared the full eight-section experiment guide, all decision gates, test procedures, measured outcomes, cost rules, cleanup, links, tables, and qualifications.",
+              "The initial Japanese page omitted the four-row phase-aware sequence table between the prototype description and the initialization guidance. That omission shifted the later parsed table structure and caused the translation validator to fail.",
+              "The final Japanese page retains the source distinction between design examples and measured results; the phase-aware startup/resize/steady-state actions; the Guaranteed QoS conditions; all measured request counts, error rates, p99 values, event times, pricing, version limits, and explicit NOT RUN/UNVERIFIED findings."
             ],
             "resolutions": [
-              "Native assembler restored all seven original protected blocks; headings/fences, code and exact link/image targets passed validation.",
-              "Emphasis formatter ran; the complete Japanese prose was reread against the full English source, including measured values and all non-run/unverified qualifications."
+              "Added a Japanese translation of the missing phase table at its source-aligned location, including MAP defaults, readiness conditions, CPU request/limit downscale, unchanged memory, same Pod UID/container, and separation of API acceptance from applied resources and service quality.",
+              "The seven fenced code blocks and all link destinations match the source; table row/column shapes, heading hierarchy, and HTML detail containers pass structural checks. Translation validation passed; actual VitePress rendering reported zero Vue errors and zero literal-bold findings.",
+              "Confirmed exactly one terminal LF, no trailing-whitespace lines, and `git diff --check` passed. No canonical IDs were needed."
             ],
-            "rationale": "Full-page native comparison completed after assembly. Japanese preserves the experiment design, actual evidence, caveats, acceptance gates and distinction between measured results and proposed work. Score reflects the complete factual comparison and technical readability, not structural validation alone."
+            "rationale": "Independent full-page review found the final Japanese guide complete and technically faithful after restoring the missing table. Experimental design, measured evidence, and unverified work remain clearly distinguished. Scores reflect the complete current-source/initial/final comparison and Japanese readability, not structural checks alone.",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "sourceInitialFinalAllRead": true,
+            "qualityScale": "100-point native review scale; fidelity and readability assessed separately",
+            "sourceSnapshot": "/tmp/jp-native-final-pr376/source/d2c3d20f87a7789e4be041b7dee4b6b537bdbe26316958c4d853a6137be00c11.md",
+            "initialTargetSnapshot": "/tmp/jp-native-final-pr376/initial/9cd07597523a11fe72b85f9d0daaf8c6c33bf2d80c80dad6a7ef58d742839b2c.md",
+            "reviewedTargetSnapshot": "/tmp/jp-native-final-pr376/final/d7d87cb34e49ea1669726d79e4a0a106a0524f0c0797166beeb97ef6f3e93afe.md",
+            "finalTargetSnapshot": "/tmp/jp-native-final-pr376/final/d7d87cb34e49ea1669726d79e4a0a106a0524f0c0797166beeb97ef6f3e93afe.md",
+            "sourcePinCommit": "559ac62bf90adc4cd6b994e3959b95ae7a8c5e17",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "fencedBlocksByteExact": true,
+              "headingHierarchyExact": true,
+              "linkDestinationsExact": true,
+              "tableRowColumnShapesExact": true,
+              "ownedAnchorRepairChanges": 0,
+              "singleTerminalLF": true,
+              "trailingWhitespaceLines": 0,
+              "gitDiffCheck": "passed"
+            }
           }
         },
         "jp/ops/README.md": {
@@ -103901,12 +103960,12 @@
   },
   "rendererContract": {
     "auditPath": "/tmp/native-document-contract-audit-20261018.json",
-    "auditTime": "2026-10-19T05:11:47.768Z",
+    "auditTime": "2026-10-19T05:30:00.475Z",
     "scope": "Actual VitePress heading hierarchy and authored local fragment links; no semantic grades."
   },
   "renderingContract": {
     "auditPath": "/tmp/native-current-render-audit-20261018.json",
-    "auditTime": "2026-10-19T05:11:39.511Z",
+    "auditTime": "2026-10-19T05:29:51.594Z",
     "scope": "Actual VitePress configuration including default syntax highlighting"
   }
 }
