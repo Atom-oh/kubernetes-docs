@@ -1,49 +1,30 @@
-# Gestión de tráfico de Cilium Service Mesh
+# Gestión del tráfico en Cilium Service Mesh {#cilium-service-mesh-traffic-management}
 
-> **Versiones compatibles**: Cilium 1.16+, Kubernetes 1.28+
-> **Última actualización**: February 22, 2026
+> **Versiones de referencia revisadas**: Cilium 1.20.3 y Gateway API 1.6.3, 16 de octubre de 2026. Consulte la [descripción general](./README.md) para conocer las matrices de pruebas de Kubernetes/EKS y los requisitos de cada plataforma.
 
-## Descripción general
+## Descripción general {#overview}
 
-La gestión de tráfico en Cilium Service Mesh combina el equilibrio de carga L4 basado en eBPF con el enrutamiento L7 basado en Envoy. Este capítulo explica características avanzadas de gestión de tráfico mediante CiliumEnvoyConfig, reglas L7 en CiliumNetworkPolicy e integración con Gateway API.
+La gestión del tráfico en Cilium Service Mesh combina el balanceo de carga L4 basado en eBPF con el enrutamiento L7 mediante Envoy. Este capítulo explica las funciones avanzadas de gestión del tráfico mediante CiliumEnvoyConfig, las reglas L7 de CiliumNetworkPolicy y la integración con Gateway API.
 
-## Arquitectura de gestión de tráfico
+## Arquitectura de gestión del tráfico {#traffic-management-architecture}
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Layers"
-        subgraph "L7 - Envoy"
-            HTTP[HTTP Routing]
-            gRPC[gRPC Routing]
-            TLS[TLS Termination]
-            Headers[Header Manipulation]
-        end
+![Una solicitud del cliente atraviesa tres capas de gestión del tráfico de Cilium —enrutamiento HTTP L7 con Envoy, balanceo de carga L4 con eBPF y enrutamiento IP L3 con eBPF— antes de llegar al servidor. Las demás funciones de cada capa se agrupan junto a ella.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
 
-        subgraph "L4 - eBPF"
-            LB[Load Balancing]
-            CT[Connection Tracking]
-            NAT[NAT/SNAT]
-            DSR[Direct Server Return]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-02-traffic-management-0.html)
 
-        subgraph "L3 - eBPF"
-            Routing[IP Routing]
-            Tunnel[Tunnel/Overlay]
-            Policy[Network Policy]
-        end
-    end
+El diagrama agrupa las funciones por capas; no impone un orden de procesamiento de paquetes. El tráfico que solo necesita L3/L4 puede evitar Envoy. La ruta real de salida, entrada o acceso a un Service depende de la configuración.
 
-    Client[Client] --> HTTP
-    HTTP --> LB
-    LB --> Routing
-    Routing --> Server[Server]
-```
+## CiliumEnvoyConfig {#ciliumenvoyconfig}
 
-## CiliumEnvoyConfig
+Estos son **ejemplos de configuración independientes**, no recursos que deban instalarse juntos. Varios ejemplos usan el mismo Service de entrada; asigne un único responsable de configuración para evitar conflictos entre listeners. Los ejemplos requieren una instalación de Cilium preparada con `l7Proxy: true`, `envoyConfig.enabled: true`, los ajustes adecuados de sustitución de kube-proxy y enrutamiento, y las CRD necesarias.
 
-### Estructura básica
+Cada Service de entrada o de backend mencionado debe existir previamente en `default`, con el puerto **8080**, los selectores adecuados y endpoints HTTP listos. Las secciones de Kafka y gRPC especifican sus propios requisitos de espacio de nombres y puerto. Los ejemplos de CEC no crean cargas de trabajo, Services ni certificados.
 
-CiliumEnvoyConfig define la configuración de Envoy para servicios específicos:
+`services` selecciona un Service de entrada para redirigir su tráfico y sincroniza sus backends. `backendServices` sincroniza otros backends sin redirigir el tráfico de entrada de sus propios Services. También deben existir los recursos Cluster de EDS. Cilium proporciona deliberadamente las direcciones de Listener y las fuentes xDS omitidas. Que Kubernetes acepte el recurso no basta: examine los errores del agente y de Envoy y compruebe solicitudes reales. Consulte el [capítulo de arquitectura](./01-architecture.md) para conocer los límites de responsabilidad y validación.
+
+### Estructura básica {#basic-structure}
+
+CiliumEnvoyConfig define la configuración de Envoy para Services concretos:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -52,28 +33,62 @@ metadata:
   name: my-service-config
   namespace: default
 spec:
-  # Services this configuration applies to
   services:
   - name: my-service
     namespace: default
-
-  # Backend services (optional)
+    ports:
+    - 8080
   backendServices:
   - name: backend-v1
     namespace: default
   - name: backend-v2
     namespace: default
-
-  # Envoy resource definitions
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: my-service-listener
-    # ... listener configuration
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: my-service-listener
+          route_config:
+            name: my-service-listener-routes
+            virtual_hosts:
+            - name: api
+              domains:
+              - '*'
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  weighted_clusters:
+                    clusters:
+                    - name: default/backend-v1
+                      weight: 50
+                    - name: default/backend-v2
+                      weight: 50
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/backend-v1
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/backend-v2
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### Enrutamiento HTTP
+Este ejemplo completo distribuye las solicitudes entre dos backends identificados de forma explícita. El Listener, la ruta HTTP y los Clusters de EDS son componentes distintos: enumerar los Services de backend no define por sí solo esos Clusters.
 
-#### Enrutamiento basado en rutas
+### Enrutamiento HTTP {#http-routing}
+
+#### Enrutamiento por ruta {#path-based-routing}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -85,7 +100,8 @@ spec:
   services:
   - name: api-gateway
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: users-service
     namespace: default
@@ -93,56 +109,65 @@ spec:
     namespace: default
   - name: products-service
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: api-gateway-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-gateway
           codec_type: AUTO
           route_config:
             name: api_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # /users/* -> users-service
               - match:
-                  prefix: "/users"
+                  path_separated_prefix: /users
                 route:
                   cluster: default/users-service
-
-              # /orders/* -> orders-service
               - match:
-                  prefix: "/orders"
+                  path_separated_prefix: /orders
                 route:
                   cluster: default/orders-service
-
-              # /products/* -> products-service
               - match:
-                  prefix: "/products"
+                  path_separated_prefix: /products
                 route:
                   cluster: default/products-service
-
-              # Default route
               - match:
-                  prefix: "/"
+                  prefix: /
                 direct_response:
                   status: 404
                   body:
-                    inline_string: "Not Found"
-
+                    inline_string: Not Found
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/orders-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/products-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/users-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-#### Enrutamiento basado en encabezados
+Envoy evalúa estas rutas en el orden mostrado. `path_separated_prefix` coincide con `/users` y `/users/123`, pero no con `/users-old`. La regla final `/` atiende las solicitudes que no coinciden con las anteriores. Este comportamiento difiere de la coincidencia con cualquier prefijo de cadena.
+
+#### Enrutamiento por encabezados {#header-based-routing}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -154,7 +179,8 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: api-v1
     namespace: default
@@ -162,53 +188,66 @@ spec:
     namespace: default
   - name: api-beta
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: header-routing-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-service
           route_config:
             name: header_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # Route to v2 if X-API-Version: v2 header present
               - match:
-                  prefix: "/"
+                  prefix: /
                   headers:
-                  - name: "X-API-Version"
-                    exact_match: "v2"
+                  - name: X-API-Version
+                    string_match:
+                      exact: v2
                 route:
                   cluster: default/api-v2
-
-              # Route to beta if X-Beta-User: true header present
               - match:
-                  prefix: "/"
+                  prefix: /
                   headers:
-                  - name: "X-Beta-User"
-                    exact_match: "true"
+                  - name: X-Beta-User
+                    string_match:
+                      exact: 'true'
                 route:
                   cluster: default/api-beta
-
-              # Default: route to v1
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   cluster: default/api-v1
-
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-beta
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-v1
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-v2
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-#### Enrutamiento basado en métodos
+Se usa la primera regla que coincida: una solicitud con ambos encabezados selecciona v2. Los encabezados de versión o beta controlados por el cliente orientan el enrutamiento; no demuestran que el usuario esté autorizado a acceder a ese backend.
+
+#### Enrutamiento por método {#method-based-routing}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -220,59 +259,81 @@ spec:
   services:
   - name: rest-api
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: read-service
     namespace: default
   - name: write-service
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: method-routing-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: rest-api
           route_config:
             name: method_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # GET requests -> read-service
               - match:
-                  prefix: "/"
+                  prefix: /
                   headers:
-                  - name: ":method"
-                    exact_match: "GET"
+                  - name: :method
+                    string_match:
+                      safe_regex:
+                        google_re2: {}
+                        regex: ^(GET|HEAD)$
                 route:
                   cluster: default/read-service
-
-              # POST, PUT, DELETE -> write-service
               - match:
-                  prefix: "/"
+                  prefix: /
                   headers:
-                  - name: ":method"
-                    safe_regex_match:
-                      google_re2: {}
-                      regex: "POST|PUT|DELETE|PATCH"
+                  - name: :method
+                    string_match:
+                      safe_regex:
+                        google_re2: {}
+                        regex: ^(POST|PUT|DELETE|PATCH)$
                 route:
                   cluster: default/write-service
-
+              - match:
+                  prefix: /
+                direct_response:
+                  status: 405
+                response_headers_to_add:
+                - header:
+                    key: allow
+                    value: GET, HEAD, POST, PUT, DELETE, PATCH
+                  append_action: OVERWRITE_IF_EXISTS_OR_ADD
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/read-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/write-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Políticas de tráfico L7
+GET y HEAD seleccionan el Service de lectura; POST, PUT, DELETE y PATCH seleccionan el de escritura. Los demás métodos reciben una respuesta 405. Configure de forma explícita OPTIONS/CORS o cualquier comportamiento específico que necesite la aplicación. Enviar una escritura a un backend dedicado no implementa por sí solo autorización ni idempotencia.
 
-### Reglas L7 de CiliumNetworkPolicy
+## Políticas de tráfico L7 {#l7-traffic-policies}
 
-CiliumNetworkPolicy permite un control de tráfico detallado en el nivel L7:
+### Reglas L7 de CiliumNetworkPolicy {#ciliumnetworkpolicy-l7-rules}
+
+CiliumNetworkPolicy permite controlar el tráfico de forma precisa en la capa L7:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -283,90 +344,69 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: backend-api
-
+      k8s:app: backend-api
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: default
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        # Allow GET /api/users/*
-        - method: GET
-          path: "/api/users/.*"
-
-        # Allow GET /api/products/*
-        - method: GET
-          path: "/api/products/.*"
-
-        # Allow POST /api/orders
-        - method: POST
-          path: "/api/orders"
-
-        # With header conditions
-        - method: GET
-          path: "/api/admin/.*"
-          headers:
-          - "X-Admin-Token: secret-token"
+        - method: ^GET$
+          path: ^/api/users/.*$
+        - method: ^GET$
+          path: ^/api/products/.*$
+        - method: ^POST$
+          path: ^/api/orders$
+        - method: ^GET$
+          path: ^/api/admin/.*$
+          headerMatches:
+          - name: X-API-Version
+            value: v1
 ```
 
-### Compatibilidad con diversos protocolos
+Las reglas son alternativas; la condición del encabezado solo se aplica a la regla de la ruta de administración. `X-API-Version: v1` es una condición exacta de versión o enrutamiento, no una credencial de administrador. Implemente la autenticación y la autorización de usuarios en la aplicación. La política selecciona el tráfico de entrada del espacio de nombres indicado; otras políticas aplicables pueden ampliar los permisos.
 
-#### Política L7 de Kafka
+### Compatibilidad con distintos protocolos {#various-protocol-support}
+
+#### Kafka: límites de red y ACL del broker {#kafka-network-boundaries-and-broker-acls}
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: kafka-l7-policy
+  name: kafka-l4-policy
   namespace: kafka
 spec:
   endpointSelector:
     matchLabels:
-      app: kafka-broker
-
+      k8s:app: kafka-broker
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: kafka-producer
+        k8s:app: kafka-producer
+        k8s:io.kubernetes.pod.namespace: kafka
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        # Allow produce to specific topics
-        - apiKey: "produce"
-          topic: "orders"
-        - apiKey: "produce"
-          topic: "events"
-
   - fromEndpoints:
     - matchLabels:
-        app: kafka-consumer
+        k8s:app: kafka-consumer
+        k8s:io.kubernetes.pod.namespace: kafka
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        # Allow fetch from specific topics
-        - apiKey: "fetch"
-          topic: "orders"
-        - apiKey: "fetch"
-          topic: "events"
-        # Allow consumer group management
-        - apiKey: "offsetcommit"
-          topic: "orders"
-        - apiKey: "offsetfetch"
-          topic: "orders"
 ```
 
-#### Política L7 de DNS
+La API de políticas L7 de Cilium 1.20.3 admite HTTP y DNS; la antigua API `rules.kafka` ya no existe. La CRD publicada rechaza ese objeto de reglas de Kafka. Eliminar sus reglas L7 solo dejaría permisos L4, sin autorización por tema. El ejemplo de sustitución únicamente permite que los clientes enumerados se conecten al listener del broker, previamente configurado en TCP 9092. Configure por separado TLS/SASL de Kafka y las ACL del broker para los temas, los grupos de consumidores y las operaciones. Aquí, la política de red no puede distinguir entre producir y recuperar mensajes.
+
+#### Política L7 de DNS {#dns-l7-policy}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -377,26 +417,28 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: web-app
-
+      k8s:app: web-app
   egress:
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
       rules:
         dns:
-        # Allow specific domain lookups only
-        - matchPattern: "*.example.com"
-        - matchPattern: "api.external-service.io"
-        - matchName: "database.internal.svc.cluster.local"
+        - matchPattern: '*.example.com'
+        - matchPattern: api.external-service.io
+        - matchName: database.internal.svc.cluster.local
 ```
 
-#### Política L7 de gRPC
+Este ejemplo permite **únicamente consultas DNS**, por UDP y TCP, al resolver del clúster seleccionado. No permite conexiones HTTPS ni de base de datos a las direcciones obtenidas; añada reglas separadas de `toFQDNs` o endpoints y puertos para los destinos previstos. `*.example.com` no incluye el dominio raíz `example.com` ni cualquier subdominio anidado. Tenga también en cuenta las consultas de la lista de búsqueda del resolver. NodeLocal DNS requiere una regla de destino distinta y verificada. Restringir los nombres no garantiza la protección frente a la exfiltración de datos, DoH ni el uso indebido de los dominios permitidos.
+
+#### Política L7 de gRPC {#grpc-l7-policy}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -407,83 +449,56 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: grpc-server
-
+      k8s:app: grpc-server
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: grpc-client
+        k8s:app: grpc-client
+        k8s:io.kubernetes.pod.namespace: default
     toPorts:
     - ports:
-      - port: "50051"
+      - port: '50051'
         protocol: TCP
       rules:
         http:
-        # gRPC is HTTP/2 based, so use http rules
-        - method: POST
-          path: "/myapp.UserService/GetUser"
-        - method: POST
-          path: "/myapp.UserService/ListUsers"
-        - method: POST
-          path: "/myapp.OrderService/.*"
+        - method: ^POST$
+          path: ^/myapp\.UserService/GetUser$
+        - method: ^POST$
+          path: ^/myapp\.UserService/ListUsers$
+        - method: ^POST$
+          path: ^/myapp\.OrderService/.*$
 ```
 
-## Equilibrio de carga
+Estas reglas HTTP/2 coinciden con la ruta gRPC `POST /package.Service/Method`. El punto del nombre del paquete está escapado y las expresiones están ancladas. Se requiere una ruta HTTP/2 compatible que pueda inspeccionarse; el tráfico cifrado de la aplicación necesita la configuración TLS correspondiente. Los métodos de salud, reflexión y demás métodos no quedan permitidos de forma implícita. La política HTTP tampoco puede autorizar campos dentro de un mensaje protobuf.
 
-### Equilibrio de carga L4 (eBPF)
+## Balanceo de carga {#load-balancing}
 
-eBPF-based L4 load balancing replaces kube-proxy:
+### Balanceo de carga L4 con eBPF {#l4-load-balancing-ebpf}
+
+El balanceo de carga L4 basado en eBPF sustituye a kube-proxy:
 
 ```yaml
-# Cilium configuration (values.yaml)
 kubeProxyReplacement: true
-
+k8sServiceHost: <reachable-api-server-host>
+k8sServicePort: 6443
 loadBalancer:
-  # Load balancing algorithm
-  algorithm: maglev  # maglev or random
-
-  # Mode configuration
-  mode: snat  # snat, dsr, or hybrid
-
-  # DSR settings (optional)
-  dsrDispatch: opt  # opt or ipip
-
-  # Session affinity
-  serviceTopology: true
-
-  # Health checking
-  healthCheckNodePort: true
+  algorithm: maglev
+  mode: snat
+nodePort:
+  enableHealthCheck: true
 ```
 
-#### Hashing Maglev
+El endpoint de la API debe ser accesible durante el arranque. Use su puerto real, normalmente 443 en EKS, y conserve los ajustes de IPAM y enrutamiento de la plataforma elegida. `nodePort.enableHealthCheck` es la clave del chart; la antigua `loadBalancer.healthCheckNodePort` no la configuraba. `loadBalancer.serviceTopology` se refiere al enrutamiento según la topología, no a la afinidad de sesión ClientIP. Las combinaciones de despacho y enrutamiento DSR requieren un diseño aparte. Las opciones de despacho documentadas son `opt` y `geneve`, no `ipip`. Consulte la [explicación de arquitectura](./01-architecture.md#kube-proxy-replacement).
 
-```mermaid
-graph TB
-    subgraph "Maglev Consistent Hashing"
-        Client[Client Request]
-        Hash[Hash Function<br/>src_ip + dst_ip + src_port + dst_port + protocol]
-        Table[Lookup Table<br/>65537 entries]
-        Backend[Backend Selection]
-    end
+#### Hashing Maglev {#maglev-hashing}
 
-    Client --> Hash
-    Hash --> Table
-    Table --> Backend
+Maglev asigna una clave de flujo a un backend mediante una tabla de consulta para el tráfico externo al que se aplica. Minimiza la reasignación cuando cambia el conjunto de backends; no conserva una sesión en un backend eliminado ni sustituye a `Service.spec.sessionAffinity: ClientIP`.
 
-    subgraph "Backends"
-        B1[Backend 1]
-        B2[Backend 2]
-        B3[Backend 3]
-    end
+El tamaño predeterminado de la tabla Maglev de eBPF en Cilium 1.20.3 es **16.381**. Entre los tamaños admitidos está **65.521**. En cambio, **65.537** corresponde al ejemplo independiente de MAGLEV de Envoy que aparece más adelante y no es un valor admitido de `maglev.tableSize` en Cilium. Todos los nodos deben tener una configuración coherente. La traducción de Services entre cargas internas a nivel de socket no pasa por esta ruta de Maglev.
 
-    Backend --> B1
-    Backend --> B2
-    Backend --> B3
-```
+### Balanceo de carga L7 con Envoy {#l7-load-balancing-envoy}
 
-### Equilibrio de carga L7 (Envoy)
-
-El equilibrio de carga L7 se proporciona mediante Envoy:
+Envoy proporciona el balanceo de carga L7:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -495,48 +510,55 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: api-backend
     namespace: default
-
   resources:
-  # Cluster definition
-  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
+    name: l7-load-balancer
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: l7-load-balancer
+          route_config:
+            name: l7-load-balancer-routes
+            virtual_hosts:
+            - name: api
+              domains:
+              - '*'
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  cluster: default/api-backend
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: default/api-backend
     connect_timeout: 5s
     type: EDS
-    eds_cluster_config:
-      eds_config:
-        api_config_source:
-          api_type: GRPC
-          grpc_services:
-          - envoy_grpc:
-              cluster_name: xds-grpc-cilium
-
-    # Load balancing policy
     lb_policy: ROUND_ROBIN
-
-    # Outlier detection (Circuit Breaker)
     outlier_detection:
       consecutive_5xx: 5
       interval: 10s
       base_ejection_time: 30s
       max_ejection_percent: 50
-
-    # Health checks
     health_checks:
     - timeout: 5s
       interval: 10s
       unhealthy_threshold: 3
       healthy_threshold: 2
       http_health_check:
-        path: "/health"
+        path: /health
         expected_statuses:
         - start: 200
-          end: 299
-
-    # Connection pool settings
+          end: 300
     circuit_breakers:
       thresholds:
       - priority: DEFAULT
@@ -546,36 +568,43 @@ spec:
         max_retries: 3
 ```
 
-#### Opciones de algoritmos de equilibrio de carga
+Las sondas activas de `/health`, la detección pasiva de endpoints anómalos y los límites de capacidad del mecanismo de circuit breaker son distintos. El intervalo de estados HTTP saludables es `[200, 300)`, por lo que incluye 299. El backend debe implementar el endpoint de salud y la política debe permitir la ruta de la sonda. La expulsión de endpoints anómalos no garantiza que todas las solicitudes eviten un endpoint averiado. `max_retries` en `circuit_breakers.thresholds` limita los recursos de reintento concurrentes; no indica el número de reintentos de cada solicitud.
+
+#### Opciones de algoritmo de balanceo de carga {#load-balancing-algorithm-options}
+
+Elija **un solo** fragmento de Cluster de los siguientes. Son alternativas, no un único objeto YAML con claves `lb_policy` repetidas. RING_HASH y MAGLEV también necesitan una `hash_policy` adecuada en la ruta si las solicitudes deben usar siempre una clave de aplicación. Si no se proporciona un hash, la selección puede recurrir a una clave aleatoria. La tabla MAGLEV L7 de Envoy es distinta de la tabla Maglev eBPF de Cilium.
 
 ```yaml
-# Round Robin
 lb_policy: ROUND_ROBIN
+```
 
-# Least Request
+```yaml
 lb_policy: LEAST_REQUEST
 least_request_lb_config:
   choice_count: 2
+```
 
-# Random
+```yaml
 lb_policy: RANDOM
+```
 
-# Ring Hash (Consistent Hashing)
+```yaml
 lb_policy: RING_HASH
 ring_hash_lb_config:
   hash_function: XX_HASH
   minimum_ring_size: 1024
   maximum_ring_size: 8388608
+```
 
-# Maglev
+```yaml
 lb_policy: MAGLEV
 maglev_lb_config:
   table_size: 65537
 ```
 
-## División de tráfico (Canary Deployment)
+## Distribución del tráfico para despliegues canary {#traffic-splitting-canary-deployment}
 
-### División de tráfico basada en peso
+### Distribución del tráfico por pesos {#weight-based-traffic-splitting}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -587,48 +616,57 @@ spec:
   services:
   - name: frontend
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: frontend-stable
     namespace: default
   - name: frontend-canary
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: canary-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: frontend
           route_config:
             name: canary_routes
             virtual_hosts:
             - name: frontend
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   weighted_clusters:
                     clusters:
-                    # 90% -> stable
                     - name: default/frontend-stable
                       weight: 90
-                    # 10% -> canary
                     - name: default/frontend-canary
                       weight: 10
-                    total_weight: 100
-
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/frontend-canary
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/frontend-stable
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### Canary basado en encabezados
+Los pesos 90 y 10 expresan probabilidades relativas de selección; no garantizan un reparto exacto en cada grupo de diez solicitudes ni por usuario o sesión. La versión actual de Envoy usa la suma de los pesos; se omite el campo obsoleto `total_weight`. Esta configuración solo selecciona tráfico y no incluye un ciclo automático de análisis de salud, promoción ni reversión.
+
+### Selección de canary mediante encabezados {#header-based-canary}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -640,52 +678,62 @@ spec:
   services:
   - name: api
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: api-stable
     namespace: default
   - name: api-canary
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: header-canary-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api
           route_config:
             name: header_canary_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # Route to canary if X-Canary: true header present
               - match:
-                  prefix: "/"
+                  prefix: /
                   headers:
-                  - name: "X-Canary"
-                    exact_match: "true"
+                  - name: X-Canary
+                    string_match:
+                      exact: 'true'
                 route:
                   cluster: default/api-canary
-
-              # Default: route to stable
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   cluster: default/api-stable
-
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-canary
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-stable
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Reintentos y tiempo de espera
+Solo el valor exacto `X-Canary: true` selecciona canary; las demás solicitudes seleccionan stable. Trate este encabezado como un dato no fiable salvo que un punto de control autenticado controle su valor. Incluya en el plan de despliegue los requisitos de estado y compatibilidad de las aplicaciones stable y canary.
 
-### Configuración de reintentos
+## Reintentos y tiempos de espera {#retry-and-timeout}
+
+### Configuración de reintentos {#retry-configuration}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -697,67 +745,87 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: api-backend
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: retry-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-service
           route_config:
             name: retry_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
+                  headers:
+                  - name: :method
+                    string_match:
+                      exact: GET
                 route:
                   cluster: default/api-backend
-                  timeout: 30s
-
-                  # Retry policy
+                  timeout: 7s
                   retry_policy:
-                    # Status codes to retry
-                    retry_on: "5xx,reset,connect-failure,retriable-4xx"
-
-                    # Maximum retry attempts
-                    num_retries: 3
-
-                    # Retry interval
-                    per_try_timeout: 10s
-
-                    # Retry backoff
+                    retry_on: 5xx,reset,connect-failure
+                    num_retries: 2
+                    per_try_timeout: 2s
                     retry_back_off:
-                      base_interval: 0.5s
-                      max_interval: 10s
-
-                    # Retriable headers
-                    retriable_headers:
-                    - name: "x-envoy-retriable-on"
-                      exact_match: "true"
-
-                    # Retry priority
-                    retry_priority:
-                      name: envoy.retry_priorities.previous_priorities
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.retry.priority.previous_priorities.v3.PreviousPrioritiesConfig
-                        update_frequency: 2
-
+                      base_interval: 0.025s
+                      max_interval: 0.25s
+                    retriable_request_headers:
+                    - name: :method
+                      string_match:
+                        exact: GET
+              - match:
+                  prefix: /
+                route:
+                  cluster: default/api-backend
+                  timeout: 7s
+                  retry_policy:
+                    num_retries: 0
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          early_header_mutation_extensions:
+          - name: envoy.http.early_header_mutation.header_mutation
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.http.early_header_mutation.header_mutation.v3.HeaderMutation
+              mutations:
+              - remove: x-envoy-retry-on
+              - remove: x-envoy-retry-grpc-on
+              - remove: x-envoy-max-retries
+              - remove: x-envoy-hedge-on-per-try-timeout
+              - remove: x-envoy-retriable-header-names
+              - remove: x-envoy-retriable-status-codes
+              - remove: x-envoy-upstream-rq-timeout-ms
+              - remove: x-envoy-upstream-rq-per-try-timeout-ms
+              - remove: x-envoy-expected-rq-timeout-ms
+              - remove: x-envoy-upstream-stream-duration-ms
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-backend
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### Configuración de tiempo de espera
+Solo las solicitudes GET se reintentan: como máximo **dos intentos adicionales**, con dos segundos de tiempo de espera por intento y siete segundos para la ruta. El tiempo de espera por intento también se aplica al intento inicial; no es la pausa entre reintentos. El retroceso entre reintentos se configura por separado. La ruta para las solicitudes distintas de GET establece explícitamente `num_retries: 0`.
+
+La extensión de modificación temprana de encabezados elimina los encabezados que permiten sobrescribir los reintentos y tiempos de espera de Envoy antes del enrutamiento y del cálculo del tiempo de espera. Está compilada en la imagen del proxy de Cilium 1.20.3; los filtros HTTP habituales `header_mutation` y Lua no están habilitados en esa compilación. La antigua extensión de prioridad de reintentos `previous_priorities` tampoco está disponible en esta imagen. No dé por hecho que todas las extensiones del proyecto Envoy están disponibles en esta imagen.
+
+Use este ejemplo con endpoints HTTP cuya operación GET pueda repetirse de forma segura. La aplicación, el cliente u otro proxy pueden reintentar de manera independiente. Mantenga las escrituras con un único intento salvo que la aplicación disponga de un mecanismo de idempotencia revisado. `retriable_headers` se refiere a los encabezados de la **respuesta del upstream** y se consulta con `retry_on: retriable-headers`; `retriable_request_headers`, en cambio, restringe qué solicitudes pueden reintentarse. Estos campos no son intercambiables. `retriable-4xx` no implica reintentar todas las respuestas 4xx.
+
+### Configuración de tiempos de espera {#timeout-configuration}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -769,62 +837,85 @@ spec:
   services:
   - name: slow-service
     namespace: default
-
+    ports:
+    - 8080
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: timeout-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: slow-service
-
-          # Connection timeout
           common_http_protocol_options:
             idle_timeout: 300s
             headers_with_underscores_action: REJECT_REQUEST
-
-          # Stream timeouts
           stream_idle_timeout: 60s
-          request_timeout: 120s
-
+          request_timeout: 0s
           route_config:
             name: timeout_routes
             virtual_hosts:
             - name: slow-service
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # Default route
               - match:
-                  prefix: "/"
-                route:
-                  cluster: default/slow-service
-                  timeout: 60s
-
-              # Endpoint requiring long processing time
-              - match:
-                  prefix: "/long-running"
+                  path_separated_prefix: /long-running
                 route:
                   cluster: default/slow-service
                   timeout: 300s
-
-              # Streaming endpoint (unlimited)
+                  idle_timeout: 300s
+                  retry_policy:
+                    num_retries: 0
               - match:
-                  prefix: "/stream"
+                  path_separated_prefix: /stream
                 route:
                   cluster: default/slow-service
-                  timeout: 0s  # Unlimited
-
+                  timeout: 0s
+                  idle_timeout: 60s
+                  retry_policy:
+                    num_retries: 0
+              - match:
+                  prefix: /
+                route:
+                  cluster: default/slow-service
+                  timeout: 60s
+                  retry_policy:
+                    num_retries: 0
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          early_header_mutation_extensions:
+          - name: envoy.http.early_header_mutation.header_mutation
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.http.early_header_mutation.header_mutation.v3.HeaderMutation
+              mutations:
+              - remove: x-envoy-retry-on
+              - remove: x-envoy-retry-grpc-on
+              - remove: x-envoy-max-retries
+              - remove: x-envoy-hedge-on-per-try-timeout
+              - remove: x-envoy-retriable-header-names
+              - remove: x-envoy-retriable-status-codes
+              - remove: x-envoy-upstream-rq-timeout-ms
+              - remove: x-envoy-upstream-rq-per-try-timeout-ms
+              - remove: x-envoy-expected-rq-timeout-ms
+              - remove: x-envoy-upstream-stream-duration-ms
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/slow-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Limitación de tasa
+Las rutas específicas preceden a la ruta general: `/long-running` recibe un límite de 300 segundos para la ruta y la inactividad del flujo; `/stream` desactiva solo el tiempo de espera global de respuesta de la ruta y conserva un límite de inactividad de 60 segundos. Las demás rutas usan un tiempo de espera de 60 segundos. `/streaming` no coincide con `/stream`.
 
-### Limitación de tasa local
+El `connect_timeout` del Cluster de destino limita el establecimiento de la conexión. `common_http_protocol_options.idle_timeout` limita la inactividad de la conexión con el cliente. El `request_timeout` del HCM limita la recepción de la solicitud del cliente, no el procesamiento del backend; aquí está desactivado para las solicitudes en streaming. Por ello, los servicios expuestos necesitan los controles correspondientes en el borde, los encabezados, el cuerpo y las conexiones. Un tiempo de inactividad de flujo distinto de cero, los plazos del cliente, los límites de infraestructura o la pérdida de conexión pueden seguir terminando un flujo. `timeout: 0s` no garantiza una conexión ilimitada.
+
+## Limitación de la tasa de solicitudes {#rate-limiting}
+
+### Limitación local de la tasa {#local-rate-limiting}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -836,71 +927,62 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: ratelimit-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-service
           route_config:
             name: ratelimit_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   cluster: default/api-service
-
           http_filters:
-          # Local Rate Limiter
           - name: envoy.filters.http.local_ratelimit
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+              '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
               stat_prefix: http_local_rate_limiter
-
-              # Global token bucket
               token_bucket:
                 max_tokens: 1000
                 tokens_per_fill: 100
                 fill_interval: 1s
-
-              # Response headers
-              response_headers_to_add:
-              - append_action: OVERWRITE_IF_EXISTS_OR_ADD
-                header:
-                  key: x-ratelimit-limit
-                  value: "1000"
-              - append_action: OVERWRITE_IF_EXISTS_OR_ADD
-                header:
-                  key: x-ratelimit-remaining
-                  value: "%DYNAMIC_METADATA(envoy.http.local_rate_limit:remaining)%"
-
-              # Response when rate limit exceeded
               status:
                 code: TooManyRequests
               filter_enabled:
-                runtime_key: local_rate_limit_enabled
                 default_value:
                   numerator: 100
                   denominator: HUNDRED
               filter_enforced:
-                runtime_key: local_rate_limit_enforced
                 default_value:
                   numerator: 100
                   denominator: HUNDRED
-
+              enable_x_ratelimit_headers: DRAFT_VERSION_03
+              local_rate_limit_per_downstream_connection: false
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### Limitación de tasa por ruta
+Este depósito de tokens admite una ráfaga de 1.000 y repone 100 tokens por segundo **en cada proceso Envoy**, de forma compartida entre sus workers. No es una cuota para todo el clúster. Los porcentajes de activación y aplicación son explícitos. `enable_x_ratelimit_headers: DRAFT_VERSION_03` solicita los encabezados reales del filtro con el límite, los tokens restantes y el reinicio. Una clave inventada de metadatos dinámicos no proporciona un recuento fiable de los tokens restantes.
+
+### Limitación de la tasa por ruta {#per-route-rate-limiting}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -912,77 +994,110 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: per-route-ratelimit-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-service
           route_config:
             name: ratelimit_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # Auth endpoint - low rate limit
               - match:
-                  prefix: "/auth"
+                  path_separated_prefix: /auth
                 route:
                   cluster: default/api-service
                 typed_per_filter_config:
                   envoy.filters.http.local_ratelimit:
-                    "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                    '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
                     stat_prefix: auth_rate_limiter
                     token_bucket:
                       max_tokens: 10
                       tokens_per_fill: 5
                       fill_interval: 60s
-
-              # Search endpoint - medium rate limit
+                    filter_enabled:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    filter_enforced:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    local_rate_limit_per_downstream_connection: false
+                    enable_x_ratelimit_headers: DRAFT_VERSION_03
               - match:
-                  prefix: "/search"
+                  path_separated_prefix: /search
                 route:
                   cluster: default/api-service
                 typed_per_filter_config:
                   envoy.filters.http.local_ratelimit:
-                    "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                    '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
                     stat_prefix: search_rate_limiter
                     token_bucket:
                       max_tokens: 100
                       tokens_per_fill: 50
                       fill_interval: 1s
-
-              # Default - high rate limit
+                    filter_enabled:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    filter_enforced:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    local_rate_limit_per_downstream_connection: false
+                    enable_x_ratelimit_headers: DRAFT_VERSION_03
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   cluster: default/api-service
                 typed_per_filter_config:
                   envoy.filters.http.local_ratelimit:
-                    "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                    '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
                     stat_prefix: default_rate_limiter
                     token_bucket:
                       max_tokens: 1000
                       tokens_per_fill: 100
                       fill_interval: 1s
-
+                    filter_enabled:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    filter_enforced:
+                      default_value:
+                        numerator: 100
+                        denominator: HUNDRED
+                    local_rate_limit_per_downstream_connection: false
+                    enable_x_ratelimit_headers: DRAFT_VERSION_03
           http_filters:
           - name: envoy.filters.http.local_ratelimit
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+              '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
               stat_prefix: http_local_rate_limiter
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Reescritura de URL y manipulación de encabezados
+Cada ruta proporciona una configuración local completa, incluidos los porcentajes de activación y aplicación. La ruta de autenticación admite una ráfaga de 10 y repone 5 tokens cada 60 segundos; la de búsqueda admite una ráfaga de 100 y repone 50 por segundo; la ruta predeterminada admite una ráfaga de 1.000 y repone 100 por segundo. Estos depósitos pertenecen a cada proceso, no son límites por usuario. Un depósito sin fracciones de activación y aplicación no impone, de forma predeterminada, un límite efectivo.
 
-### Reescritura de URL
+## Reescritura de URL y modificación de encabezados {#url-rewriting-and-header-manipulation}
+
+### Reescritura de URL {#url-rewriting}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -994,61 +1109,73 @@ spec:
   services:
   - name: api-gateway
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: users-service
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: rewrite-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-gateway
           route_config:
             name: rewrite_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
-              # /api/v1/users/* -> /users/*
               - match:
-                  prefix: "/api/v1/users"
+                  path_separated_prefix: /api/v1/users
                 route:
                   cluster: default/users-service
-                  prefix_rewrite: "/users"
-
-              # Regex rewrite
+                  prefix_rewrite: /users
               - match:
                   safe_regex:
                     google_re2: {}
-                    regex: "/v([0-9]+)/(.*)"
+                    regex: ^/v([0-9]+)/(.*)$
                 route:
                   cluster: default/users-service
                   regex_rewrite:
                     pattern:
                       google_re2: {}
-                      regex: "/v([0-9]+)/(.*)"
-                    substitution: "/api/\\2?version=\\1"
-
-              # Host rewrite
+                      regex: ^/v([0-9]+)/([^?]*)(\?.*)?$
+                    substitution: /api/v\1/\2\3
               - match:
-                  prefix: "/legacy"
+                  path: /legacy
                 route:
                   cluster: default/users-service
-                  host_rewrite_literal: "legacy.internal.svc.cluster.local"
-                  prefix_rewrite: "/"
-
+                  host_rewrite_literal: legacy.internal.svc.cluster.local
+                  prefix_rewrite: /
+              - match:
+                  prefix: /legacy/
+                route:
+                  cluster: default/users-service
+                  host_rewrite_literal: legacy.internal.svc.cluster.local
+                  prefix_rewrite: /
+              - match:
+                  prefix: /
+                direct_response:
+                  status: 404
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/users-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### Manipulación de encabezados
+`/api/v1/users/123` se convierte en `/users/123`; `/v2/users?active=1` se convierte en `/api/v2/users?active=1`, conservando la cadena de consulta existente. Las coincidencias separadas para la raíz y las rutas secundarias del prefijo antiguo evitan barras dobles accidentales. La reescritura del host cambia la autoridad HTTP enviada al Cluster seleccionado; no resuelve por sí sola un Service de backend distinto.
+
+### Modificación de encabezados {#header-manipulation}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1060,78 +1187,77 @@ spec:
   services:
   - name: api-service
     namespace: default
-
+    ports:
+    - 8080
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: header-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: api-service
           route_config:
             name: header_routes
             virtual_hosts:
             - name: api
-              domains: ["*"]
-
-              # Virtual host level headers
+              domains:
+              - '*'
               request_headers_to_add:
               - header:
-                  key: "X-Forwarded-By"
-                  value: "cilium-envoy"
+                  key: X-Forwarded-By
+                  value: cilium-envoy
                 append_action: OVERWRITE_IF_EXISTS_OR_ADD
-
               response_headers_to_add:
               - header:
-                  key: "X-Served-By"
-                  value: "cilium-service-mesh"
+                  key: X-Served-By
+                  value: cilium-service-mesh
                 append_action: OVERWRITE_IF_EXISTS_OR_ADD
-
               response_headers_to_remove:
-              - "server"
-              - "x-powered-by"
-
+              - server
+              - x-powered-by
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
                   cluster: default/api-service
-
-                  # Route level headers
-                  request_headers_to_add:
-                  - header:
-                      key: "X-Request-Start"
-                      value: "%START_TIME(%s.%3f)%"
-                    append_action: OVERWRITE_IF_EXISTS_OR_ADD
-                  - header:
-                      key: "X-Envoy-Original-Path"
-                      value: "%REQ(:PATH)%"
-                    append_action: OVERWRITE_IF_EXISTS_OR_ADD
-
-                  response_headers_to_add:
-                  - header:
-                      key: "X-Response-Time"
-                      value: "%RESPONSE_DURATION%ms"
-                    append_action: OVERWRITE_IF_EXISTS_OR_ADD
-                  - header:
-                      key: "X-Upstream-Host"
-                      value: "%UPSTREAM_HOST%"
-                    append_action: OVERWRITE_IF_EXISTS_OR_ADD
-
+                request_headers_to_add:
+                - header:
+                    key: X-Request-Start
+                    value: '%START_TIME(%s.%3f)%'
+                  append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                - header:
+                    key: X-Envoy-Original-Path
+                    value: '%REQ(:PATH)%'
+                  append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                response_headers_to_add:
+                - header:
+                    key: X-Response-Time
+                    value: '%RESPONSE_DURATION%ms'
+                  append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                - header:
+                    key: X-Upstream-Host
+                    value: '%UPSTREAM_HOST%'
+                  append_action: OVERWRITE_IF_EXISTS_OR_ADD
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/api-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Integración con Gateway API
+Las modificaciones de encabezados de la ruta deben colocarse junto a la acción `route`, no dentro de `RouteAction`. El formateador del tiempo de respuesta se evalúa al crear los encabezados de respuesta; no puede indicar cuándo termina un cuerpo que aún no se ha transmitido. El encabezado de diagnóstico del host de destino expone información interna de enrutamiento. Use estos encabezados de diagnóstico únicamente en una interfaz interna o de pruebas apropiada.
 
-### GatewayClass y Gateway
+## Integración con Gateway API {#gateway-api-integration}
+
+### GatewayClass y Gateway {#gatewayclass-and-gateway}
 
 ```yaml
-# GatewayClass definition
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -1139,7 +1265,6 @@ metadata:
 spec:
   controllerName: io.cilium/gateway-controller
 ---
-# Gateway definition
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -1154,7 +1279,6 @@ spec:
     allowedRoutes:
       namespaces:
         from: Same
-
   - name: https
     protocol: HTTPS
     port: 443
@@ -1168,7 +1292,9 @@ spec:
         from: Same
 ```
 
-### HTTPRoute
+Se requieren las CRD de Gateway API 1.6.3 y los valores `gatewayAPI.enabled: true`, `kubeProxyReplacement: true` y `l7Proxy: true` de Cilium. El GatewayClass mostrado describe la asociación con el controlador. Si las herramientas de instalación ya administran `cilium`, reutilícelo para evitar responsables en conflicto. Prepare `api-gateway-tls` como un Secret TLS válido en `default`, con un certificado para el nombre de host. La exposición y las direcciones de LoadBalancer dependen de la plataforma. Compruebe las condiciones Accepted y Programmed de GatewayClass/Gateway y las referencias de los listeners. Este manifiesto no configura un diseño completo de exposición en EKS.
+
+### HTTPRoute {#httproute}
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1180,30 +1306,24 @@ spec:
   parentRefs:
   - name: api-gateway
     namespace: default
-
+    sectionName: https
   hostnames:
-  - "api.example.com"
-
+  - api.example.com
   rules:
-  # /users/* -> users-service
   - matches:
     - path:
         type: PathPrefix
         value: /users
     backendRefs:
     - name: users-service
-      port: 80
-
-  # /orders/* -> orders-service
+      port: 8080
   - matches:
     - path:
         type: PathPrefix
         value: /orders
     backendRefs:
     - name: orders-service
-      port: 80
-
-  # Header-based routing
+      port: 8080
   - matches:
     - path:
         type: PathPrefix
@@ -1213,23 +1333,23 @@ spec:
         value: v2
     backendRefs:
     - name: api-v2
-      port: 80
-
-  # Weight-based splitting
+      port: 8080
   - matches:
     - path:
         type: PathPrefix
         value: /
     backendRefs:
     - name: api-stable
-      port: 80
+      port: 8080
       weight: 90
     - name: api-canary
-      port: 80
+      port: 8080
       weight: 10
 ```
 
-### Características avanzadas de HTTPRoute
+Esta ruta se asocia únicamente al listener `https`. Los puertos 80/443 de los listeners de entrada son distintos del puerto 8080 de los Services de backend. El listener HTTP no redirige automáticamente a HTTPS; configure una ruta independiente para ese listener si la necesita. Gateway API aplica la precedencia definida por su especificación, como la especificidad de la ruta y las coincidencias de encabezados. No suponga que todas las reglas se evalúan únicamente en el orden del YAML. Compruebe Accepted, ResolvedRefs y el estado real del listener.
+
+### Funciones avanzadas de HTTPRoute {#httproute-advanced-features}
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1240,27 +1360,20 @@ metadata:
 spec:
   parentRefs:
   - name: api-gateway
-
+    sectionName: https
   rules:
   - matches:
     - path:
         type: PathPrefix
         value: /api
-
-    # Request header modification
     filters:
     - type: RequestHeaderModifier
       requestHeaderModifier:
-        add:
-        - name: X-Request-ID
-          value: "%REQ(X-REQUEST-ID)%"
         set:
-        - name: X-Forwarded-Proto
-          value: https
+        - name: X-Doc-Route
+          value: api-v1
         remove:
         - X-Internal-Header
-
-    # Response header modification
     - type: ResponseHeaderModifier
       responseHeaderModifier:
         add:
@@ -1268,23 +1381,19 @@ spec:
           value: DENY
         - name: X-Content-Type-Options
           value: nosniff
-
-    # URL rewrite
     - type: URLRewrite
       urlRewrite:
         path:
           type: ReplacePrefixMatch
           replacePrefixMatch: /v1
-
     backendRefs:
     - name: api-service
-      port: 80
-
-  # Redirect
+      port: 8080
   - matches:
     - path:
         type: Exact
         value: /old-endpoint
+      method: GET
     filters:
     - type: RequestRedirect
       requestRedirect:
@@ -1294,9 +1403,13 @@ spec:
           type: ReplaceFullPath
           replaceFullPath: /new-endpoint
         statusCode: 301
+  hostnames:
+  - api.example.com
 ```
 
-## Duplicación de tráfico
+Los valores de los encabezados son configuración literal y portable de Gateway API. La API no define las plantillas `%REQ(...)%` de Envoy. Conserve o genere los identificadores de solicitud en la capa adecuada de aplicación o proxy. No fuerce `X-Forwarded-Proto: https` con independencia del transporte real. URLRewrite cambia la ruta de destino sin redirigir al cliente. La redirección de la ruta antigua solo coincide con GET: una respuesta 301 puede cambiar el método en algunos clientes, por lo que no debe redirigir escrituras arbitrarias de forma inadvertida.
+
+## Duplicación del tráfico {#traffic-mirroring}
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1308,57 +1421,89 @@ spec:
   services:
   - name: production-service
     namespace: default
-
+    ports:
+    - 8080
   backendServices:
   - name: production-backend
     namespace: default
   - name: shadow-backend
     namespace: default
-
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
     name: mirror-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: production-service
           route_config:
             name: mirror_routes
             virtual_hosts:
             - name: production
-              domains: ["*"]
+              domains:
+              - '*'
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
+                  headers:
+                  - name: :method
+                    string_match:
+                      safe_regex:
+                        google_re2: {}
+                        regex: ^(GET|HEAD)$
                 route:
                   cluster: default/production-backend
-
-                  # Traffic mirroring configuration
                   request_mirror_policies:
                   - cluster: default/shadow-backend
                     runtime_fraction:
                       default_value:
-                        numerator: 100  # 100% mirroring
+                        numerator: 100
                         denominator: HUNDRED
                     trace_sampled: false
-
+              - match:
+                  prefix: /
+                route:
+                  cluster: default/production-backend
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/production-backend
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/shadow-backend
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-## Próximos pasos
+El backend de copia recibe el 100 % de las **solicitudes GET/HEAD seleccionadas**; la ruta para los demás métodos no tiene política de duplicación. Pruebe con tráfico sintético o tráfico de solo lectura aprobado y un backend de pruebas aislado que no pueda modificar el estado de producción ni provocar efectos externos. La duplicación consume recursos, copia los datos de las solicitudes y puede añadir `-shadow` a la autoridad, salvo que se configure otro comportamiento. Las respuestas de la copia no se devuelven al cliente, pero eso no garantiza que los usuarios no sufran ningún impacto.
 
-- [Seguridad](./03-security.md): Configura mTLS y políticas de red L7
-- [Observabilidad](./04-observability.md): Supervisa el tráfico con Hubble
-- [Ingress & Gateway](./05-ingress-gateway.md): Gestión de tráfico externo
+## Próximos pasos {#next-steps}
 
-## Referencias
+- [Seguridad](./03-security.md): Revise la autenticación, el cifrado y las políticas de red L7
+- [Observabilidad](./04-observability.md): Supervise el tráfico con Hubble
+- [Ingress y Gateway](./05-ingress-gateway.md): Gestión del tráfico externo
 
-- [Documentación de políticas L7 de Cilium](https://docs.cilium.io/en/stable/security/policy/language/#layer-7-examples)
-- [Referencia de CiliumEnvoyConfig](https://docs.cilium.io/en/stable/network/servicemesh/envoy-config/)
-- [Documentación de Gateway API](https://gateway-api.sigs.k8s.io/)
-- [Envoy HTTP Connection Manager](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/http_conn_man)
+## Referencias {#references}
+
+- [Políticas L7 de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
+- [Políticas L3/FQDN de Cilium](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer3.rst)
+- [Ejemplo de CEC de Cilium](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
+- [Analizador de configuración de Envoy de Cilium](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [Sustitución de kube-proxy con Cilium](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Instalación de Gateway API con Cilium](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [Valores del chart de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Lista de extensiones de la imagen del proxy de Cilium](https://github.com/cilium/proxy/blob/766ccfb37260a43e9d228837aa84ce3faf9f64e7/envoy_build_config/extensions_build_config.bzl)
+- [API de enrutamiento de Envoy 1.38.6](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/config/route/v3/route_components.proto)
+- [Implementación de reintentos de Envoy](https://github.com/envoyproxy/envoy/blob/v1.38.6/source/common/router/retry_state_impl.cc)
+- [Tiempos de enrutamiento y procesamiento de encabezados de Envoy](https://github.com/envoyproxy/envoy/blob/v1.38.6/source/common/router/router.cc)
+- [Modificación temprana de encabezados de Envoy](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/extensions/http/early_header_mutation/header_mutation/v3/header_mutation.proto)
+- [Limitación local de la tasa en Envoy](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)
+- [Definiciones de tiempos de espera de Envoy](https://github.com/envoyproxy/envoy/blob/v1.38.6/docs/root/faq/configuration/timeouts.rst)
+- [Especificación de HTTPRoute de Gateway API 1.6.3](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.3/apis/v1/httproute_types.go)
+- [ACL de los brokers de Kafka](https://kafka.apache.org/41/security/authorization-and-acls/)

@@ -1,59 +1,61 @@
-# Pod ネットワークベンチマーク — 同一ノード、同一 AZ、クロス AZ、DNS ndots
+# Pod ネットワークベンチマーク: 同一ノード、同一 AZ、クロス AZ、DNS ndots
 
-> **サポート対象バージョン**: Kubernetes 1.36 (Amazon EKS)、Amazon VPC CNI v1.21.1、kube-proxy iptables モード
-> **最終更新**: September 2, 2026
+> **記録したテスト環境**: Kubernetes 1.36（Amazon EKS）、Amazon VPC CNI v1.21.1、kube-proxy iptables モード
+> **測定日**: 2026年9月2日 · **コンテンツレビュー**: 2026年9月12日
 
-EKS 上の 2 つの Pod が同じノード、同じ AZ 内の別ノード、または異なる AZ に配置された場合、実際には何が変わるのでしょうか。この問いには 2 つの誤解がつきまといます。1 つ目は、AZ をまたぐと「遅くなり帯域幅も減る」というものです。本測定では AZ 境界が変えたのは**レイテンシと料金**であり、帯域幅はまったく変わりませんでした。2 つ目は DNS です。すべての EKS Pod が受け取る `ndots:5` と 4 項目の search リストにより、5 個未満のドットを持つ任意の名前の外部ルックアップは、気付かないうちに 2 件ではなく 10 件の DNS クエリになります。このページでは、「再現方法」のフィクスチャを使用して 2026 年 9 月 2 日に `fsi-demo-cluster`（ソウル）で測定した RTT、HTTP/gRPC レイテンシ、iperf3 スループット、リージョン内データ転送料、DNS クエリ数をまとめます。すべての数値は Pod IP から Pod IP（ClusterIP なし）です。理由は「注意事項」で説明します。
+このページは、ソウルの `fsi-demo-cluster` で2026年9月2日に実施したベンチマーク報告を記録しています。Pod 間 RTT、HTTP/gRPC レイテンシ、iperf3 スループット、DNS クエリ数を扱います。この測定では、AZ をまたぐとレイテンシが上がり、2つのノード間経路では同程度のスループットが得られました。ただし、これは AZ に依存しない帯域幅を保証するものではありません。測定 1～2 のアプリケーショントラフィックは Pod IP を直接使い、測定 3 はその料金をモデル化しています。測定 4 では既存の `kube-dns` ClusterIP を使いました。報告された DNS の10クエリの名前解決は、このリゾルバー、search list、応答順序に依存しており、すべての EKS Pod に当てはまるものではありません。過去のバージョンと測定値を保持しており、このレビューでは EKS ベンチマークを再実行していません。また、請求明細も確認していません。
 
-![クライアント Pod は node A（ap-northeast-2a）から、同一ノード、同一 AZ の node B、ap-northeast-2b の node C のサーバー Pod に到達する — RTT 0.040 / 0.339 / 0.544 ms、単一フロー 29.97 / 4.96 / 4.96 Gbps。](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
+![ap-northeast-2a のノード A 上のクライアント Pod が、同一ノード上のサーバー Pod、同じ AZ のノード B 上のサーバー Pod、ap-northeast-2b のノード C 上のサーバー Pod に到達する構成。RTT は 0.040 / 0.339 / 0.544 ms、単一フローは 29.97 / 4.96 / 4.96 Gbps。](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-06-pod-network-benchmark-0.html)
 
-## TL;DR — 測定結果
+この図は、テスト時のトポロジーを表します。+0.21 ms は今回の測定間の差、$4.47 は後述する十進 GB による過去の料金モデルです。どちらも請求額として検証されたものでも、AZ ごとに常に発生する料金でもありません。
 
-1. **RTT の段階差**: 同一ノード **0.040 ms** → 同一 AZ **0.339 ms** → クロス AZ **0.544 ms**（ping、200 プローブの平均）。1 回の AZ ホップは +0.21 ms、同一ノード比では +0.50 ms です。
-2. **HTTP p50 / p99**（fortio、100 qps、4 接続、keepalive、60 s）: 0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms。アプリケーションから見ても同じ段階差です。
-3. **帯域幅**: 1 TCP フローは、AZ 内でも AZ をまたいでも **4.96 Gbps** で頭打ちになります（EC2 の 5 Gbps 単一フロー制限）。8 フローでは m5.xlarge の 10 Gbps ピークである **9.94 Gbps** に達します。**AZ をまたいでもスループットは低下しません。**
-4. **同一ノードの Pod 間**: 単一フローで **29.97 Gbps**（CPU 制約。クライアントは 1 コアの 99.8 % を使用）、8 フローで **48.15 Gbps**。トラフィックは veth ペアを通過し、NIC には到達しません。
-5. **料金**: AZ 間をラインレートで 3 分間転送 = **223.4 GB** = リージョン内データ転送の約 **$4.47**（各方向 $0.01/GB）。180 s 以内では 1.25 Gbps ベースラインへのバーストクレジット枯渇は観測されませんでした。
-6. **DNS**: デフォルトの `ndots:5` で、glibc Pod が `sts.ap-northeast-2.amazonaws.com` を 1 回解決すると **10 クエリ**（8 件は NXDOMAIN）、ウォーム時の中央値は **3.78 ms**。末尾ドットで **2 クエリ**（A+AAAA）/ 0.80 ms、`ndots:1` で 2 クエリ / 0.54 ms になります。
-7. **新規接続ではリクエスト当たり RTT が 1 回余分にかかる**: keepalive を無効にすると p50 は 0.259 → 0.664、0.461 → 1.079、0.704 → **1.517 ms**。AZ 間ではリクエストごとのレイテンシが 2 倍超になります。
+## 要約: 測定した内容
+
+1. **報告された RTT**: 同一ノード **0.040 ms** → 同一 AZ **0.339 ms** → クロス AZ **0.544 ms**（ping、200 probe の平均）。観測された差は2つのノード間経路で +0.21 ms、同一ノードとの比較で +0.50 ms です。
+2. **HTTP p50 / p99**（fortio、100 qps、4 connection、keepalive、60 s）: 0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms。アプリケーションから見ても同じ段階差が見られます。
+3. **報告された帯域幅**: TCP 1 flow では2つのノード間経路で **4.96 Gbps**、8 flow では **9.94 Gbps** に達し、m5.xlarge の 10 Gbps burst peak に近い値でした。これは cluster placement group 外で一般的な single-flow 5 Gbps 制限と整合します。別のインスタンス機能や経路では上限が異なる場合があります。
+4. **同一ノードの Pod 間通信**: 1 flow で **29.97 Gbps**（client process CPU 99.8 %。CPU 圧力と整合する値）、8 flow で **48.15 Gbps**。この VPC CNI 構成では、通信は Pod の veth pair とホストネットワークスタックを通り、物理 NIC は使いません。
+5. **料金モデル**: 180 s のクロス AZ 実行で **223.4 十進 GB** を送信しました。元の payload ベースのモデルでは、両端それぞれ $0.01/GB として **$4.47** です。請求書ではありません。180 s の範囲では 1.25 Gbps baseline への低下は観測されませんでした。
+6. **報告された DNS**: `ndots:5` の glibc Pod が `sts.ap-northeast-2.amazonaws.com` を解決した際に **10 query**（8件は NXDOMAIN）を送信し、warm 測定の中央値は **3.78 ms** でした。末尾に dot を付けると 2 query / 0.80 ms、`ndots:1` では 2 / 0.54 ms でした。これらの時間は測定サンプルであり、保証値ではありません。
+7. **新規接続**: keepalive を無効にすると p50 は 0.259 → 0.664、0.461 → 1.079、0.704 → **1.517 ms** に変化しました。TCP 接続確立が増加に寄与していますが、handshake、socket、アプリケーションのコストは個別に分離していません。
 
 ## テスト環境
 
 | 項目 | 値 |
 |---|---|
-| Cluster | Amazon EKS `fsi-demo-cluster`、ap-northeast-2（ソウル）、control plane `v1.36.2-eks-bca9cf6`、使用した 2 AZ（2a、2b） |
-| Nodes | このテスト用に Karpenter `system` NodePool が新規起動した **3 × m5.xlarge** — 2a のクライアントノード、2a のサーバーノード、2b のサーバーノード。4 vCPU、Intel Xeon Platinum 8175M @ 2.50GHz |
-| Node OS | Amazon Linux 2023.12.20260817、kernel `6.18.41-94.142.amzn2023.x86_64`、containerd 2.2.5、kubelet v1.36.3-eks-cb19647 |
+| クラスター | Amazon EKS `fsi-demo-cluster`、ap-northeast-2（ソウル）、control plane `v1.36.2-eks-bca9cf6`、使用した AZ は2つ（2a、2b） |
+| ノード | このテスト用に Karpenter `system` NodePool が新規起動した **3 × m5.xlarge**: 2a の client node、2a の server node、2b の server node。4 vCPU、Intel Xeon Platinum 8175M @ 2.50GHz |
+| ノード OS | Amazon Linux 2023.12.20260817、kernel `6.18.41-94.142.amzn2023.x86_64`、containerd 2.2.5、kubelet v1.36.3-eks-cb19647 |
 | CNI | Amazon VPC CNI `v1.21.1-eksbuild.8`（+ network-policy-agent v1.3.4）。`ENABLE_PREFIX_DELEGATION=false`、`ENABLE_POD_ENI=false`、`AWS_VPC_K8S_CNI_EXTERNALSNAT=false`、`NETWORK_POLICY_ENFORCING_MODE=standard`、`WARM_ENI_TARGET=1`、`WARM_IP_TARGET=3` |
 | kube-proxy | `v1.35.3-eksbuild.5`、`mode: "iptables"` |
-| CoreDNS | `v1.14.2-eksbuild.4`、2 レプリカ — AZ ごとに 1 台（`10.0.2.106` / 2a、`10.0.3.14` / 2b）。Service `kube-dns` ClusterIP `172.20.0.10`。Corefile `kubernetes cluster.local … { pods insecure }`、`forward . /etc/resolv.conf`、`cache 30`、`loadbalance`。**NodeLocal DNSCache なし**、`autopath` plugin なし |
-| Pod resolv.conf（デフォルト） | `search bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal` / `nameserver 172.20.0.10` / `options ndots:5` |
+| CoreDNS | `v1.14.2-eksbuild.4`、2 replica（AZ ごとに1つ、`10.0.2.106` / 2a、`10.0.3.14` / 2b）。Service `kube-dns` の ClusterIP は `172.20.0.10`。Corefile は `kubernetes cluster.local … { pods insecure }`、`forward . /etc/resolv.conf`、`cache 30`、`loadbalance`。**NodeLocal DNSCache はなし**、`autopath` plugin もなし |
+| Pod の resolv.conf（デフォルト） | `search bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal` / `nameserver 172.20.0.10` / `options ndots:5` |
 | Pod NIC | eth0 MTU **9001**（jumbo frame）、TCP congestion control `cubic`、iperf3 `tcp_mss_default: 8949` |
-| EC2 network spec | m5.xlarge「Up to 10 Gigabit」— ベースライン **1.25 Gbps**、ピーク **10 Gbps**、4 vCPU（比較: m5.large はベースライン 0.75 Gbps、ピーク 10 Gbps、2 vCPU）。`aws ec2 describe-instance-types` で検証。ENA 必須 |
-| Pricing | usagetype `APN2-DataTransfer-Regional-Bytes`、「Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses」、**$0.01/GB**（`aws pricing get-products --region us-east-1`、2026-09 に照会） |
-| Tools | `nicolaka/netshoot:v0.14` — iperf **3.19**、fortio **1.69.5**、iputils ping 20250605、tcpdump 4.99.5。DNS client `python:3.12-slim`（Debian 13、**glibc 2.41**、Python 3.12.14） |
-| テスト時間帯 | 2026-09-02 07:58–08:40 UTC（最初の Pod は 07:58:22Z、DNS Pod は 08:16:24Z） |
+| EC2 ネットワーク仕様 | m5.xlarge「Up to 10 Gigabit」: baseline **1.25 Gbps**、peak **10 Gbps**、4 vCPU（比較: m5.large は baseline 0.75 Gbps、peak 10 Gbps、2 vCPU）。`aws ec2 describe-instance-types` で確認。ENA が必要 |
+| 料金 | usage type `APN2-DataTransfer-Regional-Bytes`、「Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses」、**$0.01/GB**（`aws pricing get-products --region us-east-1`、2026年9月に照会） |
+| ツール | `nicolaka/netshoot:v0.14`（iperf **3.19**、fortio **1.69.5**、iputils ping 20250605、tcpdump 4.99.5）。DNS client は `python:3.12-slim`（Debian 13、**glibc 2.41**、Python 3.12.14） |
+| テスト時間 | 2026-09-02 07:58–08:40 UTC（最初の Pod は 07:58:22Z、DNS Pod は 08:16:24Z） |
 
-「Up to」はバースト可能なネットワークを意味します。インスタンスは network I/O credit を持つ間はピーク帯域幅を使用でき、使い切るとベースラインに向けてスロットリングされます（AWS EC2 User Guide、「Amazon EC2 instance network bandwidth」）。Measurement 2 の持続実行は、この制限が 180 s 以内には発生しなかったことだけを示します（ベースラインへの低下は観測されず、それ以上の時間は試験していません）。
+AWS は burst 帯域幅を best effort と説明しています。network I/O credit が残っていても、利用可能な burst とその継続時間は変わります。新規インスタンスは最大 credit で開始しますが、peak の利用可能性と burst 時間は一定ではありません。この180 s の実行で言えるのは、その観測時間内に baseline への低下がなかったことだけです。記録された m5.xlarge の baseline 1.25 Gbps / peak 10 Gbps は公式の [M5 network specifications](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html) にも記載されています。現在の credit 動作については [EC2 bandwidth guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html) を参照してください。
 
-実行時のフィクスチャ配置:
+実行時の fixture 配置:
 
-| Pod | IP | Node | Zone | 役割 / requests |
+| Pod | IP | ノード | Zone | 役割 / requests |
 |---|---|---|---|---|
-| `cli` | 10.0.2.109 | ip-10-0-2-128 (nodeclaim `system-76r87`) | ap-northeast-2a | client; 2500m / 1Gi |
-| `srv-same` | 10.0.2.72 | ip-10-0-2-128 — `cli` と同じ node（必須 podAffinity） | ap-northeast-2a | server; 200m / 256Mi |
-| `srv-a` | 10.0.2.37 | ip-10-0-2-20 (nodeclaim `system-ksrbg`, `cli` への podAntiAffinity) | ap-northeast-2a | server; 2800m / 1Gi |
-| `srv-b` | 10.0.3.65 | ip-10-0-3-32 (nodeclaim `system-svdvk`) | ap-northeast-2b | server; 2500m / 1Gi |
-| `dns-default` | 10.0.2.5 | ip-10-0-2-20 (`srv-a` への podAffinity) | ap-northeast-2a | glibc resolver、デフォルト `ndots:5` |
+| `cli` | 10.0.2.109 | ip-10-0-2-128（nodeclaim `system-76r87`） | ap-northeast-2a | client; 2500m / 1Gi |
+| `srv-same` | 10.0.2.72 | ip-10-0-2-128（`cli` と同じ node。必須 podAffinity） | ap-northeast-2a | server; 200m / 256Mi |
+| `srv-a` | 10.0.2.37 | ip-10-0-2-20（nodeclaim `system-ksrbg`、`cli` への podAntiAffinity） | ap-northeast-2a | server; 2800m / 1Gi |
+| `srv-b` | 10.0.3.65 | ip-10-0-3-32（nodeclaim `system-svdvk`） | ap-northeast-2b | server; 2500m / 1Gi |
+| `dns-default` | 10.0.2.5 | ip-10-0-2-20（`srv-a` への podAffinity） | ap-northeast-2a | glibc resolver、デフォルト `ndots:5` |
 | `dns-ndots1` | 10.0.2.143 | ip-10-0-2-20 | ap-northeast-2a | glibc resolver、`dnsConfig.options ndots=1` |
 
-サーバー Pod は `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"` を実行し、すべての bench Pod には `karpenter.sh/do-not-disrupt: "true"` が付与されています。`srv-a` は最初 m5.large / 1500m として要求しましたが、Karpenter は `no instance type has enough resources` と報告しました。DaemonSet overhead が m5.large の 1930m allocatable のうち 821m を使用するため、m5.xlarge / 2800m に変更しました。
+server Pod は `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"` を実行しました。すべての bench Pod に `karpenter.sh/do-not-disrupt: "true"` が設定されています。`srv-a` は最初 m5.large / 1500m で要求しましたが、Karpenter は `no instance type has enough resources` と報告しました。DaemonSet overhead が m5.large の 1930m allocatable のうち821mを使うため、m5.xlarge / 2800m に変更しました。
 
-### フィクスチャマニフェスト
+### Fixture のマニフェスト
 
-長い英語コメントヘッダーだけを削除しました。`nodeSelector`、`affinity`、`requests`、`command`、`annotations` は実行した内容そのままです。フィクスチャは Pod IP のみを使用するため Service object はありません（理由は「注意事項」を参照）。
+以下は記録された fixture です。過去の selector、requests、image、command、annotation をそのまま保持しています。アプリケーション Service object は含まれていません。この selector だけでは新規または単独の node への配置は保証されません。新しいテストでは、承認済みの NodePool、利用可能な AZ、リソース予算に合わせてコピーを調整してから実施してください。この fixture を共有の `system` pool にそのままデプロイしないでください。mutable な image tag と netshoot の build-time tool download は、元の binary を保証しないため、image digest と tool version を記録してください。以下の改訂手順は、この履歴 artifact とは別の手順です。
 
 ```yaml
 apiVersion: v1
@@ -63,7 +65,7 @@ metadata:
   labels:
     bench: net
 ---
-# client — fresh m5.xlarge in ap-northeast-2a
+# client: fresh m5.xlarge in ap-northeast-2a
 apiVersion: v1
 kind: Pod
 metadata:
@@ -84,7 +86,7 @@ spec:
       resources:
         requests: { cpu: "2500m", memory: "1Gi" }
 ---
-# same-node — co-located with cli through required podAffinity
+# same-node: co-located with cli through required podAffinity
 apiVersion: v1
 kind: Pod
 metadata:
@@ -107,7 +109,7 @@ spec:
       resources:
         requests: { cpu: "200m", memory: "256Mi" }
 ---
-# same-AZ — same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
+# same-AZ: same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -134,7 +136,7 @@ spec:
       resources:
         requests: { cpu: "2800m", memory: "1Gi" }
 ---
-# cross-AZ — fresh m5.xlarge in ap-northeast-2b
+# cross-AZ: fresh m5.xlarge in ap-northeast-2b
 apiVersion: v1
 kind: Pod
 metadata:
@@ -157,7 +159,7 @@ spec:
         requests: { cpu: "2500m", memory: "1Gi" }
 ```
 
-2 つの DNS Pod は `srv-a` と同じ node に配置しました。`app` container は glibc（`python:3.12-slim`、Debian 13、glibc 2.41）です。このページは glibc resolver を測定しており、他の resolver（musl/alpine）の結果は測定していません。`sniffer`（netshoot）は Pod の network namespace を共有するため、その tcpdump は `app` が送信するすべての query を確認できます。2 Pod の違いは `dnsConfig` だけです。
+2つの DNS Pod は `srv-a` と同じ node に配置されたと報告されています。`app` image は Debian 13 / glibc 2.41 と報告されました。musl やほかの resolver は測定していません。`sniffer` は Pod の network namespace を共有するため、クラスターが packet capture を許可すれば、該当するアプリケーション DNS packet を capture できます。下の例から2つの DNS object を作るには、2つ目を複製し、name と `app` label を `dns-ndots1` に変更して、その2つ目の object だけで `dnsConfig` のコメントを解除します。image は同一に保ち、新しい測定では記録した digest を固定してください。
 
 ```yaml
 apiVersion: v1
@@ -190,139 +192,141 @@ spec:
       resources: { requests: { cpu: "50m", memory: "64Mi" } }
 ```
 
-## Measurement 1 — RTT と HTTP レイテンシ: 同一 node → 同一 AZ → クロス AZ
+## 測定 1. RTT と HTTP レイテンシ: 同一ノード → 同一 AZ → クロス AZ
 
-まず ICMP でネットワークパスそのものを測定（`ping -c 200 -i 0.05 -q`）し、その後 fortio により同じ 3 パスを HTTP/1.1 と gRPC request として測定しました。単一のコールド `curl` request の connect / total time は参考として掲載しています。
+ICMP probe（`ping -c 200 -i 0.05 -q`）で idle 経路を測定しました。これには endpoint の kernel 処理と scheduling も含まれます。同じ経路を HTTP/1.1 と gRPC でも測定しました。新規接続を使った `curl` 1回の connect / total time も参考値として記載します。
 
-| パス | RTT min / **avg** / max / mdev (ms) | Loss | curl、コールド request 1 回: connect / total |
+| 経路 | RTT min / **avg** / max / mdev (ms) | loss | curl、cold request 1回: connect / total |
 |---|---|---|---|
-| 同一 node → 10.0.2.72 | 0.021 / **0.040** / 0.089 / 0.007 | 0/200 | 0.194 ms / 0.497 ms |
+| 同一ノード → 10.0.2.72 | 0.021 / **0.040** / 0.089 / 0.007 | 0/200 | 0.194 ms / 0.497 ms |
 | 同一 AZ → 10.0.2.37 | 0.300 / **0.339** / 0.450 / 0.017 | 0/200 | 0.497 ms / 2.333 ms |
 | クロス AZ → 10.0.3.65 | 0.504 / **0.544** / 0.625 / 0.015 | 0/200 | 0.694 ms / 4.038 ms |
 
-差分: 同一 AZ − 同一 node = +0.30 ms、クロス AZ − 同一 AZ = **+0.21 ms**、クロス AZ − 同一 node = +0.50 ms。3 パスはすべて非常に安定しており、mdev は 0.017 ms 以下です。curl の「total」はプロセス起動を含む 1 回のコールド実行なので参考値としてのみ扱い、レイテンシは以下の fortio table から読み取ってください。
+観測された差: 同一 AZ − 同一ノード = +0.30 ms、クロス AZ − 同一 AZ = **+0.21 ms**、クロス AZ − 同一ノード = +0.50 ms。このサンプルでは報告された mdev は最大でも 0.017 ms です。curl の `time_total` は process 起動時間を測るものではなく、転送操作を測定します。単一観測では分布を評価できません。[curl の時間計測項目](https://curl.se/docs/manpage.html) を参照してください。
 
-### HTTP/1.1 — 100 qps、4 connections、keepalive、60 s（6,000 requests）、ms
+### HTTP/1.1: 100 qps、4 connection、keepalive、60 s（6,000 request）、ms
 
-| パス | avg | **p50** | p90 | p99 | p99.9 | max | min |
+| 経路 | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
-| 同一 node | 0.260 | **0.259** | 0.299 | 0.350 | 1.267 | 2.080 | 0.111 |
+| 同一ノード | 0.260 | **0.259** | 0.299 | 0.350 | 1.267 | 2.080 | 0.111 |
 | 同一 AZ | 0.468 | **0.461** | 0.560 | 0.667 | 0.783 | 2.823 | 0.336 |
 | クロス AZ | 0.706 | **0.704** | 0.782 | 0.812 | 1.150 | 4.581 | 0.551 |
 
-### gRPC ping — 100 qps、4 connections、30 s（3,000 requests）、ms
+### gRPC ping: 100 qps、4 connection、30 s（3,000 request）、ms
 
-| パス | avg | **p50** | p90 | p99 | p99.9 | max | min |
+| 経路 | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
-| 同一 node | 0.410 | **0.397** | 0.449 | 0.869 | 1.187 | 1.314 | 0.241 |
+| 同一ノード | 0.410 | **0.397** | 0.449 | 0.869 | 1.187 | 1.314 | 0.241 |
 | 同一 AZ | 0.601 | **0.592** | 0.687 | 0.889 | 1.052 | 1.105 | 0.448 |
 | クロス AZ | 0.878 | **0.865** | 0.967 | 1.209 | 2.582 | 2.826 | 0.692 |
 
-response body は約 75 bytes（fortio echo、空 payload）で、すべての実行は 0 errors（200 / SERVING）で完了しました。
+報告では、HTTP echo body は約75 byte、request payload は空、すべての実行で error は0件です。各 protocol の結果 counter は分けて確認してください。HTTP status 200、gRPC Ping の結果、gRPC health-check の `SERVING` は別の応答です。`-grpc -ping` を指定すると、デフォルトの health-check workload ではなく Ping を実行します。
 
-**読み方。** HTTP p50 は ping average に 0.12–0.22 ms を足した値です（0.259 − 0.040 ≈ 0.22、0.461 − 0.339 ≈ 0.12、0.704 − 0.544 ≈ 0.16）。残りは client と server の user-space stack です。AZ hop の p50 コストは **+0.24 ms**（0.461 → 0.704）で、ping の +0.21 ms と同程度、node hop（+0.20 ms、0.259 → 0.461）にも近い値です。つまり「同一 node → 別 node」と「同一 AZ → 別 AZ」はどちらも約 0.2 ms の一定した段差です。gRPC ping p50 は各パスで HTTP/1.1 より約 0.13–0.16 ms 高くなります（0.397 / 0.592 / 0.865 対 0.259 / 0.461 / 0.704）。これは fortio ping における HTTP/2 framing と protobuf によるものです。最も差が出るのは tail です。HTTP p99 は 0.350 → 0.667 → 0.812 ms、gRPC p99.9 は 1.187 → 1.052 → **2.582 ms** となり、2 ms を超えるのはクロス AZ パスだけです。
+**読み方。** HTTP p50 は ping mean より約0.22 / 0.12 / 0.16 ms高い値ですが、異なる protocol の異なる統計量を引いても user-space overhead は分離できません。観測した HTTP p50 の段差は +0.202 ms と +0.243 ms であり、ノードごと、または AZ ごとの固定コストではありません。gRPC p50 はこれらの実装で HTTP p50 より0.138 / 0.131 / 0.161 ms高くなっていますが、HTTP/2、serialization、scheduling、client / server code の各寄与は特定できません。tail にも差が出ています。HTTP p99 は 0.350 → 0.667 → 0.812 ms、gRPC p99.9 は 1.187 → 1.052 → **2.582 ms** でした。これらは各セルで1回実行した分布の報告値です。
 
-> **比較点。** この repository の [Istio sidecar と ambient の測定](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)では、1 つの sidecar が p50 に **+1.29 ms** を追加します。ここでの AZ hop は +0.21–0.24 ms で、**1 回の mesh hop は 1 回の AZ hop より大きなコストです。** 遅い request を「別 AZ」のせいにする前に、そのパスの proxy 数を数えてください。
+> **mesh benchmark との比較。** [Istio sidecar vs ambient report](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) は、sidecar 全体のシナリオで p50 に **+1.29 ms**（2.11 − 0.82 ms）の差を記録しています。単一 proxy の分離測定ではありません。Graviton hardware、200 qps、16 connection、Fortio 1.69.4 を使っており、この M5 / 100 qps / 4 connection の測定とは異なります。数値を普遍的な「mesh hop」と「AZ hop」のコストとして足し合わせたり、順位付けしたりすることはできません。
 
-### 新規接続のコスト — keepalive=false、100 qps、4 connections、30 s（3,000 requests）、ms
+### 新規接続のコスト: keepalive=false、100 qps、4 connection、30 s（3,000 request）、ms
 
-すべての request が新しい TCP connection を開く（fortio `-keepalive=false`）場合、レイテンシはどうなるでしょうか。
+すべての request で新しい TCP connection を開く（fortio `-keepalive=false`）と、レイテンシはどうなるでしょうか。
 
-| パス | avg | **p50** | p90 | p99 | p99.9 | max | min | keepalive p50 比 |
+| 経路 | avg | **p50** | p90 | p99 | p99.9 | max | min | keepalive p50 との差 |
 |---|---|---|---|---|---|---|---|---|
-| 同一 node | 0.672 | **0.664** | 0.782 | 0.957 | 1.253 | 1.306 | 0.364 | **+0.405 ms** |
+| 同一ノード | 0.672 | **0.664** | 0.782 | 0.957 | 1.253 | 1.306 | 0.364 | **+0.405 ms** |
 | 同一 AZ | 1.066 | **1.079** | 1.185 | 1.369 | 1.582 | 1.795 | 0.769 | **+0.618 ms** |
 | クロス AZ | 1.530 | **1.517** | 1.678 | 1.796 | 1.981 | 2.009 | 1.300 | **+0.813 ms** |
 
-新しい connection 1 回のコストは、おおむね **1 RTT（TCP handshake）と約 0.3 ms の socket setup / teardown** です。パスの RTT が大きいほど上乗せも増えます。AZ 間では 1 request の p50 が 0.704 から 1.517 ms、すなわち **2 倍超**になります。Connection pooling（HTTP keepalive、gRPC channel reuse、database connection pool）は性能チューニングではありません。AZ をまたぐ call に必要な前提条件です（connection-per-request client と同様、各新規 connection は TIME_WAIT socket も残します。ここでは未測定）。
+観測された増加は **+0.405 / +0.618 / +0.813 ms** でした。新しい TCP connection では確立処理が加わりますが、「RTT 1回 + 0.3 ms」で分解できるとはこの測定から言えません。実際の workload で connection reuse を測ることは有用な最適化ですが、AZ 間通信が正しく動作するための前提条件ではありません。connection churn は、connection の close 方法によって active-closing 側の TIME_WAIT state を増やす可能性もありますが、ここでは測定していません。
 
-### 固定 connection pool の最大 qps — レイテンシはスループット（closed loop、16 connections、20 s）
+### 固定 connection pool の最大 qps: レイテンシがスループットを決める（closed loop、16 connection、20 s）
 
-`-qps 0`（unlimited、closed loop）では、16 connection が維持できる最大 request rate によって、レイテンシ差がスループット差になります。
+`-qps 0`（無制限、closed loop）では、16 connection が維持できる最大 request rate によって、レイテンシ差がスループット差になります。
 
-| パス | Requests | **達成 qps** | avg ms | p50 | p90 | p99 | p99.9 | max |
+| 経路 | request 数 | **達成 qps** | avg ms | p50 | p90 | p99 | p99.9 | max |
 |---|---|---|---|---|---|---|---|---|
-| 同一 node | 899,827 | **44,991** | 0.355 | 0.249 | 0.733 | 1.695 | 3.389 | 13.593 |
+| 同一ノード | 899,827 | **44,991** | 0.355 | 0.249 | 0.733 | 1.695 | 3.389 | 13.593 |
 | 同一 AZ | 770,156 | **38,507** | 0.415 | 0.396 | 0.537 | 0.728 | 1.147 | 4.502 |
 | クロス AZ | 512,060 | **25,602** | 0.624 | 0.597 | 0.770 | 0.949 | 1.293 | 4.725 |
 
-Little の法則（導出: throughput = concurrency ÷ latency）はほぼ正確に成立します。16 ÷ 0.000355 s = 45,070（測定 44,991）、16 ÷ 0.000415 = 38,554（38,507）、16 ÷ 0.000624 = 25,641（25,602）。固定サイズの pool では、AZ hop の +0.2 ms によって**達成可能な throughput が 34 % 減少**します（38.5k → 25.6k qps）。request/response Service では、別 AZ を高価にするのは帯域幅ではなくこのレイテンシです。同一 node の p99/max が同一 AZ より悪いこともネットワーク原因ではありません。45k qps では client と server が 1 node の 4 vCPU を共有し、CPU を競合します。
+処理中の request が約16件で、client の考慮時間がほぼない安定した closed loop では、Little の法則により throughput ≈ concurrency / mean latency となります。16 / 0.000355 = 45,070（報告値 44,991）、16 / 0.000415 = 38,554（38,507）、16 / 0.000624 = 25,641（25,602）です。この測定ではクロス AZ の報告 rate は同一 AZ より **33.5 % 低い**値でした。この関係からレイテンシの原因だけを特定したり、普遍的な AZ penalty を予測したりはできません。同一ノードの tail が悪化した理由として共有 CPU contention は考えられますが、ここでの profiling では確認していません。
 
-## Measurement 2 — Throughput: 5 Gbps 単一フロー上限と 10 Gbps インスタンス上限
+## 測定 2. スループット: single-flow の 5 Gbps 上限とインスタンスの 10 Gbps 上限
 
-iperf3 3.19、TCP、1 実行 20 s、`-J`、client は `cli`。CPU column は iperf3 自身の process ごとの数値で、100 % = 1 vCPU です。
+iperf3 3.19、TCP、1回20 s、`-J`、client は `cli`。CPU 列は iperf3 自身の process 別数値で、100 % は1 vCPU を意味します。
 
-| パス | Flows (-P) | Send Gbps | Recv Gbps | Retransmits | Bytes sent | Client CPU | Server CPU | Sender TCP mean RTT (stream 1) | max snd_cwnd |
+| 経路 | flow 数 (-P) | 送信 Gbps | 受信 Gbps | retransmit | 送信 byte 数 | client CPU | server CPU | 送信側 TCP mean RTT (stream 1) | max snd_cwnd |
 |---|---|---|---|---|---|---|---|---|---|
-| 同一 node (cli→srv-same) | 1 | **29.97** | 29.97 | 13 | 74,921,541,632 | **99.8 %** | 80.9 % | 34 µs | 1,861,392 B |
-| 同一 node | 8 | **48.15** | 48.08 | 14,567 | 120,375,083,008 | 179.0 % | 186.9 % | 201 µs / 767 µs (streams 1, 2) | 5,888,442 B |
-| 同一 AZ (cli→srv-a, 2a→2a) | 1 | **4.96** | 4.96 | 4 | 12,411,731,968 | 19.5 % | 15.4 % | **5,641 µs** | 4,349,214 B |
+| 同一ノード (cli→srv-same) | 1 | **29.97** | 29.97 | 13 | 74,921,541,632 | **99.8 %** | 80.9 % | 34 µs | 1,861,392 B |
+| 同一ノード | 8 | **48.15** | 48.08 | 14,567 | 120,375,083,008 | 179.0 % | 186.9 % | 201 µs / 767 µs（stream 1、2） | 5,888,442 B |
+| 同一 AZ (cli→srv-a、2a→2a) | 1 | **4.96** | 4.96 | 4 | 12,411,731,968 | 19.5 % | 15.4 % | **5,641 µs** | 4,349,214 B |
 | 同一 AZ | 8 | **9.94** | 9.93 | 5,874 | 24,846,139,392 | 36.3 % | 159.3 % | 2,720 µs / 1,626 µs | 1,163,370 B |
-| クロス AZ (cli→srv-b, 2a→2b) | 1 | **4.96** | 4.96 | 2 | 12,411,994,112 | 20.0 % | 22.5 % | **5,420 µs** | 4,304,469 B |
+| クロス AZ (cli→srv-b、2a→2b) | 1 | **4.96** | 4.96 | 2 | 12,411,994,112 | 20.0 % | 22.5 % | **5,420 µs** | 4,304,469 B |
 | クロス AZ | 8 | **9.94** | 9.93 | 5,979 | 24,845,090,816 | 36.7 % | 138.2 % | 3,671 µs / 3,237 µs | 1,226,013 B |
 
-ここで読み取るべき点は 4 つです。
+ここから読み取れる点は4つあります。
 
-1. **同一 node は memory-copy speed です。** 単一 flow で 29.97 Gbps のとき、client iperf3 は 1 core の 99.8 % を使用し、8 flow では 48.15 Gbps になりました。veth pair 上の packet は NIC や ENA shaper を通過しないため、これはこの instance の CPU 数値であり、他の instance family では異なります。
-2. **node 間の単一 TCP flow は 4.96 Gbps で停止します。これは同一 AZ とクロス AZ で小数第 2 位まで同じです。** AWS は cluster placement group 外の単一 flow を 5 Gbps に制限すると文書化しており（「Amazon EC2 instance network bandwidth」）、ここに現れているのはその上限です。flow は 1 core の約 20 % を使用するため、CPU は bottleneck ではありません。
-3. **8 flow では m5.xlarge の 10 Gbps peak と等しい 9.94 Gbps** となり、これも両パスで同一です。**AZ 境界をまたいでも帯域幅は下がりません。** retransmit は instance ceiling 到達時にのみ現れます（8 flow では 5,874 / 5,979、1 flow では 2–13）。これは ENA allowance shaping が上限で packet を drop することと整合する**間接的な signal**です。この実行では ENA `*_allowance_exceeded` counter は収集しませんでした（注意事項）。
-4. **flow が飽和すると、その flow に乗るすべての request は待たされます。** 単一 flow を上限に固定すると、sender の TCP RTT は idle ping RTT の 0.34 ms（同一 AZ）/ 0.54 ms（クロス AZ）から、約 4.3 MB の congestion window で **5.6 ms** / **5.4 ms** に増加しました。この遅延は shaper 内の queueing であり、bulk transfer と同じ TCP connection に multiplex された request/response exchange は約 5 ms を失います。
+1. **同一ノードの通信は物理 NIC を通りません。** single-flow は 29.97 Gbps、client process CPU は 99.8 % でした。8 flow は 48.15 Gbps に達しました。ホスト routing、両 Pod の veth 経路、kernel 処理、CPU scheduling の影響は受けます。CPU 圧力を示す材料を含むネットワークベンチマークであり、純粋な memory-copy speed の測定ではありません。
+2. **ノード間の single-flow はどちらも 4.96 Gbps でした。** cluster placement group 外の通常の 5 Gbps 上限と整合します。AWS は cluster placement group 内の flow で最大10 Gbps、同一 AZ の条件を満たす ENA Express 経路で最大25 Gbps も記載しています。iperf3 process CPU が低いだけで、ホスト / network 処理による制約をすべて否定できるわけではありません。
+3. **8 flow ではどちらも 9.94 Gbps でした。** この観測時間内に両経路で似た throughput となったことを示します。single-flow でも retransmit があり（ノード間で4 / 2）、8 flow では増加しました（5,874 / 5,979）。retransmit 数だけでは ENA shaping や loss の発生箇所を特定できません。ENA allowance counter は収集していません。
+4. **負荷時の TCP RTT は idle ICMP RTT より高い値でした。** single-flow の送信側で約 **5.6 / 5.4 ms**、congestion window は約4.3 MB と報告されました。これに対し idle ping mean は 0.34 / 0.54 ms です。queueing は原因候補ですが、protocol、sampling、負荷条件が異なります。queue の位置や multiplex されたすべての RPC に保証された5 msが加わることを測定したわけではありません。
 
-MSS 8949 は 9001-byte MTU（jumbo frame）に由来し、bytes-sent column は次節のコスト計算の基礎です。
+報告された MSS 8949 は MTU 9001 byte と IPv4/TCP overhead に整合します。実効 MSS は header と経路 MTU にも依存します。次節の byte sent 列はアプリケーション転送量であり、課金対象量として独立検証したものではありません。
 
-> **要点:** 1 つの gRPC stream、1 つの Kafka replica fetcher、1 回の volume copy のいずれでも、異なる node 上の 2 Pod 間で「1 connection」は運ぶデータに関係なく約 5 Gbps を超えません。instance の 10 Gbps を使用するには work を parallel connection（`num.replica.fetchers`、multipart upload、parallel rsync など）に分割する必要があります。逆に「1 AZ 内に置けば帯域幅が 2 倍になる」という期待は、この測定では裏付けられません。
+> この一般的な EC2 経路では、parallel flow により、1 flow の場合よりインスタンスが利用できる burst 帯域幅を多く使えました。parallelism を増やすと CPU 負荷、congestion、コストも変わります。Kafka fetcher や転送 concurrency を変更する前に、実際のインスタンス / 経路の上限を確認してください。この測定は「接続ごとに必ず 5 Gbps で頭打ちになる」ことも、「1 AZ なら帯域幅が常に2倍になる」ことも裏付けません。
 
-### 3 分間の持続実行と burst credits
+### 3分間の持続実行と burst credit
 
-「Up to 10 Gigabit」の baseline は 1.25 Gbps です。credit を使い切ると instance は peak から baseline に近づくはずなので、4-flow cross-AZ run を 10 s 間隔で 180 s 観察しました（`iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J`）。
+報告対象の m5.xlarge の baseline は 1.25 Gbps、best-effort の peak は最大10 Gbps です。過去の4-flow クロス AZ テストは180 s、10 s 間隔で実行されました（`iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J`）。この IP は記録された fixture に属します。新たなテストでは現在の Pod IP を取得してください。
 
 | 項目 | 値 |
 |---|---|
-| 10 s interval ごとの Gbps（18 intervals） | 9.94、9.93 ×12、9.92、9.93 ×4 — **min 9.92、max 9.94** |
-| Total sent | 223,376,179,200 B = 180.0 s（9.93 Gbps）で **223.4 GB** |
-| Retransmits | 44,842（≈ 249/s。10 s interval 当たり 2,273–2,669） |
+| 10 s ごとの Gbps（18 interval） | 9.94、9.93 ×12、9.92、9.93 ×4（**min 9.92、max 9.94**） |
+| 送信合計 | 180.0 s で 223,376,179,200 B = **223.4 GB**（9.93 Gbps） |
+| retransmit | 44,842（約249/s、10 s ごとに2,273～2,669） |
 | CPU | client 30.7 %（system 30.1 %）、server 54.2 %（system 52.2 %） |
 
-**180 s 以内に 1.25 Gbps baseline へ低下することは観測されませんでした。** これは burst credit が存在しないことを意味しません。AWS は「Up to」instance で、より長い持続 transfer は baseline へスロットリングされる場合があると文書化しています。このページでは 180 s 超を測定していないため、この実行ではいつ、あるいは新規 node でその時点に達するかは分かりません。m5.xlarge で数時間の backup、rebalance、replay を計画するなら、1.25 Gbps baseline（他の size にはそれぞれの baseline）を見込んで、10 Gbps は bonus とみなしてください。
+**180 s の間に 1.25 Gbps への低下は観測されませんでした。** これは credit が無制限にあることや、peak 帯域幅を持続的に保証する証拠ではありません。AWS は burst を変動する best-effort と説明し、credit が尽きると baseline へ向けて throttle される場合があります。長時間の backup や rebalance は、この短い測定から外挿せず、適用される baseline と実測 workload 要件を使って計画してください。
 
-## Measurement 3 — 実際のクロス AZ コストは料金
+## 測定 3. クロス AZ data transfer cost のモデル
 
-Measurement 1 と 2 は、AZ hop が +0.2 ms のレイテンシを追加し、帯域幅に影響しないことを示しました。では AZ 間の実際の違いはどこにあるのでしょうか。請求書です。
+ここでは報告書の計算を見積もりとして保持しています。ベンチマークから得られたのは payload byte 数と公開 price であり、Cost and Usage Report (CUR) や請求書ではありません。
 
-同一 region 内では、AWS は AZ crossing の各側で $0.01/GB を課金します。送信 AZ の「out」と受信 AZ の「in」です（EC2 On-Demand pricing page、「Data Transfer within the same AWS Region」）。この account の Pricing API item は `APN2-DataTransfer-Regional-Bytes`、「Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses」、**$0.0100000000 USD/GB** です。一方向の bulk transfer では、送信 AZ に「out」$0.01/GB、受信 AZ に「in」$0.01/GB が課金されるため、1 account 内では実質的に **AZ boundary を越える 1 GB 当たり $0.02** です（導出: $0.01 × 2）。
+同一 Region 内で AZ 間を EC2 private IP で直接転送する場合、[EC2 の料金ページ](https://aws.amazon.com/ec2/pricing/on-demand/) には両端それぞれ $0.01/GB と記載されています。報告された公開 Pricing API item は `APN2-DataTransfer-Regional-Bytes`、**$0.0100000000 USD/GB** です。`get-products` が返すのは catalog price で、アカウント固有の実際の請求 rate ではありません。一方向の payload 転送では、同程度の逆方向転送がなくても、送信側の “out” と受信側の “in” の双方に課金される場合があります。ほかの AWS service 経路では課金ルールが異なることがあります。
 
-| シナリオ | AZ boundary を越える Bytes | コスト（導出: GB × $0.01 × 2） |
+| シナリオ | 過去の十進 GB モデルによる payload 量 | 推定コスト（model GB × $0.01 × 2） |
 |---|---|---|
-| このページの 180 s sustained run（測定値） | 223.4 GB | 223.4 × $0.01 = **$2.23/方向、合計 $4.47** |
-| Measurement 2 の全 cross-AZ transfer（測定値: 12.41 + 24.85 + 223.38 GB） | 260.6 GB | ≈ $2.61/方向、**合計 ≈ $5.21**（fortio と ping traffic は 0.2 GB 未満のため除外） |
-| 30 日間、平均 1 Gbps の AZ 間転送（**仮定**） | 0.125 GB/s × 86,400 s × 30 days = 324,000 GB ≈ **324 TB** | 324,000 × $0.02 ≈ **$6,480 / month** |
-| leader ingest 100 MiB/s の 3 AZ に分散した RF3 StatefulSet（**仮定**、replication traffic のみ） | 他 AZ の 2 follower → 2 × 100 MiB/s = 209,715,200 B/s × 2,592,000 s ≈ 543,600 GB ≈ **544 TB / month** | 543,600 × $0.02 ≈ **$10,870 / month** |
+| 180 s の実行（測定 payload、推定コスト） | 223.4 GB | 223.4 × $0.01 ≈ **各端 $2.23、合計 $4.47** |
+| 測定 2 のクロス AZ iperf3 転送（12.41 + 24.85 + 223.38 GB） | 260.6 GB | 約各端 $2.61、**合計約 $5.21**（ほかの通信は除外） |
+| 30日間平均1 Gbpsで AZ 間を転送（**仮定**） | 0.125 GB/s × 86,400 s × 30日 = 324,000 GB ≈ **324 TB** | 324,000 × $0.02 ≈ **月 $6,480** |
+| 3 AZ に RF3 StatefulSet を配置し leader ingest 100 MiB/s（**仮定**、replication 通信のみ） | 別 AZ の follower が2つ → 2 × 100 MiB/s = 209,715,200 B/s × 2,592,000 s ≈ 543,600 GB ≈ **月 544 TB** | 543,600 × $0.02 ≈ **月 $10,870** |
 
-下 2 行は測定ではなく、この unit price に基づく**見積もり**です。producer/consumer traffic と AZ placement は無視しています。重要なのは規模です。3 node の benchmark は 3 分で $4.47 を費やし、その rate を終日継続すると月額数千ドルになります。帯域幅は減衰せずに boundary を越えますが、すべての byte には価格札が付きます。
+4行すべてで、**1 GB = 10⁹ payload byte** の十進換算をモデル上の仮定として使っています。EC2 の課金量もこの換算になるとは、この監査で確認していません。正確な raw total は持続実行で 223,376,179,200 B、3回のクロス AZ iperf3 実行の合計で 260,633,264,128 B です。実際の計量単位、rate、両端の課金、protocol overhead / retransmit、適用される credit や discount を [CUR のデータ転送記録](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html) と照合してください。下2行はさらに30日間の連続通信を仮定し、replication 量には producer / consumer 通信を含みません。**$4.47 と $5.21 は見積もりであり、実際に支払った金額として確認されたものではありません。**
 
-**operator がすべきこと。**
+**運用担当者が行うこと。**
 
-- **traffic を AZ 内に保つ。** `Service.spec.trafficDistribution: PreferClose` は Kubernetes 1.31 で beta、1.33 で GA（Kubernetes docs、「Traffic Distribution」）で、kube-proxy に同じ zone の endpoint を優先させます。**この実行では測定していません**。Service を作成できなかったためです（注意事項）。したがって、このページに効果の数値はありません。
-- **stateful workload を zone に合わせる。** replication fan-out が大きい StatefulSet（Kafka RF3、distributed database）は、上の 4 行目のように replication bytes の大部分を AZ 間に送信します。zone-level placement と AZ failover design は [Zonal Cluster Operations guide](../ops/15-zonal-operations-guide.md)で説明しています。
-- **bulk transfer の方向と量を把握する。** backup、rebalance、replay がどの AZ からどの AZ へ、どれだけ流れるかを記録し、「in」と「out」が同じ account の別 line item として課金されることを覚えておいてください。
+- **対応する場合は近い endpoint を優先する。** 現行 Kubernetes 文書では `Service.spec.trafficDistribution: PreferSameZone` を使います。deprecated alias は `PreferClose` です。これは fallback を伴う preference であり、zone を厳密に固定する設定ではありません。API server、kube-proxy の version、feature 対応状況を確認してください。この記録では control plane が1.36、kube-proxy が1.35 でした。この preference もアプリケーションの Service 経路も測定しておらず、直接の Pod-IP 通信には影響しません。
+- **近接性と耐障害性のバランスを取る。** zone-aware read や client は不要な転送を減らせる場合がありますが、RF3 replica をすべて1つの AZ に置くと、AZ 障害への保護が失われます。必要な replica / failover 設計を保ち、[ゾーン別クラスター運用](../ops/15-zonal-operations-guide.md) を参照してください。
+- **課金される両端を計測する。** backup、rebalance、replay について送信元 / 宛先 AZ と計量 volume を追跡してください。関連する “in” と “out” の usage record は別アカウントに計上される場合もあります。payload byte だけで最終請求を推定しないでください。
 
-## Measurement 4 — DNS: ndots:5 による query amplification
+## 測定 4. DNS: ndots:5 による query amplification
 
-![ndots:5 での 1 回の glibc lookup は、absolute name が応答する前に 4 つの search suffix を A+AAAA pair として順に試行する（8 NXDOMAIN、10 queries）。末尾ドット付き lookup は 2 queries で終了する。](../.gitbook/assets/en-networking-06-pod-network-benchmark-1.png)
+![glibc の ndots:5 lookup では、4つの search suffix に対して A と AAAA の組を順に送り（NXDOMAIN が8応答、合計10 query）、絶対名で成功します。末尾 dot を付けると2 query で終了します。](../.gitbook/assets/en-networking-06-pod-network-benchmark-1.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-06-pod-network-benchmark-1.html)
 
-EKS Pod の `/etc/resolv.conf` には 4 つの search domain（`bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal`）と `options ndots:5` があります。glibc resolver は `ndots` 未満の dot を持つ名前を、**まず各 search suffix と結合して試行**し、各 candidate に A と AAAA を並列送信します（`single-request` はデフォルトで off）。したがって 3 dot の `sts.ap-northeast-2.amazonaws.com` は absolute name を問い合わせる前に、4 candidate すべての NXDOMAIN を取得します。方法: `dns-default` / `dns-ndots1` の `app` container で、コールドの `socket.getaddrinfo(name, 80, AF_UNSPEC, SOCK_STREAM)` を 1 回実行し、`sniffer` sidecar の tcpdump（`-i eth0 -nn udp port 53`）でその 1 回の resolution の DNS packet を capture して count します。続いて同じ name を 20 回解決し、process 内で timing します。これが warm latency です。
+この図は、記録された glibc の search 順序を示します。4.37 ms は報告された A 応答で終了しており、`getaddrinfo` 呼び出し全体の時間ではありません。upstream への矢印は説明用で、Pod capture ではその通信区間を観測していません。「cache 30」は TTL の上限であり、30秒間 cache hit する保証ではありません。
 
-### 1 resolution の送信 query と warm latency（20 repeats）、ms
+記録された Pod は4つの search domain と `ndots:5` を使っていました。この構成が、すべての EKS、DNS policy、OS、node 設定で共通というわけではありません。この glibc `AF_UNSPEC` lookup では候補名ごとに A と AAAA が要求され、4つの search 候補は NXDOMAIN を返した後、絶対名 STS が成功しました。A/AAAA の並列性と query 数は resolver option、address family、早期成功、retry、TCP fallback によって変わります。過去の capture は `tcpdump -i eth0 -nn udp port 53` を使っており、UDP DNS のみを観測します。報告は process の最初の lookup 1回と、その後の計時された20 repeat を区別しています。process 起動後の最初の呼び出しだけでは、CoreDNS や upstream cache が cold だったとは証明できません。[Kubernetes Pod の DNS 設定](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) を参照してください。
 
-| Pod / ndots | Name (dots) | Queries sent | NXDOMAIN answers | warm min | **median** | p90 | max |
+### 1回の名前解決で送信した query と warm latency（20 repeat）、ms
+
+| Pod / ndots | 名前（dot 数） | 送信 query | NXDOMAIN 応答 | warm min | **median** | p90 | max |
 |---|---|---|---|---|---|---|---|
 | default / 5 | `kubernetes.default` (1) | 4 | 2 | 0.87 | **1.71** | 1.97 | 2.61 |
 | default / 5 | `kubernetes.default.svc.cluster.local` (4) | **10** | 8 | 1.53 | **3.63** | 4.45 | 6.41 |
-| default / 5 | `kubernetes.default.svc.cluster.local.` (trailing dot) | 2 | 0 | 0.33 | **0.46** | 1.09 | 1.58 |
+| default / 5 | `kubernetes.default.svc.cluster.local.`（末尾 dot） | 2 | 0 | 0.33 | **0.46** | 1.09 | 1.58 |
 | default / 5 | `sts.ap-northeast-2.amazonaws.com` (3) | **10** | 8 | 3.08 | **3.78** | 4.66 | 4.84 |
-| default / 5 | `sts.ap-northeast-2.amazonaws.com.` (trailing dot) | 2 | 0 | 0.42 | **0.80** | 1.25 | 2.17 |
+| default / 5 | `sts.ap-northeast-2.amazonaws.com.`（末尾 dot） | 2 | 0 | 0.42 | **0.80** | 1.25 | 2.17 |
 | default / 5 | `www.amazon.com` (2) | **10** | 8 | 2.51 | **3.46** | 3.74 | 5.86 |
 | ndots1 / 1 | `kubernetes.default` (1) | **6** | 4 | 1.16 | **2.04** | 2.80 | 4.54 |
 | ndots1 / 1 | `kubernetes.default.svc.cluster.local` (4) | 2 | 0 | 0.35 | **0.97** | 1.08 | 1.35 |
@@ -331,121 +335,206 @@ EKS Pod の `/etc/resolv.conf` には 4 つの search domain（`bench-net.svc.cl
 | ndots1 / 1 | `sts.ap-northeast-2.amazonaws.com.` | 2 | 0 | 0.47 | **0.75** | 1.20 | 1.30 |
 | ndots1 / 1 | `www.amazon.com` (2) | 2 | 0 | 0.63 | **0.90** | 1.27 | 2.74 |
 
-コールドの初回 resolution（glibc NSS initialization を含む。参考値のみ）は次のとおりです: default / `sts` 6.22 ms、default / `sts.` 2.87 ms、default / `www.amazon.com` 9.58 ms、default / `kubernetes.default.svc.cluster.local` 7.40 ms、ndots1 / `kubernetes.default` 10.52 ms、ndots1 / `sts` 2.84 ms。
+報告された process 最初の呼び出し時間は、default / `sts` 6.22 ms、default / `sts.` 2.87 ms、default / `www.amazon.com` 9.58 ms、default / `kubernetes.default.svc.cluster.local` 7.40 ms、ndots1 / `kubernetes.default` 10.52 ms、ndots1 / `sts` 2.84 ms でした。resolver 初期化を含むため、下の wire timeline とは別の値です。
 
-**読み方。** デフォルトの `ndots:5` では、2 つの外部 name（`sts.…`、`www.amazon.com`）と、意外にも**末尾 dot のない cluster FQDN**（`kubernetes.default.svc.cluster.local`: 4 dots、5 未満）はすべて **10 queries、8 NXDOMAIN、median 3.5–3.8 ms** です。同じ name に dot を 1 個追加すると（`….com.`）、2 queries / 0.46–0.80 ms になります。すなわち **query は 5 分の 1、warm median は `sts` で 3.78 から 0.80 ms、cluster FQDN で 3.63 から 0.46 ms に低下**します。short name `kubernetes.default` は 2 番目の candidate（`svc.cluster.local`）で一致して停止するため、4 queries / 1.71 ms です。CoreDNS の `cache 30` は NXDOMAIN も最大 30 s cache するため、warm state で高コストなのは upstream lookup ではなく、**5 回の sequential Pod↔CoreDNS round trip を待つこと**です。
+**読み方。** このサンプルでは、外部名と末尾 dot なしの cluster FQDN は **10 query / 8 NXDOMAIN** でした。末尾 dot ありの STS median は 3.78 → 0.80 ms、cluster FQDN は 3.63 → 0.46 ms に下がりました。`kubernetes.default` は2番目の search 候補で成功したため、必要な query は4つだけです。search expansion が常にリスト全体を消費するわけではありません。[CoreDNS cache](https://coredns.io/plugins/cache/) は否定応答を cache できますが、`cache 30` が設定するのは最大 TTL です。実際の TTL と minimum の影響を受け、各 replica の cache は別々です。Kubernetes plugin の default TTL は、変更しなければ5秒です。cache hit でも query 自体は順に行われますが、この capture から、すべての warm lookup が upstream 通信を避けたとは言えません。
 
-### 実際の walk — `sts.ap-northeast-2.amazonaws.com` のコールド resolution 1 回（ndots:5、tcpdump、first packet からの ms）
+### 名前解決の経路: `sts.ap-northeast-2.amazonaws.com` の cold lookup 1回（ndots:5、tcpdump、最初の packet からの ms）
 
-| t (ms) | 172.20.0.10 に送信した candidate（A + AAAA を並列） | Answer |
+| t (ms) | 172.20.0.10 に送った候補名（A + AAAA を並列送信） | 応答 |
 |---|---|---|
-| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | NXDomain（authoritative、CoreDNS kubernetes plugin）、0.92 / 1.14 |
-| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | NXDomain、2.01 / 2.26 |
-| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | NXDomain、3.15 / 3.41 |
-| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain（VPC resolver へ forwarded — non-authoritative）、3.68 / 3.93 |
-| 3.99 | `sts.ap-northeast-2.amazonaws.com.` | **A 10.0.3.84、A 10.0.2.129**、4.37（AAAA: no data） |
+| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | NXDOMAIN（権威応答、CoreDNS kubernetes plugin）0.92 / 1.14 |
+| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | NXDOMAIN 2.01 / 2.26 |
+| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | NXDOMAIN 3.15 / 3.41 |
+| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDOMAIN（VPC resolver に転送、非権威応答）3.68 / 3.93 |
+| 3.99 | `sts.ap-northeast-2.amazonaws.com.` | **A 10.0.3.84、A 10.0.2.129** 4.37（AAAA: data なし）|
 
-10 queries、8 NXDOMAIN、5 sequential round trips、end to end 4.37 ms。useful answer は最後の 0.38 ms で到着します。各 candidate の Pod→CoreDNS→Pod round trip は 0.8–1.1 ms で、CoreDNS processing time と Measurement 1 の RTT ladder を含みます。`172.20.0.10` は iptables random selection により 2 つの CoreDNS Pod に分散され、その一方は別 AZ にあります。したがって**全 DNS query のおよそ半分が AZ boundary をまたぎます。** `sts.ap-northeast-2.amazonaws.com` が 2 private IP（10.0.2.x / 10.0.3.x）に resolve されるのは、この VPC に AZ ごと 1 ENI の STS interface endpoint があるためです。末尾 dot のない `kubernetes.default.svc.cluster.local` も同じ path を walk します。その `.ap-northeast-2.compute.internal` candidate は CoreDNS が upstream に forward するため 2.2 ms かかり、walk 全体はコールドで 5.6 ms、末尾 dot ありでは 0.4–0.5 ms でした。
+表は10 query と8 NXDOMAIN を記録しています。**4.37 ms** は最初の query から報告された A 応答までの時間です。AAAA の完了時間は記録されていないため、process 起動後の最初の呼び出し 6.22 ms 全体を示すものではありません。候補ごとの RTT は一律0.8～1.1 msではありません。4番目の A/AAAA は0.21 / 0.46 ms、最後の A は0.38 msでした。kube-proxy iptables は新しい conntrack flow に対して endpoint を選び、各 packet ごとには選びません。A/AAAA request が同じ flow を共有することもあります。2つの endpoint が均等に選ばれる場合は新規 flow の半分というのが例示的な期待値ですが、**クロス AZ DNS query の割合を測定したものではありません。** Service VIP `172.20.0.10` を写した Pod capture だけでは、選ばれた backend の AZ は分かりません。元の報告は2つの STS private address を interface endpoint ENI に割り当てており、cluster FQDN の候補転送は2.2 ms / wire 全体は5.6 ms、末尾 dot ありでは0.4～0.5 ms と記録しています。これらは別の観測値です。
 
-### `ndots:1` の動作と副作用
+### `ndots:1` の効果と副作用
 
-- **外部 name**: 10 → **2 queries**、median 3.5–3.8 → **0.5–0.9 ms**（約 4–7 倍高速、query は 5 分の 1）。
-- **short cluster name は悪化します。** `kubernetes.default`（1 dot、`ndots 1` 以上）はまず absolute name `kubernetes.default.` として試されます。CoreDNS にはその zone がないため、**VPC resolver に forward**されます（1.6 ms 後に NXDomain）。続いて `bench-net.svc.cluster.local` を walk（NXDOMAIN）し、最後に `svc.cluster.local` から `172.20.0.1` を取得します。つまり 6 queries、4 NXDOMAIN、median 2.04 ms で、ndots:5 の 1.71 ms より遅くなります。cluster-internal name も upstream resolver に漏れます。`ndots:1` を使うなら、in-cluster Service は FQDN（`name.namespace.svc.cluster.local`）で指定してください。
-- **末尾 dot は ndots に関係なく機能します** — すべての場合で 2 queries、0.4–0.8 ms です。
+- **このサンプルの外部名**: 10 → **2 query**、median は約3.5～3.8 → **0.5～0.9 ms**。この改善は名前と resolver の動作に依存します。
+- **短い名前は失敗する試行が増える場合があります。** 今回の `kubernetes.default` は dot が1つあり `ndots:1` を満たすため、glibc は先に `kubernetes.default.` を試しました。CoreDNS はこれを転送し、報告された1.6 ms後に NXDOMAIN を受け取ってから、namespace suffix を試し、最終的に `svc.cluster.local` で `172.20.0.1` に解決しました。結果は6 query、4 NXDOMAIN、median 2.04 ms で、default 設定の1.71 msより長くなりました。この動作では内部名のような名前が upstream に漏れる場合があります。`ndots` を変更する前に、各アプリケーションの service 名をテストしてください。完全な Service 名を使うと曖昧さを減らせます。
+- **末尾 dot は resolver name を絶対名にします。** この resolver では search expansion を避けられますが、retry、address family、cache の条件が変わっても wire query が常に2回になる、またはレイテンシが一定になる保証はありません。
 
-### Amplification の算術（導出）
+### amplification の計算（導出）
 
-1 request ごとに 1 external name を resolve する application は、`ndots:5` で 2 件ではなく 10 件の DNS query を送信し、1 resolution 当たり **約 +3 ms** を費やします（導出: `sts` は 3.78 − 0.80 = 2.98 ms、末尾 dot なし FQDN は 3.63 − 0.46 = 3.17 ms）。cluster 全体で 1,000 resolutions/s と仮定すると、CoreDNS は 2,000 ではなく **10,000** queries/s を受け、その 8,000 件は NXDOMAIN です。2 つの CoreDNS replica の load の 5 分の 4 は「存在しない」を返すために使われ、その packet の約半分も Regional Data Transfer rate で AZ boundary をまたぎます（volume は小さいもののゼロではありません）。
+**同じ応答パターン**で、アプリケーション DNS cache がなく、毎秒1,000回 lookup するなら、10 query の形式で毎秒10,000 query、2 query の形式で毎秒2,000 query です。最初の10,000件では8,000件（80 %）が NXDOMAIN になります。これは query 数のモデルであり、CoreDNS CPU やクロス AZ query の割合を測ったものではありません。観測した median 差は STS で 3.78 − 0.80 = 2.98 ms、cluster FQDN で 3.63 − 0.46 = 3.17 ms です。固定のリクエスト当たり penalty ではありません。
 
-> **要点 — 修正方法は 4 つです。** (1) configuration 内の external endpoint に**末尾 dot**を付ける（`sts.ap-northeast-2.amazonaws.com.`）— code change なしで直ちに 2 queries。 (2) external call が多い Pod に `dnsConfig: {options: [{name: ndots, value: "1"}]}` を指定する。ただし cluster name は FQDN で指定します。(3) **NodeLocal DNSCache** — この cluster にはありません。これがあれば Pod↔CoreDNS round trip（半分は cross-AZ）は node-local cache hit になります（未測定）。(4) CoreDNS `autopath` plugin は Pod に代わって server-side で search path を walk します。この Corefile にはありませんでした（未測定）。
+**実際のアプリケーションでテストする選択肢:**
 
-## 再現方法
+- client が対応している場合は絶対 DNS 名を使います。HTTPS や AWS SDK endpoint URL に末尾 dot を機械的に付けないでください。Host 処理、SNI、証明書検証、request signing が正しく動作する必要があります。
+- 短縮名の動作とアプリケーション DNS cache を考慮しながら、`dnsConfig: {options: [{name: ndots, value: "1"}]}` を評価します。
+- 適切な環境では [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) を評価します。cache hit は node 内にとどまり、miss は引き続き upstream に向かいます。現行の [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) では node-local CoreDNS が system service として稼働します。Auto Mode のみのクラスターでは CoreDNS Deployment は不要ですが、混在クラスターの非 Auto node では引き続き必要です。
+- [CoreDNS autopath](https://coredns.io/plugins/autopath/) は server 側で search completion を行えますが、Kubernetes 統合には `pods verified`、送信元 Pod IP の可視性、関連する Pod watch / RBAC / memory が必要です。記録された `pods insecure` 設定は要件を満たしません。この最適化はテストしていません。
 
-1. 上記の manifest を `bench-net.yaml` として保存して apply し、placement が意図どおりか確認します。Pod IP は実行ごとに異なるため、`-o wide` から読み取り、以下の command に置き換えてください。
+## 再現方法: 改訂手順
 
-   ```bash
-   kubectl apply -f bench-net.yaml
-   kubectl -n bench-net get pods -o wide   # cli and srv-same on one node (2a), srv-a on another 2a node, srv-b in 2b
-   kubectl -n bench-net exec -it cli -- bash
-   ```
+承認済みの隔離 lab と、このテスト専用の未使用 namespace を使用してください。最初の fixture を調整して `bench-net.yaml`、2つの DNS object を `bench-dns.yaml` として保存し、namespace 名を一致させます。適用前に NodePool の容量、AZ、scheduling、packet-capture 権限を確認してください。テストのために本番 admission や security control を弱めないでください。実行時間を限定した command でも node を飽和させ、課金を発生させる場合があります。
 
-2. **RTT** — path ごとに 50 ms 間隔で 200 probes:
+すべての command は `cli` 内の interactive shell に入らず、**operator の Bash shell** から実行します。この監査では syntax と一部のローカル tool の動作を確認しましたが、fixture を deploy したり EKS で network load を実行したりしていません。
 
-   ```bash
-   ping -c 200 -i 0.05 -q 10.0.2.72   # same-node
-   ping -c 200 -i 0.05 -q 10.0.2.37   # same-AZ
-   ping -c 200 -i 0.05 -q 10.0.3.65   # cross-AZ
-   curl -s -o /dev/null -w 'connect=%{time_connect} total=%{time_total}\n' http://10.0.3.65:8080/   # one cold request, for reference
-   ```
+**1. 調整した fixture を deploy し、配置を検証する。**
 
-3. **Throughput** — iperf3、20 s、1 flow と 8 flows、JSON output。sustained run は cross-AZ、180 s / 4 flows / 10 s intervals です:
+```bash
+set -euo pipefail
+BENCH_NS=bench-net
+kubectl apply -f bench-net.yaml
+kubectl -n "$BENCH_NS" wait --for=condition=Ready \
+  pod/cli pod/srv-same pod/srv-a pod/srv-b --timeout=300s
+kubectl -n "$BENCH_NS" get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/zone,node.kubernetes.io/instance-type,karpenter.sh/nodepool
 
-   ```bash
-   for SRV in 10.0.2.72 10.0.2.37 10.0.3.65; do
-     iperf3 -c $SRV -p 5201 -t 20 -P 1 -J > t1-$SRV-P1.json
-     iperf3 -c $SRV -p 5201 -t 20 -P 8 -J > t1-$SRV-P8.json
-   done
-   iperf3 -c 10.0.3.65 -p 5201 -t 180 -P 4 -i 10 -J > t1-b-sustained180-P4.json
-   ```
+SAME_IP=$(kubectl -n "$BENCH_NS" get pod srv-same -o jsonpath='{.status.podIP}')
+AZ_IP=$(kubectl -n "$BENCH_NS" get pod srv-a -o jsonpath='{.status.podIP}')
+CROSS_IP=$(kubectl -n "$BENCH_NS" get pod srv-b -o jsonpath='{.status.podIP}')
+: "${SAME_IP:?missing srv-same IP}" "${AZ_IP:?missing srv-a IP}" "${CROSS_IP:?missing srv-b IP}"
+for bench_pod in srv-same srv-a srv-b; do
+  kubectl -n "$BENCH_NS" logs "$bench_pod" --tail=30
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -- ss -lnt
+done
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- \
+    curl --fail --silent --show-error --max-time 5 "http://$bench_ip:8080/" >/dev/null
+done
+```
 
-   table の column は JSON の `end.sum_sent.bits_per_second`、`retransmits`、`end.cpu_utilization_percent.host_total` / `remote_total`、および stream ごとの `sender.mean_rtt` と `max_snd_cwnd` から取得します。
+次に進む前に、`cli` と `srv-same` が同じ node、`srv-a` が同一 AZ の別 node、`srv-b` が別 AZ にあることを検証してください。server の 5201/8080/8079 listener と起動エラーを確認します。過去の fixture に readiness probe がないため、Pod が Ready でも process が listening 中とは限りません。node ID、IP、image ID、実際の `iperf3 --version` / `fortio version` を記録してください。Pod が再作成された場合は停止して IP を更新します。
 
-4. **Request latency** — fortio。すべての run に `-quiet -r 0.00001 -json -` を指定します:
+**2. RTT と参考用 HTTP request 1回。**
 
-   ```bash
-   SRV=10.0.3.65   # repeat per path
-   fortio load -quiet -r 0.00001 -json - -qps 100 -c 4 -t 60s http://$SRV:8080/                    # HTTP keepalive
-   fortio load -quiet -r 0.00001 -json - -qps 100 -c 4 -t 30s -keepalive=false http://$SRV:8080/   # new connection per request
-   fortio load -quiet -r 0.00001 -json - -qps 0 -c 16 -t 20s http://$SRV:8080/                     # qps 0 = unlimited, closed loop
-   fortio load -quiet -r 0.00001 -json - -grpc -ping -qps 100 -c 4 -t 30s $SRV:8079                # gRPC ping
-   ```
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- ping -c 200 -i 0.05 -q "$bench_ip"
+done
+kubectl -n "$BENCH_NS" exec cli -- curl --fail --silent --show-error --max-time 5 \
+  -o /dev/null -w 'connect=%{time_connect} total=%{time_total}\n' "http://$CROSS_IP:8080/"
+```
 
-   **`-r 0.00001` を外さないでください。** fortio の default histogram resolution は `-r 0.001`、すなわち 1 ms bucket です。このページのすべての latency は 1 ms 未満なので、default ではすべての request が最初の bucket に入り、p50/p99 はその 1 bucket 内の linear interpolation になります。つまり 1 ms 未満なら p50 = 0.5 ms です。最初の T2 run でまさにこれが発生しました。その percentile は破棄しました（average は有効）。上の table は 10 µs resolution での再実行です。fortio で sub-millisecond latency を測定する人は一度これに遭遇します。
+**3. 転送量を制限し、operator のローカルファイルに出力する。**
 
-5. **DNS** — `bench-dns.yaml` の 2 Pod を deploy します。1 terminal で `sniffer` sidecar による capture を行い、別 terminal で `app` container が name をコールド 1 回、ウォーム 20 回 resolve します:
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- iperf3 -c "$bench_ip" -p 5201 -t 20 -P 1 -J > "t1-$bench_ip-P1.json"
+  kubectl -n "$BENCH_NS" exec cli -- iperf3 -c "$bench_ip" -p 5201 -t 20 -P 8 -J > "t1-$bench_ip-P8.json"
+done
+kubectl -n "$BENCH_NS" exec cli -- \
+  iperf3 -c "$CROSS_IP" -p 5201 -t 180 -P 4 -i 10 -J > t1-cross-sustained180-P4.json
+```
 
-   ```bash
-   kubectl apply -f bench-dns.yaml
-   kubectl -n bench-net exec dns-default -c app -- cat /etc/resolv.conf        # confirm 4 search domains + ndots:5
-   kubectl -n bench-net exec dns-ndots1  -c app -- grep ndots /etc/resolv.conf  # options ndots:1
-   # terminal 1 — every DNS packet this Pod sends or receives
-   kubectl -n bench-net exec dns-default -c sniffer -- tcpdump -i eth0 -nn udp port 53
-   # terminal 2 — one cold resolution (count queries and NXDOMAIN in the capture above) + 20 warm timings
-   kubectl -n bench-net exec dns-default -c app -- python3 - <<'PY'
-   import socket, statistics, time
-   name = "sts.ap-northeast-2.amazonaws.com"       # trailing-dot variant: name + "."
-   def one():
-       t = time.perf_counter()
-       socket.getaddrinfo(name, 80, socket.AF_UNSPEC, socket.SOCK_STREAM)
-       return (time.perf_counter() - t) * 1000
-   print("cold ms", round(one(), 2))
-   xs = sorted(one() for _ in range(20))
-   print("warm min/median/p90/max", round(xs[0], 2), round(statistics.median(xs), 2), round(xs[int(len(xs)*0.9)-1], 2), round(xs[-1], 2))
-   PY
-   ```
+終了 status に加えて JSON error も確認してください。`end.sum_sent.bits_per_second`、`end.sum_sent.retransmits`、`end.cpu_utilization_percent.host_total` / `remote_total`、`end.streams[].sender.mean_rtt` / `max_snd_cwnd` を読み取ります。iperf3 3.19 の process CPU は経過 wall time に対する1 CPU の時間を100 %としており、複数 thread では100 %を超える場合があります。TCP RTT field の単位は microsecond です。
 
-   table 下 6 行については `dns-ndots1` で同じ手順を繰り返します。table は glibc resolver（`python:3.12-slim`）を測定しています。他の resolver（musl/alpine）は測定していないため、これらの数値を再現するには glibc image を使用してください。
+**4. request latency。検証済みの各 server address で繰り返す。**
 
-6. 完了後は namespace を削除します — `kubectl delete ns bench-net`。Karpenter が空の node を削除します。
+```bash
+for bench_ip in "$SAME_IP" "$AZ_IP" "$CROSS_IP"; do
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 100 -c 4 -t 60s "http://$bench_ip:8080/" > "http-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 100 -c 4 -t 30s -keepalive=false "http://$bench_ip:8080/" > "new-connection-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -qps 0 -c 16 -t 20s "http://$bench_ip:8080/" > "closed-loop-$bench_ip.json"
+  kubectl -n "$BENCH_NS" exec cli -- fortio load -quiet -r 0.00001 -json - \
+    -grpc -ping -qps 100 -c 4 -t 30s "$bench_ip:8079" > "grpc-$bench_ip.json"
+done
+```
+
+Fortio 1.69.5 では `-r` は histogram の最小 bucket resolution（秒）です。デフォルト `0.001` は1 ms、大きめの精度を指定する `0.00001` は10 µsで、より広い bucket もあり得ます。percentile は bucket の範囲内で補間され、観測された min / max も端点として扱います。そのため、値の入った bucket が1つだけでも **p50 = 0.5 ms とは限りません。** この報告では最初の粗い resolution の percentile を捨て、10 µs resolution で再実行しました。補間された percentile をすべて偽物と呼ばず、その経緯を保持してください。表中には1 msを超える tail 値と新規接続の median もあります。平均値とともに histogram 全体と error counter を保存してください。
+
+**5. DNS: 1回の lookup の capture と計時 repeat を分ける。**
+
+```bash
+kubectl apply -f bench-dns.yaml
+kubectl -n "$BENCH_NS" wait --for=condition=Ready pod/dns-default pod/dns-ndots1 --timeout=300s
+for bench_pod in dns-default dns-ndots1; do
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -c app -- cat /etc/resolv.conf
+  kubectl -n "$BENCH_NS" exec "$bench_pod" -c app -- ldd --version
+done
+```
+
+terminal 1 では、単一 lookup の前に capture を開始します。この filter は通常の UDP と port 53 の TCP DNS を含みますが、暗号化 DNS や CoreDNS の upstream 経路は対象外です。単一 lookup が終わったら、warm repeat を始める前に Ctrl-C で capture を止めます。
+
+```bash
+kubectl -n bench-net exec -it dns-default -c sniffer -- \
+  tcpdump -l -i eth0 -nn '(udp or tcp) and port 53'
+```
+
+terminal 2 でこのローカル helper を作り、**`kubectl exec -i`** で転送します。最初の mode は resolver call を正確に1回実行します。warm mode は、同じ process 内で計時しない warm-up を1回、その後に20回呼び出します。改訂手順では capture の範囲を明確にしています。
+
+```bash
+cat > dns-probe.py <<'PY'
+import json
+import socket
+import statistics
+import sys
+import time
+
+name, mode = sys.argv[1:3]
+if mode not in ("first", "warm"):
+    raise SystemExit("mode must be first or warm")
+
+def one():
+    started = time.perf_counter()
+    socket.getaddrinfo(name, 80, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    return (time.perf_counter() - started) * 1000
+
+first = one()
+if mode == "first":
+    print(json.dumps({"name": name, "first_process_ms": first}))
+else:
+    samples = [one() for _ in range(20)]
+    ordered = sorted(samples)
+    print(json.dumps({
+        "name": name, "warmup_ms": first, "samples_ms": samples,
+        "min_ms": ordered[0], "median_ms": statistics.median(ordered),
+        "p90_ms": ordered[17], "max_ms": ordered[-1],
+    }))
+PY
+BENCH_NS=bench-net
+DNS_POD=dns-default
+DNS_NAME=sts.ap-northeast-2.amazonaws.com
+kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
+  python3 - "$DNS_NAME" first < dns-probe.py
+```
+
+capture を停止した後:
+
+```bash
+kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
+  python3 - "$DNS_NAME" warm < dns-probe.py
+```
+
+表の名前で繰り返し、`DNS_POD=dns-ndots1` に切り替え、capture の対象 Pod も変更してください。query / response pair は最初の1回だけの capture 範囲で数え、21 lookup を1回として数えないでください。同じ digest、resolver version、設定を使っても時間や cache 状態は異なる場合があります。元の image digest と完全な packet / JSON artifact はこのページに含まれていないため、完全に同じ結果を再現できる保証はありません。
+
+**6. このテスト専用のリソースだけを削除する。** `bench-net` をこの実行専用に作成した場合は、結果を保存してから `kubectl delete namespace bench-net` を実行します。残りの node とコストを別途確認してください。Karpenter の consolidation はその policy、budget、ほかの workload に依存するため、namespace を削除しても node がすぐに削除されるとは限りません。`do-not-disrupt` はあらゆる強制的な中断手段に対する保護ではありません。
 
 ## 注意事項
 
-- **node は新規でしたが、完全に単独ではありませんでした。** このテスト用に Karpenter が 3 台の m5.xlarge node を起動した直後、consolidation により他 namespace の小さな Pod がいくつか移動しました（`cli` node に 1 個、`srv-b` node に 3 個。benchmark traffic とは無関係な小規模 internal Service と controller）。実行中は idle または low-traffic で、load は最大 180 s の burst に限定しました。`cli` node は CPU *requested* が 3901m / 3920m（99 %）でしたが、これは actual utilisation を示すものではありません。
-- **単一実行（各 cell n = 1、1 日）。** variance を推定する repeat は行っていません。数値は SLA ではなく order-of-magnitude の基準として扱い、結論は ratio と pattern（RTT ladder、5 Gbps flow cap、10 Gbps instance cap、10 対 2 queries）に基づかせてください。
-- **ClusterIP（kube-proxy iptables hop）と `trafficDistribution: PreferClose` は測定できませんでした。** cluster 内の Service に対するすべての `kubectl apply` は `Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"` により拒否されました。read-only diagnosis: `aws-load-balancer-controller` は数週間 CrashLoopBackOff であり、その背後にある `failurePolicy: Fail` webhook には ready endpoint が 0 個でした。controller が復旧するまで cluster 内のどこにも Service を作成できません。benchmark のために webhook を bypass せず、fixture は Pod IP のみを使います。symptom → diagnosis → fix は [Troubleshooting Playbook、entry 11「No Service can be created: failed calling webhook」 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook)に記載しています。
-- **ENA allowance counter は収集していません。** `ethtool -S eth0 | grep allowance_exceeded`（`bw_in_allowance_exceeded`、`bw_out_allowance_exceeded`、`pps_allowance_exceeded`、`conntrack_allowance_exceeded`、`linklocal_allowance_exceeded`）には node 上の hostNetwork Pod が必要であり、ここでは実行しませんでした。retransmit count は間接的な signal です。
-- **burst-credit exhaustion は 180 s 以内に観測されなかっただけです。** 「Up to」instance ではより長い sustained transfer が baseline（1.25 Gbps）に向けて throttle される場合があります。180 s 超は試験していません。
-- **DNS latency には CoreDNS cache effect が含まれます。** コールド初回 resolution と 20 回の warm repeat は異なります（`cache 30` は NXDOMAIN も cache します）。external name は VPC resolver を通過します。warm value 間の比較は有効ですが、absolute value は cache state に依存します。
-- **同一 node の iperf3 は 1 client core（99.8 %）に制約されます。** 29.97 / 48.15 Gbps はこの instance family の CPU 数値であり、他では異なります。
-- **他の CNI mode とは比較していません。** Prefix delegation は off、Security Groups for Pods は off、network policy enforcing mode は `standard` です（eBPF agent は存在しますが、namespace に policy はありません）。設定を変更した場合に何が変わるかは、このページの範囲外です。
+- **node は新規でしたが、完全に単独ではありません。** このテスト用に Karpenter が3台の m5.xlarge node を起動した直後、consolidation によってほかの namespace の小さな Pod がいくつか移動しました（`cli` node に1個、`srv-b` node に3個。benchmark traffic と無関係な小規模の内部 service と controller）。実行中は idle または low-traffic で、load は最大180 s の burst です。`cli` node の CPU request は 3901m / 3920m（99 %）でしたが、実使用率を示す値ではありません。
+- **各測定 cell は1回のみ（n = 1、1日）。** variance 推定のための独立した反復はありません。sample 数が限られるため、順位、比率、原因の説明にも限界があり、どれも SLA ではありません。
+- **アプリケーションの ClusterIP と traffic distribution は測定していません。** benchmark namespace での Service 作成は `failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"` により失敗したと報告されています。`failurePolicy: Fail` の webhook は、一致する request を拒否します。その対象範囲は rule、namespace / object selector、match condition によって決まります。この過去の事象は、現在のクラスターで Service を作成できないという意味ではありません。benchmark のために webhook を迂回しておらず、DNS は既存の `kube-dns` Service を使いました。[トラブルシューティング手引き](../ops/16-troubleshooting-playbook.md) を参照してください。
+- **ENA allowance counter は収集していません。** `ethtool -S` は適切な access を使い、host の実際の ENA interface に対して実行する必要があります。Pod の `eth0` は通常 veth であり、`hostNetwork` だけでは正しい device や権限があると証明できません。関連 counter は `bw_in_allowance_exceeded`、`bw_out_allowance_exceeded`、`pps_allowance_exceeded`、`conntrack_allowance_exceeded`、`linklocal_allowance_exceeded` です。retransmit はこれらの測定の代替になりません。
+- **burst credit が尽きなかったのではなく、180 s 内に低下が観測されなかっただけです。** 「Up to」instance では、より長い転送が baseline（1.25 Gbps）へ throttle されることがあります。180 s を超えるテストはしていません。
+- **DNS cache 状態は制御していません。** process 最初の lookup と repeat は異なりますが、`cache 30` で30秒間 hit するとは限りません。replica の選択と upstream の状態は両方の時間に影響し、報告された比較は観測結果です。
+- **同一ノードの CPU 圧力は原因候補です。** client process CPU 99.8 % は 29.97 Gbps という結果の解釈と整合しますが、あらゆる bottleneck を証明するものでも、29.97 / 48.15 Gbps をほかの instance に適用できると示すものでもありません。
+- **別の CNI mode や policy enforcement は比較していません。** prefix delegation と Security Groups for Pods は off で、この namespace に NetworkPolicy はありませんでした。これらの bare Pod は、対応 controller が管理する workload に対する VPC CNI NetworkPolicy enforcement の検証にはなりません。
 
 ## 関連資料
 
-- [Amazon VPC CNI](./01-vpc-cni.md) — この測定の下にある data plane: Pod が VPC IP を直接受け取り、prefix delegation、ENI/IP warming
-- [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md) — Measurement 3 の料金を減らす zone-aligned placement と AZ failover design
-- [Troubleshooting Playbook、entry 11 — No Service can be created: failed calling webhook (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) — この benchmark から ClusterIP を除外した outage
-- [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — sidecar hop の +1.29 ms p50 と、ここで測定した +0.21 ms AZ hop を比較
-- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) — 同じ cluster の storage path を測定
-- [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) — RF3 replication traffic がこのページの 5 Gbps flow cap と cross-AZ pricing にどう関わるか
-- [Guidebook Roadmap — measured-benchmark series](https://www.atomai.click/kubernetes-docs/en/roadmap)
-- [Quiz: Pod Network Benchmark](../quizzes/networking/06-pod-network-benchmark-quiz.md)
+- [Amazon VPC CNI](./01-vpc-cni.md): この測定で使った data plane（VPC IP を直接受け取る Pod、prefix delegation、ENI/IP の warming）
+- [ゾーン別クラスター運用](../ops/15-zonal-operations-guide.md): 測定 3 の請求を減らし得る zone-aligned placement と AZ failover 設計
+- [トラブルシューティング手引き](../ops/16-troubleshooting-playbook.md): webhook failure の診断。この事象は過去のものです
+- [サイドカーと Ambient モードの選択ガイド](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md): 別 hardware / workload の実験。+1.29 ms はシナリオ全体の差です
+- [EBS gp2 と gp3 の実測ベンチマーク](../storage/01-ebs-gp2-gp3-benchmark.md): 同じ cluster の storage 経路を測定
+- [EKS 上の Kafka 実測ベンチマーク](../data-on-eks/kafka/09-kafka-benchmark.md): replication traffic、flow limit、availability tradeoff
+- [ガイドブックのロードマップ: 実測ベンチマーク編](../roadmap.md)
+- [クイズ: Pod ネットワークベンチマーク](../quizzes/networking/06-pod-network-benchmark-quiz.md)
+
+### レビューで使用した主な参考資料
+
+- [Fortio 1.69.5 histogram implementation](https://github.com/fortio/fortio/blob/v1.69.5/stats/stats.go) · [CLI flags](https://github.com/fortio/fortio/blob/v1.69.5/cli/fortio_main.go)
+- [glibc 2.41 search ordering](https://github.com/bminor/glibc/blob/glibc-2.41/resolv/res_query.c) · [A/AAAA transport](https://github.com/bminor/glibc/blob/glibc-2.41/resolv/res_send.c)
+- [CoreDNS Kubernetes / autopath requirements](https://coredns.io/plugins/kubernetes/)
+- [Kubernetes Service traffic distribution](https://kubernetes.io/docs/concepts/services-networking/service/) · [virtual IP handling](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [EC2 ENA network metrics](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-network-performance-ena.html)
+- [Karpenter disruption and cleanup conditions](https://karpenter.sh/docs/concepts/disruption/)

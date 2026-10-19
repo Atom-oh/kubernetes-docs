@@ -1,8 +1,8 @@
 # EKS ネットワーキングクイズ - パート 2
 
-> **最終更新**: October 12, 2026
+> **最終更新日**：2026年10月16日
 
-これらの回答では、[パート 2](../../eks/03-eks-networking-part2.md) のコントローラーの所有範囲と前提条件（LBC 3.5.0 および Gateway API 1.6.0）を使用します。コマンドは実行時にリソースを変更する例です。ローカルのスキーマ/モックテストは EKS デプロイメントを構成しません。アカウント/Region/リソースのプレースホルダーを置き換え、意図した kubeconfig を使用し、プラットフォームの IAM/Helm/IaC 所有範囲を維持してください。
+これらの回答では、[パート 2](../../eks/03-eks-networking-part2.md) のコントローラーの所有範囲と前提条件（LBC 3.6.0 および Gateway API 1.6.0）を使用します。コマンドは実行時にリソースを変更する例です。ローカルのスキーマ/モックテストは EKS デプロイメントを構成しません。アカウント/Region/リソースのプレースホルダーを置き換え、意図した kubeconfig を使用し、プラットフォームの IAM/Helm/IaC 所有範囲を維持してください。
 
 ### 1. AWS Load Balancer Controller は、Kubernetes Ingress リソースに対してデフォルトでどの種類の AWS ロードバランサーをプロビジョニングしますか？
 
@@ -327,7 +327,7 @@ release IAM policy には、コントローラー全体に必要な EC2/ELB 権�
 
 **回答: `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`**
 
-TCP/TLS target group では、この属性は設定可能です。instance ターゲットではデフォルトで有効、IP ターゲットではデフォルトで無効です。UDP/TCP_UDP/QUIC/TCP_QUIC target group は常にクライアント IP を保持し、無効化できません。この IPv4 IP-target TCP の例は、設定可能なケースを変更します:
+TCP/TLS target group では、この属性は設定可能です。instance ターゲットではデフォルトで有効、IP ターゲットではデフォルトで無効です。UDP/TCP_UDP/QUIC/TCP_QUIC target group は常にクライアント IP を保持し、無効化できません。以下では、属性を設定できるケースとして、IPv4 の IP ターゲット TCP を例に示します：
 ```yaml
 apiVersion: v1
 kind: Service
@@ -647,7 +647,7 @@ Client application → client proxy → Pod network → destination proxy → de
 
 Istio では、compute type に対して文書化された 1 つの sidecar/ambient installation を選択してください。Fargate では、一部の mode で必要な node DaemonSet/privileged component を実行できません。普遍的な互換性を主張するのではなく、サポートを検証してください。1 つの namespace で 2 つの mesh injector を有効化しないでください。無関係な `pilot.resources` で injector ConfigMap を上書きするのではなく、サポートされる Helm/install/workload 設定を通じて proxy リソースを設定してください。Prometheus/tracing deployment と mesh export 設定は分けてください。削除された `IstioOperator.addonComponents.prometheus` と架空の App Mesh `Mesh.spec.tracing` は使用可能な installation recipe ではありません。
 
-**歴史的比較:** AWS は **September 30, 2026** に App Mesh のサポートを終了しました。その console とリソースは利用できなくなっています。既存の App Mesh デプロイメントは移行する必要があります。これを新しい EKS のデフォルトとして導入しないでください。その歴史的な Fargate 統合は将来のサポートを保証するものではありません。ECS Service Connect は ECS の選択肢であり、直接的な EKS の代替ではありません。サポートされる EKS mesh/data-plane 設計を使用し、routing、retry、certificate、authorization、tracing、および failure handling の feature parity を検証してください。
+**歴史的比較:** AWS は **2026年9月30日** に App Mesh のサポートを終了しました。その console とリソースは利用できなくなっています。既存の App Mesh デプロイメントは移行する必要があります。これを新しい EKS のデフォルトとして導入しないでください。その歴史的な Fargate 統合は将来のサポートを保証するものではありません。ECS Service Connect は ECS の選択肢であり、直接的な EKS の代替ではありません。サポートされる EKS mesh/data-plane 設計を使用し、routing、retry、certificate、authorization、tracing、および failure handling の feature parity を検証してください。
 
 元の「通常 <10 ms」のレイテンシーおよび「10–15%」の CPU/メモリオーバーヘッドの数値には、このドキュメント内で検証済みの測定ソースがありません。これらは benchmark や sizing guarantee ではなく、**未検証の歴史的推定値**としてここに残されています。enrollment の前後で、同じ request mix、TLS、telemetry sampling、および load を用いて、p50/p95/p99 レイテンシー、throughput、error、CPU/メモリを測定してください。proxy rollout、node loss、control-plane loss、certificate rotation、および retry amplification のテストを含めてください。
 
@@ -691,7 +691,7 @@ LBC は個別の ALB および NLB Gateway を使用します。controllerName �
 
 </details>
 
-### 12. LBC 3.5.0 Gateway controller はどのように有効化されますか？
+### 12. LBC 3.6.0 Gateway controller はどのように有効化されますか？
 
 - A. 常に `--enable-gateway-api` を渡す
 - B. 実際のデフォルト有効 gate で互換性のある CRD を検出する
@@ -755,7 +755,7 @@ spec:
 </details>
 `my-nlb-gateway` listener とバックエンド Service は `gateway-demo` に存在する必要があります。この実装における TLSRoute は SNI-based NLB routing を提供しません。すべての Gateway API 実装が同様に動作すると仮定するのではなく、release 固有の TLS 動作を使用してください。
 
-### 14. LBC 3.5.0 は ALB Gateway の static certificate をどのように設定しますか？
+### 14. LBC 3.6.0 は ALB Gateway の static certificate をどのように設定しますか？
 
 - A. tls-cert という名前の任意の Secret を作成する
 - B. LoadBalancerConfiguration で ACM ARN を使用する
