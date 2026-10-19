@@ -1,10 +1,10 @@
 {
-  "time": "2026-10-19T00:15:45.942652+00:00",
+  "time": "2026-10-19T00:29:29.704975+00:00",
   "status": "IN_PROGRESS",
   "sourcePages": 693,
   "modelCalls": 0,
   "reviewScope": "Complete English/native-locale document comparison",
-  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-0015",
+  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-0027",
   "locales": {
     "cn": {
       "sourcePages": 693,
@@ -40109,7 +40109,7 @@
     },
     "jp": {
       "sourcePages": 693,
-      "currentCompleteReviews": 602,
+      "currentCompleteReviews": 606,
       "minimumActualScore": 86,
       "reviews": {
         "jp/ai-ml/01-ai-ml-workloads.md": {
@@ -47219,6 +47219,65 @@
             ]
           }
         },
+        "jp/networking/calico/05-network-policy.md": {
+          "sourcePath": "en/networking/calico/05-network-policy.md",
+          "sourceBlob": "be1aabd280a5b67492f217771a348ba9ded9858f",
+          "sourceSha256": "1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2",
+          "targetSha256": "fb2a6708119116c5cec5375bb48516c0971cc0eafdfec860a1875f35c749f69a",
+          "reviewer": "nativeGPT6Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/networking/calico/05-network-policy.md",
+            "sourceBlob": "be1aabd280a5b67492f217771a348ba9ded9858f",
+            "sourceSha256": "1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2",
+            "targetSha256": "fb2a6708119116c5cec5375bb48516c0971cc0eafdfec860a1875f35c749f69a",
+            "initialTargetSha256": "c464e099a031a1b9d3f6224b976cf0353d3e3fb713fd5766434bf9d215e397e3",
+            "preEditTargetSha256": "c464e099a031a1b9d3f6224b976cf0353d3e3fb713fd5766434bf9d215e397e3",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2.md",
+            "initialSnapshot": "/tmp/jp-native-initial-snapshots/c464e099a031a1b9d3f6224b976cf0353d3e3fb713fd5766434bf9d215e397e3.md",
+            "finalSnapshot": "/tmp/native-reviewed-target-snapshots/fb2a6708119116c5cec5375bb48516c0971cc0eafdfec860a1875f35c749f69a.md",
+            "snapshot": "/tmp/native-reviewed-target-snapshots/fb2a6708119116c5cec5375bb48516c0971cc0eafdfec860a1875f35c749f69a.md",
+            "completePageComparison": true,
+            "fidelityScore": 95,
+            "readabilityScore": 91,
+            "qualityScore": 93,
+            "qualityScale": "100-point complete-page Japanese fidelity/readability review; full prose comparison, with source code and structural contracts checked separately",
+            "reviewer": "nativeGPT6Luna",
+            "reviewedAt": "2026-10-19T00:20:58+00:00",
+            "status": "passed",
+            "rationale": "I read the complete frozen English source, the complete saved initial Japanese page, and the complete final Japanese page. The initial translation was materially stale: it used a Calico 3.29+/Kubernetes 1.28+ baseline and February 2026 date, made unsupported broad claims about FQDN and Layer 7 support, and did not describe the current policy-evaluation, datastore, dataplane, host-protection, and operational caveats. The final Japanese follows all current source sections and examples, keeps the documented distinctions and non-test caveats, and reads clearly for a Kubernetes networking audience. Product names, resource fields, selectors, APIs, dataplane terms, and other established identifiers remain in their conventional forms.",
+            "findings": [
+              "The initial page's version/date baseline was obsolete, and several capability descriptions overstated what Calico Open Source supports. The final page identifies Calico 3.32.2, the tested Kubernetes 1.34–1.36 range, and the September 12, 2026 review date, then distinguishes Open Source behavior from Enterprise features and required integrations.",
+              "The initial prose omitted current constraints around Kubernetes NetworkPolicy directionality and selector logic; GlobalNetworkPolicy scope and ordering; Tier fall-through/defaults and RBAC; Kubernetes datastore-specific Service matching; DNS resolver paths; SCTP dataplane support; host endpoint failsafes and egress; DoNotTrack/Pre-DNAT scope; staged policies; and limits on performance evidence. The final review compared each of those source sections, examples, warnings, and tables.",
+              "The old page had 33 fenced blocks and different diagrams/examples, while the pinned source has 28 current code blocks. The final document replaces the stale examples with the complete current source-aligned guide and contains no unresolved omission or technical meaning drift from the final paired reread."
+            ],
+            "resolutions": [
+              "Rebuilt the complete Japanese page from the frozen English source and restored all 28 fenced code blocks byte-for-byte.",
+              "Preserved all 19 Markdown link destinations, all 49 heading levels, and the exact multiset of all 81 inline-code tokens. The owned anchor repair found no changes required.",
+              "The translation validator passed; the emphasis check passed; actual configured VitePress rendering reported zero Vue errors and zero literal-bold findings. The final page has exactly one terminal LF, and scoped git diff --check passed."
+            ],
+            "validation": {
+              "translationValidator": "passed",
+              "emphasisCheck": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 28,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 19,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 49,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 81,
+              "inlineCodeTokensExact": true,
+              "ownedAnchorRepairChanges": 0,
+              "singleTerminalLF": true,
+              "scopedGitDiffCheck": "passed"
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-networking-calico-05-network-policy-20261019T002058Z.json",
+            "ledgerBackupSha256": "d4ac24ddee8aa25556a38c80c91eee946b6781c5a295a5a7427214b0886f472e"
+          }
+        },
         "jp/networking/calico/06-ebpf-dataplane.md": {
           "sourcePath": "en/networking/calico/06-ebpf-dataplane.md",
           "sourceBlob": "097d8b277aa5cf35f2cb9cb094b2b69a1630be0e",
@@ -48964,6 +49023,64 @@
               "exactly one terminal LF"
             ],
             "reviewedAt": "2026-10-18T17:21:14.025004+00:00"
+          }
+        },
+        "jp/ops/01-infrastructure-setup.md": {
+          "sourcePath": "en/ops/01-infrastructure-setup.md",
+          "sourceBlob": "32b70d91f08dca771d85ddc33e1a5fbe56ceebd9",
+          "sourceSha256": "83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a",
+          "targetSha256": "52438639c65f88ac81f7abf186efb2bd456cf8df275619f01ce44476750f5cbc",
+          "reviewer": "nativeGPT6Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/ops/01-infrastructure-setup.md",
+            "sourceBlob": "32b70d91f08dca771d85ddc33e1a5fbe56ceebd9",
+            "sourceSha256": "83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a",
+            "targetSha256": "52438639c65f88ac81f7abf186efb2bd456cf8df275619f01ce44476750f5cbc",
+            "initialTargetSha256": "10b6f8b91de9fee4acf7fffb04a64fde7ca19f00ee41fe9708bd81deb4dd0a9c",
+            "preEditTargetSha256": "10b6f8b91de9fee4acf7fffb04a64fde7ca19f00ee41fe9708bd81deb4dd0a9c",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a.md",
+            "initialSnapshot": "/tmp/jp-native-initial-snapshots/10b6f8b91de9fee4acf7fffb04a64fde7ca19f00ee41fe9708bd81deb4dd0a9c.md",
+            "finalSnapshot": "/tmp/native-reviewed-target-snapshots/52438639c65f88ac81f7abf186efb2bd456cf8df275619f01ce44476750f5cbc.md",
+            "snapshot": "/tmp/native-reviewed-target-snapshots/52438639c65f88ac81f7abf186efb2bd456cf8df275619f01ce44476750f5cbc.md",
+            "completePageComparison": true,
+            "fidelityScore": 96,
+            "readabilityScore": 88,
+            "qualityScore": 92,
+            "qualityScale": "100-point complete-page Japanese fidelity/readability review; all prose compared in full and source code blocks verified byte-for-byte",
+            "reviewer": "nativeGPT6Luna",
+            "reviewedAt": "2026-10-19T00:15:32+00:00",
+            "status": "passed",
+            "rationale": "I read the complete frozen English source, the complete saved initial Japanese page, and the complete final Japanese page. The final page preserves the source's current validation baseline, project scope, three-layer responsibilities, Auto Mode behavior, state/security boundaries, deployment instructions, verification limits, and cross references. Japanese prose is clear for a Kubernetes/AWS audience; Terraform, Kubernetes resource, AWS API, and product terms remain in standard forms. The final page includes every current source section, all 25 code blocks, and the complete updated guidance; the captured initial page had only 23 code blocks and materially stale claims.",
+            "findings": [
+              "The initial metadata described Terraform >=1.10, AWS Provider >=5.40 and an EKS >=1.29 baseline dated February 19, 2026, and it did not say the validation was local schema/mock-plan validation rather than a live AWS deployment. The current source pins Terraform 1.16.6, AWS Provider 6.69.1, EKS module 21.29.0, VPC module 6.7.3 and Pod Identity module 2.9.0.",
+              "The initial page described Blue and Green as separate single-AZ zones in specific ap-northeast-2 AZs, overstated cost/fault-domain benefits, and omitted the current two-AZ layout, multi-AZ Auto Mode behavior, CIDR capacity caveats, and separate design guidance for any single-AZ worker cells.",
+              "The captured translation omitted current project/root-state setup constraints, private API connectivity requirements, Auto Mode/CoreDNS/StorageClass distinctions, Pod Identity policy boundaries, cross-layer access-entry ownership, and the full-state exposure risk of terraform_remote_state. It also lacked current deployment confirmation, smoke-test scope, cleanup identity checks, and validation limitations.",
+              "The current source has 25 fenced code blocks, while the initial Japanese page had 23; several old code examples and cross-section statements no longer represented the source's current recipe."
+            ],
+            "resolutions": [
+              "Rebuilt the Japanese page from the complete current source prose template and restored all 25 source code blocks byte-for-byte, while preserving all 19 link destinations, the 93 heading levels, and the 10 source inline-code tokens.",
+              "Updated the version/validation metadata, account/environment-specific project scope, state-root and module guidance, AZ/CIDR caveats, Auto Mode built-in service behavior, StorageClass setup, Pod Identity and KMS requirements, ArgoCD authentication ownership, remote-state security warning, and current deployment/verification/smoke-test instructions.",
+              "Read the entire final Japanese prose after owned-anchor handling. Translation validation passed, emphasis check found no repairs needed, the actual VitePress renderer reported zero errors and zero literal-bold regions, exactly one terminal LF remains, and scoped git diff --check passed."
+            ],
+            "validation": {
+              "translationValidator": "PASS",
+              "fencedCodeBlocks": 25,
+              "fencedCodeByteExact": true,
+              "headingLevels": 93,
+              "linkDestinations": 19,
+              "linkDestinationsExact": true,
+              "sourceInlineCodeTokens": 10,
+              "allSourceInlineCodeTokensPreserved": true,
+              "emphasisCheck": "PASS; 0 files need repair",
+              "actualVitePressRender": "PASS; 0 compile errors; 0 literal-bold regions",
+              "targetSha256": "52438639c65f88ac81f7abf186efb2bd456cf8df275619f01ce44476750f5cbc",
+              "terminalLF": "exactly one",
+              "scopedGitDiffCheck": "PASS"
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-ops-01-infrastructure-setup-20261019T001532Z.json",
+            "ledgerBackupSha256": "5777c18986b40f85b6c7a27cd3b1003e997819ba3910823135cd89f1c31832ab"
           }
         },
         "jp/ops/04-gitops-multi-cluster.md": {
@@ -58737,6 +58854,76 @@
             ]
           }
         },
+        "jp/scheduling/03-custom-scheduler-part3.md": {
+          "sourcePath": "en/scheduling/03-custom-scheduler-part3.md",
+          "sourceBlob": "b5f0a673f42dc6826392566262e6093667379504",
+          "sourceSha256": "f8cd55cce2000fcef0a378ba767ae500545db8dc35307872e83bd238d24872ac",
+          "targetSha256": "87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084",
+          "reviewer": "nativeGPT6Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "scheduling/03-custom-scheduler-part3.md",
+            "sourcePath": "en/scheduling/03-custom-scheduler-part3.md",
+            "targetPath": "jp/scheduling/03-custom-scheduler-part3.md",
+            "sourceBlob": "b5f0a673f42dc6826392566262e6093667379504",
+            "sourceSha256": "f8cd55cce2000fcef0a378ba767ae500545db8dc35307872e83bd238d24872ac",
+            "initialTargetSha256": "b93dc95e7e07c98d26c64d32e58598af3919605ea6889a4d83052567285cbdfc",
+            "targetSha256": "87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fidelityScore": 95,
+            "readabilityScore": 91,
+            "qualityScore": 93,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/f8cd55cce2000fcef0a378ba767ae500545db8dc35307872e83bd238d24872ac.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/b93dc95e7e07c98d26c64d32e58598af3919605ea6889a4d83052567285cbdfc.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "The captured Japanese page was materially stale: scheduler examples and monitoring explanations diverged from the pinned source, and several current safety, version, telemetry, readiness, and controller-selection qualifications were missing or inaccurate.",
+              "The final paired reread found and removed duplicated Grafana setup prose so the dashboard-object instructions and post-JSON import/configuration instructions each appear in their source-aligned section.",
+              "The final Japanese covers all current sections and visible prose, diagrams, examples, references, metrics, and quiz link. No unresolved meaning drift or omission remains."
+            ],
+            "resolutions": [
+              "Rebuilt the Japanese prose from the full pinned English source while restoring all 20 fenced code blocks byte-for-byte.",
+              "Preserved all 12 Markdown link destinations, all 40 heading levels, and the multiset of 43 inline-code tokens; scoped anchor repair required no additional IDs.",
+              "Translation validator passed. Actual configured VitePress render completed with zero Vue errors and zero literal-bold findings; the final file has exactly one terminal LF."
+            ],
+            "rationale": "The scores reflect a complete English-to-initial-to-final comparison after the final prose correction. The Japanese retains the source conditions, units, versions, controller precedence, security boundaries, monitoring prerequisites, and non-execution caveats while removing stale implementation claims from the captured initial page.",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 20,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 12,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 40,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 43,
+              "inlineCodeTokensExact": true,
+              "singleTerminalLF": true,
+              "ownedAnchorRepairChanges": 0
+            },
+            "initialSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/b93dc95e7e07c98d26c64d32e58598af3919605ea6889a4d83052567285cbdfc.md",
+            "finalSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084.md",
+            "snapshot": "/tmp/native-cn-assisted-jp-final-snapshots/87f7a66f20686894f0a082905e67a6faf447bbb6f4fbe9ac90d2c9b5cf9ad084.md",
+            "preEditTargetSha256": "b93dc95e7e07c98d26c64d32e58598af3919605ea6889a4d83052567285cbdfc",
+            "importedFrom": {
+              "report": "/tmp/native-cn-assisted-jp-reviews.json",
+              "reportRow": 2,
+              "reportRowSha256": "6ffda7666d10e7484b9c3a367935498242be4341a1593f5a708604da32cfa6ae",
+              "preImportProof": "/tmp/native-cn-assisted-jp-pre-import-proof.json",
+              "originalRowPreserved": true,
+              "nativeReviewerIdentityPreserved": true
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-cn-assisted-custom-scheduler-part3-20261019T001704Z.json",
+            "ledgerBackupSha256": "49603fc4fe202c94748609e1b36e7b716e60f6a953e4654141b977531c0e537a"
+          }
+        },
         "jp/security/01-kyverno-policy-management.md": {
           "sourcePath": "en/security/01-kyverno-policy-management.md",
           "sourceBlob": "c7fa24e9b9940e7df4d15ff1feac77f8fa8a2257",
@@ -59576,6 +59763,77 @@
             ],
             "ledgerBackup": "/tmp/jp-native-content-review.pre-cilium-observability-final-20261018T222649Z.json",
             "ledgerBackupSha256": "29a5138f11396bc5e7876867d1939b7569824e41dc3ece06bb49dad5c8a4ca9e"
+          }
+        },
+        "jp/service-mesh/cilium-service-mesh/05-ingress-gateway.md": {
+          "sourcePath": "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+          "sourceBlob": "927ad7f53505cbe4362f16c580e5b180fca3a921",
+          "sourceSha256": "e97a7ee0b189d30ee55945afc017031bb2e849580884ad5f68b025365ce72023",
+          "targetSha256": "d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b",
+          "reviewer": "nativeGPT6Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+            "sourcePath": "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+            "targetPath": "jp/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+            "sourceBlob": "927ad7f53505cbe4362f16c580e5b180fca3a921",
+            "sourceSha256": "e97a7ee0b189d30ee55945afc017031bb2e849580884ad5f68b025365ce72023",
+            "initialTargetSha256": "413e17ad32d51a152134bb30f67916874436334f12fcd83375aabe7a9ff57b87",
+            "targetSha256": "d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fidelityScore": 95,
+            "readabilityScore": 91,
+            "qualityScore": 93,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/e97a7ee0b189d30ee55945afc017031bb2e849580884ad5f68b025365ce72023.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/413e17ad32d51a152134bb30f67916874436334f12fcd83375aabe7a9ff57b87.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "The captured Japanese page was materially stale and incomplete relative to the pinned source: it used outdated version/support claims and simplified or incorrect routing, TLS, NLB/ALB, Gateway API, cost, and monitoring explanations.",
+              "The final Japanese was reread against the complete pinned English source, including tables, image descriptions, references, caveats, and all prose around protected code. No unresolved source omission or meaning drift remains."
+            ],
+            "resolutions": [
+              "Rebuilt the full Japanese page from the current source, restoring all 25 fenced code blocks byte-for-byte and translating the complete source prose, tables, headings, and image descriptions.",
+              "Added the source-required canonical `connection-pool-configuration` heading ID with the scoped anchor repair; no other IDs were needed.",
+              "All 19 Markdown link destinations, 35 heading levels, and 100 inline-code tokens match the source. Translation validator passed; actual configured VitePress render has zero Vue errors and zero literal-bold findings; final file has one terminal LF."
+            ],
+            "rationale": "The scores reflect a complete English-to-initial-to-final comparison. The final Japanese preserves exact version distinctions, controller ownership, listener and target requirements, authentication boundaries, protocol behavior, monitoring semantics, and non-deployment caveats while removing the obsolete claims in the initial page.",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 25,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 19,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 35,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 100,
+              "inlineCodeTokensExact": true,
+              "singleTerminalLF": true,
+              "ownedAnchorRepairChanges": 1,
+              "addedCanonicalIds": [
+                "connection-pool-configuration"
+              ]
+            },
+            "initialSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/413e17ad32d51a152134bb30f67916874436334f12fcd83375aabe7a9ff57b87.md",
+            "finalSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b.md",
+            "snapshot": "/tmp/native-cn-assisted-jp-final-snapshots/d3456dcd7cbbfc1b0c216e5d742e40577f9d73586ba971c4e0956bd67bd9ec7b.md",
+            "preEditTargetSha256": "413e17ad32d51a152134bb30f67916874436334f12fcd83375aabe7a9ff57b87",
+            "importedFrom": {
+              "report": "/tmp/native-cn-assisted-jp-reviews.json",
+              "reportRow": 3,
+              "reportRowSha256": "3521166fdfe0637561fb31b478982f8b03a4df204585634fa65e2a7a9eb6a4da",
+              "originalRowPreserved": true,
+              "nativeReviewerIdentityPreserved": true
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-cn-assisted-cilium-ingress-20261019T002122Z.json",
+            "ledgerBackupSha256": "82941636e94d00c3d7d6fd294bec031cbf8fa1cfd178cb7586259a91703a81e1"
           }
         },
         "jp/service-mesh/cilium-service-mesh/README.md": {
@@ -62159,12 +62417,6 @@
           ]
         },
         {
-          "path": "jp/networking/calico/05-network-policy.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/networking/calico/07-advanced-topics.md",
           "issues": [
             "no native review"
@@ -62244,12 +62496,6 @@
         },
         {
           "path": "jp/observability/tracing/03-opentelemetry.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/ops/01-infrastructure-setup.md",
           "issues": [
             "no native review"
           ]
@@ -62411,12 +62657,6 @@
           ]
         },
         {
-          "path": "jp/scheduling/03-custom-scheduler-part3.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/security/03-pod-security-standards.md",
           "issues": [
             "no native review"
@@ -62430,12 +62670,6 @@
         },
         {
           "path": "jp/service-mesh/cilium-service-mesh/02-traffic-management.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
           "issues": [
             "no native review"
           ]
@@ -62528,7 +62762,7 @@
     },
     "es": {
       "sourcePages": 693,
-      "currentCompleteReviews": 609,
+      "currentCompleteReviews": 613,
       "minimumActualScore": 90,
       "reviews": {
         "es/ai-ml/01-ai-ml-workloads.md": {
@@ -69857,6 +70091,109 @@
             "snapshot_path": "/tmp/native-reviewed-target-snapshots/a9ae653d686866ae73ebf41cca3e64f2b65b02655855dcb42b00b9f0cb759447.md"
           }
         },
+        "es/networking/01-vpc-cni.md": {
+          "sourcePath": "en/networking/01-vpc-cni.md",
+          "sourceBlob": "392c9e66ee41b7149ee8e04b697d72803e55f117",
+          "sourceSha256": "cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b",
+          "targetSha256": "72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/networking/01-vpc-cni.md",
+            "target_path": "es/networking/01-vpc-cni.md",
+            "source_blob": "392c9e66ee41b7149ee8e04b697d72803e55f117",
+            "source_sha256": "cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b",
+            "initial_target_sha256": "517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0",
+            "original_reviewed_target_sha256": "517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0",
+            "target_sha256": "72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941",
+            "reviewed_source_sha256": "cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b",
+            "reviewed_target_sha256": "72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941",
+            "final_target_sha256": "72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b.md",
+            "initial_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0.md",
+            "snapshot_path": "/tmp/es-vpc-cni-review/final.md",
+            "final_target_snapshot_path": "/tmp/es-vpc-cni-review/final.md",
+            "shared_final_snapshot_path": "/tmp/native-reviewed-target-snapshots/72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941.md",
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "overall_score": 94,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 92
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "complete_source_initial_final_snapshots": true,
+            "review_scope": "I read the complete frozen English source, the complete captured initial Spanish target, and the complete final Spanish target after the last wording changes. I compared the entire guide, including its version baseline, add-on and Helm ownership paths, allocation behavior, IPv4/IPv6, network policy, SGPP, Multus, Windows, troubleshooting, metrics, references, and quiz link. All 35 source code fences were checked against the source; the final uses exact source bytes. I also checked the ordered inline-code tokens and link destinations, heading hierarchy, the eight source-derived anchors in the translated headings, one terminal LF, the translation validator, actual VitePress output, and scoped diff whitespace.",
+            "rationale": "The final translation covers the complete source and preserves its technical distinctions, operational constraints, examples, version qualifications, source links, and references. Spanish wording is clear for a technically dense guide; native product and API names remain intact. The actual review score reflects the complete source/initial/final comparison, not the validators.",
+            "concrete_findings": [
+              "The captured ES page was materially behind the frozen source baseline: it named CNI/chart 1.23.0, network policy agent 1.4.1, and October 12, 2026, while the source uses 1.23.2, agent 1.4.3, and October 16. It also had three code-fence differences: the diagram separator and two Helm commands pinned 1.23.0 instead of 1.23.2.",
+              "The initial prose relied on English terms and awkward phrasing for network policy, namespace, ingress/egress, warm-pool behavior, and security groups, reducing clarity in several operational sections.",
+              "During final review, I found and corrected a plural-agreement error and two unnatural Spanish phrases before rereading the final file."
+            ],
+            "findings": [
+              "The captured ES page was materially behind the frozen source baseline: it named CNI/chart 1.23.0, network policy agent 1.4.1, and October 12, 2026, while the source uses 1.23.2, agent 1.4.3, and October 16. It also had three code-fence differences: the diagram separator and two Helm commands pinned 1.23.0 instead of 1.23.2.",
+              "The initial prose relied on English terms and awkward phrasing for network policy, namespace, ingress/egress, warm-pool behavior, and security groups, reducing clarity in several operational sections.",
+              "During final review, I found and corrected a plural-agreement error and two unnatural Spanish phrases before rereading the final file."
+            ],
+            "resolutions": [
+              "Rebuilt and refined the complete Spanish prose against the current source, including the updated 1.23.2/1.4.3/October 16 baseline while preserving the distinct EKS eksbuild listing and its availability warning.",
+              "Restored all 35 source code blocks byte-for-byte and retained the source examples, operational boundaries, version qualifications, and non-execution statements.",
+              "Translated the affected terminology into clear Spanish, corrected the final grammar/wording findings, and preserved all 89 inline-code tokens, 32 link destinations, 36 heading levels, and the eight English-source anchor IDs used by the translated headings."
+            ],
+            "unresolvedFindings": [],
+            "findings_resolved": true,
+            "validator": "PASS: scripts/validate-translation.py en/networking/01-vpc-cni.md es/networking/01-vpc-cni.md; 35/35 code fences exact; 89/89 inline-code tokens in source order; 32/32 link destinations in source order; 36 heading levels preserved; native-owned-anchor-repair changed=false (0 IDs needed); scoped VitePress renderer 0 errors and 0 literal-bold findings; git diff --check PASS; exactly one terminal LF; exact source, initial and final snapshots saved.",
+            "review_evidence_path": "/tmp/es-vpc-cni-review/review.json",
+            "native_review_provenance_path": "/tmp/es-vpc-cni-review/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/networking/01-vpc-cni.md",
+              "reviewed_source_path": "en/networking/01-vpc-cni.md",
+              "source_blob": "392c9e66ee41b7149ee8e04b697d72803e55f117",
+              "source_sha256": "cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b",
+              "initial_target_sha256": "517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0",
+              "original_reviewed_target_sha256": "517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0",
+              "target_sha256": "72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941",
+              "reviewer": "native GPT-6 Luna",
+              "score": 94,
+              "fidelityScore": 96,
+              "readabilityScore": 92,
+              "qualityScale": "100-point native GPT-6 Luna assessment",
+              "status": "reviewed",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "I read the complete frozen English source, the complete captured initial Spanish target, and the complete final Spanish target after the last wording changes. I compared the entire guide, including its version baseline, add-on and Helm ownership paths, allocation behavior, IPv4/IPv6, network policy, SGPP, Multus, Windows, troubleshooting, metrics, references, and quiz link. All 35 source code fences were checked against the source; the final uses exact source bytes. I also checked the ordered inline-code tokens and link destinations, heading hierarchy, the eight source-derived anchors in the translated headings, one terminal LF, the translation validator, actual VitePress output, and scoped diff whitespace.",
+              "rationale": "The final translation covers the complete source and preserves its technical distinctions, operational constraints, examples, version qualifications, source links, and references. Spanish wording is clear for a technically dense guide; native product and API names remain intact. The actual review score reflects the complete source/initial/final comparison, not the validators.",
+              "findings": [
+                "The captured ES page was materially behind the frozen source baseline: it named CNI/chart 1.23.0, network policy agent 1.4.1, and October 12, 2026, while the source uses 1.23.2, agent 1.4.3, and October 16. It also had three code-fence differences: the diagram separator and two Helm commands pinned 1.23.0 instead of 1.23.2.",
+                "The initial prose relied on English terms and awkward phrasing for network policy, namespace, ingress/egress, warm-pool behavior, and security groups, reducing clarity in several operational sections.",
+                "During final review, I found and corrected a plural-agreement error and two unnatural Spanish phrases before rereading the final file."
+              ],
+              "resolutions": [
+                "Rebuilt and refined the complete Spanish prose against the current source, including the updated 1.23.2/1.4.3/October 16 baseline while preserving the distinct EKS eksbuild listing and its availability warning.",
+                "Restored all 35 source code blocks byte-for-byte and retained the source examples, operational boundaries, version qualifications, and non-execution statements.",
+                "Translated the affected terminology into clear Spanish, corrected the final grammar/wording findings, and preserved all 89 inline-code tokens, 32 link destinations, 36 heading levels, and the eight English-source anchor IDs used by the translated headings."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: scripts/validate-translation.py en/networking/01-vpc-cni.md es/networking/01-vpc-cni.md; 35/35 code fences exact; 89/89 inline-code tokens in source order; 32/32 link destinations in source order; 36 heading levels preserved; native-owned-anchor-repair changed=false (0 IDs needed); scoped VitePress renderer 0 errors and 0 literal-bold findings; git diff --check PASS; exactly one terminal LF; exact source, initial and final snapshots saved.",
+              "source_snapshot": "/tmp/native-reviewed-source-snapshots/cb9718864ff2d7d26aa18152e4998eb23726ad832e19885f3da9d681dad1461b.md",
+              "initial_target_snapshot": "/tmp/native-reviewed-target-snapshots/517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0.md",
+              "original_reviewed_target_snapshot": "/tmp/native-reviewed-target-snapshots/517012f8337567600533277c956484e2853857847106c20c5c24bce300e4f2c0.md",
+              "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941.md",
+              "final_target_snapshot": "/tmp/native-reviewed-target-snapshots/72c71146e6dd7aafe76a5469337200f29d034287d37aa66ab483b27ab1b70941.md",
+              "provenance": "/tmp/es-vpc-cni-review/capture.json",
+              "reviewedAt": "2026-10-19T00:24:55.548255+00:00"
+            },
+            "reviewed_at": "2026-10-19T00:24:55.548255+00:00"
+          }
+        },
         "es/networking/05-cross-org-vpc-connectivity.md": {
           "sourcePath": "en/networking/05-cross-org-vpc-connectivity.md",
           "sourceBlob": "7f9496ff35ecabc798d314f8dcd43fc62788b952",
@@ -72248,6 +72585,136 @@
             "renderer_status": "passed: Actual VitePress render; errors=0, literal-bold=0; target hash confirmed"
           }
         },
+        "es/observability/logging/01-loki.md": {
+          "sourcePath": "en/observability/logging/01-loki.md",
+          "sourceBlob": "882abba4ca8eaa7db7bc53b592f261a7b7a847e6",
+          "sourceSha256": "75603397c5a5195a8370e9710f5dd59a0476855f9814dc4157f953b2dbbb9439",
+          "targetSha256": "ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/observability/logging/01-loki.md",
+            "target_path": "es/observability/logging/01-loki.md",
+            "source_blob": "882abba4ca8eaa7db7bc53b592f261a7b7a847e6",
+            "source_sha256": "75603397c5a5195a8370e9710f5dd59a0476855f9814dc4157f953b2dbbb9439",
+            "initial_target_sha256": "c40e8e7592f567fca62a9214b9d9157b15faad3bdd3aa9cf7d921a9b8fa7630f",
+            "original_reviewed_target_sha256": "c40e8e7592f567fca62a9214b9d9157b15faad3bdd3aa9cf7d921a9b8fa7630f",
+            "target_sha256": "ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141",
+            "reviewed_source_sha256": "75603397c5a5195a8370e9710f5dd59a0476855f9814dc4157f953b2dbbb9439",
+            "reviewed_target_sha256": "ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141",
+            "final_target_sha256": "ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141",
+            "source_snapshot_path": "/tmp/es-loki-review/source.md",
+            "initial_target_snapshot_path": "/tmp/es-loki-review/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/es-loki-review/initial.md",
+            "snapshot_path": "/tmp/es-loki-review/final.md",
+            "final_target_snapshot_path": "/tmp/es-loki-review/final.md",
+            "shared_final_snapshot_path": "/tmp/native-reviewed-target-snapshots/ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141.md",
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "overall_score": 94,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 92
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "complete_source_initial_final_snapshots": true,
+            "review_scope": "Personally read the complete frozen English source, the complete initial Spanish target and the complete final Spanish target. Reread the assembled final target after anchor and structure checks; no anchor changes were needed.",
+            "rationale": "The final Spanish covers the full source and preserves its technical distinctions, examples, dates, version qualifications and explicit limits. It distinguishes label selection from chunk scanning, runtime configuration from Helm workload values, tenant identity from authentication, retention configuration from a 31-day default, parsed-log error ratios from HTTP request error rates, and readiness from end-to-end health. All 18 source code blocks, 80 inline-code spans, 19 ordered destinations and 22 heading levels were verified; the final rendered page has no Vue errors or literal bold markers.",
+            "concrete_findings": [
+              "The initial Spanish left the updated date in English and used several literal or inconsistent technical phrases for tenant isolation, runtime versus workload configuration, object-store lifecycle, label cardinality and query semantics.",
+              "The page needed a complete current-source comparison for distinctions that affect operation: HTTP errors versus parsed log-line ratios, no-data versus healthy, Loki retention defaults versus an illustrative 744h policy, and the WAL disk-pressure cause of the 3.7.7 shutdown response.",
+              "The page also needed its source-specific Helm, IRSA/S3, versioning, LogQL, Alloy/Promtail, performance and troubleshooting qualifications expressed clearly in Spanish without turning local checks into deployment claims."
+            ],
+            "findings": [
+              "The initial Spanish left the updated date in English and used several literal or inconsistent technical phrases for tenant isolation, runtime versus workload configuration, object-store lifecycle, label cardinality and query semantics.",
+              "The page needed a complete current-source comparison for distinctions that affect operation: HTTP errors versus parsed log-line ratios, no-data versus healthy, Loki retention defaults versus an illustrative 744h policy, and the WAL disk-pressure cause of the 3.7.7 shutdown response.",
+              "The page also needed its source-specific Helm, IRSA/S3, versioning, LogQL, Alloy/Promtail, performance and troubleshooting qualifications expressed clearly in Spanish without turning local checks into deployment claims."
+            ],
+            "resolutions": [
+              "Rebuilt all visible prose and tables in natural Spanish against the frozen source, preserving all 18 code blocks byte-for-byte and keeping every source version, date, API, configuration key, limit, prerequisite and unsupported-test boundary.",
+              "Preserved the source ordering and exact 80 inline-code spans, all 19 link destinations and the 22-level heading hierarchy; the owned anchor helper made no changes.",
+              "Validated the final file with the translation validator, actual VitePress renderer (zero Vue compilation errors and zero literal bold markers), single-terminal-LF check and scoped git diff check."
+            ],
+            "unresolvedFindings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact 18 source code blocks, 80 inline-code spans, 19 link destinations, 22 heading levels, owned anchor check unchanged, translation validator, actual VitePress renderer 0 errors/0 literal bold, one terminal LF, diff check",
+            "review_evidence_path": "/tmp/es-loki-review/review.json",
+            "native_review_provenance_path": "/tmp/es-loki-review/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/observability/logging/01-loki.md",
+              "reviewed_source_path": "en/observability/logging/01-loki.md",
+              "source_blob": "882abba4ca8eaa7db7bc53b592f261a7b7a847e6",
+              "source_sha256": "75603397c5a5195a8370e9710f5dd59a0476855f9814dc4157f953b2dbbb9439",
+              "initial_target_sha256": "c40e8e7592f567fca62a9214b9d9157b15faad3bdd3aa9cf7d921a9b8fa7630f",
+              "original_reviewed_target_sha256": "c40e8e7592f567fca62a9214b9d9157b15faad3bdd3aa9cf7d921a9b8fa7630f",
+              "target_sha256": "ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141",
+              "reviewer": "native GPT-6 Luna",
+              "score": 94,
+              "fidelityScore": 96,
+              "readabilityScore": 92,
+              "qualityScale": "100-point native GPT-6 Luna assessment",
+              "status": "PASS",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Personally read the complete frozen English source, the complete initial Spanish target and the complete final Spanish target. Reread the assembled final target after anchor and structure checks; no anchor changes were needed.",
+              "rationale": "The final Spanish covers the full source and preserves its technical distinctions, examples, dates, version qualifications and explicit limits. It distinguishes label selection from chunk scanning, runtime configuration from Helm workload values, tenant identity from authentication, retention configuration from a 31-day default, parsed-log error ratios from HTTP request error rates, and readiness from end-to-end health. All 18 source code blocks, 80 inline-code spans, 19 ordered destinations and 22 heading levels were verified; the final rendered page has no Vue errors or literal bold markers.",
+              "findings": [
+                "The initial Spanish left the updated date in English and used several literal or inconsistent technical phrases for tenant isolation, runtime versus workload configuration, object-store lifecycle, label cardinality and query semantics.",
+                "The page needed a complete current-source comparison for distinctions that affect operation: HTTP errors versus parsed log-line ratios, no-data versus healthy, Loki retention defaults versus an illustrative 744h policy, and the WAL disk-pressure cause of the 3.7.7 shutdown response.",
+                "The page also needed its source-specific Helm, IRSA/S3, versioning, LogQL, Alloy/Promtail, performance and troubleshooting qualifications expressed clearly in Spanish without turning local checks into deployment claims."
+              ],
+              "resolutions": [
+                "Rebuilt all visible prose and tables in natural Spanish against the frozen source, preserving all 18 code blocks byte-for-byte and keeping every source version, date, API, configuration key, limit, prerequisite and unsupported-test boundary.",
+                "Preserved the source ordering and exact 80 inline-code spans, all 19 link destinations and the 22-level heading hierarchy; the owned anchor helper made no changes.",
+                "Validated the final file with the translation validator, actual VitePress renderer (zero Vue compilation errors and zero literal bold markers), single-terminal-LF check and scoped git diff check."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: exact 18 source code blocks, 80 inline-code spans, 19 link destinations, 22 heading levels, owned anchor check unchanged, translation validator, actual VitePress renderer 0 errors/0 literal bold, one terminal LF, diff check",
+              "reviewedAt": "2026-10-19T00:15:56.685487+00:00",
+              "source_snapshot": "/tmp/es-loki-review/source.md",
+              "initial_target_snapshot": "/tmp/es-loki-review/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/es-loki-review/initial.md",
+              "reviewedTargetSnapshot": "/tmp/es-loki-review/final.md",
+              "final_target_snapshot": "/tmp/es-loki-review/final.md",
+              "shared_final_snapshot": "/tmp/native-reviewed-target-snapshots/ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141.md",
+              "provenance": "/tmp/es-loki-review/capture.json",
+              "validatorProof": "/tmp/es-loki-review/validator.json",
+              "rendererProof": "/tmp/es-loki-review/renderer.json",
+              "diffProof": "/tmp/es-loki-review/diff_check.json",
+              "anchorProof": "/tmp/es-loki-review/anchor.json",
+              "validationChecks": {
+                "validator": {
+                  "exit_code": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                "renderer": {
+                  "exit_code": 0,
+                  "stdout": "{\"time\":\"2026-10-19T00:15:53.843Z\",\"renderer\":\"Actual VitePress configuration including default syntax highlighting\",\"files\":[{\"relativePath\":\"es/observability/logging/01-loki.md\",\"targetSha256\":\"ea0d12350238676b7aa67221f2618ff07a5be37528bcc1c7714716b8226f4141\",\"errors\":[],\"bold\":[]}]}\n",
+                  "stderr": ""
+                },
+                "diff_check": {
+                  "exit_code": 0,
+                  "stdout": "",
+                  "stderr": ""
+                },
+                "anchor": {
+                  "exit_code": 0,
+                  "stdout": "[\n  {\n    \"target\": \"es/observability/logging/01-loki.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+                  "stderr": ""
+                }
+              }
+            },
+            "reviewed_at_utc": "2026-10-19T00:15:56.685487+00:00"
+          }
+        },
         "es/observability/logging/02-opensearch.md": {
           "sourcePath": "en/observability/logging/02-opensearch.md",
           "sourceBlob": "a256c8bb38e5f5a29f285241afd681a41f4a17af",
@@ -73092,6 +73559,113 @@
             "owned_anchor_repair": "Root validation proof records no required anchor changes; canonical source destinations preserved."
           }
         },
+        "es/ops/05-gitops-automation.md": {
+          "sourcePath": "en/ops/05-gitops-automation.md",
+          "sourceBlob": "5859e241cbe01f53c652a472b0346bed0178867a",
+          "sourceSha256": "91ac474509a3f1af18b63f79813fa57d1167a58dcd2ef4982695fac10931df46",
+          "targetSha256": "4d81e361e1a53f71cb695add63ad3965917c87684eb0a2146f96236d2b5891d3",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/ops/05-gitops-automation.md",
+            "target_path": "es/ops/05-gitops-automation.md",
+            "source_blob": "5859e241cbe01f53c652a472b0346bed0178867a",
+            "source_sha256": "91ac474509a3f1af18b63f79813fa57d1167a58dcd2ef4982695fac10931df46",
+            "initial_target_sha256": "738f6de74fe73d84515cd19ffdb3a2f93aaa8aab44d65f6031c1a6098c312873",
+            "original_reviewed_target_sha256": "738f6de74fe73d84515cd19ffdb3a2f93aaa8aab44d65f6031c1a6098c312873",
+            "target_sha256": "4d81e361e1a53f71cb695add63ad3965917c87684eb0a2146f96236d2b5891d3",
+            "reviewed_source_sha256": "91ac474509a3f1af18b63f79813fa57d1167a58dcd2ef4982695fac10931df46",
+            "reviewed_target_sha256": "4d81e361e1a53f71cb695add63ad3965917c87684eb0a2146f96236d2b5891d3",
+            "final_target_sha256": "4d81e361e1a53f71cb695add63ad3965917c87684eb0a2146f96236d2b5891d3",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/gitops-automation-0018/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/gitops-automation-0018/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/gitops-automation-0018/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/gitops-automation-0018/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/gitops-automation-0018/final.md",
+            "fidelity_score": 97,
+            "readability_score": 94,
+            "overall_score": 95,
+            "component_scores": {
+              "fidelity": 97,
+              "readability": 94
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "complete_source_initial_final_snapshots": true,
+            "review_scope": "Genuine personal complete current English source / true initial Spanish / saved final Spanish comparison; native host identity honestly retained",
+            "rationale": "Personally read all 78 current source, 78 true initial and 78 final prose units and all 16 source, 16 initial and 16 final code blocks. Reread the last changed plan-application sentence and proved the other 77 read units and all code unchanged. The final Spanish preserves the current source prerequisites, operational boundaries, examples and ownership conditions in clear Spanish. Actual overall 95, fidelity 97 and readability 94 reflect this assessment; validators assigned no semantic grades.",
+            "concrete_findings": [
+              "The initial reference header and two fenced version strings were stale against the current source: Atlantis v0.47.1 and chart 6.15.0 instead of source v0.48.1 and 6.16.1.",
+              "The initial prose used awkward literal constructions and unnecessary English operational terms, including ambiguous wording about completing Terraform plan application."
+            ],
+            "findings": [
+              "The initial reference header and two fenced version strings were stale against the current source: Atlantis v0.47.1 and chart 6.15.0 instead of source v0.48.1 and 6.16.1.",
+              "The initial prose used awkward literal constructions and unnecessary English operational terms, including ambiguous wording about completing Terraform plan application."
+            ],
+            "resolutions": [
+              "Revised the awkward Spanish prose and restored the two version strings to the exact current source. All 16 final code blocks, 19 heading levels, 20 ordered link destinations and 85 inline tokens match the source contract. Preserved canonical source heading IDs.",
+              "Preserved separate Terraform executor and application reconciler ownership, state and project locks, untrusted plan execution risks, controlled repository workflows, saved-plan application, dependencies and replan requirements, current Pod Identity or IRSA prerequisites and protected credentials.",
+              "Preserved HCP plan/apply identity scopes, agent and provider prerequisites, independent run-trigger approval, remote-state consumer access, and the actual Sentinel version and enforcement boundaries. The policy examples are conditional examples, not complete cloud billing or node-policy guarantees.",
+              "Preserved Flux image discovery versus node image pulling, approved immutable image promotion, actual repository/digest consumption, pull-request approval, scoped artifact ownership, dependency readiness and migration requirements.",
+              "Preserved LLM untrusted-input and API failure handling, telemetry units and observation windows, missing/invalid/stale metrics, advisory-only anomaly output, request verification, expiring approvals and separate execution authorization. Neither an anomaly score nor a Slack button alone authorizes infrastructure changes.",
+              "Retained the source historical version and validation context. No source Terraform, Kubernetes, Helm, HCP, Flux, AWS or LLM API commands, Slack messages, approvals, merges or deployment were executed during this documentation review."
+            ],
+            "unresolvedFindings": [],
+            "findings_resolved": true,
+            "validator": "PASS: 16 exact source fences, 19 heading levels and canonical source IDs, 20 ordered hrefs, 85 inline tokens, actual Vue zero errors/zero literal bold markers, strong translation/table/container validator, emphasis zero repairs, one terminal LF, diff and saved source/initial/final snapshots",
+            "review_evidence_path": "/tmp/root-native-es-reviews/gitops-automation-0018/review-report.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/gitops-automation-0018/review-report.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/ops/05-gitops-automation.md",
+              "reviewed_source_path": "en/ops/05-gitops-automation.md",
+              "source_blob": "5859e241cbe01f53c652a472b0346bed0178867a",
+              "source_sha256": "91ac474509a3f1af18b63f79813fa57d1167a58dcd2ef4982695fac10931df46",
+              "initial_target_sha256": "738f6de74fe73d84515cd19ffdb3a2f93aaa8aab44d65f6031c1a6098c312873",
+              "original_reviewed_target_sha256": "738f6de74fe73d84515cd19ffdb3a2f93aaa8aab44d65f6031c1a6098c312873",
+              "target_sha256": "4d81e361e1a53f71cb695add63ad3965917c87684eb0a2146f96236d2b5891d3",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 95,
+              "fidelityScore": 97,
+              "readabilityScore": 94,
+              "qualityScale": 100,
+              "status": "PASS",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Genuine personal complete current English source / true initial Spanish / saved final Spanish comparison; native host identity honestly retained",
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "reviewedAt": "2026-10-19T00:24:38.147562+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/gitops-automation-0018/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/gitops-automation-0018/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/gitops-automation-0018/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/gitops-automation-0018/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/gitops-automation-0018/final.md",
+              "provenance": "/tmp/root-native-es-reviews/gitops-automation-0018/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/gitops-automation-0018/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/gitops-automation-0018/validation-proof.json",
+              "rationale": "Personally read all 78 current source, 78 true initial and 78 final prose units and all 16 source, 16 initial and 16 final code blocks. Reread the last changed plan-application sentence and proved the other 77 read units and all code unchanged. The final Spanish preserves the current source prerequisites, operational boundaries, examples and ownership conditions in clear Spanish. Actual overall 95, fidelity 97 and readability 94 reflect this assessment; validators assigned no semantic grades.",
+              "findings": [
+                "The initial reference header and two fenced version strings were stale against the current source: Atlantis v0.47.1 and chart 6.15.0 instead of source v0.48.1 and 6.16.1.",
+                "The initial prose used awkward literal constructions and unnecessary English operational terms, including ambiguous wording about completing Terraform plan application."
+              ],
+              "resolutions": [
+                "Revised the awkward Spanish prose and restored the two version strings to the exact current source. All 16 final code blocks, 19 heading levels, 20 ordered link destinations and 85 inline tokens match the source contract. Preserved canonical source heading IDs.",
+                "Preserved separate Terraform executor and application reconciler ownership, state and project locks, untrusted plan execution risks, controlled repository workflows, saved-plan application, dependencies and replan requirements, current Pod Identity or IRSA prerequisites and protected credentials.",
+                "Preserved HCP plan/apply identity scopes, agent and provider prerequisites, independent run-trigger approval, remote-state consumer access, and the actual Sentinel version and enforcement boundaries. The policy examples are conditional examples, not complete cloud billing or node-policy guarantees.",
+                "Preserved Flux image discovery versus node image pulling, approved immutable image promotion, actual repository/digest consumption, pull-request approval, scoped artifact ownership, dependency readiness and migration requirements.",
+                "Preserved LLM untrusted-input and API failure handling, telemetry units and observation windows, missing/invalid/stale metrics, advisory-only anomaly output, request verification, expiring approvals and separate execution authorization. Neither an anomaly score nor a Slack button alone authorizes infrastructure changes.",
+                "Retained the source historical version and validation context. No source Terraform, Kubernetes, Helm, HCP, Flux, AWS or LLM API commands, Slack messages, approvals, merges or deployment were executed during this documentation review."
+              ],
+              "validator": "PASS: 16 exact source fences, 19 heading levels and canonical source IDs, 20 ordered hrefs, 85 inline tokens, actual Vue zero errors/zero literal bold markers, strong translation/table/container validator, emphasis zero repairs, one terminal LF, diff and saved source/initial/final snapshots"
+            },
+            "reviewed_at": "2026-10-19T00:24:38.147562+00:00"
+          }
+        },
         "es/ops/06-scaling-strategies.md": {
           "sourcePath": "en/ops/06-scaling-strategies.md",
           "sourceBlob": "c52cb9cb58807f409dff60bec11e55dc5e6c13a4",
@@ -73179,6 +73753,116 @@
               "provenance": "/tmp/native-cn-assisted-es-captures.json",
               "reviewed_at_utc": "2026-10-18T22:49:19.344230+00:00"
             }
+          }
+        },
+        "es/ops/07-observability-alerts.md": {
+          "sourcePath": "en/ops/07-observability-alerts.md",
+          "sourceBlob": "b05dd8afa8956b7f0739e655abb8a803fbc3dd01",
+          "sourceSha256": "b75419f685142866a38201f4993f693d329ef574d252c3d1ca5ef4f2dc087436",
+          "targetSha256": "ff029da91750033e9b83158358cae1dfd5d20e8c668e3e6523c40efc10712f0f",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/ops/07-observability-alerts.md",
+            "target_path": "es/ops/07-observability-alerts.md",
+            "source_blob": "b05dd8afa8956b7f0739e655abb8a803fbc3dd01",
+            "source_sha256": "b75419f685142866a38201f4993f693d329ef574d252c3d1ca5ef4f2dc087436",
+            "initial_target_sha256": "ed5223bfc56744c85a84ad9fb81ee40779d7ab264a384515a3c0f23ebf0df152",
+            "original_reviewed_target_sha256": "ed5223bfc56744c85a84ad9fb81ee40779d7ab264a384515a3c0f23ebf0df152",
+            "target_sha256": "ff029da91750033e9b83158358cae1dfd5d20e8c668e3e6523c40efc10712f0f",
+            "reviewed_source_sha256": "b75419f685142866a38201f4993f693d329ef574d252c3d1ca5ef4f2dc087436",
+            "reviewed_target_sha256": "ff029da91750033e9b83158358cae1dfd5d20e8c668e3e6523c40efc10712f0f",
+            "final_target_sha256": "ff029da91750033e9b83158358cae1dfd5d20e8c668e3e6523c40efc10712f0f",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/observability-alerts-0014/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/observability-alerts-0014/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/observability-alerts-0014/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/observability-alerts-0014/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/observability-alerts-0014/final.md",
+            "fidelity_score": 97,
+            "readability_score": 94,
+            "overall_score": 95,
+            "component_scores": {
+              "fidelity": 97,
+              "readability": 94
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "complete_source_initial_final_snapshots": true,
+            "review_scope": "Genuine personal complete current English source / true initial Spanish / saved final Spanish comparison; native host identity honestly retained",
+            "rationale": "Personally read all 82 source, 97 true initial and 82 final prose units and all 14 source, 34 initial and 14 final code blocks. After the last Helm-release wording clarification I reread that unit and verified the other 81 read units and all code were unchanged. The final Spanish accurately preserves the current source rules, metric semantics, routing and operational qualifications. Actual overall 95, fidelity 97 and readability 94 reflect this assessment; validators assigned no semantic grades.",
+            "concrete_findings": [
+              "Initial version baseline and all 34 old code blocks were materially stale against the current 14-block source and its October 16 reviewed baseline. It retained obsolete diagrams and a fixed severity response SLA.",
+              "Initial examples assumed universal 10-Gbps denominators, invented or obsolete CNI and Karpenter metrics, treated throttled periods as lost time, and overstated PVC growth forecasts, NodeNotReady, eviction gauges and available scheduling capacity.",
+              "Initial Alertmanager routes claimed continue automatically sent critical alerts to Slack, reused channel fields with a global webhook URL, and used overly broad inhibition with missing scope labels. It omitted the current chart/Secret/template wiring and local-only validation boundaries."
+            ],
+            "findings": [
+              "Initial version baseline and all 34 old code blocks were materially stale against the current 14-block source and its October 16 reviewed baseline. It retained obsolete diagrams and a fixed severity response SLA.",
+              "Initial examples assumed universal 10-Gbps denominators, invented or obsolete CNI and Karpenter metrics, treated throttled periods as lost time, and overstated PVC growth forecasts, NodeNotReady, eviction gauges and available scheduling capacity.",
+              "Initial Alertmanager routes claimed continue automatically sent critical alerts to Slack, reused channel fields with a global webhook URL, and used overly broad inhibition with missing scope labels. It omitted the current chart/Secret/template wiring and local-only validation boundaries."
+            ],
+            "resolutions": [
+              "Rebuilt all 82 current source prose units in natural Spanish and restored all 14 current source code blocks byte-for-byte, 19 heading levels, 18 ordered link destinations, 68 inline tokens, 19 canonical source heading IDs, two source-identical PNG diagrams and enclosing interactive links.",
+              "Preserved collector/version/label/unit prerequisites; vector-zero and missing-series behavior; packets per second, bits versus binary units, actual EC2 bandwidth and PPS limits, throttled-period semantics, zero denominators and filesystem/PVC/ephemeral-storage distinctions.",
+              "Preserved observed inventory versus termination history, gauges versus event counters, PDB health shortfall versus policy bypass, managed Auto Mode versus self-managed Karpenter, provisioned versus busy CPU, and scheduling constraints.",
+              "Preserved native Alertmanager versus CRD schema, separate protected credential files, Slack webhook channel binding, PagerDuty v2 routing versus supported v1 service keys, explicit sibling fallback, per-entity inhibition, Asia/Seoul nightly muting versus daily digest, receiver resolution behavior and mixed alert status templates.",
+              "Preserved complete-values merge requirements, selected Secret/template/CRD review, external labels versus local query samples, HA deduplication and real cluster identity, synthetic local checks versus live collection/delivery, scoped silence ownership and OOM historical-gauge caveats.",
+              "Retained source historical Prometheus 3.15.0, Alertmanager 0.34.1, chart 92.9.0/Operator 0.94.1, VPC CNI 1.23.1 and Cilium 1.20.3 versions. The source historical 17-rule/18-scenario/10-route/2-template/16-inhibition checks were translated, not re-executed. No source commands, Kubernetes/Helm changes, credential transfer, Slack/PagerDuty messages, AWS calls, silences or deployment were performed."
+            ],
+            "unresolvedFindings": [],
+            "findings_resolved": true,
+            "validator": "PASS: 14 exact source fences, 19 heading levels and canonical IDs, 18 ordered hrefs, 68 inline tokens, two source-identical PNGs, actual Vue zero errors/zero literal bold markers, strong translation/table/container validator, emphasis zero repairs, LF, diff and saved source/initial/final snapshots",
+            "review_evidence_path": "/tmp/root-native-es-reviews/observability-alerts-0014/review-report.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/observability-alerts-0014/review-report.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/ops/07-observability-alerts.md",
+              "reviewed_source_path": "en/ops/07-observability-alerts.md",
+              "source_blob": "b05dd8afa8956b7f0739e655abb8a803fbc3dd01",
+              "source_sha256": "b75419f685142866a38201f4993f693d329ef574d252c3d1ca5ef4f2dc087436",
+              "initial_target_sha256": "ed5223bfc56744c85a84ad9fb81ee40779d7ab264a384515a3c0f23ebf0df152",
+              "original_reviewed_target_sha256": "ed5223bfc56744c85a84ad9fb81ee40779d7ab264a384515a3c0f23ebf0df152",
+              "target_sha256": "ff029da91750033e9b83158358cae1dfd5d20e8c668e3e6523c40efc10712f0f",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 95,
+              "fidelityScore": 97,
+              "readabilityScore": 94,
+              "qualityScale": 100,
+              "status": "PASS",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Genuine personal complete current English source / true initial Spanish / saved final Spanish comparison; native host identity honestly retained",
+              "rationale": "Personally read all 82 source, 97 true initial and 82 final prose units and all 14 source, 34 initial and 14 final code blocks. After the last Helm-release wording clarification I reread that unit and verified the other 81 read units and all code were unchanged. The final Spanish accurately preserves the current source rules, metric semantics, routing and operational qualifications. Actual overall 95, fidelity 97 and readability 94 reflect this assessment; validators assigned no semantic grades.",
+              "findings": [
+                "Initial version baseline and all 34 old code blocks were materially stale against the current 14-block source and its October 16 reviewed baseline. It retained obsolete diagrams and a fixed severity response SLA.",
+                "Initial examples assumed universal 10-Gbps denominators, invented or obsolete CNI and Karpenter metrics, treated throttled periods as lost time, and overstated PVC growth forecasts, NodeNotReady, eviction gauges and available scheduling capacity.",
+                "Initial Alertmanager routes claimed continue automatically sent critical alerts to Slack, reused channel fields with a global webhook URL, and used overly broad inhibition with missing scope labels. It omitted the current chart/Secret/template wiring and local-only validation boundaries."
+              ],
+              "resolutions": [
+                "Rebuilt all 82 current source prose units in natural Spanish and restored all 14 current source code blocks byte-for-byte, 19 heading levels, 18 ordered link destinations, 68 inline tokens, 19 canonical source heading IDs, two source-identical PNG diagrams and enclosing interactive links.",
+                "Preserved collector/version/label/unit prerequisites; vector-zero and missing-series behavior; packets per second, bits versus binary units, actual EC2 bandwidth and PPS limits, throttled-period semantics, zero denominators and filesystem/PVC/ephemeral-storage distinctions.",
+                "Preserved observed inventory versus termination history, gauges versus event counters, PDB health shortfall versus policy bypass, managed Auto Mode versus self-managed Karpenter, provisioned versus busy CPU, and scheduling constraints.",
+                "Preserved native Alertmanager versus CRD schema, separate protected credential files, Slack webhook channel binding, PagerDuty v2 routing versus supported v1 service keys, explicit sibling fallback, per-entity inhibition, Asia/Seoul nightly muting versus daily digest, receiver resolution behavior and mixed alert status templates.",
+                "Preserved complete-values merge requirements, selected Secret/template/CRD review, external labels versus local query samples, HA deduplication and real cluster identity, synthetic local checks versus live collection/delivery, scoped silence ownership and OOM historical-gauge caveats.",
+                "Retained source historical Prometheus 3.15.0, Alertmanager 0.34.1, chart 92.9.0/Operator 0.94.1, VPC CNI 1.23.1 and Cilium 1.20.3 versions. The source historical 17-rule/18-scenario/10-route/2-template/16-inhibition checks were translated, not re-executed. No source commands, Kubernetes/Helm changes, credential transfer, Slack/PagerDuty messages, AWS calls, silences or deployment were performed."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: 14 exact source fences, 19 heading levels and canonical IDs, 18 ordered hrefs, 68 inline tokens, two source-identical PNGs, actual Vue zero errors/zero literal bold markers, strong translation/table/container validator, emphasis zero repairs, LF, diff and saved source/initial/final snapshots",
+              "reviewedAt": "2026-10-19T00:16:32.532443+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/observability-alerts-0014/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/observability-alerts-0014/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/observability-alerts-0014/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/observability-alerts-0014/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/observability-alerts-0014/final.md",
+              "provenance": "/tmp/root-native-es-reviews/observability-alerts-0014/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/observability-alerts-0014/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/observability-alerts-0014/validation-proof.json"
+            },
+            "reviewed_at_utc": "2026-10-19T00:16:32.532443+00:00"
           }
         },
         "es/ops/09-observability-stack.md": {
@@ -89358,12 +90042,6 @@
           ]
         },
         {
-          "path": "es/networking/01-vpc-cni.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/networking/02-vpc-lattice.md",
           "issues": [
             "no native review"
@@ -89424,12 +90102,6 @@
           ]
         },
         {
-          "path": "es/observability/logging/01-loki.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/observability/logging/03-cloudwatch-logs.md",
           "issues": [
             "no native review"
@@ -89485,18 +90157,6 @@
         },
         {
           "path": "es/ops/03-ci-pipelines.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/ops/05-gitops-automation.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/ops/07-observability-alerts.md",
           "issues": [
             "no native review"
           ]
@@ -89710,12 +90370,12 @@
   },
   "rendererContract": {
     "auditPath": "/tmp/native-document-contract-audit-20261018.json",
-    "auditTime": "2026-10-19T00:13:43.373Z",
+    "auditTime": "2026-10-19T00:27:26.729Z",
     "scope": "Actual VitePress heading hierarchy and authored local fragment links; no semantic grades."
   },
   "renderingContract": {
     "auditPath": "/tmp/native-current-render-audit-20261018.json",
-    "auditTime": "2026-10-19T00:13:34.990Z",
+    "auditTime": "2026-10-19T00:27:18.444Z",
     "scope": "Actual VitePress configuration including default syntax highlighting"
   }
 }

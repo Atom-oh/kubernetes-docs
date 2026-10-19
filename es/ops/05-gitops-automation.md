@@ -1,35 +1,35 @@
-# Automatización GitOps: Atlantis, HCP Terraform, Flux, AIOps
+# Automatización GitOps: Atlantis, HCP Terraform, Flux, AIOps {#gitops-automation-atlantis-hcp-terraform-flux-aiops}
 
-> **Base de revisión**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5 (el pin de Flux se actualizó al parche 2.9.6 el 12 de octubre de 2026 después de revisar las notas de lanzamiento; no se volvió a ejecutar)\
-> **Última revisión**: 11 de septiembre de 2026. Se comprobó con CLI locales, charts, esquemas y dobles de prueba. No se realizaron comentarios reales en PR, Terraform apply, creación de recursos HCP, despliegue de clúster ni llamadas externas de IA.
+> **Versiones de referencia revisadas**: Atlantis 0.48.1 / chart 6.16.1, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.6 (validado con 2.9.5; actualización del parche fijado sin repetir las pruebas)\
+> **Última revisión**: 16 de octubre de 2026. Las comprobaciones se realizaron con herramientas CLI locales, charts, esquemas y dobles de prueba. No se publicaron comentarios reales en PR ni se ejecutó Terraform apply. Tampoco se crearon recursos de HCP, se desplegaron clústeres o se llamó a servicios externos de IA.
 
-< [Anterior: Multi-Cluster](04-gitops-multi-cluster.md) | [Contenido](README.md) | [Siguiente: Scaling](06-scaling-strategies.md) >
+< [Anterior: Varios clústeres](04-gitops-multi-cluster.md) | [Contenido](README.md) | [Siguiente: Escalado](06-scaling-strategies.md) >
 
-Separe la ejecución de infraestructura de la reconciliación de aplicaciones. No permita que Atlantis y HCP Terraform se ejecuten simultáneamente contra el mismo estado, ni que Flux y Argo CD compitan por los mismos campos de Kubernetes.
+Separe la ejecución de infraestructura de la reconciliación de aplicaciones. Evite que Atlantis y HCP Terraform operen simultáneamente sobre el mismo estado o que Flux y Argo CD compitan por los mismos campos de Kubernetes.
 
 | Herramienta | Responsabilidad | Requisitos previos independientes |
 |---|---|---|
-| Atlantis | Ejecutar planes/applies de Terraform basados en PR | Runtime, credenciales, estado, bloqueos y autorización de comandos |
-| HCP Terraform | Workspaces/runs/estado administrados y colaboración | Conexión VCS, agentes, políticas y permisos de workspace |
-| Flux | Reconciliar el estado de Kubernetes/Helm desde fuentes | Identidades de controlador, RBAC de tenant y permisos de repositorio |
-| Análisis AIOps | Resumir observaciones y proponer respuestas | Datos validados, aprobación y un ejecutor limitado por separado |
+| Atlantis | Planificar y aplicar Terraform a partir de PR | Entorno de ejecución, credenciales, estado, bloqueos y autorización de comandos |
+| HCP Terraform | Gestionar espacios de trabajo, ejecuciones, estado y colaboración | Conexión VCS, agentes, políticas y permisos de los espacios de trabajo |
+| Flux | Reconciliar el estado de Kubernetes y Helm a partir de fuentes | Identidades de los controladores, RBAC de cada tenant y permisos de repositorio |
+| Análisis AIOps | Resumir observaciones y proponer respuestas | Datos validados, aprobación y un ejecutor con restricciones independientes |
 
-## 1. Atlantis en EKS
+## 1. Atlantis en EKS {#1-atlantis-on-eks}
 
-Atlantis ejecuta Terraform desde pull requests. **La planificación puede ejecutar providers, fuentes de datos externas y comandos personalizados.** Exigir aprobación para apply no hace seguro un plan no confiable. Este ejemplo es para un repositorio privado de infraestructura controlado y un equipo de operaciones aprobado, con PR de forks y planificación automática deshabilitados.
+Atlantis ejecuta Terraform a partir de pull requests. **La planificación puede ejecutar proveedores, fuentes de datos externas y comandos personalizados.** Exigir aprobación para apply no hace seguro un plan procedente de una fuente no fiable. Este ejemplo está destinado a un repositorio privado de infraestructura controlado y a un equipo de operaciones autorizado; los PR de forks y la planificación automática están deshabilitados.
 
-### Requisitos previos de identidad e instalación
+### Requisitos previos de identidad e instalación {#identity-and-installation-prerequisites}
 
-- Configure la asociación de Pod Identity de EKS Auto Mode para el namespace/ServiceAccount `atlantis`. No la mezcle con una anotación IRSA. Los nodos convencionales necesitan la configuración compatible de agente y SDK.
-- Limite el acceso a las claves exactas de estado y `.tflock`, las claves KMS necesarias y los recursos administrados. Distinga lectura/escritura de objetos de estado de lectura/escritura/eliminación de objetos de bloqueo. `eks:*` amplio, creación de roles IAM y PassRole no constituyen una política universal de mínimo privilegio.
-- Restrinja las asunciones de roles a ARN exactos y la confianza prevista. Use condiciones de etiquetas de solicitud compatibles de clúster/namespace/ServiceAccount para Pod Identity.
-- Proteja las credenciales y el JSON de planes sensibles de la salida de PR. Terraform `sensitive=true` no evita que los valores se almacenen en el estado.
+- Configure la asociación de Pod Identity de EKS Auto Mode para el espacio de nombres y la ServiceAccount `atlantis`. No la mezcle con una anotación IRSA. Los nodos convencionales requieren la configuración compatible del agente y el SDK.
+- Limite el acceso a las claves exactas de estado y `.tflock`, las claves KMS necesarias y los recursos gestionados. Distinga la lectura y escritura de los objetos de estado de la lectura, escritura y eliminación de los objetos de bloqueo. Los permisos amplios `eks:*`, la creación de roles IAM y PassRole no constituyen una política universal de mínimo privilegio.
+- Restrinja la asunción de roles a los ARN exactos y a las relaciones de confianza previstas. Use las condiciones admitidas de etiquetas de solicitud de clúster, espacio de nombres y ServiceAccount para Pod Identity.
+- Proteja las credenciales y el JSON sensible de los planes frente a su exposición en la salida de PR. Terraform `sensitive=true` no impide que los valores se almacenen en el estado.
 
-El runtime necesita acceso a AWS, Git, registros de providers/módulos y API privadas de EKS. No dependa de scripts de instalación no verificados ni de herramientas ausentes de la imagen. Terraform 1.15.7 debe estar presente u obtenerse mediante la ruta de descarga permitida para `defaultTFVersion`.
+El entorno de ejecución necesita acceso a AWS, Git, los registros de proveedores y módulos y las API privadas de EKS. No dependa de scripts de instalación sin verificar ni de herramientas ausentes de la imagen. Terraform 1.15.7 debe estar instalado o poder obtenerse por la ruta de descarga permitida para `defaultTFVersion`.
 
-### Valores Helm versionados
+### Valores de Helm asociados a la versión {#versioned-helm-values}
 
-Si `auto-gp3` no existe ya, prepare una StorageClass de Auto Mode como esta. Su provisioner difiere del EBS CSI convencional. Use una alternativa apropiada en un modo de clúster diferente.
+Si `auto-gp3` aún no existe, prepare una StorageClass de Auto Mode como la siguiente. Su aprovisionador difiere del EBS CSI convencional. Use una alternativa adecuada si el clúster funciona en otro modo.
 
 ```yaml
 # fixtures/atlantis-storage.yaml
@@ -50,14 +50,14 @@ allowedTopologies:
         values: [auto]
 ```
 
-Prepare estos Secrets en el namespace `atlantis` utilizando el mecanismo de gestión de secretos aprobado. No incluya valores reales en Git ni en valores Helm.
+Prepare estos Secrets en el espacio de nombres `atlantis` mediante el mecanismo aprobado de gestión de secretos. Mantenga los valores reales fuera de Git y de los valores de Helm.
 
 | Secret | Claves requeridas |
 |---|---|
 | `atlantis-vcs` | `github-token`, `webhook-secret` |
 | `atlantis-web-auth` | `username`, `password` |
 
-Conceda al bot/token de GitHub los permisos necesarios de repositorio, PR y consulta de equipo, y rótelo. Sustituya `platform` por el equipo de organización autorizado real. Use la lista de permitidos de equipos de Atlantis en vez de hacer coincidencias de subcadenas de nombres de usuario en un shell hook.
+Conceda al bot y al token de GitHub los permisos necesarios para el repositorio, los PR y las consultas de equipos, y rote el token. Sustituya `platform` por el equipo realmente autorizado de la organización. Use la lista de equipos permitidos de Atlantis en lugar de comparar subcadenas de nombres de usuario en un hook de shell.
 
 ```yaml
 # fixtures/atlantis-values.yaml
@@ -65,7 +65,7 @@ fullnameOverride: atlantis
 replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.47.1
+  tag: v0.48.1
 orgAllowlist: github.com/REPLACE_ORG/eks-infra
 atlantisUrl: https://atlantis.example.com
 defaultTFVersion: 1.15.7
@@ -144,21 +144,21 @@ repoConfig: |
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
 helm upgrade --install atlantis runatlantis/atlantis \
-  --version 6.15.0 --namespace atlantis --create-namespace \
+  --version 6.16.1 --namespace atlantis --create-namespace \
   --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
-Estos valores crean solamente un ClusterIP. Conecte `atlantis.example.com` y `/events` mediante un proxy HTTPS/Ingress aprobado, y luego configure el secreto de webhook de GitHub correspondiente. La verificación de webhook y la autenticación de la interfaz web son distintas. No amplíe la ruta de eventos a una omisión general de autenticación.
+Estos valores crean únicamente un Service de tipo ClusterIP. Exponga `atlantis.example.com` y `/events` mediante un proxy HTTPS o Ingress aprobado y configure el secreto correspondiente del webhook de GitHub. La verificación del webhook y la autenticación de la interfaz web son mecanismos distintos. No convierta la ruta de eventos en una vía general para eludir la autenticación.
 
-El chart 6.15.0 usa `orgAllowlist`, `volumeClaim`, un mapa `environment` y `containerSecurityContext`. El PVC grabable contiene datos de checkout, plan y bloqueo de servidor; no lo superponga con un ConfigMap de solo lectura. Aumentar las réplicas por sí solo no hace altamente disponible un despliegue con un único PVC RWO/BoltDB. Gestione la retención, copia de seguridad, recuperación y eventual limpieza de volúmenes retenidos.
+El chart 6.16.1 usa `orgAllowlist`, `volumeClaim`, un mapa `environment` y `containerSecurityContext`. El PVC escribible contiene los archivos del repositorio, los planes y los bloqueos del servidor; no lo cubra con un ConfigMap de solo lectura. Aumentar las réplicas por sí solo no proporciona alta disponibilidad a un despliegue con un único PVC RWO y BoltDB. Gestione la retención, las copias de seguridad, la recuperación y la posterior eliminación de los volúmenes retenidos.
 
-### Política de servidor y proyectos de repositorio
+### Política de servidor y proyectos de repositorio {#server-policy-and-repository-projects}
 
-El `repoConfig` incorporado pertenece al servidor. `allowed_overrides: []` y `allow_custom_workflows: false` impiden que un PR cambie los requisitos de aprobación o los comandos de ejecución. Configure por separado la protección de ramas de GitHub y las comprobaciones obligatorias. `approved` no implica inherentemente dos aprobaciones distintas y actuales del último commit.
+La configuración `repoConfig` incorporada está bajo control del servidor. `allowed_overrides: []` y `allow_custom_workflows: false` impiden que un PR modifique los requisitos de aprobación o los comandos de ejecución. Configure por separado la protección de ramas y las comprobaciones obligatorias de GitHub. `approved` no implica por sí solo dos aprobaciones distintas y vigentes del último commit.
 
-Exigir el propio apply como requisito para `mergeable` puede crear una dependencia circular. Alinee las dependencias de plan/comprobación/revisión/apply con las reglas del repositorio. Este ejemplo usa comandos explícitos `atlantis plan -p ...`; revise y vuelva a planificar los cambios realizados después de la aprobación.
+Exigir apply como requisito previo para `mergeable` puede crear una dependencia circular. Alinee las dependencias de planificación, comprobación, revisión y aplicación con las reglas del repositorio. Este ejemplo usa comandos explícitos `atlantis plan -p ...`; revise y vuelva a planificar los cambios realizados después de la aprobación.
 
-Coloque este archivo en la raíz del repositorio. Cada directorio de proyecto usa la raíz correspondiente del [capítulo 01](01-infrastructure-setup.md), con su propio backend/estado y `backend.hcl` y `terraform.tfvars` revisados.
+Coloque este archivo en la raíz del repositorio. Cada directorio de proyecto usa la raíz correspondiente del [capítulo 01](01-infrastructure-setup.md), con su propio backend y estado, y con `backend.hcl` y `terraform.tfvars` revisados.
 
 ```yaml
 # fixtures/atlantis.yaml
@@ -192,7 +192,7 @@ projects:
       when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
 ```
 
-Revise y aplique los cambios de red antes de planificar/revisar/aplicar los cambios de clúster y plataforma. `depends_on` no transmite salidas de estado remoto ni actualiza automáticamente un plan descendente guardado previamente. Vuelva a planificar los cambios descendentes cuando cambien las dependencias.
+Revise y aplique los cambios de red antes de planificar, revisar y aplicar los cambios de clúster y plataforma. `depends_on` no transfiere las salidas del estado remoto ni actualiza automáticamente un plan dependiente guardado previamente. Vuelva a planificar los cambios dependientes cuando cambien sus dependencias.
 
 ```text
 atlantis plan -p network-prod
@@ -203,25 +203,25 @@ atlantis plan -p platform-prod
 atlantis apply -p platform-prod
 ```
 
-Estos son comandos de comentarios de PR. El flujo ordinario de Atlantis es **plan en el PR → cumplir los requisitos de aprobación → aplicar ese plan guardado → fusionar**. Fusionar por sí solo no aplica infraestructura. `automerge` es una opción independiente para fusionar después de applies exitosos.
+Estos comandos se publican como comentarios en el PR. El flujo habitual de Atlantis es **planificar en el PR → cumplir los requisitos de aprobación → aplicar ese plan guardado → fusionar**. Fusionar por sí solo no aplica la infraestructura. `automerge` es una opción independiente que permite fusionar después de que los planes se hayan aplicado correctamente.
 
 Las etapas integradas `plan`/`apply` usan el archivo de plan administrado por Atlantis. Los comandos personalizados deben respetar `$PLANFILE`. No lo sustituya por un `-out=tfplan` independiente ni pase valores nuevos de `-var-file` al aplicar un plan guardado. Los archivos de plan y el JSON pueden contener datos sensibles.
 
-### Bloqueos, políticas y manejo de fallos
+### Bloqueos, políticas y manejo de fallos {#locks-policies-and-failure-handling}
 
-Los bloqueos de PR/proyecto/workspace de Atlantis difieren de los bloqueos de estado del backend de Terraform. La base de datos de servidor predeterminada actual es BoltDB; las configuraciones Redis compatibles requieren un diseño independiente. No llame a DynamoDB la base de datos de bloqueo predeterminada de Atlantis ni invente ConfigMaps `lock_groups`/`apply_priority`.
+Los bloqueos de PR, proyecto y espacio de trabajo de Atlantis son distintos de los bloqueos de estado del backend de Terraform. La base de datos predeterminada actual del servidor es BoltDB; las configuraciones compatibles con Redis requieren un diseño aparte. No describa DynamoDB como la base de datos de bloqueos predeterminada de Atlantis ni invente ConfigMaps `lock_groups` o `apply_priority`.
 
-`atlantis unlock` **elimina** un bloqueo; no es una consulta. Compruebe primero los runs activos, planes guardados y bloqueos de estado. `atlantis lock`, `atlantis locks` y `unlock --force` no son comandos generales de PR en la versión de este ejemplo. Use la interfaz compatible o la API autenticada para inspeccionar bloqueos.
+`atlantis unlock` **elimina** un bloqueo; no es una consulta. Compruebe primero las ejecuciones activas, los planes guardados y los bloqueos de estado. `atlantis lock`, `atlantis locks` y `unlock --force` no son comandos generales de PR en la versión de este ejemplo. Use la interfaz admitida o la API autenticada para inspeccionar los bloqueos.
 
-Buscar en el código fuente y contar recursos en el estado actual no valida toda la infraestructura planificada. Considere módulos, fuentes de datos, providers y valores de crear/actualizar/eliminar/desconocidos. Convertir operaciones fallidas de fmt/validate/policy/API en advertencias o `|| true` elimina la compuerta.
+Buscar patrones en el código fuente y contar los recursos del estado actual no valida toda la infraestructura planificada. Tenga en cuenta los módulos, las fuentes de datos, los proveedores y los valores de creación, actualización, eliminación o aún desconocidos. Convertir en advertencias los fallos de fmt, validate, políticas o API, o añadir `|| true`, elimina el control que debía impedir avanzar.
 
-## 2. HCP Terraform
+## 2. HCP Terraform {#2-hcp-terraform}
 
-Terraform Cloud ahora se llama **HCP Terraform**. Es una alternativa a Atlantis con capacidades de workspace/run/estado/política. Compruebe el plan y contrato actuales para funciones, precios, concurrencia, agentes y Sentinel. El hosting administrado sigue requiriendo una configuración deliberada de VCS, permisos, red y aprobaciones.
+Terraform Cloud se llama ahora **HCP Terraform**. Es una alternativa a Atlantis con funciones de espacios de trabajo, ejecuciones, estado y políticas. Compruebe el plan comercial y el contrato actuales para conocer las funciones, los precios, la concurrencia, los agentes y Sentinel disponibles. El alojamiento gestionado también requiere configurar deliberadamente VCS, permisos, red y aprobaciones.
 
-### Workspaces y credenciales dinámicas de AWS
+### Espacios de trabajo y credenciales dinámicas de AWS {#workspaces-and-dynamic-aws-credentials}
 
-Este ejemplo presupone una organización/proyecto existente, conexión OAuth de VCS y **agent pool** con acceso a red privada. La ejecución por agente requiere un plan elegible y una versión compatible del agente. No suponga que un runner remoto público puede llegar directamente a una API privada de EKS.
+Este ejemplo supone que ya existen una organización y un proyecto, una conexión OAuth con VCS y un **pool de agentes** con acceso a la red privada. La ejecución mediante agentes requiere un plan que la incluya y una versión compatible del agente. No suponga que un ejecutor remoto público puede acceder directamente a una API privada de EKS.
 
 ```hcl
 # tfe/main.tf
@@ -342,21 +342,21 @@ variable "workspace_roles" {
 }
 ```
 
-Esta raíz configura recursos HCP. Proteja su backend/estado por separado de los workspaces de infraestructura. Antes de usar estado administrado por HCP para una raíz existente, decida la propiedad y migre deliberadamente su backend S3 original. No aplique el mismo estado desde dos sistemas de ejecución.
+Este módulo raíz configura recursos de HCP. Proteja su backend y estado por separado de los espacios de trabajo de infraestructura. Antes de usar el estado gestionado por HCP para un módulo raíz existente, decida quién será responsable y migre deliberadamente su backend S3 original. Evite que dos sistemas de ejecución apliquen cambios al mismo estado.
 
-AWS ya debe tener el provider OIDC `app.terraform.io` y roles limitados de plan/apply. Restrinja la audiencia/sujeto de confianza a la organización/proyecto/workspace exacto y a `run_phase:plan` o `run_phase:apply`. Las variables `TFC_AWS_*` son identificadores de roles, no claves de acceso de larga duración almacenadas. Verifique la compatibilidad de credenciales dinámicas en las versiones reales de provider y agente.
+AWS ya debe contar con el proveedor OIDC `app.terraform.io` y con roles de planificación y aplicación de alcance restringido. Limite la audiencia y el sujeto de la relación de confianza a la organización, el proyecto y el espacio de trabajo exactos, y a `run_phase:plan` o `run_phase:apply`. Las variables `TFC_AWS_*` identifican roles; no contienen claves de acceso persistentes. Compruebe que las versiones reales del proveedor y el agente admiten credenciales dinámicas.
 
-`queue_all_runs=false` retiene los runs activados por VCS durante la configuración inicial del workspace. No es un interruptor permanente de deshabilitación de ejecución después del primer run manual.
+`queue_all_runs=false` retiene las ejecuciones activadas por VCS durante la configuración inicial del espacio de trabajo. Después de la primera ejecución manual, no actúa como un interruptor permanente que impida ejecutar cambios.
 
-### Disparadores de run y salidas compartidas
+### Disparadores de ejecución y salidas compartidas {#run-triggers-and-sharing-outputs}
 
-Un apply ascendente exitoso pone en cola un run descendente. **`auto_apply_run_trigger` es independiente de `auto_apply` ordinario.** Ambos son falsos aquí, lo que requiere revisión antes de apply. Un disparador no es ni prueba de que todas las dependencias están listas ni un mecanismo de transferencia de salidas.
+Una aplicación correcta de los cambios de una dependencia pone en cola una ejecución dependiente. **`auto_apply_run_trigger` es independiente de la opción habitual `auto_apply`.** Ambas son false en este ejemplo, por lo que se requiere una revisión antes de aplicar cambios. Un disparador no demuestra que todas las dependencias estén listas ni transfiere sus salidas.
 
-El ejemplo no comparte globalmente el estado del workspace. Si deben consumirse salidas, configure consumidores/permisos aprobados y considere `tfe_outputs`. Las credenciales capaces de leer `terraform_remote_state` pueden acceder al estado sensible completo, no solo a las salidas mostradas por la fuente de datos. Conecte el acceso a salidas y las entradas de módulo según el diseño real.
+El ejemplo no comparte globalmente el estado del espacio de trabajo. Si otro componente necesita sus salidas, configure los consumidores y permisos aprobados y considere `tfe_outputs`. Las credenciales que permiten leer `terraform_remote_state` dan acceso al estado sensible completo, no solo a las salidas que muestra la fuente de datos. Conecte el acceso a las salidas y las entradas de los módulos según el diseño real.
 
-### Políticas Sentinel
+### Políticas Sentinel {#sentinel-policies}
 
-Estas son tres **políticas de ejemplo** probadas con Sentinel 0.41.0, no programas Python. Se requieren un conjunto de políticas, workspaces objetivo y configuración de aplicación antes de que puedan bloquear runs de HCP.
+Estas son tres **políticas de ejemplo** probadas con Sentinel 0.41.0, no programas de Python. Para que puedan bloquear ejecuciones de HCP, deben existir un conjunto de políticas, espacios de trabajo de destino y una configuración que determine su aplicación obligatoria.
 
 ```text
 # policies/required-tags.sentinel
@@ -395,7 +395,7 @@ main = rule {
 }
 ```
 
-Comprobar `tags_all` incluye etiquetas predeterminadas de AWS Provider. Este ejemplo comprueba acciones create/update para los tipos de recursos listados y excluye la eliminación. Las etiquetas requeridas ausentes, vacías, null o desconocidas no pasan. No cubre todos los tipos de recursos AWS.
+Comprobar `tags_all` incluye las etiquetas predeterminadas del proveedor de AWS. Este ejemplo examina las acciones de creación y actualización de los tipos de recursos indicados y excluye la eliminación. Las etiquetas obligatorias ausentes, vacías, null o desconocidas no superan la comprobación. La política no cubre todos los tipos de recursos de AWS.
 
 ```text
 # policies/instance-types.sentinel
@@ -425,7 +425,7 @@ main = rule {
 }
 ```
 
-Esto se aplica a instancias EC2 y grupos de nodos administrados con `instance_types` especificados directamente. Los grupos solo con launch template, los NodePools de Auto Mode y otros servicios de cómputo requieren políticas adicionales. Una lista de tipos vacía o desconocida no se trata como un conjunto vacío aprobado.
+Esta política se aplica a instancias EC2 y grupos de nodos gestionados que especifican directamente `instance_types`. Los grupos que solo usan una plantilla de lanzamiento, los NodePools de Auto Mode y otros servicios de cómputo requieren políticas adicionales. Una lista de tipos vacía o desconocida no se considera un conjunto vacío aprobado.
 
 ```text
 # policies/cost-limit.sentinel
@@ -443,7 +443,7 @@ main = rule {
 }
 ```
 
-Use `tfrun.cost_estimate`, no una ruta inexistente como `tfplan.workspace`. El ejemplo permite una estimación mensual proporcionada de hasta 5.000, rechazando valores ausentes, negativos, NaN e infinitos. No puede garantizar un límite completo de facturación de AWS que cubra recursos no compatibles, tráfico e infraestructura existente.
+Use `tfrun.cost_estimate`, no una ruta inexistente como `tfplan.workspace`. El ejemplo acepta una estimación mensual proporcionada de hasta 5.000 y rechaza valores ausentes, negativos, NaN o infinitos. No garantiza un límite para la factura completa de AWS que incluya recursos no admitidos, tráfico e infraestructura existente.
 
 ```hcl
 # policies/sentinel.hcl
@@ -461,13 +461,13 @@ policy "cost-limit" {
 }
 ```
 
-Adjunte el conjunto de políticas a los workspaces previstos y separe la administración de políticas de las operaciones de recursos. Una regla llamada simplemente `soft_main` no cambia la aplicación a soft-mandatory. No convierta evaluaciones fallidas o errores de API en éxito.
+Asocie el conjunto de políticas a los espacios de trabajo previstos y separe la administración de políticas de la operación de recursos. Llamar `soft_main` a una regla no cambia su nivel de aplicación a soft-mandatory. No convierta los fallos de evaluación o los errores de API en resultados correctos.
 
-## 3. Flux
+## 3. Flux {#3-flux}
 
-Esta sección usa la [guía de Flux 2.9.6](../gitops/02-fluxcd.md). Argo CD y Flux reconcilian estado declarativo. Argo CD también tiene varios componentes; Flux no es universalmente más ligero ni más aislado. La separación de namespaces por sí sola no completa la autorización de tenant.
+Esta sección usa la [guía de Flux 2.9.6](../gitops/02-fluxcd.md). Tanto Argo CD como Flux reconcilian estado declarativo. Argo CD también consta de varios componentes; Flux no es siempre más ligero ni ofrece necesariamente mayor aislamiento. Separar espacios de nombres por sí solo no completa la autorización de los tenants.
 
-Los controladores de reflector y automatización de imágenes son **componentes opcionales**. Bootstrap realiza commits en Git e instala controladores. Verifique la suma de comprobación del CLI, la versión compatible de Kubernetes, kubecontext y el acceso al repositorio antes de ejecutarlo.
+Los controladores de detección y automatización de imágenes son **componentes opcionales**. Bootstrap crea commits en Git e instala controladores. Compruebe la suma de verificación de la CLI, la versión compatible de Kubernetes, el contexto de Kubernetes y el acceso al repositorio antes de ejecutarlo.
 
 ```bash
 flux check --pre
@@ -477,11 +477,11 @@ flux bootstrap github \
   --components-extra=image-reflector-controller,image-automation-controller
 ```
 
-Proporcione de forma segura credenciales autorizadas de GitHub. No agregue `--personal` a un ejemplo de organización. Distinga los archivos `flux-system` predeterminados generados por bootstrap de los directorios de infraestructura/apps que agregue usted mismo.
+Proporcione de forma segura las credenciales autorizadas de GitHub. No añada `--personal` a un ejemplo destinado a una organización. Distinga los archivos predeterminados `flux-system` que genera bootstrap de los directorios de infraestructura y aplicaciones que añada usted mismo.
 
-### Automatización de imágenes y aprobación de Git
+### Automatización de imágenes y aprobación de Git {#image-automation-and-git-approval}
 
-El ejemplo requiere un Secret de escritura Git preparado, credenciales de lectura de ECR en image-reflector-controller mediante Pod Identity/IRSA, y la Kustomization/HelmRelease de Flux que despliega la aplicación. Estos son independientes del rol de extracción de imagen del nodo. No combine sin cuidado `provider: aws` con una ruta de autenticación de secreto de registro diferente.
+El ejemplo requiere un Secret preparado para escribir en Git, credenciales de lectura de ECR en image-reflector-controller mediante Pod Identity o IRSA, y la Kustomization o HelmRelease de Flux que despliega la aplicación. Estos permisos son distintos del rol con el que el nodo descarga imágenes. No combine sin revisar `provider: aws` con otra vía de autenticación basada en un secreto del registro.
 
 ```yaml
 # fixtures/flux-images.yaml
@@ -556,7 +556,7 @@ spec:
       app: application
 ```
 
-La política presupone **versiones semver inmutables publicadas después de la aprobación**. Las etiquetas únicas SHA/build del [capítulo de CI](03-ci-pipelines.md) no coinciden con ella. Un proceso de promoción independiente debe etiquetar el digest de índice aprobado como una versión, o la política debe usar un esquema de build revisado y monótonamente creciente de un sistema CI.
+La política supone **versiones semver inmutables publicadas después de la aprobación**. Las etiquetas únicas de SHA o compilación del [capítulo de CI](03-ci-pipelines.md) no cumplen ese patrón. Un proceso independiente de promoción debe etiquetar el digest aprobado del índice como versión, o la política debe usar un esquema revisado de números de compilación crecientes procedentes de un único sistema de CI.
 
 ```yaml
 # fixtures/flux-values.yaml
@@ -568,35 +568,35 @@ image:
   digest: sha256:REPLACE_APPROVED_DIGEST # {"$imagepolicy": "flux-system:application:digest"}
 ```
 
-El chart real de la aplicación debe usar `image.repository`, `tag` y `digest` al construir la URI de imagen del contenedor. Agregar un valor de digest no hace que un chart existente lo consuma. Compruebe que el manifiesto renderizado apunte al digest aprobado. Alinee las rutas Setters, los marcadores de política y el nombre de GitRepository.
+El chart real de la aplicación debe usar `image.repository`, `tag` y `digest` al construir la URI de la imagen del contenedor. Añadir un valor digest no hace que un chart existente lo utilice. Compruebe que el manifiesto generado apunta al digest aprobado. Alinee las rutas de Setters, los marcadores de políticas y el nombre de GitRepository.
 
-La plantilla de commit actual de ImageUpdateAutomation usa **`.Changed`**. No la sustituya por la eliminada `.Updated`. La automatización realiza push a su rama dedicada `flux/image-updates`; la creación y aprobación de PR en main requieren otro workflow. Alinee los permisos de escritura Git y la protección de ramas. La selección de etiquetas no sustituye la verificación de vulnerabilidades/firmas.
+La plantilla actual de commit de ImageUpdateAutomation usa **`.Changed`**. No la sustituya por `.Updated`, que se ha eliminado. La automatización publica los cambios en su rama dedicada `flux/image-updates`; crear el PR y aprobar su fusión en main requiere otro flujo de trabajo. Alinee los permisos de escritura en Git con la protección de ramas. Seleccionar una etiqueta no sustituye la comprobación de vulnerabilidades y firmas.
 
-### Fuentes, Helm y notificaciones
+### Fuentes, Helm y notificaciones {#sources-helm-and-notifications}
 
-- Los ejemplos actuales usan las API v1 de `GitRepository`, `OCIRepository`, `Bucket` e imágenes. HelmRelease es v2; su CRD actual admite tanto `test.enable` como `test.timeout`. Valide juntos las versiones/valores del chart y los CRD.
-- Kustomization `dependsOn` espera la condición Ready del objeto Flux referenciado. Configure wait/healthChecks para observar la salud de la carga de trabajo; no es una barrera global entre clústeres.
-- No permita que Terraform Helm Provider y Flux posean simultáneamente el mismo release Helm. Migrar la propiedad de instalación de Argo CD requiere una migración deliberada de estado/configuración.
-- No exponga buckets de estado de Terraform como fuentes ordinarias de manifiestos Flux. Use un bucket de artefactos de manifiestos independiente con acceso limitado por prefijo, y evite patrones de ignore que incluyan `.git` en los artefactos.
-- Almacene los webhooks de notificación en Secrets y verifique el tipo de receptor y autenticación reales. Pruebe los eventos seleccionados por gravedad y filtros. No presente una interfaz no instalada o una integración retirada como parte de la instalación predeterminada.
+- Los ejemplos actuales usan las API v1 de `GitRepository`, `OCIRepository`, `Bucket` e imágenes. HelmRelease es v2; su CRD actual admite `test.enable` y `test.timeout`. Valide conjuntamente las versiones y los valores del chart y los CRD.
+- Kustomization `dependsOn` espera a que el objeto de Flux referenciado tenga la condición Ready. Configure wait y healthChecks para observar la salud de las cargas de trabajo; esta dependencia no es una barrera global entre clústeres.
+- Evite que Terraform Helm Provider y Flux gestionen simultáneamente la misma instalación de Helm. Cambiar quién gestiona la instalación de Argo CD requiere migrar deliberadamente el estado y la configuración.
+- No exponga los buckets de estado de Terraform como fuentes habituales de manifiestos de Flux. Use un bucket independiente de artefactos de manifiestos, con acceso restringido por prefijo, y evite patrones de exclusión que incorporen `.git` en los artefactos.
+- Almacene los webhooks de notificación en Secrets y compruebe el tipo real de receptor y su autenticación. Pruebe los eventos seleccionados por gravedad y filtros. No presente una interfaz no instalada ni una integración retirada como parte de la instalación predeterminada.
 
-La [guía de Flux](../gitops/02-fluxcd.md) contiene ejemplos completos de source/Kustomization/HelmRelease/notificación.
+La [guía de Flux](../gitops/02-fluxcd.md) contiene ejemplos completos de fuentes, Kustomization, HelmRelease y notificaciones.
 
-## 4. AIOps: de la observación a propuestas revisables
+## 4. AIOps: de la observación a propuestas que se puedan revisar {#4-aiops-from-observation-to-reviewable-proposals}
 
-### Revisión de PR asistida por LLM
+### Revisión de PR asistida por LLM {#llm-assisted-pr-review}
 
-Configure la revisión de código de GitHub Copilot mediante sus ajustes compatibles de revisor/revisión automática, con los permisos de repositorio necesarios y el plan disponible. Un endpoint ficticio como `api.copilot.example.com` no es un ejemplo de API ejecutable.
+Configure la revisión de código de GitHub Copilot mediante sus opciones admitidas de revisor y revisión automática, con los permisos de repositorio necesarios y un plan que incluya la función. Un endpoint ficticio como `api.copilot.example.com` no constituye un ejemplo de API ejecutable.
 
-Una integración LLM personalizada debe implementar el contrato actual de API/modelo/SDK del servicio real, timeout, manejo de errores HTTP y validación de salida. Los diffs y los nombres de archivo son datos no confiables. Pase valores estructurados en vez de interpolarlos en cadenas de shell, JavaScript o JSON. Las instrucciones dentro del contenido revisado no otorgan autoridad de ejecución.
+Una integración personalizada con un LLM debe respetar el contrato actual de API, modelo y SDK del servicio real, los tiempos de espera, el tratamiento de errores HTTP y la validación de las respuestas. Los diffs y nombres de archivo son datos no fiables. Pase valores estructurados en lugar de interpolarlos en cadenas de shell, JavaScript o JSON. Las instrucciones incluidas en el contenido revisado no autorizan su ejecución.
 
-Informe del truncamiento y los fallos de API. No entregue secretos a PR externos de forks ni convierta una respuesta de modelo por sí sola en aprobación, merge o apply. Defina la divulgación permitida de código fuente y el alcance de coste antes de usar un servicio externo. No se llamó a ningún servicio externo de IA durante la revisión de este documento.
+Indique cuándo se ha truncado contenido o ha fallado la API. No entregue secretos a PR de forks externos ni convierta una respuesta del modelo por sí sola en una aprobación, fusión o aplicación de cambios. Defina el alcance permitido de divulgación del código fuente y de costes antes de usar un servicio externo. Durante la revisión de este documento no se llamó a ningún servicio externo de IA.
 
-### Unidades métricas y calidad de datos
+### Unidades de las métricas y calidad de los datos {#metric-units-and-data-quality}
 
-Un promedio de contador de CPU no es utilización de CPU. `rate(container_cpu_usage_seconds_total[...])` produce núcleos de CPU; `averageUtilization` de HPA es un porcentaje de las **solicitudes** de CPU. No compare ese porcentaje con RPS. Resuelva el scaleTargetRef del HPA y la propiedad real del Pod en vez de suponer que el HPA y el Deployment comparten un nombre.
+El promedio de un contador de CPU no representa su utilización. `rate(container_cpu_usage_seconds_total[...])` devuelve núcleos de CPU; `averageUtilization` del HPA es un porcentaje de las **solicitudes de CPU**. No compare ese porcentaje con RPS. Identifique el scaleTargetRef del HPA y qué controlador gestiona realmente los Pods, en lugar de suponer que el HPA y el Deployment comparten nombre.
 
-El p95 temporal de RPS difiere de un cuantil de histograma de duración de solicitudes:
+El p95 temporal de RPS es distinto del cuantil de un histograma de duración de solicitudes:
 
 ```promql
 # Seven-day p95 of RPS: counter -> rate -> temporal quantile
@@ -612,11 +612,11 @@ histogram_quantile(0.95,
 )
 ```
 
-Haga coincidir los nombres/etiquetas de métricas con la recopilación real. Series ausentes, tráfico cero, NaN, observaciones obsoletas y brechas de recopilación no son evidencia de salud. Combine tráfico, errores, latencia y capacidad. La CPU media por sí sola no puede establecer un “objetivo óptimo de HPA”; importan las pruebas de carga, los SLO y el comportamiento de reducción de escala.
+Use nombres y etiquetas de métricas que correspondan a la recopilación real. Las series ausentes, el tráfico cero, NaN, las observaciones antiguas y los intervalos sin datos no demuestran que el servicio esté sano. Combine tráfico, errores, latencia y capacidad. La CPU media por sí sola no determina un «objetivo óptimo del HPA»; también importan las pruebas de carga, los SLO y el comportamiento al reducir capacidad.
 
-### Ejemplo ejecutable de solo análisis
+### Ejemplo ejecutable que solo genera un análisis {#executable-analysis-only-example}
 
-Esta herramienta lee desde stdin una serie JSON de una sola métrica ya normalizada y emite **solo un informe de recomendación**. No cambia API, HPA, NLB, Git ni Slack. Estar dentro de la línea base no establece la salud de la aplicación.
+Esta herramienta lee desde stdin una serie JSON previamente normalizada de una sola métrica y emite **únicamente un informe de recomendación**. No modifica API, HPA, NLB, Git ni Slack. Que el valor esté dentro del rango de referencia no demuestra que la aplicación esté sana.
 
 ```python
 # fixtures/anomaly-report.py
@@ -702,31 +702,31 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-La entrada contiene `unit`, `periodSeconds` y `points`; cada punto tiene una marca de tiempo UTC Unix y un valor no negativo finito. Proporcione al menos 30 puntos de línea base más la observación. Las proporciones están en 0–1. El recopilador debe comprobar errores de API, paginación y resultados parciales y seleccionar una serie agregada claramente definida.
+La entrada contiene `unit`, `periodSeconds` y `points`; cada punto incluye una marca de tiempo Unix en UTC y un valor finito no negativo. Proporcione al menos 30 puntos de referencia además de la observación. Las proporciones deben estar entre 0 y 1. El recopilador debe comprobar los errores de API, la paginación y los resultados parciales y seleccionar una única serie agregada claramente definida.
 
-La observación se excluye de la línea base de mediana/MAD. Los márgenes son **umbrales ilustrativos**, no un modelo entrenado ni un sistema de predicción estacional. La herramienta ordena los puntos y rechaza brechas, duplicados y observaciones obsoletas. `review_required` no es permiso para ejecutar; `actionTaken` sigue siendo `none`.
+La observación se excluye del conjunto de referencia usado para la mediana y MAD. Los márgenes son **umbrales ilustrativos**, no un modelo entrenado ni un sistema de predicción estacional. La herramienta ordena los puntos y rechaza los intervalos sin datos, los duplicados y las observaciones antiguas. `review_required` no autoriza a ejecutar cambios; `actionTaken` sigue siendo `none`.
 
-Al adaptar la recopilación de CloudWatch, use el namespace/dimensiones reales de la métrica y ordene los `Timestamps`/`Values` emparejados. No suponga que `Values[-1]` es el más reciente con el orden de respuesta predeterminado. `RequestCount` y las métricas específicas de grupo de destino tienen contratos de dimensiones distintos; maneje NextToken, StatusCode y puntos ausentes.
+Al adaptar la recopilación de CloudWatch, use el espacio de nombres y las dimensiones reales de la métrica y ordene conjuntamente los pares `Timestamps` y `Values`. No suponga que `Values[-1]` es el dato más reciente con el orden predeterminado de respuesta. `RequestCount` y las métricas específicas de grupos de destino requieren dimensiones distintas; gestione NextToken, StatusCode y los puntos ausentes.
 
-### Límites de aprobación y ejecución
+### Límites de aprobación y ejecución {#approval-and-execution-boundaries}
 
-Una propuesta debe identificar el ARN/namespace objetivo, la revisión de configuración actual, diff, evidencia/tiempo de métricas, expiración, aprobador y condiciones de rollback. Antes de la ejecución, vuelva a comprobar autorización, expiración, revisión, capacidad y salud del destino. Una lista de permitidos de cadenas o un ConfigMap de guardrail no utilizado de otro modo no es un mecanismo de aplicación.
+Una propuesta debe identificar el ARN o espacio de nombres de destino, la revisión de la configuración actual, el diff, las métricas que la sustentan y sus fechas, la caducidad, quién la aprueba y las condiciones para revertirla. Antes de ejecutar cambios, vuelva a comprobar la autorización, la caducidad, la revisión, la capacidad y la salud del destino. Una lista de cadenas permitidas o un ConfigMap de guardrail que no se utiliza para controlar la ejecución no impone esas restricciones.
 
-Una interfaz de aprobación necesita verificación real de firma de solicitud, autorización de aprobador, estado persistente, protección contra repetición y manejo de timeout. Enviar botones de Slack y luego esperar el estado de un objeto en memoria sin modificar no es un sistema de aprobación completo. No afirme que un ejecutor no implementado realizó una acción.
+Una interfaz de aprobación necesita verificar realmente la firma de la solicitud, autorizar a quien aprueba, mantener estado persistente, impedir la repetición de solicitudes y gestionar los tiempos de espera. Enviar botones de Slack y esperar a que cambie el estado de un objeto en memoria que nadie modifica no constituye un sistema completo de aprobación. No afirme que un ejecutor sin implementar ha realizado una acción.
 
-Use el [flujo de propuesta restringida/ejecución opcional del capítulo 02](02-infrastructure-advanced.md) para cambios de NLB. No sobrescriba cada listener ni restaure una división arbitraria de 100/0 simplemente porque no se detectó ninguna anomalía. El peso cero de NLB cierra las conexiones existentes tras un período corto, a diferencia de los ajustes ordinarios de peso distinto de cero.
+Use el [flujo de propuestas restringidas y ejecución opcional del capítulo 02](02-infrastructure-advanced.md) para los cambios de NLB. No sobrescriba todos los listeners ni restablezca una distribución arbitraria de 100/0 solo porque no se detectó una anomalía. Un peso cero de NLB cierra las conexiones existentes tras un breve intervalo, a diferencia de los ajustes habituales entre pesos distintos de cero.
 
-Para entrega progresiva, use los servicios, enrutamiento y AnalysisTemplates de la [guía validada de Argo Rollouts](../gitops/argocd/05-traffic-management.md). Alinee métricas, argumentos, namespaces, manejo de vacío/NaN y condiciones de fallo específicas del canary. El fallo de análisis no revierte automáticamente los cambios de base de datos, y los ajustes de pausa/abort no resuelven todos los problemas de recuperación.
+Para la entrega progresiva, use los servicios, el enrutamiento y las AnalysisTemplates de la [guía validada de Argo Rollouts](../gitops/argocd/05-traffic-management.md). Alinee las métricas específicas del canary, los argumentos, los espacios de nombres, el tratamiento de resultados vacíos o NaN y las condiciones de fallo. Un fallo del análisis no revierte automáticamente los cambios en la base de datos, y los ajustes de pausa o cancelación no resuelven todos los problemas de recuperación.
 
-## Referencias
+## Referencias {#references}
 
 - [Seguridad de Atlantis](https://www.runatlantis.io/docs/security.html)
 - [Política del lado del servidor de Atlantis](https://www.runatlantis.io/docs/server-side-repo-config.html)
 - [Credenciales dinámicas de AWS de HCP Terraform](https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration)
-- [Disparadores de run de HCP Terraform](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers)
+- [Disparadores de ejecución de HCP Terraform](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers)
 - [Sentinel tfrun](https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun)
 - [Flux ImageUpdateAutomation v1](https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md)
 - [Revisión de código de GitHub Copilot](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
 - [Cuestionario del capítulo](../quizzes/ops/05-gitops-automation-quiz.md)
 
-< [Anterior: Multi-Cluster](04-gitops-multi-cluster.md) | [Contenido](README.md) | [Siguiente: Scaling](06-scaling-strategies.md) >
+< [Anterior: Varios clústeres](04-gitops-multi-cluster.md) | [Contenido](README.md) | [Siguiente: Escalado](06-scaling-strategies.md) >
