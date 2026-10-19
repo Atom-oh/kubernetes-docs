@@ -23,7 +23,7 @@ Amazon EKS（Elastic Kubernetes Service）でワークロードを安全に実�
 14. [EKS セキュリティのベストプラクティス](#eks-security-best-practices)
 15. [金融サービスにおける EKS セキュリティの考慮事項](#eks-security-considerations-for-financial-services)
 
-## EKS セキュリティの概要
+## EKS セキュリティの概要 {#eks-security-overview}
 
 インフラストラクチャ、クラスターアクセス、ワークロードの制御を分けて考えます。コントロールプレーンは AWS が管理します。ノード／OS の管理責任は、EC2 のセルフマネージドノードまたはマネージドノード、Fargate、Auto Mode、Hybrid Nodes のいずれを使うかによって異なります。アプリケーションイメージ、ID、データの取り扱い、ワークロードポリシーについては、引き続きお客様が責任を負います。標準的な EC2 ノードの図があるからといって、お客様が Auto Mode／Fargate のホスト OS にパッチを適用する必要があるという意味ではありません。
 
@@ -31,7 +31,7 @@ Amazon EKS（Elastic Kubernetes Service）でワークロードを安全に実�
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-0.html)
 
-## セキュリティ対策
+## セキュリティ対策 {#security-practices}
 
 スコープを明確にした複数の制御を組み合わせてください。単一のツールだけでゼロトラストが確立されたり、ワークロードの安全性が証明されたりすることはありません。呼び出し元／ワークロードの ID を検証し、意図した操作を認可し、ネットワーク経路を制限するとともに、脅威モデルに適した証跡を収集してください。
 
@@ -59,7 +59,7 @@ Falco、Gatekeeper、Kyverno など、必要なカーネル、コントローラ
 
 ポリシー・アズ・コードのツールも、それぞれ異なる段階で動作します。Gatekeeper/Kyverno は Kubernetes のアドミッションを評価でき、CloudFormation Guard や Sentinel はインフラストラクチャの変更を評価でき、AWS Config はサポート対象のデプロイ済みリソース設定を評価します。Detective などの調査ツールは、設定済みのデータソースに依存します。これらの役割をランタイム防止と混同しないでください。
 
-## IAM と認証
+## IAM と認証 {#iam-and-authentication}
 
 | ID／制御 | 目的 |
 |---|---|
@@ -227,7 +227,7 @@ View を追加しても、より広範な RBAC／アクセスポリシーの許�
 
 IAM の eks:DescribeCluster/ListClusters は AWS の管理／検出操作をサポートします。eks:AccessKubernetesApi はコンソールでの表示権限です。eks:namespaces 条件はアクセスポリシー関連付けリクエストをフィルタリングするもので、kubectl API 呼び出し全般に適用される Namespace フィルターではありません。
 
-## OIDC プロバイダーの詳細
+## OIDC プロバイダーの詳細 {#oidc-provider-deep-dive}
 
 EKS はクラスター OIDC 発行者と公開署名鍵を公開します。そのエンドポイントだけでは、IAM OIDC プロバイダーが作成されたり、ロールの引き受けが認可されたりすることはありません。IRSA を使用するには、ロールを持つアカウントに意図した IAM OIDC プロバイダーが存在し、ロールが正しい発行者／subject／audience 条件を使ってそのプロバイダーを信頼し、ワークロードが互換性のある SDK を使う必要があります。
 
@@ -631,7 +631,7 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 ```
 
 1. 実際のコンピューティング環境がサポート対象であること、互換性のある SDK／コンテナ認証情報プロバイダー、Pod Identity Agent または組み込み機能、準備済み IAM ロールの権限を確認します。
-2. 所有者を通じてレビュー済みの Pod Identity 信頼ステートメントを既存の信頼ポリシーに統合します。すべての利用者を移行するまで、IRSA の発行者、subject、audience 条件と、無関係ではない有効なステートメントを保持します。
+2. 所有者を通じてレビュー済みの Pod Identity 信頼ステートメントを既存の信頼ポリシーに統合します。すべての利用者を移行するまで、IRSA の発行者、subject、audience 条件と、この移行と無関係な有効なステートメントを保持します。
 3. スコープを限定した association と、意図した Pod Identity 認証情報経路だけを使う別の ServiceAccount によるカナリアを作成します。この検証を終える前に、本番 IRSA アノテーションを削除したり、本番 Deployment を再起動したりしないでください。
 4. 実際に使われている認証情報プロバイダーと、意図した AWS アクセスを、トークンやシークレット値を出力せずに確認します。association 作成後も、SDK の認証情報チェーン内の先行する認証情報が引き続き使われることがあります。同じ IAM ロールを示す get-caller-identity の成功だけでは、IRSA と Pod Identity を区別できません。
 5. 制御されたロールアウトを通じて対象ワークロードを移行し、注入された設定が必要な場合は Pod を再作成し、アプリケーションの動作と更新を確認します。ServiceAccount のアノテーションを変更しても、既存 Pod の環境変数は書き換わりません。
@@ -639,7 +639,7 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 
 これは移行手順を対象環境で検証するためのものであり、このドキュメントのレビュー中に移行を実行したという主張ではありません。
 
-## クラスターエンドポイントのアクセス制御
+## クラスターエンドポイントのアクセス制御 {#cluster-endpoint-access-control}
 
 エンドポイントの設定はネットワーク到達性を決めますが、API 操作には引き続き認証と認可が必要です。運用要件に基づいてアクセス経路を選び、ツールのデフォルト値を前提とせず、実際の設定を確認してください。
 
@@ -901,7 +901,7 @@ eks:controlPlaneEgressMode キーは、CreateCluster/UpdateClusterConfig リク�
 
 これは意図的なリクエストガードであり、既存クラスターの自動移行ではありません。この例では、既存の AWS_MANAGED クラスターに対する無関係な更新は引き続き可能です。異なる展開ポリシーを組織として必要とする場合は、別途モデル化してください。SCP は IAM 権限を付与せず、ルーティング／DNS も設定しません。適用前に、ポリシー継承を確認し、組織管理者と代表的な許可／拒否リクエストをテストしてください。
 
-## ネットワークセキュリティ
+## ネットワークセキュリティ {#network-security}
 
 セキュリティグループ、ルーティング、NetworkPolicy、アプリケーション認証を、それぞれのレイヤーに使用してください。図は従来型のネットワーク構成を示しています。パブリック踏み台やプライベート AWS エンドポイントは、オプションのコンポーネントです。実際に設定されている必要があり、すべての EKS クラスターに備わっているわけではありません。
 
@@ -1149,7 +1149,7 @@ spec:
 
 実際の CNI で、新規接続に対する許可／拒否の両方をテストしてください。ポリシー変更の反映には時間がかかる場合があり、既存接続の処理は実装によって異なります。ソースの例は、合成したセレクター／ポートのケースで確認しました。このレビューでは、パケットフィルタリング、DNS 名前解決、実トラフィックのテストは行っていません。
 
-## Pod のセキュリティ
+## Pod のセキュリティ {#pod-security}
 
 Pod Security Standards はプロファイルを定義し、Pod Security Admission（PSA）は選択された Namespace ポリシーを適用します。PSA は Kubernetes 1.25 から安定版です。PodSecurityPolicy は1.21で非推奨となり、**1.25で削除されました**。現在の EKS クラスターにデプロイする API ではありません。名前に PSP が含まれる Gatekeeper 制約は別個のカスタムリソースであり、削除済みの API ではありません。
 
@@ -1270,7 +1270,7 @@ spec:
 
 CEL ポリシーは、リリース済み CRD と実際の Kyverno CLI を使い、省略／false、通常／init／ephemeral の true、別 Namespace のケースで確認しました。実際の Admission Webhook、Pod デプロイ、ポリシー適用は実行していません。本番で enforce する前に、既存リソースとコントローラーのロールアウトを確認してください。
 
-## Bottlerocket と読み取り専用 OS
+## Bottlerocket と読み取り専用 OS {#bottlerocket-and-read-only-os}
 
 Bottlerocket は、ホストソフトウェアの範囲が小さく、API で設定を管理し、イメージベースで更新する Linux コンテナホストです。ルートファイルシステムが読み取り専用でも、すべてのストレージが不変になるわけではなく、カーネル／ランタイムの脆弱性がなくなるわけでもありません。
 
@@ -1372,7 +1372,7 @@ AMI のリリース情報だけでは、その後の API 設定変更やイン�
 
 主な参考資料: [Bottlerocket API client](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/v15.0.0/sources/api/apiclient)、[インプレース更新](https://bottlerocket.dev/en/os/1.64.x/update/methods/in-place/)、[ノード置換](https://bottlerocket.dev/en/os/1.64.x/update/methods/node-replacement/)、[バージョンロック](https://bottlerocket.dev/en/os/1.64.x/update/locking-to-a-specific-release/)、[dm-verity](https://docs.kernel.org/admin-guide/device-mapper/verity.html)。
 
-## IAM 権限境界
+## IAM 権限境界 {#iam-permission-boundaries}
 
 権限境界は、ID ベースのポリシーが IAM ユーザーまたはロールに付与できる権限を制限します。権限境界自体が権限を付与することはありません。ID ポリシー経路では、許可されるアクションは ID ポリシーと境界の共通部分であり、該当するセッション／Organizations ポリシーと明示的な拒否も適用されます。
 
@@ -1603,7 +1603,7 @@ JSON と、焦点を絞った条件の真理値表をローカルで確認しま
 
 主な参考資料: [IAM の権限境界](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)、[SCP の効果](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)、[EKS 認可リファレンス](https://docs.aws.amazon.com/service-authorization/latest/reference/list_eks.html)、[EKS 条件キーの発表](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)、[S3 ABAC の有効化](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)、[バケットタグ条件](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging.html)。
 
-## 暗号化とシークレット管理
+## 暗号化とシークレット管理 {#encryption-and-secrets-management}
 
 ### デフォルトの暗号化とカスタマーキーの所有権
 
@@ -1791,7 +1791,7 @@ test -s "$review_dir/secret.yaml"
 
 主な参考資料: [EKS エンベロープ暗号化](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)、[ESO 2.10 の AWS 認証](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md)、[ESO リリース](https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0)、[Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)、[Secrets Manager ローテーション CLI](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html)、[SOPS](https://getsops.io/docs/)。
 
-## コンプライアンスと監査
+## コンプライアンスと監査 {#compliance-and-auditing}
 
 ### EKS コントロールプレーン監査ログ
 
@@ -1852,7 +1852,7 @@ Security Hub CSPM は、AWS Foundational Security Best Practices（FSBP）やサ
 
 現在の Security Hub OCSF 検出結果ワークフローと CSPM ASFF イベントでは、スキーマが異なります。EventBridge では、CSPM は `Security Hub Findings - Imported` を使用し、V2 イベントは `Findings Imported V2` です。実際のスキーマに合わせて一致条件を設定し、代表的なイベントをテストしてください。どちらの連携も、CloudWatch のすべての生ログが検出結果として自動的に取り込まれるという意味ではありません。
 
-## セキュリティの監視と検出
+## セキュリティの監視と検出 {#security-monitoring-and-detection}
 
 監査ベースの脅威検出、エージェントベースのランタイムテレメトリ、セキュリティ態勢評価、インシデント対応には、それぞれ別の制御を使用してください。サービスが有効であることだけでは、クラスター／ノード全体が対象であることや、通知が正常に配信されることは証明されません。
 
@@ -1932,7 +1932,7 @@ artifact follow を無効にするとルールの定期更新は停止します�
 
 主な参考資料: [EKS ログ](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)、[全種別対応の Config ルール](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html)、[選択種別対応の Config ルール](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html)、[CSPM 標準](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html)、[ASFF イベント](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html)、[V2 イベント](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html)、[GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html)、[GuardDuty ランタイム](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html)、[Falco Chart 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0)。
 
-## EKS セキュリティのベストプラクティス
+## EKS セキュリティのベストプラクティス {#eks-security-best-practices}
 
 ### クラスターセキュリティの強化
 
@@ -1958,7 +1958,7 @@ artifact follow を無効にするとルールの定期更新は停止します�
 4. **定期的なセキュリティ評価**: 該当する CIS/EKS ベンチマークとバージョンを使用し、マネージドサービスの例外と手動チェックを記録します。
 5. **インシデント対応計画を策定する**: EKS クラスターのセキュリティインシデント対応計画を策定し、テストします。
 
-## 金融サービスにおける EKS セキュリティの考慮事項
+## 金融サービスにおける EKS セキュリティの考慮事項 {#eks-security-considerations-for-financial-services}
 
 以下は、範囲を限定した金融ワークロードの設計上の考慮事項であり、認証チェックリストでも、本番環境でこの例をテスト済みであるという主張でもありません。適用される法域、データの種類、契約上の要件、必要な管理証跡を、担当するセキュリティ／コンプライアンス管理者と判断してください。
 

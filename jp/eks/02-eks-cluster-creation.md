@@ -23,7 +23,7 @@ Amazon EKS クラスターを作成する方法はいくつかあります。こ
 9. [クラスターのアップグレード](#cluster-upgrade)
 10. [クラスターの削除](#cluster-deletion)
 
-## 前提条件
+## 前提条件 {#prerequisites}
 
 EKS クラスターを作成する前に、以下の前提条件を満たす必要があります。
 
@@ -147,7 +147,7 @@ PowerShell で[公式の kubectl インストール手順](https://kubernetes.io
 
 タグを設定しても、ルーティング、セキュリティグループ、空き IP アドレス容量は設定されません。[VPC／サブネットの要件](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)と[インターネットアクセスのないクラスター](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)を参照してください。
 
-## eksctl を使用したクラスターの作成
+## eksctl を使用したクラスターの作成 {#creating-a-cluster-using-eksctl}
 
 eksctl は EKS クラスターの作成と管理を行う最も簡単な方法です。eksctl は CloudFormation を使用して EKS クラスターと関連リソースを作成します。
 
@@ -492,7 +492,7 @@ eksctl create fargateprofile -f fargate.yaml
 
 ワークロード、ロードバランサー、データ保持、リソースを管理するツールを確認したうえで、[クラスターの削除](#cluster-deletion)の手順に従ってください。
 
-## AWS Management Console を使用したクラスターの作成
+## AWS Management Console を使用したクラスターの作成 {#creating-a-cluster-using-aws-management-console}
 
 AWS Management Console を使って EKS クラスターを作成する手順は次のとおりです。
 
@@ -614,7 +614,7 @@ EKS Auto Mode により、インフラストラクチャのセットアップが
 
 4. 「Review and create」ページで設定を確認し、「Create」ボタンをクリックします。
 
-## AWS CLI を使用したクラスターの作成
+## AWS CLI を使用したクラスターの作成 {#creating-a-cluster-using-aws-cli}
 
 以下の例では**新しいクラスター**を作成します。Auto Mode と従来の EKS のいずれかを選び、同じ名前で両方の作成コマンドを続けて実行しないでください。Bash、`jq`、最新の AWS CLI v2、認可された AWS ロールを使用してください。EKS 1.36 は検証済みのサンプルバージョンです。別のバージョンを選ぶ場合は、リージョンでのサポート状況と互換性を確認してください。
 
@@ -781,7 +781,7 @@ kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 
 参照先: [CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode の IAM と作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## Terraform を使用したクラスターの作成
+## Terraform を使用したクラスターの作成 {#creating-a-cluster-using-terraform}
 
 以下の完全な例は、Auto Mode または従来型のマネージドノードグループを最初の apply 前に選択して、**新しいクラスターを1つ**作成するものです。もう一方の方法を2つ目のクラスターリソースとして追加したり、移行計画なしに既存クラスターの設定を切り替えたりしないでください。Terraform の state と provider のロックファイルは、このデプロイメント専用のものです。
 
@@ -1074,7 +1074,7 @@ enable_auto_mode = false
 
 参照先: [AWS provider の EKS クラスター](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown)、[マネージドノードグループ](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown)、[Auto Mode のロール要件](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
-## AWS CDK を使用したクラスターの作成
+## AWS CDK を使用したクラスターの作成 {#creating-a-cluster-using-aws-cdk}
 
 この**新しいスタック**の例では `aws-cdk-lib/aws-eks-v2` を使用します。ネイティブの `AWS::EKS::Cluster` とアクセスエントリを作成するため、Auto Mode の有効化に Lambda カスタムリソースは必要ありません。既存のデプロイ済み構成をこの例で置き換えることを、インプレース移行として扱わないでください。
 
@@ -1250,7 +1250,7 @@ kubectl --kubeconfig ./kubeconfig get nodes
 
 参照先: [EKS V2 コンストラクトライブラリ](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto Mode のクラスター IAM ロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode の作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## クラスターアクセスの設定
+## クラスターアクセスの設定 {#configuring-cluster-access}
 
 選択した方法で作成したクラスター名、リージョン、専用 kubeconfig パスを設定します。Terraform／CDK の例では、承認済みのオペレーターロールを `EKS_OPERATOR_ROLE_ARN` に設定してください。CLI の作成者アクセスを使用する場合は省略できます。kubeconfig を書き込んでも Kubernetes の権限は付与されません。
 
@@ -1321,7 +1321,7 @@ fi
 
 この読み取りロールでは、Secret API へのアクセスも変更権限も付与されません。そのロールとして認証し、`kubectl auth can-i` で確認してください。ほかの RBAC／EKS ポリシーの許可によって権限が追加される場合があります。[EKS アクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 
-## クラスターの検証
+## クラスターの検証 {#cluster-validation}
 
 アクセスのセクションで設定した `eks_kubectl` と同じ専用 kubeconfig を使用します。コントロールプレーンにアクセスできるだけでは、ノードやワークロードの正常性は確認できません。
 
@@ -1414,7 +1414,7 @@ eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" port-forward --address 127.0.0.1 service/
 
 ポートフォワーディングの実行中に `http://127.0.0.1:8080` を開き、その後 Ctrl-C で停止します。これは ClusterIP へのアクセスを確認するものであり、外部ロードバランサーは確認しません。NLB を使用する場合は、Auto Mode の `eks.amazonaws.com/nlb`、またはインストール済みで認可された AWS LBC の `service.k8s.aws/nlb` を選択し、ネットワーク／コストの前提条件を別途確認してください。この監査ではデプロイやポートフォワーディングを実行していません。
 
-## クラスターのアップグレード
+## クラスターのアップグレード {#cluster-upgrade}
 
 まず、アップグレードインサイト、削除された API、Webhook／アドオンの互換性、ノードのバージョン、予備の IP アドレス、復旧計画を確認してください。遅れているノードを現在のコントロールプレーンバージョンに合わせてから、サポート対象のマイナーバージョンを一つずつ進めます。コンポーネントによっては、コントロールプレーンより先に互換性のある更新が必要です。
 
@@ -1452,7 +1452,7 @@ aws eks update-nodegroup-version --cluster-name "${EKS_CLUSTER_NAME:?}" \
 
 [アップグレード手順](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [ロールバックの条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
-## クラスターの削除
+## クラスターの削除 {#cluster-deletion}
 
 対象のアカウントとリージョンで、最初にリソースを作成したツール／state を使って削除してください。まず、コントローラーが稼働している間にワークロードと Ingress／LoadBalancer Service を削除し、完了を確認します。PVC／PV、スナップショット、ログを保持するか復旧するかを決めてください。タイムアウトや finalizer を force オプションで回避しないでください。
 

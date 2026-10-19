@@ -23,7 +23,7 @@ Los métodos de creación de este capítulo son alternativas. Elija uno para un 
 9. [Actualización del clúster](#cluster-upgrade)
 10. [Eliminación del clúster](#cluster-deletion)
 
-## Requisitos previos
+## Requisitos previos {#prerequisites}
 
 Antes de crear un clúster de EKS, se necesitan los siguientes requisitos previos:
 
@@ -147,7 +147,7 @@ La etiqueta de VPC `kubernetes.io/cluster/<cluster-name>` es un mecanismo hereda
 
 Las etiquetas no configuran el enrutamiento, los grupos de seguridad ni la capacidad de IP libres. Consulte [Requisitos de VPC/subredes](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html) y [Clústeres sin acceso a Internet](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html).
 
-## Creación de un clúster con eksctl
+## Creación de un clúster con eksctl {#creating-a-cluster-using-eksctl}
 
 eksctl es la forma más sencilla de crear y administrar clústeres de EKS. eksctl usa CloudFormation para crear clústeres de EKS y recursos relacionados.
 
@@ -491,7 +491,7 @@ Revise la compatibilidad del plano de control, los nodos y los complementos y, d
 
 Revise las cargas de trabajo, los balanceadores de carga, la retención de datos y la herramienta propietaria y, después, siga el procedimiento de [Eliminación del clúster](#cluster-deletion).
 
-## Creación de un clúster con la consola de administración de AWS
+## Creación de un clúster con la consola de administración de AWS {#creating-a-cluster-using-aws-management-console}
 
 Los pasos para crear un clúster de EKS con la consola de administración de AWS son los siguientes:
 
@@ -613,7 +613,7 @@ Para el cómputo EC2 convencional, añada grupos de nodos después de crear el c
 
 4. En la página «Review and create», revise la configuración y haga clic en el botón «Create».
 
-## Creación de un clúster con AWS CLI
+## Creación de un clúster con AWS CLI {#creating-a-cluster-using-aws-cli}
 
 Estos ejemplos crean un **clúster nuevo**. Elija Auto Mode o EKS convencional; no ejecute consecutivamente ambos comandos de creación con el mismo nombre. Use Bash, `jq`, una versión actual de AWS CLI v2 y un rol de AWS autorizado. EKS 1.36 es la versión de ejemplo verificada; revise la compatibilidad y la disponibilidad en la región antes de seleccionar otra versión.
 
@@ -780,7 +780,7 @@ kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 
 Referencias: [API CreateCluster](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html), [API CreateNodegroup](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html), [IAM y creación de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html).
 
-## Creación de un clúster con Terraform
+## Creación de un clúster con Terraform {#creating-a-cluster-using-terraform}
 
 El siguiente ejemplo completo admite **un clúster nuevo**, con Auto Mode o un grupo de nodos administrado convencional seleccionado antes del primer apply. No añada la alternativa como un segundo recurso de clúster ni cambie un clúster existente sin un plan de migración. El estado de Terraform y su archivo de bloqueo del proveedor pertenecen a este despliegue específico.
 
@@ -1073,7 +1073,7 @@ Validación: Terraform **1.16.6** con el proveedor de AWS firmado **6.69.1** sup
 
 Referencias: [Clúster de EKS del proveedor de AWS](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown), [grupo de nodos administrado](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown), [Requisitos de roles de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html).
 
-## Creación de un clúster con AWS CDK
+## Creación de un clúster con AWS CDK {#creating-a-cluster-using-aws-cdk}
 
 Use `aws-cdk-lib/aws-eks-v2` para este ejemplo de **pila nueva**. Crea un `AWS::EKS::Cluster` nativo y una entrada de acceso; no se necesita ningún recurso personalizado de Lambda para habilitar Auto Mode. No considere la sustitución de un constructo existente ya desplegado por este ejemplo como una migración in situ.
 
@@ -1249,7 +1249,7 @@ En la auditoría se compilaron ambos archivos TypeScript y se sintetizó localme
 
 Referencias: [Biblioteca de constructos EKS V2](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html), [Rol de clúster de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html), [Creación de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html).
 
-## Configuración del acceso al clúster
+## Configuración del acceso al clúster {#configuring-cluster-access}
 
 Establezca el nombre del clúster, la región y la ruta dedicada de kubeconfig que haya generado el método seleccionado. Para los ejemplos de Terraform/CDK, establezca el rol de operador aprobado en `EKS_OPERATOR_ROLE_ARN`. Puede omitirlo si usa el acceso del creador mediante CLI. Escribir kubeconfig no concede permisos de Kubernetes.
 
@@ -1320,7 +1320,7 @@ fi
 
 Este rol de lectura no concede acceso a la API de Secret ni permisos de modificación. Autentíquese como ese rol y compruebe `kubectl auth can-i`; otras concesiones de RBAC/políticas de EKS pueden añadir permisos. [Entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 
-## Validación del clúster
+## Validación del clúster {#cluster-validation}
 
 Use `eks_kubectl` y el mismo kubeconfig dedicado de la sección de acceso. El acceso al plano de control por sí solo no demuestra el estado de los nodos ni de las cargas de trabajo.
 
@@ -1413,7 +1413,7 @@ eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" port-forward --address 127.0.0.1 service/
 
 Mientras se ejecuta el reenvío de puertos, abra `http://127.0.0.1:8080` y luego deténgalo con Ctrl-C. Esto comprueba el acceso a ClusterIP, no a un balanceador de carga externo. Para un NLB, elija `eks.amazonaws.com/nlb` de Auto Mode o `service.k8s.aws/nlb` de un AWS LBC instalado y autorizado, y revise por separado los requisitos previos de redes/costos. Durante esta auditoría no se realizó ningún despliegue ni reenvío de puertos.
 
-## Actualización del clúster
+## Actualización del clúster {#cluster-upgrade}
 
 Revise primero las perspectivas de actualización, las API eliminadas, la compatibilidad de webhooks/complementos, las versiones de los nodos, las IP libres y el plan de recuperación. Actualice los nodos rezagados a la versión actual del plano de control y luego avance de una versión menor compatible a la vez. Algunos componentes necesitan actualizaciones compatibles antes que el plano de control.
 
@@ -1451,7 +1451,7 @@ Planifique las actualizaciones de los nodos autoadministrados/Hybrid, la sustitu
 
 [Procedimiento de actualización](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [Condiciones de reversión](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
-## Eliminación del clúster
+## Eliminación del clúster {#cluster-deletion}
 
 Elimine el clúster mediante la herramienta/el estado que lo administra originalmente, en la cuenta y región previstas. Primero elimine las cargas de trabajo y los Services de Ingress/LoadBalancer mientras sus controladores sigan ejecutándose y, después, verifique que se haya completado la eliminación. Decida cómo conservar o recuperar los PVC/PV, las instantáneas y los registros. No eluda los tiempos de espera ni los finalizadores usando opciones de forzado.
 

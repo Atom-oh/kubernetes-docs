@@ -21,7 +21,7 @@
 
 ---
 
-## Descripción general de Alertmanager
+## Descripción general de Alertmanager {#alertmanager-overview}
 
 Prometheus Alertmanager es un componente que procesa las alertas enviadas por los servidores Prometheus. Ofrece funciones como deduplicación, agrupación, enrutamiento, inhibición y silenciamiento de alertas.
 
@@ -50,7 +50,7 @@ sequenceDiagram
   Note over A,R: Failures and partitions can cause<br/>retries or duplicates
 ```
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 ### Estructura interna de Alertmanager
 
@@ -82,7 +82,7 @@ flowchart TB
 
 ---
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 Estos son ejemplos alternativos para una base de referencia con Kubernetes 1.35 y nodos de trabajo Linux. Los dos Helm Chart y el StatefulSet manual tienen **distintos responsables de instalación**; elija uno. Se generaron los manifiestos de los charts, se ejecutaron localmente la configuración, las plantillas y reglas sintéticas, pero no se realizó ninguna instalación de Kubernetes, aplicación de CNI en vivo, entrega a SaaS ni prueba de capacidad en producción. Las instalaciones existentes necesitan una combinación de valores y un plan de actualización revisados por el responsable, no un reemplazo a ciegas por este tutorial.
 
@@ -90,7 +90,7 @@ Prepare el espacio de nombres `monitoring`, tres nodos aptos para la programaci�
 
 ### Instalación mediante Helm (kube-prometheus-stack)
 
-Use el perfil de stack con versión fijada que aparece a continuación para una **nueva versión**. La versión 90.0.0 incluye Operator 0.93.1 y Alertmanager 0.34.0. Es una base comprobada, no una afirmación de que no exista un chart más reciente. Revise los RBAC del clúster, las CRD, los PVC, los espacios de nombres y la configuración del responsable antes de la instalación.
+Use el perfil de stack con versión fijada que aparece a continuación para una **nueva instalación de Helm (release)**. La versión 90.0.0 incluye Operator 0.93.1 y Alertmanager 0.34.0. Es una base comprobada, no una afirmación de que no exista un chart más reciente. Revise los RBAC del clúster, las CRD, los PVC, los espacios de nombres y la configuración del responsable antes de la instalación.
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -404,7 +404,7 @@ kubectl -n monitoring create configmap alertmanager-config   --from-file=alertma
 
 Proteja los permisos de lectura y ejecución del Secret, así como el contenido de las notificaciones. Añada únicamente los archivos de credenciales que requieran las integraciones habilitadas. La proyección de ConfigMap no recarga Alertmanager automáticamente: use el mecanismo de recarga o actualización revisado del responsable de instalación seleccionado; si la recarga no es válida, debe seguir ejecutándose la última configuración correcta.
 
-## Definición de reglas de alertas
+## Definición de reglas de alertas {#defining-alert-rules}
 
 ### CRD PrometheusRule
 
@@ -438,7 +438,7 @@ spec:
 
 ### Componentes de las reglas de alertas
 
-`alert` y `expr` identifican la regla y su expresión. Un vector de resultados no vacío identifica instancias de alertas activas, incluso cuando su valor de muestra es cero. `for` se comprueba entre evaluaciones de reglas; no es el intervalo de scraping ni el plazo de notificación. `labels` afecta la identidad y el enrutamiento de las alertas; coloque los valores que cambian en `annotations`, no en las etiquetas. El parámetro opcional `keep_firing_for` mantiene el estado Firing durante un período después de que se cumpla la condición. Compruebe que sea compatible con las versiones desplegadas de Prometheus y Operator.
+`alert` y `expr` identifican la regla y su expresión. Un vector de resultados no vacío identifica instancias de alertas activas, incluso cuando su valor de muestra es cero. `for` se comprueba entre evaluaciones de reglas; no es el intervalo de scraping ni el plazo de notificación. `labels` afecta la identidad y el enrutamiento de las alertas; coloque los valores que cambian en `annotations`, no en las etiquetas. El parámetro opcional `keep_firing_for` mantiene el estado Firing durante un período después de que la condición deje de cumplirse. Compruebe que sea compatible con las versiones desplegadas de Prometheus y Operator.
 
 ### Estados de las alertas
 
@@ -448,7 +448,7 @@ Ilustración de los estados de Prometheus para una duración positiva de `for` c
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
-## Configuración del enrutamiento
+## Configuración del enrutamiento {#routing-configuration}
 
 ### Estructura del árbol de enrutamiento
 
@@ -571,7 +571,7 @@ time_intervals:
 
 Las pruebas nativas de rutas por etiquetas no evalúan el calendario. El calendario se comprobó por separado con la implementación publicada de intervalos de tiempo, en los límites de apertura y cierre, los fines de semana y las diferencias entre UTC y KST. Una notificación silenciada o inactiva no se redirige automáticamente al receptor alternativo de la ruta principal.
 
-## Configuración de receptores
+## Configuración de receptores {#receiver-configuration}
 
 ### Receptor de Slack
 
@@ -704,7 +704,7 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
-## Reglas de inhibición
+## Reglas de inhibición {#inhibition-rules}
 
 ### Concepto de inhibición
 
@@ -781,7 +781,7 @@ inhibit_rules:
 
 El orden de la lista **no constituye un sistema de prioridades**. Cualquier regla de inhibición aplicable puede suprimir un objetivo. Modele las dependencias de infraestructura→nodo→servicio con matchers de origen y destino disjuntos y etiquetas de correlación no vacías; después, pruebe con nodos y clústeres no relacionados y con etiquetas ausentes. Un `alertname=~".*"` amplio junto con un `datacenter` ausente puede silenciar incidentes no relacionados. No deduzca relaciones causales basándose únicamente en la severidad.
 
-## Silenciamientos
+## Silenciamientos {#silencing}
 
 ### Creación de silenciamientos
 
@@ -834,7 +834,7 @@ stateDiagram-v2
   Expired --> Removed: retention and garbage collection
 ```
 
-## Personalización de plantillas
+## Personalización de plantillas {#template-customization}
 
 ### Conceptos básicos de las plantillas Go
 
@@ -983,7 +983,7 @@ data:
     '
 ```
 
-## Configuración de alta disponibilidad
+## Configuración de alta disponibilidad {#high-availability-configuration}
 
 ### Arquitectura del clúster
 
@@ -1165,7 +1165,7 @@ alerting:
       port: 9093
 ```
 
-## CRD AlertmanagerConfig
+## CRD AlertmanagerConfig {#alertmanagerconfig-crd}
 
 ### Configuración con ámbito de espacio de nombres
 
@@ -1279,7 +1279,7 @@ alertmanager:
       type: OnNamespace
 ```
 
-## Ejemplos de reglas de alertas para producción
+## Ejemplos de reglas de alertas para producción {#production-alert-rule-examples}
 
 ### Alertas de nodo
 
@@ -1601,7 +1601,7 @@ spec:
     interval: 30s
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### Problemas frecuentes y soluciones
 

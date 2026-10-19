@@ -17,7 +17,7 @@ Amazon EKS クラスターを最新の状態に保つことは、セキュリテ
 7. [アップグレードの自動化](#upgrade-automation)
 8. [アップグレードのベストプラクティス](#upgrade-best-practices)
 
-## EKS のアップグレード概要
+## EKS のアップグレード概要 {#eks-upgrade-overview}
 
 ![EKS のアップグレードを構成する4つの柱を示すツリー図。バージョン管理ポリシー、アップグレード対象のコンポーネント（コントロールプレーン、ノードグループ、アドオン、セルフマネージドコンポーネント）、マイナーバージョンを1つずつ進めるアップグレードパスとサポートされないバージョンのスキップ、5つの手順からなるアップグレード順序を示す。](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
@@ -60,7 +60,7 @@ EKS クラスターは、マイナーバージョンを1つずつアップグレ
 
 kubelet 1.25 以降では、上流の仕様により kubelet のバージョンは API server より最大3マイナーバージョン古くてもかまいませんが、新しくなることはできません。API server のバージョンが混在していると、許容範囲は狭まります。EKS のドキュメントには、アップグレード前にノードをそろえる指針と、サポートされるスキューの許容範囲の両方が記載されています。この手順書では準備方針としてバージョンをそろえますが、サポート対象となるスキューがすべて EKS API によって一律に拒否されるとは述べていません。アドオンは、必ずコントロールプレーンの「前」または「後」にすべてアップグレードするものではありません。ロールバックでは別の、ノードを先に処理する順序が使われます。詳細は以下を参照してください。
 
-## アップグレードの計画と準備
+## アップグレードの計画と準備 {#upgrade-planning-and-preparation}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Tree diagram showing upgrade planning and preparation split into an upgrade assessment branch (version compatibility check, resource requirements, upgrade schedule planning) and a pre-upgrade preparation branch (check cluster state, create backup, test upgrade, upgrade documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
@@ -230,7 +230,7 @@ EKS が管理するコントロールプレーンの etcd は AWS が所有し�
 - ロールバック手順
 - トラブルシューティングガイド
 
-## EKS コントロールプレーンのアップグレード
+## EKS コントロールプレーンのアップグレード {#eks-control-plane-upgrade}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Diagram of an EKS control plane upgrade split into four stages, preparation, execution, monitoring, and troubleshooting, each grouping its steps: version checks and planning, Console/CLI/eksctl, status, cluster state and CloudWatch monitoring, and common issues with troubleshooting steps.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
@@ -406,7 +406,7 @@ kubectl --context "$KUBE_CONTEXT" get events --all-namespaces --sort-by='.lastTi
 3. EKS コントロールプレーンログを確認する
 4. AWS Support に問い合わせる
 
-## ノードグループのアップグレード
+## ノードグループのアップグレード {#node-group-upgrade}
 
 コントロールプレーンのアップグレード後、ノードグループもアップグレードする必要があります。ノードグループのアップグレードには複数の戦略があり、それぞれに利点と欠点があります。
 
@@ -589,7 +589,7 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o wide
 kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,READY:'.status.conditions[?(@.type=="Ready")].status'
 ```
 
-## アドオンのアップグレード
+## アドオンのアップグレード {#add-on-upgrade}
 
 実際のコンポーネントのオーナーとアップグレードパスを一覧にしてください。EKS マネージドアドオンは、コントロールプレーンのアップグレードによって自動的にアップグレードされるわけではありません。オーナーが互換性のある更新を選んで開始します。必要な橋渡しリリースは、コントロールプレーンの変更より先に適用できます。Auto Mode の組み込み機能は AWS が別途管理します。すべてのクラスターで同じ DaemonSet／Deployment が使われているかのように、重複するノードネットワーク／ストレージ／DNS コンポーネントをインストールまたは更新しないでください。
 
@@ -745,7 +745,7 @@ kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=aws-node
 kubectl --context "$KUBE_CONTEXT" get events -n kube-system --sort-by='.lastTimestamp'
 ```
 
-## アップグレードの検証とトラブルシューティング
+## アップグレードの検証とトラブルシューティング {#upgrade-validation-and-troubleshooting}
 
 アップグレード完了後は、クラスターが正常に動作していることを検証し、発生した問題を解決する必要があります。
 
@@ -805,7 +805,7 @@ kubectl --context "$KUBE_CONTEXT" get endpointslices.discovery.k8s.io --all-name
 
 #### 機能テスト
 
-分離された、自分たちが所有するテストリソースと、明示的な受け入れ基準を使用してください。以下の**Linux EC2 ノード向けスモークテスト**では、別々の Job を使って Deployment のロールアウト／スケーリング、Service／DNS リクエスト、PVC のデータを確認します。負荷テストではなく、すべてのノード／AZ のテストでも、アプリケーション／HA／セキュリティの正しさの証明でもありません。ワークロード固有のテスト、ingress／egress、コントローラー／webhook、復旧テストを追加してください。Fargate／ハイブリッド／その他のプラットフォームには、それぞれに対応したテスト計画が必要です。
+分離された、自分たちが所有するテストリソースと、明示的な受け入れ基準を使用してください。以下の**Linux EC2 ノード向けスモークテスト**では、Deployment のロールアウト／スケーリング、Service／DNS リクエスト、および別々の Job を使った PVC データの確認を行います。負荷テストではなく、すべてのノード／AZ のテストでも、アプリケーション／HA／セキュリティの正しさの証明でもありません。ワークロード固有のテスト、ingress／egress、コントローラー／webhook、復旧テストを追加してください。Fargate／ハイブリッド／その他のプラットフォームには、それぞれに対応したテスト計画が必要です。
 
 `eks-upgrade-smoke.py` として保存します。このスクリプトでは、この監査用に確認した公式 BusyBox イメージの固定マニフェストを使用しています。ここではイメージ取得もクラスターのテストも実行していません。実行前に、イメージポリシー、Admission／ネットワークルール、利用可能な容量、選択したノードで使用可能な互換性のあるファイルシステムの StorageClass を確認してください。`KUBE_CONTEXT`、`TEST_STORAGE_CLASS`、`RUN_SMOKE_TEST=yes` を設定し、特定の置き換えノードをテストする場合はレビュー済みの `SMOKE_NODE_SELECTOR` JSON マップも設定します。このスクリプトは一意の namespace を作成し、既存 namespace を流用せず、失敗時に停止し、実際の配置先と PV の回収に関する詳細を記録します。`WaitForFirstConsumer` ボリュームでは、完了を待つ前に書き込みを行う Pod を使用します。
 
@@ -1008,7 +1008,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$WORKLOAD_NAMESPACE" get deployments,state
 kubectl --context "$KUBE_CONTEXT" api-versions
 ```
 
-#### ロールバック手順
+#### ロールバック手順 {#rollback-procedure}
 
 EKS のバージョンロールバックは、2026年7月に導入された、ユーザーが開始する実際の操作です。「ダウングレード不可」とする過去の包括的な記述ではなく、[現在のロールバックガイド](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)を使用してください。これは Kubernetes のマイナーバージョンを変更するものであり、以前の etcd／アプリケーション／PV データのスナップショットを復元するものでも、アドオンを自動的に戻すものでもありません。プラットフォームバージョンは、直前のマイナーバージョンにおける最新のプラットフォームバージョンになります。
 
@@ -1091,7 +1091,7 @@ aws eks cancel-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 
 CloudFormation スタックのロールバックや Git の revert によって、EKS のバージョンロールバックが自動的に開始されることはありません。明示的な復旧後は、観測されたバージョンに IaC の状態／計画を合わせてください。ロールバックの対象外であれば、前進修正、またはサポートされるバージョンで新しいクラスターを作成して、テスト済みの移行／復元を行う方法を検討してください。これらの方法では、データベースのマイグレーションやアプリケーションデータの変更が自動的に取り消されることはありません。
 
-## アップグレードの自動化
+## アップグレードの自動化 {#upgrade-automation}
 
 大規模な環境では、アップグレードプロセスを自動化することが重要です。次のツールや方法を使用して、EKS のアップグレードを自動化できます。
 
@@ -1204,7 +1204,7 @@ EKS のアップグレードを自動化する際のベストプラクティス�
 4. **通知**: アップグレードの成功または失敗に関する通知を設定する
 5. **ドキュメント**: 自動化のプロセスと手順を文書化する
 
-## アップグレードのベストプラクティス
+## アップグレードのベストプラクティス {#upgrade-best-practices}
 
 EKS クラスターのアップグレードに関するベストプラクティスを見ていきましょう。
 

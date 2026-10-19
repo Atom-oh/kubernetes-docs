@@ -46,7 +46,7 @@ apt-cache madison kubeadm
 ```
 
 
-## クラスター管理の概要
+## クラスター管理の概要 {#cluster-administration-overview}
 
 Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。主な領域は次のとおりです。
 
@@ -58,7 +58,7 @@ Kubernetes クラスター管理とは、クラスターのライフサイクル
 
 次の図は、Kubernetes クラスター管理の主な領域と関連ツールを示しています。
 
-## クラスターコンポーネントの管理
+## クラスターコンポーネントの管理 {#cluster-component-management}
 
 Kubernetes クラスターは、コントロールプレーンのコンポーネントとノードのコンポーネントで構成されます。各コンポーネントを管理することは、クラスターの安定性とパフォーマンスにとって重要です。
 
@@ -287,7 +287,7 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## リソース管理
+## リソース管理 {#resource-management}
 
 Kubernetes クラスターのリソースを効果的に管理することは、クラスターの安定性とパフォーマンスを維持するうえで重要です。
 
@@ -398,7 +398,7 @@ spec:
 ```
 
 上記の例では、`frontend` Deployment 内の Pod の CPU とメモリの requests が、実際のリソース使用量に基づいて自動的に調整されます。
-## クラスターのネットワーク
+## クラスターのネットワーク {#cluster-networking}
 
 Kubernetes クラスターのネットワークは、Pod、Service、ノード間の通信を管理します。
 
@@ -536,7 +536,7 @@ spec:
 
 上記の例では、`role=db` ラベルを持つ Pod は、`role=frontend` ラベルを持つ Pod からの TCP ポート3306のインバウンドトラフィックと、`role=monitoring` ラベルを持つ Pod への TCP ポート9090のアウトバウンドトラフィックのみを許可します。
 
-## 認証と認可の管理
+## 認証と認可の管理 {#authentication-and-authorization-management}
 
 Kubernetes の認証と認可の管理は、クラスターセキュリティの中核をなす要素です。
 
@@ -748,7 +748,7 @@ spec:
 
 上記の例では、Pod は UID 1000、GID 3000 で実行されます。また、コンテナは権限を昇格できず、すべての Linux capability が除外され、ルートファイルシステムは読み取り専用でマウントされます。
 
-## クラスターのアップグレード
+## クラスターのアップグレード {#cluster-upgrades}
 
 新機能、パフォーマンス改善、セキュリティパッチを適用するには、Kubernetes クラスターのアップグレードが必要です。
 
@@ -813,7 +813,7 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## バックアップと復旧
+## バックアップと復旧 {#backup-and-recovery}
 
 Kubernetes クラスターのバックアップと復旧は、災害復旧計画の重要な要素です。
 
@@ -954,7 +954,7 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## 監視とログ記録
+## 監視とログ記録 {#monitoring-and-logging}
 
 効果的な監視とログ記録は、クラスター管理の中核をなす要素です。
 
@@ -1068,7 +1068,7 @@ data:
     </match>
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な要素です。
 
@@ -1164,7 +1164,7 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Amazon EKS クラスター管理
+## Amazon EKS クラスター管理 {#amazon-eks-cluster-administration}
 
 Amazon EKS は、クラスター管理の多くの側面を自動化するマネージド Kubernetes サービスです。
 
@@ -1293,7 +1293,7 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## クラスター管理のベストプラクティス
+## クラスター管理のベストプラクティス {#cluster-administration-best-practices}
 
 Kubernetes と EKS のクラスター管理に関するベストプラクティス:
 
@@ -1337,7 +1337,7 @@ Kubernetes と EKS のクラスター管理に関するベストプラクティ�
 4. **Service Account 向け IAM ロール (IRSA)**: Pod ごとに IAM 権限を管理する
 5. **VPC CNI のカスタマイズ**: ネットワーク要件に応じて VPC CNI を構成する
 
-## まとめ
+## まとめ {#conclusion}
 
 Kubernetes クラスター管理は、クラスターの安定性、セキュリティ、パフォーマンスを維持するうえで重要な役割を果たします。この章では、クラスターコンポーネントの管理、リソース管理、ネットワーク、認証と認可の管理、アップグレード、バックアップと復旧、監視とログ記録、トラブルシューティングなど、クラスター管理のさまざまな側面を扱いました。
 

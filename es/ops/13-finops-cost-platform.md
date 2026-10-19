@@ -158,7 +158,7 @@ helm install kubecost kubecost/kubecost --version 3.2.4 \
   --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 
-Compruebe las licencias y funcionalidades del producto para SSO, RBAC detallado y funciones multinube. La presencia de valores SAML/OIDC no habilita esas funciones en todos los despliegues. `global.acknowledged` corresponde a la confirmación de actualizaciones mayores de Enterprise, no a la aceptación general de la licencia. Un ALB interno no autentica a los usuarios.
+Compruebe las licencias y funcionalidades del producto para SSO, RBAC detallado y funciones multiclúster. La presencia de valores SAML/OIDC no habilita esas funciones en todos los despliegues. `global.acknowledged` corresponde a la confirmación de actualizaciones mayores de Enterprise, no a la aceptación general de la licencia. Un ALB interno no autentica a los usuarios.
 
 ### 2.4 CUR 2.0, Athena y Cloud Cost de OpenCost
 

@@ -18,7 +18,7 @@ Amazon VPC Lattice conecta aplicaciones entre VPC y cuentas de AWS. Este capítu
 - [Resolución de problemas](#troubleshooting)
 - [Referencias](#references)
 
-## Descripción general
+## Descripción general {#overview}
 
 ### ¿Qué es VPC Lattice?
 
@@ -40,7 +40,7 @@ Entre los usos habituales se incluyen las API de aplicaciones entre cuentas, la 
 
 VPC Lattice elimina la necesidad de operar su plano de datos administrado, pero no garantiza un menor costo total ni una funcionalidad de malla idéntica. Compara los cargos por solicitudes/datos/recursos, las operaciones del controlador, los requisitos de identidad, los reintentos, las funciones de enrutamiento y la observabilidad para la carga de trabajo real. Consulta la [comparación entre Istio y Lattice](../service-mesh/istio/comparison/02-istio-vs-lattice.md).
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 ### Componentes y flujo del tráfico
 
@@ -66,7 +66,7 @@ Usa `get-service --query dnsEntry` o la anotación de ruta del controlador para 
 
 El acceso a la red, la autorización de IAM y el cifrado son controles independientes. `AWS_IAM` requiere una solicitud firmada compatible y las políticas correspondientes. `NONE` desactiva la autenticación de IAM en esa capa en particular; no omite las políticas de IAM de otras capas, los grupos de seguridad ni la autorización de la aplicación. HTTPS protege el tráfico entre el cliente y Lattice. El HTTP del backend permanece sin cifrar, salvo que se configure explícitamente TLS en el backend.
 
-## Integración de EKS y VPC Lattice
+## Integración de EKS y VPC Lattice {#eks-and-vpc-lattice-integration}
 
 AWS Gateway API Controller reconcilia los recursos de Kubernetes con los recursos de VPC Lattice:
 
@@ -84,7 +84,7 @@ Dos Gateways con el mismo nombre pueden hacer referencia a la misma red de servi
 
 Los ejemplos siguientes usan una red y una asociación de VPC administradas externamente. Dejan `defaultServiceNetwork` sin configurar y no asocian una VpcAssociationPolicy a esa asociación. Si adoptas el modelo basado en CRD, administra la red, la asociación de VPC y la autorización como recursos independientes; no administres también los mismos recursos con CloudFormation.
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 ### Requisitos previos
 
@@ -447,7 +447,7 @@ spec:
 
 El CRD usa `intervalSeconds`, `timeoutSeconds` y `statusMatch`. AWS CLI usa nombres de campos distintos, que se muestran más adelante. Cambiar el protocolo/la versión puede sustituir un grupo de destino; eliminar la política revierte su configuración, incluido el comportamiento HTTP/HTTP1 predeterminado.
 
-## Administración de servicios
+## Administración de servicios {#service-management}
 
 ### Crear un servicio mediante HTTPRoute
 
@@ -620,7 +620,7 @@ Antes de eliminar recursos, identifica a todos los consumidores, las asociacione
 
 **Al eliminar IAMAuthPolicy, se desactiva la autenticación de IAM en su destino (`NONE`) antes de separar la política.** No sirve para denegar el acceso ni para revertir la autorización de forma segura. Mantén una política restrictiva mientras eliminas un servicio y verifica los controles restantes de red/servicio.
 
-## Enrutamiento y administración del tráfico
+## Enrutamiento y administración del tráfico {#routing-and-traffic-management}
 
 ### Coincidencia de rutas y encabezados
 
@@ -688,9 +688,9 @@ aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID"
   --health-check '{"enabled":true,"protocol":"HTTP","protocolVersion":"HTTP1","port":8080,"path":"/health","healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":2,"unhealthyThresholdCount":2,"matcher":{"httpCode":"200"}}'
 ```
 
-Las comprobaciones de estado evalúan la disponibilidad según los umbrales; no garantizan disponibilidad ni cero tiempo de inactividad. Los grupos de destino HTTP1 las habilitan de forma predeterminada, mientras que HTTP2 requiere una consideración explícita. Los destinos gRPC usan comprobaciones de estado HTTP1/HTTP2, y los tipos de destino Lambda/ALB tienen un comportamiento de comprobación de estado distinto. Consulta la documentación actual del tipo de destino en lugar de aplicar el ejemplo de Pod a todos los destinos.
+Las comprobaciones de estado evalúan si los destinos están listos para atender tráfico según los umbrales; no garantizan disponibilidad ni cero tiempo de inactividad. Los grupos de destino HTTP1 las habilitan de forma predeterminada, mientras que HTTP2 requiere una consideración explícita. Los destinos gRPC usan comprobaciones de estado HTTP1/HTTP2, y los tipos de destino Lambda/ALB tienen un comportamiento de comprobación de estado distinto. Consulta la documentación actual del tipo de destino en lugar de aplicar el ejemplo de Pod a todos los destinos.
 
-## Seguridad y autenticación
+## Seguridad y autenticación {#security-and-authentication}
 
 ### Políticas de autenticación y permisos del llamador
 
@@ -743,7 +743,7 @@ aws vpc-lattice update-service --service-identifier "$SERVICE_ID" \
 
 HTTPS hacia el cliente y TLS del backend son independientes. Una `TargetGroupPolicy` de backend con `protocol: HTTPS` también requiere un backend que realmente use TLS y una comprobación de estado HTTPS compatible. VPC Lattice **no valida los certificados del backend**; esto cifra la conexión sin autenticar la identidad del certificado del backend. Usa el modelo independiente de paso transparente TLSRoute cuando ese sea el diseño previsto y revisa sus limitaciones funcionales.
 
-## Supervisión y registro
+## Supervisión y registro {#monitoring-and-logging}
 
 ### Métricas de CloudWatch, panel y alarma
 
@@ -837,7 +837,7 @@ spec:
   destinationArn: arn:aws:logs:us-west-2:123456789012:log-group:/aws/vendedlogs/vpc-lattice/api:*
 ```
 
-Sustituye el ARN y confirma el estado de la política y la entrega real de eventos. Una política puede tener como destino un Gateway para los registros de red o una Route para los registros del servicio. Puede haber un destino de cada tipo compatible por destino.
+Sustituye el ARN y confirma el estado de la política y la entrega real de eventos. Una política puede tener como destino un Gateway para los registros de red o una Route para los registros del servicio. Puede haber un destino de registros de cada tipo compatible por recurso de destino.
 
 Para S3, usa un bucket de destino revisado con bloqueo de acceso público, cifrado, reglas de retención/ciclo de vida y permisos de entrega adecuados:
 
@@ -866,7 +866,7 @@ aws logs get-query-results --query-id "$QUERY_ID"
 
 VPC Lattice no tiene una opción `update-service --tracing-config` ni una anotación del controlador que instrumente automáticamente las aplicaciones para X-Ray. Instrumenta las aplicaciones con OpenTelemetry/ADOT o el SDK de rastreo adecuado, propaga el contexto de rastreo y configura la exportación/el muestreo. Correlaciona los seguimientos de la aplicación con los registros de acceso y los ID de solicitud; un ID de solicitud proporcionado por el cliente no es una identidad autenticada.
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 - **Diseño y propiedad:** Usa nombres claros para redes/servicios y límites de entorno. Ten en cuenta los Gateways con el mismo nombre en distintos espacios de nombres, los consumidores de redes compartidas, las cuotas y la propiedad de cada política y asociación.
 - **Implementación:** Mantén los backends estable y canary seleccionables de forma independiente. Comprueba los endpoints, el estado de los destinos y la autorización antes de cambiar los pesos. Define criterios de reversión y conserva la última configuración conocida.
@@ -875,7 +875,7 @@ VPC Lattice no tiene una opción `update-service --tracing-config` ni una anotac
 - **Observabilidad:** Supervisa por separado el recuento de solicitudes, el recuento/la tasa de errores, la latencia, el estado de los destinos y la telemetría faltante. Conserva los registros de acceso durante el período requerido e instrumenta explícitamente los seguimientos de la aplicación.
 - **Costo:** Revisa los cargos regionales actuales por servicio/recurso, solicitudes, procesamiento de datos, endpoints y registro para el modelo elegido. Usa etiquetas, elimina solo los recursos cuya falta de uso se haya confirmado y dimensiona el escalado automático del backend por separado del plano de datos administrado de Lattice.
 
-## Resolución de problemas
+## Resolución de problemas {#troubleshooting}
 
 Usa los identificadores de las anotaciones/estados del controlador y del inventario de AWS. No des por hecho que el `$SERVICE_ID` del ejemplo de API directa es el servicio de la ruta de Kubernetes.
 
@@ -899,7 +899,7 @@ aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
 | Error de DNS/conectividad | DNS asignado real, asociación de VPC del cliente o ruta del endpoint, estado de asociación, grupos de seguridad, NACL, conectividad de los Pods |
 | Error 403/de autenticación | Rol del llamador, caducidad de credenciales y región/servicio de firma, `UNSIGNED-PAYLOAD`, ambas capas de autenticación, propagación, campos de registro del motivo de denegación |
 | Ruta o versión incorrecta | Condiciones de Route, prioridad y coincidencias del listener/regla, miembros del grupo de destino, pesos, dominios distintos de Route |
-| Destinos en mal estado | Puerto de escucha real, `/health`, HTTP frente a HTTPS, disponibilidad, grupos de seguridad, tipo de destino y umbrales de comprobación de estado |
+| Destinos en mal estado | Puerto de escucha real, `/health`, HTTP frente a HTTPS, preparación para atender tráfico, grupos de seguridad, tipo de destino y umbrales de comprobación de estado |
 | Sin registros/métricas | Permisos de destino y estado de entrega, dimensiones de métrica correctas, tráfico inicial, retención, estado de consulta |
 | Error de reconciliación del controlador | Registros de `manager`, rol de IAM, EndpointSlices, compatibilidad de versiones de CRD, estado del webhook y de la elección de líder |
 
@@ -916,7 +916,7 @@ aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
 
 Si se produce un incidente de servicio de AWS, consulta AWS Health y los eventos pertinentes de la cuenta. El acceso a la API y las operaciones de soporte específicas de la cuenta dependen del plan y los endpoints aplicables. Un caso de soporte debe incluir los ID de recursos revisados, el intervalo de tiempo, los síntomas del fallo y registros con datos sensibles enmascarados. Selecciona las opciones actuales de servicio/categoría/severidad para la cuenta; no pegues un comando codificado de creación de caso con `urgent`.
 
-## Referencias
+## Referencias {#references}
 
 - [Descripción general de VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 - [Asociaciones de redes de servicios](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)

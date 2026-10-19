@@ -144,7 +144,7 @@ EKS には、コントロールプレーンのログタイプが5つあります
 | タイプ | 証跡 |
 | --- | --- |
 | api | API サーバーの操作とエラーメッセージ |
-| audit | API リクエストの ID、verb、リソース、応答ステータス |
+| audit | API リクエスト主体の ID、verb、リソース、応答ステータス |
 | authenticator | IAM から Kubernetes への認証に関する証跡 |
 | controllerManager | コントローラーの調整メッセージ |
 | scheduler | スケジューリングの判断／エラー |
@@ -522,7 +522,7 @@ if [ -r /proc/pressure/cpu ]; then cat /proc/pressure/cpu; fi
 
 プロセスディレクトリの件数は、すべてのスレッド／タスクの数ではありません。ps NLWP とカーネルの上限は手がかりにすぎません。kubelet の PID pressure の計算と cgroup の PID 上限は、それぞれ別に解釈する必要があります。一般的なメモリ使用率の高さを、Kubernetes の MemoryPressure 状態と呼ばないでください。メトリクスがない場合は、証跡が利用できないものとして扱ってください。
 
-### Karpenter のプロビジョニングの問題
+### Karpenter のプロビジョニングの問題 {#karpenter-provisioning-issues}
 
 ```bash
 # Self-managed Karpenter; use the actual release namespace and selected objects.
@@ -601,7 +601,7 @@ kubectl --context "$KUBE_CONTEXT" get clusterrolebinding eks:node-manager -o yam
 
 ### Node Readiness Controller（段階的なブート検証）
 
-Kubernetes SIGs Node Readiness Controller は、実際に稼働するアウトオブバンドコントローラーです。レビュー済みの v0.5.0 リリースでは、クラスター全体を対象とする `readiness.node.x-k8s.io/v1alpha1` `NodeReadinessRule` が使用されます。これは組み込みの EKS ConfigMap プロセッサでも、Node API の GA フィールドでもありません。
+Kubernetes SIGs Node Readiness Controller は、実在するアウトオブバンドコントローラーです。レビュー済みの v0.5.0 リリースでは、クラスター全体を対象とする `readiness.node.x-k8s.io/v1alpha1` `NodeReadinessRule` が使用されます。これは組み込みの EKS ConfigMap プロセッサでも、Node API の GA フィールドでもありません。
 
 コントローラーは Node condition を読み取り、taint を管理します。ConfigMap 内の任意の `checks[].probe.exec` エントリは実行しません。元のファイル存在／containerd のチェックには、対応する condition を公開する、別途実装された認可済み reporter または NPD カスタムモニターが必要です。CNI 設定ファイルが存在しても、それだけでは CNI の準備完了を証明できません。プロジェクト付属の reporter は、`CHECK_ENDPOINT`、`CONDITION_TYPE`、`NODE_NAME` を使用して HTTP endpoint をポーリングします。その設定形式は、以前の exec-probe 形式とは異なります。
 
@@ -762,7 +762,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
   "deployment/$DEPLOYMENT_NAME" --timeout=5m
 ```
 
-タイムアウト／失敗は調査すべき証跡であり、成功ではありません。GitOps やその他の調整コントローラーと連携してください。ロールバックではデータベースは復元されず、スキーマ変更も取り消されません。Deployment の pause／resume はロールアウトの進行を制御しますが、HPA やすべての Pod 作成を制御するわけではありません。rollout restart は Pod template を意図的に変更し、同じイメージ参照でも置き換えを作成します。タグが固定されていないイメージでは、別の内容が解決される場合があります。トリアージ時に restart／undo／scale のコマンドを組み合わせるのではなく、namespace／Deployment を正確に指定し、レビュー済みの更新計画を使用してください。
+タイムアウト／失敗は調査すべき証跡であり、成功ではありません。GitOps やその他の調整コントローラーと連携してください。ロールバックではデータベースは復元されず、スキーマ変更も取り消されません。Deployment の pause／resume はロールアウトの進行を制御しますが、HPA やすべての Pod 作成を制御するわけではありません。rollout restart は Pod template を意図的に変更し、同じイメージ参照でも置き換えを作成します。digest などで内容が固定されていないイメージでは、別の内容が解決される場合があります。トリアージ時に restart／undo／scale のコマンドを組み合わせるのではなく、namespace／Deployment を正確に指定し、レビュー済みの更新計画を使用してください。
 
 ### HPA／VPA のスケーリングの問題
 
@@ -1894,7 +1894,7 @@ aws cloudwatch put-metric-alarm --region "$AWS_REGION" \
   --treat-missing-data missing --alarm-actions "$SNS_TOPIC_ARN"
 ```
 
-この例では300秒の期間を3回評価し、3回すべてでしきい値を超えることを条件とします。評価期間は15分であり、2分以内に検知される保証ではありません。TreatMissingData=missing は欠損データの状態を維持します。メトリクスの意味に合った別のポリシーを選択してください。初期の INSUFFICIENT_DATA と状態遷移を確認してください。作成しただけで正常に動作するアラームだと想定しないでください。
+この例では300秒の期間を3回評価し、3回すべてでしきい値を超えることを条件とします。評価期間は15分であり、2分以内に検知される保証ではありません。TreatMissingData=missing は欠損データの状態を維持します。別のポリシーは、メトリクスの意味からその変更が妥当な場合に限り選択してください。初期の INSUFFICIENT_DATA と状態遷移を確認してください。作成しただけで正常に動作するアラームだと想定しないでください。
 
 異常検知の例は、API の異常検知専用のメトリクス／band 構造に従います。m1 は測定値の系列で、ad1 は ThresholdMetricId で選択される band です。モデル、期間、統計値、dimension は一致させる必要があります。モデルの学習には適切なデータが必要であり、停止を予測できる保証はありません。使用前に、JSON の dimension の例を確認済みの dimension ファイルに合わせて置き換えてください。
 
@@ -1977,7 +1977,7 @@ aws logs put-metric-filter --region "$AWS_REGION" \
 | --- | --- | --- |
 | 基本 | 30分 | 基本的なメトリクスと手動のログ調査 |
 | 反応型 | 15分 | 調整済みのしきい値、ログメトリクス、dashboard |
-| 予防型 | 5分 | 相関アラームとレビュー済み runbook |
+| 能動型 | 5分 | 相関アラームとレビュー済み runbook |
 | 予測設計目標 | 2分 | 検証済みの予測、範囲を限定した自動化、管理された訓練 |
 
 ### EventBridge → Lambda による診断受付

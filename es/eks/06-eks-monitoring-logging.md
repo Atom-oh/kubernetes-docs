@@ -15,7 +15,7 @@ La supervisión y el registro eficaces son esenciales para mantener la confiabil
 7. [Prácticas recomendadas para la supervisión y el registro](#monitoring-and-logging-best-practices)
 8. [Solución de problemas y depuración](#troubleshooting-and-debugging)
 
-## Descripción general de la supervisión y el registro
+## Descripción general de la supervisión y el registro {#monitoring-and-logging-overview}
 
 ### Importancia de la supervisión y el registro
 
@@ -52,7 +52,7 @@ Sigue estos pasos para desarrollar una estrategia eficaz de supervisión y regis
 6. **Automatizar**: Automatiza los procesos de supervisión y registro tanto como sea posible
 7. **Revisar periódicamente**: Revisa y mejora periódicamente la estrategia de supervisión y registro
 
-## Registro del plano de control de EKS
+## Registro del plano de control de EKS {#eks-control-plane-logging}
 
 EKS exporta tipos seleccionados de registros del plano de control administrado a CloudWatch Logs. Un recolector del lado del nodo no extrae datos del sistema de archivos del plano de control administrado. La entrega de registros se realiza según el mejor esfuerzo; configura el acceso, la retención y la detección de registros faltantes, y luego verifica que los registros lleguen realmente.
 
@@ -200,7 +200,7 @@ Los destinos de CloudWatch Logs admiten consultas de Logs Insights. Los destinos
 
 Referencias: [registro del plano de control de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [política de auditoría y ejemplos de consultas](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [registros de controladores de capacidades](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html).
 
-## Registro de contenedores
+## Registro de contenedores {#container-logging}
 
 Los entornos de ejecución de contenedores escriben stdout/stderr en los archivos de registro CRI del nodo. Kubelet administra la rotación y permite acceder a los registros de los Pod; un recolector sigue los archivos y reenvía los registros al backend seleccionado. Un mensaje JSON de la aplicación sigue estando dentro del envoltorio CRI y no debe analizarse como si la línea completa del registro del contenedor fuera JSON de Docker.
 
@@ -442,11 +442,11 @@ La validación abarcó los metadatos publicados del chart y la imagen, las conex
 
 Referencias: [versión 3.4.14 de la imagen de AWS](https://github.com/aws/aws-for-fluent-bit/releases/tag/v3.4.14), [salida de CloudWatch](https://docs.fluentbit.io/manual/data-pipeline/outputs/cloudwatch), [almacenamiento en búfer de Fluent Bit](https://docs.fluentbit.io/manual/data-pipeline/buffering), [ciclo de vida de Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/).
 
-## Supervisión del clúster
+## Supervisión del clúster {#cluster-monitoring}
 
 La supervisión eficaz del clúster es esencial para seguir el estado, el rendimiento y el uso de recursos de tu clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para supervisar clústeres de EKS.
 
-![Diagram mapping monitoring solutions (CloudWatch Container Insights with AMP/AMG, the Prometheus stack with kube-state-metrics, Node Exporter and Grafana, and X-Ray/OpenTelemetry tracing) to the cluster-, node-, and pod-level telemetry they cover in an EKS cluster.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
+![Diagrama que relaciona las soluciones de supervisión (CloudWatch Container Insights con AMP/AMG, el stack de Prometheus con kube-state-metrics, Node Exporter y Grafana, y el rastreo de X-Ray/OpenTelemetry) con la telemetría de clústeres, nodos y Pod que cubren en un clúster de EKS.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-2.html)
 
@@ -456,7 +456,7 @@ El complemento CloudWatch Observability combina las capacidades de Container Ins
 
 #### Inspeccionar el clúster y las compilaciones compatibles del complemento
 
-Para este ejemplo estándar con Linux y EC2, prepara el agente EKS Pod Identity adecuado y un rol de CloudWatch dedicado, con confianza limitada a este clúster y a amazon-cloudwatch/cloudwatch-agent. El operador necesita los permisos requeridos para el complemento y la asociación, así como permiso para transferir el rol aprobado. Comprueba las versiones de Helm existentes, las anotaciones de las cuentas de servicio y las asociaciones, además de la lista de complementos de EKS; si ya hay un recolector, su propietario debe encargarse del proceso de migración o actualización.
+Para este ejemplo estándar con Linux y EC2, prepara el agente EKS Pod Identity adecuado y un rol de CloudWatch dedicado, con confianza limitada a este clúster y a amazon-cloudwatch/cloudwatch-agent. El operador necesita los permisos requeridos para el complemento y la asociación, así como permiso para pasar el rol aprobado. Comprueba las versiones de Helm existentes, las anotaciones de las cuentas de servicio y las asociaciones, además de la lista de complementos de EKS; si ya hay un recolector, su propietario debe encargarse del proceso de migración o actualización.
 
 ```bash
 set -euo pipefail
@@ -810,7 +810,7 @@ Referencia: [chart kube-prometheus-stack y orientación para actualizaciones](ht
 La disponibilidad de una métrica depende del destino real de extracción y de los permisos, no solo del nombre del panel:
 
 - Node exporter proporciona series de CPU, memoria, sistema de archivos y red de los nodos compatibles.
-- Kubelet/cAdvisor proporciona métricas de recursos de contenedores; kube-state-metrics proporciona el estado de objetos de Kubernetes, como reinicios y disponibilidad.
+- Kubelet/cAdvisor proporciona métricas de recursos de contenedores; kube-state-metrics proporciona el estado de objetos de Kubernetes, como reinicios y estado de preparación (readiness).
 - El API server expone métricas autorizadas de API. Las métricas directas de etcd/controller-manager/scheduler requieren sus propios endpoints accesibles; la configuración anterior no habilita esos destinos.
 
 La ausencia de una serie puede indicar que falta un exporter, que falló una extracción, que la plataforma no es compatible o que cambió la métrica. No significa automáticamente que el uso sea cero o que el sistema esté en buen estado.
@@ -865,7 +865,7 @@ X-Ray sigue siendo un backend de seguimiento compatible. Sus SDK y daemon entrar
 
 #### Propiedad del recolector y requisitos previos
 
-Elige un solo responsable de instrumentación y recopilación. La ruta de Application Signals del complemento CloudWatch descrita anteriormente es una alternativa; no añadas otro agente SDK a un proceso ya instrumentado sin revisar los intervalos duplicados y los conflictos. El ejemplo explícito que sigue utiliza OpenTelemetry Operator 0.158.0 con ADOT Collector 0.50.0 y una canalización solo de seguimientos.
+Elige un solo responsable de instrumentación y recopilación. La ruta de Application Signals del complemento CloudWatch descrita anteriormente es una alternativa; no añadas otro agente SDK a un proceso ya instrumentado sin revisar los spans duplicados y los conflictos. El ejemplo explícito que sigue utiliza OpenTelemetry Operator 0.158.0 con ADOT Collector 0.50.0 y una canalización solo de seguimientos.
 
 Prepara las siguientes dependencias con sus respectivos propietarios antes de aplicar el recolector:
 
@@ -1025,11 +1025,11 @@ class RequestTracing:
         self.provider.shutdown()
 ```
 
-Este adaptador muestra la propagación de W3C tracecontext y un intervalo de servidor; no implementa un servidor HTTP ni todos los intervalos del cliente. Las integraciones de borde de AWS que utilizan X-Amzn-Trace-Id necesitan su propagador/puente compatible, en lugar de suponer que la extracción exclusiva de W3C lee esa cabecera. El muestreo de cabecera al 10 % es un ejemplo para nuevas raíces que conserva las decisiones del padre; no puede garantizar la retención de todos los errores posteriores ni de las solicitudes lentas. El muestreo de cola requiere un diseño independiente que dirija juntos todos los intervalos de un seguimiento y cuente con búfer suficiente.
+Este adaptador muestra la propagación de W3C tracecontext y un span de servidor; no implementa un servidor HTTP ni todos los spans del cliente. Las integraciones de borde de AWS que utilizan X-Amzn-Trace-Id necesitan su propagador/puente compatible, en lugar de suponer que la extracción exclusiva de W3C lee esa cabecera. El muestreo al inicio (head sampling) al 10 % es un ejemplo para nuevas raíces que conserva las decisiones del padre; no puede garantizar la retención de todos los errores posteriores ni de las solicitudes lentas. El muestreo al final (tail sampling) requiere un diseño independiente que dirija juntos todos los spans de un seguimiento y cuente con búfer suficiente.
 
 #### Mapas de seguimientos e investigación
 
-Inspecciona los mapas de seguimientos, las distribuciones de latencia y los detalles de errores y fallos en las vistas de rastreo de X-Ray/CloudWatch disponibles para la cuenta. Un mapa refleja los intervalos instrumentados, muestreados y entregados correctamente; la ausencia de una conexión no demuestra que los servicios nunca se comuniquen. Correlaciona los ID de seguimiento con registros y métricas conservados adecuadamente, excluyendo credenciales, datos personales y atributos de solicitud sin límites.
+Inspecciona los mapas de seguimientos, las distribuciones de latencia y los detalles de errores y fallos en las vistas de rastreo de X-Ray/CloudWatch disponibles para la cuenta. Un mapa refleja los spans instrumentados, muestreados y entregados correctamente; la ausencia de una conexión no demuestra que los servicios nunca se comuniquen. Correlaciona los ID de seguimiento con registros y métricas conservados adecuadamente, excluyendo credenciales, datos personales y atributos de solicitud sin límites.
 
 Esta auditoría valida solo las API y los esquemas publicados, y el comportamiento local sintético. No afirma que se haya desplegado un recolector, ejecutado una instrumentación activa, exportado seguimientos ni probado la capacidad de producción. Referencias: [cronograma de mantenimiento de X-Ray](https://aws.amazon.com/blogs/mt/aws-x-ray-sdks-daemon-migration-to-opentelemetry/), [propiedad de EKS ADOT](https://docs.aws.amazon.com/eks/latest/userguide/opentelemetry.html), [exporter de AWS X-Ray](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awsxrayexporter).
 
@@ -1148,11 +1148,11 @@ Crea paneles personalizados en Grafana para visualizar métricas de la aplicaci�
 6. Configura el título, la descripción y el tipo de visualización del panel
 7. Haz clic en «Save»
 
-## Alertas y gestión de eventos
+## Alertas y gestión de eventos {#alerting-and-event-management}
 
 Las alertas y la gestión de eventos eficaces son esenciales para detectar y responder rápidamente a problemas en tu clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para gestionar alertas y eventos en clústeres de EKS.
 
-![Architecture diagram showing CloudWatch metrics and logs, AWS events, Prometheus metrics and Loki logs, and Kubernetes and application events routed through CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and an event router to SNS (Email and SQS subscriptions), Lambda, Slack and PagerDuty, and OpsGenie.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
+![Diagrama de arquitectura que muestra métricas y registros de CloudWatch, eventos de AWS, métricas de Prometheus y registros de Loki, y eventos de Kubernetes y aplicaciones, enrutados mediante CloudWatch Alarms, EventBridge, Prometheus Alertmanager y un enrutador de eventos hacia SNS (suscripciones de correo electrónico y SQS), Lambda, Slack, PagerDuty y OpsGenie.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-3.html)
 
@@ -1369,7 +1369,7 @@ El patrón de CloudTrail coincide con los eventos de API UpdateClusterVersion y 
 
 #### Conectar un destino SNS propio
 
-Prepara un tema SNS estándar, sus suscripciones confirmadas y un rol de ejecución de destino de EventBridge en la misma cuenta y Región. El rol debe confiar en EventBridge y permitir sns:Publish en el tema previsto, con los permisos KMS aplicables si hay cifrado. El operador necesita los permisos correspondientes para las reglas y los destinos, así como permiso para transferir el rol aprobado. La versión actual de EventBridge admite un rol de ejecución para los destinos SNS; las políticas basadas en recursos son una alternativa, no una consecuencia automática de añadir un destino.
+Prepara un tema SNS estándar, sus suscripciones confirmadas y un rol de ejecución de destino de EventBridge en la misma cuenta y Región. El rol debe confiar en EventBridge y permitir sns:Publish en el tema previsto, con los permisos KMS aplicables si hay cifrado. El operador necesita los permisos correspondientes para las reglas y los destinos, así como permiso para pasar el rol aprobado. La versión actual de EventBridge admite un rol de ejecución para los destinos SNS; las políticas basadas en recursos son una alternativa, no una consecuencia automática de añadir un destino.
 
 Elige un archivo de patrón generado y un nombre de regla nuevo que sea propio. La comprobación previa rechaza los nombres ya presentes, pero PutRule permite crear o actualizar, así que coordina la propiedad y los cambios simultáneos. La regla se crea deshabilitada y un fallo parcial de PutTargets interrumpe el flujo de trabajo:
 
@@ -1700,11 +1700,11 @@ Implementa estrategias para reducir la fatiga por alertas:
 3. **Limitación de alertas**: Limitar la frecuencia de las alertas repetidas
 4. **Ventanas horarias de alertas**: Entregar las alertas que no sean críticas para la empresa solo durante el horario laboral
 
-## Análisis y visualización de registros
+## Análisis y visualización de registros {#log-analysis-and-visualization}
 
 El análisis y la visualización de registros desempeñan un papel importante en el diagnóstico y la resolución de problemas que surgen en tu clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para analizar y visualizar registros de clústeres de EKS.
 
-![Architecture diagram of the log analysis and visualization pipeline: control plane and AWS service logs go directly to CloudWatch Logs, container and application logs pass through log collectors (Fluent Bit, Fluentd, Vector, CloudWatch Agent) into four stores (CloudWatch Logs, Amazon OpenSearch, Amazon S3, Grafana Loki), and each store feeds its paired analysis and visualization tool: CloudWatch Logs Insights, OpenSearch Dashboards, Athena with QuickSight, and Grafana Explore with dashboards.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
+![Diagrama de arquitectura de la canalización de análisis y visualización de registros: los registros del plano de control y de los servicios de AWS van directamente a CloudWatch Logs; los registros de contenedores y aplicaciones pasan por recolectores (Fluent Bit, Fluentd, Vector, CloudWatch Agent) hacia cuatro almacenes (CloudWatch Logs, Amazon OpenSearch, Amazon S3, Grafana Loki), y cada almacén alimenta su herramienta correspondiente de análisis y visualización: CloudWatch Logs Insights, OpenSearch Dashboards, Athena con QuickSight y Grafana Explore con paneles.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-4.html)
 
@@ -2089,7 +2089,7 @@ En un bucket con control de versiones habilitado, el vencimiento de la versión 
 
 Durante esta auditoría no se aplicó ninguna política de retención ni acción del ciclo de vida de objetos. Referencias: [API de sustitución del ciclo de vida](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html), [restricciones de transición](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html), [vencimiento, control de versiones y duración mínima](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html).
 
-## Prácticas recomendadas para la supervisión y el registro
+## Prácticas recomendadas para la supervisión y el registro {#monitoring-and-logging-best-practices}
 
 Exploremos las prácticas recomendadas para implementar eficazmente la supervisión y el registro en clústeres de EKS.
 
@@ -2263,11 +2263,11 @@ Implementa una organización por niveles de almacenamiento rentable:
 2. **Almacenamiento intermedio**: Registros a los que se accede con menos frecuencia
 3. **Almacenamiento en frío**: Registros archivados
 
-## Solución de problemas y depuración
+## Solución de problemas y depuración {#troubleshooting-and-debugging}
 
 Exploremos diversas técnicas para solucionar problemas y depurar los clústeres de EKS.
 
-![Diagram mapping three EKS troubleshooting areas (cluster issues, workload issues, common problems) to three debugging tool families: Kubernetes kubectl tools, AWS tools, and network diagnostic tools, with the kubectl tools at the center used by all three areas.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
+![Diagrama que relaciona tres áreas de solución de problemas de EKS (problemas del clúster, problemas de cargas de trabajo y problemas comunes) con tres familias de herramientas de depuración: herramientas kubectl de Kubernetes, herramientas de AWS y herramientas de diagnóstico de red, con las herramientas kubectl en el centro utilizadas por las tres áreas.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-5.html)
 
@@ -2359,7 +2359,7 @@ kubectl get pods -n "$NAMESPACE" --show-labels
 kubectl get networkpolicies -n "$NAMESPACE"
 ```
 
-Utiliza EndpointSlices para inspeccionar los endpoints actuales; la API heredada Endpoints está obsoleta, pero no se ha eliminado universalmente. Comprueba el selector, las direcciones de endpoint listas, el puerto/targetPort del Service y el protocolo. La resolución de DNS, la disponibilidad de endpoints y la conectividad de red son comprobaciones distintas.
+Utiliza EndpointSlices para inspeccionar los endpoints actuales; la API heredada Endpoints está obsoleta, pero no se ha eliminado universalmente. Comprueba el selector, las direcciones de endpoint listas, el puerto/targetPort del Service y el protocolo. La resolución de DNS, el estado de preparación de los endpoints y la conectividad de red son comprobaciones distintas.
 
 El reenvío local de puertos puede inspeccionar un puerto seleccionado de Service, pero sigue una ruta de diagnóstico y no demuestra que funcione el tráfico normal de Pod a Service ni un balanceador de carga. Establece el puerto real del Service:
 
@@ -2487,7 +2487,7 @@ Utiliza kubectl para el estado y los Events de Kubernetes, AWS CLI para el estad
 
 #### Recuperar un resultado de CloudWatch Logs Insights
 
-StartQuery devuelve un ID de consulta asíncrona, no los resultados finales. Este ejemplo de Bash/Python utiliza segundos de época UTC sin la opción date -v, exclusiva de macOS, consulta un número acotado de veces e imprime resultados solo cuando el estado es Complete:
+StartQuery devuelve un ID de consulta asíncrona, no los resultados finales. Este ejemplo de Bash/Python utiliza segundos de época UTC sin la opción date -v, exclusiva de macOS, sondea el estado un número acotado de veces e imprime resultados solo cuando el estado es Complete:
 
 ```bash
 set -euo pipefail
@@ -2546,7 +2546,7 @@ printf 'Query %s is still %s; inspect it again or stop it explicitly if no longe
 exit 2
 ```
 
-El límite de consultas no es un tiempo de espera del servicio. Una consulta que siga ejecutándose permanece activa; vuelve a inspeccionarla o utiliza explícitamente StopQuery si ya no la necesitas. Limita el alcance del grupo de registros y del intervalo de tiempo, configura los permisos IAM necesarios y ten en cuenta los costos de consulta. Durante esta auditoría no se ejecutó ninguna consulta de CloudWatch ni operación de depuración de clústeres.
+El límite de intentos de sondeo no es un tiempo de espera del servicio. Una consulta que siga ejecutándose permanece activa; vuelve a inspeccionarla o utiliza explícitamente StopQuery si ya no la necesitas. Limita el alcance del grupo de registros y del intervalo de tiempo, configura los permisos IAM necesarios y ten en cuenta los costos de consulta. Durante esta auditoría no se ejecutó ninguna consulta de CloudWatch ni operación de depuración de clústeres.
 
 ## Conclusión
 

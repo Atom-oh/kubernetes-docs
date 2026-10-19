@@ -17,7 +17,7 @@ Al operar clústeres de Amazon EKS, pueden surgir diversos problemas. Este docum
 9. [Problemas de actualización](#upgrade-issues)
 10. [Mensajes de error comunes y soluciones](#common-error-messages-and-solutions)
 
-## Fundamentos de la solución de problemas
+## Fundamentos de la solución de problemas {#troubleshooting-basics}
 
 ![Fundamentos de la solución de problemas de EKS: identificar los síntomas, recopilar evidencias, probar hipótesis, corregir, verificar y documentar.](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
 
@@ -163,7 +163,7 @@ Para diagnosticar la red, identifique el Pod, el espacio de nombres y el nodo de
 
 Fuentes: [Solución de problemas de EKS](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html), [Registros de Kubernetes](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/), [Depuración de nodos](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/).
 
-## Problemas de creación y administración de clústeres
+## Problemas de creación y administración de clústeres {#cluster-creation-and-management-issues}
 
 ![Síntomas relacionados con la creación, el acceso al endpoint y la eliminación del clúster, con hipótesis para investigar.](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
 
@@ -339,7 +339,7 @@ No conecte un inventario de ELB/ELBv2 de toda la cuenta/región mediante una tub
 
 Fuentes: [Eliminación de clústeres de EKS](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html), [Solución de problemas de eliminación](https://repost.aws/knowledge-center/eks-delete-cluster-issues), [Ciclo de vida de los volúmenes persistentes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
-## Problemas de redes
+## Problemas de redes {#networking-issues}
 
 ![Síntomas de red agrupados en comunicación entre Pods, acceso a Services, balanceo de carga, DNS y asignación de CNI/IP.](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
 
@@ -569,7 +569,7 @@ Aplique una versión/configuración del CNI revisada a través de su propietario
 
 Fuentes: [Configuración de políticas del VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html), [Redes de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html), [Redes personalizadas](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html), [Configuración del CNI](https://github.com/aws/amazon-vpc-cni-k8s), [NetworkPolicy de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/network-policies/), [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
 
-## Problemas de nodos y Pods
+## Problemas de nodos y Pods {#node-and-pod-issues}
 
 ![Síntomas de nodos y Pods con hipótesis de recursos, kubelet, redes, cargas de trabajo y escalado para investigar.](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
 
@@ -765,7 +765,7 @@ Consulte los [conceptos de escalado automático](../core/09-cluster-administrati
 
 Fuentes: [Reparación de nodos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html), [Ciclo de vida de Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/), [Descargas de imágenes privadas](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/), [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler).
 
-## Problemas de IAM y autenticación
+## Problemas de IAM y autenticación {#iam-and-authentication-issues}
 
 <!-- Audit 2026-09-11: parent diagram repair pending; see core-audit/eks-troubleshooting/diagram-review.json.
 ![IAM and Kubernetes authorization symptoms; use the cluster authentication mode and actual caller to select the diagnostic path.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
@@ -945,7 +945,7 @@ Use el modelo de inicialización de la AMI: AL2023/nodeadm, la configuración de
 
 Fuentes: [Access entries de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/), [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html), [PrivateLink de OIDC](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html), [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html).
 
-## Problemas de almacenamiento
+## Problemas de almacenamiento {#storage-issues}
 
 ### Diagnóstico de PVC, PV y consumidores
 
@@ -1101,7 +1101,7 @@ Para diagnosticar un montaje, empiece por los eventos y registros existentes de 
 
 Fuentes: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html), [EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html), [Volúmenes persistentes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), [StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/).
 
-## Problemas de registro y supervisión
+## Problemas de registro y supervisión {#logging-and-monitoring-issues}
 
 ### CloudWatch Logs y Container Insights
 
@@ -1256,7 +1256,7 @@ Consulte [Supervisión y registro de EKS](./06-eks-monitoring-logging.md) para v
 
 Fuentes: [Complemento de CloudWatch para EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html), [Metrics Server](https://github.com/kubernetes-sigs/metrics-server), [Solución de problemas de Prometheus Operator](https://prometheus-operator.dev/docs/platform/troubleshooting/).
 
-## Problemas de rendimiento
+## Problemas de rendimiento {#performance-issues}
 
 ### Establezca una referencia comparable
 
@@ -1358,7 +1358,7 @@ El objetivo de 10 Mbit/s sirve para regular la prueba; no representa el rendimie
 
 Fuentes: [Sysctl de Kubernetes](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/), [ModifyVolume de EBS](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html), [Manual de iperf](https://software.es.net/iperf/invoking.html).
 
-## Problemas de actualización
+## Problemas de actualización {#upgrade-issues}
 
 ### Identifique la operación exacta
 
@@ -1415,7 +1415,7 @@ Actualmente, EKS admite, bajo ciertas condiciones, volver a la versión menor in
 
 Fuentes: [Actualizaciones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html), [Actualizaciones de nodos administrados](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html), [Reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), [Reversión de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html).
 
-## Mensajes de error comunes y soluciones
+## Mensajes de error comunes y soluciones {#common-error-messages-and-solutions}
 
 Son mensajes o patrones ilustrativos; no se afirma que todos los controladores actuales emitan exactamente la misma cadena. Use el código de error, el UID del recurso, el ID de solicitud y las condiciones reales. Una causa propuesta sigue siendo una hipótesis hasta que haya evidencias que la respalden.
 

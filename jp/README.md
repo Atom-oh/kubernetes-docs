@@ -14,7 +14,7 @@
 - [ガイドブックのロードマップ](./roadmap.md) - 学習マップ全体と推奨される学習パス | [クイズ](./quizzes/roadmap-quiz.md)
 - [LLM を使った読み方](./llm-guide.md) - llms.txt、マニフェスト、MCP を通じてソース教材を見つけて読む | [クイズ](./quizzes/llm-guide-quiz.md)
 
-## 目次
+## 目次 {#table-of-contents}
 
 ### ニュース
 - [週間ニュース](./news/README.md) - Kubernetes/EKS エコシステムの最新ニュースダイジェスト

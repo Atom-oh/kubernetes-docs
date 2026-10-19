@@ -1260,7 +1260,7 @@ groups:
 
 El archivo usa el formato habitual de reglas de Prometheus; inclúyelo en `PrometheusRule.spec` si usas el Operator. Los recuentos actuales de ejecuciones completadas usan `pipelinerun_total`; los recuentos activos usan `running_pipelineruns`. Los estados del contador son `success`, `failed` y `cancelled`, y el contador no tiene una etiqueta de namespace. Este ejemplo compara los éxitos y fallos de todo el clúster, excluyendo las cancelaciones.
 
-Calcula la duración promedio a partir de **la suma de los histogramas dividida por la suma de sus recuentos**. Promediar los promedios por serie no da el promedio general. Una métrica de duración de ejecuciones completadas con `status=running` no proporciona la antigüedad transcurrida de las ejecuciones activas. Inspecciona el startTime real del Run, sus condiciones y el estado del Pod.
+Calcula la duración promedio a partir de **la suma de los valores de duración acumulada de los histogramas dividida por la suma de sus recuentos**. Promediar los promedios por serie no da el promedio general. Una métrica de duración de ejecuciones completadas con `status=running` no proporciona la antigüedad transcurrida de las ejecuciones activas. Inspecciona el startTime real del Run, sus condiciones y el estado del Pod.
 
 ### 8.3 Solución de problemas y registros
 
@@ -1301,5 +1301,5 @@ Si los Pods están Pending, inspecciona las cuotas, los nodos, los PVC y los eve
 - [Requisitos de BuildKit sin privilegios](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
 - [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
 - [Infraestructura de CI](./03-ci-pipelines.md)
-- [GitOps multinube](./04-gitops-multi-cluster.md)
+- [GitOps multiclúster](./04-gitops-multi-cluster.md)
 - [Pila de observabilidad](./09-observability-stack.md)

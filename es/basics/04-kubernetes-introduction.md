@@ -84,7 +84,7 @@ minikube start
 * [Kubernetes frente a Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Primeros pasos con Kubernetes](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
-## ¿Qué es Kubernetes?
+## ¿Qué es Kubernetes? {#what-is-kubernetes}
 
 Kubernetes significa «timonel» o «piloto» en griego, y es un sistema de código abierto que automatiza el despliegue, el escalado y el funcionamiento de aplicaciones en contenedores. Se inspiró en el sistema interno Borg de Google y se publicó como código abierto en 2014.
 
@@ -109,7 +109,7 @@ Kubernetes significa «timonel» o «piloto» en griego, y es un sistema de cód
 * **Configuración declarativa**: administrar la infraestructura como código
 * **Multinube y nube híbrida**: despliegue y administración uniformes en diversos entornos
 
-## Historia de Kubernetes
+## Historia de Kubernetes {#history-of-kubernetes}
 
 ### Antecedentes
 
@@ -127,7 +127,7 @@ Kubernetes (κυβερνήτης) significa «timonel» o «piloto» en griego. 
 
 El logotipo de Kubernetes representa un timón (la rueda de dirección de un barco) con 7 radios, que simboliza la función de Kubernetes de guiar el rumbo de las aplicaciones en contenedores.
 
-## Arquitectura de Kubernetes
+## Arquitectura de Kubernetes {#kubernetes-architecture}
 
 Kubernetes sigue una arquitectura de nodo principal. Los nodos principales (plano de control) administran el clúster, y los nodos de trabajo ejecutan las cargas de trabajo reales de las aplicaciones.
 
@@ -166,7 +166,7 @@ Kubernetes sigue una arquitectura de nodo principal. Los nodos principales (plan
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
-## Componentes principales de Kubernetes
+## Componentes principales de Kubernetes {#kubernetes-main-components}
 
 ### Servidor de API (kube-apiserver)
 
@@ -264,7 +264,7 @@ kube-proxy es un proxy de red que se ejecuta en cada nodo e implementa el concep
 * **Modo iptables**: implementación NAT que usa iptables de Linux (predeterminado)
 * **Modo IPVS**: obsoleto desde la versión 1.35; planifica la migración. El antiguo modo de espacio de usuario se eliminó.
 
-## Objetos básicos de Kubernetes
+## Objetos básicos de Kubernetes {#kubernetes-basic-objects}
 
 Los objetos de Kubernetes son entidades persistentes que representan el estado del clúster. Describen las aplicaciones en ejecución, los recursos disponibles, las políticas, etc., del clúster.
 
@@ -411,13 +411,13 @@ status:
   # ...
 ```
 
-## Recursos de cargas de trabajo de Kubernetes
+## Recursos de cargas de trabajo de Kubernetes {#kubernetes-workload-resources}
 
 Los recursos de cargas de trabajo son objetos que se usan para administrar y ejecutar pods. Administran la creación, el escalado, las actualizaciones y la terminación de pods.
 
 ### ReplicaSet
 
-Un ReplicaSet reconcilia la cantidad deseada de objetos Pod; la disponibilidad también depende de la capacidad, de una configuración válida y de la aplicación. Si los pods fallan o se eliminan, el ReplicaSet crea automáticamente pods de reemplazo.
+Un ReplicaSet reconcilia la cantidad deseada de objetos Pod; que estén listos para atender solicitudes también depende de la capacidad, de una configuración válida y de la aplicación. Si los pods fallan o se eliminan, el ReplicaSet crea automáticamente pods de reemplazo.
 
 **Funciones principales**:
 
@@ -760,7 +760,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-## Servicios y redes de Kubernetes
+## Servicios y redes de Kubernetes {#kubernetes-services-and-networking}
 
 El modelo de red de Kubernetes parte de la premisa de que un CNI compatible proporciona la red de los Pod; la capacidad de enrutar depende de NetworkPolicy, los firewalls y la topología. Los Service proporcionan endpoints estables para conjuntos de pods.
 
@@ -1030,7 +1030,7 @@ spec:
       version: v2
 ```
 
-## Almacenamiento de Kubernetes
+## Almacenamiento de Kubernetes {#kubernetes-storage}
 
 Kubernetes ofrece varias opciones de almacenamiento para aplicaciones en contenedores. Permite conservar los datos aunque los pods se reinicien o se reprogramen.
 
@@ -1218,7 +1218,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-## Configuración y seguridad de Kubernetes
+## Configuración y seguridad de Kubernetes {#kubernetes-configuration-and-security}
 
 Kubernetes proporciona diversos objetos y mecanismos para administrar la configuración y la seguridad de las aplicaciones.
 
@@ -1242,7 +1242,7 @@ data:
   max-connections: "100"
 ```
 
-Los valores de entorno no se actualizan automáticamente; vuelve a crear los Pod después de los cambios. Las actualizaciones de Volume son graduales y requieren que la aplicación se recargue; los montajes subPath no reciben actualizaciones.
+Los valores de entorno no se actualizan automáticamente; vuelve a crear los Pod después de los cambios. Las actualizaciones de Volume se propagan de forma asíncrona y requieren que la aplicación se recargue; los montajes subPath no reciben actualizaciones.
 
 **Ejemplo de Pod que usa ConfigMap**:
 
@@ -1496,7 +1496,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-## Kubernetes frente a Amazon EKS
+## Kubernetes frente a Amazon EKS {#kubernetes-vs-amazon-eks}
 
 Amazon EKS (Elastic Kubernetes Service) es un servicio de Kubernetes administrado que ofrece AWS. EKS expone la API estándar de Kubernetes con integraciones de AWS. La comparación siguiente presupone grupos de nodos EC2 convencionales; las responsabilidades y las funciones compatibles difieren en Auto Mode, Fargate y Hybrid Nodes.
 
@@ -1557,7 +1557,7 @@ EKS se integra con los siguientes servicios de AWS:
 13. **AWS SageMaker**: cargas de trabajo de aprendizaje automático
 14. **AWS Bedrock**: cargas de trabajo de IA generativa
 
-## Primeros pasos con Kubernetes
+## Primeros pasos con Kubernetes {#getting-started-with-kubernetes}
 
 Hay varias maneras de empezar a usar Kubernetes. Aquí presentamos brevemente cómo iniciar Kubernetes en un entorno de desarrollo local y en AWS EKS.
 

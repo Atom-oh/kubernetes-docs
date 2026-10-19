@@ -20,7 +20,7 @@ El código incluye manifiestos completos y fragmentos de spec/valores de Helm. I
 - [Observabilidad y alertas](#observability-and-alerting)
 - [Prácticas recomendadas para producción](#production-best-practices)
 
-## Descripción general y objetivos de aprendizaje
+## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
 RollingUpdate de un Deployment de Kubernetes ya reemplaza los Pods gradualmente. Flagger añade control explícito del tráfico entre revisiones y promoción basada en métricas y pruebas. Este capítulo abarca la propiedad de los recursos, tres estrategias, métricas y controles, GitOps y observabilidad.
 
@@ -43,7 +43,7 @@ Blue-Green no garantiza exactamente el doble de recursos, una reversión instant
 
 La integración con un ecosistema no implica una dependencia exclusiva. No permitas que dos controladores de entrega progresiva administren la misma carga de trabajo.
 
-## Arquitectura de Flagger
+## Arquitectura de Flagger {#flagger-architecture}
 
 ![Flagger observa los recursos Canary y de carga de trabajo, y se conecta con el enrutamiento, las métricas y las notificaciones.](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
@@ -77,11 +77,11 @@ Después de la configuración inicial de primary, los cambios en la plantilla de
 | kubernetes | Cambio de Service para Blue-Green, no enrutamiento ponderado de L7 ni A/B |
 | App Mesh / ingress-nginx / OSM | Limitaciones del ciclo de vida heredado que se indican a continuación |
 
-La compatibilidad con AWS App Mesh **finalizó el 30-09-2026**; AWS indica que la consola y los recursos dejarán de estar accesibles después de esa fecha. ingress-nginx de la comunidad se retiró en marzo de 2026 y el repositorio de OSM está archivado.
+La compatibilidad con AWS App Mesh **finalizó el 30-09-2026**; AWS indica que la consola y los recursos ya no están accesibles después de esa fecha. ingress-nginx de la comunidad se retiró en marzo de 2026 y el repositorio de OSM está archivado.
 
 La disponibilidad de un adaptador no garantiza el mantenimiento para nuevos usos en producción. Verifica la compatibilidad con A/B, la duplicación de tráfico y la afinidad de sesión para cada implementación.
 
-## Instalación y configuración en EKS
+## Instalación y configuración en EKS {#eks-installation-and-configuration}
 
 La configuración de referencia requiere una versión compatible de EKS/Kubernetes, un entorno de sidecars de Istio instalado y Prometheus recopilando las métricas necesarias. Sustituye su URL por el Service real. Flagger no instala Istio ni la instrumentación. La imagen de Prometheus incluida en el chart usa la versión antigua 2.41.0, por lo que se deshabilita.
 
@@ -192,7 +192,7 @@ helm upgrade --install flagger-loadtester flagger/loadtester --version 0.39.0 \
   --namespace flagger-system -f loadtester-values.yaml --wait --timeout 5m
 ```
 
-Loadtester ejecuta comandos recibidos en solicitudes HTTP. namespaceRegexp filtra una cadena del cuerpo; no autentica a quien realiza la solicitud. No lo expongas a Internet y restringe la entrada a los Pods del controlador mediante una política de CNI. Controla con RBAC el uso de exec/port-forward por parte de los operadores. Usa una réplica para los laboratorios de puertas de memoria.
+Loadtester ejecuta comandos recibidos en solicitudes HTTP. namespaceRegexp filtra una cadena del cuerpo; no autentica a quien realiza la solicitud. No lo expongas a Internet y restringe la entrada a los Pods del controlador mediante una política de CNI. Controla con RBAC el uso de exec/port-forward por parte de los operadores. Usa una réplica para los laboratorios de controles de aprobación con estado en memoria.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -321,7 +321,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
-## Estrategia de despliegue Canary
+## Estrategia de despliegue Canary {#canary-deployment-strategy}
 
 Estos son la carga de trabajo Istio y el HPA de referencia; se requiere Metrics Server. Omite del repositorio las réplicas del Deployment para que HPA/Flagger puedan administrar el escalado, y no crees un Service que compita con ellos. Elige estos manifiestos o la alternativa posterior con HelmRelease.
 
@@ -477,7 +477,7 @@ kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --pr
 
 Después de la configuración inicial estable, aplica mediante Git un cambio revisado de imagen/etiqueta/digest o de plantilla de Pod para iniciar el análisis. Sustituir el contenido remoto detrás de la misma etiqueta no reemplaza un cambio en Git. No edites directamente los recursos generados primary, Service ni de enrutamiento.
 
-## Estrategia de despliegue Blue-Green
+## Estrategia de despliegue Blue-Green {#blue-green-deployment-strategy}
 
 ![Blue-Green valida canary, actualiza primary y luego reduce la escala de canary.](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
@@ -648,7 +648,7 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
 
-## Métricas personalizadas y webhooks
+## Métricas personalizadas y webhooks {#custom-metrics-and-webhooks}
 
 ### MetricTemplate de Prometheus
 
@@ -933,7 +933,7 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/check
 ```
 
-El control integrado no es específico de un checksum, se restablece al reiniciar el Pod y no se comparte entre réplicas. Ciérralo antes de la siguiente revisión. La aprobación de producción necesita autenticación, auditoría, caducidad y estado indexado por name/namespace/checksum/gate. Un único control de memoria compartido por el inicio y la promoción no equivale a dos aprobaciones independientes.
+El control integrado no es específico de un checksum, se restablece al reiniciar el Pod y no se comparte entre réplicas. Ciérralo antes de la siguiente revisión. La aprobación de producción necesita autenticación, auditoría, caducidad y estado indexado por name/namespace/checksum/gate. Un único control de aprobación con estado en memoria compartido por el inicio y la promoción no equivale a dos aprobaciones independientes.
 
 ### Reversión manual y suspensión
 
@@ -1276,7 +1276,7 @@ image:
 
 Un marcador que solo fija la etiqueta no fija un digest. Comprueba la compatibilidad del chart con digest o la inmutabilidad de las etiquetas del registro y su validación. No sobrescribas una imagen de forma incoherente con Kustomize images y un marcador de Deployment a la vez. ECR requiere una autenticación independiente de image-reflector con AWS y la autorización real para extraer imágenes del Pod.
 
-## Observabilidad y alertas
+## Observabilidad y alertas {#observability-and-alerting}
 
 Las métricas de Flagger y las métricas de Istio/aplicación tienen distintos destinos de scrape. Las anotaciones no hacen que todas las instalaciones de Prometheus recopilen métricas automáticamente. Para Prometheus Operator, ajusta serviceMonitor.enabled del chart a los selectores, namespaces y acceso mTLS reales.
 
@@ -1431,7 +1431,7 @@ NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.st
 
 Los eventos de Kubernetes tienen límites de retención; conserva el historial duradero de forma externa. changes(status[7d]) cuenta transiciones, no despliegues. Interpreta los contadores de resultados teniendo en cuenta los casos omitidos/completados y las revisiones reales.
 
-## Prácticas recomendadas para producción
+## Prácticas recomendadas para producción {#production-best-practices}
 
 Empieza con cargas de trabajo de laboratorio y no críticas, y prueba el éxito, los fallos, los datos ausentes, las esperas de aprobación y los fallos de promoción de primary. Un umbral de fallos más alto puede retrasar la reversión en lugar de aumentar la seguridad. Un stepWeight mayor expone a más usuarios; los intervalos de análisis más largos pueden retrasar la detección.
 
@@ -1456,7 +1456,7 @@ metadata:
     flagger.app/config-tracking: disabled
 ```
 
-HPA/escaladores KEDA compatibles necesitan el autoscalerRef correcto y Metrics Server/el proveedor de métricas. Verifica que Flux/Helm no sobrescriba continuamente el escalado/control de Service de Flagger. Los PDB rigen principalmente las desalojos voluntarios, no garantizan la protección frente a la reducción de escala del controlador ni frente a las actualizaciones graduales de Deployment. Configura por separado la estrategia de actualización de la carga de trabajo y la disponibilidad.
+HPA/escaladores KEDA compatibles necesitan el autoscalerRef correcto y Metrics Server/el proveedor de métricas. Verifica que Flux/Helm no sobrescriba continuamente el escalado/control de Service de Flagger. Los PDB rigen principalmente los desalojos voluntarios, no garantizan la protección frente a la reducción de escala del controlador ni frente a las actualizaciones graduales de Deployment. Configura por separado la estrategia de actualización de la carga de trabajo y la disponibilidad.
 
 ### Flagger en varios clústeres
 

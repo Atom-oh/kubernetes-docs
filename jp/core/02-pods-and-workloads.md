@@ -66,7 +66,7 @@ kubectl -n workloads-demo get deployments,pods
 - [DaemonSet](#daemonset)
 - [JobとCronJob](#jobs-and-cronjobs)
 
-## Podの概念
+## Podの概念 {#pod-concepts}
 
 > **重要な概念**: PodはKubernetesでデプロイ可能な最小のコンピューティング単位であり、ストレージとネットワークを共有する1つ以上のコンテナで構成されます。
 
@@ -352,7 +352,7 @@ spec:
       name: app-config
 ```
 
-## Podのライフサイクル
+## Podのライフサイクル {#pod-lifecycle}
 
 Podは作成から終了まで、さまざまなライフサイクル段階を経ます。アプリケーションの安定性と可用性を確保するには、このライフサイクルを理解することが重要です。
 
@@ -477,7 +477,7 @@ PodのDisruptionは、自発的なものと非自発的なものに分けられ�
 
 PodDisruptionBudgetは、Eviction API（たとえばdrain）を介した自発的な退避を制限します。Podの直接削除やDeploymentのローリングアップデートはこれを迂回するため、ロールアウト時の可用性は別途設定してください。非自発的な障害を防ぐことはできません。
 
-## Podの設計パターン
+## Podの設計パターン {#pod-design-patterns}
 
 Podを設計する際に検討すべきパターンとベストプラクティスがいくつかあります。これらを理解して適用することで、アプリケーションの安定性、スケーラビリティ、保守性を向上させられます。
 
@@ -677,7 +677,7 @@ spec:
     image: myapp:1.0
 ```
 
-## ワークロードリソースの概要
+## ワークロードリソースの概要 {#workload-resources-overview}
 
 Kubernetesには、Podを管理するためのさまざまなワークロードリソースがあります。それぞれ特定のユースケースや要件に合わせて設計されています。
 
@@ -1249,7 +1249,7 @@ spec:
           path: /
 ```
 
-## JobとCronJob
+## JobとCronJob {#jobs-and-cronjobs}
 
 JobとCronJobは、単発または定期的なタスクを実行するためのワークロードリソースです。
 

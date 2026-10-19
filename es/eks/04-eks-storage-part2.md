@@ -319,7 +319,7 @@ spec:
       storage: 4800Gi
 ```
 
-## Integración de almacenamiento de Amazon S3
+## Integración de almacenamiento de Amazon S3 {#amazon-s3-storage-integration}
 
 S3 es almacenamiento de objetos. Las aplicaciones pueden usar su API directamente, Hadoop puede usar S3A y Mountpoint CSI puede exponer un bucket existente mediante una interfaz de sistema de archivos con límites documentados. Estas opciones no son sistemas de archivos POSIX intercambiables. S3 Files, descrito en la Parte 1, es otra integración con requisitos propios de EFS CSI.
 
@@ -355,7 +355,7 @@ Reutiliza el espacio de nombres dedicado `storage-demo` de la Parte 1. Prepara u
 }
 ```
 
-La ServiceAccount siguiente ilustra **IRSA**: reemplaza el ARN de ejemplo por el del rol preparado cuya relación de confianza de OIDC permite únicamente este clúster, `system:serviceaccount:storage-demo:s3-access-sa` y el público de STS. La anotación por sí sola no crea ese rol ni esa relación de confianza. Para **EKS Pod Identity**, omite la anotación de IRSA y crea la asociación revisada para esta misma cuenta de aplicación con un agente compatible; no configures ambos métodos como alternativa accidental. No incluyas claves estáticas de AWS en el manifiesto.
+La ServiceAccount siguiente ilustra **IRSA**: reemplaza el ARN de ejemplo por el del rol preparado cuya relación de confianza de OIDC permite únicamente este clúster, `system:serviceaccount:storage-demo:s3-access-sa` y la audiencia (aud) de STS. La anotación por sí sola no crea ese rol ni esa relación de confianza. Para **EKS Pod Identity**, omite la anotación de IRSA y crea la asociación revisada para esta misma cuenta de aplicación con un agente compatible; no configures ambos métodos como alternativa accidental. No incluyas claves estáticas de AWS en el manifiesto.
 
 ```yaml
 apiVersion: v1
@@ -437,7 +437,7 @@ spec:
 
 ### Acceso a S3A desde Hadoop
 
-S3A es la implementación de sistema de archivos `s3a://` de Hadoop, no un montaje de volumen de Kubernetes. Hadoop 3.5.0 usa AWS SDK for Java v2. Crea y revisa una imagen que incluya versiones coincidentes de `hadoop-common`/`hadoop-aws` y su paquete sombreado del SDK compatible; el marcador de posición siguiente no es una imagen publicada lista para ejecutar. Su contrato incluye `hadoop` en PATH, `/opt/hadoop/etc/hadoop` y compatibilidad con UID 1000. Combina `hadoop-aws` con cualquier otra herramienta opcional que se necesite. El proveedor de credenciales predeterminado de v2 admite la identidad de carga de trabajo seleccionada si el SDK incluido la admite; no reutilices una clase de proveedor v1 `com.amazonaws`.
+S3A es la implementación de sistema de archivos `s3a://` de Hadoop, no un montaje de volumen de Kubernetes. Hadoop 3.5.0 usa AWS SDK for Java v2. Crea y revisa una imagen que incluya versiones coincidentes de `hadoop-common`/`hadoop-aws` y su paquete compatible del SDK con dependencias reubicadas (shaded); el marcador de posición siguiente no es una imagen publicada lista para ejecutar. Su contrato incluye `hadoop` en PATH, `/opt/hadoop/etc/hadoop` y compatibilidad con UID 1000. Combina `hadoop-aws` con cualquier otra herramienta opcional que se necesite. El proveedor de credenciales predeterminado de v2 admite la identidad de carga de trabajo seleccionada si el SDK incluido la admite; no reutilices una clase de proveedor v1 `com.amazonaws`.
 
 ```yaml
 apiVersion: v1
@@ -648,9 +648,9 @@ Las opciones de montaje asignan la propiedad del sistema de archivos a UID/GID 1
 
 Los lagos de datos, los repositorios de modelos, los archivos, los recursos estáticos y los objetos de auditoría pueden usar S3. Elige el acceso por API cuando la aplicación necesite versiones de objetos, solicitudes condicionales o capacidades fuera del contrato de sistema de archivos de Mountpoint. Un directorio de base de datos con escritura que requiera actualizaciones aleatorias y bloqueos POSIX necesita otro diseño de almacenamiento.
 
-## Instantáneas y copias de seguridad
+## Instantáneas y copias de seguridad {#snapshots-and-backups}
 
-Las instantáneas CSI requieren compatibilidad con el controlador/backend específico; un PVC por sí solo no implica que se admitan instantáneas. El siguiente ejemplo de EBS captura un punto en el tiempo de un volumen de bloques. Si es necesario, detén o vacía las aplicaciones, o usa copias de seguridad compatibles con la base de datos o el archivado de WAL. Una instantánea creada correctamente no demuestra la coherencia de la aplicación ni la recuperación de la base de datos a un punto en el tiempo.
+Las instantáneas CSI requieren compatibilidad con el controlador/backend específico; un PVC por sí solo no implica que se admitan instantáneas. El siguiente ejemplo de EBS captura un punto en el tiempo de un volumen de bloques. Si es necesario, pausa la actividad de las aplicaciones y vuelca sus búferes al almacenamiento, o usa copias de seguridad compatibles con la base de datos o el archivado de WAL. Una instantánea creada correctamente no demuestra la coherencia de la aplicación ni la recuperación de la base de datos a un punto en el tiempo.
 
 ![Diagrama del flujo de instantáneas desde el PVC de origen, a través de VolumeSnapshot y SnapshotContent, hasta una instantánea de EBS, y luego la restauración en un PVC nuevo.](../.gitbook/assets/en-eks-04-eks-storage-part2-2.png)
 
@@ -786,7 +786,7 @@ velero restore create storage-demo-recovery-review --from-backup "$VERIFIED_BACK
 
 Inicia las cargas de trabajo restauradas solo después de que los datos candidatos superen las comprobaciones de la aplicación y mantén una ruta de reversión. La restauración CSI entre clústeres requiere un nombre de controlador coincidente e instantáneas/claves accesibles; la asignación de espacios de nombres por sí sola no hace portables los recursos de la nube.
 
-## Expansión y cambio de tamaño de volúmenes
+## Expansión y cambio de tamaño de volúmenes {#volume-expansion-and-resizing}
 
 ![Diagrama del proceso de expansión del volumen: desde la StorageClass que permite la expansión, pasando por la edición del PVC y la llamada CSI, hasta el crecimiento de EBS y el cambio de tamaño del sistema de archivos.](../.gitbook/assets/en-eks-04-eks-storage-part2-3.png)
 
@@ -817,13 +817,13 @@ kubectl -n storage-demo describe pvc ebs-claim
 ```
 CSI administra la expansión del backend y del sistema de archivos cuando es compatible. Inspecciona las condiciones del PVC, los registros del controlador/nodo y la capacidad montada. Si es necesario, sigue la ruta documentada del controlador para volver a montar o reiniciar; no ejecutes `resize2fs` sobre un `/dev/xvdf` supuesto dentro de un contenedor de aplicación. Nunca edites la capacidad del PV para eludir el cambio de tamaño. Planifica límites de cuota/costo y evita que el crecimiento automatizado se repita mientras una expansión anterior esté pendiente.
 
-## Clonación de volúmenes
+## Clonación de volúmenes {#volume-cloning}
 
 EBS CSI actual admite la clonación de PVC mediante `dataSource` y la capacidad de clonación de CSI; EBS CSI 1.67.0 usa una copia nativa de volumen de EBS (`CopyVolumes`), no una instantánea oculta supuesta. Comprueba la compatibilidad del controlador/complemento implementado antes de usarla. El destino es independiente, pero la disponibilidad y el rendimiento con la inicialización completa son estados distintos.
 
 
 
-Para el flujo habitual de `dataSource` de PVC, usa un origen vinculado en el mismo espacio de nombres, un modo de volumen/controlador compatible y una solicitud al menos tan grande como el origen. Define explícitamente `storageClassName`; si se omite, se aplican las reglas de la clase predeterminada en lugar de heredarse automáticamente la clase del origen. Las copias nativas de EBS permanecen en la AZ del origen. Son coherentes ante fallos, salvo que la aplicación se detenga o vacíe adecuadamente. Solo se puede inicializar una copia de un origen a la vez y se aplican las cuotas de la cuenta/Región.
+Para el flujo habitual de `dataSource` de PVC, usa un origen vinculado en el mismo espacio de nombres, un modo de volumen/controlador compatible y una solicitud al menos tan grande como el origen. Define explícitamente `storageClassName`; si se omite, se aplican las reglas de la clase predeterminada en lugar de heredarse automáticamente la clase del origen. Las copias nativas de EBS permanecen en la AZ del origen. Son coherentes ante fallos, salvo que la actividad de la aplicación se pause y sus búferes se vuelquen adecuadamente al almacenamiento. Solo se puede inicializar una copia de un origen a la vez y se aplican las cuotas de la cuenta/Región.
 
 Este origen de entrenamiento dedicado evita iniciar un clon de base de datos sin verificar en un espacio de nombres de producción. Reemplaza la AZ de ejemplo por una AZ compatible real en el escritor y el lector. El Job de preparación usa el PVC de origen, crea un marcador sin sobrescribir uno existente y luego finaliza:
 ```yaml
@@ -975,7 +975,7 @@ spec:
 
 No infieras velocidad, sobrecarga de almacenamiento ni RPO a partir de «un paso» frente a «dos pasos». Las copias nativas de volúmenes no admiten la restauración rápida de instantáneas ni tasas de inicialización aprovisionadas; sigue las instrucciones reales de inicialización de copias.
 
-## Multi-Attach de EBS
+## Multi-Attach de EBS {#multi-attach-ebs}
 
 El servicio EC2 admite Multi-Attach para volúmenes io1/io2 compatibles, hasta 16 instancias Nitro compatibles en una AZ, sujeto a restricciones de tipo de volumen/Región. La **ruta dinámica de EBS CSI 1.66.0 admite io2 + ReadWriteMany + volumeMode: Block** y habilita Multi-Attach mediante esa capacidad. `multiAttachEnabled` no es un interruptor compatible de StorageClass en esta ruta. RWOP es una restricción de un Pod y no es el modo de acceso de Multi-Attach.
 
@@ -1110,7 +1110,7 @@ spec:
 ```
 Los volúmenes io2 Multi-Attach admiten modificaciones de tamaño/IOPS en las condiciones del servicio; es incorrecto afirmar de forma general que «no se permite el cambio de tamaño en línea». La compatibilidad con las modificaciones de io1 es distinta. Para habilitar/deshabilitar Multi-Attach, el volumen debe estar desconectado, y la compatibilidad de CSI/sistema de archivos/aplicación sigue determinando un procedimiento seguro para cambiar el tamaño. Un fallo del volumen compartido puede afectar a todas las instancias conectadas. Retain y los ajustes de conexión no son una estrategia de copia de seguridad.
 
-## Análisis detallado de Mountpoint for S3 CSI
+## Análisis detallado de Mountpoint for S3 CSI {#mountpoint-for-s3-csi-deep-dive}
 
 El comportamiento siguiente se comprobó con Mountpoint 1.23.0, incluido en CSI 2.8.0. Verifica la versión realmente instalada antes de adoptar opciones independientes más recientes.
 
@@ -1289,7 +1289,7 @@ Las cuatro finalizaciones indexadas son fragmentos de datos independientes, uno 
 
 El nombre del servicio no permite deducir una clasificación universal de costo bajo/medio/alto ni de clientes ilimitados.
 
-## Optimización del rendimiento del almacenamiento
+## Optimización del rendimiento del almacenamiento {#storage-performance-optimization}
 
 Exploremos distintas estrategias para optimizar el rendimiento del almacenamiento en EKS.
 

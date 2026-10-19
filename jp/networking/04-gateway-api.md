@@ -875,7 +875,7 @@ spec:
 
 #### ステップ2: GatewayとGatewayClassを作成する
 
-新しいGatewayの名前は`migration-gateway`です。既存の`api-tls` Secretは`default`に残します。このGatewayのNamespaceから参照できるように、そのNamespaceにReferenceGrantを作成して明示的に許可します。`api.example.com`に対して有効な証明書を用意してください。`default` Namespaceには、ルートアタッチメントのセレクターとして使用できる組み込みの名前ラベルがあります。
+新しいGatewayの名前は`migration-gateway`です。既存の`api-tls` Secretは`default`に残します。GatewayのNamespaceから参照できるように、Secretがある`default` NamespaceにReferenceGrantを作成して明示的に許可します。`api.example.com`に対して有効な証明書を用意してください。`default` Namespaceには、ルートアタッチメントのセレクターとして使用できる組み込みの名前ラベルがあります。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1

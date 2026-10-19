@@ -943,7 +943,7 @@ fi
 
 </details>
 
-## Temas avanzados
+## Temas avanzados {#advanced-topics}
 
 Las siguientes preguntas tratan temas avanzados relacionados con la creación de clústeres de Amazon EKS. Esta sección evalúa su comprensión de los conceptos avanzados y las prácticas recomendadas para crear clústeres de EKS.
 
@@ -1075,7 +1075,7 @@ Referencias: [restricciones de plantillas de lanzamiento](https://docs.aws.amazo
 
 Elegir todos los nodos únicamente porque pertenecen a la generación más reciente no es un análisis de costos suficiente. Compare la arquitectura, el rendimiento, la latencia, la memoria, la disponibilidad regional y la tolerancia a interrupciones de la carga de trabajo. Una generación más reciente puede resultar más económica; ni las generaciones más nuevas ni las más antiguas son siempre más baratas para el mismo trabajo útil.
 
-1. **Spot y diversificación:** AWS anuncia descuentos de hasta el 90 % frente a On-Demand para Spot; se trata de un posible descuento de precio, no de un ahorro medido o garantizado para este laboratorio. Tenga en cuenta las interrupciones y la capacidad de sustitución. Para Cluster Autoscaler, los distintos tipos de una misma familia de instancias deben tener la misma capacidad de CPU/memoria/GPU, porque la simulación del planificador usa el primer tipo. Compruebe por separado cualquier dependencia de discos locales.
+1. **Spot y diversificación:** AWS anuncia descuentos de hasta el 90 % frente a On-Demand para Spot; se trata de un posible descuento de precio, no de un ahorro medido o garantizado para este laboratorio. Tenga en cuenta las interrupciones y la capacidad de sustitución. Para Cluster Autoscaler, los tipos de instancia combinados en un mismo grupo de nodos deben tener la misma capacidad de CPU/memoria/GPU, porque la simulación del planificador usa el primer tipo. Compruebe por separado cualquier dependencia de discos locales.
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1397,7 +1397,7 @@ Las AMI AL2023 optimizadas para EKS usan `nodeadm` para configurar containerd y 
 
 **Ejemplo de entrada NodeConfig**
 
-Lo siguiente se ejecuta en la estación de trabajo de administración para generar datos de usuario a partir de metadatos reales de un clúster IPv4 existente. Está destinado a AMI personalizadas/nodos autoadministrados basados en AL2023 optimizado para EKS y revisados; los grupos de nodos administrados sin un ID de AMI personalizado usan la generación/combinción de metadatos de EKS. `NodeConfig` es configuración de arranque del host, no un recurso de Kubernetes normal que se envíe con `kubectl apply`.
+Lo siguiente se ejecuta en la estación de trabajo de administración para generar datos de usuario a partir de metadatos reales de un clúster IPv4 existente. Está destinado a AMI personalizadas/nodos autoadministrados basados en AL2023 optimizado para EKS y revisados; los grupos de nodos administrados sin un ID de AMI personalizado usan la generación/combinación de metadatos de EKS. `NodeConfig` es configuración de arranque del host, no un recurso de Kubernetes normal que se envíe con `kubectl apply`.
 
 ```bash
 # Run on the administration workstation to prepare reviewed IPv4 node user data.

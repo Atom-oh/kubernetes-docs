@@ -24,7 +24,7 @@ Al leer este documento, comprenderá:
 7. [Conceptos de balanceo de carga](#load-balancing-concepts)
 8. [Fundamentos de seguridad de red](#network-security-basics)
 
-## Modelo OSI y pila TCP/IP
+## Modelo OSI y pila TCP/IP {#osi-model-and-tcp-ip-stack}
 
 > **Concepto clave**: El modelo OSI es un marco conceptual que clasifica la comunicación de red en 7 capas abstractas, lo que facilita la comprensión de procesos de red complejos.
 
@@ -128,7 +128,7 @@ Cilium ofrece funciones en distintas capas de red:
 - **L4 (capa de transporte)**: Filtrado por puerto, balanceo de carga y seguimiento de conexiones
 - **L7 (capa de aplicación)**: Funciones configuradas del proxy HTTP/gRPC y políticas de DNS; la antigua API de políticas L7 para Kafka se eliminó
 
-## Fundamentos de las redes de contenedores
+## Fundamentos de las redes de contenedores {#container-networking-basics}
 
 Las redes de contenedores son un mecanismo que permite que las aplicaciones en contenedores se comuniquen entre sí y con el exterior. Las plataformas de orquestación de contenedores, como Kubernetes, usan diversos modelos y soluciones de redes.
 
@@ -234,7 +234,7 @@ Cilium aprovecha eBPF para proporcionar una solución de redes de contenedores e
 
 Una instalación genérica de Helm sin anulaciones de la plataforma usa cluster-pool IPAM de forma predeterminada: el operador asigna CIDR a los nodos y los agentes asignan direcciones IP a los Pods desde el pool de su nodo. `ipam.mode: kubernetes` usa `spec.podCIDR`/`spec.podCIDRs` del Node. El modo ENI usa interfaces EC2 y direcciones VPC; no es una recomendación universal para todos los modos de cómputo de EKS. Consulte [IPAM y políticas](04-ipam-policy.md).
 
-## Redes superpuestas
+## Redes superpuestas {#overlay-networks}
 
 Las redes superpuestas son una tecnología que construye una capa de red virtual sobre una infraestructura de red existente. Esta tecnología permite crear topologías de red virtuales independientemente de la topología física. En entornos de contenedores, se usa ampliamente para permitir la comunicación entre contenedores en varios hosts.
 
@@ -331,7 +331,7 @@ ipam:
     clusterPoolIPv4MaskSize: 24
 ```
 
-## Traducción de direcciones de red (NAT)
+## Traducción de direcciones de red (NAT) {#network-address-translation-nat}
 
 La traducción de direcciones de red (NAT) es el proceso de modificar las direcciones de origen o destino de los paquetes IP. NAT se usa principalmente para permitir que los dispositivos de redes privadas se comuniquen con la Internet pública, o para permitir la comunicación entre dos redes cuyos espacios de direcciones se superponen.
 
@@ -444,7 +444,7 @@ ipMasqAgent:
     masqLinkLocal: false
 ```
 
-## Protocolos de enrutamiento
+## Protocolos de enrutamiento {#routing-protocols}
 
 Los protocolos de enrutamiento definen las reglas y los procedimientos que determinan la ruta óptima para que los paquetes viajen desde el origen hasta el destino en una red. Estos protocolos desempeñan un papel importante para adaptarse a los cambios de topología de la red, reenviar el tráfico con eficiencia y sortear fallos de red.
 
@@ -580,7 +580,7 @@ bgpControlPlane:
 
 Use el ejemplo completo de valores VXLAN anterior. Verifique el modo y el puerto activos en el estado del agente; no sobrescriba la configuración de instalación con un ConfigMap pequeño.
 
-## DNS y descubrimiento de servicios
+## DNS y descubrimiento de servicios {#dns-and-service-discovery}
 
 DNS (Sistema de nombres de dominio) y el descubrimiento de servicios desempeñan un papel fundamental en las aplicaciones de red modernas, sobre todo en los entornos dinámicos de contenedores. Estos mecanismos abstraen la ubicación de los servicios y permiten que las aplicaciones se adapten a los cambios en la topología de red.
 
@@ -787,7 +787,7 @@ spec:
       timeoutSeconds: 10800
 ```
 
-## Conceptos de balanceo de carga
+## Conceptos de balanceo de carga {#load-balancing-concepts}
 
 El balanceo de carga es una tecnología que distribuye el tráfico de red entre varios servidores o servicios de backend para optimizar el uso de los recursos y respaldar los objetivos de rendimiento, latencia y disponibilidad cuando se combina con una capacidad adecuada y la gestión del estado de los backends. En los entornos de contenedores, es especialmente importante distribuir de forma eficaz el tráfico entre instancias de backend que cambian dinámicamente.
 
@@ -969,7 +969,7 @@ maglev:
   hashSeed: AAECAwQFBgcICQoL
 ```
 
-## Fundamentos de seguridad de red
+## Fundamentos de seguridad de red {#network-security-basics}
 
 La seguridad de red consiste en proteger la infraestructura de red, las aplicaciones y los datos frente al acceso no autorizado, el uso indebido, los fallos o las modificaciones. En los entornos de contenedores, la seguridad de red es aún más importante debido a su naturaleza dinámica y distribuida.
 

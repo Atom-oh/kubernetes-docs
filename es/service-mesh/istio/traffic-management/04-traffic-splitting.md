@@ -14,7 +14,7 @@ La división del tráfico es una de las funciones más potentes de Istio: permit
 8. [Supervisión y reversión](#monitoring-and-rollback)
 9. [Solución de problemas](#troubleshooting)
 
-## Descripción general de la división del tráfico
+## Descripción general de la división del tráfico {#traffic-splitting-overview}
 
 Revisado con Istio 1.31.0 y Argo Rollouts 1.10.1. Estos son ejemplos alternativos para un espacio de nombres de prueba desechable; no ejecutes varios Rollouts con el mismo selector ni permitas que scripts manuales o GitOps sobrescriban los pesos y los hashes de subconjuntos administrados por Rollouts. Instala los Services, DestinationRules, AnalysisTemplates, la gateway y Prometheus mencionados antes del rollout. El primer despliegue establece un ReplicaSet estable; los pasos y el análisis Canary ejercitan una actualización posterior. El peso controla la distribución de solicitudes, no un porcentaje estable de usuarios.
 
@@ -46,7 +46,7 @@ spec:
       weight: 10  # 10% of traffic
 ```
 
-## Despliegue Canary
+## Despliegue Canary {#canary-deployment}
 
 Un despliegue Canary es una estrategia que valida de forma segura una versión nueva al desplegarla primero solo para un pequeño subconjunto de usuarios. Usar Argo Rollouts con Istio permite automatizar el despliegue progresivo y la reversión automática basada en métricas.
 
@@ -552,7 +552,7 @@ template:
 
 ### Uso con condiciones match de VirtualService
 
-Un nivel de tester, región o usuario debe ser proporcionado por una capa de confianza si controla el acceso privilegiado. Las rutas no administradas que siempre seleccionan `canary` no cambian cuando se revierte un peso y pueden seguir apuntando a una Canary cuya escala se haya reducido; elimínalas o modifícalas al abortar o limpiar.
+Los encabezados de tester, región o nivel de usuario deben ser proporcionados por una capa de confianza si controlan el acceso privilegiado. Las rutas no administradas que siempre seleccionan `canary` no cambian cuando se revierte un peso y pueden seguir apuntando a una Canary cuya escala se haya reducido; elimínalas o modifícalas al abortar o limpiar.
 
 Argo Rollouts se puede usar con condiciones match de VirtualService. Esto permite dirigir a Canary solo el tráfico que cumpla condiciones específicas.
 
@@ -955,7 +955,7 @@ spec:
       - pause: {duration: 2m}
 ```
 
-### Solución de problemas
+### Solución de problemas {#troubleshooting}
 
 #### Rollout atascado en el estado Progressing
 
@@ -1542,7 +1542,7 @@ spec:
         subset: version-a
 ```
 
-## Lanzamiento progresivo
+## Lanzamiento progresivo {#progressive-rollout}
 
 El lanzamiento progresivo aumenta automáticamente con el tiempo la proporción de tráfico. Usar la estrategia Canary de Argo Rollouts permite automatizar el despliegue progresivo.
 
@@ -1558,7 +1558,7 @@ kubectl argo rollouts promote reviews
 kubectl argo rollouts abort reviews
 ```
 
-## Uso con la duplicación del tráfico
+## Uso con la duplicación del tráfico {#using-with-traffic-mirroring}
 
 Combinar la división del tráfico con la duplicación permite realizar despliegues con mayor seguridad.
 
@@ -1589,7 +1589,7 @@ spec:
       value: 100
 ```
 
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 ### Ejemplo 1: Despliegue por segmento de usuario
 
@@ -1742,7 +1742,7 @@ spec:
         subset: v1
 ```
 
-## Supervisión y reversión
+## Supervisión y reversión {#monitoring-and-rollback}
 
 ### Consultas de Prometheus
 

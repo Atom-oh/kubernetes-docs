@@ -287,11 +287,11 @@ El primer resolvedor DNS de Auto Mode es local al nodo. El reenvío upstream y l
 
 AWS VPC CNI proporciona a los Pods ordinarios direcciones enrutables desde la VPC usando el modo IPAM seleccionado. Las direcciones IPv4 secundarias, los prefijos delegados, las ENI de ramificación y las configuraciones con varias NIC difieren entre sí; los Pods que usan la red del host comparten la red del nodo.
 
-![Asignación ilustrativa de IPv4 secundarias desde las ENI de EC2 a los Pods, con una interfaz activa opcional.](../.gitbook/assets/en-networking-readme-9.png)
+![Asignación ilustrativa de IPv4 secundarias desde las ENI de EC2 a los Pods, con una ENI preasignada disponible (warm ENI) opcional.](../.gitbook/assets/en-networking-readme-9.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-9.html)
 
-Esto solo representa el modo de IP secundaria. Una ENI activa es una estrategia de asignación configurable, no un requisito que obligue a cada nodo a reservar siempre exactamente una. La delegación de prefijos, las redes personalizadas y las ENI de ramificación tienen reglas de asignación distintas.
+Esto solo representa el modo de IP secundaria. Una ENI preasignada disponible (warm ENI) es una estrategia de asignación configurable, no un requisito que obligue a cada nodo a reservar siempre exactamente una. La delegación de prefijos, las redes personalizadas y las ENI de ramificación tienen reglas de asignación distintas.
 
 #### Límites de ENI e IP
 
@@ -401,7 +401,7 @@ Estas cinco opciones de conectividad difieren en capa y modelo de tráfico. Las 
 
 GWLB inserta dispositivos de inspección, como firewalls e IDS/IPS, en una ruta IP mediante un endpoint de Gateway Load Balancer. Su persistencia de flujo predeterminada usa cinco campos; las configuraciones compatibles pueden usar en su lugar dos o tres. Valida las rutas de ida y vuelta, el estado de los dispositivos, la MTU de encapsulación, las NACL y los grupos de seguridad de las cargas de trabajo/dispositivos reales. GWLB no tiene un grupo de seguridad propio como ALB, y la persistencia de flujo no sustituye las pruebas de fallos.
 
-Para el diseño de seguridad, consulta [protección de WAF/origen](../security/14-waf-edge-api-security.md), [NGFW de Palo Alto/Fortinet](../security/15-ngfw-paloalto-fortinet.md) y [rutas y fallos de GWLB/GENEVE](../security/16-gwlb-geneve-inspection.md). GWLBE tampoco admite grupos de seguridad. Para destinos que no están en buen estado, AWS describe la selección de destino por flujo y el descarte hasta que se recupere, sin omisión directa del dispositivo. Revisa conjuntamente la persistencia con tuplas reducidas, la disponibilidad entre zonas, NAT y el modo de dispositivo de TGW.
+Para el diseño de seguridad, consulta [protección de WAF/origen](../security/14-waf-edge-api-security.md), [NGFW de Palo Alto/Fortinet](../security/15-ngfw-paloalto-fortinet.md) y [rutas y fallos de GWLB/GENEVE](../security/16-gwlb-geneve-inspection.md). GWLBE tampoco admite grupos de seguridad. Cuando todos los destinos están en mal estado, AWS describe la selección de destino por flujo y el descarte hasta que se recupere, sin omisión directa del dispositivo. Revisa conjuntamente la persistencia con tuplas reducidas, la disponibilidad entre zonas, NAT y el modo de dispositivo de TGW.
 
 > 📎 La integración completa de EKS/VPC Lattice (Gateway API Controller, autorización IAM, enrutamiento) está en [VPC Lattice](02-vpc-lattice.md).
 
@@ -430,7 +430,7 @@ Cambiar de implementación puede dejar reglas del kernel y conexiones activas. S
 
 ### Redes de cómputo intensivo: ENI, EFA, NVLink y transceptores ópticos
 
-ENI, EFA y NVLink sirven para rutas distintas. Una **ENI** es una interfaz de red virtual conectada a una instancia EC2 en una zona de disponibilidad; su tráfico IP normal puede llegar a otras AZ y VPC conectadas cuando el enrutamiento y las políticas lo permiten (consulta [VPC CNI](01-vpc-cni.md)). **EFA** proporciona un dispositivo de acceso directo al sistema operativo que el software MPI/NCCL compatible usa mediante libfabric. **El tráfico del dispositivo EFA no es enrutable y no puede atravesar los límites de VPC/AZ**; el tráfico IP normal a través del dispositivo ENA de una interfaz EFA con ENA sí es enrutable. Las interfaces EFA únicamente no tienen dispositivo ENA ni direccionamiento IP. **NVLink** conecta GPU dentro de los sistemas compatibles, incluidos los dominios NVLink compatibles a escala de rack. Mide el hardware, las operaciones colectivas y la ubicación seleccionados en lugar de dar por supuesto un aumento de velocidad fijo respecto a EFA.
+ENI, EFA y NVLink sirven para rutas distintas. Una **ENI** es una interfaz de red virtual conectada a una instancia EC2 en una zona de disponibilidad; su tráfico IP normal puede llegar a otras AZ y VPC conectadas cuando el enrutamiento y las políticas lo permiten (consulta [VPC CNI](01-vpc-cni.md)). **EFA** proporciona un dispositivo que evita la intervención del sistema operativo (OS-bypass) y que el software MPI/NCCL compatible usa mediante libfabric. **El tráfico del dispositivo EFA no es enrutable y no puede atravesar los límites de VPC/AZ**; el tráfico IP normal a través del dispositivo ENA de una interfaz EFA con ENA sí es enrutable. Las interfaces EFA únicamente no tienen dispositivo ENA ni direccionamiento IP. **NVLink** conecta GPU dentro de los sistemas compatibles, incluidos los dominios NVLink compatibles a escala de rack. Mide el hardware, las operaciones colectivas y la ubicación seleccionados en lugar de dar por supuesto un aumento de velocidad fijo respecto a EFA.
 
 Los **transceptores ópticos** son un concepto general de redes de centros de datos. Los cables de cobre DAC (Direct Attach Copper) sirven para tramos cortos; los módulos ópticos y la fibra satisfacen otros requisitos de alcance y ancho de banda. QSFP y OSFP describen formatos físicos de módulos, pero no garantizan el uso de medios ópticos. Considera esto información general: no establece el cableado físico de una carga de trabajo concreta de AWS.
 

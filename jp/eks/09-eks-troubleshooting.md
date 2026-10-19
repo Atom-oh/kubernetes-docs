@@ -17,7 +17,7 @@ Amazon EKS クラスターの運用中には、さまざまな問題が発生す
 9. [アップグレードに関する問題](#upgrade-issues)
 10. [一般的なエラーメッセージと解決策](#common-error-messages-and-solutions)
 
-## トラブルシューティングの基本
+## トラブルシューティングの基本 {#troubleshooting-basics}
 
 ![EKS のトラブルシューティングの基本: 症状を特定し、証拠を収集し、仮説を検証して、修復、確認、記録を行います。](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
 
@@ -163,7 +163,7 @@ printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDE
 
 出典: [EKS のトラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Kubernetes のログ](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)、[ノードのデバッグ](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)。
 
-## クラスターの作成と管理に関する問題
+## クラスターの作成と管理に関する問題 {#cluster-creation-and-management-issues}
 
 ![調査すべき仮説とともに、クラスターの作成、エンドポイントへのアクセス、削除に関する症状を示します。](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
 
@@ -339,7 +339,7 @@ EKS の更新詳細と CloudFormation スタックイベントを使用して、
 
 出典: [EKS クラスターの削除](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html)、[削除に関するトラブルシューティング](https://repost.aws/knowledge-center/eks-delete-cluster-issues)、[PersistentVolume のライフサイクル](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。
 
-## ネットワークに関する問題
+## ネットワークに関する問題 {#networking-issues}
 
 ![Pod 間通信、Service アクセス、ロードバランシング、DNS、CNI/IP 割り当てに分類したネットワークの症状。](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
 
@@ -569,7 +569,7 @@ Auto Mode は `NodeClass` のサブネット/セキュリティグループ/ポ�
 
 出典: [VPC CNI ポリシー設定](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode のネットワーク](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[カスタムネットワーク](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)、[CNI の設定](https://github.com/aws/amazon-vpc-cni-k8s)、[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)。
 
-## ノードと Pod に関する問題
+## ノードと Pod に関する問題 {#node-and-pod-issues}
 
 ![調査すべきリソース、kubelet、ネットワーク、ワークロード、スケーリングの仮説とともに、ノードと Pod の症状を示します。](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
 
@@ -765,7 +765,7 @@ spec:
 
 出典: [EKS ノード修復](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Pod のライフサイクル](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[プライベートイメージの取得](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
 
-## IAM と認証に関する問題
+## IAM と認証に関する問題 {#iam-and-authentication-issues}
 
 <!-- Audit 2026-09-11: parent diagram repair pending; see core-audit/eks-troubleshooting/diagram-review.json.
 ![IAM and Kubernetes authorization symptoms; use the cluster authentication mode and actual caller to select the diagnostic path.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
@@ -945,7 +945,7 @@ AMI の bootstrap モデルを使用します。AL2023/nodeadm、Bottlerocket �
 
 出典: [EKS アクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)、[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)、[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)、[OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html)、[EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)。
 
-## ストレージに関する問題
+## ストレージに関する問題 {#storage-issues}
 
 ### PVC、PV、コンシューマーの診断
 
@@ -1101,7 +1101,7 @@ spec:
 
 出典: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/)。
 
-## ログとモニタリングに関する問題
+## ログとモニタリングに関する問題 {#logging-and-monitoring-issues}
 
 ### CloudWatch Logs と Container Insights
 
@@ -1256,7 +1256,7 @@ Grafana では、データソース UID/URL/認証、ネットワークアクセ
 
 出典: [CloudWatch EKS アドオン](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[Prometheus Operator のトラブルシューティング](https://prometheus-operator.dev/docs/platform/troubleshooting/)。
 
-## パフォーマンスに関する問題
+## パフォーマンスに関する問題 {#performance-issues}
 
 ### 比較可能なベースラインを作成する
 
@@ -1358,7 +1358,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" exec "$CLIENT_POD" \
 
 出典: [Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)、[EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html)、[iperf のマニュアル](https://software.es.net/iperf/invoking.html)。
 
-## アップグレードに関する問題
+## アップグレードに関する問題 {#upgrade-issues}
 
 ### 正確な操作を特定する
 
@@ -1415,7 +1415,7 @@ EKS 最適化 AMI では、Kubernetes バージョンと AMI リリースの両�
 
 出典: [EKS の更新](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)、[マネージドノードの更新](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)、[EKS のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)、[Auto Mode のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)。
 
-## 一般的なエラーメッセージと解決策
+## 一般的なエラーメッセージと解決策 {#common-error-messages-and-solutions}
 
 ここに示すのは例示的なメッセージやパターンであり、現在のすべてのコントローラーがまったく同じ文字列を出力するという意味ではありません。実際のエラーコード、リソース UID、リクエスト ID、条件を確認してください。提案された原因は、証拠によって裏付けられるまでは仮説です。
 

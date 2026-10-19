@@ -17,7 +17,7 @@ Este cuestionario abarca las redes de EKS, la capacidad de los nodos, la multi-t
 
 **Respuesta: B) El tipo de instancia de EC2**
 
-En el **modo de IP secundaria** IPv4 para Linux, si hay suficientes direcciones de subred y no se usa redes personalizadas ni grupos de seguridad para Pods, el tipo de instancia proporciona los límites de ENI y de direcciones por ENI. Esto permite estimar el límite convencional de Pods del nodo, no las «direcciones IP por Pod».
+En el **modo de IP secundaria** IPv4 para Linux, si hay suficientes direcciones de subred y no se usan redes personalizadas ni grupos de seguridad para Pods, el tipo de instancia proporciona los límites de ENI y de direcciones por ENI. Esto permite estimar el límite convencional de Pods del nodo, no las «direcciones IP por Pod».
 
 La fórmula convencional reserva la dirección principal de **cada** ENI:
 
@@ -119,7 +119,7 @@ spec:
     ports:
     - {protocol: TCP, port: 5432}
 ```
-Para aislar el tráfico de salida, permite por separado la ruta DNS real y las dependencias de la aplicación. Una conexión denegada solo es significativa después de que funcionen la conectividad de referencia, DNS, la disponibilidad y un control positivo permitido. No apliques políticas de denegación general a `kube-system` ni a un espacio de nombres `default` compartido como prueba rápida.
+Para aislar el tráfico de salida, permite por separado la ruta DNS real y las dependencias de la aplicación. Una conexión denegada solo es significativa después de que funcionen la conectividad de referencia, DNS, la preparación para atender solicitudes y un control positivo permitido. No apliques políticas de denegación general a `kube-system` ni a un espacio de nombres `default` compartido como prueba rápida.
 
 </details>
 
@@ -764,7 +764,7 @@ spec:
     matchLabels:
       app: my-app
 ```
-Una alternativa es `maxUnavailable: "50%"`; especifica solo uno de los campos de presupuesto. El redondeo de porcentajes se hace **hacia arriba**, por lo que esta opción permite que haya dos Pods no disponibles de tres, o uno de uno. No promete que quede disponible al menos la mitad. Elige los presupuestos en función del quórum, la disponibilidad, el comportamiento de la carga de trabajo y la capacidad programable disponible.
+Una alternativa es `maxUnavailable: "50%"`; especifica solo uno de los campos de presupuesto. El redondeo de porcentajes se hace **hacia arriba**, por lo que esta opción permite que haya dos Pods no disponibles de tres, o uno de uno. No promete que quede disponible al menos la mitad. Elige los presupuestos en función del quórum, la preparación de los Pods para atender solicitudes, el comportamiento de la carga de trabajo y la capacidad disponible para programarlos.
 
 Las actualizaciones `DEFAULT` de un grupo de nodos administrado lanzan capacidad de reemplazo antes de drenar los nodos antiguos seleccionados. `MINIMAL` reduce las necesidades de capacidad temporal terminando primero los nodos antiguos seleccionados. `maxUnavailable` controla la indisponibilidad simultánea de nodos; los PDB limitan las expulsiones de Pods por separado. No uses `--force` habitualmente como respuesta a un drain bloqueado, ya que puede eludir la protección de expulsión de Pods.
 
@@ -781,7 +781,7 @@ aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
   --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODEGROUP_UPDATE_ID" \
   --query 'update.{status:status,errors:errors}'
 ```
-Consulta `describe-update` hasta que ese ID tenga estado `Successful` y gestiona explícitamente los estados `Failed`/`Cancelled`. El comando original de eksctl `update nodegroup --max-unavailable` no es una alternativa compatible. Comprueba el valor real de `disruptionsAllowed` del PDB, la disponibilidad, el estado de la aplicación y la reubicación de volúmenes; una configuración de tres réplicas es un ejemplo, no un mínimo universal.
+Consulta `describe-update` hasta que ese ID tenga estado `Successful` y gestiona explícitamente los estados `Failed`/`Cancelled`. El comando original de eksctl `update nodegroup --max-unavailable` no es una alternativa compatible. Comprueba el valor real de `disruptionsAllowed` del PDB, la preparación de los Pods para atender solicitudes, el estado de la aplicación y la reubicación de volúmenes; una configuración de tres réplicas es un ejemplo, no un mínimo universal.
 
 </details>
 
@@ -1499,7 +1499,7 @@ Las preguntas siguientes tratan temas avanzados relacionados con la creación de
 
 La delegación de prefijos puede reducir la latencia de asignación de direcciones: asociar otro prefijo a una ENI existente evita parte del trabajo de creación/asociación de ENI. AWS documenta este beneficio, por lo que la explicación original de que la delegación de prefijos no puede reducir el tiempo de inicio y necesariamente añade sobrecarga de enrutamiento era incorrecta.
 
-La disponibilidad de extremo a extremo de un Pod sigue dependiendo de la programación, el inicio del nodo, la descarga de imágenes, la asociación de volúmenes, la inicialización, las sondas y el inicio de la aplicación. Aquí no se proporcionó ninguna comparación de referencia, y esta auditoría no ejecutó ninguna. No deduzcas una mejora de latencia fija ni inventes la causa de una ralentización.
+Que un Pod esté completamente listo para atender solicitudes sigue dependiendo de la programación, el inicio del nodo, la descarga de imágenes, la asociación de volúmenes, la inicialización, las sondas y el inicio de la aplicación. Aquí no se proporcionó ninguna comparación de referencia, y esta auditoría no ejecutó ninguna. No deduzcas una mejora de latencia fija ni inventes la causa de una ralentización.
 
 Cada IPv4 `/28` consume una ranura de dirección secundaria y 16 direcciones de un bloque contiguo de la subred. Aumenta la capacidad de IP por nodo, sujeta a `maxPods`, los recursos de cómputo y el espacio de subred. No amplía el CIDR ni garantiza que haya menos direcciones asignadas. La configuración de los grupos de direcciones disponibles intercambia consumo de direcciones libres por disponibilidad de asignación.
 
@@ -1649,7 +1649,7 @@ spec:
           requests: {cpu: 100m, memory: 64Mi}
           limits: {cpu: 500m, memory: 128Mi}
 ```
-Valida la disponibilidad, API/CNI/DNS, los errores de la aplicación, la presión de recursos, los volúmenes persistentes y tráfico representativo durante un período de observación revisado. Mantén explícito el enrutamiento del tráfico; una etiqueta de nodo no cambia la ruta del tráfico. Cuando se hayan verificado la capacidad de reemplazo y el comportamiento de las cargas de trabajo/datos, drena un nodo antiguo confirmado cada vez:
+Valida la preparación para atender solicitudes, API/CNI/DNS, los errores de la aplicación, la presión de recursos, los volúmenes persistentes y tráfico representativo durante un período de observación revisado. Mantén explícito el enrutamiento del tráfico; una etiqueta de nodo no cambia la ruta del tráfico. Cuando se hayan verificado la capacidad de reemplazo y el comportamiento de las cargas de trabajo/datos, drena un nodo antiguo confirmado cada vez:
 
 ```bash
 # One reviewed node at a time, after validating replacement capacity.
