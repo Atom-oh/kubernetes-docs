@@ -1,22 +1,30 @@
-# Optimización de recursos: requests, limits y runtimes de lenguaje
+# Optimización de recursos: solicitudes, límites y entornos de ejecución de lenguajes
 
-> **Última actualización**: 11 de septiembre de 2026. Ejemplos comprobados con esquemas Kubernetes 1.36,
+> **Última actualización**: 16 de octubre de 2026. Ejemplos comprobados con esquemas de Kubernetes 1.36,
 > Java 21 / Spring Boot 4.1.1, Python 3.12 / Gunicorn 26.2.0,
-> Node.js 24.21, Go 1.27.1 y Rust 1.98 / Tokio 1.53.1.
+> Node.js 24.22, Go 1.27.2 y Rust 1.98 / Tokio 1.53.1.
 
-No dimensione cargas solo por el lenguaje o un porcentaje fijo. Mida los SLO de rendimiento y latencia bajo carga representativa, arranque, reinicio, GC y fallos. Ajuste requests, limits, réplicas y concurrencia del runtime conjuntamente. Los porcentajes y umbrales son puntos de partida de pruebas, no garantías de rendimiento.
+No dimensione las cargas de trabajo basándose solo en el lenguaje o en un porcentaje fijo. Mida los SLO
+de rendimiento y latencia con cargas representativas y durante el arranque, los reinicios, el GC y los fallos.
+Ajuste conjuntamente las solicitudes, los límites, las réplicas y la concurrencia del entorno de ejecución.
+Los porcentajes y umbrales de ejemplo son puntos de partida para pruebas, no garantías de rendimiento.
 
-## 1. Requests, limits y QoS
+## 1. Solicitudes, límites y QoS
 
-| Recurso | Requests | Limits |
+| Recurso | Solicitudes | Límites |
 |---|---|---|
-| CPU | Contabilización para planificación y peso relativo bajo contención | La cuota CPU de cgroup Linux puede restringir la ejecución |
-| Memoria | Contabilización para planificación | La presión de asignación puede causar OOM del cgroup si la recuperación de memoria no basta |
-| Sin especificar | Siguen importando los valores de admisión y políticas superiores | Puede no haber límite de contenedor, pero sí de nodo/cgroup antecesor |
+| CPU | Contabilización para la planificación y peso relativo cuando hay contención | La cuota de CPU de cgroup de Linux puede restringir la ejecución |
+| Memoria | Contabilización para la planificación | La presión de asignación puede causar un OOM de cgroup cuando la recuperación no basta |
+| Sin especificar | Siguen siendo pertinentes los valores predeterminados de admisión y las políticas de niveles superiores | Puede no haber un límite de contenedor, aunque sí límites de nodo o cgroup antecesor |
 
-Un request no fija CPU física ni preasigna memoria, y no garantiza rendimiento. Si solo se proporciona un limit y ningún valor de admisión establece el request, Kubernetes copia el limit al request. Inspeccione el Pod admitido tras LimitRange y otras políticas.
+Una solicitud no fija físicamente la CPU ni preasigna memoria, y no garantiza el rendimiento de la aplicación.
+Si solo se proporciona un límite y ningún otro valor predeterminado de admisión establece la solicitud,
+Kubernetes copia el límite en la solicitud. Inspeccione el Pod admitido después de LimitRange y de las demás políticas.
 
-Estos ejemplos usan recursos por contenedor, no por Pod. Cree primero `resource-demo` y compare QoS sin un LimitRange que inyecte valores. Guaranteed requiere requests/limits positivos e iguales de CPU y memoria, y las condiciones aplicables a contenedores ordinarios e init.
+Estos ejemplos usan recursos a nivel de contenedor, no de Pod. Cree primero `resource-demo` y compare
+la QoS sin un LimitRange que inyecte valores predeterminados de recursos. Para obtener Guaranteed,
+las solicitudes y los límites de CPU y memoria deben ser positivos e iguales, además de cumplir las
+condiciones aplicables a los contenedores normales y de inicialización.
 
 ```yaml
 # qos-pods.yaml
@@ -65,21 +73,41 @@ spec:
     resources: {}
 ```
 
-BestEffort no tiene requests ni limits de CPU/memoria; otras configuraciones pueden ser Burstable. Revise reglas por versión al usar recursos Pod o contabilización de sidecars/init.
+BestEffort no tiene solicitudes ni límites de CPU/memoria; las demás configuraciones pueden ser Burstable.
+Compruebe las reglas específicas de la versión al usar recursos a nivel de Pod o contabilización de recursos
+de sidecars y contenedores de inicialización.
 
-QoS no es un orden absoluto de expulsión. Bajo presión de memoria, kubelet considera si el uso supera requests, Pod Priority y el uso relativo a requests. Guaranteed y Burstable dentro de requests suelen considerarse después, pero Guaranteed no siempre es la última víctima. Distinga expulsión DiskPressure de OOM por límite de contenedor. OOMKilled normalmente es una razón de terminación de contenedor, no una fase Pod. Puede terminar un proceso individual; si sale PID 1, la política de reinicio determina qué ocurre con el contenedor.
+La QoS no establece un orden absoluto de expulsión. Ante presión de memoria, kubelet tiene en cuenta si
+el uso supera las solicitudes, la prioridad del Pod y el uso relativo a las solicitudes. Los Pods Guaranteed
+y los Pods Burstable que se mantienen dentro de sus solicitudes suelen considerarse más tarde, pero un Pod
+Guaranteed no siempre es la última víctima. Distinga la expulsión por DiskPressure del OOM causado por el
+límite del contenedor. OOMKilled suele ser un motivo de terminación del contenedor, no una fase del Pod.
+Se puede matar un proceso individual; si termina PID 1, la política de reinicio determina el comportamiento
+del contenedor.
 
-### Cuota CPU y límites de memoria
+### Cuota de CPU y límites de memoria
 
-cgroup v1 usa `cpu.cfs_quota_us` / `cpu.cfs_period_us`; v2 usa `cpu.max`. 100ms es un período habitual, no universal. Con 500m y un período de 100ms, todos los hilos comparten 50ms de ejecución agregada. El throttling puede afectar a latencia y rendimiento. La proporción de períodos limitados mide períodos que contienen throttling, no tiempo CPU perdido.
+cgroup v1 usa `cpu.cfs_quota_us` / `cpu.cfs_period_us`; v2 usa `cpu.max`. Un período de 100 ms es habitual,
+pero no universal. Con 500m y un período de 100 ms, todos los hilos comparten un presupuesto agregado de
+50 ms de ejecución. La limitación puede afectar tanto a la latencia como al rendimiento. La proporción de
+períodos limitados mide cuántos períodos tuvieron limitación, no el tiempo de CPU perdido.
 
-Un límite de memoria no es un límite del heap. Distinga `memory.limit_in_bytes` de cgroup v1 y `memory.max` de v2. Considere RSS, asignación nativa, pilas, caché de páginas y emptyDir en memoria. Un liveness probe que reinicie cerca de un umbral puede ocultar la causa y crear bucles; no es una solución OOM general.
+Un límite de memoria no es un límite del heap. Distinga `memory.limit_in_bytes` de cgroup v1 de
+`memory.max` de v2. Tenga en cuenta el RSS, las asignaciones nativas, las pilas de hilos, la caché de páginas
+y el uso de emptyDir respaldado por memoria. Una sonda de actividad que reinicia la aplicación cuando la
+memoria se acerca a un umbral puede ocultar la causa y crear ciclos de reinicio; no es una solución general
+para los OOM.
 
-Eliminar un limit CPU puede reducir el throttling de cuota de ese contenedor, pero no elimina contención, cuotas antecesoras ni límites del nodo. Evalúe conjuntamente requests, prioridad, aislamiento, políticas y SLO.
+Quitar un límite de CPU puede reducir la limitación por cuota de ese contenedor, pero no elimina la
+contención, las cuotas de cgroup antecesoras ni los límites del nodo. Evalúe en conjunto las solicitudes,
+la prioridad, el aislamiento, las políticas y los SLO.
 
-### Valores predeterminados y presupuestos de namespace
+### Valores predeterminados y presupuestos de namespaces
 
-LimitRange controla valores de admisión y restricciones por recurso. ResourceQuota controla presupuestos de admisión del namespace para requests, limits y objetos. No miden ni limitan directamente CPU real o coste. Cree `production` antes de aplicar estas políticas.
+LimitRange controla los valores predeterminados de admisión y las restricciones por recurso. ResourceQuota
+controla los presupuestos de admisión del namespace para solicitudes, límites y cantidad de objetos.
+No miden ni limitan directamente el uso real de CPU ni el costo. Cree el namespace `production` antes de
+aplicar estas políticas.
 
 ```yaml
 # namespace-policy.yaml
@@ -116,9 +144,15 @@ spec:
 
 ## 2. Medición y VPA
 
-Observe distribuciones, picos, coste de arranque y crecimiento de memoria durante un período representativo. Requests P70 y limits P99 son hipótesis, no valores universales. GC, carga de modelos, JIT, criptografía, sidecars y entradas por lotes varían incluso dentro de un lenguaje. No oculte fugas aumentando límites ni clasifique automáticamente Pods de reserva/recuperación inactivos como desperdicio.
+Observe las distribuciones, los picos, el costo de arranque y el crecimiento de memoria durante un período
+representativo. Las solicitudes P70 y los límites P99 son hipótesis que deben probarse, no valores
+predeterminados universales. El GC, la carga de modelos, JIT, la criptografía, los sidecars y el tamaño de
+las entradas por lotes varían incluso dentro de un mismo lenguaje. No oculte una fuga aumentando solo los
+límites ni clasifique automáticamente como desperdicio los Pods inactivos de reserva o recuperación ante desastres.
 
-Use el [capítulo de escalado](./06-scaling-strategies.md) para instalar VPA y Goldilocks fijados. Goldilocks crea/muestra VPA para namespaces/cargas seleccionados; instalarlo no optimiza todo. Este VPA observa el Deployment `resource-java` posterior.
+Use el [capítulo de escalado](./06-scaling-strategies.md) para instalar las versiones fijadas de VPA y
+Goldilocks. Goldilocks crea y muestra VPA para los namespaces y cargas de trabajo seleccionados; instalarlo
+no optimiza todo automáticamente. Este VPA observa el Deployment `resource-java` que se muestra a continuación.
 
 ```yaml
 # vpa.yaml
@@ -146,19 +180,35 @@ spec:
         memory: 4Gi
 ```
 
-`Off` solo recomienda. `target` recomienda un request; los límites inferior/superior describen el intervalo recomendado. No trate upperBound directamente como limit de memoria ni uncappedTarget como valor aplicado. `RequestsAndLimits` puede ajustar limits conservando una proporción existente; no copia upperBound a limits.
+`Off` solo genera recomendaciones. `target` es una recomendación para la solicitud; los límites inferior
+y superior describen el rango de la recomendación. No trate `upperBound` directamente como el límite de
+memoria ni `uncappedTarget` como el valor aplicado. `RequestsAndLimits` puede ajustar los límites y
+conservar una proporción existente; no copia `upperBound` en los límites.
 
-En VPA 1.7.1, `Auto` obsoleto se comporta como `Recreate`. Revise requisitos de `InPlaceOrRecreate`/`InPlace` y soporte in-place Kubernetes. `Initial` sigue cambiando requests en Pods nuevos y, por tanto, el denominador de utilización HPA. No está automáticamente libre de conflictos con HPA.
+En VPA 1.8.0, el modo obsoleto `Auto` se comporta como `Recreate`. Compruebe los requisitos previos
+de `InPlaceOrRecreate`/`InPlace` y de la compatibilidad de Kubernetes con cambios in-place. `Initial`
+sigue modificando las solicitudes de los Pods nuevos y, por tanto, el denominador de utilización de HPA
+basada en solicitudes. No evita automáticamente los conflictos con HPA.
 
-Si un Pod sostiene 200 RPS con el SLO requerido, 1,000 RPS necesitan cinco Pods en estado estable. Mantenerlo tras perder uno requiere al menos seis. No garantiza soportar la pérdida de una AZ completa. Distinga añadir 20% de capacidad de dejar 20% sin usar; lo segundo requiere `ceil(1000 / (200 × 0.8)) = 7`.
+Si un Pod mantiene 200 RPS dentro del SLO requerido, 1.000 RPS necesitan cinco Pods en estado estable.
+Para mantener ese rendimiento tras perder un Pod, hacen falta al menos seis. Esto no garantiza resistir
+la pérdida de toda una AZ. Distinga entre añadir un 20 % de capacidad y dejar sin usar el 20 % de la
+capacidad disponible; esto último requiere `ceil(1000 / (200 × 0.8)) = 7`.
 
 ## 3. JVM: heap y memoria del contenedor
 
-`MaxRAMPercentage` es una entrada de la ergonomía del heap basada en memoria detectada. 75% no es universalmente óptimo ni un redimensionador que siga inmediatamente cambios del limit Pod. También importan `-Xmx`, `-XX:MaxRAM` y la ergonomía de heaps pequeños. Metaspace, caché de código, pilas, buffers directos, JNI y asignadores consumen fuera del heap. Un 25% fijo no garantiza capacidad suficiente fuera de él.
+`MaxRAMPercentage` es una entrada para la configuración automática del heap de la JVM basada en la
+memoria detectada. El 75 % no es óptimo en todos los casos y no redimensiona el heap en vivo para seguir
+de inmediato los cambios del límite del Pod. También influyen `-Xmx`, `-XX:MaxRAM` y la configuración
+automática para heaps pequeños. Metaspace, la caché de código, las pilas, los búferes directos, JNI y los
+asignadores consumen memoria fuera del heap. Un 25 % fijo no garantiza que haya suficiente memoria fuera del heap.
 
-La JVM no lee automáticamente `JAVA_OPTS`; el entrypoint debe pasarlo al comando. El ejemplo usa `JAVA_TOOL_OPTIONS`, reconocido por la JVM, y `java -jar` explícito. 60% es un punto inicial de perfilado.
+La JVM no lee `JAVA_OPTS` automáticamente; el entrypoint de la imagen debe pasarlo al comando. Este
+ejemplo usa `JAVA_TOOL_OPTIONS`, que reconoce la JVM, y un comando `java -jar` explícito. El 60 % es
+un punto de partida para el perfilado.
 
-El ejemplo completo Spring Boot se compiló con Java 21 y Boot 4.1.1. Guarde los archivos en las rutas indicadas.
+El siguiente ejemplo completo de Spring Boot se compiló con Java 21 y Boot 4.1.1. Guarde los archivos
+en las rutas del proyecto indicadas.
 
 ```xml
 <!-- java/pom.xml -->
@@ -273,7 +323,11 @@ mvn -f java/pom.xml package
 java -jar java/target/resource-api-1.0.0.jar
 ```
 
-El proyecto mínimo no incluye wrapper; use `mvn package` salvo que añada uno. La imagen debe contener el jar compilado en `/app/resource-api.jar` y un runtime compatible con Java 21. La imagen `registry.example.com` es un marcador que sustituir. Crear el namespace, construir la imagen y acceder al registro son requisitos separados. Las rutas readiness/liveness coinciden con endpoints Actuator reales.
+El proyecto mínimo no incluye archivos wrapper; use `mvn package` a menos que añada uno. La imagen
+debe contener el JAR compilado en `/app/resource-api.jar` y un entorno de ejecución compatible con
+Java 21. La imagen `registry.example.com` que aparece a continuación es un marcador que debe sustituir.
+La creación del namespace, la compilación de la imagen y el acceso al registro son requisitos previos
+independientes. Las rutas de readiness/liveness corresponden a los endpoints Actuator reales de la aplicación.
 
 ```yaml
 # java-deployment.yaml
@@ -346,26 +400,45 @@ spec:
             app: resource-java
 ```
 
-La ruta de configuración Prometheus es `management.prometheus.metrics.export`. No exponga indiscriminadamente métricas y detalles de salud. Solo las métricas que publican histogramas admiten consultas `_bucket`; promediar percentiles calculados por clientes entre Pods no produce un percentil global. Un Timer Micrometer ya aporta count/sum, por lo que no hace falta un Counter duplicado para la misma medición.
+La ruta de configuración de Prometheus es `management.prometheus.metrics.export`. No exponga
+indiscriminadamente las métricas y la información detallada de estado. Solo las métricas que publican
+histogramas permiten consultas `_bucket`; promediar percentiles calculados por clientes entre Pods no
+produce un percentil global. Un Timer de Micrometer ya proporciona count/sum, así que no hace falta un
+Counter duplicado para la misma medición.
 
-HeapDumpOnOutOfMemoryError maneja Java OOME de la JVM. SIGKILL del kernel no ejecuta hooks de heap dump o cierre. Los diagnósticos en emptyDir desaparecen al borrar el Pod; gestione colisiones de nombres y falta de disco. Los heap dumps pueden contener datos sensibles: restrinja acceso y retención. `ScheduleAnyway` expresa una preferencia, no distribución estricta entre AZ.
+HeapDumpOnOutOfMemoryError maneja los OOME de Java de la JVM. El SIGKILL del kernel no puede ejecutar
+un volcado de heap ni los hooks de apagado. Los archivos de diagnóstico en emptyDir desaparecen al
+eliminar el Pod; gestione las colisiones de nombres y el agotamiento de disco. Los volcados de heap
+pueden contener datos sensibles de la aplicación, así que restrinja su acceso y retención.
+`ScheduleAnyway` expresa una preferencia, no una distribución estricta entre AZ.
 
 ### GC y CPU
 
 | Opción | Qué validar |
 |---|---|
-| G1 | Punto inicial habitual; objetivos de pausa no garantizan latencia máxima |
-| ZGC | Comportamiento generacional específico del JDK y presupuesto CPU/memoria |
-| Shenandoah | Disponibilidad en la distribución y versión JDK elegidas |
-| Parallel / Serial | Comparar según necesidades de rendimiento o heap pequeño |
+| G1 | Punto de partida habitual; los objetivos de pausa no garantizan la latencia máxima |
+| ZGC | Comportamiento generacional específico del JDK y presupuesto de CPU/memoria |
+| Shenandoah | Disponibilidad en la distribución y versión del JDK seleccionadas |
+| Parallel / Serial | Comparar según los requisitos de rendimiento o de cargas con heap pequeño |
 
-Java 21 admite ZGC generacional con `-XX:+UseZGC -XX:+ZGenerational`. Pasó a ser predeterminado en Java 23; Java 24 eliminó el modo no generacional y dejó obsoleto el selector. Distinga una advertencia de obsolescencia en Java 25 de su futura eliminación. No copie el flag a Java 17. En JDK actuales exclusivamente generacionales, use `-XX:+UseZGC` y verifique el arranque en la versión exacta. Las cifras fijas de GC requieren benchmarks.
+Java 21 admite ZGC generacional con `-XX:+UseZGC -XX:+ZGenerational`. El modo generacional pasó
+a ser el predeterminado en Java 23; Java 24 eliminó el modo no generacional y dejó obsoleto el indicador
+de selección. Distinga la advertencia de obsolescencia de Java 25 de la futura expiración del indicador.
+No copie este indicador en Java 17. En los JDK actuales que solo admiten el modo generacional, use
+`-XX:+UseZGC` y verifique el arranque en la versión exacta. Las cifras fijas de latencia/rendimiento
+del GC requieren pruebas de rendimiento.
 
-`availableProcessors()` no siempre es el número de trabajadores GC. Importan cuota, afinidad, versión JDK y ergonomía del recolector. Añadir hilos GC puede agotar antes una cuota CPU pequeña. Para arranque lento, use startupProbe y mida JIT/GC/CPU.
+`availableProcessors()` no siempre indica la cantidad de hilos de trabajo del GC. Influyen la cuota,
+la afinidad, la versión del JDK y la configuración automática del recolector. Añadir hilos del GC puede
+agotar antes una cuota pequeña de CPU. Si el arranque es lento, use una startupProbe y mida el
+comportamiento de JIT/GC/CPU.
 
 ### JMX y JFR
 
-Incluya el jar JMX exporter 1.6.0 en la imagen, u obtenga el artefacto oficial y verifique su checksum. La configuración se probó con MBeans reales de memoria, hilos y GC. JMX y Micrometer usan nombres distintos; no los mezcle silenciosamente en dashboards. GC CollectionTime se convierte de milisegundos a segundos.
+Incluya el JAR del JMX exporter 1.6.0 en la imagen u obtenga el artefacto oficial y verifique su checksum.
+La siguiente configuración se probó con MBeans reales de memoria, hilos y GC. JMX y Micrometer usan
+nombres de métricas distintos; no los mezcle silenciosamente en los dashboards. GC CollectionTime se
+convierte de milisegundos a segundos.
 
 ```yaml
 # jmx-config.yaml
@@ -400,9 +473,14 @@ rules:
 java -javaagent:jmx_prometheus_javaagent-1.6.0.jar=127.0.0.1:9404:jmx-config.yaml   -jar java/target/resource-api-1.0.0.jar
 ```
 
-El comando local se vincula a loopback. Recoger desde otro Pod necesita puerto de métricas explícito, ServiceMonitor y controles. La JVM no arranca si falta el jar del agente. NMT requiere `-XX:NativeMemoryTracking=summary` al arrancar; no contabiliza completamente RSS de todas las asignaciones de bibliotecas nativas externas.
+Este comando de diagnóstico local se vincula a loopback. Para recopilar desde otro Pod hace falta un
+puerto de métricas explícito, un ServiceMonitor y controles de acceso. La JVM no puede arrancar si falta
+el JAR del agente. NMT requiere `-XX:NativeMemoryTracking=summary` al arrancar; no contabiliza por
+completo el RSS de todas las asignaciones de bibliotecas nativas externas.
 
-La captura JFR en vivo requiere herramientas JDK, permisos adecuados del mismo usuario, soporte de attach y destino escribible. Sustituya `PID` por el proceso Java en vez de asumir PID 1.
+La captura de JFR en vivo requiere las herramientas del JDK, permisos apropiados del mismo usuario,
+compatibilidad con attach y un destino donde se pueda escribir. Sustituya `PID` por el ID del proceso
+Java, en lugar de dar por sentado que es PID 1.
 
 ```bash
 jcmd PID VM.native_memory summary
@@ -410,11 +488,16 @@ jcmd PID JFR.start name=profile settings=profile duration=60s filename=/diagnost
 jfr summary /diagnostics/profile.jfr
 ```
 
-Al copiar desde un contenedor, considere el contenedor elegido y la disponibilidad de `tar` para `kubectl cp`. Copie cuando finalice la grabación; reemplazar proceso/Pod no garantiza que sobrevivan archivos heap o JFR.
+Al copiar desde un contenedor, tenga en cuenta cuál es el contenedor seleccionado y si `tar` está
+disponible para `kubectl cp`. Copie después de que termine la grabación; que se sustituya el proceso
+no garantiza que sobrevivan los archivos de heap o JFR.
 
 ## 4. Python: workers y perfilado
 
-Aplicar `2 × CPU + 1` al `multiprocessing.cpu_count()` del host puede sobrepasar la cuota del contenedor. Pruebe CPU/IO, GIL/extensiones nativas, RSS por worker y concurrencia. No hay fórmula universal de workers por CPU. Este ejemplo Flask WSGI lee realmente `WEB_CONCURRENCY` y empieza con un worker y dos hilos.
+Aplicar `2 × CPU + 1` a `multiprocessing.cpu_count()` del host puede sobreasignar la cuota del
+contenedor. Pruebe el comportamiento de CPU/E/S, el GIL y las extensiones nativas, el RSS por worker
+y la concurrencia de solicitudes. No hay una fórmula universal de workers por CPU. Este ejemplo de
+Flask WSGI realmente lee `WEB_CONCURRENCY` y empieza con un worker y dos hilos.
 
 ```text
 # python/requirements.txt
@@ -473,11 +556,18 @@ python -m venv .venv
 WEB_CONCURRENCY=2 GUNICORN_THREADS=2   .venv/bin/python -m gunicorn --chdir python   --config python/gunicorn.conf.py 'app:create_app()'
 ```
 
-Los endpoints de salud solo comprueban el proceso de ejemplo. Implemente readiness de dependencias. No use el hook Flask eliminado `before_first_request`. El socket local de administración de Gunicorn 26 está desactivado en este ejemplo mínimo.
+Estos endpoints de salud solo comprueban el proceso de ejemplo. Implemente la readiness de las
+dependencias de su aplicación. No use el hook eliminado `before_first_request` de Flask. En este
+ejemplo mínimo, el socket de control local de Gunicorn 26 está desactivado.
 
-Distinga Flask WSGI de aplicaciones ASGI como FastAPI. Gunicorn 26 también tiene un worker ASGI; si usa Uvicorn, distinga `uvicorn.workers` obsoleto del paquete separado `uvicorn-worker`. No aplique ajustes gthread sin cambios a ASGI. Evalúe los beneficios copy-on-write de preload junto con hilos/conexiones/clientes inicializados antes de fork. Reciclar workers no corrige la causa de una fuga.
+Distinga Flask WSGI de aplicaciones ASGI como FastAPI. Gunicorn 26 también tiene un worker ASGI;
+si elige Uvicorn, distinga el módulo obsoleto `uvicorn.workers` del paquete independiente
+`uvicorn-worker`. No aplique sin cambios la configuración de gthread a una aplicación ASGI. Evalúe
+los beneficios copy-on-write de preload junto con los hilos, conexiones y clientes inicializados antes
+del fork. Reciclar workers no corrige la causa de una fuga.
 
-tracemalloc observa asignaciones Python registradas, no todo el uso nativo/RSS. Lo siguiente es diagnóstico local explícito, no un endpoint HTTP público de depuración.
+tracemalloc observa las asignaciones de Python que tiene registradas, no todo el uso nativo/RSS.
+Lo siguiente es un diagnóstico local explícito, no un endpoint HTTP de depuración expuesto públicamente.
 
 ```python
 # python/profile_allocations.py
@@ -502,11 +592,17 @@ if __name__ == "__main__":
     profile_allocation_delta(lambda: [bytearray(1024) for _ in range(100)])
 ```
 
-## 5. Node.js: old space y memoria de proceso
+## 5. Node.js: old space y memoria del proceso
 
-`--max-old-space-size` se mide en MiB y controla old space de V8. No limita RSS: la generación joven, memoria externa/Buffer y nativa también necesitan capacidad. Con varios procesos worker, presupueste cada heap. Node.js 20 llegó a EOL en abril de 2026, por lo que los nuevos ejemplos usan Node.js 24 compatible.
+`--max-old-space-size` se mide en MiB y controla old space de V8. No es un límite del RSS: también
+hace falta capacidad para la generación joven y la memoria externa, de Buffer y nativa. Si hay varios
+procesos worker, presupueste el heap de cada proceso. Node.js 20 llegó al fin de su vida útil en abril
+de 2026, así que los nuevos ejemplos usan la línea compatible Node.js 24.
 
-Este ejemplo de un proceso implementa salud, observación de memoria y SIGTERM. Llamadas repetidas `global.gc()` basadas solo en un porcentaje no son una optimización general. Node 24 probado acepta `--expose-gc` en NODE_OPTIONS; eso no demuestra beneficio productivo de forzar GC.
+Este ejemplo de un solo proceso implementa endpoints de salud, observación de memoria y gestión de
+SIGTERM. Las llamadas repetidas a `global.gc()` basadas únicamente en un porcentaje no son una
+optimización general. La versión probada de Node 24 acepta `--expose-gc` en NODE_OPTIONS; eso no
+demuestra que forzar el GC aporte beneficios en producción.
 
 ```javascript
 // node/server.cjs
@@ -552,17 +648,33 @@ process.on('SIGINT', shutdown);
 NODE_OPTIONS="--max-old-space-size=512" node node/server.cjs
 ```
 
-`UV_THREADPOOL_SIZE` afecta a operaciones que usan el pool libuv, como E/S de archivos, parte de DNS y criptografía. No cubre toda E/S de red. Más hilos pueden aumentar memoria de pilas y operaciones concurrentes. Establézcalo antes del arranque y pruebe la carga real.
+`UV_THREADPOOL_SIZE` afecta a las operaciones que usan el pool de hilos de libuv, incluidas la E/S
+de archivos, algunas tareas de DNS y la criptografía. No cubre toda la E/S de red. Añadir hilos puede
+aumentar la memoria de las pilas y la cantidad de operaciones simultáneas. Establézcalo antes del
+arranque y pruébelo con la carga real.
 
-Si usa Node cluster, prefiera `isPrimary` y limite explícitamente workers. No asuma que `os.cpus().length`, PM2 `instances: max` o `availableParallelism()` sean fórmulas exactas para toda cuota cgroup. Los bucles de reinicio necesitan backoff y no deben recrear workers durante el cierre. Combinar réplicas Pod y de proceso multiplica workers y presupuestos de memoria.
+Si usa Node cluster, prefiera `isPrimary` y limite explícitamente la cantidad de workers. No dé por
+sentado que `os.cpus().length`, PM2 `instances: max` o `availableParallelism()` sea una fórmula
+exacta para todas las cuotas de cgroup. Los ciclos de reinicio necesitan backoff y no deben volver
+a crear workers durante el apagado. Combinar réplicas de Pods y de procesos multiplica los workers
+y el presupuesto de memoria.
 
 ## 6. Go y Rust
 
 ### Go
 
-Go 1.25 introdujo GOMAXPROCS predeterminado consciente de cgroups en Linux. Importan la versión de lenguaje de `go.mod` y los valores de compatibilidad GODEBUG; use `go 1.25.0` o posterior para esos valores. Este ejemplo se probó con Go 1.27.1. Establecer GOMAXPROCS explícitamente o llamar a `runtime.GOMAXPROCS(n)` positivo desactiva actualizaciones automáticas. Consultarlo con `runtime.GOMAXPROCS(0)` no lo cambia.
+Go 1.25 introdujo en Linux un GOMAXPROCS predeterminado que tiene en cuenta los cgroups. Importan
+la versión del lenguaje indicada en `go.mod` y los valores predeterminados de compatibilidad GODEBUG;
+use `go 1.25.0` o posterior para obtener estos valores. Este ejemplo se probó con Go 1.27.2.
+Establecer GOMAXPROCS explícitamente en el entorno o llamar a `runtime.GOMAXPROCS(n)` con un valor
+positivo desactiva las actualizaciones automáticas. Consultar el valor con `runtime.GOMAXPROCS(0)`
+no lo cambia.
 
-El runtime actual redondea la cuota hacia arriba y considera CPU lógicas y afinidad. Generalmente no elige menos de dos cuando esas cantidades permiten dos, por lo que `500m always means 1` es incorrecto. No equipare versión/redondeo de automaxprocs con los valores integrados de Go ni active ambos a ciegas. Requests CPU no son cuota.
+El runtime actual redondea la cuota hacia arriba y también tiene en cuenta las CPU lógicas y la afinidad.
+En general, no elige menos de dos cuando la cantidad de CPU lógicas/afinidad permite dos; por eso es
+incorrecto afirmar que `500m` siempre significa 1. No equipare el comportamiento de versión/redondeo
+de automaxprocs con los valores predeterminados integrados de Go ni habilite ambos a ciegas. Las
+solicitudes de CPU no son cuotas.
 
 ```text
 // go/go.mod
@@ -605,13 +717,22 @@ go -C go build -o resource-probe .
 GOMEMLIMIT=450MiB ./go/resource-probe
 ```
 
-GOMEMLIMIT es un límite flexible de memoria gestionada por Go, aproximadamente `MemStats.Sys - HeapReleased`. No es un techo RSS de todo el proceso que incluya cgo, mmap o bibliotecas externas. El runtime puede superarlo para limitar coste GC. Establecerlo al 80–90% de memoria del contenedor no garantiza evitar OOM; muy por debajo del heap vivo puede causar GC excesivo. El programa solo informa ajustes, no lee ni modifica cgroups.
+GOMEMLIMIT es un límite flexible para la memoria administrada por el runtime de Go, aproximadamente
+`MemStats.Sys - HeapReleased`. No es un límite del RSS de todo el proceso que incluya cgo, mmap o
+bibliotecas externas. El runtime puede superarlo para limitar la sobrecarga del GC. Establecerlo en
+el 80–90 % de la memoria del contenedor no garantiza evitar OOM; si queda muy por debajo del heap
+activo puede provocar un GC excesivo. Este programa solo muestra los ajustes y no lee ni modifica cgroups.
 
 ### Rust
 
-No tener GC no hace deterministas memoria o latencia. Observe asignador, fragmentación, trabajo concurrente, buffers, tareas bloqueantes y planificación del SO. Evalúe cambios como jemalloc según perfiles y soporte, sin asumir una mejora universal.
+La ausencia de GC no vuelve deterministas el uso de memoria ni la latencia. Observe el comportamiento
+del asignador, la fragmentación, el trabajo simultáneo, los búferes, el trabajo bloqueante y la
+planificación del sistema operativo. Evalúe cambios del asignador, como jemalloc, a partir de perfiles
+y de la compatibilidad de la plataforma; no suponga que mejorará el rendimiento en todos los casos.
 
-Este pequeño programa Tokio valida ajustes del runtime; no es un servidor HTTP. `worker_threads()` explícito prevalece sobre el entorno, por lo que se omite. El número de hilos worker no limita `spawn_blocking` ni hilos de bibliotecas externas.
+Este pequeño programa de Tokio valida los ajustes del runtime; no es un servidor HTTP. Un valor
+explícito de `worker_threads()` tiene prioridad sobre el entorno, por eso el ejemplo lo omite. La
+cantidad de hilos de trabajo no limita `spawn_blocking` ni los hilos de bibliotecas externas.
 
 ```toml
 # rust/Cargo.toml
@@ -654,15 +775,28 @@ cargo build --manifest-path rust/Cargo.toml
 TOKIO_WORKER_THREADS=2 ./rust/target/debug/resource-probe
 ```
 
-En proyectos nuevos sin lockfile, ejecute `cargo build`, revise y confirme el lockfile. Las compilaciones reproducibles posteriores pueden usar `--locked`. Use colas/concurrencia acotadas, no tareas async intensivas en CPU ilimitadas. No publique rankings por lenguaje de memoria/arranque/velocidad sin benchmarks comparables.
+En un proyecto nuevo sin lockfile, ejecute `cargo build`, revise el lockfile y confirme sus cambios.
+Para compilaciones reproducibles posteriores, puede usar `--locked`. Use colas y concurrencia acotadas
+en lugar de crear tareas asíncronas de uso intensivo de CPU sin límite.
+
+No publique rankings de consumo de memoria, arranque o velocidad por lenguaje sin benchmarks comparables.
 
 ## 7. PromQL y alertas
 
-Las reglas suponen `job="kubelet"`, `metrics_path="/metrics/cadvisor"` y series agregadas `cpu="total"` de kube-prometheus-stack, además de kube-state-metrics. Adapte la agregación a recogida por CPU y los selectores al contrato real de etiquetas.
+Estas reglas suponen las series agregadas `job="kubelet"`, `metrics_path="/metrics/cadvisor"` y
+`cpu="total"` de kube-prometheus-stack, además de kube-state-metrics. Adapte la agregación si recopila
+por CPU y ajuste los selectores al contrato real de etiquetas.
 
-El ejemplo usa max por contenedor para no sumar observaciones duplicadas. Inspeccione ventanas de reinicio donde varios IDs runtime se solapan con el mismo nombre Pod/contenedor; no son datos precisos de facturación CPU. Varios clústeres necesitan una etiqueta `cluster` real en recogida/remote-write; PromQL no inventa una identidad ausente.
+El ejemplo usa la agregación máxima por contenedor para evitar sumar observaciones de scrape duplicadas.
+Inspeccione los intervalos de reinicio en los que coinciden varios ID de runtime con el mismo nombre de
+Pod/contenedor; estas observaciones no son datos precisos para facturar CPU. Varios clústeres requieren
+una etiqueta real `cluster` en la ruta de recopilación/escritura remota; PromQL no inventa una identidad
+que falta.
 
-Las reglas ordenadas alinean denominadores request/limit y excluyen cero. Working set no predice OOM exactamente; investigue caché de páginas y recuperación de memoria. La última razón de terminación es un gauge, así que `increase(reason)` no cuenta OOM. La alerta combina reinicio reciente y última razón OOM; no cuenta todos los OOM del intervalo.
+Las reglas ordenadas alinean los denominadores de solicitud/límite y excluyen el cero. El working set
+no predice con exactitud los OOM; investigue la caché de páginas y el comportamiento de recuperación.
+El último motivo de terminación es un gauge, por lo que `increase(reason)` no cuenta los OOM. La alerta
+combina un reinicio reciente con el último motivo de OOM registrado; no cuenta todos los OOM del intervalo.
 
 ```yaml
 # resource-rules.yaml
@@ -734,15 +868,25 @@ spec:
           termination state.
 ```
 
-Haga coincidir `release: prometheus` y namespace `observability` con su selector de reglas. Los umbrales son ejemplos. Una proporción alta de períodos limitados no prescribe automáticamente un limit mayor; correlacione latencia, rendimiento, concurrencia y contención de nodo.
+Haga coincidir `release: prometheus` y el namespace `observability` con el selector de reglas de
+Prometheus. Los umbrales son ejemplos. Una proporción alta de períodos limitados no indica
+automáticamente que deba aumentar el límite; correlacione la latencia, el rendimiento, la concurrencia
+y la contención del nodo.
 
-`cluster:pending_pods:count` suma el gauge de fase 0/1. `count(kube_pod_status_phase{phase="Pending"})` también cuenta muestras cero. Pending puede incluir Pods ya programados esperando imágenes/almacenamiento; no equivale a recursos insuficientes. `node:pods:count` ya cuenta por nodo; no lo divida por el número de nodos del clúster.
+`cluster:pending_pods:count` suma el gauge de fase 0/1. `count(kube_pod_status_phase{phase="Pending"})`
+también cuenta las muestras con valor cero. El estado Pending puede incluir Pods ya planificados que
+esperan imágenes o almacenamiento, por lo que no equivale a falta de recursos. `node:pods:count` ya
+es una cuenta por nodo; no la divida por la cantidad de nodos del clúster.
 
-Para agregar por Deployment, use la relación Pod→ReplicaSet→Deployment de kube-state-metrics o reglas validadas, no regex de nombres Pod. Evalúe rollouts, festivos, reserva y SLO en dimensionamiento a largo plazo; observar poco uso no es una política automática de expulsión.
+Para agregar por Deployment, use la relación de ownership Pod→ReplicaSet→Deployment de kube-state-metrics
+o reglas de grabación validadas, en vez de adivinar el ownership con expresiones regulares sobre los
+nombres de Pods. Al dimensionar a largo plazo, tenga en cuenta los despliegues graduales, los días
+festivos, la capacidad de reserva y los SLO; observar un uso bajo no es una política automática de expulsión.
 
-### Consultas y dashboards JVM
+### Consultas y dashboards de JVM
 
-Las consultas se dirigen a JVM con la configuración Micrometer anterior. Distinga procesos por la etiqueta instance y verifique nombres en scrapes reales.
+Estas consultas apuntan a JVM que usan la configuración de Micrometer anterior. Distinga los procesos
+mediante la etiqueta instance de Prometheus y compruebe los nombres de métricas en scrapes reales.
 
 ```promql
 sum by (instance, application) (jvm_memory_used_bytes{area="heap"})
@@ -764,15 +908,28 @@ sum by (instance, application) (rate(jvm_gc_pause_seconds_sum[5m]))
 rate(jvm_classes_loaded_count_classes_total[5m])
 ```
 
-La tasa de `jvm_gc_pause_seconds_sum` mide segundos de pausa por segundo de reloj. Dividirla por CPU del proceso no produce un porcentaje válido de CPU GC ni captura todo el trabajo GC concurrente. `jvm_classes_loaded_classes` es un gauge de clases actualmente cargadas; el contador acumulativo Micrometer probado es `jvm_classes_loaded_count_classes_total`. Revise exposición real al cambiar JDK/bibliotecas.
+La tasa de `jvm_gc_pause_seconds_sum` mide segundos de pausa observados por segundo de tiempo real.
+Dividirla por la CPU del proceso no produce un porcentaje válido de CPU de GC ni incluye todo el trabajo
+de GC concurrente. `jvm_classes_loaded_classes` es un gauge de las clases cargadas actualmente;
+el contador acumulativo de Micrometer que se probó es `jvm_classes_loaded_count_classes_total`.
+Compruebe la exposición real al cambiar las versiones del JDK o las bibliotecas.
 
-Use los UID explícitos y el aprovisionamiento del [capítulo anterior](./09-observability-stack.md). Muestre proporciones con percentunit, o multiplique por 100 y use percent. No trate gauges brutos de utilización como buckets de histograma en un heatmap. No describa un fragmento parcial JSON de panel como dashboard completo importable.
+Use los UID explícitos de origen de datos y el aprovisionamiento de dashboards del [capítulo anterior](./09-observability-stack.md).
+Muestre las proporciones con percentunit o multiplíquelas por 100 y use percent. No trate los gauges
+de utilización sin procesar como buckets de histogramas en un heatmap. No describa un fragmento
+parcial de JSON de panel como un dashboard completo que se pueda importar.
 
 ## 8. EKS Auto Mode y capacidad de reserva
 
-Considere requests, Node allocatable real, sobrecarga DaemonSet/sistema/Pod, puertos, volúmenes, topología y taints. Una instancia de 4 vCPU no necesariamente expone cuatro CPU asignables a aplicaciones. Las grandes no siempre son más eficientes ni las pequeñas más baratas. Evalúe impacto de fallos, disponibilidad, precio y fragmentación.
+Tenga en cuenta las solicitudes, el valor real de Node allocatable, la sobrecarga de DaemonSet/sistema,
+del Pod, los puertos, los volúmenes, la topología y los taints. Una instancia de 4 vCPU no necesariamente
+ofrece cuatro CPU asignables a las solicitudes de las aplicaciones. Las instancias más grandes no siempre
+son más eficientes, ni las pequeñas siempre cuestan menos. Evalúe el impacto de fallos, la disponibilidad,
+el precio y la fragmentación.
 
-Los NodePools Auto Mode usan `karpenter.sh/v1`; el grupo NodeClass es `eks.amazonaws.com`. El ejemplo referencia un NodeClass Auto Mode `default` existente. Valide por separado NodeClass, subredes, rol IAM y disponibilidad regional de instancias.
+Los NodePools de Auto Mode usan `karpenter.sh/v1`; el grupo de NodeClass es `eks.amazonaws.com`.
+Este ejemplo hace referencia a un NodeClass `default` de Auto Mode ya existente. Valide por separado
+el NodeClass, las subredes, el rol IAM y la disponibilidad regional de las instancias.
 
 ```yaml
 # auto-nodepool.yaml
@@ -803,9 +960,17 @@ spec:
     consolidateAfter: 5m
 ```
 
-La consolidación considera requests, viabilidad de planificación, precio y restricciones de interrupción; CPU observada por debajo del 30% no garantiza consolidación. Los PDB no impiden toda terminación ni garantizan terminación forzada sin interrupción. Un limit sobredimensionado no se reserva automáticamente por el scheduler ordinario si el request no cambia.
+La consolidación tiene en cuenta las solicitudes, la viabilidad de la planificación, el precio y las
+restricciones de interrupción; que el CPU observado esté por debajo del 30 % no garantiza que se
+consolide un nodo. Los PDB no impiden todas las terminaciones ni garantizan que una terminación forzada
+no cause interrupciones. Si la solicitud no cambia, el scheduler ordinario no reserva automáticamente
+el exceso indicado por un límite sobredimensionado.
 
-Los Pods de relleno pueden favorecer capacidad de reserva para tareas prioritarias. Prioridad -1 está por debajo de la predeterminada 0, no es la mínima posible. `preemptionPolicy: Never` impide que el Pod de relleno desplace a otros; no evita que él sea desplazado. No es una EC2 Capacity Reservation ni garantía de disponibilidad; topología, taints y forma de recursos deben ajustarse a la carga real.
+Los Pods de relleno pueden favorecer la existencia de capacidad libre para tareas de mayor prioridad.
+La prioridad -1 está por debajo de la predeterminada 0, pero no es el valor más bajo posible.
+`preemptionPolicy: Never` impide que el Pod de relleno expulse a otros; no impide que lo expulsen a él.
+Esto no es una EC2 Capacity Reservation ni una garantía de disponibilidad; la topología, los taints y
+la forma de los recursos deben ajustarse a la carga real.
 
 ```yaml
 # capacity-buffer.yaml
@@ -845,29 +1010,33 @@ spec:
 
 ## Secuencia de despliegue y límites de validación
 
-1. Mida latencia, rendimiento, cuotas, memoria total y causas de reinicio con carga representativa.
-2. Use VPA y observaciones para proponer requests, considerando HPA y concurrencia conjuntamente.
-3. Pruebe arranque, picos, fallos y reinicios fuera de producción antes de ajustar limits y margen.
-4. Observe SLO, coste, ubicación e interrupción durante un canary; conserve la configuración de reversión.
+1. Mida la latencia, el rendimiento, el comportamiento de las cuotas, la memoria total y las causas de reinicio con carga representativa.
+2. Use VPA y las observaciones para proponer solicitudes y tenga en cuenta conjuntamente HPA y la concurrencia del runtime.
+3. Pruebe fuera de producción el arranque, la carga máxima, los fallos y los reinicios antes de ajustar los límites y el margen.
+4. Durante un canary, observe los SLO, el costo, la ubicación y las interrupciones; conserve la configuración necesaria para revertir.
 
-La validación ejecutó localmente métricas Java/Spring/JMX, JFR/NMT, salud y SIGTERM de Gunicorn/Node, informes runtime Go y configuración de workers Tokio. Los casos PromQL cubrieron scrapes duplicados, varios clústeres, denominadores cero, estado OOM histórico y gauges Pending 0/1. No se desplegó EKS, no se modificaron cuotas cgroup, no se forzó OOM ni se midió rendimiento.
+La validación ejecutó localmente métricas Java/Spring/JMX y JFR/NMT, el comportamiento de salud y
+SIGTERM de Gunicorn/Node, informes del runtime de Go y la configuración de hilos de Tokio. Los casos
+de cálculo PromQL cubrieron scrapes duplicados, varios clústeres, denominadores cero, estado OOM
+histórico y gauges Pending 0/1. No se desplegó EKS, no se modificaron las cuotas de cgroup, no se forzó
+un OOM ni se hicieron benchmarks de rendimiento.
 
 ## Referencias oficiales
 
-- [Recursos Kubernetes](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Recursos de Kubernetes](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Expulsión por presión del nodo](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
-- [GOMAXPROCS de Go consciente de contenedores](https://go.dev/blog/container-aware-gomaxprocs)
-- [Guía GC de Go](https://go.dev/doc/gc-guide)
-- [Opciones Java 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
+- [GOMAXPROCS de Go adaptado a contenedores](https://go.dev/blog/container-aware-gomaxprocs)
+- [Guía del GC de Go](https://go.dev/doc/gc-guide)
+- [Opciones de Java 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
 - [JEP 474](https://openjdk.org/jeps/474)
 - [JEP 490](https://openjdk.org/jeps/490)
-- [Propiedades Spring Boot](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
+- [Propiedades de Spring Boot](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
 - [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
-- [Ajustes Gunicorn](https://gunicorn.org/reference/settings/)
-- [Historial de cambios Flask](https://flask.palletsprojects.com/en/stable/changes/)
-- [CLI Node.js 24](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
-- [Constructor del runtime Tokio](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
+- [Configuración de Gunicorn](https://gunicorn.org/reference/settings/)
+- [Historial de cambios de Flask](https://flask.palletsprojects.com/en/stable/changes/)
+- [CLI de Node.js 24](https://nodejs.org/download/release/v24.22.0/docs/api/cli.html)
+- [Constructor de runtime de Tokio](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---
 
-< [Anterior: Stack de observabilidad](./09-observability-stack.md) | [Índice](./README.md) | [Siguiente: Actualizaciones EKS](./11-upgrade-operations.md) >
+< [Anterior: Pila de observabilidad](./09-observability-stack.md) | [Contenido](./README.md) | [Siguiente: Actualizaciones de EKS](./11-upgrade-operations.md) >

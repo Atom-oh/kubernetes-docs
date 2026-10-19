@@ -1,13 +1,13 @@
 # Multiclúster
 
-> **Última actualización**: 11 de septiembre de 2026 · Istio1.31 · Kubernetes1.32–1.36. Los ejemplos describen topologías **sidecar** y son alternativas independientes. Ambient tiene otros límites de soporte. Esta auditoría no realizó despliegues de clúster, AWS ni carga productiva.
+> **Última actualización**: 16 de octubre de 2026 · Istio 1.31 · Kubernetes 1.32–1.37. Los ejemplos de instalación describen topologías **sidecar** y son alternativas independientes. Ambient tiene límites de compatibilidad distintos. Esta auditoría no desplegó ningún clúster, recurso de AWS ni carga de producción.
 
-Una malla multiclúster conecta varios clústeres Kubernetes en una malla unificada.
+Service Mesh multiclúster conecta varios clústeres de Kubernetes en una malla de servicios unificada.
 
 ## Índice
 
 1. [¿Realmente necesita multiclúster?](02-multi-cluster.md#do-you-really-need-multi-cluster)
-2. [Guía de selección de arquitectura](02-multi-cluster.md#architecture-selection-guide)
+2. [Guía para elegir arquitectura](02-multi-cluster.md#architecture-selection-guide)
 3. [Istio frente a AWS VPC Lattice](02-multi-cluster.md#istio-vs-aws-vpc-lattice)
 4. [Topología](02-multi-cluster.md#topology)
 5. [Configuración Primary-Remote](02-multi-cluster.md#primary-remote-setup)
@@ -15,325 +15,321 @@ Una malla multiclúster conecta varios clústeres Kubernetes en una malla unific
 7. [Comunicación entre clústeres](02-multi-cluster.md#cross-cluster-communication)
 8. [Uso con VPC Lattice](02-multi-cluster.md#using-with-vpc-lattice)
 9. [Ejemplos prácticos](02-multi-cluster.md#practical-examples)
-10. [Comparación de rendimiento y coste](02-multi-cluster.md#performance-and-cost-comparison)
-11. [Resolución de problemas](02-multi-cluster.md#troubleshooting)
+10. [Comparación de rendimiento y costos](02-multi-cluster.md#performance-and-cost-comparison)
+11. [Solución de problemas](02-multi-cluster.md#troubleshooting)
 
 ## ¿Realmente necesita multiclúster? {#do-you-really-need-multi-cluster}
 
-Una malla multiclúster es potente, pero aumenta complejidad y coste. Evalúe cuidadosamente antes de adoptarla.
+Service Mesh multiclúster es potente, pero aumenta la complejidad y el costo. Antes de adoptarla, es necesario evaluar cuidadosamente el caso.
 
 ### Flujo de decisión
 
-Use los requisitos siguientes como restricciones; ninguna puntuación de checklist hace universalmente preferible una arquitectura.
+Use los requisitos siguientes como restricciones; ninguna puntuación de lista de comprobación hace que una arquitectura sea universalmente preferible.
 
-
-### Cuándo hace falta multiclúster
+### Cuándo se necesita el multiclúster
 
 #### 1. Distribución geográfica y optimización de latencia
 
-![Una malla Istio unificada sincroniza configuración con tres clústeres EKS regionales en EE. UU., Europa y Asia, que también se comunican directamente mediante mTLS entre regiones.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
+![Una malla Istio unificada distribuye la sincronización de configuración a tres clústeres EKS regionales de Estados Unidos, Europa y Asia, que además se conectan directamente entre sí mediante mTLS entre regiones.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-1.html)
 
 **Cuándo se necesita**:
 
-* Servicios globales orientados al usuario, con latencia objetivo <100ms
-* Obligaciones de ubicación de datos por carga; la malla no establece cumplimiento por sí sola
-* Enrutamiento regional y aislamiento de fallos
+* Servicios globales orientados a usuarios (objetivo de latencia <100 ms)
+* Obligaciones de ubicación de datos específicas de las cargas de trabajo; una malla no garantiza por sí sola el cumplimiento
+* Enrutamiento del tráfico regional y aislamiento de fallos
 
 #### 2. Recuperación ante desastres (DR)
 
-![Route 53 dirige normalmente todo el tráfico a producción del clúster activo mientras el de reserva recibe replicación de configuración en tiempo real; tras un desastre cambia todo el tráfico al de reserva.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
+![Route 53 envía normalmente todo el tráfico de usuarios a las cargas de producción del clúster activo, mientras que el clúster en espera recibe replicación de configuración en tiempo real; cuando un desastre activa la conmutación por error, todo el tráfico se dirige al clúster en espera.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-2.html)
 
 **Cuándo se necesita**:
 
-* RTO, objetivo de tiempo de recuperación, <1 hora
-* RPO, objetivo de punto de recuperación, <15 minutos
-* Failover automático ante fallo regional
+* RTO (objetivo de tiempo de recuperación) <1 hora
+* RPO (objetivo de punto de recuperación) <15 minutos
+* Conmutación por error automática ante una avería regional
 
-Las cifras RTO/RPO son requisitos de ejemplo, no resultados garantizados. El diagrama DR supone replicación de despliegues/datos y DNS con salud implementados aparte; clientes, cachés y conexiones existentes afectan al cambio.
+Las cifras de RTO/RPO anteriores son requisitos de ejemplo, no resultados que garantice una malla. El diagrama de DR supone que la replicación de despliegues/datos y el enrutamiento DNS por estado de salud se implementan por separado; los clientes, las cachés y las conexiones existentes afectan al cambio de destino.
 
-#### 3. Separación de entornos y despliegue por etapas
+#### 3. Separación de entornos y despliegues por etapas
 
 **Cuándo se necesita**:
 
-* Separar clústeres Dev/Staging/Prod con gestión unificada
+* Separar los clústeres de desarrollo, staging y producción con una gestión unificada
 * Despliegues Blue/Green a nivel de clúster
-* Canary con expansión regional gradual
+* Despliegues canary con expansión regional gradual
 
 #### 4. Límites organizativos y aislamiento de seguridad
 
 **Cuándo se necesita**:
 
-* Operación independiente por equipo/departamento
+* Operación independiente de cada clúster por equipo o departamento
 * Multitenencia mejorada
-* Límites de aislamiento evaluados explícitamente; compartir confianza de malla es otra decisión
+* Límites de aislamiento evaluados explícitamente; compartir la confianza de la malla es una decisión aparte
 
-### Cuándo NO hace falta multiclúster
+### Cuándo NO se necesita el multiclúster
 
-#### 1. Una región y servicios pequeños
+#### 1. Servicios pequeños en una sola región
 
-![Un plano de control Istio de un clúster EKS gestiona tres namespaces, prod, staging y dev; puede bastar para servicios pequeños de una región sin necesidad multiclúster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
+![El plano de control Istio de un único clúster EKS administra tres namespaces (producción, staging y desarrollo), algo suficiente para servicios pequeños de una región que no necesitan multiclúster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-3.html)
 
-**Alternativas**:
+**Use en su lugar**:
 
-* Separación mediante namespaces Kubernetes
-* NetworkPolicy para aislamiento de red
-* RBAC para acceso
+* Separación mediante namespaces de Kubernetes
+* NetworkPolicy para aislar la red
+* RBAC para controlar el acceso
 
-#### 2. Cuando no puede asumirse la complejidad operativa
+#### 2. Cuando no se puede gestionar la complejidad operativa
 
-**Requisitos operativos multiclúster**:
+**Requisitos operativos del multiclúster**:
 
-* Equipo responsable capaz de operar redes, PKI, actualizaciones e incidentes entre clústeres
-* Gestión y monitorización de gateways este-oeste
+* Un equipo responsable capaz de operar redes, PKI, actualizaciones e incidentes entre clústeres
+* Gestión y supervisión de gateways este-oeste
 * Gestión de certificados entre clústeres
-* Capacidad de diagnóstico multiclúster
+* Capacidad para depurar problemas entre clústeres
 
 **Si el equipo es pequeño**:
 
-* Istio de un clúster, o
-* AWS VPC Lattice gestionado
+* Istio en un solo clúster, o
+* AWS VPC Lattice (servicio administrado)
 
-#### 3. Cuando el coste es decisivo
+#### 3. Cuando el costo es un factor decisivo
 
-**Costes adicionales multiclúster**:
+**Costos adicionales del multiclúster**:
 
-* Horas/capacidad de balanceadores este-oeste y procesamiento de la plataforma
-* Bytes facturables entre regiones y tarifas por dirección/región
-* Réplicas de plano de control/gateway y capacidad de telemetría/almacenamiento
+* Horas/capacidad de balanceadores de carga este-oeste y cargos por procesamiento de la plataforma elegida
+* Bytes facturables entre regiones y tarifas específicas por dirección/región
+* Réplicas del plano de control/gateway y capacidad de observabilidad/almacenamiento
 
 ### Lista de comprobación
 
-Responda antes de adoptar:
+Responda estas preguntas antes de adoptar la arquitectura:
 
 **Arquitectura**:
 
-* [ ] ¿Ya hay 2 o más clústeres operativos?
-* [ ] ¿Se necesita despliegue multirregional?
+* [ ] ¿Ya hay dos o más clústeres en operación?
+* [ ] ¿Se necesita una implementación multirregional?
 * [ ] ¿Son frecuentes las llamadas entre clústeres?
 
 **Requisitos de negocio**:
 
-* [ ] ¿Se orienta a usuarios globales?
-* [ ] ¿Es esencial DR?
-* [ ] ¿Son estrictos RTO/RPO?
+* [ ] ¿Se atiende a usuarios globales?
+* [ ] ¿Es esencial la recuperación ante desastres (DR)?
+* [ ] ¿Son estrictos los requisitos de RTO/RPO?
 
 **Seguridad y cumplimiento**:
 
 * [ ] ¿Se necesita localización de datos?
-* [ ] ¿Se necesita aislamiento fuerte entre clústeres?
+* [ ] ¿Se necesita un aislamiento sólido entre clústeres?
 
 **Capacidad operativa**:
 
-* [ ] ¿Hay expertos Istio?
-* [ ] ¿Puede depurar redes complejas?
-* [ ] ¿Puede asumir costes adicionales?
+* [ ] ¿Tiene expertos en Istio?
+* [ ] ¿Puede depurar problemas complejos de red?
+* [ ] ¿Puede asumir los costos adicionales?
 
 **Resultados**:
 
-Use respuestas como entradas de diseño, no puntuación numérica. Región, confianza, API, recuperación y operación pueden descartar opciones independientemente de cuántas casillas marque.
+Use las respuestas como datos de diseño, no como una puntuación numérica para recomendar una arquitectura. Las restricciones de región, confianza, API, recuperación y operación pueden descartar una opción independientemente de cuántas casillas se marquen.
 
-## Guía de selección de arquitectura {#architecture-selection-guide}
+## Guía para elegir arquitectura {#architecture-selection-guide}
 
-| Decisión | Evidencia requerida |
+| Decisión | Evidencia necesaria |
 |---|---|
-| HA regional frente a DR regional | Ubicación del control/cargas, datos replicados y recuperación probada |
-| Malla entre clústeres | API/gateways accesibles, confianza común, identidad namespace/servicio y configuración distribuida aparte |
-| Conectividad Lattice regional | Red regional, asociaciones/endpoints VPC, modo listener/auth y destinos accesibles |
-| Conectividad entre regiones | Diseño global explícito de red/endpoints y aplicación/datos; asociaciones VPC regionales no son una red global |
-| Coste y personal | Carga medida, mismas hipótesis de tráfico, facturación y esfuerzo reales |
+| Alta disponibilidad regional frente a recuperación ante desastres regional | Ubicación del plano de control y las cargas, datos replicados y procedimientos de recuperación probados |
+| Malla entre clústeres | API/gateways accesibles, diseño de confianza común, identidad de namespace/servicio y configuración distribuida por separado |
+| Conectividad regional con Lattice | Red de servicios regional, asociaciones/endpoints de VPC, modo de listener/autenticación y accesibilidad de los destinos |
+| Conectividad entre regiones | Diseño explícito de red/endpoints globales y de aplicación/datos; las asociaciones directas entre VPC regionales no forman una red global |
+| Costos y personal | Carga medida, supuestos de tráfico equivalentes, facturación real y esfuerzo operativo |
 
-### Comparación de soluciones
+### Comparación de cada solución
 
-#### Istio de un clúster
+#### Istio en un solo clúster
 
 **Ventajas**:
 
-* Gestión más sencilla
-* Menos componentes pueden simplificar costes; mida la carga real
-* Diagnóstico rápido
-* Todas las funciones Istio disponibles
+* Administración más sencilla
+* Menos componentes pueden simplificar el modelo de costos; mida la carga real
+* Depuración rápida
+* Disponibilidad de todas las funciones de Istio
 
 **Desventajas**:
 
-* Dominio de fallo compartido; aún puede configurar HA regional
-* Dependencia regional salvo arquitectura de recuperación aparte
-* Un control plane EKS es regional; distribuir dominios de fallo más amplios requiere diseño adicional
+* Un dominio de fallo compartido, aunque se puede configurar alta disponibilidad regional
+* Dependencia regional si no existe otra arquitectura de recuperación
+* Un plano de control de EKS es regional; distribuirlo entre dominios de fallo más amplios requiere diseño adicional
 
 **Adecuado cuando**:
 
-* Servicio de una región
-* Los objetivos regionales del equipo encajan en ese alcance
-* Se logra HA regional sin DR entre regiones
+* Se prestan servicios en una sola región
+* Los objetivos de fiabilidad regional del equipo caben en este alcance operativo
+* Se puede lograr alta disponibilidad regional sin requerir recuperación ante desastres entre regiones
 
 #### Istio multiclúster
 
 **Ventajas**:
 
 * Distribución geográfica completa
-* Base para failover diseñado explícitamente; DR de aplicación/datos sigue separado
-* Todas las funciones L7: retry, timeout, circuit breaker
-* Control fino de tráfico
+* Base para diseñar explícitamente la conmutación por error del tráfico; la recuperación ante desastres de la aplicación y los datos sigue siendo independiente
+* Todas las funciones L7 (Retry, Timeout, Circuit Breaker)
+* Control granular del tráfico
 * Observabilidad unificada
 
 **Desventajas**:
 
-* Complejidad operativa alta
-* Gestión de gateway este-oeste
-* Costes de transferencia entre regiones
-* Diagnóstico difícil
+* Complejidad operativa elevada
+* Requiere administrar el gateway este-oeste
+* Costos de transferencia entre regiones
+* Depuración difícil
 
 **Adecuado cuando**:
 
-* Servicios globales
-* Se requiere DR fuerte
-* Control fino L7 esencial
+* Hay servicios globales
+* Se necesita recuperación ante desastres sólida
+* Es esencial el control granular L7
 
 #### AWS VPC Lattice
 
 **Ventajas**:
 
-* Totalmente gestionado por AWS
+* Servicio totalmente administrado por AWS
 * Configuración sencilla
 * Baja carga operativa
-* Conectividad entre VPC mediante asociaciones y políticas explícitas
-* Modelar costes de servicio/solicitudes/datos y operación con la carga real
+* Conectividad entre VPC con asociaciones y políticas de acceso explícitas
+* Modele los costos del servicio, las solicitudes, los datos y la operación para la carga real
 
 **Desventajas**:
 
-* Controles de resiliencia distintos; la API de reglas no tiene retry/outlier por salto equivalente
+* Controles de resiliencia distintos; la API de reglas del listener no ofrece una configuración equivalente de reintentos por salto/detección de valores atípicos
 * Dependencia de AWS
-* Rutas por cabeceras/métodos/path y destinos ponderados, con coincidencias/límites distintos de Istio
-* Interfaces métricas/logs diferentes; trazado completo exige integración de aplicación
+* Enrutamiento por encabezado/método/ruta y destinos ponderados, con tipos de coincidencia y límites distintos de Istio
+* Interfaces distintas para métricas/registros; el trazado completo requiere integración en la aplicación
 
 **Adecuado cuando**:
 
-* Arquitectura centrada en AWS
-* Solo se necesita conectividad sencilla
-* Prioridad en simplificar operación
+* La arquitectura se centra en AWS
+* Solo se necesita conectividad sencilla entre servicios
+* Se prioriza simplificar la operación
 
 ## Istio frente a AWS VPC Lattice {#istio-vs-aws-vpc-lattice}
 
 ### Comparación de funciones
 
-| Área | Malla sidecar Istio | Servicios VPC Lattice |
+| Área | Malla sidecar de Istio | Servicios de VPC Lattice |
 |---|---|---|
-| Enrutamiento | Políticas VirtualService/DestinationRule | Cabecera HTTP exact/prefix/contains, path exact/prefix, método y grupos ponderados |
-| Resiliencia | Retry/timeout por salto, pools y detección de anomalías | Límites gestionados de servicio/conexión; no la misma API configurable por salto |
-| Identidad TLS | mTLS de carga con confianza compatible | HTTPS termina en Lattice; passthrough puede llevar mTLS de aplicación, no identidad SPIFFE gestionada |
-| Autorización | Políticas Istio/aplicación | Políticas HTTP(S) e IAM/SigV4 donde se exija; permitir solo por SourceVpc puede incluir anónimos |
-| Límites TLS passthrough | Dependen del gateway | SNI de dominio personalizado, grupo TCP y solo regla predeterminada; políticas de principal anónimo, no IAM por cabecera HTTP |
-| Observabilidad | Métricas, logs y trazas configurados de proxy/app | CloudWatch y accesos; trazas/contexto de aplicación se integran aparte |
-| Coste | Cómputo, gateways, transferencias y operación | Tiempo de servicio, solicitudes/datos y cargos de recursos/endpoints; sin ganador universal más barato |
+| Enrutamiento | Políticas de VirtualService/DestinationRule | Coincidencia exact/prefix/contains de encabezados HTTP, exact/prefix de ruta, método y reglas de grupos de destino ponderados |
+| Resiliencia | Reintentos/tiempos de espera por salto, circuit breakers del pool y detección de valores atípicos | Límites administrados de servicio/conexión; no equivale a una API configurable de reintentos/detección por salto |
+| Identidad TLS | mTLS de cargas de trabajo con una confianza compatible de la malla | HTTPS termina en Lattice; TLS passthrough puede transportar mTLS de aplicación, pero no administra una identidad SPIFFE |
+| Autorización | Políticas de Istio/aplicación | Políticas de autenticación HTTP(S) e IAM/SigV4 cuando corresponda; permitir solo con SourceVpc puede incluir llamantes anónimos |
+| Límites de TLS passthrough | Dependen del gateway configurado | SNI de dominio personalizado, grupo de destino TCP y solo una regla predeterminada; políticas de autenticación para principal anónimo, no autenticación IAM por encabezado HTTP |
+| Observabilidad | Métricas, registros y trazas configurados del proxy/la aplicación | Métricas de CloudWatch y registros de acceso; el trazado/contexto de aplicación se integra por separado |
+| Costo | Cómputo, gateways, transferencia de datos y operación | Tiempo de servicio, solicitudes/procesamiento de datos y cargos de recursos/endpoints aplicables; no hay una opción universalmente más barata |
 
-Servicios, configuraciones de recursos y redes Lattice son regionales. Clientes de otras regiones/locales requieren rutas de red/endpoints explícitas compatibles; peering/tránsito necesita el endpoint VPC de red de servicios apropiado, no solo asociación. Passthrough TLS y terminación HTTPS tienen contratos diferentes. Un híbrido debe indicar cada límite TLS/identidad.
+Los servicios, las configuraciones de recursos y las redes de Lattice son regionales. Los clientes entre regiones o desde instalaciones locales requieren una ruta de red/endpoint compatible y explícita; el tráfico por peering/tránsito necesita el endpoint de VPC de la red de servicios correspondiente, no solo una asociación. TLS passthrough y la terminación HTTPS tienen contratos distintos de enrutamiento/autenticación. Una arquitectura híbrida debe especificar cada límite de TLS e identidad.
 
-### Comparación de patrones
+### Comparación de patrones de arquitectura
 
-#### Patrón 1: Solo Istio multiclúster
-
+#### Patrón 1: solo Istio multiclúster
 
 **Ventajas**:
 
-* Funciones Istio completas
+* Todas las funciones de Istio
 * Observabilidad unificada
-* Control fino
+* Control granular
 
 **Desventajas**:
 
-* Requiere gestión de gateway este-oeste
-* Complejidad alta
-* Costes entre regiones
+* Requiere administrar el gateway este-oeste
+* Complejidad elevada
+* Costos de transferencia entre regiones
 
-#### Patrón 2: Solo VPC Lattice
+#### Patrón 2: solo VPC Lattice
 
-![Servicios de aplicaciones de dos VPC separadas se registran en Lattice y se enrutan mediante una red de servicios compartida, no una malla Istio.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
+![Los servicios de aplicaciones de dos VPC separadas se registran como servicios de VPC Lattice y ambos se enrutan a través de una red de servicios Lattice compartida en lugar de una malla Istio.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-5.html)
 
 **Ventajas**:
 
-* Totalmente gestionado por AWS
+* Servicio totalmente administrado por AWS
 * Configuración sencilla
 * Baja carga operativa
 
 **Desventajas**:
 
-* No puede usar funciones Istio
-* Control de tráfico limitado
-* La integración Kubernetes requiere AWS Gateway API Controller y sus API admitidas
+* No se pueden usar las funciones de Istio
+* Control limitado del tráfico
+* La integración con Kubernetes requiere AWS Gateway API Controller y sus API compatibles
 
-#### Patrón 3: Híbrido, una opción de conectividad regional
+#### Patrón 3: híbrido (una opción de conectividad regional)
 
-![Dentro de cada clúster, Istio proporciona mTLS y retry completos entre Service A y B; Service B alcanza el otro clúster solo mediante una red VPC Lattice compartida.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
+![Dentro de cada clúster, la malla Istio ofrece mTLS completo y reintentos entre el Servicio A y el Servicio B; el Servicio B de cada clúster solo llega al otro clúster mediante una red de servicios VPC Lattice compartida.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-6.html)
 
 **Ventajas**:
 
-* Dentro del clúster: funciones avanzadas Istio, retry, circuit breaker y rutas finas
-* Entre clústeres: gestión sencilla y estabilidad Lattice
-* Menor complejidad sin gateway este-oeste
-* El coste debe medirse; elegir Lattice no reduce por sí solo bytes necesarios entre regiones
+* Dentro del clúster: todas las funciones avanzadas de Istio (Retry, Circuit Breaker y enrutamiento granular)
+* Entre clústeres: administración sencilla y estabilidad de VPC Lattice
+* Menor complejidad operativa (sin gateway este-oeste)
+* Es necesario medir los costos; elegir Lattice no reduce por sí solo los bytes necesarios entre regiones
 
 **Desventajas**:
 
-* Hay que entender dos stacks
-* Entre clústeres, solo funciones Lattice
+* Es necesario comprender dos stacks tecnológicos
+* La conectividad entre clústeres se limita a las funciones de Lattice
 
 **Adecuado cuando**:
 
-* Entorno AWS
-* Se necesita tráfico complejo dentro del clúster
-* Solo conectividad sencilla entre clústeres
+* El entorno es AWS
+* Se necesita control complejo del tráfico dentro del clúster
+* Solo se requiere conectividad sencilla entre clústeres
 
-## Descripción general multiclúster
+## Descripción general del multiclúster
 
-Una malla multiclúster permite:
+Service Mesh multiclúster permite:
 
-* Despliegue multirregional
-* Recuperación ante desastres
-* Separación de entornos dev/staging/prod
+* Implementaciones multirregionales
+* Recuperación ante desastres (DR)
+* Separación de entornos (desarrollo/staging/producción)
 * Descubrimiento y comunicación entre clústeres
 
 ## Topología {#topology}
 
-Son topologías sidecar. Ambient multiclúster actual admite Beta multi-primary/multi-network, con otros límites; no reutilice primary/remote para ambient. Cada primary lee API Kubernetes autorizadas. Istiod no replica otros CRD Istio, configuración de aplicación ni bases de datos a otro primary; distribúyalos aparte. Compartir trust domain da la misma identidad namespace/ServiceAccount entre clústeres, por lo que separarlos no aísla autorización.
+Estas son topologías sidecar. La compatibilidad actual de Ambient multiclúster ofrece Beta para multi-primary/multi-network, con limitaciones distintas; no reutilice las instrucciones primary/remote para Ambient. Cada primary lee las API de Kubernetes autorizadas. Istiod no replica otros CRD de Istio, configuración de aplicaciones ni bases de datos a otro primary; distribúyalos por separado. Un trust domain compartido asigna la misma identidad de namespace/ServiceAccount en todos los clústeres, por lo que separarlos no aísla la autorización.
 
-Una instalación primary puede tener varias réplicas. Su caída afecta a descubrimiento, inyección y certificados; proxies existentes pueden conservar configuración, así que no implica caída inmediata universal del tráfico. Multi-primary reduce esa dependencia, pero no todos los fallos compartidos.
-
+Una instalación primary puede tener varias réplicas. Una interrupción del primary afecta el descubrimiento, la inyección y las operaciones de certificados; los proxies existentes pueden conservar su configuración, por lo que no provoca necesariamente una interrupción inmediata y universal del tráfico. Multi-primary reduce esa dependencia, pero no elimina todos los modos de fallo compartidos.
 
 ### Primary-Remote
 
-![Istiod del primary envía configuración a dos servicios remotos; Service A del primary y los servicios remotos comunican por mTLS, con un plano de control y un punto único de fallo.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
+![Istiod de un clúster primary envía configuración a dos servicios de un clúster remoto; Service A del primary y los dos servicios remotos se comunican mediante mTLS, con un solo plano de control y un punto único de fallo.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-7.html)
 
 **Características**:
 
-* Un plano de control Primary
-* Varios planos de datos Remote
-* Gestión sencilla
-* Dependencia compartida del primary para descubrir, inyectar y emitir certificados
+* Un plano de control (Primary)
+* Varios planos de datos (Remote)
+* Administración sencilla
+* Dependencia compartida de la implementación primary para operaciones de descubrimiento/inyección/certificados
 
 ### Multi-Primary
-
 
 **Características**:
 
 * Varios planos de control
 * Alta disponibilidad
-* Gestión compleja
+* Administración compleja
 * Autonomía regional
 
-### Requisitos compartidos
+### Requisitos previos compartidos
 
-Trabaje desde la distribución Istio1.31 con dos clústeres compatibles y contextos kubeconfig revisados. Se supone revisión predeterminada; conserve la instalada en etiquetas y generación de gateways si difiere. Ambas API y rutas necesarias deben ser accesibles. Planifique confianza antes de instalar: issuers multi-primary deben encadenar a raíz común confiable o diseño explícitamente soportado; meshID iguales no establecen confianza. Siga [requisitos oficiales y preparación CA](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/) y proteja material privado. Distribuya configuración de aplicación/malla aparte; remote secrets no la replican.
+Trabaje desde el directorio de distribución de Istio 1.31, con dos clústeres existentes y compatibles, y contextos de kubeconfig revisados. Los ejemplos suponen la revisión predeterminada; si es distinta, conserve la revisión instalada en las etiquetas de namespace y en la generación del gateway. Deben ser accesibles ambas API de Kubernetes y las rutas necesarias de datos/plano de control. Planifique la confianza compartida antes de instalar: los emisores de certificados multi-primary deben encadenar a una raíz común de confianza (o a un diseño de confianza compatible explícitamente); que las cadenas meshID coincidan no establece confianza de certificados. Siga los [requisitos previos oficiales y la preparación de CA](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/) y proteja el material de CA privado. Distribuya por separado la configuración de la aplicación/malla; los secretos remotos no la replican.
 
 ```bash
 export CTX_CLUSTER1=cluster1
@@ -344,9 +340,9 @@ kubectl --context="$CTX_CLUSTER2" get nodes
 
 ## Configuración Primary-Remote {#primary-remote-setup}
 
-Es la topología oficial **sidecar basada en IP y misma red**: Pods directamente accesibles entre clústeres y API remota accesible desde primary. No es una receta para hostname NLB EKS. El chart 1.31 puede representar remotePilotAddress DNS con un Service ExternalName; la búsqueda IP aquí no es diseño EKS DNS completo. Use la [guía de control externo](https://istio.io/latest/docs/setup/install/external-controlplane/) para URL de inyección, certificados DNS firmados y acceso real. Renderizar un DNS no verifica el despliegue. IstioOperator es entrada istioctl, no un operador dentro del clúster.
+Esta es la topología oficial **sidecar basada en IP y en una misma red**: los Pods deben ser directamente accesibles entre clústeres y la API remota debe ser accesible desde el primary. No es una receta para usar hostnames de NLB de EKS. El chart 1.31 puede representar un remotePilotAddress con valor DNS mediante un Service ExternalName; la búsqueda por IP de este recorrido no constituye un diseño EKS basado en DNS completo. Use la [guía del plano de control externo](https://istio.io/latest/docs/setup/install/external-controlplane/) para la URL de inyección, los certificados DNS firmados y la conectividad real con el plano de control. Renderizar un valor DNS no verifica la implementación. IstioOperator es una entrada para istioctl, no un recurso de operador dentro del clúster.
 
-### 1. Configurar el clúster primary
+### 1. Configuración del clúster primary
 
 ```bash
 # Context setup
@@ -376,7 +372,7 @@ kubectl apply --context="${CTX_CLUSTER1}" -f \
   samples/multicluster/expose-istiod.yaml
 ```
 
-### 2. Configurar el clúster remoto
+### 2. Configuración del clúster remoto
 
 ```bash
 # Context setup
@@ -420,7 +416,7 @@ istioctl create-remote-secret \
 
 ## Configuración Multi-Primary {#multi-primary-setup}
 
-En redes separadas, cada primary debe alcanzar API y gateway este-oeste del peer. Prepare Secrets CA acordes antes de Istiod. Configure LB L4, acceso a gateway y permisos acotados para la plataforma; ALB u otro salto L7 que termine TLS no es compatible con AUTO_PASSTHROUGH. Consulte [integración AWS](../04-aws-integration.md) para requisitos de LB EKS.
+En esta topología de redes separadas, cada primary debe poder acceder a la API del peer y a su gateway este-oeste. Aprovisione los secretos de CA adecuados para la topología antes de instalar Istiod. Configure balanceadores L4, accesibilidad del gateway y acceso acotado para la plataforma; un ALB u otro salto L7 que termine TLS no es compatible con AUTO_PASSTHROUGH. Consulte [integración con AWS](../04-aws-integration.md) para los requisitos de balanceadores de carga de EKS.
 
 ### 1. Configurar ambos clústeres como primary
 
@@ -465,7 +461,7 @@ kubectl --context="$CTX_CLUSTER1" apply -n istio-system -f samples/multicluster/
 kubectl --context="$CTX_CLUSTER2" apply -n istio-system -f samples/multicluster/expose-services.yaml
 ```
 
-### 2. Registrar remote secrets de forma cruzada
+### 2. Registrar secretos remotos en ambas direcciones
 
 ```bash
 # Cluster 1's Secret to Cluster 2
@@ -483,9 +479,9 @@ istioctl create-remote-secret \
 
 ## Comunicación entre clústeres {#cross-cluster-communication}
 
-Use descubrimiento remoto con mismos nombres Service/namespace y visibilidad DNS. Istiod no copia Service o Deployment entre clústeres. El laboratorio define Service en ambos, backend solo en cluster2 y cliente inyectado en cluster1. En redes diferentes, Istio selecciona gateway este-oeste y ruta SNI/mTLS; no lo sustituya por ServiceEntry HTTP a 15443.
+Use descubrimiento remoto con los mismos nombres de Service/namespace y la visibilidad DNS necesaria. Istiod no copia objetos Service ni Deployments entre clústeres. Este laboratorio define el Service en ambos clústeres, implementa el backend solo en cluster2 y llama a ese backend desde un cliente inyectado en cluster1. En redes distintas, Istio selecciona el gateway este-oeste y la ruta SNI/mTLS; no lo sustituya por un ServiceEntry HTTP al puerto 15443.
 
-Guarde como `shared-httpbin-service.yaml`:
+Guarde lo siguiente como `shared-httpbin-service.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -517,19 +513,19 @@ istioctl proxy-config endpoints deployment/curl --context="$CTX_CLUSTER1" -n mul
 kubectl --context="$CTX_CLUSTER1" exec -n multicluster-demo deploy/curl -c curl -- curl -sS --max-time 5 http://httpbin:8000/headers
 ```
 
-La respuesta HTTP prueba la ruta de aplicación, no la confianza del certificado por sí sola. Inspeccione TLS e identidad del llamante/receptor como en seguridad. La [verificación oficial](https://istio.io/latest/docs/setup/install/multicluster/verify/) añade escenarios. Se supone que confianza, red, políticas y descubrimiento ya funcionan.
+La respuesta HTTP prueba la ruta de la aplicación, no la confianza del certificado por sí sola. Inspeccione la configuración TLS del llamante/receptor y las pruebas de identidad como se explica en el capítulo de seguridad. La [verificación multiclúster oficial](https://istio.io/latest/docs/setup/install/multicluster/verify/) ofrece escenarios adicionales. Estos comandos presuponen que ya se cumplen los requisitos previos de confianza, red, políticas y descubrimiento.
 
 ## Uso con VPC Lattice {#using-with-vpc-lattice}
 
-### Contratos híbridos y fragmentos
+### Contratos híbridos y fragmentos de configuración
 
-La alternativa empieza con mallas Istio independientes y una ruta regional Lattice. Cambiar `meshID` o un supuesto `multiCluster.enabled` no desconecta con seguridad una malla unida. Use guía de instalación y migración revisada de confianza/remote secrets/políticas al cambiar topología.
+Esta alternativa parte de mallas Istio independientes y de una ruta regional de servicio Lattice. Cambiar `meshID` o establecer un supuesto interruptor `multiCluster.enabled` no es una forma segura de desconectar una malla que ya se unió. Use la guía de instalación y una migración revisada de confianza/secretos remotos/políticas al cambiar la topología.
 
-Los comandos son ejemplos, no un despliegue productivo completo. Suponen identidades de gestión autorizadas, IDs VPC/SG reales, AWS Gateway API Controller/CRD instalados y servicio Lattice HTTPS funcional. Las credenciales de gestión difieren del rol del llamante de aplicación, que solo necesita permisos de datos previstos. Lattice es regional; clientes de peering/tránsito requieren endpoint/ruta soportados. Asociar directamente dos VPC de una región no crea una red de tres regiones.
+Los siguientes comandos son ejemplos de configuración, no una implementación de producción de extremo a extremo. Suponen identidades de administración autorizadas, IDs reales de VPC/grupos de seguridad, AWS Gateway API Controller/CRD instalados y un servicio Lattice HTTPS funcional. Las credenciales de administración de estos comandos son independientes del rol llamante de la aplicación, que solo necesita los permisos de plano de datos previstos. Los servicios/redes de Lattice son regionales; los clientes que llegan mediante peering/tránsito necesitan la ruta de red/endpoint de red de servicios compatible. Las asociaciones directas entre dos VPC de la misma región no crean una red de tres regiones.
 
 #### 1. Crear o seleccionar la red de servicios regional
 
-Para una red nueva, capture el ID devuelto en vez de buscar un nombre ambiguo. Si ya existe, use su ID verificado, no cree otra. Asociar VPC habilita ruta de cliente; no publica Services Kubernetes ni autoriza toda solicitud.
+Para una red nueva, capture el ID devuelto en vez de buscar un nombre ambiguo. Si la red ya existe, use su ID verificado en lugar de crear otra. La asociación de VPC habilita una ruta para el cliente; no publica Services de Kubernetes ni autoriza cada solicitud.
 
 ```bash
 # Both VPCs below are in this Region; use real reviewed VPC/security-group IDs
@@ -545,9 +541,9 @@ aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION
 
 #### 2. Publicar mediante el controlador con un límite de entrada definido
 
-La GatewayClass `amazon-vpc-lattice` y Gateway referencian la red por nombre. Un Gateway `my-service-network` puede usar la red gestionada aparte. HTTPRoute/GRPCRoute admitidas aportan servicio/listener/destinos y su propio endpoint; Gateway no es un endpoint DNS universal de servicio.
+La GatewayClass `amazon-vpc-lattice` y Gateway del controlador hacen referencia por nombre a una red de servicios. Un Gateway llamado `my-service-network` puede apuntar a la red administrada por separado descrita arriba. Un HTTPRoute/GRPCRoute compatible define el enrutamiento del servicio/listener/destinos y tiene su propio endpoint asignado; el Gateway no es un endpoint DNS universal para servicios.
 
-`ServiceExport` es API válida específica, pero crea un **grupo de destino**, no una asociación completa servicio/red Lattice. La antigua anotación `lattice-service-network` no hacía ese flujo. La exportación opcional supone Service ingress `lattice-entry` en puerto 80; crearla sola no expone una ruta completa:
+`ServiceExport` es una API válida específica del controlador, pero crea un **grupo de destino**, no una asociación completa de servicio/red Lattice. La antigua anotación `lattice-service-network` no proporcionaba ese flujo. La exportación opcional de abajo supone un Service de entrada existente `lattice-entry` en el puerto 80; crearlo por sí solo no publica una ruta completa:
 
 ```yaml
 # Optional target-group export only; assumes this ingress Service already exists
@@ -562,13 +558,13 @@ spec:
     routeType: HTTP
 ```
 
-Para publicar, complete [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/), [HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/) y ServiceImport donde proceda. Haga coincidir versión de controlador/CRD; exportedPorts se comprobó con v2.1.3.
+Para publicar de verdad, complete la configuración de [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/), [HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/) y, cuando corresponda, ServiceImport. Use la misma versión del controlador/CRD instalada; `exportedPorts` se comprobó con v2.1.3.
 
-Lattice no origina mTLS SPIFFE Istio hacia un backend STRICT. Proporcione una frontera ingress configurada aparte que acepte tráfico Lattice previsto, restrinja bypass y origine mTLS al backend, o diseñe otro contrato de seguridad admitido. No debilite políticas silenciosamente. El backend puede ver identidad ingress, no el llamante IAM original; propagar identidad confiable requiere diseño propio. El documento no aprovisiona esa frontera, roles IAM, certificados ACM ni DNS.
+Lattice no origina mTLS SPIFFE de Istio hacia un backend STRICT. Proporcione una frontera de entrada configurada por separado que acepte el tráfico Lattice previsto, restrinja las rutas alternativas y origine mTLS de la malla al backend, o diseñe explícitamente otro contrato de seguridad compatible. No debilite la política del backend sin hacerlo explícito. El backend puede ver la identidad de entrada en lugar del llamante IAM original; la propagación de identidad de confianza requiere un diseño propio. Este documento no aprovisiona esa frontera, los roles IAM, los certificados ACM ni DNS.
 
-#### 3. Descubrir y llamar al endpoint HTTPS real
+#### 3. Detectar y llamar al endpoint HTTPS real
 
-Tras estar listas la ruta del proveedor y asociación, obtenga DNS real. La aplicación debe usar HTTPS, verificar certificado coincidente y firmar host/ruta/payload reales cuando se exija autenticación. No invente `.lattice.svc.cluster.local` ni envuelva TLS de aplicación con SIMPLE TLS.
+Cuando la ruta del proveedor y la asociación a la red de servicios estén listas, obtenga el nombre DNS real del servicio. La aplicación debe usar HTTPS, verificar el certificado correspondiente y firmar el host/ruta/payload reales cuando se requiera acceso autenticado. No invente un nombre `.lattice.svc.cluster.local` ni añada TLS SIMPLE alrededor del TLS de la aplicación.
 
 ```bash
 # Obtain the real service ID from the reconciled provider configuration
@@ -587,11 +583,11 @@ jq -n --arg host "$LATTICE_SERVICE_DNS" '{
 kubectl --context="$CTX_CLUSTER1" apply -f lattice-service-entry.json
 ```
 
-ServiceEntry solo registra el servicio externo en Istio del llamante; no aprovisiona conectividad Lattice, políticas ni firmante. HTTPS originado por la aplicación es opaco al sidecar; routing/métricas HTTP necesitan otra ruta de terminación TLS diseñada explícitamente.
+Este ServiceEntry solo hace que el servicio externo sea conocido en el registro de Istio del llamante; no aprovisiona la conectividad Lattice, la política ni un firmante. El HTTPS originado por la aplicación es opaco para el sidecar, así que el enrutamiento/métricas a nivel HTTP requieren otra ruta de terminación TLS diseñada explícitamente.
 
 #### 4. Exigir el llamante IAM previsto
 
-`AWS_IAM` habilita evaluación de políticas. Principal comodín con solo SourceVpc puede permitir anónimos; no prueba autenticación IAM. Aquí se nombra un rol IAM y se restringe a un servicio y dos VPC asociadas directamente.
+`AWS_IAM` habilita la evaluación de políticas. Un Principal comodín con solo una condición SourceVpc puede permitir solicitudes anónimas; no demuestra autenticación IAM. Este ejemplo nombra un rol IAM y limita el acceso a un servicio y a las dos VPC con asociación directa.
 
 ```bash
 : "${CALLER_ROLE_ARN:?Set the explicitly authorized caller IAM role ARN}"
@@ -606,21 +602,21 @@ jq -cn --arg role "$CALLER_ROLE_ARN" --arg service "$LATTICE_SERVICE_ARN"   --ar
 aws vpc-lattice put-auth-policy --region "$LATTICE_REGION"   --resource-identifier "$SERVICE_NETWORK_ID" --policy file://lattice-auth-policy.json
 ```
 
-El rol también necesita permiso Invoke basado en identidad. Toda política auth habilitada de red/servicio debe permitir y deny explícito prevalece. Si habilita autenticación de servicio, gestione también esa política, sin propietarios CLI/controlador competidores. Use SDK/firmante compatible o proxy firmado validado con credenciales de carga. TLS Istio no genera SigV4; cambiar host/ruta/body después puede invalidar la firma.
+El rol llamante también necesita el permiso Invoke adecuado basado en identidad. Todas las políticas de autenticación habilitadas de la red/servicio deben permitir la solicitud y prevalece cualquier denegación explícita. Si se habilita la autenticación a nivel de servicio, gestione también esa política; evite que CLI y controlador compitan por administrarla. Use un SDK/firmante de aplicación compatible o un proxy de firma validado con credenciales de la carga de trabajo. La configuración TLS de Istio no genera firmas SigV4; cambiar el host/ruta/cuerpo después de firmar puede invalidarlas.
 
-### Tráfico y observabilidad
+### Flujo del tráfico y observabilidad
 
-El flujo previsto es: llamante firma y establece HTTPS → Lattice autoriza y termina HTTPS → frontera ingress entra a la malla backend → aplicación recibe. TLS passthrough es otro contrato: SNI personalizado/destinos TCP, solo regla por defecto y políticas de principal anónimo; puede transportar mTLS de aplicación, pero no da IAM mediante cabeceras HTTP.
+El flujo previsto es: el llamante firma y establece HTTPS → Lattice autoriza y termina HTTPS → la frontera de entrada configurada accede a la malla backend → la aplicación recibe la solicitud. TLS passthrough es otro contrato: SNI de dominio personalizado/destinos TCP, solo una regla predeterminada y políticas de autenticación para principal anónimo; puede transportar mTLS de aplicación, pero no ofrece autenticación IAM por encabezados HTTP.
 
-Mantenga contexto de trazas y configuración collector/backend compatibles. Cruzar clúster o Lattice no divide inherentemente una traza. Verifique identidad, TLS y telemetría reales, sin asumir que el diagrama original de dos clústeres es un despliegue completo.
+Mantenga compatible el contexto de traza y la configuración de Collector/backend entre aplicaciones. Cruzar un límite de clúster o de Lattice no divide una traza por sí mismo. Verifique la ruta real de identidad, TLS y telemetría en lugar de dar por hecho que el diagrama original de dos clústeres es una implementación completa.
 
 ## Ejemplos prácticos {#practical-examples}
 
-### Ejemplo 1: Comercio global, Multi-Primary + VPC Lattice
+### Ejemplo 1: comercio electrónico global (Multi-Primary + VPC Lattice)
 
-Una aplicación global puede desplegar mallas y redes Lattice regionales. Dentro de una región, Order local puede llamar a Payment local por el contrato Lattice/ingress. Las llamadas entre regiones necesitan diseño de red/endpoints separado; el diagrama retirado no lo establecía por dibujar tres regiones alrededor de una red. Replicación y failover regional siguen siendo responsabilidades de aplicación/infraestructura.
+Una aplicación global puede implementar mallas regionales y redes de servicio regionales de Lattice. Dentro de una región, un servicio Order local puede llamar a un servicio Payment local mediante el contrato definido de Lattice/entrada. Las llamadas entre regiones requieren un diseño independiente de red/endpoints compatible; el diagrama retirado no establecía esa ruta al dibujar tres regiones alrededor de una sola red de servicios. La replicación de datos y la conmutación por error regional siguen siendo responsabilidades de la aplicación/infraestructura.
 
-El ejemplo intraclúster supone Service cart real y etiquetas Pod v1/v2 coincidentes. La cabecera user-type elige ruta; no autentica. Se desactiva retry de malla porque las operaciones cart pueden tener efectos.
+El siguiente ejemplo dentro del clúster supone que existe un Service `cart` real y que coinciden sus etiquetas de Pod v1/v2. El encabezado de tipo de usuario elige una ruta; no autentica al usuario. Los reintentos de la malla están desactivados porque las operaciones de carrito pueden tener efectos secundarios.
 
 #### Ejemplo de configuración
 
@@ -683,15 +679,15 @@ spec:
       version: v2
 ```
 
-**Order → Payment regional mediante Lattice**
+**Order regional → Payment mediante Lattice**
 
-Use DNS HTTPS real y ServiceEntry renderizado de la sección híbrida, con ruta proveedor funcional, frontera ingress compatible y llamante SigV4. No añada SIMPLE TLS a HTTPS de aplicación ni invente alias Kubernetes `.svc.cluster.local`. Una ruta regional Lattice no resuelve sola routing global o recuperación de datos.
+Use el DNS HTTPS real y el ServiceEntry renderizado de la sección híbrida, junto con una ruta funcional del proveedor, una frontera de entrada compatible y un llamante SigV4. No añada TLS SIMPLE alrededor de una conexión HTTPS de aplicación ni invente un alias Kubernetes `.svc.cluster.local`. Una ruta regional de Lattice no resuelve por sí sola el enrutamiento global ni la recuperación de datos.
 
-### Ejemplo 2: Recuperación ante desastres
+### Ejemplo 2: escenario de recuperación ante desastres (DR)
 
-Es una **configuración manual de alias failover Route53** para dos NLB regionales existentes. No despliega cargas, balanceadores, listeners TLS, replicación ni servicio de salud. Configure primero readiness/salud real de cada grupo. No mezcle este propietario de registros con anotaciones ExternalDNS incompletas ni invente IDs de health check.
+Esta es una **configuración manual de failover de alias de Route 53** para dos NLB regionales existentes. No implementa cargas de trabajo, balanceadores, listeners TLS, replicación ni un servicio de estado de salud. Primero configure una comprobación real de readiness/estado de salud en los grupos de destino. No combine este propietario de registros con las anotaciones ExternalDNS incompletas anteriores ni invente IDs de comprobaciones de estado.
 
-El ejemplo usa `EvaluateTargetHealth` en alias NLB, sin una comprobación HTTPS pública separada. Para salud más profunda de aplicación/datos, diseñe endpoint/alarma apropiados; el Service HTTP80 antiguo no coincidía con el probe HTTPS443. Los verificadores HTTP públicos Route53 no pueden probar sin más endpoints exclusivamente privados.
+El ejemplo usa `EvaluateTargetHealth` para los alias de NLB, sin una comprobación HTTPS pública de estado independiente. Si necesita comprobar el estado profundo de la aplicación/datos, diseñe una señal adecuada de endpoint/alarma; el antiguo Service HTTP80 no coincidía con la comprobación HTTPS443. Los comprobadores HTTP públicos de Route 53 no pueden probar directamente endpoints exclusivamente privados.
 
 ```bash
 # Existing, healthy NLBs and a DNS zone controlled by this workflow
@@ -726,23 +722,23 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --change-batch file://failover-config.json
 ```
 
-Revise registros y planes de restauración/reversión antes de cambiar DNS. Un alias A no es configuración IPv6 completa; dualstack también requiere AAAA y conectividad adecuados. Caché DNS, conexiones reutilizadas, semántica de salud y todos-los-destinos-no-saludables afectan failover. Pruebe junto con recuperación de datos/app. DNS e Istio solos no establecen RPO de 15 minutos ni RTO de una hora.
+Compruebe los registros existentes y los planes de restauración/reversión antes de cambiar DNS. Un registro alias A no es una configuración IPv6 completa; el uso de dualstack también necesita registros AAAA y conectividad adecuados. Las cachés DNS, la reutilización de conexiones, la semántica del estado de los grupos de destino y el comportamiento cuando todos los destinos están en mal estado afectan a la conmutación por error. Pruebe todo esto junto con la recuperación de la aplicación/datos. Ni DNS ni Istio establecen por sí solos un RPO de 15 minutos o un RTO de una hora.
 
-## Comparación de rendimiento y coste {#performance-and-cost-comparison}
+## Comparación de rendimiento y costos {#performance-and-cost-comparison}
 
-La antigua tabla de latencia/RPS/CPU/memoria no tenía fuente reproducible, versión, hardware ni carga. La de costes comparaba tráficos distintos, 10TB frente a 5TB, y presupuestos arbitrarios de personal. No establecen una arquitectura más barata/rápida y no se presentan como mediciones actuales.
+La antigua tabla de latencia/RPS/CPU/memoria no incluía fuente de benchmark reproducible, versión, hardware ni condiciones de carga. La tabla de costos comparaba volúmenes de tráfico distintos (10 TB frente a 5 TB) y presupuestos arbitrarios de personal. No demuestra qué arquitectura es más barata/rápida y no se presenta como mediciones actuales.
 
-| Componente | Medir o cotizar explícitamente |
+| Componente | Medición o costo que debe calcularse explícitamente |
 |---|---|
-| Latencia/rendimiento de aplicación | Mismas regiones, payload, concurrencia, TLS, políticas, capacidad y percentil |
-| Cómputo de malla | Réplicas reales Istiod/proxy/gateway/telemetría y consumo; costes Kubernetes/EKS aparte |
-| Red | Mismos bytes/direcciones facturables, transferencia regional, procesamiento/capacidad LB/endpoints/TGW/peering |
-| Servicios Lattice | Tiempo aprovisionado, solicitudes y procesamiento; recursos/endpoints tienen modelo propio |
-| Operación/DR | Esfuerzo observado, ejercicios de incidentes/recuperación y supuestos de impacto |
+| Latencia/rendimiento de aplicación | Mismas regiones, payload, concurrencia, TLS, políticas, capacidad de aplicación y definición de percentil |
+| Cómputo de malla | Réplicas y consumo reales de Istiod/proxy/gateway/telemetría; contabilice Kubernetes/EKS por separado |
+| Red | Mismos bytes/direcciones facturables, transferencia regional, procesamiento/capacidad de LB/endpoints/TGW/peering |
+| Servicios Lattice | Tiempo aprovisionado, solicitudes y procesamiento de datos; configuraciones de recursos/endpoints tienen su propio modelo |
+| Operación/DR | Esfuerzo de ingeniería observado, ejercicios de incidentes/recuperación y supuestos de impacto empresarial |
 
-Use [precios Lattice](https://aws.amazon.com/vpc/lattice/pricing/) y facturación real. Peering VPC no elimina automáticamente tarifas entre regiones. Lattice documenta ausencia de cargo adicional inter-AZ dentro del servicio, distinto de procesamiento gratuito. Ambient no garantiza 90% de ahorro; mida políticas equivalentes. Ni personal fijo ni un umbral de caída $1,000/hora seleccionan la arquitectura.
+Use los [precios de Lattice](https://aws.amazon.com/vpc/lattice/pricing/) y los datos reales de facturación. El peering de VPC no elimina automáticamente los cargos de transferencia entre regiones. Lattice documenta que no hay cargos adicionales de transferencia de datos entre AZ dentro de su servicio, lo que no equivale a costo cero por procesamiento de datos. Ambient no garantiza un ahorro de recursos del 90 %; mida con políticas equivalentes. Ni una cantidad fija de personal ni un umbral de costo por inactividad de 1.000 USD/hora determinan la arquitectura.
 
-## Resolución de problemas {#troubleshooting}
+## Solución de problemas {#troubleshooting}
 
 ```bash
 # Verify cross-cluster connectivity
@@ -766,22 +762,22 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 * [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 * [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/)
 
-* [Componentes regionales y patrones entre regiones Lattice](https://aws.amazon.com/vpc/lattice/faqs/)
-* [Política auth y llamantes anónimos Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
-* [Solicitudes SigV4 Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
-* [TLS passthrough Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
-* [Alias failover Route53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-failover-alias.html)
+* [Componentes regionales y patrones entre regiones de Lattice](https://aws.amazon.com/vpc/lattice/faqs/)
+* [Política de autenticación de Lattice y llamantes anónimos](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
+* [Solicitudes SigV4 de Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+* [TLS passthrough de Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+* [Alias de failover de Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-failover-alias.html)
 
-### Blogs y casos
+### Blogs y casos prácticos
 
 * [Tetrate: Istio multiclúster](https://tetrate.io/blog/multicluster-istio/)
 
 ### Documentos relacionados
 
-* [Modo ambient](01-ambient-mode.md) - Optimización de recursos
+* [Modo Ambient](01-ambient-mode.md) - Optimización de recursos
 * [mTLS](../security/01-mtls.md) - Comunicación segura entre clústeres
-* [VPC Lattice](../../../networking/02-vpc-lattice.md) - Redes de servicios gestionadas por AWS
+* [VPC Lattice](../../../networking/02-vpc-lattice.md) - Redes de servicios administradas por AWS
 
 ## Resumen
 
-Elija topología según confianza, red, API y recuperación reales. Un clúster regional puede ofrecer HA multizona. Sidecar multiclúster amplía descubrimiento y mTLS si cumple requisitos, pero no replica estado de aplicación. Lattice es red de aplicación regional gestionada, con contratos TLS/auth por listener. Un híbrido debe definir cada frontera de identidad/terminación y las rutas entre regiones. Valide comportamiento y costes con igual carga antes de recomendar.
+Elija una topología según los requisitos reales de confianza, red, API y recuperación. Un clúster regional puede ofrecer alta disponibilidad multizona. El multiclúster sidecar puede ampliar el descubrimiento y mTLS de la malla si se cumplen sus requisitos, pero no replica el estado de la aplicación. Lattice es una red de aplicaciones regional administrada con contratos de TLS/autenticación específicos de cada listener. Una arquitectura híbrida debe definir cada límite de identidad/terminación y cualquier ruta entre regiones. Valide el comportamiento y los costos con cargas equivalentes antes de recomendar una opción.

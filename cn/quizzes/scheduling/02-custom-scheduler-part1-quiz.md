@@ -1,7 +1,7 @@
 # 自定义调度器测验（第 1 部分）
 
 > **示例基准**：Kubernetes 1.35.8，Go 1.27.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 本测验考查你对 Kubernetes 中自定义调度器的实现和使用的理解。
 
@@ -199,6 +199,7 @@ kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 - C. metadata.scheduler：Kubernetes API 中不存在此字段。
 - D. spec.nodeName：此字段用于绕过调度器，将 Pod 直接分配给特定节点。它不是用于指定调度器的字段。
 </details>
+
 ### 4. Kubernetes 调度框架中“Filter”扩展点的作用是什么？
 
 A. 为节点评分
@@ -338,6 +339,7 @@ spec:
 **其他选项：**
 A、B 和 D 都是合理的调度考量。这里的区别在于放置和运行时操作，而不是调度与镜像信息之间的区别。
 </details>
+
 ### 6. Kubernetes 调度框架中“Score”扩展点的作用是什么？
 
 A. 排除无法运行 Pod 的节点
@@ -553,6 +555,7 @@ kubelet 通常负责注册节点并报告健康状态。节点生命周期控制
 - B. 调度器扩展器：这是有效的调度器扩展方法。
 - C. 部署多个调度器：这是有效的调度器扩展方法。
 </details>
+
 ### 8. Kubernetes 调度器中 `--leader-elect` 标志的用途是什么？
 
 A. 授予调度器领导权限

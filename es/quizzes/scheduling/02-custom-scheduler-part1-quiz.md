@@ -199,6 +199,7 @@ kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 - C. metadata.scheduler: este campo no existe en la API de Kubernetes.
 - D. spec.nodeName: este campo omite el scheduler y asigna directamente un pod a un nodo concreto; no sirve para indicar un scheduler.
 </details>
+
 ### 4. ¿Qué función cumple el punto de extensión "Filter" del scheduling framework de Kubernetes?
 
 A. Puntuar nodos
@@ -338,6 +339,7 @@ spec:
 **Las otras opciones:**
 A, B y D son consideraciones válidas para la programación. La distinción original es entre ubicar el pod y ejecutar acciones del runtime, no entre programación e información de imágenes.
 </details>
+
 ### 6. ¿Qué función cumple el punto de extensión "Score" del scheduling framework de Kubernetes?
 
 A. Excluir los nodos en los que no se puede ejecutar el pod
@@ -553,6 +555,7 @@ Evalúa la complejidad de implementación, la sobrecarga HTTP por nodo, la coher
 - B. Scheduler extender: es un método válido para ampliar el scheduler.
 - C. Desplegar varios schedulers: es un método válido para ampliar el scheduler.
 </details>
+
 ### 8. ¿Para qué sirve el flag `--leader-elect` del scheduler de Kubernetes?
 
 A. Conceder autoridad de liderazgo al scheduler

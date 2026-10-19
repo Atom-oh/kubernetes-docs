@@ -1,74 +1,74 @@
-# Amazon OpenSearch Service
+# Amazon OpenSearch Service {#amazon-opensearch-service}
 
-> **Última actualización**: September 13, 2026
-> **Línea base del ejemplo**: OpenSearch Service 3.5 aprovisionado; Terraform 1.15.7/proveedor de AWS 6.64.0; AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9). Solo comprobaciones de configuración locales; no se implementó ningún dominio, recopilador, sesión SAML ni prueba de entrega de datos.
+> **Última actualización**: 13 de septiembre de 2026
+> **Versiones de referencia del ejemplo**: OpenSearch Service 3.5 aprovisionado; Terraform 1.15.7/proveedor de AWS 6.69.1; AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9). Solo se realizaron comprobaciones locales de configuración; no se desplegó ningún dominio ni recopilador, ni se probaron sesiones SAML o la entrega de datos.
 
-Amazon OpenSearch Service administra clústeres de búsqueda y admite versiones seleccionadas de OpenSearch y Elasticsearch OSS heredado. Este capítulo cubre un dominio VPC y los niveles tradicionales hot/UltraWarm/cold. Las colecciones Serverless y las opciones más recientes de almacenamiento en instancias optimizadas tienen requisitos independientes de configuración, API y disponibilidad.
+Amazon OpenSearch Service gestiona clústeres de búsqueda y admite determinadas versiones de OpenSearch y de Elasticsearch OSS anteriores. Este capítulo aborda un dominio en una VPC y los niveles tradicionales hot, UltraWarm y cold. Las colecciones Serverless y las opciones más recientes de almacenamiento para instancias optimizadas tienen sus propios requisitos de configuración, API y disponibilidad.
 
 <span id="table-of-contents"></span>
 <span id="opensearch-vs-elasticsearch"></span>
 <span id="amazon-opensearch-service-features"></span>
 <span id="key-use-cases"></span>
 
-## Descripción general
+## Descripción general {#overview}
 
-OpenSearch es un proyecto de búsqueda con licencia Apache-2.0. Su linaje de Elasticsearch 7.10 no implica compatibilidad con todos los clientes, plugins o API actuales de Elasticsearch. Las decisiones actuales de licencia de código fuente de Elastic incluyen AGPLv3 para partes de código fuente elegibles junto con SSPL/Elastic License 2.0; compruebe el componente y la distribución exactos en vez de tratar Elasticsearch como un único modelo de licenciamiento sin cambios.
+OpenSearch es un proyecto de búsqueda con licencia Apache-2.0. Su origen en Elasticsearch 7.10 no implica compatibilidad con todos los clientes, plugins o API actuales de Elasticsearch. Las opciones actuales de licencia del código fuente de Elastic incluyen AGPLv3 para las partes que cumplen sus condiciones, además de SSPL y Elastic License 2.0. Compruebe el componente y la distribución concretos, en lugar de dar por hecho que Elasticsearch mantiene un único modelo de licencia sin cambios.
 
-La tabla de soporte de AWS actualmente enumera OpenSearch 3.5 entre las versiones admitidas. El ejemplo anterior de 2.11 **sigue bajo soporte estándar hasta el 7 de noviembre de 2027**; no deja de ser compatible simplemente porque exista una versión más reciente. Para un dominio existente, compruebe las rutas de actualización admitidas, los cambios incompatibles, las snapshots y la compatibilidad del cliente antes de solicitar una actualización de versión.
+La tabla de soporte de AWS incluye actualmente OpenSearch 3.5 entre las versiones admitidas. El ejemplo anterior con 2.11 **mantiene el soporte estándar hasta el 7 de noviembre de 2027**; que exista una versión más reciente no significa que esa versión carezca de soporte. Para un dominio existente, compruebe las rutas de actualización admitidas, los cambios incompatibles, las instantáneas y la compatibilidad de los clientes antes de solicitar una actualización.
 
-OpenSearch Service puede admitir análisis de logs, búsqueda de texto completo, agregaciones y flujos de trabajo de análisis de seguridad. Habilitar un servicio o conservar logs de auditoría no satisface por sí mismo un requisito de conformidad.
+OpenSearch Service puede utilizarse para análisis de registros, búsqueda de texto completo, agregaciones y flujos de análisis de seguridad. Habilitar un servicio o conservar registros de auditoría no satisface por sí solo un requisito de cumplimiento.
 
 <span id="node-types"></span>
 
-## Arquitectura
+## Arquitectura {#architecture}
 
-### Arquitectura del clúster de OpenSearch
+### Arquitectura del clúster de OpenSearch {#opensearch-cluster-architecture}
 
-![Flujo conceptual de ingesta de dominio aprovisionado y almacenamiento tradicional hot/UltraWarm/cold.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
+![Flujo conceptual de ingesta de un dominio aprovisionado y de almacenamiento en los niveles tradicionales hot, UltraWarm y cold.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
 
-El diagrama es esquemático, no una réplica exacta del diseño de réplicas/AZ ni una recomendación de dimensionamiento. Su etiqueta “Master” se refiere al rol dedicado de administración del clúster; los campos de configuración de AWS todavía usan `dedicated_master_*`. “Kinesis Data Firehose” es el nombre anterior de **Amazon Data Firehose**. Tanto el almacenamiento UltraWarm como cold usan almacenamiento respaldado por S3; los datos cold deben adjuntarse a UltraWarm antes de consultarse.
+El diagrama es esquemático; no representa una distribución exacta de réplicas o zonas de disponibilidad ni recomienda tamaños concretos. Su etiqueta «Master» designa la función dedicada de gestión del clúster; los campos de configuración de AWS siguen utilizando `dedicated_master_*`. «Kinesis Data Firehose» es el nombre anterior de **Amazon Data Firehose**. Tanto UltraWarm como cold utilizan almacenamiento respaldado por S3; para consultar datos cold, primero debe volver a asociarlos a UltraWarm.
 
 | Rol o nivel | Función |
 |---|---|
-| Nodos dedicados de administración del clúster | Estado del clúster, metadatos y administración de la asignación de shards. Tres es la configuración convencional de administradores dedicados; no son réplicas de datos. |
-| Nodos de datos / almacenamiento hot | Indexación y consultas. La disponibilidad y los límites de EBS dependen de la familia de instancias seleccionada. |
-| UltraWarm | Índices de solo lectura respaldados por S3, con caché/cómputo de nodos warm. Compruebe los requisitos de motor, instancia y administrador dedicado. |
-| Almacenamiento cold | Almacenamiento de índices separados con un ciclo de vida independiente. Vuelva a adjuntar índices seleccionados a UltraWarm para consultarlos. |
+| Nodos dedicados de gestión del clúster | Gestionan el estado del clúster, los metadatos y la asignación de shards. Tres nodos es la configuración convencional de gestores dedicados; no son réplicas de datos. |
+| Nodos de datos / almacenamiento hot | Realizan la indexación y las consultas. La disponibilidad y los límites de EBS dependen de la familia de instancias seleccionada. |
+| UltraWarm | Índices de solo lectura respaldados por S3, con caché y cómputo en nodos warm. Compruebe los requisitos del motor, de las instancias y de los gestores dedicados. |
+| Almacenamiento cold | Almacena índices desvinculados con un ciclo de vida independiente. Vuelva a asociar los índices seleccionados a UltraWarm para consultarlos. |
 
-Multi-AZ with Standby tiene requisitos adicionales de topología y réplicas. Simplemente habilitar la conciencia de zona no habilita Standby ni establece sus garantías de disponibilidad. Revise las restricciones actuales de instancias, incluidos VPC Encryption Controls y la compatibilidad de almacenamiento. Los tamaños originales r6g/m6g son entradas de ejemplo, no un benchmark.
+Multi-AZ with Standby tiene requisitos adicionales de topología y réplicas. Habilitar la distribución entre zonas no habilita Standby ni proporciona sus garantías de disponibilidad. Revise las restricciones actuales de las instancias, incluidos VPC Encryption Controls y la compatibilidad del almacenamiento. Los tamaños originales r6g/m6g son valores de ejemplo, no resultados de una prueba de rendimiento.
 
-Recurso complementario: [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). La capacidad del servicio todavía requiere una prueba representativa de carga de trabajo de OpenSearch.
+Recurso complementario: [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). Para determinar la capacidad del servicio, sigue siendo necesaria una prueba con una carga de trabajo representativa de OpenSearch.
 
-### Flujo de datos
+### Flujo de datos {#data-flow}
 
-![Ciclo de vida ilustrativo de índices diarios: ingesta al almacenamiento hot, después una transición ISM a UltraWarm y almacenamiento cold.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
+![Ciclo de vida ilustrativo de índices diarios: ingesta en almacenamiento hot y transición mediante ISM a UltraWarm y almacenamiento cold.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
 
-Las etiquetas de 7/30 días son condiciones de **edad del índice** de ejemplo, no valores predeterminados automáticos ni retención exacta según la edad del evento. ISM se ejecuta periódicamente y la migración es asíncrona. Los eventos tardíos o reproducidos pueden dirigirse a un índice antiguo de solo lectura con indexación basada en fechas; decida cómo enrutar o archivarlos antes de habilitar la migración.
+Las etiquetas de 7 y 30 días son ejemplos de **condiciones de antigüedad del índice**, no valores predeterminados automáticos ni una retención exacta basada en la antigüedad de cada evento. ISM se ejecuta periódicamente y la migración es asíncrona. Con índices basados en fechas, los eventos tardíos o reprocesados pueden dirigirse a un índice antiguo de solo lectura; decida cómo dirigirlos o archivarlos antes de habilitar la migración.
 
 <span id="creation-via-aws-console"></span>
 
-## Creación de dominios
+## Creación de dominios {#domain-creation}
 
-### Requisitos previos
+### Requisitos previos {#prerequisites}
 
-Prepare tres subredes privadas en AZ distintas de la misma VPC, grupos de seguridad de clientes accesibles, un rol vinculado al servicio existente y roles IAM aprobados de administrador/escritor/lector. El ejemplo valida IDs de subred distintos, pero no verifica remotamente sus AZ, rutas, capacidad ni propiedad.
+Prepare tres subredes privadas en distintas zonas de disponibilidad de la misma VPC, grupos de seguridad de clientes con conectividad, un rol vinculado al servicio existente y roles IAM aprobados para administradores, escritores y lectores. El ejemplo valida que los identificadores de subred sean distintos, pero no comprueba remotamente sus zonas, rutas, capacidad ni propiedad.
 
-El perfil de Terraform usa **solicitudes de API firmadas por IAM** y un rol maestro de IAM. Evita una contraseña maestra interna en el estado de Terraform. Configure las asignaciones de roles FGAC antes de enviar logs. El SSO del navegador es un perfil de acceso independiente tratado más adelante; una política de dominio de principal IAM requiere SigV4 y no acepta automáticamente solicitudes de navegador SAML sin firmar.
+El perfil de Terraform utiliza **solicitudes a la API firmadas con IAM** y un rol IAM de administrador principal. Evita guardar una contraseña interna de administrador principal en el estado de Terraform. Configure las asignaciones de roles FGAC antes de enviar registros. El SSO del navegador es un perfil de acceso distinto que se explica más adelante; una política de dominio con principales IAM requiere SigV4 y no acepta automáticamente solicitudes SAML del navegador sin firmar.
 
-### Creación mediante Terraform
+### Creación mediante Terraform {#creation-via-terraform}
 
-El ejemplo usa la partición comercial de AWS y la Región de Seúl. Reemplace las entradas de forma coherente y compruebe la disponibilidad regional. Crea recursos si se aplica; la auditoría solo ejecutó validación local.
+El ejemplo utiliza la partición comercial de AWS y la región de Seúl. Sustituya los valores de forma coherente y compruebe la disponibilidad regional. Aplicar esta configuración crea recursos; la revisión solo realizó validaciones locales.
 
 ```hcl
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -253,25 +253,25 @@ output "dashboards_endpoint" {
 }
 ```
 
-Los tamaños iniciales, los volúmenes EBS de 500 GiB y la retención de CloudWatch de 30 días son ilustrativos. El perfil usa explícitamente Multi-AZ **sin Standby**. El acceso saliente del grupo de seguridad sigue siendo amplio en esta referencia; diseñe restricciones de salida para las conexiones compatibles reales antes de producción.
+Los tamaños iniciales, los volúmenes EBS de 500 GiB y la retención de CloudWatch de 30 días son ejemplos. El perfil utiliza expresamente Multi-AZ **sin Standby**. En esta referencia, el acceso saliente del grupo de seguridad sigue siendo amplio; antes de utilizarla en producción, diseñe restricciones de salida para las conexiones reales admitidas.
 
-La política de acceso al dominio admite los roles IAM indicados para operaciones HTTP; **FGAC** debe restringir sus permisos de índice/clúster. Los permisos IAM basados solo en URI no restringen los nombres de índice incrustados en cuerpos de solicitudes bulk. Asigne al rol del recopilador únicamente la asignación de escritor prevista.
+La política de acceso al dominio permite a los roles IAM indicados realizar operaciones HTTP; **FGAC** debe restringir sus permisos sobre índices y clústeres. Los permisos IAM basados únicamente en URI no limitan los nombres de índice incluidos dentro de los cuerpos de solicitudes bulk. Asigne al rol del recopilador solo el rol de escritura previsto.
 
-El rol vinculado al servicio de la plataforma es una dependencia a nivel de cuenta. Reutilícelo o impórtelo mediante el estado de infraestructura de su propietario en vez de intentar crear el mismo rol en cada implementación.
+El rol vinculado al servicio de la plataforma es una dependencia de la cuenta. Reutilícelo o impórtelo en el estado de infraestructura que lo gestiona, en lugar de intentar crear el mismo rol en cada despliegue.
 
-Los dominios OpenSearch reciben snapshots automatizadas cada hora que se conservan durante 14 días (hasta 336). El antiguo ejemplo `automated_snapshot_start_hour` se aplica a versiones mucho más antiguas de Elasticsearch, no a este perfil de OpenSearch. Las snapshots son mecanismos de recuperación, no sustitutos de un plan de retención/restauración probado. El estado red del clúster puede impedir las snapshots.
+Los dominios OpenSearch generan instantáneas automáticas cada hora y las conservan durante 14 días, hasta un máximo de 336. El antiguo ejemplo `automated_snapshot_start_hour` corresponde a versiones mucho anteriores de Elasticsearch, no a este perfil de OpenSearch. Las instantáneas son mecanismos de recuperación; no sustituyen un plan de retención y restauración probado. El estado rojo del clúster puede impedir que se generen.
 
-La publicación en CloudWatch necesita la política de recursos con alcance definido antes de configurar el dominio. Publicar destinos de slow logs no habilita todos los umbrales de slow log, y publicar logs de auditoría no configura todos los eventos de auditoría. Configure deliberadamente los ajustes correspondientes del motor/auditoría; las consultas y el contenido de documentos en los logs también necesitan controles de acceso y retención.
+Antes de configurar el dominio para publicar en CloudWatch, debe existir la política de recursos con el alcance correspondiente. Configurar destinos para los registros de consultas lentas no habilita todos sus umbrales, y publicar registros de auditoría no configura todos los eventos auditados. Configure expresamente los ajustes del motor y de auditoría pertinentes. Las consultas y el contenido de los documentos presentes en los registros también necesitan controles de acceso y retención.
 
 <span id="index-aliases"></span>
 
-## Administración de índices
+## Administración de índices {#index-management}
 
-El recopilador principal siguiente escribe **índices diarios** llamados `logs-production-YYYY.MM.DD`. La plantilla, el patrón ISM y los ejemplos de consulta usan ese patrón. A continuación hay un ejercicio de rollover independiente; no combine silenciosamente las dos estrategias de escritura.
+El recopilador principal siguiente escribe **índices diarios** llamados `logs-production-YYYY.MM.DD`. La plantilla, el patrón ISM y los ejemplos de consulta utilizan ese patrón. Más adelante se presenta un ejercicio independiente de rollover; mantenga separadas ambas estrategias de escritura.
 
-Los siguientes bloques de solicitudes usan la sintaxis de Dev Tools de OpenSearch Dashboards. No son archivos JSON independientes ni comandos ejecutados por la auditoría. Use un cliente de plano de datos autorizado y el dominio previsto.
+Los bloques de solicitudes siguientes utilizan la sintaxis de Dev Tools de OpenSearch Dashboards. No son archivos JSON independientes ni comandos ejecutados durante la revisión. Utilice un cliente autorizado del plano de datos y el dominio previsto.
 
-### Plantillas de índices
+### Plantillas de índices {#index-templates}
 
 ```http
 PUT _index_template/logs-template
@@ -373,19 +373,19 @@ PUT _index_template/logs-template
 }
 ```
 
-El filtro Kubernetes produce `kubernetes.namespace_name`, no `kubernetes.namespace`. El JSON de la aplicación está anidado bajo `app` para mantenerlo separado de los metadatos del recopilador. Las aplicaciones deben emitir los campos y unidades documentados; los ejemplos usan `app.level` en minúsculas y milisegundos en `app.http.response_time_ms`.
+El filtro de Kubernetes genera `kubernetes.namespace_name`, no `kubernetes.namespace`. El JSON de la aplicación se anida bajo `app` para separarlo de los metadatos del recopilador. Las aplicaciones deben emitir los campos y las unidades documentados; los ejemplos utilizan `app.level` en minúsculas y milisegundos para `app.http.response_time_ms`.
 
-Un registro de aplicación ilustrativo de una línea antes del enriquecimiento del recopilador es:
+Este es un ejemplo de registro de aplicación de una sola línea, antes de que el recopilador añada metadatos:
 
 ```json
 {"level":"error","message":"request failed","error_type":"upstream_timeout","http":{"method":"GET","path":"/orders","status_code":503,"response_time_ms":1250}}
 ```
 
-El subcampo `message.keyword` se define explícitamente como `app.message.keyword`; una asignación `text` por sí sola no lo crea automáticamente. Los valores por encima de su límite `ignore_above` no se indexan en ese subcampo. Considere una taxonomía delimitada de `error_type` para agregaciones en vez de mensajes arbitrarios.
+El subcampo `message.keyword` se define expresamente como `app.message.keyword`; una definición de tipo `text` por sí sola no lo crea automáticamente. Los valores que superan su límite `ignore_above` no se indexan en ese subcampo. Para las agregaciones, considere una clasificación limitada de `error_type` en lugar de mensajes arbitrarios.
 
-`dynamic: false` limita los campos asignados nuevos, pero **no elimina campos desconocidos de `_source`**. El campo `log` sin procesar se almacena sin un índice de búsqueda. Revise la duplicación, el enmascaramiento y el acceso a los datos sin procesar. `translog.durability: request` es una línea base más segura que una compensación de durabilidad async/30s sin explicación; ninguno de los dos ajustes garantiza la recuperación ante cada fallo de almacenamiento o réplica.
+`dynamic: false` limita la creación de nuevos campos mapeados, pero **no elimina los campos desconocidos de `_source`**. El campo `log` original se almacena sin indexarse para búsquedas. Revise la duplicación, la eliminación o el enmascaramiento de datos sensibles y el acceso a los datos originales. `translog.durability: request` es una referencia más segura que aceptar, sin explicación, el compromiso de durabilidad de async/30s; ninguno de los ajustes garantiza la recuperación ante todos los fallos de almacenamiento o réplicas.
 
-### Políticas ISM (Index State Management)
+### Políticas ISM (Index State Management) {#ism-index-state-management-policies}
 
 ```http
 PUT _plugins/_ism/policies/logs-lifecycle
@@ -463,15 +463,15 @@ PUT _plugins/_ism/policies/logs-lifecycle
 }
 ```
 
-Esta política se adjunta a índices coincidentes recién creados. Los índices existentes necesitan una operación deliberada de adjuntar políticas; inspeccione `_plugins/_ism/explain/INDEX` y las versiones de las políticas antes de modificarlos.
+Esta política se asocia a los nuevos índices que coincidan con su patrón. Para los índices existentes, debe realizar expresamente una operación de asociación de política; examine `_plugins/_ism/explain/INDEX` y las versiones de las políticas antes de modificarlos.
 
-Cada objeto de acción tiene una acción (con sus metadatos de reintento/tiempo de espera admitidos). Las acciones administradas `warm_migration`, `cold_migration` y **`cold_delete`** difieren de las operaciones ISM autoadministradas. Los índices cold requieren `cold_delete`, y la migración cold de ISM necesita un campo de marca de tiempo explícito. No combine la migración warm, los cambios de réplica y force merge en un solo objeto de acción.
+Cada objeto de acción contiene una sola acción, junto con los metadatos de reintento o tiempo de espera admitidos. Las operaciones gestionadas `warm_migration`, `cold_migration` y **`cold_delete`** difieren de las operaciones ISM de instalaciones autogestionadas. Los índices cold necesitan `cold_delete`, y la migración a cold mediante ISM exige un campo explícito de marca de tiempo. No combine una migración a warm, cambios de réplicas y force merge en un único objeto de acción.
 
-ISM normalmente evalúa los trabajos cada 5–8 minutos y no los ejecuta mientras el estado del clúster sea red. La edad del índice se mide desde su creación. La eliminación de ejemplo a los 90 días es una elección organizativa, no un requisito legal universal ni una expiración exacta por registro. Verifique el comportamiento de datos tardíos, las snapshots y la recuperación antes de habilitar la eliminación.
+ISM suele evaluar los trabajos cada 5–8 minutos y no los ejecuta mientras el clúster esté en estado rojo. La antigüedad del índice se mide desde su creación. El ejemplo de eliminación a los 90 días es una decisión de la organización, no un requisito legal universal ni una expiración exacta de cada registro. Antes de habilitar la eliminación, verifique el tratamiento de los datos tardíos, las instantáneas y la recuperación.
 
-### Alias de índices y rollover
+### Alias de índices y rollover {#index-aliases-and-rollover}
 
-Este ejercicio independiente usa el prefijo `rollover-logs-*` y un alias de escritor. No cambia la configuración diaria del recopilador.
+Este ejercicio independiente utiliza el prefijo `rollover-logs-*` y un alias de escritura. No modifica la configuración de índices diarios del recopilador.
 
 ```http
 PUT _index_template/rollover-logs
@@ -556,20 +556,20 @@ POST rollover-logs-write/_rollover
 }
 ```
 
-El rollover automático de ISM necesita el ajuste de alias de rollover, un índice numerado adecuado y el alias de escritura. Un escritor de fechas diarias no usará ese alias simplemente porque exista uno.
+El rollover automático de ISM necesita la configuración del alias de rollover, un índice numerado adecuado y el alias de escritura. Un proceso que escribe en índices diarios por fecha no utilizará ese alias simplemente porque exista.
 
-`min_primary_shard_size: 30gb` de ISM se refiere a un único shard principal. El analizador REST de rollover de OpenSearch 3.5 acepta `max_age`, `max_docs` y `max_size`; `max_size` mide el **almacenamiento total de shards principales**, excluyendo réplicas. Por lo tanto, el ejemplo REST de 90 GB no es la misma condición que un umbral de 30 GB por shard principal. Las condiciones de rollover son alternativas, no un requisito de satisfacer todos los umbrales simultáneamente.
+`min_primary_shard_size: 30gb` de ISM se refiere a un único shard primario. El analizador de la API REST de rollover de OpenSearch 3.5 admite `max_age`, `max_docs` y `max_size`; `max_size` mide el **almacenamiento total de los shards primarios**, sin réplicas. Por tanto, el ejemplo REST de 90 GB no representa la misma condición que un umbral de 30 GB por shard primario. Las condiciones de rollover son alternativas; no es necesario cumplir todos los umbrales a la vez.
 
 <span id="direct-ingestion-from-fluentbit-to-opensearch"></span>
 <span id="fluentbit-daemonset-using-irsa"></span>
 
-## Ingesta de datos
+## Ingesta de datos {#data-ingestion}
 
-### Ingesta directa desde Fluent Bit
+### Ingesta directa desde Fluent Bit {#direct-ingestion-from-fluent-bit}
 
-Los siguientes seis recursos forman una configuración de recopilador de referencia para **nodos Linux EC2** elegibles. Fargate usa su enrutador de logs de plataforma; Windows y otras plataformas de nodo requieren sus propias rutas y modelo de implementación. Confirme las rutas de host, las excepciones de políticas de admisión y las necesidades de recursos antes de implementar un lector de logs de nodo.
+Los seis recursos siguientes forman una configuración de referencia del recopilador para **nodos EC2 Linux** que cumplan los requisitos. Fargate utiliza el router de registros de su plataforma; Windows y otras plataformas de nodos necesitan sus propias rutas y su propio modelo de despliegue. Antes de desplegar un lector de registros del nodo, confirme las rutas del host, las excepciones de las políticas de admisión y los recursos necesarios.
 
-Establezca el hostname de dominio, la Región y el rol IRSA reales. La confianza OIDC del rol debe coincidir con `system:serviceaccount:logging:fluent-bit`; autorice también su acceso IAM/plano de datos y el rol de escritor FGAC. Pod Identity es una alternativa solo con soporte compatible de nodo/agente/SDK.
+Configure el nombre real del host del dominio, la región y el rol IRSA. La relación de confianza OIDC del rol debe coincidir con `system:serviceaccount:logging:fluent-bit`; autorice también su acceso IAM al plano de datos y su rol de escritura FGAC. Pod Identity solo es una alternativa si el nodo, el agente y el SDK son compatibles.
 
 ```yaml
 apiVersion: v1
@@ -746,27 +746,27 @@ spec:
         emptyDir: {}
 ```
 
-El índice de imágenes está fijado y se comprobó su metadato Linux amd64/arm64. El CMD predeterminado de esta imagen es un script de punto de entrada; el ejemplo invoca explícitamente `/fluent-bit/bin/fluent-bit` con la **salida OpenSearch nativa**. No carga los plugins heredados de salida Go ni prueba la imagen en tiempo de ejecución.
+El índice de la imagen está fijado y se comprobaron sus metadatos para Linux amd64/arm64. El CMD predeterminado de esta imagen ejecuta un script de entrada; el ejemplo invoca expresamente `/fluent-bit/bin/fluent-bit` con la **salida nativa de OpenSearch**. No carga los plugins de salida antiguos escritos en Go ni prueba la imagen en ejecución.
 
 Relaciones de configuración importantes:
 
-- `multiline.parser docker, cri` maneja el framing de contenedor compatible; después, el filtro Kubernetes fusiona el JSON de la aplicación bajo `app`.
-- El montaje `/var/log` de solo lectura es para la entrada de logs. La base de datos Tail y los buffers de sistema de archivos usan una ruta de nodo separada con escritura. Sobreviven al reinicio de un Pod solo mientras sobreviva ese nodo/ruta; no son almacenamiento duradero entre nodos.
-- El RBAC de metadatos se limita a operaciones de lectura en Pods/namespaces. El agente mismo lee los logs de nodo, por lo que debe proteger su namespace, rol y configuración.
-- Las anotaciones de aplicaciones no pueden sobrescribir silenciosamente el análisis ni excluir logs en este ejemplo. Los valores de clúster/entorno generados por el recopilador se establecen deliberadamente. Excluya los propios logs del recopilador de este pipeline para reducir los bucles de retroalimentación.
-- `Suppress_Type_Name On` es obligatorio para la API sin tipos de OpenSearch 2.x/3.x. `Type _doc` no es un sustituto compatible.
-- `Logstash_Format On` crea nombres de índices basados en fechas y el campo `@timestamp`. No escribe en el alias de rollover opcional.
-- Los reintentos, `Generate_ID`, los buffers de memoria y el límite de almacenamiento de la salida no son una garantía de entrega exactamente una vez ni sin pérdidas. Pruebe errores bulk parciales, líneas sobredimensionadas, offsets de reinicio, el límite de reintentos, presión de disco y registros tardíos. El límite de salida no limita todo el uso de disco del nodo.
+- `multiline.parser docker, cri` procesa los formatos admitidos de registros de contenedores; después, el filtro de Kubernetes incorpora el JSON de la aplicación bajo `app`.
+- El montaje de solo lectura de `/var/log` sirve como entrada de registros. La base de datos de Tail y los búferes del sistema de archivos utilizan otra ruta del nodo con permisos de escritura. Solo sobreviven a un reinicio del pod mientras ese nodo y esa ruta sigan existiendo; no constituyen almacenamiento duradero entre nodos.
+- El RBAC de metadatos se limita a leer pods y espacios de nombres. El agente también lee los registros del nodo, por lo que debe proteger su espacio de nombres, su rol y su configuración.
+- En este ejemplo, las anotaciones de las aplicaciones no pueden modificar de forma inadvertida el análisis ni excluir registros. Los valores de clúster y entorno generados por el recopilador se configuran expresamente. Excluya de este flujo los registros del propio recopilador para reducir los bucles de retroalimentación.
+- `Suppress_Type_Name On` es necesario para la API sin tipos de OpenSearch 2.x/3.x. `Type _doc` no es un sustituto compatible.
+- `Logstash_Format On` crea nombres de índice basados en fechas y el campo `@timestamp`. No escribe en el alias opcional de rollover.
+- Los reintentos, `Generate_ID`, los búferes de memoria y el límite de almacenamiento de la salida no garantizan una entrega exactamente una vez ni sin pérdidas. Pruebe los errores parciales de solicitudes bulk, las líneas demasiado grandes, las posiciones de lectura tras reinicios, el límite de reintentos, la presión sobre el disco y los registros tardíos. El límite de la salida no limita todo el uso de disco del nodo.
 
-El log sin procesar conservado puede contener datos también presentes bajo `app`. Enmascare el contenido prohibido antes de almacenarlo y supervise los registros rechazados. No habilite el rastreo de cuerpos de solicitudes como un ajuste de diagnóstico permanente.
+El registro original conservado puede contener datos que también figuren bajo `app`. Elimine o enmascare el contenido prohibido antes de almacenarlo y supervise los registros rechazados. No mantenga habilitada la trazabilidad de los cuerpos de solicitudes como ajuste permanente de diagnóstico.
 
 <span id="ingestion-via-kinesis-data-firehose"></span>
 
-### Ingesta mediante Amazon Data Firehose
+### Ingesta mediante Amazon Data Firehose {#ingestion-via-amazon-data-firehose}
 
-Data Firehose es una ruta de entrega administrada alternativa con controles de almacenamiento en búfer, reintentos y respaldo; no es automáticamente la opción más barata ni la más simple para cada carga de trabajo. Su recurso Terraform sigue llamándose `aws_kinesis_firehose_delivery_stream`.
+Data Firehose ofrece una ruta alternativa de entrega gestionada con controles de almacenamiento en búfer, reintento y copia de seguridad. No es automáticamente la opción más barata o sencilla para todas las cargas de trabajo. Su recurso de Terraform sigue llamándose `aws_kinesis_firehose_delivery_stream`.
 
-Este archivo de recursos opcional usa el dominio anterior y las entradas existentes aprobadas de rol de entrega, subred, grupo de seguridad y bucket de respaldo privado:
+Este archivo opcional de recursos utiliza el dominio anterior y valores ya existentes y aprobados para el rol de entrega, las subredes, los grupos de seguridad y el bucket privado de copia de seguridad:
 
 ```hcl
 variable "firehose_role_arn" {
@@ -833,23 +833,23 @@ resource "aws_kinesis_firehose_delivery_stream" "logs" {
 }
 ```
 
-El rol de entrega necesita los permisos relevantes de OpenSearch/FGAC, S3, CloudWatch y VPC/ENI, además de los permisos KMS requeridos; su confianza y los permisos `iam:PassRole` del implementador son independientes. Incluya el rol de entrega en las entradas de llamadores del dominio y en la asignación de escritor, y permita sus conexiones VPC al puerto 443.
+El rol de entrega necesita los permisos correspondientes de OpenSearch/FGAC, S3, CloudWatch y VPC/ENI, además de los permisos KMS necesarios. Su relación de confianza y los permisos `iam:PassRole` de quien despliega son requisitos independientes. Incluya el rol de entrega entre los clientes autorizados del dominio y en la asignación del rol de escritura; permita sus conexiones desde la VPC al puerto 443.
 
-`FailedDocumentsOnly` elige el modo de respaldo; nombrar un prefijo S3 `failed/` por sí solo no lo hace. Pruebe los fallos y la reproducción desde el bucket de respaldo privado. Los registros de Firehose necesitan un esquema compatible con la asignación de índices, incluidas las marcas de tiempo; el servicio no crea automáticamente el sobre de metadatos Kubernetes/aplicación mostrado aquí.
+`FailedDocumentsOnly` selecciona el modo de copia de seguridad; utilizar un prefijo de S3 llamado `failed/` no lo configura por sí solo. Pruebe los fallos y el reprocesamiento desde el bucket privado de copia de seguridad. Los registros de Firehose necesitan un esquema compatible con el mapping del índice, incluidas las marcas de tiempo. El servicio no crea automáticamente la estructura de metadatos de Kubernetes y de aplicación mostrada aquí.
 
 <span id="dashboard-access-setup"></span>
 <span id="create-index-pattern"></span>
 <span id="visualization-creation"></span>
 
-## OpenSearch Dashboards
+## OpenSearch Dashboards {#opensearch-dashboards}
 
-### Acceso y patrones de índices
+### Acceso y patrones de índices {#access-and-index-patterns}
 
-Use conectividad VPC aprobada y un método de autenticación compatible con la política de acceso del dominio. Un túnel SSH simple no conserva por sí mismo el hostname TLS original, las redirecciones SSO ni la firma SigV4. No deshabilite la verificación de certificados para hacer que `https://localhost:9200` parezca funcionar. Un ALB no es una receta completa de integración nativa de dominio/Dashboards.
+Utilice conectividad VPC aprobada y un método de autenticación compatible con la política de acceso al dominio. Un túnel SSH por sí solo no conserva el nombre original del host TLS, las redirecciones SSO ni la firma SigV4. No deshabilite la verificación de certificados para hacer que `https://localhost:9200` parezca funcionar. Un ALB no constituye una solución completa de integración nativa del dominio y Dashboards.
 
-Después de configurar el acceso autenticado, cree una vista de datos/patrón de índice para `logs-production-*` y seleccione `@timestamp`. Los nombres de menú varían según la versión de Dashboards y la experiencia habilitada.
+Después de configurar el acceso autenticado, cree una vista de datos o patrón de índices para `logs-production-*` y seleccione `@timestamp`. Los nombres de los menús varían según la versión de Dashboards y la experiencia habilitada.
 
-### Ejemplos de consultas de búsqueda
+### Ejemplos de consultas de búsqueda {#search-query-examples}
 
 ```http
 GET logs-production-*/_search
@@ -964,21 +964,21 @@ GET logs-production-*/_search
 }
 ```
 
-Estos ejemplos usan contexto de filtro para condiciones exactas de keyword/tiempo. La segunda consulta realmente filtra errores antes de agregar namespaces. La agregación Terms devuelve un conjunto top-N seleccionado y puede tener aproximación distribuida/buckets omitidos; no es un recuento completo de cada namespace. Los percentiles son aproximados y usan el campo asignado en milisegundos.
+Estos ejemplos utilizan el contexto de filtro para condiciones exactas sobre palabras clave y tiempo. La segunda consulta filtra los errores antes de agregar los espacios de nombres. La agregación terms devuelve un conjunto seleccionado de los N resultados principales y puede producir aproximaciones distribuidas u omitir grupos; no proporciona un recuento completo de todos los espacios de nombres. Los percentiles son aproximados y utilizan el campo mapeado en milisegundos.
 
-Para las visualizaciones, elija `app.level`, un histograma de tiempo sobre `@timestamp` o los campos asignados explícitamente `app.message.keyword`/`app.error_type`. Un nombre de campo mencionado en un dashboard no crea su asignación.
+Para las visualizaciones, seleccione `app.level`, un histograma temporal sobre `@timestamp` o los campos expresamente mapeados `app.message.keyword`/`app.error_type`. Mencionar un nombre de campo en un dashboard no crea su mapping.
 
 <span id="fine-grained-access-control-fgac"></span>
 <span id="document-level-security-dls"></span>
 <span id="field-level-security-fls"></span>
 
-## Configuración de seguridad
+## Configuración de seguridad {#security-configuration}
 
-### Control de acceso detallado
+### Control de acceso granular {#fine-grained-access-control}
 
-El acceso de red, la política de recursos del dominio y FGAC son capas independientes. La política de principal IAM de Terraform requiere SigV4. Ni una regla de grupo de seguridad ni una solicitud IAM correcta conceden automáticamente acceso al índice.
+El acceso de red, la política de recursos del dominio y FGAC son capas independientes. La política de Terraform con principales IAM requiere SigV4. Ni una regla de grupo de seguridad ni una solicitud IAM aceptada conceden automáticamente acceso a los índices.
 
-Un administrador puede definir un rol de escritor para el recopilador y un lector restringido por namespace:
+Un administrador puede definir un rol de escritura para el recopilador y un rol de lectura restringido por espacio de nombres:
 
 ```http
 PUT _plugins/_security/api/roles/logs-writer
@@ -1032,13 +1032,13 @@ PUT _plugins/_security/api/rolesmapping/team-a-logs
 }
 ```
 
-Reemplace los ARN de rol por las identidades aprobadas. La asignación de escritor también debe incluir un rol de entrega Firehose si se usa esa ruta. No conceda a lectores rutinarios `cluster_all` ni el rol maestro. Las asignaciones de roles de backend de IAM y los nombres de usuario internos/SAML son mecanismos de identidad diferentes.
+Sustituya los ARN de los roles por los de las identidades aprobadas. Si utiliza Firehose, la asignación de escritura también debe incluir su rol de entrega. No conceda `cluster_all` ni el rol de administrador principal a los lectores habituales. Las asignaciones de backend roles IAM y los nombres de usuario internos o de SAML son mecanismos de identidad distintos.
 
-### Seguridad a nivel de documento y seguridad a nivel de campo
+### Seguridad a nivel de documento y seguridad a nivel de campo {#document-level-security-and-field-level-security}
 
-DLS filtra documentos por campos almacenados. En este ejemplo, los metadatos de namespace deben provenir del recopilador de confianza; las cadenas proporcionadas por aplicaciones no son prueba de identidad del inquilino.
+DLS filtra documentos a partir de campos almacenados. En este ejemplo, los metadatos del espacio de nombres deben proceder del recopilador de confianza; las cadenas proporcionadas por la aplicación no demuestran la identidad del tenant.
 
-Para un lector más restringido, el siguiente rol **combinado** conserva la restricción de namespace e incluye solo campos de respuesta seleccionados:
+Para un lector con acceso más restringido, el rol **combinado** siguiente mantiene la restricción por espacio de nombres y solo incluye determinados campos de respuesta:
 
 ```http
 PUT _plugins/_security/api/roles/team-a-limited
@@ -1066,15 +1066,15 @@ PUT _plugins/_security/api/roles/team-a-limited
 }
 ```
 
-Use la asignación de rol prevista en vez de agregar un rol restringido a una identidad que ya tiene acceso más amplio. Evalúe el conjunto completo de roles efectivos. El campo `log` sin procesar está ausente intencionalmente de esta lista de permitidos porque puede duplicar campos JSON ocultos de otro modo.
+Utilice la asignación de rol prevista, en lugar de añadir un rol restringido a una identidad que ya tenga un acceso más amplio. Evalúe el conjunto completo de roles efectivos. El campo `log` original se excluye expresamente de esta lista de campos permitidos porque puede duplicar campos JSON que, de otro modo, quedarían ocultos.
 
-FLS controla los campos devueltos, no el contenido de una cadena de mensaje permitida. No elimina información de `_source`, snapshots ni archivos de logs. Pruebe el acceso de búsqueda, get, búsqueda múltiple y agregación, e impida que los datos prohibidos se registren en primer lugar.
+FLS controla los campos devueltos, no el contenido de una cadena de mensaje permitida. No elimina información de `_source`, de las instantáneas ni de los archivos de registros. Pruebe el acceso mediante search, get, multi-search y agregaciones, e impida desde el principio que se registren datos prohibidos.
 
-### Configuración de autenticación SAML
+### Configuración de autenticación SAML {#saml-authentication-setup}
 
-SAML administrado de OpenSearch Service se configura mediante la **API de configuración de dominio de AWS**, no subiendo un `opensearch-security/config.yml` autoadministrado.
+En OpenSearch Service gestionado, SAML se configura mediante la **API de configuración de dominios de AWS**, no cargando un archivo `opensearch-security/config.yml` de una instalación autogestionada.
 
-El siguiente asistente local serializa XML de IdP aprobado sin escaparlo manualmente. Reemplace el grupo administrativo de ejemplo y la clave de atributo de rol con la configuración de IdP que revisó:
+El script auxiliar local siguiente serializa el XML aprobado del IdP sin tener que escapar su contenido manualmente. Sustituya el grupo de administración de ejemplo y la clave del atributo de rol por los de la configuración del IdP que haya revisado:
 
 ```python
 from pathlib import Path
@@ -1103,67 +1103,67 @@ aws opensearch update-domain-config \
   --advanced-security-options file://advanced-security-saml.json
 ```
 
-Este es un ejemplo de payload, no una implementación SSO de extremo a extremo. Valide la confianza de metadatos, el ID de entidad, los certificados, las URL de ACS/Dashboards y las asignaciones. El tráfico de navegador SAML necesita un diseño de política de acceso al dominio coincidente; habilitar `SAMLOptions` no convierte ese tráfico en SigV4 para la política solo IAM anterior. Siga un perfil de autenticación coherente y pruebe la recuperación del administrador antes de cambiar un dominio existente.
+Este es un ejemplo del cuerpo de una solicitud, no un despliegue SSO completo. Valide la confianza en los metadatos, el identificador de entidad, los certificados, las URL de ACS y Dashboards, y las asignaciones. El tráfico SAML del navegador necesita una política de acceso al dominio compatible; habilitar `SAMLOptions` no convierte ese tráfico en SigV4 para la política anterior, que solo admite IAM. Siga un único perfil de autenticación coherente y pruebe la recuperación del acceso administrativo antes de modificar un dominio existente.
 
 <span id="storage-tiering"></span>
 <span id="cost-comparison-based-on-100gb-day"></span>
 <span id="index-optimization"></span>
 <span id="reserved-instances"></span>
 
-## Optimización de costos
+## Optimización de costes {#cost-optimization}
 
-### Ajustes de almacenamiento e índices
+### Ajustes de almacenamiento e índices {#storage-and-index-settings}
 
-Calcule el precio de la Región seleccionada, familias/recuentos de nodos, réplicas, EBS, cómputo/almacenamiento de nodos warm, almacenamiento cold y rutas de transferencia/ingesta de datos. Los totales anteriores en dólares de 100 GB/día y los porcentajes fijos de ahorro carecían de suficientes supuestos para reproducirse; no son un presupuesto actual ni una comparación medida.
+Calcule el coste de la región elegida, las familias y cantidades de nodos, las réplicas, EBS, el cómputo y almacenamiento de nodos warm, el almacenamiento cold y las rutas de transferencia e ingesta de datos. Los antiguos totales en dólares para 100 GB/día y los porcentajes fijos de ahorro no incluían suficientes supuestos para reproducirlos; no son un presupuesto actual ni una comparación basada en mediciones.
 
-La compresión de índices, el intervalo de actualización, los recuentos de shards y las asignaciones de campos intercambian almacenamiento/CPU, frescura de búsqueda, capacidad de consulta y costo de recuperación. Establezca opciones estáticas como `index.codec` en la plantilla de creación; no envíe ciegamente cambios de ajustes estáticos a todos los índices de producción abiertos. Eliminar posiciones de texto o deshabilitar campos puede romper consultas.
+La compresión de índices, el intervalo de actualización, la cantidad de shards y los mappings de campos implican compromisos entre almacenamiento y CPU, actualización de los resultados de búsqueda, capacidad de consulta y coste de recuperación. Defina las opciones estáticas, como `index.codec`, en la plantilla de creación. No envíe indiscriminadamente cambios de ajustes estáticos a todos los índices abiertos de producción. Eliminar las posiciones del texto o deshabilitar campos puede impedir que determinadas consultas funcionen.
 
-Los ahorros de Reserved Instance dependen del uso elegible, la Región, el plazo y la opción de pago. Un horizonte de un año por sí solo no justifica una compra, y un descuento de nodo no hace que desaparezcan todos los cargos de almacenamiento/entrega. Use precios actuales y demanda medida en lugar de las antiguas cifras fijas de 21/24/36%.
+El ahorro de Reserved Instances depende del uso que cumpla los requisitos, la región, el plazo y la modalidad de pago. Planificar a un año no justifica por sí solo una compra, y un descuento en los nodos no elimina los cargos de almacenamiento y entrega. Utilice precios actuales y demanda medida, en lugar de las antiguas cifras fijas de 21/24/36%.
 
 <span id="inverted-index-inefficiency"></span>
 <span id="aggregation-query-performance-degradation"></span>
 <span id="scaling-cost-issues"></span>
 <span id="clickhouse-migration-decision-criteria"></span>
 
-## Limitaciones en entornos de logs a gran escala
+## Limitaciones en entornos de registros a gran escala {#limitations-in-large-scale-log-environments}
 
-OpenSearch combina índices invertidos con **valores de documento orientados a columnas** para muchas agregaciones y ordenaciones. No vuelve a leer universalmente cada documento `_source` completo para una agregación. La asignación, selectividad, shards, cachés, diseño de segmentos y trabajo simultáneo afectan al rendimiento.
+OpenSearch combina índices invertidos con **doc values almacenados por columnas** para muchas agregaciones y ordenaciones. Una agregación no requiere siempre volver a leer cada documento `_source` completo. Los mappings, la selectividad, los shards, las cachés, la distribución de segmentos y el trabajo concurrente influyen en el rendimiento.
 
-Las cifras originales de latencia y compresión de OpenSearch/ClickHouse no tenían hardware, versiones, datos ni consultas reproducibles. No las convierta en un umbral de migración universal de 100 GB ni en una afirmación de que el 90% de las consultas de todas las organizaciones tienen un patrón.
+Las cifras originales de latencia y compresión de OpenSearch y ClickHouse no especificaban hardware, versiones, datos ni consultas que permitieran reproducirlas. No las convierta en un umbral universal de migración de 100 GB ni afirme que el 90% de las consultas de todas las organizaciones siguen un único patrón.
 
-Compare consultas representativas de texto completo, filtro, agregación e investigación con los mismos requisitos de datos, retención, durabilidad y simultaneidad. Evalúe el costo de ingesta/relleno histórico, evolución de esquemas, permisos, dashboards, habilidades operativas y reversión. Un experimento de escritura dual necesita reconciliación y controles de costos; un calendario fijo de dos semanas o dos meses no es una garantía.
+Compare consultas representativas de texto completo, filtros, agregaciones e investigación con los mismos datos y los mismos requisitos de retención, durabilidad y concurrencia. Evalúe el coste de ingesta y carga de datos históricos, la evolución de esquemas, los permisos, los dashboards, los conocimientos operativos y la reversión. Una prueba de escritura dual necesita conciliación de datos y controles de costes; un calendario fijo de dos semanas o dos meses no garantiza el resultado.
 
 <span id="feature-comparison"></span>
 <span id="recommendations-by-use-case"></span>
 <span id="migration-considerations"></span>
 
-## Comparación con Loki
+## Comparación con Loki {#comparison-with-loki}
 
-| Área | OpenSearch | Loki |
+| Aspecto | OpenSearch | Loki |
 |---|---|---|
-| Modelo de índice/consulta | Campos asignados, índices invertidos y valores de documento; Query DSL y características SQL/PPL compatibles | Índice de etiquetas de stream, escaneo de chunks y pipelines/métricas LogQL |
-| Búsqueda de texto | Analizadores, relevancia y capacidades de consulta de texto completo | Filtrado/búsqueda de texto dentro de streams y rangos de tiempo seleccionados |
-| Control de acceso | Red/IAM/FGAC y controles de documento/campo configurados | Gateway de autenticación, autorización de inquilinos y controles de política/operación |
-| Costos y operaciones | Dependen del modelo aprovisionado/administrado y de la carga de trabajo | Dependen del modo de implementación, streams, almacenamiento de objetos, cachés y consultas |
-| Migración | Reconstruir asignaciones/consultas y validar permisos/corrección de datos | Rediseñar etiquetas/metadatos/consultas y validar permisos/corrección de datos |
+| Modelo de indexación y consulta | Campos mapeados, índices invertidos y doc values; Query DSL y funciones SQL/PPL admitidas | Índice de etiquetas de flujos, lectura de chunks y procesamiento y métricas con LogQL |
+| Búsqueda de texto | Analizadores, relevancia y consultas de texto completo | Filtrado y búsqueda de texto en los flujos e intervalos temporales seleccionados |
+| Control de acceso | Red, IAM, FGAC y controles configurados de documentos y campos | Gateway con autenticación, autorización de tenants y controles de políticas y operación |
+| Costes y operación | Dependen del modelo aprovisionado o gestionado y de la carga de trabajo | Dependen del modo de despliegue, los flujos, el almacenamiento de objetos, las cachés y las consultas |
+| Migración | Reconstruir mappings y consultas; validar permisos y exactitud de los datos | Rediseñar etiquetas, metadatos y consultas; validar permisos y exactitud de los datos |
 
-Ningún producto es automáticamente la opción de conformidad, la opción más barata ni operacionalmente simple. Loki todavía admite búsqueda de texto y métricas derivadas; una migración cambia la semántica y las capacidades en vez de ajustarse a una regla fija de costo de 3–5× o ahorro de 60–80%.
+Ninguno de los productos garantiza por sí solo el cumplimiento ni es automáticamente la opción más barata o sencilla de operar. Loki también admite búsquedas de texto y métricas derivadas. Una migración cambia la semántica y las capacidades; no se ajusta a una regla fija de costes de 3–5× o ahorros del 60–80%.
 
-## Validación y referencias
+## Validación y referencias {#validation-and-references}
 
-Las comprobaciones locales cubren la configuración de recursos Terraform y los contratos publicados de datos/configuración. No demuestran autorización de AWS en vivo, capacidad de SKU compatible en una Región, entrega del recopilador, transiciones/eliminación ISM, autenticación SAML ni rendimiento de consultas. Se inspeccionaron los metadatos de índice/configuración de imágenes sin descargar capas ejecutables ni ejecutar un contenedor.
+Las comprobaciones locales abarcan la configuración de recursos de Terraform y los contratos publicados de datos y configuración. No demuestran la autorización real en AWS, la capacidad de los SKU admitidos en una región, la entrega del recopilador, las transiciones o eliminaciones de ISM, la autenticación SAML ni el rendimiento de las consultas. Los metadatos del índice y la configuración de la imagen se inspeccionaron sin descargar sus capas ejecutables ni ejecutar un contenedor.
 
 - [Soporte de servicio/versión](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
 - [Tipos de instancia admitidos](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) y [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
 - [Acceso VPC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html), [políticas de acceso](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html) y [FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
 - [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html), [almacenamiento cold](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html), [ISM administrado](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html) y [referencia de políticas ISM](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
 - [API de rollover](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/) y [valores de documento](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
-- [Snapshots](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html), [logs de CloudWatch](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html) y [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
+- [Instantáneas](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html), [Registros de CloudWatch](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html) y [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
 - [Historial de versiones de AWS for Fluent Bit](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md) y [configuración de salida OpenSearch](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
 - [Configuración de destino de Data Firehose](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
 - [Precios actuales del servicio](https://aws.amazon.com/opensearch-service/pricing/)
 - [Preguntas frecuentes sobre licencias de Elastic](https://www.elastic.co/pricing/faq/licensing)
 
-## Cuestionario
+## Cuestionario {#quiz}
 
-Pruebe las distinciones en el [cuestionario de OpenSearch](../../quizzes/observability/logging/02-opensearch-quiz.md).
+Repase estas distinciones con el [cuestionario de OpenSearch](../../quizzes/observability/logging/02-opensearch-quiz.md).

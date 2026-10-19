@@ -1,6 +1,6 @@
 # Comparación de soluciones de Service Mesh
 
-> **Última actualización**: September 11, 2026
+> **Última revisión**: 11 de septiembre de 2026
 > **Comprobaciones de API/artefactos**: Istio 1.31.0; Linkerd edge-26.9.1; Kong Mesh/Kuma 2.14.4; Consul/chart 2.0.4
 
 Las versiones de los artefactos identifican las fuentes usadas para comprobar ejemplos. **No son una matriz compartida de compatibilidad con Kubernetes** ni evidencia de un sistema de producción desplegado. Las cifras originales de rendimiento de Istio 1.24/Linkerd 2.15/Kong Mesh 2.8/Consul 1.19 se conservan a continuación con su estado histórico y no verificado.
@@ -19,7 +19,7 @@ Las versiones de los artefactos identifican las fuentes usadas para comprobar ej
 
 ## Arquitectura {#architecture}
 
-Un service mesh desplaza funciones de comunicación seleccionadas a componentes de infraestructura. La interceptación del tráfico puede ser transparente para el código de la aplicación, pero la selección de protocolos, propiedad del tráfico, identidad de las cargas de trabajo y políticas aún requieren configuración. El tracing distribuido también necesita propagación/instrumentación de contexto. Un mesh no hace que reintentos arbitrarios de una aplicación sean seguros.
+Un service mesh desplaza funciones de comunicación seleccionadas a componentes de infraestructura. La interceptación del tráfico puede ser transparente para el código de la aplicación, pero la selección de protocolos, propiedad del tráfico, identidad de las cargas de trabajo y políticas aún requieren configuración. El trazado distribuido también requiere propagación e instrumentación de contexto. Un mesh no hace que reintentos arbitrarios de una aplicación sean seguros.
 
 ![Patrón conceptual de sidecar: un plano de control configura proxies entre servicios. El texto circundante define la configuración necesaria de políticas y telemetría.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
 
@@ -43,7 +43,7 @@ Se admiten Kubernetes y la integración documentada de VM, con requisitos previo
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.html)
 
-Linkerd usa su proxy Rust diseñado específicamente y recursos, anotaciones y CRD de Kubernetes. Las características actuales incluyen enrutamiento de solicitudes de Gateway API, timeouts/reintentos, autorización por ruta y limitación de tasa local. Describirlo como un mesh solo de anotaciones o de «solo características básicas» es inexacto.
+Linkerd usa su proxy Rust diseñado específicamente y recursos, anotaciones y CRD de Kubernetes. Las características actuales incluyen enrutamiento de solicitudes de Gateway API, tiempos de espera/reintentos, autorización por ruta y limitación de tasa local. Describirlo como un mesh solo de anotaciones o de «solo características básicas» es inexacto.
 
 La expansión del mesh fuera de Kubernetes está documentada mediante ExternalWorkload, un proxy en la máquina externa, identidad SPIFFE/SPIRE compatible, DNS y acceso de red. No significa «sin soporte de VM», ni registrar una IP externa instala o autentica automáticamente un proxy.
 
@@ -55,9 +55,9 @@ La expansión del mesh fuera de Kubernetes está documentada mediante ExternalWo
 
 Kong Mesh se basa en Kuma. El modo Kubernetes usa recursos/almacenamiento de Kubernetes; el modo Universal admite entornos de VM/bare-metal y usa su base de datos configurada. Kong ofrece opciones autohospedadas y de plano de control global administrado; las características de edición y los términos de soporte deben verificarse por separado de Kuma upstream.
 
-En un despliegue multizona, los planos de control global y de zona intercambian recursos mediante KDS, mientras que cada zona suministra xDS a sus proxies locales. El tráfico de datos entre zonas usa el ingress de la zona de destino y, cuando está configurado, el egress de la zona local. El plano de control global no es un backend automático de agregación de Prometheus/tracing.
+En un despliegue multizona, los planos de control global y de zona intercambian recursos mediante KDS, mientras que cada zona suministra xDS a sus proxies locales. El tráfico de datos entre zonas usa el ingress de la zona de destino y, cuando está configurado, el egress de la zona local. El plano de control global no es un backend automático para agregar métricas de Prometheus y trazas.
 
-El descubrimiento de un Service no especifica por sí mismo una división 80% local/20% remota. La ponderación de endpoints heredada y la configuración de localidad actual de MeshLoadBalancingStrategy tienen valores predeterminados distintos. Inspeccione la política seleccionada, los endpoints elegibles y la configuración entre zonas/de failover, en lugar de tratar las ponderaciones de un diagrama como comportamiento inherente.
+El descubrimiento de servicios no determina por sí solo una distribución 80% local/20% remota. La ponderación de endpoints heredada y la configuración de localidad actual de MeshLoadBalancingStrategy tienen valores predeterminados distintos. Inspeccione la política seleccionada, los endpoints elegibles y la configuración entre zonas y de conmutación por error, en lugar de tratar las ponderaciones de un diagrama como comportamiento inherente.
 
 Use políticas actuales como MeshHTTPRoute, MeshTrafficPermission, MeshRetry, MeshTimeout, MeshMetric, MeshTrace y MeshAccessLog cuando corresponda. TrafficRoute y TrafficPermission son interfaces heredadas/obsoletas, no necesariamente API eliminadas en la versión comprobada. Migre las políticas dependientes juntas; no combine TrafficPermission antiguo con MeshTrafficPermission. Un tipo de política por sí solo no establece la propiedad o propagación «global» frente a «solo de zona».
 
@@ -67,11 +67,11 @@ El fallo del plano de control global puede dejar funcionando el tráfico de dato
 
 Consul proporciona funciones de descubrimiento de servicios, configuración e identidad con soporte de primera clase para Envoy. Las integraciones actuales de Kubernetes normalmente usan consul-dataplane para administrar el sidecar; la imagen antigua de un client-agent-por-nodo no es la única ni la arquitectura predeterminada de Kubernetes.
 
-La descripción general oficial del proxy también describe un proxy L4 integrado para desarrollo/pruebas y desaconseja su uso en producción. No debe presentarse como equivalente al conjunto de características L7 de producción de Envoy, ni describirse incorrectamente como eliminado sin evidencia de una versión. Consul también admite integraciones documentadas de VM y otros runtimes además de Kubernetes.
+La descripción general oficial del proxy también describe un proxy L4 integrado para desarrollo/pruebas y desaconseja su uso en producción. No debe presentarse como equivalente al conjunto de características L7 de producción de Envoy, ni describirse incorrectamente como eliminado sin evidencia de una versión. Consul también admite integraciones documentadas de VM y otros entornos de ejecución además de Kubernetes.
 
 ### Cilium en la misma decisión
 
-Cilium combina un datapath de red eBPF con proxies como Envoy para el análisis/política L7. No es una red L7 completamente libre de proxies. La autenticación mutua fuera de banda de Cilium 1.20.1 es Beta y usa un handshake fuera de banda; el cifrado WireGuard/IPsec es un requisito separado. Consulte la [guía de mesh de Cilium](../../cilium-service-mesh/README.md) para conocer sus características reales y restricciones de Cluster Mesh.
+Cilium combina un plano de datos de red eBPF con proxies como Envoy para el análisis/política L7. No es una red L7 completamente libre de proxies. La autenticación mutua fuera de banda de Cilium 1.20.1 es Beta y utiliza un intercambio de autenticación fuera de banda; el cifrado WireGuard/IPsec es un requisito separado. Consulte la [guía de mesh de Cilium](../../cilium-service-mesh/README.md) para conocer sus características reales y restricciones de Cluster Mesh.
 
 Cilium 1.20.1 también proporciona una [beta independiente de cifrado transparente ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), seleccionada con `encryption.type: ztunnel`. Proporciona mTLS de cargas de trabajo TCP con inscripción por namespace; ambos endpoints deben estar inscritos. Excluye ClusterMesh y Pods con red de host, y la guía publicada advierte que las políticas L4 normales no funcionan en esta ruta salvo al dirigirse al puerto HBONE 15008. Es una elección de despliegue distinta, con sus propios requisitos de CA/bootstrap.
 
@@ -97,19 +97,19 @@ El gráfico de rendimiento eliminado afirmaba que Linkerd mantenía el 95–98%,
 
 Mantenga las versiones reales de producto/proxy/Kubernetes, hardware y configuración completa adjuntas a los resultados. Iguale el protocolo/payload/concurrencia de tráfico, TLS/autenticación, política, telemetría y límites de recursos. Informe las distribuciones de latencia absoluta de línea base y con mesh, el rendimiento bajo un límite definido de error/SLO, CPU/memoria por componente y variabilidad de ejecuciones repetidas.
 
-Compare el comportamiento equivalente de HA y fallos, incluidos rollout, drenaje, reutilización de conexiones, telemetría ausente y pérdida del plano de control. Mida los errores sin procesar por separado de los resultados visibles para el cliente tras los reintentos. No adelante las etiquetas de versión históricas sin volver a ejecutar y conservar el experimento.
+Compare el comportamiento equivalente de HA y fallos, incluidos el despliegue progresivo, el drenaje y la reutilización de conexiones, telemetría ausente y pérdida del plano de control. Mida los errores sin procesar por separado de los resultados visibles para el cliente tras los reintentos. No adelante las etiquetas de versión históricas sin volver a ejecutar y conservar el experimento.
 
 ## Gestión de tráfico {#traffic-management}
 
 | Capacidad | Qué comparar de forma concreta |
 |---|---|
 | Enrutamiento ponderado/por encabezado | Comportamiento de Istio VirtualService, Linkerd HTTPRoute, Kong MeshHTTPRoute y Consul router/splitter/resolver |
-| Blue/Green o canary | Una ruta es solo una parte; un controlador de rollout o flujo de trabajo de despliegue debe gestionar revisiones, análisis y reversión |
+| Blue/Green o canary | Una ruta es solo una parte; un controlador de despliegue progresivo o flujo de trabajo de despliegue debe gestionar revisiones, análisis y reversión |
 | Reintentos/timeouts | Alcance de solicitud/protocolo compatible, política predeterminada, presupuestos e idempotencia de la aplicación |
 | Limitación de tasa | Contadores locales frente a compartidos, identidad, política de fallos y alcance real de las réplicas |
-| Fallos/mirroring | API/filtro compatible y configuración generada observada; las escrituras reflejadas pueden tener efectos secundarios |
+| Inyección de fallos/reflejo de tráfico | API/filtro compatible y configuración generada observada; las escrituras reflejadas pueden tener efectos secundarios |
 
-Linkerd admite limitación de tasa local mediante HTTPLocalRateLimitPolicy, incluidos límites por identidad, y enrutamiento dinámico por propiedades de solicitud. Los límites locales por proxy no son una cuota global de servicio. Las características de Consul y Kong pueden depender de la edición/API seleccionada; una tabla general de «básico/enterprise/no» es insuficiente.
+Linkerd admite limitación de tasa local mediante HTTPLocalRateLimitPolicy, incluidos límites por identidad, y enrutamiento dinámico por propiedades de solicitud. Los límites locales por proxy no son una cuota global de servicio. Las características de Consul y Kong pueden depender de la edición/API seleccionada; una tabla general de «básico/empresarial/no» es insuficiente.
 
 ### Ejemplos independientes de enrutamiento de solo lectura
 
@@ -389,7 +389,7 @@ spec:
         - /reviews/*
 ```
 
-Este ejemplo de sidecar requiere la identidad ServiceAccount real de productpage y la carga de trabajo reviews. Auto mTLS puede seleccionar el transporte de salida adecuado; no se requiere una DestinationRule ISTIO_MUTUAL global de `*.local` y esta puede romper destinos no relacionados/de texto plano. STRICT es aplicación entrante, mientras que la política ALLOW controla la identidad/método/ruta mostrados.
+Este ejemplo de sidecar requiere la identidad ServiceAccount real de productpage y la carga de trabajo `reviews`. Auto mTLS puede seleccionar el transporte de salida adecuado; no se requiere una DestinationRule ISTIO_MUTUAL global de `*.local` y esta puede romper destinos no relacionados/de texto plano. STRICT es aplicación entrante, mientras que la política ALLOW controla la identidad/método/ruta mostrados.
 
 La coincidencia de cadenas de AuthorizationPolicy es exacta, por prefijo, sufijo o presencia; `*Mobile*` no es una coincidencia general de substring-regex. User-Agent tampoco es una identidad de carga de trabajo. La asociación L7 de Ambient requiere el modelo de política de waypoint compatible en lugar de copiar sin cambios un selector de sidecar.
 
@@ -441,7 +441,7 @@ spec:
     name: productpage
 ```
 
-El Server selecciona un puerto de Pod declarado real y aquí se establece de forma predeterminada para denegar. El HTTPRoute entrante selecciona solicitudes GET bajo `/reviews/`; la AuthorizationPolicy requiere el ServiceAccount productpage. Los grupos de API objetivo son explícitos: omitir un grupo significa el grupo central, no un Server de Linkerd inferido. Una referencia ausente/incorrecta no crea una concesión de autorización.
+El recurso Server selecciona un puerto real declarado en el Pod y, en este ejemplo, se aplica una política de denegación por defecto. El HTTPRoute entrante selecciona solicitudes GET bajo `/reviews/`; la AuthorizationPolicy requiere el ServiceAccount productpage. Los grupos de API objetivo son explícitos: omitir un grupo significa el grupo central, no un Server de Linkerd inferido. Una referencia ausente/incorrecta no crea una concesión de autorización.
 
 Los CRD edge comprobados sirven Server v1beta3 y versiones anteriores, incluida v1beta1; no se afirma que la API anterior se haya eliminado. Use las versiones de API admitidas por el artefacto seleccionado. La política de namespace/Pod predeterminada `all-unauthenticated` es distinta del cifrado automático entre pares con mesh y de esta política Server explícita.
 
@@ -515,16 +515,16 @@ La versión mínima de TLS de una entrada de configuración de mesh cambia una c
 
 ## Observabilidad {#observability}
 
-El recuento de métricas no es una clasificación fija significativa: las estadísticas, dimensiones, política, scraping e instrumentación de aplicación habilitados afectan tanto a la señal como a la sobrecarga. EnvoyFilter no es una API de extensión de telemetría ilimitada, y todos los backends de tracing no son intercambiables sin protocolos/exportadores compatibles.
+El recuento de métricas no es una clasificación fija significativa: las estadísticas, dimensiones, política, recopilación de métricas e instrumentación de aplicación habilitados afectan tanto a la señal como a la sobrecarga. EnvoyFilter no es una API de extensión de telemetría ilimitada, y los backends de trazado no son intercambiables sin protocolos/exportadores compatibles.
 
 | Mesh | Configurar y verificar |
 |---|---|
-| Istio | API de Telemetry, métricas reales de proxy/plano de control, formato de access-log, proveedor de tracing y backends; integración opcional de Kiali/Grafana |
-| Linkerd | Métricas golden/por ruta del proxy, configuración de viz o monitorización externa seleccionada y tracing de proxy/aplicación configurado |
+| Istio | API de Telemetry, métricas reales de proxy/plano de control, formato de access-log, proveedor de trazado y backends; integración opcional de Kiali/Grafana |
+| Linkerd | Métricas doradas y por ruta del proxy, configuración de viz o monitorización externa seleccionada y trazado de proxy/aplicación configurado |
 | Kong Mesh | MeshMetric, MeshTrace y MeshAccessLog con backends compatibles; disponibilidad de GUI/plano de control y acceso configurados por separado |
-| Consul | Métricas de proxy/agent, tracing configurado y proveedor de métricas de UI con configuraciones reales de endpoint/autenticación |
+| Consul | Métricas de proxy/agent, trazado configurado y proveedor de métricas de UI con configuraciones reales de endpoint/autenticación |
 
-Para trazas de extremo a extremo, propague el contexto entre llamadas de aplicación, inicie/muestree trazas según sea necesario y configure la entrega al collector/backend. Linkerd documenta explícitamente esos requisitos; un span de proxy por sí solo no es la traza completa de la aplicación. Un collector OpenTelemetry puede conectar protocolos compatibles, pero su presencia no prueba todas las combinaciones de producto/backend.
+Para trazas de extremo a extremo, propague el contexto entre llamadas de aplicación, inicie/muestree trazas según sea necesario y configure la entrega al recolector/backend. Linkerd documenta explícitamente esos requisitos; un span de proxy por sí solo no es la traza completa de la aplicación. Un collector OpenTelemetry puede conectar protocolos compatibles, pero su presencia no prueba todas las combinaciones de producto/backend.
 
 Con los componentes pertinentes ya instalados y autorizados, los comandos de inspección útiles incluyen:
 
@@ -542,8 +542,8 @@ Estos no instalan dashboards ni backends. La configuración y compatibilidad act
 | Sistema | Ruta de descubrimiento/datos | Límite importante |
 |---|---|---|
 | Istio | Cada primario lee API de Kubernetes autorizadas; el tráfico entre redes usa gateways east-west configurados | Los secretos remotos no copian CRD ni establecen red/confianza. Sidecar y ambient admiten topologías diferentes. |
-| Linkerd | Los Services locales reflejados describen servicios remotos; el modo jerárquico usa el gateway **objetivo**; el modo plano admite rutas directas de Pod | El mirror está en el clúster de origen. Un gateway de origen no es inherentemente necesario. Los Services federados usan el modelo plano y no admiten miembros headless. |
-| Kong Mesh | KDS intercambia recursos de zona/Service; el ingress de zona de destino y el egress opcional de zona de origen transportan tráfico entre zonas | El comportamiento de localidad/failover procede de la política aplicable y los endpoints elegibles; no hay una división 80/20 inherente ni failover incondicional. |
+| Linkerd | Los Services locales reflejados describen servicios remotos; el modo jerárquico usa el gateway **objetivo**; el modo plano admite rutas directas de Pod | El servicio reflejado reside en el clúster de origen. Un gateway de origen no es inherentemente necesario. Los Services federados usan el modelo plano y no admiten miembros headless. |
+| Kong Mesh | KDS intercambia recursos de zona/Service; el ingress de zona de destino y el egress opcional de zona de origen transportan tráfico entre zonas | El comportamiento de localidad y conmutación por error procede de la política aplicable y los endpoints elegibles; no hay una división 80/20 inherente ni conmutación por error incondicional. |
 | Consul | Modelo de peering de clúster o federación WAN compatible con rutas de descubrimiento y mesh-gateway | Elija la topología real y configure confianza, servicios exportados, autorización y enrutamiento; los nombres por sí solos no unen clústeres. |
 
 ![Un esquema de patrón de centro de datos Consul federado por WAN con servidores Consul y mesh gateways. El peering de clúster es un modelo de configuración independiente.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
@@ -601,7 +601,7 @@ kubectl rollout restart deployment/"$DEPLOYMENT" -n mesh-demo
 kubectl rollout status deployment/"$DEPLOYMENT" -n mesh-demo
 ```
 
-Revise las anulaciones existentes de namespace y Pod antes del traspaso. Una etiqueta de inyección heredada puede tener prioridad sobre la selección de revisión. Reinicie solo la cohorte de cargas de trabajo prevista; los componentes gateway y ambient tienen sus propios procedimientos de actualización. Las revisiones canary no garantizan cero errores durante cada rollout de aplicación.
+Revise las anulaciones existentes de namespace y Pod antes del traspaso. Una etiqueta de inyección heredada puede tener prioridad sobre la selección de revisión. Reinicie solo la cohorte de cargas de trabajo prevista; los componentes gateway y ambient tienen sus propios procedimientos de actualización. Las revisiones canary no garantizan cero errores durante cada despliegue progresivo de la aplicación.
 
 ### Instalación y actualización de Linkerd
 
@@ -616,7 +616,7 @@ kubectl apply -f linkerd-control-plane.yaml
 linkerd check
 ```
 
-Este es un flujo de CLI orientado a laboratorio; la guía de instalación de producción recomienda Helm para repetibilidad y configuraciones de identidad revisadas. Anotar un namespace habilita la inyección para Pods creados posteriormente, no la inserción inmediata de proxies en Pods en ejecución. Actualice los CRD/plano de control mediante el procedimiento de la versión seleccionada y después haga rollout de las cargas de trabajo deliberadamente para actualizar los proxies de plano de datos; no se implica un rollout automático de cargas de trabajo.
+Este es un flujo de CLI orientado a laboratorio; la guía de instalación de producción recomienda Helm para repetibilidad y configuraciones de identidad revisadas. Anotar un namespace habilita la inyección para Pods creados posteriormente, no la inserción inmediata de proxies en Pods en ejecución. Actualice los CRD/plano de control mediante el procedimiento de la versión seleccionada y después haga un despliegue progresivo deliberado de las cargas de trabajo para actualizar los proxies de plano de datos; no se implica una actualización automática de las cargas de trabajo.
 
 ### Inspección de charts de Kong y Consul
 
@@ -632,7 +632,7 @@ helm template kong-mesh kong-mesh/kong-mesh --version 2.14.4   --namespace kong-
 helm template consul hashicorp/consul --version 2.0.4   --namespace consul --include-crds --values reviewed-consul-values.yaml
 ```
 
-Los archivos de valores revisados son entradas específicas del entorno, no archivos proporcionados por esta comparación. Confirme soporte de Kubernetes, edición/licencia, identidad de CA/ACL/bootstrap, almacenamiento, HA, configuración de injector/controlador y notas de actualización antes de seguir la guía de instalación de cada producto. Un render Helm correcto no prueba ni la preparación en runtime ni una actualización in situ segura.
+Los archivos de valores revisados son entradas específicas del entorno, no archivos proporcionados por esta comparación. Confirme soporte de Kubernetes, edición/licencia, identidad de CA/ACL/bootstrap, almacenamiento, HA, configuración de injector/controlador y notas de actualización antes de seguir la guía de instalación de cada producto. Un render Helm correcto no prueba ni la preparación en el entorno de ejecución ni una actualización in situ segura.
 
 ### Solución de problemas
 
@@ -677,7 +677,7 @@ Un modelo de costes significativo usa capacidad retenida real, restricciones de 
 | Kuma / Kong Mesh | Kuma upstream y el producto comercial Kong Mesh son distintos; verifique la edición y el contrato de soporte elegidos |
 | Consul | La licencia de la **aplicación Consul 2.0.4** comprobada es Business Source License 1.1 con su concesión de uso declarada y condiciones posteriores de cambio a MPL, no simplemente MPL-2.0 actual |
 
-El chart Helm de Consul anuncia una licencia MPL para ese artefacto; no anula la licencia del binario de la aplicación. Revise los términos exactos de artefacto/versión. La configuración HA del plano de control de Linkerd no es inherentemente una característica exclusiva de enterprise; el soporte/SLA de pago y las características del producto deben distinguirse de las capacidades upstream. No infiera soporte de un nombre de proveedor o una clasificación por signos de dólar.
+El chart Helm de Consul anuncia una licencia MPL para ese artefacto; no anula la licencia del binario de la aplicación. Revise los términos exactos de artefacto/versión. La configuración HA del plano de control de Linkerd no es inherentemente una función exclusiva de la edición empresarial; el soporte/SLA de pago y las características del producto deben distinguirse de las capacidades upstream. No infiera soporte de un nombre de proveedor o una clasificación por signos de dólar.
 
 ## Selección y validación {#selection-and-validation}
 
@@ -686,7 +686,7 @@ El chart Helm de Consul anuncia una licencia MPL para ese artefacto; no anula la
 | Despliegue grande | ¿Qué API exactas de enrutamiento/seguridad, escala de endpoint/actualización y comportamiento de HA se requieren? |
 | Equipo pequeño o inicio rápido | ¿Qué flujo de trabajo de ciclo de vida y solución de problemas puede operar el equipo, incluida identidad y actualizaciones? |
 | Restricciones de recursos | ¿Qué consume realmente una carga de trabajo de política equivalente, incluidos todos los proxies, waypoints, gateways y telemetría? |
-| VM o carga de trabajo heredada | ¿La integración documentada de identidad/red/runtime encaja? Istio y Linkerd también tienen rutas de integración con VM. |
+| VM o carga de trabajo heredada | ¿La integración documentada de identidad/red/entorno de ejecución encaja? Istio y Linkerd también tienen rutas de integración con VM. |
 | Multicloud o multiclúster | ¿Qué límites de confianza, API, plano de datos, distribución de políticas y recuperación ante desastres se necesitan? |
 | Observabilidad sólida | ¿Qué señales de aplicación/proxy, rutas de collector/exporter, retención y controles de acceso se requieren? |
 
@@ -700,7 +700,7 @@ Use una prueba de concepto acotada con las cargas de trabajo y políticas requer
 - [Integración de VM de Istio](https://istio.io/latest/docs/setup/install/virtual-machine/) y [multiclúster](https://istio.io/latest/docs/setup/install/multicluster/)
 - [Versiones de Linkerd](https://linkerd.io/releases/), [compatibilidad con Kubernetes](https://linkerd.io/docs/reference/k8s-versions/) y [compatibilidad con Gateway API](https://linkerd.io/docs/features/gateway-api/)
 - [Enrutamiento de solicitudes de Linkerd](https://linkerd.io/docs/features/request-routing/), [HTTPRoute](https://linkerd.io/docs/reference/httproute/), [autorización](https://linkerd.io/docs/reference/authorization-policy/) y [limitación de tasa](https://linkerd.io/docs/features/rate-limiting/)
-- [Multiclúster de Linkerd](https://linkerd.io/docs/features/multicluster/), [expansión de VM](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) y [tracing](https://linkerd.io/docs/features/distributed-tracing/)
+- [Multiclúster de Linkerd](https://linkerd.io/docs/features/multicluster/), [expansión de VM](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) y [trazado distribuido](https://linkerd.io/docs/features/distributed-tracing/)
 - [Changelog de Kong Mesh](https://developer.konghq.com/mesh/changelog/), [soporte](https://developer.konghq.com/mesh/support-policy/) y [versiones validadas](https://developer.konghq.com/mesh/version-compatibility/)
 - [Kong MeshHTTPRoute](https://developer.konghq.com/mesh/policies/meshhttproute/), [MeshTrafficPermission](https://developer.konghq.com/mesh/policies/meshtrafficpermission/) y [política de balanceo de carga](https://developer.konghq.com/mesh/policies/meshloadbalancingstrategy/)
 - [Despliegue multizona de Kong](https://developer.konghq.com/mesh/mesh-multizone-service-deployment/) e [instalación](https://developer.konghq.com/mesh/deploy-mesh-self-managed/)

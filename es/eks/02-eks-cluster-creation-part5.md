@@ -1,6 +1,6 @@
 # Parte 5: Acceso al clúster, validación, actualización y eliminación
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 Esta guía trata sobre un clúster de EKS existente. Use la cuenta/Región autorizada y un kubeconfig privado. Los ejemplos se revisaron con la documentación actual de AWS y analizadores locales; durante esta auditoría no se realizaron cambios en AWS, cargas de trabajo del clúster ni pruebas de recuperación en producción.
 
@@ -165,7 +165,7 @@ NODE_DELETE_ALLOWED=$(kubectl --kubeconfig "$DEVELOPER_KUBECONFIG" auth can-i de
   exit 1
 }
 ```
-Las entradas de acceso son eventualmente coherentes; inspeccione los errores y espere a que se propaguen antes de volver a intentarlo. La suplantación con `kubectl --as`/`--as-group` prueba RBAC de Kubernetes, no los permisos de las políticas de acceso de EKS de la entidad principal de IAM. Del mismo modo, `auth can-i --list` no es un inventario completo de los permisos concedidos por las políticas de acceso de EKS. Se admiten usuarios de IAM como entidades principales, pero es preferible usar roles con credenciales temporales; un usuario existente necesita su propia vía de credenciales configurada adecuadamente.
+Los cambios en las entradas de acceso pueden tardar en propagarse; revise los errores y espere antes de volver a intentarlo. La suplantación con `kubectl --as`/`--as-group` prueba RBAC de Kubernetes, no los permisos de las políticas de acceso de EKS de la entidad principal de IAM. Del mismo modo, `auth can-i --list` no es un inventario completo de los permisos concedidos por las políticas de acceso de EKS. Se admiten usuarios de IAM como entidades principales, pero es preferible usar roles con credenciales temporales; un usuario existente necesita su propia vía de credenciales configurada adecuadamente.
 ### Método 2: Migración del aws-auth heredado
 
 ![Diagrama que compara las dos formas en que una entidad principal de IAM se asigna a la API de Kubernetes: las entradas de acceso de EKS y el ConfigMap aws-auth.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
@@ -194,10 +194,10 @@ kubectl --kubeconfig "$ADMIN_KUBECONFIG" get nodes -o wide
 kubectl --kubeconfig "$ADMIN_KUBECONFIG" get pods -n kube-system -o wide
 aws eks list-addons --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"
 ```
-Verifique que la cantidad y el estado de los nodos sean los esperados, el estado de las implementaciones de Deployment/DaemonSet y el estado de los add-ons. `Running` es una fase de Pod, no una prueba de que los contenedores estén listos; los Jobs completados correctamente pueden estar en estado `Succeeded`. Una lista de nodos vacía no indica un clúster EC2 convencional saludable. Auto Mode, Fargate y Hybrid Nodes tienen distintas disposiciones de componentes del sistema; solo se necesita una StorageClass predeterminada para las cargas de trabajo que dependan de ella.
+Compruebe que el número y el estado de los nodos sean los previstos, y verifique el estado de despliegue de Deployments/DaemonSets y de los add-ons. `Running` es una fase de Pod, no una prueba de que los contenedores estén listos; los Jobs completados correctamente pueden estar en estado `Succeeded`. Una lista de nodos vacía no indica un clúster EC2 convencional saludable. Auto Mode, Fargate y Hybrid Nodes tienen distintas disposiciones de componentes del sistema; solo se necesita una StorageClass predeterminada para las cargas de trabajo que dependan de ella.
 ### Implementar una prueba HTTP propia
 
-Este ejemplo convencional de Linux usa un respondedor HTTP pequeño en un espacio de nombres recién creado. Prueba la programación, la descarga de imágenes, DNS y un Service de tipo ClusterIP sin aprovisionar automáticamente un balanceador de carga público. Las políticas existentes de toda la organización pueden exigir una excepción aprobada para DNS/HTTP; este ejemplo no las deshabilita.
+Este ejemplo convencional de Linux despliega un servicio HTTP sencillo en un espacio de nombres recién creado. Prueba la programación, la descarga de imágenes, DNS y un Service de tipo ClusterIP sin aprovisionar automáticamente un balanceador de carga público. Las políticas existentes de toda la organización pueden exigir una excepción aprobada para DNS/HTTP; este ejemplo no las deshabilita.
 
 ```bash
 VALIDATION_NAMESPACE="eks-validation-$(date +%s)-$$"
@@ -435,7 +435,7 @@ aws eks list-nodegroups --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REG
 aws eks list-fargate-profiles --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"
 aws eks list-capabilities --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"
 ```
-Elimine solo los Services/Ingresses y recursos de datos revisados explícitamente, a través de sus propietarios. La eliminación de un PVC puede eliminar el almacenamiento si se aplica una política de recuperación `Delete`; `Retain`, las instantáneas, las copias de seguridad y los finalizers requieren una gestión independiente. Detenga las aplicaciones y espere a que se complete la limpieza prevista del almacenamiento/balanceador de carga mientras los controladores y los permisos de IAM sigan disponibles. La lista de grupos de nodos de EKS solo abarca los grupos administrados; haga también un inventario independiente de los ASG/instancias autoadministrados y Hybrid Nodes.
+Elimine solo los Services/Ingresses y recursos de datos revisados explícitamente, a través de sus propietarios. La eliminación de un PVC puede eliminar el almacenamiento si se aplica una política de recuperación `Delete`; `Retain`, las instantáneas, las copias de seguridad y los finalizers requieren una gestión independiente. Detenga las aplicaciones y espere a que se complete la limpieza prevista del almacenamiento y del balanceador de carga mientras los controladores y los permisos de IAM sigan disponibles. La lista de grupos de nodos de EKS solo abarca los grupos administrados; haga también un inventario independiente de los ASG/instancias autoadministrados y Hybrid Nodes.
 ### Usar el propietario original de los recursos
 
 Para el proyecto Terraform por capas, use los planes de destrucción revisados y guardados en orden inverso de la Parte 4. Para un clúster creado con eksctl, siga su flujo de eliminación después de completar los requisitos previos de recursos/datos y espere a que finalice:
@@ -517,7 +517,7 @@ jq -e '.capabilities | type == "array" and length == 0' \
 aws eks delete-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"
 aws eks wait cluster-deleted --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"
 ```
-### Revisar los recursos restantes y su conservación
+### Revisar los recursos restantes y el plan de retención
 
 La eliminación de un clúster de Auto Mode también elimina sus nodos/instancias EC2 y balanceadores de carga administrados, según se documenta. Eso no justifica eliminar recursos compartidos arbitrarios de VPC. Revise los volúmenes/instantáneas conservados, las puertas de enlace NAT/EIP, ENI, grupos de seguridad, roles de IAM, proveedores de OIDC y grupos de registros, de acuerdo con el plan de conservación y propiedad registrado.
 

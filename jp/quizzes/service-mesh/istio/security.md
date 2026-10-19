@@ -1,8 +1,8 @@
 # セキュリティクイズ
 
-> **最終更新**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36（EKS標準サポート: 1.34–1.36）。[インストール対応表](../../../service-mesh/istio/01-installation.md)を参照してください。
+> **最終更新日**: 2026年10月12日 · Istio 1.31 · Kubernetes 1.32–1.37（EKS 標準サポート: 1.34–1.37）。[インストール対応表](../../../service-mesh/istio/01-installation.md)を参照してください。
 
-サイドカー例でIstioセキュリティを確認するクイズです。各問は独立シナリオであり、同じワークロードに全ALLOWポリシーを組み合わせないでください。AmbientのHTTP/JWTポリシーにはwaypointの`targetRefs`が必要で、PeerAuthentication `DISABLE`は非対応です。指定ワークロード、ServiceAccount、ポート、IDは実デプロイと一致する必要があります。
+このクイズは、サイドカー構成の例を使って Istio のセキュリティを確認します。各問は独立したシナリオです。すべての ALLOW ポリシーを同じワークロードに重ねて適用しないでください。Ambient モードで HTTP/JWT ポリシーを使うには waypoint の `targetRefs` が必要で、PeerAuthentication の `DISABLE` はサポートされません。ワークロード名、ServiceAccount、ポート、identity は実際のデプロイと一致させてください。
 
 ## 選択問題（1-5）
 
@@ -114,7 +114,7 @@ D. mTLSだけ許可する
 
 **正解: B**
 
-空specは一致ルールなしのALLOWがデフォルトとなり、このポリシー単体は**全要求を拒否**します。他の一致ALLOWは例外を提供できますが、明示DENY-allはALLOWで上書きできません。
+空の `spec` では action が ALLOW になり、マッチするルールがないため、このポリシー単体で**すべての要求が拒否**されます。他の一致ALLOWは例外を提供できますが、明示DENY-allはALLOWで上書きできません。
 
 **解説:**
 
@@ -791,7 +791,7 @@ Istioで **エンドユーザー認証（JWT）** と **サービス間認証（
 
 Keycloak realm `myrealm`、OIDCクライアント、明示API audience `myapp`を設定します。PKCE付き認可コードフローと正確なHTTPSリダイレクトURIを使います。クライアントタイプ/認証はアプリがシークレットを保管できるかによります。Keycloakロールは通常`realm_access.roles`に現れます。audience mapper/client scopeでAPIトークンに期待する`aud`を持たせます。
 
-`requestPrincipals`や`request.auth.claims`を評価する全プロキシに独自RequestAuthenticationが必要です。ゲートウェイでJWTを検証してもfrontend/backendでの要求IDは成立しません。`forwardOriginalToken`はその転送要求のトークンを保持し、**frontendアプリが新たなbackend要求へAuthorizationを伝播する必要があります**。
+`requestPrincipals`や`request.auth.claims`を評価する全プロキシに独自RequestAuthenticationが必要です。ゲートウェイで JWT を検証しても、frontend や backend のプロキシでもその要求の identity が検証済みになるわけではありません。`forwardOriginalToken`はその転送要求のトークンを保持し、**frontendアプリが新たなbackend要求へAuthorizationを伝播する必要があります**。
 
 以下は問6の関連ポリシーを置き換えます。ロール限定backendルールの隣に広いALLOWを残さないでください。ALLOWは和集合です。デプロイとHTTPSゲートウェイの前提条件は問6と同じです。
 
@@ -1226,7 +1226,7 @@ spec:
           value: 'request.url_path.startsWith("/api/admin/") ? "admin" : "other"'
 ```
 
-Telemetryは要求数に値の限定された`security_operation`ディメンション（`admin`/`other`）も追加します。`request_method`と生URLパスは標準Istioメトリクスラベルではありません。カーディナリティと機密情報のため完全URLラベルは避けます。AUDITプラグインなしでもエラー、DELETE、adminアクセスは記録します。全要求を有効にするにはフィルターを省略し、名前空間全体にはセレクターを省略します。ルート名前空間のセレクターなしポリシーはメッシュ全体です。
+Telemetry は要求数に、値を `admin` と `other` に限定した `security_operation` ディメンションも追加します。`request_method`と生URLパスは標準Istioメトリクスラベルではありません。カーディナリティと機密情報のため完全URLラベルは避けます。AUDITプラグインなしでもエラー、DELETE、adminアクセスは記録します。全要求を有効にするにはフィルターを省略し、名前空間全体にはセレクターを省略します。ルート名前空間のセレクターなしポリシーはメッシュ全体です。
 
 CloudWatchには、ノードログマウント、CRI/containerd解析、`log`フィールドのJSON解析、IAM認証情報、CloudWatch出力を持つ対応EKSログエージェントまたはFluent Bit DaemonSetをデプロイ・設定します。ConfigMap単体はエージェントを起動しません。Elasticsearch/OpenSearchにはその宛先用collector出力を使います。provider `envoy`のTelemetryは標準出力へ書き、Elasticsearchを設定しません。FargateはノードDaemonSetでなく対応ログ機構が必要です。
 
@@ -1246,7 +1246,7 @@ fields @timestamp, path, response_code, response_code_details
 | stats count() by bin(5m), response_code_details
 ```
 
-403はアプリ、JWT認可、外部providerが返す場合があります。Istioが原因とする前に`response_code_details`、プロキシRBACログ、実効ポリシーを調べます。`envoy_http_rbac_logged_total`を組み込みAUDITカウンターと想定しないでください。実RBAC/実験的dry-run統計はプロキシ設定と命名に依存するため、公開系列を確認します。
+403はアプリ、JWT認可、外部providerが返す場合があります。Istioが原因とする前に`response_code_details`、プロキシRBACログ、実効ポリシーを調べます。`envoy_http_rbac_logged_total`を組み込みAUDITカウンターと想定しないでください。実際の RBAC 統計や実験的な dry-run 統計はプロキシ設定とメトリクス名に依存するため、エクスポートされたメトリクス系列を確認してください。
 
 Grafanaでは標準destination報告の403レートとカスタムadminディメンションを描画できます。インストール済みPrometheus Operatorが選択するPrometheusRuleで後者にアラートを設定できます。
 

@@ -1,229 +1,140 @@
-# Amazon EKS Storage - Part 3: Monitoring, Troubleshooting, Cost Optimization, and Security
+# Amazon EKS ストレージ 第3部：モニタリング、トラブルシューティング、コスト最適化、セキュリティ
 
-このドキュメントは Amazon EKS storage series の第 3 部かつ最終部であり、storage monitoring、troubleshooting、cost optimization、および security を扱います。
+> **最終更新日**：2026年10月16日
 
-## Table of Contents
+本書は Amazon EKS ストレージシリーズの第3部（最終部）で、ストレージのモニタリング、トラブルシューティング、コスト最適化、セキュリティを扱います。
 
-1. [Storage Monitoring](#storage-monitoring)
-2. [Storage Troubleshooting](#storage-troubleshooting)
-3. [Storage Cost Optimization](#storage-cost-optimization)
-4. [Storage Security](#storage-security)
-5. [Storage Management Best Practices](#storage-management-best-practices)
+## 目次
 
-## Storage Monitoring
+1. [ストレージのモニタリング](#storage-monitoring)
+2. [ストレージのトラブルシューティング](#storage-troubleshooting)
+3. [ストレージコストの最適化](#storage-cost-optimization)
+4. [ストレージのセキュリティ](#storage-security)
+5. [ストレージ管理のベストプラクティス](#storage-management-best-practices)
 
-EKS cluster 内の storage resources を効果的に monitoring することは、performance issues を早期に検出し、capacity planning を確立するために重要です。
+## ストレージのモニタリング {#storage-monitoring}
 
-```mermaid
-flowchart TD
-    subgraph Monitoring_Solutions ["Storage Monitoring Solutions"]
-        subgraph AWS_CloudWatch ["AWS CloudWatch"]
-            EBS_Metrics[EBS Volume Metrics]
-            EFS_Metrics[EFS File System Metrics]
-            FSx_Metrics[FSx for Lustre Metrics]
-            CW_Alarms[CloudWatch Alarms]
-            CW_Dashboard[CloudWatch Dashboard]
-        end
+バックエンド、Kubernetes、アプリケーションの各観測結果を組み合わせます。バックエンドの I/O カウンターではファイルシステムの空き容量は測れず、Kubernetes の Ready 状態でもデータベースの整合性は確認できません。アラームを作成する前に、単位、ディメンション、集計期間、欠損データの扱いを記録してください。
 
-        subgraph K8s_Monitoring ["Kubernetes Monitoring"]
-            Prometheus[Prometheus]
-            Grafana[Grafana Dashboard]
-            ServiceMonitor[ServiceMonitor]
-            PodMonitor[PodMonitor]
-            PrometheusRule[Alert Rules]
-        end
+<!-- 図の修正待ち：ServiceMonitor は Prometheus の検出設定であり、node-exporter は PVC 使用量のエクスポーターではありません。
+![EKS ストレージ監視の3つの並列パイプラインを示す図：AWS CloudWatch は EBS、EFS、FSx for Lustre のメトリクスから主要な監視メトリクス、アラーム、ダッシュボードを作成します。Prometheus は ServiceMonitor/PodMonitor による検出を Grafana と PrometheusRule のアラートルールに渡します。ボリューム使用量エクスポーターの DaemonSet はカスタムメトリクスとアラートを生成します。](../.gitbook/assets/en-eks-04-eks-storage-part3-0.png)
 
-        subgraph Custom_Solutions ["Custom Solutions"]
-            Usage_Exporter[Volume Usage Exporter]
-            Custom_Metrics[Custom Metrics]
-            Custom_Alerts[Custom Alerts]
-        end
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-0.html)
+-->
 
-    subgraph Key_Metrics ["Key Monitoring Metrics"]
-        Volume_Usage[Volume Usage]
-        IOPS[IOPS Usage]
-        Throughput[Throughput]
-        Latency[Latency]
-        Queue_Length[Queue Length]
-        Burst_Credits[Burst Credits]
-    end
+### CloudWatch によるモニタリング
 
-    %% Connection relationships
-    EBS_Metrics --> Volume_Usage
-    EBS_Metrics --> IOPS
-    EBS_Metrics --> Throughput
-    EBS_Metrics --> Latency
-    EBS_Metrics --> Queue_Length
-    EBS_Metrics --> Burst_Credits
+EBS/EFS/FSx は、Kubernetes エクスポーターを介さずに各サービスのメトリクスを公開します。CloudWatch のクエリや可視化には、引き続き適切な IAM 権限が必要です。get-dashboard 呼び出しで取得できるのは既存ダッシュボードの定義であり、ダッシュボードの作成やメトリクスの有効化は行いません。
 
-    EFS_Metrics --> Volume_Usage
-    EFS_Metrics --> Throughput
-    EFS_Metrics --> Burst_Credits
+#### EBS ボリュームメトリクス
 
-    FSx_Metrics --> Volume_Usage
-    FSx_Metrics --> IOPS
-    FSx_Metrics --> Throughput
+| メトリクス | 正しい解釈 |
+|---|---|
+| VolumeReadBytes / VolumeWriteBytes | Sum は選択期間中に転送されたバイト数です。期間の秒数で割ると bytes/s になります |
+| VolumeReadOps / VolumeWriteOps | Sum は完了した操作数です。期間の秒数で割ると IOPS になります |
+| VolumeTotalReadTime / VolumeTotalWriteTime | Sum は操作時間の累積秒数です。0操作の場合を考慮し、対応する操作の Sum で割ると平均秒/操作になります |
+| VolumeQueueLength | 保留中 I/O のゲージです。Average/Maximum を使うと、継続的なキューとピークを区別しやすくなります |
+| BurstBalance | gp2、st1、sc1 の残存クレジットです。gp3 のクレジットメトリクスではありません |
 
-    Volume_Usage --> CW_Alarms
-    IOPS --> CW_Alarms
-    Throughput --> CW_Alarms
-    Latency --> CW_Alarms
-    Queue_Length --> CW_Alarms
-    Burst_Credits --> CW_Alarms
+対応する Nitro アタッチメントでは、現在のメトリクスに VolumeAvgIOPS（Ops/s）、VolumeAvgThroughput（KiB/s）、VolumeAvgReadLatency/VolumeAvgWriteLatency（ミリ秒）、I/O 超過・停止チェックも含まれます。各メトリクスの Multi-Attach、コンピューティング、ゾーンに関する制約を確認してください。標準ボリュームメトリクスはアタッチ済みボリュームについて公開されます。データ欠損を自動的に使用量ゼロとして扱わないでください。操作が重なると、既存の時間カウンターは実際の経過時間を超える場合があります。
 
-    CW_Alarms --> CW_Dashboard
+#### EFS ファイルシステムのメトリクス
 
-    Prometheus --> ServiceMonitor
-    Prometheus --> PodMonitor
-    ServiceMonitor --> Grafana
-    PodMonitor --> Grafana
-    Prometheus --> PrometheusRule
+TotalIOBytes、DataReadIOBytes、DataWriteIOBytes、MetadataIOBytes はバイト数を表し、正規化済みの転送速度ではありません。該当する Sum を期間で割ると bytes/s になります。MeteredIOBytes は読み取り割引を含む EFS のスループット計測値で、生の転送バイト数とは同一視できません。PermittedThroughput は速度です。期間と単位をそろえて比較し、必要に応じて ClientConnections、モードに応じた PercentIOLimit、ストレージクラスを監視してください。BurstCreditBalance が適用されるのは Bursting スループットであり、Elastic スループットではありません。
 
-    Usage_Exporter --> Custom_Metrics
-    Custom_Metrics --> Custom_Alerts
+#### FSx for Lustre のメトリクス
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+DataReadBytes/DataWriteBytes と DataReadOperations/DataWriteOperations は FileSystemId を使います。Sum を期間で割ると、スループットまたは operations/s になります。**NetworkThroughputUtilization は有効なメトリクスです**。オブジェクトストレージサーバー（OSS）単位で、FileSystemId と FileServer のディメンションを持ち、使用率をパーセントで示します。FreeDataStorageCapacity は FileSystemId と StorageTargetId を持つ OST 単位です。ターゲットごとの偏りと対応する容量ゲージを確認してください。ゲージを時間で合計しても、現在の空き容量にはなりません。
 
-    %% Class application
-    class EBS_Metrics,EFS_Metrics,FSx_Metrics,CW_Alarms,CW_Dashboard awsService;
-    class Prometheus,Grafana,ServiceMonitor,PodMonitor,PrometheusRule k8sComponent;
-    class Usage_Exporter,Custom_Metrics,Custom_Alerts userApp;
-    class Volume_Usage,IOPS,Throughput,Latency,Queue_Length,Burst_Credits default;
+LogicalDiskUsage と PhysicalDiskUsage も有効なメトリクスです。圧縮前の論理バイト数と圧縮後の物理バイト数を示します。ファイルシステム単位の集計は圧縮率の評価に役立ちますが、プロビジョニング済み容量に対する料金を使用量ベースの料金に変えるものではありません。
+
+### Prometheus と Grafana によるモニタリング
+
+既存の監視基盤の管理者と連携し、その基盤を再利用してください。新規導入をレビューする場合、公開済みの kube-prometheus-stack chart 92.9.0 は operator 0.94.1 を使った検証済みの参考例です。既存クラスターを自動的にアップグレードする指示ではありません。次の設定はマニフェストのレンダリングのみを行います。`monitoring/grafana-admin` に admin-user/admin-password キーを用意し、この章の拡張可能な ebs-gp3 クラスを使ってください。実際のクラスターのバージョン、ストレージサイズ、保持期間に合わせて調整します。アラート配信、Grafana の永続化と可用性、kubelet の TLS/認証の既定値は、デプロイ先ごとにレビューが必要です。
+
+```yaml
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+prometheus:
+  prometheusSpec:
+    retention: 14d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ebs-gp3
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
 ```
 
-### Monitoring with CloudWatch
 
-AWS CloudWatch を使用して、EBS、EFS、および FSx for Lustre volumes の performance metrics を monitoring できます。
-
-#### EBS Volume Metrics
-
-主要な EBS metrics:
-- VolumeReadBytes/VolumeWriteBytes: 読み取り/書き込み throughput
-- VolumeReadOps/VolumeWriteOps: 読み取り/書き込み operations の数
-- VolumeTotalReadTime/VolumeTotalWriteTime: 読み取り/書き込み latency
-- VolumeQueueLength: 保留中の I/O requests の数
-- BurstBalance: Burst credit balance (gp2 volumes)
-
-CloudWatch dashboard の例:
 
 ```bash
-aws cloudwatch get-dashboard --dashboard-name EBSVolumeMonitoring
-```
-
-#### EFS File System Metrics
-
-主要な EFS metrics:
-- TotalIOBytes: 合計 I/O bytes
-- DataReadIOBytes/DataWriteIOBytes: 読み取り/書き込み throughput
-- ClientConnections: 接続中の clients の数
-- PermittedThroughput: 許可された throughput
-- BurstCreditBalance: Burst credit balance
-
-#### FSx for Lustre Metrics
-
-主要な FSx for Lustre metrics:
-- DataReadBytes/DataWriteBytes: 読み取り/書き込み throughput
-- DataReadOperations/DataWriteOperations: 読み取り/書き込み operations の数
-- FreeDataStorageCapacity: 利用可能な storage capacity
-- NetworkThroughputUtilization: Network throughput utilization
-
-### Monitoring with Prometheus and Grafana
-
-Prometheus と Grafana を使用して、Kubernetes level で storage resources を monitoring できます。
-
-1. Prometheus と Grafana をインストールします。
-
-```bash
+set -euo pipefail
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace
+helm repo update prometheus-community
+helm template prometheus prometheus-community/kube-prometheus-stack \
+  --version 92.9.0 --namespace monitoring --kube-version 1.36.0 \
+  --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
-2. storage 関連 metrics collection のために ServiceMonitor を設定します。
+ServiceMonitor は **Service** を選択し、そのエンドポイントを対象にします。namespaceSelector と Prometheus インスタンスの ServiceMonitor セレクターの両方が一致する必要があります。EBS CSI 1.66 の Helm chart では controller.enableMetrics の既定値は false です。この chart で管理するインストールでは、既存の管理者と値を確認してください。これらの値は driver の 3301 メトリクスエンドポイント、sidecar のメトリクス Service、生成される ServiceMonitor を有効にします。実際の Prometheus セレクターに合う release ラベルを指定してください。
+
+```yaml
+controller:
+  enableMetrics: true
+  serviceMonitor:
+    labels:
+      release: prometheus
+```
+
+EKS マネージドアドオンでは設定項目が異なる場合があります。Helm の値を適用するのではなく、そのバージョン、設定、実際のリソースを調べてください。次の単独 ServiceMonitor は、所有者が例示された Service をすでに公開していて、一致する monitor を作成していない場合に限る**代替案**です。同等の monitor が生成済みなら、これと併用しないでください。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: csi-metrics
+  name: csi-metrics-reviewed
   namespace: monitoring
+  labels:
+    release: prometheus
 spec:
+  namespaceSelector:
+    matchNames:
+    - kube-system
   selector:
     matchLabels:
       app: ebs-csi-controller
   endpoints:
   - port: metrics
+    path: /metrics
     interval: 30s
 ```
 
-3. Grafana dashboard を設定します。
 
-以下の metrics を含む dashboard を Grafana で作成します。
-- PVC usage と capacity
-- Volume provisioning status
-- CSI driver operation latency
-- Volume mount/unmount operations
 
-### Custom Monitoring Solutions
-
-特定の要件に合わせて custom monitoring solutions を実装できます。
-
-1. Volume usage monitoring pod:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: volume-usage-exporter
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: volume-usage-exporter
-  template:
-    metadata:
-      labels:
-        app: volume-usage-exporter
-    spec:
-      containers:
-      - name: exporter
-        image: quay.io/prometheus/node-exporter:v1.3.1
-        args:
-        - --path.procfs=/host/proc
-        - --path.sysfs=/host/sys
-        - --collector.filesystem
-        volumeMounts:
-        - name: proc
-          mountPath: /host/proc
-          readOnly: true
-        - name: sys
-          mountPath: /host/sys
-          readOnly: true
-        - name: root
-          mountPath: /host/root
-          readOnly: true
-          mountPropagation: HostToContainer
-      volumes:
-      - name: proc
-        hostPath:
-          path: /proc
-      - name: sys
-        hostPath:
-          path: /sys
-      - name: root
-        hostPath:
-          path: /
+```bash
+set -euo pipefail
+kubectl -n kube-system get svc ebs-csi-controller -o yaml
+kubectl -n kube-system get endpointslice \
+  -l kubernetes.io/service-name=ebs-csi-controller -o wide
+kubectl -n monitoring get prometheus -o yaml
 ```
 
-2. Alert rules configuration:
+選択した target が Up で、意図したメトリクスを公開していることを確認してください。driver と provisioner/attacher/resizer/snapshotter はそれぞれ別のメトリクスエンドポイントを持ちます。driver の Service 1つでは全 sidecar を収集できません。CSI API 操作のレイテンシと、アプリケーション/EBS のデータ I/O レイテンシは別のものです。
+
+### ファイルシステム使用量とアラート
+
+CSI driver が必要なボリューム統計を実装している場合は、認証済み kubelet メトリクスの kubelet_volume_stats_* を使います。kube-state-metrics はオブジェクトの状態や要求に関する情報を提供し、node-exporter はホストのファイルシステムメトリクスを提供します。node-exporter の DaemonSet を追加でインストールしても、PVC 単位の使用量メトリクスは生成されません。kube-prometheus-stack には node-exporter の選択肢がすでに含まれています。ホストのマウントや権限を重複させないでください。
+
+raw block ボリュームや統計をサポートしない driver では、ファイルシステム容量が公開されない場合があります。EFS access point/PVC の要求はディレクトリ単位のクォータではなく、報告される容量が共有ファイルシステム全体を表す場合があります。container_fs_usage_bytes はあらゆる PVC に使える測定値ではありません。collector、mount、namespace/claim の対応関係を検証し、メトリクス欠損は別に扱ってください。
+
+次のルールは、重複した claim を合算せず max を使って、同一スクレイプの重複を排除します。フェデレーションデータには信頼できる cluster ラベルが必要です。容量ゼロの系列は除外します。予測にはゲージと直近の傾向を使います。対処する前に、スクレイプ欠損、claim の再作成やサイズ変更、ワークロードの変化を確認してください。読み取り専用/静的データセットや、オペレーターへのページ通知が不要な他の claim に合わせてセレクターを調整します。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -231,535 +142,191 @@ kind: PrometheusRule
 metadata:
   name: storage-alerts
   namespace: monitoring
+  labels:
+    release: prometheus
 spec:
   groups:
-  - name: storage
+  - name: storage-reviewed
     rules:
+    - record: pvc:storage_used_bytes:max
+      expr: max by (cluster, namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes)
+    - record: pvc:storage_capacity_bytes:max
+      expr: max by (cluster, namespace, persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes)
     - alert: VolumeUsageHigh
-      expr: kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85
+      expr: (pvc:storage_used_bytes:max / pvc:storage_capacity_bytes:max > 0.85) and
+        (pvc:storage_capacity_bytes:max > 0)
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Volume usage high ({{ $value | humanizePercentage }})"
-        description: "PVC {{ $labels.persistentvolumeclaim }} is using {{ $value | humanizePercentage }} of its capacity."
-    - alert: VolumeFullIn24Hours
-      expr: predict_linear(kubelet_volume_stats_used_bytes[6h], 24 * 3600) > kubelet_volume_stats_capacity_bytes
+        summary: Volume usage high ({{ $value | humanizePercentage }})
+        description: PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim
+          }} requires capacity review.
+    - alert: VolumeMayFillIn24Hours
+      expr: (predict_linear(pvc:storage_used_bytes:max[6h], 86400) > pvc:storage_capacity_bytes:max)
+        and (pvc:storage_capacity_bytes:max > 0) and (delta(pvc:storage_used_bytes:max[1h])
+        > 0)
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Volume will fill in 24 hours"
-        description: "PVC {{ $labels.persistentvolumeclaim }} is predicted to fill within 24 hours."
+        summary: Recent trend projects capacity exhaustion
+        description: Review the trend and workload for PVC {{ $labels.namespace }}/{{
+          $labels.persistentvolumeclaim }}; this is not a guarantee.
 ```
 
-## Storage Troubleshooting
+namespace/release ラベルが Prometheus ルールのセレクターと一致している必要があります。ルールの構文と合成シナリオを検証し、意図したデプロイ環境で実メトリクスの網羅性とアラート経路を確認してください。このレビューでは実メトリクスの収集もアラート配信も実行していません。
 
-EKS clusters で発生する可能性がある一般的な storage issues とその solutions を見ていきましょう。
+## ストレージのトラブルシューティング {#storage-troubleshooting}
 
-```mermaid
-flowchart TD
-    subgraph Common_Issues ["Common Storage Issues"]
-        PVC_Pending[PVC in Pending State]
-        Volume_Provisioning[Volume Provisioning Failure]
-        Mount_Issues[Volume Mount Issues]
-        Performance_Issues[Performance Issues]
-    end
+まずオブジェクトの識別情報とイベントを確認します。Pending、ContainerCreating、I/O の低速化は原因が異なることがあります。イメージの取得、スケジューリング、アプリケーションの Ready 状態が、必ずしもストレージ障害を示すわけではありません。図はトリアージの手引きであり、症状と原因の対応を網羅するものではありません。
 
-    subgraph Troubleshooting_Steps ["Troubleshooting Steps"]
-        Check_PVC[Check PVC Status]
-        Check_SC[Check Storage Class]
-        Check_CSI[Check CSI Driver Logs]
-        Check_IAM[Check IAM Permissions]
-        Check_Pod[Check Pod Status]
-        Check_Node[Check Node Status]
-        Check_SG[Check Security Groups]
-        Check_Network[Check Network Connectivity]
-        Check_Metrics[Check Performance Metrics]
-        Check_FS[Test File System]
-    end
+![EKS ストレージでよくある4種類の問題（PVC の Pending、プロビジョニング失敗、マウント問題、パフォーマンス問題）を、2つのグループに分けて共通の診断と修正に導く図です。プロビジョニング関連の2種類は CSI driver のログ、IAM 権限、StorageClass に、マウントとパフォーマンスの2種類はノード状態の確認につながります。](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
 
-    subgraph Resolution_Actions ["Resolution Actions"]
-        Fix_SC[Fix Storage Class]
-        Fix_CSI[Reinstall CSI Driver]
-        Fix_IAM[Add IAM Permissions]
-        Fix_Pod[Restart Pod]
-        Fix_SG[Add Security Group Rules]
-        Fix_Volume[Change Volume Type]
-        Fix_Instance[Change Instance Type]
-        Fix_FS[Optimize File System]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-1.html)
 
-    %% Issue and troubleshooting step connections
-    PVC_Pending --> Check_PVC
-    PVC_Pending --> Check_SC
-    PVC_Pending --> Check_CSI
-    PVC_Pending --> Check_IAM
+### プロビジョニングと WaitForFirstConsumer
 
-    Volume_Provisioning --> Check_CSI
-    Volume_Provisioning --> Check_IAM
-    Volume_Provisioning --> Check_SC
-
-    Mount_Issues --> Check_Pod
-    Mount_Issues --> Check_Node
-    Mount_Issues --> Check_SG
-    Mount_Issues --> Check_Network
-
-    Performance_Issues --> Check_Metrics
-    Performance_Issues --> Check_FS
-    Performance_Issues --> Check_Node
-
-    %% Troubleshooting steps and action connections
-    Check_SC --> Fix_SC
-    Check_CSI --> Fix_CSI
-    Check_IAM --> Fix_IAM
-    Check_Pod --> Fix_Pod
-    Check_SG --> Fix_SG
-    Check_Metrics --> Fix_Volume
-    Check_Metrics --> Fix_Instance
-    Check_FS --> Fix_FS
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class PVC_Pending,Volume_Provisioning,Mount_Issues,Performance_Issues k8sComponent;
-    class Check_PVC,Check_SC,Check_CSI,Check_IAM,Check_Pod,Check_Node,Check_SG,Check_Network,Check_Metrics,Check_FS default;
-    class Fix_SC,Fix_CSI,Fix_IAM,Fix_Pod,Fix_SG,Fix_Volume,Fix_Instance,Fix_FS userApp;
-```
-
-### Volume Provisioning Issues
-
-#### Issue: PVC Remains in Pending State
-
-1. PVC status を確認します。
+ワークロードが実際に使う namespace、claim、consumer を確認します。推測で広範なアクセスを許可するのではなく、参照されている class、controller のイベント、driver の ID/KMS 権限、クォータ、ノードのアタッチ上限を調べてください。
 
 ```bash
-kubectl get pvc
-kubectl describe pvc <pvc-name>
-```
-
-2. storage class を確認します。
-
-```bash
-kubectl get sc
-kubectl describe sc <storage-class-name>
-```
-
-3. provisioner pod logs を確認します。
-
-```bash
-kubectl -n kube-system get pods | grep csi
-kubectl -n kube-system logs <csi-controller-pod-name>
-```
-
-4. 一般的な原因と solutions:
-   - Storage class が存在しない: 正しい storage class を作成します
-   - CSI driver がインストールされていない: driver をインストールします
-   - IAM permissions が不足している: 必要な IAM permissions を付与します
-   - Volume limit を超過している: service limit increase をリクエストします
-
-#### Issue: Volume Not Provisioned with WaitForFirstConsumer Binding Mode
-
-1. pod status を確認します。
-
-```bash
-kubectl get pods
-kubectl describe pod <pod-name>
-```
-
-2. node availability zones を確認します。
-
-```bash
+set -euo pipefail
+: "${NAMESPACE:?Set the workload namespace}"
+: "${PVC_NAME:?Set the claim name}"
+: "${POD_NAME:?Set its intended consumer Pod}"
+kubectl -n "$NAMESPACE" get pvc "$PVC_NAME" -o yaml
+kubectl -n "$NAMESPACE" describe pvc "$PVC_NAME"
+kubectl -n "$NAMESPACE" describe pod "$POD_NAME"
+kubectl get storageclass
 kubectl get nodes -L topology.kubernetes.io/zone
 ```
 
-3. Solutions:
-   - pod scheduling issues を解決します
-   - node selector と affinity rules を確認します
-   - node pool が PVC と同じ availability zone にあることを確認します
 
-### Volume Mount Issues
-
-#### Issue: Pod Stuck in ContainerCreating State
-
-1. pod events を確認します。
 
 ```bash
-kubectl describe pod <pod-name>
+set -euo pipefail
+: "${CSI_CONTROLLER_POD:?Select the actual controller Pod}"
+: "${CSI_CONTAINER:?Select the relevant driver/sidecar container}"
+kubectl -n kube-system get pod "$CSI_CONTROLLER_POD" \
+  -o jsonpath='{.spec.containers[*].name}'
+kubectl -n kube-system logs "$CSI_CONTROLLER_POD" -c "$CSI_CONTAINER" --since=15m --tail=200
 ```
 
-2. node kubelet logs を確認します。
+WaitForFirstConsumer は、スケジュール可能な consumer がトポロジーを決めるまで、新しい PVC を意図的に Pending のままにします。新規の未バインド PVC に、ノードプールが移動すべき AZ がすでに決まっているわけではありません。Pod のセレクター、affinity、taint、リソース、ストレージトポロジーを調べてください。spec.nodeName を指定するとスケジューラーを迂回し、このバインド経路を妨げる場合があります。サポートされているスケジューリング制約を使ってください。バインド後は、EBS PV の AZ/ノード affinity が重要です。Pending を解消する目的で claim を削除したり、PV の容量を編集したりしないでください。
+
+### マウント失敗
+
+attach エラー、node publish/mount エラー、ファイルシステム client の不足、ID/権限エラー、アプリケーションの権限を区別します。ログを読むときは該当する CSI driver/sidecar コンテナを選択してください。複数コンテナの Pod で既定のログを見ても、すべてのコンポーネントは確認できません。必要に応じて VolumeAttachment、バインド済み PV の driver/handle、割り当て先ノードを調べます。
+
+EFS では、マウント対象と DNS、および実際の mount client から TCP 2049 に到達できることを確認します。Lustre では TCP 988 と 1018–1023、およびサービスの client/server ルールが必要です。EFA 構成には追加のセキュリティグループ参照要件があります。NACL の戻りトラフィックとルートも確認してください。ICMP ping の失敗だけでは NFS が利用不可とは判断できません。また AWS CLI コンテナに ping/telnet/mount 用のツールが含まれる保証はありません。Pod からのネットワークテストは、ノード起点の CSI マウントとは送信元やセキュリティグループが異なる場合があります。
+
+### I/O の低速化
+
+測定した操作サイズ、キューイング、アプリケーションの並行数、プロビジョニング済みボリューム性能、インスタンスの EBS 上限、初期化状態を確認します。次の移植可能な Python の時間計算は、境界を含む5分間隔を使います。VolumeReadOps Sum/300 は読み取り IOPS です。Average をそのまま速度と解釈する方法とは異なります。
 
 ```bash
-kubectl get nodes
-ssh ec2-user@<node-ip>
-sudo journalctl -u kubelet
+set -euo pipefail
+: "${AWS_REGION:?Set the volume Region}"
+: "${EBS_VOLUME_ID:?Set the verified owned EBS volume ID}"
+read -r START_TIME END_TIME < <(python3 - <<'PY'
+import datetime, time
+end = int(time.time()) // 300 * 300
+fmt = lambda value: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+print(fmt(end - 3600), fmt(end))
+PY
+)
+aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
+  --namespace AWS/EBS --metric-name VolumeReadOps \
+  --dimensions "Name=VolumeId,Value=$EBS_VOLUME_ID" \
+  --start-time "$START_TIME" --end-time "$END_TIME" \
+  --period 300 --statistics Sum --output json > ebs-read-ops.json
+python3 - ebs-read-ops.json <<'PY'
+import json, sys
+with open(sys.argv[1]) as stream:
+    points = json.load(stream)["Datapoints"]
+for point in sorted(points, key=lambda p: p["Timestamp"]):
+    print(point["Timestamp"], "read IOPS:", point["Sum"] / 300)
+if not points:
+    print("No datapoints: check dimensions, attachment/activity, Region and publication delay")
+PY
 ```
 
-3. 一般的な原因と solutions:
-   - Volume ID が見つからない: AWS console で volume の存在を確認します
-   - Device mount failure: device path と file system を確認します
-   - Permission issues: IAM roles と security groups を確認します
-
-#### Issue: EFS or FSx Mount Failure
-
-1. security groups を確認します。
-   - EFS: TCP port 2049 を許可します
-   - FSx for Lustre: TCP port 988 を許可します
-
-2. network connectivity を確認します。
+ファイルシステムへの書き込みテストには、検証済みマウント上の使用許可を得た一時ディレクトリを使ってください。このスクリプトは意図したテスト環境内に保存します。一意な 64 MiB ファイルを作成し、自身が作成したファイルとディレクトリだけを削除します。読み取りがキャッシュに当たる場合があるため、この時間からコールドストレージの性能は判断できません。ライブデータに対する予測可能な `/data/test` の上書きや、raw device へのゼロ書き込みは実行しないでください。
 
 ```bash
-kubectl debug node/<node-name> -it --image=amazon/aws-cli
-ping <efs-dns-name>
-telnet <efs-dns-name> 2049
+set -euo pipefail
+: "${STORAGE_TEST_DIR:?Set an approved disposable directory on the verified disposable filesystem mount}"
+test -d "$STORAGE_TEST_DIR" && test -w "$STORAGE_TEST_DIR"
+STORAGE_TEST_PATH=$(mktemp -d "$STORAGE_TEST_DIR/storage-test.XXXXXX")
+cleanup() { rm -f -- "$STORAGE_TEST_PATH/payload"; rmdir -- "$STORAGE_TEST_PATH"; }
+trap cleanup EXIT
+time dd if=/dev/zero of="$STORAGE_TEST_PATH/payload" bs=1M count=64 conv=fsync
+time dd if="$STORAGE_TEST_PATH/payload" of=/dev/null bs=1M
 ```
 
-3. mount helper pod を作成します。
+このレビューではストレージベンチマークを実行していません。断片化は証拠を要する仮説として扱ってください。ファイルシステムの再作成/フォーマットはデータ移行であり、最初に行う通常の修正ではありません。nvme0n1 の I/O scheduler を推測で変更しないでください。別ボリュームや root device の可能性があり、最新の blk-mq では scheduler 名や対応状況が異なります。
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mount-helper
-spec:
-  containers:
-  - name: mount-helper
-    image: amazonlinux:2
-    command: ["sleep", "infinity"]
-    securityContext:
-      privileged: true
-```
+EFS では General Purpose モード、実際のスループットモード、client の上限、メタデータ負荷、並行数が重要です。ハードマウント/TLS と適切な timeout/retry 動作を含む、Part 2 でサポートされている mount-helper オプションを使ってください。実測したワークロードでは、ファイルをまとめることや、より逐次的なアクセスが役立つ場合がありますが、アプリケーションのデータ配置変更が常に有効とは限りません。
 
-4. mount を手動で test します。
+## ストレージコストの最適化 {#storage-cost-optimization}
+
+レイテンシ、耐久性、復旧、所有権の要件を維持しながら、ワークロードの総コストを最適化します。コンピューティングの割引、割り当て済みストレージ、プロビジョニング済み性能、リクエスト/転送料金、保持するバックアップは、それぞれ別のコストです。
+
+<!-- 図の修正待ち：各ストレージサービスを実際の最適化戦略に対応させてください。S3 を FSx の最適化に、FSx を EFS の最適化に割り当てないでください。
+![4種類の AWS ストレージ（EBS、EFS、FSx for Lustre、S3）を、それぞれ対応する最適化戦略（ボリューム最適化、ライフサイクル管理、EFS 最適化、FSx 最適化）につなぎ、4つの戦略を Cost Explorer、Kubernetes コスト配賦、異常検出で構成する1つのコスト監視ノードに集約する図です。](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-2.html)
+-->
+
+### ボリュームの種類、サイズ、移行
+
+gp3 と実際の gp2 のコスト/性能を比較し、適したアクセスパターンの場合だけ HDD タイプを検討します。根拠のない最大サイズではなく、測定に基づく余裕とアラームを設定してください。EBS/PVC の容量は通常、縮小ではなく拡張します。割り当て容量を減らすには、小さい新規ボリュームへのサポート対象の移行とデータ検証が必要です。
+
+gp3 StorageClass の作成や default 指定だけでは、既存の gp2 ボリュームは移行され**ません**。default class を変更すると、無関係な新規 claim にも影響します。Part 1 で名前を指定した class を再利用してください。既存ボリュームでは、デプロイ済み driver がサポートする変更手順か、テスト済みのバックアップ/復元による新規 claim への移行を選びます。ストレージを変更する前に、所有権、アプリケーションの整合性、ロールバックを確認してください。
+
+### ライフサイクルと保持
+
+VolumeSnapshotClass は driver/保持動作を定義しますが、スナップショットのスケジュール作成も、経過時間による削除も行いません。バックアップ管理者のスケジュールと保持ポリシーを使ってください。Part 2 では、元の class が Retain であっても削除され得る Velero の CSI スナップショットライフサイクルを説明しています。
+
+PV が Available または Released でも、自動的に破棄してよいとは限りません。Bound でも利用中である証拠にはなりません。クリーンアップ前に claimRef/UID、ワークロード所有者、スナップショット、保持義務、実際のバックエンドリソースを一覧化してください。Retain は課金対象のリソースを残す場合があり、Delete の動作は driver に依存します。EFS access point の削除は、そのファイルシステム/データの削除と同じではありません。S3/Archive への階層化にも、アプリケーションに適合した復元/アクセス計画が必要です。
+
+### EFS コストの最適化
+
+AWS は予測しにくいスパイク状のワークロードに Elastic スループットを推奨しています。既知の継続需要には Provisioned、容量/クレジットモデルに合う場合は Bursting と比較してください。実際に計測された I/O と現在の料金を使います。推奨パフォーマンスモードは General Purpose です。access point は異なる POSIX ID を使ってファイルシステムを共有できますが、PVC ごとの容量を確保したり、アプリケーションごとの自動課金を提供したりはしません。
+
+変更案を出す前に、既存のライフサイクル設定全体を読み取ってください。
 
 ```bash
-kubectl exec -it mount-helper -- bash
-yum install -y nfs-utils
-mkdir -p /mnt/efs
-mount -t nfs4 <efs-dns-name>:/ /mnt/efs
+set -euo pipefail
+: "${AWS_REGION:?Set the filesystem Region}"
+: "${EFS_FILE_SYSTEM_ID:?Set the owned filesystem ID}"
+aws efs describe-file-systems --region "$AWS_REGION" --file-system-id "$EFS_FILE_SYSTEM_ID" \
+  --output json > efs-filesystem-review.json
+aws efs describe-lifecycle-configuration --region "$AWS_REGION" \
+  --file-system-id "$EFS_FILE_SYSTEM_ID" --output json > efs-lifecycle-before.json
 ```
 
-### Performance Issues
+put-lifecycle-configuration リクエストはファイルシステム設定を更新するため、レビュー済みの配列では意図した既存の移行設定をすべて残してください。空の配列はライフサイクル管理を無効にします。各ポリシーオブジェクトには1つの移行設定を指定します。Archive はサポート対象の General Purpose/Elastic 構成が必要で、IA より後の移行期間を指定します。コスト分析では IA/Archive のアクセス料金と最低保管期間の料金を含めてください。単一の30日例で既存ポリシーを無条件に上書きしないでください。
 
-#### Issue: Slow I/O Performance
+### FSx for Lustre とコスト配賦
 
-1. volume performance metrics を確認します。
+再作成できるデータだけに scratch を選び、必要なライフサイクルに応じた persistent のデプロイ/ストレージオプションを使います。LZ4 で物理データ量を減らせる場合がありますが、すでにプロビジョニング済みの SSD 割り当て料金が自動的に下がるわけではありません。選択したストレージ料金モデル、圧縮率、スループット/CPU への影響を評価してください。S3 リポジトリ統合には、バケット名だけでなく、設定済みのインポート/エクスポート/リリース動作が必要です。
 
-```bash
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/EBS \
-  --metric-name VolumeReadOps \
-  --dimensions Name=VolumeId,Value=vol-1234567890abcdef0 \
-  --start-time $(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 300 \
-  --statistics Average
-```
+Cost Explorer と Kubernetes の配賦ツールには、請求データの設定、該当する場合のコスト配賦タグの有効化、PVC/PV とクラウドリソース ID の対応検証が必要です。namespace ラベルだけでは、すべての AWS 料金に自動でタグが付きません。保持中のボリューム/スナップショット、リクエスト/転送料金、テレメトリの保持を追跡してください。EC2 Reserved Instances/Compute Savings Plans は対象となるコンピューティング費用を変えますが、EBS/EFS/FSx の個別のストレージ料金は自動的には下がりません。
 
-2. file system performance を test します。
+## ストレージのセキュリティ {#storage-security}
 
-```bash
-kubectl exec -it <pod-name> -- bash
-dd if=/dev/zero of=/data/test bs=1M count=1000 oflag=direct
-dd if=/data/test of=/dev/null bs=1M count=1000 iflag=direct
-```
+バックエンド、ノード/マウント経路、Kubernetes コントロールプレーンをそれぞれ保護します。class 名、namespace ポリシー、コンテナの root を読み取り専用にする設定だけでは、書き込み可能な PVC の内容を保護できません。
 
-3. 一般的な原因と solutions:
-   - 不適切な volume type: workload に適した volume type を選択します (例: gp3、io2)
-   - IOPS または throughput limits: volume performance parameters を調整します
-   - Instance limitations: EBS-optimized instances を使用します
-   - File system fragmentation: file system を最適化または再作成します
+<!-- 図の修正待ち：TLS、保存時の鍵管理、IAM、ネットワークルール、RBAC、admission は別々の制御です。RBAC も PSS もバックエンド暗号化の証明にはなりません。
+![EBS/FSx、EFS、S3 のストレージセキュリティについて、保存時/転送中の暗号化を AWS KMS の鍵管理に接続し、セキュリティグループと IAM role を Kubernetes RBAC および OPA Gatekeeper/Kyverno のポリシー適用につなぎ、Pod security context を Pod Security Standards で適用する図です。](../.gitbook/assets/en-eks-04-eks-storage-part3-3.png)
 
-#### Issue: EFS Performance Degradation
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-3.html)
+-->
 
-1. EFS performance mode と throughput mode を確認します
-2. client mount options を最適化します。
+### データの暗号化
 
-```yaml
-mountOptions:
-  - nfsvers=4.1
-  - rsize=1048576
-  - wsize=1048576
-  - timeo=600
-  - retrans=2
-  - noresvport
-```
-
-3. access patterns を最適化します。
-   - 小さな files ではなく大きな files を使用します
-   - sequential access patterns を使用します
-   - metadata operations を最小化します
-
-## Storage Cost Optimization
-
-EKS clusters で storage costs を最適化するための strategies を見ていきましょう。
-
-```mermaid
-flowchart TD
-    subgraph Cost_Optimization_Strategies ["Cost Optimization Strategies"]
-        subgraph Volume_Optimization ["Volume Optimization"]
-            Volume_Type[Select Appropriate Volume Type]
-            Volume_Size[Optimize Volume Size]
-            GP3_Migration[Migrate to gp3 Volumes]
-        end
-
-        subgraph Lifecycle_Management ["Lifecycle Management"]
-            Data_Tiering[Data Tiering]
-            Snapshot_Policy[Automated Snapshot Policy]
-            PV_Reclaim[PV Reclaim Policy]
-        end
-
-        subgraph EFS_Optimization ["EFS Optimization"]
-            Throughput_Mode[Appropriate Throughput Mode]
-            IA_Storage[IA Storage Class]
-            Access_Points[Access Points]
-        end
-
-        subgraph FSx_Optimization ["FSx Optimization"]
-            Deployment_Type[Appropriate Deployment Type]
-            Data_Compression[Data Compression]
-            S3_Integration[S3 Integration]
-        end
-
-        subgraph Cost_Monitoring ["Cost Monitoring"]
-            Cost_Explorer[AWS Cost Explorer]
-            K8s_Cost[Kubernetes Cost Allocation]
-            Cost_Anomaly[Cost Anomaly Detection]
-        end
-    end
-
-    subgraph Storage_Types ["Storage Type Optimization"]
-        EBS[Amazon EBS]
-        EFS[Amazon EFS]
-        FSx[Amazon FSx for Lustre]
-        S3[Amazon S3]
-    end
-
-    %% Connection relationships
-    EBS --> Volume_Type
-    EBS --> Volume_Size
-    EBS --> GP3_Migration
-
-    EBS --> Snapshot_Policy
-    EBS --> PV_Reclaim
-
-    EFS --> Throughput_Mode
-    EFS --> IA_Storage
-    EFS --> Access_Points
-
-    FSx --> Deployment_Type
-    FSx --> Data_Compression
-    FSx --> S3_Integration
-
-    S3 --> Data_Tiering
-
-    Volume_Optimization --> Cost_Monitoring
-    Lifecycle_Management --> Cost_Monitoring
-    EFS_Optimization --> Cost_Monitoring
-    FSx_Optimization --> Cost_Monitoring
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class EBS,EFS,FSx,S3 awsService;
-    class Volume_Type,Volume_Size,GP3_Migration,Data_Tiering,Snapshot_Policy,PV_Reclaim,Throughput_Mode,IA_Storage,Access_Points,Deployment_Type,Data_Compression,S3_Integration default;
-    class Cost_Explorer,K8s_Cost,Cost_Anomaly userApp;
-```
-
-### Volume Type and Size Optimization
-
-1. **Select appropriate volume type**:
-   - 一般的な workloads: gp3 (gp2 より cost-effective)
-   - Throughput-intensive workloads: st1
-   - アクセス頻度の低い data: sc1
-
-2. **Optimize volume size**:
-   - 必要量より少し大きめに volumes を provision します
-   - volume usage を monitoring し、必要に応じて拡張します
-   - 不要な data を clean up または archive します
-
-3. **Migrate to gp3 volumes**:
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ebs-gp3
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  encrypted: "true"
-allowVolumeExpansion: true
-```
-
-### Storage Lifecycle Management
-
-1. **Data tiering**:
-   - 頻繁にアクセスされる data: EBS または EFS
-   - アクセス頻度の低い data: S3 または S3 Glacier
-
-2. **Automated snapshot policy**:
-   - regular snapshots を作成します
-   - 古い snapshots を自動的に削除します
-
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: ebs-snapshot-class
-driver: ebs.csi.aws.com
-deletionPolicy: Delete
-```
-
-3. **PV reclaim policy**:
-   - 一時 data には Delete policy を使用します
-   - 重要な data には Retain policy を使用します
-
-### EFS Cost Optimization
-
-1. **Select appropriate throughput mode**:
-   - 予測可能な workloads: Provisioned throughput
-   - 変動する workloads: Bursting mode
-
-2. **Lifecycle management**:
-   - アクセス頻度の低い files を IA (Infrequent Access) storage class に自動的に移動します
-   - lifecycle policy を設定します。
-
-```bash
-aws efs put-lifecycle-configuration \
-  --file-system-id fs-1234567890abcdef0 \
-  --lifecycle-policies '[{"TransitionToIA":"AFTER_30_DAYS"}]'
-```
-
-3. **Use access points**:
-   - application-specific access points を使用して file system を共有します
-
-### FSx for Lustre Cost Optimization
-
-1. **Select appropriate deployment type**:
-   - 一時的な workloads: SCRATCH_2
-   - 長期 workloads: PERSISTENT_1 または PERSISTENT_2
-
-2. **Enable data compression**:
-   - storage costs を削減するために LZ4 data compression を使用します
-
-3. **Integration with S3**:
-   - data tiering のために S3 bucket を FSx for Lustre に接続します
-
-### Cost Monitoring and Analysis
-
-1. **Use AWS Cost Explorer**:
-   - storage cost trends を分析します
-   - resource ごとの costs を分析します
-
-2. **Kubernetes cost allocation**:
-   - namespaces と labels を使用して costs を配賦します
-   - Kubecost などの tools を使用します
-
-3. **Cost anomaly detection**:
-   - AWS budgets と alerts を設定します
-   - 異常な cost increases に対する alerts を設定します
-
-## Storage Security
-
-EKS clusters 内の storage resources を保護するための security best practices を見ていきましょう。
-
-```mermaid
-flowchart TD
-    subgraph Security_Measures ["Storage Security Measures"]
-        subgraph Data_Encryption ["Data Encryption"]
-            At_Rest[Data at Rest Encryption]
-            In_Transit[Data in Transit Encryption]
-            KMS[AWS KMS Key Management]
-        end
-
-        subgraph Access_Control ["Access Control"]
-            IAM[IAM Roles and Policies]
-            Security_Groups[Security Groups]
-            K8s_RBAC[Kubernetes RBAC]
-        end
-
-        subgraph Pod_Security ["Pod Security"]
-            ReadOnly_FS[Read-Only Root Filesystem]
-            Limited_Privileges[Limited Privileges]
-            Security_Profiles[SELinux/AppArmor/Seccomp]
-        end
-
-        subgraph Policy_Enforcement ["Security Policy Enforcement"]
-            OPA[OPA Gatekeeper]
-            Kyverno[Kyverno]
-            PSS[Pod Security Standards]
-        end
-    end
-
-    subgraph Storage_Services ["Storage Services"]
-        EBS_Security[EBS Security]
-        EFS_Security[EFS Security]
-        FSx_Security[FSx Security]
-        S3_Security[S3 Security]
-    end
-
-    %% Connection relationships
-    EBS_Security --> At_Rest
-    EBS_Security --> KMS
-    EBS_Security --> Security_Groups
-
-    EFS_Security --> At_Rest
-    EFS_Security --> In_Transit
-    EFS_Security --> KMS
-    EFS_Security --> Security_Groups
-    EFS_Security --> IAM
-
-    FSx_Security --> At_Rest
-    FSx_Security --> KMS
-    FSx_Security --> Security_Groups
-
-    S3_Security --> At_Rest
-    S3_Security --> In_Transit
-    S3_Security --> IAM
-
-    At_Rest --> KMS
-    In_Transit --> KMS
-
-    IAM --> K8s_RBAC
-
-    ReadOnly_FS --> PSS
-    Limited_Privileges --> PSS
-    Security_Profiles --> PSS
-
-    K8s_RBAC --> OPA
-    K8s_RBAC --> Kyverno
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class EBS_Security,EFS_Security,FSx_Security,S3_Security,KMS,IAM,Security_Groups awsService;
-    class K8s_RBAC,PSS,OPA,Kyverno k8sComponent;
-    class At_Rest,In_Transit,ReadOnly_FS,Limited_Privileges,Security_Profiles default;
-```
-
-### Data Encryption
-
-1. **Data at rest encryption**:
-   - EBS volume encryption:
+EBS 暗号化はボリュームのプロビジョニング時に指定します。StorageClass を変更しても既存ボリュームは遡及的に暗号化されません。この新規 class の例では、暗号化した gp3 ストレージ、遅延トポロジーバインド、明示的な保持を要求します。カスタマー管理キーが必要なら、実際にレビューした kmsKeyId を加え、キーのポリシーと driver の権限付与を準備してください。サンプル ARN は実際に使えるキーではありません。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -767,171 +334,84 @@ kind: StorageClass
 metadata:
   name: ebs-encrypted
 provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
 parameters:
   type: gp3
-  encrypted: "true"
-  kmsKeyId: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
 ```
 
-   - EFS file system encryption:
+EFS の暗号化は Part 1 のガード付きインフラ手順を使ってファイルシステムの作成時に設定します。既存の非暗号化データには、マウントオプションではなく、暗号化済みファイルシステムへのサポート対象の移行が必要です。FSx for Lustre は保存データを自動的に暗号化します。scratch ファイルシステムはサービス管理キーを使い、選択可能な AWS 管理キー/カスタマー管理 KMS キーを選べるのは **persistent-filesystem** です。SCRATCH_2 の例に customer kms-key-id を渡さないでください。
+
+実際のクラウドリソースを調べ、EBS ID とバインド済み PV の volumeHandles を照合し、アカウント/リージョンを確認してください。customer key を選択していない scratch FSx の応答だけを根拠に、暗号化されていないとは判断できません。
 
 ```bash
-aws efs create-file-system \
-  --encrypted \
-  --kms-key-id arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+set -euo pipefail
+: "${AWS_REGION:?Set the resources Region}"
+: "${EBS_VOLUME_ID:?Identify the actual volume from its bound PV}"
+: "${EFS_FILE_SYSTEM_ID:?Set the owned EFS filesystem ID}"
+: "${FSX_FILE_SYSTEM_ID:?Set the owned FSx filesystem ID}"
+aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$EBS_VOLUME_ID" \
+  --query 'Volumes[0].{Id:VolumeId,Encrypted:Encrypted,KmsKeyId:KmsKeyId}' --output json
+aws efs describe-file-systems --region "$AWS_REGION" --file-system-id "$EFS_FILE_SYSTEM_ID" \
+  --query 'FileSystems[0].{Id:FileSystemId,Encrypted:Encrypted,KmsKeyId:KmsKeyId}' --output json
+aws fsx describe-file-systems --region "$AWS_REGION" --file-system-ids "$FSX_FILE_SYSTEM_ID" \
+  --query 'FileSystems[0].{Id:FileSystemId,Type:LustreConfiguration.DeploymentType,KmsKeyId:KmsKeyId}' --output json
 ```
 
-   - FSx for Lustre encryption:
+転送中のデータには、サポート対象の EFS CSI/mount-helper `tls` オプションを使い、実際のマウント経路で有効になっていることを確認します。FSx の転送中暗号化は、サポートされるファイルシステム/client/インスタンス構成に依存します。サービスのガイダンスに従ってください。**S3 HTTPS/TLS は転送を保護します。`aws s3 cp --sse AES256` は SSE-S3 の保存時暗号化を選択します。このフラグは** TLS を有効にしません。HTTPS endpoint と証明書検証を使い、安全な転送を必須にする bucket policy も確認してください。KMS キーポリシーと転送用証明書の管理は別のものです。
 
-```bash
-aws fsx create-file-system \
-  --file-system-type LUSTRE \
-  --storage-capacity 1200 \
-  --subnet-ids subnet-1234567890abcdef0 \
-  --lustre-configuration DeploymentType=SCRATCH_2 \
-  --security-group-ids sg-1234567890abcdef0 \
-  --kms-key-id arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
-```
+### アクセス制御
 
-2. **Data in transit encryption**:
-   - EFS in-transit encryption:
+Part 1 で準備した CSI identity を使います。controller 用にサポートされる Pod Identity/IRSA role と正確な driver 権限、および該当する場合は KMS 権限付与が必要です。無関係な eksctl コマンドで既存のマネージドアドオン ServiceAccount を再作成したり、controller 権限をすべてのノード/アプリケーションに付与したりしないでください。Mountpoint の Pod 単位 identity、EFS IAM マウント、ファイルシステムの POSIX/access point identity では、認可経路が異なります。
+
+ネットワークアクセスでは、実際の client/ノードの送信元セキュリティグループから EFS マウントターゲットの TCP 2049 への通信を許可します。Lustre では、必要な自己/client 間トラフィックを含め、client と file server の間で仕様に記載された TCP 988 と 1018–1023 のルールが必要です。EFA 対応 Lustre では、代わりに指定されたセキュリティグループ参照付きの全トラフィックルールが必要です。インターネット全体を許可する CIDR で代替してはいけません。SG に加えて、ルート、DNS、NACL、実際の CSI マウント送信元を確認してください。Kubernetes Pod NetworkPolicy が、ノード起点のすべてのファイルシステム接続を自動的に制御するわけではありません。
+
+次の namespace スコープの reader は PVC オブジェクトを参照できますが、作成、サイズ変更、削除はできません。cluster スコープの PV 参照には、別途レビューした ClusterRole が必要です。どちらの role もファイルの内容を直接制御しません。namespace で Pod を作成できる主体は、その PVC をマウントできる場合があります。そのため Pod 作成権限、workload identity、POSIX/access point 権限、テナント分離も制御する必要があります。
 
 ```yaml
-mountOptions:
-  - tls
-```
-
-   - S3 in-transit encryption:
-
-```bash
-aws s3 cp --sse AES256 file.txt s3://my-bucket/
-```
-
-### Access Control
-
-1. **IAM roles and policies**:
-   - least privilege の原則を適用します
-   - service accounts には IAM roles を使用します
-
-```bash
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --approve
-```
-
-2. **Security groups**:
-   - 必要な ports のみを許可します
-   - source IPs を制限します
-
-```bash
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-1234567890abcdef0 \
-  --protocol tcp \
-  --port 2049 \
-  --source-group sg-0987654321fedcba0
-```
-
-3. **Kubernetes RBAC**:
-   - PVs と PVCs への access を制限します
-
-```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: storage-auditor
+  namespace: storage-demo
+automountServiceAccountToken: false
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: app-namespace
-  name: pvc-manager
+  name: pvc-reader
+  namespace: storage-demo
 rules:
-- apiGroups: [""]
-  resources: ["persistentvolumeclaims"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups:
+  - ''
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: pvc-manager-binding
-  namespace: app-namespace
+  name: pvc-reader
+  namespace: storage-demo
 subjects:
 - kind: ServiceAccount
-  name: app-service-account
-  namespace: app-namespace
+  name: storage-auditor
+  namespace: storage-demo
 roleRef:
-  kind: Role
-  name: pvc-manager
   apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pvc-reader
 ```
 
-### Pod Security Context
+### Pod のセキュリティコンテキスト
 
-1. **Read-only root filesystem**:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-pod
-spec:
-  containers:
-  - name: app
-    image: nginx
-    securityContext:
-      readOnlyRootFilesystem: true
-    volumeMounts:
-    - name: data-volume
-      mountPath: /data
-      readOnly: false
-```
-
-2. **Limited privileges**:
-
-```yaml
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 3000
-  fsGroup: 2000
-  allowPrivilegeEscalation: false
-```
-
-3. **SELinux, AppArmor, or seccomp profiles**:
-
-```yaml
-securityContext:
-  seLinuxOptions:
-    level: "s0:c123,c456"
-  seccompProfile:
-    type: RuntimeDefault
-```
-
-### Security Policy Enforcement
-
-1. **OPA Gatekeeper or Kyverno**:
-   - encrypted volumes のみを許可します
-
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-ebs-encryption
-spec:
-  validationFailureAction: enforce
-  rules:
-  - name: check-ebs-encryption
-    match:
-      resources:
-        kinds:
-        - PersistentVolumeClaim
-    validate:
-      message: "EBS volumes must be encrypted"
-      pattern:
-        spec:
-          storageClassName: "ebs-*"
-          +(storageClassName): "ebs-encrypted"
-```
-
-2. **Pod Security Standards**:
-   - Pod Security Standards を namespaces に適用します
+次の完全な例では、Pod レベルの runAsUser/runAsGroup/fsGroup/seccomp と、コンテナレベルの allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem を分けています。定義されていない data volume や、提示されていない書き込み可能な実行時パスを使う nginx image ではなく、準備済みの暗号化 class と宣言済み PVC を使います。namespace ポリシーのバージョンは、レビュー済み Kubernetes 1.36 の例に合わせています。クラスターに適したポリシーバージョンを選んでください。
 
 ```yaml
 apiVersion: v1
@@ -940,145 +420,143 @@ metadata:
   name: secure-ns
   labels:
     pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: secure-data
+  namespace: secure-ns
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-encrypted
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+  namespace: secure-ns
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: busybox:1.38.0
+    command:
+    - sh
+    - -c
+    args:
+    - test -w /data && sleep 3600
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: secure-data
 ```
 
-## Storage Management Best Practices
+root を読み取り専用にしても `/data` は読み取り専用になりません。このワークロードは書き込み可能な PVC を意図的に確認します。fsGroup の動作は CSI/ファイルシステムに依存します。EFS access point が別の POSIX identity を強制する場合もあります。SELinux/AppArmor プロファイルには、実際のノード/runtime のサポートと準備済みポリシーが必要です。根拠のない MCS label や profile 名をコピーしないでください。Pod Security Standards は Pod 設定を制約しますが、クラウドボリュームを暗号化したり IAM 権限を付与したりはしません。ホストアクセスを持つモニタリング/CSI node agent には、個別にレビューした namespace/セキュリティ設計が必要です。
 
-EKS clusters で storage を効果的に管理するための best practices を見ていきましょう。
+### セキュリティポリシーの適用
 
-```mermaid
-flowchart TD
-    subgraph Best_Practices ["Storage Management Best Practices"]
-        subgraph Planning ["Planning and Design"]
-            Requirements[Requirements Analysis]
-            Storage_Selection[Storage Type Selection]
-            Capacity_Planning[Capacity Planning]
-        end
+PVC 名のパターンや StorageClass の許可リストだけでは、EBS 暗号化を証明できません。次の **Kyverno ValidatingPolicy** は、Kyverno 1.19.1 と CRD で確認された提供中の `policies.kyverno.io/v1` API を使います。インストール済み controller/CRD と、適切な admission 管理が必要です。このリリースでは従来の ClusterPolicy 例は非推奨です。API に互換性があると決めつけず、意図して移行してください。
 
-        subgraph Backup_DR ["Backup and Disaster Recovery"]
-            Regular_Backups[Regular Backups]
-            DR_Plan[Disaster Recovery Plan]
-            Velero[Velero Backup]
-        end
-
-        subgraph Automation ["Automation and IaC"]
-            Terraform[Terraform/CloudFormation]
-            Helm[Helm Charts]
-            GitOps[GitOps Workflow]
-        end
-
-        subgraph Optimization ["Performance and Cost Optimization"]
-            Performance_Review[Performance Review]
-            Cost_Review[Cost Optimization Review]
-            Auto_Scaling[Auto Scaling]
-        end
-    end
-
-    subgraph Lifecycle ["Storage Lifecycle"]
-        Planning_Phase[Planning Phase]
-        Implementation[Implementation Phase]
-        Operation[Operation Phase]
-        Optimization_Phase[Optimization Phase]
-        Decommission[Decommission Phase]
-    end
-
-    %% Connection relationships
-    Planning_Phase --> Requirements
-    Planning_Phase --> Storage_Selection
-    Planning_Phase --> Capacity_Planning
-
-    Implementation --> Terraform
-    Implementation --> Helm
-    Implementation --> GitOps
-
-    Operation --> Regular_Backups
-    Operation --> DR_Plan
-    Operation --> Velero
-
-    Optimization_Phase --> Performance_Review
-    Optimization_Phase --> Cost_Review
-    Optimization_Phase --> Auto_Scaling
-
-    Requirements --> Storage_Selection
-    Storage_Selection --> Capacity_Planning
-
-    Regular_Backups --> DR_Plan
-    DR_Plan --> Velero
-
-    Terraform --> Helm
-    Helm --> GitOps
-
-    Performance_Review --> Cost_Review
-    Cost_Review --> Auto_Scaling
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Planning_Phase,Implementation,Operation,Optimization_Phase,Decommission userApp;
-    class Requirements,Storage_Selection,Capacity_Planning,Regular_Backups,DR_Plan,Velero,Terraform,Helm,GitOps,Performance_Review,Cost_Review,Auto_Scaling default;
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-declared-ebs-encryption
+spec:
+  validationActions:
+  - Deny
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - storage.k8s.io
+      apiVersions:
+      - v1
+      resources:
+      - storageclasses
+      operations:
+      - CREATE
+      - UPDATE
+      scope: Cluster
+  validations:
+  - expression: '!(object.provisioner in [''ebs.csi.aws.com'', ''ebs.csi.eks.amazonaws.com''])
+      || (has(object.parameters) && ''encrypted'' in object.parameters && object.parameters[''encrypted'']
+      == ''true'')'
+    message: EBS StorageClasses must explicitly request encryption.
 ```
 
-### Storage Planning and Design
+このポリシーは **EBS StorageClass の作成/更新で宣言された暗号化パラメーター**を検査し、Auto Mode provisioner も対象にします。既存の AWS ボリューム、static PV、スナップショット内容、対象外の match/bypass 経路は検査しません。StorageClass/PV の管理を制限し、admission に加えてバックエンドのコンプライアンスチェックも行ってください。広範囲に適用する前に、代表的なリソースで展開し、ポリシーレポート/webhook の健全性を監視します。既存データの暗号化には別途移行が必要です。
 
-1. **Requirements analysis**:
-   - Performance requirements (IOPS、throughput)
-   - Capacity requirements
-   - Access patterns (read/write ratio、concurrency)
-   - Availability と durability requirements
+## ストレージ管理のベストプラクティス {#storage-management-best-practices}
 
-2. **Storage type selection**:
-   - Block storage (EBS): Databases、stateful applications
-   - File storage (EFS): Shared files、web servers、CMS
-   - High-performance file storage (FSx for Lustre): HPC、ML training
-   - Object storage (S3): Backups、archives、static content
+![4つのストレージライフサイクル段階（計画、実装、運用、最適化）と、それぞれに対応するベストプラクティス（計画と設計、自動化と IaC、バックアップと災害復旧、パフォーマンスとコストの最適化）を対応させ、各領域の3つの実践項目を順に示す図です。](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
 
-3. **Capacity planning**:
-   - 現在の requirements + growth margin
-   - auto-scaling mechanisms を実装します
-   - regular capacity reviews
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-4.html)
 
-### Backup and Disaster Recovery
+### 計画と容量
 
-1. **Regular backups**:
-   - volume snapshots を自動化します
-   - backup retention policies を定義します
+レイテンシ/IOPS/スループット、容量増加、読み書きパターン、並行数、可用性、耐久性、RPO/RTO をそれぞれ記録します。要件に基づき、block、共有 NFS、並列 Lustre、object access を選びます。実測に基づく余裕と、範囲を限定した拡張手順を用意してください。autoscaler や PVC のサイズ変更は、アプリケーションのレプリケーションや任意の容量縮小を提供するものではありません。
+
+### バックアップと災害復旧
+
+一意なバックアップ識別子と保持責任者を定めた、サポート済みのスケジュールを使います。固定 snapshot 名を繰り返し作る shell cron は、最初のオブジェクト作成後に失敗します。daily-backup という名前の Velero backup を一度作ってもスケジュールにはなりません。Part 2 のレビュー済み Velero/CSI 導入方法とデータベース整合性要件に沿って、次のコマンドはレビュー用の日次スケジュールを出力します。
 
 ```bash
-# Create snapshot daily at midnight
-0 0 * * * kubectl create -f snapshot.yaml
+velero schedule create storage-daily --schedule="0 0 * * *" \
+  --include-namespaces=storage-demo --ttl=720h0m0s -o yaml > storage-schedule-review.yaml
 ```
 
-2. **Disaster recovery plan**:
-   - Multi-AZ または cross-region replication
-   - Recovery Time Objective (RTO) と Recovery Point Objective (RPO) を定義します
-   - regular recovery testing
+所有者のレビュー後にデプロイし、バックアップの欠落/失敗をアラートし、分離された環境への復元を試験します。S3 内のバックアップが、ボリュームの全バイトを含まずネイティブ snapshot を参照する場合があります。AZ/リージョンをまたぐ復旧には、アクセス可能なデータ、キー、driver/ストレージの対応、アプリケーション検証が必要です。管理された切り替えが成功するまでソースを保持し、スケジュールから RPO/RTO を主張せず、測定した復旧時間を記録してください。
 
-3. **Cluster backup with Velero**:
+### Infrastructure as Code と GitOps
 
-```bash
-velero backup create daily-backup --include-namespaces=default,app-namespace
-```
+Part 1/Part 2 のガード付きファイルシステム作成例、または provider/schema のバージョン、サブネット/マウントターゲット/セキュリティグループ設定、削除保護をレビューした所有済み Terraform/CloudFormation module を使います。ファイルシステムだけを定義する Terraform resource は、EKS ですぐ使えるマウント経路にはなりません。バックアップ保持と IaC の destroy/prune 動作を分けてください。
 
-### Automation and IaC (Infrastructure as Code)
+Helm values は chart 固有の入力です。たとえば custom `storage.encrypted: true` value は、template が対応する実リソースフィールドに割り当てない限り何も起こしません。デプロイ前に、レンダリングした StorageClass/PVC/workload を検証してください。GitOps の prune、chart のアンインストール、claim の保持設定はデータに異なる影響を与えます。各リソースの管理者を記録し、ライフサイクル変更は一時データで試験します。
 
-1. **Use Terraform or CloudFormation**:
-   - storage resources の宣言的な定義
-   - Version control と change tracking
+次のファイルシステム resource は暗号化と Elastic throughput を要求し、教材用の30日 IA ポリシーと Terraform destroy guard を追加します。作成 token をプロジェクト固有の安定した値に置き換え、provider/アカウント/リージョンを設定し、レビュー済みのネットワーク/マウントターゲット resource を追加してください。prevent_destroy は Terraform 操作のガードであり、バックアップではなく、外部からのすべての削除を防ぐものでもありません。
 
 ```hcl
 resource "aws_efs_file_system" "example" {
-  creation_token = "example"
+  creation_token   = "example"
   performance_mode = "generalPurpose"
-  throughput_mode = "bursting"
-  encrypted = true
+  throughput_mode  = "elastic"
+  encrypted        = true
 
   lifecycle_policy {
     transition_to_ia = "AFTER_30_DAYS"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 
   tags = {
@@ -1087,48 +565,31 @@ resource "aws_efs_file_system" "example" {
 }
 ```
 
-2. **Use Helm charts**:
-   - storage classes と PVCs を templatize します
+### 継続的なレビュー
 
-```yaml
-# values.yaml
-storage:
-  class: ebs-gp3
-  size: 10Gi
-  encrypted: true
-```
+ワークロードの変化に応じて、ボトルネック、プロビジョニング上限、保持コスト、セキュリティ制御を見直してください。リソース所有権、バックアップ/復旧、削除の影響を確認するまでは、クリーンアップレポートを読み取り専用のままにします。変更はアラートして範囲を限定したうえで提案してから自動化してください。この章の例はローカルで検証した参考構成です。バックエンド性能、admission のデプロイ、復旧は、意図した環境で引き続き検証が必要です。
 
-3. **GitOps workflow**:
-   - ArgoCD または Flux で storage configuration を管理します
+## まとめ
 
-### Performance and Cost Optimization
+本書では、Amazon EKS ストレージのモニタリング、トラブルシューティング、コスト最適化、セキュリティを扱いました。効果的なストレージ管理は、EKS クラスターの性能、信頼性、費用対効果を確保するうえで重要です。
 
-1. **Regular performance review**:
-   - bottlenecks を特定して解決します
-   - workloads の変化に応じて storage configuration を調整します
+ストレージ要件はアプリケーションによって異なります。ワークロードの特性を把握して適切なストレージソリューションを選び、定期的なモニタリング、トラブルシューティング、コスト最適化、セキュリティレビューを通じてストレージリソースを管理してください。
 
-2. **Cost optimization review**:
-   - 使用されていない volumes を特定して削除します
-   - cost-effective な storage types に移行します
-   - Reserved Instances または Savings Plans を検討します
+## 参考資料
 
-3. **Auto scaling**:
-   - demand に基づいて storage を自動的に scale します
-   - usage-based alerts を設定します
+- [Amazon EKS ストレージのベストプラクティス](https://docs.aws.amazon.com/eks/latest/best-practices/storage.html)
+- [Kubernetes ストレージのトラブルシューティング](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/#debugging-pods)
+- [Kubernetes ストレージのセキュリティ](https://kubernetes.io/docs/concepts/security/)
 
-## Conclusion
+- [EBS CloudWatch メトリクス](https://docs.aws.amazon.com/ebs/latest/userguide/using_cloudwatch_ebs.html)
+- [FSx Lustre のメトリクスディメンション](https://docs.aws.amazon.com/fsx/latest/LustreGuide/fs-metrics.html)
+- [EFS パフォーマンスモード](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
+- [EFS ライフサイクル API](https://docs.aws.amazon.com/efs/latest/APIReference/API_PutLifecycleConfiguration.html)
+- [FSx の保存時暗号化](https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-at-rest.html)
+- [FSx のネットワークアクセス](https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html)
+- [S3 の保存時暗号化](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html)
+- [Kyverno CEL 移行ガイド](https://kyverno.io/docs/guides/migration-to-cel/)
 
-このドキュメントでは、Amazon EKS storage の monitoring、troubleshooting、cost optimization、および security について扱いました。効果的な storage management は、EKS cluster の performance、reliability、および cost-effectiveness を確保するために重要です。
+## クイズ
 
-Storage requirements は application によって異なるため、workload の特性を理解し、適切な storage solution を選択することが重要です。さらに、regular monitoring、troubleshooting、cost optimization、および security reviews を通じて storage resources を効果的に管理する必要があります。
-
-## References
-
-- [Amazon EKS Storage Best Practices](https://aws.github.io/aws-eks-best-practices/storage/)
-- [Kubernetes Storage Troubleshooting](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/#debugging-pods)
-- [AWS Storage Cost Optimization](https://aws.amazon.com/blogs/storage/cost-optimization-for-amazon-ebs-and-amazon-efs/)
-- [Kubernetes Storage Security](https://kubernetes.io/docs/concepts/security/)
-
-## Quiz
-
-この章で学んだ内容を確認するには、[topic quiz](../quizzes/eks/04-eks-storage-part3-quiz.md) に挑戦してください。
+この章の学習内容を確認するには、[トピック別クイズ](../quizzes/eks/04-eks-storage-part3-quiz.md)に挑戦してください。

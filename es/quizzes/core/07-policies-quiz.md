@@ -129,7 +129,7 @@ AdmissionController es un plugin que intercepta y valida o modifica solicitudes 
 OPA Gatekeeper es una solución extensible para aplicar políticas a clusters de Kubernetes. Está basada en OPA (Open Policy Agent) y usa CustomResourceDefinitions (CRDs) para definir y aplicar políticas. Gatekeeper opera como un AdmissionWebhook para verificar que los recursos creados o modificados en el cluster cumplan con las políticas definidas. Esto permite aplicar diversas políticas, como políticas de seguridad, límites de recursos y convenciones de nombres.
 </details>
 
-9. Al crear un pod sin especificar resource requests y limits en un namespace con ResourceQuota aplicado, ¿qué sucede?
+9. ¿Qué sucede con un Pod que no especifica esos recursos si el namespace tiene cuotas para solicitudes y límites de CPU/memoria y no cuenta con valores predeterminados de admisión?
    - A) El pod se crea con resource requests y limits predeterminados
    - B) Se rechaza la creación del pod
    - C) El pod se crea pero no se programa
@@ -141,7 +141,7 @@ OPA Gatekeeper es una solución extensible para aplicar políticas a clusters de
 **Respuesta: B) Se rechaza la creación del pod**
 
 **Explicación:**
-Cuando ResourceQuota se aplica a un namespace y se establecen cuotas para recursos de cómputo como CPU y memoria, todos los containers de ese namespace deben especificar explícitamente resource requests y limits. De lo contrario, el API server rechaza la solicitud de creación del pod. Esto sirve para rastrear y limitar con precisión el uso de recursos en namespaces con cuotas aplicadas.
+Cuando ResourceQuota se aplica a un namespace con cuotas de CPU o memoria, los Pods deben incluir los campos de recursos requeridos después de aplicar los valores predeterminados de admisión. Si esos campos siguen faltando, se rechaza la creación. LimitRange puede proporcionar valores predeterminados; una cuota que solo limita el número de objetos no exige campos de CPU o memoria. Así se puede contabilizar y limitar correctamente el uso de recursos en namespaces sujetos a cuotas.
 </details>
 
 10. ¿Cuál es el propósito principal de PriorityClass en Kubernetes?
@@ -194,7 +194,7 @@ Pod Security Standards define tres niveles de política para configuraciones de 
    - Política de nivel intermedio que evita rutas conocidas de escalación de privilegios.
    - Proporciona un nivel base de seguridad adecuado para la mayoría de las workloads.
    - Restringe containers privilegiados y el uso de host namespaces.
-   - Sin embargo, algunas operaciones privilegiadas (por ejemplo, mounts de host path) todavía están permitidas.
+   - Los volúmenes HostPath también están prohibidos en Baseline; Restricted añade requisitos como ejecución sin root, seccomp y restricciones de capabilities.
 
 3. **Restricted**:
    - Política más restrictiva con configuraciones de seguridad mejoradas.
@@ -259,7 +259,7 @@ kubectl label namespace source-namespace name=source-namespace
 kubectl label namespace destination-namespace name=destination-namespace
 ```
 
-NetworkPolicy opera en modo de lista de permitidos de forma predeterminada, por lo que una vez que se aplican estas políticas, solo es posible la comunicación permitida explícitamente y todo lo demás queda bloqueado.
+Estas políticas aíslan únicamente las direcciones seleccionadas. Otras NetworkPolicies suman sus permisos y no pueden reducir un permiso más amplio. Añade el egreso DNS por separado cuando se usan nombres y prueba las reglas tanto en el origen como en el destino.
 </details>
 
 4. Explica tres ejemplos de políticas que se pueden implementar usando OPA Gatekeeper en Kubernetes.
@@ -268,9 +268,11 @@ NetworkPolicy opera en modo de lista de permitidos de forma predeterminada, por 
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Ejemplos de políticas que se pueden implementar usando OPA Gatekeeper:
+Ejemplos de políticas que se pueden implementar con OPA Gatekeeper:
 
-1. **Restricción de Image Registry**:
+Instala primero la ConstraintTemplate correspondiente desde la biblioteca oficial de Gatekeeper. Estos tipos se generan a partir de plantillas; no son APIs integradas. El esquema K8sRequiredLabels de la biblioteca difiere de K8sRequiredLabelKeys, la versión simplificada que presenta este capítulo.
+
+1. **Restricción de registros de imágenes**:
    - Política que obliga a que las imágenes se descarguen solo desde registries aprobados
    - Ejemplo: Permitir solo registries internos de la empresa o registries públicos específicos de confianza
    ```yaml
@@ -326,7 +328,43 @@ Ejemplos de políticas que se pueden implementar usando OPA Gatekeeper:
            kinds: ["Pod"]
    ```
 
-(Solo es necesario explicar tres de los anteriores)
+4. **Restringir el acceso al sistema de archivos del host** (requiere la plantilla correspondiente de la biblioteca):
+   ```yaml
+   apiVersion: constraints.gatekeeper.sh/v1beta1
+   kind: K8sPSPHostFilesystem
+   metadata:
+     name: prevent-host-filesystem-mount
+   spec:
+     match:
+       kinds:
+       - apiGroups: [""]
+         kinds: ["Pod"]
+     parameters:
+       allowedHostPaths: []
+   ```
+
+5. **Exigir etiquetas con valores restringidos**:
+   ```yaml
+   apiVersion: constraints.gatekeeper.sh/v1beta1
+   kind: K8sRequiredLabels
+   metadata:
+     name: require-team-label
+   spec:
+     match:
+       kinds:
+       - apiGroups: [""]
+         kinds: ["Pod", "Service"]
+       - apiGroups: ["apps"]
+         kinds: ["Deployment"]
+     parameters:
+       labels:
+       - key: team
+         allowedRegex: "^(frontend|backend|infra)$"
+       - key: environment
+         allowedRegex: "^(dev|staging|prod)$"
+   ```
+
+(Solo es necesario explicar tres de los cinco ejemplos anteriores)
 </details>
 
 5. Explica cómo asegurar la disponibilidad de workloads importantes usando PriorityClass en Kubernetes.
@@ -365,11 +403,11 @@ Cómo asegurar la disponibilidad de workloads importantes usando PriorityClass:
 
 3. **Aprovechar Preemption**:
    - Cuando los recursos son escasos, los pods de mayor prioridad pueden hacer preempt (evict) a pods de menor prioridad y ser programados
-   - Esto garantiza que las workloads importantes siempre puedan ejecutarse
+   - Esto mejora la preferencia de programación, pero no garantiza que los Pods se ubiquen si las restricciones o la capacidad disponible lo impiden
 
 4. **Considerar System Priority Classes**:
-   - Kubernetes proporciona system priority classes como system-cluster-critical (2000000000) y system-node-critical (2000001000)
-   - Las priority classes definidas por el usuario generalmente deberían usar valores menores que estos
+   - Kubernetes proporciona clases de prioridad del sistema como system-cluster-critical (2000000000) y system-node-critical (2000001000)
+   - Los valores de PriorityClass definidos por usuarios deben ser como máximo 1 000 000 000; los valores superiores están reservados para las clases del sistema
 
 5. **Diseñar una jerarquía de prioridades**:
    - Definir varios niveles de prioridad según la importancia de la workload
@@ -627,7 +665,7 @@ kubectl label namespace restricted-ns \
 
 1. **Arquitectura y enfoque**:
    - **OPA Gatekeeper**: Basado en Open Policy Agent (OPA), usa el lenguaje de políticas Rego. Define políticas usando dos CRDs: ConstraintTemplate y Constraint.
-   - **Kyverno**: Usa su propio motor de políticas y proporciona definiciones de políticas basadas en YAML/JSON. Define políticas usando un único CRD Policy.
+   - **Kyverno**: Usa su propio motor de políticas y define políticas con YAML/JSON. Ofrece varios tipos, como Policy/ClusterPolicy y, según la versión, APIs específicas para limpieza y CEL.
 
 2. **Lenguaje de políticas**:
    - **OPA Gatekeeper**: Usa el lenguaje Rego, potente pero con una curva de aprendizaje pronunciada.
@@ -646,7 +684,7 @@ kubectl label namespace restricted-ns \
 
 4. **Pros**:
    - **OPA Gatekeeper**:
-     - Más maduro y ampliamente adoptado
+     - Ecosistema Rego establecido y plantillas reutilizables
      - Más adecuado para expresar políticas complejas
      - Documentación y ejemplos extensos para diversos casos de uso
      - El ecosistema OPA se puede usar fuera de Kubernetes
@@ -662,9 +700,9 @@ kubectl label namespace restricted-ns \
      - Configuración inicial y configuración complejas
      - Se necesita configuración adicional para la modificación de recursos
    - **Kyverno**:
-     - Relativamente menos maduro
+     - Requiere comprobar la compatibilidad de CRD y funciones según la versión
      - Puede tener limitaciones para expresar políticas muy complejas
-     - El rendimiento puede ser menor en comparación con OPA
+     - Compara políticas representativas y carga de admisión; no existe una clasificación universal del rendimiento de los motores
 
 6. **Criterios de selección**:
    - **Elige OPA Gatekeeper cuando**:
@@ -675,7 +713,7 @@ kubectl label namespace restricted-ns \
      - Son importantes un inicio rápido y una curva de aprendizaje sencilla
      - El equipo está familiarizado con la sintaxis de recursos de Kubernetes
      - Se necesitan funciones de creación y modificación de recursos
-     - Solo se necesitan políticas simples
+     - La mutación, generación, verificación o validación nativas de Kubernetes se ajustan a los requisitos de la política
 </details>
 
 2. Explica las principales diferencias entre Pod Security Admission y el PodSecurityPolicy (PSP) anterior en Kubernetes.
@@ -688,7 +726,7 @@ kubectl label namespace restricted-ns \
 **Comparación entre Pod Security Admission y PodSecurityPolicy (PSP):**
 
 1. **Implementación**:
-   - **PodSecurityPolicy**: Implementado como recurso de API (CRD), aplicado mediante admission controller.
+   - **PodSecurityPolicy**: Implementado como recurso de API integrado (no es un CRD) y aplicado mediante un admission controller.
    - **Pod Security Admission**: Implementado como admission controller integrado, configurado mediante labels de namespace.
 
 2. **Método de configuración**:
@@ -721,4 +759,152 @@ kubectl label namespace restricted-ns \
 8. **Extensibilidad**:
    - **PodSecurityPolicy**: Alta extensibilidad mediante configuraciones personalizadas.
    - **Pod Security Admission**: Extensibilidad limitada; pueden ser necesarias herramientas adicionales como OPA Gatekeeper o Kyverno para un control más preciso.
+</details>
+
+3. Explica cómo un webhook externo de autorización puede complementar RBAC de Kubernetes y por qué es importante el orden de los autorizadores.
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta:**
+
+En un servidor de API autogestionado, configura un webhook autenticado con TLS mediante un kubeconfig que proporcione el endpoint, la CA, el certificado de cliente y la clave. Este es un ejemplo basado en flags:
+
+```text
+--authorization-mode=Node,RBAC,Webhook
+--authorization-webhook-config-file=/path/to/webhook-config.yaml
+--authorization-webhook-version=v1
+```
+
+El webhook recibe un SubjectAccessReview de `authorization.k8s.io/v1` con el usuario y los grupos autenticados y los atributos de la solicitud. Devuelve un estado de SubjectAccessReview, por ejemplo `allowed: true` o una denegación explícita. Debe validar las credenciales de transporte, gestionar deliberadamente los errores y tiempos de espera, y evitar registrar tokens bearer o datos confidenciales de la solicitud.
+
+**La cadena de autorizadores se detiene en el primer permiso o denegación.** En `Node,RBAC,Webhook`, un permiso concedido por RBAC omite el webhook. Un webhook posterior no puede revocar ese permiso. Las políticas de denegación externa obligatoria requieren un orden o una política de fallo adecuados, o controles de admisión apropiados. AuthorizationConfiguration estructurada admite controles adicionales para webhooks. EKS no expone flags arbitrarios del servidor de API.
+
+Un adaptador de OPA puede evaluar la revisión con Rego. Este ejemplo de OPA 1.x usa la sintaxis actual:
+
+```rego
+package kubernetes.authz
+
+default allow := false
+
+allow if {
+    input.spec.resourceAttributes.namespace == "default"
+    input.spec.resourceAttributes.resource == "deployments"
+    input.spec.resourceAttributes.verb == "get"
+    input.spec.user == "jane"
+    "developers" in input.spec.groups
+}
+```
+
+Implementa una versión compatible de OPA, carga el paquete de políticas y crea un adaptador que envíe la revisión como entrada a OPA y traduzca el resultado al estado de SubjectAccessReview. Implementar OPA sin más no proporciona un webhook de autorización completo. La centralización de políticas, los atributos externos y la auditabilidad son ventajas; hay que probar la disponibilidad, la latencia, los TTL de caché y el comportamiento de las denegaciones.
+
+</details>
+
+4. Diseña el aislamiento de red multiinquilino con NetworkPolicy.
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta:**
+
+Empieza con una política predeterminada que deniegue el ingreso y el egreso en cada namespace de tenant. Después elige entre permitir la comunicación general dentro del tenant o aplicar reglas detalladas por rol. Como las políticas son aditivas, una política amplia que permite la comunicación dentro del mismo namespace anula las restricciones por rol más específicas si se aplican ambas.
+
+Para permitir la comunicación general dentro del tenant, habilita ambos sentidos; una política de ingreso por sí sola no elimina la denegación predeterminada del egreso:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-same-namespace
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+```
+
+Para un aislamiento más detallado, selecciona etiquetas como `role: backend` o `tier: web`. Expón APIs seleccionadas a otros tenants combinando un selector de namespace y uno de Pod en el mismo peer e indicando los puertos de destino. Usa la etiqueta de namespace integrada `kubernetes.io/metadata.name` o mantén una convención protegida para las etiquetas de tenant.
+
+El acceso a servicios compartidos requiere que coincidan el egreso del origen y el ingreso del destino. Permitir que los tenants accedan a Prometheus en el puerto 9090 expone su API/UI; no autoriza a Prometheus a recopilar métricas de los Pods de los tenants. Esa recopilación requiere la ruta de tráfico inversa. Restringe el egreso externo mediante rangos IP y puertos TCP apropiados, o usa una implementación que admita políticas por dominio cuando las IP no sean adecuadas.
+
+El egreso DNS suele necesitar la siguiente regla (ajústala para NodeLocal DNS o etiquetas distintas):
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+```
+
+Usa un CNI que aplique las políticas, protege con RBAC y reglas de admisión los cambios en las etiquetas de namespaces y Pods, versiona las políticas y prueba los flujos permitidos y denegados. NetworkPolicy estándar no ofrece autenticación L7 y tiene limitaciones documentadas para el tráfico de nodos y host-network.
+
+</details>
+
+5. Explica una estrategia de gestión de recursos que combine ResourceQuota y LimitRange.
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta:**
+
+- En el ámbito del clúster, planifica la capacidad de los nodos, el escalado automático y el aislamiento de las cargas de trabajo. En el ámbito del namespace, limita los recursos de cómputo solicitados y limitados, el almacenamiento y el número de objetos. En cada carga de trabajo, define solicitudes de recursos medidas y la prioridad del Pod.
+- Usa `requests.storage` y `<class>.storageclass.storage.k8s.io/requests.storage` para asignar PVC. Para contar objetos arbitrarios, usa claves como `count/deployments.apps` y `count/statefulsets.apps`; `deployments.apps` sin el prefijo de conteo no es la sintaxis para contar objetos.
+- Aplica una cuota con `scopeSelector` y `hard.pods` para cada clase de prioridad. PriorityClass pertenece a los Pods, no directamente a los namespaces.
+- Usa entradas Container de LimitRange para definir valores predeterminados y validar mínimos y máximos. Las entradas Pod limitan los recursos agregados, y las entradas PVC limitan las solicitudes de almacenamiento; ninguna proporciona valores predeterminados.
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: object-counts
+  namespace: team-a
+spec:
+  hard:
+    pods: "50"
+    services: "10"
+    services.loadbalancers: "2"
+    services.nodeports: "5"
+    secrets: "20"
+    configmaps: "20"
+    count/deployments.apps: "10"
+    count/statefulsets.apps: "5"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: storage-limits
+  namespace: team-a
+spec:
+  limits:
+  - type: PersistentVolumeClaim
+    min:
+      storage: 1Gi
+    max:
+      storage: 100Gi
+```
+
+ResourceQuota y LimitRange no tienen un modo integrado de solo auditoría: evalúa los cambios en namespaces de prueba y mediante dry-run cuando corresponda. Supervisa por separado la asignación de cuotas y el uso real, genera alertas antes de alcanzar los límites y ajusta las solicitudes según mediciones. Los cambios dinámicos de cuotas, el uso compartido, los grupos comunes y la imputación de costes requieren controladores o automatización adicionales; las cuotas estrictas nativas no permiten excesos temporales. Las cuotas limitan la admisión, no garantizan el rendimiento de las cargas de trabajo.
+
 </details>

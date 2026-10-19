@@ -1,35 +1,36 @@
-# Configuración y operación de la plataforma de observabilidad
+# Configuración y operación de la pila de observabilidad
 
-> **Última actualización**: 11 de septiembre de 2026: Loki 3.7.7, Tempo 3.0.3, Alloy 1.19.2,
-> OpenTelemetry Collector Contrib 0.160.0, kube-prometheus-stack 90.1.1.
+> **Última actualización**: 16 de octubre de 2026: Loki 3.7.8, Tempo 3.0.3, Alloy 1.20.1,
+> OpenTelemetry Collector Contrib 0.162.0, kube-prometheus-stack 92.9.0.
 
-Este capítulo configura recopilación, almacenamiento, permisos, retención y navegación entre señales.
-Use los [ejemplos completos de instrumentación Go/Python y logs JSON de Java](./08-observability-analysis.md)
-del capítulo anterior. Instalar Grafana no correlaciona por sí solo las tres señales.
+Este capítulo configura la recopilación, el almacenamiento, los permisos, la retención y la navegación entre señales.
+Use los [ejemplos completos de instrumentación Go/Python y de registros JSON en Java](./08-observability-analysis.md)
+del capítulo anterior. Instalar Grafana por sí solo no correlaciona las tres señales.
 
-## Alcance y requisitos
+## Alcance y requisitos previos
 
-| Señal | Recopilación | Almacenamiento y consultas |
+| Señal | Ruta de recopilación | Almacenamiento y consultas |
 |---|---|---|
-| Logs | JSON stdout de la aplicación → fuente API Kubernetes de Alloy | Loki → Grafana |
-| Trazas | OTLP de aplicación → Collector → Tempo | Tempo → Grafana |
-| Métricas | Scrape Prometheus; remote write opcional de métricas generadas por Tempo | Prometheus; AMP opcional |
+| Registros | JSON por stdout de la aplicación → fuente de la API de registros de Kubernetes de Alloy | Loki → Grafana |
+| Trazas | OTLP de la aplicación → Collector → Tempo | Tempo → Grafana |
+| Métricas | Scrape de Prometheus; escritura remota opcional de métricas generadas por Tempo | Prometheus; AMP opcional |
 
-Se usa `observability`. Prepare ese namespace, los CRD de Prometheus Operator y una StorageClass
-`gp3` operativa. Auto Mode y EBS CSI ordinario usan provisionadores diferentes; el mismo nombre
-no demuestra compatibilidad. Buckets S3 y roles IRSA son requisitos separados. Sustituya cuentas,
-roles, buckets y workspaces. Separe buckets por finalidad y bloquee acceso público. Limite roles
-Loki/Tempo al listado y lectura/escritura/eliminación de objetos necesarios; incluya los permisos
-de la clave KMS elegida si usa SSE-KMS.
+Los ejemplos usan el namespace `observability`. Prepare ese namespace, los CRD de Prometheus Operator
+y una StorageClass `gp3` funcional. EKS Auto Mode y el controlador EBS CSI habitual usan provisionadores
+distintos; que una clase tenga el mismo nombre no demuestra que sea compatible. Los buckets de S3 y los
+roles IRSA son requisitos previos independientes. Sustituya los marcadores de cuenta, rol, bucket y espacio
+de trabajo. Use buckets separados según su propósito y bloquee el acceso público. Limite los roles de
+Loki/Tempo a las operaciones necesarias de listado de buckets y lectura, escritura y eliminación de objetos;
+incluya los permisos de la clave KMS elegida si usa SSE-KMS.
 
 Estos ajustes son un punto de partida de configuración. El HTTP interno sin autenticación, la conexión
-Kafka, los tamaños de recursos y la retención no son valores predeterminados universales de producción.
-Valide el acceso de red, TLS/autenticación, capacidad y recuperación para su entorno. `ClusterIP` no
+con Kafka, los tamaños de recursos y la retención no son valores predeterminados universales para producción.
+Valide el acceso de red, TLS/autenticación, la capacidad y la recuperación en su entorno. `ClusterIP` no
 proporciona autenticación.
 
-Las versiones de charts y aplicaciones difieren. Loki/Tempo usan el repositorio actual
-`grafana-community`. Dar values distribuidos al antiguo chart monolítico `grafana/tempo`
-no lo convierte en un despliegue distribuido.
+Las versiones de los charts y de las aplicaciones son distintas. Los ejemplos de Loki y Tempo usan el
+repositorio actual `grafana-community`. Proporcionar valores distribuidos al antiguo chart monolítico
+`grafana/tempo` no lo convierte en una implementación distribuida.
 
 ```bash
 helm repo add grafana-community https://grafana-community.github.io/helm-charts
@@ -38,33 +39,37 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo update
 ```
 
-## Loki: modos y almacenamiento S3
+## Loki: modos de implementación y almacenamiento en S3
 
-Loki indexa etiquetas de streams y guarda contenido en chunks. Buscar contenido todavía lee datos
-de los streams seleccionados; etiquetas, intervalos y cachés de chunks/índices afectan al coste.
-Las relaciones de compresión y umbrales diarios fijos requieren mediciones de la carga.
+Loki indexa las etiquetas de los streams y almacena el contenido de los registros en chunks. Las búsquedas
+de contenido siguen leyendo datos de los streams seleccionados, por lo que la selección de etiquetas,
+los intervalos de tiempo y las cachés de índices/chunks afectan al costo de las consultas. Las tasas de
+compresión y los límites fijos de volumen diario requieren mediciones específicas de la carga de trabajo.
 
-| Modo | Propósito y límites |
+| Modo | Propósito y limitaciones |
 |---|---|
-| Monolithic | Un proceso; HA exige almacenamiento compartido, replicación y rutas |
-| SimpleScalable | Destinos read/write/backend separados; obsoleto, eliminación prevista en Loki 4.0 |
-| Distributed | Componentes independientes; operación adicional de red, anillo, consultas y almacenamiento |
+| Monolithic | Componentes en un proceso; la alta disponibilidad (HA) requiere almacenamiento de objetos compartido, replicación y enrutamiento |
+| SimpleScalable | Destinos separados de lectura/escritura/backend; está obsoleto y se prevé eliminarlo en Loki 4.0 |
+| Distributed | Componentes independientes; requiere operaciones adicionales de red, anillo, ruta de consultas y almacenamiento |
 
-El ejemplo distribuido usa tres ingesters y un compactor. `zoneAwareReplication: false` implica
-que tres réplicas no garantizan aislamiento entre AZ. Valide ubicación, cuórum, PDB y rollouts
-conjuntamente. Las cachés están deshabilitadas para reducir la validación inicial; dimensione
-las de producción mediante pruebas de carga.
+El ejemplo usa el modo Distributed con tres ingesters y un compactor. `zoneAwareReplication: false`
+significa que tres réplicas por sí solas no garantizan el aislamiento entre zonas de disponibilidad (AZ).
+Valide conjuntamente la ubicación en AZ/nodos, el quórum, los PDB y las actualizaciones graduales. Las
+cachés están desactivadas para reducir la carga inicial de validación; elija su capacidad mediante
+pruebas de carga en producción.
 
-La fecha de esquema corresponde a un almacén nuevo. En uno existente, conserve entradas históricas
-y siga el procedimiento para añadir una futura. `auth_enabled: false` selecciona el único tenant
-`fake`. Activar multitenancy no autentica usuarios; un proxy autenticador debe validar y fijar las cabeceras de tenant.
+La fecha del esquema corresponde a un almacén nuevo. En una instalación existente, no sustituya las
+entradas históricas del esquema: consérvelas y siga el procedimiento para añadir una entrada con fecha
+futura. `auth_enabled: false` selecciona el único tenant `fake` en este ejemplo interno. Habilitar la
+multitenencia no añade autenticación de usuarios; un proxy de autenticación debe validar y establecer
+los encabezados del tenant.
 
 ```yaml
 # loki-values.yaml
 deploymentMode: Distributed
 loki:
   image:
-    tag: 3.7.7
+    tag: 3.7.8
   auth_enabled: false
   commonConfig:
     replication_factor: 3
@@ -156,20 +161,22 @@ helm template loki grafana-community/loki --version 18.12.2   --namespace observ
 helm upgrade --install loki grafana-community/loki --version 18.12.2   --namespace observability -f loki-values.yaml
 ```
 
-En chart 18.12.2, configure los PVC de ingester/compactor mediante `persistence.claims`.
-Incluya `accessModes` al sustituir la lista. Compruebe `volumeClaimTemplates` y binding real,
-no solo la salida de Helm. El Service gateway usa **80**; el proceso Loki usa HTTP **3100**.
+Para el chart 18.12.2, configure los PVC de ingester y compactor mediante `persistence.claims`.
+Incluya `accessModes` al reemplazar la lista. Compruebe los `volumeClaimTemplates` renderizados y
+que los PVC se hayan enlazado realmente; no se fíe solo del código de salida de Helm. El Service
+del gateway usa el puerto **80**; el puerto HTTP del proceso de Loki es **3100**.
 
 ### Retención
 
-Configure conjuntamente TSDB v13 con índice de 24 horas, `compactor.retention_enabled`,
-`delete_request_store` y `limits_config.retention_period`. La eliminación es asíncrona y respeta
-`retention_delete_delay`. Conserve marcadores y estado del compactor al reiniciar. Cambiar
-retención no reorganiza necesariamente datos existentes de forma retroactiva.
+Configure en conjunto un esquema TSDB v13 con un período de índice de 24 horas,
+`compactor.retention_enabled`, `delete_request_store` y `limits_config.retention_period`.
+La eliminación es asíncrona y respeta `retention_delete_delay`. Conserve los marcadores de eliminación
+y el estado del compactor entre reinicios. No dé por sentado que un cambio de retención reorganiza
+retroactivamente los datos existentes.
 
-Las anulaciones por inquilino pertenecen a `loki.runtimeConfig.overrides` del chart.
-El ejemplo de un solo inquilino utiliza `fake`. El siguiente fragmento sustituye el valor
-predeterminado de 30 días por siete días; aplíquelo solo después de comprobar sus requisitos de retención.
+Las anulaciones por tenant se definen en `loki.runtimeConfig.overrides` del chart. El ejemplo
+monotenant usa `fake`. El siguiente fragmento cambia el valor predeterminado de 30 días a siete días;
+aplíquelo solo después de comprobar sus requisitos de retención.
 
 ```yaml
 loki:
@@ -179,22 +186,24 @@ loki:
         retention_period: 168h
 ```
 
-La caducidad de objetos de todo el bucket puede dañar índices, solicitudes de borrado y reglas.
-Si necesita una protección adicional de ciclo de vida, limítela a prefijos de chunks y fije una
-caducidad mayor que retención más demora de borrado. Evalúe versionado/backup y requisitos de
-eliminación por separado; habilitar versionado no prueba recuperación.
+La expiración del ciclo de vida aplicada a todo el bucket puede dañar los índices, las solicitudes
+de eliminación y la configuración del ruler. Si necesita una medida de seguridad con el ciclo de vida,
+limítela a los prefijos de chunks y establezca una expiración superior al período de retención más la
+demora de eliminación. Evalúe por separado los costos del versionado/las copias de seguridad y los
+requisitos de eliminación; habilitar el versionado no es una prueba de recuperación.
 
-## Recopilación de logs y etiquetas con Alloy
+## Recopilación de registros y etiquetas con Alloy
 
-Promtail llegó al fin de vida el 2026-03-02. Los ejemplos nuevos usan Alloy.
-Esta configuración lee Pods `app=correlation-api` de `observability` del
-[capítulo anterior](./08-observability-analysis.md) mediante la API de logs Kubernetes.
-No sigue archivos de nodos ni necesita hostPath o `stage.cri`.
+Promtail llegó al fin de su vida útil el 2 de marzo de 2026. Los ejemplos nuevos usan Alloy.
+Esta configuración lee los pods `app=correlation-api` del namespace `observability` del
+[capítulo anterior](./08-observability-analysis.md) mediante la API de registros de Kubernetes.
+No lee archivos de los nodos ni requiere montajes hostPath o `stage.cri`.
 
-Una réplica Deployment con `Recreate` evita duplicación estable y durante rollouts.
-No es HA y las actualizaciones pueden interrumpir la recopilación. Para escalar, configure clustering
-Alloy y soporte de la fuente, o limite destinos por nodo. Un DaemonSet donde cada Pod descubre
-todos los Pods de aplicaciones duplica la recopilación.
+Una única réplica de Deployment con `Recreate` evita la duplicación en estado estable y durante las
+actualizaciones. No proporciona alta disponibilidad y las actualizaciones pueden interrumpir la
+recopilación. Para escalar, configure tanto el clustering de Alloy como la compatibilidad de la fuente
+con el clustering, o limite los destinos por nodo. Un DaemonSet en el que cada pod descubre todos los
+pods de aplicaciones duplica la recopilación.
 
 ```yaml
 # alloy-rbac.yaml
@@ -290,8 +299,8 @@ loki.write "backend" {
 }
 ```
 
-Guarde los values como `alloy-values.yaml` e inyecte el archivo anterior con `--set-file`.
-Así no duplica la configuración Alloy dentro de una cadena YAML.
+Guarde estos valores como `alloy-values.yaml` e inyecte el archivo anterior con `--set-file`.
+Así se evita duplicar la configuración de Alloy dentro de una cadena YAML.
 
 ```yaml
 controller:
@@ -320,19 +329,21 @@ crds:
 
 ```bash
 kubectl apply -f alloy-rbac.yaml
-helm upgrade --install alloy grafana/alloy --version 1.12.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
+helm upgrade --install alloy grafana/alloy --version 1.13.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
 ```
 
-Prefiera etiquetas acotadas como `namespace`, `service_name` y `container`.
-Mantenga `trace_id` y `request_id` en JSON o metadatos estructurados. Los nombres Pod no están
-prohibidos universalmente, pero su duración y cambios afectan a streams. Importa el producto de
-combinaciones, no un número fijo de etiquetas. El ejemplo conserva la línea JSON completa e indexa
-`level`; normalice valores ilimitados y elimine datos personales en aplicación o recopilación.
+Prefiera etiquetas acotadas como `namespace`, `service_name` y `container`. Mantenga `trace_id`
+y `request_id` en el contenido JSON o en metadatos estructurados. Los nombres de pods no están
+prohibidos en todos los casos, pero su duración y rotación afectan la cantidad de streams. Lo que
+importa es el producto de las combinaciones de etiquetas; un número fijo de etiquetas no garantiza
+la seguridad. Este ejemplo conserva la línea JSON completa y además indexa `level`. Normalice los
+valores no acotados de `level` y elimine los datos personales en la aplicación o en la capa de recopilación.
 
-### LogQL y alertas
+### LogQL y alertas de registros
 
-Excluya errores JSON y campos numéricos inválidos antes de agregar. La latencia siguiente está en
-milisegundos. `rate` cuenta líneas por segundo; `bytes_rate`, bytes por segundo.
+Elimine los errores de análisis JSON y los campos numéricos no válidos antes de agregarlos. El campo
+de latencia siguiente se mide en milisegundos. `rate` cuenta líneas de registro por segundo; use
+`bytes_rate` para obtener bytes por segundo.
 
 ```logql
 {service_name="correlation-api"} | json | __error__="" | level="ERROR"
@@ -354,38 +365,42 @@ avg_over_time({service_name="correlation-api"} | json | latency_ms >= 0 | __erro
 quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms >= 0 | __error__="" | unwrap latency_ms | __error__="" [5m])
 ```
 
-Loki Ruler evalúa reglas LogQL y envía alertas a Alertmanager. Introducir LogQL en un
-PrometheusRule o añadir una etiqueta ConfigMap arbitraria `loki_rule` no carga reglas.
-La configuración base anterior tiene cero réplicas de ruler. Configure un despliegue de ruler, su almacén/API
-de reglas o montajes, el intervalo de evaluación y el endpoint de Alertmanager antes de probar la evaluación.
+Loki Ruler evalúa reglas LogQL y envía alertas a Alertmanager. Incluir LogQL en un PrometheusRule
+o añadir una etiqueta arbitraria `loki_rule` a un ConfigMap no carga reglas. La configuración base
+anterior tiene cero réplicas de ruler. Antes de probar la evaluación, configure una implementación
+del ruler, su almacén/API de reglas o sus montajes, el intervalo de evaluación y el endpoint de Alertmanager.
 
-Texto genérico `"error"` o `"unauthorized"` no demuestra caída o ataque. Para CrashLoopBackOff
-consulte el estado de contenedores en kube-state-metrics, no solo logs de aplicación. Las proporciones
-requieren ámbitos coincidentes, manejo de errores de análisis, cero tráfico y series de error ausentes.
-Conéctelas con las [pruebas de rutas e inhibición de alertas](./07-observability-alerts.md).
+La presencia del texto genérico `"error"` o `"unauthorized"` no demuestra una interrupción ni un
+ataque. Compruebe el estado de los contenedores en kube-state-metrics para detectar CrashLoopBackOff,
+en vez de confiar solo en los registros de la aplicación. Las alertas de proporción requieren ámbitos
+coincidentes para numerador y denominador, gestión de errores de análisis, tratamiento del tráfico cero
+y comportamiento definido cuando falte la serie de errores. Conéctelas con las
+[pruebas de enrutamiento e inhibición de alertas](./07-observability-alerts.md).
 
 ## Tempo 3: operación monolítica y distribuida
 
-Tempo permite buscar por trace ID y atributos TraceQL. metrics-generator deriva métricas de
-trazas seleccionadas; no es el interruptor que habilita búsquedas.
+Tempo permite buscar por ID de traza y por atributos con TraceQL. El metrics-generator deriva métricas
+de las trazas seleccionadas; no es el mecanismo que habilita las búsquedas.
 
-| Componente | Función distribuida en Tempo 3 |
+| Componente | Responsabilidad distribuida en Tempo 3 |
 |---|---|
-| Distributor | Escribe spans entrantes en Kafka |
-| Block-builder | Consume Kafka y crea bloques en objetos |
-| Live-store | Atiende consultas de datos recientes |
+| Distributor | Escribe los spans entrantes en Kafka |
+| Block-builder | Consume Kafka y crea bloques en el almacén de objetos |
+| Live-store | Sirve consultas de datos recientes |
 | Backend-scheduler / backend-worker | Mantenimiento, compactación y retención de bloques |
-| Query-frontend / querier | Consulta datos recientes y objetos |
+| Query-frontend / querier | Consulta los datos recientes y el almacén de objetos |
 
-Se eliminaron ingester/compactor 2.x y el modo scalable single binary. El modo monolítico de un
-proceso no necesita Kafka. Aumentar `replicas` no es una conversión soportada a HA distribuida.
+Se eliminaron los destinos ingester y compactor de 2.x, así como el modo scalable single binary.
+El modo monolítico de un solo proceso no requiere Kafka. Aumentar `replicas` no es una conversión
+compatible a alta disponibilidad distribuida.
 
 ### Laboratorio de instancia única
 
-`tempo-lab-values.yaml` usa PVC local sin Kafka. Un fallo de proceso/PVC puede interrumpir
-servicio; no mezcle estos values con los distribuidos S3. En chart 3.0.0, desactive protocolos Jaeger
-individuales con `null`; borrar el padre rompe el render. El Service puede conservar puertos
-heredados; restrinja acceso según receivers y políticas reales.
+`tempo-lab-values.yaml` usa un PVC local sin Kafka. Un fallo del proceso o del PVC puede interrumpir
+la disponibilidad; no mezcle esta configuración con los valores de implementación distribuida en S3.
+En el chart 3.0.0, desactive protocolos Jaeger individuales con `null` en lugar de eliminar el nodo
+padre, lo que impide renderizar el chart. El Service puede conservar puertos heredados; limite el acceso
+según la configuración real de receptores y las políticas de red.
 
 ```yaml
 # tempo-lab-values.yaml
@@ -438,17 +453,20 @@ helm upgrade --install tempo grafana-community/tempo --version 3.0.0   --namespa
 
 ### Configuración distribuida para revisión
 
-Este archivo es una alternativa al chart de instancia única, no una superposición para él.
-Kafka y S3 ya deben existir. El ejemplo utiliza un endpoint Kafka interno en un entorno
-de validación aislado. Confirme primero sus requisitos de TLS/autenticación de Kafka en producción frente
-a la compatibilidad del cliente de Tempo 3.0.3. No se admiten campos arbitrarios `tls` ni MSK IAM bajo
-el `ingest.kafka` de esta versión. La compatibilidad con usuario/contraseña SASL no implica cifrado de transporte.
+Este archivo es una alternativa al chart de instancia única, no una capa superpuesta para ese chart.
+Kafka y S3 ya deben existir. El ejemplo usa un endpoint interno de Kafka en un entorno aislado de
+validación. Primero confirme que los requisitos de TLS/autenticación de Kafka en producción sean
+compatibles con el cliente de Tempo 3.0.3. En esta versión no se admiten campos `tls` arbitrarios
+ni campos de MSK IAM en `ingest.kafka`. La compatibilidad con usuario y contraseña SASL no implica
+cifrado del transporte.
 
-Con `partitions_per_instance: 1`, tres particiones requieren tres block-builders; el ejemplo también
-usa tres live-stores. Cambiar `auto_create_topic_default_partitions` no redimensiona un tema
-existente. Sin creación automática, configure particiones, replicación, ISR mínimo, retención y
-capacidad aparte. Añadir `persistence` no soportado no crea PVC para esos componentes.
-Pruebe recuperación con el almacenamiento real del chart y la ventana de replay Kafka.
+Con el valor predeterminado `partitions_per_instance: 1`, tres particiones de Kafka requieren tres
+block-builders. Este ejemplo del chart también usa tres live-stores. Cambiar
+`auto_create_topic_default_partitions` no redimensiona un topic existente. Si la creación automática
+está desactivada, configure por separado el número real de particiones, la replicación, el mínimo de
+ISR, la retención y la capacidad. Añadir claves `persistence` no compatibles a los valores de
+block-builder/live-store no crea PVC. Pruebe la recuperación con el comportamiento de almacenamiento
+real del chart y la ventana de repetición de Kafka.
 
 ```yaml
 # tempo-distributed-values.yaml
@@ -532,31 +550,36 @@ gateway:
 helm template tempo grafana-community/tempo-distributed --version 3.5.1   --namespace observability -f tempo-distributed-values.yaml > tempo-rendered.yaml
 ```
 
-`backendWorker.podDisruptionBudget.enabled` es explícito para evitar un default ausente del
-PDB 3.5.1. El render no prueba Kafka, permisos S3, scheduling ni escritura/consulta completas.
-La ingesta usa `tempo-distributor:4318` y las consultas `tempo-query-frontend:3200`;
-actualice las URL del Collector y Grafana del laboratorio.
+`backendWorker.podDisruptionBudget.enabled` se establece explícitamente para evitar que falte el
+valor predeterminado en la plantilla PDB 3.5.1. El renderizado no comprueba la conectividad con Kafka,
+los permisos de S3, la planificación ni las escrituras/consultas de extremo a extremo. La ingesta
+distribuida usa `tempo-distributor:4318` y las consultas, `tempo-query-frontend:3200`; actualice
+las URL del Collector y de Grafana del laboratorio.
 
 ### Migración de 2.x a 3.x
 
-En monolítico, revise `tempo-cli migrate config --mode=monolithic`. En distribuido,
-despliegue en paralelo, valide y migre tráfico. Retire `ingester`, `ingester_client`, `compactor`,
-`metrics_generator_client` y `local_blocks`. Los datos históricos necesitan bloques vParquet4 o posteriores.
+En el modo monolítico, revise el resultado de `tempo-cli migrate config --mode=monolithic`.
+En el modo distribuido, use una implementación paralela, valide y migre el tráfico. Elimine la
+configuración `ingester`, `ingester_client`, `compactor`, `metrics_generator_client` y la opción
+retirada `local_blocks`. El almacenamiento histórico debe usar bloques vParquet4 o posteriores.
 
-No active dos sistemas de compactación sobre almacenamiento compartido. Establezca
-`compaction_disabled` en defaults 3.x y cada tenant, y retírelo tras detener compactors 2.x.
-Los overrides no heredan simplemente los campos omitidos. Verifique trace ID antiguos y nuevos
-antes del cambio. Las métricas TraceQL tienen restricciones como cobertura de bloques RF1;
-disponer de trazas históricas no implica la misma cobertura de métricas históricas.
+No habilite dos sistemas de compactación simultáneamente sobre el mismo almacenamiento compartido.
+Establezca `compaction_disabled` en los valores predeterminados de 3.x y en cada anulación por tenant;
+retírelo después de detener los compactors de 2.x. Las anulaciones de tenants no heredan sin más
+los campos que se omiten en ellas. Verifique los ID de las trazas históricas y nuevas antes de cambiar
+el tráfico. Las métricas TraceQL tienen restricciones de migración, como la cobertura de bloques RF1;
+que las trazas históricas estén disponibles no implica que se conserve la misma cobertura histórica de métricas.
 
 ## Collector y muestreo
 
-La configuración valida tail sampling en un Collector. Las aplicaciones deben definir `service.name`.
-No añade metadatos Kubernetes automáticamente: k8sattributes necesita asociación de Pods y RBAC
-separados. Los eventos Kubernetes son logs; `k8s_events` no es receiver de trazas.
+Esta configuración valida el muestreo tail en un único Collector. Las aplicaciones deben establecer
+`service.name` en sus recursos. La configuración no añade automáticamente metadatos de Kubernetes;
+para añadir k8sattributes, se requiere una estrategia de asociación con pods y permisos RBAC separados.
+Los eventos de Kubernetes son una señal de registros; `k8s_events` no es un receptor de trazas.
 
-La eliminación de atributos sensibles ocurre antes del buffer tail y solo cubre claves indicadas,
-no todo log/evento/atributo sensible. Hashear `db.statement` no garantiza privacidad ni protección de secretos.
+La eliminación de atributos sensibles ocurre antes del búfer tail. Solo cubre las claves enumeradas,
+no todos los registros, eventos ni atributos que puedan contener datos sensibles. Aplicar un hash a
+`db.statement` por sí solo no garantiza privacidad ni protección de secretos.
 
 ```yaml
 # collector.yaml
@@ -651,7 +674,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: collector
-          image: otel/opentelemetry-collector-contrib:0.160.0
+          image: otel/opentelemetry-collector-contrib:0.162.0
           args: ["--config=/etc/otel/collector.yaml"]
           resources:
             requests:
@@ -698,32 +721,35 @@ kubectl create configmap otel-collector --namespace observability   --from-file=
 kubectl apply -f collector-deployment.yaml
 ```
 
-Collector Contrib 0.160.0 usa `service.telemetry.metrics.readers` para métricas internas.
-No conserve `metrics.address`, el procesador independiente inexistente `rate_limiting` ni el
-exportador eliminado `loki`. Los manifiestos conectan ConfigMap, Service y puertos.
-El laboratorio usa `Recreate`; actualizar puede perder trazas y colas en memoria.
+Collector Contrib 0.162.0 usa `service.telemetry.metrics.readers` para sus métricas internas.
+No conserve el antiguo `metrics.address`, el procesador `rate_limiting` independiente que no existe,
+ni el exportador `loki` que se eliminó. Los manifiestos conectan el ConfigMap, el Service y los puertos.
+Este laboratorio de instancia única usa `Recreate`; las actualizaciones pueden perder trazas en búferes
+y colas en memoria.
 
 | Ajuste | Significado |
 |---|---|
-| Muestreo head | Decide al inicio; no conoce aún error/latencia final |
-| Muestreo tail | Decide con spans recibidos durante `decision_wait`; no garantiza integridad |
-| Políticas error/latencia/base | Aquí se combinan con OR; una política de tasa aparte no limita globalmente |
+| Muestreo head | Decide al inicio; aún no puede seleccionar según un error o una latencia final que todavía se desconoce |
+| Muestreo tail | Decide a partir de los spans recibidos durante `decision_wait`; no garantiza que estén todos |
+| Políticas de error/latencia/línea base | Aquí se combinan con OR; una política de limitación de tasa separada no impone un límite global |
 | `spans_per_second` | Spans por segundo, no trazas; no es un procesador independiente |
-| `num_traces` | Capacidad del buffer pendiente; desbordamiento, retrasos y reinicios pueden perder spans |
-| `send_batch_size` | Disparador de envío; `send_batch_max_size` es el máximo |
+| `num_traces` | Capacidad del búfer de trazas pendientes; el desbordamiento, los datos tardíos y los reinicios pueden hacer que se pierdan spans |
+| `send_batch_size` | Disparador del envío; `send_batch_max_size` es el límite máximo del lote |
 
-Varios tail samplers necesitan rutas por trace ID para reunir todos los spans. Un Service aleatorio
-puede dividir trazas. Tail no recupera spans descartados por head. Límites de cola, spans tardíos y
-fallos de recepción impiden garantizar conservar todos los errores. `UNSET` no es error; incluirlo
-puede retener muchos spans normales. Grafos y métricas generadas dependen del muestreo;
-use métricas instrumentadas aparte para medir toda la población de solicitudes.
+Se requiere enrutamiento por ID de traza para varios samplers tail, de modo que todos los spans de una
+traza lleguen al mismo sampler. Un balanceo aleatorio ordinario del Service puede dividir las trazas.
+El muestreo tail no puede recuperar spans descartados por el muestreo head. Los límites de cola,
+los spans tardíos y los fallos de recepción impiden garantizar que se conserve toda traza con errores.
+`UNSET` no es un estado de error; incluirlo puede retener grandes volúmenes de spans normales. Los
+grafos de servicios y las métricas generadas dependen del muestreo; use métricas instrumentadas por
+separado cuando necesite mediciones de toda la población de solicitudes.
 
-## TraceQL, grafos y correlación con logs
+## TraceQL, grafos de servicios y correlación con registros
 
-Estas son consultas de búsqueda de trazas individuales. `span:duration` mide un span, no toda la traza.
-Los atributos HTTP dependen de la versión de las convenciones semánticas del SDK: el ejemplo Go probado
-del capítulo anterior utiliza `http.response.status_code`, mientras que la instrumentación predeterminada
-de Python utiliza `http.status_code`.
+Estas son consultas de búsqueda de trazas individuales. `span:duration` mide un span, no la traza
+completa. Los atributos HTTP dependen de la versión de las convenciones semánticas del SDK: el ejemplo
+de Go probado en el capítulo anterior usa `http.response.status_code`, mientras que la instrumentación
+predeterminada de Python usa `http.status_code`.
 
 ```traceql
 { resource.service.name = "correlation-api" && span:status = error }
@@ -741,28 +767,33 @@ de Python utiliza `http.status_code`.
 { resource.service.name = "correlation-api" } | by(span:status) | count() > 1
 ```
 
-`>>` significa descendiente y `>` hijo directo. `| by(...) | count()` agrega conjuntos de spans.
-Funciones de métricas TraceQL como `rate()` devuelven series temporales, no búsquedas individuales.
-Para un ID conocido use el modo trace-ID de Grafana o la API Tempo; no use un atributo intrínseco
-inválido y un ID incompleto como `{ trace:id = "abc123" }`.
+`>>` significa descendiente; `>` significa hijo directo. `| by(...) | count()` agrega conjuntos de
+spans. Las funciones de métricas de TraceQL, como `rate()`, devuelven series temporales y son distintas
+de las búsquedas de trazas individuales. Para un ID conocido, use el modo de ID de traza de Grafana
+o la API de Tempo; no use un atributo intrínseco no válido y un ID incompleto como
+`{ trace:id = "abc123" }`.
 
-Los ejemplos conectan service-graphs/span-metrics en configuración y overrides y envían resultados
-al receiver remote-write de Prometheus. Los grafos necesitan SpanKind client/server adecuados y
-nombres coherentes. `http.target` bruto, URL completas e ID de usuario pueden inflar cardinalidad.
+Los ejemplos conectan los service-graphs y las span-metrics tanto en la configuración de implementación
+como en las anulaciones, y luego envían los resultados al receptor de escritura remota de Prometheus.
+Los grafos de servicios requieren valores adecuados de SpanKind client/server y nombres de servicios
+coherentes. Añadir `http.target` sin procesar, URL completas o ID de usuario como dimensiones puede
+aumentar la cardinalidad.
 
-Reutilice los [ejemplos probados Java MDC/Logback y Go/Python de trazas/exemplars](./08-observability-analysis.md).
-Puede existir contexto válido no muestreado cuando `is_recording()` es false. No descarte logs
-ordinarios por falta de span ni borre valores MDC ajenos con `MDC.clear()`.
+Reutilice los [ejemplos probados de MDC/Logback en Java y de trazas/exemplars en Go/Python](./08-observability-analysis.md).
+Puede existir un contexto válido no muestreado aunque `is_recording()` sea false. No descarte los
+registros ordinarios cuando no haya un span ni borre valores MDC ajenos con `MDC.clear()`.
 
 ## Prometheus y Grafana
 
-Estos values activan remote-write para métricas Tempo y almacenamiento de exemplars.
-Restrinja el receiver a remitentes fiables como Tempo. Las métricas de aplicación aún necesitan
-scrape/ServiceMonitor y el contrato de métricas/etiquetas de `correlation-api` del capítulo anterior.
+Los siguientes valores de kube-prometheus-stack habilitan el receptor de escritura remota para las
+métricas generadas por Tempo y el almacenamiento de exemplars. Restrinja el receptor a emisores de
+confianza, como Tempo. Las métricas de aplicación siguen necesitando un destino de scrape/ServiceMonitor
+y el contrato de métricas/etiquetas de `correlation-api` del capítulo anterior.
 
-Grafana usa UID explícitos `prometheus`, `loki`, `tempo`, `tracesToLogsV2`, regex de trace ID de
-32 caracteres minúsculos tolerante a espacios y escape de `$` en provisioning. El destino de
-`serviceMap` debe contener realmente métricas generadas de grafos.
+Grafana usa los UID explícitos `prometheus`, `loki` y `tempo`, `tracesToLogsV2`, una expresión regular
+de 32 caracteres en minúsculas para el ID de traza que admite espacios en blanco y el escape de `$` en
+el aprovisionamiento. El destino `serviceMap` debe contener realmente las métricas generadas del grafo
+de servicios.
 
 ```yaml
 # prometheus-values.yaml
@@ -852,24 +883,26 @@ grafana:
 ```
 
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability -f prometheus-values.yaml
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability -f prometheus-values.yaml
 ```
 
-Los exemplars necesitan asociación trace/span, exposición OpenMetrics, soporte de almacenamiento
-Prometheus y mapeo UID Grafana. HTTP/2 o histogramas solos no los crean. Muestreo, retención,
-tenant o permisos pueden hacer inaccesible una traza enlazada.
+Los exemplars requieren asociación con trace/span durante la instrumentación, exposición OpenMetrics,
+compatibilidad de almacenamiento en Prometheus y mapeo de UID en Grafana. HTTP/2 o configurar
+histogramas por sí solos no crea exemplars. El muestreo, la retención, la tenencia o los permisos aún
+pueden impedir el acceso a una traza enlazada.
 
-Para automatizar dashboards, coloque el JSON del dashboard en el valor ConfigMap. No use el
-wrapper API `dashboard` ni confunda YAML de proveedor con JSON. Se seleccionan ConfigMaps
-`grafana_dashboard: "1"` en `observability`. No combine proveedor/montaje manual con un sidecar
-superpuesto. El JSON completo anterior puede colocarse en este ConfigMap.
+Para automatizar dashboards, coloque el JSON del propio dashboard en el valor del ConfigMap.
+No use el contenedor `dashboard` de una respuesta de API ni trate el YAML del proveedor como JSON
+del dashboard. Estos valores seleccionan ConfigMaps con `grafana_dashboard: "1"` en `observability`.
+Evite combinar un proveedor/montaje administrado manualmente con una configuración superpuesta de
+sidecar. El JSON completo del dashboard del capítulo anterior se puede colocar en este ConfigMap.
 
-## AMP: permisos separados de escritura y lectura
+## AMP: permisos independientes para escritura y lectura
 
-AMP proporciona almacenamiento y consultas compatibles con Prometheus. No recopila métricas del clúster
-sin un recopilador configurado o un recolector gestionado. El Terraform siguiente crea un espacio de trabajo
-y roles IRSA separados de escritura/lectura; el proveedor OIDC de EKS ya debe existir.
-Las métricas de CloudWatch no se incluyen automáticamente sin una ruta de recopilación separada.
+AMP proporciona almacenamiento y consultas compatibles con Prometheus. No recopila métricas del
+clúster sin un recopilador configurado o un scraper administrado. El siguiente Terraform crea un
+espacio de trabajo y roles IRSA separados para escritura y lectura; el proveedor OIDC de EKS ya debe
+existir. Las métricas de CloudWatch no se incluyen automáticamente sin una ruta de recopilación separada.
 
 ```hcl
 # amp.tf
@@ -878,7 +911,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -967,13 +1000,15 @@ output "client_role_arns" {
 }
 ```
 
-`oidc_provider_arn` y `oidc_issuer` sin esquema deben identificar el mismo EKS. Writer confía en
-`observability:prometheus-amp`, reader en `observability:grafana-amp`, ambos con
-`aud=sts.amazonaws.com`. Las políticas solo apuntan al ARN del workspace. RemoteWrite sin
-QueryMetrics no permite consultas Grafana.
+`oidc_provider_arn` y `oidc_issuer`, sin esquema, deben identificar el mismo clúster de EKS.
+El rol de escritura confía en `observability:prometheus-amp`; el de lectura, en
+`observability:grafana-amp`; y ambos limitan `aud=sts.amazonaws.com`. Las políticas se aplican
+únicamente al ARN de este espacio de trabajo. Un rol de Grafana con RemoteWrite pero sin QueryMetrics
+no puede consultar métricas.
 
-Este es el overlay AMP principal de `prometheus-values.yaml`. Helm sustituye toda
-`additionalDataSources`; conserve las tres entradas base antes de añadir AMP. Se sigue usando Prometheus local.
+Lo siguiente es la capa de AMP principal para `prometheus-values.yaml`. Helm reemplaza la lista
+completa de `additionalDataSources`, así que conserve las tres entradas base antes de añadir AMP.
+El ejemplo también sigue usando Prometheus local.
 
 ```yaml
 prometheus:
@@ -1016,9 +1051,10 @@ grafana:
       sigV4Region: ap-northeast-2
 ```
 
-Guarde el fragmento como `amp-overlay.yaml` y después construya explícitamente la lista de fuentes de datos
-utilizando Python con PyYAML instalado. Este programa solo combina esa lista; no reimplementa
-el comportamiento general de fusión de Helm. Sustituya los ARN de roles IAM y el endpoint del espacio de trabajo antes de aplicar.
+Guarde el fragmento como `amp-overlay.yaml` y después ensamble explícitamente la lista de fuentes
+de datos con Python y PyYAML instalado. Este programa solo combina esa lista; no vuelve a implementar
+el comportamiento general de fusión de Helm. Sustituya los ARN de roles IAM y el endpoint del espacio
+de trabajo antes de aplicar los cambios.
 
 ```python
 import yaml
@@ -1034,60 +1070,67 @@ Path("amp-values.yaml").write_text(yaml.safe_dump(overlay, sort_keys=False))
 ```
 
 ```bash
-helm template prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
+helm template prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
 ```
 
-### HA, colas y retención
+### Alta disponibilidad, colas y retención
 
-La deduplicación HA usa `cluster` y `__replica__`. Réplicas de los mismos datos necesitan el mismo
-`cluster` y distintos `__replica__`. Agrupar instancias independientes con cobertura distinta puede
-perder datos. Compruebe conflictos con la etiqueta `cluster` de la métrica. Planifique etiquetas
-de workspace/grupo HA entre clústeres; workspaces separados no se federan automáticamente.
+La deduplicación de alta disponibilidad de AMP usa `cluster` y `__replica__`. Las réplicas de los
+mismos datos necesitan el mismo `cluster` y valores distintos de `__replica__`. Agrupar instancias
+independientes de Prometheus con coberturas de scrape distintas puede provocar pérdida de datos.
+Compruebe si hay conflictos con la etiqueta `cluster` propia de una métrica. Planifique las etiquetas
+de los espacios de trabajo y grupos de alta disponibilidad entre clústeres; los espacios de trabajo
+independientes no se federan automáticamente.
 
-Shards y capacidad de cola afectan a rendimiento/memoria. WAL y reintentos no son buffers
-ilimitados ni garantía de entrega. Retener siete días localmente no garantiza replay tras siete días
-de caída remote-write. Vigile retraso, fallos, rechazos y WAL, y pruebe recuperación. Filtros keep de
-namespace pueden eliminar métricas de nodo/clúster sin esa etiqueta; `labeldrop` puede fusionar
-series distintas. Las reglas de grabación añaden agregados y no reducen automáticamente la cardinalidad original.
+La cantidad y la capacidad de los shards de la cola afectan al rendimiento y la memoria. WAL y los
+reintentos no son un búfer ilimitado ni garantizan la entrega. Siete días de retención local no
+aseguran siete días de repetición tras una interrupción de escritura remota. Supervise el retraso,
+los fallos, los rechazos y el comportamiento de WAL; además, pruebe la recuperación. Los filtros
+keep de namespace pueden eliminar métricas de nodos o clústeres que no tengan esa etiqueta;
+`labeldrop` puede fusionar series que antes eran distintas. Las reglas de grabación añaden series
+agregadas, pero no eliminan automáticamente la cardinalidad de origen.
 
-AMP permite retención hasta 1,095 días. Es incorrecto afirmar un máximo estricto de 150 días
-que obligue a Thanos. Ampliarla no restaura métricas caducadas.
+La retención de espacios de trabajo de AMP se puede configurar hasta 1.095 días. Es incorrecto
+afirmar que 150 días es un límite estricto que obliga a usar Thanos. Aumentar la retención no puede
+restaurar métricas que ya expiraron.
 
 | Área | AMP | Thanos |
 |---|---|---|
-| Almacenamiento y operación | Administrado; el usuario conserva recopilación, IAM, cuotas, coste y reglas | Operar integración de objetos y componentes query/store/compactor |
-| Retención | Configuración y límites del servicio | Políticas compactor, objetos y presupuesto |
-| HA y multiclúster | Etiquetas HA y diseño de workspace explícitos | Etiquetas de réplica, deduplicación y conexiones |
-| Reducción de resolución | No asumir downsampling automático al estilo Thanos | Revisar resolución/retención y consultas |
+| Almacenamiento y operación | Almacenamiento administrado; el usuario sigue siendo responsable de la recopilación, IAM, las cuotas, el costo y las reglas | Operar la integración con el almacén de objetos y los componentes query/store/compactor |
+| Retención | Configuración del espacio de trabajo y límites del servicio | Políticas del compactor, almacén de objetos y presupuesto |
+| Alta disponibilidad y varios clústeres | Diseño explícito de etiquetas de alta disponibilidad y espacios de trabajo | Etiquetas de réplicas, deduplicación y conexiones con los almacenes |
+| Reducción de resolución | No dé por sentado que incluye downsampling automático al estilo de Thanos | Revise la resolución/retención del compactor y el comportamiento de las consultas |
 
-SigV4 autentica solicitudes AWS, no sustituye TLS. Verifique conjuntamente activación SigV4 en
-Grafana, credenciales, confianza IRSA y permisos de consulta. Amazon Managed Grafana y Grafana
-propio tienen procedimientos de roles distintos.
+SigV4 autentica las solicitudes de AWS; no sustituye el cifrado TLS. Verifique en conjunto que el
+proceso de Grafana tenga SigV4 habilitado, las credenciales, la confianza de IRSA y los permisos de
+consulta del espacio de trabajo. Amazon Managed Grafana y Grafana autogestionado tienen flujos de
+configuración de roles distintos.
 
-## Después de aplicar
+## Después de aplicar los cambios
 
-1. Compruebe imágenes, PVC, puertos, montajes ConfigMap y ServiceAccounts renderizados.
-2. Consulte un log, una traza y una métrica instrumentada directamente en sus backends.
-3. Verifique enlaces traza-log, log-traza y exemplars, incluidos tenant y tiempo.
-4. Pruebe reinicio Collector, replay Kafka, fallos IAM S3 y corte/recuperación remote-write fuera de producción.
-5. Observe borrado de retención Loki, mantenimiento Tempo, avisos, cuotas y costes.
+1. Compruebe las imágenes, los PVC, los puertos de Service, los montajes de ConfigMap y los ServiceAccount renderizados.
+2. Consulte un registro, una traza y una métrica instrumentada directamente en sus respectivos backends.
+3. Compruebe los enlaces de traza a registro, de registro a traza y de exemplars, incluidos el tenant y los intervalos de tiempo.
+4. Pruebe fuera de producción el reinicio del Collector, la repetición de Kafka, los fallos de permisos de S3 y la interrupción/recuperación de la escritura remota.
+5. Observe las eliminaciones de retención de Loki, el mantenimiento de bloques de Tempo, las advertencias, las cuotas y los costos.
 
-La revisión usó render fijado, parsers nativos Loki/Tempo/Collector/Alloy, comprobaciones de
-PVC/Service/identidad y mocks Terraform. No desplegó EKS/Kafka/S3 ni demostró login Grafana
-o acceso AWS real de lectura/escritura.
+Esta revisión usó renderizado con versiones fijadas, analizadores nativos de la configuración de
+Loki/Tempo/Collector/Alloy, comprobaciones de PVC/Service/identidad renderizados y pruebas simuladas
+de Terraform. No desplegó EKS/Kafka/S3 ni demostró el inicio de sesión en Grafana ni el acceso real
+de lectura/escritura a AWS.
 
 ## Referencias oficiales
 
-- [Modos Loki](https://grafana.com/docs/loki/latest/get-started/deployment-modes/)
-- [Retención Loki](https://grafana.com/docs/loki/latest/operations/storage/retention/)
-- [Charts comunitarios Grafana](https://github.com/grafana-community/helm-charts)
-- [Ciclo de vida Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/)
-- [Migración Tempo 3](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
-- [Kafka en Tempo 3.0.3](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
-- [Tail sampling del Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
-- [Procesador batch](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor)
-- [Configuración de workspace AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
-- [Alta disponibilidad AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
+- [Modos de implementación de Loki](https://grafana.com/docs/loki/latest/get-started/deployment-modes/)
+- [Retención de Loki](https://grafana.com/docs/loki/latest/operations/storage/retention/)
+- [Charts comunitarios de Grafana](https://github.com/grafana-community/helm-charts)
+- [Ciclo de vida de Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [Migración a Tempo 3](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
+- [Configuración de Kafka en Tempo 3.0.3](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
+- [Muestreo tail de Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.162.0/processor/tailsamplingprocessor)
+- [Procesador batch de Collector](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.162.0/processor/batchprocessor)
+- [Configuración de espacios de trabajo de AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
+- [Alta disponibilidad de AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
 
 ---
 
