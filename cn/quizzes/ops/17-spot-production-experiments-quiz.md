@@ -2,7 +2,7 @@
 
 > **相关指南**：[EKS Spot 生产实验与结果评估](../../ops/17-spot-production-experiments.md)
 
-## 1. 在带有 PDB 的 Spot 节点上进行 drain 测试并通过。这能证明什么？
+## 1. 在带有 PDB 的 Spot 节点上进行节点排空测试并通过。这能证明什么？
 
 - A) 实际回收 Spot 实例始终能保持相同的可用性
 - B) 自愿驱逐路径有效；实际回收需要单独测试
@@ -18,12 +18,12 @@
 
 </details>
 
-## 2. 一个 Pending Pod 带有仅允许 Spot 的 selector。添加 On-Demand 节点后会发生什么？
+## 2. 一个 Pending Pod 带有仅允许 Spot 的选择器。添加 On-Demand 节点后会发生什么？
 
-- A) 无论 selector 如何，Pod 都会立即迁移
-- B) PDB 会将 selector 改为 On-Demand
+- A) 无论选择器如何，Pod 都会立即迁移
+- B) PDB 会将选择器改为 On-Demand
 - C) 该 Pod 仍不符合 On-Demand 节点的调度条件
-- D) NodePool 权重会覆盖 selector
+- D) NodePool 权重会覆盖选择器
 
 <details>
 <summary>显示答案</summary>
@@ -114,39 +114,39 @@
 
 </details>
 
-## 8. 某 Pod 从创建时起就是 Guaranteed。其目标普通容器的 CPU request 和 limit 都从 200m 降至 50m。Memory request=limit 仍为 64Mi，所有其他容器也保持 Guaranteed 资源设置。会发生什么？
+## 8. 某 Pod 创建时的 QoS 类别为 Guaranteed。其目标普通容器的 CPU 请求值（request）和限制值（limit）都从 200m 降至 50m。内存请求值与限制值相等，仍为 64Mi，所有其他容器也保持 Guaranteed 资源设置。会发生什么？
 
 - A) 降低 CPU 一定会使 Pod 变为 Burstable
-- B) Pod 会保留原有的 Guaranteed 类别，缩容后 CPU 和内存的 request 与 limit 仍分别相等
-- C) 同样的 resize 也能将创建时为 Burstable 的 Pod 变为 Guaranteed
-- D) 即使 memory request 和 limit 不相等，CPU 值相等也能保持 Guaranteed
+- B) Pod 会保留原有的 Guaranteed 类别，下调后 CPU 和内存的请求值与限制值仍分别相等
+- C) 同样的资源调整也能将创建时为 Burstable 的 Pod 变为 Guaranteed
+- D) 即使内存请求值和限制值不相等，CPU 值相等也能保持 Guaranteed
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Pod 会保留原有的 Guaranteed 类别，缩容后 CPU 和内存的 request 与 limit 仍分别相等**
+**答案：B) Pod 会保留原有的 Guaranteed 类别，下调后 CPU 和内存的请求值与限制值仍分别相等**
 
-**说明**：QoS 类别在创建时确定，不能通过 resize 更改。此容器级设计会保持每个适用容器的 CPU 和内存 request 分别等于相应的正数 limit，并同时降低目标 CPU request 和 limit。保持 Guaranteed 并不能证明缩容后符合应用 SLO，也不能防止 Spot 回收。
+**说明**：QoS 类别在创建时确定，不能通过资源调整更改。此容器级设计会保持每个适用容器的 CPU 和内存请求值分别等于对应的正数限制值，并同时降低目标 CPU 请求值和限制值。保持 Guaranteed 并不能证明下调后符合应用 SLO，也不能防止 Spot 回收。
 
 </details>
 
-## 9. 在 E10 中，哪些证据能够证明初始化已完成、CPU 缩容已应用，以及缩容后服务质量符合要求？
+## 9. 在 E10 中，哪些证据能够证明初始化已完成、CPU 下调已应用，以及下调后服务质量符合要求？
 
 - A) Pod 处于 Running 状态即可满足全部三项条件
-- B) `pods/resize` PATCH 成功即可证明初始化完成、缩容完成并符合 SLO
-- C) 验证实际的 startupProbe 和 `started=true`、期望资源与上报资源、各代次及 resize 状态，并检查缩容后的应用 SLO
+- B) `pods/resize` PATCH 成功即可证明初始化完成、下调完成并符合 SLO
+- C) 验证实际的 startupProbe 和 `started=true`、期望资源与上报资源、资源代次及调整状态，并检查下调后的应用 SLO
 - D) containerID 未变化且类别为 Guaranteed，因此无需检查请求错误和延迟
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 验证实际的 startupProbe 和 `started=true`、期望资源与上报资源、各代次及 resize 状态，并检查缩容后的应用 SLO**
+**答案：C) 验证实际的 startupProbe 和 `started=true`、期望资源与上报资源、资源代次及调整状态，并检查下调后的应用 SLO**
 
-**说明**：仅凭 Running 状态或 started 值无法证明初始化已完成；每个目标都需要通过 startupProbe 检查实际初始化情况。PATCH 成功只表示请求已被接受，因此还要检查 kubelet 上报的资源、已观测到的代次、`PodResizePending` 和 `PodResizeInProgress`。缩容实际应用后，应通过就绪状态/负载均衡器状态和应用 SLO 证据另行评估质量，包括错误、p99、吞吐量和 throttling。
+**说明**：仅凭 Running 状态或 started 值无法证明初始化已完成；每个目标都需要通过 startupProbe 检查实际初始化情况。PATCH 成功只表示请求已被接受，因此还要检查 kubelet 上报的资源、已观测到的代次、`PodResizePending` 和 `PodResizeInProgress`。资源下调实际应用后，应通过就绪状态/负载均衡器状态和应用 SLO 证据另行评估质量，包括错误、p99、吞吐量和 CPU 限流。
 
 </details>
 
-## 10. 2026-09-12 的 Spot 测量结果和已发布的初始模板能证明什么关于分阶段 CPU resize 的结论？
+## 10. 对于分阶段 CPU 资源调整，2026-09-12 的 Spot 测量结果和已发布的初始模板能够证明什么？
 
 - A) E2 的总体 p99 较低，证明增加启动 CPU 有益
 - B) 初始模板和测量结果都缺少分阶段配置和必要证据，因此 E10 仍为 NOT RUN
@@ -158,6 +158,6 @@
 
 **答案：B) 初始模板和测量结果都缺少分阶段配置和必要证据，因此 E10 仍为 NOT RUN**
 
-**说明**：三个初始 Deployment 都请求 50m/64Mi，限制为 500m/256Mi；这些设置本身不符合 Guaranteed 要求。它们缺少分阶段 resize opt-in、`resizePolicy` 和 `startupProbe`，也没有实际资源、QoS 或预热性能对比的前后证据。初始模板不能代表准入后的 Pod 实际观测结果。应将路线图历史报告、本地原型检查和 Spot 测量结果分别记录，并单独运行 E10。
+**说明**：三个初始 Deployment 都请求 50m/64Mi，限制为 500m/256Mi；这些设置本身不符合 Guaranteed 要求。它们缺少显式启用分阶段资源调整的配置、`resizePolicy` 和 `startupProbe`，也没有实际资源、QoS 或预热性能对比的前后证据。初始模板不能代表准入后的 Pod 实际观测结果。应将路线图历史报告、本地原型检查和 Spot 测量结果分别记录，并单独运行 E10。
 
 </details>

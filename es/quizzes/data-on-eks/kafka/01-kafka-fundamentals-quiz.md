@@ -51,7 +51,7 @@ ISR incluye réplicas suficientemente sincronizadas, incluido el líder. acks=al
 **Respuesta: B) `true`**
 
 **Explicación:**
-Java KafkaConsumer 4.3 usa true e intervalo 5000 ms. La posición cliente no es finalización del negocio externo. En procesamiento asíncrono/paralelo no confirme más allá de trabajo incompleto. El commit manual también necesita contabilizar correctamente la posición completada.
+El KafkaConsumer de Java 4.3 tiene `enable.auto.commit=true` de forma predeterminada y usa un intervalo de 5000 ms. La posición cliente no es finalización del negocio externo. En el procesamiento asíncrono o paralelo, no confirmes offsets por delante del trabajo que sigue incompleto. El commit manual también necesita contabilizar correctamente la posición completada.
 </details>
 
 4. ¿Qué NO provoca reequilibrado del grupo?
@@ -102,7 +102,7 @@ KRaft se introdujo por primera vez como versión preliminar de acceso anticipado
 Kafka 4.0 (publicado en marzo de 2025) eliminó completamente el modo de gestión de metadatos basado en ZooKeeper. A partir de esta versión, los clústeres nuevos solo pueden inicializarse en modo KRaft, y los clústeres existentes basados en ZooKeeper deben completar una migración a KRaft en Kafka 3.x antes de actualizar a 4.0.
 </details>
 
-7. Con tres réplicas ISR sanas y otros requisitos como cuórum mantenidos, ¿cuántos fallos de broker tolera RF=3/min ISR=2/acks=all conservando escritura?
+7. Con tres réplicas ISR sanas y otros requisitos —como mantener el cuórum de controladores—, ¿cuántos fallos de broker tolera RF=3/min ISR=2/acks=all y se conserva la disponibilidad de escritura?
    - A) 0
    - B) 1
    - C) 2
@@ -115,7 +115,7 @@ Kafka 4.0 (publicado en marzo de 2025) eliminó completamente el modo de gestió
 **Respuesta: B) 1**
 
 **Explicación:**
-Se supone ISR inicial sano de tres y cuórum, red y almacenamiento operativos. Dos ISR restantes cumplen el mínimo tras un fallo, aunque pueden producirse errores/reintentos durante la transición. Dos fallos de réplica no conservan escritura. RF=3 solo no garantiza supervivencia ante dos fallos arbitrarios.
+Se supone que las tres réplicas pertenecen inicialmente a un ISR sano y que el cuórum de controladores, la red y el almacenamiento siguen operativos. Dos ISR restantes cumplen el mínimo tras un fallo, aunque pueden producirse errores/reintentos durante la transición. Dos fallos de réplica no conservan escritura. RF=3 solo no garantiza supervivencia ante dos fallos arbitrarios.
 </details>
 
 8. ¿Qué acks no espera confirmación del broker?
@@ -218,7 +218,7 @@ El valor predeterminado es 300000 ms. Con membresía estática (group.instance.i
 
 ## Ejercicios prácticos
 
-15. Escriba `kafka-topics.sh` para crear `events` con 8 particiones, replicación 3 y `min.insync.replicas=2`.
+15. Escribe `kafka-topics.sh` para crear `events` con 8 particiones, factor de replicación 3 y `min.insync.replicas=2`.
 
 <details>
 
@@ -238,7 +238,7 @@ kafka-topics.sh --create \
 Se necesita un clúster accesible con al menos tres brokers y autenticación adecuada. Ocho particiones permiten hasta ocho propietarios activos en un grupo por particiones asignado automáticamente; uno puede poseer varias. La tolerancia depende de sincronización real, cuórum y otras condiciones.
 </details>
 
-16. Escriba un fragmento Kafka 4.3.1 de cuórum dinámico para controlador dedicado node.id=90 con tres endpoints de descubrimiento y explique por qué las semillas no son los votantes.
+16. Escribe un fragmento de configuración de cuórum dinámico de Kafka 4.3.1 para un controlador dedicado `node.id=90` con tres endpoints de descubrimiento y explica por qué las semillas no son los votantes.
 
 <details>
 
@@ -258,10 +258,10 @@ log.dirs=./controller-90-data
 ```
 
 **Explicación:**
-controller.quorum.bootstrap.servers enumera semillas, no votantes. El formato/arranque inicial coordina cluster ID, directory ID y votantes iniciales. No defina controller.quorum.voters en cuórum dinámico. Ajuste DNS, listeners y TLS/autenticación; es un fragmento, no un clúster completo desplegable.
+controller.quorum.bootstrap.servers enumera semillas, no votantes. El formato y el arranque inicial coordinan el ID de clúster, los ID de directorio y los votantes iniciales. No definas `controller.quorum.voters` en un cuórum dinámico. Ajusta DNS, listeners y TLS/autenticación a tu entorno; esto es solo un fragmento de configuración, no un clúster completo listo para desplegar.
 </details>
 
-17. Configure idempotencia e ID transaccional y explique los pasos adicionales para exactly-once de Kafka a Kafka.
+17. Configura la idempotencia y un ID transaccional, y explica los pasos adicionales para lograr exactly-once entre Kafka y Kafka.
 
 <details>
 
@@ -280,7 +280,7 @@ delivery.timeout.ms=120000
 ```
 
 **Explicación:**
-La configuración solo prepara al productor. Implemente initTransactions, beginTransaction, envíos de salida, sendOffsetsToTransaction con siguientes offsets de entrada, commitTransaction y abort/recuperación. Los consumidores desactivan auto commit y usan read_committed. Escritores concurrentes necesitan ID transaccionales distintos; siguen vigentes plazos como delivery.timeout.ms.
+La configuración solo prepara al productor para usar transacciones. Implementa initTransactions, beginTransaction, los envíos de salida, sendOffsetsToTransaction con los siguientes offsets de entrada, commitTransaction y la gestión de abortos y recuperación. Los consumidores deshabilitan el commit automático y usan read_committed. Los escritores concurrentes necesitan ID transaccionales distintos; siguen vigentes plazos como delivery.timeout.ms.
 </details>
 
 ---

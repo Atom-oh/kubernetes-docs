@@ -1,26 +1,26 @@
 # 第2部: Strimzi Operator
 
-> **最終更新**: September 12, 2026。Strimzi 1.2.0、Kafka 4.3.1。StrimziにはKubernetes 1.30以降が必要です。ローカルでのスキーマ検証には1.36.2を使用しました。
-> **検証**: 2つのHelm設定、67個のKubernetes/CRDオブジェクト、およびKafkaネイティブのJAASパーサーによる5つの認証情報ファイルのケースを検証しました。実際のEKSへのインストール、TLS接続、ブローカーでのACL適用、EBSまたはNLBのプロビジョニングは行っていません。
+> **最終更新日**: 2026年10月16日。Strimzi 1.3.0、Kafka 4.3.1。StrimziにはKubernetes 1.32以降が必要です。ローカルでのスキーマ検証には1.36.2を使用しました。
+> **検証**: Helm設定2種類、67個のKubernetes／CRDオブジェクト、KafkaネイティブのJAASパーサーによる認証情報ファイル5ケースを確認しました。実際のEKSへのインストール、TLS接続、ブローカーでのACL適用、EBSまたはNLBのプロビジョニングは実施していません。
 
 ## 1. 対象範囲と前提条件
 
-これは専用コントローラー3台とブローカー3台による新規インストールの例です。3つのAZにスケジュール可能な容量と、適切なStorageClassが必要です。既存クラスターのアップグレードは別の操作です。
+これは、専用コントローラー3台とブローカー3台を使う新規インストールの例です。3つのAZにスケジュール可能なキャパシティと、適切なStorageClassが必要です。既存クラスターのアップグレードは別の作業です。
 
-Strimziは、Kubernetes Operatorを通じてKafkaリソースを調整するCNCFのインキュベーションプロジェクトです。現在のCluster OperatorはStrimziPodSet、Pod、Service、PVCを管理します。有効にすると、Entity OperatorがTopic OperatorとUser Operatorを実行し、KafkaTopicとKafkaUserリソースを調整します。Operatorをインストールしても、すべてのリバランス、復旧、可用性の方針が自動的に整うわけではありません。
+Strimziは、Kubernetes Operatorを通じてKafkaリソースを調整するCNCFインキュベーションプロジェクトです。現在のCluster OperatorはStrimziPodSet、Pod、Service、PVCを管理します。有効にすると、Entity OperatorがTopic OperatorとUser Operatorを実行し、KafkaTopicとKafkaUserリソースを調整します。Operatorをインストールしても、リバランス、復旧、高可用性のポリシーがすべて自動的に整うわけではありません。
 
 前提条件:
 
-- Kubernetes 1.30以降と、そのクラスターでサポートされるkubectlバージョン。「1.28より新しい任意のkubectlバージョン」では、すべての新しいクラスターに対して十分とは限りません。
+- Kubernetes 1.32以降と、そのクラスターでサポートされるkubectlバージョン。「1.28より新しい任意のkubectl」では、すべての新しいクラスターに対して十分とは限りません。
 - Helm 3。ここでのレンダリングにはHelm 3.21.3を使用しました。
 - 標準のEBS CSIまたはEKS Auto Modeに適したボリュームプロビジョナーとIAM設定。
-- 3つのAZにまたがるスケジュール可能なノード/容量と、必要なイメージレジストリへのアクセス。
+- 3つのAZにまたがるスケジュール可能なノード／キャパシティと、必要なイメージレジストリへのアクセス。
 
-Strimzi 1.0以降は`kafka.strimzi.io/v1`のみをサポートします。まず公式手順に従って古いベータリソースを変換し、CRDをアップグレードしてください。CRDはクラスターをスコープとするため、新しい名前空間を作成しても既存定義との競合は避けられません。Helmの`crds/`ディレクトリは、新規インストール時と既存CRDのアップグレード時で動作が異なります。次のhelm installコマンドは、既存の0.45クラスターをアップグレードする手順ではありません。
+Strimzi 1.0以降がサポートするAPIは`kafka.strimzi.io/v1`のみです。古いベータリソースを変換し、公式手順に従って先にCRDをアップグレードしてください。CRDはクラスター全体に適用されるため、新しい名前空間を使っても既存定義との競合は避けられません。Helmの`crds/`ディレクトリは、新規インストール時と既存CRDのアップグレード時で動作が異なります。以下のhelm installコマンドは、既存の0.45クラスターをアップグレードする手順ではありません。
 
 ## 2. Cluster Operatorのインストール
 
-これらのコマンドは実際のクラスターを変更します。コンテキスト/名前空間を確認し、新規インストールに使用してください。
+以下のコマンドは実際のクラスターを変更します。コンテキストと名前空間を確認し、新規インストールに使用してください。
 
 **`operator-values.yaml`**
 
@@ -35,7 +35,7 @@ kubectl config current-context
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl wait --for=condition=Established --timeout=120s \
@@ -43,15 +43,15 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-デフォルトのチャートは自身の名前空間を監視します。追加の名前空間については、先に作成してから`watchNamespaces: [kafka-staging]`などの値を設定します。チャート1.2はリリースの名前空間を追加/重複排除し、対応するRoleBindingをレンダリングします。kubectl set envで監視用の環境変数だけを変更すると、RBACの不足やHelmとの差異が残る可能性があります。
+既定のチャートは自身の名前空間を監視します。監視対象を追加する場合は、先に名前空間を作成し、`watchNamespaces: [kafka-staging]`などの値を設定します。チャート1.3はリリースの名前空間を追加して重複を除き、対応するRoleBindingをレンダリングします。kubectl set envで監視用環境変数だけを変更すると、RBACの不足やHelmとの構成差異が残ることがあります。
 
-同じインストールの所有権をHelm、OLM、手動管理で重複させないでください。`watchAnyNamespace: true`はクラスター全体を対象とする明示的な選択であり、この例では無効です。
+Helm、OLM、手動管理で同じインストールを重複して管理しないでください。`watchAnyNamespace: true`はクラスター全体を監視する明示的な設定であり、この例では無効です。
 
 ## 3. ストレージと配置
 
 ### 標準のEBS CSI
 
-このStorageClassは標準のEBS CSIプロビジョナーを使用します。適用する前に、同名の既存リソースを確認してください。プロビジョナーを変更しても、既存ボリュームは別のドライバーへ自動移行されません。
+このStorageClassは標準のEBS CSIプロビジョナーを使います。適用前に同じ名前の既存リソースを確認してください。プロビジョナーを変更しても、既存ボリュームが別のドライバーへ自動移行されることはありません。
 
 **`storageclass.yaml`**
 
@@ -71,11 +71,11 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-gp3のベースライン性能は3,000 IOPSと125 MiB/sです。以前の`throughput: "250"`の例は追加のスループットをプロビジョニングしており、ベースラインではありませんでした。インスタンスのEBS/ネットワーク制限、パーティションのレプリケーション、読み取りパターンも重要です。JBODはデータを自動的に均等配置したり、インスタンスレベルの制限を取り除いたりしません。
+gp3のベースライン性能は3,000 IOPS、125 MiB/sです。以前の`throughput: "250"`の例は追加のスループットをプロビジョニングする設定であり、ベースライン値ではありません。インスタンスのEBS／ネットワーク上限、パーティションのレプリケーション、読み取りパターンも影響します。JBODはデータを自動的に均等配置したり、インスタンス単位の上限をなくしたりしません。
 
-### EKS Auto Modeの代替設定
+### EKS Auto Modeの代替
 
-この別のStorageClassはAuto Modeでのみ選択し、**新しいNodePoolのボリュームクラス**を`gp3-kafka-auto`に設定してください。クラスターに適したプロビジョナーのパスを使用します。既存PVCの移行には別の手順が必要です。
+Auto Modeの場合に限り、この別のStorageClassを選び、**新しいNodePoolのボリュームクラス**を`gp3-kafka-auto`に設定します。クラスターに適したプロビジョナーパスを使用してください。既存PVCの移行には別の手順が必要です。
 
 **`storageclass-auto.yaml`**
 
@@ -101,11 +101,11 @@ allowedTopologies:
 
 ### コントローラーとブローカーのプール
 
-これらのファイルは標準の`gp3-kafka`を参照します。実際のロールは`controller`と`broker`です。両方を一緒に指定できますが、`dual-role`という独立した列挙値はありません。
+これらのファイルは標準の`gp3-kafka`を参照します。実際のロール名は`controller`と`broker`です。両方を一緒に列挙できますが、`dual-role`という独立した列挙値はありません。
 
-両方のプールで3つのAZが必要です。セレクターは実際のカスタムPodラベル`docs.example.com/kafka-role`とクラスターラベルに一致し、`minDomains: 3`を設定しています。適格なノードが2つのAZにしかない場合、PodがPendingのままになることがあります。この厳格な制約は、障害時に残りのAZで代替Podを作成することも妨げる可能性があります。
+両方のプールに3つのAZが必要です。セレクターは実際のカスタムPodラベル`docs.example.com/kafka-role`とクラスターラベルに一致し、`minDomains: 3`を指定します。適格なノードが2つのAZにしかない場合、PodがPendingのままになることがあります。この厳格な制約により、障害時に残ったAZで代替Podを起動できない場合もあります。
 
-プールを分離するとPodのロール/リソース設定を分離できますが、物理ワーカーノードまで分離されるとは限りません。物理的な分離が必要ならノードアフィニティを使用してください。Kafkaのラック認識とPodスケジューリングは異なるレイヤーで動作します。
+プールを分けるとPodのロールやリソース設定は分離できますが、物理ワーカーノードまで分かれるとは限りません。物理的な分離が必要ならノードアフィニティを使ってください。Kafkaのラック認識とPodスケジューリングは別々のレイヤーで動作します。
 
 **`controller-pool.yaml`**
 
@@ -201,13 +201,13 @@ spec:
             docs.example.com/kafka-role: broker
 ```
 
-`kraftMetadata: shared`はKRaftメタデータに使用するボリュームを選択します。1つのプールで指定できるボリュームは最大1つです。`deleteClaim: false`とStorageClassのRetainは保持設定であり、バックアップではありません。他のリソースを削除した後もPVC/PV/EBSボリュームが残り、料金が発生し続ける場合があります。
+`kraftMetadata: shared`は、KRaftメタデータに使うボリュームを選択します。1つのプールでこの指定ができるボリュームは最大1つです。`deleteClaim: false`とStorageClassのRetainは保持設定であり、バックアップではありません。他のリソースを削除した後もPVC／PV／EBSボリュームが残り、料金が発生し続けることがあります。
 
-コントローラーが3台あれば、投票者1台の障害後も2台の過半数を維持できます。ブローカー3台は、これとは別のデータレプリケーション目標を満たします。奇数台なら自動的に安全になるわけではなく、過半数の可用性と接続性が依然として重要です。
+コントローラーが3台なら、投票者1台の障害後も2台の過半数を維持できます。ブローカー3台は別のデータレプリケーション目標を満たします。奇数台にするだけで安全になるわけではなく、過半数の可用性と接続性は引き続き重要です。
 
 ## 4. 認証付きKafkaクラスター
 
-内部TLS/SCRAMリスナーとACLオーソライザーを一緒に有効にします。KafkaUserを作成しても、認証なしの平文リスナーでテストしたのでは、そのユーザーの認証を検証したことにはなりません。
+内部TLS／SCRAMリスナーとACLオーソライザーを同時に有効にします。KafkaUserを作成しても、認証なしの平文リスナーでテストしたのでは、そのユーザーの認証を検証したことにはなりません。
 
 **`kafka-cluster.yaml`**
 
@@ -245,9 +245,9 @@ spec:
     userOperator: {}
 ```
 
-Strimzi 1.2はKRaftとノードプールを使用します。従来の有効化アノテーションやZooKeeperブロックは追加しないでください。`rack.topologyKey`はレプリカ配置用のAZ情報を提供しますが、既存の全パーティションを自動的に再割り当てするわけではありません。
+Strimzi 1.3はKRaftとノードプールを使います。従来の有効化アノテーションやZooKeeperブロックを追加しないでください。`rack.topologyKey`はレプリカ配置用のAZ情報を提供しますが、既存の全パーティションを自動的に再割り当てするわけではありません。
 
-KafkaのバージョンとmetadataVersionの互換性を保ってください。この例は4.3.1 / 4.3-IV0を使用します。古いイメージのオーバーライドを残したままversionフィールドを変更しないでください。ノードIDはクラスター全体で割り当てられます。すべてのプールに末尾が-0のPodがあるとは想定しないでください。
+KafkaのバージョンとmetadataVersionの互換性を保ってください。この例では4.3.1／4.3-IV0を使います。古いイメージのオーバーライドを残したままversionフィールドを変更しないでください。ノードIDはクラスター全体で割り当てられるため、すべてのプールに末尾が-0のPodがあるとは限りません。
 
 ```bash
 # Use the appropriate StorageClass file for the cluster.
@@ -260,7 +260,7 @@ kubectl -n kafka get kafkanodepools
 kubectl -n kafka get pods,pvc -l strimzi.io/cluster=my-cluster
 ```
 
-Ready=TrueはOperatorが観測した調整結果です。observedGenerationと現在のgenerationを比較し、Podの準備状態、クォーラム、クライアントの接続性を確認してください。古いReady条件やRunningフェーズだけでは、現在すべてのコンポーネントが正常であることは証明できません。
+Ready=Trueは、Operatorが観測した調整結果です。observedGenerationと現在のgenerationを比較し、Podの準備状態、クォーラム、クライアント接続を確認してください。古いReady条件やRunningフェーズだけでは、すべてのコンポーネントが現在正常であることを証明できません。
 
 ## 5. トピックとユーザー
 
@@ -313,9 +313,9 @@ spec:
         operations: [IdempotentWrite]
 ```
 
-スモークテストでは、このユーザーはordersへの書き込み/読み取りとorder-processorグループの読み取りができます。トピックACLはグループACLを付与しません。クラスターのIdempotentWriteは冪等なプロデューサー操作をサポートしますが、他のトピックのWrite権限を代替しません。実際のサービスでは、プロデューサーとコンシューマーに別々のIDを使用することを検討してください。
+スモークテストでは、このユーザーにordersトピックへの書き込み／読み取りと、order-processorグループの読み取りを許可します。トピックACLはグループACLを付与しません。クラスターのIdempotentWriteは冪等なプロデューサー操作をサポートしますが、他のトピックへのWrite権限を代替しません。実際のサービスでは、プロデューサーとコンシューマーに別々のIDを使うことを検討してください。
 
-User Operatorは、ユーザーと同名のSecretを作成し、passwordとsasl.jaas.configのエントリを格納します。クラスターのオーソライザーとリスナー認証も有効にする必要があります。KafkaConnect/KafkaConnectorは別のワーカー/コネクターを定義します。これらの設定は第5部で扱います。
+User Operatorはユーザー名と同じ名前のSecretを作成し、passwordとsasl.jaas.configのエントリーを格納します。クラスターのオーソライザーとリスナー認証も有効にする必要があります。KafkaConnect／KafkaConnectorは別のワーカーとコネクターを定義します。これらの設定は第5部で扱います。
 
 ```bash
 kubectl apply -f orders-topic.yaml -f order-service-user.yaml
@@ -323,11 +323,11 @@ kubectl -n kafka wait kafkatopic/orders --for=condition=Ready --timeout=5m
 kubectl -n kafka wait kafkauser/order-service --for=condition=Ready --timeout=5m
 ```
 
-## 6. TLS/SCRAM接続のテスト
+## 6. TLS／SCRAM接続のテスト
 
-このファイルには、一時的なクライアントPodと設定生成コードが含まれます。認証情報はSecretボリュームから読み取り、Java properties用にエスケープしてファイルへ書き込みます。パスワードをコマンド引数、環境変数、ログには配置しません。Python initコンテナとKafkaコンテナは同じUIDを使用します。
+このファイルには、一時的なクライアントPodと設定生成コードが含まれます。認証情報はSecretボリュームから読み込み、Java properties向けにエスケープしてファイルに書き込みます。パスワードをコマンド引数、環境変数、ログに含めません。Python initコンテナーとKafkaコンテナーは同じUIDを使います。
 
-クライアントはPEMトラストストアを通じて公開CAを信頼し、ホスト名検証を維持します。Kafkaイメージは4.3.1リリースのダイジェストに固定されています。実行時のパッケージインストールや、KafkaイメージにPythonが存在するという想定は不要です。
+クライアントはPEMトラストストアを通じて公開CAを信頼し、ホスト名検証を維持します。Kafkaイメージは4.3.1リリースのダイジェストに固定しています。実行時のパッケージインストールや、Kafkaイメージ内にPythonがあるという想定は不要です。
 
 **`client.yaml`**
 
@@ -512,13 +512,13 @@ kubectl -n kafka exec kafka-client -- \
 kubectl -n kafka delete pod kafka-client
 ```
 
-これは新しい演習用トピックに対する接続性のスモークテストです。既存トピックには古いレコードが含まれる可能性があるため、最初のレコードが直前に送信したものだと決めつけず、出力を確認してください。実際の検証では、未許可のトピック/グループへのアクセス拒否、認証失敗、CAローテーション、ブローカーエンドポイントへのアクセス、復旧も扱う必要があります。この章のローカル検証ではKafkaメッセージを送信していません。
+これは新しいラボ用トピックに対する接続性のスモークテストです。既存トピックには古いレコードが含まれることがあるため、最初のレコードが直前に送信したものだと決めつけず、出力を確認してください。実運用の検証では、未許可のトピック／グループへのアクセス拒否、認証失敗、CAローテーション、ブローカーエンドポイントへの到達性、復旧も確認します。この章のローカル検証ではKafkaメッセージを送信していません。
 
-## 7. オプション: Kubernetes外のVPCクライアント
+## 7. オプション: Kubernetes外部のVPCクライアント
 
-このマージパッチは、**AWS Load Balancer Controller**を通じて内部NLBを作成します。JSON merge patchはlisteners配列全体を置き換えるため、既存のTLSリスナーも含んでいます。使用前に10.0.0.0/16を、実際に承認されたクライアントCIDRに置き換えてください。
+このマージパッチは**AWS Load Balancer Controller**を使って内部NLBを作成します。JSON merge patchはlisteners配列全体を置き換えるため、既存のTLSリスナーも含めています。使用前に10.0.0.0/16を、承認された実際のクライアントCIDRに置き換えてください。
 
-configuration.classは、生成されるServiceのloadBalancerClassになります。対応する内部/IPターゲットのアノテーションは、ブローカーIDを0/1/2と決めつけることなく、bootstrapと各ブローカーのServiceに適用されます。Auto Modeの負荷分散では、コントローラークラスとサポートされるオプションを別途確認する必要があります。
+configuration.classは生成されるServiceのloadBalancerClassになります。内部向け／IPターゲットの対応アノテーションは、ブローカーIDが0／1／2だと決めつけず、bootstrapおよび各ブローカーのServiceに適用します。Auto Modeのロードバランサーでは、コントローラークラスとサポートされるオプションを別途確認してください。
 
 **`external-listener.patch.yaml`**
 
@@ -558,14 +558,14 @@ kubectl -n kafka get services -l strimzi.io/cluster=my-cluster
 kubectl -n kafka get kafka my-cluster -o jsonpath='{.status.listeners}'
 ```
 
-このオプションはbootstrap用とブローカーごとのLoadBalancer Serviceを作成し、対応する料金が発生します。クライアントはbootstrapだけでなく、メタデータで返されるすべてのブローカーエンドポイントに到達できる必要があります。DNSレコードの追加やNodePortへの切り替えだけで、ルーティング、TLS、ノードライフサイクルの要件が自動的に解決されるわけではありません。
+この方法ではbootstrap用とブローカーごとのLoadBalancer Serviceが作成され、それぞれに料金が発生します。クライアントはbootstrapだけでなく、メタデータで返されるすべてのブローカーエンドポイントに到達できる必要があります。DNSレコードを追加したりNodePortに切り替えたりするだけで、ルーティング、TLS、ノードライフサイクルの要件が自動的に解決されるわけではありません。
 
 ## 次のステップと参考資料
 
 - [Kafkaの運用](./03-kafka-operations.md)
 - [Kafkaの概要](./README.md)
 - [クイズ](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
-- [Strimzi 1.2.0のデプロイ](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0のデプロイ](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Strimzi v1 APIへの変換](https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str)
-- [Strimzi 1.2.0のリリース](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0リリース](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 - [EBS gp3の性能](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)

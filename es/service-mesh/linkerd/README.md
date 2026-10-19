@@ -1,22 +1,22 @@
 # Linkerd
 
-> **Última actualización**: September 11, 2026 · Ejemplos de CLI pública comprobados con edge-26.9.1
+> **Última actualización**: 16 de octubre de 2026 · Ejemplos de CLI pública comprobados con edge-26.10.1
 
-El proyecto upstream publica artefactos edge; las distribuciones estables y su ciclo de soporte proceden de proveedores. Linkerd 2.20 es un hito de funciones, no una cadena de versión universal para la CLI descargada. Elija una distribución/versión exacta y compruebe su compatibilidad con Kubernetes y Gateway API. El ejemplo público actual aquí es edge-26.9.1, publicado el September 4, 2026; corrige la aceptación de exec-auth-provider en credenciales remotas multiclúster y el tratamiento de conflictos de IP de destino reintentables. Consulte la [versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1) y el [modelo de versiones](https://linkerd.io/releases/).
+El proyecto upstream publica artefactos edge; las distribuciones estables y sus ciclos de soporte proceden de los proveedores. Linkerd 2.20 es un hito de funcionalidades, no una cadena de versión universal para la CLI descargada. Elija una distribución y una versión exactas y compruebe su compatibilidad con Kubernetes y Gateway API. El ejemplo público actual de este documento es edge-26.10.1 (proxy v2.370.0), publicado el 5 de octubre de 2026. En edge-26.9.1 se corrigieron la aceptación del exec-auth-provider para credenciales remotas en multiclúster y la gestión reintentable de conflictos de IP de destino. Consulte la [versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1) y el [modelo de versiones](https://linkerd.io/releases/).
 
 Las entradas siguientes conservan el contexto histórico de versiones. La versión máxima de Kubernetes probada con edge-26.8.2 no amplía automáticamente la matriz de soporte de una distribución estable de un proveedor.
 
 ### Actualización de agosto de 2026: edge-26.8.4
 
-La versión edge-26.8.4, publicada el August 25, 2026, protege frente a un ExternalWorkload nulo en el tratamiento de protocolos opacos, hace que el controlador de políticas negocie la versión de API TLSRoute con el clúster y actualiza Go a 1.26.7. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4) para más detalles.
+La versión edge-26.8.4, publicada el 25 de agosto de 2026, protege frente a un ExternalWorkload nulo en el tratamiento de protocolos opacos, hace que el controlador de políticas negocie la versión de API TLSRoute con el clúster y actualiza Go a 1.26.7. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4) para más detalles.
 
 ### Actualización de agosto de 2026: edge-26.8.2 — Compatibilidad con Gateway API 1.5.1
 
-La versión edge-26.8.2, publicada el August 14, 2026, añade compatibilidad con Gateway API 1.5.1 (mediante linkerd-kubert 0.27.0) y eleva a 1.36 la versión máxima de Kubernetes probada. También incluye correcciones de estabilidad: elimina un informador Job duplicado en el controlador destination y hace que el controlador de políticas termine si muere su tarea de observación del arrendamiento. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2) para más detalles.
+La versión edge-26.8.2, publicada el 14 de agosto de 2026, añade compatibilidad con Gateway API 1.5.1 (mediante linkerd-kubert 0.27.0) y eleva a 1.36 la versión máxima de Kubernetes probada. También incluye correcciones de estabilidad: elimina un informador Job duplicado en el controlador destination y hace que el controlador de políticas termine si muere su tarea de observación del arrendamiento. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2) para más detalles.
 
 ### Actualización de julio de 2026: edge-26.7.1 — Solicitudes a puertos de Service no definidos prohibidas
 
-La versión de GitHub para edge-26.7.1 se publicó el July 21, 2026. Incluye una corrección que cambia el comportamiento y rechaza solicitudes a puertos no declarados por el Service de destino incluso cuando existe un ServiceProfile. Compruebe las declaraciones reales de puertos de Service antes de actualizar. La versión también añade una comprobación de instalación de Gateway API. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1).
+La versión de GitHub para edge-26.7.1 se publicó el 21 de julio de 2026. Incluye una corrección que cambia el comportamiento y rechaza solicitudes a puertos no declarados por el Service de destino incluso cuando existe un ServiceProfile. Compruebe las declaraciones reales de puertos de Service antes de actualizar. La versión también añade una comprobación de instalación de Gateway API. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1).
 
 ## Descripción general
 
@@ -27,7 +27,7 @@ Linkerd es una malla de servicios graduada de CNCF con un proxy del plano de dat
 | Capacidad | Qué verificar |
 |---|---|
 | mTLS predeterminado de cargas de trabajo | Ambos pares están en la malla y el tráfico no elude el proxy; el texto sin cifrar ajeno a la malla necesita políticas de autorización explícitas |
-| Proxy Rust | Solicitudes, límites y uso de memoria/CPU con las conexiones y el tráfico esperados |
+| Proxy Rust | Solicitudes y límites de recursos de CPU/memoria, y su uso con las conexiones y el tráfico esperados |
 | Enrutamiento HTTP/gRPC | Tipos de Gateway API compatibles, asociación y detección de protocolos |
 | Operaciones | Ciclo de vida de certificados, alta disponibilidad, compatibilidad de actualizaciones y gestión de extensiones |
 | Rendimiento | Mediciones de latencia/errores/carga específicas de la carga de trabajo; sin promesa universal de 10MB ni de menos de un milisegundo |
@@ -55,15 +55,15 @@ Esta arquitectura no implica un consumo fijo de memoria ni una sobrecarga fija d
 | Multiclúster | Reflejo/federación y configuración explícita de confianza/red | Configuraciones compatibles de malla específicas de la topología | ClusterMesh y sus requisitos de plataforma/red |
 | Selección | Probar las funciones y operaciones necesarias | Probar las funciones y operaciones necesarias | Probar las funciones y operaciones necesarias |
 
-SMI TrafficSplit es un flujo heredado, no la descripción completa del enrutamiento actual de Linkerd. Linkerd puede enrutar HTTP/gRPC según propiedades de solicitudes mediante Gateway API. Las clasificaciones fijas de memoria, p99 y personal/complejidad no son comparables sin una carga de trabajo reproducible y mediciones con versiones identificadas.
+SMI TrafficSplit es un flujo heredado, no la descripción completa del enrutamiento actual de Linkerd. Linkerd puede enrutar HTTP/gRPC según propiedades de solicitudes mediante Gateway API. Las afirmaciones rígidas sobre consumo de memoria, p99 y necesidades de personal/complejidad no se pueden comparar sin una carga de trabajo reproducible y mediciones con versiones identificadas.
 
 ## Cuándo elegir Linkerd
 
 Linkerd es un candidato cuando su integración predeterminada con Kubernetes, identidad de cargas de trabajo y comportamiento HTTP/gRPC/TCP compatible encajan con las necesidades de la aplicación. Compare la eficiencia de recursos y la latencia bajo una carga realista y planifique la rotación de CA, las políticas de acceso y las actualizaciones. El cifrado automático de transporte por sí solo no es un programa completo de confianza cero ni de cumplimiento.
 
-Valide las funciones exactas requeridas de enrutamiento/filtros/extensibilidad antes de elegir una malla. Los protocolos no HTTP pueden pasar por el proxy como TCP; esto no les proporciona enrutamiento ni métricas a nivel HTTP. Las conexiones donde el servidor habla primero/inactivas pueden necesitar configuración de puertos opacos o appProtocol, y el TLS originado en la aplicación sigue siendo opaco a la inspección HTTP. El tráfico opaco sigue atravesando el proxy; los puertos omitidos lo eluden.
+Valide las funciones exactas requeridas de enrutamiento/filtros/extensibilidad antes de elegir una malla. Los protocolos no HTTP pueden pasar por el proxy como TCP; esto no les proporciona enrutamiento ni métricas a nivel HTTP. Los protocolos en los que el servidor envía primero datos y las conexiones inactivas pueden requerir declarar puertos opacos o configurar appProtocol; el TLS que se origina en la aplicación sigue siendo opaco a la inspección HTTP. El tráfico opaco sigue atravesando el proxy; los puertos omitidos lo eluden.
 
-La integración de VM y máquinas físicas está disponible mediante [expansión de la malla](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/), incluido el registro ExternalWorkload y una ruta externa de identidad/arranque. No es categóricamente incompatible. La accesibilidad de red, DNS, la instalación del proxy y el diseño de confianza añaden requisitos más allá de la inyección ordinaria de Pods; los atajos de arranque del tutorial upstream no son un diseño de producción.
+La integración de máquinas virtuales (VM) y máquinas físicas está disponible mediante [expansión de la malla](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/), incluido el registro ExternalWorkload y una ruta externa de identidad/arranque. No es categóricamente incompatible. La accesibilidad de red, DNS, la instalación del proxy y el diseño de confianza añaden requisitos más allá de la inyección ordinaria de Pods; los atajos de arranque del tutorial upstream no son un diseño de producción.
 
 ## Estructura de la documentación
 
@@ -150,7 +150,7 @@ Tap observa eventos de solicitudes HTTP compatibles; no demuestra todas las ruta
 
 ### Proxy del plano de datos
 
-El linkerd-proxy de Rust se ejecuta junto a las cargas de trabajo incorporadas. Procesa rutas TCP configuradas; los puertos omitidos, los endpoints ajenos a la malla y las restricciones de plataforma deben comprobarse por separado. El comportamiento a nivel HTTP requiere HTTP visible/detectado. Mida el consumo de recursos y la latencia en vez de suponer un consumo constante por Pod.
+El linkerd-proxy de Rust se ejecuta junto a las cargas de trabajo incorporadas. Procesa rutas TCP configuradas; los puertos omitidos, los endpoints ajenos a la malla y las restricciones de plataforma deben comprobarse por separado. El comportamiento de capa HTTP requiere tráfico HTTP visible o detectable. Mida el consumo de recursos y la latencia en vez de suponer un consumo constante por Pod.
 
 ### Descubrimiento de servicios
 

@@ -1,8 +1,10 @@
-# Container Technology Quiz
+# Cuestionario sobre tecnología de contenedores
 
-Este cuestionario evalúa tu comprensión de los fundamentos de la tecnología de contenedores, cómo funcionan y su relación con Kubernetes.
+Este cuestionario evalúa los fundamentos de la tecnología de contenedores, su funcionamiento y su relación con Kubernetes.
 
-## Multiple Choice Questions
+Responde pensando en contenedores Linux aislados mediante procesos. Los entornos de ejecución respaldados por máquinas virtuales, como Kata o Fargate, y la compatibilidad con Windows presentan diferencias.
+
+## Preguntas de opción múltiple
 
 1. ¿Cuál de las siguientes NO es una característica clave de los contenedores?
    - A) Portabilidad
@@ -17,26 +19,26 @@ Este cuestionario evalúa tu comprensión de los fundamentos de la tecnología d
 **Respuesta: C) Virtualización completa del hardware**
 
 **Explicación:**
-Los contenedores comparten el kernel del sistema operativo host y no virtualizan el hardware. La virtualización completa del hardware es una característica de las máquinas virtuales (VM). Los contenedores proporcionan portabilidad, operación ligera y entornos de ejecución aislados, pero dependen del kernel del sistema operativo host para funcionar.
+Los contenedores comparten el núcleo del sistema operativo anfitrión y no virtualizan el hardware. La virtualización completa del hardware es una característica de las máquinas virtuales (VM). Los contenedores son portátiles y ligeros, ofrecen entornos de ejecución aislados y dependen del núcleo del sistema operativo anfitrión.
 </details>
 
 2. ¿Cuál es la principal diferencia entre los contenedores y las máquinas virtuales?
-   - A) Cada contenedor requiere su propio sistema operativo independiente
-   - B) Las máquinas virtuales tienen tiempos de inicio más rápidos que los contenedores
-   - C) Los contenedores comparten el kernel del sistema operativo host
+   - A) Cada contenedor necesita su propio sistema operativo independiente
+   - B) Las máquinas virtuales arrancan más rápido que los contenedores
+   - C) Los contenedores comparten el núcleo del sistema operativo anfitrión
    - D) Las máquinas virtuales usan menos recursos que los contenedores
    
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Los contenedores comparten el kernel del sistema operativo host**
+**Respuesta: C) Los contenedores comparten el núcleo del sistema operativo anfitrión**
 
 **Explicación:**
-Los contenedores funcionan compartiendo el kernel del sistema operativo host, mientras que cada máquina virtual incluye un sistema operativo completo. Como resultado, los contenedores son más ligeros, arrancan más rápido y son más eficientes en el uso de recursos que las máquinas virtuales.
+Los contenedores comparten el núcleo del sistema operativo anfitrión, mientras que cada máquina virtual incluye un sistema operativo completo. Como resultado, los contenedores son más ligeros, arrancan más rápido y son más eficientes en el uso de recursos que las máquinas virtuales.
 </details>
 
-3. ¿Cuál de los siguientes NO es un runtime de contenedores de bajo nivel compatible con OCI (Open Container Initiative)?
+3. ¿Cuál de los siguientes no es un entorno de ejecución de contenedores de bajo nivel compatible con OCI (Open Container Initiative)?
    - A) runc
    - B) crun
    - C) containerd
@@ -49,7 +51,7 @@ Los contenedores funcionan compartiendo el kernel del sistema operativo host, mi
 **Respuesta: C) containerd**
 
 **Explicación:**
-containerd es un runtime de contenedores de alto nivel que proporciona funciones como transferencia de imágenes, almacenamiento y administración de la ejecución de contenedores. runc, crun y gVisor son runtimes de contenedores de bajo nivel compatibles con OCI responsables de la creación y ejecución reales de contenedores.
+containerd es un entorno de ejecución de contenedores de alto nivel que ofrece funciones como transferir y almacenar imágenes y gestionar el ciclo de vida de los contenedores. runc, crun y gVisor son entornos de ejecución de bajo nivel compatibles con OCI, responsables de crear y ejecutar los contenedores.
 </details>
 
 4. ¿Qué afirmación es correcta sobre las capas de las imágenes de contenedor?
@@ -68,7 +70,7 @@ containerd es un runtime de contenedores de alto nivel que proporciona funciones
 Las imágenes de contenedor constan de varias capas, y cada capa representa cambios respecto a la capa anterior. Este enfoque por capas hace que compartir imágenes y usar caché sea eficiente, ahorrando espacio de almacenamiento y mejorando las velocidades de descarga de imágenes. Las capas son de solo lectura y, cuando se ejecuta un contenedor, se añade una capa escribible encima.
 </details>
 
-5. ¿Cuál es el propósito principal de usar compilaciones multi-stage en Dockerfiles?
+5. ¿Cuál es el propósito principal de usar compilaciones de varias etapas en los Dockerfiles?
    - A) Mejorar la velocidad de compilación
    - B) Reducir el tamaño final de la imagen
    - C) Reducir vulnerabilidades de seguridad
@@ -81,7 +83,7 @@ Las imágenes de contenedor constan de varias capas, y cada capa representa camb
 **Respuesta: B) Reducir el tamaño final de la imagen**
 
 **Explicación:**
-El propósito principal de las compilaciones multi-stage es reducir el tamaño final de la imagen. La etapa de build incluye todas las herramientas necesarias para la compilación del código fuente, la instalación de dependencias, etc., mientras que la etapa de ejecución lleva solo los artefactos de build para crear una imagen pequeña con un entorno de runtime mínimo. Esto excluye las herramientas de build y los archivos intermedios de la imagen final.
+El propósito principal de las compilaciones de varias etapas es reducir el tamaño de la imagen final. La fase de compilación incluye las herramientas necesarias para compilar el código e instalar sus dependencias; la fase de ejecución incorpora solo los artefactos necesarios y un entorno mínimo. Así, la imagen final no contiene las herramientas de compilación ni los archivos intermedios.
 </details>
 
 6. ¿Cuál es el controlador de red predeterminado de Docker?
@@ -97,23 +99,23 @@ El propósito principal de las compilaciones multi-stage es reducir el tamaño f
 **Respuesta: B) bridge**
 
 **Explicación:**
-bridge es el controlador de red predeterminado de Docker, que permite la comunicación entre contenedores que se ejecutan en el mismo host. Este controlador crea un bridge virtual dentro del host para conectar contenedores. El controlador host usa directamente la red del host, overlay es para comunicación entre varios hosts y macvlan asigna direcciones MAC a los contenedores para que aparezcan como dispositivos de red físicos.
+El controlador `bridge` es la red predeterminada de Docker y permite la comunicación entre contenedores del mismo anfitrión. Crea un puente virtual que los conecta. El controlador `host` usa directamente la red del anfitrión; `overlay` permite la comunicación entre varios anfitriones, y `macvlan` asigna direcciones MAC para que los contenedores aparezcan como dispositivos físicos de red.
 </details>
 
-7. Para el almacenamiento persistente de datos en contenedores, ¿qué método usa un área del sistema de archivos del host administrada por Docker?
+7. Para conservar datos de los contenedores, ¿qué método usa un área del sistema de archivos del anfitrión que administra Docker?
    - A) Almacenamiento efímero
-   - B) Volume
-   - C) Bind mount
-   - D) tmpfs mount
+   - B) Volumen
+   - C) Montaje enlazado
+   - D) Montaje tmpfs
    
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Volume**
+**Respuesta: B) Volumen**
 
 **Explicación:**
-Los volúmenes son un área del sistema de archivos del host administrada por Docker, que es el método más adecuado para el almacenamiento persistente de datos en contenedores. El almacenamiento efímero es el sistema de archivos interno del contenedor, donde los datos se pierden cuando se elimina el contenedor. Los bind mounts montan una ruta específica del host dentro del contenedor, y los tmpfs mounts almacenan datos solo en memoria.
+Los volúmenes son áreas del sistema de archivos del anfitrión administradas por Docker y suelen ser la opción más adecuada para conservar datos de contenedores. El almacenamiento efímero es el sistema de archivos interno del contenedor, donde los datos se pierden cuando se elimina el contenedor. Los montajes enlazados conectan una ruta específica del anfitrión al contenedor. Los montajes `tmpfs` usan almacenamiento respaldado por memoria, aunque el sistema puede intercambiar páginas a swap.
 </details>
 
 8. ¿Cuál NO es un método para mejorar la seguridad de los contenedores?
@@ -132,7 +134,7 @@ Los volúmenes son un área del sistema de archivos del host administrada por Do
 Conceder privilegios de administrador a todos los contenedores es una acción que debilita la seguridad. Para mejorar la seguridad de los contenedores, debes seguir el principio de privilegio mínimo. Ejecutar contenedores como usuarios no root, conceder solo las capacidades de Linux necesarias y montar sistemas de archivos como solo lectura cuando sea posible son buenas prácticas de seguridad.
 </details>
 
-9. ¿Qué servicio de AWS proporciona un entorno serverless de ejecución de contenedores?
+9. ¿Qué servicio de AWS ofrece un entorno sin servidor para ejecutar contenedores?
    - A) Amazon EC2
    - B) Amazon ECS
    - C) Amazon Fargate
@@ -145,14 +147,14 @@ Conceder privilegios de administrador a todos los contenedores es una acción qu
 **Respuesta: C) Amazon Fargate**
 
 **Explicación:**
-Amazon Fargate es el entorno serverless de ejecución de contenedores de AWS, que permite ejecutar contenedores sin administrar servidores. Amazon EC2 es un servicio de servidores virtuales, Amazon ECS es un servicio de orquestación de contenedores y Amazon ECR es un servicio de registro de imágenes de contenedor.
+Amazon Fargate permite ejecutar contenedores en AWS sin administrar servidores. Amazon EC2 ofrece servidores virtuales, Amazon ECS es un servicio de orquestación de contenedores y Amazon ECR es un registro de imágenes de contenedor.
 </details>
 
 10. ¿Cuál NO es una función principal de las herramientas de orquestación de contenedores?
-    - A) Despliegue y rollback automáticos
-    - B) Service discovery y balanceo de carga
+    - A) Despliegue y reversión automáticos
+    - B) Detección de servicios y balanceo de carga
     - C) Construcción de imágenes de contenedor
-    - D) Auto scaling
+    - D) Escalado automático
 
 <details>
 
@@ -161,10 +163,10 @@ Amazon Fargate es el entorno serverless de ejecución de contenedores de AWS, qu
 **Respuesta: C) Construcción de imágenes de contenedor**
 
 **Explicación:**
-La construcción de imágenes de contenedor suele ser responsabilidad de los pipelines de CI/CD o de herramientas de build de contenedores como Docker. Las funciones principales de las herramientas de orquestación de contenedores (Kubernetes, Docker Swarm, etc.) son el despliegue y rollback automáticos, service discovery y balanceo de carga, auto scaling, self-healing, gestión de configuración y orquestación de almacenamiento.
+La creación de imágenes de contenedor suele corresponder a los procesos de CI/CD o a herramientas como Docker. Las funciones principales de los orquestadores (Kubernetes, Docker Swarm y otros) incluyen despliegue y reversión automáticos, detección de servicios y balanceo de carga, escalado automático, recuperación automática, gestión de configuración y orquestación del almacenamiento.
 </details>
 
-11. ¿En qué estado NO puede estar un contenedor mientras no se está ejecutando?
+11. ¿Cuál de los siguientes no es un estado del ciclo de vida de un contenedor Docker?
     - A) Created
     - B) Exited
     - C) Building
@@ -177,7 +179,7 @@ La construcción de imágenes de contenedor suele ser responsabilidad de los pip
 **Respuesta: C) Building**
 
 **Explicación:**
-Los estados del ciclo de vida de un contenedor incluyen Created (creado), Running (en ejecución), Paused (pausado), Restarting (reiniciando), Exited (salido) y Dead (muerto). Building es un estado del proceso de construcción de imágenes y no es un estado de contenedor. Los contenedores se crean después de que se construyen las imágenes.
+Los estados del ciclo de vida de un contenedor incluyen Created, Running, Paused, Restarting, Exited, Removing y Dead. Building corresponde al proceso de crear una imagen, no a un estado del contenedor; los contenedores se crean a partir de imágenes ya construidas.
 </details>
 
 12. ¿Qué política de reinicio de contenedores reinicia el contenedor cuando se inicia el daemon de Docker, pero no lo reinicia si el contenedor se detuvo manualmente?
@@ -193,7 +195,7 @@ Los estados del ciclo de vida de un contenedor incluyen Created (creado), Runnin
 **Respuesta: D) unless-stopped**
 
 **Explicación:**
-La política de reinicio `unless-stopped` siempre reinicia el contenedor a menos que se haya detenido explícitamente. El contenedor se inicia automáticamente incluso cuando se reinicia el daemon de Docker, pero si el usuario lo detuvo manualmente con el comando `docker stop`, el contenedor no se iniciará después del reinicio del daemon. `always` reinicia independientemente del estado de detención manual.
+La política `unless-stopped` vuelve a iniciar el contenedor automáticamente, incluso después de reiniciar el daemon de Docker, salvo que se lo haya detenido manualmente con `docker stop`; esa detención se mantiene después del reinicio del daemon. Con `always`, en cambio, una detención manual suprime los reinicios solo hasta que se reinicia el daemon o se inicia el contenedor explícitamente.
 </details>
 
 13. ¿Qué comando de Docker verifica los cambios del sistema de archivos entre un contenedor y su imagen original?
@@ -209,10 +211,10 @@ La política de reinicio `unless-stopped` siempre reinicia el contenedor a menos
 **Respuesta: B) docker diff**
 
 **Explicación:**
-El comando `docker diff` muestra los cambios entre el sistema de archivos del contenedor y la imagen original. En la salida, A representa archivos Added, C representa archivos Changed y D representa archivos Deleted. Este comando es útil para depurar qué archivos se modificaron mientras el contenedor estaba en ejecución.
+El comando `docker diff` muestra los cambios entre el sistema de archivos del contenedor y la imagen original. En la salida, A indica archivos añadidos, C archivos modificados y D archivos eliminados. Este comando es útil para depurar qué archivos se modificaron mientras el contenedor estaba en ejecución.
 </details>
 
-## Short Answer Questions
+## Preguntas de respuesta breve
 
 14. ¿Cuál es el identificador único basado en el contenido de una imagen de contenedor, expresado como un hash SHA256?
 
@@ -223,7 +225,7 @@ El comando `docker diff` muestra los cambios entre el sistema de archivos del co
 **Respuesta: Digest**
 
 **Explicación:**
-Un digest es el hash SHA256 del contenido de la imagen de contenedor y sirve como identificador único de la imagen. A diferencia de las tags, si el contenido de la imagen cambia, el digest también cambia, por lo que se usa para referenciar con precisión una versión específica de la imagen. Ejemplo: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
+El digest de una referencia de imagen identifica los bytes del manifiesto o del índice para varias plataformas, normalmente mediante SHA256; el manifiesto, a su vez, referencia los digest de las capas y la configuración. A diferencia de una etiqueta, el digest identifica con precisión esos bytes. Ejemplo: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
 15. ¿Cuál es la directiva de Dockerfile que especifica el comando que se ejecutará cuando se inicie un contenedor?
@@ -238,7 +240,7 @@ Un digest es el hash SHA256 del contenido de la imagen de contenedor y sirve com
 La directiva CMD especifica el comando predeterminado que se ejecutará cuando se inicie un contenedor. Por ejemplo, `CMD ["node", "server.js"]` ejecuta el comando `node server.js` cuando se inicia el contenedor. CMD se puede sobrescribir proporcionando argumentos al comando docker run.
 </details>
 
-16. ¿Cuál es el nombre de la interfaz de red virtual que Docker crea para la comunicación entre contenedores?
+16. ¿Cómo se llama la interfaz de red virtual que Docker crea para que se comuniquen los contenedores?
 
 <details>
 
@@ -247,7 +249,7 @@ La directiva CMD especifica el comando predeterminado que se ejecutará cuando s
 **Respuesta: docker0**
 
 **Explicación:**
-docker0 es la interfaz de red bridge virtual que Docker crea de forma predeterminada. Este bridge permite la comunicación entre contenedores que se ejecutan en el mismo host y media la comunicación entre contenedores y redes externas.
+docker0 es el puente de red virtual que Docker crea de forma predeterminada. Permite la comunicación entre contenedores del mismo anfitrión y media el tráfico entre ellos y las redes externas.
 </details>
 
 17. ¿Cuál es la característica de seguridad de Linux que restringe las llamadas al sistema que puede usar un proceso que se ejecuta dentro de un contenedor?
@@ -259,7 +261,7 @@ docker0 es la interfaz de red bridge virtual que Docker crea de forma predetermi
 **Respuesta: seccomp (Secure Computing Mode)**
 
 **Explicación:**
-seccomp es una característica de seguridad del kernel de Linux que restringe las llamadas al sistema que puede usar un proceso. Los runtimes de contenedores como Docker usan perfiles seccomp para restringir las llamadas al sistema que los contenedores pueden realizar, mejorando así la seguridad.
+seccomp es una característica de seguridad del núcleo de Linux que restringe las llamadas al sistema que puede usar un proceso. Los entornos de ejecución de contenedores, como Docker, utilizan perfiles seccomp para restringir las llamadas al sistema que pueden realizar los procesos del contenedor y reforzar así la seguridad.
 </details>
 
 18. ¿Cuál es el nombre del servicio de AWS que almacena y administra imágenes de contenedor?
@@ -271,7 +273,7 @@ seccomp es una característica de seguridad del kernel de Linux que restringe la
 **Respuesta: Amazon ECR (Elastic Container Registry)**
 
 **Explicación:**
-Amazon ECR (Elastic Container Registry) es el servicio administrado de registro de imágenes de contenedor de AWS. Proporciona características como análisis de vulnerabilidades de imágenes, integración con IAM y administración del ciclo de vida de imágenes, y se integra sin problemas con otros servicios de AWS.
+Amazon ECR (Elastic Container Registry) es el servicio administrado de AWS para almacenar imágenes de contenedor. Ofrece análisis de vulnerabilidades, integración con IAM y gestión del ciclo de vida de las imágenes, y se integra con otros servicios de AWS.
 </details>
 
 19. ¿Qué comando de Docker permite ejecutar comandos adicionales dentro de un contenedor en ejecución?
@@ -283,10 +285,10 @@ Amazon ECR (Elastic Container Registry) es el servicio administrado de registro 
 **Respuesta: docker exec**
 
 **Explicación:**
-El comando `docker exec` permite ejecutar comandos adicionales dentro de un contenedor en ejecución. Por ejemplo, `docker exec -it <container> bash` se conecta a una shell interactiva dentro del contenedor, o `docker exec <container> ls /app` lista archivos dentro del contenedor. Este comando es muy útil para depurar contenedores.
+El comando `docker exec` permite ejecutar comandos adicionales dentro de un contenedor en ejecución. Por ejemplo, `docker exec -it <container> bash` se conecta a una terminal interactiva dentro del contenedor, o `docker exec <container> ls /app` lista archivos dentro del contenedor. Este comando es muy útil para depurar contenedores.
 </details>
 
-20. ¿Qué comando de Docker monitorea eventos de contenedor en tiempo real (inicio, detención, reinicio, etc.) como un stream?
+20. ¿Qué comando de Docker supervisa los eventos del contenedor en tiempo real (inicio, detención, reinicio, etc.) como un flujo continuo?
 
 <details>
 
@@ -295,13 +297,13 @@ El comando `docker exec` permite ejecutar comandos adicionales dentro de un cont
 **Respuesta: docker events**
 
 **Explicación:**
-El comando `docker events` muestra eventos en tiempo real del daemon de Docker como un stream. Puedes monitorear eventos como inicio, detención y reinicio de contenedores, descarga de imágenes, conexión/desconexión de red, etc. La opción `--filter` permite filtrar por contenedor específico o tipo de evento, lo que es útil para depuración y monitoreo.
+El comando `docker events` muestra en tiempo real los eventos del daemon de Docker en un flujo continuo. Permite supervisar, por ejemplo, el inicio, la detención y el reinicio de contenedores, la descarga de imágenes y la conexión o desconexión de redes. La opción `--filter` limita la salida a un contenedor o tipo de evento, algo útil para depurar y supervisar el sistema.
 </details>
 
-## Hands-on Questions
+## Preguntas prácticas
 
 21. Escribe un Dockerfile que cumpla los siguientes requisitos:
-    - Usar la imagen Node.js 14 Alpine
+    - Usar la imagen Node.js 24 Alpine
     - Establecer el directorio de trabajo en /app
     - Copiar primero los archivos package.json y package-lock.json
     - Instalar dependencias
@@ -315,15 +317,17 @@ El comando `docker events` muestra eventos en tiempo real del daemon de Docker c
 
 **Respuesta:**
 ```dockerfile
-FROM node:14-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3000
 
@@ -331,7 +335,7 @@ CMD ["node", "server.js"]
 ```
 
 **Explicación:**
-Este Dockerfile muestra una configuración básica para aplicaciones Node.js. Al copiar primero los archivos de dependencias (package*.json) e instalarlas antes de copiar los archivos restantes, optimiza el almacenamiento en caché de capas de Docker. De esta forma, incluso si cambia el código fuente, el paso npm install puede reutilizarse si las dependencias no han cambiado.
+Este Dockerfile muestra una configuración básica para aplicaciones de Node.js. Al copiar primero los archivos de dependencias (`package*.json`) e instalarlas antes de copiar los demás archivos, aprovecha la caché de capas de Docker. Así, si cambia el código fuente pero no las dependencias, se puede reutilizar la capa de `npm ci`.
 </details>
 
 22. Analiza el siguiente comando de Docker y explica su propósito:
@@ -344,18 +348,18 @@ Este Dockerfile muestra una configuración básica para aplicaciones Node.js. Al
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Este comando se usa para los siguientes propósitos:
-    - `-d`: Ejecutar el contenedor en segundo plano (modo detached)
-    - `--name my-app`: Establecer el nombre del contenedor en "my-app"
-    - `-p 8080:80`: Mapear el puerto 8080 del host al puerto 80 del contenedor
-    - `-v data:/app/data`: Montar un volumen llamado "data" en la ruta /app/data dentro del contenedor
-    - `--restart always`: Reiniciar automáticamente siempre que el contenedor salga
-    - `nginx:latest`: Usar la versión más reciente de la imagen nginx
+El comando sirve para lo siguiente:
+    - `-d`: Ejecuta el contenedor en segundo plano, en modo desacoplado.
+    - `--name my-app`: Asigna al contenedor el nombre `my-app`.
+    - `-p 8080:80`: Publica el puerto 80 del contenedor como el puerto 8080 del anfitrión.
+    - `-v data:/app/data`: Monta el volumen llamado `data` en `/app/data` dentro del contenedor; esto no cambia el directorio raíz de documentos de NGINX.
+    - `--restart always`: Reinicia el contenedor tras una salida. Si se detiene manualmente, el reinicio queda suprimido hasta que se reinicie el daemon o se inicie el contenedor explícitamente.
+    - `nginx:latest`: Usa la etiqueta mutable `latest`; para obtener una imagen más reciente hay que descargarla de nuevo.
 
-Este comando ejecuta el servidor web nginx en segundo plano, lo hace accesible a través del puerto 8080 del host, configura un volumen para almacenamiento persistente de datos y configura el reinicio automático cuando el contenedor sale.
+El comando ejecuta el servidor web NGINX en segundo plano y publica el puerto 8080 del host. De forma predeterminada, el puerto publicado escucha en todas las direcciones del anfitrión; para limitar el acceso a la máquina local, usa `127.0.0.1:8080:80`. El volumen conserva datos, pero no hace que NGINX los sirva desde `/app/data` sin configurar su raíz de documentos.
 </details>
 
-23. Escribe un Dockerfile optimizado para una aplicación React usando compilaciones multi-stage.
+23. Escribe un Dockerfile optimizado para una aplicación React mediante una compilación de varias etapas.
 
 <details>
 
@@ -364,20 +368,20 @@ Este comando ejecuta el servidor web nginx en segundo plano, lo hace accesible a
 **Respuesta:**
 ```dockerfile
 # Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
 # Run stage
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy build artifacts to nginx's service directory
 COPY --from=build /app/build /usr/share/nginx/html
@@ -390,14 +394,14 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 **Explicación:**
-Este Dockerfile multi-stage consta de dos etapas:
-1. Etapa de build: Usa la imagen Node.js para construir la aplicación React.
-2. Etapa de ejecución: Usa la imagen ligera nginx para servir los archivos estáticos construidos.
+Este Dockerfile de varias etapas consta de dos fases:
+1. Compilación: usa una imagen de Node.js para construir la aplicación React.
+2. Ejecución: usa la imagen ligera de NGINX para servir los archivos estáticos resultantes.
 
-La ventaja de este enfoque es que la imagen final no incluye el runtime de Node.js, paquetes npm, código fuente, etc., lo que reduce significativamente el tamaño de la imagen. La imagen final contiene solo los archivos estáticos construidos y nginx, por lo que es más pequeña y segura.
+Así, la imagen final no incluye Node.js, los paquetes de npm ni el código fuente, lo que reduce su tamaño. Solo contiene los archivos estáticos generados y NGINX, por lo que también tiene una superficie de software menor.
 </details>
 
-24. Escribe un Dockerfile que incluya health checks de contenedor. Configúralo para comprobar el endpoint HTTP /health cada 30 segundos, tratarlo como fallido si no hay respuesta en 3 segundos y marcarlo como unhealthy después de 3 fallos.
+24. Escribe un Dockerfile que incluya comprobaciones de estado del contenedor. Configúralo para consultar el endpoint HTTP `/health` cada 30 segundos, considerar fallida la comprobación si no responde en 3 segundos y marcar el contenedor como `unhealthy` tras 3 fallos.
 
 <details>
 
@@ -405,14 +409,15 @@ La ventaja de este enfoque es que la imagen final no incluye el runtime de Node.
 
 **Respuesta:**
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy application (example)
 COPY ./html /usr/share/nginx/html
+RUN printf 'ok\n' > /usr/share/nginx/html/health
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1
 
 EXPOSE 80
 
@@ -420,14 +425,14 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 **Explicación:**
-Significado de cada opción de la directiva HEALTHCHECK:
-- `--interval=30s`: Realizar el health check cada 30 segundos
-- `--timeout=3s`: El comando de health check debe completarse en 3 segundos
-- `--start-period=10s`: Ignorar fallos de health check durante 10 segundos después del inicio del contenedor (tiempo de inicialización)
-- `--retries=3`: Marcar el contenedor como unhealthy después de 3 fallos consecutivos
-- `CMD`: Comando de health check que se ejecutará. Usa wget para comprobar el endpoint /health
+Significado de cada opción de la instrucción `HEALTHCHECK`:
+- `--interval=30s`: Ejecuta la comprobación de estado cada 30 segundos.
+- `--timeout=3s`: La comprobación se considera fallida si no termina en 3 segundos.
+- `--start-period=10s`: Permite fallos durante la inicialización por hasta 10 segundos; una comprobación correcta temprana termina antes ese período de gracia.
+- `--retries=3`: Marca el contenedor como `unhealthy` tras 3 fallos consecutivos.
+- `CMD`: Define el comando que se ejecutará; aquí, `wget` consulta el endpoint `/health`.
 
-Las health checks son usadas por herramientas de orquestación de contenedores para determinar el estado del contenedor para decisiones de recuperación automática o enrutamiento de tráfico.
+Docker puede marcar el contenedor como `unhealthy`, pero ese estado por sí solo no reinicia un contenedor independiente. Un orquestador puede reaccionar a las señales de salud que admita; Kubernetes requiere sus propias sondas y no usa `HEALTHCHECK` del Dockerfile. Para que el ejemplo funcione, la aplicación debe responder con HTTP 200 en `/health`.
 </details>
 
 25. Escribe comandos de Docker para comprobar las variables de entorno, la configuración de red y la lista de procesos de un contenedor en ejecución con fines de depuración.
@@ -476,14 +481,16 @@ docker stats <container-id>
 Al depurar contenedores, combina estos comandos para diagnosticar problemas:
 - `docker exec` ejecuta comandos en un contenedor en ejecución
 - `docker inspect` comprueba metadatos detallados del contenedor
-- `docker top` muestra los procesos del contenedor desde la perspectiva del host
+- `docker top` muestra los procesos del contenedor desde el punto de vista del anfitrión
 - `docker diff` comprueba archivos modificados en comparación con la imagen
 Usar estas herramientas de forma eficaz ayuda a comprender el estado interno del contenedor y resolver problemas.
 </details>
 
-## Advanced Questions
+El ejercicio del Dockerfile requiere el `package-lock.json` correspondiente, `server.js` o el script de compilación estática y el directorio `html` que espera la aplicación. Excluye `node_modules`, `.git` y `.env` mediante `.dockerignore`. La salida estática de React puede estar en `build` o `dist`; usa la ruta que genere la herramienta real. Una aplicación SSR no se ejecuta copiando archivos estáticos a NGINX. El ejemplo de `/health` comprueba la respuesta de NGINX estático, no la disponibilidad del servicio de backend.
 
-26. Compara los roles de namespaces y cgroups, los componentes principales de la tecnología de contenedores, y explica cómo contribuye cada uno al aislamiento de contenedores.
+## Preguntas avanzadas
+
+26. Compara las funciones de los espacios de nombres (namespaces) y los cgroups, componentes principales de la tecnología de contenedores, y explica cómo contribuye cada uno al aislamiento.
 
 <details>
 
@@ -491,36 +498,36 @@ Usar estas herramientas de forma eficaz ayuda a comprender el estado interno del
 
 **Respuesta:**
 
-**Namespaces**:
-    - **Rol**: Aísla grupos de procesos para que cada grupo pueda ver los recursos del sistema de forma independiente.
-    - **Tipo de aislamiento**: Proporciona aislamiento de visibilidad.
-    - **Namespaces principales**:
-    - PID namespace: Aislamiento de ID de proceso
-    - Network namespace: Aislamiento de la pila de red
-    - Mount namespace: Aislamiento de puntos de montaje del sistema de archivos
-    - UTS namespace: Aislamiento de hostname y nombre de dominio
-    - IPC namespace: Aislamiento de recursos de comunicación entre procesos
-    - User namespace: Aislamiento de ID de usuario y grupo
+**Espacios de nombres (namespaces)**:
+    - **Función**: Aíslan grupos de procesos para que cada grupo vea los recursos del sistema de forma independiente.
+    - **Tipo de aislamiento**: Aíslan la visibilidad de los recursos.
+    - **Espacios de nombres principales**:
+    - Espacio de nombres PID: Aislamiento de identificadores de proceso
+    - Espacio de nombres de red: Aislamiento de la pila de red
+    - Espacio de nombres de montaje: Aislamiento de los puntos de montaje del sistema de archivos
+    - Espacio de nombres UTS: Aislamiento del nombre de host y del nombre de dominio NIS
+    - Espacio de nombres IPC: Aislamiento de los recursos de comunicación entre procesos
+    - Espacio de nombres de usuario: Aislamiento de los identificadores de usuario y grupo
 
-**cgroups (Control Groups)**:
-    - **Rol**: Limita y aísla el uso de recursos de grupos de procesos.
-    - **Tipo de aislamiento**: Proporciona limitación de recursos.
+**cgroups (grupos de control)**:
+    - **Función**: Limitan y aíslan el uso de recursos de grupos de procesos.
+    - **Tipo de aislamiento**: Limitación del uso de recursos.
     - **Funciones principales**:
-    - Limitación de tiempo de CPU
-    - Limitación de uso de memoria
-    - Limitación de ancho de banda de Block I/O
-    - Limitación de ancho de banda de red
-    - Control de acceso a dispositivos
+    - Limitación del tiempo de CPU
+    - Limitación del uso de memoria
+    - Limitación del ancho de banda de E/S de bloques
+    - Control del tráfico de red mediante la integración con `tc`/eBPF
+    - Control del acceso a dispositivos
 
 **Contribución al aislamiento de contenedores**:
 
-Namespaces y cgroups desempeñan roles complementarios:
+Los espacios de nombres y los cgroups cumplen funciones complementarias:
 
-    - Namespaces permite que los contenedores tengan sus propios entornos independientes (árboles de procesos, interfaces de red, puntos de montaje, etc.), proporcionando aislamiento lógico. Esto da a cada contenedor su propia vista única del sistema.
+    - Los espacios de nombres dan a cada contenedor su propio entorno y vista del sistema (árbol de procesos, interfaces de red, puntos de montaje, etc.), lo que proporciona aislamiento lógico.
 
-    - cgroups limita los recursos del sistema (CPU, memoria, I/O de disco, etc.) que los contenedores pueden usar, proporcionando aislamiento de recursos físicos. Esto evita que un contenedor use recursos excesivos y afecte a otros contenedores o al sistema host.
+    - Los cgroups limitan los recursos del sistema (CPU, memoria, E/S de disco, entre otros) que puede usar cada contenedor, y evitan que consuma en exceso y afecte a los demás o al sistema anfitrión.
 
-Estas dos tecnologías trabajan juntas para permitir que los contenedores se ejecuten en entornos aislados con uso limitado de recursos. Este aislamiento es más ligero que el de las máquinas virtuales, pero proporciona aislamiento suficiente para seguridad y administración de recursos.
+Estas tecnologías permiten ejecutar contenedores con aislamiento y límites de recursos. Ese aislamiento es más ligero que el de las máquinas virtuales, pero la seguridad depende de la exposición al núcleo, los privilegios y la configuración del entorno de ejecución; no ofrece una garantía de aislamiento completo.
 </details>
 
 27. Explica cómo funciona el sistema de capas de imágenes de contenedor y cómo la estrategia Copy-on-Write (CoW) contribuye a la eficiencia de los contenedores.
@@ -531,25 +538,25 @@ Estas dos tecnologías trabajan juntas para permitir que los contenedores se eje
 
 **Respuesta:**
 
-**Sistema de capas de imágenes de contenedor**:
+**Capas de las imágenes de contenedor**:
 
-Las imágenes de contenedor constan de una pila de varias capas. Cada capa representa cambios del sistema de archivos, y cada comando de Dockerfile (FROM, RUN, COPY, etc.) crea una nueva capa. Estas capas son de solo lectura y se apilan jerárquicamente para formar la imagen final.
+Las imágenes de contenedor constan de varias capas apiladas. Cada capa representa cambios en el sistema de archivos: `RUN`, `COPY` y `ADD` pueden generar diferencias en él, mientras que instrucciones que solo modifican metadatos, como `ENV` o `CMD`, no crean una capa del sistema de archivos. Las capas son de solo lectura y se apilan para formar la imagen final.
 
-Características clave del sistema de capas:
-1. **Builds incrementales**: Solo las capas modificadas se regeneran durante las construcciones de imágenes
+Características principales del sistema de capas:
+1. **Compilaciones incrementales**: Solo las capas modificadas se regeneran durante las construcciones de imágenes
 2. **Compartición de capas**: Varias imágenes comparten las mismas capas base
 3. **Caché**: Las capas ya descargadas se reutilizan
 
-**Estrategia Copy-on-Write (CoW)**:
+**Estrategia de copia al escribir (Copy-on-Write, CoW)**:
 
-Copy-on-Write es una estrategia de optimización que retrasa las operaciones de copia hasta que los datos se modifican realmente. En el contexto de contenedores:
+La copia al escribir es una estrategia de optimización que aplaza la copia hasta que se modifican los datos. En los contenedores:
 
-1. **Inicio del contenedor**: Cuando se inicia un contenedor, se añade una capa escribible delgada encima de las capas de imagen existentes.
+1. **Inicio del contenedor**: Al iniciar un contenedor, se añade una capa escribible fina sobre las capas existentes de la imagen.
 2. **Operaciones de lectura**: Al leer un archivo, el sistema busca en las capas de arriba hacia abajo y usa la primera versión del archivo encontrada.
-3. **Operaciones de escritura**: Al modificar un archivo, primero se copia el archivo a la capa escribible y luego se modifica (Copy-on-Write). El archivo original permanece sin cambios.
-4. **Operaciones de eliminación**: Al eliminar un archivo, el archivo no se elimina realmente; en su lugar, se crea un archivo "whiteout" en la capa escribible para hacer que parezca eliminado.
+3. **Escritura**: Al modificar un archivo, primero se copia a la capa escribible y después se modifica mediante copia al escribir; el archivo original permanece intacto.
+4. **Eliminación**: Si se elimina un archivo de una capa inferior, se crea un marcador `whiteout` en la capa escribible para ocultarlo. Un archivo que solo existe en la capa superior se puede eliminar de esa capa.
 
-**Contribución a la eficiencia**:
+**Cómo contribuye a la eficiencia**:
 
 1. **Eficiencia de almacenamiento**: 
     - Varios contenedores que usan la misma imagen base comparten capas de imagen, ahorrando espacio en disco.
@@ -565,7 +572,7 @@ Copy-on-Write es una estrategia de optimización que retrasa las operaciones de 
 4. **Eficiencia de red**:
     - Las capas ya existentes no necesitan descargarse de nuevo durante la descarga de imágenes.
 
-Gracias a estas eficiencias, los contenedores pueden iniciar de forma más ligera y rápida que las máquinas virtuales, y pueden ejecutarse más contenedores en el mismo host.
+Gracias a estas eficiencias, los contenedores pueden ser más ligeros y arrancar más rápido que las máquinas virtuales, y un mismo host puede ejecutar más contenedores.
 </details>
 
 28. Explica todo el ciclo de vida de un contenedor y describe el comportamiento del contenedor y los métodos de transición de estado en cada estado (Created, Running, Paused, Restarting, Exited, Dead).
@@ -581,44 +588,44 @@ Gracias a estas eficiencias, los contenedores pueden iniciar de forma más liger
 1. **Created**
    - El contenedor se ha creado, pero aún no se ha iniciado
    - Creado con el comando `docker create`
-   - El proceso no está en ejecución, asignación mínima de recursos
+   - El proceso aún no se ejecuta y se asignan pocos recursos.
    - Transición: `docker start` → Running
 
 2. **Running**
    - El proceso principal del contenedor está en ejecución
-   - Se entra mediante `docker run` o `docker start`
-   - Usa activamente recursos como CPU y memoria
+   - Se inicia mediante `docker run` o `docker start`.
+   - Utiliza activamente recursos como CPU y memoria.
    - Transiciones:
      - `docker pause` → Paused
      - `docker stop` → Exited
      - `docker kill` → Exited
-     - `docker restart` → Restarting → Running
+     - `docker restart` → secuencia de detención e inicio → Running
      - Al terminar el proceso → Exited
 
 3. **Paused**
-   - Todos los procesos están pausados con SIGSTOP
+   - Los procesos Linux se congelan mediante el cgroup freezer, no enviándoles SIGSTOP
    - Se entra mediante el comando `docker pause`
    - La memoria se mantiene, pero no hay uso de CPU
    - Transición: `docker unpause` → Running
 
 4. **Restarting**
    - Estado temporal mientras el contenedor se reinicia
-   - Ocurre mediante `docker restart` o una política de reinicio
-   - Transición: Cambia automáticamente a Running o Exited
+   - Indica un reinicio automático provocado por una política de reinicio; `docker restart` solicita explícitamente una secuencia de detención e inicio
+   - Transición: pasa automáticamente a Running o Exited.
 
 5. **Exited**
-   - El proceso principal ha terminado
-   - Se conserva el código de salida
-   - Se mantienen los cambios del sistema de archivos
+   - El proceso principal terminó.
+   - Se conserva el código de salida.
+   - Se conservan los cambios del sistema de archivos.
    - Transiciones:
      - `docker start` → Running
      - `docker rm` → Deleted
 
 6. **Dead**
    - Estado anómalo en el que falló el intento de eliminación del contenedor
-   - Limpieza de recursos no completada
-   - Generalmente requiere intervención manual
-   - Intentar eliminación forzada con `docker rm -f`
+   - La limpieza de recursos no se completó.
+   - Por lo general, requiere intervención manual.
+   - Se puede intentar eliminarlo por la fuerza con `docker rm -f`.
 
 **Comandos de verificación y administración de estado:**
 ```bash
@@ -639,12 +646,39 @@ docker rm <id>                  # Delete
 **Políticas de reinicio y ciclo de vida:**
 - `no`: Sin reinicio automático
 - `on-failure[:max]`: Reiniciar en caso de salida anómala; se puede especificar un número máximo
-- `always`: Reiniciar siempre (incluido el reinicio del daemon)
-- `unless-stopped`: Reiniciar siempre hasta que se detenga manualmente
+- `always`: Reinicia tras la salida o el reinicio del daemon; una detención manual suprime el reinicio hasta que se reinicie el daemon o se inicie el contenedor explícitamente.
+- `unless-stopped`: Reinicia tras la salida o el reinicio del daemon, salvo que el contenedor se haya detenido manualmente; esa detención persiste después de reiniciar el daemon.
 
-Comprender el ciclo de vida de los contenedores ayuda a garantizar la disponibilidad de las aplicaciones y a establecer estrategias de recuperación adecuadas cuando ocurren problemas.
+Comprender el ciclo de vida de los contenedores ayuda a mantener la disponibilidad de las aplicaciones y a definir estrategias adecuadas de recuperación ante problemas.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../basics/03-container-technology.md) | [Siguiente cuestionario: Kubernetes Introduction](./04-kubernetes-introduction-quiz.md)
+[Volver a los materiales de aprendizaje](../../basics/03-container-technology.md) | [Siguiente cuestionario: Introducción a Kubernetes](./04-kubernetes-introduction-quiz.md)
+
+## Referencias de verificación
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

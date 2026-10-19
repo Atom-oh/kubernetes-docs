@@ -6,11 +6,11 @@
 
 El ejemplo local se verificó con Python 3.12, `ray==2.58.0` y `numpy==2.2.6`. Sus comprobaciones de task, actor y ObjectRef no requieren GPU, modelo entrenado ni Kubernetes. Verifica por separado las dependencias adicionales pertinentes al habilitar funciones como el dashboard.
 
-El ejemplo configura explícitamente dos CPU lógicas y un object store de 80 MiB, y luego cierra Ray. La configuración de recursos de Ray no son límites del sistema operativo para el CPU/RAM total; los procesos de control y worker requieren memoria adicional.
+El ejemplo configura explícitamente dos CPU lógicas y un almacén de objetos de 80 MiB, y luego cierra Ray. La configuración de recursos de Ray no limita el uso total de CPU o RAM del sistema operativo; los procesos de control y de los workers requieren memoria adicional.
 
 ## ¿Qué es Ray?
 
-Ray Core proporciona funciones remotas (tasks), instancias remotas con estado (actors), ObjectRefs y object stores por nodo. Train, Tune y Serve se basan en esa base. Compartir Core no elimina sus propios controllers, reintentos, checkpoints ni lógica de comunicación del framework.
+Ray Core proporciona funciones remotas (tasks), instancias remotas con estado (actors), ObjectRefs y almacenes de objetos por nodo. Train, Tune y Serve se basan en esa base. Compartir Core no elimina sus propios controllers, reintentos, checkpoints ni lógica de comunicación del framework.
 
 ## Primitivas principales
 
@@ -20,17 +20,17 @@ Después de aplicar `@ray.remote`, envía mediante **`f.remote(...)`**. Llamarlo
 
 Llamar a una task sin estado no garantiza una función pura sin efectos secundarios. Las mutaciones de archivos/base de datos necesitan una estrategia de idempotencia para los reintentos. Los workers pueden reutilizarse; una caché global del módulo que sobrevive de forma incidental es distinta de la gestión explícita del estado.
 
-Ray rastrea dependencias. Pasar un ObjectRef ascendente como argumento de nivel superior a otra task crea una dependencia de que ese valor esté listo. Las tasks no son necesariamente independientes entre sí.
+Ray rastrea dependencias. Pasar un ObjectRef de una tarea previa como argumento de nivel superior a otra task hace que esta dependa de que el valor esté listo. Las tasks no son necesariamente independientes entre sí.
 
 ### Actors
 
 `Actor.remote()` crea un handle para una instancia remota; `handle.method.remote()` envía un método a esta. Los contadores, conexiones o modelos en la memoria de esa instancia pueden reutilizarse entre llamadas.
 
-Esto no es almacenamiento durable automático. En 2.58.0, `max_restarts` tiene como valor predeterminado 0. Configurar reinicios vuelve a ejecutar el constructor; no restaura automáticamente el estado de la aplicación. Diseña los checkpoints y la recuperación por separado, y distingue la concurrencia/ordenación síncrona, async y mediante threads de los actors.
+Esto no es almacenamiento duradero automático. En 2.58.0, `max_restarts` tiene como valor predeterminado 0. Configurar reinicios vuelve a ejecutar el constructor; no restaura automáticamente el estado de la aplicación. Diseña los checkpoints y la recuperación por separado, y distingue la concurrencia y el orden de ejecución de los actors síncronos, asíncronos y multihilo.
 
 ### Object Store
 
-Los valores remotos son inmutables y pueden almacenarse o replicarse en object stores locales de cada nodo. Las referencias a un valor no hacen que todos los nodos compartan una región de memoria física. El acceso entre nodos puede implicar costes de transporte y serialización.
+Los valores remotos son inmutables y pueden almacenarse o replicarse en almacenes de objetos locales de cada nodo. Las referencias a un valor no hacen que todos los nodos compartan una región de memoria física. El acceso entre nodos puede implicar costos de transporte y serialización.
 
 **Los arrays de NumPy en el mismo nodo** pueden leerse mediante vistas de memoria compartida de solo lectura. Cópialos antes de modificarlos. Esto no implica comportamiento de copia cero para todos los objetos de Python, transferencias entre nodos ni tensores de GPU/pesos de modelos. Los valores pequeños y grandes también pueden usar rutas de transferencia diferentes.
 
@@ -96,9 +96,9 @@ Los recursos lógicos de CPU/GPU guían la admisión y la programación. `num_cp
 
 El GCS está en memoria de forma predeterminada; la recuperación después de un fallo del head requiere una configuración adicional de backend durable. La documentación de 2.58.0 distingue Redis externo compatible de RocksDB integrado **alpha**. Recuperar los metadatos del GCS no restaura el estado de la aplicación de cada actor ni el valor de cada objeto.
 
-La recuperación de objetos depende de la propiedad, el lineage y la elegibilidad para reintento/reconstrucción. No equipares los valores de `ray.put()` con las salidas de tasks recomputables, ni el object spilling con una copia de seguridad a largo plazo.
+La recuperación de objetos depende de la propiedad, el linaje y la posibilidad de reintentar o reconstruirlos. No equipares los valores de `ray.put()` con las salidas de tasks recomputables, ni el volcado de objetos con una copia de seguridad a largo plazo.
 
-Train, Tune y Serve reutilizan Core mientras añaden políticas como checkpoints de entrenamiento, programación de trials y controllers de serving. Los colectivos del framework y otras comunicaciones de entrenamiento no pueden describirse todos como tráfico a través de una única ruta de object store.
+Train, Tune y Serve reutilizan Core mientras añaden políticas como checkpoints de entrenamiento, programación de experimentos y controllers de serving. Las operaciones colectivas del framework y otras comunicaciones de entrenamiento no pueden describirse todas como tráfico por una única ruta del almacén de objetos.
 
 ## Por qué esto es importante en Kubernetes
 

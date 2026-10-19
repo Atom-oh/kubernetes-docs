@@ -1,7 +1,7 @@
 # Instalación de ArgoCD
 
 > **Línea base de revisión**: Argo CD 3.5.2 / Helm Chart 10.8.4; las versiones fijadas para los manifiestos y la CLI se actualizaron a la versión de parche 3.5.5 tras revisar las notas de la versión (no se volvieron a ejecutar los ejemplos)
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenido
 - [Requisitos previos](#prerequisites)
@@ -17,7 +17,7 @@
 
 Esta guía explica una instalación autogestionada. Argo CD administrado por EKS utiliza procesos separados para crear, autorizar y configurar capacidades; no superponga allí una instalación autogestionada. Consulte la [tabla de compatibilidad general](README.md) y los períodos de soporte de EKS. La versión mínima de kubeVersion de un chart no garantiza que se haya probado ni que tenga soporte.
 
-Tener permiso para crear un namespace no demuestra que se tengan permisos para CRD, ClusterRoles y enlaces. Compruebe el contexto y la autorización reales. El paquete de alta disponibilidad requiere al menos tres nodos para la antiafinidad. Mida el uso de CPU y memoria según la escala de las aplicaciones, los clústeres y los repositorios; no siempre se requiere un PVC de Redis fijo de 10/50 GB.
+Tener permiso para crear un namespace no demuestra que se tengan permisos para crear CRD, ClusterRoles y sus vinculaciones (bindings). Compruebe el contexto y la autorización reales. El paquete de alta disponibilidad requiere al menos tres nodos para la antiafinidad. Mida el uso de CPU y memoria según la escala de las aplicaciones, los clústeres y los repositorios; no siempre se requiere un PVC de Redis fijo de 10/50 GB.
 
 ```bash
 kubectl version --client
@@ -357,7 +357,7 @@ Una anotación de IAM por sí sola no configura las integraciones de AWS ni la r
 | Desplegar en otra API de EKS | Controller y rol de administración requerido de ApplicationSet/Server → AssumeRole de destino → EKS Access Entry/RBAC |
 | Leer fuentes OCI/Helm | Autenticación de registro, proveedor de credenciales y renovación de tokens del Repo Server real |
 | Detectar imágenes/actualizar Git | Image Updater independiente |
-| Leer Secrets Manager | Rol de la persona que realmente realiza la llamada a AWS, como External Secrets |
+| Leer Secrets Manager | Rol de la identidad que realmente realiza la llamada a AWS, como External Secrets |
 | Obtener imágenes de Pod | Rol del nodo o rol de ejecución de Fargate |
 
 IRSA requiere un proveedor OIDC y una relación de confianza restringida por aud/sub; Pod Identity requiere el agente, la asociación y un SDK compatible. Limite la confianza de destino y los permisos AssumeRole del rol de administración a los ARN previstos. Configure por separado las entradas de acceso de EKS de destino, la autorización del namespace y la conectividad con la API. Si es necesario, vuelva a crear los Pods afectados después de cambiar la identidad de la carga de trabajo.
@@ -427,7 +427,7 @@ Prefiera las comprobaciones de estado integradas para los recursos compatibles, 
 
 ### Credenciales del repositorio
 
-Estos ejemplos aprovisionan Secrets a partir de archivos protegidos. Proporcione usuarios/repositorios/ID de aplicaciones reales y solo los permisos de lectura necesarios. No confirme tokens, claves privadas ni Secrets codificados en base64 en Git. Use un único responsable, como External Secrets, para la rotación continua.
+Estos ejemplos aprovisionan Secrets a partir de archivos protegidos. Proporcione usuarios/repositorios/ID de aplicaciones reales y solo los permisos de lectura necesarios. No incluya en commits de Git tokens, claves privadas ni Secrets codificados en base64. Use un único responsable, como External Secrets, para la rotación continua.
 
 #### Plantilla de credenciales HTTPS
 

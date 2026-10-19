@@ -29,8 +29,8 @@ y la red/capacidad de EKS. Prepare el esquema y el usuario de la base de datos, 
 el URI de conexión/TLS probado y las políticas de copia de seguridad/retención. KEDA solo se necesita para el
 perfil de escalado de Celery.
 
-Los valores de abajo hacen referencia a Secrets en lugar de incluir contraseñas. Guarde el URI de la base de datos
-en una sola línea dentro de un archivo protegido y codifique con URI los caracteres reservados en las contraseñas
+Los siguientes valores hacen referencia a Secrets en lugar de incluir contraseñas. Guarde el URI de la base de datos
+en una sola línea dentro de un archivo protegido y codifique en formato URI los caracteres reservados en las contraseñas
 y otros campos. Use TLS verificado para RDS u otras bases de datos remotas. Cualquier ruta de sslrootcert
 debe ser legible por el cliente real de la base de datos. **KEDA también es un
 cliente de base de datos**: la configuración de CA, DNS, red y acceso solo para Airflow es insuficiente.
@@ -125,7 +125,7 @@ los resultados y los registros.
 ### Usuario inicial
 
 createUserJob está habilitado de forma predeterminada y puede crear admin/admin, por lo que este perfil lo deshabilita.
-Los valores actuales están en createUserJob.defaultUser; webserver.defaultUser es
+La configuración actual se define en createUserJob.defaultUser; webserver.defaultUser es
 una ruta de compatibilidad. En lugar de guardar una contraseña en values.yaml o Helm --set,
 use este comando interactivo para el administrador de autenticación FAB seleccionado. Otros administradores de autenticación
 o SSO requieren sus propios procedimientos de gestión de usuarios.
@@ -239,7 +239,7 @@ límites de los nodos. Con persistence=false, este perfil tiene como objetivo un
 persistence=true puede producir un StatefulSet, que KEDA también admite.
 
 Los valores predeterminados reales del chart son pollingInterval=5s y cooldownPeriod=30s. El ejemplo
-**elige explícitamente 10s/300s**. El cooldown controla el escalado a cero; distíngalo del sondeo/estabilización de HPA por encima de cero.
+**elige explícitamente 10s/300s**. El cooldown controla el escalado a cero; distíngalo del sondeo o la estabilización de HPA cuando hay más de cero réplicas.
 El sondeo real de la base de datos también depende de la actividad de KEDA, las solicitudes de HPA y el almacenamiento en caché de métricas, no de un intervalo universal exacto de 10 segundos.
 
 Este perfil genera la siguiente consulta de PostgreSQL:

@@ -1,55 +1,28 @@
-# EKS Networking - Part 2: Services, Load Balancing, and Network Policies
+# EKSネットワーキング - パート2: Service、負荷分散、ネットワークポリシー
 
-## Overview
+> **検証済み例のバージョン**: EKS Kubernetes 1.36、AWS Load Balancer Controller 3.6.0、Gateway API 1.6.0
+> **最終更新**: 2026年10月16日
 
-このドキュメントでは、Amazon EKS における services（サービス）、load balancing、および network policies について学びます。Kubernetes services を通じて applications を公開する方法、AWS load balancers との統合、そして network policies を使用して pod 間通信を制御する方法を扱います。
+## 概要
 
-## Kubernetes Service Types
+このドキュメントでは、Amazon EKSにおけるService、負荷分散、ネットワークポリシーを説明します。Kubernetes Serviceを使ったアプリケーションの公開、AWSロードバランサーとの統合、NetworkPolicyを使ったPod間通信の制御を扱います。
 
-Kubernetes は次の service types を提供します。
+## Kubernetes Serviceの種類
 
-```mermaid
-flowchart TD
-    subgraph Service_Types ["Kubernetes Service Types"]
-        ClusterIP[ClusterIP<br>Accessible only within the cluster]
-        NodePort[NodePort<br>Accessible through a specific port on all nodes]
-        LoadBalancer[LoadBalancer<br>Accessible through an external load balancer]
-        ExternalName[ExternalName<br>Provides CNAME record for external services]
-    end
+Kubernetesには次のService typeがあります。
 
-    subgraph Access_Methods ["Access Methods"]
-        Internal[Within cluster]
-        Node_Access[Node IP:Port]
-        External_LB[External load balancer]
-        DNS[DNS CNAME]
-    end
+![4種類のKubernetes Service（ClusterIP、NodePort、LoadBalancer、ExternalName）と、それぞれが提供するアクセス方法を示します。クラスター内部アクセス、Node経由の公開、外部ロードバランサー、外部サービスを指すDNS CNAMEに対応します。](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
 
-    ClusterIP --> Internal
-    NodePort --> Node_Access
-    LoadBalancer --> External_LB
-    ExternalName --> DNS
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-0.html)
 
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ClusterIP,NodePort,LoadBalancer,ExternalName k8sComponent;
-    class External_LB awsService;
-    class Internal,Node_Access,DNS default;
-```
-
-1. **ClusterIP**: cluster 内からのみアクセス可能な Service
-2. **NodePort**: すべての nodes 上の特定の port を通じてアクセス可能な Service
-3. **LoadBalancer**: external load balancer を通じてアクセス可能な Service
-4. **ExternalName**: external services のための CNAME record を提供します
+1. **ClusterIP**: クラスター内ルーティング用のService仮想IPです。認可境界ではありません。
+2. **NodePort**: 対象Nodeアドレスと割り当てportを通じて公開します。ルーティングとfirewall ruleの影響を受けます。
+3. **LoadBalancer**: インストール済みロードバランサー実装が調整するServiceです。ロードバランサーをinternalにすることもできます。
+4. **ExternalName**: 外部Serviceを指すCNAMEレコードを提供します。
 
 ### ClusterIP Service
 
-ClusterIP service は cluster 内からのみアクセス可能です。これはデフォルトの service type です。
+ClusterIPがデフォルトtypeです。仮想IPはクラスター内ネットワーク用で、namespace分離や認証を実施するものではありません。headless Service（`clusterIP: None`）は代わりにDNS経由でendpoint addressを公開します。
 
 ```yaml
 apiVersion: v1
@@ -67,7 +40,7 @@ spec:
 
 ### NodePort Service
 
-NodePort service は、すべての nodes 上の特定の port を通じてアクセス可能です。
+NodePortは通常、設定済みNode addressと30000–32767（デフォルト範囲）のportを使います。実際の到達性はNode readiness、service-proxy設定、`externalTrafficPolicy`、route、security ruleによって決まります。単一Serviceのために範囲全体を開く必要はありません。
 
 ```yaml
 apiVersion: v1
@@ -86,25 +59,30 @@ spec:
 
 ### LoadBalancer Service
 
-LoadBalancer service は external load balancer を通じてアクセス可能です。EKS では、これは AWS load balancers（CLB、NLB、ALB）と統合されます。
+インストール済みcontrollerがこのServiceを調整します。例ではLBCを明示的に選び、Pod IPをtargetとするinternal NLBを作成します。ALBはIngressまたはALB Gatewayで設定します。EKS Auto Modeでは`eks.amazonaws.com/nlb`と固有の対応設定を使います。同じ`my-service`の2つのバージョンを同時に適用しないでください。
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: my-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
   selector:
     app: my-app
   ports:
   - port: 80
     targetPort: 8080
-  type: LoadBalancer
 ```
 
 ### ExternalName Service
 
-ExternalName service は external services のための CNAME record を提供します。
+ExternalName Serviceは外部Serviceを指すCNAMEレコードを提供します。通信のproxy、TLS、port、firewall accessの設定は行いません。HTTP Host headerと証明書名は引き続き宛先に一致させる必要があります。
 
 ```yaml
 apiVersion: v1
@@ -116,209 +94,81 @@ spec:
   externalName: my-service.example.com
 ```
 
-## AWS Load Balancer Integration
+## AWSロードバランサーとの統合
 
-EKS は Kubernetes services を AWS load balancers と統合し、applications を外部からアクセス可能にします。
+EKSはKubernetes ServiceとAWSロードバランサーを統合し、アプリケーションをクラスター外から利用できるようにします。
 
-```mermaid
-flowchart TD
-    subgraph Internet ["Internet"]
-        Users((Users))
-    end
+<!-- Diagram repair pending: see batch report.
+![EKSクラスターでユーザーがClassic、Network、Application Load Balancerへ接続する構成です。CLBとNLBはLoadBalancer Serviceに直接接続し、ALBはIngress resourceを経由してNodePort Serviceへルーティングします。どちらのServiceもクラスター内Podへ通信を転送します。](../.gitbook/assets/en-eks-03-eks-networking-part2-1.png)
 
-    subgraph AWS_Cloud ["AWS Cloud"]
-        subgraph Load_Balancers ["AWS Load Balancers"]
-            CLB[Classic Load Balancer]
-            NLB[Network Load Balancer]
-            ALB[Application Load Balancer]
-        end
-
-        subgraph EKS_Cluster ["EKS Cluster"]
-            subgraph Services ["Kubernetes Services"]
-                Service1[LoadBalancer Service]
-                Service2[NodePort Service]
-                Ingress[Ingress Resource]
-            end
-
-            subgraph Pods ["Pods"]
-                Pod1[Pod 1]
-                Pod2[Pod 2]
-                Pod3[Pod 3]
-            end
-        end
-    end
-
-    Users --> CLB
-    Users --> NLB
-    Users --> ALB
-    CLB --> Service1
-    NLB --> Service1
-    ALB --> Ingress
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service1 --> Pod2
-    Service2 --> Pod3
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CLB,NLB,ALB awsService;
-    class Service1,Service2,Ingress k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Users default;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-1.html)
+-->
 
 ### Classic Load Balancer (CLB)
 
-デフォルトでは、`type: LoadBalancer` に設定された services は Classic Load Balancer を作成します。ただし、CLB は現在は推奨されておらず、NLB または ALB の使用が推奨されます。
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: my-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: LoadBalancer
-```
+従来のAWS service-controller経路ではCLBを作成する場合がありました。これは現行LBCのデフォルトではありません。LBC 2.5以降は通常、新規LoadBalancer ServiceにNLB classを割り当てます。既存Serviceを移行する前に実controller、class、resource ownershipを確認してください。ownership annotationをその場で変更するとresource漏れや公開範囲の変化が起きる場合があります。
 
 ### Network Load Balancer (NLB)
 
-NLB を使用するには、service に特定の annotations を追加する必要があります。
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb
-spec:
-  selector:
-    app: my-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: LoadBalancer
-```
-
-追加の NLB configuration options は次のとおりです。
-
+上の明示的なNLB例を使います。以下はそのServiceへマージする**annotation断片**であり、単独manifestではありません。
 ```yaml
 metadata:
   annotations:
-    # Create internal NLB
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-
-    # Enable cross-zone load balancing
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-
-    # Specify target type (instance or ip)
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
     service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-
-    # Enable TCP proxy protocol
-    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
 ```
+`aws-load-balancer-nlb-target-type`はtarget typeを選択します。`preserve_client_ip.enabled`が変えるのは送信元IPの扱いで、target typeではありません。Cross-zone balancingはcapacity、可用性、費用を踏まえて決めてください。ゾーンごとのtargetと障害時の動作を確認します。Proxy Protocol v2は任意ですが、backend側にparserが必要です。通常のHTTP serverで有効にするとrequestが壊れる場合があります。
 
 ### Application Load Balancer (ALB)
 
-ALB を使用するには、AWS Load Balancer Controller をインストールし、Ingress resources を使用する必要があります。
+ALBを使うにはAWS Load Balancer Controllerをインストールし、Ingress resourceを使います。
 
-```mermaid
-flowchart TD
-    subgraph AWS_Cloud ["AWS Cloud"]
-        subgraph VPC ["VPC"]
-            subgraph Public_Subnets ["Public Subnets"]
-                ALB[Application Load Balancer]
-            end
+![Internet trafficがpublic subnet内のApplication Load Balancerへ届きます。AWS Load Balancer Controllerはprivate subnetのEKSクラスターでIngress resourceからALBを作成・設定します。IngressはService 1とService 2、および各ServiceのPodへrouteします。](../.gitbook/assets/en-eks-03-eks-networking-part2-2.png)
 
-            subgraph Private_Subnets ["Private Subnets"]
-                subgraph EKS_Cluster ["EKS Cluster"]
-                    ALBIC[AWS Load Balancer Controller]
-                    Ingress[Ingress Resource]
-                    Service1[Service 1]
-                    Service2[Service 2]
-                    Pod1[Pod 1]
-                    Pod2[Pod 2]
-                end
-            end
-        end
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-2.html)
 
-    Internet((Internet)) --> ALB
-    ALB --> Ingress
-    ALBIC --> ALB
-    Ingress --> Service1
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service2 --> Pod2
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ALB,Public_Subnets,Private_Subnets awsService;
-    class ALBIC,Ingress,Service1,Service2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Internet default;
-```
-
-1. AWS Load Balancer Controller をインストールします。
-
+1. platform ownerとcontrollerを準備します。以下のcommandは固定IAM policyを取得して固定chartをrenderしますが、IAM trustは設定しません。まず、review済みPod Identity associationまたはIRSA role/OIDC trust、およびrelease policyを設定した`kube-system/aws-load-balancer-controller` ServiceAccountを用意します。既存installationは元のHelm/IaC ownershipを維持してください。subnet discovery、API/Webhook接続、利用可能なkubeconfigも確認します。
 ```bash
-# Download IAM policy
-curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
-
-# Create IAM policy
-aws iam create-policy \
-  --policy-name AWSLoadBalancerControllerIAMPolicy \
-  --policy-document file://iam-policy.json
-
-# Create IAM role and attach policy (using eksctl)
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --attach-policy-arn=arn:aws:iam::123456789012:policy/AWSLoadBalancerControllerIAMPolicy \
-  --approve
-
-# Add Helm repository
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${AWS_REGION:?Set the cluster Region}"
+: "${VPC_ID:?Set the cluster VPC ID}"
+curl --fail --show-error --location \
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json \
+  --output lbc-iam-policy-v3.6.0.json
 helm repo add eks https://aws.github.io/eks-charts
-helm repo update
-
-# Install AWS Load Balancer Controller
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=my-cluster \
+helm repo update eks
+helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --version 3.6.0 --namespace kube-system \
+  --set-string clusterName="$CLUSTER_NAME" \
+  --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
   --set serviceAccount.create=false \
-  --set serviceAccount.name=aws-load-balancer-controller
+  --set-string serviceAccount.name=aws-load-balancer-controller \
+  > lbc-rendered.yaml
 ```
-
-2. Ingress resource を作成します。
-
+render済みresourceをreviewしIAM前提条件を満たしてから、クラスターに変更を適用します。CRDは文書化されたrelease手順でupgradeしてください。Helm upgradeだけではすべてのCRDが自動upgradeされません。
+```bash
+helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --version 3.6.0 --namespace kube-system \
+  --set-string clusterName="$CLUSTER_NAME" \
+  --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
+  --set serviceAccount.create=false \
+  --set-string serviceAccount.name=aws-load-balancer-controller
+kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=180s
+```
+2. `spec.ingressClassName: alb`を指定したIngressを作成します。追加のload balancerを作らないよう、最初の例の**ClusterIP** `my-service`をbackendとして使います。選択されるPodが実際に8080でlistenしている必要があります。上図は論理的な設定を示します。trafficはIngress API objectやcontroller Podを経由しません。
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -330,129 +180,58 @@ spec:
             port:
               number: 80
 ```
-
-追加の ALB configuration options は次のとおりです。
-
+HTTPSでは、この断片をIngressにマージし、ACM ARNとsecurity groupを同一Region/VPCの実resourceに置き換えます。custom frontend SGは自分で設定してください。backend ruleを管理するかは別の選択です。action annotationを参照しない限り、それだけではredirectは追加されません。下の`ssl-redirect`は文書化された簡易設定です。
 ```yaml
 metadata:
   annotations:
-    # Create internal ALB
-    alb.ingress.kubernetes.io/scheme: internal
-
-    # Specify SSL certificate
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
-
-    # HTTPS redirect
-    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": {"Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
-
-    # Specify target type (instance or ip)
-    alb.ingress.kubernetes.io/target-type: ip
-
-    # Specify security groups
-    alb.ingress.kubernetes.io/security-groups: sg-xxxx,sg-yyyy
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/00000000-0000-4000-8000-000000000000
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
 ```
 
-### Service and Load Balancer Best Practices
+### Serviceとロードバランサーのベストプラクティス
 
-```mermaid
-flowchart TD
-    A[Service and Load Balancer Best Practices] --> B[Use ClusterIP for internal services]
-    A --> C[Use LoadBalancer or Ingress for external services]
-    A --> D[Use ALB when path-based routing, SSL termination, authentication are needed]
-    A --> E[Use NLB when TCP/UDP traffic, high performance, static IP are needed]
-    A --> F[Use internal load balancers for services accessed only within the cluster]
-    A --> G[Enable cross-zone load balancing for high availability]
-    A --> H[Select appropriate target type]
+<!-- Diagram repair pending: see batch report.
+![EKS上のServiceとロードバランサーに関する5つの実践項目です。内部ServiceにはClusterIP、外部公開にはLoadBalancerまたはIngress、path routingとSSL終端にはALB、TCP/UDPとstatic IPにはNLB、用途に合ったinternal設定やtarget typeを選びます。](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-3.html)
+-->
 
-    %% Class application
-    class A,B,C,D,E,F,G,H default;
+1. **内部ServiceにClusterIPを使う**: クラスター内だけからアクセスするServiceにはClusterIP typeを使います。
+2. **外部ServiceにLoadBalancerまたはIngressを使う**: 外部アクセスが必要なServiceにはLoadBalancer typeまたはIngress resourceを使います。
+3. **ALBを使う**: path-based routing、SSL終端、認証などの機能が必要な場合にALBを使います。
+4. **NLBを使う**: TCP/UDP traffic、高性能、static IPが必要な場合にNLBを使います。
+5. **internal load balancerを使う**: 接続済みVPCや許可されたオンプレミスを含むprivate route clientにはinternal load balancerを使います。クラスター内clientには通常ClusterIPで十分です。
+6. **cross-zone balancingを有効にする**: cross-zoneの動作をtarget capacity、ゾーン障害テスト、転送費用と照らして評価します。有効にするだけで高可用性が保証されるわけではありません。
+7. **適切なtarget typeを選ぶ**: Pod IPを直接targetにする場合は`ip`、Node IPをtargetにする場合は`instance`を選択します。
+
+## NetworkPolicy
+
+NetworkPolicyはenforcement実装が有効な場合、選択したPodと方向に対するL3/L4 trafficをfilterします。Amazon VPC CNIは、対応するEC2/Linux構成でnative network-policy機能を備えています。必ずしも別のCNIをインストールする必要はありません。[AWSガイド](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)で、正確なadd-on版、kernel/compute制限、standard/strict mode、managed Pod要件を確認してください。
+
+<!-- Diagram repair pending: see batch report.
+![EKSクラスターの4つのNetworkPolicyを示します。外部traffic policyはfrontend Podへの入力元を制限し、Pod通信policyはfrontendからbackendへのTCP 80だけを許可します。egress policyはbackend Podからdatabase PodのTCP 5432と外部HTTPS 443だけを許可し、namespace分離policyは2つのnamespaceにある全Podへ適用します。](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)
+
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-4.html)
+-->
+
+### NetworkPolicy実装の選択
+
+EKS管理のVPC CNI add-onでは、`describe-addon-configuration`を確認し、既存設定の無関係な項目を維持したうえで、add-on ownerを通じて以下の断片をマージします。policy objectの存在だけでなく、TCP通信を許可する場合と拒否する場合の両方を試してenforcementを検証します。
+```json
+{"enableNetworkPolicy":"true"}
 ```
+Calicoは代替policy engineです。VPC CNIと組み合わせる場合は、`cni.type: AmazonVPC`、Pod IP annotationの権限、版の互換性を含む[公式EKS policy-only手順](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)に従ってください。VPC CNIのnative enforcementを同時に有効にしないでください。既存VPC CNIクラスターへVXLAN networking manifestを適用してもpolicy-only installationにはなりません。ネットワークを置き換えるには別途migration設計が必要です。
 
-1. **内部 services には ClusterIP を使用**: cluster 内からのみアクセスされる services には ClusterIP type を使用します。
-2. **external services には LoadBalancer または Ingress を使用**: 外部アクセスが必要な services には LoadBalancer type または Ingress resources を使用します。
-3. **ALB を使用**: path-based routing、SSL termination、authentication などの機能が必要な場合は ALB を使用します。
-4. **NLB を使用**: TCP/UDP traffic、高性能、および static IP が必要な場合は NLB を使用します。
-5. **internal load balancers を使用**: cluster 内からのみアクセスされる services には internal load balancers を使用します。
-6. **cross-zone load balancing を有効化**: high availability のために cross-zone load balancing を有効にします。
-7. **適切な target type を選択**: pod IPs を直接 targets として使用するには `ip` target type を選択し、node IPs を targets として使用するには `instance` target type を選択します。
+### デフォルトNetworkPolicy
 
-## Network Policies
+選択するNetworkPolicyがなければ、その方向についてPodはisolationされません。route、security group、その他の制御は引き続き適用されます。Ingressとegressは別々にisolationされ、一致する複数policyの許可は加算されます。両方向がisolationされる場合は、送信元のegressと宛先のingressの両方が接続を許可する必要があります。応答trafficは暗黙に許可されます。以下は組み合わせて全体を狭めるpolicy例ではありません。後述のnamespace全体向けingress許可は、後のfrontend限定例が制限する想定のtrafficも許可します。
 
-Network policies は pod 間通信を制御するために使用されます。EKS で network policies を使用するには、network policies をサポートする CNI plugin（例: Calico、Cilium）をインストールする必要があります。
+### Namespace分離policy
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["EKS Cluster"]
-        subgraph Network_Policies ["Network Policies"]
-            NP1[Namespace Isolation Policy]
-            NP2[Specific Pod Communication Allow Policy]
-            NP3[External Traffic Restriction Policy]
-            NP4[Egress Traffic Restriction Policy]
-        end
-
-        subgraph Namespaces ["Namespaces"]
-            subgraph NS1 ["Namespace 1"]
-                Pod1[Frontend Pod]
-                Pod2[Backend Pod]
-            end
-
-            subgraph NS2 ["Namespace 2"]
-                Pod3[Database Pod]
-            end
-        end
-
-        NP1 --> NS1
-        NP1 --> NS2
-        NP2 --> Pod1
-        NP2 --> Pod2
-        NP3 --> Pod1
-        NP4 --> Pod2
-        Pod1 --> Pod2
-        Pod2 --> Pod3
-    end
-
-    External((External Services)) --> Pod1
-    Pod2 --> External
-
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class NP1,NP2,NP3,NP4,NS1,NS2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Pod3 dataStore;
-    class External default;
-```
-
-### Installing Calico
-
-Calico は、EKS で network policies を実装するために広く使用されている CNI plugin です。
-
-```bash
-# Install Calico
-kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-
-# Check Calico status
-kubectl get pods -n kube-system -l k8s-app=calico-node
-```
-
-### Default Network Policy
-
-デフォルトでは、network policies がない場合、すべての pods は互いに通信できます。network policies が適用されると、明示的に許可された traffic のみが許可されます。
-
-### Namespace Isolation Policy
-
-特定の namespace 内の pods 間でのみ通信を許可する policy:
+このpolicyは`my-namespace`の全Podを選択し、**ingressだけ**をisolationします。同一namespaceからの全port ingressを許可し、egressは制限しません。先にnamespaceと対象workload labelを作成してください。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -469,9 +248,9 @@ spec:
     - podSelector: {}
 ```
 
-### Specific Pod Communication Allow Policy
+### 特定Pod間の通信許可policy
 
-特定の labels を持つ pods 間でのみ通信を許可する policy:
+特定labelを持つPod間の通信だけを許可するpolicyです。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -495,9 +274,9 @@ spec:
       port: 80
 ```
 
-### External Traffic Restriction Policy
+### 外部traffic制限policy
 
-特定の IP ranges からの traffic のみを許可する policy:
+source CIDRからのingressを許可する例です。他の加算的なpolicyも適用されます。評価対象はpolicy enforcement pointで見えるsource IPです。NAT、NodePort、load balancerによりIPが変わる場合があります。frontend load balancerのSGやWAF ruleの代わりにはなりません。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -522,9 +301,9 @@ spec:
       port: 80
 ```
 
-### Egress Traffic Restriction Policy
+### Egress traffic制限policy
 
-特定の destinations への egress traffic のみを許可する policy:
+特定宛先だけにegressを許可するpolicyです。`203.0.113.0/24`は文書用範囲なので、承認済みの実外部宛先に置き換えてください。DNS許可は通常のCoreDNS Podを前提としており、NodeLocal DNSなど別設計では変更が必要です。`0.0.0.0/0`からRFC1918範囲を除外しても、特定の外部Serviceを指定できず、instance metadataを確実に保護できるわけでもありません。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -548,138 +327,143 @@ spec:
       port: 5432
   - to:
     - ipBlock:
-        cidr: 0.0.0.0/0
-        except:
-        - 10.0.0.0/8
-        - 172.16.0.0/12
-        - 192.168.0.0/16
+        cidr: 203.0.113.0/24
     ports:
     - protocol: TCP
       port: 443
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
-### Network Policy Best Practices
+### NetworkPolicyのベストプラクティス
 
-```mermaid
-flowchart TD
-    A[Network Policy Best Practices] --> B[Apply default deny policy]
-    A --> C[Namespace isolation]
-    A --> D[Apply principle of least privilege]
-    A --> E[Restrict egress traffic]
-    A --> F[Test policies]
+![Kubernetes NetworkPolicyの5つの実践項目です。default deny、namespace分離、最小権限、egress traffic制限、適用前のpolicy testを行います。](../.gitbook/assets/en-eks-03-eks-networking-part2-5.png)
 
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-5.html)
 
-    %% Class application
-    class A,B,C,D,E,F default;
-```
-
-1. **default deny policy を適用**: デフォルトですべての traffic を拒否し、必要な traffic のみを明示的に許可します。
-2. **Namespace isolation**: namespaces 間の通信を制限することで security を強化します。
-3. **least privilege の原則を適用**: 必要最小限の通信のみを許可します。
-4. **egress traffic を制限**: pods から外部へ出ていく traffic を制限することで security を強化します。
-5. **policies をテスト**: 意図しない通信遮断を防ぐため、network policies を適用する前にテストします。
+1. **default deny policyを適用する**: 既定ですべてのtrafficを拒否し、必要なtrafficだけ明示的に許可します。
+2. **namespaceを分離する**: namespace間通信を制限してセキュリティを高めます。
+3. **最小権限の原則を適用する**: 必要最小限の通信だけを許可します。
+4. **egress trafficを制限する**: Podから外部へ向かうtrafficを制限します。
+5. **policyをテストする**: 意図しない通信遮断を防ぐため、適用前にNetworkPolicyをテストします。
 
 ---
 
 ## Gateway API
 
-> **Supported Versions**: AWS Load Balancer Controller v2.13.0+
-> **最終更新**: February 19, 2026
+### 概要
 
-### Overview
+Gateway APIではインフラ所有者（GatewayClass/Gateway）とアプリケーションrouteを分離します。LBCでは**ALB GatewayとNLB Gatewayを分けます**。1つのGatewayでL4とL7のrouteを混在できません。controllerが文書化する機能範囲内で、ALBはHTTPRoute/GRPCRoute、NLBはTCPRoute/UDPRoute/TLSRouteをサポートします。
 
-Gateway API は、従来の Ingress resources の制限を克服し、より豊富な routing capabilities を提供する Kubernetes の次世代 service networking API です。AWS Load Balancer Controller は Gateway API をサポートしており、Gateway resources を通じて L4（NLB）および L7（ALB）の routing configuration を有効にします。
+<!-- Diagram repair pending: see batch report.
+![GatewayClassがGatewayを設定し、L7 traffic用ALBのHTTPRouteとL4 traffic用NLBのTCPRouteへ分岐します。HTTPRouteはService A/Bへ分散し、TCPRouteはService Cへ転送します。](../.gitbook/assets/en-eks-03-eks-networking-part2-6.png)
 
-```mermaid
-flowchart TD
-    GC[GatewayClass] --> GW[Gateway]
-    GW --> HR[HTTPRoute - L7/ALB]
-    GW --> TR[TCPRoute - L4/NLB]
-    HR --> SVC1[Service A]
-    HR --> SVC2[Service B]
-    TR --> SVC3[Service C]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-6.html)
+-->
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    class GC,GW,HR,TR k8sComponent;
-    class SVC1,SVC2,SVC3 awsService;
-```
+### 前提条件
 
-### Prerequisites
-
-1. **AWS Load Balancer Controller v2.13.0 以降**: インストール済みであること
-2. **Feature Gates の有効化**: controller をデプロイするときに `--feature-gates=EnableGatewayAPI=true` flag を追加します
-3. **Gateway API CRDs のインストール**:
-
+例はLBC **3.6.0**と、そのreleaseが示すGateway API **1.6.0**を対象とします。3.6.0は3.5.0と同じGateway API 1.6.0 CRDを使いますが、release noteではcontroller upgrade前にAWS提供の最新CRD（chart CRDとLBC Gateway CRD）の適用を求めています。以前のL4対応は2.13.3、L7は2.14.0からです。「2.13以降はすべて対応」は誤りです。3.6.0ではcontrollerがCRDを検出し、`NLBGatewayAPI`/`ALBGatewayAPI`をデフォルトで有効にします。`EnableGatewayAPI` gateはありません。TCPRouteとUDPRouteは標準channelのv1 resourceです。古いexperimental CRDをそのままインストールしないでください。
 ```bash
-# Install Standard CRDs
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
-
-# Install Experimental CRDs (TCPRoute, etc.)
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
-
-# Install AWS LBC-specific CRDs
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/config/crd/gateway-api/crds.yaml
+set -euo pipefail
+curl --fail --show-error --location \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml \
+  --output gateway-standard-v1.6.0.yaml
+curl --fail --show-error --location \
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/config/crd/gateway/gateway-crds.yaml \
+  --output lbc-gateway-crds-v3.6.0.yaml
+```
+クラスター全体に及ぶこれらの更新を適用する前に、download内容と既存CRDのowner/stored versionを確認します。既存installationではrelease migration手順に従ってください。CRDがない状態でcontrollerが起動した場合は、CRD確立後にcontrollerを再起動または再調整します。
+```bash
+kubectl apply --server-side -f gateway-standard-v1.6.0.yaml
+kubectl apply --server-side -f lbc-gateway-crds-v3.6.0.yaml
+kubectl get crd gateways.gateway.networking.k8s.io \
+  tcproutes.gateway.networking.k8s.io udproutes.gateway.networking.k8s.io \
+  loadbalancerconfigurations.gateway.k8s.aws
 ```
 
-### GatewayClass and Gateway Setup
+### GatewayClassとGatewayの設定
 
-GatewayClass は load balancer の type を定義し、Gateway は実際の load balancer instance を表します。
-
+専用の`gateway-demo` namespaceと、名前付きbackend Service/ready workloadを先に作成します。ACM ARNとsource CIDRを置き換え、証明書をALBがそのRegionで利用できる状態にします。これは設定例であり、本番デプロイを実行したものではありません。参照先のデフォルトTargetGroupConfigurationはClusterIP backendでIP targetを使わせます。設定しなければcontrollerのデフォルトがNodePortを必要とするinstance targetになる場合があります。このLBC固有のHTTPS方式ではLoadBalancerConfiguration経由でACMを設定し、未対応の`tls.certificateRefs`は意図的に省いています。
 ```yaml
-# GatewayClass definition
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: amazon-alb
 spec:
   controllerName: gateway.k8s.aws/alb
-
 ---
-# Gateway definition (L7 - ALB)
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: ip-targets
+  namespace: gateway-demo
+spec:
+  defaultConfiguration:
+    targetType: ip
+---
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
+metadata:
+  name: alb-config
+  namespace: gateway-demo
+spec:
+  scheme: internal
+  sourceRanges:
+  - 10.0.0.0/16
+  defaultTargetGroupConfiguration:
+    name: ip-targets
+  listenerConfigurations:
+  - protocolPort: HTTPS:443
+    defaultCertificate: arn:aws:acm:us-west-2:123456789012:certificate/00000000-0000-4000-8000-000000000000
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: my-hotel-gateway
-  namespace: default
+  namespace: gateway-demo
 spec:
   gatewayClassName: amazon-alb
+  infrastructure:
+    parametersRef:
+      group: gateway.k8s.aws
+      kind: LoadBalancerConfiguration
+      name: alb-config
   listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
   - name: https
     protocol: HTTPS
     port: 443
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: my-tls-secret
+    hostname: app.example.com
+    allowedRoutes:
+      namespaces:
+        from: Same
 ```
 
-### HTTPRoute Example (L7 → ALB)
+### HTTPRouteの例（L7 → ALB）
 
-HTTPRoute は HTTP/HTTPS traffic を services に routing するための rules を定義します。Gateway にアタッチされた HTTPRoutes は、ALB を通じて traffic を分散します。
-
+90/10のweightは`/api`に一致する対象requestに適用されます。正確なrequest数の保証でも、health-based failover policyでもありません。このrouteはhostnameが一致するHTTPS listenerにattachします。backend portにはService portを指定します。namespaceをまたぐroute/backendには、対応するallowedRoutes/ReferenceGrant設定が必要です。
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: app-route
-  namespace: default
+  namespace: gateway-demo
 spec:
   parentRefs:
   - name: my-hotel-gateway
-    sectionName: http
+    sectionName: https
   hostnames:
-  - "app.example.com"
+  - app.example.com
   rules:
   - matches:
     - path:
@@ -701,38 +485,54 @@ spec:
       port: 80
 ```
 
-### TCPRoute Example (L4 → NLB)
+### TCPRouteの例（L4 → NLB）
 
-TCPRoute は TCP traffic を処理し、NLB を通じて L4-level load balancing を提供します。
-
+この独立したinternal NLB Gatewayは`ip-targets`を再利用します。`postgres-service`が`gateway-demo`内に存在し、Serviceのtarget portでreadyかつroute可能なtargetを持つ必要があります。TCP listenerはbyteを転送しますが、database認証やTLS自体は設定しません。
 ```yaml
-# GatewayClass for NLB
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: amazon-nlb
 spec:
   controllerName: gateway.k8s.aws/nlb
-
 ---
-# NLB Gateway
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
+metadata:
+  name: nlb-config
+  namespace: gateway-demo
+spec:
+  scheme: internal
+  sourceRanges:
+  - 10.0.0.0/16
+  defaultTargetGroupConfiguration:
+    name: ip-targets
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: my-nlb-gateway
+  namespace: gateway-demo
 spec:
   gatewayClassName: amazon-nlb
+  infrastructure:
+    parametersRef:
+      group: gateway.k8s.aws
+      kind: LoadBalancerConfiguration
+      name: nlb-config
   listeners:
   - name: tcp
     protocol: TCP
     port: 5432
-
+    allowedRoutes:
+      namespaces:
+        from: Same
 ---
-# TCPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: db-route
+  namespace: gateway-demo
 spec:
   parentRefs:
   - name: my-nlb-gateway
@@ -743,108 +543,80 @@ spec:
       port: 5432
 ```
 
-### QUIC/HTTP3 Support
+### QUIC/HTTP3対応
 
-Gateway API を通じて作成された ALBs は、QUIC/HTTP3 protocol を自動的にサポートします。HTTPS listener が設定されている場合、ALB は QUIC protocol upgrades を自動的に処理します。
-
+ALB HTTPS listenerが自動的にHTTP/3へ対応する**わけではありません**。LBC 3.6.0で文書化されるQUICは、`listenerConfigurations[].quicEnabled`を使う**NLB UDP/TCP_UDP listener**向けです。IP targetとsecurity groupが関連付けられていないNLBが必要です。backend自身がQUIC/HTTP3を終端する必要があります。以下はUDP:443とUDPRouteを持つ別NLB Gateway用の設定部品で、ALB設定でも完全なdeploymentでもありません。SGなし設計を選ぶ前にtarget側securityとhealth checkを計画してください。
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
 metadata:
-  name: quic-gateway
-  annotations:
-    gateway.k8s.aws/quic-enabled: "true"
+  name: quic-config
+  namespace: gateway-demo
 spec:
-  gatewayClassName: amazon-alb
-  listeners:
-  - name: https
-    protocol: HTTPS
-    port: 443
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: tls-cert
+  scheme: internal
+  disableSecurityGroup: true
+  defaultTargetGroupConfiguration:
+    name: ip-targets
+  listenerConfigurations:
+  - protocolPort: UDP:443
+    quicEnabled: true
 ```
 
-### Certificate Discovery
+### 証明書の検出
 
-AWS Load Balancer Controller は 2 つの certificate discovery 方法をサポートしています。
+静的証明書には`LoadBalancerConfiguration.spec.listenerConfigurations[].defaultCertificate`を使い、追加ARNは`certificates`に指定します。secure listenerを使う場合は、listenerとattachされたrouteのhostnameから一致するACM証明書をLBCが検出する方法もあります。HTTPRouteだけではHTTPS listenerも証明書も作成されません。このLBC releaseはKubernetes Secretを指すGateway `certificateRefs`に対応していません。そのSecretを作成してもACMへimportされません。
 
-1. **Static certificate reference**: Gateway の `tls.certificateRefs` で直接指定します
-2. **Hostname-based auto-discovery**: HTTPRoute の `hostnames` field に基づいて、一致する certificates を ACM から自動的に検索します
+### Security Group
 
+デフォルトではLBCがfrontend/backend SG経路を管理します。custom frontend SGはLoadBalancerConfigurationで設定し、`gateway.k8s.aws/security-group-ids`は**使いません**。証明書、scheme、target設定を維持して以下の項目を`alb-config`へマージし、frontend ruleは別途設定してください。明示指定したfrontend SGに対する追加filterとして`sourceRanges`を使うことはできません。backend ruleの所有者を確認し、必要なtarget/health-check portのみ許可します。
 ```yaml
-# Hostname-based auto-discovery example
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
 metadata:
-  name: auto-cert-route
+  name: alb-config
+  namespace: gateway-demo
 spec:
-  parentRefs:
-  - name: my-gateway
-  hostnames:
-  - "secure.example.com"  # Auto-discovers matching certificate from ACM
-  rules:
-  - backendRefs:
-    - name: secure-service
-      port: 443
+  securityGroups:
+  - sg-0123456789abcdef0
+  manageBackendSecurityGroupRules: true
 ```
 
-### Security Groups
+### Out-of-Band Target Group
 
-Gateway API を通じて作成された load balancers には、security groups が自動的に作成されます。
-
-- **Frontend security group**: clients から load balancer への inbound traffic を許可します
-- **Backend security group**: load balancer から target pods への traffic を許可します
-
-custom security groups は、Gateway annotations を通じて指定することもできます。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: custom-sg-gateway
-  annotations:
-    gateway.k8s.aws/security-group-ids: sg-0123456789abcdef0,sg-0987654321fedcba0
-spec:
-  gatewayClassName: amazon-alb
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
-```
-
-### Out-of-Band Target Groups
-
-`TargetGroupName` backendRef を使用すると、既存の target groups を Gateway API routing に接続できます。これは、既存 infrastructure との統合や migration scenarios に役立ちます。
-
+LBC extensionではKubernetes TargetGroupBindingでなく、`group: ""`、`kind: TargetGroupName`、**既存AWS target-group名**を使います。登録、lifecycle、protocol、VPC、load balancerとの関連付け互換性は外部ownerの責任です。この例は前述のroot-path routeに代わるものです。同じlistenerに競合するroot matchを作成しないでください。
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: oob-route
+  namespace: gateway-demo
 spec:
   parentRefs:
-  - name: my-gateway
+  - name: my-hotel-gateway
+    sectionName: https
+  hostnames:
+  - app.example.com
   rules:
   - backendRefs:
-    - group: gateway.k8s.aws
-      kind: TargetGroupBinding
+    - group: ""
+      kind: TargetGroupName
       name: existing-target-group
+      weight: 1
 ```
 
-### Gateway API vs Ingress Comparison
+### Gateway APIとIngressの比較
 
-| Feature | Ingress | Gateway API |
-|---------|---------|-------------|
-| Routing Model | Host/Path based | Host/Path/Header/Query based |
-| Protocol Support | HTTP/HTTPS | HTTP, HTTPS, TCP, TLS, gRPC |
-| Traffic Splitting | Annotation based | Native weight-based |
-| Role Separation | Single resource | GatewayClass/Gateway/Route separation |
-| Extensibility | Limited via annotations | Extensible via Policy attachment |
-| L4 Load Balancing | Not supported | TCPRoute/UDPRoute supported |
+| 機能 | LBCのIngress | LBC 3.6.0のGateway API |
+|---|---|---|
+| routing | host/pathとcontroller annotation | HTTPRoute/GRPCRoute matchと対応extension |
+| L4 | 独立したNLB Serviceを使う | TCPRoute/UDPRoute/TLSRouteを使う独立NLB Gateway |
+| traffic split | 参照するweighted-forward action | route backendのweight |
+| ownership | IngressClassとIngress | GatewayClass、Gateway、Routeの役割 |
+| TLS証明書 | ACM annotation/検出 | ACM LoadBalancerConfiguration/検出。Secret certificateRefsなし |
+| portability | controller固有annotation | controller conformanceを確認。すべての標準filterに対応するわけではない |
 
-## Quiz
+公式資料: [LBC Gateway API](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/gateway/gateway/)、[LoadBalancerConfiguration](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/gateway/loadbalancerconfig/)、[Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)、[NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)。
 
-この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/eks/03-eks-networking-part2-quiz.md) に挑戦してください。
+## クイズ
+
+この章で学んだことを確認するには、[トピッククイズ](../quizzes/eks/03-eks-networking-part2-quiz.md)を試してください。

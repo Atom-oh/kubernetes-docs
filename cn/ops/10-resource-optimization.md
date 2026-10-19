@@ -1,6 +1,6 @@
 # 资源优化：requests、limits 与语言运行时
 
-> **最后更新**：October 16, 2026。示例已根据 Kubernetes 1.36 schemas、Java 21 / Spring Boot 4.1.1、Python 3.12 / Gunicorn 26.2.0、Node.js 24.22、Go 1.27.2 和 Rust 1.98 / Tokio 1.53.1 进行检查。
+> **最后更新**：2026年10月16日。示例已根据 Kubernetes 1.36 schemas、Java 21 / Spring Boot 4.1.1、Python 3.12 / Gunicorn 26.2.0、Node.js 24.22、Go 1.27.2 和 Rust 1.98 / Tokio 1.53.1 进行检查。
 
 不要仅根据语言名称或固定百分比来确定工作负载的资源配置。在有代表性的负载、启动、重启、GC 和故障条件下，测量吞吐量和延迟 SLO。将 requests、limits、副本数和运行时并发配置一起调整。示例百分比和阈值是测试起点，并非性能保证。
 

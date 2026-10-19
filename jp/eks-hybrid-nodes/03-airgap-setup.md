@@ -3,7 +3,7 @@
 < [前へ: Network Configuration](./02-network-configuration.md) | [目次](./README.md) | [次へ: Node Bootstrap](./04-node-bootstrap.md) >
 
 > **サポート対象バージョン**: EKS Hybrid Nodes。nodeadm v1.0.20 のソースを確認済みです。クラスターに対応する Kubernetes、OS、runtime、add-on のコホートを選択してください。
-> **最終更新**: September 16, 2026
+> **最終更新**: 2026年9月16日
 
 この章では、パブリックインターネットへのアクセスが制限されている Hybrid Nodes を準備します。**Hybrid Nodes には、AWS でホストされる EKS control plane と、認証情報に使用する AWS サービスへの接続が引き続き必要です。** ソフトウェアを物理的に転送しても、Hybrid Nodes が切断された Kubernetes distribution になるわけではありません。
 
@@ -47,9 +47,9 @@
 
 Amazon VPC CNI（`aws-node` / `vpc-cni-init`）は Hybrid Nodes 用の CNI ではありません。[Network Configuration](./02-network-configuration.md) にあるサポート対象の Hybrid CNI 手順を使用してください。選択した CNI datapath が使用する場合にのみ kube-proxy を含めます。CNI plugin binary bundle はデプロイ済み CNI controller ではありません。
 
-## installation path を選択する
+## インストール方法を選ぶ
 
-### Path A: preinstalled OS image
+### Path A: OS イメージへの事前インストール
 
 制御された builder で、承認済み Hybrid nodeadm をインストールし、クラスターで選択した Kubernetes version と credential provider を使用して `nodeadm install` を実行します。AWS はこの image-build の利用を文書化しています。インストール済み artifact と nodeadm tracker を image 内に保持します。
 
@@ -69,7 +69,7 @@ builder を initialize/register してその identity を複製することは**
 
 新しい SSM installation/upgrade には nodeadm **1.0.19 以降**が必要です。これは古い release に古い SSM signing key が含まれているためです。この章で確認したのは **v1.0.20** であり、無制限な `latest` binary ではありません。
 
-### Path B: custom artifact manifest
+### Path B: カスタム artifact manifest を使用する
 
 公開された **v1.0.20 source** は、user-guide の flag table にすべてが記載されていない場合でも、以下の flag をサポートします。
 
@@ -281,7 +281,7 @@ size limit は artifact あたり意図的に 256 MiB としています。承�
 
 これらの hash は、選択した byte を取得済み checksum に結び付けます。これらは独立した signature でも、侵害された publisher が信頼できることの証明でもありません。レビュー済み manifest/checksum record を保護し、利用可能な場合は publisher verification を使用してください。
 
-## Private S3 の公開と authorization
+## Private S3 への公開とアクセス制御
 
 Block Public Access、承認済み encryption、versioning/retention、分離された publisher/reader permission を備えた、**事前作成済みで所有する** bucket を使用してください。以下の例では bucket を作成せず、その policy を置き換えることもありません。AccessDenied、expired credential、timeout は失敗であり、bucket/object が存在しない証拠ではありません。
 
@@ -405,7 +405,7 @@ private ECR pull には、ECR API および DKR path、S3 layer-download path、
 
 nodeadm は ECR helper を `/etc/eks/image-credential-provider/ecr-credential-provider` にインストールし、その config を `/etc/eks/image-credential-provider/config.json` に初期化します。別の directory の下に使用されない file を書き込むのではなく、生成された kubelet configuration を確認してください。`ctr images pull` は別の client であり、kubelet の exec credential provider を自動的には使用しません。
 
-### Offline image transfer
+### オフラインでのイメージ転送
 
 承認済み digest と必要な platform を選択してください。multi-platform archive では、source/destination format が対応している場所で index と digest を保持してください。
 
@@ -463,7 +463,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-hybrid-mirror
 
 これには有効な package signature と署名済み repository metadata が必要です。metadata と package signing key は異なる場合があります。承認済み key set を設定してください。verification が失敗したときに `gpgcheck=0` を設定しないでください。package installation と service restart は、任意の live-node verification script ではなく、image build または drain 済みの maintenance operation で実施するものです。
 
-## Proxy configuration
+## プロキシ設定
 
 まず client ごとの destination map を作成してください。loopback、実際の private API/registry name、proxy を bypass すべき node/Pod/Service range を含めてください。CIDR と suffix matching は client によって異なります。**`.eks.amazonaws.com`** を無条件に `NO_PROXY` に入れないでください。これは public `hybrid-assets.eks.amazonaws.com` download host にも一致します。
 
@@ -536,7 +536,7 @@ AWS read が認可されている場合は、文書化された connectivity/ide
 
 update automation は**candidate を検出**した後、promotion 前に source verification、compatibility review、OS/image scanning、local validation、representative node canary、approval を要求する必要があります。新しい immutable version/build prefix の下で公開し、以前に承認された cohort を保持して、rollback limit を記録してください。本番の `latest` key を密かに overwrite する cron job を実行しないでください。`nodeadm upgrade` は disruptive であり、workload evacuation が必要です。
 
-以前の quiz にある過去の bandwidth estimate、layer caching **50–80%**、compression **30–50%**、platform filtering **50%** には、帰属可能な measurement がありません。予測される節約量ではなく、未検証の過去の illustration としてのみ保持してください。layer reuse、platform set、compression format の実際の byte 数を測定してください。digest が変わらないと主張しながら、承認済み content を recompress しないでください。
+layer caching、compression、必要な platform のみへの image 同期は、転送量を削減できる場合があります。適用前後に実際に転送された byte 数を比較し、対象の image と layer reuse に基づいて削減量を計算してください。承認済み content を再圧縮した場合は digest を再確認し、変更後の artifact を承認プロセスに提出してください。
 
 ## 主な参照先
 

@@ -1,8 +1,8 @@
 # Cuestionario de mejores prácticas de seguridad de EKS
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EKS con las siguientes preguntas.
+Ponga a prueba su comprensión de las mejores prácticas de seguridad de Amazon EKS con las siguientes preguntas.
 
 ***
 
@@ -33,14 +33,14 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 * A) Cifrado más sólido
 * B) Rendimiento más rápido
-* C) No se requiere configuración de OIDC Provider, gestión simplificada
+* C) No se requiere configurar un proveedor OIDC; gestión simplificada
 * D) Compatibilidad con más servicios de AWS
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) No se requiere configuración de OIDC Provider, gestión simplificada**
+**Respuesta: C) No se requiere configurar un proveedor OIDC; gestión simplificada**
 
 **Explicación:** Pod Identity evita la configuración de un proveedor OIDC de IAM por clúster y utiliza una asociación, un agente/SDK compatible y EKS Auth. Los roles aún requieren permisos de confianza y de privilegio mínimo. Auto Mode incluye el agente; otras plataformas y los roles entre cuentas/en cadena tienen requisitos específicos. No reemplaza IRSA ni refuerza automáticamente la seguridad de todas las aplicaciones.
 
@@ -53,7 +53,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 ### 3. ¿Qué NO se requiere para la ruta de Security Groups for Pods respaldada por EC2?
 
 * A) Tipos de instancia EC2 compatibles con trunking
-* B) Plugin Amazon VPC CNI
+* B) Complemento de Amazon VPC CNI
 * C) Perfil de Fargate
 * D) Configuración de SecurityGroupPolicy
 
@@ -63,7 +63,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: C) Perfil de Fargate**
 
-**Explicación:** Para la ruta respaldada por EC2, utiliza un tipo de instancia compatible con trunking, Amazon VPC CNI compatible y SecurityGroupPolicy. No todas las instancias Nitro cumplen los requisitos. La política de VPC Resource Controller pertenece al rol del clúster. Fargate tiene un modelo compatible independiente; Windows y Auto Mode están excluidos por la documentación actual de Pod-SG. ENIConfig no sustituye a SecurityGroupPolicy.
+**Explicación:** Para la ruta respaldada por EC2, utilice un tipo de instancia compatible con trunking, Amazon VPC CNI compatible y SecurityGroupPolicy. No todas las instancias Nitro cumplen los requisitos. La política de VPC Resource Controller pertenece al rol del clúster. Fargate tiene un modelo compatible independiente; Windows y Auto Mode están excluidos por la documentación actual de Pod-SG. ENIConfig no sustituye a SecurityGroupPolicy.
 
 </details>
 
@@ -82,7 +82,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) Solo es accesible desde la VPC o redes conectadas**
 
-**Explicación:** La accesibilidad a la API privada necesita una red conectada, DNS, rutas y security groups, además de autenticación de IAM y autorización de Kubernetes. Prueba el acceso de operadores, CI y recuperación antes de eliminar el acceso público. Un endpoint de administración PrivateLink de EKS no sustituye al endpoint privado de la API de Kubernetes.
+**Explicación:** La accesibilidad a la API privada necesita una red conectada, DNS, rutas y security groups, además de autenticación de IAM y autorización de Kubernetes. Pruebe el acceso de operadores, CI y recuperación antes de eliminar el acceso público. Un endpoint de administración PrivateLink de EKS no sustituye al endpoint privado de la API de Kubernetes.
 
 </details>
 
@@ -114,15 +114,15 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 * A) Un endpoint de administración de EKS sustituye a la API de Kubernetes
 * B) Pod Identity siempre utiliza el endpoint global de STS
 * C) Todas las regiones de AWS admiten los mismos nombres de endpoint
-* D) Distinguir la resolución DNS de Route 53 management API PrivateLink
+* D) Distinguir entre la resolución de DNS y PrivateLink para la API de administración de Route 53
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Distinguir la resolución DNS de Route 53 management API PrivateLink**
+**Respuesta: D) Distinguir entre la resolución de DNS y PrivateLink para la API de administración de Route 53**
 
-**Explicación:** La resolución DNS habitual utiliza el resolvedor/la ruta de red configurados. Las llamadas a Route 53 management API son diferentes; la documentación actual de clústeres privados de EKS enumera un servicio Route 53 PrivateLink. EKS Auth, STS regional, detección de OIDC y ECR/S3 también tienen rutas distintas, por lo que debes verificar los requisitos reales del servicio/la región.
+**Explicación:** La resolución DNS habitual utiliza el resolvedor/la ruta de red configurados. Las llamadas a la API de administración de Route 53 son distintas; la documentación actual de clústeres privados de EKS enumera un servicio Route 53 PrivateLink. EKS Auth, STS regional, descubrimiento de OIDC y ECR/S3 también tienen rutas distintas, por lo que debe verificar los requisitos reales del servicio y la región.
 
 </details>
 
@@ -141,7 +141,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) El perfil de benchmark CIS Amazon EKS aplicable**
 
-**Explicación:** Elige la edición del benchmark CIS Amazon EKS y el perfil de kube-bench adecuados para el entorno. kube-bench0.16.0 incluye varios perfiles de EKS; un único Job mutable del proyecto upstream no demuestra la cobertura de toda la flota. Las comprobaciones manuales/no aplicables y las limitaciones del plano de control administrado se mantienen, y la puntuación de un cuestionario/herramienta no es una certificación.
+**Explicación:** Elija la edición del benchmark CIS Amazon EKS y el perfil de kube-bench adecuados para el entorno. kube-bench 0.16.0 incluye varios perfiles de EKS; un único Job mutable del proyecto upstream no demuestra la cobertura de toda la flota. Las comprobaciones manuales/no aplicables y las limitaciones del plano de control administrado se mantienen, y la puntuación de un cuestionario/herramienta no es una certificación.
 
 </details>
 
@@ -160,7 +160,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) Tokens vinculados y configuración del tiempo de expiración**
 
-**Explicación:** La proyección permite una audiencia y una duración solicitada con vinculación de objetos. Comprueba la expiración real del token y la validación del receptor; no supongas que todos los tokens expiran exactamente una hora después. Un token de portador robado aún puede reutilizarse mientras sea aceptado, por lo que la proyección no elimina los requisitos de protección de tokens. La proyección por sí sola no es una configuración completa de IRSA.
+**Explicación:** La proyección permite una audiencia y una duración solicitada con vinculación de objetos. Compruebe la expiración real del token y la validación del receptor; no suponga que todos los tokens expiran exactamente una hora después. Un token de portador robado aún puede reutilizarse mientras sea aceptado, por lo que la proyección no elimina los requisitos de protección de tokens. La proyección por sí sola no es una configuración completa de IRSA.
 
 </details>
 
@@ -179,7 +179,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) Vulnerabilidades de imágenes de contenedor**
 
-**Explicación:** El análisis mejorado de ECR utiliza Inspector para detectar vulnerabilidades de paquetes de imágenes compatibles. La información sobre el uso de imágenes en ejecución difiere de la detección del comportamiento en tiempo de ejecución. Restringe el digest exacto solo después de un estado correcto, una marca de tiempo de finalización y un mapa explícito de recuento de hallazgos; los resultados pendientes/faltantes/con errores no deben convertirse en cero vulnerabilidades.
+**Explicación:** El análisis mejorado de ECR utiliza Inspector para detectar vulnerabilidades de paquetes de imágenes compatibles. La información sobre el uso de imágenes en ejecución difiere de la detección del comportamiento en tiempo de ejecución. Aplique un control de admisión al digest exacto solo después de comprobar un estado correcto, una marca de tiempo de finalización y un mapa explícito del recuento de hallazgos; los resultados pendientes/faltantes/con errores no deben convertirse en cero vulnerabilidades.
 
 </details>
 
@@ -198,7 +198,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: D) kubelet**
 
-**Explicación:** Las cinco categorías del plano de control de EKS son api, audit, authenticator, controllerManager y scheduler. Los logs de Kubelet/contenedor requieren una ruta de recopilación de nodos/tiempo de ejecución independiente. Habilita las exportaciones mediante el propietario del clúster, inspecciona la actualización asíncrona y la llegada real, y configura la retención y el acceso.
+**Explicación:** Las cinco categorías del plano de control de EKS son api, audit, authenticator, controllerManager y scheduler. Los logs de Kubelet/contenedor requieren una ruta de recopilación de nodos/tiempo de ejecución independiente. Habilite las exportaciones mediante el propietario del clúster, inspeccione la actualización asíncrona y la llegada real, y configure la retención y el acceso.
 
 </details>
 
@@ -217,7 +217,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) Aplicar el principio de privilegio mínimo**
 
-**Explicación:** Los roles de workload limitan los permisos de la aplicación independientemente de las responsabilidades del nodo. La exposición del rol de nodo depende de la accesibilidad a metadatos y de los privilegios; no todos los Pod tienen acceso siempre. IRSA por sí solo no bloquea IMDS. Revisa IMDSv2, los controles de red, los workloads hostNetwork/con privilegios, la precedencia de credenciales del SDK y el compromiso de nodos.
+**Explicación:** Los roles de las cargas de trabajo limitan los permisos de la aplicación independientemente de las responsabilidades del nodo. La exposición del rol de nodo depende de la accesibilidad a metadatos y de los privilegios; no todos los Pod tienen acceso siempre. IRSA por sí solo no bloquea IMDS. Revise IMDSv2, los controles de red, las cargas de trabajo con hostNetwork o privilegios, la precedencia de credenciales del SDK y la intrusión en nodos.
 
 </details>
 
@@ -225,7 +225,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 <span id="_12-which-component-is-responsible-for-integrating-kubernetes-rbac-with-aws-iam-in-eks"></span>
 
-### 12. ¿Qué enfoque otorga a un desarrollador de EKS únicamente el acceso de namespace requerido?
+### 12. ¿Qué enfoque otorga a un desarrollador de EKS únicamente el acceso necesario a su espacio de nombres?
 
 * A) Agregar a todos los desarrolladores a system:masters
 * B) Compartir el rol de nodo con todos los desarrolladores
@@ -238,7 +238,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: C) Usar una entrada de acceso con una política de acceso con ámbito o mapeo de grupo/RBAC**
 
-**Explicación:** Utiliza una entrada de acceso con la política de acceso de EKS con ámbito requerida o el mapeo de grupo/RBAC de Kubernetes. La autenticación y la autorización son independientes. El ConfigMap aws-auth es una ruta heredada, y la migración del modo de autenticación tiene restricciones unidireccionales. Evita system:masters para desarrolladores habituales; las políticas de acceso de EKS o RBAC pueden permitir una operación de forma independiente.
+**Explicación:** Utilice una entrada de acceso con la política de acceso de EKS con el alcance requerido o el mapeo de grupo/RBAC de Kubernetes. La autenticación y la autorización son independientes. El ConfigMap aws-auth es una ruta heredada, y la migración del modo de autenticación tiene restricciones unidireccionales. Evite system:masters para desarrolladores habituales; las políticas de acceso de EKS o RBAC pueden permitir una operación de forma independiente.
 
 </details>
 
@@ -246,12 +246,12 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 ## Cálculo de puntuación
 
-Calcula 1 punto por pregunta.
+Calcule 1 punto por pregunta.
 
 | Puntuación | Calificación                                                     |
 | ----- | ---------------------------------------------------------- |
-| 11-12 | Repaso completo; valida los escenarios operativos a continuación                      |
-| 8-10  | Bien - Conceptos básicos comprendidos, repasa las características avanzadas |
+| 11-12 | Repaso completo; valide después los escenarios operativos                      |
+| 8-10  | Bien: conceptos básicos comprendidos; repase las características avanzadas |
 | 5-7   | Regular - Se recomienda estudio adicional                     |
 | 0-4   | Se requiere aprendizaje básico                                      |
 

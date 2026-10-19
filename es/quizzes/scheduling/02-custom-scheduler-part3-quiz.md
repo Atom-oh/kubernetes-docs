@@ -1,119 +1,103 @@
-# Cuestionario de Custom Scheduler (Parte 3)
+# Cuestionario de scheduler personalizado (Parte 3)
 
-Este cuestionario evalúa tu comprensión avanzada de la implementación y el uso de Custom Schedulers en Kubernetes.
+> **Base de los ejemplos**: Kubernetes 1.35.8 y Go 1.27.2; las funciones nativas de 1.37 se indican por separado
+> **Última actualización**: 16 de octubre de 2026
+
+Este cuestionario evalúa los conocimientos avanzados sobre la implementación y el uso de schedulers personalizados en Kubernetes.
 
 ## Preguntas del cuestionario
 
-### 1. ¿Cuál de los siguientes NO es un problema que puede ocurrir al ejecutar múltiples schedulers simultáneamente en Kubernetes?
+### 1. ¿Qué afirmación sobre el uso de varios schedulers es incorrecta?
 
-A. Contención de recursos
-B. Conflictos en decisiones de scheduling
-C. Mayor ancho de banda de red
-D. Conflictos de leader election
+A. Los schedulers adicionales aumentan el trabajo de observación de la API y de caché
+B. Las asignaciones que cada scheduler supone de forma independiente pueden competir por los recursos
+C. Añadir un scheduler aumenta automáticamente la capacidad de los nodos
+D. Los grupos de schedulers independientes necesitan Leases de elección de líder distintos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Mayor ancho de banda de red**
+**Respuesta: C. Añadir un scheduler aumenta automáticamente la capacidad de los nodos**
 
 **Explicación:**
-"Mayor ancho de banda de red" NO es un problema que pueda ocurrir al ejecutar múltiples schedulers simultáneamente en Kubernetes. Aunque los schedulers se comunican con el API server, el uso de ancho de banda de red suele ser mínimo y no representa una preocupación.
+Un scheduler asigna Pods; no crea capacidad en los nodos. Los schedulers adicionales pueden aumentar la carga de la API y de la red. Cada uno observa el estado de los Pods ya registrado, pero sus asignaciones supuestas en memoria no forman una transacción de reserva compartida con los demás. Mantenga los filtros de recursos y pruebe la planificación simultánea en grupos de nodos compartidos.
 
-**Problemas reales que pueden ocurrir al ejecutar múltiples schedulers:**
+Omitir `schedulerName` selecciona `default-scheduler`; no permite que todos los schedulers que cumplen el contrato vinculen ese Pod. Las réplicas de un mismo scheduler comparten intencionadamente un Lease para ofrecer alta disponibilidad. Los grupos independientes que comparten ese Lease pueden bloquearse entre sí; los procesos que usan el mismo perfil sin coordinar el liderazgo pueden competir.
 
-1. **Contención de recursos**:
-   - La contención de recursos puede ocurrir cuando múltiples schedulers intentan programar Pods en el mismo pool de Nodes.
-   - Como cada scheduler opera de forma independiente sin conocer las decisiones de otros schedulers, existe el riesgo de sobreasignar recursos de los Nodes.
-   - Ejemplo: dos schedulers pueden programar Pods simultáneamente en el mismo Node, excediendo la capacidad del Node.
+**Ejemplos de selección del scheduler de un Pod:**
 
-2. **Conflictos en decisiones de scheduling**:
-   - Los conflictos pueden ocurrir cuando múltiples schedulers intentan programar el mismo Pod.
-   - Esto puede suceder cuando los Pods no especifican explícitamente un `schedulerName`, o cuando múltiples schedulers usan el mismo nombre.
-   - Ejemplo: ocurren race conditions cuando dos schedulers intentan vincular el mismo Pod a diferentes Nodes.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: default-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.30.6
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: custom-pod
+spec:
+  schedulerName: custom-scheduler
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: custom-scheduler
+    effect: NoSchedule
+  containers:
+  - name: nginx
+    image: nginx:1.30.6
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+```
 
-3. **Conflictos de leader election**:
-   - Si múltiples instancias de scheduler con el mismo nombre se ejecutan con leader election habilitado, pueden ocurrir conflictos en el mecanismo de leader election.
-   - Ejemplo: múltiples instancias de scheduler con el mismo nombre compitiendo por el liderazgo pueden causar transiciones de liderazgo inestables.
+**Separar la identidad del scheduler de la política del grupo de nodos:**
+Use el Deployment y el RBAC completos de la Parte 1. Los nombres y la identidad del Lease se definen en `KubeSchedulerConfiguration`, no mediante la opción obsoleta `--scheduler-name`. El plugin integrado `NodeAffinity` admite `addedAffinity` en el perfil; no existe un plugin predeterminado llamado `NodeSelector`.
 
-**Mejores prácticas al ejecutar múltiples schedulers:**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+  pluginConfig:
+  - name: NodeAffinity
+    args:
+      addedAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: training.example.com/scheduler-pool
+              operator: In
+              values:
+              - custom
+```
 
-1. **Separación clara de responsabilidades**:
-   ```yaml
-   # Pod for default scheduler
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: default-pod
-   spec:
-     # Uses default scheduler when schedulerName is not specified
-     containers:
-     - name: nginx
-       image: nginx
+```bash
+# Only label/taint a node selected for this isolated lab.
+: "${CUSTOM_NODE:?Select the lab node}"
+kubectl label node "$CUSTOM_NODE" training.example.com/scheduler-pool=custom --overwrite
+kubectl taint node "$CUSTOM_NODE" dedicated=custom-scheduler:NoSchedule --overwrite
+```
 
-   # Pod for custom scheduler
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: custom-pod
-   spec:
-     schedulerName: my-custom-scheduler  # Specify custom scheduler
-     containers:
-     - name: nginx
-       image: nginx
-   ```
-
-2. **Usar nombres de scheduler únicos**:
-   ```yaml
-   # Custom scheduler deployment
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-custom-scheduler
-     namespace: kube-system
-   spec:
-     replicas: 1
-     selector:
-       matchLabels:
-         component: my-custom-scheduler
-     template:
-       metadata:
-         labels:
-           component: my-custom-scheduler
-       spec:
-         containers:
-         - name: scheduler
-           image: my-custom-scheduler:v1.0
-           args:
-           - --scheduler-name=my-custom-scheduler  # Use unique name
-           - --leader-elect=true
-           - --leader-elect-resource-name=my-custom-scheduler  # Use unique resource name
-   ```
-
-3. **Separar pools de Nodes usando etiquetas de Node y taints**:
-   ```yaml
-   # Apply node labels and taints
-   kubectl label node node1 scheduler=default
-   kubectl label node node2 scheduler=custom
-
-   kubectl taint nodes node2 dedicated=custom-scheduler:NoSchedule
-
-   # Custom scheduler configuration
-   apiVersion: kubescheduler.config.k8s.io/v1
-   kind: KubeSchedulerConfiguration
-   profiles:
-   - schedulerName: my-custom-scheduler
-     plugins:
-       filter:
-         enabled:
-         - name: NodeSelector
-     pluginConfig:
-     - name: NodeSelector
-       args:
-         nodeSelector:
-           scheduler: custom
-   ```
-
-4. **Establecer resource quotas**:
+El Pod personalizado anterior tolera el taint del ejemplo. Las tolerancias no fuerzan la ubicación; los nombres de los schedulers, las etiquetas de los nodos y las cuotas tampoco constituyen límites de seguridad. Las siguientes cuotas por namespace limitan las solicitudes admitidas, pero no reservan un grupo de nodos. Cree primero los namespaces y defina las solicitudes de recursos de las cargas sujetas a estas cuotas.
+**Ejemplos de cuotas por namespace:**
    ```yaml
    apiVersion: v1
    kind: ResourceQuota
@@ -123,8 +107,8 @@ D. Conflictos de leader election
    spec:
      hard:
        pods: "10"
-       cpu: "20"
-       memory: 40Gi
+       requests.cpu: "20"
+       requests.memory: 40Gi
 
    ---
    apiVersion: v1
@@ -135,846 +119,335 @@ D. Conflictos de leader election
    spec:
      hard:
        pods: "10"
-       cpu: "20"
-       memory: 40Gi
+       requests.cpu: "20"
+       requests.memory: 40Gi
    ```
 
-**Monitoreo de múltiples schedulers:**
+**Monitorización del scheduler secundario mediante consultas:**
+Use su namespace y sus etiquetas reales. Los componentes del plano de control administrado de EKS no son el Deployment secundario mostrado aquí.
+
 ```bash
-# Check scheduler pods
-kubectl get pods -n kube-system -l component=kube-scheduler
-kubectl get pods -n kube-system -l component=my-custom-scheduler
-
-# Check scheduler logs
-kubectl logs -n kube-system -l component=kube-scheduler
-kubectl logs -n kube-system -l component=my-custom-scheduler
-
-# Check scheduling events
-kubectl get events | grep -i "Successfully assigned"
+kubectl -n scheduler-lab get pods -l app=custom-scheduler
+kubectl -n scheduler-lab logs -l app=custom-scheduler --prefix --tail=100
+kubectl -n scheduler-lab get lease custom-scheduler
+kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.nodeName= -o wide
 ```
 
-**Explicación de las otras opciones:**
-- A. Contención de recursos: un problema real que puede ocurrir cuando múltiples schedulers programan Pods en el mismo pool de Nodes.
-- B. Conflictos en decisiones de scheduling: un problema real que puede ocurrir cuando múltiples schedulers intentan programar el mismo Pod.
-- D. Conflictos de leader election: un problema real que puede ocurrir cuando múltiples instancias de scheduler con el mismo nombre compiten por el liderazgo.
+**Otras opciones:** A, B y D describen aspectos reales de carga de trabajo o coordinación.
 </details>
 
-### 2. ¿Cuál es el rol del punto de extensión "Permit" en el scheduler de Kubernetes?
+### 2. ¿Qué función cumple el punto de extensión "Permit" del scheduler de Kubernetes?
 
-A. Vincular Pods a Nodes
-B. Permitir, denegar o retrasar el scheduling de Pods
-C. Excluir Nodes donde los Pods no pueden ejecutarse
-D. Asignar puntuaciones a Nodes
+A. Vincular Pods a nodos
+B. Permitir, rechazar o retrasar la planificación de Pods
+C. Excluir los nodos donde los Pods no pueden ejecutarse
+D. Asignar puntuaciones a los nodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Permitir, denegar o retrasar el scheduling de Pods**
+**Respuesta: B. Permitir, rechazar o retrasar la planificación de Pods**
 
 **Explicación:**
-El rol del punto de extensión "Permit" en el framework de scheduling de Kubernetes es permitir, denegar o retrasar el scheduling de Pods. Los plugins Permit se ejecutan después de que se selecciona un Node, pero antes de la fase de binding, proporcionando aprobación o rechazo final para las decisiones de scheduling de Pods.
+El punto de extensión "Permit" del framework de planificación de Kubernetes permite, rechaza o retrasa la planificación de un Pod. Sus plugins se ejecutan después de seleccionar un nodo y antes de la fase de vinculación, para aprobar o rechazar finalmente la decisión.
 
-**Funciones clave del punto de extensión Permit:**
-1. **Allow**: Permite que el scheduling del Pod continúe hacia la fase de binding.
-2. **Deny**: Rechaza el scheduling del Pod para que se pueda seleccionar otro Node.
-3. **Wait**: Retrasa temporalmente el scheduling del Pod y espera hasta que se cumplan condiciones específicas.
+**Funciones principales del punto de extensión Permit:**
+1. **Permitir**: Deja que la planificación continúe hasta la fase de vinculación.
+2. **Rechazar**: Rechaza el intento para que pueda seleccionarse otro nodo.
+3. **Esperar**: Retrasa temporalmente la planificación hasta que se cumplan determinadas condiciones.
 
-**Interfaz del plugin Permit:**
+**Contrato de Permit para la versión indicada:**
+`Permit(ctx, fwk.CycleState, pod, nodeName)` devuelve un estado y un tiempo de espera. `Success` permite continuar; `Wait` pide al framework que mantenga el Pod en espera; un estado de fallo como `Unschedulable` rechaza el intento. No existe un valor de enumeración `framework.Deny`. El rechazo no vincula inmediatamente el Pod a otro nodo: después se aplican los reintentos, la espera entre intentos y la limpieza de reservas.
+
+`TaintToleration` y `PodTopologySpread` no son plugins Permit predeterminados. La configuración base conserva sus fases Filter y Score reales.
+
+**Demostración completa de la interfaz (`quizplugins/permit.go`):**
+Los valores de la anotación son instrucciones de prueba, no un mecanismo de autorización fiable. No se proporciona un servicio externo de aprobación. Un Pod con el valor `wait` agota el tiempo de espera si un controlador de pruebas integrado no lo libera después de que el framework lo registre; un canal privado sin un consumidor no puede liberar los Pods que esperan en el framework.
+
 ```go
-type PermitPlugin interface {
-    Plugin
-    // Permit allows, denies, or delays pod scheduling.
-    // Return values:
-    // - Success: Allows pod scheduling.
-    // - Deny: Rejects pod scheduling.
-    // - Wait: Delays pod scheduling and waits until timeout or allowed.
-    Permit(ctx context.Context, state *CycleState, pod *v1.Pod, nodeName string) (*Status, time.Duration)
+package quizplugins
+
+import (
+	"context"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
+type CustomPermit struct{ handle fwk.Handle }
+
+var _ fwk.PermitPlugin = &CustomPermit{}
+
+func (*CustomPermit) Name() string { return "CustomPermit" }
+
+func (*CustomPermit) Permit(_ context.Context, _ fwk.CycleState, pod *v1.Pod, _ string) (*fwk.Status, time.Duration) {
+	// These are test directives, not an authorization or approval mechanism.
+	switch pod.Annotations["training.example.com/permit"] {
+	case "", "allow":
+		return nil, 0
+	case "wait":
+		return fwk.NewStatus(fwk.Wait, "waiting for the test driver"), 30 * time.Second
+	case "deny":
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, "test driver denied"), 0
+	default:
+		return fwk.NewStatus(fwk.Error, "unknown test permit directive"), 0
+	}
+}
+
+// Call only after the framework has registered the waiting Pod. The caller
+// must handle false (not registered yet, already released, deleted or timed out).
+func (p *CustomPermit) Allow(uid types.UID) bool {
+	waiting := p.handle.GetWaitingPod(uid)
+	if waiting == nil {
+		return false
+	}
+	waiting.Allow(p.Name())
+	return true
+}
+
+func (p *CustomPermit) Reject(uid types.UID, reason string) bool {
+	waiting := p.handle.GetWaitingPod(uid)
+	if waiting == nil {
+		return false
+	}
+	waiting.Reject(p.Name(), reason)
+	return true
+}
+
+func NewPermit(_ context.Context, _ runtime.Object, handle fwk.Handle) (fwk.Plugin, error) {
+	return &CustomPermit{handle: handle}, nil
 }
 ```
 
-**Tipos de resultado de Permit:**
-1. **Success**: Permite el scheduling del Pod.
-2. **Deny**: Rechaza el scheduling del Pod.
-3. **Wait**: Retrasa el scheduling del Pod y espera durante el tiempo especificado.
+Registre este ejemplo y el de PreBind posterior en `cmd/quiz-scheduler/main.go`; guarde ambos archivos de código antes de compilar:
 
-**Plugins Permit predeterminados:**
-Kubernetes proporciona los siguientes plugins Permit predeterminados:
-
-1. **TaintToleration**: Comprueba los taints de Node y las tolerations de Pod.
-2. **PodTopologySpread**: Comprueba las restricciones de distribución topológica de Pods.
-
-**Ejemplo de plugin Permit personalizado:**
 ```go
-// CustomPermit implements custom permit logic.
-type CustomPermit struct {
-    handle framework.Handle
-    // Map to track waiting pods
-    waitingPods map[string]waitingPod
-    // Mutex to synchronize map access
-    mu sync.RWMutex
-}
+package main
 
-// waitingPod stores information about waiting pods.
-type waitingPod struct {
-    pod      *v1.Pod
-    nodeName string
-    status   chan bool  // true: allow, false: deny
-}
+import (
+	"os"
 
-// Name returns the plugin name.
-func (pl *CustomPermit) Name() string {
-    return "CustomPermit"
-}
+	"example.com/custom-scheduler/quizplugins"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+)
 
-// Permit allows, denies, or delays pod scheduling.
-func (pl *CustomPermit) Permit(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (*framework.Status, time.Duration) {
-    // Example: Allow, deny, or delay pod scheduling based on specific conditions
-    if shouldWait(pod, nodeName) {
-        // Add pod to waiting list
-        key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-
-        pl.mu.Lock()
-        if pl.waitingPods == nil {
-            pl.waitingPods = make(map[string]waitingPod)
-        }
-        pl.waitingPods[key] = waitingPod{
-            pod:      pod,
-            nodeName: nodeName,
-            status:   make(chan bool),
-        }
-        pl.mu.Unlock()
-
-        // Wait for up to 10 minutes
-        return framework.NewStatus(framework.Wait, "waiting for condition"), 10 * time.Minute
-    }
-
-    if shouldDeny(pod, nodeName) {
-        return framework.NewStatus(framework.Unschedulable, "denied by custom permit plugin"), 0
-    }
-
-    // Allow pod scheduling
-    return nil, 0
-}
-
-// Allow waiting pod
-func (pl *CustomPermit) Allow(pod *v1.Pod) {
-    key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-
-    pl.mu.RLock()
-    waitingPod, ok := pl.waitingPods[key]
-    pl.mu.RUnlock()
-
-    if ok {
-        // Allow pod
-        waitingPod.status <- true
-
-        pl.mu.Lock()
-        delete(pl.waitingPods, key)
-        pl.mu.Unlock()
-    }
-}
-
-// Reject waiting pod
-func (pl *CustomPermit) Reject(pod *v1.Pod) {
-    key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-
-    pl.mu.RLock()
-    waitingPod, ok := pl.waitingPods[key]
-    pl.mu.RUnlock()
-
-    if ok {
-        // Reject pod
-        waitingPod.status <- false
-
-        pl.mu.Lock()
-        delete(pl.waitingPods, key)
-        pl.mu.Unlock()
-    }
-}
-
-// Function to check if pod should wait
-func shouldWait(pod *v1.Pod, nodeName string) bool {
-    // Implement custom logic
-    return false
-}
-
-// Function to check if pod should be denied
-func shouldDeny(pod *v1.Pod, nodeName string) bool {
-    // Implement custom logic
-    return false
+func main() {
+	command := app.NewSchedulerCommand(
+		app.WithPlugin("CustomPermit", quizplugins.NewPermit),
+		app.WithPlugin("IdentityPreBind", quizplugins.NewPreBind),
+	)
+	os.Exit(cli.Run(command))
 }
 ```
 
-**Habilitación del plugin Permit en la configuración del scheduler:**
+Compile con el módulo de la Parte 1 mediante `CGO_ENABLED=0 go build -buildvcs=false -o custom-scheduler ./cmd/quiz-scheduler`. Habilite solo el punto de extensión correspondiente y conserve los valores predeterminados:
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     permit:
       enabled:
       - name: CustomPermit
-      disabled:
-      - name: TaintToleration  # Disable default plugin
 ```
 
 **Casos de uso de Permit:**
-1. **Gang scheduling**: Retrasar el scheduling de un grupo de Pods hasta que todos los Pods relacionados estén listos para programarse.
-2. **Reserva de recursos**: Reservar recursos externos antes de que los Pods se programen.
-3. **Validación de políticas**: Asegurar que el scheduling de Pods cumpla con las políticas organizacionales.
-4. **Flujos de aprobación**: Solicitar aprobación externa para el scheduling de Pods.
+1. **Planificación en grupo**: Retrasar la planificación de un grupo de Pods hasta que todos los relacionados estén listos para planificarse.
+2. **Reserva de recursos**: Reservar recursos externos antes de planificar los Pods.
+3. **Validación de políticas**: Comprobar que la planificación cumple las políticas de la organización.
+4. **Flujos de aprobación**: Solicitar una aprobación externa para planificar los Pods.
 
-**Ejemplo de Gang scheduling:**
-Gang scheduling es una técnica que asegura que todos los Pods relacionados se programen juntos. Esto es útil para cargas de trabajo como trabajos de entrenamiento distribuido, donde todos los componentes deben ejecutarse simultáneamente.
+**Por qué una barrera Permit no constituye un scheduler completo para grupos:**
+Una implementación real debe delimitar la identidad del grupo por namespace y UID, contar miembros únicos, gestionar reintentos, eliminaciones y tiempos de espera, liberar las reservas cuando falle y tener en cuenta los fallos de vinculación. No construya un `WaitingPod` privado, no cuente dos veces el mismo reintento ni considere registrado el Pod actual antes de que Permit devuelva el resultado. La barrera no garantiza un arranque simultáneo de los contenedores ni evita que algunas cargas queden sin recursos indefinidamente. La pregunta 3 describe implementaciones mantenidas.
 
-```go
-// GangPermit implements Gang scheduling.
-type GangPermit struct {
-    handle framework.Handle
-    // Map to track waiting pods by group
-    waitingGroups map[string]gangGroup
-    mu sync.RWMutex
-}
-
-// gangGroup stores Gang information.
-type gangGroup struct {
-    pods      map[string]*v1.Pod
-    nodeName  map[string]string
-    minCount  int
-    readyPods int
-}
-
-// Permit allows, denies, or delays pod scheduling.
-func (pl *GangPermit) Permit(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (*framework.Status, time.Duration) {
-    // Get Gang ID
-    gangID, ok := pod.Labels["gang-id"]
-    if !ok {
-        // Process as regular pod if no Gang ID
-        return nil, 0
-    }
-
-    pl.mu.Lock()
-    defer pl.mu.Unlock()
-
-    // Create group if not exists
-    if _, ok := pl.waitingGroups[gangID]; !ok {
-        minCount, _ := strconv.Atoi(pod.Labels["gang-min-count"])
-        if minCount <= 0 {
-            minCount = 1
-        }
-
-        pl.waitingGroups[gangID] = gangGroup{
-            pods:      make(map[string]*v1.Pod),
-            nodeName:  make(map[string]string),
-            minCount:  minCount,
-            readyPods: 0,
-        }
-    }
-
-    // Add pod
-    group := pl.waitingGroups[gangID]
-    key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-    group.pods[key] = pod
-    group.nodeName[key] = nodeName
-    group.readyPods++
-
-    // Check if minimum count reached
-    if group.readyPods >= group.minCount {
-        // Allow all pods
-        for _, p := range group.pods {
-            pl.handle.PermitPlugin().Allow(p)
-        }
-
-        // Delete group
-        delete(pl.waitingGroups, gangID)
-
-        return nil, 0
-    }
-
-    // Wait until minimum count is reached
-    return framework.NewStatus(framework.Wait, "waiting for gang members"), 10 * time.Minute
-}
-```
-
-**Problemas con las otras opciones:**
-- A. Vincular Pods a Nodes: este es el rol del punto de extensión "Bind".
-- C. Excluir Nodes donde los Pods no pueden ejecutarse: este es el rol del punto de extensión "Filter".
-- D. Asignar puntuaciones a Nodes: este es el rol del punto de extensión "Score".
+**Por qué las otras opciones son incorrectas:**
+- A. Vincular Pods a nodos: Es la función del punto de extensión "Bind".
+- C. Excluir los nodos donde los Pods no pueden ejecutarse: Es la función de "Filter".
+- D. Asignar puntuaciones a los nodos: Es la función de "Score".
 </details>
-### 3. ¿Cuál es el propósito principal de Gang Scheduling en Kubernetes?
 
-A. Colocar Pods solo en Nodes específicos
-B. Asegurar que todos los Pods relacionados se programen juntos
-C. Distribuir Pods de manera uniforme entre varios Nodes
-D. Programar Pods según prioridad
+### 3. ¿Cuál es el objetivo principal de la planificación en grupo en Kubernetes?
+
+A. Ubicar los Pods únicamente en nodos concretos
+B. Coordinar la ubicación de un grupo de Pods requerido
+C. Distribuir los Pods de manera uniforme entre varios nodos
+D. Planificar los Pods según su prioridad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Asegurar que todos los Pods relacionados se programen juntos**
+**Respuesta: B. Coordinar la ubicación de un grupo de Pods requerido**
 
 **Explicación:**
-El propósito principal de Gang Scheduling en Kubernetes es asegurar que todos los Pods relacionados se programen juntos. Esto es importante para cargas de trabajo como trabajos de entrenamiento distribuido y trabajos de procesamiento de datos distribuido, donde todos los componentes deben ejecutarse simultáneamente.
+La planificación en grupo coordina la ubicación del grupo requerido antes de permitir que continúe. Es importante para cargas como el entrenamiento y el procesamiento de datos distribuidos, cuyos componentes deben ejecutarse al mismo tiempo.
 
-**Por qué se necesita Gang scheduling:**
-1. **Requisito de todo o nada**: Algunas cargas de trabajo requieren que todos los componentes se ejecuten simultáneamente; si solo algunos se ejecutan, el trabajo no avanza.
-2. **Prevención del desperdicio de recursos**: Si solo algunos Pods se programan mientras otros esperan, los recursos utilizados por los Pods ya programados pueden desperdiciarse.
-3. **Prevención de deadlock**: Puede ocurrir deadlock cuando Pods interdependientes se programan en momentos diferentes.
+**Por qué se necesita la planificación en grupo:**
+1. **Requisito de todo o nada**: Algunas cargas requieren que todos sus componentes se ejecuten al mismo tiempo; si solo se ejecuta una parte, la tarea no avanza.
+2. **Evitar el desperdicio de recursos**: Si algunos Pods se planifican mientras otros esperan, pueden desperdiciarse los recursos de los ya planificados.
+3. **Evitar interbloqueos**: Los Pods con dependencias mutuas pueden bloquearse cuando se planifican en momentos distintos.
 
-**Métodos de implementación de Gang scheduling:**
-Kubernetes no admite Gang scheduling de forma nativa, pero puede implementarse mediante:
+**Alternativas de implementación y versiones:**
+Kubernetes 1.35 incorporó las funciones alfa `GenericWorkload` y `GangScheduling`, que deben habilitarse expresamente. En la versión upstream 1.37, la planificación de PodGroup está en **beta y deshabilitada de forma predeterminada**; requiere `GenericWorkload` y la API `scheduling.k8s.io/v1beta1`. Esto no demuestra que la función esté disponible en EKS ni autoriza a cambiar las opciones de su plano de control administrado.
 
-1. **Custom scheduler**: Implementar Gang scheduling usando el punto de extensión Permit.
-2. **Controlador externo**: Implementar un controlador que administre Gang scheduling fuera de Kubernetes.
-3. **Soluciones open source**: Usar schedulers open source como Volcano o Kube-batch.
+Volcano es una alternativa que se instala como scheduler. Kube-batch es su predecesor histórico, no otra recomendación actual. Se necesita un controlador compatible, sus CRD, la planificación en grupo habilitada y una cola en estado Open.
 
-**Ejemplo de Gang scheduling (Volcano):**
+**Ejemplo de Job de Volcano (esquema comprobado con 1.15.2):**
+El controlador crea el PodGroup. El ejemplo define los cuatro miembros, a diferencia de un grupo con minMember igual a 4 que contiene un solo Pod. La carga solo usa CPU y ejecuta sleep para mostrar la relación entre los manifiestos; no es un entrenamiento distribuido ni un benchmark. No se ha desplegado.
+
 ```yaml
-# PodGroup definition for Gang scheduling
-apiVersion: scheduling.volcano.sh/v1beta1
-kind: PodGroup
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
 metadata:
-  name: tf-training
+  name: gang-demo
   namespace: default
 spec:
-  minMember: 4  # At least 4 pods must be scheduled together
-  minResources:
-    cpu: 8
-    memory: 16Gi
+  minAvailable: 4
+  schedulerName: volcano
   queue: default
-
----
-# Pod belonging to Gang
-apiVersion: v1
-kind: Pod
-metadata:
-  name: tf-worker-0
-  namespace: default
-  labels:
-    app: tf-training
-  annotations:
-    scheduling.volcano.sh/pod-group: tf-training  # Reference PodGroup
-spec:
-  schedulerName: volcano  # Use Volcano scheduler
-  containers:
-  - name: tensorflow
-    image: tensorflow/tensorflow:latest-gpu
-    resources:
-      requests:
-        cpu: 2
-        memory: 4Gi
-        nvidia.com/gpu: 1
+  maxRetry: 1
+  tasks:
+  - name: workers
+    replicas: 4
+    template:
+      spec:
+        restartPolicy: Never
+        containers:
+        - name: worker
+          image: busybox:1.38.0
+          command:
+          - sh
+          - -c
+          - sleep 60
+          resources:
+            requests:
+              cpu: 250m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
 ```
 
-**Implementación de Gang scheduling usando un plugin Permit personalizado:**
-```go
-// GangSchedulingPlugin implements Gang scheduling.
-type GangSchedulingPlugin struct {
-    handle framework.Handle
-    // Pod tracking per Gang
-    gangs map[string]*Gang
-    mu sync.RWMutex
-}
+La decisión de planificación coordina el grupo mínimo; no hace que sus procesos arranquen en el mismo instante. La aplicación todavía necesita barreras, una política de tiempos de espera, un reparto justo y mecanismos de recuperación. La ubicación nativa de PodGroup también tiene limitaciones documentadas para Pods heterogéneos y dependencias entre Pods: su algoritmo de ordenación no siempre encuentra una ubicación factible.
 
-// Gang represents a group of related pods.
-type Gang struct {
-    MinRequired int
-    Scheduled   map[string]string  // pod name -> node name
-    Waiting     map[string]*framework.WaitingPod
-}
-
-// Name returns the plugin name.
-func (pl *GangSchedulingPlugin) Name() string {
-    return "GangSchedulingPlugin"
-}
-
-// PreFilter initializes Gang information.
-func (pl *GangSchedulingPlugin) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) *framework.Status {
-    gangID, ok := pod.Labels["gang-id"]
-    if !ok {
-        return nil  // Process as regular pod if no Gang ID
-    }
-
-    pl.mu.Lock()
-    defer pl.mu.Unlock()
-
-    if _, ok := pl.gangs[gangID]; !ok {
-        minRequired, _ := strconv.Atoi(pod.Labels["gang-min-required"])
-        if minRequired <= 0 {
-            minRequired = 1
-        }
-
-        pl.gangs[gangID] = &Gang{
-            MinRequired: minRequired,
-            Scheduled:   make(map[string]string),
-            Waiting:     make(map[string]*framework.WaitingPod),
-        }
-    }
-
-    return nil
-}
-
-// Permit implements Gang scheduling logic.
-func (pl *GangSchedulingPlugin) Permit(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (*framework.Status, time.Duration) {
-    gangID, ok := pod.Labels["gang-id"]
-    if !ok {
-        return nil, 0  // Process as regular pod if no Gang ID
-    }
-
-    pl.mu.Lock()
-    defer pl.mu.Unlock()
-
-    gang, ok := pl.gangs[gangID]
-    if !ok {
-        return framework.NewStatus(framework.Error, "gang not found"), 0
-    }
-
-    podKey := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-    gang.Scheduled[podKey] = nodeName
-
-    // Check if enough pods are scheduled
-    if len(gang.Scheduled) >= gang.MinRequired {
-        // Allow all waiting pods
-        for _, waitingPod := range gang.Waiting {
-            waitingPod.Allow(pl.Name())
-        }
-        gang.Waiting = make(map[string]*framework.WaitingPod)
-        return nil, 0
-    }
-
-    // Wait until enough pods are scheduled
-    waitingPod := framework.NewWaitingPod(pod)
-    gang.Waiting[podKey] = waitingPod
-    return framework.NewStatus(framework.Wait, "waiting for gang members"), 10 * time.Minute
-}
-```
-
-**Ventajas y desventajas de Gang scheduling:**
+**Ventajas y desventajas de la planificación en grupo:**
 Ventajas:
-- Asegura que todos los Pods relacionados se programen juntos
-- Previene el desperdicio de recursos
-- Previene deadlock y starvation
+- Coordina el grupo mínimo configurado
+- Evita desperdiciar recursos
+- Puede reducir los interbloqueos por asignaciones parciales; el reparto justo y los tiempos de espera siguen siendo necesarios
 
 Desventajas:
 - Mayor complejidad de implementación
-- Posibles retrasos de scheduling
-- Posible disminución en la utilización de recursos del clúster
+- Posibles retrasos en la planificación
+- Posible reducción del uso de recursos del clúster
 
-**Cargas de trabajo que necesitan Gang scheduling:**
-1. **Trabajos de entrenamiento distribuido**: Frameworks de entrenamiento distribuido como TensorFlow, PyTorch
-2. **Procesamiento de datos distribuido**: Frameworks de procesamiento de datos distribuido como Spark, Flink
-3. **Trabajos MPI**: Cargas de trabajo de computación de alto rendimiento (HPC)
-4. **Service mesh**: Service meshes donde múltiples componentes deben trabajar juntos
+**Cargas que necesitan planificación en grupo:**
+1. **Entrenamiento distribuido**: Frameworks como TensorFlow y PyTorch
+2. **Procesamiento de datos distribuido**: Frameworks como Spark y Flink
+3. **Trabajos MPI**: Cargas de computación de alto rendimiento, o HPC
+4. **Trabajos paralelos estrechamente relacionados**: Cargas que necesitan un conjunto mínimo declarado de procesos de trabajo
 
-**Problemas con las otras opciones:**
-- A. Colocar Pods solo en Nodes específicos: este es el rol de node selectors o node affinity.
-- C. Distribuir Pods de manera uniforme entre varios Nodes: este es el rol de las restricciones de pod topology spread.
-- D. Programar Pods según prioridad: este es el rol de pod priority y preemption.
+**Por qué las otras opciones son incorrectas:**
+- A. Ubicar los Pods únicamente en nodos concretos: Es la función de los selectores de nodos o de la afinidad de nodo.
+- C. Distribuir los Pods de manera uniforme: Es la función de las restricciones de distribución topológica de Pods.
+- D. Planificar los Pods según su prioridad: Es la función de la prioridad y la preempción.
 </details>
 
-### 4. ¿Cuál de los siguientes NO es un endpoint de API requerido al implementar un Scheduler Extender en Kubernetes?
+### 4. ¿Qué función no forma parte del contrato de callbacks de un extender de kube-scheduler?
 
-A. /filter
-B. /prioritize
-C. /bind
-D. /validate
+A. Filtrar los nodos candidatos
+B. Asignar prioridades a los nodos candidatos
+C. Vincular opcionalmente un Pod a un nodo
+D. Validar la admisión mediante ValidatingWebhookConfiguration
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. /validate**
+**Respuesta: D. Validar la admisión mediante ValidatingWebhookConfiguration**
 
-**Explicación:**
-"/validate" NO es un endpoint de API requerido al implementar un Scheduler Extender en Kubernetes. Los scheduler extenders suelen implementar endpoints como "/filter", "/prioritize", "/bind", "/preempt", pero "/validate" no es una API estándar para scheduler extenders.
+Un extender puede implementar los callbacks configurados de filtrado, priorización, preempción y vinculación. Ninguna ruta literal de URL es obligatoria: `filterVerb` podría incluso definir una ruta llamada `validate`, pero su contenido y significado seguirían correspondiendo al filtrado. Los webhooks de admisión tienen un contrato de API distinto.
 
-**Endpoints de API de Scheduler Extender:**
-1. **filter**: Recibe una lista de Nodes y devuelve una lista filtrada de Nodes.
-2. **prioritize**: Recibe una lista de Nodes y asigna puntuaciones a cada Node.
-3. **bind**: Vincula un Pod a un Node.
-4. **preempt**: Devuelve Nodes y Pods para preemption.
+**Configuración:**
+Reutilice los requisitos del servicio TLS y de los certificados de la Parte 2. `extenders` se configura en el nivel superior. Mantenga el filtrado obligatorio de modo que rechace los intentos si falla, y conserve la contabilidad de recursos del propio scheduler.
 
-**Ejemplo de configuración de Scheduler Extender:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
-profiles:
-- schedulerName: default-scheduler
-  extenders:
-  - urlPrefix: "http://extender-service:8080"
-    filterVerb: "filter"
-    prioritizeVerb: "prioritize"
-    bindVerb: "bind"
-    enableHTTPS: false
-    nodeCacheCapable: false
-    ignorable: true
-    managedResources:
-    - name: example.com/foo
-      ignoredByScheduler: true
-```
-
-**Formatos de solicitud y respuesta de la API de Scheduler Extender:**
-
-1. **API filter**:
-   - Solicitud:
-     ```json
-     {
-       "pod": <pod>,
-       "nodes": <nodes>,
-       "nodenames": <node-names>
-     }
-     ```
-   - Respuesta:
-     ```json
-     {
-       "nodes": <filtered-nodes>,
-       "nodenames": <filtered-node-names>,
-       "failedNodes": <failed-nodes>,
-       "error": <error-message>
-     }
-     ```
-
-2. **API prioritize**:
-   - Solicitud:
-     ```json
-     {
-       "pod": <pod>,
-       "nodes": <nodes>,
-       "nodenames": <node-names>
-     }
-     ```
-   - Respuesta:
-     ```json
-     {
-       "hostPriorities": [
-         {
-           "host": <node-name>,
-           "score": <score>
-         },
-         ...
-       ],
-       "error": <error-message>
-     }
-     ```
-
-3. **API bind**:
-   - Solicitud:
-     ```json
-     {
-       "pod": <pod>,
-       "node": <node-name>
-     }
-     ```
-   - Respuesta:
-     ```json
-     {
-       "error": <error-message>
-     }
-     ```
-
-4. **API preempt**:
-   - Solicitud:
-     ```json
-     {
-       "pod": <pod>,
-       "nodenames": <node-names>,
-       "nodes": <nodes>
-     }
-     ```
-   - Respuesta:
-     ```json
-     {
-       "nodenames": <node-names>,
-       "nodes": <nodes>,
-       "podsToPreempt": {
-         <node-name>: [<pod>, ...],
-         ...
-       },
-       "error": <error-message>
-     }
-     ```
-
-**Ejemplo de implementación de Scheduler Extender (Go):**
-```go
-package main
-
-import (
-    "encoding/json"
-    "log"
-    "net/http"
-
-    v1 "k8s.io/api/core/v1"
-    extender "k8s.io/kube-scheduler/extender/v1"
-)
-
-func main() {
-    http.HandleFunc("/filter", filterHandler)
-    http.HandleFunc("/prioritize", prioritizeHandler)
-    http.HandleFunc("/bind", bindHandler)
-
-    log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-// Filter handler
-func filterHandler(w http.ResponseWriter, r *http.Request) {
-    var args extender.ExtenderArgs
-    var result extender.ExtenderFilterResult
-
-    // Decode request body
-    if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement filtering logic
-    filteredNodes := make([]v1.Node, 0, len(args.Nodes.Items))
-    failedNodes := make(map[string]string)
-
-    for _, node := range args.Nodes.Items {
-        // Custom filtering logic
-        if customFilter(&args.Pod, &node) {
-            filteredNodes = append(filteredNodes, node)
-        } else {
-            failedNodes[node.Name] = "Node failed custom filter"
-        }
-    }
-
-    // Set result
-    result.Nodes = &v1.NodeList{Items: filteredNodes}
-    result.FailedNodes = failedNodes
-
-    // Send response
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(result); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-// Prioritize handler
-func prioritizeHandler(w http.ResponseWriter, r *http.Request) {
-    var args extender.ExtenderArgs
-    var result extender.HostPriorityList
-
-    // Decode request body
-    if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement prioritization logic
-    result = make(extender.HostPriorityList, 0, len(args.Nodes.Items))
-
-    for _, node := range args.Nodes.Items {
-        // Custom score calculation
-        score := customScore(&args.Pod, &node)
-        result = append(result, extender.HostPriority{
-            Host:  node.Name,
-            Score: score,
-        })
-    }
-
-    // Send response
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(result); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-// Bind handler
-func bindHandler(w http.ResponseWriter, r *http.Request) {
-    var args extender.ExtenderBindingArgs
-
-    // Decode request body
-    if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement binding logic
-    err := customBind(&args.Pod, args.Node)
-
-    // Send response
-    w.Header().Set("Content-Type", "application/json")
-    if err != nil {
-        json.NewEncoder(w).Encode(extender.ExtenderBindingResult{
-            Error: err.Error(),
-        })
-    } else {
-        json.NewEncoder(w).Encode(extender.ExtenderBindingResult{})
-    }
-}
-
-// Custom filtering function
-func customFilter(pod *v1.Pod, node *v1.Node) bool {
-    // Implement custom filtering logic
-    return true
-}
-
-// Custom score calculation function
-func customScore(pod *v1.Pod, node *v1.Node) int64 {
-    // Implement custom score calculation logic
-    return 100
-}
-
-// Custom binding function
-func customBind(pod *v1.Pod, nodeName string) error {
-    // Implement custom binding logic
-    return nil
-}
-```
-
-**Ventajas y desventajas de Scheduler Extenders:**
-Ventajas:
-- Pueden desarrollarse de forma independiente del codebase del scheduler
-- Pueden implementarse en varios lenguajes de programación
-- Se ven menos afectados por las actualizaciones del scheduler
-
-Desventajas:
-- Degradación del rendimiento debido a la sobrecarga de comunicación HTTP
-- Solo pueden extender algunas etapas del ciclo de scheduling
-- Posibilidad de fallo de comunicación entre el scheduler y el extender
-
-**Scheduler Extender vs plugins del Scheduling Framework:**
-- **Scheduler Extender**: Se ejecuta como un proceso externo mediante webhooks HTTP.
-- **Plugins del Scheduling Framework**: Se ejecutan directamente integrados con el codebase del scheduler.
-
-**Explicación de las otras opciones:**
-- A. /filter: Un endpoint de API válido de scheduler extender que filtra la lista de Nodes.
-- B. /prioritize: Un endpoint de API válido de scheduler extender que asigna puntuaciones a Nodes.
-- C. /bind: Un endpoint de API válido de scheduler extender que vincula Pods a Nodes.
-</details>
-### 5. ¿Cuál es el rol del punto de extensión "PostFilter" en el framework del scheduler de Kubernetes?
-
-A. Asignar puntuaciones a Nodes después del filtering
-B. Vincular Pods a Nodes después del filtering
-C. Ejecutar lógica de preemption cuando falla el filtering
-D. Actualizar el estado del Pod después del filtering
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C. Ejecutar lógica de preemption cuando falla el filtering**
-
-**Explicación:**
-El rol del punto de extensión "PostFilter" en el framework de scheduling de Kubernetes es ejecutar lógica de preemption cuando falla el filtering. Cuando todos los Nodes se excluyen durante la fase de filtering y un Pod no puede programarse, los plugins PostFilter encuentran formas de programar el Pod mediante preemption.
-
-**Funciones clave del punto de extensión PostFilter:**
-1. **Identificar candidatos de preemption**: Identifica Pods y Nodes que pueden ser preempted.
-2. **Simulación de preemption**: Simula si los Pods pueden programarse después de la preemption.
-3. **Decisión de preemption**: Determina la estrategia óptima de preemption.
-
-**Interfaz del plugin PostFilter:**
-```go
-type PostFilterPlugin interface {
-    Plugin
-    // PostFilter is called when filtering fails.
-    // Finds ways to schedule pods through preemption.
-    PostFilter(ctx context.Context, state *CycleState, pod *v1.Pod, filteredNodeStatusMap NodeToStatusMap) (*PostFilterResult, *Status)
-}
-
-// PostFilterResult represents the result of PostFilter operation.
-type PostFilterResult struct {
-    // Node where pod will be scheduled after preemption
-    NominatedNodeName string
-}
-```
-
-**Plugin PostFilter predeterminado:**
-Kubernetes proporciona el siguiente plugin PostFilter predeterminado:
-
-1. **DefaultPreemption**: Implementa la lógica de preemption predeterminada.
-
-**Funcionamiento del plugin DefaultPreemption:**
-1. Identifica Nodes donde se puede liberar espacio mediante preemption de Pods de menor prioridad.
-2. Determina qué Pods preempt en cada Node.
-3. Verifica que los Pods puedan programarse después de la preemption.
-4. Selecciona la estrategia óptima de preemption.
-5. Establece el Node seleccionado como el nominatedNodeName del Pod.
-
-**Ejemplo de plugin PostFilter personalizado:**
-```go
-// CustomPostFilter implements custom preemption logic.
-type CustomPostFilter struct {
-    handle framework.Handle
-}
-
-// Name returns the plugin name.
-func (pl *CustomPostFilter) Name() string {
-    return "CustomPostFilter"
-}
-
-// PostFilter is called when filtering fails.
-func (pl *CustomPostFilter) PostFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, filteredNodeStatusMap framework.NodeToStatusMap) (*framework.PostFilterResult, *framework.Status) {
-    // Identify preemptable nodes
-    preemptableNodes := identifyPreemptableNodes(pl.handle, pod, filteredNodeStatusMap)
-    if len(preemptableNodes) == 0 {
-        return nil, framework.NewStatus(framework.Unschedulable, "no preemptable nodes found")
-    }
-
-    // Determine pods to preempt on each node
-    nodeToVictims := map[string]*framework.Victims{}
-    for _, node := range preemptableNodes {
-        victims, err := selectVictimsOnNode(pl.handle, pod, node)
-        if err != nil {
-            continue
-        }
-        nodeToVictims[node.Name] = victims
-    }
-
-    // Select optimal preemption strategy
-    nominatedNode, victims := selectBestNodeForPreemption(nodeToVictims)
-    if nominatedNode == "" {
-        return nil, framework.NewStatus(framework.Unschedulable, "no node for preemption")
-    }
-
-    // Execute preemption
-    for _, victim := range victims.Pods {
-        if err := pl.handle.ClientSet().CoreV1().Pods(victim.Namespace).Delete(ctx, victim.Name, metav1.DeleteOptions{}); err != nil {
-            return nil, framework.NewStatus(framework.Error, err.Error())
-        }
-    }
-
-    return &framework.PostFilterResult{
-        NominatedNodeName: nominatedNode,
-    }, nil
-}
-
-// Identify preemptable nodes
-func identifyPreemptableNodes(handle framework.Handle, pod *v1.Pod, filteredNodeStatusMap framework.NodeToStatusMap) []*v1.Node {
-    // Implementation omitted
-    return nil
-}
-
-// Select pods to preempt on node
-func selectVictimsOnNode(handle framework.Handle, pod *v1.Pod, node *v1.Node) (*framework.Victims, error) {
-    // Implementation omitted
-    return nil, nil
-}
-
-// Select optimal preemption strategy
-func selectBestNodeForPreemption(nodeToVictims map[string]*framework.Victims) (string, *framework.Victims) {
-    // Implementation omitted
-    return "", nil
-}
-```
-
-**Habilitación del plugin PostFilter en la configuración del scheduler:**
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
-  plugins:
-    postFilter:
-      enabled:
-      - name: CustomPostFilter
-      disabled:
-      - name: DefaultPreemption  # Disable default plugin
+extenders:
+- urlPrefix: https://scheduler-extender.scheduler-lab.svc:8443
+  filterVerb: filter
+  prioritizeVerb: prioritize
+  weight: 1
+  enableHTTPS: true
+  tlsConfig:
+    caFile: /etc/extender-client/ca.crt
+    certFile: /etc/extender-client/tls.crt
+    keyFile: /etc/extender-client/tls.key
+  httpTimeout: 2s
+  nodeCacheCapable: false
+  ignorable: false
 ```
 
-**Configuraciones relacionadas con preemption:**
+**Contrato de solicitudes y respuestas:**
+* Filter y prioritize usan `ExtenderArgs` con `Pod` y con `Nodes` completos o `NodeNames`, según `nodeCacheCapable`.
+* Filter devuelve `Nodes` o `NodeNames`, mapas de fallos y `Error`.
+* Prioritize devuelve directamente un array, por ejemplo `[{"Host":"node-a","Score":7}]`; las puntuaciones van de 0 a 10, no hasta 100. Si la priorización falla, se omiten las puntuaciones de ese extender; por tanto, estas no pueden imponer restricciones obligatorias.
+* Bind usa `PodName`, `PodNamespace`, `PodUID` y `Node`. Devuelva un resultado satisfactorio solo después de que la vinculación real se complete; una función de relleno `customBind` que devuelve nil no implementa la vinculación.
+* Preempt usa `ExtenderPreemptionArgs` con los mapas de candidatos y víctimas, y devuelve `ExtenderPreemptionResult.NodeNameToMetaVictims`. No devuelve una estructura inventada `podsToPreempt`.
+
+Use el manejador completo con límites de la [Parte 2](../../scheduling/02-custom-scheduler-part2.md). Este deja `bindVerb` sin configurar para conservar `DefaultBinder`. Aquí no se proporciona otro servidor HTTP ni un endpoint de vinculación que informe falsamente de éxito.
+</details>
+
+### 5. ¿Qué función cumple el punto de extensión "PostFilter" del framework de planificación de Kubernetes?
+
+A. Asignar puntuaciones a los nodos después del filtrado
+B. Vincular Pods a nodos después del filtrado
+C. Ejecutar la lógica de preempción cuando el filtrado falla
+D. Actualizar el estado del Pod después del filtrado
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Ejecutar la lógica de preempción cuando el filtrado falla**
+
+**Explicación:**
+PostFilter intenta recuperar la planificación cuando el filtrado no encuentra ningún nodo factible; la preempción predeterminada es una de sus implementaciones. Cuando todos los nodos quedan excluidos y el Pod no puede planificarse, sus plugins pueden intentar acciones que hagan viable un intento posterior.
+
+**Funciones principales del punto de extensión PostFilter:**
+1. **Identificar candidatos a la preempción**: Identifica los Pods y nodos que pueden participar.
+2. **Simular la preempción**: Comprueba si el Pod podría planificarse después de desalojar las víctimas.
+3. **Decidir la preempción**: Determina la estrategia óptima.
+
+**Interfaz de la versión indicada y extensión adecuada:**
+La API fijada usa `fwk.CycleState` y `fwk.NodeToStatusReader`; `PostFilterResult` incorpora `NominatingInfo`. Una nominación indica un posible destino para el siguiente intento, no una vinculación ya confirmada.
+
+Conserve `DefaultPreemption`, la implementación predeterminada, salvo que disponga de una alternativa completa y probada. Evalúa víctimas de menor prioridad frente a las restricciones restantes e intenta evitar incumplimientos de PDB, sin garantizarlo. Un bucle que omite la selección de víctimas y elimina directamente los Pods no es una alternativa segura. Los plugins de recuperación pueden realizar otras acciones apropiadas: PostFilter no se limita por definición a la preempción.
+
+La siguiente configuración ajusta la implementación predeterminada sin deshabilitarla. Los límites de candidatos acotan la búsqueda; no garantizan un resultado globalmente óptimo ni que el Pod llegue a planificarse.
+
+**Opciones relacionadas con la preempción:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
@@ -983,85 +456,91 @@ profiles:
   pluginConfig:
   - name: DefaultPreemption
     args:
-      minCandidateNodesPercentage: 10  # Minimum percentage of preemption candidate nodes
-      minCandidateNodesAbsolute: 100   # Minimum number of preemption candidate nodes
+      minCandidateNodesPercentage: 10
+      minCandidateNodesAbsolute: 100
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 ```
 
-**Proceso de preemption:**
-1. La fase PostFilter se llama cuando un Pod falla la fase de filtering en todos los Nodes.
-2. El plugin PostFilter identifica Nodes candidatos para preemption.
-3. Determina qué Pods preempt en cada Node.
-4. Verifica que los Pods puedan programarse después de la preemption.
-5. Selecciona la estrategia óptima de preemption.
-6. Establece el Node seleccionado como el nominatedNodeName del Pod.
-7. Los Pods preempted pasan por una terminación graceful.
-8. Cuando los Pods preempted terminan, los Pods de mayor prioridad se programan.
+**Proceso de preempción:**
+1. Se invoca PostFilter cuando el Pod no supera el filtrado en ningún nodo.
+2. El plugin identifica los nodos candidatos.
+3. Determina qué Pods deben desalojarse en cada nodo.
+4. Comprueba que el Pod pueda planificarse después.
+5. Selecciona la estrategia óptima.
+6. Establece el nodo elegido como nominatedNodeName del Pod.
+7. Los Pods desalojados terminan de forma ordenada.
+8. Cuando las víctimas terminan, se reintenta la planificación; la nominación no garantiza la vinculación.
 
-**Monitoreo de métricas relacionadas con preemption:**
+**Monitorización de métricas de preempción:**
 ```bash
-# Check preemption-related metrics from scheduler metrics
-kubectl get --raw /metrics | grep scheduler_preemption
+# Inspect nominations; scheduler metrics require its authenticated HTTPS endpoint.
+kubectl get pods -A -o custom-columns=NAME:.metadata.name,NOMINATED:.status.nominatedNodeName
 ```
 
-**Comprobación de eventos de preemption:**
+**Consultar eventos de preempción:**
 ```bash
 # Check preemption events
 kubectl get events | grep -i preempt
 ```
 
-**Problemas con las otras opciones:**
-- A. Asignar puntuaciones a Nodes después del filtering: este es el rol del punto de extensión "Score".
-- B. Vincular Pods a Nodes después del filtering: este es el rol del punto de extensión "Bind".
-- D. Actualizar el estado del Pod después del filtering: este no es un punto de extensión en el framework del scheduler.
+**Por qué las otras opciones son incorrectas:**
+- A. Asignar puntuaciones después del filtrado: Es la función de "Score".
+- B. Vincular Pods a nodos después del filtrado: Es la función de "Bind".
+- D. Actualizar el estado del Pod: No es un punto de extensión del framework de planificación.
 </details>
 
-### 6. ¿Cuál es el propósito principal del plugin "NodeResourcesBalancedAllocation" en el scheduler de Kubernetes?
+### 6. ¿Cuál es el objetivo principal del plugin "NodeResourcesBalancedAllocation" del scheduler de Kubernetes?
 
-A. Dar puntuaciones más altas a Nodes con uso equilibrado de CPU y memoria
-B. Dar puntuaciones más altas a Nodes con menor uso de recursos
-C. Dar puntuaciones más altas a Nodes con mayor uso de recursos
-D. Establecer límites de recursos en Nodes
+A. Puntuar mejor los nodos con fracciones equilibradas de CPU y memoria solicitadas
+B. Puntuar mejor los nodos con menor uso de recursos
+C. Puntuar mejor los nodos con mayor uso de recursos
+D. Establecer límites de recursos en los nodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A. Dar puntuaciones más altas a Nodes con uso equilibrado de CPU y memoria**
+**Respuesta: A. Puntuar mejor los nodos con fracciones equilibradas de CPU y memoria solicitadas**
 
 **Explicación:**
-El propósito principal del plugin "NodeResourcesBalancedAllocation" en el scheduler de Kubernetes es dar puntuaciones más altas a Nodes con uso equilibrado de CPU y memoria. Este plugin prefiere Nodes donde la diferencia entre utilización de CPU y memoria es pequeña, mejorando el balance general del uso de recursos en el clúster.
+`NodeResourcesBalancedAllocation` equilibra las **fracciones de recursos efectivamente solicitados respecto a los asignables**, no el uso medido de CPU y memoria. Para dos recursos incluidos en la implementación fijada:
 
-**Funcionamiento del plugin NodeResourcesBalancedAllocation:**
-1. Calcula la utilización de CPU y la utilización de memoria para cada Node.
-2. Calcula la diferencia entre la utilización de CPU y la utilización de memoria.
-3. Da puntuaciones más altas a Nodes con diferencias más pequeñas.
-
-**Método de cálculo de puntuación:**
 ```
-score = 10 - variance(cpuFraction, memoryFraction) * 10
+cpuFraction = min(requestedCPU / allocatableCPU, 1)
+memoryFraction = min(requestedMemory / allocatableMemory, 1)
+std = abs(cpuFraction - memoryFraction) / 2
+score = int((1 - std) * 100)
 ```
-Donde:
-- cpuFraction = (CPU solicitada + solicitud de CPU del Pod) / CPU asignable
-- memoryFraction = (memoria solicitada + solicitud de memoria del Pod) / memoria asignable
-- variance(a, b) = |a - b|
 
-**Ejemplo:**
-- Node A: utilización de CPU 80%, utilización de memoria 80% -> diferencia: 0% -> puntuación: 10
-- Node B: utilización de CPU 90%, utilización de memoria 50% -> diferencia: 40% -> puntuación: 6
-- Node C: utilización de CPU 30%, utilización de memoria 90% -> diferencia: 60% -> puntuación: 4
+Los totales solicitados incluyen el Pod entrante y las solicitudes contabilizadas por el scheduler. El plugin completo también gestiona las opciones de recursos propias de su versión. Cuando se incluyen más de dos recursos, usa la desviación estándar poblacional.
 
-En este caso, Node A recibe la puntuación más alta y es el que tiene mayor probabilidad de ser seleccionado.
+Estos son cálculos ilustrativos, no mediciones: las fracciones 80 %/80 % dan una puntuación de 100; 90 %/50 %, de 80; y 30 %/90 %, de 70. Los demás plugins y sus pesos también influyen en la selección del nodo.
 
-**Habilitación del plugin NodeResourcesBalancedAllocation en la configuración del scheduler:**
+**Habilitar NodeResourcesBalancedAllocation en la configuración del scheduler:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   plugins:
     score:
       enabled:
       - name: NodeResourcesBalancedAllocation
-        weight: 2  # Set weight
+        weight: 2
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 ```
 
 **Configuración del plugin:**
@@ -1069,7 +548,7 @@ profiles:
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   pluginConfig:
   - name: NodeResourcesBalancedAllocation
     args:
@@ -1078,340 +557,205 @@ profiles:
         weight: 1
       - name: memory
         weight: 1
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 ```
 
-**NodeResourcesBalancedAllocation vs otros plugins de scoring:**
-1. **NodeResourcesBalancedAllocation**: Prefiere Nodes con uso equilibrado de CPU y memoria.
-2. **NodeResourcesFit**: Prefiere Nodes con más recursos disponibles en comparación con los recursos solicitados.
-3. **NodeResourcesLeastAllocated**: Prefiere Nodes con menor uso de recursos.
-4. **NodeResourcesMostAllocated**: Prefiere Nodes con mayor uso de recursos.
+**NodeResourcesBalancedAllocation frente a otras estrategias de puntuación:**
+1. **NodeResourcesBalancedAllocation**: Prefiere fracciones equilibradas de recursos solicitados respecto a los asignables.
+2. **NodeResourcesFit**: Usa la estrategia configurada: LeastAllocated, MostAllocated o RequestedToCapacityRatio.
+3. **Estrategia LeastAllocated de NodeResourcesFit**: Prefiere fracciones solicitadas más bajas.
+4. **Estrategia MostAllocated de NodeResourcesFit**: Prefiere fracciones solicitadas más altas.
 
 **Casos de uso:**
-1. **Balance de recursos**: Mejora el balance de uso de CPU y memoria en todo el clúster.
-2. **Prevención de cuellos de botella**: Evita que un tipo de recurso (CPU o memoria) se agote antes que el otro.
-3. **Mejora de escalabilidad**: Los clústeres con uso equilibrado de recursos pueden escalar con mayor eficiencia.
+1. **Equilibrio de recursos**: Mejora el equilibrio de CPU y memoria en el clúster.
+2. **Reducir desequilibrios**: Puede reducir el desequilibrio entre los recursos solicitados; no evita los cuellos de botella durante la ejecución.
+3. **Mejorar la escalabilidad**: Los clústeres con un uso equilibrado de recursos pueden escalar con mayor eficiencia.
 
-**Ejemplo de plugin de balanced allocation personalizado:**
+**Funciones auxiliares de cálculo (`scoring/formulas.go`):**
+Comprueban la fórmula y la ponderación opcional 70:30 para GPU descrita en el capítulo de origen. No constituyen un plugin completo de scheduler. Mantenga la contabilidad de recursos integrada, incluidos los milicores de CPU, los contenedores de inicialización y sidecar, la sobrecarga y el tratamiento específico de las funciones habilitadas.
+
 ```go
-// CustomBalancedAllocation implements custom balanced allocation logic.
-type CustomBalancedAllocation struct {
-    handle framework.Handle
-    // Resource weights
-    resourceWeights map[v1.ResourceName]int64
+package scoring
+
+import (
+	"fmt"
+	"math"
+)
+
+// Two-resource form of the pinned BalancedAllocation formula.
+// Inputs are effective requested/allocatable fractions, not live utilization.
+func BalancedScore(cpuFraction, memoryFraction float64) (int64, error) {
+	for _, value := range []float64{cpuFraction, memoryFraction} {
+		if math.IsNaN(value) || math.IsInf(value, 0) || value < 0 {
+			return 0, fmt.Errorf("fractions must be finite and non-negative")
+		}
+	}
+	cpuFraction = math.Min(cpuFraction, 1)
+	memoryFraction = math.Min(memoryFraction, 1)
+	std := math.Abs(cpuFraction-memoryFraction) / 2
+	return int64((1 - std) * 100), nil
 }
 
-// Name returns the plugin name.
-func (pl *CustomBalancedAllocation) Name() string {
-    return "CustomBalancedAllocation"
-}
-
-// Score assigns a score to nodes.
-func (pl *CustomBalancedAllocation) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := pl.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("getting node %q from Snapshot: %v", nodeName, err))
-    }
-
-    // Node's allocatable resources
-    allocatable := nodeInfo.Node().Status.Allocatable
-
-    // Resources already requested on node
-    requested := nodeInfo.RequestedResource()
-
-    // Pod's resource request
-    podRequest := calculatePodResourceRequest(pod)
-
-    // Calculate resource utilization
-    fractions := make(map[v1.ResourceName]float64)
-    for resource, weight := range pl.resourceWeights {
-        if weight == 0 {
-            continue
-        }
-
-        allocatableValue := allocatable[resource]
-        if allocatableValue.IsZero() {
-            continue
-        }
-
-        requestedValue := requested.ResourceList[resource]
-        podRequestValue := podRequest[resource]
-
-        fraction := float64(requestedValue.Value()+podRequestValue.Value()) / float64(allocatableValue.Value())
-        fractions[resource] = fraction
-    }
-
-    // Calculate difference between resource utilizations
-    var variance float64
-    for _, fraction := range fractions {
-        for _, otherFraction := range fractions {
-            diff := fraction - otherFraction
-            if diff > 0 {
-                variance += diff
-            } else {
-                variance -= diff
-            }
-        }
-    }
-
-    // Calculate score
-    score := int64(100 - variance*100)
-    if score < 0 {
-        score = 0
-    }
-
-    return score, nil
-}
-
-// ScoreExtensions returns interface for score normalization.
-func (pl *CustomBalancedAllocation) ScoreExtensions() framework.ScoreExtensions {
-    return nil
-}
-
-// Calculate pod's resource request
-func calculatePodResourceRequest(pod *v1.Pod) v1.ResourceList {
-    result := v1.ResourceList{}
-    for _, container := range pod.Spec.Containers {
-        for resource, value := range container.Resources.Requests {
-            if currentValue, ok := result[resource]; ok {
-                currentValue.Add(value)
-                result[resource] = currentValue
-            } else {
-                result[resource] = value.DeepCopy()
-            }
-        }
-    }
-    return result
+// Optional policy arithmetic only; no GPU telemetry collector is implemented here.
+// The caller must establish freshness and workload/device relevance first.
+func WeightedGPUScore(packing int64, utilization float64) (int64, error) {
+	if packing < 0 || packing > 100 || math.IsNaN(utilization) || math.IsInf(utilization, 0) || utilization < 0 || utilization > 1 {
+		return 0, fmt.Errorf("packing must be 0..100 and utilization finite in 0..1")
+	}
+	utilizationScore := int64((1 - utilization) * 100)
+	return (packing*7 + utilizationScore*3) / 10, nil
 }
 ```
 
-**Problemas con las otras opciones:**
-- B. Dar puntuaciones más altas a Nodes con menor uso de recursos: este es el rol del plugin "NodeResourcesLeastAllocated".
-- C. Dar puntuaciones más altas a Nodes con mayor uso de recursos: este es el rol del plugin "NodeResourcesMostAllocated".
-- D. Establecer límites de recursos en Nodes: este no es el rol de los plugins de scheduler; los límites de recursos de Node son propiedades de los propios Nodes.
+**Por qué las otras opciones son incorrectas:**
+- B. Puntuar mejor los nodos con menor uso de recursos: Corresponde a la estrategia LeastAllocated de NodeResourcesFit.
+- C. Puntuar mejor los nodos con mayor uso de recursos: Corresponde a la estrategia MostAllocated de NodeResourcesFit.
+- D. Establecer límites de recursos: No es la función de los plugins de planificación; los límites son propiedades de los propios nodos.
 </details>
-### 7. ¿Cuál es el rol del punto de extensión "PreBind" en el scheduler de Kubernetes?
 
-A. Vincular Pods a Nodes
-B. Realizar operaciones necesarias antes del binding
-C. Realizar limpieza después del binding
-D. Realizar operaciones de recuperación cuando falla el binding
+### 7. ¿Qué función cumple el punto de extensión "PreBind" del scheduler de Kubernetes?
+
+A. Vincular Pods a nodos
+B. Realizar las operaciones necesarias antes de la vinculación
+C. Realizar la limpieza después de la vinculación
+D. Realizar operaciones de recuperación cuando la vinculación falla
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Realizar operaciones necesarias antes del binding**
+**Respuesta: B. Realizar las operaciones necesarias antes de la vinculación**
 
 **Explicación:**
-El rol del punto de extensión "PreBind" en el framework de scheduling de Kubernetes es realizar operaciones necesarias antes de vincular un Pod a un Node. Por ejemplo, pueden realizarse operaciones como aprovisionamiento de volúmenes, configuración de red y reserva de recursos.
+PreBind coordina los requisitos previos antes de confirmar la vinculación del Pod. `VolumeBinding` coordina con los controladores de almacenamiento la vinculación y el aprovisionamiento de volúmenes relacionados con la planificación. No existe un plugin predeterminado llamado `DefaultPreBind`.
 
-**Funciones clave del punto de extensión PreBind:**
-1. **Aprovisionamiento de volúmenes**: Crea y prepara los volúmenes necesarios.
-2. **Configuración de red**: Configura los recursos de red necesarios.
-3. **Reserva de recursos**: Reserva los recursos necesarios.
-4. **Prevalidación**: Verificación final de que el binding es posible.
+La interfaz de 1.35.8 incluye **tanto** `PreBindPreFlight` como `PreBind`, y usa `fwk.CycleState`. La comprobación previa puede devolver Skip para evitar trabajo innecesario para un Pod.
 
-**Interfaz del plugin PreBind:**
+**Demostración completa mediante consultas (`quizplugins/prebind.go`):**
+Esta comprobación de identidad opcional no aprovisiona volúmenes, configura CNI, crea endpoints de servicios ni asigna GPU. Esas tareas requieren sus controladores o mecanismos de dispositivos correspondientes. `DefaultBinder` ya incluye el UID; esta consulta adicional a la API solo muestra cómo usar la interfaz.
+
 ```go
-type PreBindPlugin interface {
-    Plugin
-    // PreBind is called before binding a pod to a node.
-    PreBind(ctx context.Context, state *CycleState, pod *v1.Pod, nodeName string) *Status
+package quizplugins
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
+type IdentityPreBind struct{ handle fwk.Handle }
+
+var _ fwk.PreBindPlugin = &IdentityPreBind{}
+
+func (*IdentityPreBind) Name() string { return "IdentityPreBind" }
+
+func (*IdentityPreBind) PreBindPreFlight(_ context.Context, _ fwk.CycleState, pod *v1.Pod, _ string) *fwk.Status {
+	if pod.Annotations["training.example.com/check-identity"] != "true" {
+		return fwk.NewStatus(fwk.Skip)
+	}
+	return nil
+}
+
+// Read-only interface demonstration. DefaultBinder already carries the Pod UID;
+// this extra API round trip is not required for ordinary scheduling.
+func (p *IdentityPreBind) PreBind(parent context.Context, _ fwk.CycleState, pod *v1.Pod, _ string) *fwk.Status {
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+	defer cancel()
+	current, err := p.handle.ClientSet().CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+	if err != nil {
+		return fwk.AsStatus(err)
+	}
+	if current.UID != pod.UID || current.DeletionTimestamp != nil || current.Spec.NodeName != "" {
+		return fwk.AsStatus(fmt.Errorf("Pod identity/state changed before binding"))
+	}
+	return nil
+}
+
+func NewPreBind(_ context.Context, _ runtime.Object, handle fwk.Handle) (fwk.Plugin, error) {
+	return &IdentityPreBind{handle: handle}, nil
 }
 ```
 
-**Plugins PreBind predeterminados:**
-Kubernetes proporciona los siguientes plugins PreBind predeterminados:
+El comando de la pregunta 2 lo registra. Mantenga `VolumeBinding` habilitado:
 
-1. **VolumeBinding**: Realiza operaciones de binding de volúmenes.
-2. **DefaultPreBind**: Realiza operaciones básicas previas al binding.
-
-**Ejemplo de plugin PreBind personalizado:**
-```go
-// CustomPreBind implements custom pre-binding logic.
-type CustomPreBind struct {
-    handle framework.Handle
-}
-
-// Name returns the plugin name.
-func (pl *CustomPreBind) Name() string {
-    return "CustomPreBind"
-}
-
-// PreBind is called before binding a pod to a node.
-func (pl *CustomPreBind) PreBind(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) *framework.Status {
-    // 1. Volume provisioning
-    if err := pl.provisionVolumes(ctx, pod, nodeName); err != nil {
-        return framework.NewStatus(framework.Error, err.Error())
-    }
-
-    // 2. Network resource setup
-    if err := pl.setupNetworking(ctx, pod, nodeName); err != nil {
-        return framework.NewStatus(framework.Error, err.Error())
-    }
-
-    // 3. Resource reservation
-    if err := pl.reserveResources(ctx, pod, nodeName); err != nil {
-        return framework.NewStatus(framework.Error, err.Error())
-    }
-
-    // 4. Final validation
-    if err := pl.validateBinding(ctx, pod, nodeName); err != nil {
-        return framework.NewStatus(framework.Error, err.Error())
-    }
-
-    return nil
-}
-
-// Volume provisioning
-func (pl *CustomPreBind) provisionVolumes(ctx context.Context, pod *v1.Pod, nodeName string) error {
-    // Identify necessary volumes
-    for _, volume := range pod.Spec.Volumes {
-        if volume.PersistentVolumeClaim != nil {
-            // Check PVC status
-            pvc, err := pl.handle.ClientSet().CoreV1().PersistentVolumeClaims(pod.Namespace).Get(ctx, volume.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
-            if err != nil {
-                return err
-            }
-
-            // If PVC is not bound
-            if pvc.Status.Phase != v1.ClaimBound {
-                return fmt.Errorf("PVC %s is not bound", pvc.Name)
-            }
-        }
-    }
-    return nil
-}
-
-// Network resource setup
-func (pl *CustomPreBind) setupNetworking(ctx context.Context, pod *v1.Pod, nodeName string) error {
-    // Example: Network policy setup
-    if err := pl.setupNetworkPolicies(ctx, pod, nodeName); err != nil {
-        return err
-    }
-
-    // Example: Service endpoint setup
-    if err := pl.setupServiceEndpoints(ctx, pod, nodeName); err != nil {
-        return err
-    }
-
-    return nil
-}
-
-// Resource reservation
-func (pl *CustomPreBind) reserveResources(ctx context.Context, pod *v1.Pod, nodeName string) error {
-    // Example: GPU resource reservation
-    if err := pl.reserveGPUs(ctx, pod, nodeName); err != nil {
-        return err
-    }
-
-    // Example: Special hardware resource reservation
-    if err := pl.reserveSpecialHardware(ctx, pod, nodeName); err != nil {
-        return err
-    }
-
-    return nil
-}
-
-// Binding validation
-func (pl *CustomPreBind) validateBinding(ctx context.Context, pod *v1.Pod, nodeName string) error {
-    // Example: Re-verify node status
-    node, err := pl.handle.ClientSet().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-    if err != nil {
-        return err
-    }
-
-    // Example: Check node resource availability
-    if !hasEnoughResources(node, pod) {
-        return fmt.Errorf("node %s does not have enough resources", nodeName)
-    }
-
-    return nil
-}
-```
-
-**Habilitación del plugin PreBind en la configuración del scheduler:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     preBind:
       enabled:
-      - name: CustomPreBind
-      disabled:
-      - name: VolumeBinding  # Disable default plugin
+      - name: IdentityPreBind
 ```
 
-**Casos de uso de PreBind:**
-1. **Aprovisionamiento de volúmenes**:
-   - Creación y binding de PersistentVolume
-   - Preparación de volúmenes efímeros
-   - Validación de parámetros de StorageClass
+**Límites de responsabilidad:**
+El provisionador o controlador correspondiente aprovisiona el almacenamiento; el scheduler coordina su ubicación y vinculación. La red CNI y los montajes de Secrets y volúmenes se configuran mediante el runtime y kubelet después de la asignación. Los controladores de Service, EndpointSlice y balanceadores de carga reconcilian sus propios recursos. Si un plugin personalizado coordina una reserva externa, debe implementar operaciones limitadas e idempotentes y su propia limpieza Unreserve; el framework no puede deshacer automáticamente cualquier efecto externo.
 
-2. **Configuración de red**:
-   - Aplicación de NetworkPolicy
-   - Configuración de endpoints de Service
-   - Configuración de load balancer
-
-3. **Reserva de recursos**:
-   - Reserva de recursos GPU
-   - Reserva de recursos FPGA
-   - Reserva de recursos de hardware especial
-
-4. **Configuración de seguridad**:
-   - Aplicación de políticas de seguridad
-   - Aprovisionamiento de certificados
-   - Preparación de montaje de Secrets
-
-**Manejo de fallos de PreBind:**
+**Gestión de fallos de PreBind:**
 Cuando un plugin PreBind devuelve un fallo:
-1. El ciclo de scheduling se aborta.
-2. El Pod vuelve a la cola de scheduling.
-3. Los recursos reservados se liberan.
+1. Se aborta el ciclo de planificación.
+2. El Pod vuelve a la cola de planificación.
+3. Los hooks Unreserve deshacen las reservas supuestas que pertenecen al plugin; la limpieza externa debe implementarse expresamente.
 4. Se registran eventos de fallo.
 
-**Monitoreo de logs y eventos de PreBind:**
+**Monitorización de logs y eventos de PreBind:**
 ```bash
 # Check PreBind-related messages in scheduler logs
-kubectl logs -n kube-system <scheduler-pod> | grep -i prebind
+kubectl -n scheduler-lab logs -l app=custom-scheduler --prefix --tail=100
 
 # Check pod events
-kubectl describe pod <pod-name> | grep -i prebind
+kubectl describe pod <pod-name>
 ```
 
-**Problemas con las otras opciones:**
-- A. Vincular Pods a Nodes: este es el rol del punto de extensión "Bind".
-- C. Realizar limpieza después del binding: este es el rol del punto de extensión "PostBind".
-- D. Realizar operaciones de recuperación cuando falla el binding: este no es un punto de extensión en el framework del scheduler.
+**Por qué las otras opciones son incorrectas:**
+- A. Vincular Pods a nodos: Es la función de "Bind".
+- C. Realizar la limpieza después de la vinculación: Es la función de "PostBind".
+- D. La recuperación tras un fallo incluye Unreserve para las reservas del plugin y la gestión de reintentos del framework.
 </details>
 
-### 8. ¿Cuál es el propósito principal del plugin "NodeResourcesFit" en el scheduler de Kubernetes?
+### 8. ¿Cuál es el objetivo principal del plugin "NodeResourcesFit" del scheduler de Kubernetes?
 
-A. Monitorear el uso de recursos del Node
-B. Establecer límites de recursos del Node
-C. Comparar la capacidad de recursos del Node con las solicitudes de recursos del Pod
-D. Mantener el balance de uso de recursos del Node
+A. Monitorizar el uso de recursos del nodo
+B. Establecer los límites de recursos del nodo
+C. Comparar los recursos asignables restantes con las solicitudes efectivas del Pod
+D. Mantener el equilibrio del uso de recursos del nodo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Comparar la capacidad de recursos del Node con las solicitudes de recursos del Pod**
+**Respuesta: C. Comparar los recursos asignables restantes con las solicitudes efectivas del Pod**
 
 **Explicación:**
-El propósito principal del plugin "NodeResourcesFit" en el scheduler de Kubernetes es comparar la capacidad de recursos del Node con las solicitudes de recursos del Pod para verificar si los Pods pueden ejecutarse en los Nodes. Este plugin considera varios tipos de recursos, incluidos CPU, memoria, almacenamiento efímero y recursos extendidos (como GPUs).
+`NodeResourcesFit` compara las solicitudes efectivas del Pod con los recursos asignables **menos las solicitudes asignadas o supuestas**, y aplica las restricciones correspondientes de número de Pods y recursos extendidos. Por lo general, no comprueba la suma de los límites de CPU y memoria frente a la capacidad. Deben contabilizarse las solicitudes derivadas de la admisión o de valores predeterminados, los contenedores de inicialización, los sidecars reiniciables, la sobrecarga y las funciones de recursos habilitadas.
 
-**Funciones clave del plugin NodeResourcesFit:**
-1. **Validación de solicitudes de recursos**: Verifica que las solicitudes de recursos del Pod no excedan los recursos asignables del Node.
-2. **Validación de límites de recursos**: Verifica que los límites de recursos del Pod no excedan la capacidad del Node.
-3. **Validación de recursos extendidos**: Verifica que las solicitudes de recursos extendidos como GPUs y FPGAs estén disponibles en los Nodes.
+Conserve la fase Filter predeterminada. La configuración modifica la puntuación sin sustituir la comprobación de recursos.
 
 **Configuración del plugin NodeResourcesFit:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   plugins:
     filter:
       enabled:
@@ -1430,128 +774,37 @@ profiles:
           weight: 1
         - name: memory
           weight: 1
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 ```
 
-**Estrategias de scoring:**
-El plugin NodeResourcesFit admite las siguientes estrategias de scoring:
+**Estrategias de puntuación:**
+El plugin NodeResourcesFit admite las siguientes estrategias:
 
-1. **LeastAllocated**: Da puntuaciones más altas a Nodes con menos recursos en uso.
+1. **LeastAllocated**: Puntúa mejor las fracciones solicitadas más bajas.
    ```
-   score = (capacity - requested) / capacity
-   ```
-
-2. **MostAllocated**: Da puntuaciones más altas a Nodes con más recursos en uso.
-   ```
-   score = requested / capacity
+   score ≈ 100 × (allocatable - requested) / allocatable
    ```
 
-3. **RequestedToCapacityRatio**: Usa funciones personalizadas para asignar puntuaciones según la proporción de recursos solicitados respecto a la capacidad.
+2. **MostAllocated**: Puntúa mejor las fracciones solicitadas más altas.
+   ```
+   score ≈ 100 × requested / allocatable
+   ```
 
-**Ejemplo de plugin NodeResourcesFit personalizado:**
-```go
-// CustomNodeResourcesFit implements custom resource fit logic.
-type CustomNodeResourcesFit struct {
-    handle framework.Handle
-    // Resource weights
-    resourceWeights map[v1.ResourceName]int64
-}
+3. **RequestedToCapacityRatio**: Usa una curva lineal por tramos configurada sobre las proporciones de recursos solicitados respecto a los asignables. Las fórmulas anteriores son ejemplos simplificados para un solo recurso.
 
-// Name returns the plugin name.
-func (pl *CustomNodeResourcesFit) Name() string {
-    return "CustomNodeResourcesFit"
-}
+**Precauciones con una implementación personalizada:**
+Conserve `NodeResourcesFit` del proyecto upstream. Comprobar solo los recursos de un mapa de pesos de puntuación puede omitir un recurso requerido; además, CPU `Quantity.Value()` pierde la precisión de milicores. Sumar solo las solicitudes de los contenedores convencionales omite el comportamiento de los contenedores de inicialización, los sidecars y la sobrecarga. Una puntuación escrita a mano que trunca las fracciones antes de escalarlas puede devolver únicamente ceros.
 
-// Filter checks node resource fitness.
-func (pl *CustomNodeResourcesFit) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    // Node's allocatable resources
-    allocatable := nodeInfo.Node().Status.Allocatable
+La comprobación local de la Parte 1 usa la función real de ajuste de recursos de la versión fijada: si ya se han solicitado 1500m en un nodo de 2 núcleos, otra solicitud de 1 núcleo no cabe, mientras que una de 250m sí cabe aunque tenga límites de CPU mayores. Es una prueba sintética de contabilidad, no un benchmark de clúster.
 
-    // Resources already requested on node
-    requested := nodeInfo.RequestedResource()
-
-    // Pod's resource request
-    podRequest := calculatePodResourceRequest(pod)
-
-    // Check each resource type
-    for resourceName := range pl.resourceWeights {
-        allocatableValue := allocatable[resourceName]
-        if allocatableValue.IsZero() {
-            return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("node does not have resource %s", resourceName))
-        }
-
-        requestedValue := requested.ResourceList[resourceName]
-        podRequestValue := podRequest[resourceName]
-
-        if requestedValue.Value()+podRequestValue.Value() > allocatableValue.Value() {
-            return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("insufficient %s", resourceName))
-        }
-    }
-
-    return nil
-}
-
-// Score assigns scores to nodes.
-func (pl *CustomNodeResourcesFit) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := pl.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("getting node %q from Snapshot: %v", nodeName, err))
-    }
-
-    // Node's allocatable resources
-    allocatable := nodeInfo.Node().Status.Allocatable
-
-    // Resources already requested on node
-    requested := nodeInfo.RequestedResource()
-
-    // Pod's resource request
-    podRequest := calculatePodResourceRequest(pod)
-
-    // Calculate score
-    var score int64 = 0
-    for resourceName, weight := range pl.resourceWeights {
-        allocatableValue := allocatable[resourceName]
-        if allocatableValue.IsZero() {
-            continue
-        }
-
-        requestedValue := requested.ResourceList[resourceName]
-        podRequestValue := podRequest[resourceName]
-
-        // Use LeastAllocated strategy
-        resourceScore := (float64(allocatableValue.Value()) - float64(requestedValue.Value()+podRequestValue.Value())) / float64(allocatableValue.Value())
-        score += int64(resourceScore * float64(weight))
-    }
-
-    return score, nil
-}
-
-// ScoreExtensions returns interface for score normalization.
-func (pl *CustomNodeResourcesFit) ScoreExtensions() framework.ScoreExtensions {
-    return pl
-}
-
-// NormalizeScore normalizes scores.
-func (pl *CustomNodeResourcesFit) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-    var highest int64 = 0
-    for _, nodeScore := range scores {
-        if nodeScore.Score > highest {
-            highest = nodeScore.Score
-        }
-    }
-
-    if highest == 0 {
-        return nil
-    }
-
-    for i := range scores {
-        scores[i].Score = scores[i].Score * framework.MaxNodeScore / highest
-    }
-
-    return nil
-}
-```
-
-**Ejemplo de solicitud y límite de recursos:**
+**Ejemplo de solicitudes y límites de recursos:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1560,7 +813,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: "500m"
@@ -1570,36 +823,37 @@ spec:
         memory: "512Mi"
 ```
 
-**Problemas con las otras opciones:**
-- A. Monitorear el uso de recursos del Node: este es el rol de metrics servers o sistemas de monitoreo.
-- B. Establecer límites de recursos del Node: este es el rol de la configuración del Node o kubelet.
-- D. Mantener el balance de uso de recursos del Node: este es el rol del plugin "NodeResourcesBalancedAllocation".
+**Por qué las otras opciones son incorrectas:**
+- A. Monitorizar el uso de recursos del nodo: Es la función de los servidores de métricas o sistemas de monitorización.
+- B. Establecer límites de recursos del nodo: Es la función de la configuración del nodo o de kubelet.
+- D. Mantener el equilibrio del uso de recursos: Es la función de "NodeResourcesBalancedAllocation".
 </details>
-### 9. ¿Cuál es el propósito principal del plugin "InterPodAffinity" en el scheduler de Kubernetes?
 
-A. Procesar reglas de affinity entre Pods y Nodes
-B. Procesar reglas de affinity y anti-affinity entre Pods
-C. Procesar reglas de affinity entre Pods y volúmenes
-D. Procesar reglas de affinity entre Pods y Services
+### 9. ¿Cuál es el objetivo principal del plugin "InterPodAffinity" del scheduler de Kubernetes?
+
+A. Procesar las reglas de afinidad entre Pods y nodos
+B. Procesar las reglas de afinidad y antiafinidad entre Pods
+C. Procesar las reglas de afinidad entre Pods y volúmenes
+D. Procesar las reglas de afinidad entre Pods y servicios
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Procesar reglas de affinity y anti-affinity entre Pods**
+**Respuesta: B. Procesar las reglas de afinidad y antiafinidad entre Pods**
 
 **Explicación:**
-El propósito principal del plugin "InterPodAffinity" en el scheduler de Kubernetes es procesar reglas de affinity y anti-affinity entre Pods. Este plugin controla si los Pods se colocan en el mismo dominio topológico (Node, zona, región, etc.) que otros Pods (affinity) o en dominios diferentes (anti-affinity).
+"InterPodAffinity" procesa las reglas de afinidad y antiafinidad entre Pods. Determina si los Pods deben ubicarse en el mismo dominio de topología que otros Pods, como un nodo, una zona o una región, o en dominios distintos.
 
-**Funciones clave del plugin InterPodAffinity:**
-1. **Procesamiento de reglas de Pod affinity**: Asegura que los Pods se coloquen en el mismo dominio topológico que otros Pods con etiquetas específicas.
-2. **Procesamiento de reglas de Pod anti-affinity**: Asegura que los Pods se coloquen en dominios topológicos diferentes de otros Pods con etiquetas específicas.
-3. **Consideración del dominio topológico**: Considera varios niveles de dominios topológicos, incluidos Nodes, zonas y regiones.
+**Funciones principales del plugin InterPodAffinity:**
+1. **Procesar la afinidad de Pod**: Exige que el Pod se ubique en el mismo dominio de topología que otros Pods con determinadas etiquetas.
+2. **Procesar la antiafinidad de Pod**: Exige un dominio de topología distinto del de otros Pods con determinadas etiquetas.
+3. **Considerar los dominios de topología**: Tiene en cuenta niveles como nodos, zonas y regiones.
 
-**Tipos de Pod affinity y anti-affinity:**
-1. **requiredDuringSchedulingIgnoredDuringExecution**: Reglas que deben cumplirse para que los Pods se programen (requisito estricto).
-2. **preferredDuringSchedulingIgnoredDuringExecution**: Reglas que son preferidas, pero no obligatorias (requisito flexible).
+**Tipos de afinidad y antiafinidad de Pod:**
+1. **requiredDuringSchedulingIgnoredDuringExecution**: Reglas que deben cumplirse para planificar el Pod; son requisitos obligatorios.
+2. **preferredDuringSchedulingIgnoredDuringExecution**: Reglas preferidas, pero no obligatorias.
 
-**Ejemplo de Pod affinity y anti-affinity:**
+**Ejemplo de afinidad y antiafinidad de Pod:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1631,7 +885,7 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
 **Configuración del plugin InterPodAffinity:**
@@ -1639,7 +893,7 @@ spec:
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   plugins:
     preFilter:
       enabled:
@@ -1650,213 +904,79 @@ profiles:
     score:
       enabled:
       - name: InterPodAffinity
-        weight: 2  # Set weight
+        weight: 2
   pluginConfig:
   - name: InterPodAffinity
     args:
-      hardPodAffinityWeight: 1  # Hard pod affinity weight
+      hardPodAffinityWeight: 1
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 ```
 
-**Ejemplo de plugin InterPodAffinity personalizado:**
-```go
-// CustomInterPodAffinity implements custom inter-pod affinity logic.
-type CustomInterPodAffinity struct {
-    handle framework.Handle
-    // Hard pod affinity weight
-    hardPodAffinityWeight int64
-}
+**Usar la implementación integrada completa:**
+Conserve `InterPodAffinity` y su procesamiento previo. Tiene en cuenta la selección de namespaces, los términos obligatorios del Pod entrante, la antiafinidad obligatoria de los Pods existentes, la topología y el arranque de grupos con autoafinidad. Un objeto `*v1.Affinity` sin adaptar no es un StateData del framework con Clone; la ausencia de estado no debe omitir silenciosamente las comprobaciones obligatorias.
 
-// Name returns the plugin name.
-func (pl *CustomInterPodAffinity) Name() string {
-    return "CustomInterPodAffinity"
-}
+En este ejemplo debe existir un Pod `app=cache` adecuado en el namespace seleccionado. La antiafinidad preferida no garantiza la separación. `hardPodAffinityWeight` influye en la puntuación y no relaja las restricciones obligatorias. Pruebe las decisiones de escala y ubicación con cargas reales; ubicar los Pods juntos no demuestra que se consiga una latencia mínima.
 
-// PreFilter initializes inter-pod affinity information.
-func (pl *CustomInterPodAffinity) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) *framework.Status {
-    // Initialize pod affinity information
-    if pod.Spec.Affinity == nil || (pod.Spec.Affinity.PodAffinity == nil && pod.Spec.Affinity.PodAntiAffinity == nil) {
-        return nil
-    }
+**Casos de uso de la afinidad y antiafinidad de Pod:**
+1. **Alta disponibilidad**: Distribuir las instancias de una aplicación entre distintos nodos, zonas o regiones.
+2. **Optimización del rendimiento**: Ubicar juntos los Pods que se comunican cuando las mediciones respaldan el equilibrio entre contención y latencia.
+3. **Aislamiento de recursos**: Distribuir los Pods que consumen muchos recursos entre distintos nodos.
+4. **Restricciones de licencia**: Concentrar en nodos concretos las aplicaciones con restricciones de licencia.
 
-    // Store pod affinity information
-    affinity := pod.Spec.Affinity
-    state.Write(framework.StateKey("CustomInterPodAffinity"), affinity)
+**Efecto de la afinidad y antiafinidad de Pod en el rendimiento:**
+Estas reglas pueden exigir mucho cálculo porque consideran los nodos y Pods. En clústeres grandes pueden afectar al rendimiento de la planificación; úselas con cuidado.
 
-    return nil
-}
-
-// PreFilterExtensions returns interface providing additional features.
-func (pl *CustomInterPodAffinity) PreFilterExtensions() framework.PreFilterExtensions {
-    return nil
-}
-
-// Filter checks inter-pod affinity rules.
-func (pl *CustomInterPodAffinity) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    // Get pod affinity information
-    obj, err := state.Read(framework.StateKey("CustomInterPodAffinity"))
-    if err != nil {
-        return nil
-    }
-
-    affinity, ok := obj.(*v1.Affinity)
-    if !ok || affinity == nil {
-        return nil
-    }
-
-    // Check required pod affinity rules
-    if affinity.PodAffinity != nil {
-        for _, term := range affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-            if !satisfiesPodAffinityTerm(pod, term, nodeInfo, pl.handle) {
-                return framework.NewStatus(framework.Unschedulable, "node does not satisfy pod affinity rules")
-            }
-        }
-    }
-
-    // Check required pod anti-affinity rules
-    if affinity.PodAntiAffinity != nil {
-        for _, term := range affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-            if satisfiesPodAffinityTerm(pod, term, nodeInfo, pl.handle) {
-                return framework.NewStatus(framework.Unschedulable, "node does not satisfy pod anti-affinity rules")
-            }
-        }
-    }
-
-    return nil
-}
-
-// Score assigns scores to nodes.
-func (pl *CustomInterPodAffinity) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    // Get pod affinity information
-    obj, err := state.Read(framework.StateKey("CustomInterPodAffinity"))
-    if err != nil {
-        return 0, nil
-    }
-
-    affinity, ok := obj.(*v1.Affinity)
-    if !ok || affinity == nil {
-        return 0, nil
-    }
-
-    nodeInfo, err := pl.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("getting node %q from Snapshot: %v", nodeName, err))
-    }
-
-    var score int64 = 0
-
-    // Calculate preferred pod affinity score
-    if affinity.PodAffinity != nil {
-        for _, term := range affinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
-            if satisfiesPodAffinityTerm(pod, term.PodAffinityTerm, nodeInfo, pl.handle) {
-                score += term.Weight
-            }
-        }
-    }
-
-    // Calculate preferred pod anti-affinity score
-    if affinity.PodAntiAffinity != nil {
-        for _, term := range affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
-            if !satisfiesPodAffinityTerm(pod, term.PodAffinityTerm, nodeInfo, pl.handle) {
-                score += term.Weight
-            }
-        }
-    }
-
-    return score, nil
-}
-
-// ScoreExtensions returns interface for score normalization.
-func (pl *CustomInterPodAffinity) ScoreExtensions() framework.ScoreExtensions {
-    return pl
-}
-
-// NormalizeScore normalizes scores.
-func (pl *CustomInterPodAffinity) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-    var highest int64 = 0
-    for _, nodeScore := range scores {
-        if nodeScore.Score > highest {
-            highest = nodeScore.Score
-        }
-    }
-
-    if highest == 0 {
-        return nil
-    }
-
-    for i := range scores {
-        scores[i].Score = scores[i].Score * framework.MaxNodeScore / highest
-    }
-
-    return nil
-}
-
-// Check if pod affinity term is satisfied
-func satisfiesPodAffinityTerm(pod *v1.Pod, term v1.PodAffinityTerm, nodeInfo *framework.NodeInfo, handle framework.Handle) bool {
-    // Implementation omitted
-    return true
-}
-```
-
-**Casos de uso de Pod affinity y anti-affinity:**
-1. **Alta disponibilidad**: Distribuir instancias de la misma aplicación entre diferentes Nodes, zonas o regiones
-2. **Optimización de rendimiento**: Colocar Pods que se comunican entre sí en el mismo Node para minimizar la latencia
-3. **Aislamiento de recursos**: Distribuir Pods con uso intensivo de recursos entre diferentes Nodes
-4. **Restricciones de licencia**: Concentrar aplicaciones con restricciones de licencia en Nodes específicos
-
-**Impacto en el rendimiento de Pod affinity y anti-affinity:**
-Pod affinity y anti-affinity pueden ser computacionalmente costosas, ya que necesitan considerar todos los Nodes y Pods. En clústeres grandes, esto puede impactar el rendimiento del scheduling, por lo que deben usarse con precaución.
-
-**Problemas con las otras opciones:**
-- A. Procesar reglas de affinity entre Pods y Nodes: este es el rol del plugin "NodeAffinity".
-- C. Procesar reglas de affinity entre Pods y volúmenes: este es el rol del plugin "VolumeBinding".
-- D. Procesar reglas de affinity entre Pods y Services: este no es un plugin del scheduler de Kubernetes.
+**Por qué las otras opciones son incorrectas:**
+- A. Procesar reglas de afinidad entre Pods y nodos: Es la función de "NodeAffinity".
+- C. Procesar reglas de afinidad entre Pods y volúmenes: Es la función de "VolumeBinding".
+- D. Procesar reglas de afinidad entre Pods y servicios: No es un plugin del scheduler de Kubernetes.
 </details>
 
-### 10. ¿Cuál es el propósito principal del plugin "NodeName" en el scheduler de Kubernetes?
+### 10. ¿Cuál es el objetivo principal del plugin "NodeName" del scheduler de Kubernetes?
 
-A. Verificar que el campo spec.nodeName del Pod coincida con el nombre del Node
-B. Asignar nombres a Nodes
-C. Asignar nombres de Node a Pods
-D. Validar el formato del nombre de Node
+A. Comprobar que el campo spec.nodeName del Pod coincida con el nombre del nodo
+B. Asignar nombres a los nodos
+C. Asignar nombres de nodos a los Pods
+D. Validar el formato del nombre de nodo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A. Verificar que el campo spec.nodeName del Pod coincida con el nombre del Node**
+**Respuesta: A. Comprobar que el campo spec.nodeName del Pod coincida con el nombre del nodo**
 
 **Explicación:**
-El propósito principal del plugin "NodeName" en el scheduler de Kubernetes es verificar que el campo `spec.nodeName` del Pod coincida con el nombre del Node. Este plugin comprueba si un Pod ha sido asignado directamente a un Node específico y solo permite pasar por la fase de filtering a los Nodes con nombres coincidentes.
+"NodeName" comprueba que el campo `spec.nodeName` del Pod coincida con el nombre del nodo. Si se invoca con un nodeName no vacío, su predicado solo acepta ese nombre. En el funcionamiento habitual, los Pods ya asignados quedan excluidos de la cola de Pods sin planificar; el plugin no es lo que provoca que se omita la planificación.
 
-**Funciones clave del plugin NodeName:**
-1. **Verificación del nombre del Node**: Si el campo `spec.nodeName` del Pod está configurado, solo se seleccionan Nodes con nombres coincidentes.
-2. **Soporte de scheduling directo**: Permite a los usuarios asignar Pods directamente a Nodes específicos.
-3. **Omisión del scheduler**: Los Pods con `spec.nodeName` configurado omiten la lógica normal de scheduling y se asignan directamente al Node especificado.
+**Funciones principales del plugin NodeName:**
+1. **Comprobar el nombre del nodo**: Si se define `spec.nodeName`, solo se seleccionan nodos con el mismo nombre.
+2. **Significado del campo**: spec.nodeName indica directamente el nodo; no selecciona un scheduler.
+3. **Omitir el scheduler**: Los Pods con `spec.nodeName` definido omiten la planificación normal y se asignan directamente al nodo indicado.
 
-**Implementación del plugin NodeName:**
+**Predicado equivalente a la comprobación del nombre:**
+Esta función auxiliar ilustra la comprobación integrada; no registre un plugin de reemplazo llamado `NodeName`.
+
 ```go
-// NodeName plugin implementation example
-type NodeName struct{}
+package quizplugins
 
-// Name returns the plugin name.
-func (pl *NodeName) Name() string {
-    return "NodeName"
-}
+import v1 "k8s.io/api/core/v1"
 
-// Filter verifies that the pod's spec.nodeName field matches the node name.
-func (pl *NodeName) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    if pod.Spec.NodeName == "" {
-        return nil
-    }
-
-    if pod.Spec.NodeName != nodeInfo.Node().Name {
-        return framework.NewStatus(framework.UnschedulableAndUnresolvable, "node name does not match")
-    }
-
-    return nil
+// Equivalent name predicate for explanation; not a replacement scheduler.
+func NodeNameMatches(pod *v1.Pod, node *v1.Node) bool {
+	if pod == nil || node == nil {
+		return false
+	}
+	return pod.Spec.NodeName == "" || pod.Spec.NodeName == node.Name
 }
 ```
 
-**Ejemplo de Pod con especificación nodeName:**
+**Ejemplo de Pod con nodeName:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1866,31 +986,33 @@ spec:
   nodeName: worker-node-1  # Direct assignment to specific node
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-**Consideraciones al usar nodeName:**
-1. **Omisión del scheduler**: Usar `nodeName` omite el filtering, scoring y otra lógica del scheduler.
-2. **Comprobación de existencia del Node**: Si el Node especificado no existe, el Pod permanece en estado `Pending`.
-3. **Sin comprobación de recursos**: La disponibilidad de recursos del Node no se comprueba, lo que puede provocar fallos por escasez de recursos.
-4. **Ignorar restricciones**: Se ignoran taints, affinity y otras restricciones.
+**Aspectos que deben considerarse al usar nodeName:**
+1. **Omitir el scheduler**: Usar `nodeName` omite el filtrado, la puntuación y las demás comprobaciones del scheduler.
+2. **Existencia del nodo**: Un nombre incorrecto o inexistente no provoca la selección de otro nodo.
+3. **La admisión sigue aplicándose**: Se omiten las comprobaciones de recursos del scheduler, pero kubelet todavía puede rechazar el Pod si no hay recursos suficientes.
+4. **Restricciones restantes**: Se omiten NoSchedule y las comprobaciones de afinidad de la planificación, pero siguen aplicándose NoExecute y la admisión del nodo. Los PVC con WaitForFirstConsumer pueden permanecer en Pending porque se ha omitido la coordinación de volúmenes del scheduler.
 
-**nodeName vs nodeSelector vs nodeAffinity:**
-1. **nodeName**: Asigna directamente a un Node específico. Es la opción más restrictiva y menos flexible.
-2. **nodeSelector**: Selecciona Nodes según etiquetas. Simple, pero con expresividad limitada.
-3. **nodeAffinity**: Admite reglas complejas de selección de Nodes. Es la opción más flexible y expresiva.
+La etiqueta `kubernetes.io/hostname` no tiene por qué coincidir con el nombre del objeto Node. Consulte su valor real antes de usar los siguientes ejemplos de etiquetas.
+
+**nodeName frente a nodeSelector y nodeAffinity:**
+1. **nodeName**: Asigna directamente un nodo concreto. Es la opción más restrictiva y menos flexible.
+2. **nodeSelector**: Selecciona nodos por sus etiquetas. Es sencillo, pero tiene una expresividad limitada.
+3. **nodeAffinity**: Permite reglas de selección más complejas. Es la opción más flexible y expresiva.
 
 **Casos de uso de nodeName:**
-1. **Debugging**: Ejecutar Pods en Nodes específicos para depurar problemas.
-2. **Pruebas**: Ejecutar pruebas en Nodes específicos.
-3. **Hardware especial**: Asignar Pods a Nodes con hardware específico.
-4. **Static Pods**: Usado para Static Pods administrados directamente por kubelet.
+1. **Depuración**: Ejecutar Pods en nodos concretos para investigar problemas.
+2. **Pruebas**: Ejecutar pruebas en nodos concretos.
+3. **Hardware especial**: Asignar Pods a nodos que disponen de hardware específico.
+4. **Distinción respecto a un Pod estático**: Un Pod creado mediante la API con nodeName no es un Pod estático; estos proceden de la configuración local de kubelet.
 
 **Precauciones al usar nodeName:**
-1. **Sin recuperación automática**: Si un Node falla, los Pods no se mueven automáticamente a otros Nodes.
-2. **Escalabilidad limitada**: Los nombres de Node están codificados de forma fija, lo que limita la escalabilidad.
-3. **Dificultad de mantenimiento**: Las definiciones de Pod necesitan actualizaciones si cambian los nombres de Node.
-4. **Sin balanceo de carga**: No se pueden aprovechar las funciones de balanceo de carga del scheduler.
+1. **Comportamiento de los reemplazos**: Los Pods no se trasladan. Un controlador puede crear reemplazos, pero una plantilla fijada al mismo nombre de nodo averiado sigue restringiendo su ubicación.
+2. **Escalabilidad limitada**: Los nombres de nodo se fijan en la definición, lo que limita la escalabilidad.
+3. **Mantenimiento más difícil**: Las definiciones deben actualizarse si cambian los nombres de los nodos.
+4. **Sin reparto de carga**: No se aprovechan las funciones de reparto de carga del scheduler.
 
 **Alternativas y recomendaciones:**
 1. **Usar nodeSelector**:
@@ -1904,7 +1026,7 @@ spec:
        kubernetes.io/hostname: worker-node-1
      containers:
      - name: nginx
-       image: nginx
+       image: nginx:1.30.6
    ```
 
 2. **Usar nodeAffinity**:
@@ -1925,11 +1047,56 @@ spec:
                - worker-node-1
      containers:
      - name: nginx
-       image: nginx
+       image: nginx:1.30.6
    ```
 
-**Problemas con las otras opciones:**
-- B. Asignar nombres a Nodes: Los nombres de Node se asignan en la creación del Node y no son el rol de los plugins del scheduler.
-- C. Asignar nombres de Node a Pods: Esto se realiza en la fase de binding del scheduler, no por el plugin NodeName.
-- D. Validar el formato del nombre de Node: Esto lo realiza la lógica de validación del API server, no los plugins del scheduler.
+**Por qué las otras opciones son incorrectas:**
+- B. Asignar nombres a los nodos: Se asignan cuando se crea el nodo; no es la función de los plugins de planificación.
+- C. Asignar nombres de nodos a los Pods: Ocurre en la fase de vinculación del scheduler, no en NodeName.
+- D. Validar el formato del nombre de nodo: Es la función de la validación del servidor de API, no de los plugins del scheduler.
 </details>
+
+### 11. ¿Qué controlador usa el coste de eliminación de Pod como preferencia al reducir réplicas?
+
+A. La eliminación por ordinal de StatefulSet
+B. ReplicaSet, incluidos los que pertenecen a Deployments
+C. La eliminación de cualquier Pod independiente
+D. Un scheduler global que clasifica todos los Pods de distintos Deployments
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. ReplicaSet, incluidos los que pertenecen a Deployments**
+
+La anotación se compara dentro de un mismo ReplicaSet y se aplica sin garantías. Si falta, su valor es 0; se admiten valores int32 con signo, incluidos los negativos. La asignación, la fase y el estado de preparación pueden tener precedencia: un Pod de coste alto que no esté preparado puede eliminarse antes que otro de coste menor que sí lo esté. La función estaba en alfa en 1.21 y es beta, habilitada de forma predeterminada, desde 1.22.
+</details>
+
+### 12. ¿Qué patrón para actualizar el coste de eliminación coincide con el capítulo de origen?
+
+A. Un coste alto y un PDB garantizan que una réplica sobreviva a una reducción normal de réplicas
+B. Sustituir el Pod completo por cada solicitud entrante
+C. Cambiar solo el coste en transiciones relevantes, comprobar el UID del Pod y rechazar métricas obsoletas
+D. Tratar las métricas no disponibles como actividad nula y reducir inmediatamente el coste
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Cambiar solo el coste en transiciones relevantes, comprobar el UID del Pod y rechazar métricas obsoletas**
+
+Use un único escritor autorizado, solicitudes limitadas y un parche mínimo de la anotación. La comprobación del UID evita modificar por error un Pod nuevo que tenga el mismo nombre. Una simulación de escalado en el servidor no predice qué Pods se eliminarán. La reducción normal de réplicas de ReplicaSet elimina los Pods directamente y no queda bloqueada por un PDB; el drenaje de la aplicación, su estado de preparación y la recuperación siguen siendo necesarios.
+</details>
+
+## Referencias
+
+El código usa el [módulo de la Parte 1](../../scheduling/01-custom-scheduler-part1.md). Las pruebas locales de código y configuración no demuestran que exista un sistema de aprobación desplegado, una carga en grupo, ejecución en GPU ni una configuración preparada para producción.
+
+* [Framework de planificación](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
+* [Interfaces del framework para la versión fijada](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)
+* [Configuración del scheduler](https://kubernetes.io/docs/reference/scheduling/config/)
+* [Planificación nativa de PodGroup](https://kubernetes.io/docs/concepts/scheduling-eviction/podgroup-scheduling/)
+* [Políticas de PodGroup](https://kubernetes.io/docs/concepts/workloads/workload-api/policies/)
+* [Job de Volcano](https://volcano.sh/en/docs/vcjob/)
+* [CRD de Job de Volcano 1.15.2](https://github.com/volcano-sh/volcano/blob/v1.15.2/config/crd/volcano/bases/batch.volcano.sh_jobs.yaml)
+* [Puntuación de BalancedAllocation](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/scheduler/framework/plugins/noderesources/balanced_allocation.go)
+* [Asignación de nodos](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
+* [Coste de eliminación en ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)

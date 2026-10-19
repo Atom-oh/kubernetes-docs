@@ -1,22 +1,22 @@
-# Security Quiz
+# Kubernetes セキュリティクイズ
 
-このクイズでは、認証、認可、NetworkPolicy、Security Context、Secret 管理など、Kubernetes security の概念に関する理解を確認します。
+このクイズでは、認証、認可、NetworkPolicy、Security Context、Secret 管理など、Kubernetes のセキュリティ概念に関する理解を確認します。
 
-## Multiple Choice Questions
+## 選択問題
 
-1. Kubernetes でユーザー認証にサポートされていない認証方式はどれですか？
-   - A) X.509 certificates
-   - B) Service account tokens
-   - C) OAuth tokens
-   - D) Built-in user database
-   
+1. Kubernetes のユーザー認証でサポートされていない方式はどれですか？
+   - A) X.509 証明書
+   - B) ServiceAccount トークン
+   - C) OpenID Connect ID トークン
+   - D) 組み込みユーザーデータベース
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) Built-in user database**
+**回答: D) 組み込みユーザーデータベース**
 
 **解説:**
-Kubernetes は組み込みのユーザーデータベースを提供していません。代わりに、X.509 certificates、service account tokens、OAuth tokens、OpenID Connect tokens、webhook token authentication などの認証方式をサポートしています。ユーザー管理は通常、外部システム（例: LDAP、Active Directory）との統合を通じて行われます。
+Kubernetes は組み込みのユーザーデータベースを提供していません。X.509 証明書、ServiceAccount トークン、OIDC ID トークン、webhook によるトークン認証などをサポートしています。任意の OAuth アクセストークンを使うには、対応する認証機能を適切に構成する必要があります。ユーザー管理には通常、LDAP や Active Directory などの外部システムを使用します。
 </details>
 
 2. Kubernetes における RBAC (Role-Based Access Control) の主要コンポーネントではないものはどれですか？
@@ -24,208 +24,208 @@ Kubernetes は組み込みのユーザーデータベースを提供していま
    - B) ClusterRole
    - C) RoleBinding
    - D) SecurityPolicy
-   
+
 <details>
 <summary>回答を表示</summary>
 
 **回答: D) SecurityPolicy**
 
 **解説:**
-Kubernetes RBAC の主要コンポーネントは Role、ClusterRole、RoleBinding、ClusterRoleBinding です。Role と ClusterRole は権限の集合を定義し、RoleBinding と ClusterRoleBinding はそれらの権限をユーザー、グループ、または service account に関連付けます。SecurityPolicy は RBAC コンポーネントではありません。類似のリソースとしては PodSecurityPolicy（現在は非推奨）や PodSecurityStandard があります。
+Kubernetes RBAC の主要コンポーネントは Role、ClusterRole、RoleBinding、ClusterRoleBinding です。Role と ClusterRole は権限を定義し、各 Binding はその権限をユーザー、グループ、ServiceAccount に付与します。SecurityPolicy は RBAC のコンポーネントではありません。PodSecurityPolicy は Kubernetes 1.25 で削除されました。Pod Security Standards は Pod Security Admission が適用するポリシー定義であり、PodSecurityStandard という API リソースはありません。
 </details>
 
-3. Kubernetes の pod の Security Context で設定できないものはどれですか？
-   - A) Container user ID (UID)
-   - B) Container group ID (GID)
-   - C) Container network policy
-   - D) Container privilege escalation capability
-   
+3. Kubernetes の Pod の Security Context で設定できないものはどれですか？
+   - A) コンテナのユーザー ID (UID)
+   - B) コンテナのグループ ID (GID)
+   - C) コンテナのネットワークポリシー
+   - D) コンテナの権限昇格機能
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Container network policy**
+**回答: C) コンテナのネットワークポリシー**
 
 **解説:**
-Security Context は、pod または container レベルでの権限とアクセス制御設定を定義します。これには user ID (runAsUser)、group ID (runAsGroup)、privilege escalation capability (allowPrivilegeEscalation)、privileged containers (privileged)、capabilities が含まれます。ただし、network policies は Security Context ではなく、別個の NetworkPolicy リソースで定義されます。
+Security Context では、Pod またはコンテナ単位で権限やアクセス制御を設定します。設定項目にはユーザー ID (`runAsUser`)、グループ ID (`runAsGroup`)、権限昇格の許可 (`allowPrivilegeEscalation`)、特権モード (`privileged`)、Linux capabilities があります。ネットワークポリシーは Security Context ではなく、別の NetworkPolicy リソースで定義します。
 </details>
 
 4. Kubernetes における ServiceAccount の主な目的は何ですか？
-   - A) Authentication for users outside the cluster
-   - B) Providing identity for pods to communicate with the API server
-   - C) Encrypting communication between nodes
-   - D) Granting cluster administrator privileges
-   
+   - A) クラスター外のユーザー認証
+   - B) Pod が API server と通信するための ID を提供する
+   - C) ノード間通信を暗号化する
+   - D) cluster-admin 権限を付与する
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Providing identity for pods to communicate with the API server**
+**回答: B) Pod が API server と通信するための ID を提供する**
 
 **解説:**
-Service accounts は、pod 内で実行されるプロセスが Kubernetes API server と通信するための identity を提供します。各 namespace には default service account があり、明示的に指定しない限り、pod はこの default service account を使用します。Service accounts は RBAC と組み合わせて使用することで、pod が実行できる操作を制限できます。
+ServiceAccount は、Pod 内のプロセスが Kubernetes API server と通信するための ID を提供します。各 namespace にはデフォルトの ServiceAccount があり、明示しない場合は Pod がこれを使用します。RBAC と組み合わせることで、Pod が実行できる操作を制限できます。
 </details>
 
-5. Kubernetes における NetworkPolicy の主な目的は何ですか？
-   - A) Routing traffic from outside the cluster to inside
-   - B) Controlling and restricting communication between pods
-   - C) Encrypting communication between nodes
-   - D) Providing service discovery
-   
+5. Kubernetes の NetworkPolicy の主な目的は何ですか？
+   - A) クラスター外から内部へのトラフィックをルーティングする
+   - B) Pod 間の通信を制御・制限する
+   - C) ノード間通信を暗号化する
+   - D) サービスディスカバリーを提供する
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Controlling and restricting communication between pods**
+**回答: B) Pod 間の通信を制御・制限する**
 
 **解説:**
-NetworkPolicy は、pod のグループ間の通信を制御する方法を提供します。これにより、どの pod がどの他の pod と通信できるか、またどの ports と protocols を使用できるかを指定できます。Network policies は、service-to-service communication の細かな制御と、microservice architectures における security 強化に重要です。
+NetworkPolicy を使うと、Pod のグループ間で許可する通信相手、ポート、プロトコルを指定できます。サービス間通信を細かく制御できるため、マイクロサービス構成のセキュリティ強化に役立ちます。
 </details>
 
-6. Pod Security Standards における 3 つの policy levels のうち、最も制限が厳しいものはどれですか？
+6. Pod Security Standards の 3 つのポリシーレベルのうち、最も制限が厳しいものはどれですか？
    - A) Privileged
    - B) Baseline
    - C) Restricted
    - D) Enforced
-   
+
 <details>
 <summary>回答を表示</summary>
 
 **回答: C) Restricted**
 
 **解説:**
-Pod Security Standards は 3 つの policy levels を定義しています:
+Pod Security Standards は、次の 3 つのポリシーレベルを定義しています。
   - Privileged: 制限なし、すべての権限を許可
-  - Baseline: 既知の privilege escalation paths を防止
-  - Restricted: security settings が強化された最も制限の厳しい policy
+  - Baseline: 既知の権限昇格経路を防止
+  - Restricted: セキュリティ設定を強化した、最も制限の厳しいポリシー
 
-Restricted policy は最も制限が厳しく、least privilege の原則に従い、security best practices を適用します。この policy は privileged containers、host namespace sharing、host path mounts などを禁止します。
+Restricted ポリシーは最も制限が厳しく、最小権限の原則に沿ったセキュリティのベストプラクティスを適用します。特権コンテナ、ホスト namespace の共有、hostPath マウントなどを禁止します。
 </details>
 
-7. Kubernetes で Secret data を保護するために最も効果的な方法は何ですか？
-   - A) Base64 encoding
-   - B) etcd encryption configuration
-   - C) Namespace isolation
-   - D) Adding labels
-   
+7. Kubernetes Secret のデータを保護するうえで最も効果的な方法は何ですか？
+   - A) Base64 エンコード
+   - B) etcd の保存時暗号化設定
+   - C) Namespace による分離
+   - D) label の追加
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) etcd encryption configuration**
+**回答: B) etcd の保存時暗号化設定**
 
 **解説:**
-Kubernetes の Secret data はデフォルトで Base64 にエンコードされて保存されますが、これは暗号化ではなく単純なエンコードです。etcd encryption configuration を使用すると、Secret data は etcd に保存される前に暗号化され、etcd database への不正アクセスから機密情報を保護できます。Namespace isolation と labels はアクセス制御には役立ちますが、データ自体を保護するものではありません。
+Kubernetes Secret のデータは、既定では Base64 でエンコードされますが、これは暗号化ではありません。etcd の暗号化を設定すると、Secret のデータは etcd への保存前に暗号化され、etcd データベースへの不正アクセスから保護されます。namespace の分離やラベルはアクセス制御には役立ちますが、データそのものを暗号化するものではありません。
 </details>
 
-8. Kubernetes における container image security を強化する方法ではないものはどれですか？
-   - A) Image vulnerability scanning
-   - B) Using trusted registries
-   - C) Image signing and verification
-   - D) Granting root privileges to containers
-   
+8. Kubernetes でコンテナイメージの安全性を高める方法ではないものはどれですか？
+   - A) イメージの脆弱性スキャン
+   - B) 信頼できるレジストリの使用
+   - C) イメージの署名と検証
+   - D) コンテナに root 権限を付与する
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) Granting root privileges to containers**
+**回答: D) コンテナに root 権限を付与する**
 
 **解説:**
-containers に root privileges を付与すると security が弱まります。Container image security を強化する方法には、image vulnerability scanning、trusted registries の使用、image signing and verification、least privilege の原則の適用、不要な packages の削除、containers を non-root users として実行することが含まれます。
+コンテナに root 権限を与えるとセキュリティが弱まります。コンテナイメージの安全性を高めるには、脆弱性スキャン、信頼できるレジストリの使用、イメージの署名と検証、最小権限の適用、不要なパッケージの削除、root 以外のユーザーでの実行などが有効です。
 </details>
 
-9. Kubernetes における Audit Logging の主な目的は何ですか？
-   - A) Collecting pod logs
-   - B) Recording API server requests
-   - C) Monitoring node status
-   - D) Analyzing network traffic
-   
+9. Kubernetes の監査ログの主な目的は何ですか？
+   - A) Pod ログの収集
+   - B) API server へのリクエストの記録
+   - C) ノード状態の監視
+   - D) ネットワーク通信の分析
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Recording API server requests**
+**回答: B) API server へのリクエストの記録**
 
 **解説:**
-Audit logging は、Kubernetes API server への requests を記録する仕組みです。これにより、cluster 内で誰が何をしたかを追跡でき、security incident investigation、compliance requirements、troubleshooting に役立ちます。Audit logs には、request time、user、request content、response などの情報を含めることができます。
+監査ログは Kubernetes API server へのリクエストを記録します。これにより、クラスター内で誰が何をしたかを追跡でき、セキュリティインシデントの調査、コンプライアンス要件への対応、トラブルシューティングに役立ちます。監査ログには、リクエスト時刻、ユーザー、リクエスト内容、応答などを記録できます。
 </details>
 
-10. Kubernetes における privileged containers の特徴ではないものはどれですか？
-    - A) Access to all host devices
-    - B) Use of host network stack
-    - C) Ability to load host kernel modules
-    - D) Automatic access to resources in other namespaces
-    
+10. Kubernetes の特権コンテナの特徴ではないものはどれですか？
+    - A) すべてのホストデバイスへのアクセス
+    - B) すべての Linux capability の付与
+    - C) ホストカーネルモジュールを読み込める
+    - D) 他の namespace のリソースへの自動アクセス
+
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) Automatic access to resources in other namespaces**
+**回答: D) 他の namespace のリソースへの自動アクセス**
 
 **解説:**
-Privileged containers はほぼすべての host capabilities にアクセスできますが、他の namespaces 内の Kubernetes resources に自動的にアクセスできるわけではありません。Cross-namespace access は RBAC permissions によって制御されます。Privileged containers は host devices、network stack、kernel modules などにアクセスでき、大きな security risks をもたらすため、本当に必要な場合にのみ使用するべきです。
+特権コンテナはホストのほぼすべての Linux capability にアクセスできますが、他の namespace の Kubernetes リソースに自動でアクセスするわけではありません。namespace をまたぐアクセスは RBAC 権限で制御されます。`privileged: true` を設定しても `hostNetwork: true` にはなりません。ただし、ホストとの隔離が大きく損なわれるため、侵害されたワークロードから認証情報が漏えいしたり、想定した分離を回避されたりするおそれがあります。RBAC は侵害された特権ワークロードを防御しません。
 </details>
 
-## Short Answer Questions
+## 短答問題
 
-1. Kubernetes RBAC における 'Role' と 'ClusterRole' の主な違いは何ですか？
+1. Kubernetes RBAC における Role と ClusterRole の主な違いは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
-Role は特定の namespace 内でのみ権限を定義して適用します。一方、ClusterRole は cluster-wide に適用され、すべての namespaces にわたる権限を定義します。ClusterRole は、non-namespaced resources（nodes、PVs など）に対する権限を定義するためにも使用されます。
+Role は namespace 内の権限を定義します。ClusterRole はクラスター全体を対象とする権限定義ですが、namespace 付きリソースにもクラスター全体のリソースにも使えます。RoleBinding は ClusterRole の権限を特定の namespace に付与し、ClusterRoleBinding はクラスター全体に付与します。Role や ClusterRole を作成しただけでは、主体に権限は付与されません。
 </details>
 
-2. Kubernetes で 'principle of least privilege' を適用する 3 つの方法を説明してください。
+2. Kubernetes で「最小権限の原則」を実践する方法を 3 つ説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
-1. RBAC を使用して必要最小限の権限だけを付与する
-2. pod security context で containers を non-root users として実行する
-3. network policies を使用して必要な通信のみを許可する
-4. privileged containers の使用を制限する
-5. container capabilities を制限する
-6. Pod Security Standards Restricted profile を適用する
+1. RBAC で必要最小限の権限だけを付与する
+2. Pod の Security Context でコンテナを root 以外のユーザーとして実行する
+3. NetworkPolicy で必要な通信だけを許可する
+4. 特権コンテナの使用を制限する
+5. コンテナの Linux capabilities を制限する
+6. Pod Security Standards の Restricted プロファイルを適用する
 
 （上記のうち 3 つだけ説明すればよい）
 </details>
 
-3. Kubernetes における security の観点から見た Secret と ConfigMap の主な違いは何ですか？
+3. Kubernetes のセキュリティ上、Secret と ConfigMap はどのように異なりますか？
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
-Secret は機密情報（passwords、tokens、keys など）を保存するためのもので、ConfigMap は一般的な設定データを保存するためのものです。Secrets は Base64 でエンコードされて保存され（デフォルトでは暗号化されません）、memory 内にのみ mount するよう設定でき、pod 作成時にのみ参照されます。ただし、追加設定がない場合、どちらも etcd に plaintext で保存されるため、完全な security には etcd encryption settings が必要です。
+Secret にはパスワード、トークン、鍵などの機密情報を保存し、ConfigMap には一般的な設定データを保存します。Secret の `data` は API 上で Base64 エンコードされますが、暗号化ではありません。Linux では Secret ボリューム全体がメモリ上のストレージを使い、Pod 作成後の更新も反映されます。アプリケーションはファイルを再読み込みする必要があります。保存時暗号化の有無はクラスター構成によります（EKS 1.28 以降は API データが既定で暗号化されます）。引き続き RBAC と Pod からの最小権限アクセスが必要です。
 </details>
 
-4. Kubernetes における 'service account token volume projection' の目的と利点は何ですか？
+4. Kubernetes の ServiceAccount トークンのボリューム投影には、どのような目的と利点がありますか？
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
-Service account token volume projection は、pod に mount される service account tokens に対して、時間制限や audience restrictions などの追加 security features を提供します。これにより、token lifetime を制限し、特定の API servers のみが token を受け入れるようにできるため、token leakage が発生した場合の risk を低減できます。さらに、tokens は自動的に更新されるため、長時間実行される applications の authentication issues を防止できます。
+ServiceAccount トークンのボリューム投影では、Pod にマウントするトークンの有効期間と audience を制限し、漏えい時のリスクを抑えます。kubelet は投影トークンをローテーションしますが、アプリケーションはファイルを再読み込みし、受信側は audience と有効期限を検証する必要があります。トークンをキャッシュしたままのアプリケーションは、ローテーション後も古い値を使い続けるため、ファイルを再読み込みする実装が必要です。
 </details>
 
-5. Kubernetes における 'container sandboxing' とは何ですか。また、それを実装するためにどのような technologies を使用できますか？
+5. Kubernetes における「コンテナのサンドボックス化」とは何ですか。実装にはどのような技術を使用できますか？
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
-Container sandboxing は、containers を host system や他の containers から分離することで security を強化する技術です。これを実装するための technologies には次のものがあります:
-1. Linux namespaces and cgroups: 基本的な container isolation を提供
-2. seccomp: system calls を制限
-3. AppArmor/SELinux: Mandatory access control
-4. gVisor: user-space kernel implementation による追加 isolation
-5. Kata Containers: lightweight VMs を使用した hardware-level isolation
-6. Firecracker: MicroVM-based isolation
+コンテナのサンドボックス化は、コンテナをホストシステムや他のコンテナから分離してセキュリティを強化する技術です。実装には次の技術を使用できます。
+1. Linux namespaces と cgroups: 基本的なコンテナ分離を提供します
+2. seccomp: システムコールを制限します
+3. AppArmor/SELinux: 強制アクセス制御を適用します
+4. gVisor: ユーザー空間カーネルの実装により、追加の分離境界を設けます
+5. Kata Containers: 軽量 VM を使用してハードウェア支援の分離を実現します
+6. Firecracker: MicroVM による分離を実現します
 
-これらの technologies は、containers が host system に与えられる影響を制限し、container escape attacks の risk を低減します。
+これらの技術は、コンテナがホストシステムに及ぼす影響を抑え、コンテナ脱出攻撃のリスクを低減します。
 </details>
 
-## Hands-on Questions
+## 実践問題
 
-1. 次の要件を満たす RBAC resources を作成してください:
-   - 'monitoring' namespace の pods を読み取れる Role
-   - この Role を 'monitoring-team' service account に bind する RoleBinding
+1. 次の要件を満たす RBAC リソースを作成してください。
+   - `monitoring` namespace 内の Pod を読み取る Role を作成する
+   - Role を `monitoring-team` ServiceAccount に紐付ける RoleBinding を作成する
 
 <details>
 <summary>回答を表示</summary>
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-  - apiGroups: [""]
+- apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -268,9 +268,9 @@ kubectl apply -f monitoring-rolebinding.yaml
 </details>
 
 2. 次の要件を満たす NetworkPolicy を作成してください:
-   - 'backend' namespace 内のすべての pods に適用する
-   - port 8080 で 'frontend' namespace 内の pods からの incoming traffic のみを許可する
-   - すべての outgoing traffic を許可する
+   - `backend` namespace 内のすべての Pod に適用する
+   - `frontend` namespace 内の Pod からポート 8080 への受信トラフィックだけを許可する
+   - すべての送信トラフィックを許可する
 
 <details>
 <summary>回答を表示</summary>
@@ -293,7 +293,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: frontend
+          kubernetes.io/metadata.name: frontend
     ports:
     - protocol: TCP
       port: 8080
@@ -306,16 +306,13 @@ spec:
 kubectl apply -f backend-network-policy.yaml
 ```
 
-注: この NetworkPolicy を機能させるには、'frontend' namespace に 'name: frontend' label が必要です。ない場合は、次のように追加します:
-```bash
-kubectl label namespace frontend name=frontend
-```
+組み込みラベル `kubernetes.io/metadata.name` を使えば `frontend` namespace を選択できるため、独自ラベルは不要です。ほかの NetworkPolicy は許可ルールを追加する場合があり、送信元 Pod 側の egress policy も通信可否に影響します。
 </details>
 
-3. 次の security context 要件を満たす pod を作成してください:
-   - Container が UID 1000 として実行される
-   - Privilege escalation を許可しない
-   - Read-only root filesystem
+3. 次のセキュリティコンテキスト要件を満たす Pod を作成してください。
+   - コンテナを UID 1000 で実行する
+   - 権限昇格を許可しない
+   - ルートファイルシステムを読み取り専用にする
 
 <details>
 <summary>回答を表示</summary>
@@ -331,7 +328,8 @@ metadata:
 spec:
   containers:
   - name: secure-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       runAsUser: 1000
       allowPrivilegeEscalation: false
@@ -344,24 +342,24 @@ kubectl apply -f secure-pod.yaml
 ```
 </details>
 
-4. 次の要件を満たす Secret を作成し、pod に volume として mount してください:
-   - 'db-credentials' という名前の Secret
-   - 'username=admin' と 'password=s3cr3t' を含む
-   - pod 内の '/etc/db-credentials' path に mount する
+4. 次の要件を満たす Secret を作成し、Pod にボリュームとしてマウントしてください。
+   - `db-credentials` という名前にする
+   - `username=admin` と `password=s3cr3t` を含める
+   - Pod 内の `/etc/db-credentials` パスにマウントする
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-Secret を作成:
+Secret を作成します。
 ```bash
 kubectl create secret generic db-credentials \
   --from-literal=username=admin \
   --from-literal=password=s3cr3t
 ```
 
-または YAML として:
+または、次の YAML を使います。
 ```yaml
 # db-secret.yaml
 apiVersion: v1
@@ -374,7 +372,7 @@ data:
   password: czNjcjN0  # base64 encoding of 's3cr3t'
 ```
 
-pod に mount:
+Pod にマウントします。
 ```yaml
 # pod-with-secret.yaml
 apiVersion: v1
@@ -402,18 +400,18 @@ kubectl apply -f pod-with-secret.yaml
 ```
 </details>
 
-## Advanced Topics
+## 応用トピック
 
-1. Kubernetes で OPA (Open Policy Agent) Gatekeeper を使用して実装できる policies の例を 3 つ挙げ、それらを説明してください。
+1. Kubernetes で OPA (Open Policy Agent) Gatekeeper を使って実装できるポリシーを 3 つ挙げ、説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-OPA Gatekeeper は Kubernetes clusters に policies を適用するための強力なツールです。適用できる policies の例は次のとおりです:
+OPA Gatekeeper は Kubernetes クラスターにポリシーを適用するツールです。以下の Constraint を作成する前に、公式ポリシーライブラリから対応する ConstraintTemplate を導入してください。Constraint の kind は Kubernetes に組み込まれた API ではありません。また、レジストリの許可リストだけではイメージ署名を検証できません。ポリシーの例を示します。
 
-1. **Image Registry Restriction**: images が承認済み registries からのみ pull されるように強制し、信頼できない sources の images の使用を防ぎます。
+1. **イメージレジストリの制限**: 承認済みレジストリからのみイメージを pull するよう強制し、信頼できない提供元のイメージを防ぎます。
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sAllowedRepos
@@ -430,7 +428,7 @@ OPA Gatekeeper は Kubernetes clusters に policies を適用するための強�
          - "gcr.io/company/"
    ```
 
-2. **Prevent Privileged Containers**: security risks を低減するため、privileged containers の使用を禁止します。
+2. **特権コンテナの禁止**: セキュリティリスクを抑えるため、特権コンテナの使用を禁止します。
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sPSPPrivilegedContainer
@@ -443,7 +441,7 @@ OPA Gatekeeper は Kubernetes clusters に policies を適用するための強�
            kinds: ["Pod"]
    ```
 
-3. **Enforce Resource Limits**: resource exhaustion attacks を防ぐため、すべての containers に CPU と memory limits の設定を強制します。
+3. **リソース制限の強制**: リソース枯渇攻撃を防ぐため、すべてのコンテナに CPU とメモリの上限を設定させます。
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sRequiredResources
@@ -460,7 +458,7 @@ OPA Gatekeeper は Kubernetes clusters に policies を適用するための強�
          - memory
    ```
 
-OPA Gatekeeper は、namespaces に特定の labels を要求する、ingress hostnames を制限する、volume types を制限する、host path mounts を防止するなど、他のさまざまな policies も適用できます。
+OPA Gatekeeper では、namespace に特定のラベルを要求する、Ingress のホスト名やボリューム種別を制限する、hostPath のマウントを禁止するといったポリシーも適用できます。
 </details>
 
 2. Kubernetes で mTLS (mutual TLS) を実装する方法とその利点を説明してください。
@@ -470,14 +468,14 @@ OPA Gatekeeper は、namespaces に特定の labels を要求する、ingress ho
 
 **回答:**
 
-mTLS (mutual TLS) は、client と server の両方が certificates を使用して相互に認証する方法です。Kubernetes で mTLS を実装する方法とその利点は次のとおりです:
+mTLS (mutual TLS) では、クライアントとサーバーが証明書を使って互いを認証します。Kubernetes では、次の方法で実装できます。
 
 **実装方法:**
 
-1. **Using Service Mesh**: Istio や Linkerd のような service meshes は、sidecar proxies を通じて mTLS を自動的に実装します。
+1. **サービスメッシュの使用**: Istio や Linkerd などのサービスメッシュは、サイドカープロキシを通じて mTLS を自動的に適用します。
    ```yaml
    # Istio example
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -487,9 +485,9 @@ mTLS (mutual TLS) は、client と server の両方が certificates を使用し
        mode: STRICT
    ```
 
-2. **Use with Network Policies**: mTLS と network policies を組み合わせて、認証済み traffic のみを許可します。
+2. **NetworkPolicy との併用**: NetworkPolicy で L3/L4 の到達性を制限し、サービスメッシュで証明書を検証します。ワークロードをメッシュに登録して mTLS を強制し、メッシュの認可ポリシーで認証済み ID へのアクセスを制御します。
 
-3. **Certificate Management**: cert-manager のような tools を使用して certificate lifecycle を管理します。
+3. **証明書管理**: cert-manager などのツールで証明書のライフサイクルを管理します。
    ```yaml
    apiVersion: cert-manager.io/v1
    kind: Certificate
@@ -508,58 +506,58 @@ mTLS (mutual TLS) は、client と server の両方が certificates を使用し
 
 **利点:**
 
-1. **Mutual Authentication**: Client と server が相互に認証し、man-in-the-middle attacks を防止します
-2. **Encrypted Communication**: すべての service-to-service traffic が暗号化され、eavesdropping を防止します
-3. **Fine-grained Access Control**: Certificate-based identity により fine-grained access control が可能になります
-4. **Zero Trust Architecture**: network location に関係なく、すべての通信に authentication を要求します
-5. **Compliance Support**: PCI DSS、HIPAA などの compliance requirements を満たすのに役立ちます
+1. **相互認証**: クライアントとサーバーが互いを認証し、中間者攻撃を防ぎます。
+2. **通信の暗号化**: サービス間の通信を暗号化し、盗聴を防ぎます。
+3. **きめ細かなアクセス制御**: 証明書に基づく ID により、細かなアクセス制御が可能になります。
+4. **ゼロトラストアーキテクチャ**: ネットワーク上の位置にかかわらず、すべての通信で認証を要求します。
+5. **コンプライアンス対応**: PCI DSS や HIPAA などのコンプライアンス要件への対応に役立ちます。
 
-mTLS は、microservice architectures における service-to-service communication の security を強化する重要な方法です。
+mTLS は、マイクロサービス間の通信の安全性を高める重要な手段です。
 </details>
 
-3. Kubernetes における 'supply chain security' を強化する方法を説明してください。
+3. Kubernetes のソフトウェアサプライチェーンを保護する方法を説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-Kubernetes における supply chain security を強化する方法には、次のものがあります:
+Kubernetes のソフトウェアサプライチェーンを保護する方法には、次のものがあります。
 
-1. **Image Signing and Verification**:
-   - Cosign、Notary などの tools を使用して container images に署名する
-   - 署名済み images のみが deployment されるように policies を適用する（例: OPA Gatekeeper、Kyverno）
+1. **イメージの署名と検証**:
+   - Cosign や Notary などのツールでコンテナイメージに署名する
+   - 署名済みイメージだけがデプロイされるようにポリシーを適用する（例: OPA Gatekeeper、Kyverno）
    ```bash
-   cosign sign --key cosign.key docker.io/company/app:latest
+   cosign sign --key cosign.key "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
-2. **Software Bill of Materials (SBOM) Generation and Verification**:
-   - Syft、Anchore などの tools を使用して SBOM を生成する
-   - images に含まれるすべての software components を追跡する
+2. **ソフトウェア部品表 (SBOM) の生成と検証**:
+   - Syft や Anchore などのツールで SBOM を生成する
+   - イメージに含まれるすべてのソフトウェア構成要素を追跡する
    ```bash
-   syft docker.io/company/app:latest -o spdx-json > sbom.json
+   syft "${IMAGE_REF:?Set repository@sha256:digest}" -o spdx-json > sbom.json
    ```
 
-3. **Vulnerability Scanning**:
-   - Trivy、Clair などの tools を使用して images の vulnerabilities を scan する
-   - scanning を CI/CD pipelines に統合する
+3. **脆弱性スキャン**:
+   - Trivy や Clair などのツールでイメージの脆弱性をスキャンする
+   - スキャンを CI/CD パイプラインに組み込む
    ```bash
-   trivy image docker.io/company/app:latest
+   trivy image "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
-4. **Use Minimal Base Images**:
-   - attack surface を減らすため、distroless、scratch のような minimal images を使用する
+4. **最小限のベースイメージを使用する**:
+   - 攻撃対象領域を減らすため、distroless や scratch のような最小構成のイメージを使う
    ```dockerfile
-   FROM gcr.io/distroless/java:11
-   COPY --from=build /app/target/app.jar /app.jar
+   FROM gcr.io/distroless/java21-debian13:nonroot
+   COPY app.jar /app.jar
    CMD ["app.jar"]
    ```
 
-5. **Apply Image Policies**:
-   - image age、vulnerability severity、registry source などに基づいて policies を適用する
+5. **イメージポリシーの適用**:
+   - イメージの経過時間、脆弱性の深刻度、レジストリの提供元などを基準にポリシーを適用する
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
+   kind: K8sAllowedRepos
    metadata:
      name: trusted-images
    spec:
@@ -568,36 +566,36 @@ Kubernetes における supply chain security を強化する方法には、次�
          - apiGroups: [""]
            kinds: ["Pod"]
      parameters:
-       allowedRegistries:
+       repos:
          - "docker.io/company/"
          - "gcr.io/verified/"
    ```
 
-6. **Supply Chain Levels for Software Artifacts (SLSA)**:
-   - build provenance を追跡する
-   - reproducible builds を確保する
-   - build integrity を検証する
+6. **ソフトウェア成果物のサプライチェーンレベル (SLSA)**:
+   - ビルドの来歴を追跡する
+   - 再現可能なビルドを確保する
+   - ビルドの完全性を検証する
 
-7. **Continuous Monitoring and Auditing**:
-   - runtime security tools を使用して anomalous behavior を検出する
-   - 定期的な security audits を実施する
+7. **継続的な監視と監査**:
+   - 実行時セキュリティツールで異常な挙動を検出する
+   - セキュリティ監査を定期的に実施する
 
-これらの方法を組み合わせることで、Kubernetes environments を software supply chain attacks から保護できます。
+これらの方法を組み合わせることで、Kubernetes 環境をソフトウェアサプライチェーン攻撃から保護できます。
 </details>
 
-4. Kubernetes で 'zero trust security model' を実装するためのアプローチを説明してください。
+4. Kubernetes でゼロトラストセキュリティモデルを実装する方法を説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-Zero trust security model は、「never trust, always verify」という原則に基づいています。Kubernetes で zero trust を実装するためのアプローチは次のとおりです:
+ゼロトラストセキュリティモデルは、「決して信頼せず、常に検証する」という原則に基づきます。Kubernetes では次のように実装できます。
 
-1. **Fine-grained Identity and Access Management**:
-   - 強力な RBAC policies を実装する
-   - service accounts に必要最小限の権限を付与する
-   - external ID providers（OIDC、LDAP など）と統合する
+1. **きめ細かな ID とアクセス管理**:
+   - 強固な RBAC ポリシーを設定する
+   - ServiceAccount に必要最小限の権限だけを付与する
+   - 外部 ID プロバイダー（OIDC、LDAP など）と統合する
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: Role
@@ -607,14 +605,14 @@ Zero trust security model は、「never trust, always verify」という原則�
    rules:
    - apiGroups: [""]
      resources: ["pods"]
-     verbs: ["get", "list"]
+     verbs: ["get"]
      resourceNames: ["app-pod"]
    ```
 
-2. **Network Segmentation**:
-   - デフォルトですべての traffic を拒否する
-   - 明示的に必要な通信のみを許可する network policies を適用する
-   - microsegmentation を実装する
+2. **ネットワークの分割**:
+   - デフォルトですべての通信を拒否する
+   - 明示的に必要な通信のみを許可する NetworkPolicy を適用する
+   - マイクロセグメンテーションを実装する
    ```yaml
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
@@ -627,11 +625,11 @@ Zero trust security model は、「never trust, always verify」という原則�
      - Egress
    ```
 
-3. **Apply Mutual TLS (mTLS)**:
-   - service mesh（Istio、Linkerd など）を使用して、すべての service-to-service communication に mTLS を適用する
-   - Certificate-based service identity verification
+3. **相互 TLS (mTLS) の適用**:
+   - Istio や Linkerd などのサービスメッシュを使い、すべてのサービス間通信に mTLS を適用する
+   - 証明書に基づいてサービス ID を検証する
    ```yaml
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -641,73 +639,84 @@ Zero trust security model は、「never trust, always verify」という原則�
        mode: STRICT
    ```
 
-4. **Continuous Verification and Authentication**:
-   - すべての requests に対して継続的な authentication and authorization を行う
-   - context-based access control（time、location、device state など）
-   - OPA Gatekeeper または Kyverno を使用した dynamic policy application
+4. **継続的な検証と認証**:
+   - すべてのリクエストを継続的に認証・認可する
+   - 時刻、場所、デバイスの状態などのコンテキストに基づいてアクセスを制御する
+   - OPA Gatekeeper または Kyverno でポリシーを動的に適用する
 
-5. **Encryption**:
-   - Data at rest encryption（etcd encryption、encrypted PVs など）
-   - Data in transit encryption（TLS、mTLS）
-   - Secret management tool integration（Vault、Sealed Secrets など）
+5. **暗号化**:
+   - 保存データを暗号化する（etcd の暗号化、暗号化済み PV など）
+   - 通信中のデータを暗号化する（TLS、mTLS）
+   - Secret 管理ツールとの連携（Vault、Sealed Secrets など）
 
-6. **Threat Detection and Response**:
-   - runtime security monitoring tools を deployment する
-   - anomalous behavior を検出して alert する
-   - automated response mechanisms を実装する
+6. **脅威の検出と対応**:
+   - 実行時セキュリティ監視ツールを導入する
+   - 異常な挙動を検出してアラートを出す
+   - 自動応答の仕組みを実装する
 
-7. **Least Privilege Workload Configuration**:
-   - containers を non-root users として実行する
-   - read-only filesystems を使用する
-   - security context restrictions を適用する
+7. **ワークロードの最小権限構成**:
+   - コンテナを root 以外のユーザーで実行する
+   - 読み取り専用ファイルシステムを使う
+   - セキュリティコンテキストで制限を設定する
    ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-     readOnlyRootFilesystem: true
-     allowPrivilegeEscalation: false
+   spec:
+     securityContext:
+       runAsUser: 1000
+       runAsGroup: 3000
+       fsGroup: 2000
+       runAsNonRoot: true
+       seccompProfile:
+         type: RuntimeDefault
+     containers:
+     - name: app
+       image: busybox:1.36
+       command: ["sh", "-c", "sleep 3600"]
+       securityContext:
+         readOnlyRootFilesystem: true
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop: ["ALL"]
    ```
 
-8. **Continuous Security Posture Assessment**:
-   - 定期的な vulnerability scanning
-   - penetration testing と security audits
-   - compliance monitoring
+8. **セキュリティ態勢の継続的な評価**:
+   - 脆弱性スキャンを定期的に行う
+   - ペネトレーションテストとセキュリティ監査を実施する
+   - コンプライアンス状況を継続的に監視する
 
-Zero trust model は単一の solution ではなく、continuous verification と least privilege の原則に基づいて、複数の security layers を組み合わせるアプローチです。
+ゼロトラストは単一の製品で実現するものではありません。継続的な検証と最小権限の原則に基づき、複数の防御層を組み合わせるアプローチです。
 </details>
 
-5. Kubernetes における 'runtime security' のための tools と technologies を比較して説明してください。
+5. Kubernetes の実行時セキュリティに使うツールと技術を比較し、説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-Kubernetes における runtime security の主要な tools と technologies には次のものがあります:
+Kubernetes の実行時セキュリティには、主に次のツールや技術が使われます。
 
 1. **Falco**:
-   - **How it works**: system calls を監視して anomalous behavior を検出します
-   - **Features**: 
-     - kernel level で動作して container internal activity を監視します
-     - さまざまな security threats を検出するための custom rules
-     - real-time alerting and response support
-   - **Example rule**:
+   - **仕組み**: システムコールを監視し、異常な挙動を検出します
+   - **特徴**:
+     - カーネルレベルで動作し、コンテナ内部の活動を監視します
+     - さまざまなセキュリティ上の脅威を検出するルールを作成できます
+     - リアルタイムのアラートと対応をサポートします
+   - **ルール例**:
      ```yaml
      - rule: Terminal shell in container
        desc: A shell was spawned by a container
-       condition: container and proc.name = bash
+       condition: spawned_process and container and proc.name = bash and proc.tty != 0
        output: Shell opened in container (user=%user.name container=%container.name)
        priority: WARNING
      ```
 
 2. **Seccomp (Secure Computing Mode)**:
-   - **How it works**: containers が使用できる system calls を制限します
-   - **Features**:
-     - 組み込みの Linux kernel feature を使用します
-     - 許可された system calls のみ実行できます
-     - attack surface を削減します
-   - **Implementation example**:
+   - **仕組み**: コンテナが使用できるシステムコールを制限します
+   - **特徴**:
+     - Linux カーネルに組み込まれた機能を使います
+     - 許可したシステムコールだけを実行できます
+     - 攻撃対象領域を減らします
+   - **実装例**:
      ```yaml
      apiVersion: v1
      kind: Pod
@@ -718,31 +727,42 @@ Kubernetes における runtime security の主要な tools と technologies に
          seccompProfile:
            type: Localhost
            localhostProfile: profiles/audit.json
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 3. **AppArmor**:
-   - **How it works**: program ごとの access control profiles を適用します
-   - **Features**:
-     - files、network、capabilities などに対する fine-grained access control
-     - Linux distributions にデフォルトで含まれます
-     - container ごとの profile application が可能です
-   - **Implementation example**:
+   - **仕組み**: プログラムごとにアクセス制御プロファイルを適用します
+   - **特徴**:
+     - ファイル、ネットワーク、ケーパビリティなどへのアクセスを細かく制御できます
+     - AppArmor が有効な Linux ノードと、事前に読み込んだプロファイルが必要です
+     - コンテナごとにプロファイルを適用できます
+   - **実装例**:
      ```yaml
      apiVersion: v1
      kind: Pod
      metadata:
        name: apparmor-pod
-       annotations:
-         container.apparmor.security.beta.kubernetes.io/container1: localhost/restricted
+     spec:
+       containers:
+       - name: container1
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
+         securityContext:
+           appArmorProfile:
+             type: Localhost
+             localhostProfile: restricted
      ```
 
 4. **SELinux**:
-   - **How it works**: Mandatory Access Control (MAC) policies を適用します
-   - **Features**:
-     - label-based の fine-grained security policies
-     - military-grade security standard support
-     - 複雑な configuration が必要です
-   - **Implementation example**:
+   - **仕組み**: Mandatory Access Control (MAC、強制アクセス制御) ポリシーを適用します
+   - **特徴**:
+     - ラベルに基づく細かなセキュリティポリシーを適用します
+     - ホストに設定済みの SELinux ポリシーを適用します
+     - 複雑な設定が必要です
+   - **実装例**:
      ```yaml
      apiVersion: v1
      kind: Pod
@@ -752,29 +772,33 @@ Kubernetes における runtime security の主要な tools と technologies に
        securityContext:
          seLinuxOptions:
            level: "s0:c123,c456"
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 5. **OPA Gatekeeper**:
-   - **How it works**: policy-based runtime governance
-   - **Features**:
-     - Declarative policy definition
-     - 広範な policy application scope
-     - Audit and enforcement mode support
+   - **仕組み**: Admission 時にポリシーを強制し、API オブジェクトを定期監査します。システムコールは監視しません
+   - **特徴**:
+     - 宣言的なポリシー定義
+     - 幅広い種類のリソースにポリシーを適用できます
+     - 監査モードと強制モードのサポート
 
-6. **Commercial Tools (Aqua, Sysdig, StackRox, etc.)**:
-   - **How it works**: 包括的な container security platforms を提供します
-   - **Features**:
-     - vulnerability scanning、runtime protection、compliance monitoring の統合
-     - machine learning-based anomaly detection
-     - dashboard and reporting features
+6. **商用ツール (Aqua、Sysdig、StackRox など)**:
+   - **仕組み**: 包括的なコンテナセキュリティプラットフォームを提供します
+   - **特徴**:
+     - 脆弱性スキャン、実行時保護、コンプライアンス監視を統合します
+     - 機械学習による異常検知
+     - ダッシュボードとレポート機能
 
 7. **gVisor**:
-   - **How it works**: application と host kernel の間に user-space kernel を提供します
-   - **Features**:
-     - container と host の間に追加 isolation layer を提供します
-     - System call interception and emulation
-     - performance overhead があります
-   - **Implementation example**:
+   - **仕組み**: アプリケーションとホストカーネルの間にユーザー空間カーネルを設けます
+   - **特徴**:
+     - コンテナとホストの間に追加の分離層を設けます
+     - システムコールの仲介とエミュレーション
+     - 性能へのオーバーヘッドがあります
+   - **実装例**:
      ```yaml
      apiVersion: node.k8s.io/v1
      kind: RuntimeClass
@@ -784,18 +808,20 @@ Kubernetes における runtime security の主要な tools と technologies に
      ```
 
 8. **Kata Containers**:
-   - **How it works**: lightweight VMs を使用して containers を実行します
-   - **Features**:
-     - Hardware-level isolation
-     - OCI compatibility maintained
-     - 通常の containers より overhead が高いです
+   - **仕組み**: 軽量 VM 内でコンテナを実行します
+   - **特徴**:
+     - ハードウェア支援による分離を提供します
+     - OCI 互換性を維持します
+     - 通常のコンテナよりオーバーヘッドが大きくなります
 
-**Comparison and Selection Criteria**:
-  - **Security level**: Kata Containers と gVisor は最も強力な isolation を提供します
-  - **Performance impact**: Seccomp は overhead が最小で、Kata Containers は最大です
-  - **Implementation complexity**: Seccomp と AppArmor は比較的簡単で、SELinux は複雑です
-  - **Monitoring vs Prevention**: Falco は主に monitoring、その他は preventive protection を提供します
-  - **Integration ease**: OPA Gatekeeper は Kubernetes と密接に統合されます
+**比較と選定基準**:
+  - **セキュリティレベル**: Kata Containers と gVisor は隔離境界を追加します。脅威モデルに照らして選択してください。
+  - **性能への影響**: 実際のワークロードで起動時間、I/O、メモリ、システムコールのオーバーヘッドを測定してください。
+  - **導入の複雑さ**: Seccomp と AppArmor は比較的簡単ですが、SELinux の設定は複雑です。
+  - **監視と防御**: Falco は主に検知と通知に使います。Seccomp、AppArmor、SELinux、OPA Gatekeeper などは構成に応じて実行やリソース操作を制限します。商用製品の機能は製品ごとに異なります。
+  - **統合のしやすさ**: OPA Gatekeeper は Kubernetes と緊密に連携します。
 
-組織の security requirements、performance goals、operational complexity tolerance に基づいて、適切な tool combination を選択してください。
+Seccomp の Localhost プロファイルは、対象ノードの kubelet が参照する seccomp プロファイル用ディレクトリに事前に配置します。監査専用プロファイルはシステムコールを記録しますが、実行を遮断しません。AppArmor と SELinux には、ホスト側の対応と設定済みプロファイルやラベルが必要です。RuntimeClass handler (`runsc`、`kata`) は CRI ランタイムに事前導入して設定し、Pod の `runtimeClassName` で指定します。RuntimeClass を作成しただけではランタイムは導入されません。Java の Dockerfile 例では、ビルドコンテキストに互換性のある `app.jar` があらかじめ必要です。
+
+組織の脅威モデル、実際のワークロードで測定した性能、運用上の複雑さを踏まえて、適切なツールの組み合わせを選んでください。
 </details>

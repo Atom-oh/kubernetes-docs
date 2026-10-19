@@ -1,27 +1,27 @@
-# ArgoCD 同期戦略
+# Argo CDの同期戦略
 
-> **レビュー基準**: Argo CD 3.5.2。リリースノートの確認後にパッチ 3.5.4 へ更新（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **レビュー基準**: Argo CD 3.5.2。リリースノート確認後、パッチ3.5.4に更新（例は再実行していません）
+> **最終更新日**: 2026年10月16日
 
 ## 目次
-- [Manual vs Automated Sync](#manual-vs-automated-sync)
-- [Auto-Sync Policies](#auto-sync-policies)
-- [Sync Options](#sync-options)
-- [Sync Waves and Phases](#sync-waves-and-phases)
-- [Sync Windows](#sync-windows)
-- [Diffing Customization](#diffing-customization)
-- [Retry Policies](#retry-policies)
-- [Selective Sync](#selective-sync)
+- [手動同期と自動同期](#manual-vs-automated-sync)
+- [自動同期ポリシー](#auto-sync-policies)
+- [同期オプション](#sync-options)
+- [同期Waveとフェーズ](#sync-waves-and-phases)
+- [同期Window](#sync-windows)
+- [差分のカスタマイズ](#diffing-customization)
+- [再試行ポリシー](#retry-policies)
+- [選択的同期](#selective-sync)
 
-## 手動同期と自動同期
+## 手動同期と自動同期 {#manual-vs-automated-sync}
 
-例はそれぞれ独立したポリシーの断片です。実際の Application の source/destination/project を保持し、必要なオプションだけを選択してください。Sync は変更を適用し、Refresh はソース/キャッシュから比較を更新します。Synced はヘルスおよび実際のサービス可用性とは別のものです。
+以下の例はそれぞれ独立したポリシー断片です。実際のApplicationのsource／destination／projectを維持し、必要なオプションだけを選んでください。Syncは変更を適用し、Refreshはソースやキャッシュから比較結果を更新します。Syncedであることは、healthや実際のサービス可用性とは別です。
 
-ArgoCD は、手動と自動の 2 つの同期モードをサポートします。
+Argo CDは、手動同期と自動同期の2つのモードをサポートします。
 
 ### 手動同期
 
-手動モードでは、ユーザーが明示的に同期をトリガーする必要があります。
+手動モードでは、ユーザーが明示的に同期を開始する必要があります。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -41,7 +41,7 @@ spec:
   # No syncPolicy.automated = manual sync
 ```
 
-手動同期をトリガーします。
+手動同期の開始:
 
 ```bash
 # Via CLI
@@ -56,7 +56,7 @@ argocd app sync my-app --dry-run
 
 ### 自動同期
 
-自動モードでは、変更が検出されると ArgoCD が自動的に同期します。
+自動モードでは、変更が検出されるとArgo CDが自動的に同期します。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -77,17 +77,17 @@ spec:
     automated: {}  # Enable auto-sync with defaults
 ```
 
-![Argo CD は、Git リポジトリ内の目的の状態を Kubernetes クラスターのライブ状態と継続的に比較し、OutOfSync の差分を検出すると変更を適用して、ライブ状態を再び Git と一致させます。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
+![Argo CDがGitリポジトリの望ましい状態とKubernetesクラスターの実際の状態を継続的に比較し、OutOfSyncの差分を検出すると変更を適用して、クラスターの状態を再びGitに一致させる流れ。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-0.html)
 
-## 自動同期ポリシー
+## 自動同期ポリシー {#auto-sync-policies}
 
-automated: {}、または enabled フラグを省略するか null にすると自動同期が有効になり、enabled: false で無効になります。ライブ状態のみのドリフト修正には selfHeal が必要であり、prune は別の機能です。失敗した同一のコミット/パラメーターの組み合わせは、デフォルトでは無期限に再試行されません。retry ポリシーを設定してください。ApplicationSet で管理される Application では、所有するテンプレートを変更してください。
+`automated: {}`、または`enabled`フラグの省略／nullは自動同期を有効にします。`enabled: false`は無効にします。クラスター上だけで発生したドリフトの修正には`selfHeal`が必要で、`prune`は別の設定です。同じコミット／パラメーターの組み合わせで失敗しても、デフォルトでは無期限に再試行されません。再試行ポリシーを設定してください。ApplicationSetが管理するApplicationは、所有元のテンプレートを変更してください。
 
 ### Prune
 
-Git に存在しなくなったリソースを自動的に削除します。
+Gitに存在しなくなったリソースを自動的に削除します。
 
 ```yaml
 syncPolicy:
@@ -95,9 +95,9 @@ syncPolicy:
     prune: true
 ```
 
-**ユースケース**: クラスターの状態を Git リポジトリと完全に一致させます。孤立したリソースを削除します。
+**ユースケース**: クラスターの状態をGitリポジトリと完全に一致させ、孤立したリソースを削除します。
 
-Prune は Application が追跡するリソースに影響し、クラスター内のすべての孤立リソースに影響するわけではありません。PruneLast は順序を変更しますが、データを保護したり、削除のレビューに置き換わったりはしません。
+Pruneの対象はApplicationが追跡するリソースであり、クラスター内のすべての孤立リソースではありません。`PruneLast`は削除の順序を変えるだけで、データを保護する機能でも、削除内容のレビューに代わるものでもありません。
 
 ### Self-Heal
 
@@ -109,15 +109,15 @@ syncPolicy:
     selfHeal: true
 ```
 
-**ユースケース**: 手動の kubectl 変更やその他のツールによる設定ドリフトを防止します。
+**ユースケース**: 手動の`kubectl`操作や他のツールによる設定ドリフトを防ぎます。
 
-![ユーザーが kubectl で Deployment を手動スケーリングし、Argo CD が状態変更を検出して Git から目的のレプリカ数を読み取り、再適用することで Kubernetes が Git で宣言された状態へ自己修復するまでを示すシーケンス図。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
+![ユーザーがkubectlでDeploymentの規模を手動変更するとArgo CDが状態の変化を検出し、Gitから望ましいレプリカ数を読み取って再適用し、KubernetesがGitに宣言された状態へ自己修復する流れを示すシーケンス図。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-1.html)
 
-### 空を許可
+### 空の状態を許可
 
-リソースを持たない Application を許可します。
+リソースを持たないApplicationを許可します。
 
 ```yaml
 syncPolicy:
@@ -125,9 +125,9 @@ syncPolicy:
     allowEmpty: true
 ```
 
-自動 prune が有効な場合、レンダリングが空集合を返すと、allowEmpty によって管理対象のすべてのリソースの削除が許可される可能性があります。これは汎用的なブートストラップ要件ではありません。
+自動pruneが有効な場合、レンダリング結果が空集合になると、`allowEmpty`によって管理対象リソースをすべて削除できることがあります。これは一般的なブートストラップ要件ではありません。
 
-### 完全な自動同期設定
+### 自動同期の完全な設定
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -151,29 +151,29 @@ spec:
       allowEmpty: false  # Prevent auto-prune from deleting everything on an empty render
 ```
 
-## 同期オプション
+## 同期オプション {#sync-options}
 
-同期オプションは、同期動作をきめ細かく制御します。
+同期オプションを使うと、同期時の動作を細かく制御できます。
 
 ### 使用可能な同期オプション
 
 | オプション | 説明 | デフォルト |
 |--------|-------------|---------|
-| `Validate` | スキーマに対してリソースを検証 | true |
-| `CreateNamespace` | 存在しない場合に namespace を作成 | false |
-| `PrunePropagationPolicy` | 削除伝播ポリシー | foreground |
-| `PruneLast` | 他のすべての同期後に prune を実行 | false |
-| `Replace` | apply の代わりに replace を使用 | false |
-| `FailOnSharedResource` | 別の Argo CD Application がリソースを追跡している場合に失敗 | false |
-| `ApplyOutOfSyncOnly` | OutOfSync のリソースのみを適用 | false |
-| `ServerSideApply` | サーバーサイド apply を使用 | false |
-| `RespectIgnoreDifferences` | 同期時に ignoreDifferences を尊重 | false |
+| `Validate` | スキーマに照らしてリソースを検証する | true |
+| `CreateNamespace` | namespaceがない場合に作成する | false |
+| `PrunePropagationPolicy` | 削除の伝播ポリシー | foreground |
+| `PruneLast` | 他のすべての同期後にpruneする | false |
+| `Replace` | applyの代わりにreplaceを使う | false |
+| `FailOnSharedResource` | 別のArgo CD Applicationがリソースを追跡している場合に失敗する | false |
+| `ApplyOutOfSyncOnly` | OutOfSyncのリソースだけを適用する | false |
+| `ServerSideApply` | サーバーサイドapplyを使う | false |
+| `RespectIgnoreDifferences` | 同期時にignoreDifferencesを尊重する | false |
 
-`Validate=false` は apply 時のスキーマ検証をスキップします。存在しない CRD をインストールするわけではありません。Argo CD は、CRD が同じ同期内でインストールされる場合、その CR のドライランを自動的にスキップします。別の controller によって CRD が作成される場合など、正当なケースでのみ `SkipDryRunOnMissingResource=true` を使用し、CRD が利用可能であることを確認してください。
+`Validate=false`はapply時のスキーマ検証を省略する設定であり、存在しないCRDをインストールするものではありません。CRDが同じ同期でインストールされる場合、Argo CDはそのCRのdry runを自動的に省略します。別のコントローラーがCRDを作る場合など、正当な理由があるときだけ`SkipDryRunOnMissingResource=true`を使い、CRDが利用可能なことを確認してください。
 
-`PruneLast=true` は、他のリソースがデプロイされ Healthy になった後、最終的な暗黙の wave で prune をスケジュールします。`FailOnSharedResource=true` は、別の Argo CD Application による追跡を確認します。他の Kubernetes controller や Flux とのすべての所有権競合を検出するわけではありません。
+`PruneLast=true`は、ほかのリソースがデプロイされHealthyになった後、最後の暗黙のwaveでpruneを実行します。`FailOnSharedResource=true`が確認するのは、別のArgo CD Applicationによる追跡です。他のKubernetesコントローラーやFluxとの所有権競合をすべて検出するわけではありません。
 
-### Application レベルのオプション
+### Application単位のオプション
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -199,9 +199,9 @@ spec:
       - ApplyOutOfSyncOnly=true
 ```
 
-### リソースレベルのオプション
+### リソース単位のオプション
 
-アノテーションを使用して、特定のリソースに同期オプションを適用します。
+アノテーションを使って、特定のリソースに同期オプションを適用します。
 
 ```yaml
 # Merge into an existing complete resource manifest.
@@ -210,11 +210,11 @@ metadata:
     argocd.argoproj.io/sync-options: ServerSideApply=true
 ```
 
-### サーバーサイド Apply
+### サーバーサイドApply
 
-Argo CD 3.5.4 は --server-side --force-conflicts を呼び出します。フィールドの所有権は追跡されますが、競合が拒否されることを保証するものではありません。所有権の引き継ぎの可能性をレビューしてください。
+Argo CD 3.5.4は`--server-side --force-conflicts`を実行します。フィールド所有権は追跡されますが、競合が拒否される保証はありません。所有権が意図せず引き継がれる可能性を確認してください。
 
-より適切に競合を検出するため、Kubernetes のサーバーサイド apply を使用します。
+競合をより適切に検出するには、Kubernetesのサーバーサイドapplyを使います。
 
 ```yaml
 syncPolicy:
@@ -222,7 +222,7 @@ syncPolicy:
     - ServerSideApply=true
 ```
 
-または、リソース単位で設定します。
+または、リソースごとに設定します。
 
 ```yaml
 metadata:
@@ -231,13 +231,13 @@ metadata:
 ```
 
 **利点**:
-- フィールド所有権の追跡が向上
-- 所有権の競合は Argo CD により強制解決できます。意図する manager の境界を確認してください
-- CRD および webhook と適切に連携
+- フィールド所有権をより適切に追跡できる
+- 所有権の競合はArgo CDが強制的に解決することがあるため、意図する管理者の境界を確認する
+- CRDやwebhookと相性がよい
 
-### Replace と Force
+### ReplaceとForce
 
-Replace は kubectl replace/create を選択します。不変フィールドが自動的に編集可能になるわけではありません。Replace=true とともに Force=true を使用すると、オブジェクトを削除/再作成する可能性があり、これは別個の破壊的な選択です。
+`Replace`は`kubectl replace/create`を選択します。不変フィールドを自動的に変更可能にするものではありません。`Replace=true`と`Force=true`を併用するとオブジェクトを削除して再作成することがあり、これは別個の破壊的な選択です。
 
 ```yaml
 metadata:
@@ -245,26 +245,26 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 ```
 
-不変の変更には、リソース固有の移行/再作成計画が必要です。PVC の storage-class 移行の近道として使用しないでください。削除前に保持、データ、可用性をレビューしてください。Replace は ServerSideApply より優先されます。
+不変フィールドの変更には、リソースごとの移行／再作成計画が必要です。PVCのstorage class移行を簡単に済ませる手段として使わないでください。削除前に保持要件、データ、可用性を確認してください。`Replace`は`ServerSideApply`より優先されます。
 
-## 同期 Wave とフェーズ
+## 同期Waveとフェーズ {#sync-waves-and-phases}
 
-同期 wave はリソースを適用する順序を制御します。
+同期waveは、リソースを適用する順序を制御します。
 
-### Wave の仕組み
+### Waveの仕組み
 
-リソースは wave 番号でグループ化され、順に同期されます。
-1. フェーズ、wave、kind、名前の順でソートします。
-2. 負の Sync wave は PreSync フェーズより前には実行されません。
-3. Wave の進行は同期/ヘルス状態に従います。依存関係について、同一 wave 内の物理的な並行実行に依存しないでください。準備完了状態で後続の作業をブロックする必要がある場合、Custom Resource には意味のあるヘルスチェックが必要です。
+リソースはwave番号ごとにまとめられ、順番に同期されます。
+1. phase、wave、kind、nameの順に並べ替えます。
+2. 負のSync waveもPreSyncフェーズより前に実行されるわけではありません。
+3. 次のwaveへ進むかどうかは同期／health状態に従います。依存関係を同じwave内の実際の並列実行に依存させないでください。後続作業を準備完了まで待たせる場合、Custom Resourceには意味のあるhealth checkが必要です。
 
-![Argo CD の同期 wave が昇順で適用されるワークフロー図。wave -2 の CRD、wave -1 の Namespace と ServiceAccount、デフォルトの wave 0 の ConfigMap、Secret、Deployment、続いて wave 1 の Service と Ingress があり、各 wave は前の wave が健全になるまで待機します。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
+![Argo CDがwave -2のCRD、wave -1のNamespaceとServiceAccount、デフォルトのwave 0のConfigMap、Secret、Deployment、wave 1のServiceとIngressの順に適用し、それぞれ前のwaveがHealthyになるまで待つワークフロー図。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-2.html)
 
-### 同期 Wave の設定
+### 同期Waveの設定
 
-この断片を完全なリソース manifest の metadata にマージしてください。完全な例は後に続きます。
+次の断片を、完全なリソースmanifestのmetadataにマージしてください。続けて完全な例を示します。
 
 ```yaml
 metadata:
@@ -272,9 +272,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 ```
 
-### Wave と Hook の組み合わせ
+### WaveとHookの組み合わせ
 
-PreSync は通常のすべての Sync wave より前に実行されます。以下の既存の Service、namespace、DB Secret、移行イメージは、あらかじめ準備されている必要があります。PreSync は、後の Sync wave で作成されるデータベースへのアクセスを前提にできません。
+PreSyncは通常のすべてのSync waveより前に実行されます。以下の既存Service、namespace、DB Secret、移行用イメージは事前に用意してください。後のSync waveで作成するデータベースにPreSyncからアクセスできるとは限りません。
 
 ```yaml
 apiVersion: batch/v1
@@ -294,7 +294,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command: ["curl"]
         args: ["--fail", "--show-error", "--silent", "--connect-timeout", "5", "--max-time", "20", "http://existing-data-service:8080/health"]
 ---
@@ -324,11 +324,11 @@ spec:
               key: url
 ```
 
-pg_dump を stdout に出力するだけの Job は、復元可能なバックアップ手順ではありません。永続的な暗号化ストレージ、完了の検証、復元テストを使用してください。移行のべき等性、ロック、リカバリを検証してください。PostSync の失敗は自動ロールバックではありません。
+stdoutに`pg_dump`を出力するだけのJobは、復元可能なバックアップ手順ではありません。暗号化された永続ストレージ、完了の検証、復元テストを行ってください。移行のべき等性、ロック、復旧方法を検証してください。PostSyncの失敗で自動的にロールバックされることはありません。
 
-### 最小限の動作する順序付けの例
+### 最小限の動作する順序の例
 
-この最小例では、同じ Sync フェーズ内で Namespace → ConfigMap → Service → readiness を備えた Deployment の順に並べます。Healthy な Service オブジェクトは、準備完了した endpoint を証明するものではありません。Deployment probe がワークロードの準備完了を確認します。Argo Project/RBAC と image-registry へのアクセスを準備してください。
+この最小例では、同じSync phase内でNamespace → ConfigMap → Service → readinessを備えたDeploymentの順に配置します。ServiceオブジェクトがHealthyでも、readyなendpointが存在するとは限りません。Deployment probeがワークロードの準備完了を確認します。Argo Project/RBACとイメージレジストリへのアクセスを用意してください。
 
 ```yaml
 apiVersion: v1
@@ -409,11 +409,11 @@ spec:
             drop: [ALL]
 ```
 
-データベースでは、まず認証、永続化、Service、実際の準備完了を用意してください。HPA には CPU requests と metrics の可用性が必要です。準備完了に必要な Service/ConfigMap を後の wave に置かないでください。
+データベースでは、認証、永続化、Service、実際のreadinessを先に準備してください。HPAにはCPU requestsとmetricsの利用可能性が必要です。readinessに必要なServiceやConfigMapを後のwaveに置かないでください。
 
-## Sync Window
+## 同期Window {#sync-windows}
 
-この例では、日曜日の 02:00～06:00 KST に本番プロジェクトの prod-* Application を許可し、03:00～04:00 は凍結します。リポジトリ/destination は実際に認可されたスコープに置き換えてください。
+この例では、本番project `prod-*`のApplicationに対し、日曜02:00～06:00 KSTの同期を許可し、03:00～04:00は凍結します。repositoryとdestinationは、実際に許可された範囲に置き換えてください。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -450,32 +450,30 @@ spec:
     syncOverrun: false
 ```
 
-新しい自動同期リクエストでは、次のようになります。
+新しい自動同期リクエストについて、次のように判定します。
 
-1. 一致する window がない場合、window による制限はありません。
-2. アクティブで一致する deny があれば、ブロックされます。
-3. それ以外の場合、アクティブな allow が許可します。
-4. 一致する allow window がすべて非アクティブであれば、ブロックされます。
-5. allow window がなく、非アクティブな deny のみの場合は許可されます。
+1. 一致するwindowがなければ、windowによる制限はありません。
+2. 一致するdenyが有効なら、リクエストをブロックします。
+3. それ以外では、有効なallowがリクエストを許可します。
+4. 一致するallow windowがすべて無効なら、リクエストをブロックします。
+5. allow windowがなく、無効なdenyしかなければ、リクエストを許可します。
 
-Application/namespace/cluster のセレクターのデフォルトは OR です。特異性による順位付けはありません。指定されたセレクターがすべて一致する必要がある場合は、andOperator: true を使用してください。デフォルトのタイムゾーンは UTC です。KST のコメントでは変更されません。
+Application／namespace／cluster selectorのデフォルトはORであり、具体性による優先順位はありません。指定したselectorすべての一致を必須にするには`andOperator: true`を使ってください。デフォルトのタイムゾーンはUTCです。コメントにKSTと書いても変わりません。
 
-手動例外は、関連するすべてのブロッキング window が manualSync を許可していることと、呼び出し元に同期権限があることに依存します。--force は回避策ではありません。常時アクティブな 24 時間の allow は手動で有効化する緊急スイッチではなく、自動同期も許可できます。window 境界をまたいだ実行継続は syncOverrun、開始時刻、関連する window に依存します。完了またはロールバックを保証するものではありません。
+手動での例外には、該当するブロッキングwindowすべてが`manualSync`を許可していることと、呼び出し元にsync権限があることが必要です。`--force`は回避策ではありません。常時有効な24時間のallowは、手動で有効化する緊急スイッチではなく、自動同期も許可する可能性があります。windowの境界を越えて実行を継続できるかは、`syncOverrun`、開始時刻、該当windowに依存します。完了やロールバックを保証するものではありません。
 
 ```bash
 argocd proj windows list production -o yaml
 argocd app get my-app
 ```
 
-
-
-![新しい自動同期の判断フロー。一致する window、アクティブな deny/allow、非アクティブな allow を区別します。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-4.png)
+![新しい自動同期リクエストについて、一致するwindow、有効なdeny／allow、無効なallowを区別して判定するフロー図。](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-4.html)
 
-## 差分カスタマイズ
+## 差分のカスタマイズ {#diffing-customization}
 
-別の controller が所有する実際のフィールドだけを、名前/namespace でスコープして無視してください。たとえば、1 つの HPA 管理対象 Deployment の replicas を除外します。広範な image、すべての annotation/resources、またはすべての manager の除外をデフォルトにしないでください。
+別のコントローラーが所有している実際のフィールドだけを、name／namespaceで範囲指定して無視してください。たとえば、HPAが管理する特定のDeploymentのreplicasを除外できます。image、すべてのannotation／resource、またはすべてのmanagerを広く除外する設定を初期値にしないでください。
 
 ```yaml
 spec:
@@ -490,13 +488,13 @@ spec:
     syncOptions: [RespectIgnoreDifferences=true]
 ```
 
-ignoreDifferences は比較を制御します。RespectIgnoreDifferences は同期にも拡張しますが、ライブオブジェクトなしで初期作成する場合は、依然として目的の manifest を使用します。manager を選択する前に、実際の管理対象フィールドを確認してください。グローバル/ステータスの比較除外はヘルス評価を無効にせず、image の改ざんを隠すべきではありません。
+`ignoreDifferences`は比較を制御します。`RespectIgnoreDifferences`はこの動作を同期にも適用しますが、live objectがない初回作成では引き続き望ましいmanifestが使われます。managerを選ぶ前に、実際のmanaged fieldsを確認してください。グローバル／statusの比較除外はhealth評価を無効にするものではなく、imageの改ざんを見逃す目的で使うべきではありません。
 
-スコープされたルールについては、[Application ignore-difference の例](02-applications.md#ignore-differences)を参照してください。
+スコープを限定したルールは、[Applicationのignore-difference例](02-applications.md#ignore-differences)を参照してください。
 
-## 再試行ポリシー
+## 再試行ポリシー {#retry-policies}
 
-limit: 5 は、初回試行後に 5 回の再試行、合計で最大 6 回の試行を許可します。遅延は 5s、10s、20s、40s、80s から始まります。maxDuration は同期全体や hook ではなく、個別のバックオフを上限設定します。Application の retry と Job の backoffLimit/activeDeadlineSeconds は別のレイヤーです。
+`limit: 5`は初回試行の後に5回まで再試行し、合計で最大6回試行します。待ち時間は5秒、10秒、20秒、40秒、80秒と増えます。`maxDuration`が上限を設けるのは個々のバックオフであり、同期全体やhookの時間ではありません。ApplicationのretryとJobの`backoffLimit`／`activeDeadlineSeconds`は別の層です。
 
 同期失敗時の自動再試行を設定します。
 
@@ -526,13 +524,13 @@ spec:
         maxDuration: 3m # Maximum delay
 ```
 
-### 再試行フロー
+### 再試行の流れ
 
-limit: 5 は、初回試行後に最大 5 回の再試行を許可します。duration が 5s、factor が 2 の場合、遅延は 5s、10s、20s、40s、80s で始まります。maxDuration は個別のバックオフ遅延を上限設定するものであり、同期/hook 全体のタイムアウトではありません。
+`limit: 5`は、初回試行後に最大5回の再試行を許可します。`duration`が5秒、`factor`が2なら、待ち時間は5秒、10秒、20秒、40秒、80秒と増えます。`maxDuration`が制限するのは個々のバックオフ待ち時間であり、同期やhook全体のタイムアウトではありません。
 
-### 上限付き依存関係 Preflight
+### 期限を設けた依存関係の事前確認
 
-preflight hook は上限のある期限で失敗できます。Argo のエラーコード別 retry フィルターを追加するものではありません。以下の依存関係は、すでに存在している必要があります。
+事前確認hookは上限付きの期限で失敗させられますが、Argoのエラーコード別再試行フィルターを追加するものではありません。以下の依存先はすでに存在している必要があります。
 
 ```yaml
 apiVersion: batch/v1
@@ -551,7 +549,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command:
         - sh
         - -c
@@ -565,13 +563,13 @@ spec:
           exit 1
 ```
 
-## 選択的同期
+## 選択的同期 {#selective-sync}
 
-明示的な --resource/--label 選択では、hook と履歴がスキップされます。ApplyOutOfSyncOnly/--apply-out-of-sync-only は 3.5.4 で hook/履歴を保持します。--label はリソースを選択し、--selector(-l) は Application を選択します。
+`--resource`／`--label`で明示的に選択すると、hookと履歴は省略されます。`ApplyOutOfSyncOnly`／`--apply-out-of-sync-only`は、バージョン3.5.4ではhookと履歴を維持します。`--label`はリソースを選び、`--selector`（`-l`）はApplicationを選びます。
 
-Application 内の特定のリソースのみを同期します。
+Application内の特定リソースだけを同期します。
 
-### CLI を使用
+### CLIから実行
 
 ```bash
 # Sync specific resource by kind and name
@@ -590,7 +588,7 @@ argocd app sync my-app \
 argocd app sync my-app --label 'app.kubernetes.io/component=backend'
 ```
 
-### 選択的同期の同期オプション
+### 選択的同期のオプション
 
 ```bash
 # Apply only out-of-sync resources
@@ -603,7 +601,7 @@ argocd app sync my-app --dry-run
 argocd app sync my-app --prune
 ```
 
-### リソースパス形式
+### リソースパスの形式
 
 ```
 <group>:<kind>:<name>
@@ -617,12 +615,12 @@ networking.k8s.io:Ingress:my-ingress # networking.k8s.io group
 
 ## クイズ
 
-学習内容を確認するには、[ArgoCD 同期戦略クイズ](../../quizzes/gitops/argocd/03-sync-strategies-quiz.md)を試してください。
+内容を確認するには、[ArgoCD同期戦略クイズ](../../quizzes/gitops/argocd/03-sync-strategies-quiz.md)に挑戦してください。
 
-## バージョン固定のレビューソース
+## バージョン別のレビュー資料
 
-- [3.5.4 同期オプション](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
-- [Sync window](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync_windows.md)
-- [Window の一致と CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/types.go)
-- [フェーズと wave](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
-- [CLI リソース/Application セレクター](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/commands/argocd_app_sync.md)
+- [3.5.4の同期オプション](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [同期Window](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync_windows.md)
+- [Windowの一致判定とCanSync](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/types.go)
+- [フェーズとWave](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [CLIのリソース／Applicationセレクター](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/commands/argocd_app_sync.md)

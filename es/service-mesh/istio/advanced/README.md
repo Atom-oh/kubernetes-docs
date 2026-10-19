@@ -1,6 +1,6 @@
 # Funciones avanzadas
 
-> **Última actualización**: September 11, 2026 · Istio 1.31. Estos ejemplos independientes presuponen que existen las cargas de trabajo, Services y controladores indicados. Siga cada capítulo detallado para la instalación/compatibilidad y validación; los fragmentos no constituyen una pila probada en producción.
+> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31. Estos ejemplos independientes presuponen que existen las cargas de trabajo, Services y controladores indicados. Siga cada capítulo detallado para la instalación/compatibilidad y validación; los fragmentos no constituyen una pila probada en producción.
 
 Esta sección cubre funciones avanzadas de Istio, como el modo Ambient, multiclúster, EnvoyFilter, compatibilidad con gRPC/WebSocket y otras.
 
@@ -27,7 +27,7 @@ El modo de despliegue, el enrutamiento de protocolos, la personalización, el co
 
 ## 1. Modo Ambient
 
-Ambient se incluyó por primera vez como alpha en Istio 1.18 y alcanzó GA en 1.24. Separa la superposición segura L4 del nodo del procesamiento L7 opcional basado en waypoints.
+Ambient se lanzó inicialmente como versión alfa en Istio 1.18 y alcanzó GA en 1.24. Separa la superposición segura L4 del nodo del procesamiento L7 opcional basado en waypoints.
 
 ### Modo Sidecar frente a modo Ambient
 
@@ -65,7 +65,7 @@ Conecte varios clústeres de Kubernetes como una única malla de servicios.
 - Despliegue azul/verde de clústeres
 - Conexión deliberada de entornos seleccionados; el aislamiento sigue necesitando límites de identidad/red/autorización
 
-La figura ilustra una topología primario/remoto con conectividad supuesta. Múltiples primarios es otra topología; las redes distintas requieren gateways este-oeste/enrutamiento y configuración de confianza adecuados. Conectar clústeres por sí solo no proporciona recuperación ante desastres ni aísla los entornos.
+La figura ilustra una topología primario/remoto con conectividad supuesta. La topología con varios clústeres primarios es otra opción; las redes distintas requieren gateways este-oeste/enrutamiento y configuración de confianza adecuados. Conectar clústeres por sí solo no proporciona recuperación ante desastres ni aísla los entornos.
 
 **Más información**: [Guía de configuración multiclúster](02-multi-cluster.md)
 
@@ -119,7 +119,7 @@ spec:
 
 ## 4. Caché DNS
 
-El proxy DNS de Istio captura las consultas DNS de las aplicaciones y puede responder localmente a las entradas de la malla/servicios. Un grupo de conexiones DestinationRule no habilita la caché DNS. Combine este fragmento de plantilla de Pod y cree nuevos Pods con sidecar:
+El proxy DNS de Istio captura las consultas DNS de las aplicaciones y puede responder localmente a consultas sobre servicios y recursos ServiceEntry de la malla. Un grupo de conexiones DestinationRule no habilita la caché DNS. Combine este fragmento de plantilla de Pod y cree nuevos Pods con sidecar:
 
 ```yaml
 spec:
@@ -132,7 +132,7 @@ spec:
 **Ventajas**:
 - Menor latencia de consulta DNS
 - Menor carga en servidores DNS externos
-- Respuestas conscientes del registro, sujetas al comportamiento de descubrimiento/TTL/actualización
+- Respuestas basadas en el registro de servicios, sujetas al comportamiento de descubrimiento/TTL/actualización
 
 La captura DNS en sidecars requiere activación explícita; ambient habilita el proxy DNS de forma predeterminada desde 1.25. La captura, la asignación de direcciones del registro y la actualización del DNS ascendente son comportamientos independientes; la caché no garantiza respuestas DNS permanentemente idénticas ni elimina todas las consultas externas.
 
@@ -194,7 +194,7 @@ spec:
 
 ## 6. Compatibilidad con WebSocket
 
-Istio admite actualizaciones HTTP a WebSocket. Esto presupone un `my-gateway` existente en `default` para `ws.example.com`, y un Service de backend HTTP8080 que atiende `/ws`. No es necesaria una coincidencia exacta de la cabecera Upgrade sensible a mayúsculas y minúsculas.
+Istio admite actualizaciones HTTP a WebSocket. Esto presupone un `my-gateway` existente en `default` para `ws.example.com`, y un Service de backend HTTP en el puerto 8080 que atiende `/ws`. No es necesaria una coincidencia exacta de la cabecera Upgrade sensible a mayúsculas y minúsculas.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -278,7 +278,7 @@ spec:
 
 ## 9. Argo Rollouts con reconocimiento de zonas
 
-Realice despliegues canary con reconocimiento de zonas por zona de disponibilidad.
+Realice despliegues Canary conscientes de las zonas de disponibilidad.
 
 **Más información**: [Guía de Argo Rollouts con reconocimiento de zonas](09-zone-aware-argo-rollouts.md)
 
@@ -293,9 +293,9 @@ Implemente autoescalado basado en métricas de Istio mediante KEDA.
 |Entradas de métricas|API de métricas de recursos/personalizadas/externas|Los escaladores exponen métricas de backend al HPA|
 |Funciones de escalado|Ajuste de réplicas, normalmente con minReplicas 1|Activación/desactivación más un HPA gestionado para 1→N|
 |Métricas externas|Requiere un adaptador de métricas externas|Proporciona su adaptador de API de métricas|
-|Lógica de consultas|Consume valores numéricos de métricas|Consultas PromQL o de métricas/operaciones matemáticas/Metrics Insights de CloudWatch, según el escalador|
+|Lógica de consultas|Consume valores numéricos de métricas|Consultas PromQL o consultas de métricas, de aritmética de métricas o de Metrics Insights en CloudWatch, según el escalador|
 
-Metrics Server proporciona métricas de recursos; no es el adaptador genérico de métricas externas. KEDA 2.20 requiere Kubernetes ≥1.30; verifique la versión elegida, las API y la compatibilidad de la plataforma independientemente de Istio. El escalado a cero también requiere una señal que siga siendo observable con cero réplicas y una ruta de activación viable. CloudWatch Metrics Insights es distinto de CloudWatch Logs Insights.
+Metrics Server proporciona métricas de recursos; no es el adaptador genérico de métricas externas. KEDA 2.20 requiere Kubernetes ≥ 1.30; verifique la versión elegida, las API y la compatibilidad de la plataforma independientemente de Istio. El escalado a cero también requiere una señal que siga siendo observable con cero réplicas y una ruta de activación viable. CloudWatch Metrics Insights es distinto de CloudWatch Logs Insights.
 
 ### Arquitectura de KEDA
 
@@ -329,7 +329,7 @@ spec:
   maxReplicaCount: 10
 ```
 
-El mínimo sigue siendo 1 porque las métricas de tráfico de destino desaparecen cuando el destino no tiene Pods en ejecución; este ejemplo no puede activarse por sí solo desde cero. `ignoreNullValues: false` trata un resultado vacío como un error, en vez de tratar silenciosamente la pérdida de telemetría como cero. No asocie un HPA competidor a la misma carga de trabajo. Las proporciones de latencia/error y los indicadores de disyuntores no son intrínsecamente proporcionales a la capacidad de las réplicas; valide su comportamiento de control en vez de añadirlos como señales de escalado arbitrarias.
+El mínimo sigue siendo 1 porque las métricas de tráfico de destino desaparecen cuando el destino no tiene Pods en ejecución; este ejemplo no puede activarse por sí solo desde cero. `ignoreNullValues: false` trata un resultado vacío como un error, en vez de tratar silenciosamente la pérdida de telemetría como cero. No asocie un HPA competidor a la misma carga de trabajo. Las métricas de latencia/error y las métricas tipo gauge de los disyuntores no son intrínsecamente proporcionales a la capacidad de las réplicas; valide su comportamiento de control en vez de añadirlas como señales de escalado arbitrarias.
 
 **Métricas de escalado**:
 - **RPS (solicitudes por segundo)**: basado en solicitudes por segundo

@@ -1,6 +1,6 @@
 # Ciliumサービスメッシュの可観測性
 
-> **最終更新**: September 11, 2026 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7。Kubernetes/EKSとプラットフォーム要件は[概要](./README.md)を参照してください。
+> **最終更新**: 2026年10月16日 · Cilium/chart 1.20.3 · Hubble CLI 1.20.2 · Collector Contrib 0.162.0 · Loki 3.7.8。Kubernetes/EKSとプラットフォーム要件は[概要](./README.md)を参照してください。
 
 ## 概要
 
@@ -30,7 +30,7 @@ HubbleはCiliumが扱う通信の観測を公開します。L3/L4イベントは
 
 ### Helmによるインストール
 
-このオーバーレイをCilium 1.20.1のレビュー済みvaluesにマージします。メトリクスを公開し、port-forwardアクセスのRelay/UIを有効にします。Prometheus、Grafana、Collector、Lokiはインストールしません。
+このオーバーレイをCilium 1.20.3のレビュー済みvaluesにマージします。メトリクスを公開し、port-forwardアクセスのRelay/UIを有効にします。Prometheus、Grafana、Collector、Lokiはインストールしません。
 
 ```yaml
 prometheus:
@@ -82,7 +82,7 @@ Hubbleサーバー→RelayのmTLSは観測転送を保護します。UI Ingress�
 
 ```bash
 set -eu
-HUBBLE_VERSION=v1.19.4
+HUBBLE_VERSION=v1.20.2
 case "$(uname -s)" in
   Linux) HUBBLE_RELEASE_OS=linux ;;
   Darwin) HUBBLE_RELEASE_OS=darwin ;;
@@ -203,7 +203,7 @@ JSON対応は64ビット`latency_ns`を**文字列**としてエンコードし�
 
 HTTP応答レコードは状態を持ちますが、要求レコードにはまだない場合があります。gRPCメソッドはHTTPパスで選べますが、HTTP 200はアプリレベルgRPC成功を意味しません。必要ならRPC結果を別収集します。
 
-選択CLIに`--dns-rcode`はありません。JSONの数値DNS応答コードを確認し、3はNXDOMAINです。CLIの`kafka`フィルターは互換過去データを読めますが、Cilium 1.20.1で削除したKafka L7処理を復活させません。9092フィルターはL4観測で、トピック/操作検査ではありません。
+選択CLIに`--dns-rcode`はありません。JSONの数値DNS応答コードを確認し、3はNXDOMAINです。CLIの`kafka`フィルターは互換過去データを読めますが、Cilium 1.20で削除したKafka L7処理を復活させません。9092フィルターはL4観測で、トピック/操作検査ではありません。
 
 ## Prometheusメトリクス
 
@@ -664,7 +664,7 @@ hubble:
 
 ### Collector設定
 
-以下はCollector Contrib 0.160.0の**設定**で、Deploymentではありません。ノードローカルCollector DaemonSetに、対応ホストログディレクトリの読み取り権限、書き込み可能な永続チェックポイントストレージ、downward APIの`K8S_NODE_NAME`を用意する必要があります。
+以下はCollector Contrib 0.162.0の**設定**で、Deploymentではありません。ノードローカルCollector DaemonSetに、対応ホストログディレクトリの読み取り権限、書き込み可能な永続チェックポイントストレージ、downward APIの`K8S_NODE_NAME`を用意する必要があります。
 
 ```yaml
 extensions:
@@ -726,7 +726,7 @@ service:
 
 filelog receiverはJSON本文と時刻を解析します。永続`file_storage`チェックポイントは読み取りオフセットを保持します。一時チェックポイントボリュームは再起動動作を変え得ます。`start_at: end`は保存位置がないと既存内容を飛ばし、再生/インポート設定ではありません。
 
-Loki 3.7.7は`/otlp/v1/logs`でOTLP/HTTPログを受け入れます。エクスポーターが`/otlp`基本エンドポイントに`/v1/logs`を追加します。Lokiは構造化メタデータと互換ストレージ設定に対応し、有効にする必要があります。削除されたCollector `loki`エクスポーターを使わないでください。リソース属性`service.name`はLokiラベル`service_name`となり、構造化本文はログ内容に残ります。
+Loki 3.7.8は`/otlp/v1/logs`でOTLP/HTTPログを受け入れます。エクスポーターが`/otlp`基本エンドポイントに`/v1/logs`を追加します。Lokiは構造化メタデータと互換ストレージ設定に対応し、有効にする必要があります。削除されたCollector `loki`エクスポーターを使わないでください。リソース属性`service.name`はLokiラベル`service_name`となり、構造化本文はログ内容に残ります。
 
 フローログ、Prometheusメトリクス、アプリトレースは異なるシグナルです。
 
@@ -778,19 +778,19 @@ kubectl -n kube-system logs deployment/hubble-relay --since=10m
 
 ## 参考資料
 
-- [Cilium1.20.1 Hubble設定](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/setup.rst)
-- [Hubble TLSと更新](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/tls.rst)
-- [Hubbleエクスポート](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
-- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-cli.rst)
-- [Hubble CLI1.19.4リリース](https://github.com/cilium/hubble/releases/tag/v1.19.4)
-- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-ui.rst)
-- [メトリクス定義](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [HTTPメトリクス実装](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/http/handler.go)
-- [メトリクスコンテキストラベル](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/api/context.go)
-- [リリース済みHTTPワークロードダッシュボード](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
-- [リリース済み一般Hubbleダッシュボード](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
-- [Collector0.160 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md)
-- [Loki3.7.7 OTLP取り込み](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/send-data/otel/_index.md)
-- [Loki3.7.7 OTLP対応とエンドポイント](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/shared/otel.md)
-- [Collector JSONパーサー](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/pkg/stanza/docs/operators/json_parser.md)
+- [Cilium 1.20.3 の Hubble 設定](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/setup.rst)
+- [Hubble TLSと更新](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/tls.rst)
+- [Hubbleエクスポート](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/export.rst)
+- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-cli.rst)
+- [Hubble CLI 1.20.2 リリース](https://github.com/cilium/hubble/releases/tag/v1.20.2)
+- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-ui.rst)
+- [メトリクス定義](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [HTTPメトリクス実装](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/http/handler.go)
+- [メトリクスコンテキストラベル](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/api/context.go)
+- [リリース済みHTTPワークロードダッシュボード](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
+- [リリース済み一般Hubbleダッシュボード](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
+- [Collector Contrib 0.162.0 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/receiver/filelogreceiver/README.md)
+- [Loki 3.7.8 OTLP 取り込み](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/send-data/otel/_index.md)
+- [Loki 3.7.8 OTLP 対応とエンドポイント](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/shared/otel.md)
+- [Collector JSONパーサー](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/pkg/stanza/docs/operators/json_parser.md)
 - [Google SREゴールデンシグナル](https://sre.google/sre-book/monitoring-distributed-systems/)

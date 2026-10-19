@@ -101,7 +101,7 @@ isolation.level=read_committed
 max.poll.interval.ms=300000
 ```
 
-事务处理包括 `initTransactions()`、`beginTransaction()`、发送输出、`sendOffsetsToTransaction(...)`、`commitTransaction()` 以及中止/恢复处理。并发生产者需要各自不同的 transactional ID；应为逻辑写入方设计稳定的重启和 fencing 行为。
+事务处理包括 `initTransactions()`、`beginTransaction()`、发送输出、`sendOffsetsToTransaction(...)`、`commitTransaction()` 以及中止/恢复处理。并发生产者需要各自不同的 transactional ID；应为逻辑写入者设计稳定的重启方式和栅栏机制。
 
 显式启用幂等性要求 `acks=all`、`retries>0` 和 `max.in.flight.requests.per.connection<=5`。发生冲突时会抛出 ConfigException。隐式默认的幂等性可能会因冲突设置而被禁用。较大的 retries 值不能覆盖 `delivery.timeout.ms` 等截止时间。
 

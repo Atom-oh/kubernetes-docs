@@ -279,6 +279,7 @@ A real implementation must scope group identity by namespace/UID, count unique m
 - C. Exclude nodes where pods cannot run: This is the role of the "Filter" extension point.
 - D. Assign scores to nodes: This is the role of the "Score" extension point.
 </details>
+
 ### 3. What is the main purpose of Gang Scheduling in Kubernetes?
 
 A. Place pods only on specific nodes
@@ -418,6 +419,7 @@ extenders:
 
 Use the complete bounded handler in [Part2](../../scheduling/02-custom-scheduler-part2.md). It leaves `bindVerb` unset to retain `DefaultBinder`. No additional HTTP server or fake-success bind endpoint is provided here.
 </details>
+
 ### 5. What is the role of the "PostFilter" extension point in the Kubernetes scheduler framework?
 
 A. Assign scores to nodes after filtering
@@ -617,6 +619,7 @@ func WeightedGPUScore(packing int64, utilization float64) (int64, error) {
 - C. Give higher scores to nodes with higher resource usage: This is the MostAllocated strategy of NodeResourcesFit.
 - D. Set resource limits on nodes: This is not the role of scheduler plugins; node resource limits are properties of the nodes themselves.
 </details>
+
 ### 7. What is the role of the "PreBind" extension point in the Kubernetes scheduler?
 
 A. Bind pods to nodes
@@ -825,6 +828,7 @@ spec:
 - B. Set node resource limits: This is the role of node configuration or kubelet.
 - D. Maintain node resource usage balance: This is the role of the "NodeResourcesBalancedAllocation" plugin.
 </details>
+
 ### 9. What is the main purpose of the "InterPodAffinity" plugin in the Kubernetes scheduler?
 
 A. Process affinity rules between pods and nodes

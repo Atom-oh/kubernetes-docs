@@ -1,7 +1,7 @@
 # cert-manager による Certificate 管理
 
-> **最終更新**: October 12, 2026
-> **検証ベースライン**: cert-manager 1.21.2、cmctl 2.5.0、trust-manager 0.25.0、istio-csr 0.17.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 で公開されているサポート/テスト対象の Kubernetes 範囲は 1.33–1.36 です。Kubernetes 1.37 はこの範囲外であるため、本ガイドではその互換性を保証しません。
+> **最終更新**: 2026年10月16日
+> **検証ベースライン**: cert-manager 1.21.2、cmctl 2.6.1、trust-manager 0.25.0、istio-csr 0.18.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 で公開されているサポート/テスト対象の Kubernetes 範囲は 1.33–1.36 です。Kubernetes 1.37 はこの範囲外であるため、本ガイドではその互換性を保証しません。
 
 cert-manager は Certificate の発行と更新を Kubernetes リソースとして管理します。**CA 信頼の配布、アプリケーションの再読み込み、失効、および CRL/OCSP 操作は、引き続き別個の責務です。** 例はローカルのスキーマ、設定、ライブラリで確認しています。これらは外部 CA の発行や AWS/Kubernetes デプロイメントの証拠ではありません。別途、一時的なローカル Vault 2.1.0 テストでは、合成 CA を使用して 16 件の発行/CSR 署名の受け入れ/拒否ケースを検証しました。
 
@@ -438,10 +438,10 @@ sidecar フローでは、istio-agent が CSR を作成し、istio-csr が Certi
 
 ```bash
 helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
-  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
+  --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
-### Linkerd と trust-manager
+### Linkerd と trust-manager {#linkerd-and-trust-manager}
 
 [Linkerd identity の例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml)は、issuer Secret と root-bundle ConfigMap を準備します。固定された control-plane chart 2026.9.1 は linkerd-identity-issuer と linkerd-identity-trust-roots を参照します。
 

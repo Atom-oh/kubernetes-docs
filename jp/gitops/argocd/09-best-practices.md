@@ -1,7 +1,7 @@
 # ArgoCD ベストプラクティス
 
-> **レビューのベースライン**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1。リリースノートのレビュー後、マニフェスト例をパッチ 3.5.4（引き続き Kustomize 5.8.1 をバンドル）向けに更新しました（例は再実行していません）。
-> **最終更新**: October 12, 2026
+> **レビューのベースライン**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1。リリースノートを確認したうえで、マニフェスト例をパッチ 3.5.5 向けに更新しました（引き続き Kustomize 5.8.1 をバンドル）。例は再実行していません。
+> **最終更新**: 2026年10月16日
 
 ## 目次
 
@@ -15,7 +15,7 @@
 - [EKS のベストプラクティス](#eks-best-practices)
 - [本番環境チェックリスト](#production-checklist)
 
-## リポジトリ構造
+## リポジトリ構造 {#repository-structure}
 
 ### モノレポパターン
 
@@ -128,7 +128,7 @@ gitops-root/
 | Namespace | `{app}` または `{app}-{env}` | `frontend`, `frontend-prod` |
 | リポジトリ | `gitops-{scope}` | `gitops-platform` |
 
-## 環境プロモーション
+## 環境プロモーション {#environment-promotion}
 
 ### Git ブランチ戦略
 
@@ -232,7 +232,7 @@ jobs:
             Require the repository's validation and approval checks before merging.
 ```
 
-## リソース管理
+## リソース管理 {#resource-management}
 
 ### コンポーネントリソース
 
@@ -295,7 +295,7 @@ repoServer:
         stabilizationWindowSeconds: 300
 ```
 
-## パフォーマンスチューニング
+## パフォーマンスチューニング {#performance-tuning}
 
 ### 設定の配置場所と意味
 
@@ -378,7 +378,7 @@ spec:
     - /spec/replicas
 ```
 
-## 障害復旧
+## 障害復旧 {#disaster-recovery}
 
 ### バックアップ範囲
 
@@ -465,18 +465,18 @@ argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
 
 必要な補足 ConfigMaps/Secrets と外部依存関係を復旧した後、レビュー済みのインストール設定から controller のレプリカを復元します。個別にデプロイを再開する前に、代表的な Application の diff/health を検査してください。全 Application の sync、import の `--prune`、または Namespace の削除は、デフォルトの復旧手順ではありません。
 
-## アップグレード戦略
+## アップグレード戦略 {#upgrade-strategies}
 
 ### バージョンとインストールのオーナーシップ
 
-この例は、2.x または古い minor からの無条件な移行ではなく、レビュー済みの 3.5.x パッチを 3.5.4 へアップデートすることを対象としています。非本番環境で、間にあるすべての minor/major の移行ノート、テスト済み Kubernetes の組み合わせ、CRD/RBAC/SSO/CMP の変更を確認してください。既存の manifest/Helm/GitOps オーナーを維持してください。この自己管理手順を、EKS managed Argo CD capability に適用しないでください。
+この例は、2.x または古い minor からの無条件な移行ではなく、レビュー済みの 3.5.x パッチを 3.5.5 へアップデートすることを対象としています。非本番環境で、間にあるすべての minor/major の移行ノート、テスト済み Kubernetes の組み合わせ、CRD/RBAC/SSO/CMP の変更を確認してください。既存の manifest/Helm/GitOps オーナーを維持してください。この自己管理手順を、EKS managed Argo CD capability に適用しないでください。
 
 ```bash
-# Example: reviewed 3.5.x patch upgrade to 3.5.4, manifest-managed non-HA install.
+# Example: reviewed 3.5.x patch upgrade to 3.5.5, manifest-managed non-HA install.
 kubectl config current-context
 argocd version
 kubectl apply --server-side -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
 kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
@@ -490,7 +490,7 @@ HA manifest インストールには `manifests/ha/install.yaml` を使用しま
 
 ### Helm 管理インストールの代替手段
 
-レビュー済みの Chart 10.8.4 は Argo CD v3.5.2 をデプロイするため、この Helm パスでは上記で使用した 3.5.4 パッチには到達しません。Argo CD 3.5.4 は Chart 10.9.7 で初めて提供されますが、これはここではレビューしていない Chart minor アップデートです。
+レビュー済みの Chart 10.8.4 は Argo CD v3.5.2 をデプロイするため、この Helm パスでは上記で使用した 3.5.5 パッチには到達しません。Argo CD 3.5.5 は Chart 10.10.3 で初めて提供されますが、これはここではレビューしていない Chart minor アップデートです。
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -508,7 +508,7 @@ helm upgrade argocd argo/argo-cd --version 10.8.4 \
 
 1 つの cluster 上の 2 つの Namespace は、依然として CRD とその他の cluster スコープのリソースを共有します。インストール Namespace だけを変更しても、ClusterRoleBinding の subject は書き換えられません。Kubernetes には `kubectl rename namespace` コマンドはありません。別の cluster で検証し、認証情報、tracking/instance ID、アクティブな controller、トラフィック切り替えを明示的に計画することを推奨します。古い Namespace を削除すると、Application finalizer を介して管理対象ワークロードにカスケードする可能性があります。
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 ### Sync と差分の検査
 
@@ -566,7 +566,7 @@ kubectl logs -n argocd deployment/argocd-repo-server --tail=100
 
 レンダリングされた manifests には生成された Secrets が含まれる可能性があります。共有ログに含めないでください。デフォルトの controller は StatefulSet です。動的分散が有効な場合は、実際の Deployment を検査してください。一時的な debug logging は影響を受けるコンポーネントに限定し、その rollout と削除を管理してください。
 
-## EKS のベストプラクティス
+## EKS のベストプラクティス {#eks-best-practices}
 
 ### AWS 認証情報
 
@@ -614,7 +614,7 @@ spec:
 
 自動 sync を保留する場合は、元の設定を記録し、その Git/ApplicationSet オーナーを変更してください。CLI のみで子 Application を変更しても、親によって元に戻される可能性があります。connectivity、diff、sample-sync の検証後は、無条件に automation を有効にするのではなく、元の prune/selfHeal/automated ポリシーを復元してください。
 
-## 本番環境チェックリスト
+## 本番環境チェックリスト {#production-checklist}
 
 - [ ] デフォルト admin を無効にする前に、SSO/RBAC/TLS と復旧アクセスを確認する
 - [ ] secrets を暗号化/外部化し、リポジトリ/cluster 認証情報をスコープする
@@ -629,10 +629,10 @@ spec:
 
 - [ベストプラクティス](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
 - [高可用性とスケーリング](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
-- [バックアップの実装と範囲](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/admin/backup.go)
+- [バックアップの実装と範囲](https://github.com/argoproj/argo-cd/blob/v3.5.5/cmd/argocd/commands/admin/backup.go)
 - [アップグレードガイド](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
 - [Chart 10.8.4 の values](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
-- [Kustomize のバンドルバージョン](https://github.com/argoproj/argo-cd/blob/v3.5.4/hack/tool-versions.sh)
+- [Kustomize のバンドルバージョン](https://github.com/argoproj/argo-cd/blob/v3.5.5/hack/tool-versions.sh)
 - [Velero スケジュール](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## クイズ

@@ -738,6 +738,12 @@ Un cliente local entra mediante un balanceador de carga y llega a Pods en nodos 
 
 La [guía de Ingress de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recomienda ALB con Load Balancer Controller para el tráfico que se origina en la región, e Ingress local para el tráfico que se origina en las instalaciones. Como el gateway requiere `l7Proxy=false` de Cilium, Cilium Ingress y Gateway API no están disponibles en la misma instalación; para el acceso desde las instalaciones, considere un Service `LoadBalancer` L4 (Cilium LB IPAM/BGP) o un balanceador de hardware existente con NodePort.
 
+#### Vídeo de demostración: destinos IP de ALB y ruta de retorno
+
+[![Vídeo de demostración V3: destinos IP de ALB en Pods Hybrid y ruta de retorno desde las instalaciones (sin sonido, 3 min 12 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
+
+Vídeo sin sonido que reinicia progresivamente los Pods Hybrid bajo carga para que los destinos `ip` del ALB cambien a las nuevas IP de Pod; después prueba las tres rutas que parten de un host de las instalaciones. Grabado el 18 de octubre de 2026 en un entorno simulado (instancias EC2 que representan los sistemas locales a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, solo las nuevas IP de Pod siguieron superando las comprobaciones de estado 50 s después del reinicio progresivo; fallaron 0 de 174 solicitudes y, desde las instalaciones, `/cloud` respondió 3/3, `/hybrid` 3/3 y la ruta NodePort falló en los 3 intentos. Las cifras de 54 s, 276 solicitudes, 4 s y 1 de 191 de las tablas anteriores proceden de una medición anterior del mismo día (02:11 UTC). Consulta el [material de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
+
 ### Patrón 6: comparación — con y sin gateway
 
 El enrutamiento nativo/BGP/estático y este gateway son rutas de datos distintas, administradas por componentes diferentes. El gateway agrega un salto VXLAN activo/en espera y automatiza rutas agregadas, pero mantiene las responsabilidades sobre la red subyacente, CIDR, firewall, IAM y aplicaciones. Las secciones siguientes sobre comparación y migración describen sus límites; ninguno de los enfoques garantiza automáticamente la disponibilidad de webhooks/balanceadores.
@@ -779,6 +785,12 @@ Durante la ventana de conmutación por error:
 - **Tráfico de la VPC a Hybrid**: se pierde hasta que se actualizan las rutas de la VPC (los paquetes se envían a la ENI del gateway que falló).
 - **Tráfico de Hybrid a la VPC**: se pierde hasta que se actualiza CiliumVTEPConfig (Cilium envía el tráfico a la IP del gateway anterior).
 - **Rutas internas de Hybrid y del nodo/plano de control**: las rutas que no atraviesan el gateway pueden seguir funcionando solo si su propia red subyacente, CNI, DNS y dependencias continúan en buen estado; un fallo compartido de zona de disponibilidad/red también puede afectarlas.
+
+#### Vídeo de demostración: conmutación por error del líder del gateway
+
+[![Vídeo de demostración V1: conmutación por error del líder del gateway (sin sonido, 2 min 58 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
+
+Vídeo sin sonido que elimina el Pod líder del gateway y muestra el cambio de titularidad del Lease, el cambio de ENI de la ruta de la VPC y los resultados de sondas a intervalos de 1 s. Es una grabación real de terminal realizada el 18 de octubre de 2026 en un entorno simulado (instancias EC2 que representan los sistemas locales a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, el cambio de titularidad del Lease tardó 5 s y fallaron 2 de 60 sondas. Las tres ejecuciones anteriores que se muestran al final (del 15 de octubre de 2026) midieron cambios de titularidad de 3 s, 5 s y 5 s, con 1 de 60, 1 de 60 y 2 de 45 sondas fallidas. Al igual que la estimación de aproximadamente 3 a 5 s de la documentación de AWS, estas cifras no son garantías. Consulta el [material de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
 
 ### Fallo de un único gateway y varios centros de datos
 

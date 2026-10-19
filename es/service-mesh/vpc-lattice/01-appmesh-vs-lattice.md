@@ -83,7 +83,7 @@ graph TB
 Se destacan tres diferencias.
 
 1. **Número de saltos por proxies**: ANTES se atraviesan **dos** proxies: el Envoy del emisor y el Envoy del receptor. DESPUÉS el tráfico pasa **una vez** por Lattice.
-2. **Quién es propietario del plano de control**: ANTES, el plano de control de App Mesh envía la configuración a cada Envoy mediante xDS y SPIRE emite certificados. DESPUÉS, estas funciones pasan al dominio administrado por AWS y en el clúster del cliente solo queda una implementación de AWS Gateway API Controller.
+2. **Quién es propietario del plano de control**: ANTES, el plano de control de App Mesh envía la configuración a cada Envoy mediante xDS y SPIRE emite certificados. DESPUÉS, estas funciones pasan al dominio administrado por AWS y en el clúster del cliente solo queda un recurso Deployment de AWS Gateway API Controller.
 3. **Dónde termina la conexión**: ANTES, el Envoy del emisor se conecta **directamente a la IP del Pod receptor.** DESPUÉS, se conecta a una dirección de Lattice y es Lattice quien conoce las IP de los Pods.
 
 ## Correspondencia entre recursos
@@ -111,7 +111,7 @@ En otras palabras, aunque se complete la columna de la derecha, no todos los atr
 
 ## Brechas funcionales
 
-Estas son **comprobaciones de migración**, no pruebas de que un plano de datos administrado nunca pueda implementar esas funciones. App Mesh, Istio y Envoy por sí solo exponen superficies de configuración distintas; compruebe qué función se utiliza realmente antes de elegir su sustituto.
+Estas son **comprobaciones de migración**, no pruebas de que un plano de datos administrado nunca pueda implementar esas funciones. Las superficies de configuración de App Mesh, Istio y Envoy sin integrar en una malla son distintas; compruebe qué funciones utiliza realmente el producto de origen antes de elegir un sustituto.
 
 | Capacidad | Comprobación para la migración |
 |---|---|
@@ -125,7 +125,7 @@ Estas son **comprobaciones de migración**, no pruebas de que un plano de datos 
 
 Una tarea de migración importante es la **observabilidad**: haga un inventario de las métricas, los registros de acceso y el contexto de traza que aporta cada componente actual y compruebe de extremo a extremo la vía de sustitución.
 
-Los interruptores de circuito y los reintentos tienen una alternativa clara («añadir una biblioteca a la aplicación») cuyo coste se puede estimar. La observabilidad también parece tener una alternativa clara, pero requiere otro tipo de trabajo. ANTES, los spans que Envoy generaba automáticamente se obtenían **sin tocar el código de la aplicación.** Para obtener el mismo nivel de trazas DESPUÉS, hay que instrumentar cada servicio con OpenTelemetry, lo que se convierte en una tarea para los equipos de aplicaciones.
+Los circuit breakers y los reintentos tienen una alternativa clara («añadir una biblioteca a la aplicación») cuyo coste se puede estimar. La observabilidad también parece tener una alternativa clara, pero requiere otro tipo de trabajo. ANTES, los spans que Envoy generaba automáticamente se obtenían **sin tocar el código de la aplicación.** Para obtener el mismo nivel de trazas DESPUÉS, hay que instrumentar cada servicio con OpenTelemetry, lo que se convierte en una tarea para los equipos de aplicaciones.
 
 Un span del cliente normalmente engloba el span del servidor descendente, por lo que restar la hora de finalización del span del emisor de la hora de inicio del span del receptor no mide la latencia de red. Correlacione los spans de la aplicación con campos de los registros de Lattice como `requestId`, `duration`, `requestToTargetDuration` y `responseFromTargetDuration`; la desviación de reloj, los límites de instrumentación y el tiempo de red restringen la atribución causal. Lattice añade `x-amzn-requestid` para correlacionar solicitudes HTTP; no es un span de OpenTelemetry.
 

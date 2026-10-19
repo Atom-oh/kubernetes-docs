@@ -1,8 +1,8 @@
-# Linux Basics Quiz
+# Cuestionario de fundamentos de Linux
 
 Este cuestionario evalúa tu comprensión de los conceptos fundamentales de Linux que forman la base de Kubernetes y la tecnología de contenedores.
 
-## Multiple Choice Questions
+## Preguntas de opción múltiple
 
 1. ¿Cuál de las siguientes NO es una función principal del kernel de Linux?
    - A) Gestión de procesos
@@ -32,8 +32,7 @@ El kernel de Linux es el núcleo del sistema operativo y actúa como intermediar
 **Respuesta: C) Memory namespace**
 
 **Explicación:**
-Linux tiene los siguientes namespaces: PID (Process ID), Network, Mount, UTS (hostname), IPC (Inter-Process Communication), User y cgroup namespaces. Memory namespace no existe. El aislamiento de memoria se gestiona principalmente mediante cgroups.
-
+Linux tiene namespaces de PID (identificadores de proceso), red, montaje, UTS (hostname), IPC (comunicación entre procesos), usuario, cgroup y tiempo. No existe un namespace de memoria: los espacios de direcciones virtuales de los procesos aíslan la memoria, mientras que los cgroups contabilizan y limitan su uso.
 </details>
 
 3. ¿Cuál es la función principal de cgroups (Control Groups)?
@@ -49,10 +48,10 @@ Linux tiene los siguientes namespaces: PID (Process ID), Network, Mount, UTS (ho
 **Respuesta: A) Limitar y aislar el uso de recursos de grupos de procesos**
 
 **Explicación:**
-cgroups es una característica del kernel de Linux que limita y aísla el uso de recursos de grupos de procesos. Puede limitar y supervisar el uso de recursos como tiempo de CPU, memoria, E/S de bloques y ancho de banda de red. Es una tecnología central para implementar límites de recursos en contenedores.
+cgroups es una función del kernel de Linux que limita y aísla el uso de recursos de grupos de procesos. Puede limitar y supervisar el tiempo de CPU, la memoria y la E/S de bloques; para controlar el ancho de banda de red se necesita integrar tc/eBPF. Es una tecnología fundamental para implementar límites de recursos en contenedores.
 </details>
 
-4. En el permiso de archivo "rwxr-xr--", ¿cuáles son los permisos del usuario del grupo?
+4. En el permiso de archivo "rwxr-xr--", ¿qué permisos corresponden al grupo?
    - A) Lectura, escritura, ejecución
    - B) Lectura, ejecución
    - C) Solo lectura
@@ -119,7 +118,7 @@ OverlayFS es un sistema de archivos de montaje de unión que superpone varios di
 **Respuesta: B) net.ipv4.ip_forward**
 
 **Explicación:**
-`net.ipv4.ip_forward` es la configuración que habilita el reenvío de paquetes IP en el kernel de Linux. Esta configuración debe establecerse en 1 para habilitar la comunicación entre contenedores y entre contenedores y redes externas. Este parámetro debe habilitarse al configurar nodos de Kubernetes y puede establecerse con el comando `sysctl -w net.ipv4.ip_forward=1`.
+`net.ipv4.ip_forward` habilita el reenvío de paquetes IP en el kernel de Linux. Establécelo en 1 cuando el nodo deba reenviar paquetes IPv4 entre interfaces; el tráfico de localhost dentro del mismo network namespace no requiere reenvío. En nodos de Kubernetes, habilítalo cuando la topología de red lo necesite. Puedes establecerlo con `sysctl -w net.ipv4.ip_forward=1`.
 </details>
 
 8. En un archivo de unidad de systemd, ¿qué directiva se usa para definir que un servicio debe iniciarse después de un servicio específico?
@@ -135,10 +134,10 @@ OverlayFS es un sistema de archivos de montaje de unión que superpone varios di
 **Respuesta: C) After**
 
 **Explicación:**
-En los archivos de unidad de systemd, `After` define que la unidad actual debe iniciarse después de la unidad especificada. Por ejemplo, `After=network-online.target` garantiza que el servicio se inicie después de que la red esté lista. `Requires` define una dependencia fuerte, `Wants` define una dependencia débil y `Before` indica que la unidad actual debe iniciarse antes que otra unidad.
+En una unidad de systemd, `After` establece el orden de inicio respecto de otra unidad, pero solo cuando ambas se inician. Si el servicio necesita conectividad de red al arrancar, combina `Wants=network-online.target` con `After=network-online.target` y con la implementación wait-online de la distribución. Esto no supervisa continuamente la disponibilidad de la red. `Requires` define una dependencia fuerte, `Wants` una dependencia débil y `Before` indica que la unidad actual debe iniciarse antes que otra.
 </details>
 
-9. ¿Qué parámetro del kernel se requiere para que los plugins CNI funcionen correctamente, permitiendo que el tráfico de bridge pase por iptables?
+9. ¿Qué parámetro del kernel hace que el tráfico IPv4 puenteado pase por iptables cuando el CNI seleccionado requiere bridge netfilter?
    - A) net.ipv4.ip_forward
    - B) net.bridge.bridge-nf-call-iptables
    - C) net.core.netdev_max_backlog
@@ -151,7 +150,7 @@ En los archivos de unidad de systemd, `After` define que la unidad actual debe i
 **Respuesta: B) net.bridge.bridge-nf-call-iptables**
 
 **Explicación:**
-`net.bridge.bridge-nf-call-iptables` configura el tráfico de red puenteado para que pase por las reglas de iptables. Esta configuración es esencial para que los plugins CNI de Kubernetes (Calico, Flannel, etc.) apliquen correctamente las políticas de red y el enrutamiento de servicios. Para habilitar esta configuración, primero debes cargar el módulo del kernel `br_netfilter`.
+`net.bridge.bridge-nf-call-iptables` hace que el tráfico IPv4 puenteado pase por las reglas de iptables. La necesidad de esta opción depende del CNI y del plano de datos; no es un requisito universal para redes enrutadas o basadas en eBPF. Para habilitar esta opción, primero carga el módulo del kernel `br_netfilter`.
 </details>
 
 10. En la gestión de paquetes, ¿qué comando se usa en Ubuntu/Debian para impedir actualizaciones automáticas de los componentes de Kubernetes?
@@ -167,10 +166,10 @@ En los archivos de unidad de systemd, `After` define que la unidad actual debe i
 **Respuesta: B) apt-mark hold**
 
 **Explicación:**
-`apt-mark hold` fija paquetes específicos para evitar actualizaciones automáticas. En clústeres de Kubernetes, la compatibilidad de versiones de kubelet, kubeadm y kubectl es importante, por lo que se recomienda fijar las versiones con el comando `sudo apt-mark hold kubelet kubeadm kubectl`. En RHEL/CentOS, usa el comando `yum versionlock`.
+`apt-mark hold` marca paquetes específicos para impedir que se actualicen automáticamente. En clústeres de Kubernetes importa la compatibilidad entre las versiones de kubelet, kubeadm y kubectl; por eso se recomienda fijarlas con `sudo apt-mark hold kubelet kubeadm kubectl`. En sistemas basados en RPM, usa el complemento versionlock de DNF/YUM que esté instalado o exclusiones de repositorio adecuadas para la distribución.
 </details>
 
-## Short Answer Questions
+## Preguntas de respuesta breve
 
 11. ¿Cómo se llama un proceso cuando ha terminado, pero su proceso padre no ha comprobado su estado?
 
@@ -241,7 +240,7 @@ Un veth pair es un par de interfaces ethernet virtuales donde un extremo está d
 **Respuesta: ulimit**
 
 **Explicación:**
-ulimit es un comando para comprobar y establecer límites de recursos para usuarios y procesos. `ulimit -n` comprueba el número de descriptores de archivo que se pueden abrir, y `ulimit -n 65536` cambia el límite. En los nodos de Kubernetes, se necesitan muchos manejadores de archivos, por lo que es común establecer permanentemente valores altos en `/etc/security/limits.conf`.
+`ulimit` permite consultar y establecer límites de recursos. `ulimit -n` muestra el límite de descriptores de archivo y `ulimit -n 65536` lo cambia para el shell actual y sus procesos hijos futuros. Los límites de PAM se aplican a las nuevas sesiones de inicio de sesión; para servicios del sistema como kubelet, configura `LimitNOFILE` en systemd.
 </details>
 
 17. ¿Cómo se llama la herramienta del sistema de logging de systemd usada para la gestión unificada de logs de servicios?
@@ -265,7 +264,7 @@ journald es el sistema de logging unificado de systemd que recopila y almacena l
 **Respuesta: chronyd (o chrony)**
 
 **Explicación:**
-chronyd es un cliente/servidor NTP moderno que sincroniza la hora más rápido que el ntpd tradicional. El comando `chronyc tracking` comprueba el estado de sincronización, y `chronyc sources` muestra la lista de servidores NTP. En clústeres de Kubernetes, todos los nodos deben tener la hora sincronizada con precisión para que la autenticación, el logging, etc. funcionen correctamente.
+`chronyd` es un cliente/servidor NTP. La convergencia depende de la red, la calidad de las fuentes y la configuración. `chronyc tracking` consulta el estado de sincronización y `chronyc sources` muestra la lista de fuentes NTP. En clústeres de Kubernetes, todos los nodos deben mantener la hora sincronizada con precisión para que funcionen correctamente la autenticación, los registros y otros componentes.
 </details>
 
 19. ¿Cuál es la ruta del archivo donde se almacenan las configuraciones de resolución de nombres DNS en Linux?
@@ -280,7 +279,7 @@ chronyd es un cliente/servidor NTP moderno que sincroniza la hora más rápido q
 `/etc/resolv.conf` es el archivo que almacena la configuración de resolución de nombres DNS y define nameservers, dominios de búsqueda, opciones, etc. En entornos de Kubernetes, este archivo cumple un papel importante junto con CoreDNS y también afecta a la configuración DNS de Pod. En sistemas modernos, systemd-resolved puede gestionar dinámicamente este archivo.
 </details>
 
-## Hands-on Questions
+## Ejercicios prácticos
 
 20. Escribe los comandos para crear un nuevo network namespace y listar las interfaces de red dentro de ese namespace.
 
@@ -291,10 +290,12 @@ chronyd es un cliente/servidor NTP moderno que sincroniza la hora más rápido q
 **Respuesta:**
 ```bash
 # Create a new network namespace
-ip netns add mynetns
+sudo ip netns add mynetns
 
 # List network interfaces within that namespace
-ip netns exec mynetns ip link list
+sudo ip netns exec mynetns ip link list
+# After the exercise, when no processes use it:
+sudo ip netns delete mynetns
 ```
 
 **Explicación:**
@@ -386,7 +387,7 @@ ss -tulpn | grep :8080
   - `ss -tulpn | grep :8080`: Un reemplazo moderno de `netstat` que proporciona la misma información.
 </details>
 
-25. Escribe los comandos para configurar los módulos del kernel br_netfilter y overlay para que se carguen automáticamente al arrancar, ya que son necesarios para los nodos de Kubernetes.
+25. Escribe los comandos para configurar los módulos del kernel `br_netfilter` y `overlay` para que se carguen automáticamente al arrancar, cuando los requiera el runtime o el CNI seleccionado.
 
 <details>
 
@@ -405,10 +406,10 @@ sudo modprobe br_netfilter
 ```
 
 **Explicación:**
-Crear un archivo `.conf` en el directorio `/etc/modules-load.d/` hace que el servicio systemd-modules-load cargue automáticamente esos módulos al arrancar. El módulo `overlay` admite el sistema de archivos OverlayFS usado para capas de imágenes de contenedores, y el módulo `br_netfilter` permite que el tráfico de bridge pase por iptables, lo cual es esencial para la red de Kubernetes.
+Crear un archivo `.conf` en `/etc/modules-load.d/` hace que `systemd-modules-load` cargue esos módulos al arrancar. `overlay` admite OverlayFS, que se usa para las capas de imágenes de contenedores. `br_netfilter` permite que el tráfico puenteado pase por iptables cuando la configuración del CNI seleccionado lo requiere.
 </details>
 
-26. Escribe un comando journalctl para ver logs en tiempo real del servicio kubelet mientras se filtran solo mensajes de nivel error y superior.
+26. Escribe un comando `journalctl` para seguir en tiempo real los registros del servicio kubelet y filtrar los mensajes de nivel error y más graves.
 
 <details>
 
@@ -419,19 +420,14 @@ Crear un archivo `.conf` en el directorio `/etc/modules-load.d/` hace que el ser
 journalctl -u kubelet -f -p err
 ```
 
-o
-
-```bash
-journalctl -u kubelet -f -p warning
-```
+`-p warning` también incluye advertencias, por lo que no cumple el requisito de mostrar solo mensajes de nivel error y más graves.
 
 **Explicación:**
-  - `-u kubelet`: Muestra solo los logs del servicio kubelet
-  - `-f`: Transmite nuevos logs en tiempo real (similar a tail -f)
-  - `-p err`: Muestra solo logs de nivel error y superior (err, crit, alert, emerg)
-  - `-p warning`: Muestra logs de nivel warning y superior (warning, err, crit, alert, emerg)
+  - `-u kubelet`: muestra solo los registros del servicio kubelet
+  - `-f`: sigue los mensajes nuevos en tiempo real, como `tail -f`
+  - `-p err`: muestra mensajes de nivel error y más graves (`err`, `crit`, `alert`, `emerg`)
 
-Los niveles de prioridad de journalctl van de 0(emerg) a 7(debug), y se muestran los mensajes del nivel especificado y de mayor prioridad.
+Los niveles de prioridad de `journalctl` van de 0 (`emerg`) a 7 (`debug`); se muestran los mensajes del nivel indicado y de mayor prioridad.
 </details>
 
 27. Escribe los comandos para comprobar la zona horaria actual del sistema y cambiarla a Asia/Seoul.
@@ -453,29 +449,29 @@ sudo timedatectl set-timezone Asia/Seoul
 El comando `timedatectl` es la utilidad de gestión de tiempo de systemd que puede establecer y comprobar la hora, la fecha y la zona horaria del sistema. El comando `timedatectl list-timezones` muestra las zonas horarias disponibles. En clústeres de Kubernetes, ayuda con el análisis de logs y la resolución de problemas si todos los nodos usan la misma zona horaria o usan UTC.
 </details>
 
-28. Escribe la configuración que se debe añadir a /etc/security/limits.conf para establecer permanentemente el límite de descriptores de archivo en 65536.
+28. Escribe las líneas que se deben añadir a `/etc/security/limits.conf` para establecer el límite de descriptores de archivo en 65536.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-```bash
+```text
 *               soft    nofile          65536
 *               hard    nofile          65536
 ```
 
-o para usuarios/servicios específicos:
-```bash
+o para un usuario que inicia sesión mediante PAM (no para un servicio systemd):
+```text
 root            soft    nofile          65536
 root            hard    nofile          65536
 ```
 
 **Explicación:**
-`/etc/security/limits.conf` es un archivo de configuración usado por PAM (Pluggable Authentication Modules) para definir límites de recursos por usuario. `*` significa todos los usuarios, `soft` es el límite predeterminado y `hard` es el límite máximo. `nofile` especifica el número de descriptores de archivo que se pueden abrir. En los nodos de Kubernetes, se necesitan muchas conexiones de red y manejadores de archivos, por lo que este valor debe establecerse alto.
+`/etc/security/limits.conf` es un archivo de PAM (Pluggable Authentication Modules) para definir límites de recursos por usuario. `*` coincide con usuarios ordinarios, pero no incluye a `root`, que necesita una entrada explícita. `soft` es el límite aplicado por defecto y `hard` el máximo; `nofile` indica el número de descriptores que se pueden abrir. Elige límites según las necesidades de la carga. PAM no cambia los procesos en ejecución ni los servicios systemd del sistema; para estos últimos configura `LimitNOFILE` en una unidad complementaria del servicio.
 </details>
 
-## Advanced Questions
+## Preguntas avanzadas
 
 29. Explica las tres tecnologías principales usadas por el kernel de Linux para el aislamiento de contenedores y describe qué tipo de aislamiento proporciona cada una.
 
@@ -502,14 +498,14 @@ root            hard    nofile          65536
   - Limitación de tiempo de CPU
   - Limitación de uso de memoria
   - Limitación de ancho de banda de E/S de bloques
-  - Limitación de ancho de banda de red
+  - Clasificación del tráfico de red integrada con `tc`/eBPF
   - Control de acceso a dispositivos
 
 3. **Capabilities**:
   - Las Linux capabilities dividen los privilegios root tradicionales en unidades de privilegio más pequeñas.
-  - Aislamiento proporcionado:
-  - Aislamiento de privilegios: concede a los contenedores solo los privilegios mínimos necesarios
-  - Mejora de seguridad: reduce riesgos de seguridad al eliminar privilegios innecesarios
+  - Efecto en la seguridad:
+  - Mínimo privilegio: concede a los contenedores solo los privilegios necesarios
+  - Reducción de riesgos: elimina privilegios innecesarios
   - Ejemplos: `CAP_NET_ADMIN` (cambios de configuración de red), `CAP_SYS_ADMIN` (tareas de administración del sistema), etc.
 
 Estas tres tecnologías se combinan para permitir que los contenedores se ejecuten en un entorno aislado del sistema host y de otros contenedores, con uso de recursos limitado y seguridad mejorada.
@@ -600,7 +596,7 @@ Es importante conceder solo las capabilities mínimas necesarias a los contenedo
 En entornos de producción, es una buena práctica de seguridad identificar con precisión las capabilities que necesita un contenedor y eliminar todas las demás. Para ello se pueden usar las opciones `--cap-drop`, `--cap-add` de Docker o el campo `securityContext.capabilities` de Kubernetes.
 </details>
 
-32. Explica la estructura de un archivo de unidad de servicio de systemd y la función de las secciones principales ([Unit], [Service], [Install]), y escribe un ejemplo básico de archivo de unidad para el servicio kubelet de Kubernetes.
+32. Explica la estructura de una unidad de servicio de systemd y la función de sus secciones principales ([Unit], [Service], [Install]). Escribe una unidad básica para un servicio de formación y explica por qué deben conservarse la unidad y las unidades complementarias empaquetadas de kubelet.
 
 <details>
 
@@ -608,36 +604,35 @@ En entornos de producción, es una buena práctica de seguridad identificar con 
 
 **Respuesta:**
 
-**Secciones principales de un archivo de unidad de systemd:**
+**Secciones principales de una unidad de systemd:**
 
-1. **Sección [Unit]**: Define metadatos y dependencias de la unidad
-   - `Description`: Descripción del servicio
+1. **Sección [Unit]**: define los metadatos y las dependencias de la unidad.
+   - `Description`: descripción del servicio
    - `Documentation`: URL de documentación
-   - `After/Before`: Define el orden de inicio
-   - `Requires/Wants`: Define dependencias
+   - `After/Before`: orden de inicio
+   - `Requires/Wants`: dependencias
 
-2. **Sección [Service]**: Define cómo ejecutar el servicio
-   - `Type`: Tipo de servicio (simple, forking, oneshot, etc.)
-   - `ExecStart`: Comando que se debe ejecutar
-   - `Restart`: Política de reinicio
-   - `RestartSec`: Tiempo de espera para reiniciar
+2. **Sección [Service]**: define cómo se ejecuta el servicio.
+   - `Type`: tipo de servicio (`simple`, `forking`, `oneshot`, etc.)
+   - `ExecStart`: comando que se ejecutará
+   - `Restart`: política de reinicio
+   - `RestartSec`: espera antes del reinicio
 
-3. **Sección [Install]**: Define el comportamiento cuando la unidad se habilita
-   - `WantedBy`: Target que quiere esta unidad
+3. **Sección [Install]**: define el comportamiento al habilitar la unidad.
+   - `WantedBy`: destino que incorpora esta unidad
 
-**Ejemplo de archivo de unidad del servicio kubelet:**
+**Ejemplo de unidad para el servicio de formación `linux-basics-demo.service`:**
 
 ```ini
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -645,10 +640,10 @@ WantedBy=multi-user.target
 ```
 
 **Explicación:**
-Este archivo de unidad define el servicio kubelet. Se inicia después de que la red esté lista (`After=network-online.target`), siempre se reinicia en caso de fallo (`Restart=always`) e intenta reiniciarse cada 10 segundos (`RestartSec=10`). `WantedBy=multi-user.target` significa que este servicio se inicia cuando el sistema arranca en modo multiusuario.
+Esta unidad ejecuta un proceso inocuo para la formación. Usa `systemctl cat kubelet` para inspeccionar la unidad de la distribución y las unidades complementarias creadas por kubeadm; no las sustituyas por este ejemplo. El servicio queda ordenado después de `network-online.target` cuando ambas unidades se activan. Se reinicia si falla (`Restart=on-failure`) y vuelve a intentarlo después de 10 segundos (`RestartSec=10`). `WantedBy=multi-user.target` hace que se inicie al arrancar el sistema en modo multiusuario.
 </details>
 
-33. Explica cómo establecer permanentemente los parámetros del kernel sysctl requeridos para la configuración de nodos de Kubernetes y describe la función de cada parámetro.
+33. Explica cómo establecer de forma persistente parámetros sysctl del kernel para configurar nodos de Kubernetes y la función de cada parámetro.
 
 <details>
 
@@ -656,7 +651,7 @@ Este archivo de unidad define el servicio kubelet. Se inicia después de que la 
 
 **Respuesta:**
 
-**Configuraciones sysctl clave requeridas para Kubernetes y sus funciones:**
+**Configuración de sysctl y función de sus parámetros:**
 
 ```bash
 # Create /etc/sysctl.d/99-kubernetes.conf file
@@ -665,12 +660,11 @@ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 
-# Bridge traffic passes through iptables - essential for CNI network policies
+# Bridge traffic passes through iptables - only if the CNI uses bridge netfilter
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 
-# Connection tracking table size (for large clusters)
-net.netfilter.nf_conntrack_max = 1000000
+# Size conntrack separately from measured workload/memory requirements.
 EOF
 
 # Apply settings
@@ -679,29 +673,27 @@ sudo sysctl --system
 
 **Función de cada parámetro:**
 
-1. **net.ipv4.ip_forward = 1**
-   - Permite que el kernel de Linux reenvíe paquetes entre interfaces de red
-   - Esencial para la comunicación desde Pods hacia otros Pods o redes externas
-   - La red de contenedores no funcionará si está deshabilitado
+1. **`net.ipv4.ip_forward = 1`**
+   - Permite que el kernel de Linux reenvíe paquetes entre interfaces de red.
+   - Se necesita cuando el nodo debe reenviar tráfico IPv4 entre Pods u otras redes.
 
-2. **net.bridge.bridge-nf-call-iptables = 1**
-   - Configura el tráfico que pasa por bridges para que esté sujeto a reglas de iptables
-   - Esencial para que los servicios de Kubernetes (ClusterIP, NodePort) y NetworkPolicy funcionen correctamente
-   - Requerido porque kube-proxy usa iptables para el enrutamiento de servicios
+2. **`net.bridge.bridge-nf-call-iptables = 1`**
+   - Hace que el tráfico puenteado se procese con reglas de iptables.
+   - Solo se necesita para implementaciones que dependen de bridge netfilter. `kube-proxy` puede usar iptables o nftables, y otro plano de datos puede sustituir a `kube-proxy`.
 
-3. **net.ipv6.conf.all.forwarding = 1**
-   - Habilita el reenvío de paquetes en entornos IPv6
-   - Necesario para clústeres dual-stack
+3. **`net.ipv6.conf.all.forwarding = 1`**
+   - Habilita el reenvío de paquetes en entornos IPv6.
+   - Se necesita para clústeres dual-stack cuando la topología lo requiere.
 
-**Orden de aplicación de la configuración:**
-1. Primero carga el módulo `br_netfilter`: `modprobe br_netfilter`
-2. Crea el archivo de configuración sysctl
-3. Aplica todas las configuraciones con `sysctl --system`
+**Orden para aplicar la configuración:**
+1. Carga `br_netfilter` si lo requiere el CNI seleccionado.
+2. Crea el archivo de configuración sysctl.
+3. Aplica los ajustes con `sysctl --system`.
 
-Sin estas configuraciones, la red del clúster de Kubernetes no funcionará correctamente, especialmente con problemas en la comunicación Pod a Pod y el descubrimiento de servicios.
+Aplica solo los ajustes necesarios para las familias IP y el CNI que uses, dentro de un laboratorio aislado o mediante un proceso revisado de configuración de nodos.
 </details>
 
-34. Explica la estrategia de gestión de logs de Linux usando journald y logrotate, y presenta métodos de configuración para una gestión eficiente de logs en nodos de Kubernetes.
+34. Explica la estrategia de gestión de registros de Linux con journald y logrotate, y presenta métodos de configuración para administrar eficazmente los registros en nodos de Kubernetes.
 
 <details>
 
@@ -711,18 +703,18 @@ Sin estas configuraciones, la red del clúster de Kubernetes no funcionará corr
 
 **Funciones de journald y logrotate:**
 
-**journald (logging basado en systemd):**
-- Recopila logs stdout/stderr de servicios systemd
-- Se almacenan en formato binario y se consultan con journalctl
-- Admite compresión y rotación automática de logs
+**journald (registro basado en systemd):**
+- Recopila la salida estándar y de error (`stdout`/`stderr`) de los servicios de systemd.
+- Almacena los registros en formato binario y permite consultarlos con `journalctl`.
+- Admite compresión y rotación automáticas.
 
-**logrotate (gestión tradicional de archivos de log):**
-- Gestiona la rotación, compresión y eliminación de archivos de log de texto
-- Se ejecuta periódicamente mediante un cron job
+**logrotate (gestión tradicional de archivos de registro):**
+- Rota, comprime y elimina archivos de texto de registro.
+- Se ejecuta mediante el temporizador de systemd de la distribución o un trabajo de cron.
 
-**Configuración de gestión de logs de nodos de Kubernetes:**
+**Configuración de los registros de nodos de Kubernetes:**
 
-**1. Configuración de journald (/etc/systemd/journald.conf):**
+**1. Configuración de journald (`/etc/systemd/journald.conf`):**
 ```ini
 [Journal]
 # Store persistently on disk
@@ -741,10 +733,20 @@ SystemKeepFree=1G
 MaxRetentionSec=1month
 ```
 
-**2. Configuración de logrotate para logs de contenedores:**
-```bash
-# /etc/logrotate.d/containers
-/var/log/containers/*.log {
+**2. Rotación de registros CRI de kubelet:**
+
+Combina estos campos con la configuración existente de kubelet; no los apliques con `kubectl` ni sustituyas el archivo completo.
+
+```yaml
+containerLogMaxSize: 10Mi
+containerLogMaxFiles: 5
+```
+
+Para los registros de texto normales de aplicaciones que no administra kubelet:
+
+```text
+# /etc/logrotate.d/myapp
+/var/log/myapp/*.log {
     daily
     rotate 7
     compress
@@ -756,7 +758,7 @@ MaxRetentionSec=1month
 }
 ```
 
-**3. Comandos de limpieza de logs:**
+**3. Comandos para limpiar registros:**
 ```bash
 # journald log cleanup
 journalctl --vacuum-time=7d   # Delete logs older than 7 days
@@ -766,15 +768,38 @@ journalctl --vacuum-size=1G   # Delete old logs when exceeding 1GB
 journalctl --disk-usage
 ```
 
-**Mejores prácticas de gestión de logs de Kubernetes:**
+**Buenas prácticas para gestionar registros en Kubernetes:**
 
-1. **Logs de kubelet**: Gestionados por journald, almacenados en `/var/log/journal/`
-2. **Logs de contenedores**: Almacenados en `/var/log/containers/`, gestionados por logrotate
-3. **Logging centralizado**: Se recomienda reenviar a sistemas externos usando Fluentd/Fluent Bit
+1. **Registros de kubelet**: suelen gestionarse con journald. Los registros persistentes están en `/var/log/journal`; los volátiles, en `/run/log/journal`.
+2. **Registros de contenedores**: los archivos CRI suelen estar en `/var/log/pods` y tienen enlaces simbólicos en `/var/log/containers`. Kubelet administra su rotación; no ejecutes logrotate sobre esos enlaces simbólicos.
+3. **Registro centralizado**: se recomienda reenviar los registros a sistemas externos mediante Fluentd o Fluent Bit.
 
-Una gestión adecuada de logs mantiene un equilibrio entre prevenir fallos de nodo por agotamiento del espacio en disco y conservar logs para la resolución de problemas.
+`copytruncate` puede perder registros por la carrera entre la copia y el truncado; es preferible que la aplicación admita un mecanismo para volver a abrir sus archivos. Los comandos de `journalctl` con la opción `--vacuum` solo eliminan archivos archivados.
+
+Una gestión adecuada de los registros equilibra la prevención de fallos de nodos por falta de espacio en disco con la conservación de datos para resolver problemas.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../basics/01-linux-basics.md) | [Siguiente cuestionario: Linux Operations](./02-linux-advanced-quiz.md)
+[Volver a los materiales de aprendizaje](../../basics/01-linux-basics.md) | [Siguiente cuestionario: Operaciones de Linux](./02-linux-advanced-quiz.md)
+
+## Referencias de verificación
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

@@ -1,7 +1,7 @@
 # 第1部: Calico入門
 
 > **レビュー基準**: Calico Open Source 3.32.2、kind 0.33.0、Kubernetes 1.36.4
-> **最終更新**: September 12, 2026。Calico 3.32はKubernetes 1.34–1.36でテストされています。
+> **最終更新**: 2026年9月12日。Calico 3.32はKubernetes 1.34–1.36でテストされています。
 
 ## 演習環境
 
@@ -156,10 +156,10 @@ Project Calicoは2014年にMetaswitchで始まり、2016年設立のTigeraが主
 
 | 日付 | 一次リリース記録 |
 |---|---|
-| December 21, 2017 | [Calico 3.0.0](https://github.com/projectcalico/calico/releases/tag/v3.0.0)。過去のリリースでありインストール推奨ではない |
-| February 25, 2020 | [eBPFの導入](https://www.tigera.io/blog/introducing-the-calico-ebpf-dataplane/)。GAではなく**3.13の技術プレビュー**として発表 |
-| October 29, 2024 | [Calico 3.29.0](https://github.com/projectcalico/calico/releases/tag/v3.29.0) |
-| August 30, 2026 | [Calico 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2)。このレビューの基準 |
+| 2017年12月21日 | [Calico 3.0.0](https://github.com/projectcalico/calico/releases/tag/v3.0.0)。過去のリリースでありインストール推奨ではない |
+| 2020年2月25日 | [eBPFの導入](https://www.tigera.io/blog/introducing-the-calico-ebpf-dataplane/)。GAではなく**3.13の技術プレビュー**として発表 |
+| 2024年10月29日 | [Calico 3.29.0](https://github.com/projectcalico/calico/releases/tag/v3.29.0) |
+| 2026年8月30日 | [Calico 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2)。このレビューの基準 |
 
 旧年表の「eBPFの完全な機能同等性」と「Windows eBPF」という主張は誤りでした。現在の[Windowsの制限](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)でも、Linux eBPF、IPIP、IPv6/デュアルスタック、WireGuardは対象外です。
 

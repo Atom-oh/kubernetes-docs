@@ -5,7 +5,7 @@
 1. **在 Cilium 1.20 中，内核支持时每设备程序使用哪种挂载机制？如果内核不支持会怎样？**
    - A) 始终使用传统 `clsact` 过滤器；tcx 仅用于 netkit
    - B) 使用 tcx `bpf_link`（内核 6.6 或更高版本）；否则使用 `clsact` + `cls_bpf` direct-action
-   - C) 在每个 veth 上使用 XDP；否则代理会拒绝启动
+   - C) 在每个 veth 上使用 XDP；否则 Cilium agent 会拒绝启动
    - D) 在每个接口上使用 cgroup hook；否则使用 iptables
 
    <details>
@@ -13,14 +13,14 @@
 
    **答案：B) 使用 tcx `bpf_link`（内核 6.6 或更高版本）；否则使用 `clsact` + `cls_bpf` direct-action**
 
-   `bpf.enableTCX` 默认值为 true。该链接会固定在 `/sys/fs/bpf/cilium/...` 下，并在重新加载时以原子方式更新。只有在 tc-bpf 和 tcx 均不可用时，代理才会失败。
+   `bpf.enableTCX` 默认值为 true。该链接会固定在 `/sys/fs/bpf/cilium/...` 下，并在重新加载时以原子方式更新。只有在 tc-bpf 和 tcx 均不可用时，Cilium agent 才会失败。
 
    </details>
 
 2. **同一节点上 Pod 到 Pod 的流量使用 BPF 主机路由和 `bpf_redirect_peer`。目标 Pod 的入站策略在哪里强制执行？**
    - A) 在发送方的 `bpf_lxc` 程序中，该程序会 tail-call `cilium_call_policy[destination endpoint ID]`
    - B) 在目标 veth 的 tc egress hook 中，使用为发送方端点固定的策略映射
-   - C) 在目标 netns 的 iptables 链中，由代理为每个端点安装
+   - C) 在目标 netns 的 iptables 链中，由 Cilium agent 为每个端点安装
    - D) 在数据包到达任何 veth 之前，由节点 NIC 上的 XDP 程序执行
 
    <details>
@@ -122,11 +122,11 @@
 
    </details>
 
-9. **管理员编辑了 CiliumNetworkPolicy。代理会如何更新数据路径？**
+9. **管理员编辑了 CiliumNetworkPolicy。Cilium agent 会如何更新数据路径？**
    - A) 对每个受影响端点使用 clang 重新编译 `bpf_lxc.c`，并在其 veth 上重新加载程序
    - B) 替换所有设备上固定的 tcx 链接，使新策略原子生效
    - C) 更新 `cilium_policy_v3_<id>` 中的条目；只有端点或节点配置哈希发生变化时才会重新加载程序
-   - D) 重启 Cilium 代理 Pod，使所有端点重新生成程序
+   - D) 重启 Cilium Agent Pod，使所有端点重新生成程序
 
    <details>
    <summary>显示答案</summary>
@@ -139,15 +139,15 @@
 
 10. **关于 1.20 中的 Hubble 事件流水线，哪项说法正确？**
     - A) BPF 写入 ring buffer，Hubble Relay 直接从每个节点的 BPF 文件系统读取
-    - B) 事件进入 `cilium_events`（perf array），然后经过代理 monitor 和 Hubble 队列，进入内存 ring（4095 个 flow）
+    - B) 事件进入 `cilium_events`（perf array），然后经过 Cilium agent 的 monitor 和 Hubble 队列，进入内存 ring（4095 个 flow）
     - C) 代理会将 flow 持久化到磁盘，并在重启后重放给 Hubble Relay
     - D) L7 事件由 `bpf_lxc` tail 程序在代理重定向映射匹配时发出
 
     <details>
     <summary>显示答案</summary>
 
-    **答案：B) 事件进入 `cilium_events`（perf array），然后经过代理 monitor 和 Hubble 队列，进入内存 ring（4095 个 flow）**
+    **答案：B) 事件进入 `cilium_events`（perf array），然后经过 Cilium agent 的 monitor 和 Hubble 队列，进入内存 ring（4095 个 flow）**
 
-    丢失可能发生在 perf buffer（`perf_event_ring_buffer`）或 observer 队列（`observer_events_queue`）。L7 记录由 Envoy 和 DNS 代理作为代理事件生成，而不是由 BPF 生成。
+    丢失可能发生在 perf buffer（`perf_event_ring_buffer`）或 observer 队列（`observer_events_queue`）。L7 记录由 Envoy 和 DNS 代理产生，再由 Cilium agent 作为事件发出，而不是由 BPF 生成。
 
     </details>

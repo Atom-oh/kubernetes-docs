@@ -1,7 +1,7 @@
 # Notificaciones de ArgoCD
 
-> **Revisado con respecto a**: Argo CD 3.5.2 (Notifications Engine incluido 0cff13b8a717); actualizado al parche 3.5.4, que fija el mismo commit de Notifications Engine, tras revisar las notas de la versión (los ejemplos no se ejecutaron de nuevo)
-> **Última actualización**: October 12, 2026
+> **Versión utilizada en la revisión**: Argo CD 3.5.2 (con Notifications Engine 0cff13b8a717 incluido). Tras revisar las notas de la versión, se actualizó al parche 3.5.4, que utiliza el mismo commit de Notifications Engine; los ejemplos no se volvieron a ejecutar.
+> **Última actualización**: 12 de octubre de 2026
 
 ## Índice
 
@@ -22,21 +22,21 @@ ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y
 
 | Característica | Descripción |
 |---------|-------------|
-| Varios servicios | Slack, Teams, correo electrónico, webhook, GitHub y más |
-| Disparadores flexibles | Disparadores de notificación basados en condiciones |
-| Plantillas Go | Sintaxis de plantillas enriquecida para el formato de mensajes |
+| Varios servicios | Slack, Teams, correo electrónico, webhook, GitHub y otros |
+| Disparadores flexibles | Activación de notificaciones cuando se cumplen determinadas condiciones |
+| Plantillas Go | Sintaxis avanzada para dar formato a los mensajes |
 | Modelo de suscripción | Suscripciones de notificación por aplicación |
-| Catálogo de ejemplos | Definiciones opcionales de disparadores/plantillas para combinar con su configuración |
+| Catálogo de ejemplos | Definiciones opcionales de disparadores y plantillas que puede incorporar a su configuración |
 
 ## Arquitectura {#architecture}
 
-![Diagrama de flujo de las notificaciones de ArgoCD: los eventos de Application llegan al Notifications Controller, que evalúa los disparadores y renderiza las plantillas; después, envía mensajes a las suscripciones configuradas coincidentes.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
+![Flujo de las notificaciones de ArgoCD: los eventos de Application llegan al controlador de Notifications, que evalúa los disparadores y genera los mensajes a partir de las plantillas. Después, envía los mensajes a los destinatarios de las suscripciones configuradas que correspondan.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-08-notifications-0.html)
 
 ### Controlador y configuración
 
-La instalación completa de Argo CD 3.5.4 incluye el controlador de Notifications. Compruebe que esté habilitado en los valores de su instalación/Helm. El archivo notifications_catalog/install.yaml contiene configuración de ejemplo; no es un instalador para un controlador ausente. Combine las entradas seleccionadas del catálogo con su ConfigMap y Secret existentes.
+La instalación completa de Argo CD 3.5.4 incluye el controlador de Notifications. Compruebe que esté habilitado en su instalación o en los valores de Helm. El archivo notifications_catalog/install.yaml contiene configuración de ejemplo; no instala un controlador que falte. Incorpore las entradas del catálogo que necesite a su ConfigMap y Secret existentes.
 
 ```bash
 kubectl get deployment argocd-notifications-controller -n argocd
@@ -44,11 +44,11 @@ kubectl get deployment argocd-notifications-controller -n argocd
 
 ## Servicios de notificación {#notification-services}
 
-Combine estos fragmentos de datos en una configuración de argocd-notifications-cm; no reemplace el mismo ConfigMap/Secret con cada fragmento independiente. Almacene los tokens, las URL de webhook firmadas y las claves privadas en valores protegidos de argocd-notifications-secret fuera de Git. Los nombres de servicio, plantilla, disparador y suscripción deben coincidir.
+Reúna estos fragmentos de datos en una única configuración de argocd-notifications-cm. No aplique cada ejemplo independiente de forma que sustituya el mismo ConfigMap o Secret. Guarde los tokens, las URL firmadas de webhooks y las claves privadas en valores protegidos de argocd-notifications-secret, fuera de Git. Los nombres de los servicios, las plantillas, los disparadores y las suscripciones deben corresponderse.
 
 ### Slack
 
-Configure chat:write e invite al bot a los canales previstos. chat:write.public solo se necesita para publicar en canales públicos a los que el bot no se ha unido. signingSecret no sustituye una URL de Incoming Webhook.
+Configure chat:write e invite al bot a los canales previstos. chat:write.public solo es necesario para publicar en canales públicos a los que el bot no se haya unido. signingSecret no sustituye una URL de Incoming Webhook.
 
 ```yaml
 apiVersion: v1
@@ -70,15 +70,15 @@ stringData:
   slack-token: xoxb-your-bot-token
 ```
 
-Configuración de Slack Bot:
-1. Cree una Slack App en https://api.slack.com/apps
-2. Añada `chat:write`; use `chat:write.public` solo si el caso de uso indicado lo requiere
+Configuración del bot de Slack:
+1. Cree una aplicación de Slack en https://api.slack.com/apps
+2. Añada `chat:write`; utilice `chat:write.public` solo si el caso de uso indicado lo requiere
 3. Instale la aplicación en el espacio de trabajo
-4. Copie el Bot User OAuth Token
+4. Copie el token OAuth del usuario del bot
 
 ### Microsoft Teams Workflows
 
-Use un endpoint de Workflows con teams-workflows en vez de los conectores heredados de Office365. Verifique la autenticación real del endpoint y el ciclo de vida de propiedad/copropiedad del flujo. Guarde su URL firmada en un Secret; no suponga que un endpoint heredado de MessageCard es intercambiable.
+Utilice un endpoint de Workflows con teams-workflows en lugar de los antiguos conectores Office365. Compruebe la autenticación real del endpoint y cómo se mantiene la propiedad y la copropiedad del flujo durante su ciclo de vida. Guarde su URL firmada en un Secret; no dé por supuesto que puede sustituirse por un endpoint antiguo de MessageCard.
 
 ```yaml
 apiVersion: v1
@@ -160,7 +160,7 @@ stringData:
 
 ### GitHub (estado de commit)
 
-Instale la GitHub App en el repositorio objetivo y conceda acceso de escritura a los estados de commit. Sustituya los ID y la clave privada de ejemplo por los valores de esa instalación.
+Instale la aplicación de GitHub en el repositorio de destino y concédale permiso de escritura sobre los estados de commit. Sustituya los ID y la clave privada del ejemplo por los valores de esa instalación.
 
 ```yaml
 apiVersion: v1
@@ -189,7 +189,7 @@ stringData:
 
 ### Grafana
 
-Use un token de cuenta de servicio con los permisos necesarios para escribir anotaciones. Este motor espera apiUrl incluido /api y añade anotaciones. Evite establecer de forma predeterminada un token de administrador o una duración innecesariamente larga.
+Utilice un token de cuenta de servicio con permiso para escribir anotaciones. Este motor requiere que apiUrl incluya /api y añade el segmento annotations a esa ruta. Evite utilizar por defecto un token de administrador o un token con una vigencia innecesariamente larga.
 
 ```yaml
 apiVersion: v1
@@ -220,7 +220,7 @@ data:
 
 ## Disparadores {#triggers}
 
-Estos son ejemplos definidos explícitamente, no supuestos sobre un catálogo instalado automáticamente. Sus entradas `send` hacen referencia a `template.app-status` a continuación. **Combine los fragmentos en un ConfigMap** junto con la configuración del servicio que haya seleccionado.
+Estos ejemplos definen los disparadores de forma explícita; no dependen de que un catálogo se instale automáticamente. Sus entradas `send` hacen referencia a `template.app-status`, definido más adelante. **Reúna los fragmentos en un único ConfigMap**, junto con la configuración de los servicios que haya seleccionado.
 
 ```yaml
 apiVersion: v1
@@ -262,7 +262,7 @@ data:
       - app-status
 ```
 
-`?.` gestiona las Applications que aún no tienen `status` u `operationState`. El éxito de la sincronización por sí solo no significa que la aplicación esté lista. `on-deployed` requiere una operación realizada correctamente y el estado **Synced + Healthy** actual, lo que excluye un cambio nuevo OutOfSync con una operación realizada correctamente anterior.
+`?.` permite trabajar con Applications que aún no tienen `status` u `operationState`. Una sincronización correcta no demuestra por sí sola que la aplicación esté lista. `on-deployed` requiere que la operación haya finalizado correctamente y que el estado actual sea **Synced + Healthy**. Así se excluye un cambio nuevo OutOfSync aunque exista una operación anterior que finalizara correctamente.
 
 ### Condiciones personalizadas
 
@@ -319,13 +319,13 @@ data:
       - app-status
 ```
 
-- `summary.images` cuenta imágenes, no réplicas. Use `any(...)` para matrices de recursos y `matches` para expresiones regulares.
-- Las condiciones de tiempo se ejecutan cuando se evalúa una Application. No son temporizadores precisos de diez minutos y no ponen en cola notificaciones para la próxima ventana laboral UTC.
-- Las diferencias de revisión no demuestran un rollback. `on-declared-rollback` lee información explícita de la operación. Tras revisar un cambio de recuperación en Git, un flujo de trabajo de sincronización manual puede usar `argocd app sync my-app --info release-action=rollback`. La sincronización automática no añade este marcador automáticamente.
+- `summary.images` cuenta imágenes, no réplicas. Utilice `any(...)` para los arrays de recursos y `matches` para las expresiones regulares.
+- Las condiciones temporales se evalúan cuando se evalúa una Application. No son temporizadores exactos de diez minutos ni dejan notificaciones en cola hasta la siguiente franja laboral UTC.
+- Una diferencia entre revisiones no demuestra que se haya realizado un rollback. `on-declared-rollback` lee información explícita de la operación. Después de revisar en Git el cambio de recuperación, un workflow de sincronización manual puede utilizar `argocd app sync my-app --info release-action=rollback`. La sincronización automática no añade este marcador por sí sola.
 
-### Supervisión sostenida de OutOfSync
+### Supervisión de un estado OutOfSync persistente
 
-El `finishedAt` de la última operación no es la hora a la que comenzó OutOfSync. Para una condición continua de treinta minutos, recopile métricas de Argo CD con Prometheus y use una regla como esta. Requiere Prometheus Operator y etiquetas/namespaces que coincidan con su configuración de `ruleSelector` de Prometheus.
+El campo `finishedAt` de la última operación no indica cuándo comenzó el estado OutOfSync. Para detectar que ese estado persista durante treinta minutos, recopile las métricas de Argo CD con Prometheus y utilice una regla como la siguiente. Se necesita Prometheus Operator, y las etiquetas y los namespaces deben coincidir con la configuración de `ruleSelector` de Prometheus.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -348,9 +348,9 @@ spec:
 
 ## Plantillas {#templates}
 
-Esta plantilla común define formatos para Slack, Teams Workflows, correo electrónico HTML, webhook e incidentes. **Las suscripciones seleccionan los destinos**; incluir un formato de servicio no difunde a todos los proveedores. Suscriba PagerDuty/Opsgenie solo a los disparadores de fallo o Degraded. Este ejemplo no resuelve automáticamente los incidentes.
+Esta plantilla común define formatos para Slack, Teams Workflows, correo electrónico HTML, webhooks e incidentes. **Las suscripciones seleccionan los destinos**: incluir el formato de un servicio no envía mensajes a todos los proveedores. Suscriba PagerDuty y Opsgenie únicamente a disparadores de fallo o de estado Degraded. El ejemplo no resuelve los incidentes automáticamente.
 
-Esta versión del motor usa Go `text/template` con funciones Sprig. Escape los valores JSON con `toJson` y los valores HTML con `html`. Los campos se renderizan independientemente, por lo que las variables locales se declaran en cada campo. La plantilla gestiona la ausencia de estado, una revisión de operación única y `revisions` de múltiples fuentes. No reenvía mensajes de error sin procesar de la operación a canales externos.
+Esta versión del motor utiliza Go `text/template` con funciones Sprig. Escape los valores JSON con `toJson` y los valores HTML con `html`. Cada campo se genera de forma independiente, por lo que sus variables locales se declaran dentro de él. La plantilla admite que falte el estado, una única revisión de operación y `revisions` de varias fuentes. No reenvía los mensajes de error originales de las operaciones a canales externos.
 
 ```yaml
 apiVersion: v1
@@ -451,19 +451,19 @@ data:
       alias: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}/application-status
 ```
 
-`service.email.html: true` habilita cuerpos HTML. Teams usa el campo `teams-workflows` y los nombres de color de Adaptive Card. El nombre del servicio para `service.webhook.custom` es **custom**, con su cuerpo en `webhook.custom`; establezca `POST` explícitamente. Grafana usa el `message` común para su anotación.
+`service.email.html: true` habilita los cuerpos de mensaje HTML. Teams utiliza el campo `teams-workflows` y los nombres de colores de Adaptive Card. El nombre del servicio definido mediante `service.webhook.custom` es **custom**; el cuerpo se configura bajo `webhook.custom`. Establezca `POST` de forma explícita. Grafana utiliza el `message` común para su anotación.
 
-| Función | Propósito |
+| Función | Uso |
 |---|---|
-| `upper`, `lower` | Cambiar mayúsculas y minúsculas |
-| `default`, `dict`, `list` | Valores predeterminados y colecciones |
-| `join`, `splitList` | Unir/dividir listas |
+| `upper`, `lower` | Convertir letras a mayúsculas o minúsculas |
+| `default`, `dict`, `list` | Definir valores predeterminados y colecciones |
+| `join`, `splitList` | Unir o dividir listas |
 | `toJson` | Codificar valores JSON |
-| `html` | Escapar caracteres especiales de HTML |
+| `html` | Escapar los caracteres especiales de HTML |
 
 ### Estado de commit de GitHub
 
-Use disparadores/plantillas separados para el estado de commit. Este ejemplo está limitado a una fuente HTTPS de GitHub y publica solo cuando el resultado de la operación identifica su repositorio y revisión. Las fuentes múltiples, Helm/OCI y SSH requieren una asignación explícita. Los fallos antes de que se registre una revisión de resultado no se publican. `status.label` proporciona el contexto del estado de GitHub; `context` y `description` no son campos de este esquema de plantilla.
+Utilice disparadores y plantillas independientes para los estados de commit. Este ejemplo solo admite una fuente de GitHub con URL HTTPS y publica el estado cuando el resultado de la operación identifica el repositorio y la revisión correspondientes. Las configuraciones con varias fuentes, Helm, OCI o SSH requieren una asignación explícita. Si el fallo ocurre antes de que se registre la revisión del resultado, no se publica. `status.label` define el contexto del estado en GitHub; `context` y `description` no son campos de este esquema de plantilla.
 
 ```yaml
 apiVersion: v1
@@ -509,7 +509,7 @@ data:
 
 ### Anotaciones de Application
 
-Combine este **fragmento de metadata en una Application existente**; no es un manifiesto de Application independiente. Haga coincidir los nombres de destinatario configurados por cada servicio y seleccione las suscripciones que necesite. Los destinatarios múltiples se separan por **punto y coma**, no por comas.
+Incorpore este **fragmento de metadata a una Application existente**; no es un manifiesto completo de Application. Utilice los nombres de destinatarios configurados en cada servicio y seleccione las suscripciones que necesite. Para indicar varios destinatarios, sepárelos con **punto y coma**, no con comas.
 
 ```yaml
 metadata:
@@ -528,7 +528,7 @@ metadata:
 
 ### Disparadores predeterminados y suscripciones globales
 
-`defaultTriggers` proporciona nombres de disparadores para anotaciones como `notifications.argoproj.io/subscribe.slack: alerts`. No crea suscripciones en todas las Applications. Use `subscriptions` para destinatarios administrados centralmente; `selector` coincide con las **etiquetas de Application**.
+`defaultTriggers` proporciona los nombres de los disparadores para anotaciones como `notifications.argoproj.io/subscribe.slack: alerts`. No crea una suscripción en todas las Applications. Utilice `subscriptions` para gestionar los destinatarios de forma centralizada; `selector` selecciona mediante las **etiquetas de Application**.
 
 ```yaml
 apiVersion: v1
@@ -555,7 +555,7 @@ data:
 
 ### Suscripciones de AppProject
 
-Combine este fragmento de metadata en el AppProject existente para cubrir sus Applications, conservando las políticas de fuente/destino/RBAC del capítulo anterior.
+Incorpore este fragmento de metadata al AppProject existente para cubrir sus Applications. Conserve las políticas de origen, destino y RBAC del capítulo anterior.
 
 ```yaml
 metadata:
@@ -570,11 +570,11 @@ metadata:
 
 ### oncePer y gestión de duplicados
 
-`oncePer` reduce las notificaciones duplicadas para una condición mediante el valor de la expresión. No es un límite de solicitudes por segundo ni una garantía de entrega exactamente una vez. Los disparadores de operación aquí usan `operationState.startedAt` para distinguir nuevos intentos de sincronización en la misma revisión. Gestione los límites de velocidad en el servicio/puente receptor y haga idempotentes a los consumidores de webhook/SQS.
+`oncePer` utiliza el valor de la expresión para reducir las notificaciones duplicadas de una condición. No limita las solicitudes por segundo ni garantiza que cada mensaje se entregue exactamente una vez. Los disparadores de operación del ejemplo utilizan `operationState.startedAt` para distinguir nuevos intentos de sincronización de la misma revisión. Gestione los límites de frecuencia en el servicio receptor o en el componente que conecta los servicios, y haga idempotentes los consumidores de webhooks y SQS.
 
 ### Validación de consola
 
-Guarde el ConfigMap compuesto como `notifications.yaml`. Estos comandos leen Application/AppProject mediante su kubeconfig actual y renderizan explícitamente en `console:stdout`. Los permisos y la entrega reales de Slack/Teams/GitHub/SQS requieren pruebas de integración independientes.
+Guarde el ConfigMap que reúne la configuración como `notifications.yaml`. Estos comandos leen la Application y el AppProject mediante su kubeconfig actual y generan explícitamente la salida en `console:stdout`. Los permisos y la entrega reales mediante Slack, Teams, GitHub o SQS requieren pruebas de integración independientes.
 
 ```bash
 kubectl get application my-app -n argocd -o yaml > sample-application.yaml
@@ -588,9 +588,9 @@ argocd admin notifications template notify app-status ./sample-application.yaml 
 
 ### Servicio SQS nativo
 
-Esta versión proporciona un servicio `awssqs`. Una URL de AWS API o una cadena estática `Authorization: AWS4-HMAC-SHA256 ...` en un webhook genérico no firma una solicitud SigV4. Las credenciales de IRSA/Pod Identity por sí solas no hacen que el webhook genérico reconozca el firmante.
+Esta versión incluye el servicio `awssqs`. Configurar una URL de la API de AWS o una cadena estática `Authorization: AWS4-HMAC-SHA256 ...` en un webhook genérico no firma la solicitud con SigV4. Proporcionar credenciales mediante IRSA o Pod Identity tampoco hace que el webhook genérico firme automáticamente las solicitudes.
 
-Primero aprovisione una **cola Standard** llamada `argocd-notifications` en la misma cuenta/región y asocie la cuenta de servicio de Notifications Controller con IRSA o EKS Pod Identity. La cadena de credenciales predeterminada del SDK evita aquí las claves de acceso estáticas. Sustituya los valores de cuenta/región/cola y combine la configuración de `context` anterior.
+Primero, aprovisione una **cola Standard** llamada `argocd-notifications` en la misma cuenta y región, y asocie el ServiceAccount del controlador de Notifications con IRSA o EKS Pod Identity. La cadena de credenciales predeterminada del SDK evita utilizar claves de acceso estáticas. Sustituya los valores de cuenta, región y cola, e incorpore la configuración de `context` anterior.
 
 ```yaml
 apiVersion: v1
@@ -621,7 +621,7 @@ data:
       {{ dict "event" "sync-completed" "application" .app.metadata.name "namespace" .app.metadata.namespace "uid" (default "" .app.metadata.uid) "project" (default "default" .app.spec.project) "phase" (default "" $op.phase) "syncStatus" (default "Unknown" $sync.status) "healthStatus" (default "Unknown" $health.status) "appliedRevisions" $applied "operationStartedAt" (default "" $op.startedAt) "url" $url | toJson }}
 ```
 
-Permisos de remitente de ejemplo para el rol del controlador, suponiendo cifrado administrado por SQS. Una clave KMS administrada por el cliente requiere además la política de claves apropiada y permisos de KMS.
+El siguiente ejemplo concede permisos de envío al rol del controlador y presupone cifrado administrado por SQS. Si utiliza una clave KMS administrada por el cliente, también debe configurar su política y los permisos KMS correspondientes.
 
 ```json
 {
@@ -639,7 +639,7 @@ Permisos de remitente de ejemplo para el rol del controlador, suponiendo cifrado
 }
 ```
 
-Añada esta entrada a las anotaciones de una Application existente. El destinatario es un nombre de cola y anula la cola predeterminada del servicio.
+Añada esta entrada a las anotaciones de una Application existente. El destinatario es el nombre de una cola y sustituye la cola predeterminada del servicio.
 
 ```yaml
 metadata:
@@ -647,20 +647,20 @@ metadata:
     notifications.argoproj.io/subscribe.on-aws-sync-completed.awssqs: argocd-notifications
 ```
 
-El motor incluido establece un retraso de diez segundos en `SendMessage`. Las colas FIFO no admiten retraso por mensaje, por lo que no sustituya una cola FIFO en este ejemplo. No suponga que se envían los `messageAttributes` configurados; incluya los metadatos requeridos en el cuerpo del mensaje JSON.
+El motor incluido configura un retraso de diez segundos en `SendMessage`. Las colas FIFO no admiten retrasos por mensaje, por lo que no debe utilizarlas en este ejemplo. No dé por supuesto que se envían los `messageAttributes` configurados: incluya los metadatos necesarios en el cuerpo JSON del mensaje.
 
 ### Integración con Lambda, SNS y EventBridge
 
-Una ruta de integración compatible es **Notifications → SQS → Lambda → SNS o EventBridge**. Implemente y despliegue los recursos descendentes por separado; el ConfigMap no los crea.
+Una ruta de integración compatible es **Notifications → SQS → Lambda → SNS o EventBridge**. Implemente y despliegue por separado los recursos que procesan los mensajes después de Notifications; el ConfigMap no los crea.
 
-| Salto | Configuración requerida |
+| Conexión | Configuración necesaria |
 |---|---|
-| SQS → Lambda | Asignación de origen de eventos en la misma región; permisos de recibir/eliminar/atributos de cola; tiempo de espera de visibilidad ajustado al procesamiento; reintentos/DLQ |
-| Lambda → SNS | Permiso `sns:Publish` del rol de ejecución en el tema objetivo; llamada firmada de AWS SDK |
-| Lambda → EventBridge | `events:PutEvents` en el bus objetivo; inspeccione `FailedEntryCount` y los errores de las entradas individuales |
-| Consumidor | Validación JSON; clave de idempotencia que considere UID de Application, evento, operationStartedAt y estado actual; configuración de respuesta de fallo parcial por lote de SQS |
+| SQS → Lambda | Mapeo de origen de eventos en la misma región; permisos para recibir y eliminar mensajes y consultar los atributos de la cola; tiempo de visibilidad adecuado al procesamiento; reintentos y DLQ |
+| Lambda → SNS | Permiso `sns:Publish` del rol de ejecución sobre el tema de destino; llamada firmada mediante el SDK de AWS |
+| Lambda → EventBridge | Permiso `events:PutEvents` sobre el bus de destino; comprobación de `FailedEntryCount` y de los errores de cada entrada |
+| Consumidor | Validación JSON; clave de idempotencia que considere el UID de Application, el evento, operationStartedAt y el estado actual; configuración de respuestas para fallos parciales de lotes SQS |
 
-Si se requiere un webhook de API Gateway, cree un puente autenticado por separado. Una API key/usage plan por sí sola no es autenticación. La revisión de este capítulo no aprovisionó recursos de AWS ni envió mensajes reales.
+Si necesita un webhook de API Gateway, cree un componente de conexión con autenticación propia. Una clave de API y un plan de uso no bastan para autenticar solicitudes. La revisión descrita en el original no aprovisionó recursos de AWS ni envió mensajes reales.
 
 ## Referencias
 

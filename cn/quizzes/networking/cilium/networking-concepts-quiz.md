@@ -1,7 +1,7 @@
 # Cilium 网络概念测验
 
 > **基线版本**：Cilium 1.20.3。
-> **最近审核时间**：October 16, 2026。
+> **最近审核时间**：2026 年 10 月 16 日。
 
 [返回指南](../../../networking/cilium/networking-concepts.md)
 
@@ -19,7 +19,7 @@
 
    **答案：D) L3/L4 控制以及已配置的受支持 L7 规则**
 
-   Cilium 将 L3/L4 强制执行与受支持的 HTTP/gRPC 和 DNS 代理功能结合起来。这并不意味着实现 OSI 的每一层，也不意味着支持已移除的 Kafka L7 API。
+   Cilium 将 L3/L4 策略执行与受支持的 HTTP/gRPC 和 DNS 代理功能结合起来。这并不意味着实现 OSI 的每一层，也不意味着支持已移除的 Kafka L7 API。
 
    </details>
 
@@ -57,9 +57,9 @@
 
 ## 容器网络
 
-4. **未指定平台覆盖项时，Cilium Helm 的通用路由默认值是什么？**
+4. **未被平台特定配置覆盖时，Cilium Helm 的通用默认路由模式是什么？**
 
-   - A) Docker bridge
+   - A) Docker 网桥
    - B) 隧道/覆盖网络模式
    - C) 强制使用 BGP 原生模式
    - D) 所有工作负载都使用主机网络
@@ -73,7 +73,7 @@
 
    </details>
 
-5. **Cilium 通用隧道配置文件的默认协议是什么？**
+5. **Cilium 通用隧道安装配置的默认协议是什么？**
 
    - A) VXLAN
    - B) GRE
@@ -101,13 +101,13 @@
 
    **答案：C) 该路径上没有覆盖网络封装**
 
-   原生路由会避免覆盖网络头部，但需要有效的 Pod 可达性和返回路由。性能取决于工作负载和具体实现。
+   原生路由无需添加覆盖网络头部，但需要确保 Pod 可达且返回路由有效。性能取决于工作负载和具体实现。
 
    </details>
 
 ## IPAM
 
-7. **未指定平台覆盖项时，通用 Helm IPAM 的默认值是什么？**
+7. **未被平台特定配置覆盖时，通用 Helm IPAM 的默认模式是什么？**
 
    - A) kubernetes
    - B) cluster-pool
@@ -119,23 +119,23 @@
 
    **答案：B) cluster-pool**
 
-   在 cluster-pool 模式下，operator 分配节点 CIDR，每个 agent 在本地分配 Pod IP。请使用实际的模式名称，而不要使用含义不明确的“Cluster Scope”一词。
+   在 cluster-pool 模式下，控制器分配节点 CIDR，每个代理在本地分配 Pod IP。请使用实际的模式名称，而不要使用含义不明确的“Cluster Scope”（集群范围）一词。
 
    </details>
 
 8. **哪种 Cilium IPAM 模式会使用 EC2 ENI 和 VPC 地址？**
 
-   - A) Kubernetes host-scope
+   - A) Kubernetes host-scope（主机范围）
    - B) Cluster-pool
    - C) ENI
-   - D) 通用的 CRD 支持模式
+   - D) 通用的基于 CRD 的模式
 
    <details>
    <summary>显示答案</summary>
 
    **答案：C) ENI**
 
-   ENI 模式有 AWS 特定的前置条件。它并非适用于所有 EKS 计算模式或 CNI 链接配置的通用建议。
+   ENI 模式有 AWS 特定的前置条件。它并非适用于所有 EKS 计算模式或 CNI 链式配置的通用建议。
 
    </details>
 
@@ -151,11 +151,11 @@
 
    **答案：A) spec.podCIDR / spec.podCIDRs**
 
-   Kubernetes 会分配节点 Pod CIDR。Cilium 在 Kubernetes host-scope IPAM 中使用这些 CIDR；PodCIDR 并非 IPAM 模式的字面名称。
+   Kubernetes 会为节点分配 Pod CIDR。Cilium 在 Kubernetes host-scope（主机范围）IPAM 中使用这些 CIDR；PodCIDR 并非 IPAM 模式的实际名称。
 
    </details>
 
-## Services 和负载均衡
+## Service 和负载均衡
 
 10. **哪项功能不能仅通过替代 kube-proxy 来启用？**
 
@@ -169,15 +169,15 @@
 
    **答案：D) 工作负载 mTLS**
 
-   Service 转发与工作负载身份验证/加密是两回事。外部负载均衡器的配置还需要其控制器/提供商。
+   Service 转发与工作负载身份验证/加密是两回事。创建外部负载均衡器还需要相应的控制器或服务提供商。
 
    </details>
 
 11. **哪两种是 Cilium 的 BPF Service 负载均衡算法？**
 
    - A) Random 和 Maglev
-   - B) 仅 Round robin
-   - C) 默认使用 Least connections
+   - B) 仅轮询算法
+   - C) 默认使用最少连接算法
    - D) 定期轮换 Maglev 超时
 
    <details>
@@ -211,7 +211,7 @@
 
    - A) 目标地址范围
    - B) 经过身份验证的 DNS 主机名
-   - C) 仅限命名的 Service
+   - C) 仅限按名称指定的 Service
    - D) 仅限 TCP 端口
 
    <details>
@@ -219,7 +219,7 @@
 
    **答案：A) 目标地址范围**
 
-   CIDR 选择器遵循端点分类规则；默认情况下会排除由集群管理的 Pod/节点，而此版本提供显式的 Beta opt-in 选项。它不是身份验证机制。
+   CIDR 选择器遵循端点分类规则；默认情况下会排除集群内受管理的 Pod/节点，而此版本提供需要显式启用的 Beta 选项。它不是身份验证机制。
 
    </details>
 
@@ -336,5 +336,3 @@
    在满足前置条件且符合集成限制的情况下，BPF 主机路由可以绕过主机协议栈/netfilter 的部分组件。这与选择节点之间使用原生路由还是隧道路由是两回事。
 
    </details>
-
-</source_document>

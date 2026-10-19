@@ -33,7 +33,7 @@ El capítulo parte de la pregunta «¿se puede llegar a un acuerdo sin un árbit
 **Respuesta: B) Los requisitos de identificación de contrapartes y de ubicación de datos para la actividad y jurisdicción concretas**
 
 **Explicación:**
-Los sistemas públicos y los autorizados pueden usar controles distintos. La pertenencia a un consorcio por sí sola no demuestra cumplimiento de KYC/AML ni de privacidad; solicita la evaluación jurídica y de cumplimiento correspondiente.
+Los sistemas públicos y los permisionados pueden usar controles distintos. La pertenencia a un consorcio por sí sola no demuestra cumplimiento de KYC/AML ni de privacidad; solicita la evaluación jurídica y de cumplimiento correspondiente.
 </details>
 
 3. ¿Qué valor sustancial queda al elegir una cadena de consorcio y por qué conviene definirlo así durante la revisión?
@@ -65,7 +65,7 @@ Al pasar a un consorcio desaparece gran parte del valor de una cadena pública (
 **Respuesta: B) Pueden persistir copias históricas del texto cifrado y una clave comprometida puede exponer los registros cifrados con esa clave**
 
 **Explicación:**
-Volver a cifrar los registros nuevos no elimina las copias anteriores. La purga de datos privados autorizados tiene una semántica distinta; valida los requisitos de retención, ciclo de vida de claves y obligaciones jurídicas en lugar de afirmar que todas las cadenas tienen el mismo comportamiento de eliminación.
+Volver a cifrar los registros nuevos no elimina las copias anteriores. La eliminación de datos privados en redes permisionadas sigue una semántica distinta; valida los requisitos de retención, ciclo de vida de claves y obligaciones jurídicas en lugar de afirmar que todas las cadenas tienen el mismo comportamiento de eliminación.
 </details>
 
 5. ¿En qué punto entra en conflicto la gestión de claves de validadores PoS con las prácticas habituales de alta disponibilidad?

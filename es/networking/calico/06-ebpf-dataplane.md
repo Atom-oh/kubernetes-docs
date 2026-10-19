@@ -1,12 +1,14 @@
 # Parte 6: Dataplane eBPF
 
-> **Versiones compatibles**: Calico v3.29+ / Kubernetes 1.28+ **Última actualización**: February 23, 2026
+> **Versiones de referencia revisadas**: Calico 3.32.2; Calico 3.32 se prueba con Kubernetes 1.34–1.36. **Última actualización**: 12 de septiembre de 2026.
+>
+> Los ejemplos suponen un clúster Linux con Calico ya instalado y compatible, junto con el servidor de API estándar de Calico. Use el procedimiento de quien administra la instalación: los fragmentos muestran opciones alternativas, no pasos que deban aplicarse a todos los clústeres. Esta revisión no cargó programas BPF, ni migró un clúster ni reprodujo los resultados de rendimiento citados.
 
 ## Introducción
 
-El dataplane eBPF de Calico representa una evolución significativa en las redes de Kubernetes, al reemplazar el procesamiento tradicional de paquetes basado en iptables por programas eBPF modernos. Este enfoque ofrece mejoras sustanciales de rendimiento, menor latencia y capacidades de observabilidad mejoradas.
+El dataplane eBPF de Calico utiliza programas y mapas BPF para las redes de las cargas de trabajo, las políticas y el manejo de Services de Kubernetes. Puede reducir la sobrecarga en rutas adecuadas, pero el rendimiento depende de la carga y la configuración. Calico también ofrece dataplanes Linux clásicos y Windows HNS; eBPF no supone una mejora universal para todas las plataformas.
 
-Este análisis detallado explora los fundamentos de eBPF desde una perspectiva de redes, la arquitectura eBPF de Calico, las estrategias de migración y las técnicas de optimización del rendimiento.
+Este capítulo profundiza en los fundamentos de eBPF aplicados a las redes, la arquitectura eBPF de Calico, las estrategias de migración y la optimización del rendimiento.
 
 ***
 
@@ -14,182 +16,77 @@ Este análisis detallado explora los fundamentos de eBPF desde una perspectiva d
 
 ### ¿Qué es eBPF?
 
-eBPF (extended Berkeley Packet Filter) es una tecnología revolucionaria que permite ejecutar programas aislados en un sandbox dentro del kernel de Linux sin modificar el código fuente del kernel ni cargar módulos del kernel.
+eBPF (extended Berkeley Packet Filter) es una tecnología revolucionaria que permite ejecutar programas aislados dentro del kernel de Linux sin modificar su código fuente ni cargar módulos del kernel.
 
-![Diagrama que muestra un programa eBPF moviéndose desde el espacio de usuario, a través del cargador libbpf y el verificador del kernel y el compilador JIT, hasta hooks del kernel que comparten mapas BPF con la aplicación de verificación.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
+![Modelo general de carga de BPF y sus hooks.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-1.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-1.html)
+
+> La máquina virtual describe un modelo abstracto de instrucciones. Con JIT, el programa cargado se ejecuta como código nativo en su hook, sin una máquina virtual invitada adicional. El diagrama no enumera exactamente todos los hooks de Calico.
 
 ### Conceptos clave de eBPF para redes
 
-| Concepto      | Descripción                              | Uso en Calico                       |
+| Concepto | Descripción | Uso en Calico |
 | ------------ | ---------------------------------------- | ----------------------------------- |
-| **Programas** | Bytecode ejecutado en hooks del kernel        | Filtrado de paquetes, enrutamiento           |
-| **Mapas**     | Almacenes clave-valor compartidos entre programas | Tablas de rutas, reglas de políticas          |
-| **Hooks**    | Puntos de conexión en el kernel              | XDP, TC, socket                     |
-| **Helpers**  | Funciones del kernel invocables desde eBPF      | Manipulación de paquetes, operaciones de mapas |
-| **BTF**      | Información de tipos para mapas/programas       | Información de depuración, CO-RE                   |
+| **Programas** | Bytecode ejecutado en hooks del kernel | Filtrado de paquetes y enrutamiento |
+| **Mapas** | Almacenes clave-valor compartidos entre programas | Tablas de rutas y reglas de políticas |
+| **Hooks** | Puntos de conexión en el kernel | XDP, TC y socket |
+| **Helpers** | Funciones del kernel invocables desde eBPF | Manipulación de paquetes y operaciones con mapas |
+| **BTF** | Información de tipos para mapas y programas | Información de depuración y CO-RE |
 
 ### eBPF frente a iptables
 
-| Aspecto               | iptables                  | eBPF              |
-| -------------------- | ------------------------- | ----------------- |
-| **Arquitectura**     | Cadenas de reglas secuenciales    | Ejecución directa  |
-| **Complejidad**       | Coincidencia de reglas O(n)        | Búsqueda en mapas O(1)   |
-| **Cruces del kernel** | Varios por paquete       | Mínimos           |
-| **Programabilidad**  | Tipos de reglas fijos          | Programas flexibles |
-| **Observabilidad**    | Contadores limitados          | Métricas enriquecidas      |
-| **Eficiencia de CPU**   | Mayor sobrecarga de interrupciones | Menor sobrecarga    |
+Tanto iptables como los programas eBPF procesan paquetes en el kernel. Recorrer una regla de iptables normalmente no requiere pasar al espacio de usuario. kube-proxy es un proceso del plano de control que configura las reglas de los Services; en modo iptables, los paquetes no atraviesan ese proceso.
 
-***
+Las búsquedas en mapas hash, las coincidencias de prefijo más largo, las políticas compiladas, las llamadas de cola y el seguimiento de conexiones tienen costos distintos. No es válido concluir que «todas las políticas eBPF son O(1)» o que «la memoria es constante sin importar las reglas o flujos». iptables también puede utilizar conjuntos de IP indexados. Normalmente selecciona la regla NAT con el primer paquete de una conexión y aplica las traducciones ya establecidas mediante conntrack a los siguientes paquetes.
 
 ## Arquitectura eBPF de Calico
 
-![Comparación de dataplanes de Calico: en modo iptables, un paquete recorre PREROUTING, FORWARD, reglas de kube-proxy y POSTROUTING para llegar al Pod; en modo eBPF, el LB en tiempo de conexión elige el backend en el socket y un programa BPF conectado al hook TC lo reenvía.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
+| Mecanismo | Función y alcance |
+| --- | --- |
+| Hooks de paquetes TC | Políticas, enrutamiento, estado de conexiones y manejo de Services por paquete; la entrada/salida de una interfaz no equivale necesariamente a la entrada/salida de la carga |
+| Hooks de direcciones de socket en cgroup | Traducción del destino de un Service al conectar; el cargador de la versión publicada conecta hooks de connect y, cuando se habilita UDP, de sendmsg/recvmsg |
+| XDP | Procesamiento temprano donde exista soporte y esté configurado; la aceleración XDP del dataplane clásico y las conexiones XDP del dataplane eBPF completo son mecanismos distintos |
+| Mapas de programas, conjuntos de IP y contadores | Apoyo a los programas compilados y su estado; una política no se reduce a un mapa universal de tuplas a acciones |
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
-
-### Comparación de arquitecturas
-
-![Diagrama que contrasta un paquete que atraviesa siete cadenas secuenciales de iptables con el mismo paquete que atraviesa un único programa eBPF que consulta mapas BPF entre los hooks de entrada y salida de TC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
-
-### Tipos de programas eBPF en Calico
-
-Calico utiliza varios tipos de programas eBPF para diferentes funciones:
-
-![Diagrama que muestra hooks XDP y de entrada de TC que alimentan programas sockops y sk_msg de nivel socket, que se transfieren a un hook de salida de TC, con el programa de ámbito cgroup mostrado como una primitiva de nivel socket sin conexión.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
-
-### Programas TC (Traffic Control)
-
-Los programas TC son el hook principal del dataplane para Calico:
-
-```
-Ingress TC Program Functions:
-├── Policy enforcement (allow/deny)
-├── Connection tracking lookup
-├── Service load balancing (DNAT)
-├── Tunnel decapsulation
-└── Metrics collection
-
-Egress TC Program Functions:
-├── Policy enforcement (egress rules)
-├── SNAT for masquerade
-├── Tunnel encapsulation
-└── DSR return path handling
-```
-
-### Programas XDP (eXpress Data Path)
-
-XDP proporciona el hook de procesamiento de paquetes más temprano:
-
-![Diagrama de flujo que muestra un paquete que llega desde la tarjeta de red a un programa XDP, el cual devuelve uno de cuatro veredictos: descartar para protección contra DDoS, pasar al procesamiento TC normal, retorno TX directo o redirigir a otra interfaz.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
-
-### Programas de socket
-
-eBPF de nivel socket para la integración de service mesh:
-
-```yaml
-# sockops: Intercept socket operations
-- connect() -> Redirect to local sidecar
-- accept() -> Apply connection policies
-- close() -> Cleanup connection state
-
-# sk_msg: Process socket data
-- sendmsg() -> Apply L7 policy
-- recvmsg() -> Inspect response
-```
-
-***
+Son contextos de ejecución distintos, no una secuencia obligatoria XDP → TC → sockops → sk_msg → TC. El balanceo al conectar de Calico no inspecciona métodos HTTP mediante sk_msg. Las políticas de aplicación utilizan la [integración independiente de Istio/Dikastes](05-network-policy.md).
 
 ## Estructuras de mapas BPF
 
-### Tipos de mapas utilizados por Calico
+Los siguientes diseños IPv4 corresponden **específicamente a Calico 3.32.2**. No son una ABI pública estable ni instrucciones para escribir directamente en mapas del kernel:
 
-| Tipo de mapa          | Propósito              | Ejemplo de uso         |
-| ----------------- | -------------------- | ------------------- |
-| **Hash Map**      | Búsqueda clave-valor     | Seguimiento de conexiones |
-| **LRU Hash**      | Caché con expulsión automática  | Tabla NAT           |
-| **Array**         | Indexado de tamaño fijo   | Configuración de endpoint     |
-| **LPM Trie**      | Coincidencia de prefijo más largo | Búsqueda de rutas        |
-| **Per-CPU Array** | Contadores escalables    | Estadísticas          |
+| Familia de mapas | Tipo | Bytes de clave / valor | Propósito |
+| --- | --- | --- | --- |
+| Rutas | LPM trie | 8 / 8 | Prefijo de destino, flags y unión de siguiente salto o interfaz |
+| Frontend NAT | LPM trie | 16 / 20 | Coincidencia de Service/prefijo de origen, grupo y cantidad de backends, afinidad y flags |
+| Backend NAT | Hash | 8 / 8 | Grupo/ordinal de backend → dirección y puerto |
+| Formato conntrack v4 | LRU hash | 16 / 88 | Protocolo, par de direcciones, puertos, estado y metadatos NAT |
+| Afinidad | LRU hash | Depende de la versión | Selección de backend por cliente almacenada en caché |
 
-### Estructura del mapa de rutas
+En la clave de ruta IPv4, los primeros cuatro bytes contienen la longitud del prefijo en orden little-endian y después vienen los bytes de la dirección IPv4. El valor incluye flags y una unión de cuatro bytes para siguiente salto o índice de interfaz, no una dirección MAC. Conntrack utiliza un campo de protocolo de 32 bits seguido de direcciones y puertos; la antigua estructura simplificada de cinco campos no representaba su diseño real. IPv6 utiliza otros diseños.
 
-```c
-// Simplified route map entry
-struct calico_route_key {
-    __be32 prefix;
-    __u32 prefix_len;
-};
-
-struct calico_route_value {
-    __u32 flags;          // LOCAL, REMOTE, HOST, etc.
-    __be32 next_hop;      // Next hop IP
-    __u32 ifindex;        // Interface index
-    __u8 mac[6];          // Destination MAC
-};
-```
-
-### Mapa de seguimiento de conexiones
-
-```c
-// Connection tracking key
-struct calico_ct_key {
-    __be32 src_ip;
-    __be32 dst_ip;
-    __be16 src_port;
-    __be16 dst_port;
-    __u8 protocol;
-};
-
-// Connection tracking value
-struct calico_ct_value {
-    __u64 created;        // Timestamp
-    __u64 last_seen;      // Last packet
-    __be32 orig_dst;      // Pre-DNAT destination
-    __be16 orig_port;     // Pre-DNAT port
-    __u32 flags;          // Connection state
-};
-```
-
-### Estructura del mapa de políticas
-
-```c
-// Policy rule entry
-struct calico_policy_key {
-    __u32 policy_id;
-    __u32 rule_index;
-};
-
-struct calico_policy_value {
-    __u32 action;         // ALLOW, DENY, PASS
-    __u32 flags;
-    __be32 src_net;
-    __be32 src_mask;
-    __be32 dst_net;
-    __be32 dst_mask;
-    __be16 port_start;
-    __be16 port_end;
-};
-```
-
-***
+Las políticas se compilan en instrucciones BPF con apoyo de mapas; un mapa de contadores de reglas no es la política en sí. Decodifique los mapas con la herramienta de depuración de la misma versión de Calico y compruebe su tipo, capacidad y versión antes de interpretar bytes sin procesar.
 
 ## Direct Server Return (DSR)
 
-### Descripción general de DSR
+![Tráfico de Service a través de un nodo de entrada de Kubernetes, con una ruta de respuesta alternativa DSR.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-6.png)
 
-DSR permite que el tráfico de respuesta omita el balanceador de carga, reduciendo la latencia y el consumo de recursos del balanceador de carga.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-6.html)
 
-![Diagrama que compara un flujo normal con balanceo de carga, donde la respuesta del servidor vuelve a través del balanceador de carga al cliente, con un flujo Direct Server Return, donde la respuesta omite el balanceador de carga y va directamente del servidor al cliente.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
+> El frontend puede ser un NodePort u otra dirección de Service. Calico traduce la dirección de origen de la respuesta. El diagrama omite el balanceador de carga externo de la nube, cuyas restricciones de retorno siguen aplicándose.
 
-### Modos DSR en Calico
+Aquí, «nodo balanceador» es el nodo de Kubernetes que reenvía el tráfico del Service. DSR permite que la respuesta evite ese nodo, pero no evita automáticamente un balanceador externo de la nube. Calico traduce el origen de la respuesta; el Pod de la aplicación no tiene que vincularse a una VIP.
 
-| Modo         | Descripción              | Caso de uso                  |
-| ------------ | ------------------------ | ------------------------- |
-| **Deshabilitado** | Todo el tráfico a través de LB   | Predeterminado, todos los entornos |
-| **IPIP**     | Respuesta mediante túnel IPIP | Entre subredes              |
-| **DSR**      | Respuesta directa          | Misma red L2           |
+| `bpfExternalServiceMode` | Ruta hacia un backend remoto |
+| --- | --- |
+| `Tunnel` (predeterminado) | La solicitud y la respuesta pasan por el nodo de entrada y el túnel |
+| `DSR` | La solicitud llega por túnel al nodo remoto y la respuesta va directamente hacia el cliente |
 
-### Habilitar DSR
+Este campo no acepta `Disabled` ni `IPIP`. Calico utiliza VXLAN para este reenvío de Services, por lo que ambos modos deben cumplir los requisitos de MTU y de la red subyacente. DSR exige además que la red permita a un nodo enviar tráfico con la dirección de origen del frontend o nodo de entrada original. La guía de Calico para AWS requiere nodos en la misma subred y la desactivación de las comprobaciones de origen/destino. Estas condiciones no habilitan cualquier despliegue entre subredes.
+
+La guía actual de solución de problemas de Calico excluye las rutas de retorno de balanceadores externos de AWS/GCP que exigen pasar por el destino original. Cumplir los requisitos de subred y comprobación de origen no basta para habilitar DSR en ese tráfico.
+
+En una ruta eBPF compatible que ya funciona, la opción se configura así:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -197,69 +94,22 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
   bpfExternalServiceMode: DSR
 ```
 
-### Requisitos de DSR
+Integre el cambio mediante quien administra la configuración y pruebe el enrutamiento de retorno, la validación de origen y las conexiones activas. Cambiar el modo puede interrumpir conexiones. DSR y el balanceo al conectar son optimizaciones independientes.
 
-* El servidor y el cliente deben estar en la misma red L2 O
-* Usar encapsulación IPIP/VXLAN entre subredes
-* La IP del cliente externo debe poder enrutarse desde los servidores
-* Sin SNAT en la ruta de entrada
+## Balanceo de carga al establecer la conexión
 
-***
+![Traducción de Service al conectar frente a la traducción por paquete.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
 
-## Balanceo de carga en tiempo de conexión
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-7.html)
 
-### LB tradicional frente a LB en tiempo de conexión
+> kube-proxy configura reglas del kernel; no transporta los paquetes. Tras la selección inicial de reglas, las conexiones iptables existentes utilizan conntrack. CTLB evita esa ruta DNAT del Service, no todo el procesamiento de paquetes.
 
-![Diagrama que contrasta el enfoque por paquete de kube-proxy, donde cada paquete SYN, de datos y FIN se somete a DNAT hacia el Pod A, con el balanceo de carga eBPF en tiempo de conexión, donde una única llamada al sistema connect() elige el Pod B una vez y cada paquete de esa conexión se le envía directamente.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
+El diagrama es conceptual. kube-proxy configura el estado del kernel y los paquetes posteriores utilizan conntrack en lugar de seleccionar de nuevo un backend recorriendo toda la lista de reglas del Service. El balanceo al conectar traduce el destino de Service de un socket compatible antes de procesar paquetes. No elimina todo el enrutamiento, las políticas, el seguimiento de conexiones ni cualquier otro NAT.
 
-### Beneficios del LB en tiempo de conexión
-
-| Aspecto                  | Por paquete          | En tiempo de conexión          |
-| ----------------------- | ------------------- | --------------------- |
-| **Sobrecarga de NAT**        | Cada paquete        | Solo en la configuración de la conexión |
-| **Seguimiento de conexiones** | Requerido            | Mínimo               |
-| **Latencia**             | Mayor (búsqueda NAT) | Menor (directa)        |
-| **Uso de CPU**           | Mayor              | Menor                 |
-
-### Cómo funciona el LB en tiempo de conexión
-
-```c
-// Simplified connect-time LB logic
-int bpf_connect4(struct bpf_sock_addr *ctx) {
-    // Check if destination is a Service IP
-    struct lb_backend *backend = lookup_service(ctx->user_ip4, ctx->user_port);
-
-    if (backend) {
-        // Rewrite destination to backend pod
-        ctx->user_ip4 = backend->pod_ip;
-        ctx->user_port = backend->pod_port;
-    }
-
-    return 1; // Allow connection
-}
-```
-
-***
-
-## Aceleración XDP
-
-### Niveles de procesamiento XDP
-
-![Diagrama que muestra que los programas XDP descargados en la NIC son los más rápidos, los programas ejecutados de forma nativa en el driver son rápidos y los programas ejecutados en la pila de red genérica son los más lentos, pero funcionan en cualquier NIC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
-
-### Modos XDP
-
-| Modo        | Ubicación      | Rendimiento | Requisitos   |
-| ----------- | ------------- | ----------- | -------------- |
-| **Offload** | Hardware de NIC  | Más rápido     | SmartNIC       |
-| **Native**  | Driver de NIC    | Rápido        | Compatibilidad del driver |
-| **Generic** | Pila de red | Base    | Cualquier NIC        |
-
-### Habilitar XDP en Calico
+El campo actual admite `bpfConnectTimeLoadBalancing: TCP` (predeterminado), `Enabled` o `Disabled`. La antigua opción booleana `bpfConnectTimeLoadBalancingEnabled` está obsoleta, aunque se sigue aceptando. Revise y elimine los valores antiguos mediante quien administra la configuración, en lugar de configurar ambas formas sin comprobar su efecto.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -267,194 +117,108 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
-
-  # XDP mode: Disabled, Enabled, Offload
-  xdpEnabled: Enabled
-
-  # Interfaces for XDP
-  # Uses same detection as BPF dataplane interface
+  bpfConnectTimeLoadBalancing: TCP
+  bpfHostNetworkedNATWithoutCTLB: Enabled
 ```
 
-### Casos de uso de XDP en Calico
+`Enabled` puede incluir sockets UDP; `TCP` limita CTLB a TCP. `bpfHostNetworkedNATWithoutCTLB` controla una ruta NAT complementaria para la red del host, no el soporte general de ClusterIP. Un service mesh que necesite conservar las direcciones originales de los Services puede exigir desactivar CTLB. Siga la integración probada para ese caso; la reescritura de sockets no siempre es compatible.
 
-1. **Protección contra DDoS**: Descartar tráfico malicioso en la NIC
-2. **Aplicación de blocklist**: Rechazo temprano de IP bloqueadas
-3. **Limitación de tasa**: Límites de tasa de paquetes antes de la pila
-4. **Recopilación de métricas**: Conteo de paquetes a velocidad de línea
+## Aceleración XDP
+
+![Acciones generales de XDP ante un paquete entrante.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-3.html)
+
+> Son acciones del framework. La ejecución nativa, genérica y descargada al hardware tiene requisitos distintos. El diagrama no garantiza que Calico exponga todas las acciones o funciones del hardware.
+
+Las acciones XDP del diagrama son generales; no garantizan que Calico ofrezca todas las funciones de descarga al hardware o limitación de tasa. XDP nativo en el driver puede actuar antes de asignar un skb, mientras que XDP genérico actúa después, con un skb ya creado. La descarga al hardware depende de la NIC, el driver y el programa. El nombre del modo no establece una clasificación universal de velocidad.
+
+El campo Felix `xdpEnabled` es **booleano** y acelera determinados rechazos de entrada sin seguimiento de conexiones en el dataplane clásico de iptables. `genericXDPEnabled` vale false de forma predeterminada; el uso de XDP genérico como alternativa no está garantizado. Estas opciones son distintas de los programas XDP internos del dataplane eBPF completo.
+
+```yaml
+# Separate classic iptables-dataplane acceleration example.
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  xdpEnabled: true
+  genericXDPEnabled: false
+```
+
+Compruebe el soporte del driver y los programas conectados realmente a la interfaz prevista. `xdpEnabled: Enabled`, `Offload` y `BestEffort` no son modos enumerados válidos.
 
 ***
 
 ## Requisitos del modo eBPF
 
-### Requisitos del kernel
+Consulte los requisitos de la versión elegida, en lugar de basarse en un mínimo histórico:
 
-| Requisito      | Versión mínima | Notas                     |
-| ---------------- | --------------- | ------------------------- |
-| **Kernel de Linux** | 5.3+            | Se recomienda 5.8+          |
-| **Compatibilidad con BTF**  | Requerido        | `CONFIG_DEBUG_INFO_BTF=y` |
-| **Llamada al sistema BPF**  | Requerido        | `CONFIG_BPF_SYSCALL=y`    |
-| **BPF JIT**      | Requerido        | `CONFIG_BPF_JIT=y`        |
+| Requisito | Alcance de eBPF en Calico 3.32 |
+| --- | --- |
+| Kernel Linux base | 5.10 o posterior; excepción documentada: RHEL 8.4 con kernel 4.18.0-305 o posterior |
+| Arquitectura | x86-64 o arm64 little-endian |
+| Datastore | Kubernetes; este modo no admite el datastore etcd |
+| Funciones adicionales | Las reglas Log eBPF requieren kernel 5.16; los controles de ancho de banda QoS documentados requieren 6.6/TCX |
+| Red subyacente | Debe permitir el tráfico VXLAN configurado entre nodos, incluido el reenvío de NodePort aunque los pools de Pods no usen encapsulación |
+| Entorno de ejecución | Capacidades BPF/cgroup, privilegios y montajes escribibles necesarios; las variantes de SO inmutables necesitan un `CgroupV2Path` adecuado |
 
-### Verificar la compatibilidad del kernel
+BTF aporta información de tipos para CO-RE y las herramientas, pero no es el verificador ni garantiza compatibilidad con todos los kernels. El cargador de Calico selecciona variantes de objetos CO-RE o sin CO-RE donde existe soporte. Comprobar `/sys/kernel/btf/vmlinux` no basta para declarar que un nodo está preparado. Verifique los requisitos de la versión, la configuración del nodo y los diagnósticos de carga reales. Los objetos fijados en bpffs sobreviven al proceso que los creó, pero no a un reinicio del host como lo harían datos persistentes en disco.
+
+### Límites de las plataformas
+
+La guía actual de Calico incluye clústeres autoadministrados/kubeadm, kOps, OpenShift, EKS, MKE y determinadas configuraciones de AKS/RKE. Excluye expresamente GKE, los clústeres que mantienen eBPF junto con el dataplane estándar o Windows y las políticas/Services SCTP. Documenta IPv6 y el funcionamiento exclusivamente IPv6; cambiar a dual-stack no es una solución general a una supuesta falta de soporte IPv6.
+
+AKS con Azure CNI no permite desactivar su kube-proxy administrado. La guía considera AKS con redes Calico como una configuración independiente todavía en pruebas. Un nombre de SO, una imagen Ubuntu o una versión de kernel no demuestran por sí solos que una plataforma esté admitida. En EKS, el modo de nodos, la combinación CNI y la variante del SO deben seguir el procedimiento específico Calico/EKS. No extrapole el soporte a modos de red administrados ni a entornos que no puedan ejecutar los componentes privilegiados de nodo necesarios.
+
+Windows utiliza el dataplane Windows HNS, no iptables de Linux. Evite un canary eBPF permanente por nodo mezclado con nodos Windows o del dataplane estándar. Valide en un clúster representativo independiente y después siga la transición coordinada documentada.
+
+### Inventario de solo lectura
 
 ```bash
-# Check kernel version
-uname -r
-
-# Check BTF support
-ls /sys/kernel/btf/vmlinux
-
-# Check BPF support
-cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
-
-# Required output:
-# CONFIG_BPF=y
-# CONFIG_BPF_SYSCALL=y
-# CONFIG_BPF_JIT=y
-# CONFIG_DEBUG_INFO_BTF=y
+kubectl get nodes -o wide
+kubectl -n kube-system get daemonset kube-proxy -o yaml
+kubectl get installation.operator.tigera.io default -o yaml
+kubectl get felixconfiguration.projectcalico.org default -o yaml
 ```
 
-### Compatibilidad de distribuciones
-
-| Distribución      | Preparada para eBPF | Notas                        |
-| ----------------- | ---------- | ---------------------------- |
-| Ubuntu 20.04+     | Sí        | Kernel 5.4+                  |
-| Ubuntu 22.04+     | Sí        | Kernel 5.15+ (recomendado)   |
-| RHEL/CentOS 8.2+  | Sí        | Kernel 4.18+ con backports  |
-| Amazon Linux 2    | Parcial    | Puede necesitar actualización del kernel      |
-| Amazon Linux 2023 | Sí        | Kernel 6.1+                  |
-| Bottlerocket      | Sí        | Creado específicamente para contenedores |
-
-### Requisitos de versión de Calico
-
-```yaml
-# Minimum Calico versions for eBPF features
-eBPF dataplane basic:     v3.13.0
-Connect-time LB:          v3.16.0
-XDP acceleration:         v3.18.0
-Dual-stack eBPF:         v3.20.0
-Host-networked pods:      v3.13.0 (with limitations)
-```
-
-### Configuración del nodo
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Enable eBPF dataplane
-  bpfEnabled: true
-
-  # Data interface detection
-  # Auto-detect: first interface with default route
-  # Or specify pattern: "eth*"
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
-
-  # External service mode: Tunnel or DSR
-  bpfExternalServiceMode: Tunnel
-
-  # Log level for BPF programs
-  bpfLogLevel: Info
-
-  # Kube-proxy replacement
-  bpfKubeProxyIptablesCleanupEnabled: true
-
-  # Connection tracking
-  bpfConnectTimeLoadBalancingEnabled: true
-```
-
-***
+Utilice el namespace de la instalación y consulte las versiones reales de las imágenes de Calico y del operador. En cada nodo, examine `uname -r`, BTF, bpffs y los montajes cgroup desde el namespace de montajes del host. La vista del sistema de archivos de un contenedor de depuración no coincide necesariamente con la del host. Para cambiar el dataplane, conserve los valores de la release de Helm existente y compruebe su nombre real antes de actualizarla.
 
 ## Migración de iptables a eBPF
 
-### Lista de verificación previa a la migración
+### Arranque automático del operador: requisitos específicos
+
+Esta opción corresponde a un clúster autoadministrado basado en kubeadm e instalado con Tigera Operator. kube-proxy debe estar en `kube-system` y **no administrado por Helm, Argo CD ni otro reconciliador**; el operador debe poder leer el Service de Kubernetes y sus endpoints.
 
 ```bash
-# 1. Verify kernel requirements
-uname -r  # Should be 5.3+
-ls /sys/kernel/btf/vmlinux  # BTF must exist
-
-# 2. Check Calico version
-kubectl get deployment -n kube-system calico-kube-controllers -o jsonpath='{.spec.template.spec.containers[0].image}'
-# Should be v3.13.0+
-
-# 3. Verify CNI plugin
-kubectl get ds -n kube-system calico-node -o jsonpath='{.spec.template.spec.containers[0].env}' | grep -i cni
-
-# 4. Check existing networking mode
-calicoctl get felixconfiguration default -o yaml | grep -i bpf
-
-# 5. Verify no conflicting CNI
-ls /etc/cni/net.d/
+kubectl get installation.operator.tigera.io default -o yaml
+# Only when every automatic-bootstrap prerequisite above is met:
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF","bpfNetworkBootstrap":"Enabled","kubeProxyManagement":"Enabled"}}}'
 ```
 
-### Pasos de migración
+El operador configura el acceso directo a la API y administra kube-proxy durante la transición. Las actualizaciones progresivas dejan temporalmente nodos en modos distintos, y la guía oficial advierte de posibles interrupciones de NodePort. La migración no garantiza la ausencia de interrupciones.
 
-**Paso 1: Actualizar FelixConfiguration (dry-run)**
+### Preparación manual y administración de los componentes
+
+En otras instalaciones admitidas, establezca primero un acceso **directo** y estable al servidor de API que no dependa del mecanismo de Services que se va a sustituir. Use el hostname o la dirección y el puerto reales del balanceador de API. En EKS corresponde al hostname del endpoint de API del clúster, normalmente en el puerto 443. El ejemplo siguiente contiene un endpoint de API autoadministrado que debe reemplazar.
 
 ```yaml
-# Save current configuration
-kubectl get felixconfiguration default -o yaml > felix-backup.yaml
-
-# Create eBPF configuration
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: default
-spec:
-  bpfEnabled: false  # Not enabled yet
-  bpfLogLevel: Debug  # For troubleshooting
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
-  bpfExternalServiceMode: Tunnel
-  bpfKubeProxyIptablesCleanupEnabled: false  # Don't cleanup yet
+  name: kubernetes-services-endpoint
+  namespace: tigera-operator
+data:
+  KUBERNETES_SERVICE_HOST: api.internal.example.com
+  KUBERNETES_SERVICE_PORT: "6443"
 ```
 
-**Paso 2: Deshabilitar kube-proxy (si se utiliza Calico como reemplazo)**
+Utilice `tigera-operator` en una instalación con operador y `kube-system` en el procedimiento con manifiestos independientes. El nombre es **`kubernetes-services-endpoint`**, en plural. Antes de cambiar el dataplane de Services, confirme que Calico ha recibido el endpoint y puede resolverlo y conectarse a él. El arranque de DNS, las reglas de seguridad y la conectividad siguen dependiendo de la plataforma.
 
-```bash
-# Option A: Scale down kube-proxy
-kubectl -n kube-system patch daemonset kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico":"true"}}}}}'
+Si kube-proxy utiliza IPVS, la migración oficial exige cambiarlo antes a modo iptables y efectuar un reinicio de nodos planificado. Trate ese paso como un cambio controlado independiente.
 
-# Option B: Add calico node selector to skip kube-proxy nodes
-# Only if running both temporarily
-```
-
-**Paso 3: Habilitar eBPF en el nodo de prueba**
-
-```bash
-# Label test node
-kubectl label node test-node-1 calico-ebpf=enabled
-
-# Apply node-specific config
-calicoctl apply -f - <<EOF
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: node.test-node-1
-spec:
-  bpfEnabled: true
-EOF
-```
-
-**Paso 4: Validar el nodo de prueba**
-
-```bash
-# Check BPF programs loaded
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  bpftool prog list
-
-# Verify connectivity
-kubectl run test-pod --image=busybox --restart=Never --overrides='{"spec":{"nodeName":"test-node-1"}}' -- sleep 3600
-kubectl exec test-pod -- wget -O- http://kubernetes.default.svc
-
-# Check logs
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i bpf
-```
-
-**Paso 5: Implementar en todos los nodos**
+Coordine kube-proxy con quien lo administra. Si debe seguir en ejecución, como en el caso documentado de AKS con Azure CNI, integre estos campos en la configuración Felix existente:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -462,248 +226,182 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
-  bpfLogLevel: Info
-  bpfDataIfacePattern: "^((en|eth|wl)[opsx].*|(eth|wlan|eno)[0-9].*)"
-  bpfExternalServiceMode: Tunnel
-  bpfKubeProxyIptablesCleanupEnabled: true
-  bpfConnectTimeLoadBalancingEnabled: true
+  bpfKubeProxyIptablesCleanupEnabled: false
+  bpfKubeProxyHealthzPort: 0
 ```
 
-**Paso 6: Limpiar las reglas de iptables**
+La opción de limpieza por sí sola no habilita el manejo de Services. Ejecutar kube-proxy con la limpieza activada hace que los dos componentes compitan por iptables. Mantener ambos servidores de salud en el puerto 10256 también produce un conflicto. Conserve el resto de la configuración Felix al integrar los campos.
+
+Habilite el dataplane mediante **una sola** opción de administración:
 
 ```bash
-# After confirming eBPF is working
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfKubeProxyIptablesCleanupEnabled":true}}'
-
-# Verify iptables rules are minimal
-iptables -L -n | wc -l  # Should be significantly reduced
+# Operator installation:
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF"}}}'
 ```
-
-### Procedimiento de reversión
 
 ```bash
-# Disable eBPF
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfEnabled":false}}'
-
-# Restore kube-proxy if disabled
-kubectl -n kube-system patch daemonset kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":null}}}}'
-
-# Wait for calico-node restart
-kubectl rollout status ds/calico-node -n kube-system
-
-# Verify iptables rules restored
-iptables -L -n -v
+# Alternative: standalone manifest installation, without operator ownership:
+kubectl patch felixconfiguration.projectcalico.org default --type=merge \
+  -p '{"spec":{"bpfEnabled":true}}'
 ```
+
+Cuando la instalación requiera desactivar kube-proxy manualmente, siga la secuencia documentada de la plataforma durante la ventana de transición prevista. Guarde antes su configuración deseada. Si usa un nodeSelector temporal, elija una clave no utilizada, compruebe que no coincide con ningún nodo y retire después únicamente esa clave. Conserve el mapa de selectores existente. Eliminar un DaemonSet o escalar un Deployment kube-proxy inexistente no es un procedimiento general de migración.
+
+### Validar el tráfico, además de los programas cargados
+
+Revise el estado del despliegue y los programas y mapas BPF reales de los nodos previstos. Pruebe conexiones nuevas entre Pods, DNS, ClusterIP, NodePort/accesos externos, rechazos por políticas y las conexiones necesarias desde la red del host entre nodos. Un listado de programas o pocas líneas de iptables no demuestran que esas rutas funcionen.
+
+La API de Kubernetes normalmente utiliza HTTPS, no `http://kubernetes.default.svc`. Pruebe el transporte con la confianza TLS y la identidad adecuadas; distinga los fallos de autenticación de los de red. Para verificar conectividad, prefiera un Service de aplicación controlado a una solicitud sin autenticación a la API.
+
+### Reversión
+
+Revierta el cambio de modo mediante quien administra la misma configuración:
+
+```bash
+# Operator installation: use its owner/GitOps source for the same change.
+kubectl patch installation.operator.tigera.io default --type=merge \
+  -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'
+```
+
+```bash
+# Alternative for standalone manifest installations:
+kubectl patch felixconfiguration.projectcalico.org default --type=merge \
+  -p '{"spec":{"bpfEnabled":false}}'
+```
+
+Con el arranque automático, el operador puede restaurar kube-proxy. Si lo desactivó manualmente, revierta solo el cambio temporal mediante su administrador, conservando los selectores y las demás opciones originales. Vuelva a comprobar las reglas de Services y el tráfico. Desactivar eBPF o cambiar el modo de Service externo puede interrumpir conexiones existentes. Reiniciar un nodo no garantiza que todo el estado de las aplicaciones quede limpio.
 
 ***
 
-## Benchmarks de rendimiento
+## Registros de rendimiento citados
 
-### Comparación de latencia
+Las guías anteriores en inglés y coreano contenían **registros distintos que no se verificaron**. Las tablas siguientes conservan sus cifras originales; no son mediciones de esta revisión ni garantías para Calico 3.32.2. Ningún registro incluye la salida original, la fecha de prueba, las versiones exactas de Calico/Kubernetes/kernel, la topología, los detalles de NIC/CPU, el estado inicial de las conexiones ni un método de prueba completo.
 
-| Escenario                | iptables | eBPF  | Mejora |
-| ----------------------- | -------- | ----- | ----------- |
-| Pod a Pod (mismo nodo)  | 45 μs    | 25 μs | 44%         |
-| Pod a Pod (entre nodos) | 120 μs   | 80 μs | 33%         |
-| Service (ClusterIP)     | 150 μs   | 60 μs | 60%         |
-| Service (NodePort)      | 180 μs   | 70 μs | 61%         |
+### Registro A: guía anterior en inglés
 
-### Comparación de throughput
+| Latencia citada | iptables | eBPF | Reducción original redondeada |
+| --- | --- | --- | --- |
+| Pod en el mismo nodo | 45 μs | 25 μs | 44% |
+| Pod entre nodos | 120 μs | 80 μs | 33% |
+| ClusterIP | 150 μs | 60 μs | 60% |
+| NodePort | 180 μs | 70 μs | 61% |
 
-| Escenario            | iptables | eBPF    | Mejora |
-| ------------------- | -------- | ------- | ----------- |
-| Flujo único TCP   | 15 Gbps  | 23 Gbps | 53%         |
-| Varios flujos TCP    | 35 Gbps  | 48 Gbps | 37%         |
-| Flujo único UDP   | 8 Gbps   | 18 Gbps | 125%        |
-| Paquetes pequeños (64B) | 2M pps   | 5M pps  | 150%        |
+| Rendimiento citado | iptables | eBPF | Aumento original redondeado |
+| --- | --- | --- | --- |
+| Un flujo TCP | 15 Gbps | 23 Gbps | 53% |
+| Varios flujos TCP | 35 Gbps | 48 Gbps | 37% |
+| Un flujo UDP | 8 Gbps | 18 Gbps | 125% |
+| Paquetes de 64 bytes | 2M pps | 5M pps | 150% |
 
-### Eficiencia de CPU
+| Cantidad de reglas citada | Conexiones/s con iptables | Conexiones/s con eBPF |
+| --- | --- | --- |
+| 1,000 | 50,000 | 120,000 |
+| 5,000 | 35,000 | 115,000 |
+| 10,000 | 20,000 | 110,000 |
 
-```
-Connection rate test (connections/sec):
 
-iptables dataplane:
-├── 1000 rules: 50,000 conn/s
-├── 5000 rules: 35,000 conn/s
-└── 10000 rules: 20,000 conn/s
+No se especifica el percentil de latencia. Las conexiones por segundo no miden directamente la utilización de CPU. Estos tres puntos tampoco demuestran un costo constante de las políticas a cualquier escala.
 
-eBPF dataplane:
-├── 1000 rules: 120,000 conn/s
-├── 5000 rules: 115,000 conn/s
-└── 10000 rules: 110,000 conn/s
+### Registro B: guía anterior en coreano
 
-Note: eBPF performance remains nearly constant regardless of rule count
-```
+| Métrica citada | iptables | eBPF | Cambio original redondeado |
+| --- | --- | --- | --- |
+| Rendimiento | 1.2M pps | 2.0M pps | +67% |
+| Latencia | 120 μs | 75 μs | −38% |
+| CPU con 1,000 Services | 70% | 30% | −57% |
+| Establecimiento de conexión | Sin valor absoluto | Sin valor absoluto | Reducción citada del 50% |
 
-### Ejecutar tus propios benchmarks
+
+El registro B corresponde a otro experimento distinto del A. Sus afirmaciones sobre memoria y complejidad no eran datos medidos, y el porcentaje de reducción del tiempo de conexión no incluye las duraciones originales. Mantenga los registros separados y evite presentar una «mejora del 20–40%» fija como resultado esperado.
+
+### Comparación reproducible
+
+Use imágenes de prueba de cliente y servidor equivalentes, los mismos nodos, la misma ruta de tráfico, asignación de CPU/NIC, MTU y carga. Registre el dataplane, el kernel, las versiones de software, la duración, la cantidad de muestras, el calentamiento, la concurrencia, el estado de conntrack y las opciones de logging. Pruebe un Service de aplicación por separado del acceso directo a IP de Pods.
 
 ```bash
-# Install netperf
-apt-get install netperf
-
-# Pod-to-Pod latency (TCP_RR)
-kubectl exec client-pod -- netperf -H server-pod-ip -t TCP_RR -l 30
-
-# Throughput (TCP_STREAM)
-kubectl exec client-pod -- netperf -H server-pod-ip -t TCP_STREAM -l 30
-
-# Service latency
-kubectl exec client-pod -- netperf -H service-cluster-ip -t TCP_RR -l 30
-
-# Compare with iperf3
-kubectl exec client-pod -- iperf3 -c server-pod-ip -t 30
+# Requires ready test Pods with netperf/netserver and an appropriate test policy.
+CLIENT_POD=netperf-client
+SERVER_POD=netperf-server
+SERVER_IP="$(kubectl -n calico-demo get pod "$SERVER_POD" -o jsonpath='{.status.podIP}')"
+test -n "$SERVER_IP"
+kubectl -n calico-demo exec "$CLIENT_POD" -- \
+  netperf -H "$SERVER_IP" -t TCP_RR -l 30
+kubectl -n calico-demo exec "$CLIENT_POD" -- \
+  netperf -H "$SERVER_IP" -t TCP_STREAM -l 30
 ```
+
+`TCP_RR` normalmente informa **transacciones por segundo**, no un percentil de latencia. Bajo los supuestos pertinentes, su inverso puede expresar el tiempo medio de transacción; no es la latencia de red p99. netperf utiliza conexiones de control y de datos, que deben permitirse en el entorno de prueba aislado. Instalar netperf en la estación de trabajo del operador no lo instala en el Pod cliente. Esta revisión no ejecutó el procedimiento en un clúster Calico.
 
 ***
 
 ## Depuración de eBPF
 
-### Comandos de bpftool
+La imagen de nodo de Calico incluye la herramienta de depuración mediante **`calico-node -bpf`**. También existe un punto de entrada independiente `calico-bpf` en el código fuente, pero no debe suponerse que haya un binario separado instalado en la imagen. La herramienta integrada utiliza `help`; el wrapper puede procesar `--help` antes de que llegue al subcomando BPF.
 
 ```bash
-# List loaded BPF programs
-bpftool prog list
-
-# Show program details
-bpftool prog show id 123
-
-# Dump program instructions
-bpftool prog dump xlated id 123
-
-# List BPF maps
-bpftool map list
-
-# Dump map contents
-bpftool map dump id 456
-
-# Show map entries
-bpftool map lookup id 456 key 0x0a 0x00 0x01 0x0a
+CALICO_NAMESPACE=calico-system
+CALICO_NODE=demo-worker
+CALICO_POD="$(kubectl -n "$CALICO_NAMESPACE" get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')"
+test -n "$CALICO_POD"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf help
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf routes dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf conntrack dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf nat dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf counters dump
 ```
-
-### Inspección de filtros TC
 
 ```bash
-# Show TC filters on interface
-tc filter show dev eth0 ingress
-tc filter show dev eth0 egress
-
-# Show BPF program attached to TC
-tc filter show dev eth0 ingress | grep bpf
-
-# Detailed filter info
-tc -s filter show dev eth0 ingress
+# Choose an interface actually attached on this node.
+BPF_INTERFACE=eth0
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf policy dump "$BPF_INTERFACE" all
+# IPv6, when enabled: put the debug-tool flag after its subcommand.
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  calico-node -bpf routes dump --ipv6
 ```
-
-### Depuración de BPF de Calico
 
 ```bash
-# Enable debug logging
-calicoctl patch felixconfiguration default -p '{"spec":{"bpfLogLevel":"Debug"}}'
-
-# View BPF debug logs
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i "bpf\|ebpf"
-
-# Check BPF map contents via calico-node
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf conntrack dump
-
-# Show routes in BPF map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf routes dump
-
-# Show NAT entries
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat dump
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool prog show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool map show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- bpftool net show
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  tc filter show dev "$BPF_INTERFACE" ingress
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  tc filter show dev "$BPF_INTERFACE" egress
 ```
 
-### Escenarios de depuración comunes
+`policy dump` requiere una interfaz y un hook: `ingress`, `egress`, `xdp` o `all`. Debe existir información de depuración de políticas; `bpfPolicyDebugEnabled` vale true de forma predeterminada. La entrada a una carga se conecta al hook TC/TCX de **salida** del veth del lado del host; la entrada al host utiliza el hook de entrada de su interfaz. La palabra que describe el hook no determina por sí sola la dirección respecto de la carga.
 
-**Problemas de conectividad:**
+`nat dump` acepta cero argumentos o una terna IP/puerto/protocolo. La CLI revisada no incluye `nat frontend list`. Consulte los ID reales de programas y mapas antes de usar comandos de bpftool por ID. Las claves para consultar un mapa dependen de su diseño completo y de su versión: cuatro bytes de IPv4 no constituyen una clave de mapa de rutas.
 
-```bash
-# Check if BPF programs are loaded
-bpftool prog list | grep calico
+Use el valor real de `max_entries` y los tamaños que informa bpftool. `/proc/sys/kernel/bpf_map_max_entries` no es un control general de capacidad de mapas de Linux. Los contadores de ejecución, como `run_cnt` y `run_time_ns`, requieren habilitar estadísticas y no miden la latencia de solicitudes de extremo a extremo. Para conexiones TCX puede ser necesario examinar los enlaces y puntos de conexión de bpftool, además de `tc filter show`.
 
-# Verify route is in BPF map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf routes dump | grep "10.244.1.5"
+### Logs y capturas
 
-# Check conntrack entries
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf conntrack dump | grep "10.244.1.5"
+`bpfLogLevel` admite **Off, Info o Debug**, no Warn/Warning. Los logs de programas van al trace pipe de BPF; los logs del componente Felix van a stdout del contenedor. Use la herramienta de trazado y el nodo adecuados para revisar los logs de programas y políticas. Un despliegue de Pods correcto no demuestra que una ruta de paquetes esté permitida.
 
-# Verify policy is allowing traffic
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf policy dump
-```
+Calico puede redirigir directamente al extremo de la carga. Por ello, una captura en el veth del lado del host puede omitir tráfico que evita ese hook. Capture en la ruta real y correlacione las políticas, las rutas, conntrack y los backends de Services.
 
-**Problemas de balanceo de carga de Service:**
+## Reemplazo del manejo de Services de Kubernetes y sus límites
 
-```bash
-# Check service backends in NAT map
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat dump | grep "10.96.0.1"
+Calico eBPF reenvía tráfico de Services, pero no aprovisiona balanceadores externos de la nube. Mantenga separadas las responsabilidades de los controladores de AWS o de la nube. La implementación actual incluye mapas NAT IPv4/IPv6, flags de tráfico local y afinidad. La antigua tabla que indicaba falta de soporte para IPv6/Local no refleja las funciones actuales. Verifique el comportamiento de cada opción de kube-proxy antes de considerarla equivalente.
 
-# Verify frontend entry exists
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat frontend list
-```
+Las pruebas funcionales de WireGuard de la versión publicada incluyen modo BPF y configuraciones IPv4/IPv6. Por tanto, WireGuard **no es incompatible en todos los casos** con eBPF. Verifique el CNI, el tipo de tráfico, el kernel, la MTU y la ruta de cifrado reales. La guía general de cifrado contiene restricciones y ejemplos antiguos que no deben aplicarse automáticamente a un SO actual.
 
-***
+Para cargas que usan la red del host, revise por separado las opciones CTLB/NAT del host y las políticas HostEndpoint. La guía eBPF actual sigue excluyendo SCTP y clústeres que mantienen una mezcla de eBPF, dataplane estándar o Windows. Windows necesita la arquitectura HNS admitida.
 
-## Limitaciones y problemas conocidos
+Para rutas de balanceadores de AWS/GCP, la guía actual de solución de problemas de Calico advierte expresamente que DSR no funciona correctamente cuando el balanceador externo exige una respuesta a través del destino original. Use el modo admitido documentado y valide la ruta completa. Los requisitos de misma subred y comprobación de origen no bastan para establecer compatibilidad con un balanceador de la nube.
 
-### Limitaciones actuales
+## Configuración y observabilidad
 
-| Limitación              | Descripción            | Solución alternativa                      |
-| ----------------------- | ---------------------- | ------------------------------- |
-| **Pods en red de host** | Compatibilidad limitada con políticas | Usar iptables para Pods de host      |
-| **IPv6**                | Compatibilidad parcial        | Usar modo dual-stack             |
-| **Wireguard**           | No compatible con eBPF          | Usar IPsec o deshabilitar el cifrado |
-| **Topología de Service**    | Compatibilidad limitada        | Usar kube-proxy estándar         |
-| **Nodos Windows**       | No compatible          | Usar dataplane iptables          |
-
-### Problemas conocidos
-
-```yaml
-# Issue: BPF program fails to load
-# Cause: Kernel too old or BTF missing
-# Solution: Upgrade kernel or enable BTF
-
-# Issue: Services not accessible
-# Cause: kube-proxy and Calico BPF conflict
-# Solution: Fully disable kube-proxy
-
-# Issue: NodePort not working
-# Cause: DSR mode with non-routable client IPs
-# Solution: Use Tunnel mode instead of DSR
-
-# Issue: High memory usage
-# Cause: Large conntrack table
-# Solution: Tune conntrack limits
-```
-
-### Comprobar si hay problemas
-
-```bash
-# Check for BPF verifier errors
-dmesg | grep -i "bpf\|verifier"
-
-# Check Felix logs for BPF errors
-kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i error
-
-# Verify BPF map limits
-cat /proc/sys/kernel/bpf_map_max_entries
-```
-
-***
-
-## Reemplazo de Kube-proxy
-
-### Reemplazo completo de Kube-proxy
-
-Calico eBPF puede reemplazar por completo a kube-proxy para el balanceo de carga de Service:
+Conserve los valores predeterminados de la versión mientras las mediciones no justifiquen un cambio. Estos campos ilustran nombres y valores actuales para una instalación con eBPF ya habilitado. Intégrelos mediante quien administra la configuración:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -711,139 +409,43 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  bpfEnabled: true
-  bpfKubeProxyIptablesCleanupEnabled: true
-  bpfKubeProxyMinSyncPeriod: 1s
-
-  # Disable kube-proxy IPVS/iptables cleanup
-  # (Calico will manage service rules)
+  bpfLogLevel: "Off"
+  bpfExternalServiceMode: Tunnel
+  bpfConnectTimeLoadBalancing: TCP
+  bpfHostNetworkedNATWithoutCTLB: Enabled
 ```
 
-### Deshabilitar kube-proxy
+Conserve un `bpfDataIfacePattern` que cubra las interfaces reales, en lugar de sustituirlo por un `eth*` arbitrario o una expresión demasiado estrecha. Es una expresión regular que debe incluir las interfaces de red subyacente y Services, excluyendo las de cargas y los dispositivos especiales de Calico. El nombre de una interfaz no demuestra soporte de descarga XDP al hardware.
 
-```bash
-# Method 1: Scale to zero
-kubectl -n kube-system scale deployment kube-proxy --replicas=0
+`bpfKubeProxyEndpointSlicesEnabled` no es un campo Felix actual. La antigua opción booleana CTLB está obsoleta, no eliminada. Entre las claves actuales de timeout de conntrack figuran `tcpEstablished`, `tcpFinsSeen`, `tcpResetSeen`, `udpTimeout`, `genericTimeout` e `icmpTimeout`; `tcpClosing`, `udp` e `icmp` no corresponden a esas claves. Mida la ocupación y la memoria de los mapas antes de asignar un millón de entradas a cualquier despliegue.
 
-# Method 2: Delete DaemonSet
-kubectl -n kube-system delete ds kube-proxy
+El administrador de endpoints de la versión publicada registra estos indicadores reales de tipo gauge:
 
-# Method 3: Prevent scheduling (reversible)
-kubectl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico":"true"}}}}}'
-```
+| Métrica | Significado |
+| --- | --- |
+| `felix_bpf_dataplane_endpoints` | Endpoints BPF administrados |
+| `felix_bpf_dirty_dataplane_endpoints` | Endpoints que siguen pendientes de actualizar después de un fallo |
+| `felix_bpf_happy_dataplane_endpoints` | Endpoints programados correctamente |
 
-### Verificar el reemplazo
+Habilite el endpoint de métricas Felix documentado mediante quien lo administra. Examine el scrape real y las declaraciones HELP/TYPE. No se verificó que la antigua lista `calico_bpf_*` correspondiera a métricas exportadas. Los gauges de endpoints no sustituyen directamente a la ocupación de mapas, los contadores de paquetes rechazados ni la latencia de la aplicación.
 
-```bash
-# Check no kube-proxy rules in iptables
-iptables -t nat -L KUBE-SERVICES 2>/dev/null | wc -l
-# Should be 0 or minimal
-
-# Verify Calico is handling services
-kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
-  calico-bpf nat frontend list
-
-# Test service connectivity
-kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.svc
-```
-
-### Comparación de funcionalidades de Service
-
-| Funcionalidad         | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
-| --------------- | --------------------- | ----------------- | ----------- |
-| ClusterIP       | Sí                   | Sí               | Sí         |
-| NodePort        | Sí                   | Sí               | Sí         |
-| LoadBalancer    | Sí                   | Sí               | Sí         |
-| ExternalIPs     | Sí                   | Sí               | Sí         |
-| SessionAffinity | Sí                   | Sí               | Sí         |
-| Topología        | Sí                   | Sí               | Limitada     |
-| ProxyMode       | iptables              | IPVS              | eBPF        |
-
-***
-
-## Prácticas recomendadas
-
-### Recomendaciones de implementación
-
-1. **Verifica los requisitos del kernel** antes de habilitar eBPF
-2. **Prueba primero en un clúster que no sea de producción**
-3. **Habilita de forma incremental** utilizando selectores de nodos
-4. **Supervisa el rendimiento** durante el despliegue
-5. **Ten listo un plan de reversión**
-
-### Prácticas recomendadas de configuración
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Production settings
-  bpfEnabled: true
-  bpfLogLevel: Warn  # Reduce logging in production
-
-  # Interface detection
-  bpfDataIfacePattern: "^((en|eth)[0-9]+)"
-
-  # Service mode based on topology
-  bpfExternalServiceMode: Tunnel  # Safe default
-
-  # Connection tracking
-  bpfConnectTimeLoadBalancingEnabled: true
-
-  # Cleanup legacy rules
-  bpfKubeProxyIptablesCleanupEnabled: true
-```
-
-### Supervisar el dataplane eBPF
-
-```yaml
-# Prometheus metrics to monitor
-calico_bpf_num_maps                    # Number of BPF maps
-calico_bpf_map_size_bytes              # Size of each map
-calico_bpf_conntrack_entries           # Active connections
-calico_bpf_nat_frontend_entries        # Service frontends
-calico_bpf_nat_backend_entries         # Service backends
-felix_bpf_dataplane_apply_time_seconds # Dataplane sync time
-```
-
-***
-
-## Resumen
-
-El dataplane eBPF de Calico representa un avance significativo en las redes de Kubernetes:
-
-| Beneficio           | Impacto                      |
-| ----------------- | --------------------------- |
-| **Rendimiento**   | Hasta un 60% de reducción de latencia |
-| **Escalabilidad**   | Búsqueda de reglas O(1) frente a O(n)    |
-| **Eficiencia**    | Menor uso de CPU             |
-| **Observabilidad** | Métricas enriquecidas basadas en BPF      |
-| **Simplicidad**    | Reemplaza kube-proxy         |
-
-### Cuándo usar el dataplane eBPF
-
-* Cargas de trabajo de alto throughput
-* Aplicaciones sensibles a la latencia
-* Clústeres grandes con muchos servicios
-* Entornos que requieren observabilidad detallada
-* Kernel de Linux 5.3+ disponible
-
-### Cuándo mantener iptables
-
-* Se requiere compatibilidad con nodos Windows
-* Versiones de kernel más antiguas
-* Se necesita cifrado Wireguard
-* Requisitos complejos de topología de Service
-* Entornos reacios al riesgo que requieren tecnología probada
+Seleccione el dataplane según la compatibilidad actual de la plataforma, las funciones necesarias de Services, políticas y cifrado, y el comportamiento medido de la carga. Ensaye tanto la transición como la reversión. eBPF e iptables pueden ser adecuados según el clúster; ninguno es siempre la opción correcta.
 
 ***
 
 ## Referencias
 
-* [Documentación eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/)
-* [Documentación eBPF de Linux](https://ebpf.io/what-is-ebpf/)
-* [Guía de referencia de BPF y XDP](https://docs.cilium.io/en/stable/bpf/)
-* [Guía de migración eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
-* [Manual de bpftool](https://man7.org/linux/man-pages/man8/bpftool.8.html)
+* [Requisitos de instalación eBPF de Calico 3.32](https://docs.tigera.io/calico/latest/operations/ebpf/install)
+* [Migración y reversión eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+* [Solución de problemas y CLI eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
+* [Configuración Felix](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
+* [API de instalación del operador](https://docs.tigera.io/calico/latest/reference/installation/api)
+* [BTF del kernel](https://docs.kernel.org/bpf/btf.html)
+* [libbpf y CO-RE](https://docs.kernel.org/bpf/libbpf/libbpf_overview.html)
+* [Diseño del mapa de rutas de Calico 3.32.2](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/routes/map.go)
+* [Mapas NAT de Calico 3.32.2](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/maps.go)
+* [Diseño de conntrack v4 de Calico 3.32.2](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/conntrack/v4/map.go)
+* [Cargador de balanceo al conectar de Calico 3.32.2](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/connecttime.go)
+* [Pruebas funcionales de WireGuard de Calico 3.32.2](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/fv/wireguard_test.go)
+* [Referencia de programas de bpftool](https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-prog.rst)
+* [Referencia de mapas de bpftool](https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-map.rst)

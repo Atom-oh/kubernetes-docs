@@ -1,7 +1,7 @@
 # Kubernetes の拡張
 
 > **レビュー済みのアップストリーム Kubernetes バージョン**: Kubernetes 1.35, 1.36, 1.37
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 Kubernetes は拡張性を念頭に設計されたプラットフォームであり、さまざまな方法で機能を拡張できます。この章では、Kubernetes を拡張する各種方法と、Amazon EKS で拡張機能を活用する方法を説明します。
 
@@ -20,7 +20,7 @@ Kubernetes は拡張性を念頭に設計されたプラットフォームであ
 12. [ベストプラクティス](#best-practices)
 13. [まとめ](#conclusion)
 
-## Kubernetes 拡張の概要
+## Kubernetes 拡張の概要 {#kubernetes-extension-overview}
 
 Kubernetes には、基本機能を拡張およびカスタマイズするための多様な拡張ポイントがあります。主な拡張ポイントは次のとおりです。
 
@@ -177,7 +177,7 @@ versions:
   storage: true
 ```
 
-上記の例では、`v1alpha1`、`v1beta1`、`v1` の 3 バージョンが提供されますが、新規の書き込みには `v1` が使用されます。これは versions のフラグメントです。各バージョンに構造化スキーマを含めてください。既存オブジェクトは自動的に書き換えられないため、古い storedVersions エントリを削除する前にストレージを移行してください。
+上記の例では、`v1alpha1`、`v1beta1`、`v1` の 3 バージョンが提供されますが、新規の書き込みには `v1` が使用されます。これは versions のコード断片です。各バージョンに構造化スキーマを含めてください。既存オブジェクトは自動的に書き換えられないため、古い storedVersions エントリを削除する前にストレージを移行してください。
 
 ### Conversion Webhook
 
@@ -199,7 +199,7 @@ spec:
       - v1
 ```
 
-## Operator パターン
+## Operator パターン {#operator-pattern}
 
 Operator パターンは、Custom Resources と Controller を組み合わせて、複雑なアプリケーションの運用知識を自動化する方法です。
 
@@ -329,7 +329,7 @@ make deploy IMG="$OPERATOR_IMAGE"
 5. **OpenTelemetry Operator**: Jaeger v2 をデプロイします。旧 Jaeger Operator は廃止された Jaeger v1 のみをサポートします。
 6. **Strimzi Kafka Operator**: Apache Kafka クラスターを管理する
 7. **Istio in-cluster Operator (removed in 1.24)**: 過去の例です。サポートされている Helm/istioctl のインストールワークフローを使用してください。
-## Admission Controller
+## Admission Controller {#admission-controllers}
 
 Admission Controller は、Kubernetes API Server へのリクエストをインターセプトし、変更または検証する Plugin です。
 
@@ -531,7 +531,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**: Service Mesh の Sidecar 注入
 4. **cert-manager**: TLS 証明書管理
 
-## API Server の拡張
+## API Server の拡張 {#api-server-extensions}
 
 API Server 拡張は、Kubernetes API Server に新しいエンドポイントを追加する方法です。
 
@@ -631,7 +631,7 @@ Aggregation Layer により、複数の API Server が単一の API Server と�
           +-----------------------+               +-------------------------+
 ```
 
-## Scheduler の拡張
+## Scheduler の拡張 {#scheduler-extensions}
 
 Scheduler 拡張は、Kubernetes Scheduler の動作をカスタマイズする方法です。
 
@@ -723,7 +723,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ## Cloud Controller Manager
@@ -1053,7 +1053,7 @@ kubectl get nodes -o wide
 kubectl -n kube-system get daemonsets
 ```
 
-## Device Plugin
+## Device Plugin {#device-plugins}
 
 Device Plugin は、Kubernetes と特殊なハードウェアの間にインターフェイスを提供します。
 
@@ -1125,7 +1125,7 @@ spec:
 4. **InfiniBand Device Plugin**: InfiniBand デバイス管理
 5. **SR-IOV Network Device Plugin**: SR-IOV ネットワークデバイス管理
 
-## Amazon EKS の拡張機能
+## Amazon EKS の拡張機能 {#extension-features-in-amazon-eks}
 
 EKS のバージョンサポートはアップストリームと異なります。2026-10-12 時点で、EKS の標準サポートは 1.34～1.37 を対象としています。各 Add-on/Controller の互換性マトリクスも確認してください。
 
@@ -1254,7 +1254,7 @@ spec:
 EOF
 ```
 
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
 Kubernetes 拡張機能の実装時に考慮すべきベストプラクティスを見ていきましょう。
 
@@ -1298,7 +1298,7 @@ Kubernetes 拡張機能の実装時に考慮すべきベストプラクティス
 4. **Security Group**: 適切な Security Group を設定する
 5. **コスト最適化**: 適切なインスタンスタイプとサイズを選択する
 
-## まとめ
+## まとめ {#conclusion}
 
 Kubernetes には、基本機能を拡張およびカスタマイズするためのさまざまな拡張ポイントがあります。Custom Resources、Operator、Admission Controller、API Server 拡張、Scheduler 拡張、CSI、CNI、および Device Plugin により、Kubernetes をさまざまな環境や要件に適応させることができます。
 

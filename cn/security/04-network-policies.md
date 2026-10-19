@@ -1,7 +1,7 @@
 # 网络策略
 
 > **审查基线**：Kubernetes 1.35 OpenAPI、Cilium 1.20.3、Calico 3.32.2 和当前 AWS 文档。离线检查无法证明与集群兼容。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 Kubernetes NetworkPolicy 是用于控制 Pod 之间流量的防火墙规则。本文介绍基本 NetworkPolicy 以及 Cilium/Calico 扩展。各部分是彼此独立的示例；合并所有策略会改变实际生效的权限。未执行集群/云部署或实时连通性测试。
 
@@ -1486,7 +1486,7 @@ aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --con
 
 ### EKS 增强网络安全策略（2025 年 12 月）
 
-> **公告日期**：December 15, 2025 · [来源](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+> **公告日期**：2025 年 12 月 15 日 · [来源](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
 此功能确实存在，但其资源使用 **`networking.k8s.aws/v1alpha1`**。`ClusterNetworkPolicy` 的作用范围是整个集群，且必须指定 `tier`；下面的命名空间示例使用 `ApplicationNetworkPolicy` 配置基于 DNS 的 egress。EC2 Linux 上支持标准/管理型 VPC CNI 策略，不代表所有计算模式都支持这些策略。DNS 规则仅在 **Auto Mode 启动的 EC2 实例**上强制执行，即使集群是混合模式也如此。
 

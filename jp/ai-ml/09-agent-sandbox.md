@@ -1,7 +1,7 @@
 # EKS上のAgent Sandbox：AIエージェント向けの分離されたステートフルランタイム
 
 > **サポート対象バージョン**: Agent Sandbox v1.0.6（API `v1beta1`）、Python SDK `k8s-agent-sandbox` 1.0.6、`cpuOptions.nestedVirtualization` 用の Karpenter v1.13.0+
-> **最終更新日**: October 16, 2026
+> **最終更新日**: 2026年10月16日
 
 [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox)（`kubernetes-sigs/agent-sandbox`）は、**分離されたステートフルな単一インスタンスのワークロード**向けに、`Sandbox` カスタムリソースとコントローラーを追加する Kubernetes SIG Apps のサブプロジェクトです。Sandbox は、安定した ID、任意の永続ストレージ、ライフサイクル制御（有効期限、一時停止、再開）を備えた単一の Pod です。これらは Deployment や StatefulSet では直接モデル化できません。一般的な利用者は、LLM が生成したコードを実行する AI エージェント、強化学習（RL）のロールアウト、ノートブック、ユーザーごとの開発環境です。
 
@@ -24,13 +24,13 @@
 
 エージェントプラットフォームでは通常、数千もの短期間だけ使われる、または大半の時間アイドル状態にある環境が必要で、それぞれが1つのセッションまたはユーザーに属します。各環境をサイズ1の StatefulSet と Service、PVC の組み合わせでモデル化することはできますが、有効期限、ウォームプール、Claim のレイテンシ、分離のデフォルト設定は独自コードに委ねられます。
 
-### プロジェクトの状況（October 16, 2026）
+### プロジェクトの状況（2026年10月16日）
 
 | 項目 | 値 |
 |------|-------|
-| リポジトリ作成日 | August 12, 2025 |
-| v1.0.0 | August 28, 2026：`v1alpha1` と変換 Webhook を削除し、すべての CRD が `v1beta1` のみを提供 |
-| 最新リリース | v1.0.7（October 15, 2026）；v1.0.0 以降、パッチリリースを毎週公開。この章は v1.0.6 に基づく |
+| リポジトリ作成日 | 2025年8月12日 |
+| v1.0.0 | 2026年8月28日：`v1alpha1` と変換 Webhook を削除し、すべての CRD が `v1beta1` のみを提供 |
+| 最新リリース | v1.0.7（2026年10月15日）。v1.0.0 以降、パッチリリースは毎週公開されています。この章は v1.0.6 に基づきます |
 | API グループ | `agents.x-k8s.io/v1beta1`（コア）、`extensions.agents.x-k8s.io/v1beta1`（拡張機能） |
 | コントローラーの Namespace | `agent-sandbox-system` |
 | SDK | Python（`k8s-agent-sandbox`、Python ≥ 3.11）、Go（`sigs.k8s.io/agent-sandbox/clients/go/sandbox`）、TypeScript |
@@ -247,7 +247,7 @@ EKS 固有の注意点：
 - **gVisor**：カスタム AMI または起動時にバイナリをインストールし、ランタイムハンドラーを登録します。AL2023 では、nodeadm の `NodeConfig` は `spec.containerd.config` にインライン TOML を指定できます。containerd 1.x は設定バージョン2（`plugins."io.containerd.grpc.v1.cri"`）を、2.x はバージョン3（`plugins."io.containerd.cri.v1.runtime"`）を使うため、ランタイムセクションを記述する前に AMI 上で `containerd --version` を確認してください。
 - **Kata とネストされた仮想化**：EC2 は、M7i、M7i-flex、M8i、M8id、M8i-flex、C7i、C7i-flex、C8i、C8id、C8i-flex、R7i、R7iz、R8i、R8id、R8i-flex、X8i、I7i、I7ie で、CPU オプション `NestedVirtualization=enabled` によって有効化するネストされた仮想化（L1 として KVM または Hyper-V）をサポートします。性能が重要なワークロードには、AWS はベアメタルを推奨しています。
   - Karpenter v1.13.0 以降では、`EC2NodeClass` の `spec.cpuOptions.nestedVirtualization: enabled` が公開され、`nested-virtualization` を報告するインスタンスタイプに絞り込まれます。
-  - マネージドノードグループについては、containers-roadmap の要望（[#2784](https://github.com/aws/containers-roadmap/issues/2784)）は、ユーザーから起動テンプレートの設定が反映されるとの報告があった後、October 12, 2026 に対応済みとしてクローズされました。これを前提とする前に、テストノードで確認してください（`grep -cE 'vmx|svm' /proc/cpuinfo`）。
+  - マネージドノードグループについては、containers-roadmap の要望（[#2784](https://github.com/aws/containers-roadmap/issues/2784)）は、ユーザーから起動テンプレートの設定が反映されるとの報告があった後、2026年10月12日に対応済みとしてクローズされました。これを前提とする前に、テストノードで確認してください（`grep -cE 'vmx|svm' /proc/cpuinfo`）。
 - **Fargate** は Pod ごとに独自の VM で実行されますが、VPC CNI は Fargate Pod にネットワークポリシーを適用できないため、テンプレートの管理対象 NetworkPolicy はそこで適用されません。選択する前に Fargate に関する考慮事項を確認してください。
 
 Sandbox Pod がハンドラーのないノードに配置されないよう、準備済みノードに RuntimeClass を紐付けます。

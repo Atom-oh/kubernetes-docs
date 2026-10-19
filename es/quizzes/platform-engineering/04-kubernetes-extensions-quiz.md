@@ -1,6 +1,6 @@
 # Cuestionario sobre mecanismos de extensión de Kubernetes
 
-[Kubernetes extensions](../../platform-engineering/04-kubernetes-extensions.md)
+[Extensiones de Kubernetes](../../platform-engineering/04-kubernetes-extensions.md)
 
 Los temas originales de las 20 preguntas se han revisado conforme a las API y el comportamiento actuales.
 
@@ -212,7 +212,7 @@ spec:
 <details>
 <summary>Mostrar respuesta</summary>
 
-Haz coincidir los deployments de apps/v1 CREATE/UPDATE y selecciona kubernetes.io/metadata.name: production. Configura un servidor/Service/ruta de validación real, el paquete CA, failurePolicy, timeoutSeconds, sideEffects y admissionReviewVersions. El controlador /mutate de la guía no es un validador de Deployment. Para un límite de réplicas por sí solo, usa su ejemplo de VAP/binding y haz coincidir tanto `deployments` como `deployments/scale`, de modo que las actualizaciones de HPA y `kubectl scale` no puedan omitir el límite.
+Configura reglas para los Deployments de `apps/v1` en `CREATE` y `UPDATE`, y selecciona `kubernetes.io/metadata.name: production`. Configura un servidor, un Service y una ruta de validación reales, el paquete de CA, `failurePolicy`, `timeoutSeconds`, `sideEffects` y `admissionReviewVersions`. El manejador `/mutate` de la guía no valida Deployments. Para limitar únicamente la cantidad de réplicas, usa su ejemplo de VAP/binding y haz coincidir tanto `deployments` como `deployments/scale`, de modo que las actualizaciones de HPA y `kubectl scale` no puedan omitir el límite.
 
 </details>
 
@@ -221,7 +221,7 @@ Haz coincidir los deployments de apps/v1 CREATE/UPDATE y selecciona kubernetes.i
 <details>
 <summary>Mostrar respuesta</summary>
 
-Trata NotFound como una finalización exitosa. Durante la eliminación, termina la limpieza idempotente antes de eliminar únicamente tu finalizer. Conserva un finalizer antes de crear recursos externos, comprueba la propiedad de los recursos secundarios y reconcilia los campos de tu propiedad. Reintenta los conflictos y aplica parches al status observado que haya cambiado. No etiquetes pseudocódigo como un controller ejecutable.
+Trata NotFound como una finalización correcta. Durante la eliminación, termina la limpieza idempotente antes de quitar únicamente tu finalizer. Persiste un finalizer antes de crear recursos externos, comprueba quién es propietario de los recursos secundarios y reconcilia los campos que administra. Reintenta ante conflictos y aplica parches al status observado cuando cambie. No presentes pseudocódigo como un controller ejecutable.
 
 </details>
 
@@ -239,6 +239,6 @@ Además de los esquemas y la creación de cargas de trabajo, diseña el fencing 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Compila y registra plugins con las interfaces del framework de la versión menor exacta de Kubernetes. Alinea los nombres de profile y el schedulerName de Pod; prueba los fallos de Filter/Score y de reserva, permiso y binding. El YAML por sí solo no puede instalar un plugin. Considera primero node affinity para requisitos de zona simples.
+Compila y registra plugins con las interfaces del framework de la versión menor exacta de Kubernetes. Alinea el nombre del perfil y el `schedulerName` del Pod; prueba los fallos de Filter/Score y de reserva, permiso y binding. El YAML por sí solo no puede instalar un plugin. Considera primero node affinity para requisitos de zona simples.
 
 </details>

@@ -1,7 +1,7 @@
 # Políticas de Kubernetes
 
 > **Versiones compatibles**: Kubernetes 1.35 - 1.37
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 En Kubernetes, las políticas son conjuntos de reglas que controlan y regulan el comportamiento de los clústeres y las cargas de trabajo. Mediante las políticas, puedes administrar diversos aspectos, como la seguridad, el uso de recursos y la comunicación de red. En este capítulo, aprenderemos sobre los distintos tipos de políticas en Kubernetes, cómo implementarlas y cómo administrar políticas en Amazon EKS.
 

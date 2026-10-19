@@ -6,7 +6,7 @@
 
 我们使用 Python 3.12 和 `ray[serve]==2.58.0` 检查了一个小型 CPU 响应示例。在此环境中，HAProxy 模块导入了 Jinja2，但额外安装项并未提供它；显式添加 `Jinja2==3.1.6` 后，导入问题得到解决。其他环境可能已通过其他依赖安装了它。
 
-`ray[llm]` 额外项会添加 vLLM 等大型推理依赖。本次未安装此额外项，也未运行模型权重、GPU 或 EKS 工作负载。以下验证涵盖 Serve 配置、HTTP 响应和 DeploymentHandle 调用。
+`ray[llm]` 额外项会添加 vLLM 等大型推理依赖。本次没有安装该额外项，也没有加载模型权重、使用 GPU 或在 EKS 上运行工作负载。以下验证涵盖 Serve 配置、HTTP 响应和 DeploymentHandle 调用。
 
 ## Deployments、Applications 与请求路径
 
@@ -98,7 +98,7 @@ finally:
 
 RayService 是一种在 EKS 上以声明式方式管理 Serve 应用和 RayClusters 生命周期的选择，并非每个生产部署都必须使用。请区分应用配置变更与集群变更，以及 `NewCluster` 和基于 Gateway 的增量升级策略。
 
-KubeRay 1.7 启用的增量功能门控仍需要 Gateway API/实现、备用容量、就绪条件和排空条件。请针对关闭限制测试流式和长时间运行的请求。不要描述成每次升级都能保证请求零丢失。
+KubeRay 1.7 启用了增量升级功能门控，但仍需要 Gateway API/实现、备用容量、就绪条件和排空条件。应在设定的关闭时限内测试流式和长时间运行请求的行为。不要描述成每次升级都能保证请求零丢失。
 
 HTTP 选项等集群级启动设置在动态更新方面存在限制。Deployment 变更可能只需轻量级重新配置，也可能需要替换 actor。重启/替换的副本需要承担模型初始化和状态恢复成本。
 

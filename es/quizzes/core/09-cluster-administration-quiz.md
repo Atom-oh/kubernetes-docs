@@ -1,20 +1,24 @@
+# Cuestionario de administración de clústeres
+
+Este cuestionario abarca operaciones autogestionadas y de EKS, copias de seguridad, mantenimiento, supervisión y recuperación. Se conservan los 15 ejercicios originales; los procedimientos de etcd a nivel de host no se aplican al plano de control administrado de EKS.
+
 ## Preguntas de respuesta corta
 
-1. Explica los procedimientos de backup y restore para la base de datos etcd en un cluster Kubernetes.
+1. Explica los procedimientos para respaldar y restaurar la base de datos etcd de un clúster Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Procedimiento de backup de etcd:**
+**Procedimiento de copia de seguridad de etcd:**
 
-1. **Verificar la instalación de la herramienta etcdctl:**
+1. **Verifica que la herramienta etcdctl esté instalada:**
    ```bash
    etcdctl version
    ```
 
-2. **Ejecutar el comando de backup:**
+2. **Ejecuta el comando de copia de seguridad:**
    ```bash
    ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
      --endpoints=https://127.0.0.1:2379 \
@@ -23,172 +27,133 @@
      --key=/etc/kubernetes/pki/etcd/server.key
    ```
 
-3. **Verificar el archivo de backup:**
+3. **Verifica el archivo de copia de seguridad:**
    ```bash
-   ETCDCTL_API=3 etcdctl snapshot status snapshot.db --write-out=table
+   etcdutl snapshot status snapshot.db --write-out=table
    ```
 
-4. **Almacenar el archivo de backup en una ubicación segura:**
-   - Almacenamiento fuera del cluster
+4. **Guarda el archivo en una ubicación segura:**
+   - Almacenamiento fuera del clúster
    - Almacenamiento en la nube (S3, GCS, etc.)
-   - Ubicación física diferente
+   - Otra ubicación física
 
-**Procedimiento de restore de etcd:**
+**Procedimiento de restauración de etcd:**
 
-1. **Detener todos los API servers para la restauración:**
-   ```bash
-   sudo systemctl stop kube-apiserver
-   ```
+1. Valida la instantánea y conserva los datos originales, PKI y claves/configuración del proveedor de cifrado. Una instantánea de etcd no incluye archivos de volúmenes persistentes ni toda la configuración del host.
+2. Detén todos los API servers y los procesos etcd afectados siguiendo el procedimiento de la distribución. kubeadm suele usar Pods estáticos, no unidades systemd independientes; detener kubelet por sí solo no detiene esos contenedores.
+3. Restaura sin conexión en un directorio nuevo con una versión compatible de etcdutl. Este ejemplo de un solo miembro no sirve como comando de recuperación de un clúster de alta disponibilidad:
+```bash
+etcdutl snapshot restore snapshot.db \
+  --data-dir=/var/lib/etcd-restore \
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
+```
 
-2. **Detener el Service etcd:**
-   ```bash
-   sudo systemctl stop etcd
-   ```
+4. En una configuración de alta disponibilidad, restaura la misma instantánea en cada miembro, con su propio nombre/URL de pares y la misma lista completa de miembros. Aumenta la revisión lo suficiente para superar las escrituras hechas desde la instantánea e invalidar las cachés de watch.
+5. Configura el manifiesto/servicio de etcd para usar los datos restaurados, con la propiedad y los certificados correctos. Comprueba el cuórum y la salud de etcd antes de reiniciar los API servers/controladores; después verifica los nodos y las cargas de trabajo.
+6. Sigue el [procedimiento oficial de recuperación](https://etcd.io/docs/v3.6/op-guide/recovery/). En EKS, restaura los recursos y datos de las aplicaciones con herramientas de copia de seguridad admitidas, en lugar de acceder al etcd administrado.
 
-3. **Hacer backup del directorio de datos (opcional):**
-   ```bash
-   sudo mv /var/lib/etcd /var/lib/etcd.bak
-   ```
-
-4. **Crear un nuevo directorio de datos desde el snapshot:**
-   ```bash
-   ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
-     --data-dir=/var/lib/etcd-restore \
-     --name=master \
-     --initial-cluster=master=https://127.0.0.1:2380 \
-     --initial-cluster-token=etcd-cluster-1 \
-     --initial-advertise-peer-urls=https://127.0.0.1:2380
-   ```
-
-5. **Configurar etcd para usar el directorio de datos restaurado:**
-   ```bash
-   sudo mv /var/lib/etcd-restore /var/lib/etcd
-   sudo chown -R etcd:etcd /var/lib/etcd
-   ```
-
-6. **Reiniciar el Service etcd:**
-   ```bash
-   sudo systemctl start etcd
-   ```
-
-7. **Verificar el estado de etcd:**
-   ```bash
-   ETCDCTL_API=3 etcdctl endpoint health \
-     --endpoints=https://127.0.0.1:2379 \
-     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-     --cert=/etc/kubernetes/pki/etcd/server.crt \
-     --key=/etc/kubernetes/pki/etcd/server.key
-   ```
-
-8. **Reiniciar el API server:**
-   ```bash
-   sudo systemctl start kube-apiserver
-   ```
-
-9. **Verificar el estado del cluster:**
-   ```bash
-   kubectl get nodes
-   kubectl get pods --all-namespaces
-   ```
-
-**Mejores prácticas:**
-- Configurar programaciones de backup periódicas (por ejemplo, diarias)
-- Verificar el estado del cluster etcd antes del backup
-- Validar la integridad del archivo de backup
-- Probar regularmente los procedimientos de restore
-- Incluir timestamps en los nombres de archivo de backup
-- Mantener varias versiones de backup
-- Documentar los procedimientos de backup y restore
+**Prácticas recomendadas:**
+- Programa copias de seguridad periódicas (por ejemplo, a diario).
+- Comprueba el estado del clúster etcd antes de hacer la copia.
+- Valida la integridad del archivo de copia de seguridad.
+- Prueba periódicamente los procedimientos de restauración.
+- Incluye marcas de tiempo en los nombres de archivo.
+- Conserva varias versiones de las copias.
+- Documenta los procedimientos de copia y restauración.
 </details>
 
-2. Explica el procedimiento para el mantenimiento de node en un cluster Kubernetes y describe las diferencias entre los comandos `cordon`, `drain` y `uncordon`.
+2. Explica el procedimiento de mantenimiento de nodos de un clúster Kubernetes y las diferencias entre los comandos `cordon`, `drain` y `uncordon`.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Procedimiento de mantenimiento de node:**
+**Procedimiento de mantenimiento de nodos:**
 
-1. **Comprobar el estado del node:**
+1. **Comprueba el estado del nodo:**
    ```bash
    kubectl get nodes
    kubectl describe node <node_name>
    ```
 
-2. **Aplicar cordon al node:**
+2. **Marca el nodo como no programable (cordon):**
    ```bash
    kubectl cordon <node_name>
    ```
 
-3. **Aplicar drain al node:**
+3. **Desaloja sus Pods (drain):**
    ```bash
-   kubectl drain <node_name> --ignore-daemonsets --delete-emptydir-data
+   kubectl drain <node_name> --ignore-daemonsets
    ```
 
-4. **Realizar tareas de mantenimiento:**
+4. **Realiza las tareas de mantenimiento:**
    - Actualizaciones de software
    - Actualizaciones del kernel
-   - Reemplazo de hardware
+   - Sustitución de hardware
    - Cambios de configuración
 
-5. **Aplicar uncordon al node después de completar las tareas:**
+5. **Vuelve a permitir la programación en el nodo al terminar (uncordon):**
    ```bash
    kubectl uncordon <node_name>
    ```
 
-6. **Verificar el estado del node:**
+6. **Verifica el estado del nodo:**
    ```bash
    kubectl get nodes
    ```
 
-**Diferencias entre comandos:**
+**Diferencias entre los comandos:**
 
 1. **`kubectl cordon <node_name>`:**
-   - Marca el node como no programable.
-   - Los nuevos pods no se programarán en el node.
-   - Los pods que ya están en ejecución continúan ejecutándose.
-   - El indicador `SchedulingDisabled` aparece en el estado del node.
+   - Marca el nodo como no programable.
+   - No se programarán Pods nuevos en ese nodo.
+   - Los Pods que ya se ejecutan allí siguen funcionando.
+   - El estado del nodo muestra el indicador `SchedulingDisabled`.
 
 2. **`kubectl drain <node_name>`:**
-   - Marca el node como no programable (incluye cordon).
-   - Desaloja de forma segura los pods en ejecución del node.
-   - Los pods se reprograman en otros nodes.
-   - Los pods de DaemonSet se ignoran de forma predeterminada (se requiere el flag `--ignore-daemonsets`).
-   - Los pods que usan volúmenes emptyDir pueden perder datos, por lo que requieren manejo especial (flag `--delete-emptydir-data`).
+   - Marca el nodo como no programable (incluye cordon).
+   - Evacúa de forma segura los Pods en ejecución.
+   - Los controladores de cargas de trabajo pueden crear Pods de reemplazo; su programación depende de la capacidad y las restricciones.
+   - drain rechaza los Pods de DaemonSet salvo que se indique `--ignore-daemonsets`; esa opción los deja en ejecución.
+   - Los Pods que usan volúmenes emptyDir pueden perder datos y requerir el tratamiento especial de la opción `--delete-emptydir-data`.
    - Respeta los PodDisruptionBudgets.
 
 3. **`kubectl uncordon <node_name>`:**
-   - Marca el node como programable nuevamente.
-   - Se pueden programar nuevos pods en el node.
-   - Los pods desalojados anteriormente no regresan automáticamente.
+   - Vuelve a marcar el nodo como programable.
+   - Se pueden programar Pods nuevos en él.
+   - Los Pods desalojados no regresan automáticamente.
 
 **Consideraciones de mantenimiento:**
-- Asegurar que el cluster tenga suficiente capacidad libre
-- Configurar PodDisruptionBudgets para workloads críticos
-- Realizar mantenimiento en un node a la vez
-- Ajustar la configuración de auto-scaling durante los períodos de mantenimiento
-- Verificar el estado de los workloads antes y después del mantenimiento
-- Usar estrategias de rolling update
+- Asegura que el clúster tenga capacidad libre suficiente.
+- Configura PodDisruptionBudgets para las cargas de trabajo críticas.
+- Mantén un nodo a la vez.
+- Ajusta la configuración de autoescalado durante el mantenimiento.
+- Verifica el estado de las cargas de trabajo antes y después.
+- Usa estrategias de actualización gradual.
 </details>
 
-3. Explica cómo monitorear y gestionar el uso de recursos en un cluster Kubernetes. Enumera las herramientas y técnicas que deben incluirse.
+3. Explica cómo supervisar y administrar el uso de recursos en un clúster Kubernetes. Enumera las herramientas y técnicas que conviene incluir.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Métodos de monitoreo y gestión de recursos de Kubernetes:**
+**Métodos para supervisar y administrar los recursos de Kubernetes:**
 
-**1. Herramientas básicas de monitoreo:**
+**1. Herramientas básicas de supervisión:**
 
 - **Metrics Server:**
-  - Proporciona métricas básicas de uso de CPU y memoria
-  - Admite comandos `kubectl top`
-  - Método de instalación:
+  - Proporciona métricas básicas de uso de CPU y memoria.
+  - Permite usar los comandos `kubectl top`.
+  - Ejemplo de instalación para Kubernetes 1.34 o posterior (verifica primero los requisitos y si ya está instalado):
     ```bash
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml
     ```
   - Ejemplos de uso:
     ```bash
@@ -196,26 +161,26 @@
     kubectl top pods --all-namespaces
     ```
 
-- **Kubernetes Dashboard:**
-  - Representación visual del estado del cluster y del uso de recursos
-  - Proporciona una interfaz de gestión de recursos para pods, nodes, namespaces, etc.
+- **Headlamp (Kubernetes Dashboard está archivado):**
+  - Presenta visualmente el estado del clúster y el uso de recursos.
+  - Ofrece una interfaz para administrar Pods, nodos, namespaces y otros recursos.
 
-**2. Stack de monitoreo avanzado:**
+**2. Pila avanzada de supervisión:**
 
 - **Prometheus + Grafana:**
-  - Prometheus: recopilación y almacenamiento de métricas
-  - Grafana: visualización de métricas y dashboards
-  - Puede instalarse mediante kube-prometheus-stack o Prometheus Operator
-  - Admite reglas de alerta y dashboards personalizados
+  - Prometheus recopila y almacena métricas.
+  - Grafana visualiza las métricas y los dashboards.
+  - Se pueden instalar con kube-prometheus-stack o Prometheus Operator.
+  - Admiten reglas de alerta y dashboards personalizados.
 
-- **Stack ELK/EFK:**
-  - Elasticsearch: almacenamiento y búsqueda de logs
-  - Logstash/Fluentd: recopilación y procesamiento de logs
-  - Kibana: visualización y análisis de logs
+- **Pila ELK/EFK:**
+  - Elasticsearch almacena y permite buscar logs.
+  - Logstash/Fluentd recopila y procesa logs.
+  - Kibana visualiza y analiza logs.
 
-**3. Técnicas de gestión de recursos:**
+**3. Técnicas de administración de recursos:**
 
-- **Configurar resource requests y limits:**
+- **Configurar solicitudes y límites de recursos:**
   ```yaml
   resources:
     requests:
@@ -226,7 +191,7 @@
       cpu: "500m"
   ```
 
-- **Resource quotas a nivel de namespace (ResourceQuota):**
+- **Cuotas de recursos por namespace (ResourceQuota):**
   ```yaml
   apiVersion: v1
   kind: ResourceQuota
@@ -242,7 +207,7 @@
       limits.memory: 16Gi
   ```
 
-- **Resource limits predeterminados (LimitRange):**
+- **Límites de recursos predeterminados (LimitRange):**
   ```yaml
   apiVersion: v1
   kind: LimitRange
@@ -283,98 +248,103 @@
   ```
 
 - **Vertical Pod Autoscaler (VPA):**
-  - Ajusta automáticamente las requests de CPU y memoria para pods
-  - Proporciona recomendaciones basadas en patrones de uso de recursos
+  - Ajusta automáticamente las solicitudes de CPU y memoria de los Pods.
+  - Ofrece recomendaciones basadas en los patrones de uso de recursos.
 
 - **Cluster Autoscaler:**
-  - Ajusta automáticamente el número de nodes del cluster según los requisitos de los workloads
-  - Agrega nodes cuando los recursos son insuficientes y elimina nodes cuando la utilización es baja
+  - Ajusta automáticamente el número de nodos del clúster según las necesidades de las cargas de trabajo.
+  - Añade nodos cuando faltan recursos y los elimina cuando la utilización es baja.
 
-**4. Mejores prácticas de monitoreo:**
+**4. Prácticas recomendadas de supervisión:**
 
-- Configurar resource requests y limits para todos los pods
-- Configurar alertas para métricas críticas
-- Planificar recursos basándose en el análisis de uso histórico
-- Realizar auditorías periódicas de recursos
-- Analizar tendencias de uso de recursos para optimizar costos
-- Configurar resource quotas adecuadas para entornos de desarrollo, staging y producción
-- Monitorear métricas tanto a nivel de node como a nivel de pod
+- Configura solicitudes y límites de recursos para todos los Pods.
+- Configura alertas para las métricas críticas.
+- Planifica los recursos a partir del análisis del uso histórico.
+- Realiza auditorías periódicas de recursos.
+- Analiza las tendencias de uso para optimizar los costos.
+- Define cuotas de recursos adecuadas para desarrollo, pruebas y producción.
+- Supervisa las métricas tanto de los nodos como de los Pods.
 </details>
 
-4. Explica los principales riesgos que pueden ocurrir durante un upgrade de un cluster Kubernetes y las estrategias para mitigarlos.
+4. Explica los principales riesgos de una actualización de un clúster Kubernetes y las estrategias para mitigarlos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Riesgos de upgrade de cluster Kubernetes y estrategias de mitigación:**
+**Riesgos de actualizar un clúster Kubernetes y estrategias de mitigación:**
 
 **1. Riesgos principales:**
 
 - **Problemas de compatibilidad de API:**
-  - Las API pueden cambiar o eliminarse en nuevas versiones
-  - Algunas Custom Resource Definitions (CRDs) o versiones de API pueden dejar de estar admitidas
+  - Las API pueden cambiar o eliminarse en versiones nuevas.
+  - Algunas Custom Resource Definitions (CRD) o versiones de API pueden dejar de admitirse.
 
-- **Interrupción de workloads:**
-  - Indisponibilidad temporal del API server debido a reinicios de componentes del control plane
-  - Interrupción del Service debido a la reprogramación de pods durante upgrades de nodes
+- **Interrupción de cargas de trabajo:**
+  - El API server puede dejar de estar disponible temporalmente al reiniciar componentes del plano de control.
+  - La reprogramación de Pods durante las actualizaciones de nodos puede interrumpir servicios.
 
 - **Cambios de funcionalidades:**
-  - Los comportamientos predeterminados pueden cambiar y afectar workloads existentes
-  - Problemas de permisos debido a cambios en políticas de seguridad
+  - Los comportamientos predeterminados pueden cambiar y afectar a las cargas de trabajo existentes.
+  - Los cambios en las políticas de seguridad pueden causar problemas de permisos.
 
 - **Problemas de rendimiento:**
-  - Los requisitos de recursos pueden aumentar en nuevas versiones
-  - Posible degradación del rendimiento durante el período inicial de estabilización
+  - Las versiones nuevas pueden requerir más recursos.
+  - Puede haber una degradación del rendimiento durante la estabilización inicial.
 
-- **Complejidad del rollback:**
-  - Algunos upgrades no se pueden revertir fácilmente
-  - Limitaciones de rollback debido a cambios en el formato de datos
+- **Complejidad de la reversión:**
+  - Algunas actualizaciones no se pueden revertir fácilmente.
+  - Los cambios de formato de datos pueden limitar la reversión.
 
 **2. Estrategias de mitigación:**
 
 - **Planificación y preparación exhaustivas:**
-  - **Revisar el changelog:** comprobar cambios, funcionalidades eliminadas y problemas conocidos en la nueva versión
-  - **Verificar la ruta de upgrade:** confirmar que el upgrade directo está admitido desde la versión actual hasta la versión objetivo
-  - **Revisar los requisitos de recursos:** comprobar los requisitos mínimos para la nueva versión
+  - **Revisa el registro de cambios:** identifica cambios, funcionalidades eliminadas y problemas conocidos de la nueva versión.
+  - **Verifica la ruta de actualización:** confirma que se admite la actualización directa desde la versión actual hasta la de destino.
+  - **Revisa los requisitos de recursos:** comprueba los requisitos mínimos de la nueva versión.
 
-- **Probar primero en un entorno de pruebas:**
-  - Realizar el upgrade en un cluster de pruebas similar a producción
-  - Probar todos los workloads críticos y recursos personalizados
-  - Ejecutar suites de pruebas automatizadas
+- **Prueba primero en un entorno de pruebas:**
+  - Actualiza un clúster de pruebas parecido al de producción.
+  - Prueba todas las cargas críticas y los recursos personalizados.
+  - Ejecuta las suites de pruebas automatizadas.
 
-- **Verificar la compatibilidad de API:**
-  - Comprobar las versiones de API en uso:
+- **Verifica la compatibilidad de API:**
+  - Enumera las versiones de API que se ofrecen actualmente (esto no indica qué versiones usan los clientes):
     ```bash
     kubectl api-resources -o wide
     ```
-  - Comprobar el uso de API obsoletas:
+  - Si tienes acceso a `/metrics`, inspecciona las solicitudes observadas a API obsoletas; audita también los manifiestos y logs de solicitudes:
     ```bash
-    kubectl get -A | grep "deprecated"
+    kubectl get --raw /metrics | grep '^apiserver_requested_deprecated_apis'
     ```
-  - Actualizar manifests según sea necesario
+  - Actualiza los manifiestos cuando sea necesario.
 
-- **Plan de backup y recuperación:**
-  - Hacer backup de la base de datos etcd:
+- **Plan de copia de seguridad y recuperación:**
+  - Haz una copia de seguridad de la base de datos etcd:
     ```bash
-    ETCDCTL_API=3 etcdctl snapshot save snapshot.db
+    ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
+      --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+      --key=/etc/kubernetes/pki/etcd/healthcheck-client.key
     ```
-  - Hacer backup de todos los manifests críticos:
+  - Exporta un subconjunto de objetos de carga de trabajo (no es una copia completa; protege el archivo generado):
     ```bash
-    kubectl get all --all-namespaces -o yaml > all-resources.yaml
+    umask 077
+    kubectl get all --all-namespaces -o yaml > workload-subset.yaml
     ```
-  - Documentar y probar los procedimientos de recuperación
+  - Documenta y prueba los procedimientos de recuperación.
 
-- **Enfoque de upgrade gradual:**
-  - **Actualizar primero los componentes del control plane:**
-    - En configuraciones HA, actualizar un node del control plane a la vez
-  - **Rolling upgrade de worker nodes:**
-    - Dividir los grupos de nodes en lotes pequeños para el upgrade
-    - Verificar la estabilidad después de cada lote
+- **Actualización gradual:**
+  - **Actualiza primero los componentes del plano de control:**
+    - En configuraciones de alta disponibilidad, actualiza un nodo del plano de control a la vez.
+  - **Actualiza gradualmente los nodos de trabajo:**
+    - Divide los grupos de nodos en lotes pequeños.
+    - Comprueba la estabilidad después de cada lote.
 
-- **Protección de workloads:**
-  - **Configurar PodDisruptionBudget:**
+- **Protección de las cargas de trabajo:**
+  - **Configura PodDisruptionBudget:**
     ```yaml
     apiVersion: policy/v1
     kind: PodDisruptionBudget
@@ -386,90 +356,90 @@
         matchLabels:
           app: my-app
     ```
-  - **Tener cuidado al aplicar drain a nodes:**
+  - **Ten cuidado al desalojar nodos:**
     ```bash
-    kubectl drain <node_name> --ignore-daemonsets --delete-emptydir-data
+    kubectl drain <node_name> --ignore-daemonsets
     ```
 
-- **Monitoreo mejorado:**
-  - Monitorear el estado del cluster antes, durante y después del upgrade
-  - Centrarse en métricas y logs clave
-  - Ajustar temporalmente los umbrales de alerta
+- **Supervisión mejorada:**
+  - Supervisa el estado del clúster antes, durante y después de la actualización.
+  - Presta atención a las métricas y los logs clave.
+  - Ajusta temporalmente los umbrales de alerta.
 
-- **Plan de rollback:**
-  - Definir condiciones que disparen el rollback
-  - Documentar procedimientos de rollback
-  - Conservar todos los componentes e imágenes necesarios para el rollback
+- **Plan de reversión:**
+  - Define las condiciones que activan la reversión.
+  - Documenta el procedimiento de reversión.
+  - Conserva todos los componentes e imágenes que se necesiten para revertir.
 
 - **Plan de comunicación:**
-  - Notificar a todos los stakeholders sobre el calendario del upgrade y el impacto esperado
-  - Proporcionar actualizaciones de estado durante el upgrade
-  - Definir rutas de escalamiento para problemas
+  - Notifica a las partes interesadas el calendario y el impacto previsto.
+  - Comunica el estado durante la actualización.
+  - Define las vías de escalamiento de problemas.
 
-**3. Consideraciones específicas de versión:**
+**3. Consideraciones según la versión:**
 
-- **Upgrades de versión menor (por ejemplo, 1.24 → 1.25):**
-  - Prestar especial atención a API eliminadas y cambios de funcionalidades
-  - Actualizar una versión menor a la vez
+- **Actualizaciones de versión menor (por ejemplo, 1.24 → 1.25):**
+  - Presta especial atención a las API eliminadas y a los cambios de funcionalidades.
+  - Actualiza una versión menor cada vez.
 
-- **Upgrades de versión de parche (por ejemplo, 1.24.0 → 1.24.1):**
-  - Generalmente son más seguros, pero aun así requieren pruebas
-  - Considerar un despliegue más rápido para parches de seguridad
+- **Actualizaciones de versión de parche (por ejemplo, 1.24.0 → 1.24.1):**
+  - Suelen ser más seguras, pero también requieren pruebas.
+  - Considera desplegar más rápidamente los parches de seguridad.
 </details>
 
-5. Explica los problemas de networking comunes que pueden ocurrir en un cluster Kubernetes y cómo diagnosticarlos y resolverlos.
+5. Explica qué problemas de red pueden presentarse en un clúster Kubernetes y cómo diagnosticarlos y resolverlos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Diagnóstico y resolución de problemas de networking de Kubernetes:**
+**Diagnóstico y resolución de problemas de red de Kubernetes:**
 
-**1. Problemas de comunicación Pod-to-Pod:**
+**1. Problemas de comunicación entre Pods:**
 
 - **Síntomas:**
-  - Los pods no pueden comunicarse con otros pods
-  - No se puede conectar por nombre de service
-  - Errores de timeout de red
+  - Los Pods no pueden comunicarse entre sí.
+  - No es posible conectarse por el nombre del Service.
+  - Se producen errores de tiempo de espera de red.
 
 - **Métodos de diagnóstico:**
-  - Comprobar network policies:
+  - Comprueba las políticas de red:
     ```bash
     kubectl get networkpolicy --all-namespaces
     ```
-  - Crear un pod de prueba para pruebas de conectividad:
+  - Crea un Pod de prueba para probar la conectividad:
     ```bash
     kubectl run -it --rm debug --image=busybox -- sh
     # Inside the pod
     ping <target_pod_IP>
     wget -O- <service_name>:<port>
     ```
-  - Comprobar el estado de los pods del plugin CNI:
+  - Comprueba el estado de los Pods del complemento CNI:
     ```bash
     kubectl get pods -n kube-system | grep -E 'calico|flannel|weave|cilium'
     ```
 
 - **Métodos de resolución:**
-  - Reinstalar o actualizar el plugin CNI
-  - Modificar o eliminar network policies
-  - Comprobar las interfaces de red del node
-  - Comprobar las reglas de firewall
+  - Reinstala o actualiza el complemento CNI.
+  - Modifica o elimina las políticas de red.
+  - Comprueba las interfaces de red de los nodos.
+  - Comprueba las reglas del firewall.
 
-**2. Problemas de Service Discovery y DNS:**
+**2. Problemas de descubrimiento de servicios y DNS:**
 
 - **Síntomas:**
-  - No se puede conectar por nombre de service
-  - Fallos de DNS lookup
-  - Problemas de conexión intermitentes
+  - No es posible conectarse por el nombre del Service.
+  - Fallan las consultas DNS.
+  - Hay problemas de conexión intermitentes.
 
 - **Métodos de diagnóstico:**
-  - Comprobar el estado de los pods de CoreDNS:
+  - Comprueba el estado de los Pods de CoreDNS:
     ```bash
     kubectl get pods -n kube-system -l k8s-app=kube-dns
     kubectl logs -n kube-system -l k8s-app=kube-dns
     ```
-  - Probar DNS lookup:
+  - Prueba la resolución DNS:
     ```bash
     kubectl run -it --rm debug --image=busybox -- sh
     # Inside the pod
@@ -477,114 +447,114 @@
     nslookup <service_name>.<namespace>.svc.cluster.local
     cat /etc/resolv.conf
     ```
-  - Comprobar endpoints del service:
+  - Comprueba los endpoints del Service:
     ```bash
     kubectl get endpoints <service_name>
     ```
 
 - **Métodos de resolución:**
-  - Reiniciar los pods de CoreDNS:
+  - Reinicia los Pods de CoreDNS:
     ```bash
     kubectl rollout restart deployment coredns -n kube-system
     ```
-  - Comprobar y modificar la configuración de DNS:
+  - Comprueba y modifica la configuración DNS:
     ```bash
     kubectl edit configmap coredns -n kube-system
     ```
-  - Comprobar la configuración DNS de kubelet
+  - Comprueba la configuración DNS de kubelet.
 
 **3. Problemas de Service e Ingress:**
 
 - **Síntomas:**
-  - No se puede acceder al service desde fuentes externas
-  - Las reglas de Ingress no funcionan
-  - No se crea el load balancer
+  - No se puede acceder al Service desde fuera.
+  - Las reglas de Ingress no funcionan.
+  - No se crea el balanceador de carga.
 
 - **Métodos de diagnóstico:**
-  - Comprobar el estado del service:
+  - Describe el estado del Service:
     ```bash
     kubectl describe service <service_name>
     ```
-  - Comprobar el estado del ingress:
+  - Describe el estado del Ingress:
     ```bash
     kubectl describe ingress <ingress_name>
     ```
-  - Comprobar los logs del pod del ingress controller:
+  - Comprueba los logs del Pod del controlador de Ingress:
     ```bash
     kubectl logs -n <ingress_namespace> <ingress_controller_pod>
     ```
-  - Comprobar endpoints:
+  - Comprueba los endpoints:
     ```bash
     kubectl get endpoints <service_name>
     ```
 
 - **Métodos de resolución:**
-  - Verificar que el selector del service coincida con las labels del pod
-  - Reinstalar o actualizar el ingress controller
-  - Comprobar el tipo de service y la configuración de puertos
-  - Comprobar la configuración del load balancer del cloud provider
+  - Verifica que el selector del Service coincida con las etiquetas de los Pods.
+  - Reinstala o actualiza el controlador de Ingress.
+  - Comprueba el tipo de Service y la configuración de puertos.
+  - Comprueba la configuración del balanceador de carga del proveedor de nube.
 
-**4. Problemas de networking de node:**
+**4. Problemas de red de los nodos:**
 
 - **Síntomas:**
-  - Node desconectado del cluster
-  - Fallo de comunicación node-to-node
-  - Errores de conexión de kubelet
+  - Un nodo se desconecta del clúster.
+  - Falla la comunicación entre nodos.
+  - Hay errores de conexión de kubelet.
 
 - **Métodos de diagnóstico:**
-  - Comprobar el estado del node:
+  - Describe el estado del nodo:
     ```bash
     kubectl describe node <node_name>
     ```
-  - Comprobar las interfaces de red del node:
+  - Comprueba las interfaces de red del nodo:
     ```bash
     # Directly on the node
     ip addr
     ip route
     ```
-  - Comprobar reglas de firewall:
+  - Comprueba las reglas del firewall:
     ```bash
     # Directly on the node
     iptables -L
     ```
-  - Comprobar logs de kubelet:
+  - Comprueba los logs de kubelet:
     ```bash
     journalctl -u kubelet
     ```
 
 - **Métodos de resolución:**
-  - Reconfigurar las interfaces de red del node
-  - Modificar reglas de firewall
-  - Reiniciar kubelet
-  - Reiniciar el node si es necesario
+  - Reconfigura las interfaces de red del nodo.
+  - Modifica las reglas del firewall.
+  - Reinicia kubelet.
+  - Reinicia el nodo si es necesario.
 
-**5. Problemas de Network Policy:**
+**5. Problemas con las políticas de red:**
 
 - **Síntomas:**
-  - Bloqueo inesperado de conexiones
-  - No se puede comunicar entre namespaces específicos
-  - Solo algunos pods son accesibles
+  - Se bloquean conexiones inesperadamente.
+  - No hay comunicación entre determinados namespaces.
+  - Solo algunos Pods son accesibles.
 
 - **Métodos de diagnóstico:**
-  - Comprobar network policies:
+  - Comprueba las políticas de red:
     ```bash
     kubectl get networkpolicy -A
     kubectl describe networkpolicy <policy_name> -n <namespace>
     ```
-  - Comprobar labels de pods:
+  - Comprueba las etiquetas de los Pods:
     ```bash
     kubectl get pods --show-labels
     ```
-  - Verificar que el plugin de red admita network policies
+  - Verifica que el complemento de red admita políticas de red.
 
 - **Métodos de resolución:**
-  - Modificar o eliminar network policies
-  - Modificar labels de pods
-  - Usar herramientas de debugging de network policies
+  - Modifica o elimina las políticas de red.
+  - Modifica las etiquetas de los Pods.
+  - Usa herramientas para diagnosticar políticas de red.
 
-**6. Herramientas comunes de debugging de networking:**
+**6. Herramientas habituales para diagnosticar problemas de red:**
 
-- **Pod de debugging de red:**
+- **Pod de diagnóstico de red:**
   ```yaml
   apiVersion: v1
   kind: Pod
@@ -608,28 +578,29 @@
   netstat -tuln
   ```
 
-- **Herramientas de debugging específicas del plugin CNI:**
+- **Herramientas específicas de complementos CNI:**
   - Calico: `calicoctl`
   - Cilium: `cilium`
   - Weave: `weave`
 
-**7. Mejores prácticas:**
+**7. Prácticas recomendadas:**
 
-- Documentar la topología de red
-- Realizar pruebas de conectividad periódicas
-- Analizar el impacto antes de cambios en network policies
-- Planificar los rangos CIDR de red del cluster
-- Implementar herramientas de monitoreo de red
+- Documenta la topología de red.
+- Realiza pruebas de conectividad periódicas.
+- Analiza el impacto antes de cambiar las políticas de red.
+- Planifica los rangos CIDR de red del clúster.
+- Implementa herramientas de supervisión de red.
 </details>
+
 ## Preguntas prácticas
 
-1. Escribe un manifest de ResourceQuota que cumpla los siguientes requisitos:
+1. Escribe un manifiesto ResourceQuota que cumpla estos requisitos:
    - Namespace: development
-   - Pods máximos: 20
-   - CPU requests máximas: 4 cores
-   - Memory requests máximas: 8Gi
-   - PVCs máximos: 10
-   - Storage requests máximas: 100Gi
+   - Máximo de Pods: 20
+   - Solicitudes máximas de CPU: 4 núcleos
+   - Solicitudes máximas de memoria: 8Gi
+   - Máximo de PVC: 10
+   - Solicitudes máximas de almacenamiento: 100Gi
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -651,30 +622,30 @@ spec:
     requests.storage: 100Gi
 ```
 
-Este ResourceQuota establece los siguientes límites en el namespace 'development':
-- Máximo 20 pods
-- CPU requests totales de 4 cores
-- Memory requests totales de 8Gi
-- Máximo 10 PersistentVolumeClaims
-- Storage requests totales de 100Gi
+Este ResourceQuota establece los siguientes límites en el namespace `development`:
+- Máximo de 20 Pods.
+- Solicitudes totales de CPU: 4 núcleos.
+- Solicitudes totales de memoria: 8Gi.
+- Máximo de 10 PersistentVolumeClaims.
+- Solicitudes totales de almacenamiento: 100Gi.
 
 Para aplicar el ResourceQuota:
 ```bash
 kubectl apply -f resource-quota.yaml
 ```
 
-Para comprobar el uso actual de la quota:
+Para comprobar el uso actual de la cuota:
 ```bash
 kubectl describe quota dev-quota -n development
 ```
 
-Nota: El namespace debe existir antes de aplicar el ResourceQuota. Si el namespace no existe, créalo primero:
+Nota: el namespace debe existir antes de aplicar el ResourceQuota. Si no existe, créalo primero:
 ```bash
 kubectl create namespace development
 ```
 </details>
 
-2. Escribe un script que compruebe el estado del Service kubelet en todos los nodes del cluster y resuelva los problemas si se encuentran.
+2. Escribe una comprobación de kubelet para un clúster Linux autogestionado con alias SSH para cada nodo y con un modo de reparación explícito.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -682,156 +653,151 @@ kubectl create namespace development
 **Respuesta:**
 
 ```bash
-#!/bin/bash
-# Filename: check_kubelet.sh
-# Description: Check kubelet service status on all nodes and troubleshoot
-
-# Get node list
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-
-# Iterate over each node
-for NODE in $NODES; do
-  echo "===== Checking node: $NODE ====="
-
-  # Check node status
-  NODE_STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-  echo "Node status: $NODE_STATUS"
-
-  # Check kubelet status via SSH
-  echo "Checking kubelet service status..."
-  ssh $NODE "sudo systemctl status kubelet | grep Active"
-
-  # Start kubelet if not running
-  if ssh $NODE "sudo systemctl is-active kubelet" != "active"; then
-    echo "kubelet is not running. Starting service..."
-    ssh $NODE "sudo systemctl start kubelet"
-
-    # Check status again after starting
-    sleep 5
-    if ssh $NODE "sudo systemctl is-active kubelet" == "active"; then
-      echo "kubelet service started successfully."
-    else
-      echo "kubelet service failed to start. Checking logs..."
-      ssh $NODE "sudo journalctl -u kubelet --no-pager -n 50"
-    fi
+#!/usr/bin/env bash
+# check_kubelet.sh: self-managed Linux nodes with configured SSH aliases only.
+set -euo pipefail
+repair=${REPAIR_KUBELET:-0}
+status=0
+nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+for node in $nodes; do
+  printf '%s: ' "$node"
+  if state=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl is-active kubelet'); then
+    printf 'kubelet %s\n' "$state"
+    continue
   else
-    echo "kubelet service is running normally."
+    rc=$?
   fi
-
-  # Check kubelet configuration
-  echo "Checking kubelet configuration..."
-  ssh $NODE "sudo cat /var/lib/kubelet/config.yaml | grep -E 'address|authentication|authorization'"
-
-  echo "===== $NODE check complete ====="
-  echo ""
+  if [ "$rc" -ne 3 ]; then
+    printf 'SSH/sudo/service query failed (exit %s); no repair attempted\n' "$rc" >&2
+    status=1
+    continue
+  fi
+  printf 'kubelet %s\n' "$state"
+  if [ "$repair" != 1 ]; then
+    printf 'Inspect logs and approve a repair before rerunning with REPAIR_KUBELET=1\n'
+    status=1
+    continue
+  fi
+  if ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl start kubelet && sudo -n systemctl is-active --quiet kubelet' \
+      && kubectl wait --for=condition=Ready "node/$node" --timeout=120s; then
+    printf '%s: kubelet active and node Ready\n' "$node"
+  else
+    status=1
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n journalctl -u kubelet --no-pager -n 50' || true
+  fi
 done
+exit "$status"
 ```
 
-Este script realiza las siguientes tareas:
-1. Usa `kubectl get nodes` para obtener una lista de todos los nodes del cluster.
-2. Para cada node:
-   - Comprueba el estado Ready del node.
-   - Se conecta al node mediante SSH para comprobar el estado del Service kubelet.
-   - Inicia el Service si kubelet no está en ejecución.
-   - Comprueba el estado nuevamente después de iniciar el Service.
-   - Comprueba logs si el inicio falla.
-   - Comprueba configuraciones clave en el archivo de configuración de kubelet.
+Este script realiza lo siguiente:
+1. Usa `kubectl get nodes` para obtener los nombres de todos los nodos del clúster.
+2. Para cada nodo:
+   - Comprueba el estado del servicio y, tras una reparación solicitada, verifica que el nodo esté Ready.
+   - Se conecta al nodo por SSH para consultar el estado del servicio kubelet.
+   - Informa si el servicio está inactivo; solo lo inicia cuando `REPAIR_KUBELET=1` y la consulta del servicio se completó correctamente.
+   - Vuelve a comprobar el estado después de iniciar el servicio.
+   - Consulta los logs si el inicio falla.
+   - Distingue los errores de SSH/sudo/consulta de un servicio inactivo y comprueba que el nodo esté Ready después de repararlo.
 
 **Uso:**
 ```bash
 chmod +x check_kubelet.sh
 ./check_kubelet.sh
+# After diagnosing the inactive service and approving repair:
+REPAIR_KUBELET=1 ./check_kubelet.sh
 ```
 
 **Notas:**
-- Se requiere acceso SSH a todos los nodes para ejecutar este script.
-- Se recomienda la autenticación basada en claves SSH para entornos de producción.
-- En entornos cloud, el acceso SSH directo a los nodes puede estar restringido, por lo que puede que necesites usar las herramientas de gestión de nodes del cloud provider.
+- Se necesita acceso SSH a todos los nodos para ejecutar este script.
+- Se recomienda la autenticación mediante claves SSH en producción.
+- En entornos de nube, el acceso SSH directo puede estar restringido; quizá debas usar las herramientas de administración de nodos del proveedor.
 </details>
 
-3. Configura un cron job que haga backup de la base de datos etcd del cluster y almacene el archivo de backup en una ubicación segura.
+3. Configura un cron job que respalde la base de datos etcd del clúster y almacene el archivo en una ubicación segura.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**1. Crear script de backup:**
+**1. Crea el script de copia de seguridad:**
 
 ```bash
-#!/bin/bash
-# Filename: backup_etcd.sh
-# Description: etcd database backup and remote storage
+#!/usr/bin/env bash
+# backup_etcd.sh: self-managed etcd; external storage must already be mounted.
+set -euo pipefail
+umask 077
+BACKUP_DIR=${BACKUP_DIR:-/opt/etcd-backup}
+REMOTE_ROOT=${REMOTE_ROOT:-/mnt/remote-storage}
+REMOTE_DIR="$REMOTE_ROOT/etcd-backups"
+METRICS_DIR=${METRICS_DIR:-/var/lib/node_exporter/textfile_collector}
+RETENTION_DAYS=${RETENTION_DAYS:-7}
+ETCD_ENDPOINT=${ETCD_ENDPOINT:-https://127.0.0.1:2379}
+ETCD_CACERT=${ETCD_CACERT:-/etc/kubernetes/pki/etcd/ca.crt}
+ETCD_CERT=${ETCD_CERT:-/etc/kubernetes/pki/etcd/healthcheck-client.crt}
+ETCD_KEY=${ETCD_KEY:-/etc/kubernetes/pki/etcd/healthcheck-client.key}
 
-# Variable settings
-BACKUP_DIR="/opt/etcd-backup"
-REMOTE_BACKUP_DIR="/mnt/remote-storage/etcd-backups"
-DATE=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="etcd-snapshot-$DATE.db"
-ETCD_ENDPOINTS="https://127.0.0.1:2379"
-ETCD_CACERT="/etc/kubernetes/pki/etcd/ca.crt"
-ETCD_CERT="/etc/kubernetes/pki/etcd/server.crt"
-ETCD_KEY="/etc/kubernetes/pki/etcd/server.key"
-RETENTION_DAYS=7
-
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Create etcd snapshot
-ETCDCTL_API=3 etcdctl snapshot save $BACKUP_DIR/$BACKUP_FILE \
-  --endpoints=$ETCD_ENDPOINTS \
-  --cacert=$ETCD_CACERT \
-  --cert=$ETCD_CERT \
-  --key=$ETCD_KEY
-
-# Verify backup success
-if [ $? -eq 0 ]; then
-  echo "etcd backup successful: $BACKUP_FILE"
-
-  # Check backup file status
-  ETCDCTL_API=3 etcdctl snapshot status $BACKUP_DIR/$BACKUP_FILE --write-out=table
-
-  # Compress backup file
-  gzip $BACKUP_DIR/$BACKUP_FILE
-
-  # Copy to remote storage
-  mkdir -p $REMOTE_BACKUP_DIR
-  cp $BACKUP_DIR/$BACKUP_FILE.gz $REMOTE_BACKUP_DIR/
-
-  # Clean up old backup files (local)
-  find $BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-
-  # Clean up old backup files (remote)
-  find $REMOTE_BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-
-  echo "Backup complete and copied to remote storage: $REMOTE_BACKUP_DIR/$BACKUP_FILE.gz"
-else
-  echo "etcd backup failed"
-  exit 1
-fi
+publish_status() {
+  rc=$?
+  trap - EXIT
+  if [ -d "$METRICS_DIR" ]; then
+    tmp=$(mktemp "$METRICS_DIR/.etcd-backup.XXXXXX")
+    success=0
+    [ "$rc" -eq 0 ] && success=1
+    printf 'etcd_backup_success %s\netcd_backup_last_attempt_timestamp_seconds %s\n' \
+      "$success" "$(date +%s)" > "$tmp"
+    chmod 0644 "$tmp"
+    mv "$tmp" "$METRICS_DIR/etcd_backup_status.prom"
+  fi
+  exit "$rc"
+}
+trap publish_status EXIT
+case "$RETENTION_DAYS" in ''|*[!0-9]*) echo 'Invalid retention' >&2; exit 1;; esac
+mountpoint -q "$REMOTE_ROOT" || { echo 'Remote storage is not mounted' >&2; exit 1; }
+mkdir -p "$BACKUP_DIR" "$REMOTE_DIR"
+exec 9>"$BACKUP_DIR/.backup.lock"
+flock -n 9 || { echo 'Another backup is running' >&2; exit 1; }
+name="etcd-snapshot-$(date -u +%Y%m%d-%H%M%S).db"
+ETCDCTL_API=3 etcdctl snapshot save "$BACKUP_DIR/$name" \
+  --endpoints="$ETCD_ENDPOINT" --cacert="$ETCD_CACERT" \
+  --cert="$ETCD_CERT" --key="$ETCD_KEY"
+etcdutl snapshot status "$BACKUP_DIR/$name" --write-out=table
+gzip "$BACKUP_DIR/$name"
+cp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+cmp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+mv "$REMOTE_DIR/.$name.gz.partial" "$REMOTE_DIR/$name.gz"
+# Retention runs only after snapshot validation and verified external copy.
+find "$BACKUP_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+find "$REMOTE_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+printf 'Verified backup copied to %s\n' "$REMOTE_DIR/$name.gz"
 ```
 
-**2. Conceder permiso de ejecución al script:**
+**2. Concede permiso de ejecución al script:**
 
 ```bash
 chmod +x /opt/etcd-backup/backup_etcd.sh
 ```
 
-**3. Configurar cron job:**
+**3. Configura el cron job:**
 
 ```bash
 # Edit root user's crontab
 sudo crontab -e
 ```
 
-Añade el siguiente contenido:
+Añade lo siguiente:
 
 ```
 # Run etcd backup daily at 2 AM
 0 2 * * * /opt/etcd-backup/backup_etcd.sh >> /var/log/etcd-backup.log 2>&1
 ```
 
-**4. Configurar rotación del log de backup:**
+**4. Configura la rotación del log de copia de seguridad:**
 
 Crea el archivo `/etc/logrotate.d/etcd-backup`:
 
@@ -843,143 +809,101 @@ Crea el archivo `/etc/logrotate.d/etcd-backup`:
     delaycompress
     missingok
     notifempty
-    create 0644 root root
+    create 0600 root root
 }
 ```
 
-**5. Probar el backup:**
+**5. Prueba la copia de seguridad:**
 
 ```bash
 sudo /opt/etcd-backup/backup_etcd.sh
 ```
 
-**6. Configurar monitoreo del backup (opcional):**
+**6. Supervisa la copia de seguridad:**
 
-Para recibir alertas ante fallos de backup, puedes integrarlo con herramientas de monitoreo como Prometheus. Añade el siguiente código al script de backup:
-
-```bash
-# Create file indicating backup success/failure
-if [ $? -eq 0 ]; then
-  echo "success" > /var/lib/node_exporter/etcd_backup_status.prom
-else
-  echo "failure" > /var/lib/node_exporter/etcd_backup_status.prom
-fi
-```
+Si existe `METRICS_DIR`, la trampa EXIT del script publica las métricas numéricas `etcd_backup_success` y `etcd_backup_last_attempt_timestamp_seconds`. Configura el textfile collector de node-exporter para leer ese directorio, concede permisos de escritura y genera alertas ante un fallo o un intento demasiado antiguo. No añadas una comprobación posterior de `$?` después de comandos `echo` o de copia. El montaje externo debe existir de antemano; si falla la validación o la copia, se detiene la retención.
 
 **Notas:**
-- Los archivos de backup deben almacenarse en una ubicación segura fuera del cluster.
-- En entornos cloud, se recomienda usar object storage como S3 o GCS.
-- Realiza pruebas de restauración de backup regularmente para verificar la validez del backup.
-- Para clusters etcd HA, el backup solo necesita realizarse en una instancia etcd.
+- Guarda las copias en una ubicación segura fuera del clúster.
+- En la nube, se recomienda almacenamiento de objetos como S3 o GCS.
+- Prueba periódicamente la restauración para comprobar la validez de las copias.
+- En clústeres etcd de alta disponibilidad, basta con hacer la copia en una instancia etcd.
 </details>
-4. Escribe un procedimiento para realizar rolling updates en todos los nodes del cluster. La disponibilidad de los workloads debe mantenerse durante las actualizaciones.
+
+4. Escribe un procedimiento de mantenimiento acotado para nodos de trabajo Linux autogestionados que se seleccionen explícitamente, respete los presupuestos de interrupción y se detenga si fallan las comprobaciones de salud.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Procedimiento de rolling update de nodes:**
+**Procedimiento de actualización gradual de nodos:**
 
 ```bash
-#!/bin/bash
-# Filename: node_rolling_update.sh
-# Description: Perform cluster node rolling update
-
-# Variable settings
-UPGRADE_COMMAND="sudo apt update && sudo apt upgrade -y"
-REBOOT_REQUIRED_CHECK="[ -f /var/run/reboot-required ]"
-MAX_UNAVAILABLE=1  # Number of nodes to update at once
-
-# Check cluster status
-echo "Checking cluster status..."
-kubectl get nodes
-kubectl get pods --all-namespaces -o wide
-
-# Check PodDisruptionBudgets
-echo "Checking PodDisruptionBudgets..."
-kubectl get poddisruptionbudget --all-namespaces
-
-# Get node list
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-NODE_COUNT=$(echo $NODES | wc -w)
-
-echo "Updating $NODE_COUNT nodes total."
-echo "Node list: $NODES"
-echo "Maximum $MAX_UNAVAILABLE node(s) will be updated at once."
-echo "Press Enter to continue. Press Ctrl+C to cancel."
-read
-
-# Iterate over each node
-for NODE in $NODES; do
-  echo "===== Updating node: $NODE ====="
-
-  # Cordon node
-  echo "Cordoning node..."
-  kubectl cordon $NODE
-
-  # Drain node
-  echo "Draining node..."
-  kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data --force
-
-  # Update node
-  echo "Updating node..."
-  ssh $NODE "$UPGRADE_COMMAND"
-
-  # Check if reboot is required
-  REBOOT_REQUIRED=$(ssh $NODE "$REBOOT_REQUIRED_CHECK && echo 'true' || echo 'false'")
-
-  if [ "$REBOOT_REQUIRED" == "true" ]; then
-    echo "Reboot required. Rebooting..."
-    ssh $NODE "sudo reboot"
-
-    # Wait until node is Ready again
-    echo "Node rebooting. Waiting until Ready..."
-    while true; do
-      STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-      if [ "$STATUS" == "True" ]; then
-        echo "Node is now Ready."
-        break
-      fi
-      echo "Node is not Ready yet. Checking again in 10 seconds."
-      sleep 10
-    done
-  else
-    echo "Node reboot not required."
-  fi
-
-  # Uncordon node
-  echo "Uncordoning node..."
-  kubectl uncordon $NODE
-
-  # Check node status
-  echo "Checking node status..."
-  kubectl get node $NODE
-
-  # Wait for pods to be rescheduled on the node
-  echo "Waiting for pods to be rescheduled on the node..."
-  sleep 30
-
-  # Check cluster status
-  echo "Checking cluster status..."
-  kubectl get pods --all-namespaces -o wide | grep $NODE
-
-  echo "===== $NODE update complete ====="
-  echo ""
-
-  # User confirmation before proceeding to next node (optional)
-  echo "Press Enter to proceed to next node. Press Ctrl+C to cancel."
-  read
+#!/usr/bin/env bash
+# node_rolling_update.sh: explicitly selected self-managed Linux workers only.
+set -euo pipefail
+: "${MAINTENANCE_COMMAND:?Set a reviewed node-maintenance command that does not reboot itself}"
+: "${WORKLOAD_HEALTHCHECK:?Set a command that verifies critical workload health}"
+[ "$#" -gt 0 ] || { echo 'Pass the worker node names as arguments' >&2; exit 1; }
+trap 'echo "Stopped on error; inspect the node before manually uncordoning it" >&2' ERR
+for node in "$@"; do
+  kubectl get node "$node" -o json | jq -e '
+    (.metadata.labels["kubernetes.io/os"] == "linux") and
+    (.metadata.labels | has("node-role.kubernetes.io/control-plane") | not) and
+    (.metadata.labels | has("node-role.kubernetes.io/master") | not)' >/dev/null
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n true'
 done
-
-echo "All node updates complete!"
-kubectl get nodes
+kubectl get poddisruptionbudgets -A
+bash -c "$WORKLOAD_HEALTHCHECK"
+for node in "$@"; do
+  kubectl wait --for=condition=Ready "node/$node" --timeout=120s
+  boot_before=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+  kubectl cordon "$node"
+  kubectl drain "$node" --ignore-daemonsets --timeout=10m
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" "$MAINTENANCE_COMMAND"
+  reboot_required=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+    'if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi')
+  if [ "$reboot_required" = yes ]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n reboot' || true
+    deadline=$((SECONDS + 600))
+    while :; do
+      boot_after=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+      [ -n "$boot_after" ] && [ "$boot_after" != "$boot_before" ] && break
+      [ "$SECONDS" -lt "$deadline" ] || { echo 'New boot ID not reported' >&2; exit 1; }
+      sleep 5
+    done
+  fi
+  # Require a fresh kubelet lease renewal, not a stale pre-maintenance Ready flag.
+  lease_before=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+  deadline=$((SECONDS + 120))
+  while :; do
+    lease_after=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+    [ -n "$lease_after" ] && [ "$lease_after" != "$lease_before" ] && break
+    [ "$SECONDS" -lt "$deadline" ] || { echo 'No fresh kubelet lease' >&2; exit 1; }
+    sleep 5
+  done
+  kubectl wait --for=condition=Ready "node/$node" --timeout=5m
+  bash -c "$WORKLOAD_HEALTHCHECK"
+  kubectl uncordon "$node"
+  bash -c "$WORKLOAD_HEALTHCHECK"
+done
 ```
 
-**Preparación previa al rolling update:**
+Este ejemplo requiere kubectl, jq, alias SSH para los nodos seleccionados, sudo autorizado sin contraseña y un comando de mantenimiento revisado. Comprueba el marcador de Debian/Ubuntu que indica que hace falta reiniciar; adáptalo al sistema operativo. Define `WORKLOAD_HEALTHCHECK` como un comando que compruebe realmente las aplicaciones críticas y pasa únicamente la lista de nodos de trabajo revisada. Por ejemplo:
 
-1. **Configurar PodDisruptionBudget:**
-   Configura PDBs para workloads críticos para garantizar la disponibilidad.
+```bash
+MAINTENANCE_COMMAND='sudo -n /usr/local/sbin/approved-node-maintenance' \
+WORKLOAD_HEALTHCHECK='kubectl -n app rollout status deployment/frontend --timeout=5m' \
+./node_rolling_update.sh worker-1 worker-2
+```
+
+Los nombres del comando/script y de las aplicaciones deben existir y coincidir con tu plan. No usa force ni autoriza la pérdida de datos de emptyDir. Se detiene si falla el desalojo o el mantenimiento, espera a que cambie el boot ID después de un reinicio y a que se renueve el lease de kubelet, y deja los nodos con cordon si hay un fallo. Los PDB y estas comprobaciones reducen las interrupciones planificadas, pero no garantizan la disponibilidad ante fallos ajenos. Usa las actualizaciones administradas por el proveedor para nodos administrados o Auto Mode de EKS, y el procedimiento separado de kubeadm para los nodos del plano de control.
+
+**Preparación antes de la actualización gradual:**
+
+1. **Configura PodDisruptionBudget:**
+   Configura PDB para garantizar la disponibilidad de las cargas críticas.
 
    ```yaml
    apiVersion: policy/v1
@@ -994,431 +918,368 @@ kubectl get nodes
          app: my-app
    ```
 
-2. **Asegurar recursos suficientes:**
-   Verifica que los nodes restantes puedan manejar todos los workloads cuando se retire un node.
+2. **Asegura que haya recursos suficientes:**
+   Comprueba que los nodos restantes puedan ejecutar todas las cargas de trabajo al retirar un nodo.
 
-3. **Realizar backup:**
-   Realiza backup de la base de datos etcd antes de las actualizaciones.
+3. **Haz una copia de seguridad:**
+   Haz una copia de la base de datos etcd antes de las actualizaciones.
 
-**Mejores prácticas de rolling update:**
+**Prácticas recomendadas para las actualizaciones graduales:**
 
-1. **Enfoque gradual:**
-   - Actualizar solo un node a la vez
-   - Verificar el estado del cluster después de cada actualización de node
+1. **Avanza gradualmente:**
+   - Actualiza un nodo a la vez.
+   - Comprueba el estado del clúster después de cada nodo.
 
-2. **Automatización e idempotencia:**
-   - Automatizar el proceso usando scripts
-   - Diseñar para reintentos seguros en caso de fallo
+2. **Automatiza y haz el proceso idempotente:**
+   - Automatiza el proceso con scripts.
+   - Diseña reintentos seguros ante fallos.
 
-3. **Monitoreo mejorado:**
-   - Monitorear métricas del cluster durante las actualizaciones
-   - Monitorear estado y rendimiento de las aplicaciones
+3. **Mejora la supervisión:**
+   - Supervisa las métricas del clúster durante las actualizaciones.
+   - Supervisa el estado y el rendimiento de las aplicaciones.
 
-4. **Plan de rollback:**
-   - Preparar procedimientos de rollback para problemas
-   - Contar con métodos para restaurar al estado anterior
+4. **Prepara un plan de reversión:**
+   - Documenta cómo revertir si hay problemas.
+   - Prepara métodos para volver al estado anterior.
 
-5. **Comunicación:**
-   - Anunciar el calendario de actualización y el impacto esperado
-   - Informar periódicamente el progreso de la actualización
+5. **Comunícate:**
+   - Anuncia el calendario y el impacto previsto.
+   - Informa periódicamente del progreso.
 
 **Notas:**
-- En entornos cloud, puedes aprovechar las funcionalidades de actualización de nodes de servicios Kubernetes gestionados (EKS, GKE, AKS, etc.).
-- Si hay varios grupos de nodes, realiza las actualizaciones por grupo.
-- Monitorea especialmente el estado de los pods críticos del sistema (CoreDNS, kube-proxy, etc.).
+- En la nube, puedes aprovechar las funciones de actualización de nodos de servicios Kubernetes administrados (EKS, GKE, AKS, etc.).
+- Si hay varios grupos de nodos, actualízalos por grupo.
+- Supervisa especialmente los Pods críticos del sistema (CoreDNS, kube-proxy, etc.).
 </details>
 
-5. Escribe un script que identifique pods con alto uso de recursos en el cluster y genere un informe con esa información.
+5. Escribe un script que detecte Pods con un uso elevado de recursos en el clúster y genere un informe.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-```bash
-#!/bin/bash
-# Filename: resource_usage_report.sh
-# Description: Identify pods with high resource usage in the cluster and generate report
+```python
+#!/usr/bin/env python3
+# resource_usage_report.py: read-only Kubernetes API/metrics reporting.
+import datetime
+from decimal import Decimal
+import html
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
 
-# Variable settings
-REPORT_DIR="/tmp/k8s-reports"
-DATE=$(date +%Y%m%d-%H%M%S)
-REPORT_FILE="$REPORT_DIR/resource-usage-report-$DATE.txt"
-TOP_N=10  # Show top N pods
+SCALE = {"": Decimal(1), "n": Decimal("1e-9"), "u": Decimal("1e-6"),
+         "m": Decimal("1e-3"), "k": Decimal(1000), "K": Decimal(1000)}
+SCALE.update({s: Decimal(1000) ** n for n, s in enumerate("MGTPE", 2)})
+SCALE.update({s + "i": Decimal(1024) ** n for n, s in enumerate("KMGTPE", 1)})
 
-# Create report directory
-mkdir -p $REPORT_DIR
+def quantity(value):
+    text = str(value)
+    match = re.fullmatch(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([a-zA-Z]*)", text)
+    if not match or match[2] not in SCALE:
+        raise ValueError("Unsupported Kubernetes quantity: " + text)
+    return Decimal(match[1]) * SCALE[match[2]]
 
-# Write report header
-echo "===== Kubernetes Cluster Resource Usage Report =====" > $REPORT_FILE
-echo "Generated: $(date)" >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def kubectl_json(*args):
+    return json.loads(subprocess.check_output(["kubectl", *args], text=True))
 
-# Add cluster information
-echo "===== Cluster Information =====" >> $REPORT_FILE
-kubectl cluster-info >> $REPORT_FILE 2>&1
-echo "" >> $REPORT_FILE
+def make_rows(pods, metrics):
+    index = {(p["metadata"]["namespace"], p["metadata"]["name"]): p for p in pods}
+    rows = []
+    for metric in metrics:
+        key = metric["metadata"]["namespace"], metric["metadata"]["name"]
+        if key not in index:
+            continue  # API snapshots are not atomic; the Pod may have disappeared.
+        spec = index[key]["spec"]
+        active = spec.get("containers", []) + [c for c in spec.get("initContainers", [])
+                                               if c.get("restartPolicy") == "Always"]
+        usage = {r: sum((quantity(c["usage"][r]) for c in metric["containers"]), Decimal(0))
+                 for r in ("cpu", "memory")}
+        requests = {}
+        for resource in ("cpu", "memory"):
+            pod_request = spec.get("resources", {}).get("requests", {}).get(resource)
+            values = [c.get("resources", {}).get("requests", {}).get(resource) for c in active]
+            requests[resource] = (quantity(pod_request) if pod_request is not None else
+                                  sum((quantity(v) for v in values), Decimal(0))
+                                  if all(v is not None for v in values) else None)
+        rows.append((key, usage, requests))
+    return rows
 
-# Node resource usage
-echo "===== Node Resource Usage =====" >> $REPORT_FILE
-kubectl top nodes | sort -k 3 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def render_report(rows):
+    lines = ["Kubernetes resource usage report", "Generated: " + datetime.datetime.now(datetime.timezone.utc).isoformat(),
+             "Requests: active application/native-sidecar containers or Pod-level requests.",
+             "This is not scheduler effective-request accounting for completed init stages/overhead."]
+    totals = {}
+    for key, usage, _ in rows:
+        total = totals.setdefault(key[0], {"cpu": Decimal(0), "memory": Decimal(0)})
+        for resource in total:
+            total[resource] += usage[resource]
+    for resource in ("cpu", "memory"):
+        lines.append("\nTop 10 Pods by " + resource)
+        for key, usage, requests in sorted(rows, key=lambda row: row[1][resource], reverse=True)[:10]:
+            request = requests[resource]
+            ratio = f"{usage[resource] / request * 100:.1f}%" if request else "request missing/zero"
+            lines.append(f"{key[0]}/{key[1]}: usage={usage[resource]}, request={request}, ratio={ratio}")
+    lines.append("\nNamespace totals (CPU cores, memory GiB)")
+    for namespace, total in sorted(totals.items()):
+        lines.append(f"{namespace}: {total['cpu']:.3f}, {total['memory'] / (1024 ** 3):.3f}")
+    lines.append("\nPods above 80% of known requests or with missing requests")
+    for key, usage, requests in rows:
+        if any(not requests[r] or usage[r] / requests[r] >= Decimal('0.8') for r in requests):
+            lines.append(f"{key[0]}/{key[1]}: usage={usage}; requests={requests}")
+    return "\n".join(lines)
 
-# Top pods by CPU usage
-echo "===== Top $TOP_N Pods by CPU Usage =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 3 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def main():
+    os.umask(0o077)
+    group = kubectl_json("get", "--raw", "/apis/metrics.k8s.io")
+    version = group["preferredVersion"]["version"]
+    pod_metrics = kubectl_json("get", "--raw", f"/apis/metrics.k8s.io/{version}/pods")["items"]
+    pods = kubectl_json("get", "pods", "-A", "-o", "json")["items"]
+    rows = make_rows(pods, pod_metrics)
+    report = render_report(rows)
+    nodes = subprocess.check_output(["kubectl", "top", "nodes"], text=True)
+    report += "\n\nNode resource usage\n" + nodes
+    node_count = len(kubectl_json("get", "nodes", "-o", "json")["items"])
+    namespace_count = len(kubectl_json("get", "namespaces", "-o", "json")["items"])
+    context = subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
+    report += f"\nContext: {context}; nodes: {node_count}; namespaces: {namespace_count}\n"
+    report += f"Inventory Pods: {len(pods)}; Pods with matched metrics: {len(rows)}\n"
+    directory = Path(os.environ.get("REPORT_DIR", "/tmp/k8s-reports"))
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stem = "resource-usage-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    text_path = directory / (stem + ".txt")
+    text_path.write_text(report, encoding="utf-8")
+    (directory / (stem + ".html")).write_text(
+        '<!doctype html><meta charset="utf-8"><title>Kubernetes resource report</title><pre>'
+        + html.escape(report) + '</pre>', encoding="utf-8")
+    print(text_path)
 
-# Top pods by memory usage
-echo "===== Top $TOP_N Pods by Memory Usage =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 4 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Resource usage by namespace
-echo "===== Resource Usage by Namespace =====" >> $REPORT_FILE
-echo "CPU Usage (cores):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $3}' | sed 's/m//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1000}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "Memory Usage (GiB):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $4}' | sed 's/Mi//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1024}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Identify pods with high usage relative to requests
-echo "===== Pods with High Usage Relative to Requests =====" >> $REPORT_FILE
-echo "Collecting pod information..." >> $REPORT_FILE
-
-# Create temporary files
-PODS_USAGE_FILE="$REPORT_DIR/pods-usage-$DATE.tmp"
-PODS_REQUESTS_FILE="$REPORT_DIR/pods-requests-$DATE.tmp"
-
-# Collect current usage
-kubectl top pods --all-namespaces | tail -n +2 > $PODS_USAGE_FILE
-
-# Collect resource requests for all pods in all namespaces
-echo "Namespace,Pod,CPU Request(m),Memory Request(Mi)" > $PODS_REQUESTS_FILE
-for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl get pods -n $ns -o jsonpath='{range .items[*]}{.metadata.namespace},{.metadata.name},{range .spec.containers[*]}{.resources.requests.cpu}{","}{.resources.requests.memory}{"\n"}{end}{end}' | sed 's/$/,/' | sed 's/,$//' >> $PODS_REQUESTS_FILE
-done
-
-# Calculate usage relative to requests and add to report
-echo "Pods with high CPU usage (usage/request > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  cpu_usage=$(echo $line | awk '{print $3}' | sed 's/m//')
-
-  # Find CPU request for the pod
-  cpu_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $3}' | sed 's/[^0-9m.]//g' | sed 's/m//')
-
-  # Show as "not set" if no CPU request
-  if [ -z "$cpu_request" ] || [ "$cpu_request" == "" ]; then
-    echo "$ns/$pod: CPU usage ${cpu_usage}m, request not set" >> $REPORT_FILE
-  else
-    # Calculate CPU usage percentage
-    cpu_percentage=$(echo "scale=2; $cpu_usage / $cpu_request * 100" | bc)
-
-    # Only show if usage is 80% or higher
-    if (( $(echo "$cpu_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: CPU usage ${cpu_usage}m, request ${cpu_request}m, utilization ${cpu_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-echo "Pods with high memory usage (usage/request > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  mem_usage=$(echo $line | awk '{print $4}' | sed 's/Mi//')
-
-  # Find memory request for the pod
-  mem_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $4}' | sed 's/[^0-9Mi.]//g' | sed 's/Mi//')
-
-  # Show as "not set" if no memory request
-  if [ -z "$mem_request" ] || [ "$mem_request" == "" ]; then
-    echo "$ns/$pod: Memory usage ${mem_usage}Mi, request not set" >> $REPORT_FILE
-  else
-    # Calculate memory usage percentage
-    mem_percentage=$(echo "scale=2; $mem_usage / $mem_request * 100" | bc)
-
-    # Only show if usage is 80% or higher
-    if (( $(echo "$mem_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: Memory usage ${mem_usage}Mi, request ${mem_request}Mi, utilization ${mem_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-
-# Identify pods without resource requests
-echo "===== Pods Without Resource Requests =====" >> $REPORT_FILE
-kubectl get pods --all-namespaces -o json | jq -r '.items[] | select((.spec.containers[].resources.requests.cpu == null) or (.spec.containers[].resources.requests.memory == null)) | .metadata.namespace + "/" + .metadata.name' >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Clean up temporary files
-rm -f $PODS_USAGE_FILE $PODS_REQUESTS_FILE
-
-# Report summary
-echo "===== Report Summary =====" >> $REPORT_FILE
-echo "Total nodes: $(kubectl get nodes | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Total pods: $(kubectl get pods --all-namespaces | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Total namespaces: $(kubectl get ns | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Report generation complete: $REPORT_FILE" >> $REPORT_FILE
-
-# Output report location
-echo "Report generated: $REPORT_FILE"
-
-# HTML report generation (optional)
-HTML_REPORT="${REPORT_FILE%.txt}.html"
-echo "<html><head><title>Kubernetes Resource Usage Report</title>" > $HTML_REPORT
-echo "<style>body{font-family:Arial;margin:20px}h1{color:#326ce5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background-color:#f2f2f2}</style>" >> $HTML_REPORT
-echo "</head><body>" >> $HTML_REPORT
-echo "<h1>Kubernetes Cluster Resource Usage Report</h1>" >> $HTML_REPORT
-echo "<p>Generated: $(date)</p>" >> $HTML_REPORT
-
-# Convert report content to HTML
-awk '/===== Cluster Information =====/{flag=1;print "<h2>Cluster Information</h2><pre>"}/===== Node Resource Usage =====/{flag=0;print "</pre><h2>Node Resource Usage</h2><table><tr><th>Node</th><th>CPU(%)</th><th>Memory(%)</th></tr>"}/===== Top.*CPU Usage/{flag=0;print "</table><h2>Top Pods by CPU Usage</h2><table><tr><th>Namespace</th><th>Pod</th><th>CPU(m)</th><th>Memory(Mi)</th></tr>"}/===== Top.*Memory Usage/{flag=0;print "</table><h2>Top Pods by Memory Usage</h2><table><tr><th>Namespace</th><th>Pod</th><th>CPU(m)</th><th>Memory(Mi)</th></tr>"}/===== Resource Usage by Namespace =====/{flag=0;print "</table><h2>Resource Usage by Namespace</h2>"}/CPU Usage \(cores\):/{flag=0;print "<h3>CPU Usage (cores)</h3><table><tr><th>Namespace</th><th>CPU(cores)</th></tr>"}/Memory Usage \(GiB\):/{flag=0;print "</table><h3>Memory Usage (GiB)</h3><table><tr><th>Namespace</th><th>Memory(GiB)</th></tr>"}/===== Pods with High Usage Relative to Requests =====/{flag=0;print "</table><h2>Pods with High Usage Relative to Requests</h2>"}/Pods with high CPU usage/{flag=0;print "<h3>Pods with High CPU Usage (usage/request > 80%)</h3><ul>"}/Pods with high memory usage/{flag=0;print "</ul><h3>Pods with High Memory Usage (usage/request > 80%)</h3><ul>"}/===== Pods Without Resource Requests =====/{flag=0;print "</ul><h2>Pods Without Resource Requests</h2><ul>"}/===== Report Summary =====/{flag=0;print "</ul><h2>Report Summary</h2><ul>"}{if(flag==1)print;else if($0 ~ /^NAME/){print "<tr>";for(i=1;i<=NF;i++)print "<th>"$i"</th>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]%/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]m/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].* [0-9]/){print "<tr><td>"$1"</td><td>"$2"</td></tr>"}else if($0 ~ /^[a-z].*\//){print "<li>"$0"</li>"}else if($0 ~ /^Total/){print "<li>"$0"</li>"}}' $REPORT_FILE >> $HTML_REPORT
-
-echo "</ul></body></html>" >> $HTML_REPORT
-echo "HTML report generated: $HTML_REPORT"
+if __name__ == "__main__":
+    main()
 ```
 
 **Uso del script:**
 ```bash
-chmod +x resource_usage_report.sh
-./resource_usage_report.sh
+python3 resource_usage_report.py
 ```
 
-**Características del script:**
-1. Recopila información del cluster
-2. Recopila el uso de recursos de nodes
-3. Identifica los pods principales por uso de CPU y memoria
-4. Calcula el uso de recursos por namespace
-5. Identifica pods con alto uso relativo a las requests
-6. Identifica pods sin resource requests
-7. Genera informes en formatos de texto y HTML
+**Funciones del script:**
+1. Recopila información del clúster.
+2. Recopila el uso de recursos de los nodos.
+3. Identifica los Pods con mayor uso de CPU y memoria.
+4. Calcula el uso de recursos por namespace.
+5. Detecta Pods con un uso elevado en relación con sus solicitudes.
+6. Detecta Pods sin solicitudes de recursos.
+7. Genera informes en texto y HTML.
 
 **Notas:**
-- Este script requiere las herramientas `kubectl`, `jq` y `bc`.
-- Metrics Server debe estar instalado en el cluster.
-- El tiempo de ejecución del script puede ser mayor en clusters grandes.
-- Puede configurarse como cron job para generar informes periódicos.
-- Los informes pueden enviarse por email o integrarse con sistemas de monitoreo.
+- Este script requiere Python 3 y kubectl con acceso de lectura a las API de Pods y métricas. Descubre la versión de métricas disponible, agrega el uso de varios contenedores por namespace, maneja las unidades de cantidades y escapa el HTML de salida.
+- Metrics Server debe estar instalado en el clúster.
+- En clústeres grandes, el script puede tardar más.
+- Se puede ejecutar como cron job para generar informes periódicos.
+- Los informes se pueden enviar por correo o integrar con sistemas de supervisión.
 </details>
+
 ## Temas avanzados
 
-1. ¿Cuáles son los parámetros de configuración clave y las mejores prácticas para optimizar el rendimiento de etcd en un cluster Kubernetes?
+1. ¿Qué dos conjuntos contienen parámetros reales de etcd o prácticas operativas válidas? (Selecciona dos.)
    - A) `--max-request-bytes`, `--quota-backend-bytes`, compactación periódica
-   - B) `--max-concurrent-requests`, `--max-connections`, configuración de RAID de disco
+   - B) `--max-concurrent-requests`, `--max-connections`, configuración RAID de disco
    - C) `--auto-compaction-retention`, `--snapshot-count`, almacenamiento SSD
    - D) `--max-txn-ops`, `--max-result-buffer`, ampliación de memoria
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) `--auto-compaction-retention`, `--snapshot-count`, almacenamiento SSD**
+**Respuesta: A y C**
 
 **Explicación:**
-etcd es el almacén de datos central de los clusters Kubernetes, y su rendimiento afecta directamente al rendimiento general del cluster. Los parámetros de configuración clave y las mejores prácticas para optimizar el rendimiento de etcd son los siguientes:
+etcd es el almacén de datos central de los clústeres Kubernetes y su rendimiento influye directamente en el rendimiento general. Entre los parámetros y prácticas importantes para optimizarlo se incluyen:
 
-1. **`--auto-compaction-retention`**: etcd es un almacén append-only que conserva un historial de todos los cambios. Este parámetro configura el intervalo para compactar automáticamente versiones anteriores de keys. El valor predeterminado es 0 (deshabilitado), pero en entornos de producción normalmente se configura en 1 hora (1h) o 24 horas (24h). Esto ayuda a ahorrar espacio en disco y mejorar el rendimiento.
+1. **`--auto-compaction-retention`:** etcd es un almacén de solo anexado que conserva el historial de cambios. Este parámetro establece el intervalo de compactación automática de versiones anteriores de claves. El valor predeterminado es 0 (desactivado); en producción suele configurarse en 1 hora (`1h`) o 24 horas (`24h`). Esto ayuda a ahorrar espacio y mejorar el rendimiento.
 
-2. **`--snapshot-count`**: Especifica el número de transacciones que se deben confirmar antes de que etcd cree un snapshot. El valor predeterminado es 100,000, pero en clusters grandes este valor puede ajustarse para optimizar la frecuencia de creación de snapshots. Los valores más pequeños crean snapshots con mayor frecuencia, reduciendo el tiempo de recuperación pero aumentando la E/S de disco.
+2. **`--snapshot-count`:** Indica cuántas transacciones se confirman antes de que etcd cree una instantánea. Controla las instantáneas internas de Raft, no las instantáneas portátiles de copia de seguridad. Los valores predeterminados dependen de la versión (la referencia de v3.6 indica 10 000); comprueba la versión instalada y mide antes de ajustar este parámetro.
 
-3. **Almacenamiento SSD**: etcd es sensible a la E/S de disco, por lo que usar SSDs (Solid State Drives) mejora significativamente el rendimiento. El uso de SSD es esencial en clusters grandes.
+3. **Almacenamiento SSD:** etcd es sensible al rendimiento de disco; las unidades SSD mejoran considerablemente la E/S. Son esenciales en clústeres grandes.
 
-Otras configuraciones importantes de optimización y mejores prácticas:
+Otras configuraciones y prácticas útiles:
 
-- **Usar discos dedicados**: Usa discos dedicados para los datos de etcd para evitar la contención de E/S con otras aplicaciones.
-- **Asignación adecuada de memoria**: etcd almacena datos en caché en memoria para mejorar el rendimiento, por lo que debe asignarse memoria suficiente.
-- **Optimizar el tamaño del cluster**: Normalmente, 3-5 miembros de etcd proporcionan rendimiento y disponibilidad óptimos.
-- **Minimizar la latencia de red**: Ubica los miembros de etcd en el mismo data center o availability zone para minimizar la latencia de red entre miembros.
-- **Backup y compactación periódicos**: Realiza backups y compactación periódicos para garantizar la seguridad de los datos y el uso eficiente del espacio en disco.
+- **Usa discos dedicados:** evita la contención de E/S con otras aplicaciones.
+- **Asigna memoria suficiente:** etcd almacena datos en caché para mejorar el rendimiento.
+- **Dimensiona correctamente el clúster:** normalmente, entre 3 y 5 miembros de etcd ofrecen un buen equilibrio entre rendimiento y disponibilidad.
+- **Reduce la latencia de red:** equilibra la latencia entre miembros con el aislamiento ante fallos; si todos están en una sola zona, perder esa zona elimina el cuórum.
+- **Haz copias de seguridad y compacta periódicamente:** protege los datos y administra el espacio de disco.
 
-`--max-request-bytes` y `--quota-backend-bytes` son parámetros reales de etcd, pero están relacionados principalmente con límites de recursos más que con el rendimiento. `--max-concurrent-requests`, `--max-connections`, `--max-txn-ops` y `--max-result-buffer` no son parámetros reales de etcd o no son factores principales en la optimización del rendimiento.
+`--max-request-bytes`, `--quota-backend-bytes` y `--max-txn-ops` son parámetros reales. La opción D también incluye `--max-result-buffer`, que no es compatible; no confundas los límites de configuración, la retención ni las instantáneas internas con una estrategia de copia de seguridad.
 </details>
 
-2. ¿Cuál es la forma más eficaz de implementar alta disponibilidad (HA) del control plane en un cluster Kubernetes?
-   - A) Ejecutar varias instancias de API server en un único master node
-   - B) Configurar un cluster etcd con varios master nodes y un load balancer
-   - C) Desplegar el API server como un StatefulSet con PersistentVolume
-   - D) Implementar un proceso watchdog con auto-recuperación en el master node
+2. ¿Cuál es la forma más eficaz de implementar alta disponibilidad (HA) para el plano de control de un clúster Kubernetes?
+   - A) Ejecutar varias instancias del API server en un único nodo principal
+   - B) Configurar un clúster etcd en varios nodos principales y usar un balanceador de carga
+   - C) Desplegar el API server como StatefulSet con un PersistentVolume
+   - D) Implementar un proceso watchdog con recuperación automática en el nodo principal
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar un cluster etcd con varios master nodes y un load balancer**
+**Respuesta: B) Configurar un clúster etcd en varios nodos principales y usar un balanceador de carga**
 
 **Explicación:**
-La forma más eficaz de implementar alta disponibilidad (HA) del control plane de Kubernetes es configurar un cluster etcd con varios master nodes y un load balancer. Este enfoque consta de los siguientes componentes:
+La forma más eficaz de implementar alta disponibilidad para el plano de control de Kubernetes es configurar un clúster etcd con varios nodos principales y un balanceador de carga. Esta configuración incluye:
 
-1. **Varios master nodes**: Normalmente se despliegan 3 o 5 master nodes en diferentes availability zones para eliminar puntos únicos de fallo. Cada master node ejecuta los siguientes componentes del control plane:
-   - kube-apiserver: servidor que maneja solicitudes de API
-   - kube-controller-manager: ejecuta procesos de controller
-   - kube-scheduler: decisiones de scheduling de Pods
+1. **Varios nodos principales:** normalmente se despliegan 3 o 5 nodos principales en distintas zonas de disponibilidad para evitar puntos únicos de fallo. Cada nodo ejecuta estos componentes del plano de control:
+   - kube-apiserver, que atiende las solicitudes de la API.
+   - kube-controller-manager, que ejecuta los controladores.
+   - kube-scheduler, que decide dónde programar los Pods.
 
-2. **Cluster etcd**: etcd es un almacén distribuido de clave-valor que almacena todos los datos del cluster Kubernetes. Para alta disponibilidad, normalmente se ejecutan 3 o 5 instancias de etcd. etcd puede ejecutarse directamente en master nodes o en nodes dedicados.
+2. **Clúster etcd:** etcd es un almacén distribuido de clave-valor que contiene los datos del clúster Kubernetes. Para lograr alta disponibilidad suelen ejecutarse 3 o 5 instancias etcd, en los nodos principales o en nodos dedicados.
 
-3. **Load balancer**: Se necesita un load balancer para distribuir las solicitudes de clientes entre varias instancias de kube-apiserver. Esto normalmente se implementa usando servicios de load balancer de cloud providers o load balancers de software como HAProxy o Nginx.
+3. **Balanceador de carga:** distribuye las solicitudes de los clientes entre varias instancias de kube-apiserver. Puede ser un servicio del proveedor de nube o un balanceador de software como HAProxy o Nginx.
 
-Beneficios clave de esta configuración:
-- **Tolerancia a fallos**: El cluster continúa operando incluso si falla un master node.
-- **Alta disponibilidad**: Desplegar en varias availability zones puede manejar incluso fallos a nivel de data center.
-- **Escalabilidad**: Las solicitudes del API server pueden distribuirse y procesarse entre varias instancias.
-- **Consistencia de datos**: El algoritmo de consenso Raft de etcd garantiza la consistencia de datos.
+Ventajas principales:
+- **Tolerancia a fallos:** el clúster sigue funcionando si falla un nodo principal.
+- **Alta disponibilidad:** el despliegue en varias zonas de disponibilidad puede tolerar fallos de un centro de datos.
+- **Escalabilidad:** las solicitudes de la API se distribuyen entre varias instancias.
+- **Coherencia de datos:** el consenso Raft de etcd mantiene la coherencia de los datos.
 
-Problemas con otras opciones:
-- Ejecutar varias instancias de API server en un único master node convierte al propio node en un punto único de fallo.
-- Desplegar el API server como un StatefulSet no es un enfoque común, y los componentes del control plane normalmente se gestionan fuera de Kubernetes.
-- Un proceso watchdog puede ser útil, pero por sí solo no es una verdadera solución de alta disponibilidad.
+Problemas de las demás opciones:
+- Varias instancias de API server en un solo nodo principal siguen dejando ese nodo como punto único de fallo.
+- El API server no suele desplegarse como StatefulSet; los componentes del plano de control suelen administrarse fuera de Kubernetes.
+- Un proceso watchdog puede ser útil, pero no constituye por sí solo una solución de alta disponibilidad.
 </details>
 
-3. ¿Cuál es la consideración más importante al configurar audit logging en un cluster Kubernetes?
-   - A) Registrar todas las solicitudes de API para garantizar un audit trail completo
-   - B) Usar audit policies para registrar selectivamente solo eventos importantes
-   - C) Streaming en tiempo real de audit logs a un sistema SIEM externo
-   - D) Restringir el acceso a audit logs solo a administradores
+3. ¿Qué mecanismo selecciona los eventos y el nivel de detalle que registra el sistema de auditoría de Kubernetes?
+   - A) Registrar sin filtros todos los cuerpos de solicitud y respuesta
+   - B) Usar una política de auditoría para seleccionar eventos y niveles
+   - C) Transmitir en tiempo real los logs de auditoría a un SIEM externo
+   - D) Limitar el acceso a los logs de auditoría a los administradores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usar audit policies para registrar selectivamente solo eventos importantes**
+**Respuesta: B) Usar una política de auditoría para seleccionar eventos y niveles**
 
 **Explicación:**
-La consideración más importante al configurar audit logging de Kubernetes es usar audit policies para registrar selectivamente solo eventos importantes. Esto es importante por las siguientes razones:
+Las políticas de auditoría seleccionan los eventos y su nivel de detalle. Una regla general de nivel Metadata puede conservar una cobertura amplia sin incluir cargas útiles sensibles; también importan la retención, el control de acceso y la entrega de los logs. Esto es importante por varios motivos:
 
-1. **Minimizar el impacto en el rendimiento**: Registrar todas las solicitudes de API puede generar una carga significativa en el API server y degradar el rendimiento. Los clusters grandes pueden tener miles de solicitudes de API por segundo.
+1. **Reduce el impacto en el rendimiento:** registrar todas las solicitudes de API puede cargar significativamente el API server y degradar su rendimiento. Elige los niveles según la cobertura de auditoría necesaria y el impacto medido; registrar los metadatos de todas las solicitudes es una opción de referencia admitida.
 
-2. **Eficiencia de almacenamiento**: Registrar todos los eventos hace que los datos de logs crezcan rápidamente, aumentando los costos de almacenamiento y dificultando el análisis de logs.
+2. **Ahorra almacenamiento:** registrar todos los eventos hace crecer rápidamente los logs, aumenta los costos y dificulta el análisis.
 
-3. **Enfoque en información relevante**: Al registrar solo eventos importantes, los analistas de seguridad pueden enfocarse en información crítica.
+3. **Se centra en la información relevante:** al registrar los eventos importantes, los analistas de seguridad pueden centrarse en la información crítica.
 
-4. **Cumplimiento**: Muchos requisitos de cumplimiento exigen registrar tipos específicos de eventos, no todos los eventos.
+4. **Cumplimiento:** adapta la cobertura de eventos, la retención y los controles de acceso a los requisitos aplicables al sistema.
 
-Las audit policies de Kubernetes admiten los siguientes niveles de auditoría:
+Las políticas de auditoría de Kubernetes admiten estos niveles:
 
-- **None**: No registra el evento.
-- **Metadata**: Registra solo metadatos de la solicitud (usuario, timestamp, recurso, acción, etc.) y excluye el cuerpo de la solicitud/respuesta.
-- **Request**: Registra metadatos y el cuerpo de la solicitud, pero excluye el cuerpo de la respuesta.
-- **RequestResponse**: Registra metadatos, cuerpo de la solicitud y cuerpo de la respuesta.
+- **None:** no registra el evento.
+- **Metadata:** registra solo los metadatos de la solicitud (usuario, marca de tiempo, recurso, acción, etc.) y excluye el cuerpo de la solicitud y de la respuesta.
+- **Request:** registra los metadatos y el cuerpo de la solicitud, pero excluye el cuerpo de la respuesta.
+- **RequestResponse:** registra los metadatos y los cuerpos de la solicitud y la respuesta.
 
-Ejemplo de una audit policy efectiva:
+Ejemplo de política de auditoría:
 ```yaml
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
-# Set logging level for authentication and authorization requests
 - level: Metadata
-  users: ["system:anonymous"]
-  verbs: ["get", "list", "watch"]
-
-# Log changes to sensitive resources like Secret, ConfigMap in detail
-- level: Request
   resources:
   - group: ""
-    resources: ["secrets", "configmaps"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# Log important resource changes in detail
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# Log only metadata by default
+    resources: ["secrets", "configmaps", "serviceaccounts/token"]
+  - group: authentication.k8s.io
+    resources: ["tokenreviews"]
 - level: Metadata
 ```
 
-Problemas con otras opciones:
+Problemas de las demás opciones:
 - Registrar todas las solicitudes de API puede causar problemas de rendimiento y almacenamiento.
-- El streaming en tiempo real a sistemas SIEM externos es importante, pero tiene menor prioridad que decidir qué registrar.
-- Restringir el acceso a audit logs es importante, pero es una medida de seguridad más que la política de logging en sí.
+- La transmisión en tiempo real a un SIEM externo es importante, pero primero hay que decidir qué registrar.
+- Restringir el acceso a los logs de auditoría es importante, pero es una medida de seguridad y no la política que selecciona el registro.
 </details>
 
-4. ¿Cuál es la forma más eficaz de implementar node auto-repair en un cluster Kubernetes?
-   - A) Desplegar un DaemonSet que monitoree el estado del node y reinicie automáticamente nodes problemáticos
-   - B) Utilizar managed node groups y funcionalidades de auto-repair del cloud provider
-   - C) Usar Node Problem Detector y custom controllers para monitoreo y recuperación del estado de nodes
-   - D) Implementar un cron job que compruebe periódicamente el estado de los nodes y recree nodes problemáticos
+4. ¿Qué patrón combina un detector dedicado de problemas de nodos con una lógica de reparación personalizada en un entorno autogestionado?
+   - A) Desplegar un DaemonSet que supervise los nodos y reinicie automáticamente los problemáticos
+   - B) Usar grupos de nodos administrados y funciones de reparación automática del proveedor de nube
+   - C) Usar Node Problem Detector y controladores personalizados para supervisar y recuperar el estado de los nodos
+   - D) Ejecutar un cron job que compruebe periódicamente los nodos y vuelva a crear los problemáticos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Usar Node Problem Detector y custom controllers para monitoreo y recuperación del estado de nodes**
+**Respuesta: C) Usar Node Problem Detector y controladores personalizados para supervisar y recuperar el estado de los nodos**
 
 **Explicación:**
-La forma más eficaz de implementar node auto-repair en un cluster Kubernetes es usar Node Problem Detector junto con custom controllers. Este enfoque proporciona los siguientes beneficios:
+Node Problem Detector junto con una reparación personalizada es un diseño extensible, aunque no siempre es la mejor opción: la reparación administrada por el proveedor, incluida la reparación de nodos de EKS, puede reducir el trabajo operativo. Este patrón ofrece las ventajas siguientes:
 
-1. **Detección precisa de problemas**: Node Problem Detector (NPD) es una herramienta de propósito específico que puede detectar diversos problemas de node, incluidos:
-   - Errores y bloqueos del kernel
-   - Problemas de hardware
-   - Problemas del sistema de archivos
-   - Problemas de red
-   - Problemas de escasez de recursos
+1. **Detección precisa de problemas:** Node Problem Detector (NPD) detecta varios problemas de nodos, por ejemplo:
+   - Errores y fallos del kernel.
+   - Problemas de hardware.
+   - Problemas del sistema de archivos.
+   - Problemas de red.
+   - Falta de recursos.
 
-2. **Respuesta flexible**: Los custom controllers permiten implementar diversas estrategias de recuperación para los problemas detectados:
-   - Problemas menores: reinicio del node
-   - Problemas graves: reemplazo del node
-   - Tipos específicos de problemas: reinicio de un Service específico
+2. **Respuesta flexible:** los controladores personalizados pueden aplicar distintas estrategias según el problema detectado:
+   - Problemas menores: reiniciar el nodo.
+   - Problemas graves: sustituir el nodo.
+   - Problemas concretos: reiniciar un servicio específico.
 
-3. **Integración nativa con Kubernetes**: NPD informa el estado del node como NodeConditions, integrándose bien con los mecanismos existentes de Kubernetes.
+3. **Integración con Kubernetes:** NPD informa el estado mediante NodeConditions y se integra con los mecanismos existentes de Kubernetes.
 
-4. **Independiente de cloud**: Este enfoque funciona en todos los entornos (on-premises, varios cloud providers).
+4. **Independencia de la nube:** la detección y reparación deben adaptarse al sistema operativo, el runtime y el proveedor; la pérdida de un nodo también requiere una señal/controlador externo si el agente del propio nodo no puede informar.
 
 Pasos de implementación:
 
-1. **Desplegar Node Problem Detector**:
+1. **Despliega Node Problem Detector:**
    ```bash
    kubectl apply -f https://raw.githubusercontent.com/kubernetes/node-problem-detector/master/deployment/node-problem-detector.yaml
    ```
 
-2. **Implementar custom controller**:
-   - Observar eventos de Kubernetes y cambios de estado de nodes
-   - Implementar lógica para responder a NodeConditions específicas
-   - Realizar acciones de recuperación (ejecución de comandos mediante SSH, recreación de node mediante cloud API, etc.)
+2. **Implementa un controlador personalizado:**
+   - Observa eventos de Kubernetes y cambios de estado de los nodos.
+   - Define la lógica para responder a NodeConditions específicas.
+   - Ejecuta acciones de recuperación (comandos por SSH, recreación del nodo mediante la API de la nube, etc.).
 
-3. **Configurar alertas y logging**:
-   - Configurar alertas para acciones de recuperación
-   - Registrar problemas y acciones de recuperación
+3. **Configura alertas y logs:**
+   - Configura alertas para las acciones de recuperación.
+   - Registra los problemas y las acciones de recuperación.
 
-Problemas con otras opciones:
+Problemas de las demás opciones:
 
-- **Enfoque con DaemonSet**: Si el node tiene problemas graves, el propio DaemonSet puede verse afectado, y es difícil detectar todos los tipos de problemas.
+- **DaemonSet:** si el nodo tiene un problema grave, el propio DaemonSet puede verse afectado; además, es difícil detectar todos los tipos de problemas.
+- **Grupos de nodos administrados por el proveedor:** dependen de proveedores concretos y no se pueden usar en instalaciones locales; los tipos de problemas detectables también pueden ser limitados.
+- **Cron job:** reacciona lentamente, detecta una gama limitada de problemas y debe ejecutarse fuera del clúster.
 
-- **Managed node groups del cloud provider**: Están ligados a cloud providers específicos y no pueden usarse en entornos on-premises. Los tipos de problemas que pueden detectarse también pueden estar limitados.
-
-- **Enfoque con cron job**: Tiempo de reacción lento, capacidad limitada de detección de problemas y debe ejecutarse fuera del cluster.
-
-Combinar Node Problem Detector con custom controllers permite implementar una solución de node auto-repair potente y flexible que funciona en varios entornos.
+Node Problem Detector con controladores personalizados permite una reparación potente y flexible en distintos entornos.
 </details>
 
-5. ¿Cuáles son las mejores prácticas para gestionar eficazmente RBAC (Role-Based Access Control) en un cluster Kubernetes?
-   - A) Conceder el rol cluster-admin a todos los usuarios para facilitar la gestión
-   - B) Definir roles granulares por namespace y aplicar el principio de menor privilegio
-   - C) Consolidar todos los permisos en un único ClusterRole para mantener la consistencia
-   - D) Usar siempre certificados de usuario en lugar de service accounts para la autenticación
+5. ¿Cuáles son las prácticas recomendadas para administrar RBAC (Role-Based Access Control) de forma eficaz en un clúster Kubernetes?
+   - A) Conceder el rol cluster-admin a todos los usuarios para simplificar la administración
+   - B) Definir roles granulares por namespace y aplicar el principio de privilegio mínimo
+   - C) Consolidar todos los permisos en un único ClusterRole para mantener la coherencia
+   - D) Usar siempre certificados de usuario en vez de service accounts para la autenticación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Definir roles granulares por namespace y aplicar el principio de menor privilegio**
+**Respuesta: B) Definir roles granulares por namespace y aplicar el principio de privilegio mínimo**
 
 **Explicación:**
-La mejor práctica para gestionar eficazmente RBAC (Role-Based Access Control) en un cluster Kubernetes es definir roles granulares por namespace y aplicar el principio de menor privilegio. Este enfoque proporciona los siguientes beneficios:
+La práctica recomendada para administrar RBAC eficazmente es definir roles granulares por namespace y aplicar el principio de privilegio mínimo. Este enfoque ofrece varias ventajas:
 
-1. **Principio de menor privilegio**: Concede solo los permisos mínimos necesarios a usuarios y service accounts para minimizar el riesgo de seguridad. Esto ayuda a proteger el cluster contra cambios no intencionados o acciones maliciosas.
+1. **Principio de privilegio mínimo:** concede a los usuarios y service accounts solo los permisos mínimos necesarios para reducir riesgos de seguridad y cambios involuntarios o maliciosos.
 
-2. **Aislamiento por namespace**: Definir roles por namespace fortalece el aislamiento lógico entre equipos o aplicaciones. Esto evita que errores de un equipo afecten los recursos de otro equipo.
+2. **Aislamiento por namespace:** los roles por namespace refuerzan el aislamiento lógico entre equipos o aplicaciones. Esto limita las acciones habituales de la API; también hacen falta controles de admisión de cargas de trabajo y de red.
 
-3. **Control de acceso granular**: Los permisos pueden controlarse finamente para tipos de recursos o acciones específicos. Por ejemplo, a los desarrolladores se les puede conceder permiso para gestionar pods y services mientras se restringen los permisos para modificar secrets o el propio namespace.
+3. **Control de acceso granular:** permite limitar permisos por tipo de recurso y acción. Por ejemplo, se puede permitir que los desarrolladores administren Pods y Services, pero restringirles la modificación de Secrets o del propio namespace.
 
-4. **Facilidad de auditoría**: Usar roles granulares documenta claramente quién puede realizar qué acciones, lo que facilita auditorías y cumplimiento.
+4. **Facilidad de auditoría:** los roles granulares documentan con claridad quién puede hacer qué y facilitan las auditorías y el cumplimiento.
 
-Ejemplos de implementación de mejores prácticas de RBAC:
+Ejemplos de prácticas recomendadas para RBAC:
 
-1. **Definir roles por namespace**:
+1. **Define roles por namespace:**
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: Role
@@ -1432,12 +1293,11 @@ Ejemplos de implementación de mejores prácticas de RBAC:
    - apiGroups: ["apps"]
      resources: ["deployments", "replicasets"]
      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-   - apiGroups: [""]
-     resources: ["secrets"]
-     verbs: ["get", "list", "watch"]  # Only allow reading secrets
    ```
 
-2. **Crear role binding**:
+La creación de Pods o Deployments puede exponer indirectamente Secrets y privilegios de ServiceAccount del namespace. Quitar el acceso de lectura directo a Secrets es útil, pero no basta para limitar las credenciales que pueden montar las cargas; usa controles de admisión apropiados.
+
+2. **Crea un role binding:**
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: RoleBinding
@@ -1454,7 +1314,7 @@ Ejemplos de implementación de mejores prácticas de RBAC:
      apiGroup: rbac.authorization.k8s.io
    ```
 
-3. **Usar roles a nivel de cluster con moderación**:
+3. **Usa con moderación los roles de clúster:**
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: ClusterRole
@@ -1466,7 +1326,7 @@ Ejemplos de implementación de mejores prácticas de RBAC:
      verbs: ["get", "list", "watch"]
    ```
 
-4. **Permisos granulares para service accounts**:
+4. **Concede permisos granulares a service accounts:**
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: Role
@@ -1480,11 +1340,9 @@ Ejemplos de implementación de mejores prácticas de RBAC:
      verbs: ["get"]
    ```
 
-Problemas con otras opciones:
+Problemas de las demás opciones:
 
-- **Conceder el rol cluster-admin a todos los usuarios**: Esto plantea riesgos de seguridad graves. Todos los usuarios tendrían acceso completo a todos los recursos del cluster, lo que lo hace vulnerable a cambios no intencionados o acciones maliciosas.
-
-- **Consolidar todos los permisos en un único ClusterRole**: Esto hace imposible el control de acceso granular y viola el principio de menor privilegio.
-
-- **Usar siempre certificados de usuario**: Las service accounts son adecuadas para la autenticación de aplicaciones, y usar certificados de usuario en todas las situaciones aumenta la carga de gestión. Es importante elegir el mecanismo de autenticación adecuado según la situación.
+- **Conceder cluster-admin a todos los usuarios:** crea riesgos de seguridad graves, porque todos tendrían acceso completo a los recursos del clúster.
+- **Consolidar todos los permisos en un ClusterRole:** un rol compartido con demasiados permisos puede conceder acceso excesivo; sí puede ser apropiado reutilizar un ClusterRole de alcance limitado mediante RoleBindings con ámbito de namespace.
+- **Usar siempre certificados de usuario:** las service accounts son adecuadas para la autenticación de aplicaciones, mientras que usar certificados de usuario en todos los casos aumenta la carga administrativa. El mecanismo debe elegirse según la situación.
 </details>

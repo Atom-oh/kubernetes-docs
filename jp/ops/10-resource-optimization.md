@@ -1,8 +1,8 @@
 # リソース最適化: requests、limits、言語ランタイム
 
-> **最終更新**: September 11, 2026。例はKubernetes 1.36スキーマ、
+> **最終更新**: 2026年10月16日。例はKubernetes 1.36スキーマ、
 > Java 21 / Spring Boot 4.1.1、Python 3.12 / Gunicorn 26.2.0、
-> Node.js 24.21、Go 1.27.1、Rust 1.98 / Tokio 1.53.1で確認しました。
+> Node.js 24.22、Go 1.27.2、Rust 1.98 / Tokio 1.53.1で確認しました。
 
 言語名や固定割合だけでワークロードのサイズを決めないでください。代表的な負荷、起動、再起動、GC、
 障害条件でスループットとレイテンシーSLOを測定します。requests、limits、レプリカ、ランタイム同時実行数を
@@ -176,7 +176,7 @@ spec:
 upperBoundをそのままメモリlimit、uncappedTargetを適用値と見なさないでください。
 `RequestsAndLimits`は既存比率を維持してlimitsを調整でき、upperBoundをlimitsにコピーしません。
 
-VPA 1.7.1では非推奨の`Auto`は`Recreate`として動作します。
+VPA 1.8.0では非推奨の`Auto`は`Recreate`として動作します。
 `InPlaceOrRecreate`/`InPlace`の前提条件とKubernetesのインプレース対応を確認します。
 `Initial`も新Podのrequestsを変更するため、requestベースHPA使用率の分母を変えます。
 HPAと自動的に競合しないわけではありません。
@@ -648,7 +648,7 @@ Podレプリカとプロセスレプリカを組み合わせると、ワーカ�
 
 Go 1.25はLinuxでcgroup対応のデフォルトGOMAXPROCSを導入しました。
 `go.mod`の言語バージョンとGODEBUG互換デフォルトが関係します。このデフォルトには`go 1.25.0`以降を使います。
-例はGo 1.27.1でテストしました。
+例はGo 1.27.2でテストしました。
 環境でGOMAXPROCSを明示設定するか、正の`runtime.GOMAXPROCS(n)`を呼ぶと自動更新は無効になります。
 `runtime.GOMAXPROCS(0)`での照会は変更しません。
 
@@ -1007,7 +1007,7 @@ EKSデプロイ、cgroupクォータ変更、強制OOM、性能ベンチマー�
 - [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
 - [Gunicorn設定](https://gunicorn.org/reference/settings/)
 - [Flask変更履歴](https://flask.palletsprojects.com/en/stable/changes/)
-- [Node.js 24 CLI](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
+- [Node.js 24 CLI](https://nodejs.org/download/release/v24.22.0/docs/api/cli.html)
 - [Tokioランタイムビルダー](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---

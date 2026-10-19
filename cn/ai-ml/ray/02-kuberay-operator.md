@@ -45,7 +45,7 @@ chart 默认启用 beta 功能门控 `RayServiceIncrementalUpgrade`。mTLS、Ray
 
 Ray autoscaler 会检查任务、actor、placement/资源请求和期望的 worker 组大小；KubeRay 则调整 Pod。使用 `numOfHosts` 时，一个组副本可能对应多个 Ray Pod，因此 `replicas == Pod count` 并非普遍成立。
 
-Kubernetes 负责调度 Pod，而 Karpenter 之类的配置器会为无法调度的需求提供 EC2 容量。由镜像拉取、PVC、权限或配额导致的 Pending Pod，不一定能通过增加节点解决。Karpenter 的整合和漂移处理也属于独立的控制行为。
+Kubernetes 负责调度 Pod，而 Karpenter 之类的节点容量供应器会为无法调度的需求提供 EC2 容量。由镜像拉取、PVC、权限或配额导致的 Pending Pod，不一定能通过增加节点解决。Karpenter 的整合和漂移处理也属于独立的控制行为。
 
 Ray 2.58.0 配置生成器将全局空闲超时默认设为 60 秒；组级空闲超时可以覆盖该行为。最小/最大副本数、活动状态、轮询和排空条件意味着它并不保证恰好在 60 秒后删除 Pod。
 

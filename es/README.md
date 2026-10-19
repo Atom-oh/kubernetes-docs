@@ -3,11 +3,11 @@
 # Contenido de formación sobre Kubernetes y Amazon EKS
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-Este repositorio es una guía completa de cloud que abarca los fundamentos de Linux y los contenedores, Kubernetes y Amazon EKS, redes, service mesh, almacenamiento, bases de datos, canalizaciones de datos, IA/ML y seguridad y operaciones. Además del material de aprendizaje, ofrece datos de referencia medidos en entornos reales de AWS, así como cuestionarios por tema y laboratorios prácticos seleccionados.
+Este repositorio es una guía integral de computación en la nube que abarca los fundamentos de Linux y los contenedores, Kubernetes y Amazon EKS, redes, mallas de servicios, almacenamiento, bases de datos, canalizaciones de datos, IA/ML, seguridad y operaciones. Además del material de aprendizaje, ofrece resultados de pruebas comparativas medidos en entornos AWS reales, además de cuestionarios por tema y una selección de laboratorios prácticos.
 
 ## Materiales de aprendizaje y cuestionarios
 
-Este contenido formativo incluye cuestionarios para cada tema junto con los materiales de aprendizaje. Puedes poner a prueba y reforzar lo que has aprendido mediante los cuestionarios. Cada cuestionario presenta las respuestas en un formato desplegable y oculto, lo que te permite intentar responder las preguntas antes de revelarlas.
+Este contenido formativo incluye cuestionarios para cada tema junto con los materiales de aprendizaje. Puedes poner a prueba y reforzar lo que has aprendido mediante los cuestionarios. Cada cuestionario oculta las respuestas en paneles desplegables, para que puedas intentar responder antes de mostrarlas.
 
 - [Tabla de contenido de los materiales de aprendizaje](#table-of-contents) - Materiales de aprendizaje por tema
 - [Colección de cuestionarios](./quizzes/README.md) - Cuestionarios por tema
@@ -35,19 +35,19 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 1. [Introducción a Kubernetes](./basics/04-kubernetes-introduction.md) | [Cuestionario](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 2. [Arquitectura del clúster](./core/01-cluster-architecture.md) | [Cuestionario](./quizzes/core/01-cluster-architecture-quiz.md)
 3. [Pods y cargas de trabajo](./core/02-pods-and-workloads.md) | [Cuestionario](./quizzes/core/02-pods-and-workloads-quiz.md)
-4. [Services y redes](./core/03-services-networking.md) | [Cuestionario](./quizzes/core/03-services-networking-quiz.md)
+4. [Servicios y redes](./core/03-services-networking.md) | [Cuestionario](./quizzes/core/03-services-networking-quiz.md)
 5. [Almacenamiento](./core/04-storage.md) | [Cuestionario](./quizzes/core/04-storage-quiz.md)
 6. [Configuración](./core/05-configuration-secrets.md) | [Cuestionario](./quizzes/core/05-configuration-secrets-quiz.md)
 7. [Seguridad](./core/06-security.md) | [Cuestionario](./quizzes/core/06-security-quiz.md)
 8. [Políticas](./core/07-policies.md) | [Cuestionario](./quizzes/core/07-policies-quiz.md)
-9. [Programación, preempción y expulsión](./core/08-scheduling-preemption-eviction.md) | [Cuestionario](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [Laboratorio](./labs/core/08-scheduling-preemption-eviction-lab.md)
+9. [Planificación, preempción y expulsión](./core/08-scheduling-preemption-eviction.md) | [Cuestionario](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [Laboratorio](./labs/core/08-scheduling-preemption-eviction-lab.md)
 10. [Administración del clúster](./core/09-cluster-administration.md) | [Cuestionario](./quizzes/core/09-cluster-administration-quiz.md)
 11. [Windows en Kubernetes](./core/10-windows-in-kubernetes.md) | [Cuestionario](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 12. [Ampliación de Kubernetes](./core/11-extending-kubernetes.md) | [Cuestionario](./quizzes/core/11-extending-kubernetes-quiz.md)
-13. Programador personalizado
-   - [Parte 1: Fundamentos de un programador personalizado](./scheduling/01-custom-scheduler-part1.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-   - [Parte 2: Extensiones y framework del programador](./scheduling/02-custom-scheduler-part2.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
-   - [Parte 3: Ejemplos de implementación y supervisión de un programador personalizado](./scheduling/03-custom-scheduler-part3.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+13. Planificador personalizado
+   - [Parte 1: Fundamentos del planificador personalizado](./scheduling/01-custom-scheduler-part1.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Parte 2: Extensiones y framework del planificador](./scheduling/02-custom-scheduler-part2.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Parte 3: Ejemplos de implementación y supervisión de un planificador personalizado](./scheduling/03-custom-scheduler-part3.md) | [Cuestionario](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 14. Escalado automático
    - [KEDA](./autoscaling/01-keda.md) | [Cuestionario](./quizzes/autoscaling/05-keda-quiz.md)
    - [Karpenter](./autoscaling/02-karpenter.md) | [Cuestionario](./quizzes/autoscaling/06-karpenter-quiz.md)
@@ -63,7 +63,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
    - [Parte 5: Acceso al clúster, validación, actualización y eliminación](./eks/02-eks-cluster-creation-part5.md) | [Cuestionario](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. Redes de EKS
    - [Parte 1: Conceptos básicos y configuración de VPC](./eks/03-eks-networking-part1.md) | [Cuestionario](./quizzes/eks/03-eks-networking-part1-quiz.md)
-   - [Parte 2: Services y balanceo de carga, políticas de red](./eks/03-eks-networking-part2.md) | [Cuestionario](./quizzes/eks/03-eks-networking-part2-quiz.md)
+   - [Parte 2: Servicios y balanceo de carga, políticas de red](./eks/03-eks-networking-part2.md) | [Cuestionario](./quizzes/eks/03-eks-networking-part2-quiz.md)
    - [Parte 3: Optimización del rendimiento, solución de problemas y casos de uso avanzados](./eks/03-eks-networking-part3.md) | [Cuestionario](./quizzes/eks/03-eks-networking-part3-quiz.md)
 4. Almacenamiento de EKS
    - [Parte 1: Conceptos básicos, EBS y EFS](./eks/04-eks-storage-part1.md) | [Cuestionario](./quizzes/eks/04-eks-storage-part1-quiz.md)
@@ -120,7 +120,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
    - [2. Política de enrutamiento y convergencia](./networking/expert/02-routing-policy-convergence.md) | [Cuestionario](./quizzes/networking/expert/02-routing-policy-convergence-quiz.md)
    - [3. EVPN/VXLAN para centros de datos](./networking/expert/03-datacenter-evpn.md) | [Cuestionario](./quizzes/networking/expert/03-datacenter-evpn-quiz.md)
    - [4. Rutas de paquetes y rendimiento en Linux](./networking/expert/04-linux-performance.md) | [Cuestionario](./quizzes/networking/expert/04-linux-performance-quiz.md)
-   - [5. Diseño de cloud y CNI](./networking/expert/05-cloud-cni-design.md) | [Cuestionario](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
+   - [5. Diseño de nube y CNI](./networking/expert/05-cloud-cni-design.md) | [Cuestionario](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
    - [6. Automatización y evaluación final](./networking/expert/06-automation-capstone.md) | [Cuestionario](./quizzes/networking/expert/06-automation-capstone-quiz.md)
 3. [Descripción general de las redes de Kubernetes](./networking/README.md) | [Cuestionario](./quizzes/networking/00-networking-overview-quiz.md)
 4. [Fundamentos de redes: 25 protocolos](./basics/06-network-fundamentals-part1.md)
@@ -186,7 +186,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
    - [Prácticas recomendadas](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
 4. **Análisis detallado de VPC Lattice**
-   - [Descripción general del análisis detallado de VPC Lattice](./service-mesh/vpc-lattice/README.md)
+   - [Introducción a la sección avanzada de VPC Lattice](./service-mesh/vpc-lattice/README.md)
    - [Arquitectura de App Mesh frente a VPC Lattice](./service-mesh/vpc-lattice/01-appmesh-vs-lattice.md) | [Cuestionario](./quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
    - [Análisis del impacto en la latencia](./service-mesh/vpc-lattice/02-latency.md) | [Cuestionario](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
    - [Flujo de autenticación de IAM](./service-mesh/vpc-lattice/03-auth-flow.md) | [Cuestionario](./quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
@@ -197,11 +197,11 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 
 ### Almacenamiento
 1. [Descripción general del almacenamiento](./storage/README.md)
-2. [Prueba de rendimiento medida de EBS gp2 frente a gp3](./storage/01-ebs-gp2-gp3-benchmark.md) | [Cuestionario](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+2. [Comparativa de rendimiento medida entre EBS gp2 y gp3](./storage/01-ebs-gp2-gp3-benchmark.md) | [Cuestionario](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 
 ### Bases de datos
 1. [Descripción general de las bases de datos en Kubernetes](./database/README.md)
-2. [Prueba de rendimiento medida de ClickHouse en EKS](./database/01-clickhouse-on-eks.md) | [Cuestionario](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+2. [Comparativa de rendimiento medida de ClickHouse en EKS](./database/01-clickhouse-on-eks.md) | [Cuestionario](./quizzes/database/01-clickhouse-on-eks-quiz.md)
 
 ### Blockchain
 1. [Descripción general de blockchain](./blockchain/README.md)
@@ -236,7 +236,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 4. **Análisis detallado de Airflow en EKS**
    - [Introducción a Airflow en EKS](./data-on-eks/airflow/README.md)
    - [Parte 1: Arquitectura de Airflow en Kubernetes](./data-on-eks/airflow/01-architecture.md) | [Cuestionario](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-   - [Parte 2: Implementación con Helm y elección del executor](./data-on-eks/airflow/02-helm-deployment.md) | [Cuestionario](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Parte 2: Implementación con Helm y elección del ejecutor](./data-on-eks/airflow/02-helm-deployment.md) | [Cuestionario](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
    - [Parte 3: Patrones de DAG y KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [Cuestionario](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
    - [Parte 4: Integración con Amazon MWAA](./data-on-eks/airflow/04-mwaa-integration.md) | [Cuestionario](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
    - [Parte 5: Operaciones y seguridad](./data-on-eks/airflow/05-operations.md) | [Cuestionario](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
@@ -268,7 +268,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
    - [Parte 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
    - [Parte 4: Katib (ajuste de hiperparámetros y AutoML)](./ai-ml/kubeflow/04-katib.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
    - [Parte 5: Kubeflow Trainer y entrenamiento distribuido](./ai-ml/kubeflow/05-training-operator.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
-   - [Parte 6: KServe (serving de modelos en Kubernetes)](./ai-ml/kubeflow/06-kserve.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+   - [Parte 6: KServe (servicio de modelos en Kubernetes)](./ai-ml/kubeflow/06-kserve.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
 10. **Análisis detallado de MLflow en EKS**
    - [Introducción a MLflow en EKS](./ai-ml/mlflow/README.md)
    - [Parte 1: Seguimiento de MLflow](./ai-ml/mlflow/01-tracking.md) | [Cuestionario](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
@@ -289,7 +289,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 2. [Autenticación y autorización de Kubernetes](./security/02-kubernetes-auth-authz.md) | [Cuestionario](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
 3. [Estándares de seguridad de Pod](./security/03-pod-security-standards.md) | [Cuestionario](./quizzes/security/03-pod-security-standards-quiz.md)
 4. [Políticas de red](./security/04-network-policies.md) | [Cuestionario](./quizzes/security/04-network-policies-quiz.md)
-5. [Gestión de Secrets](./security/05-secrets-management.md) | [Cuestionario](./quizzes/security/05-secrets-management-quiz.md)
+5. [Gestión de secretos](./security/05-secrets-management.md) | [Cuestionario](./quizzes/security/05-secrets-management-quiz.md)
 6. [Prácticas recomendadas de seguridad de EKS](./security/06-eks-security-best-practices.md) | [Cuestionario](./quizzes/security/06-eks-security-best-practices-quiz.md)
 7. [Seguridad de imágenes](./security/07-image-security.md) | [Cuestionario](./quizzes/security/07-image-security-quiz.md)
 8. [Seguridad en tiempo de ejecución](./security/08-runtime-security.md) | [Cuestionario](./quizzes/security/08-runtime-security-quiz.md)
@@ -298,7 +298,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 11. [Kubescape](./security/11-kubescape.md) | [Cuestionario](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Cuestionario](./quizzes/security/12-spiffe-spire-quiz.md)
 13. [Defensa en profundidad y respuesta ante incidentes](./security/13-defense-in-depth-incident-response.md) | [Cuestionario](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
-14. [Protección de WAF, edge, API y origen](./security/14-waf-edge-api-security.md) | [Cuestionario](./quizzes/security/14-waf-edge-api-security-quiz.md)
+14. [Protección del WAF, la capa perimetral, las API y el origen](./security/14-waf-edge-api-security.md) | [Cuestionario](./quizzes/security/14-waf-edge-api-security-quiz.md)
 15. [NGFW de Palo Alto y Fortinet](./security/15-ngfw-paloalto-fortinet.md) | [Cuestionario](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
 16. [Validación de rutas y fallos de GWLB y GENEVE](./security/16-gwlb-geneve-inspection.md) | [Cuestionario](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
@@ -357,7 +357,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
    - [Grafana Mimir](./observability/metrics/03-mimir.md) | [Cuestionario](./quizzes/observability/metrics/03-mimir-quiz.md)
    - [Métricas de CloudWatch](./observability/metrics/04-cloudwatch-metrics.md) | [Cuestionario](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
    - [Datadog](./observability/metrics/05-datadog.md) | [Cuestionario](./quizzes/observability/metrics/05-datadog-quiz.md)
-3. **Registro**
+3. **Gestión de registros**
    - [Descripción general del registro](./observability/logging/README.md) | [Cuestionario](./quizzes/observability/logging/README-quiz.md)
    - [Grafana Loki](./observability/logging/01-loki.md) | [Cuestionario](./quizzes/observability/logging/01-loki-quiz.md)
    - [OpenSearch](./observability/logging/02-opensearch.md) | [Cuestionario](./quizzes/observability/logging/02-opensearch-quiz.md)
@@ -387,7 +387,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 6. [Estrategias de escalado](./ops/06-scaling-strategies.md) | [Cuestionario](./quizzes/ops/06-scaling-strategies-quiz.md)
 7. [Alertas de observabilidad](./ops/07-observability-alerts.md) | [Cuestionario](./quizzes/ops/07-observability-alerts-quiz.md)
 8. [Análisis de observabilidad](./ops/08-observability-analysis.md) | [Cuestionario](./quizzes/ops/08-observability-analysis-quiz.md)
-9. [Pila de observabilidad](./ops/09-observability-stack.md) | [Cuestionario](./quizzes/ops/09-observability-stack-quiz.md)
+9. [Stack de observabilidad](./ops/09-observability-stack.md) | [Cuestionario](./quizzes/ops/09-observability-stack-quiz.md)
 10. [Optimización de recursos](./ops/10-resource-optimization.md) | [Cuestionario](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [Operaciones de actualización](./ops/11-upgrade-operations.md) | [Cuestionario](./quizzes/ops/11-upgrade-operations-quiz.md)
 12. [Manual de planificación de capacidad para eventos](./ops/12-event-capacity-planning.md) | [Cuestionario](./quizzes/ops/12-event-capacity-planning-quiz.md)
@@ -402,15 +402,15 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 Ofrecemos guías de laboratorio prácticas para realizar ejercicios en entornos reales después de aprender la teoría.
 
 - [Lista de guías de laboratorio](./labs/README.md)
-- Fundamentos: fundamentos de Linux, operaciones de Linux y laboratorios de contenedores
-- Núcleo: laboratorios de Pod, Service, almacenamiento y ConfigMap
+- Fundamentos: Linux, operaciones del sistema y laboratorios de contenedores
+- Conceptos básicos: laboratorios de Pods, Services, almacenamiento y ConfigMaps
 - EKS: laboratorio de creación de clústeres
 
 ### Laboratorios de observabilidad de extremo a extremo
 1. [Introducción a la serie de laboratorios](./labs/observability/README.md)
 2. [Parte 1: Configuración de infraestructura](./labs/observability/01-infrastructure-setup-lab.md) | [Cuestionario](./quizzes/observability/labs/01-infrastructure-setup-quiz.md)
-3. [Parte 2: Pila de observabilidad](./labs/observability/02-observability-stack-lab.md) | [Cuestionario](./quizzes/observability/labs/02-observability-stack-quiz.md)
-4. [Parte 3: Implementación de MSA y canary](./labs/observability/03-msa-deployment-lab.md) | [Cuestionario](./quizzes/observability/labs/03-msa-deployment-quiz.md)
+3. [Parte 2: Stack de observabilidad](./labs/observability/02-observability-stack-lab.md) | [Cuestionario](./quizzes/observability/labs/02-observability-stack-quiz.md)
+4. [Parte 3: Despliegue de MSA y estrategia canaria](./labs/observability/03-msa-deployment-lab.md) | [Cuestionario](./quizzes/observability/labs/03-msa-deployment-quiz.md)
 5. [Parte 4: Pruebas de carga y escalado automático](./labs/observability/04-load-testing-scaling-lab.md) | [Cuestionario](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
 6. [Parte 5: Alertas y AIOps](./labs/observability/05-alerting-aiops-lab.md) | [Cuestionario](./quizzes/observability/labs/05-alerting-aiops-quiz.md)
 7. [Parte 6: Análisis de trazas distribuidas](./labs/observability/06-distributed-tracing-lab.md) | [Cuestionario](./quizzes/observability/labs/06-distributed-tracing-quiz.md)
@@ -429,13 +429,13 @@ Ofrecemos guías de laboratorio prácticas para realizar ejercicios en entornos 
 
 ### Cómo usar los cuestionarios
 - Haz clic en el enlace del cuestionario al final de cada documento para comprobar tu aprendizaje
-- Piensa primero las respuestas en formato desplegable antes de revelarlas
+- Intenta responder las preguntas antes de desplegar las respuestas
 - Revisa el documento correspondiente si has respondido mal alguna pregunta
 
 ## Contribuciones
 
 Si quieres contribuir a este proyecto:
-1. Envía un issue cuando encuentres errores tipográficos o de contenido
+1. Abre una incidencia cuando encuentres errores tipográficos o de contenido
 2. Sugiere temas nuevos o mejoras
 3. Sugiere añadir o mejorar preguntas del cuestionario
 

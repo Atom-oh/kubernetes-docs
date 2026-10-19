@@ -1,335 +1,279 @@
-# Node Bootstrap (ノードブートストラップ)
+# ノードのブートストラップ
 
-< [前へ: Air-Gap Setup](./03-airgap-setup.md) | [目次](./README.md) | [次へ: GPU Integration](./05-gpu-integration.md) >
+< [前へ: 制限付きインターネット環境の構成](./03-airgap-setup.md) | [目次](./README.md) | [次へ: GPU 統合](./05-gpu-integration.md) >
 
-> **サポート対象バージョン**: EKS 1.31+, nodeadm 0.1+
-> **最終更新**: February 23, 2026
+> **サポート対象バージョン**: EKS Hybrid Nodes。nodeadm v1.0.20 のソースを確認済みです。対象クラスターに対応する、サポート対象の OS、Kubernetes、CNI の組み合わせを選んでください。
+> **最終更新**: 2026年9月12日
 
-このドキュメントでは、nodeadm を使用してオンプレミスサーバーを EKS Hybrid Nodes としてブートストラップするプロセスについて説明します。
+この章では、準備済みのオンプレミスホストを EKS に接続します。ソフトウェアのインストール、AWS アイデンティティ、初期化、ワークロードの稼働確認を分けて説明します。例を実行するには、対象クラスターとホストの特定、および記載した変更に対する運用担当者の承認が必要です。ローカルでの検証は、本番ネットワーク、OS イメージ、PKI、ワークロードがテスト済みであることを意味しません。
 
-## Bootstrap ワークフロー概要
+## ブートストラップの流れ
 
-以下の手順は、IAM 認証情報のセットアップから完全に Ready 状態の hybrid node になるまでの、Node bootstrap プロセス全体を示しています。
+1. [前提条件](./01-prerequisites.md) と [ネットワーク構成](./02-network-configuration.md) に従い、サポート対象の OS/ランタイム、一意なホスト ID、時刻同期、ルート、DNS、ファイアウォールルールを準備します。
+2. **Hybrid Nodes 用 IAM ロール**、SSM または IAM Roles Anywhere のプロバイダー、および `HYBRID_LINUX` タイプのクラスターアクセスエントリを用意します。一般的な SSM 管理ロールだけでは不十分です。
+3. Hybrid nodeadm のリリースを確認してから、ホスト上または管理された OS イメージのビルド工程で依存関係をインストールします。
+4. 認証情報プロバイダーを 1 つだけ指定した、ノードごとの保護された NodeConfig を配布します。必要に応じてプロキシとレジストリの信頼設定を行います。
+5. 対象ホストで `nodeadm config check` を実行し、続けて `nodeadm init` を実行します。
+6. サポート対象の Hybrid CNI と必要なアドオンを構成します。Node が登録されても `NotReady` のままの場合があります。
+7. Node の ID、Ready 条件、CNI/DNS、認証情報の更新、制限付きワークロードを確認してから、サービスに受け入れます。
 
-### Bootstrap 手順
+## nodeadm と依存関係のインストール
 
-1. **IAM 認証情報を準備する** — SSM Hybrid Activation を作成するか、IAM Roles Anywhere を設定します
-2. **nodeadm をダウンロードする** — 使用するアーキテクチャ向けの CLI バイナリをダウンロードします
-3. **`nodeadm install` を実行する** — Kubernetes コンポーネントと依存関係をインストールします
-4. **NodeConfig YAML を作成する** — cluster details、認証情報、kubelet、containerd を設定します
-5. **CA 証明書をインストールする** — private registry を使用する場合は、private registry の CA certs をシステムの trust store に追加します
-6. **`nodeadm init` を実行する** — Node を初期化し、EKS cluster に登録します
-7. **CNI をインストールする** — Pod networking のために Helm 経由で Cilium をデプロイします
-8. **登録を確認する** — `kubectl get nodes` で Node が `Ready` と表示されることを確認します
+Hybrid nodeadm は EC2 用の `amazon-eks-ami` インストーラーではなく、**`aws/eks-hybrid`** から入手します。新規の SSM インストール/アップグレードには **nodeadm 1.0.19 以降**が必要です。それ以前のバージョンには古い SSM 署名キーが含まれます。このレビューではリリース済みの **v1.0.20 ソース**を確認しました。
 
-## nodeadm CLI のダウンロードとインストール
-
-nodeadm は、EKS Hybrid Nodes の初期化と管理に使用する CLI tool です。
-
-### Step 1: nodeadm をダウンロードする
+承認済みリリースを HTTPS 検証付きでダウンロードし、root として実行する前に、独立して承認された記録とダイジェストを照合してください。変更可能な `latest` ダウンロードで `/usr/local/bin/nodeadm` を無条件に置き換えないでください。[制限付きインターネット環境の章](./03-airgap-setup.md) では、イメージ準備と、確認したリリースの private-manifest 用フラグを説明しています。この環境では公式アーティファクトホストの TLS ホスト名検証に失敗したため、今回の監査では nodeadm バイナリを取得も実行もしていません。
 
 ```bash
-# Download nodeadm (Linux x86_64)
-curl -Lo nodeadm https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/amd64/nodeadm
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# For ARM64 architecture:
-# curl -Lo nodeadm https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/arm64/nodeadm
-
-# Check version
-nodeadm version
+# Target host/image builder: installs software. Choose exactly one provider.
+set -euo pipefail
+: "${KUBERNETES_VERSION:?Approved cluster-compatible version}"
+: "${CREDENTIAL_PROVIDER:?ssm or iam-ra}" "${REGION:?}"
+: "${CONTAINERD_SOURCE:?distro, docker or none for this OS}"
+case "$CREDENTIAL_PROVIDER" in ssm|iam-ra) ;; *) exit 1 ;; esac
+case "$CONTAINERD_SOURCE" in distro|docker|none) ;; *) exit 1 ;; esac
+sudo nodeadm install "$KUBERNETES_VERSION" \
+  --credential-provider "$CREDENTIAL_PROVIDER" \
+  --containerd-source "$CONTAINERD_SOURCE" --region "$REGION" --timeout 20m
 ```
 
-### Step 2: `nodeadm install` を実行する
+新しい Node には、コントロールプレーンと同じマイナーバージョンを優先してください。サポートされる kubelet のバージョン差は互換性の許容範囲であり、サポート対象外の古い EKS バージョンを選ぶ理由にはなりません。kubelet は API server より新しいバージョンにしてはいけません。上流のバージョン差ポリシーだけでなく、EKS と CNI のサポート状況も確認してください。
 
-`nodeadm install` コマンドは、Kubernetes コンポーネント（kubelet、kubectl など）とシステム依存関係をインストールします。これは `nodeadm init` の前に実行する必要があります。
+RHEL では `distro` はサポートされません。文書化された Docker パッケージソースを使うか、互換性のあるランタイムが事前インストールされた状態で `none` を指定してください。AL2023 では `docker` はサポートされません。`none` は containerd のインストールを省略します。Private モードも OS パッケージのインストールを省略するため、不足しているランタイム依存関係を補うものではありません。
 
-```bash
-# Install with SSM credential provider
-sudo nodeadm install 1.31 --credential-provider ssm
+| コンポーネント | 文書化されたインストール先 |
+|---|---|
+| kubelet | `/usr/bin/kubelet` |
+| kubectl | `/usr/local/bin/kubectl` |
+| ECR 認証情報プロバイダー | `/etc/eks/image-credential-provider/ecr-credential-provider` |
+| AWS IAM authenticator / 署名ヘルパー | `/usr/local/bin/aws-iam-authenticator` / `/usr/local/bin/aws_signing_helper` |
+| SSM セットアップ CLI | `/opt/ssm/ssm-setup-cli` |
+| SSM Agent | Ubuntu snap: `/snap/amazon-ssm-agent/current/amazon-ssm-agent`; AL2023/RHEL: `/usr/bin/amazon-ssm-agent` |
+| containerd | Ubuntu/AL2023: `/usr/bin/containerd`; RHEL の文書: `/bin/containerd` |
+| nodeadm の追跡データ | `/opt/nodeadm/tracker` |
 
-# Install with IAM Roles Anywhere credential provider
-sudo nodeadm install 1.31 --credential-provider iam-ra
+`nodeadm install` は署名済みセットアップ CLI を通じて SSM agent をインストール、構成します。**SSM への登録は `init` 中に行われます**。これは、手作業で `dpkg` を実行してから互換性のない別の nodeadm インストーラーを使う手順ではありません。
 
-# Custom timeout for slow networks
-sudo nodeadm install 1.31 --credential-provider ssm --timeout 20m0s
-```
+## NodeConfig と認証情報
 
-> **注記**: `1.31` を対象の Kubernetes version に置き換えてください。この version は EKS cluster version と一致している必要があります。
+### SSM
 
-### インストールされるファイルパス
-
-| コンポーネント | Ubuntu/AL2023 パス | RHEL パス |
-|-----------|-------------------|-----------|
-| kubelet | /usr/bin/kubelet | /usr/bin/kubelet |
-| kubectl | /usr/bin/kubectl | /usr/bin/kubectl |
-| SSM Agent | /snap/amazon-ssm-agent (Ubuntu) / systemd (AL2023) | /usr/bin/amazon-ssm-agent |
-| containerd | /usr/bin/containerd | /usr/bin/containerd |
-| nodeadm | /usr/local/bin/nodeadm | /usr/local/bin/nodeadm |
-
-## NodeConfig YAML の作成
+準備済み Hybrid ロールに対するクラスター名/Region と有効な activation code/ID を指定します。
 
 ```yaml
-# nodeconfig.yaml
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   cluster:
     name: my-hybrid-cluster
     region: ap-northeast-2
-    apiServerEndpoint: https://XXXXXXXXXXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com
-    certificateAuthority: |
-      -----BEGIN CERTIFICATE-----
-      MIIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      -----END CERTIFICATE-----
-    cidr: 10.100.0.0/16  # Service CIDR
-
-  # Credential method selection (SSM or IAM Roles Anywhere)
   hybrid:
-    # Method 1: SSM Hybrid Activations
     ssm:
-      activationCode: <activation-code>
-      activationId: <activation-id>
-
-    # Method 2: IAM Roles Anywhere (uncomment to use)
-    # iamRolesAnywhere:
-    #   nodeName: hybrid-node-001  # Must match certificate CN
-    #   trustAnchorArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:trust-anchor/xxxxx
-    #   profileArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:profile/xxxxx
-    #   roleArn: arn:aws:iam::123456789012:role/EKSHybridNodeRole
-    #   certificatePath: /etc/iam/pki/server.pem
-    #   privateKeyPath: /etc/iam/pki/server.key
-
+      activationCode: REPLACE_WITH_ACTIVATION_CODE
+      activationId: REPLACE_WITH_ACTIVATION_ID
   kubelet:
     config:
       maxPods: 110
       shutdownGracePeriod: 30s
       shutdownGracePeriodCriticalPods: 10s
     flags:
-      - --node-labels=node.kubernetes.io/instance-type=on-prem-gpu
-      - --register-with-taints=eks.amazonaws.com/compute-type=hybrid:NoSchedule
-
-  containerd:
-    config: |
-      version = 2
-
-      [plugins."io.containerd.grpc.v1.cri".registry]
-        config_path = "/etc/containerd/certs.d"
-
-      # Private registry TLS configuration (uncomment and adjust for your registry)
-      # [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.internal.company.io".tls]
-      #   ca_file = "/etc/ssl/certs/registry-ca.crt"
-      # [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.internal.company.io".auth]
-      #   username = "pull-robot"
-      #   password = "<token>"
+      - --node-labels=workload.example.com/location=onprem
 ```
 
-## SSM Hybrid Activation の作成
+保護対象の設定ファイルは入力テンプレートであり、秘密情報を含む状態でコミットしてはいけません。root 所有、モード `0600` とし、値をログやシェル履歴に出さずに渡してください。クラスターの検出では Hybrid ロールの EKS 権限を使って API endpoint と CA を取得します。base64 で符号化された CA フィールドに生の PEM ブロックを入れても、API が要求する表現の代わりにはなりません。
+
+`maxPods` とシャットダウン時間は計画用の例であり、容量を保証しません。CNI の割り当て、予約済み IP、リソース、ワークロードの終了要件を確認してください。任意の `NoSchedule` taint を設定する場合は、対象ワークロード/CNI に対応する toleration が必要です。必要な agent やアプリケーションのスケジュールを妨げる既定 taint を安易に追加しないでください。
+
+認証情報の所有者を通じてのみ activation を作成し、準備済み Hybrid ロール、正しい Region、明示的な有効期限、上限付きの登録数を指定してください。応答は activation code を表示するのではなく、アクセスを制限したファイルに保存します。
 
 ```bash
-# Create SSM Hybrid Activation
-aws ssm create-activation \
-  --default-instance-name "eks-hybrid-node" \
-  --iam-role "service-role/AmazonEC2RunCommandRoleForManagedInstances" \
-  --registration-limit 100 \
-  --region ap-northeast-2 \
-  --tags "Key=Environment,Value=Production" "Key=NodeType,Value=Hybrid"
-
-# Enter the output ActivationCode and ActivationId in nodeconfig.yaml
+# AWS write: owner-approved activation for one new host.
+set -euo pipefail
+umask 077
+: "${REGION:?}" "${HYBRID_ROLE_NAME:?Prepared Hybrid Nodes IAM role name}"
+: "${ACTIVATION_EXPIRY:?Future UTC timestamp within SSM service limits}"
+test ! -e activation.json
+aws ssm create-activation --region "$REGION" \
+  --iam-role "$HYBRID_ROLE_NAME" --registration-limit 1 \
+  --expiration-date "$ACTIVATION_EXPIRY" \
+  --default-instance-name eks-hybrid-node > activation.json
 ```
 
-## IAM Roles Anywhere のセットアップ (代替)
+リクエストが失敗したか結果不明の場合、無条件に再作成してはいけません。認証情報の所有者と状態を照合してください。SSM は生成された `mi-*` 管理インスタンス ID を Node 名として使います。通常の再起動では SSM 登録を再利用し、一時認証情報を更新します。再登録には、登録可能数が残っている有効な activation が必要です。有効期限と登録数の両方を確認してください。
 
-SSM の代わりに IAM Roles Anywhere を使用する場合は、trust anchor、profile、証明書を設定します。
+### IAM Roles Anywhere
 
-```bash
-# Create Trust Anchor
-TRUST_ANCHOR_ARN=$(aws rolesanywhere create-trust-anchor \
-  --name "eks-hybrid-trust-anchor" \
-  --source "sourceType=CERTIFICATE_BUNDLE,sourceData={x509CertificateData=$(cat ca.pem)}" \
-  --enabled \
-  --query 'trustAnchor.trustAnchorArn' --output text)
-
-# Create Profile
-PROFILE_ARN=$(aws rolesanywhere create-profile \
-  --name "eks-hybrid-profile" \
-  --role-arns arn:aws:iam::123456789012:role/EKSHybridNodeRole \
-  --enabled \
-  --query 'profile.profileArn' --output text)
-
-echo "Trust Anchor ARN: $TRUST_ANCHOR_ARN"
-echo "Profile ARN: $PROFILE_ARN"
-# Enter these values in nodeconfig.yaml under spec.hybrid.iamRolesAnywhere
-```
-
-IAM Roles Anywhere 用の NodeConfig YAML:
+[前提条件](./01-prerequisites.md) で準備した trust anchor、有効な profile、Hybrid ロール、ノードごとの証明書/秘密鍵を使います。この章を実行するたびに trust anchor/profile を新たに作成しないでください。
 
 ```yaml
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
 spec:
+  cluster:
+    name: my-hybrid-cluster
+    region: ap-northeast-2
   hybrid:
     iamRolesAnywhere:
-      nodeName: hybrid-node-001  # Must match certificate CN
-      trustAnchorArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:trust-anchor/xxxxx
-      profileArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:profile/xxxxx
-      roleArn: arn:aws:iam::123456789012:role/EKSHybridNodeRole
+      nodeName: hybrid-node-001
+      trustAnchorArn: arn:aws:rolesanywhere:ap-northeast-2:111122223333:trust-anchor/REPLACE_ID
+      profileArn: arn:aws:rolesanywhere:ap-northeast-2:111122223333:profile/REPLACE_ID
+      roleArn: arn:aws:iam::111122223333:role/EKSHybridNodeRole
       certificatePath: /etc/iam/pki/server.pem
       privateKeyPath: /etc/iam/pki/server.key
 ```
 
-> **注記**: IAM Roles Anywhere を使用する場合は、IAM RA profile で `acceptRoleSessionName` を有効にし、頻繁な credential refresh を避けるために IAM role の `MaxSessionDuration` を少なくとも 1 時間（推奨: 12 時間）に設定してください。
+パスは例であり、1 つの証明書を複数のマシンで使い回す指示ではありません。`nodeName` をロールの trust policy が参照する証明書属性に結び付けてください。一般的な CN 条件を使う場合は両者を一致させる必要があります。Node 名は Kubernetes の命名規則を満たし、64 文字以下でなければなりません。profile では **`acceptRoleSessionName: true`** を有効にしてください。
 
-## システムへの CA Certificate のインストール (Private Registry)
+ロールの最大値を 12 時間に設定しただけで、session duration が延びるわけではありません。実際に要求する/profile の期間は、ロールの `MaxSessionDuration` 以下である必要があります。同じ値は許可されます。セキュリティと可用性の要件に応じて期間を選び、認証情報が更新されることを確認してください。静的な IAM ユーザーアクセスキーは、Hybrid nodeadm がサポートする 3 つ目の認証情報プロバイダーではありません。
 
-自己署名証明書または内部 CA 証明書を使用する private container registry を使う場合は、各 Node に CA cert をインストールします。
+## プライベートレジストリの信頼設定
 
-```bash
-# Install CA certificate on system (Ubuntu)
-sudo cp ca.crt /usr/local/share/ca-certificates/registry-ca.crt
-sudo update-ca-certificates
+社内レジストリを使う場合は、その管理者を通じて CA のフィンガープリントと証明書のホスト名を確認してください。適切な場合はレジストリ単位の信頼設定を優先します。提示された証明書を無条件にシステム全体へインストールしたり、ホスト名検証を無効にしたりしないでください。
 
-# RHEL/CentOS
-sudo cp ca.crt /etc/pki/ca-trust/source/anchors/registry-ca.crt
-sudo update-ca-trust extract
+承認済みレジストリ向け `hosts.toml` の例です。
 
-# Configure directory for containerd to find certificate
-sudo mkdir -p /etc/containerd/certs.d/<REGISTRY_HOST>
-cat <<EOF | sudo tee /etc/containerd/certs.d/<REGISTRY_HOST>/hosts.toml
-server = "https://<REGISTRY_HOST>"
+```toml
+# /etc/containerd/certs.d/registry.internal.example.com/hosts.toml
+server = "https://registry.internal.example.com"
 
-[host."https://<REGISTRY_HOST>"]
+[host."https://registry.internal.example.com"]
   capabilities = ["pull", "resolve"]
-  ca = "/usr/local/share/ca-certificates/registry-ca.crt"
-EOF
+  ca = "/etc/containerd/certs.d/registry.internal.example.com/ca.crt"
 ```
 
-## Node の初期化
+対応する、レビュー済みの CA ファイルを各 Node に配置してください。containerd 1.x ではレジストリの `config_path` は `plugins."io.containerd.grpc.v1.cri".registry` の下に置きます。containerd 2.x/config version 3 では `plugins."io.containerd.cri.v1.images".registry` の下です。nodeadm が生成した `/etc/containerd/config.toml` を確認し、実際に導入したランタイムの節を使ってください。非推奨のインライン `configs/auth` と `config_path` の手順を混在させたり、レジストリのパスワードを NodeConfig に入れたりしないでください。
 
-### Configuration の検証
+組織でシステム全体の CA 信頼が必要な場合、Ubuntu では `/usr/local/share/ca-certificates/` と `update-ca-certificates` を使います。RHEL/AL2023 では `/etc/pki/ca-trust/source/anchors/` と `update-ca-trust extract` を使います。RHEL の例で Ubuntu のパスを参照しないでください。通常の ECR 証明書は公開 CA で信頼されますが、OS に正常な CA bundle が必要です。レジストリの信頼設定と認証は別の仕組みです。
 
-Node を初期化する前に、configuration file を検証することを推奨します。
-
-```bash
-# Validate configuration (recommended before node initialization)
-nodeadm config check --config-source file://nodeconfig.yaml
-```
-
-### 初期化の実行
+## 初期化と検証
 
 ```bash
-# Initialize node using nodeadm
-sudo nodeadm init -c file://nodeconfig.yaml
-
-# Check initialization logs
-sudo journalctl -u kubelet -f
-
-# Check node status (from EKS cluster)
-kubectl get nodes -o wide
-```
-
-## Node 登録の確認
-
-```bash
-# Check node list
-kubectl get nodes --show-labels
-
-# Expected output:
-# NAME                STATUS   ROLES    AGE   VERSION   LABELS
-# ip-10-0-1-100       Ready    <none>   1d    v1.31.0   topology.kubernetes.io/zone=ap-northeast-2a
-# ip-10-0-2-100       Ready    <none>   1d    v1.31.0   topology.kubernetes.io/zone=ap-northeast-2b
-# hybrid-node-001     Ready    <none>   5m    v1.31.0   eks.amazonaws.com/compute-type=hybrid
-
-# Check node details
-kubectl describe node hybrid-node-001
-
-# Filter Hybrid Nodes
-kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid
-```
-
----
-
-## systemd による自動 Bootstrap
-
-大規模デプロイでは、Node の起動時に `nodeadm install` と `nodeadm init` を自動実行する systemd service を設定できます。marker file により、install は初回起動時のみ実行され、以降の起動ではスキップされます。
-
-### 前提条件
-
-automatic bootstrap の前に、以下のファイルを Node 上に事前配置しておく必要があります。
-
-- `/etc/eks/nodeconfig.yaml` — NodeConfig configuration file
-- `/etc/eks/bootstrap.env` — Bootstrap environment variables
-- `/usr/local/bin/nodeadm` — nodeadm binary
-
-> **注記**: これらのファイルは、VM image build（Packer など）、cloud-init、または configuration management tools（Ansible など）を使用して事前配置できます。
-
-### 環境設定ファイル
-
-```bash
-# /etc/eks/bootstrap.env
-K8S_VERSION="1.31"
-CREDENTIAL_PROVIDER="ssm"          # ssm or iam-ra
-NODECONFIG_PATH="/etc/eks/nodeconfig.yaml"
-```
-
-### Bootstrap Script
-
-```bash
-#!/bin/bash
-# /usr/local/bin/eks-hybrid-bootstrap.sh
+# Identified target host; init changes local configuration and joins EKS.
 set -euo pipefail
-
-LOG_TAG="eks-hybrid-bootstrap"
-MARKER_DIR="/var/lib/eks"
-INSTALL_MARKER="${MARKER_DIR}/.nodeadm-installed"
-INIT_MARKER="${MARKER_DIR}/.nodeadm-initialized"
-
-# Load environment variables
-source /etc/eks/bootstrap.env
-
-log() { logger -t "$LOG_TAG" "$1"; echo "[$(date '+%H:%M:%S')] $1"; }
-
-mkdir -p "$MARKER_DIR"
-
-# --- install phase (first boot only) ---
-if [ -f "$INSTALL_MARKER" ]; then
-  log "nodeadm install already completed — skipping"
-else
-  log "Starting nodeadm install ${K8S_VERSION} (credential-provider: ${CREDENTIAL_PROVIDER})"
-  nodeadm install "${K8S_VERSION}" --credential-provider "${CREDENTIAL_PROVIDER}"
-  touch "$INSTALL_MARKER"
-  log "nodeadm install completed"
-fi
-
-# --- init phase (first boot only) ---
-if [ -f "$INIT_MARKER" ]; then
-  log "nodeadm init already completed — skipping"
-else
-  log "Starting nodeadm init"
-  nodeadm init -c "file://${NODECONFIG_PATH}"
-  touch "$INIT_MARKER"
-  log "nodeadm init completed — node registered with EKS cluster"
-fi
+sudo nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml
+sudo nodeadm init --config-source file:///etc/eks/nodeconfig.yaml
 ```
+
+Private-manifest を使ったインストールでは、[制限付きインターネット環境の構成](./03-airgap-setup.md) に従い、`init` に承認済みの `--manifest-override` と `--private-mode` を渡してください。プロキシ設定が nodeadm と daemon の実プロセスに届くようにします。`config check` はローカルの設定検査であり、接続全体の試験ではありません。
+
+**クラスター管理者の**端末から、使用する kubeconfig context と、想定した Node 名（SSM の `mi-*`、または承認済みの IAM Roles Anywhere 名）を確認してください。
 
 ```bash
-sudo chmod +x /usr/local/bin/eks-hybrid-bootstrap.sh
+set -euo pipefail
+umask 077
+: "${KUBECONFIG:?}" "${CONTEXT:?}" "${EXPECTED_NODE_NAME:?}"
+kubectl --kubeconfig "$KUBECONFIG" --context "$CONTEXT" \
+  get node "$EXPECTED_NODE_NAME" -o json > node-registration.json
+jq -e '.metadata.labels["eks.amazonaws.com/compute-type"] == "hybrid"
+  and (.metadata.uid | type == "string" and length > 0)' node-registration.json
+expected_uid=$(jq -er '.metadata.uid' node-registration.json)
+# After CNI and required add-ons are ready:
+kubectl --kubeconfig "$KUBECONFIG" --context "$CONTEXT" wait \
+  --for=condition=Ready "node/$EXPECTED_NODE_NAME" --timeout=5m
+observed_uid=$(kubectl --kubeconfig "$KUBECONFIG" --context "$CONTEXT" \
+  get node "$EXPECTED_NODE_NAME" -o jsonpath='{.metadata.uid}')
+test "$observed_uid" = "$expected_uid"
 ```
 
-### systemd Service Unit
+Node UID を記録し、provider/addresses を対象として特定した物理/仮想ホストと照合してください。Ready 条件だけでは不十分です。DNS、イメージ取得、接続性、認証情報の更新、必要なワークロードも確認してください。以前の `v1.31.0` 出力は説明用の過去の出力であり、今回新たに登録して測定した結果ではありません。
+
+## 事前インストール済みホストの systemd 自動化
+
+管理されたビルド/インストール工程で `nodeadm install` を使ってソフトウェアを準備してください。以下の自動化は**初期化だけ**を実行し、マシン ID、承認済み nodeadm バイナリ、NodeConfig、任意の private manifest にひも付けた記録を保存します。状態の変更や一部だけ初期化された状態を検知した場合、黙って登録を繰り返さず停止します。登録状態、マシン ID、鍵、この状態ディレクトリを他の Node に複製しないでください。
+
+root 所有の `/etc/eks/bootstrap.env` の例（モード `0600`）:
+
+```text
+NODECONFIG_PATH=/etc/eks/nodeconfig.yaml
+APPROVED_NODEADM_SHA256=REPLACE_WITH_APPROVED_64_HEX_DIGEST
+# Only for the reviewed private-manifest path:
+# LOCAL_MANIFEST=/etc/eks/manifest.json
+```
+
+root 所有の次のスクリプトを `/usr/local/bin/eks-hybrid-bootstrap.sh` に保存します。親ディレクトリとファイルはホスト管理者が保護してください。これは悪意ある root から保護する仕組みではありません。
+
+```bash
+#!/usr/bin/env bash
+# Initialize one preinstalled, uniquely identified host. Run as root.
+set -euo pipefail
+umask 077
+[[ "$EUID" -eq 0 ]]
+: "${NODECONFIG_PATH:?Absolute per-node config path}"
+: "${APPROVED_NODEADM_SHA256:?Hash from the approved binary record}"
+[[ "$NODECONFIG_PATH" = /* ]]
+[[ "$APPROVED_NODEADM_SHA256" =~ ^[0-9a-f]{64}$ ]]
+NODEADM=/usr/local/bin/nodeadm
+STATE=/var/lib/eks-hybrid-bootstrap
+
+private_file() {
+  local path=$1 owner mode
+  [[ -f "$path" && ! -L "$path" ]]
+  owner=$(stat -c '%u' "$path")
+  mode=$(stat -c '%a' "$path")
+  [[ "$owner" == 0 && "$mode" == 600 ]]
+}
+
+private_file "$NODECONFIG_PATH"
+test -s /etc/machine-id
+test -s /opt/nodeadm/tracker
+test -x "$NODEADM"
+actual=$(sha256sum "$NODEADM")
+[[ "${actual%% *}" == "$APPROVED_NODEADM_SHA256" ]]
+if [[ -e /var/lib/eks/.nodeadm-installed || -e /var/lib/eks/.nodeadm-initialized ]]; then
+  echo 'Legacy markers found: review existing installation and migrate state manually.' >&2
+  exit 1
+fi
+[[ ! -L "$STATE" ]]
+mkdir -p -m 700 "$STATE"
+[[ "$(stat -c '%u:%a' "$STATE")" == 0:700 ]]
+exec 9>"$STATE/lock"
+flock -n 9
+
+args=(--config-source "file://$NODECONFIG_PATH")
+fingerprint_inputs=(/etc/machine-id "$NODEADM" "$NODECONFIG_PATH")
+if [[ -n "${LOCAL_MANIFEST:-}" ]]; then
+  [[ "$LOCAL_MANIFEST" = /* ]]
+  private_file "$LOCAL_MANIFEST"
+  fingerprint_inputs+=("$LOCAL_MANIFEST")
+  args+=(--manifest-override "file://$LOCAL_MANIFEST" --private-mode)
+fi
+fingerprint=$(sha256sum "${fingerprint_inputs[@]}" | sha256sum)
+fingerprint=${fingerprint%% *}
+if [[ -e "$STATE/state" ]]; then
+  private_file "$STATE/state"
+  if [[ "$(cat "$STATE/state")" == "$fingerprint init-command-completed" ]]; then
+    echo 'Matching initialization record; verify current Node readiness separately.'
+    exit 0
+  fi
+  echo 'Changed identity/config or incomplete initialization: manual recovery required.' >&2
+  exit 1
+fi
+
+"$NODEADM" config check --config-source "file://$NODECONFIG_PATH"
+printf '%s started\n' "$fingerprint" > "$STATE/state.new"
+mv "$STATE/state.new" "$STATE/state"
+# Failure/interruption retains started state and prevents an automatic retry.
+"$NODEADM" init "${args[@]}"
+systemctl is-active --quiet containerd
+systemctl is-active --quiet kubelet
+printf '%s init-command-completed\n' "$fingerprint" > "$STATE/state.new"
+mv "$STATE/state.new" "$STATE/state"
+echo 'Init command completed; cluster registration/CNI/readiness still require verification.'
+```
+
+この状態記録は、init コマンドが完了し、その時点で 2 つのローカルサービスが active だったことを示します。**Kubernetes Node が Ready であることを意味しません**。失敗時には `started` の記録が残るため、運用担当者が状態を照合する前に、実際のホスト/SSM/クラスターの状態を調べてください。サービスのタイムアウトやコマンドの中断だけでは、登録が行われなかったとは判断できません。
 
 ```ini
 # /etc/systemd/system/eks-hybrid-bootstrap.service
 [Unit]
-Description=EKS Hybrid Node Bootstrap (install + init)
-After=network-online.target
+Description=Initialize one prepared EKS Hybrid Node
 Wants=network-online.target
-ConditionPathExists=!/var/lib/eks/.nodeadm-initialized
+After=network-online.target
 
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/eks/bootstrap.env
 ExecStart=/usr/local/bin/eks-hybrid-bootstrap.sh
+TimeoutStartSec=10min
 RemainAfterExit=true
 StandardOutput=journal
 StandardError=journal
@@ -338,476 +282,187 @@ StandardError=journal
 WantedBy=multi-user.target
 ```
 
-> **ConditionPathExists**: `!` prefix は、この service がファイルが **存在しない** 場合にのみ実行されることを意味します。init が完了して marker file が作成されると、以降の起動時には service は自動的にスキップされます。
+ホスト構成の管理者を通じてインストール/有効化してください。`network-online.target` はネットワーク管理サービスの待機機能に基づき起動順序を定めますが、DNS、VPN、EKS、認証情報サービスへの到達性を保証しません。`RemainAfterExit` が記録するのはサービス状態であり、Node の健全性ではありません。`EnvironmentFile` は systemd が解析するファイルであり、スクリプトが shell の `source` で実行するものではありません。
 
-### Service の有効化
+marker だけを使う既存インストールからの移行には、明示的な手順が必要です。`.nodeadm-installed` / `.nodeadm-initialized` を削除して再起動するだけではリセットになりません。認証情報ファイルの有効化など承認済みの構成変更は、文書化されたメンテナンス/init 手順に従い、自動化の記録もその後に照合してください。
 
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable eks-hybrid-bootstrap.service
-```
+通常の再起動では、構成済みの kubelet/認証情報サービスが再開します。Kubernetes Node オブジェクトを削除しても、SSM の登録解除や kubelet の停止にはなりません。稼働中で認可された kubelet は Node を再作成できます。`delete node` をホスト廃止の手段として使わず、障害のあったすべてのホストが必ず再参加すると想定しないでください。
 
-### 動作確認
+## Cilium CNI
 
-```bash
-# Check service status
-sudo systemctl status eks-hybrid-bootstrap.service
+AWS は現在、Hybrid Nodes 向けに保守する **Cilium 1.17.x と 1.18.x** のビルドをサポートしています。公開例には `oci://public.ecr.aws/eks/cilium/cilium` の `1.17.9-0` と `1.18.3-0` があります。任意の新しい上流 chart を選ぶ推奨ではありません。
 
-# View bootstrap logs
-sudo journalctl -u eks-hybrid-bootstrap.service
+現在の AWS CNI ページでは、カーネル要件のため **Ubuntu 20.04 と RHEL 8 は Cilium v1.18.3 の対象外**と明記されています。カーネルを変更しただけで AWS のサポート対象になると主張しないでください。文書化された対応表の範囲内で OS/CNI を選択します。
 
-# Check marker files
-ls -la /var/lib/eks/.nodeadm-*
-```
+Calico の例は `aws-samples/eks-hybrid-examples` に移動されました。これは Calico プロジェクトの非推奨を意味せず、既存のあらゆる Calico 配置が今後も動作する保証でもありません。現行の AWS CNI サポートページには、AWS が保守する Cilium ビルドとサポート対象の機能が記載されています。
 
-### 再インストール
+### インストール値
 
-最初からやり直すには、marker file を削除して再起動します。
-
-```bash
-# Clean up existing state
-sudo nodeadm uninstall
-sudo rm -f /var/lib/eks/.nodeadm-installed /var/lib/eks/.nodeadm-initialized
-
-# Reboot triggers automatic install + init
-sudo reboot
-```
-
-### よくある質問
-
-**Q: systemd unit file の各設定は何を意味しますか?**
-
-| 設定 | 意味 |
-|---------|---------|
-| `Type=oneshot` | 起動時に 1 回だけ実行して終了します |
-| `After=network-online.target` | ネットワークが完全に Ready になった後にのみ実行します |
-| `ConditionPathExists=!/var/lib/eks/.nodeadm-initialized` | `!` prefix — marker file が **存在しない** 場合にのみ実行します |
-| `RemainAfterExit=true` | プロセス終了後も service は active state のままになります（status check が可能） |
-| `WantedBy=multi-user.target` | 通常起動時に自動的に開始します |
-
-**Q: Node が再起動されるたびに新しい SSM activation code が必要ですか?**
-
-いいえ。SSM Hybrid Activation の `activationCode`/`activationId` は、`nodeadm init` 中に SSM agent を AWS に登録するために 1 回だけ使用されます。登録後、SSM agent は自身の認証情報を自動的に更新するため、**通常の再起動では activation code は不要です**。
-
-ただし、`nodeadm uninstall` を実行した場合は、SSM artifacts が削除され、再登録が必要になります。`registration-limit` に達していない場合は、同じ activation code を再利用できます。
-
-**Q: `nodeadm init` は Node を cluster に参加させますか?**
-
-はい。`nodeadm init` は以下の手順を順番に実行します。
-1. kubelet configuration files（`/etc/kubernetes/`）を生成します
-2. SSM または IAM Roles Anywhere credentials を登録します
-3. kubelet systemd service を開始します
-4. kubelet が EKS API server に Node を登録（join）します
-
-言い換えると、`nodeadm init` が実際の **cluster join command** です。
-
-**Q: SSM activation registration は `install` と `init` のどちらで行われますか?**
-
-| Phase | SSM-Related Action |
-|-------|-------------------|
-| `nodeadm install --credential-provider ssm` | SSM Agent **binary only** をインストールします |
-| `nodeadm init` | nodeconfig.yaml の `activationCode`/`activationId` を使用して SSM Agent を AWS に **登録** します |
-
-SSM activation（registration）は **init phase** で行われます。
-
-**Q: SSM activation を維持したまま Node を削除して再登録するにはどうすればよいですか?**
-
-`kubectl delete node <NODE_NAME>` は SSM registration には影響しません（SSM は OS level で動作し、Node registration は Kubernetes level です）。kubelet がまだ実行中であれば、Node は自動的に再登録されます。
-
-```bash
-# Remove node from cluster
-kubectl delete node hybrid-node-001
-
-# If kubelet is running, it auto-registers
-# If stopped, restart manually
-sudo systemctl restart kubelet
-```
-
-**Q: `drain → delete → shutdown` の後、Node は systemd 経由で再起動時に自動登録されますか?**
-
-Node は再登録されますが、それは systemd bootstrap service ではなく、**kubelet service 自体** によって処理されます。
-
-1. `nodeadm init` は kubelet を systemd service としてインストールします
-2. 再起動時に kubelet が自動的に開始し、API server に再登録します
-3. marker file が存在するため bootstrap service はスキップされます（これは期待される動作です）
-
-```bash
-# No need to delete marker files in this workflow
-kubectl drain hybrid-node-001 --ignore-daemonsets --delete-emptydir-data
-kubectl delete node hybrid-node-001
-# Shutdown and reboot → kubelet auto-registers
-```
-
-> **注記**: `nodeadm uninstall` が実行された場合にのみ、marker file を削除し、再インストールのために bootstrap service に依存してください。
-
----
-
-## Cilium CNI のインストール
-
-Cilium は、EKS Hybrid Nodes 向けに AWS がサポートする CNI です。hybrid nodes は、CNI がインストールされるまで `Not Ready` status で表示されます。Amazon VPC CNI は hybrid nodes と **互換性がありません**。
-
-> **サポート対象バージョン**: Amazon EKS でサポートされるすべての Kubernetes versions 向け Cilium v1.17.x および v1.18.x
-> **Helm repository**: `oci://public.ecr.aws/eks/cilium/cilium`
-
-> **前提条件**:
-> - **Kernel version**: Cilium には Linux kernel **5.10 以上** が必要です。Ubuntu 20.04 および RHEL 8 の default kernels は 5.10 未満です — Cilium v1.18.x をインストールする前に kernel をアップグレードする必要があります。
-> - **Hybrid nodes only**: Cilium affinity は hybrid nodes（`eks.amazonaws.com/compute-type: hybrid`）でのみ実行されるように設定する必要があります。VPC CNI を使用する cloud nodes では Cilium を実行しないでください。
-> - **IPAM settings are immutable**: `clusterPoolIPv4PodCIDRList` および `clusterPoolIPv4MaskSize` の値は、初回デプロイ後に **変更できません**。インストール前に Pod CIDR allocation を慎重に計画してください。
-
-### Cilium Values YAML の作成
+この IPv4 cluster-pool の例は、Node/VPC/Service ネットワークと重ならない、レビュー済みのリモート Pod ネットワーク `10.85.0.0/16` を前提とします。初回インストールの**前に**、クラスターで承認済みの値に置き換えてください。
 
 ```yaml
-# cilium-values.yaml
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: eks.amazonaws.com/compute-type
-          operator: In
-          values:
-          - hybrid
-
+        - matchExpressions:
+            - key: eks.amazonaws.com/compute-type
+              operator: In
+              values: [hybrid]
 ipam:
   mode: cluster-pool
   operator:
     clusterPoolIPv4MaskSize: 25
-    clusterPoolIPv4PodCIDRList:
-    - <POD_CIDR>  # Same as your EKS cluster's remote pod networks
-
+    clusterPoolIPv4PodCIDRList: [10.85.0.0/16]
 loadBalancer:
   serviceTopology: true
-
 operator:
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: eks.amazonaws.com/compute-type
-            operator: In
-            values:
-            - hybrid
+          - matchExpressions:
+              - key: eks.amazonaws.com/compute-type
+                operator: In
+                values: [hybrid]
   unmanagedPodWatcher:
     restart: false
-
 envoy:
   enabled: false
-
 kubeProxyReplacement: "false"
+preflight:
+  nodeSelector:
+    eks.amazonaws.com/compute-type: hybrid
 ```
 
-### Cilium のインストール
+事前チェック用 selector は agent affinity とは別です。`/25` には 128 アドレスがありますが、Cilium cluster-pool はそのうち 2 つを予約するため、Pod に 128 個のアドレスを使用できる保証にはなりません。kubelet の `maxPods`、hostNetwork Pod、その他の制約も合わせて調整してください。
+
+既存の pool entry や `clusterPoolIPv4MaskSize` を変更しないでください。Cilium が文書化する拡張方法は、新しい pool entry の**追加**です。事前に EKS remote networks、ルーティング/BGP、アドレス重複、容量をまとめて確認します。「リスト全体を拡張できない」という説明は強すぎます。
 
 ```bash
+# Cluster write; requires approved context, values and supported chart.
+set -euo pipefail
+: "${KUBECONFIG:?}" "${CONTEXT:?}" "${CILIUM_VERSION:?Approved AWS chart version}"
 helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
-  --version 1.18.3-0 \
-  --namespace kube-system \
-  --values cilium-values.yaml
+  --version "$CILIUM_VERSION" --namespace kube-system \
+  --kubeconfig "$KUBECONFIG" --kube-context "$CONTEXT" \
+  --values cilium-values.yaml --wait --timeout 10m
 ```
 
-### インストールの確認
+すべての対象 Hybrid Node 上の Cilium agent と operator、Node の Ready 状態、ノード間通信を確認してください。affinity によりこのインストールは Hybrid Node に限定され、クラウド Node のネットワークは既存の controller が引き続き管理します。kube-proxy を置き換える設計には、独自の API 到達性と移行計画が必要です。同じ Node 上で kube-proxy と競合する設定を残さないでください。
 
-```bash
-# Check Cilium pods are running
-kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
+### アップグレードと削除の境界
 
-# Nodes should now show Ready
-kubectl get nodes -o wide
-```
+Cilium をアップグレードする前に、現在の値/manifest と明示的な Helm revision を保存し、バージョン固有のアップグレードノートを確認し、承認済みの値で候補 chart を render してください。Hybrid Node に対象を絞った**別個の事前検証リリース**を `preflight.enabled=true`、`agent=false`、`operator.enabled=false` で実行します。DaemonSet の全対象 Node への展開と validation Deployment の Ready の**両方**を待ちます。事前検証リリースを作っただけでは検査結果になりません。
 
-### Cilium のアップグレード
+検査に合格したら、その事前検証リリースだけを削除します。レビュー済みの保存値と適切な `upgradeCompatibility` 設定でアップグレードします。マイナーバージョンを越えて古い設定を `--reuse-values` で無条件に引き継がないでください。ロールバックには、明示的に確認した revision と CNI 状態/CRD 互換性の確認が必要です。データプレーンが必ず復旧する保証ではありません。
 
-Cilium を新しい version にアップグレードする手順:
+CNI の削除は、サービスに影響する廃止/移行作業です。ワークロードを退避し、どの Node、ポリシー、CR がまだ Cilium に依存しているか確認してください。共有クラスターで `kubectl get crds | grep cilium | xargs kubectl delete` を実行してはいけません。Helm uninstall だけでホストのルート、インターフェイス、BPF 状態がすべて削除されるとは限りません。対象 Node を退避させた上で、バージョン固有の CNI cleanup 手順に従い、パスを削除する前にマウント中の領域と保持データを確認してください。
 
-```bash
-# 1. Preflight check (validate compatibility before upgrade)
-helm install cilium-preflight oci://public.ecr.aws/eks/cilium/cilium \
-  --version NEW_VERSION \
-  --namespace kube-system \
-  --set preflight.enabled=true \
-  --set agent=false --set operator.enabled=false
+## Bottlerocket は異なるブートストラップ契約を使用
 
-# 2. Upgrade while preserving existing values
-helm upgrade cilium oci://public.ecr.aws/eks/cilium/cilium \
-  --version NEW_VERSION \
-  --namespace kube-system \
-  --reuse-values
+AWS は、サポート対象の x86_64 Kubernetes variant と前提条件を備えた VMware Bottlerocket variant を **1.37.0 以降**でサポートしています。これは nodeadm を**実行しません**。AWS ガイドでは Kubernetes/AWS 設定に加え、**`eks-hybrid-setup` bootstrap container** を構成します。以前の `[settings.hybrid.ssm]` と `[settings.hybrid.iam-roles-anywhere]` の例は、文書化された設定仕様ではありません。
 
-# 3. Verify status
-kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
-
-# 4. Rollback (if issues occur)
-helm rollback cilium --namespace kube-system
-```
-
-### Cilium のアンインストール
-
-Cilium を完全に削除する手順:
-
-```bash
-# 1. Helm uninstall
-helm uninstall cilium --namespace kube-system
-
-# 2. Delete CRDs
-kubectl get crds -o name | grep cilium | xargs kubectl delete
-
-# 3. On-disk cleanup (run on each node)
-sudo rm -rf /var/run/cilium /var/lib/cilium /etc/cni/net.d/05-cilium.conflist
-sudo rm -f /opt/cni/bin/cilium-cni
-```
-
-### Calico 非推奨のお知らせ
-
-> **注記**: Calico は EKS Hybrid Nodes 向けに公式サポートされなくなり、`eks-hybrid-examples` repository に移動されました。新規デプロイでは Cilium を推奨します。既存の Calico deployments は引き続き動作しますが、AWS からの公式サポートは限定的です。
-
----
-
-## Bottlerocket Configuration
-
-Bottlerocket は VMware vSphere environments（v1.37.0+）でのみサポートされ、x86_64 architecture のみ対応しています。Bottlerocket は **nodeadm を使用せず**、TOML-based configuration と user data によってブートストラップされます。
-
-### SSM Hybrid Activation Configuration (settings.toml)
+選択したプロバイダーの設定一式は、[Bottlerocket での Hybrid Node 接続](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html) を参照してください。一般的な項目は次のとおりです。
 
 ```toml
+# Common fragment only: combine with the provider-specific settings from AWS.
 [settings.kubernetes]
-cluster-name = "CLUSTER_NAME"
-api-server = "API_SERVER_ENDPOINT"
-cluster-certificate = "BASE64_CA_CERT"
-service-cidr = "SERVICE_CIDR"
+cluster-name = "my-hybrid-cluster"
+api-server = "https://REPLACE_WITH_CLUSTER_ENDPOINT"
+cluster-certificate = "REPLACE_WITH_BASE64_CLUSTER_CA"
+hostname-override = "hybrid-node-001"
+provider-id = "eks-hybrid:///ap-northeast-2/my-hybrid-cluster/hybrid-node-001"
+authentication-mode = "aws"
+cloud-provider = ""
+server-tls-bootstrap = true
 
-[settings.hybrid]
-enable-credentials-file = true  # Required for Pod Identity
+[settings.network]
+hostname = "hybrid-node-001"
 
-[settings.hybrid.ssm]
-activation-id = "ACTIVATION_ID"
-activation-code = "ACTIVATION_CODE"
+[settings.aws]
+region = "ap-northeast-2"
+
+[settings.kubernetes.node-labels]
+"eks.amazonaws.com/compute-type" = "hybrid"
+
+[settings.bootstrap-containers.eks-hybrid-setup]
+mode = "always"
+user-data = "REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"
 ```
 
-### IAM Roles Anywhere Configuration (settings.toml)
+この断片だけでは起動可能な設定になりません。SSM provider は `eks-hybrid-ssm-setup` に activation/Region の入力を渡し、登録後の Node 名は `mi-*` に変わります。IAM Roles Anywhere provider は `eks-hybrid-iam-ra-setup` に証明書/鍵の入力と AWS credential-process の設定を渡し、role-session-name を証明書ポリシーに結び付けます。文書化された ECR provider とプロバイダー固有の Node label/設定も含めてください。
 
-```toml
-[settings.hybrid.iam-roles-anywhere]
-trust-anchor-arn = "TRUST_ANCHOR_ARN"
-profile-arn = "PROFILE_ARN"
-role-arn = "ROLE_ARN"
-node-name = "NODE_NAME"  # Must match certificate CN
-certificate-path = "/PATH/TO/CERT"
-private-key-path = "/PATH/TO/KEY"
-```
+Base64 は符号化であり、暗号化ではありません。provider bootstrap data に activation secret や秘密鍵が含まれる場合があります。VM の設定、guestinfo、管理権限、診断情報の出力を保護し、公開リポジトリやログに入れないでください。admin-container 経由の SSH は任意ですが、別途認可が必要です。登録済み VM をクリーンなテンプレートとして複製しないでください。
 
-### govc による VMware デプロイ
+承認済みの**電源 OFF 状態の新規プロビジョニング済み VM**を、初回起動の前に構成してください。AWS ガイドでは base64 で符号化した `settings.toml` と `guestinfo.userdata.encoding=base64` を使います。通常の base64 を `gzip+base64` と表記しないでください。プロビジョニング前に、実際の govc/VMware バージョン、datastore、ネットワーク、テンプレート所有者、秘密情報の配布方法を確認してください。この監査では VMware のデプロイを実行していません。
+
+## アドオン配置と Pod Identity
+
+API server のトラフィックが、実際の webhook/aggregated API listener に到達するようにしてください。Hybrid Pod CIDR に到達できない場合、**webhook server/operator** を到達可能なクラウド Node に配置するか、サポートされる範囲で適切な hostNetwork 設計を検証します。CloudWatch/ADOT agent やアプリケーションのすべての Pod をクラウド側で動かす必要があるという意味ではありません。
+
+クラウド Node に配置する場合は、レビュー済みの明示的な Node label/affinity を使い、容量と taint を確認してください。`NotIn [hybrid]` は label のない Node にも一致するため、承認済み EC2 の配置を証明しません。
+
+クラウド/Hybrid 混在クラスターでは、AWS は CoreDNS replica を両側に少なくとも 1 つずつ置くことを推奨しています。replica を 4 つにし、soft spread を使っても、各側にちょうど 2 つずつ配置される保証はありません。[ネットワーク構成](./02-network-configuration.md) にある配置と Service Traffic Distribution の手順を適用し、結果を確認してください。
+
+| Node OS | Pod Identity の準備 |
+|---|---|
+| Ubuntu/RHEL/AL2023 | `spec.hybrid.enableCredentialsFile: true` としてから、文書化された `nodeadm init` を実行。agent 設定で `daemonsets.hybrid.create` を有効にする |
+| Bottlerocket | OS **1.39.0 以降**。provider bootstrap command に `--enable-credentials-file=true` を指定し、`daemonsets.hybrid-bottlerocket.create` を有効にする |
+
+互換性の最低バージョンは Bottlerocket 以外の agent が **v1.3.3-eksbuild.1**、Bottlerocket が **v1.3.7-eksbuild.2** です。これは現行のインストール先を示すものではありません。クラスターに対応する現在のアドオンバージョンと設定 schema を選んでください。マウントされる一時認証情報のパスは異なり、`/eks-hybrid/.aws/credentials` と Bottlerocket の `/var/eks-hybrid/.aws/credentials` です。
+
+Private 環境では `eks-auth` service への経路、Node role の `eks-auth:AssumeRoleForPodIdentity` 権限、各ワークロード用の Pod Identity association/trust/permission が必要です。agent をインストールしただけでは不十分です。必要な DaemonSet 設定はアドオン所有者を通じてマージしてください。既存アドオンを無条件の `create-addon` で上書きしないでください。
+
+## アップグレード、復旧、削除
+
+古い Node を退避する前に、置換容量を追加し、**完全に初期化して検証**してください。新しいホストにバイナリをインストールしただけではクラスター容量は増えません。DNS の可用性を維持してください。「回復性」を理由に、既存の CoreDNS 4 replica を確認せず 2 つに減らさないでください。
+
+特定した古い Node について context、Node UID、ホスト対応、ワークロード/データの所有者を確認します。cordon し、timeout を指定して drain し、PDB/eviction のエラーがあれば停止してください。`--delete-emptydir-data` はローカルの emptyDir データ消失を明示的に許可する指定であり、既定の安全オプションではありません。管理外 Pod、ローカル永続データ、DaemonSet は個別に扱う必要があります。drain の停止を成功扱いにするため、`--force` を使ったり eviction を無効にしたりしないでください。
+
+インプレース更新では、退避させたホストで文書化された `nodeadm upgrade` を実行します。その後、Node identity、ソフトウェアバージョン、Ready/CNI/DNS、ワークロード動作を検証してから uncordon してください。これは中断を伴います。「予備容量がない」ことは安全性の根拠にはなりません。
+
+廃止時は自動 bootstrap/rejoin 経路を止め、文書化された nodeadm の削除とプロバイダー登録解除を完了してから、該当 Node object を削除し、残る CNI リソースを所有者と照合します。復旧に必要な証跡は非公開の場所に保持してください。
+
+`nodeadm uninstall` は `kubectl drain` や `kubectl delete node` と同じではありません。通常、ワークロード Pod が残っていると処理を拒否します。すべての CNI/アドオン資産を削除するわけでもありません。**v1.0.9 以降、文書化された force/skip uninstall 経路でも、ホストのファイルシステムを露出するマウント済みパスがあるため `/var/lib/kubelet` は削除しません**。`--force` は既定の CNI/Kubernetes パスをさらに削除しますが、確認を省略してすべてを消す汎用フラグではありません。手動削除の前にマウントとデータを調査してください。
+
+削除後に承認された再インストールを行う場合は、有効な認証情報で **install → config check → init** を実行し、自動化記録を照合してください。認証エラー、既存 profile、一部だけ完了した init を、稼働中 Node の uninstall を正当化する理由にしてはいけません。
+
+## トラブルシューティング
+
+| 観測された状態 | 状態を変更する前に調査する内容 |
+|---|---|
+| 古い nodeadm で SSM installer の署名エラー | 承認済み nodeadm が 1.0.19 以降か確認。署名検証を回避しない |
+| package manager/ダウンロード失敗 | 実際の repository 到達性、proxy、CA trust、package lock、サポート OS/runtime、エラー内容。`dnf update` は診断ではなくシステムアップグレード |
+| timeout | 失敗した工程と到達性を特定。timeout を延ばすだけでは解決しない |
+| Node IP が remote networks の範囲外 | 実際に設定された Node IP と EKS remote-node CIDR |
+| API に到達できない / Unauthorized | DNS/route/443 と戻り経路、想定する Hybrid role、trust/認証情報の有効性、`HYBRID_LINUX` access entry |
+| NotReady | CNI/agent log と選択した datapath port、runtime、disk/resource 状態。すべてのケースで CNI 不足とは限らない |
+| image pull または x509 error | 正確な image/auth 経路、ECR API/DKR/S3、private-registry CA と hostname。TLS 検証は有効のままにする |
+| activation / token の期限切れ | activation の有効期限/残数/Region と、稼働中 agent の認証情報更新、時刻同期、AWS 到達性を切り分ける。再起動で必ず直るわけではない |
+| Hybrid profile が既存 / init が一部完了 | 現在の nodeadm/provider 状態と対象クラスターを調べ、証跡を保持する。自動で uninstall しない |
 
 ```bash
-# Clone from VM template
-govc vm.clone -vm "/PATH/TO/TEMPLATE" -ds="DATASTORE" \
-  -on=false -template=false -folder=/FOLDER "VM_NAME"
-
-# Configure user data
-govc vm.change -dc="DC" -vm "VM_NAME" \
-  -e guestinfo.userdata="${USER_DATA}" \
-  -e guestinfo.userdata.encoding=gzip+base64
-
-# Start VM
-govc vm.power -on "VM_NAME"
+# Private diagnostic output on the identified node; no nonexistent nodeadm status.
+sudo systemctl status kubelet containerd --no-pager
+sudo journalctl -u kubelet --since '-15 min' --lines 200 --no-pager
+sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 ```
 
-> **注記**: `USER_DATA` は、settings.toml content を gzip 圧縮し、base64 エンコードしたものです。
+`nodeadm debug` は AWS/クラスターへの読み取りと認証情報の検査を行います。出力を非公開にし、共有前に秘密情報を伏せてください。`sudo aws sts get-caller-identity` は別の root/admin 認証情報チェーンを使う場合があり、kubelet が使う認証情報を証明するものではありません。TLS 検証に `curl -k` を使わないでください。サーバーの CA 信頼と kubelet client certificate の承認/発行は別の仕組みです。
 
----
+## 主な参考資料
 
-## Webhook と Add-on 配置のガイダンス
+- [Hybrid nodeadm のコマンド、ファイル配置、削除時の動作](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
+- [Hybrid の認証情報](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html)
+- [IAM Roles Anywhere CreateSession の期間](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html)
+- [SSM CreateActivation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html)
+- [AWS Hybrid CNI のサポートとライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Cilium cluster-pool の拡張](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/ipam/cluster-pool.rst)
+- [Bottlerocket Hybrid のブートストラップ](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html)
+- [Hybrid アドオンと Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html)
+- [containerd registry host の構成](https://github.com/containerd/containerd/blob/v2.2.0/docs/hosts.md)
+- [systemd network-online の意味](https://systemd.io/NETWORK_ONLINE/)
+- [Kubernetes のバージョン差](https://kubernetes.io/releases/version-skew-policy/)
 
-一部の EKS add-ons は、API server が pods に直接到達できる必要がある webhooks を使用します。オンプレミスの Pod CIDR が **routable でない** 場合、これらの add-ons は cloud nodes でのみ実行する必要があります。
-
-### Cloud-Only Add-ons (Unroutable Pod CIDR)
-
-webhook-based add-ons を cloud nodes に制限するには、`nodeAffinity` を使用します。
-
-```yaml
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: eks.amazonaws.com/compute-type
-          operator: NotIn
-          values:
-          - hybrid
-```
-
-この扱いが必要な add-ons: AWS Load Balancer Controller、CloudWatch Observability Agent、ADOT、cert-manager。
-
-### CoreDNS Mixed Mode
-
-DNS resiliency のため、CoreDNS は cloud nodes と hybrid nodes の **両方** で実行する必要があります。少なくとも 4 replicas（各側 2 つ）で `topologySpreadConstraints` を使用します。[Network Configuration - CoreDNS Dual-Location Deployment (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#coredns-placement-and-locality) を参照してください。
-
-### EKS Pod Identity Agent
-
-EKS Pod Identity Agent は、private/air-gap environments で `eks-auth` VPC endpoint を必要とします。EKS managed add-on としてインストールします。
-
-```bash
-aws eks create-addon \
-  --cluster-name my-hybrid-cluster \
-  --addon-name eks-pod-identity-agent \
-  --addon-version v1.3.3-eksbuild.1
-```
-
----
-
-## Node のアップグレード
-
-Hybrid nodes は upstream Kubernetes と同じ Kubernetes version skew policy に従います。つまり、control plane より新しい version にはできず、最大 3 minor versions 古い version まで許容されます。
-
-### Cutover Migration (推奨)
-
-spare capacity が利用できる場合は、target version の新しい Nodes を作成し、workloads を安全に移行します。
-
-```bash
-# 1. Install nodeadm on new hosts with target version
-nodeadm install K8S_VERSION --credential-provider CREDS_PROVIDER
-
-# 2. Cordon old nodes
-kubectl cordon NODE_NAME
-
-# 3. Scale CoreDNS for resiliency
-kubectl scale deployments/coredns --replicas=2 -n kube-system
-
-# 4. Drain old nodes
-kubectl drain NODE_NAME --ignore-daemonsets --delete-emptydir-data
-
-# 5. Uninstall old nodes
-sudo nodeadm uninstall
-
-# 6. Delete old node resource
-kubectl delete node NODE_NAME
-```
-
-### In-Place Upgrade
-
-spare capacity が利用できない場合は、Nodes を in-place でアップグレードします（downtime が発生します）。
-
-```bash
-# 1. Cordon the node
-kubectl cordon NODE_NAME
-
-# 2. Drain workloads
-kubectl drain NODE_NAME --ignore-daemonsets --delete-emptydir-data
-
-# 3. Run nodeadm upgrade
-sudo nodeadm upgrade K8S_VERSION -c file://nodeConfig.yaml
-
-# 4. Uncordon after upgrade completes
-kubectl uncordon NODE_NAME
-
-# 5. Monitor
-kubectl get nodes -o wide -w
-```
-
----
-
-## Troubleshooting
-
-### nodeadm debug
-
-`nodeadm debug` コマンドは、network access、credentials、cluster connectivity を検証します。
-
-```bash
-sudo nodeadm debug -c file://nodeConfig.yaml
-```
-
-これは以下を検証します。
-- AWS APIs への network access
-- Hybrid Nodes IAM role の AWS credentials retrieval
-- EKS Kubernetes API endpoint への network access
-- EKS cluster での Node authentication
-
-### よくある問題と修正
-
-#### インストールの問題
-
-| 問題 | 症状 | 修正 |
-|-------|---------|-----|
-| root として実行する必要があります | `"msg":"Command failed","error":"must run as root"` | `sudo` で `nodeadm` を実行します |
-| 依存関係に接続できません | `max retries achieved for http request` | dependency repositories への network access を確認します |
-| package manager failure | `failed to run update using package manager` | 先に `apt update` または `dnf update` を実行します |
-| Timeout | `context deadline exceeded` | `--timeout 20m0s` flag を使用します |
-
-#### 接続の問題
-
-| 問題 | 症状 | 修正 |
-|-------|---------|-----|
-| Node IP が CIDR 内にありません | `node IP is not in any of the remote network CIDR blocks` | `RemoteNodeNetworks` に Node IP range が含まれていることを確認します |
-| API server unreachable | `Unable to connect to the server` / `dial tcp: i/o timeout` | VPN/DX tunnel、firewall port 443、TGW/VGW への VPC routes を確認します |
-| Unauthorized | `Failed to ensure lease exists: Unauthorized` | IAM role、`HYBRID_LINUX` type の EKS access entry を確認します |
-| Node stays NotReady | Node registered but NotReady | CNI（Cilium）をインストールし、VXLAN port 8472 を確認します |
-| DNS resolution failure | EKS API endpoint の `no such host` | Route 53 Resolver Inbound Endpoint を設定し、on-prem DNS を更新します |
-| Image pull failure | system pods で `ErrImagePull` | ECR VPC endpoints、containerd registry config、CA certs を確認します |
-| Certificate error | `x509: certificate signed by unknown authority` | system trust store に CA cert をインストールし、`update-ca-certificates` を実行します |
-| Hybrid profile exists | `hybrid profile already exists` | `nodeadm uninstall`、`nodeadm install`、`nodeadm init` の順に実行します |
-
-#### SSM Credential の問題
-
-| 問題 | 症状 | 修正 |
-|-------|---------|-----|
-| Invalid activation | `InvalidActivation` | nodeConfig.yaml の region、activationCode、activationId を確認します |
-| Expired activation | `ActivationExpired` | 新しい SSM hybrid activation を作成し、nodeConfig.yaml を更新します |
-| Expired token | `ExpiredTokenException` | SSM agent を再起動します: `systemctl restart amazon-ssm-agent` |
-
-#### IAM Roles Anywhere の問題
-
-| 問題 | 症状 | 修正 |
-|-------|---------|-----|
-| Certificate not found | `open /etc/iam/pki/server.pem: no such file or directory` | `/etc/iam/pki/` directory を作成し、certificate と key をコピーします |
-| Not authorized | `not authorized to perform: sts:AssumeRole` | trust policy、trust anchor ARN、IAM RA profile を確認します |
-
-### 診断コマンド
-
-```bash
-# Check kubelet status and logs
-sudo systemctl status kubelet
-sudo journalctl -u kubelet -f
-
-# Check containerd
-sudo systemctl status containerd
-
-# Validate credentials
-sudo aws sts get-caller-identity
-
-# Check SSM agent (AL2023/RHEL)
-sudo systemctl status amazon-ssm-agent
-
-# Check SSM agent (Ubuntu)
-sudo systemctl status snap.amazon-ssm-agent.amazon-ssm-agent
-
-# Run nodeadm diagnostics
-sudo nodeadm debug -c file://nodeConfig.yaml
-```
-
-### Node のリセット
-
-bootstrap が失敗し、最初からやり直す必要がある場合:
-
-```bash
-# Basic uninstall
-sudo nodeadm uninstall
-
-# Force uninstall (cleans all state, skips confirmation prompt)
-sudo nodeadm uninstall --force
-
-# Re-run initialization
-sudo nodeadm init -c file://nodeconfig.yaml
-```
-
-**nodeadm uninstall によって削除される paths:**
-- `/etc/kubernetes` - Kubernetes configuration files
-- `/etc/eks` - EKS-related configuration
-- SSM/IAM Roles Anywhere artifacts
-
-**v1.0.9+ の変更:**
-- `/var/lib/kubelet` は **default で保持されます**（data protection improvement）
-- `--force` option は、通常保持されるものを含め、すべての artifacts を削除します
-
----
-
-< [前へ: Air-Gap Setup](./03-airgap-setup.md) | [目次](./README.md) | [次へ: GPU Integration](./05-gpu-integration.md) >
+< [前へ: 制限付きインターネット環境の構成](./03-airgap-setup.md) | [目次](./README.md) | [次へ: GPU 統合](./05-gpu-integration.md) >

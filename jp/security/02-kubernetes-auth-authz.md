@@ -1,7 +1,7 @@
 # Kubernetes 認証および認可システム
 
 > **対象範囲**: Kubernetes stable API および Amazon EKS ユーザーアクセス管理
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 ## 概要
 

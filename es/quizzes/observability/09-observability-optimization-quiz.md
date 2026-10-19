@@ -2,7 +2,7 @@
 
 > **Versiones de ejemplo validadas**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Este cuestionario evalúa tu comprensión de la guía de optimización de observabilidad de EKS. Cubre los tres pilares de la observabilidad —registro, métricas y trazado—, así como el monitoreo basado en eBPF y las estrategias de optimización de costos.
 

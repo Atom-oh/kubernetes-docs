@@ -4,7 +4,7 @@
 
 ## Entornos de ejecución y vías de envío
 
-EMR en EKS incorpora un entorno de ejecución de Spark seleccionado por AWS y servicios de envío a una infraestructura de EKS existente. Usted sigue administrando la capacidad, las redes, el almacenamiento y los nodos de EKS. Distinga estas vías:
+EMR en EKS incorpora un entorno de ejecución de Spark preparado por AWS y servicios de envío a una infraestructura de EKS existente. Usted sigue administrando la capacidad, las redes, el almacenamiento y los nodos de EKS. Distinga estas vías:
 
 | Vía | Envío y ciclo de vida | Qué administra usted |
 | --- | --- | --- |
@@ -12,14 +12,14 @@ EMR en EKS incorpora un entorno de ejecución de Spark seleccionado por AWS y se
 | Entorno de ejecución de EMR + Spark Operator | SparkApplication CR enviado al operador de EMR instalado | Helm/CRD, controlador, RBAC de Kubernetes y ciclo de vida del CR |
 | Envío directo con spark-submit | Spark envía el trabajo a la API de Kubernetes | Emisor, configuración de Spark, estado y nuevos intentos |
 
-La compatibilidad con Spark Operator desde EMR 6.10.0 **no** significa que StartJobRun tenga una opción para delegar internamente el trabajo a ese operador. La vía documentada del operador lo instala por separado y utiliza kubectl apply. No suponga que estas aplicaciones CR reciben automáticamente IDs de StartJobRun ni que las administra la API de trabajos de EMR. Puede combinar el entorno de ejecución de EMR con operaciones basadas en CR, pero el envío, la observación y los reintentos dependen de la vía elegida. El gráfico de EMR también es distinto de los gráficos ascendentes actuales de la Parte 2.
+La compatibilidad con Spark Operator desde EMR 6.10.0 **no** significa que StartJobRun tenga una opción para delegar internamente el trabajo a ese operador. La vía documentada del operador lo instala por separado y utiliza kubectl apply. No suponga que estas aplicaciones CR reciben automáticamente IDs de StartJobRun ni que las administra la API de trabajos de EMR. Puede combinar el entorno de ejecución de EMR con operaciones basadas en CR, pero el envío, la observación y los reintentos dependen de la vía elegida. El chart de Helm de EMR también es distinto de los charts upstream actuales de la Parte 2.
 
 ## Versiones actuales y reproducibilidad
 
 | Versión de EMR en EKS | Entorno de ejecución de Spark |
 | --- | --- |
 | emr-7.14.0 | 3.5.8-amzn-0 |
-| emr-spark-8.1.0 | 4.1.1-amzn-0; LTS, publicada en septiembre de 2026 |
+| emr-spark-8.1.0 | 4.1.1-amzn-0; LTS, con lanzamiento en septiembre de 2026 |
 | emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x con disponibilidad general, publicado en mayo de 2026 |
 
 Spark 4 ya está disponible. El número 8.0.0 identifica una versión del entorno de ejecución de EMR, no Apache Spark 8. Compruebe por separado las versiones y capacidades de otras opciones de implementación de EMR. Un alias `-latest` sigue las actualizaciones de seguridad; no fija los mismos bytes de imagen. Los sufijos con fecha facilitan la reproducibilidad, pero aun así requieren revisar las actualizaciones. El ejemplo con fecha que aparece a continuación es una base reproducible, no una afirmación de que tenga el parche de seguridad más reciente.
@@ -40,7 +40,7 @@ Un clúster virtual registra un espacio de nombres de EKS; no crea capacidad de 
 
 IRSA requiere el proveedor OIDC de IAM del clúster y una relación de confianza limitada a la audiencia, el espacio de nombres y la identidad de la cuenta de servicio administrada por EMR. update-role-trust-policy modifica esta relación de confianza; no concede permisos sobre los datos ni permisos a quien invoca.
 
-StartJobRun también admite **EKS Pod Identity desde EMR 7.3.0**. Prepare el agente, los permisos EKS Auth del nodo, la relación de confianza sts:AssumeRole/sts:TagSession para `pods.eks.amazonaws.com` y las asociaciones de cuentas de servicio de EMR. El auxiliar prepara tres asociaciones: para el emisor, el controlador y el ejecutor. Una anotación de IRSA no sustituye estas asociaciones.
+StartJobRun también admite **EKS Pod Identity desde EMR 7.3.0**. Prepare el agente, los permisos EKS Auth del nodo, la relación de confianza sts:AssumeRole/sts:TagSession para `pods.eks.amazonaws.com` y las asociaciones de cuentas de servicio de EMR. El auxiliar prepara tres asociaciones: para el pod de envío, el driver y el ejecutor. Una anotación de IRSA no sustituye estas asociaciones.
 
 Sustituya los valores del clúster, el rol y el espacio de nombres, y ejecute **solo la vía seleccionada**. Estos auxiliares modifican la configuración de IAM y EKS.
 
@@ -96,7 +96,7 @@ CreateVirtualCluster devuelve **id**. Úselo como virtualClusterId en StartJobRu
 
 ## Enviar un trabajo de prueba
 
-Guárdelo como smoke.py. Comprueba que rows=10 y total=45 sin modificar un conjunto de datos externo.
+Guárdelo como smoke.py. Compruebe que rows=10 y total=45 sin modificar un conjunto de datos externo.
 
 ```python
 from pyspark.sql import SparkSession
@@ -112,7 +112,7 @@ finally:
     spark.stop()
 ```
 
-Guárdelo como start-job-run.json y sustituya virtualClusterId, account, role y bucket. Antes de enviar el trabajo, prepare el acceso de lectura al script y el acceso al grupo de registros.
+Guárdelo como `start-job-run.json` y sustituya `virtualClusterId`, el ID de cuenta, el rol y el bucket por los valores correspondientes. Antes de enviar el trabajo, prepare el acceso de lectura al script y el acceso al grupo de registros.
 
 ```json
 {
@@ -155,7 +155,7 @@ aws emr-containers describe-job-run \
   --id "$EMR_JOB_ID" --query 'jobRun.{state:state,details:stateDetails,reason:failureReason}'
 ```
 
-Que la respuesta de la API confirme la aceptación no significa que el trabajo haya terminado. Compruebe que el estado final sea COMPLETED y que los registros del controlador contengan SMOKE_OK rows=10 total=45. Un token de solicitud deduplica la solicitud a la API; no garantiza que los efectos externos se produzcan exactamente una vez entre los reintentos de la aplicación. Si se produce un fallo, inspeccione stateDetails, failureReason y los registros del emisor, del controlador y del ejecutor.
+Que la respuesta de la API confirme la aceptación no significa que el trabajo haya terminado. Compruebe que el estado final sea COMPLETED y que los registros del driver contengan SMOKE_OK rows=10 total=45. Un token de solicitud deduplica la solicitud a la API; no garantiza que los efectos externos se produzcan exactamente una vez entre los reintentos de la aplicación. Si se produce un fallo, inspeccione stateDetails, failureReason y los registros del pod de envío, del driver y del ejecutor.
 
 ![StartJobRun, ubicación de pods de Kubernetes, credenciales del rol de ejecución y observación separada del trabajo y de los registros.](../../.gitbook/assets/en-data-on-eks-spark-03-emr-on-eks-0.png)
 
@@ -167,7 +167,7 @@ Los pods de EMR se pueden ver con kubectl en su espacio de nombres. Las plantill
 
 Los registros de CloudWatch requieren monitoringConfiguration y permisos para el rol de ejecución. Distinga las métricas del estado del trabajo de la telemetría completa de los ejecutores de Spark. Step Functions admite la integración de solicitud/respuesta y .sync para StartJobRun, pero requiere una máquina de estados y un rol configurados. Los eventos de trabajo de EventBridge también requieren reglas, destinos y gestión de fallos. Que exista una integración no activa automáticamente toda la recopilación de datos ni la automatización.
 
-EMR Studio se conecta a un **punto de enlace interactivo creado con CreateManagedEndpoint**. Jupyter Enterprise Gateway administra los ciclos de vida de los kernels y requiere subredes privadas, un controlador ALB, redes y roles. Las celdas del bloc de notas no son simplemente llamadas por lotes normales a StartJobRun. Los usuarios y kernels que comparten un punto de enlace usan su rol de ejecución; revise los límites de acceso y use puntos de enlace separados cuando sea necesario. Los puntos de enlace y los kernels tienen costes; el mero registro del clúster virtual, en cambio, no.
+EMR Studio se conecta a un **punto de enlace interactivo creado con CreateManagedEndpoint**. Jupyter Enterprise Gateway administra los ciclos de vida de los kernels y requiere subredes privadas, un controlador de ALB, redes y roles. Las celdas del bloc de notas no son simplemente llamadas por lotes normales a StartJobRun. Los usuarios y kernels que comparten un punto de enlace usan su rol de ejecución; revise los límites de acceso y use puntos de enlace separados cuando sea necesario. Los puntos de enlace y los kernels tienen costes; el mero registro del clúster virtual, en cambio, no.
 
 ## Elección y limpieza
 

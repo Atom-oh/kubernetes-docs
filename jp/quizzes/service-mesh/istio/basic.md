@@ -1,16 +1,19 @@
 # 基本クイズ
 
-> **対応バージョン**: Istio 1.28.0 **EKS バージョン**: 1.34 (Kubernetes 1.28+) **最終更新**: February 23, 2026
+> **レビュー対象バージョン**: Istio 1.31.0 **EKS バージョン**: 1.34～1.36 **最終更新**: 2026 年 9 月 11 日
 
-このクイズでは、Istio の基本概念とアーキテクチャに関する理解を確認します。
+このクイズでは、Istio の基本概念とアーキテクチャへの理解を確認します。
 
 ## 選択問題（1～5）
 
 ### 問題 1: Service Mesh の定義
 
-Service Mesh についての記述として、**正しくない**ものはどれですか？
+Service Mesh に関する次の説明のうち、**正しくない**ものはどれですか？
 
-A. マイクロサービス間の通信を処理するインフラストラクチャレイヤーである B. アプリケーションコードを変更することでのみ使用できる C. Service 間のトラフィック制御と可観測性を提供する D. ネットワークレベルでセキュリティとポリシーを適用する
+A. マイクロサービス間の通信を処理するインフラストラクチャ層である\
+B. アプリケーションコードを変更した場合にのみ使用できる\
+C. Service 間のトラフィック制御と可観測性を提供する\
+D. ネットワークレベルでセキュリティとポリシーを適用する
 
 <details>
 
@@ -18,29 +21,32 @@ A. マイクロサービス間の通信を処理するインフラストラク�
 
 **回答: B**
 
-Service Mesh の主要な利点の一つは、**アプリケーションコードを変更せずに** Service 間の通信を制御および監視できることです。
+Service Mesh の主な利点の一つは、**アプリケーションコードを変更せずに** Service 間の通信を制御し、可視化できることです。
 
 **解説:**
 
-* A (O): Service Mesh は、マイクロサービスアーキテクチャにおける Service 間の通信を担う専用のインフラストラクチャレイヤーです
-* B (X): アプリケーションコードを変更せず、sidecar proxy または Ambient Mode を通じて透過的に適用されます
-* C (O): VirtualService、DestinationRule などでトラフィックを制御し、metrics/logs/traces を自動収集します
-* D (O): mTLS、Authorization Policy などでネットワークレベルのセキュリティポリシーを適用します
+* A (正): Service Mesh は、マイクロサービスアーキテクチャにおける Service 間通信を担う専用のインフラストラクチャ層です。
+* B (誤): サイドカープロキシまたは Ambient Mode を使い、アプリケーションコードを変更せず透過的に適用できます。
+* C (正): VirtualService や DestinationRule などでトラフィックを制御し、メトリクスを公開します。ログ／トレースには構成が必要で、アプリケーションがトレースコンテキストを伝播する必要があります。
+* D (正): mTLS、Authorization Policy などによってネットワークレベルのセキュリティポリシーを適用します。
 
-**参照:**
+**参考:**
 
 * [Istio のコア概念](../../../service-mesh/istio/02-basic-concepts.md)
-* [Service Mesh とは？](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/02-istio.md#introduction)
+* [Service Mesh とは](../../../service-mesh/istio/README.md)
 
 </details>
 
 ***
 
-### 問題 2: Istio アーキテクチャコンポーネント
+### 問題 2: Istio アーキテクチャのコンポーネント
 
-Istio の Control Plane で、service discovery、configuration management、certificate management を担う**集中型コンポーネント**はどれですか？
+Istio の Control Plane で、サービスディスカバリー、構成管理、証明書管理を担う**集中管理コンポーネント**はどれですか？
 
-A. Envoy B. Istiod C. Pilot D. Citadel
+A. Envoy\
+B. Istiod\
+C. Pilot\
+D. Citadel
 
 <details>
 
@@ -48,17 +54,17 @@ A. Envoy B. Istiod C. Pilot D. Citadel
 
 **回答: B**
 
-**Istiod** は、以前の Pilot、Citadel、Galley コンポーネントを統合した、Istio 1.5 で導入された単一バイナリです。
+**Istiod** は Istio 1.5 で導入された単一バイナリで、従来は分かれていた Pilot、Citadel、Galley の各コンポーネントを統合しています。
 
 **解説:**
 
-* A (X): Envoy は各 Pod で sidecar として稼働する Data Plane proxy です
-* B (O): Istiod は Control Plane の中核であり、次の機能を担います:
-  * Service Discovery
-  * Configuration Management
-  * Certificate Management
-* C (X): Pilot は Istio 1.5 より前のバージョンのコンポーネントであり、現在は Istiod に統合されています
-* D (X): Citadel も Istio 1.5 より前のバージョンのコンポーネントであり、現在は Istiod に統合されています
+* A (誤): Envoy は各 Pod 内でサイドカーとして動作する Data Plane プロキシです。
+* B (正): Istiod は Control Plane の中核で、次を担当します。
+  * サービスディスカバリー
+  * 構成管理
+  * 証明書管理
+* C (誤): Pilot は Istio 1.5 より前のバージョンにあったコンポーネントで、現在は Istiod に統合されています。
+* D (誤): Citadel も Istio 1.5 より前のコンポーネントで、現在は Istiod に統合されています。
 
 **Istiod の主な役割:**
 
@@ -69,20 +75,23 @@ A. Envoy B. Istiod C. Pilot D. Citadel
 3. Certificate Issuance: Service Account -> mTLS Certificate
 ```
 
-**参照:**
+**参考:**
 
-* [Istio コンポーネント](../../../service-mesh/istio/03-architecture.md)
-* [アーキテクチャ概要](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/02-istio.md#architecture-overview)
+* [Istio のコンポーネント](../../../service-mesh/istio/03-architecture.md)
+* [アーキテクチャの概要](../../../service-mesh/istio/README.md)
 
 </details>
 
 ***
 
-### 問題 3: Envoy Proxy の役割
+### 問題 3: Envoy プロキシの役割
 
-Data Plane の Envoy proxy が実行するタスクとして、**該当しない**ものはどれですか？
+Data Plane の Envoy プロキシが実行するタスクでは**ない**ものはどれですか？
 
-A. トラフィックルーティングと負荷分散 B. mTLS の暗号化と認証 C. Kubernetes CRD の検証と保存 D. metrics、logs、traces の収集
+A. トラフィックのルーティングとロードバランシング\
+B. mTLS による暗号化と認証\
+C. Kubernetes CRD の検証と保存\
+D. メトリクス、ログ、トレースの収集
 
 <details>
 
@@ -90,16 +99,16 @@ A. トラフィックルーティングと負荷分散 B. mTLS の暗号化と�
 
 **回答: C**
 
-Kubernetes CRD の検証と保存は Control Plane（Istiod）の役割です。
+Kubernetes API Server がリソースを保存し、スキーマを検証します。Istiod も Admission Webhook を通じて Istio 構成を検証します。Envoy が Kubernetes CRD を保存することはありません。
 
 **解説:**
 
-* A (O): Envoy は VirtualService ルールに従ってトラフィックをルーティングし、負荷分散します
-* B (O): Envoy は mTLS で Service 間通信を自動的に暗号化し、certificate を検証します
-* C (X): CRD の検証と保存は Kubernetes API Server と Istiod の役割です
-* D (O): Envoy はすべてのリクエストの metrics（Prometheus）、logs（Access Log）、traces（Jaeger）を収集します
+* A (正): Envoy は VirtualService のルールに従ってトラフィックをルーティングし、ロードバランシングします。
+* B (正): Envoy は Service 間通信を mTLS で自動的に暗号化し、証明書を検証します。
+* C (誤): CRD の検証と保存は Kubernetes API Server と Istiod の役割です。
+* D (正): 構成されたログ記録やトレースサンプリングに応じて、Envoy はメトリクス（Prometheus）、ログ（Access Log）、トレース（Jaeger）を収集します。
 
-**参照:**
+**参考:**
 
 * [Data Plane の構造](../../../service-mesh/istio/03-architecture.md#data-plane-envoy-proxy)
 
@@ -107,53 +116,43 @@ Kubernetes CRD の検証と保存は Control Plane（Istiod）の役割です。
 
 ***
 
-### 問題 4: Istio インストールプロファイル
+### 問題 4: Istio のインストールプロファイル
 
-Amazon EKS の本番環境に Istio をインストールする際、推奨される profile はどれですか？
+Amazon EKS の本番環境で Istio をインストールするとき、推奨されるプロファイルはどれですか？
 
-A. default B. demo C. minimal D. production
+A. default\
+B. demo\
+C. minimal\
+D. production
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: D**
+**回答: A**
 
-本番環境では、**production** profile を使用する必要があります。
+このガイドにおけるサイドカーインストールでは、`default` が本番構成の出発点です。組み込みの `production` プロファイルはありません。レプリカ数、リソース要求、配置、PDB、セキュリティポリシーは明示的に設定してください。`default` を選ぶだけで高可用性になるわけではありません。
 
-**解説:**
-
-**Istio インストールプロファイルの比較:**
-
-| Profile        | 用途                | 特徴                                      |
-| -------------- | ------------------- | ----------------------------------------- |
-| **default**    | 開発/テスト         | デフォルト設定、標準的なリソース          |
-| **demo**       | デモ/学習           | すべての機能が有効、高いリソース使用量    |
-| **minimal**    | 最小構成            | Control Plane のみ                        |
-| **production** | 本番                | HA 構成、高可用性                         |
-
-**Production Profile の特徴:**
+| プロファイル | 用途 |
+| --- | --- |
+| default | 本番構成の出発点。ワークロードに合わせて調整する |
+| demo | デモ用。テレメトリが詳細で、性能試験には向かない |
+| minimal | Control Plane のみ |
+| production | 組み込みプロファイルではない |
 
 ```bash
-# Production profile installation
-istioctl install --set profile=production -y
-
-# Key characteristics:
-# - Istiod replica: 3 (HA)
-# - PodDisruptionBudget configured
-# - Resource limits properly set
-# - Ingress/Egress Gateway included
+istioctl install --set profile=default
 ```
 
-**本番チェックリスト:**
+**本番環境のチェックリスト:**
 
-* ✅ Control Plane HA（replica ≥ 3）
-* ✅ mTLS STRICT mode
-* ✅ PodDisruptionBudget 設定済み
-* ✅ resource limits と HPA 設定済み
-* ✅ monitoring stack 準備完了
+* ✅ Control Plane の高可用性（レプリカ数 3 以上）
+* ✅ mTLS STRICT モード
+* ✅ PodDisruptionBudget の設定
+* ✅ リソース上限と HPA の設定
+* ✅ 監視スタックの準備
 
-**参照:**
+**参考:**
 
 * [インストールガイド](../../../service-mesh/istio/01-installation.md)
 * [ベストプラクティス](../../../service-mesh/istio/best-practices.md#production-checklist)
@@ -164,9 +163,12 @@ istioctl install --set profile=production -y
 
 ### 問題 5: Istio CRD（Custom Resource Definition）
 
-以下のうち、Istio の**traffic management**用 CRD では**ない**ものはどれですか？
+次のうち、Istio の**トラフィック管理用 CRD ではない**ものはどれですか？
 
-A. VirtualService B. DestinationRule C. PeerAuthentication D. Gateway
+A. VirtualService\
+B. DestinationRule\
+C. PeerAuthentication\
+D. Gateway
 
 <details>
 
@@ -180,29 +182,29 @@ A. VirtualService B. DestinationRule C. PeerAuthentication D. Gateway
 
 **Istio CRD の分類:**
 
-**1. Traffic Management:**
+**1. トラフィック管理:**
 
 * VirtualService: ルーティングルールを定義
-* DestinationRule: 負荷分散、subset 定義
-* Gateway: 外部トラフィックのエントリポイント
+* DestinationRule: ロードバランシングと Subset の定義
+* Gateway: 外部トラフィックの入口
 * ServiceEntry: 外部 Service の定義
-* Sidecar: Envoy configuration scope を制限
+* Sidecar: Envoy の構成対象範囲を制限
 
-**2. Security:**
+**2. セキュリティ:**
 
 * PeerAuthentication: Service 間認証（mTLS）
 * RequestAuthentication: エンドユーザー認証（JWT）
 * AuthorizationPolicy: アクセス制御
 
-**3. Observability:**
+**3. 可観測性:**
 
-* Telemetry: metrics、logs、traces の設定
+* Telemetry: メトリクス、ログ、トレースの構成
 
 **例:**
 
 ```yaml
 # Traffic Management
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -217,7 +219,7 @@ spec:
 
 ---
 # Security
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -226,10 +228,10 @@ spec:
     mode: STRICT
 ```
 
-**参照:**
+**参考:**
 
-* [Traffic Management](../../../service-mesh/istio/traffic-management/README.md)
-* [Security](../../../service-mesh/istio/security/README.md)
+* [トラフィック管理](../../../service-mesh/istio/traffic-management/README.md)
+* [セキュリティ](../../../service-mesh/istio/security/README.md)
 
 </details>
 
@@ -237,9 +239,9 @@ spec:
 
 ## 記述問題（6～10）
 
-### 問題 6: Sidecar Injection の仕組み
+### 問題 6: サイドカー注入の仕組み
 
-Istio で Envoy Sidecar を Pod に自動注入する 2 つの方法を説明し、それぞれの長所と短所を比較してください。
+Istio で Envoy サイドカーを Pod に自動注入する 2 つの方法を説明し、それぞれの長所と短所を比較してください。
 
 <details>
 
@@ -247,9 +249,9 @@ Istio で Envoy Sidecar を Pod に自動注入する 2 つの方法を説明し
 
 **回答:**
 
-Istio は 2 つの方法で Sidecar を自動注入します:
+Istio は次の 2 つの方法でサイドカーを自動注入します。
 
-**1. Namespace レベルの自動注入:**
+**1. Namespace 単位の自動注入:**
 
 ```bash
 # Add label to Namespace
@@ -261,16 +263,16 @@ kubectl apply -f deployment.yaml
 
 **長所:**
 
-* Namespace 全体に一度に適用できる
-* 管理が容易
-* 意図しない設定漏れの可能性が低い
+* Namespace 全体へ一度に適用できる
+* 管理しやすい
+* 意図しない注入漏れが起きにくい
 
 **短所:**
 
-* Namespace 内のすべての Pod に適用される（選択的な除外が必要）
+* Namespace 内のすべての Pod に適用される（対象外にする Pod は個別に除外が必要）
 * 既存の Pod は再起動が必要
 
-**2. Pod レベルの選択的注入:**
+**2. Pod 単位の選択的注入:**
 
 ```yaml
 apiVersion: apps/v1
@@ -278,9 +280,13 @@ kind: Deployment
 metadata:
   name: myapp
 spec:
+  selector:
+    matchLabels:
+      app: myapp
   template:
     metadata:
       labels:
+        app: myapp
         sidecar.istio.io/inject: "true"  # or "false"
     spec:
       containers:
@@ -290,41 +296,41 @@ spec:
 
 **長所:**
 
-* 特定の Pod のみに選択的に注入できる
-* きめ細かな制御が可能
-* Namespace label は不要
+* 特定の Pod だけを選んで注入できる
+* きめ細かく制御できる
+* Namespace のラベル付けは不要
 
 **短所:**
 
-* 各 Deployment に設定が必要
-* 管理対象が増える
-* 意図しない設定漏れの可能性がある
+* Deployment ごとに構成が必要
+* 管理箇所が増える
+* 意図しない注入漏れが起きる可能性がある
 
 **比較表:**
 
-| 項目                  | Namespace レベル        | Pod レベル          |
-| --------------------- | ----------------------- | ------------------ |
-| 範囲                  | Namespace 全体          | 個別 Pod           |
-| 管理の複雑さ          | 低い                    | 高い               |
-| 選択性                | 低い（除外が必要）      | 高い               |
-| 推奨用途              | 本番環境                | 混在環境           |
+| 項目 | Namespace 単位 | Pod 単位 |
+| --- | --- | --- |
+| 対象範囲 | Namespace 全体 | 個々の Pod |
+| 管理の複雑さ | 低い | 高い |
+| 選択性 | 低い（除外設定が必要） | 高い |
+| 推奨用途 | 本番環境 | 構成が混在する環境 |
 
-**本番環境での推奨事項:**
+**本番環境での推奨:**
 
-* デフォルトでは Namespace レベルを使用する
-* 除外が必要な Pod にのみ `sidecar.istio.io/inject: "false"` を設定する
+* 既定では Namespace 単位の注入を使う
+* 除外が必要な Pod にだけ `sidecar.istio.io/inject: "false"` を設定する
 
-**参照:**
+**参考:**
 
-* [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+* [サイドカー注入](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 
 </details>
 
 ***
 
-### 問題 7: Istio リソース使用量の最適化
+### 問題 7: Istio のリソース使用量の最適化
 
-1000 Pod の大規模 Kubernetes cluster で Istio を使用する際の、Sidecar Mode と Ambient Mode の**想定リソース使用量**を計算して比較してください。（ztunnel は 10 nodes に配置され、waypoint は 1 つと仮定）
+Istio を 1,000 Pod の大規模な Kubernetes クラスターで使用する場合、Sidecar Mode と Ambient Mode の**想定リソース使用量**を計算し、比較してください。（ztunnel は 10 ノード、waypoint は 1 つとします。）
 
 <details>
 
@@ -332,13 +338,15 @@ spec:
 
 **回答:**
 
-**前提条件:**
+以下は算術演習のために設定した仮定値であり、Istio の実測要件やサイジング推奨値ではありません。MB/GB はすべて十進単位として計算します。サイドカー 1 個あたり 0.1 vCPU、ztunnel 1 個あたり 0.1 vCPU、waypoint 1 個あたり 0.5 vCPU と仮定します。
 
-* Pod 数: 1000
-* Node 数: 10
-* Sidecar Memory: 50MB/Pod
-* ztunnel Memory: 50MB/Node
-* waypoint Memory: 200MB
+**前提:**
+
+* Pod 数: 1,000
+* ノード数: 10
+* サイドカーのメモリ: Pod あたり 50 MB
+* ztunnel のメモリ: ノードあたり 50 MB
+* waypoint のメモリ: 200 MB
 
 **1. Sidecar Mode のリソース使用量:**
 
@@ -368,43 +376,16 @@ CPU Usage = (Number of Nodes × ztunnel CPU) + waypoint CPU
 
 **3. 比較と削減量:**
 
-| 項目       | Sidecar Mode | Ambient Mode | 削減量     | 削減率       |
-| ---------- | ------------ | ------------ | --------- | ------------ |
-| **Memory** | 50GB         | 0.7GB        | 49.3GB    | **98.6%**    |
-| **CPU**    | 100 vCPU     | 1.5 vCPU     | 98.5 vCPU | **98.5%**    |
+| 項目 | Sidecar Mode | Ambient Mode | 削減量 | 削減率 |
+| --- | --- | --- | --- | --- |
+| **メモリ** | 50 GB | 0.7 GB | 49.3 GB | **98.6%** |
+| **CPU** | 100 vCPU | 1.5 vCPU | 98.5 vCPU | **98.5%** |
 
-**コスト計算（AWS EKS ベース）:**
+**解釈:**
 
-```
-# r5.xlarge: 4 vCPU, 32GB RAM, $0.252/hour
+この仮定では、プロキシ合計のメモリが 98.6%、CPU が 98.5% 減少します。この数値は AWS 請求額が 96% 減ることや、1,000 Pod の 10 ノードクラスターが 1 台のインスタンスで稼働できることを意味しません。アプリケーションのリソース、Pod／IP 上限、高可用性、レプリカ数、スループット、waypoint の容量は計算に含めていません。サイジングやコスト試算の前に実際のトポロジーをベンチマークしてください。Ambient の主要機能は Istio 1.24 から GA です。
 
-Sidecar Mode:
-- CPU: 100 vCPU → 25 instances needed
-- Memory: 50GB → 2 instances needed
-- Required instances: max(25, 2) = 25
-- Monthly cost: 25 × $0.252 × 24 × 30 = $4,536
-
-Ambient Mode:
-- CPU: 1.5 vCPU → 1 instance sufficient
-- Memory: 0.7GB → 1 instance sufficient
-- Required instances: 1
-- Monthly cost: 1 × $0.252 × 24 × 30 = $181
-
-Monthly cost savings: $4,536 - $181 = $4,355 (96%)
-```
-
-**結論:**
-
-* Ambient Mode は大規模 cluster で**96%以上のコスト削減**を実現します
-* 1000 Pod 規模では、月額約 **$4,300 の節約**になります
-* リソース使用量を**98%以上**削減します
-
-**注記:**
-
-* L7 機能が必要な場合は追加の waypoint が必要です
-* Ambient Mode は Istio 1.28+ の beta feature です
-
-**参照:**
+**参考:**
 
 * [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md#resource-usage-comparison)
 * [コスト最適化](../../../service-mesh/istio/best-practices.md#cost-optimization)
@@ -413,9 +394,9 @@ Monthly cost savings: $4,536 - $181 = $4,355 (96%)
 
 ***
 
-### 問題 8: mTLS の動作メカニズム
+### 問題 8: mTLS の動作
 
-Istio において、2 つの Service（service-a と service-b）が通信する際の mTLS の動作を段階的に説明してください。Istiod、Envoy、Certificate の役割を含めてください。
+Istio で Service A と Service B が通信するときの mTLS の仕組みを順を追って説明してください。Istiod、Envoy、証明書の役割も含めてください。
 
 <details>
 
@@ -423,85 +404,63 @@ Istio において、2 つの Service（service-a と service-b）が通信す�
 
 **回答:**
 
-**mTLS（Mutual TLS）の動作プロセス:**
+**mTLS（Mutual TLS）の処理:**
 
-**ステップ 1: Certificate Issuance（Bootstrap）**
+**ステップ 1: 証明書の発行（初期化）**
 
-* Pod が起動すると、Envoy は自身の Service Account を使用して Istiod に certificate（CSR）をリクエストします
-* Istiod は Service Account を検証し、X.509 certificate を発行します
-* certificate には Service Account ID（例: `cluster.local/ns/default/sa/service-a`）が含まれます
-* certificate の有効期間: デフォルトで 24 時間（自動更新）
+* Pod の起動時に Istio agent が秘密鍵と CSR を作成し、ワークロード認証情報で Istiod に認証します。Envoy はローカル agent から SDS 経由で証明書と鍵を受け取ります。
+* Istiod は Service Account を検証して X.509 証明書を発行します。
+* 証明書には Service Account ID（例: `cluster.local/ns/default/sa/service-a`）が含まれます。
+* 証明書の有効期間は既定で 24 時間で、自動更新されます。
 
-**ステップ 2: Service 間通信（mTLS Handshake）**
+**ステップ 2: Service 間通信（mTLS ハンドシェイク）**
 
 ```
 Service A → Envoy A → [mTLS] → Envoy B → Service B
 ```
 
-**詳細プロセス:**
+**詳細な処理:**
 
-```yaml
-# Service A calls Service B
-1. Service A → Envoy A (localhost:outbound)
-   - Application sends plaintext HTTP request
-
-2. Envoy A: Outbound Processing
-   - Check configuration received from Istiod
-   - Check PeerAuthentication policy (STRICT mTLS)
-   - Start connection to Service B's Envoy B
-
-3. TLS Handshake (Envoy A ↔ Envoy B)
-   a. Envoy A → Envoy B: ClientHello
-      - Present own certificate
-      - Present supported encryption algorithms
-
-   b. Envoy B → Envoy A: ServerHello
-      - Present own certificate
-      - Selected encryption algorithm
-
-   c. Mutual Certificate Validation
-      - Envoy A: Validate Service B's certificate
-      - Envoy B: Validate Service A's certificate
-      - Verify signature with Istiod's Root CA
-
-   d. Generate Encrypted Session Key
-      - Create TLS 1.3 encrypted channel
-
-4. Envoy B → Service B (localhost:inbound)
-   - Deliver decrypted plaintext HTTP request
-
-5. Service B → Envoy B → [mTLS] → Envoy A → Service A
-   - Response uses same encrypted channel
+```text
+1. The source app sends HTTP; configured redirection sends it through Envoy A.
+2. Auto mTLS/DestinationRule determines outbound TLS; destination PeerAuthentication
+   determines whether Envoy B requires inbound mTLS.
+3. ClientHello and ServerHello negotiate TLS parameters/key exchange.
+   Certificates are sent in Certificate messages, not in ClientHello/ServerHello.
+   The server requests the client certificate; each peer validates the other
+   certificate and proof of key possession against the configured trust chain.
+4. Envoy B applies authorization and forwards the decrypted request to Service B.
+5. The response travels over the established TLS connection.
 ```
 
 **各コンポーネントの役割:**
 
 **Istiod:**
 
-* Root CA として機能（certificate signing）
-* Service Account に基づいて certificate を発行
-* certificate を自動更新（24 時間ごと）
-* PeerAuthentication policy を配布
+* 認証局（CA）として機能します（外部ルート CA の下に中間 CA を置く場合があります）。
+* Service Account に基づいて証明書を発行します。
+* 証明書の期限前に更新要求へ署名します。有効期間は構成可能です。
+* PeerAuthentication ポリシーを配布します。
 
-**Envoy Sidecar:**
+**Envoy サイドカー:**
 
-* certificate をリクエストおよび更新
-* TLS handshake を実行
-* トラフィックを暗号化/復号
-* certificate を検証
+* SDS 経由で Istio agent から証明書を受け取ります。
+* TLS ハンドシェイクを実行します。
+* トラフィックを暗号化／復号します。
+* 証明書を検証します。
 
-**Certificate:**
+**証明書:**
 
-* X.509 certificate format
+* X.509 形式
 * Subject Alternative Name（SAN）: Service Account URI
-* 有効期間: 24 時間（デフォルト）
+* 有効期間: 既定で 24 時間
 * 自動更新
 
-**設定例:**
+**構成例:**
 
 ```yaml
 # PeerAuthentication - STRICT mTLS
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -511,36 +470,25 @@ spec:
     mode: STRICT  # Force all communication to mTLS
 ```
 
-**Certificate Verification:**
+**証明書の検証:**
 
 ```bash
-# Check Pod's certificate
-istioctl proxy-config secret <pod-name> -o json
-
-# Example output:
-{
-  "name": "default",
-  "tlsCertificate": {
-    "certificateChain": "...",
-    "privateKey": "...",
-    "subjectAltNames": [
-      "spiffe://cluster.local/ns/default/sa/service-a"
-    ]
-  }
-}
+# Inspect certificate validity/status; private keys are not shown as plaintext
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config secret <pod-name> -n <namespace> -o json
 ```
 
 **セキュリティ上の利点:**
 
-1. **機密性**: すべての通信を暗号化
-2. **完全性**: データ改ざんを防止
-3. **認証**: 双方向の identity verification
-4. **自動化**: コード変更なしで適用
+1. **機密性**: すべての通信を暗号化する
+2. **完全性**: データ改ざんを防ぐ
+3. **認証**: 双方向で ID を検証する
+4. **自動化**: コードを変更せずに適用する
 
-**参照:**
+**参考:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Certificate Management (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#_3-certificate-management-citadel-functionality)
+* [証明書管理](../../../service-mesh/istio/03-architecture.md#3-certificate-management-citadel-functionality)
 
 </details>
 
@@ -548,7 +496,7 @@ istioctl proxy-config secret <pod-name> -o json
 
 ### 問題 9: Istio のデバッグ
 
-新しくデプロイした Service が Istio mesh 内で通信できない問題を診断するための、段階的なデバッグ方法を記述してください。（少なくとも 5 ステップ）
+新しくデプロイした Service が Istio メッシュ内で通信できないときの診断手順を、少なくとも 5 つのステップで説明してください。
 
 <details>
 
@@ -556,16 +504,16 @@ istioctl proxy-config secret <pod-name> -o json
 
 **回答:**
 
-**Istio Service 通信デバッグチェックリスト:**
+**Istio Service 通信のデバッグチェックリスト:**
 
-**ステップ 1: Pod と Sidecar のステータスを確認**
+**ステップ 1: Pod とサイドカーの状態を確認する**
 
 ```bash
 # Check if Pod is running normally
 kubectl get pods -n <namespace>
 
 # Check if Sidecar is injected (should have 2 containers)
-kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}'
+kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}{" "}{.spec.initContainers[*].name}'
 # Expected output: myapp istio-proxy
 
 # Detailed Sidecar injection check
@@ -578,10 +526,10 @@ kubectl logs <pod-name> -n <namespace> -c istio-proxy  # Envoy logs
 
 **診断:**
 
-* container が 1 つだけの場合 → Sidecar が注入されていない
-* Pod が CrashLoopBackOff の場合 → Application または Sidecar の初期化に失敗
+* コンテナ内の `istio-proxy`、または native sidecar の initContainers を確認します。ambient ワークロードには注入済みサイドカーがありません。
+* Pod が CrashLoopBackOff の場合は、アプリケーションまたはサイドカーの初期化に失敗しています。
 
-**解決方法:**
+**対処:**
 
 ```bash
 # Check Namespace injection label
@@ -596,14 +544,14 @@ kubectl rollout restart deployment/<deployment-name> -n <namespace>
 
 ***
 
-**ステップ 2: Service と Endpoint を確認**
+**ステップ 2: Service と Endpoint を確認する**
 
 ```bash
 # Check Service exists
 kubectl get svc <service-name> -n <namespace>
 
 # Check Service Endpoint (is Pod IP registered)
-kubectl get endpoints <service-name> -n <namespace>
+kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service-name>
 
 # Service details
 kubectl describe svc <service-name> -n <namespace>
@@ -611,10 +559,10 @@ kubectl describe svc <service-name> -n <namespace>
 
 **診断:**
 
-* Endpoint が空の場合 → Service Selector と Pod Label の不一致
-* Service port と Pod port の不一致
+* Endpoint が空なら Service Selector と Pod Label が一致していません。
+* Service のポートと Pod のポートが一致していません。
 
-**解決方法:**
+**対処:**
 
 ```bash
 # Check Pod labels
@@ -626,7 +574,7 @@ kubectl get svc <service-name> -n <namespace> -o yaml | grep -A 3 selector
 
 ***
 
-**ステップ 3: Istio configuration を確認**
+**ステップ 3: Istio の構成を確認する**
 
 ```bash
 # Check VirtualService
@@ -638,7 +586,7 @@ kubectl get destinationrule -n <namespace>
 kubectl describe destinationrule <dr-name> -n <namespace>
 
 # Check Gateway (for external access)
-kubectl get gateway -n <namespace>
+kubectl get gateways.networking.istio.io -n <namespace>
 
 # Validate Istio configuration
 istioctl analyze -n <namespace>
@@ -646,11 +594,11 @@ istioctl analyze -n <namespace>
 
 **診断:**
 
-* `istioctl analyze` のエラーメッセージを確認
-* VirtualService host が Service 名と一致しているか
-* DestinationRule subset label が Pod label と一致しているか
+* `istioctl analyze` のエラーメッセージを確認します。
+* VirtualService の host が Service 名と一致するか確認します。
+* DestinationRule の Subset ラベルが Pod ラベルと一致するか確認します。
 
-**解決方法:**
+**対処:**
 
 ```bash
 # Auto-detect configuration errors
@@ -658,19 +606,21 @@ istioctl analyze -n <namespace>
 
 # Example output:
 # Error [IST0101] (VirtualService reviews.default)
-# Referenced host not found: reviews
+# Referenced gateway not found: missing-gateway
 ```
 
 ***
 
-**ステップ 4: mTLS と Security Policy を確認**
+**ステップ 4: mTLS とセキュリティポリシーを確認する**
 
 ```bash
 # Check PeerAuthentication policies
 kubectl get peerauthentication -A
 
 # Check mTLS mode for specific Pod
-istioctl authn tls-check <pod-name>.<namespace> <service-name>.<namespace>.svc.cluster.local
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config clusters <pod-name> -n <namespace> -o json
+istioctl x authz check <pod-name> -n <namespace>
 
 # Check AuthorizationPolicy
 kubectl get authorizationpolicy -n <namespace>
@@ -678,31 +628,18 @@ kubectl get authorizationpolicy -n <namespace>
 
 **診断:**
 
-* mTLS mode の不一致（STRICT vs PERMISSIVE）
-* AuthorizationPolicy がトラフィックをブロックしている
+* STRICT 宛てに平文クライアントトラフィックが到達している、証明書が期限切れ、または信頼設定が互換でない可能性があります。
+* AuthorizationPolicy がトラフィックを拒否している可能性があります。
 
-**解決方法:**
+**対処:**
 
-```bash
-# Temporarily change to PERMISSIVE mode (for debugging)
-kubectl apply -f - <<EOF
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: <namespace>
-spec:
-  mtls:
-    mode: PERMISSIVE
-EOF
+有効なポリシー、ワークロード ID、証明書、Envoy の拒否ログを調べてください。STRICT と PERMISSIVE のサーバーはいずれも、メッシュの mTLS クライアントからの接続を受け入れられます。ポリシー変更は隔離したテスト Namespace で再現してください。稼働中の認可ポリシーを削除したり、mTLS を緩和したりすることを既定のデバッグ手順にしないでください。
 
-# Temporarily delete AuthorizationPolicy
-kubectl delete authorizationpolicy <policy-name> -n <namespace>
-```
+
 
 ***
 
-**ステップ 5: Envoy configuration を確認**
+**ステップ 5: Envoy の構成を確認する**
 
 ```bash
 # Check Envoy cluster configuration (service discovery)
@@ -720,31 +657,31 @@ istioctl proxy-config endpoints <pod-name> -n <namespace>
 
 **診断:**
 
-* target Service が clusters にない場合 → Istiod が Service を認識していない
-* listeners がない場合 → port configuration error
-* endpoints が UNHEALTHY の場合 → Pod が Ready ではない
+* 対象 Service が clusters にない場合、Istiod が Service を認識していません。
+* listeners がない場合、ポート構成に誤りがあります。
+* endpoints が UNHEALTHY の場合、Pod が Ready ではありません。
 
 ***
 
-**ステップ 6: ネットワーク接続テスト**
+**ステップ 6: ネットワーク接続をテストする**
 
 ```bash
 # Test directly from inside Pod
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<target-service>:<port>
 
-# Test directly without going through Envoy (by Pod IP)
+# Compare Pod-IP routing; this does not bypass the sidecar interception
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<pod-ip>:<port>
 
 # Check DNS resolution
 kubectl exec -it <source-pod> -n <namespace> -- nslookup <service-name>
 
 # Check statistics via Envoy Admin API
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- curl localhost:15000/stats | grep <service-name>
+istioctl dashboard envoy <pod-name> -n <namespace>
 ```
 
 ***
 
-**ステップ 7: Istiod logs を確認**
+**ステップ 7: Istiod のログを確認する**
 
 ```bash
 # Check Istiod logs (configuration push errors)
@@ -759,7 +696,9 @@ istioctl proxy-status <pod-name>.<namespace>
 
 ***
 
-**ステップ 8: metrics と tracing を確認**
+**ステップ 8: メトリクスとトレースを確認する**
+
+Telemetry アドオンは別途インストールが必要です。ブロッキングするポートフォワードはそれぞれ別のターミナルで実行し、Collector の実際の Service／Namespace に置き換えてください。
 
 ```bash
 # Check metrics in Prometheus
@@ -774,7 +713,7 @@ istioctl dashboard kiali
 
 ***
 
-**トラブルシューティングフローチャート:**
+**トラブルシューティングのフローチャート:**
 
 ```
 1. Pod/Sidecar normal?
@@ -790,11 +729,11 @@ istioctl dashboard kiali
    └─ YES → Step 4
 
 4. mTLS/policies normal?
-   ├─ NO → Test PERMISSIVE mode
+   ├─ NO → Inspect identity, certificates, and denial logs
    └─ YES → Step 5
 
 5. Envoy configuration normal?
-   ├─ NO → Restart Istiod
+   ├─ NO → Inspect xDS status and istiod logs
    └─ YES → Step 6
 
 6. Network connection normal?
@@ -802,269 +741,96 @@ istioctl dashboard kiali
    └─ YES → Analyze logs/metrics
 ```
 
-**参照:**
+**参考:**
 
-* [Istio デバッグガイド](https://istio.io/latest/docs/ops/diagnostic-tools/)
+* [Istio のデバッグガイド](https://istio.io/latest/docs/ops/diagnostic-tools/)
 
 </details>
 
 ***
 
-### 問題 10: Istio アップグレード戦略
+### 問題 10: Istio のアップグレード戦略
 
-本番環境で Istio を 1.27.0 から 1.28.0 にアップグレードするための **Canary Upgrade** 戦略を説明してください。段階的なコマンドと検証方法を含めてください。
+互換性のある EKS クラスターで Istio 1.30.4 から 1.31.0 へ Canary Upgrade を行う方法を説明してください。ワークロードの移行、Gateway の扱い、検証、ロールバック条件を含めてください。
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答:**
+旧 Control Plane は、すべてのワークロードと Gateway の移行が完了し、ロールバック期間が終了するまで稼働させてください。これは istioctl で管理するサイドカー構成の例です。Helm と ambient のインストールにはそれぞれ独自のアップグレード手順があります。以下のリビジョン名は例であり、実際のインストールに合わせてください。
 
-**Istio Canary Upgrade 戦略:**
+**1. 準備とバックアップ**
 
-Canary Upgrade は、旧版と新版の Control Plane を同時に稼働させ、workload を段階的に移行する安全なアップグレードアプローチです。
-
-***
-
-**準備:**
+Istio/EKS のサポートマトリックスとリリースアップグレードノートを確認します。既存のインストールファイル、該当する場合はチャートのバージョン、メッシュリソース、ベストプラクティス章で説明されている CA/TLS Secret を保全します。対象バージョンの istioctl をダウンロードし、事前チェックを実行します。
 
 ```bash
-# 1. Check current version
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.0 sh -
+cd istio-1.31.0
+export PATH="$PWD/bin:$PATH"
 istioctl version
-
-# 2. Create backup
-kubectl get istiooperator -A -o yaml > istio-1.27-backup.yaml
-kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
-
-# 3. Download new version
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
-
-# 4. Check compatibility
 istioctl x precheck
 ```
 
-***
+**2. Canary Control Plane をインストールする**
 
-**ステップ 1: 新しい Control Plane をインストール（revision を使用）**
+既存の構成を基に `canary-install.yaml` を用意し、メッシュ ID、信頼設定、リソース設定を維持します。リビジョンを `1-31-0` にし、Gateway コンポーネントを有効にせず、Control Plane のみの Canary 用に `minimal` を使います。インストール前にレンダリングして内容を確認します。
 
 ```bash
-# Install new version Control Plane using Revision
-istioctl install --set revision=1-28-0 --set profile=production -y
-
-# Verify installation
-kubectl get pods -n istio-system -l app=istiod
-# Example output:
-# istiod-1-27-0-xxxx  (old version)
-# istiod-1-28-0-xxxx  (new version)
-
-# Check Revision
-kubectl get mutatingwebhookconfigurations | grep istio
-# Output:
-# istio-sidecar-injector-1-27-0
-# istio-sidecar-injector-1-28-0
+istioctl manifest generate -f canary-install.yaml > canary-rendered.yaml
+istioctl install -f canary-install.yaml
+kubectl rollout status deployment/istiod-1-31-0 -n istio-system
 ```
 
-**重要:** この時点では、**2 つの Control Plane** が同時に稼働しています。
+`production` プロファイルは存在しません。リビジョンラベルがバイナリのバージョンを選ぶわけではありません。対象バージョンは istioctl と構成で決まります。
 
-***
-
-**ステップ 2: テスト Namespace で Canary Validation**
+**3. テスト Namespace を検証する**
 
 ```bash
-# Create test namespace
 kubectl create namespace istio-upgrade-test
-
-# Label for new version
-kubectl label namespace istio-upgrade-test istio.io/rev=1-28-0
-
-# Deploy test application
-kubectl apply -n istio-upgrade-test -f samples/sleep/sleep.yaml
+kubectl label namespace istio-upgrade-test istio.io/rev=1-31-0
+kubectl apply -n istio-upgrade-test -f samples/curl/curl.yaml
 kubectl apply -n istio-upgrade-test -f samples/httpbin/httpbin.yaml
-
-# Check Sidecar version (should be 1.28.0)
-kubectl get pods -n istio-upgrade-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
-
-# Test communication
-kubectl exec -n istio-upgrade-test deploy/sleep -- curl http://httpbin:8000/headers
-
-# Check Envoy configuration
-istioctl proxy-config clusters deploy/sleep.istio-upgrade-test
+kubectl rollout status deployment/curl -n istio-upgrade-test
+kubectl rollout status deployment/httpbin -n istio-upgrade-test
+kubectl exec -n istio-upgrade-test deploy/curl -c curl -- curl -fsS http://httpbin:8000/headers
+istioctl proxy-status
+istioctl analyze -n istio-upgrade-test
 ```
 
-**検証チェックリスト:**
+続行する前に、実際のプロキシイメージのバージョン、同期状態、mTLS／認可の挙動、エラー、レイテンシーを確認します。
 
-* ✅ Sidecar はバージョン 1.28.0 で注入されているか？
-* ✅ Service 間通信は正常か？
-* ✅ mTLS は正しく機能しているか？
-* ✅ metrics は収集されているか？
+**4. Staging、次に本番の Namespace を一つずつ移行する**
 
-***
-
-**ステップ 3: Staging Namespace を移行**
+`istio-injection` を削除します。このラベルはリビジョンラベルより優先されるためです。コントローラーを再起動して新しいプロキシを持つ Pod を作成します。該当する場合は StatefulSet、DaemonSet、今後作成する Job も含めます。
 
 ```bash
-# Switch staging namespace to new version
-kubectl label namespace staging istio.io/rev=1-28-0 --overwrite
-
-# Remove existing label (if present)
-kubectl label namespace staging istio-injection-
-
-# Restart Pods (inject new version Sidecar)
+kubectl label namespace staging istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n staging
-
-# Monitor restart status
 kubectl rollout status deployment -n staging
-
-# Verify version
-kubectl get pods -n staging -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
+istioctl proxy-status
 ```
 
-**検証:**
+アプリケーションのスモークテストが成功し、ワークロードに応じた観察期間を経てから次へ進みます。一定時間 sleep させるだけではヘルスゲートになりません。
+
+**5. 旧 Control Plane の削除前に Gateway を移行する**
+
+Gateway を管理している istioctl／Helm の構成を使ってアップグレードし、プロキシイメージ、リビジョン、外部ロードバランサー設定を含めます。Deployment のラベルだけを変更しても、古いイメージを明示した Gateway には不十分です。ロールアウト、外部リクエスト、proxy-status を確認してください。istioctl の既定プロファイルは共有 Gateway をインプレースで更新する場合があるため、この動作を明示的に計画してください。
+
+**6. 完了またはロールバックする**
+
+Gateway と Deployment 以外のワークロードを含むすべてのプロキシが旧リビジョンから移行したことを確認してから、インストールツールを使って旧リビジョンを削除します。共有の検証 Webhook を手作業で削除しないでください。
 
 ```bash
-# Check metrics
-kubectl exec -n staging <pod-name> -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio_build
-
-# Test communication
-kubectl exec -n staging <pod-name> -- curl http://<service-name>
-
-# Visual confirmation with Kiali
-istioctl dashboard kiali
+istioctl proxy-status
+istioctl uninstall --revision=1-30-4
 ```
 
-**24～48 時間監視:**
+旧リビジョンを削除する前なら、影響を受けた Namespace のラベルを稼働中の旧リビジョンに戻し、ワークロードを再起動し、アップグレード済み Gateway を旧リリース構成で戻して、トラフィックを検証するのがロールバックです。新リビジョンに依存するプロキシがなくなった場合にのみ、新リビジョンを削除してください。旧リビジョンをすでに削除した場合は、ワークロードのラベルを戻す前に旧リビジョンを再インストールして検証してください。
 
-* Prometheus metrics を確認
-* error rate と latency を比較
-* Istiod のリソース使用量を確認
+**参考:**
 
-***
-
-**ステップ 4: Production Namespace を段階的に移行**
-
-```bash
-# List of production Namespaces
-PROD_NAMESPACES="prod-api prod-web prod-worker"
-
-# Migrate one at a time gradually
-for ns in $PROD_NAMESPACES; do
-  echo "Upgrading namespace: $ns"
-
-  # Update label
-  kubectl label namespace $ns istio.io/rev=1-28-0 --overwrite
-
-  # Restart Pods
-  kubectl rollout restart deployment -n $ns
-
-  # Wait for completion
-  kubectl rollout status deployment -n $ns
-
-  # Verify
-  echo "Verifying namespace: $ns"
-  kubectl exec -n $ns <pod-name> -- curl http://<service-name>
-
-  # Wait before next Namespace migration (observation)
-  echo "Waiting 1 hour before next namespace..."
-  sleep 3600
-done
-```
-
-**段階ごとの検証:**
-
-```bash
-# After each Namespace migration
-# 1. Golden Signals
-kubectl port-forward -n istio-system svc/prometheus 9090:9090
-# Query in Prometheus:
-# - istio_requests_total
-# - istio_request_duration_milliseconds
-# - istio_request_bytes
-
-# 2. Control Plane status
-istioctl proxy-status | grep $ns
-
-# 3. Error logs
-kubectl logs -n istio-system -l app=istiod,istio.io/rev=1-28-0 --tail=100
-```
-
-***
-
-**ステップ 5: 旧バージョンを削除**
-
-```bash
-# Verify all Namespaces have migrated to new version
-kubectl get namespace -L istio.io/rev
-
-# Verify no Pods using old version
-kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}' | grep 1.27
-
-# Remove old version Control Plane
-istioctl uninstall --revision=1-27-0 -y
-
-# Verify removal
-kubectl get pods -n istio-system -l app=istiod
-
-# Cleanup
-kubectl delete mutatingwebhookconfigurations istio-sidecar-injector-1-27-0
-kubectl delete validatingwebhookconfigurations istio-validator-1-27-0-istio-system
-```
-
-***
-
-**ステップ 6: Gateway のアップグレード（任意）**
-
-```bash
-# Upgrade Gateway separately
-kubectl patch deployment istio-ingressgateway -n istio-system \
-  -p '{"spec":{"template":{"metadata":{"labels":{"istio.io/rev":"1-28-0"}}}}}'
-
-kubectl rollout restart deployment istio-ingressgateway -n istio-system
-kubectl rollout status deployment istio-ingressgateway -n istio-system
-```
-
-***
-
-**ロールバック計画:**
-
-```bash
-# Immediate rollback if issues occur
-# 1. Change Namespace label to old version
-kubectl label namespace <namespace> istio.io/rev=1-27-0 --overwrite
-
-# 2. Restart Pods
-kubectl rollout restart deployment -n <namespace>
-
-# 3. Remove new version Control Plane
-istioctl uninstall --revision=1-28-0 -y
-```
-
-***
-
-**ベストプラクティス:**
-
-1. **段階的アプローチ:**
-   * Test → Staging → Prod の段階で進める
-   * 一度に 1 つの Namespace を移行する
-   * 各段階で十分な観察時間を設ける
-2. **Monitoring:**
-   * Golden Signals（Latency、Traffic、Errors、Saturation）を監視する
-   * Istiod のリソース使用量を確認する
-   * 各段階で 24～48 時間観察する
-3. **Automation:**
-   * CI/CD pipeline に統合する
-   * Smoke Tests を自動化する
-   * rollback scripts を準備する
-4. **Communication:**
-   * アップグレードスケジュールをチームと共有する
-   * release notes を確認する
-   * 変更を文書化する
-
-**参照:**
-
-* [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-* [アップグレード戦略](../../../service-mesh/istio/best-practices.md#upgrade-strategy)
+- [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [バックアップと運用のガイダンス](../../../service-mesh/istio/best-practices.md)
 
 </details>
 
@@ -1078,8 +844,8 @@ istioctl uninstall --revision=1-28-0 -y
 
 **評価基準:**
 
-* 90～100 点: 優秀（Istio の基本概念を完全に理解）
-* 80～89 点: 良好（基本操作が可能）
+* 90～100 点: 優秀（Istio の基本概念を十分に理解している）
+* 80～89 点: 良好（基本的な運用ができる）
 * 70～79 点: 平均（追加学習を推奨）
 * 60～69 点: 平均以下（基本概念の復習が必要）
 * 0～59 点: 再学習が必要
@@ -1090,3 +856,13 @@ istioctl uninstall --revision=1-28-0 -y
 * [コア概念](../../../service-mesh/istio/02-basic-concepts.md)
 * [コンポーネント](../../../service-mesh/istio/03-architecture.md)
 * [Istio 公式ドキュメント](https://istio.io/latest/docs/)
+
+* [インストール構成プロファイル](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+* [Sidecar のインストール](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+* [セキュリティ](https://istio.io/latest/docs/concepts/security/)
+* [Internet Engineering Task Force（IETF）、E. Rescorla](https://www.rfc-editor.org/rfc/rfc8446.html)
+* [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
+* [istioctl](https://istio.io/latest/docs/reference/commands/istioctl/)
+* [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)
+* [Istio 1.24.0 の発表](https://istio.io/latest/news/releases/1.24.x/announcing-1.24/)
+* [パフォーマンスとスケーラビリティ](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)

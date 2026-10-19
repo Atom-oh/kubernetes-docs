@@ -1,6 +1,6 @@
 # Amazon EKS 升级测验
 
-> **最后更新**：September 12, 2026
+> **最后更新**：2026 年 9 月 12 日
 
 本测验用于测试你对 Amazon EKS 集群升级流程、最佳实践、故障排除及相关注意事项的理解。
 
@@ -1122,5 +1122,3 @@ data:
 来源：[持久卷](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[Pod 生命周期](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[Terraform PVC](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/persistent_volume_claim_v1)、[Prometheus 函数](https://prometheus.io/docs/prometheus/latest/querying/functions/)。
 
 </details>
-
-</source_document>

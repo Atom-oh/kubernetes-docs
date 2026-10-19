@@ -17,13 +17,13 @@
 | 历史版本 2.16 | 已发布的矩阵为 1.22–1.29 | 不建议用于当前安装 |
 | 历史版本 2.15 / 2.14 | 已发布的范围分别为 1.22–1.29 / 1.21–1.28 | 请查看对应发行版；不要推断其适用于“以及之后的每个 Kubernetes 版本” |
 
-CLI 的最低版本检查并不是最高支持版本检查。通过 `check --pre` 并不能证明其兼容新发布的 Kubernetes 或 Gateway API 版本。对于 EKS，还应检查在那里可用的版本和支持期限。本次审计中的 Helm 验证使用了 Kubernetes 1.35 的 capabilities。
+CLI 的最低版本检查并不是最高支持版本检查。通过 check --pre 并不能证明其兼容新发布的 Kubernetes 或 Gateway API 版本。对于 EKS，还应检查在那里可用的版本和支持期限。本次审计中的 Helm 验证使用了 Kubernetes 1.35 的 capabilities。
 
 ### 容量和平台
 
 不要依据一条通用的 100m CPU/200Mi 声明来确定整个控制平面的容量。请检查 controller、policy 容器、代理、init 容器和扩展的渲染后 requests/limits；并测量实际流量和连接负载。HA 要求至少有三个符合条件的节点，以满足其必需的节点反亲和性，同时还要有足够容量支持滚动更新。跨 Zone 分布是偏好设置，并不保证分布在三个不同 Zone。
 
-本指南面向运行 Linux 的 Kubernetes 节点。下载 Windows CLI 并不能证明支持 Windows 工作负载配置。请单独检查所选发行版对工作负载/平台的支持情况。对于 Cilium kube-proxy replacement，请查看 `socketLB.hostNamespaceOnly`；将 Linkerd CNI 与 Cilium 链接使用时，`cni.exclusive` 必须允许其他插件。
+本指南面向运行 Linux 的 Kubernetes 节点。下载 Windows CLI 并不能证明支持 Windows 工作负载配置。请单独检查所选发行版对工作负载/平台的支持情况。对于 Cilium kube-proxy replacement，请查看 socketLB.hostNamespaceOnly；将 Linkerd CNI 与 Cilium 链接使用时，cni.exclusive 必须允许其他插件。
 
 ### 网络路径和预检
 
@@ -91,7 +91,7 @@ linkerd version --client
 
 ### 官方安装程序替代方案
 
-旧版 `run.linkerd.io/install` 脚本已弃用，且安装的是 edge，而非 stable。当前安装程序接受环境变量 `LINKERD2_VERSION`；旧命令 `sh --version stable-2.16.0` 并不会选择一个受支持的上游 stable 构件。
+旧版 run.linkerd.io/install 脚本已弃用，且安装的是 edge，而非 stable。当前安装程序接受环境变量 LINKERD2_VERSION；旧命令 sh --version stable-2.16.0 并不会选择一个受支持的上游 stable 构件。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -fsSL https://run.linkerd.io/install-edge -o install-linkerd.sh
@@ -105,7 +105,7 @@ linkerd version --client
 
 ### Windows 二进制文件
 
-发行版构件名为 `windows.exe`，而不是 `windows-amd64.exe`：
+发行版构件名为 windows.exe，而不是 windows-amd64.exe：
 
 ```powershell
 $ErrorActionPreference = "Stop"
@@ -156,7 +156,7 @@ helm show chart linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VER
 
 Helm 需要信任锚证书以及 issuer 证书/私钥，或者需要有意配置受支持的外部 issuer-secret 集成。它不要求上传根 CA 私钥。
 
-请使用已安装的 [Smallstep CLI](https://smallstep.com/docs/step-cli/installation/) 及其已发布的证书创建接口。这个 ECDSA P-256 示例保留了原演示中的有效期，但修正了 `--not-after` 之后错误的续行：
+请使用已安装的 [Smallstep CLI](https://smallstep.com/docs/step-cli/installation/) 及其已发布的证书创建接口。这个 ECDSA P-256 示例保留了原演示中的有效期，但修正了 --not-after 之后错误的续行：
 
 ```bash
 umask 077
@@ -176,11 +176,11 @@ mkdir linkerd-pki
 )
 ```
 
-安装前请检查证书链、算法和有效期。根私钥应留在 Kubernetes 之外；下文只会提供公有信任锚和 issuer 签名凭据。`--no-password/--insecure` 会创建未加密的本地密钥，因此示例使用了访问受限的目录/umask。生产 PKI 需要经批准的密钥存储和轮换流程。本次审计根据官方文档检查了这些标志，但没有实际运行 Smallstep 证书生成命令。
+安装前请检查证书链、算法和有效期。根私钥应留在 Kubernetes 之外；下文只会提供公有信任锚和 issuer 签名凭据。--no-password/--insecure 会创建未加密的本地密钥，因此示例使用了访问受限的目录/umask。生产 PKI 需要经批准的密钥存储和轮换流程。本次审计根据官方文档检查了这些标志，但没有实际运行 Smallstep 证书生成命令。
 
 #### 自定义 values
 
-将以下内容保存为 `linkerd-values.yaml`。这些是容量配置示例，并非对工作负载的保证：
+将以下内容保存为 linkerd-values.yaml。这些是容量配置示例，并非对工作负载的保证：
 
 ```yaml
 proxy:
@@ -209,7 +209,7 @@ identityResources: *id001
 proxyInjectorResources: *id001
 ```
 
-`proxy.logLevel` 和 `proxy.logFormat` 是实际的嵌套键。虽然基础 values 文件中并未全部列出，但 `destinationResources`、`identityResources` 和 `proxyInjectorResources` 均受支持；打包的 HA 文件和模板会使用它们。旧版 `namespace.labels` map 和顶层 `proxyLogLevel`/`proxyLogFormat` 并未被使用。默认情况下，chart 会将 header/request 日志抑制规则追加到配置的 proxy 日志选择器中；请检查最终的环境变量值。
+proxy.logLevel 和 proxy.logFormat 是实际的嵌套键。虽然基础 values 文件中并未全部列出，但 destinationResources、identityResources 和 proxyInjectorResources 均受支持；打包的 HA 文件和模板会使用它们。旧版 namespace.labels map 和顶层 proxyLogLevel/proxyLogFormat 并未被使用。默认情况下，chart 会将 header/request 日志抑制规则追加到配置的 proxy 日志选择器中；请检查最终的环境变量值。
 
 ```bash
 helm install linkerd-crds linkerd-edge/linkerd-crds \
@@ -237,7 +237,7 @@ linkerd check
 
 ## 高可用性（HA）安装
 
-使用固定版本 chart 随附的 `values-ha.yaml`：
+使用固定版本 chart 随附的 values-ha.yaml：
 
 ```bash
 helm pull linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
@@ -253,7 +253,7 @@ linkerd install --ha --linkerd-cni-enabled="$CNI_ENABLED" > linkerd-ha-rendered.
 
 打包的配置会为关键组件启用三个副本、必需的节点隔离、偏好的 Zone 隔离、PDB 以及 Fail admission-webhook 策略。这些是冗余的服务实例，并非由三个成员组成的共识仲裁组。可用性还取决于 API server/网络访问、凭据、容量和应用本身。
 
-以前手写的 `destination.replicas`/`identity.resources`/`proxyInjector.resources` 字段没有配置预期的容器。根级 `podDisruptionBudget` map 不会创建任何 PDB，根级 `topologySpreadConstraints` 也未被使用。对旧示例进行离线渲染后发现有三个副本，但 controller 资源设置缺失，且没有 PDB。请使用实际打包的配置文件并检查渲染结果。
+以前手写的 destination.replicas/identity.resources/proxyInjector.resources 字段没有配置预期的容器。根级 podDisruptionBudget map 不会创建任何 PDB，根级 topologySpreadConstraints 也未被使用。对旧示例进行离线渲染后发现有三个副本，但 controller 资源设置缺失，且没有 PDB。请使用实际打包的配置文件并检查渲染结果。
 
 ```bash
 kubectl -n linkerd get pods -o wide
@@ -278,7 +278,7 @@ linkerd viz check
 linkerd viz dashboard
 ```
 
-对于 Helm，将以下内容保存为 `viz-values.yaml`，并检查渲染后的 PVC、Deployment 和资源设置：
+对于 Helm，将以下内容保存为 viz-values.yaml，并检查渲染后的 PVC、Deployment 和资源设置：
 
 ```yaml
 prometheus:
@@ -330,7 +330,7 @@ helm install linkerd-viz linkerd-edge/linkerd-viz \
 linkerd viz check
 ```
 
-所选 chart 仅在存在 `persistence` **map** 时支持持久化。它不会使用 `persistence.enabled` 作为开关。其 PVC 模板要求设置 `accessMode`；旧示例省略了该项，渲染出的 access mode 为 null。省略该 map 时会使用 emptyDir。gp3 StorageClass 是一个示例先决条件，并非由 Viz 创建；在 EKS 上请验证 EBS CSI driver、权限和卷拓扑。
+所选 chart 仅在存在 persistence **map** 时支持持久化。它不会使用 persistence.enabled 作为开关。其 PVC 模板要求设置 accessMode；旧示例省略了该项，渲染出的 access mode 为 null。省略该 map 时会使用 emptyDir。gp3 StorageClass 是一个示例先决条件，并非由 Viz 创建；在 EKS 上请验证 EBS CSI driver、权限和卷拓扑。
 
 内置 Prometheus 只有一个副本；启用持久化后会选择 Recreate Deployment 策略。PVC 可在合适的 Pod 替换期间保留数据，但不能让 metrics 存储实现 HA，也不能保证服务不中断。Chart 2026.10.1 默认使用 Prometheus v2.55.1，保留时间为六小时。请明确选择后端维护、保留期限和可用性要求。
 
@@ -342,15 +342,15 @@ prometheus:
 prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 ```
 
-切换之前，请配置外部服务器的 Linkerd 抓取/重标记规则和访问策略。请验证实际的 Viz 查询和 metrics，而不只是 HTTP 就绪端点。`dashboard`、`tap` 和 `metricsAPI` 的资源设置均受支持。`grafana.enabled` 并不是 Deployment 开关：此 chart 提供 Grafana 链接设置，供单独管理的 Grafana 使用。
+切换之前，请配置外部服务器的 Linkerd 抓取/重标记规则和访问策略。请验证实际的 Viz 查询和 metrics，而不只是 HTTP 就绪端点。dashboard、tap 和 metricsAPI 的资源设置均受支持。grafana.enabled 并不是 Deployment 开关：此 chart 提供 Grafana 链接设置，供单独管理的 Grafana 使用。
 
-初次使用时请通过 localhost dashboard 命令访问。`dashboard.enforcedHostRegexp` 会验证 Host 值，但它不是用户身份验证；该值为空时会采用 chart 默认的主机限制。组织的 ingress 需要单独配置身份验证/授权、经批准的网络暴露方式以及允许的主机。
+初次使用时请通过 localhost dashboard 命令访问。dashboard.enforcedHostRegexp 会验证 Host 值，但它不是用户身份验证；该值为空时会采用 chart 默认的主机限制。组织的 ingress 需要单独配置身份验证/授权、经批准的网络暴露方式以及允许的主机。
 
 ### 分布式追踪
 
-edge-26.10.1 没有 `linkerd jaeger` 子命令。公共 `linkerd-jaeger` chart 的历史版本停留在 2025.9.4；它不是与 2026.10.1 匹配的扩展。请将过时的安装/检查/升级/卸载说明替换为单独管理的 collector/backend，以及所选的 proxy tracing 配置。
+edge-26.10.1 没有 linkerd jaeger 子命令。公共 linkerd-jaeger chart 的历史版本停留在 2025.9.4；它不是与 2026.10.1 匹配的扩展。请将过时的安装/检查/升级/卸载说明替换为单独管理的 collector/backend，以及所选的 proxy tracing 配置。
 
-Tracing 需要传入 trace context、应用传播以及兼容的 collector/export 协议。Viz 拓扑图或 metrics 图表并不是分布式 trace。完整数据路径请参阅[可观测性指南](05-observability.md)和[官方 tracing 文档](https://linkerd.io/docs/features/distributed-tracing/)。本安装审计并未声称未经测试的 collector/Jaeger 部署能够端到端正常工作。如果旧安装中已有 `linkerd-jaeger` release，请清点并迁移其数据，然后通过原有所有者将其退役；当前 CLI 无法管理这个已移除的扩展。
+Tracing 需要传入 trace context、应用传播以及兼容的 collector/export 协议。Viz 拓扑图或 metrics 图表并不是分布式 trace。完整数据路径请参阅[可观测性指南](05-observability.md)和[官方 tracing 文档](https://linkerd.io/docs/features/distributed-tracing/)。本安装审计并未声称未经测试的 collector/Jaeger 部署能够端到端正常工作。如果旧安装中已有 linkerd-jaeger release，请清点并迁移其数据，然后通过原有所有者将其退役；当前 CLI 无法管理这个已移除的扩展。
 
 ### 多集群
 
@@ -379,7 +379,7 @@ gateway:
 remoteMirrorServiceAccountName: linkerd-service-mirror-remote-access-default
 ```
 
-将内容保存为 `multicluster-values.yaml`，然后使用 Helm 替代方案：
+将内容保存为 multicluster-values.yaml，然后使用 Helm 替代方案：
 
 ```bash
 helm install linkerd-multicluster linkerd-edge/linkerd-multicluster \
@@ -387,9 +387,9 @@ helm install linkerd-multicluster linkerd-edge/linkerd-multicluster \
   -f multicluster-values.yaml --wait --timeout 10m
 ```
 
-`loadBalancerClass` 用于选择预期的 controller。EKS Auto Mode 使用不同的 class/配置契约；不要混用这些假设，也不要随意更改现有 Service 的所有权。确保远程网络可以解析/访问内部 gateway 及其探测路径。不要在无关的 ACM listener 处终止 Linkerd 的传输 mTLS。
+loadBalancerClass 用于选择预期的 controller。EKS Auto Mode 使用不同的 class/配置契约；不要混用这些假设，也不要随意更改现有 Service 的所有权。确保远程网络可以解析/访问内部 gateway 及其探测路径。不要在无关的 ACM listener 处终止 Linkerd 的传输 mTLS。
 
-固定版本的 chart 不会使用 `gateway.resources`。Gateway proxy 资源来自注入配置；请检查最终生成的 Pod，不要假设被忽略的 values 区块更改了其 limits。此 chart 附带的 HA 覆盖文件使用 `gateway.replicas` 和反亲和性。
+固定版本的 chart 不会使用 gateway.resources。Gateway proxy 资源来自注入配置；请检查最终生成的 Pod，不要假设被忽略的 values 区块更改了其 limits。此 chart 附带的 HA 覆盖文件使用 gateway.replicas 和反亲和性。
 
 当前 edge 远程凭据不接受 exec auth provider。请使用[多集群指南](06-multi-cluster.md)支持的凭据流程，并验证生成的 service-mirror controller/版本及最小权限 API 访问。
 
@@ -410,11 +410,11 @@ linkerd check --pre --linkerd-cni-enabled
 # or --set cniEnabled=true for the control-plane Helm chart.
 ```
 
-请验证节点的 CNI 配置/二进制文件目录以及已安装插件的行为。默认路径为 `/etc/cni/net.d` 和 `/opt/cni/bin`，但并非所有平台都使用这些路径。所选控制平面 chart 会使用 `cniEnabled`；渲染结果应显示 `linkerd-init` 被按预期省略。
+请验证节点的 CNI 配置/二进制文件目录以及已安装插件的行为。默认路径为 /etc/cni/net.d 和 /opt/cni/bin，但并非所有平台都使用这些路径。所选控制平面 chart 会使用 cniEnabled；渲染结果应显示 linkerd-init 被按预期省略。
 
-未使用 Linkerd CNI 时，常规 init-container 重定向路径需要 `NET_ADMIN` capability。启用 CNI 后，这项工作由节点插件执行。此发行版默认启用 native sidecar，因此诊断 proxy 注入时请同时检查 `containers` 和 `initContainers`。已发布的 Identity Deployment 会有意使用常规 proxy 并禁用启动等待；不要将此引导例外判断为注入失败。禁用 native sidecar 会改变 init-container 的网络/启动顺序；绕过 UID 并不是通用的安全修复方法。
+未使用 Linkerd CNI 时，常规 init-container 重定向路径需要 NET_ADMIN capability。启用 CNI 后，这项工作由节点插件执行。此发行版默认启用 native sidecar，因此诊断 proxy 注入时请同时检查 containers 和 initContainers。已发布的 Identity Deployment 会有意使用常规 proxy 并禁用启动等待；不要将此引导例外判断为注入失败。禁用 native sidecar 会改变 init-container 的网络/启动顺序；绕过 UID 并不是通用的安全修复方法。
 
-对于 Cilium kube-proxy replacement，Linkerd 文档中的配置使用 `socketLB.hostNamespaceOnly=true`，使 Pod 流量保留 Service 地址，以便进行服务发现。链接使用 Linkerd CNI 时，还需要设置 `cni.exclusive=false`。请与主 CNI 的所有者共同审查这些更改，不要盲目替换其配置。
+对于 Cilium kube-proxy replacement，Linkerd 文档中的配置使用 socketLB.hostNamespaceOnly=true，使 Pod 流量保留 Service 地址，以便进行服务发现。链接使用 Linkerd CNI 时，还需要设置 cni.exclusive=false。请与主 CNI 的所有者共同审查这些更改，不要盲目替换其配置。
 
 ### 现有 EKS 集群
 
@@ -432,13 +432,13 @@ kubectl config current-context
 kubectl -n kube-system get daemonset aws-node   -o jsonpath='{.spec.template.spec.containers[*].image}'
 ```
 
-进行集群变更前，请确认 endpoint/context 符合预期。标准 Linkerd controller 使用 Kubernetes API 凭据；`linkerd-destination` 发现 Services 并不需要 IAM role。AWS API 权限应授予实际调用方，例如 Load Balancer Controller、EBS CSI 或 telemetry collector，并采用其支持的 IRSA/Pod Identity 配置。
+进行集群变更前，请确认 endpoint/context 符合预期。标准 Linkerd controller 使用 Kubernetes API 凭据；linkerd-destination 发现 Services 并不需要 IAM role。AWS API 权限应授予实际调用方，例如 Load Balancer Controller、EBS CSI 或 telemetry collector，并采用其支持的 IRSA/Pod Identity 配置。
 
 ### EKS dashboard 和网络注意事项
 
 旧版面向互联网的 ALB 示例发布了管理 dashboard，却没有设计身份验证方案。在配置并测试好经过身份验证的组织 ingress 之前，请通过 localhost 进行管理。
 
-Web Service 的 8084 端口有效。其单独的管理/就绪端口为 9994，chart 在该端口上的就绪探测路径为 `/ready`。不要认为 UI listener 上的健康检查语义相同。ALB 设计必须协调目标健康检查、安全组、主机验证、证书所有权和身份验证；仅有 TLS 证书并不能验证 dashboard 用户的身份。
+Web Service 的 8084 端口有效。其单独的管理/就绪端口为 9994，chart 在该端口上的就绪探测路径为 /ready。不要认为 UI listener 上的健康检查语义相同。ALB 设计必须协调目标健康检查、安全组、主机验证、证书所有权和身份验证；仅有 TLS 证书并不能验证 dashboard 用户的身份。
 
 安全组和 NetworkPolicy 规则应按实际源/目标角色进行限制。组件端口表是诊断信息，并不是要求向所有来源暴露 proxy metrics 或 webhook 端口。请在实际集群中验证 CNI 启动、DNS、admission、identity 和跨节点路径。
 
@@ -453,7 +453,7 @@ kubectl -n linkerd get pods,services,pdb -o wide
 kubectl -n linkerd-viz get pods,services -o wide
 ```
 
-只对已安装的扩展运行检查。`check --proxy` 会检查数据平面；它并不表示“检查所有扩展”。这些检查无法验证应用业务逻辑。
+只对已安装的扩展运行检查。check --proxy 会检查数据平面；它并不表示“检查所有扩展”。这些检查无法验证应用业务逻辑。
 
 对于示例应用，请先查看固定版本的应用清单，再应用它；只为选定的 namespace 添加注解，并重新创建预期工作负载。可变的 emojivoto URL 加上对每个运行中的 Deployment 进行往返导出，并不是可复现的应用输入。请确认镜像/架构、Service 端口、就绪状态以及实际 HTTP/TCP 结果。
 
@@ -466,7 +466,7 @@ linkerd viz stat deploy/my-app -n my-app
 linkerd viz top deploy/my-app -n my-app
 ```
 
-请将 `my-app` 替换为实际的 namespace 和 Deployment。Metrics/tap/top 依赖已配置的扩展和受支持的协议；它们不能证明所有流量都已加密，也不能证明所有业务操作均已成功。
+请将 my-app 替换为实际的 namespace 和 Deployment。Metrics/tap/top 依赖已配置的扩展和受支持的协议；它们不能证明所有流量都已加密，也不能证明所有业务操作均已成功。
 
 ## 升级 Linkerd
 
@@ -474,7 +474,7 @@ linkerd viz top deploy/my-app -n my-app
 
 选择确切的目标 CLI/chart，审查发行说明、兼容性、支持的版本偏差和当前健康状态。此处显示的目标版本并不意味着可以从所有历史 2.14/2.16 安装直接升级；请遵循所需的中间升级步骤和供应商指南。Edge tag 不提供语义化版本保证。请分别通过各自的所有者升级 CLI、CRD/控制平面、已安装的扩展，最后再升级数据平面 proxy。
 
-对现有安装使用 `check` 和 `check --proxy`。`check --pre` 是针对新安装的预检，其中包含 namespace/设置假设，不能代替升级规划。请保留当前信任凭据，并在升级前检查已移除的 CRD 版本。
+对现有安装使用 check 和 check --proxy。check --pre 是针对新安装的预检，其中包含 namespace/设置假设，不能代替升级规划。请保留当前信任凭据，并在升级前检查已移除的 CRD 版本。
 
 ### CLI 管理的安装
 
@@ -497,7 +497,7 @@ linkerd prune > linkerd-obsolete.yaml
 # Review ownership and contents before any kubectl delete -f linkerd-obsolete.yaml.
 ```
 
-扩展提供用于渲染更新的 install 命令，而没有 `viz upgrade` 子命令。即使帮助命令返回退出码 0，它也可能只是父命令的帮助信息；请检查可用命令列表和生成的资源内容。删除任何内容前，请先检查 prune 的输出。多集群 controller 更新可能需要通过受支持的工作流重新建立链接。
+扩展提供用于渲染更新的 install 命令，而没有 viz upgrade 子命令。即使帮助命令返回退出码 0，它也可能只是父命令的帮助信息；请检查可用命令列表和生成的资源内容。删除任何内容前，请先检查 prune 的输出。多集群 controller 更新可能需要通过受支持的工作流重新建立链接。
 
 ### Helm 管理的安装
 
@@ -515,7 +515,7 @@ helm upgrade linkerd-control-plane linkerd-edge/linkerd-control-plane \
 linkerd check
 ```
 
-审核后的 values 必须包含有意设置的 HA/CNI 配置，以及**现有的**信任/issuer 配置或受支持的外部 secret 引用。如果不保留这些输入而使用 `--reset-values`，可能会改变行为或导致失败；`--reuse-values` 则可能保留过时的设置。请比较目标默认值和覆盖项；切勿仅仅为了常规升级而重新生成 CA。
+审核后的 values 必须包含有意设置的 HA/CNI 配置，以及**现有的**信任/issuer 配置或受支持的外部 secret 引用。如果不保留这些输入而使用 --reset-values，可能会改变行为或导致失败；--reuse-values 则可能保留过时的设置。请比较目标默认值和覆盖项；切勿仅仅为了常规升级而重新生成 CA。
 
 ### 数据平面更新
 
@@ -529,7 +529,7 @@ kubectl -n my-app get pods -o json |
   jq '.items[] | {pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy}))}'
 ```
 
-`stat` 是流量统计命令，并不是 proxy 镜像版本清单。上文会同时检查常规容器和 native sidecar 位置。请检查相关版本偏差指南，并在重新创建后确认实际就绪状态/流量。
+stat 是流量统计命令，并不是 proxy 镜像版本清单。上文会同时检查常规容器和 native sidecar 位置。请检查相关版本偏差指南，并在重新创建后确认实际就绪状态/流量。
 
 ## 故障排查
 
@@ -561,7 +561,7 @@ kubectl -n linkerd get secret linkerd-identity-issuer -o json |
   base64 -d | openssl x509 -noout -dates
 ```
 
-默认 issuer 格式使用 `crt.pem`；配置了 `kubernetes.io/tls` 集成时则使用 `tls.crt`。请检查已配置的方案，不要假设每个 issuer Secret 都有相同字段。自定义信任集成可能会改变存储所有者。请检查所有信任证书、时钟/有效期、issuer 可用性和 identity 错误；避免未经规划就替换根证书。
+默认 issuer 格式使用 crt.pem；配置了 kubernetes.io/tls 集成时则使用 tls.crt。请检查已配置的方案，不要假设每个 issuer Secret 都有相同字段。自定义信任集成可能会改变存储所有者。请检查所有信任证书、时钟/有效期、issuer 可用性和 identity 错误；避免未经规划就替换根证书。
 
 ### 组件和 proxy 日志
 

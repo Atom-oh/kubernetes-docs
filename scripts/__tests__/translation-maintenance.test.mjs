@@ -89,6 +89,58 @@ test('translation validation rejects changed code and link targets even when cou
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })
 
+test('translation validation preserves both poster and video destinations of linked images', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-video-links-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Demo\n\nThe recorded video is a functional check in a simulated environment.\n\n[![Recorded demo](poster.jpg)](https://presentation.atomai.click/demo.mp4)\n\n[![Second demo](<second.jpg>)](<https://presentation.atomai.click/second.mp4>)\n'
+    const translated = source.replace('# Demo', '# 演示').replace('Recorded demo', '实录演示').replace('Second demo', '第二个演示')
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const changed of [
+      translated.replace('/demo.mp4', '/wrong.mp4'),
+      translated.replace('/second.mp4', '/different.mp4'),
+      translated.replace('[![实录演示](poster.jpg)](https://presentation.atomai.click/demo.mp4)', '![实录演示](poster.jpg)'),
+      translated.replace('poster.jpg', 'wrong.jpg')
+    ]) {
+      fs.writeFileSync(dst, changed)
+      assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+        error => /link\/image target mismatch/.test(error.stderr.toString()))
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
+test('translation validation rejects added response wrappers and retains source XML examples', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-response-wrappers-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Guide\n\nUse the documented configuration and verify the result before deployment.\n'
+    const translated = source.replace('# Guide', '# 说明')
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const contaminated of [
+      `${translated}\n</source_document>\n`,
+      `<source_document>\n${translated}`,
+      `<translated_document>\n${translated}</translated_document>\n`
+    ]) {
+      fs.writeFileSync(dst, contaminated)
+      assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+        error => /unexpected translation wrapper/.test(error.stderr.toString()))
+    }
+    const xmlExample = '\n```xml\n<source_document>Example input</source_document>\n```\n'
+    fs.writeFileSync(src, source + xmlExample)
+    fs.writeFileSync(dst, translated + xmlExample)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    fs.writeFileSync(dst, translated + xmlExample + '</source_document>\n')
+    assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+      error => /unexpected translation wrapper/.test(error.stderr.toString()))
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
 test('complete Chinese prose can be shorter than English without accepting an empty summary', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-chinese-size-'))
   const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))

@@ -1,96 +1,46 @@
 # ServiceEntry
 
-ServiceEntry は、外部サービスを Istio service mesh に登録し、内部サービスと同様に管理できるようにします。
+ServiceEntryは、外部サービスをIstioサービスメッシュに登録し、内部サービスと同様に管理できるようにします。
 
 ## 目次
 
-1. [ServiceEntry が必要な理由](#why-serviceentry)
-2. [ServiceEntry の概要](#serviceentry-overview)
+1. [ServiceEntryが必要な理由](#why-serviceentry)
+2. [ServiceEntryの概要](#serviceentry-overview)
 3. [名前解決モード](#resolution-modes)
 4. [ロケーション設定](#location-settings)
 5. [実践例](#practical-examples)
-6. [Egress Gateway との組み合わせ](#combining-with-egress-gateway)
-7. [セキュリティと TLS](#security-and-tls)
-8. [モニタリングと制御](#monitoring-and-control)
+6. [Egress Gatewayとの組み合わせ](#combining-with-egress-gateway)
+7. [セキュリティとTLS](#security-and-tls)
+8. [監視と制御](#monitoring-and-control)
 9. [ベストプラクティス](#best-practices)
 
-<span id="why-serviceentry"></span>
+## ServiceEntryが必要な理由 {#why-serviceentry}
 
-## ServiceEntry が必要な理由
+### 外部サービスを管理する必要性
 
-### 外部サービス管理の必要性
+`ALLOW_ANY`では、未知の外部宛先への通信も許可されますが、ポリシーやテレメトリが限定される場合があります。ServiceEntryは宛先を登録し、対応するプロキシポリシーを設定できるようにするものです。アクセス制御ルールそのものではありません。
 
-デフォルトでは、Istio mesh は外部サービスへのトラフィックを制御しません。ServiceEntry を使用すると、次のことが可能になります。
-
-```mermaid
-flowchart TB
-    subgraph Without["Without ServiceEntry"]
-        A1[Mesh Internal<br/>Service] -->|Unknown Traffic| E1[External API]
-        A1 -.->|No Monitoring| E1
-        A1 -.->|Cannot Apply Policies| E1
-        A1 -.->|No Circuit Breaker| E1
-    end
-
-    subgraph With["With ServiceEntry"]
-        A2[Mesh Internal<br/>Service] -->|Registered Traffic| E2[External API<br/>ServiceEntry]
-        A2 -->|Monitoring Enabled| E2
-        A2 -->|Policy Applied| E2
-        A2 -->|Circuit Breaker| E2
-    end
-
-    %% Style definitions
-    classDef internal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef unknown fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,A2 internal;
-    class E2 external;
-    class E1 unknown;
-```
+宛先ごとの設定が可能になりますが、実際の監視、TLS、トラフィック制御はプロトコルと適用するポリシーに依存します。
 
 ### 主な利点
 
-| 機能 | ServiceEntry なし | ServiceEntry あり |
+| 機能 | ServiceEntryなし | ServiceEntryあり |
 |---------|---------------------|-------------------|
-| **モニタリング** | ブラックホール | 完全なメトリクス収集 |
-| **トラフィック制御** | 不可能 | Timeout、Retry、Circuit Breaker |
-| **セキュリティ** | 限定的 | mTLS、証明書管理 |
-| **Egress 制御** | すべての外部トラフィックを許可 | 明示的な許可/ブロック |
-| **Service Discovery** | 手動管理 | 自動 DNS ルックアップ |
+| **監視** | パススルーのテレメトリが限定的 | プロトコルに応じたテレメトリ。HTTPではL7の可視性が必要 |
+| **トラフィック制御** | 設定できない | タイムアウト、リトライ、サーキットブレーカーを設定可能 |
+| **セキュリティ** | アプリケーション側のTLSは引き続き利用可能 | TLS/mTLSを別途設定する。外部証明書は自動発行されない |
+| **Egress制御** | アウトバウンド設定やネットワークポリシーに依存 | レジストリ登録とルーティングを設定する。ネットワーク上の強制制御は別途必要 |
+| **サービスディスカバリー** | 手動管理 | DNSによる自動名前解決 |
 
-<span id="serviceentry-overview"></span>
+## ServiceEntryの概要 {#serviceentry-overview}
 
-## ServiceEntry の概要
+これらはサイドカーを使う構成例です。ServiceEntryはistiodとプロキシに参照される登録情報であり、ネットワーク上の中継ホップではありません。`addresses`はサービス／VIPトラフィックの分類に使い、`endpoints`は上流バックエンドを指定します。`resolution`が制御するのはプロキシ側の名前解決であり、アプリケーションのDNSではありません。合成ホスト名を使う場合は、DNSレコードまたはDNSキャプチャを設定してください。ServiceEntryだけではVMのプロキシはメッシュに参加せず、identity用の認証情報も発行されません。
 
-ServiceEntry は、外部サービスを Istio service registry に追加します。
+ServiceEntryは、外部サービスをIstioのサービスレジストリに追加します。
 
-```mermaid
-flowchart LR
-    subgraph Mesh["Service Mesh"]
-        App[Application]
-        SE[ServiceEntry<br/>Registration]
-    end
+![メッシュ内のアプリケーションがServiceEntry登録を介してリクエストを送り、トラフィック制御、監視、セキュリティの設定が適用された後、外部APIと外部データベースに接続する構成図](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-1.png)
 
-    subgraph External["External Services"]
-        API[External API<br/>api.example.com]
-        DB[External DB<br/>db.example.com]
-    end
-
-    App -->|1. Request| SE
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| API
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| DB
-
-    %% Style definitions
-    classDef meshService fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef serviceEntry fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App meshService;
-    class SE serviceEntry;
-    class API,DB external;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-12-service-entry-1.html)
 
 ### 基本構造
 
@@ -110,15 +60,13 @@ spec:
   resolution: DNS         # Address resolution method
 ```
 
-<span id="resolution-modes"></span>
+## 名前解決モード {#resolution-modes}
 
-## 名前解決モード
+Istio 1.31 APIでは、5種類の名前解決モードが定義されています。
 
-ServiceEntry は 4 つのアドレス名前解決モードをサポートします。
+### 1. DNS名前解決
 
-### 1. DNS 名前解決
-
-最も一般的なモードで、DNS を介して IP アドレスを動的に名前解決します。
+最も一般的なモードです。DNSを使ってIPアドレスを動的に解決します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -137,13 +85,13 @@ spec:
 ```
 
 **ユースケース**:
-- パブリック API（AWS S3、Google Cloud Storage）
-- SaaS サービス（Stripe、SendGrid）
-- クラウドマネージドサービス
+- パブリックAPI（AWS S3、Google Cloud Storage）
+- SaaSサービス（Stripe、SendGrid）
+- クラウドのマネージドサービス
 
-### 2. STATIC 名前解決
+### 2. STATIC名前解決
 
-固定 IP アドレスを明示的に指定します。
+固定IPアドレスを明示的に指定します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -168,13 +116,13 @@ spec:
 ```
 
 **ユースケース**:
-- レガシーシステム（DNS なし）
-- 固定 IP を必要とするコンプライアンス要件
-- 内部データセンターサービス
+- DNSを利用できないレガシーシステム
+- コンプライアンス上、固定IPアドレスが必要な場合
+- 社内データセンターのサービス
 
-### 3. NONE 名前解決
+### 3. NONE名前解決
 
-アドレスの名前解決を実行せず、クライアントから提供されたアドレスをそのまま使用します。
+名前解決は行わず、クライアントが指定したアドレスをそのまま使用します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -194,20 +142,22 @@ spec:
 
 **ユースケース**:
 - ワイルドカードドメイン
-- クライアント側ロードバランシング
-- TCP/TLS proxy
+- クライアント側のロードバランシング
+- TCP/TLSプロキシ
 
-### 4. DNS_ROUND_ROBIN 名前解決（非推奨）
+### 4. DNS_ROUND_ROBIN名前解決
 
-DNS round robin を使用します（現在は DNS モードに統合されています）。
+このモードはサポートされており、非推奨ではありません。DNSモードがDNSから得られるエンドポイント一式を使うのに対し、DNS_ROUND_ROBINでは新しい接続を開始するときにDNSの先頭アドレスを使い、DNSレコードが変わっても既存の接続を維持します。エンドポイントが頻繁に変わるDNSフロントのサービスで、接続プールが常に破棄されるのを避けたい場合に適しています。
 
-<span id="location-settings"></span>
+### 5. DYNAMIC_DNS名前解決
 
-## ロケーション設定
+HTTPのHostまたはSNIから、リクエスト時にワイルドカード宛先を解決します。利用条件はリリース、データプレーン、waypointの構成によって異なります。ホスト名を復元できない不透明なTCPトラフィックには適用できません。利用前にモード固有の要件を確認してください。以下のワイルドカード例では、サイドカーでNONEモードを使います。
 
-### MESH_EXTERNAL（外部サービス）
+## ロケーション設定 {#location-settings}
 
-mesh 外部のサービスを登録します。
+### MESH_EXTERNAL（メッシュ外部のサービス）
+
+メッシュ外のサービスを登録します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -225,14 +175,14 @@ spec:
   resolution: DNS
 ```
 
-**特性**:
-- mTLS は適用されない
-- Egress Gateway 経由で送信可能
+**特徴**:
+- 適切なDestinationRuleとサーバーの信頼設定を用意すれば、外部サービスとのTLS/mTLSを利用できる
+- Egress Gateway経由で送信できる
 - 外部トラフィックとして分類される
 
-### MESH_INTERNAL（内部サービス）
+### MESH_INTERNAL（メッシュ内部のサービス）
 
-mesh 内部サービスとして扱います（使用されることはまれです）。
+サービスをメッシュ内部のものとして扱います（使用するケースはまれです）。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -255,17 +205,15 @@ spec:
 ```
 
 **ユースケース**:
-- VM workload を mesh に含める
+- VMワークロードをメッシュに含める
 - マルチクラスター環境
 - ハイブリッドクラウド構成
 
-<span id="practical-examples"></span>
+## 実践例 {#practical-examples}
 
-## 実践例
+### 1. 外部REST APIの登録
 
-### 1. 外部 REST API の登録
-
-#### シナリオ: Payment Gateway API
+#### シナリオ: 決済ゲートウェイAPI
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -277,9 +225,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -293,14 +242,23 @@ spec:
   hosts:
   - api.payment-gateway.com
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: api.payment-gateway.com
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: api.payment-gateway.com
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 # DestinationRule: Circuit Breaker
 apiVersion: networking.istio.io/v1
@@ -316,12 +274,16 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
-      mode: SIMPLE  # TLS connection
+      mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames: [api.payment-gateway.com]
 ```
+
+このTLSオリジネーション構成では、アプリケーションはローカルのサイドカーにHTTPで送信し、プロキシが検証済みのHTTPSで上流へ接続します。アプリケーションがHTTPSを開始する構成と組み合わせないでください。決済の書き込み処理でリトライを有効にするには、アプリケーション側に冪等性を保証する契約が必要です。
 
 ### 2. 外部データベースの登録
 
@@ -354,14 +316,16 @@ spec:
         maxConnections: 100
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
 ### 3. ワイルドカードドメインの登録
 
-#### シナリオ: AWS S3 Bucket へのアクセス
+RDSのTLSと証明書検証は、最新のRDS CAバンドルを使ってデータベースドライバー側で設定してください。TCPの登録だけでは、データベース認証やSSLネゴシエーションは設定されません。同じポートを使う複数の外部データベースでは、ポート番号だけで宛先が曖昧にならないよう、DNSキャプチャまたは一意のサービスVIPを使ってください。
+
+#### シナリオ: AWS S3バケットへのアクセス
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -371,8 +335,8 @@ metadata:
 spec:
   hosts:
   - "*.s3.amazonaws.com"
-  - "*.s3.*.amazonaws.com"
-  - "*.s3-*.amazonaws.com"
+  - "*.s3.us-west-2.amazonaws.com"
+  - "s3.us-west-2.amazonaws.com"
   ports:
   - number: 443
     name: https
@@ -381,9 +345,11 @@ spec:
   resolution: NONE  # Use NONE for wildcards
 ```
 
-### 4. 複数 Endpoint を持つ外部サービス
+先頭に置くワイルドカード接頭辞だけが有効です。ホスト名の途中に`*`を置くのではなく、実際のリージョン別エンドポイントのサフィックスを列挙してください。これはサイドカー構成の例であり、すべてのS3エンドポイント種別を網羅するものでも、IAMアクセスを許可するものでもありません。
 
-#### シナリオ: マルチリージョン API
+### 4. 複数のエンドポイントを持つ外部サービス
+
+#### シナリオ: マルチリージョンAPI
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -394,11 +360,38 @@ spec:
   hosts:
   - api.global-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+  endpoints:
+  - address: us-west.api.global-service.com
+    labels:
+      region: us-west
+  - address: eu-central.api.global-service.com
+    labels:
+      region: eu-central
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: multi-region-api
+spec:
+  host: api.global-service.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.global-service.com
+      subjectAltNames: [api.global-service.com]
+  subsets:
+  - name: us-west
+    labels:
+      region: us-west
+  - name: eu-central
+    labels:
+      region: eu-central
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -408,40 +401,32 @@ spec:
   hosts:
   - api.global-service.com
   http:
-  # Region-based routing
   - match:
     - headers:
         x-region:
-          exact: "us-west"
+          exact: us-west
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: us-west.api.global-service.com
-
+        subset: us-west
   - match:
     - headers:
         x-region:
-          exact: "eu-central"
+          exact: eu-central
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: eu-central.api.global-service.com
-
-  # Default routing
+        subset: eu-central
   - route:
     - destination:
         host: api.global-service.com
 ```
 
-### 5. TCP Service の登録
+どちらのリージョンのエンドポイントも、同じ正規のAPIホスト名と証明書を提供する必要があります。HTTP Hostヘッダーだけを変えても、プロキシが選択するDNSエンドポイントは変わりません。アプリケーションからローカルへはHTTPで送信し、前述のとおり上流へのTLSはプロキシが開始します。
 
-#### シナリオ: 外部 Redis Cluster
+### 5. TCPサービスの登録
+
+#### シナリオ: 外部Redisクラスター
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -450,10 +435,9 @@ metadata:
   name: external-redis
 spec:
   hosts:
-  - redis.external-cluster.com
+  - redis-primary.external-cluster.com
   addresses:
   - 203.0.113.10
-  - 203.0.113.11
   ports:
   - number: 6379
     name: tcp
@@ -464,16 +448,13 @@ spec:
   - address: 203.0.113.10
     labels:
       instance: primary
-  - address: 203.0.113.11
-    labels:
-      instance: replica
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-redis-lb
 spec:
-  host: redis.external-cluster.com
+  host: redis-primary.external-cluster.com
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -483,13 +464,13 @@ spec:
         connectTimeout: 3s
 ```
 
-<span id="combining-with-egress-gateway"></span>
+この例が選択するのは書き込み可能なプライマリだけです。読み取り専用トラフィックにはレプリカを別途登録するか、Redisを理解するクライアントを使用してください。汎用的なラウンドロビンでは、Redisのプライマリ／レプリカ構成やシャーディングの動作を維持できません。例にあるIPアドレスは、到達可能なエンドポイントに置き換えてください。
 
-## Egress Gateway との組み合わせ
+## Egress Gatewayとの組み合わせ {#combining-with-egress-gateway}
 
-Egress Gateway を通じて外部トラフィックを一元的に制御します。
+Egress Gatewayを通じて外部トラフィックを一元的に制御します。
 
-### 基本的な Egress Gateway 設定
+### 基本的なEgress Gateway設定
 
 ```yaml
 # ServiceEntry: Register external service
@@ -512,14 +493,15 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
       number: 443
-      name: https
-      protocol: HTTPS
+      name: tls
+      protocol: TLS
     hosts:
     - api.example.com
     tls:
@@ -535,12 +517,14 @@ spec:
   - api.example.com
   gateways:
   - mesh
-  - egress-gateway
-  http:
+  - istio-system/egress-gateway
+  tls:
   - match:
     - gateways:
       - mesh
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
@@ -548,8 +532,10 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-gateway
+      - istio-system/egress-gateway
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: api.example.com
@@ -557,7 +543,7 @@ spec:
           number: 443
 ```
 
-### TLS Origination（内部は HTTP、外部は HTTPS）
+### TLSオリジネーション（内部はHTTP、外部はHTTPS）
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -571,6 +557,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   - number: 443
     name: https
     protocol: HTTPS
@@ -591,11 +578,9 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
-<span id="security-and-tls"></span>
+## セキュリティとTLS {#security-and-tls}
 
-## セキュリティと TLS
-
-### 外部サービスへの mTLS
+### 外部サービスへのmTLS
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -606,9 +591,10 @@ spec:
   hosts:
   - mtls-api.example.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -621,18 +607,23 @@ spec:
   trafficPolicy:
     tls:
       mode: MUTUAL
+      sni: mtls-api.example.com
+      subjectAltNames: [mtls-api.example.com]
       clientCertificate: /etc/certs/client-cert.pem
       privateKey: /etc/certs/client-key.pem
       caCertificates: /etc/certs/ca-cert.pem
 ```
 
-### SNI ルーティング
+これらの証明書／鍵ファイルをプロキシコンテナにマウントし、証明書管理の手順に沿ってローテーションしてください。外部サーバーはクライアントCAを信頼する必要があります。ServiceEntryはこの認証情報を発行しません。これはアプリケーションからのローカルHTTPをプロキシがmTLSにする構成であり、アプリケーションTLSにもう一段TLSを重ねるものではありません。
+
+### SNIルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-sni-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -657,7 +648,7 @@ spec:
   - api2.example.com
   gateways:
   - mesh
-  - egress-sni-gateway
+  - istio-system/egress-sni-gateway
   tls:
   - match:
     - gateways:
@@ -672,7 +663,7 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-sni-gateway
+      - istio-system/egress-sni-gateway
       port: 443
       sniHosts:
       - api.example.com
@@ -681,13 +672,35 @@ spec:
         host: api.example.com
         port:
           number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - istio-system/egress-sni-gateway
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: api2.example.com
+        port:
+          number: 443
 ```
 
-<span id="monitoring-and-control"></span>
+[Egress Control](11-egress-control.md)に記載されたとおり、Egress GatewayのワークロードとClusterIP Serviceをインストールし、両方の外部ホストをServiceEntryに登録してください。SNIルートは転送先を設定するものであり、すべてのトラフィックがゲートウェイを通過することを強制しません。その境界を必須にするには、ネットワークレベルの強制制御を使ってください。
 
-## モニタリングと制御
+## 監視と制御 {#monitoring-and-control}
 
-### メトリクス収集
+### メトリクスの収集
 
 ```bash
 # Check ServiceEntry traffic
@@ -695,29 +708,31 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
   curl localhost:15000/stats/prometheus | grep "api.example.com"
 
 # Egress traffic metrics
-istio_requests_total{destination_service_name="api.example.com"}
+istio_requests_total{reporter="source",destination_service_name="api.example.com"}
 ```
 
-### Prometheus クエリ
+### Prometheusクエリ
 
-```yaml
+クエリを作る前に、実際のメトリクスラベルを確認してください。HTTPリクエスト／エラー／レイテンシーのメトリクスには、L7の可視性（たとえばTLSオリジネーション）が必要です。不透明なHTTPS/TCPでは接続数やバイト数のメトリクスが公開されます。外部ServiceEntryのnamespaceラベルが空だと決めつけないでください。
+
+```promql
 # External service request count
-sum(rate(istio_requests_total{destination_service_namespace="",destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service error rate
-sum(rate(istio_requests_total{destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total{destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service response time
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_service_name="api.example.com"}[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="api.example.com"}[5m])) by (le)
 )
 ```
 
-### Egress トラフィックのブロック
+### 未登録宛先の検出
 
 ```yaml
-# Block all Egress by default
+# Registry/configuration control, not a firewall
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
@@ -729,14 +744,14 @@ spec:
     - "./*"  # Allow only same namespace
     - "istio-system/*"  # Allow istio-system
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
+    mode: REGISTRY_ONLY  # Known Kubernetes and ServiceEntry destinations
 ```
 
-<span id="best-practices"></span>
+サイドカーのimport scopeや`REGISTRY_ONLY`はセキュリティ境界ではありません。必須のEgress制御にはネットワークポリシー／ファイアウォールを使い、該当する場合はAuthorizationPolicyも設定してください。
 
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
-### 1. 明示的な ServiceEntry 登録
+### 1. ServiceEntryを明示的に登録する
 
 ```yaml
 # Good example: Explicit registration
@@ -760,7 +775,7 @@ spec:
   resolution: DNS
 ```
 
-### 2. 常に Circuit Breaker を適用する
+### 2. プロトコルに応じて耐障害性を調整する
 
 ```yaml
 # Always apply Circuit Breaker for external services
@@ -776,12 +791,12 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
 ```
 
-### 3. Timeout 設定
+### 3. タイムアウトを設定する
 
 ```yaml
 # Set explicit Timeout for external services
@@ -802,7 +817,7 @@ spec:
       perTryTimeout: 5s
 ```
 
-### 4. Egress Gateway を使用する（本番環境）
+### 4. 本番環境ではEgress Gatewayを使う
 
 ```yaml
 # Control external traffic through Egress Gateway in production
@@ -811,7 +826,7 @@ spec:
 # - Consistent security policies
 ```
 
-### 5. Namespace 分離
+### 5. namespace間の設定可視性
 
 ```yaml
 # Isolate ServiceEntry by namespace
@@ -830,11 +845,10 @@ spec:
     mode: REGISTRY_ONLY
 ```
 
-### 6. ドキュメントテンプレート
+### 6. ドキュメントのテンプレート
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+# Metadata excerpt; replace illustrative SLA/cost values with the actual service contract
 metadata:
   name: external-service
   annotations:
@@ -864,3 +878,12 @@ metadata:
 - [Istio Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
 - [Istio TLS Origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
 - [Envoy External Services](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+
+- [主要資料1](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [主要資料2](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [主要資料3](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [主要資料4](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主要資料5](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/)
+- [主要資料6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [主要資料7](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
+- [主要資料8](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)

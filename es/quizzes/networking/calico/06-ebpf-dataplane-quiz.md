@@ -1,11 +1,11 @@
 # Cuestionario sobre el dataplane eBPF
 
-> **Documento relacionado**: [eBPF Dataplane](../../../networking/calico/06-ebpf-dataplane.md)
-> **Última actualización**: February 22, 2026
+> **Documento relacionado**: [Dataplane eBPF](../../../networking/calico/06-ebpf-dataplane.md)
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Cuestionario
 
-1. ¿Cuál es la versión mínima de kernel de Linux requerida para el dataplane eBPF de Calico?
+1. ¿Cuál es la versión mínima genérica del kernel de Linux que indica la guía actual de eBPF de Calico 3.32, sin contar la excepción de backport de RHEL?
    - A) 4.15+
    - B) 5.0+
    - C) 5.3+
@@ -14,49 +14,49 @@
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) 5.3+**
+**Respuesta: D) 5.10+**
 
 **Explicación:**
-El dataplane eBPF de Calico requiere una versión mínima de kernel 5.3. Sin embargo, se recomienda kernel 5.8+ para un rendimiento óptimo y compatibilidad completa con funciones, incluido BTF (BPF Type Format), que permite mejores capacidades de depuración e introspección.
+La versión base genérica es 5.10. La guía documenta RHEL 8.4 con el kernel 4.18.0-305 o posterior como excepción con backport. Algunas funciones requieren versiones más recientes: las reglas de registro eBPF requieren 5.16 y los controles de ancho de banda QoS documentados requieren 6.6/TCX. La versión del sistema operativo o del kernel, por sí sola, no demuestra la compatibilidad completa de la plataforma.
 
 </details>
 
-2. ¿Qué mejora de rendimiento se puede esperar normalmente al cambiar de iptables al dataplane eBPF en Calico?
-   - A) Aumento del rendimiento de 5-10%
-   - B) Aumento del rendimiento de 20-40%
-   - C) Aumento del rendimiento de 50-60%
-   - D) Aumento del rendimiento de 100%
+2. ¿Cómo se debe evaluar la mejora de rendimiento al cambiar al dataplane eBPF de Calico?
+   - A) Aumento del caudal del 5–10 %
+   - B) Medir la carga de trabajo y la configuración reales; no hay un porcentaje universal
+   - C) Aumento del caudal del 50–60 %
+   - D) Aumento del caudal del 100 %
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aumento del rendimiento de 20-40%**
+**Respuesta: B) Medir la carga de trabajo y la configuración reales; no hay un porcentaje universal**
 
 **Explicación:**
-El dataplane eBPF normalmente proporciona una mejora de rendimiento de 20-40% respecto a iptables. Esto se debe a que eBPF procesa paquetes directamente en el kernel sin la sobrecarga de recorrer cadenas de iptables, que puede volverse significativa a medida que aumenta el número de reglas.
+Ambos dataplanes procesan paquetes en el kernel. La mejora depende de la ruta del tráfico, las reglas, conntrack, la CPU y la NIC, el registro y la carga. La guía conserva distintos valores históricos reportados sin evidencia sin procesar; no garantizan una mejora del 20–40 % ni un costo constante de las políticas.
 
 </details>
 
 3. ¿Qué significa BTF y por qué es importante para el dataplane eBPF de Calico?
-   - A) Binary Transfer Format - para la codificación de paquetes de red
-   - B) BPF Type Format - para depuración y compatibilidad con CO-RE
-   - C) Byte Translation Function - para la conversión de direcciones
-   - D) Block Transfer Filter - para la limitación de velocidad
+   - A) Binary Transfer Format: para codificar paquetes de red
+   - B) BPF Type Format: para depuración y compatibilidad con CO-RE
+   - C) Byte Translation Function: para convertir direcciones
+   - D) Block Transfer Filter: para limitar la velocidad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) BPF Type Format - para depuración y compatibilidad con CO-RE**
+**Respuesta: B) BPF Type Format: para depuración y compatibilidad con CO-RE**
 
 **Explicación:**
-BTF (BPF Type Format) proporciona información de tipo para programas BPF. Permite la compatibilidad con CO-RE (Compile Once, Run Everywhere), lo que permite que los programas eBPF se ejecuten en diferentes versiones de kernel sin recompilación. BTF también permite mejores capacidades de depuración con herramientas como bpftool.
+BTF proporciona metadatos de tipos que utilizan las herramientas y la reubicación CO-RE. Es distinto de las comprobaciones de seguridad del verificador y no garantiza que todos los programas compilados funcionen en cualquier kernel. Calico selecciona objetos según la versión y comprueba las funciones disponibles; que exista un archivo no basta para confirmar que todo esté listo.
 
 </details>
 
 4. ¿Qué es Direct Server Return (DSR) en el contexto del dataplane eBPF de Calico?
-   - A) Un método para que los pods contacten directamente con el servidor de API de Kubernetes
+   - A) Un método para que los Pods contacten directamente con el servidor de API de Kubernetes
    - B) Una optimización de balanceo de carga en la que el tráfico de retorno evita el balanceador de carga
-   - C) Una técnica de resolución DNS para descubrimiento de servicios
+   - C) Una técnica de resolución DNS para descubrir servicios
    - D) Un patrón de acceso al almacenamiento para volúmenes persistentes
 
 <details>
@@ -65,75 +65,75 @@ BTF (BPF Type Format) proporciona información de tipo para programas BPF. Permi
 **Respuesta: B) Una optimización de balanceo de carga en la que el tráfico de retorno evita el balanceador de carga**
 
 **Explicación:**
-Direct Server Return (DSR) es una optimización de balanceo de carga en la que el tráfico de respuesta del servidor backend va directamente al cliente, evitando el nodo del balanceador de carga. Esto reduce la latencia y el consumo de ancho de banda del balanceador de carga, mejorando el rendimiento general del servicio.
+DSR permite que un nodo backend remoto devuelva el tráfico sin pasar por el nodo de Kubernetes que reenvió inicialmente la solicitud del Service. Calico realiza la traducción de origen. Se necesita una estructura de red y una ruta de retorno compatibles; DSR no evita automáticamente todos los balanceadores de carga de nube externos ni funciona con cualquiera de ellos.
 
 </details>
 
-5. ¿Qué es el balanceo de carga en el momento de conexión en el dataplane eBPF de Calico?
+5. ¿Qué es el balanceo de carga en el momento de la conexión en el dataplane eBPF de Calico?
    - A) Balanceo de carga que ocurre cuando un nodo se une al clúster
-   - B) Traducción de IP de Service realizada al establecer una conexión TCP
-   - C) Un mecanismo de comprobación de estado para pods backend
+   - B) Traducción de la IP del Service al establecer una conexión TCP
+   - C) Un mecanismo de comprobación de estado de los Pods backend
    - D) Conmutación por error automática cuando se interrumpen las conexiones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Traducción de IP de Service realizada al establecer una conexión TCP**
+**Respuesta: B) Traducción de la IP del Service al establecer una conexión TCP**
 
 **Explicación:**
-El balanceo de carga en el momento de conexión realiza la traducción de IP de Service a IP de pod en el momento en que se establece una conexión TCP, en lugar de hacerlo en cada paquete. Esto proporciona un balanceo de carga más eficiente y permite funciones como DSR, ya que el socket del cliente se conecta directamente al backend seleccionado.
+Para los sockets TCP compatibles, CTLB traduce el destino del Service durante `connect()`, antes de procesar los paquetes. El modo habilitado también puede incluir hooks para sockets UDP. Evita esa ruta de DNAT del Service, pero no todas las políticas, rutas, operaciones de conntrack ni otras formas de NAT. DSR es una optimización distinta para la ruta de retorno externo.
 
 </details>
 
-6. Cuando se habilita el dataplane eBPF de Calico, ¿qué ocurre con kube-proxy?
-   - A) kube-proxy continúa ejecutándose junto con eBPF
-   - B) kube-proxy puede deshabilitarse, ya que eBPF proporciona una funcionalidad equivalente
+6. ¿Qué afirmación describe correctamente la coordinación de kube-proxy con eBPF de Calico?
+   - A) kube-proxy siempre debe permanecer sin cambios junto con eBPF
+   - B) Calico puede gestionar los Services coordinándose con kube-proxy según la plataforma
    - C) kube-proxy se actualiza automáticamente para usar eBPF
-   - D) kube-proxy gestiona IPv6 mientras eBPF gestiona IPv4
+   - D) kube-proxy gestiona IPv6 mientras que eBPF gestiona IPv4
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) kube-proxy puede deshabilitarse, ya que eBPF proporciona una funcionalidad equivalente**
+**Respuesta: B) Calico puede gestionar los Services coordinándose con kube-proxy según la plataforma**
 
 **Explicación:**
-El dataplane eBPF de Calico puede reemplazar por completo a kube-proxy para el balanceo de carga de Service. Cuando se habilita el modo eBPF, kube-proxy puede deshabilitarse para evitar el procesamiento redundante y posibles conflictos. El dataplane eBPF gestiona directamente los servicios ClusterIP, NodePort y LoadBalancer.
+Sigue el procedimiento del responsable de la instalación. El arranque automático condicional puede gestionar kube-proxy; las plataformas que conservan un proxy administrado deben deshabilitar la limpieza y configurar un servidor de estado de salud que no entre en conflicto. Una opción de limpieza, por sí sola, no habilita Services; eliminar kube-proxy tampoco es un procedimiento universal.
 
 </details>
 
-7. ¿Para qué se utilizan los mapas BPF en el dataplane eBPF de Calico?
-   - A) Almacenar datos de ubicación geográfica para geo-routing
-   - B) Almacenar datos de estado y configuración compartidos entre kernel y espacio de usuario
-   - C) Mapear nombres DNS a direcciones IP
-   - D) Crear diagramas de topología de red
+7. ¿Para qué se usan los mapas BPF en el dataplane eBPF de Calico?
+   - A) Para almacenar datos de ubicación geográfica para el enrutamiento geográfico
+   - B) Para almacenar datos de estado y configuración compartidos entre el kernel y el espacio de usuario
+   - C) Para asociar nombres DNS con direcciones IP
+   - D) Para crear diagramas de topología de red
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenar datos de estado y configuración compartidos entre kernel y espacio de usuario**
+**Respuesta: B) Para almacenar datos de estado y configuración compartidos entre el kernel y el espacio de usuario**
 
 **Explicación:**
-Los mapas BPF son estructuras de datos clave-valor que almacenan datos de estado y configuración accesibles tanto por programas eBPF que se ejecutan en el kernel como por aplicaciones de espacio de usuario. Calico utiliza mapas BPF para almacenar el estado de seguimiento de conexiones, reglas de políticas, endpoints de Service y otros metadatos de red.
+Los mapas contienen datos de rutas, NAT, conntrack, afinidad y estructuras auxiliares de programas, contadores y conjuntos de IP. Las distintas familias usan tipos como hash, LRU hash y LPM trie, entre otros. Las políticas se compilan en programas BPF; no se almacenan todas en un único mapa universal de tuplas a acciones con tiempo constante.
 
 </details>
 
-8. ¿Cuál es la diferencia entre los puntos de enlace XDP y TC para los programas eBPF?
-   - A) XDP procesa paquetes antes en la pila de red que TC
-   - B) TC procesa paquetes antes en la pila de red que XDP
-   - C) XDP es solo para entrada; TC es solo para salida
+8. ¿Cómo se compara XDP en modo nativo del controlador con los puntos de conexión TC?
+   - A) XDP procesa los paquetes antes en la pila de red que TC
+   - B) TC procesa los paquetes antes en la pila de red que XDP
+   - C) XDP solo procesa tráfico de entrada y TC solo tráfico de salida
    - D) No hay diferencia; son alias
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) XDP procesa paquetes antes en la pila de red que TC**
+**Respuesta: A) XDP procesa los paquetes antes en la pila de red que TC**
 
 **Explicación:**
-XDP (eXpress Data Path) procesa paquetes en el punto más temprano posible de la pila de red, incluso antes de que el kernel asigne un sk_buff. Los hooks TC (Traffic Control) procesan paquetes más tarde, después de que se asigna el sk_buff. XDP proporciona el máximo rendimiento, pero tiene funcionalidad limitada, mientras que TC ofrece más funciones con un ligero coste de rendimiento.
+XDP conectado al controlador nativo puede actuar antes de que se asigne un skb, mientras que TC opera con el contexto de paquetes basado en skb. XDP genérico se ejecuta más tarde y ya tiene un skb. Importan la compatibilidad del controlador, el hardware y el programa; el nombre del hook no garantiza una ventaja fija de rendimiento.
 
 </details>
 
-9. ¿Qué configuración de FelixConfiguration habilita el dataplane eBPF en Calico?
+9. ¿Qué ajuste de FelixConfiguration habilita el dataplane eBPF en Calico?
    - A) dataplaneMode: eBPF
    - B) bpfEnabled: true
    - C) useEBPF: yes
@@ -145,27 +145,27 @@ XDP (eXpress Data Path) procesa paquetes en el punto más temprano posible de la
 **Respuesta: B) bpfEnabled: true**
 
 **Explicación:**
-El dataplane eBPF se habilita configurando `bpfEnabled: true` en el recurso FelixConfiguration. También se pueden configurar en el mismo recurso opciones específicas adicionales de eBPF, como `bpfExternalServiceMode`, `bpfKubeProxyIptablesCleanupEnabled` y otras.
+`bpfEnabled: true` es el campo de Felix que se usa en el procedimiento del manifiesto independiente. En las instalaciones del operador, se selecciona `Installation.spec.calicoNetwork.linuxDataplane: BPF`. Respeta quién administra la instalación, el acceso directo a la API, la coordinación del proxy y el procedimiento de transición compatible para todo el clúster.
 
 </details>
 
-10. ¿Qué controla la configuración bpfExternalServiceMode en Calico?
-    - A) Cómo los pods acceden a servicios externos fuera del clúster
-    - B) Cómo los clientes externos acceden a servicios NodePort y LoadBalancer
-    - C) Qué servidores DNS externos se utilizan para el descubrimiento de servicios
-    - D) Modo de autenticación para acceso externo a la API
+10. ¿Qué controla el ajuste `bpfExternalServiceMode` en Calico?
+    - A) Cómo acceden los Pods a servicios externos fuera del clúster
+    - B) Cómo acceden los clientes externos a los Services NodePort y LoadBalancer
+    - C) Qué servidores DNS externos se usan para descubrir servicios
+    - D) El modo de autenticación del acceso a la API externa
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cómo los clientes externos acceden a servicios NodePort y LoadBalancer**
+**Respuesta: B) Cómo acceden los clientes externos a los Services NodePort y LoadBalancer**
 
 **Explicación:**
-La configuración `bpfExternalServiceMode` controla cómo Calico gestiona el tráfico desde fuentes externas hacia servicios NodePort y LoadBalancer. Las opciones incluyen "Tunnel" (predeterminada, conserva la IP de origen mediante encapsulación) y "DSR" (Direct Server Return para mejorar el rendimiento).
+Para los backends remotos de un Service, Tunnel usa el nodo de ingreso y la ruta del túnel tanto para la solicitud como para la respuesta; DSR encapsula la solicitud, pero la respuesta vuelve directamente desde el nodo backend. Ambos modos requieren la ruta VXLAN/MTU correspondiente. DSR añade restricciones de validación de origen y de balanceador de carga externo.
 
 </details>
 
-11. ¿Qué herramienta se utiliza habitualmente para depurar e inspeccionar los programas y mapas eBPF de Calico?
+11. ¿Qué herramienta se usa habitualmente para depurar e inspeccionar los programas y mapas eBPF de Calico?
     - A) tcpdump
     - B) bpftool
     - C) netstat
@@ -177,22 +177,22 @@ La configuración `bpfExternalServiceMode` controla cómo Calico gestiona el tr�
 **Respuesta: B) bpftool**
 
 **Explicación:**
-bpftool es la utilidad estándar para inspeccionar y depurar programas y mapas eBPF. Puede listar programas BPF cargados, volcar el contenido de mapas, mostrar estadísticas de programas y presentar información BTF. Es esencial para solucionar problemas del dataplane eBPF de Calico.
+`bpftool` inspecciona los ID, tipos y estados reales de los programas y mapas BPF. La imagen del nodo de Calico también incluye `calico-node -bpf`; consulta su subcomando de ayuda y proporciona argumentos completos, como `policy dump <interface> <hook>`. Un listado, por sí solo, no demuestra que la aplicación tenga conectividad.
 
 </details>
 
-12. ¿Cuál es la secuencia recomendada para migrar de iptables al dataplane eBPF en Calico?
-    - A) Habilitar eBPF inmediatamente en todos los nodos simultáneamente
-    - B) Deshabilitar primero kube-proxy y luego habilitar eBPF
-    - C) Habilitar eBPF en Calico, verificar su funcionamiento y luego deshabilitar kube-proxy
+12. ¿Qué enfoque es adecuado para migrar al dataplane de Calico 3.32?
+    - A) Habilitar eBPF inmediatamente en todos los nodos a la vez
+    - B) Deshabilitar kube-proxy primero y después habilitar eBPF
+    - C) Verificar la compatibilidad y el acceso directo a la API y seguir el proceso coordinado de migración y reversión del responsable
     - D) Reinstalar Calico desde cero con eBPF habilitado
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Habilitar eBPF en Calico, verificar su funcionamiento y luego deshabilitar kube-proxy**
+**Respuesta: C) Verificar la compatibilidad y el acceso directo a la API y seguir el proceso coordinado de migración y reversión del responsable**
 
 **Explicación:**
-La ruta de migración recomendada es: 1) Habilitar el dataplane eBPF en FelixConfiguration, 2) Verificar que la red y los servicios funcionen correctamente, 3) Deshabilitar kube-proxy una vez confirmado el funcionamiento de eBPF. Esto permite una reversión segura si se detectan problemas durante la migración.
+El arranque automático del operador tiene requisitos previos limitados; las demás instalaciones deben seguir el procedimiento manual y específico de su plataforma. No mantengas un canary persistente en modo mixto ni deshabilites todas las instancias de kube-proxy antes de una prueba preparada. La transición gradual oficial puede interrumpir el tráfico de NodePort y la reversión puede restablecer las conexiones.
 
 </details>

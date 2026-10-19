@@ -1,6 +1,6 @@
 # 可观测性堆栈配置与运维
 
-> **最后更新**：October 16, 2026：Loki 3.7.8、Tempo 3.0.3、Alloy 1.20.1、
+> **最后更新**：2026年10月16日：Loki 3.7.8、Tempo 3.0.3、Alloy 1.20.1、
 > OpenTelemetry Collector Contrib 0.162.0、kube-prometheus-stack 92.9.0。
 
 本章介绍采集、存储、权限、保留期限和跨信号导航的配置。

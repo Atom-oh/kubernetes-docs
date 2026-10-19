@@ -404,7 +404,7 @@ spec:
 
 ### 官方 Istio 仪表板
 
-下方目录已对照下载的 **Istio1.31.0 修订**检查，不只是按仪表板标题判断。选择匹配安装 Istio 版本的修订，导入时映射 Prometheus 数据源。仪表板最新修订不自动兼容旧网格。
+下方目录已对照下载的 **Istio 1.31.0 修订版**检查，不只是按仪表板标题判断。选择匹配安装 Istio 版本的修订，导入时映射 Prometheus 数据源。仪表板最新修订不自动兼容旧网格。
 
 | 仪表板 | ID | 已验证修订 | 范围 |
 |---|---:|---:|---|
@@ -416,7 +416,7 @@ spec:
 | Istio Wasm Extension | 13277 | 287 | Wasm VM/运行时/缓存/远程加载状态 |
 | Istio Ztunnel | 21306 | 97 | Ambient L4 连接、字节、DNS、xDS 和进程资源 |
 
-Service 仪表板的 `service` 变量是服务主机，其 1.31 修订具有 `srcns`/`dstns` 过滤器，不是通用 `namespace` 变量。Workload 仪表板有 `namespace` 和 `workload`。配置深层链接前检查下载修订的变量。ID7636、11829、13277 分别是 **Service、Performance 和 Wasm**，不是 Workload、通用 Mesh 和 Gateway。
+Service 仪表板的 `service` 变量是服务主机，其 1.31 修订具有 `srcns`/`dstns` 过滤器，不是通用 `namespace` 变量。Workload 仪表板有 `namespace` 和 `workload`。配置深层链接前检查下载修订的变量。编号 7636、11829 和 13277 分别对应 **Service、Performance 和 Wasm**，不是 Workload、通用 Mesh 和 Gateway。
 
 通过 Grafana 仪表板 UI 导入并选择数据源。全新测试环境可使用 Istio 固定的 `samples/addons/grafana.yaml`，其中捆绑仪表板；该示例未针对生产加固。现有部署使用其文档规定的预置机制，不要安装第二个 Grafana。
 
@@ -433,7 +433,7 @@ curl -fL -o istio-loki-dashboard.json \
 
 ### 指标警报规则
 
-以下是 **Prometheus Operator PrometheusRule**，不是 Grafana 管理的警报预置。Grafana 管理规则使用 query-data/condition/UID 字段；选择该路径时在 Grafana 配置并导出受支持格式。下方 Operator 选择 `istio-system` 中规则。阈值是需按 SLO 和流量调整的示例；HTTP5xx 不是 gRPC/应用失败的完整定义。
+以下是 **Prometheus Operator PrometheusRule**，不是 Grafana 管理的警报预置。Grafana 管理规则使用 query-data/condition/UID 字段；选择该路径时在 Grafana 配置并导出受支持格式。下方 Operator 选择 `istio-system` 中规则。阈值是需按 SLO 和流量调整的示例；HTTP 5xx 不是 gRPC/应用失败的完整定义。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1

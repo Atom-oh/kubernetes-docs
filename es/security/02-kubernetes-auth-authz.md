@@ -1,19 +1,19 @@
 # Sistema de autenticación y autorización de Kubernetes
 
 > **Alcance**: API estables de Kubernetes y administración del acceso de usuarios de Amazon EKS
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 ## Descripción general
 
-La autenticación establece la identidad de la solicitud, la autorización decide qué operaciones de la API puede realizar esa identidad, y la admisión aplica políticas adicionales a los cambios autorizados. Los manifiestos a continuación son ejemplos de aprendizaje independientes; primero prepare los namespaces, los permisos de administrador, los certificados y los servidores webhook. No se probaron llamadas a clusters/API en producción ni cambios de acceso a EKS.
+La autenticación establece la identidad de la solicitud, la autorización decide qué operaciones de la API puede realizar esa identidad y la admisión aplica políticas adicionales a los cambios autorizados. Los manifiestos siguientes son ejemplos independientes para aprender; prepare antes los espacios de nombres, los permisos de administrador, los certificados y los servidores de webhooks. No se probaron llamadas en vivo al clúster ni a su API, ni cambios en el acceso a EKS.
 
-Los ejemplos de indicadores de `kube-apiserver` se aplican a un **control plane autoadministrado**. Use la configuración de acceso administrada para EKS; estos ejemplos no son instrucciones para configurar sus indicadores de servidor API ni obtener su clave privada de CA.
+Los ejemplos de indicadores de `kube-apiserver` se aplican a un **plano de control autogestionado**. Use la configuración de acceso administrada para EKS; estos ejemplos no son instrucciones para configurar sus indicadores de servidor API ni obtener su clave privada de CA.
 
 ## Autenticación
 
 La autenticación es el proceso de verificar que un usuario o servicio es quien afirma ser. Kubernetes admite varios métodos de autenticación, que pueden habilitarse simultáneamente.
 
-Con varios autenticadores, se utiliza el primer resultado correcto, pero no se garantiza su orden de evaluación. Las credenciales no válidas pueden hacer que la autenticación falle. El manejo de solicitudes sin credenciales depende de la configuración de autenticación anónima, y una identidad anónima aún necesita autorización.
+Cuando hay varios autenticadores, se usa el primer resultado satisfactorio, aunque no se garantiza el orden de evaluación. Las credenciales no válidas pueden hacer fallar la autenticación. El tratamiento de las solicitudes sin credenciales depende de la configuración de autenticación anónima; una identidad anónima también necesita autorización.
 
 ### Estrategias de autenticación
 
@@ -62,7 +62,7 @@ Reemplace las rutas por los archivos emitidos y restrinja el acceso a la clave p
 
 #### 2. Tokens de ServiceAccount
 
-Un ServiceAccount es una identidad de carga de trabajo con ámbito de namespace. Cada namespace tiene una cuenta `default`; el `serviceAccountName` de un Pod hace referencia a una cuenta del mismo namespace. Seleccionar una cuenta no concede por sí mismo acceso a recursos de la aplicación.
+Un ServiceAccount es una identidad de carga de trabajo con ámbito de espacio de nombres. Cada espacio de nombres tiene una cuenta `default`; el `serviceAccountName` de un Pod hace referencia a una cuenta del mismo espacio de nombres. Seleccionar una cuenta no concede por sí mismo acceso a recursos de la aplicación.
 
 Este ejemplo no llama a la API y deshabilita el montaje automático de tokens. Su imagen de ejemplo no proporciona un servicio de red.
 
@@ -89,11 +89,11 @@ spec:
 
 `automountServiceAccountToken` es un campo de nivel superior de ServiceAccount y un campo `spec` de Pod. La configuración de Pod tiene precedencia. Controla el montaje predeterminado; no impide un volumen proyectado `serviceAccountToken` declarado explícitamente.
 
-Para los Pods que necesitan acceso a la API, kubelet obtiene y rota los tokens proyectados predeterminados mediante TokenRequest. El archivo de token predeterminado es `/var/run/secrets/kubernetes.io/serviceaccount/token`. Las aplicaciones deben recargar el archivo rotado. El vencimiento y la vinculación de audiencia reducen la exposición, pero no hacen que sea seguro revelar un bearer token. No asuma que crear una cuenta crea automáticamente un token Secret de larga duración. El [ejemplo de volumen proyectado del cuestionario](../quizzes/security/02-kubernetes-auth-authz-quiz.md) cubre una audiencia personalizada y una vigencia solicitada.
+Para los Pods que necesitan acceso a la API, kubelet obtiene y rota los tokens proyectados predeterminados mediante TokenRequest. El archivo de token predeterminado es `/var/run/secrets/kubernetes.io/serviceaccount/token`. Las aplicaciones deben volver a leer el archivo tras su rotación. El vencimiento y la vinculación a una audiencia reducen la exposición, pero no hacen seguro divulgar un token de portador. No dé por sentado que crear una cuenta genera automáticamente un token Secret de larga duración. El [ejemplo de volumen proyectado del cuestionario](../quizzes/security/02-kubernetes-auth-authz-quiz.md) muestra una audiencia personalizada y una vigencia solicitada.
 
 #### 3. OpenID Connect (OIDC)
 
-OIDC permite que el servidor API valide **ID tokens** de un proveedor de identidad externo. Configure el emisor, la audiencia, la validación de firma/vencimiento y el mapeo de identidad. El servidor API no proporciona un inicio de sesión interactivo ni emite refresh tokens. Los clientes usan una herramienta revisada o un complemento de credenciales `exec` para su proveedor de identidad.
+OIDC permite que el servidor API valide **tokens de ID** de un proveedor de identidad externo. Configure el emisor, la audiencia, la validación de firma y vencimiento, y el mapeo de identidad. El servidor API no ofrece inicio de sesión interactivo ni emite tokens de actualización. Los clientes usan una herramienta revisada o un complemento de credenciales `exec` para su proveedor de identidad.
 
 Estos son **indicadores adicionales para un servidor API autoadministrado**, no un comando de inicio completo ni un kubeconfig. Reemplace el emisor HTTPS y el ID de cliente de ejemplo.
 
@@ -137,7 +137,7 @@ Si se instala en `/etc/kubernetes/authn-webhook.kubeconfig`, configure `--authen
 
 #### 5. Proxy de autenticación
 
-Un proxy de autenticación verifica al solicitante y reenvía el nombre de usuario y los grupos resultantes. Solo nombrar encabezados confiables no establece la confianza. Primero autentique la identidad TLS del proxy mediante una CA de front-proxy dedicada y un CN de certificado de cliente permitido.
+Un proxy de autenticación verifica al solicitante y reenvía el nombre de usuario y los grupos resultantes. El mero hecho de declarar encabezados de confianza no establece una relación de confianza. Primero autentique la identidad TLS del proxy mediante una CA dedicada para el front proxy y un CN de certificado de cliente permitido.
 
 **Extracto de indicadores de servidor API autoadministrado:**
 
@@ -154,8 +154,8 @@ El proxy debe eliminar los encabezados de identidad proporcionados por el solici
 
 En Kubernetes, los usuarios se clasifican de la siguiente manera:
 
-1. **Usuarios regulares**: Se administran fuera del cluster; Kubernetes no los administra directamente.
-2. **Service Accounts**: Cuentas administradas por la API de Kubernetes.
+1. **Usuarios regulares**: Se administran fuera del clúster; Kubernetes no los administra directamente.
+2. **Cuentas de servicio**: Cuentas administradas por la API de Kubernetes.
 
 Los usuarios pueden pertenecer a uno o más grupos, y los grupos se utilizan en políticas de autorización.
 
@@ -171,12 +171,12 @@ RBAC proporciona control de acceso basado en roles y actualmente es el mecanismo
 
 **Conceptos clave:**
 
-1. **Role**: Define permisos dentro de un namespace.
-2. **ClusterRole**: Una definición con ámbito de cluster para recursos de cluster, URL sin recursos o permisos reutilizables sobre recursos con ámbito de namespace.
-3. **RoleBinding**: Hace referencia a un Role en el mismo namespace o a un ClusterRole y concede permisos **solo en el namespace del binding**. Un sujeto ServiceAccount puede pertenecer explícitamente a otro namespace.
-4. **ClusterRoleBinding**: Concede los permisos de un ClusterRole en todo el cluster; no puede hacer referencia a un Role.
+1. **Role**: Define permisos dentro de un espacio de nombres.
+2. **ClusterRole**: Una definición de ámbito de clúster para recursos del clúster, rutas URL que no corresponden a recursos de la API o permisos reutilizables para recursos con ámbito de espacio de nombres.
+3. **RoleBinding**: Hace referencia a un Role del mismo espacio de nombres o a un ClusterRole y concede permisos **solo en el espacio de nombres de la vinculación**. El sujeto puede ser una ServiceAccount de otro espacio de nombres si así se indica explícitamente.
+4. **ClusterRoleBinding**: Concede los permisos de un ClusterRole en todo el clúster; no puede hacer referencia a un Role.
 
-Una definición de rol no concede nada sin un binding. RBAC agrega permisos permitidos y no tiene reglas de denegación explícita. `get/list/watch` en Secret permite leer datos secretos, por lo que estos ejemplos usan lecturas de Pod en su lugar.
+Una definición de rol no concede permisos sin vincularse a un sujeto. RBAC solo añade permisos y no admite reglas explícitas de denegación. `get/list/watch` sobre Secret permite leer sus datos, por lo que estos ejemplos usan permisos de lectura de Pods.
 
 **Ejemplo de Role:**
 
@@ -240,7 +240,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-El ClusterRoleBinding ilustra un grupo de operaciones que necesita explícitamente **información de Pod en todos los namespaces**; no es una recomendación predeterminada. Para un único namespace, use allí un RoleBinding con `roleRef.kind: ClusterRole` y `roleRef.name: pod-reader-reusable`.
+El ClusterRoleBinding ilustra un grupo de operaciones que necesita explícitamente **información de Pods en todos los espacios de nombres**; no es una recomendación predeterminada. Para un solo espacio de nombres, cree allí un RoleBinding con `roleRef.kind: ClusterRole` y `roleRef.name: pod-reader-reusable`.
 
 #### 2. ABAC (Attribute-Based Access Control)
 
@@ -262,24 +262,24 @@ ABAC proporciona control de acceso basado en atributos. Las políticas se define
 }
 ```
 
-ABAC se incluye para comprender los clusters autoadministrados existentes. La política consumida por `--authorization-policy-file` es un archivo con **un objeto JSON por línea**, no un recurso de la API de Kubernetes. La sangría anterior es explicativa; serialice cada política en una línea en el archivo real. Los cambios requieren reiniciar el servidor API. Prefiera RBAC para configuraciones nuevas; este indicador no es un mecanismo de configuración de EKS.
+ABAC se incluye para comprender los clústeres autoadministrados existentes. La política consumida por `--authorization-policy-file` es un archivo con **un objeto JSON por línea**, no un recurso de la API de Kubernetes. La sangría anterior es explicativa; serialice cada política en una línea en el archivo real. Los cambios requieren reiniciar el servidor API. Prefiera RBAC para configuraciones nuevas; este indicador no es un mecanismo de configuración de EKS.
 
-#### 3. Autorización de Node
+#### 3. Autorización de nodos
 
-La autorización de Node es específica de los kubelets. Su identidad debe pertenecer a `system:nodes` y usar el nombre de usuario `system:node:<nodeName>`, que debe coincidir con el nombre de Node real. No es un mecanismo de acceso de cargas de trabajo. En clusters autoadministrados, combínela con la admisión NodeRestriction para restringir los cambios de kubelet a objetos Node y Pod.
+La autorización de nodos es específica para kubelets. La identidad de cada kubelet debe pertenecer a `system:nodes` y usar el nombre de usuario `system:node:<nodeName>`, que debe coincidir con el nombre del objeto Node real. Este mecanismo no sirve para controlar el acceso de las cargas de trabajo. En clústeres autoadministrados, combínelo con la admisión NodeRestriction para limitar los cambios que hace kubelet a objetos Node y Pod.
 
 #### 4. Autorización mediante webhook
 
-Un servidor API autoadministrado envía una **SubjectAccessReview** de `authorization.k8s.io/v1` a un servicio externo. Use el mismo formato de archivo de conexión que el webhook de autenticación anterior, con un endpoint de autorización, una CA y un certificado de cliente independientes. Configure `--authorization-webhook-config-file` y `--authorization-webhook-version=v1`, o use `AuthorizationConfiguration` estructurada para configurar la cadena y la política de fallas. No existe un campo `authorization.webhook` en un kubeconfig de usuario.
+Un servidor API autoadministrado envía una **SubjectAccessReview** de `authorization.k8s.io/v1` a un servicio externo. Use el mismo formato de archivo de conexión que para el webhook de autenticación anterior, con un punto de conexión de autorización, una CA y un certificado de cliente independientes. Configure `--authorization-webhook-config-file` y `--authorization-webhook-version=v1`, o use `AuthorizationConfiguration` estructurada para configurar la cadena de autorización y la política ante fallas. El kubeconfig de un usuario no tiene un campo `authorization.webhook`.
 
-Los autorizadores se ejecutan en el orden configurado; el primer **Allow o Deny** decide. `NoOpinion` continúa con el siguiente autorizador; todos los resultados NoOpinion deniegan el acceso. Un webhook posterior no puede vetar una solicitud que RBAC ya permitió. `system:masters` es un grupo especial que omite la autorización RBAC y webhook; no lo asigne a administradores ordinarios ni suponga que eliminar un role binding revoca su acceso.
+Los autorizadores se ejecutan en el orden configurado; el primer **Allow o Deny** determina el resultado. `NoOpinion` hace que se consulte al siguiente autorizador; si todos responden NoOpinion, se deniega el acceso. Un webhook posterior no puede vetar una solicitud que RBAC ya permitió. `system:masters` es un grupo especial que omite la autorización RBAC y la del webhook; no lo asigne a administradores ordinarios ni suponga que eliminar una asociación de rol revoca su acceso.
 
 ### Prácticas recomendadas de autorización
 
 1. **Principio de mínimo privilegio**: Conceda solo los permisos mínimos necesarios.
 2. **Separación de roles**: Conceda los permisos apropiados según roles como administradores, desarrolladores y operadores.
-3. **Separación de namespaces**: Separe los namespaces por equipo o proyecto y conceda los permisos apropiados.
-4. **Separación de Service Accounts**: Use Service Accounts independientes para cada aplicación.
+3. **Separación de espacios de nombres**: Separe los espacios de nombres por equipo o proyecto y conceda los permisos apropiados.
+4. **Separación de cuentas de servicio**: Use una cuenta de servicio distinta para cada aplicación.
 5. **Auditoría periódica**: Revise y actualice periódicamente las políticas de autorización.
 
 ## Control de admisión
@@ -290,14 +290,14 @@ La admisión gestiona la creación, los cambios, la eliminación y algunas solic
 
 ### Tipos de controladores de admisión
 
-1. **Controladores de admisión mutantes**: Pueden modificar solicitudes.
-2. **Controladores de admisión de validación**: Solo validan solicitudes sin modificarlas.
+1. **Controladores de admisión que modifican solicitudes**: Pueden cambiar las solicitudes.
+2. **Controladores de admisión validadores**: Solo validan las solicitudes, sin modificarlas.
 
 ### Controladores de admisión clave
 
 1. **LimitRanger**: Aplica valores predeterminados y restricciones mínimas/máximas definidas por LimitRange.
-2. **ResourceQuota**: Comprueba las cuotas configuradas del namespace para cantidades de objetos, solicitudes de recursos y cantidades similares; no es un límite para el consumo medido de CPU/memoria ni para el gasto.
-3. **PodSecurity**: Aplica los estándares de seguridad de Pod según etiquetas de namespace. La antigua PodSecurityPolicy se eliminó en Kubernetes 1.25.
+2. **ResourceQuota**: Comprueba las cuotas configuradas del espacio de nombres para cantidades de objetos, solicitudes de recursos y cantidades similares; no es un límite para el consumo medido de CPU/memoria ni para el gasto.
+3. **PodSecurity**: Aplica los estándares de seguridad de Pod según etiquetas de espacio de nombres. La antigua PodSecurityPolicy se eliminó en Kubernetes 1.25.
 4. **ServiceAccount**: Asigna automáticamente Service Accounts a los pods.
 5. **DefaultStorageClass**: Selecciona una StorageClass predeterminada para un PVC sin una clase especificada; no crea la StorageClass.
 
@@ -336,7 +336,7 @@ webhooks:
   timeoutSeconds: 5
 ```
 
-Este webhook se dirige solo a namespaces etiquetados explícitamente. No lo instale sin el servicio HTTPS, la CA y una implementación de AdmissionReview reales que conserve el UID de la solicitud. `failurePolicy: Fail` bloquea las solicitudes coincidentes ante errores/tiempos de espera de llamada. `Ignore` ignora las fallas de llamada; no convierte una denegación devuelta correctamente en una autorización. Pruebe la disponibilidad y la recuperación en un namespace dedicado. CEL ValidatingAdmissionPolicy es otra opción para validación.
+Este webhook se aplica únicamente a espacios de nombres con etiquetas explícitas. No lo instale sin un servicio HTTPS operativo, la CA correspondiente y una implementación de AdmissionReview que conserve el UID de la solicitud. `failurePolicy: Fail` bloquea las solicitudes coincidentes si la llamada falla o agota el tiempo de espera. `Ignore` omite los errores de llamada, pero no convierte una denegación devuelta correctamente en una respuesta de autorización positiva. Pruebe la disponibilidad y la recuperación en un espacio de nombres dedicado. CEL ValidatingAdmissionPolicy es otra opción de validación.
 
 ## Ejemplos prácticos de implementación
 
@@ -344,9 +344,9 @@ Este webhook se dirige solo a namespaces etiquetados explícitamente. No lo inst
 
 #### Integración de IAM y RBAC
 
-Use **access entries** para el acceso actual de usuarios de IAM a EKS. Un rol IAM proporciona la identidad autenticada; las políticas de acceso EKS asociadas o Kubernetes RBAC conceden permisos de Kubernetes. Los permisos permitidos de ambas rutas se acumulan. Una política de acceso EKS no es una política IAM.
+Use **entradas de acceso (access entries)** para gestionar el acceso de usuarios de IAM a EKS. Un rol de IAM proporciona la identidad autenticada; las políticas de acceso de EKS asociadas o RBAC de Kubernetes conceden permisos para Kubernetes. Los permisos concedidos por ambas vías se acumulan. Una política de acceso de EKS no es una política de IAM.
 
-Lo siguiente es un ejemplo de cambio de un administrador para un cluster y un rol IAM existentes. Primero confirme la cuenta, la región, el cluster, el modo `API` o `API_AND_CONFIG_MAP`, un namespace `development` existente, la ausencia de una access entry duplicada y los permisos para `eks:CreateAccessEntry` y los cambios de RBAC. No es un script de creación de infraestructura ni un procedimiento de migración completo.
+El siguiente ejemplo muestra un cambio administrativo en un clúster y un rol de IAM existentes. Antes de ejecutarlo, confirme que usa la cuenta y la región correctas; que el clúster está en modo `API` o `API_AND_CONFIG_MAP`; que existe el espacio de nombres `development`; que no hay ya una entrada de acceso duplicada; y que cuenta con permisos para `eks:CreateAccessEntry` y para los cambios de RBAC. No es un script para crear infraestructura ni un procedimiento completo de migración.
 
 ```bash
 # Example inputs: replace with the approved cluster and existing IAM role.
@@ -388,11 +388,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-Después de aplicar los objetos RBAC, verifique el acceso con las credenciales reales del rol. Este ejemplo no asocia ninguna política de acceso, y crear una access entry no crea objetos RBAC. Los bindings o las políticas existentes pueden hacer que los permisos efectivos sean más amplios que estas lecturas de Pod. Considere el retraso de propagación.
+Después de aplicar los objetos RBAC, verifique el acceso con las credenciales reales del rol. Este ejemplo no asocia ninguna política de acceso, y crear una entrada de acceso no crea objetos RBAC. Las vinculaciones o políticas existentes pueden ampliar los permisos efectivos más allá de estas lecturas de Pods. Tenga en cuenta el retraso de propagación.
 
-El ConfigMap `aws-auth` es el mecanismo heredado. Reemplazar el ConfigMap completo puede eliminar los mapeos de Node/Fargate. Planifique la migración de `CONFIG_MAP` a `API_AND_CONFIG_MAP`, migre y verifique los mapeos, y luego use `API`. Una vez habilitado, el acceso de API no puede eliminarse al revertir los modos; `API` no puede regresar a un modo ConfigMap. Al usar ambos, una access entry tiene precedencia para el mismo principal IAM. No todos los mapeos existentes se migran automáticamente.
+El ConfigMap `aws-auth` es el mecanismo heredado. Reemplazar el ConfigMap completo puede eliminar los mapeos de Node/Fargate. Planifique la migración de `CONFIG_MAP` a `API_AND_CONFIG_MAP`, migre y verifique los mapeos, y luego use `API`. Una vez habilitado, el acceso de API no puede eliminarse al revertir los modos; `API` no puede regresar a un modo ConfigMap. Al usar ambos, una entrada de acceso tiene prioridad para el mismo principal IAM. No todos los mapeos existentes se migran automáticamente.
 
-`kubectl auth can-i --list` no muestra los permisos de las políticas de acceso EKS. La suplantación con `--as`/`--as-group` fuerza la evaluación de Kubernetes RBAC y, por tanto, no prueba los permisos de la política de acceso del rol IAM. Verifique acciones individuales como el rol real, incluidas las denegaciones esperadas fuera del namespace y para lecturas de Secret.
+`kubectl auth can-i --list` no muestra los permisos de las políticas de acceso EKS. La suplantación con `--as`/`--as-group` fuerza la evaluación de Kubernetes RBAC y, por tanto, no prueba los permisos de la política de acceso del rol IAM. Verifique acciones individuales como el rol real, incluidas las denegaciones esperadas fuera del espacio de nombres y para lecturas de Secret.
 
 #### Configuración del proveedor OIDC
 
@@ -400,17 +400,17 @@ Estas tres rutas tienen direcciones y propósitos diferentes.
 
 | Ruta | Destino y configuración de autenticación |
 |---|---|
-| Usuario OIDC externo → API de Kubernetes | Asocie el IdP externo mediante `AssociateIdentityProviderConfig` de EKS y, después, vincule sus usuarios/grupos a RBAC. EKS debe poder alcanzar al emisor mediante HTTPS público; con salida de control plane enrutada por el cliente (`controlPlaneEgressMode=CUSTOMER_ROUTED`), también se debe poder alcanzar al emisor mediante la ruta de salida que configure en la VPC. No se admiten certificados de emisor autofirmados. Esto no deshabilita la autenticación IAM. |
-| Pod → API de AWS mediante IRSA | Establezca la confianza IAM en el emisor OIDC de ServiceAccount del cluster, restrinja la confianza del rol al namespace/ServiceAccount previsto y conceda solo los recursos AWS necesarios. `eksctl utils associate-iam-oidc-provider` es para esta ruta, no para el inicio de sesión de usuario externo. |
+| Usuario OIDC externo → API de Kubernetes | Asocie el IdP externo mediante `AssociateIdentityProviderConfig` de EKS y, después, vincule sus usuarios/grupos a RBAC. EKS debe poder alcanzar al emisor mediante HTTPS público; con salida de plano de control enrutada por el cliente (`controlPlaneEgressMode=CUSTOMER_ROUTED`), también se debe poder alcanzar al emisor mediante la ruta de salida que configure en la VPC. No se admiten certificados de emisor autofirmados. Esto no deshabilita la autenticación IAM. |
+| Pod → API de AWS mediante IRSA | Establezca la confianza IAM en el emisor OIDC de ServiceAccount del clúster, restrinja la confianza del rol al espacio de nombres/ServiceAccount previsto y conceda solo los recursos AWS necesarios. `eksctl utils associate-iam-oidc-provider` es para esta ruta, no para el inicio de sesión de usuario externo. |
 | Pod → API de AWS mediante EKS Pod Identity | Use el agente Pod Identity y una asociación de rol en entornos de ejecución admitidos. Esto difiere de la configuración del proveedor OIDC de IAM de IRSA. |
 
-Ninguno de los mecanismos de carga de trabajo concede Kubernetes API RBAC por sí mismo. Evite usar como ejemplo predeterminado una política administrada de lectura de S3 para toda la cuenta; limite los permisos a los ARN reales de bucket/objeto. Siga [OIDC externo de EKS](https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html) y [roles IAM de cargas de trabajo](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html) para conocer los detalles de configuración.
+Ninguno de estos mecanismos para cargas de trabajo concede por sí solo permisos RBAC en la API de Kubernetes. Evite usar como ejemplo predeterminado una política administrada que permita leer S3 en toda la cuenta; limite los permisos a los ARN de los buckets y objetos necesarios. Consulte [OIDC externo de EKS](https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html) y [roles IAM de cargas de trabajo](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html) para ver los detalles de configuración.
 
-### Seguridad de clusters multiinquilino
+### Seguridad de clústeres multiinquilino
 
 En entornos multiinquilino, el aislamiento entre inquilinos es importante.
 
-**Aislamiento de namespace:**
+**Aislamiento de espacio de nombres:**
 
 ```yaml
 apiVersion: v1
@@ -435,7 +435,7 @@ spec:
           tenant: a
 ```
 
-Esta política permite tráfico de entrada desde **todos** los namespaces etiquetados con `tenant: a`. Otras políticas de entrada pueden agregar permisos y la salida no tiene restricciones. Requiere la aplicación de NetworkPolicy por parte de CNI; solo los administradores de confianza deben controlar las etiquetas y políticas de namespace. Un namespace por sí solo no garantiza un aislamiento sólido entre inquilinos hostiles. El cuestionario incluye denegación predeterminada en ambas direcciones; revise los permisos independientes para DNS y el tráfico necesario.
+Esta política permite tráfico de entrada desde **todos** los espacios de nombres etiquetados con `tenant: a`. Otras políticas de entrada pueden agregar permisos y la salida no tiene restricciones. Requiere que la CNI aplique NetworkPolicy; solo los administradores de confianza deben controlar las etiquetas y políticas de los espacios de nombres. Un espacio de nombres por sí solo no garantiza un aislamiento sólido entre inquilinos hostiles. El cuestionario incluye denegación predeterminada en ambas direcciones; revise los permisos independientes para DNS y el tráfico necesario.
 
 **Cuotas de recursos:**
 
@@ -457,18 +457,18 @@ spec:
 ## Prácticas recomendadas de seguridad
 
 1. **Rotación periódica de certificados**: Renueve los certificados periódicamente.
-2. **Deshabilitar el montaje automático de tokens de ServiceAccount**: Deshabilite el montaje automático de tokens de ServiceAccount cuando no sea necesario.
+2. **Deshabilitar el montaje automático de tokens de ServiceAccount**: Deshabilite este montaje cuando la aplicación no necesite el token.
 3. **Minimizar las políticas RBAC**: Conceda solo los permisos mínimos necesarios.
-4. **Implementar Network Policies**: Restrinja la comunicación entre pods.
-5. **Habilitar el registro de auditoría**: Verifique la cobertura de audit-policy, las exclusiones de datos sensibles, la retención y el acceso a los registros. En EKS, habilite el tipo de registro de control plane `audit` y verifique la entrega a CloudWatch; no suponga que se registra cada cuerpo de solicitud.
-6. **Configurar Security Contexts**: Configure correctamente los security contexts de pods y contenedores.
-7. **Escaneo de imágenes**: Analice periódicamente las imágenes de contenedor para detectar vulnerabilidades.
+4. **Implementar políticas de red**: Restrinja la comunicación entre Pods.
+5. **Habilitar el registro de auditoría**: Verifique la cobertura de la política de auditoría, las exclusiones de datos sensibles, la retención y el acceso a los registros. En EKS, habilite el tipo de registro `audit` del plano de control y compruebe que los registros lleguen a CloudWatch; no dé por sentado que se registra el cuerpo de todas las solicitudes.
+6. **Configurar contextos de seguridad**: Configure correctamente los contextos de seguridad de los Pods y contenedores.
+7. **Escaneo de imágenes**: Analice periódicamente las imágenes de contenedor en busca de vulnerabilidades.
 
 ## Conclusión
 
-El sistema de autenticación y autorización de Kubernetes es un elemento fundamental de la seguridad del cluster. Al seleccionar métodos de autenticación apropiados, implementar control de acceso detallado mediante RBAC y aplicar políticas de seguridad adicionales mediante controladores de admisión, puede crear un entorno de Kubernetes seguro.
+El sistema de autenticación y autorización de Kubernetes es un elemento fundamental de la seguridad del clúster. Al seleccionar métodos de autenticación apropiados, implementar control de acceso detallado mediante RBAC y aplicar políticas de seguridad adicionales mediante controladores de admisión, puede crear un entorno de Kubernetes seguro.
 
-La autenticación, la autorización y el control de admisión se complementan entre sí, y es importante usarlos juntos para implementar una estrategia de Defense in Depth.
+La autenticación, la autorización y el control de admisión se complementan entre sí, y es importante usarlos juntos para implementar una estrategia de defensa en profundidad.
 
 ## Referencias oficiales
 

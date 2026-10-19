@@ -1,4 +1,4 @@
-# スケジューリング、Preemption、Eviction クイズ
+# スケジューリング、プリエンプション、Pod 退避に関するクイズ
 
 このクイズでは、Kubernetes のスケジューリング、ノード選択、affinity、taint、優先度、eviction、disruption budget、descheduling を扱います。
 
@@ -260,7 +260,7 @@ DaemonSet は、期限のない not-ready/unreachable NoExecute toleration を�
 
 ## ハンズオン問題
 
-1. us-east-1a または us-east-1b を必須とし、m5.large node を優先する nginx:1.30.4 を使用した web-server という名前の Pod を作成してください。
+1. us-east-1a または us-east-1b を必須とし、m5.large node を優先する nginx:1.30.6 を使用した web-server という名前の Pod を作成してください。
 
 <details>
 <summary>回答を表示</summary>
@@ -275,7 +275,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -335,7 +335,7 @@ spec:
 最初に同じ namespace 内で password key を含む postgres-credentials を作成してください。この例は scheduling を示すものであり、永続 database storage はありません。永続的な利用には PVC を追加してください。Toleration は worker-1 を許可しますが、そこへの配置を強制するものではありません。
 </details>
 
-3. nginx:1.30.4 を使用する 3 replica の web-frontend Deployment を作成し、app=cache Pod と co-locate しつつ、自身の replica とは分離してください。
+3. nginx:1.30.6 を使用する 3 replica の web-frontend Deployment を作成し、app=cache Pod と co-locate しつつ、自身の replica とは分離してください。
 
 <details>
 <summary>回答を表示</summary>
@@ -378,7 +378,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 Required Pod affinity と anti-affinity は namespace 内で適用されます。3 つすべての replica をスケジュールするには、少なくとも 3 つの適格な node に一致する cache Pod が存在する必要があります。そうでない場合、replica は Pending のままになる可能性があります。これらの rule は label の変更後に既存 Pod を自動的に移動しません。
@@ -410,7 +410,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 500m

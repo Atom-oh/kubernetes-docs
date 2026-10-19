@@ -1275,7 +1275,7 @@ EKS 集群升级流程：
 
 ### EKS 集群监控
 
-控制平面日志导出 api/audit/authenticator/controllerManager/scheduler 日志。Container Insights 需要 CloudWatch agent/附加组件以及范围受限的遥测 IAM 权限；`update-cluster-logging` 不会启用它。CloudWatch observability 附加组件会安装 CloudWatch/Fluent Bit 组件，而不是 Prometheus/Grafana。请参阅[官方附加组件设置指南](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)。
+控制平面日志导出 api/audit/authenticator/controllerManager/scheduler 日志。Container Insights 需要 CloudWatch agent/附加组件以及范围受限的遥测 IAM 权限；update-cluster-logging 不会启用它。CloudWatch observability 附加组件会安装 CloudWatch/Fluent Bit 组件，而不是 Prometheus/Grafana。请参阅[官方附加组件设置指南](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)。
 
 EKS 集群监控工具：
 
@@ -1926,7 +1926,7 @@ aws eks associate-access-policy --cluster-name my-cluster \
 
 ### EKS 集群监控
 
-控制平面日志导出 api/audit/authenticator/controllerManager/scheduler 日志。Container Insights 需要 CloudWatch agent/附加组件以及范围受限的遥测 IAM 权限；`update-cluster-logging` 不会启用它。CloudWatch observability 附加组件会安装 CloudWatch/Fluent Bit 组件，而不是 Prometheus/Grafana。请参阅[官方附加组件设置指南](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)。
+控制平面日志导出 api/audit/authenticator/controllerManager/scheduler 日志。Container Insights 需要 CloudWatch agent/附加组件以及范围受限的遥测 IAM 权限；update-cluster-logging 不会启用它。CloudWatch observability 附加组件会安装 CloudWatch/Fluent Bit 组件，而不是 Prometheus/Grafana。请参阅[官方附加组件设置指南](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)。
 
 ```bash
 # Enable EKS control-plane logs

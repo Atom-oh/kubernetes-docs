@@ -1,6 +1,6 @@
 # Tecnología de contenedores
 
-> **Versiones compatibles**: Versiones mantenidas de Linux Docker/CRI; Kubernetes CRI v1; ejemplos de compilación con Node.js 24 **Última actualización**: 16 de octubre de 2026
+> **Versiones compatibles**: Versiones con mantenimiento activo de Linux, Docker y CRI; CRI v1 de Kubernetes; ejemplos de compilación con Node.js 24 **Última actualización**: 16 de octubre de 2026
 
 Los contenedores son una tecnología que empaqueta aplicaciones y sus dependencias, lo que permite ejecutarlas de forma coherente en diversos entornos. Este documento explica los conceptos fundamentales de los contenedores, cómo funcionan y su relación con Kubernetes.
 
@@ -53,8 +53,8 @@ Esta es una comparación de arquitecturas, no una prueba de rendimiento/inicio b
 
 | Característica       | Contenedor                       | Máquina virtual                                           |
 | ------------------- | -------------------------------- | --------------------------------------------------------- |
-| Tamaño              | Capas de aplicación/espacio de usuario; varía | Sistema operativo invitado más aplicación; varía          |
-| Tiempo de inicio    | A menudo rápido cuando la imagen ya es local | Depende de la estrategia de arranque/restauración          |
+| Tamaño              | Capas de aplicación y espacio de usuario; varía | Sistema operativo invitado más aplicación; varía          |
+| Tiempo de inicio    | A menudo es rápido cuando la imagen ya está en el host | Depende de la estrategia de arranque/restauración          |
 | Nivel de aislamiento | Aislamiento a nivel de proceso   | Aislamiento a nivel de hardware                            |
 | Sistema operativo   | Comparte el kernel del sistema operativo host | Cada VM requiere un sistema operativo completo             |
 | Rendimiento         | Casi nativo                      | Cierta sobrecarga                                         |
@@ -216,10 +216,10 @@ Las imágenes de contenedor se almacenan y comparten en registros. Entre los pri
 * **GitHub Container Registry**: Registro de contenedores de GitHub
 * **Harbor**: Registro de código abierto de nivel empresarial
 
-### Etiquetas y resúmenes criptográficos de imágenes
+### Etiquetas y digest de imágenes
 
 * **Etiqueta**: Referencia mutable y legible para las personas; se puede reasignar, a menos que el registro aplique la inmutabilidad (por ejemplo, `nginx:1.30.6`)
-* **Resumen criptográfico**: Resumen del contenido de un manifiesto de imagen o de un índice multiplataforma (comúnmente SHA256); hace referencia a los resúmenes de la configuración y de las capas (por ejemplo, `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
+* **Digest**: Valor hash de un manifiesto de imagen o de un índice multiplataforma (habitualmente SHA-256); identifica el contenido y hace referencia a los digest de la configuración y de las capas (por ejemplo, `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
 
@@ -242,7 +242,7 @@ VOLUME /app/data
 CMD ["node", "server.js"]
 ```
 
-Node.js 14 llegó al final de su vida útil; estos ejemplos utilizan la línea compatible de Node.js 24. Comprueba la compatibilidad de musl de Alpine con los módulos nativos. Prepara .dockerignore para evitar que node_modules del host o las credenciales se copien en la imagen. EXPOSE es metadato y no publica un puerto; para publicar un puerto se necesita docker run -p o la configuración del orquestador.
+Node.js 14 llegó al final de su vida útil; estos ejemplos utilizan la línea Node.js 24 con soporte vigente. Comprueba que los módulos nativos sean compatibles con musl de Alpine. Prepara .dockerignore para evitar que node_modules del host o las credenciales se copien en la imagen. EXPOSE es metadato y no publica un puerto; para publicar un puerto se necesita docker run -p o la configuración del orquestador.
 
 ```text
 # .dockerignore
@@ -276,13 +276,13 @@ CMD ["nginx", "-g", "daemon off;"]
 
 1. **Elegir una imagen base adecuada**: Utiliza imágenes ligeras, como Alpine
 2. **Utilizar compilaciones en varias etapas**: Excluye las herramientas de compilación y los archivos intermedios
-3. **Optimizar el contenido de las capas y la caché**: Combina la instalación/limpieza de paquetes en un RUN; reducir el número de capas no garantiza por sí solo que la imagen sea más pequeña.
+3. **Optimizar el contenido de las capas y la caché**: Combina la instalación y la limpieza de paquetes en una instrucción RUN; reducir el número de capas no garantiza por sí solo que la imagen sea más pequeña.
 4. **Excluir archivos innecesarios**: Utiliza el archivo .dockerignore
 5. **Aprovechar la caché**: Coloca las capas que cambian con frecuencia al final
 
 ## Redes de contenedores {#container-networking}
 
-Las redes de contenedores permiten la comunicación entre contenedores y entre los contenedores y el exterior.
+Las redes de contenedores permiten la comunicación entre contenedores y con el exterior.
 
 ### Controladores de red
 
@@ -307,7 +307,7 @@ La publicación de puertos se enlaza de forma predeterminada a todas las direcci
 
 ### Comunicación entre contenedores
 
-1. **Misma red**: Los contenedores de una misma red bridge definida por el usuario pueden resolverse entre sí por nombre; el bridge predeterminado no proporciona resolución DNS automática de nombres
+1. **Misma red**: Los contenedores de una misma red bridge definida por el usuario pueden resolver los nombres de los demás; el bridge predeterminado no proporciona resolución DNS automática de nombres
 2. **Links**: Método heredado para configurar enlaces directos entre contenedores
 3. **Red externa**: Comunicación a través de los puertos del host
 
@@ -320,7 +320,7 @@ La capa de escritura de un contenedor Docker se conserva al detenerlo y volverlo
 1. **Almacenamiento efímero**: Sistema de archivos interno del contenedor; los datos se pierden al eliminarlo
 2. **Volúmenes**: Áreas del sistema de archivos del host administradas por Docker
 3. **Montajes bind**: Montan rutas específicas del host en el contenedor
-4. **Montajes tmpfs**: Almacenamiento temporal respaldado por memoria; las páginas pueden intercambiarse al disco
+4. **Montajes tmpfs**: Almacenamiento temporal respaldado por memoria; el sistema puede llevar sus páginas a disco mediante swap
 
 ### Ejemplos de uso de volúmenes
 
@@ -350,7 +350,7 @@ La seguridad de los contenedores debe tenerse en cuenta en varias capas, incluid
 
 ### Seguridad de las imágenes
 
-1. **Análisis de vulnerabilidades**: Analiza las imágenes en busca de vulnerabilidades con herramientas como Trivy y Clair
+1. **Análisis de vulnerabilidades**: Analiza las imágenes en busca de vulnerabilidades con herramientas como Trivy o Clair
 2. **Imágenes base de confianza**: Utiliza imágenes oficiales o verificadas
 3. **Principio de privilegio mínimo**: Incluye solo los paquetes y permisos necesarios
 4. **Firma de imágenes**: Utiliza un flujo de trabajo de firma de imágenes mantenido, como Cosign. Docker Content Trust está en proceso de retirada; está previsto que el servicio Notary v1 de Docker cierre el 8 de diciembre de 2026.
@@ -534,7 +534,7 @@ docker network prune
 
 ### Comprobaciones de estado
 
-HEALTHCHECK registra el estado de salud de Docker. Las políticas de reinicio de Docker independiente responden a la salida del proceso, no solo al estado de salud. Kubernetes ignora HEALTHCHECK de Dockerfile y utiliza sondas de liveness/readiness/startup.
+HEALTHCHECK registra el estado de salud de Docker. En una instalación independiente de Docker, las políticas de reinicio responden a la salida del proceso, no solo al estado de salud. Kubernetes ignora HEALTHCHECK de Dockerfile y utiliza sondas de liveness/readiness/startup.
 
 ```dockerfile
 FROM nginx:1.30.6-alpine
@@ -583,7 +583,7 @@ docker update --restart=always <container-id>
 
 ### Depuración de contenedores
 
-bash/ip/netstat/ps deben estar instalados en la imagen. Para imágenes mínimas, utiliza docker inspect/top desde el host o una imagen de depuración aprobada. El resultado de env/inspect puede contener secretos; no lo pegues en registros compartidos.
+bash/ip/netstat/ps deben estar instalados en la imagen. Para imágenes mínimas, utiliza docker inspect/top desde el host o una imagen de depuración aprobada. La salida de env o inspect puede contener secretos; no la pegues en registros compartidos.
 
 ```bash
 # Explore container internal file system
@@ -691,7 +691,7 @@ Servicio de registro de imágenes de contenedor administrado por AWS.
 | **cgroups**           | Característica del kernel de Linux que limita y supervisa el uso de recursos (CPU, memoria, etc.) de grupos de procesos.     |
 | **Capa**               | Las imágenes de contenedor constan de varias capas que representan diferencias en el sistema de archivos; las instrucciones que solo contienen metadatos no necesitan una capa del sistema de archivos. |
 | **Volumen**            | Mecanismo para almacenar datos de contenedor de forma persistente.                                                            |
-| **Orquestación**      | Proceso de automatizar la implementación, administración, el escalado y las redes de varios contenedores.                     |
+| **Orquestación**      | Proceso de automatizar la implementación, la administración, el escalado y la configuración de red de varios contenedores.                     |
 | **ECS**               | Amazon Elastic Container Service, servicio de orquestación de contenedores de AWS.                                            |
 | **ECR**               | Amazon Elastic Container Registry, servicio de registro de imágenes de contenedor de AWS.                                     |
 | **Fargate**           | Entorno de ejecución de contenedores sin servidor de AWS que ejecuta contenedores sin administrar la infraestructura.        |

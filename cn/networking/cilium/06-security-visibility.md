@@ -1,7 +1,7 @@
 # 安全与可见性
 
 > **审查基线**：Cilium 1.20.3；Cilium CLI 0.20.1；Hubble CLI 1.20.2。
-> **最后审核**：October 16, 2026。Kubernetes 1.33–1.36 是 Cilium 1.20 的兼容版本范围；选择符合 API server 支持的版本偏差范围的 kubectl。
+> **最后审核**：2026 年 10 月 16 日。Kubernetes 1.33–1.36 是 Cilium 1.20 的兼容版本范围；选择符合 API server 支持的版本偏差范围的 kubectl。
 
 ## 实验环境设置
 

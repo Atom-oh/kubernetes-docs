@@ -56,7 +56,7 @@ No ejecutes todos los capítulos secuencialmente en un mismo entorno.
 | Nube | Cuenta/clúster de laboratorio existente y aprobado, con permisos de lectura | Cuenta, región, contexto, espacio de nombres, propietario de recursos y ámbito de costo/permisos/validación |
 | Diseño/pruebas proporcionadas | Supuestos y datos de entrada indicados, incluso si no se dispone del equipo | Distinguir la revisión del diseño de la validación del tráfico en vivo y marcar lo que no se observó |
 
-No copies las direcciones ni los nombres de dispositivos de netlab/containerlab a la NIC de una máquina virtual para principiantes. Algunos ejercicios requieren imágenes comerciales de NOS, soporte de virtualización o placas adicionales: **comprueba primero cada capítulo y sus requisitos upstream**. La limpieza global de Docker, el desmantelamiento de otros laboratorios y la inyección de fallos en producción no son pasos predeterminados de este curso.
+No copies las direcciones ni los nombres de dispositivos de netlab/containerlab a la NIC de una máquina virtual para principiantes. Algunos ejercicios requieren imágenes comerciales de NOS, soporte de virtualización o placas adicionales: **comprueba primero cada capítulo y sus requisitos upstream**. La eliminación global de recursos de Docker, el desmantelamiento de otros laboratorios y la inyección de fallos en producción no son pasos predeterminados de este curso.
 
 Crea este registro antes de cada experimento. Registrar versiones y revisiones significa capturar las entradas reales; no garantiza compatibilidad entre combinaciones arbitrarias.
 
@@ -65,7 +65,7 @@ Crea este registro antes de cada experimento. Registrar versiones y revisiones s
 | ID y propietario del experimento | Un ID que puedas distinguir y la función responsable |
 | Entorno/permisos | Máquina virtual local, contenedor de laboratorio o acceso de solo lectura aprobado a la nube |
 | Topología | Nodos, interfaces, direcciones, VRF, puntos de observación y rutas de administración |
-| Herramientas/entradas | Sistema operativo, kernel, versiones de herramienta e imagen; confirmación upstream; hashes de archivos de entrada |
+| Herramientas/entradas | Sistema operativo, kernel, versiones de herramienta e imagen; commit upstream; hashes de archivos de entrada |
 | Alcance del tráfico | Origen, destino, protocolo, puertos y duración máxima |
 | Línea base | Rutas, políticas, estado de servicios y configuración de recuperación |
 | Hipótesis/cambio | Resultado esperado y el único elemento que se cambiará |
@@ -73,7 +73,7 @@ Crea este registro antes de cada experimento. Registrar versiones y revisiones s
 
 ## Selección de recursos oficiales {#resources}
 
-Estas orientaciones de aprendizaje se comprobaron el 15 de septiembre de 2026. Verifica aparte el acceso a los materiales semestrales, la matrícula, los calificadores y la formación programada.
+Estas orientaciones de aprendizaje se comprobaron el 15 de septiembre de 2026. Verifica aparte el acceso a los materiales semestrales, la matrícula, el personal de evaluación y la formación programada.
 
 | Recurso | Función en este curso | Antes de usarlo |
 |---|---|---|

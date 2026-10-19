@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **审查基线**：Collector Contrib 0.160.0；Operator 0.158.0；语言版本见下文
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 ## 简介
 

@@ -12,7 +12,7 @@ La validación aquí abarca la descarga del chart oficial y su renderizado nativ
 
 KubeRay reconcilia los CR de Ray en Pods, Services y recursos relacionados. No dé por sentado que un grupo de workers ordinario de RayCluster necesariamente es un Deployment o StatefulSet. Por lo general, un nodo de Ray corresponde a un Pod de Ray, distinto del nodo de Kubernetes/EC2 que aloja ese Pod.
 
-Instalar el operador no inicia una carga de trabajo de Ray. Cree recursos como RayCluster, RayJob o RayService por separado. Tampoco se aplica automáticamente cualquier cambio en `spec` en el Pod existente; inspeccione la ruta de actualización.
+Instalar el operador no inicia una carga de trabajo de Ray. Cree recursos como RayCluster, RayJob o RayService por separado. Tampoco todos los cambios en `spec` se aplican automáticamente en el Pod existente; inspeccione la ruta de actualización.
 
 ## CRD y puertas de funcionalidades
 

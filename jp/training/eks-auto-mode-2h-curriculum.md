@@ -78,9 +78,9 @@ Pod のセレクター／アフィニティ、リクエスト、taint/toleration
 
 ### 1-3. スケーリング（15分）
 
-[スケーリングガイド](../eks-auto-mode/03-scaling-behavior.md)に従い、スケジュール不能な Pod、プールの制約、ノードのプロビジョニング、Pod の Ready 化を確認します。40～90秒で完了する保証はありません。イメージの取得、IP／クォータ／キャパシティ、ボリューム依存関係を測定してください。
+[スケーリングガイド](../eks-auto-mode/03-scaling-behavior.md)に従い、スケジュール不能な Pod、プールの制約、ノードのプロビジョニング、Pod の Ready 化を確認します。ノードの準備が40～90秒で完了する保証はありません。イメージの取得、IP／クォータ／キャパシティ、ボリューム依存関係を測定してください。
 
-WhenEmpty、WhenEmptyOrUnderutilized、consolidateAfter を比較します。Pod のリクエスト量が実際の使用量と異なるワークロードも対象にしてください。統合処理は、手動での最適化や負荷検証に代わるものではありません。drift が発生しても、すべての変更で常に1台ずつ即時に置き換わるとは限りません。
+`WhenEmpty`、`WhenEmptyOrUnderutilized`、`consolidateAfter` を比較します。Pod のリクエスト量が実際の使用量と異なるワークロードも対象にしてください。統合処理は、手動での最適化や負荷検証に代わるものではありません。drift が発生しても、すべての変更で常に1台ずつ即時に置き換わるとは限りません。
 
 ## パート2: 最適化とライフサイクル（35分）
 
@@ -104,7 +104,7 @@ VPA の Off は推奨のみを行います。プールの分離は、チーム�
 
 [ライフサイクルガイド](../eks-auto-mode/07-node-lifecycle.md)を使い、AWS が文書化している**デフォルトの有効期限336時間（14日）、NodeClaim 終了猶予期間のデフォルト24時間、マネージドインスタンスの最大有効期間21日**を区別します。以前の720時間（30日）の例は Auto Mode の標準値ではありません。また、いずれの有効期間も稼働時間の保証ではありません。
 
-Budget は、任意の drift／空状態／統合による変更をレート制限します。営業時間外に、すべての有効期限切れ／中断／修復を延期できるわけではありません。保存されている NodeClaim の値、PDB、終了時刻、アプリケーションの復旧を確認してください。
+Disruption Budget（中断予算）は、drift／空ノード／統合による任意の変更をレート制限します。営業時間外でも、すべての有効期限切れ／中断／修復を延期できるわけではありません。保存されている NodeClaim の値、PDB、終了時刻、アプリケーションの復旧を確認してください。
 
 ## 休憩（10分）
 
@@ -155,7 +155,7 @@ CloudTrail に記録されるのは API アクションであり、すべての�
 
 ### 4-2. GitOps 運用（5分）
 
-[ArgoCD Applications](../gitops/argocd/02-applications.md)と[ApplicationSets](../gitops/argocd/04-applicationsets.md)で、権限、ジェネレーター、同期ポリシーを比較します。Auto-sync／self-heal／prune が、自動的に安全なロールアウトになるわけではありません。NodePool／NodeClass の削除による影響と drift の管理主体を確認し、Progressive Sync の有効化状況とバージョン対応を検証してください。
+[ArgoCD Applications](../gitops/argocd/02-applications.md)と[ApplicationSets](../gitops/argocd/04-applicationsets.md)で、権限、ジェネレーター、同期ポリシーを比較します。`auto-sync`／`self-heal`／`prune` が、自動的に安全なロールアウトになるわけではありません。NodePool／NodeClass の削除による影響と drift の管理主体を確認し、Progressive Sync の有効化状況とバージョン対応を検証してください。
 
 ## 評価とラボの準備
 

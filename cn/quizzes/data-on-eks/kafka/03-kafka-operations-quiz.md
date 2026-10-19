@@ -1,6 +1,6 @@
 # Kafka 运维测验
 
-> **最后更新**：October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
+> **最后更新**：2026年10月16日, Strimzi 1.3.0 / Kafka 4.3.1.
 
 本测验旨在检验你对 EKS 上由 Strimzi 管理的 Kafka 集群的存储设计、Broker 扩缩容、Cruise Control 重新平衡、滚动升级和故障处理的理解。
 

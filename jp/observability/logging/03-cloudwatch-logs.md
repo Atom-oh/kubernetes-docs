@@ -1,43 +1,41 @@
 # CloudWatch Logs
 
-> **最終更新**: September 13, 2026
-> **確認済みの例**: AWS provider 6.64.0、オプションの CloudWatch Observability Helm chart 6.6.0、手動 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9。ローカル設定、SDK、合成ペイロードのみを確認しました。AWS リソース、ログ配信、Insights クエリ、アラームは実行していません。
+> **最終更新**: 2026年9月13日
+> **確認した例**: AWS provider 6.69.1、オプションの CloudWatch Observability Helm chart 6.6.0、手動構成の AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9。ローカル設定、SDK、合成ペイロードのみを確認しています。AWS リソース、ログ配信、Insights クエリ、アラームは実行していません。
 
-Amazon CloudWatch Logs は、ログの取り込み、保存、分析を管理します。プロデューサー、アイデンティティ、ネットワーク、保持期間、クォータ、およびダウンストリームコンシューマーの設定は引き続き必要です。EKS コントロールプレーンログ、ワークロードログ、EKS Auto Mode マネージドコンポーネントログは、それぞれ別の収集経路です。
+Amazon CloudWatch Logs はログの取り込み、保存、分析を管理します。ログを送る側、ID、ネットワーク、保持期間、クォータ、後段の利用者は引き続き設定が必要です。EKS コントロールプレーン、ワークロード、EKS Auto Mode の管理コンポーネントのログは、それぞれ別の収集経路です。
 
 ## 目次
 
 1. [概要](#overview)
-2. [EKS コントロールプレーンログ](#eks-control-plane-logging)
+2. [EKS コントロールプレーンのログ](#eks-control-plane-logging)
 3. [Container Insights](#container-insights)
-4. [FluentBit 統合](#fluentbit-integration)
+4. [Fluent Bit の統合](#fluentbit-integration)
 5. [CloudWatch Logs Insights](#cloudwatch-logs-insights)
 6. [サブスクリプションフィルター](#subscription-filters)
-7. [コスト最適化](#cost-optimization)
+7. [コストの最適化](#cost-optimization)
 
-<span id="overview"></span>
-
-## 概要
+## 概要 {#overview}
 
 <span id="cloudwatch-logs-features"></span>
 
 ### 機能とログクラス
 
-| 項目 | 確認事項 |
+| 項目 | 確認すること |
 |---|---|
-| マネージドサービス | 運用する検索クラスターは不要ですが、コレクターと配信統合には引き続き責任者が必要です |
-| キャパシティ | イベントサイズ、API、サブスクリプション、宛先のクォータが適用されます。取り込みは無制限ではありません |
-| セキュリティ | IAM、暗号化、データ保護、プライベート接続にはそれぞれ別の設定があります |
-| 適時性 | 配信とアラートは非同期です。再試行、重複配信、配信欠落を考慮する必要があります |
-| Standard クラス | この章で使用するメトリックフィルターとサブスクリプションをサポートします |
-| Infrequent Access | 低い取り込み料金と異なる機能セット。サブスクリプションフィルター、メトリックフィルター、EMF はありません |
-| Delivery クラス | S3/Firehose に配信される Lambda ログ用の別オプション。CloudWatch の保持期間は固定で 2 日間、Logs Insights クエリはありません |
+| マネージドサービス | 検索クラスターの運用は不要ですが、コレクターと配信連携の担当者は必要です |
+| 容量 | イベントサイズ、API、サブスクリプション、宛先にクォータがあり、無制限に取り込めるわけではありません |
+| セキュリティ | IAM、暗号化、データ保護、プライベート接続はそれぞれ別に設定します |
+| 配信時期 | 配信とアラートは非同期です。再試行、重複、配信漏れを考慮してください |
+| Standard クラス | この章で使うメトリクスフィルターとサブスクリプションをサポートします |
+| Infrequent Access | 取り込み料金が低く、機能も異なります。サブスクリプションフィルター、メトリクスフィルター、EMF は利用できません |
+| Delivery クラス | Lambda ログを S3/Firehose に配信する別の選択肢です。CloudWatch での保持期間は固定の2日間で、Logs Insights クエリは利用できません |
 
-ロググループのクラスは作成後に変更できません。Infrequent Access は現在、S3 エクスポート、Logs Insights、データ保護などの機能をサポートしているため、これらを一切サポートしないという古い包括的な説明は正しくありません。収集設計を変更する前に、最新の機能表を確認してください。
+ロググループのクラスは作成後に変更できません。Infrequent Access は現在、S3 エクスポート、Logs Insights、データ保護などをサポートしています。そのため、これらを一切サポートしないという古い一律の説明は正しくありません。収集方式を変える前に、最新の機能表を確認してください。
 
 <span id="terminology"></span>
 
-### 主要概念
+### 主な用語
 
 ```mermaid
 flowchart LR
@@ -56,30 +54,28 @@ flowchart LR
   GROUPS -.->|Separate asynchronous export task| S3
 ```
 
-サブスクリプションフィルターの宛先に S3 バケット ARN を指定することは**できません**。Firehose を介した継続的な S3 配信と、非同期の S3 エクスポートタスクは別の経路です。また、CloudWatch Logs バッチを Firehose の OpenSearch 宛先経由で配信することもできません。代わりに、ドキュメント化された CloudWatch から OpenSearch への統合を使用してください。Firehose に直接送信されるアプリケーションレコードは、異なる入力契約です。
+サブスクリプションフィルターの宛先に S3 バケット ARN を指定することは**できません**。Firehose 経由の継続的な S3 配信と、非同期の S3 エクスポートタスクは別の経路です。また、CloudWatch Logs のバッチは Firehose の OpenSearch 宛先には配信できません。代わりに、文書化されている CloudWatch から OpenSearch への連携を使用します。Firehose に直接送るアプリケーションレコードは、入力仕様が異なります。
 
 | 用語 | 意味 |
 |---|---|
-| ロググループ | 共通の保持、アクセス、設定の境界。例: `/aws/eks/example-eks/cluster` |
-| ログストリーム | グループ内のログイベントのシーケンス |
-| ログイベント | タイムスタンプとメッセージ。サービス制限の対象です |
-| 保持期間 | サポートされる離散的な保持期間、または保持期間が未設定の場合は無期限 |
+| ロググループ | 保持、アクセス、設定をまとめる境界。例: `/aws/eks/example-eks/cluster` |
+| ログストリーム | グループ内にあるログイベントの列 |
+| ログイベント | タイムスタンプとメッセージ。サービスの上限が適用されます |
+| 保持期間 | サポート対象の離散的な保持期間。未設定なら期限はありません |
 
-<span id="eks-control-plane-logging"></span>
+## EKS コントロールプレーンのログ {#eks-control-plane-logging}
 
-## EKS コントロールプレーンログ
+### ログの種類
 
-### ログタイプ
+ログの種類は `api`、`audit`、`authenticator`、`controllerManager`、`scheduler` の5つです。それぞれ API サーバーの診断、監査イベント、IAM 認証、コントローラーマネージャーの診断、スケジューリングを対象とします。ワーカーノードとアプリケーションのログは別です。
 
-5 つのタイプは `api`、`audit`、`authenticator`、`controllerManager`、`scheduler` です。これらはそれぞれ API サーバー診断、監査イベント、IAM 認証、コントローラーマネージャー診断、スケジューリングを対象とします。Worker ノードログとアプリケーションログは別です。
-
-コントロールプレーンログはデフォルトで無効です。診断、セキュリティ、保持の要件に応じてタイプを選択してください。API は以前の表にあった「必須」の選択を強制しません。通常、配信には数分かかり、ベストエフォートです。ログを有効にしても、すでにローテーションされた過去のログは復元されません。
+コントロールプレーンのログは既定で無効です。診断、セキュリティ、保持の要件に応じて種類を選んでください。API が以前の表にある「必須」の選択肢を要求するわけではありません。通常、配信には数分かかり、ベストエフォートです。有効化しても、すでにローテーションされた過去のログは復元されません。
 
 <span id="enable-via-aws-cli"></span>
 
-### 更新を有効化して確認する
+### 有効化して更新状況を確認する
 
-既存のクラスターでは、以下を `control-plane-logging.json` として保存します。
+既存クラスターの場合、次の内容を `control-plane-logging.json` として保存します。
 
 ```json
 {
@@ -113,22 +109,22 @@ aws eks describe-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-更新は `Successful` に到達する必要があります。リクエストが受け入れられただけでは不十分です。ログ設定の更新には、クラスターサブネットごとに最大 5 個の空き IP アドレスが必要になる場合があります。タイプを無効にするには、既存のログを暗黙にオフにする別の例をコピーするのではなく、その変更を明示的に確認してください。
+更新ステータスが `Successful` になる必要があります。リクエストが受け付けられただけでは不十分です。ログ設定の更新では、クラスターの各サブネットに最大5個の空き IP アドレスが必要になる場合があります。種類を無効にする場合は、既存ログを暗黙にオフにする別の例をコピーせず、その変更を明示的に確認してください。
 
 <span id="configure-with-terraform"></span>
 
 ### Terraform の所有権と保持期間
 
-Terraform で管理するクラスターでは、**既存のクラスターリソースを所有する設定**の `enabled_cluster_log_types` を変更します。ログを有効化するためだけに別の `aws_eks_cluster` リソースを作成せず、廃止された Kubernetes 1.29 の作成例をコピーしないでください。
+Terraform 管理のクラスターでは、既存クラスターリソースを所有する設定の `enabled_cluster_log_types` を変更します。ログを有効にする目的だけで `aws_eks_cluster` リソースを追加したり、廃止された Kubernetes 1.29 の作成例をコピーしたりしないでください。
 
-以下の別ファイルは、ロググループと手動コレクターのポリシーを管理します。
+次の別ファイルでは、ロググループと手動コレクターのポリシーを管理します。
 
 ```hcl
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -192,11 +188,11 @@ output "collector_policy_arn" {
 }
 ```
 
-グループがすでに存在する場合は、その所有者を再利用するか、適用前に意図した状態へインポートしてください。たとえば、コントロールプレーングループはインポート ID `/aws/eks/example-eks/cluster` を使用します。同じグループを「監査」グループとして再宣言しないでください。5 つすべてのコントロールプレーンタイプが、このグループとその保持期間を共有します。
+グループがすでに存在する場合は、現在の所有者を使うか、適用前に予定した state にインポートしてください。たとえば、コントロールプレーングループのインポート ID は `/aws/eks/example-eks/cluster` です。同じグループを「監査」グループとして再宣言しないでください。5種類すべてのコントロールプレーンログが、このグループと保持期間を共有します。
 
-30 日という値は例であり、法的要件ではありません。`prevent_destroy` は Terraform による破棄を防ぎますが、保持期間の短縮や Terraform 外での削除を防ぐものではありません。CloudWatch は保存済みログデータを暗号化します。カスタマー管理 KMS キーには、独自のキーポリシーと運用計画が必要です。
+30日という値は例であり、法的要件ではありません。`prevent_destroy` は Terraform による破棄を防ぎますが、保持期間の短縮や Terraform 外での削除は防ぎません。CloudWatch は保存したログを暗号化します。カスタマー管理 KMS キーには、独自のキーポリシーと運用計画が必要です。
 
-### ロググループ構造
+### ロググループの構成
 
 ```text
 /aws/eks/example-eks/cluster
@@ -207,7 +203,7 @@ output "collector_policy_arn" {
   kube-scheduler-...         Scheduler
 ```
 
-ストリームのサフィックスはローテーションします。古い図の例である `/aws/eks/cluster/logs` は、実際のコントロールプレーングループの命名規則ではありませんでした。
+ストリームの接尾辞はローテーションします。古い図にあった `/aws/eks/cluster/logs` は、実際のコントロールプレーングループの命名規則ではありません。
 
 ## Container Insights
 
@@ -217,11 +213,11 @@ output "collector_policy_arn" {
 <span id="install-via-helm-chart"></span>
 <span id="irsa-setup"></span>
 
-### インストールの選択肢
+### インストール方法の選択
 
-最新の **Amazon CloudWatch Observability EKS add-on** またはその **amazon-cloudwatch-observability** Helm chart を使用してください。以前の ADOT exporter chart と、置換されていないクイックスタート URL は同等のインストールではありません。
+現在の **Amazon CloudWatch Observability EKS アドオン**、またはその **amazon-cloudwatch-observability** Helm chart を使用します。以前の ADOT exporter chart や、置換されていないクイックスタート URL は、これらと同じインストール方法ではありません。
 
-add-on では、実際のクラスターと互換性のあるバージョンを検出し、選択した設定スキーマを調べ、ドキュメント化された IAM 関連付けを設定します。chart のバージョンは EKS add-on のバージョン文字列ではありません。
+アドオンの場合は、実際のクラスターと互換性のあるバージョンを調べ、選んだ設定スキーマを確認し、文書化された IAM 関連付けを設定します。chart のバージョンは EKS アドオンのバージョン文字列とは異なります。
 
 ```bash
 K8S_VERSION=$(aws eks describe-cluster --name "$DOCS_CLUSTER" \
@@ -231,7 +227,7 @@ aws eks describe-addon-versions \
   --kubernetes-version "$K8S_VERSION" --region "$DOCS_REGION"
 ```
 
-オプションの Helm 例では、以下の `cloudwatch-values.yaml` を使用します。従来の Container Insights 経路とコンテナログを選択し、Application Signals と別の OTel Container Insights パイプラインはここでは無効にします。
+次の `cloudwatch-values.yaml` は任意の Helm 例です。従来の Container Insights 経路とコンテナログを選び、Application Signals と別系統の OTel Container Insights パイプラインは無効にしています。
 
 ```yaml
 clusterName: example-eks
@@ -257,37 +253,35 @@ helm upgrade --install cloudwatch-observability \
   --values cloudwatch-values.yaml
 ```
 
-IAM 権限は**インストール前に**設定してください。この chart では、Fluent Bit DaemonSet が `cloudwatch-agent` ServiceAccount を使用します。その名前と namespace は、選択した Pod Identity association と一致する必要があります。公式の association/role-trust 要件に従ってください。異なる名前の ServiceAccount 用の IRSA ロールでは、手動で作成した `fluent-bit` Pod を認可できません。この chart を EKS 管理の add-on の上にインストールしたり、同じログに対して重複するコレクターを実行したりしないでください。
+IAM 権限は**インストール前に**設定してください。この chart では Fluent Bit DaemonSet が `cloudwatch-agent` ServiceAccount を使います。選択した Pod Identity 関連付けに合うよう、名前と namespace を一致させてください。公式の関連付けとロール信頼ポリシーの要件に従います。名前が異なる ServiceAccount 向けの IRSA ロールでは、手作業で作った `fluent-bit` Pod は認可されません。この chart を EKS 管理のアドオンに重ねてインストールしたり、同じログに複数のコレクターを動かしたりしないでください。
 
 <span id="collected-logs"></span>
 
-### 収集ログとプラットフォーム
+### 収集されるログとプラットフォーム
 
-| 一般的なグループサフィックス | 内容と制約 |
+| 一般的なグループ接尾辞 | 内容と制約 |
 |---|---|
-| `application` | `/aws/containerinsights/CLUSTER/application` 配下のコンテナ stdout/stderr |
-| `dataplane` | 設定済みの kubelet/runtime/VPC CNI/kube-proxy ソース。実際のコンポーネントはプラットフォームにより異なります |
-| `host` | 設定済みの Linux ファイル/journal または Windows event logs。すべての OS に `/var/log/messages`、`/var/log/secure`、`/var/log/dmesg` があるわけではありません |
-| `performance` | 多くの場合 EMF のパフォーマンスイベント。アプリケーションログメッセージと互換ではありません |
+| `application` | `/aws/containerinsights/CLUSTER/application` にあるコンテナの stdout/stderr |
+| `dataplane` | 設定された kubelet/runtime/VPC CNI/kube-proxy のソース。実際のコンポーネントはプラットフォームによって異なります |
+| `host` | 設定された Linux ファイル/journal または Windows イベントログ。すべての OS に `/var/log/messages`、`/var/log/secure`、`/var/log/dmesg` があるわけではありません |
+| `performance` | 多くは EMF のパフォーマンスイベントで、アプリケーションログメッセージとは互換性がありません |
 
-サポート対象の add-on/chart には Linux と Windows の経路がありますが、Application Signals は EKS Windows ではサポートされません。Fargate はこの手動 DaemonSet ではなく、プラットフォームのログルーターを使用します。Hybrid Nodes と Auto Mode は個別に検証してください。従来の EC2 ホストパスがどこでも存在すると仮定しないでください。
+サポートされているアドオン/chart には Linux と Windows の経路がありますが、Application Signals は EKS Windows でサポートされません。Fargate はこの手動 DaemonSet ではなく、プラットフォームのログルーターを使います。Hybrid Nodes と Auto Mode は別途確認してください。従来の EC2 ホストパスがすべての環境にあると仮定しないでください。
 
-EKS Auto Mode の AWS 管理 Karpenter、EBS CSI、load-balancer-controller、IPAM ログは、別の **vended log delivery** 設定を使用します。そのログタイプは `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS`、`AUTO_MODE_IPAM_LOGS` です。ドキュメント化された `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` フローでは、ロググループ、S3、Firehose をターゲットにできます。これは `PutSubscriptionFilter` や 5 つのコントロールプレーンログタイプの有効化とは別物です。
+EKS Auto Mode の AWS 管理 Karpenter、EBS CSI、ロードバランサーコントローラー、IPAM のログは、別の **vended log delivery** 設定を使います。ログの種類は `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS`、`AUTO_MODE_IPAM_LOGS` です。文書化された `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` の流れでは、ロググループ、S3、Firehose を宛先にできます。これは `PutSubscriptionFilter` や5種類のコントロールプレーンログ有効化とは別の機能です。
 
-<span id="fluentbit-integration"></span>
-
-## FluentBit 統合
+## Fluent Bit の統合 {#fluentbit-integration}
 
 <span id="fluentbit-configmap"></span>
 <span id="fluentbit-daemonset"></span>
 
-### 手動アプリケーションログコレクター
+### 手動でアプリケーションログを収集する
 
-これは、対象となる Linux EC2 ノード向けの**代替アプリケーションログ専用プロファイル**です。完全な Container Insights メトリクスパイプラインをインストールするものではなく、汎用的な host/dataplane 収集を保証するものでもありません。
+これは、対象となる Linux EC2 ノード用の**アプリケーションログ専用の代替プロファイル**です。Container Insights の完全なメトリクスパイプラインをインストールするものではなく、あらゆるホスト/dataplane ログを収集する保証もありません。
 
-先に application グループを作成または再利用します。上記のコレクターポリシーは、そのグループに対するストリーム作成とイベント書き込みを許可しますが、意図的にグループの作成や保持期間の変更は許可しません。したがって、手動プロファイルには `cloudwatch:PutMetricData`、`s3:PutObject`、または包括的な `logs:*` 権限は不要です。
+先に application グループを作成するか、既存のものを使います。上記のコレクターポリシーは、そのグループでのストリーム作成とイベント書き込みを許可しますが、意図的にグループ作成や保持期間変更は許可しません。そのため、この手動プロファイルに `cloudwatch:PutMetricData`、`s3:PutObject`、包括的な `logs:*` 権限は不要です。
 
-OIDC trust が `system:serviceaccount:logging:fluent-bit-cloudwatch`、audience が `sts.amazonaws.com` と一致する承認済み IRSA ロールを準備し、生成したポリシーをアタッチします。`eksctl --role-only` ワークフローでは、manifest が ServiceAccount を所有したままロールを作成できます。ロール ARN、クラスター名、Region を一貫して置き換えてください。
+OIDC 信頼条件が `system:serviceaccount:logging:fluent-bit-cloudwatch`、audience が `sts.amazonaws.com` に一致する承認済み IRSA ロールを用意し、生成したポリシーをアタッチします。`eksctl --role-only` の手順でロールを作成し、ServiceAccount はマニフェストで管理できます。ロール ARN、クラスター名、Region は一貫して置き換えてください。
 
 ```yaml
 apiVersion: v1
@@ -456,29 +450,29 @@ spec:
       terminationGracePeriodSeconds: 45
 ```
 
-ネイティブプラグインは `cloudwatch_logs` です。古い Go プラグインは `cloudwatch` という名前です。image のデフォルトコマンドはエントリポイントスクリプトであるため、手動 manifest は設定とともにネイティブ Fluent Bit バイナリを明示的に起動します。
+ネイティブプラグイン名は `cloudwatch_logs` で、以前の Go プラグインは `cloudwatch` です。イメージの既定コマンドはエントリポイントスクリプトなので、この手動マニフェストは設定を指定してネイティブ Fluent Bit バイナリを明示的に起動します。
 
-Tail DB と filesystem buffer は書き込み可能で、読み取り専用のログマウントとは分離されています。Grace は 30 秒、Pod の終了猶予は 45 秒ですが、これによってすべてのバッファ済みデータの配信が保証されるわけではありません。ノード消失、ディスク満杯、長い行、有限の再試行、再起動オフセットによってもログが失われる可能性があります。`Read_from_Head Off` は未確認のファイルに影響します。永続的なオフセットも依然として重要です。
+Tail DB とファイルシステムバッファーは書き込み可能で、読み取り専用のログマウントとは分離しています。Grace は30秒、Pod の終了猶予は45秒ですが、それですべてのバッファーデータが配信される保証はありません。ノード消失、ディスク満杯、長い行、有限の再試行回数、再起動時のオフセットによりログが失われる場合があります。`Read_from_Head Off` は未確認ファイルに影響します。永続的なオフセットも重要です。
 
-このプロファイルは、ホストネットワークの kubelet アクセスではなく、API サーバーのメタデータ検索を使用します。アプリケーションアノテーションでパースを変更したりログを除外したりすることはできません。カスタムコレクターで、マネージドインストールであるかのように示すため予約済みの `extra_user_agent: container-insights` 値を設定しないでください。
+このプロファイルは、ホストネットワーク経由で kubelet にアクセスするのではなく、API サーバーからメタデータを取得します。アプリケーションの annotation でパース方法を変えたりログを除外したりはできません。カスタムコレクターに予約済みの `extra_user_agent: container-insights` を設定して、管理対象のインストールであるかのように見せないでください。
 
-### レコード契約とホストソース
+### レコード仕様とホスト側のソース
 
-CloudWatch に送信される、補強されたイベントの例は次のとおりです。
+CloudWatch に送られる、メタデータを追加したイベントの例です。
 
 ```json
 {"log":"{\"level\":\"error\",\"message\":\"upstream request failed\",\"error_type\":\"upstream_timeout\",\"http\":{\"response_time_ms\":1250,\"status_code\":503}}","stream":"stderr","kubernetes":{"namespace_name":"production","pod_name":"api-example","container_name":"api"},"log_processed":{"level":"error","message":"upstream request failed","error_type":"upstream_timeout","http":{"response_time_ms":1250,"status_code":503}}}
 ```
 
-アプリケーションフィールドは `log_processed` 配下にあり、信頼できる Kubernetes メタデータは `kubernetes` 配下にあります。生の `log` 文字列はアプリケーションデータを複製します。収集前に禁止フィールドをマスキングしてください。以下のクエリ、サブスクリプション、メトリックフィルターの例では、この正確な JSON エンベロープと小文字の `level: error` を使用します。
+アプリケーションのフィールドは `log_processed` の下にあり、信頼できる Kubernetes メタデータは `kubernetes` の下にあります。生の `log` 文字列にもアプリケーションデータが重複して入るため、収集前に禁止フィールドをマスキングしてください。以下のクエリ、サブスクリプション、メトリクスフィルターの例は、この正確な JSON エンベロープと小文字の `level: error` を使います。
 
-Linux journal 収集が必要な場合は、永続 journal が `/var/log/journal` にあるか、volatile journal が `/run/log/journal` にあるかを確認してください。`systemd` input、適切な unit filter、読み取り専用マウント、別の書き込み可能な DB、出力グループ、IAM 権限を設定します。Docker の古い `/var/lib/docker/containers` パスを無条件にマウントしたり、containerd/Bottlerocket/AL2023 ノードに存在しないテキストファイルを要求したりしないでください。これらのプラットフォーム固有のホスト設定は、手動プロファイルではデプロイされません。
+Linux journal を収集する場合は、永続 journal が `/var/log/journal` にあるか、一時的な journal が `/run/log/journal` にあるかを確認してください。`systemd` input、適切な unit filter、読み取り専用マウント、別の書き込み可能な DB、出力グループ、IAM 権限を設定します。Docker の古い `/var/lib/docker/containers` を無条件にマウントしたり、containerd/Bottlerocket/AL2023 ノードに存在しないテキストファイルを前提にしたりしないでください。こうしたプラットフォーム固有のホスト設定は、この手動プロファイルには含まれません。
 
 ## CloudWatch Logs Insights
 
-これらの例では SQL ではなく **Logs Insights QL** を使用します。対象のロググループと範囲を限定した時間帯を選択してください。ローカルレビューでは公開済みの構文と契約を確認しました。マネージドクエリサービスは呼び出していません。
+以下の例は SQL ではなく **Logs Insights QL** を使います。対象ロググループと範囲を絞った時間帯を選んでください。ローカルレビューでは公開済みの構文と仕様を確認しましたが、マネージドクエリサービスは呼び出していません。
 
-### 基本クエリ構文
+### 基本的なクエリ構文
 
 ```text
 fields @timestamp, @message
@@ -487,9 +481,9 @@ fields @timestamp, @message
 | limit 100
 ```
 
-大文字小文字を区別しない正規表現には、JavaScript の `/error/i` サフィックスではなく `/(?i)error/` を使用します。テキスト一致は、アプリケーションの構造化された error level ではない語にも一致する可能性があります。
+大文字小文字を区別しない正規表現には `/(?i)error/` を使います。JavaScript の `/error/i` のような接尾辞は使えません。テキスト一致では、アプリケーションの構造化された error level ではない単語にも一致する場合があります。
 
-コレクターの JSON エンベロープの場合:
+コレクターが送る JSON エンベロープの場合:
 
 ```text
 fields jsonParse(@message) as record
@@ -508,11 +502,11 @@ fields @timestamp, @message
 | limit 100
 ```
 
-任意の JSON キー順序と空白を仮定する glob に依存しないでください。`jsonParse` と明示的なネストフィールドにより、期待するレコード構造が明確になります。
+JSON のキー順や空白が任意でも動くと想定した glob に頼らないでください。`jsonParse` と明示的なネストフィールドを使えば、想定するレコード構造が明確になります。
 
-### EKS ログクエリの例
+### EKS ログのクエリ例
 
-API サーバー診断では、重複する監査ストリームプレフィックスを除外します。
+API サーバーの診断では、重複する監査ストリームの接頭辞を除外します。
 
 ```text
 fields @timestamp, @logStream, @message
@@ -534,7 +528,7 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-Authenticator 診断:
+Authenticator の診断:
 
 ```text
 fields @timestamp, @message
@@ -544,7 +538,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-Pod 作成/削除の監査イベント:
+Pod の作成/削除に関する監査イベント:
 
 ```text
 fields jsonParse(@message) as audit
@@ -556,9 +550,9 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-これらは診断用の検索であり、監査がすべてのアクションを記録することや、テキスト一致が根本原因を確定することの証明ではありません。
+これらは診断用の検索例です。監査ログがすべての操作を記録することや、テキストの一致が根本原因を示すことを証明するものではありません。
 
-### アプリケーションログクエリ
+### アプリケーションログのクエリ
 
 namespace ごとのエラー:
 
@@ -569,7 +563,7 @@ fields jsonParse(@message) as record
 | sort error_count desc
 ```
 
-定義済みの数値ミリ秒フィールドを使用した低速レスポンス:
+定義済みの数値ミリ秒フィールドで遅いレスポンスを調べる例:
 
 ```text
 fields jsonParse(@message) as record
@@ -580,16 +574,16 @@ fields jsonParse(@message) as record
 | limit 100
 ```
 
-時間ごとのイベント数:
+時間単位のイベント数:
 
 ```text
 stats count(*) as log_count by bin(1h) as bucket
 | sort bucket asc
 ```
 
-`stats` の後では、定義済みの bucket alias をソートします。元のイベント単位の `@timestamp` は、もはやグループ化出力ではありません。
+`stats` の後は定義した bucket alias をソートします。元のイベント単位の `@timestamp` はグループ化した出力には残りません。
 
-上位のエラーカテゴリー:
+エラー種別の上位項目:
 
 ```text
 fields jsonParse(@message) as record
@@ -599,7 +593,7 @@ fields jsonParse(@message) as record
 | limit 10
 ```
 
-通常、範囲が限定されたカテゴリーは、すべての一意の完全メッセージでグループ化するより解釈しやすくなります。リクエスト ID や任意のメッセージを無制限のメトリクスディメンションにしないでください。
+範囲を限定したカテゴリーの方が、すべての一意な全文メッセージでグループ化するより通常は解釈しやすくなります。リクエスト ID や任意のメッセージを、無制限に増えるメトリクスディメンションにしないでください。
 
 ### 高度なクエリ
 
@@ -613,7 +607,7 @@ fields jsonParse(@message) as record
 | sort bucket asc
 ```
 
-QL の集計は `percentile` ではなく `pct` です。プロデューサーは数値のミリ秒を出力する必要があります。古い nginx の例には、ワイルドカード数の不一致と、作り出されたフィールド位置がありました。
+QL の集計関数は `percentile` ではなく `pct` です。送信元は数値のミリ秒を出力する必要があります。古い nginx の例ではワイルドカード数が合わず、フィールド位置も根拠なく作られていました。
 
 ```text
 fields @timestamp, @message, @logStream
@@ -622,9 +616,9 @@ fields @timestamp, @message, @logStream
 | sort backoff_log_events desc
 ```
 
-これはコンテナの再起動ではなく、一致した**ログイベント**をカウントします。kubelet のイベント/メッセージは、存在しない、繰り返される、または集約される場合があります。実際の再起動数が必要な場合は、適切な Kubernetes 再起動メトリクスを使用してください。
+これは一致した**ログイベント**を数えるもので、コンテナの再起動数ではありません。kubelet のイベント/メッセージは存在しない場合、繰り返される場合、集約される場合があります。実際の再起動数を調べるには、適切な Kubernetes 再起動メトリクスを使ってください。
 
-`SOURCE` はコンソールのクエリエディターではなく、CLI/API クエリでサポートされます。
+`SOURCE` はコンソールのクエリエディターではなく CLI/API クエリでサポートされています:
 
 ```text
 SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/containerinsights/prod-', '/aws/containerinsights/stage-'])
@@ -634,21 +628,19 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 | limit 100
 ```
 
-`accountIdentifier` は単数形です。クロスアカウントクエリには、承認済みの monitoring/source-account 設定と権限が必要です。2 つ目の account または group に言及しても、そのアクセスは作成されません。account/prefix の選択を省略すると、クエリ範囲が大幅に広がる可能性があります。
+`accountIdentifier` は単数形です。クロスアカウントクエリには承認済みの monitoring/source-account 設定と権限が必要です。別のアカウントやグループに言及しても、そのアクセスは作成されません。アカウントや prefix を選ばないと、クエリ範囲が大幅に広がる場合があります。
 
-<span id="subscription-filters"></span>
+## サブスクリプションフィルター {#subscription-filters}
 
-## サブスクリプションフィルター
+サブスクリプションフィルターは、新しく一致したイベントを非同期に転送します。配信は少なくとも1回で、重複する場合があります。再試行可能な宛先障害は最大24時間再試行されますが、再試行できないエラーや障害の長期化では配信が失われる可能性があります。クォータ、`DeliveryErrors`、`DeliveryThrottling` を監視してください。サブスクリプションは過去の全ログをバックフィルしません。
 
-サブスクリプションフィルターは、新しい一致イベントを非同期に転送します。配信は少なくとも 1 回です。重複が発生する場合があります。再試行可能な宛先障害は最大 24 時間再試行できますが、再試行不可能なエラーと継続的な障害では配信を失う可能性があります。クォータ、`DeliveryErrors`、`DeliveryThrottling` を監視してください。サブスクリプションは、すべての過去ログをバックフィルしません。
-
-これらの例の直接 Lambda、Kinesis、Firehose 宛先は、ロググループと同じ account に属します。クロスアカウント配信では、サポートされる logical destination とその destination policy を使用します。任意のクロスアカウント Lambda ARN は代替になりません。
+これらの例の Lambda、Kinesis、Firehose への直接の宛先は、ロググループと同じアカウントに属します。クロスアカウント配信には、サポートされた logical destination とその destination policy を使います。任意のクロスアカウント Lambda ARN では代用できません。
 
 <span id="export-to-s3"></span>
 
-### Firehose を介した S3 へのアーカイブ
+### Firehose 経由で S3 にアーカイブする
 
-このオプションファイルでは、上記のグループ、既存のプライベート S3 バケット、承認済みの Firehose 配信ロールを使用します。
+この任意のファイルは、上記のグループ、既存のプライベート S3 バケット、承認済みの Firehose 配信ロールを使います。
 
 ```hcl
 variable "firehose_delivery_role_arn" {
@@ -729,15 +721,15 @@ resource "aws_cloudwatch_log_subscription_filter" "archive" {
 }
 ```
 
-配信ロールには、レビュー済みの Firehose trust、bucket/prefix アクセス、オプションの KMS 権限、宛先ログ権限が必要です。CloudWatch から Firehose へのロールは別であり、デプロイヤーにはスコープを限定した `iam:PassRole` が必要です。配信エラーログを、それ自体のパイプラインに再度サブスクライブしないでください。
+配信ロールには、レビュー済みの Firehose 信頼ポリシー、bucket/prefix へのアクセス、必要に応じた KMS 権限、宛先ログの権限が必要です。CloudWatch から Firehose へのロールは別です。デプロイ担当者にはスコープを絞った `iam:PassRole` が必要です。配信エラーログを同じパイプラインに再び流さないでください。
 
-CloudWatch のサブスクリプションレコードは、すでに gzip 圧縮されています。ここでの `UNCOMPRESSED` は**追加の Firehose 圧縮**を無効にします。受信ペイロードをプレーンテキストに変更したり、CloudWatch エンベロープを除去したりするものではありません。コンシューマーは実際のアーカイブ済みレコード形式を処理する必要があります。
+CloudWatch のサブスクリプションレコードは、すでに gzip 圧縮されています。ここでの `UNCOMPRESSED` は**Firehose による追加圧縮**を無効にする指定です。受信データをプレーンテキストにしたり、CloudWatch のエンベロープを削除したりはしません。コンシューマーは実際のアーカイブ形式を処理する必要があります。
 
-展開済み出力が必要な場合は、Firehose のドキュメント化された展開機能を意図的に設定してください。オプションのメッセージ抽出では、`owner`、`logGroup`、`logStream`、その他のエンベロープメタデータが削除されます。vended-log input と CloudWatch-subscription 展開用に構成された stream を混在させず、これらの設定がサポートされない CloudWatch→Firehose→OpenSearch 経路を有効にすると仮定しないでください。
+展開済みの出力が必要なら、Firehose の文書化された展開機能を意図して設定します。任意のメッセージ抽出を有効にすると、`owner`、`logGroup`、`logStream` などのエンベロープメタデータが削除されます。vended-log 入力と、CloudWatch サブスクリプション展開用に設定した stream を混在させないでください。また、この設定によって未サポートの CloudWatch→Firehose→OpenSearch 経路が使えるようになると考えないでください。
 
 ### Lambda で処理する
 
-この例は上記の構造化エンベロープを処理し、コントロールメッセージを無視して、生のログテキストではなくエラーの**要約**を送信します。`log_processor.py` として保存してください。
+次の例は上記の構造化エンベロープを処理し、制御メッセージを無視し、生のログテキストではなくエラーの**要約**を送信します。`log_processor.py` として保存してください。
 
 ```python
 import base64
@@ -812,17 +804,17 @@ def lambda_handler(event, context):
     return {"notified": True, "errorCount": summary["errorCount"]}
 ```
 
-`ALERT_TOPIC_ARN` は、承認済みの同一 Region topic 用の非機密宛先識別子です。Lambda 実行ロールには、スコープを限定した `sns:Publish` と独自のログ権限、および該当する KMS 権限が必要です。その logging group が同じサブスクリプションを再帰的にフィードしてはなりません。
+`ALERT_TOPIC_ARN` は、承認済みの同一 Region の topic を示す秘密ではない宛先 ID です。Lambda 実行ロールには、範囲を限定した `sns:Publish`、独自のログ権限、該当する KMS 権限が必要です。その logging group から同じサブスクリプションへ再帰的にログを送ってはいけません。
 
-8MiB の処理上限は、AWS クォータではなく、選択した例の境界です。無効なエンベロープではエラーが発生します。期待されるアプリケーションスキーマ外のレコードは構造化エラーとして扱われません。パース失敗を監視し、障害処理を設定して、デプロイ前にリプレイをテストしてください。SNS の非 SMS メッセージは 1,000 文字ルールではなく **UTF-8 バイト**で制限されます。固定 subject も subject の上限を下回ります。
+8 MiB の処理上限はこの例で決めた値であり、AWS のクォータではありません。無効なエンベロープはエラーになります。想定したアプリケーションスキーマに合わないレコードは、構造化エラーとして扱われません。パース失敗を監視し、障害処理を設定し、デプロイ前にリプレイを試験してください。SNS の SMS 以外のメッセージ上限は1,000文字ではなく **UTF-8 のバイト数**です。固定の subject も subject の上限内に収まります。
 
-イベントキーは調査に役立ちますが、**永続的な重複排除ではありません**。繰り返しの呼び出しによって、通知が重複して送信されることがあります。本番コンシューマーには、明示的な冪等性と障害宛先の判断が必要です。
+イベントキーは調査に役立ちますが、**永続的な重複排除にはなりません**。呼び出しを繰り返すと通知も重複することがあります。本番のコンシューマーでは、明示的な冪等性と障害宛先の判断が必要です。
 
 <span id="create-alerts-with-metric-filters"></span>
 
-### メトリックフィルターとアラーム
+### メトリクスフィルターとアラーム
 
-以下のオプションファイルは、すでにデプロイ済みの、修飾されていない Lambda function ARN を接続し、カウントメトリクス/アラームを作成します。コレクターおよびクエリと同じ JSON フィールドを使用します。
+次の任意のファイルは、すでにデプロイ済みで修飾されていない Lambda function ARN を接続し、カウントメトリクス/アラームを作成します。コレクターとクエリで使うのと同じ JSON フィールドを使います。
 
 ```hcl
 variable "processor_function_arn" {
@@ -881,53 +873,51 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 }
 ```
 
-この権限は Lambda サブスクリプションに先行し、ロググループ ARN と source account で制限されます。SNS のアラーム宛先にも適切な topic policy が必要です。function のデプロイ、実行ロールポリシー、topic subscriptions、エンドツーエンドの通知は別の前提条件です。
+この権限設定は Lambda サブスクリプションより先に適用され、ロググループ ARN と source account に制限されます。SNS のアラーム宛先にも適切な topic policy が必要です。function のデプロイ、実行ロールポリシー、topic subscriptions、エンドツーエンドの通知は別途必要です。
 
-このアラームはエラー率ではなく**エラー件数**です。5 分間の期間 2 回それぞれで、一致イベントが 100 件を超えた場合です。`default_value = 0` はログが到着しても一致しない場合に適用されます。ログが到着しないことは依然として欠損データを意味する可能性があります。`treat_missing_data = "missing"` は無通信を正常と扱いません。メトリックフィルターは過去イベントをバックフィルせず、重複はカウントに影響する可能性があります。
+このアラームはエラー率ではなく**エラー件数**です。5分間の期間が2回あり、それぞれで一致イベントが100件を超えた場合に該当します。`default_value = 0` はログが届いているものの一致がない場合に適用されます。ログが届かない場合は欠損データになり得ます。`treat_missing_data = "missing"` は無通信を正常として扱いません。メトリクスフィルターは過去のイベントをバックフィルせず、重複は件数に影響することがあります。
 
 <span id="_3-archive-to-s3"></span>
 
 ### エクスポートタスクと S3 ライフサイクル
 
-範囲を限定した履歴エクスポートには、CloudWatch の別の S3 export task API と、その bucket/KMS 権限を使用します。エクスポートの可用性は最大 12 時間遅れる場合があり、順序は保証されず、サービスは継続的なアーカイブに定期的な export task を推奨していません。
+期間を限定した履歴のエクスポートには、CloudWatch の別個の S3 export task API と、バケット/KMS の権限を使います。エクスポート可能になるまで最大12時間遅れる場合があり、順序は保証されません。サービスは継続的なアーカイブに定期的な export task を使うことを推奨していません。
 
-アーカイブのライフサイクルルールは、バケットの単一の設定所有者に属します。既存のルールを 2 つ目の Terraform resource で置き換えるのではなく、レビュー済みの prefix スコープルールをその設定にマージしてください。Standard-IA または Glacier tier を選択する前に、小さなオブジェクトの移行動作、最小保存期間、取り出しコスト、Object Lock を検討してください。
+アーカイブのライフサイクルルールは、バケットの単一の設定所有者が管理します。既存ルールを2つ目の Terraform resource で置き換えず、レビュー済みの prefix 範囲ルールをその設定に統合してください。Standard-IA または Glacier tier を選ぶ前に、小さいオブジェクトの移行動作、最低保存期間、取り出しコスト、Object Lock を検討します。
 
-<span id="cost-optimization"></span>
+## コストの最適化 {#cost-optimization}
 
-## コスト最適化
+### コストの内訳
 
-### コスト構造
+取り込み、保存データ、クエリスキャン、vended delivery、変換、後段サービスについて、現在の Region/class/tier 料金を確認します。Firehose、S3、KMS、Lambda、カスタムメトリクス、アラームが常に無料とは限りません。以前の表は Seoul の料金や無料の「Logs to S3」経路を裏付けていませんでした。
 
-取り込み、保持ストレージ、クエリスキャン、vended delivery、変換、ダウンストリームサービスについて、最新の Region/class/tier 料金を確認してください。Firehose、S3、KMS、Lambda、カスタムメトリクス、アラームは、常に無料とは限りません。古い表では Seoul の料金やゼロコストの「Logs to S3」経路を裏付けていませんでした。
-
-以下は**仮定に基づく計算であり、最新の Region 料金ではありません**。
+以下は**仮定に基づく計算であり、現在のリージョン料金ではありません**。
 
 | 仮定 | 月額計算 |
 |---|---|
-| 1 日あたり 100GB を 30 日間、仮定した $0.50/GB で取り込み | 3,000 × $0.50 = $1,500 |
-| 30 日間の定常状態の保持、仮定保存割合 0.5、$0.03/GB-month | 平均 1,500GB × $0.03 = $45 |
-| 1 日あたり 200GB を 30 日間、仮定した $0.005/GB でスキャン | 6,000 × $0.005 = $30 |
-| これらの仮定のみの小計 | **$1,575** |
+| 1日100GBを30日間、仮定の $0.50/GB で取り込み | 3,000 × $0.50 = $1,500 |
+| 30日間の定常状態で保持。保存割合を0.5、$0.03/GB-month と仮定 | 平均1,500GB × $0.03 = $45 |
+| 1日200GBを30日間、仮定の $0.005/GB でスキャン | 6,000 × $0.005 = $30 |
+| これらの仮定のみで計算した小計 | **$1,575** |
 
-これは初月のストレージランプ、圧縮ベンチマーク、または完全な請求額ではありません。元の $1,576 合計には、日次/月次のクエリ値が混在していました。測定済みの平均保持バイト、スキャン量、最新料金、その他すべての料金カテゴリを使用してください。
+これは初月のストレージ増加、圧縮ベンチマーク、完全な請求額を示すものではありません。元の $1,576 という合計は、クエリ値の日次/月次を混在させていました。実測した平均保持バイト数、スキャン量、現在の料金、その他すべての課金項目を使ってください。
 
 <span id="cost-reduction-strategies"></span>
 <span id="_1-log-filtering"></span>
 <span id="_2-retention-period-optimization"></span>
 <span id="_4-adjust-log-levels"></span>
 
-### フィルタリング、保持期間、ログレベル
+### フィルター、保持期間、ログレベル
 
-診断およびセキュリティ要件で破棄を許可しているレコードだけをフィルタリングしてください。Fluent Bit classic configuration は YAML ではありません。このレコード構造では、namespace filter は存在しないフラットフィールド `kubernetes_namespace_name` ではなく、`$kubernetes['namespace_name']` のような record accessor を使用します。
+診断とセキュリティの要件上、破棄してよいレコードだけをフィルタリングします。Fluent Bit の classic configuration は YAML ではありません。このレコード構造で namespace を絞るには、存在しないフラットフィールド `kubernetes_namespace_name` ではなく、`$kubernetes['namespace_name']` のような record accessor を使います。
 
-health-check path に言及しているだけで有用なエラーを破棄する、広範な substring filter は避けてください。レビュー済みの event type など、明示的なフィールドを優先し、破棄する例だけでなく保持すべき例も検証してください。
+health-check path に言及しているというだけで役立つエラーを捨てる、広範な部分文字列フィルターは避けてください。レビュー済みのイベント種別など明示的なフィールドを優先し、破棄する例だけでなく保持すべき例も確認してください。
 
-開発、production、監査のニーズには異なる保持期間が適切な場合がありますが、保持期間を変更するとデータが削除される可能性があります。1 つのグループ内のすべてのコントロールプレーンストリームは、そのグループのポリシーを共有します。アプリケーションログレベルはアプリケーションの契約です。アプリケーションが消費して実装しない限り、ConfigMap に `LOG_LEVEL: INFO` を置いても何も起こりません。一時的に増やす詳細度には、アクセス制御、有効期限、ボリューム予算が必要です。
+開発、本番、監査で異なる保持期間を設定することは適切な場合がありますが、保持期間を変えるとデータが削除されることがあります。同じグループ内のコントロールプレーンストリームはすべて、そのグループのポリシーを共有します。アプリケーションのログレベルはアプリケーション側の仕様です。アプリケーションが読み取り実装しない限り、ConfigMap に `LOG_LEVEL: INFO` を置いても何も起こりません。一時的に詳細度を上げる場合は、アクセス制御、有効期限、容量予算が必要です。
 
-### コスト監視
+### コストの監視
 
-`LogGroupName` dimension と `Sum` statistic を指定した `IncomingBytes`、`IncomingLogEvents` などの `AWS/Logs` metrics を使用します。これらは取り込みを表すもので、請求額全体を表すものではありません。`@billedDuration` は Lambda field であり、CloudWatch Logs のストレージまたは取り込み課金メトリクスではありません。
+`LogGroupName` dimension と `Sum` statistic を指定して、`IncomingBytes` や `IncomingLogEvents` などの `AWS/Logs` metrics を使います。これらは取り込み量を示すもので、請求全体ではありません。`@billedDuration` は Lambda のフィールドであり、CloudWatch Logs の保存または取り込み料金のメトリクスではありません。
 
 ```bash
 aws logs describe-log-groups --region "$DOCS_REGION" \
@@ -940,22 +930,22 @@ aws ce get-dimension-values --region us-east-1 \
   --dimension SERVICE --search-string CloudWatch
 ```
 
-Cost Explorer filter では返された billing-service 値を使用し、完全なパイプラインを見積もる際には関連サービスを含めてください。`storedBytes` はロググループ属性であり、その名前の `AWS/Logs` metric が保証されるわけではありません。コストを見積もるためにすべてのログをクエリすると、それ自体にクエリ料金が発生する可能性があります。
+Cost Explorer のフィルターには返された billing-service の値を使い、パイプライン全体を見積もる際は関連サービスも含めてください。`storedBytes` はロググループの属性であり、同名の `AWS/Logs` metric が保証されているわけではありません。コスト見積もりのために全ログをクエリすると、そのクエリ自体に料金がかかることがあります。
 
-## 検証と参照
+## 検証と参考資料
 
-監査では、ローカルの Terraform/Helm 設定、Kubernetes schema、SDK payload types、合成 Lambda events、バイリンガルの例、クイズ回答、Markdown rendering を確認しました。これらの確認は、実際の IAM、コレクター配信、管理された QL 実行、Firehose archives、アラーム配信、実際のコストを証明するものではありません。
+この監査では、ローカルの Terraform/Helm 設定、Kubernetes schema、SDK payload type、合成 Lambda event、二言語の例、クイズの回答、Markdown のレンダリングを確認しました。これらの確認は、実環境での IAM、コレクター配信、マネージド QL 実行、Firehose アーカイブ、アラーム配信、実際の料金を証明するものではありません。
 
 - [EKS コントロールプレーンログ](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-- [CloudWatch Observability add-on と Helm インストール](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
-- [Auto Mode マネージドコンポーネントログ配信](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
+- [CloudWatch Observability アドオンと Helm のインストール](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [Auto Mode 管理コンポーネントのログ配信](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
 - [ログクラス](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html) と [クォータ](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
 - [Fluent Bit ネイティブ CloudWatch output](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md)
-- [QL filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html)、[stats](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html)、[functions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html)、[SOURCE](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html)
-- [サブスクリプションの例](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html) と [destination API](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html)
+- [QL の filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html)、[stats](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html)、[関数](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html)、[SOURCE](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html)
+- [サブスクリプションの例](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html) と [宛先 API](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html)
 - [CloudWatch Logs から Firehose への制約](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html)、[展開](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html)、[メッセージ抽出](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)
-- [メトリックフィルター](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html)、[S3 export tasks](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html)、[CloudWatch Logs サービスメトリクス](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
-- [SNS Publish API](https://docs.aws.amazon.com/sns/latest/api/API_Publish.html) と [最新の CloudWatch 料金](https://aws.amazon.com/cloudwatch/pricing/)
+- [メトリクスフィルター](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html)、[S3 エクスポートタスク](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html)、[CloudWatch Logs のサービスメトリクス](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
+- [SNS Publish API](https://docs.aws.amazon.com/sns/latest/api/API_Publish.html) と [CloudWatch の最新料金](https://aws.amazon.com/cloudwatch/pricing/)
 
 ## クイズ
 

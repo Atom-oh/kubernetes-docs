@@ -1,11 +1,11 @@
 # Creación de clústeres EKS - Parte 4: Creación de clústeres con Terraform
 
 > **Versiones de ejemplo**: Amazon EKS 1.36; Terraform 1.16.6; proveedor de AWS 6.69.1; módulo EKS 21.29.0
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Ejemplo de Terraform en tres capas
 
-Terraform administra la infraestructura como código. Este ejemplo usa el proveedor de AWS 6.x y fija las versiones del módulo EKS en **21.29.0** y del módulo VPC en **6.7.3**. El HCL se verificó con Terraform 1.16.6 y el proveedor de AWS 6.69.1; no se ejecutaron implementaciones en AWS ni se comprobó el comportamiento en producción. Las entradas originales de estilo v20 `cluster_*` son incompatibles con la versión 21 del módulo: usa `name`, `kubernetes_version`, `addons` y los demás nombres de v21 que se muestran a continuación.
+Terraform administra la infraestructura como código. Este ejemplo usa el proveedor de AWS 6.x y fija las versiones del módulo EKS en **21.29.0** y del módulo VPC en **6.7.3**. El HCL se verificó con Terraform 1.16.6 y el proveedor de AWS 6.69.1; no se hicieron despliegues en AWS ni se comprobó el comportamiento en producción. Las entradas originales de estilo v20 `cluster_*` son incompatibles con la versión 21 del módulo: usa `name`, `kubernetes_version`, `addons` y los demás nombres de v21 que se muestran a continuación.
 
 Los estados separados pueden ayudar a los equipos a dividir responsabilidades y revisar los cambios según su ciclo de vida. No eliminan las dependencias ni el impacto operativo: un cambio en la red aún puede interrumpir un clúster, y un cambio en un complemento o en una política de acceso puede afectar a todas las cargas de trabajo. Esta es una estructura de ejemplo, no una arquitectura de producción probada.
 
@@ -38,7 +38,7 @@ eks-terraform/
 
 ### Por qué separar las capas
 
-| Capa | Cambios | Responsable | Radio de impacto |
+| Capa | Cambios | Responsable | Alcance del impacto |
 |-------|---------|--------------|--------------|
 | 01-network | Poco frecuentes, a modo de ejemplo | Equipo de infraestructura | VPC/subredes y conectividad dependiente |
 | 02-cluster | Mensuales | Equipo de plataforma | Clúster EKS, nodos |
@@ -68,7 +68,7 @@ terraform {
 
 ## Capa 1: Red (01-network)
 
-Este ejemplo crea una VPC en tres AZ con una gateway NAT para mantener pequeño el laboratorio. Una sola NAT crea una dependencia de AZ y puede generar cargos por transferencia entre AZ. Antes de usarla en producción, revisa un diseño de salida resiliente a las fallas de AZ, la capacidad de las subredes, DNS y los endpoints privados.
+Este ejemplo crea una VPC en tres zonas de disponibilidad (AZ) con una puerta de enlace NAT para mantener pequeño el laboratorio. Una sola puerta de enlace NAT introduce una dependencia entre zonas y puede generar cargos por transferencia entre AZ. Antes de usarla en producción, revisa un diseño de salida resiliente a fallas de AZ, la capacidad de las subredes, DNS y los endpoints privados.
 
 ### 01-network/providers.tf
 
@@ -182,7 +182,7 @@ module "vpc" {
 }
 ```
 
-> **La detección de subredes** depende de la versión del Load Balancer Controller, los feature gates y las reglas de elegibilidad de las subredes, no de la versión del módulo Terraform EKS. Las etiquetas de función que se muestran ayudan a seleccionar subredes públicas/privadas; verifica también la cobertura de AZ, las direcciones libres, las rutas y cualquier filtrado de etiquetas del clúster.
+> **La detección de subredes** depende de la versión del Load Balancer Controller, los feature gates y las reglas de elegibilidad de las subredes, no de la versión del módulo Terraform EKS. Las etiquetas de función que se muestran ayudan a seleccionar subredes públicas y privadas; verifica también la cobertura de AZ, las direcciones disponibles, las rutas y cualquier filtrado de etiquetas del clúster.
 
 ### 01-network/outputs.tf
 
@@ -207,7 +207,7 @@ output "public_subnet_ids" {
 
 ## Capa 2: Clúster EKS (02-cluster)
 
-Esta capa crea un **clúster EC2 convencional nuevo**, grupos de nodos administrados y complementos principales. Establece explícitamente el valor existente de `cluster_admin_role_arn`; quien ejecuta Terraform no recibe automáticamente permisos de administración de Kubernetes. El operador debe poder asumir ese rol. Para acceder al endpoint privado, se necesita un entorno de administración conectado y con rutas configuradas antes de usar kubectl o instalar la plataforma.
+Esta capa crea un **clúster EC2 convencional nuevo**, grupos de nodos administrados y complementos principales. Establece explícitamente el ARN existente en `cluster_admin_role_arn`; quien ejecuta Terraform no recibe automáticamente permisos de administración de Kubernetes. El operador debe poder asumir ese rol. Para acceder al endpoint privado, se necesita un entorno de administración conectado y con rutas configuradas antes de usar kubectl o instalar la plataforma.
 
 ### 02-cluster/providers.tf
 
@@ -421,7 +421,7 @@ Los discos raíz de los grupos de nodos usan asignaciones de dispositivos de blo
 
 Revisa los valores predeterminados del módulo antes de la implementación: el rol de IAM para nodos administrados de este módulo fijado incluye permisos de ECR ReadOnly y CNI IPv4. Estos valores predeterminados hacen que el ejemplo sea funcional, pero no implican que se trate de permisos mínimos para producción. Es preferible usar una identidad CNI dedicada y un rol de nodo revisado explícitamente (incluido ECR PullOnly cuando sea suficiente). Los valores min/max del grupo de nodos no instalan un autoscaler.
 
-La compilación predeterminada compatible puede cambiar cuando Terraform vuelve a evaluar sus fuentes de datos. Resuelve y registra las compilaciones compatibles con el clúster de destino y usa `addon_version` cuando la reproducibilidad requiera fijar una versión. Conserva la configuración personalizada revisada al actualizar.
+La versión predeterminada compatible del complemento puede cambiar cuando Terraform vuelve a evaluar sus fuentes de datos. Determina y registra las versiones compatibles con el clúster de destino y fija `addon_version` cuando necesites reproducir la configuración. Conserva la configuración personalizada revisada al actualizar.
 
 ### 02-cluster/outputs.tf
 
@@ -466,7 +466,7 @@ output "cluster_arn" {
 
 ## Capa 3: Plataforma (03-platform)
 
-La capa de plataforma EC2 estándar administra complementos adicionales, asociaciones de Pod Identity y acceso para desarrolladores/lectores. Su estado es independiente, pero sus cambios pueden afectar la seguridad del clúster y la disponibilidad de las cargas de trabajo. Las alternativas Auto Mode e Hybrid que aparecen más adelante requieren seleccionar archivos de plataforma distintos.
+La capa de plataforma EC2 estándar administra complementos adicionales, asociaciones de Pod Identity y el acceso de desarrolladores y usuarios con permisos de solo lectura. Su estado es independiente, pero sus cambios pueden afectar la seguridad del clúster y la disponibilidad de las cargas de trabajo. Las alternativas Auto Mode e Hybrid que aparecen más adelante requieren seleccionar archivos de plataforma distintos.
 
 ### 03-platform/providers.tf
 
@@ -674,7 +674,7 @@ resource "aws_eks_pod_identity_association" "app_s3_access" {
 }
 ```
 
-Crea el nuevo namespace `app-dev` y el ServiceAccount `app-sa` mediante el responsable de Kubernetes/GitOps antes de probar la aplicación. La asociación EKS no crea ninguno de estos objetos. El ejemplo concede acceso de lectura únicamente al prefijo `app/` del bucket aprobado; las políticas del bucket, el cifrado de KMS y el acceso entre cuentas pueden requerir permisos adicionales revisados. Verifica el rol que se asume realmente y ten en cuenta la propagación de IAM y de la asociación antes de depender de ella.
+Antes de probar la aplicación, pide al equipo responsable de Kubernetes/GitOps que cree el nuevo namespace `app-dev` y la ServiceAccount `app-sa`. La asociación EKS no crea ninguno de estos objetos. El ejemplo concede acceso de lectura únicamente al prefijo `app/` del bucket aprobado; las políticas del bucket, el cifrado de KMS y el acceso entre cuentas pueden requerir permisos adicionales revisados. Verifica el rol que se asume realmente y ten en cuenta la propagación de IAM y de la asociación antes de depender de ella.
 
 ### 03-platform/access-entries.tf
 
@@ -959,8 +959,8 @@ Para la variante EC2 convencional, la capa del clúster administra CoreDNS, VPC 
 
 | Opción | Descripción |
 |--------|-------------|
-| `most_recent` | Si es true, resuelve la compilación compatible más reciente durante la evaluación de Terraform; si es false, selecciona la opción predeterminada de EKS. No es un servicio de actualización autónomo. Para mayor reproducibilidad, es preferible usar un `addon_version` revisado. |
-| `before_compute` | Ordena la creación de complementos administrados por el módulo antes que la de los grupos de nodos. Es útil para inicializar VPC CNI; no es un requisito universal para todos los complementos. CoreDNS necesita cómputo utilizable para alcanzar el estado correcto. |
+| `most_recent` | Si es true, busca la versión compatible más reciente durante la evaluación de Terraform; si es false, usa la versión predeterminada de EKS. No es un servicio de actualización automática. Para reproducir la configuración, conviene fijar un `addon_version` revisado. |
+| `before_compute` | Ordena la creación de complementos administrados por el módulo antes que la de los grupos de nodos. Es útil para inicializar VPC CNI; no es un requisito universal para todos los complementos. CoreDNS necesita que haya capacidad de cómputo disponible para alcanzar un estado saludable. |
 | `configuration_values` | Cadena JSON con ajustes específicos del complemento (p. ej., delegación de prefijos de VPC CNI). |
 | `service_account_role_arn` | ARN de rol de IRSA; Pod Identity usa `pod_identity_association` en su lugar. |
 | `resolve_conflicts_on_create` | `NONE` expone los conflictos para que se revisen. Usa `OVERWRITE` solo en una migración revisada desde una instalación existente. |
@@ -1057,7 +1057,7 @@ aws eks describe-addon --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION"
 ```
 Repite `describe-addon` para los complementos esperados. Enumerar los DaemonSet por sí solo no demuestra que los complementos EKS estén en buen estado. Comprueba la autenticación de la API, DNS, la red, el almacenamiento y la identidad AWS real de la aplicación; durante esta auditoría no se ejecutaron comprobaciones en vivo de este tipo. Los clústeres de Auto Mode puro y solo híbridos necesitan las rutas de validación correspondientes y podrían no tener los mismos Pods del sistema.
 
-### Destruye en orden inverso
+### Eliminación en orden inverso
 
 Primero haz una copia de seguridad de los datos y elimina, mediante sus controladores, los balanceadores de carga y los recursos de volúmenes creados por Kubernetes, revisando el comportamiento de recuperación de PVC/PV. Conserva los controladores y los permisos de IAM hasta que se complete esa limpieza. Luego guarda y revisa el plan de destrucción de la plataforma:
 

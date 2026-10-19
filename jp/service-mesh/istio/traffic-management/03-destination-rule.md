@@ -1,129 +1,57 @@
 # DestinationRule
 
-> **サポート対象バージョン**: Istio 1.28+
+> **確認済みバージョン**: Istio 1.31.0
 > **API バージョン**: `networking.istio.io/v1`
-> **最終更新**: February 19, 2026
+> **最終更新日**: 2026年9月11日
 
-DestinationRule は、VirtualService がトラフィックを宛先にルーティングした後の処理方法を定義する、Istio の中核リソースです。
+DestinationRule は、VirtualService がトラフィックを宛先へルーティングした後の処理方法を定義する、Istio の中核リソースです。
 
 ## 目次
 
-1. [DestinationRule とは？](#what-is-destinationrule)
-2. [VirtualService と DestinationRule](#virtualservice-vs-destinationrule)
+1. [DestinationRule とは](#what-is-destinationrule)
+2. [VirtualService と DestinationRule の違い](#virtualservice-vs-destinationrule)
 3. [Subset の概念](#subset-concept)
 4. [基本構造](#basic-structure)
 5. [Subset の定義](#defining-subsets)
-6. [Traffic Policy の概要](#traffic-policy-overview)
-7. [VirtualService との使用](#using-with-virtualservice)
+6. [トラフィックポリシーの概要](#traffic-policy-overview)
+7. [VirtualService との併用](#using-with-virtualservice)
 8. [実践例](#practical-examples)
 9. [ベストプラクティス](#best-practices)
 10. [トラブルシューティング](#troubleshooting)
 
-<span id="what-is-destinationrule"></span>
+## DestinationRule とは {#what-is-destinationrule}
 
-## DestinationRule とは？
+ここに示す例は、それぞれ独立したサイドカー設定パターンです。DestinationRule と VirtualService は istiod がコンパイルする設定入力であり、別々のトラフィック処理ホップではありません。VirtualService がなくても DestinationRule は適用されます。Subset は、Service についてすでに検出されたエンドポイントを選択するだけです。ワークロードを作成したり、環境を分離したり、トラフィックの割合を割り当てたりはしません。Pod テンプレートのラベルを一致させ、Subset へのルートを明示してください。
 
-DestinationRule は**ルーティング後のトラフィックポリシー**を定義します。VirtualService がトラフィックの送信先（「どこに」）を決定するなら、DestinationRule はその処理方法（「どのように」）を決定します。
+DestinationRule は**ルーティング後のトラフィックポリシー**を定義します。VirtualService がトラフィックの「送信先」を決めるのに対し、DestinationRule はトラフィックの「処理方法」を決めます。
 
-```mermaid
-flowchart LR
-    Client[Client Request]
+![クライアントのリクエストが VirtualService のルーティング判断（どこへ送るか）を通り、DestinationRule のトラフィックポリシーを適用されてから、Subset v1 と v2 の2つのサービスバージョンに到達する図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-0.png)
 
-    subgraph VS[VirtualService]
-        Route[Routing Decision<br/>Where?]
-    end
-
-    subgraph DR[DestinationRule]
-        Policy[Traffic Policy<br/>How?]
-    end
-
-    subgraph Services[Services]
-        V1[Version 1]
-        V2[Version 2]
-    end
-
-    Client --> Route
-    Route -->|90%| Policy
-    Route -->|10%| Policy
-    Policy --> V1
-    Policy --> V2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Route routing;
-    class Policy policy;
-    class V1,V2 service;
-```
+[🔍 インタラクティブ図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-0.html)
 
 ### DestinationRule の主な役割
 
 | 役割 | 説明 | 例 |
 |------|-------------|---------|
-| **Subset 定義** | Service バージョンをグループ化 | v1, v2, canary, stable |
-| **Load Balancing** | 負荷分散アルゴリズム | ROUND_ROBIN, LEAST_REQUEST |
-| **Connection Pool** | コネクションプールの設定 | 最大コネクション数、Timeout |
-| **Circuit Breaker** | 障害の隔離 | Outlier Detection |
-| **TLS 設定** | 暗号化ポリシー | mTLS, SIMPLE TLS |
+| **Subset の定義** | サービスのバージョンをグループ化 | v1、v2、canary、stable |
+| **負荷分散** | 負荷分散アルゴリズム | ROUND_ROBIN、LEAST_REQUEST |
+| **コネクションプール** | 接続プールの設定 | 最大接続数、タイムアウト |
+| **サーキットブレーカー** | 障害の分離 | Outlier Detection |
+| **TLS 設定** | 暗号化ポリシー | mTLS、SIMPLE TLS |
 
-<span id="virtualservice-vs-destinationrule"></span>
+## VirtualService と DestinationRule の違い {#virtualservice-vs-destinationrule}
 
-## VirtualService と DestinationRule
-
-この 2 つのリソースは連携して、完全なトラフィック管理を提供します。
+この2つのリソースは連携して、トラフィックを包括的に管理します。
 
 ### 役割の比較
 
-```mermaid
-flowchart TD
-    Request[HTTP Request<br/>Host: reviews]
+![HTTP リクエストの条件を VirtualService が評価して名前付き Subset へルーティングし、続いて DestinationRule がその Subset を選択して、ラベルの一致する3つの Pod に負荷分散する図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-1.png)
 
-    subgraph VS[VirtualService Role]
-        Match{Condition Matching}
-        Route[Routing Decision]
-    end
+[🔍 インタラクティブ図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-1.html)
 
-    subgraph DR[DestinationRule Role]
-        Subset[Subset Selection]
-        Policy[Policy Application]
-    end
+### 責務の分担
 
-    subgraph Pods[Pods]
-        P1[reviews-v1-pod1]
-        P2[reviews-v1-pod2]
-        P3[reviews-v2-pod1]
-    end
-
-    Request --> Match
-    Match -->|headers, path, etc.| Route
-    Route -->|subset: v1<br/>weight: 90%| Subset
-    Route -->|subset: v2<br/>weight: 10%| Subset
-    Subset --> Policy
-    Policy -->|load balancing| P1
-    Policy -->|load balancing| P2
-    Policy -->|load balancing| P3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef vs fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dr fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match,Route vs;
-    class Subset,Policy dr;
-    class P1,P2,P3 pod;
-```
-
-### 責務の分離
-
-**VirtualService（どこに？）**:
+**VirtualService（どこへ送るか）**:
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -147,7 +75,7 @@ spec:
         subset: v1  # ← References subset from DestinationRule
 ```
 
-**DestinationRule（どのように？）**:
+**DestinationRule（どのように処理するか）**:
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -170,49 +98,19 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-<span id="subset-concept"></span>
+## Subset の概念 {#subset-concept}
 
-## Subset の概念
+Subset は、サービスの**論理的なグループ**を定義します。通常、バージョン、デプロイ段階、リージョンなどで区別します。
 
-Subset は Service の**論理グループ**を定義します。通常、バージョン、デプロイステージ、リージョンなどで区別されます。
+### Subset の基本
 
-### Subset の本質
+![Kubernetes Service が DestinationRule の2つの Subset、v1 と v2 を参照し、それぞれがラベルとの照合によって該当バージョンのラベルを持つ実際の Pod に解決される図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-2.png)
 
-```mermaid
-flowchart TB
-    Service[Kubernetes Service<br/>reviews]
+[🔍 インタラクティブ図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-2.html)
 
-    subgraph DR[DestinationRule Subset Definition]
-        S1[Subset: v1<br/>labels: version=v1]
-        S2[Subset: v2<br/>labels: version=v2]
-    end
+### Subset の使用例
 
-    subgraph Pods[Actual Pods]
-        P1[reviews-v1-abc<br/>version=v1]
-        P2[reviews-v1-def<br/>version=v1]
-        P3[reviews-v2-xyz<br/>version=v2]
-    end
-
-    Service --> S1
-    Service --> S2
-    S1 -.->|Label Matching| P1
-    S1 -.->|Label Matching| P2
-    S2 -.->|Label Matching| P3
-
-    %% Style definitions
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Service service;
-    class S1,S2 subset;
-    class P1,P2,P3 pod;
-```
-
-### Subset のユースケース
-
-#### 1. バージョンベースのルーティング
+#### 1. バージョンに基づくルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -234,16 +132,14 @@ spec:
 ```
 
 ```yaml
-# Pod labels
-apiVersion: v1
-kind: Pod
+# Pod-template label excerpt
 metadata:
   labels:
     app: reviews
     version: v1  # ← Matches Subset
 ```
 
-#### 2. デプロイステージの分離
+#### 2. デプロイ段階の分離
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -264,7 +160,7 @@ spec:
       stage: test
 ```
 
-#### 3. リージョンの分離
+#### 3. リージョンごとの分離
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -285,7 +181,7 @@ spec:
       region: eu-central
 ```
 
-#### 4. 環境の分離
+#### 4. 環境ごとの分離
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -303,9 +199,7 @@ spec:
       env: staging
 ```
 
-<span id="basic-structure"></span>
-
-## 基本構造
+## 基本構造 {#basic-structure}
 
 ### 必須フィールド
 
@@ -326,15 +220,15 @@ spec:
       simple: ROUND_ROBIN
 ```
 
-### Host の指定方法
+### host の指定方法
 
-**1. Service 名（同じ Namespace）**
+**1. サービス名（同じ名前空間）**
 ```yaml
 spec:
   host: reviews
 ```
 
-**2. FQDN（異なる Namespace）**
+**2. FQDN（異なる名前空間）**
 ```yaml
 spec:
   host: reviews.production.svc.cluster.local
@@ -346,15 +240,13 @@ spec:
   host: "*.example.com"
 ```
 
-**4. 外部 Service（ServiceEntry 使用）**
+**4. 外部サービス（ServiceEntry を使用）**
 ```yaml
 spec:
   host: api.external.com
 ```
 
-<span id="defining-subsets"></span>
-
-## Subset の定義
+## Subset の定義 {#defining-subsets}
 
 ### シンプルな Subset
 
@@ -374,7 +266,7 @@ spec:
       version: v2
 ```
 
-### Subset 固有のポリシー
+### Subset ごとのポリシー
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -403,7 +295,7 @@ spec:
           http1MaxPendingRequests: 10
 ```
 
-### 複合ラベルマッチング
+### 複雑なラベル照合
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -425,48 +317,19 @@ spec:
       tier: standard
 ```
 
-<span id="traffic-policy-overview"></span>
+## トラフィックポリシーの概要 {#traffic-policy-overview}
 
-## Traffic Policy の概要
+DestinationRule の `trafficPolicy` では、さまざまなトラフィック制御機能を設定できます。
 
-DestinationRule の `trafficPolicy` は、多様なトラフィック制御機能を提供します。
+### トラフィックポリシーの階層
 
-### Traffic Policy の階層
+![DestinationRule の全体に設定した trafficPolicy がすべての Subset の既定値となり、Subset v1 はそのまま継承し、Subset v2 は独自の trafficPolicy で上書きするツリー図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-3.png)
 
-```mermaid
-flowchart TD
-    DR[DestinationRule]
+[🔍 インタラクティブ図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-3.html)
 
-    subgraph Global[Global Traffic Policy]
-        GP[Applied to all subsets]
-    end
+### トラフィックポリシーの構成要素
 
-    subgraph Subset1[Subset: v1]
-        SP1[v1-specific policy<br/>Overrides global policy]
-    end
-
-    subgraph Subset2[Subset: v2]
-        SP2[Inherits global policy]
-    end
-
-    DR --> Global
-    Global --> Subset1
-    Global --> Subset2
-
-    %% Style definitions
-    classDef dr fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class DR dr;
-    class GP global;
-    class SP1,SP2 subset;
-```
-
-### Traffic Policy のコンポーネント
-
-#### 1. Load Balancer
+#### 1. ロードバランサー
 
 ```yaml
 trafficPolicy:
@@ -474,9 +337,9 @@ trafficPolicy:
     simple: ROUND_ROBIN  # LEAST_REQUEST, RANDOM, PASSTHROUGH
 ```
 
-詳細は [Load Balancing](06-load-balancing.md) を参照してください。
+詳しくは[負荷分散](06-load-balancing.md)を参照してください。
 
-#### 2. Connection Pool
+#### 2. コネクションプール
 
 ```yaml
 trafficPolicy:
@@ -489,20 +352,20 @@ trafficPolicy:
       maxRequestsPerConnection: 2
 ```
 
-詳細は [Circuit Breaker](07-circuit-breaker.md) を参照してください。
+詳しくは[サーキットブレーカー](07-circuit-breaker.md)を参照してください。
 
 #### 3. Outlier Detection
 
 ```yaml
 trafficPolicy:
   outlierDetection:
-    consecutiveErrors: 5
+    consecutive5xxErrors: 5
     interval: 30s
     baseEjectionTime: 30s
     maxEjectionPercent: 50
 ```
 
-詳細は [Circuit Breaker](07-circuit-breaker.md) を参照してください。
+詳しくは[サーキットブレーカー](07-circuit-breaker.md)を参照してください。
 
 #### 4. TLS 設定
 
@@ -512,9 +375,9 @@ trafficPolicy:
     mode: ISTIO_MUTUAL  # DISABLE, SIMPLE, MUTUAL
 ```
 
-詳細は [Security](../security/01-mtls.md) を参照してください。
+詳しくは[セキュリティ](../security/01-mtls.md)を参照してください。
 
-#### 5. ポートレベル設定
+#### 5. ポート単位の設定
 
 ```yaml
 trafficPolicy:
@@ -529,13 +392,13 @@ trafficPolicy:
       mode: SIMPLE
 ```
 
-<span id="using-with-virtualservice"></span>
+## VirtualService との併用 {#using-with-virtualservice}
 
-## VirtualService との使用
+VirtualService と DestinationRule を併用して、トラフィックを包括的に制御できます。
 
-VirtualService と DestinationRule は連携して、完全なトラフィック制御を提供します。
+### 基本パターン: カナリアデプロイ
 
-### 基本パターン: Canary Deployment
+本番環境で段階的に切り替える場合は、まず DestinationRule を適用し、新しい Subset がプロキシのクラスタ設定に現れたことを確認してから VirtualService を更新します。複数ドキュメントを1回の apply で適用しても、反映順序は保証されません。Subset を削除する前に、その Subset を参照するルートを削除してください。
 
 ```yaml
 # DestinationRule: Subset definition
@@ -573,7 +436,7 @@ spec:
       weight: 10
 ```
 
-### ヘッダーベースのルーティング
+### ヘッダーに基づくルーティング
 
 ```yaml
 # DestinationRule
@@ -616,7 +479,7 @@ spec:
         subset: v1
 ```
 
-### URI ベースのルーティング + Subset 固有のポリシー
+### URI ルーティングと Subset ごとのポリシー
 
 ```yaml
 # DestinationRule: Different policies per subset
@@ -665,11 +528,9 @@ spec:
         subset: v1
 ```
 
-<span id="practical-examples"></span>
+## 実践例 {#practical-examples}
 
-## 実践例
-
-### 例 1: Microservice のバージョン管理
+### 例1: マイクロサービスのバージョン管理
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -700,12 +561,14 @@ spec:
       version: v3
 ```
 
-**ユースケース**:
+**使用例**:
 - v1: 安定版（大半のトラフィック）
-- v2: Canary バージョン（トラフィックの 10%）
-- v3: テストバージョン（開発者のみ）
+- v2: カナリア版（トラフィックの10%）
+- v3: テスト版（開発者のみ）
 
-### 例 2: マルチリージョンデプロイ
+### 例2: マルチリージョンデプロイ
+
+この例は、メッシュが各リージョンのエンドポイントをすでに検出でき、到達可能であることを前提とします。独自の `region` Pod ラベルで Subset を選択し、ノードのトポロジーラベルで Envoy の locality を別途設定します。リージョンごとの Subset には明示的なルーティングが必要です。また、locality failover には Outlier Detection と、到達可能な正常容量が必要です。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -743,7 +606,7 @@ spec:
           maxConnections: 500
 ```
 
-### 例 3: デプロイステージポリシー
+### 例3: デプロイ段階ごとのポリシー
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -765,7 +628,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -780,7 +643,7 @@ spec:
         http:
           http1MaxPendingRequests: 20
       outlierDetection:
-        consecutiveErrors: 5
+        consecutive5xxErrors: 5
         interval: 30s
         baseEjectionTime: 30s
 
@@ -795,12 +658,12 @@ spec:
         http:
           http1MaxPendingRequests: 100
       outlierDetection:
-        consecutiveErrors: 10
+        consecutive5xxErrors: 10
         interval: 60s
         baseEjectionTime: 30s
 ```
 
-### 例 4: 外部 Service の統合
+### 例4: 外部サービスとの連携
 
 ```yaml
 # ServiceEntry: Register external API
@@ -812,9 +675,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -833,14 +697,19 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
       mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames:
+      - api.payment-gateway.com
 ```
 
-### 例 5: データベースの Connection Pool
+この例では、アプリケーションは登録されたポート80へ HTTP を送信し、サイドカーがポート443へ検証付き TLS を開始します。例のホスト名は使用するエンドポイントに置き換えてください。アプリケーションがすでに HTTPS を送信する場合は、二重暗号化を避けるため、TLS origination と、その暗号化済み TLS パスには適用できない HTTP 専用のポリシー設定を省きます。
+
+### 例5: データベースのコネクションプール
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -857,11 +726,8 @@ spec:
         tcpKeepalive:
           time: 7200s
           interval: 75s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
   subsets:
@@ -877,9 +743,9 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
-<span id="best-practices"></span>
+ここで設定する TCP 接続数の上限は各プロキシに適用されるもので、データベース全体の接続予算ではありません。PostgreSQL は HTTP 接続設定を使用しません。選択する Service のエンドポイントにプライマリ用とレプリカ用の両方の Subset が含まれている必要があり、アプリケーションが読み取り先と書き込み先を正しく選ぶ必要があります。
 
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
 ### 1. Subset の命名規則
 
@@ -892,7 +758,9 @@ subsets:
 - name: canary
 - name: us-west
 - name: production
+```
 
+```yaml
 # ❌ Bad example: Vague names
 subsets:
 - name: subset1
@@ -900,7 +768,7 @@ subsets:
 - name: new
 ```
 
-### 2. デフォルトポリシー + オーバーライドパターン
+### 2. 既定ポリシーと上書きのパターン
 
 ```yaml
 # ✅ Good example: Define default policy and override when needed
@@ -926,10 +794,10 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-### 3. Circuit Breaker は必須
+### 3. 障害の分離を調整する
 
 ```yaml
-# ✅ Always set outlierDetection
+# Tune outlierDetection for the service and failure model
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -939,13 +807,13 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Optional policy
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 4. Connection Pool の設定
+### 4. コネクションプールの設定
 
 ```yaml
 # ✅ Connection Pool appropriate for service characteristics
@@ -964,7 +832,7 @@ spec:
         maxRequestsPerConnection: 100
 ```
 
-### 5. 段階的ロールアウト
+### 5. 段階的なロールアウト
 
 ```yaml
 # ✅ Gradually increase canary ratio
@@ -1010,11 +878,9 @@ spec:
   # ...
 ```
 
-<span id="troubleshooting"></span>
+## トラブルシューティング {#troubleshooting}
 
-## トラブルシューティング
-
-### Subset が動作しない
+### Subset が機能しない
 
 **症状**:
 ```bash
@@ -1022,7 +888,7 @@ spec:
 kubectl get virtualservice reviews -o yaml
 ```
 
-**原因と解決策**:
+**原因と対処**:
 
 ```bash
 # 1. Check DestinationRule
@@ -1036,24 +902,26 @@ kubectl get destinationrule reviews -o yaml
 kubectl get pods --show-labels | grep reviews
 
 # 4. Verify pods have version=v2 label
-kubectl label pod reviews-v2-xxx version=v2
+kubectl get deployment reviews-v2 -o jsonpath='{.spec.template.metadata.labels}'
 ```
 
-### Traffic Policy が適用されない
+### トラフィックポリシーが適用されない
 
 ```bash
 # Check Envoy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local -o json
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local -o json
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
+istioctl proxy-config clusters <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 ```
 
 ### Subset の競合
 
+Istio は、同じ host に適用される DestinationRule の断片をマージできます。以下のように異なる2つの Subset を定義しても、それだけで競合するわけではありません。同じ名前の Subset が重複している場合、最初の定義だけが使われ、内容はマージされません。また、複数のトップレベル `trafficPolicy` がある場合も、最初に処理されたものだけが残ります。名前空間による検索と可視性も考慮が必要です。所有者が1つのルールを管理するほうが動作を把握しやすくなります。
+
 **問題**:
 ```yaml
-# Multiple DestinationRules for the same host cause conflicts
+# Same-host DestinationRule fragments can merge with restrictions
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -1065,7 +933,7 @@ spec:
     labels:
       version: v1
 ---
-# ❌ Conflict occurs
+# Unique subset names can merge; duplicate names/policies are the problem
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -1096,7 +964,7 @@ spec:
       version: v2
 ```
 
-### istioctl の分析
+### istioctl による分析
 
 ```bash
 # Validate DestinationRule
@@ -1106,20 +974,23 @@ istioctl analyze
 istioctl analyze -n production
 
 # Example output
-# Error [IST0101] (DestinationRule reviews.default) Referenced host not found: "reviews"
+# Inspect actual analyzer messages and confirm subset clusters in proxy-config output
 ```
 
 ## 次のステップ
 
-DestinationRule を理解したら、次のトピックに進んでください。
+DestinationRule を理解したら、次のトピックに進みましょう。
 
-1. **[Traffic Splitting](04-traffic-splitting.md)**: Canary、Blue/Green デプロイ
-2. **[Load Balancing](06-load-balancing.md)**: 多様なアルゴリズムとポリシー
-3. **[Circuit Breaker](07-circuit-breaker.md)**: 障害の隔離とレジリエンス
-4. **[Retry and Timeout](05-retry-timeout.md)**: Retry と Timeout の設定
+1. **[トラフィック分割](04-traffic-splitting.md)**: カナリア、Blue/Green デプロイ
+2. **[負荷分散](06-load-balancing.md)**: さまざまなアルゴリズムとポリシー
+3. **[サーキットブレーカー](07-circuit-breaker.md)**: 障害の分離と回復力
+4. **[再試行とタイムアウト](05-retry-timeout.md)**: 再試行とタイムアウトの設定
 
 ## 参考資料
 
-- [Istio DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
-- [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
-- [Envoy Cluster Configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+- [Istio DestinationRule リファレンス](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Istio トラフィック管理](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Envoy クラスタ設定](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+
+- [DestinationRule のマージと安全な Subset の段階的ロールアウト](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+- [TLS origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

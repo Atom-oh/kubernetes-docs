@@ -14,7 +14,7 @@ Un **Deployment** de Serve administra réplicas de actores; es distinto de un De
 
 Una **aplicación** contiene uno o más deployments y un deployment de entrada. Los DeploymentHandles pueden conectar el preprocesamiento y la inferencia sin hacer que cada llamada interna atraviese HTTP ni crear un Service de Kubernetes por deployment.
 
-El Controller administra el estado de control de Serve y los ciclos de vida de los actores. Los proxies reciben tráfico HTTP/gRPC y lo reenvían a los deployments. La ubicación predeterminada del proxy en la versión 2.58.0 es **`EveryNode` en los nodos que alojan réplicas**. Se pueden seleccionar explícitamente `HeadOnly` y `Disabled`. La configuración predeterminada de solo head de una página de arquitectura anterior no debe prevalecer sobre el contrato actual de la API.
+El Controller administra el estado de control de Serve y los ciclos de vida de los actores. Los proxies reciben tráfico HTTP/gRPC y lo reenvían a los deployments. La ubicación predeterminada del proxy en la versión 2.58.0 es **`EveryNode` en los nodos que alojan réplicas**. Se pueden seleccionar explícitamente `HeadOnly` y `Disabled`. La afirmación de una página de arquitectura anterior de que el valor predeterminado es solo el nodo principal no debe prevalecer sobre el contrato actual de la API.
 
 Distingue las colas de llamadas en los proxies/handles de las solicitudes en curso asignadas a las réplicas. Revisa en la aplicación los controladores síncronos/asíncronos, el trabajo bloqueante, los tiempos de espera y el comportamiento de cancelación.
 
@@ -70,7 +70,7 @@ Distingue estos valores predeterminados verificados en la versión 2.58.0:
 
 El objetivo del escalado automático observa la carga de solicitudes; es distinto del máximo de solicitudes en curso y de un límite global de cola. Superar los límites de la cola puede generar BackPressureError para los handles o devolver HTTP 503 de forma predeterminada. La configuración del control de presión puede personalizar la respuesta HTTP.
 
-Ajusta conjuntamente el mínimo/máximo, las ventanas de medición y los retrasos, los arranques en frío, la carga de modelos, el batching y el tiempo real de procesamiento. Escalar a cero con `min_replicas=0` no elimina la latencia de reinicio. La cantidad deseada de réplicas no garantiza que todas estén listas.
+Ajusta conjuntamente el mínimo/máximo, las ventanas de medición y los retrasos, los arranques en frío, la carga de modelos, el procesamiento por lotes (batching) y el tiempo real de procesamiento. Escalar a cero con `min_replicas=0` no elimina la latencia de reinicio. La cantidad deseada de réplicas no garantiza que todas estén listas.
 
 ## Capas de control en EKS
 

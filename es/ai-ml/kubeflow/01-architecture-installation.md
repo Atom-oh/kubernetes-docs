@@ -1,12 +1,12 @@
 # Parte 1: Arquitectura e instalación de Kubeflow en EKS
 
 > **Base de revisión**: Community Distribution 26.03.1; Dashboard 2.0.0; KFP 2.16.1
-> **Última revisión**: September 12, 2026
+> **Última revisión**: 12 de septiembre de 2026
 > **Validación**: El overlay de Profile se renderizó localmente con kubectl 1.36.2 / Kustomize 5.8.1. No se ejecutó ninguna instalación de EKS ni flujo de identidad de AWS.
 
 ## Preparación del entorno
 
-Selecciona una versión de la distribución antes de elegir los comandos. Registra la versión de EKS/Kubernetes, la arquitectura de los nodos, el CNI, las clases de almacenamiento, el proveedor de identidad y los componentes requeridos. `Kubernetes 1.34+` no garantiza compatibilidad sin límites.
+Selecciona una versión de la distribución antes de elegir los comandos. Registra la versión de EKS/Kubernetes, la arquitectura de los nodos, el CNI, las clases de almacenamiento, el proveedor de identidad y los componentes requeridos. `Kubernetes 1.34+` no garantiza soporte ilimitado.
 
 La versión 26.03.1 informa cobertura de CI para Kubernetes 1.36 y uso de Kind 0.32+. Esto no certifica todas las combinaciones de complementos de EKS. Su README advierte que algunas imágenes podrían no ser compatibles con ARM64. El renderizado requiere kubectl con Kustomize o la versión independiente de Kustomize especificada por la distribución; para aplicar recursos también se requiere un clúster de destino, permisos y dependencias listas.
 
@@ -48,13 +48,13 @@ La versión describe Workspaces (Notebooks v2) como beta; esto no reemplaza la f
 | --- | --- | --- |
 | Proveedor de identidad, oauth2-proxy, gateway | Autenticación del navegador y reenvío de identidad de confianza | Clientes OIDC, TLS, encabezados de confianza, autenticación de máquina a máquina |
 | Dashboard y aplicaciones web de componentes | Navegación e interfaces de aplicaciones | Autorización de cada API e identidad de servicio |
-| Profile Controller y gestión de acceso (KFAM) | Propiedad del namespace, acceso de propietarios y colaboradores, RBAC generado y políticas de Istio | Cuotas, aislamiento de red, privilegios de cargas de trabajo, almacenamiento y permisos de AWS |
+| Profile Controller y gestión de acceso (KFAM) | Titularidad del espacio de nombres, acceso de propietarios y colaboradores, RBAC generado y políticas de Istio | Cuotas, aislamiento de red, privilegios de cargas de trabajo, almacenamiento y permisos de AWS |
 | Controladores de componentes | Reconciliación de recursos de Kubernetes compatibles | Admisión, planificación, dependencias y estado |
 | API y persistencia de KFP | Operaciones de pipelines, ejecuciones y experimentos, metadatos y artefactos | Disponibilidad, autorización y copias de seguridad de la base de datos y del almacenamiento de objetos |
 
 Un `Profile` con alcance de clúster tiene un propietario y gestiona un namespace; los colaboradores se administran mediante la gestión de acceso. Dashboard 2.0.0 crea su `ResourceQuota` solo cuando `spec.resourceQuotaSpec.hard` no está vacío. Omitir la cuota no genera un límite de recursos predeterminado; dejar vacío este campo elimina la cuota gestionada por este controlador.
 
-El RBAC y `AuthorizationPolicy` de Istio generados por Profile no proporcionan un aislamiento completo entre tenants. La aplicación de NetworkPolicy, los permisos de Pod, el acceso al almacenamiento, AWS IAM y la autorización de aplicaciones siguen siendo aspectos independientes. La NetworkPolicy incluida en el overlay de Profile protege ese servicio del controlador y de gestión de acceso, no todos los namespaces de usuario.
+El RBAC y `AuthorizationPolicy` de Istio generados por Profile no proporcionan un aislamiento completo entre tenants. La aplicación de NetworkPolicy, los permisos de Pod, el acceso al almacenamiento, AWS IAM y la autorización de aplicaciones siguen siendo aspectos independientes. La NetworkPolicy incluida en el overlay de Profile protege el servicio de ese controlador y de gestión de acceso, no todos los espacios de nombres de usuario.
 
 Los conceptos de Pipeline, Run y Experiment de KFP no son universalmente CRD. El modo opcional de Kubernetes Native API añade las CRD `Pipeline` y `PipelineVersion`. KFP Experiment y Katib Experiment son recursos distintos.
 
@@ -85,13 +85,13 @@ El controlador rechaza la apropiación de un namespace existente cuya propiedad 
 
 | Opción | Evidencia y limitaciones |
 | --- | --- |
-| Community Distribution 26.03.1 | Paquete comunitario revisado; configura la red, el almacenamiento, el ingreso y la identidad de EKS para esta versión |
+| Community Distribution 26.03.1 | Paquete comunitario revisado; configura la red, el almacenamiento, la entrada de tráfico y la identidad de EKS para esta versión |
 | `awslabs/kubeflow-manifests` | Última versión publicada inspeccionada: `v1.7.0-aws-b1.0.3` (1 de septiembre de 2023). Su página de versión indica que las instalaciones nuevas fallan porque se eliminó una imagen OIDC antigua |
 | Distribución con soporte de proveedor | Evalúa su propia matriz de versiones, soporte, integraciones y ruta de migración |
 
 La [advertencia de la versión de AWS](https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3) significa que la antigua guía de manifiestos/Terraform no es una receta de instalación verificada para 26.03.1. La actividad del repositorio, por sí sola, no cambia la compatibilidad de esa versión.
 
-Los overlays históricos de AWS describen integraciones con Cognito, RDS y S3. Pueden reducir la operación de los servicios autogestionados de identidad, bases de datos y almacenamiento de objetos, pero no son valores predeterminados intercambiables: la asignación de emisor y claims, la compatibilidad de bases de datos, la red, IAM, los costos y la migración siguen siendo importantes. Valida los overlays antiguos antes de combinarlos con una versión nueva.
+Los overlays históricos de AWS describen integraciones con Cognito, RDS y S3. Pueden reducir el trabajo necesario para operar servicios autogestionados de identidad, bases de datos y almacenamiento de objetos, pero no son valores predeterminados intercambiables: la asignación de emisor y claims, la compatibilidad de bases de datos, la red, IAM, los costos y la migración siguen siendo importantes. Valida los overlays antiguos antes de combinarlos con una versión nueva.
 
 ### Renderiza antes de aplicar
 
@@ -108,7 +108,7 @@ kubectl kustomize \
 
 El overlay revisado produjo 14 recursos, incluida la CRD Profile, RBAC, Service y `profiles-deployment` en `kubeflow`. Sus contenedores usan imágenes de Profile Controller y de gestión de acceso de Dashboard 2.0.0. Este overlay no crea el namespace `kubeflow` y requiere sus dependencias de Istio y de políticas de red.
 
-Para la instalación, sigue el orden de componentes individuales de la versión fijada. Inspecciona los recursos renderizados, establece las CRD requeridas, espera a que los controladores y webhooks estén listos y luego aplica los recursos personalizados. Diagnostica los errores de admisión o de propiedad de campos en vez de forzar repetidamente los conflictos. Un renderizado correcto no demuestra ni la admisión de la API ni el funcionamiento de una implementación en EKS.
+Para la instalación, sigue el orden de componentes individuales de la versión fijada. Inspecciona los recursos renderizados, instala las CRD requeridas, espera a que los controladores y webhooks estén listos y luego aplica los recursos personalizados. Diagnostica los errores de admisión o de propiedad de campos en vez de forzar repetidamente los conflictos. Un renderizado correcto no demuestra ni la admisión de la API ni el funcionamiento de una implementación en EKS.
 
 ## Patrones de acceso de IAM: IRSA, KFPv2 y Pod Identity
 
@@ -122,7 +122,7 @@ El complemento Profile `AwsIamForServiceAccount` de Dashboard no activa Pod Iden
 
 ## ¿Por qué ejecutarlo en EKS en vez de usar una alternativa gestionada?
 
-EKS es adecuado para equipos con capacidad operativa de Kubernetes que necesitan herramientas compartidas, entornos de ejecución de entrenamiento personalizados o comportamientos específicos de planificación y serving. El equipo es responsable de los controladores, las CRD, los límites entre tenants, la recuperación, la capacidad y las actualizaciones.
+EKS es adecuado para equipos con capacidad operativa de Kubernetes que necesitan herramientas compartidas, entornos de ejecución de entrenamiento personalizados o comportamientos específicos de planificación y servicio de inferencia. El equipo es responsable de los controladores, las CRD, los límites entre tenants, la recuperación, la capacidad y las actualizaciones.
 
 SageMaker AI puede reducir la operación de infraestructura, pero no elimina las responsabilidades relacionadas con las aplicaciones, los datos, IAM ni la calidad de los modelos. Compara los servicios y modos de implementación que realmente necesitas.
 

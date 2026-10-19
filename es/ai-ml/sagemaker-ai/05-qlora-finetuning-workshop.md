@@ -1,6 +1,6 @@
 # Taller: ajuste fino de QLoRA para la extracción de PII
 
-> **Última actualización**: September 16, 2026
+> **Última actualización**: 16 de septiembre de 2026
 
 Las fuentes primarias se revisaron el 15 de septiembre de 2026.
 
@@ -63,7 +63,7 @@ La función actual `parse_tsv()` es deliberadamente tolerante: puede descartar f
 | LoRA | Adaptar un modelo preentrenado con actualizaciones entrenables de bajo rango | Reducir el almacenamiento del modelo base sin cuantizar |
 | QLoRA | Entrenar adaptadores a través de una base cuantizada y congelada cuando la memoria es limitada | Hacer que las activaciones, el estado del optimizador o todos los tensores del modelo sean de cuatro bits |
 
-Empieza con una referencia determinista y otra basada solo en prompts. Si el modelo con prompts es adecuado para una tarea acotada, el entrenamiento podría añadir complejidad sin suficiente beneficio. Si no detecta entidades específicas del dominio o infringe repetidamente el contrato de salida, un experimento de adaptación supervisada tiene un propósito más claro.
+Empieza con una referencia determinista y otra basada solo en prompts. Si el modelo evaluado solo con prompts ya es adecuado para una tarea acotada, entrenarlo podría añadir complejidad sin suficiente beneficio. Si no detecta entidades específicas del dominio o infringe repetidamente el contrato de salida, un experimento de adaptación supervisada tiene un propósito más claro.
 
 ## 2. Comprende qué cambia LoRA
 
@@ -237,7 +237,7 @@ assert sum(label != -100 for label in labels) == 1
 
 El ejemplo ilustra la supervisión de EOS para un registro negativo. La plantilla real puede incluir tokens de respuesta adicionales, como un salto de línea. Verifica la fila real tokenizada; no des por hecho que los ID de prompt ilustrativos o la longitud de respuesta son fijos.
 
-La ficha del modelo Instruct-2507 indica que es **no pensante** y que no requiere `enable_thinking=False`. El código de predicción actual pasa ese argumento, pero no convierte este checkpoint en un modelo de razonamiento. `assistant_only_loss=True` es una opción distinta que requiere compatibilidad adecuada con la máscara del asistente por parte de la plantilla; no es necesaria para este contrato de prompt/respuesta de una sola respuesta.
+La ficha del modelo Instruct-2507 indica que pertenece a la categoría **non-thinking** y que no requiere `enable_thinking=False`. El código de predicción actual pasa ese argumento, pero no convierte este checkpoint en un modelo de razonamiento. `assistant_only_loss=True` es una opción distinta que requiere compatibilidad adecuada con la máscara del asistente por parte de la plantilla; no es necesaria para este contrato de prompt/respuesta de una sola respuesta.
 
 ### Inspecciona los datos preparados antes del primer paso de entrenamiento
 
@@ -263,7 +263,7 @@ print({"examples": len(examples), "target_tokens": supervised.tolist()})
 
 Inspecciona también las longitudes de prompt más respuesta antes del truncamiento y confirma que se conserve el EOS de la respuesta. `max_length=1024` se aplica a la secuencia de entrenamiento combinada, no solo al documento. Un prompt largo puede consumir todo el presupuesto y eliminar la respuesta. El truncamiento en inferencia también puede ocultar PII mientras la evaluación sigue esperando entidades del documento completo.
 
-Elige una política documentada: rechazar los casos que excedan el límite, acortar solo las instrucciones no esenciales del prompt o dividir la fuente en fragmentos actualizando el contrato de anotación. Mantén los fragmentos y los descendientes del aumento de datos en la misma familia de documentos y partición. No aumentes simplemente la longitud de secuencia sin volver a evaluar la memoria de activaciones, el microbatch y la longitud de salida en inferencia.
+Elige una política documentada: rechazar los casos que excedan el límite, acortar solo las instrucciones no esenciales del prompt o dividir la fuente en fragmentos y actualizar el contrato de anotación. Mantén los fragmentos y los ejemplos derivados del aumento de datos en la misma familia de documentos y partición. No aumentes simplemente la longitud de secuencia sin volver a evaluar la memoria de activaciones, el microbatch y la longitud de salida en inferencia.
 
 ## 6. Lee la configuración de entrenamiento fijada siguiendo el orden de ejecución
 
@@ -442,11 +442,11 @@ Por ejemplo, ocho registros con un lote efectivo de ocho y 20 actualizaciones de
 
 Esta es intencionalmente una comprobación de sobreajuste. Tener éxito indica que la ruta de entrenamiento puede aprender estos ejemplos. No demuestra generalización, recuperación de producción ni eliminación de toda la PII. El fracaso es útil: corrige las máscaras, los objetivos, la correspondencia de datos o la optimización antes de aumentar el tamaño del modelo o del conjunto de datos.
 
-### Por qué el entrenador actual no es un ciclo de HPO seguro
+### Por qué el entrenador actual no es un ciclo seguro de optimización de hiperparámetros (HPO)
 
 El entrenador confirmado lee el archivo de test y lo evalúa **antes y después de cada ejecución**, incluida la prueba. Usa validación para la evaluación intermedia del entrenador, pero calcula las métricas finales de referencia y del modelo ajustado con test cada vez. No inspecciones repetidamente esos resultados de test mientras eliges hiperparámetros.
 
-Para un flujo de trabajo didáctico de ajuste, realiza una modificación claramente identificada que use un subconjunto de prueba para los diagnósticos de ejecución y la validación para comparar candidatos. Mantén test inaccesible para las ejecuciones habituales de ajuste, fija la configuración elegida y solo entonces realiza una comparación final entre la referencia y el candidato con test. Esto se explica con más detalle en el [taller de evaluación y lanzamiento de PII](07-pii-evaluation-release.md).
+Para un flujo de trabajo didáctico de ajuste, realiza una modificación claramente identificada que use un subconjunto de diagnóstico rápido para comprobar la ejecución y la validación para comparar candidatos. Mantén test inaccesible para las ejecuciones habituales de ajuste, fija la configuración elegida y solo entonces realiza una comparación final entre la referencia y el candidato con test. Esto se explica con más detalle en el [taller de evaluación y lanzamiento de PII](07-pii-evaluation-release.md).
 
 | Experimento | Mantener fijo | Cambiar deliberadamente | Elegir usando validación |
 |---|---|---|---|
@@ -545,7 +545,7 @@ Solo después de revisar esas decisiones se debe realizar una prueba previa de G
 ## 12. Comprueba lo que has entendido
 
 1. Con microbatch 1 y acumulación 8 en un solo worker, ¿cuántas presentaciones de ejemplos representan 80 actualizaciones? **Unas 640**, bajo los supuestos de ausencia de empaquetado y divisibilidad usados aquí.
-2. ¿«3.3B activos» implica que solo se necesitan 3.3B parámetros en memoria? **No.** Describe el cálculo disperso; los pesos totales y el estado de entrenamiento siguen siendo importantes.
+2. ¿«3.3B activados» implica que solo se necesitan 3.3B parámetros en memoria? **No.** Describe el cálculo disperso; los pesos totales y el estado de entrenamiento siguen siendo importantes.
 3. ¿Qué debe enseñar un documento negativo? **Una respuesta de extracción vacía válida que termine el turno del asistente**, no una secuencia de etiquetas totalmente ignoradas.
 4. ¿Se puede seleccionar el rango usando una puntuación de test después de cada ejecución? **No.** Selecciona usando validación, fija el candidato y usa el test bloqueado para la comparación final.
 5. ¿Una ida y vuelta exitosa demuestra que se eliminó la PII? **No.** Demuestra la reversibilidad de la ruta de reemplazo; la PII no detectada puede seguir intacta.

@@ -1,76 +1,74 @@
 # コンテナ技術
 
-> **対応バージョン**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+ **最終更新**: February 11, 2026
+> **対応バージョン**: 保守対象のLinux Docker／CRIリリース、Kubernetes CRI v1、Node.js 24のビルド例。**最終更新**: 2026年10月16日
 
-コンテナは、アプリケーションとその依存関係をまとめてパッケージ化し、さまざまな環境で一貫して実行できるようにする技術です。このドキュメントでは、コンテナの基本概念、動作の仕組み、Kubernetes との関係について説明します。
+アプリケーションと依存関係をまとめてパッケージ化し、さまざまな環境で同じように実行できるようにするのがコンテナ技術です。このドキュメントでは、コンテナの基本概念や動作、Kubernetesとの関係を説明します。
 
 ## 目次
 
-* [コンテナとは?](03-container-technology.md#what-is-a-container)
-* [コンテナ vs 仮想マシン](03-container-technology.md#container-vs-virtual-machine)
+* [コンテナとは](03-container-technology.md#what-is-a-container)
+* [コンテナと仮想マシンの違い](03-container-technology.md#container-vs-virtual-machine)
 * [コンテナの技術的基盤](03-container-technology.md#technical-foundation-of-containers)
-* [Container Runtime](03-container-technology.md#container-runtime)
-* [コンテナ Image](03-container-technology.md#container-images)
+* [コンテナランタイム](03-container-technology.md#container-runtime)
+* [コンテナイメージ](03-container-technology.md#container-images)
 * [Dockerfile](03-container-technology.md#dockerfile)
-* [コンテナ Networking](03-container-technology.md#container-networking)
-* [コンテナ Storage](03-container-technology.md#container-storage)
-* [コンテナ Security](03-container-technology.md#container-security)
-* [コンテナ Lifecycle Management](03-container-technology.md#container-lifecycle-management)
-* [Container Orchestration](03-container-technology.md#container-orchestration)
-* [AWS 上のコンテナ](03-container-technology.md#containers-on-aws)
+* [コンテナネットワーク](03-container-technology.md#container-networking)
+* [コンテナストレージ](03-container-technology.md#container-storage)
+* [コンテナセキュリティ](03-container-technology.md#container-security)
+* [コンテナのライフサイクル管理](03-container-technology.md#container-lifecycle-management)
+* [コンテナオーケストレーション](03-container-technology.md#container-orchestration)
+* [AWS上のコンテナ](03-container-technology.md#containers-on-aws)
 
-<span id="what-is-a-container"></span>
+> 以下のLinuxコマンドは、Linux上のDockerホストを前提としています。Docker Desktopではデーモンが仮想マシン上で動作するため、デスクトップOSからホストのPIDやファイルシステムのパスを直接確認できません。イメージとCPUアーキテクチャ、OS、カーネル機能との互換性も必要です。KataやFargateなど仮想マシンを使う環境は、ここで説明する基本的なプロセス分離モデルとは異なります。
 
-## コンテナとは?
+## コンテナとは {#what-is-a-container}
 
-コンテナは、アプリケーションの実行に必要なもの（コード、runtime、システムツール、システムライブラリ、設定）をすべて含む、標準化されたソフトウェア単位です。コンテナは、ホスト OS の kernel を共有しながら、分離された環境で実行されます。
+コンテナは、アプリケーションの実行に必要なもの（コード、ランタイム、システムツール、システムライブラリ、設定）を含む標準化されたソフトウェア単位です。ホストOSのカーネルを共有しながら、分離された環境で動作します。
 
 ### コンテナの主な特徴
 
-1. **可搬性**: 開発、テスト、本番環境をまたいで一貫した実行環境を提供します
-2. **軽量性**: 仮想マシンより少ないリソースを使用します
-3. **分離**: 他のコンテナやホストシステムから分離された実行環境を提供します
-4. **高速な起動と停止**: ミリ秒単位の素早い起動時間を実現します
-5. **スケーラビリティ**: 水平方向のスケーリングのために簡単に複製できます
-6. **バージョン管理**: image のバージョン管理を通じてアプリケーションのライフサイクルを管理します
+1. **可搬性**: 開発、テスト、本番環境で一貫した実行環境を提供する
+2. **軽量性**: 仮想マシンより少ないリソースで動作する
+3. **分離性**: 他のコンテナやホストシステムから隔離された実行環境を提供する
+4. **起動と停止の速さ**: 多くの場合、起動は速い。イメージの取得とアプリケーションの初期化にかかる時間が準備完了までの時間を左右する
+5. **スケーラビリティ**: 複製しやすく、水平スケーリングに適している
+6. **バージョン管理**: イメージのバージョンを使ってアプリケーションのライフサイクルを管理する
 
 ### コンテナ技術の歴史
 
-* **2000 年代初期**: Linux VServer や OpenVZ などの初期コンテナ技術が登場
-* **2007**: cgroups (Control Groups) が Linux kernel に統合
-* **2008**: LXC (Linux Containers) プロジェクトが開始
-* **2013**: Docker のリリースによりコンテナ技術が普及
-* **2015**: Open Container Initiative (OCI) が設立され、コンテナの標準化が進む
-* **2017**: containerd が CNCF プロジェクトに寄贈
+* **2000年代初頭**: Linux VServerやOpenVZなどの初期のコンテナ技術が登場
+* **2008年**: Linux 2.6.24でcgroupsの初期実装がリリース
+* **2008年**: LXC（Linux Containers）プロジェクトが開始
+* **2013年**: Dockerのリリースによってコンテナ技術が広く普及
+* **2015年**: Open Container Initiative（OCI）が設立され、コンテナを標準化
+* **2017年**: containerdがCNCFプロジェクトに寄贈
 
-<span id="container-vs-virtual-machine"></span>
+## コンテナと仮想マシンの違い {#container-vs-virtual-machine}
 
-## コンテナ vs 仮想マシン
-
-### 仮想マシンアーキテクチャ vs コンテナアーキテクチャ
+### 仮想マシンとコンテナのアーキテクチャ
 
 ### 主な違い
 
-| 特性                | コンテナ                         | 仮想マシン                                                |
-| ------------------- | -------------------------------- | --------------------------------------------------------- |
-| サイズ              | 通常は数十 MB                    | 通常は数 GB                                               |
-| 起動時間            | 数秒以下                         | 数分                                                      |
-| 分離レベル          | プロセスレベルの分離             | ハードウェアレベルの分離                                  |
-| OS                  | ホスト OS kernel を共有          | 各 VM に完全な OS が必要                                  |
-| パフォーマンス      | ほぼネイティブ                   | 一定のオーバーヘッド                                      |
-| セキュリティ        | 比較的低い（kernel を共有）      | 比較的高い（完全な分離）                                  |
-| リソース効率        | 高い                             | 中程度                                                    |
-| ユースケース        | Microservices、CI/CD、dev/test   | Legacy apps、多様な OS 要件、高いセキュリティ要件         |
+これはアーキテクチャの比較であり、性能や起動時間を測定したベンチマークではありません。結果はイメージの大きさ、初期化処理、仮想マシンの復元方式によって変わります。
 
-<span id="technical-foundation-of-containers"></span>
+| 特性 | コンテナ | 仮想マシン |
+| --- | --- | --- |
+| サイズ | アプリケーションとユーザー空間のレイヤー。環境によって異なる | ゲストOSとアプリケーション。環境によって異なる |
+| 起動時間 | イメージがローカルにあれば、多くの場合速い | 起動または復元方式による |
+| 分離レベル | プロセス単位の分離 | ハードウェア単位の分離 |
+| OS | ホストOSのカーネルを共有する | 各VMに完全なOSが必要 |
+| 性能 | ほぼネイティブ | 何らかのオーバーヘッドがある |
+| セキュリティ | カーネルを共有するため、強化策が必要 | ハイパーバイザーによる境界があるが、強化策は引き続き必要 |
+| リソース効率 | 高い | 中程度 |
+| 用途 | マイクロサービス、CI/CD、開発／テスト | レガシーアプリ、多様なOS要件、高いセキュリティ要件 |
 
-## コンテナの技術的基盤
+## コンテナの技術的基盤 {#technical-foundation-of-containers}
 
-コンテナは、複数の Linux kernel 機能を使用して実装されています。これらの技術は 01-linux-basics.md で詳しく扱っています。ここでは、それらがコンテナとどのように関係するかに焦点を当てます。
+コンテナは複数のLinuxカーネル機能を使って実装されています。これらの技術は`01-linux-basics.md`で詳しく説明しています。ここではコンテナとの関係に注目します。
 
-### Namespaces による分離
+### Namespacesによる分離
 
-コンテナは Linux namespaces を使用してプロセスを分離します。各コンテナは独自の namespaces セットを持ち、独立した実行環境を提供します。
+コンテナはLinux Namespacesを使ってプロセスを分離します。Namespaceの共有方法は設定できます。たとえば、同じKubernetes Pod内のコンテナはネットワークNamespaceを共有します。
 
 ```bash
 # Check container namespaces
@@ -84,18 +82,18 @@ docker exec <container-id> ps aux
 ps aux | grep <process-name>
 ```
 
-**コンテナで使用される Namespaces**:
+**コンテナで使われるNamespace**:
 
-* **PID**: コンテナは独自のプロセスツリーを持ちます（PID 1 から開始）
-* **Network**: 独立したネットワークスタック（IP アドレス、ルーティングテーブル、ポート）
-* **Mount**: 独立したファイルシステムビュー
-* **UTS**: 独立した hostname
-* **IPC**: 独立したプロセス間通信空間
-* **User**: 独立した user ID mapping（任意）
+* **PID**: コンテナごとのプロセスツリー（PID 1から開始）
+* **Network**: 独立したネットワークスタック（IPアドレス、ルーティングテーブル、ポート）
+* **Mount**: 独立したファイルシステムのビュー
+* **UTS**: 独立したホスト名
+* **IPC**: 独立したプロセス間通信領域
+* **User**: 独立したユーザーIDマッピング（任意）
 
-### cgroups によるリソース制限
+### cgroupsによるリソース制限
 
-コンテナは cgroups を使用してリソース使用量を制限し、監視します。
+コンテナはcgroupsを使って、リソース使用量を制限・監視します。
 
 ```bash
 # Run container with CPU limit
@@ -107,42 +105,49 @@ docker stats <container-id>
 # Check container cgroup settings
 docker inspect <container-id> | grep -A 20 "Cgroup"
 
-# Check container cgroup from host
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/cpu.max
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
+# On a Linux cgroup v2 host, inspect a running container's actual path.
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' <container-id>)
+if [ "$CONTAINER_PID" -gt 0 ]; then
+  CGROUP_PATH=$(awk -F: '$1 == "0" {print $3}' "/proc/$CONTAINER_PID/cgroup")
+  cat "/sys/fs/cgroup$CGROUP_PATH/cpu.max"
+  cat "/sys/fs/cgroup$CGROUP_PATH/memory.max"
+fi
 ```
 
-**コンテナで使用される cgroup リソース制御**:
+**コンテナで使われるcgroupのリソース制御**:
 
-* **CPU**: CPU 時間の制限と CPU core の割り当て
-* **Memory**: メモリ使用量の制限と OOM 動作の制御
-* **Block I/O**: ディスク I/O 帯域幅の制限
-* **Network**: ネットワーク帯域幅の制限（tc と組み合わせて使用）
-* **PIDs**: コンテナ内のプロセス数制限
+* **CPU**: CPU時間の制限、CPUコアの割り当て
+* **Memory**: メモリ使用量の制限、OOM動作の制御
+* **Block I/O**: ディスクI/O帯域幅の制限
+* **Network**: tc／eBPFと連携したトラフィック分類
+* **PIDs**: コンテナ内のプロセス数の上限
 
-### OverlayFS による Layer 管理
+### OverlayFSによるレイヤー管理
 
-コンテナ image は OverlayFS を使用して、複数の layer を効率的に管理します。
+新規にインストールしたDocker Engine 29.0以降は、containerdのイメージストアとスナップショッターを既定で使います。アップグレード環境では従来のoverlay2が残っている場合があるため、`docker info`で確認してください。`GraphDriver.Data`のパスは、すべてのインストール環境で取得できるわけではありません。
+
+OCIイメージでは、ストレージ実装と切り離してファイルシステムのレイヤーを記述します。OverlayFSはLinuxでよく使われるバックエンドですが、ランタイムによっては別のストレージドライバーやスナップショッターを使います。
 
 ```bash
 # Check image layers
 docker history <image-name>
 
 # Check container file system layers
-docker inspect <container-id> | grep -A 10 "GraphDriver"
+docker info --format '{{.Driver}} {{json .DriverStatus}}'
+docker image inspect <image-name> --format '{{json .RootFS.Layers}}'
 
 # Check OverlayFS mount information
 mount | grep overlay
 ```
 
-**OverlayFS の構造**:
+**OverlayFSの構造**:
 
-* **LowerDir**: 読み取り専用の image layers（下位 layer → 上位 layer）
-* **UpperDir**: 読み書き可能な container layer
-* **WorkDir**: OverlayFS の作業ディレクトリ
+* **LowerDir**: 読み取り専用のイメージレイヤー（下位レイヤーから上位レイヤー）
+* **UpperDir**: 読み書き可能なコンテナレイヤー
+* **WorkDir**: OverlayFSの作業ディレクトリ
 * **MergedDir**: 統合ビュー（コンテナから見えるファイルシステム）
 
-### Lab: コンテナの技術的基盤を理解する
+### ラボ: コンテナの技術的基盤を理解する
 
 ```bash
 # 1. Run a simple container
@@ -166,174 +171,158 @@ docker stop test-container
 docker rm test-container
 ```
 
-## Container Runtime
+## コンテナランタイム {#container-runtime}
 
-Container runtime は、コンテナのライフサイクルを管理するソフトウェアです。コンテナ image を実行し、コンテナのリソース使用量を制限し、networking と storage を設定します。
+コンテナランタイムは、コンテナのライフサイクルを管理するソフトウェアです。コンテナイメージを実行し、コンテナのリソース使用量を制限し、ネットワークとストレージを構成します。
 
-### Container Runtime の階層
+### コンテナランタイムの階層
 
-1. **Low-level Runtime (OCI Compatible)**
-   * **runc**: Docker のデフォルト runtime、OCI 標準実装
-   * **crun**: C で書かれた軽量な OCI runtime
-   * **kata-containers**: ハードウェア仮想化を使用したセキュリティ強化 runtime
-   * **gVisor**: user space で kernel 機能をエミュレートするセキュリティ runtime
-2. **High-level Runtime**
-   * **containerd**: Docker から分離された業界標準の container runtime
-   * **CRI-O**: Kubernetes 向けに特化して設計された軽量 runtime
-   * **Docker Engine**: 最も広く利用されているコンテナプラットフォーム
+1. **低レベルランタイム（OCI互換）**
+   * **runc**: Dockerの既定ランタイムで、OCI標準を実装する
+   * **crun**: Cで書かれた軽量なOCIランタイム
+   * **kata-containers**: ハードウェア仮想化を使うセキュリティ強化ランタイム
+   * **gVisor**: ユーザー空間でカーネル機能をエミュレートするセキュリティランタイム
+2. **高レベルランタイム**
+   * **containerd**: Dockerから分離された業界標準のコンテナランタイム
+   * **CRI-O**: Kubernetes向けに設計された軽量ランタイム
+   * **Docker Engine**: 広く使われているコンテナプラットフォーム
 
-### Kubernetes Container Runtime Interface (CRI)
+### Kubernetes Container Runtime Interface（CRI）
 
-Kubernetes は CRI (Container Runtime Interface) を通じて、さまざまな container runtime と統合します。CRI は、Kubernetes と container runtime の間に標準化されたインターフェースを提供します。
+KubernetesはCRI（Container Runtime Interface）を通じて、さまざまなコンテナランタイムと連携します。CRIはKubernetesとコンテナランタイムの間に標準インターフェイスを提供します。
 
-<span id="container-images"></span>
+Kubernetes 1.26以降ではCRI v1が必要です。サポート対象のcontainerdまたはCRI-Oを使い、cgroupドライバーをkubeletに合わせてください。Docker Engine自体はCRIを実装しておらず、組み込みのdockershimは1.24で削除されました。Docker Engineを使う場合はcri-dockerdなどのCRIアダプターが別途必要です。DockerでビルドしたOCIイメージは引き続き使用できます。CRIはkubeletとランタイム間のAPI契約であり、必ずしも個別にデプロイする中間サービスではありません。
 
-## コンテナ Image
+## コンテナイメージ {#container-images}
 
-コンテナ image は、アプリケーションとその依存関係を含む immutable なテンプレートです。image は複数の layer で構成され、それぞれがファイルシステムの変更を表します。
+コンテナイメージは、アプリケーションと依存関係を含む不変のテンプレートです。複数のレイヤーから構成され、それぞれがファイルシステムの変更を表します。
 
-### Image Layers
+### イメージレイヤー
 
-コンテナ image は、複数の layer を積み重ねて構成されます。各 layer は、前の layer に対する変更を表します。この layer 化アプローチにより、image の共有とキャッシュが効率的になります。
+コンテナイメージは複数のレイヤーを積み重ねて構成します。それぞれのレイヤーは前のレイヤーからの変更を表します。この仕組みにより、イメージを効率よく共有・キャッシュできます。
 
-```mermaid
-flowchart TB
-    app["Application Layer<br/>Application code"]
-    dep["Dependencies Layer<br/>npm packages, pip packages, etc."]
-    runtime["Runtime Layer<br/>Node.js, Python, etc."]
-    os["OS Layer<br/>Ubuntu, Alpine, etc."]
+![OSレイヤーの上にランタイム、依存関係、アプリケーションのレイヤーが積み重なるコンテナイメージの図。各レイヤーはその下のレイヤーからの変更を記録するため、イメージを効率よく共有・キャッシュできる。](../.gitbook/assets/en-basics-03-container-technology-0.png)
 
-    app --> dep --> runtime --> os
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-03-container-technology-0.html)
 
-    style app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    style dep fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+### イメージレジストリ
 
-```
+コンテナイメージはレジストリに保存し、共有します。主なレジストリは次のとおりです。
 
-### Image Registries
+* **Docker Hub**: 最大規模の公開レジストリ
+* **Amazon ECR**: AWSのコンテナレジストリサービス
+* **Google Artifact Registry**: 現行のGoogle Cloudレジストリ。Container Registryは2025年に終了しましたが、Artifact Registryをバックエンドとする`gcr.io`リポジトリは引き続きサポートされます
+* **Azure Container Registry**: Microsoft Azureのレジストリ
+* **GitHub Container Registry**: GitHubのコンテナレジストリ
+* **Harbor**: エンタープライズ向けのオープンソースレジストリ
 
-コンテナ image は registry に保存され、共有されます。主な registry には次のものがあります。
+### イメージのタグとダイジェスト
 
-* **Docker Hub**: 最大の public registry
-* **Amazon ECR**: AWS の container registry service
-* **Google Container Registry**: Google Cloud の registry
-* **Azure Container Registry**: Microsoft Azure の registry
-* **GitHub Container Registry**: GitHub の container registry
-* **Harbor**: オープンソースのエンタープライズグレード registry
-
-### Image Tags and Digests
-
-* **Tag**: image の特定バージョンを識別する、人間が読める名前（例: `nginx:1.21.0`）
-* **Digest**: image contents の SHA256 hash で、image の一意な識別子（例: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`）
+* **タグ**: 人が読める可変の参照名。レジストリで不変性を強制しない限り、別のイメージに付け替えられます（例: `nginx:1.30.6`）
+* **ダイジェスト**: イメージマニフェストまたはマルチプラットフォームインデックスのコンテンツダイジェスト（通常はSHA256）。設定やレイヤーのダイジェストを参照します（例: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`）
 
 ## Dockerfile
 
-Dockerfile は、コンテナ image を build するための instructions を含むテキストファイルです。各 instruction は image に新しい layer を追加します。
+Dockerfileは、コンテナイメージをビルドする命令を記述したテキストファイルです。ファイルシステムを変更する命令はレイヤーを作成できますが、ENVやCMDなどメタデータだけを変更する命令はファイルシステム差分を追加しません。
 
-### 主要な Dockerfile Instructions
+### 主なDockerfile命令
 
 ```dockerfile
-# Specify base image
-FROM node:14-alpine
-
-# Set working directory
+FROM node:24-alpine
 WORKDIR /app
-
-# Set environment variables
 ENV NODE_ENV=production
-
-# Copy files
-COPY package*.json ./
-COPY . .
-
-# Run commands
-RUN npm install --production
-
-# Expose port
+# Requires a committed package-lock.json matching package.json.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --chown=node:node . .
+RUN mkdir -p /app/data && chown node:node /app/data
+USER node
 EXPOSE 3000
-
-# Define volume
 VOLUME /app/data
-
-# Command to run when container starts
 CMD ["node", "server.js"]
 ```
 
-### Multi-stage Builds
+Node.js 14はサポートが終了しています。以下の例ではサポート対象のNode.js 24系を使います。ネイティブモジュールとAlpineのmuslとの互換性を確認してください。ホストの`node_modules`や認証情報をイメージにコピーしないよう、`.dockerignore`を用意します。EXPOSEはメタデータであり、ポートを公開しません。ポート公開には`docker run -p`またはオーケストレーターの設定が必要です。
 
-Multi-stage builds は、複数の build stage を使用して最終 image size を削減します。
+```text
+# .dockerignore
+node_modules
+.git
+.env
+.env.*
+npm-debug.log
+```
+
+### マルチステージビルド
+
+マルチステージビルドでは複数のビルドステージを使い、最終イメージを小さくします。
 
 ```dockerfile
-# Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
+# This example assumes a static build written to dist/.
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Image 最適化テクニック
+### イメージの最適化
 
-1. **適切な base image を選択する**: Alpine のような軽量 image を使用します
-2. **Multi-stage builds を使用する**: build tools と中間ファイルを除外します
-3. **Layer を最小化する**: RUN、COPY、その他の commands をまとめます
-4. **不要なファイルを除外する**: .dockerignore ファイルを使用します
-5. **Cache を活用する**: 頻繁に変更される layer を後ろに配置します
+1. **適切なベースイメージを選ぶ**: Alpineなどの軽量イメージを使用する
+2. **マルチステージビルドを使う**: ビルドツールや中間ファイルを最終イメージから除外する
+3. **レイヤーの内容とキャッシュを最適化する**: パッケージのインストールと後片付けを1つのRUNにまとめる。レイヤー数を減らすだけでイメージが小さくなるとは限らない
+4. **不要なファイルを除外する**: `.dockerignore`を使う
+5. **キャッシュを活用する**: 変更頻度の高いレイヤーを後ろに置く
 
-<span id="container-networking"></span>
+## コンテナネットワーク {#container-networking}
 
-## コンテナ Networking
+コンテナネットワークを使うと、コンテナ同士、およびコンテナと外部との通信ができます。
 
-コンテナ networking は、コンテナ間、およびコンテナと外部世界との通信を可能にします。
+### ネットワークドライバー
 
-### Network Drivers
+Dockerには複数のネットワークドライバーがあります。
 
-Docker はさまざまな network drivers を提供します。
+1. **bridge**: 既定のネットワーク。同一ホスト上のコンテナ間通信に使う
+2. **host**: ホストのネットワークNamespaceを共有する。他のコンテナ分離機能は引き続き適用される
+3. **overlay**: 複数ホストにまたがるコンテナ間通信に使う
+4. **macvlan**: コンテナにMACアドレスを割り当て、物理ネットワークデバイスのように見せる
+5. **none**: ループバックだけを残す
 
-1. **bridge**: デフォルトの network driver。同じホスト上のコンテナ間通信に使用します
-2. **host**: ホスト network を直接使用し、分離はありません
-3. **overlay**: 複数ホストをまたぐコンテナ通信に使用します
-4. **macvlan**: コンテナに MAC address を割り当て、物理ネットワークデバイスのように見せます
-5. **none**: すべての networking を無効にします
+### ポートマッピング
 
-### Port Mapping
-
-外部からアクセスできるように、コンテナ内部の port をホスト port にマッピングします。
+外部からアクセスできるように、コンテナ内のポートをホストのポートに割り当てます。
 
 ```bash
 # Map host port 8080 to container port 80
 docker run -p 8080:80 nginx
 ```
 
-### Container-to-Container Communication
+ポート公開では、既定でホスト上のすべてのアドレスにバインドします。ローカルだけで使うラボでは`-p 127.0.0.1:8080:80`を指定してください。
 
-1. **同じ network**: 同じ network 上のコンテナは、コンテナ名で通信できます
-2. **Links**: 旧来の方式で、コンテナ間に直接 link を設定します
-3. **External network**: ホスト port を通じて通信します
+### コンテナ間通信
 
-<span id="container-storage"></span>
+1. **同じネットワーク**: ユーザー定義bridge上のコンテナは互いの名前を解決できる。既定のbridgeには自動名前解決用DNSがない
+2. **links**: コンテナ間を直接つなぐ旧式の方式
+3. **外部ネットワーク**: ホストポートを通じて通信する
 
-## コンテナ Storage
+## コンテナストレージ {#container-storage}
 
-コンテナはデフォルトでは stateless ですが、永続データ保存にはいくつかの選択肢があります。
+Dockerコンテナの書き込み可能レイヤーは、停止・再起動後も残りますが、コンテナ自体を削除すると失われます。永続化するデータはvolumeなどの外部ストレージに保存してください。
 
-### Storage Types
+### ストレージの種類
 
-1. **Ephemeral storage**: コンテナ内部のファイルシステムで、コンテナ削除時にデータが失われます
-2. **Volumes**: Docker が管理するホストファイルシステム領域
-3. **Bind mounts**: 特定のホスト path をコンテナに mount します
-4. **tmpfs mounts**: データを memory のみに保存し、高い I/O performance が必要な場合に使用します
+1. **一時ストレージ**: コンテナ内部のファイルシステム。コンテナを削除するとデータも失われる
+2. **volume**: Dockerが管理するホストファイルシステム領域
+3. **bind mount**: ホスト上の指定パスをコンテナにマウントする
+4. **tmpfs mount**: メモリベースの一時ストレージ。ページがディスクにスワップされる場合がある
 
-### Volume 使用例
+### volumeの使用例
 
 ```bash
 # Create volume
@@ -349,57 +338,54 @@ docker run -v /host/path:/container/path nginx
 docker run -v /host/path:/container/path:ro nginx
 ```
 
-### Data Sharing Patterns
+### データ共有パターン
 
-1. **Volume sharing**: 複数のコンテナが同じ volume を使用します
-2. **Data volume container**: データのみを含むコンテナを作成し、それを共有します
-3. **External storage integration**: AWS EBS、NFS などの外部 storage system を使用します
+1. **volume共有**: 複数のコンテナが同じvolumeを使う
+2. **データ用コンテナ**: データだけを含むコンテナを作成し、共有する
+3. **外部ストレージとの統合**: AWS EBSやNFSなどの外部ストレージシステムを使う
 
-<span id="container-security"></span>
+## コンテナセキュリティ {#container-security}
 
-## コンテナ Security
+コンテナのセキュリティは、イメージ、コンテナランタイム、ホストシステムなど複数の層で検討します。
 
-コンテナ security は、image、container runtime、host system など複数の layer で考慮する必要があります。
+### イメージのセキュリティ
 
-### Image Security
+1. **脆弱性スキャン**: TrivyやClairなどでイメージの脆弱性を調べる
+2. **信頼できるベースイメージ**: 公式または検証済みのイメージを使う
+3. **最小権限の原則**: 必要なパッケージと権限だけを含める
+4. **イメージ署名**: Cosignなど、保守されているイメージ署名の仕組みを使う。Docker Content Trustは廃止予定で、DockerのNotary v1サービスは2026年12月8日に終了予定
 
-1. **Vulnerability scanning**: Trivy、Clair などの tools で image の脆弱性をスキャンします
-2. **Trusted base images**: 公式または検証済み image を使用します
-3. **Principle of least privilege**: 必要な packages と permissions のみを含めます
-4. **Image signing**: Docker Content Trust または Cosign で image に署名し、検証します
+### ランタイムのセキュリティ
 
-### Runtime Security
+1. **権限の制限**: root以外のユーザーでコンテナを実行する
+2. **Capabilitiesの制限**: 必要なLinux capabilityだけを付与する
+3. **seccompプロファイル**: システムコールを制限する
+4. **AppArmor／SELinux**: 強制アクセス制御を適用する
+5. **読み取り専用ファイルシステム**: 可能な場合はファイルシステムを読み取り専用でマウントする
 
-1. **Privilege restriction**: コンテナを non-root user として実行します
-2. **Capabilities restriction**: 必要な Linux capabilities のみを付与します
-3. **seccomp profiles**: system calls を制限します
-4. **AppArmor/SELinux**: mandatory access controls を適用します
-5. **Read-only file system**: 可能な場合はファイルシステムを read-only として mount します
+### セキュリティのベストプラクティス
 
-### Security Best Practices
+1. **定期更新**: コンテナイメージとホストシステムを定期的に更新する
+2. **ネットワーク分離**: 適切なネットワークポリシーでコンテナ間通信を制限する
+3. **シークレット管理**: プラットフォームのシークレット機能か外部シークレットマネージャーを使う。Docker Swarmのシークレットはサービス向けで、単独の`docker run`コンテナには適用されない。Composeファイルのシークレットは保証範囲が異なる
+4. **リソース上限**: CPU、メモリなどの使用量を制限する
+5. **監視とログ**: コンテナの動作を監視し、ログを一元管理する
 
-1. **Regular updates**: コンテナ image と host system を定期的に更新します
-2. **Network isolation**: 適切な network policies でコンテナ通信を制限します
-3. **Secret management**: environment variables の代わりに Docker Secrets や外部 secret management tools を使用します
-4. **Resource limits**: CPU、memory、その他の resource usage を制限します
-5. **Monitoring and logging**: コンテナ activity を監視し、logs を一元化します
+## コンテナのライフサイクル管理 {#container-lifecycle-management}
 
-<span id="container-lifecycle-management"></span>
+コンテナのライフサイクル全体を理解することは、効果的な運用に欠かせません。
 
-## コンテナ Lifecycle Management
+### コンテナの状態
 
-完全なコンテナ lifecycle を理解することは、効果的なコンテナ運用に不可欠です。
+コンテナには次のような状態があります。
 
-### Container States
-
-コンテナにはいくつかの状態があります。
-
-* **Created**: コンテナは作成済みですが、まだ開始されていません
-* **Running**: コンテナは実行中です
-* **Paused**: コンテナ内のすべてのプロセスが一時停止しています
-* **Restarting**: コンテナは再起動中です
-* **Exited**: コンテナは終了しています
-* **Dead**: コンテナ daemon が削除を試みましたが失敗しました
+* **Created**: 作成済みだが、まだ開始していない
+* **Running**: 実行中
+* **Paused**: freezer cgroupによってLinuxプロセスが凍結されている
+* **Restarting**: 再起動中
+* **Exited**: 終了済み
+* **Removing**: 削除処理中
+* **Dead**: 一部削除されたままの状態。再起動できず、後片付けが必要
 
 ```bash
 # Check container status
@@ -417,7 +403,7 @@ docker stop <container-id>  # Transition to Exited state
 docker rm <container-id>  # Remove container
 ```
 
-### Creating and Running Containers
+### コンテナの作成と実行
 
 ```bash
 # Create container only (don't start)
@@ -448,7 +434,7 @@ docker run -p 8080:80 nginx
 docker run -v /host/path:/container/path nginx
 ```
 
-### Controlling Containers
+### コンテナの制御
 
 ```bash
 # List running containers
@@ -457,7 +443,7 @@ docker ps
 # List all containers (including stopped)
 docker ps -a
 
-# Stop container (SIGTERM then SIGKILL)
+# Stop with configured signal (default SIGTERM), then SIGKILL after timeout
 docker stop <container-id>
 
 # Force kill container (SIGKILL)
@@ -481,7 +467,7 @@ docker cp <container-id>:/path/to/file /local/path
 docker cp /local/path <container-id>:/path/to/file
 ```
 
-### Container Logging and Monitoring
+### コンテナのログと監視
 
 ```bash
 # View container logs
@@ -512,16 +498,16 @@ docker top <container-id>
 docker inspect <container-id>
 ```
 
-### Cleaning Up Containers
+### コンテナのクリーンアップ
 
 ```bash
 # Remove all stopped containers
 docker container prune
 
-# Remove all unused resources (containers, images, networks, volumes)
+# Remove stopped containers, unused networks, dangling images and build cache; no volumes
 docker system prune
 
-# Remove all resources including volumes
+# Additionally prune unused anonymous volumes; running resources are not removed
 docker system prune --volumes
 
 # Check disk usage
@@ -530,13 +516,13 @@ docker system df
 # Remove image
 docker rmi <image-id>
 
-# Remove unused images
+# Remove dangling images; -a includes all unused images
 docker image prune
 
 # Remove volume
 docker volume rm <volume-name>
 
-# Remove unused volumes
+# Remove unused anonymous volumes; --all includes unused named volumes
 docker volume prune
 
 # Remove network
@@ -546,40 +532,40 @@ docker network rm <network-name>
 docker network prune
 ```
 
-### Health Checks
+### ヘルスチェック
 
-自動復旧のために、コンテナの health status を監視します。
+HEALTHCHECKはDockerのヘルス状態を記録します。単独Dockerの再起動ポリシーが反応するのはプロセスの終了であり、ヘルス状態だけでは再起動しません。KubernetesはDockerfileのHEALTHCHECKを無視し、liveness／readiness／startup probeを使います。
 
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Define health check in Dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1
 ```
 
 ```bash
 # Define health check at runtime
 docker run -d \
-  --health-cmd="curl -f http://localhost/ || exit 1" \
+  --health-cmd="wget -q -O /dev/null http://127.0.0.1/ || exit 1" \
   --health-interval=30s \
   --health-timeout=3s \
   --health-retries=3 \
-  nginx
+  nginx:1.30.6-alpine
 
 # Check health check status
 docker inspect <container-id> | jq '.[0].State.Health'
 ```
 
-### Restart Policies
+### 再起動ポリシー
 
-コンテナ終了時に自動的に再起動するよう設定します。
+コンテナの終了時に自動で再起動するよう構成します。
 
 ```bash
 # Restart policy options
 # - no: Don't restart (default)
 # - on-failure: Restart only on failure
-# - always: Always restart
+# - always: Restart after exit; manual stop suppresses it until daemon restart or explicit start
 # - unless-stopped: Always restart unless explicitly stopped
 
 # Restart on failure (max 3 times)
@@ -595,7 +581,9 @@ docker run -d --restart=unless-stopped nginx
 docker update --restart=always <container-id>
 ```
 
-### Debugging Containers
+### コンテナのデバッグ
+
+`bash`、`ip`、`netstat`、`ps`はイメージ内にインストールされている必要があります。最小構成のイメージでは、ホスト側の`docker inspect`／`docker top`か、承認済みのデバッグ用イメージを使ってください。`env`や`inspect`の出力にはシークレットが含まれる場合があります。共有ログへ貼り付けないでください。
 
 ```bash
 # Explore container internal file system
@@ -621,109 +609,134 @@ docker events --filter container=<container-id>
 docker diff <container-id>
 ```
 
-## Container Orchestration
+## コンテナオーケストレーション {#container-orchestration}
 
-Container orchestration は、複数のコンテナを管理し調整するプロセスです。主な機能には、deployment management、scaling、networking、service discovery があります。
+コンテナオーケストレーションとは、複数のコンテナを管理・調整することです。主な機能には、デプロイ管理、スケーリング、ネットワーク、サービスディスカバリーがあります。
 
-### 主な Orchestration Tools
+### 主なオーケストレーションツール
 
-1. **Kubernetes**: 最も広く使用されている container orchestration platform
-2. **Docker Swarm**: Docker に組み込まれた orchestration tool。設定がシンプルです
-3. **Amazon ECS**: AWS の container orchestration service
-4. **HashiCorp Nomad**: コンテナ workload と非コンテナ workload の両方をサポートします
+1. **Kubernetes**: 広く使われているコンテナオーケストレーションプラットフォーム
+2. **Docker Swarm**: Docker組み込みのオーケストレーション機能で、設定が簡単
+3. **Amazon ECS**: AWSのコンテナオーケストレーションサービス
+4. **HashiCorp Nomad**: コンテナと非コンテナのワークロードをどちらもサポート
 
-### Orchestration の主な機能
+### オーケストレーションの主な機能
 
-1. **Automated deployment and rollback**: 宣言的な設定によるアプリケーション deployment management
-2. **Service discovery and load balancing**: コンテナ通信と負荷分散
-3. **Auto-scaling**: 負荷に基づいてコンテナ数を調整します
-4. **Self-healing**: 失敗したコンテナを自動的に再起動します
-5. **Configuration management**: アプリケーション configuration と secret management
-6. **Storage orchestration**: persistent storage management
-7. **Batch execution**: one-time job と cron job の実行
+1. **デプロイとロールバックの自動化**: 宣言的な設定によるアプリケーションのデプロイ管理
+2. **サービスディスカバリーとロードバランシング**: コンテナ間通信と負荷分散
+3. **オートスケーリング**: 負荷に応じてコンテナ数を調整する
+4. **自己修復**: 失敗したコンテナを自動で再起動する
+5. **設定管理**: アプリケーション設定とシークレットを管理する
+6. **ストレージオーケストレーション**: 永続ストレージを管理する
+7. **バッチ実行**: 単発ジョブとcronジョブを実行する
 
-<span id="containers-on-aws"></span>
+## AWS上のコンテナ {#containers-on-aws}
 
-## AWS 上のコンテナ
+AWSはコンテナワークロード向けに複数のサービスを提供しています。
 
-AWS はコンテナ workload 向けにさまざまなサービスを提供しています。
+### Amazon ECS（Elastic Container Service）
 
-### Amazon ECS (Elastic Container Service)
-
-EC2 instances または AWS Fargate 上でコンテナを実行できる、AWS 独自の container orchestration service です。
+EC2インスタンスまたはAWS Fargateでコンテナを実行できる、AWS独自のオーケストレーションサービスです。
 
 **主な機能**:
 
-* AWS services との緊密な統合
-* Serverless container execution (Fargate)
+* AWSサービスとの緊密な統合
+* サーバーレスのコンテナ実行（Fargate）
 * シンプルな設定と管理
-* Auto-scaling と load balancing
+* オートスケーリングとロードバランシング
 
-### Amazon EKS (Elastic Kubernetes Service)
+### Amazon EKS（Elastic Kubernetes Service）
 
-標準の Kubernetes APIs を使用して AWS infrastructure 上で Kubernetes を実行できる、AWS-managed Kubernetes service です。
+標準のKubernetes APIを使ってAWS基盤上でKubernetesを実行する、AWS管理のKubernetesサービスです。
 
 **主な機能**:
 
-* Managed Kubernetes control plane
-* 複数の availability zones にまたがる高可用性
-* AWS services との統合
-* EC2 と Fargate のサポート
+* 管理されたKubernetesコントロールプレーン
+* 複数のアベイラビリティゾーンでの高可用性
+* AWSサービスとの統合
+* EC2とFargateへの対応
 
 ### AWS Fargate
 
-server を管理せずにコンテナを実行できる、serverless container execution environment です。
+サーバーを管理せずにコンテナを実行できるサーバーレス環境です。
 
 **主な機能**:
 
-* server management が不要
-* コンテナ単位の課金
-* ECS および EKS との統合
-* Security isolation
+* サーバー管理が不要
+* 料金は要求したタスクリソース（ECS）またはPodリソース（EKS）に基づく。アプリケーション内のコンテナごとに別料金がかかるわけではない
+* ECSおよびEKSとの統合
+* セキュリティ分離
 
-### Amazon ECR (Elastic Container Registry)
+### Amazon ECR（Elastic Container Registry）
 
-AWS の managed container image registry service です。
+AWSが提供するマネージドコンテナイメージレジストリです。
 
 **主な機能**:
 
-* Image vulnerability scanning
-* IAM との統合
-* Image lifecycle management
+* イメージの脆弱性スキャン
+* IAMとの統合
+* イメージのライフサイクル管理
 * 高可用性とスケーラビリティ
 
 ## 用語集
 
-| 用語                  | 説明                                                                                                                          |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Container**         | アプリケーションとその依存関係をパッケージ化し、どこでも一貫して実行できるようにする標準化されたソフトウェア単位です。       |
-| **Image**             | コンテナを作成するために使用される読み取り専用テンプレートで、アプリケーションコード、ライブラリ、依存関係、tools、その他のファイルを含みます。 |
-| **Dockerfile**        | コンテナ image を build するための instructions を含むテキストファイルです。                                                  |
-| **Registry**          | コンテナ image を保存し配布する repository です。（例: Docker Hub、Amazon ECR）                                                |
-| **Container Runtime** | コンテナを実行するソフトウェアです。（例: Docker、containerd、CRI-O）                                                         |
-| **Namespace**         | プロセスを分離し、system の他の部分を見えないようにする Linux kernel 機能です。                                                |
-| **cgroups**           | process groups の resource usage（CPU、memory など）を制限し監視する Linux kernel 機能です。                                  |
-| **Layer**             | コンテナ image は複数の layer で構成され、それぞれが Dockerfile instruction に対応します。                                     |
-| **Volume**            | コンテナ data を永続的に保存するための仕組みです。                                                                            |
-| **Orchestration**     | 複数コンテナの deployment、management、scaling、networking を自動化するプロセスです。                                          |
-| **ECS**               | Amazon Elastic Container Service。AWS の container orchestration service です。                                                |
-| **ECR**               | Amazon Elastic Container Registry。AWS の container image registry service です。                                              |
-| **Fargate**           | infrastructure management なしでコンテナを実行する、AWS の serverless container execution environment です。                   |
+| 用語 | 説明 |
+| --- | --- |
+| **Container** | アプリケーションと依存関係をパッケージ化し、どこでも一貫して実行できる標準化されたソフトウェア単位 |
+| **Image** | コンテナ作成に使う読み取り専用テンプレート。アプリケーションコード、ライブラリ、依存関係、ツール、その他のファイルを含む |
+| **Dockerfile** | コンテナイメージのビルド命令を記述したテキストファイル |
+| **Registry** | コンテナイメージを保存・配布するリポジトリ（例: Docker Hub、Amazon ECR） |
+| **Container Runtime** | コンテナを実行するソフトウェア（例: Docker、containerd、CRI-O） |
+| **Namespace** | プロセスを分離し、システムの他の部分を見えなくするLinuxカーネル機能 |
+| **cgroups** | プロセスグループのCPUやメモリなど、リソース使用量を制限・監視するLinuxカーネル機能 |
+| **Layer** | コンテナイメージを構成するファイルシステム差分。メタデータだけを変更する命令はファイルシステムのレイヤーを必要としない |
+| **Volume** | コンテナのデータを永続的に保存する仕組み |
+| **Orchestration** | 複数コンテナのデプロイ、管理、スケーリング、ネットワークを自動化すること |
+| **ECS** | Amazon Elastic Container Service。AWSのコンテナオーケストレーションサービス |
+| **ECR** | Amazon Elastic Container Registry。AWSのコンテナイメージレジストリサービス |
+| **Fargate** | インフラストラクチャを管理せずにコンテナを実行するAWSのサーバーレス環境 |
 
 ## まとめ
 
-コンテナ技術は、アプリケーションの開発とデプロイ方法を大きく変革しました。可搬性、一貫性、効率性を提供し、開発者の生産性を高め、運用の複雑さを軽減します。Kubernetes のような orchestration tools と組み合わせることで、大規模な分散アプリケーションを効果的に管理できます。
+コンテナ技術は、アプリケーションの開発とデプロイの方法を大きく変えました。可搬性、一貫性、効率性によって開発者の生産性を高め、運用の複雑さを減らします。Kubernetesなどのオーケストレーションツールと組み合わせると、大規模な分散アプリケーションを効果的に管理できます。
 
-コンテナの基本概念と動作を理解することは、現代的な cloud-native アプリケーションを開発・運用するうえで不可欠です。この知識は、Kubernetes を効果的に活用するための基盤となります。
+コンテナの基本概念と動作を理解することは、現代のクラウドネイティブアプリケーションを開発・運用するうえで欠かせません。この知識はKubernetesを効果的に活用する基礎となります。
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[コンテナ技術クイズ](../quizzes/basics/03-container-technology-quiz.md)に取り組んでください。
+この章の内容を確認するには、[コンテナ技術クイズ](../quizzes/basics/03-container-technology-quiz.md)に取り組んでください。
 
 ## 参考資料
 
-* [Docker Official Documentation](https://docs.docker.com/)
-* [OCI (Open Container Initiative)](https://opencontainers.org/)
-* [containerd Project](https://containerd.io/)
-* [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
-* [AWS Container Services](https://aws.amazon.com/containers/)
+* [Docker公式ドキュメント](https://docs.docker.com/)
+* [OCI（Open Container Initiative）](https://opencontainers.org/)
+* [containerdプロジェクト](https://containerd.io/)
+* [Kubernetesコンテナランタイム概要](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
+* [AWSコンテナサービス](https://aws.amazon.com/containers/)
+
+## 検証資料
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

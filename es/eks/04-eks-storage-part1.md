@@ -1,6 +1,6 @@
 # Almacenamiento de EKS
 
-> **Última actualización**: September 28, 2026
+> **Última actualización**: 28 de septiembre de 2026
 
 Al ejecutar aplicaciones en Amazon EKS, hay diversas opciones de almacenamiento para guardar y administrar datos. Este documento cubre los conceptos básicos del almacenamiento de EKS y cómo usar Amazon EBS (Elastic Block Store) y Amazon EFS (Elastic File System).
 

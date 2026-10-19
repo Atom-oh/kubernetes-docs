@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
-> **Revisado con respecto a**: Argo CD 3.5.2, incluido su controlador ApplicationSet incorporado; actualizado al parche 3.5.4 tras revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Revisado con**: Argo CD 3.5.2, incluido su controlador ApplicationSet; actualizado al parche 3.5.4 tras revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
+> **Última actualización**: 12 de octubre de 2026
 
 ## Tabla de contenido
 - [Descripción general de ApplicationSet](#applicationset-overview)
@@ -13,7 +13,7 @@
 
 ## Descripción general de ApplicationSet {#applicationset-overview}
 
-ApplicationSet es un controlador de Kubernetes que añade compatibilidad para generar Applications de ArgoCD a partir de plantillas. Permite administrar múltiples aplicaciones con configuraciones similares en clústeres, entornos o repositorios.
+ApplicationSet es un controlador de Kubernetes que permite generar objetos Application de ArgoCD a partir de plantillas. Facilita la gestión de varias aplicaciones con configuraciones similares en distintos clústeres, entornos o repositorios.
 
 ### Cuándo usar ApplicationSet
 
@@ -25,9 +25,9 @@ ApplicationSet es un controlador de Kubernetes que añade compatibilidad para ge
 | Entornos dinámicos a partir de PR | Sí |
 | Despliegue de una sola aplicación | No (use Application) |
 
-`myorg`, `example.com`, las URL de clústeres y los charts privados a continuación son marcadores de posición. Proporcione rutas de repositorio, charts, archivos de valores, clústeres registrados, permisos de AppProject y credenciales reales antes de aplicarlos. ApplicationSet no registra clústeres ni crea AppProjects. `CreateNamespace=true` solo crea un Namespace de destino autorizado. Todos los ejemplos completos habilitan explícitamente las plantillas Go.
+`myorg`, `example.com`, las URL de clústeres y los charts privados que aparecen a continuación son marcadores de posición. Antes de aplicar los ejemplos, configure las rutas de repositorio, los charts, los archivos de valores, los clústeres registrados, los permisos de AppProject y las credenciales reales. ApplicationSet no registra clústeres ni crea AppProjects. `CreateNamespace=true` solo crea un Namespace de destino para el que se tienen permisos. Todos los ejemplos completos habilitan explícitamente las plantillas Go.
 
-Restrinja la creación de ApplicationSet y las entradas de los generadores a administradores de confianza. Una entrada de Git/PR que controle el proyecto, el origen o el destino puede ampliar los privilegios de despliegue; use AppProjects fijos y con ámbito limitado, además de entradas revisadas.
+Permita que solo administradores de confianza creen o modifiquen ApplicationSets y las entradas de sus generadores. Una entrada de Git o de una PR que controle el proyecto, el origen o el destino puede ampliar los privilegios de despliegue; utilice AppProjects fijos con permisos limitados y entradas revisadas.
 
 ### Estructura básica
 
@@ -134,7 +134,7 @@ spec:
 
 ### 2. Generador Cluster
 
-Se dirige automáticamente a los clústeres registrados en ArgoCD:
+Selecciona automáticamente los clústeres registrados en ArgoCD:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -212,7 +212,7 @@ generators:
               - high
 ```
 
-Un selector de Cluster vacío puede incluir el clúster local. El clúster local predeterminado no tiene Secret y puede no coincidir con los selectores de etiquetas; cree o configure su Secret de clúster cuando necesite seleccionar por etiquetas. Use `nameNormalized` para los nombres de Application y respete por separado los límites de Namespace/Label. Los fragmentos de Secret solo muestran la estructura: `...` no es una CA ni una credencial válidas.
+Un selector vacío del generador Cluster puede incluir el clúster local. El clúster local predeterminado no tiene un Secret y puede quedar fuera de los selectores de etiquetas; cree o configure su Secret de clúster si necesita seleccionarlo por etiquetas. Use `nameNormalized` para los nombres de Application y compruebe por separado las restricciones de nombres de Namespace y etiquetas. Los fragmentos de Secret solo muestran la estructura: `...` no es un certificado de CA ni una credencial válidos.
 
 ### 3. Generador Git - Directorios
 
@@ -378,15 +378,15 @@ spec:
 
 #### Visualización de Matrix
 
-![Diagrama que muestra el generador matrix de un ApplicationSet de ArgoCD combinando una lista de clústeres y una lista de apps, de modo que cada par clúster-app produce una Application generada; tres clústeres por tres apps dan como resultado nueve Applications.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-0.png)
+![Diagrama del generador Matrix de un ApplicationSet de ArgoCD: combina una lista de clústeres y una lista de aplicaciones para generar una Application por cada par clúster-aplicación. Tres clústeres y tres aplicaciones producen nueve Applications.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-0.html)
 
-Matrix combina exactamente dos generadores secundarios; los generadores de combinación solo admiten un nivel de anidamiento. Use `pathParamPrefix` cuando dos generadores Git producirían parámetros de ruta en conflicto.
+Matrix combina exactamente dos generadores secundarios; los generadores de combinación solo admiten un nivel de anidamiento. Use `pathParamPrefix` cuando dos generadores Git puedan generar parámetros de ruta con nombres en conflicto.
 
 ### 6. Generador Merge
 
-Combine las salidas de varios generadores para combinar parámetros:
+Combine las salidas de varios generadores para reunir sus parámetros:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -442,7 +442,7 @@ spec:
   - missingkey=error
 ```
 
-Merge conserva las entradas del generador base y aplica las anulaciones coincidentes según `mergeKeys`; los generadores posteriores tienen prioridad y se descartan las entradas de anulación sin coincidencia. Las claves de Merge anidadas no son compatibles con las plantillas Go.
+Merge conserva las entradas del generador base y aplica las sobrescrituras que coinciden según `mergeKeys`. Los generadores posteriores tienen prioridad y se descartan las entradas de sobrescritura sin coincidencia. Las claves de combinación anidadas no son compatibles con las plantillas Go.
 
 ### 7. Generador SCM Provider
 
@@ -523,7 +523,7 @@ spec:
   - missingkey=error
 ```
 
-`scmProvider.filters` se sitúa junto al objeto del proveedor. Las condiciones de un filtro son AND; las entradas de filtro separadas son OR. El ejemplo combina requisitos de nombre, ruta y etiqueta en un filtro. Los repositorios privados y los límites de tasa de la API requieren un token o GitHub App con un ámbito apropiado.
+`scmProvider.filters` está al mismo nivel que el objeto del proveedor. Las condiciones de un mismo filtro se combinan con AND; los filtros separados se combinan con OR. El ejemplo reúne los requisitos de nombre, ruta y etiqueta en un único filtro. Para acceder a repositorios privados y gestionar los límites de solicitudes de la API, utilice un token o una GitHub App con los permisos adecuados.
 
 ### 8. Generador Pull Request
 
@@ -577,7 +577,7 @@ spec:
   - missingkey=error
 ```
 
-Use el ejemplo de PR solo con un AppProject `previews` creado previamente que restrinja el clúster y los Namespaces de vista previa. GitHub requiere todas las etiquetas enumeradas; una etiqueta no hace seguro el código de PR no confiable. No exponga Secrets de producción ni credenciales de cluster-admin a las cargas de trabajo de vista previa. Según la política de eliminación predeterminada, las Applications de PR cerradas o sin coincidencia se eliminan durante la reconciliación; la limpieza de recursos sigue la configuración de finalizers/preservation y un Namespace creado solo mediante `CreateNamespace=true` no se rastrea automáticamente como objetivo de limpieza.
+Utilice el ejemplo de PR únicamente con un AppProject `previews` creado de antemano que limite los clústeres y Namespaces de los entornos de vista previa. GitHub exige todas las etiquetas indicadas; una etiqueta no garantiza que el código de una PR sea seguro. No exponga Secrets de producción ni credenciales de cluster-admin a las cargas de esos entornos. Con la política de eliminación predeterminada, las Applications de PR cerradas o que ya no cumplen los criterios se eliminan durante la reconciliación. La eliminación de sus recursos depende de los finalizers y de la configuración de conservación. Un Namespace creado únicamente mediante `CreateNamespace=true` no se incorpora automáticamente a los recursos cuyo ciclo de vida se gestiona.
 
 ### 9. Generador Cluster Decision Resource
 
@@ -632,11 +632,11 @@ data:
   matchKey: clusterName
 ```
 
-Esto requiere una instalación existente de Open Cluster Management y un Placement `production` que genere objetos PlacementDecision. Conceda al controlador ApplicationSet acceso de lectura a esos objetos en el Namespace `argocd`. Cada `status.decisions[].clusterName` debe coincidir con un clúster registrado en Argo CD; use el valor `server` generado para su endpoint de API. Seleccione decisiones por nombre o por labelSelector.
+Este ejemplo requiere una instalación existente de Open Cluster Management y un Placement `production` que genere objetos PlacementDecision. Conceda al controlador ApplicationSet permisos de lectura sobre esos objetos en el Namespace `argocd`. Cada `status.decisions[].clusterName` debe coincidir con un clúster registrado en Argo CD; utilice el valor `server` generado como dirección de su API. Seleccione las decisiones por nombre o mediante labelSelector.
 
 ### 10. Generador Plugin
 
-Ejecute lógica personalizada de generador mediante ConfigMap:
+Configure un generador con lógica personalizada mediante un ConfigMap:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -688,11 +688,11 @@ data:
   requestTimeout: "30"
 ```
 
-El ConfigMap no ejecuta código. Un servicio HTTP desplegado por separado debe gestionar POST `/api/v1/getparams.execute` y devolver un array `output.parameters`. Sustituya el dominio de ejemplo por un endpoint validado mediante TLS. Aprovisione el Secret `appset-plugin-token` en `argocd`, con la clave `token` y la etiqueta `app.kubernetes.io/part-of: argocd`; mantenga su valor fuera de Git. Implemente autenticación, validación de entradas y el esquema de respuesta documentado antes de conectarlo.
+El ConfigMap no ejecuta código. Un servicio HTTP desplegado por separado debe atender solicitudes POST a `/api/v1/getparams.execute` y devolver un array `output.parameters`. Sustituya el dominio de ejemplo por un endpoint cuyo certificado TLS se valide. Cree el Secret `appset-plugin-token` en `argocd` con la clave `token` y la etiqueta `app.kubernetes.io/part-of: argocd`; mantenga su valor fuera de Git. Antes de conectar el servicio, implemente la autenticación, la validación de entradas y el esquema de respuesta documentado.
 
 ## Plantillas Go {#go-templating}
 
-Establezca `spec.goTemplate: true` para usar plantillas Go; el motor predeterminado en 3.5.4 sigue siendo fasttemplate. Los ejemplos de esta página habilitan explícitamente las plantillas Go con `missingkey=error`. Cada campo de cadena se procesa de forma independiente: las instrucciones de control no pueden abarcar campos YAML, y los booleanos/objetos/listas requieren `templatePatch`. Use `dig` para las claves opcionales porque el acceso directo a una clave faltante falla antes de que pueda ejecutarse `default`.
+Configure `spec.goTemplate: true` para utilizar plantillas Go; en 3.5.4, el motor predeterminado sigue siendo fasttemplate. Los ejemplos de esta página habilitan explícitamente las plantillas Go con `missingkey=error`. Cada campo de texto se renderiza de forma independiente: las instrucciones de control no pueden abarcar varios campos YAML. Para modificar booleanos, objetos o listas, utilice `templatePatch`. Use `dig` para las claves opcionales, ya que acceder directamente a una clave ausente provoca un error antes de que pueda ejecutarse `default`.
 
 ### Sintaxis básica
 
@@ -764,11 +764,11 @@ spec:
 
 ## Sincronización progresiva {#progressive-sync}
 
-Progressive Syncs es Beta desde la versión 3.3 y aún debe habilitarse explícitamente en la 3.5.4. Combine `applicationsetcontroller.enable.progressive.syncs: "true"` con los `argocd-cmd-params-cm.data` existentes y, después, reinicie el controlador ApplicationSet. Para Helm, administre la clave correspondiente en `configs.params`.
+Progressive Syncs está en Beta desde la versión 3.3 y debe habilitarse explícitamente también en 3.5.4. Añada `applicationsetcontroller.enable.progressive.syncs: "true"` a los datos existentes de `argocd-cmd-params-cm.data` y reinicie el controlador ApplicationSet. Si utiliza Helm, gestione la clave correspondiente en `configs.params`.
 
-RollingSync selecciona **etiquetas en las Applications generadas** y espera que cada Application de un grupo pase a estar Healthy antes de continuar. Deshabilita el autosync secundario y solicita sincronizaciones mediante el controlador ApplicationSet, respetando las ventanas de sincronización y la configuración de reintento de Application. Las Applications que no coinciden con ningún paso requieren sincronización manual.
+RollingSync selecciona las Applications mediante **las etiquetas de las Applications generadas** y espera a que todas las de un grupo estén Healthy antes de avanzar. Deshabilita la sincronización automática de las Applications generadas y solicita sincronizaciones a través del controlador ApplicationSet, respetando las ventanas de sincronización y la configuración de reintentos de Application. Las Applications que no coincidan con ningún paso requieren sincronización manual.
 
-`maxUpdate: 0` pausa la sincronización automática de ese grupo; no concede aprobación ni avanza a un grupo duplicado. Sincronice manualmente el grupo pausado o aplique un cambio de estrategia revisado. Los porcentajes positivos se redondean hacia abajo, con un mínimo de uno. No se garantiza el orden dentro de un grupo. El ejemplo siguiente usa Namespaces en un clúster; `region` es metadato de agrupación, no un destino de clúster.
+`maxUpdate: 0` pausa la sincronización automática del grupo; no concede una aprobación ni permite avanzar a un grupo duplicado. Sincronice manualmente el grupo pausado o aplique un cambio de estrategia revisado. Los porcentajes positivos se redondean hacia abajo, con un mínimo de una Application. El orden dentro de un grupo no está garantizado. El ejemplo siguiente utiliza Namespaces de un único clúster; `region` es un metadato de agrupación, no el clúster de destino.
 
 Controle el despliegue progresivo entre aplicaciones con RollingSync.
 
@@ -841,7 +841,7 @@ spec:
 
 ### Flujo de sincronización progresiva
 
-![La sincronización progresiva de tres pasos espera a que Dev y Staging pasen a estar Healthy y después sincroniza las dos Applications de Prod de una en una. No se garantiza el orden dentro de Prod.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-1.png)
+![La sincronización progresiva consta de tres pasos: espera a que Dev y Staging estén Healthy y después sincroniza las dos Applications de Prod de una en una. El orden dentro de Prod no está garantizado.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
@@ -849,7 +849,7 @@ spec:
 
 ### Patrón hub-and-spoke
 
-ArgoCD central que administra varios clústeres:
+Una instancia central de ArgoCD gestiona varios clústeres:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -908,7 +908,7 @@ spec:
   - missingkey=error
 ```
 
-El ejemplo hub-and-spoke requiere archivos de valores revisados para **cada** par clúster/app. Prepare la configuración de almacenamiento de objetos/esquema/modo de despliegue de Loki, las credenciales de Grafana, la persistencia y los requisitos previos de Gateway API en ese repositorio de configuración. Registre `docker.io/envoyproxy` como repositorio Helm con OCI habilitado, tal como se describe en el capítulo de instalación. La ausencia intencional de archivos `$values` hace fallar el procesamiento; no los sustituya por valores vacíos. Loki reemplaza el bundle `loki-stack` retirado, y Envoy Gateway reemplaza el ejemplo comunitario ingress-nginx retirado; se trata de una migración que requiere cambios de rutas/valores, no de una actualización directa.
+El ejemplo hub-and-spoke requiere archivos de valores revisados para **cada** combinación de clúster y aplicación. Configure en ese repositorio el almacenamiento de objetos, el esquema y el modo de despliegue de Loki, las credenciales de Grafana, la persistencia y los requisitos previos de Gateway API. Registre `docker.io/envoyproxy` como repositorio Helm con OCI habilitado, como se explica en el capítulo de instalación. Si falta un archivo `$values`, el renderizado falla intencionadamente; no lo sustituya por valores vacíos. Loki sustituye al paquete retirado `loki-stack` y Envoy Gateway sustituye al ejemplo basado en el proyecto comunitario ingress-nginx, ya retirado. Estos cambios requieren una migración de rutas y valores, no una simple actualización de versiones.
 
 ### Patrón de promoción de entornos
 
@@ -948,7 +948,7 @@ spec:
   - missingkey=error
 ```
 
-Guarde cada documento YAML siguiente como el archivo con el nombre correspondiente; los separadores muestran los límites de archivo. Promueva mediante Git versiones de artefactos inmutables y revisadas. Las anotaciones de Application como `sync-wave` por sí solas no ordenan Applications reconciliadas de manera independiente; use RollingSync y etiquetas cuando se requiera un despliegue coordinado.
+Guarde cada documento YAML siguiente en el archivo cuyo nombre se indica; los separadores marcan los límites entre archivos. Promueva mediante Git versiones de artefactos revisadas e inmutables. Una anotación de Application como `sync-wave` no basta para ordenar Applications que se reconcilian de forma independiente. Si necesita un despliegue coordinado, utilice RollingSync y etiquetas.
 
 Archivos de configuración:
 
@@ -980,7 +980,7 @@ imageTag: v1.2.3
 
 ## Parches de plantillas {#template-patches}
 
-Anule campos de plantilla según la salida del generador.
+Sobrescriba campos de la plantilla según la salida del generador.
 
 ### Parche básico
 
@@ -1074,11 +1074,11 @@ spec:
 
 ## Eliminación y conservación
 
-Eliminar un ApplicationSet normalmente recolecta como basura sus Applications generadas mediante ownerReferences. `preserveResourcesOnDeletion: true` evita añadir el finalizer de eliminación de recursos a las Applications, conservando sus recursos desplegados; **no conserva los propios objetos Application**. Inspeccione los finalizers de las Applications existentes antes de cambiar la configuración del ciclo de vida.
+Al eliminar un ApplicationSet, Kubernetes normalmente elimina también las Applications generadas mediante sus ownerReferences. `preserveResourcesOnDeletion: true` impide añadir a las Applications el finalizer que elimina sus recursos desplegados, por lo que estos se conservan; **esta opción no conserva los propios objetos Application**. Compruebe los finalizers de las Applications existentes antes de cambiar la configuración de su ciclo de vida.
 
-Para eliminar solo el elemento principal, use `kubectl delete applicationset NAME -n argocd --cascade=orphan`. Las Applications huérfanas conservan el autosync y cualquier finalizer existente; eliminar una posteriormente puede seguir eliminando sus recursos desplegados. `applicationsSync: create-update` restringe las eliminaciones impulsadas por la reconciliación, no la recolección de basura por owner-reference cuando se elimina el elemento principal.
+Para eliminar únicamente el ApplicationSet padre, utilice `kubectl delete applicationset NAME -n argocd --cascade=orphan`. Las Applications huérfanas conservan la sincronización automática y los finalizers existentes; eliminarlas más adelante puede eliminar también sus recursos desplegados. `applicationsSync: create-update` limita las eliminaciones durante la reconciliación, pero no la eliminación automática mediante ownerReferences cuando se elimina el padre.
 
-`templatePatch` requiere `goTemplate: true`. En la 3.5.4 utiliza un parche de combinación estratégica de Kubernetes con el tipo Application. Los arrays sin etiquetas de combinación en la especificación de Application, como los valueFiles de Helm, se reemplazan; no suponga la combinación basada en nombres utilizada para los contenedores de Pod. Evite un `spec:` sin valor (null) que borre la configuración existente, no aplique parches a `spec.project` y escape las cadenas insertadas no confiables con funciones como `toJson`.
+`templatePatch` requiere `goTemplate: true`. En 3.5.4, utiliza los parches de combinación estratégica de Kubernetes para el tipo Application. Los arrays de la especificación de Application sin etiquetas de combinación, como los valueFiles de Helm, se sustituyen por completo; no se combinan necesariamente por nombre como los contenedores de un Pod. Evite un `spec:` sin valor (null), que borra la configuración existente. No modifique `spec.project` mediante el parche y escape las cadenas insertadas que procedan de fuentes no confiables con funciones como `toJson`.
 
 ## Referencias
 

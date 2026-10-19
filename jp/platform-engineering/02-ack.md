@@ -1,43 +1,43 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **最終更新**: September 12, 2026
+> **最終更新日**: 2026年10月16日
 
 ## 概念とアーキテクチャ
 
-ACK は、サービス固有の controller を通じて Kubernetes custom resource を AWS API に接続します。CRD は入力を定義し、controller は期待状態を観測された AWS 状態と reconcile します。CR を作成しても、AWS resource の準備が完了しているとは限りません。status とサービス自身の readiness を確認してください。
+ACK は、サービスごとのコントローラーを通じて Kubernetes カスタムリソースを AWS API に接続します。CRD は入力を定義し、コントローラーは望ましい状態と AWS で観測された状態を調整します。CR を作成しただけでは、AWS リソースの準備が完了したとは限りません。status と、サービス側の readiness を確認してください。
 
-ACK は Kubernetes API、RBAC、GitOps tool を再利用しますが、Kubernetes authorization と AWS IAM は別個のままです。通常、ユーザーの CR は controller の AWS permission で action を実行します。したがって、CR の書き込み permission は、その controller を通じて AWS action をリクエストする能力を委譲します。
+ACK は Kubernetes API、RBAC、GitOps ツールを利用しますが、Kubernetes の認可と AWS IAM は別々の仕組みです。通常、ユーザーが作成した CR による操作は、コントローラーに付与された AWS 権限で実行されます。そのため、CR の書き込み権限を与えることは、そのコントローラーを通じて AWS の操作を要求する権限を委譲することになります。
 
-ACK は CloudFormation や Terraform の必須の後継ではありません。実際の resource は AWS にあり、Kubernetes には CR spec/status があります。drift handling は、サポートされる field と controller logic に依存します。複数の tool や cluster が同じ AWS resource を reconcile するのではなく、mutation owner を 1 つに割り当ててください。
+ACK は CloudFormation や Terraform の必須の後継ではありません。実際のリソースは AWS にあり、Kubernetes には CR の spec/status が保存されます。ドリフトへの対処は、サポートされるフィールドとコントローラーのロジックに依存します。同じ AWS リソースを複数のツールやクラスターで調整させず、変更を管理する主体を 1 つにしてください。
 
-![ACK は Kubernetes custom resource を AWS API を介して reconcile する](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
+![ACK は Kubernetes カスタムリソースを AWS API を通じて調整します](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
 
-[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html)
+[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html)
 
 ## バージョンとサポート
 
-| Controller | Version |
+| コントローラー | バージョン |
 | --- | --- |
-| s3 | 1.12.1 |
-| iam | 1.9.0 |
-| sqs | 1.7.0 |
-| sns | 1.10.1 |
-| elbv2 | 1.7.0 |
-| route53 | 1.6.0 |
-| rds | 1.12.0 |
+| s3 | 1.13.1 |
+| iam | 1.10.1 |
+| sqs | 1.8.2 |
+| sns | 1.11.1 |
+| elbv2 | 1.8.2 |
+| route53 | 1.7.1 |
+| rds | 1.13.3 |
 
-これらの version は公式 release と OCI chart に照らして確認しました。完全な coverage と Alpha/Beta/GA status については、公式 service list を参照してください。GA は、すべての AWS API feature またはすべての運用要件がカバーされることを意味しません。CRD の v1alpha1 API string は controller maturity とは別のものです。
+これらのバージョンは公式リリースと OCI チャートで確認しました。対応範囲の全容と Alpha／Beta／GA の段階については、公式のサービス一覧を参照してください。GA であっても、すべての AWS API 機能や運用要件が網羅されているとは限りません。CRD の v1alpha1 という API 文字列は、コントローラーの成熟度とは別のものです。
 
-過去の Kubernetes 1.16 minimum は、現在の運用 baseline ではありません。サポート対象の Kubernetes/EKS version、controller compatibility、Helm version、CRD upgrade process をまとめて検証してください。
+以前に示されていた Kubernetes 1.16 という最小バージョンは、現在の運用基準ではありません。サポート対象の Kubernetes／EKS バージョン、コントローラーとの互換性、Helm バージョン、CRD のアップグレード手順をまとめて確認してください。
 
-## インストール準備とオフライン検査
+## インストールの準備とオフライン検査
 
-以前の eks-charts s3-chart path ではなく、以下の OCI chart path を使用してください。この command は cluster にインストールせずに manifest を render します。
+以前の eks-charts s3-chart パスではなく、以下の OCI チャートのパスを使用してください。このコマンドは、クラスターにインストールせずにマニフェストをレンダリングします。
 
 ```bash
 helm template ack-s3 \
   oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
-  --version 1.12.1 --namespace infra \
+  --version 1.13.1 --namespace infra \
   --set aws.region=us-west-2 \
   --set installScope=namespace --set watchNamespace=infra \
   --set enableCARM=false --set enableCrossNamespace=false \
@@ -46,27 +46,27 @@ helm template ack-s3 \
   --set metrics.service.create=true --set deletionPolicy=retain
 ```
 
-実際の install/upgrade の前に、infra namespace と controller ServiceAccount を準備し、IRSA またはサポート対象の EKS Pod Identity を設定してください。IRSA の namespace/ServiceAccount 用 OIDC trust condition、または Pod Identity の agent/SDK compatibility と association を検証してください。IAM role を作成するだけでは、ServiceAccount に permission は付与されません。
+実際にインストールまたはアップグレードする前に、infra namespace とコントローラーの ServiceAccount を用意し、IRSA またはサポート対象の EKS Pod Identity を設定してください。IRSA では namespace／ServiceAccount に対する OIDC 信頼条件を確認してください。Pod Identity では agent／SDK の互換性と association を確認します。IAM ロールを作成しただけでは、ServiceAccount に権限は付与されません。
 
-managed resource に対する controller の read/create/update/delete/tag と PassRole permission を確認してください。AmazonS3FullAccess や Resource:"*" は least-privilege の例ではありません。サブガイドの data-access policy は完全な controller policy ではありません。
+管理対象リソースに必要なコントローラーの read／create／update／delete／tag および PassRole 権限を確認してください。AmazonS3FullAccess や Resource:"*" は最小権限の例ではありません。サブガイドにあるデータアクセス用ポリシーも、コントローラーに必要なポリシー全体を示すものではありません。
 
-render の成功は、IAM、AWS API constraint、admission、CRD installation、endpoint connectivity、resource creation を検証するものではありません。controller のインストールと CRD の変更は別個の運用変更です。
+レンダリングに成功しても、IAM、AWS API の制約、admission、CRD のインストール、エンドポイントへの接続、リソース作成が検証されたことにはなりません。コントローラーのインストールと CRD の変更は、それぞれ別の運用変更です。
 
-## Namespace と Account の分離
+## Namespace とアカウントの分離
 
-デフォルトの installScope は cluster です。dev/prod namespace に release をインストールするだけでは、両方の controller が同じ CR を watch したままになる可能性があります。この例では installScope=namespace と watchNamespace=infra を設定し、CARM と cross-namespace reference を無効にしています。ほかの team には、別々の watch scope、ServiceAccount、IAM role、RBAC を使用してください。
+既定の installScope は cluster です。dev／prod の namespace にリリースをインストールするだけでは、両方のコントローラーが同じ CR を監視し続けることがあります。この例では installScope=namespace と watchNamespace=infra を設定し、CARM と cross-namespace reference を無効にしています。他のチームには、監視範囲、ServiceAccount、IAM ロール、RBAC をそれぞれ分けてください。
 
-namespace mode でも、現在の chart は namespace cache 用に namespace の get/list/watch を付与する ClusterRole を render します。namespace mode はすべての cluster permission を除去するわけではありません。render された Role、ClusterRole、Binding、および Secret/FieldExport access を検査してください。namespace annotation、role mapping、reference target を変更する permission も分離に影響します。
+namespace モードでも、現在のチャートは namespace cache 用に namespace の get／list／watch を許可する ClusterRole をレンダリングします。namespace モードですべてのクラスター権限がなくなるわけではありません。レンダリングされた Role、ClusterRole、Binding、Secret／FieldExport へのアクセスを確認してください。namespace annotation、role mapping、reference target を変更する権限も分離に影響します。
 
-CARM は、target-role trust、AssumeRole permission、controller configuration を必要とする cross-account management です。複数の cluster による安全な concurrent mutation を保証するものではありません。read-only reference と mutation ownership を分離してください。
+CARM は、対象ロールへの信頼設定、AssumeRole 権限、コントローラーの設定を必要とするクロスアカウント管理機能です。複数のクラスターによる同時変更が安全になることを保証するものではありません。読み取り専用の参照と、変更を管理する主体を分けてください。
 
-## 作成、Reference、Status
+## リソースの作成、参照、状態
 
-service schema は異なります。S3 policy は Bucket.spec.policy に属し、別個の BucketPolicy CRD はありません。IAM managed policy は Role.policies/policyRefs を通じて attach します。サブガイドでは、SQS queueName/string attribute と専用の SNS Topic/Subscription field を示しています。
+サービスごとにスキーマは異なります。S3 のポリシーは Bucket.spec.policy に設定し、別個の BucketPolicy CRD はありません。IAM の管理ポリシーは Role.policies／policyRefs を通じて関連付けます。サブガイドでは、SQS の queueName／string 属性と、SNS 専用の Topic／Subscription フィールドを説明しています。
 
-- [S3 / IAM](ack/01-s3-iam.md)
-- [SQS / SNS](ack/02-sqs-sns.md)
-- [ELBv2 / Route 53 / Aurora](ack/03-elbv2-route53-rds.md)
+- [S3／IAM](ack/01-s3-iam.md)
+- [SQS／SNS](ack/02-sqs-sns.md)
+- [ELBv2／Route 53／Aurora](ack/03-elbv2-route53-rds.md)
 
 ```bash
 kubectl get buckets.s3.services.k8s.aws -n infra
@@ -78,13 +78,13 @@ kubectl get events -n infra \
   --field-selector involvedObject.name=app-data
 ```
 
-ACK.ResourceSynced=True は controller synchronization を示します。database connection や app-readiness check を示すものではありません。ACK.Terminal/ACK.Recoverable などの他の condition と service status を確認してください。resource に提供されている場合、その ARN は status.ackResourceMetadata.arn にあります。NLB と TargetGroup の ARN もこの path を使用します。
+ACK.ResourceSynced=True は、コントローラーによる同期状態を示します。データベース接続やアプリケーションの readiness を示すものではありません。ACK.Terminal／ACK.Recoverable などの他の condition とサービスの状態も確認してください。リソースに提供されている場合、ARN は status.ackResourceMetadata.arn にあります。NLB と TargetGroup の ARN もこのパスに格納されます。
 
-サポートされる Ref field は、同じ namespace 内の resource を接続できます。複数の YAML document を apply しても、AWS 全体の transaction にはなりません。参照される resource の readiness と external identifier/ARN を検証してください。
+サポートされる Ref フィールドを使うと、同じ namespace 内のリソースを関連付けられます。複数の YAML ドキュメントを適用しても、AWS 全体にわたるトランザクションにはなりません。参照先リソースの readiness と外部 identifier／ARN を確認してください。
 
-## Adoption と Retention
+## リソースの引き継ぎと保持
 
-以下の ResourceAdoption annotation を使用してください。現在の S3 chart ではこの feature gate が有効です。adoption の前に identifier、account、region を確認し、ほかの tool からの ownership transfer を計画してください。
+以下の ResourceAdoption annotation を使用します。現在の S3 チャートでは、この機能ゲートが有効です。引き継ぎの前に identifier、アカウント、リージョンを確認し、他のツールからの所有権移行を計画してください。
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -100,13 +100,13 @@ spec:
   name: REPLACE_WITH_EXISTING_BUCKET
 ```
 
-runtime は adopt と adopt-or-create を受け入れます。adopt は既存の state を spec/status に読み込みます。adopt-or-create は存在しない resource を作成できます。その後の通常の reconciliation は adopted resource を変更できるため、adoption は単なる read access ではありません。read-only behavior は、固有の gate と lifecycle を持つ別機能です。以前の resource-imported:"true" annotation は adoption を設定しません。公式 documentation では、AdoptedResource を以前の approach としても位置付けています。
+実行時に指定できる値は adopt と adopt-or-create です。adopt は既存の状態を spec/status に読み込みます。adopt-or-create は、リソースが存在しない場合に作成できます。その後の通常の調整で引き継いだリソースが変更されることがあるため、引き継ぎは読み取り専用アクセスではありません。読み取り専用の動作は、独自のゲートとライフサイクルを持つ別の機能です。以前の resource-imported:"true" annotation ではリソースの引き継ぎは設定されません。公式ドキュメントでは AdoptedResource も以前の方式として扱っています。
 
-retention value は **retain** です。現在の runtime は orphan を受け入れません。優先順位は、個々の CR の services.k8s.aws/deletion-policy、namespace の service-specific deletion-policy、controller default の順です。AWS resource を retain すると、継続する cost、ownership、backup responsibility が残ります。
+保持値は **retain** です。現在のランタイムは orphan を受け付けません。適用される順序は、個別の CR にある services.k8s.aws/deletion-policy、namespace のサービス固有 deletion-policy、コントローラーの既定値です。AWS リソースを保持すると、その後のコスト、所有権管理、バックアップの責任も残ります。
 
-## Observability、Scaling、Recovery
+## 可観測性、スケーリング、復旧
 
-metrics.service.create を有効にし、以下の target namespace と port name を一致させてください。Prometheus Operator CRD と Prometheus ServiceMonitor selector は別個の前提条件です。
+metrics.service.create を有効にし、以下の target namespace と port name を一致させてください。Prometheus Operator の CRD と Prometheus ServiceMonitor の selector は、それぞれ別に必要です。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -126,26 +126,26 @@ spec:
       interval: 30s
 ```
 
-確認した runtime は ack_outbound_api_requests_total と ack_outbound_api_requests_error_total を定義しています。reconcile success/failure や API-latency metric name を勝手に作らないでください。実際の endpoint で controller-runtime の metric name、label、version を検証してください。CloudTrail auditing は service/API logging support と設定された event に依存します。
+レビュー済みのランタイムで定義されているメトリクスは ack_outbound_api_requests_total と ack_outbound_api_requests_error_total です。reconcile の成功／失敗や API latency のメトリクス名を推測で作らないでください。実際のエンドポイントで controller-runtime のメトリクス名、ラベル、バージョンを確認してください。CloudTrail で監査できる範囲は、サービス／API のログ対応状況と設定したイベントに依存します。
 
-replica configuration は deployment.replicas です。複数の replica を実行する場合は leaderElection.enabled を確認してください。replicaCount はこの chart の設定ではありません。追加の leader-elected replica によって parallel throughput が自動的に増加するわけではありません。観測した quota、throttling、resource usage に基づいて reconcile concurrency/resync を調整してください。
+レプリカ数は deployment.replicas で設定します。複数のレプリカを実行する場合は leaderElection.enabled を確認してください。replicaCount はこのチャートの設定項目ではありません。leader election を使うレプリカを増やしても、並列処理のスループットが自動的に向上するわけではありません。観測されたクォータ、スロットリング、リソース使用量に基づいて reconcile concurrency／resync を調整してください。
 
-environment-specific manifest と chart を Git で version 管理し、credential は含めないでください。recovery には、CR だけでなく AWS data/backup、identifier、retention policy、ownership が必要です。別の region で CR を作成しても、data replication や recovery は実装されません。
+環境固有のマニフェストとチャートは Git でバージョン管理し、認証情報は含めないでください。復旧には CR だけでなく、AWS のデータ／バックアップ、識別子、保持ポリシー、所有権の情報も必要です。別リージョンに CR を作成しても、データ複製や復旧の仕組みにはなりません。
 
 ## トラブルシューティング
 
-作成失敗の場合は、condition/event、controller image/log、account/region、IAM trust/policy、reference、service constraint を検査してください。Kubernetes RBAC error と AWS IAM error を区別してください。Terminating resource では、finalizer が待機している AWS deletion、dependency、retention condition を特定してください。
+作成に失敗した場合は、condition／event、コントローラーのイメージ／ログ、アカウント／リージョン、IAM の信頼設定／ポリシー、参照、サービスの制約を確認してください。Kubernetes RBAC のエラーと AWS IAM のエラーを区別します。リソースが Terminating のままなら、finalizer が待機している AWS リソースの削除、依存関係、保持条件を特定してください。
 
-finalizer を常に削除しないでください。そうすると、追跡されない AWS resource が残る可能性があります。まず原因を解決してください。実際の resource state、backup、その後の ownership を確認したうえで、最後の手段としてのみ recovery procedure を使用してください。
+通常の対処として finalizer を消さないでください。追跡されない AWS リソースが残ることがあります。まず原因を解決してください。最後の手段として復旧手順を使う場合も、実際のリソース状態、バックアップ、その後の所有権を確認してから実行してください。
 
-## 検証と参照
+## 検証と参考資料
 
-56 個の一意な code block を含む、韓国語/英語の 8 個の元の guide file と 2 個の quiz を読みました。7 個の公式 OCI chart を render し、18 個の resource example を、unknown-spec-field rejection を備えた versioned CRD に対して確認しました。AWS resource creation、controller execution、admission/CEL、message delivery、database connectivity はテストしていません。
+56 個の異なるコードブロックを含む、韓国語／英語のガイド 8 本とクイズ 2 本を読みました。公式 OCI チャート 7 種をレンダリングし、未定義の spec フィールドを拒否する設定で、バージョン管理された CRD に対してリソース例 18 件を確認しました。AWS リソースの作成、コントローラーの実行、admission／CEL、メッセージ配送、データベース接続はテストしていません。
 
-- [ACK service](https://aws-controllers-k8s.github.io/community/docs/community/services/)
-- [Resource adoption](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
-- [Retention](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
-- [S3 chart 1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm)
-- [Runtime 0.63.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0)
+- [ACK 対応サービス](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+- [リソースの引き継ぎ](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
+- [保持ポリシー](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
+- [S3 チャート 1.13.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/helm)
+- [ランタイム 0.66.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.66.0)
 
-[ACK quiz](../quizzes/platform-engineering/02-ack-quiz.md)
+[ACK クイズ](../quizzes/platform-engineering/02-ack-quiz.md)

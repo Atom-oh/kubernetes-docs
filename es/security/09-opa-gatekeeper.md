@@ -2,7 +2,7 @@
 
 > **Referencia de validación**: Gatekeeper/Gator 3.23.1 · Helm chart 3.23.1
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Descripción general
 
@@ -39,9 +39,9 @@ kubectl -n gatekeeper-system rollout status deployment/gatekeeper-audit
 
 Para un despliegue por fases, `values.yaml` conserva explícitamente el webhook `failurePolicy: Ignore`. Por lo tanto, los fallos de invocación del webhook pueden permitir solicitudes incluso cuando un Constraint indica `deny`. Evalúe `Fail` junto con la disponibilidad de la API, la recuperación y los namespaces exentos. El alcance del webhook puede ser más amplio que el alcance de un Constraint individual.
 
-### Orden de Template y Constraint
+### Orden de aplicación de las plantillas y Constraints
 
-Las Templates generan los CRD de Constraint correspondientes. Espere a que los CRD estén establecidos y compruebe el estado de los Pod de Template antes de aplicar Constraints. Todos los Constraints de ejemplo comienzan en `dryrun`; revise los prefijos de imagen, los parámetros y los namespaces para el entorno objetivo.
+Las plantillas generan los CRD de Constraint correspondientes. Espere a que los CRD tengan la condición Established y compruebe el estado de los pods generados por las plantillas antes de aplicar las Constraints. Todos los Constraints de ejemplo comienzan en `dryrun`; revise los prefijos de imagen, los parámetros y los namespaces para el entorno objetivo.
 
 ```bash
 kubectl create namespace policy-lab --dry-run=client -o yaml | kubectl apply -f -
@@ -65,7 +65,7 @@ kubectl apply -f constraints/
 
 ## Rego y el contrato de entrada
 
-Las políticas de Gatekeeper usan `input.review`, no `input.request` de un ejemplo genérico de OPA AdmissionReview. `input.parameters` proporciona valores de Constraint y `data.inventory` proporciona objetos de Kubernetes sincronizados. Los `targets[].rego` existentes usan Rego v0 compatible de forma predeterminada. Rego v1 se selecciona explícitamente con `code[].source.version: v1`; las Templates v0 más antiguas no quedan automáticamente invalidadas.
+Las políticas de Gatekeeper usan `input.review`, no `input.request` de un ejemplo genérico de OPA AdmissionReview. `input.parameters` proporciona valores de Constraint y `data.inventory` proporciona objetos de Kubernetes sincronizados. Los `targets[].rego` existentes usan Rego v0 compatible de forma predeterminada. Rego v1 se selecciona explícitamente con `code[].source.version: v1`; las plantillas v0 más antiguas no quedan automáticamente invalidadas.
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
@@ -101,7 +101,7 @@ spec:
           \  not valid_label(key)\n}\n"
 ```
 
-`violation contains ... if` es una regla de conjunto parcial v1. Varias definiciones contribuyen a ese conjunto; esto no significa que las reglas de documentos completos en conflicto siempre se combinen como OR. Todas las condiciones dentro del cuerpo de una regla deben cumplirse. Distinga las reglas recursivas definidas por el usuario de las funciones integradas de recorrido JSON como `walk`.
+`violation contains ... if` es una regla de conjunto parcial v1. Varias definiciones contribuyen a ese conjunto; esto no significa que las reglas de valor completo que entran en conflicto siempre se combinen como OR. Todas las condiciones dentro del cuerpo de una regla deben cumplirse. Distinga las reglas recursivas definidas por el usuario de las funciones integradas de recorrido JSON como `walk`.
 
 ```rego
 package examples
@@ -150,9 +150,9 @@ missing := {"app", "team"} - keys
 
 Un analizador limitado a Gi/Mi/Ki puede devolver un resultado indefinido para `9G` o bytes simples e ignorar silenciosamente infracciones. El ejemplo fija la política upstream `K8sContainerLimits`, que informa las cadenas no compatibles como infracciones. No acepta todas las representaciones de cantidades que permite Kubernetes; documente sus restricciones de formato. Las pruebas nativas distinguen millicores, memoria decimal/binaria, bytes simples, entradas numéricas y cadenas de exponentes entre comillas explícitamente. Ponga entre comillas fixtures de cadenas como `8e9` para evitar que los analizadores YAML las conviertan en números.
 
-### PSS y recursos de Controller
+### PSS y recursos de los controladores
 
-No etiquete unas pocas comprobaciones de privileged/runAsNonRoot como una aplicación completa de Baseline/Restricted. PSS versionado también cubre namespaces de host, seccomp, capabilities, distinciones de SO, herencia de nivel de Pod y contenedores efímeros; use la [guía de Pod Security Standards](./03-pod-security-standards.md). Estos ejemplos comprueban la admisión de Pod. Para evaluar antes las plantillas de Pod de Controller, configure pruebas independientes de template o ExpansionTemplate.
+No etiquete unas pocas comprobaciones de privileged/runAsNonRoot como una aplicación completa de Baseline/Restricted. PSS versionado también cubre namespaces de host, seccomp, capabilities, distinciones de SO, herencia de nivel de Pod y contenedores efímeros; use la [guía de Pod Security Standards](./03-pod-security-standards.md). Estos ejemplos comprueban la admisión de Pod. Para evaluar antes las plantillas de Pod de los controladores, configure pruebas independientes con Template o ExpansionTemplate.
 
 <span id="advanced-policy-patterns"></span>
 
@@ -236,7 +236,7 @@ Separe la mutación/establecimiento de valores predeterminados de la validación
 
 ## Auditoría y monitoreo
 
-Establezca la frecuencia de auditoría con `auditInterval` del chart. La configuración `validation.traces` sirve para depurar evaluaciones de admisión seleccionadas, no para programar auditorías. Las entradas de admisión y las salidas de Rego pueden contener datos sensibles de objetos; actívelas solo para el alcance necesario. `constraintViolationsLimit` limita la lista de detalles de estado, que puede diferir de totalViolations.
+Establezca la frecuencia de auditoría con `auditInterval` del chart. La configuración `validation.traces` sirve para depurar evaluaciones de admisión seleccionadas, no para programar auditorías periódicas. Las entradas de admisión y las salidas de Rego pueden contener datos sensibles de objetos; actívelas solo para el alcance necesario. `constraintViolationsLimit` limita la lista de detalles de estado, que puede diferir de totalViolations.
 
 ```bash
 kubectl get constraints
@@ -245,7 +245,7 @@ kubectl get constrainttemplatepodstatuses -n gatekeeper-system
 kubectl get constraintpodstatuses -n gatekeeper-system
 ```
 
-El Service de webhook del chart expone solo tráfico HTTPS de webhook, no métricas. `podmonitor.yaml` selecciona el puerto del contenedor de métricas:8888 nombrado real en los Deployments de auditoría y webhook. Primero instale los CRD de Prometheus Operator y alinee los selectores de labels/namespace de PodMonitor.
+El Service del webhook del chart expone solo tráfico HTTPS del webhook, no métricas. `podmonitor.yaml` selecciona el puerto `metrics` (8888) del contenedor real tanto en el Deployment de auditoría como en el de webhook. Instale primero los CRD de Prometheus Operator y ajuste los selectores de etiquetas y espacios de nombres de PodMonitor.
 
 | Métrica | Interpretación |
 |---|---|
@@ -272,7 +272,7 @@ histogram_quantile(0.99, sum by (le) (rate(gatekeeper_validation_request_duratio
 
 ## Pruebas de Gator y CI
 
-Instale el recurso de lanzamiento oficial 3.23.1 y verifique su checksum publicado. El binario ARM64 informa +dirty en GitVersion; la auditoría verificó el hash del archivo publicado en lugar de suponer que ese texto significa una modificación local. No reemplace evidencia versionada con una ejecución de CLI @latest no fijada.
+Descargue el binario oficial de la versión 3.23.1 y verifique su checksum publicado. El binario ARM64 informa +dirty en GitVersion; la auditoría verificó el hash del archivo publicado en lugar de suponer que ese texto significa una modificación local. No reemplace evidencia versionada con una ejecución de CLI @latest no fijada.
 
 ```bash
 gator version

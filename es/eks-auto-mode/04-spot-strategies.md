@@ -1,15 +1,15 @@
 # Estrategias de utilización de instancias Spot
 
 > **Versiones compatibles**: EKS Auto Mode GA; versión base del ejemplo: EKS 1.36
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 Spot intercambia interrupciones e incertidumbre de capacidad por precios de EC2 potencialmente más bajos. La capacidad mixta, la diversificación y las réplicas pueden mejorar la resiliencia, pero ninguna de ellas por sí sola garantiza la disponibilidad ni el ahorro. Usa la cuenta y el contexto revisados, así como el NodeClass de los capítulos anteriores.
 
-Los manifiestos son ejemplos de laboratorio comprobados localmente con esquemas; no son una prueba de conmutación por error en producción. Usan una taint/toleration `spot-lab` y una selección explícita de pool para reducir la colocación accidental de cargas de trabajo ajenas. Las taints no constituyen un límite de seguridad entre tenants. Revisa el número de réplicas y los límites de recursos antes de aplicar los manifiestos; estos ejemplos pueden crear nodos facturables. No se aprovisionaron instancias Spot ni se consultó la API EC2 Spot Price History ni los datos de facturación de ningún cliente durante esta auditoría.
+Los manifiestos son ejemplos de laboratorio comprobados localmente con esquemas; no son una prueba de conmutación por error en producción. Usan una taint/toleration `spot-lab` y una selección explícita de pool para reducir la colocación accidental de cargas de trabajo ajenas. Las taints no constituyen un límite de seguridad entre clientes (tenants). Revisa el número de réplicas y los límites de recursos antes de aplicar los manifiestos; estos ejemplos pueden crear nodos facturables. No se aprovisionaron instancias Spot ni se consultó la API EC2 Spot Price History ni los datos de facturación de ningún cliente durante esta auditoría.
 
 ## Capacidad mixta y una base deliberada
 
-El pool siguiente permite tanto Spot como On-Demand. Dentro de un pool elegible, Auto Mode prioriza los tipos de capacidad permitidos; Spot tiene preferencia sobre On-Demand cuando ambos están permitidos y disponibles. Si también se permite `reserved` y existe una reserva adecuada, esta tiene mayor prioridad. El orden de los arrays y el peso de NodePool no determinan un porcentaje de Spot.
+El pool siguiente permite tanto Spot como On-Demand. Dentro de un pool elegible, Auto Mode prioriza los tipos de capacidad permitidos; Spot tiene preferencia sobre On-Demand cuando ambos están permitidos y disponibles. Si también se permite `reserved` y existe una reserva adecuada, esta tiene mayor prioridad. El orden de los elementos de la lista y el peso de NodePool no fijan el porcentaje de capacidad Spot.
 
 ```yaml
 apiVersion: v1
@@ -129,7 +129,7 @@ Este selector exige intencionalmente `on-demand`; no incluye capacidad `reserved
 
 ## Diversificar la capacidad compatible
 
-Un pool de capacidad Spot está vinculado a un tipo de instancia y una AZ. Disponer de más tipos/AZ compatibles ofrece más opciones al asignador; no hace que las interrupciones sean independientes ni duplica la capacidad por el mero hecho de enumerar dos arquitecturas.
+Un pool de capacidad Spot está vinculado a un tipo de instancia y una zona de disponibilidad (AZ). Disponer de más tipos/AZ compatibles ofrece más opciones al asignador; no hace que las interrupciones sean independientes ni duplica la capacidad por el mero hecho de enumerar dos arquitecturas.
 
 El ejemplo permite la generación 5 y posteriores en vez de fijar el límite superior en 7. Confirma la compatibilidad de las imágenes, los binarios, el almacenamiento y el rendimiento antes de ampliar las restricciones.
 
@@ -248,7 +248,7 @@ Adapta la ventana a tu calendario operativo; otras zonas horarias y los cambios 
 
 ## Apagado ordenado dentro del tiempo realmente disponible
 
-Normalmente, EC2 emite un aviso de dos minutos antes de detener o terminar una instancia por una interrupción, pero los avisos se emiten en el mejor de los casos. La hibernación tiene un comportamiento distinto, con inicio inmediato. No consideres que los dos minutos son tiempo garantizado para cada Pod: la detección, la expulsión, el trabajo de la aplicación y los cambios de enrutamiento consumen tiempo, y los fallos pueden impedir que se gestione el aviso.
+Normalmente, EC2 emite un aviso de dos minutos antes de detener o terminar una instancia por una interrupción, pero la entrega del aviso es de mejor esfuerzo y no está garantizada. La hibernación tiene un comportamiento distinto, con inicio inmediato. No consideres que los dos minutos son tiempo garantizado para cada Pod: la detección, la expulsión, el trabajo de la aplicación y los cambios de enrutamiento consumen tiempo, y los fallos pueden impedir que se gestione el aviso.
 
 `terminationGracePeriodSeconds` es un presupuesto de apagado de Kubernetes, no una ampliación del plazo de EC2. `preStop` se ejecuta dentro de ese presupuesto, antes de la señal de parada normal. Un `sleep 90` sin más desperdicia la mayor parte de un presupuesto de 120 segundos y no implementa el apagado de la aplicación ni la creación de puntos de control.
 
@@ -333,7 +333,7 @@ spec:
 
 `NODE_NAME` recibe el nombre del nodo mediante la Downward API. No indica si la instancia es Spot, y los campos del Pod de la Downward API no exponen automáticamente las etiquetas del nodo. Por lo general, las aplicaciones deberían gestionar la terminación ordenada independientemente de la opción de compra. Si se necesita el tipo de capacidad, proporciona metadatos verificados mediante un mecanismo revisado en lugar de depender de las credenciales de IMDS del nodo.
 
-El ejemplo requiere dos dominios de AZ elegibles y distribuye las seis réplicas con `maxSkew: 1`. Las restricciones estrictas `DoNotSchedule` pueden dejar Pods en estado Pending cuando una AZ o capacidad no están disponibles; no crean capacidad. Revisa las ventajas y desventajas antes de exigir tres dominios, y no des por sentado que la distribución entre AZ también distribuye los tipos de instancia dentro de una AZ.
+El ejemplo requiere dos dominios de zonas de disponibilidad elegibles y distribuye las seis réplicas con `maxSkew: 1`. Las restricciones estrictas `DoNotSchedule` pueden dejar Pods en estado Pending cuando una zona de disponibilidad o la capacidad no están disponibles; no crean capacidad. Revisa las ventajas y desventajas antes de exigir tres dominios, y no des por sentado que la distribución entre AZ también distribuye los tipos de instancia dentro de una AZ.
 
 El PDB limita la expulsión voluntaria de la aplicación; no puede conservar una VM recuperada por EC2. Más réplicas solo ayudan si también se validan la gestión del tráfico, la capacidad elegible, la topología y la recuperación ante fallos.
 
@@ -347,7 +347,7 @@ El PDB limita la expulsión voluntaria de la aplicación; no puede conservar una
 | Base de datos de una sola instancia o quórum crítico | Evita la exposición a interrupciones si no cuentas con una arquitectura de recuperación explícita; On-Demand por sí solo no protege los datos locales |
 | Desarrollo/pruebas | Usa límites de costo y tolera la escasez de capacidad; no des por sentado que los trabajos que solo usan Spot siempre se iniciarán |
 
-Mantén la única copia de los datos importantes fuera del almacenamiento local desechable del nodo. Valida el almacenamiento persistente, las copias de seguridad y la restauración independientemente de la opción de compra de la instancia.
+Mantén la única copia de estado importante fuera del almacenamiento local desechable del nodo. Valida el almacenamiento persistente, las copias de seguridad y la restauración independientemente de la opción de compra de la instancia.
 
 ## Ilustración histórica de costos, no una cotización actual
 
@@ -360,7 +360,7 @@ La guía anterior publicó estos importes mensuales sin indicar una región, una
 | CI/CD | $500/mes | $150/mes | 70% |
 | API no crítica | $3,000/mes | $1,200/mes | 60% |
 
-AWS anuncia descuentos de EC2 Spot de hasta un 90%; esto no es un descuento mínimo ni una garantía de ahorro para toda la carga de trabajo. Spot Instance Advisor resume datos del último mes sobre interrupciones y ahorros, promediados entre AZ, y puede tener retrasos. Usa el historial de precios Spot actual específico de cada AZ o los datos de facturación reales para calcular precios; los intervalos históricos de interrupción no predicen lo que ocurrirá con tu siguiente trabajo.
+AWS anuncia descuentos de EC2 Spot de hasta un 90%; esto no es un descuento mínimo ni una garantía de ahorro para toda la carga de trabajo. Spot Instance Advisor resume datos del último mes sobre interrupciones y ahorros, promediados entre zonas de disponibilidad, y puede tener retrasos. Usa el historial de precios Spot actual específico de cada AZ o los datos de facturación reales para calcular precios; los intervalos históricos de interrupción no predicen lo que ocurrirá con tu siguiente trabajo.
 
 Compara el mismo trabajo útil, la misma región, el mismo período y el mismo objetivo de disponibilidad:
 
@@ -377,7 +377,7 @@ Actual total =
 Net savings = Baseline total - Actual total
 ```
 
-Usa horas de forma coherente con las tarifas por hora y pondera los precios cambiantes según los intervalos de uso realmente facturados. Las horas facturadas de Spot y de la capacidad alternativa deben incluir los reintentos, el solapamiento y el trabajo de recuperación por los que realmente se haya pagado. No restes un segundo cargo genérico por «sobrecoste de interrupción» si ese trabajo ya está incluido en las horas facturadas.
+Usa horas de forma coherente con las tarifas por hora y pondera los precios cambiantes según los intervalos de uso realmente facturados. Las horas facturadas de Spot y de la capacidad de respaldo deben incluir los reintentos, el solapamiento y el trabajo de recuperación por los que realmente se haya pagado. No restes un segundo cargo genérico por «sobrecoste de interrupción» si ese trabajo ya está incluido en las horas facturadas.
 
 Incluye de forma coherente en los otros costos las tarifas de gestión pertinentes de Auto Mode, los cargos del plano de control, EBS, redes/NAT, transferencia de datos, registro y licencias. Las tarifas de Auto Mode son adicionales a la opción de compra de EC2. El antiguo atajo `interrupt count × recovery time × instance count` era ambiguo en cuanto a las unidades y a si las interrupciones ya se habían contabilizado en todo el clúster.
 

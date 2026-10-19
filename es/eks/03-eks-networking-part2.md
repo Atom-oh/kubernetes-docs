@@ -1,7 +1,7 @@
 # Redes de EKS - Parte 2: Services, balanceo de carga y políticas de red
 
 > **Versiones verificadas del ejemplo**: EKS Kubernetes 1.36, AWS Load Balancer Controller 3.6.0, Gateway API 1.6.0
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Descripción general
 
@@ -22,7 +22,7 @@ Kubernetes ofrece los siguientes tipos de Service:
 
 ### Service ClusterIP
 
-ClusterIP es el tipo predeterminado. Su IP virtual está destinada a las redes del clúster; no aplica aislamiento de espacios de nombres ni autenticación. En cambio, un Service sin cabecera (`clusterIP: None`) expone direcciones de endpoints mediante DNS.
+ClusterIP es el tipo predeterminado. Su IP virtual está destinada a las redes del clúster; no aplica aislamiento de espacios de nombres ni autenticación. En cambio, un Service sin IP de clúster (`clusterIP: None`) expone las direcciones de sus endpoints mediante DNS.
 
 ```yaml
 apiVersion: v1
@@ -202,13 +202,13 @@ metadata:
 2. **Use LoadBalancer o Ingress para los services externos**: Use el tipo LoadBalancer o recursos Ingress para los services que necesitan acceso externo.
 3. **Use ALB**: Use ALB cuando se necesiten funciones como el enrutamiento basado en rutas, la terminación SSL y la autenticación.
 4. **Use NLB**: Use NLB cuando se necesiten tráfico TCP/UDP, alto rendimiento e IP estáticas.
-5. **Use balanceadores de carga internos**: Use un balanceador de carga interno para clientes privados con acceso de enrutamiento, incluidas las VPC conectadas o las redes locales cuando esté permitido; ClusterIP suele ser suficiente para los clientes dentro del clúster.
+5. **Use balanceadores de carga internos**: Use un balanceador de carga interno para clientes privados con conectividad enrutable, incluidas las VPC conectadas y, cuando esté permitido, las redes locales; ClusterIP suele bastar para los clientes dentro del clúster.
 6. **Habilite el balanceo de carga entre zonas**: Evalúe el comportamiento entre zonas considerando la capacidad de los destinos, las pruebas de fallos zonales y los costos de transferencia; habilitarlo por sí solo no garantiza una alta disponibilidad.
 7. **Seleccione el tipo de destino adecuado**: Elija el tipo de destino `ip` para utilizar directamente las IP de los Pods como destinos, o el tipo de destino `instance` para utilizar las IP de los nodos como destinos.
 
 ## Políticas de red
 
-NetworkPolicy filtra los Pods y las direcciones seleccionados en L3/L4 cuando hay habilitada una implementación de aplicación de políticas. Amazon VPC CNI ofrece compatibilidad nativa con políticas de red en configuraciones compatibles de EC2/Linux; no es necesario instalar otro CNI por el mero hecho de habilitarlas. Consulte la [guía de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) para conocer la versión exacta del add-on, las limitaciones del kernel y del cómputo, los modos estándar/estricto y los requisitos de los Pods administrados.
+NetworkPolicy aplica filtros L3/L4 a los Pods seleccionados y a los sentidos de tráfico (entrada o salida) seleccionados, siempre que haya una implementación que aplique las políticas. Amazon VPC CNI ofrece compatibilidad nativa con políticas de red en configuraciones compatibles de EC2/Linux; no es necesario instalar otro CNI por el mero hecho de habilitarlas. Consulte la [guía de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) para conocer la versión exacta del add-on, las limitaciones del kernel y del cómputo, los modos estándar/estricto y los requisitos de los Pods administrados.
 
 <!-- Diagram repair pending: see batch report.
 ![Cuatro políticas de red regulan el tráfico en un clúster EKS: una política de tráfico externo limita lo que llega al Pod frontend; una política de comunicación entre Pods permite solo el tráfico de frontend a backend en TCP 80; una política de salida limita el Pod backend al Pod de base de datos en TCP 5432 y al HTTPS externo en 443; y una política de aislamiento del espacio de nombres se aplica a todos los Pods de ambos espacios de nombres.](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)
@@ -226,7 +226,7 @@ Calico es un motor de políticas alternativo. Con VPC CNI, siga el [procedimient
 
 ### Política de red predeterminada
 
-Sin una NetworkPolicy que seleccione un Pod, este no está aislado para esa dirección; las rutas, los grupos de seguridad y otros controles siguen aplicándose. El aislamiento se aplica por separado a la entrada y la salida, y los permisos de todas las políticas coincidentes se suman. Cuando tanto el origen como el destino están aislados, la conexión debe estar permitida tanto por la salida del origen como por la entrada del destino. El tráfico de respuesta se permite implícitamente. Estos ejemplos de políticas son alternativas, no un conjunto restrictivo acumulativo: la regla que permite la entrada a todo el espacio de nombres que aparece a continuación también permitiría tráfico que el ejemplo posterior, limitado al frontend, pretende restringir.
+Si ninguna NetworkPolicy selecciona un Pod, este no está aislado para ese sentido del tráfico; las rutas, los grupos de seguridad y otros controles siguen aplicándose. El aislamiento se aplica por separado a la entrada y la salida, y los permisos de todas las políticas coincidentes se suman. Cuando tanto el origen como el destino están aislados, la conexión debe estar permitida tanto por la salida del origen como por la entrada del destino. El tráfico de respuesta se permite implícitamente. Estos ejemplos de políticas son alternativas, no un conjunto restrictivo acumulativo: la regla que permite la entrada a todo el espacio de nombres que aparece a continuación también permitiría tráfico que el ejemplo posterior, limitado al frontend, pretende restringir.
 
 ### Política de aislamiento del espacio de nombres
 
@@ -372,7 +372,7 @@ Gateway API separa la propiedad de la infraestructura (GatewayClass/Gateway) de 
 
 ### Requisitos previos
 
-Estos ejemplos están dirigidos a LBC **3.6.0** con Gateway API **1.6.0**, la versión indicada por esa versión de LBC. 3.6.0 utiliza los mismos CRD de Gateway API 1.6.0 que 3.5.0, pero las notas de la versión indican que deben aplicarse los CRD más recientes proporcionados por AWS (los CRD del chart y los CRD de Gateway de LBC) antes de actualizar el controlador. La compatibilidad inicial con L4 comenzó en 2.13.3 y la de L7 en 2.14.0; decir que «2.13+ es compatible con todo» es incorrecto. En 3.6.0, el controlador detecta los CRD y habilita `NLBGatewayAPI`/`ALBGatewayAPI` de forma predeterminada. No existe la opción `EnableGatewayAPI`. TCPRoute y UDPRoute ahora son recursos v1 del canal estándar; no instale a ciegas CRD experimentales antiguos.
+Estos ejemplos se basan en LBC **3.6.0** y Gateway API **1.6.0**, la versión especificada por LBC 3.6.0. 3.6.0 utiliza los mismos CRD de Gateway API 1.6.0 que 3.5.0, pero las notas de la versión indican que deben aplicarse los CRD más recientes proporcionados por AWS (los CRD del chart y los CRD de Gateway de LBC) antes de actualizar el controlador. La compatibilidad inicial con L4 comenzó en 2.13.3 y la de L7 en 2.14.0; decir que «2.13+ es compatible con todo» es incorrecto. En 3.6.0, el controlador detecta los CRD y habilita `NLBGatewayAPI`/`ALBGatewayAPI` de forma predeterminada. No existe la opción `EnableGatewayAPI`. TCPRoute y UDPRoute ahora son recursos v1 del canal estándar; no instale a ciegas CRD experimentales antiguos.
 ```bash
 set -euo pipefail
 curl --fail --show-error --location \
@@ -452,7 +452,7 @@ spec:
 
 ### Ejemplo de HTTPRoute (L7 → ALB)
 
-Los pesos 90/10 se aplican a las solicitudes elegibles que coinciden con `/api`; no garantizan una cantidad exacta de solicitudes ni representan una política de conmutación por error basada en el estado de salud. Esta ruta se asocia al listener HTTPS, con un nombre de host coincidente. Los puertos de backend son puertos de Service. Las rutas o los backends entre espacios de nombres requieren los controles `allowedRoutes`/ReferenceGrant correspondientes.
+Los pesos 90/10 se aplican a las solicitudes elegibles que coinciden con `/api`; no garantizan una cantidad exacta de solicitudes ni representan una política de conmutación por error basada en el estado de salud. Esta ruta se asocia al listener HTTPS y usa un nombre de host compatible con el del listener. Los puertos de backend son puertos de Service. Las rutas o los backends entre espacios de nombres requieren los controles `allowedRoutes`/ReferenceGrant correspondientes.
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

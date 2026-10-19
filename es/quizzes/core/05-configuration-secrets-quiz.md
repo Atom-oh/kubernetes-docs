@@ -37,7 +37,7 @@ ConfigMap es un recurso de Kubernetes que almacena datos de configuración en pa
 </details>
 
 3. ¿Cuál es la diferencia entre requests y limits de recursos en pods de Kubernetes?
-   - A) Los requests son los recursos mínimos que un pod puede usar; los limits son el máximo
+   - A) Los requests orientan la planificación y la asignación de recursos; los limits restringen el uso durante la ejecución
    - B) Los requests son los recursos máximos que un pod puede usar; los limits son el mínimo
    - C) Los requests solo se usan para la programación; los limits solo se aplican en tiempo de ejecución
    - D) Los requests solo se aplican a CPU; los limits solo se aplican a memoria
@@ -46,10 +46,10 @@ ConfigMap es un recurso de Kubernetes que almacena datos de configuración en pa
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Los requests son los recursos mínimos que un pod puede usar; los limits son el máximo**
+**Respuesta: A) Los requests orientan la planificación y la asignación de recursos; los limits restringen el uso durante la ejecución**
 
 **Explicación:**
-Los resource requests especifican la cantidad mínima de recursos garantizada para un pod, y el scheduler usa estos valores al colocar pods en nodes. Los resource limits especifican la cantidad máxima de recursos que un pod puede usar. Cuando se superan estos valores, el pod puede ser limitado (para CPU) o terminado (para memoria).
+Los requests reservan capacidad para la planificación y afectan a la asignación de recursos durante la ejecución; un proceso puede usar menos de lo solicitado. Los límites de CPU se aplican mediante estrangulamiento (throttling); los límites de memoria se aplican de forma reactiva al terminar el proceso por OOM. Los requests no garantizan protección frente a la presión del nodo.
 </details>
 
 4. ¿Cuál NO es un método para proporcionar datos de Secret a pods en Kubernetes?
@@ -68,20 +68,20 @@ Los resource requests especifican la cantidad mínima de recursos garantizada pa
 Los métodos para proporcionar datos de Secret a pods en Kubernetes incluyen hacerlo como variables de entorno, como un volumen montado y como credenciales de registro de imágenes. Kubernetes no admite proporcionar Secrets a través de una interfaz de red.
 </details>
 
-5. ¿Cuál NO es un método para crear un ConfigMap en Kubernetes?
+5. ¿Cuál de estas opciones NO es compatible con el comando `kubectl create configmap`?
    - A) A partir de valores literales
    - B) A partir de un archivo
    - C) A partir de un directorio
-   - D) A partir de una solicitud de red
+   - D) `--from-url`
    
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) A partir de una solicitud de red**
+**Respuesta: D) `--from-url`**
 
 **Explicación:**
-Los métodos para crear ConfigMaps en Kubernetes incluyen a partir de valores literales (`--from-literal`), a partir de un archivo (`--from-file`) y a partir de un directorio (`--from-file=<directory>`). Kubernetes no admite de forma nativa crear un ConfigMap directamente a partir de una solicitud de red.
+Los métodos para crear ConfigMaps con este comando incluyen valores literales (`--from-literal`), archivos (`--from-file`) y directorios (`--from-file=<directory>`). El comando no tiene la opción `--from-url`. Por supuesto, también se pueden crear ConfigMaps mediante solicitudes a la API REST de Kubernetes o aplicando un manifiesto obtenido desde una URL.
 </details>
 
 6. ¿Qué campo se usa para especificar la service account de un pod en Kubernetes?
@@ -116,23 +116,23 @@ En Kubernetes, la service account de un pod se especifica mediante el campo `spe
 Los datos de Secret en Kubernetes se almacenan codificados en Base64 de forma predeterminada. Esto es simplemente codificación, no cifrado, por lo que se necesitan medidas de seguridad adicionales. Desde Kubernetes 1.13, está disponible el cifrado de datos de Secret almacenados en etcd.
 </details>
 
-8. ¿Qué método para establecer variables de entorno es el menos recomendado en Kubernetes?
-   - A) A partir de un ConfigMap
-   - B) A partir de un Secret
-   - C) Codificadas directamente en la especificación del pod
-   - D) A partir de la Downward API
+8. ¿Qué forma de incluir una contraseña real en el manifiesto de un Pod se debe evitar?
+   - A) Referenciar una clave de un Secret
+   - B) Usar un volumen protegido de Secret
+   - C) Escribirla directamente en la especificación del Pod
+   - D) Obtenerla de un gestor externo de secretos mediante identidad de carga de trabajo
    
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Codificadas directamente en la especificación del pod**
+**Respuesta: C) Escribirla directamente en la especificación del Pod**
 
 **Explicación:**
-Codificar variables de entorno directamente en la especificación del pod viola el principio de separar la configuración del código y no se recomienda. Usar ConfigMaps o Secrets para administrar variables de entorno permite realizar cambios de configuración sin modificar el código de la aplicación, y usar la Downward API permite proporcionar metadatos del pod o información de recursos como variables de entorno.
+Evita incluir contraseñas literales en manifiestos y registros. Usar directamente `env.value` es válido para constantes no confidenciales; para valores confidenciales, usa Secrets o un almacén externo. ConfigMaps y Downward API no son almacenes de contraseñas.
 </details>
 
-9. Cuando todos los contenedores de un pod tienen resource requests y limits establecidos, y los requests son iguales a los limits, ¿qué clase QoS (Quality of Service) se asigna?
+9. Cuando todos los contenedores tienen requests y limits de CPU y memoria iguales (y no hay ajustes de recursos a nivel del Pod), ¿qué clase QoS (Quality of Service) se asigna?
    - A) Guaranteed
    - B) Burstable
    - C) BestEffort
@@ -145,23 +145,23 @@ Codificar variables de entorno directamente en la especificación del pod viola 
 **Respuesta: A) Guaranteed**
 
 **Explicación:**
-La clase QoS Guaranteed se asigna cuando todos los contenedores de un pod tienen resource requests y limits establecidos, y los requests son iguales a los limits. Los pods de esta clase se terminan al final cuando los recursos son escasos. Burstable se asigna cuando solo algunos contenedores tienen requests y limits establecidos, o cuando los requests y limits difieren. BestEffort se asigna cuando no se establecen requests ni limits.
+La clase QoS Guaranteed se asigna cuando todos los contenedores tienen requests y limits de CPU y memoria, y cada request coincide con su limit, sin ajustes de recursos a nivel del Pod. El desalojo también tiene en cuenta la prioridad del Pod y el uso respecto de los requests; Guaranteed no garantiza sobrevivir en cualquier circunstancia. Burstable se asigna cuando solo algunos contenedores tienen requests y limits, o cuando los requests y limits difieren. BestEffort se asigna cuando no se establece ningún request ni limit.
 </details>
 
 10. ¿Cuándo se reflejan automáticamente en los pods los cambios en ConfigMaps o Secrets?
     - A) Siempre se reflejan automáticamente
-    - B) Solo cuando se montan como volumen
-    - C) Solo cuando se usan como variables de entorno
+    - B) Eventualmente, en montajes de volumen completos (excepto `subPath`)
+    - C) Solo cuando se usan como volúmenes montados
     - D) Nunca se reflejan automáticamente; se requiere reiniciar el pod
     
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Solo cuando se montan como volumen**
+**Respuesta: B) Eventualmente, en montajes de volumen completos (excepto `subPath`)**
 
 **Explicación:**
-Cuando ConfigMaps o Secrets se montan como volumes, Kubernetes actualiza periódicamente los archivos montados (el valor predeterminado es aproximadamente 1 minuto). Sin embargo, cuando se usan como variables de entorno, se establecen solo una vez cuando se crea el pod, por lo que el pod debe reiniciarse para reflejar los cambios. Esto se debe a que las variables de entorno se establecen al inicio del proceso.
+Las proyecciones mutables en volúmenes completos se actualizan eventualmente; el retraso depende de la sincronización del kubelet y de la configuración de caché/detección de cambios. Los montajes `subPath` no se actualizan. Las aplicaciones deben volver a leer los archivos; para actualizar las variables de entorno, hay que reemplazar o reiniciar el contenedor de la aplicación, o desplegar Pods nuevos.
 </details>
 
 ## Preguntas prácticas
@@ -181,6 +181,7 @@ kind: ConfigMap
 metadata:
    name: app-config
 data:
+  app.name: MyApp
   app.properties: |
     app.name=MyApp
     app.version=1.0.0
@@ -218,8 +219,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: app.properties
-              subPath: app.name
+              key: app.name
         # Get environment variables from Secret
         - name: DB_USER
           valueFrom:
@@ -259,7 +259,7 @@ kubectl apply -f pod.yaml
 
 5. Verificar variables de entorno:
 ```bash
-kubectl exec app-pod -- env | grep -E 'APP_NAME|DB_'
+kubectl exec app-pod -- sh -c 'test -n "$APP_NAME" && test -n "$DB_PASSWORD" && echo "Configuration available"'
 ```
 
 6. Verificar volumes montados:
@@ -271,7 +271,7 @@ kubectl exec app-pod -- ls -la /etc/secrets
 7. Verificar contenido de archivos:
 ```bash
 kubectl exec app-pod -- cat /etc/config/app.properties
-kubectl exec app-pod -- cat /etc/secrets/db.user
+kubectl exec app-pod -- test -s /etc/secrets/db.user
 ```
 </details>
 
@@ -436,11 +436,13 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
         - name: CPU_LIMIT
           valueFrom:
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
         - name: MEM_REQUEST
           valueFrom:
             resourceFieldRef:
@@ -471,10 +473,12 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
           - path: "cpu-limit"
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
 ```
 
 2. Crear pod:

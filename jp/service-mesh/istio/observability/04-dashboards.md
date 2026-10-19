@@ -1,9 +1,9 @@
 # Istioダッシュボード
 
 > **レビュー基準**: Istio 1.31。Kiali互換性には後述の条件があります。
-> **最終更新**: September 11, 2026
+> **最終更新**: 2026年9月11日
 
-Grafana、Kiali、Prometheusで設定済みテレメトリーを調べます。例は公式資料とオフライン検証で確認した演習パターンで、デプロイや本番負荷テストはしていません。Backend可用性、認証、名前空間権限、ストレージ、版互換性は明示的な前提条件です。
+Grafana、Kiali、Prometheusを使って、設定済みのテレメトリを確認します。ここで示すのは公式資料とオフライン検証で確認した演習用の設定パターンで、実環境へのデプロイや本番負荷試験は行っていません。バックエンドの可用性、認証、名前空間権限、ストレージ、バージョン互換性は明示的な前提条件です。
 
 ## 目次
 
@@ -19,7 +19,7 @@ Grafana、Kiali、Prometheusで設定済みテレメトリーを調べます。�
 
 ### 可観測性スタックのアーキテクチャ
 
-KialiはKubernetes APIからIstioリソースを読み、Prometheusを照会します。istiodはKialiに設定を送るのでなくプロキシを設定します。Grafanaは設定済みメトリクス/ログ/トレースbackendを照会します。Prometheusはプロキシメトリクスをスクレイプし、collectorがアクセスログ/スパンを送り、トレース対象アプリはコンテキストを伝播する必要があります。
+KialiはKubernetes APIからIstioリソースを読み取り、Prometheusを照会します。istiodはKialiに設定を送るのでなくプロキシを設定します。Grafanaは設定済みメトリクス/ログ/トレースbackendを照会します。Prometheusはプロキシメトリクスをスクレイプし、collectorがアクセスログ/スパンを送り、トレース対象アプリはコンテキストを伝播する必要があります。
 
 ### ツールごとの目的
 
@@ -41,14 +41,14 @@ KialiはIstioメッシュの**可観測性コンソール**です。サービス
 ### Kialiの中核的価値
 
 1. **サービスグラフ可視化**: マイクロサービスの関係と通信を直感的に表示
-2. **リアルタイム監視**: 要求レート、エラー率、応答時間をリアルタイム表示
+2. **リアルタイム監視**: リクエストレート、エラー率、応答時間をリアルタイム表示
 3. **設定検証**: VirtualService、DestinationRuleなどIstio CRDのエラー検出
 4. **mTLS状態確認**: サービス間mTLS適用を視覚的に確認
 5. **分散トレース統合**: Jaeger連携でグラフから直接トレースを表示
 
 ### インストール例と互換性
 
-Kiali 2.31.0とOperatorはAugust 23, 2026にリリースされました。公表互換表は現在Istio 1.30にKiali 2.26+、Istio 1.29にKiali 2.21+を示しますが、**Istio 1.31はまだ明示掲載されていません**。以下は文書上互換なIstio向けKiali 2.31設定例として扱います。1.31と組み合わせる前に現メンテナーのガイダンスと代表演習で互換性を確認します。版番号一致も「最新」も証明ではありません。例のためだけに既存メッシュをダウングレードしないでください。
+Kiali 2.31.0とOperatorは2026年8月23日にリリースされました。公表互換表は現在Istio 1.30にKiali 2.26+、Istio 1.29にKiali 2.21+を示しますが、**Istio 1.31はまだ明示掲載されていません**。以下は文書上互換なIstio向けKiali 2.31設定例として扱います。1.31と組み合わせる前に現メンテナーのガイダンスと代表演習で互換性を確認します。版番号一致も「最新」も証明ではありません。例のためだけに既存メッシュをダウングレードしないでください。
 
 #### 1. Kiali Operatorのインストール
 
@@ -62,7 +62,7 @@ kubectl get pods -n kiali-operator
 
 #### 2. 範囲を限定した閲覧専用Kiali CRの作成
 
-Istioメトリクスを持つ到達可能Prometheusが必要です。Service名が異なればURLを合わせます。後のOperator例は`istio-system`に`prometheus`を定義します。Operatorは自身の名前空間とdiscoveryセレクターに一致する名前空間へのアクセスをKialiに与えます。`cluster_wide_access: false`ではサーバーへのクラスターワイド権限でなく、名前空間権限を作ります。利用者RBACでさらに可視範囲を狭められます。
+Istioメトリクスを収集しているPrometheusが稼働し、Kialiから到達できる必要があります。Service名が異なる場合はURLを合わせてください。後述のPrometheus Operatorの例では、`istio-system`に`prometheus`を定義します。Operatorは自身の名前空間とdiscoveryセレクターに一致する名前空間へのアクセスをKialiに与えます。`cluster_wide_access: false`ではサーバーへのクラスターワイド権限でなく、名前空間権限を作ります。利用者RBACでさらに可視範囲を狭められます。
 
 ```yaml
 apiVersion: kiali.io/v1alpha1
@@ -128,11 +128,11 @@ kubectl create token kiali-viewer -n default --duration=1h
 
 **概要**:
 - 名前空間ごとのサービストポロジー可視化
-- 通信フローと要求レート（RPS）表示
+- 通信フローとリクエストレート（RPS）表示
 - エラー率と応答時間の可視化
 - バージョン別の通信分布確認
 
-通信アニメーションは選択窓と更新間隔の集計を示します。パケットキャプチャや要求ごと1点の表示ではありません。定量分析には辺のメトリクスを使います。
+通信アニメーションは選択窓と更新間隔の集計を示します。パケットキャプチャでも、リクエスト1件ごとに1点を表示するものでもありません。定量分析には辺のメトリクスを使います。
 
 **グラフ表示タイプ**:
 
@@ -181,12 +181,12 @@ Hide: kube-system namespace
 
 - **Overview**: 全体状態の要約
 - **Traffic**: 受信/送信メトリクス
-  - 要求量（RPS）
-  - 要求時間（P50、P95、P99）
-  - 要求サイズ / 応答サイズ
+  - リクエスト数（RPS）
+  - リクエスト時間（P50、P95、P99）
+  - リクエストサイズ / 応答サイズ
 - **Inbound Metrics**: 受信通信分析
   - 送信元ワークロード
-  - 要求プロトコル（HTTP/gRPC/TCP）
+  - リクエストのプロトコル（HTTP/gRPC/TCP）
   - 応答コード
 - **Outbound Metrics**: 送信通信分析
   - 宛先サービス
@@ -201,7 +201,7 @@ Deployment、StatefulSetなど各ワークロードの詳細:
 - **Services**: 接続Service一覧
 - **Logs**: リアルタイムPodログ（Envoy + アプリ）
 - **Metrics**: ワークロードメトリクス
-  - 要求量
+  - リクエスト数
   - 時間（P50/P95/P99）
   - エラー率
 - **Traces**: Jaeger統合の分散トレース
@@ -217,7 +217,7 @@ Kubernetes Serviceごとの詳細:
 
 - **Overview**: Serviceメタデータ
 - **Traffic**: 通信メトリクス
-- **Inbound Metrics**: クライアント別要求分析
+- **Inbound Metrics**: クライアント別リクエスト分析
 - **Traces**: サービス呼び出しトレース
 
 #### 5. Istio設定検証（Istio Config）
@@ -362,17 +362,17 @@ spec:
       version: v2
 ```
 
-設定重みは90/10です。Kialiは選択窓の実要求レートを表示します。標本変動、エラー、経路条件で観測比率は異なり得ます。両subsetに一致エンドポイントがある前提です。
+設定重みは90/10です。Kialiは選択窓の実リクエストレートを表示します。標本変動、エラー、経路条件で観測比率は異なり得ます。両subsetに一致エンドポイントがある前提です。
 
 **カナリア監視**:
-- 版別の観測要求レートと設定90/10の比較
+- 版別の観測リクエストレートと設定90/10の比較
 - 版別エラー率比較
 - 版別応答時間（P50、P95、P99）
 - リアルタイム通信アニメーションで分布確認
 
 #### 名前空間分離とアクセス制御
 
-同じKialiの代替セレクター設定で、重複デプロイの追加ではありません。cluster-wide access無効時はサーバーアクセスを`team-a`と自身の制御名前空間に限定し、ユーザーRBACも適用されます。OpenIDは別認証作業です。現Keycloakはカスタム`/auth`接頭辞がなければ`/realms/...`がデフォルトです。
+同じKialiの代替セレクター設定で、重複デプロイの追加ではありません。cluster-wide access無効時はサーバーアクセスを`team-a`と自身の制御名前空間に限定し、ユーザーRBACも適用されます。OpenIDは別認証作業です。現行のKeycloakはカスタム`/auth`接頭辞がなければ`/realms/...`がデフォルトです。
 
 ```yaml
 apiVersion: kiali.io/v1alpha1
@@ -422,7 +422,7 @@ Grafana UIでインポートしデータソースを選びます。新規テス�
 
 ### コミュニティのLoki Dashboard14876
 
-確認済み項目は**Grafana Loki Dashboard for Istio Service Mesh**、revision3です。特定Envoy text形式用`pattern`パーサーで`status_code`と`req_id`を使い、datasource/label/job/instance変数があります。要求/状態数、バイト、最近の要求、時間、visitor/path/user-agent要約を含みます。mTLSセキュリティを証明せず、以前ここで主張した全パネルも提供しません。
+確認済み項目は**Grafana Loki Dashboard for Istio Service Mesh**、revision3です。特定Envoy text形式用`pattern`パーサーで`status_code`と`req_id`を使い、datasource/label/job/instance変数があります。リクエスト数/ステータス数、バイト、最近のリクエスト、時間、visitor/path/user-agent要約を含みます。mTLSセキュリティを証明せず、以前ここで主張した全パネルも提供しません。
 
 ```bash
 curl -fL -o istio-loki-dashboard.json \

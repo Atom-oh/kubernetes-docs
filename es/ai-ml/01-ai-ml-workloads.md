@@ -1,7 +1,7 @@
 # Cargas de trabajo de IA/ML
 
 > **Línea base de revisión**: GPU Operator 26.7.2 / NVIDIA device plugin 0.20.1 / FSx CSI 1.11.0
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 Kubernetes es una plataforma potente para ejecutar cargas de trabajo de IA/ML. En este capítulo, aprenderemos a ejecutar cargas de trabajo de IA/ML en EKS y exploraremos las prácticas recomendadas.
 
@@ -27,7 +27,7 @@ Verifica la compatibilidad con el framework, la imagen, el dispositivo y la vers
 Los modelos de lenguaje de gran tamaño (LLM) son una de las tecnologías más destacadas de la IA en los últimos años. Consideraciones clave para implementar LLM de forma eficiente en Kubernetes:
 
 - **Fragmentación del modelo**: Distribuir modelos grandes entre varias GPU
-- **Selección de precisión**: Distinguir los cálculos FP16/BF16 de la cuantización INT8/INT4 y validar la precisión y la compatibilidad del dispositivo
+- **Selección de precisión**: Distinguir los cálculos FP16/BF16 de la cuantización INT8/INT4 y validar la exactitud y la compatibilidad con el dispositivo
 - **Optimización de la inferencia**: Mejorar el rendimiento de la inferencia con vLLM, TensorRT, ONNX Runtime, etc.
 - **Estrategia de escalado**: Aumentar el rendimiento mediante el escalado horizontal
 
@@ -36,16 +36,16 @@ Los modelos de lenguaje de gran tamaño (LLM) son una de las tecnologías más d
 Frameworks de orquestación especializados para gestionar cargas de trabajo de IA/ML en Kubernetes:
 
 - **Kubeflow**: Plataforma integral para flujos de trabajo de aprendizaje automático
-- **Ray en Kubernetes**: Framework de computación distribuida
+- **Ray en Kubernetes**: Marco de computación distribuida
 - **KServe**: Gestión de inferencias con Knative/Standard y otras modalidades
-- **Seldon Core**: Servicio y supervisión de modelos
+- **Seldon Core**: Despliegue y supervisión de modelos
 
 ### 3. Uso compartido y optimización de GPU
 
 Tecnologías para utilizar los recursos de GPU de forma eficiente:
 
 - **MIG (Multi-Instance GPU)**: Particionamiento de GPU NVIDIA A100/H100
-- **Enfoques para compartir**: MPS y el fraccionamiento temporal difieren entre sí y también de MIG en cuanto a aislamiento y compatibilidad
+- **Enfoques para compartir**: MPS y el uso compartido por intervalos de tiempo difieren entre sí y también de MIG en cuanto a aislamiento y compatibilidad
 - **Asignación dinámica**: Asignación dinámica de recursos de GPU según las necesidades
 - **GPU Operator**: Automatización de la gestión de GPU en Kubernetes
 
@@ -67,7 +67,7 @@ Integración de bases de datos vectoriales para embeddings y búsqueda semántic
 - **Faiss**: Biblioteca eficiente de búsqueda por similitud de Facebook AI
 - **OpenSearch**: Motor de búsqueda con capacidades de búsqueda vectorial
 
-La inferencia por lotes y la inferencia en línea tienen objetivos diferentes de latencia y rendimiento.
+La inferencia por lotes y la inferencia en línea tienen objetivos distintos de latencia y caudal.
 
 ## Configuración de infraestructura de IA/ML en EKS
 
@@ -110,8 +110,8 @@ Las cargas de trabajo de IA/ML requieren almacenamiento de alto rendimiento:
 
 2. **Amazon EFS**:
    - Es útil cuando varios nodos necesitan acceder a datos compartidos
-   - Modo de rendimiento: se recomienda General Purpose; el modo heredado Max I/O es incompatible con el rendimiento Elastic
-   - Modos de rendimiento: Elastic, Provisioned y Bursting; compara las necesidades de la carga de trabajo, los precios y los límites
+   - Modo de rendimiento: se recomienda General Purpose; el modo heredado Max I/O es incompatible con el caudal Elastic
+   - Modos de caudal: Elastic, Provisioned y Bursting; compara las necesidades de la carga de trabajo, los precios y los límites
 
 3. **Amazon FSx for Lustre**:
    - Sistema de archivos paralelo de alto rendimiento
@@ -136,7 +136,7 @@ Configuración de redes para el entrenamiento distribuido:
    - Elastic Fabric Adapter (EFA)
 
 3. **Configuración de VPC CNI**:
-   - Gestión de direcciones IP para implementaciones de Pod a gran escala
+   - Gestión de direcciones IP para implementaciones de Pods a gran escala
    - Configuración de rangos de direcciones IP secundarias
 
 ## Implementación de cargas de trabajo de IA/ML
@@ -149,7 +149,7 @@ Configuración de redes para el entrenamiento distribuido:
 
 Las AMI NVIDIA de EKS AL2023 ya incluyen controladores y Container Toolkit, así que desactiva su instalación por parte de GPU Operator. No incluyen el device plugin ni el controlador DRA, que requieren configuración. Las AMI NVIDIA de Bottlerocket incluyen el device plugin. Evita instalar componentes duplicados que administren la misma función.
 
-Este comando **representa localmente** el chart revisado de Operator. Inspecciona ClusterPolicy/RBAC y los requisitos reales de instalación antes de la implementación.
+Este comando **renderiza localmente** el chart revisado de GPU Operator. Inspecciona ClusterPolicy/RBAC y los requisitos reales de instalación antes de la implementación.
 
 ```bash
 # AL2023 NVIDIA AMI profile: host driver/toolkit are already installed.
@@ -161,7 +161,7 @@ helm template gpu-operator nvidia/gpu-operator \
   > gpu-operator.rendered.yaml
 ```
 
-El recurso extendido de NVIDIA es `nvidia.com/gpu`. Los límites enteros implican una solicitud equivalente; si se especifican ambos, deben coincidir. `0.5` no es una asignación válida de GPU. Esta imagen CUDA 12.8 es ilustrativa; verifica la compatibilidad entre el controlador del host y la arquitectura, y fija el digest de la imagen antes de la implementación. En esta revisión no se ejecutó ninguna GPU.
+El recurso extendido de NVIDIA es `nvidia.com/gpu`. Al establecer un límite entero, se implica una solicitud del mismo valor; si especificas ambos, deben coincidir. `0.5` no es una asignación válida de GPU. Esta imagen CUDA 12.8 es ilustrativa; verifica la compatibilidad entre el controlador del host y la arquitectura, y fija el digest de la imagen antes de la implementación. En esta revisión no se ejecutó ninguna GPU.
 
 ```yaml
 apiVersion: v1
@@ -187,9 +187,9 @@ spec:
 
 Usa la [guía de instalación 26.03.1](kubeflow/01-architecture-installation.md) fijada para consultar dependencias, identidad y almacenamiento, en lugar de una instalación de una sola línea desde la rama master. El proyecto de servicio de modelos es KServe; KFServing es su nombre histórico.
 
-La ejecución distribuida puede utilizar [Trainer](kubeflow/05-training-operator.md), TFJob/PyTorchJob heredados o el MPI Operator independiente. Distingue la API de MPI Operator de Training Operator heredado según las CRD y la versión instaladas. Los controladores de Jobs crean Pod; un lanzador MPI o torchrun inicia los procesos.
+La ejecución distribuida puede utilizar [Trainer](kubeflow/05-training-operator.md), TFJob/PyTorchJob heredados o el MPI Operator independiente. Distingue la API de MPI Operator de Training Operator heredado según las CRD y la versión instaladas. Los controladores de trabajos crean Pods; un lanzador MPI o torchrun inicia los procesos.
 
-Un solo Pod no puede satisfacer torchrun --nnodes=2, y un nombre DNS inventado para un Pod no proporciona rendezvous. Proporciona el código y la imagen de entrenamiento reales, la cantidad de workers, el Service/DNS, los rangos y el backend, la partición de datos y el comportamiento de checkpoints, tiempos de espera y reintentos. La planificación en grupo requiere una política y compatibilidad del scheduler independientes.
+Un solo Pod no puede satisfacer torchrun --nnodes=2, y un nombre DNS inventado para un Pod no proporciona rendezvous. Proporciona el código y la imagen de entrenamiento reales, la cantidad de workers, el Service/DNS, los ranks de los procesos y el backend, la partición de datos y el comportamiento de checkpoints, tiempos de espera y reintentos. La planificación en grupo requiere una política y compatibilidad del scheduler independientes.
 
 ![La creación de Pod y el inicio de procesos son independientes de la comunicación mediante NCCL, AWS OFI NCCL, libfabric y EFA, así como de la exportación de checkpoints configurada.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-3.png)
 
@@ -215,7 +215,7 @@ TorchServe anuncia que ya no tiene mantenimiento activo ni correcciones de segur
 
 ### Uso compartido y memoria de GPU
 
-El fraccionamiento temporal proporciona acceso compartido a la GPU, pero no ofrece aislamiento de memoria ni de fallos, ni garantías de rendimiento proporcional. MPS utiliza un daemon de control independiente; la documentación revisada del plugin califica la compatibilidad como experimental y excluye los dispositivos con MIG habilitado. Un RuntimeClass junto con un Pod MPS privilegiado no configura el uso compartido en todo el nodo.
+El uso compartido por intervalos de tiempo proporciona acceso compartido a la GPU, pero no ofrece aislamiento de memoria ni de fallos, ni garantías de rendimiento proporcional. MPS utiliza un daemon de control independiente; la documentación revisada del plugin califica la compatibilidad como experimental y excluye los dispositivos con MIG habilitado. Un RuntimeClass junto con un Pod MPS privilegiado no configura el uso compartido en todo el nodo.
 
 Esta es una configuración independiente de device plugin. Si GPU Operator administra el plugin, usa en su lugar la ruta de configuración de ese administrador.
 
@@ -242,11 +242,11 @@ helm template nvdp nvdp/nvidia-device-plugin \
   > device-plugin.rendered.yaml
 ```
 
-Esto expone nvidia.com/gpu.shared; los Pod solicitan un valor entero de ese recurso. replicas=2 no garantiza la mitad de la memoria de la GPU. Verifica los nodos seleccionados, la asignación y la contención en hardware GPU real.
+Esto expone nvidia.com/gpu.shared; los Pods solicitan un valor entero de ese recurso. replicas=2 no garantiza la mitad de la memoria de la GPU. Verifica los nodos seleccionados, la asignación y la contención en hardware GPU real.
 
 ### Ubicación y topología {#placement-and-topology}
 
-Las anotaciones de zona/región no controlan la ubicación de los Pod. Usa nodeSelector/afinidad con etiquetas reales de los nodos; los selectores de antiafinidad y distribución también deben coincidir con las etiquetas de los Pod. Sustituye la AZ indicada más abajo por la real. La ubicación en la misma AZ, la distribución entre nodos y la admisión en grupo son restricciones distintas.
+Las anotaciones de zona/región no controlan la ubicación de los Pods. Usa nodeSelector/afinidad con etiquetas reales de los nodos; los selectores de antiafinidad y distribución también deben coincidir con las etiquetas de los Pods. Sustituye la AZ indicada más abajo por la real. La ubicación en la misma AZ, la distribución entre nodos y la admisión en grupo son restricciones distintas.
 
 ```yaml
 apiVersion: v1
@@ -321,7 +321,7 @@ spec:
 
 El aprovisionamiento dinámico crea un sistema de archivos a partir de un StorageClass/PVC. No incluyas la configuración estática de volumeHandle/DNS en el StorageClass ni la combines con un recurso fsx.aws.k8s.io/Lustre sin definir. Usa el [ejemplo de aprovisionamiento dinámico del controlador](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0/examples/kubernetes/dynamic_provisioning) y comprueba las reglas de rendimiento y copias de seguridad específicas del tipo de implementación; SCRATCH_2 no puede usar opciones exclusivas de almacenamiento persistente.
 
-Un DaemonSet de workers de Alluxio, por sí solo, no constituye una implementación completa de caché. Diseña los roles de master/worker, las rutas, la memoria, la red, la coherencia y la retención. Compara el rendimiento en una ruta de prueba independiente en el PVC realmente montado; ejecutar FIO en un /data sin montar no mide el rendimiento de FSx.
+Un DaemonSet de workers de Alluxio, por sí solo, no constituye una implementación completa de caché. Diseña los roles de master/worker, las rutas, la memoria, la red, la coherencia y la retención. Mide el rendimiento con una prueba independiente en una ruta del PVC realmente montado; ejecutar FIO en un /data sin montar no mide el rendimiento de FSx.
 
 ## Supervisión y registro
 
@@ -352,11 +352,11 @@ spec:
       interval: 15s
 ```
 
-Observa la utilización, la memoria y los errores de GPU junto con las solicitudes, los errores y los histogramas de latencia de la aplicación. La precisión requiere un flujo de evaluación con valores de referencia; añadir réplicas no mejora la calidad del modelo. Sustituye el formato JSON antiguo de gráficas de Grafana/Flot por los formatos actuales de series temporales/indicadores y los UID reales de las fuentes de datos, y después valida la importación.
+Observa la utilización, la memoria y los errores de GPU junto con las solicitudes, los errores y los histogramas de latencia de la aplicación. La exactitud del modelo requiere un flujo de evaluación con valores de referencia; añadir réplicas no mejora su calidad. Sustituye el formato JSON antiguo de gráficas de Grafana/Flot por los formatos actuales de series temporales/indicadores y los UID reales de las fuentes de datos, y después valida la importación.
 
 ### Recopilación de registros
 
-El encuadre de registros CRI de containerd y el JSON de la aplicación son capas diferentes. Configura en Fluent Bit el análisis CRI y multilínea, las rutas, la base de datos de posiciones y la rotación, así como RBAC para los metadatos de Kubernetes. No copies tipos de documentos de Elasticsearch/OpenSearch eliminados ni nombres de analizadores sin definir. Las integraciones de salida de CloudWatch requieren plugins de imagen, IAM para cargas de trabajo y acceso a la red. Gestiona los payloads sensibles de los modelos y el crecimiento de los búferes de reintentos. Consulta la ruta de recopilación seleccionada en la [guía de observabilidad](../observability/README.md).
+El formato de encuadre de los registros CRI de containerd y el JSON de la aplicación corresponden a capas distintas. Configura en Fluent Bit el análisis CRI y multilínea, las rutas, la base de datos de posiciones y la rotación, así como RBAC para los metadatos de Kubernetes. No copies tipos de documentos de Elasticsearch/OpenSearch eliminados ni nombres de analizadores sin definir. Las integraciones de salida de CloudWatch requieren plugins de imagen, IAM para cargas de trabajo y acceso a la red. Gestiona los payloads sensibles de los modelos y el crecimiento de los búferes de reintentos. Consulta la ruta de recopilación seleccionada en la [guía de observabilidad](../observability/README.md).
 
 ## Optimización de costos
 
@@ -397,11 +397,11 @@ Una agregación o agrupación de etiquetas incorrecta puede impedir que un adapt
 
 ### Acceso a datos y modelos {#data-and-model-access}
 
-RBAC de Kubernetes controla el acceso a la API; los permisos de S3/KMS usan IAM para cargas de trabajo. Usa almacenamiento de objetos, cifrado y credenciales basadas en archivos en lugar de Secrets grandes para los modelos o claves de descifrado en variables de entorno. La codificación base64 de un Secret no es cifrado. En NetworkPolicy, namespaceSelector y podSelector dentro del mismo peer se combinan mediante AND; las entradas separadas se combinan mediante OR. Permite también las direcciones reales de DNS, almacenamiento y métricas.
+RBAC de Kubernetes controla el acceso a la API; los permisos de S3/KMS usan IAM para cargas de trabajo. Usa almacenamiento de objetos, cifrado y credenciales basadas en archivos en lugar de Secrets grandes para los modelos o claves de descifrado en variables de entorno. La codificación base64 de un Secret no es cifrado. En NetworkPolicy, namespaceSelector y podSelector dentro del mismo peer se combinan mediante AND; las entradas separadas se combinan mediante OR. Permite también el tráfico necesario hacia/desde DNS, almacenamiento y métricas.
 
 ## Validación y referencias
 
-Este capítulo se corrigió mediante la revisión de manifiestos y configuraciones, y la representación de Helm oficial de GPU Operator/device plugin. No se realizaron ejecuciones reales de GPU, creación/montaje de FSx, entrenamiento distribuido, servicio de modelos ni escalado automático. Valida las versiones de los componentes y los requisitos de los nodos en el entorno de destino.
+Este capítulo se corrigió mediante la renderización oficial con Helm de GPU Operator y device plugin, además de la revisión de manifiestos y configuraciones. No se realizaron ejecuciones reales de GPU, creación/montaje de FSx, entrenamiento distribuido, servicio de modelos ni escalado automático. Valida las versiones de los componentes y los requisitos de los nodos en el entorno de destino.
 
 - [AMI aceleradas de EKS](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
 - [Planificación de GPU en Kubernetes](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)

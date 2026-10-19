@@ -1,153 +1,167 @@
-# Guía de pruebas de Cilium
+# Ejercicios de validación de red de Cilium
 
-Este documento proporciona métodos para probar y validar las funcionalidades de Cilium. Está escrito con base en Cilium versión 1.17 y verifica la compatibilidad con Kubernetes versión 1.30 y posteriores.
+Este capítulo presenta ocho ejercicios guiados con resultados esperados. La base es Cilium 1.20.3, CLI 0.20.1 y una versión compatible de Kubernetes (1.33–1.36), revisados el 16 de octubre de 2026. No se afirma que sea compatible con todas las versiones «1.30 o posteriores».
 
 ## Requisitos previos
 
-- Clúster de Kubernetes (1.30 o posterior)
-- kubectl instalado y configurado
-- Cilium CLI instalado
-- Helm 3.12 o posterior (opcional)
+Use un clúster desechable preparado siguiendo la [guía de redes](../../../networking/cilium/03-networking.md) y los [perfiles de instalación](../../../networking/cilium/README.md), con dos nodos Linux en los que se puedan programar cargas. Use herramientas e imágenes adecuadas para la arquitectura. Mantenga kubectl dentro del desfase de versiones admitido por la documentación. Estos ejercicios no migran un CNI existente ni cambian la red administrada por el proveedor.
 
-## 1. Instalación de Cilium y pruebas básicas
+El laboratorio manual de políticas requiere permiso para crear un espacio de nombres nuevo, Pods, un Deployment, un Service y una CiliumNetworkPolicy con ámbito de espacio de nombres. Revise las políticas de ámbito de clúster y las restricciones de admisión existentes: un espacio de nombres separado no las anula. Ejecute los bloques de shell en la misma sesión para que se conserven las variables.
 
-### 1.1 Instalar Cilium CLI
+## 1. Instalación y pruebas básicas
+
+Siga el procedimiento de descarga de CLI verificado en la guía de instalación y elija un perfil de Cilium. No ejecute los instaladores de Helm y CLI sobre la misma instalación de Cilium ni use, sin verificarlo, un archivo AMD64 obtenido de la versión `latest`.
 
 ```bash
-# Install Cilium CLI
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
-
-# Verify version
+set -euo pipefail
+kubectl config current-context
+kubectl version -o yaml
 cilium version
+cilium status --wait
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 
-### 1.2 Instalar Cilium
+Si lo desea, ejecute el conjunto de pruebas de conectividad mantenido en el clúster desechable. Este crea cargas y políticas, y puede comunicarse con destinos externos; revise las pruebas seleccionadas y sus requisitos previos.
 
 ```bash
-# Basic installation
-cilium install --version 1.17.0
-
-# Or installation using Helm
-helm repo add cilium https://helm.cilium.io/
-helm install cilium cilium/cilium --version 1.17.0 \
-  --namespace kube-system
+cilium connectivity test --test-namespace cilium-net-smoke \
+  --namespace-labels docs-audit-lab=cilium-networking-03
 ```
 
-### 1.3 Comprobar el estado de la instalación
+La CLI 0.20.1 añade un sufijo de secuencia: la suite individual predeterminada usa `cilium-net-smoke-1`. Revise los fallos y los casos omitidos; que el comando termine no demuestra que funcionen combinaciones de nube o funciones que no se hayan probado.
+
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+Las versiones instaladas se ajustan a la matriz documentada, los agentes quedan listos y los casos de conectividad seleccionados pasan. Explique por qué un DaemonSet listo no demuestra por sí solo el enrutamiento entre nodos y por qué «kubectl 1.31 o posterior» no basta para un servidor de API más reciente.
+
+</details>
+
+## 2. Pruebas de políticas de red
+
+### Crear un espacio de nombres de prueba aislado y las cargas de trabajo
 
 ```bash
-# Check Cilium status
-cilium status
-
-# Verify all Cilium components are running properly
-kubectl get pods -n kube-system -l k8s-app=cilium
+kubectl create namespace cilium-net-lab
+kubectl label namespace cilium-net-lab docs-audit-lab=cilium-networking-03
 ```
 
-### 1.4 Prueba básica de conectividad
+Si al crear el espacio de nombres se indica que ya existe, deténgase y elija un nombre nuevo que use de forma coherente en todos los archivos y comandos. No cambie las etiquetas ni reutilice el espacio de nombres de otra persona.
 
-```bash
-# Run Cilium connectivity test
-cilium connectivity test
-```
+Los digests de las imágenes siguientes proceden de los valores predeterminados de pruebas de la CLI oficial 0.20.1. El código fuente de la implementación usa `/usr/bin/pause` para la imagen curl y un servidor simulado JSON que escucha en TCP 8080 y tiene una comprobación de disponibilidad en `/`. Son imágenes de prueba, no recomendaciones para aplicaciones de producción. La antiafinidad del backend lo separa del frontend entre nodos.
 
-## 2. Pruebas de Network Policy
+**`lab-app.yaml`**
 
-### 2.1 Implementar la aplicación de prueba
-
-```bash
-# Create test namespace
-kubectl create namespace cilium-test
-
-# Deploy test application
-kubectl -n cilium-test apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
+```yaml
+apiVersion: v1
+kind: Pod
 metadata:
   name: frontend
+  namespace: cilium-net-lab
+  labels:
+    app: frontend
 spec:
-  selector:
-    matchLabels:
-      app: frontend
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: 80
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  namespace: cilium-net-lab
+  labels:
+    app: outsider
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: cilium-net-lab
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: backend
-  replicas: 2
   template:
     metadata:
       labels:
         app: backend
     spec:
+      automountServiceAccountToken: false
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: frontend
+            topologyKey: kubernetes.io/hostname
       containers:
-      - name: nginx
-        image: nginx:latest
+      - name: http
+        image: quay.io/cilium/json-mock:v1.4.1@sha256:6a66df90808a39c02e7a9d58af7bf0e54d8f8b7d4bc528f48c891969a7049195
         ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-spec:
-  type: ClusterIP
-  selector:
-    app: frontend
-  ports:
-  - port: 80
-    targetPort: 80
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: backend
+  namespace: cilium-net-lab
 spec:
-  type: ClusterIP
   selector:
     app: backend
   ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-# Verify deployment
-kubectl -n cilium-test get pods,svc
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP
 ```
 
-### 2.2 Verificar la conectividad básica
 
 ```bash
-# Test connectivity from frontend to backend
-FRONTEND_POD=$(kubectl -n cilium-test get pods -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-kubectl -n cilium-test exec $FRONTEND_POD -- curl -s backend
+kubectl apply -f lab-app.yaml
+kubectl -n cilium-net-lab wait --for=condition=Ready pod/frontend pod/outsider --timeout=120s
+kubectl -n cilium-net-lab rollout status deployment/backend --timeout=120s
+kubectl -n cilium-net-lab get pods -o wide
+kubectl -n cilium-net-lab get endpointslices -l kubernetes.io/service-name=backend
+BACKEND_IP=$(kubectl -n cilium-net-lab get service backend -o jsonpath='{.spec.clusterIP}')
+test -n "$BACKEND_IP"
 ```
 
-### 2.3 Aplicar Network Policy
+Un backend en estado Pending puede indicar que no hay suficientes nodos aptos para cumplir la antiafinidad. No lo interprete como un fallo de la política de red. Primero compruebe que **ambos** clientes pueden llegar al backend en buen estado antes de añadir la política. Use la IP del Service para excluir los fallos de DNS de esta prueba de tráfico entrante.
 
 ```bash
-# Apply Cilium network policy
-kubectl -n cilium-test apply -f - <<EOF
-apiVersion: "cilium.io/v2"
+kubectl -n cilium-net-lab exec frontend -- \
+  curl --fail --silent --show-error --connect-timeout 3 --max-time 5 "http://$BACKEND_IP:8080/"
+kubectl -n cilium-net-lab exec outsider -- \
+  curl --fail --silent --show-error --connect-timeout 3 --max-time 5 "http://$BACKEND_IP:8080/"
+```
+
+### Aplicar y comprobar la política
+
+**`allow-frontend.yaml`**
+
+```yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "allow-frontend-to-backend"
+  name: allow-frontend-to-backend
+  namespace: cilium-net-lab
 spec:
   endpointSelector:
     matchLabels:
@@ -155,279 +169,182 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-net-lab
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "80"
+      - port: '8080'
         protocol: TCP
-EOF
-
-# Verify policy
-kubectl -n cilium-test get ciliumnetworkpolicies
 ```
 
-### 2.4 Probar la conectividad después de aplicar la política
 
 ```bash
-# Test connectivity from frontend to backend (allowed)
-FRONTEND_POD=$(kubectl -n cilium-test get pods -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-kubectl -n cilium-test exec $FRONTEND_POD -- curl -s backend
-
-# Test connectivity from other Pod to backend (blocked)
-kubectl -n cilium-test run test-pod --image=curlimages/curl --rm -it -- curl -s --connect-timeout 5 backend
+kubectl apply -f allow-frontend.yaml
+kubectl -n cilium-net-lab get ciliumnetworkpolicy allow-frontend-to-backend -o yaml
+kubectl -n cilium-net-lab exec frontend -- \
+  curl --fail --silent --show-error --connect-timeout 3 --max-time 5 "http://$BACKEND_IP:8080/"
 ```
+
+Espere a que la política se aplique a los endpoints pertinentes y vuelva a comprobar la solicitud permitida. Que una conexión anterior haya pasado no demuestra que una política nueva ya esté lista; cada comando de esta sección inicia un proceso curl nuevo.
+
+```bash
+if kubectl -n cilium-net-lab exec outsider -- \
+  curl --fail --silent --show-error --connect-timeout 3 --max-time 5 "http://$BACKEND_IP:8080/"; then
+  echo "Unexpected allowed request: inspect combined policy and realization" >&2
+  exit 1
+else
+  denied_rc=$?
+  printf 'Outsider request failed with exit %s; correlate the flow before declaring a policy pass.\n' "$denied_rc"
+fi
+```
+
+Un código de salida distinto de cero **no** demuestra automáticamente que se haya denegado el tráfico. También puede deberse a exec/RBAC, a la ausencia de curl, al enrutamiento, al backend u otros fallos. El timeout de curl suele producir el código de salida 28, pero correlacione el origen, el destino, el puerto y el flujo denegado por la política con la prueba inicial satisfactoria y con el frontend que sigue funcionando. La regla limitada al espacio de nombres no impide que otras políticas permitan el tráfico de forma independiente.
+
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+Antes de aplicar la política, ambos clientes llegan al backend. Una vez aplicada, el frontend sigue funcionando y al Pod outsider se le deniega el acceso, con evidencia de la política que lo corrobore. Explique por qué la falta de EndpointSlices, los errores de DNS o cualquier código de salida no nulo no demuestran aislamiento. Esta política L3/L4 no analiza HTTP.
+
+</details>
 
 ## 3. Pruebas de visibilidad de Hubble
 
-### 3.1 Habilitar Hubble
+Use Hubble Relay/UI habilitados por el perfil y una CLI de Hubble compatible. Mantenga este reenvío de puertos en un terminal aparte y ejecute el observador en otro:
 
 ```bash
-# Enable Hubble
-cilium hubble enable
-
-# Check status
-cilium status
+cilium hubble port-forward
 ```
 
-### 3.2 Instalar Hubble UI (opcional)
-
 ```bash
-# Install Hubble UI
-cilium hubble enable --ui
-
-# Set up port forwarding
+hubble status
+hubble observe --namespace cilium-net-lab --last 50
+hubble observe --from-pod cilium-net-lab/outsider --verdict DROPPED --last 20
 cilium hubble ui
 ```
 
-### 3.3 Observar flujos de Hubble
+Genere solicitudes nuevas mientras observa. La pérdida o agregación de eventos y los filtros afectan lo que se ve. Los flujos HTTP requieren un proxy L7 o una configuración de visibilidad compatible; la regla L4 anterior no los crea. Un rechazo L7 configurado puede devolver HTTP 403 en lugar de un evento de paquete DROPPED.
 
-```bash
-# Install Hubble CLI
-export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
-sudo tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
-rm hubble-linux-amd64.tar.gz
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
 
-# Set up Hubble connection
-cilium hubble port-forward &
+Se puede acceder a Relay, los flujos identifican los endpoints previstos y la evidencia de la prueba negativa corresponde a su solicitud. Explique por qué la ausencia de registros HTTP en este laboratorio solo L4 no demuestra que Hubble esté averiado.
 
-# Observe network flows
-hubble observe --namespace cilium-test
-```
+</details>
 
 ## 4. Pruebas de rendimiento
 
-### 4.1 Prueba básica de rendimiento
+Ejecute el ejemplo mantenido de [`cilium connectivity perf` en la guía](../../../networking/cilium/03-networking.md), que crea cargas de cliente y servidor coincidentes. Mantenga separados los resultados del mismo nodo y entre nodos, y registre la ubicación de los nodos, las versiones, las MTU de las rutas y la configuración de políticas y cifrado.
+
+La prueba anterior combinaba nombres de Pods `netperf-*` que no correspondían con una imagen iperf3 y un Service que solo admitía TCP. En una configuración iperf3 independiente, una prueba UDP requiere **control TCP y datos UDP** en los puertos configurados. Solicitar simplemente `-b 1G` no demuestra que se esté transmitiendo a 1 Gbit/s.
+
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+Todas las cargas de prueba seleccionadas están listas y los resultados están etiquetados por escenario. Explique la diferencia entre solicitud/respuesta TCP, creación de conexiones, caudal de un flujo y tasa ofrecida y pérdida de paquetes en UDP. Un resultado de benchmark solo corresponde a la configuración registrada, no a todos los modos de Cilium o de la nube.
+
+</details>
+
+## 5. Comprobaciones opcionales de funciones avanzadas
+
+Configure cada función mediante un perfil documentado preparado por separado. **No desinstale el CNI del clúster entre comprobaciones.** Un indicador de Helm no aporta por sí solo claves, rutas, acceso a la API ni peers BGP que falten.
+
+| Función | Preparación | Qué observar |
+|---|---|---|
+| Reemplazo de kube-proxy | `kubeProxyReplacement: true`, valores accesibles para `k8sServiceHost`/`k8sServicePort`, datapath compatible y plan de migración | Estado real del agente y tráfico de Service; `strict` ya no es un valor vigente |
+| IPsec/WireGuard | Modo de cifrado correcto, gestión de claves, puertos/MTU y alcance de tráfico compatible | Estado de cifrado del agente y ruta real entre nodos |
+| BGP Control Plane | `bgpControlPlane.enabled: true`, recursos BGP versionados y peers configurados accesibles | Sesiones y rutas anunciadas; no dé por hecho que se programan rutas en la tabla de reenvío local |
+
+Elija el agente del nodo pertinente:
 
 ```bash
-# Create performance test namespace
-kubectl create namespace perf-test
-
-# Deploy performance test application
-kubectl -n perf-test apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: perf-client
-spec:
-  selector:
-    matchLabels:
-      app: perf-client
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: perf-client
-    spec:
-      containers:
-      - name: netperf
-        image: networkstatic/iperf3
-        command: ["sleep", "infinity"]
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: perf-server
-spec:
-  selector:
-    matchLabels:
-      app: perf-server
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: perf-server
-    spec:
-      containers:
-      - name: netperf
-        image: networkstatic/iperf3
-        command: ["iperf3", "-s"]
-        ports:
-        - containerPort: 5201
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: perf-server
-spec:
-  type: ClusterIP
-  selector:
-    app: perf-server
-  ports:
-  - port: 5201
-    targetPort: 5201
-EOF
-
-# Verify deployment
-kubectl -n perf-test get pods
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-AGENT-ON-TARGET-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg encrypt status
+cilium bgp peers
+kubectl get ciliumbgpclusterconfigs,ciliumbgppeerconfigs,ciliumbgpadvertisements
 ```
 
-### 4.2 Ejecutar la prueba de rendimiento de iperf3
+Interprete los comandos opcionales de una función solo si esta está configurada. En el perfil base, el estado deshabilitado/no configurado es lo esperado. El comando independiente `cilium bgp peers` informa sobre los estados de los nodos del clúster; los comandos BGP antiguos, ejecutados dentro de un agente, están obsoletos. BGP requiere los recursos de configuración aplicables de `cilium.io/v2`; los ajustes eliminados `bgp.enabled` y `bgp.announce.loadbalancerIP` no establecen una sesión.
+
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+El estado observado coincide con el perfil elegido y la evidencia pertinente de tráfico/rutas respalda el resultado. Explique por qué «BGP establecido» no demuestra el enrutamiento interno de Pods o por qué el estado del cifrado por sí solo no demuestra que se cifran todas las rutas del tráfico.
+
+</details>
+
+## 6. Comprobaciones de compatibilidad
 
 ```bash
-# Get client Pod name
-CLIENT_POD=$(kubectl -n perf-test get pods -l app=perf-client -o jsonpath='{.items[0].metadata.name}')
-
-# Get server service IP
-SERVER_IP=$(kubectl -n perf-test get svc perf-server -o jsonpath='{.spec.clusterIP}')
-
-# TCP performance test
-kubectl -n perf-test exec $CLIENT_POD -- iperf3 -c $SERVER_IP -t 30
-
-# UDP performance test
-kubectl -n perf-test exec $CLIENT_POD -- iperf3 -c $SERVER_IP -u -b 1G -t 30
-```
-
-## 5. Pruebas de funcionalidades avanzadas
-
-### 5.1 Prueba del modo de reemplazo de kube-proxy
-
-```bash
-# Reinstall Cilium with kube-proxy replacement mode
-cilium uninstall
-cilium install --kube-proxy-replacement=strict
-
-# Check status
-cilium status
-
-# Test service connectivity
-cilium connectivity test
-```
-
-### 5.2 Prueba de cifrado
-
-```bash
-# Reinstall Cilium with IPsec encryption
-cilium uninstall
-cilium install --encryption=ipsec
-
-# Or install with WireGuard encryption
-cilium uninstall
-cilium install --encryption=wireguard
-
-# Check status
-cilium status
-
-# Check encryption status
-kubectl -n kube-system exec -ti ds/cilium -- cilium encrypt status
-```
-
-### 5.3 Prueba de BGP (avanzada)
-
-```bash
-# Install Cilium with BGP configuration
-helm install cilium cilium/cilium --version 1.17.0 \
-  --namespace kube-system \
-  --set bgp.enabled=true \
-  --set bgp.announce.loadbalancerIP=true
-
-# Check BGP peering status
-kubectl -n kube-system exec -ti ds/cilium -- cilium bgp peers
-```
-
-## 6. Pruebas de compatibilidad
-
-### 6.1 Comprobar la compatibilidad de la versión de Kubernetes
-
-```bash
-# Check Kubernetes version
-kubectl version --short
-
-# Check Cilium version
+kubectl version -o yaml
 cilium version
+kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.nodeInfo.kernelVersion}{"\n"}{end}'
+kubectl -n kube-system get configmap cilium-config -o yaml
+kubectl -n kube-system get daemonset cilium -o yaml
 ```
 
-### 6.2 Comprobar la compatibilidad de la versión del kernel
+Compare las versiones y funciones con la matriz de compatibilidad, incluidos los backports de kernel documentados. Inspeccione la configuración CNI real y los montajes de volúmenes antes de leer un archivo de configuración del host: `/etc/cni/net.d/05-cilium.conf` no es una ruta ni un nombre de archivo universal dentro de los contenedores. Las configuraciones encadenadas o personalizadas son distintas. Que exista un archivo no demuestra compatibilidad en tiempo de ejecución.
+
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+Los requisitos de versión y kernel coinciden con la plataforma, los Pods reciben direcciones mediante el CNI previsto y las pruebas de tráfico pasan. Explique la diferencia entre instalar el CNI, asignar IPAM y reenviar tráfico de extremo a extremo.
+
+</details>
+
+## 7. Solución de problemas
 
 ```bash
-# Check node kernel version
-kubectl get nodes -o wide
-kubectl debug node/<node-name> -it --image=ubuntu -- uname -r
-```
-
-### 6.3 Comprobar la compatibilidad de CNI
-
-```bash
-# Check CNI configuration
-kubectl -n kube-system exec -ti ds/cilium -- ls -la /etc/cni/net.d/
-kubectl -n kube-system exec -ti ds/cilium -- cat /etc/cni/net.d/05-cilium.conf
-```
-
-## 7. Pruebas de solución de problemas
-
-### 7.1 Recopilar información de diagnóstico de Cilium
-
-```bash
-# Collect Cilium diagnostic information
 cilium status --verbose
-cilium clustermesh status
-cilium hubble status
-
-# Collect system information
-cilium sysdump
+kubectl -n kube-system logs "$CILIUM_POD" -c cilium-agent --tail=100
+kubectl -n kube-system logs deployment/cilium-operator --tail=100
+kubectl -n kube-system logs deployment/hubble-relay --tail=100
 ```
 
-### 7.2 Análisis de logs
+Para un endpoint frontend, seleccione el agente del nodo del frontend antes de inspeccionarlo:
 
 ```bash
-# Check Cilium agent logs
-kubectl -n kube-system logs -l k8s-app=cilium
-
-# Check Cilium operator logs
-kubectl -n kube-system logs -l name=cilium-operator
-
-# Check Hubble relay logs
-kubectl -n kube-system logs -l k8s-app=hubble-relay
+kubectl -n cilium-net-lab get pod frontend -o wide
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
+  cilium-dbg endpoint get pod-name:cilium-net-lab:frontend
 ```
 
-### 7.3 Solución de problemas de conectividad
+Si se deniega el ingreso, inspeccione también el agente/endpoint del backend. Compare la política deseada con su estado aplicado, el estado de la ruta y del backend, y los flujos observados. No use los comandos eliminados `policy trace` ni analice tablas legibles por personas con un marcador `<pod-name>` sin entrecomillar en el shell.
 
-```bash
-# Check specific endpoint information
-kubectl -n kube-system exec -ti ds/cilium -- cilium endpoint list
+Si hace falta, `cilium sysdump` recopila diagnósticos; revise los registros y la información de recursos del archivo antes de compartirlo. `cilium clustermesh status` solo se aplica a Cluster Mesh configurado. Después de establecer la conexión, consulte el estado de Relay con `hubble status`.
 
-# Get detailed endpoint information
-ENDPOINT_ID=$(kubectl -n kube-system exec -ti ds/cilium -- cilium endpoint list | grep <pod-name> | awk '{print $1}')
-kubectl -n kube-system exec -ti ds/cilium -- cilium endpoint get $ENDPOINT_ID
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
 
-# Policy tracing
-kubectl -n kube-system exec -ti ds/cilium -- cilium policy trace --src-k8s-pod=<namespace>:<pod-name> --dst-k8s-pod=<namespace>:<pod-name> -d TCP/<port>
-```
+La evidencia identifica el nodo y el endpoint correctos, no cualquier Pod del DaemonSet que kubectl haya seleccionado. Explique qué evidencia permite distinguir entre un backend que no está listo, un fallo de ruta, una denegación de política y la falta de observación.
+
+</details>
 
 ## 8. Limpieza
 
-```bash
-# Delete test namespaces
-kubectl delete namespace cilium-test
-kubectl delete namespace perf-test
+Revise qué espacios de nombres creó esta ejecución y guarde primero los resultados:
 
-# Remove Cilium (if needed)
-cilium uninstall
+```bash
+kubectl get namespaces -l docs-audit-lab=cilium-networking-03
+LAB_OWNER=$(kubectl get namespace cilium-net-lab -o jsonpath='{.metadata.labels.docs-audit-lab}')
+test "$LAB_OWNER" = cilium-networking-03
+kubectl delete namespace cilium-net-lab
 ```
 
-## Referencias
+Si ejecutó las suites de CLI, verifique por separado la propiedad antes de eliminar sus espacios de nombres generados `cilium-net-smoke-1` o `cilium-net-perf-1`. No elimine en bloque espacios de nombres ajenos ni desinstale Cilium como parte de la limpieza de la aplicación. Detenga los reenvíos de puertos locales con Ctrl-C.
 
-- [Documentación oficial de Cilium](https://docs.cilium.io/)
-- [Repositorio de GitHub de Cilium](https://github.com/cilium/cilium)
-- [Documentación de Hubble](https://github.com/cilium/hubble)
-- [Ejemplos de Cilium Network Policy](https://docs.cilium.io/en/stable/policy/language/)
+<details>
+<summary>Resultado esperado y autoevaluación</summary>
+
+Solo se eliminan los recursos de prueba de esta ejecución; el CNI instalado y las demás cargas de trabajo siguen funcionando. Explique por qué desinstalar repetidamente el CNI no era una forma válida de comparar funciones.
+
+</details>
+
+## Límites de validación y referencias
+
+Se comprobaron los valores YAML/Helm publicados, la sintaxis de shell y los contratos de CLI/API sin implementar estas cargas. Tras reiniciar el host no se afirma haber usado un clúster activo ni haber ejecutado imágenes, renderizado Helm o medido el caudal. Hay que verificar en el entorno preparado la admisión, la arquitectura de las imágenes y su política de descarga, la capacidad, el plano de datos real y los resultados esperados.
+
+- [Valores predeterminados de imágenes de CLI 0.20.1](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go), [implementaciones de prueba](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go), [indicadores de conectividad/rendimiento](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go)
+- [API de políticas de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml), [comportamiento L7](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst), [configuración BGP](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst), [CLI BGP](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/bgp.go), [comandos del agente](https://github.com/cilium/cilium/tree/v1.20.3/Documentation/cmdref)
+- [Desviación de versiones de Kubernetes](https://kubernetes.io/releases/version-skew-policy/), [uso de iperf3](https://software.es.net/iperf/invoking.html), [guía de redes](../../../networking/cilium/03-networking.md)

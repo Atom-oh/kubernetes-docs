@@ -1,6 +1,6 @@
 # CloudWatch Alarms
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026年9月13日
 
 本文的 CLI 与 Terraform 示例涵盖 **经典 CloudWatch 指标告警（metric alarm）** 和复合告警（composite alarm）。CloudWatch 还支持基于其 OTLP 端点摄取的指标的 **PromQL 告警**，以及基于 Logs Insights 查询结果的 **日志告警**。PromQL 告警使用 `PendingPeriod`/`RecoveryPeriod`；下文的 M-of-N 与缺失数据设置并不能原样套用。文中的账户、Region 和资源取值均为示例。在执行创建或更新命令之前，请先确认实际目标、IAM 权限、成本和接收人。`PutMetricAlarm`/`PutCompositeAlarm` 会替换已有的告警配置，因此更新前请先保留其当前设置。
 
@@ -21,7 +21,7 @@
 
 ---
 
-## CloudWatch Alarms Overview
+## CloudWatch Alarms 概述 {#cloudwatch-alarms-overview}
 
 Amazon CloudWatch Alarms 是 AWS 原生监控服务的告警功能。它基于 CloudWatch 指标创建告警，并可通过与 SNS、Lambda、EC2 Auto Scaling 等服务集成实现自动化响应。
 
@@ -46,7 +46,7 @@ Amazon CloudWatch Alarms 是 AWS 原生监控服务的告警功能。它基于 C
 
 ---
 
-## Architecture
+## 架构 {#architecture}
 
 ### CloudWatch Alarms 运行流程
 
@@ -64,7 +64,7 @@ Amazon CloudWatch Alarms 是 AWS 原生监控服务的告警功能。它基于 C
 
 ---
 
-## Metric Alarms
+## 指标告警 {#metric-alarms}
 
 ### 创建基础告警（控制台/CLI）
 
@@ -202,7 +202,7 @@ math-functions:
 
 ---
 
-## Composite Alarms
+## 复合告警 {#composite-alarms}
 
 ### 复合告警概念
 
@@ -309,7 +309,7 @@ aws cloudwatch put-composite-alarm  \
 
 ---
 
-## Anomaly Detection
+## 异常检测 {#anomaly-detection}
 
 ### 异常检测概述
 
@@ -398,7 +398,7 @@ aws cloudwatch put-anomaly-detector \
 
 ---
 
-## SNS Integration
+## SNS 集成 {#sns-integration}
 
 ### 创建 SNS Topic
 
@@ -448,7 +448,7 @@ aws sns set-subscription-attributes  \
 
 ---
 
-## EventBridge Integration
+## EventBridge 集成 {#eventbridge-integration}
 
 ### 创建 EventBridge 规则
 
@@ -522,7 +522,7 @@ def lambda_handler(event, context):
 
 ---
 
-## Container Insights Alerts
+## Container Insights 告警 {#container-insights-alerts}
 
 ### EKS Container Insights 指标
 
@@ -603,7 +603,7 @@ CPU 示例是集群级聚合。针对单个节点需要使用 `ClusterName`、`N
 
 ---
 
-## CloudWatch Alarm Actions
+## CloudWatch 告警动作 {#cloudwatch-alarm-actions}
 
 ### EC2 动作
 
@@ -675,7 +675,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## Cost Optimization
+## 成本优化 {#cost-optimization}
 
 ### 成本构成因素
 
@@ -730,7 +730,7 @@ aws cloudwatch describe-alarms  \
 
 ---
 
-## Prometheus Metrics Integration
+## Prometheus 指标集成 {#prometheus-metrics-integration}
 
 ### Amazon Managed Prometheus (AMP) 集成
 
@@ -744,7 +744,7 @@ aws cloudwatch describe-alarms  \
 
 ---
 
-## Terraform Examples
+## Terraform 示例 {#terraform-examples}
 
 下面这些代码块构成一个示例模块。请配置真实的资源取值和 SNS topic 策略，并在部署前审查 `terraform plan`。示例验证只覆盖 provider schema/语法，不包括 AWS 实际部署或真实通知投递。
 

@@ -1,6 +1,6 @@
 # Istioでよくあるエラーと解決方法
 
-> **最終更新**: September 11, 2026 · CLI/設定確認: Istio 1.31.0
+> **最終更新**: 2026年9月11日 · CLI/設定確認: Istio 1.31.0
 
 観測した障害、実効設定、ワークロードモードから始めます。以下は診断例で、メッシュをリセットする指示ではありません。Kubernetes/EKS版の[インストール互換性ガイダンス](../01-installation.md)を確認してください。
 
@@ -199,7 +199,7 @@ spec:
 
 auto mTLS有効で明示DestinationRule TLS上書きがなければ、既知メッシュendpointへworkload mTLSを選びます。明示DISABLEはSTRICT宛先と競合し得ます。意図しない上書きは所有者経由で削除するか、意図的Istio mTLS宛先にISTIO_MUTUALを使います。任意外部TLS/平文サービスへ強制しないでください。
 
-呼び出し元がstrict対応後、以下のセレクターなしポリシーを**app名前空間**に適用します。
+呼び出し元がSTRICTの適用に備えた後で、以下のセレクターなしポリシーを**app名前空間**に適用します。
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -425,7 +425,7 @@ spec:
 
 ### 問題の説明
 
-x 509期限切れやhandshake失敗はworkload leaf、署名中間/root、Ingress証明書、時刻ずれに関係し得ます。期限はCA/provider/設定に依存し、「10年」「24時間」は普遍的診断ではありません。
+X.509証明書の期限切れやhandshake失敗はworkload leaf、署名中間/root、Ingress証明書、時刻ずれに関係し得ます。期限はCA/provider/設定に依存し、「10年」「24時間」は普遍的診断ではありません。
 
 ### 診断と復旧
 

@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 
 export const batchBranch = 'docs/translate-sync'
@@ -69,6 +70,91 @@ function readState(buffer) {
   return state
 }
 
+function nativeContractFailures(root, main, targets, working = false) {
+  const failed = new Set()
+  if (!targets.size) return failed
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'native-review-contracts-'))
+  const sources = new Map()
+  try {
+    const validator = path.join(directory, 'validate-translation.py')
+    const validatorEntry = main.get('scripts/validate-translation.py')
+    if (!validatorEntry) throw new Error('Native review recovery requires the committed translation validator')
+    fs.writeFileSync(validator, blob(root, validatorEntry))
+    const sourceFile = path.join(directory, 'source.md')
+    for (const target of targets) {
+      const source = sourcePath(target)
+      const targetBytes = working ? current(root, target) : blob(root, main.get(target))
+      if (!main.has(source) || !targetBytes) { failed.add(target); continue }
+      if (!sources.has(source)) sources.set(source, blob(root, main.get(source)))
+      const targetFile = path.join(directory, target.split('/')[0], 'target.md')
+      fs.mkdirSync(path.dirname(targetFile), { recursive: true })
+      fs.writeFileSync(sourceFile, sources.get(source))
+      fs.writeFileSync(targetFile, targetBytes)
+      const result = spawnSync('python3', [validator, sourceFile, targetFile], {
+        cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024
+      })
+      if (result.error) throw result.error
+      if (result.signal || ![0, 1].includes(result.status)) {
+        throw new Error(`Native review validation could not complete: ${target}`)
+      }
+      if (result.status === 1) failed.add(target)
+    }
+    return failed
+  } finally { fs.rmSync(directory, { recursive: true, force: true }) }
+}
+
+function recoverNativeReviews(root, main, state) {
+  const reviewed = new Set()
+  const targetHashes = new Map()
+  for (const [file, entry] of main) {
+    if (!/^results\/Native-GitBook-Review-Progress-\d{8}\.json$/.test(file)) continue
+    const report = JSON.parse(blob(root, entry).toString())
+    if (!['IN_PROGRESS', 'COMPLETE'].includes(report.status)) continue
+    for (const lang of languages) {
+      const locale = report.locales?.[lang]
+      const rejected = new Set((locale?.rejected || []).map(row => row.path))
+      for (const [target, review] of Object.entries(locale?.reviews || {})) {
+        if (!translatedPath(target) || !target.startsWith(`${lang}/`) ||
+            rejected.has(target) || review.completePageComparison !== true ||
+            !Number.isFinite(review.score) || review.score < 85 || review.score > 100) continue
+        const source = sourcePath(target)
+        if (!main.has(target) || !main.has(source) || review.sourcePath !== source ||
+            review.sourceBlob !== main.get(source).oid) continue
+        if (!targetHashes.has(target)) {
+          targetHashes.set(target, createHash('sha256').update(blob(root, main.get(target))).digest('hex'))
+        }
+        if (review.targetSha256 !== targetHashes.get(target)) continue
+        reviewed.add(target)
+      }
+    }
+  }
+  const invalid = nativeContractFailures(root, main, reviewed)
+  for (const target of reviewed) {
+    if (invalid.has(target)) delete state.sources[target]
+    else state.sources[target] = main.get(sourcePath(target)).oid
+  }
+  state.pending = [...new Set([
+    ...state.pending.filter(file => !reviewed.has(file) || invalid.has(file)),
+    ...invalid
+  ])]
+  return invalid
+}
+
+function retryInvalidNativeReviews(root, main, state, pending, invalid) {
+  // Import/refresh can overlay the same invalid bytes and clear their retry.
+  // Only a structurally valid replacement may supersede a rejected snapshot.
+  const failed = nativeContractFailures(root, main, invalid, true)
+  for (const target of invalid) {
+    if (failed.has(target)) {
+      delete state.sources[target]
+      pending.add(target)
+    } else {
+      state.sources[target] = main.get(sourcePath(target)).oid
+      pending.delete(target)
+    }
+  }
+}
+
 function write(root, file, content) {
   if (!allowedPath(file)) throw new Error(`Refusing to write outside translation scope: ${file}`)
   const target = path.join(root, file)
@@ -82,14 +168,18 @@ function write(root, file, content) {
 function writeState(root, state, pending) {
   state.sources = Object.fromEntries(Object.entries(state.sources).sort(([a], [b]) => a.localeCompare(b)))
   state.pending = [...pending].sort()
-  const previous = readState(blob(root, tree(root, 'HEAD').get(statePath)))
+  const previousBytes = blob(root, tree(root, 'HEAD').get(statePath))
+  const previous = readState(previousBytes)
   const sameSources = Object.keys(previous.sources).length === Object.keys(state.sources).length &&
     Object.entries(state.sources).every(([file, sha]) => previous.sources[file] === sha)
   const samePending = previous.pending.length === state.pending.length &&
     state.pending.every(file => previous.pending.includes(file))
   // A main commit without translation changes must not create a metadata-only PR.
-  state.sourceCommit = sameSources && samePending && previous.sourceCommit
-    ? previous.sourceCommit : git(root, 'rev-parse', 'HEAD')
+  if (sameSources && samePending && previous.sourceCommit) {
+    write(root, statePath, previousBytes)
+    return
+  }
+  state.sourceCommit = git(root, 'rev-parse', 'HEAD')
   write(root, statePath, `${JSON.stringify(state, null, 2)}\n`)
 }
 
@@ -136,6 +226,7 @@ function mergeHeadings(root, incoming) {
 export function prepareBatch(root, { refs = [], before, section, langs = languages, fillMissing = false } = {}) {
   const main = tree(root, 'HEAD')
   const state = readState(blob(root, main.get(statePath)))
+  const invalidNative = recoverNativeReviews(root, main, state)
   const pending = new Set(state.pending)
   // Reviewed results already merged into main supersede older draft queues.
   // Keep this snapshot separate from records imported during reconciliation.
@@ -216,6 +307,7 @@ export function prepareBatch(root, { refs = [], before, section, langs = languag
     }
   }
 
+  retryInvalidNativeReviews(root, main, state, pending, invalidNative)
   const pairs = []
   for (const file of [...pending].sort()) {
     const src = sourcePath(file)
@@ -304,6 +396,7 @@ export function refreshBatch(root, ref = 'origin/main') {
   run(root, 'git', ['checkout', '--detach', latest])
   const main = tree(root, 'HEAD')
   const state = readState(blob(root, main.get(statePath)))
+  const invalidNative = recoverNativeReviews(root, main, state)
   const mainSources = { ...state.sources }
   const mainPending = new Set(state.pending)
   const mainCurrent = file => main.has(file) && main.has(sourcePath(file)) && !mainPending.has(file) &&
@@ -330,6 +423,7 @@ export function refreshBatch(root, ref = 'origin/main') {
     if (main.get(sourcePath(file))?.oid === sha && !pending.has(file)) state.sources[file] = sha
     else if (main.get(sourcePath(file))?.oid !== sha) pending.add(file)
   }
+  retryInvalidNativeReviews(root, main, state, pending, invalidNative)
   for (const src of new Set([...base.keys(), ...main.keys()])) {
     if (!src.startsWith('en/') || !src.endsWith('.md') || base.get(src)?.oid === main.get(src)?.oid) continue
     for (const lang of languages) {

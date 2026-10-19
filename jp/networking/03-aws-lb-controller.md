@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
-> **レビュー基準**: AWS Load Balancer Controller / Helmチャートv3.5.0
-> **最終更新**: September 11, 2026
+> **レビュー基準**: AWS Load Balancer Controller / Helmチャート v3.6.0
+> **最終更新**: 2026年10月16日
 
 ## 概要
 
@@ -37,7 +37,7 @@ RBAC、CRD、プローブ、Webhook証明書を含む、リリースされた完
 
 この章は**自己管理のオープンソースコントローラー**を設定します。EKS Auto Modeは独自のマネージド負荷分散を提供します。NLB Serviceは`eks.amazonaws.com/nlb`、ALB IngressClassは`eks.amazonaws.com/alb`を使い、TargetGroupBinding APIも`elbv2.k8s.aws/v1beta1`とは異なります。クラスを変更したり全アノテーションをそのままコピーしたりせず、Auto Mode移行ガイドを確認してください。両モデルが存在する場合、明示的なクラスで曖昧さを防ぎます。
 
-現在サポートされるEKS Kubernetesリリースを使い、クラスターワイドのCRDを共有する全コントローラーを確認します。LBC **v3.5.0**は**2026-08-03**にリリースされ、検証済みチャート**3.5.0**がそのコントローラーを同梱します。Gateway API利用者はアップグレード前に**v1.6.0** CRDが必要で、LBC固有のGateway CRDは現在`gateway.k8s.aws/v1`を使用します。任意の最新Gateway APIやKubernetesリリースと互換性があるという意味ではありません。古い一般的な「Kubernetes 1.22+」というインストール下限は、現在のEKSサポートマトリックスではありません。
+現在サポート対象のEKS Kubernetesリリースを使用し、クラスター全体でCRDを共有するすべてのコントローラーを確認してください。LBC **v3.6.0**は**2026-10-05**にリリースされ、検証済みのHelmチャート**3.6.0**に含まれます。v3.6.0のGateway API CRD基準はv3.5.0と同じ**v1.6.0**です。Gateway APIを使用する場合は、アップグレード前にv1.6.0のCRDが必要です。リリースノートでは、コントローラーをアップグレードする前に、AWS提供の最新LBC CRD（チャートの`helm show crds`出力）を適用するよう推奨しています。LBC固有のGateway CRDは`gateway.k8s.aws/v1`を使用します。これは任意の最新Gateway APIやKubernetesリリースとの互換性を意味しません。古い一般的な「Kubernetes 1.22+」というインストール下限は、現在のEKSサポートマトリックスではありません。
 
 コントローラーのWebhookには、コントロールプレーンからTCP 9443への到達性が必要です。IMDSが制限される場合やFargate/Hybrid Nodes上で動作する場合は、リージョン/VPC値を明示し、そのコンピュートタイプでサポートされる認証情報の仕組みを選んでください。IPターゲットには、VPCでルーティング可能なPodアドレスと、サポートされるエンドポイント/ENI検出が必要です。Amazon VPC CNIはEKSで一般的ですが、可能なCNI設定はそれだけではありません。インスタンスターゲットにはNodePort対応Serviceと適切なノードネットワーキングが必要です。
 
@@ -45,7 +45,7 @@ RBAC、CRD、プローブ、Webhook証明書を含む、リリースされた完
 
 ### 1. IAMポリシーの作成
 
-**v3.5.0**に同梱されたIAMポリシーと正しいAWSパーティションを使用します。広範な検出権限とセキュリティグループ権限、リソース/タグ条件、このデプロイで有効な機能を確認してください。レビュー済みポリシーを保存してから作成します。上流ポリシーを最小権限の保証と見なしたり、古いv2.8ポリシーを現行インストールにコピーしたりしないでください。コントローラーのAWS認証情報には、対応ノードで**IRSAまたはEKS Pod Identity**を使用でき、Kubernetes API RBACとは別です。
+**v3.6.0**に同梱されたIAMポリシーと正しいAWSパーティションを使用します。広範な検出権限とセキュリティグループ権限、リソース/タグ条件、このデプロイで有効な機能を確認してください。レビュー済みポリシーを保存してから作成します。上流ポリシーを最小権限の保証と見なしたり、古いv2.8ポリシーを現行インストールにコピーしたりしないでください。コントローラーのAWS認証情報には、対応ノードで**IRSAまたはEKS Pod Identity**を使用でき、Kubernetes API RBACとは別です。
 
 ### 2. IRSAの設定
 
@@ -64,7 +64,7 @@ eksctl utils associate-iam-oidc-provider --cluster "$CLUSTER_NAME" \
   --region "$AWS_REGION" --approve
 
 curl --fail --location --output iam-policy-upstream.json \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json
 export REVIEWED_POLICY_FILE=iam-policy-reviewed.json
 test -s "$REVIEWED_POLICY_FILE"
 export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
@@ -84,17 +84,17 @@ eksctl create iamserviceaccount --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm pull eks/aws-load-balancer-controller --version 3.5.0
+helm pull eks/aws-load-balancer-controller --version 3.6.0
 
 # Review cluster-wide CRD changes and other controllers before applying.
 curl --fail --location --output gateway-api-v1.6.0.yaml \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
 kubectl apply --server-side -f gateway-api-v1.6.0.yaml
-helm show crds ./aws-load-balancer-controller-3.5.0.tgz > lbc-crds.yaml
+helm show crds ./aws-load-balancer-controller-3.6.0.tgz > lbc-crds.yaml
 kubectl apply --server-side -f lbc-crds.yaml
 
 # Save the values below as controller-values.yaml and replace its cluster/region/VPC.
-helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.5.0.tgz \
+helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.6.0.tgz \
   -n kube-system -f controller-values.yaml --wait --timeout 5m
 ```
 
@@ -467,7 +467,7 @@ stringData:
   clientSecret: your-client-secret
 ```
 
-OIDC SecretはIngressの名前空間に置く必要があります。チャートのデフォルトは`clusterSecretsPermissions.allowAllSecrets: false`です。このコントローラーには必要なSecretアクセスだけを付与します。v3.5.0は`metadata.name`フィールドセレクターでSecretを監視するため、Roleで`resourceNames`を制限できます。実際のSecretは承認されたシークレット管理手順で作成し、本物のクライアントシークレットをコミットしないでください。
+OIDC SecretはIngressの名前空間に置く必要があります。チャートのデフォルトは`clusterSecretsPermissions.allowAllSecrets: false`です。このコントローラーには必要なSecretアクセスだけを付与します。v3.6.0は`metadata.name`フィールドセレクターを使ってSecretを監視するため、Roleの`resourceNames`で対象を制限できます。実際のSecretは承認されたシークレット管理手順で作成し、本物のクライアントシークレットをコミットしないでください。
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -937,8 +937,9 @@ spec:
 - **v2.16.0 — 2025-11-20:** ALB Target OptimizerとNLB重み付きターゲットグループ。Target Optimizerにはターゲット制御エージェントと設定が必要で、LBCをインストールするだけでは有効になりません。
 - **v2.17.0 — 2025-12-19:** リスナー、エンドポイントグループ、エンドポイントをネストする単一の`aga.k8s.aws/v1beta1` `GlobalAccelerator` CRDによるGlobal Acceleratorサポート。Gateway APIはGAリリース候補の状態。Global Acceleratorには追加IAM権限と機能設定が必要です。
 - **v3.5.0 — 2026-08-03:** Gateway API v1.6.0準拠と安定版v1 TCPRoute/UDPRouteサポート。LBC Gateway設定リソースは`gateway.k8s.aws/v1`を使用し、引き続き提供されるv1beta1は非推奨です。
+- **v3.6.0 — 2026-10-05:** Gateway APIのCRD基準はv1.6.0のままです。アップグレード前にAWS提供の最新LBC CRDを適用するようリリースで推奨されています。クロスアカウントTargetGroupBinding向けのPod-AZベースIP登録（オプトイン）と、Ingressの`frontend-nlb-status-only`アノテーションが追加されました。
 
-現在のv3.5はQUIC/TCP_QUIC設定とALB JWT検証をサポートします。これらは別々の機能で、プロトコル固有の制約があります。JWT検証はHTTPS専用で、JSONは`jwksUri`ではなく **`jwksEndpoint`** を使用します。有効な証明書、到達可能な信頼できるJWKSエンドポイント、レビュー済みの発行者/クレームを備えたHTTPS Ingressのアノテーションに、以下を追加します。
+現行のv3.6はQUIC/TCP_QUIC設定とALB JWT検証をサポートします。これらは別々の機能で、プロトコル固有の制約があります。JWT検証はHTTPS専用で、JSONは`jwksUri`ではなく **`jwksEndpoint`** を使用します。有効な証明書、到達可能な信頼できるJWKSエンドポイント、レビュー済みの発行者/クレームを備えたHTTPS Ingressのアノテーションに、以下を追加します。
 
 ```yaml
 alb.ingress.kubernetes.io/jwt-validation: >-
@@ -1247,11 +1248,11 @@ aws elbv2 describe-target-groups --query 'TargetGroups[?contains(TargetGroupName
 - [ALBドキュメント](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
 - [NLBドキュメント](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
 
-- [LBC v3.5.0のリリース](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
-- [LBC v3.5.0のIngressアノテーション](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
-- [LBC v3.5.0のServiceアノテーション](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
-- [TargetGroupBindingの所有権](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [サブネット検出](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
+- [LBC v3.6.0のリリース](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.6.0)
+- [LBC v3.6.0のIngressアノテーション](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress/annotations.md)
+- [LBC v3.6.0のServiceアノテーション](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/annotations.md)
+- [TargetGroupBindingの所有権](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [サブネット検出](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/subnet_discovery.md)
 - [NLBリスナーの重みと接続](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 - [ALB認証の前提条件](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html)
 - [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)

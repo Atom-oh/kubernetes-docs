@@ -3,7 +3,7 @@
 < [Anterior: Inicio de nodos](./04-node-bootstrap.md) | [Tabla de contenidos](./README.md) | [Siguiente: Estrategias de ubicación de cargas de trabajo](./06-workload-placement.md) >
 
 > **Versiones compatibles**: Los ejemplos de GPU DRA requieren Kubernetes 1.34.2+ en una versión de EKS compatible. Interfaces revisadas: GPU Operator 26.7.0, controlador DRA 0.5.0, plugin de dispositivos 0.20.0.
-> **Última actualización**: 12 de octubre de 2026
+> **Última actualización**: 18 de octubre de 2026
 
 Este capítulo integra hosts NVIDIA con GPU preparados con EKS Hybrid Nodes. Abarca la asignación, la administración de GPU Operator, MIG y time-slicing. **Para esta auditoría no se ejecutaron GPU, no se instalaron controladores ni se descargaron modelos, y tampoco se realizó una prueba de rendimiento de inferencia.** Los ejemplos requieren una combinación aprobada de SO/kernel/controlador/toolkit/entorno de ejecución/imagen y pruebas en el hardware real.
 
@@ -326,6 +326,12 @@ Después de que el propietario reemplace la imagen, verifique la ubicación, el 
 No configure `CUDA_VISIBLE_DEVICES=0,1,2,3` para un claim de un dispositivo. El administrador de dispositivos y el entorno de ejecución proporcionan los dispositivos asignados; los índices visibles para el proceso CUDA pueden diferir de los índices físicos de GPU. Una anulación manual puede ocultar o identificar erróneamente la asignación y no concede GPU adicionales.
 
 `nvidia-smi -L` confirma solo la visibilidad de dispositivos. Valide por separado una operación CUDA acotada y la aplicación real en hardware aprobado; aquí no se afirma tal ejecución ni resultado de rendimiento.
+
+### Demostración con mediciones
+
+[![Vídeo de demostración V4: inferencia de GPU en Hybrid (sin sonido, 2 min 14 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v4-gpu.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v4-gpu.mp4)
+
+A diferencia de los Jobs de prueba anteriores, este video sin sonido ejecuta un Pod de inferencia de vLLM (v0.19.1, `Qwen/Qwen2.5-0.5B-Instruct`) en un nodo Hybrid con GPU y el plugin de dispositivos; un Job cliente en un nodo de la nube le envía solicitudes. Es una grabación real de terminal, realizada el 18 de octubre de 2026 en un entorno simulado (un host g6.xlarge con GPU NVIDIA L4 incorporado al clúster desde una VPC local conectada mediante TGW; no es una configuración compatible para producción). En la ejecución grabada, solo el nodo con GPU anunció 1 unidad de `nvidia.com/gpu`; el Pod de inferencia ejecutó un único contenedor (sin `istio-proxy` y con `hostNetwork=false`), y la respuesta tardó menos de 1 s. La primera descarga de la imagen de vLLM (9.6 GB a través de una ruta NAT) tardó 4 min 35 s y se produjo fuera de la grabación. Se trata de una comprobación funcional, no de un resultado de rendimiento. Consulte la [presentación de la sesión de una hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
 
 ## MIG y time-slicing
 

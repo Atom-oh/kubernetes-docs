@@ -350,7 +350,7 @@ AWS 必须已配置 `app.terraform.io` OIDC provider 和范围受限的 plan/app
 
 ### Run trigger 和输出共享
 
-上游 apply 成功后会将下游 run 加入队列。**`auto_apply_run_trigger` 与普通的 `auto_apply` 相互独立。此处两者都设为** false，因此 apply 前需要审查。Trigger 既不能证明所有依赖均已就绪，也不是输出传递机制。
+上游 apply 成功后会将下游 run 加入队列。**`auto_apply_run_trigger` 与普通的 `auto_apply` 相互独立**。此处两者都设为 false，因此 apply 前需要审查。Trigger 既不能证明所有依赖均已就绪，也不是输出传递机制。
 
 本示例不会全局共享 workspace state。如果必须使用输出，请配置获准的消费者/权限，并考虑使用 `tfe_outputs`。能够读取 `terraform_remote_state` 的凭证可以访问完整的敏感 state，而不只是数据源显示的输出。应根据实际设计配置输出访问和 module 输入。
 

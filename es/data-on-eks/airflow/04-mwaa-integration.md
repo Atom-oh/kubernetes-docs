@@ -7,7 +7,7 @@ Este capítulo se dirige a **entornos aprovisionados de Amazon MWAA** que envía
 
 ## 1. Límites de administración y versiones actuales
 
-Los planificadores/workers de MWAA usan infraestructura Fargate administrada por AWS, conectada a subredes privadas de la VPC del cliente seleccionada. AWS también administra la base de datos de metadatos. Por lo tanto, el servicio no es ajeno a su VPC. Sin embargo, **los Pods del planificador de MWAA no se implementan en el clúster EKS del cliente para administrarlos con kubectl**. En Airflow 3, el servidor web de MWAA también aloja la API de ejecución.
+Los planificadores/workers de MWAA usan infraestructura Fargate administrada por AWS, conectada a subredes privadas de la VPC del cliente seleccionada. AWS también administra la base de datos de metadatos. Por ello, la VPC del cliente sí forma parte de la arquitectura del servicio. Sin embargo, **los Pods del planificador de MWAA no se implementan en el clúster EKS del cliente para administrarlos con kubectl**. En Airflow 3, el servidor web de MWAA también aloja la API de ejecución.
 
 AWS opera el servicio subyacente. Usted sigue administrando los DAG, las dependencias, IAM, la conectividad de VPC, los ajustes de capacidad, las alarmas, los procedimientos de recuperación y las actualizaciones a versiones compatibles. La infraestructura administrada no elimina los fallos del entorno ni la planificación de capacidad.
 
@@ -19,12 +19,12 @@ La tabla oficial de compatibilidad indica que Airflow **3.3.1 está disponible d
 | Versiones/ejecutores | Validar las combinaciones elegidas | Elegir entre las opciones de runtime/configuración compatibles |
 | Paquetes de Python | Crear imágenes propias u otros mecanismos de entrega | requirements.txt en S3 con restricciones de versión correspondientes |
 | Dependencias del sistema | Configurarlas en las políticas de imagen/nodo | Los scripts de inicio pueden instalar runtimes de Linux; validar la compatibilidad, el tiempo de inicio y la red |
-| Entrega de DAG | Configurar GitDagBundle, git-sync u otras rutas | Referencia documentada: carpeta de DAG en S3 y sincronización de archivos complementarios |
+| Entrega de DAG | Configurar GitDagBundle, git-sync u otras rutas | Configuración base documentada: carpeta de DAG en S3 y sincronización de archivos complementarios |
 | Cargas de trabajo externas | Usar KPO y otras integraciones para imágenes separadas | La integración KPO/EKS también puede ejecutar imágenes de carga separadas |
 
 Los scripts de inicio se ejecutan antes de instalar los requisitos y arrancar Airflow; los ejemplos oficiales incluyen la instalación de runtimes mediante sudo. Por ello, es incorrecto prohibir en bloque los paquetes del sistema. Esta capacidad no equivale a poder reemplazar libremente la imagen base administrada o el ejecutor.
 
-Este ejemplo usa Git → CI → S3 → MWAA. La entrega mediante S3 por sí sola no demuestra que ninguna capacidad de bundles de Airflow 3 esté disponible. Antes de adoptar una configuración independiente de bundles, valide la configuración permitida y la compatibilidad con una versión concreta de MWAA. Tanto el sondeo de Git como la sincronización de S3 tienen retrasos de análisis; ninguno garantiza la ejecución inmediatamente después de un push o merge.
+Este ejemplo usa Git → CI → S3 → MWAA. La entrega mediante S3 por sí sola no permite concluir que todas las capacidades de bundles de Airflow 3 estén indisponibles. Antes de adoptar una configuración independiente de bundles, valide la configuración permitida y la compatibilidad con una versión concreta de MWAA. Tanto el sondeo de Git como la sincronización de S3 tienen retrasos de análisis; ninguno garantiza la ejecución inmediatamente después de un push o merge.
 
 ## 2. Tres requisitos para acceder a EKS
 
@@ -32,7 +32,7 @@ Este ejemplo usa Git → CI → S3 → MWAA. La entrega mediante S3 por sí sola
 2. **Autenticación:** el rol de ejecución de MWAA debe reconocerse mediante una entrada de acceso de EKS o una configuración `aws-auth` existente. El complemento exec de kubeconfig usa las credenciales IAM disponibles en el momento de la ejecución.
 3. **Autorización:** vincule el grupo de Kubernetes asignado a un Role del espacio de nombres. La autenticación de EKS, RBAC de Kubernetes y los permisos de datos de AWS del Pod secundario son capas distintas.
 
-Use un entorno MWAA 3.3.1 existente, un clúster EKS existente, AWS CLI v2 y kubectl. Compruebe la compatibilidad actual de EKS y la compatibilidad del proveedor/cliente. Este capítulo no requiere un clúster nuevo ni una identidad amplia de administrador.
+Use un entorno MWAA 3.3.1 existente, un clúster EKS existente, AWS CLI v2 y kubectl. Compruebe la compatibilidad actual de EKS y la compatibilidad del proveedor/cliente. Este capítulo no requiere un clúster nuevo ni permisos administrativos amplios.
 
 ### Entrada de acceso y RBAC del espacio de nombres
 
@@ -239,7 +239,7 @@ Compare la flexibilidad de ejecutor/runtime, las versiones compatibles, la capac
 
 ## Alcance de la validación y referencias
 
-Se revisaron la tabla de versiones, las restricciones oficiales, el código fuente del proveedor y la estructura de ejemplo de Python/YAML/shell. No se actualizó MWAA, creó una entrada de acceso de EKS, aplicó RBAC ni ejecutó un flujo integral. Verifique la conectividad y la ejecución específicas de la cuenta con las comprobaciones anteriores.
+Se revisaron la tabla de versiones, las restricciones oficiales, el código fuente del proveedor y la estructura de ejemplo de Python/YAML/shell. No se actualizó MWAA ni se creó una entrada de acceso de EKS; tampoco se aplicó RBAC ni se ejecutó un flujo integral. Verifique la conectividad y la ejecución específicas de la cuenta con las comprobaciones anteriores.
 
 
 - [Versiones compatibles y fechas de disponibilidad de MWAA](https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html)

@@ -1,7 +1,7 @@
 # ArgoCD 应用
 
 > **审查基线**：Argo CD 3.5.2；发布说明审查后更新至补丁版本 3.5.4（未重新运行示例）
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [Application CRD 概览](#application-crd-overview)

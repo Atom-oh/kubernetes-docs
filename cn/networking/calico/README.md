@@ -2,9 +2,9 @@
 
 > **示例基线**：Calico Open Source 3.32.2
 >
-> **最后审查**：October 12, 2026
+> **最后审查**：2026 年 10 月 12 日
 >
-> **最新版本**：Calico 3.33.0 于 October 1 发布，是最新的 Open Source 版本，并已针对 Kubernetes 1.35–1.37 进行测试。
+> **最新版本**：Calico 3.33.0 于 10 月 1 日发布，是最新的 Open Source 版本，并已针对 Kubernetes 1.35–1.37 进行测试。
 >
 > 本系列中的命令仍固定使用 3.32.2，其已测试范围为 1.34–1.36。这些示例尚未针对 3.33.0 进行验证。在选择版本前，请查阅 [3.33.0 发布说明](https://github.com/projectcalico/calico/releases/tag/v3.33.0)和[当前要求](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)。这并非开放式的 `3.29+ / Kubernetes 1.28+` 兼容性保证。
 
@@ -14,11 +14,11 @@ Calico 为 Kubernetes 提供网络和网络策略；其他主机与 VM 功能则
 
 ### 2026 年 7 月：用于 Kubernetes 上 VM 的 Calico
 
-Tigera 的[官方公告](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/)日期为 **July 23, 2026**。其中介绍了 VMware 迁移所需的 VM/container 网络、IP 连续性、L2 网桥扩展、策略和可观测性。这是一则产品公告，并不承诺每项宣传的能力都包含在 Calico Open Source 中。请检查准确的版本、拓扑和功能状态：[Enterprise 3.23 发布说明](https://docs.tigera.io/calico-enterprise/latest/release-notes/)仍将 KubeVirt 实时迁移标记为技术预览。营销可用性并不会消除该功能特有的限制。
+Tigera 的[官方公告](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/)日期为 **2026 年 7 月 23 日**。其中介绍了 VMware 迁移所需的 VM/container 网络、IP 连续性、L2 网桥扩展、策略和可观测性。这是一则产品公告，并不承诺每项宣传的能力都包含在 Calico Open Source 中。请检查准确的版本、拓扑和功能状态：[Enterprise 3.23 发布说明](https://docs.tigera.io/calico-enterprise/latest/release-notes/)仍将 KubeVirt 实时迁移标记为技术预览。营销宣传所称的可用性，并不会消除该功能特有的限制。
 
 ## 兼容性与功能边界
 
-- Calico 3.32.2 于 August 30, 2026 发布，并已在 Kubernetes 1.34–1.36 上测试。更新的 3.33.0 版本已在 Kubernetes 1.35–1.37 上测试；仅 Kubernetes 1.37 可用并不能证明固定的 3.32.2 示例具有兼容性。
+- Calico 3.32.2 于 2026 年 8 月 30 日发布，并已在 Kubernetes 1.34–1.36 上测试。更新的 3.33.0 版本已在 Kubernetes 1.35–1.37 上测试；仅 Kubernetes 1.37 可用并不能证明固定的 3.32.2 示例具有兼容性。
 - 通用 Linux 要求为内核 5.10 或更高版本，并具备所需模块。请查阅 eBPF 指南，了解支持的架构、供应商回移补丁及各个功能更高的要求。
 - Linux 数据平面包括 iptables、nftables 和 eBPF。默认值取决于安装程序/平台；当前自管 kubeadm operator 安装可默认使用 eBPF。并不存在全面的功能对等保证。
 - [适用于 Windows 的 Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)支持指定的 IPv4 VXLAN 和 BGP 配置，但不支持 Linux eBPF、IPIP、IPv6/双栈、WireGuard 或所有 Linux 策略功能。

@@ -1,8 +1,8 @@
 # Kubernetes ネットワーキング
 
-> **最終更新**: October 15, 2026
+> **最終更新**: 2026年10月16日
 >
-> **固定済みの例**: Cilium 1.20.1、Calico Open Source 3.32.2、Flannel 0.28.9、およびアップストリームの AWS VPC CNI/Helm chart 1.23.0。
+> **固定済みの例**: Cilium 1.20.3、Calico Open Source 3.32.2、Flannel 0.28.10、およびアップストリームの AWS VPC CNI/Helm chart 1.23.2。
 >
 > **現在のリリース情報**: AWS は Kubernetes 1.31–1.37 向けの EKS 管理 VPC CNI アドオン `v1.23.1-eksbuild.1` を掲載しています。Calico 3.33.0 は最新の Open Source リリースであり、Kubernetes 1.35–1.37 でテストされています。固定済みの例を変更する前にリリースノートを確認してください。
 >
@@ -204,10 +204,10 @@ CNI は、ランタイムがコンテナネットワークを構成するため�
 
 | プロジェクト / 範囲 | ネットワーキングとポリシー | 区別すべき機能と制限 |
 |---|---|---|
-| **Cilium 1.20.1** | eBPF ネットワーキング。該当する L7 機能には Envoy。Cilium NetworkPolicy と Hubble | AMD64/Arm64 要件を伴う Linux ワーカーデータプレーン。Windows CLI の可用性は Windows CNI サポートを意味しません。WireGuard/IPsec と Beta ztunnel mTLS には異なる範囲があります。 |
+| **Cilium 1.20.3** | eBPF ネットワーキング。該当する L7 機能には Envoy。Cilium NetworkPolicy と Hubble | AMD64/Arm64 要件を伴う Linux ワーカーデータプレーン。Windows CLI の可用性は Windows CNI サポートを意味しません。WireGuard/IPsec と Beta ztunnel mTLS には異なる範囲があります。 |
 | **Calico Open Source 3.32.2 の例; 3.33.0 が最新** | ルーティング/カプセル化の選択肢。iptables、nftables、eBPF オプション。順序付きポリシー Tier と host/workload ポリシー | Calico 3.33.0 は Kubernetes 1.35–1.37 でテストされています。アップグレード前にリリースノートを確認してください。Windows には、Linux eBPF または WireGuard データプレーンがないことを含む別個の制限があります。Whisker/Goldmane フロー可観測性は Tech Preview として利用できます。有償機能についてはエディションマトリクスを参照してください。 |
-| **Flannel 0.28.9** | ホストサブネット割り当てとノード間転送。VXLAN、host-gw、その他のバックエンド | `flanneld` 自体は NetworkPolicy を強制しません。chart の任意の `netpol.enabled` は SIGs ポリシー Controller をデプロイします。WireGuard は文書化されたバックエンドであり、IPsec は実験的です。Windows VXLAN には固有の設定/制限があります。 |
-| **AWS VPC CNI 1.23.0 のアップストリーム/Helm の例; EKS アドオン `v1.23.1-eksbuild.1`** | VPC アドレス割り当てと EC2 ENI/プレフィックス。サポート対象 Linux EC2 ノードでの EKS 標準および Admin NetworkPolicy 機能 | AWS は Kubernetes 1.31–1.37 向けにこの管理アドオンビルドを掲載しています。リージョンでの可用性とクラスターの実際のバージョンを検証してください。EKS Auto Mode は、追加の DNS ポリシー機能を持つ管理ネットワーキング実装です。Windows、Fargate、カスタムネットワーキング、プレフィックス委譲、multi-NIC サポートには別個の条件があります。 |
+| **Flannel 0.28.10** | ホストサブネット割り当てとノード間転送。VXLAN、host-gw、その他のバックエンド | `flanneld` 自体は NetworkPolicy を強制しません。chart の任意の `netpol.enabled` は SIGs ポリシー Controller をデプロイします。WireGuard は文書化されたバックエンドであり、IPsec は実験的です。Windows VXLAN には固有の設定/制限があります。 |
+| **AWS VPC CNI 1.23.2 のアップストリーム/Helm の例; EKS アドオン `v1.23.1-eksbuild.1`** | VPC アドレス割り当てと EC2 ENI/プレフィックス。サポート対象 Linux EC2 ノードでの EKS 標準および Admin NetworkPolicy 機能 | AWS は Kubernetes 1.31–1.37 向けにこの管理アドオンビルドを掲載しています。リージョンでの可用性とクラスターの実際のバージョンを検証してください。EKS Auto Mode は、追加の DNS ポリシー機能を持つ管理ネットワーキング実装です。Windows、Fargate、カスタムネットワーキング、プレフィックス委譲、multi-NIC サポートには別個の条件があります。 |
 | **元の Weave Net プロジェクト** | 歴史的なオーバーレイネットワーキング実装 | 元の `weaveworks/weave` リポジトリはアーカイブされています。新しいクラスターのためのアクティブでサポートされたデフォルトとして説明しないでください。 |
 
 ### ポリシー、暗号化、可観測性
@@ -258,7 +258,7 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-アップストリームの 1.23.0 リリース番号と EKS の `eksbuild` バージョンは異なる識別子です。AWS の現在のアドオン表には Kubernetes 1.31–1.37 向けの `v1.23.1-eksbuild.1` が掲載されています。対象リージョンで `describe-addon-versions` を使用して、互換性のあるビルドを選択してください。変更は意図した管理アドオン構成とマージし、盲目的に `latest` を選択したり、無関係な値を置き換えたりしないでください。サードパーティのポリシー実装からの移行では、既存の強制状態の削除と、テスト済みのノード/ワークロード移行計画も必要です。
+アップストリームの 1.23.2 リリース番号と EKS の `eksbuild` バージョンは異なる識別子です。AWS の現在のアドオン表には Kubernetes 1.31–1.37 向けの `v1.23.1-eksbuild.1` が掲載されています。対象リージョンで `describe-addon-versions` を使用して、互換性のあるビルドを選択してください。変更は意図した管理アドオン構成とマージし、盲目的に `latest` を選択したり、無関係な値を置き換えたりしないでください。サードパーティのポリシー実装からの移行では、既存の強制状態の削除と、テスト済みのノード/ワークロード移行計画も必要です。
 
 ## EKS ネットワーキングの基礎
 
@@ -304,7 +304,7 @@ AWS VPC CNI は、選択した IPAM モードを使用して、通常の Pod に
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
-これらの値は、VPC CNI 1.23.0 のインスタンス制限および旧 max-Pods 表に照らして検証されています。履歴上の計算式は `ENIs × (IPv4 slots per ENI − 1) + 2` です。これは現在の普遍的な推奨ではありません。プレフィックス委譲、カスタムネットワーキング、branch ENI、複数のネットワークカードによりアドレス容量は変わります。Kubernetes スケジューリングは kubelet `maxPods` とリソースによっても制限されます。EKS 管理ノードグループでは、30 vCPU 未満のインスタンスで `maxPods` は 110、それ以外では 250 に制限されます。使用可能 IP 数だけではその上限を上書きできません。
+これらの値は、VPC CNI 1.23.2 のインスタンス制限および旧 max-Pods 表に照らして検証されています。履歴上の計算式は `ENIs × (IPv4 slots per ENI − 1) + 2` です。これは現在の普遍的な推奨ではありません。プレフィックス委譲、カスタムネットワーキング、branch ENI、複数のネットワークカードによりアドレス容量は変わります。Kubernetes スケジューリングは kubelet `maxPods` とリソースによっても制限されます。EKS 管理ノードグループでは、30 vCPU 未満のインスタンスで `maxPods` は 110、それ以外では 250 に制限されます。使用可能 IP 数だけではその上限を上書きできません。
 
 ### EKS ネットワーキングの考慮事項
 
@@ -693,10 +693,10 @@ spec:
 - [Calico ポリシー Tier](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
 - [Calico Whisker フローログ](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 - [Calico Windows の制限](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
-- [Flannel 0.28.9 ネットワーキングとポリシー](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md)
-- [Flannel バックエンド](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
+- [Flannel 0.28.10 ネットワーキングとポリシー](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.10/README.md)
+- [Flannel バックエンド](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.10/Documentation/backends.md)
 - [元の Weave リポジトリの状態](https://api.github.com/repos/weaveworks/weave)
-- [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
+- [AWS VPC CNI 1.23.2](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/README.md)
 - [Amazon EKS 最新 VPC CNI アドオンバージョン](https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html)
 - [EKS NetworkPolicy 構成](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [EKS 標準および Admin NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
@@ -708,8 +708,8 @@ spec:
 - [Netshoot v0.16 イメージメタデータ](https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16)
 - [Netshoot v0.16 Dockerfile](https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile)
 - [Tetragon ランタイムセキュリティ](https://tetragon.io/docs/overview/)
-- [AWS LBC 3.5 NLB 構成](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
-- [AWS LBC 3.5 Ingress 構成](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
+- [AWS LBC 3.6 NLB 構成](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/nlb.md)
+- [AWS LBC 3.6 Ingress 構成](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress/annotations.md)
 - [Gateway Load Balancer の概念](https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-load-balancers.html)
 - [GENEVE カプセル化 (RFC 8926)](https://www.rfc-editor.org/rfc/rfc8926)
 - [VPC DNS リゾルバー](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)

@@ -1,101 +1,100 @@
-# Custom Scheduler クイズ (Part 2)
+# カスタムスケジューラークイズ（パート2）
 
-このクイズでは、Kubernetes で Custom Scheduler を実装し使用するための高度な理解を確認します。
+> **例の基準**: Kubernetes 1.35.8、Go 1.27.2
+> **最終更新**: 2026年10月16日
+
+このクイズでは、Kubernetes のカスタムスケジューラーの実装と利用に関する応用知識を確認します。
 
 ## クイズ問題
 
-### 1. Kubernetes scheduling framework における "Bind" extension point の役割は何ですか？
+### 1. Kubernetes scheduling framework の「Bind」拡張ポイントの役割は何ですか？
 
-A. scheduling decision を確定するために Pod を Node に bind する
-B. Pod と Node の間の network binding を設定する
-C. Pod と Service の間の binding を作成する
-D. Pod と volume の間の binding を設定する
+A. スケジューリングの決定を確定するため、Pod を Node に割り当てる
+B. Pod と Node 間のネットワーク接続を設定する
+C. Pod と Service 間の関連付けを作成する
+D. Pod とボリューム間の関連付けを設定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. scheduling decision を確定するために Pod を Node に bind する**
+**回答: A. スケジューリングの決定を確定するため、Pod を Node に割り当てる**
 
 **解説:**
-Kubernetes scheduling framework における "Bind" extension point の役割は、選択された Node に Pod を bind し、scheduling decision を確定することです。binding stage は scheduling cycle の最終 stage であり、kubelet が Pod を実行できるように Pod の `spec.nodeName` field が設定されます。
+Bind 拡張ポイントは、選択した Node への Pod の割り当てを記録し、スケジューリングの決定を確定します。Bind 段階では binding cycle 中に割り当てがコミットされます。その後に PostBind が実行されますが、kubelet でイメージ、ストレージ、ランタイムの障害が発生する可能性は残ります。
 
-**Binding Process:**
-1. scheduler は filtering と scoring を通じて最適な Node を選択します。
-2. 選択された Node に Pod を予約します (reserve)。
-3. binding stage で、Pod の `spec.nodeName` field を選択された Node の名前に更新します。
-4. 更新された Pod 情報が API server に保存されます。
-5. kubelet が Pod 情報を検出し、その Node 上で Pod を実行します。
+**Bind の処理:**
+1. スケジューラーはフィルタリングとスコアリングで最適な Node を選びます。
+2. 選んだ Node 上に Pod を予約します（reserve）。
+3. Bind 段階で Pod の `spec.nodeName` を選択した Node 名に更新します。
+4. 更新した Pod 情報を API server に保存します。
+5. kubelet が Pod 情報を検知し、その Node 上で Pod を実行します。
 
-**Bind Plugin Implementation Example:**
+**Bind リクエストの例:**
+Bind は Node 選択、仮割り当て/予約、Permit、PreBind の後、binding cycle 内で行われます。記録するのは割り当てであり、コンテナの起動成功ではありません。対象バージョンの API キャッシュ経路とバインドエラーも処理する upstream の `DefaultBinder` を維持します。次の完全なヘルパーは、リクエストの識別情報を送信せずに示します。
+
 ```go
-// Bind plugin example
-type MyBindPlugin struct {
-    handle framework.Handle
-}
+package bindingexample
 
-func (bp *MyBindPlugin) Name() string {
-    return "MyBindPlugin"
-}
+import (
+	"fmt"
 
-// Bind method implementation
-func (bp *MyBindPlugin) Bind(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) *framework.Status {
-    // Create pod binding object
-    binding := &v1.Binding{
-        ObjectMeta: metav1.ObjectMeta{
-            Name:      pod.Name,
-            Namespace: pod.Namespace,
-        },
-        Target: v1.ObjectReference{
-            Kind:       "Node",
-            Name:       nodeName,
-            APIVersion: "v1",
-        },
-    }
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
-    // Send binding request to API server
-    err := bp.handle.ClientSet().CoreV1().Pods(pod.Namespace).Bind(ctx, binding, metav1.CreateOptions{})
-    if err != nil {
-        return framework.NewStatus(framework.Error, err.Error())
-    }
-
-    return nil
+// This only constructs a request; it neither selects a node nor calls the API.
+// Use DefaultBinder within the complete scheduler pipeline for actual binding.
+func BindingFor(pod *v1.Pod, nodeName string) (*v1.Binding, error) {
+	if pod == nil || pod.Name == "" || pod.Namespace == "" || pod.UID == "" || nodeName == "" {
+		return nil, fmt.Errorf("admitted Pod name, namespace, UID and selected node are required")
+	}
+	return &v1.Binding{
+		ObjectMeta: metav1.ObjectMeta{Name: pod.Name, Namespace: pod.Namespace, UID: pod.UID},
+		Target:     v1.ObjectReference{Kind: "Node", Name: nodeName},
+	}, nil
 }
 ```
 
-**Enabling Bind Plugin in Scheduler Configuration:**
+Pod UID によって、削除済み Pod と同じ名前で作成された新しい Pod を取り違えずに済みます。Bind リクエスト自体はリソース、アフィニティ、taint を検査しません。これらはスケジューラーパイプラインの前段で確認します。
+
+**Default Binder の設定:**
+次の設定は `DefaultBinder` を含むすべての既定値を維持し、未登録のカスタム binder を有効にするものではありません。
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
-  plugins:
-    bind:
-      enabled:
-      - name: MyBindPlugin
-      disabled:
-      - name: DefaultBinder  # Disable default binder
 ```
 
-**Checking Binding-Related Events:**
+**Bind 関連イベントの確認:**
 ```bash
 # Check pod scheduling events
 kubectl get events | grep -i "Successfully assigned"
 ```
 
-**Troubleshooting Binding Failures:**
-binding stage で失敗する一般的な原因:
-1. API server 接続の問題
+**Bind 失敗のトラブルシューティング:**
+Bind 段階でよくある失敗原因:
+1. API server への接続障害
 2. 権限不足
 3. Node 名の誤り
-4. Race condition（別の scheduler が同じ Pod を同時に bind しようとしている）
+4. 競合状態（別のスケジューラーが同じ Pod を同時に Bind しようとする）
 
-**Issues with Other Options:**
-- B. Pod と Node の間の network binding を設定する: Network setup は CNI plugin の役割であり、scheduler の bind stage とは関係ありません。
-- C. Pod と Service の間の binding を作成する: Service と Pod の接続は label selector を通じて行われ、scheduler の bind stage とは関係ありません。
-- D. Pod と volume の間の binding を設定する: Volume binding は PersistentVolumeClaim controller によって処理され、scheduler の bind stage とは別の process です。
+**他の選択肢について:**
+- B. Pod と Node 間のネットワーク接続を設定する: ネットワーク設定は CNI プラグインの役割であり、スケジューラーの Bind 段階とは関係ありません。
+- C. Pod と Service 間の関連付けを作成する: Service と Pod はラベルセレクターで結び付けられ、スケジューラーの Bind 段階とは関係ありません。
+- D. Pod とボリューム間の関連付けを設定する: PV/PVC のバインドや CSI のプロビジョニングはストレージコントローラーとスケジューラーの VolumeBinding プラグインが担当し、遅延バインドも扱います。Pod と Node の Bind とは別の操作です。
 </details>
 
-### 2. 次のうち、Kubernetes の Node Affinity に関連する operator ではないものはどれですか？
+### 2. Kubernetes の Node Affinity に関係する演算子ではないものはどれですか？
 
 A. In
 B. NotIn
@@ -108,17 +107,16 @@ D. Contains
 **回答: D. Contains**
 
 **解説:**
-Kubernetes の Node Affinity に関連しない operator は `Contains` です。Kubernetes は node affinity に対して `Contains` operator を提供していません。
+Kubernetes の Node Affinity に `Contains` 演算子はありません。Kubernetes は `Contains` 演算子を提供していません。
 
-**Operators Supported in Node Affinity:**
-1. **In**: Label value は指定された値のいずれかに一致する必要があります。
-2. **NotIn**: Label value は指定された値に一致してはいけません。
-3. **Exists**: 指定された label key が存在する必要があります。
-4. **DoesNotExist**: 指定された label key が存在してはいけません。
-5. **Gt**: Label value は指定された値より大きい必要があります (Greater than)。
-6. **Lt**: Label value は指定された値より小さい必要があります (Less than)。
+**Node Affinity でサポートされる演算子:**
+1. **In**: ラベル値が指定値のいずれかと一致する必要があります。
+2. **NotIn**: ラベル値が指定値と一致してはいけません。
+3. **Exists**: 指定したラベルキーが存在する必要があります。
+4. **DoesNotExist**: 指定したラベルキーが存在してはいけません。
+5. **Gt**: ラベル値が指定値より大きい必要があります（Greater than）。
+6. **Lt**: ラベル値が指定値より小さい必要があります（Less than）。
 
-**Node Affinity Example:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -130,127 +128,121 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: kubernetes.io/e2e-az-name
+          - key: topology.kubernetes.io/zone
             operator: In
-            values:
-            - e2e-az1
-            - e2e-az2
+            values: [us-east-1a, us-east-1b]
       preferredDuringSchedulingIgnoredDuringExecution:
       - weight: 1
         preference:
           matchExpressions:
           - key: another-node-label-key
             operator: Exists
+  containers:
+  - name: nginx
+    image: nginx:1.30.6
 ```
 
-**Node Affinity Types:**
-1. **requiredDuringSchedulingIgnoredDuringExecution**: Pod を Node に schedule するために満たす必要がある rule（hard requirement）。
-2. **preferredDuringSchedulingIgnoredDuringExecution**: 満たされることが望ましいが必須ではない rule（soft requirement）。
+**Node Affinity の種類:**
+1. **requiredDuringSchedulingIgnoredDuringExecution**: Pod を Node にスケジュールするために必ず満たすハード要件です。
+2. **preferredDuringSchedulingIgnoredDuringExecution**: 満たすことが望ましいものの、必須ではないソフト要件です。
 
-**Operator Usage Examples:**
-1. **In Operator**:
+**演算子の使用例:**
+1. **In 演算子:**
    ```yaml
-   - key: kubernetes.io/e2e-az-name
+   - key: topology.kubernetes.io/zone
      operator: In
      values:
-     - e2e-az1
-     - e2e-az2
+     - us-east-1a
+     - us-east-1b
    ```
-   Node の `kubernetes.io/e2e-az-name` label value は `e2e-az1` または `e2e-az2` である必要があります。
+   Node の `topology.kubernetes.io/zone` ラベル値は `us-east-1a` または `us-east-1b` である必要があります。
 
-2. **NotIn Operator**:
+2. **NotIn 演算子:**
    ```yaml
-   - key: kubernetes.io/e2e-az-name
+   - key: topology.kubernetes.io/zone
      operator: NotIn
      values:
-     - e2e-az3
+     - us-east-1c
    ```
-   Node の `kubernetes.io/e2e-az-name` label value は `e2e-az3` であってはいけません。
+   Node の `topology.kubernetes.io/zone` ラベル値は `us-east-1c` であってはいけません。
 
-3. **Exists Operator**:
+3. **Exists 演算子:**
    ```yaml
-   - key: kubernetes.io/e2e-az-name
+   - key: topology.kubernetes.io/zone
      operator: Exists
    ```
-   `kubernetes.io/e2e-az-name` label は Node 上に存在する必要があります。
+   Node に `topology.kubernetes.io/zone` ラベルが存在する必要があります。
 
-4. **DoesNotExist Operator**:
+4. **DoesNotExist 演算子:**
    ```yaml
    - key: emptyLabel
      operator: DoesNotExist
    ```
-   `emptyLabel` label は Node 上に存在してはいけません。
+   Node に `emptyLabel` ラベルが存在してはいけません。
 
-5. **Gt/Lt Operators**:
+5. **Gt/Lt 演算子:**
    ```yaml
    - key: node-size
      operator: Gt
      values:
      - "10"
    ```
-   Node の `node-size` label value は 10 より大きい必要があります。
+   Node の `node-size` ラベル値は 10 より大きい必要があります。
 
-**Handling Node Affinity in Custom Scheduler:**
-Custom Scheduler を実装する際は、Pod の node affinity 要件を考慮する必要があります。
+**必須の Node Affinity の確認:**
+既定の `NodeAffinity` プラグインを維持します。読み取り専用ヘルパーには、常に true を返す `matchNodeSelectorTerm` のスタブではなく、バージョンに対応したコンポーネントヘルパーを使います。
 
 ```go
-// Node affinity check example
-func checkNodeAffinity(pod *v1.Pod, node *v1.Node) bool {
-    affinity := pod.Spec.Affinity
-    if affinity == nil || affinity.NodeAffinity == nil {
-        return true  // All nodes are suitable if there's no node affinity
-    }
+package affinityexample
 
-    // Check required node affinity
-    if required := affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution; required != nil {
-        for _, term := range required.NodeSelectorTerms {
-            if matchNodeSelectorTerm(term, node) {
-                return true
-            }
-        }
-        return false  // No NodeSelectorTerm matched
-    }
+import (
+	"fmt"
 
-    return true
-}
+	v1 "k8s.io/api/core/v1"
+	nodeaffinity "k8s.io/component-helpers/scheduling/corev1/nodeaffinity"
+)
 
-// Check if NodeSelectorTerm matches
-func matchNodeSelectorTerm(term v1.NodeSelectorTerm, node *v1.Node) bool {
-    // Implementation omitted
-    return true
+// A read-only check of Pod nodeSelector and required node affinity.
+// The scheduler's NodeAffinity plugin also handles profile-level addedAffinity.
+func MatchesRequired(pod *v1.Pod, node *v1.Node) (bool, error) {
+	if pod == nil || node == nil {
+		return false, fmt.Errorf("pod and node are required")
+	}
+	return nodeaffinity.GetRequiredNodeAffinity(pod).Match(node)
 }
 ```
 
-**Explanation of Other Options:**
-- A. In: 有効な node affinity operator です。
-- B. NotIn: 有効な node affinity operator です。
-- C. Exists: 有効な node affinity operator です。
+`nodeSelector` と必須 Node Affinity の両方が一致する必要があります。セレクターの各 term は OR、1つの term 内の各 expression は AND です。空の term はどの Node にも一致しません。キーが存在しない場合も `NotIn` は一致するため、キーの存在が必要なら `Exists` を追加します。`Gt`/`Lt` は比較値を整数1つだけ受け取り、Node ラベル値も整数である必要があります。`IgnoredDuringExecution` では、後からラベルが変わっても、それだけを理由に割り当て済み Pod は退避されません。プロファイルレベルの `addedAffinity` は引き続きスケジューラープラグインが処理します。
+
+**他の選択肢について:**
+- A. In: Node Affinity で有効な演算子です。
+- B. NotIn: Node Affinity で有効な演算子です。
+- C. Exists: Node Affinity で有効な演算子です。
 </details>
 
-### 3. Kubernetes における Pod Topology Spread Constraints の主な目的は何ですか？
+### 3. Kubernetes の Pod Topology Spread Constraints の主な目的は何ですか？
 
-A. さまざまな Node に Pod を均等に分散する
-B. Pod を特定の Node にのみ配置する
-C. Pod を特定の zone にのみ配置する
-D. Pod を特定の label を持つ Node にのみ配置する
+A. Pod を複数の Node に均等に分散する
+B. Pod を特定の Node だけに配置する
+C. Pod を特定の zone だけに配置する
+D. Pod を特定のラベルを持つ Node だけに配置する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. さまざまな Node に Pod を均等に分散する**
+**回答: A. Pod を複数の Node に均等に分散する**
 
 **解説:**
-Kubernetes における Pod Topology Spread Constraints の主な目的は、さまざまな topology domain（Node、zone、region など）に Pod を均等に分散することです。これにより、application の高可用性が向上し、resource usage が最適化され、failure tolerance が向上します。
+Topology spread は、新たに配置する各 Pod を対象ドメイン間に分散します。耐障害性の向上に役立ちますが、既存 Pod を再配置したり、レイテンシー、容量、可用性を保証したりはしません。
 
-**Main Components of Pod Topology Spread Constraints:**
-1. **maxSkew**: topology domain 間の Pod 数の最大差を指定します。
-2. **topologyKey**: Pod を分散する topology domain を定義する Node label key です。
-3. **whenUnsatisfiable**: constraint を満たせない場合の動作を指定します。
-   - `DoNotSchedule`: constraint が満たされない場合、Pod を schedule しません。
-   - `ScheduleAnyway`: constraint が満たされなくても Pod を schedule します。
-4. **labelSelector**: spread calculation で考慮する既存の Pod を選択する label selector です。
+**主なフィールド:**
+1. **maxSkew**: `DoNotSchedule` では、配置候補ドメインの Pod 数が、対象ドメインのグローバル最小値からどれだけ離れてよいかを制限します。
+2. **topologyKey**: Node ラベルでドメインを定義します。
+3. **whenUnsatisfiable**: `DoNotSchedule` はハード制約です。`ScheduleAnyway` はスコアリング上の優先事項であり、他のハードフィルターを無効にしません。
+4. **labelSelector**: 新しい Pod と同じ namespace 内で、集計対象の Pod を選択します。新しい Pod 自身も意図したセレクターに一致することを確認します。
+5. **minDomains / nodeAffinityPolicy / nodeTaintsPolicy**: 対象ドメインの集計方法に影響します。不足している Node や AZ 容量を作り出すものではありません。
 
-**Pod Topology Spread Constraints Example:**
+**Pod Topology Spread Constraints の例:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -274,111 +266,60 @@ spec:
         app: web
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-この例では、2 つの constraint が定義されています:
-1. 各 Node（`kubernetes.io/hostname`）間で、`app=web` label を持つ Pod 数の差は最大 1 である必要があります。
-2. 各 zone（`topology.kubernetes.io/zone`）間で、`app=web` label を持つ Pod 数の差は最大 2 である必要があります。
+この例では、候補配置が2つの制約を両方満たす必要があります。`DoNotSchedule` の場合は次のように計算します。
+1. 空のドメインを含め、対象となるすべてのドメインで一致する Pod 数を数えます。
+2. 対象ドメインのグローバル最小値を求めます。`minDomains` よりドメイン数が少ない場合、値は0です。
+3. 新しい Pod がセレクターに一致するなら、配置候補ドメインの数に加えて、その候補の数と最小値を比較します。
 
-**Topology Spread Calculation Method:**
-1. 各 topology domain で label selector に一致する Pod 数を計算します。
-2. 最も多くの Pod を持つ domain と最も少ない Pod を持つ domain の差を計算します。
-3. この差が `maxSkew` より大きい場合、constraint に違反しています。
+Pod 数が **2,2,1** で `maxSkew: 1` の場合、3番目のドメインには新しい一致 Pod を配置できます（2−1=1）が、最初の2つには配置できません（3−1=2）。これは候補配置を判定する仕組みであり、既存の全ドメインの組み合わせが常に均等であると約束するものではありません。
 
-**Common Topology Keys:**
-1. **kubernetes.io/hostname**: Node-level spread
-2. **topology.kubernetes.io/zone**: Zone-level spread
-3. **topology.kubernetes.io/region**: Region-level spread
-4. **node.kubernetes.io/instance-type**: Instance type-level spread
+**一般的な topology key:**
+1. **kubernetes.io/hostname**: Node 単位の分散
+2. **topology.kubernetes.io/zone**: zone 単位の分散
+3. **topology.kubernetes.io/region**: region 単位の分散
+4. **node.kubernetes.io/instance-type**: インスタンスタイプ単位の分散
 
-**Use Cases:**
-1. **High availability**: 複数の Node、zone、region に Pod を分散して failure tolerance を向上させる
-2. **Resource balance**: workload を cluster 全体に均等に分散する
-3. **Cost optimization**: workload を特定 type の Node に分散する
-4. **Performance optimization**: network latency を最小化するように分散する
+**ユースケース:**
+1. **高可用性**: 複数の Node、zone、region に Pod を分散し、障害耐性を高めます。
+2. **リソースの均衡**: クラスター全体にワークロードを分散します。
+3. **コスト最適化**: 特定のタイプの Node にワークロードを配置します。
+4. **Topology ポリシー**: 障害耐性と、ドメイン間通信や実測レイテンシーとのバランスを取ります。
 
-**Handling Topology Spread in Custom Scheduler:**
-Custom Scheduler を実装する際は、Pod の topology spread constraints を考慮する必要があります。
+**カスタムスケジューラーでの処理:**
+`PodTopologySpread` とその PreFilter/Filter/Score 段階を維持します。正しく扱うには、スケジューラーのスナップショット、namespace/セレクターの一致、対象および空のドメイン、新しい Pod、`minDomains`、Node Affinity/taint ポリシー、再キューイベントを考慮する必要があります。skew の計算を省き、Running Pod を走査するだけの実装では不十分です。
 
-```go
-// Topology spread constraint check example
-func checkTopologySpreadConstraints(pod *v1.Pod, node *v1.Node, allPods []*v1.Pod) bool {
-    constraints := pod.Spec.TopologySpreadConstraints
-    if len(constraints) == 0 {
-        return true  // All nodes are suitable if there are no constraints
-    }
+この EKS ラボでは、1つの AWS Region にある EC2 Node を使います。`topology.kubernetes.io/region` ラベルを設定しても、マルチリージョンクラスターにはなりません。AZ 間に Pod を分散すると AZ 間通信量が増える場合があり、ネットワークレイテンシーが自動的に最小になるわけではありません。
 
-    for _, constraint := range constraints {
-        // Get topology key value
-        topologyValue, ok := node.Labels[constraint.TopologyKey]
-        if !ok {
-            // Skip this constraint if the node doesn't have the topology key
-            if constraint.WhenUnsatisfiable == v1.DoNotSchedule {
-                return false
-            }
-            continue
-        }
-
-        // Calculate the number of matching pods in the current topology domain
-        var matchingPods int
-        for _, existingPod := range allPods {
-            // Check if the pod matches the label selector and is in the same topology domain
-            if podMatchesLabelSelector(existingPod, constraint.LabelSelector) {
-                podNode, err := getNodeForPod(existingPod)
-                if err != nil {
-                    continue
-                }
-                if podNode.Labels[constraint.TopologyKey] == topologyValue {
-                    matchingPods++
-                }
-            }
-        }
-
-        // Calculate pod count in other topology domains and check skew
-        // (Implementation omitted)
-
-        // Check maxSkew violation
-        if skew > constraint.MaxSkew && constraint.WhenUnsatisfiable == v1.DoNotSchedule {
-            return false
-        }
-    }
-
-    return true
-}
-```
-
-**Issues with Other Options:**
-- B. Pod を特定の Node にのみ配置する: これは nodeSelector または nodeAffinity の役割です。
-- C. Pod を特定の zone にのみ配置する: これは node affinity を使って Pod を特定の zone に配置することです。topology spread constraints の主な目的は均等な分散です。
-- D. Pod を特定の label を持つ Node にのみ配置する: これは nodeSelector または nodeAffinity の役割です。
+**他の選択肢について:**
+- B. Pod を特定の Node だけに配置する: nodeSelector または Node Affinity の役割です。
+- C. Pod を特定の zone だけに配置する: Node Affinity で zone を指定します。Topology spread の主な目的は均等な分散です。
+- D. Pod を特定のラベルを持つ Node だけに配置する: nodeSelector または Node Affinity の役割です。
 </details>
-### 4. Kubernetes における Taints and Tolerations の主な目的は何ですか？
 
-A. 特定の Pod が特定の Node にのみ schedule されることを保証する
-B. 特定の Pod が特定の Node に schedule されるのを防ぐ
-C. Node が特定の Pod を拒否し、Pod がそれを許容できるようにする
+### 4. Kubernetes の Taints and Tolerations の主な役割は何ですか？
+
+A. 特定の Pod を特定の Node のみにスケジュールする
+B. 特定の Pod が特定の Node にスケジュールされないようにする
+C. Node が一部の Pod を拒否し、Pod はそれを許容できるようにする
 D. Pod 間の通信を制限する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. Node が特定の Pod を拒否し、Pod がそれを許容できるようにする**
+**回答: C. Node が一部の Pod を拒否し、Pod はそれを許容できるようにする**
 
 **解説:**
-Kubernetes における Taints and Tolerations の主な目的は、Node が特定の Pod を拒否し、Pod がそれを許容できるようにすることです。Taint は Pod が schedule されるのを防ぐために Node に適用され、toleration は特定の taint を持つ Node への scheduling を許可するために Pod に適用されます。
+Taint は Pod を遠ざけ、toleration は一致する taint を無視できるようにします。Toleration を設定しても、その Node への配置が強制されたり、リソースやアフィニティのフィルターが迂回されたりはしません。
 
-**How Taints and Tolerations Work:**
-1. **Taints**: その Node への Pod scheduling を制限するために Node に適用されます。
-2. **Tolerations**: 特定の taint を持つ Node への scheduling を許可するために Pod に適用されます。
-3. **Effect**: taint の effect は、toleration を持たない Pod に対する動作を定義します。
+**Effect の種類:**
+1. **NoSchedule**: 対応する toleration がない Pod の新規スケジューリングを防ぎますが、すでに動作中の Pod は退避しません。
+2. **PreferNoSchedule**: ソフトな優先設定です。他のスコアが上回れば、他に容量がある場合でも、その Node に配置される可能性があります。
+3. **NoExecute**: 対応する toleration がない新規 Pod のスケジューリングを防ぎます。既存 Pod は toleration がない場合、または設定した toleration 時間が過ぎた場合に退避処理の対象になります。API 上の削除だけでは、到達不能な Node 上のプロセスが停止した証拠にはなりません。
 
-**Taint Effect Types:**
-1. **NoSchedule**: toleration を持たない Pod はその Node に schedule されません。
-2. **PreferNoSchedule**: toleration を持たない Pod はできればその Node に schedule されませんが、cluster resource が不足している場合は schedule される可能性があります。
-3. **NoExecute**: toleration を持たない Pod はその Node に schedule されず、すでに実行中の Pod は削除されます。
-
-**Taint Application Example:**
+**Taint の設定例:**
 ```bash
 # Apply taint to node
 kubectl taint nodes node1 key=value:NoSchedule
@@ -387,41 +328,28 @@ kubectl taint nodes node1 key=value:NoSchedule
 kubectl taint nodes node1 key=value:NoSchedule-
 ```
 
-**Taint and Toleration Example:**
+**Taint と Toleration の例:**
 ```yaml
-# Apply taint to node
-apiVersion: v1
-kind: Node
-metadata:
-  name: node1
-spec:
-  taints:
-  - key: "key"
-    value: "value"
-    effect: "NoSchedule"
-
-# Apply toleration to pod
 apiVersion: v1
 kind: Pod
 metadata:
   name: pod-with-toleration
 spec:
   tolerations:
-  - key: "key"
-    operator: "Equal"
-    value: "value"
-    effect: "NoSchedule"
+  - key: key
+    operator: Equal
+    value: value
+    effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-**Toleration Operators:**
-1. **Equal**: Key と value が一致する必要があります。
-2. **Exists**: Key のみ一致すればよいです（value は無視されます）。
-
-**Additional Toleration Field:**
-- **tolerationSeconds**: NoExecute effect で削除されるまで、Pod が Node 上に残ることができる時間（秒）を指定します。
+**Toleration のフィールド:**
+- `Equal`（既定の演算子）はキーと値を比較します。`Exists` では値を省略します。
+- effect を指定した場合は一致する必要があります。空の effect はそのキーの全 effect に一致します。空のキーは `Exists` が必要で全キーに一致するため、意図して使います。
+- `tolerationSeconds` は `NoExecute` にのみ適用されます。省略すると一致する taint を無期限に許容し、指定すると許容時間を制限します。
+- この例では既定の `Equal`/`Exists` の動作を使います。Kubernetes 1.35 で任意の比較演算子を使う機能は alpha で、ここでは無効です。
 
 ```yaml
 tolerations:
@@ -431,294 +359,256 @@ tolerations:
   tolerationSeconds: 300
 ```
 
-**Common Use Cases:**
-1. **Dedicated nodes**: 特定の workload 専用に Node を予約する
-2. **Special hardware**: GPU などの special hardware を持つ Node にのみ特定の Pod を schedule する
-3. **Node maintenance**: Node maintenance 中に新しい Pod scheduling を防ぐ
-4. **Master node protection**: control plane node に一般的な workload が schedule されるのを防ぐ
+**一般的なユースケース:**
+1. **専用 Node**: taint、制御された toleration、必須アフィニティを組み合わせます。taint だけでは対象ワークロードが専用 Node に配置されるとは限りません。
+2. **専用ハードウェア**: GPU などの特別なハードウェアを持つ Node に特定の Pod を配置します。
+3. **Node メンテナンス**: メンテナンス中の新規 Pod 配置を防ぎます。
+4. **Control plane の保護**: 一般ワークロードが control plane Node に配置されないようにします。
 
-**System Taints:**
-Kubernetes は次の system taints を自動的に適用します:
-1. **node.kubernetes.io/not-ready**: Node is not ready
-2. **node.kubernetes.io/unreachable**: Node is unreachable
-3. **node.kubernetes.io/memory-pressure**: Node has memory pressure
-4. **node.kubernetes.io/disk-pressure**: Node has disk pressure
-5. **node.kubernetes.io/pid-pressure**: Node has PID pressure
-6. **node.kubernetes.io/network-unavailable**: Node's network is unavailable
-7. **node.kubernetes.io/unschedulable**: Node is marked as unschedulable
+**システム taint:**
+Kubernetes は次のシステム taint を自動的に設定します。
+1. **node.kubernetes.io/not-ready**: Node が Ready ではない
+2. **node.kubernetes.io/unreachable**: Node に到達できない
+3. **node.kubernetes.io/memory-pressure**: Node がメモリー不足
+4. **node.kubernetes.io/disk-pressure**: Node がディスク不足
+5. **node.kubernetes.io/pid-pressure**: Node が PID 不足
+6. **node.kubernetes.io/network-unavailable**: Node のネットワークが利用できない
+7. **node.kubernetes.io/unschedulable**: Node がスケジュール不可に設定されている
 
-**Handling Taints and Tolerations in Custom Scheduler:**
-Custom Scheduler を実装する際は、Node taints と Pod tolerations を考慮する必要があります。
+**ハード taint の確認:**
+次の完全なヘルパーは、effect とワイルドカードを含む、基準バージョンの一致規則を使います。`PreferNoSchedule` はハードチェックから除外し、`NoExecute` は含めます。これはスケジューラーの他のフィルターや taint eviction controller の代わりにはなりません。
 
 ```go
-// Taint and toleration check example
-func checkTaintsAndTolerations(pod *v1.Pod, node *v1.Node) bool {
-    // All pods can be scheduled if the node has no taints
-    if len(node.Spec.Taints) == 0 {
-        return true
-    }
+package taintexample
 
-    // Check if the pod has tolerations for each taint
-    for _, taint := range node.Spec.Taints {
-        if taint.Effect == v1.TaintEffectNoSchedule || taint.Effect == v1.TaintEffectPreferNoSchedule {
-            // Check if the pod tolerates this taint
-            if !tolerationsTolerateTaint(pod.Spec.Tolerations, &taint) {
-                return false
-            }
-        }
-    }
+import (
+    v1 "k8s.io/api/core/v1"
+    corehelpers "k8s.io/component-helpers/scheduling/corev1"
+    "k8s.io/klog/v2"
+)
 
-    return true
-}
-
-// Check if tolerations tolerate a taint
-func tolerationsTolerateTaint(tolerations []v1.Toleration, taint *v1.Taint) bool {
-    for _, toleration := range tolerations {
-        if toleration.Key == taint.Key {
-            if toleration.Operator == v1.TolerationOpExists {
-                return true
-            } else if toleration.Operator == v1.TolerationOpEqual && toleration.Value == taint.Value {
-                return true
-            }
-        }
-    }
-    return false
+// Checks hard scheduling taints only; it does not implement eviction timers.
+func ToleratesHardTaints(pod *v1.Pod, node *v1.Node) bool {
+	if pod == nil || node == nil {
+		return false
+	}
+	_, untolerated := corehelpers.FindMatchingUntoleratedTaint(
+		klog.Background(), node.Spec.Taints, pod.Spec.Tolerations,
+		func(taint *v1.Taint) bool {
+			return taint.Effect == v1.TaintEffectNoSchedule || taint.Effect == v1.TaintEffectNoExecute
+		}, false, // Equal/Exists behavior; comparison-operator feature is not enabled here.
+	)
+	return !untolerated
 }
 ```
 
-**Issues with Other Options:**
-- A. 特定の Pod が特定の Node にのみ schedule されることを保証する: これは nodeSelector または nodeAffinity の役割です。
-- B. 特定の Pod が特定の Node に schedule されるのを防ぐ: これは podAntiAffinity の役割です。
-- D. Pod 間の通信を制限する: これは NetworkPolicy の役割です。
+**他の選択肢について:**
+- A. 特定の Pod を特定の Node のみにスケジュールする: nodeSelector または Node Affinity の役割です。
+- B. 特定の Pod が特定の Node にスケジュールされないようにする: これは taint と toleration のうち、Pod を遠ざける側だけを説明しています。podAntiAffinity は他の Pod との位置関係を扱います。
+- D. Pod 間の通信を制限する: NetworkPolicy の役割です。
 </details>
 
-### 5. 次のうち、Kubernetes における Scheduler Extender の主な特性ではないものはどれですか？
+### 5. Kubernetes の Scheduler Extender の主な特徴ではないものはどれですか？
 
-A. HTTP webhook を通じて scheduler と通信する
-B. filtering と prioritization の機能を提供する
-C. scheduler codebase に直接統合されている
-D. 外部 process として実行される
+A. HTTP webhook を通じてスケジューラーと通信する
+B. フィルタリングと優先順位付けを提供する
+C. スケジューラーのコードベースに直接統合される
+D. 外部プロセスとして実行される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. scheduler codebase に直接統合されている**
+**回答: C. スケジューラーのコードベースに直接統合される**
 
 **解説:**
-「scheduler codebase に直接統合されている」は、Kubernetes における Scheduler Extender の主な特性ではありません。Scheduler extender は scheduler codebase に直接統合されておらず、HTTP webhook を通じて通信し、外部 process として実行されます。これは scheduling framework plugin との主な違いです。
+Scheduler Extender はスケジューラーのコードベースに直接統合されません。HTTP webhook を通じて通信する外部プロセスです。これが Scheduling Framework プラグインとの主な違いです。
 
-**Main Characteristics of Scheduler Extender:**
-1. **HTTP webhooks**: scheduler は HTTP request を通じて extender と通信します。
-2. **External process**: extender は scheduler とは別の process として実行されます。
-3. **Filtering and prioritization**: extender は Node filtering と prioritization の機能を提供できます。
-4. **Binding**: extender は任意で Pod を Node に bind できます。
+**Scheduler Extender の主な特徴:**
+1. **HTTP webhook**: スケジューラーは HTTP リクエストで extender と通信します。
+2. **外部プロセス**: extender はスケジューラーとは別のプロセスとして実行されます。
+3. **フィルタリングと優先順位付け**: Node のフィルタリングや優先順位付けを提供できます。
+4. **Bind**: オプションで Pod を Node にバインドできます。
 
-**Scheduler Extender Configuration Example:**
+**Extender の設定:**
+Part2 の TLS サービスと証明書の前提条件を、セカンダリスケジューラーとともに使います。`extenders` はトップレベルの設定です。必須フィルターでは `ignorable: false` を維持します。可用性を強制したいリソースに対して、障害を許容する extender と `ignoredByScheduler: true` を組み合わせないでください。この例では GPU の計上を組み込みのリソースフィルターに任せています。
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
-- schedulerName: default-scheduler
-  extenders:
-  - urlPrefix: "http://extender-service:8080"
-    filterVerb: "filter"
-    prioritizeVerb: "prioritize"
-    weight: 5
-    bindVerb: "bind"
-    enableHTTPS: false
-    nodeCacheCapable: false
-    ignorable: true
-    managedResources:
-    - name: example.com/foo
-      ignoredByScheduler: true
+- schedulerName: custom-scheduler
+extenders:
+- urlPrefix: https://scheduler-extender.scheduler-lab.svc:8443
+  filterVerb: filter
+  prioritizeVerb: prioritize
+  weight: 1
+  enableHTTPS: true
+  tlsConfig:
+    caFile: /etc/extender-client/ca.crt
+    certFile: /etc/extender-client/tls.crt
+    keyFile: /etc/extender-client/tls.key
+  httpTimeout: 2s
+  nodeCacheCapable: false
+  ignorable: false
 ```
 
-**Scheduler Extender API:**
-1. **Filter API**: Node list を受け取り、filtered node list を返します。
-   ```
-   POST /filter
-   ```
-   Request body:
-   ```json
-   {
-     "pod": <pod>,
-     "nodes": <nodes>,
-     "nodenames": <node-names>
-   }
-   ```
-   Response body:
-   ```json
-   {
-     "nodes": <filtered-nodes>,
-     "nodenames": <filtered-node-names>,
-     "failedNodes": <failed-nodes>,
-     "error": <error-message>
-   }
-   ```
+**Wire Protocol (Kubernetes 1.35.8):**
+Go の型は大文字始まりのフィールド名でシリアライズされます。`nodeCacheCapable: false` の場合は `Pod` と完全な `Nodes` を送り、`NodeNames` は null です。true にするには、別途管理する Node キャッシュと `NodeNames` の契約が必要です。以下は有効な JSON 例であり、山括弧で囲んだプレースホルダーではありません。
 
-2. **Prioritize API**: Node list を受け取り、各 Node に score を割り当てます。
-   ```
-   POST /prioritize
-   ```
-   Request body:
-   ```json
-   {
-     "pod": <pod>,
-     "nodes": <nodes>,
-     "nodenames": <node-names>
-   }
-   ```
-   Response body:
-   ```json
-   {
-     "hostPriorities": [
-       {
-         "host": <node-name>,
-         "score": <score>
-       },
-       ...
-     ],
-     "error": <error-message>
-   }
-   ```
-
-3. **Bind API**: Pod を Node に bind します。
-   ```
-   POST /bind
-   ```
-   Request body:
-   ```json
-   {
-     "pod": <pod>,
-     "node": <node-name>
-   }
-   ```
-   Response body:
-   ```json
-   {
-     "error": <error-message>
-   }
-   ```
-
-**Scheduler Extender Implementation Example (Go):**
-```go
-package main
-
-import (
-    "encoding/json"
-    "log"
-    "net/http"
-
-    v1 "k8s.io/api/core/v1"
-    extender "k8s.io/kube-scheduler/extender/v1"
-)
-
-// Filter handler
-func filterHandler(w http.ResponseWriter, r *http.Request) {
-    var args extender.ExtenderArgs
-    var result extender.ExtenderFilterResult
-
-    // Decode request body
-    if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement filtering logic
-    filteredNodes := make([]v1.Node, 0, len(args.Nodes.Items))
-    failedNodes := make(map[string]string)
-
-    for _, node := range args.Nodes.Items {
-        // Custom filtering logic
-        if customFilter(&args.Pod, &node) {
-            filteredNodes = append(filteredNodes, node)
-        } else {
-            failedNodes[node.Name] = "Node failed custom filter"
+1. **Filter / Prioritize リクエスト:**
+```json
+{
+  "Pod": {
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+      "name": "gpu-pod",
+      "namespace": "default",
+      "uid": "00000000-0000-0000-0000-000000000001",
+      "annotations": {
+        "training.example.com/min-gpu-memory-mib": "16384"
+      }
+    },
+    "spec": {
+      "schedulerName": "custom-scheduler",
+      "containers": [
+        {
+          "name": "worker",
+          "image": "busybox:1.38.0",
+          "resources": {
+            "requests": {
+              "nvidia.com/gpu": "1"
+            },
+            "limits": {
+              "nvidia.com/gpu": "1"
+            }
+          }
         }
+      ]
     }
-
-    // Set result
-    result.Nodes = &v1.NodeList{Items: filteredNodes}
-    result.FailedNodes = failedNodes
-
-    // Send response
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(result); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-// Prioritize handler
-func prioritizeHandler(w http.ResponseWriter, r *http.Request) {
-    var args extender.ExtenderArgs
-    var result extender.HostPriorityList
-
-    // Decode request body
-    if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement prioritization logic
-    result = make(extender.HostPriorityList, 0, len(args.Nodes.Items))
-
-    for _, node := range args.Nodes.Items {
-        // Custom score calculation
-        score := customScore(&args.Pod, &node)
-        result = append(result, extender.HostPriority{
-            Host:  node.Name,
-            Score: score,
-        })
-    }
-
-    // Send response
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(result); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-func main() {
-    http.HandleFunc("/filter", filterHandler)
-    http.HandleFunc("/prioritize", prioritizeHandler)
-
-    log.Fatal(http.ListenAndServe(":8080", nil))
+  },
+  "Nodes": {
+    "items": [
+      {
+        "metadata": {
+          "name": "gpu-node",
+          "labels": {
+            "training.example.com/gpu-memory-mib": "16384"
+          }
+        },
+        "status": {
+          "allocatable": {
+            "nvidia.com/gpu": "1"
+          }
+        }
+      }
+    ]
+  },
+  "NodeNames": null
 }
 ```
 
-**Scheduler Extender vs Scheduling Framework Plugin:**
+2. **Filter レスポンス:** 提示された候補 Node のみを返せます。`FailedAndUnresolvableNodes` は preemption で解決できない失敗を示します。
 
-| Feature | Scheduler Extender | Scheduling Framework Plugin |
+```json
+{
+  "Nodes": {
+    "items": [
+      {
+        "metadata": {
+          "name": "gpu-node",
+          "labels": {
+            "training.example.com/gpu-memory-mib": "16384"
+          }
+        },
+        "status": {
+          "allocatable": {
+            "nvidia.com/gpu": "1"
+          }
+        }
+      }
+    ]
+  },
+  "NodeNames": null,
+  "FailedNodes": {},
+  "FailedAndUnresolvableNodes": {},
+  "Error": ""
+}
+```
+
+3. **Prioritize レスポンス:** `Host`/`Score` の配列だけを返し、スコア範囲は **0～10** です。Framework のスコアは 0～100 です。優先順位付けでエラーが起きると、この extender のスコアは省略されるため、必須ルールは Filter に置きます。
+
+```json
+[
+  {
+    "Host": "gpu-node",
+    "Score": 2
+  }
+]
+```
+
+4. **任意の Bind リクエストとレスポンス:** リクエストは Pod の名前、namespace、UID、および選択した Node を識別します。Part2 はこの callback を実装せず、`bindVerb` も設定しません。
+
+```json
+{
+  "PodName": "gpu-pod",
+  "PodNamespace": "default",
+  "PodUID": "00000000-0000-0000-0000-000000000001",
+  "Node": "gpu-node"
+}
+```
+
+```json
+{
+  "Error": ""
+}
+```
+
+5. **任意の preemption callback:** `preemptVerb` は `ExtenderPreemptionArgs`/`ExtenderPreemptionResult` を使って Pod と候補 victim を交換します。PreFilter や PreScore の callback ではありません。
+
+**実装:**
+完全な入力サイズ制限付き handler と TLS コマンドは[Part2](../../scheduling/02-custom-scheduler-part2.md)を参照してください。Pod/Node の欠落、不正なメモリー要件、過大な入力、不正なキャッシュ契約を拒否します。実行可能なコードとして、未実装の `customFilter` や `customScore` 関数を扱わないでください。
+
+**Scheduler Extender と Scheduling Framework Plugin の比較:**
+
+| 特徴 | Scheduler Extender | Scheduling Framework Plugin |
 |---------|-------------------|---------------------------|
-| Integration Method | HTTP webhook | Direct codebase integration |
-| Execution Mode | External process | Inside scheduler |
-| Performance | Relatively slower due to HTTP overhead | Faster due to direct integration |
-| Development Language | No restriction | Go |
-| Deployment | Separate service | Deployed with scheduler |
-| Maintenance | Independent from scheduler | Linked to scheduler version |
+| 統合方法 | HTTP webhook | コードベースへ直接統合 |
+| 実行方式 | 外部プロセス | スケジューラー内 |
+| 性能 | HTTP のオーバーヘッドにより比較的低速 | 直接統合のため高速 |
+| 開発言語 | 制限なし | Go |
+| デプロイ | 独立したサービス | スケジューラーとともにデプロイ |
+| 保守 | スケジューラーから独立 | スケジューラーのバージョンと連動 |
 
-**Pros and Cons of Scheduler Extender:**
-Pros:
-- scheduler codebase から独立して開発できます
-- さまざまな programming language で実装できます
-- scheduler upgrade の影響を受けにくいです
+**Scheduler Extender の長所と短所:**
+長所:
+- スケジューラーのコードベースから独立して開発できる
+- さまざまなプログラミング言語で実装できる
+- スケジューラーのアップグレードの影響を受けにくい
 
-Cons:
-- HTTP communication overhead による performance degradation
-- scheduling cycle の一部の stage しか拡張できません
-- scheduler と extender 間で communication failure が発生する可能性があります
+短所:
+- HTTP 通信のオーバーヘッドによる性能低下
+- スケジューリングサイクルの一部の段階しか拡張できない
+- スケジューラーと extender の間で通信障害が発生する可能性がある
 
-**Explanation of Other Options:**
-- A. HTTP webhook を通じて scheduler と通信する: scheduler extender の有効な特性です。
-- B. filtering と prioritization の機能を提供する: scheduler extender の有効な特性です。
-- D. 外部 process として実行される: scheduler extender の有効な特性です。
+**他の選択肢について:**
+- A. HTTP webhook を通じてスケジューラーと通信する: Scheduler Extender の特徴です。
+- B. フィルタリングと優先順位付けを提供する: Scheduler Extender の特徴です。
+- D. 外部プロセスとして実行される: Scheduler Extender の特徴です。
 </details>
-### 6. Kubernetes における Pod Affinity and Anti-Affinity の主な目的は何ですか？
+
+### 6. Kubernetes の Pod Affinity と Anti-Affinity の主な目的は何ですか？
 
 A. Pod と Node の関係を定義する
-B. Pod と volume の関係を定義する
+B. Pod とボリュームの関係を定義する
 C. Pod 間の関係を定義する
 D. Pod と Service の関係を定義する
 
@@ -728,18 +618,18 @@ D. Pod と Service の関係を定義する
 **回答: C. Pod 間の関係を定義する**
 
 **解説:**
-Kubernetes における Pod Affinity and Anti-Affinity の主な目的は、Pod 間の関係を定義することです。これにより、特定の Pod を他の Pod と同じ topology domain（Node、zone、region など）に配置するか（affinity）、配置しないか（anti-affinity）を制御できます。
+Pod Affinity と Anti-Affinity は、Pod 同士の配置関係を定義します。Affinity は特定の Pod と同じ topology domain（Node、zone、region など）に配置し、Anti-Affinity は同じ domain を避けるために使います。
 
-**Main Components of Pod Affinity and Anti-Affinity:**
-1. **topologyKey**: Pod 間の関係を定義する topology domain を指定する Node label key です。
-2. **labelSelector**: 関係を確立する対象の Pod を選択する label selector です。
-3. **namespaces**: label selector が適用される namespace の list です。
+**主な要素:**
+1. **topologyKey**: Pod 間の関係を定める topology domain を指定する Node ラベルキーです。
+2. **labelSelector**: 関係の対象となる Pod を選ぶラベルセレクターです。
+3. **namespaces**: ラベルセレクターを適用する namespace の一覧です。
 
-**Pod Affinity Types:**
-1. **requiredDuringSchedulingIgnoredDuringExecution**: Pod を schedule するために満たす必要がある rule（hard requirement）。
-2. **preferredDuringSchedulingIgnoredDuringExecution**: 満たされることが望ましいが必須ではない rule（soft requirement）。
+**Pod Affinity の種類:**
+1. **requiredDuringSchedulingIgnoredDuringExecution**: スケジューリング時に満たさなければならないハード要件です。
+2. **preferredDuringSchedulingIgnoredDuringExecution**: 満たすことが望ましいソフト要件です。
 
-**Pod Affinity Example:**
+**Pod Affinity の例:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -771,185 +661,145 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
 この例では:
-1. **Pod Affinity**: web server Pod は、`app=cache` label を持つ Pod と同じ Node（`kubernetes.io/hostname`）に schedule される必要があります。
-2. **Pod Anti-Affinity**: web server Pod は、できれば `app=web` label を持つ他の Pod とは異なる Node に schedule されるべきです。
+1. **Pod Affinity**: web server Pod は `app=cache` ラベルを持つ Pod と同じ Node（`kubernetes.io/hostname`）に配置される必要があります。
+2. **Pod Anti-Affinity**: web server Pod は、できれば `app=web` ラベルを持つ他の Pod と異なる Node に配置します。
 
-**Common Topology Keys:**
-1. **kubernetes.io/hostname**: Node-level relationship
-2. **topology.kubernetes.io/zone**: Zone-level relationship
-3. **topology.kubernetes.io/region**: Region-level relationship
+**一般的な topology key:**
+1. **kubernetes.io/hostname**: Node 単位の関係
+2. **topology.kubernetes.io/zone**: zone 単位の関係
+3. **topology.kubernetes.io/region**: region 単位の関係
 
-**Use Cases:**
-1. **High availability**: 同じ application の instance を異なる Node、zone、region に分散する
-2. **Performance optimization**: 相互に通信する Pod を同じ Node に配置して latency を最小化する
-3. **Resource isolation**: resource-intensive な Pod を異なる Node に分散する
-4. **License restrictions**: license restriction がある application を特定の Node に集中させる
+**ユースケース:**
+1. **高可用性**: 同じアプリケーションのインスタンスを異なる Node、zone、region に分散します。
+2. **近接配置の優先**: 同じ場所への配置で一部のネットワーク費用が下がる場合があります。依存する前に競合とレイテンシーを測定します。
+3. **リソース分離**: リソースを大量に使う Pod を異なる Node に分散します。
+4. **ライセンス制約**: ライセンス制限のあるアプリケーションを特定 Node に集中させます。
 
-**Pod Affinity vs Node Affinity:**
+**Pod Affinity と Node Affinity の違い:**
 - **Node Affinity**: Pod と Node の関係を定義します。
-- **Pod Affinity**: Pod 間の関係を定義します。
+- **Pod Affinity**: Pod 同士の関係を定義します。
 
-**Performance Impact of Pod Affinity and Anti-Affinity:**
-Pod affinity と anti-affinity は、すべての Node と Pod を考慮する必要があるため、計算コストが高くなる可能性があります。特に大規模 cluster では scheduling performance に影響する可能性があるため、慎重に使用する必要があります。
+**性能への影響:**
+Pod Affinity と Anti-Affinity はすべての Node と Pod を考慮するため、計算コストが高くなる場合があります。大規模クラスターではスケジューリング性能に影響し得るため、慎重に使います。
 
-**Handling Pod Affinity in Custom Scheduler:**
-Custom Scheduler を実装する際は、Pod の affinity と anti-affinity 要件を考慮する必要があります。
+**カスタムスケジューラーでの処理:**
+`InterPodAffinity` と、その前処理およびスコアリングを維持します。正しい処理には、新しい Pod の必須 term、既存 Pod の必須 Anti-Affinity、namespace の選択、topology label、自己アフィニティの初期化動作を考慮する必要があります。常に true を返すスタブでは不正な配置を許したり、Anti-Affinity 用に反転してすべての Node を拒否したりする可能性があります。
 
-```go
-// Pod affinity check example
-func checkPodAffinity(pod *v1.Pod, node *v1.Node, allPods []*v1.Pod) bool {
-    affinity := pod.Spec.Affinity
-    if affinity == nil || affinity.PodAffinity == nil {
-        return true  // All nodes are suitable if there's no pod affinity
-    }
+`namespaces` と `namespaceSelector` の両方を指定した場合、対象 namespace は和集合になります。どちらも省略した場合は、新しい Pod の namespace が使われます。`namespaceSelector: {}` は全 namespace を選択します。この例では、必須の `app=cache` Pod が選択した namespace 内の適格な Node にすでに存在する必要があります。優先 Anti-Affinity は分離を保証しません。`IgnoredDuringExecution` では、ラベルや peer が変化しても Pod を継続的に移動しません。
 
-    // Check required pod affinity
-    for _, term := range affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-        if !satisfiesPodAffinityTerm(pod, node, term, allPods) {
-            return false
-        }
-    }
-
-    return true
-}
-
-// Pod anti-affinity check example
-func checkPodAntiAffinity(pod *v1.Pod, node *v1.Node, allPods []*v1.Pod) bool {
-    affinity := pod.Spec.Affinity
-    if affinity == nil || affinity.PodAntiAffinity == nil {
-        return true  // All nodes are suitable if there's no pod anti-affinity
-    }
-
-    // Check required pod anti-affinity
-    for _, term := range affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-        if satisfiesPodAffinityTerm(pod, node, term, allPods) {
-            return false
-        }
-    }
-
-    return true
-}
-
-// Check if pod affinity term is satisfied
-func satisfiesPodAffinityTerm(pod *v1.Pod, node *v1.Node, term v1.PodAffinityTerm, allPods []*v1.Pod) bool {
-    // Implementation omitted
-    return true
-}
-```
-
-**Issues with Other Options:**
-- A. Pod と Node の関係を定義する: これは nodeAffinity の役割です。
-- B. Pod と volume の関係を定義する: これは volume binding と PersistentVolumeClaim の役割です。
-- D. Pod と Service の関係を定義する: これは service label selector を通じて処理されます。
+**他の選択肢について:**
+- A. Pod と Node の関係を定義する: Node Affinity の役割です。
+- B. Pod とボリュームの関係を定義する: Volume Binding と PersistentVolumeClaim の役割です。
+- D. Pod と Service の関係を定義する: Service のラベルセレクターで処理します。
 </details>
 
-### 7. Kubernetes scheduler における "QueueSort" extension point の役割は何ですか？
+### 7. Kubernetes scheduler の「QueueSort」拡張ポイントの役割は何ですか？
 
-A. Node を score する
-B. Pod が実行できない Node を除外する
-C. scheduling queue 内の Pod を sort する
-D. Pod を Node に bind する
+A. Node をスコアリングする
+B. Pod を実行できない Node を除外する
+C. スケジューリングキュー内の Pod を並べ替える
+D. Pod を Node にバインドする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. scheduling queue 内の Pod を sort する**
+**回答: C. スケジューリングキュー内の Pod を並べ替える**
 
 **解説:**
-Kubernetes scheduling framework における "QueueSort" extension point の役割は、scheduling queue 内の Pod を sort することです。この extension point は、どの Pod を先に schedule するかを決定する priority を設定します。
+QueueSort 拡張ポイントは、スケジューリングキュー内の Pod の順序を決めます。この順序によって、どの Pod を先に処理するかが決まります。
 
-**Scheduling Queue and QueueSort:**
-scheduler は scheduling queue 内の Pod を 1 つずつ処理します。QueueSort plugin は、この queue 内の Pod の順序を決定します。デフォルトでは、Kubernetes は `PrioritySort` plugin を使用して Pod priority で sort します。
+**スケジューリングキューと QueueSort:**
+スケジューラーはキュー内の Pod を1つずつ処理します。QueueSort プラグインがその順序を決めます。既定では `PrioritySort` が Pod の優先度で並べ替えます。
 
-**QueueSort Plugin Interface:**
+**バージョン付きインターフェイス:**
+Kubernetes 1.35.8 で QueueSort は `Less(fwk.QueuedPodInfo, fwk.QueuedPodInfo) bool` を実装します。これらのインターフェイスには getter 経由でアクセスします。既定の `PrioritySort` は、許可された priority、次にキュー時刻を比較します。
+
+**完全なカスタム例（`quizplugins/queue.go`）:**
+この実装はラボ独自の優先順位を適用する前に、許可済み priority を維持します。namespace や label に基づく優先設定は、同じ優先度の Pod 間で不公平を生む可能性があります。信頼できない label を、Admission 制御された PriorityClass の代わりに使わないでください。
+
 ```go
-type QueueSortPlugin interface {
-    Plugin
-    // Less determines which of two pods should be scheduled first.
-    // Returns true if pInfo1 should be scheduled before pInfo2.
-    Less(*QueuedPodInfo, *QueuedPodInfo) bool
-}
-```
+package quizplugins
 
-**Default QueueSort Plugin - PrioritySort:**
-```go
-// PrioritySort sorts pods by pod priority.
-type PrioritySort struct{}
+import (
+	"context"
 
-// Name returns the plugin name.
-func (pl *PrioritySort) Name() string {
-    return Name
-}
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	corehelpers "k8s.io/component-helpers/scheduling/corev1"
+	fwk "k8s.io/kube-scheduler/framework"
+)
 
-// Less determines which of two pods should be scheduled first.
-func (pl *PrioritySort) Less(pInfo1, pInfo2 *framework.QueuedPodInfo) bool {
-    p1 := getPodPriority(pInfo1.Pod)
-    p2 := getPodPriority(pInfo2.Pod)
-
-    // Higher priority pods are scheduled first.
-    if p1 != p2 {
-        return p1 > p2
-    }
-
-    // If priorities are equal, pods with longer wait time are scheduled first.
-    return pInfo1.Timestamp.Before(pInfo2.Timestamp)
-}
-```
-
-**Custom QueueSort Plugin Example:**
-```go
-// CustomQueueSort implements custom sorting logic.
 type CustomQueueSort struct{}
 
-// Name returns the plugin name.
-func (pl *CustomQueueSort) Name() string {
-    return "CustomQueueSort"
+var _ fwk.QueueSortPlugin = &CustomQueueSort{}
+
+func (*CustomQueueSort) Name() string { return "CustomQueueSort" }
+
+func (*CustomQueueSort) Less(a, b fwk.QueuedPodInfo) bool {
+	pa, pb := a.GetPodInfo().GetPod(), b.GetPodInfo().GetPod()
+	ap, bp := corehelpers.PodPriority(pa), corehelpers.PodPriority(pb)
+	if ap != bp {
+		return ap > bp
+	}
+	// Lab tie-breakers only; do not override the admitted Pod priority.
+	aPreferred := pa.Namespace == "high-priority-namespace"
+	bPreferred := pb.Namespace == "high-priority-namespace"
+	if aPreferred != bPreferred {
+		return aPreferred
+	}
+	if critical(pa) != critical(pb) {
+		return critical(pa)
+	}
+	return a.GetTimestamp().Before(b.GetTimestamp())
 }
 
-// Less determines which of two pods should be scheduled first.
-func (pl *CustomQueueSort) Less(pInfo1, pInfo2 *framework.QueuedPodInfo) bool {
-    // Example: Prioritize pods in a specific namespace
-    if pInfo1.Pod.Namespace == "high-priority-namespace" && pInfo2.Pod.Namespace != "high-priority-namespace" {
-        return true
-    }
-    if pInfo1.Pod.Namespace != "high-priority-namespace" && pInfo2.Pod.Namespace == "high-priority-namespace" {
-        return false
-    }
+func critical(pod *v1.Pod) bool { return pod.Labels["training.example.com/critical"] == "true" }
 
-    // Example: Prioritize pods with a specific label
-    if hasLabel(pInfo1.Pod, "critical") && !hasLabel(pInfo2.Pod, "critical") {
-        return true
-    }
-    if !hasLabel(pInfo1.Pod, "critical") && hasLabel(pInfo2.Pod, "critical") {
-        return false
-    }
-
-    // By default, consider priority and wait time
-    p1 := getPodPriority(pInfo1.Pod)
-    p2 := getPodPriority(pInfo2.Pod)
-
-    if p1 != p2 {
-        return p1 > p2
-    }
-
-    return pInfo1.Timestamp.Before(pInfo2.Timestamp)
-}
-
-// Check if pod has a specific label
-func hasLabel(pod *v1.Pod, label string) bool {
-    _, exists := pod.Labels[label]
-    return exists
+func NewQueue(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &CustomQueueSort{}, nil
 }
 ```
 
-**Enabling QueueSort Plugin in Scheduler Configuration:**
+後述の PoolConstraint 例とともに `cmd/quiz-scheduler/main.go` に登録します。
+
+```go
+package main
+
+import (
+	"os"
+
+	"example.com/custom-scheduler/quizplugins"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+)
+
+func main() {
+	command := app.NewSchedulerCommand(
+		app.WithPlugin("CustomQueueSort", quizplugins.NewQueue),
+		app.WithPlugin("PoolConstraint", quizplugins.NewPool),
+	)
+	os.Exit(cli.Run(command))
+}
+```
+
+Part1 の module から `CGO_ENABLED=0 go build -buildvcs=false -o custom-scheduler ./cmd/quiz-scheduler` でビルドします。選んだ構成で必要なプラグインだけを有効にします。
+
+**Scheduler 設定での QueueSort プラグインの有効化:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
@@ -960,53 +810,54 @@ profiles:
       - name: PrioritySort  # Disable default plugin
 ```
 
-**Characteristics of QueueSort Plugin:**
-1. **Single activation**: 同時に有効にできる QueueSort plugin は 1 つだけです。
-2. **Global impact**: QueueSort plugin は scheduling queue 内のすべての Pod に影響します。
-3. **Performance importance**: 効率的な sorting algorithm が重要です。複雑な logic は scheduling performance に影響する可能性があります。
+**QueueSort プラグインの特徴:**
+1. **有効化は1つだけ**: 一度に有効にできる QueueSort プラグインは1つです。
+2. **キューの共有**: 1つの scheduler process 内のすべての profile で QueueSort プラグインと設定を共有する必要があります。別の scheduler process は別のキューを持ちます。
+3. **性能上の重要性**: 効率的なソートアルゴリズムが重要です。複雑なロジックはスケジューリング性能に影響します。
 
-**QueueSort Plugin Use Cases:**
-1. **Business priority**: business importance に基づいて Pod を sort する
-2. **Resource efficiency**: empty space を活用するために resource request が小さい Pod を先に schedule する
-3. **Service Level Agreements (SLA)**: SLA 要件に従って Pod を sort する
-4. **Batch processing**: batch job と interactive job の間の priority を調整する
+**QueueSort プラグインのユースケース:**
+1. **業務上の優先度**: 業務上の重要性に応じて Pod を並べ替えます。
+2. **リソース効率**: 空きリソースを使うため、リソース request が小さい Pod を先に処理します。
+3. **Service Level Agreement (SLA)**: SLA 要件に従って Pod を並べ替えます。
+4. **バッチ処理**: バッチジョブと対話型ジョブの優先度を調整します。
 
-**Monitoring Scheduling Queue:**
+**スケジューリングキューの監視:**
 ```bash
 # Check queue information in scheduler logs
-kubectl logs -n kube-system <scheduler-pod> | grep -i queue
+kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 
 # Check pods pending scheduling
-kubectl get pods --all-namespaces -o wide | grep -i pending
+kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.nodeName= -o wide
 ```
 
-**Issues with Other Options:**
-- A. Node を score する: これは "Score" extension point の役割です。
-- B. Pod が実行できない Node を除外する: これは "Filter" extension point の役割です。
-- D. Pod を Node に bind する: これは "Bind" extension point の役割です。
+**他の選択肢について:**
+- A. Node をスコアリングする: 「Score」拡張ポイントの役割です。
+- B. Pod を実行できない Node を除外する: 「Filter」拡張ポイントの役割です。
+- D. Pod を Node にバインドする: 「Bind」拡張ポイントの役割です。
 </details>
-### 8. Kubernetes における Pod Priority Preemption の主な目的は何ですか？
 
-A. より高い priority の Pod を schedule できるように、より低い priority の Pod を削除する
-B. より高い priority の Pod により多くの resource を割り当てる
-C. より高い priority の Pod をより速く実行する
-D. より高い priority の Pod を特定の Node にのみ配置する
+### 8. Kubernetes の Pod Priority Preemption の主な目的は何ですか？
+
+A. 優先度の低い Pod を削除して、優先度の高い Pod をスケジュールできるようにする
+B. 優先度の高い Pod により多くのリソースを割り当てる
+C. 優先度の高い Pod をより速く実行する
+D. 優先度の高い Pod を特定の Node だけに配置する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. より高い priority の Pod を schedule できるように、より低い priority の Pod を削除する**
+**回答: A. 優先度の低い Pod を削除して、優先度の高い Pod をスケジュールできるようにする**
 
 **解説:**
-Kubernetes における Pod Priority Preemption の主な目的は、より高い priority の Pod を schedule できるように、より低い priority の Pod を削除することです。cluster resource が不足し、より高い priority の Pod を schedule できない場合、scheduler はより低い priority の Pod を preempt（削除）して空き容量を確保します。
+優先度の高い Pod を配置できず、その Pod のポリシーと残る制約が許せば、スケジューラーは優先度の低い Pod を preempt することがあります。
 
-**Pod Priority and Preemption Mechanism:**
-1. **PriorityClass definition**: Pod priority を定義する cluster-level resource です。
-2. **Assign priority to pod**: Pod は `spec.priorityClassName` を通じて PriorityClass を参照します。
-3. **Scheduling order**: より高い priority の Pod が scheduling queue で先に処理されます。
-4. **Preemption process**: より高い priority の Pod を schedule できない場合、scheduler はより低い priority の Pod を削除して空き容量を確保します。
+**Pod Priority と Preemption の仕組み:**
+1. **PriorityClass の定義**: Pod の優先度を定義するクラスター全体のリソースです。
+2. **Pod への優先度の指定**: Pod は `spec.priorityClassName` で PriorityClass を参照します。
+3. **処理順序**: 優先度の高い Pod がスケジューリングキューで先に処理されます。
+4. **Preemption の処理**: 高優先度 Pod のポリシーが許し、他の制約も満たせる場合、スケジューラーは低優先度 Pod を退避することがあります。
 
-**PriorityClass Example:**
+**PriorityClass の例:**
 ```yaml
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -1018,7 +869,7 @@ description: "High priority pods"  # Description
 preemptionPolicy: PreemptLowerPriority  # Preemption policy (default: PreemptLowerPriority)
 ```
 
-**Applying Priority to a Pod:**
+**Pod への優先度の適用:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1028,13 +879,13 @@ spec:
   priorityClassName: high-priority  # Reference PriorityClass name
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-**Preemption Policies:**
-PriorityClass には、次の値を取ることができる `preemptionPolicy` field があります:
-1. **PreemptLowerPriority (default)**: より低い priority の Pod を preempt できます。
-2. **Never**: より低い priority の Pod を preempt しません。
+**Preemption ポリシー:**
+PriorityClass の `preemptionPolicy` フィールドは次の値を取ります。
+1. **PreemptLowerPriority（既定）**: 優先度の低い Pod を preempt できます。
+2. **Never**: 優先度の低い Pod を preempt しません。
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -1047,259 +898,236 @@ description: "High priority pods that do not preempt other pods"
 preemptionPolicy: Never  # Do not preempt
 ```
 
-**Preemption Process:**
-1. scheduler がより高い priority の Pod を schedule しようとします。
-2. 適切な Node がない場合、scheduler は各 Node 上の preemption candidate Pod を特定します。
-3. preemption candidate は、より低い priority の Pod から選択されます。
-4. scheduler は必要な resource を解放するために最小数の Pod を preempt します。
-5. 選択された Pod は graceful に終了されます。
-6. preempt された Pod が終了すると、より高い priority の Pod が schedule されます。
+**Preemption の流れ:**
+1. スケジューラーが高優先度 Pod の配置を試みます。
+2. 適切な Node がなければ、各 Node 上で preemption 候補 Pod を特定します。
+3. 候補 victim は低優先度 Pod から選びます。
+4. スケジューラーはポリシーに従って候補または victim の集合を選びます。全体で victim 数が最小になる保証はありません。
+5. 選択された Pod を猶予期間付きで終了します。
+6. victim の終了後に再度スケジューリングを試みます。nominated になっても Bind が保証されるわけではありません。
 
-**Preemption Considerations:**
-1. **Graceful termination period**: preempt された Pod には `terminationGracePeriodSeconds`（default: 30 seconds）の graceful termination time があります。
-2. **Pod Disruption Budget (PDB)**: scheduler は可能な場合、PDB に違反しないようにします。
-3. **Node taints**: preemption 後、新しい Pod が schedule されるのを防ぐために Node に taint が追加される場合があります。
-4. **System pods**: system critical Pod は通常、非常に高い priority を持ち、preempt されません。
+**Preemption に関する考慮点:**
+1. **猶予付き終了期間**: preempt された Pod には `terminationGracePeriodSeconds`（既定値: 30秒）の猶予があります。
+2. **Pod Disruption Budget (PDB)**: PDB 違反を避けようとしますが、準拠はベストエフォートであり保証されません。
+3. **Nomination**: `status.nominatedNodeName` は候補 Node を記録します。Preemption は Node taint の追加で予約する仕組みではありません。
+4. **System Pod**: Critical PriorityClass には高い予約済み優先度がありますが、さらに高優先度の Pod や別の退避機構から常に保護されるわけではありません。
 
-**Checking Preemption Events:**
+**Preemption イベントの確認:**
 ```bash
 # Check preemption events
 kubectl get events | grep -i preempt
 ```
 
-**Monitoring Preemption-Related Metrics:**
+**Preemption 関連メトリクスの監視:**
+設定済みの監視システムから、カスタムスケジューラーの認証済み HTTPS メトリクス endpoint 上の `scheduler_preemption_attempts_total` を読み取ります。`kubectl get --raw /metrics` が読むのは API server のメトリクスであり、この endpoint のものではありません。
+
 ```bash
-# Check preemption-related metrics in scheduler metrics
-kubectl get --raw /metrics | grep scheduler_preemption
+kubectl get pods -A -o custom-columns=NAME:.metadata.name,PRIORITY:.spec.priority,NOMINATED:.status.nominatedNodeName
 ```
 
-**Implementing Preemption in Custom Scheduler:**
-Custom Scheduler を実装する際は、Pod priority と preemption mechanism を考慮する必要があります。
+**安全な Preemption 処理:**
+PostFilter で `DefaultPreemption` を維持します。これは低優先度 Pod の削除をシミュレーションして、関連する制約を再実行します。最初に見つけた Node 上の低優先度 Pod をすべて削除するのは安全ではありません。候補の選択では PDB 違反と victim の優先度を考慮しますが、全体で victim 数を最小化する保証はありません。
 
-```go
-// Preemption logic example
-func preempt(pod *v1.Pod, nodes []*v1.Node) *v1.Node {
-    // Check pod priority
-    podPriority := getPodPriority(pod)
+Preemption では、存在しない label、互換性のない volume topology、不足しているハードウェアは解決できません。Nomination 後も Pod が Pending のままの場合があり、別の高優先度 Pod によって結果が変わる場合があります。置換、終了、API 更新は非同期です。この監査では eviction loop を実行していません。
 
-    // Identify preemptable pods on each node
-    for _, node := range nodes {
-        // Get pods running on the node
-        nodePods := getPodsOnNode(node)
+**Preemption の長所と短所:**
+長所:
+- 制約が許す場合に、高優先度ワークロード用の領域を確保できます。
+- クラスターリソースを効率的に使えます。
+- Service Level Agreement (SLA) への準拠を支援します。
 
-        // Identify preemption candidate pods
-        var victims []*v1.Pod
-        for _, p := range nodePods {
-            // Select only lower priority pods
-            if getPodPriority(p) < podPriority {
-                victims = append(victims, p)
-            }
-        }
+短所:
+- Preempt された Pod が中断されます。
+- 再スケジュールに伴うオーバーヘッドがあります。
+- Preemption の判断ロジックが複雑です。
 
-        // Check if resources are sufficient after preemption
-        if hasEnoughResourcesAfterPreemption(node, victims, pod) {
-            // Execute preemption
-            for _, victim := range victims {
-                evictPod(victim)
-            }
-            return node
-        }
-    }
-
-    return nil  // No suitable node found
-}
-```
-
-**Pros and Cons of Preemption:**
-Pros:
-- 重要な workload の scheduling を保証します
-- cluster resource を効率的に使用します
-- Service Level Agreement (SLA) compliance をサポートします
-
-Cons:
-- preempt された Pod の disruption
-- preemption 後の rescheduling による overhead
-- 複雑な preemption decision logic
-
-**Issues with Other Options:**
-- B. より高い priority の Pod により多くの resource を割り当てる: Pod priority は resource allocation に直接影響しません。Resource request と limit は Pod spec で別途定義されます。
-- C. より高い priority の Pod をより速く実行する: Priority は scheduling order に影響しますが、Pod の execution speed 自体は変わりません。
-- D. より高い priority の Pod を特定の Node にのみ配置する: これは nodeSelector または nodeAffinity の役割であり、priority とは直接関係ありません。
+**他の選択肢について:**
+- B. 優先度の高い Pod により多くのリソースを割り当てる: Pod の優先度はリソース割り当てに直接影響しません。リソース request と limit は Pod spec で別々に定義します。
+- C. 優先度の高い Pod をより速く実行する: 優先度はスケジューリング順に影響しますが、Pod 自体の実行速度は変えません。
+- D. 優先度の高い Pod を特定の Node だけに配置する: nodeSelector または Node Affinity の役割であり、優先度とは直接関係ありません。
 </details>
 
-### 9. Kubernetes scheduler における "PreFilter" extension point の役割は何ですか？
+### 9. Kubernetes scheduler の「PreFilter」拡張ポイントの役割は何ですか？
 
-A. filtering の前に Pod と cluster state に対して preprocessing を実行する
-B. filtering 後に Node を score する
-C. Pod を Node に bind する前に verification を実行する
-D. scheduling queue 内の Pod を sort する
+A. フィルタリング前に Pod とクラスターの状態を前処理する
+B. フィルタリング後に Node をスコアリングする
+C. Pod を Node に Bind する前に検証する
+D. スケジューリングキュー内の Pod を並べ替える
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. filtering の前に Pod と cluster state に対して preprocessing を実行する**
+**回答: A. フィルタリング前に Pod とクラスターの状態を前処理する**
 
 **解説:**
-Kubernetes scheduling framework における "PreFilter" extension point の役割は、filtering の前に Pod と cluster state に対して preprocessing を実行することです。PreFilter plugin は filtering stage で使用する data を準備し、Pod を schedule できるかを事前に check できます。
+PreFilter 拡張ポイントは、フィルタリング段階で使うデータを準備し、Pod をスケジュールできるか事前確認する場合があります。
 
-**Main Functions of the PreFilter Extension Point:**
-1. **Data preparation**: filtering stage で使用する data structure を初期化し準備します。
-2. **Pre-checks**: Pod を schedule できるかを事前に check します。
-3. **State storage**: scheduling cycle 中に使用する state information を保存します。
-4. **Optimization**: 不要な filtering work を防ぎ、performance を最適化します。
+**PreFilter 拡張ポイントの主な機能:**
+1. **データの準備**: フィルタリング段階で使うデータ構造を初期化して準備します。
+2. **事前チェック**: Pod をスケジュールできるか先に確認します。
+3. **状態の保存**: スケジューリングサイクル内で使う状態情報を保存します。
+4. **最適化**: 不要なフィルタリングを避け、性能を高めます。
 
-**PreFilter Plugin Interface:**
-```go
-type PreFilterPlugin interface {
-    Plugin
-    // PreFilter performs preprocessing on the pod before filtering.
-    PreFilter(ctx context.Context, state *CycleState, pod *v1.Pod) *Status
-    // PreFilterExtensions returns an interface that provides additional functionality.
-    PreFilterExtensions() PreFilterExtensions
-}
+**バージョン付きインターフェイス:**
+Kubernetes 1.35.8 では `PreFilter(ctx, state, pod, nodes) (*fwk.PreFilterResult, *fwk.Status)` を使います。`state` は `fwk.CycleState`、`nodes` は `[]fwk.NodeInfo` です。任意の AddPod/RemovePod 拡張には、スケジュール中の Pod、シミュレーション上追加/削除した PodInfo、NodeInfo が渡されます。これらは preemption シミュレーションを支援し、複製された state 上で実行されることもあります。通常の informer callback ではありません。
 
-type PreFilterExtensions interface {
-    // AddPod updates state when a pod is added to a node.
-    AddPod(ctx context.Context, state *CycleState, podToAdd *v1.Pod, nodeInfo *NodeInfo) *Status
-    // RemovePod updates state when a pod is removed from a node.
-    RemovePod(ctx context.Context, state *CycleState, podToRemove *v1.Pod, nodeInfo *NodeInfo) *Status
-}
-```
-
-**Default PreFilter Plugins:**
-Kubernetes は次の default PreFilter plugin を提供しています:
-
-1. **InterPodAffinity**: inter-pod affinity と anti-affinity 要件を処理します。
-2. **NodeAffinity**: node affinity 要件を処理します。
+**既定の PreFilter プラグイン:**
+Kubernetes には次の既定 PreFilter プラグインがあります。
+1. **InterPodAffinity**: Pod 間の affinity と anti-affinity の要件を処理します。
+2. **NodeAffinity**: Node Affinity の要件を処理します。
 3. **NodePorts**: Pod が要求する host port を処理します。
-4. **NodeResourcesFit**: Node resource 要件を処理します。
-5. **PodTopologySpread**: Pod topology spread constraints を処理します。
-6. **VolumeBinding**: volume binding 要件を処理します。
+4. **NodeResourcesFit**: Node のリソース要件を処理します。
+5. **PodTopologySpread**: Pod Topology Spread Constraints を処理します。
+6. **VolumeBinding**: ボリュームのバインド要件を処理します。
 
-**Custom PreFilter Plugin Example:**
+**完全な PreFilter + Filter の例（`quizplugins/prefilter.go`）:**
+一般的な pool label なら必須 Node Affinity のほうが単純です。この例は、検証済みのサイクル単位の state と `Clone()` を示します。他の Pod には依存しないため、AddPod/RemovePod 拡張は不要です。PreFilter state がない場合はエラーにし、スケジュール許可として扱いません。
+
 ```go
-// CustomPreFilter implements custom pre-filtering logic.
-type CustomPreFilter struct {
-    handle framework.Handle
+package quizplugins
+
+import (
+	"context"
+	"strings"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	validation "k8s.io/apimachinery/pkg/util/validation"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
+const poolStateKey fwk.StateKey = "training.example.com/pool-constraint"
+
+type poolState struct{ Pool string }
+
+func (s *poolState) Clone() fwk.StateData { return &poolState{Pool: s.Pool} }
+
+type PoolConstraint struct{}
+
+var _ fwk.PreFilterPlugin = &PoolConstraint{}
+var _ fwk.FilterPlugin = &PoolConstraint{}
+
+func (*PoolConstraint) Name() string { return "PoolConstraint" }
+
+func (*PoolConstraint) PreFilter(_ context.Context, state fwk.CycleState, pod *v1.Pod, _ []fwk.NodeInfo) (*fwk.PreFilterResult, *fwk.Status) {
+	pool := pod.Annotations["training.example.com/required-pool"]
+	if problems := validation.IsValidLabelValue(pool); len(problems) != 0 {
+		return nil, fwk.NewStatus(fwk.UnschedulableAndUnresolvable, strings.Join(problems, "; "))
+	}
+	state.Write(poolStateKey, &poolState{Pool: pool})
+	return nil, nil
 }
 
-// Name returns the plugin name.
-func (pl *CustomPreFilter) Name() string {
-    return "CustomPreFilter"
+func (*PoolConstraint) PreFilterExtensions() fwk.PreFilterExtensions { return nil }
+
+func (*PoolConstraint) Filter(_ context.Context, state fwk.CycleState, _ *v1.Pod, info fwk.NodeInfo) *fwk.Status {
+	data, err := state.Read(poolStateKey)
+	if err != nil {
+		return fwk.AsStatus(err)
+	}
+	prepared, ok := data.(*poolState)
+	if !ok || info == nil || info.Node() == nil {
+		return fwk.NewStatus(fwk.Error, "invalid prepared state or node")
+	}
+	if prepared.Pool != "" && info.Node().Labels["training.example.com/pool"] != prepared.Pool {
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, "required pool label does not match")
+	}
+	return nil
 }
 
-// PreFilter performs preprocessing on the pod before filtering.
-func (pl *CustomPreFilter) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) *framework.Status {
-    // Example: Check if the pod is schedulable according to certain conditions
-    if !isPodSchedulable(pod) {
-        return framework.NewStatus(framework.Unschedulable, "Pod does not meet custom requirements")
-    }
-
-    // Example: Store data to be used in the filtering stage
-    data := &customPreFilterState{
-        // Initialize required data
-    }
-    state.Write(stateKey, data)
-
-    return nil
-}
-
-// PreFilterExtensions returns an interface that provides additional functionality.
-func (pl *CustomPreFilter) PreFilterExtensions() framework.PreFilterExtensions {
-    return nil  // Return nil if no extension functionality is needed
-}
-
-// State data structure
-type customPreFilterState struct {
-    // Define required fields
-}
-
-// State key
-var stateKey = framework.StateKey("CustomPreFilter")
-
-// Function to check if pod is schedulable
-func isPodSchedulable(pod *v1.Pod) bool {
-    // Implement custom logic
-    return true
+func NewPool(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &PoolConstraint{}, nil
 }
 ```
 
-**Enabling PreFilter Plugin in Scheduler Configuration:**
+**実装した両段階を有効にし、既定のリソースチェックを維持する:**
+問7の登録コマンドにこのプラグインも含まれます。
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     preFilter:
       enabled:
-      - name: CustomPreFilter
-      disabled:
-      - name: NodeResourcesFit  # Disable default plugin
+      - name: PoolConstraint
+    filter:
+      enabled:
+      - name: PoolConstraint
 ```
 
-**Relationship Between PreFilter and Filter:**
-1. **PreFilter**: すべての Node に対する filtering を開始する前に 1 回実行されます。
-2. **Filter**: 各 Node に対して個別に実行されます。
+**PreFilter と Filter の関係:**
+1. **PreFilter**: 全 Node のフィルタリングを始める前に1回実行します。
+2. **Filter**: 各 Node に対して個別に実行します。
 
-PreFilter は Filter stage で使用する data を準備し、どの Node にも schedule できない Pod を事前に特定して、不要な filtering work を防ぎます。
+PreFilter は Filter 段階で使うデータを準備します。また、どの Node にも配置できない Pod を事前に特定し、不要なフィルタリングを防ぎます。
 
-**PreFilter Use Cases:**
-1. **Complex constraint handling**: inter-pod affinity、topology spread などの複雑な constraint を効率的に処理する
-2. **Pre-validation**: Pod を schedule できるかを事前に check し、不要な processing を防ぐ
-3. **Data caching**: filtering stage で繰り返し使用される data を事前に計算し、performance を向上させる
-4. **State sharing**: 複数の plugin 間で共有される state information を管理する
+**PreFilter のユースケース:**
+1. **複雑な制約の処理**: Pod 間 affinity や topology spread などを効率的に処理します。
+2. **事前検証**: Pod を配置できるか確認し、不要な処理を避けます。
+3. **データのキャッシュ**: フィルタリング段階で繰り返し使うデータを事前計算し、性能を高めます。
+4. **状態の共有**: 複数のプラグイン間で共有する状態情報を管理します。
 
-**Issues with Other Options:**
-- B. filtering 後に Node を score する: これは "Score" extension point の役割です。
-- C. Pod を Node に bind する前に verification を実行する: これは "PreBind" extension point の役割です。
-- D. scheduling queue 内の Pod を sort する: これは "QueueSort" extension point の役割です。
+**他の選択肢について:**
+- B. フィルタリング後に Node をスコアリングする: 「Score」拡張ポイントの役割です。
+- C. Pod を Node に Bind する前に検証する: 「PreBind」拡張ポイントの役割です。
+- D. スケジューリングキュー内の Pod を並べ替える: 「QueueSort」拡張ポイントの役割です。
 </details>
 
-### 10. Kubernetes における Node taint `node.kubernetes.io/unreachable:NoExecute` は何を意味しますか？
+### 10. Kubernetes の Node taint `node.kubernetes.io/unreachable:NoExecute` は何を意味しますか？
 
-A. Node が unreachable であり、toleration を持たない Pod は削除される
-B. Node は unschedulable だが、既存の Pod は実行を続ける
-C. Node は maintenance mode であり、新しい Pod は schedule されない
-D. Node は resource shortage state であり、新しい Pod はできれば schedule されない
+A. Node に到達できず、toleration がない Pod は退避される
+B. Node はスケジュール不可だが、既存の Pod は実行を続ける
+C. Node はメンテナンス中で、新しい Pod は配置されない
+D. Node のリソースが不足しており、新しい Pod はなるべく配置されない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. Node が unreachable であり、toleration を持たない Pod は削除される**
+**回答: A. Node に到達できず、toleration がない Pod は退避される**
 
 **解説:**
-Kubernetes における Node taint `node.kubernetes.io/unreachable:NoExecute` は、その Node が unreachable であり、この taint に対する toleration を持たない Pod が Node から削除（evict）されることを意味します。この taint は node controller によって自動的に追加され、Node の status が `Ready` から `Unknown` に変わったときに適用されます。
+`node.kubernetes.io/unreachable:NoExecute` taint は、Node に到達できず、この taint に一致する toleration を持たない Pod が Node から退避されることを示します。node controller は Node の status が `Ready` から `Unknown` に変わると、この taint を自動で追加します。
 
-**Node Unreachable State:**
-Node が unreachable になる一般的な原因:
-1. Network connectivity の問題
+**Node が到達不能になる状態:**
+一般的な原因:
+1. ネットワーク接続の障害
 2. kubelet process の crash
-3. Node system failure
-4. Node power issues
+3. Node system の障害
+4. Node の電源障害
 
-**Taint Components:**
+**Taint の構成要素:**
 1. **Key**: `node.kubernetes.io/unreachable`
-2. **Value**: 通常は空文字列ですが、値を持つ場合があります。
-3. **Effect**: `NoExecute` - toleration を持たない Pod は Node から削除されます。
+2. **Value**: 通常は空文字列ですが、値を持つ場合もあります。
+3. **Effect**: `NoExecute`。toleration がない Pod は Node から退避されます。
 
-**NoExecute Effect:**
-`NoExecute` effect は次の動作を引き起こします:
-1. taint を持つ Node には新しい Pod は schedule されません。
-2. すでにその Node 上で実行中の Pod のうち、その taint に対する toleration を持たないものは削除されます。
+**NoExecute effect:**
+`NoExecute` effect では次の動作になります。
+1. 一致する toleration がない新しい Pod は、taint のある Node に配置されません。
+2. すでに Node 上で動作している Pod のうち、この taint に一致する toleration がないものは退避されます。
 
-**System Taints:**
-Kubernetes は Node status に基づいて次の system taints を自動的に追加します:
-1. **node.kubernetes.io/not-ready:NoExecute**: Node is not ready
-2. **node.kubernetes.io/unreachable:NoExecute**: Node is unreachable
-3. **node.kubernetes.io/memory-pressure:NoSchedule**: Node has memory pressure
-4. **node.kubernetes.io/disk-pressure:NoSchedule**: Node has disk pressure
-5. **node.kubernetes.io/pid-pressure:NoSchedule**: Node has PID pressure
-6. **node.kubernetes.io/network-unavailable:NoSchedule**: Node's network is unavailable
-7. **node.kubernetes.io/unschedulable:NoSchedule**: Node is marked as unschedulable
+**システム taint:**
+Kubernetes は Node の status に応じて次のシステム taint を自動で追加します。
+1. **node.kubernetes.io/not-ready:NoExecute**: Node が Ready ではない
+2. **node.kubernetes.io/unreachable:NoExecute**: Node に到達できない
+3. **node.kubernetes.io/memory-pressure:NoSchedule**: Node がメモリー不足
+4. **node.kubernetes.io/disk-pressure:NoSchedule**: Node がディスク不足
+5. **node.kubernetes.io/pid-pressure:NoSchedule**: Node が PID 不足
+6. **node.kubernetes.io/network-unavailable:NoSchedule**: Node のネットワークが使用できない
+7. **node.kubernetes.io/unschedulable:NoSchedule**: Node がスケジュール不可に設定されている
 
-**Default Tolerations:**
-Kubernetes はすべての Pod に次の default toleration を自動的に追加します:
+**既定の toleration:**
+既定の Admission 動作では、同等の toleration が明示的に指定されていない場合に限って、Kubernetes は次の toleration を追加します。DaemonSet Pod には、not-ready/unreachable に対する期限なしの NoExecute toleration が代わりに付与されます。
+
 ```yaml
 tolerations:
 - key: node.kubernetes.io/not-ready
@@ -1312,10 +1140,11 @@ tolerations:
   tolerationSeconds: 300
 ```
 
-これらの default toleration により、Node が not ready または unreachable になった場合でも、Pod は 5 分間（300 秒）その Node 上に残ることができ、一時的な network issue による不要な Pod rescheduling を防ぎます。
+これらの既定値は、taint 処理が始まってから300秒の間その taint を許容します。障害検知から置換までの時間が正確に5分という意味ではありません。検知、taint 公開、controller の処理制限、削除によって遅延します。切断されたプロセスが動き続けている場合もあります。
 
-**Custom Tolerations:**
-critical workload では、より長い toleration time を設定できます:
+**カスタム toleration:**
+toleration を長くすると Pod の置換が遅れ、障害が長引く場合があります。長いほうが安全と決めつけず、アプリケーションの復旧要件に基づいて選びます。
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1329,16 +1158,15 @@ spec:
     tolerationSeconds: 600  # Tolerate for 10 minutes
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-**Node Controller Settings:**
-node controller は、次の settings を通じて Node status change と taint application behavior を制御します:
-1. **--node-monitor-period**: Node status を check する period（default: 5 seconds）
-2. **--node-monitor-grace-period**: Node を `Unknown` として mark する前の wait time（default: 40 seconds）
-3. **--pod-eviction-timeout**: `Unknown` または `NotReady` Node から Pod を削除する前の wait time（default: 5 minutes）
+**Node controller と退避のタイミング:**
+基準とする upstream 1.35.8 では、`--node-monitor-period` の既定値は5秒、`--node-monitor-grace-period` は**50秒**であり、40秒ではありません。古い `--pod-eviction-timeout` flag は、taint に基づく退避の現行機構ではありません。一致する Pod toleration と taint-eviction controller が退避を制御します。検知、taint の公開、controller の rate limit、削除処理により、さらに時間がかかる場合があります。
 
-**Checking Node Status and Taints:**
+Kubernetes 1.29 以降、taint に基づく退避は独立した `taint-eviction-controller` で実行されます。既定で有効ですが、自主管理 control plane では個別に設定できます。これらの値は EKS の設定手順でも failover 時間の保証でもありません。到達不能な Node 上の stateful Pod を強制削除する前に、古い writer が停止または fence されていることを確認し、同時書き込みを防いでください。
+
+**Node の状態と taint の確認:**
 ```bash
 # Check node status
 kubectl get nodes
@@ -1350,29 +1178,48 @@ kubectl describe node <node-name>
 kubectl get node <node-name> -o jsonpath='{.spec.taints}'
 ```
 
-**Checking Pod Tolerations:**
+**Pod toleration の確認:**
 ```bash
 # Check pod tolerations
 kubectl get pod <pod-name> -o jsonpath='{.spec.tolerations}'
 ```
 
-**Handling Taints in Custom Scheduler:**
-Custom Scheduler を実装する際は、Node taints と Pod tolerations を考慮する必要があります。
+**カスタムスケジューラーでの taint 処理:**
+カスタムスケジューラーを実装するときは、Node taint と Pod toleration を考慮します。
 
 ```go
-// Taint handling example
-func checkNodeUnreachableTaint(node *v1.Node) bool {
+package diagnostic
+
+import v1 "k8s.io/api/core/v1"
+
+// This observes a taint; it is not a network probe or proof a process stopped.
+func HasUnreachableTaint(node *v1.Node) bool {
+    if node == nil {
+        return false
+    }
     for _, taint := range node.Spec.Taints {
         if taint.Key == "node.kubernetes.io/unreachable" && taint.Effect == v1.TaintEffectNoExecute {
-            return true  // Node has unreachable taint
+            return true
         }
     }
     return false
 }
 ```
 
-**Issues with Other Options:**
-- B. Node は unschedulable だが、既存の Pod は実行を続ける: これは `NoSchedule` effect の動作です。`NoExecute` effect は toleration を持たない既存の Pod も削除します。
-- C. Node は maintenance mode であり、新しい Pod は schedule されない: これは通常、`node.kubernetes.io/unschedulable:NoSchedule` taint の動作です。
-- D. Node は resource shortage state であり、新しい Pod はできれば schedule されない: これは `PreferNoSchedule` effect の動作であり、resource shortage は通常 `node.kubernetes.io/memory-pressure` または `node.kubernetes.io/disk-pressure` taint によって示されます。
+**他の選択肢について:**
+- B. Node はスケジュール不可だが、既存の Pod は実行を続ける: これは `NoSchedule` effect の動作です。`NoExecute` effect では toleration がない既存 Pod も退避します。
+- C. Node はメンテナンス中で、新しい Pod は配置されない: 通常は `node.kubernetes.io/unschedulable:NoSchedule` taint の動作です。
+- D. PreferNoSchedule はソフトな優先設定です。一般にメモリー不足とディスク不足には NoSchedule taint が使われ、どちらも unreachable:NoExecute を表すものではありません。
 </details>
+
+## 参考資料
+
+[Part1 module](../../scheduling/01-custom-scheduler-part1.md) と [Part2 の実装](../../scheduling/02-custom-scheduler-part2.md) を使用してください。コードと設定はローカルで確認し、クラウドへのデプロイや eviction は実行していません。
+
+* [v1.35.8 の Framework interface](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)
+* [Extender の wire type](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/extender/v1/types.go)
+* [Node と Pod の affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
+* [Topology spread](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+* [Taints と toleration](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
+* [Priority と preemption](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)
+* [Node lifecycle の既定値](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/controller/nodelifecycle/config/v1alpha1/defaults.go)

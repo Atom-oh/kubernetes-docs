@@ -1,14 +1,14 @@
 # Cuestionario de gestión de políticas con Kyverno
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-Estas preguntas utilizan las políticas CEL revisadas de Kyverno 1.19.1. Los ejemplos son fixtures locales; no se ejecutó ningún clúster ni ninguna limpieza destructiva.
+Estas preguntas utilizan las políticas CEL revisadas de Kyverno 1.19.1. Los ejemplos usan datos de prueba locales; no se ejecutaron operaciones en un clúster ni tareas de limpieza destructivas.
 
 ## Preguntas del cuestionario
 
 ### 1. ¿Qué es Kyverno?
 
-- A) Un motor de políticas de Kubernetes con controladores de admisión y controladores de background/ciclo de vida configurados por separado.
+- A) Un motor de políticas de Kubernetes con controladores configurados por separado para la admisión, las tareas en segundo plano y el ciclo de vida.
 - B) Únicamente un escáner de vulnerabilidades.
 - C) Un reemplazo de la autenticación del API server.
 - D) Un dataplane de service mesh.
@@ -16,9 +16,9 @@ Estas preguntas utilizan las políticas CEL revisadas de Kyverno 1.19.1. Los eje
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Un motor de políticas de Kubernetes con controladores de admisión y controladores de background/ciclo de vida configurados por separado.**
+**Respuesta: A) Un motor de políticas de Kubernetes con controladores configurados por separado para la admisión, las tareas en segundo plano y el ciclo de vida.**
 
-Las políticas de Kyverno validan, mutan, generan, verifican imágenes y eliminan dentro de los ámbitos que se les configuran. Las políticas v1 actuales usan CEL dentro de YAML/JSON; los patrones heredados de ClusterPolicy y JMESPath son lenguajes distintos. El empaquetado nativo de Kubernetes no elimina la necesidad de aprender las expresiones de política.
+Las políticas de Kyverno validan y modifican recursos, generan recursos derivados, verifican imágenes y eliminan recursos dentro de los ámbitos configurados. Las políticas v1 actuales usan CEL dentro de YAML/JSON; los patrones heredados de ClusterPolicy y JMESPath son lenguajes distintos. El empaquetado nativo de Kubernetes no elimina la necesidad de aprender las expresiones de política.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -153,7 +153,7 @@ spec:
 
 **Respuesta: B) Usando matchConstraints y matchConditions opcionales; se inspeccionan el kind, la operación, el namespace y la disponibilidad de los datos de la solicitud.**
 
-La ClusterPolicy clásica usa estructuras match/exclude en las reglas; no corresponden a la disposición actual de campos con CEL. Las condiciones de recurso y de usuario deben entenderse como expresiones, no como abreviaturas de OR/AND que se dan por supuestas. La información de usuario o de rol procedente de la admisión no siempre está disponible en los escaneos en background. Un selector de etiquetas de namespace también queda bajo el control de quien pueda cambiar esa etiqueta.
+La ClusterPolicy clásica usa estructuras match/exclude en las reglas; no corresponden a la disposición actual de campos con CEL. Las condiciones de recurso y de usuario deben entenderse como expresiones, no como abreviaturas de OR/AND que se dan por supuestas. La información de usuario o de rol procedente de la admisión no siempre está disponible en los análisis en segundo plano. Un selector de etiquetas de namespace también queda bajo el control de quien pueda cambiar esa etiqueta.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -188,17 +188,17 @@ spec:
 
 ### 5. ¿Qué hace que esta mutación de valores predeterminados de recursos sea segura para los valores existentes?
 
-- A) Sobrescribe todos los containers con límites idénticos.
-- B) En CREATE, solo rellena los recursos de containers normales que están completamente sin definir y conserva los ajustes existentes, completos o parciales.
+- A) Sobrescribe todos los contenedores con límites idénticos.
+- B) En CREATE, solo rellena los recursos de los contenedores normales cuando están completamente ausentes y conserva cualquier configuración parcial o completa.
 - C) Copia los valores del primer container a todos los demás containers.
 - D) Usa sentencias if/hasKey de Helm dentro de una expresión de Kyverno.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) En CREATE, solo rellena los recursos de containers normales que están completamente sin definir y conserva los ajustes existentes, completos o parciales.**
+**Respuesta: B) En CREATE, solo rellena los recursos de los contenedores normales cuando están completamente ausentes y conserva cualquier configuración parcial o completa.**
 
-La salida real de la CLI se comparó con objetos de entrada completos y parcialmente configurados, y no presentó cambios. Los campos parciales requieren una revisión aparte; no crees un request superior a un límite pequeño ya existente. ApplyConfiguration y JSONPatch tienen semánticas diferentes; JSONPatch necesita una ruta padre existente, y el orden de ejecución de políticas independientes no está garantizado.
+La salida real de la CLI se comparó con objetos de entrada completos y parcialmente configurados, y no presentó cambios. Los campos parciales requieren una revisión aparte; no aumentes la solicitud de recursos por encima de un límite existente que sea bajo. ApplyConfiguration y JSONPatch tienen semánticas diferentes; JSONPatch necesita una ruta padre existente, y el orden de ejecución de políticas independientes no está garantizado.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -251,7 +251,7 @@ spec:
 
 **Respuesta: A) Para crear recursos derivados seleccionados explícitamente a partir de un disparador coincidente y con los permisos necesarios.**
 
-Este ejemplo de Deployment requiere una adhesión explícita (opt-in) y al menos dos réplicas deseadas, y copia por completo spec.selector. La generación puede ser asíncrona. La sincronización, las fuentes de datos frente a las de clonado, generate-existing y los ajustes de orphaning afectan al comportamiento de actualización y eliminación. No clones un Secret de registro en todos los namespaces nuevos sin un límite de origen/destino aprobado.
+Este ejemplo de Deployment requiere habilitarlo de forma explícita (opt-in) y al menos dos réplicas deseadas, y copia por completo spec.selector. La generación puede ser asíncrona. La sincronización, las fuentes de datos frente a las de clonado, generate-existing y los ajustes de orphaning afectan al comportamiento de actualización y eliminación. No clones un Secret de registro en todos los namespaces nuevos sin un límite de origen/destino aprobado.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -314,9 +314,9 @@ Las reglas heredadas verifyImages de ClusterPolicy son distintas del nuevo kind 
 
 <span id="_8-what-does-the-background-false-setting-mean-in-a-kyverno-policy"></span>
 
-### 8. ¿Qué significa deshabilitar el escaneo de validación en background?
+### 8. ¿Qué significa deshabilitar el análisis de validación en segundo plano?
 
-- A) Los recursos existentes no se escanean periódicamente con ese ajuste de validación, pero las actualizaciones de admisión coincidentes se pueden seguir comprobando.
+- A) Ese ajuste de validación deja de analizar periódicamente los recursos existentes, pero permite seguir comprobando las actualizaciones coincidentes que pasan por admisión.
 - B) Todos los recursos existentes quedan exentos permanentemente de la admisión.
 - C) El ajuste detiene todos los controladores de Kyverno.
 - D) Se eliminan las infracciones de política existentes.
@@ -324,9 +324,9 @@ Las reglas heredadas verifyImages de ClusterPolicy son distintas del nuevo kind 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Los recursos existentes no se escanean periódicamente con ese ajuste de validación, pero las actualizaciones de admisión coincidentes se pueden seguir comprobando.**
+**Respuesta: A) Ese ajuste de validación deja de analizar periódicamente los recursos existentes, pero permite seguir comprobando las actualizaciones coincidentes que pasan por admisión.**
 
-Para el tipo actual usa spec.evaluation.background.enabled; la ClusterPolicy clásica usaba background. Ninguno de los dos es un interruptor global para mutate-existing, la generación o la limpieza. El informe en background por sí mismo no repara, deniega ni elimina un recurso ya almacenado. Las operaciones de admisión y las condiciones de coincidencia siguen rigiendo las actualizaciones.
+Para el tipo actual, usa spec.evaluation.background.enabled; la ClusterPolicy clásica usaba background. Ninguno de estos ajustes es un interruptor global para mutate-existing, la generación o la limpieza. Un informe de análisis en segundo plano no repara, deniega ni elimina por sí solo un recurso que ya está almacenado. Las operaciones de admisión y las condiciones de coincidencia siguen rigiendo las actualizaciones.
 
 </details>
 
@@ -342,7 +342,7 @@ Para el tipo actual usa spec.evaluation.background.enabled; la ClusterPolicy cl�
 
 **Respuesta: B) Un PolicyReport con entradas resources/result y recuentos de resumen coherentes con esas entradas.**
 
-El perfil predeterminado del chart usa los informes del Policy WG. PolicyReport está en un namespace y ClusterPolicyReport cubre los recursos de ámbito de clúster. Este es un ejemplo de esquema sintético, no evidencia recopilada en vivo. Un timestamp suministrado usa segundos y nanosegundos enteros. Otros backends de informes deben verificarse por separado.
+El perfil predeterminado del chart usa los informes del Policy WG. PolicyReport se limita a un espacio de nombres y ClusterPolicyReport abarca recursos de ámbito de clúster. Este es un ejemplo de esquema sintético, no evidencia recopilada en vivo. Una marca de tiempo proporcionada usa valores enteros para los segundos y nanosegundos. Los demás backends de informes deben verificarse por separado.
 
 ```yaml
 apiVersion: wgpolicyk8s.io/v1alpha2

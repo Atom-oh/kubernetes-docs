@@ -8,7 +8,7 @@
 
 Este cuaderno pregunta si una transacción lenta está esperando a la aplicación, el transporte, el kernel o la ruta.
 El entregable es un informe de medición reproducible con explicaciones alternativas, evidencia negativa y procedimiento de restauración.
-No se promete ninguna latencia fija, mejora del rendimiento ni puntuación de benchmark.
+No se promete una latencia fija, una mejora del caudal ni una puntuación de benchmark.
 
 Complete el [curso para principiantes](../beginner/README.md), en especial su [lección de supervisión](../beginner/07-monitoring-performance.md).
 Lea la [pila de red del kernel](../../kernel/02-network-stack.md), desde socket/VFS hasta transmisión, recepción y ubicación de hooks.
@@ -29,10 +29,10 @@ Los documentos públicos no incluyen acceso gratuito a un instructor, una placa 
 | Lectura | Conocimientos necesarios | Pregunta que se debe responder aquí |
 |---|---|---|
 | Secciones de Bootlin sobre la pila de red e interfaz de espacio de usuario | Administración de Linux, sockets y capas de protocolo | ¿En qué punto los bytes de aplicación se convierten en trabajo en cola del kernel? |
-| Controladores, NAPI y laboratorios de hardware de Bootlin | C sólido, desarrollo de kernel/módulos, interrupciones, DMA y preparación de placa/cadena de herramientas del laboratorio | ¿Qué afirmaciones requieren un controlador y una NIC reales? |
+| Controladores, NAPI y laboratorios de hardware de Bootlin | Dominio sólido de C, desarrollo de kernel/módulos, interrupciones, DMA y preparación de placa/cadena de herramientas del laboratorio | ¿Qué afirmaciones requieren un controlador y una NIC reales? |
 | [Documentación NAPI del kernel](https://docs.kernel.org/networking/napi.html) | Diferencia entre interrupciones y sondeo | ¿Qué trabajo se sondea y con qué presupuesto/contexto? |
 | [Documentación de escalado del kernel](https://docs.kernel.org/networking/scaling.html) | Colas de CPU y hash de flujos | ¿RSS o RPS selecciona la CPU de procesamiento? |
-| [Descargas de segmentación](https://docs.kernel.org/networking/segmentation-offloads.html) | MTU/MSS y puntos de observación de paquetes | ¿Por qué una captura puede mostrar unidades mayores que las de la red? |
+| [Offloads de segmentación](https://docs.kernel.org/networking/segmentation-offloads.html) | MTU/MSS y puntos de observación de paquetes | ¿Por qué una captura puede mostrar unidades mayores que las de la red? |
 | [Documentación sysctl TCP](https://docs.kernel.org/networking/ip-sysctl.html) | Memoria del socket, ventanas y ajuste automático | ¿Qué límite es una política y qué dato es una observación por flujo? |
 | [Manual fuente de ss de iproute2](https://github.com/iproute2/iproute2/blob/main/man/man8/ss.8) y [manual fuente de tc](https://github.com/iproute2/iproute2/blob/main/man/man8/tc.8) | Estados TCP y contadores de colas | ¿Qué cuenta exactamente cada valor mostrado? |
 
@@ -60,7 +60,7 @@ Antes de comenzar, complete esta ficha del experimento. Los campos vacíos son t
 
 Una pausa de 0.15 segundos es un **parámetro de entrada**, no una demora de red medida.
 La carga de trabajo es intencionadamente demasiado pequeña para agotar la ventana de recepción o saturar loopback.
-No use su goodput para afirmar capacidad de NIC, latencia de Internet ni convergencia de enrutamiento.
+No use el rendimiento útil (goodput) para afirmar capacidad de la NIC, latencia de Internet ni convergencia de enrutamiento.
 En lo posible, mantenga inactivo el sistema invitado y anote otras cargas de trabajo; los contadores de loopback incluyen otros procesos.
 
 ## Herramientas, funciones y alcance {#readiness}
@@ -96,7 +96,7 @@ sha256sum examples/networking/foundations/http_lab.py
 ss -ltn 'sport = :18080'
 ```
 
-Si el filtro de listeners devuelve cualquiera, deténgase y elija otro puerto libre de forma coherente; nunca detenga un servicio ajeno.
+Si el filtro detecta algún socket en escucha, deténgase y elija otro puerto libre; use ese puerto de forma coherente y nunca detenga un servicio ajeno.
 Cree un directorio privado nuevo con `mkdir -m 700 linux-evidence-01`; si ya existe, utilice otro nombre.
 Dentro de ese directorio, registre la revisión del repositorio, la versión del sistema operativo, las versiones de las herramientas, el espacio de nombres y las horas UTC de inicio y finalización.
 Todos los comandos de cliente/servidor que siguen se ejecutan como usuario normal en el mismo sistema invitado y espacio de nombres.
@@ -105,7 +105,7 @@ Todos los comandos de cliente/servidor que siguen se ejecutan como usuario norma
 
 Use el diagrama del capítulo existente sobre el kernel y anótelo con estas distinciones.
 La ruta habitual de recepción de un controlador nativo es cola de NIC → sondeo NAPI → XDP nativo opcional → pila/transporte → socket → aplicación.
-Los modos de descarga del controlador/dispositivo y XDP genérico se ubican en otros puntos; etiquete el modo en vez de dibujar cada hook en el mismo lugar.
+Los modos de offload del controlador/dispositivo y XDP genérico se ubican en otros puntos; etiquete el modo en vez de dibujar cada hook en el mismo lugar.
 El trabajo de transmisión pasa del socket/transporte por el enrutamiento y las colas aplicables hasta el dispositivo.
 
 | Mecanismo | Qué cambia | Observación y contraejemplo |
@@ -121,9 +121,9 @@ El trabajo de transmisión pasa del socket/transporte por el enrutamiento y las 
 Loopback no tiene colas RSS físicas, serialización de enlace ni una ruta de conmutación para medir.
 No proyecte sus detalles de procesamiento en un controlador físico.
 
-Para un **flujo preexistente de una VM propia**, sustituya las modificaciones por un plan de observación por escrito: identifique ambos extremos, la interfaz/ruta existente, la tupla de flujo, el propietario y el presupuesto de tráfico original.
-Tome solo observaciones de lectura con `ethtool -k`, `ethtool -l`, `ethtool -x` y `ethtool -S` en esa interfaz de laboratorio identificada, cuando sea compatible.
-Anote «no compatible» o «permiso denegado» en vez de cambiar controladores, cantidad de colas o descargas de trabajo.
+Para un **flujo preexistente de una VM propia**, elabore un plan de observación por escrito: identifique ambos extremos, la interfaz/ruta existente, la tupla de flujo, el propietario y el presupuesto de tráfico original.
+Realice solo estas consultas de lectura con `ethtool -k`, `ethtool -l`, `ethtool -x` y `ethtool -S` en esa interfaz de laboratorio identificada, cuando sean compatibles.
+Anote «no compatible» o «permiso denegado» en vez de cambiar controladores, cantidad de canales o funciones de offload.
 La ruta principal no requiere comandos generales de interfaz ni recursos nuevos de VM/nube.
 
 ## Experimento acotado de loopback {#bounded-experiment}
@@ -227,13 +227,13 @@ Si falla el eco, conserve la fila fallida y el estado del servidor antes de diag
 
 Para obtener evidencia opcional de paquetes, use la [captura acotada del proyecto B](01-protocol-projects.md#stream-project) en un directorio nuevo de evidencia.
 Sus límites de 20 segundos/120 paquetes pueden omitir conexiones de esta ejecución; registre la cobertura parcial en vez de interpretar paquetes ausentes como pérdidas.
-No desactive las descargas de trabajo de suma de comprobación/segmentación para que la captura resulte más familiar.
+No desactive las funciones de offload de sumas de comprobación/segmentación para que la captura resulte más familiar.
 
 **Restauración:** detenga con Ctrl+C solo el servidor propio en primer plano o deje que venza su plazo de 180 segundos.
 El cliente y el observador terminan al alcanzar sus límites; si hace falta, interrumpa solo esos procesos en primer plano.
 Verifique que `ss -ltn 'sport = :18080'` no devuelva ningún listener; puede que queden sockets TIME_WAIT de forma legítima.
 Conserve el directorio de evidencia o elimine solo sus archivos designados tras revisarlos.
-Este ejercicio no modificó qdisc, sysctl, descargas de trabajo de NIC, rutas ni asociaciones BPF.
+Este ejercicio no modificó qdisc, sysctl, funciones de offload de la NIC, rutas ni programas BPF adjuntos.
 
 ## Interpretar ventanas, pérdidas y latencia {#interpretation}
 
@@ -251,8 +251,8 @@ Una ventana efectiva más pequeña puede limitar el rendimiento, pero aumentar u
 
 Excluya el calentamiento e informe para cada fase el número de muestras, los fallos, el mínimo, la mediana y el máximo de las filas reales.
 Cinco muestras no bastan para justificar un objetivo de servicio p99 creíble ni una afirmación de capacidad de producción.
-Los bits de carga útil de respuesta divididos por los segundos de transacción son el goodput de aplicación de esa operación, incluida la demora de conexión/procesamiento.
-No equivalen a la velocidad de línea Ethernet ni miden directamente la congestión.
+El cociente entre los bits de carga útil de respuesta y los segundos de transacción es el goodput de aplicación de esa operación; incluye la demora de conexión y procesamiento.
+No equivale a la velocidad de línea Ethernet ni mide directamente la congestión.
 
 | Observación | Posible explicación | Evidencia necesaria para separar alternativas |
 |---|---|---|
@@ -260,7 +260,7 @@ No equivalen a la velocidad de línea Ethernet ni miden directamente la congesti
 | Cola de recepción persistente | Lector de aplicación lento o planificación | Avance del lector, datos de CPU y muestras repetidas por flujo |
 | Cola de envío persistente | Datos sin enviar, ACK ausentes o limitación del receptor | Campos de ventana/retransmisión y evidencia de ambos extremos |
 | Aumentan las retransmisiones | Pérdida, reordenamiento o retransmisión espuria | Evidencia de secuencia/tiempo; un contador no localiza el descarte |
-| La captura tcpdump descarta paquetes | El observador no puede procesar la carga | Estadísticas de captura; no son directamente una pérdida TCP/de ruta |
+| La captura tcpdump descarta paquetes | El observador no alcanza a procesar los paquetes al ritmo de llegada | Estadísticas de captura; no son directamente una pérdida TCP/de ruta |
 | Aumentan los descartes qdisc | Política/presión de una cola local | Mismo intervalo/interfaz y atribución del tráfico |
 
 ## Observación y diseño de fallos con eBPF/XDP {#bpf-observation}
@@ -276,9 +276,9 @@ Especifique cómo contabilizar la pérdida de eventos y cómo correlacionar las 
 Un tracepoint, un programa TC y un programa XDP nativo observan etapas diferentes; que no haya datos en un hook no demuestra que no haya datos en ninguna etapa.
 Este cuaderno no adjunta, desasocia ni sustituye programas BPF.
 
-**La extensión opcional de netem solo se diseña aquí.** No ejecute comandos qdisc/sysctl/descarga de trabajo que afecten a todo el host.
+**La extensión opcional de netem solo se diseña aquí.** No ejecute comandos de qdisc, sysctl u offload con alcance global en el host.
 Redacte un plan aparte, en un espacio de nombres/VM propios, con la administración fuera de la interfaz afectada.
-Anote la identidad del espacio de nombres/VM, la interfaz, la jerarquía, los identificadores y opciones qdisc originales, las rutas, las descargas de trabajo y todos los cambios propuestos.
+Anote la identidad del espacio de nombres/VM, la interfaz, la jerarquía, los identificadores y opciones qdisc originales, las rutas, las funciones de offload y todos los cambios propuestos.
 Especifique una sola variable, un flujo de duración finita exacta, una referencia y el resultado negativo esperado.
 Antes de ejecutar, exija un plan de restauración exacto: eliminar un qdisc raíz no recrea una jerarquía arbitraria original.
 En un entorno descartable nuevo, destruir solo los ID de recursos registrados puede ser el límite de restauración.

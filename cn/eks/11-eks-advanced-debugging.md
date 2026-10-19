@@ -1,7 +1,7 @@
 # EKS 高级调试与事件响应
 
 > **审查基线**：Kubernetes 1.36 schemas 和 kubectl 1.36.2；选择当前受支持的 EKS 版本和兼容的组件版本
-> **最后更新**：September 12, 2026
+> **最后更新**：2026 年 9 月 12 日
 
 要确保 Amazon EKS 集群稳定运行，系统化的事件响应框架和高级调试技能必不可少。本文档提供实用指南，帮助快速诊断和解决生产环境中出现的复杂问题。
 
@@ -667,11 +667,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINE
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINER_NAME" \
   --previous --tail=200
 ```
-previous 日志针对所选容器最近一次已终止实例，并非完整的重启历史。日志轮转或 Pod 删除可能导致日志不可用。记录 Pod UID/时间，并在采集期间检查是否已被替换；init/sidecar/ephemeral 容器可能有不同的故障。日志和状态消息可能包含敏感数据，因此请妥善保管采集到的证据。不要把打印所有环境变量或应用配置文件当作诊断捷径。
+前一容器实例的日志针对所选容器最近一次已终止实例，并非完整的重启历史。日志轮转或 Pod 删除可能导致日志不可用。记录 Pod UID/时间，并在采集期间检查是否已被替换；init/sidecar/ephemeral 容器可能有不同的故障。日志和状态消息可能包含敏感数据，因此请妥善保管采集到的证据。不要把打印所有环境变量或应用配置文件当作诊断捷径。
 
 ### kubectl debug：三种不同操作
 
-Ephemeral container 会修改现有 Pod；`--copy-to` 会创建另一个 Pod；`node/` 会在节点上创建诊断 Pod。它们都是变更操作，需要相应的 RBAC/admission 权限。经检查的 kubectl 1.36.2 默认使用 general profile。这不自动意味着特权模式；访问主机 namespace/文件系统与 `privileged=true` 是不同的。
+Ephemeral container 会修改现有 Pod；--copy-to 会创建另一个 Pod；node/ 会在节点上创建诊断 Pod。它们都是变更操作，需要相应的 RBAC/admission 权限。经检查的 kubectl 1.36.2 默认使用 general profile。这不自动意味着特权模式；访问主机 namespace/文件系统与 privileged=true 是不同的。
 
 #### Ephemeral container
 
@@ -683,7 +683,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" debug "$POD_NAME" -it \
   --container="$DEBUG_CONTAINER_NAME" --target="$CONTAINER_NAME" \
   --image="$DEBUG_IMAGE" --profile=restricted -- sh
 ```
-restricted profile 会移除 capabilities、防止权限提升，并请求以非 root 身份运行/使用 RuntimeDefault seccomp。镜像/用户/shell 必须支持这些设置；不保证任意仅限 root 的 BusyBox 镜像都能启动。只有 runtime 支持时，`--target` 才会请求目标进程 namespace。它不会复制应用文件系统/环境变量，也不会绕过权限。退出会结束 debug 进程，但无法从现有 Pod spec 中删除 ephemeral-container 条目。
+restricted profile 会移除 capabilities、防止权限提升，并请求以非 root 身份运行/使用 RuntimeDefault seccomp。镜像/用户/shell 必须支持这些设置；不保证任意仅限 root 的 BusyBox 镜像都能启动。只有 runtime 支持时，--target 才会请求目标进程 namespace。它不会复制应用文件系统/环境变量，也不会绕过权限。退出会结束 debug 进程，但无法从现有 Pod spec 中删除 ephemeral-container 条目。
 
 #### Pod 副本
 
@@ -967,7 +967,7 @@ spec:
   - name: app
     image: registry.example.com/owned/app:replace-with-reviewed-digest
 ```
-以下是 Corefile 示例。请对照已安装版本、所需插件、自定义 zone/forwarder 和托管插件配置进行比较；不要整体覆盖在线 ConfigMap。cache、max_concurrent 和 lameduck 值需要通过流量/健康验证。`pods insecure` 是 Kubernetes 插件的 Pod 记录模式，并不是禁用 Kubernetes API TLS/身份验证的开关。
+以下是 Corefile 示例。请对照已安装版本、所需插件、自定义 zone/forwarder 和托管插件配置进行比较；不要整体覆盖在线 ConfigMap。cache、max_concurrent 和 lameduck 值需要通过流量/健康验证。pods insecure 是 Kubernetes 插件的 Pod 记录模式，并不是禁用 Kubernetes API TLS/身份验证的开关。
 
 ```text
 .:53 {
@@ -1245,7 +1245,7 @@ kubectl --context "$KUBE_CONTEXT" get csinode "$NODE_NAME" -o json | jq '.spec.d
 aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$EBS_VOLUME_ID" \
   --query 'Volumes[].{ID:VolumeId,AZ:AvailabilityZone,State:State,Encrypted:Encrypted,KMS:KmsKeyId,Attachments:Attachments}'
 ```
-Auto Mode 有单独的 provisioner 和节点兼容性要求。请明确设置 `encrypted: "true"` 并检查生成的卷/KMS key。当前 Auto Mode StorageClass 参数表中的 encrypted 默认值为 false；Auto Mode 节点 root/data disk 加密，并不能证明每个工作负载 PVC 都已加密。更改 StorageClass 不会追溯更改现有卷。
+Auto Mode 有单独的 provisioner 和节点兼容性要求。请明确设置 encrypted: "true" 并检查生成的卷/KMS key。当前 Auto Mode StorageClass 参数表中的 encrypted 默认值为 false；Auto Mode 节点 root/data disk 加密，并不能证明每个工作负载 PVC 都已加密。更改 StorageClass 不会追溯更改现有卷。
 
 现有 EBS 卷不会仅因 StorageClass 使用 WaitForFirstConsumer 就跨 AZ 挂载。迁移/恢复需要遵循文档说明的 snapshot 或受控静态卷流程，并正确处理所有权标签/IAM 和应用一致性数据；这不是修改驱动名称就能解决的。Snapshot controller/CRD 是独立前提条件，创建了 snapshot 也不代表能成功恢复。ReadWriteOnce 允许从一个节点访问，并不意味着“只能由一个 Pod”访问；Auto Mode SELinux 隔离还可能增加跨 Pod 限制。更改前应保留数据并审查预期的访问/一致性模式。
 
@@ -1825,7 +1825,7 @@ inhibit_rules:
   - container
   - node
 ```
-此配置会通过一个 receiver 将 critical 告警同时发送到 Slack 和 PagerDuty，将 warning 告警发送到 Slack，其他告警发送到 default receiver。`continue:true` 不会在匹配子路由后再同时调用父级/default receiver。当前的 matchers/source_matchers/target_matchers 可避免使用已弃用的映射语法。Inhibition equal labels 包含资源身份；缺失标签会被视为空字符串，因此请检查实际标签约定，避免抑制另一个 Pod/node 的告警。请分别验证已加载配置、路由和传输。解析和合成路由并不能证明 Slack/PagerDuty 已接受通知；电子邮件/SMS 需要另行明确配置。
+此配置会通过一个 receiver 将 critical 告警同时发送到 Slack 和 PagerDuty，将 warning 告警发送到 Slack，其他告警发送到 default receiver。continue:true 不会在匹配子路由后再同时调用父级/default receiver。当前的 matchers/source_matchers/target_matchers 可避免使用已弃用的映射语法。Inhibition equal labels 包含资源身份；缺失标签会被视为空字符串，因此请检查实际标签约定，避免抑制另一个 Pod/node 的告警。请分别验证已加载配置、路由和传输。解析和合成路由并不能证明 Slack/PagerDuty 已接受通知；电子邮件/SMS 需要另行明确配置。
 
 ### CloudWatch 阈值、异常和复合告警
 
@@ -2036,7 +2036,7 @@ def lambda_handler(event,context):
 
 | 症状 | 证据和解读 |
 | --- | --- |
-| CrashLoopBackOff | 容器反复退出/重启并进入退避；检查退出代码、last state、probe 以及当前/previous 日志。restartAlways 下，退出代码为 0 也可能导致循环 |
+| CrashLoopBackOff | 容器反复退出/重启并进入退避；检查退出代码、last state、probe 以及当前日志/前一容器实例日志。restartAlways 下，退出代码为 0 也可能导致循环 |
 | ImagePullBackOff | 拉取失败后进入重试延迟；检查先前错误、image/tag/digest、平台、拉取身份、registry/网络/CA/速率限制 |
 | ErrImagePull | 拉取尝试失败；这不能单独证明网络故障，也不能证明应用 IRSA 有问题 |
 | OOMKilled | 结合 runtime 原因、内存限制/工作集和节点证据；仅凭退出代码 137 或高使用量不能证明内存泄漏 |

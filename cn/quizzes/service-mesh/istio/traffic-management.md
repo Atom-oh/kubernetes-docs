@@ -1,16 +1,19 @@
 # 流量管理测验
 
-> **支持版本**: Istio 1.28.0 **EKS 版本**: 1.34 (Kubernetes 1.28+) **最后更新**: February 23, 2026
+> **审核版本**：Istio 1.31.0 **EKS 版本**：1.34–1.36 **最后更新**：2026年9月11日
 
 本测验用于检验你对 Istio 流量管理功能的理解。
 
-## 选择题（1-5）
+## 选择题（1–5）
 
 ### 问题 1：VirtualService 的作用
 
-以下关于 VirtualService 的说法，哪一项是**正确**的？
+以下关于 VirtualService 的说法，哪一项**正确**？
 
-A. 它是替代 Kubernetes Service 的资源 B. 它只能定义负载均衡算法 C. 它定义路由规则并控制流量 D. 它仅在 Control Plane 中运行
+A. 它会取代 Kubernetes Service 资源\
+B. 它只能定义负载均衡算法\
+C. 它定义路由规则并控制流量\
+D. 它会让每个应用请求都经过 istiod
 
 <details>
 
@@ -18,24 +21,24 @@ A. 它是替代 Kubernetes Service 的资源 B. 它只能定义负载均衡算�
 
 **答案：C**
 
-VirtualService 是一个核心 Istio CRD，通过定义**路由规则**来控制流量。
+VirtualService 是 Istio 的核心 CRD，通过定义**路由规则**来控制流量。
 
 **说明：**
 
-* A (X)：VirtualService 不会替代 Kubernetes Service；它在 Service 之上添加路由规则
-* B (X)：负载均衡由 DestinationRule 处理；VirtualService 定义路由规则
-* C (O)：VirtualService 定义以下内容：
+* A (错误)：VirtualService 不会取代 Kubernetes Service；它会在 Service 之上添加路由规则
+* B (错误)：负载均衡由 DestinationRule 处理；VirtualService 定义路由规则
+* C (正确)：VirtualService 可定义以下内容：
   * HTTP/TCP 路由规则
   * 基于 URL 路径的路由
   * 基于 Header 的路由
   * 基于权重的流量拆分
   * Timeout 和 Retry 设置
-* D (X)：VirtualService 在 Data Plane 中的 Envoy 里运行
+* D (错误)：istiod 会编译 VirtualService API 对象；Envoy 在数据平面执行生成的路由配置
 
 **示例：**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -59,18 +62,21 @@ spec:
 
 **参考：**
 
-* [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService Concepts (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#_1-virtualservice)
+* [路由](../../../service-mesh/istio/traffic-management/02-routing.md)
+* [VirtualService 概念](../../../service-mesh/istio/02-basic-concepts.md#1-virtualservice)
 
 </details>
 
 ***
 
-### 问题 2：DestinationRule 功能
+### 问题 2：DestinationRule 的功能
 
 以下哪项**不是** DestinationRule 执行的功能？
 
-A. 定义子集 B. 配置负载均衡算法 C. 基于 HTTP 路径的路由 D. 配置 Connection Pool
+A. 定义子集\
+B. 配置负载均衡算法\
+C. 基于 HTTP 路径的路由\
+D. 配置连接池
 
 <details>
 
@@ -78,16 +84,16 @@ A. 定义子集 B. 配置负载均衡算法 C. 基于 HTTP 路径的路由 D. �
 
 **答案：C**
 
-基于 HTTP 路径的路由是 **VirtualService** 的职责。
+基于 HTTP 路径的路由属于 **VirtualService** 的职责。
 
 **说明：**
 
 **DestinationRule 的主要功能：**
 
-1. **定义子集（A - O）**
+1. **定义子集（A - 正确）**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -102,7 +108,7 @@ spec:
       version: v2
 ```
 
-2. **负载均衡配置（B - O）**
+2. **负载均衡配置（B - 正确）**
 
 ```yaml
 spec:
@@ -111,7 +117,7 @@ spec:
       simple: ROUND_ROBIN  # RANDOM, LEAST_REQUEST, etc.
 ```
 
-3. **Connection Pool 配置（D - O）**
+3. **连接池配置（D - 正确）**
 
 ```yaml
 spec:
@@ -123,15 +129,19 @@ spec:
         http1MaxPendingRequests: 50
 ```
 
-4. **基于 HTTP 路径的路由（C - X）**
+4. **基于 HTTP 路径的路由（C - 错误）**
 
 * 这是 VirtualService 的职责：
 
 ```yaml
 # Handled by VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
+metadata:
+  name: path-routing-example
 spec:
+  hosts:
+  - api-service
   http:
   - match:
     - uri:
@@ -143,29 +153,29 @@ spec:
 
 **对比表：**
 
-| 功能          | VirtualService | DestinationRule |
-| ----------------- | -------------- | --------------- |
-| 路由规则     | 是            | 否              |
-| 路径匹配     | 是            | 否              |
-| 子集定义 | 否             | 是             |
-| 负载均衡    | 否             | 是             |
-| Connection Pool   | 否             | 是             |
+| 功能 | VirtualService | DestinationRule |
+| --- | --- | --- |
+| 路由规则 | 是 | 否 |
+| 路径匹配 | 是 | 否 |
+| 子集定义 | 否 | 是 |
+| 负载均衡 | 否 | 是 |
+| 连接池 | 否 | 是 |
 
 **参考：**
 
-* [Load Balancing](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing)
-* [Connection Pool](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool)
+* [负载均衡](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
+* [连接池](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md)
 
 </details>
 
 ***
 
-### 问题 3：Canary Deployment 流量拆分
+### 问题 3：Canary 部署中的流量拆分
 
-以下 VirtualService 配置中 v1 和 v2 的流量比例是多少？
+以下 VirtualService 配置中，v1 和 v2 之间的流量比例是多少？
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -184,7 +194,10 @@ spec:
       weight: 20
 ```
 
-A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
+A. v1：50%，v2：50%\
+B. v1：80%，v2：20%\
+C. v1：20%，v2：80%\
+D. v1：100%，v2：0%
 
 <details>
 
@@ -192,7 +205,7 @@ A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 
 **答案：B**
 
-由于权重值为 **v1: 80, v2: 20**，流量将按 **80% 到 v1** 和 **20% 到 v2** 进行分配。
+由于权重值为 **v1：80，v2：20**，流量将按 **80% 到 v1** 和 **20% 到 v2** 的比例分配。
 
 **说明：**
 
@@ -200,10 +213,10 @@ A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 
 * `weight` 字段表示相对比例
 * 总权重：80 + 20 = 100
-* v1 比例：80/100 = 80%
-* v2 比例：20/100 = 20%
+* v1 的比例：80/100 = 80%
+* v2 的比例：20/100 = 20%
 
-**Canary Deployment 阶段：**
+**Canary 部署阶段：**
 
 ```yaml
 # Stage 1: 10% Canary
@@ -223,31 +236,33 @@ A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 - weight: 100 # v2
 ```
 
-**使用 Argo Rollouts 自动 Canary：**
+**使用 Argo Rollouts 自动执行 Canary：**
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: reviews
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+# Strategy fragment; merge into a complete Rollout with selector/template
+strategy:
+  canary:
+    trafficRouting:
+      istio:
+        virtualService:
+          name: reviews
+        destinationRule:
+          name: reviews
+          stableSubsetName: v1
+          canarySubsetName: v2
+    steps:
+    - setWeight: 10
+    - pause: {duration: 2m}
+    - setWeight: 25
+    - pause: {duration: 2m}
+    - setWeight: 50
+    - pause: {duration: 2m}
 ```
 
 **参考：**
 
-* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
-* [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+* [流量拆分](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
+* [Argo Rollouts 集成](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
 
@@ -255,101 +270,52 @@ spec:
 
 ### 问题 4：Gateway 的用途
 
-以下哪项**不是** Istio Gateway 的主要职责？
+以下哪项**不是** Istio ingress Gateway 配置的职责？
 
-A. 从集群外部进入内部的流量入口 B. TLS 终止和证书管理 C. 服务间 mTLS 加密 D. 外部流量的负载均衡
+A. 定义监听端口、协议和允许的主机\
+B. 使用证书 Secret 配置 TLS 终止\
+C. 自动向每个应用 Pod 注入代理，并单独保护所有东西向流量\
+D. 将入口流量绑定到 VirtualService 路由
 
 <details>
-
 <summary>显示答案</summary>
 
 **答案：C**
 
-服务间 mTLS 加密是 **Sidecar Envoy** 和 **PeerAuthentication** 的职责。
-
-**说明：**
-
-**Gateway 的主要职责：**
-
-1. **Ingress/Egress 流量入口（A - O）**
+Istio Gateway 用于配置现有的网关代理。工作负载加入网格以及服务间网格安全，需要 sidecar 或 ambient 数据平面及其策略。Gateway 代理本身也可以发起上游 mTLS，因此“Gateway 永远不会使用 mTLS”同样不正确。Gateway 不会签发证书；`credentialName` 引用的是由网关工作负载 namespace 中的其他组件管理的 Secret。
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
-    istio: ingressgateway  # Select Ingress Gateway Pod
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*"
-```
-
-2. **TLS 终止（B - O）**
-
-```yaml
-spec:
+    istio: ingressgateway
   servers:
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
       mode: SIMPLE
-      credentialName: bookinfo-secret  # TLS certificate
-    hosts:
-    - bookinfo.example.com
+      credentialName: bookinfo-secret
 ```
 
-3. **外部流量负载均衡（D - O）**
-
-* Gateway 与 Kubernetes LoadBalancer Service 集成
-* 将外部流量分配到集群内
-
-4. **服务到服务的 mTLS（C - X）**
-
-* 这是 Sidecar Envoy 的职责：
-
-```yaml
-# Enable mTLS with PeerAuthentication
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-spec:
-  mtls:
-    mode: STRICT
-```
-
-**Gateway 与 Sidecar 的职责：**
-
-| 功能                     | Gateway | Sidecar Envoy |
-| ---------------------------- | ------- | ------------- |
-| 外部 -> 内部流量 | 是     | 否            |
-| TLS 终止              | 是     | 否            |
-| 服务到服务的 mTLS      | 否      | 是           |
-| 内部路由             | 否      | 是           |
-
-**参考：**
-
-* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+[Gateway 与 VirtualService](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
 
 </details>
 
 ***
 
-### 问题 5：Timeout 和 Retry 策略
+### 问题 5：超时和重试策略
 
-以下 VirtualService 配置表示什么含义？
+以下 VirtualService 配置表示什么？
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -366,7 +332,10 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. 原始请求后最多重试 3 次，每次发送限制为 2 秒，整个请求限制为 10 秒 B. 总计在 2 秒内最多重试 3 次，每次尝试限制为 10 秒 C. 总计在 10 秒内无限重试，每次尝试限制为 2 秒 D. 10 秒后失败且不重试
+A. 原始请求后最多额外重试 3 次，每次发送限制为 2 秒，整个请求限制为 10 秒\
+B. 总计在 2 秒内最多重试 3 次，每次尝试限制为 10 秒\
+C. 总计在 10 秒内无限重试，每次尝试限制为 2 秒\
+D. 10 秒后失败且不重试
 
 <details>
 
@@ -374,7 +343,7 @@ A. 原始请求后最多重试 3 次，每次发送限制为 2 秒，整个请�
 
 **答案：A**
 
-此配置允许在**原始请求后最多额外重试 3 次**，将每次发送限制为 **2 秒**，并将整个请求限制为 **10 秒**。因此，它最多可向上游发送请求四次。
+此配置允许在**原始请求之后最多额外重试 3 次**，将每次发送限制为 **2 秒**，并将整个请求限制为 **10 秒**。因此，最多会向上游发送四次请求。
 
 **说明：**
 
@@ -386,6 +355,8 @@ retries:
   attempts: 3          # Up to 3 retries after the original request
   perTryTimeout: 2s    # Time limit for each delivery
 ```
+
+这些计时示例假设故障符合 retryOn 条件，并且未计入退避/处理开销。超时并不意味着所有策略都会重试。
 
 **执行场景：**
 
@@ -431,186 +402,153 @@ retries:
 # Write requests: disable mesh retry
 - match:
   - method:
-      regex: "^(POST|PATCH)$"
+      regex: "^(POST|PUT|PATCH|DELETE)$"
   retries:
     attempts: 0
 ```
 
 **注意事项：**
 
-* 为给每次重试预留时间，`timeout` 应大致大于 `(1 + attempts) x perTryTimeout`，并包含退避时间
-* 过多重试可能导致级联故障
-* `attempts: 0` 会禁用重试；`attempts: 1` 允许在原始请求后重放一次
-* 默认对 POST/PATCH 禁用网格重试，因为服务器可能已提交操作而仅丢失响应
-* Workload mTLS 或网络加密不会使请求重放变得安全
+* 为所有重试预留时间时，`timeout` 应大致大于 `(1 + attempts) x perTryTimeout`，并计入退避时间
+* 重试过多可能导致级联故障
+* `attempts: 0` 会禁用重试；`attempts: 1` 表示原始请求后最多再重放一次
+* 默认应对 POST/PATCH 禁用网格重试，因为服务器可能已提交操作，只是响应丢失
+* Workload mTLS 或网络加密不会让请求重放变得安全
 
 **参考：**
 
-* [Timeout and Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+* [超时和重试](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
-***
+## 简答题（6–10）
 
-## 简答题（6-10）
+### 问题 6：Argo Rollouts + Istio Canary 部署
 
-### 问题 6：Argo Rollouts + Istio Canary Deployment
-
-说明如何结合 Argo Rollouts 和 Istio 实现自动化 Canary Deployment 的过程。请包括**所需资源**（Rollout、VirtualService、DestinationRule、AnalysisTemplate）和**自动回滚条件**。
+说明如何使用基于子集的 Canary rollout 和自动指标门控。请包括所需资源、创建顺序和中止条件。
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+使用一个 Service、DestinationRule stable/canary 子集、VirtualService 路由、AnalysisTemplate 和完整的 Rollout。Argo 会更新路由权重和子集的 Pod 模板哈希；它不会创建预先引用的 Istio 资源。若与主机级集成，则使用独立的 stable/canary Service。命名路由必须与 Rollout 显式列出的路由相匹配；只有一个路由时，可以省略该列表。
 
-**实现 Argo Rollouts + Istio Canary Deployment：**
+使用全新的实验 namespace，并启用 sidecar 注入；还要使用兼容的 Argo Rollouts controller/CLI（本次审计的指南使用 v1.10.0）。将以下 Pod scrape relabeling 添加到 Prometheus，并确认 canary 流量带有 `rollout_hash` 和 `reporter="destination"` 标签。这些门控针对最新的 ReplicaSet 进行测量，而不是被 stable 与 canary 流量稀释的平均值。
 
-***
+```yaml
+# Existing workload pod scrape job: relabel_configs fragment
+- source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+  target_label: rollout_hash
+```
 
-**1. 创建 Service（基础 Kubernetes Service）**
+先创建前置资源：
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: reviews
+  namespace: default
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: reviews  # Select all Pods from Rollout
-```
-
-***
-
-**2. 定义 DestinationRule（子集定义）**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destrule
+  namespace: default
 spec:
   host: reviews
   subsets:
   - name: stable
-    labels: {}  # Managed automatically by Rollout
+    labels:
+      app: reviews
   - name: canary
-    labels: {}  # Managed automatically by Rollout
-```
-
-**重要**：Rollout 会自动向 Pods 添加 `rollouts-pod-template-hash` label，并使用该 label 区分子集。
-
-***
-
-**3. 定义 VirtualService（流量拆分）**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    labels:
+      app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
+  namespace: default
 spec:
   hosts:
   - reviews
   http:
-  - name: primary  # Route name referenced by Rollout (required)
+  - name: primary
     route:
     - destination:
         host: reviews
         subset: stable
-      weight: 100  # Automatically modified by Rollout
+      weight: 100
     - destination:
         host: reviews
         subset: canary
-      weight: 0    # Automatically modified by Rollout
-```
-
-**要点：**
-
-* `http[].name` 字段是必需的
-* Rollout 仅自动更新此 VirtualService 中的 `weight` 值
-
-***
-
-**4. 定义 AnalysisTemplate（自动回滚条件）**
-
-**成功率分析：**
-
-```yaml
+      weight: 0
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: success-rate
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: success-rate
     interval: 30s
-    count: 4  # 4 measurements (total 2 minutes)
-    successCondition: result >= 0.95  # 95% or higher success rate
-    failureLimit: 2  # Auto rollback after 2 failures
+    count: 4
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.95
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-**延迟分析：**
-
-```yaml
+        query: "sum(rate(\n  istio_requests_total{\n    destination_service_name=\"\
+          {{args.service-name}}\",\n    reporter=\"destination\",\n    rollout_hash=\"\
+          {{args.pod-template-hash}}\",\n    destination_workload_namespace=\"default\"\
+          ,\n    response_code!~\"5.*\"\n  }[2m]\n))\n/\nsum(rate(\n  istio_requests_total{\n\
+          \    destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n    destination_workload_namespace=\"\
+          default\"\n  }[2m]\n))\n"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: latency
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: latency-p95
     interval: 30s
     count: 4
-    successCondition: result <= 500  # P95 latency 500ms or less
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 500
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
+        query: "histogram_quantile(0.95,\n  sum(rate(\n    istio_request_duration_milliseconds_bucket{\n\
+          \      destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n     \
+          \ destination_workload_namespace=\"default\"\n    }[2m]\n  )) by (le)\n\
+          )\n"
 ```
 
-***
-
-**5. 定义 Rollout 资源（Canary 策略）**
+然后创建 Rollout：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: reviews
+  namespace: default
 spec:
   replicas: 5
   revisionHistoryLimit: 2
@@ -621,17 +559,22 @@ spec:
     metadata:
       labels:
         app: reviews
+        sidecar.istio.io/inject: 'true'
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v2:1.17.0
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
         ports:
         - containerPort: 9080
-
-  # Canary deployment strategy
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 100m
+          limits:
+            memory: 128Mi
+            cpu: 200m
   strategy:
     canary:
-      # Traffic control via Istio VirtualService
       trafficRouting:
         istio:
           virtualService:
@@ -642,315 +585,115 @@ spec:
             name: reviews-destrule
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Define Canary stages
       steps:
-      - setWeight: 10    # 10% traffic to Canary
+      - setWeight: 10
       - pause:
           duration: 2m
-
-      - setWeight: 25    # 25% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 25
       - pause:
           duration: 2m
-
-      - setWeight: 50    # 50% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 50
       - pause:
           duration: 2m
-
-      - setWeight: 75    # 75% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 75
       - pause:
           duration: 2m
-
-      # Automatic metric analysis
-      analysis:
-        templates:
-        - templateName: success-rate
-        - templateName: latency
-        startingStep: 1
-        args:
-        - name: service-name
-          value: reviews
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 ```
 
-***
-
-**6. 部署执行和监控**
+首次部署会建立 stable 版本；之后更新镜像以触发 canary 阶段。每个加权阶段都有有限时长的内联分析门控。failureLimit 为 0 时，一次测量失败就会中止当前 rollout；缺失/NaN 数据不能通过门控。门控成功后才会进入下一阶段。实际耗时取决于流量、抓取/分析间隔和控制器协调过程，不能保证只需几秒。
 
 ```bash
-# Install Argo Rollouts
-kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
-
-# Deploy resources
-kubectl apply -f service.yaml
-kubectl apply -f destination-rule.yaml
-kubectl apply -f virtual-service.yaml
-kubectl apply -f analysis-templates.yaml
-kubectl apply -f rollout.yaml
-
-# Deploy new version
-kubectl argo rollouts set image reviews \
-  reviews=istio/examples-bookinfo-reviews-v3:1.17.0
-
-# Monitor deployment status in real-time
 kubectl argo rollouts get rollout reviews --watch
-
-# Rollout dashboard
-kubectl argo rollouts dashboard
+kubectl get analysisruns
+kubectl argo rollouts set image reviews reviews=istio/examples-bookinfo-reviews-v3:1.20.3
+# Stop a failing active rollout; undo is a separate desired-template rollback
+kubectl argo rollouts abort reviews
 ```
 
-***
-
-**自动回滚场景：**
-
-**场景 1：错误率 > 5%**
-
-```
-10% Canary -> Analysis starts
-+- Measurement 1 (30s): 6% error rate -> Failure (1/2)
-+- Measurement 2 (30s): 7% error rate -> Failure (2/2)
-+- Auto rollback executed -> Stable 100%
-```
-
-**场景 2：延迟 > 500ms**
-
-```
-25% Canary -> Analysis starts
-+- Measurement 1 (30s): P95 600ms -> Failure (1/2)
-+- Measurement 2 (30s): P95 550ms -> Failure (2/2)
-+- Auto rollback executed -> Stable 100%
-```
-
-**场景 3：所有指标正常**
-
-```
-10% Canary -> Analysis passed -> 25% Canary
-25% Canary -> Analysis passed -> 50% Canary
-50% Canary -> Analysis passed -> 75% Canary
-75% Canary -> Analysis passed -> 100% Canary
-```
-
-***
-
-**主要优点：**
-
-1. **完全自动化**：部署无需人工干预即可推进
-2. **即时回滚**：检测到指标失败后数秒内回滚
-3. **安全部署**：在每个阶段自动验证
-4. **流程一致**：标准化部署策略
-
-**参考：**
-
-* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+切换线上流量前，应等待配置传播并验证端点健康。不要让其他 controller 覆盖由 Argo 管理的权重/哈希。安装和执行前置条件见[完整 rollout 指南](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)。
 
 </details>
 
 ***
 
-### 问题 7：Blue/Green Deployment 与 Canary Deployment
+### 问题 7：Blue/Green 与 Canary
 
-比较 Blue/Green deployment 和 Canary deployment 之间的**差异**，并说明各自的**优缺点**和**使用场景**。
+比较流量迁移方式、资源需求、回滚方法和适用场景。
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+| 方面 | Blue/Green | Canary |
+| --- | --- | --- |
+| 流量 | 先预览，然后切换活动 Service selector | 分阶段提高路由请求权重 |
+| 验证 | 提升前后进行分析 | 随 rollout 推进进行内联/后台分析 |
+| 容量 | 迁移期间通常需要两个完整版本；预览规模可不同 | 取决于副本数和扩缩策略；保留完整 stable 容量时可能接近两个版本 |
+| 回滚 | 在旧版本/容量仍可用时切回 | 中止当前 rollout 并回到 stable；提升后按需撤销/重新部署 |
+| 主要权衡 | 生产切换简单，但切换时影响面较大 | 每阶段暴露范围较小，但需要协调路由和分析 |
 
-**Blue/Green Deployment 与 Canary Deployment 对比：**
+任何一种切换都不是网络层面的原子操作：端点/代理传播和现有连接都会产生影响。两者都不会撤销数据库迁移或外部副作用。在新旧版本共存期间，应保持 schema 和 API 合约兼容。Canary 权重不代表稳定的用户群组；A/B 测试需要显式的群组键。
 
-***
-
-**1. 部署方式差异**
-
-**Blue/Green Deployment：**
-
-```
-Blue (current version) --+
-                         +--> [100% Traffic]
-Green (new version) -----+
-
-Stage 1: Blue 100% active
-Stage 2: Deploy and test Green (0% traffic)
-Stage 3: Switch traffic (Blue 0% -> Green 100%)
-Stage 4: Remove Blue
-```
-
-**Canary Deployment：**
-
-```
-Stable (current version) --> 90% -> 75% -> 50% -> 0%
-Canary (new version) -----> 10% -> 25% -> 50% -> 100%
-
-Gradually increase traffic
-```
-
-***
-
-**2. 详细对比表**
-
-| 项目               | Blue/Green                           | Canary                                 |
-| ------------------ | ------------------------------------ | -------------------------------------- |
-| **流量切换** | 即时 100% 切换                  | 逐步增加（10% -> 100%）         |
-| **回滚速度** | 即时（单次切换）              | 快速（仅从当前阶段回滚）         |
-| **资源使用量** | 2 倍（Blue + Green）                    | 1 倍 + 少量（Stable + Canary）    |
-| **风险级别**     | 中等（所有用户同时受影响）           | 低（从少量用户开始）            |
-| **测试周期** | 部署前进行充分测试 | 在生产环境中逐步验证       |
-| **复杂度**     | 低                                  | 中等（需要指标分析）      |
-| **用户影响**    | 所有用户同时受到影响    | 从少量用户开始逐步影响 |
-
-***
-
-**3. Istio 实现示例**
-
-**Blue/Green Deployment（Argo Rollouts）：**
+Blue/Green 适合可充分预览且有足够临时容量的发布。Canary 适合在有代表性的流量和可信指标时逐步验证生产环境。不要仅凭“1 倍多一点”这样的假设选择 Canary；应检查其扩缩设置，包括可选的 dynamicStableScale。
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    blueGreen:
-      activeService: myapp-active    # Blue (production)
-      previewService: myapp-preview  # Green (test)
-      autoPromotionEnabled: false    # Manual approval
-      scaleDownDelaySeconds: 30      # Remove previous version 30s after Green -> Blue switch
-
-      # Pre-promotion testing
-      prePromotionAnalysis:
-        templates:
-        - templateName: smoke-tests
-
-      # Post-promotion validation
-      postPromotionAnalysis:
-        templates:
-        - templateName: performance-tests
+# Alternative strategy fragment for a complete Rollout
+strategy:
+  blueGreen:
+    activeService: myapp-active
+    previewService: myapp-preview
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 600
+    prePromotionAnalysis:
+      templates:
+      - templateName: smoke-tests
+    postPromotionAnalysis:
+      templates:
+      - templateName: post-promotion-tests
 ```
 
-**Canary Deployment（Argo Rollouts）：**
+使用前先创建 Service 以及带有所需参数的 AnalysisTemplate。保留时间应足以覆盖提升后的分析和回滚需求。混合式渐进流程需要专门设计；在 rollout 中途修改策略字段，不会自动将 Canary 转换成 Blue/Green。
 
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: myapp-vsvc
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 50
-      - pause: {duration: 2m}
-      - setWeight: 100
-```
-
-***
-
-**4. 优缺点对比**
-
-**Blue/Green 的优点：**
-
-* 结构简单（仅 Blue <-> Green 切换）
-* 可即时回滚（翻转切换）
-* 可在部署前进行充分测试
-* 行为可预测
-
-**Blue/Green 的缺点：**
-
-* 需要 2 倍资源
-* 所有用户同时受影响
-* 数据库迁移复杂
-* 无法逐步验证
-
-**Canary 的优点：**
-
-* 从少量用户开始逐步验证
-* 资源效率高（1 倍 + 少量）
-* 在生产环境中进行真实验证
-* 可自动回滚（基于指标）
-
-**Canary 的缺点：**
-
-* 配置复杂（指标、分析）
-* 需要监控
-* 部署时间更长
-* 存在版本共存期
-
-***
-
-**5. 使用场景**
-
-**推荐使用 Blue/Green 的场景：**
-
-1. **重要发布**：充分测试后快速切换
-2. **无数据库变更**：没有 schema 变更时
-3. **需要即时回滚**：发生问题时需要快速恢复
-4. **资源充足**：能够负担 2 倍资源时
-5. **可预测的变更**：预先测试足以验证时
-
-**示例：**
-
-```
-- Major feature releases
-- Complete UI redesign
-- API version upgrades
-- Marketing campaign integration (switch at specific time)
-```
-
-**推荐使用 Canary 的场景：**
-
-1. **实验性功能**：先用少量用户测试
-2. **资源受限**：没有 2 倍资源时
-3. **逐步验证**：在生产环境中使用真实数据验证
-4. **自动化部署**：CI/CD 中的自动部署
-5. **Microservices**：服务依赖复杂时
-
-**示例：**
-
-```
-- A/B testing
-- Performance optimization
-- Bug fixes
-- Minor feature additions
-- Daily deployment (Continuous Deployment)
-```
-
-***
-
-**6. 混合方法**
-
-实际中可以组合使用两种策略：
-
-```yaml
-# Stage 1: Gradual validation with Canary
-10% -> 25% -> 50%
-
-# Stage 2: Final switch with Blue/Green
-50% -> 100% (instant switch)
-```
-
-**参考：**
-
-* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
-* [Blue/Green Deployment](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment)
+[部署策略和示例](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 
 </details>
 
@@ -968,21 +711,21 @@ spec:
 
 **流量镜像概念：**
 
-流量镜像是一种复制生产流量并将其发送到新版本、同时**忽略响应**的技术。它也称为“影子测试”。
+流量镜像会复制生产流量并将副本发送到新版本，同时**忽略新版本的响应**。这种方法也称为“影子测试”。
 
 ***
 
 **1. 工作方式**
 
-![用户请求由 Envoy proxy 复制：主请求发送到生产版本 1，而镜像请求发送到测试版本 2，其响应会被丢弃。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-traffic-management-0.png)
+![Envoy proxy 会复制用户请求：主请求发送到生产版本 1，镜像请求发送到测试版本 2，测试版本的响应会被丢弃。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-traffic-management-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-traffic-management-0.html)
 
-**主要特征：**
+**主要特点：**
 
-* 用户仅收到 v1 的响应
-* v2 的响应由 Envoy 丢弃
-* v2 的错误不会影响用户
+* 用户只会收到 v1 的响应
+* v2 的响应会被 Envoy 丢弃
+* v2 的响应不会返回给客户端，但共享资源竞争和写入副作用仍可能影响用户
 
 ***
 
@@ -991,7 +734,7 @@ spec:
 **基础镜像（100%）：**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -1028,7 +771,7 @@ spec:
       value: 50  # Only 50% mirroring (reduce traffic load)
 ```
 
-**镜像 + Canary 组合：**
+**镜像与 Canary 组合：**
 
 ```yaml
 spec:
@@ -1056,7 +799,7 @@ spec:
 
 **3. 使用场景**
 
-**案例 1：新版本性能测试**
+**场景 1：新版本性能测试**
 
 ```
 Purpose: Verify if v2's performance is better than v1
@@ -1067,7 +810,7 @@ Purpose: Verify if v2's performance is better than v1
 4. If v2 is slower than v1 -> Optimize and retest
 ```
 
-**案例 2：数据库迁移验证**
+**场景 2：数据库迁移验证**
 
 ```
 Purpose: Verify new database schema
@@ -1078,7 +821,7 @@ Purpose: Verify new database schema
 4. If no issues -> Switch to v2
 ```
 
-**案例 3：Bug 修复验证**
+**场景 3：Bug 修复验证**
 
 ```
 Purpose: Verify that bug fix actually works
@@ -1088,14 +831,14 @@ Purpose: Verify that bug fix actually works
 3. If v2's error rate decreases -> Deploy
 ```
 
-**案例 4：缓存预热**
+**场景 4：缓存预热**
 
 ```
 Purpose: Pre-populate new version's cache
 
-1. Warm cache via mirroring before v2 deployment
+1. Deploy v2, then warm its cache with mirror traffic before cutover
 2. Once v2's cache is sufficiently populated
-3. No cold start when switching to v2
+3. Warmup can reduce cache misses; it does not guarantee no cold start
 ```
 
 ***
@@ -1140,7 +883,7 @@ histogram_quantile(0.95,
 
 **5. 注意事项**
 
-**警告 - 负载增加：**
+**警告——负载增加：**
 
 ```
 Mirroring increases service load.
@@ -1150,12 +893,12 @@ Example:
 - v2: 1000 RPS (mirror)
 - Total load: 2000 RPS
 
-Solution: Set mirrorPercentage to 50% or less
+Choose the percentage from shadow capacity and the test hypothesis; 50% is not a universal safe limit
 ```
 
-**警告 - 注意副作用：**
+**警告——留意副作用：**
 
-```yaml
+```text
 # Don't mirror write operations!
 
 # Bad example
@@ -1165,23 +908,22 @@ POST /api/orders  # Both v1 and v2 create orders -> Duplicates!
 GET /api/orders   # Mirror only read-only operations
 ```
 
-**警告 - 成本：**
+**警告——成本：**
 
 ```
 Mirroring increases resources and costs.
 
-- 2x computing resources
-- 2x network traffic
-- 2x database queries
+- 100% mirroring duplicates request volume on that route
+- CPU, response traffic, and database cost depend on workload behavior
 
 Solution: Mirror only for short periods (1-2 days)
 ```
 
-**警告 - 无法验证响应：**
+**警告——无法验证响应：**
 
 ```
 Mirror traffic responses are discarded, so
-you cannot validate response content.
+Istio does not compare response content. Application instrumentation or a dedicated shadow comparison system can validate correctness separately.
 
 Can validate:
 - Error rate
@@ -1189,15 +931,14 @@ Can validate:
 - Resource usage
 
 Cannot validate:
-- Response data accuracy
-- Business logic verification
+- Response/business correctness requires additional validation tooling
 ```
 
 ***
 
 **6. 最佳实践**
 
-```yaml
+```text
 # Good examples
 1. Mirror only read-only APIs
 2. mirrorPercentage: 50% (reduce load)
@@ -1206,313 +947,43 @@ Cannot validate:
 
 # Bad examples
 1. Mirroring write operations (duplicate data)
-2. mirrorPercentage: 100% (overload)
+2. mirrorPercentage: 100% without capacity planning
 3. Long-term mirroring (cost increase)
 4. Manual validation (slow)
 ```
 
 **参考：**
 
-* [Traffic Mirroring](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror)
+* [流量镜像](../../../service-mesh/istio/traffic-management/09-traffic-mirror.md)
 
 </details>
 
 ***
 
-### 问题 9：本地性负载均衡（区域感知路由）
+### 问题 9：区域本地性与跨 AZ 成本
 
-说明如何使用 Istio 的 Locality Load Balancing 来**降低 AWS EKS 中的跨 AZ 成本**。请包括配置示例和**预估成本节省**。
+说明 EKS 上的本地性路由、故障转移所需条件，以及如何根据测得的流量估算节省。
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
-
-**Locality Load Balancing 概念：**
-
-Locality Load Balancing 是一项通过**优先路由到同一 Availability Zone（AZ）内的服务**来降低网络延迟和跨 AZ 成本的功能。
-
-***
-
-**1. AWS EKS 中的跨 AZ 成本**
-
-**成本结构：**
-
-```
-Same AZ traffic: Free
-Cross-AZ traffic: $0.01-0.02 per GB
-Cross-Region traffic: $0.02-0.09 per GB
-```
-
-**计算示例：**
-
-```
-Service A (us-east-1a) -> Service B (us-east-1b)
-- Monthly traffic: 1TB = 1000GB
-- Cross-AZ cost: 1000GB x $0.01 = $10/month
-
-If 80% traffic is routed to same AZ:
-- Same AZ: 800GB x $0 = $0
-- Cross-AZ: 200GB x $0.01 = $2/month
-- Savings: $8/month (80%)
-```
-
-***
-
-**2. EKS Pod 拓扑 label**
-
-EKS 节点会自动设置拓扑 label：
-
-```yaml
-# EKS node labels (automatic)
-topology.kubernetes.io/region: us-east-1
-topology.kubernetes.io/zone: us-east-1a
-
-# Pods inherit node labels
-```
-
-***
-
-**3. Locality Load Balancing 配置**
-
-**基础配置（同 AZ 优先）：**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        # 100% routing to same AZ if Pods exist there
-        # Automatic failover to other AZ if not
-```
-
-**高级配置（加权分配）：**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        distribute:
-        # Traffic originating from us-east-1a
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 80  # Same AZ 80%
-            "us-east-1/us-east-1b/*": 20  # Other AZ 20% (for failover)
-
-        # Traffic originating from us-east-1b
-        - from: us-east-1/us-east-1b/*
-          to:
-            "us-east-1/us-east-1b/*": 80  # Same AZ 80%
-            "us-east-1/us-east-1a/*": 20  # Other AZ 20% (for failover)
-```
-
-**故障转移策略：**
-
-```yaml
-spec:
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        failover:
-        # On us-east-1a failure, route to us-east-1b
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b
-
-        # On us-east-1 complete failure, route to us-west-2
-        - from: us-east-1
-          to: us-west-2
-```
-
-***
-
-**4. 与 Outlier Detection 结合**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    # Locality Load Balancing
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-
-    # Outlier Detection (exclude unhealthy instances)
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
-      maxEjectionPercent: 50
-```
-
-**行为：**
-
-```
-1. Prioritize Pods in same AZ (us-east-1a)
-2. Exclude that Pod after 5 consecutive failures
-3. Automatic switch to healthy Pod in other AZ (us-east-1b)
-4. Retry excluded Pod after 30 seconds
-```
-
-***
-
-**5. 成本节省计算**
-
-**场景：大规模 Microservices 架构**
-
-```
-Assumptions:
-- Number of services: 20
-- Monthly traffic between each service: 500GB
-- Total monthly traffic: 20 x 20 x 500GB = 200TB
-- Cross-AZ ratio (without Locality LB): 70%
-- Cross-AZ ratio (with Locality LB): 20%
-```
-
-**未使用 Locality LB：**
-
-```
-Cross-AZ traffic: 200TB x 70% = 140TB
-Cost: 140,000GB x $0.01 = $1,400/month
-```
-
-**使用 Locality LB：**
-
-```
-Cross-AZ traffic: 200TB x 20% = 40TB
-Cost: 40,000GB x $0.01 = $400/month
-
-Savings: $1,400 - $400 = $1,000/month (71% savings)
-Annual savings: $1,000 x 12 = $12,000/year
-```
-
-***
-
-**6. 性能改进**
-
-**延迟改进：**
-
-```
-Same AZ communication: ~1ms
-Cross-AZ communication: ~2-3ms
-
-With Locality LB:
-- 30-50% reduction in average latency
-- 40-60% reduction in P99 latency
-```
-
-**实际测量示例：**
+Istiod 会根据节点拓扑推导区域本地性；Pod 不会自动继承节点标签。检查 Node 以及代理端点的本地性信息：
 
 ```bash
-# us-east-1a -> us-east-1a (same AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.001s
-
-# us-east-1a -> us-east-1b (cross-AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.003s
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
 ```
 
-***
-
-**7. 监控**
-
-**Prometheus 查询：**
-
-```promql
-# Traffic distribution by Locality
-sum(rate(
-  istio_requests_total[5m]
-)) by (
-  source_workload_namespace,
-  destination_workload_namespace,
-  source_canonical_service,
-  destination_canonical_service
-)
-
-# Cross-AZ traffic ratio
-sum(rate(istio_requests_total{
-  source_cluster="us-east-1a",
-  destination_cluster!="us-east-1a"
-}[5m]))
-/
-sum(rate(istio_requests_total[5m]))
-```
-
-**Grafana Dashboard：**
+加权分布示例如下：
 
 ```yaml
-Panel 1: Request count by Locality (us-east-1a, us-east-1b, us-east-1c)
-Panel 2: Cross-AZ traffic ratio (target: <20%)
-Panel 3: Latency (same AZ vs cross-AZ)
-Panel 4: Estimated cost (cross-AZ traffic x $0.01/GB)
-```
-
-***
-
-**8. 注意事项**
-
-**警告 - 负载不均衡：**
-
-```
-If all traffic concentrates on one AZ, overload can occur
-
-Solutions:
-- Deploy sufficient replicas in each AZ
-- Configure HPA (Horizontal Pod Autoscaler)
-- Ensure minimum replicas with PodDisruptionBudget
-```
-
-**警告 - AZ 故障：**
-
-```
-If entire AZ fails, traffic moves to other AZs
-
-Failover policy configuration required:
-- from: us-east-1/us-east-1a
-  to: us-east-1/us-east-1b
-```
-
-**警告 - 冷启动：**
-
-```
-On failover, Pods in other AZ may be in cold start state
-
-Solutions:
-- Maintain at least 1 replica in each AZ
-- Verify ready state with Readiness Probe
-```
-
-***
-
-**9. 最佳实践**
-
-```yaml
-# Recommended configuration
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: production-service
+  name: reviews-locality
 spec:
-  host: production-service
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -1520,26 +991,34 @@ spec:
         distribute:
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 80  # Cost savings
-            "us-east-1/us-east-1b/*": 15  # Failover
-            "us-east-1/us-east-1c/*": 5   # Additional backup
-
+            "us-east-1/us-east-1a/*": 80
+            "us-east-1/us-east-1b/*": 20
+        - from: us-east-1/us-east-1b/*
+          to:
+            "us-east-1/us-east-1b/*": 80
+            "us-east-1/us-east-1a/*": 20
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 10s
       baseEjectionTime: 30s
-
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
 ```
 
-**参考：**
+远端的 20% 是实际承载流量，并非空闲的故障转移容量。显式设置 `failover` 是 `distribute` 的替代方案，其 from/to 值表示**区域**，例如从 us-east-1 切换到 us-west-2；它们不是“区域/可用区”的路径。可用区故障转移依赖端点本地性/健康状况。应在其他 AZ 中提供健康容量，并验证端点驱逐和 panic 行为。PDB 只限制自愿中断；它既不会创建副本，也无法阻止 AZ 故障。
 
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [AWS EKS Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
+**假设性计算，不是 AWS 报价**：假设每月有 200,000 GB 计费流量，跨 AZ 流量占比从 70% 降至 20%，测量路径的有效费率为每计费 GB 0.01 美元。
+
+|  | 之前 | 之后 |
+| --- | ---: | ---: |
+| 跨 AZ 流量（GB） | 140,000 | 40,000 |
+| 模型估算的月费用 | $1,400 | $400 |
+
+模型估算每月节省 $1,000（71.4%），每年节省 $12,000。应使用实际计费路径费率、方向、负载均衡器/NAT/服务费用和测得的字节数；不要用服务数量的平方来推算流量。当前费率取决于区域以及具体服务/路径；同 AZ 流量也不一定免除所有处理费用。
+
+`source_cluster`/`destination_cluster` 是集群 ID，不是 AZ。标准 Istio 指标不会自动提供所有源/目标 AZ 标签。应使用显式配置的拓扑遥测，或结合时点正确的端点/AZ 映射和计费数据分析 VPC Flow Logs。在受控流量下测量延迟；不能保证固定提升 30–60%。
+
+- [AWS EC2 数据传输定价](https://aws.amazon.com/ec2/pricing/on-demand/)
+- [VPC Flow Logs 字段](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+- [区域本地性指南](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
 
 </details>
 
@@ -1547,141 +1026,80 @@ spec:
 
 ### 问题 10：Gateway TLS 配置
 
-说明如何在 Istio Gateway 中配置 **TLS 终止**并设置 **HTTPS 重定向**。请包括两种情况：使用 ACM（AWS Certificate Manager）证书和使用自签名证书。
+说明 Istio TLS 终止与 NLB 上的 ACM TLS 终止有何区别，并说明 HTTP 重定向和证书续期。
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+应选择一种 TLS 终止设计。假定网关工作负载位于 istio-system，带有 istio=ingressgateway 标签，Service 端口匹配，并且已安装 AWS Load Balancer Controller。应通过负责该 Service 的安装工具合并变更。NLB 证书 ARN 和 Istio 的 credentialName 是不同对象。
 
-**Istio Gateway TLS 配置：**
+**1. 在 Istio 终止 TLS**
 
-***
-
-**1. 使用自签名证书（Kubernetes Secret）**
-
-**步骤 1：生成 TLS 证书**
+在 NLB 上使用 TCP 透传。进行本地测试时，生成带 DNS SAN 的证书，并在客户端显式信任该证书。将示例主机名替换为你控制的域名：
 
 ```bash
-# Generate self-signed certificate (for testing)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout bookinfo.key \
-  -out bookinfo.crt \
-  -subj "/CN=bookinfo.example.com"
-
-# Or use Let's Encrypt certificate
-certbot certonly --standalone -d bookinfo.example.com
+  -keyout bookinfo.key -out bookinfo.crt \
+  -subj "/CN=bookinfo.example.com" \
+  -addext "subjectAltName=DNS:bookinfo.example.com"
+kubectl create secret tls bookinfo-secret -n istio-system \
+  --key=bookinfo.key --cert=bookinfo.crt
 ```
-
-**步骤 2：创建 Kubernetes Secret**
-
-```bash
-# Create Secret for Istio to use
-kubectl create -n istio-system secret tls bookinfo-secret \
-  --key=bookinfo.key \
-  --cert=bookinfo.crt
-
-# Verify Secret
-kubectl get secret bookinfo-secret -n istio-system
-```
-
-**步骤 3：配置 Gateway（HTTPS + HTTP -> HTTPS 重定向）**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
-  namespace: default
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # HTTPS (port 443)
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
-      mode: SIMPLE  # One-way TLS (server certificate only)
-      credentialName: bookinfo-secret  # Kubernetes Secret name
-    hosts:
-    - bookinfo.example.com
-
-  # HTTP (port 80) - Redirect to HTTPS
+      mode: SIMPLE
+      credentialName: bookinfo-secret
   - port:
       number: 80
       name: http
       protocol: HTTP
-    hosts:
-    - bookinfo.example.com
+    hosts: [bookinfo.example.com]
     tls:
-      httpsRedirect: true  # HTTP -> HTTPS redirect
-```
-
-**步骤 4：连接 VirtualService**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+      httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: bookinfo-vs
   namespace: default
 spec:
-  hosts:
-  - bookinfo.example.com
-  gateways:
-  - bookinfo-gateway
+  hosts: [bookinfo.example.com]
+  gateways: [istio-system/bookinfo-gateway]
   http:
-  - match:
-    - uri:
-        prefix: /productpage
-    route:
+  - route:
     - destination:
         host: productpage
         port:
           number: 9080
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
 ```
-
-**步骤 5：测试**
 
 ```bash
-# HTTPS access
-curl -v https://bookinfo.example.com/productpage
-
-# HTTP access -> HTTPS redirect verification
-curl -v http://bookinfo.example.com/productpage
-# Output:
-# HTTP/1.1 301 Moved Permanently
-# location: https://bookinfo.example.com/productpage
+# INGRESS_HOST is the actual LB hostname; preserve the certificate hostname/SNI
+curl --cacert bookinfo.crt \
+  --connect-to "bookinfo.example.com:443:${INGRESS_HOST}:443" \
+  https://bookinfo.example.com/productpage
+curl -I --connect-to "bookinfo.example.com:80:${INGRESS_HOST}:80" \
+  http://bookinfo.example.com/productpage
 ```
 
-***
+**2. 在 NLB 使用 ACM 终止 TLS**
 
-**2. 使用 AWS ACM 证书（NLB Annotation）**
-
-在 AWS EKS 中，推荐的方法是在 NLB 使用 ACM 证书进行 TLS 终止。
-
-**步骤 1：签发 ACM 证书**
-
-```bash
-# Issue ACM certificate via AWS Console or CLI
-aws acm request-certificate \
-  --domain-name bookinfo.example.com \
-  --validation-method DNS \
-  --region us-east-1
-
-# Get ARN
-aws acm list-certificates --region us-east-1
-# Output: arn:aws:acm:us-east-1:123456789012:certificate/abc123
-```
-
-**步骤 2：修改 Istio Ingress Gateway Service**
+使用 NLB 所在区域中状态为 ISSUED 且已通过 DNS 验证的 ACM 证书。仅请求证书并不能完成验证。NLB 是传输层负载均衡器，不会执行 HTTP 重定向；SSL 协商策略只选择 TLS 版本/密码套件。将解密后的 443 端口流量转发到一个与 HTTP 重定向监听器端口不同的网关目标端口，避免重定向循环：
 
 ```yaml
 apiVersion: v1
@@ -1690,69 +1108,68 @@ metadata:
   name: istio-ingressgateway
   namespace: istio-system
   annotations:
-    # Use NLB
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-
-    # TLS termination (ACM certificate)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/abc123"
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/replace-with-issued-certificate
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-
-    # HTTP -> HTTPS redirect (NLB level)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
-
-    # Cross-AZ load balancing
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
 spec:
   type: LoadBalancer
   selector:
     istio: ingressgateway
     app: istio-ingressgateway
   ports:
-  # HTTP (80) - NLB redirects to HTTPS(443)
   - name: http
     port: 80
     targetPort: 8080
-    protocol: TCP
-
-  # HTTPS (443) - NLB terminates TLS and forwards to 8443
   - name: https
     port: 443
-    targetPort: 8443
-    protocol: TCP
-```
-
-**步骤 3：配置 Gateway（TLS Passthrough）**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    targetPort: 8081
+---
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # Receive as HTTP since NLB terminated TLS
   - port:
-      number: 8443
-      name: http
-      protocol: HTTP  # NLB already terminated TLS
-    hosts:
-    - bookinfo.example.com
+      number: 80
+      name: http-redirect
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: http-after-nlb
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
 ```
 
-***
+此替代方案会取代之前的 TLS Gateway，并使用相同的 VirtualService 绑定。本例中，NLB 到网关这一段为明文传输。如需加密该段，应配置单独的 TLS 后端设计，不要让 SIMPLE 与透传监听器不匹配。
 
-**3. 双向 TLS（mTLS）- 客户端认证**
+**3. 在 Istio 配置客户端证书认证**
 
-当客户端也必须出示证书时：
+对于 Istio MUTUAL 监听器，应使用包含服务器凭证和受信任客户端 CA 的 Secret；不要同时使用 credentialName 和独立的 CA 文件路径：
+
+```bash
+kubectl create secret generic server-cert-secret -n istio-system \
+  --from-file=tls.crt=server.crt --from-file=tls.key=server.key \
+  --from-file=ca.crt=client-ca.crt
+```
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: secure-gateway
+  name: mutual-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -1761,157 +1178,31 @@ spec:
       number: 443
       name: https-mutual
       protocol: HTTPS
+    hosts: [secure.example.com]
     tls:
-      mode: MUTUAL  # Two-way TLS
-      credentialName: server-cert-secret  # Server certificate
-      caCertificates: /etc/istio/client-ca/ca-chain.crt  # Client CA
-    hosts:
-    - secure.example.com
+      mode: MUTUAL
+      credentialName: server-cert-secret
+      minProtocolVersion: TLSV1_2
 ```
 
-**使用客户端证书连接：**
-
 ```bash
-curl --cert client.crt --key client.key \
+curl --cacert server-ca.crt --cert client.crt --key client.key \
   https://secure.example.com/api
 ```
 
-***
+为该主机配置匹配的 VirtualService/DNS。诸如 *.example.com 的通配符 SAN 仅匹配一层最左侧标签（api.example.com），不匹配 example.com 或 x.api.example.com。应明确设置 SAN。cipherSuites 字段配置 TLS 1.3 之前版本的密码套件；它不会选择 TLS 1.3 密码套件。
 
-**4. 通配符证书**
+**4. 证书续期**
 
-为多个子域名使用单个证书：
-
-```bash
-# Generate wildcard certificate
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout wildcard.key \
-  -out wildcard.crt \
-  -subj "/CN=*.example.com"
-
-# Create Secret
-kubectl create -n istio-system secret tls wildcard-secret \
-  --key=wildcard.key \
-  --cert=wildcard.crt
-```
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: wildcard-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: wildcard-secret
-    hosts:
-    - "*.example.com"  # Allow all subdomains
-```
-
-**使用 VirtualService 按子域名路由：**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: multi-subdomain
-spec:
-  hosts:
-  - api.example.com
-  - web.example.com
-  - admin.example.com
-  gateways:
-  - wildcard-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /api
-      authority:
-        exact: api.example.com
-    route:
-    - destination:
-        host: api-service
-
-  - match:
-    - authority:
-        exact: web.example.com
-    route:
-    - destination:
-        host: web-service
-
-  - match:
-    - authority:
-        exact: admin.example.com
-    route:
-    - destination:
-        host: admin-service
-```
-
-***
-
-**5. TLS 版本和 Cipher Suite 设置**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: secure-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: bookinfo-secret
-      minProtocolVersion: TLSV1_2  # Allow only TLS 1.2 and above
-      maxProtocolVersion: TLSV1_3
-      cipherSuites:
-      - ECDHE-ECDSA-AES256-GCM-SHA384
-      - ECDHE-RSA-AES256-GCM-SHA384
-      - ECDHE-ECDSA-AES128-GCM-SHA256
-    hosts:
-    - bookinfo.example.com
-```
-
-***
-
-**6. 自动证书续期（cert-manager）**
+cert-manager 1.21 支持 Kubernetes 1.33–1.36；安装或升级前应重新检查其发行版兼容矩阵。如果集群尚未由 cert-manager 管理，本次审计使用的版本为 v1.21.1：
 
 ```bash
-# Install cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml
+```
 
-# Create Let's Encrypt Issuer
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          class: istio
-EOF
+配置状态为 Ready 且 challenge solver 符合实际 ingress/Gateway API/DNS 设置的 Issuer/ClusterIssuer。仅设置 ingress class 字符串并不能确保 ACME challenge 可访问。然后在网关工作负载 namespace 中创建 Certificate：
 
-# Create Certificate resource (auto-renewal)
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -1920,86 +1211,58 @@ metadata:
 spec:
   secretName: bookinfo-secret
   issuerRef:
-    name: letsencrypt-prod
+    name: configured-issuer
     kind: ClusterIssuer
-  dnsNames:
-  - bookinfo.example.com
-EOF
+  dnsNames: [bookinfo.example.com]
 ```
 
-***
-
-**7. 最佳实践**
-
-```yaml
-# Recommended configuration
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: production-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  # HTTPS (recommended)
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: prod-tls-secret
-      minProtocolVersion: TLSV1_2  # Security hardening
-    hosts:
-    - "*.example.com"
-
-  # HTTP -> HTTPS redirect
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*.example.com"
-    tls:
-      httpsRedirect: true
+```bash
+kubectl wait --for=condition=Ready certificate/bookinfo-cert -n istio-system --timeout=120s
 ```
 
-**说明：**
+Istio 会监视生成的 Secret；续期由 cert-manager 执行。避免多个组件同时手动管理同一个 Secret。公网入口需要客户端信任的证书；上面的自签名示例用于实验室信任配置，内部 PKI 则需要谨慎规划信任分发和生命周期管理。
 
-* 使用 TLS 1.2 或更高版本
-* 配置强 Cipher Suites
-* 自动续期证书（cert-manager）
-* 启用 HTTP -> HTTPS 重定向
-* 不要在生产环境中使用自签名证书
-* 不要使用 TLS 1.0/1.1
-
-**参考：**
-
-* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
-* [TLS Configuration](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic)
+- [Istio 与 cert-manager 集成](https://istio.io/latest/docs/ops/integrations/certmanager/)
+- [cert-manager 支持的发行版](https://cert-manager.io/docs/releases/)
+- [AWS 集成示例](../../../service-mesh/istio/04-aws-integration.md)
 
 </details>
 
 ***
 
-## 分数计算
+## 评分计算
 
-* 选择题 1-5：每题 10 分（共 50 分）
-* 简答题 6-10：每题 10 分（共 50 分）
+* 选择题 1–5：每题 10 分（共 50 分）
+* 简答题 6–10：每题 10 分（共 50 分）
 * **总分：100 分**
 
 **评估标准：**
 
-* 90-100 分：优秀（Istio 流量管理专家）
-* 80-89 分：良好（具备生产运维能力）
-* 70-79 分：一般（建议进一步学习）
-* 60-69 分：低于平均水平（需要复习基础概念）
-* 0-59 分：需要重新学习
+* 90–100 分：优秀（Istio 流量管理专家）
+* 80–89 分：良好（具备生产运维能力）
+* 70–79 分：一般（建议进一步学习）
+* 60–69 分：低于平均水平（需要复习基础概念）
+* 0–59 分：需要重新学习
 
 ## 学习资源
 
-* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
+* [流量管理文档](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
-* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
+* [Gateway](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
+* [流量拆分](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+* [主要参考资料 2](https://istio.io/latest/docs/reference/config/networking/gateway/)
+* [主要参考资料 3](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [主要参考资料 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
+* [主要参考资料 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
+* [主要参考资料 6](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+* [主要参考资料 7](https://aws.amazon.com/ec2/pricing/on-demand/)
+* [主要参考资料 8](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+* [主要参考资料 9](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+* [主要参考资料 10](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+* [主要参考资料 11](https://cert-manager.io/docs/releases/)
+* [主要参考资料 12](https://istio.io/latest/docs/ops/integrations/certmanager/)
+* [主要参考资料 13](https://cert-manager.io/docs/usage/certificate/)
+* [主要参考资料 14](https://www.rfc-editor.org/rfc/rfc9525.html)

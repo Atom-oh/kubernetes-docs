@@ -1,6 +1,6 @@
 # 第3部: Kafkaの運用
 
-> **最終更新**: September 12, 2026、Strimzi 1.2.0 / Kafka 4.3.1。
+> **最終更新**: 2026年10月16日、Strimzi 1.3.0 / Kafka 4.3.1。
 > **検証**: 現行リリースのドキュメント/ソース、ローカルでのCRD/マージパッチ確認、提案の生成/JSON抽出、Decimalによる計算、CLIオプションを検証しました。Kafkaの再割り当て、アップグレード、AWSボリュームの変更は実行していません。
 
 この章は、[第2部](./02-strimzi-operator.md)の認証付きKafkaデプロイとブローカー専用プールを前提とします。運用コマンドは実際のパーティションを移動し、リソースを変更する可能性があります。実行前に現在の設定、配置、提案を確認してください。ブローカーのスケーリング手順を、そのままコントローラーロールのプールに適用しないでください。
@@ -103,11 +103,11 @@ kubectl -n kafka get pvc -l strimzi.io/cluster=my-cluster
 
 拡張はStorageClass/CSIとファイルシステムに依存します。PVCの縮小、クラス変更、ボリュームID変更は、この操作には含まれません。kraftMetadata: sharedを2つのボリュームに割り当てないでください。
 
-ディスクを取り外す前に、レプリカとメタデータの配置を調べ、データを退避してください。Strimzi 1.2はremove-disksリバランスモードでブローカー内のJBOD移動をサポートし、専用のフィールドと前提条件があります。deleteClaim: false/Retainはバックアップでも復旧の証明でもありません。Operator管理下のデータに対してkafka-storage.sh formatを手動実行しないでください。
+ディスクを取り外す前に、レプリカとメタデータの配置を調べ、データを退避してください。Strimzi 1.3はremove-disksリバランスモードでブローカー内のJBOD移動をサポートし、専用のフィールドと前提条件があります。deleteClaim: false/Retainはバックアップでも復旧の証明でもありません。Operator管理下のデータに対してkafka-storage.sh formatを手動実行しないでください。
 
 ## 4. ブローカーのスケーリング: 手動と自動の方法
 
-これらの手順は**ブローカー専用プール**が対象です。Strimzi 1.2は静的コントローラークォーラムを設定するため、コントローラーロールのプールを同じ方法でスケーリングしないでください。上流Kafkaの動的クォーラム機能とOperatorのサポートは別です。
+これらの手順は**ブローカー専用プール**が対象です。Strimzi 1.3は静的コントローラークォーラムを設定するため、コントローラーロールのプールを同じ方法でスケーリングしないでください。上流Kafkaの動的クォーラム機能とOperatorのサポートは別です。
 
 | 設定 | 既存プールのレプリカ数の変更 |
 | --- | --- |
@@ -390,7 +390,7 @@ kafka-topics.sh --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADM
 
 metadataVersionを省略すると、StrimziはKafkaバイナリのアップグレード後にデフォルト値へ自動更新する場合があります。両方のフィールドを1回の更新で変更すること自体が、クォーラムを破損させるわけではありません。
 
-以前のmetadataVersionを明示的に維持すると、引き上げる前に検証/復旧を判断する期間を確保できます。この例は、Strimzi 1.2の下で**既存のKafka 4.2.1 / メタデータ4.2-IV1**クラスターを4.3.1へアップグレードします。すでに4.3.1である第2部の演習環境でメタデータを下げる指示ではありません。
+以前のmetadataVersionを明示的に維持すると、引き上げる前に検証/復旧を判断する期間を確保できます。この例は、Strimzi 1.3の下で**既存のKafka 4.2.1 / メタデータ4.2-IV1**クラスターを4.3.1へアップグレードします。すでに4.3.1である第2部の演習環境でメタデータを下げる指示ではありません。
 
 **`upgrade-binaries.patch.yaml`**
 
@@ -435,7 +435,7 @@ kubectl -n kafka get kafka my-cluster -o yaml
 
 ## 8. PDBと障害処理
 
-Strimzi 1.2のデフォルトKafka PDBは、**Kafkaクラスターごとに1つで、そのノードプール全体のKafka Podを対象とします**。プールごとに1つではありません。生成設定やカスタムPDBが異なる場合は、実際のセレクターとminAvailable/maxUnavailableを調べてください。
+Strimzi 1.3のデフォルトKafka PDBは、**Kafkaクラスターごとに1つで、そのノードプール全体のKafka Podを対象とします**。プールごとに1つではありません。生成設定やカスタムPDBが異なる場合は、実際のセレクターとminAvailable/maxUnavailableを調べてください。
 
 PDBは自発的な退避を制限します。ノード/AZ障害、Podの直接削除、Operatorのあらゆる操作を防ぐものではありません。min.insync.replicasは、あらゆる形態のデータ損失を防止する単一のスイッチではありません。
 
@@ -454,7 +454,7 @@ Strimzi Drain Cleanerなどの追加コンポーネントには、独自のサ�
 - [Schema Registry](./04-schema-registry.md)
 - [Kafkaの概要](./README.md)
 - [クイズ](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
-- [Strimzi 1.2の運用](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3の運用](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kafka 4.3の設計](https://kafka.apache.org/43/design/design/)
 - [Kafka 4.3.1のログディレクトリ選択](https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala)
 - [Kafka再割り当てコマンドの実装](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java)

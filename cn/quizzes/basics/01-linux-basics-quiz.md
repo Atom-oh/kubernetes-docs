@@ -32,7 +32,7 @@ Linux kernel 是操作系统的核心，充当硬件和软件之间的中介。k
 **答案：C) Memory namespace**
 
 **解释：**
-Linux 具有以下 namespace：PID（Process ID）、Network、Mount、UTS（hostname）、IPC（Inter-Process Communication）、User 和 cgroup namespace。Memory namespace 并不存在。内存隔离主要通过 cgroups 管理。
+Linux namespace 包括 PID（Process ID）、Network、Mount、UTS（hostname）、IPC（Inter-Process Communication）、User、cgroup 和 time namespace。不存在 memory namespace：进程虚拟地址空间提供内存隔离，而 cgroups 用于统计并限制内存使用。
 
 </details>
 
@@ -49,7 +49,7 @@ Linux 具有以下 namespace：PID（Process ID）、Network、Mount、UTS（hos
 **答案：A) 限制和隔离进程组的资源使用**
 
 **解释：**
-cgroups 是一种 Linux kernel 功能，用于限制和隔离进程组的资源使用。它可以限制和监控 CPU 时间、内存、块 I/O、网络带宽等资源的使用。这是容器中实现资源限制的核心技术。
+cgroups 是一种 Linux kernel 功能，用于限制和隔离进程组的资源使用。它可以限制并监控 CPU 时间、内存和块 I/O 的使用；网络带宽控制则需要集成 tc/eBPF。这是容器中实现资源限制的核心技术。
 </details>
 
 4. 在文件权限 "rwxr-xr--" 中，组用户的权限是什么？
@@ -106,7 +106,7 @@ OverlayFS 是一种联合挂载文件系统，它将多个目录叠加并呈现�
 `systemctl enable` 会将服务设置为在系统启动时自动启动。`start` 会立即启动服务，`restart` 会重启服务，`reload` 只会重新读取配置文件。在 Kubernetes 节点上，kubelet 和 containerd 等核心服务应使用 `systemctl enable` 配置为自动启动。
 </details>
 
-7. 哪个 kernel 参数对 Kubernetes 集群设置至关重要，可为容器网络启用 IP 数据包转发？
+7. 当节点需要在网络接口之间转发 IPv4 数据包时，哪个 kernel 参数可启用该功能？
    - A) net.ipv4.tcp_syncookies
    - B) net.ipv4.ip_forward
    - C) net.core.somaxconn
@@ -119,7 +119,7 @@ OverlayFS 是一种联合挂载文件系统，它将多个目录叠加并呈现�
 **答案：B) net.ipv4.ip_forward**
 
 **解释：**
-`net.ipv4.ip_forward` 是在 Linux kernel 中启用 IP 数据包转发的设置。必须将此设置设为 1，才能启用容器之间以及容器与外部网络之间的通信。设置 Kubernetes 节点时必须启用此参数，并且可以使用命令 `sysctl -w net.ipv4.ip_forward=1` 进行设置。
+`net.ipv4.ip_forward` 是在 Linux kernel 中启用 IP 数据包转发的设置。当节点需要在接口之间转发 IPv4 数据包时，将此设置为 1；同一网络命名空间中的 localhost 流量无需转发。配置 Kubernetes 节点时，在需要转发的场景中必须启用此参数，可使用命令 `sysctl -w net.ipv4.ip_forward=1` 设置。
 </details>
 
 8. 在 systemd unit 文件中，哪个指令用于定义某个服务应在特定服务之后启动？
@@ -135,10 +135,10 @@ OverlayFS 是一种联合挂载文件系统，它将多个目录叠加并呈现�
 **答案：C) After**
 
 **解释：**
-在 systemd unit 文件中，`After` 定义当前 unit 应在指定 unit 之后启动。例如，`After=network-online.target` 确保服务在网络就绪后启动。`Requires` 定义强依赖，`Wants` 定义弱依赖，`Before` 表示当前 unit 应在另一个 unit 之前启动。
+在 systemd unit 文件中，`After` 仅在两个 unit 都被启动时规定当前 unit 的启动顺序晚于指定 unit。若服务启动时需要网络就绪，应将 Wants=network-online.target 与 After=network-online.target 配合使用，并配置发行版提供的 wait-online 实现。它不会持续监控网络可用性。`Requires` 定义强依赖，`Wants` 定义弱依赖，`Before` 表示当前 unit 应在另一个 unit 之前启动。
 </details>
 
-9. 哪个 kernel 参数是 CNI 插件正常工作所必需的，允许桥接流量经过 iptables？
+9. 当所选 CNI 要求使用 bridge netfilter 时，哪个 kernel 参数会让桥接的 IPv4 流量经过 iptables？
    - A) net.ipv4.ip_forward
    - B) net.bridge.bridge-nf-call-iptables
    - C) net.core.netdev_max_backlog
@@ -151,7 +151,7 @@ OverlayFS 是一种联合挂载文件系统，它将多个目录叠加并呈现�
 **答案：B) net.bridge.bridge-nf-call-iptables**
 
 **解释：**
-`net.bridge.bridge-nf-call-iptables` 将桥接网络流量配置为经过 iptables 规则。此设置对于 Kubernetes CNI 插件（Calico、Flannel 等）正确应用网络策略和服务路由至关重要。要启用此设置，必须先加载 `br_netfilter` kernel 模块。
+`net.bridge.bridge-nf-call-iptables` 会配置桥接的 IPv4 流量经过 iptables 规则。是否需要此设置取决于 CNI/数据平面；对于路由或 eBPF 网络并非通用要求。启用此设置前，必须先加载 `br_netfilter` kernel 模块。
 </details>
 
 10. 在包管理中，在 Ubuntu/Debian 上使用哪个命令来防止 Kubernetes 组件自动升级？
@@ -167,7 +167,7 @@ OverlayFS 是一种联合挂载文件系统，它将多个目录叠加并呈现�
 **答案：B) apt-mark hold**
 
 **解释：**
-`apt-mark hold` 会固定特定软件包以防止自动升级。在 Kubernetes 集群中，kubelet、kubeadm 和 kubectl 的版本兼容性很重要，因此建议使用命令 `sudo apt-mark hold kubelet kubeadm kubectl` 固定版本。在 RHEL/CentOS 上，使用 `yum versionlock` 命令。
+`apt-mark hold` 会固定特定软件包以防止自动升级。在 Kubernetes 集群中，kubelet、kubeadm 和 kubectl 的版本兼容性很重要，因此建议使用命令 `sudo apt-mark hold kubelet kubeadm kubectl` 固定版本。在基于 RPM 的系统上，应根据发行版使用已安装的 DNF/YUM versionlock 插件，或采用相应的软件仓库排除规则。
 </details>
 
 ## 简答题
@@ -241,7 +241,7 @@ veth pair 是一对虚拟以太网接口，其中一端位于容器内，另一�
 **答案：ulimit**
 
 **解释：**
-ulimit 是用于检查和设置用户与进程资源限制的命令。`ulimit -n` 会检查可打开的文件描述符数量，`ulimit -n 65536` 会更改该限制。在 Kubernetes 节点上，需要大量文件句柄，因此通常会在 `/etc/security/limits.conf` 中永久设置较高的值。
+ulimit 用于检查和设置用户与进程的资源限制。`ulimit -n` 会检查可打开的文件描述符数量，`ulimit -n 65536` 会更改该限制。shell 限制会作用于该 shell 及其之后创建的子进程。PAM limits 仅影响新的登录会话；对于 kubelet 等 systemd 系统服务，应通过 service drop-in 设置 LimitNOFILE。
 </details>
 
 17. systemd 用于统一管理服务日志的日志系统工具叫什么？
@@ -265,7 +265,7 @@ journald 是 systemd 的统一日志系统，用于收集和存储系统与服�
 **答案：chronyd (or chrony)**
 
 **解释：**
-chronyd 是一种现代 NTP 客户端/服务器，与传统 ntpd 相比能更快地同步时间。`chronyc tracking` 命令会检查同步状态，`chronyc sources` 会显示 NTP 服务器列表。在 Kubernetes 集群中，所有节点都必须准确同步时间，身份认证、日志记录等才能正常工作。
+chronyd 是 NTP 客户端/服务器；其收敛速度取决于网络、时间源质量和配置。`chronyc tracking` 命令会检查同步状态，`chronyc sources` 会显示 NTP 服务器列表。在 Kubernetes 集群中，所有节点都需要准确同步时间，身份认证、日志记录等才能正常工作。
 </details>
 
 19. Linux 中存储 DNS 名称解析设置的文件路径是什么？
@@ -291,10 +291,12 @@ chronyd 是一种现代 NTP 客户端/服务器，与传统 ntpd 相比能更快
 **答案：**
 ```bash
 # Create a new network namespace
-ip netns add mynetns
+sudo ip netns add mynetns
 
 # List network interfaces within that namespace
-ip netns exec mynetns ip link list
+sudo ip netns exec mynetns ip link list
+# After the exercise, when no processes use it:
+sudo ip netns delete mynetns
 ```
 
 **解释：**
@@ -386,7 +388,7 @@ ss -tulpn | grep :8080
   - `ss -tulpn | grep :8080`：`netstat` 的现代替代工具，提供相同的信息。
 </details>
 
-25. 写出用于配置 kernel 模块 br_netfilter 和 overlay 在启动时自动加载的命令，这些模块是 Kubernetes 节点所必需的。
+25. 当所选运行时/CNI 需要 br_netfilter 和 overlay 模块时，写出将这些 kernel 模块配置为启动时自动加载的命令。
 
 <details>
 
@@ -405,7 +407,7 @@ sudo modprobe br_netfilter
 ```
 
 **解释：**
-在 `/etc/modules-load.d/` 目录中创建 `.conf` 文件会使 systemd-modules-load 服务在启动时自动加载这些模块。`overlay` 模块支持用于容器镜像层的 OverlayFS 文件系统，`br_netfilter` 模块允许桥接流量经过 iptables，这对 Kubernetes 网络至关重要。
+在 `/etc/modules-load.d/` 目录中创建 `.conf` 文件会使 systemd-modules-load 服务在启动时自动加载其中的模块。`overlay` 模块支持容器镜像层所使用的 OverlayFS 文件系统；当所选 CNI 配置需要 bridge netfilter 时，`br_netfilter` 模块可让桥接流量经过 iptables。
 </details>
 
 26. 写出一个 journalctl 命令，用于查看 kubelet 服务的实时日志，同时只过滤错误级别及以上的消息。
@@ -419,13 +421,8 @@ sudo modprobe br_netfilter
 journalctl -u kubelet -f -p err
 ```
 
-或
-
-```bash
-journalctl -u kubelet -f -p warning
-```
-
 **解释：**
+`-p warning` 还会显示警告，因此不符合题目要求的“仅错误级别及以上”。
   - `-u kubelet`：仅显示 kubelet 服务日志
   - `-f`：实时流式显示新日志（类似 tail -f）
   - `-p err`：仅显示错误级别及以上日志（err、crit、alert、emerg）
@@ -460,19 +457,19 @@ sudo timedatectl set-timezone Asia/Seoul
 <summary>显示答案</summary>
 
 **答案：**
-```bash
+```text
 *               soft    nofile          65536
 *               hard    nofile          65536
 ```
 
-或针对特定用户/服务：
-```bash
+或针对特定 PAM 登录用户（不适用于 systemd 服务）：
+```text
 root            soft    nofile          65536
 root            hard    nofile          65536
 ```
 
 **解释：**
-`/etc/security/limits.conf` 是 PAM（Pluggable Authentication Modules）使用的配置文件，用于定义每个用户的资源限制。`*` 表示所有用户，`soft` 是默认限制，`hard` 是最大限制。`nofile` 指定可打开的文件描述符数量。在 Kubernetes 节点上，需要大量网络连接和文件句柄，因此应将此值设置得较高。
+`/etc/security/limits.conf` 是 PAM（Pluggable Authentication Modules）使用的配置文件，用于定义每个用户的资源限制。`*` 匹配普通用户（root 需要单独配置），`soft` 是默认限制，`hard` 是最大限制。`nofile` 指定可打开的文件描述符数量，应根据工作负载需求选择限制。PAM 设置不会更改正在运行的进程，也不会作用于普通的 systemd 系统服务；应在服务 drop-in 中配置 LimitNOFILE。
 </details>
 
 ## 进阶题
@@ -502,7 +499,7 @@ root            hard    nofile          65536
   - CPU 时间限制
   - 内存使用限制
   - 块 I/O 带宽限制
-  - 网络带宽限制
+  - 与 tc/eBPF 集成的网络流量分类
   - 设备访问控制
 
 3. **Capabilities**:
@@ -600,7 +597,7 @@ Linux capabilities 将传统 root 权限拆分为更小的权限单元，并通�
 在生产环境中，准确识别容器需要的 capabilities 并移除所有其他 capabilities 是良好的安全实践。可以使用 Docker 的 `--cap-drop`、`--cap-add` 选项，或 Kubernetes 的 `securityContext.capabilities` 字段来实现这一点。
 </details>
 
-32. 解释 systemd service unit 文件的结构以及主要部分（[Unit]、[Service]、[Install]）的作用，并为 Kubernetes kubelet 服务写出一个基本 unit 文件示例。
+32. 解释 systemd service unit 文件的结构以及主要部分（[Unit]、[Service]、[Install]）的作用，并为训练服务写出一个基本 unit 文件示例；说明为什么应保留 kubelet 随软件包提供的 unit 和 drop-in。
 
 <details>
 
@@ -625,19 +622,18 @@ Linux capabilities 将传统 root 权限拆分为更小的权限单元，并通�
 3. **[Install] 部分**：定义启用 unit 时的行为
    - `WantedBy`：需要此 unit 的 target
 
-**kubelet service unit 文件示例：**
+**训练服务 unit 示例（linux-basics-demo.service）：**
 
 ```ini
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -645,7 +641,7 @@ WantedBy=multi-user.target
 ```
 
 **解释：**
-此 unit 文件定义了 kubelet 服务。它会在网络就绪后启动（`After=network-online.target`），失败时始终重启（`Restart=always`），并每 10 秒尝试重启一次（`RestartSec=10`）。`WantedBy=multi-user.target` 表示当系统启动到多用户模式时启动此服务。
+此 unit 会运行一个无害的训练进程。使用 systemctl cat kubelet 检查发行版提供的 unit 和 kubeadm drop-in；不要用此示例替换它们。当两个 unit 都被激活时，它会将启动顺序设为晚于 network-online.target；失败时重启（`Restart=on-failure`），并每 10 秒尝试重启一次（`RestartSec=10`）。`WantedBy=multi-user.target` 表示系统启动到多用户模式时会启动此服务。
 </details>
 
 33. 解释如何永久设置 Kubernetes 节点配置所需的 sysctl kernel 参数，并描述每个参数的作用。
@@ -665,12 +661,11 @@ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 
-# Bridge traffic passes through iptables - essential for CNI network policies
+# Bridge traffic passes through iptables - only if the CNI uses bridge netfilter
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 
-# Connection tracking table size (for large clusters)
-net.netfilter.nf_conntrack_max = 1000000
+# Size conntrack separately from measured workload/memory requirements.
 EOF
 
 # Apply settings
@@ -686,8 +681,8 @@ sudo sysctl --system
 
 2. **net.bridge.bridge-nf-call-iptables = 1**
    - 配置经过桥接器的流量受 iptables 规则约束
-   - 对 Kubernetes Service（ClusterIP、NodePort）和 NetworkPolicy 正常工作至关重要
-   - 这是必需的，因为 kube-proxy 使用 iptables 进行服务路由
+   - 仅当实现依赖 bridge netfilter 时才需要
+   - kube-proxy 可能使用 iptables 或 nftables；其他数据平面也可能替代 kube-proxy
 
 3. **net.ipv6.conf.all.forwarding = 1**
    - 在 IPv6 环境中启用数据包转发
@@ -698,7 +693,7 @@ sudo sysctl --system
 2. 创建 sysctl 配置文件
 3. 使用 `sysctl --system` 应用所有设置
 
-如果没有这些设置，Kubernetes 集群网络将无法正常运行，尤其会出现 Pod 到 Pod 通信和服务发现方面的问题。
+只应用 IP 地址族和 CNI 所需的设置，并在隔离实验环境或经过审查的节点配置流程中操作。
 </details>
 
 34. 解释使用 journald 和 logrotate 的 Linux 日志管理策略，并给出在 Kubernetes 节点上高效管理日志的配置方法。
@@ -741,10 +736,18 @@ SystemKeepFree=1G
 MaxRetentionSec=1month
 ```
 
-**2. 容器日志的 logrotate 配置：**
-```bash
-# /etc/logrotate.d/containers
-/var/log/containers/*.log {
+**2. Kubelet CRI 日志轮转：**
+
+将这些字段合并到现有 kubelet 配置中；不要通过 kubectl 应用，也不要替换整个配置文件。
+```yaml
+containerLogMaxSize: 10Mi
+containerLogMaxFiles: 5
+```
+
+对于不由 kubelet 管理的普通应用文本日志：
+```text
+# /etc/logrotate.d/myapp
+/var/log/myapp/*.log {
     daily
     rotate 7
     compress
@@ -768,9 +771,11 @@ journalctl --disk-usage
 
 **Kubernetes 日志管理最佳实践：**
 
-1. **kubelet 日志**：由 journald 管理，存储在 `/var/log/journal/`
-2. **容器日志**：存储在 `/var/log/containers/`，由 logrotate 管理
+1. **kubelet 日志**：通常由 journald 管理；持久日志位于 /var/log/journal，临时日志位于 /run/log/journal
+2. **容器日志**：CRI 文件通常位于 /var/log/pods，并在 /var/log/containers 中提供符号链接；由 kubelet 管理轮转。不要对这些符号链接运行 logrotate。
 3. **集中式日志记录**：建议使用 Fluentd/Fluent Bit 转发到外部系统
+
+copytruncate 在复制/截断的竞态期间可能丢失日志记录；应优先使用应用支持的重新打开日志机制。journal vacuum 命令只会删除归档文件。
 
 合理的日志管理可以在防止磁盘空间耗尽导致节点故障与保留日志用于故障排查之间保持平衡。
 </details>
@@ -778,3 +783,24 @@ journalctl --disk-usage
 ---
 
 [返回学习资料](../../basics/01-linux-basics.md) | [下一测验：Linux 运维](./02-linux-advanced-quiz.md)
+
+## 验证参考资料
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

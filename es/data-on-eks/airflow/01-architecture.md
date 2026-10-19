@@ -75,7 +75,7 @@ Con executors simultáneos, la primera entrada configurada es la predeterminada.
 
 ## 5. Preparación para la Parte 2 y límites de la validación
 
-Chart 1.22.0 requiere Helm **3.19.0+** y Airflow **3.1.0+**.
+Chart 1.22.0 está orientado a Helm **3.19.0+** y Airflow **3.1.0+**.
 La lista de versiones de Kubernetes probadas para Airflow 3.3.1 es **1.30–1.35**. Esto no es una garantía general para versiones futuras ni una recomendación de elegir EKS 1.30, que es antiguo. Comprueba también los periodos de soporte de EKS y la compatibilidad del provider/chart seleccionado.
 
 La Parte 2 prepara las imágenes, las conexiones a la base de datos/broker, la entrega de DAG, los permisos y el almacenamiento. No des por sentado que el servidor de API, el scheduler, el procesador y el triggerer siempre consumen pocos recursos; mide el número de DAG, el costo de análisis, la carga de la API y la concurrencia de tareas.

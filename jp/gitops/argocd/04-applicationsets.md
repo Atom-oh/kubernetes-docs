@@ -577,7 +577,7 @@ spec:
   - missingkey=error
 ```
 
-PR の例は、プレビュー用クラスター/Namespace を制限する `previews` AppProject を事前に作成している場合にのみ使用してください。GitHub では列挙されたすべての Label が必要です。Label があっても、信頼できない PR コードが安全になるわけではありません。本番用 Secret や cluster-admin 認証情報をプレビュー workload に公開しないでください。デフォルトの削除ポリシーでは、クローズ済みまたは不一致の PR Application は reconciliation 時に削除されます。リソースのクリーンアップは finalizer/preservation 設定に従います。また、`CreateNamespace=true` のみによって作成された Namespace は、自動的に追跡対象のクリーンアップ対象にはなりません。
+PR の例は、プレビュー用クラスター/Namespace を制限する `previews` AppProject を事前に作成している場合にのみ使用してください。GitHub では列挙されたすべての Label が必要です。Label があっても、信頼できない PR コードが安全になるわけではありません。本番用 Secret や cluster-admin 認証情報をプレビュー workload に公開しないでください。デフォルトの削除ポリシーでは、クローズ済みまたは不一致の PR Application は reconciliation 時に削除されます。リソースのクリーンアップは finalizer/preservation 設定に従います。また、`CreateNamespace=true` のみで作成された Namespace は、自動的に追跡されるクリーンアップ対象にはなりません。
 
 ### 9. Cluster Decision Resource Generator
 
@@ -1078,7 +1078,7 @@ ApplicationSet を削除すると、通常は ownerReferences を通じて生成
 
 親のみを削除するには、`kubectl delete applicationset NAME -n argocd --cascade=orphan` を使用します。orphan になった Application は autosync と既存の finalizer を保持します。後で 1 つを削除した場合でも、デプロイ済みリソースが削除される可能性があります。`applicationsSync: create-update` は reconciliation による削除を制限するものであり、親を削除した場合の owner-reference garbage collection を制限するものではありません。
 
-`templatePatch` には `goTemplate: true` が必要です。3.5.4 では Application type を使用した Kubernetes strategic merge patch を使用します。Helm valueFiles など、Application spec 内で merge tag がない array は置換されます。Pod container で使用される名前ベースのマージを想定しないでください。既存設定をクリアする値なしの `spec:`（null）は避け、`spec.project` をパッチせず、信頼できない挿入 string は `toJson` などの関数でエスケープしてください。
+`templatePatch` には `goTemplate: true` が必要です。3.5.4 では Application 型を対象とする Kubernetes strategic merge patch を使用します。Helm valueFiles など、Application spec 内で merge tag がない array は置換されます。Pod container で使用される名前ベースのマージを想定しないでください。既存設定をクリアする値なしの `spec:`（null）は避け、`spec.project` をパッチせず、信頼できない挿入 string は `toJson` などの関数でエスケープしてください。
 
 ## 参照
 

@@ -1,6 +1,6 @@
 # Gestor de paquetes Helm
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 > **Validación local**: Helm 3.21.3 / Helm 4.3.0
 
 Helm renderiza charts y gestiona recursos de Kubernetes y el historial de releases. La versión del chart, appVersion, el tag/digest de la imagen y la revisión del release son valores diferentes. Helm 4 acepta charts existentes de apiVersion:v2, pero el comportamiento de CLI/apply/wait debe verificarse para la versión exacta.
@@ -32,7 +32,7 @@ appVersion: "1.30.4"
 replicaCount: 1
 image:
   repository: nginxinc/nginx-unprivileged
-  tag: "1.30.4-alpine"
+  tag: "1.30.6-alpine"
 service:
   port: 8080
 resources:

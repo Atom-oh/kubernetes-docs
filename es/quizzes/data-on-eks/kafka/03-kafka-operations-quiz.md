@@ -1,8 +1,8 @@
 # Cuestionario de operaciones de Kafka
 
-> **Última actualización**: 12 de septiembre de 2026, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Última actualización**: 16 de octubre de 2026, Strimzi 1.3.0 / Kafka 4.3.1.
 
-Evalúa almacenamiento, escalado de brokers, Cruise Control, actualizaciones graduales y fallos de Kafka administrado por Strimzi en EKS.
+Este cuestionario evalúa conocimientos sobre diseño de almacenamiento, escalado de brokers, reequilibrio de Cruise Control, actualizaciones graduales y gestión de fallos en un clúster Kafka administrado por Strimzi en EKS.
 
 ## Preguntas de opción múltiple
 
@@ -19,7 +19,7 @@ Evalúa almacenamiento, escalado de brokers, Cruise Control, actualizaciones gra
 **Respuesta: C) io2**
 
 **Explicación:**
-io2 Block Express persigue baja latencia, IOPS y durabilidad. Las 256,000 IOPS máximas requieren condiciones como Nitro. Distinga durabilidad de diseño 99.999% y AFR 0.001%. Capacidad e IOPS influyen en coste; elija por mediciones, requisitos y precios.
+io2 Block Express persigue baja latencia, IOPS y durabilidad. Las 256,000 IOPS máximas requieren condiciones como Nitro. Distinga durabilidad de diseño 99.999% y AFR 0.001%. La capacidad y las IOPS influyen en los costos; elija según las mediciones, los requisitos y los precios.
 </details>
 
 2. ¿Qué tipo de `KafkaNodePool` permite varios volúmenes independientes por broker?
@@ -35,10 +35,10 @@ io2 Block Express persigue baja latencia, IOPS y durabilidad. Las 256,000 IOPS m
 **Respuesta: B) `type: jbod`**
 
 **Explicación:**
-JBOD ofrece ID de volúmenes independientes. Kafka 4.3.1 suele preferir directorios con menos logs de particiones para los nuevos, sin garantizar turnos ni equilibrio por bytes. Mover datos existentes es aparte.
+JBOD proporciona ID de volumen independientes. Al crear logs nuevos, Kafka 4.3.1 suele preferir los directorios que contienen menos logs de particiones; esto no garantiza una asignación por turnos ni un equilibrio en bytes. El movimiento de datos existentes es una operación aparte.
 </details>
 
-3. Con 100MB/s sostenidos retenidos, siete días y RF=3, ¿qué fórmula mantiene libre 30% de la capacidad total?
+3. Con una tasa sostenida de 100 MB/s de registros retenidos, una retención de siete días y RF=3, ¿qué fórmula deja libre el 30 % de la capacidad total?
    - A) 100MB/s × 7 días (segundos) × 3
    - B) 100MB/s × 7 días (segundos) × 3 ÷ 0.70
    - C) 100MB/s × 7 días (segundos) ÷ 3
@@ -51,7 +51,7 @@ JBOD ofrece ID de volúmenes independientes. Kafka 4.3.1 suele preferir director
 **Respuesta: B) 100MB/s × 7 días (segundos) × 3 ÷ 0.70**
 
 **Explicación:**
-Añadir 30% al dato deja aproximadamente 23.08% libre del total. Divida datos replicados por 0.70 para conservar 30%. Use bytes sostenidos retenidos/comprimidos, retención real y sobrecarga operativa aparte.
+Sumar un 30 % al tamaño de los datos deja aproximadamente un 23.08 % de capacidad libre. Divida los datos replicados entre 0.70 para mantener libre el 30 %. Use el volumen de bytes de registros retenidos/comprimidos medido de forma sostenida, la retención real y añada por separado la sobrecarga operativa.
 </details>
 
 4. ¿Qué script debe ejecutar manualmente un operador para formatear volúmenes gestionados por Strimzi?
@@ -67,10 +67,10 @@ Añadir 30% al dato deja aproximadamente 23.08% libre del total. Divida datos re
 **Respuesta: C) Ninguno: Strimzi lo gestiona al iniciar el Pod del broker**
 
 **Explicación:**
-Strimzi/scripts inicializan los metadatos de almacenamiento nuevo cuando corresponde. Los datos existentes no se borran en cada arranque. No formatee manualmente volúmenes del Operator de forma arbitraria.
+Strimzi y sus scripts de inicio gestionan la inicialización necesaria de los metadatos de almacenamiento nuevo. Los datos existentes no se borran en cada arranque. No formatee manualmente volúmenes del Operator de forma arbitraria.
 </details>
 
-5. Sin un modo autoRebalance correspondiente, ¿qué hace aumentar replicas del grupo de brokers?
+5. Sin un modo autoRebalance coincidente, ¿qué ocurre al aumentar las réplicas del pool de brokers?
    - A) Redistribuye inmediatamente particiones existentes
    - B) Los nuevos brokers se unen, pero las particiones existentes no se reasignan automáticamente
    - C) Los nuevos brokers pasan a liderar todas las particiones
@@ -83,7 +83,7 @@ Strimzi/scripts inicializan los metadatos de almacenamiento nuevo cuando corresp
 **Respuesta: B) Los nuevos brokers se unen, pero las particiones existentes no se reasignan automáticamente**
 
 **Explicación:**
-Esto describe la ausencia del modo correspondiente. Strimzi 1.2 puede reequilibrar tras aumentar replicas en un grupo existente si se configura add-brokers. Crear/eliminar el grupo es otro evento.
+Esto describe la ausencia del modo correspondiente. Strimzi 1.3.0 puede reequilibrar automáticamente tras aumentar las réplicas de un pool existente cuando se configura la automatización add-brokers. Crear o eliminar un pool es un evento distinto.
 </details>
 
 6. ¿Qué condición de datos debe cumplirse antes de retirar un broker?
@@ -99,12 +99,12 @@ Esto describe la ausencia del modo correspondiente. Strimzi 1.2 puede reequilibr
 **Respuesta: B) Reasignar primero sus particiones a los brokers restantes**
 
 **Explicación:**
-Deben evacuarse todas las réplicas de forma segura. El procedimiento manual incluye temas internos; remove-brokers autoRebalance configurado puede coordinarlo. Conserve la comprobación de broker no vacío y valide ID de retirada.
+Deben evacuarse todas las réplicas de forma segura. El procedimiento manual incluye temas internos; remove-brokers autoRebalance configurado puede coordinarlo. Mantenga la comprobación de que el broker no esté vacío y verifique los ID de los brokers que se retirarán.
 </details>
 
 7. ¿Cuál es el papel principal de Cruise Control?
    - A) Automatizar creación/eliminación de temas
-   - B) Recoger carga de brokers y generar/ejecutar planes de reasignación según objetivos
+   - B) Recopilar métricas de carga de los brokers y generar/ejecutar automáticamente planes de reasignación según objetivos
    - C) Gestionar commits de offsets de grupos
    - D) Renovar certificados TLS automáticamente
 
@@ -112,10 +112,10 @@ Deben evacuarse todas las réplicas de forma segura. El procedimiento manual inc
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Recoger carga de brokers y generar/ejecutar planes de reasignación según objetivos**
+**Respuesta: B) Recopilar métricas de carga de los brokers y generar/ejecutar automáticamente planes de reasignación según objetivos**
 
 **Explicación:**
-Calcula propuestas desde carga/objetivos y ejecuta según aprobación/automatización. Proponer y mover son operaciones distintas; no omita a la ligera métricas insuficientes o fallos de objetivos obligatorios.
+Calcula propuestas a partir de las métricas de carga y los objetivos, y las ejecuta según la política de aprobación/automatización. Generar una propuesta y mover particiones son operaciones distintas; no ignore a la ligera la falta de métricas ni el incumplimiento de objetivos obligatorios.
 </details>
 
 8. ¿Qué `mode` de `KafkaRebalance` mueve particiones a nuevos brokers para darles carga?
@@ -131,7 +131,7 @@ Calcula propuestas desde carga/objetivos y ejecuta según aprobación/automatiza
 **Respuesta: B) `add-brokers`**
 
 **Explicación:**
-Usa los nuevos brokers especificados y necesita sus ID reales. Objetivos, volumen y racks determinan duración/impacto; no siempre es más rápido que full. remove-brokers evacúa antes de retirar.
+El modo add-brokers actúa sobre los brokers nuevos especificados y requiere sus ID reales. Los objetivos, el volumen de datos y las restricciones de racks determinan la duración y el impacto; no siempre es más rápido que full. remove-brokers evacúa los brokers antes de retirarlos.
 </details>
 
 9. ¿Qué patrón actualiza 4.2.1 a 4.3.1 conservando el formato anterior durante la validación?
@@ -147,10 +147,10 @@ Usa los nuevos brokers especificados y necesita sus ID reales. Objetivos, volume
 **Respuesta: B) Elevar version a 4.3.1, conservar metadataVersion 4.2-IV1 y validar antes de pasar a 4.3-IV0**
 
 **Explicación:**
-Retiene explícitamente metadataVersion para validar. Si se omite, Strimzi puede actualizar metadatos tras los binarios. El Operator debe soportar ambas versiones y el formato posterior puede impedir downgrade.
+Conserva explícitamente metadataVersion para validar. Si se omite, Strimzi puede actualizar los metadatos tras la actualización de la versión binaria. El Operator debe ser compatible con las versiones actual y objetivo de Kafka; un cambio posterior de formato puede impedir volver a una versión anterior.
 </details>
 
-10. ¿Qué recurso limita desalojos voluntarios de Kafka Strimzi?
+10. ¿Qué recurso limita los desalojos voluntarios de Pods en un clúster Kafka gestionado por Strimzi?
     - A) ResourceQuota
     - B) NetworkPolicy
     - C) PodDisruptionBudget
@@ -163,12 +163,12 @@ Retiene explícitamente metadataVersion para validar. Si se omite, Strimzi puede
 **Respuesta: C) PodDisruptionBudget**
 
 **Explicación:**
-Strimzi 1.2 normalmente crea uno por clúster, cubriendo Pods Kafka de todos sus grupos. Limita desalojos voluntarios, no fallos nodo/AZ o borrado forzado.
+Strimzi 1.3.0 normalmente crea un PDB de Kafka por clúster que cubre los Pods de Kafka de todos sus pools. Limita los desalojos voluntarios, no los fallos de nodo/AZ ni el borrado forzado.
 </details>
 
 ## Preguntas breves
 
-11. ¿Qué configuración de ISR mínimo interviene en la disponibilidad durante rollouts?
+11. ¿Qué configuración de ISR mínimo se tiene en cuenta al comprobar la disponibilidad durante una actualización gradual?
 
 <details>
 
@@ -177,7 +177,7 @@ Strimzi 1.2 normalmente crea uno por clúster, cubriendo Pods Kafka de todos sus
 **Respuesta: `min.insync.replicas`**
 
 **Explicación:**
-Es una entrada importante, no garantía incondicional durante cualquier rollout. Verifique ISR real, cuórum, almacenamiento/red y timeouts/reintentos cliente.
+Es un factor importante para la disponibilidad, no una garantía incondicional durante cualquier actualización gradual. Verifique el ISR real, el cuórum del controlador, el almacenamiento y la red, además de los tiempos de espera y reintentos del cliente.
 </details>
 
 12. ¿Qué componente debe soportar Kafka actual y objetivo antes de actualizar?
@@ -204,21 +204,21 @@ Verifique una versión compatible con ambas. No hace falta actualizar el Operato
 --generate muestra asignaciones actuales/propuestas sin mover. Extraiga Proposed y revise RF, ID, racks y capacidad. --verify completado puede borrar throttles si no se usa preserve-throttles.
 </details>
 
-14. Distinga la durabilidad de acks=all de una garantía de éxito durante un rollout.
+14. Distinga la durabilidad de acks=all de una garantía de éxito durante una actualización gradual.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: La durabilidad mejora mientras hay copias sincronizadas y líder/cuórum viables, pero las solicitudes pueden agotar su tiempo o necesitar reintentos.**
+**Respuesta: La durabilidad es mayor mientras haya copias sincronizadas y un líder/cuórum viable, pero aun así las solicitudes pueden agotar el tiempo de espera o requerir reintentos.**
 
 **Explicación:**
-acks=all espera al ISR actual completo y exige su mínimo. Deben conservarse copias sincronizadas y condiciones viables de líder/cuórum/storage. Gestione timeouts, reintentos y procesamiento repetido aparte.
+acks=all espera al ISR completo actual mientras se cumple el mínimo de réplicas en sincronía. Deben mantenerse copias sincronizadas y condiciones viables de líder/cuórum/almacenamiento. Gestione timeouts, reintentos y procesamiento repetido aparte.
 </details>
 
 ## Ejercicios prácticos
 
-15. Defina un grupo de brokers para entorno nuevo con tres volúmenes gp3 de 300Gi.
+15. Defina un ejemplo de pool de brokers para un entorno nuevo con tres volúmenes gp3 de 300 Gi.
 
 <details>
 
@@ -281,7 +281,7 @@ spec:
 ```
 
 **Explicación:**
-Es una definición nueva, no una orden de reducir un volumen ampliado a 500Gi. Usa gp3-kafka de la Parte 2 y selecciona un volumen de metadatos. Retain/deleteClaim no son backups.
+Es una definición nueva, no una orden de reducir un volumen ampliado a 500Gi. Usa gp3-kafka de la Parte 2 y selecciona un volumen de metadatos. Los ajustes Retain y deleteClaim no sustituyen las copias de seguridad.
 </details>
 
 16. Cree `KafkaRebalance` en modo `full` para `my-cluster` y escriba la aprobación de la propuesta.
@@ -317,10 +317,10 @@ kubectl -n kafka get kafkarebalance reviewed-full-rebalance -w
 ```
 
 **Explicación:**
-Cruise Control debe estar habilitado con métricas/objetivos válidos. Autoaprobación es false: inspeccione ProposalReady. Distinga solicitudes manuales y de escalado automático.
+Cruise Control debe estar habilitado con métricas/objetivos válidos. La autoaprobación está desactivada (false): inspeccione ProposalReady. Distinga las solicitudes manuales de las solicitudes de escalado automático.
 </details>
 
-17. Tras ampliar brokers, use ID reales y administración TLS para generar, extraer, ejecutar y comprobar reasignación de orders.
+17. Tras ampliar el número de brokers, use sus ID reales y la configuración TLS de administración para generar, extraer, ejecutar y comprobar la reasignación del tema orders.
 
 <details>
 
@@ -352,7 +352,7 @@ kafka-reassign-partitions.sh \
 ```
 
 **Explicación:**
-Mantenga archivos donde corre la CLI. Use ID y configuración TLS reales y extraiga Proposed, no Current. Consulte movimiento con --verify --preserve-throttles y después URP/min-ISR/offline aparte. Mover un tema no demuestra evacuación completa del broker.
+Mantenga los archivos en el entorno donde se ejecuta la CLI. Use ID de brokers y configuración TLS de administración reales; extraiga Proposed, no Current. Consulte el estado del movimiento con --verify --preserve-throttles y después compruebe por separado URP, min-ISR y particiones fuera de línea. Mover un tema no demuestra que el broker se haya evacuado por completo.
 </details>
 
 ---

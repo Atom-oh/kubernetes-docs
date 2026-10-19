@@ -1,37 +1,37 @@
 # FluxCD
 
 > **Línea base de revisión**: Flux 2.9.5 autogestionado; actualizado al parche 2.9.6 tras revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-FluxCD es un conjunto de soluciones de entrega continua y progresiva para Kubernetes que son abiertas y extensibles. FluxCD se graduó de la CNCF en noviembre de 2022, lo que lo convierte en una de las herramientas GitOps más maduras del ecosistema cloud-native.
+FluxCD es un conjunto de soluciones de entrega continua y progresiva para Kubernetes que son abiertas y extensibles. FluxCD se graduó de la CNCF en noviembre de 2022, lo que lo convierte en una de las herramientas GitOps más maduras del ecosistema nativo de la nube.
 
-Este capítulo se orienta a **Flux 2.9.6 autogestionado**. La comprobación previa de la CLI requiere al menos Kubernetes 1.33; revise también la ventana de soporte real de la distribución. Revise el procedimiento de migración de API 2.7+ antes de actualizar desde 2.6 o una versión anterior. Las API OCIRepository/Bucket/image de abajo usan v1; Notification Provider/Alert permanecen en v1beta3.
+Este capítulo se orienta a **Flux 2.9.6 autogestionado**. La comprobación previa de la CLI requiere Kubernetes 1.33 como mínimo; revisa también el periodo de soporte real de la distribución. Consulta el procedimiento de migración de API 2.7+ antes de actualizar desde la versión 2.6 o anteriores. Las API OCIRepository, Bucket e image mencionadas a continuación usan v1; Notification Provider/Alert siguen en v1beta3.
 
-Los ejemplos usan recursos `flux-system` confiables y propiedad de la plataforma. Las Kustomizations repetidas son alternativas o fragmentos para componer, no una secuencia de sustituciones. Prepare las URL, rutas, namespaces y Secrets reales del repositorio. El uso por tenants requiere namespaces dedicados, RBAC/impersonation mediante `spec.serviceAccountName` y restricciones de referencias entre namespaces.
+Los ejemplos usan recursos `flux-system` confiables y gestionados por la plataforma. Las definiciones Kustomization repetidas son alternativas o fragmentos que puedes combinar; no forman una secuencia de sustituciones. Prepara las URL, rutas, espacios de nombres y Secrets reales del repositorio. El uso multiinquilino requiere espacios de nombres dedicados, RBAC e impersonación mediante `spec.serviceAccountName`, además de restricciones para las referencias entre espacios de nombres.
 
 ## Introducción
 
-FluxCD implementa los principios GitOps mediante repositorios Git como fuente de verdad para definir el estado deseado de sus clústeres Kubernetes. Reconcilia periódicamente los cambios de las fuentes y la desviación. Los fallos de autorización, disponibilidad y health check pueden retrasar o impedir la convergencia.
+FluxCD implementa los principios GitOps mediante repositorios Git como fuente de verdad para definir el estado deseado de los clústeres de Kubernetes. Reconcilia periódicamente los cambios de las fuentes y la desviación. Los fallos de autorización, disponibilidad y de las comprobaciones de estado pueden retrasar o impedir la convergencia.
 
 ### Características principales
 
 - **GitOps nativo**: Creado desde cero para flujos de trabajo GitOps
-- **Multi-tenancy**: Admite varios equipos con configuraciones aisladas
-- **Multi-cluster**: Gestiona varios clústeres desde un único repositorio Git
-- **Extensible**: Arquitectura modular con controllers especializados
+- **Multiinquilino**: Admite varios equipos con configuraciones aisladas
+- **Multiclúster**: Gestiona varios clústeres desde un único repositorio Git
+- **Extensible**: Arquitectura modular con controladores especializados
 - **Kubernetes nativo**: Usa Custom Resource Definitions (CRDs) para la configuración
 
 ## Descripción general de la arquitectura
 
-FluxCD consta de un conjunto de controllers especializados que trabajan juntos para implementar flujos de trabajo GitOps:
+FluxCD consta de un conjunto de controladores especializados que trabajan juntos para implementar flujos de trabajo GitOps:
 
-![Controllers de fuente, aplicación/entrega y notificaciones de Flux, con los controllers opcionales image-reflector e image-automation que separan los análisis del registro de las actualizaciones de Git.](../.gitbook/assets/en-gitops-02-fluxcd-0.png)
+![Controladores de fuente, aplicación/entrega y notificaciones de Flux, con los controladores opcionales image-reflector e image-automation que separan los análisis del registro de las actualizaciones de Git.](../.gitbook/assets/en-gitops-02-fluxcd-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-02-fluxcd-0.html)
 
 ## Componentes principales
 
-La instalación predeterminada incluye los controllers source/kustomize/helm/notification. La automatización de imágenes también requiere **image-reflector-controller e image-automation-controller**. El source-watcher opcional proporciona composición de fuentes mediante API como ArtifactGenerator.
+La instalación predeterminada incluye los controladores source/kustomize/helm/notification. La automatización de imágenes también requiere los controladores **image-reflector-controller e image-automation-controller**. El source-watcher opcional proporciona composición de fuentes mediante API como ArtifactGenerator.
 
 | Secret | Contenido requerido |
 |---|---|
@@ -40,15 +40,15 @@ La instalación predeterminada incluye los controllers source/kustomize/helm/not
 | slack-bot-token | Token OAuth de Slack Bot bajo la clave `token` |
 | github-webhook-token | El `token` compartido con el webhook de GitHub |
 
-Prepare los ConfigMaps/Secrets a los que se hace referencia en el mismo namespace que el recurso Flux. Proporcione los valores reales mediante una gestión de secretos protegida, no mediante archivos Git de texto sin formato.
+Prepara los ConfigMaps/Secrets a los que se hace referencia en el mismo espacio de nombres que el recurso Flux. Proporciona los valores reales mediante una gestión de secretos protegida, no mediante archivos Git de texto sin formato.
 
-### Source Controller
+### Controlador Source
 
-El Source Controller se encarga de obtener artifacts de fuentes externas. Admite varios tipos de fuentes:
+El controlador Source se encarga de obtener artefactos de fuentes externas. Admite varios tipos de fuentes:
 
 #### GitRepository
 
-Realiza seguimiento de un repositorio Git y lo pone a disposición de otros controllers:
+Sigue un repositorio Git y lo pone a disposición de otros controladores:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -67,7 +67,7 @@ spec:
 
 #### HelmRepository
 
-Realiza seguimiento de un repositorio de charts Helm:
+Sigue un repositorio de charts Helm:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -82,9 +82,9 @@ spec:
 
 #### OCIRepository
 
-Esto describe un **artifact OCI que contiene manifests/contenido Helm para Flux**, no una imagen de contenedor de carga de trabajo. Publique primero un artifact compatible y fije su tag/digest.
+Esto describe un **artefacto OCI con manifiestos o contenido Helm para Flux**, no una imagen de contenedor de carga de trabajo. Publica primero un artefacto compatible y fija su etiqueta o digest.
 
-Realiza seguimiento de artifacts almacenados en registros compatibles con OCI (incluidos registros de contenedores):
+Sigue los artefactos almacenados en registros compatibles con OCI (incluidos registros de contenedores):
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -101,9 +101,9 @@ spec:
 
 #### Bucket
 
-El ejemplo de AWS presupone una cadena de credenciales predeterminada configurada, como IRSA/Pod Identity de source-controller. Prepare la autenticación de EKS y los permisos del bucket que se describen a continuación.
+El ejemplo de AWS presupone que source-controller tiene configurada una cadena de credenciales predeterminada, como IRSA o EKS Pod Identity. Prepara la autenticación de EKS y los permisos del bucket que se describen a continuación.
 
-Realiza seguimiento de artifacts almacenados en almacenamiento compatible con S3:
+Sigue los artefactos guardados en sistemas compatibles con S3:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -119,13 +119,13 @@ spec:
   region: us-east-1
 ```
 
-### Kustomize Controller
+### Controlador de Kustomize
 
-El Kustomize Controller aplica overlays de Kustomize y manifests de Kubernetes simples desde las fuentes.
+El controlador de Kustomize aplica capas de Kustomize y manifiestos de Kubernetes simples desde las fuentes.
 
 #### Kustomization CRD
 
-`targetNamespace` no crea un namespace. Créelo previamente o incluya su manifest Namespace en la Kustomization. `prune: true` puede eliminar recursos gestionados previamente que se hayan quitado de la fuente; revise los límites de la fuente y la política de eliminación.
+`targetNamespace` no crea un espacio de nombres. Créalo previamente o incluye un manifiesto Namespace en la Kustomization. `prune: true` puede eliminar recursos gestionados previamente que se hayan quitado de la fuente; revisa los límites de la fuente y la política de eliminación.
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -151,7 +151,7 @@ spec:
 
 #### Sustitución de variables
 
-Las entradas de `substituteFrom` sobrescriben las entradas anteriores; `substitute` en línea tiene precedencia. Las sustituciones de Secret entran en los manifests renderizados, así que controle su salida/acceso. El kustomize-controller 1.9.6 incluido con Flux 2.9.6 habilita `StrictPostBuildSubstitutions` de forma predeterminada y falla si faltan variables sin valores predeterminados. Compruebe si una implementación existente deshabilita explícitamente esa feature gate. Los campos numéricos aún deben renderizarse como valores numéricos de Kubernetes.
+Las entradas de `substituteFrom` sobrescriben las entradas anteriores; `substitute` en línea tiene precedencia. Las sustituciones de Secret entran en los manifiestos renderizados, así que controla la salida y el acceso. El kustomize-controller 1.9.6 incluido con Flux 2.9.6 habilita `StrictPostBuildSubstitutions` de forma predeterminada y falla cuando falta una variable sin valor predeterminado. Comprueba si una implementación existente deshabilita explícitamente esa feature gate. Los campos numéricos aún deben renderizarse como valores numéricos de Kubernetes.
 
 FluxCD admite la sustitución de variables mediante `postBuild`:
 
@@ -180,9 +180,9 @@ spec:
   targetNamespace: production
 ```
 
-#### Health checks
+#### Comprobaciones de estado
 
-Defina health checks personalizados para los recursos implementados:
+Define comprobaciones de estado personalizadas para los recursos implementados:
 
 ```yaml
 spec:
@@ -198,9 +198,9 @@ spec:
   timeout: 5m
 ```
 
-### Helm Controller
+### Controlador de Helm
 
-El Helm Controller gestiona las releases de charts Helm de forma declarativa.
+El controlador de Helm gestiona de forma declarativa las releases de charts de Helm.
 
 #### HelmRelease CRD
 
@@ -237,9 +237,9 @@ spec:
 
 #### Anulaciones de valores
 
-Las entradas `valuesFrom` posteriores sobrescriben las anteriores, seguidas por los valores en línea. Una referencia `targetPath` puede sobrescribir incluso valores en línea, así que gestione explícitamente ese caso.
+Las entradas `valuesFrom` posteriores sobrescriben las anteriores, seguidas por los valores en línea. Una referencia `targetPath` puede sobrescribir incluso valores en línea, así que gestiona ese caso de forma explícita.
 
-Anule valores Helm desde varias fuentes:
+Anula los valores de Helm desde varias fuentes:
 
 ```yaml
 spec:
@@ -256,9 +256,9 @@ spec:
 
 #### Detección de desviaciones
 
-Ignore las réplicas solo cuando otro controller, como HPA, sea su propietario. Las reglas de ignorado innecesarias pueden ocultar desviaciones manuales.
+Ignora las réplicas solo cuando otro controlador, como HPA, sea su propietario. Las reglas innecesarias para ignorar recursos pueden ocultar desviaciones manuales.
 
-Habilite la detección de desviaciones para garantizar que los recursos implementados coincidan con el estado deseado:
+Habilita la detección de desviaciones para garantizar que los recursos implementados coincidan con el estado deseado:
 
 ```yaml
 spec:
@@ -271,15 +271,15 @@ spec:
         kind: Deployment
 ```
 
-### Notification Controller
+### Controlador de notificaciones
 
-El Notification Controller gestiona eventos entrantes y salientes.
+El controlador de notificaciones gestiona eventos entrantes y salientes.
 
-#### Providers
+#### Proveedores
 
-El ejemplo usa la API de Slack Bot. Configure `chat:write`, invite al bot al canal de destino y sustituya channel por su ID real. Una URL de Incoming Webhook no es un token de Bot.
+El ejemplo usa la API de Slack Bot. Configura el permiso `chat:write`, invita al bot al canal de destino y sustituye `channel` por el ID real del canal. Una URL de Incoming Webhook no equivale a un token de bot.
 
-Configure providers de notificaciones para las alertas:
+Configura los proveedores de notificaciones para las alertas:
 
 ```yaml
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
@@ -295,7 +295,7 @@ spec:
   address: https://slack.com/api/chat.postMessage
 ```
 
-Los providers admitidos incluyen:
+Los proveedores admitidos incluyen:
 - Slack
 - Microsoft Teams Workflows (`msteams`)
 - Discord
@@ -306,9 +306,9 @@ Los providers admitidos incluyen:
 - Grafana
 - Webhooks genéricos
 
-#### Alerts
+#### Alertas
 
-Defina alertas para los eventos de FluxCD:
+Define alertas para los eventos de FluxCD:
 
 ```yaml
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
@@ -333,9 +333,9 @@ spec:
 
 #### Receivers (Webhooks)
 
-La creación de un Receiver no expone un endpoint de Internet. Combine un ingress TLS revisado para el Service webhook-receiver con status.webhookPath, configure el mismo token en GitHub y conserve la verificación de firma para type: github.
+La creación de un recurso Receiver no expone por sí sola un endpoint a Internet. Combina un Ingress previamente revisado que use TLS y dirija al Service `webhook-receiver` con `status.webhookPath`; configura el mismo token en GitHub y conserva la verificación de firma para `type: github`.
 
-Configure webhooks para eventos externos:
+Configura los webhooks para eventos externos:
 
 ```yaml
 apiVersion: notification.toolkit.fluxcd.io/v1
@@ -357,13 +357,13 @@ spec:
 
 ### Automatización de imágenes
 
-FluxCD puede actualizar automáticamente tags de imágenes de contenedor en repositorios Git.
+FluxCD puede actualizar automáticamente etiquetas de imágenes de contenedor en repositorios Git.
 
 #### ImageRepository
 
-El image-reflector-controller analiza tags y evalúa ImagePolicy. No crea imágenes, analiza vulnerabilidades ni realiza pulls de imágenes de cargas de trabajo.
+El image-reflector-controller analiza las etiquetas y evalúa ImagePolicy. No crea imágenes, analiza vulnerabilidades ni descarga imágenes de cargas de trabajo.
 
-Analice registros de contenedores para detectar tags nuevos:
+Analiza registros de contenedores para detectar etiquetas nuevas:
 
 ```yaml
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -380,7 +380,7 @@ spec:
 
 #### ImagePolicy
 
-Defina políticas para seleccionar tags de imagen:
+Define políticas para seleccionar etiquetas de imagen:
 
 ```yaml
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -401,7 +401,7 @@ spec:
 
 #### ImageUpdateAutomation
 
-Los campos YAML necesitan marcadores de política para actualizarse. IfNotPresent refleja el digest de un tag seleccionado; no es validación de firmas o vulnerabilidades. Esta automatización hace push a una rama dedicada flux/image-updates. La creación/aprobación de PR hacia main es un flujo de CI/operador independiente, no proporcionado automáticamente por Flux. Reserve la rama para la automatización y conceda acceso de escritura a sus credenciales Git.
+Los campos YAML que quieras actualizar deben incluir marcadores de política. La estrategia `IfNotPresent` refleja el digest de una etiqueta seleccionada; no valida firmas ni vulnerabilidades. Esta automatización sube los cambios a la rama dedicada flux/image-updates. La creación o aprobación de un PR dirigido a main forma parte de un flujo independiente de CI u operador, que Flux no proporciona automáticamente. Reserva la rama para la automatización y concede a las credenciales de Git acceso de escritura.
 
 ```yaml
 # Deployment Pod-template fragment; the policy marker is required.
@@ -413,7 +413,7 @@ spec:
           image: ghcr.io/my-org/my-app:1.0.0 # {"$imagepolicy": "flux-system:my-app"}
 ```
 
-Automatice commits de Git cuando se detecten nuevas imágenes:
+Automatiza los commits de Git cuando se detecten nuevas imágenes:
 
 ```yaml
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -465,7 +465,7 @@ spec:
 
 ### Uso de la CLI de Flux
 
-Ejemplo de instalación de la release verificada Linux amd64/arm64. Para otros sistemas operativos, siga la [guía oficial de instalación de la CLI](https://fluxcd.io/flux/installation/#install-the-flux-cli) y verifique la versión instalada.
+Ejemplo de instalación de la versión publicada y verificada para Linux amd64/arm64. Para otros sistemas operativos, sigue la [guía oficial de instalación de la CLI](https://fluxcd.io/flux/installation/#install-the-flux-cli) y verifica la versión instalada.
 
 ```bash
 set -euo pipefail
@@ -493,7 +493,7 @@ flux --version
 
 ### Bootstrap
 
-Bootstrap escribe la configuración en Git e instala controllers en el clúster. Verifique el kubecontext y la autorización del repositorio, y elija GitHub o GitLab. my-org representa una organización/grupo; use --personal solo para una cuenta de usuario. Proporcione tokens de forma segura mediante variables de entorno. Estos ejemplos incluyen controllers de automatización de imágenes. Si automatiza el propio repositorio de bootstrap, habilite por separado el acceso de escritura para su deploy key.
+El proceso de bootstrap escribe la configuración en Git e instala los controladores en el clúster. Verifica el contexto de `kubectl` y la autorización del repositorio, y elige GitHub o GitLab. `my-org` representa una organización o grupo; usa `--personal` solo con una cuenta personal. Proporciona los tokens de forma segura mediante variables de entorno. Estos ejemplos instalan también los controladores de automatización de imágenes. Si automatizas el repositorio de bootstrap, habilita por separado el acceso de escritura de la clave de despliegue.
 
 ```bash
 kubectl config current-context
@@ -531,7 +531,7 @@ flux get all
 flux get kustomizations --watch
 ```
 
-## Multi-cluster con Flux
+## Multiclúster con Flux
 
 FluxCD admite la gestión de varios clústeres desde un único repositorio.
 
@@ -575,9 +575,9 @@ fleet-infra/
 
 ### Dependencias de Kustomization en un plano de control
 
-`dependsOn` espera la condición Ready de los objetos Kustomization observados por este plano de control Flux. Son dos objetos en un clúster, no una barrera entre clústeres. `wait: true` hace que la preparación de la infraestructura incluya la salud de las cargas de trabajo. El GitRepository de bootstrap predeterminado se llama `flux-system`, que este ejemplo utiliza como su `sourceRef`.
+`dependsOn` espera la condición Ready de los objetos Kustomization observados por este plano de control Flux. Son dos objetos en un clúster, no una barrera entre clústeres. `wait: true` hace que la preparación de la infraestructura incluya la salud de las cargas de trabajo. El GitRepository de bootstrap predeterminado se llama `flux-system`, nombre que el ejemplo utiliza en `sourceRef`.
 
-Inicialice cada clúster independiente con su propio contexto/ruta, o configure explícitamente un `kubeConfig` remoto y la autorización. Desde Flux 2.9.5, los kubeconfigs de Secret rechazan referencias a archivos locales en `certificate-authority`, `tokenFile`, `client-certificate` y `client-key`. Proporcione las credenciales/certificados requeridos como datos en línea protegidos o use una configuración de workload identity compatible.
+Inicializa cada clúster independiente con su propio contexto/ruta, o configura explícitamente un `kubeConfig` remoto y la autorización. Desde Flux 2.9.5, los kubeconfigs de Secret rechazan referencias a archivos locales en `certificate-authority`, `tokenFile`, `client-certificate` y `client-key`. Proporciona las credenciales/certificados requeridos como datos en línea protegidos o usa una configuración compatible de identidad de carga de trabajo.
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -613,21 +613,21 @@ spec:
 
 ## FluxCD en Amazon EKS
 
-### Autenticación de AWS por controller
+### Autenticación de AWS por controlador
 
-Este ejemplo utiliza **IRSA en el nivel del controller**. Primero configure el proveedor OIDC de EKS, la confianza de rol para el subject ServiceAccount exacto y la audiencia sts.amazonaws.com, además de los permisos de recursos. Una anotación role-ARN no crea confianza ni políticas. EKS Pod Identity requiere en cambio la configuración de su asociación/agente; no se configura con la anotación de IRSA.
+Este ejemplo utiliza **IRSA a nivel de controlador**. Primero configura el proveedor OIDC de EKS, la relación de confianza del rol con el subject exacto de la ServiceAccount y la audiencia `sts.amazonaws.com`, además de los permisos necesarios para los recursos. Una anotación `role-ARN` no crea confianza ni políticas. EKS Pod Identity requiere, en cambio, configurar la asociación y el agente correspondientes; no se configura con la anotación de IRSA.
 
-| Controller | Propósito del acceso a AWS |
+| Controlador | Propósito del acceso a AWS |
 |---|---|
-| source-controller | Artifacts OCI/Helm, Buckets S3, fuentes Git de CodeCommit |
-| image-reflector-controller | Análisis de tag/digest de imágenes de cargas de trabajo de ECR |
-| image-automation-controller | Permisos de Git clone/push al usar directamente CodeCommit |
+| source-controller | Artefactos OCI/Helm, buckets de S3, fuentes Git de CodeCommit |
+| image-reflector-controller | Análisis de etiquetas/digest de imágenes de cargas de trabajo de ECR |
+| image-automation-controller | Permisos para clonar y subir cambios con Git al usar directamente CodeCommit |
 | kustomize-controller | Descifrado de SOPS KMS o reconciliación de EKS remoto |
 | helm-controller | Reconciliación de releases Helm en EKS remoto |
 
-Conceder un rol a source-controller no autentica todos los demás controllers. Para multi-tenancy, revise por separado la workload identity compatible en el nivel de objeto y su feature gate, ServiceAccount y configuración de RBAC.
+Asignar un rol a source-controller no autentica a los demás controladores. En entornos multiinquilino, revisa por separado la identidad de carga de trabajo permitida para el objeto, la feature gate que la habilita, la ServiceAccount y la configuración de RBAC.
 
-Fusione este parche en flux-system/kustomization.yaml bajo la ruta de bootstrap y gestiónelo en Git, conservando los parches/recursos existentes. Un cambio únicamente en ServiceAccount no vuelve a inyectar IRSA en los Pods existentes; implemente de nuevo el controller afectado después de la reconciliación.
+Fusiona este parche en flux-system/kustomization.yaml, dentro de la ruta de bootstrap, y gestiónalo en Git sin eliminar los parches ni recursos existentes. Un cambio exclusivo de la ServiceAccount no vuelve a inyectar IRSA en los Pods existentes; después de la reconciliación, vuelve a desplegar el controlador afectado.
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -653,9 +653,9 @@ kubectl rollout restart deployment/source-controller -n flux-system
 kubectl rollout status deployment/source-controller -n flux-system --timeout=180s
 ```
 
-### Artifacts GitOps en ECR
+### Artefactos de GitOps en ECR
 
-Estos permisos de source-controller leen un repositorio dedicado gitops-artifacts. GetAuthorizationToken no admite la delimitación al ARN del repositorio, por lo que su recurso es * con una condición de región solicitada. Las acciones de lectura de contenido están delimitadas al ARN del repositorio. Sustituya los valores de cuenta/región/repositorio.
+Estos permisos permiten a source-controller leer el repositorio dedicado `gitops-artifacts`. La acción `GetAuthorizationToken` no admite limitar el alcance al ARN del repositorio; por eso, usa el recurso `*` y añade a la política una condición para la región solicitada. Las acciones de lectura de contenido están delimitadas al ARN del repositorio. Sustituye los valores de cuenta, región y repositorio.
 
 ```json
 {
@@ -698,11 +698,11 @@ spec:
   provider: aws
 ```
 
-OCIRepository lee artifacts de manifest/Helm para Flux. No implementa imágenes de contenedor de cargas de trabajo ni concede permisos de image pull de EKS node/Fargate. El análisis de ImageRepository de ECR necesita autenticación independiente de image-reflector-controller y permisos de lectura del registro.
+OCIRepository lee artefactos OCI con manifiestos o contenido Helm para Flux. No implementa imágenes de contenedor de cargas de trabajo ni concede permisos para descargarlas en nodos de EKS o en Fargate. El análisis de ImageRepository de ECR necesita autenticación independiente de image-reflector-controller y permisos de lectura del registro.
 
-### Fuente Bucket de S3
+### Fuente S3 de tipo Bucket
 
-Use un bucket de artifacts dedicado y agregue los siguientes permisos al rol del controller. El cifrado KMS gestionado por el cliente además necesita la política de clave y kms:Decrypt; el acceso entre cuentas también requiere la política del bucket.
+Usa un bucket de artefactos dedicado y añade los permisos siguientes al rol del controlador. Si usas cifrado KMS gestionado por el cliente, también necesitas la política de clave y `kms:Decrypt`; el acceso entre cuentas requiere además la política del bucket.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -738,7 +738,7 @@ spec:
 
 ### Fuente HTTPS de CodeCommit
 
-Esta es una **integración de fuente para una instalación Flux existente**, no un procedimiento de bootstrap ni de creación de credenciales IAM. source-controller 1.9.6 (incluido con Flux 2.9.6) admite provider: aws con un endpoint HTTPS de CodeCommit e IRSA/Pod Identity. Agregue el permiso de lectura a su rol y haga referencia a este GitRepository desde la Kustomization deseada.
+Esta es una **integración de fuentes para una instalación Flux existente**, no un procedimiento de bootstrap ni de creación de credenciales de IAM. source-controller 1.9.6 (incluido con Flux 2.9.6) admite `provider: aws` con un endpoint HTTPS de CodeCommit e IRSA o EKS Pod Identity. Añade el permiso de lectura al rol del controlador y referencia este GitRepository desde la Kustomization deseada.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -767,37 +767,37 @@ spec:
 }
 ```
 
-Si ImageUpdateAutomation hace push a CodeCommit, su identidad de controller/objeto también necesita permisos GitPull/GitPush y una política de rama/PR dedicada. SSH requiere un ID de clave SSH registrado en IAM como nombre de usuario y la clave privada correspondiente; una URL ssh:// o una opción de generación de claves de la CLI no registra una clave IAM.
+Si ImageUpdateAutomation envía cambios a CodeCommit, la identidad de su controlador u objeto también necesita permisos GitPull/GitPush y una política específica de rama y PR. SSH requiere como nombre de usuario el ID de una clave SSH registrada en IAM y la clave privada correspondiente; una URL ssh:// o una opción de generación de claves de la CLI no registra una clave IAM.
 
 ## Prácticas recomendadas
 
 ### Estructura del repositorio
 
-- Use un monorepo para equipos pequeños
-- Use repositorios separados para infraestructura y aplicaciones en organizaciones grandes
-- Implemente overlays específicos por entorno con Kustomize
+- Usa un monorepo para equipos pequeños
+- Usa repositorios separados para infraestructura y aplicaciones en organizaciones grandes
+- Implementa capas específicas por entorno con Kustomize
 
 ### Seguridad
 
-- Gestione los ciclos de vida de Secret/clave con SOPS/Sealed Secrets o External Secrets Operator
-- Configure namespaces de tenant, RBAC/impersonation basado en spec.serviceAccountName y restricciones de referencias entre namespaces
-- Habilite la validación de webhooks para receivers
+- Gestiona los ciclos de vida de los Secret y las claves con SOPS/Sealed Secrets o External Secrets Operator
+- Configura espacios de nombres para inquilinos, RBAC e impersonación mediante spec.serviceAccountName y restricciones para las referencias entre espacios de nombres
+- Habilita la validación de webhooks para receivers
 
 ### Monitorización
 
-- Configure alertas para fallos de reconciliación
-- Exporte métricas a Prometheus
-- Configure dashboards para los componentes de Flux
+- Configura alertas para fallos de reconciliación
+- Exporta métricas a Prometheus
+- Configura paneles para los componentes de Flux
 
 ### Rendimiento
 
-- Ajuste los intervalos de reconciliación según la frecuencia de cambios
-- Use caché para repositorios Helm
-- Implemente health checks con timeouts adecuados
+- Ajusta los intervalos de reconciliación según la frecuencia de cambios
+- Usa la caché para repositorios Helm
+- Implementa comprobaciones de estado con tiempos de espera adecuados
 
 ## Referencias
 
-- [Release de Flux 2.9.5 y aviso de endurecimiento de kubeconfig](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
+- [Versión de Flux 2.9.5 y aviso de seguridad de kubeconfig](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
 - [Notas de la versión de Flux 2.9.6](https://github.com/fluxcd/flux2/releases/tag/v2.9.6)
 - [Instalación de Flux](https://fluxcd.io/flux/installation/)
 - [Integración de AWS](https://fluxcd.io/flux/integrations/aws/)
@@ -809,4 +809,4 @@ Si ImageUpdateAutomation hace push a CodeCommit, su identidad de controller/obje
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido, pruebe el [cuestionario de FluxCD](../quizzes/gitops/02-fluxcd-quiz.md).
+Para comprobar lo que aprendiste, prueba el [cuestionario de FluxCD](../quizzes/gitops/02-fluxcd-quiz.md).

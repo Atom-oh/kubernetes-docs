@@ -1,36 +1,36 @@
 # Linkerd multiclúster
 
-> **Última actualización**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 / charts 2026.10.1 · Gateway API 1.5.1
 
-Linkerd refleja información de servicios seleccionados entre clústeres. Esto requiere tanto una ruta de descubrimiento funcional del plano de control como la ruta de red adecuada del plano de datos. No fusiona clústeres, replica datos de aplicaciones ni duplica cada solicitud para pruebas con tráfico reflejado.
+Linkerd refleja información de servicios seleccionados entre clústeres. Para ello, necesita una ruta de descubrimiento funcional en el plano de control y la conectividad adecuada en el plano de datos. No fusiona los clústeres, no replica los datos de las aplicaciones ni duplica cada solicitud para probar con una copia del tráfico.
 
 ## Modos de comunicación
 
-| Modo | Descubrimiento/selección de servicios | Ruta de datos e identidad |
+| Modo | Descubrimiento y selección de servicios | Ruta de datos e identidad |
 |---|---|---|
 | Jerárquico | De forma predeterminada, `mirror.linkerd.io/exported=true` | Proxy cliente de origen → gateway del clúster de destino → servidor; la identidad original del cliente se pierde en el gateway |
 | Plano / descubrimiento remoto | `mirror.linkerd.io/exported=remote-discovery` | Conexiones directas entre Pods de distintos clústeres; se conserva la identidad original de la carga de trabajo |
-| Service federado | `mirror.linkerd.io/federated=member` | Unión de servicios con el mismo nombre/espacio de nombres sobre una red plana; requiere clientes incorporados a la malla |
+| Service federado | `mirror.linkerd.io/federated=member` | Agrupación de servicios con el mismo nombre y namespace sobre una red plana; requiere clientes incorporados a la malla |
 
-El controlador de reflejo del clúster de origen observa la **API de Kubernetes de destino**, no otro controlador de reflejo. Un Service reflejado es un objeto de descubrimiento de Kubernetes, no un proceso que realiza TLS. Su nombre habitual es `<service>-<Link cluster name>` en el espacio de nombres correspondiente.
+El controlador de reflejo del clúster de origen observa la **API de Kubernetes del clúster de destino**, no otro controlador de reflejo. Un Service reflejado es un objeto de descubrimiento de Kubernetes, no un proceso que establece conexiones TLS. Su nombre habitual es `<service>-<Link cluster name>` en el namespace correspondiente.
 
 ![Ruta jerárquica: el proxy cliente de origen se conecta al gateway remoto, que abre una conexión separada al servidor de la malla. No se requiere un salto por un gateway de origen y el servidor final no recibe la identidad original del cliente a través de este gateway.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-2.html)
 
-El modo jerárquico necesita que los clientes de origen puedan acceder al gateway de destino. El modo plano/federado necesita además enrutamiento directo e inequívoco de IP de Pods entre clústeres y el mismo espacio de nombres del plano de control de Linkerd. Un equilibrador de carga interno o un endpoint de VPC por sí solos no establecen esa red plana.
+En modo jerárquico, los clientes de origen deben poder acceder al gateway de destino. Los modos plano y federado requieren, además, enrutamiento directo y sin ambigüedades entre las IP de Pods de los clústeres, y el mismo namespace para el plano de control de Linkerd. Un balanceador de carga interno o un endpoint de VPC no bastan por sí solos para establecer esa red plana.
 
 ## Requisitos previos y confianza compartida
 
-Utilice dos clústeres preparados con contextos kubeconfig explícitos `west` y `east`. Son alias locales, no pruebas de su cuenta o región de AWS. Utilice versiones compatibles de Kubernetes/Gateway API, la configuración de nodos de trabajo Linux/CNI y la CLI fijada de la [guía de instalación](01-installation.md); no equipare la versión más reciente de Kubernetes con la compatibilidad de Linkerd.
+Utilice dos clústeres preparados con contextos kubeconfig explícitos `west` y `east`. Estos nombres son alias locales; no identifican por sí solos la cuenta ni la región de AWS. Siga la [guía de instalación](01-installation.md) para seleccionar versiones compatibles de Kubernetes y Gateway API, configurar los nodos Linux y la CNI, y fijar la CLI. Que una versión de Kubernetes sea la más reciente no significa que sea compatible con Linkerd.
 
-Ambas instalaciones de Linkerd deben confiar en las cadenas de emisores pertinentes. Una raíz pública común es la disposición más sencilla; también es compatible un paquete compartido que contenga varias raíces apropiadas. Los clústeres no necesitan compartir una clave privada de emisor ni certificados de cargas de trabajo.
+Ambas instalaciones de Linkerd deben confiar en las cadenas de certificados de los emisores correspondientes. Compartir un certificado raíz público es la opción más sencilla; también se admite un paquete de confianza que incluya varias raíces adecuadas. Los clústeres no necesitan compartir la clave privada del emisor ni los certificados de las cargas de trabajo.
 
-![Una disposición habitual de PKI: una raíz pública compartida con emisores separados por clúster y certificados finales por proxy. Las claves privadas de raíz no se distribuyen a todos los proxies; los emisores separados no hacen intrínsecamente que ServiceAccounts con el mismo nombre tengan identidades distintas de clúster.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-3.png)
+![Una configuración habitual de PKI: un certificado raíz público compartido, emisores independientes por clúster y certificados de cada proxy. Las claves privadas de la raíz no se distribuyen a todos los proxies; utilizar emisores distintos no hace que los ServiceAccounts con el mismo nombre tengan automáticamente identidades de clúster diferentes.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-3.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-3.html)
 
-**Solo para un laboratorio nuevo y aislado**, lo siguiente crea una raíz común y emisores ECDSA P-256 separados. La duración de diez años de la raíz es un ejemplo, no el valor predeterminado de la CLI ni una recomendación universal:
+**Solo para un laboratorio nuevo y aislado**, el siguiente ejemplo crea una raíz común y emisores ECDSA P-256 independientes. La vigencia de diez años de la raíz es un ejemplo, no el valor predeterminado de la CLI ni una recomendación universal:
 
 ```bash
 set -euo pipefail
@@ -48,13 +48,13 @@ step certificate create identity.linkerd.cluster.local issuer-east.crt issuer-ea
 cp ca.crt shared-roots.pem
 ```
 
-`--no-password --insecure` produce archivos de claves privadas sin cifrar. Consérvelos en una ubicación de trabajo protegida y distribuya únicamente el paquete público de confianza más el material de emisor requerido por cada clúster. Para mallas existentes, utilice el [procedimiento gradual de rotación de confianza](04-security.md); no sustituya raíces solo para seguir un ejemplo de instalación nueva.
+`--no-password --insecure` genera archivos de claves privadas sin cifrar. Consérvelos en una ubicación de trabajo protegida y distribuya únicamente el paquete público de confianza y el material del emisor que necesite cada clúster. Para las mallas existentes, siga el [procedimiento gradual de rotación de confianza](04-security.md); no sustituya las raíces simplemente para seguir un ejemplo de instalación nueva.
 
 ### Instalar el núcleo con contextos explícitos
 
-Lo siguiente es la ruta de instalación del núcleo gestionada por la CLI, después de completar los requisitos de Gateway API/CNI de la guía de instalación en ambos clústeres. Para núcleos gestionados por Helm, conserve ese responsable y pase las credenciales correspondientes de cada clúster mediante sus valores revisados.
+El siguiente ejemplo instala el núcleo mediante la CLI, después de completar los requisitos de Gateway API y CNI de la guía de instalación en ambos clústeres. Si Helm ya gestiona el núcleo, mantenga esa forma de gestión y proporcione las credenciales de cada clúster mediante los valores de Helm revisados.
 
-Los comandos muestran la ruta predeterminada de proxy-init en nodos de trabajo Linux compatibles. Una instalación de Linkerd CNI también debe pasar `cniEnabled:true` mediante su configuración de instalación seleccionada.
+Los comandos utilizan la opción predeterminada proxy-init en nodos Linux compatibles. Si utiliza Linkerd CNI, también debe incluir `cniEnabled:true` en la configuración de instalación elegida.
 
 ```bash
 set -euo pipefail
@@ -74,15 +74,15 @@ linkerd --context west check
 linkerd --context east check
 ```
 
-Instale Viz por separado si necesita sus estadísticas de tráfico. Las comprobaciones propias de la extensión multiclúster no son una validación de aplicación/negocio.
+Instale Viz por separado si necesita sus estadísticas de tráfico. Las comprobaciones de la extensión multiclúster no validan el funcionamiento de la aplicación ni sus operaciones de negocio.
 
 ## Extensión y enlaces direccionales
 
-Este ejercicio utiliza Helm para gestionar la extensión multiclúster y sus controladores de pares. El antiguo `multicluster link` de la CLI seleccionada está obsoleto; utilice `link-gen` para el Link y los Secrets de credenciales, junto con la lista `controllers` del chart.
+Este ejercicio utiliza Helm para gestionar la extensión multiclúster y los controladores de los clústeres remotos. El antiguo comando `multicluster link` de la CLI seleccionada está obsoleto. Utilice `link-gen` para generar el Link y los Secrets de credenciales, junto con la lista `controllers` del chart.
 
 ### Instalación base
 
-Para **EKS con AWS Load Balancer Controller instalado**, guarde esto como `mc-base-values.yaml`. Solicita un NLB TCP interno; asegúrese de que las rutas de pares, DNS, grupos de seguridad y puertos requeridos ya estén diseñados. Otras plataformas necesitan su propia configuración compatible de equilibrador de carga.
+Para **EKS con AWS Load Balancer Controller instalado**, guarde lo siguiente como `mc-base-values.yaml`. Esta configuración solicita un NLB TCP interno; antes de aplicarla, prepare las rutas entre clústeres, DNS, los grupos de seguridad y los puertos necesarios. En otras plataformas, utilice una configuración de balanceador de carga compatible con ellas.
 
 ```yaml
 gateway:
@@ -100,22 +100,22 @@ helm repo add linkerd-edge https://helm.linkerd.io/edge
 helm repo update linkerd-edge
 # Initially install gateway/remote-access prerequisites, without peer controllers.
 helm --kube-context west upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 helm --kube-context east upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 kubectl --context west -n linkerd-multicluster get svc linkerd-gateway -o yaml
 kubectl --context east -n linkerd-multicluster get svc linkerd-gateway -o yaml
 ```
 
-El Service de destino debe tener una IP de ingreso **o un nombre de host** antes de que pueda generarse un Link basado en gateway. Los NLB de AWS suelen exponer un nombre de host, que `link-gen` acepta. El puerto predeterminado de datos del gateway es 4143; el de las sondas de disponibilidad del gateway es 4191. La accesibilidad de ninguno de esos puertos demuestra que la API remota de Kubernetes o todas las aplicaciones estén sanas.
+El Service de destino debe disponer de una IP de ingreso **o un nombre de host** para que pueda generarse un Link basado en gateway. Los NLB de AWS suelen proporcionar un nombre de host, que `link-gen` admite. El puerto predeterminado para el tráfico de datos del gateway es 4143, y el de las sondas de disponibilidad es 4191. Poder acceder a cualquiera de esos puertos no demuestra que la API remota de Kubernetes ni todas las aplicaciones funcionen correctamente.
 
-### East consume West
+### East utiliza servicios de West
 
-Guarde esta lista deseada de controladores como `mc-east-links.yaml`:
+Guarde la lista de controladores que desea mantener como `mc-east-links.yaml`:
 
 ```yaml
 controllers:
@@ -132,7 +132,7 @@ linkerd --context west multicluster link-gen --cluster-name west > west-link.yam
 # Review public metadata and target endpoint without printing credential values.
 kubectl --context east apply -f west-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-east-links.yaml \
   --wait --timeout 10m
 kubectl --context east -n linkerd-multicluster get links.multicluster.linkerd.io
@@ -140,11 +140,11 @@ linkerd --context east multicluster check
 linkerd --context east multicluster gateways
 ```
 
-`link-gen` lee la ubicación/CA de la API de West y el token del ServiceAccount de acceso remoto seleccionado. Emite un Link y dos Secrets de credenciales, para `linkerd-multicluster` y el espacio de nombres del plano de control `linkerd`. No instala por sí mismo una ruta de red ni el controlador de reflejo de origen.
+`link-gen` lee la dirección de la API de West, su CA y el token del ServiceAccount seleccionado para el acceso remoto. Genera un Link y dos Secrets de credenciales: uno para `linkerd-multicluster` y otro para el namespace del plano de control, `linkerd`. El comando no instala una ruta de red ni el controlador de reflejo del clúster de origen.
 
-Trate el archivo generado como una credencial: restrinja el acceso, no lo incluya en commits ni imprima su contenido en registros. El kubeconfig generado debe poder utilizarse desde los controladores, incluidos datos autocontenidos de CA de la API y una dirección de servidor accesible y con certificado válido. Si el endpoint de la estación de trabajo no es apropiado, utilice la anulación compatible `--api-server-address` con el endpoint real de API accesible desde los controladores.
+El archivo generado contiene credenciales: restrinja su acceso, no lo incluya en commits ni imprima su contenido en los registros. Los controladores deben poder utilizar el kubeconfig generado. Este debe incluir los datos de la CA de la API sin depender de archivos externos, y una dirección de servidor accesible cuyo certificado sea válido. Si el endpoint de la estación de trabajo no sirve para los controladores, utilice la opción compatible `--api-server-address` para indicar el endpoint real de la API al que puedan acceder.
 
-El Link es direccional: generarlo en West y aplicarlo a East permite que **East descubra West**. Conserve todos los pares existentes en la lista deseada de controladores de Helm al actualizar una instalación establecida; sustituir un arreglo por este ejemplo de una sola entrada puede eliminar otros controladores.
+El Link es direccional: generarlo en West y aplicarlo en East permite que **East descubra West**. Al actualizar una instalación existente, mantenga todos los clústeres remotos en la lista de controladores de Helm. Sustituir la lista por este ejemplo de una sola entrada puede eliminar otros controladores.
 
 ### Dirección inversa opcional
 
@@ -163,17 +163,17 @@ umask 077
 linkerd --context east multicluster link-gen --cluster-name east > east-link.yaml
 kubectl --context west apply -f east-link.yaml
 helm --kube-context west upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-west-links.yaml \
   --wait --timeout 10m
 linkerd --context west multicluster check
 ```
 
-ServiceAccounts de acceso remoto distintos por par pueden hacer más selectiva la revocación. Coordine su RBAC y la renovación de credenciales; son credenciales de API de Kubernetes, separadas de los certificados de cargas de trabajo de la malla.
+Utilizar un ServiceAccount de acceso remoto distinto para cada clúster permite revocar el acceso de forma más selectiva. Coordine sus permisos RBAC y la renovación de sus credenciales. Estas credenciales permiten acceder a la API de Kubernetes y son independientes de los certificados de las cargas de trabajo de la malla.
 
 ## Exportar y consumir un servicio
 
-Prepare el espacio de nombres de la aplicación en ambos clústeres. El chart no crea por defecto los espacios de nombres de reflejo que falten.
+Prepare el namespace de la aplicación en ambos clústeres. De forma predeterminada, el chart no crea los namespaces que falten para los servicios reflejados.
 
 Guarde como `mc-namespace.yaml`:
 
@@ -225,13 +225,13 @@ kubectl --context east -n mc-demo exec deployment/client -c client -- \
   curl --fail --show-error --retry 0 --max-time 10 http://web-west.mc-demo.svc.cluster.local/
 ```
 
-Para un Service recién creado, aplique su manifiesto después de crear el espacio de nombres y preparar las cargas de trabajo. El comando de etiqueta es la alternativa para un Service existente. Las etiquetas de exportación seleccionan el descubrimiento; no son un límite de control de acceso y solo afectan a pares cuyos selectores/RBAC de Link coincidan.
+Para crear un Service, aplique su manifiesto después de crear el namespace y preparar las cargas de trabajo. Si el Service ya existe, utilice como alternativa el comando que añade la etiqueta. Las etiquetas de exportación seleccionan los servicios que se descubren; no son un mecanismo de control de acceso. Solo afectan a los clústeres remotos cuyos selectores y permisos RBAC del Link coincidan.
 
-La implementación seleccionada de service-mirror sigue manteniendo `Endpoints` heredados para reflejos jerárquicos. Inspeccione también EndpointSlices cuando existan, pero no finja que cambiar un comando de diagnóstico migra el controlador. En modo de descubrimiento remoto, los Endpoints locales pueden faltar intencionadamente: el componente destination consulta en su lugar los endpoints remotos.
+La implementación seleccionada de service-mirror sigue gestionando `Endpoints` heredados para los servicios reflejados en modo jerárquico. Inspeccione también los EndpointSlices cuando existan; cambiar el comando de diagnóstico no migra el controlador. En modo de descubrimiento remoto, puede ser intencionado que no haya Endpoints locales: el componente destination consulta directamente los endpoints remotos.
 
-## Enrutamiento local/remoto explícito
+## Enrutamiento explícito entre servicios locales y remotos
 
-Para las cargas de trabajo web locales de **East**, guarde estos Services principal/de backend local como `east-web-services.yaml`:
+Para las cargas de trabajo web locales de **East**, guarde el Service principal y el Service del backend local como `east-web-services.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -263,7 +263,7 @@ spec:
     appProtocol: http
 ```
 
-Guarde `east-web-route.yaml` para dividir el tráfico de clientes de la malla aptos entre ese backend local y el Service importado:
+Guarde `east-web-route.yaml` para repartir el tráfico de los clientes de la malla a los que se aplique la ruta entre el backend local y el Service importado:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -294,11 +294,11 @@ kubectl --context east -n mc-demo get httproute web-cluster-route -o yaml
 linkerd --context east diagnostics policy -n mc-demo service/web 80 -o json
 ```
 
-Utilice el grupo principal de Service `""` y el puerto 80 del Service. Confirme que las rutas local y remota estén listas, la aceptación de la ruta y la política efectiva del cliente. Un ServiceProfile en conflicto puede tener prioridad sobre la política saliente actual; consulte la [gestión del tráfico](03-traffic-management.md).
+Utilice el grupo de API principal de Service, `""`, y su puerto 80. Confirme que las rutas local y remota estén disponibles, que la ruta se acepte y que la política efectiva del cliente sea la prevista. Un ServiceProfile en conflicto puede prevalecer sobre la política de salida actual; consulte la [gestión del tráfico](03-traffic-management.md).
 
 ### Transición manual frente a conmutación automática
 
-Una configuración 100/0 no convierte automáticamente un backend de peso cero en una reserva activa. Para esta ruta gestionada manualmente, un estado exclusivamente remoto revisado explícitamente es:
+Una configuración 100/0 no convierte automáticamente un backend con peso cero en un destino de reserva activo. En esta ruta gestionada manualmente, el siguiente ejemplo define de forma explícita y revisada un estado que solo envía tráfico al backend remoto:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -322,16 +322,16 @@ spec:
       weight: 100
 ```
 
-Aplique deliberadamente un estado elegido y verifique el resultado de la aplicación, la capacidad remota y la coherencia de datos antes de tratarlo como recuperación. Las solicitudes y escrituras existentes pueden tener resultados inciertos; los cambios de enrutamiento no replican bases de datos ni deshacen operaciones confirmadas.
+Aplique deliberadamente el estado elegido y compruebe el resultado de la aplicación, la capacidad remota y la coherencia de los datos antes de dar por recuperado el servicio. El resultado de las solicitudes y escrituras que ya estaban en curso puede ser incierto. Cambiar las rutas no replica las bases de datos ni deshace operaciones confirmadas.
 
-El antiguo webhook de reversión de Flagger referenciaba un servicio `/failover` no desplegado/no verificado y modificaba un TrafficSplit con otro nombre. No establecía una conmutación regional fiable. La entrega progresiva con Flagger se cubre por separado en la guía de tráfico.
+El anterior webhook de reversión de Flagger apuntaba a un servicio `/failover` que no se había desplegado ni verificado, y modificaba un TrafficSplit con otro nombre. Ese ejemplo no demostraba una conmutación regional fiable. La guía de tráfico trata por separado la entrega progresiva con Flagger.
 
-SMI TrafficSplit y la extensión Linkerd Failover están obsoletos. La dirección oficial de migración son los servicios federados cuando hay red plana; la federación no sustituye automáticamente todos los requisitos de red jerárquica o de primario local estricto.
+SMI TrafficSplit y la extensión Linkerd Failover están obsoletos. La migración oficial recomienda servicios federados cuando existe una red plana. La federación no sustituye automáticamente cualquier configuración jerárquica ni satisface por sí sola los requisitos de mantener estrictamente un destino local como primario.
 
 
 ## Redes planas y servicios federados
 
-Para una **configuración solo plana** independiente, los valores base omiten el gateway. Guarde como `flat-base-values.yaml`:
+Para una **configuración independiente que utilice únicamente una red plana**, los valores base deshabilitan el gateway. Guárdelos como `flat-base-values.yaml`:
 
 ```yaml
 gateway:
@@ -349,7 +349,7 @@ controllers:
     enabled: false
 ```
 
-Siga la misma secuencia instalación base → Link/Secrets → controlador de Helm, utilizando estos archivos y `--gateway=false` en la generación del Link. Prepare primero el enrutamiento de Pods, los espacios de nombres y la confianza de ambos clústeres. Al migrar una instalación existente, conserve los gateways hasta que se haya trasladado su último consumidor jerárquico.
+Siga la misma secuencia: instalación base → Link/Secrets → controlador de Helm. Utilice estos archivos y la opción `--gateway=false` al generar el Link. Prepare primero el enrutamiento de Pods, los namespaces y la confianza de ambos clústeres. Al migrar una instalación existente, conserve los gateways hasta que el último cliente que utilice el modo jerárquico haya migrado.
 
 ```bash
 set -euo pipefail
@@ -360,7 +360,7 @@ linkerd --context west multicluster link-gen --cluster-name west \
   --gateway=false > west-flat-link.yaml
 kubectl --context east apply -f west-flat-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f flat-base-values.yaml -f flat-east-links.yaml \
   --wait --timeout 10m
 kubectl --context west -n mc-demo label service/web \
@@ -383,15 +383,15 @@ kubectl --context east -n linkerd-multicluster get link west -o yaml
 linkerd --context east diagnostics endpoints web-federated.mc-demo.svc.cluster.local:80
 ```
 
-El Service federado existe donde están configurados los Links/controladores direccionales pertinentes. Los clientes de la malla equilibran directamente entre los endpoints de miembros descubiertos, sin gateway. Esto proporciona una base para la resiliencia, pero no garantiza recuperación inmediata, orden local primero estricto ni disponibilidad de aplicaciones/datos.
+El Service federado existe allí donde se hayan configurado los Links direccionales y sus controladores. Los clientes de la malla reparten el tráfico directamente entre los endpoints descubiertos de los miembros, sin pasar por un gateway. Esto ayuda a diseñar la resiliencia, pero no garantiza una recuperación inmediata, la prioridad estricta de los destinos locales ni la disponibilidad de las aplicaciones y sus datos.
 
-Revise la disponibilidad de endpoints, los ajustes de acumulación de fallos, las particiones de red, la actualidad del descubrimiento y la semántica de reintentos del cliente. La selección de metadatos/puertos de la federación también importa cuando los Services miembros difieren; no suponga que todas las anotaciones contradictorias se combinen como se pretende.
+Revise la disponibilidad de los endpoints, la configuración de detección de fallos acumulados, las particiones de red, la actualización de la información de descubrimiento y la semántica de los reintentos del cliente. Si los Services miembros difieren, también debe revisar cómo la federación selecciona sus metadatos y puertos. No dé por supuesto que las anotaciones en conflicto se combinan de la forma deseada.
 
-El reflejo de servicios sin IP de clúster es una capacidad opcional independiente del controlador (`enableHeadlessServices` en los ajustes correspondientes del controlador). Requiere hosts con nombre adecuados y tiene un comportamiento de endpoints distinto; los Services sin IP de clúster no pueden unirse a Services federados.
+El reflejo de servicios headless, sin IP de clúster, es una función opcional e independiente del controlador (`enableHeadlessServices` en su configuración correspondiente). Requiere hosts con nombres adecuados y gestiona los endpoints de forma distinta. Los Services headless no pueden pertenecer a Services federados.
 
 ## Autorización entre clústeres
 
-Los gateways jerárquicos autentican la conexión de malla entrante y crean una conexión saliente separada. El servidor final no puede utilizar la identidad original del cliente remoto para distinguir clientes a través de ese gateway.
+Los gateways del modo jerárquico autentican la conexión entrante de la malla y establecen otra conexión de salida. El servidor final no recibe la identidad original del cliente remoto, por lo que no puede utilizarla para distinguir a los clientes que llegan a través de ese gateway.
 
 Para **tráfico plano/federado**, esta política en West permite la identidad conservada `client.mc-demo.serviceaccount.identity.linkerd.cluster.local`:
 
@@ -427,15 +427,15 @@ spec:
 
 La API es AuthorizationPolicy de Linkerd con Server `v1beta3`, no el inexistente ServerAuthorization `v1beta2`. La identidad estándar de Kubernetes tiene formato DNS, no la URI SPIFFE de estilo Istio mostrada anteriormente.
 
-La misma combinación de ServiceAccount/espacio de nombres/dominio de confianza puede tener la misma identidad en varios clústeres. Las claves separadas de emisor no introducen un ID criptográfico implícito de clúster. Esta política permite esa identidad de carga de trabajo; no demuestra «solo East». Diseñe identidades y límites de confianza distintos cuando sea necesario y evalúe la identidad realmente visible en cada punto de aplicación.
+La misma combinación de ServiceAccount, namespace y dominio de confianza puede producir la misma identidad en varios clústeres. Utilizar claves de emisor diferentes no añade un identificador criptográfico implícito del clúster. Esta política permite la identidad de esa carga de trabajo; no demuestra que proceda «solo de East». Cuando sea necesario, diseñe identidades y límites de confianza diferenciados, y compruebe qué identidad se ve realmente en cada punto donde se aplica la política.
 
-Para despliegues en modo gateway, tenga en cuenta la identidad del gateway en el servidor final y los controles en el límite del gateway/red. Las etiquetas de exportación y un equilibrador de carga interno no sustituyen la autorización.
+En modo gateway, tenga en cuenta la identidad que el gateway presenta al servidor final y los controles que se aplican en el gateway y en la red. Las etiquetas de exportación y un balanceador de carga interno no sustituyen los controles de autorización.
 
 ## Conectividad y gestión de EKS
 
-Los valores base anteriores presuponen **AWS Load Balancer Controller**, `service.k8s.aws/nlb`, destinos IP y un NLB interno. Utilizan la anotación actual de atributos del equilibrador de carga en vez de la anotación entre zonas obsoleta. EKS Auto Mode utiliza otro responsable/clase, `eks.amazonaws.com/nlb`, y sus anotaciones compatibles deben comprobarse por separado.
+Los valores base anteriores presuponen **AWS Load Balancer Controller**, la clase `service.k8s.aws/nlb`, destinos IP y un NLB interno. Utilizan la anotación actual de atributos del balanceador de carga en lugar de la antigua anotación para tráfico entre zonas. EKS Auto Mode utiliza otro controlador y otra clase, `eks.amazonaws.com/nlb`; compruebe por separado las anotaciones que admite.
 
-Mantenga intacta la ruta TCP/mTLS de Linkerd; el enrutamiento HTTP o la terminación TLS de un ALB no son un transporte de gateway intercambiable. Tenga en cuenta por separado el puerto de datos 4143 de origen a gateway, el puerto de sonda 4191 del controlador de reflejo al gateway y el acceso del plano de control de origen a la API de Kubernetes de destino. Restrinja los orígenes permitidos según el diseño real de enrutamiento/SNAT/grupos de seguridad.
+Mantenga la ruta TCP/mTLS de Linkerd. El enrutamiento HTTP o la terminación TLS de un ALB no pueden sustituir sin más el transporte del gateway. Prepare por separado el acceso del origen al puerto de datos 4143 del gateway, el acceso del controlador de reflejo al puerto de sonda 4191 y el acceso del plano de control de origen a la API de Kubernetes de destino. Restrinja los orígenes permitidos según el diseño real de enrutamiento, SNAT y grupos de seguridad.
 
 | Conectividad | Qué proporciona |
 |---|---|
@@ -444,17 +444,17 @@ Mantenga intacta la ruta TCP/mTLS de Linkerd; el enrutamiento HTTP o la terminac
 | Endpoint privado de API de Kubernetes de EKS | Acceso a la API de Kubernetes de ese clúster desde su VPC/red conectada apropiadamente |
 | Endpoint de interfaz de VPC de EKS | Acceso privado a la API de gestión de AWS EKS; no es el endpoint de la API de Kubernetes |
 
-Para modo plano, asegure direcciones de Pods sin conflictos y directamente accesibles; una conexión solo mediante gateway no basta. Para modo jerárquico, diseñe la accesibilidad del gateway y la API remota aunque no exista enrutamiento arbitrario a Pods remotos.
+El modo plano requiere direcciones de Pods que no se solapen y que sean directamente accesibles; una conexión únicamente mediante gateway no basta. En modo jerárquico, prepare el acceso al gateway y a la API remota, aunque no exista enrutamiento directo a cualquier Pod remoto.
 
-Aprovisione los clústeres y las conexiones de red mediante su flujo de infraestructura revisado, seleccionando la cuenta/perfil AWS previstos y versiones compatibles. Dar nombres diferentes a dos comandos `eksctl create cluster` no los coloca en cuentas diferentes. La creación de clústeres, el aprovisionamiento de gateways y el tráfico real entre regiones no se ejecutaron en esta auditoría.
+Aprovisione los clústeres y las conexiones de red mediante el flujo de infraestructura revisado, seleccionando la cuenta y el perfil de AWS previstos y versiones compatibles. Asignar nombres distintos a dos comandos `eksctl create cluster` no hace que creen clústeres en cuentas diferentes. En la auditoría descrita en el original no se crearon clústeres, no se aprovisionaron gateways ni se probó tráfico real entre regiones.
 
-Los operadores/controladores que gestionan recursos de AWS necesitan permisos IAM de AWS. Las credenciales de reflejo generadas por Linkerd se autentican con tokens de ServiceAccount de Kubernetes y RBAC; un rol IAM general entre cuentas no es un requisito de todos los Links durante la ejecución. Mantenga separadas estas relaciones de confianza.
+Los operadores y controladores que gestionan recursos de AWS necesitan permisos IAM. En cambio, las credenciales de reflejo generadas por Linkerd utilizan tokens de ServiceAccount de Kubernetes y permisos RBAC. No todos los Links necesitan un rol IAM general entre cuentas durante su ejecución. Gestione estas relaciones de confianza por separado.
 
 ## Observabilidad y federación
 
 `multicluster gateways` informa de la sonda del gateway de destino, no del estado de extremo a extremo de todas las aplicaciones exportadas. Las métricas de sonda pertenecen al controlador de reflejo de origen: incluyen, por ejemplo, `gateway_alive` y `gateway_probe_latency_ms`, etiquetadas con `target_cluster_name`. No son métricas ordinarias del proxy del gateway local.
 
-Para Prometheus central, lo siguiente es un **ejemplo de configuración de cliente para endpoints HTTPS privados ya desplegados con autenticación Basic**. Proporcione DNS reales, archivos de CA/contraseña, autenticación del servidor, accesibilidad y autorización de recopilación. Viz predeterminado no expone automáticamente estos endpoints.
+Para un Prometheus central, el siguiente es un **ejemplo de configuración de cliente para endpoints HTTPS privados ya desplegados con autenticación Basic**. Proporcione los nombres DNS reales, los archivos de CA y contraseñas, la autenticación del servidor, la conectividad y los permisos para recopilar métricas. La configuración predeterminada de Viz no expone automáticamente estos endpoints.
 
 ```yaml
 scrape_configs:
@@ -496,7 +496,7 @@ scrape_configs:
     replacement: east
 ```
 
-`honor_labels:true` conserva las etiquetas de métricas de origen; un reetiquetado de destino por sí solo no sobrescribe de forma fiable una etiqueta exportada en conflicto. Aquí el reetiquetado de métricas asigna el `origin_cluster` controlado por el recopilador después de la recopilación. Conserve esa etiqueta de origen al agregar y evite rutas de recopilación duplicadas.
+`honor_labels:true` conserva las etiquetas de las métricas de origen. Reetiquetar solo el destino de recopilación no sobrescribe de forma fiable una etiqueta exportada con el mismo nombre. Aquí, el reetiquetado de métricas asigna `origin_cluster`, controlado por el recopilador, después de obtener las métricas. Conserve esta etiqueta al agregarlas y evite recopilar las mismas series por varias rutas.
 
 Proporción de éxito del backend por origen de métricas:
 
@@ -514,9 +514,9 @@ histogram_quantile(0.99,
 )
 ```
 
-El cliente de demostración debe enviar el tráfico remoto previsto para que la segunda consulta represente esa ruta. Incluye tiempo de aplicación/proxy/red y no es RTT puro entre regiones. `src_cluster` y `dst_cluster` no son etiquetas que esta configuración garantice añadir. Inspeccione las series reales antes de construir dimensiones entre clústeres más específicas.
+El cliente de demostración debe enviar el tráfico remoto previsto para que la segunda consulta represente esa ruta. El tiempo medido incluye la aplicación, el proxy y la red; no es únicamente el RTT entre regiones. Esta configuración no garantiza que se añadan las etiquetas `src_cluster` y `dst_cluster`. Inspeccione las series reales antes de definir dimensiones más específicas entre clústeres.
 
-Las series de éxito ausentes se alinean con el total de cada clúster; los totales inactivos/ausentes no se informan como 100% de éxito. Consulte la [guía de observabilidad](05-observability.md) para clasificación, unidades, estado de recopilación y requisitos de paneles.
+Las series de éxito que falten se alinean con el total de su clúster. Si el total es cero o no existe, no se informa de un 100 % de éxito. Consulte la [guía de observabilidad](05-observability.md) para revisar la clasificación, las unidades, el estado de la recopilación y los requisitos de los paneles.
 
 ## Solución de problemas
 
@@ -531,7 +531,7 @@ linkerd --context west check --proxy
 linkerd --context east check --proxy
 ```
 
-Compruebe el estado del Link y los registros del controlador para problemas de API remota/RBAC/espacio de nombres. Para problemas de gateway, inspeccione la dirección de ingreso del Service de **destino**, la ruta/puerto de sonda y la ruta de red. Una sonda sana no verifica el puerto de datos ni la lógica de negocio. Para modo plano, utilice diagnósticos de endpoints de destination y conectividad directa de Pods en vez de esperar estadísticas de gateway.
+Para problemas con la API remota, RBAC o los namespaces, revise el estado del Link y los registros del controlador. Si falla el gateway, inspeccione la dirección de ingreso del Service de **destino**, la ruta y el puerto de la sonda, y la conectividad de red. Una sonda correcta no valida el puerto de datos ni la lógica de negocio. En modo plano, utilice los diagnósticos de endpoints del componente destination y compruebe la conectividad directa entre Pods; no espere estadísticas de gateway.
 
 Lea el paquete público de confianza real:
 
@@ -546,7 +546,7 @@ openssl crl2pkcs7 -nocrl -certfile west-trust.pem | openssl pkcs7 -print_certs -
 openssl crl2pkcs7 -nocrl -certfile east-trust.pem | openssl pkcs7 -print_certs -text -noout
 ```
 
-Inspeccione todos los certificados y su validez/cadena de emisores. El orden/formato PEM por sí solo no prueba equivalencia de confianza y un grep corto del antiguo campo de configuración no es una verificación completa. Utilice el proceso gradual de rotación de la guía de seguridad para los cambios.
+Inspeccione todos los certificados, su vigencia y la cadena de emisores. El orden y el formato PEM no bastan para demostrar que dos configuraciones ofrecen la misma confianza. Tampoco basta un grep breve del antiguo campo de configuración. Para realizar cambios, siga el proceso gradual de rotación de la guía de seguridad.
 
 ## Referencias y siguientes pasos
 
@@ -554,8 +554,8 @@ Inspeccione todos los certificados y su validez/cadena de emisores. El orden/for
 - [Referencia multiclúster](https://linkerd.io/docs/reference/multicluster/) e [instalación](https://linkerd.io/docs/tasks/installing-multicluster/)
 - [Modo entre Pods](https://linkerd.io/docs/tasks/pod-to-pod-multicluster/) y [servicios federados](https://linkerd.io/docs/tasks/federated-services/)
 - [Extensión de conmutación por error obsoleta](https://linkerd.io/docs/tasks/automatic-failover/)
-- [Implementación publicada de link-gen](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go)
-- [Tratamiento de endpoints de service-mirror publicado](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go)
+- [Implementación publicada de link-gen](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/cmd/link-gen.go)
+- [Gestión de endpoints en la versión publicada de service-mirror](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/service-mirror/cluster_watcher.go)
 - [Anotaciones de AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
 - [NLB de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
 - [Emparejamiento de VPC](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html) y [AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)

@@ -86,7 +86,7 @@ Compare WhenEmpty, WhenEmptyOrUnderutilized y consolidateAfter, incluidas las ca
 
 ### 2-1. Spot (10 min)
 
-Use la [guía de Spot](../eks-auto-mode/04-spot-strategies.md) para revisar la diversidad de instancias compatibles, la capacidad crítica y la interrupción/recuperación. Exigir solo Spot es una restricción estricta; no expresa una preferencia con alternativa automática de On-Demand. do-not-disrupt/PDB no impiden la recuperación de Spot ni los fallos de nodos.
+Use la [guía de Spot](../eks-auto-mode/04-spot-strategies.md) para revisar la diversidad de instancias compatibles, la capacidad crítica y la interrupción/recuperación. Exigir solo Spot es una restricción estricta; no expresa una preferencia con alternativa automática de On-Demand. do-not-disrupt/PDB no impiden la reclamación de instancias Spot ni el fallo de un nodo.
 
 ### 2-2. Costos (10 min)
 
@@ -104,7 +104,7 @@ VPA Off solo genera recomendaciones. La separación de pools sigue las necesidad
 
 Diferencie los valores **predeterminados documentados por AWS: vencimiento predeterminado de 336 h (14 días), gracia predeterminada de terminación de NodeClaim de 24 h y vida útil máxima de instancia administrada de 21 días** con la [guía del ciclo de vida](../eks-auto-mode/07-node-lifecycle.md). El antiguo ejemplo de 720 h (30 días) no es la referencia básica de Auto Mode, ni ninguna vida útil garantiza el tiempo de actividad.
 
-Los presupuestos limitan la tasa de drift voluntario, vaciado y consolidación; no permiten aplazar todas las expiraciones/interrupciones/reparaciones fuera del horario laboral. Inspeccione los valores almacenados de NodeClaim, los PDB, el tiempo de terminación y la recuperación de la aplicación.
+Los presupuestos limitan la tasa de disrupciones voluntarias por drift, nodos vacíos y consolidación; no permiten aplazar todas las expiraciones, interrupciones o reparaciones fuera del horario laboral. Inspeccione los valores almacenados de NodeClaim, los PDB, el tiempo de terminación y la recuperación de la aplicación.
 
 ## Pausa (10 min)
 
@@ -143,7 +143,7 @@ Verifique ajustes específicos de la versión como tracesToLogsV2, los UID/URL d
 | --- | --- | --- |
 | Pendiente sin un nodo nuevo | Eventos del Pod, PVC, afinidad, taints, condiciones de clase/pool, cuotas/IP/capacidad y errores de API | Suponer siempre falta de capacidad |
 | Desapareció un nodo | Eventos de eliminación/interrupción, NodeClaims, registros administrados, EC2/CloudTrail y recuperación | Suponer siempre consolidación u OOM |
-| Latencia de respuesta | Distribuciones de errores/latencia, colas, trazas/registros y CPU/RAM/red/almacenamiento | Que una traza/temperatura demuestra la causa |
+| Latencia de respuesta | Distribuciones de errores/latencia, colas, trazas/registros y CPU/RAM/red/almacenamiento | Concluir que una sola traza o una lectura de temperatura demuestra la causa |
 
 CloudTrail muestra acciones de API registradas, no la causa definitiva de todos los fallos de programación. Las condiciones/eventos de Kubernetes son importantes cuando no se realizó ninguna llamada a EC2. No dé a entender que se recuperó telemetría histórica que faltaba.
 
@@ -155,7 +155,7 @@ Use la [guía de infraestructura](../ops/01-infrastructure-setup.md) para distin
 
 ### 4-2. Operaciones de GitOps (5 min)
 
-Compare los permisos, generadores y políticas de sincronización en [Aplicaciones de ArgoCD](../gitops/argocd/02-applications.md) y [ApplicationSets](../gitops/argocd/04-applicationsets.md). La autosincronización, la autorreparación y la poda no constituyen implementaciones graduales automáticamente seguras. Revise el impacto de eliminar NodePool/NodeClass y quién administra las desviaciones, y compruebe que Progressive Sync esté habilitado y sea compatible con la versión.
+Compare los permisos, generadores y políticas de sincronización en [Aplicaciones de ArgoCD](../gitops/argocd/02-applications.md) y [ApplicationSets](../gitops/argocd/04-applicationsets.md). La autosincronización, la autorreparación y la poda no equivalen automáticamente a despliegues progresivos seguros. Revise el impacto de eliminar NodePool/NodeClass y quién administra las desviaciones, y compruebe que Progressive Sync esté habilitado y sea compatible con la versión.
 
 ## Evaluación y preparación del laboratorio
 

@@ -1,8 +1,8 @@
 # Alarmas de CloudWatch
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-Los ejemplos de CLI y Terraform cubren las **alarmas de métricas clásicas de CloudWatch** y las alarmas compuestas. CloudWatch también admite **alarmas de PromQL** sobre métricas ingeridas mediante su endpoint de OTLP y **alarmas de registros** sobre resultados de consultas de Logs Insights. Las alarmas de PromQL usan `PendingPeriod`/`RecoveryPeriod`; las configuraciones de M-de-N y de datos faltantes siguientes no se aplican sin cambios. Los valores de cuenta, Region y recurso son ejemplos. Antes de usar comandos de creación o actualización, verifique los destinos reales, los permisos de IAM, el costo y los destinatarios. `PutMetricAlarm`/`PutCompositeAlarm` reemplazan una configuración de alarma existente, por lo que debe conservar su configuración actual antes de actualizarla.
+Los ejemplos de CLI y Terraform cubren las **alarmas de métricas clásicas de CloudWatch** y las alarmas compuestas. CloudWatch también admite **alarmas de PromQL** sobre métricas ingeridas mediante su endpoint OTLP y **alarmas de logs** sobre resultados de consultas de Logs Insights. Las alarmas de PromQL usan `PendingPeriod`/`RecoveryPeriod`; la configuración M-de-N y de datos faltantes siguiente no se aplica sin cambios. Los valores de cuenta, Region y recursos son ejemplos. Antes de usar comandos para crear o actualizar alarmas, verifique los destinos reales, los permisos de IAM, los costos y los destinatarios. `PutMetricAlarm`/`PutCompositeAlarm` reemplazan la configuración de una alarma existente; conserve su configuración actual antes de actualizarla.
 
 ## Tabla de contenidos
 
@@ -21,18 +21,16 @@ Los ejemplos de CLI y Terraform cubren las **alarmas de métricas clásicas de C
 
 ---
 
-<span id="cloudwatch-alarms-overview"></span>
+## Descripción general de las alarmas de CloudWatch {#cloudwatch-alarms-overview}
 
-## Descripción general de las alarmas de CloudWatch
+Amazon CloudWatch Alarms es la función de alertas del servicio de monitorización nativo de AWS. Genera alertas a partir de métricas de CloudWatch y permite respuestas automatizadas mediante integraciones con SNS, Lambda, EC2 Auto Scaling y otros servicios.
 
-Amazon CloudWatch Alarms es la función de alertas del servicio de monitoreo nativo de AWS. Crea alertas basadas en métricas de CloudWatch y permite respuestas automatizadas mediante la integración con SNS, Lambda, EC2 Auto Scaling y más.
+### Funciones principales
 
-### Características principales
-
-1. **Alarmas de métricas**: evalúan una métrica, cálculos de métricas o una consulta de Metrics Insights
-2. **Alarmas compuestas**: combinan varias condiciones de alarma
-3. **Detección de anomalías**: detección de anomalías basada en machine learning
-4. **Acciones de alarma**: ejecutan acciones automáticas cuando se activan alertas
+1. **Alarmas de métricas**: evalúan una métrica, un cálculo de métricas o una consulta de Metrics Insights.
+2. **Alarmas compuestas**: combinan varias condiciones de alarma.
+3. **Detección de anomalías**: usa machine learning para detectar anomalías.
+4. **Acciones de alarma**: ejecutan acciones automáticas cuando se activa una alarma.
 5. **Integración con servicios de AWS**: integración nativa con EC2, ECS, EKS, Lambda, etc.
 
 ### Alarmas de CloudWatch frente a Prometheus Alertmanager
@@ -40,37 +38,33 @@ Amazon CloudWatch Alarms es la función de alertas del servicio de monitoreo nat
 | Característica | Alarmas de CloudWatch | Prometheus Alertmanager |
 |----------------|-------------------|-------------------------|
 | **Tipo** | Servicio administrado de AWS | Código abierto |
-| **Fuente de datos** | Métricas de CloudWatch, métricas de OTLP o registros según el tipo de alarma | Alertas evaluadas por Prometheus u otros clientes |
-| **Evaluación** | Cálculos de métricas, PromQL o Logs Insights según el tipo de alarma | Prometheus evalúa PromQL; Alertmanager agrupa, inhibe y enruta alertas |
+| **Origen de datos** | Métricas de CloudWatch, métricas OTLP o logs, según el tipo de alarma | Alertas evaluadas por Prometheus u otros clientes |
+| **Evaluación** | Cálculos de métricas, PromQL o Logs Insights, según el tipo de alarma | Prometheus evalúa PromQL; Alertmanager agrupa, inhibe y enruta alertas |
 | **Costo** | Depende del tipo de alarma, las métricas evaluadas, las consultas y los contribuyentes | Sin tarifa de licencia de software; la infraestructura y las operaciones siguen teniendo costo |
-| **Enrutamiento complejo** | Limitado | Compatibilidad avanzada de enrutamiento |
+| **Enrutamiento complejo** | Limitado | Compatibilidad avanzada con enrutamiento |
 | **Integración con AWS** | Nativa | Requiere configuración adicional |
 
 ---
 
-<span id="architecture"></span>
-
-## Arquitectura
+## Arquitectura {#architecture}
 
 ### Flujo de operación de las alarmas de CloudWatch
 
-![Las métricas de EC2, EKS, RDS, Lambda y fuentes personalizadas alimentan CloudWatch Metrics, que las alarmas evalúan directamente o mediante Metrics Math y bandas de Anomaly Detection; las alarmas se distribuyen a SNS y otras acciones, y SNS las reenvía a canales de notificación.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
+![Las métricas de EC2, EKS, RDS, Lambda y fuentes personalizadas alimentan CloudWatch Metrics. Las alarmas las evalúan directamente o mediante Metrics Math y bandas de detección de anomalías; luego las alarmas se envían a SNS y otras acciones, y SNS reenvía las notificaciones a sus canales.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-0.html)
 
 ### Estados de alarma
 
-Una alarma de métrica clásica comienza en `INSUFFICIENT_DATA` y luego se evalúa como `OK` o `ALARM`. Los datos faltantes no siempre implican `INSUFFICIENT_DATA`: `missing` produce datos insuficientes cuando faltan todos los datos de evaluación, `notBreaching` completa los puntos faltantes como buenos, `breaching` los completa como malos e `ignore` conserva el estado. Cuando los puntos reales adicionales son suficientes para la evaluación, CloudWatch no usa la configuración para completar datos faltantes. Por lo tanto, una política general de `notBreaching` puede ocultar un heartbeat o recopilador detenido. Una alarma compuesta puede estar en `INSUFFICIENT_DATA` únicamente justo después de su creación.
+Una alarma de métrica clásica comienza en `INSUFFICIENT_DATA` y después se evalúa como `OK` o `ALARM`. Los datos faltantes no siempre producen `INSUFFICIENT_DATA`: `missing` da ese estado cuando faltan todos los datos de evaluación, `notBreaching` completa los puntos faltantes como conformes, `breaching` los completa como infractores e `ignore` conserva el estado. Cuando hay suficientes puntos reales adicionales para evaluar, CloudWatch no usa la política de relleno de datos faltantes. Por tanto, una política general de `notBreaching` puede ocultar un heartbeat o recolector detenido. Una alarma compuesta solo puede estar en `INSUFFICIENT_DATA` inmediatamente después de su creación.
 
-![Una alarma de métrica clásica comienza en INSUFFICIENT_DATA; las transiciones posteriores distinguen la evaluación del umbral de la política configurada de datos faltantes.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
+![Una alarma de métrica clásica comienza en INSUFFICIENT_DATA; las transiciones posteriores distinguen la evaluación del umbral de la política configurada para datos faltantes.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html)
 
 ---
 
-<span id="metric-alarms"></span>
-
-## Alarmas de métricas
+## Alarmas de métricas {#metric-alarms}
 
 ### Creación básica de alarmas (consola/CLI)
 
@@ -98,17 +92,17 @@ aws cloudwatch put-metric-alarm \
 
 | Parámetro | Descripción | Ejemplo |
 |-----------|-------------|---------|
-| `metric-name` | Nombre de la métrica que se debe monitorear | `CPUUtilization` |
-| `namespace` | Espacio de nombres de la métrica | `AWS/EC2`, `AWS/EKS` |
+| `metric-name` | Nombre de la métrica que se supervisa | `CPUUtilization` |
+| `namespace` | Namespace de la métrica | `AWS/EC2`, `AWS/EKS` |
 | `statistic` | Función estadística | `Average`, `Sum`, `Maximum`, `Minimum`, `SampleCount` |
 | `period` | Período de evaluación (segundos) | `60`, `300`, `3600` |
-| `threshold` | Valor de umbral | `80` |
+| `threshold` | Valor del umbral | `80` |
 | `comparison-operator` | Operador de comparación | `GreaterThanThreshold` |
-| `evaluation-periods` | Número de períodos de evaluación N | `3` (M es `datapoints-to-alarm`) |
-| `datapoints-to-alarm` | Puntos de datos necesarios para la alarma | `2` de `3` |
-| `treat-missing-data` | Manejo de datos faltantes | `notBreaching`, `breaching`, `ignore`, `missing` |
+| `evaluation-periods` | Número N de períodos de evaluación | `3` (M es `datapoints-to-alarm`) |
+| `datapoints-to-alarm` | Número de puntos de datos necesarios para activar la alarma | `2` de `3` |
+| `treat-missing-data` | Tratamiento de datos faltantes | `notBreaching`, `breaching`, `ignore`, `missing` |
 
-Use `--extended-statistic p99`, no `--statistic p99`. Los M puntos que superan el umbral dentro de N no tienen que ser consecutivos; omitir M hace que sea igual a N. `Period` es la duración de agregación, no un intervalo de notificación. Los períodos de alarma de métrica clásica de 10, 20 o 30 segundos son de alta resolución y requieren datos de alta resolución coincidentes. 60 segundos es resolución estándar. Period×N está limitado a siete días, o a un día cuando Period es inferior a una hora. Normalmente, las acciones se ejecutan en las transiciones de estado, excepto las acciones de Auto Scaling.
+Use `--extended-statistic p99`, no `--statistic p99`. Los M puntos infractores dentro de N no tienen que ser consecutivos; si se omite M, su valor es N. `Period` es la duración de agregación, no un intervalo de notificación. Los períodos de alarma de métrica clásica de 10, 20 o 30 segundos son de alta resolución y requieren datos de alta resolución compatibles. 60 segundos es resolución estándar. Period×N tiene un máximo de siete días, o de un día cuando Period es inferior a una hora. Normalmente, las acciones se ejecutan al cambiar el estado, con la excepción de las acciones de Auto Scaling.
 
 ### Operadores de comparación
 
@@ -174,7 +168,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
-Esta expresión mide las respuestas 5xx del destino entre las solicitudes reenviadas por el ALB. No incluye todos los fallos visibles para el usuario, como los errores generados por el ALB o los fallos antes de seleccionar un destino. Los puntos 5xx faltantes se completan con cero cuando existen solicitudes; aquí, cero solicitudes se define como 0 %. Monitoree por separado los datos faltantes de solicitudes/recopilación. Una alarma de cálculo de métricas clásica debe devolver una serie temporal final. `SEARCH` es para gráficos y no se puede usar como expresión de alarma. `RATE` puede comportarse de manera diferente con métricas dispersas porque el rango de evaluación cambia.
+Esta expresión mide las respuestas 5xx del destino entre las solicitudes que el ALB reenvía. No incluye todos los fallos visibles para los usuarios, como los errores generados por el propio ALB o los fallos anteriores a la selección de un destino. Si hay solicitudes, los puntos 5xx faltantes se completan con cero; aquí, cero solicitudes se define como 0 %. Supervise por separado la ausencia de datos de solicitudes/recopilación. Una alarma clásica de cálculo de métricas debe devolver una sola serie temporal final. `SEARCH` sirve para gráficos y no se puede usar como expresión de alarma. `RATE` puede comportarse de otra manera con métricas dispersas porque cambia el rango de evaluación.
 
 ### Funciones de Metrics Math
 
@@ -208,19 +202,17 @@ math-functions:
 
 ---
 
-<span id="composite-alarms"></span>
-
-## Alarmas compuestas
+## Alarmas compuestas {#composite-alarms}
 
 ### Concepto de alarma compuesta
 
-Las alarmas compuestas pueden combinar varias alarmas de métricas para definir condiciones complejas.
+Las alarmas compuestas combinan varias alarmas de métricas para definir condiciones complejas.
 
-![Tres alarmas de métricas y una regla de combinación alimentan una alarma compuesta que evalúa la condición booleana entre ellas, y solo la alarma compuesta activa la acción posterior de SNS/Lambda.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png)
+![Tres alarmas de métricas y una regla de combinación alimentan una alarma compuesta, que evalúa la condición booleana entre ellas; solo la compuesta activa la acción posterior de SNS/Lambda.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-2.html)
 
-Las métricas de memoria y disco de `CWAgent` requieren un agente instalado y un conjunto de dimensiones publicadas coincidente. Los ejemplos con solo `InstanceId` funcionan únicamente si el agente publica esa agregación. `disk_used_percent` suele incluir también `path`, `device` y `fstype`; use el **conjunto completo de dimensiones** que devuelve `list-metrics`. Las alarmas secundarias de ejemplo no tienen acciones; solo la compuesta envía notificaciones.
+Las métricas de memoria y disco de `CWAgent` requieren que el agente esté instalado y que publique el conjunto de dimensiones correspondiente. Los ejemplos que solo incluyen `InstanceId` funcionan únicamente si el agente publica esa agregación. `disk_used_percent` suele incluir además `path`, `device` y `fstype`; use el **conjunto completo de dimensiones** que devuelve `list-metrics`. Las alarmas secundarias de ejemplo no tienen acciones; solo la alarma compuesta envía notificaciones.
 
 ### Creación de alarmas compuestas
 
@@ -303,7 +295,7 @@ examples:
 
 ### Patrón de supresión de alertas
 
-`set-alarm-state` es una anulación temporal para pruebas; una alarma de métrica vuelve rápidamente a su estado evaluado y no establece una ventana de mantenimiento. El siguiente ejemplo supone que un controlador externo publica continuamente el estado de una alarma `MaintenanceMode`. `ActionsSuppressor` suprime las acciones compuestas sin cambiar su estado evaluado. Incluya los períodos de espera/extensión al probar la ventana de mantenimiento.
+`set-alarm-state` es una anulación temporal para pruebas; la alarma de métrica vuelve pronto al estado que resulte de su evaluación y no establece una ventana de mantenimiento. El ejemplo siguiente presupone que un controlador externo publica continuamente el estado de una alarma `MaintenanceMode`. `ActionsSuppressor` suprime las acciones de la alarma compuesta sin cambiar su estado evaluado. Incluya los períodos de espera/extensión al probar la ventana de mantenimiento.
 
 ```bash
 aws cloudwatch put-composite-alarm  \
@@ -317,15 +309,13 @@ aws cloudwatch put-composite-alarm  \
 
 ---
 
-<span id="anomaly-detection"></span>
-
-## Detección de anomalías
+## Detección de anomalías {#anomaly-detection}
 
 ### Descripción general de la detección de anomalías
 
 CloudWatch Anomaly Detection usa machine learning para aprender patrones normales de las métricas y detectar valores atípicos.
 
-![Una fase de aprendizaje entrena un modelo de ML con datos históricos para producir una banda esperada, y una fase de detección compara las métricas actuales con ella, generando una alerta de anomalía fuera de la banda o marcándolas como normales dentro de ella.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
+![Una fase de aprendizaje entrena un modelo de ML con datos históricos para generar una banda esperada. Durante la detección se comparan las métricas actuales con la banda y se alerta si quedan fuera, o se consideran normales si quedan dentro.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html)
 
@@ -385,7 +375,7 @@ examples:
   - "ANOMALY_DETECTION_BAND(m1, 1)"
 ```
 
-El parámetro controla el ancho de la banda esperada del modelo; no es un intervalo gaussiano garantizado del 95 % ni del 99,7 %. El modelo usa hasta dos semanas de historial y puede comenzar con menos. Las fechas excluidas a continuación ilustran el formato; reemplácelas por intervalos relevantes dentro del historial de entrenamiento del modelo.
+El parámetro controla la amplitud de la banda esperada del modelo; no es un intervalo gaussiano garantizado del 95 % ni del 99,7 %. El modelo usa hasta dos semanas de historial y puede comenzar con menos. Las fechas excluidas siguientes ilustran el formato; sustitúyalas por intervalos relevantes dentro del historial de entrenamiento del modelo.
 
 ### Ajuste del período de entrenamiento del modelo
 
@@ -408,9 +398,7 @@ aws cloudwatch put-anomaly-detector \
 
 ---
 
-<span id="sns-integration"></span>
-
-## Integración con SNS
+## Integración con SNS {#sns-integration}
 
 ### Creación de un tema de SNS
 
@@ -439,7 +427,7 @@ aws sns subscribe \
 
 ### Filtrado de mensajes de SNS
 
-Las notificaciones predeterminadas de CloudWatch SNS no incluyen automáticamente los atributos de mensaje `severity` o `environment` de ejemplo. Para filtrar el `NewStateValue` del cuerpo, establezca `FilterPolicyScope=MessageBody`. Este filtro excluye los mensajes de recuperación `OK`. El correo electrónico requiere confirmación de suscripción; SMS requiere comprobar los números verificados, los requisitos de sandbox/Region y el costo. Una suscripción de Lambda también necesita una política de recursos de Lambda que permita a `sns.amazonaws.com` desde el ARN del tema específico.
+Las notificaciones predeterminadas de CloudWatch SNS no incluyen automáticamente los atributos de mensaje de ejemplo `severity` o `environment`. Para filtrar el `NewStateValue` del cuerpo del mensaje, establezca `FilterPolicyScope=MessageBody`. Este filtro excluye los mensajes de recuperación `OK`. El correo electrónico requiere confirmar la suscripción; para SMS hay que comprobar los números verificados, los requisitos de sandbox/Region y el costo. La suscripción de Lambda también necesita una política de recursos de Lambda que permita a `sns.amazonaws.com` actuar desde el ARN del tema específico.
 
 ```bash
 aws sns set-subscription-attributes  \
@@ -454,15 +442,13 @@ aws sns set-subscription-attributes  \
 
 ### Integración de SNS con Slack (Lambda)
 
-Para las notificaciones estándar de CloudWatch, conecte el tema de SNS y un canal de Slack aprobado mediante **Amazon Q Developer in chat applications** (anteriormente AWS Chatbot). Limite el rol de IAM y la política de barreras de protección del canal a su propósito de notificación.
+Para las notificaciones estándar de CloudWatch, conecte el tema SNS y un canal Slack aprobado mediante **Amazon Q Developer in chat applications** (antes AWS Chatbot). Limite el rol IAM y la política de barreras de protección del canal a su finalidad de notificación.
 
-Si se requiere una Lambda personalizada, obtenga el webhook de un almacén de secretos, valide su destino, establezca tiempos de espera de conexión/lectura y compruebe el estado de la respuesta. No informe HTTP 429/5xx como éxito; configure reintentos, una ruta de dead-letter y el manejo de duplicados. SNS usa `Records[].Sns.Message`, no el sobre de EventBridge siguiente. La validación de este capítulo no envía mensajes reales de Slack.
+Si necesita una Lambda personalizada, obtenga el webhook de un almacén de secretos, valide su destino, establezca tiempos de espera de conexión/lectura y compruebe el estado de la respuesta. No informe HTTP 429/5xx como éxito; configure reintentos, una ruta de dead-letter y el tratamiento de duplicados. SNS usa `Records[].Sns.Message`, no el sobre de EventBridge que aparece más adelante. La validación de este capítulo no envía mensajes reales a Slack.
 
 ---
 
-<span id="eventbridge-integration"></span>
-
-## Integración con EventBridge
+## Integración con EventBridge {#eventbridge-integration}
 
 ### Creación de una regla de EventBridge
 
@@ -493,7 +479,7 @@ aws events put-targets \
 
 ### Configuración de respuesta automática
 
-![Un cambio de estado de alarma de CloudWatch fluye a través de EventBridge hasta una regla de evento que se distribuye a cinco destinos de respuesta automatizada: funciones de Lambda, un runbook de SSM y un flujo de trabajo de recuperación de Step Functions.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png)
+![Un cambio de estado de una alarma de CloudWatch pasa por EventBridge hasta una regla de evento que distribuye la respuesta automatizada a cinco destinos: funciones Lambda, un runbook de SSM y un flujo de recuperación de Step Functions.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-4.html)
 
@@ -513,13 +499,13 @@ aws events put-targets \
 }
 ```
 
-Restringir `previousState` a `OK` omite `INSUFFICIENT_DATA → ALARM`. Hacer coincidir un ARN de alarma exacto evita suposiciones sobre las formas de configuración de cálculos de métricas o compuestas. `put-targets` no concede permiso de invocación de Lambda: agregue una política de recursos de Lambda para `events.amazonaws.com`, limitada al `SourceArn` de la regla, y configure el comportamiento de reintento/dead-letter.
+Si limita `previousState` a `OK`, se omite la transición `INSUFFICIENT_DATA → ALARM`. Hacer coincidir el ARN exacto de la alarma evita suposiciones sobre las formas de configuración de cálculos de métricas o alarmas compuestas. `put-targets` no concede permiso para invocar Lambda: agregue una política de recursos de Lambda para `events.amazonaws.com`, limitada al `SourceArn` de la regla, y configure los reintentos y el comportamiento dead-letter.
 
 ### Ejemplo de Lambda de recuperación automática
 
-Una CPU alta por sí sola no demuestra que reiniciar sea apropiado. Este ejemplo implementa la **etapa de inspección de entrada** de la recuperación: comprueba el estado, la cuenta, la Region y el ARN de alarma, y luego devuelve información de la métrica. Las `dimensions` de EventBridge son un objeto, a diferencia de la lista de dimensiones en un mensaje de alarma de SNS. También maneja una consulta que comienza con una expresión y una alarma compuesta sin métricas.
+Un uso alto de CPU por sí solo no demuestra que reiniciar sea apropiado. Este ejemplo implementa la **etapa de inspección de entrada** de una recuperación: comprueba el estado, la cuenta, la Region y el ARN de la alarma, y luego devuelve información de la métrica. `dimensions` en EventBridge es un objeto, a diferencia de la lista de dimensiones del mensaje de alarma de SNS. También maneja una consulta que empieza con una expresión y una alarma compuesta que no contiene métricas.
 
-Empaquete el [normalizador de eventos probado y las pruebas](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/cloudwatch-alarms) con el controlador de Lambda:
+Incluya el [normalizador de eventos probado y sus pruebas](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/cloudwatch-alarms) en el paquete junto con el controlador de Lambda:
 
 ```python
 from event_normalizer import normalize_alarm_event
@@ -532,19 +518,17 @@ def lambda_handler(event, context):
     )
 ```
 
-La función no realiza mutaciones de AWS. Las comprobaciones de payload no autentican al remitente. Toda remediación agregada necesita una lista de permitidos explícita de destinos, comprobaciones actuales del estado de la alarma/recurso, idempotencia, período de enfriamiento, mínimo privilegio y reversión.
+La función no realiza mutaciones en AWS. Las comprobaciones del payload no autentican al remitente. Toda remediación que se agregue necesita una lista explícita de destinos permitidos, comprobaciones del estado actual de la alarma/recurso, idempotencia, período de enfriamiento, mínimo privilegio y reversión.
 
 ---
 
-<span id="container-insights-alerts"></span>
-
-## Alertas de Container Insights
+## Alertas de Container Insights {#container-insights-alerts}
 
 ### Métricas de EKS Container Insights
 
-Estos ejemplos usan la ruta de métricas clásicas de CloudWatch `ContainerInsights`. No mezcle sus nombres, dimensiones y facturación con rutas de métricas de observabilidad mejorada u OTel. Siga la [guía actual de complementos de EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html), que instala CloudWatch Agent y Fluent Bit, y seleccione una versión de complemento compatible con la versión de Kubernetes y la Region del clúster. Configure primero IAM y la asociación del agente al usar EKS Pod Identity.
+Estos ejemplos usan la ruta clásica de métricas `ContainerInsights` de CloudWatch. No mezcle sus nombres, dimensiones y facturación con las rutas de observabilidad mejorada ni con las de OTel. Siga la [guía actual del complemento de EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html), que instala CloudWatch Agent y Fluent Bit, y elija una versión del complemento compatible con la versión de Kubernetes y la Region del clúster. Si usa EKS Pod Identity, configure primero IAM y la asociación de identidad del agente.
 
-`update-addon` actualiza una instalación existente; una primera instalación usa `create-addon`. Conserve la configuración existente y las asociaciones de Pod Identity. Consulte las versiones disponibles y seleccione una en el plan de implementación en lugar de fijar la antigua `v1.2.0` o aplicar un manifiesto `latest` de Fluentd sin revisar.
+`update-addon` actualiza una instalación existente; para la primera instalación se usa `create-addon`. Conserve la configuración y las asociaciones de Pod Identity existentes. Consulte las versiones disponibles y seleccione una en el plan de despliegue en lugar de fijar la antigua `v1.2.0` o aplicar un manifiesto `latest` de Fluentd sin revisar.
 
 ```bash
 aws eks describe-addon-versions  \
@@ -601,17 +585,17 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
 ```
 
-El ejemplo de CPU es una agregación de clúster. Un nodo individual usa el conjunto completo `ClusterName`, `NodeName` e `InstanceId`. `pod_memory_utilization` divide por la **memoria del nodo**, mientras que `pod_memory_utilization_over_pod_limit` divide por el límite del Pod. Este último puede estar ausente si cualquier contenedor carece de un límite de memoria. `pod_number_of_container_restarts` es acumulativo y usa `ClusterName`, `Namespace` y `PodName`. `Maximum > 3` significa que el recuento observado durante la vida útil superó tres; sumar muestras no cuenta los reinicios recientes. Tenga en cuenta el reemplazo de Pod, los restablecimientos y la reutilización de nombres. Use `increase()` de PromQL con reconocimiento de restablecimientos o una métrica delta definida por separado para incrementos recientes.
+El ejemplo de CPU agrega datos a nivel de clúster. Para un nodo individual, use el conjunto completo `ClusterName`, `NodeName` e `InstanceId`. `pod_memory_utilization` divide por la **memoria del nodo**, mientras que `pod_memory_utilization_over_pod_limit` divide por el límite del Pod. Esta última métrica puede no estar presente si algún contenedor carece de límite de memoria. `pod_number_of_container_restarts` es acumulativa y usa `ClusterName`, `Namespace` y `PodName`. `Maximum > 3` significa que el recuento acumulado durante la vida útil superó tres; sumar muestras no cuenta los reinicios recientes. Tenga en cuenta el reemplazo de Pods, los restablecimientos y la reutilización de nombres. Para incrementos recientes, use `increase()` de PromQL, que tiene en cuenta los restablecimientos, o defina una métrica delta por separado.
 
 ### Métricas clave de Container Insights
 
 | Métrica | Descripción | Dimensiones |
 |--------|-------------|------------|
-| `cluster_node_count` | Recuento de nodos del clúster | ClusterName |
-| `cluster_failed_node_count` | Recuento de nodos con errores | ClusterName |
+| `cluster_node_count` | Cantidad de nodos del clúster | ClusterName |
+| `cluster_failed_node_count` | Cantidad de nodos con errores | ClusterName |
 | `node_cpu_utilization` | Utilización de CPU del nodo | ClusterName, NodeName, InstanceId; o ClusterName |
 | `node_memory_utilization` | Utilización de memoria del nodo | ClusterName, NodeName, InstanceId; o ClusterName |
-| `node_filesystem_utilization` | Utilización de disco del nodo | ClusterName, NodeName, InstanceId; o ClusterName |
+| `node_filesystem_utilization` | Utilización del disco del nodo | ClusterName, NodeName, InstanceId; o ClusterName |
 | `pod_cpu_utilization` | Utilización de CPU del Pod | ClusterName, Namespace, PodName |
 | `pod_memory_utilization` | Utilización de memoria del Pod | ClusterName, Namespace, PodName |
 | `pod_number_of_container_restarts` | Recuento de reinicios de contenedores | ClusterName, Namespace, PodName |
@@ -619,14 +603,11 @@ El ejemplo de CPU es una agregación de clúster. Un nodo individual usa el conj
 
 ---
 
-<span id="cloudwatch-alarm-actions"></span>
-
-## Acciones de alarmas de CloudWatch
+## Acciones de alarmas de CloudWatch {#cloudwatch-alarm-actions}
 
 ### Acciones de EC2
 
-Las acciones directas de EC2 son detener, terminar, reiniciar y recuperar; **iniciar no es compatible**. Estos ejemplos modifican instancias: use solo un destino aprobado explícitamente después de comprobar las instancias compatibles, los permisos y el impacto de detención/recuperación. Use `missing` para datos faltantes y adjunte acciones de mutación solo a `ALARM`. Las alarmas de cálculo de métricas y las compuestas no pueden realizar directamente acciones de EC2.
-
+Las acciones directas de EC2 son detener, terminar, reiniciar y recuperar; **no se admite iniciar**. Estos ejemplos modifican instancias: úselos solo con un destino aprobado explícitamente y después de comprobar las instancias compatibles, los permisos y el impacto de la detención/recuperación. Use `missing` para los datos faltantes y asocie acciones que mutan recursos solo al estado `ALARM`. Las alarmas de cálculos de métricas y las alarmas compuestas no pueden ejecutar directamente acciones de EC2.
 
 ```bash
 # EC2 instance recovery (on system status check failure)
@@ -689,29 +670,26 @@ aws cloudwatch put-metric-alarm \
 
 ### Acciones de Systems Manager
 
-Un ARN `automation-definition/...` no es un destino directo de `AlarmActions` compatible para ejecutar un runbook arbitrario de SSM Automation. La integración directa con SSM usa las acciones enumeradas por la API, como OpsItems. Enrute Automation mediante un **destino de SSM Automation de EventBridge** o un flujo de trabajo explícito de Lambda/Step Functions. Limite por separado el rol de ejecución del destino, `ssm:StartAutomationExecution`, los parámetros del runbook y el rol de Automation. Un umbral de disco por sí solo no debe autorizar la eliminación arbitraria de archivos.
+Un ARN `automation-definition/...` no es un destino directo de `AlarmActions` admitido para ejecutar un runbook arbitrario de SSM Automation. La integración directa con SSM usa las acciones enumeradas por la API, como OpsItems. Enrute Automation mediante un **destino SSM Automation de EventBridge** o un flujo de trabajo explícito de Lambda/Step Functions. Limite por separado el rol de ejecución del destino, `ssm:StartAutomationExecution`, los parámetros del runbook y el rol de Automation. Un umbral de disco por sí solo no debe autorizar la eliminación arbitraria de archivos.
 
 ---
 
-<span id="cost-optimization"></span>
-
-## Optimización de costos
+## Optimización de costos {#cost-optimization}
 
 ### Factores de costo
 
-Las cifras siguientes son **ejemplos de US East** de la página de precios oficial consultada el 2026-09-13, no una cotización para Seúl. Consulte los precios actuales de la Region de destino. Las alarmas de métricas se cobran por métricas evaluadas, mientras que las compuestas se cobran por alarma. La detección de anomalías incluye la métrica real y dos métricas de banda. Agregar una compuesta conserva los cargos de las alarmas secundarias: reduce el ruido de las notificaciones, no el costo automáticamente.
-
+Las cifras siguientes son **ejemplos de US East** de la página oficial de precios consultada el 2026-09-13; no son una cotización para Seúl. Consulte los precios actuales de la Region de destino. Las alarmas de métricas se cobran por las métricas evaluadas, mientras que las compuestas se cobran por alarma. La detección de anomalías incluye la métrica real y dos métricas de banda. Al agregar una alarma compuesta se mantienen los cargos de las alarmas secundarias: reduce el ruido de las notificaciones, pero no disminuye automáticamente el costo.
 
 | Elemento | Costo |
 |------|------|
 | Alarma de resolución estándar (60 s) | $0.10/alarma/mes |
 | Alarma de alta resolución (10 s) | $0.30/alarma/mes |
-| Alarma de anomalía estándar: una métrica real más dos bandas | Ejemplo de $0.30/alarma/mes |
+| Alarma de anomalía estándar: una métrica real más dos bandas | Ejemplo: $0.30/alarma/mes |
 | Alarma compuesta | $0.50/alarma/mes |
 
 ### Estrategias de optimización de costos
 
-![Revise la duplicación, la resolución y las métricas evaluadas; las compuestas se suman a los cargos de las alarmas secundarias, y la eliminación requiere comprobaciones de propiedad y dependencias.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
+![Revise la duplicación, la resolución y las métricas evaluadas; las alarmas compuestas se suman al costo de las alarmas secundarias, y eliminarlas requiere comprobar la propiedad y las dependencias.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-5.html)
 
@@ -738,7 +716,7 @@ info-alerts:
 
 ### Script de limpieza de alarmas
 
-Este comando solo enumera candidatos para inspección. `INSUFFICIENT_DATA` no prueba que una alarma no se use, y una fecha histórica fija no puede significar «hace 90 días». Revise el tiempo transcurrido desde `StateTransitionedTimestamp`, la recopilación real, la propiedad y las dependencias compuestas antes de una eliminación autorizada por separado. `StateUpdatedTimestamp` también puede cambiar cuando cambia el motivo del estado; no es lo mismo que el tiempo en el estado actual.
+Este comando solo enumera candidatos para inspeccionarlos. `INSUFFICIENT_DATA` no demuestra que una alarma no se use, y una fecha histórica fija no puede significar «hace 90 días». Antes de una eliminación autorizada por separado, revise el tiempo transcurrido desde `StateTransitionedTimestamp`, la recopilación real, la propiedad y las dependencias de alarmas compuestas. `StateUpdatedTimestamp` también puede cambiar cuando cambia el motivo del estado; no equivale al tiempo que lleva en el estado actual.
 
 ```bash
 aws cloudwatch describe-alarms  \
@@ -750,28 +728,23 @@ aws cloudwatch describe-alarms  \
 
 ---
 
-<span id="prometheus-metrics-integration"></span>
-
-## Integración de métricas de Prometheus
+## Integración de métricas de Prometheus {#prometheus-metrics-integration}
 
 ### Integración con Amazon Managed Prometheus (AMP)
 
 Las métricas almacenadas en AMP no se copian automáticamente a las métricas clásicas de CloudWatch. Elija la ruta que corresponda al requisito.
 
-- **Alertas dentro de AMP**: configure reglas de alerta de Prometheus del espacio de trabajo → Alertmanager administrado → un receptor compatible (SNS o PagerDuty).
-- **Alarmas de PromQL de CloudWatch**: evalúan métricas ingeridas mediante el endpoint de OTLP de CloudWatch. No es una consulta directa de un espacio de trabajo de AMP.
-- **Republicación de métricas clásicas de CloudWatch**: defina solo los agregados requeridos en un exportador independiente. Firme con un conjunto único y consistente de credenciales temporales congeladas, y valide los tiempos de espera, el estado HTTP, el tipo de resultado, los valores finitos, las marcas de tiempo y las dimensiones. No convierta resultados vacíos, NaN o fallos en cero o éxito. Esto agrega costos de consulta, métricas personalizadas, tiempo de ejecución y retraso.
+- **Alertas dentro de AMP**: configure reglas de alerta de Prometheus en el workspace → Alertmanager administrado → un receptor compatible (SNS o PagerDuty).
+- **Alarmas PromQL de CloudWatch**: evalúan métricas ingeridas por el endpoint OTLP de CloudWatch. No consultan directamente un workspace de AMP.
+- **Republicación de métricas clásicas de CloudWatch**: defina solo los agregados necesarios en un exportador independiente. Firme con un único conjunto coherente y congelado de credenciales temporales, y valide tiempos de espera, estado HTTP, tipo de resultado, valores finitos, marcas de tiempo y dimensiones. No convierta resultados vacíos, NaN o errores en cero ni en éxito. Esto añade costos de consultas, métricas personalizadas y ejecución, además de retraso.
 
-El anterior promedio de modo de CPU no era la utilización total de CPU; una proporción de promedios de memoria entre Pods no relacionados o sin límite no era la utilización del límite de cada Pod. Seleccione PromQL que conserve las etiquetas requeridas y la semántica de restablecimiento, luego pruebe la regla y valide los datos recopilados reales.
+El promedio anterior del modo de CPU no representaba la utilización total de CPU; una proporción entre promedios de memoria de Pods no relacionados o sin límite no representaba la utilización del límite de cada Pod. Seleccione PromQL que conserve las etiquetas necesarias y la semántica de restablecimiento; después, pruebe la regla y valide los datos recopilados reales.
 
 ---
 
-<span id="terraform-examples"></span>
+## Ejemplos de Terraform {#terraform-examples}
 
-## Ejemplos de Terraform
-
-Los bloques siguientes forman un módulo de ejemplo. Configure valores reales de recursos y la política del tema de SNS, y luego revise `terraform plan` antes de la implementación. La validación de ejemplo cubre el esquema/sintaxis del proveedor, no la implementación de AWS ni la entrega real de notificaciones.
-
+Los bloques siguientes forman un módulo de ejemplo. Configure los valores reales de los recursos y la política del tema SNS, y revise `terraform plan` antes del despliegue. La validación de ejemplo cubre el esquema/sintaxis del proveedor, no el despliegue en AWS ni la entrega real de notificaciones.
 
 ### Alarma básica
 
@@ -999,16 +972,16 @@ resource "aws_cloudwatch_metric_alarm" "cpu_anomaly" {
 - [Cálculos de métricas](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
 - [Detección de anomalías](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html)
 - [Esquemas de mensajes de alarma de SNS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html)
-- [Ámbito de la política de filtro de SNS](https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html)
+- [Ámbito de la política de filtrado de SNS](https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html)
 - [Eventos de alarma de EventBridge](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-and-eventbridge.html)
 - [Permisos de destino de EventBridge](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
 - [Dimensiones de métricas de Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
-- [Complemento CloudWatch Observability de EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [Complemento CloudWatch Observability para EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
 - [Precios de CloudWatch](https://aws.amazon.com/cloudwatch/pricing/)
-- [Alarmas de PromQL](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html)
-- [Alarmas de registros](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html)
+- [Alarmas PromQL](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html)
+- [Alarmas de logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html)
 - [Receptores de alertas de AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-alertmanager-receiver.html)
 
 ## Cuestionario
 
-Pruebe sus conocimientos con el [Cuestionario de alarmas de CloudWatch](../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md).
+Ponga a prueba sus conocimientos con el [cuestionario de alarmas de CloudWatch](../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md).

@@ -1,6 +1,6 @@
 # 负载均衡
 
-Istio 通过 Envoy 提供多种负载均衡算法，以高效分配流量。
+Istio 通过 Envoy 提供多种负载均衡算法，以有效分配流量。
 
 ## 目录
 
@@ -15,133 +15,55 @@ Istio 通过 Envoy 提供多种负载均衡算法，以高效分配流量。
 9. [最佳实践](#best-practices)
 10. [故障排除](#troubleshooting)
 
-<span id="why-load-balancing"></span>
+## 为什么需要负载均衡？ {#why-load-balancing}
 
-## 为什么需要负载均衡？
+### 高效利用资源
 
-### 高效的资源利用
+负载均衡会将流量分配到多个实例，从而提高系统整体吞吐量和稳定性。
 
-负载均衡将流量分配到多个实例，从而提高整体系统吞吐量和稳定性。
+![不使用负载均衡时，所有请求都会打到一个已满载的服务，另外两个服务则闲置；在前端加入负载均衡器后，同一批请求会被均匀分配，让各服务承担相近的负载。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Load Balancing"]
-        C1[All Requests] -->|Overload| S1[Service 1<br/>100% Load]
-        S2[Service 2<br/>0% Load]
-        S3[Service 3<br/>0% Load]
-    end
-
-    subgraph With["With Load Balancing"]
-        C2[Distributed Requests] --> LB[Load Balancer]
-        LB -->|33%| S4[Service 1<br/>33% Load]
-        LB -->|33%| S5[Service 2<br/>33% Load]
-        LB -->|34%| S6[Service 3<br/>34% Load]
-    end
-
-    %% Style definitions
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef idle fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef balanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class C1,C2 client;
-    class S1 overload;
-    class S2,S3 idle;
-    class LB lb;
-    class S4,S5,S6 balanced;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### 主要优势
 
-| 问题 | 没有负载均衡 | 使用负载均衡 |
+| 问题 | 不使用负载均衡 | 使用负载均衡 |
 |---------|------------------------|---------------------|
 | **可用性** | 单点故障（SPOF） | 故障时自动切换 |
-| **性能** | 特定实例过载 | 负载均匀分配 |
+| **性能** | 某个实例过载 | 均衡分配负载 |
 | **可扩展性** | 难以水平扩展 | 易于横向扩容 |
-| **响应时间** | 不一致（0-1000ms+） | 响应时间一致 |
-| **资源利用率** | 效率低（仅部分使用） | 高效使用资源 |
+| **响应时间** | 不稳定（0–1000ms+） | 响应时间较稳定 |
+| **资源利用率** | 利用不充分 | 高效利用资源 |
 
-<span id="load-balancing-overview"></span>
+## 负载均衡概述 {#load-balancing-overview}
 
-## 负载均衡概述
+![客户端请求到达 Istio 负载均衡算法后，算法根据三个 Pod 当前负载不同，使用轮询、最少请求或随机选择其中一个 Pod。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-1.png)
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
-    subgraph LB["Load Balancer"]
-        Algorithm[Load Balancing<br/>Algorithm]
-    end
+## 负载均衡算法 {#load-balancing-algorithms}
 
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Load: 30%]
-        Pod2[Pod 2<br/>Load: 50%]
-        Pod3[Pod 3<br/>Load: 20%]
-    end
-
-    Client --> Algorithm
-    Algorithm -->|Round Robin| Pod1
-    Algorithm -->|Least Request| Pod3
-    Algorithm -->|Random| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Algorithm lb;
-    class Pod1,Pod2,Pod3 pod;
-```
-
-<span id="load-balancing-algorithms"></span>
-
-## 负载均衡算法
+已发布的 Istio 1.31.0 默认算法为 LEAST_REQUEST。以下示例分别展示独立的 DestinationRule，不能合并为同一主机的一套配置。结果取决于端点健康状况、请求开销、连接复用和代理所在位置；没有任何算法能保证 CPU 负载完全相等或延迟恒定。`consistentHash` 是单独的配置分支，并不是 `simple: CONSISTENT_HASH` 这样的枚举值。
 
 Istio 提供以下负载均衡算法。
 
-### 算法比较
+### 算法对比
 
 | 算法 | 说明 | 使用场景 | 优点 | 缺点 |
 |-----------|-------------|-----------|------|------|
-| **ROUND_ROBIN** | 顺序分配（默认） | 无状态服务 | 简单、公平 | 可能发生负载不均衡 |
-| **LEAST_REQUEST** | 最少活跃请求数 | 高性能 API、DB 连接 | 负载均衡 | 略有开销 |
-| **RANDOM** | 随机分配 | 高流量 | 简单、快速 | 短期内可能不均衡 |
-| **PASSTHROUGH** | 原始目标地址 | TCP 代理、SNI 路由 | 灵活性 | 控制有限 |
-| **CONSISTENT_HASH** | 基于哈希的粘性路由 | 会话持久化、缓存 | 粘性会话 | 可能不均衡 |
+| **ROUND_ROBIN** | 按顺序分配（显式选项） | 无状态服务 | 简单、公平 | 可能出现负载不均 |
+| **LEAST_REQUEST** | 选择活跃请求较少的端点 | 高性能 API、数据库连接 | 均衡负载 | 略有开销 |
+| **RANDOM** | 随机分配 | 高流量 | 简单、快速 | 短期内可能不均 |
+| **PASSTHROUGH** | 使用原始目标地址 | TCP 代理、SNI 路由 | 灵活 | 控制有限 |
+| **CONSISTENT_HASH** | 基于哈希实现粘性路由 | 会话保持、缓存 | 粘性会话 | 可能不均 |
 
-### 1. ROUND_ROBIN（默认）
+### 1. ROUND_ROBIN（轮询）
 
-将请求按顺序分配到各个端点。
+按顺序将请求分配给各个端点。
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LB as Load Balancer<br/>(ROUND_ROBIN)
-    participant Pod1 as Pod 1
-    participant Pod2 as Pod 2
-    participant Pod3 as Pod 3
+![负载均衡器按 ROUND_ROBIN 算法将四个连续请求依次路由到 Pod 1、Pod 2、Pod 3，再回到 Pod 1，按端点顺序循环分配。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-2.png)
 
-    Client->>LB: Request 1
-    LB->>Pod1: Route
-    Pod1-->>Client: Response
-
-    Client->>LB: Request 2
-    LB->>Pod2: Route
-    Pod2-->>Client: Response
-
-    Client->>LB: Request 3
-    LB->>Pod3: Route
-    Pod3-->>Client: Response
-
-    Client->>LB: Request 4
-    LB->>Pod1: Route (cycle)
-    Pod1-->>Client: Response
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **配置示例：**
 
@@ -163,46 +85,18 @@ spec:
 - 默认设置已足够时
 
 **优点：**
-- 实现简单且可预测
+- 实现简单、可预测
 - 分配公平
 
 **缺点：**
-- 不考虑每个 Pod 的负载差异
-- 长时间请求可能导致不均衡
+- 不考虑各 Pod 的负载差异
+- 耗时较长的请求可能造成负载不均
 
-### 2. LEAST_REQUEST
+### 2. LEAST_REQUEST（默认）
 
-路由到活跃请求数最少的端点。
+对于权重相同的端点，Envoy 通常会从可用主机中随机抽取两个，并选择活跃请求较少的那个。它不会扫描所有 Pod，也不会测量 Pod 的 CPU 或数据库查询负载。端点权重不同时会使用另一种加权算法。
 
-```mermaid
-flowchart LR
-    Client[Client<br/>New Request]
-    LB[Load Balancer<br/>LEAST_REQUEST]
-
-    subgraph Pods[Pod Status]
-        Pod1[Pod 1<br/>Active Requests: 5]
-        Pod2[Pod 2<br/>Active Requests: 2 ✅]
-        Pod3[Pod 3<br/>Active Requests: 8]
-    end
-
-    Client --> LB
-    LB -.->|Check| Pod1
-    LB -.->|Check| Pod2
-    LB -.->|Check| Pod3
-    LB -->|Route to<br/>Least Loaded| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef selected fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% Class applications
-    class Client client;
-    class LB lb;
-    class Pod1,Pod3 pod;
-    class Pod2 selected;
-```
+权重相同的 LEAST_REQUEST 默认会从两个随机候选端点中选择较空闲的一个。
 
 **配置示例：**
 
@@ -216,7 +110,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 60 second warmup (optional)
+      warmup:
+        duration: 60s  # 60 second warmup (optional)
 ```
 
 **高级配置：**
@@ -231,7 +126,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 120  # New pod warmup
+      warmup:
+        duration: 120s  # New pod warmup
     connectionPool:
       http:
         http2MaxRequests: 100
@@ -239,20 +135,20 @@ spec:
 ```
 
 **使用场景：**
-- 响应时间可变的 API
+- 响应时间不固定的 API
 - 数据库连接池
 - 处理负载较重的服务
-- 实时负载均衡很重要时
+- 需要根据实时请求负载进行分配时
 
 **优点：**
-- 适应实时负载
-- 提高响应时间一致性
-- 吸收每个 Pod 的性能差异
+- 能适应实时请求负载
+- 提高响应时间的稳定性
+- 能缓解 Pod 之间的性能差异
 
 **缺点：**
-- 略有开销（跟踪活跃请求）
+- 略有额外开销（需跟踪活跃请求）
 
-### 3. RANDOM
+### 3. RANDOM（随机）
 
 随机选择一个端点。
 
@@ -269,20 +165,20 @@ spec:
 ```
 
 **使用场景：**
-- 高流量（统计上均匀）
-- 需要简单快速选择时
+- 高流量（统计上趋于均匀）
+- 需要简单、快速地选择端点时
 - Pod 性能相同时
 
 **优点：**
-- 选择速度非常快
+- 选择速度很快
 - 实现简单
-- 大规模下统计上均匀
+- 大规模时统计上较均匀
 
 **缺点：**
 - 短期内可能不均衡
-- 不可预测
+- 结果不可预测
 
-### 4. PASSTHROUGH
+### 4. PASSTHROUGH（直通）
 
 直接连接到客户端指定的原始目标地址。
 
@@ -306,14 +202,16 @@ spec:
 
 **优点：**
 - 保留原始目标地址
-- 路由灵活
+- 路由方式灵活
 
 **缺点：**
 - 负载均衡控制有限
 
-### 5. LEAST_CONN（已弃用 -> LEAST_REQUEST）
+DestinationRule 的 PASSTHROUGH 使用原始目标地址负载均衡。Gateway 的 `tls.mode: PASSTHROUGH` 控制 TLS 终止，两者是不同设置；按 SNI 路由还需要 TLS VirtualService 路由。
 
-**注意**：`LEAST_CONN` 已**弃用**，并由 `LEAST_REQUEST` 替代。
+### 5. LEAST_CONN（已弃用，改用 LEAST_REQUEST）
+
+**注意**：`LEAST_CONN` 已**弃用**，由 `LEAST_REQUEST` 取代。
 
 **迁移：**
 ```yaml
@@ -321,62 +219,28 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: LEAST_CONN
+```
 
+```yaml
 # New version
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
 
-<span id="consistent-hash-details"></span>
+## 一致性哈希详解 {#consistent-hash-details}
 
-## 一致性哈希详解
+只要端点视图保持稳定，一致性哈希就能为相同键提供软亲和性。新增或移除端点、健康状态变化或本地性差异都可能导致请求重新映射；它不能替代持久化会话存储。
 
-一致性哈希根据特定属性路由到同一端点，以确保会话持久化。
+### 一致性哈希的工作原理
 
-### 一致性哈希工作原理
+![每个请求的键都会哈希到环上的固定值并映射到一个 Pod；因此用户 A 的相同 Cookie 两次都落到 Pod 1，用户 B 的另一个 Cookie 则落到 Pod 2。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-4.png)
 
-```mermaid
-flowchart TD
-    subgraph Requests[Requests]
-        R1[User A<br/>Cookie: abc123]
-        R2[User B<br/>Cookie: def456]
-        R3[User A<br/>Cookie: abc123]
-    end
-
-    subgraph Hash[Hash Calculation]
-        H1[Hash abc123<br/>-> 0x1A2B]
-        H2[Hash def456<br/>-> 0x7C8D]
-        H3[Hash abc123<br/>-> 0x1A2B]
-    end
-
-    subgraph Ring[Consistent Hash Ring]
-        P1[Pod 1<br/>0x0000-0x4FFF]
-        P2[Pod 2<br/>0x5000-0x9FFF]
-        P3[Pod 3<br/>0xA000-0xFFFF]
-    end
-
-    R1 -->|1| H1
-    H1 -->|2| P1
-    R2 -->|1| H2
-    H2 -->|2| P2
-    R3 -->|1| H3
-    H3 -->|2| P1
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef hash fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class R1,R2,R3 request;
-    class H1,H2,H3 hash;
-    class P1,P2,P3 pod;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
 ### 1. 基于 HTTP Header
 
-根据特定 HTTP Header 值计算哈希。
+根据指定 HTTP header 的值计算哈希。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -392,13 +256,13 @@ spec:
 ```
 
 **使用场景：**
-- 每用户会话持久化
+- 按用户保持会话亲和性
 - 基于 API key 的路由
-- 每租户隔离
+- 按租户键保持亲和性；隔离仍需单独实施
 
 ### 2. 基于 HTTP Cookie
 
-根据 Cookie 值计算哈希；如果 Cookie 缺失，则自动生成 Cookie。
+根据 Cookie 值计算哈希；如果 Cookie 不存在，则自动生成一个。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -416,9 +280,9 @@ spec:
 ```
 
 **使用场景：**
-- Web 应用程序会话持久化
-- 购物车持久化
-- 用户体验一致性
+- Web 应用会话保持
+- 购物车状态保持
+- 保持用户体验一致
 
 ### 3. 基于源 IP
 
@@ -438,17 +302,17 @@ spec:
 ```
 
 **使用场景：**
-- 基于 IP 的会话持久化
-- 限流（每个 IP）
+- 基于 IP 的会话亲和性
+- 为外部按 IP 限流器提供亲和性；哈希本身不会执行限流
 - 区域缓存
 
 **注意事项：**
-- NAT 后的客户端可能被路由到同一 Pod
-- 使用代理时，请验证实际客户端 IP
+- NAT 后面的客户端可能都会被路由到同一个 Pod
+- 使用代理时，应核实实际客户端 IP
 
 ### 4. 基于 HTTP 查询参数
 
-根据查询参数值计算哈希。
+根据查询参数的值计算哈希。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -464,13 +328,13 @@ spec:
 ```
 
 **使用场景：**
-- RESTful API 中基于资源 ID 的路由
-- 缓存友好的路由
+- RESTful API 中按资源 ID 路由
+- 有利于缓存的路由
 - 分片策略
 
-### 5. 最小哈希环大小设置
+### 5. 最小哈希环大小
 
-设置最小一致性哈希环大小，以尽量减少重新分配。
+调整哈希环中的虚拟节点数，以改善不同键之间的分布；这不能消除重新映射或热点键。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -483,18 +347,19 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 1024  # Default: 1024
+        ringHash:
+          minimumRingSize: 1024  # Default: 1024
 ```
 
 **说明：**
-- 更大的哈希环大小可提供更均匀的分配
-- 减少添加/移除 Pod 时被重新分配的 key 比例
-- 内存使用量略有增加
+- 增大哈希环可让不同键的分布更加均匀
+- 端点变更时，不保证重新映射比例会下降
+- 内存占用会略有增加
 
-**推荐值：**
-- 小规模（< 10 个 Pod）：1024（默认）
-- 中等规模（10-50 个 Pod）：2048
-- 大规模（50+ 个 Pod）：4096
+**供基准测试参考的示例值（不是通用容量阈值）：**
+- 小规模（少于 10 个 Pod）：1024（默认值）
+- 中等规模（10–50 个 Pod）：2048
+- 大规模（50 个以上 Pod）：4096
 
 ### 一致性哈希组合示例
 
@@ -512,7 +377,8 @@ spec:
           name: "session-id"
           path: "/api"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       http:
         maxRequestsPerConnection: 100
@@ -521,40 +387,20 @@ spec:
 
 ### 一致性哈希注意事项
 
-#### 1. 不均衡风险
+#### 1. 负载不均风险
 
-```mermaid
-flowchart LR
-    subgraph Problem[Problem Situation]
-        Users[1000 Users]
-        P1[Pod 1<br/>800 users ⚠️]
-        P2[Pod 2<br/>150 users]
-        P3[Pod 3<br/>50 users]
-    end
+![如果过多用户映射到同一哈希区间，一个 Pod 可能承担大部分流量，而其他 Pod 几乎空闲；这是使用一致性哈希时的一种风险。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
-    Users -->|80%| P1
-    Users -->|15%| P2
-    Users -->|5%| P3
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Users user;
-    class P1 overload;
-    class P2,P3 normal;
-```
-
-**原因**：流量集中于特定哈希值
+**原因**：流量集中在少数哈希值上。
 
 **解决方案：**
-- 增加 `minimumRingSize`
-- 使用多个哈希 key 组合
-- 考虑 Bounded Load 算法（Envoy 不支持）
+- 只有不同键的分布不均时才增加 `ringHash.minimumRingSize`；单个热点键仍会映射到一台主机
+- 组合多个哈希键
+- Envoy 支持通过 hash_balance_factor 实现有界负载哈希；Istio DestinationRule 不直接暴露此参数
 
-#### 2. 添加/移除 Pod 时的重新分配
+#### 2. 添加或移除 Pod 后的重新分配
 
 ```yaml
 # On pod scale out
@@ -563,14 +409,14 @@ flowchart LR
 # - Result: ~25% of sessions redistributed to different pods
 ```
 
-**缓解策略：**
-- 使用优雅关闭
+**缓解措施：**
+- 优雅关闭
 - 使用外部会话存储（Redis、Memcached）
 - 逐步扩缩容
 
-<span id="locality-based-load-balancing"></span>
+## 基于位置的负载均衡 {#locality-based-load-balancing}
 
-## 基于位置的负载均衡
+同一设置中应使用位置 `distribute` 百分比或显式 `failover`，不要同时配置两者。故障转移需要健康检测和可达的健康端点。Region/zone 标签描述拓扑，并非测得的距离；DestinationRule 也不会建立跨区域网络或服务发现。EKS 上应使用实际节点拓扑值。
 
 基于位置的负载均衡优先选择地理位置更近的端点。
 
@@ -611,7 +457,7 @@ spec:
 
 ### 位置故障转移
 
-当一个区域发生故障时，自动切换到另一个区域。
+某个区域发生故障时，自动切换到另一个区域。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -627,6 +473,10 @@ spec:
         failover:
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### 多区域示例
@@ -654,28 +504,21 @@ spec:
           to:
             "us-east/*": 90
             "us-west/*": 10
-        failover:
-        - from: us-west
-          to: us-east
-        - from: us-east
-          to: us-west
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **使用场景：**
 - 多区域部署
-- 最小化延迟
+- 降低延迟
 - 跨区域灾难恢复
-- 成本优化（同一 AZ 通信）
+- 优化成本（同一 AZ 内通信）
 
-<span id="connection-pool-settings"></span>
+## 连接池设置 {#connection-pool-settings}
 
-## 连接池设置
-
-将连接池与负载均衡一同配置，以优化性能。
+配合负载均衡配置连接池，以优化性能。
 
 ### HTTP/1.1 连接池
 
@@ -720,9 +563,7 @@ spec:
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
 
-<span id="practical-examples"></span>
-
-## 实践示例
+## 实践示例 {#practical-examples}
 
 ### 示例 1：高性能 API 服务
 
@@ -737,7 +578,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
     connectionPool:
       tcp:
         maxConnections: 200
@@ -747,7 +589,7 @@ spec:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -755,7 +597,7 @@ spec:
 
 **使用场景：**
 - 高性能 REST API
-- 响应时间可变的请求
+- 响应时间不固定的请求
 - Pod 性能存在差异的环境
 
 ### 示例 2：基于用户会话的路由
@@ -773,7 +615,8 @@ spec:
         httpCookie:
           name: "session-id"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       tcp:
         maxConnections: 500
@@ -783,9 +626,9 @@ spec:
 ```
 
 **使用场景：**
-- Web 应用程序会话持久化
-- 购物车一致性
-- 每用户缓存利用
+- Web 应用会话保持
+- 购物车状态一致
+- 提高按用户划分的缓存利用率
 
 ### 示例 3：多区域全局服务
 
@@ -819,29 +662,26 @@ spec:
           to:
             "eu-central-1/*": 90
             "eu-west-1/*": 10
-        failover:
-        - from: us-west-1
-          to: us-west-2
-        - from: us-east-1
-          to: us-east-2
     connectionPool:
       tcp:
         maxConnections: 1000
       http:
         http2MaxRequests: 2000
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 60s
 ```
 
 **使用场景：**
 - 全球 SaaS 服务
-- 最小化延迟
-- 每区域灾难恢复
-- 跨 AZ 流量成本降低
+- 降低延迟
+- 按区域进行灾难恢复
+- 降低跨 AZ 流量成本
 
 ### 示例 4：缓存服务优化
+
+此示例假定 HTTP 缓存服务接受 x-cache-key。原生 Redis 流量没有 HTTP header；Redis 键应使用支持 Redis 的客户端或集群分片机制。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -849,12 +689,13 @@ kind: DestinationRule
 metadata:
   name: cache-service-optimized
 spec:
-  host: redis-cache
+  host: http-cache
   trafficPolicy:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 4096  # Large ring size to minimize redistribution
+        ringHash:
+          minimumRingSize: 4096  # Large ring size to minimize redistribution
     connectionPool:
       tcp:
         maxConnections: 100
@@ -864,14 +705,14 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 600s
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
 ```
 
 **使用场景：**
-- 最大化缓存命中率
-- 一致的缓存 key 路由
+- 尽量提高缓存命中率
+- 按一致的缓存键路由
 - 分片策略
 
 ### 示例 5：数据库连接池
@@ -885,24 +726,21 @@ spec:
   host: postgres-primary
   trafficPolicy:
     loadBalancer:
-      simple: LEAST_REQUEST
+      simple: ROUND_ROBIN
     connectionPool:
       tcp:
         maxConnections: 50  # DB connection limit
         connectTimeout: 5s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
 ```
 
 **使用场景：**
-- 数据库连接池管理
-- 慢查询分配
-- 连接限制强制执行
+- 管理数据库连接池
+- 仅选择连接；已执行的 SQL 查询不会重新均衡
+- 强制执行连接数限制
 
 ### 示例 6：高流量处理
 
@@ -925,7 +763,7 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 60s
     outlierDetection:
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 20  # Limited ejection at scale
@@ -936,67 +774,27 @@ spec:
 - 日志收集
 - 大规模数据处理
 
-<span id="algorithm-selection-guide"></span>
-
-## 算法选择指南
+## 算法选择指南 {#algorithm-selection-guide}
 
 ### 决策树
 
-```mermaid
-flowchart TD
-    Start[Load Balancing Needed]
-
-    Q1{Session<br/>Persistence<br/>Required?}
-    Q2{Very High<br/>Traffic?}
-    Q3{Variable<br/>Response Times?}
-    Q4{Geographic<br/>Distribution?}
-    Q5{TCP<br/>Proxy?}
-
-    R1[CONSISTENT_HASH<br/>httpCookie or<br/>httpHeaderName]
-    R2[RANDOM]
-    R3[LEAST_REQUEST]
-    R4[LEAST_REQUEST +<br/>Locality Setting]
-    R5[PASSTHROUGH]
-    R6[ROUND_ROBIN<br/>Default]
-
-    Start --> Q1
-    Q1 -->|Yes| R1
-    Q1 -->|No| Q2
-    Q2 -->|Yes| R2
-    Q2 -->|No| Q3
-    Q3 -->|Yes| Q4
-    Q3 -->|No| Q4
-    Q4 -->|Yes| R4
-    Q4 -->|No| Q5
-    Q5 -->|Yes| R5
-    Q5 -->|No| R6
-
-    %% Style definitions
-    classDef question fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class Start start;
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class R1,R2,R3,R4,R5,R6 result;
-```
+HTTP 流量可从 LEAST_REQUEST 开始；只有需要软亲和性时才选择一致性哈希，其他算法应在有代表性的负载下测量。
 
 ### 按服务类型推荐的算法
 
 | 服务类型 | 推荐算法 | 原因 |
 |-------------|----------------------|--------|
-| **REST API** | LEAST_REQUEST | 响应时间一致性 |
-| **GraphQL API** | LEAST_REQUEST | 复杂查询分配 |
-| **gRPC** | LEAST_REQUEST | 流式负载均衡 |
-| **Web 前端** | CONSISTENT_HASH (cookie) | 会话持久化 |
-| **WebSocket** | CONSISTENT_HASH (header) | 连接持久化 |
-| **缓存服务** | CONSISTENT_HASH (header) | 缓存命中率 |
+| **REST API** | LEAST_REQUEST | 响应时间更稳定 |
+| **GraphQL API** | LEAST_REQUEST | 分配复杂查询 |
+| **gRPC** | LEAST_REQUEST | 均衡流式负载 |
+| **Web 前端** | CONSISTENT_HASH（cookie） | 会话保持 |
+| **WebSocket** | 可选的重连亲和性 | 已建立的连接会继续使用其上游端点 |
+| **缓存服务** | CONSISTENT_HASH（header） | 提高缓存命中率 |
 | **Analytics/日志收集** | RANDOM | 大规模处理 |
-| **数据库** | LEAST_REQUEST | 连接池管理 |
+| **数据库** | 数据库感知的客户端/连接池；按需使用 TCP 策略 | 保持主库/副本语义 |
 | **静态内容** | ROUND_ROBIN | 简单且足够 |
-| **消息队列** | LEAST_REQUEST | 队列负载均衡 |
-| **批处理** | LEAST_REQUEST | 作业分配 |
+| **消息队列** | Broker/客户端消费者分配 | HTTP 活跃请求数无法衡量队列负载 |
+| **批处理** | LEAST_REQUEST | 分配作业 |
 
 ### 按流量模式选择
 
@@ -1005,17 +803,23 @@ flowchart TD
 trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN  # Simple and efficient
+```
 
+```yaml
 # 2. Variable requests (10ms ~ 1s+)
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST  # Load adaptive
+```
 
+```yaml
 # 3. Very high traffic (10,000+ RPS)
 trafficPolicy:
   loadBalancer:
     simple: RANDOM  # Minimize overhead
+```
 
+```yaml
 # 4. Session-based (user state)
 trafficPolicy:
   loadBalancer:
@@ -1023,7 +827,9 @@ trafficPolicy:
       httpCookie:
         name: "session-id"
         ttl: 3600s
+```
 
+```yaml
 # 5. Multi-region
 trafficPolicy:
   loadBalancer:
@@ -1032,9 +838,7 @@ trafficPolicy:
       enabled: true
 ```
 
-<span id="best-practices"></span>
-
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. 算法选择原则
 
@@ -1050,7 +854,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST  # Load adaptive
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
 ```
 
 **不佳示例：**
@@ -1067,9 +872,9 @@ spec:
       simple: ROUND_ROBIN  # Causes load imbalance
 ```
 
-### 2. 连接池必需设置
+### 2. 调整连接池
 
-始终将连接池与负载均衡一同配置：
+根据实测需求调整可选的连接池上限；这些上限是逐代理设置，不是全局 Service 连接预算：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1081,7 +886,7 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    connectionPool:  # Required
+    connectionPool:  # Optional tuning
       tcp:
         maxConnections: 100
       http:
@@ -1089,9 +894,9 @@ spec:
         maxRequestsPerConnection: 100
 ```
 
-### 3. 异常值检测组合
+### 3. 组合异常值检测
 
-与 Circuit Breaker 一起使用，以移除发生故障的 Pod：
+可结合 Circuit Breaker 使用，以移除持续失败的 Pod：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1103,8 +908,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Health-based ejection
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -1165,56 +970,41 @@ spec:
       simple: LEAST_REQUEST
       localityLbSetting:
         enabled: true
-        distribute:
-        - from: us-west/*
-          to:
-            "us-west/*": 80
-            "us-east/*": 20
         failover:  # Required
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
-### 6. 监控和指标
+### 6. 监控与指标
 
-监控负载均衡的有效性：
+监控负载均衡效果：
 
-```yaml
-# Prometheus queries
-# Request distribution per pod
-sum by (destination_workload) (rate(istio_requests_total[5m]))
+```promql
+# Per-pod inbound request distribution (assumes scrape labels retain namespace/pod)
+sum by (namespace, pod) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# Response time per pod
+# Per-pod inbound P95 latency
 histogram_quantile(0.95,
-  sum by (destination_workload, le) (
-    rate(istio_request_duration_milliseconds_bucket[5m])
+  sum by (namespace, pod, le) (
+    rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])
   )
 )
 
-# Active connection count
-sum by (destination_workload) (envoy_cluster_upstream_cx_active)
+# Raw Envoy connection statistics do not have Istio destination_workload labels
+sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 ```
 
 ### 7. 逐步应用
 
-```yaml
-# Step 1: Default ROUND_ROBIN
-simple: ROUND_ROBIN
-
-# Step 2: LEAST_REQUEST after monitoring
-simple: LEAST_REQUEST
-
-# Step 3: Add Connection Pool
-simple: LEAST_REQUEST
-connectionPool: ...
-
-# Step 4: Add Outlier Detection
-simple: LEAST_REQUEST
-connectionPool: ...
-outlierDetection: ...
-```
+从当前默认的 LEAST_REQUEST 开始。先测量有代表性的流量，再分别调整算法、连接池、预热和异常值检测。示例中的值仅为起点，并非性能保证阈值。
 
 ### 8. 文档
+
+下面的注解值仅供示例。请用实际测量值替换示例中的延迟/负载数值；这些数值不是本次审计的基准测试结果。Redis 会话存储还需要应用集成，不能只靠 DestinationRule 注解实现。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1228,7 +1018,7 @@ metadata:
     # Algorithm selection basis
     algorithm-rationale: |
       - LEAST_REQUEST: Response times vary 10ms-500ms
-      - warmupDurationSecs: New pods need 60s to warm up cache
+      - warmup.duration: New pods need 60s to warm up cache
 
     # Test results
     test-results: |
@@ -1240,13 +1030,13 @@ metadata:
     monitoring: |
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
+spec:
+  host: api-service
 ```
 
-<span id="troubleshooting"></span>
+## 故障排除 {#troubleshooting}
 
-## 故障排除
-
-### 负载分配不均衡
+### 负载分配不均
 
 **症状：**
 ```bash
@@ -1255,9 +1045,9 @@ kubectl top pods -n production
 
 # Output:
 # NAME                CPU    MEMORY
-# api-pod-1           80%    2Gi
-# api-pod-2           20%    1Gi
-# api-pod-3           15%    1Gi
+# api-pod-1           800m   2048Mi
+# api-pod-2           200m   1024Mi
+# api-pod-3           150m   1024Mi
 ```
 
 **原因和解决方案：**
@@ -1275,16 +1065,17 @@ spec:
       simple: LEAST_REQUEST  # Changed
 
 # 2. Add Warmup
-      warmupDurationSecs: 60
+      warmup:
+        duration: 60s
 
 # 3. Add Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 一致性哈希不均衡
+### 一致性哈希分配不均
 
 **症状：**
 ```bash
@@ -1308,39 +1099,31 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-user-id"
-        minimumRingSize: 4096  # Increase 2048 -> 4096
+        ringHash:
+          minimumRingSize: 4096  # Increase 2048 -> 4096
 ```
 
 ### 基于位置的路由不起作用
 
-**验证步骤：**
+检查工作负载所在节点的拓扑，以及 Envoy endpoint 配置中的位置。Kubernetes/EKS 通常会在 Node 上提供 region/zone 标签，而不是在应用 Pod 上提供。应修正实际节点/供应器配置；不要为了强制路由而虚构云 region/zone 标签。
 
 ```bash
-# 1. Check pod locality labels
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.topology\.kubernetes\.io/region}{"\t"}{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}{end}'
-
-# 2. Check Istio Proxy configuration
-istioctl proxy-config endpoints pod-name | grep locality
-
-# 3. Check DestinationRule application
-istioctl proxy-config clusters pod-name --fqdn api-service.default.svc.cluster.local -o json | jq '.[] | .localityLbEndpoints'
-```
-
-**修复：**
-
-```yaml
-# Check and add node labels
-apiVersion: v1
-kind: Node
-metadata:
-  labels:
-    topology.kubernetes.io/region: us-west
-    topology.kubernetes.io/zone: us-west-1
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
+istioctl proxy-config clusters <pod-name> --fqdn api-service.default.svc.cluster.local -o json
 ```
 
 ## 参考资料
 
-- [Istio Load Balancing](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
-- [Envoy Load Balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
-- [Consistent Hashing](https://www.toptal.com/big-data/consistent-hashing)
-- [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+- [Istio 负载均衡](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
+- [Envoy 负载均衡](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
+- [一致性哈希](https://www.toptal.com/big-data/consistent-hashing)
+- [位置负载均衡](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+- [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主要参考资料 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)
+- [主要参考资料 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
+- [主要参考资料 4](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
+- [主要参考资料 5](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [主要参考资料 6](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/)

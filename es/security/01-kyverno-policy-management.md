@@ -1,23 +1,23 @@
 # Gestión de políticas con Kyverno
 
 > **Línea de base de validación**: Kyverno/CLI 1.19.1, chart de Helm 3.9.1. La guía de la versión actual enumera Kubernetes 1.33–1.35 como versiones probadas; la restricción de instalación más amplia del chart no es una garantía de compatibilidad.
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-Kyverno evalúa políticas de Kubernetes y realiza mutación, generación y eliminación configuradas explícitamente. Estos ejemplos se verificaron localmente con la CLI real y los esquemas/charts publicados. No se ejecutó ninguna instalación en un cluster en vivo, admisión, aislamiento de red, limpieza ni integración con AWS.
+Kyverno evalúa políticas de Kubernetes y realiza mutación, generación y eliminación configuradas explícitamente. Estos ejemplos se verificaron localmente con la CLI real y los esquemas/charts publicados. No se instaló Kyverno en un clúster en vivo ni se probaron la admisión, el aislamiento de red, la limpieza o la integración con AWS.
 
-Los ejemplos originales de `ClusterPolicy` se actualizaron a políticas CEL de `policies.kyverno.io/v1`. La guía oficial de migración de la versión 1.19 desaconseja ClusterPolicy/Policy, CleanupPolicy y el PolicyException heredado de `kyverno.io`, cuya eliminación está prevista para 1.20. No están ya ausentes en 1.19; migre y pruebe antes de actualizar, en lugar de simplemente reemplazar una cadena apiVersion.
+Los ejemplos originales de `ClusterPolicy` se actualizaron a políticas CEL de `policies.kyverno.io/v1`. La guía oficial de migración de la versión 1.19 declara obsoletos ClusterPolicy/Policy, CleanupPolicy y el PolicyException heredado de `kyverno.io`, cuya eliminación está prevista para 1.20. Aún no han desaparecido en 1.19; migre y pruebe antes de actualizar, en lugar de limitarse a cambiar la cadena de `apiVersion`.
 
 ## Configuración del entorno de laboratorio
 
 ### Herramientas necesarias
 
-Use kubectl con la desviación de versión compatible con el API server de destino, una versión compatible de Helm con capacidad OCI y la CLI verificada de Kyverno 1.19.1 para estas pruebas locales. Obtenga el archivo para el OS/arquitectura correspondiente de la CLI y verifique su checksum/firma publicados. No reutilice un archivo 1.10.0 ni redirija una descarga no verificada a una instalación root.
+Use kubectl con una diferencia de versión admitida por el API server de destino, una versión compatible de Helm con capacidad OCI y la CLI verificada de Kyverno 1.19.1 para estas pruebas locales. Obtenga el archivo de la CLI correspondiente al sistema operativo y la arquitectura, y verifique la suma de comprobación o firma publicada. No reutilice un archivo 1.10.0 ni canalice una descarga sin verificar hacia una instalación con privilegios de root.
 
 Comience con archivos locales. Las políticas siguientes son ejemplos independientes, no un conjunto que deba aplicar íntegramente. Los ejemplos de Pod se dirigen a `policy-lab`; la generación requiere además una etiqueta explícita. Restrinja quién puede cambiar estas políticas, etiquetas de namespace, Roles y PolicyExceptions. Esos selectores no son por sí mismos un límite de seguridad de RBAC.
 
 ### Instalación de Kyverno
 
-Prepare un namespace dedicado `kyverno`. Verifique la versión de EKS/Kubernetes elegida, la conectividad del API server a los webhooks, DNS, el comportamiento de fallos/timeouts de admisión y el procedimiento de actualización de CRD antes de cambiar un cluster compartido. Los ServiceAccounts/RBAC de Kubernetes autorizan los controllers; instalar Kyverno no requiere por sí solo un rol de administrador de AWS.
+Prepare un namespace dedicado `kyverno`. Verifique la versión de EKS/Kubernetes elegida, la conectividad del API server a los webhooks, DNS, el comportamiento de fallos/timeouts de admisión y el procedimiento de actualización de CRD antes de cambiar un cluster compartido. Los ServiceAccounts y RBAC de Kubernetes autorizan a los controladores; instalar Kyverno no requiere por sí solo un rol de administrador de AWS.
 
 ## Introducción a Kyverno
 
@@ -25,10 +25,10 @@ Prepare un namespace dedicado `kyverno`. Verifique la versión de EKS/Kubernetes
 
 | Componente | Responsabilidad |
 |---|---|
-| Controller de admisión | Solicitudes de admisión coincidentes y validación/mutación/verificaciones de imágenes de políticas; no todas las solicitudes GET/list |
-| Controller en segundo plano | Trabajo de generación y mutate-existing habilitado explícitamente |
-| Controller de informes | Agregación/elaboración de informes de resultados de políticas |
-| Controller de limpieza | Políticas de eliminación programada y operaciones de limpieza permitidas |
+| Controlador de admisión | Solicitudes coincidentes y validación, mutación o verificación de imágenes de políticas; no todas las solicitudes GET/list |
+| Controlador en segundo plano | Tareas de generación y de mutate-existing habilitadas explícitamente |
+| Controlador de informes | Agregación y elaboración de informes de resultados de políticas |
+| Controlador de limpieza | Políticas de eliminación programada y operaciones de limpieza permitidas |
 
 Una política de validación no elimina ni repara recursos no conformes existentes. Los informes en segundo plano, mutate-existing, generate-existing y la eliminación programada son mecanismos independientes con permisos distintos. La generación puede ser asíncrona; la creación de namespace y la aplicación de NetworkPolicy generada no son una operación atómica.
 
@@ -40,7 +40,7 @@ Las políticas actuales de Kyverno usan CEL en manifiestos YAML/JSON; las polít
 
 ### Instalación mediante Helm
 
-Guarde esto como `kyverno-values.yaml`. Es un perfil de **laboratorio** de una sola réplica. Los CRD de ServiceMonitor y una instalación de Prometheus que seleccione el namespace/las etiquetas reales ya deben existir; reemplace la etiqueta de ejemplo `release: kube-prom` por el selector de esa instalación o deshabilite los ServiceMonitors hasta estar preparado.
+Guarde esto como `kyverno-values.yaml`. Es un perfil de **laboratorio** con una sola réplica. Los CRD de ServiceMonitor y una instalación de Prometheus que seleccione el namespace/las etiquetas reales ya deben existir; reemplace la etiqueta de ejemplo `release: kube-prom` por el selector de esa instalación o deshabilite los ServiceMonitors hasta estar preparado.
 
 ```yaml
 admissionController:
@@ -82,17 +82,17 @@ helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
   --values kyverno-values.yaml
 ```
 
-El render contiene cuatro Deployments de controller y cuatro ServiceMonitors de métricas. Más réplicas requieren planificación de topología, interrupciones, dimensionamiento de recursos y disponibilidad de webhooks; una réplica por controller no es un diseño HA. Inspeccione los valores predeterminados del chart actual y las etiquetas de imagen renderizadas reales, en lugar de interpretar la etiqueta de versión de un chart como la versión de la aplicación.
+El manifiesto renderizado incluye cuatro Deployments, uno por controlador, y cuatro ServiceMonitors de métricas. Añadir réplicas requiere planificar la topología, las interrupciones, el dimensionamiento de recursos y la disponibilidad de los webhooks; un controlador con una sola réplica no ofrece alta disponibilidad. Inspeccione los valores predeterminados del chart actual y las etiquetas de imagen renderizadas reales, en lugar de interpretar la etiqueta de versión de un chart como la versión de la aplicación.
 
 ### Instalación mediante manifiestos YAML
 
-Si GitOps administra YAML, renderice el chart fijado y revise sus CRD, RBAC, certificados y hooks como un conjunto administrado. Un `kubectl apply` sin procesar de un render no ejecuta la semántica de hook/actualización de Helm. No aplique el antiguo install.yaml 1.10.0 sobre una versión más reciente ni mezcle varios propietarios para los mismos controllers.
+Si GitOps administra YAML, renderice el chart fijado y revise sus CRD, RBAC, certificados y hooks como un conjunto administrado. Un `kubectl apply` sin procesar de un render no ejecuta la semántica de hook/actualización de Helm. No aplique el antiguo install.yaml 1.10.0 sobre una versión más reciente ni asigne varios responsables a los mismos controladores.
 
 ## Tipos de políticas
 
 ### 1. Políticas de validación
 
-Guarde este ejemplo independiente como `require-limits.yaml`. Comprueba que los containers **normales e init** tengan límites de CPU/memoria no vacíos. Los containers efímeros no pueden declarar requests/limits de recursos; las verificaciones de seguridad a continuación los cubren por separado. Esta es una política elegida por container, no una afirmación de que cada carga de trabajo de Kubernetes deba usar esta estrategia de recursos.
+Guarde este ejemplo independiente como `require-limits.yaml`. Comprueba que los contenedores **normales y de inicialización** tengan límites de CPU y memoria no vacíos. Los contenedores efímeros no pueden declarar solicitudes ni límites de recursos; las verificaciones de seguridad a continuación los cubren por separado. Esta política ilustra una opción por contenedor, no afirma que todas las cargas de trabajo de Kubernetes deban usar esta estrategia de recursos.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -207,7 +207,7 @@ spec:
       }])
 ```
 
-Prepare las reglas necesarias de DNS/API/aplicación antes de que las cargas de trabajo dependan de este namespace. El aislamiento de Kubernetes NetworkPolicy necesita un CNI que lo aplique; otras políticas de allow son aditivas y se debe considerar el comportamiento de host-network. Un manifiesto generado localmente no demuestra que se haya bloqueado el tráfico.
+Prepare las reglas necesarias de DNS/API/aplicación antes de que las cargas de trabajo dependan de este namespace. El aislamiento de Kubernetes NetworkPolicy requiere un CNI que lo aplique; las demás políticas que permiten tráfico se suman, y también hay que considerar el comportamiento de la red del host. Un manifiesto generado localmente no demuestra que se haya bloqueado el tráfico.
 
 La sincronización y generate-existing están deshabilitados aquí. Un Namespace ya existente no se completa automáticamente cuando se instala esta política: use después un trigger coincidente o revise explícitamente la habilitación de generate-existing antes de cambiar esa configuración. Con la sincronización habilitada, el ciclo de vida downstream depende de los datos frente a la fuente clone, de cambios en el trigger y de `orphanDownstreamOnPolicyDelete`; no es un mecanismo universal de copia de seguridad/reversión. Compartir Secrets requiere una lista de allow explícita de origen/destino y una revisión de RBAC/ciclo de vida de credenciales, no una copia en cada namespace nuevo.
 
@@ -414,7 +414,7 @@ spec:
       }])
 ```
 
-El controller en segundo plano necesita permiso real para crear el recurso generado. Para la versión renderizada de `kyverno`, este Role/Binding de namespace adicional ilustra una concesión PDB estrecha. El chart ya contiene otros permisos de controller; no considere esto la política RBAC efectiva completa del controller. Ajuste los nombres de ServiceAccount al render y verifique la autorización en el cluster de destino.
+El controlador en segundo plano necesita permiso real para crear el recurso generado. Para la versión renderizada de `kyverno`, este Role/Binding adicional en el namespace ilustra un permiso limitado para PDB. El chart ya incluye otros permisos para el controlador; este ejemplo no representa toda su política RBAC efectiva. Ajuste los nombres de ServiceAccount al manifiesto renderizado y verifique la autorización en el clúster de destino.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -497,7 +497,7 @@ spec:
 
 ### Flujo de trabajo de aplicación de políticas
 
-Revise la propiedad y el alcance de la política, pruebe localmente casos positivos/negativos/omitidos, inspeccione los objetos generados/mutados y, luego, prepare la admisión en vivo y los permisos de los controllers. Audit es una acción de validación; no hace que la mutación, la generación ni la eliminación sean inocuas. La autogeneración de Pod-controller y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opt-ins independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de asumir que todas las plantillas de controller están cubiertas.
+Revise la propiedad y el alcance de la política, pruebe localmente casos positivos/negativos/omitidos, inspeccione los objetos generados/mutados y, luego, prepare la admisión en vivo y los permisos de los controllers. Audit es una acción de validación; no hace que la mutación, la generación ni la eliminación sean inocuas. La autogeneración de políticas para controladores de Pods y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opciones independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de suponer que cubre todas las plantillas de controladores.
 
 ### Simulación de políticas
 

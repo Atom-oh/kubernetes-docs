@@ -1,7 +1,7 @@
-# Pod 安全标准 (PSS)
+# Pod 安全标准（PSS）
 
 > **验证基线**：Kubernetes PSA 库 `k8s.io/pod-security-admission` v0.36.2；示例 PSS 策略 v1.35
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 Pod 安全标准（PSS）是 Kubernetes 中用于 Pod 安全的标准化策略框架。本文档涵盖 PSS 概念、配置方法以及在 EKS 环境中的实现。
 

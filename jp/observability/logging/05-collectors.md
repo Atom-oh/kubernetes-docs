@@ -1,6 +1,6 @@
 # ログコレクターの比較
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 このガイドでは、Fluent Bit、Grafana Alloy、OpenTelemetry Collector を比較し、サポート終了となった Promtail インストールからの移行について説明します。想定上のメモリ使用量や毎秒イベント数のランキングではなく、実際の入力、出力プラグイン、デプロイ権限、障害時の挙動に基づいてコレクターを選択してください。
 
@@ -13,7 +13,7 @@
 3. [Promtail](#promtail)
 4. [Grafana Alloy](#grafana-alloy)
 5. [OpenTelemetry Collector](#opentelemetry-collector)
-6. [比較と選定 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors#comparison-and-selection-guide)
+6. [比較と選定ガイド](#comparison-and-selection-guide)
 
 <span id="overview"></span>
 
@@ -377,7 +377,7 @@ kubectl -n logging rollout status daemonset/fluent-bit
 
 ### 概要
 
-**Promtail は 2026 年3月2日に EOL に達しました。**商用サポートと将来の更新は終了しています。既存のインストールは Alloy または他のサポート対象クライアントに移行してください。新規 Loki デプロイメントで Promtail を選択しないでください。発表された廃止には、別の `lambda-promtail` クライアントは含まれません。
+**Promtail は 2026 年3月2日に EOL に達しました**。商用サポートと将来の更新は終了しています。既存のインストールは Alloy または他のサポート対象クライアントに移行してください。新規 Loki デプロイメントで Promtail を選択しないでください。発表された廃止には、別の `lambda-promtail` クライアントは含まれません。
 
 ### アーキテクチャ
 
@@ -774,7 +774,7 @@ Kafka topic を統合すると、ACL、retention、partition、consumer ownershi
 
 一般的なロギングの推奨として予約済みの `system-cluster-critical`/`system-node-critical` class を使用するのではなく、クラスターに適した operator-owned PriorityClass を使用してください。専用ノード、priority、予備 capacity は、あらゆる障害時の可用性を保証するものではありません。
 
-## 比較と選定ガイド
+## 比較と選定ガイド {#comparison-and-selection-guide}
 
 ### 機能比較表
 

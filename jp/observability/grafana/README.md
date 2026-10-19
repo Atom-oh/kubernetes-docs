@@ -3,7 +3,7 @@
 
 > **対応バージョン**: Grafana 13.2.1 · Community Helm chart 13.2.2
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 ## はじめに
 
@@ -95,7 +95,7 @@ serviceAccount:
 
 `values-ha.yaml` は 2 レプリカを追加し、共有 PVC を無効化し、`verify-full` を使う外部 PostgreSQL、headless Service、Alerting の gossip を設定します。データベースの HA、バックアップ、リカバリは別途準備してください。1 つの SQLite ファイルを複数の Grafana レプリカで共有しないでください。
 
-サンプルのデータベース/ユーザーは `grafana` です。`host`（証明書に一致する DNS:5432）、`password`、`ca.crt` を含む `grafana-database` Secret を準備し、両方の Pod に同じ `grafana-runtime/secret-key` をマウントしてください。`root_url` は実際の外部 HTTPS アドレスに置き換え、TLS 終端を設定します。既存の SQLite データの移行には別途マイグレーションとリカバリ確認が必要です。データベースの種類を変更してもデータは移行されません。
+サンプルのデータベース名とユーザー名はいずれも `grafana` です。`grafana-database` Secret には、証明書に一致する DNS 名と 5432 ポートを指定する `host`、`password`、`ca.crt` を含め、両方の Pod に同じ `grafana-runtime/secret-key` をマウントしてください。`root_url` は実際の外部 HTTPS アドレスに置き換え、TLS 終端を設定します。既存の SQLite データの移行には別途マイグレーションとリカバリ確認が必要です。データベースの種類を変更してもデータは移行されません。
 
 ```bash
 helm upgrade --install grafana grafana-community/grafana --version 13.2.2 \
@@ -195,7 +195,7 @@ Grafana の ServiceAccount に承認済みの IRSA ロールをアタッチし�
 |---|---|---|
 | RED: Rate, Errors, Duration | リクエストレート、5xx の割合、ヒストグラムの p99 | 欠損またはゼロのリクエストトラフィックを成功率 100% にしないこと |
 | USE: Utilization, Saturation, Errors | CPU/メモリ使用率、ディスクキューの圧力、ネットワークエラー | 重み付き I/O 時間はディスクエラーのカウンターではない |
-| Four Golden Signals | Latency, Traffic, Errors, Saturation | 可用性はこの 4 つの名前の 1 つではなく、重要な別個の SLI である |
+| Four Golden Signals（4 つのゴールデンシグナル） | レイテンシ、トラフィック、エラー、飽和 | 可用性はこの 4 つの名前の 1 つではなく、重要な別個の SLI である |
 
 対応するリクエスト系列が存在する場合にのみ、欠損しているエラー系列をゼロで埋めてください。
 
@@ -227,7 +227,7 @@ helm upgrade grafana grafana-community/grafana --version 13.2.2 \
 
 ### Grafana Operator
 
-Operator によるデプロイでは、まず対応するコントローラー/CRD と、その `GrafanaDashboard`/`GrafanaDatasource` リソースによって選択される `Grafana` インスタンスが必要です。別の Helm デプロイと Operator が所有権を争わないようにしてください。この章で検証しているのは Helm のファイルプロビジョニングであり、Operator のインストールではありません。`panels: [...]` のような省略記法はデプロイ可能な有効な JSON ではありません。ダッシュボードの内容には完全な `dashboard.json` を使用してください。
+Operator によるデプロイでは、まず対応するコントローラー/CRD と、`Grafana` インスタンスを選択する `GrafanaDashboard`/`GrafanaDatasource` リソースが必要です。別の Helm デプロイと Operator が所有権を争わないようにしてください。この章で検証しているのは Helm のファイルプロビジョニングであり、Operator のインストールではありません。`panels: [...]` のような省略記法はデプロイ可能な有効な JSON ではありません。ダッシュボードの内容には完全な `dashboard.json` を使用してください。
 
 <span id="alert-rule-configuration"></span>
 
@@ -368,17 +368,17 @@ Overview、Infrastructure、Kubernetes、Applications、Alerts を目的別に�
 
 ## 検証範囲と参考資料
 
-シングルインスタンス、HA、metrics、sidecar の各チャートプロファイルをレンダリングしました。実際の Grafana 13.2.1 インスタンスで、データソース、ダッシュボード、一時停止アラートのプロビジョニング、式の評価、メトリクス認証を確認しました。式の評価には合成した Prometheus レスポンスを使用しました。これらの確認では、EKS のデプロイ、実際のバックエンド TLS の検証、HA データベースのフェイルオーバー、SSO/IRSA の完了、外部通知の配信は行っていません。
+シングルインスタンス、HA、メトリクス、サイドカーの各チャートプロファイルをレンダリングしました。実際の Grafana 13.2.1 インスタンスで、データソース、ダッシュボード、一時停止アラートのプロビジョニング、式の評価、メトリクス認証を確認しました。式の評価には合成した Prometheus レスポンスを使用しました。これらの確認では、EKS のデプロイ、実際のバックエンド TLS の検証、HA データベースのフェイルオーバー、SSO/IRSA の完了、外部通知の配信は行っていません。
 
-- [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)
-- [Grafana 13.2.1 configuration defaults](https://github.com/grafana/grafana/blob/v13.2.1/conf/defaults.ini)
-- [Community Helm chart](https://github.com/grafana-community/helm-charts/tree/main/charts/grafana)
-- [Alerting file provisioning](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/)
-- [Generic OAuth](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/generic-oauth/)
-- [Data source permissions and caching](https://grafana.com/docs/grafana/latest/administration/data-source-management/)
-- [Tempo provisioning](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/)
-- [Loki configuration](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
+- [Grafana の高可用性](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)
+- [Grafana 13.2.1 の既定設定](https://github.com/grafana/grafana/blob/v13.2.1/conf/defaults.ini)
+- [Community Helm チャート](https://github.com/grafana-community/helm-charts/tree/main/charts/grafana)
+- [アラートのファイルプロビジョニング](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/)
+- [汎用 OAuth](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/generic-oauth/)
+- [データソースの権限とキャッシュ](https://grafana.com/docs/grafana/latest/administration/data-source-management/)
+- [Tempo のプロビジョニング](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/)
+- [Loki の設定](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
 
-## Quiz
+## クイズ
 
 設定と運用上の違いを [Grafana クイズ](../../quizzes/observability/grafana/grafana-quiz.md) で確認してください。

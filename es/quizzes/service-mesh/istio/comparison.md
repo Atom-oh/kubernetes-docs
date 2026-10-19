@@ -26,7 +26,7 @@ D. Los conteos prueban que STRICT mTLS no está soportado
 
 **Explicación:**
 
-Los estados HTTP agregados no determinan una causa. Terminación Pod, propagación de endpoints, drenaje, timeouts y pools pueden contribuir. La explicación original de reutilización IP/notificación ztunnel no tenía una cronología diagnóstica conservada. Investigue hosts upstream, flags, UID de Pods y eventos de conexión, sin enseñar esa hipótesis como mecanismo probado.
+Los conteos agregados de códigos de estado HTTP no determinan una causa raíz. La terminación de Pods, la propagación de endpoints, el drenaje de la aplicación o del proxy, los timeouts y los pools de conexiones pueden contribuir. La explicación original sobre la reutilización de IP y las notificaciones de ztunnel no estaba respaldada por una cronología diagnóstica conservada. Investigue los hosts upstream reales, los flags de respuesta del proxy, los UID de Pods y los eventos de conexión, sin presentar esa hipótesis como un mecanismo probado.
 
 **Referencias:**
 

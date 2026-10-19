@@ -7,7 +7,7 @@
 
 - Cómo traducir las características operativas de [Fundamentos](./01-fundamentals.md) en una configuración real de Kubernetes: StatefulSets, almacenamiento y exposición P2P
 - Cómo incluir el estado de sincronización en las comprobaciones de estado y por qué las comprobaciones de estado habituales no funcionan
-- Las diferencias operativas entre los nodos de Ethereum y Hyperledger Fabric, y cómo gestionar los calendarios de hard forks
+- Las diferencias operativas entre los nodos de Ethereum y Hyperledger Fabric, y cómo gestionar los calendarios de bifurcaciones duras (hard forks)
 
 ## Pregunta inicial: ¿debería ejecutar esto en EKS?
 
@@ -17,15 +17,15 @@ Antes de hablar de la configuración, considera esta pregunta. **Los nodos de bl
 |---|---|
 | Programación y reprogramación rápidas | El coste de reconstruir el estado hace que reprogramar sea caro |
 | Escalado horizontal del rendimiento | Las réplicas pueden aumentar la capacidad agregada de RPC/lectura y la disponibilidad, pero no aumentan automáticamente la capacidad de escritura/consenso de la cadena base |
-| Actualizaciones declarativas y progresivas | Los hard forks se activan simultáneamente |
-| Mover Pods entre nodos | Está vinculado al disco local |
+| Actualizaciones declarativas y progresivas | Las bifurcaciones duras se activan simultáneamente |
+| Mover Pods entre nodos | El estado queda ligado al disco local |
 
 Aun así, hay motivos para usar EKS.
 
 | Motivo | Contenido |
 |---|---|
 | **Estandarización operativa** | Si ya ejecutas todo en EKS, es mejor no añadir otra pila |
-| **Varias cadenas/entornos** | Mainnet, redes de prueba y varios protocolos gestionados de la misma manera |
+| **Varias cadenas/entornos** | Red principal (mainnet), redes de prueba y varios protocolos gestionados de la misma manera |
 | **Integración con componentes relacionados** | Los indexadores, las puertas de enlace de API y la supervisión ya están en el clúster |
 | **Orientación oficial para Fabric** | Hyperledger Fabric cuenta con un ecosistema maduro de operadores de Kubernetes |
 
@@ -44,7 +44,7 @@ Aun así, hay motivos para usar EKS.
 | DNS estable | ✗ | ✓ con un Service headless, `node-0.svc...` |
 | Inicio y apagado ordenados | ✗ | ✓ |
 
-Los requisitos de «identidad de peer estable» y «estado por Pod» de [Fundamentos](./01-fundamentals.md) son precisamente lo que proporcionan los StatefulSets.
+Los requisitos de «identidad estable del nodo par» y «estado por Pod» de [Fundamentos](./01-fundamentals.md) son precisamente lo que proporcionan los StatefulSets.
 
 ### Esquema incompleto, solo para pruebas (no es un manifiesto desplegable)
 Este fragmento omite el selector y las etiquetas de plantilla obligatorios del StatefulSet, la imagen y los argumentos, el Service headless, la StorageClass y la configuración posterior a Merge de EL/CL Engine API/JWT. No lo apliques tal cual. Completa y valida esos recursos en un entorno de pruebas aislado **sin fondos reales ni claves de firma de validadores**. Mantén JSON-RPC y Engine API en privado y autenticados; la accesibilidad P2P no debe exponer RPC ni puntos de conexión de firma.
@@ -81,7 +81,7 @@ Hay tres diferencias respecto a las cargas de trabajo habituales.
 
 **① `terminationGracePeriodSeconds` debe ser largo.** Los clientes de blockchain deben volcar el estado en memoria al disco durante el apagado. Un cierre forzado puede **dañar la base de datos y obligar a resincronizar.** Los 30 segundos predeterminados no suelen ser suficientes.
 
-**② Los puertos P2P usan TCP y UDP.** Muchos protocolos separan la detección de peers (UDP) de las conexiones propiamente dichas (TCP). Si abres solo uno, no podrás encontrar peers o no podrás conectarte.
+**② Los puertos P2P usan TCP y UDP.** Muchos protocolos separan la detección de nodos pares (UDP) de las conexiones propiamente dichas (TCP). Si abres solo uno, no podrás encontrar nodos pares o no podrás conectarte.
 
 **③ El volumen es grande.** Se aborda en la sección de almacenamiento a continuación.
 
@@ -126,7 +126,7 @@ Los datos de la cadena crecen **monótonamente.** Esto cambia la naturaleza de l
 
 ### Recomendaciones oficiales de hardware: EIP-7870
 
-Usa [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870) y la [Guía para ejecutar un nodo](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) como **recomendaciones iniciales**, no como garantía de que una instancia de EKS o un volumen de EBS las cumplan. Verifica el cliente seleccionado, el fork, la poda y el crecimiento medido.
+Usa [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870) y la [Guía para ejecutar un nodo](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) como **recomendaciones iniciales**, no como garantía de que una instancia de EKS o un volumen de EBS las cumplan. Verifica el cliente seleccionado, la bifurcación activa, la poda y el crecimiento medido.
 
 | Aspecto | Mínimo | **Recomendado (EIP-7870, nodo completo)** |
 |---|---|---|
@@ -144,7 +144,7 @@ Hay tres aspectos importantes para interpretar estos datos.
 **③ El mínimo de 2 TB tiene fecha de caducidad.** ethereum.org señala que probablemente se «supere en 2027», lo que **explica por qué el crecimiento debe formar parte de tu plan de capacidad.**
 
 ::: warning Requiere verificación
-Las cifras anteriores corresponden a un **nodo completo.** **Un nodo de archivo necesita mucho más almacenamiento, y el uso real varía según el cliente, la configuración de poda y el fork.**
+Las cifras anteriores corresponden a un **nodo completo.** **Un nodo de archivo necesita mucho más almacenamiento, y el uso real varía según el cliente, la configuración de poda y la bifurcación del protocolo.**
 
 En particular, PeerDAS de Fusaka cambió el manejo de blobs, así que consulta los requisitos actuales en las notas de la versión de tu cliente y **mide tú mismo la tasa de crecimiento en una prueba de concepto.**
 :::
@@ -181,7 +181,7 @@ Un nodo rezagado en la sincronización:
 |---|---|
 | **startup** | La sincronización inicial está en curso; lleva mucho tiempo, así que debe tener un **`failureThreshold` generoso** |
 | **liveness** | El proceso está activo y responde; **no compruebes aquí la sincronización** (matar un nodo rezagado puede impedir que se ponga al día) |
-| **readiness** | Está **a N bloques de la cabeza de la cadena**, es decir, si puede prestar servicio |
+| **readiness** | Está **a no más de N bloques de la cabeza de la cadena**, es decir, si puede prestar servicio |
 
 **La separación entre liveness y readiness es decisiva.**
 
@@ -190,7 +190,7 @@ Un nodo rezagado en la sincronización:
 
 ### Orientación para la implementación
 
-El estado de sincronización se comprueba mediante el RPC del cliente. El método varía según el protocolo y el cliente, por lo que lo habitual es evaluarlo con un script de contenedor o un sidecar.
+El estado de sincronización se comprueba mediante el RPC del cliente. El método varía según el protocolo y el cliente, por lo que lo habitual es evaluarlo con un script auxiliar o un sidecar.
 
 ```yaml
 # Conceptual form: the actual judgment logic differs per client
@@ -220,7 +220,7 @@ startupProbe:
 
 La sincronización funciona solo con conexiones salientes. Sin embargo, aceptar conexiones entrantes:
 
-- Aumenta la cantidad de peers, lo que hace que la **propagación sea más rápida y estable**
+- Aumenta la cantidad de nodos pares, lo que hace que la **propagación sea más rápida y estable**
 - Contribuye a la red (es beneficioso para todas las partes en las cadenas públicas)
 
 Es especialmente importante para los validadores: el retraso en la propagación de bloques afecta directamente al rendimiento (las recompensas).
@@ -233,13 +233,13 @@ Es especialmente importante para los validadores: el retraso en la propagación 
 | **`hostPort`** | Asigna solo puertos específicos al nodo. Requiere gestionar los conflictos de puertos por nodo |
 | **NodePort Service** | Opción estándar de Kubernetes. Restricciones del rango de puertos y problemas al anunciar la IP del nodo |
 | **LoadBalancer por Pod (NLB)** | Dirección estable. **Coste de LB por Pod** |
-| **Omitir conexiones entrantes** | Solo conexiones salientes. Configuración sencilla, pero menor calidad de peers |
+| **Omitir conexiones entrantes** | Solo conexiones salientes. Configuración sencilla, pero menor calidad de nodos pares |
 
 ### Un escollo habitual: la dirección anunciada
 
-Los protocolos P2P **anuncian** su propia dirección a otros peers. Si la dirección visible dentro del contenedor (la IP del Pod) difiere de la dirección accesible desde el exterior (IP pública del nodo, dirección del LB), **los demás peers no pueden conectarse.**
+Los protocolos P2P **anuncian** su propia dirección a otros nodos pares. Si la dirección visible dentro del contenedor (la IP del Pod) difiere de la dirección accesible desde el exterior (IP pública del nodo, dirección del LB), **los demás nodos pares no pueden conectarse.**
 
-La mayoría de los clientes ofrecen una opción para especificar la dirección anunciada (`--nat extip:<addr>` y otras similares). **Sin ella, abrir las conexiones entrantes no atraerá a ningún peer**. Esta es la causa clásica de «lo abrí y no pasó nada».
+La mayoría de los clientes ofrecen una opción para especificar la dirección anunciada (`--nat extip:<addr>` y otras similares). **Sin ella, abrir las conexiones entrantes no atraerá a ningún nodo par**. Esta es la causa clásica de «lo abrí y no pasó nada».
 
 Como cada Pod debe anunciar una dirección distinta, necesitas una lógica de inicialización para que cada Pod descubra su propia dirección mediante el ordinal del StatefulSet o la downward API.
 
@@ -253,7 +253,7 @@ Los nodos de blockchain **usan la CPU y las IOPS de forma constante.** Los bloqu
 | **Memoria** | Los clientes usan mucha memoria para las cachés de estado. **Establece límites generosos**, ya que un OOM puede dañar la base de datos |
 | **request = limit** | La QoS garantizada reduce la prioridad de desalojo |
 | **Nodos dedicados** | Sepáralos de otras cargas de trabajo mediante taints/tolerations para evitar vecinos ruidosos |
-| **Descriptores de archivo** | Una conexión de socket por cada peer. Considera aumentar el límite ([Ajuste del kernel](../kernel/03-eks-node-tuning.md)) |
+| **Descriptores de archivo** | Una conexión de socket por cada nodo par. Considera aumentar el límite ([Ajuste del kernel](../kernel/03-eks-node-tuning.md)) |
 
 **La decisión sobre el límite de CPU es la más importante.** Como se explica en los [documentos sobre el kernel](../kernel/01-container-primitives.md), un límite de CPU limita el ancho de banda; por tanto, agotar la cuota dentro de un periodo obliga a detenerse. Si el procesamiento de bloques coincide con ese intervalo, aumenta la latencia y, en el caso de un validador, se pierde una oportunidad.
 
@@ -287,8 +287,8 @@ Los siguientes son **eventos del protocolo con fecha**, no una garantía de una 
 
 | Fecha | Actualización | Importancia operativa |
 |---|---|---|
-| **7 de mayo de 2025** | **Pectra** en mainnet | EIP-7251 elevó a 2048 ETH el saldo efectivo máximo de los validadores que cumplen los requisitos; la consolidación modifica los registros de validadores, no necesariamente la cantidad de procesos o máquinas virtuales |
-| **3 de diciembre de 2025** | **Fusaka** en mainnet (época 411392) | El aspecto destacado es **PeerDAS** (Peer Data Availability Sampling): verificar datos de blobs mediante muestreo, en lugar de hacerlo íntegramente. Aumenta el rendimiento de blobs |
+| **7 de mayo de 2025** | **Pectra** en red principal | EIP-7251 elevó a 2048 ETH el saldo efectivo máximo de los validadores que cumplen los requisitos; la consolidación modifica los registros de validadores, no necesariamente la cantidad de procesos o máquinas virtuales |
+| **3 de diciembre de 2025** | **Fusaka** en red principal (época 411392) | El aspecto destacado es **PeerDAS** (Peer Data Availability Sampling): verificar datos de blobs mediante muestreo, en lugar de hacerlo íntegramente. Aumenta el rendimiento de blobs |
 
 La identidad o clave de un validador **no constituye un proceso ni una máquina virtual independientes**: un cliente de validador puede gestionar muchas claves en una pila de beacon node compartida. La consolidación de EIP-7251 puede reducir los registros de validadores y el trabajo de gestión de claves, pero no demuestra ahorros proporcionales en infraestructura ni en costes. Mide la topología real del cliente y conserva la protección contra slashing durante la migración de claves.
 
@@ -303,7 +303,7 @@ Fabric tiene características distintas. Al ser **una cadena de consorcio con pa
 | Componente | Función | Ubicación en Kubernetes |
 |---|---|---|
 | **Peer** | Almacena el ledger, ejecuta chaincode y valida transacciones | StatefulSet + volumen persistente |
-| **Orderer** | Ordena transacciones mediante el consenso configurado: CFT Raft o, en Fabric 3.x, SmartBFT | StatefulSet + almacenamiento persistente; la validación de los peers determina las actualizaciones válidas del estado |
+| **Orderer** | Ordena transacciones mediante el consenso configurado: CFT Raft o, en Fabric 3.x, SmartBFT | StatefulSet + almacenamiento persistente; la validación de los nodos pares determina las actualizaciones válidas del estado |
 | **CA** (Fabric CA) | Emite certificados de miembros | Deployment + volumen persistente |
 | **Chaincode** | Contratos inteligentes | Generador externo o Pods separados |
 
@@ -314,7 +314,7 @@ Fabric tiene características distintas. Al ser **una cadena de consorcio con pa
 **② La gestión de certificados es la tarea principal.** Fabric gestiona las organizaciones y las identidades mediante MSP (Membership Service Provider), y todas las comunicaciones usan TLS. Debes gestionar:
 
 - Certificados y claves de firma de MSP
-- Certificados TLS (para cada peer, orderer y CA)
+- Certificados TLS (para cada Peer, Orderer y CA)
 - **Gestión de caducidad**: la caducidad de los certificados provoca interrupciones reales
 
 La caducidad de los certificados es un riesgo importante de interrupción, pero aquí no se proporciona un conjunto de datos sobre su frecuencia. Supervisa y ensaya la renovación de las credenciales de MSP y TLS, y valida la compatibilidad de las versiones del operador y del cliente.
@@ -332,28 +332,28 @@ Un operador convierte la configuración repetitiva en la aplicación de recursos
 
 | Aspecto | Nodo de Ethereum | Hyperledger Fabric |
 |---|---|---|
-| **Participación** | Sin permisos | Permisionada (MSP) |
+| **Participación** | Sin autorización previa | Con permisos (MSP) |
 | **Consenso** | PoS | Modo de orderer configurado: Raft (CFT) o SmartBFT (Fabric 3.x) |
-| **Finalidad** | Basada en checkpoints, según los supuestos del protocolo | El ordenamiento es final según los supuestos del consenso; los peers siguen validando las transacciones, y una transacción ordenada puede no ser válida |
-| **Principal carga operativa** | Sincronización, crecimiento del disco y hard forks | **Caducidad de certificados**, gestión de canales y políticas |
+| **Finalidad** | Basada en checkpoints, según los supuestos del protocolo | El ordenamiento es final según los supuestos del consenso; los nodos pares siguen validando las transacciones, y una transacción ordenada puede no ser válida |
+| **Principal carga operativa** | Sincronización, crecimiento del disco y bifurcaciones duras | **Caducidad de certificados**, gestión de canales y políticas |
 | **Exposición P2P** | Se recomiendan las conexiones entrantes | Conexiones entre organizaciones (puntos de conexión conocidos) |
 | **Crecimiento del almacenamiento** | Elevado y monótono | Relativamente bajo (depende del volumen de transacciones) |
-| **Actualizaciones** | Calendario externo (hard forks) | Decididas por consenso del consorcio |
+| **Actualizaciones** | Calendario externo (bifurcaciones duras) | Decididas por consenso del consorcio |
 
-**La mayor diferencia operativa**: Ethereum debe cumplir **un calendario establecido externamente** (hard forks), mientras que en Fabric **el consorcio fija el calendario.** A cambio, Fabric requiere un proceso de acuerdo entre los miembros.
+**La mayor diferencia operativa**: Ethereum debe cumplir **un calendario establecido externamente** (bifurcaciones duras), mientras que en Fabric **el consorcio fija el calendario.** A cambio, Fabric requiere un proceso de acuerdo entre los miembros.
 
-## Gestión de los calendarios de hard forks
+## Gestión de los calendarios de bifurcaciones duras
 
-En [Fundamentos](./01-fundamentals.md), se describió un hard fork como «una migración con fecha límite». Este es un procedimiento práctico:
+En [Fundamentos](./01-fundamentals.md), se describió una bifurcación dura (hard fork) como «una migración con fecha límite». Este es un procedimiento práctico:
 
 | Paso | Contenido |
 |---|---|
 | **1. Suscribirse** | Blog oficial del protocolo, notas de la versión de los clientes y comunidades de operadores |
-| **2. Registrar la fecha** | Añade el bloque o la hora del fork al calendario del equipo. **Fija una fecha objetivo con margen** |
-| **3. Validar en una red de prueba** | Los forks de las redes de prueba se producen antes que los de mainnet; valida allí |
-| **4. Preparar las imágenes** | Compila y analiza las imágenes con una versión compatible con el fork |
-| **5. Actualizar de forma secuencial** | **Termina antes** del punto de activación del fork. Si tienes varios nodos, actualiza uno a la vez |
-| **6. Supervisar durante el fork** | Altura de la cadena, cantidad de peers y si se reconoció el fork |
+| **2. Registrar la fecha** | Añade el bloque o el momento de activación al calendario del equipo. **Fija una fecha objetivo con margen** |
+| **3. Validar en una red de prueba** | Las bifurcaciones en las redes de prueba se activan antes que en la red principal; valídalas allí |
+| **4. Preparar las imágenes** | Compila y analiza las imágenes con una versión compatible con la bifurcación |
+| **5. Actualizar de forma secuencial** | **Termina antes** del punto de activación de la bifurcación. Si tienes varios nodos, actualiza uno a la vez |
+| **6. Supervisar durante la bifurcación** | Altura de la cadena, cantidad de nodos pares y si se reconoció la bifurcación |
 | **7. Verificar después** | Que todos los nodos estén en la misma cadena |
 
 Un nodo que ejecute un cliente incompatible puede dejar de seguir la cadena canónica o divergir tras la activación. Compara **la misma altura de bloque y el estado de finalidad** entre fuentes independientes de confianza, teniendo en cuenta los retrasos normales de propagación y sincronización; no compares cabezas más recientes que no estén relacionadas como si tuvieran que coincidir al instante.
@@ -364,7 +364,7 @@ Un nodo que ejecute un cliente incompatible puede dejar de seguir la cadena can�
 |---|---|---|
 | **Sincronización** | Diferencia de bloques respecto a la cabeza de la cadena | Indicador fundamental de si puede prestar servicio |
 | **Sincronización** | Latencia de procesamiento de bloques | Señal temprana de que empieza a quedarse atrás |
-| **P2P** | Cantidad de peers | Una caída brusca indica un problema de red o de configuración |
+| **P2P** | Cantidad de nodos pares | Una caída brusca indica un problema de red o de configuración |
 | **P2P** | Proporción de conexiones entrantes y salientes | Si no hay conexiones entrantes, la configuración de exposición ha fallado |
 | **Almacenamiento** | Uso del disco y tasa de crecimiento | Permite predecir cuándo ampliar |
 | **Almacenamiento** | IOPS, profundidad de cola y latencia | Permite confirmar el cuello de botella |
@@ -373,7 +373,7 @@ Un nodo que ejecute un cliente incompatible puede dejar de seguir la cadena can�
 | **Fabric** | **Tiempo restante hasta la caducidad del certificado** | Prevención de interrupciones |
 | **Recursos** | Limitación de CPU (`nr_throttled`) | [Documentos sobre el kernel](../kernel/01-container-primitives.md) |
 
-**La «diferencia de bloques respecto a la cabeza de la cadena» es la métrica más importante.** Cuando empieza a aumentar, debes encontrar la causa (IOPS, CPU, peers o red); al superar un umbral, el nodo debe dejar de estar listo.
+**La «diferencia de bloques respecto a la cabeza de la cadena» es la métrica más importante.** Cuando empieza a aumentar, debes encontrar la causa (IOPS, CPU, nodos pares o red); al superar un umbral, el nodo debe dejar de estar listo.
 
 ## Resumen
 
@@ -381,11 +381,11 @@ Un nodo que ejecute un cliente incompatible puede dejar de seguir la cadena can�
 - **StatefulSet + Service headless + volumen persistente** es la estructura básica, y `terminationGracePeriodSeconds` debe ser generoso (un cierre forzado puede dañar la base de datos).
 - En el almacenamiento, **las IOPS se convierten en un cuello de botella antes que la capacidad.** La ventaja clave de gp3 es que permite ajustar por separado la capacidad y las IOPS, y es obligatorio contar con un plan para ampliar el volumen.
 - Separa la actividad del proceso de la preparación para prestar servicio según la sincronización, y prueba ambas; este capítulo no proporciona una clasificación por frecuencia de interrupciones.
-- Al abrir conexiones P2P entrantes, **si olvidas la dirección anunciada, no llegarán peers.**
+- Al abrir conexiones P2P entrantes, **si olvidas la dirección anunciada, no llegarán nodos pares.**
 - El uso de recursos es sostenido, no en ráfagas. **Dedica nodos y decide con cuidado los límites de CPU.**
 - Ethereum usa clientes EL y CL; las identidades y claves de validadores son independientes de la cantidad de procesos y máquinas virtuales. La consolidación no demuestra por sí sola que se ahorren costes.
 - La principal carga operativa de Fabric es **la caducidad de los certificados.** Empieza con un operador y automatiza la renovación.
-- Después de un hard fork, **compara los hashes de bloque con los de otros nodos y exploradores** para confirmar que estás en la misma cadena.
+- Después de una bifurcación dura, **compara los hashes de bloque con los de otros nodos y exploradores** para confirmar que estás en la misma cadena.
 
 Siguiente: [Amazon Managed Blockchain](./03-managed-blockchain.md) analiza cuánto de esta carga pueden asumir los servicios gestionados.
 
@@ -394,8 +394,8 @@ Siguiente: [Amazon Managed Blockchain](./03-managed-blockchain.md) analiza cuán
 - [Ethereum: ejecutar un nodo](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
 - [EIP-7870: recomendaciones de hardware y ancho de banda](https://eips.ethereum.org/EIPS/eip-7870): recomendaciones oficiales de hardware
 - [Hoja de ruta de Ethereum](https://ethereum.org/roadmap/) / [Pectra](https://ethereum.org/roadmap/pectra/) / [Fusaka](https://ethereum.org/roadmap/fusaka/)
-- [Anuncio de Pectra en mainnet (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
-- [Anuncio de Fusaka en mainnet (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)
+- [Anuncio de Pectra en red principal (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
+- [Anuncio de Fusaka en red principal (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)
 - [Hyperledger Fabric: implementar una red de producción](https://hyperledger-fabric.readthedocs.io/en/latest/deployment_guide_overview.html)
 - [hyperledger-labs/fabric-operator](https://github.com/hyperledger-labs/fabric-operator) / [bevel-operator-fabric](https://github.com/hyperledger-bevel/bevel-operator-fabric)
 - [Prueba comparativa de EBS gp2 frente a gp3](../storage/01-ebs-gp2-gp3-benchmark.md) / [Ajuste del kernel de los nodos de EKS](../kernel/03-eks-node-tuning.md)

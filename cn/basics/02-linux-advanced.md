@@ -1,6 +1,7 @@
 # Linux 运维技能
 
-> **支持的版本**：受维护的 Linux 发行版上的 Bash；命令假定已安装所列工具 **最后更新**：October 16, 2026
+> **支持的版本**：受维护的 Linux 发行版上的 Bash；命令假定已安装所列工具
+> **最后更新**：2026 年 10 月 16 日
 
 本文介绍在 Kubernetes 环境中高效工作所需的 Linux 核心运维技能。
 
@@ -144,7 +145,7 @@ check_pod_exists() {
 
 ### 2.5 Init Container 模式
 
-此有界循环示例会等待 DNS 发现。DNS 查询成功并不代表数据库已就绪；应用需要实现连接重试，或执行特定于数据库的就绪检查。请准备 mysql Service 和自定义 myapp 镜像。Kubelet 可以重启失败的 init container，因此这与 Pod 启动的总时限不同。
+此有界循环示例会等待 DNS 解析成功。DNS 查询成功并不代表数据库已就绪；应用需要实现连接重试，或执行特定于数据库的就绪检查。请准备 mysql Service 和自定义 myapp 镜像。Kubelet 可以重启失败的 init container，因此这与 Pod 启动的总时限不同。
 
 ```yaml
 apiVersion: v1

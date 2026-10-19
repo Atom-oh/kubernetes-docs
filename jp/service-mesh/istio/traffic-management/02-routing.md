@@ -1,64 +1,29 @@
 # ルーティング
 
-Istio の高度なルーティング機能により、さまざまなリクエスト属性に基づいてトラフィックをきめ細かく制御できます。
+Istio の高度なルーティング機能を使うと、さまざまなリクエスト属性に基づいてトラフィックをきめ細かく制御できます。
 
 ## 目次
 
 1. [ルーティングの概要](#routing-overview)
 2. [マッチ条件](#match-conditions)
 3. [URI ベースのルーティング](#uri-based-routing)
-4. [Header ベースのルーティング](#header-based-routing)
-5. [Query Parameter ベースのルーティング](#query-parameter-based-routing)
+4. [ヘッダーベースのルーティング](#header-based-routing)
+5. [クエリパラメータベースのルーティング](#query-parameter-based-routing)
 6. [HTTP メソッドベースのルーティング](#http-method-based-routing)
 7. [送信元ベースのルーティング](#source-based-routing)
 8. [優先順位とフォールバック](#priority-and-fallback)
 9. [実践例](#practical-examples)
 10. [トラブルシューティング](#troubleshooting)
 
-<span id="routing-overview"></span>
+## ルーティングの概要 {#routing-overview}
 
-## ルーティングの概要
+以下は、それぞれ独立したサイドカー向けルーティング例です。例に示す Service と subset を作成し、同じホストには重複する VirtualService を1つだけ適用してください。`gateways` を指定しないルートはメッシュ内のサイドカーに適用されます。外部ホストへの ingress の例では、既存 Gateway へのバインドと一致するホスト名も必要です。ヘッダー、クエリパラメータ、送信元ワークロードのラベルはルーティング入力であり、ユーザー ID の証明にはなりません。テナント／ユーザーの権限は、認証と AuthorizationPolicy で強制してください。
 
-VirtualService のルーティングルールは、**マッチ条件**と**ルート宛先**で構成されます。
+VirtualService のルーティングルールは、**マッチ条件**と**ルートの宛先**で構成されます。
 
-```mermaid
-flowchart LR
-    Request[Incoming Request]
+![Istio VirtualService 内の順序付きマッチ条件に対して受信リクエストを評価し、一致した条件に対応する宛先 Service へルーティングする流れ。先行条件に一致しない場合は既定のフォールバックルールが適用される。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
 
-    subgraph VirtualService["VirtualService Routing"]
-        Match1[Match Condition 1<br/>URI = /api/v1]
-        Match2[Match Condition 2<br/>Header = Mobile]
-        Match3[Match Condition 3<br/>Default]
-
-        Route1[Route 1<br/>→ api-v1]
-        Route2[Route 2<br/>→ mobile-app]
-        Route3[Route 3<br/>→ web-app]
-    end
-
-    Request --> Match1
-    Request --> Match2
-    Request --> Match3
-
-    Match1 -->|Match| Route1
-    Match2 -->|Match| Route2
-    Match3 -->|Match| Route3
-
-    Route1 --> Service1[API v1<br/>Service]
-    Route2 --> Service2[Mobile App<br/>Service]
-    Route3 --> Service3[Web App<br/>Service]
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef match fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef route fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match1,Match2,Match3 match;
-    class Route1,Route2,Route3 route;
-    class Service1,Service2,Service3 service;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-02-routing-0.html)
 
 ### 基本構造
 
@@ -89,13 +54,11 @@ spec:
         host: web-app
 ```
 
-<span id="match-conditions"></span>
-
-## マッチ条件
+## マッチ条件 {#match-conditions}
 
 ### マッチ条件の種類
 
-| 条件 | 説明 | マッチタイプ |
+| 条件 | 説明 | マッチ方式 |
 |-----------|-------------|------------|
 | **uri** | リクエストパス | `exact`, `prefix`, `regex` |
 | **scheme** | HTTP/HTTPS | `exact`, `prefix`, `regex` |
@@ -103,22 +66,26 @@ spec:
 | **authority** | Host ヘッダー | `exact`, `prefix`, `regex` |
 | **headers** | HTTP ヘッダー | `exact`, `prefix`, `regex` |
 | **queryParams** | クエリパラメータ | `exact`, `prefix`, `regex` |
-| **sourceLabels** | 送信元 workload ラベル | ラベルセレクター |
+| **sourceLabels** | 送信元ワークロードのラベル | ラベルセレクター |
 | **gateways** | Gateway 名 | リスト |
 
-### マッチタイプ
+### マッチ方式
 
 ```yaml
 # exact: Exact match
 match:
 - uri:
     exact: "/login"
+```
 
+```yaml
 # prefix: Prefix match
 match:
 - uri:
     prefix: "/api/"
+```
 
+```yaml
 # regex: Regular expression match
 match:
 - uri:
@@ -142,7 +109,9 @@ http:
   route:
   - destination:
       host: api-debug
+```
 
+```yaml
 # OR condition: Use multiple match blocks
 http:
 - match:
@@ -155,11 +124,9 @@ http:
       host: api-service
 ```
 
-<span id="uri-based-routing"></span>
+## URI ベースのルーティング {#uri-based-routing}
 
-## URI ベースのルーティング
-
-### Prefix マッチング
+### prefix マッチング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -208,7 +175,7 @@ spec:
           number: 3000
 ```
 
-### Exact マッチング
+### exact マッチング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -244,7 +211,7 @@ spec:
         host: health-service
 ```
 
-### Regex マッチング
+### 正規表現マッチング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -280,9 +247,7 @@ spec:
         host: image-service
 ```
 
-<span id="header-based-routing"></span>
-
-## Header ベースのルーティング
+## ヘッダーベースのルーティング {#header-based-routing}
 
 ### User-Agent ベースのルーティング
 
@@ -295,16 +260,6 @@ spec:
   hosts:
   - reviews
   http:
-  # Mobile devices
-  - match:
-    - headers:
-        user-agent:
-          regex: ".*Mobile.*"
-    route:
-    - destination:
-        host: reviews
-        subset: mobile
-
   # Tablet devices
   - match:
     - headers:
@@ -315,6 +270,16 @@ spec:
         host: reviews
         subset: tablet
 
+  # Mobile devices
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: reviews
+        subset: mobile
+
   # Desktop (default)
   - route:
     - destination:
@@ -322,7 +287,7 @@ spec:
         subset: desktop
 ```
 
-### カスタム Header ベースのルーティング
+### カスタムヘッダーベースのルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -370,7 +335,7 @@ spec:
         subset: stable
 ```
 
-### API Version ベースのルーティング
+### API バージョンベースのルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -408,11 +373,9 @@ spec:
         subset: v1
 ```
 
-<span id="query-parameter-based-routing"></span>
+## クエリパラメータベースのルーティング {#query-parameter-based-routing}
 
-## Query Parameter ベースのルーティング
-
-### 基本的な Query Parameter マッチング
+### 基本的なクエリパラメータのマッチング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -460,7 +423,7 @@ spec:
         subset: standard
 ```
 
-### 複数の Query Parameter の組み合わせ
+### 複数のクエリパラメータの組み合わせ
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -500,9 +463,7 @@ spec:
         subset: production
 ```
 
-<span id="http-method-based-routing"></span>
-
-## HTTP メソッドベースのルーティング
+## HTTP メソッドベースのルーティング {#http-method-based-routing}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -554,9 +515,9 @@ spec:
         host: api-read-service
 ```
 
-<span id="source-based-routing"></span>
+## 送信元ベースのルーティング {#source-based-routing}
 
-## 送信元ベースのルーティング
+`sourceLabels` と `sourceNamespace` は、どの送信元サイドカーに設定を適用するかを選びます。ingress gateway でリクエストごとの認証済みマッチを行うものではありません。これらのセレクターを適用するには、トップレベルの gateway リストに `mesh` を明示的に含める必要があります。データベースの例は HTTP を受け付ける Service を前提としており、内容を解釈しない SQL プロトコルには適用できません。
 
 ### Namespace ベースのルーティング
 
@@ -586,13 +547,12 @@ spec:
         host: database
         subset: staging
 
-  # Block other namespaces
-  - route:
-    - destination:
-        host: access-denied
+  # Illustrative HTTP rejection; enforce identity policy at the destination
+  - directResponse:
+      status: 403
 ```
 
-### Service Account ベースのルーティング
+### 送信元ワークロードのラベルベースのルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -603,7 +563,7 @@ spec:
   hosts:
   - payment-service
   http:
-  # Allow access only from specific Service Account
+  # Select configuration for matching source workload labels
   - match:
     - sourceLabels:
         app: frontend
@@ -624,9 +584,7 @@ spec:
         subset: v1
 ```
 
-<span id="priority-and-fallback"></span>
-
-## 優先順位とフォールバック
+## 優先順位とフォールバック {#priority-and-fallback}
 
 ### マッチルールの優先順位
 
@@ -676,6 +634,8 @@ spec:
 
 ### フォールバック戦略
 
+ここでいうフォールバックは、どのルートにも一致しなかったリクエストに適用する最後のルートです。いったんルートが一致した後に上流で障害が起きても、次のルートから評価が再開されるわけではありません。障害からの復旧には、retry／outlier detection またはロールアウトコントローラーを別途設定してください。
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -694,14 +654,9 @@ spec:
     - destination:
         host: myapp
         subset: canary
-    fault:
-      abort:
-        percentage:
-          value: 0
-        httpStatus: 503
     # No fallback on canary failure - return error
 
-  # Default requests - with fallback
+  # Default route for requests that did not match the canary condition
   - route:
     - destination:
         host: myapp
@@ -709,11 +664,9 @@ spec:
       weight: 100
 ```
 
-<span id="practical-examples"></span>
+## 実践例 {#practical-examples}
 
-## 実践例
-
-### 例 1: マルチテナントルーティング
+### 例1: マルチテナントルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -723,6 +676,7 @@ metadata:
 spec:
   hosts:
   - api.example.com
+  - tenant-b.api.example.com
   http:
   # Tenant A (identified by header)
   - match:
@@ -755,7 +709,7 @@ spec:
         subset: tenant-c
 ```
 
-### 例 2: Feature Flag ベースのルーティング
+### 例2: Feature Flag ベースのルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -786,7 +740,7 @@ spec:
         host: myapp
         subset: beta
 
-  # Experimental features (employees only)
+  # Workloads labeled role=employee with the feature header
   - match:
     - headers:
         x-feature-experimental:
@@ -805,7 +759,7 @@ spec:
         subset: stable
 ```
 
-### 例 3: 地理的ルーティング
+### 例3: 地理的ルーティング
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -850,7 +804,7 @@ spec:
   - match:
     - headers:
         x-country-code:
-          regex: "DE|FR|UK|IT|ES"
+          regex: "DE|FR|GB|IT|ES"
     route:
     - destination:
         host: content-service
@@ -863,7 +817,9 @@ spec:
         subset: global
 ```
 
-### 例 4: API Gateway パターン
+### 例4: API Gateway パターン
+
+`api-gateway` を実際の Gateway にバインドし、公開前に保護対象のパスへ[JWT 認証と認可](../security/02-authentication.md)を適用してください。`Bearer ...` という文字列にマッチしても、トークンの検証にはなりません。認証情報がない場合に、保護対象パスがパブリック／一般向けルートへフォールスルーしてはいけません。地理情報やテナントを表すヘッダーをアクセス判断に使う場合は、信頼できる認証済みソースから取得してください。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -876,13 +832,10 @@ spec:
   gateways:
   - api-gateway
   http:
-  # APIs requiring authentication
+  # Route protected paths; JWT/authorization must be enforced separately
   - match:
     - uri:
         prefix: "/api/v1/protected/"
-      headers:
-        authorization:
-          regex: "Bearer .*"
     route:
     - destination:
         host: protected-api-service
@@ -921,17 +874,14 @@ spec:
     - destination:
         host: health-service
 
-  # 404 handling
-  - route:
-    - destination:
-        host: error-service
+  # 404 response for unmatched paths
+  - directResponse:
+      status: 404
 ```
 
-<span id="troubleshooting"></span>
+## トラブルシューティング {#troubleshooting}
 
-## トラブルシューティング
-
-### ルーティングが機能しない
+### ルーティングが機能しない場合
 
 ```bash
 # 1. Check VirtualService status
@@ -977,7 +927,9 @@ http:
   route:
   - destination:
       host: api-service
+```
 
+```yaml
 # ✅ Correct order
 http:
 - match:  # Specific rules first
@@ -991,34 +943,30 @@ http:
       host: myapp
 ```
 
-#### 2. Regex 構文エラー
+#### 2. 正規表現がマッチする範囲
+
+RE2 は文字列全体に対してマッチします。`/api/v[1-3]` は有効な構文で、`/api/v1` には一致しますが、`/api/v1/users` には一致しません。`/` をエスケープする必要はありません。バージョンのルートとその配下のパスの両方にマッチさせるには、次のようにします。
 
 ```yaml
-# ❌ Incorrect regex
 match:
 - uri:
-    regex: "/api/v[1-3]"  # Missing anchor
-
-# ✅ Correct regex
-match:
-- uri:
-    regex: "^/api/v[1-3].*"
+    regex: "^/api/v[1-3](/.*)?$"
 ```
 
-#### 3. Header の大文字・小文字の問題
+#### 3. ヘッダー名
+
+HTTP ヘッダー名は通信上では大文字と小文字を区別しませんが、Istio の match map のキーは小文字にする必要があります。式で別の指定をしない限り、ヘッダー値は大文字と小文字を区別します。
 
 ```yaml
-# HTTP headers are case-insensitive
-# Istio automatically converts to lowercase
 match:
 - headers:
-    X-Custom-Header:  # Automatically converted to x-custom-header
+    x-custom-header:
       exact: "value"
 ```
 
 ## ベストプラクティス
 
-### 1. 特定のルールを先に配置する
+### 1. 具体的なルールを先に置く
 
 ```yaml
 # ✅ Good example
@@ -1053,14 +1001,16 @@ http:
 match:
 - uri:
     regex: "^/(api|admin|public)/v[0-9]+/(users|products|orders)/[a-zA-Z0-9_-]+$"
+```
 
+```yaml
 # ✅ Recommended - use prefix or exact
 match:
 - uri:
     prefix: "/api/v1/"
 ```
 
-### 3. 明確な命名
+### 3. 分かりやすい命名
 
 ```yaml
 # ✅ Use clear names
@@ -1074,6 +1024,10 @@ metadata:
 spec:
   hosts:
   - product-api.example.com
+  http:
+  - route:
+    - destination:
+        host: product-api-service
 ```
 
 ### 4. ドキュメント化
@@ -1103,6 +1057,8 @@ spec:
 
 ### 5. テスト戦略
 
+GATEWAY_URL にはインストール済み ingress のアドレス／ポートを設定し、Host とヘッダーは現在デプロイしている1つの例に合わせてください。メッシュ内のみで動作する例を外部から curl でテストするには、先にその Gateway へバインドする必要があります。調査のため一時的に proxy の debug log level を変更した場合は、調査後に元へ戻してください。
+
 ```bash
 # Routing rule test script
 #!/bin/bash
@@ -1114,15 +1070,15 @@ curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v1/users
 curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v2/users
 
 # Mobile user test
-curl -H "User-Agent: Mobile" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "User-Agent: Mobile" "http://$GATEWAY_URL/"
 
 # Header-based test
-curl -H "x-canary: true" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "x-canary: true" "http://$GATEWAY_URL/"
 ```
 
 ## 参考資料
 
-- [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Istio のトラフィック管理](https://istio.io/latest/docs/concepts/traffic-management/)
 - [VirtualService リファレンス](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
-- [HTTP Route マッチング](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest)
+- [HTTP ルートのマッチング](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest)
 - [トラフィックルーティング](https://istio.io/latest/docs/tasks/traffic-management/request-routing/)

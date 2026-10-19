@@ -1,484 +1,538 @@
 # EKS ストレージ Part 3 クイズ
 
-このクイズでは、Amazon EKS におけるストレージのモニタリング、トラブルシューティング、コスト最適化、セキュリティに関する理解を確認します。
+> **最終更新日**: 2026年9月11日
 
-## 問題 1: ストレージモニタリングメトリクス
+この章で設定した collector とストレージの例を使って、監視、診断、コスト、セキュリティを確認します。以下の例はローカルで確認したものであり、AWS 操作、本番環境での復旧、稼働中のダッシュボードを検証した結果を示すものではありません。デプロイ前にプレースホルダーを置き換え、リソースの所有者を確認してください。
 
-<details>
-<summary>EKS でストレージ性能を監視するための主要なメトリクスは何ですか？</summary>
+## 選択式問題
 
-**解答:**
-**EBS メトリクス:**
-- VolumeReadOps/VolumeWriteOps: IOPS 使用量
-- VolumeReadBytes/VolumeWriteBytes: スループット
-- VolumeTotalReadTime/VolumeTotalWriteTime: レイテンシー
-- VolumeQueueLength: 保留中の I/O リクエスト数
-- BurstBalance: バーストクレジット残高
+### 1. VolumeReadOps から読み取り IOPS を計算する方法はどれですか？
 
-**EFS メトリクス:**
-- DataReadIOBytes/DataWriteIOBytes: データ転送量
-- MetadataIOBytes: メタデータ操作量
-- ClientConnections: クライアント接続数
-- PercentIOLimit: I/O 制限の使用率
-
-**Kubernetes メトリクス:**
-- kubelet_volume_stats_used_bytes: Volume 使用量
-- kubelet_volume_stats_capacity_bytes: Volume 容量
-- container_fs_usage_bytes: Container ファイルシステム使用量
-</details>
-
-## 問題 2: ストレージ問題の診断
-
-<details>
-<summary>EKS の Pod が "Pending" 状態のままで PVC をマウントできない場合、何を確認すべきですか？</summary>
-
-**解答:**
-1. **PVC ステータスの確認**:
-   ```bash
-   kubectl get pvc
-   kubectl describe pvc <pvc-name>
-   ```
-
-2. **Storage Class の確認**:
-   ```bash
-   kubectl get storageclass
-   kubectl describe storageclass <storage-class-name>
-   ```
-
-3. **CSI Driver ステータスの確認**:
-   ```bash
-   kubectl get pods -n kube-system -l app=ebs-csi-controller
-   kubectl logs -n kube-system -l app=ebs-csi-controller
-   ```
-
-4. **Node 権限の確認**:
-   - EC2 instance profile に必要な IAM 権限があることを確認
-   - EBS CSI driver service account の権限を確認
-
-5. **Availability Zone の互換性**:
-   - Pod と EBS volume が同じ AZ にあることを確認
-
-6. **リソース制限**:
-   - EBS volume の制限（instance あたりの最大 volume 数）
-   - volume サイズ制限を確認
-</details>
-
-## 問題 3: 性能最適化
-
-<details>
-<summary>EKS でデータベースワークロード向けのストレージ性能をどのように最適化できますか？</summary>
-
-**解答:**
-1. **適切な Volume Type の選択**:
-   ```yaml
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: fast-ssd
-   provisioner: ebs.csi.aws.com
-   parameters:
-     type: io2
-     iops: "10000"
-     encrypted: "true"
-   volumeBindingMode: WaitForFirstConsumer
-   ```
-
-2. **Multi-Attach Volumes の使用**（読み取り専用ワークロード向け）:
-   ```yaml
-   parameters:
-     type: io2
-     multiAttach: "true"
-   ```
-
-3. **Instance Store の活用**:
-   ```yaml
-   # Instance store for temporary data
-   volumeMounts:
-   - name: instance-store
-     mountPath: /tmp
-   volumes:
-   - name: instance-store
-     hostPath:
-       path: /mnt/instance-store
-   ```
-
-4. **適切な Filesystem の選択**:
-   - XFS: 大きなファイルと高い同時実行性
-   - ext4: 汎用
-   - 適切なマウントオプションを設定
-
-5. **I/O Scheduler の最適化**:
-   ```bash
-   # noop or deadline scheduler for SSD
-   echo noop > /sys/block/nvme0n1/queue/scheduler
-   ```
-</details>
-
-## 問題 4: コスト最適化戦略
-
-<details>
-<summary>EKS のストレージコストを最適化するために、どのような戦略を使用できますか？</summary>
-
-**解答:**
-1. **適切な Volume Type の選択**:
-   - gp3: ほとんどのワークロードで費用対効果が高い
-   - gp2 から gp3 へ移行
-   - 必要な場合にのみ provisioned IOPS を使用
-
-2. **Volume サイズの最適化**:
-   ```bash
-   # Monitor usage
-   kubectl top pods --containers
-   df -h # Inside pod
-   ```
-
-3. **ライフサイクル管理**:
-   ```yaml
-   # Snapshot automation
-   apiVersion: snapshot.storage.k8s.io/v1
-   kind: VolumeSnapshotClass
-   metadata:
-     name: csi-aws-vsc
-   driver: ebs.csi.aws.com
-   deletionPolicy: Delete
-   ```
-
-4. **EFS Storage Classes の活用**:
-   ```yaml
-   # Infrequent Access storage class
-   parameters:
-     performanceMode: generalPurpose
-     throughputMode: provisioned
-     provisionedThroughputInMibps: "100"
-   ```
-
-5. **未使用 Volume のクリーンアップ**:
-   ```bash
-   # Check unused PVs
-   kubectl get pv | grep Available
-
-   # Clean up old snapshots
-   aws ec2 describe-snapshots --owner-ids self \
-     --query 'Snapshots[?StartTime<=`2023-01-01`]'
-   ```
-</details>
-
-## 問題 5: セキュリティのベストプラクティス
-
-<details>
-<summary>EKS のストレージセキュリティをどのように強化できますか？</summary>
-
-**解答:**
-1. **暗号化の有効化**:
-   ```yaml
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: encrypted-gp3
-   provisioner: ebs.csi.aws.com
-   parameters:
-     type: gp3
-     encrypted: "true"
-     kmsKeyId: "arn:aws:kms:region:account:key/key-id"
-   ```
-
-2. **IAM 権限の最小化**:
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "ec2:CreateVolume",
-           "ec2:AttachVolume",
-           "ec2:DetachVolume",
-           "ec2:DeleteVolume",
-           "ec2:DescribeVolumes",
-           "ec2:CreateSnapshot",
-           "ec2:DeleteSnapshot",
-           "ec2:DescribeSnapshots"
-         ],
-         "Resource": "*",
-         "Condition": {
-           "StringEquals": {
-             "aws:RequestedRegion": "us-west-2"
-           }
-         }
-       }
-     ]
-   }
-   ```
-
-3. **ネットワークセキュリティ**:
-   ```yaml
-   # EFS mount target security group
-   securityGroupSelector:
-     matchLabels:
-       Name: "efs-mount-target-sg"
-   ```
-
-4. **アクセス制御**:
-   ```yaml
-   # RBAC configuration
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: Role
-   metadata:
-     name: storage-admin
-   rules:
-   - apiGroups: [""]
-     resources: ["persistentvolumes", "persistentvolumeclaims"]
-     verbs: ["get", "list", "create", "delete"]
-   ```
-
-5. **監査ログ**:
-   ```yaml
-   # Storage-related audit policy
-   - level: Metadata
-     resources:
-     - group: ""
-       resources: ["persistentvolumes", "persistentvolumeclaims"]
-   ```
-</details>
-
-### 6. Amazon EKS におけるストレージモニタリングと管理に最も効果的なツールの組み合わせは何ですか？
-
-A. CloudWatch と AWS Console のみを使用する
-B. CloudWatch、Prometheus、Grafana、自動管理ツール
-C. 手動検査とログ分析
-D. サードパーティ製モニタリングツールのみを使用する
+- A. Average をそのまま IOPS として使う
+- B. Sum を期間の秒数で割る
+- C. バイト数に Pod 数を掛ける
+- D. VolumeQueueLength を完了済み IOPS として使う
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. CloudWatch、Prometheus、Grafana、自動管理ツール**
+**正解: B**
 
-**解説:**
-Amazon EKS におけるストレージモニタリングと管理に最も効果的なツールの組み合わせは、CloudWatch、Prometheus、Grafana、自動管理ツールを併用することです。この統合アプローチにより、AWS ネイティブのメトリクスと詳細な Kubernetes レベルのメトリクスの両方を収集し、それらを可視化し、自動管理を通じて運用効率を向上させます。
+Sum を期間の秒数で割ります。VolumeReadBytes/VolumeWriteBytes も同様に正規化して bytes/s を求めます。VolumeTotalReadTime/VolumeTotalWriteTime は累積された操作時間（秒）です。対応する操作の Sum で割ると平均秒/操作になり、操作数がゼロの場合は別途処理が必要です。生のカウンターをすべてレートやレイテンシーとして扱わないでください。
 
-**統合モニタリングおよび管理アーキテクチャ:**
+現在の Nitro メトリクスには、文書化された単位や制約を持つ VolumeAvgIOPS、VolumeAvgThroughput、平均レイテンシーのメトリクスもあります。BurstBalance は gp2/st1/sc1 に適用され、gp3 には適用されません。EFS の byte/metered-byte メトリクスと FSx の OSS/OST ごとのメトリクスでは、ディメンションや統計量が異なります。対応している環境では kubelet_volume_stats_* からファイルシステム使用量を取得できる場合がありますが、container_fs_usage_bytes はあらゆる PVC に共通する測定値ではありません。
 
-1. **CloudWatch**:
-   - AWS インフラストラクチャレベルのメトリクスを収集
-   - EBS、EFS、FSx ストレージ性能メトリクス
-   - アラームとイベント管理
-
-2. **Prometheus**:
-   - 詳細な Kubernetes レベルのメトリクスを収集
-   - カスタムストレージメトリクスを収集
-   - 長期データ保持とクエリ
-
-3. **Grafana**:
-   - 統合ダッシュボードと可視化
-   - CloudWatch と Prometheus データソースの統合
-   - カスタムアラートとレポート
-
-4. **Automated Management Tools**:
-   - ストレージプロビジョニングの自動化
-   - 容量計画とスケーリング
-   - 問題の検出と解決
 </details>
 
+### 2. Pending の PVC や consumer について、最初に確認することはどれですか？
+
+- A. PVC をすぐに削除する
+- B. すべてのノードに EC2 の完全なアクセス権を与える
+- C. イベント、binding mode、スケジューリング制約を調べる
+- D. 未バインドの PVC が AZ をすでに固定していると考える
+
+<details>
+<summary>解答を表示</summary>
+
+**正解: C**
+
+実際の namespace、claim、consumer のイベント、StorageClass、トポロジーを調べます。WaitForFirstConsumer は、スケジューリングまで新しい PVC を Pending のままにすることがあります。これは必ずしも driver の障害ではありません。バインド後は、EBS PV の node affinity/AZ とアタッチ上限が重要です。バインドに必要なスケジューラーを迂回する spec.nodeName の使用は避けてください。
+
+```bash
+set -euo pipefail
+: "${NAMESPACE:?Set the workload namespace}"
+: "${PVC_NAME:?Set the claim name}"
+: "${POD_NAME:?Set its intended consumer Pod}"
+kubectl -n "$NAMESPACE" get pvc "$PVC_NAME" -o yaml
+kubectl -n "$NAMESPACE" describe pvc "$PVC_NAME"
+kubectl -n "$NAMESPACE" describe pod "$POD_NAME"
+kubectl get storageclass
+kubectl get nodes -L topology.kubernetes.io/zone
+```
+
+
+
+```bash
+set -euo pipefail
+: "${CSI_CONTROLLER_POD:?Select the actual controller Pod}"
+: "${CSI_CONTAINER:?Select the relevant driver/sidecar container}"
+kubectl -n kube-system get pod "$CSI_CONTROLLER_POD" \
+  -o jsonpath='{.spec.containers[*].name}'
+kubectl -n kube-system logs "$CSI_CONTROLLER_POD" -c "$CSI_CONTAINER" --since=15m --tail=200
+```
+
+CSI driver の実際の Pod Identity/IRSA ロールと KMS grant を確認してください。EC2 ノードの instance profile だけを見ても十分ではありません。複数コンテナを持つ controller では、対象の driver/sidecar を選んでログを確認します。ContainerCreating の原因は、アタッチ、マウント、クライアントソフトウェア、イメージ取得、アプリケーション権限の場合もあります。症状をリセットするためにデータを削除しないでください。
+
+</details>
+
+### 3. データベースのストレージを調整する方法として適切なのはどれですか？
+
+- A. 測定し、ボリューム、ファイルシステム、インスタンスの制約に合わせる
+- B. 常に multiAttach:true を有効にする
+- C. どの hostPath も高速な NVMe だとみなす
+- D. 対象を特定せずルートディスクの scheduler を変更する
+
+<details>
+<summary>解答を表示</summary>
+
+**正解: A**
+
+I/O パターン、キュー、レイテンシー、インスタンス上限を測定してから、ストレージと性能の設定を選んでください。この 10,000 IOPS io2 クラスは説明用の割り当て例であり、データベースの SLO を満たす証拠ではありません。
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  type: io2
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
+  iops: '10000'
+```
+
+Multi-Attach は、汎用の読み取り専用性能スイッチではありません。レビュー済みの EBS CSI 経路では、Part 2 に記載されたとおり、io2、RWX、raw Block とアプリケーション側の協調制御を使います。/mnt/instance-store という名前の hostPath だけでは、物理的な instance store であることは確認できません。準備済みのノードローカルストレージ設計を使い、そのデータは一時的なものとして扱ってください。EC2 instance-store CSI は実際にサポートされている統合機能ですが、独自の前提条件があります。
+
+対象が nvme0n1 だと決めつけて noop を設定しないでください。それがルートディスクや別のディスクである可能性があり、最新の blk-mq ではデバイス名も異なります。個別に変更を検討する前にデバイスとサポート対象の scheduler を特定してください。ファイルシステムの選択やマウントオプションにもワークロードの根拠が必要です。XFS も ext4 も性能結果を保証しません。
+
+</details>
+
+### 4. デフォルトの gp3 StorageClass を作成すると、既存の gp2 ボリュームも移行されますか？
+
+- A. はい、アタッチ済みの全ボリュームが直ちに変更される
+- B. はい、StorageClass の名前を変更した後に限られる
+- C. はい、デフォルトの StorageClass が既存データを暗号化して移行する
+- D. いいえ。既存ボリュームには別途、サポートされた手順が必要
+
+<details>
+<summary>解答を表示</summary>
+
+**正解: D**
+
+移行されません。StorageClass は適用対象のプロビジョニングを制御するもので、すでにバインド済みの PV/backend を書き換えるものではありません。デフォルト StorageClass の変更は、無関係な新規 claim に影響することがあります。所有者が明確なサポート対象の変更またはデータ移行を選び、復旧ポイントを保持してアプリケーションデータを検証してください。容量拡張と容量縮小は別の操作です。一般に PVC/EBS のサイズをインプレースで縮小することはできません。
+
+割り当て容量、プロビジョニング済み IOPS/throughput、保持期間、リクエスト、転送コストを比較してください。コンピューティングの割引で別料金のストレージ費用が自動的に下がるわけではありません。VolumeSnapshotClass はスケジュール機能ではありません。以下の例は、意図的に一時利用する snapshot の削除動作だけを定義します。
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: temporary-ebs-snapshots
+driver: ebs.csi.aws.com
+deletionPolicy: Delete
+```
+
+コスト最適化のために、この一時用 StorageClass で章の保持用クラスを一括置換しないでください。バックアップの所有者が保持期間をスケジュールし、管理する必要があります。Velero には独自の CSI snapshot ライフサイクルがあります。
+
+</details>
+
+### 5. ストレージのセキュリティ制御を正しく分けて説明しているのはどれですか？
+
+- A. PVC 名だけで暗号化が保証される
+- B. 各制御には、それぞれ正しい適用範囲と実際のリソース対応付けが必要
+- C. Role により、すべてのクラスタースコープ PV 権限を付与できる
+- D. PSS が IAM と KMS の代わりになる
+
+<details>
+<summary>解答を表示</summary>
+
+**正解: B**
+
+IAM/KMS、ネットワークアクセス、Kubernetes API 認可、admission、ファイルシステムの identity は、それぞれ異なる操作を保護します。リージョン指定の EC2 action 一覧だけで、CSI に必要な最小権限ポリシー全体を満たすとは限りません。実際の driver ロールのポリシーと必要な key grant を確認してください。存在しない kmsKeyId を指定しても KMS key は作成されません。
+
+namespace 単位の Role で PVC へのアクセス権は付与できますが、クラスタースコープの PV への権限は付与できません。この Role を通じて PVC オブジェクトを読めない Pod 作成者であっても、namespace 内の PVC をマウントできる場合があります。ワークロードの作成権限と tenant の境界も保護してください。この章の namespace reader は、オブジェクトを調査する例です。
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: storage-auditor
+  namespace: storage-demo
+automountServiceAccountToken: false
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pvc-reader
+  namespace: storage-demo
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pvc-reader
+  namespace: storage-demo
+subjects:
+- kind: ServiceAccount
+  name: storage-auditor
+  namespace: storage-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pvc-reader
+```
 
-**スコア計算:**
-- 5-6 問正解: 優秀（EKS ストレージエキスパートレベル）
-- 3-4 問正解: 良好（追加学習を推奨）
-- 1-2 問正解: 可（基本概念の復習が必要）
-- 0 問正解: 改善が必要（全内容の再学習が必要）
+EFS の SG は、実在する mount target/client に適用されます。架空の securityGroupSelector 断片に適用されるわけではありません。実際の TCP 2049 経路を使ってください。Lustre/EFA のルールは異なります。Pod Security Standards は、クラウド暗号化や IAM 権限を構成するものではありません。
 
-**実装例:**
+</details>
 
-1. **CloudWatch Container Insights のセットアップ**:
-   ```yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: cwagent-config
-     namespace: amazon-cloudwatch
-   data:
-     cwagentconfig.json: |
-       {
-         "logs": {
-           "metrics_collected": {
-             "kubernetes": {
-               "cluster_name": "my-cluster",
-               "metrics_collection_interval": 60
-             }
-           },
-           "force_flush_interval": 5
-         },
-         "metrics": {
-           "namespace": "EKS/Storage",
-           "metrics_collected": {
-             "statsd": {
-               "service_address": ":8125"
-             }
-           }
-         }
-       }
-   ```
+### 6. 監視統合について正しい説明はどれですか？
 
-2. **Prometheus と Storage Exporter のセットアップ**:
-   ```yaml
-   apiVersion: monitoring.coreos.com/v1
-   kind: ServiceMonitor
-   metadata:
-     name: storage-monitor
-     namespace: monitoring
-   spec:
-     selector:
-       matchLabels:
-         app: storage-exporter
-     endpoints:
-     - port: metrics
-       interval: 30s
-       path: /metrics
-   ```
+- A. Grafana ConfigMap が PVC メトリクスを自動収集する
+- B. Prometheus はデータを常に無期限に保持する
+- C. collector、service discovery、認可、ストレージを構成する必要がある
+- D. CloudWatch はカスタムメトリクスを受け取れない
 
-3. **Grafana Dashboard の設定**:
-   ```yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: storage-dashboard
-     namespace: monitoring
-   data:
-     storage-dashboard.json: |
-       {
-         "title": "EKS Storage Dashboard",
-         "panels": [
-           {
-             "title": "EBS Volume IOPS",
-             "datasource": "Prometheus",
-             "targets": [
-               {
-                 "expr": "aws_ebs_volume_read_ops + aws_ebs_volume_write_ops",
-                 "legendFormat": "{{volume_id}}"
-               }
-             ]
-           },
-           {
-             "title": "EFS Throughput",
-             "datasource": "CloudWatch",
-             "targets": [
-               {
-                 "namespace": "AWS/EFS",
-                 "metricName": "TotalIOBytes",
-                 "dimensions": {
-                   "FileSystemId": "*"
-                 },
-                 "statistic": "Sum"
-               }
-             ]
-           }
-         ]
-       }
-   ```
+<details>
+<summary>解答を表示</summary>
 
-4. **自動ストレージ管理 CronJob**:
-   ```yaml
-   apiVersion: batch/v1
-   kind: CronJob
-   metadata:
-     name: storage-manager
-   spec:
-     schedule: "0 1 * * *"
-     jobTemplate:
-       spec:
-         template:
-           spec:
-             containers:
-             - name: storage-manager
-               image: storage-tools:latest
-               command:
-               - /bin/bash
-               - -c
-               - |
-                 # Identify unused PVCs
-                 UNUSED_PVCS=$(kubectl get pvc -A -o json | jq -r '.items[] | select(.status.phase == "Bound") | select(.metadata.annotations.lastUsed < "'$(date -d "30 days ago" +%Y-%m-%d)'") | .metadata.name')
+**正解: C**
 
-                 # Create snapshots
-                 for PVC in $UNUSED_PVCS; do
-                   kubectl create snapshot ...
-                 done
+CloudWatch は AWS ネイティブのサービスメトリクスを扱い、Prometheus は構成した Kubernetes/application の target から収集し、Grafana は構成済みのデータソースを可視化します。collector、service discovery、IAM/auth、保持期間、label、alert routing は別途構成が必要です。ダッシュボード ConfigMap だけでは、存在しないメトリクスは生成されません。
 
-                 # Analyze volume usage and generate reports
-                 ...
-             restartPolicy: OnFailure
-   ```
+CloudWatch は構成済みの agent/integration 経由でカスタム/Kubernetes メトリクスを取り込めます。また、Prometheus が自動的に長期間保持するわけではありません。ワークロードに合った保持期間とストレージ/remote-write 構成を使ってください。自動管理は、無条件の変更ではなく、観測と範囲を限定した提案から始めます。
 
-**主要なモニタリングメトリクス:**
+</details>
 
-1. **EBS Volume メトリクス**:
-   - VolumeReadOps/VolumeWriteOps
-   - VolumeReadBytes/VolumeWriteBytes
-   - VolumeQueueLength
-   - BurstBalance（gp2 volumes）
+### 7. どの観測結果だけでボリュームの削除を承認できますか？
 
-2. **EFS メトリクス**:
-   - TotalIOBytes
-   - DataReadIOBytes/DataWriteIOBytes
-   - MetadataIOBytes
-   - ClientConnections
-   - StorageBytes（Standard/IA）
+- A. PV が Available である
+- B. 現在一覧に表示される Pod が PVC を参照していない
+- C. lastUsed annotation の日時が古い
+- D. どれも単独では承認できない
 
-3. **FSx for Lustre メトリクス**:
-   - DataReadBytes/DataWriteBytes
-   - DataReadOperations/DataWriteOperations
-   - FreeDataStorageCapacity
-   - LogicalDiskUsage
+<details>
+<summary>解答を表示</summary>
 
-4. **Kubernetes Storage メトリクス**:
-   - PVC 使用量と容量
-   - Volume マウントステータス
-   - Storage class 使用量
+**正解: D**
 
-**高度なモニタリングおよび管理機能:**
+保持データ、scale-to-zero controller、今後実行される Job、バックアップ義務、外部の所有者を考慮する必要があります。lastUsed は、信頼できる標準 PVC 使用フィールドではありません。削除前に namespace/UID を保全し、backend の identity を確認してください。
 
-1. **予測分析**:
-   - 容量予測と計画
-   - 性能トレンド分析
-   - コスト予測
+</details>
 
-2. **異常検知**:
-   - 異常な I/O パターンを検出
-   - 性能低下の早期警告
-   - 容量不足の予測
+### 8. kubectl top pods で PVC のディスク使用量を測定できますか？
 
-3. **自動最適化**:
-   - 使用パターンに基づく Volume type 推奨
-   - 自動スケールアップおよびスケールダウン
-   - コスト最適化の推奨
+- A. いいえ。主に CPU/メモリを報告する
+- B. はい。メモリ使用量とディスク使用量は同じ
+- C. はい。EBS の空き block をすべて一覧表示する
+- D. StorageClass の名前が gp3 の場合に限り測定できる
 
-4. **統合レポート**:
-   - ストレージ使用量と性能レポート
-   - コスト配分と分析
-   - コンプライアンスおよび監査レポート
+<details>
+<summary>解答を表示</summary>
 
-**実装のベストプラクティス:**
+**正解: A**
 
-1. **マルチレベルモニタリング**:
-   - インフラストラクチャレベル（CloudWatch）
-   - Kubernetes レベル（Prometheus）
-   - アプリケーションレベル（custom metrics）
+正しい mount path/driver の、サポートされたファイルシステム統計を使い、実際の PVC を特定してください。コンテナ内の df が別の mount や共有 EFS ファイルシステムを示すことがあります。EFS PVC の request はディレクトリ単位の quota ではありません。
 
-2. **アラート戦略**:
-   - 重要度に基づいてアラートを設定
-   - アラートのグループ化と重複排除
-   - エスカレーションパスを定義
+</details>
 
-3. **データ保持ポリシー**:
-   - 高解像度データ: 短期保持
-   - 集約データ: 長期保持
-   - コストと有用性のバランス
+### 9. EFS IA/Archive のライフサイクルはどこで構成しますか？
 
-4. **段階的な自動化導入**:
-   - まずモニタリングとアラートを実装
-   - レポートと分析機能を追加
-   - 自動管理を段階的に導入
+- A. access point 用 StorageClass に任意の performanceMode parameter を指定する
+- B. 意図した遷移を保ちながらファイルシステムの lifecycle configuration で設定する
+- C. PVC request を減らす
+- D. Pod の label を IA に変更する
 
-その他の選択肢の問題点:
-- **A. CloudWatch と AWS Console のみを使用する**: AWS ネイティブのメトリクスは提供しますが、詳細な Kubernetes レベルのメトリクスが不足し、自動化機能が限られています。
-- **C. 手動検査とログ分析**: スケーラビリティが不足し、リアルタイムモニタリングが困難になり、プロアクティブな問題検出を妨げます。
-- **D. サードパーティ製モニタリングツールのみを使用する**: AWS ネイティブのメトリクスとの統合が限られる可能性があり、追加コストが発生する場合があります。
+<details>
+<summary>解答を表示</summary>
+
+**正解: B**
+
+EFS CSI の access-point parameter ですべてのファイルシステム throughput や lifecycle property を構成できるわけではありません。既存ポリシーを読んでから配列を更新してください。空の配列は lifecycle 管理を無効にします。需要が予測しにくい場合、Elastic が推奨される開始点です。Archive には、利用可能性と遷移順序に関する固有の要件があります。
+
+</details>
+
+### 10. aws s3 cp --sse AES256 が選択するのは何ですか？
+
+- A. TLS protocol version
+- B. NetworkPolicy の暗号化
+- C. 保存時の SSE-S3 暗号化
+- D. EFS mount の暗号化
+
+<details>
+<summary>解答を表示</summary>
+
+**正解: C**
+
+HTTPS/TLS は転送中の通信を保護しますが、--sse で TLS が有効になるわけではありません。適切な endpoint と証明書検証を使用してください。FSx scratch data はサービス管理キーで暗号化され、選択可能な顧客キーを使えるのは persistent filesystem です。
+
+</details>
+
+## 短答問題
+
+### 11. レート計算と容量予測をどのように検証しますか？
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: 単位、期間、欠損データ、代表的なシナリオを確認する**
+
+300 秒の期間に読み取り操作が 30,000 回完了した場合、読み取り IOPS は 100 です。累積された読み取り時間が 1,500 秒で、操作数が 30,000 回なら、1,500 / 30,000 = 0.05 秒/操作、つまり 50 ミリ秒です。操作が重なると、累積時間が実時間を超えることがあります。期間を揃え、ゼロ件/サンプルなしは個別に処理してください。
+
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the volume Region}"
+: "${EBS_VOLUME_ID:?Set the verified owned EBS volume ID}"
+read -r START_TIME END_TIME < <(python3 - <<'PY'
+import datetime, time
+end = int(time.time()) // 300 * 300
+fmt = lambda value: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+print(fmt(end - 3600), fmt(end))
+PY
+)
+aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
+  --namespace AWS/EBS --metric-name VolumeReadOps \
+  --dimensions "Name=VolumeId,Value=$EBS_VOLUME_ID" \
+  --start-time "$START_TIME" --end-time "$END_TIME" \
+  --period 300 --statistics Sum --output json > ebs-read-ops.json
+python3 - ebs-read-ops.json <<'PY'
+import json, sys
+with open(sys.argv[1]) as stream:
+    points = json.load(stream)["Datapoints"]
+for point in sorted(points, key=lambda p: p["Timestamp"]):
+    print(point["Timestamp"], "read IOPS:", point["Sum"] / 300)
+if not points:
+    print("No datapoints: check dimensions, attachment/activity, Region and publication delay")
+PY
+```
+
+これらは算術上の例であり、測定したワークロードの結果ではありません。カウンターではなく gauge に predict_linear を使います。重複する scrape series を除き、無効な容量値も除外してください。直近の傾向は、将来の容量枯渇を保証するものではありません。ソースのルールは、合成データを使って、高い使用率の継続、重複 target、容量ゼロ、series 欠損、使用量増加をテストしました。
+
+</details>
+
+### 12. CSI identity、Multi-Attach、ノードローカルストレージの違いは何ですか？
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: それぞれ認可、アタッチ、配置の問題を解決します**
+
+CSI controller の identity は backend のライフサイクル API を認可するものであり、各アプリケーションの identity ではありません。EBS Multi-Attach は、サービス/driver/AZ の制約下で raw device を共有してアタッチします。アプリケーション側の書き込み調整と fencing が必要です。任意の multiAttach StorageClass field は、サポートされたスイッチではありません。
+
+ノードローカルの instance store は物理的にノードのライフサイクルに結びついており、適切なデバイスのプロビジョニング/スケジューリングが必要です。hostPath の文字列だけでは、実際の backing device や耐久性を確認できません。性能例を動かすために権限を広げたり、対象不明のディスクを format したりせず、この章のレビュー済み CSI 経路を使ってください。
+
+</details>
+
+### 13. admission と EKS audit logging で何を証明できますか？
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: 構成されたリクエスト範囲と記録済みイベントに限られます**
+
+この章の Kyverno policies.kyverno.io/v1 ValidatingPolicy は、対象となる EBS StorageClass の暗号化 parameter の宣言を確認します。既存の AWS volume、static PV の内容、すべての迂回経路を検査するものではありません。管理者権限を制限し、admission に加えて実際の backend 暗号化を検証してください。
+
+EKS では control plane の audit policy を AWS が管理します。クラスター所有者がサポートされた audit log type を有効にし、配信された記録を確認してください。貼り付けた audit.k8s.io policy 断片は、EKS API から管理済み policy を置き換える方法ではありません。Kubernetes audit event と CloudTrail backend API event は補完関係にありますが、保持期間、アクセス、対象範囲は別々です。audit logging だけでデータ損失を防ぐことはできません。
+
+</details>
+
+## 実践問題
+
+### 14. レビュー可能な監視/ダッシュボード構成を作成してください。
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: 依存する各要素を明示的に構成する**
+
+この章でレビューした monitoring stack と collector を使ってください。ConfigMap だけで agent がインストールされると考えないでください。従来の CloudWatch agent のインストールでは、実際の namespace/workload と identity を確認します。選択した integration に合わせて名前を変更し、対応状況を確認してください。
+
+```bash
+set -euo pipefail
+kubectl -n amazon-cloudwatch get daemonsets,pods
+kubectl -n amazon-cloudwatch get serviceaccount cloudwatch-agent -o yaml
+```
+
+[クラスター監視の例](../../eks/02-eks-cluster-creation-part3.md)では、所有する agent/add-on の前提条件を説明しています。StatsD receiver だけでは EBS/PVC メトリクスは生成されません。ダッシュボードの不足を埋める目的で static AWS key を追加したり、agent を重複して有効にしたりしないでください。
+
+EBS CSI では、既存の管理者を通じてサポートされた metrics configuration を有効化してください。この章で生成した monitor、**または**既存の Service がある場合は以下の単独 monitor を使い、scrape の重複を避けてください。Prometheus は monitor の namespace/label を選択し、指定された Service port に到達できる必要があります。
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: csi-metrics-reviewed
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app: ebs-csi-controller
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+```
+
+この章の recording/alert rule を監視管理者経由でインストールし、target の Up 状態、期待した series、alert の配信を確認してください。EBS driver endpoint が報告するのは CSI operation のメトリクスであり、すべての sidecar メトリクスや生のファイルシステム使用量ではありません。
+
+この ConfigMap は、その import/provisioning 経路をサポートするデプロイメント向けの **Classic dashboard model** です。現在の Grafana には V1 Resource と既定の V2 Resource model もあります。この raw Classic object を、resource envelope を期待する別の API に送らないでください。Prometheus data-source UID を置き換え、参照する recording rule が存在すること、Grafana sidecar の label/namespace 設定が一致することを確認してください。採用前に対象の Grafana version で export/import を検証します。
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storage-dashboard-reviewed
+  namespace: monitoring
+  labels:
+    grafana_dashboard: '1'
+data:
+  storage-dashboard.json: |
+    {
+      "id": null,
+      "uid": "eks-storage-reviewed",
+      "title": "EKS Storage: PVC Filesystem Usage",
+      "tags": [
+        "storage"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 42,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "PVC filesystem utilization",
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "REPLACE_WITH_PROMETHEUS_DATASOURCE_UID"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "(pvc:storage_used_bytes:max / pvc:storage_capacity_bytes:max) and (pvc:storage_capacity_bytes:max > 0)",
+              "legendFormat": "{{cluster}} {{namespace}}/{{persistentvolumeclaim}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          }
+        }
+      ]
+    }
+```
+
+EBS IOPS/EFS throughput の追加のネイティブパネルでは、レビュー済み IAM access を使って CloudWatch data source を構成し、ソースに基づく metric dimension と期間正規化済みの計算を使ってください。構成済み exporter が実際にその名前と意味の series を公開していない限り、aws_ebs_* Prometheus series を作り出さないでください。ここにある JSON と式はローカルで確認しただけで、認証済み Grafana への import や稼働中の AWS query は行っていません。
+
+</details>
+
+### 15. 安全でない削除推定をせずにストレージ一覧を作成してください。
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: 根拠を報告し、削除可能とは推定しない**
+
+古い placeholder CronJob を読み取り専用のレポートに置き換えます。次の script は namespace と UID を保持し、直接参照する Pod を一覧表示し、削除を承認しません。lastUsed から古さを推定せず、Bound を未使用と同義に扱わず、全 namespace の query から namespace を取り除きません。
+
+```python
+"""Report direct Pod/PVC references; never infer deletion eligibility."""
+import json,sys
+def inventory(namespace,claims,pods):
+    refs={}
+    for pod in pods['items']:
+        meta=pod['metadata']
+        if meta['namespace']!=namespace:raise ValueError('Pod list contains another namespace')
+        seen=set()
+        for volume in pod.get('spec',{}).get('volumes',[]):
+            claim=volume.get('persistentVolumeClaim',{}).get('claimName')
+            if claim and claim not in seen:
+                seen.add(claim)
+                refs.setdefault(claim,[]).append({'pod':meta['name'],'podUID':meta['uid'],'phase':pod.get('status',{}).get('phase','Unknown')})
+    rows=[]
+    for pvc in claims['items']:
+        meta,spec=pvc['metadata'],pvc.get('spec',{})
+        if meta['namespace']!=namespace:raise ValueError('PVC list contains another namespace')
+        rows.append({'namespace':namespace,'name':meta['name'],'uid':meta['uid'],
+          'phase':pvc.get('status',{}).get('phase','Unknown'),'volumeName':spec.get('volumeName'),
+          'storageClassName':spec.get('storageClassName'),'requestedStorage':spec.get('resources',{}).get('requests',{}).get('storage'),
+          'directPodReferences':refs.get(meta['name'],[]),'ownerReferences':meta.get('ownerReferences',[]),
+          'deletionAuthorized':False,'nextAction':'Review owner, controller templates, retention, backups and actual backend before any change'})
+    return {'reviewOnly':True,'namespace':namespace,'rows':sorted(rows,key=lambda x:x['name']),
+      'limitations':['The two API reads are not an atomic snapshot.','No Pod reference does not mean unused: scale-to-zero controllers, future Jobs, retained data and indirect/ephemeral references need separate review.','lastUsed is not a standard trustworthy Kubernetes PVC field. This report never authorizes snapshot creation or deletion.']}
+if __name__=='__main__':
+    if len(sys.argv)!=4:raise SystemExit('Usage: storage-inventory.py namespace pvcs.json pods.json')
+    with open(sys.argv[2]) as f:claims=json.load(f)
+    with open(sys.argv[3]) as f:pods=json.load(f)
+    print(json.dumps(inventory(sys.argv[1],claims,pods),indent=2))
+```
+
+
+
+```bash
+set -euo pipefail
+: "${STORAGE_NAMESPACE:?Set the namespace being reviewed}"
+kubectl -n "$STORAGE_NAMESPACE" get pvc -o json > inventory-pvcs.json
+kubectl -n "$STORAGE_NAMESPACE" get pods -o json > inventory-pods.json
+python3 storage-inventory.py "$STORAGE_NAMESPACE" inventory-pvcs.json inventory-pods.json
+```
+
+query を実行する identity に必要なのは、この namespace の読み取り権限だけです。この Role は適用範囲の例です。必要であればレビュー済みの operator/automation identity に bind します。snapshot の作成、resize、削除権限は付与しません。
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: storage-inventory-reader
+  namespace: storage-demo
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+```
+
+scale-to-zero controller template、Job/CronJob、保持中の claim、間接/一時的な参照、バックアップ方針、実際の backend ID を別々に確認してください。現在 Pod から参照されていないだけで削除を決めてはいけません。このレポートを後で定期実行する場合は、script/client を含む実在するレビュー済み image、上限のある実行、範囲を限定した credential、明確なレポート出力先を使用してください。storage-tools:latest や省略記号入りのコマンドは実装ではありません。
+
+まず観測を自動化し、その後、範囲を限定した変更提案と独立して検証された復旧を行います。EBS/PVC の拡張は任意の縮小ではありません。リソースを密かに破棄する script を使わず、デプロイメントに合った監査証拠、ライフサイクル所有者、明示的な承認/運用制御を維持してください。
+
+</details>
+
+## 解答を振り返る
+
+問題は全15問で、選択式が10問あります。誤答は復習が必要な分野を見つけるために使ってください。クイズの得点だけで本番環境を扱う専門性が証明されるわけではありません。実践問題では、構文だけでなく前提条件、リソースの適用範囲、検証証拠も評価してください。
+
+## 参考資料
+
+- [参照章](../../eks/04-eks-storage-part3.md)
+- [EBS メトリクス](https://docs.aws.amazon.com/ebs/latest/userguide/using_cloudwatch_ebs.html)
+- [FSx メトリクス](https://docs.aws.amazon.com/fsx/latest/LustreGuide/fs-metrics.html)
+- [EFS lifecycle API](https://docs.aws.amazon.com/efs/latest/APIReference/API_PutLifecycleConfiguration.html)
+- [EKS audit](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html)
+- [Grafana dashboard model](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/view-dashboard-json-model/)

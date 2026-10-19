@@ -1,322 +1,195 @@
 # EKS Auto Mode 迁移指南测验
 
 > **相关文档**: [迁移指南](../../eks-auto-mode/09-migration-guide.md)
+> **最后更新**: 2026 年 9 月 12 日
 
 ## 选择题
 
-### 1. 从 managed node groups 迁移到 Auto Mode 时，第一步是什么？
+### 1. 在启用或移除迁移容量之前，应先做什么？
 
-- A) 立即删除现有 node groups
-- B) 分析当前状态（检查节点资源使用情况、工作负载分布）
-- C) 创建 Auto Mode NodePool
-- D) Drain 所有 Pods
+- A) 删除旧节点组
+- B) 清点工作负载、依赖项、所有权和恢复要求
+- C) 驱逐所有 Pod
+- D) 假设实例名称相同就代表兼容
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 分析当前状态（检查节点资源使用情况、工作负载分布）**
+**答案：B) 清点工作负载、依赖项、所有权和恢复要求**
 
-**解释：**
-迁移的第一步是全面分析当前环境。
-
-**迁移步骤：**
-1. **分析当前状态** - 检查 node groups、资源使用情况、工作负载分布
-2. 启用 Auto Mode
-3. 配置 NodePool
-4. 迁移工作负载
-5. 缩容现有 node groups
-6. 删除现有 node groups
-7. 验证并优化
+**说明：**
+先确认账户、集群和旧节点组的身份，再检查放置、数据、IAM、网络、控制器、成本和应用健康状况。在缩容或删除之前逐批验证；最后的验证阶段不能代替前期健康检查。源文档会设置下方命令使用的私有 WORK_DIR 和 KUBE_CONTEXT。
 
 ```bash
-# Check current node groups
-eksctl get nodegroup --cluster my-cluster
-
-# Analyze node resource usage
-kubectl top nodes
-
-# Check workload distribution
-kubectl get pods -A -o wide | awk '{print $8}' | sort | uniq -c
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get deployments,statefulsets,daemonsets,jobs,cronjobs -A -o json |
+jq '[.items[] | (.spec.template // .spec.jobTemplate.spec.template) as $t |
+ {kind,namespace:.metadata.namespace,name:.metadata.name,uid:.metadata.uid,
+  nodeSelector:$t.spec.nodeSelector,affinity:$t.spec.affinity,tolerations:$t.spec.tolerations,
+  serviceAccountName:$t.spec.serviceAccountName,hostNetwork:$t.spec.hostNetwork,
+  pvcNames:[$t.spec.volumes[]?.persistentVolumeClaim.claimName // empty]}]' \
+  > "$WORK_DIR/workload-placement.json"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pods -A -o json |
+jq '[.items[] | {namespace:.metadata.namespace,name:.metadata.name,node:.spec.nodeName,
+  phase:.status.phase,deletionTimestamp:.metadata.deletionTimestamp,
+  ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported"),
+  owners:[.metadata.ownerReferences[]?|{kind,name,controller}]}]' \
+  > "$WORK_DIR/pod-state.json"
 ```
 
 </details>
 
-### 2. 迁移期间如何允许现有 node groups 与 Auto Mode 共存？
+### 2. 如何让旧托管节点与 Auto Mode 可预测地共存？
 
-- A) 不可能，必须只能按顺序进行
-- B) 使用 nodeSelector 分离工作负载
-- C) 需要单独的 cluster
-- D) 需要 AWS Support 工单
+- A) 两者不能共存
+- B) 为每个工作负载显式指定放置规则和控制器所有权
+- C) 只能使用单独的集群
+- D) 只需匹配 AWS 资源标签
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用 nodeSelector 分离工作负载**
+**答案：B) 为每个工作负载显式指定放置规则和控制器所有权**
 
-**解释：**
-在共存期间，使用 nodeSelector 和 affinity 来分离工作负载。
+**说明：**
+用特定的旧节点组选择器，以及精确的 Auto 节点池/计算类型选择器区分两类节点。通用 Karpenter 标签也可能匹配自管理的 Karpenter。在依赖尚未迁移前，保留混合节点环境中的 DNS/代理，以及现有存储和负载均衡控制器。以下只是 Pod spec 片段；指南中包含完整的 canary Deployment。
 
+旧托管节点组：
 ```yaml
-# Workloads pinned to existing node groups
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-critical-app
-spec:
-  template:
-    spec:
-      nodeSelector:
-        eks.amazonaws.com/nodegroup: old-nodegroup
-
----
-# Workloads that can be migrated to Auto Mode
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: migrated-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: karpenter.sh/nodepool
-                    operator: Exists
+# Pod template spec fragment
+nodeSelector:
+  eks.amazonaws.com/nodegroup: REPLACE_WITH_OLD_NODEGROUP
+tolerations: []
 ```
 
-</details>
-
-### 3. 渐进式迁移工作负载的推荐顺序是什么？
-
-- A) Production -> Staging -> Development
-- B) Development -> Staging -> Production（先迁移非关键工作负载）
-- C) 同时迁移所有工作负载
-- D) 随机顺序
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) Development -> Staging -> Production（先迁移非关键工作负载）**
-
-**解释：**
-渐进式迁移可以最大限度降低风险。
-
+Auto canary：
 ```yaml
-# Step 1: Migrate non-critical workloads
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dev-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: node-type
-                    operator: In
-                    values: ["auto-mode"]
-```
-
-**迁移顺序：**
-1. Development 环境工作负载
-2. Staging 工作负载
-3. Production 非关键工作负载
-4. Production 关键工作负载
-
-</details>
-
-### 4. 需要回滚时，步骤顺序是什么？
-
-- A) 删除并重新创建 cluster
-- B) 删除 NodePool -> 扩容现有 node groups -> 迁移工作负载
-- C) 联系 AWS Support
-- D) 仅禁用 Auto Mode
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 删除 NodePool -> 扩容现有 node groups -> 迁移工作负载**
-
-**解释：**
-回滚按相反顺序进行。
-
-```bash
-#!/bin/bash
-# rollback.sh
-
-# 1. Disable Auto Mode NodePool
-kubectl delete nodepool migration-pool
-
-# 2. Scale up existing node groups
-eksctl scale nodegroup \
-    --cluster my-cluster \
-    --name old-nodegroup \
-    --nodes 10 \
-    --nodes-min 3
-
-# 3. Migrate workloads back to existing nodes
-kubectl patch deployment migrated-app -p '
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "nodeSelector": {
-          "eks.amazonaws.com/nodegroup": "old-nodegroup"
-        },
-        "affinity": null
-      }
-    }
-  }
-}'
-
-# 4. Drain Auto Mode Pods
-for node in $(kubectl get nodes -l karpenter.sh/nodepool=migration-pool -o name); do
-    kubectl drain $node --ignore-daemonsets --delete-emptydir-data
-done
+# Pod template spec fragment
+nodeSelector:
+  karpenter.sh/nodepool: migration-pool
+  eks.amazonaws.com/compute-type: auto
+tolerations:
+- key: migration
+  operator: Equal
+  value: auto-mode
+  effect: NoSchedule
 ```
 
 </details>
 
-### 5. 渐进式缩容现有 node groups 的推荐方法是什么？
+### 3. 哪种顺序有助于降低迁移风险？
 
-- A) 立即缩容到 0
-- B) 每次缩容 50%，并进行稳定性检查
-- C) 每次仅缩容 1 个
-- D) 同时 Drain 所有节点
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 每次缩容 50%，并进行稳定性检查**
-
-**解释：**
-渐进式缩容可以最大限度降低对服务的影响。
-
-```bash
-#!/bin/bash
-CLUSTER="my-cluster"
-NODEGROUP="old-nodegroup"
-CURRENT_SIZE=$(eksctl get nodegroup --cluster $CLUSTER --name $NODEGROUP -o json | jq -r '.[0].DesiredCapacity')
-
-# Scale down by 50%
-while [ $CURRENT_SIZE -gt 0 ]; do
-    NEW_SIZE=$((CURRENT_SIZE / 2))
-    if [ $NEW_SIZE -lt 1 ]; then
-        NEW_SIZE=0
-    fi
-
-    echo "Scaling from $CURRENT_SIZE to $NEW_SIZE"
-    eksctl scale nodegroup --cluster $CLUSTER --name $NODEGROUP \
-        --nodes $NEW_SIZE --nodes-min 0
-
-    # Wait for stabilization
-    sleep 300
-
-    # Check workload status
-    kubectl get pods -A --field-selector=status.phase=Pending
-
-    CURRENT_SIZE=$NEW_SIZE
-done
-```
-
-</details>
-
-### 6. 迁移期间哪一项不是需要监控的关键指标？
-
-- A) Pending Pod 数量
-- B) Node provisioning time
-- C) EC2 instance cost
-- D) Workload availability
+- A) 先迁移关键生产工作负载
+- B) 先迁移有代表性的低风险工作负载，再逐步迁移更关键的依赖项
+- C) 一次性迁移所有内容
+- D) 随机安排顺序
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) EC2 instance cost**
+**答案：B) 先迁移有代表性的低风险工作负载，再逐步迁移更关键的依赖项**
 
-**解释：**
-迁移期间，服务稳定性是最高优先级，因此需要监控以下指标。
-
-| 指标 | 正常范围 | 告警条件 |
-|--------|--------------|-----------------|
-| Pending Pod 数量 | 0-5 | > 10 for 5 min |
-| 节点预置时间 | < 90 sec | > 120 sec |
-| 工作负载可用性 | > 99.9% | < 99.5% |
-| API 响应时间 | < 200ms | > 500ms |
-
-成本会在迁移完成后的优化阶段进行检查。
-
-```bash
-# Real-time monitoring
-watch -n 5 'echo "=== Pending Pods ===" && \
-kubectl get pods -A --field-selector=status.phase=Pending && \
-echo "=== Node Status ===" && kubectl get nodes -o wide'
-```
+**说明：**
+当阶段能反映实际依赖关系时，可依次处理开发/暂存环境、非关键生产工作负载和关键生产工作负载。更新实际拥有工作负载的控制器/GitOps 放置配置，然后验证应用行为、存储、IAM、DNS 和流量。软性偏好或臆造的 `node-type=auto-mode` 标签都不能证明迁移已完成。遇到健康状态失败或未知时应停止；固定等待一段时间不等于完成验证。
 
 </details>
 
-### 7. 迁移完成后，不属于验证项的是哪一项？
+### 4. 哪种回滚顺序能保留恢复路径？
 
-- A) 验证所有工作负载正常运行
-- B) 验证 Auto Mode 节点上的 Pod 分布
-- C) 完全删除现有 node groups
-- D) 验证 NodePool 状态
+- A) 先删除并重建集群
+- B) 恢复兼容的旧容量和放置规则，验证健康后再退役明确归属的 Auto 资源
+- C) 先删除 Auto NodePool
+- D) 只需禁用 Auto Mode
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 完全删除现有 node groups**
+**答案：B) 恢复兼容的旧容量和放置规则，验证健康后再退役明确归属的 Auto 资源**
 
-**解释：**
-在验证阶段，应保留现有 node groups，以保留回滚选项。确认稳定性后再进行删除。
-
-**验证清单：**
-1. 验证所有 Pods 处于 Running 状态
-2. 验证 Auto Mode 节点上的工作负载分布
-3. NodePool 和 NodeClaim 状态正常
-4. 应用程序性能测试
-5. 日志和指标收集正常
-6. **确认稳定运行一段时间（1-2 周）后删除现有 node groups**
+**说明：**
+保留 Auto 节点池，直到旧容量变为 Ready。审查并恢复预期的放置规则，避免遗留冲突的 Auto 选择器，也不要清除无关的 affinity。除 Pod 外，还要验证数据和流量。只有随后才退役本次迁移所拥有的容量。删除 NodePool 可能级联删除节点；缩放配置的 JSON 不能重建已删除的节点组。这是工作负载迁移回滚，不是 Kubernetes 版本回滚。
 
 </details>
 
-### 8. 从直接使用 Karpenter 的 cluster 迁移到 Auto Mode 时，需要注意什么？
+### 5. 缩减旧托管节点组的期望容量之前需要做什么？
 
-- A) 可以直接迁移
-- B) 可能与现有 Karpenter 资源冲突，移除 Karpenter 后再迁移
-- C) 推荐同时运行
-- D) 会产生额外成本
+- A) 立即将容量设为零
+- B) 验证已迁移的工作负载、cordon 并清空旧应用节点容量，同时与其所有者协调
+- C) 始终将容量减半
+- D) 只需等待五分钟
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 可能与现有 Karpenter 资源冲突，移除 Karpenter 后再迁移**
+**答案：B) 验证已迁移的工作负载、cordon 并清空旧应用节点容量，同时与其所有者协调**
 
-**解释：**
-Auto Mode 在内部使用 Karpenter，因此可能与现有自管理 Karpenter 冲突。
-
-**迁移流程：**
-1. 备份现有 Karpenter NodePool 配置
-2. 将 Karpenter 管理的工作负载临时迁移到 managed node groups
-3. 移除自管理 Karpenter
-4. 启用 Auto Mode
-5. 配置 Auto Mode NodePool（参考备份）
-6. 迁移工作负载
-
-```bash
-# Verify before removing Karpenter
-kubectl get nodepools
-kubectl get nodeclaims
-kubectl get nodes -l karpenter.sh/nodepool
-
-# Remove Karpenter
-helm uninstall karpenter -n karpenter
-kubectl delete namespace karpenter
-```
+**说明：**
+MNG 缩放配置变更通过 ASG 缩容，不遵守 PDB。源文档会检查旧节点的 cordon 状态和仍在运行的非 DaemonSet Pod，并在查询失败时停止。还要检查系统依赖和已导出的作业结果，并防止控制器重新向旧节点填充工作负载。将容量减半并等待一段时间不能证明操作安全。原有 IaC/缩放所有权仍然适用。
 
 </details>
+
+### 6. 迁移期间应如何监控成本？
+
+- A) 等到删除所有旧资源后再考虑成本
+- B) 将当前节点数量视为精确账单成本
+- C) 同时跟踪重叠运行的节点组和负载均衡器，并监控可用性与性能
+- D) 假设 Auto Mode 会自动移除所有旧费用
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C) 同时跟踪重叠运行的节点组和负载均衡器，并监控可用性与性能**
+
+**说明：**
+共存期间，两套节点组和流量路径都可能产生费用。应使用实际账单数据及已配置的运维指标发布器。下表中的旧阈值仍是未经验证的规划示例，不是 Auto Mode 的默认指标或正常范围。
+
+| 信号 | 先前的基线示例 | 先前的告警示例 |
+|--------|------------------------|---------------------|
+| Pending Pod 数量 | 0–5 | >10 持续 5 分钟 |
+| 节点预置时间 | <90 秒 | >120 秒 |
+| 可用性 | >99.9% | <99.5% |
+| API 延迟 | <200 毫秒 | >500 毫秒 |
+
+Pending 不等同于不可调度，Running 不代表应用已就绪，采集器没有数据也不代表故障为零。
+
+</details>
+
+### 7. 工作负载验证后，为保留回滚选项，可以延后哪项操作？
+
+- A) 检查应用行为
+- B) 检查预期放置位置
+- C) 删除旧节点组定义
+- D) 检查数据和控制器健康状况
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C) 删除旧节点组定义**
+
+**说明：**
+在有意设定的稳定观察期内保留旧定义/配置，同时考虑保留资源和相应成本。先前提到的一到两周只是示例，并非普遍要求。检查实际就绪状态和成功的 Job，不要要求每个 Pod 都必须处于 Running。只有完成数据、流量和工作负载验证后，才由原 IaC 所有者删除旧定义。
+
+</details>
+
+### 8. 已有自管理 Karpenter 控制器时，正确的做法是什么？
+
+- A) 启用 Auto Mode 前始终先将其移除
+- B) 共存期间保留兼容的 Karpenter，完成旧资源的终结流程后再卸载
+- C) 删除所有共享的 Karpenter CRD
+- D) 删除所有带有 Karpenter 标签的节点
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) 共存期间保留兼容的 Karpenter，完成旧资源的终结流程后再卸载**
+
+**说明：**
+AWS 记录了直接共存迁移方式。v1.1 迁移最低版本不取代当前 Kubernetes 兼容性要求。应使用不同的 NodeClass 引用和带污点的 Auto 节点池。不要修改或删除共享的 NodePool/NodeClaim CRD。在现有控制器仍能完成终结流程时，退役旧的自有 NodePool/NodeClaim；确认实例及依赖资源已清理后，再移除仅属于该控制器的发布、IAM 和队列资源。
+
+</details>
+
+## 参考资料
+
+- [托管节点组缩放与 PDB](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)
+- [Auto Mode 迁移参考](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)
+- [Karpenter 共存迁移](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)

@@ -1,355 +1,139 @@
-# Argo Rollouts conscientes de las zonas
+# Argo Rollouts con enrutamiento por zona
 
-> **Versiones compatibles**: Istio 1.18+, Argo Rollouts 1.6+ **Última actualización**: February 19, 2026 **Dificultad**: Experto
+> **Base de verificación**: Istio 1.31.0, Argo Rollouts 1.10.1, Kubernetes 1.32–1.37
+> **Última revisión**: 16 de octubre de 2026
+> **Dificultad**: Avanzada
 
-Este documento explica cómo configurar despliegues Canary de Argo Rollouts independientes por cada Availability Zone de AWS, aprovechando el enrutamiento consciente de la localidad de Istio para la conmutación por error automática.
+Esta guía diferencia las versiones canary zonales independientes de la conmutación por error entre zonas de disponibilidad (AZ). El ejemplo principal es un **esquema de enrutamiento y aislamiento zonal**: un grupo de clientes selecciona los Services estable/canary de una zona. No implementa la conmutación automática a otra zona cuando desaparecen esos endpoints.
 
 ## Tabla de contenido
 
-1. [Definición del problema](09-zone-aware-argo-rollouts.md#problem-definition)
-2. [Descripción general de la arquitectura](09-zone-aware-argo-rollouts.md#architecture-overview)
-3. [Decisiones clave de diseño](09-zone-aware-argo-rollouts.md#key-design-decisions)
-4. [Guía de implementación](09-zone-aware-argo-rollouts.md#implementation-guide)
-5. [Flujo de tráfico](09-zone-aware-argo-rollouts.md#traffic-flow)
-6. [Solución de problemas](09-zone-aware-argo-rollouts.md#troubleshooting)
-7. [Prácticas recomendadas](09-zone-aware-argo-rollouts.md#best-practices)
+1. [Definición del problema](#problem-definition)
+2. [Descripción de la arquitectura](#architecture-overview)
+3. [Decisiones clave de diseño](#key-design-decisions)
+4. [Guía de implementación](#implementation-guide)
+5. [Flujo del tráfico](#traffic-flow)
+6. [Solución de problemas](#troubleshooting)
+7. [Prácticas recomendadas](#best-practices)
 
-<span id="problem-definition"></span>
+## Definición del problema {#problem-definition}
 
-## Definición del problema
+### Interrupciones de Spot y PDB
 
-### Caso de uso real: gestión de PDB en entornos de Spot Instances
+AWS puede retirar capacidad Spot, por lo que hay que planificar la pérdida correlacionada de capacidad. Los avisos de interrupción se envían según disponibilidad y no están garantizados; los avisos de detención o terminación suelen conceder dos minutos, mientras que la hibernación comienza de inmediato. Los grupos de nodos administrados de EKS intentan reemplazar nodos y redistribuir la capacidad, pero no garantizan que un reemplazo esté Ready antes de vaciar el nodo interrumpido.
 
-**Contexto**: En entornos que utilizan AWS Spot Instances, todos los nodos de una Availability Zone (zona) específica pueden terminarse de forma repentina.
+Un PodDisruptionBudget limita las operaciones voluntarias de desalojo realizadas a través de la API de Eviction. No evita interrupciones de EC2, fallos de nodos, la eliminación directa de Pods ni todas las actualizaciones iniciadas por controladores. Rollouts no crea ni administra los PDB que aparecen a continuación; el equipo de la aplicación los define y Kubernetes calcula su estado.
 
-**Escenario del problema**:
+Con nueve Pods coincidentes en estado saludable y un valor entero de **`minAvailable: 6`**, el margen ilustrativo para interrupciones voluntarias es de tres. Si solo quedan seis saludables, ese margen es cero. No significa «un mínimo del 33 % que exige seis Pods»: con nueve Pods esperados, `minAvailable: "33%"` se redondea hacia arriba a tres. `maxUnavailable` porcentual tiene otra semántica y requiere considerar cómo el controlador escala.
 
-```mermaid
-flowchart TD
-    subgraph Before["Before Full Zone Outage"]
-        direction LR
-        ZoneA1[Zone A<br/>3 Pods]
-        ZoneB1[Zone B<br/>3 Pods]
-        ZoneC1[Zone C<br/>3 Pods]
+Dividir ese presupuesto global en `minAvailable: 1` por zona cambia el nivel de protección. Si se pierde una zona, los presupuestos de las dos restantes pueden permitir desalojos voluntarios hasta dejar un Pod saludable en cada una, en lugar de preservar seis a nivel global. Esto puede servir para operaciones independientes, pero representa otra política de disponibilidad y capacidad. Un presupuesto que selecciona Pods estables y canary tampoco garantiza capacidad en cada destino ponderado por separado.
 
-        PDB1[PodDisruptionBudget: 33%<br/>Minimum 6 Pods required]
-    end
+### Objetivos y restricciones
 
-    subgraph After["After Zone C Full Outage"]
-        direction LR
-        ZoneA2[Zone A<br/>3 Pods<br/>Normal]
-        ZoneB2[Zone B<br/>3 Pods<br/>Normal]
-        ZoneC2[Zone C<br/>0 Pods<br/>Full outage]
+| Diseño | Versiones zonales independientes | Conmutación por error entre AZ | Restricción principal |
+|---|---|---|---|
+| Una revisión/subconjunto compartido con endpoints en varias AZ | No permite control independiente de revisiones por zona | Posible dentro del grupo de endpoints seleccionado | Capacidad saludable y versiones/estado de datos compatibles en la otra AZ |
+| Rollouts por zona y Services filtrados por zona, como aquí | Sí | La configuración de localidad no la proporciona | Si el grupo de una zona seleccionada queda vacío, sigue vacío |
+| Enrutamiento de entrada independiente y consciente del estado de salud antes de las pasarelas/cadenas zonales | Se puede diseñar | Requiere su propia política/controlador y pruebas | Coordinación adicional de enrutamiento, capacidad, identidad y recuperación |
 
-        PDB2[PodDisruptionBudget: 33%<br/>Actual: 6/9 -> 6/6 = 100%<br/>Balance broken]
-    end
+No afirmes que se obtienen las tres propiedades —filtrado zonal estricto, hashes independientes por zona y conmutación transparente por error— con solo añadir un DestinationRule. Un diseño de enrutamiento de entrada independiente queda fuera de este esquema de despliegue y no se ha probado en producción aquí.
 
-    Before -->|Spot Instance<br/>Interruption| After
+## Descripción de la arquitectura {#architecture-overview}
 
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failed fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef warning fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
+Un Service común llamado `test` proporciona el nombre DNS. Para los clientes con sidecar, un VirtualService elige una ruta zonal mediante una **etiqueta explícita en el Pod cliente**. Cada ruta apunta a los Services estable/canary de esa zona. Un Rollout independiente controla los hashes de esos Services y los pesos de su ruta con nombre propio.
 
-    class ZoneA1,ZoneB1,ZoneC1,ZoneA2,ZoneB2 normal;
-    class ZoneC2 failed;
-    class PDB2 warning;
-```
+Istiod compila la configuración en Envoy. Los objetos VirtualService/DestinationRule no son saltos de red. Un cliente fuera de la malla puede usar la selección normal de endpoints de Kubernetes del Service común y omitir estas reglas de ruta; las etiquetas de enrutamiento no son un límite de seguridad.
 
-**¿Por qué se necesitan Rollouts específicos por zona?**
+Los Pods de cada zona se programan únicamente en su AZ configurada. Por ello, los Services de la zona A no contienen endpoints de reserva de las zonas B o C. Un estado de despliegue independiente tampoco elimina las dependencias compartidas del plano de control, el servidor de API, la red o la base de datos.
 
-1. **Gestión de PDB independiente por Rollout**
-   * El Rollout de cada zona gestiona su propio PDB
-   * Los PDB de las zonas A y B no se ven afectados aunque la zona C desaparezca por completo
-2. **Recuperación a nivel de zona**
-   * Solo se reinicia el Rollout afectado cuando se recupera la zona C
-   * No hay impacto en el estado de despliegue de las demás zonas
-3. **Respuesta a la interrupción de Spot Instance**
-   * El Service continúa en las demás zonas incluso cuando se terminan todas las Spot Instances de una zona específica
-   * Cambio de tráfico automático mediante la conmutación por error de localidad de Istio
+## Decisiones clave de diseño {#key-design-decisions}
 
-**Ejemplo de configuración de PDB** (por zona):
+### 1. Propiedad de las rutas
 
-```yaml
-# Zone A - PDB (Independent per Rollout)
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-a-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone A
-  selector:
-    matchLabels:
-      app: test
-      zone: a
----
-# Zone B - PDB
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-b-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone B
-  selector:
-    matchLabels:
-      app: test
-      zone: b
----
-# Zone C - PDB
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-c-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone C
-  selector:
-    matchLabels:
-      app: test
-      zone: c
-```
+Rollouts 1.10 concilia los pesos de ruta configurados y los destinos administrados compatibles; no reemplaza a ciegas todos los arreglos de destinos. Usar nombres de ruta diferentes evita que los controladores compitan por los pesos deseados. Sin embargo, tres controladores que actualicen un mismo VirtualService aún pueden encontrar conflictos de `resourceVersion` de Kubernetes y demoras de conciliación. Si se necesita un aislamiento más sólido del plano de control, se pueden usar objetos independientes o enrutamiento de entrada.
 
-**Ventajas**:
+Este esquema usa rutas distintas (`zone-a-route`, `zone-b-route`, `zone-c-route`) y **distribución del tráfico a nivel de host**. No combina la gestión de los hashes de Service con la gestión de subconjuntos en DestinationRule. La [guía de integración](08-argo-rollouts.md) explica ambas alternativas.
 
-* Los PDB de las zonas A y B funcionan normalmente incluso durante una interrupción completa de la zona C
-* Cada zona puede recuperarse de forma independiente
-* Los despliegues Canary también avanzan de forma independiente por zona
+### 2. Etiquetas de cliente y AZ real
 
-### Requisitos
+`sourceLabels` selecciona las cargas de trabajo de origen cuando Istiod crea su configuración de malla; no coincide con encabezados de solicitud durante la ejecución. Las etiquetas de nodo, como `topology.kubernetes.io/zone`, no se copian automáticamente a los Pods. La etiqueta de Pod personalizada `routing.example.com/zone: a` debe corresponderse con una ubicación verificada en la AZ prevista.
 
-1. **Despliegue independiente por zona**: despliegues Canary independientes para cada una de las 3 Availability Zones (a, b, c)
-2. **Aislamiento de zona**: el tráfico de cada zona se procesa de forma predeterminada solo dentro de esa zona
-3. **Solo conmutación por error**: el tráfico cambia a otras zonas solo ante un fallo (a->b, b->c, c->a)
-4. **Llamada unificada**: los clientes llaman mediante un único nombre de Service
-5. **Respuesta de Spot Instance**: continuidad del Service garantizada incluso durante interrupciones a nivel de zona
+Estos selectores se aplican a los clientes de la malla, no a solicitudes externas genéricas que llegan a una pasarela de entrada. Conserva el ámbito de la pasarela `mesh`. En este ejemplo, los grupos de clientes desconocidos reciben una respuesta 503 explícita en lugar de seleccionar otra zona en silencio.
 
-### Problemas comunes
+### 3. La localidad no permite salir del grupo seleccionado
 
-**Problema**: se producen conflictos cuando varios Argo Rollouts hacen referencia al mismo VirtualService
+Un subconjunto seleccionado por `zone: a` y un hash de Rollout A no pueden conmutar por error a un subconjunto de la zona B. Lo mismo ocurre con un Service filtrado por zona. La detección de valores atípicos solo cambia la elegibilidad de endpoints dentro del grupo de upstream seleccionado; no salta a otra ruta de VirtualService.
 
-```yaml
-# Wrong approach: All Rollouts try to modify the same route
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: test-a
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test  # All zone Rollouts reference same VirtualService
-            routes:
-            - primary  # Trying to modify same route simultaneously -> Conflict!
-```
+Además, `localityLbSetting.distribute`, `failover` y `failoverPriority` son alternativas; no son campos que puedan combinarse libremente. Los valores `failover.from/to` son **regiones**, no cadenas `region/zone`. Esas entradas no establecen un ciclo de AZ A→B→C→A.
 
-**Solución**: separación mediante rutas específicas por zona
+## Guía de implementación {#implementation-guide}
 
-**Importante**: Argo Rollouts **gestiona todo el arreglo de destinos** del nombre de ruta especificado. Por lo tanto, si varios Rollouts hacen referencia al mismo nombre de ruta, cada Rollout sobrescribirá la configuración de los demás. Se producen conflictos incluso con configuraciones de subset diferentes.
+### Requisitos previos
 
-<span id="architecture-overview"></span>
+Usa los requisitos previos del controlador, la CLI, la inyección, Prometheus y las cargas de trabajo de [Integración de Argo Rollouts](08-argo-rollouts.md). Esta es una demostración HTTP aislada con sidecars e inyección predeterminada/heredada; en una malla con revisiones, utiliza la revisión/etiqueta instalada. El laboratorio requiere nodos de trabajo Linux compatibles respaldados por EC2, cuotas, red, acceso a imágenes y observabilidad. Fargate queda fuera de este esquema; elige una versión de EKS actualmente compatible con el rango de Istio.
 
-## Descripción general de la arquitectura
-
-### Estructura general
-
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        ClientA[Client A<br/>Zone: us-east-1a]
-        ClientB[Client B<br/>Zone: us-east-1b]
-        ClientC[Client C<br/>Zone: us-east-1c]
-    end
-
-    subgraph Istio["Istio Control Plane"]
-        VS[VirtualService: test<br/>Single VirtualService]
-        DR[DestinationRule: test<br/>locality-aware routing]
-    end
-
-    subgraph ZoneA["Zone A (us-east-1a)"]
-        RolloutA[Rollout: test-a<br/>subset: stable-a/canary-a]
-        StableA[Stable Pods<br/>label: zone=a]
-        CanaryA[Canary Pods<br/>label: zone=a]
-    end
-
-    subgraph ZoneB["Zone B (us-east-1b)"]
-        RolloutB[Rollout: test-b<br/>subset: stable-b/canary-b]
-        StableB[Stable Pods<br/>label: zone=b]
-        CanaryB[Canary Pods<br/>label: zone=b]
-    end
-
-    subgraph ZoneC["Zone C (us-east-1c)"]
-        RolloutC[Rollout: test-c<br/>subset: stable-c/canary-c]
-        StableC[Stable Pods<br/>label: zone=c]
-        CanaryC[Canary Pods<br/>label: zone=c]
-    end
-
-    ClientA -->|test.default| VS
-    ClientB -->|test.default| VS
-    ClientC -->|test.default| VS
-
-    VS -->|90% stable-a| StableA
-    VS -->|10% canary-a| CanaryA
-    VS -->|90% stable-b| StableB
-    VS -->|10% canary-b| CanaryB
-    VS -->|90% stable-c| StableC
-    VS -->|10% canary-c| CanaryC
-
-    DR -.->|localityLbSetting| VS
-
-    RolloutA -.->|manages weights| VS
-    RolloutB -.->|manages weights| VS
-    RolloutC -.->|manages weights| VS
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef rollout fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class VS,DR istio;
-    class RolloutA,RolloutB,RolloutC rollout;
-    class StableA,CanaryA,StableB,CanaryB,StableC,CanaryC pod;
-    class ClientA,ClientB,ClientC client;
-```
-
-### Componentes clave
-
-1. **Un único VirtualService**: define las reglas de enrutamiento de tráfico para todas las zonas
-2. **Rollout específico por zona**: gestiona el despliegue Canary independiente en cada zona
-3. **Separación basada en subset**: cada Rollout gestiona pares únicos de subset (stable-a/canary-a, etc.)
-4. **DestinationRule consciente de la localidad**: enrutamiento local a la zona y conmutación por error automáticos
-
-<span id="key-design-decisions"></span>
-
-## Decisiones clave de diseño
-
-### 1. Un único VirtualService + separación de rutas específica por zona
-
-**¿Por qué se necesita este enfoque?**
-
-Argo Rollouts funciona sobrescribiendo todo el arreglo de destinos del nombre de ruta especificado. Por lo tanto, **el Rollout de cada zona debe gestionar nombres de ruta independientes** para evitar conflictos:
-
-```yaml
-# VirtualService: Zone-specific routes defined in single VirtualService
-http:
-- name: zone-a-route  # Rollout A manages stable-a/canary-a for this route
-  match:
-  - sourceLabels:
-      topology.istio.io/zone: us-east-1a
-  route:
-  - destination: {host: test, subset: stable-a}
-    weight: 90
-  - destination: {host: test, subset: canary-a}
-    weight: 10
-
-- name: zone-b-route  # Rollout B manages stable-b/canary-b for this route
-  match:
-  - sourceLabels:
-      topology.istio.io/zone: us-east-1b
-  route:
-  - destination: {host: test, subset: stable-b}
-    weight: 90
-  - destination: {host: test, subset: canary-b}
-    weight: 10
-```
-
-**Principio fundamental**:
-
-* Cada Rollout hace referencia a **nombres de ruta diferentes** (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-* Cada ruta procesa solo el tráfico de esa zona mediante la **coincidencia de sourceLabels**
-* El enrutamiento consciente de la localidad prioriza automáticamente los endpoints locales de la zona
-
-### 2. Enrutamiento consciente de la localidad
-
-**Comportamiento predeterminado**:
-
-* Cliente de la zona A -> Pod de la zona A (100%)
-* Cliente de la zona B -> Pod de la zona B (100%)
-* Cliente de la zona C -> Pod de la zona C (100%)
-
-**Durante la conmutación por error**:
-
-* Fallo de la zona A -> cambio automático a la zona B
-* Fallo de la zona B -> cambio automático a la zona C
-* Fallo de la zona C -> cambio automático a la zona A
-
-### 3. Llamada unificada al Service
-
-Los clientes utilizan un único nombre DNS:
+Los nombres de AZ de ejemplo `us-east-1a/b/c` deben reemplazarse por las etiquetas de nodo reales. La asignación de nombres de AZ puede variar entre cuentas; al coordinar zonas físicas entre cuentas, verifica los ID de AZ. La imagen fijada de la demostración solo es Linux amd64, por lo que cada AZ seleccionada necesita nodos compatibles o una imagen de reemplazo verificada por separado.
 
 ```bash
-# Call like this
-curl http://test.default.svc.cluster.local:8080
-
-# Istio automatically routes to zone-local endpoint
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone,kubernetes.io/arch
 ```
 
-<span id="implementation-guide"></span>
-
-## Guía de implementación
-
-### 1. Crear un Service común
-
-**Importante**: no incluya la etiqueta de zona en `selector` (selecciona Pods de todas las zonas)
+### 1. Namespace y Services comunes/por zona
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zone-rollouts-demo
+  labels:
+    istio-injection: enabled
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: test
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
-    app: test  # No zone label - selects Pods from all zones
+    app: test
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
-```
-
-### 2. Services de Rollout específicos por zona
-
-Services stable/canary gestionados por cada Rollout:
-
-```yaml
-# Zone A - Stable Service
+    targetPort: http
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
-    zone: a  # Selects only Zone A stable Pods
+    zone: a
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone A - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
-    zone: a  # Selects only Zone A canary Pods
+    zone: a
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone B - Stable Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -357,14 +141,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone B - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -372,14 +155,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone C - Stable Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -387,14 +169,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone C - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -402,162 +183,126 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ```
 
-### 3. Un único VirtualService con rutas específicas por zona
+El Service común es una entrada DNS para los clientes de la malla, no un mecanismo de autorización. Los seis Services zonales tienen un selector real de `zone` del Pod; Rollouts agrega el hash de cada versión estable/canary.
 
-Un único VirtualService que gestiona el tráfico de todas las zonas (separación de rutas específica por zona):
+### 2. Contrato de la plantilla del cliente
+
+Integra esto en un **Deployment existente llamado `zone-client-a`** y conserva su selector, contenedores, imagen verificada, recursos y demás restricciones de ubicación. Añade la etiqueta de ruta `a` a la plantilla real del Pod, no solo a los metadatos del Deployment:
+
+```yaml
+metadata:
+  name: zone-client-a
+  namespace: zone-rollouts-demo
+spec:
+  template:
+    metadata:
+      labels:
+        routing.example.com/zone: a
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east-1a
+```
+
+Prepara clientes equivalentes B/C con las etiquetas correspondientes y restricciones de AZ reales al probarlos. Al combinar la afinidad con reglas existentes, conserva las restricciones AND/OR previstas; no amplíes por accidente los nodos elegibles. Comprueba `.spec.nodeName` frente a la zona del nodo seleccionado. Este fragmento no despliega un cliente ni copia automáticamente los metadatos del nodo.
+
+### 3. VirtualService compartido con rutas independientes
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: test
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   hosts:
   - test
-  - test.default.svc.cluster.local
+  - test.zone-rollouts-demo.svc.cluster.local
+  gateways:
+  - mesh
   http:
-  # Zone A route (Managed by Rollout A)
   - name: zone-a-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1a
+        routing.example.com/zone: a
     route:
     - destination:
-        host: test
-        subset: stable-a
-      weight: 90
+        host: test-stable-a
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-a
-      weight: 10
-  # Zone B route (Managed by Rollout B)
+        host: test-canary-a
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
   - name: zone-b-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1b
+        routing.example.com/zone: b
     route:
     - destination:
-        host: test
-        subset: stable-b
-      weight: 90
+        host: test-stable-b
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-b
-      weight: 10
-  # Zone C route (Managed by Rollout C)
+        host: test-canary-b
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
   - name: zone-c-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1c
+        routing.example.com/zone: c
     route:
     - destination:
-        host: test
-        subset: stable-c
-      weight: 90
+        host: test-stable-c
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-c
-      weight: 10
+        host: test-canary-c
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
+  - name: unclassified-client
+    directResponse:
+      status: 503
+      body:
+        string: No reviewed client-zone route
 ```
 
-**Cambios importantes**:
+Antes de enviar tráfico de prueba, verifica que cada controlador haya seleccionado los hashes previstos y que haya endpoints saludables. Los pesos iniciales son 100/0, no una división activa 90/10 sin explicación. Cada ruta con nombre desactiva explícitamente los reintentos de malla; el comportamiento de reintentos de la aplicación es independiente.
 
-* Anteriormente: todas las zonas compartían la misma ruta `primary` -> **se producía un conflicto**
-* Corregido: cada zona utiliza nombres de ruta independientes (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-* Añadido: separación de tráfico específica por zona mediante la coincidencia de `sourceLabels.topology.kubernetes.io/zone`
+### 4. Rollouts por zona
 
-**Cómo funciona**:
-
-1. Solicitudes desde Pods de la zona A -> se aplica `zone-a-route`
-2. El Rollout A modifica únicamente los pesos de `zone-a-route` (sin impacto en las demás zonas)
-3. El enrutamiento consciente de la localidad prioriza automáticamente los endpoints locales de la zona
-
-### 4. DestinationRule con configuración de localidad
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: test
-  namespace: default
-spec:
-  host: test
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        # Each zone processes only local traffic by default
-        distribute:
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 100  # Zone A -> Zone A (100%)
-        - from: us-east-1/us-east-1b/*
-          to:
-            "us-east-1/us-east-1b/*": 100  # Zone B -> Zone B (100%)
-        - from: us-east-1/us-east-1c/*
-          to:
-            "us-east-1/us-east-1c/*": 100  # Zone C -> Zone C (100%)
-        # Failover settings: a->b, b->c, c->a
-        failover:
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b  # Zone A failure -> Zone B
-        - from: us-east-1/us-east-1b
-          to: us-east-1/us-east-1c  # Zone B failure -> Zone C
-        - from: us-east-1/us-east-1c
-          to: us-east-1/us-east-1a  # Zone C failure -> Zone A
-    # Outlier Detection for fast failure detection
-    outlierDetection:
-      consecutiveErrors: 3        # 3 consecutive failures
-      interval: 10s               # Check every 10 seconds
-      baseEjectionTime: 30s       # Exclude for 30 seconds
-      maxEjectionPercent: 100     # Up to 100% can be excluded
-  # Define stable/canary subsets per zone
-  subsets:
-  # Zone A subsets
-  - name: stable-a
-    labels:
-      app: test
-      zone: a
-  - name: canary-a
-    labels:
-      app: test
-      zone: a
-  # Zone B subsets
-  - name: stable-b
-    labels:
-      app: test
-      zone: b
-  - name: canary-b
-    labels:
-      app: test
-      zone: b
-  # Zone C subsets
-  - name: stable-c
-    labels:
-      app: test
-      zone: c
-  - name: canary-c
-    labels:
-      app: test
-      zone: c
-```
-
-### 5. Configuración de Rollout específica por zona
-
-#### Rollout de la zona A
+La carga de trabajo, la cantidad de réplicas, las solicitudes/límites y las pausas son valores de entrada de demostración. Tres réplicas no se distribuyen automáticamente entre tres nodos. Para un despliegue real, revisa la distribución/anti-afinidad a nivel de nodo, la capacidad, los PDB y el margen para las versiones estable/canary.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -568,7 +313,30 @@ spec:
         app: test
         zone: a
     spec:
-      # Deploy Pods only to Zone A
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -578,50 +346,73 @@ spec:
                 operator: In
                 values:
                 - us-east-1a
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "a"
   strategy:
     canary:
-      # Zone A specific Services
-      canaryService: test-canary-a
       stableService: test-stable-a
+      canaryService: test-canary-a
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-a-route          # Zone A specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-a  # Zone A specific subset
-            stableSubsetName: stable-a  # Zone A specific subset
+            - zone-a-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
-```
-
-#### Rollout de la zona B
-
-```yaml
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -632,7 +423,30 @@ spec:
         app: test
         zone: b
     spec:
-      # Deploy Pods only to Zone B
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -642,50 +456,73 @@ spec:
                 operator: In
                 values:
                 - us-east-1b
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "b"
   strategy:
     canary:
-      # Zone B specific Services
-      canaryService: test-canary-b
       stableService: test-stable-b
+      canaryService: test-canary-b
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-b-route          # Zone B specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-b  # Zone B specific subset
-            stableSubsetName: stable-b  # Zone B specific subset
+            - zone-b-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
-```
-
-#### Rollout de la zona C
-
-```yaml
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -696,7 +533,30 @@ spec:
         app: test
         zone: c
     spec:
-      # Deploy Pods only to Zone C
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -706,423 +566,350 @@ spec:
                 operator: In
                 values:
                 - us-east-1c
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "c"
   strategy:
     canary:
-      # Zone C specific Services
-      canaryService: test-canary-c
       stableService: test-stable-c
+      canaryService: test-canary-c
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-c-route          # Zone C specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-c  # Zone C specific subset
-            stableSubsetName: stable-c  # Zone C specific subset
+            - zone-c-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
 ```
 
-<span id="traffic-flow"></span>
+Cada Rollout tiene su propio selector, estado de imagen/revisión, Services y argumentos de análisis. Después del primer control del 5 %, una pausa indefinida requiere una promoción deliberada. La afinidad estricta a una zona deja los Pods afectados en estado Pending si esa AZ no tiene capacidad; no los reubica en otras AZ saludables.
 
-## Flujo de tráfico
-
-### Estado normal (tráfico local a la zona)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Normal state: Zone-local traffic only
-
-    ClientA->>EnvoyA: GET /api
-    Note over EnvoyA: Locality-aware routing<br/>distribute: 100% local
-
-    EnvoyA->>PodA: Request (zone-local)
-    Note over EnvoyA,PodA: Processed within same zone
-
-    PodA->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodB: Zone B Pod is<br/>not used
-```
-
-### Escenario de conmutación por error
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)<br/>Unhealthy
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Failover: Zone A -> Zone B
-
-    ClientA->>EnvoyA: GET /api
-    EnvoyA->>PodA: Attempt 1
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 2
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 3
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    Note over EnvoyA: Outlier Detection<br/>consecutiveErrors: 3<br/>-> Exclude Zone A
-
-    Note over EnvoyA: Apply failover rule<br/>from: us-east-1a<br/>to: us-east-1b
-
-    EnvoyA->>PodB: Request (failover to Zone B)
-    Note over EnvoyA,PodB: Cross-zone traffic
-
-    PodB->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodA: Zone A is<br/>excluded for<br/>baseEjectionTime(30s)
-```
-
-### Flujo de tráfico durante el despliegue Canary
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A
-    participant Client as Client
-    participant VS as VirtualService
-    participant Stable as Stable Pod<br/>90%
-    participant Canary as Canary Pod<br/>10%
-    end
-
-    Note over Client,Canary: Canary deployment in progress<br/>setWeight: 10
-
-    Client->>VS: GET /api
-
-    alt 90% of traffic
-        VS->>Stable: subset: stable-a<br/>weight: 90
-        Stable->>VS: Response (v1)
-    else 10% of traffic
-        VS->>Canary: subset: canary-a<br/>weight: 10
-        Canary->>VS: Response (v2)
-    end
-
-    VS->>Client: Response
-
-    Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
-```
-
-<span id="troubleshooting"></span>
-
-## Solución de problemas
-
-### 1. Error de conflicto de VirtualService
-
-**Síntomas**:
-
-```bash
-Error: VirtualService update conflict
-```
-
-**Causa**: varios Rollouts intentan modificar la misma ruta simultáneamente
-
-**Resolución**:
+### 5. PDB explícitos
 
 ```yaml
-# Configure each Rollout to manage unique subsets
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-a-pdb
+  namespace: zone-rollouts-demo
 spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          destinationRule:
-            canarySubsetName: canary-a  # Different subset per Zone
-            stableSubsetName: stable-a
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: a
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-b-pdb
+  namespace: zone-rollouts-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: b
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-c-pdb
+  namespace: zone-rollouts-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: c
 ```
 
-### 2. Tráfico entre zonas
+Estos conservan el mínimo ilustrativo original de un Pod por zona. No equivalen al mínimo global anterior de seis ni protegen de forma independiente cada revisión ponderada por tráfico. Antes del mantenimiento voluntario, inspecciona `currentHealthy`, `desiredHealthy` y `disruptionsAllowed`.
 
-**Síntomas**: tráfico enviado a otras zonas sin conmutación por error
+### 6. Análisis por zona
 
-**Causa**: configuración incorrecta de `distribute`
-
-**Resolución**:
-
-```yaml
-# Correct distribute settings
-distribute:
-- from: us-east-1/us-east-1a/*
-  to:
-    "us-east-1/us-east-1a/*": 100  # 100% local only
-```
-
-### 3. La conmutación por error no funciona
-
-**Síntomas**: no hay conmutación por error a otras zonas incluso durante un fallo de zona
-
-**Causa**: la detección de valores atípicos está deshabilitada o la configuración es demasiado lenta
-
-**Resolución**:
-
-```yaml
-# Fast failure detection
-outlierDetection:
-  consecutiveErrors: 3      # Detect even after just 3 failures
-  interval: 10s             # Check every 10 seconds
-  baseEjectionTime: 30s     # Exclude for 30 seconds
-```
-
-### 4. Rollout bloqueado
-
-**Síntomas**: el despliegue Canary no avanza
-
-**Verificación**:
-
-```bash
-# Check Rollout status
-kubectl argo rollouts get rollout test-a -n default
-
-# Check VirtualService weights
-kubectl get virtualservice test -n default -o yaml | grep weight
-
-# Check DestinationRule subsets
-kubectl get destinationrule test -n default -o yaml
-```
-
-### 5. Comandos de depuración
-
-```bash
-# 1. Verify Pods deployed to correct zones
-kubectl get pods -l app=test -o wide
-kubectl get nodes --show-labels | grep topology.kubernetes.io/zone
-
-# 2. Verify locality routing configuration
-istioctl proxy-config endpoint <pod-name> --cluster "outbound|8080||test.default.svc.cluster.local"
-
-# 3. Verify VirtualService synchronization
-istioctl proxy-config route <pod-name> --name 8080
-
-# 4. Check outlier detection status
-kubectl exec <pod-name> -c istio-proxy -- curl localhost:15000/clusters | grep outlier
-
-# 5. Check Argo Rollouts logs
-kubectl logs -n argo-rollouts deployment/argo-rollouts
-```
-
-<span id="best-practices"></span>
-
-## Prácticas recomendadas
-
-### 1. Sincronización de Rollout
-
-**Problema**: mayor complejidad al desplegar varios Rollouts de zona simultáneamente
-
-**Recomendación**:
-
-```bash
-# Sequential deployment per Zone
-kubectl argo rollouts promote test-a -n default
-# Wait 5 minutes and monitor
-kubectl argo rollouts promote test-b -n default
-# Wait 5 minutes and monitor
-kubectl argo rollouts promote test-c -n default
-```
-
-### 2. Análisis Canary
-
-Realice un análisis independiente por zona:
+Crea esta plantilla antes de los Rollouts. Usa el nombre real del Service canary zonal y las métricas estándar del reporter de origen, en vez de etiquetas de zona de Pod inventadas:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: success-rate-zone-a
+  name: zone-canary-check
+  namespace: zone-rollouts-demo
 spec:
+  args:
+  - name: service-name
+  - name: namespace
   metrics:
-  - name: success-rate
+  - name: request-volume
     interval: 1m
-    successCondition: result[0] >= 0.95
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
     provider:
       prometheus:
-        address: http://prometheus:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service="test.default.svc.cluster.local",
-              destination_workload_namespace="default",
-              response_code=~"2..",
-              destination_pod_label_zone="a"
-            }[5m]
-          )) /
-          sum(rate(
-            istio_requests_total{
-              destination_service="test.default.svc.cluster.local",
-              destination_workload_namespace="default",
-              destination_pod_label_zone="a"
-            }[5m]
-          ))
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-2xx-rate
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
 ```
 
-### 3. Pasos progresivos de Rollout
+El numerador corresponde específicamente a **HTTP 2xx**, según la definición de éxito de esta guía. Una ventana con todos los resultados 5xx produce 0, no un numerador vacío; la falta de tráfico o de datos no puede superar los controles de valor finito/volumen. Los proxies de origen y el proveedor deben poder acceder al Prometheus configurado, y sus etiquetas reales deben coincidir con estos selectores.
+
+Mantén tráfico representativo dentro de la malla hacia `http://test.zone-rollouts-demo.svc.cluster.local:8080/color`. La etiqueta del cliente selecciona su zona y el controlador elige el peso estable/canary de esa zona. Una espera inicial de cinco minutos supera el período de consulta de métricas de dos minutos; la estimación de veinte solicitudes y las cantidades medidas son ilustrativas, no medidas de confianza estadística.
+
+## Flujo del tráfico {#traffic-flow}
+
+### Ruta zonal normal
+
+Un cliente A correctamente etiquetado y ubicado en la AZ revisada obtiene `zone-a-route`, que apunta a los Services estable/canary de A. La proporción observada depende del tamaño de la muestra, las sesiones y la disponibilidad, no de una garantía exacta por cada diez solicitudes.
+
+### Pérdida de una zona
+
+Si desaparecen todos los endpoints elegibles de A, la ruta de A no tiene un upstream saludable. Reducir el umbral de detección de valores atípicos o cambiar el PDB no puede crear endpoints de B en el Service de A. El ejemplo devuelve fallos hasta que cambie la capacidad o una política de enrutamiento de nivel superior diseñada explícitamente.
+
+Para mantener la continuidad entre AZ, elige una arquitectura con endpoints remotos saludables en el mismo grupo de versiones seleccionado o implementa y prueba una política de conmutación por error independiente en la capa de entrada. Ten en cuenta la capacidad remota, la coherencia de datos, la autenticación, las solicitudes en curso y la vuelta a la zona original. El código zonal anterior no ofrece conmutación transparente ni cíclica por error.
+
+### Alternativa de localidad con endpoints compartidos
+
+Lo siguiente corresponde a una **configuración diferente**: un Service `shared-app` existente o un subconjunto seleccionado cuyos endpoints elegibles abarcan AZ y tienen un estado de versión compatible. No habilita la conmutación por error de los Services zonales anteriores. Si un DestinationRule ya administra ese host/subconjuntos compartidos, integra allí este trafficPolicy en vez de crear una regla que compita:
 
 ```yaml
-steps:
-- setWeight: 5      # Start with very small traffic
-- pause: {duration: 5m}
-- analysis:
-    templates:
-    - templateName: success-rate-zone-a
-- setWeight: 10
-- pause: {duration: 5m}
-- setWeight: 25
-- pause: {duration: 10m}
-- setWeight: 50
-- pause: {duration: 10m}
-- setWeight: 75
-- pause: {duration: 10m}
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: shared-endpoint-locality
+  namespace: zone-rollouts-demo
+spec:
+  host: shared-app.zone-rollouts-demo.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+        - topology.kubernetes.io/region
+        - topology.kubernetes.io/zone
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
 ```
 
-### 4. Reversión automática
+Las prioridades de localidad prefieren la región/zona coincidente y pueden dirigir el tráfico posterior a endpoints elegibles y saludables. No definen un orden cíclico fijo de AZ. `consecutive5xxErrors` es el campo actual; la detección consecutiva depende del tráfico, mientras que `interval` se aplica al trabajo de detección periódica. Expulsar todos los endpoints puede causar errores, y una solicitud que ya falló no se vuelve a reproducir automáticamente. Consulta [Enrutamiento con conocimiento de zonas](../resilience/03-zone-aware-routing.md).
+
+## Solución de problemas {#troubleshooting}
+
+```bash
+kubectl argo rollouts get rollout test-a -n zone-rollouts-demo
+kubectl get virtualservice test -n zone-rollouts-demo -o yaml
+kubectl get services test-stable-a test-canary-a -n zone-rollouts-demo -o yaml
+kubectl get pods -n zone-rollouts-demo -l app=test -o wide --show-labels
+kubectl get endpointslices -n zone-rollouts-demo -l kubernetes.io/service-name=test-canary-a
+kubectl get pdb -n zone-rollouts-demo -o wide
+
+istioctl proxy-config routes <client-a-pod> -n zone-rollouts-demo
+istioctl proxy-config endpoints <client-a-pod> -n zone-rollouts-demo --cluster 'outbound|8080||test-canary-a.zone-rollouts-demo.svc.cluster.local'
+kubectl get analysisruns -n zone-rollouts-demo
+kubectl logs -n argo-rollouts deployment/argo-rollouts
+```
+
+- **Conflictos de actualización**: Distingue la propiedad de una misma ruta de los conflictos temporales de versión del objeto en un VirtualService compartido. Tener nombres de subconjunto diferentes no resuelve por sí solo ninguna de las dos causas.
+- **Se seleccionó la zona equivocada**: Compara las etiquetas reales del Pod cliente, la ubicación del nodo y las rutas compiladas. No supongas que las etiquetas de zona del nodo se copiaron a los Pods.
+- **Sin alternativa**: Primero inspecciona los endpoints elegibles del Service/subconjunto seleccionado. Si no hay ninguno fuera de A, una detección más rápida de valores atípicos no proporciona conmutación por error entre AZ.
+- **Sin tráfico canary**: Confirma el recorrido por la malla, los EndpointSlices listos, los selectores de hash, los pesos reales y una cantidad de muestras suficiente.
+- **Análisis bloqueado o fallido**: Inspecciona el resultado sin procesar y el error del proveedor, no solo la fase agregada del rollout. La telemetría integrada no incluye etiquetas de zona personalizadas.
+
+## Prácticas recomendadas {#best-practices}
+
+### 1. Coordinar explícitamente los cambios de versión
+
+Promote reanuda una pausa existente; no despliega una imagen nueva ni demuestra que otra AZ esté saludable. Actualiza en Git la imagen deseada de una zona (o directamente en el laboratorio aislado), observa el análisis y el estado de la carga de trabajo y luego decide si se debe avanzar otra zona. Una espera fija de cinco minutos no basta por sí sola como evidencia.
+
+```bash
+# Isolated lab alternative to changing Git; affects zone A only.
+kubectl argo rollouts set image test-a app=argoproj/rollouts-demo@sha256:e32df3d15f759d36c323b3dccb7003d38df1a4274d37217715151f085c24c58f -n zone-rollouts-demo
+kubectl argo rollouts get rollout test-a -n zone-rollouts-demo --watch
+# After the intended manual pause and review:
+kubectl argo rollouts promote test-a -n zone-rollouts-demo
+```
+
+Abort no revierte la imagen deseada en Git. Coordina GitOps para que no sobrescriba los pesos administrados de cada zona ni los selectores de hash de Service; consulta la guía de integración anterior.
+
+### 2. Alternativa de análisis continuo
+
+Si se necesita monitoreo continuo, sustituye deliberadamente la secuencia de pasos en línea. La plantilla en segundo plano omite `count`, y `startingStep: 2` significa el tercer paso:
 
 ```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: zone-canary-continuous
+  namespace: zone-rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+  - name: http-2xx-rate
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+---
 spec:
   strategy:
     canary:
       analysis:
         templates:
-        - templateName: success-rate-zone-a
-        startingStep: 2  # Start analysis from second step
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test
-          destinationRule:
-            name: test
-            canarySubsetName: canary-a
-            stableSubsetName: stable-a
+        - templateName: zone-canary-continuous
+        startingStep: 2
+        args:
+        - name: service-name
+          value: test-canary-a
+        - name: namespace
+          value: zone-rollouts-demo
+      steps:
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause: {}
 ```
 
-### 5. Monitoreo y alertas
+Al adaptar este fragmento de A a B/C, conserva la ruta, los Services y los argumentos de la zona correcta. El análisis independiente aún puede depender de la disponibilidad compartida de Prometheus, la red y el plano de control.
 
-**Alertas de Prometheus**:
+### 3. Reglas de monitoreo
+
+Esta PrometheusRule requiere Prometheus Operator y selectores coincidentes para las etiquetas y el namespace de las reglas. Un Prometheus complementario independiente de Istio no carga automáticamente este CRD.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: zone-aware-rollout-alerts
+  name: zone-rollout-alerts
+  namespace: zone-rollouts-demo
 spec:
   groups:
-  - name: rollout
+  - name: zone-rollout
     rules:
-    # Zone A Canary high failure rate
-    - alert: HighErrorRateZoneA
-      expr: |
-        sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          response_code=~"5..",
-          destination_pod_label_zone="a"
-        }[5m])) /
-        sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          destination_pod_label_zone="a"
-        }[5m])) > 0.05
+    - alert: HighErrorRateZoneACanary
+      expr: |-
+        ((sum(rate(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a",response_code=~"5..|0"}[2m])) or vector(0)) / sum(rate(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a"}[2m]))) > 0.05
+        and
+        (sum(increase(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a"}[2m]))) >= 20
       for: 2m
       annotations:
-        summary: "Zone A Canary has high error rate"
-
-    # Cross-zone traffic occurring (unexpected)
-    - alert: UnexpectedCrossZoneTraffic
-      expr: |
+        summary: Zone A canary has elevated 5xx/zero-status rate with observed traffic
+    - alert: UnexpectedDemoZoneRoute
+      expr: |-
         sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          source_workload_zone="a",
-          destination_pod_label_zone!="a"
+          reporter="source",source_workload="zone-client-a",source_workload_namespace="zone-rollouts-demo",
+          destination_service_namespace="zone-rollouts-demo",destination_service_name=~"test-(stable|canary)-(b|c)"
         }[5m])) > 0
       for: 5m
       annotations:
-        summary: "Unexpected cross-zone traffic from Zone A"
+        summary: Demo client A is using a B/C destination Service; inspect route/placement assumptions
 ```
 
-### 6. Lista de verificación de despliegue
+La primera regla comprueba los fallos 5xx/estado cero; los 4xx también reducen la tasa de análisis 2xx, pero no activan esta regla de errores en particular. El tráfico bajo o ausente requiere una señal de salud de telemetría/tráfico esperado diseñada por separado; la ausencia no demuestra que la versión canary esté saludable.
 
-* [ ] Todos los Nodes de zona están listos
-* [ ] VirtualService incluye todos los subsets
-* [ ] Configuración de localidad de DestinationRule verificada
-* [ ] Detección de valores atípicos habilitada
-* [ ] Cada Rollout gestiona subsets únicos
-* [ ] Services específicos por zona definidos
-* [ ] Recopilación de métricas de Prometheus verificada
-* [ ] Reglas de alerta configuradas
+La segunda es una **alerta de invariantes de enrutamiento de demostración**, no un detector universal de zonas físicas. Supone que el Deployment de origen real es `zone-client-a`, está ubicado en A y que los Services B/C conservan sus selectores zonales. Para mediciones de zonas físicas, usa localidad de nodos/endpoints verificada o telemetría enriquecida explícitamente, como se describe en las guías de enrutamiento/observabilidad.
 
-## Consideraciones de rendimiento
+### 4. Recuperación y capacidad
 
-### Requisitos de recursos
+Diversifica la capacidad Spot y conserva suficiente capacidad tolerante a fallos según el modelo real de aprovisionamiento de EKS/nodos. La afinidad zonal, la gestión de interrupciones y la política PDB no garantizan capacidad de reemplazo. Comprueba el comportamiento del ciclo de vida del grupo de nodos y el proceso de terminación/restauración de la aplicación.
 
-**Control Plane**:
+Este esquema no incluye resultados medidos de recursos ni latencia. Dimensiona Istiod, los proxies y el controlador Rollouts con base en la presión de conciliación medida, la cantidad de endpoints, el uso de recursos y la latencia de rutas normales y de fallo para la carga de trabajo real.
 
-* Istiod: CPU 500m, memoria 2GB (carga de VirtualService/DestinationRule adicionales)
+## Referencias y siguientes pasos
 
-**Data Plane**:
+- [Integración de Argo Rollouts](08-argo-rollouts.md)
+- [Enrutamiento con conocimiento de zonas](../resilience/03-zone-aware-routing.md)
+- [Detección de valores atípicos](../resilience/01-outlier-detection.md)
+- [DestinationRule](../traffic-management/03-destination-rule.md)
+- [Selectores de origen de Istio VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Conmutación por error de localidad de Istio](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [API DestinationRule de Istio](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Integración de Istio con Argo Rollouts](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
+- [Interrupciones de Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [Configuración y redondeo de PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+- [Afinidad de nodos](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
+- [Avisos de interrupción de EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html)
+- [Comportamiento de Spot en grupos de nodos administrados de EKS](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
+- [ID de AZ y asignación de cuentas de AWS](https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html)
+- [Regiones y zonas de disponibilidad de AWS](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
 
-* Envoy Sidecar: CPU 100-500m, memoria 50-150MB (información de zona y sobrecarga de enrutamiento de localidad)
-
-**Controlador de Argo Rollouts**:
-
-* CPU 100m, memoria 128MB (gestión de 3 Rollouts)
-
-### Sobrecarga de red
-
-* **Tráfico local a la zona**: latencia adicional de 1-2ms (sobrecarga de Envoy)
-* **Tráfico entre zonas** (durante la conmutación por error): latencia adicional de 5-10ms (red entre zonas)
-
-## Referencias
-
-### Documentos relacionados
-
-* [Integración de Argo Rollouts](08-argo-rollouts.md)
-* [Enrutamiento consciente de zonas](../resilience/03-zone-aware-routing.md)
-* [Detección de valores atípicos](../resilience/01-outlier-detection.md)
-* [DestinationRule](../traffic-management/03-destination-rule.md)
-
-### Enlaces externos
-
-* [Balanceo de carga por localidad de Istio](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
-* [Integración de Istio con Argo Rollouts](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
-* [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
-
-## Próximos pasos
-
-1. [Laboratorio: práctica de Rollout consciente de zonas](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide)
-2. Amplíe a [Multi-cluster](02-multi-cluster.md) para implementar conmutación por error entre regiones
-3. [Progressive Delivery](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts) para análisis y reversión automáticos
+Usa como punto de partida las guías de integración y enrutamiento mantenidas para validar el laboratorio. [Multi-clúster](02-multi-cluster.md) incorpora requisitos adicionales de confianza, conectividad y diseño de dominios de fallo; no es una extensión de este esquema mediante un único ajuste.

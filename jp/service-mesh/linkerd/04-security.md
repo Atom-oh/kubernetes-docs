@@ -1,6 +1,6 @@
-# Linkerdセキュリティ
+# Linkerd セキュリティ
 
-> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 · cert-manager例は1.21.1で確認
+> **最終更新**: 2026年10月16日 · Linkerd edge-26.10.1 · cert-manager の例は 1.21.2 に対して確認
 
 Linkerdはproxyが扱う通信にworkload認証、転送暗号化、受信認可を提供します。参加、policy、証明書ライフサイクル、アプリsecurityは明示設計が必要です。[導入ガイド](01-installation.md)の対応Kubernetes/Gateway API構成を使います。以下はその導入と既存workloadを前提とします。
 
@@ -403,7 +403,7 @@ identity:
 # Merge into the complete reviewed values from the installation guide.
 # In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-values.yaml -f managed-issuer-values.yaml \
   --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
 ```
@@ -505,7 +505,7 @@ HTTP認可拒否カウンターとアプリログイン失敗は別です。opaq
 - [手動認証情報rotation](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
 - [管理された認証情報rotation](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
 - [Proxyメトリクス](https://linkerd.io/docs/reference/proxy-metrics/)
-- [リリースIdentity再読込/issuer metrics実装](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
-- [リリースチャートの認証情報所有権](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [リリースIdentity再読込/issuer metrics実装](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/pkg/identity/service.go)
+- [リリースチャートの認証情報所有権](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/templates/identity.yaml)
 - [cert-manager CA Issuer](https://cert-manager.io/docs/configuration/ca/)と[Vault認証](https://cert-manager.io/docs/configuration/vault/)
 - [Vault中間署名](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)

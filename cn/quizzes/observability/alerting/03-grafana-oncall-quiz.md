@@ -1,6 +1,6 @@
 # Grafana OnCall 测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 本测验涵盖对已归档的 OnCall OSS 部署进行审查/迁移的内容。
 
@@ -11,8 +11,8 @@
 ---
 
 1. 以下哪一项**不是** Grafana OnCall 的核心功能？
-   - A) On-call 排班管理
-   - B) 升级链（escalation chain）配置
+   - A) 值班排班管理
+   - B) 告警升级链配置
    - C) 指标采集与存储
    - D) ChatOps 集成（Slack、Teams）
 
@@ -28,25 +28,25 @@ OnCall 负责接收和管理告警、排班、路由以及响应人操作；它�
 
 ---
 
-2. Grafana OnCall 升级策略中 `wait` 类型的作用是什么？
+2. Grafana OnCall 告警升级策略中 `wait` 类型的作用是什么？
    - A) 在发送告警前等待数据采集完成
-   - B) 在进入下一个升级步骤前等待
+   - B) 在进入下一个告警升级步骤前等待
    - C) 等待用户响应后自动解决
    - D) 等待告警分组
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在进入下一个升级步骤前等待**
+**答案：B) 在进入下一个告警升级步骤前等待**
 
 **解析：**
-wait 步骤会延迟下一个升级步骤。它既不会确认（acknowledge）也不会解决（resolve）事件。经查阅的公共 serializer 接受从 1 分钟到 24 小时的等待时间（以秒为单位）；实际的停止/重新呼叫行为取决于升级链和告警组（alert group）状态。
+wait 步骤会延迟下一个告警升级步骤。它既不会确认（acknowledge）也不会解决（resolve）事件。经查阅的公共序列化器接受从 1 分钟到 24 小时的等待时间（以秒为单位）；实际的停止/重新呼叫行为取决于告警升级链和告警组状态。
 
 </details>
 
 ---
 
-3. Grafana OnCall 的 on-call 排班中的 “Override” 是什么？
+3. Grafana OnCall 的值班排班中的 “Override” 是什么？
    - A) 完全删除并重建排班
    - B) 在现有排班中临时更改某一特定时段的响应人
    - C) 更改排班的时区
@@ -58,7 +58,7 @@ wait 步骤会延迟下一个升级步骤。它既不会确认（acknowledge）�
 **答案：B) 在现有排班中临时更改某一特定时段的响应人**
 
 **解析：**
-override 会更改某个既定时段的值班覆盖。在经查阅的 API 中，它属于 on_call_shifts 类型，需要显式指定时区，并必须关联到目标排班。请核实现有班次的 ID、优先级、空档以及最终响应人；不要假设仍存在旧的嵌套 overrides 端点。
+临时替班（override）会更改指定时段的值班安排。在经查阅的 API 中，它属于 on_call_shifts 类型，需要显式指定时区，并必须关联到目标排班。请核实现有班次的 ID、优先级、空档以及最终响应人；不要假设仍存在旧的嵌套 overrides 端点。
 
 </details>
 
@@ -76,7 +76,7 @@ override 会更改某个既定时段的值班覆盖。在经查阅的 API 中，
 **答案：B) 通过 Alertmanager 的 webhook_configs 将告警发送到 OnCall**
 
 **解析：**
-使用 webhook_configs 并填入对应实际集成类型所生成的 URL，必要时将其保存在受保护的 url_file 中。所有被引用的 receiver 都必须定义，并使用当前版本的 matchers。公共 API 的原始 token 认证与 webhook URL 是两回事；send_resolved 并不会让 OnCall 去更新源规则。
+使用 webhook_configs 并填入对应实际集成类型所生成的 URL，必要时将其保存在受保护的 url_file 中。所有引用的接收器都必须定义，并使用当前版本的匹配器。公共 API 的原始令牌认证与 webhook URL 是两回事；send_resolved 并不会让 OnCall 去更新源规则。
 
 </details>
 
@@ -94,16 +94,16 @@ override 会更改某个既定时段的值班覆盖。在经查阅的 API 中，
 **答案：B) 将相关告警归为一组，以减少告警疲劳**
 
 **解析：**
-分组可以减少响应人的重复工作，但必须使用与事件域相匹配的分组键。标签过少会把无关事件合并在一起；使用无界的 ID 则会导致分组碎片化。源端 Alertmanager 的时序与 OnCall 的分组/解决模板是相互独立的，并且投递也无法保证恰好一次。
+分组可以减少响应人的重复工作，但必须使用与事件域相匹配的分组键。标签过少会把无关事件合并在一起；使用无界的 ID 则会导致分组碎片化。源端 Alertmanager 的时序与 OnCall 的分组/告警解除模板是相互独立的，并且投递也无法保证恰好一次。
 
 </details>
 
 ---
 
-6. 在 Grafana OnCall 升级策略中，当 `notify_on_call_from_schedule` 的 `important` 标志为 true 时会发生什么？
+6. 在 Grafana OnCall 告警升级策略中，当 `notify_on_call_from_schedule` 的 `important` 标志为 true 时会发生什么？
    - A) 告警被标记为最高优先级
    - B) 选用该用户配置的 important 通知规则集
-   - C) 跳过升级链，告警立即发送给主管
+   - C) 跳过告警升级链，告警立即发送给主管
    - D) 告警被永久保存
 
 <details>
@@ -130,13 +130,13 @@ important 会选用该用户的 important 个人通知规则集。已配置的�
 **答案：C) 核实已安装应用的命令、权限和操作按钮**
 
 **解析：**
-请检查已安装 Slack 应用的实际根命令/帮助信息以及已授权的操作按钮。经查阅的源码使用可配置的根命令和 /grafana 示例，而不是此前所声称的旧 /oncall 命令集。Acknowledge、Resolve 和 Silence 是各自独立的操作；它们并不意味着会执行部署。
+请检查已安装 Slack 应用的实际根命令/帮助信息以及已授权的操作按钮。经查阅的源码使用可配置的根命令和 /grafana 示例，而不是此前所声称的旧 /oncall 命令集。确认（Acknowledge）、解除（Resolve）和静默（Silence）是各自独立的操作；它们并不意味着会执行部署。
 
 </details>
 
 ---
 
-8. 选择新的 on-call 工具或做出迁移决策的恰当依据是什么？
+8. 选择新的值班工具或做出迁移决策的恰当依据是什么？
    - A) 仅按旧的集成数量来选择
    - B) 假定 OSS 没有运营成本
    - C) 考察维护状况、所需功能、实际成本以及迁移/恢复
@@ -166,25 +166,25 @@ important 会选用该用户的 important 个人通知规则集。已配置的�
 **答案：B) 依赖项、状态、投递、故障与恢复行为**
 
 **解析：**
-仅靠副本数量并不能消除所有故障点。现有部署需要验证依赖项、broker/缓存/数据库、调度器、密钥、TLS、投递以及恢复能力。已归档的 OSS 不应作为新建生产环境的默认选择；本次审查中并未实际演练任何 HA 部署。
+仅靠副本数量并不能消除所有故障点。现有部署需要验证依赖项、消息代理/缓存/数据库、调度器、密钥、TLS、投递以及恢复能力。已归档的 OSS 不应作为新建生产环境的默认选择；本次审查中并未实际演练任何 HA 部署。
 
 </details>
 
 ---
 
-10. 在 Grafana OnCall 中设置路由（route）的主要目的是什么？
+10. 在 Grafana OnCall 中设置路由的主要目的是什么？
     - A) 网络流量分发
-    - B) 根据告警条件应用不同的升级链
+    - B) 根据告警条件应用不同的告警升级链
     - C) 数据库查询优化
     - D) 用户认证路径配置
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 根据告警条件应用不同的升级链**
+**答案：B) 根据告警条件应用不同的告警升级链**
 
 **解析：**
-路由会依据集成的实际负载、匹配模式、顺序和回退（fallback）来选择升级/通知行为。经查阅的 serializer 使用嵌套的 slack.channel_id/enabled。请测试字段缺失/冲突的情况；对消息文本做任意正则匹配并不是所有提供方都遵循的通用约定。
+路由会依据集成的实际告警内容、匹配模式、顺序和回退行为来选择告警升级/通知方式。经查阅的序列化器使用嵌套的 slack.channel_id/enabled。请测试字段缺失/冲突的情况；对消息文本做任意正则匹配并不是所有提供方都遵循的通用约定。
 
 </details>
 
@@ -194,9 +194,9 @@ important 会选用该用户的 important 个人通知规则集。已配置的�
 
 ## 补充学习资源
 
-- [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
+- [Grafana OnCall 文档](https://grafana.com/docs/oncall/latest/)
 - [Grafana OnCall GitHub](https://github.com/grafana-cold-storage/oncall)
 - [Grafana OnCall Helm Chart](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54/helm/oncall)
-- [Grafana IRM (Incident Response Management)](https://grafana.com/products/cloud/irm/)
+- [Grafana IRM（事件响应管理）](https://grafana.com/products/cloud/irm/)
 
 - [指南](../../../observability/alerting/03-grafana-oncall.md)

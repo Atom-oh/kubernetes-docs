@@ -1,43 +1,74 @@
-# EBS gp2 vs gp3 実測ベンチマーク
+# EBS gp2 と gp3 の実測ベンチマーク
 
-> **対応バージョン**: Kubernetes 1.36 (Amazon EKS), EBS CSI driver, fio 3.36
-> **最終更新**: September 2, 2026
+> **記録したテスト環境**: Kubernetes 1.36（Amazon EKS）、EBS CSI ドライバー、fio 3.36
+> **最終更新**: 2026年10月16日
 
-AWS の決まり文句である「gp2 から gp3 に移行すれば、20% 節約でき、同等以上のパフォーマンスを得られる」はよく知られています。しかし、その差が Kubernetes PVC で**いつ、どのような形で**現れるのかを示すグラフは見つけにくいものです。この記事では、1 つの EKS node に**100 GiB の gp2 PVC 1 つと 100 GiB の gp3 PVC 1 つ**を接続し、両方に fio で 45 分間負荷をかけます。要点は「gp2 は遅い」ではありません。つまり、**gp2 は 33 分間 gp3 と区別がつかず、その後わずか 1 秒以内に 10 分の 1 に低下する**ということです。すべての数値は、以下の manifest と fio コマンドで再現できます。
+AWSの決まり文句である「gp2からgp3に移行すれば20%節約でき、同等以上の性能が得られる」は有名ですが、その差がKubernetesのPVCで**いつ、どのような形で**現れるのかを示すグラフはあまり見つかりません。この記事では、単一のEKSノードに**100 GiBのgp2 PVCを1つ、100 GiBのgp3 PVCを1つ**接続し、fioでgp3を10分間、gp2を45分間測定します。要点は「gp2は遅い」ということではありません。**gp2は33分間gp3と見分けがつかず、その後1秒以内に性能が10分の1まで落ちる**ということです。ここに示す数値は実際の1回の実行で得られた結果であり、再実行しても同じ結果になるとは限りません。実行を比較する場合は、初期クレジット残高、ドライバーとイメージのバージョン、ノードの状態を記録してください。
 
-![アーキテクチャ図: fio pod が EBS CSI で接続された block device を通して gp3（固定 3,000 IOPS）と gp2（300 IOPS のベースラインと I/O credit bucket）に 4k random I/O を送信し、bucket の残高は CloudWatch BurstBalance に報告される。](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-benchmark-0.png)
+![構成図: fio PodがEBS CSIで接続したブロックデバイスを通じてgp3（固定3,000 IOPS）とgp2（ベースライン300 IOPSとI/Oクレジットバケット）に4kランダムI/Oを送り、バケット残高をCloudWatchのBurstBalanceに報告する。](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-benchmark-0.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-storage-01-ebs-gp2-gp3-benchmark-0.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-storage-01-ebs-gp2-gp3-benchmark-0.html)
 
-## TL;DR — 測定結果
+## 要約: 測定結果
 
-| 指標 (100 GiB, m5.xlarge) | gp3 | gp2 |
+| 指標（100 GiB、m5.xlarge） | gp3 | gp2 |
 |-----------------------------|-----|-----|
-| 4k random read IOPS (qd32) | **3,001** 平均、600 s にわたり横ばい (最小 2,991) | **3,001 → 300**、1,999 s で急落 |
-| 4k random read p99 latency (qd32) | 12.9 ms | 109.6 ms (急落後の期間が大半を占める) |
-| 4k random write IOPS (qd32、credit 枯渇後) | **3,025** | 601 (一部再充填された bucket を含む) |
-| 4k random read latency (qd1) | 平均 **0.56 ms** / p99 0.87 ms | 平均 1.65 ms — 二峰性: p50 0.60 / p95 3.39 ms |
-| 1 MiB sequential read / write | 127 / 126 MiB/s (125 MiB/s ベースライン) | 130 / 129 MiB/s (≤170 GiB では 128 MiB/s 上限) |
-| 月額コスト (Seoul region、100 GiB) | **$9.12** | $11.40 |
+| 4kランダム読み取りIOPS（qd32） | **平均3,001**、600秒間ほぼ一定（最小2,991） | **3,001から300へ低下**、1,999秒で急落 |
+| 4kランダム読み取りp99レイテンシー（qd32） | 12.9 ms | 109.6 ms（急落後の時間帯が大半を占める） |
+| 4kランダム書き込みIOPS（qd32、クレジット枯渇後） | **3,025** | 601（一部再充填されたバケットを含む） |
+| 4kランダム読み取りレイテンシー（qd1） | 平均 **0.56 ms** / p99 0.87 ms | 平均1.65 ms、二峰性: p50 0.60 / p95 3.39 ms |
+| 1 MiBシーケンシャル読み取り / 書き込み | 127 / 126 MiB/s（ベースライン125 MiB/s） | 130 / 129 MiB/s（170 GiB以下の上限128 MiB/s） |
+| 月額料金（ソウルリージョン、100 GiB） | **$9.12** | $11.40 |
 
-一文で言えば、**同じ容量に対して、gp2 は 25% 高い価格で 3,000 IOPS を 33 分間提供します。**
+ひと言でまとめると、**同じ容量なら、gp2は25%高い料金で3,000 IOPSを33分間提供します。**
 
 ## テスト環境
 
 | 項目 | 値 |
 |------|-------|
-| Cluster | Amazon EKS, Kubernetes 1.36, ap-northeast-2 |
-| Node | **m5.xlarge** (4 vCPU, 16 GiB)、Karpenter により provision — instance EBS 制限: ベースライン 6,000 IOPS / 1,150 Mbps (≈137 MiB/s)、burst 18,750 IOPS / 4,750 Mbps |
-| Volumes | EBS **gp2 100 GiB** 1 つと **gp3 100 GiB** 1 つ、デフォルト設定 (`StorageClass` `gp2` / `gp3`、EBS CSI driver) |
-| Pod | `alpine:3.20` + `fio 3.36`、`direct=1` (page cache をバイパス)、`libaio` engine、8 GiB テストファイル |
-| 実行 | **2 つの volume を同時に測定することはありませんでした** — 3,000 + 3,000 = 6,000 IOPS は m5.xlarge の instance 制限と同じであり、volume ではなく instance がボトルネックになるためです |
-| 料金 | gp2 $0.114/GB-month、gp3 $0.0912/GB-month + 追加 IOPS $0.0057/IOPS-month + 追加 throughput $0.0456/MiB/s-month (Seoul region、Pricing API、September 2026) |
+| クラスター | Amazon EKS、Kubernetes 1.36、ap-northeast-2 |
+| ノード | **m5.xlarge**（4 vCPU、16 GiB）、Karpenterでプロビジョニング。インスタンスのEBS上限: ベースライン6,000 IOPS / 1,150 Mbps（143.75 MB/s ≈137 MiB/s）、バースト18,750 IOPS / 4,750 Mbps |
+| ボリューム | EBS **gp2 100 GiBを1つ**、**gp3 100 GiBを1つ**、どちらもデフォルト設定（StorageClass `gp2` / `gp3`、EBS CSIドライバー） |
+| Pod | `alpine:3.20` + `fio 3.36`、`direct=1`（ページキャッシュを迂回）、`libaio`エンジン、テストファイル8 GiB |
+| 実行方法 | **2つのボリュームは同時に測定していません**。複数のボリュームはインスタンスの継続・バーストI/O予算を共有するため、同時に測定すると干渉が起きます。 |
+| 料金 | gp2 $0.114/GB・月、gp3 $0.0912/GB・月 + 追加IOPS $0.0057/IOPS・月 + 追加スループット $0.0456/MiB/s・月（ソウルリージョン、Pricing API、2026年9月） |
 
-`nodeSelector` が m5.xlarge を固定する理由は 1 つだけです。その instance レベルの EBS 制限 (6,000 IOPS) が volume 制限 (3,000) を十分に上回るため、**測定された上限が volume によるものであることを確信できる**からです。より小さい instance (m5.large のベースラインは 3,600 IOPS) では、2 つの制限が混ざり合い、結果の解釈が難しくなります。
+`nodeSelector`でm5.xlargeを指定した理由は1つだけです。インスタンスレベルのEBS上限（6,000 IOPS）がボリューム上限（3,000 IOPS）を十分に上回るため、ボリュームの性能を観察する余裕を確保できます。ノード全体のI/Oと、インスタンスおよびボリュームの上限超過メトリクスも確認して、ボトルネックを特定してください。より小さいインスタンス（m5.largeはベースライン3,600 IOPS）では2つの上限が近くなり、結果を解釈しにくくなります。
 
-### Deployment Manifest
+### デプロイ用マニフェスト
+
+記録した実行では`alpine:3.20` / fio 3.36を使用しました。Alpine 3.20は通常サポートを終了しているため、以下の**再実行用**の例では3.24.2を使います。パッケージのバージョンは変わる可能性があるため、表示されたfioのバージョンとイメージダイジェストを保存し、新しい結果は過去の測定結果と分けてください。この例は、`ebs.csi.aws.com`と必要なIAM権限を設定した通常のEC2ノード向けであり、EKS Auto Modeのプロビジョナーには対応していません。
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bench-storage
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: bench-gp2
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp2
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: bench-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  iops: "3000"
+  throughput: "125"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -45,7 +76,7 @@ metadata:
   namespace: bench-storage
 spec:
   accessModes: ["ReadWriteOnce"]
-  storageClassName: gp2
+  storageClassName: bench-gp2
   resources:
     requests:
       storage: 100Gi
@@ -57,7 +88,7 @@ metadata:
   namespace: bench-storage
 spec:
   accessModes: ["ReadWriteOnce"]
-  storageClassName: gp3
+  storageClassName: bench-gp3
   resources:
     requests:
       storage: 100Gi
@@ -74,8 +105,8 @@ spec:
     node.kubernetes.io/instance-type: m5.xlarge
   containers:
     - name: fio
-      image: alpine:3.20
-      command: ["sh", "-c", "apk add --no-cache fio && sleep infinity"]
+      image: alpine:3.24.2
+      command: ["sh", "-c", "apk add --no-cache fio && fio --version && sleep infinity"]
       resources:
         requests: { cpu: "1", memory: 1Gi }
         limits: { cpu: "2", memory: 2Gi }
@@ -90,11 +121,11 @@ spec:
   restartPolicy: Never
 ```
 
-> `karpenter.sh/do-not-disrupt` annotation があるのは、実際にこの benchmark の最初の試行がこれなしでは失敗したためです。node 上の別の workload がなくなると、Karpenter は node を「Underutilized」と判断して consolidation を開始し、45 分間の実行途中で fio pod を eviction しました (exit 137)。長時間実行される batch または benchmark pod には、この annotation (または PodDisruptionBudget) が必要です。
+> `karpenter.sh/do-not-disrupt`アノテーションを付けているのは、最初のベンチマーク実行がこの設定なしで実際に失敗したためです。ノード上の別のワークロードが終了すると、Karpenterはノードを「Underutilized」と判断して統合を開始し、45分の実行途中でfio Podを退避しました（終了コード137）。このアノテーションは一部の自発的な中断を防ぎますが、ノード障害、Spot中断、強制終了、terminationGracePeriodの経過を防ぐ保証はありません。PDBも非自発的な障害を防げません。結果を永続化し、再実行できるようにしてください。
 
-### fio コマンド
+### fioコマンド
 
-各フェーズでは以下の共通オプションを使用し、次の順序で 1 つずつ実行しました。
+以下の共通オプションを使い、各フェーズを記載順に1つずつ実行しました。
 
 ```bash
 COMMON="--ioengine=libaio --direct=1 --group_reporting --output-format=json"
@@ -103,7 +134,7 @@ COMMON="--ioengine=libaio --direct=1 --group_reporting --output-format=json"
 fio --name=layout --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M $COMMON
 fio --name=layout --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M $COMMON
 
-# 1. 4k random read, qd32 — gp3 for 600 s, gp2 for 2,700 s (45 minutes, to catch the credit cliff)
+# 1. 4k random read, qd32: gp3 for 600 s, gp2 for 2,700 s (45 minutes, to catch the credit cliff)
 fio --name=gp3-randread --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k \
     --iodepth=32 --runtime=600  --time_based --write_iops_log=gp3_rr --log_avg_msec=1000 $COMMON
 fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k \
@@ -113,96 +144,96 @@ fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --b
 fio --name=gp3-randwrite --filename=/mnt/gp3/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 fio --name=gp2-randwrite --filename=/mnt/gp2/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 
-# 3. 4k random read, qd1, 60 s — device latency without queueing
+# 3. 4k random read, qd1, 60 s: end-to-end completion latency at low concurrency
 fio --name=gp3-lat --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 fio --name=gp2-lat --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 
-# 4. 1 MiB sequential read/write, qd8, 60 s — throughput ceiling
+# 4. 1 MiB sequential read/write, qd8, 60 s: throughput ceiling
 fio --name=gp3-seqread  --filename=/mnt/gp3/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp3-seqwrite --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqread  --filename=/mnt/gp2/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqwrite --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 ```
 
-## 測定 1 — 45 分間の 4k Random Read: Credit Cliff
+## 測定1: 4kランダム読み取りを45分実行した場合のクレジット急落
 
-![IOPS 時系列: gp3 は 10 分間にわたり 3,000 IOPS で横ばいを維持する。gp2 は 3,000 IOPS を維持した後、1,999 秒で垂直に 300 IOPS へ低下する。](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg)
+![IOPSの時系列: gp3は10分間3,000 IOPSを維持し、gp2は3,000 IOPSを維持した後、1,999秒で垂直に300 IOPSまで低下する。](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg)
 
-これは fio が記録した秒ごとの IOPS log (gp2 は 2,699 samples、gp3 は 600) をそのままプロットしたものです。以下の table は、各 log の最初の 1 秒 sample (両 volume とも 5,997 — 初期 queue fill。fio の summary に含まれており、これが fio 自身が gp3 で 3,005 IOPS と報告する理由です) を除外しています。
+これはfioが記録した1秒ごとのIOPSログを、そのままプロットしたものです（gp2は2,699サンプル、gp3は600サンプル）。下表では各ログの最初の1秒分のサンプルを除いています。どちらのボリュームも5,997 IOPSで、原因を別途調査する必要がある初期の過渡値です。このサンプルを含めると、集計平均が変わることがあります。
 
-| | gp3 (600 s) | cliff 前の gp2 (0–1,999 s) | cliff 後の gp2 (2,000–2,700 s) |
+| | gp3（600秒） | 急落前のgp2（0～1,999秒） | 急落後のgp2（2,000～2,700秒） |
 |---|---|---|---|
-| 平均 IOPS | **3,001** | **3,001** | **300** |
+| 平均IOPS | **3,001** | **3,001** | **300** |
 | 最小 / 最大 | 2,991 / 3,004 | 2,997 / 3,005 | 297 / 304 |
-| 平均 latency (qd32) | 10.4 ms | ≈10.4 ms | ≈106 ms |
+| 平均レイテンシー（qd32） | 10.4 ms | 約10.4 ms | 約106 ms |
 
-読み方:
+結果の見方:
 
-- **cliff 前の gp2 は gp3 と区別がつきません。**どちらも 3,001 IOPS を提供し、どちらも p50 は 10.0–10.2 ms です。ここで「gp2 は遅い」は単純に誤りです。credit を持つ gp2 volume は 3,000 IOPS volume です。
-- **cliff は 1 秒で発生しました。**1,998 s では 3,001 IOPS、1,999 s では 2,659、2,000 s では 300 です。徐々に劣化するのではなく、switch を切り替えたかのように容量の 90% が消えます。application の観点では、これは「database query が突然 10 倍遅くなったのに、誰も何も deploy していない」という incident pattern です。
-- **数値は AWS documentation と 1 秒以内の精度で一致します。**100 GiB の gp2 volume には、3 IOPS/GiB × 100 = **300 IOPS** のベースライン、5.4M-credit bucket、そして `5,400,000 ÷ (3,000 − 300) = 2,000 s` の burst duration があります。AWS table には「100 GiB → 2,000 seconds」とあります。測定値は 1,999 でした。
-- **106 ms の latency は volume 自体が遅いからではありません。**Little の法則 (平均 latency = outstanding I/O ÷ throughput) より、32 ÷ 300 = 106.7 ms となります。1 秒あたり 300 件しか完了しない間に 32 I/O を in-flight に保っているため、queue が増加します。3,000 IOPS での 10.4 ms も同じ計算です (32 ÷ 3,000 = 10.7 ms)。**qd32 benchmark における latency は queueing time です。device latency は測定 3 で示します。**
+- **急落前のgp2はgp3と見分けがつきません**。どちらも3,001 IOPSを達成し、p50は10.0～10.2 msです。この状況で「gp2は遅い」とするのは誤りです。クレジットが残っているgp2ボリュームは3,000 IOPSのボリュームとして動作します。
+- **急落は1秒で起きました**。1,998秒時点では3,001 IOPS、1,999秒では2,659 IOPS、2,000秒では300 IOPSでした。徐々に性能が落ちるのではなく、容量の90%がスイッチを切ったように失われます。アプリケーションから見ると、「データベースのクエリが突然10倍遅くなったが、何もデプロイされていない」という障害パターンです。
+- **数値はAWSのドキュメントと1秒以内の差で一致します**。100 GiBのgp2ボリュームのベースラインは3 IOPS/GiB × 100 = **300 IOPS**で、クレジットバケットは540万クレジット、バースト継続時間は`5,400,000 ÷ (3,000 − 300) = 2,000秒`です。AWSの表では「100 GiB → 2,000秒」とされており、今回の測定では1,999秒でした。
+- **レイテンシー106 msは、ボリューム自体が遅いことを意味しません**。リトルの法則（平均レイテンシー = 未完了I/O数 ÷ スループット）では32 ÷ 300 = 106.7 msです。完了数が毎秒300回なのに対し、32件のI/Oを同時に処理中に保つため、キューが増えます。3,000 IOPS時の10.4 msも同じ計算（32 ÷ 3,000 = 10.7 ms）に近い値です。**これは平均約32件のI/Oが未完了の場合の総応答時間の近似値であり、キューイング時間とサービス時間を分離した値ではありません**。実行間で比較する場合は、fioの同じ`slat`、`clat`または`lat`メトリクスを比べてください。
 
-> **テスト条件の開示**: 記録対象の実行の約 13 分前、最初の試行 (Karpenter eviction によって短縮) では、同じ gp2 volume におよそ 8 分間 (14:55–15:03 UTC)、すでに 3,000 IOPS の負荷がかかっていました。単純な credit model では、この事前 drain により cliff は 2,000 s より早く発生するはずです。しかし、観測値は 2,000 s でした。理由を特定できませんでした (eviction 前の実際の I/O duration は不確かです)。**cliff の形状 (1 秒以内に 90% 低下) と下限 (300 IOPS) は決定的な結果として扱い**、**正確な duration の計画値には AWS formula (2,000 s) を使用してください**。
+> **テスト条件の開示**: 記録した実行の約13分前、最初の試行ではKarpenterによる退避で中断されるまで、同じgp2ボリュームに約8分間（14:55～15:03 UTC）、3,000 IOPSの負荷をかけていました。単純なクレジット計算では、その事前負荷によって急落が2,000秒より早まるはずですが、実測では2,000秒でした。退避前に実際にI/Oが続いた時間が不明なため、理由は特定できませんでした。**この実行で得られた結果として扱うのは、急落の形（1秒以内に90%低下）と下限（300 IOPS）です。正確な継続時間の計画値には、AWSの計算式による2,000秒を使ってください。**
 
-## 測定 2 — Credit 枯渇後の Random Write: 3,025 vs 601 IOPS
+## 測定2: クレジット枯渇後のランダム書き込み — 3,025対601 IOPS
 
-| 4k random write, qd32, 120 s | gp3 | gp2 (枯渇直後) |
+| 4kランダム書き込み、qd32、120秒 | gp3 | gp2（枯渇直後） |
 |---|---|---|
 | IOPS | **3,025** | **601** |
-| 平均 latency | 10.3 ms | 52.0 ms |
+| 平均レイテンシー | 10.3 ms | 52.0 ms |
 | p50 / p95 / p99 | 10.2 / 11.2 / 12.0 ms | 11.1 / 109.6 / 133.7 ms |
 
-ここで本当に重要なのは、gp2 が 300 のベースラインではなく 601 IOPS を出した理由です。gp2 write test の直前の 120 秒間 (gp3 write test の実行中)、gp2 は idle であり、**300 credits/s × 120 s = 36,000 credits** が蓄積されました。120 秒の test でこの 36,000 を消費すると、300 のベースラインに 300 IOPS が追加されます。つまり、ちょうど **600 IOPS** です。測定値は 601 でした。
+ここでの要点は、gp2がベースラインの300 IOPSではなく601 IOPSを記録した理由です。gp2への書き込みテスト直前の120秒間（gp3への書き込みテスト中）、gp2はアイドル状態で、**毎秒300クレジット × 120秒 = 36,000クレジット**を蓄積しました。この36,000クレジットを120秒のテストで使うと、ベースラインの300 IOPSに毎秒300 IOPSが上乗せされ、ちょうど**600 IOPS**になります。実測値は601でした。
 
-つまり gp2 credit bucket は「一度 drain すると永遠に空」のではありません。**volume が休止するたびにゆっくり再充填される銀行口座**です。これが intermittent traffic 下の gp2 が「速いときもあれば遅いときもある」理由であり、on demand で再現することがほとんどなく debug が困難な pattern です。二峰性 distribution — p50 は 11 ms、p95 は 110 ms — がその指紋です。credit が残っている秒は高速で、残っていない秒は queue 内で待機します。
+つまりgp2のクレジットバケットは「一度空になったら永久に空」の状態ではありません。ボリュームが休止している間に少しずつ補充される**銀行口座のようなもの**です。そのため、断続的なトラフィックではgp2が「速いときも遅いときもある」状態になります。要求したタイミングで再現しにくく、調査が困難です。二峰性の分布（p50が11 ms、p95が110 ms）はその特徴です。クレジットが残っている間は速く、なくなるとキューで待たされます。
 
-## 測定 3 — qd1 Latency: 同じ Device、異なる Throttle
+## 測定3: qd1レイテンシー — 低い並行度での分布
 
-queue depth が 1 では queueing はなく、生の EBS round-trip latency がそのまま見えます。
+キュー深度1では、アプリケーションが発生させる並行度が下がります。それでもカーネル、仮想化、EBSサービス、スロットリングによる遅延は加わるため、物理SSDだけを測定した結果ではありません。
 
-| 4k random read, qd1, 60 s | gp3 | gp2 (throttled) |
+| 4kランダム読み取り、qd1、60秒 | gp3 | gp2（スロットリング中） |
 |---|---|---|
-| 平均 latency | **0.564 ms** | 1.651 ms |
+| 平均レイテンシー | **0.564 ms** | 1.651 ms |
 | p50 | 0.569 ms | **0.602 ms** |
 | p95 | 0.627 ms | 3.391 ms |
 | p99 | 0.872 ms | 3.555 ms |
-| 達成 IOPS | 1,759 | 603 |
+| 達成IOPS | 1,759 | 603 |
 
-- **gp3 の 0.56 ms (p99 0.87 ms) は、この環境における EBS general-purpose SSD の実際の round-trip time です。**qd1 では 1,759 IOPS は 3,000 の上限を下回るため throttle はなく、latency のみが throughput を決定しました (1 ÷ 0.564 ms ≈ 1,773)。
-- **gp2 の p50、0.602 ms に注目してください。**I/O の半分は gp3 とまったく同じ速度です。device は異なりません。残りの半分は 3.4–3.6 ms で到達しました。これは 1 秒あたりの allowance を超えた I/O (603 IOPS — 測定 2 と同じ計算: 60 秒の休止中に蓄積された 18,000 credits と 300 のベースライン) が throttle queue に保持されたためです。
-- 実務上の結論: **throttling は平均値ではなく distribution の形状に現れます。**平均 latency だけを表示する dashboard は 1.6 ms —「少し遅い」— と示しますが、p95 は 6 倍に跳ね上がっています。これが storage dashboard で p95/p99 と並べて p50 が必要な理由です。
+- **gp3の0.56 ms（p99 0.87 ms）は、この環境におけるEBS汎用SSDの実際の往復時間です**。qd1での1,759 IOPSは上限の3,000を下回っているためスロットリングはなく、レイテンシーだけでスループットが決まりました（1 ÷ 0.564 ms ≈ 1,773）。
+- **gp2のp50、0.602 msに注目してください**。I/Oの半分はgp3と同程度の速さです。p50が似ていても、物理デバイスやサービス内部の仕組みが同一だとは言えません。残りの半分は3.4～3.6 msで完了しました。毎秒の許容量を超えたI/O（603 IOPS。測定2と同じ計算で、60秒の休止中に蓄積した18,000クレジットにベースラインの300を加算）は、スロットリングキューに保持されました。
+- 実務上の結論: **スロットリングは平均値ではなく、分布の形に現れます**。平均レイテンシーだけを表示するダッシュボードには「少し遅い」程度の1.6 msと表示されますが、p95は6倍に跳ね上がっています。そのため、ストレージのダッシュボードではp95/p99とともにp50も確認してください。
 
-## 測定 4 — Sequential 1 MiB: 両方とも 125–128 MiB/s で上限
+## 測定4: 1 MiBシーケンシャルI/O — どちらも125～128 MiB/sで上限
 
-| 1 MiB sequential, qd8, 60 s | gp3 read | gp3 write | gp2 read | gp2 write |
+| 1 MiBシーケンシャル、qd8、60秒 | gp3読み取り | gp3書き込み | gp2読み取り | gp2書き込み |
 |---|---|---|---|---|
-| Throughput | 127.3 MiB/s | 126.0 MiB/s | 130.3 MiB/s | 128.9 MiB/s |
-| 平均 latency | 58.0 ms | 58.5 ms | 56.7 ms | 57.3 ms |
+| スループット | 127.3 MiB/s | 126.0 MiB/s | 130.3 MiB/s | 128.9 MiB/s |
+| 平均レイテンシー | 58.0 ms | 58.5 ms | 56.7 ms | 57.3 ms |
 
-ここでは gp2 と gp3 は実質的に同一です。gp3 は 125 MiB/s のベースラインで止まり、gp2 は 170 GiB 以下の volume に対する上限である 128 MiB/s で止まります。また、この計算は gp2 sequential test が空の credit bucket によって遅くならなかった理由も説明します。EBS は 1 MiB I/O を 256 KiB operations 4 回として数えるため、130 MiB/s ≈ 520 IOPS となり、直前の 120 秒の休止中に蓄積された 36,000 credits の範囲内です。IOPS ceiling より先に throughput ceiling が作用しました。
+ここではgp2とgp3は実質的に同じ性能です。gp3はベースラインの125 MiB/sで頭打ちになり、gp2は容量170 GiB以下のボリューム上限である128 MiB/sで頭打ちになります。また、この計算はgp2のシーケンシャルテストが空のクレジットバケットで遅くならなかった理由も説明します。EBSでは1 MiBのI/Oを256 KiBの操作4回として数えるため、130 MiB/sは約520 IOPSです。直前の120秒の休止中に蓄積した36,000クレジットの範囲内です。IOPS上限より先にスループット上限に達しました。
 
-もう 1 点、この node (m5.xlarge) の instance レベルの EBS bandwidth ベースラインは 1,150 Mbps ≈ **137 MiB/s** です。gp3 volume を 250 MiB/s に引き上げても、**この instance では依然として 137 MiB/s 付近で止まります** (4,750 Mbps の burst は 24 時間あたり 30 分間利用可能です)。volume を upgrade する前に、instance spec sheet の EBS bandwidth column を確認してください。[ClickHouse benchmark](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) の full scan は、まさに同じ理由でこの 125–137 MiB/s band に停滞しました。
+もう1点、m5.xlargeノードのインスタンスレベルEBS帯域幅のベースラインは1,150 Mbps ≈ **137 MiB/s**です。インスタンスのバースト容量が使える間は、スループットを250 MiB/sに設定したgp3ボリュームで137 MiB/sを超えることがあります。**長期にわたる継続的な需要は、約137 MiB/sのベースラインを基準に計画してください**。AWSが示すのは、24時間ごとに少なくとも1回、30分間にわたって最大性能を発揮できるという仕様であり、常に正確に30分間使えるという保証ではありません。ボリュームをアップグレードする前に、インスタンスの仕様表でEBS帯域幅を確認してください。[ClickHouseベンチマーク](../database/01-clickhouse-on-eks.md)でも、同じ理由でフルスキャンが125～137 MiB/sの範囲で停滞しました。
 
-## 金額で見る
+## 料金で比較
 
-Seoul region の料金 (Pricing API、September 2026) では、「3,000 IOPS を得るにはどうすればよいか」という問いに gp2 を使い続ける理由はありません。
+ソウルリージョンの料金（Pricing API、2026年9月）を見ると、「3,000 IOPSを得るにはどうすればよいか」という点でgp2を使い続ける理由はありません。
 
-| 構成 | 月額コスト | 持続可能な IOPS | Throughput |
+| 構成 | 月額料金 | 継続可能なIOPS | スループット |
 |---------------|--------------|------------------|------------|
-| gp2 100 GiB | $11.40 | **300** (最大 33 分間の 3,000 burst) | 128 MiB/s |
-| gp3 100 GiB (デフォルト) | **$9.12** | **3,000**、無制限 | 125 MiB/s |
-| gp3 100 GiB + 6,000 IOPS | $26.22 ($9.12 + 3,000 × $0.0057) | 6,000 | 125 MiB/s |
-| gp3 100 GiB + 250 MiB/s | $14.82 ($9.12 + 125 × $0.0456) | 3,000 | 250 MiB/s |
-| gp2 1,000 GiB (「IOPS 用にサイズを確保した」volume) | $114.00 | 3,000 | 250 MiB/s |
+| gp2 100 GiB | $11.40 | **300**（3,000 IOPSのバーストは最大33分間） | 128 MiB/s |
+| gp3 100 GiB（デフォルト） | **$9.12** | **3,000（継続可能）** | 125 MiB/s |
+| gp3 100 GiB + 6,000 IOPS | $26.22（$9.12 + 3,000 × $0.0057） | 6,000 | 125 MiB/s |
+| gp3 100 GiB + 250 MiB/s | $14.82（$9.12 + 125 × $0.0456） | 3,000 | 250 MiB/s |
+| gp2 1,000 GiB（「IOPS確保のために容量を増やした」ボリューム） | $114.00 | 3,000 | 250 MiB/s |
 
-最後の行は、実際に最もよくある無駄です。gp2 時代には、IOPS を必要とする 100 GiB dataset に対して 1 TiB を割り当てることが標準的な方法でした。gp3 100 GiB は同じ 3,000 IOPS を **$9.12** で提供します。つまり 12.5 倍安価です ($114.00 ÷ $9.12)。IOPS を容量から切り離すことが gp3 の本質であり、この table はその結果です。
+最後の行は、実際によくある無駄な構成です。gp2の時代には、IOPSを必要とする100 GiBのデータセットに1,000 GiBを割り当てるのが一般的でした。gp3の100 GiBボリュームなら同じ3,000 IOPSを$**9.12**で得られます。12.5倍安くなります（$114.00 ÷ $9.12）。IOPSを容量から切り離せることがgp3の本質であり、この表はその効果を示しています。
 
-## Kubernetes で gp3 に移行する
+## Kubernetesでgp3に移行する
 
-### 新規 volume: gp3 をデフォルトの StorageClass にする
+### 新しいボリューム: gp3をStorageClassのデフォルトにする
 
-standard-mode EKS cluster では、依然として `gp2` がデフォルトの StorageClass として出荷されています。gp3 をデフォルトにすることが第一歩です。
+StorageClassのデフォルトは、クラスターのバージョンやプロビジョニング方法によって異なります。`kubectl get storageclass -o yaml`でプロビジョナー、タイプ、デフォルトのアノテーションを確認してください。以下は一般的なEBS CSIの例です。既存のデフォルトクラスがあれば、明示的に調整してください。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -220,13 +251,14 @@ allowVolumeExpansion: true
 ```
 
 ```bash
-kubectl annotate storageclass gp2 storageclass.kubernetes.io/is-default-class-
+# Run only if gp2 actually exists and is the default.
+kubectl annotate storageclass gp2 storageclass.kubernetes.io/is-default-class="false" --overwrite
 kubectl apply -f gp3-storageclass.yaml
 ```
 
-### 既存 PVC: VolumeAttributesClass でインプレース変更する
+### 既存のPVC: VolumeAttributesClassでインプレース変更する
 
-`VolumeAttributesClass` (`storage.k8s.io/v1`、Kubernetes 1.34 以降 GA) は、PVC を削除せずに volume の type を変更します。EBS CSI driver は `type`、`iops`、`throughput` parameters をサポートし、内部で EBS Elastic Volumes (`ModifyVolume`) を呼び出すため、pod は実行を継続します。
+`VolumeAttributesClass`（`storage.k8s.io/v1`、Kubernetes 1.34からGA）は、PVCを削除せずにボリュームのタイプを変更します。EBS CSIドライバーは`type`、`iops`、`throughput`のパラメーターをサポートし、内部でEBS Elastic Volumesの`ModifyVolume`を呼び出すため、Podは稼働を継続できます。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -238,33 +270,47 @@ parameters:
   type: gp3
 ```
 
+上記のVACを`gp3-baseline-volumeattributesclass.yaml`として保存してください。`kubectl api-resources --api-group=storage.k8s.io`でAPIの検出を確認し、互換性のあるEBS CSI、external-provisioner、resizerの各バージョンをインストールします。対象PVCの名前空間を指定してください。タイプだけを指定すると、gp2でより高いスループットが設定されていた場合に、gp3のベースラインへ下げずに引き継がれ、追加料金が発生することがあります。
+
 ```bash
-kubectl patch pvc data-postgres-0 -p '{"spec":{"volumeAttributesClassName":"gp3-baseline"}}'
+kubectl apply -f gp3-baseline-volumeattributesclass.yaml
+kubectl patch pvc data-postgres-0 --type=merge -p '{"spec":{"volumeAttributesClassName":"gp3-baseline"}}'
 kubectl get pvc data-postgres-0 -o jsonpath='{.status.currentVolumeAttributesClassName}'
 ```
 
-注意点は 2 つあります。EBS では同じ volume への次の modification の前に各 modification が `completed` state に到達する必要があり (1 TiB volume では完了まで最大 6 時間かかることがあります)、**rolling 24-hour period あたり volume ごとに最大 4 回の modification** しか許可されないため、type、IOPS、throughput の変更を 1 つの request にまとめてください。また、Kubernetes 1.31–1.33 では API は feature gate 配下の `v1beta1` です。`aws ec2 modify-volume --volume-type gp3` を直接実行しても機能しますが、PV object には StorageClass 名として `gp2` が残るため、後で混乱を招きます。
+注意点が2つあります。EBSでは、同じボリュームに対する次の変更を行う前に、前の変更が`completed`状態になる必要があります（1 TiBのボリュームでは通常、完了まで最大6時間かかることがありますが、完了時間はベストエフォートです）。また、**ローリング24時間あたり、1ボリュームにつき最大4回まで**変更できます。そのため、タイプ、IOPS、スループットの変更を1つのリクエストにまとめてください。Kubernetes 1.31～1.33では、ディストリビューションの`v1beta1` APIと、コントロールプレーンおよびサイドカーの機能ゲート設定を確認してください。直接のModifyVolume呼び出しもVACも、既存の`storageClassName`を自動では変更しません。希望する属性はPVC/VACで管理し、PVCの変更状態と実際のEBSタイプ、IOPS、スループットの両方を確認してください。
 
-### 残っている gp2 すべてに alarm を設定する
+### 残っているgp2ボリュームを監視する
 
-migration が完了するまで、CloudWatch EBS metric **`BurstBalance`** (残り credit、percent) に alarm を設定してください。この記事の gp2 volume では、約 15% で発火させると cliff の 5 分前に warning を得られます。cliff は予告なく到来します。credit balance が予告です。
+移行が終わるまで、**CloudWatchのEBSメトリクス`BurstBalance`**（残っているクレジットの割合）にアラームを設定してください。この記事のgp2ボリュームでは、15%は3,000 IOPSを一定に消費した場合、約5分に相当します。実際の消費量、アラームの評価期間、欠落データも考慮してください。急落は予告なく起こります。クレジット残高がその予告になります。
 
-## 再現方法
+## 再現手順
 
-1. 上の manifest を適用します: `kubectl apply -f bench-storage.yaml`、続いて `kubectl wait -n bench-storage pod/fio --for=condition=Ready`。
-2. fio command block を pod 内の shell script に入れ、**`nohup` で実行**し、結果を volume (`/mnt/gp3/results`) に書き込みます。`kubectl exec` が 45 分間維持されると想定しないでください。また pod の `/tmp` は pod とともに消えます。
-3. IOPS time series 用に、`--write_iops_log` の出力 (`*_iops.1.log`、format は `time_ms, iops, ...`) を直接プロットします。
-4. 最後に `kubectl delete ns bench-storage` を実行します。PVC は `Delete` reclaim policy を使用するため、volume も一緒に削除されます。合計 wall time は約 70 分、コストは m5.xlarge が約 $0.30 に volume-hours 数セントです。
+1. 上記のマニフェストを適用します: `kubectl apply -f bench-storage.yaml`を実行し、続けて`kubectl wait -n bench-storage pod/fio --for=condition=Ready --timeout=300s`を実行します。
+2. fioコマンドブロックをPod内のシェルスクリプトに入れ、**`nohup`で実行**して、結果をボリューム（`/mnt/gp3/results`）に書き込みます。`kubectl exec`が45分間切断されないとは限りません。また、Podの`/tmp`はPodとともに削除されます。
+3. IOPSの時系列を得るには、`--write_iops_log`の出力（`*_iops.1.log`、形式は`time_ms, iops, ...`）を直接プロットします。
+4. 専用の`bench-storage`名前空間を削除する前に、未加工のJSON、IOPSログ、CloudWatchの時系列データ、PVC/EBSの設定をクラスター外にエクスポートします。この例ではDeleteのreclaimPolicyを使うため、データも削除されます。クラスター全体に適用される`bench-gp2` / `bench-gp3` StorageClassは別途削除してください。料金は、実行後にリソースを残す時間も含め、実際のノード、ボリューム、EKSコントロールプレーン、ネットワークの使用量によって変わります。
 
 ## 注意事項
 
-- **単一 volume、単一実行。**AWS は gp2 と gp3 の両方を「99% の時間で provisioned performance を提供する」よう設計しているため、別の日の別 volume では IOPS が数 percent 異なる可能性があります。この記事の対象は絶対値ではなく、**credit model の形状**です。
-- cliff 測定前の gp2 volume に対する事前負荷については、測定 1 の開示を参照してください。
-- `direct=1` は page cache をバイパスします。実際の database は buffer pool と OS cache により、はるかに少ない IOPS で動作できます。まさにこれが、gp2 cliff が「ときどきだけ」現れ、diagnose に時間がかかる理由です。
-- 100 GiB より大きい gp2 volume は比例して高いベースラインを持ちます (334 GiB → 1,002 IOPS)。また 1 TiB 以上ではベースラインが 3,000 であるため cliff はありません。ここでの結論は **1 TiB 未満の gp2 volume** に適用されます。
+- **単一ボリューム、単一実行です**。AWSはgp2とgp3の両方について、「プロビジョニングした性能を99%の時間で提供する」よう設計しています。そのため、別の日に別のボリュームを使うとIOPSが数%異なることがあります。この記事で扱うのは絶対値ではなく、**クレジットモデルの挙動**です。
+- 急落を測定する前にgp2ボリュームへ負荷をかけた条件については、測定1の開示を参照してください。
+- `direct=1`はページキャッシュを迂回します。実際のデータベースはバッファープールとOSキャッシュを使うため、はるかに少ないIOPSでも動作します。だからこそgp2の急落は「ときどき」しか現れず、診断に時間がかかります。
+- 100 GiBを超えるgp2ボリュームではベースラインも比例して高くなります（334 GiB → 1,002 IOPS）。1,000 GiB以上ではベースラインが少なくとも3,000 IOPSとなり、性能の急落はありません。ここでの結論は、**ベースラインが3,000 IOPS未満のgp2ボリューム**に当てはまります。
 
 ## 関連資料
 
-- [Storage Overview](./README.md) — EKS storage の選び方と、この benchmark の位置付け
-- [EKS Storage Part 1](../eks/04-eks-storage-part1.md) — EBS CSI driver のインストールと StorageClass の基本
-- [ClickHouse on EKS 実測ベンチマーク](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) — この記事の 125 MiB/s throughput ceiling が実際の database full scan でどのように現れるか
+- [ストレージの概要](./README.md): EKSストレージの選び方と、このベンチマークの位置付け
+- [EKSストレージ 第1部](../eks/04-eks-storage-part1.md): EBS CSIドライバーのインストールとStorageClassの基本
+- [EKS上のClickHouse実測ベンチマーク](../database/01-clickhouse-on-eks.md): この記事のスループット上限125 MiB/sが、実際のデータベースのフルスキャンにどう現れるか
+
+## 参照資料
+
+- [EBS gp2/gp3の性能](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
+- [EC2のEBS最適化帯域幅](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html)
+- [EBSボリューム変更時の考慮事項](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html)
+- [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/)
+- [EBS CSIによるボリューム変更](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md)
+- [Karpenterの中断](https://karpenter.sh/docs/concepts/disruption/)
+- [fioのレイテンシー定義](https://github.com/axboe/fio/blob/master/HOWTO.rst)
+- [Alpineのリリースサポート](https://alpinelinux.org/releases/)

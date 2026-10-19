@@ -1,10 +1,10 @@
 # Linkerdのインストールと設定
 
-> **最終更新**: September 11, 2026 · 公開CLI: edge-26.9.1 · 対応チャート: 2026.9.1
+> **最終更新**: 2026年10月16日 · 公開CLI: edge-26.10.1 · 対応チャート: 2026.10.1
 
-管理されたKubernetes導入、Helm/CLI所有権、HA、任意拡張、EKS、更新、削除を扱います。上流はedge成果物を公開し、stableディストリビューションの導入/サポートはベンダーごとです。2.20という節目は上流stable-2.20.0ダウンロードではありません。
+このガイドでは、Kubernetesへの制御された導入、Helm/CLIの所有権管理、高可用性（HA）、任意の拡張機能、EKS固有の考慮事項、アップグレード、削除を扱います。上流はedge成果物を公開し、stableディストリビューションの導入/サポートはベンダーごとです。2.20という節目は上流stable-2.20.0ダウンロードではありません。
 
-PowerShell表記以外はBashを使います。意図したkubeconfig/contextと所有者を使用します。CLIとHelmは**代替手順**で、Helm所有リリースへCLI生成リソースを適用しないでください。オフライン確認では本番サイズ、ストレージ、ネットワーク適用、アプリ互換性は成立しません。
+PowerShell表記以外はBashを使います。意図したkubeconfig/contextと所有者を使用します。CLIとHelmは**代替手順**で、Helm所有リリースへCLI生成リソースを適用しないでください。オフラインでの確認だけでは、本番環境でのサイジング、ストレージ、ネットワーク制御、アプリケーション互換性を検証できません。
 
 ## 前提条件
 
@@ -13,7 +13,7 @@ PowerShell表記以外はBashを使います。意図したkubeconfig/contextと
 | 系列/版 | Kubernetesの根拠 | Gateway APIの根拠 |
 |---|---|---|
 | Linkerd 2.20の節目/ディストリビューション | 公表表1.31–1.35。ベンダー対応を確認 | 公表表1.2.1–1.5.1 |
-| ここでの公開edge-26.9.1 | CLI最小1.31.0。edge-26.8.2でテスト最大1.36へ引き上げ | 1.5.1対応をリリース。このガイドはStandardバンドル |
+| ここでの公開edge-26.10.1 | CLI最小1.31.0。edge-26.8.2でテスト最大1.36へ引き上げ | 1.5.1対応をリリース。このガイドはStandardバンドル |
 | 過去の2.16 | 公表表1.22–1.29 | 現在の導入推奨ではない |
 | 過去の2.15 / 2.14 | 公表範囲1.22–1.29 / 1.21–1.28 | 対応リリースを確認。「以降すべてのKubernetes」対応と推測しない |
 
@@ -27,7 +27,7 @@ CLIの最小版チェックは最大対応チェックではありません。ch
 
 ### ネットワーク経路と事前確認
 
-全場所に開くポート一覧でなく、送信元/宛先経路を検証します。
+どこにでも開放するポート一覧に頼らず、送信元から宛先への実際の通信経路を検証してください。
 
 | 経路 | 固定レンダリングのデフォルト例 |
 |---|---|
@@ -37,10 +37,10 @@ CLIの最小版チェックは最大対応チェックではありません。ch
 | Viz（導入時） | Tap API server 8089、tap gRPC 8088、metrics API 8085、Prometheus 9090 |
 | 診断 | Proxy metrics 4191、web UI 8084、別web admin/readiness 9994 |
 
-コンポーネントのポートで、無制限SGルール群ではありません。DNS、Kubernetes API、選択CNI/NetworkPolicy動作も含めます。実Service targetPortsとWebhook設定を確認します。
+これらはコンポーネントごとのポート例であり、すべての送信元に無制限のセキュリティグループルールを設定する指示ではありません。DNS、Kubernetes API、選択した CNI/NetworkPolicy の動作も考慮してください。実際の Service の targetPort と Webhook 設定を確認してください。
 
 ```bash
-LINKERD_CHART_VERSION=2026.9.1
+LINKERD_CHART_VERSION=2026.10.1
 CNI_ENABLED=false  # Set true only after installing/verifying Linkerd CNI.
 kubectl config current-context
 kubectl version
@@ -52,22 +52,22 @@ kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/re
 linkerd check --pre --linkerd-cni-enabled="$CNI_ENABLED"
 ```
 
-既存CRD所有権と全利用controller確認後、必要な場合だけGateway APIバンドルを適用します。Linkerd CNI選択時は制御前に導入/確認し、後述CNI対応チェックを使います。実出力と終了コードを読みます。旧例の長い「全部緑」出力はあなたのクラスター結果ではありません。
+既存 CRD の所有者と、それを利用するすべてのコントローラーを確認してから、必要な場合に限り Gateway API バンドルを適用してください。Linkerd CNI を選ぶ場合は、コントロールプレーンの前にインストールして準備完了を確認し、後述の CNI 対応チェックを使います。実際の出力と終了コードを確認してください。以前の例にある長い「すべて成功」を示す出力は、あなたのクラスターで得られた結果ではありません。
 
 ## Linkerd CLIのインストール
 
 ### 固定Linux/macOSバイナリ
 
-正確な公開assetを選び、公式release metadataのSHA256と比較します。PATH変更は現在のシェルだけです。
+公開リリースから使用するアセットを正確に選び、その SHA256 を公式リリースメタデータと照合してください。PATH の変更は現在のシェルにのみ適用されます。
 
 ```bash
 set -euo pipefail
-LINKERD_VERSION=edge-26.9.1
+LINKERD_VERSION=edge-26.10.1
 case "$(uname -s)/$(uname -m)" in
-  Linux/x86_64) suffix=linux-amd64; expected=094e1de06215fbe76fc011cf62c96214f8dae0cd5a58135fb40307be88b6b176 ;;
-  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=f92eddc52dc1f3089b65fd16014cdb1bc6b07c3fd177091c365cf3d8c0ea1a8b ;;
-  Darwin/x86_64) suffix=darwin; expected=acff9471f26552dd0ebb9560925a98d5ca1213a13dfc81464a2b815c9201664d ;;
-  Darwin/arm64) suffix=darwin-arm64; expected=5050da9d974e0c2f548a2e9f145540ec035582cfd67f47c58c37411ae3008913 ;;
+  Linux/x86_64) suffix=linux-amd64; expected=66d634f5318c8016f0b5face246a688964b6e2c86d6c3be34be68ab9fcd2a8cc ;;
+  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=431989b15b48acfd6e344ff16a0d3505574c0cce551a2d4aeae82246ce65a5cc ;;
+  Darwin/x86_64) suffix=darwin; expected=bcf7acaf8a946cffd262d075dcaa50e9b583d8191bfa6e1c20fd3593fe6db524 ;;
+  Darwin/arm64) suffix=darwin-arm64; expected=abaaaeba9334feae7c1f16dd43a6f85b6051eadf49425f0ae30cbf16eba29f70 ;;
   *) echo "No verified asset for this OS/architecture in this example" >&2; exit 1 ;;
 esac
 CLI_DIR="$PWD/linkerd-cli/$LINKERD_VERSION"
@@ -96,7 +96,7 @@ linkerd version --client
 ```bash
 curl --proto '=https' --tlsv1.2 -fsSL https://run.linkerd.io/install-edge -o install-linkerd.sh
 # Inspect the downloaded script before execution.
-LINKERD2_VERSION=edge-26.9.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
+LINKERD2_VERSION=edge-26.10.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
 export PATH="$PWD/linkerd-installer/bin:$PATH"
 linkerd version --client
 ```
@@ -109,8 +109,8 @@ release asset名はwindows-amd64.exeでなくwindows.exeです。
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$LinkerdVersion = "edge-26.9.1"
-$ExpectedSha256 = "d50119c635a0052bfcc7e0b96dcc985676b237ebc87464380677c413344d99a9"
+$LinkerdVersion = "edge-26.10.1"
+$ExpectedSha256 = "7f6d3b1183bfed8d555e55fbb4934695e1376c8a3fab77a5d3f8954ec0306dc7"
 $Download = Join-Path (Get-Location) "linkerd.download.exe"
 $Url = "https://github.com/linkerd/linkerd2/releases/download/$LinkerdVersion/linkerd2-cli-$LinkerdVersion-windows.exe"
 Invoke-WebRequest -Uri $Url -OutFile $Download
@@ -150,7 +150,7 @@ helm repo update linkerd-edge
 helm show chart linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
 ```
 
-対応公開チャートはlinkerd-crds、linkerd-control-plane、linkerd-viz、linkerd-multicluster、linkerd2-cniの2026.9.1です。現core appVersionはedge-26.9.1です。未固定の古いstableリポジトリチャートを入れ、CLIに合うと想定しないでください。
+対応公開チャートはlinkerd-crds、linkerd-control-plane、linkerd-viz、linkerd-multicluster、linkerd2-cniの2026.10.1です。現core appVersionはedge-26.10.1です。未固定の古いstableリポジトリチャートを入れ、CLIに合うと想定しないでください。
 
 #### Trust anchorとissuer
 
@@ -332,7 +332,7 @@ linkerd viz check
 
 選択チャートはpersistenceの**mapが存在する**と永続化をサポートします。persistence.enabledはスイッチではありません。PVC templateはaccessMode必須で、旧例は省略してnullをrenderしていました。map省略はemptyDirです。gp3 StorageClassは前提例でVizが作るものではありません。EKSではEBS CSI、権限、volume topologyを確認します。
 
-同梱Prometheusは1レプリカで、永続化はRecreate戦略を選びます。PVCは適切なPod置換をまたいで保存しますが、保存HAや無停止保証にはなりません。2026.9.1はPrometheus v2.55.1と6時間保持がデフォルトです。保守、保持、可用性要件を明示選択します。
+同梱Prometheusは1レプリカで、永続化はRecreate戦略を選びます。PVCは適切なPod置換をまたいで保存しますが、保存HAや無停止保証にはなりません。2026.10.1はPrometheus v2.55.1と6時間保持がデフォルトです。保守、保持、可用性要件を明示選択します。
 
 設定済み外部Prometheusには、この**代替**valuesを使います。
 
@@ -348,7 +348,7 @@ prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 
 ### 分散トレーシング
 
-edge-26.9.1にlinkerd jaegerサブコマンドはありません。公開linkerd-jaegerチャート履歴は2025.9.4で止まり、2026.9.1対応拡張ではありません。旧install/check/upgrade/uninstallを別管理collector/backendと選択proxy tracing設定へ置き換えます。
+edge-26.10.1にlinkerd jaegerサブコマンドはありません。公開linkerd-jaegerチャート履歴は2025.9.4で止まり、2026.10.1対応拡張ではありません。旧install/check/upgrade/uninstallを別管理collector/backendと選択proxy tracing設定へ置き換えます。
 
 トレースには受信コンテキスト、アプリ伝播、互換collector/exportプロトコルが必要です。Vizトポロジー/メトリクスグラフは分散トレースではありません。完全経路は[可観測性ガイド](05-observability.md)と[公式トレース文書](https://linkerd.io/docs/features/distributed-tracing/)を参照します。この監査は未テストcollector/Jaegerのend-to-end動作を主張しません。旧linkerd-jaeger releaseがあるならデータを棚卸し・移行し、元の所有者で廃止します。現CLIは削除拡張を管理できません。
 
@@ -418,7 +418,7 @@ Cilium kube-proxy置換では、文書化されたsocketLB.hostNamespaceOnly=tru
 
 ### 既存EKSクラスター
 
-対応既存clusterを使い、Linkerd系列とEKS提供状況の両方で版を確認します。旧EKS 1.28作成コマンドは現在の案内として古いものです。Linux手順は互換EC2ノードを前提とします。Fargateは示すCNI DaemonSetを実行できず、交換可能な対象ではありません。
+対応している既存クラスターを使い、Linkerd のバージョン系列と EKS での提供状況の両方を確認してください。旧EKS 1.28作成コマンドは現在の案内として古いものです。Linux手順は互換EC2ノードを前提とします。Fargateは示すCNI DaemonSetを実行できず、交換可能な対象ではありません。
 
 専用kubeconfigを準備する場合:
 
@@ -635,7 +635,7 @@ Linkerd CNIを入れた場合は依存workloadがなくなってから別途node
 
 ## 参考資料
 
-- [リリースモデル](https://linkerd.io/releases/)と[edge-26.9.1成果物](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)
+- [リリースモデル](https://linkerd.io/releases/)と[edge-26.10.1成果物](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)
 - [Kubernetes対応表](https://linkerd.io/docs/reference/k8s-versions/)と[Gateway API互換性](https://linkerd.io/docs/features/gateway-api/)
 - [Helm導入](https://linkerd.io/docs/tasks/install-helm/)と[公式edgeチャート索引](https://helm.linkerd.io/edge/index.yaml)
 - [HA動作](https://linkerd.io/docs/features/ha/)と[cluster/Cilium設定](https://linkerd.io/docs/reference/cluster-configuration/)

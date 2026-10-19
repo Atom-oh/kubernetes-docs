@@ -1,41 +1,41 @@
-# ExampleCorp 注文システム: ACK + kro の統合
+# ExampleCorpの注文システム: ACKとkroの統合
 
-> **最終更新**: September 12, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
+> **最終更新日**: 2026年10月16日 · kro 0.9.4 / AWS Load Balancer Controller 3.6.0
 
 ## シナリオと検証範囲
 
-ExampleCorp は架空の企業です。このガイドは、kro のアプリケーショングラフと ACK が管理するインフラストラクチャを接続する統合コントラクトを定義します。動作する Order API や公開されたアプリケーションイメージを提供するエンドツーエンドのラボではありません。以前の架空の ECR イメージは、実行可能なものとしては提示されていません。
+ExampleCorpは架空の企業です。このガイドでは、kroのアプリケーショングラフとACK管理のインフラストラクチャを接続する統合コントラクトを定義します。動作するOrder APIや、公開済みのアプリケーションイメージを提供するエンドツーエンドのラボではありません。以前の架空のECRイメージは、実行可能なものとして提示していません。
 
-ACK は NLB、TargetGroup、Listener、Route 53 レコード、および Aurora を管理します。kro は Service、ConfigMap、TargetGroupBinding (TGB)、および Deployment リソースを作成します。**別個の AWS Load Balancer Controller (LBC) が TGB を reconcile し、Pod IP ターゲットの登録/登録解除を行います。** ACK と kro をインストールするだけでは、その接続は実装されません。
+ACKはNLB、TargetGroup、Listener、Route 53レコード、Auroraを管理します。kroはService、ConfigMap、TargetGroupBinding (TGB)、Deploymentリソースを作成します。**別個のAWS Load Balancer Controller (LBC) がTGBを調整し、Pod IPターゲットを登録/登録解除します。** ACKとkroをインストールするだけでは、この接続は実装されません。
 
-![AWS LBC が ACK インフラストラクチャと kro アプリケーションの間で TargetGroupBinding を reconcile する](../.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png)
+![ACKインフラストラクチャとkroアプリケーション間のTargetGroupBindingをAWS LBCが調整する構成図](../.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png)
 
 [インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-05-example-corp-app-0.html)
 
 ## インフラストラクチャとアプリケーションの前提条件
 
-まず [ACK リソースの例](ack/03-elbv2-route53-rds.md) にある現在のスキーマとライフサイクルのガイダンスを確認してください。承認済みの VPC/プライベートサブネット/セキュリティグループ、内部 NLB/Listener、ip タイプの TargetGroup、DNS、および Aurora クラスター/インスタンスを準備します。TargetGroup ARN は、以前の `.status.targetGroupARN` ではなく `.status.ackResourceMetadata.arn` から読み取ってください。
+最初に、[ACKリソースの例](ack/03-elbv2-route53-rds.md)にある現在のスキーマとライフサイクルのガイダンスを確認してください。承認済みのVPC/プライベートサブネット/セキュリティグループ、内部NLB/Listener、ipタイプのTargetGroup、DNS、Auroraクラスター/インスタンスを準備します。TargetGroup ARNは、以前使われていた`.status.targetGroupARN`ではなく、`.status.ackResourceMetadata.arn`から読み取ってください。
 
-AWS LBC、その CRD、IAM/ServiceAccount、および webhook は別途準備します。このガイドが確認しているのは OSS LBC 3.5.0 の elbv2.k8s.aws/v1beta1 TGB であり、EKS Auto Mode の異なるロードバランシング API ではありません。TGB の作成者は controller の IAM 権限の範囲内で TargetGroup を参照できるため、許可する ARN、namespace、および書き込みアクセスを制限してください。
+AWS LBC、そのCRD、IAM/ServiceAccount、webhookは別途準備します。このガイドが確認するのはOSS LBC 3.6.0のelbv2.k8s.aws/v1beta1 TGBであり、EKS Auto Modeの別のロードバランシングAPIではありません。TGBを作成できる主体は、コントローラーのIAM権限で許可されたTargetGroupを参照できるため、許可するARN、名前空間、書き込み権限を制限してください。
 
-運用者は、次のコントラクトを満たす Order API イメージを提供する必要があります。
+運用者は、以下のコントラクトを満たすOrder APIイメージを用意する必要があります。
 
-- 設定されたポートで HTTP を提供し、readiness を `/readyz` で公開する。
-- ConfigMap の設定から DB_WRITER_HOST、DB_READER_HOST、DB_PORT、および DB_NAME を読み取る。
-- DB_CREDENTIALS_DIR 以下の認証情報ファイルを読み取り、ローテーションする。パスワードを環境変数、ConfigMap、または status に置かないこと。
-- UID 10001、読み取り専用の root、制限されたリソース、および書き込み可能な /tmp ボリュームで動作する。実際のイメージが異なる場合は、セキュリティポリシーに従ってコントラクトを適合させてください。
+- 設定したポートでHTTPを提供し、`/readyz`でreadinessを返す。
+- DB_WRITER_HOST、DB_READER_HOST、DB_PORT、DB_NAMEをConfigMapの設定から読み取る。
+- DB_CREDENTIALS_DIR配下の認証情報ファイルを読み取り、ローテーションに対応する。パスワードを環境変数、ConfigMap、statusに格納しない。
+- UID 10001、読み取り専用root、上限を設定したリソース、書き込み可能な`/tmp`ボリュームで動作する。実際のイメージが異なる場合は、セキュリティポリシーに従ってコントラクトを適合させる。
 
-production と order-db-credentials は、承認済みの provider/ESO フローを通じて準備してください。RDS が管理する Secrets Manager の認証情報は、Kubernetes Secret を自動的に作成しません。アプリケーションのデータベース/ユーザー、最小限の DB 権限、TLS 検証、およびコネクションプーリングは別個の要件です。CR でデータベース名を指定しても、そのデータベースは作成されません。
+productionとorder-db-credentialsは、承認済みのprovider/ESOフローで準備します。RDS管理のSecrets Manager認証情報からKubernetes Secretが自動作成されるわけではありません。アプリケーションのデータベース/ユーザー、最小限のDB権限、TLS検証、コネクションプールは、それぞれ別途必要です。CRでデータベース名を指定しても、データベース自体は作成されません。
 
-## Readiness gate と作成順序
+## Readiness gateと作成順序
 
-LBC の Pod readiness gate を使うには、**Pod の作成前に** namespace に elbv2.k8s.aws/pod-readiness-gate-inject=enabled のラベルを付与します。対応する Service とその ip タイプの TGB が既に存在している必要があります。グラフは CEL によって Service → TGB → Deployment の順序を強制します。Deployment のアノテーションが TGB 名を参照することで、その依存関係を確立します。
+LBCのPod readiness gateを使うには、**Podを作成する前に**名前空間に`elbv2.k8s.aws/pod-readiness-gate-inject=enabled`ラベルを付けます。対応するServiceとip型TGBがすでに存在している必要があります。グラフではCELによってService → TGB → Deploymentの順序を強制します。DeploymentのアノテーションがTGB名を参照し、その依存関係を示します。
 
-TGB には、ターゲットが healthy になるのを待つ readyWhen はありません。Pod の作成をターゲットの health を待たせると、healthy なターゲットになる Pod が存在しないためデッドロックする可能性があります。TGB の存在、LBC の reconcile、ターゲットの health、および Pod の readiness は異なる状態です。webhook の failurePolicy/インジェクション、ロールアウト、シャットダウンの猶予時間、および登録解除の遅延を検証してください。
+TGBには、ターゲットがhealthyになるまで待つreadyWhenはありません。ターゲットのhealthを待ってからPodを作成すると、healthyなターゲットになるPodがまだないためデッドロックする可能性があります。TGBの存在、LBCの調整、ターゲットのhealth、Podのreadinessはそれぞれ別の状態です。webhookのfailurePolicy/注入、ロールアウト、シャットダウン猶予時間、登録解除の遅延を確認してください。
 
 ## ResourceGraphDefinition
 
-これらのファイルは examples/platform/examplecorp にもあります。OrderApp/status/finalizers と Service、ConfigMap、Deployment、TGB リソースに対する集約 RBAC を確認し、追加してください。RGD を作成する権限は、controller の権限の使用を委譲することになります。
+これらのファイルはexamples/platform/examplecorpにもあります。OrderApp/status/finalizersと、Service、ConfigMap、Deployment、TGBリソースの集約RBACを確認して追加してください。RGDの作成権限を与えると、コントローラー権限の使用を委譲することになります。
 
 ```yaml
 apiVersion: kro.run/v1alpha1
@@ -187,9 +187,9 @@ spec:
                 secretName: ${schema.spec.credentialsSecretName}
 ```
 
-## インスタンスの入力
+## インスタンスへの入力
 
-以下の example.invalid のアドレス/イメージおよび ARN/VPC ID はプレースホルダーです。実際の ACK のエンドポイント/ARN を読み取り、使用前にアプリケーションイメージのダイジェストと Secret を検証してください。手動でコピーしたエンドポイントは ACK の変更に自動的に追従しないため、承認済みの GitOps による入力更新の経路を用意してください。
+以下のexample.invalidのアドレス/イメージ、ARN/VPC IDはプレースホルダーです。実際のACKエンドポイント/ARNを取得し、利用する前にアプリケーションイメージのダイジェストとSecretを検証してください。手動でコピーしたエンドポイントはACKの変更に自動追従しません。承認済みのGitOps経由で入力を更新できるようにしてください。
 
 ```yaml
 apiVersion: platform.example.com/v1alpha1
@@ -220,19 +220,19 @@ kubectl get deploy,svc,targetgroupbindings.elbv2.k8s.aws,configmap \
 kubectl get pods -n production -l app.kubernetes.io/name=order-api -o wide
 ```
 
-CR の condition と Deployment の状態を、Pod の readiness gate、EndpointSlice、TGB の状態、AWS のターゲット health、DNS/HTTP、およびデータベースの TLS 接続性と併せて確認してください。readiness がデータベースを確認するかどうかは実際のアプリケーションに依存します。生成されるすべてのリソースのメタデータには同じクエリ用ラベルが付きます。
+CRのconditionとDeploymentの状態を、Pod readiness gate、EndpointSlice、TGBの状態、AWSターゲットのhealth、DNS/HTTP、データベースのTLS接続性と併せて確認してください。readinessがデータベースを確認するかは、実際のアプリケーションによって異なります。生成されるすべてのリソースメタデータに同じクエリ用ラベルが付与されます。
 
-新しい決済サービスには、レビュー済みのイメージ、別個の TargetGroup/Listener のルーティング計画、およびデータベースのユーザー/権限/スキーマのコントラクトが必要です。Aurora を共有しても、データ、パフォーマンス、コストの分離は保証されません。複数の TGB/クラスター間で TargetGroup を共有する場合は、multiClusterTargetGroup のライフサイクルを意図的に扱う必要があります。デフォルトの所有権モデルを無視すると、他のターゲットが登録解除される可能性があります。
+新しい決済サービスには、レビュー済みイメージ、別個のTargetGroup/Listenerルーティング計画、データベースユーザー/権限/スキーマの契約が必要です。Auroraを共有しても、データ、性能、コストの分離は保証されません。複数のTGB/クラスターでTargetGroupを共有する場合は、multiClusterTargetGroupのライフサイクルを意図的に管理します。デフォルトの所有権モデルを無視すると、ほかのターゲットが登録解除される可能性があります。
 
-Aurora のレプリカは、サポートされているクラス/リージョンの組み合わせを使用して ACK DBInstance 経由で追加します。名前やタグによって writer の役割が決まるわけではありません。[RDS の例](ack/03-elbv2-route53-rds.md) にある promotionTier、エンドポイント、およびフェイルオーバーのガイダンスに従い、実際の負荷とリカバリをテストしてください。
+Auroraレプリカは、サポート対象のクラス/リージョンの組み合わせでACK DBInstanceから追加します。名前やタグでwriterの役割が決まるわけではありません。[RDSの例](ack/03-elbv2-route53-rds.md)にあるpromotionTier、エンドポイント、フェイルオーバーのガイダンスに従い、実際の負荷と復旧をテストしてください。
 
-Deployment のイメージを更新すると通常は RollingUpdate が実行され、自動的な Blue/Green やゼロダウンタイムが保証されるわけではありません。Blue/Green には、別個のアプリケーションバージョン、ターゲット/ルーティングの切り替え、検証メトリクス、ロールバック条件、およびデータベースの互換性が必要です。CR を削除/置換すると、子の TGB/Deployment やターゲットの関連付けがクリーンアップされる可能性があり、無害なバージョン切り替えではありません。
+Deploymentのイメージを更新すると通常はRollingUpdateが行われます。自動Blue/Greenやゼロダウンタイムが保証されるわけではありません。Blue/Greenには、別個のアプリケーションバージョン、ターゲット/ルーティングの切り替え、検証メトリクス、ロールバック条件、データベース互換性が必要です。CRを削除/置換すると、子リソースのTGB/Deploymentやターゲットとの関連付けがクリーンアップされる可能性があります。これは安全なバージョン切り替えではありません。
 
 ## 実施した確認
 
-元の両方のガイドとすべての例を読み、現在の RGD/TGB スキーマと比較しました。cel-go で 21 個の一意な式をコンパイル/評価し、4 つのリソース、Service/Pod の selector、ConfigMap/Service の参照、Deployment より前の TGB の依存関係、および status を確認しました。これらは合成入力を用いたローカルの確認です。AWS リソース、アプリケーションイメージ、データベース、ターゲット health、Pod の mutation、トラフィックはいずれも実行していません。
+元の両ガイドとすべての例を読み、現在のRGD/TGBスキーマと比較しました。cel-goで一意な式21個をコンパイル/評価し、4つのリソース、Service/Podセレクター、ConfigMap/Serviceの参照、Deploymentより前に必要なTGBの依存関係、statusを確認しました。これらは合成入力を用いたローカル確認です。AWSリソース、アプリケーションイメージ、データベース、ターゲットhealth、Podの変更、トラフィックはいずれも実行していません。
 
 - [ACK](02-ack.md)
 - [kro](03-kro.md)
-- [AWS LBC 3.5.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [Pod readiness gate](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/pod_readiness_gate.md)
+- [AWS LBC 3.6.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Pod readiness gate](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/pod_readiness_gate.md)

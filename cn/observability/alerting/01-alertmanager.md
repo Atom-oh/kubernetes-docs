@@ -1,7 +1,7 @@
 # Prometheus Alertmanager
 
 > **评审基线**：Alertmanager 0.34.0；kube-prometheus-stack 90.0.0 / Operator 0.93.1；独立 chart 1.43.1
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 ## 目录
 
@@ -442,7 +442,7 @@ spec:
 
 ### 告警状态
 
-以下 Prometheus 状态示意图假设 `for` 时长为正值且未设置 keep_firing_for；对于 `for` 为零的规则，匹配评估时即可立即触发。
+以下 Prometheus 状态示意图假设 for 时长为正值且未设置 keep_firing_for；对于 for 为零的规则，匹配评估时即可立即触发。
 
 ![Prometheus 状态示意图：for 时长为正值且未设置 keep_firing_for；对于 for 为零的规则，匹配评估时即可立即触发。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
 

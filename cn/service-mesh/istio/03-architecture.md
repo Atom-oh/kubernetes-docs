@@ -1,6 +1,6 @@
 # 架构
 
-> **审阅版本**: Istio 1.31.0 **API 版本**: `networking.istio.io/v1`, `security.istio.io/v1` **最后更新**: September 11, 2026
+> **审阅版本**: Istio 1.31.0 **API 版本**: `networking.istio.io/v1`, `security.istio.io/v1` **最后更新**: 2026 年 9 月 11 日
 
 本文深入介绍 Istio 的内部架构和网络机制。
 

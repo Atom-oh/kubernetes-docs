@@ -2,7 +2,7 @@
 
 > **Última actualización**: 16 de octubre de 2026
 
-Esta guía presenta el [formato propuesto llms.txt](https://llmstxt.org/) y Markdown para cada documento. Entregue el índice a una herramienta de IA que pueda recuperar URL, incorpore el catálogo y el texto fuente a una Wiki de LLM o a una canalización RAG, o conecte las herramientas de búsqueda y recuperación a un cliente MCP local. Publicar `llms.txt` no garantiza que todos los sistemas de IA lo descubran o busquen automáticamente. La herramienta consumidora necesita recuperación web o una conexión MCP.
+Esta guía presenta el [formato propuesto llms.txt](https://llmstxt.org/) y Markdown para cada documento. Proporcione el índice a una herramienta de IA que pueda recuperar direcciones URL, incorporar el catálogo y el texto fuente a una Wiki de LLM o una canalización RAG, o conectar las herramientas de búsqueda y recuperación a un cliente MCP local. Publicar `llms.txt` no garantiza que todos los sistemas de IA lo descubran o busquen automáticamente. La herramienta consumidora necesita recuperación web o una conexión MCP.
 
 ## Endpoints
 
@@ -18,7 +18,7 @@ Todos estos archivos y las páginas Markdown de cada documento se generan a part
 
 ## Ingesta de fuentes en una Wiki de LLM
 
-En este contexto, una Wiki de LLM conserva el material fuente y permite que la IA lo organice en páginas de conocimiento por tema. Este sitio proporciona documentos fuente y metadatos. La herramienta de ingesta sigue siendo responsable de crear y actualizar la Wiki o las incrustaciones.
+En este contexto, una Wiki de LLM conserva el material fuente y permite que la IA lo organice en páginas de conocimiento por tema. Este sitio proporciona documentos fuente y metadatos. La herramienta de ingesta sigue siendo responsable de crear y actualizar la Wiki o las representaciones vectoriales.
 
 1. Lea `llms/manifest.json` y filtre por `locale` y `section`. Elija un idioma para evitar ingerir dos veces el mismo tema.
 2. Recupere cada `markdownUrl` y almacene la fuente con su `id` estable. `sha256` corresponde a los bytes UTF-8 de Markdown y también puede verificar el contenido descargado.
@@ -35,7 +35,7 @@ El manifiesto tiene `schemaVersion: 1`. El Markdown por documento, el manifiesto
 
 ## Búsqueda y lectura mediante MCP
 
-El repositorio incluye un servidor MCP **stdio** creado con el [SDK oficial de TypeScript](https://github.com/modelcontextprotocol/typescript-sdk). Instale las dependencias del repositorio con Node.js 22 o posterior y luego inícielo. No se necesita compilar VitePress, una clave de API ni un servicio de incrustaciones.
+El repositorio incluye un servidor MCP **stdio** creado con el [SDK oficial de TypeScript](https://github.com/modelcontextprotocol/typescript-sdk). Instale las dependencias del repositorio con Node.js 22 o posterior y luego inícielo. No se necesita compilar VitePress, una clave de API ni un servicio de embeddings.
 
 ```bash
 git clone https://github.com/Atom-oh/kubernetes-docs.git
@@ -63,7 +63,7 @@ El último comando espera datos de MCP y no imprime un mensaje de inicio en el t
 | `fetch` | `{"id":"en/storage/01-ebs-gp2-gp3-benchmark.md","maxLength":12000}` | Markdown fuente, cita, encabezados, fecha de actualización y desplazamiento de continuación |
 | Continuar `fetch` | Pase como `offset` el `nextOffset` anterior | Recupera partes posteriores hasta que `nextOffset` sea `null` |
 
-Esta es una **búsqueda por palabras clave** en títulos, descripciones, encabezados y texto completo. La configuración regional predeterminada es `ko`; también se admiten `en` y `all`. Use términos concretos como `ambient mTLS` o `gp3 throughput` en vez de una pregunta completa. Si no encuentra coincidencias, use menos términos o pruebe con otro idioma. De forma predeterminada se devuelven 8 resultados y el máximo es 20. `fetch` lee 12 000 caracteres de forma predeterminada, hasta 50 000 por llamada. Los desplazamientos usan posiciones de cadena de JavaScript, no bytes; pase `nextOffset` tal como se devuelve, en lugar de calcularlo.
+Esta es una **búsqueda por palabras clave** en títulos, descripciones, encabezados y texto completo. La configuración regional predeterminada es `ko`; también se admiten `en` y `all`. Use términos concretos como `ambient mTLS` o `gp3 throughput` en vez de una pregunta completa. Si no encuentra coincidencias, use menos términos o pruebe con otro idioma. De forma predeterminada se devuelven 8 resultados y el máximo es 20. Fetch lee 12 000 caracteres de forma predeterminada, hasta 50 000 por llamada. Los desplazamientos usan posiciones de cadena de JavaScript, no bytes; pase `nextOffset` tal como se devuelve, en lugar de calcularlo.
 
 El servidor lee los archivos locales `ko/`, `en/` y `SUMMARY.md` al iniciarse. **No recupera el sitio publicado.** Actualice su copia de trabajo y reinicie el servidor MCP para actualizar la búsqueda. Solo se pueden leer los ID de documentos catalogados; no se pueden recuperar rutas arbitrarias ni URL externas. Las URL de cita apuntan al sitio público, por lo que las ediciones locales que aún no se hayan publicado pueden diferir del contenido publicado.
 

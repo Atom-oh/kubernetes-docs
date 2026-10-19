@@ -1,7 +1,7 @@
 # 第 5 部分：Kafka Connect 和 MirrorMaker
 
 > **审核基线**：Strimzi 1.3.0、Kafka 4.3.1、Debezium PostgreSQL 3.6.3.Final、Aiven S3 sink 3.4.3\
-> **最后审核日期**：October 16, 2026
+> **最后审核日期**：2026 年 10 月 16 日
 
 ## Connect 工作器和连接器
 

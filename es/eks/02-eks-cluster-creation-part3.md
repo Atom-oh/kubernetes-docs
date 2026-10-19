@@ -1,264 +1,270 @@
-# Parte 3: Creación de clústeres con AWS Management Console y CLI
+# Parte 3: Creación de clústeres con AWS Management Console y AWS CLI
 
-## Creación de un clúster mediante AWS Management Console
+> **Última actualización**: 11 de septiembre de 2026
 
-Los pasos para crear un clúster de EKS mediante AWS Management Console son los siguientes:
+Complete los [requisitos previos de la parte 1](02-eks-cluster-creation-part1.md). Los ejemplos crean recursos de AWS facturables y son flujos de trabajo educativos; en esta auditoría no se han aprovisionado ni certificado para producción.
 
-![Diagrama del flujo de trabajo de creación basada en consola, desde el inicio de sesión hasta la configuración del clúster, la revisión y creación, la adición de un grupo de nodos y la conexión.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-0.png)
+## Crear un clúster mediante AWS Management Console
+
+Esta sección crea un clúster convencional con un grupo de nodos administrado de EC2. Use **Custom configuration** y desactive **Use EKS Auto Mode**. El flujo rápido de Auto Mode usa roles y administra la infraestructura de otra manera.
+
+![Diagrama del flujo de trabajo de creación mediante la consola, desde el inicio de sesión hasta la configuración del clúster, la revisión y creación, la incorporación de un grupo de nodos y la conexión.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-0.html)
 
-1. Inicie sesión en [AWS Management Console](https://console.aws.amazon.com/).
-2. Busque "EKS" o seleccione "Elastic Kubernetes Service" en la lista de servicios.
-3. En la página "Clusters", haga clic en el botón "Create cluster".
+El diagrama ilustra el flujo de trabajo; el tiempo de creación puede variar. Revise explícitamente el acceso de la identidad creadora y la disponibilidad de los nodos: no dé por sentado que la configuración predeterminada satisface sus requisitos.
 
-### Configuración del clúster
+### Configurar el clúster
 
-4. En la página "Configure cluster", introduzca la siguiente información:
-   * **Nombre del clúster**: Introduzca un nombre único para el clúster.
-   * **Versión de Kubernetes**: Seleccione la versión de Kubernetes que desea utilizar.
-   * **Rol de servicio del clúster**: Cree un rol nuevo o seleccione un rol existente.
-   * **Etiquetas**: Añada etiquetas si es necesario.
-   * Haga clic en el botón "Next".
+Abra la consola de EKS en la cuenta y la región previstas, elija **Add cluster → Create** y seleccione la configuración personalizada indicada arriba.
+
+- Elija un nombre de clúster único y una versión de EKS que tenga soporte actualmente. El ejemplo de CLI siguiente usa **1.36**; las versiones publicadas de Kubernetes no equivalen al catálogo de versiones compatibles con EKS.
+- Seleccione un rol de IAM del clúster que se haya revisado, con relación de confianza para `eks.amazonaws.com` y `AmazonEKSClusterPolicy`. La identidad que aprovisiona también necesita los permisos adecuados de EKS e IAM, incluidos permisos de `iam:PassRole` con alcance limitado y, cuando haga falta, la creación del rol vinculado al servicio.
+- Revise la política de soporte estándar o extendido, las etiquetas y las funciones opcionales. Desde EKS 1.28, los datos de la API de Kubernetes ya se cifran mediante cifrado de sobre con una clave propiedad de AWS; una clave de KMS administrada por el cliente es opcional.
+- Seleccione la autenticación mediante entradas de acceso a la API. Para este laboratorio, impida la concesión automática de permisos de administrador a la identidad creadora y planifique una entrada de acceso explícita para el rol de operador existente. Crear el archivo kubeconfig más adelante no concede autorización.
 
 ### Especificar la red
 
-5. En la página "Specify networking", introduzca la siguiente información:
-   * **VPC**: Cree una VPC nueva o seleccione una VPC existente.
-   * **Subredes**: Seleccione las subredes que desea utilizar para el clúster. Al menos 2 subredes deben estar en diferentes zonas de disponibilidad.
-   * **Grupos de seguridad**: Seleccione los grupos de seguridad que desea utilizar para el clúster.
-   * **Acceso al endpoint del clúster**: Configure el acceso al endpoint del servidor de API del clúster.
-     * **Público**: Se puede acceder al servidor de API desde Internet.
-     * **Privado**: Solo se puede acceder al servidor de API desde la VPC.
-     * **Público y privado**: Se puede acceder al servidor de API tanto desde Internet como desde la VPC.
-   * Haga clic en el botón "Next".
+Seleccione una VPC existente que cumpla los requisitos de EKS, o prepare primero una con un diseño de red completo. Elija al menos dos subredes adecuadas en zonas de disponibilidad diferentes. Cada subred del clúster necesita al menos seis direcciones IP disponibles; AWS recomienda al menos dieciséis, y la capacidad adicional para nodos, Pods y actualizaciones requiere planificación.
+
+Revise DNS de VPC, rutas, solapamientos entre la familia IP y el CIDR del servicio, y el acceso de los nodos a los servicios y registros necesarios de AWS. Use subredes privadas para los nodos con NAT o puntos de conexión de VPC adecuados. Las opciones del endpoint de la API son:
+
+- **Público:** enrutable desde redes públicas; `publicAccessCidrs` restringe los rangos de origen de los clientes autorizados.
+- **Privado:** acceso mediante la VPC o redes conectadas, con las rutas, DNS, grupos de seguridad y autorizaciones de IAM y Kubernetes necesarios.
+- **Público y privado:** habilita ambas vías; restrinja los CIDR públicos y verifique la ruta privada.
+
+EKS crea el grupo de seguridad del clúster. Los grupos adicionales son opcionales y se asocian a las interfaces del clúster; no se adjuntan automáticamente a todos los grupos de nodos. El endpoint público de la API no se controla con una regla TCP 443 general en este grupo.
 
 ### Configurar el registro
 
-6. En la página "Configure logging", introduzca la siguiente información:
-   * **Registro del plano de control**: Seleccione los tipos de registros que desea habilitar.
-     * Registros del servidor de API
-     * Registros de auditoría
-     * Registros del autenticador
-     * Registros del administrador de controladores
-     * Registros del programador
-   * Haga clic en el botón "Next".
+En **Configure observability**, seleccione los tipos de registro del plano de control necesarios: `api`, `audit`, `authenticator`, `controllerManager` y `scheduler`. Revise aparte las funciones opcionales de métricas. La ingesta, el almacenamiento y las consultas de CloudWatch tienen un costo, y la entrega de registros se realiza con el mejor esfuerzo.
 
 ### Seleccionar complementos
 
-7. En la página "Select add-ons", introduzca la siguiente información:
-   * **Amazon VPC CNI**: Plugin de CNI para redes de Pod.
-   * **CoreDNS**: Servicio DNS dentro del clúster.
-   * **kube-proxy**: Proporciona proxy de red y balanceo de carga.
-   * Haga clic en el botón "Next".
+En este clúster convencional de EC2, mantenga versiones compatibles de VPC CNI, CoreDNS y kube-proxy salvo que tenga una sustitución revisada. Seleccione versiones compatibles en **Configure selected add-ons settings** y configure las identidades IAM necesarias para los complementos. Los controladores opcionales y los drivers de almacenamiento requieren su propia instalación y sus propios permisos.
 
 ### Revisar y crear
 
-8. En la página "Review and create", revise la configuración y haga clic en el botón "Create".
+Revise los roles, el modo de acceso, la red y la configuración de complementos elegidos; después, cree el clúster y espere a que alcance el estado **ACTIVE**. Configure la entrada de acceso del operador antes de intentar acceder con kubectl.
 
-Una vez finalizada la creación del clúster, puede hacer clic en el botón "Add node group" para añadir un grupo de nodos.
+### Añadir un grupo de nodos
 
-### Añadir grupo de nodos
+Añada un grupo de nodos administrado desde la sección **Compute** del clúster:
 
-1. En la página "Node group configuration", introduzca la siguiente información:
-   * **Nombre del grupo de nodos**: Introduzca un nombre único para el grupo de nodos.
-   * **Rol de IAM del nodo**: Cree un rol nuevo o seleccione un rol existente.
-   * Haga clic en el botón "Next".
-2. En la página "Set compute and scaling configuration", introduzca la siguiente información:
-   * **Tipo de AMI**: Seleccione el tipo de AMI que desea utilizar para los nodos.
-   * **Tipo de instancia**: Seleccione el tipo de instancia EC2 que desea utilizar para los nodos.
-   * **Tamaño del disco**: Especifique el tamaño del disco para los nodos.
-   * **Número de nodos**: Especifique el número mínimo, máximo y deseado de nodos.
-   * Haga clic en el botón "Next".
-3. En la página "Specify networking", introduzca la siguiente información:
-   * **Subredes**: Seleccione las subredes que desea utilizar para el grupo de nodos.
-   * **Configuración de acceso remoto**: Configure el acceso SSH.
-   * Haga clic en el botón "Next".
-4. En la página "Review and create", revise la configuración y haga clic en el botón "Create".
+1. Elija un nombre de grupo que no se esté usando y un rol IAM de nodo EC2 revisado.
+2. Seleccione **AL2023 x86_64**, un tipo de instancia compatible y valores de disco y escalado adecuados para la carga de trabajo. `m5.large`, 80 GiB y los límites de 1 a 3 del ejemplo de CLI son ejemplos, no recomendaciones basadas en mediciones de capacidad.
+3. Elija las subredes privadas reales. Deje desactivado el acceso SSH salvo que se requiera una vía de acceso revisada por separado.
+4. Cree el grupo y espere a que alcance el estado **ACTIVE** y a que los nodos estén sanos y **Ready**. Los límites mínimo y máximo no instalan un autoescalador de nodos que responda a las cargas de trabajo.
 
-## Creación de un clúster mediante AWS CLI
+El rol del nodo necesita permisos para que los nodos actúen como trabajadores del clúster y descarguen imágenes. Es preferible usar un rol de carga de trabajo CNI independiente; la CLI siguiente documenta explícitamente una alternativa más sencilla para nodos IPv4.
 
-El proceso de creación de un clúster de EKS mediante AWS CLI consta de varios pasos. Este método es útil cuando se necesita más control.
+## Crear un clúster mediante AWS CLI
 
-![Diagrama del flujo de trabajo de AWS CLI que crea primero el rol de IAM, la VPC y el grupo de seguridad, luego el clúster y el grupo de nodos, y finalmente actualiza kubeconfig.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-1.png)
+El siguiente ejemplo convencional de IPv4 usa EKS 1.36 y nodos administrados de AL2023. Elija este flujo de trabajo o el de la consola. Ejecute los pasos de CLI en una sola sesión de Bash, use nombres de laboratorio que no estén ocupados y conserve los archivos de respuesta privados para comprobar la propiedad de los recursos y facilitar su limpieza.
+
+![Diagrama del flujo de trabajo de AWS CLI: primero crea el rol de IAM, la VPC y el grupo de seguridad; después, el clúster y el grupo de nodos; y, por último, actualiza kubeconfig.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-1.html)
 
-### 1. Crear rol de IAM para el clúster
-
-Un clúster de EKS requiere un rol de IAM que permita al plano de control de Kubernetes administrar recursos de AWS.
+El diagrama muestra pasos generales. EKS crea automáticamente el grupo de seguridad del clúster; use las políticas actuales de los roles y la configuración de acceso explícita que se indica a continuación. En esta auditoría no se ejecutaron las operaciones de AWS.
 
 ```bash
-# Create role
-aws iam create-role \
-  --role-name EKSClusterRole \
-  --assume-role-policy-document '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Service": "eks.amazonaws.com"
-        },
-        "Action": "sts:AssumeRole"
-      }
-    ]
-  }'
-
-# Attach required policy
-aws iam attach-role-policy \
-  --role-name EKSClusterRole \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+: "${EKS_CLUSTER_NAME:?Choose an unused training cluster name}"
+: "${EKS_REGION:?For example us-west-2}"
+: "${OPERATOR_ROLE_ARN:?Existing operator IAM role that this login may assume}"
+: "${APPROVED_API_CIDR:?Actual approved administration egress CIDR}"
+EKS_CREATE_DIR=$(mktemp -d /tmp/eks-console-cli.XXXXXX)
+: "${EKS_CREATE_DIR:?}"
+EKS_KUBECONFIG="$EKS_CREATE_DIR/kubeconfig"
+aws sts get-caller-identity
 ```
 
-### 2. Crear VPC y subredes
+### 1. Crear el rol IAM del clúster
 
-Un clúster de EKS requiere una VPC y subredes. Puede utilizar una VPC existente o crear una nueva.
+Estos comandos crean un rol **nuevo** y se detienen si falla la creación. Para reutilizar un rol que ya se haya revisado, establezca `EKS_CLUSTER_ROLE_ARN` y omita el bloque de creación y asociación, en vez de modificar un rol existente solo porque tenga un nombre parecido.
 
 ```bash
-# Create VPC
-aws ec2 create-vpc \
-  --cidr-block 10.0.0.0/16 \
-  --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=EKS-VPC}]' \
-  --query Vpc.VpcId \
-  --output text
-
-# Create subnets
-aws ec2 create-subnet \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --cidr-block 10.0.1.0/24 \
-  --availability-zone us-west-2a \
-  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=EKS-Subnet-1}]' \
-  --query Subnet.SubnetId \
-  --output text
-
-aws ec2 create-subnet \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --cidr-block 10.0.2.0/24 \
-  --availability-zone us-west-2b \
-  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=EKS-Subnet-2}]' \
-  --query Subnet.SubnetId \
-  --output text
+cat > "${EKS_CREATE_DIR:?}/cluster-trust.json" << 'EOF'
+{
+  "Version":"2012-10-17",
+  "Statement":[{
+    "Effect":"Allow",
+    "Principal":{"Service":"eks.amazonaws.com"},
+    "Action":"sts:AssumeRole"
+  }]
+}
+EOF
+aws iam create-role --role-name "${NEW_CLUSTER_ROLE_NAME:?Unused role name}" \
+  --assume-role-policy-document "file://$EKS_CREATE_DIR/cluster-trust.json" \
+  --query Role --output json > "$EKS_CREATE_DIR/created-cluster-role.json" || exit 1
+EKS_CLUSTER_ROLE_ARN=$(jq -er '.Arn' "$EKS_CREATE_DIR/created-cluster-role.json") || exit 1
+aws iam attach-role-policy --role-name "$NEW_CLUSTER_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy || exit 1
 ```
 
-### 3. Crear grupo de seguridad del clúster
+### 2. Crear la VPC y las subredes
 
-Un clúster de EKS requiere un grupo de seguridad.
+Use una VPC existente y revisada o, si lo desea, cree una red de ejemplo completa con la plantilla oficial que aparece abajo. La plantilla crea dos subredes públicas y dos privadas en dos zonas de disponibilidad, una puerta de enlace de Internet y dos puertas de enlace NAT con sus EIP. Revise primero los solapamientos de CIDR, las rutas y los costos. La fecha de la URL no es una versión de Kubernetes.
 
 ```bash
-# Create security group
-aws ec2 create-security-group \
-  --group-name EKS-Cluster-SG \
-  --description "Security group for EKS cluster" \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --query GroupId \
-  --output text
-
-# Add inbound rule
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-xxxxxxxxxxxxxxxxx \
-  --protocol tcp \
-  --port 443 \
-  --cidr 0.0.0.0/0
+# Optional new-network path; review the entire template and its CIDR/NAT costs first.
+aws cloudformation create-stack --region "${EKS_REGION:?}" \
+  --stack-name "${NEW_VPC_STACK_NAME:?Unused stack name}" \
+  --template-url https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml \
+  > "${EKS_CREATE_DIR:?}/vpc-stack.json" || exit 1
+aws cloudformation wait stack-create-complete --region "$EKS_REGION" \
+  --stack-name "$NEW_VPC_STACK_NAME" || exit 1
+aws cloudformation describe-stacks --region "$EKS_REGION" \
+  --stack-name "$NEW_VPC_STACK_NAME" --query 'Stacks[0].Outputs' --output table
 ```
 
-### 4. Crear clúster de EKS
+La salida `SubnetIds` de la pila incluye **las cuatro subredes**. Identifique el par privado a partir de sus tablas de rutas y etiquetas antes de establecer `EKS_PRIVATE_SUBNET_A/B`. Una subred sin una asociación explícita a una tabla de rutas usa la tabla principal de la VPC; aun así, tiene enrutamiento.
 
-Ahora puede crear el clúster de EKS.
+Las comprobaciones siguientes validan los requisitos básicos de zona de disponibilidad, VPC, IP y DNS. Verifique por separado las rutas efectivas, los controles de seguridad, el acceso al registro y a S3, y los puntos de conexión de VPC que se necesiten. Crear solo una VPC y dos subredes no proporciona una ruta de salida funcional para los nodos.
 
 ```bash
-aws eks create-cluster \
-  --name my-cluster \
-  --role-arn arn:aws:iam::123456789012:role/EKSClusterRole \
-  --resources-vpc-config subnetIds=subnet-xxxxxxxxxxxxxxxxx,subnet-yyyyyyyyyyyyyyyyy,securityGroupIds=sg-zzzzzzzzzzzzzzzzz \
-  --kubernetes-version 1.26
+# Set these IDs after identifying the actual private subnets and their routes.
+aws ec2 describe-subnets --region "${EKS_REGION:?}" \
+  --subnet-ids "${EKS_PRIVATE_SUBNET_A:?}" "${EKS_PRIVATE_SUBNET_B:?}" \
+  --query Subnets --output json > "${EKS_CREATE_DIR:?}/subnets.json" || exit 1
+jq -e 'length == 2 and
+  (map(.VpcId) | unique | length) == 1 and
+  (map(.AvailabilityZone) | unique | length) == 2 and
+  all(.[]; .AvailableIpAddressCount >= 6)' \
+  "$EKS_CREATE_DIR/subnets.json" >/dev/null || exit 1
+EKS_VPC_ID=$(jq -er '.[0].VpcId' "$EKS_CREATE_DIR/subnets.json") || exit 1
+aws ec2 describe-vpc-attribute --region "$EKS_REGION" --vpc-id "$EKS_VPC_ID" \
+  --attribute enableDnsSupport --output json > "$EKS_CREATE_DIR/dns-support.json" || exit 1
+aws ec2 describe-vpc-attribute --region "$EKS_REGION" --vpc-id "$EKS_VPC_ID" \
+  --attribute enableDnsHostnames --output json > "$EKS_CREATE_DIR/dns-hostnames.json" || exit 1
+jq -e '.EnableDnsSupport.Value == true' "$EKS_CREATE_DIR/dns-support.json" >/dev/null || exit 1
+jq -e '.EnableDnsHostnames.Value == true' "$EKS_CREATE_DIR/dns-hostnames.json" >/dev/null || exit 1
 ```
 
-Espere a que finalice la creación del clúster. Para comprobar el estado del clúster, ejecute el siguiente comando:
+### 3. Crear el grupo de seguridad del clúster
+
+EKS crea automáticamente el grupo de seguridad del clúster durante su creación. Este ejemplo no requiere otro grupo con acceso abierto a `0.0.0.0/0`. El acceso público a la API se restringe mediante `publicAccessCidrs`; las reglas del grupo de seguridad del clúster controlan la ruta privada y la comunicación entre nodos.
+
+Si necesita grupos adicionales, revise sus reglas y agregue deliberadamente sus ID a la configuración. Construya como JSON la solicitud de red del clúster:
 
 ```bash
-aws eks describe-cluster \
-  --name my-cluster \
-  --query "cluster.status"
+# EKS creates the cluster security group; public API restrictions use this CIDR list.
+jq -n --arg a "${EKS_PRIVATE_SUBNET_A:?}" --arg b "${EKS_PRIVATE_SUBNET_B:?}" \
+  --arg cidr "${APPROVED_API_CIDR:?}" '{
+    subnetIds:[$a,$b],
+    endpointPublicAccess:true,
+    endpointPrivateAccess:true,
+    publicAccessCidrs:[$cidr]
+  }' > "${EKS_CREATE_DIR:?}/vpc-config.json" || exit 1
 ```
 
-### 5. Crear rol de IAM para el nodo
+### 4. Crear el clúster de EKS
 
-Los nodos de EKS requieren un rol de IAM para acceder a los recursos de AWS.
+Use `--kubernetes-version` con `aws eks create-cluster`; `--version` muestra la versión de AWS CLI. El campo JSON de la API sigue siendo `version`. Este ejemplo desactiva el acceso de administrador automático de la identidad creadora, habilita los cinco tipos de registro del plano de control e inicia los complementos esenciales convencionales. Los complementos iniciados por CLI son autoadministrados; adoptarlos como complementos administrados por EKS requiere otro flujo de trabajo con una configuración y versiones compatibles.
 
 ```bash
-# Create role
-aws iam create-role \
-  --role-name EKSNodeRole \
-  --assume-role-policy-document '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Service": "ec2.amazonaws.com"
-        },
-        "Action": "sts:AssumeRole"
-      }
-    ]
-  }'
-
-# Attach required policies
-aws iam attach-role-policy \
-  --role-name EKSNodeRole \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-
-aws iam attach-role-policy \
-  --role-name EKSNodeRole \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-
-aws iam attach-role-policy \
-  --role-name EKSNodeRole \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
+aws eks create-cluster --name "${EKS_CLUSTER_NAME:?}" --region "$EKS_REGION" \
+  --kubernetes-version 1.36 --role-arn "${EKS_CLUSTER_ROLE_ARN:?}" \
+  --resources-vpc-config "file://${EKS_CREATE_DIR:?}/vpc-config.json" \
+  --access-config authenticationMode=API,bootstrapClusterCreatorAdminPermissions=false \
+  --bootstrap-self-managed-addons \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query cluster --output json > "$EKS_CREATE_DIR/created-cluster.json" || exit 1
+aws eks wait cluster-active --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" || exit 1
+aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --query 'cluster.{arn:arn,status:status,version:version,vpc:resourcesVpcConfig}'
 ```
 
-### 6. Crear grupo de nodos
+Si falla una operación de espera, eso no demuestra que se hayan revertido todos los recursos. Inspeccione el estado del clúster y las respuestas guardadas antes de continuar. El registro genera costos de CloudWatch.
 
-Ahora puede crear el grupo de nodos.
+### 5. Crear el rol IAM del nodo
+
+Cree un rol nuevo de confianza EC2. `AmazonEC2ContainerRegistryPullOnly` proporciona permisos para descargar imágenes. En este sencillo **laboratorio IPv4**, los permisos de CNI se asignan al rol del nodo para que funcione el VPC CNI iniciado durante el arranque. Cuando sea compatible, es preferible un rol IRSA o Pod Identity dedicado para CNI; quite esta alternativa solo después de comprobar que esa configuración funciona. Los permisos de AWS para otras aplicaciones o controladores no deben estar en todos los nodos.
 
 ```bash
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --node-role arn:aws:iam::123456789012:role/EKSNodeRole \
-  --subnets subnet-xxxxxxxxxxxxxxxxx subnet-yyyyyyyyyyyyyyyyy \
-  --disk-size 80 \
-  --scaling-config minSize=1,maxSize=3,desiredSize=2 \
-  --instance-types m5.large
+cat > "${EKS_CREATE_DIR:?}/node-trust.json" << 'EOF'
+{
+  "Version":"2012-10-17",
+  "Statement":[{
+    "Effect":"Allow",
+    "Principal":{"Service":"ec2.amazonaws.com"},
+    "Action":"sts:AssumeRole"
+  }]
+}
+EOF
+aws iam create-role --role-name "${NEW_NODE_ROLE_NAME:?Unused role name}" \
+  --assume-role-policy-document "file://$EKS_CREATE_DIR/node-trust.json" \
+  --query Role --output json > "$EKS_CREATE_DIR/created-node-role.json" || exit 1
+EKS_NODE_ROLE_ARN=$(jq -er '.Arn' "$EKS_CREATE_DIR/created-node-role.json") || exit 1
+aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy || exit 1
+aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly || exit 1
+# Simple IPv4 lab fallback only. Prefer a dedicated CNI workload role in production.
+aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy || exit 1
 ```
 
-Espere a que finalice la creación del grupo de nodos. Para comprobar el estado del grupo de nodos, ejecute el siguiente comando:
+### 6. Crear el grupo de nodos
+
+Cree el grupo administrado en las subredes privadas revisadas. EKS proporciona la inicialización de nodo de la AMI AL2023 seleccionada y la entrada de acceso para los nodos administrados. El ejemplo omite el acceso SSH y las anulaciones personalizadas de la plantilla de lanzamiento.
 
 ```bash
-aws eks describe-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --query "nodegroup.status"
+aws eks create-nodegroup --cluster-name "${EKS_CLUSTER_NAME:?}" --region "${EKS_REGION:?}" \
+  --nodegroup-name "${NEW_NODEGROUP_NAME:?}" --node-role "${EKS_NODE_ROLE_ARN:?}" \
+  --subnets "${EKS_PRIVATE_SUBNET_A:?}" "${EKS_PRIVATE_SUBNET_B:?}" \
+  --ami-type AL2023_x86_64_STANDARD --instance-types m5.large --capacity-type ON_DEMAND \
+  --disk-size 80 --scaling-config minSize=1,maxSize=3,desiredSize=2 \
+  --query nodegroup --output json > "${EKS_CREATE_DIR:?}/created-nodegroup.json" || exit 1
+aws eks wait nodegroup-active --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --nodegroup-name "$NEW_NODEGROUP_NAME" || exit 1
+aws eks describe-nodegroup --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --nodegroup-name "$NEW_NODEGROUP_NAME" \
+  --query 'nodegroup.{status:status,health:health,ami:amiType,release:releaseVersion}'
 ```
 
 ### 7. Configurar kubeconfig
 
-Debe configurar el archivo kubeconfig para acceder al clúster.
+Use un rol IAM de operador existente que su sesión actual tenga permiso para asumir. La identidad que aprovisiona debe poder crear su entrada de acceso a EKS y asociar la política de acceso al laboratorio. Estos comandos conceden administración de Kubernetes en este clúster, no administración de toda la cuenta de AWS.
 
 ```bash
-aws eks update-kubeconfig \
-  --name my-cluster \
-  --region us-west-2
+# The named operator gets cluster-admin only on this training cluster.
+aws eks create-access-entry --cluster-name "${EKS_CLUSTER_NAME:?}" --region "${EKS_REGION:?}" \
+  --principal-arn "${OPERATOR_ROLE_ARN:?}" --type STANDARD || exit 1
+aws eks associate-access-policy --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --principal-arn "$OPERATOR_ROLE_ARN" \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster || exit 1
+aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --role-arn "$OPERATOR_ROLE_ARN" --kubeconfig "${EKS_KUBECONFIG:?}" \
+  --alias "$EKS_CLUSTER_NAME" || exit 1
 ```
 
 ### 8. Verificar el clúster
 
-Verifique que el clúster esté configurado correctamente.
+Inspeccione el contexto previsto, la disponibilidad de los nodos y los Pods del sistema:
 
 ```bash
-kubectl get nodes
+kubectl --kubeconfig "${EKS_KUBECONFIG:?}" config current-context
+kubectl --kubeconfig "$EKS_KUBECONFIG" auth can-i get nodes
+kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes -o wide
+kubectl --kubeconfig "$EKS_KUBECONFIG" get pods -n kube-system
 ```
+
+La infraestructura en estado `ACTIVE` no demuestra que la aplicación esté lista; `get nodes` debe mostrar realmente nodos sanos en estado Ready. Verifique la programación de cargas de trabajo, DNS, la descarga de imágenes y las dependencias de la aplicación antes de usarla en producción. En esta auditoría no se midieron el rendimiento ni la disponibilidad de las cargas de trabajo.
+
+Para limpiar, siga el [procedimiento de ciclo de vida revisado](02-eks-cluster-creation.md#cluster-deletion): primero quite las dependencias de nube de la aplicación y, después, los grupos o perfiles de nodos correspondientes y el clúster. Elimine una VPC de laboratorio dedicada solo cuando ya no tenga dependencias, y elimine únicamente los roles propios del laboratorio. Si falla la limpieza, conserve los archivos de respuesta y propiedad.
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario sobre la creación de clústeres de EKS - Parte 3](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md).
+Para comprobar lo aprendido en este capítulo, responda el [cuestionario sobre la creación de clústeres de EKS, parte 3](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md).
+
+## Referencias
+
+- [Crear un clúster de EKS](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html)
+- [Requisitos de red de EKS](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [Acceso al endpoint de la API](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
+- [Rol IAM del nodo](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)
+- [Cifrado de sobre predeterminado](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)
+- [Entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)

@@ -1,6 +1,6 @@
 # EKS アップグレード: Auto Mode、ロールバック、ブルー/グリーン
 
-> **最終更新**: October 12, 2026. コマンドは AWS CLI 2.36.44、Pluto 5.24.3、Velero 1.18.2 を使用して September 12, 2026 に確認しました。
+> **最終更新**: 2026年10月16日。コマンドは2026年9月12日に確認し、Pluto と Velero は2026年10月16日に再確認しました（AWS CLI 2.36.44、Pluto 5.24.4、Velero 1.18.4）。
 > 例の移行は 1.35 → 1.36 です。実際のリージョンでの提供状況を確認してください。
 
 コントロールプレーン、ノード、アドオン、アプリケーション、データをまとめて計画します。
@@ -10,8 +10,8 @@ readiness、再接続動作、セッション、状態、復旧を検証して�
 ## 1. バージョンと管理責任
 
 Upstream Kubernetes は、現在のリリースに加えて過去 3 バージョンではなく、直近 3 つのマイナーリリースの
-リリースブランチを維持します（October 12, 2026 時点で 1.35–1.37）。各マイナーリリースにはおよそ 14 か月の
-パッチが提供され、その最後の 2 か月はメンテナンスモードです。1.34 は October 27, 2026 の EOL まで
+リリースブランチを維持します（2026年10月12日時点で 1.35–1.37）。各マイナーリリースにはおよそ 14 か月の
+パッチが提供され、その最後の 2 か月はメンテナンスモードです。1.34 は 2026年10月27日の EOL まで
 メンテナンスモードです。EKS には別のライフサイクルがあり、通常は 14 か月の標準サポートと
 12 か月の延長サポートです。正確な日付、ポリシー、リージョンでの提供状況を確認してください。
 
@@ -33,7 +33,7 @@ kubectl --context "$DOCS_CONTEXT" get nodes -o wide
 
 `describe-addon-versions` はアドオンの互換性を確認するものであり、クラスターのサポート日付を確認するものではありません。
 EKS コントロールプレーンは、中間バージョンをスキップせずに一度に 1 マイナーバージョン進めます。
-現在サポートされているバージョンでは、kubelet は API server より新しくできず、Upstream ポリシーはその条件下で
+現在サポートされているバージョンでは、kubelet は API サーバーより新しくできず、Upstream ポリシーはその条件下で
 最大 3 マイナー古いバージョンを許容します。これはノードを遅れたままにする推奨ではありません。次のアップグレード前に
 ノードを現在のコントロールプレーンに合わせるよう計画し、EKS managed-node、Fargate、self-managed、Hybrid の要件をそれぞれ確認してください。
 kubectl はコントロールプレーンから 1 マイナー以内のバージョンを使用してください。
@@ -75,12 +75,12 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3 では、終了コード 0（正常）、2（非推奨）、3（削除済み）が区別されます。
+Pluto 5.24.4 は、終了コード 0（検出事項なし）、2（非推奨）、3（削除済み）、4（対象バージョンで代替 API を利用できない）を区別します。
 ゼロ以外のすべての結果を「未インストール」に変換したり、`|| true` で隠したりしないでください。
 JSON はオブジェクトです。`.items // []` を数えてください。正常なレスポンスでは items が省略されることがあります。
 `detect-all-in-cluster` も有効です。公式リリースのアーキテクチャとチェックサムを確認してください。
 
-API server がオブジェクトを変換するため、ライブ検出では元の API バージョンを見逃す可能性があります。
+API サーバーがオブジェクトを変換するため、ライブ検出では元の API バージョンを見逃す可能性があります。
 Git、レンダリング済み Helm/Kustomize、リリースメタデータ、API 警告/audit、実際のクライアントをレビューしてください。
 Pluto の他のコンポーネントターゲットも、デプロイ済みの Istio/cert-manager バージョンに合わせてください。
 
@@ -328,7 +328,7 @@ Completed は、アプリケーションの整合性やすべてのボリュー�
 PVC/PV オブジェクトだけでは、完全なアプリケーション/Secret/Service/データのバックアップにはなりません。
 Filesystem backup には別途 node-agent とボリューム設定が必要です。
 
-Velero 1.18.2 の restore create には `--dry-run` がありません。
+Velero 1.18.4 の restore create には `--dry-run` がありません。
 `-o yaml/json` は Restore を作成せずに出力しますが、discovery/Backup の読み取りは実行します。
 これは完全なオフラインでも、復旧テストでもありません。
 
@@ -347,7 +347,7 @@ CronJob、consumer、外部 DB、DNS/LB の変更は隔離されません。
 
 ## 4. コントロールプレーンとノードの更新
 
-これは [infrastructure chapter](./01-infrastructure-setup.md) の既存クラスター層を使用します。
+これは [インフラストラクチャの章](./01-infrastructure-setup.md) の既存クラスター層を使用します。
 新しい state に重複クラスターを作成したり、VPC/IAM を再構築したりしないでください。
 Kubernetes のマイナー変更とは別に、module/provider のメジャー変更をレビューしてください。
 古い EKS module v20 の input を現在の module に混在させないでください。
@@ -479,10 +479,10 @@ EKS は、アップグレード完了から 7 日以内であれば、直前の�
 
 | コンポーネント | 処理 |
 |---|---|
-| API server/control plane | 前の Kubernetes マイナーとその最新 platform version |
+| API サーバー／コントロールプレーン | 前の Kubernetes マイナーとその最新 platform version |
 | Auto Mode ノード | サービスが最初にノードを調整し、その後コントロールプレーンをロールバック |
-| 通常の managed node group | User が最初に UpdateNodegroupVersion で調整 |
-| Self-managed/Hybrid ノード | User が最初に互換性のあるノードで置換 |
+| 通常の managed node group | 利用者が最初に UpdateNodegroupVersion で調整 |
+| Self-managed/Hybrid ノード | 利用者が最初に互換性のあるノードで置換 |
 | Fargate | 既存 Pod kubelet の直接ダウングレードはなし。別個の置換/互換性を計画 |
 | アドオン、アプリ、etcd オブジェクト、PV データ | 履歴 snapshot からはリストアされない |
 
@@ -536,7 +536,7 @@ Kubernetes バージョンロールバックではありません。CLI/API 変�
 
 Green には別個の state/identity を使用し、共有 DNS/NLB/database の所有権は Blue の
 削除スコープ外に保ちます。実際の endpoint/CA、workload identity、assume-role、EKS access entry、
-Kubernetes RBAC について、[multi-cluster GitOps](./04-gitops-multi-cluster.md) の手順を通じて登録してください。
+Kubernetes RBAC について、[マルチクラスター GitOps](./04-gitops-multi-cluster.md) の手順を通じて登録してください。
 cluster Secret は Green ではなく Hub context に適用してください。
 
 この ApplicationSet は自動 sync なしで Green のみを選択します。
@@ -626,7 +626,7 @@ test "$DOCS_HTTP_CODE" = "200" || exit 1
 NLB の weighted target group はサポートされています。相対 weight は 0–999 の範囲で、合計を 100 にする必要はありません。
 これは新規接続の予想シェアを表すものであり、正確なリクエスト、bytes、既存 session を表すものではありません。
 クラスターごとに別々の TG に正常な target を登録してください。
-TGB、target type、network/security group については [advanced infrastructure](./02-infrastructure-advanced.md) を参照してください。
+TGB、target type、network/security group については [高度なインフラストラクチャ](./02-infrastructure-advanced.md) を参照してください。
 
 通常の weight 変更は新規接続に影響しますが、weight をゼロにすると短時間後に既存の
 接続を閉じる場合があります。これは中断のない drain ではありません。lifetime、retry、session をテストしてください。
@@ -784,7 +784,7 @@ histogram_quantile(0.99,
 等価な cohort を比較してください。blue/green は traffic、route、sample count、load が異なる場合があります。
 72 時間では完全な週次パターンをカバーしません。workload cycle とロールバック適格性ウィンドウから監視期間を選んでください。
 
-[stack chapter's](./09-observability-stack.md) 明示的な UID と完全な dashboard provisioning を使用してください。
+[オブザーバビリティスタックの章](./09-observability-stack.md) 明示的な UID と完全な dashboard provisioning を使用してください。
 部分的な panel YAML/JSON を完全にインポート可能な dashboard として提示しないでください。
 前後のバージョン、update ID、計画/実際の時刻、障害、復旧結果を記録してください。
 
@@ -794,19 +794,19 @@ snapshot/restore、アプリケーション load test は実行していませ�
 
 ## 公式リファレンス
 
-- [EKS update](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
-- [EKS rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
-- [Auto Mode rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
-- [Auto Mode upgrades](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
-- [EKS pricing](https://aws.amazon.com/eks/pricing/)
-- [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/)
-- [Kubernetes release history](https://kubernetes.io/releases/)
-- [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
-- [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
-- [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
-- [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
-- [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [EKS の更新](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [EKS のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [Auto Mode のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
+- [Auto Mode のアップグレード](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
+- [EKS の料金](https://aws.amazon.com/eks/pricing/)
+- [Kubernetes のバージョンスキュー](https://kubernetes.io/releases/version-skew-policy/)
+- [Kubernetes のリリース履歴](https://kubernetes.io/releases/)
+- [Kubernetes のパッチリリースとサポート期間](https://kubernetes.io/releases/patch-releases/)
+- [Kubernetes の非推奨ポリシー](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
+- [Pluto 5.24.4](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.4)
+- [Velero 1.18.4](https://github.com/velero-io/velero/releases/tag/v1.18.4)
+- [NLB リスナー](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---
 
-< [前へ: Resource optimization](./10-resource-optimization.md) | [目次](./README.md) | [次へ: Event capacity planning](./12-event-capacity-planning.md) >
+< [前へ: リソース最適化](./10-resource-optimization.md) | [目次](./README.md) | [次へ: イベント容量計画](./12-event-capacity-planning.md) >

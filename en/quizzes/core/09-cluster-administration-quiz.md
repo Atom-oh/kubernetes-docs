@@ -592,6 +592,7 @@ etcdutl snapshot restore snapshot.db \
 - Plan cluster network CIDR ranges
 - Implement network monitoring tools
 </details>
+
 ## Hands-on Questions
 
 1. Write a ResourceQuota manifest that meets the following requirements:
@@ -1081,6 +1082,7 @@ python3 resource_usage_report.py
 - Can be set up as a cron job for regular report generation.
 - Reports can be sent via email or integrated with monitoring systems.
 </details>
+
 ## Advanced Topics
 
 1. Which two sets contain real etcd settings or operational practices? (Select two.)

@@ -2,7 +2,7 @@
 
 > **已验证的示例版本**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0 · Alertmanager 0.34.0 · OpenCost 1.121.2/chart 2.5.31
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 请围绕故障排查中要回答的问题、采集质量以及实测成本来优化可观测性。仅凭节点数量无法预测数据摄入量、查询负载、保留期成本或人力投入。本章使用[完整配置示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)，并链接到集群安装所需的部署指南。原生测试使用的是合成数据；它们不是生产容量基准测试。
 
@@ -278,7 +278,7 @@ Prometheus 的特性开关应写在命令行参数或 Operator 支持的 `enable
 
 ### 基于请求的 SLO、燃烧率与剩余预算
 
-对于基于请求的 99.9% 可用性 SLO，在给定窗口内允许的失败请求数为 `总请求数 × 0.001`。这并不会自动等于 43 分钟的停机时间；基于时间与基于请求的 SLI 分母不同。
+对于基于请求的 99.9% 可用性 SLO，在给定窗口内允许的失败请求数为 `total requests × 0.001`。这并不会自动等于 43 分钟的停机时间；基于时间与基于请求的 SLI 分母不同。
 
 `slo-rules.yaml` 把短窗口错误比率与 30 天按请求加权的比率区分开：
 

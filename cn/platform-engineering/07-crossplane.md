@@ -1,6 +1,6 @@
 # Crossplane
 
-> **最后更新日期**: October 16, 2026 · Crossplane 2.4.2 / AWS provider 2.9.0
+> **最后更新日期**: 2026 年 10 月 16 日 · Crossplane 2.4.2 / AWS provider 2.9.0
 
 ## 概念与 v2 变更
 

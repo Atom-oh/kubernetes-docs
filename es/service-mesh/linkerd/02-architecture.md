@@ -1,33 +1,33 @@
 # Arquitectura de Linkerd
 
-> **Última actualización**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 / proxy release/v2.370.0
 
-Este capítulo explica las funciones actuales de los componentes, la jerarquía de identidad, la captura de tráfico y el ciclo de vida de la inyección. Utilice la [guía de instalación](01-installation.md) para la combinación compatible de versión/clúster y los artefactos de versiones fijadas. Los ejemplos siguientes ilustran configuraciones; no se realizó ningún despliegue real ni rotación de CA en esta auditoría.
+Este capítulo explica las funciones actuales de los componentes, la jerarquía de identidades, la captura del tráfico y el ciclo de vida de la inyección. Consulta la [guía de instalación](01-installation.md) para ver la combinación compatible de versiones y clúster, así como los artefactos fijados. Los siguientes ejemplos ilustran configuraciones; en esta revisión no se realizó ningún despliegue real ni rotación de la CA.
 
 ## Arquitectura general
 
-![Vista simplificada de los tres Deployments principales de Linkerd y dos pares incorporados a la malla. El controlador de políticas se ejecuta con Destination y no se dibuja por separado; se muestran conexiones seleccionadas.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
+![Vista simplificada de las tres implementaciones principales de Linkerd y dos pares dentro de la malla. El controlador de políticas se ejecuta junto con Destination y no aparece por separado; se muestran algunas conexiones.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
 
-[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
+[Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
 
-El espacio de nombres predeterminado del plano de control es linkerd. El chart fijado tiene tres Deployments principales: linkerd-destination, linkerd-identity y linkerd-proxy-injector. Destination también contiene los contenedores de políticas y de validación de ServiceProfile; las funciones lógicas de controlador no equivalen a Deployments separados. Los componentes opcionales de Viz y multiclúster tienen sus propios ciclos de vida.
+El espacio de nombres predeterminado del plano de control es linkerd. El chart fijado incluye tres implementaciones principales: linkerd-destination, linkerd-identity y linkerd-proxy-injector. Destination también contiene los contenedores del controlador de políticas y del validador de ServiceProfile; las funciones lógicas de los controladores no equivalen a implementaciones independientes. Los componentes opcionales Viz y multiclúster tienen ciclos de vida propios.
 
-El plano de datos utiliza proxies Rust junto a las aplicaciones incorporadas. Los sidecars nativos son el valor predeterminado de esta versión. El Deployment Identity utiliza deliberadamente un proxy regular con la espera de inicio deshabilitada, por lo que la inspección debe considerar tanto containers como initContainers.
+El plano de datos utiliza proxies Rust junto a las aplicaciones incorporadas a la malla. Los sidecars nativos son los predeterminados en esta versión. La implementación de Identity utiliza deliberadamente un proxy regular con la espera de inicio deshabilitada, por lo que al inspeccionarla hay que tener en cuenta ambos contenedores y los contenedores de inicialización.
 
 ## Plano de control
 
 ### Controlador Destination
 
-Destination observa el estado de descubrimiento y proporciona direcciones de endpoints, identidades esperadas e información de perfiles mediante API de streaming. Los valores predeterminados actuales utilizan EndpointSlices. Los ServiceProfiles siguen siendo un mecanismo de configuración anterior; el enrutamiento y la autorización de Gateway API también involucran al controlador de políticas. No describa el enrutamiento actual de Linkerd como únicamente SMI TrafficSplit ni suponga que Destination observa directamente los recursos de esa extensión heredada.
+Destination observa el estado de descubrimiento y, mediante API de streaming, proporciona direcciones de endpoints, identidades esperadas e información de perfiles. La configuración predeterminada actual utiliza EndpointSlices. ServiceProfile sigue siendo un mecanismo de configuración anterior; el enrutamiento y la autorización de Gateway API también involucran al controlador de políticas. No describas el enrutamiento actual de Linkerd como si dependiera solo de SMI TrafficSplit ni supongas que Destination observa directamente los recursos de esa extensión heredada.
 
 | Responsabilidad | Significado |
 |---|---|
-| Descubrimiento | Adiciones/eliminaciones de endpoints y metadatos del Service solicitado |
-| Identidad esperada | Información que utiliza el proxy saliente para autenticar al par seleccionado |
-| Perfiles | Configuración compatible de rutas/perfiles para métricas, reintentos y tiempos de espera |
-| Entradas de equilibrio de carga | Información de endpoints y pesos configurados; las observaciones de latencia y la selección de solicitudes/conexiones durante la ejecución ocurren en el proxy |
+| Descubrimiento | Altas y bajas de endpoints, y metadatos del Service solicitado |
+| Identidad esperada | Información que el proxy saliente utiliza para autenticar al par seleccionado |
+| Perfiles | Configuración de rutas y perfiles compatible para métricas, reintentos y tiempos de espera |
+| Datos para el balanceo de carga | Información de endpoints y pesos configurados; las observaciones de latencia y la selección de solicitudes/conexiones en tiempo de ejecución ocurren en el proxy |
 
-Esto es un **extracto de un servicio Protocol Buffers**, no código fuente Go. Las definiciones de mensajes y las importaciones están en la API del proxy fijada:
+Este fragmento es un **extracto de un servicio Protocol Buffers**, no código fuente de Go. Las definiciones de mensajes y las importaciones se encuentran en la API fijada del proxy:
 
 ```protobuf
 // Excerpt: message definitions/imports are in the linked API source.
@@ -37,21 +37,21 @@ service Destination {
 }
 ```
 
-Get transmite actualizaciones de destinos; GetProfile transmite actualizaciones de perfiles. Ni un flujo ni una caché local hacen instantáneos los cambios de configuración ni eliminan la necesidad de gestionar endpoints no disponibles.
+Get transmite actualizaciones de Destination; GetProfile transmite actualizaciones de perfiles. Ni un flujo ni una caché local hacen que los cambios de configuración sean instantáneos o eliminan la necesidad de gestionar endpoints no disponibles.
 
 ### Controlador Identity
 
-El flujo de identidad predeterminado de Kubernetes es:
+El flujo predeterminado de identidad de Kubernetes es el siguiente:
 
-1. El inicio del proxy establece el material local de clave privada/CSR.
+1. Al iniciarse, el proxy establece el material local de clave privada y CSR.
 2. El cliente de identidad envía el CSR, la identidad solicitada y el token de ServiceAccount.
 3. Identity valida el token mediante TokenReview de Kubernetes y deriva la identidad con formato DNS.
-4. La **credencial de firma del emisor** configurada, normalmente el emisor intermedio, firma el certificado de la carga de trabajo.
-5. El cliente carga el certificado/cadena devueltos y los renueva antes de su caducidad.
+4. La **credencial de firma del emisor** configurado, normalmente el emisor intermedio, firma el certificado de la carga de trabajo.
+5. El cliente carga el certificado y la cadena recibidos, y los renueva antes de que caduquen.
 
-El ancla de confianza es la base de validación de la cadena. El controlador de identidad de Linkerd no requiere su clave privada; la raíz no actúa como firmante en línea de cada CSR de carga de trabajo.
+El ancla de confianza es la base para validar la cadena. El controlador de identidad de Linkerd no necesita su clave privada; la raíz no actúa como firmante en línea de cada CSR de las cargas de trabajo.
 
-Lo siguiente es un **fragmento de valores de Helm** para el responsable de la instalación:
+El siguiente fragmento de valores de Helm es para el responsable de la instalación:
 
 ```yaml
 identity:
@@ -61,17 +61,17 @@ identity:
     scheme: linkerd.io/tls
 ```
 
-linkerd.io/tls es el esquema de emisor predeterminado. Una integración kubernetes.io/tls utiliza el formato de Secret correspondiente gestionado externamente. No cambie el esquema sin que coincidan el responsable de la credencial y las claves, ni sobrescriba toda la entrada values de linkerd-config con un ConfigMap parcial de identidad.
+linkerd.io/tls es el esquema de emisor predeterminado. La integración kubernetes.io/tls utiliza el formato correspondiente de Secret administrado externamente. No cambies el esquema a menos que coincidan el responsable de la credencial y las claves; tampoco sobrescribas toda la entrada values de linkerd-config con un ConfigMap parcial de identidad.
 
 ### Inyector de proxies
 
-![Flujo conceptual de admisión de Pods aptos sin Linkerd CNI. El servidor de API aplica la modificación del inyector; la ubicación del proxy nativo y las exclusiones se describen en el texto.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
+![Flujo conceptual de admisión para Pods aptos cuando no se utiliza Linkerd CNI. El servidor de API aplica la mutación del inyector; el texto describe la ubicación de los proxies nativos y las exclusiones.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
-[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
+[Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 
-El inyector es un webhook de admisión mutante. Su respuesta describe modificaciones que aplica el servidor de API; el diagrama es conceptual, no un ejemplo de formato de transmisión. Siguen aplicándose la selección real del webhook, las anulaciones del Pod y la elegibilidad de la plataforma.
+El inyector es un webhook de admisión mutante. Su respuesta describe las mutaciones que aplica el servidor de API; el diagrama es conceptual, no un ejemplo del formato de transmisión. También se aplican la selección real del webhook, las anulaciones del Pod y los requisitos de compatibilidad de la plataforma.
 
-Habilite un espacio de nombres seleccionado:
+Habilita un espacio de nombres seleccionado:
 
 ```yaml
 apiVersion: v1
@@ -82,7 +82,7 @@ metadata:
     linkerd.io/inject: enabled
 ```
 
-Para un Deployment, coloque las anulaciones en su **plantilla de Pod**. Este fragmento pertenece a la definición existente de la carga de trabajo:
+En un Deployment, coloca las anulaciones en la **plantilla del Pod**. Este fragmento se inserta dentro de la definición existente de la carga de trabajo:
 
 ```yaml
 spec:
@@ -97,18 +97,18 @@ spec:
         config.linkerd.io/proxy-log-level: warn,linkerd=info
 ```
 
-Utilice un valor literal, enabled o disabled, no enabled|disabled. Añadir una anotación no modifica Pods existentes. El webhook instalado excluye determinados espacios de nombres del sistema, y las anulaciones explícitas de Pod pueden deshabilitar una inyección que de otro modo estaría habilitada.
+Utiliza un único valor literal —enabled o disabled—, no enabled|disabled. Añadir una anotación no modifica los Pods existentes. El webhook instalado excluye determinados espacios de nombres del sistema, y las anulaciones explícitas del Pod pueden deshabilitar una inyección que de otro modo estaría habilitada.
 
-| Elemento inyectado/configurado | Función |
+| Elemento inyectado o configurado | Función |
 |---|---|
-| linkerd-init | Configuración de captura de red del Pod cuando no se utiliza Linkerd CNI |
+| linkerd-init | Configuración de la captura de tráfico de red del Pod cuando no se utiliza Linkerd CNI |
 | linkerd-proxy | Proxy del plano de datos, normalmente un contenedor de inicialización reiniciable en esta versión |
-| Token de identidad proyectado y almacenamiento local de identidad | Arranque y uso de certificados de cargas de trabajo; la clave del proxy no se distribuye como un Secret compartido de la carga de trabajo |
-| Entorno/sondas/recursos | Configuración de ejecución específica de la versión generada por la inyección |
+| Token de identidad proyectado y almacenamiento local de identidad | Arranque y uso del certificado de la carga de trabajo; la clave del proxy no se distribuye como un Secret compartido de la carga de trabajo |
+| Entorno, sondas y recursos | Configuración de ejecución específica de la versión que genera la inyección |
 
 ### Controlador de políticas
 
-Policy controla la autorización entrante y el comportamiento compatible saliente/de enrutamiento de solicitudes. Este ejemplo selecciona Pods etiquetados app:web con un puerto declarado llamado http y autoriza al ServiceAccount api-gateway incorporado a la malla en my-app:
+Policy controla la autorización del tráfico entrante y el comportamiento compatible del tráfico saliente y el enrutamiento de solicitudes. Este ejemplo selecciona Pods con la etiqueta app:web y un puerto declarado llamado http; además, autoriza el ServiceAccount api-gateway del espacio de nombres my-app, incorporado a la malla:
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta3
@@ -139,11 +139,11 @@ spec:
     name: api-gateway
 ```
 
-Un Server selecciona pares de Pod/puerto existentes; no crea una aplicación, Service ni listener. El puerto con nombre debe existir. El tráfico seleccionado se deniega de forma predeterminada salvo que lo permita una política aplicable o una política de acceso alternativa seleccionada explícitamente. Prepare y pruebe el ámbito de la política antes de aplicarla.
+Un Server selecciona pares existentes de Pod y puerto; no crea una aplicación, un Service ni un listener. El puerto con nombre debe existir. El tráfico seleccionado se deniega de forma predeterminada, salvo que lo permita una política aplicable o una política de acceso alternativa seleccionada explícitamente. Prepara y prueba el ámbito de la política antes de aplicarla.
 
-AuthorizationPolicy puede dirigirse a un Server o a una ruta compatible. Las referencias a ServiceAccount son un requisito de autenticación práctico; MeshTLSAuthentication y NetworkAuthentication expresan conjuntos adicionales de identidades/redes. Todas las referencias de autenticación requeridas dentro de una política deben coincidir; revise otras políticas que también puedan autorizar tráfico.
+AuthorizationPolicy puede seleccionar un Server o una ruta compatible. Las referencias a ServiceAccount son un requisito de autenticación práctico; MeshTLSAuthentication y NetworkAuthentication expresan conjuntos adicionales de identidades y redes. Todas las referencias de autenticación requeridas dentro de una política deben coincidir; revisa también otras políticas que puedan autorizar el tráfico.
 
-Para un flujo de trabajo ServerAuthorization existente, esto es una **alternativa** compatible, no un requisito adicional que deba aplicarse junto con la autorización anterior:
+Para un flujo de trabajo existente con ServerAuthorization, esta es una **alternativa** compatible, no un requisito adicional que se aplique junto con la autorización anterior:
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta1
@@ -161,31 +161,31 @@ spec:
         namespace: my-app
 ```
 
-Los CRD publicados sirven ServerAuthorization v1beta1, no v1beta2 como en el ejemplo original. Server v1beta2 sigue sirviéndose; el ejemplo utiliza su versión actual de almacenamiento v1beta3. AuthorizationPolicy es la interfaz preferida, más flexible. No confunda estos recursos de Linkerd con los recursos de nombres similares de Istio en otro grupo de API.
+Los CRD publicados sirven ServerAuthorization v1beta1, no v1beta2 como en el ejemplo original. Server v1beta2 sigue estando disponible; el ejemplo utiliza su versión de almacenamiento actual, v1beta3. AuthorizationPolicy es la interfaz preferida y más flexible. No confundas estos recursos de Linkerd con los recursos de nombre parecido de Istio, que pertenecen a otro grupo de API.
 
 ## Plano de datos
 
-### Comportamiento del proxy y ámbito de protocolos
+### Comportamiento del proxy y ámbito de los protocolos
 
-linkerd2-proxy está escrito en Rust y diseñado específicamente para la malla. Admite HTTP/1.1, HTTP/2, gRPC y TCP. El enrutamiento/métricas HTTP requieren HTTP visible; el TLS originado en la aplicación es opaco y UDP/QUIC o el tráfico omitido no están cubiertos por la ruta del proxy TCP.
+linkerd2-proxy está escrito en Rust y diseñado específicamente para la malla. Admite HTTP/1.1, HTTP/2, gRPC y TCP. El enrutamiento y las métricas de HTTP requieren que el tráfico HTTP sea visible; el TLS que origina la aplicación es opaco, y el tráfico UDP/QUIC o el tráfico que se excluye no pasa por la ruta del proxy TCP.
 
-Para pares TCP aptos incorporados a la malla, Linkerd proporciona mTLS de transporte. El transporte de malla documentado utiliza TLS 1.3; el paso directo del TLS originado en la aplicación es una capa independiente. Los pares ajenos a la malla y las omisiones explícitas de captura necesitan consideración separada. La política entrante predeterminada acepta texto sin cifrar ajeno a la malla; mTLS automático no equivale a exigir acceso autenticado desde todos los orígenes.
+Para pares TCP aptos dentro de la malla, Linkerd proporciona mTLS de transporte. El transporte documentado de la malla utiliza TLS 1.3; el paso directo del TLS originado por la aplicación es una capa distinta. También hay que tener en cuenta por separado los pares ajenos a la malla y las anulaciones explícitas de la captura. La política de entrada predeterminada acepta tráfico en texto plano procedente de pares ajenos a la malla; mTLS automático no equivale a exigir acceso autenticado desde todos los orígenes.
 
-El proxy utiliza equilibrio consciente de la latencia para solicitudes HTTP y equilibrio por conexión para TCP opaco. Los pesos de endpoints y las reglas de enrutamiento son distintos de las estimaciones de latencia durante la ejecución. No interprete EWMA como una garantía de que cada solicitud vaya a un único endpoint determinísticamente más rápido.
+El proxy utiliza balanceo basado en la latencia para las solicitudes HTTP y balanceo por conexión para el TCP opaco. Los pesos de endpoints y las reglas de enrutamiento son distintos de las estimaciones de latencia en tiempo de ejecución. No interpretes EWMA como una garantía de que cada solicitud vaya a un endpoint que sea, de forma determinista, el más rápido.
 
-No existe una garantía universal de memoria de 10MB, p99 <1ms ni tamaño fijo del binario. Las mediciones dependen de la versión/compilación, arquitectura, número de conexiones, políticas/configuración, carga de trabajo e instrumentación.
+No hay una garantía universal de 10 MB de memoria, p99 <1 ms ni de un tamaño binario fijo. Las mediciones dependen de la versión y compilación, la arquitectura, el número de conexiones, las políticas y la configuración, la carga de trabajo y la instrumentación.
 
 ### Flujo de tráfico del proxy
 
-![Una solicitud HTTP mediante una nueva conexión de malla: el proxy saliente descubre/selecciona un destino, los proxies establecen mTLS y la política entrante precede a la entrega a la aplicación. Las conexiones existentes pueden reutilizarse.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
+![Solicitud HTTP en una nueva conexión de malla: el proxy saliente descubre y selecciona un destino, los proxies establecen mTLS y la política de entrada se evalúa antes de entregar el tráfico a la aplicación. Se pueden reutilizar las conexiones existentes.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
 
-[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
+[Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
 
-El descubrimiento saliente, el enrutamiento/equilibrio, los reintentos y los tiempos de espera difieren de la autorización entrante. Una nueva conexión puede realizar descubrimiento y establecimiento de mTLS; las conexiones existentes y la configuración en caché pueden reutilizarse. El comportamiento seguro de reintento de solicitudes sigue siendo una decisión de aplicación/protocolo, especialmente para escrituras.
+El descubrimiento, enrutamiento y balanceo salientes, los reintentos y los tiempos de espera son distintos de la autorización entrante. Una conexión nueva puede realizar el descubrimiento y establecer mTLS; las conexiones existentes y la configuración almacenada en caché se pueden reutilizar. El comportamiento seguro de los reintentos de solicitudes sigue siendo una decisión de la aplicación y el protocolo, especialmente para las escrituras.
 
 ### Captura de tráfico: linkerd-init o CNI
 
-Utilice la configuración generada de proxy-init o Linkerd CNI. Lo siguiente es un orden conceptual, **no comandos iptables del host que deban ejecutarse**:
+Utiliza la configuración generada de proxy-init o Linkerd CNI. El siguiente orden es conceptual, **no son comandos de iptables del host que se deban ejecutar**:
 
 ```text
 Inside the Pod network namespace:
@@ -198,13 +198,13 @@ Linkerd CNI: installs the Linkerd-specific capture setup through the CNI chain.
 linkerd-init: performs the setup at Pod startup when Linkerd CNI is not used.
 ```
 
-El antiguo ejemplo añadía la exclusión por UID del proxy después de un REDIRECT de todo TCP, donde no protegería el propio tráfico saliente del proxy. Aplicar esas reglas en el espacio de nombres del host tampoco es la configuración de Linkerd específica del Pod. La implementación real incluye exclusiones/cadenas adicionales y admite modos de iptables configurados.
+El ejemplo anterior añadía la excepción del UID del proxy después de una regla REDIRECT para todo el tráfico TCP, por lo que no protegía el propio tráfico saliente del proxy. Aplicar esas reglas en el espacio de nombres del host tampoco configura Linkerd específicamente para el Pod. La implementación real incluye cadenas y exclusiones adicionales, y admite los modos de iptables configurados.
 
-Los puertos opacos omiten la detección de protocolo y conservan el tratamiento del transporte por el proxy. Los puertos omitidos eluden el proxy y sus funciones de malla. Para tráfico donde el servidor habla primero, no utilice la omisión como sustituto de una configuración correcta de puertos opacos/protocolo.
+Los puertos opacos omiten la detección del protocolo, pero conservan el tratamiento del transporte por el proxy. Los puertos excluidos evitan el proxy y sus funciones de malla. Para el tráfico en el que el servidor habla primero, no uses la exclusión como sustituto de una configuración correcta de puertos opacos y protocolos.
 
-### Inspeccionar el Pod generado en vez de construir un proxy a mano
+### Inspecciona el Pod generado en vez de construir el proxy manualmente
 
-El antiguo Pod ensamblado manualmente omitía material de identidad/arranque y presuponía una imagen upstream stable-2.16.0 no disponible. Genere o inspeccione la configuración con la CLI seleccionada y la configuración instalada del plano de control:
+Al Pod que se ensamblaba manualmente le faltaba material de identidad y arranque, y se basaba en la suposición de que existía una imagen upstream stable-2.16.0, que no está disponible. Genera o inspecciona la configuración con la CLI seleccionada y la configuración instalada del plano de control:
 
 ```bash
 # The input is a complete, reviewed application manifest.
@@ -219,7 +219,7 @@ linkerd inject --manual --native-sidecar \
   web.yaml > web-manually-injected.yaml
 ```
 
-El modo inject predeterminado es una transformación de anotaciones. En edge-26.9.1, la generación manual también consume anotaciones de configuración de la entrada existente: una anotación observada de solicitud de CPU de 700m tuvo prioridad sobre una opción CLI de 100m, y se aplicó una anotación de nivel de registro de entrada. Actualice/elimine entradas contradictorias e inspeccione los campos resultantes del proxy. Un proxy materializado manualmente no se regenera automáticamente mediante cambios posteriores de anotaciones; actualice la carga de trabajo generada mediante su responsable en vez de copiar un contenedor abreviado como instalación completa.
+El modo predeterminado de inyección es una transformación de anotaciones. En edge-26.9.1, la generación manual también utiliza las anotaciones de configuración que ya existan en la entrada: una anotación observada de solicitud de CPU de 700m tuvo prioridad sobre una opción de CLI de 100m y también se aplicó una anotación de nivel de registro de entrada. Actualiza o elimina las entradas en conflicto e inspecciona los campos resultantes del proxy. Los cambios posteriores en las anotaciones no regeneran automáticamente un proxy materializado de forma manual; actualiza la carga de trabajo generada mediante el controlador que la administra, en lugar de copiar un contenedor abreviado como si fuera una instalación completa.
 
 ```bash
 : "${APP_POD:?Set an application Pod name in my-app}"
@@ -227,23 +227,23 @@ kubectl -n my-app get pod "$APP_POD" -o json |
   jq '{pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy, resources, startupProbe, readinessProbe, livenessProbe}))}'
 ```
 
-Los sidecars nativos aparecen en initContainers con restartPolicy: Always. Se omite el contenedor linkerd-init con la ruta CNI configurada. Los endpoints de estado del proxy son /live y /ready en el puerto de administración configurado (4191 de forma predeterminada); el comportamiento nativo de inicio/disponibilidad y la disponibilidad de la aplicación son independientes.
+Los sidecars nativos aparecen en initContainers con restartPolicy: Always. Si se configura la ruta CNI, se omite el contenedor linkerd-init. Los endpoints de salud del proxy son /live y /ready en el puerto de administración configurado (4191 de forma predeterminada); el comportamiento nativo de inicio y disponibilidad es independiente de la disponibilidad de la aplicación.
 
 ## Jerarquía de certificados
 
-| Material | Función/almacenamiento predeterminado |
+| Material | Función y almacenamiento predeterminados |
 |---|---|
-| Certificado/paquete del ancla de confianza | Base pública de confianza; ConfigMap linkerd-identity-trust-roots, ca-bundle.crt |
-| Clave privada de la CA raíz | Material del responsable de PKI; Linkerd no la necesita para funcionar |
-| Certificado/clave privada del emisor | Secret linkerd-identity-issuer; el formato predeterminado utiliza crt.pem/key.pem |
+| Certificado o paquete del ancla de confianza | Base pública de confianza; ConfigMap linkerd-identity-trust-roots, ca-bundle.crt |
+| Clave privada de la CA raíz | Material del responsable de PKI; Linkerd no necesita la clave para funcionar |
+| Certificado y clave privada del emisor | Secret linkerd-identity-issuer; el formato predeterminado utiliza crt.pem/key.pem |
 | Integración de emisor TLS de Kubernetes | Alternativa configurada deliberadamente que utiliza tls.crt/tls.key y el esquema correspondiente |
-| Clave/certificado de la carga de trabajo | Material de credenciales local del proxy; validez nominal del certificado de 24h, renovado automáticamente |
+| Clave y certificado de carga de trabajo | Credencial local del proxy; validez nominal del certificado de 24 h y renovación automática |
 
-La validez del emisor y del ancla de confianza depende de su PKI configurada. Las raíces/emisores generados por la CLI de forma predeterminada tienen validez de un año; un ejemplo personalizado de diez años no es un valor predeterminado ni una recomendación universal. Inspeccione las fechas reales de los certificados en vez de copiar una marca temporal fija de ejemplo.
+La validez del emisor y el ancla de confianza depende de la PKI configurada. Las raíces y los emisores que genera la CLI de forma predeterminada tienen una validez de un año; un ejemplo personalizado de diez años no es un valor predeterminado ni una recomendación universal. Inspecciona las fechas reales de los certificados en vez de copiar una marca temporal fija de ejemplo.
 
 ### Identidad de cargas de trabajo de Kubernetes
 
-Para el mecanismo predeterminado de identidad de Kubernetes, la identidad tiene formato DNS:
+Con el mecanismo predeterminado de identidad de Kubernetes, la identidad tiene formato DNS:
 
 ```text
 <service-account>.<namespace>.serviceaccount.identity.<linkerd-namespace>.<identity-trust-domain>
@@ -251,15 +251,15 @@ Para el mecanismo predeterminado de identidad de Kubernetes, la identidad tiene 
 web-service.my-app.serviceaccount.identity.linkerd.cluster.local
 ```
 
-Varios Pods que utilizan el mismo ServiceAccount comparten esta identidad, aunque cada uno conserva sus propias credenciales locales. El dominio de confianza de identidad es un concepto configurable, no necesariamente idéntico a un sufijo DNS de Kubernetes modificado.
+Varios Pods que utilizan el mismo ServiceAccount comparten esta identidad, pero conservan sus propias credenciales locales. El dominio de confianza de la identidad es un concepto configurable y no necesariamente coincide con un sufijo DNS de Kubernetes modificado.
 
-La cadena original spiffe://root.linkerd.cluster.local/ns/.../sa/... no era el formato predeterminado de identidad de Kubernetes. Las identidades basadas en SPIFFE/SPIRE son compatibles con una [ruta de expansión de malla a cargas de trabajo externas](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) distinta; no sustituya TokenReview de Kubernetes por su modelo de identidad/arranque.
+La cadena spiffe://root.linkerd.cluster.local/ns/.../sa/... del ejemplo original no era el formato predeterminado de identidad de Kubernetes. Las identidades basadas en SPIFFE/SPIRE son compatibles con una [ruta distinta para ampliar la malla a cargas de trabajo externas](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/); no sustituyas TokenReview de Kubernetes por su modelo de identidad y arranque.
 
 ### Renovación y rotación
 
-En proxy release/v2.368.0, el cliente de identidad normalmente programa el siguiente intento de certificado al 70% de la validez **restante**, acotado por los intervalos mínimo/máximo de actualización configurados. Las rutas de error/caducidad pueden utilizar el retraso mínimo. Esto no es una garantía fija de tiempo de reloj para todos los certificados.
+En proxy release/v2.370.0, el cliente de identidad normalmente programa el siguiente intento de obtener un certificado cuando ha transcurrido el 70 % de la validez **restante**, dentro de los intervalos mínimo y máximo de actualización configurados. Las rutas de error o caducidad pueden utilizar el retraso mínimo. No es una garantía de tiempo fija para todos los certificados.
 
-Ese cliente reutiliza sus documentos de clave/CSR cargados al solicitar certificados renovados. Renovar certificados no equivale a rotar claves privadas, emisores o anclas de confianza.
+Al solicitar certificados renovados, el cliente reutiliza los documentos de clave y CSR que tiene cargados. Renovar un certificado no es lo mismo que rotar la clave privada, el emisor o el ancla de confianza.
 
 ```bash
 set -euo pipefail
@@ -272,15 +272,15 @@ kubectl -n linkerd get secret linkerd-identity-issuer -o json |
   base64 -d | openssl x509 -noout -dates
 ```
 
-Una transición completa del ancla de confianza tiene varias fases:
+Una transición completa del ancla de confianza consta de varias fases:
 
-1. Inventariar las raíces válidas actuales, el emisor, todos los consumidores y los responsables de instalación/PKI.
-2. Añadir la nueva raíz junto a la antigua mediante la configuración del responsable. Asegurar que los proxies/componentes del plano de control afectados y los pares multiclúster carguen realmente el paquete con ambas raíces.
-3. Rotar el emisor a una credencial firmada por la nueva raíz y confirmar que el servicio de identidad la haya cargado.
-4. Renovar/recrear los consumidores según requiera su fuente de configuración; verificar las credenciales nuevas reales y el tráfico mTLS por las rutas afectadas.
-5. Eliminar la raíz antigua solo cuando ningún par necesario dependa de ella, propagar el paquete final y volver a verificar.
+1. Haz inventario de las raíces válidas actuales, el emisor, todos los consumidores y los responsables de la instalación y la PKI.
+2. Añade la nueva raíz junto a la anterior mediante la configuración de su responsable. Comprueba que los proxies y componentes del plano de control afectados, además de los pares multiclúster, carguen realmente el paquete con ambas raíces.
+3. Rota el emisor a una credencial firmada por la nueva raíz y confirma que el servicio de identidad la haya cargado.
+4. Renueva o vuelve a crear los consumidores según lo requiera su fuente de configuración; verifica las credenciales nuevas y el tráfico mTLS real en las rutas afectadas.
+5. Elimina la raíz anterior solo cuando ningún par necesario dependa de ella, distribuye el paquete final y vuelve a verificar.
 
-La antigua actualización de ConfigMap más el reinicio de un espacio de nombres terminaba antes de la transición del emisor y la eliminación de la raíz antigua; no era un procedimiento de rotación completo. Evite modificaciones directas que entren en conflicto con la gestión de Helm/cert-manager/trust-manager. Una raíz ya caducada necesita un procedimiento de recuperación, no una sustitución normal de una raíz válida.
+La antigua actualización del ConfigMap seguida del reinicio de un espacio de nombres terminaba antes de rotar el emisor y eliminar la raíz antigua; no era un procedimiento de rotación completo. Evita los cambios directos que entren en conflicto con la administración de Helm, cert-manager o trust-manager. Si una raíz ya ha caducado, se necesita un procedimiento de recuperación, no una sustitución normal de una raíz válida.
 
 ```bash
 linkerd check
@@ -290,54 +290,54 @@ kubectl -n linkerd get events --field-selector reason=IssuerUpdated
 kubectl -n my-app get pods -o wide
 ```
 
-Un evento IssuerUpdated es una observación, no una prueba de que todos los proxies o clústeres remotos hayan completado la transición. cert-manager puede automatizar la renovación del emisor y trust-manager puede distribuir paquetes, pero el cambio de raíz sigue necesitando verificación coordinada. Siga el flujo [manual](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/) o de [credenciales gestionadas](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/) para el diseño real de PKI; este capítulo no ejecutó una rotación.
+Un evento IssuerUpdated es una observación, no una prueba de que todos los proxies o clústeres remotos hayan completado la transición. cert-manager puede automatizar la renovación del emisor y trust-manager puede distribuir paquetes, pero el cambio de raíz aún necesita una verificación coordinada. Sigue el flujo [manual](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/) o el de [credenciales administradas](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/) para el diseño de PKI real; en este capítulo no se realizó ninguna rotación.
 
-## Detalles de inyección de sidecars
+## Detalles de la inyección de sidecars
 
-![Las decisiones de inyección combinan la intención del espacio de nombres, las anulaciones de la plantilla del Pod y la elegibilidad antes de crear el Pod. Una anotación no garantiza que todos los Pods reciban inyección.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
+![Las decisiones de inyección combinan la intención del espacio de nombres, las anulaciones de la plantilla del Pod y los criterios de elegibilidad antes de crear el Pod. Una anotación no garantiza que se inyecten todos los Pods.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
 
-[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
+[Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
 
-Para cargas de trabajo gestionadas por controladores, utilice anotaciones de plantilla de Pod e inspeccione los Pods resultantes. Las claves metadata duplicadas en un mismo mapa YAML se sobrescriben/entran en conflicto; mantenga los ejemplos de espacio de nombres y carga de trabajo como recursos/fragmentos separados.
+Para las cargas de trabajo administradas por controladores, utiliza anotaciones en la plantilla del Pod e inspecciona los Pods resultantes. Las claves de metadatos duplicadas dentro de un mismo mapa YAML se sobrescriben o entran en conflicto; mantén los ejemplos de espacios de nombres y cargas de trabajo como recursos o fragmentos separados.
 
-Las anotaciones de recursos/registros mostradas antes establecen las solicitudes/límites previstos del proxy y la configuración de registros. No son mediciones del consumo real. Las anulaciones de puertos opacos sustituyen la lista de puertos predeterminada en vez de añadir simplemente dos puertos de base de datos; conserve todos los puertos necesarios. Las anulaciones de puertos omitidos eliminan deliberadamente tráfico del tratamiento de la malla.
+Las anotaciones de recursos y registros mostradas antes definen las solicitudes y los límites previstos para el proxy, así como la configuración de registros. No son mediciones del consumo real. Las anulaciones de puertos opacos sustituyen la lista de puertos predeterminada; no se limitan a añadir dos puertos de base de datos. Conserva todos los puertos necesarios. Las anulaciones de puertos excluidos retiran intencionalmente el tráfico de la malla.
 
 ## Comunicación entre componentes
 
-![Funciones seleccionadas de comunicación del plano de control: descubrimiento, validación de identidad, políticas y admisión. Los valores predeterminados actuales utilizan EndpointSlices y TokenReview; la tabla de puertos también cubre TCP opaco.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
+![Funciones seleccionadas de la comunicación del plano de control: descubrimiento, validación de identidad, políticas y admisión. Los valores predeterminados actuales utilizan EndpointSlices y TokenReview; la tabla de puertos también incluye TCP opaco.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
 
-[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
+[Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
 
-| Componente/ruta | Puerto predeterminado | Protocolo/propósito |
+| Componente o ruta | Puerto predeterminado | Protocolo o propósito |
 |---|---|---|
-| Service Destination | 8086 | gRPC de streaming para descubrimiento/perfiles |
-| Service Identity | 8080 | gRPC de API de certificados |
+| Service Destination | 8086 | gRPC de streaming para descubrimiento y perfiles |
+| Service Identity | 8080 | gRPC de la API de certificados |
 | Service Policy | 8090 | gRPC de políticas |
 | Inyector de proxies | Service 443 → Pod 8443 | Webhook de admisión HTTPS |
-| Entrada del proxy | 4143 | TCP interceptado, incluidos HTTP/gRPC o tráfico opaco |
+| Entrada del proxy | 4143 | TCP interceptado, incluido HTTP/gRPC o tráfico opaco |
 | Salida del proxy | 4140 | TCP saliente interceptado |
 | Administración del proxy | 4191 | Endpoints HTTP de métricas y estado |
 
-Estos puertos se pueden configurar y no constituyen una regla general de acceso a la red. El endpoint de administración no es una interfaz de configuración de enrutamiento al estilo Envoy; las políticas/configuración se entregan mediante las API del plano de control.
+Estos puertos se pueden configurar y no establecen una regla general de acceso a la red. El endpoint de administración no es una interfaz de configuración de enrutamiento al estilo de Envoy; las políticas y la configuración se distribuyen mediante las API del plano de control.
 
 ## Comparación con la arquitectura de Istio
 
 | Aspecto | Linkerd | Istio |
 |---|---|---|
-| Organización del plano de control | Tres Deployments principales en esta versión, con varios controladores lógicos | Istiod unificado para las funciones principales de control, más componentes específicos del modo |
-| Plano de datos | Proxies Rust diseñados específicamente | Sidecars Envoy o ztunnel de ambient con waypoints seleccionados |
+| Empaquetado del plano de control | Tres implementaciones principales en esta versión, con varios controladores lógicos | Istiod unificado para las funciones principales de control, más componentes específicos de cada modo |
+| Plano de datos | Proxies Rust diseñados para la malla | Sidecars Envoy o ztunnel de ambient con waypoints seleccionados |
 | Configuración | API gRPC de streaming de Linkerd y sus recursos compatibles | xDS para Envoy y configuración compatible de Istio/Gateway API |
-| Extensiones | Comprobar las funciones/API compatibles de Linkerd | Comprobar la compatibilidad y asociación de Envoy/Wasm/Lua específicas del modo/versión |
-| Comparación de recursos/rendimiento | Medir cargas de trabajo equivalentes y la configuración real | Medir cargas de trabajo equivalentes y la configuración real |
+| Extensiones | Comprueba las funciones y API compatibles de Linkerd | Comprueba la compatibilidad y la asociación de Envoy/Wasm/Lua específicas del modo y la versión |
+| Comparación de recursos y rendimiento | Mide cargas de trabajo equivalentes con su configuración real | Mide cargas de trabajo equivalentes con su configuración real |
 
-xDS también utiliza habitualmente gRPC; el nombre de un protocolo no es una clasificación intrínseca de complejidad. El número de CRD varía según versiones y extensiones y no mide la sobrecarga durante la ejecución. Las solicitudes/límites son reservas/topes configurados, no memoria o latencia observadas. Compare la misma carga de trabajo, tráfico, protocolo, políticas y presupuesto de fallos antes de elegir; consulte la [comparación mantenida](../istio/comparison/README.md).
+xDS también utiliza gRPC habitualmente; el nombre del protocolo no indica por sí solo una mayor complejidad. El número de CRD varía según las versiones y extensiones, y no mide la sobrecarga en tiempo de ejecución. Las solicitudes y los límites son reservas y topes configurados, no medidas de memoria o latencia observadas. Antes de elegir, compara la misma carga de trabajo, tráfico, protocolo, políticas y presupuesto de fallos; consulta la [comparación mantenida](../istio/comparison/README.md).
 
 ## Siguientes pasos y fuentes
 
 - [Gestión del tráfico](03-traffic-management.md), [Seguridad](04-security.md), [Observabilidad](05-observability.md)
 - [Cuestionario de arquitectura](../../quizzes/service-mesh/linkerd/architecture.md)
 - [Arquitectura oficial](https://linkerd.io/docs/reference/architecture/), [inyección](https://linkerd.io/docs/features/proxy-injection/) y [referencia de políticas](https://linkerd.io/docs/reference/authorization-policy/)
-- [mTLS automático](https://linkerd.io/docs/features/automatic-mtls/), [tratamiento de protocolos](https://linkerd.io/docs/features/protocol-detection/) y [equilibrio de carga](https://linkerd.io/docs/features/load-balancing/)
-- [API Destination de la versión fijada](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
-- [Validación de tokens de Kubernetes](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go) y [formato de identidad](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
-- [Implementación de renovación de certificados de la versión fijada](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)
+- [mTLS automático](https://linkerd.io/docs/features/automatic-mtls/), [gestión de protocolos](https://linkerd.io/docs/features/protocol-detection/) y [balanceo de carga](https://linkerd.io/docs/features/load-balancing/)
+- [API Destination fijada](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
+- [Validación de tokens de Kubernetes](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/validator.go) y [formato de identidad](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/domain.go)
+- [Implementación fijada de actualización de certificados](https://github.com/linkerd/linkerd2-proxy/blob/0cdcc078e66eb27c79b9dfc030fc660042716d31/linkerd/proxy/identity-client/src/certify.rs)

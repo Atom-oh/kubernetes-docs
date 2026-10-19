@@ -1,13 +1,12 @@
 # Datadog
 
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 > Helm chart 3.244.0、対応する Agent/Cluster Agent 7.83.1。
 > 構成、SDK、およびローカル検証の制限は以下に記載します。Datadog テナントは変更していません。
 
 ## はじめに
 
-Datadog は SaaS のオブザーバビリティバックエンドを提供します。チームは引き続き、collector、identity、
-ネットワークアクセス、instrumentation、データ開示、保持、monitor、およびコストを管理します。
+Datadog は SaaS のオブザーバビリティバックエンドを提供します。チームは引き続き、データ収集、ID管理、ネットワークアクセス、計装、データ開示、保持期間、監視、コストを管理します。
 Infrastructure Monitoring、APM、profiling、logs、その他の製品には、それぞれ異なる
 利用資格と課金ディメンションがあります。Agent をインストールしても、すべての製品が含まれるわけではありません。
 
@@ -23,7 +22,7 @@ Infrastructure Monitoring、APM、profiling、logs、その他の製品には、
 利用可能な製品、料金条件は site 間で交換可能ではありません。固定の integration 数の主張や
 普遍的な「簡単/高度/安価」の順位付けではなく、integration catalogue を使用してください。
 
-## EKS integration architecture
+## EKS との統合アーキテクチャ
 
 | コンポーネント | 責任 / 境界 |
 | --- | --- |
@@ -229,9 +228,9 @@ Datadog 提供の external ID を使用します。node Agent SA に付与され
 **render された** service-account name を解決してください。推測した `datadog-agent` SA に IAM association を作成しても、Helm release が使用する
 異なる SA は bind されません。local STS caller check を workload の identity の証明として扱わないでください。
 
-## Infrastructure Monitoring
+## インフラストラクチャの監視
 
-### metric の collector、unit、tags を確認する
+### メトリクスの収集元、単位、タグを確認する
 
 | Metric / source | 意味 |
 | --- | --- |
@@ -252,7 +251,7 @@ collector/runtime に依存します。その metric の実際の definition を
 cluster-centric State Core metrics が常に `host` tag を持つとは限りません。`cluster_name` と `kube_cluster_name` は交換可能ではありません。
 raw nanocore value を 80 と比較しても、80% CPU を意味しません。
 
-### OpenMetrics Autodiscovery
+### OpenMetrics による自動検出設定
 
 container 名が `app` で、port 9464 上に gauge `queue_depth` を提供する workload に、次の **metadata fragment** を merge してください。
 これは application や endpoint を作成しません。annotation の container identifier は一致する必要があります。endpoint を保護し、必要に応じて TLS/authentication を構成してください。
@@ -272,7 +271,7 @@ metadata:
 counters と histograms では、Prometheus name が最終的な Datadog name でもあると仮定せず、name normalization、emitted `.count`/bucket
 series、check-version behavior を検証してください。
 
-### DogStatsD: application から到達できる endpoint を使用する
+### DogStatsD: アプリケーションから到達できるエンドポイントを使う
 
 application Pod の `localhost` は node Agent ではありません。Linux の例では host-local UDS directory を使用します。Admission Controller の
 `socket` mode は `DD_DOGSTATSD_URL`、`DD_TRACE_AGENT_URL`、volume を inject できます。それ以外の場合は、対応する mounts と permissions を
@@ -280,7 +279,7 @@ application Pod の `localhost` は node Agent ではありません。Linux の
 引き続き見えるように parent directory を mount してください。
 
 Python helper は `datadog==0.53.0` で確認しました。`socket_path` には `/var/run/datadog/dsd.socket` のような実際の filesystem path を渡してください。
-他の SDKs/environment settings で使用する `unix://` URL は同じ argument format ではありません。zero の good/error values を含め、実際の interval counts で
+他の SDKs/environment settings で使用する `unix://` URL は同じ argument format ではありません。成功数やエラー数が0の場合も含め、期間ごとの実測カウントを使って
 `emit_batch` を呼び出してください。
 
 ```python
@@ -356,7 +355,7 @@ local datagram delivery は SaaS ingestion を acknowledge しません。UDP �
 monitoring が必要です。sample helper は DogStatsD client telemetry を有効にしないため、deployment には別の collection-health signal を選択してください。
 Counter retries/duplicate sends は exactly-once business ledger ではありません。
 
-### File-based Autodiscovery configuration
+### ファイルベースの Autodiscovery 設定
 
 Helm 管理の configuration では、`datadog.confd` が check files を作成して mount します。`datadog-checks` という名前の standalone ConfigMap は、
 存在するだけでは自動的に discovered されません。次の NGINX fragment には、一致する image identity と構成済みで authorized な `stub_status` endpoint が必要です。
@@ -372,9 +371,9 @@ authenticated Redis check には、正しい port/TLS と credential delivery �
 application Pod の environment ではなく **Agent の** environment です。構成済みの Datadog secret backend または必要な特定の permissions を持つ
 保護された file delivery を優先してください。public check examples に passwords を露出したり、discovery のためだけに cluster-wide Secret reads を付与したりしないでください。
 
-## APM と Distributed Tracing
+## APM と分散トレーシング
 
-### Local SDK injection と SSI は明示的な選択です
+### ローカル SDK 注入と SSI は明示的に選択する
 
 admission opt-in label は mutation/connection-setting injection を許可します。tracing library を install するには、SSI targets または
 サポート対象の language/version annotation を構成してください。label だけでは SDK が install されたことや traces が Datadog に到達したことの証明にはなりません。
@@ -408,7 +407,7 @@ cluster-wide SSI は、レビュー済みの namespace/pod targets と library v
 manual と injected tracers を意図せず組み合わせないでください。injected library は manually installed なものより優先されることがあります。
 Profiler enablement には、引き続きサポート対象 client library と独自の product/runtime conditions が必要です。
 
-### Manual Java instrumentation
+### Java の手動計装
 
 application JVM の起動時には、staged で versioned な `dd-java-agent.jar`、または上記の validated injection route を使用してください。
 単に `dd-trace-api` を追加しても annotation/API にはアクセスできますが、runtime bytecode instrumentation は開始しません。
@@ -439,7 +438,7 @@ handler は caller から提供される application code を表します。oper
 ごとの tags は、このデモには不要であり、disclosure/cardinality risks を生み出す可能性があります。manual span APIs には対応するサポート対象 bridge/library が必要です。
 annotation API しかない project に OpenTracing imports を追加しないでください。
 
-### Manual Python instrumentation
+### Python の手動計装
 
 この確認済みの 4.14.0 の例には、現在の `ddtrace.trace` import を使用してください。dependency declaration は Python code block 内ではなく
 `requirements.txt` に置いてください。framework auto-instrumentation では、application imports の前に選択した `ddtrace-run`/SSI setup に従ってください。
@@ -465,9 +464,9 @@ Service maps は観測された instrumented relationships から作られ、任
 raw customer/order identifiers、tokens、request bodies をデフォルトで tag しないでください。実際の application について instrumentation capture、
 error messages、sampling/redaction rules をレビューしてください。auto-instrumentation は完全な PII removal を保証しません。
 
-## Log Management
+## ログ管理
 
-### collection と parsing を意図的に選択する
+### 収集と解析方法を適切に選ぶ
 
 installation は log collection を有効にしますが、`containerCollectAll: false` のままにします。container 名が `app` の pod template に
 この metadata を merge してください。multiline rule は **date で始まる plain-text Java records** に適用されます。一般的な JSON-log parser ではありません。
@@ -486,7 +485,7 @@ metadata:
 file access、runtime paths、annotation matching、exclusion settings、backend pipeline filters はすべて collection に影響します。
 matching application と excluded one の両方で selective collection を確認してください。
 
-### Pipeline request structure
+### パイプライン作成リクエストの構造
 
 この request は実際の API fields **`match_rules` と `support_rules`** を使用します。古い camelCase fields は Logs API model ではありません。
 sample message は期待する line format を定義しています。application の実際の format/timezone を使用し、unmatched/multiline/error cases を test してください。
@@ -536,7 +535,7 @@ valid request model は Datadog tenant における Grok parsing や ingestion/i
 Pipeline の creation/reordering は matching logs の processing を変更します。正しい site、scoped API permissions、既存の pipeline ownership の下で構成してください。
 この監査では pipeline request は送信していません。
 
-### Trace-log correlation と MDC ownership
+### トレースとログの関連付け、および MDC の管理
 
 可能な場合はサポート対象の automatic log injection を使用し、structured logs では trace/span IDs を strings として保持してください。
 正しい service/env/version、timestamps、parsing、利用可能な trace data も必要です。2 つの ID fields だけでは correlation を保証しません。
@@ -574,11 +573,11 @@ public final class TraceLogContext {
 これには `dd-trace-api` と application に対応する SLF4J API/provider が必要です。logging pattern または JSON encoder に MDC values を含める必要があります。
 servlet API、imports、checked-exception contract がないまま servlet example をコピーしないでください。
 
-## Dashboards と Alerts
+## ダッシュボードとアラート
 
 <span id="dashboard-creation-api"></span>
 
-### Dashboard request construction
+### ダッシュボード作成リクエストの構築
 
 この helper は request body の構築に `datadog-api-client==2.60.0` を使用します。cluster と namespace template variables は実際に queries から参照されます。
 host widget は percent metric を使用し、pod widget は memory bytes とその namespace filter を使用します。選択した data が本当に grouping tags を持つことを確認してください。
@@ -617,7 +616,7 @@ caller は正しく構成された `ApiClient` を提供し、意図した dashb
 
 <span id="monitor-alert-configuration"></span>
 
-### Monitor queries と units
+### モニタークエリと単位
 
 構成済みの Datadog Terraform provider と project version constraints/lock file を使用してください。これらは resource fragments であり、完全な provider/credential setup ではありません。
 thresholds は例です。実際の metric units、tags、windows、application objectives を確認してください。最初の monitor は nanocores を 80 と比較して結果を「CPU percent」と呼ぶのではなく、
@@ -731,11 +730,11 @@ def build_success_slo():
 `ServiceLevelObjectivesApi.create_slo` に渡せます。Datadog は monitor-based および time-slice SLOs もサポートします。gauge/restart total を
 good-event count に無理に当てはめるのではなく、SLI に一致する model を選択してください。
 
-## Cost Structure
+## コスト構造
 
 <span id="pricing-overview"></span>
 
-### 実際の product と contract units を使用する
+### 実際の製品と契約上の単位を使う
 
 | コンポーネント | 見積もりの入力 |
 | --- | --- |
@@ -770,7 +769,7 @@ Estimated cost =
 
 <span id="cost-optimization-strategies"></span>
 
-### Metrics、logs、trace controls は異なることを行う
+### メトリクス、ログ、トレース制御の役割
 
 <span id="_1-metric-optimization"></span>
 
@@ -786,7 +785,7 @@ Estimated cost =
   文書化された Python `DD_TRACE_RATE_LIMIT` は process ごとで、構成された sampling rules/rate とともに適用されます。cluster-wide や dollar cap ではありません。
   10% trace rate は Datadog bill 全体の 90% reduction を意味しません。
 
-## Best Practices
+## ベストプラクティス
 
 <span id="_1-tagging-strategy"></span>
 

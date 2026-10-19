@@ -2,9 +2,9 @@
 
 > **例のベースライン**: Calico Open Source 3.32.2
 >
-> **最終確認**: October 12, 2026
+> **最終確認**: 2026年10月12日
 >
-> **最新リリース**: October 1 にリリースされた Calico 3.33.0 が最新の Open Source リリースであり、Kubernetes 1.35–1.37 でテストされています。
+> **最新リリース**: 10月1日にリリースされた Calico 3.33.0 が最新の Open Source リリースであり、Kubernetes 1.35–1.37 でテストされています。
 >
 > このシリーズのコマンドは、テスト対象範囲が 1.34–1.36 である 3.32.2 に引き続き固定されています。これらの例は 3.33.0 では検証されていません。リリースを選択する前に、[3.33.0 リリースノート](https://github.com/projectcalico/calico/releases/tag/v3.33.0)と[現在の要件](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)を確認してください。これは、無期限の `3.29+ / Kubernetes 1.28+` 互換性保証ではありません。
 
@@ -14,11 +14,11 @@ Calico は Kubernetes 向けのネットワーキングとネットワークポ�
 
 ### 2026 年 7 月: Kubernetes 上の VM 向け Calico
 
-Tigera の[公式発表](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/)の日付は **July 23, 2026** です。これは、VM/container ネットワーキング、IP 継続性、L2 ブリッジ拡張、VMware 移行向けのポリシーと可観測性について説明しています。これは製品発表であり、宣伝されているすべての機能が Calico Open Source に含まれるという約束ではありません。正確なエディション、トポロジー、機能ステータスを確認してください。[Enterprise 3.23 リリースノート](https://docs.tigera.io/calico-enterprise/latest/release-notes/)では、KubeVirt ライブマイグレーションは引き続き技術プレビューとされています。マーケティング上の利用可能性によって、その機能固有の制限がなくなることはありません。
+Tigera の[公式発表](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/)の日付は **2026年7月23日** です。これは、VM/container ネットワーキング、IP 継続性、L2 ブリッジ拡張、VMware 移行向けのポリシーと可観測性について説明しています。これは製品発表であり、宣伝されているすべての機能が Calico Open Source に含まれるという約束ではありません。正確なエディション、トポロジー、機能ステータスを確認してください。[Enterprise 3.23 リリースノート](https://docs.tigera.io/calico-enterprise/latest/release-notes/)では、KubeVirt ライブマイグレーションは引き続き技術プレビューとされています。マーケティング上の利用可能性によって、その機能固有の制限がなくなることはありません。
 
 ## 互換性と機能の境界
 
-- Calico 3.32.2 は August 30, 2026 にリリースされ、Kubernetes 1.34–1.36 でテストされています。より新しい 3.33.0 リリースは Kubernetes 1.35–1.37 でテストされています。Kubernetes 1.37 が利用可能であることだけでは、固定された 3.32.2 の例との互換性は確立されません。
+- Calico 3.32.2 は 2026年8月30日にリリースされ、Kubernetes 1.34–1.36 でテストされています。より新しい 3.33.0 リリースは Kubernetes 1.35–1.37 でテストされています。Kubernetes 1.37 が利用可能であることだけでは、固定された 3.32.2 の例との互換性は確立されません。
 - 一般的な Linux 要件は、必要なモジュールを備えたカーネル 5.10 以降です。サポート対象のアーキテクチャ、ベンダーのバックポート、個別機能に対するより高い要件については、eBPF ガイドを参照してください。
 - Linux データプレーンには iptables、nftables、eBPF があります。デフォルトはインストーラー/プラットフォームに依存します。現在の自己管理 kubeadm operator インストールでは、デフォルトが eBPF になる場合があります。包括的な機能同等性の保証はありません。
 - [Calico for Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)は、指定された IPv4 VXLAN および BGP 構成をサポートしますが、Linux eBPF、IPIP、IPv6/dual stack、WireGuard、または Linux のすべてのポリシー機能はサポートしません。

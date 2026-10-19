@@ -1,6 +1,6 @@
 # Instalación y configuración de Linkerd
 
-> **Última actualización**: 11 de septiembre de 2026 · CLI pública: edge-26.9.1 · Charts correspondientes: 2026.9.1
+> **Última actualización**: 16 de octubre de 2026 · CLI pública: edge-26.10.1 · Charts correspondientes: 2026.10.1
 
 La guía cubre instalación controlada, propiedad Helm/CLI, HA, extensiones opcionales, EKS, actualizaciones y retirada. Upstream publica artefactos edge; las distribuciones estables tienen instrucciones de instalación/soporte del proveedor. Un hito como 2.20 no es una descarga upstream stable-2.20.0.
 
@@ -13,7 +13,7 @@ Los comandos usan Bash salvo indicación PowerShell. Use kubeconfig/contexto y p
 | Rama/versión | Evidencia Kubernetes | Evidencia Gateway API |
 |---|---|---|
 | Hito/distribución Linkerd 2.20 | Matriz 1.31–1.35; confirme soporte del proveedor | Matriz 1.2.1–1.5.1 |
-| edge-26.9.1 público usado aquí | Mínimo CLI 1.31.0; edge-26.8.2 elevó máximo probado a 1.36 | Soporte publicado 1.5.1; se usa su paquete estándar |
+| edge-26.10.1 público usado aquí | Mínimo CLI 1.31.0; edge-26.8.2 elevó máximo probado a 1.36 | Soporte publicado 1.5.1; se usa su paquete estándar |
 | Histórico 2.16 | Matriz 1.22–1.29 | No recomendado para instalación actual |
 | Históricos 2.15 / 2.14 | Intervalos 1.22–1.29 / 1.21–1.28 | Revise la release; no deduzca «y todo Kubernetes posterior» |
 
@@ -40,7 +40,7 @@ Verifique origen/destino, no solo puertos para abrir en todas partes:
 Son puertos de componentes, no reglas de seguridad sin restricciones. Incluya DNS, Kubernetes API y comportamiento CNI/políticas elegido. Inspeccione targetPorts y webhooks reales.
 
 ```bash
-LINKERD_CHART_VERSION=2026.9.1
+LINKERD_CHART_VERSION=2026.10.1
 CNI_ENABLED=false  # Set true only after installing/verifying Linkerd CNI.
 kubectl config current-context
 kubectl version
@@ -62,12 +62,12 @@ Lo siguiente selecciona el artefacto exacto y compara SHA256 con metadatos ofici
 
 ```bash
 set -euo pipefail
-LINKERD_VERSION=edge-26.9.1
+LINKERD_VERSION=edge-26.10.1
 case "$(uname -s)/$(uname -m)" in
-  Linux/x86_64) suffix=linux-amd64; expected=094e1de06215fbe76fc011cf62c96214f8dae0cd5a58135fb40307be88b6b176 ;;
-  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=f92eddc52dc1f3089b65fd16014cdb1bc6b07c3fd177091c365cf3d8c0ea1a8b ;;
-  Darwin/x86_64) suffix=darwin; expected=acff9471f26552dd0ebb9560925a98d5ca1213a13dfc81464a2b815c9201664d ;;
-  Darwin/arm64) suffix=darwin-arm64; expected=5050da9d974e0c2f548a2e9f145540ec035582cfd67f47c58c37411ae3008913 ;;
+  Linux/x86_64) suffix=linux-amd64; expected=66d634f5318c8016f0b5face246a688964b6e2c86d6c3be34be68ab9fcd2a8cc ;;
+  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=431989b15b48acfd6e344ff16a0d3505574c0cce551a2d4aeae82246ce65a5cc ;;
+  Darwin/x86_64) suffix=darwin; expected=bcf7acaf8a946cffd262d075dcaa50e9b583d8191bfa6e1c20fd3593fe6db524 ;;
+  Darwin/arm64) suffix=darwin-arm64; expected=abaaaeba9334feae7c1f16dd43a6f85b6051eadf49425f0ae30cbf16eba29f70 ;;
   *) echo "No verified asset for this OS/architecture in this example" >&2; exit 1 ;;
 esac
 CLI_DIR="$PWD/linkerd-cli/$LINKERD_VERSION"
@@ -96,7 +96,7 @@ run.linkerd.io/install antiguo está obsoleto e instala edge, no stable. El inst
 ```bash
 curl --proto '=https' --tlsv1.2 -fsSL https://run.linkerd.io/install-edge -o install-linkerd.sh
 # Inspect the downloaded script before execution.
-LINKERD2_VERSION=edge-26.9.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
+LINKERD2_VERSION=edge-26.10.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
 export PATH="$PWD/linkerd-installer/bin:$PATH"
 linkerd version --client
 ```
@@ -109,8 +109,8 @@ El artefacto se llama windows.exe, no windows-amd64.exe:
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$LinkerdVersion = "edge-26.9.1"
-$ExpectedSha256 = "d50119c635a0052bfcc7e0b96dcc985676b237ebc87464380677c413344d99a9"
+$LinkerdVersion = "edge-26.10.1"
+$ExpectedSha256 = "7f6d3b1183bfed8d555e55fbb4934695e1376c8a3fab77a5d3f8954ec0306dc7"
 $Download = Join-Path (Get-Location) "linkerd.download.exe"
 $Url = "https://github.com/linkerd/linkerd2/releases/download/$LinkerdVersion/linkerd2-cli-$LinkerdVersion-windows.exe"
 Invoke-WebRequest -Uri $Url -OutFile $Download
@@ -150,7 +150,7 @@ helm repo update linkerd-edge
 helm show chart linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
 ```
 
-Los charts públicos correspondientes son linkerd-crds, linkerd-control-plane, linkerd-viz, linkerd-multicluster y linkerd2-cni 2026.9.1. El appVersion core actual es edge-26.9.1. No instale un chart antiguo sin fijar del repositorio stable suponiendo coincidencia con esta CLI.
+Los charts públicos correspondientes son linkerd-crds, linkerd-control-plane, linkerd-viz, linkerd-multicluster y linkerd2-cni 2026.10.1. El appVersion del chart principal es edge-26.10.1. No instale un chart antiguo sin fijar del repositorio stable suponiendo que coincide con esta CLI.
 
 #### Ancla de confianza e issuer
 
@@ -332,7 +332,7 @@ linkerd viz check
 
 El chart admite persistencia cuando **existe el mapa** persistence. No usa persistence.enabled como interruptor. accessMode es obligatorio; el ejemplo anterior lo omitía y renderizaba null. Omitir el mapa usa emptyDir. StorageClass gp3 es requisito de ejemplo, no algo que cree Viz; verifique CSI EBS, permisos y topología en EKS.
 
-Prometheus incluido tiene una réplica; persistencia selecciona Recreate. Un PVC conserva datos en reemplazos adecuados, pero no hace HA ni garantiza disponibilidad continua. Chart 2026.9.1 usa Prometheus v2.55.1 y seis horas de retención por defecto. Elija explícitamente mantenimiento, retención y disponibilidad.
+Prometheus, incluido en el chart, funciona con una sola réplica; habilitar la persistencia selecciona la estrategia de implementación Recreate. Un PVC conserva los datos cuando se reemplaza el Pod en las condiciones adecuadas, pero no aporta alta disponibilidad al almacenamiento de métricas ni garantiza que el servicio esté siempre disponible. El chart 2026.10.1 usa Prometheus v2.55.1 y establece seis horas de retención de forma predeterminada. Defina explícitamente los requisitos de mantenimiento, retención y disponibilidad del backend.
 
 Para Prometheus externo ya configurado, este archivo es una **alternativa**:
 
@@ -348,7 +348,7 @@ Use dashboard localhost inicialmente. dashboard.enforcedHostRegexp valida Host; 
 
 ### Trazado distribuido
 
-edge-26.9.1 no tiene subcomando linkerd jaeger. El chart público linkerd-jaeger termina en 2025.9.4, no corresponde a 2026.9.1. Sustituya instrucciones obsoletas de instalar/comprobar/actualizar/desinstalar por collector/backend independiente y configuración de tracing del proxy.
+edge-26.10.1 no incluye el subcomando linkerd jaeger. El historial público del chart linkerd-jaeger termina en 2025.9.4; no es una extensión correspondiente a 2026.10.1. Sustituya las instrucciones obsoletas para instalar, comprobar, actualizar y desinstalar esa extensión por una configuración con collector/backend gestionado por separado y la configuración de tracing elegida para el proxy.
 
 Tracing requiere contexto entrante, propagación de aplicación y protocolos compatibles. Una topología Viz o gráfico métrico no es una traza. Consulte [observabilidad](05-observability.md) y [documentación oficial](https://linkerd.io/docs/features/distributed-tracing/) para la ruta completa. Esta auditoría no afirma que un despliegue Collector/Jaeger no probado funcione extremo a extremo. Si existe una release antigua linkerd-jaeger, inventaríe/migre datos y retírela mediante su propietario; la CLI actual no gestiona esa extensión eliminada.
 
@@ -635,7 +635,7 @@ Si se instaló Linkerd CNI, limpie su plugin de nodo aparte cuando ninguna carga
 
 ## Referencias
 
-- [Modelo de releases](https://linkerd.io/releases/) y [artefactos edge-26.9.1](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)
+- [Modelo de releases](https://linkerd.io/releases/) y [artefactos edge-26.10.1](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)
 - [Matriz Kubernetes](https://linkerd.io/docs/reference/k8s-versions/) y [compatibilidad Gateway API](https://linkerd.io/docs/features/gateway-api/)
 - [Instalación Helm](https://linkerd.io/docs/tasks/install-helm/) e [índice oficial edge](https://helm.linkerd.io/edge/index.yaml)
 - [Comportamiento HA](https://linkerd.io/docs/features/ha/) y [configuración clúster/Cilium](https://linkerd.io/docs/reference/cluster-configuration/)

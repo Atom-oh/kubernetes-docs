@@ -299,6 +299,7 @@ spec:
 - C. 파드를 특정 영역(zone)에만 배치: 이는 노드 어피니티를 사용하여 특정 영역에 배치하는 것이며, 토폴로지 분산 제약 조건의 주요 목적은 균등한 분산입니다.
 - D. 파드를 특정 레이블이 있는 노드에만 배치: 이는 노드 셀렉터 또는 노드 어피니티의 역할입니다.
 </details>
+
 ### 4. Kubernetes에서 테인트(Taint)와 톨러레이션(Toleration)의 주요 목적은 무엇인가요?
 
 A. 특정 파드가 특정 노드에만 스케줄링되도록 보장  
@@ -605,6 +606,7 @@ Go 타입은 대문자로 시작하는 필드명을 직렬화합니다. `nodeCac
 - B. 필터링 및 우선순위 지정 기능 제공: 스케줄러 익스텐더의 유효한 특징입니다.
 - D. 외부 프로세스로 실행: 스케줄러 익스텐더의 유효한 특징입니다.
 </details>
+
 ### 6. Kubernetes에서 파드 어피니티(Pod Affinity)와 안티-어피니티(Anti-Affinity)의 주요 목적은 무엇인가요?
 
 A. 파드와 노드 간의 관계 정의  
@@ -835,6 +837,7 @@ kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.no
 - B. 파드를 실행할 수 없는 노드 제외: 이는 "Filter" 확장 포인트의 역할입니다.
 - D. 파드를 노드에 바인딩: 이는 "Bind" 확장 포인트의 역할입니다.
 </details>
+
 ### 8. Kubernetes에서 파드 우선순위 선점(Pod Priority Preemption)의 주요 목적은 무엇인가요?
 
 A. 우선순위가 높은 파드가 스케줄링될 수 있도록 우선순위가 낮은 파드 제거  

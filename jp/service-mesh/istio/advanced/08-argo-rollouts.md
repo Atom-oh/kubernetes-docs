@@ -1,423 +1,174 @@
 # Argo Rollouts と Istio の統合
 
-> **対応バージョン**: Argo Rollouts 1.6+, Istio 1.18+
-> **最終更新**: February 19, 2026
-> **難易度**: ⭐⭐⭐⭐（上級）
+> **検証基準**: Argo Rollouts 1.10.1、Istio 1.31.0、Kubernetes 1.32～1.37
+> **最終確認日**: 2026年10月16日
+> **難易度**: 上級
 
-このドキュメントでは、Argo Rollouts を Istio Service Mesh と統合して Progressive Delivery を実装する方法を詳しく説明します。
+Argo Rollouts は段階的デリバリー中にレプリカの選択と Istio のトラフィック重みを調整します。分析を行うには設定と信頼できる観測データが必要です。両方のコントローラーをインストールしただけでは、自動品質ゲートも可用性の保証も得られません。
 
 ## 目次
 
 1. [概要](#overview)
 2. [アーキテクチャ](#architecture)
-3. [コアコンセプト](#core-concepts)
+3. [基本概念](#core-concepts)
 4. [セットアップと設定](#setup-and-configuration)
 5. [トラフィックルーティング戦略](#traffic-routing-strategies)
 6. [分析とメトリクス](#analysis-and-metrics)
-7. [高度なデプロイメントパターン](#advanced-deployment-patterns)
+7. [高度なデプロイパターン](#advanced-deployment-patterns)
 8. [トラブルシューティング](#troubleshooting)
 9. [ベストプラクティス](#best-practices)
 
-<span id="overview"></span>
+## 概要 {#overview}
 
-## 概要
+Canary は対象トラフィックを段階的に移行し、blue/green はアクティブ Service のセレクターを切り替えます。設定した分析により、更新を続行させるか、中止（abort）するか、一時停止させるかを判断できます。トラフィックの伝播、readiness、追加容量、長時間接続、アプリケーションやデータの互換性が、引き続きユーザーに見える結果を左右します。
 
-### Argo Rollouts とは？
+![手動で重みを変更する場合と、Analysis ステップを明示的に設定した Rollout の概念比較](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-0.png)
 
-Argo Rollouts は、Kubernetes 向けの Progressive Delivery コントローラーであり、高度なデプロイメント戦略を提供します。
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-0.html)
 
-- **Canary デプロイメント**: 段階的なトラフィック移行
-- **Blue/Green デプロイメント**: 即時切り替えとロールバック
-- **分析ベースの自動化**: メトリクスに基づく自動進行／ロールバック
-- **トラフィック管理の統合**: Istio、Nginx、ALB などをサポート
+この図では分析が設定済みであることを前提とします。更新中に abort すると、管理対象のトラフィックを安定版へ戻せますが、Git 内のイメージ指定は元に戻りません。Argo Rollouts はほかのトラフィックルーターとも連携できますが、それぞれ実装と保守状況が異なります。
 
-### Istio 統合の利点
+## アーキテクチャ {#architecture}
 
-```mermaid
-flowchart LR
-    subgraph "Without Argo Rollouts"
-        direction TB
-        D1[Deployment v1<br/>100%]
-        D2[Deployment v2<br/>0%]
-        Manual[Manual traffic adjustment<br/>Direct VirtualService modification]
-        D1 --> Manual
-        D2 --> Manual
-    end
+Argo CD/GitOps の利用は任意です。Rollouts コントローラーは Rollout/Analysis リソースを読み取り、設定された Service または DestinationRule の subset ラベルと VirtualService の重みを更新します。Istiod はこれらのリソースをプロキシ設定に変換します。リクエストは Envoy を通ってアプリケーションのエンドポイントへ進みます。VirtualService と DestinationRule は設定であり、ネットワーク上の中継点ではありません。
 
-    subgraph "With Argo Rollouts + Istio"
-        direction TB
-        R1[Rollout<br/>Automatic version management]
-        Auto[Automatic traffic adjustment<br/>Metric-based progression]
-        Analysis[Analysis<br/>Success rate/latency verification]
-        R1 --> Auto
-        Auto --> Analysis
-    end
+Prometheus は対象プロキシをスクレイプし、分析プロバイダーは Prometheus にクエリします。コントローラーは AnalysisRun のフェーズに応じて動作します。設定したメッシュプロキシまたはゲートウェイを通るトラフィックだけが Istio の分割に従います。メッシュ外のクライアントや Pod への直接接続、port-forward はこの経路を迂回することがあります。
 
-    classDef manual fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef auto fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Manual manual;
-    class R1,Auto,Analysis auto;
-```
-
-**主な利点**:
-- ✅ **Canary デプロイメントの自動化**: VirtualService の重みを自動調整
-- ✅ **メトリクスベースの検証**: Prometheus メトリクスによる自動進行／ロールバック
-- ✅ **きめ細かなトラフィック制御**: Istio の L7 ルーティングを活用
-- ✅ **ダウンタイムゼロのデプロイメント**: トラフィック切り替え中もダウンタイムなし
-- ✅ **自動ロールバック**: エラー率上昇時に自動ロールバック
-
-### 対応する Istio リソース
-
-| リソース | 目的 | Argo Rollouts による管理 |
-|----------|------|-------------------|
-| **VirtualService** | トラフィックルーティングルール | ✅ ルートの重みを自動調整 |
-| **DestinationRule** | Subset の定義 | ⚠️ 手動作成が必要 |
-| **Service** | Stable/Canary エンドポイント | ⚠️ 手動作成が必要 |
-
-<span id="architecture"></span>
-
-## アーキテクチャ
-
-### 全体アーキテクチャ
-
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        ArgoCD[ArgoCD<br/>GitOps Deployment]
-        Rollouts[Argo Rollouts<br/>Controller]
-        Istiod[Istiod<br/>Istio Control Plane]
-    end
-
-    subgraph "Data Plane"
-        direction TB
-
-        subgraph "Istio Ingress Gateway"
-            Gateway[Gateway<br/>External Traffic]
-        end
-
-        subgraph "VirtualService (test)"
-            VS[VirtualService<br/>Routing Rules]
-        end
-
-        subgraph "Services"
-            StableService[test-stable<br/>Service]
-            CanaryService[test-canary<br/>Service]
-        end
-
-        subgraph "Rollout Managed Pods"
-            StablePods[Stable Pods<br/>v1]
-            CanaryPods[Canary Pods<br/>v2]
-        end
-
-        subgraph "DestinationRule"
-            DR[DestinationRule<br/>Subsets]
-        end
-    end
-
-    subgraph "Observability"
-        Prometheus[Prometheus<br/>Metric Collection]
-        AnalysisRun[AnalysisRun<br/>Metric Verification]
-    end
-
-    ArgoCD -->|Deployment| Rollouts
-    Rollouts -->|VirtualService weight adjustment| VS
-    Rollouts -->|ReplicaSet management| StablePods
-    Rollouts -->|ReplicaSet management| CanaryPods
-    Rollouts -->|AnalysisRun creation| AnalysisRun
-
-    Gateway --> VS
-    VS -->|90% stable subset| DR
-    VS -->|10% canary subset| DR
-    DR --> StableService
-    DR --> CanaryService
-    StableService --> StablePods
-    CanaryService --> CanaryPods
-
-    Istiod -.->|xDS Config| Gateway
-    Istiod -.->|Configuration sync| VS
-    Istiod -.->|Configuration sync| DR
-
-    StablePods -.->|Metrics| Prometheus
-    CanaryPods -.->|Metrics| Prometheus
-    Prometheus -->|Query| AnalysisRun
-    AnalysisRun -.->|Success/Failure| Rollouts
-
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef observ fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class ArgoCD,Rollouts,Istiod control;
-    class Gateway,VS,DR,StableService,CanaryService routing;
-    class StablePods,CanaryPods app;
-    class Prometheus,AnalysisRun observ;
-```
-
-### トラフィックフロー
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as User
-    participant Gateway as Istio Gateway
-    participant VS as VirtualService
-    participant Stable as Stable Pod (v1)
-    participant Canary as Canary Pod (v2)
-    participant Rollouts as Argo Rollouts
-    participant Prom as Prometheus
-
-    Note over User,Prom: Initial state: v1 100%
-
-    Rollouts->>VS: setWeight: 10<br/>stable: 90%, canary: 10%
-
-    User->>Gateway: HTTP Request
-    Gateway->>VS: Traffic forwarding
-
-    alt 90% traffic
-        VS->>Stable: subset: stable
-        Stable->>VS: Response
-    else 10% traffic
-        VS->>Canary: subset: canary
-        Canary->>VS: Response
-    end
-
-    VS->>Gateway: Response
-    Gateway->>User: Response
-
-    Stable->>Prom: Metrics (success rate, latency)
-    Canary->>Prom: Metrics (success rate, latency)
-
-    Rollouts->>Prom: Analysis query<br/>(Canary success rate >= 95%?)
-    Prom->>Rollouts: Metric result
-
-    alt Success rate >= 95%
-        Rollouts->>VS: setWeight: 50<br/>Auto progress
-    else Success rate < 95%
-        Rollouts->>VS: setWeight: 0<br/>Auto rollback
-    end
-```
-
-<span id="core-concepts"></span>
-
-## コアコンセプト
+## 基本概念 {#core-concepts}
 
 ### 1. Rollout リソース
 
-Rollout は Deployment を置き換え、高度なデプロイメント戦略をサポートするカスタムリソースです。
+Rollout は Canary または blue/green 戦略で ReplicaSet を管理します。これは Deployment とは別の API であり、`strategy: RollingUpdate` を付けた Deployment の別名ではありません。既存 Deployment の移行には、レビュー済みの移行または workloadRef の計画が必要です。同じ Pod を2つのコントローラーに管理させないでください。
 
-**Deployment との比較**:
+### 2. VirtualService の所有権
 
-| 機能 | Deployment | Rollout |
-|------|-----------|---------|
-| **基本的なロールアウト** | ✅ RollingUpdate | ✅ RollingUpdate |
-| **Canary デプロイメント** | ❌ | ✅ トラフィック重みの制御 |
-| **Blue/Green** | ❌ | ✅ 即時切り替え |
-| **分析ベースの自動化** | ❌ | ✅ AnalysisTemplate |
-| **トラフィック管理の統合** | ❌ | ✅ Istio、Nginx、ALB |
-| **自動ロールバック** | ❌ | ✅ メトリクスベース |
+Rollouts は指定された名前付きルートの重みを調整し、管理対象の experiment 宛先を追加・削除する場合があります。対応するルーティングフィールドを維持し、宛先配列全体を無条件に上書きするわけではありません。追加の subset 宛先には `additionalSubsetNames` と有効な合計重みが必要です。管理外の宛先が削除される場合があります。各管理ルートは1つの Rollout に割り当て、GitOps の所有権も調整してください。
 
-### 2. VirtualService の管理方法
+### 3. ホスト単位と subset 単位のトラフィック分割
 
-**重要**: Argo Rollouts は、指定したルート名の **destinations 配列全体を上書き** します。
+| 方式 | ユーザーが作成するリソース | Rollouts が調整するフィールド |
+|---|---|---|
+| メインラボで使うホスト単位 | Rollout、stable/canary Service、VirtualService | Service の hash セレクターと名前付きルートの重み |
+| 代替方式の subset 単位 | Rollout、単一 Service、VirtualService、DestinationRule | stable/canary subset の hash ラベルと名前付きルートの重み |
+
+仮の ReplicaSet hash を手作業で設定しないでください。ホスト単位の分割では、コントローラーが2つの Service セレクターに `rollouts-pod-template-hash` を追加します。subset 単位の分割では、設定した DestinationRule subset のラベルに hash を追加し、単一 Service はワークロード全体を選択したままにします。
+
+以下は**ホスト単位のラボとは別の subset 単位の代替構成**です。この構成では Service と VirtualService の両方で `test` を使います。
 
 ```yaml
-# VirtualService initial state
+apiVersion: v1
+kind: Service
+metadata:
+  name: test
+  namespace: rollouts-demo
+spec:
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: test
+  name: test-subsets
+  namespace: rollouts-demo
 spec:
+  hosts:
+  - test
+  - test.rollouts-demo.svc.cluster.local
   http:
-  - name: primary  # Route managed by Rollout
+  - name: primary
     route:
-    - destination: {host: test, subset: stable}
+    - destination:
+        host: test
+        port:
+          number: 8080
+        subset: stable
       weight: 100
-    - destination: {host: test, subset: canary}
+    - destination:
+        host: test
+        port:
+          number: 8080
+        subset: canary
       weight: 0
+    retries:
+      attempts: 0
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: test-subsets
+  namespace: rollouts-demo
+spec:
+  host: test
+  subsets:
+  - name: stable
+    labels:
+      app: test
+  - name: canary
+    labels:
+      app: test
 ```
 
-**Rollout 設定**:
+メインの Rollout では Canary 戦略をこの断片に置き換え、実際のワークロードとテンプレートは維持します。この代替構成では、ホスト単位用の `stableService` と `canaryService` フィールドを省きます。
+
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
 spec:
   strategy:
     canary:
       trafficRouting:
         istio:
           virtualService:
-            name: test          # VirtualService name
+            name: test-subsets
             routes:
-            - primary           # Route name to manage
+            - primary
           destinationRule:
-            name: test          # DestinationRule name
+            name: test-subsets
             canarySubsetName: canary
             stableSubsetName: stable
       steps:
-      - setWeight: 10  # → Modifies primary route of VirtualService
+      - setWeight: 10
+      - pause: {}
 ```
 
-**setWeight: 10 の実行時**:
+コントローラーが異なる hash を書き込むまでは、同一または空の2つの subset セレクターでリビジョンを分離できません。テストトラフィックを送る前に、調整後のラベルと readiness を確認してください。subset を使っても `destination_service_name` が自動的に分かれるわけではありません。この代替構成の分析では、リビジョンまたはワークロードのテレメトリを検証する必要があります。`destination_workload_label_rollouts_pod_template_hash` は**Istio の既定メトリクスラベルではありません**。
+
+### 4. 分析結果
+
+Prometheus はベクトルを返します。`result[0]` にアクセスする前に、要素数と値が有限であることを確認してください。`successCondition` だけを指定した場合、条件が false なら測定は失敗です。プロバイダーや式のエラーは別扱いです。成功条件と失敗条件の両方を指定し、どちらにも一致しなければ測定結果は判定不能です。
+
+`failureLimit: 2` は2回の測定失敗を許容し、3回目に失敗します（`failed > failureLimit`）。したがって、この上限で `count: 5` を指定しても、5回すべての成功が必須になるわけではありません。メイン例では、データ欠落や非有限値も含めて `failureLimit: 0` とし、観測トラフィックの最小量も要求します。以下のしきい値やサンプル数は例示であり、統計的な信頼度や本番 SLO の保証ではありません。
+
+## セットアップと設定 {#setup-and-configuration}
+
+### 前提条件と対象範囲
+
+対応する Rollouts コントローラー、CRD、CLI プラグイン、互換性のある Istio sidecar データプレーン、そして分析プロバイダーから DNS/RBAC/ネットワーク経由で利用できる Prometheus のスクレイプ設定を用意してください。[可観測性ガイド](../observability/README.md)と[インジェクションガイド](07-sidecar-injection.md)を参照してください。分析を有効にする前に、実際のメトリクスを検証します。
+
+この独立した HTTP デモでは、digest で固定した公式 blue/green デモイメージを使います。検証済みイメージは **Linux amd64 専用**なので、Pod テンプレートでそのアーキテクチャを選択します。Arm64/Graviton では、別途検証した Arm64 またはマルチプラットフォームのアプリケーションイメージを用意してください。この監査ではクラスター、イメージランタイム、本番負荷、実際の Rollout をテストしていません。
+
+この例では、新しい `rollouts-demo` namespace を作成し、既定/legacy の sidecar インジェクションを使います。revisioned インストールでは、リンク先ガイドのインジェクション規則を維持したうえで、インストール済みの revision/tag を選択してください。
+
+### 1. Namespace と Rollout
+
 ```yaml
-# Automatically modified by Argo Rollouts
-http:
-- name: primary
-  route:
-  - destination: {host: test, subset: stable}
-    weight: 90   # ← Auto adjusted
-  - destination: {host: test, subset: canary}
-    weight: 10   # ← Auto adjusted
-```
-
-**注意事項**:
-- ⚠️ 複数の Rollout が同じルート名を参照すると競合が発生します
-- ⚠️ Rollout はルートの **すべての destination** を管理します
-- ⚠️ Subset 名が異なっていても同じルートを共有できません
-
-### 3. Subset と Service
-
-**DestinationRule Subset**:
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: test
-spec:
-  host: test  # Matches Service name
-  subsets:
-  - name: stable
-    labels: {}  # ← Empty labels (uses Service selector)
-  - name: canary
-    labels: {}  # ← Empty labels (uses Service selector)
-```
-
-**Stable/Canary Service**:
-```yaml
-# Stable Service
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: test-stable
-spec:
-  selector:
-    app: test
-    # Label automatically added by Rollout
-    rollouts-pod-template-hash: <stable-hash>
-  ports:
-  - port: 8080
-
+  name: rollouts-demo
+  labels:
+    istio-injection: enabled
 ---
-# Canary Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: test-canary
-spec:
-  selector:
-    app: test
-    # Label automatically added by Rollout
-    rollouts-pod-template-hash: <canary-hash>
-  ports:
-  - port: 8080
-```
-
-**動作方法**:
-1. Rollout が新しいバージョンをデプロイすると、新しい `rollouts-pod-template-hash` ラベルを作成します
-2. そのハッシュラベルを Canary Pod に自動追加します
-3. Canary Service はそれらの Pod のみを選択します
-4. Rollout の完了時に、Stable Service は新しいハッシュで更新されます
-
-### 4. 分析とメトリクス
-
-**AnalysisTemplate**:
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-spec:
-  args:
-  - name: service-name
-  - name: canary-hash
-  metrics:
-  - name: success-rate
-    interval: 30s              # Measure every 30 seconds
-    count: 5                   # 5 measurements
-    successCondition: result >= 0.95  # Must be 95% or above for success
-    failureLimit: 2            # Entire failure after 2 failures
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}"
-            }[2m]
-          ))
-```
-
-**AnalysisRun**:
-```mermaid
-flowchart TD
-    Start[AnalysisRun Start]
-    Start --> M1[Measurement 1: Wait 30s]
-    M1 --> C1{Success rate >= 95%?}
-    C1 -->|Yes| M2[Measurement 2: Wait 30s]
-    C1 -->|No| Fail1[Failure count 1]
-
-    M2 --> C2{Success rate >= 95%?}
-    C2 -->|Yes| M3[Measurement 3: Wait 30s]
-    C2 -->|No| Fail2[Failure count 2<br/>Total failure!]
-
-    M3 --> C3{Success rate >= 95%?}
-    C3 -->|Yes| M4[Measurement 4: Wait 30s]
-    C3 -->|No| Fail3[Failure count 2<br/>Total failure!]
-
-    M4 --> C4{Success rate >= 95%?}
-    C4 -->|Yes| M5[Measurement 5: Wait 30s]
-    M5 --> C5{Success rate >= 95%?}
-    C5 -->|Yes| Success[Total success!<br/>Proceed to next step]
-
-    Fail1 --> M2
-    Fail2 --> Rollback[Automatic rollback]
-    Fail3 --> Rollback
-
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Success success;
-    class Fail2,Fail3,Rollback failure;
-    class C1,C2,C3,C4,C5 check;
-```
-
-<span id="setup-and-configuration"></span>
-
-## セットアップと設定
-
-### 必要なリソースの作成
-
-#### 1. Rollout リソース
-
-```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test
-  namespace: default
+  namespace: rollouts-demo
 spec:
   replicas: 3
-  revisionHistoryLimit: 2  # Number of ReplicaSets to keep
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -426,11 +177,23 @@ spec:
       labels:
         app: test
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
       containers:
       - name: app
-        image: myapp:v1
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
@@ -440,870 +203,764 @@ spec:
             memory: 256Mi
   strategy:
     canary:
-      # Stable/Canary Service specification
-      canaryService: test-canary
       stableService: test-stable
-
-      # Istio traffic routing
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test              # VirtualService name
-            routes:
-            - primary               # Route name to manage
-          destinationRule:
-            name: test              # DestinationRule name
-            canarySubsetName: canary
-            stableSubsetName: stable
-
-      # Deployment steps
-      steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
-      - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
-```
-
-#### 2. Stable/Canary Service
-
-```yaml
-# Stable Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: test-stable
-  namespace: default
-spec:
-  selector:
-    app: test
-    # rollouts-pod-template-hash is auto-added by Rollout
-  ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-
----
-# Canary Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: test-canary
-  namespace: default
-spec:
-  selector:
-    app: test
-    # rollouts-pod-template-hash is auto-added by Rollout
-  ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-
----
-# Unified Service (referenced by VirtualService)
-apiVersion: v1
-kind: Service
-metadata:
-  name: test
-  namespace: default
-spec:
-  selector:
-    app: test
-  ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-```
-
-#### 3. VirtualService
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: test
-  namespace: default
-spec:
-  hosts:
-  - test
-  - test.default.svc.cluster.local
-  http:
-  - name: primary  # Route managed by Rollout
-    route:
-    - destination:
-        host: test
-        subset: stable
-      weight: 100  # ← Auto adjusted by Rollout
-    - destination:
-        host: test
-        subset: canary
-      weight: 0    # ← Auto adjusted by Rollout
-```
-
-#### 4. DestinationRule
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: test
-  namespace: default
-spec:
-  host: test
-  trafficPolicy:
-    loadBalancer:
-      simple: LEAST_REQUEST
-  subsets:
-  - name: stable
-    labels: {}  # Empty labels (uses Service selector)
-  - name: canary
-    labels: {}  # Empty labels (uses Service selector)
-```
-
-### デプロイメントワークフロー
-
-```bash
-# 1. Deploy new version
-kubectl argo rollouts set image test app=myapp:v2
-
-# 2. Check status (real-time monitoring)
-kubectl argo rollouts get rollout test --watch
-
-# Output example:
-# Name:            test
-# Namespace:       default
-# Status:          ॥ Paused
-# Strategy:        Canary
-#   Step:          1/8
-#   SetWeight:     10
-#   ActualWeight:  10
-# Images:          myapp:v1 (stable)
-#                  myapp:v2 (canary)
-# Replicas:
-#   Desired:       3
-#   Current:       4
-#   Updated:       1
-#   Ready:         4
-#   Available:     4
-
-# 3. Manually proceed to next step (after pause)
-kubectl argo rollouts promote test
-
-# 4. Immediate rollback (if issues occur)
-kubectl argo rollouts abort test
-
-# 5. Retry after rollback
-kubectl argo rollouts retry rollout test
-```
-
-<span id="traffic-routing-strategies"></span>
-
-## トラフィックルーティング戦略
-
-### 1. 基本的な Canary（重みベース）
-
-```yaml
-spec:
-  strategy:
-    canary:
-      steps:
-      - setWeight: 10   # 10% traffic
-      - pause: {duration: 5m}
-      - setWeight: 30
-      - pause: {duration: 5m}
-      - setWeight: 50
-      - pause: {duration: 10m}
-      - setWeight: 80
-      - pause: {duration: 10m}
-      # 100% auto transition
-```
-
-**トラフィック遷移グラフ**:
-```mermaid
-flowchart LR
-    T0[0%<br/>Canary] --> T1[10%<br/>Wait 5m]
-    T1 --> T2[30%<br/>Wait 5m]
-    T2 --> T3[50%<br/>Wait 10m]
-    T3 --> T4[80%<br/>Wait 10m]
-    T4 --> T5[100%<br/>Complete]
-
-    classDef current fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    class T3 current;
-```
-
-### 2. Header ベースのルーティング
-
-**ユースケース**: 特定のユーザーグループ（内部テスター）にのみ Canary バージョンを公開する
-
-```yaml
-# VirtualService configuration
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: test
-spec:
-  http:
-  # Priority 1: Header matching (Beta users → Canary)
-  - name: header-route
-    match:
-    - headers:
-        x-beta-user:
-          exact: "true"
-    route:
-    - destination:
-        host: test
-        subset: canary
-      weight: 100
-
-  # Priority 2: Normal traffic (weight-based)
-  - name: primary
-    route:
-    - destination:
-        host: test
-        subset: stable
-      weight: 90
-    - destination:
-        host: test
-        subset: canary
-      weight: 10
-```
-
-```yaml
-# Rollout configuration
-spec:
-  strategy:
-    canary:
+      canaryService: test-canary
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
             name: test
             routes:
-            - primary  # Manages only primary route
+            - primary
       steps:
       - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 50
-      - pause: {duration: 10m}
-```
-
-**動作**:
-- `x-beta-user: true` Header を持つリクエスト → 100% Canary
-- 通常のリクエスト → Rollout が重みを管理（10% → 50% → 100%）
-
-### 3. ミラートラフィック（Shadow Testing）
-
-**ユースケース**: 本番トラフィックを Canary にコピーする（レスポンスは無視）
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: test
-spec:
-  http:
-  - name: primary
-    route:
-    - destination:
-        host: test
-        subset: stable
-      weight: 100  # Actual traffic 100% Stable
-    mirror:
-      host: test
-      subset: canary
-    mirrorPercentage:
-      value: 10.0  # Copy 10% to Canary (ignore response)
-```
-
-**特徴**:
-- ✅ 実際のユーザーへの影響なし（レスポンスは Stable からのみ返される）
-- ✅ 本番トラフィックで Canary のパフォーマンス／エラーを検証
-- ⚠️ Canary の書き込み操作には注意（データ重複の可能性）
-
-### 4. 複数ルートの管理
-
-**ユースケース**: 複数のパスのトラフィックを同時に調整する
-
-```yaml
-# VirtualService configuration
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: test
-spec:
-  http:
-  - name: api-route  # API path
-    match:
-    - uri:
-        prefix: /api
-    route:
-    - destination: {host: test, subset: stable}
-      weight: 100
-    - destination: {host: test, subset: canary}
-      weight: 0
-
-  - name: web-route  # Web path
-    match:
-    - uri:
-        prefix: /web
-    route:
-    - destination: {host: test, subset: stable}
-      weight: 100
-    - destination: {host: test, subset: canary}
-      weight: 0
-```
-
-```yaml
-# Rollout configuration
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test
-            routes:
-            - api-route  # Manage both routes
-            - web-route
-      steps:
-      - setWeight: 10  # Adjusts both routes to 10%
-```
-
-<span id="analysis-and-metrics"></span>
-
-## 分析とメトリクス
-
-Argo Rollouts は、Istio が収集する Prometheus メトリクスを使用して、Canary デプロイメントの成功を自動的に判定します。以下は、Argo Rollouts と Istio メトリクスの統合アーキテクチャです。
-
-![Argo Rollouts と Istio メトリクスの統合](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio-service-metrics.png)
-
-*出典: [Argo Rollouts 公式ドキュメント](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/)*
-
-### 1. 基本的な Analysis 統合
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-spec:
-  strategy:
-    canary:
-      analysis:
-        templates:
-        - templateName: success-rate
-        args:
-        - name: service-name
-          value: test
-      steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - analysis:  # ← Analysis runs at this step
+      - pause:
+          duration: 5m
+      - analysis:
           templates:
           - templateName: success-rate
           args:
           - name: service-name
-            value: test
+            value: test-canary
+          - name: namespace
+            value: rollouts-demo
       - setWeight: 50
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: test-canary
+          - name: namespace
+            value: rollouts-demo
+      - setWeight: 80
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: test-canary
+          - name: namespace
+            value: rollouts-demo
 ```
 
-### 2. バックグラウンド Analysis
+イメージ、CPU/メモリー設定、レプリカ数はデモ用の入力値です。45秒の終了猶予は、デモで説明されているシャットダウン遅延を考慮したものです。実際の Rollout ではアプリケーション固有のライフサイクルを検証してください。この戦略では、メイン VirtualService ルートのメッシュ再試行を明示的に無効にし、ウォームアップの pause 後にインライン分析を実行します。
+
+### 2. Stable/Canary Service
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-stable
+  namespace: rollouts-demo
+spec:
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-canary
+  namespace: rollouts-demo
+spec:
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+```
+
+Rollouts は各 Service に追加する hash セレクターを所有します。stable Service が昇格後のリビジョンを選択できなくなるため、固定の `version: v1` セレクターを追加しないでください。
+
+### 3. VirtualService
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-stable
+  - test-stable.rollouts-demo.svc.cluster.local
+  http:
+  - name: primary
+    route:
+    - destination:
+        host: test-stable
+        port:
+          number: 8080
+      weight: 100
+    - destination:
+        host: test-canary
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
+```
+
+これは**メッシュ内 HTTP ルーティング**であり、ingress Gateway は前提としていません。sidecar を注入したクライアントから `http://test-stable.rollouts-demo.svc.cluster.local:8080/color` へ継続的にテストトラフィックを送ります。Canary Service への直接アクセス、Pod の port-forward、非メッシュクライアントでは、重み付きルートを検証できません。
+
+### 4. AnalysisTemplate とデータ契約
+
+この例は `reporter="source"` と宛先 Service の namespace を使って、標準的な Service 単位のメトリクスをクエリします。このデータセットでは source proxy が一度だけスクレイプされ、実際のラベル値がセレクターと一致することを前提とします。
+
+Rollout 全体を通して実際のテストトラフィックを流し続けてください。5分のウォームアップは2分の lookback より長く、最初のゲートに以前のセレクターのデータが混ざらないようにしています。最小量の検査はカウンター増加からの推定であり、統計的有意性の証明ではありません。トラフィック不足やテレメトリ欠落を黙って昇格につなげてはいけません。
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+```
+
+可用性の計算は4xxも含め、5xx 以外かつゼロ以外の HTTP 応答を数えます。業務上の成功を証明するものではありません。これは HTTP デモであり、gRPC ステータスの SLO ではありません。スクレイプの重複、遅延、カウンターのリセット、重複する時間窓を考慮して結果を解釈してください。
+
+### デプロイの手順
+
+レビュー済みリソースを個別ファイルに保存し、Rollout より先に依存リソースを作成します。
+
+```bash
+kubectl argo rollouts lint -f rollout.yaml
+kubectl apply -f namespace.yaml
+kubectl apply -f analysis-templates.yaml -f services.yaml -f virtualservice.yaml
+kubectl apply -f rollout.yaml
+
+kubectl argo rollouts get rollout test -n rollouts-demo --watch
+```
+
+最初の作成で安定版リビジョンを確立します。テストトラフィックを流しながら、次のイメージ変更で Canary 戦略を試してください。GitOps 管理環境では、Git 内の desired image を変更します。以下の CLI コマンドはラボでの代替手順です。
+
+```bash
+kubectl argo rollouts set image test app=argoproj/rollouts-demo@sha256:e32df3d15f759d36c323b3dccb7003d38df1a4274d37217715151f085c24c58f -n rollouts-demo
+kubectl argo rollouts get rollout test -n rollouts-demo --watch
+
+# Choose the action appropriate to the observed state; do not run these as a sequence.
+kubectl argo rollouts promote test -n rollouts-demo
+kubectl argo rollouts abort test -n rollouts-demo
+kubectl argo rollouts retry rollout test -n rollouts-demo
+```
+
+Promote は意図した pause を解除する操作であり、分析失敗の調査に代わるものではありません。Abort 後も desired Pod template は変更されません。特に別の GitOps コントローラーが値を戻す場合は、再試行や undo の前に desired version を調整してください。
+
+## トラフィックルーティング戦略 {#traffic-routing-strategies}
+
+このセクションの断片はすべて、メイン Canary 戦略の**代替案**です。既存の Service、トラフィックルーティング参照、ワークロードテンプレートと組み合わせてください。単独のリソースとして適用してはいけません。
+
+### 1. 重み付き Canary
+
+`setWeight` と `pause` は別々の step object にします。パーセンテージはルーティング目標であり、少数のサンプルで正確な比率になるわけではありません。セッションアフィニティや長時間リクエストも、観測される分布に影響します。
+
+![Canary の重み目標と pause の例。実際の経過時間は readiness と分析結果によって決まります](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-4.png)
+
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-4.html)
+
+### 2. 管理対象ヘッダールーティング
+
+`managedRoutes`/`setHeaderRoute` を使うと、Rollouts が生成ルートの順序と削除を管理できます。ヘッダーのみの段階に入る前に Canary レプリカを用意し、トラフィック重みによるスケーリングへ戻す前にその状態を確保してください。
 
 ```yaml
 spec:
   strategy:
     canary:
-      analysis:
-        templates:
-        - templateName: success-rate
-        startingStep: 2  # Runs continuously in background from step 2
-        args:
-        - name: service-name
-          value: test
+      trafficRouting:
+        managedRoutes:
+        - name: beta-header
+        istio:
+          virtualService:
+            name: test
+            routes:
+            - primary
+      steps:
+      - setCanaryScale:
+          replicas: 1
+      - setWeight: 0
+      - setHeaderRoute:
+          name: beta-header
+          match:
+          - headerName: x-beta-user
+            headerValue:
+              exact: 'true'
+      - pause:
+          duration: 5m
+      - setHeaderRoute:
+          name: beta-header
+      - setCanaryScale:
+          matchTrafficWeight: true
+      - setWeight: 10
+      - pause: {}
+```
+
+Release 1.10 はこのヘッダールートに primary route の再試行ポリシーをコピーしません。この断片は冪等なデモリクエストに限って使い、生成されたルートを確認してください。読み取り専用メソッドを強制するものでも、書き込みが再試行されないことを保証するものでもありません。書き込みを受け付けるデプロイでは、再試行と認可を別途制御・検証する設計が必要です。
+
+`x-beta-user` ヘッダーは、認証済みテスターの識別情報ではありません。公開範囲を制限する必要がある場合は、信頼できる認証境界を使ってください。Rollouts の managed-route リスト外で手動作成したヘッダールートは、abort/完了時に自動削除されず、Canary endpoint へ到達し続ける可能性があります。
+
+### 3. 管理対象ミラートラフィック
+
+この例は GET リクエストだけをミラーし、shadow 段階ではユーザーへの応答を stable ルートに維持します。通常の Canary トラフィックへ移る前にミラーを削除します。
+
+```yaml
+spec:
+  strategy:
+    canary:
+      trafficRouting:
+        managedRoutes:
+        - name: shadow-read
+        istio:
+          virtualService:
+            name: test
+            routes:
+            - primary
+      steps:
+      - setCanaryScale:
+          replicas: 1
+      - setWeight: 0
+      - setMirrorRoute:
+          name: shadow-read
+          percentage: 10
+          match:
+          - method:
+              exact: GET
+      - pause:
+          duration: 5m
+      - setMirrorRoute:
+          name: shadow-read
+      - setCanaryScale:
+          matchTrafficWeight: true
+      - setWeight: 10
+      - pause: {}
+```
+
+生成されたミラールートにも primary の再試行ポリシーは引き継がれません。実効メッシュ既定値を確認してください。ミラー応答は破棄されますが、リクエスト処理自体は実行されます。GET でもアプリケーションに副作用を起こす場合があるため、必要に応じてセマンティクスを検証し、データや依存先を分離します。ミラーはリソース/ネットワーク負荷を増やし、ユーザーへの影響がゼロとは限りません。実際の mirror Host の動作とアプリケーションの受け入れを確認してください。
+
+### 4. 複数の名前付きルート
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-stable
+  - test-stable.rollouts-demo.svc.cluster.local
+  http:
+  - name: api-route
+    match:
+    - uri:
+        exact: /api
+    - uri:
+        prefix: /api/
+    route:
+    - destination:
+        host: test-stable
+        port:
+          number: 8080
+      weight: 100
+    - destination:
+        host: test-canary
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
+  - name: web-route
+    match:
+    - uri:
+        exact: /web
+    - uri:
+        prefix: /web/
+    route:
+    - destination:
+        host: test-stable
+        port:
+          number: 8080
+      weight: 100
+    - destination:
+        host: test-canary
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
+---
+spec:
+  strategy:
+    canary:
+      trafficRouting:
+        istio:
+          virtualService:
+            name: test
+            routes:
+            - api-route
+            - web-route
       steps:
       - setWeight: 10
-      - pause: {duration: 2m}
+      - pause: {}
+```
+
+2つの名前付きルートには同じ Canary 重みが設定されます。境界条件によって `/api` と `/api/…` を無関係な prefix から個別に保護します。これらのパス外のリクエストには、明示的なルート設計が必要です。
+
+## 分析とメトリクス {#analysis-and-metrics}
+
+上流の過去のスクリーンショットは、Service 単位の分離を示すものであり、統合アーキテクチャや現在のベンチマークを示すものではありません。
+
+![stable と Canary の Service メトリクスを示す過去の Istio Service ダッシュボード](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio-service-metrics.png)
+
+### 1. インライン分析
+
+メイン Rollout は `success-rate` をインライン step として実行し、完了を待ちます。呼び出しごとに必須の引数を両方渡します。失敗した run は abort し、判定不能の run は pause できます。分析プロバイダーは、存在しないアプリケーショントラフィックを作り出したり、誤ったメトリクスセレクターを修正したりはできません。
+
+### 2. 継続的なバックグラウンド分析
+
+`count: 5` を設定したバックグラウンドテンプレートは、有限回の測定後に停止します。継続的なバックグラウンドゲートにするには count を省略します。
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate-continuous
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+---
+spec:
+  strategy:
+    canary:
+      analysis:
+        templates:
+        - templateName: success-rate-continuous
+        startingStep: 2
+        args:
+        - name: service-name
+          value: test-canary
+        - name: namespace
+          value: rollouts-demo
+      steps:
+      - setWeight: 10
+      - pause:
+          duration: 5m
       - setWeight: 30
-      - pause: {duration: 2m}
+      - pause:
+          duration: 5m
       - setWeight: 50
+      - pause: {}
 ```
 
-**動作**:
-```mermaid
-flowchart TD
-    S1[Step 1: setWeight 10<br/>Wait 2m]
-    S2[Step 2: setWeight 30<br/>Wait 2m]
-    S3[Step 3: setWeight 50]
+`startingStep: 2` は0始まりで、この断片では3番目の step（`setWeight: 30`）を指します。その前の pause で2分のデータ窓をウォームアップします。Rollout による終了または完了、あるいは失敗条件まで、後続 step と並行して分析を続けます。これはエンドツーエンドの即時ロールバックを保証しません。
 
-    A1[Analysis Start]
-    A2[Measure every 30s]
-    A3[Immediate rollback on failure]
+### 3. 複合メトリクス
 
-    S1 --> S2
-    S2 --> S3
-    S2 --> A1
-    A1 --> A2
-    A2 --> A3
-
-    classDef steps fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef analysis fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class S1,S2,S3 steps;
-    class A1,A2,A3 analysis;
-```
-
-### 3. 複合メトリクス分析
+このより厳格な代替案では、リクエスト量、99% 以上の5xx以外かつゼロ以外の可用性、0.5秒以下の p95、1% 以下のエラー率を要求します。ここでは可用性検査とエラー率検査を組み合わせていますが、サンプル値はワークロードに応じた根拠が必要です。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: comprehensive-analysis
+  namespace: rollouts-demo
 spec:
   args:
   - name: service-name
-  - name: canary-hash
+  - name: namespace
   metrics:
-  # Metric 1: Success rate
-  - name: success-rate
+  - name: request-volume
     interval: 30s
-    count: 5
-    successCondition: result >= 0.95
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
     provider:
       prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.99
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
           /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}"
-            }[2m]
-          ))
-
-  # Metric 2: P95 Latency
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
   - name: latency-p95
     interval: 30s
-    count: 5
-    successCondition: result <= 0.5  # 500ms or less
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
     provider:
       prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
           histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}",
-                destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}"
-              }[2m]
-            )) by (le)
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
           ) / 1000
-
-  # Metric 3: Error rate
-  - name: error-rate
-    interval: 30s
     count: 5
-    successCondition: result <= 0.01  # 1% or less
-    failureLimit: 2
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
     provider:
       prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}",
-              response_code=~"5.*"
-            }[2m]
-          ))
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
           /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              destination_workload_label_rollouts_pod_template_hash="{{args.canary-hash}}"
-            }[2m]
-          ))
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
 ```
 
-### 4. Pre/Post Analysis
+Istio の duration histogram はミリ秒単位なので、秒と比較する前にクエリで1000で割ります。instant-vector の結果は、空、複数要素、NaN/Inf の値を検査します。重複する lookback は独立した統計サンプルにはなりません。
+
+### 4. Pre/Post 検査
+
+Canary に指定できる background `analysis` フィールドは1つです。同じ YAML object に `analysis` キーを2つ書いても pre/post 検査にはなりません。適切なトラフィックと事前条件を用意し、意図した地点に inline analysis step を置くか、以下の blue/green 用 `prePromotionAnalysis` および `postPromotionAnalysis` hook を使います。
+
+## 高度なデプロイパターン {#advanced-deployment-patterns}
+
+### 1. Blue/Green
+
+これは**独立した戦略のひな型**です。レビュー済みのワークロードテンプレートを再利用し、Canary 戦略とクライアント向け Service 参照を置き換えます。実行前に active と preview の両 Service を作成してください。
 
 ```yaml
-spec:
-  strategy:
-    canary:
-      # Pre-analysis (before deployment)
-      analysis:
-        templates:
-        - templateName: pre-deployment-check
-        args:
-        - name: service-name
-          value: test
-
-      steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 50
-
-      # Post-analysis (after deployment)
-      analysis:
-        templates:
-        - templateName: post-deployment-check
-        args:
-        - name: service-name
-          value: test
-```
-
-<span id="advanced-deployment-patterns"></span>
-
-## 高度なデプロイメントパターン
-
-### 1. Blue/Green デプロイメント
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
+apiVersion: v1
+kind: Service
 metadata:
-  name: test
+  name: test-active
+  namespace: rollouts-demo
 spec:
-  replicas: 3
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-preview
+  namespace: rollouts-demo
+spec:
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+spec:
   strategy:
     blueGreen:
-      # Preview/Active Service specification
-      previewService: test-preview
       activeService: test-active
-
-      # Auto promotion (default: manual)
+      previewService: test-preview
       autoPromotionEnabled: false
-
-      # Pre-analysis
       prePromotionAnalysis:
         templates:
         - templateName: smoke-test
-
-      # Post-analysis
-      postPromotionAnalysis:
-        templates:
-        - templateName: comprehensive-analysis
         args:
         - name: service-name
-          value: test
-
-      # Previous version retention time
-      scaleDownDelaySeconds: 600  # Delete previous version after 10 minutes
-```
-
-**VirtualService（Blue/Green）**:
-```yaml
+          value: test-preview
+        - name: namespace
+          value: rollouts-demo
+      postPromotionAnalysis:
+        templates:
+        - templateName: post-promotion-analysis
+        args:
+        - name: service-name
+          value: test-active
+        - name: namespace
+          value: rollouts-demo
+      scaleDownDelaySeconds: 600
+---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: test
+  name: test-bluegreen
+  namespace: rollouts-demo
 spec:
+  hosts:
+  - test-active
+  - test-active.rollouts-demo.svc.cluster.local
   http:
-  - route:
+  - name: active
+    route:
     - destination:
-        host: test-active  # ← Auto switched by Rollout
+        host: test-active
+        port:
+          number: 8080
       weight: 100
+    retries:
+      attempts: 0
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: post-promotion-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.99
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
 ```
 
-**操作フロー**:
-```mermaid
-flowchart TD
-    Start[Start new version deployment]
-    Start --> Preview[Deploy to Preview environment]
-    Preview --> PreAnalysis{Pre-analysis<br/>smoke-test}
+アプリケーション側で用意する `smoke-test` AnalysisTemplate は、実装と検証が必要な前提条件であり、このガイドには含まれません。`service-name`/`namespace` 引数を宣言し、適切な ID、ネットワークアクセス、機能検査を使って preview リビジョンをテストしてください。promotion 後のテンプレートは5分待ってから2分間の窓をクエリします。伝播や `test-active` への継続的なトラフィックを確認し、既存接続やデータがすぐ消えると決めつけないでください。この断片を、動作確認済みの smoke-test デプロイ全体としてコピーしないでください。
 
-    PreAnalysis -->|Failure| Abort1[Deployment abort]
-    PreAnalysis -->|Success| Wait[Wait for manual approval<br/>autoPromotion=false]
+`autoPromotionEnabled` の既定値は true ですが、この例では明示的に無効化しています。`scaleDownDelaySeconds` は古い ReplicaSet のスケールダウンを遅らせます。リビジョン履歴をすべて削除したり、既存接続を移行したりする設定ではありません。Service/endpoint の伝播や上流ロードバランサーの動作によっては、停止が発生することがあります。
 
-    Wait -->|promote command| Switch[Active Service switch<br/>Blue → Green]
-    Switch --> PostAnalysis{Post-analysis<br/>comprehensive}
+![blue/green preview、promotion、post-analysis、旧リビジョンのスケールダウンを条件付きで行うフロー](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-6.png)
 
-    PostAnalysis -->|Failure| Rollback[Rollback to previous version<br/>Green → Blue]
-    PostAnalysis -->|Success| Scale[Delete previous version after 10m]
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-6.html)
 
-    Scale --> End[Deployment complete]
+### 2. 重み付き Experiment
 
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    class End success;
-    class Abort1,Rollback failure;
-    class PreAnalysis,PostAnalysis check;
-```
-
-### 2. Experiment を使用した Canary
-
-**ユースケース**: Canary デプロイメント中に複数バージョンを同時にテストする
+Istio はトラフィックルーティングされた experiment をサポートします。ここで有効な `specRef` は `stable` と `canary` です。`experimental` というソースリビジョンはありません。
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
 spec:
   strategy:
     canary:
       steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-
-      # Experiment execution
       - experiment:
           duration: 10m
           templates:
-          - name: canary-v2
-            specRef: canary
-            weight: 10
-          - name: experimental-v3
-            specRef: experimental
+          - name: baseline
+            specRef: stable
             weight: 5
-          analyses:
-          - name: compare-versions
-            templateName: version-comparison
-
-      - setWeight: 50
-      - pause: {duration: 5m}
+          - name: candidate
+            specRef: canary
+            weight: 5
+      - setWeight: 10
+      - pause: {}
 ```
 
-### 3. 段階的 Rollout
+最初の experiment step では、コントローラーが experiment の ReplicaSet/Service を作成し、stable の宛先を90%に保ちながら、それぞれに5%を振り分けます。Experiment Pod の hash は親 Rollout の hash と異なります。この断片は10分間の公開をスケジュールするものであり、それだけで統計的に妥当な比較を行うわけではありません。実際の比較用 AnalysisTemplate を追加し、experiment が生成する固有の識別子/Service を引数に使ってください。
+
+### 3. 時間をかけた段階的 Rollout
 
 ```yaml
 spec:
   strategy:
     canary:
-      # Very slow rollout
       steps:
-      - setWeight: 1    # Start from 1%
-      - pause: {duration: 1h}
+      - setWeight: 1
+      - pause:
+          duration: 1h
       - setWeight: 5
-      - pause: {duration: 1h}
+      - pause:
+          duration: 1h
       - setWeight: 10
-      - pause: {duration: 2h}
+      - pause:
+          duration: 2h
       - setWeight: 25
-      - pause: {duration: 4h}
+      - pause:
+          duration: 4h
       - setWeight: 50
-      - pause: {duration: 8h}
+      - pause:
+          duration: 8h
       - setWeight: 75
-      - pause: {duration: 8h}
-      # 100% (total 24+ hours)
-
-      # Background Analysis
+      - pause:
+          duration: 8h
       analysis:
         templates:
-        - templateName: comprehensive-analysis
-        startingStep: 1
+        - templateName: success-rate-continuous
+        startingStep: 2
+        args:
+        - name: service-name
+          value: test-canary
+        - name: namespace
+          value: rollouts-demo
 ```
 
-<span id="troubleshooting"></span>
+指定された pause の合計は24時間で、これに readiness、分析、伝播の時間が加わります。長いスケジュールだけでは、代表的なトラフィック、障害検知、容量、レビュー済みの復旧手順を代替できません。
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
-### 1. VirtualService が更新されない
-
-**症状**:
-```bash
-kubectl argo rollouts get rollout test
-# Status: ॥ Paused
-# Message: CannotUpdateVirtualService: ...
-```
-
-**原因**:
-- VirtualService が存在しない
-- ルート名が正しくない
-- Istio がインストールされていない
-
-**解決策**:
-```bash
-# 1. Check VirtualService
-kubectl get virtualservice test -o yaml
-
-# 2. Check route name
-kubectl get virtualservice test -o jsonpath='{.spec.http[*].name}'
-
-# 3. Check Rollout configuration
-kubectl get rollout test -o jsonpath='{.spec.strategy.canary.trafficRouting.istio}'
-```
-
-### 2. Canary Pod がトラフィックを受信しない
-
-**症状**: setWeight: 10 であるにもかかわらず Canary Pod へのトラフィックがない
-
-**原因**:
-- DestinationRule の Subset が正しく設定されていない
-- Service selector が Pod を見つけられない
-
-**確認**:
-```bash
-# 1. Check pod labels
-kubectl get pods -l app=test --show-labels
-
-# Output:
-# NAME                    LABELS
-# test-abc123-xyz         app=test,rollouts-pod-template-hash=abc123
-# test-def456-xyz         app=test,rollouts-pod-template-hash=def456
-
-# 2. Check if Canary Service selects correct pods
-kubectl get endpoints test-canary
-
-# 3. Check VirtualService → DestinationRule → Service path
-istioctl proxy-config clusters <pod-name> | grep test
-```
-
-### 3. Analysis の失敗
-
-**症状**:
-```bash
-kubectl get analysisrun
-# NAME                       STATUS   AGE
-# test-abc123-1              Failed   5m
-```
-
-**確認**:
-```bash
-# Check Analysis logs
-kubectl describe analysisrun test-abc123-1
-
-# Test Prometheus query
-kubectl port-forward -n istio-system svc/prometheus 9090:9090
-
-# Run query in browser
-# http://localhost:9090/graph
-```
-
-**よくある問題**:
-- Prometheus のアドレスが正しくない
-- メトリクスが存在しない（トラフィック不足）
-- クエリ構文エラー
-
-### 4. ロールバックが機能しない
-
-**症状**: `kubectl argo rollouts abort` が機能しない
-
-**原因**: すべてのステップがすでに完了している（100%）
-
-**解決策**:
-```bash
-# 1. Check current status
-kubectl argo rollouts status test
-
-# 2. Revert to previous version
-kubectl argo rollouts undo test
-
-# Or to specific revision
-kubectl argo rollouts undo test --to-revision=2
-```
-
-### 5. デバッグコマンド
+namespace 内のリソースと実際のプロキシ経路を確認します。
 
 ```bash
-# 1. Rollout status (detailed)
-kubectl argo rollouts get rollout test
-
-# 2. Rollout events
-kubectl describe rollout test
-
-# 3. Check ReplicaSet
-kubectl get replicaset -l app=test
-
-# 4. Check VirtualService weight
-kubectl get virtualservice test -o yaml | grep -A 10 "name: primary"
-
-# 5. Check Istio proxy configuration
-istioctl proxy-config route <pod-name> --name 8080
-
-# 6. Check AnalysisRun
-kubectl get analysisrun -l rollout=test
-
-# 7. Rollout Controller logs
+kubectl argo rollouts get rollout test -n rollouts-demo
+kubectl describe rollout test -n rollouts-demo
+kubectl get virtualservice test -n rollouts-demo -o yaml
+kubectl get services test-stable test-canary -n rollouts-demo -o yaml
+kubectl get pods -n rollouts-demo -l app=test --show-labels
+kubectl get endpointslices -n rollouts-demo -l kubernetes.io/service-name=test-canary
+istioctl proxy-config routes <client-pod> -n rollouts-demo
+istioctl proxy-config clusters <client-pod> -n rollouts-demo
+kubectl get analysisruns -n rollouts-demo
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
 
-<span id="best-practices"></span>
+重みが更新されない場合は、RBAC、参照されるルート名、コントローラーイベント、競合する GitOps 更新を調べてください。Canary にトラフィックが届かない場合は、Service/subset の hash セレクター、ready な EndpointSlice、実際のメッシュクライアント/Gateway 経路、サンプル量を確認します。
 
-## ベストプラクティス
+分析に失敗した場合は、AnalysisRun の測定値とメッセージを調べ、同じ Prometheus datasource に同じクエリを実行します。source reporter、namespace/Service ラベル、トラフィック量、lookback、プロバイダーの認証/ネットワークアクセスを検証してください。しきい値による失敗、判定不能、プロバイダーエラーを区別します。
 
-### 1. デプロイメントステップの設計
+Rollout の完了後、abort は履歴全体を戻す一般的なコマンドではありません。履歴を確認し、意図したテンプレート/バージョンを復元します。
 
-**推奨ステップ**:
-```yaml
-steps:
-- setWeight: 5      # Very small start
-  pause: {duration: 5m}
-- setWeight: 10     # Small-scale verification
-  pause: {duration: 10m}
-- setWeight: 25     # Meaningful traffic
-  pause: {duration: 15m}
-- setWeight: 50     # Half transition
-  pause: {duration: 30m}
-- setWeight: 75     # Most transition
-  pause: {duration: 30m}
-# 100% auto complete
+```bash
+kubectl argo rollouts get rollout test -n rollouts-demo
+kubectl argo rollouts undo test --to-revision=<reviewed-revision> -n rollouts-demo
 ```
 
-**原則**:
-- ✅ 小さなステップ（5～10%）から始める
-- ✅ 各ステップで十分な検証時間を確保する
-- ✅ 50% 以降（トラフィックの大半）は待機時間を長くする
-- ✅ 最後の 20～30% は迅速に移行する
+GitOps を使っている場合は、Git の desired version も変更・同期してください。保持された ReplicaSet とデータベース/API の互換性によって、安全に undo できる範囲が決まります。
 
-### 2. Analysis 設定
+## ベストプラクティス {#best-practices}
 
-```yaml
-metrics:
-- name: success-rate
-  interval: 30s        # Not too short (minimum 30s)
-  count: 5             # Sufficient samples (minimum 5)
-  successCondition: result >= 0.95  # Reasonable threshold
-  failureLimit: 2      # Don't fail immediately
-```
+### GitOps のフィールド所有権
 
-**原則**:
-- ✅ 複数メトリクスの組み合わせ（成功率 + レイテンシー + エラー率）
-- ✅ 十分な計測時間（最低 2～3 分）
-- ✅ `failureLimit` により一時的なエラーを許容する
-- ✅ バックグラウンド Analysis でデプロイメント全体を監視する
-
-### 3. Service 設定
-
-```yaml
-# ❌ Wrong example: version label in selector
-apiVersion: v1
-kind: Service
-metadata:
-  name: test-stable
-spec:
-  selector:
-    app: test
-    version: v1  # ← Wrong! Should use hash managed by Rollout
-
----
-# ✅ Correct example: Rollout manages hash
-apiVersion: v1
-kind: Service
-metadata:
-  name: test-stable
-spec:
-  selector:
-    app: test
-    # rollouts-pod-template-hash is auto-added
-```
-
-### 4. リソース管理
+Argo CD Application では、Rollouts が所有する runtime field だけを sync 時にも尊重される除外設定にできます。
 
 ```yaml
 spec:
-  revisionHistoryLimit: 2  # Minimum 2 (for rollback)
-  progressDeadlineSeconds: 600  # 10 minute timeout
+  ignoreDifferences:
+  - group: networking.istio.io
+    kind: VirtualService
+    name: test
+    namespace: rollouts-demo
+    jqPathExpressions:
+    - .spec.http[] | select(.name == "primary") | .route[].weight
+  - group: ''
+    kind: Service
+    name: test-stable
+    namespace: rollouts-demo
+    jqPathExpressions:
+    - .spec.selector["rollouts-pod-template-hash"]
+  - group: ''
+    kind: Service
+    name: test-canary
+    namespace: rollouts-demo
+    jqPathExpressions:
+    - .spec.selector["rollouts-pod-template-hash"]
+  syncPolicy:
+    syncOptions:
+    - RespectIgnoreDifferences=true
+```
 
+これは Application の `spec` 断片であり、単独で使える Application リソースではありません。最初のリソース作成では、重み/セレクターを正しく設定する必要があります。subset ルーティングでは、管理対象 DestinationRule subset の hash ラベルも除外範囲にします。managed header/mirror route では、固有名の runtime entry も考慮してください。VirtualService の spec 全体を無視しないでください。hosts、宛先、セキュリティに関わるルーティングはレビュー可能な状態にします。
+
+### Step、測定、容量
+
+割合と pause の長さは、リクエスト量、リスク、復旧時間をもとに決めます。最低30秒、5サンプルで信頼できる、最後の段階は素早く昇格すべき、といった普遍的な規則はありません。CanaryStep では1つの操作に絞り、再試行とスキーマ/データ互換性を調整します。
+
+```yaml
+spec:
+  revisionHistoryLimit: 2
+  progressDeadlineSeconds: 600
+  progressDeadlineAbort: false
   template:
     spec:
       containers:
@@ -1313,102 +970,42 @@ spec:
             cpu: 100m
             memory: 128Mi
           limits:
-            cpu: 200m      # 2x of request
-            memory: 256Mi  # 2x of request
+            cpu: 200m
+            memory: 256Mi
 ```
 
-### 5. HA 設定
+`revisionHistoryLimit` は履歴の保持設定であり、常に最低2を必要とするわけではありません。`progressDeadlineSeconds` は進行がない状態に関する設定です。pause と分析のライフサイクルは別に理解してください。明示的に false にした `progressDeadlineAbort` は、progress deadline 到達時に自動 abort しません。リクエスト/limit 比率の2倍は、元の例に入っていた値にすぎません。
 
-```yaml
-spec:
-  replicas: 3  # Minimum 3 (1 per AZ)
+レプリカが3つあっても、各 AZ に1つずつ配置されるとは限りません。ゾーン分散が必要なら、レビュー済みの topology 制約と容量を使ってください。[Zone-Aware Argo Rollouts](09-zone-aware-argo-rollouts.md)を参照してください。トラフィックルーティングには、単純な surge 見積もりを超える stable/canary 容量が必要になる場合があります。PDB が影響するのは自発的な退避であり、すべての障害やコントローラーによるスケーリングではありません。
 
-  strategy:
-    canary:
-      maxSurge: 1         # Maximum 1 extra pod
-      maxUnavailable: 0   # Maintain minimum replicas
-```
-
-**PodDisruptionBudget**:
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: test-pdb
+  namespace: rollouts-demo
 spec:
-  minAvailable: 2  # Maintain minimum 2
+  minAvailable: 2
   selector:
     matchLabels:
       app: test
 ```
 
-### 6. デプロイメントチェックリスト
-
-デプロイメント前:
-- [ ] Stable/Canary Service を作成済み
-- [ ] VirtualService と DestinationRule を作成済み
-- [ ] AnalysisTemplate を定義済み
-- [ ] Prometheus メトリクス収集を確認済み
-- [ ] Rollout ステップをレビュー済み
-
-デプロイメント中:
-- [ ] `kubectl argo rollouts get rollout --watch` で監視
-- [ ] Canary Pod がトラフィックを受信していることを確認
-- [ ] Analysis メトリクスが正常であることを確認
-- [ ] エラーログを監視
-
-デプロイメント後:
-- [ ] 100% 移行を確認
-- [ ] 以前の ReplicaSet の削除を確認
-- [ ] 最終的なメトリクスを確認
-
-### 7. 段階的な導入
-
-**ステップ 1**: 基本的な Canary
-```yaml
-steps:
-- setWeight: 10
-- pause: {}  # Manual approval
-```
-
-**ステップ 2**: 自動 Analysis を追加
-```yaml
-steps:
-- setWeight: 10
-- pause: {duration: 5m}
-- analysis:
-    templates:
-    - templateName: success-rate
-```
-
-**ステップ 3**: バックグラウンド Analysis
-```yaml
-analysis:
-  templates:
-  - templateName: success-rate
-  startingStep: 1
-```
-
-**ステップ 4**: 複合メトリクス
-```yaml
-analysis:
-  templates:
-  - templateName: comprehensive-analysis  # Success rate + latency + error rate
-```
+更新前に、コントローラー/CRD、インジェクション、DNS、イメージのプラットフォーム、Service/route、プロバイダーアクセス、メトリクスラベル、継続的なテストトラフィックを確認してください。更新中は、実際の endpoint 選択と AnalysisRun の結果を調べます。promotion 後は、desired image、管理対象の重み、endpoint readiness、古い ReplicaSet のスケール/保持動作を確認し、古い ReplicaSet がすべて削除されると期待しないでください。
 
 ## 参考資料
 
-### 関連ドキュメント
-- [トラフィック分割 - Canary デプロイメント](../traffic-management/04-traffic-splitting.md)
-- [Zone-Aware Argo Rollouts](09-zone-aware-argo-rollouts.md)
+- [Argo Rollouts Istio 統合](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
+- [分析のライフサイクル](https://argoproj.github.io/argo-rollouts/features/analysis/)
+- [Prometheus プロバイダー](https://argoproj.github.io/argo-rollouts/analysis/prometheus/)
+- [トラフィックルーティングと managed route](https://argoproj.github.io/argo-rollouts/features/traffic-management/)
+- [Blue/green](https://argoproj.github.io/argo-rollouts/features/bluegreen/)
+- [Experiment](https://argoproj.github.io/argo-rollouts/features/experiment/)
+- [Rollout 仕様](https://argoproj.github.io/argo-rollouts/features/specification/)
+- [Rollouts FAQ](https://argoproj.github.io/argo-rollouts/FAQ/)
+- [Release 1.10 の Istio reconciler](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/rollout/trafficrouting/istio/istio.go)
+- [Release 1.10 の分析失敗判定](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/analysis/analysis.go)
+- [Argo CD sync options のソース](https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/user-guide/sync-options.md)
+- [トラフィック分割](../traffic-management/04-traffic-splitting.md)
 - [VirtualService](../traffic-management/01-gateway-virtualservice.md)
 - [DestinationRule](../traffic-management/03-destination-rule.md)
-
-### 外部リンク
-- [Argo Rollouts 公式ドキュメント](https://argo-rollouts.readthedocs.io/)
-- [Istio トラフィック管理](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/)
-- [AnalysisTemplate の例](https://github.com/argoproj/argo-rollouts/tree/master/examples)
-
-## 次のステップ
-
-1. [Zone-Aware Rollout の実装](09-zone-aware-argo-rollouts.md)

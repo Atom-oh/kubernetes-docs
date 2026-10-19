@@ -5,13 +5,13 @@ Este cuestionario evalúa tu comprensión de ArgoCD y GitOps.
 ## Pregunta 1: Principios fundamentales de GitOps
 
 <details>
-<summary>¿Cuáles son los 4 principios fundamentales de GitOps?</summary>
+<summary>¿Cuáles son los cuatro principios fundamentales de GitOps?</summary>
 
 **Respuesta:**
-1. **Configuración declarativa**: Define el estado deseado del sistema como código
-2. **Control de versiones**: Realiza el seguimiento de todos los cambios en Git
-3. **Sincronización automatizada**: Reconcilia automáticamente las diferencias entre el repositorio y el entorno en ejecución
-4. **Autorreparación**: Recupera automáticamente el sistema al estado deseado
+1. **Configuración declarativa**: Define como código el estado deseado del sistema
+2. **Versionado e inmutable**: Conserva versiones inmutables del estado deseado y un historial completo
+3. **Obtención automática desde el origen**: Los agentes obtienen automáticamente las declaraciones de estado deseado desde el origen
+4. **Conciliación continua**: Observa el estado real e intenta aplicar continuamente el estado deseado
 
 Estos principios permiten que GitOps funcione como un modelo operativo completo, más allá de ser solo una herramienta de despliegue.
 </details>
@@ -19,16 +19,16 @@ Estos principios permiten que GitOps funcione como un modelo operativo completo,
 ## Pregunta 2: Arquitectura de ArgoCD
 
 <details>
-<summary>¿Cuáles son los componentes principales de ArgoCD y cuáles son sus funciones?</summary>
+<summary>¿Cuáles son los componentes principales de ArgoCD y qué función cumple cada uno?</summary>
 
 **Respuesta:**
-- **API Server**: Proporciona la API REST y la interfaz web, y gestiona la autenticación y la autorización
-- **Repository Server**: Se conecta a repositorios Git y genera manifiestos
-- **Application Controller**: Supervisa el estado de la Application y realiza la sincronización
-- **Redis**: Almacenamiento en caché y de sesiones
+- **Servidor de API**: Proporciona la API REST y la interfaz web, y gestiona la autenticación y la autorización
+- **Servidor de repositorios**: Se conecta a los repositorios Git y genera manifiestos
+- **Controlador de aplicaciones**: Supervisa el estado de las aplicaciones y realiza la sincronización
+- **Redis**: Caché reconstruible
 - **Dex**: Servidor de autenticación OIDC (opcional)
 
-Cada componente puede escalarse de forma independiente y admite configuraciones de alta disponibilidad.
+El escalado varía según el componente: Application Controller utiliza fragmentación (sharding), ApplicationSet usa elección de líder y el Dex incluido no puede lograr alta disponibilidad de forma segura solo agregando réplicas a su almacenamiento en memoria.
 </details>
 
 ## Pregunta 3: Recurso Application
@@ -60,31 +60,31 @@ spec:
 
 **Elementos obligatorios:**
 - `source`: Información del repositorio Git
-- `destination`: Cluster y namespace de destino para el despliegue
-- `project`: Proyecto de ArgoCD (para la gestión de permisos)
+- `destination`: Clúster y espacio de nombres de destino para el despliegue
+- `project`: Proyecto de ArgoCD (para gestionar permisos)
 </details>
 
 ## Pregunta 4: Políticas de sincronización
 
 <details>
-<summary>¿Cuáles son las diferencias entre la sincronización automatizada y la manual en ArgoCD?</summary>
+<summary>¿Qué diferencias hay entre la sincronización automática y la manual en ArgoCD?</summary>
 
 **Respuesta:**
-**Sincronización automatizada:**
+**Sincronización automática:**
 ```yaml
 syncPolicy:
   automated:
     prune: true      # Automatically delete unnecessary resources
     selfHeal: true   # Automatically recover from drift
 ```
-- Se aplica automáticamente al cluster cuando cambia Git
-- Se recupera automáticamente cuando se detecta drift
+- Aplica los cambios al clúster automáticamente cuando cambia Git
+- Corrige automáticamente las desviaciones detectadas
 - Úsala con precaución en entornos de producción
 
 **Sincronización manual:**
 - El usuario inicia explícitamente la sincronización
-- Se aplica después de revisar los cambios
-- Es más segura, pero incrementa la carga operativa
+- Aplica los cambios después de revisarlos
+- Aún es necesario diseñar los controles de revisión/aprobación y la carga operativa
 </details>
 
 ## Pregunta 5: ApplicationSet
@@ -94,38 +94,49 @@ syncPolicy:
 
 **Respuesta:**
 **Propósito:**
-- Automatizar despliegues en múltiples clusters
-- Creación de Application basada en plantillas
-- Gestión de configuración específica del entorno
+- Automatizar despliegues en varios clústeres
+- Crear recursos Application mediante plantillas
+- Gestionar configuraciones específicas de cada entorno
 
 **Generadores principales:**
-- **List Generator**: Basado en listas de valores estáticos
-- **Cluster Generator**: Basado en clusters registrados
-- **Git Generator**: Basado en la estructura del repositorio Git
-- **Matrix Generator**: Combina múltiples generadores
-- **Pull Request Generator**: Entornos temporales basados en PR
+- **Generador List**: Usa listas de valores estáticos
+- **Generador Cluster**: Usa los clústeres registrados
+- **Generador Git**: Usa la estructura del repositorio Git
+- **Generador Matrix**: Combina varios generadores
+- **Generador Pull Request**: Crea entornos temporales basados en solicitudes de incorporación de cambios (PR)
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: cluster-apps
+  name: demo-cluster-apps
+  namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
-  - clusters: {}
+  - clusters:
+      selector:
+        matchLabels:
+          environment: demo
   template:
     metadata:
-      name: '{{name}}-app'
+      name: '{{.nameNormalized}}-guestbook'
     spec:
+      project: default
       source:
-        repoURL: https://github.com/example/apps
-        path: '{{name}}'
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
       destination:
-        server: '{{server}}'
+        server: '{{.server}}'
+        namespace: guestbook
+      syncPolicy:
+        syncOptions: [CreateNamespace=true]
 ```
 </details>
 
-## Pregunta 6: Mejores prácticas de seguridad
+## Pregunta 6: Prácticas recomendadas de seguridad
 
 <details>
 <summary>¿Cuáles son los métodos principales para reforzar la seguridad de ArgoCD?</summary>
@@ -133,51 +144,51 @@ spec:
 **Respuesta:**
 1. **Configuración de RBAC**:
    ```yaml
-   policy.default: role:readonly
+   policy.default: role:authenticated
    policy.csv: |
-     p, role:admin, applications, *, */*, allow
      p, role:dev, applications, get, dev/*, allow
+     p, role:dev, projects, get, dev, allow
      g, dev-team, role:dev
    ```
 
 2. **Integración de SSO**:
-   - Integración con OIDC, SAML y LDAP
-   - Gestión centralizada de autenticación
+   - OIDC directo o conectores de Dex compatibles con otros proveedores de identidad
+   - Gestión centralizada de la autenticación
 
 3. **Seguridad de red**:
    - Configuración de TLS para Ingress
    - Aplicación de políticas de red
    - Uso de repositorios Git privados
 
-4. **Gestión de Secrets**:
+4. **Gestión de secretos**:
    - Uso de External Secrets Operator
    - Sealed Secrets o Helm Secrets
-   - Repositorios Git separados para información confidencial
+   - Evita guardar secretos en texto sin cifrar en Git; usa un almacén externo de secretos o el cifrado y la gestión de claves adecuados
 
 5. **Registro de auditoría**:
-   - Seguimiento de todos los cambios
-   - Supervisión de registros de acceso
+   - Registrar todos los cambios
+   - Supervisar los registros de acceso
 </details>
 
-## Pregunta 7: Gestión de múltiples clusters
+## Pregunta 7: Gestión de varios clústeres
 
 <details>
-<summary>¿Cómo se gestionan múltiples clusters en ArgoCD?</summary>
+<summary>¿Cómo se gestionan varios clústeres en ArgoCD?</summary>
 
 **Respuesta:**
-1. **Registro de clusters**:
+1. **Registro del clúster**:
    ```bash
    argocd cluster add my-cluster-context
    ```
 
-2. **Despliegue de Application por cluster**:
+2. **Despliegue de aplicaciones por clúster**:
    ```yaml
    destination:
      server: https://my-cluster-api-server
      namespace: production
    ```
 
-3. **Automatización mediante ApplicationSet**:
+3. **Automatización con ApplicationSet**:
    ```yaml
    generators:
    - clusters:
@@ -186,49 +197,49 @@ spec:
            environment: production
    ```
 
-4. **Gestión de permisos de clusters**:
-   - Configurar cuentas de servicio para cada cluster
+4. **Gestión de permisos de los clústeres**:
+   - Configurar cuentas de servicio para cada clúster
    - Aplicar el principio de privilegio mínimo
-   - Aislamiento basado en namespace
+   - Aislar por espacio de nombres
 
 5. **Supervisión y alertas**:
-   - Paneles de estado por cluster
-   - Alertas de fallos de sincronización
+   - Paneles de estado por clúster
+   - Alertas de errores de sincronización
    - Supervisión del uso de recursos
 </details>
 
 ## Pregunta 8: Solución de problemas
 
 <details>
-<summary>¿Qué se debe revisar cuando una Application de ArgoCD está en estado "OutOfSync"?</summary>
+<summary>¿Qué debes comprobar cuando una aplicación de ArgoCD está en estado «OutOfSync»?</summary>
 
 **Respuesta:**
-1. **Revisar el estado del repositorio Git**:
+1. **Comprobar el estado del repositorio Git**:
    ```bash
    # Check repository access permissions
    argocd repo list
-   argocd repo get <repo-url>
+   argocd repo get "$REPO_URL"
    ```
 
-2. **Validar manifiestos**:
+2. **Validar los manifiestos**:
    ```bash
    # Validate manifests locally
-   kubectl apply --dry-run=client -f manifests/
+   kubectl --context "$TARGET_CONTEXT" apply --server-side --dry-run=server -f manifests/
    ```
 
-3. **Revisar las políticas de sincronización**:
+3. **Comprobar las políticas de sincronización**:
    - Configuración de sincronización automática
-   - Opciones de Prune y SelfHeal
+   - Opciones Prune y SelfHeal
    - Condiciones de sincronización (Sync Windows)
 
 4. **Analizar el estado de los recursos**:
    ```bash
    # Check application details
-   argocd app get <app-name>
-   argocd app diff <app-name>
+   argocd app get "$APP_NAME"
+   argocd app diff "$APP_NAME"
    ```
 
-5. **Revisar los registros**:
+5. **Comprobar los registros**:
    ```bash
    # ArgoCD controller logs
    kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller
@@ -236,81 +247,86 @@ spec:
 
 6. **Probar la sincronización manual**:
    ```bash
-   argocd app sync <app-name> --prune
+   argocd app sync "$APP_NAME" --dry-run
    ```
 </details>
 
-## Pregunta 9: Tendencias recientes de GitOps
+## Pregunta 9: Patrones operativos de GitOps
 
 <details>
-<summary>¿Cuáles son las principales tendencias en el ámbito de GitOps en 2023?</summary>
+<summary>¿Qué patrones operativos de GitOps cubre esta guía?</summary>
 
 **Respuesta:**
-1. **GitOps para múltiples clusters**:
-   - Despliegues automatizados en múltiples clusters mediante ApplicationSets
-   - Sincronización de configuración entre clusters y aplicación de políticas
+1. **GitOps para varios clústeres**:
+   - Despliegues automatizados en varios clústeres mediante ApplicationSet
+   - Sincronización de configuración y aplicación de políticas entre clústeres
 
-2. **GitOps híbrido y multi-cloud**:
-   - Estrategias de despliegue consistentes en entornos on-premises y cloud
-   - Portabilidad de workloads entre distintos proveedores cloud
+2. **GitOps híbrido y multinube**:
+   - Estrategias de despliegue coherentes en entornos locales y en la nube
+   - Portabilidad de cargas de trabajo entre distintos proveedores de nube
 
 3. **Integración de GitOps y gestión de políticas**:
    - Integración con OPA (Open Policy Agent) y Kyverno
-   - Automatización de cumplimiento y gobernanza
-   - Codificación y control de versiones de políticas de seguridad
+   - Automatización del cumplimiento y la gobernanza
+   - Definición de políticas de seguridad como código y control de versiones
 
 4. **Entrega progresiva**:
-   - Automatización de despliegues Canary y Blue-Green
+   - Automatización de despliegues canary y blue-green
    - Integración con Argo Rollouts
-   - Rollback automático basado en métricas
+   - Reversión automática basada en métricas
 </details>
 
 ## Pregunta 10: Integración con Amazon EKS
 
 <details>
-<summary>¿Cuáles son las consideraciones al integrar ArgoCD con Amazon EKS?</summary>
+<summary>¿Qué aspectos se deben tener en cuenta al integrar ArgoCD con Amazon EKS?</summary>
 
 **Respuesta:**
 1. **Configuración de permisos de IAM**:
    ```yaml
    # IRSA (IAM Roles for Service Accounts) configuration
-   serviceAccount:
-     annotations:
-       eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/argocd-role
+   controller:
+     serviceAccount:
+       annotations:
+         eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-Management
    ```
 
 2. **Configuración de ALB Ingress**:
    ```yaml
-   annotations:
-     kubernetes.io/ingress.class: alb
-     alb.ingress.kubernetes.io/scheme: internet-facing
-     alb.ingress.kubernetes.io/target-type: ip
+   metadata:
+     annotations:
+       alb.ingress.kubernetes.io/scheme: internal
+       alb.ingress.kubernetes.io/target-type: ip
+   spec:
+     ingressClassName: alb
    ```
 
-3. **Registro de clusters EKS**:
+3. **Registro del clúster de EKS**:
    ```bash
    # Register EKS cluster to ArgoCD
-   argocd cluster add arn:aws:eks:region:account:cluster/cluster-name
+   argocd cluster add "$TARGET_CONTEXT"
    ```
 
 4. **Integración con ECR**:
-   - Actualizaciones automáticas de imágenes ECR
+   - Actualización automática de imágenes de ECR
    - Configuración de Image Updater
 
 5. **AWS Load Balancer Controller**:
-   - Optimización del balanceo de carga de Service
+   - Optimización del balanceo de carga de servicios
    - Uso de Target Group Binding
 
 6. **Consideraciones de seguridad**:
-   - Uso de endpoints de VPC
-   - Configuración de security groups
+   - Uso de puntos de conexión de VPC
+   - Configuración de grupos de seguridad
    - Aplicación de políticas de red
 </details>
 
 ---
 
 **Puntuación:**
-- 8-10 respuestas correctas: Excelente (nivel experto en ArgoCD)
-- 6-7 respuestas correctas: Bien (se recomienda aprendizaje adicional)
-- 4-5 respuestas correctas: Promedio (se necesita repasar los conceptos básicos)
-- 0-3 respuestas correctas: Insuficiente (se necesita volver a estudiar todo el contenido)
+- 8-10 respuestas correctas: Se entienden los conceptos fundamentales de este cuestionario
+- 6-7 respuestas correctas: Buen resultado (se recomienda profundizar)
+- 4-5 respuestas correctas: Promedio (conviene repasar los conceptos básicos)
+- 0-3 respuestas correctas: Repasa los fundamentos y practica los laboratorios
+
+Configura `REPO_URL`, `APP_NAME` y `TARGET_CONTEXT` con valores reales. `TARGET_CONTEXT` es un contexto de kubeconfig; el contexto predeterminado de EKS puede ser un ARN. Revisa los cambios RBAC de cluster-add y las diferencias entre la sincronización y la eliminación de recursos (`prune`). La ejecución de prueba muestra los cambios; `--prune` incluye eliminaciones y requiere una revisión independiente. Las anotaciones de IRSA no configuran la relación de confianza ni las entradas de acceso de EKS, y ALB requiere certificados/TLS y acceso de red. En el entorno de ApplicationSet, `demo` debe coincidir con las etiquetas de los Secrets de los clústeres registrados. Conserva `role:authenticated` sin conceder permisos globales de solo lectura y asigna a `dev-team` únicamente el alcance que necesita.

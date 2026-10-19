@@ -1,8 +1,8 @@
 # Ambient Mode
 
-> **Última actualización**: October 12, 2026 · Istio 1.31. Este laboratorio presupone nodos Linux compatibles, permisos de node-agent/CNI y un namespace de demostración nuevo. Esta auditoría no ejecutó comandos de despliegue.
+> **Última actualización**: 12 de octubre de 2026 · Istio 1.31. Este laboratorio presupone nodos Linux compatibles, los permisos necesarios para el agente de nodo/CNI y un namespace de demostración nuevo. Esta revisión no ejecutó comandos de despliegue.
 
-Ambient se presentó como una vista previa experimental en 2022, se distribuyó por primera vez en Istio 1.18 como Alpha, llegó a Beta en 1.22 y al GA básico en 1.24. La vista previa no fue una funcionalidad generalmente disponible de la versión principal 1.15. El ahorro de recursos y la seguridad de la migración dependen de la topología, las políticas y el tráfico reales.
+Ambient se presentó como una versión preliminar experimental en 2022. Se incluyó por primera vez en Istio 1.18 como Alpha, pasó a Beta en 1.22 y sus funciones principales alcanzaron la disponibilidad general en 1.24. La versión preliminar no era una función de disponibilidad general de la versión principal 1.15. El ahorro de recursos y la seguridad de la migración dependen de la topología, las políticas y el tráfico reales.
 
 ## Tabla de contenidos
 
@@ -18,40 +18,40 @@ Ambient se presentó como una vista previa experimental en 2022, se distribuyó 
 ## Descripción general {#overview}
 
 
-Ambient Mode es un nuevo enfoque que proporciona funcionalidad de Service Mesh sin inyectar proxies Sidecar en los Pods de aplicación. Ambient Mode consta de una **arquitectura en capas**:
+Ambient Mode proporciona funciones de malla de servicios sin inyectar proxies sidecar en los Pods de aplicaciones. Su diseño utiliza una **arquitectura en capas**:
 
-1. **Capa de superposición segura (L4)**: mTLS y telemetría básica mediante ztunnel
-2. **Capa de procesamiento L7**: Administración avanzada del tráfico mediante Waypoint Proxy
+1. **Capa overlay segura (L4)**: mTLS y telemetría básica mediante ztunnel
+2. **Capa de procesamiento L7**: gestión avanzada del tráfico mediante un proxy waypoint
 
 ### ¿Por qué se necesita Ambient Mode?
 
-Limitaciones del modelo Sidecar tradicional:
-- **Alta sobrecarga de recursos**: Cada Pod requiere un proxy Envoy (mida la huella real del proxy)
-- **Complejidad operativa**: Los reinicios de Pods, la administración de versiones y las actualizaciones graduales son complejos
-- **Coordinación de inicio**: La preparación del proxy y de la aplicación debe coordinarse
-- **Funcionalidad excesiva**: Algunas cargas de trabajo solo necesitan funcionalidades de mesh L4
+Limitaciones del modelo tradicional con sidecars:
+- **Consumo elevado de recursos**: cada Pod requiere un proxy Envoy; mida el consumo real del proxy
+- **Complejidad operativa**: los reinicios de Pods, la gestión de versiones y las actualizaciones graduales son complejos
+- **Coordinación del arranque**: debe coordinarse la disponibilidad del proxy y de la aplicación
+- **Funciones innecesarias**: algunas cargas solo necesitan las funciones L4 de la malla
 
-Soluciones de Ambient Mode:
-- Proxies de nodo compartidos más los waypoints necesarios: mida el uso total de recursos
-- La inscripción puede evitar reiniciar Pods sin mesh; la eliminación de un sidecar y los cambios de políticas necesitan una implementación controlada
-- Adopción gradual: Amplíe de L4 a L7 según sea necesario
-- El transporte L4 puede ser transparente; el contexto de trazado y los contratos de timeout/idempotencia de la aplicación siguen siendo importantes
+Opciones que ofrece Ambient Mode:
+- Proxies de nodo compartidos junto con los waypoints necesarios: mida el consumo total de recursos
+- Incorporar Pods que aún no pertenecen a la malla puede evitar su reinicio; retirar un sidecar y cambiar políticas requiere un despliegue controlado
+- Adopción gradual: amplíe de L4 a L7 según las necesidades
+- El transporte L4 puede ser transparente; siguen siendo necesarios el contexto de tracing y los contratos de timeout e idempotencia de la aplicación
 
 ### Conceptos principales
 
-El waypoint opcional de estas figuras se selecciona mediante configuración/inscripción. Ztunnel no analiza cada solicitud HTTP y decide si debe realizar un desvío L7. Las conexiones existentes, la preparación y las transiciones de políticas siguen necesitando validación.
+El waypoint opcional de estas figuras se selecciona mediante la configuración y la incorporación del recurso. Ztunnel no analiza cada solicitud HTTP para decidir si debe desviarla a L7. Aun así, deben validarse las conexiones existentes, la disponibilidad de los componentes y las transiciones de políticas.
 
 
-![Diagrama que contrasta Sidecar Mode, donde cada Pod empareja su aplicación con un sidecar Envoy, con Ambient Mode, donde los Pods envían tráfico de forma transparente a un ztunnel de nivel de nodo con una ruta Waypoint opcional configurada para el procesamiento L7.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
+![Diagrama que compara Sidecar Mode, donde cada Pod contiene una aplicación y un sidecar Envoy, con Ambient Mode, donde los Pods envían tráfico de forma transparente a un ztunnel del nodo y utilizan una ruta waypoint opcional configurada para el procesamiento L7.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-0.html)
 
 ### Ventajas de Ambient Mode
 
-1. **Modelo de recursos compartidos**: Proxies de nodo más las réplicas de waypoint necesarias
-2. **Despliegue simple**: La inscripción de Pods sin mesh no necesita reiniciar Pods; eliminar un sidecar sí
-3. **Transporte L4 transparente**: Los requisitos de tracing/deadline/idempotencia de la aplicación se mantienen
-4. **Funcionalidades L7 flexibles**: Use waypoint solo cuando sea necesario
+1. **Recursos compartidos**: proxies de nodo y las réplicas de waypoint necesarias
+2. **Despliegue sencillo**: incorporar Pods sin malla no tiene por qué reiniciarlos; retirar un sidecar sí requiere hacerlo
+3. **Transporte L4 transparente**: se mantienen los requisitos de tracing, plazos e idempotencia de la aplicación
+4. **Funciones L7 flexibles**: utilice waypoints solo cuando sean necesarios
 
 ## Modo Sidecar frente a Ambient Mode {#sidecar-mode-vs-ambient-mode}
 
@@ -59,7 +59,7 @@ El waypoint opcional de estas figuras se selecciona mediante configuración/insc
 
 #### Modo Sidecar
 
-![Diagrama de arquitectura que muestra tres Pods, cada uno emparejando un contenedor de aplicación con su propio proxy sidecar Envoy, con TLS mutuo negociado directamente entre los sidecars.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
+![Diagrama de arquitectura con tres Pods, cada uno con un contenedor de aplicación y su propio proxy sidecar Envoy; el TLS mutuo se negocia directamente entre los sidecars.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-1.html)
 
@@ -71,38 +71,38 @@ El waypoint opcional de estas figuras se selecciona mediante configuración/insc
 
 #### Ambient Mode
 
-![Diagrama de arquitectura que muestra muchos Pods de aplicación enviando tráfico de forma transparente a un ztunnel de nivel de nodo, que sirve directamente al servicio de destino para tráfico L4 y usa la ruta waypoint opcional cuando el recurso está inscrito para ello.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
+![Diagrama de arquitectura con varios Pods de aplicaciones que envían tráfico de forma transparente al ztunnel de su nodo. Este conecta directamente con el servicio de destino para L4 y utiliza la ruta waypoint opcional cuando el recurso está configurado para ella.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-2.html)
 
 **Características**:
 - Un ztunnel por nodo
-- Funcionalidades L4 proporcionadas de forma predeterminada
-- Las funcionalidades L7 requieren waypoint
-- La inscripción de Pods sin mesh no necesita reiniciar Pods; eliminar un sidecar sí
+- Funciones L4 disponibles de forma predeterminada
+- Las funciones L7 requieren un waypoint
+- Incorporar Pods sin malla no tiene por qué reiniciarlos; retirar un sidecar sí requiere hacerlo
 
 ### Tabla de comparación detallada
 
 | Elemento | Modo Sidecar | Ambient Mode |
 |------|-------------|--------------|
-| **Método de despliegue** | Inyección de Sidecar en el Pod | ztunnel de nivel de nodo + waypoint opcional |
-| **Contabilización de recursos** | Envoy por Pod + plano de control | ztunnels de nodo + todas las réplicas de waypoint + plano de control; mida bajo carga |
-| **Recreación de Pod** | Necesaria para agregar/eliminar un proxy inyectado | Normalmente no es necesaria para la inscripción sin mesh; necesaria para eliminar un sidecar |
-| **Coordinación de inicio** | Ciclo de vida y preparación de proxy/aplicación | Captura de CNI y preparación de ztunnel |
-| **Funcionalidades L4** | Compatible | Compatible |
-| **Funcionalidades L7** | Compatibilidad específica de la versión | Se requieren Waypoint y API compatible; no todas las extensiones son GA |
+| **Método de despliegue** | Inyección de un sidecar en el Pod | ztunnel del nodo y waypoint opcional |
+| **Cómputo de recursos** | Envoy por Pod y plano de control | ztunnels de los nodos, todas las réplicas de waypoint y plano de control; mida bajo carga |
+| **Recreación de Pods** | Necesaria para añadir o retirar un proxy inyectado | Normalmente no es necesaria para incorporar Pods sin malla; sí lo es para retirar un sidecar |
+| **Coordinación del arranque** | Ciclo de vida y disponibilidad del proxy y de la aplicación | Captura de tráfico mediante CNI y disponibilidad de ztunnel |
+| **Funciones L4** | Compatibles | Compatibles |
+| **Funciones L7** | Compatibilidad según la versión | Requieren un waypoint y una API compatible; no todas las extensiones tienen disponibilidad general |
 | **mTLS** | Automático | Automático |
-| **Telemetría** | Detallada | Básica (L4), detallada (L7 con waypoint) |
-| **Circuit Breaker** | Compatible | Requiere Waypoint |
-| **Retry/Timeout** | Compatible | Requiere Waypoint |
-| **Manipulación de encabezados** | Compatible | Requiere Waypoint |
-| **Sobrecarga de rendimiento** | Depende de la carga de trabajo/configuración | Depende de ruta/identidad/waypoint/carga; compare políticas equivalentes |
-| **Ámbito operativo** | Ciclo de vida del proxy por carga de trabajo | Ciclo de vida de nodo/CNI y waypoint compartido |
-| **Preparación para producción** | Maduro | GA (Istio 1.24+) |
+| **Telemetría** | Detallada | Básica en L4, detallada en L7 con waypoint |
+| **Circuit breaker** | Compatible | Requiere un waypoint |
+| **Reintentos y timeouts** | Compatibles | Requieren un waypoint |
+| **Modificación de encabezados** | Compatible | Requiere un waypoint |
+| **Sobrecarga de rendimiento** | Depende de la carga y la configuración | Depende de la ruta, identidad, waypoint y carga; compare políticas equivalentes |
+| **Ámbito operativo** | Ciclo de vida del proxy de cada carga | Ciclo de vida de nodos/CNI y waypoints compartidos |
+| **Preparación para producción** | Maduro | Disponibilidad general a partir de Istio 1.24 |
 
 ### Comparación de uso de recursos {#resource-usage-comparison}
 
-El cálculo de 100 Pods a continuación es un ejemplo hipotético de planificación, no un benchmark oficial. Cuente todas las réplicas de nodo/waypoint y compare requisitos equivalentes de seguridad, telemetría y enrutamiento antes de estimar ahorros de recursos o facturación.
+El cálculo siguiente para 100 Pods es un ejemplo de planificación con valores supuestos, no un benchmark oficial. Incluya todas las réplicas de proxies de nodo y waypoints, y compare requisitos equivalentes de seguridad, telemetría y enrutamiento antes de estimar ahorros de recursos o de facturación.
 
 ## Arquitectura {#architecture}
 
@@ -112,21 +112,21 @@ El plano de datos de Ambient Mode consta de dos componentes principales: **ztunn
 ### ztunnel (Zero Trust Tunnel)
 
 
-ztunnel es el componente principal de Ambient Mode, un **proxy L4 ligero que se ejecuta en el nivel de nodo**. Se ejecuta como DaemonSet en nodos Linux elegibles y gestiona el tráfico compatible de las cargas de trabajo inscritas. No es todo el tráfico de cada Pod; las cargas de trabajo con host-network/excluidas y los protocolos de aplicación que no son TCP requieren verificar la compatibilidad actual.
+ztunnel es el componente principal de Ambient Mode: un **proxy L4 ligero que se ejecuta en cada nodo**. Se despliega como DaemonSet en nodos Linux compatibles y gestiona el tráfico admitido de las cargas incorporadas a la malla. Su alcance no incluye todo el tráfico de todos los Pods; compruebe la compatibilidad actual de cargas con red del host, cargas excluidas y protocolos de aplicación distintos de TCP.
 
 #### Cómo funciona ztunnel
 
-1. **Captura de tráfico**: Intercepta de forma transparente el tráfico de red de Pods mediante reglas netfilter/iptables en el Pod de Istio CNI y transferencia de espacio de nombres de red
-2. **Aplicación de mTLS**: Aplica automáticamente cifrado mTLS mediante Identity basada en SPIFFE
-3. **Balanceo de carga**: Realiza balanceo de carga L4 entre endpoints
-4. **Recopilación de telemetría**: Recopila métricas y logs de conexión
-5. **Reenvío**: Reenvía tráfico al ztunnel de destino o a Waypoint
+1. **Captura de tráfico**: intercepta el tráfico de red de los Pods de forma transparente mediante las reglas netfilter/iptables que Istio CNI configura dentro del Pod y la transferencia de su namespace de red
+2. **Aplicación de mTLS**: aplica automáticamente cifrado mTLS con identidades basadas en SPIFFE
+3. **Balanceo de carga**: distribuye el tráfico L4 entre endpoints
+4. **Recopilación de telemetría**: recopila métricas y registros de conexiones
+5. **Reenvío**: dirige el tráfico al ztunnel de destino o a un waypoint
 
-**Stack tecnológico de ztunnel**:
-- **Lenguaje**: Rust (alto rendimiento, bajo uso de memoria)
+**Tecnologías de ztunnel**:
+- **Lenguaje**: Rust, con alto rendimiento y bajo consumo de memoria
 - **Protocolo**: HBONE (HTTP-Based Overlay Network Environment)
-- **Identidad**: Identidades de carga de trabajo SPIFFE; Istiod CA de forma predeterminada, integración separada para SPIRE
-- **CNI**: Integración estrecha con el plugin Istio CNI
+- **Identidad**: identidades SPIFFE de las cargas; CA de Istiod de forma predeterminada e integración independiente para SPIRE
+- **CNI**: integración estrecha con el plugin Istio CNI
 
 #### Rol de ztunnel
 
@@ -142,7 +142,7 @@ ztunnel es el componente principal de Ambient Mode, un **proxy L4 ligero que se 
 
 #### Despliegue de ztunnel
 
-Use la instalación/charts de ambient publicada. El DaemonSet mínimo original omitía montajes de token/CA/socket y usaba configuraciones hostNetwork/privileged incorrectas. El chart 1.31 proporciona capacidades específicas y acceso al espacio de nombres en el Pod; no establece `hostNetwork: true` ni `privileged: true`. No copie ni reduzca privilegios sin el contexto completo del chart/plataforma.
+Use la instalación y los charts publicados de ambient. El DaemonSet mínimo original omitía los montajes de token, CA y socket, y configuraba incorrectamente hostNetwork y privileged. El chart 1.31 proporciona capacidades específicas y acceso al namespace dentro del Pod; no establece `hostNetwork: true` ni `privileged: true`. No copie ni reduzca permisos sin considerar la configuración completa del chart y la plataforma.
 
 ```bash
 # Offline inspection; use the same reviewed values as the actual installation
@@ -154,35 +154,35 @@ kubectl get daemonset ztunnel -n istio-system -o yaml
 ### Waypoint Proxy
 
 
-Waypoint es un **proxy opcional que se usa cuando se necesitan funcionalidades L7**. Un waypoint configurado se coloca en la ruta de tráfico de los recursos inscritos para proporcionar funcionalidades avanzadas de administración del tráfico.
+Waypoint es un **proxy opcional para las funciones L7**. Al configurarlo y seleccionar los recursos que lo utilizarán, se incorpora a su ruta de tráfico para ofrecer gestión avanzada.
 
 #### Características principales de Waypoint
 
-1. **Despliegue selectivo**: Se usa solo para servicios que necesitan funcionalidades L7, no para todos los servicios
-2. **Proxy compartido**: Varias cargas de trabajo comparten un único Waypoint (según la inscripción de namespace/Service/Pod)
-3. **Basado en Envoy**: Usa el mismo proxy Envoy que Sidecar tradicional, con compatibilidad de API L7 específica de la versión
-4. **Bajo demanda**: Se puede agregar/eliminar dinámicamente en tiempo de ejecución
+1. **Despliegue selectivo**: se utiliza para servicios que necesitan funciones L7, no para todos los servicios
+2. **Proxy compartido**: varias cargas comparten un waypoint según la incorporación del namespace, Service o Pod
+3. **Basado en Envoy**: utiliza el mismo proxy Envoy que el modelo tradicional con sidecars, con las API L7 compatibles de cada versión
+4. **Bajo demanda**: puede añadirse o retirarse dinámicamente durante la ejecución
 
 #### Unidades de despliegue de Waypoint
 
 Un ServiceAccount proporciona identidad de carga de trabajo; etiquetarlo **no** selecciona un waypoint. Use `istio.io/use-waypoint` en un Namespace, Service o Pod, con un Gateway cuyo tipo de tráfico `istio.io/waypoint-for` coincida con el tráfico previsto.
 
-| Inscripción | Ámbito |
+| Recurso incorporado | Ámbito |
 |---|---|
-|Namespace|Selección de waypoint predeterminado para recursos elegibles en ese namespace|
-|Service|Tráfico hacia ese Service; el tipo de waypoint predeterminado es `service`|
-|Pod|Tráfico directo de carga de trabajo/Pod-IP con un waypoint `workload` o `all`|
+|Namespace|Selección predeterminada de waypoint para recursos compatibles del namespace|
+|Service|Tráfico hacia ese Service; el tipo predeterminado de waypoint es `service`|
+|Pod|Tráfico directo a una carga o IP de Pod con un waypoint de tipo `workload` o `all`|
 
-Las etiquetas de Deployment por sí solas no etiquetan Pods existentes; use etiquetas de plantilla de Pod para la inscripción de cargas de trabajo. Un waypoint `service` no cubre automáticamente el tráfico directo a Pod-IP.
+Las etiquetas de un Deployment por sí solas no etiquetan los Pods existentes; utilice las etiquetas de la plantilla de Pod para incorporar las cargas. Un waypoint de tipo `service` no cubre automáticamente el tráfico directo a IP de Pods.
 
 #### Rol de Waypoint
 
 
 **Características de Waypoint**:
-- Desplegado como Gateway y seleccionado mediante inscripción de recursos compatible
-- Basado en proxy Envoy
-- Verifique la compatibilidad por API; los parches arbitrarios de EnvoyFilter no son una API de waypoint compatible
-- Uso selectivo solo para los servicios necesarios
+- Se despliega como Gateway y se selecciona mediante la incorporación de recursos compatibles
+- Utiliza un proxy Envoy
+- Compruebe el soporte de cada API; los parches arbitrarios de EnvoyFilter no constituyen una API compatible de waypoint
+- Se usa de forma selectiva para los servicios que lo necesitan
 
 #### Despliegue de Waypoint
 
@@ -202,23 +202,23 @@ spec:
     protocol: HBONE
 ```
 
-La clase predeterminada `istio-waypoint` usa Envoy. El GA básico de ambient no convierte todas las API en GA: la documentación actual describe VirtualService de ambient como Alpha y prohíbe combinarlo con rutas de Gateway API. Use HTTPRoute aquí. EnvoyFilter no es una extensión de waypoint compatible. Las políticas L7 protegen el tráfico que llega al waypoint; el recorrido obligatorio también necesita la protección de autorización de ztunnel documentada y la inscripción/preparación correctas.
+La clase predeterminada `istio-waypoint` utiliza Envoy. La disponibilidad general de las funciones principales de ambient no se extiende a todas las API: la documentación actual considera Alpha el soporte de VirtualService en ambient y prohíbe combinarlo con rutas de Gateway API. Aquí se utiliza HTTPRoute. EnvoyFilter no es una extensión compatible de waypoint. Las políticas L7 protegen el tráfico que llega al waypoint; para exigir que el tráfico lo atraviese, también se necesita el control de autorización de ztunnel documentado y una incorporación correcta con los componentes listos.
 
 ### Flujo de tráfico completo
 
-La siguiente es un diagrama completo que muestra cómo fluye el tráfico en Ambient Mode **sin Sidecars**:
+El siguiente diagrama muestra el flujo completo del tráfico en Ambient Mode **sin sidecars**:
 
-![Diagrama de secuencia que rastrea una solicitud desde una aplicación cliente sin sidecar a través de ztunnels cliente y servidor para la ruta L4 simple y, en una rama opcional, mediante un proxy waypoint para el enrutamiento L7 antes de llegar a la aplicación servidor.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
+![Diagrama de secuencia que sigue una solicitud desde una aplicación cliente sin sidecar a través de los ztunnels del cliente y del servidor para la ruta L4; una rama opcional añade un proxy waypoint para el enrutamiento L7 antes de llegar a la aplicación servidor.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-6.html)
 
 **Análisis de flujo de tráfico**:
 
-1. **Ruta solo L4** (usando solo ztunnel):
-   - Mida la latencia de ruta bajo carga representativa
-   - mTLS aplicado automáticamente
+1. **Ruta solo L4**, mediante ztunnel:
+   - Mida la latencia de la ruta bajo una carga representativa
+   - mTLS se aplica automáticamente
    - Telemetría básica
-   - Adecuada cuando los requisitos reales son solo L4
+   - Adecuada cuando los requisitos reales se limitan a L4
 
 2. **Ruta L7** (ztunnel + Waypoint):
    - Enrutamiento basado en encabezados
@@ -231,26 +231,26 @@ La siguiente es un diagrama completo que muestra cómo fluye el tráfico en Ambi
 
 **HBONE (HTTP-Based Overlay Network Environment)** es el protocolo de túnel utilizado en Ambient Mode:
 
-- **Basado en HTTP/2**: Compatibilidad con infraestructura existente
-- **mTLS integrado**: Comunicación segura
-- **Multiplexación**: Los streams TCP comparten túneles para el mismo par de identidad de origen/destino
-- **Política de red**: HBONE usa convencionalmente TCP15008; permita explícitamente la ruta de mesh necesaria
+- **Basado en HTTP/2**: compatibilidad con infraestructura existente
+- **mTLS integrado**: comunicación segura
+- **Multiplexación**: los flujos TCP comparten túneles para el mismo par de identidades de origen y destino
+- **Políticas de red**: HBONE utiliza normalmente TCP 15008; permita explícitamente la ruta necesaria de la malla
 
-![Diagrama que muestra tráfico TCP sin cifrar desde una aplicación encapsulado en un túnel HBONE HTTP/2 mTLS por el ztunnel de origen, transportado por la red y desencapsulado de vuelta a TCP sin cifrar por el ztunnel de destino antes de llegar a la aplicación de destino.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
+![Diagrama donde el ztunnel de origen encapsula el tráfico TCP sin cifrar de una aplicación en un túnel HBONE HTTP/2 con mTLS. El túnel atraviesa la red y el ztunnel de destino lo desencapsula para entregar TCP sin cifrar a la aplicación de destino.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-7.html)
 
-HBONE en esta guía transporta streams TCP. UDP de aplicación no se transporta por ese túnel; la captura/proxy de DNS es una función independiente. El stream de aplicación local puede permanecer en texto sin cifrar mientras el transporte de mesh entre proxies está cifrado.
+En esta guía, HBONE transporta flujos TCP. El tráfico UDP de la aplicación no atraviesa ese túnel; la captura y el proxy de DNS son funciones independientes. El flujo local de la aplicación puede permanecer sin cifrar mientras el transporte de la malla entre proxies está cifrado.
 
 ## Instalación y configuración {#installation-and-configuration}
 
-El laboratorio necesita nodos Linux compatibles y los DaemonSets de Istio CNI/ztunnel necesarios. EKS Fargate no puede ejecutar estos DaemonSets de nodo; use una ubicación compatible basada en EC2 y revise la plataforma real de nodo/CNI. Los [requisitos previos de la plataforma](https://istio.io/latest/docs/ambient/install/platform-prerequisites/) cubren rutas de CNI, permisos y sondas de estado. El trunking de Pod ENI de VPC CNI con SecurityGroupPolicy puede requerir el modo de aplicación estándar o sondas exec adecuadas; evalúe las implicaciones de las políticas. GKE, OpenShift, k3s y otras plataformas pueden necesitar configuraciones diferentes.
+El laboratorio requiere nodos Linux compatibles y los DaemonSets de Istio CNI y ztunnel. EKS Fargate no puede ejecutar estos DaemonSets de nodo; utilice nodos EC2 compatibles y revise la plataforma real de nodos y CNI. Los [requisitos previos de la plataforma](https://istio.io/latest/docs/ambient/install/platform-prerequisites/) describen las rutas CNI, los permisos y las sondas de salud. El trunking de ENI de Pods de VPC CNI con SecurityGroupPolicy puede requerir el modo estándar de aplicación de políticas o sondas exec adecuadas; evalúe sus implicaciones para las políticas. GKE, OpenShift, k3s y otras plataformas pueden necesitar parámetros diferentes.
 
-Istio1.31 es compatible con Kubernetes1.32–1.37; consulte la [guía de instalación](../01-installation.md) para la compatibilidad con EKS. Gateway API1.6.0 a continuación coincide con la dependencia de Istio1.31 y el tutorial oficial de ambient. Compruebe la compatibilidad de un bundle existente; no degrade un bundle compatible más reciente solo para copiar el ejemplo.
+Istio 1.31 es compatible con Kubernetes 1.32–1.37; consulte la [guía de instalación](../01-installation.md) para la compatibilidad con EKS. Gateway API 1.6.0, utilizada más abajo, coincide con la dependencia de Istio 1.31 y su tutorial oficial de ambient. Compruebe la compatibilidad del conjunto de CRD existente; no cambie a una versión anterior un conjunto más reciente y compatible solo para copiar el ejemplo.
 
 ### 1. Instalación de Istio (Ambient Mode)
 
-Use este comando de instalación solo para un mesh de laboratorio nuevo después de revisar el instalador y la configuración de la plataforma. Preserve el método/valores de instalación de un mesh existente mediante el procedimiento de migración.
+Utilice este comando únicamente para una malla de laboratorio nueva, después de revisar el instalador y los parámetros de la plataforma. Para una malla existente, siga el procedimiento de migración y conserve su método de instalación y sus valores.
 
 ```bash
 curl -fsSL https://istio.io/downloadIstio -o download-istio.sh
@@ -272,7 +272,7 @@ kubectl get pods,daemonsets -n istio-system
 
 ### 2. Habilitar Ambient Mode y desplegar la aplicación
 
-Use un namespace desechable nuevo sin anulación de sidecar-injection/revision. Los Pods Sidecar existentes no se convierten agregando la etiqueta ambient. El manifiesto completo de Bookinfo de la distribución 1.31 proporciona el Service reviews, las etiquetas de versión, ServiceAccounts y la dependencia ratings que falta en el antiguo ejemplo de un único Deployment; usa imágenes Bookinfo1.20.3.
+Utilice un namespace nuevo y desechable sin configuraciones específicas de inyección de sidecars o revisión. Añadir la etiqueta ambient no convierte los Pods existentes con sidecars. El manifiesto completo de Bookinfo de la distribución 1.31 incluye el Service reviews, las etiquetas de versión, los ServiceAccounts y la dependencia ratings que faltaban en el antiguo ejemplo con un único Deployment; utiliza imágenes Bookinfo 1.20.3.
 
 ```bash
 kubectl create namespace ambient-demo
@@ -288,7 +288,7 @@ istioctl ztunnel-config workloads --workload-namespace ambient-demo
 
 ### 3. Desplegar y seleccionar un Waypoint
 
-La CLI actual toma un nombre de waypoint y un tipo de tráfico, no una marca de inscripción de ServiceAccount. Espere a que esté listo e inscriba explícitamente el Service.
+La CLI actual recibe un nombre de waypoint y un tipo de tráfico, no una opción para incorporar un ServiceAccount. Espere a que el waypoint esté listo y configure explícitamente el Service para utilizarlo.
 
 ```bash
 istioctl waypoint apply --name reviews-waypoint --for service -n ambient-demo --wait
@@ -299,7 +299,7 @@ kubectl get service reviews -n ambient-demo --show-labels
 
 ### 4. Usar funcionalidades L7
 
-Cree Services de backend específicos de versión y adjunte un HTTPRoute al Service reviews inscrito. Esto demuestra el enrutamiento GET/por encabezado; el encabezado no es una identidad autenticada. No combine el antiguo VirtualService con esta ruta de Gateway API. Las llamadas directas a otro Service/Pod IP son una ruta independiente.
+Cree Services backend específicos de cada versión y adjunte un HTTPRoute al Service reviews que utiliza el waypoint. El ejemplo demuestra enrutamiento por GET y encabezado; el encabezado no es una identidad autenticada. No combine el antiguo VirtualService con esta ruta de Gateway API. Las llamadas directas a otro Service o IP de Pod utilizan una ruta independiente.
 
 ```yaml
 apiVersion: v1
@@ -364,21 +364,21 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
   curl -sS --max-time 5 -H "end-user: jason" http://reviews:9080/reviews/0
 ```
 
-Compruebe las condiciones Accepted/ResolvedRefs y el backend seleccionado mediante logs/telemetría. El éxito de HTTP por sí solo no prueba ni mTLS ni el recorrido obligatorio por waypoint. La autorización L7 necesita los `targetRefs` adecuados; el recorrido obligatorio también necesita la protección de autorización de ztunnel documentada. Consulte [vinculación de políticas de waypoint](https://istio.io/latest/docs/ambient/usage/l7-features/).
+Compruebe las condiciones Accepted/ResolvedRefs y el backend seleccionado mediante registros y telemetría. Que HTTP funcione no demuestra por sí solo que se use mTLS ni que el tráfico atraviese obligatoriamente el waypoint. La autorización L7 requiere los `targetRefs` adecuados; exigir el paso por el waypoint también requiere el control de autorización de ztunnel documentado. Consulte la [vinculación de políticas de waypoint](https://istio.io/latest/docs/ambient/usage/l7-features/).
 
 ## Migración {#migration}
 
 ### De Sidecar Mode a Ambient Mode
 
-La migración es una implementación de política/carga de trabajo, no un cambio basado solo en etiquetas. Preserve la revisión instalada, CA/trust, gateways, opciones CNI y configuración declarativa de carga de trabajo. Los sidecars existentes tienen prioridad sobre la inscripción ambient. Prepare el enrutamiento/autorización L7 compatible y los waypoints listos antes de eliminar sidecars de las cargas de trabajo que requieren esas políticas.
+La migración requiere desplegar cambios de políticas y cargas de trabajo, no solo cambiar etiquetas. Conserve la revisión instalada, la CA y las relaciones de confianza, los gateways, las opciones CNI y la configuración declarativa de las cargas. Los sidecars existentes tienen prioridad sobre la incorporación a ambient. Prepare el enrutamiento y la autorización L7 compatibles y asegúrese de que los waypoints estén listos antes de retirar sidecars de cargas que necesitan esas políticas.
 
 #### Paso 1: Instalar componentes Ambient
 
-Use el método de instalación existente y los valores revisados para agregar compatibilidad ambient en una versión compatible. No sobrescriba un mesh administrado por Helm con un comando independiente no relacionado `istioctl install --set profile=ambient`. Renderice/diferencie la configuración prevista y verifique los agentes de nodo CNI/ztunnel.
+Utilice el método de instalación existente y los valores revisados para añadir soporte de ambient con una versión compatible. No sobrescriba una malla gestionada por Helm con un comando independiente `istioctl install --set profile=ambient`. Renderice la configuración prevista, revise sus diferencias y compruebe los agentes de nodo CNI y ztunnel.
 
 #### Paso 2: Aplicar al namespace de prueba
 
-Esta prueba ambient independiente despliega tanto el cliente como el servidor desde la distribución 1.31. El Service httpbin expone8000 y tiene como destino8080.
+Esta prueba independiente de ambient despliega el cliente y el servidor de la distribución 1.31. El Service httpbin expone el puerto 8000 y dirige el tráfico al 8080.
 
 ```bash
 kubectl create namespace test-ambient
@@ -393,7 +393,7 @@ kubectl exec -n test-ambient deploy/curl -c curl -- \
 
 #### Paso 3: Verificación
 
-La columna de carga de trabajo HBONE muestra el transporte previsto. Para el tráfico real, inspeccione las identidades de origen/destino esperadas en los logs de ztunnel del nodo correcto o las métricas TCP con `connection_security_policy="mutual_tls"`. El éxito de HTTP por sí solo no es prueba de mTLS. La inscripción HBONE no rechaza a todos los llamadores de texto sin cifrar; use PeerAuthentication STRICT si es necesario. Consulte [verificación de mTLS](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/).
+La columna HBONE de las cargas muestra el transporte previsto. Para verificar el tráfico real, examine las identidades esperadas de origen y destino en los registros de ztunnel del nodo correcto, o las métricas TCP con `connection_security_policy="mutual_tls"`. Que HTTP funcione no demuestra por sí solo que se use mTLS. Incorporar una carga a HBONE no rechaza a todos los clientes que envían tráfico sin cifrar; si es necesario, utilice PeerAuthentication STRICT. Consulte la [verificación de mTLS](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/).
 
 ```bash
 istioctl ztunnel-config workloads --workload-namespace test-ambient
@@ -406,7 +406,7 @@ kubectl logs "$ztunnel_pod" -n istio-system --since=5m
 
 #### Paso 4: Cambiar cargas de trabajo seleccionadas
 
-El siguiente ejemplo presupone un namespace existente independiente `migration-demo` que contiene solo Deployments curl/httpbin revisados e inyectados por namespace con requisitos solo L4. Compruebe las anulaciones de inyección de plantilla de Pod o proxies inyectados manualmente; estos comandos no los eliminan. Para cargas de trabajo L7, valide primero la inscripción de waypoint y la traducción de políticas, incluidos `targetRefs` y cualquier protección de recorrido obligatorio. Planifique la coexistencia de políticas durante la migración; una política L7 basada en selector aplicada por ztunnel puede fallar de forma cerrada.
+El siguiente ejemplo presupone un namespace existente e independiente, `migration-demo`, que solo contiene Deployments curl/httpbin revisados, con inyección configurada en el namespace y requisitos exclusivamente L4. Compruebe las configuraciones específicas de inyección en las plantillas de Pod y los proxies inyectados manualmente; estos comandos no los eliminan. Para cargas L7, valide primero la incorporación al waypoint y la adaptación de políticas, incluidos `targetRefs` y cualquier control que exija atravesarlo. Planifique la coexistencia de políticas durante la migración; una política L7 basada en selectores aplicada por ztunnel puede denegar el tráfico en lugar de permitirlo cuando no puede aplicar la política.
 
 ```bash
 # Reference snapshots, not manifests to blindly reapply with stale server metadata
@@ -430,11 +430,11 @@ istioctl ztunnel-config workloads --workload-namespace migration-demo
 
 #### Paso 5: Validar la ruta de datos elegida
 
-Repita las pruebas de preparación, conectividad, identidad y políticas para las cargas de trabajo indicadas. Para un grupo L7, inspeccione la inscripción real de Namespace/Service/Pod, el tipo de tráfico/la preparación de Gateway y la vinculación de ruta/política; no cree un waypoint por ServiceAccount. Use criterios de detención/reversión específicos de la carga de trabajo. Esta secuencia de laboratorio no es una garantía de producción sin tiempo de inactividad.
+Repita las pruebas de disponibilidad, conectividad, identidad y políticas para las cargas indicadas. En un grupo de cargas L7, compruebe la incorporación real de Namespace/Service/Pod, el tipo de tráfico y la disponibilidad del Gateway y las rutas y políticas asociadas; no cree un waypoint por ServiceAccount. Defina criterios de detención y reversión específicos para las cargas. Esta secuencia de laboratorio no garantiza una migración sin interrupciones en producción.
 
 ### Estrategia de reversión
 
-Restaure el modo de inyección registrado y la configuración original de plantilla de Pod/política. El código a continuación solo gestiona el caso de inyección de namespace anterior; la revisión anterior debe seguir existiendo y estar en buen estado. Un grupo con waypoints necesita que se restauren sus políticas de inscripción/enrutamiento como parte de la reversión revisada. Elimine solo un waypoint específicamente identificado y sin referencias creado para ese grupo; nunca todos los Gateways de un namespace.
+Restaure el modo de inyección registrado y la configuración original de plantillas de Pod y políticas. El código siguiente solo cubre el caso de inyección por namespace anterior; la revisión original debe seguir existiendo y estar operativa. En un grupo de cargas con waypoints, restaure también sus políticas de incorporación y enrutamiento como parte de la reversión revisada. Elimine únicamente un waypoint concreto creado para ese grupo que ya no tenga referencias, nunca todos los Gateways del namespace.
 
 ```bash
 original_revision=$(jq -r '.metadata.labels["istio.io/rev"] // ""' migration-namespace-before.json)
@@ -460,18 +460,18 @@ done
 
 ### Resultados de benchmark
 
-La URL `perf.png` eliminada devolvió404 y no justificaba la antigua tabla de “benchmark oficial”. Ninguna fuente estableció sus porcentajes de CPU/memoria por Pod, latencia o rendimiento. Use [resultados de rendimiento publicados](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) con sus condiciones originales de versión, carga, payload, hardware y políticas; no cambie la etiqueta de mediciones históricas como si fueran una prueba de la versión actual.
+La URL eliminada `perf.png` devolvió 404 y no respaldaba la antigua tabla de «benchmark oficial». Ninguna fuente sustentaba sus porcentajes de CPU y memoria por Pod, latencia o throughput. Utilice los [resultados de rendimiento publicados](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) con sus condiciones originales de versión, carga, payload, hardware y políticas; no presente mediciones históricas como pruebas de la versión actual.
 
-| Medida | Mantener comparable |
+| Medida | Condiciones que deben ser comparables |
 |---|---|
-|Memoria/CPU|Cantidad de aplicaciones, identidades/conexiones, cantidad de nodos, todas las réplicas de waypoint y políticas equivalentes|
-|Latencia P50/P99|Tamaño/tasa de solicitud, reutilización de conexión, mTLS, política L7, telemetría y condiciones de sobrecarga|
-|Rendimiento|La misma capacidad de aplicación/backend y definición de error|
-|Costo|Capacidad aprovisionada, utilización y facturación reales; las solicitudes/el uso menores por sí solos no reducen la factura|
+|Memoria/CPU|Número de aplicaciones, identidades y conexiones, número de nodos, todas las réplicas de waypoint y políticas equivalentes|
+|Latencia P50/P99|Tamaño y tasa de solicitudes, reutilización de conexiones, mTLS, políticas L7, telemetría y condiciones de sobrecarga|
+|Throughput|La misma capacidad de aplicación/backend y la misma definición de error|
+|Costo|Capacidad aprovisionada, utilización y facturación reales; reducir las solicitudes de recursos o su consumo no reduce por sí solo la factura|
 
 ### Cálculo de ahorro de recursos
 
-La aritmética original de 100 Pods se conserva a continuación solo como un **modelo de presupuesto hipotético**. Sus valores de50MB/0.1CPU y de waypoint son entradas supuestas, no solicitudes/límites recomendados ni costos medidos. Incluya cada réplica de waypoint/ztunnel, la ubicación de HA y los recursos del plano de control en una comparación real. Las réplicas adicionales de waypoint cambian el resultado.
+El cálculo original para 100 Pods se conserva a continuación únicamente como una **estimación de presupuesto basada en supuestos**. Los valores de 50 MB/0.1 CPU y del waypoint son datos de entrada supuestos, no requests/limits recomendados ni costos medidos. En una comparación real, incluya todas las réplicas de waypoint y ztunnel, su ubicación para alta disponibilidad y los recursos del plano de control. Añadir réplicas de waypoint cambia el resultado.
 
 ```python
 # Hypothetical planning inputs, not measured resource consumption or billing
@@ -504,7 +504,7 @@ cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed basel
 
 ### 1. Cuando solo se necesitan funcionalidades L4
 
-Para cargas de trabajo TCP existentes compatibles, inscriba un namespace después de verificar los requisitos previos de plataforma, política y captura. Este Namespace no es un despliegue completo de base de datos; la replicación/almacenamiento/HA de base de datos debe diseñarse por separado.
+Para cargas TCP existentes y compatibles, incorpore un namespace después de verificar los requisitos de plataforma, políticas y captura de tráfico. Este Namespace no constituye un despliegue completo de base de datos; diseñe por separado su replicación, almacenamiento y alta disponibilidad.
 
 ```yaml
 apiVersion: v1
@@ -517,17 +517,17 @@ metadata:
 
 ### 2. Uso selectivo de funcionalidades L7
 
-La demostración selecciona el waypoint reviews listo en el nivel de Service. La inscripción de Namespace y de carga de trabajo directa son ámbitos compatibles independientes; una etiqueta de ServiceAccount no es un selector.
+La demostración selecciona el waypoint reviews, ya listo, en el Service. La incorporación por Namespace y la incorporación directa de cargas son ámbitos independientes y compatibles; una etiqueta de ServiceAccount no selecciona un waypoint.
 
 ```bash
 kubectl label service reviews -n ambient-demo istio.io/use-waypoint=reviews-waypoint --overwrite
 ```
 
-Los requisitos L7 no requieren automáticamente sidecars: compare las API y extensiones de waypoint compatibles con las necesidades reales de la aplicación. A la inversa, el GA básico no implica paridad de funcionalidades para cada API avanzada.
+Los requisitos L7 no implican automáticamente que se necesiten sidecars: compare las API y extensiones de waypoint compatibles con las necesidades reales de la aplicación. A su vez, la disponibilidad general de las funciones principales no implica paridad en todas las API avanzadas.
 
 ### 3. Migración gradual
 
-Primero haga un inventario de inyección e inscripción, y luego migre un grupo revisado con criterios explícitos de preparación/seguridad/reversión. No etiquete ciegamente cada namespace de desarrollo/staging/producción ni suponga que el cambio convierte sidecars existentes.
+Primero identifique la inyección y la incorporación de los recursos; después migre un grupo revisado con criterios explícitos de disponibilidad, seguridad y reversión. No etiquete indiscriminadamente todos los namespaces de desarrollo, staging y producción ni dé por hecho que el cambio convierte los sidecars existentes.
 
 ```bash
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
@@ -568,18 +568,18 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 ### Documentación oficial actual
 
 - [Descripción general de Ambient](https://istio.io/latest/docs/ambient/overview/)
-- [Introducción](https://istio.io/latest/docs/ambient/getting-started/)
-- [Redirección de tráfico en el Pod](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
+- [Primeros pasos](https://istio.io/latest/docs/ambient/getting-started/)
+- [Redirección de tráfico dentro del Pod](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
 - [HBONE](https://istio.io/latest/docs/ambient/architecture/hbone/)
-- [Inscripción de Waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/)
-- [Compatibilidad de API L7 y vinculación de políticas](https://istio.io/latest/docs/ambient/usage/l7-features/)
-- [Metodología/resultados de rendimiento](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+- [Incorporación a un waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [Soporte de API L7 y vinculación de políticas](https://istio.io/latest/docs/ambient/usage/l7-features/)
+- [Metodología y resultados de rendimiento](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
 - [Código fuente de ztunnel](https://github.com/istio/ztunnel)
 - [Comunidad de Istio y acceso a Slack](https://istio.io/latest/get-involved/)
 
 ### Introducciones históricas
 
-Estas páginas de2022 describen la vista previa experimental, no la instalación actual ni los comandos de ServiceAccount-waypoint.
+Estas páginas de 2022 describen la versión preliminar experimental, no la instalación actual ni comandos de selección de waypoint mediante ServiceAccount.
 
 - [Presentación de ambient mesh (2022)](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
 - [Arquitectura de seguridad experimental (2022)](https://istio.io/latest/blog/2022/ambient-security/)
@@ -589,13 +589,13 @@ Estas páginas de2022 describen la vista previa experimental, no la instalación
 
 | Hito | Evidencia |
 |---|---|
-|Vista previa de 2022|Implementación experimental anunciada; no es la versión de funcionalidad principal 1.15|
-|1.18 Alpha (2023)|Primera versión de Istio que distribuye ambient|
-|1.22 Beta (2024)|Hito Beta|
-|1.24 GA básico (2024)|Hito básico de ztunnel/waypoint/API; las funcionalidades individuales conservan su propio estado|
+|Versión preliminar de 2022|Se anunció una implementación experimental; no era una función de la versión principal 1.15|
+|1.18 Alpha (2023)|Primera versión de Istio que incluyó ambient|
+|1.22 Beta (2024)|Paso a Beta|
+|1.24: disponibilidad general de las funciones principales (2024)|Hito de ztunnel, waypoint y API principales; cada función conserva su propio estado de madurez|
 
-La [documentación multicluster de ambient](https://istio.io/latest/docs/ambient/install/multicluster/) actual describe compatibilidad **Beta multi-primary, multi-network**. Primary/remote no es compatible y los despliegues de red única no se prueban; los nombres/configuración de waypoint y el ámbito de Service deben coordinarse entre clústeres. La antigua hoja de ruta 1.26/1.27 y los ahorros empresariales sin atribución no son evidencia de comportamiento compatible ni de reducción garantizada de costos.
+La [documentación actual de ambient para varios clusters](https://istio.io/latest/docs/ambient/install/multicluster/) describe soporte **Beta multi-primary, multi-network**. La topología primary/remote no es compatible y los despliegues de una única red no se han probado; los nombres y la configuración de waypoints y el ámbito de los servicios deben coordinarse entre clusters. La antigua hoja de ruta de 1.26/1.27 y las cifras de ahorro empresarial sin fuentes no demuestran soporte ni garantizan una reducción de costos.
 
 ## Resumen
 
-Ambient separa el transporte L4 compartido del procesamiento L7 de waypoint seleccionado. Puede simplificar la inscripción de cargas de trabajo sin mesh y la administración del ciclo de vida de los proxies, pero el ahorro de recursos, la preservación de políticas y la disponibilidad requieren mediciones de políticas equivalentes y un plan de migración validado. Tenga en cuenta las restricciones de Linux/CNI/plataforma, la conectividad TCP15008 y el estado de funcionalidad de cada API.
+Ambient separa el transporte L4 compartido del procesamiento L7 mediante waypoints seleccionados. Puede simplificar la incorporación de cargas sin malla y la gestión del ciclo de vida de los proxies, pero ahorrar recursos, conservar las políticas y mantener la disponibilidad requiere mediciones con políticas equivalentes y un plan de migración validado. Considere las restricciones de Linux, CNI y plataforma, la conectividad TCP 15008 y el estado de madurez de cada API.

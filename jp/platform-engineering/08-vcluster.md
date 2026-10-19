@@ -1,34 +1,34 @@
 # vCluster
 
-> **最終更新**: September 13, 2026 · レビュー基準: vCluster 0.37.0
+> **最終更新日**: 2026年10月16日 · 確認した基準バージョン: vCluster 0.37.3
 
 ## 概念と分離境界
 
-vClusterはテナント別Kubernetes API、controller、data storeを提供できます。この**Shared Nodes**例ではworkloadがhost cluster nodeで動き、kernel、CNI、CSI、容量を共有します。API/RBAC分離だけでは完全なhardware/network/performance分離は成立しません。
+vCluster は、テナントごとに Kubernetes API、コントローラー、データストアを分けて提供できます。この **Shared Nodes** の例では、ワークロードはホストクラスターのノード上で実行され、カーネル、CNI、CSI、容量を共有します。API/RBAC を分離しても、ハードウェア、ネットワーク、性能が完全に分離されるわけではありません。
 
 | モード | 評価する境界 |
 | --- | --- |
-| Namespace | API server、cluster resource、nodeを共有。RBAC、quota、network policyが必要。 |
-| Shared Nodes vCluster | テナントAPIを分離しworkload node、CNI、CSIを共有。 |
-| Dedicated/Private Nodes | Node配置と実Private NodesのCNI/CSI境界を確認。 |
-| Standalone | Host control-plane clusterなしのインフラ上で動く別モード。 |
-| 独立Kubernetes cluster | 分離は共有account、VPC、管理者、hardwareにも依存。 |
+| Namespace | API サーバー、クラスターリソース、ノードを共有します。RBAC、クォータ、ネットワークポリシーが必要です。 |
+| Shared Nodes vCluster | テナントの API を分離しつつ、ワークロードノード、CNI、CSI を共有します。 |
+| Dedicated/Private Nodes | ノード配置と、実際の Private Nodes の CNI/CSI 境界を確認してください。 |
+| Standalone | ホストのコントロールプレーンクラスターがないインフラストラクチャ上に展開する別のモードです。 |
+| 独立した Kubernetes クラスター | アカウント、VPC、管理者、ハードウェアを共有する場合、分離はそれらにも依存します。 |
 
-公開リポジトリはApache 2.0です。配布イメージ、Platform機能、サポート、利用権は別確認です。元の「November 2024からCNCF Sandbox」という主張は公式project pageで確認できず削除されました。Kubernetes適合性とCNCF所属は別です。
+公開リポジトリは Apache 2.0 ライセンスです。配布イメージ、Platform の機能、サポート、利用権は個別に確認してください。以前の「2024 年 11 月から CNCF Sandbox」という主張は公式プロジェクトページで確認できなかったため削除しました。Kubernetes 適合性と CNCF プロジェクトへの所属は別のものです。
 
-30秒未満の作成、100–200MiB負荷、数百cluster、60–70%節約を約束しないでください。実profile、host API負荷、PVC、image取得、workload、課金モデルを測ります。
+作成が 30 秒未満、オーバーヘッドが 100～200 MiB、数百クラスターを運用可能、または 60～70% のコスト削減になるとは約束しないでください。実際のプロファイル、ホスト API の負荷、PVC、イメージ取得、ワークロード、課金モデルを測定してください。
 
-![Shared Nodesのコントロールプレーンと共有ワーカー](../.gitbook/assets/en-platform-engineering-08-vcluster-10.png)
+![Shared Nodes のコントロールプレーンと共有ワーカーノード](../.gitbook/assets/en-platform-engineering-08-vcluster-10.png)
 
 [インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-10.html)
 
-## 現在のバージョンと基準
+## 現在のバージョンと基準構成
 
-レビュー中GitHub latestは0.36.1を返しましたが、September 8, 2026付の明示stable 0.37.0を確認しました。例はCLI/chart 0.37.0と確認済みghcr.io/loft-sh/kubernetes:v1.36.3を対象にします。image実行と完全runtime互換性は別チェックです。
+2026 年 10 月 16 日時点で、GitHub の latest エンドポイントが返す安定版は 0.37.3 で、2026 年 10 月 5 日に公開されています。この例では CLI/chart 0.37.3 と、確認済みの `ghcr.io/loft-sh/kubernetes:v1.36.3` イメージを対象にします。イメージが実行できることと、ランタイム全体との互換性は別途確認が必要です。
 
-現schemaに旧k3s/k0s distro設定はありません。k8s設定、backing store、正確な版を区別します。既定imageはvcluster-proで、名前だけではsourceライセンスや無料利用権は決まりません。
+現在のスキーマには、古い k3s/k0s ディストリビューション設定はありません。k8s の構成、バッキングストア、正確なバージョンを区別してください。chart の既定イメージは vcluster-pro です。名称だけでソースコードのライセンスや無償利用の権利が決まるわけではありません。
 
-Shared Nodes profileは1レプリカ、組み込みDB、PVCです。運用者はgp3/CSI、quota、ID、host policyを準備します。
+この Shared Nodes プロファイルでは、レプリカ 1 台、組み込みデータベース、PVC を使用します。運用者は gp3 ストレージ/CSI、クォータ、ID、ホスト側ポリシーを準備する必要があります。
 
 ```yaml
 controlPlane:
@@ -97,45 +97,45 @@ telemetry:
   enabled: false
 ```
 
-profileは実schema/Helm確認を通過しました。ただしHelmはruntime sourceが拒否する組み込みDB/3レプリカ構成もrenderします。HAには対応store、quorum、storage、復旧検証が必要で、replica増加だけでは不足です。
+このプロファイルは実際のスキーマ検証と Helm の検証に合格しました。ただし Helm は、ランタイムのソースコードでは拒否される「組み込みデータベースと 3 レプリカ」の組み合わせもレンダリングします。高可用性には、サポートされるストア、クォーラム、ストレージ、復旧の検証が必要です。レプリカを増やすだけでは不十分です。
 
-configMaps、serviceAccounts、persistentVolumeClaimsなどのキーは大文字小文字を区別します。StorageClass/CSIのAuto defaultはモード依存で、普遍的同期ではありません。profileはIngress、ServiceAccount、NetworkPolicy同期を明示無効にします。
+`configMaps`、`serviceAccounts`、`persistentVolumeClaims` などのキーは大文字と小文字を区別します。StorageClass/CSI の自動既定値は展開モードによって異なるため、常に同期されるわけではありません。このプロファイルでは Ingress、ServiceAccount、NetworkPolicy の同期を明示的に無効にします。
 
-![Podと参照リソースの同期](../.gitbook/assets/en-platform-engineering-08-vcluster-11.png)
+![Pod と参照先リソースの同期](../.gitbook/assets/en-platform-engineering-08-vcluster-11.png)
 
 [インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html)
 
-仮想Deployment/ReplicaSet controllerと実host Podを区別します。Syncerの名前/ラベル変換はmode、長さ、版に依存します。IRSA trustや運用スクリプトで推測しないでください。fromHost.nodes可視性はworkload node分離を自動強制しません。
+仮想 Deployment/ReplicaSet コントローラーと、実際のホスト Pod を区別してください。Syncer の名前やラベルの変換は、モード、長さ、バージョンによって異なります。IRSA の信頼ポリシーや運用スクリプトで名前を推測しないでください。`fromHost.nodes` の可視性だけでは、ワークロードのノード分離は強制されません。
 
 ## インストールとアクセス
 
-正しいOS/architectureのCLIを選び公式checksumを確認します。例コマンドは実clusterへ影響し得るためHOST_CONTEXTとnamespaceを先に確認します。監査でcreate/delete/snapshotは実行していません。
+OS/アーキテクチャに合った CLI を選び、公式チェックサムを検証してください。次の例のコマンドは実際のクラスターに影響する可能性があるため、先に `HOST_CONTEXT` と namespace を確認してください。この監査では作成、削除、スナップショット操作を実行していません。
 
 ```bash
 helm repo add loft-sh https://charts.loft.sh
 helm repo update
-helm template team-alpha loft-sh/vcluster   --version 0.37.0 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
+helm template team-alpha loft-sh/vcluster   --version 0.37.3 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
 
 # After the reviewed host prerequisites are ready:
-vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.0   --values examples/platform/vcluster/vcluster.yaml --connect=false
+vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.3   --values examples/platform/vcluster/vcluster.yaml --connect=false
 
 # Keep the forwarding lifetime tied to the child command:
 vcluster connect team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --background-proxy=false --   kubectl get namespaces
 ```
 
-connectはアクセス経路とkubeconfigを管理します。旧--update-current/--kube-configは削除ではなく非推奨別名です。--printは認証情報を出し得るため、会話、ログ、PRでなく制限ファイルへ保存します。
+`connect` はアクセス経路と kubeconfig を管理します。古い `--update-current`/`--kube-config` オプションは削除されたのではなく、非推奨の別名です。`--print` は認証情報を出力する場合があります。チャット、ログ、PR ではなく、アクセスを制限したファイルに保存してください。
 
-再利用外部kubeconfigには到達API、一致SAN/CA、適切な認証期限が必要です。localhost転送先保存では転送停止後のアクセスは残りません。背景proxyはDockerと追加imageが必要な場合があります。管理者共有でなく利用者別最小権限ServiceAccountを使い、--token-expirationを確認します。
+再利用する外部 kubeconfig には、到達可能な API エンドポイント、一致する証明書の SAN/CA、適切な認証情報の有効期限が必要です。localhost のポートフォワード先を保存しても、転送停止後のアクセスは維持されません。バックグラウンドプロキシでは Docker と別のイメージが必要になる場合があります。管理者の認証情報を共有せず、ユーザーごとの最小権限 ServiceAccount を使い、`--token-expiration` を確認してください。
 
-host操作は--context HOST_CONTEXTを使い、namespace削除/backupを誤ってtenantへ向けないようにします。並列研修環境作成では全終了コードを収集し、失敗後に全準備完了と報告しません。
+ホスト側の操作には `--context HOST_CONTEXT` を使い、namespace の削除やバックアップが誤ってテナントのコンテキストを対象にしないようにしてください。研修環境を並列に作成する場合、すべての終了ステータスを収集し、失敗があったのに一律で準備完了と報告しないでください。
 
-## EKSストレージ、Ingress、IAM
+## EKS ストレージ、Ingress、IAM
 
-Shared NodesではPVCをhostへ同期しhost CSIがvolumeを扱います。StorageClass、volumeBindingMode、topology、reclaim、retentionを一緒に確認します。現profileはstatefulSet.persistence.volumeClaim.storageClass/sizeです。
+Shared Nodes では PVC がホストに同期され、ホストの CSI がボリュームを処理します。StorageClass、volumeBindingMode、トポロジー、回収ポリシー、保持動作をまとめて確認してください。現在のプロファイルでは `statefulSet.persistence.volumeClaim.storageClass/size` を使います。
 
-Ingress同期には実host LBC/IngressClass、Service参照、TLS、SG、承認経路が必要です。host LBC webhook Serviceをtenantへ複製してもALB統合は成立しません。ServiceアノテーションはcontrolPlane.service.annotations下に置きます。service.spec.annotationsはServiceSpecフィールドではありません。
+Ingress の同期には、実際にホスト側で稼働する LBC/IngressClass、Service 参照、TLS、セキュリティグループ、承認済みのアクセス経路が必要です。ホストの LBC webhook Service をテナントに複製しても、ALB 連携は実現しません。Service のアノテーションは `controlPlane.service.annotations` に設定してください。`service.spec.annotations` は Kubernetes の ServiceSpec に存在するフィールドではありません。
 
-ServiceAccount同期無効時はhost workload-ServiceAccount動作、有効時は実変換/同期を確認します。仮想PodアノテーションコピーだけではIRSAを設定しません。host ServiceAccount、token issuer/subject/audience、role trust、注入を確認します。tenant制御IAM-roleアノテーションを制限します。
+ServiceAccount の同期が無効なら、ホスト側のワークロード ServiceAccount の動作が適用されます。有効なら、実際の変換と同期を検証してください。仮想 Pod のアノテーションをコピーするだけでは IRSA は構成されません。ホストの ServiceAccount、トークンの issuer/subject/audience、ロールの信頼ポリシー、注入動作を確認してください。テナントが制御できる IAM ロール用アノテーションは制限してください。
 
 ## 分離とガバナンス
 
@@ -187,13 +187,13 @@ spec:
         ephemeral-storage: 1Gi
 ```
 
-LimitRangeはephemeral-storage requests/limitsを省略した通常/initにもdefaultを設定します。limitなしPodはephemeral-storage quota適用を免れる場合があるため、最終変換tenant Podとcontrol-plane initを確認します。値はquota計算用で、容量予約/性能保証ではありません。
+LimitRange は、ephemeral-storage の requests/limits を指定していない通常コンテナと init コンテナにも既定値を設定します。この制限がない Pod は ephemeral-storage クォータの適用をすり抜ける可能性があるため、変換後のテナント Pod とコントロールプレーンの init コンテナを確認してください。これらの値はクォータ計算を支援するもので、容量予約や性能保証ではありません。
 
-チャートはcontrol-plane SyncerをUID 0でrenderします。host名前空間にrestrictedを盲目的適用すると制御が拒否され得ます。host baseline admissionとprofileのpolicies.podSecurityStandard: restrictedは、host Podと仮想workload検証という別層です。変換Podを実host policyで確認します。
+chart はコントロールプレーンの Syncer を UID 0 としてレンダリングします。ホスト namespace に restricted を無条件で適用すると、コントロールプレーンが拒否される場合があります。ホストの baseline admission とプロファイルの `policies.podSecurityStandard: restricted` は、ホスト Pod と仮想ワークロードの検証という異なる層を対象にします。変換後の Pod を実際のホストポリシーに照らして確認してください。
 
-quota予算はcontrol plane、CoreDNS、tenant、storageを含みます。node容量を予約せず性能も保証しません。生成Role/ClusterRoleとSecretアクセスを調べ、tenantに任意host Secret/Role変更を与えないでください。
+クォータの予算にはコントロールプレーン、CoreDNS、テナントワークロード、ストレージが含まれます。クォータはノード容量を予約せず、性能も保証しません。生成された Role/ClusterRole と Secret へのアクセスを調べ、テナントにホスト Secret/Role の任意変更を許可しないでください。
 
-必要なら次のvaluesでチャートのnetwork policyをrenderします。
+必要に応じて、次の値で chart のネットワークポリシーをレンダリングしてください。
 
 ```yaml
 policies:
@@ -204,19 +204,19 @@ policies:
         enabled: false
 ```
 
-実renderはworkloadの公開Egressを無効にしましたが、443/8443/6443などcontrol-planeの広いEgressを残しました。完全host API遮断としては示しません。NetworkPolicy Allowは加算的で、別「deny」を加えて既存許可を減らせません。
+実際のレンダリングではワークロードからのパブリックな egress は無効になりましたが、コントロールプレーンには 443/8443/6443 などのポートで広い egress が残りました。これをホスト API へのアクセスを完全に遮断する設定として示してはいません。NetworkPolicy の Allow は加算的です。別の「deny」ポリシーを追加しても、既存の許可を取り消すことはできません。
 
-Syncerにはhost APIアクセスが必要です。同じdeny-egressを制御へ適用すると同期停止し得ます。DNS、endpoint IP/DNAT、必要app/DB/registry経路、CNI動作を確認します。default deny/例外には信頼するcontrol-plane/workload分類を使います。
+Syncer にはホスト API へのアクセスが必要です。コントロールプレーンにも同じ egress deny を適用すると、同期が停止する可能性があります。DNS、エンドポイント IP/DNAT、必要なアプリケーション/データベース/レジストリへの経路、CNI の動作を確認してください。デフォルト拒否と例外には、信頼できるコントロールプレーン/ワークロードの分類を使ってください。
 
-![チーム別APIと共有リソース予算](../.gitbook/assets/en-platform-engineering-08-vcluster-12.png)
+![チームごとの API と共有リソースの予算](../.gitbook/assets/en-platform-engineering-08-vcluster-12.png)
 
 [インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html)
 
 ## Pause、Sleep、削除、スナップショット
 
-現CLI pauseは仮想control planeを縮小しworkloadを除去して、resumeで再作成します。PVC/Serviceは別保持動作です。Podメモリ保存のsuspendやbackupではありません。手動pauseと自動sleep/wake条件を区別します。
+現在の CLI で pause すると、仮想コントロールプレーンが縮小され、ワークロードは削除されます。resume 時にワークロードは再作成されます。PVC と Service には別の保持動作が適用されます。これは Pod のメモリを保持する suspend 操作でも、データバックアップでもありません。手動 pause と、自動 sleep/wake の条件を区別してください。
 
-ライフサイクル設定は任意です。利用権、controller、workload動作を先に確認します。ここでは自動削除は有効にしません。
+これらのライフサイクル設定は任意です。先に製品の利用権、コントローラー、ワークロードの動作を確認してください。ここでは自動削除を有効にしていません。
 
 ```yaml
 # Optional configuration: verify product entitlement and workload behavior first.
@@ -232,13 +232,13 @@ deletion:
   prevent: true
 ```
 
-現設定はsleep.autoやdeletion.autoです。旧架空management.loft.sh/VirtualClusterフィールドは現契約ではありません。TTLラベル/アノテーションだけでは削除は起きません。実controller policyを使い、所有権、active workload、backupを確認します。
+現在の設定には `sleep.auto` や `deletion.auto` などのパスを使います。以前の架空の `management.loft.sh/VirtualCluster` フィールドは、現在の構成仕様ではありません。TTL ラベル/アノテーションを付けただけでは削除は実行されません。実際のコントローラーポリシーを使い、所有者、稼働中ワークロード、バックアップを確認してください。
 
-namespace削除はPVCと残存workloadを消し得ます。PVC保持、PV回収、外部resourceも含めvcluster delete、Helm uninstall、ArgoCD Application除去を区別します。削除防止がhost管理者のnamespace直接削除まで防ぐとは限りません。
+namespace の削除によって PVC や残存ワークロードが削除される場合があります。PVC の保持、PV の回収、外部リソースも含めて、`vcluster delete`、Helm のアンインストール、ArgoCD Application の削除を区別してください。削除防止設定があっても、ホスト管理者による namespace の直接削除を必ず防げるとは限りません。
 
-snapshot createは非同期要求を送ります。要求成功はreadyや復元成功ではありません。PV名はEBS volume IDではなく、spec.csi.driverとvolumeHandleを確認します。稼働DB snapshotには整合性、静止化、復元テストが必要です。
+`snapshot create` は非同期リクエストを送信します。リクエストの成功は、スナップショットの準備完了や復元成功を意味しません。PV 名は EBS ボリューム ID ではありません。EBS では `spec.csi.driver` と `volumeHandle` を確認してください。稼働中データベースのスナップショットには、一貫性の確保、書き込み静止、復元テストが必要です。
 
-0.37はdeploy.volumeSnapshotControllerを拒否しますが、volumeSnapshots/volumeSnapshotContentsの対同期を再びサポートします。古いschemaコメントから全snapshot同期削除とは判断しませんでした。CSI snapshot controller/classと両optionを準備し、復元は別テストします。Secretの平文exportは完全backup戦略ではありません。
+chart 0.37 は `deploy.volumeSnapshotController` を拒否しますが、`volumeSnapshots`/`volumeSnapshotContents` の対となる同期を再びサポートしています。古いスキーマコメントを根拠に、すべてのスナップショット同期が削除されたとは判断していません。CSI snapshot controller/class と両方のオプションを準備し、復元は別途テストしてください。Secret の平文エクスポートは完全なバックアップ戦略ではありません。
 
 ![ライフサイクル操作と保持境界](../.gitbook/assets/en-platform-engineering-08-vcluster-14.png)
 
@@ -246,11 +246,11 @@ snapshot createは非同期要求を送ります。要求成功はreadyや復元
 
 ## Backstage、ArgoCD、一時環境
 
-チーム開発、CI、preview、研修、SaaSは信頼、性能、寿命要件が異なります。開発workloadが全Spot中断に耐える、SaaS tenantが相互影響しないと想定しないでください。
+チーム開発、CI、プレビュー、研修、SaaS では、信頼境界、性能、ライフサイクルの要件が異なります。開発ワークロードがすべての Spot 中断に耐える、あるいは SaaS の各テナントが互いに影響しないと想定しないでください。
 
-CIではhost ID、信頼event/branch、OIDC権限を設定します。未信頼forkへhost認証情報を露出しません。create/connect/test/cleanupでnamespace/contextを明示し、転送寿命をテストに結び付けます。独立cleanup jobにもツール/IDが必要です。全終了コードを確認します。
+CI ではホスト側の ID、信頼するイベント/ブランチ、OIDC 権限を構成してください。信頼されていない fork のコードにホストの認証情報を公開しないでください。作成、接続、テスト、クリーンアップでは namespace/context を明示し、ポートフォワードの有効期間をテストに合わせてください。独立したクリーンアップジョブにもツールと ID が必要です。すべての終了ステータスを確認してください。
 
-ApplicationSetには以前欠けた$values sourceRefを含めます。gitops-config.yamlをvclusters/team-alpha/config.yamlに、review済みvcluster.yamlを隣に保存します。repositoryとAppProject/destination権限を承認値に置換します。
+この ApplicationSet には、以前欠けていた `$values` の sourceRef が含まれています。`gitops-config.yaml` は `vclusters/team-alpha/config.yaml` に、レビュー済みの `vcluster.yaml` はその隣に保存してください。リポジトリと AppProject/destination の権限は、承認済みの値に置き換えてください。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -277,7 +277,7 @@ spec:
       sources:
         - repoURL: https://charts.loft.sh
           chart: vcluster
-          targetRevision: "0.37.0"
+          targetRevision: "0.37.3"
           helm:
             releaseName: "{{ .name }}"
             valueFiles:
@@ -295,41 +295,41 @@ spec:
         syncOptions: [CreateNamespace=true]
 ```
 
-preserveResourcesOnDeletionとprune:falseは設定除去を即データ削除にしない意図的選択です。保持resource所有権/費用と別廃止処理を追跡します。Backstageのdebug:logは承認やデプロイ待機を実装しません。
+`preserveResourcesOnDeletion` と `prune: false` は、構成を削除しただけでデータを直ちに削除しないための意図的な選択です。保持されたリソースの所有権と費用を追跡し、別途廃止手順を用意してください。Backstage の `debug:log` アクションは、承認やデプロイ完了待ちを実装するものではありません。
 
-![レビュー済み要求と範囲限定アクセス](../.gitbook/assets/en-platform-engineering-08-vcluster-13.png)
+![レビュー済みリクエストと範囲を限定したアクセス](../.gitbook/assets/en-platform-engineering-08-vcluster-13.png)
 
 [インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html)
 
-## 可観測性、リソース、費用
+## 可観測性、リソース、コスト
 
-意図的pauseで希望0のStatefulSetへ自動alertしないでください。単一集約absent()は他が正常なら1失敗clusterを見逃し得ます。実job/namespace/pod/containerラベル、metrics endpoint、期待状態一覧を使います。chart container名はsyncerです。架空vcluster_syncer_*を作らないでください。
+意図的に pause して desired レプリカ数が 0 の StatefulSet に、自動でアラートを出さないでください。集約した `absent()` だけでは、別のクラスターが正常なときに 1 つの障害クラスターを見逃す可能性があります。実際の job/namespace/pod/container ラベル、メトリクスのエンドポイント、期待する状態の一覧を使ってください。chart のコンテナ名は `syncer` です。存在しない `vcluster_syncer_*` メトリクスを作らないでください。
 
-requestsは使用率や請求ではありません。CPU 1と250m、memory 1Giと512Miは単なる数値文字列として加算できません。examples/platform/vcluster/usageはKubernetes PodRequestsで単位、init、overhead、Pod-level requestsを扱います。
+requests は使用率でも請求額でもありません。CPU の `1` と `250m`、メモリの `1Gi` と `512Mi` を、単位を無視して数値文字列として足し合わせることはできません。`examples/platform/vcluster/usage` は Kubernetes PodRequests を使い、単位、init コンテナ、overhead、Pod レベルの requests を扱います。
 
 ```bash
 # Run inside examples/platform/vcluster/usage with the pinned Go dependencies:
 kubectl --context HOST_CONTEXT get pods -n vcluster-team-alpha -o json | go run .
 ```
 
-ツールは未終了Podのspecベースrequestsを合計し、実RSS/CPU、resize状態、PVC費用ではありません。合成3ケースをテストし、実cluster照会はしていません。
+このツールが合計するのは、終了状態ではない Pod の spec に基づく requests です。実際の RSS/CPU、resize の状態、PVC の費用は集計しません。合成した 3 ケースをテストしており、実クラスターへの問い合わせは実施していません。
 
-active時間168から50への削減でnode、EBS、LB、license費が比例削減されるわけではありません。実node縮小、保持storage、commitment、最小容量を請求と比較します。KubernetesラベルはAWSコスト配分タグへ自動変換されません。
+稼働時間を 168 時間から 50 時間に減らしても、ノード、EBS、ロードバランサー、ライセンスの費用が比例して下がるわけではありません。実際のノード縮退、保持ストレージ、契約上のコミットメント、最小容量を請求額と比較してください。Kubernetes ラベルは AWS のコスト配分タグに自動変換されません。
 
-EKS利用者に管理API server/etcdのreplicaやinstanceを直接resizeするよう指示しないでください。対応managed-plane設定/quotaと要求負荷を確認します。chart/CLI/Kubernetes/store組を固定し、backup/stagingを検証し、別namespaceの同名Helm releaseも考慮します。
+EKS の利用者に、管理対象の API サーバー/etcd のレプリカ数やインスタンスを直接変更するよう案内しないでください。サポートされる管理プレーン設定/クォータとリクエスト負荷を確認してください。chart/CLI/Kubernetes/ストアの組み合わせを固定し、バックアップとステージングで検証してください。namespace が異なっても Helm release 名が同じになる場合を考慮してください。
 
 ## 実施した確認
 
-韓国語1,998行、英語2,171行、両143行quiz、106個の一意code blockを読みました。0.37.0 schema、Helm profile、lifecycle/network-policy render、公式checksum/image index、Kubernetes resource計算を検証し、schema/runtime検証の違いを記録しました。
+韓国語 1,998 行、英語 2,171 行のガイド、143 行のクイズ 2 件、一意のコードブロック 106 件を確認しました。バージョン 0.37.0 のスキーマ、Helm プロファイル、ライフサイクル/ネットワークポリシーのレンダリング、公式チェックサム/イメージインデックス、Kubernetes のリソース計算を検証しました。スキーマ検証とランタイム検証の違いを記録しました。
 
-0.36.1で非推奨接続flag確認を2回試み、既存clusterへ読み取り専用照会してUnauthorizedとなりました。resource変更はなく、その後0.37はversion/help/sourceとoffline chartに限定しました。vCluster作成、image実行、sleep/削除/snapshot/復元、network分離、IAM認証、負荷、節約は検証していません。
+非推奨の接続フラグを調べるため、0.36.1 で 2 回試行しました。既存クラスターへの読み取り専用問い合わせでしたが、Unauthorized エラーになりました。リソースの変更はありません。その後の 0.37 の確認は、バージョン/help/ソースコードとオフライン chart に限定しました。vCluster の作成、イメージ実行、sleep/削除/スナップショット/復元、ネットワーク分離、IAM 認証、負荷、コスト削減は検証していません。
 
-- [vCluster 0.37.0](https://github.com/loft-sh/vcluster/releases/tag/v0.37.0)
-- [バージョン付き設定](https://github.com/loft-sh/vcluster/blob/v0.37.0/config/values.yaml)
-- [バージョン付きschema](https://github.com/loft-sh/vcluster/blob/v0.37.0/chart/values.schema.json)
+- [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
+- [バージョン固定の構成](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)
+- [バージョン固定のスキーマ](https://github.com/loft-sh/vcluster/blob/v0.37.3/chart/values.schema.json)
 - [アーキテクチャ](https://www.vcluster.com/docs/vcluster/introduction/architecture)
-- [Sleep設定](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
+- [Sleep の構成](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
 
 [Backstage](06-backstage-idp.md) · [Crossplane](07-crossplane.md)
 
-[vClusterクイズ](../quizzes/platform-engineering/08-vcluster-quiz.md)
+[vCluster クイズ](../quizzes/platform-engineering/08-vcluster-quiz.md)

@@ -1,6 +1,6 @@
 # Kubernetes 扩展机制
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 选择扩展点
 
@@ -15,7 +15,7 @@ Kubernetes 提供了多种扩展 API 和工作负载行为的方式。注册 CRD
 | CNI | 容器网络 | 实际接口、IPAM、路由和清理 |
 | CSI | 卷生命周期和节点挂载 | 与能力相符的 RPC 以及后端/节点操作 |
 
-请检查所选 API、库和发行版的兼容性。截至 October 16, 2026，审核时最新发布的 controller-runtime 0.25.2，其 go.mod 使用 Go 1.26.0 和 Kubernetes Go 模块 0.37.0。以下关于 Scheduler 接口的说明根据 Kubernetes 1.36.2 源码核对；不要假设 scheduler-plugins 0.35.7 可以与之互换。
+请检查所选 API、库和发行版的兼容性。截至 2026 年 10 月 16 日，审核时最新发布的 controller-runtime 0.25.2，其 go.mod 使用 Go 1.26.0 和 Kubernetes Go 模块 0.37.0。以下关于 Scheduler 接口的说明根据 Kubernetes 1.36.2 源码核对；不要假设 scheduler-plugins 0.35.7 可以与之互换。
 
 ## CRD 和实例
 

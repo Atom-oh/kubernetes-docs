@@ -6,23 +6,23 @@ Use estas 12 preguntas para interpretar los ejercicios locales de HTTP, sockets,
 
 ## Preguntas de opción múltiple {#questions}
 
-1. Su shell selecciona un contexto Docker remoto, pero usted quiere ejecutar el ayudante de enrutamiento. ¿Qué preparación coincide con su contrato?
-   - A) El ayudante usa automáticamente el daemon remoto seleccionado
-   - B) Prepare la imagen fijada en el motor local de Linux en `/var/run/docker.sock` y supere la comprobación previa de colisiones de subredes
+1. Su shell selecciona un contexto remoto de Docker, pero usted quiere ejecutar el script auxiliar de enrutamiento. ¿Qué preparación exige el contrato de la herramienta?
+   - A) El script auxiliar usa automáticamente el daemon remoto seleccionado
+   - B) Prepare la imagen con la versión fijada en el motor local de Docker para Linux, accesible en `/var/run/docker.sock`, y confirme que supera la comprobación previa de colisiones de subredes
    - C) Habilite los contenedores privilegiados y publique los puertos del router
    - D) Inicie varias copias simultáneamente porque sus rangos de subred son aleatorios
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Prepare la imagen fijada en el motor local de Linux en `/var/run/docker.sock` y supere la comprobación previa de colisiones de subredes**
+**Respuesta: B) Prepare la imagen con la versión fijada en el motor local de Docker para Linux, accesible en `/var/run/docker.sock`, y confirme que supera la comprobación previa de colisiones de subredes**
 
 **Explicación:**
-El ayudante fija el socket Unix local e ignora las selecciones de host/contexto remoto del entorno. Usa subredes de documentación fijas, por lo que las ejecuciones no deben solaparse. La imagen debe estar disponible de antemano. Los puentes dedicados deshabilitan la traducción de direcciones; solo los tres contenedores propios pierden sus rutas predeterminadas IPv4. Docker sigue creando puentes en el host y administrando las reglas de red.
+El script auxiliar fija el socket Unix local e ignora las selecciones de host/contexto remoto del entorno. Usa subredes de documentación fijas, por lo que las ejecuciones no deben solaparse. La imagen debe estar disponible de antemano. Los puentes dedicados deshabilitan el enmascaramiento NAT; solo los tres contenedores propios pierden sus rutas predeterminadas IPv4. Docker sigue creando puentes en el host y administrando las reglas de red.
 
 </details>
 
-2. GET `/lesson` devuelve el cuerpo `b"hello\n"`. ¿Qué Content-Length es correcto?
+2. GET `/lesson` devuelve el cuerpo `b"hello\n"`. ¿Qué valor de Content-Length es correcto?
    - A) 5, porque solo cuentan las letras visibles
    - B) 7, porque cada salto de línea del cuerpo debe ser CRLF
    - C) 6, porque las cinco letras ASCII y el LF final suman seis bytes
@@ -34,14 +34,14 @@ El ayudante fija el socket Unix local e ignora las selecciones de host/contexto 
 **Respuesta: C) 6, porque las cinco letras ASCII y el LF final suman seis bytes**
 
 **Explicación:**
-En hexadecimal, el cuerpo es `68 65 6c 6c 6f 0a`. Las reglas CRLF de las líneas de encabezado HTTP/1.1 no convierten un LF del cuerpo en CRLF. Content-Length cuenta los bytes del contenido, sin incluir la línea inicial, los encabezados ni el separador. El ayudante de eco también conserva los bytes suministrados con `--data-binary`.
+En hexadecimal, el cuerpo es `68 65 6c 6c 6f 0a`. Las reglas CRLF de las líneas de encabezado HTTP/1.1 no convierten un LF del cuerpo en CRLF. Content-Length cuenta los bytes del contenido, sin incluir la línea inicial, los encabezados ni el separador. El script auxiliar de eco también conserva los bytes suministrados con `--data-binary`.
 
 </details>
 
 3. Una traza de curl muestra que `/lesson` devuelve `Content-Length: 6` cuando se ejecuta `curl --http1.1 -I`, pero no muestra ningún cuerpo. ¿Qué ocurrió?
    - A) curl envió HEAD; la respuesta no tiene cuerpo y la longitud describe la representación GET correspondiente
    - B) curl envió GET y descartó seis bytes del cuerpo después de recibirlos
-   - C) El servidor infringió el encuadre al no enviar los seis bytes requeridos
+   - C) El servidor infringió la delimitación de la respuesta al no enviar los seis bytes requeridos
    - D) HEAD siempre exige que Content-Length sea cero
 
 <details>
@@ -50,14 +50,14 @@ En hexadecimal, el cuerpo es `68 65 6c 6c 6f 0a`. Las reglas CRLF de las líneas
 **Respuesta: A) curl envió HEAD; la respuesta no tiene cuerpo y la longitud describe la representación GET correspondiente**
 
 **Explicación:**
-`-I` selecciona HEAD. Una respuesta a HEAD no tiene cuerpo de mensaje, aunque incluya una longitud de representación permitida. Es distinto de `-i`, que incluye los encabezados en la salida normal. Tratar los metadatos de HEAD como encuadre del cuerpo puede hacer que un cliente interprete mal la siguiente respuesta en una conexión persistente.
+`-I` selecciona HEAD. Una respuesta a HEAD no tiene cuerpo de mensaje, aunque incluya una longitud de representación permitida. Es distinto de `-i`, que incluye los encabezados en la salida normal. Tratar los metadatos de HEAD como delimitación del cuerpo puede hacer que un cliente interprete mal la siguiente respuesta en una conexión persistente.
 
 </details>
 
 4. Una traza de curl muestra encabezados HTTP legibles para una solicitud HTTPS. ¿Qué demuestra?
    - A) Los encabezados atravesaron la red sin cifrado
    - B) Cada línea de la traza corresponde a un paquete TCP
-   - C) HTTP/2 y HTTP/3 usan en la conexión líneas de texto HTTP/1.1
+   - C) HTTP/2 y HTTP/3 transmiten líneas de texto HTTP/1.1 por la red
    - D) El cliente puede mostrar los datos HTTP que procesa; esto no es una captura pasiva de paquetes
 
 <details>
@@ -66,20 +66,20 @@ En hexadecimal, el cuerpo es `68 65 6c 6c 6f 0a`. Las reglas CRLF de las líneas
 **Respuesta: D) El cliente puede mostrar los datos HTTP que procesa; esto no es una captura pasiva de paquetes**
 
 **Explicación:**
-La salida de depuración de curl se genera en el cliente y puede exponer datos protegidos en la red por TLS. Sus anotaciones no son el formato de conexión ni los límites de los segmentos. HTTP/2 y HTTP/3 también usan encuadre binario. La visibilidad de una captura depende del punto de observación y de los secretos de sesión disponibles.
+La salida de depuración de curl se genera en el cliente y puede exponer datos protegidos en la red por TLS. Sus anotaciones no reflejan la codificación de los datos transmitidos por la red ni los límites de los segmentos. HTTP/2 y HTTP/3 usan un formato binario basado en tramas. La visibilidad de una captura depende del punto de observación y de los secretos de sesión disponibles.
 
 </details>
 
 5. Una instantánea ilustrativa de `ss` muestra LISTEN `Recv-Q=3`, `Send-Q=128` y ESTABLISHED `Recv-Q=6`. ¿Qué interpretación es correcta?
-   - A) El listener contiene tres bytes de carga útil en un búfer de envío de 128 bytes
-   - B) El listener tiene tres SYN incompletos y el socket establecido tiene seis conexiones en cola
-   - C) El listener tiene tres conexiones que esperan `accept`, con un backlog máximo de 128; el socket establecido tiene seis bytes ordenados sin leer
+   - A) El socket de escucha contiene tres bytes de carga útil en un búfer de envío de 128 bytes
+   - B) El socket de escucha tiene tres SYN incompletos y el socket establecido tiene seis conexiones en cola
+   - C) El socket de escucha tiene tres conexiones pendientes de aceptación y un backlog máximo de 128; el socket establecido tiene seis bytes del flujo en cola para ser leídos
    - D) Los tres números son tamaños de la ventana de congestión
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) El listener tiene tres conexiones que esperan `accept`, con un backlog máximo de 128; el socket establecido tiene seis bytes ordenados sin leer**
+**Respuesta: C) El socket de escucha tiene tres conexiones pendientes de aceptación y un backlog máximo de 128; el socket establecido tiene seis bytes del flujo en cola para ser leídos**
 
 **Explicación:**
 Las unidades de las columnas de cola dependen del estado del socket. En LISTEN, las columnas describen la cola de aceptación, no la cola de SYN incompletos. En ESTABLISHED, describen bytes del flujo; el Send-Q del socket incluye bytes que todavía no se han confirmado. Filtre por el puerto de prueba y distinga los endpoints del cliente y del servidor.
@@ -90,7 +90,7 @@ Las unidades de las columnas de cola dependen del estado del socket. En LISTEN, 
    - A) La conexión está rota porque las colas vacías requieren que el uso de memoria del socket sea cero
    - B) La contabilidad y los presupuestos de memoria difieren de la ocupación del flujo; la pequeña carga de trabajo puede vaciarse entre observaciones
    - C) Aumente todos los sysctl de búfer TCP hasta que las colas del flujo dejen de estar vacías
-   - D) `rb` es la ventana de recepción exacta anunciada al peer
+   - D) `rb` es la ventana de recepción exacta anunciada al equipo remoto
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -98,7 +98,7 @@ Las unidades de las columnas de cola dependen del estado del socket. En LISTEN, 
 **Respuesta: B) La contabilidad y los presupuestos de memoria difieren de la ocupación del flujo; la pequeña carga de trabajo puede vaciarse entre observaciones**
 
 **Explicación:**
-El cliente consume cada respuesta de seis bytes antes de su siguiente solicitud. Este es un ejercicio de observación, no de saturación forzada del búfer. `skmem` incluye la contabilidad y los presupuestos del kernel, mientras que las ventanas de recepción y de congestión son cantidades independientes. Los valores de política de solo lectura y las observaciones repetidas no justifican un ajuste universal.
+El cliente consume cada respuesta de seis bytes antes de su siguiente solicitud. Este es un ejercicio de observación, no de saturación forzada del búfer. `skmem` incluye la contabilidad y los presupuestos del kernel, mientras que las ventanas de recepción y de congestión son cantidades independientes. Los valores consultados en modo de solo lectura y las observaciones repetidas no justifican un ajuste universal.
 
 </details>
 
@@ -118,19 +118,19 @@ La búsqueda de ruta selecciona el siguiente salto en enlace antes de resolver e
 
 </details>
 
-8. Un ping con TTL 1 termina sin éxito, mientras que la captura del router contiene ICMP tipo 11, código 0, citando esa sonda. ¿Cómo debe interpretar esto el laboratorio?
+8. Un ping con TTL 1 falla, mientras que la captura del router contiene ICMP tipo 11, código 0, que incluye esa sonda. ¿Cómo debe interpretar esto el laboratorio?
    - A) El destino completó una solicitud HTTP
    - B) El router informó de una incompatibilidad de MSS de TCP
    - C) Todos los paquetes de aplicación posteriores tienen que fallar en el mismo router
-   - D) El TTL deliberadamente corto venció en el router y generó la respuesta de diagnóstico prevista
+   - D) El TTL deliberadamente corto expiró en el router y generó la respuesta de diagnóstico prevista
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) El TTL deliberadamente corto venció en el router y generó la respuesta de diagnóstico prevista**
+**Respuesta: D) El TTL deliberadamente corto expiró en el router y generó la respuesta de diagnóstico prevista**
 
 **Explicación:**
-La solicitud Echo saliente y el mensaje Time Exceeded de retorno son mensajes distintos. Correlacionar el error capturado con la sonda confirma que ocurrió el evento previsto. Un tiempo de espera por sí solo no lo haría: el filtrado, la limitación de frecuencia de respuestas o la pérdida en la ruta de retorno también pueden impedir una respuesta. Para esta comprobación, el ayudante captura el tráfico en el espacio de nombres real del router.
+La solicitud Echo saliente y el mensaje Time Exceeded de retorno son mensajes distintos. Correlacionar el error capturado con la sonda confirma que ocurrió el evento previsto. Un simple tiempo de espera no bastaría para demostrarlo: el filtrado, la limitación de frecuencia de respuestas o la pérdida en la ruta de retorno también pueden impedir una respuesta. Para esta comprobación, el script auxiliar captura el tráfico en el espacio de nombres real del router.
 
 </details>
 
@@ -151,7 +151,7 @@ Añada 20 bytes del encabezado IPv4 y 8 del encabezado ICMP. DF impide que el ro
 </details>
 
 10. `ss -i` en la conexión HTTP loopback informa de un MSS superior a 1460. ¿Qué conclusión está justificada?
-   - A) El ayudante necesariamente habilitó tramas Ethernet jumbo en una interfaz física
+   - A) El script auxiliar necesariamente habilitó tramas Ethernet jumbo en una interfaz física
    - B) El cálculo de 1460 presupone MTU Ethernet 1500 y encabezados IPv4/TCP básicos; loopback tiene condiciones distintas
    - C) El tamaño de datos de la sonda ICMP es el MSS TCP real
    - D) Toda unidad capturada que supere 1500 demuestra una infracción de MTU en un cable físico
@@ -178,14 +178,14 @@ MSS describe datos TCP, no datos ICMP ni una trama completa. La MTU de la interf
 **Respuesta: A) La resolución de nombres funciona; aún hay que examinar la selección de ruta, el reenvío y la ruta de retorno**
 
 **Explicación:**
-DNS y el reenvío ponen a prueba mecanismos distintos. Esta configuración usa enrutamiento explícito entre puentes dedicados con la traducción de direcciones deshabilitada, y no evalúa el rendimiento de NAT de Internet. Cada espacio de nombres de red tiene su propio loopback; el servidor loopback del host no es un servicio local de los contenedores. Correlacione las observaciones en el espacio de nombres donde se realiza cada búsqueda.
+DNS y el reenvío ponen a prueba mecanismos distintos. Esta configuración usa enrutamiento explícito entre puentes dedicados con el enmascaramiento NAT deshabilitado, y no evalúa el rendimiento de NAT de Internet. Cada espacio de nombres de red tiene su propio loopback; el servidor loopback del host no es un servicio local de los contenedores. Correlacione las observaciones en el espacio de nombres donde se realiza cada búsqueda.
 
 </details>
 
 12. El JSON de enrutamiento contiene algunas observaciones correctas, pero su estado es fallido o la limpieza está incompleta. ¿Cuál es el resultado correcto?
    - A) Cuente toda la ejecución como aprobada porque funcionó la búsqueda de rutas
    - B) Ignore la limpieza si la imagen sigue almacenada localmente
-   - C) Ejecute una poda amplia de Docker para garantizar que el host quede limpio
+   - C) Ejecute una limpieza general de Docker para garantizar que el host quede limpio
    - D) Mantenga el estado fallido, inspeccione la fase que falló e identifique solo los ID creados para cualquier limpieza necesaria
 
 <details>
@@ -194,7 +194,7 @@ DNS y el reenvío ponen a prueba mecanismos distintos. Esta configuración usa e
 **Respuesta: D) Mantenga el estado fallido, inspeccione la fase que falló e identifique solo los ID creados para cualquier limpieza necesaria**
 
 **Explicación:**
-Para que una ejecución se apruebe, debe finalizar correctamente, las ocho comprobaciones deben ser verdaderas y la limpieza debe constar en el informe, incluidas las listas vacías de rutas predeterminadas IPv4 en los tres contenedores. El ayudante registra los ID creados en lugar de eliminar recursos con nombre que no le pertenecen. Una terminación abrupta puede impedir la limpieza. Conserve la evidencia, use una nueva ruta de salida para una ejecución posterior y no eluda los controles de red compartidos para forzar la aprobación.
+Para que una ejecución se apruebe, debe finalizar correctamente, las ocho comprobaciones deben ser verdaderas y la limpieza debe constar en el informe, incluidas las listas vacías de rutas predeterminadas IPv4 en los tres contenedores. El script auxiliar registra los ID creados en lugar de eliminar recursos con nombre que no le pertenecen. Una terminación abrupta puede impedir la limpieza. Conserve la evidencia, use una nueva ruta de salida para una ejecución posterior y no eluda los controles de red compartidos para forzar la aprobación.
 
 </details>
 

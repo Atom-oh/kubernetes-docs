@@ -1,7 +1,7 @@
 # Karpenter
 
 > **支持的版本**：Karpenter 1.14 LTS（示例：1.14.1）；请根据兼容性和 provider 支持表选择 Kubernetes/EKS 版本。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [简介](#introduction)
@@ -350,7 +350,7 @@ AWS 于 2026 年 7 月 22 日发布公告，为 Karpenter/EKS Auto Mode 增加�
 
 ### 2026 年 8 月更新：v1.14.1 补丁版本发布
 
-[v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1) 是 v1.14 版本线上的第一个补丁版本，于 2026 年 8 月 21 日发布。这是一个维护版本，更新了上游 `sigs.k8s.io/karpenter` 版本，并回合移植了 v1.14.0 之后的修复。
+[v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1) 是 v1.14 版本线上的第一个补丁版本，于 2026 年 8 月 21 日发布。这是一个维护版本，更新了上游 `sigs.k8s.io/karpenter` 版本，并将 v1.14.0 发布以来的修复挑选后回移植到该版本。
 
 ### 2026 年 10 月更新：v1.15.0 常规版本发布
 

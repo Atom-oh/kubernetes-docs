@@ -418,6 +418,7 @@ Windows 컨테이너의 리소스 관리 고려 사항:
 
 Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사용하여 리소스 사용량을 모니터링할 수 있습니다.
 </details>
+
 ## 주관식 문제
 
 1. Kubernetes 클러스터에 Windows 노드를 추가하기 위한 주요 단계와 요구 사항을 설명하세요.
@@ -1322,6 +1323,7 @@ monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 
 SQL Server 이미지는 Linux용이며 Windows 애플리케이션은 네트워크로 연결합니다. Linux 호환 PVC와 SQL 프로세스의 쓰기 권한, 기존 sql-credentials Secret이 필요합니다.
 예제 StorageClass는 먼저 생성해야 하며 Windows EBS 클래스에는 NTFS와 WaitForFirstConsumer를 설정합니다. 이름만으로 드라이버/클래스가 설치되지 않습니다.
 </details>
+
 ## 실습 문제
 
 1. Windows 노드와 Linux 노드가 혼합된 Kubernetes 클러스터에서 다음 요구 사항을 충족하는 Deployment 매니페스트를 작성하세요:
@@ -1946,6 +1948,7 @@ spec:
 - Azure Storage 연결 문자열과 같은 민감한 정보는 Azure Key Vault와 같은 외부 시크릿 관리 시스템과 통합하는 것이 좋습니다.
 두 복제본이 서로 다른 파일 이름 또는 Pod별 디렉토리에 로그를 기록하도록 구성합니다. 애플리케이션은 환경 변수를 읽고 /health를 구현해야 합니다. subPath ConfigMap은 자동 갱신되지 않습니다.
 </details>
+
 ## 고급 주제
 
 1. containerd 1.x에서 Windows Pod sandbox 이미지를 선택하는 설정은 무엇인가요?

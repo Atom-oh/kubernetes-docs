@@ -1,8 +1,8 @@
 # Istio 安装与初始设置
 
-> **最后更新**：October 16, 2026 · 安装固定版本：Istio 1.31.2
+> **最后更新**：2026年10月16日 · 安装固定版本：Istio 1.31.2
 
-截至 October 16, 2026，Istio 1.31.2 是当前的 1.31 补丁版本；它包含 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 安全修复，以及 1.31.1 的 `BackendTLSPolicy` 明文回退修复。以下命令示例已从 1.31.1 更新；较早版本的 chart 渲染结果并不能验证 1.31.2 的所有值，因此应用前请渲染并检查所选 chart。
+截至2026年10月16日，Istio 1.31.2 是当前的 1.31 补丁版本；它包含 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 安全修复，以及 1.31.1 的 `BackendTLSPolicy` 明文回退修复。以下命令示例已从 1.31.1 更新；较早版本的 chart 渲染结果并不能验证 1.31.2 的所有值，因此应用前请渲染并检查所选 chart。
 
 本文介绍如何在 Amazon EKS 集群上安装和初始配置 Istio。
 
@@ -25,7 +25,7 @@
 
 ### 1. Amazon EKS 集群
 
-- **Kubernetes 版本**：本 Istio 1.31.2 示例适用于 EKS 1.34–1.37（于 October 16, 2026 审阅）。Istio 1.31 支持 1.32–1.37；EKS 1.31–1.33 处于扩展支持阶段，1.34–1.37 处于标准支持阶段。请同时查看 [Istio 版本矩阵](https://istio.io/latest/docs/releases/supported-releases/)和 [EKS 生命周期](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
+- **Kubernetes 版本**：本 Istio 1.31.2 示例适用于 EKS 1.34–1.37（于2026年10月16日审阅）。Istio 1.31 支持 1.32–1.37；EKS 1.31–1.33 处于扩展支持阶段，1.34–1.37 处于标准支持阶段。请同时查看 [Istio 版本矩阵](https://istio.io/latest/docs/releases/supported-releases/)和 [EKS 生命周期](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
 - **节点类型**：至少 2 个工作节点（建议：3 个或更多）
 - **节点规格**：至少 2 个 vCPU、4GB RAM（建议：t3.medium 或更高规格）
 
@@ -49,7 +49,7 @@ kubectl get nodes
 
 ### 4. 集群资源
 
-仅供规划参考的请求值，并非普遍适用的最低要求；请根据测得的负载确定规格：
+以下资源 requests 值仅供规划参考，并非通用最低配置；请根据实测负载进行容量规划：
 - **控制平面**：1 vCPU，1.5GB RAM
 - **Sidecar（每个 Pod）**：0.1 vCPU，128MB RAM
 
@@ -109,7 +109,7 @@ kubectl logs -n istio-system -l app=istiod
 
 ## 使用 Helm 安装 {#installation-using-helm}
 
-istiod 1.31.0 和 1.31.2 的 chart 存档中不包含 `eks` 平台配置文件（`files/profile-platform-eks.yaml`；于 October 16, 2026 检查）。以下 chart 示例现已固定为 1.31.2，但本次审阅未渲染该 chart；安装前请检查所选 chart。这些示例不设置 `global.platform=eks`，以免假设该配置文件存在，并明确设置 EKS 先决条件和负载均衡器参数。
+istiod 1.31.0 和 1.31.2 的 chart 存档中不包含 `eks` 平台配置文件（`files/profile-platform-eks.yaml`；于2026年10月16日检查）。以下 chart 示例现已固定为 1.31.2，但本次审阅未渲染该 chart；安装前请检查所选 chart。这些示例不设置 `global.platform=eks`，以免假设该配置文件存在，并明确设置 EKS 先决条件和负载均衡器参数。
 
 Helm 是适用于 GitOps 工作流的 Kubernetes 包管理器。
 
@@ -324,7 +324,7 @@ kubectl get validatingwebhookconfiguration
 
 Istio 包含一个名为 Bookinfo 的示例应用程序。
 
-请在解压后的 `istio-1.31.2` 目录中运行以下命令，并选中默认命名空间（`kubectl config set-context --current --namespace=default`）。如果使用 Helm，请先安装上文中的可选 Gateway。后面的 dashboard 命令要求事先单独安装遥测插件。
+请从解压后的 `istio-1.31.2` 目录运行以下命令，并先将默认命名空间（`kubectl config set-context --current --namespace=default`）设为当前命名空间。如果使用 Helm，请先安装上文所述的可选 Gateway。后续的仪表板命令还要求单独安装遥测插件。
 
 ### 1. 为命名空间启用自动 Sidecar 注入
 

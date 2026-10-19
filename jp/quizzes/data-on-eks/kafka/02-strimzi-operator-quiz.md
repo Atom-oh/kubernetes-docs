@@ -1,6 +1,6 @@
 # Strimzi Operatorクイズ
 
-> **最終更新**: September 12, 2026、Strimzi 1.2.0 / Kafka 4.3.1。
+> **最終更新**: 2026年10月16日、Strimzi 1.3.0 / Kafka 4.3.1。
 
 このクイズはStrimzi Operatorの基礎、インストール方法、主要CRD、KRaftノードの役割、EKSデプロイの考慮事項の理解を確認します。
 
@@ -19,7 +19,7 @@
 **正解: B) Kubernetes上でApache Kafkaを実行するOperator**
 
 **解説:**
-Strimzi 1.2はカスタムリソースの期待状態を調整するCNCFインキュベーションプロジェクトです。現在のKafka Pod管理はStrimziPodSetを使います。Operatorがすべての運用方針や可用性保証を自動完成させるわけではありません。
+Strimzi 1.3はCNCFインキュベーション段階のプロジェクトで、カスタムリソースに宣言された望ましい状態に合わせて調整します。現在、Kafka Podの管理にはStrimziPodSetを使用します。Operatorだけであらゆる運用方針が実装されるわけでも、可用性が保証されるわけでもありません。
 </details>
 
 2. StrimziなしでKafkaをStatefulSetとして直接運用する課題として、最も不正確なのはどれですか？
@@ -51,7 +51,7 @@ Strimzi 1.2はカスタムリソースの期待状態を調整するCNCFイン�
 **正解: A) `helm repo add strimzi https://strimzi.io/charts/`**
 
 **解説:**
-公式チャートリポジトリを追加し、新規インストールでは1.2.0に固定します。既存ベータAPI/CRDは先に公式移行手順が必要です。新名前空間でもクラスター範囲のCRD競合は避けられません。
+公式チャートリポジトリを追加し、新規インストールでは1.3.0に固定します。既存ベータAPI/CRDは先に公式移行手順が必要です。新名前空間でもクラスター範囲のCRD競合は避けられません。
 </details>
 
 4. Strimzi Cluster Operatorがデフォルトで監視する名前空間範囲はどれですか？
@@ -67,10 +67,10 @@ Strimzi 1.2はカスタムリソースの期待状態を調整するCNCFイン�
 **正解: C) デプロイ先の名前空間のみ**
 
 **解説:**
-デフォルトチャートはリリースの名前空間を監視します。チャート1.2は追加watchNamespacesとともにその名前空間を含めて重複排除し、RoleBindingを作成します。環境変数だけの変更ではRBAC不足が残る場合があります。
+デフォルトチャートはリリースの名前空間を監視します。チャート1.3は追加watchNamespacesとともにその名前空間を含めて重複排除し、RoleBindingを作成します。環境変数だけの変更ではRBAC不足が残る場合があります。
 </details>
 
-5. 現在のStrimzi 1.2 KRaftデプロイで未対応のブロックはどれですか？
+5. 現在のStrimzi 1.3 KRaftデプロイで未対応のブロックはどれですか？
    - A) `Kafka.spec.kafka.listeners`
    - B) `Kafka.spec.zookeeper`
    - C) `Kafka.spec.entityOperator`
@@ -83,7 +83,7 @@ Strimzi 1.2はカスタムリソースの期待状態を調整するCNCFイン�
 **正解: B) `Kafka.spec.zookeeper`**
 
 **解説:**
-現在のStrimzi 1.2はKRaftを使い、ZooKeeperブロックをサポートしません。KafkaNodePoolはcontrollerとbrokerロールを定義し、従来の有効化アノテーションは不要です。
+現在のStrimzi 1.3はKRaftを使い、ZooKeeperブロックをサポートしません。KafkaNodePoolはcontrollerとbrokerロールを定義し、従来の有効化アノテーションは不要です。
 </details>
 
 6. `KafkaNodePool.spec.roles`の有効なエントリではない値はどれですか？
@@ -230,7 +230,7 @@ KafkaConnectはConnectワーカー、KafkaConnectorは個々のコネクター�
 
 ## 実践問題
 
-16. 本文のoperator-values.yamlを使い、新しいkafka名前空間にStrimzi 1.2.0をインストールしてください。
+16. 本文のoperator-values.yamlを使い、新しいkafka名前空間にStrimzi 1.3.0をインストールしてください。
 
 <details>
 
@@ -241,7 +241,7 @@ KafkaConnectはConnectワーカー、KafkaConnectorは個々のコネクター�
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl get crd kafkas.kafka.strimzi.io kafkanodepools.kafka.strimzi.io

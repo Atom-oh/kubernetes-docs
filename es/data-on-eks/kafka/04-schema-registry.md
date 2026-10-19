@@ -19,8 +19,7 @@ significado de una moneda o una marca de tiempo.
 JSON también puede tener un contrato: JSON Schema, las comprobaciones de CI y las
 especificaciones con control de versiones son posibles tanto con un registro como
 sin él. Un registro central ayuda a distribuir y gobernar ese contrato; la
-codificación binaria es una decisión independiente. Compara registros comprimidos
-y medidos antes de afirmar que se ahorrará espacio en la carga útil o en el almacenamiento.
+codificación binaria es una decisión independiente. Compare los registros medidos y comprimidos antes de afirmar que se ahorrará espacio en la carga útil o en el almacenamiento.
 
 ### ¿Qué se transmite en un registro?
 
@@ -35,7 +34,7 @@ El serializador registra o busca un esquema, y el deserializador recupera el esq
 del escritor mediante su identificador. Normalmente, los clientes almacenan los
 esquemas en caché, así que no necesariamente se realiza una solicitud HTTP por cada
 registro. Aun así, una caché vacía o un esquema nuevo pueden requerir el registro.
-Conserva la correspondencia entre ID y esquema mientras los datos de Kafka
+Conserve la correspondencia entre ID y esquema mientras los datos de Kafka
 correspondientes, los archivos y las copias de recuperación ante desastres deban
 seguir siendo legibles.
 
@@ -50,12 +49,12 @@ seguir siendo legibles.
 Karapace y Apicurio publican licencias Apache-2.0. Esa licencia tiene condiciones,
 incluida la conservación de los avisos requeridos; no significa «sin restricciones».
 El repositorio de Confluent distingue los módulos de servidor con licencia Community
-de los módulos de cliente/Avro con licencia Apache-2.0. Comprueba la licencia del
+de los módulos de cliente/Avro con licencia Apache-2.0. Compruebe la licencia del
 componente real y cualquier contrato de soporte, en lugar de inferir las condiciones
 comerciales a partir del tamaño del clúster.
 
 La compatibilidad de API es útil, pero **cambiar solo la URL no es un plan de migración**.
-Prueba los ID de esquema, las referencias, la nomenclatura de sujetos, la autenticación,
+Pruebe los ID de esquema, las referencias, la nomenclatura de sujetos, la autenticación,
 las versiones de cliente y la codificación en el cable con los registros conservados.
 Por ejemplo, la API de compatibilidad de Apicurio no implementa todas las funciones
 de exportación/cifrado de Confluent; aceptar un campo opcional de una solicitud no
@@ -69,7 +68,7 @@ Kafka no significa que no requiera configuración.
 
 ### Avro
 
-Guarda el siguiente ejemplo canónico como `order.avsc`. Avro resuelve un esquema
+Guarde el siguiente ejemplo canónico como `order.avsc`. Avro resuelve un esquema
 escritor frente a un esquema lector mediante nombres, valores predeterminados,
 alias y promociones de tipos definidas. El `logicalType` de la marca de tiempo
 pertenece dentro de su **objeto de tipo**, no junto al `name` del campo. Un atributo
@@ -112,13 +111,13 @@ marca de tiempo lógica.
 
 Aquí, `amount` es solo un valor ilustrativo de tipo double. Un contrato real debe
 definir las unidades, la precisión y el redondeo; cuando se requieran importes
-decimales exactos, usa una representación adecuada de entero o decimal.
+decimales exactos, utilice una representación adecuada de entero o decimal.
 
 ### Protobuf y JSON Schema
 
 Protobuf usa campos numerados y API de generación/ejecución específicas de cada
-lenguaje. Define explícitamente la unidad de tiempo; `int64` por sí solo no declara
-una marca de tiempo lógica. No reutilices números de campos eliminados; reserva los
+lenguaje. Defina explícitamente la unidad de tiempo; `int64` por sí solo no declara
+una marca de tiempo lógica. No reutilice números de campos eliminados; reserve los
 números y nombres eliminados según corresponda.
 
 ```protobuf
@@ -142,13 +141,13 @@ distintos, no codificaciones intercambiables.
 | Formato | Representación en el cable | Consideraciones de evolución |
 | --- | --- | --- |
 | Avro | Binaria, con interpretación del esquema escritor | Resolución lector/escritor, valores predeterminados, nombres y promociones |
-| Protobuf | Binaria, con campos numerados | Conserva los números de campo y los tipos de cable; comprueba la semántica de la aplicación |
+| Protobuf | Binaria, con campos numerados | Conserve los números de campo y los tipos de cable; compruebe la semántica de la aplicación |
 | JSON Schema | JSON | Conjuntos de instancias aceptadas, campos obligatorios, propiedades adicionales y compatibilidad con borradores |
 
 ## Compatibilidad y orden de implementación
 
-En la API compatible con Confluent, configura la compatibilidad en el nivel de
-**sujeto** (o hereda un valor predeterminado global). Con la estrategia
+En la API compatible con Confluent, configure la compatibilidad en el nivel de
+**sujeto** (o herede un valor predeterminado global). Con la estrategia
 `TopicNameStrategy` predeterminada, los valores del tema `orders` usan el sujeto
 `orders-value`; otras estrategias pueden compartir un sujeto entre temas o separar
 tipos de registros dentro de un tema.
@@ -158,7 +157,7 @@ tipos de registros dentro de un tema.
 | BACKWARD | El lector nuevo puede leer los datos del escritor anterior | Primero los consumidores |
 | FORWARD | El lector anterior puede leer los datos del escritor nuevo | Primero los productores |
 | FULL | Ambas direcciones | Cualquiera de los dos órdenes para la relación de esquemas comprobada |
-| NONE | No se comprueba la compatibilidad | Coordina y prueba explícitamente |
+| NONE | No se comprueba la compatibilidad | Coordine y pruebe explícitamente |
 
 Los modos no transitivos comparan con la versión anterior más reciente. Sus variantes
 `_TRANSITIVE` comparan con todas las versiones anteriores. Para reproducir registros
@@ -183,9 +182,9 @@ que un escritor omita un campo obligatorio cualquiera.
 | Eliminar un campo | Compatible con versiones anteriores; la compatibilidad con versiones posteriores depende de si el lector antiguo tiene un valor predeterminado |
 | Cambiar `double` a `string` | Incompatible; no es una promoción numérica de Avro |
 | Cambiar `int` a `long` | El lector nuevo puede aceptar valores enteros antiguos; la dirección inversa es distinta |
-| Cambiar el nombre de un campo | Un alias del lector o un valor predeterminado aplicable pueden cambiar el resultado; prueba ambas direcciones |
+| Cambiar el nombre de un campo | Un alias del lector o un valor predeterminado aplicable pueden cambiar el resultado; pruebe ambas direcciones |
 
-Ejecuta pruebas de lector/escritor con datos históricos representativos además de
+Ejecute pruebas de lector/escritor con datos históricos representativos además de
 usar el endpoint de compatibilidad del registro. Permiten detectar clases distintas
 de fallos.
 
@@ -198,14 +197,14 @@ de nombres `kafka`, tres brokers, los operadores Topic/User y el listener TLS/SC
 en el puerto 9093.
 La API HTTP siguiente no tiene autenticación de aplicaciones. NetworkPolicy permite
 el puerto 8080 solo desde Pods etiquetados en el mismo espacio de nombres cuando el
-CNI aplica NetworkPolicy. Restringe quién puede crear o etiquetar esos Pods. Para
-un uso compartido en producción, configura por separado TLS, autenticación y
+CNI aplica NetworkPolicy. Restrinja quién puede crear o etiquetar esos Pods. Para
+un uso compartido en producción, configure por separado TLS, autenticación y
 autorización para la API, sin depender de SASL de Kafka; un Service interno por sí
 solo no proporciona esos controles.
 
 ### Temas de almacenamiento e identidad de Kafka
 
-Guarda el archivo como `registry-storage.yaml`. La identidad de la aplicación lee
+Guarde el archivo como `registry-storage.yaml`. La identidad de la aplicación lee
 y escribe únicamente en sus tres temas designados y en el prefijo de su grupo de
 consumidores. El Topic Operator crea los temas de antemano, por lo que la aplicación
 no necesita permisos para crear temas.
@@ -299,10 +298,10 @@ spec:
 
 KafkaSQL 3.3.3 inicializa los temas de journal, snapshots y eventos. De forma
 predeterminada, las comprobaciones de los temas de journal y snapshots requieren
-`cleanup.policy=delete`, `retention.ms=-1` y `retention.bytes=-1`. No les apliques
+`cleanup.policy=delete`, `retention.ms=-1` y `retention.bytes=-1`. No les aplique
 una receta genérica de compactación de `_schemas` ni una retención normal de eventos
-de siete días. Esto conserva los registros indefinidamente, así que supervisa el
-crecimiento del disco y planifica copias de seguridad y limpieza que se hayan probado.
+de siete días. Esto conserva los registros indefinidamente, así que supervise el
+crecimiento del disco y planifique copias de seguridad y limpieza que se hayan probado.
 
 KafkaSQL reconstruye el estado SQL local a partir del journal y de cualquier
 snapshot disponible. El tema de snapshots contiene **rutas a archivos de snapshot**,
@@ -317,11 +316,11 @@ que se reproduzcan los datos al iniciar.
 
 ### Deployment y Service
 
-Guarda el archivo como `registry.yaml`. Los valores de CA y JAAS provienen de
+Guarde el archivo como `registry.yaml`. Los valores de CA y JAAS provienen de
 Secrets de Strimzi.
-La verificación del nombre de host se establece explícitamente. El tamaño de los
+La verificación del nombre de host está habilitada de forma explícita. El tamaño de los
 recursos y el margen de inicio de diez minutos son valores iniciales para el
-laboratorio; mide el uso de memoria y el tiempo de reproducción.
+laboratorio; mida el uso de memoria y el tiempo de reproducción.
 
 ```yaml
 apiVersion: apps/v1
@@ -466,15 +465,15 @@ kubectl -n kafka port-forward --address=127.0.0.1 service/apicurio-registry 8080
 ```
 
 El reenvío de puertos requiere acceso a Kubernetes y permanece en primer plano.
-Reinicia la carga de trabajo después de cambiar las variables de entorno respaldadas
+Reinicie la carga de trabajo después de cambiar las variables de entorno respaldadas
 por Secrets. Para el almacenamiento SQL, `APICURIO_STORAGE_KIND=sql` por sí solo
-no configura PostgreSQL: selecciona el tipo SQL y proporciona una base de datos
+no configura PostgreSQL: seleccione el tipo SQL y proporcione una base de datos
 dedicada, TLS, credenciales y procedimientos de recuperación. La base de datos H2
 en memoria predeterminada no es un almacenamiento de producción duradero.
 
-## Registra el mismo esquema que usa la aplicación
+## Registre el mismo esquema que usa la aplicación
 
-Desde otra terminal, registra `order.avsc` con el sujeto `orders-value`. Así se
+Desde otra terminal, registre `order.avsc` con el sujeto `orders-value`. Así se
 evita la antigua discrepancia entre un ejemplo con espacio de nombres y varios
 campos y un esquema distinto de un solo campo oculto en una cadena de curl. La
 primera solicitud configura explícitamente la compatibilidad del sujeto; los
@@ -510,7 +509,7 @@ curl --fail-with-body --silent --show-error \
 Estas son propiedades **adicionales** para aplicaciones ya configuradas con la
 dirección del broker de la Parte 2, la confianza TLS y sus propias identidades de
 Kafka. Las credenciales HTTP del registro y las credenciales SASL de Kafka son
-independientes. Incluye en la aplicación una dependencia del serializador Avro de
+independientes. Incluya en la aplicación una dependencia del serializador Avro de
 Confluent compatible y con la versión fijada; no se proporciona simplemente por
 instalar Kafka o Strimzi.
 
@@ -539,10 +538,10 @@ las clases SpecificRecord generadas requieren el código correspondiente y la
 configuración del lector. La estrategia de sujetos predeterminada presupone que el
 tema de Kafka de la aplicación es `orders`.
 
-Antes de cambiar de registro, prueba un consumidor con la caché vacía frente a los
+Antes de cambiar de registro, pruebe un consumidor con la caché vacía frente a los
 registros conservados, el registro de una nueva versión, el rechazo por
 incompatibilidad, las referencias de esquemas y el reinicio/la recuperación.
-Conserva la correspondencia original entre ID de esquema y esquema o realiza una
+Conserve la correspondencia original entre ID de esquema y esquema o realice una
 migración explícita y compatible de datos/identificadores. Una comprobación HTTP de
 estado satisfactoria no es una prueba de serialización.
 

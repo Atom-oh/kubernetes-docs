@@ -99,7 +99,7 @@ Cada diagrama interactivo se abre en `https://www.atomai.click/kubernetes-docs/a
 7. ¿Qué afirmación sobre **Route Share Card** del menú Export es correcta?
    - A) Siempre aparece en todos los diagramas e infiere rutas automáticamente entre formas cercanas
    - B) Solo aparece después de que Route Probe (`R`) haya encontrado una ruta entre dos nodos, y sigue únicamente relaciones dirigidas definidas por el autor
-   - C) Muestra la accesibilidad ascendente y descendente de un nodo como análisis del radio de impacto
+   - C) Muestra la alcanzabilidad ascendente y descendente de un nodo como análisis del radio de impacto
    - D) Solo permite copiar al portapapeles, no descargar
 
 <details>
@@ -108,7 +108,7 @@ Cada diagrama interactivo se abre en `https://www.atomai.click/kubernetes-docs/a
 **Respuesta: B) Solo aparece después de que Route Probe (`R`) haya encontrado una ruta entre dos nodos, y sigue únicamente relaciones dirigidas definidas por el autor**
 
 **Explicación:**
-En la tabla del menú Export, Route Share Card es un PNG de 1200×630 (solo descarga) que «aparece únicamente después de que Route Probe (`R`) haya encontrado una ruta entre dos nodos». La sección de límites de certeza añade que «Route Share Card solo sigue las relaciones dirigidas definidas por el autor. Nunca infiere una ruta a partir de la geometría y se niega a exportar una ruta obsoleta o inaccesible». La accesibilidad ascendente/descendente pertenece a Reach Share Card, una tarjeta distinta que tampoco debe presentarse como análisis de impacto, radio de impacto, interrupción o causalidad durante la ejecución.
+En la tabla del menú Export, Route Share Card es un PNG de 1200×630 (solo descarga) que «aparece únicamente después de que Route Probe (`R`) haya encontrado una ruta entre dos nodos». La sección de límites de certeza añade que «Route Share Card solo sigue las relaciones dirigidas definidas por el autor. Nunca infiere una ruta a partir de la geometría y se niega a exportar una ruta obsoleta o inaccesible». La alcanzabilidad ascendente/descendente pertenece a Reach Share Card, una tarjeta distinta que tampoco debe presentarse como análisis de impacto, radio de impacto, interrupción o causalidad durante la ejecución.
 
 </details>
 
@@ -124,6 +124,6 @@ En la tabla del menú Export, Route Share Card es un PNG de 1200×630 (solo desc
 **Respuesta: A) Las exportaciones son materiales de comunicación (no pruebas de que se haya validado una arquitectura), y Share Card nunca afirma que haya habido validación**
 
 **Explicación:**
-La primera viñeta de la sección dice: «Las exportaciones son materiales de comunicación. No demuestran que se haya validado una arquitectura y no reemplazan el HTML publicado ni la validación del propio autor. Share Card nunca afirma que haya habido validación». Del mismo modo, Reach Share Card solo muestra *accesibilidad definida por el autor*; no debe presentarse como análisis de impacto, radio de impacto, interrupción ni causalidad durante la ejecución.
+La primera viñeta de la sección dice: «Las exportaciones son materiales de comunicación. No demuestran que se haya validado una arquitectura y no reemplazan el HTML publicado ni la validación del propio autor. Share Card nunca afirma que haya habido validación». Del mismo modo, Reach Share Card solo muestra *alcanzabilidad definida por el autor*; no debe presentarse como análisis de impacto, radio de impacto, interrupción ni causalidad durante la ejecución.
 
 </details>

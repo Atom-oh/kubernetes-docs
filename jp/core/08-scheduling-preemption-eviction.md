@@ -1,7 +1,7 @@
 # Kubernetes スケジューリング、プリエンプション、Eviction
 
-> **サポート対象バージョン**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 の例)
-> **最終更新**: September 17, 2026
+> **サポート対象バージョン**: Kubernetes 1.34 - 1.37 (Descheduler v0.37 の例)
+> **最終更新**: 2026年10月16日
 
 Kubernetes において、スケジューリングは Pod を適切な Node に配置するプロセスです。プリエンプションは高優先度の Pod のための空きを確保するために低優先度の Pod を削除するプロセスであり、Eviction は Pod を終了します。ワークロードコントローラーは置き換え用の Pod を作成する場合があり、その Pod はスケジューラーによって別途配置されます。この章では、Kubernetes のスケジューリングメカニズム、Node 選択、プリエンプション、Eviction、および Amazon EKS におけるスケジューリング最適化手法について学びます。
 
@@ -88,7 +88,7 @@ EOF
 | **Pod Anti-Affinity** | 他の Pod から離して Pod を配置 | 高可用性の確保 | 1.6+ |
 | **Taints and Tolerations** | 特定の Pod のみを Node 上で許可 | 専用 Node、Node 分離 | 1.6+ |
 | **Topology Spread Constraints** | トポロジードメイン全体に Pod を分散 | アベイラビリティーゾーン間の分散 | 1.16+ (1.19 で GA) |
-| **Priority and Preemption** | 重要なワークロードを優先 | クリティカルな Service の保証 | 1.8+ (1.11 で GA) |
+| **Priority and Preemption** | 重要なワークロードを優先 | クリティカルな Service の保証 | 1.8+ (1.14 で GA) |
 | **Pod Disruption Budget** | 同時に中断される Pod を制限 | 高可用性の確保 | 1.4+ (1.21 で GA) |
 
 ## 基本的なスケジューリングの概念
@@ -129,7 +129,7 @@ EOF
 15. [スケジューリングのベストプラクティス](#scheduling-best-practices)
 16. [まとめ](#conclusion)
 
-## スケジューリングの概要
+## スケジューリングの概要 {#scheduling-overview}
 
 Kubernetes スケジューラーは、Pod を適切な Node に配置するコントロールプレーンコンポーネントです。スケジューラーは Pod を配置する最適な Node を決定するために、さまざまな要素を考慮します。
 
@@ -154,7 +154,7 @@ Kubernetes スケジューラーは、Pod を適切な Node に配置するコ�
    - データローカリティ
    - Taint/Toleration
 
-## スケジューラーの仕組み
+## スケジューラーの仕組み {#how-the-scheduler-works}
 
 Kubernetes スケジューラーは次のプロセスで動作します。
 
@@ -184,7 +184,7 @@ Kubernetes スケジューラーはプラグインアーキテクチャを使用
    - InterPodAffinity: Pod 間 Affinity を考慮
    - NodeAffinity: Node Affinity を考慮
 
-### NodeResourcesFit スコアリング戦略: LeastAllocated と MostAllocated
+### NodeResourcesFit スコアリング戦略: LeastAllocated と MostAllocated {#noderesourcesfit-scoring-strategy-leastallocated-vs-mostallocated}
 
 `NodeResourcesFit` は Filter プラグイン（Node に Pod のための十分な割り当て可能 CPU/メモリがあるか）と Score プラグインの両方です。Score プラグインの挙動は、`KubeSchedulerConfiguration` で設定する `scoringStrategy.type` により制御されます。
 
@@ -220,11 +220,11 @@ Amazon EKS のコントロールプレーンはフルマネージドであるた
 
 `LeastAllocated` は `worker3` を `worker2` と同じ状態になるまで使用率を上げるため、すべての Node が部分的に使用され、どの Node も安全にスケールダウンできなくなります。`MostAllocated` はすでに使用率の高い Node に負荷を集中させ続け、`worker3` を未使用のままにしました。これはまさに、クラスターオートスケーラーまたは Karpenter の統合処理によって終了される Node です。
 
-このため、Karpenter または Cluster Autoscaler と並行して実行する **バッチ/短命な Job ワークロード**では、`MostAllocated` が一般的に推奨されます。Job を少数の Node にビンパッキングすると、完全にアイドル状態となり統合の対象になる Node 数が最大化され、コンピューティングコストを直接削減できます。`LeastAllocated` は、トラフィックの急増や単一のパックされた Node にカスケードする圧力を発生させずに `kubectl drain` を吸収する余裕をすべての Node に残すため、長時間実行されるレイテンシーに敏感な Service には引き続き優れたデフォルトです。
+このため、Karpenter または Cluster Autoscaler と並行して実行する **バッチ/短命な Job ワークロード**では、`MostAllocated` が一般的に推奨されます。Job を少数の Node にビンパッキングすると、完全にアイドル状態となり統合の対象になる Node 数が最大化され、コンピューティングコストを直接削減できます。`LeastAllocated` は負荷を分散して各 Node に余力を残すため、長時間稼働するレイテンシー重視の Service には引き続き適したデフォルトです。トラフィックの急増や `kubectl drain` に対応しやすく、負荷が単一の高密度 Node に集中して連鎖的な圧迫を招くのを防ぎます。
 
 この比較を完全に再現する手順については、[Scheduler Scoring Strategy Lab](../labs/core/08-scheduling-preemption-eviction-lab.md) を参照してください。
 
-### 複数スケジューラー
+### 複数スケジューラー {#multiple-schedulers}
 
 Kubernetes は複数のスケジューラーを同時に実行できます。これにより、特定のワークロード向けにカスタムスケジューリングロジックを実装できます。
 
@@ -242,7 +242,7 @@ spec:
 
 上記の例では、`schedulerName` フィールドが Pod をスケジュールするスケジューラーを指定します。
 
-## Node 選択
+## Node 選択 {#node-selection}
 
 Kubernetes には Pod を特定の Node に配置する複数のメカニズムがあります。
 
@@ -293,7 +293,7 @@ spec:
 
 上記の例では、Pod は `worker-node-1` という名前の Node に直接配置されます。
 
-## Pod Affinity と Anti-Affinity
+## Pod Affinity と Anti-Affinity {#pod-affinity-and-anti-affinity}
 
 Pod Affinity と Anti-Affinity は、Pod 間の関係に基づいて Pod を配置する方法を提供します。
 
@@ -501,7 +501,7 @@ Node Affinity はさまざまな演算子をサポートします。
 - **Gt**: ラベル値が指定値より大きい
 - **Lt**: ラベル値が指定値より小さい
 
-## Pod Priority と Preemption
+## Pod Priority と Preemption {#pod-priority-and-preemption}
 
 Kubernetes は、重要なワークロードがクラスターリソースを確保できるよう、Pod Priority と Preemption の機能を提供します。
 
@@ -732,7 +732,7 @@ TopologySpreadConstraints は、アベイラビリティーゾーン、Node、�
 
 | フィールド | 説明 | 必須 |
 |-------|-------------|----------|
-| **maxSkew** | DoNotSchedule の場合は対象ドメインとグローバル最小値の許容差。ScheduleAnyway は skew を設定として使用 | はい |
+| **maxSkew** | DoNotSchedule の場合は対象ドメインとグローバル最小値の許容差。ScheduleAnyway は skew を優先条件として使用 | はい |
 | **topologyKey** | トポロジードメインを定義する Node ラベルキー | はい |
 | **whenUnsatisfiable** | 制約を満たせない場合のアクション: `DoNotSchedule` または `ScheduleAnyway` | はい |
 | **labelSelector** | カウントする Pod を選択。通常はこれと一致する Pod ラベルを指定 | いいえ（null は Pod に一致しない） |
@@ -776,7 +776,7 @@ spec:
             app: web
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         resources:
           requests:
             cpu: 100m
@@ -883,7 +883,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 ### キャッシュ保護パターン
@@ -967,7 +967,7 @@ Descheduler v0.36.0 は検証済みの例のリリースであり、テスト対
 ```bash
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
 helm upgrade --install descheduler descheduler/descheduler \
-  --version 0.36.0 --namespace kube-system \
+  --version 0.37.0 --namespace kube-system \
   --values descheduler-values.yaml
 ```
 
@@ -1062,7 +1062,7 @@ spec:
           serviceAccountName: descheduler
           containers:
           - name: descheduler
-            image: registry.k8s.io/descheduler/descheduler:v0.36.0
+            image: registry.k8s.io/descheduler/descheduler:v0.37.0
             args:
             - --policy-config-file=/policy/policy.yaml
             - --v=3
@@ -1083,7 +1083,7 @@ spec:
 > - [Custom Scheduler Part 2: 実装](../scheduling/02-custom-scheduler-part2.md)
 > - [Custom Scheduler Part 3: 高度な機能](../scheduling/03-custom-scheduler-part3.md)
 
-## Amazon EKS におけるスケジューリング最適化
+## Amazon EKS におけるスケジューリング最適化 {#scheduling-optimization-in-amazon-eks}
 
 Amazon EKS では、Kubernetes のスケジューリング機能を使用してワークロードを最適化できます。
 
@@ -1231,7 +1231,7 @@ spec:
     updateMode: "Recreate"
 ```
 
-## スケジューリングのベストプラクティス
+## スケジューリングのベストプラクティス {#scheduling-best-practices}
 
 Kubernetes と EKS におけるスケジューリング最適化のベストプラクティスは以下のとおりです。
 
@@ -1265,7 +1265,7 @@ Kubernetes と EKS におけるスケジューリング最適化のベストプ�
    - メンテナンス中の Node に Taint を適用
    - 適切な Toleration を設定
 
-## まとめ
+## まとめ {#conclusion}
 
 Kubernetes のスケジューリング、Preemption、Eviction のメカニズムは、クラスターリソースを効率的に管理し、ワークロードの可用性を維持するうえで重要な役割を果たします。これらの機能を理解して活用することで、Amazon EKS クラスターのワークロードを最適化し、信頼性高く運用できます。
 

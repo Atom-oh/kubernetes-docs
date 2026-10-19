@@ -1,6 +1,6 @@
 # EKS セキュリティのベストプラクティスクイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 以下の質問で Amazon EKS のセキュリティに関するベストプラクティスの理解度を確認しましょう。
 
@@ -141,7 +141,7 @@
 
 **回答: B) 該当する CIS Amazon EKS benchmark profile**
 
-**解説:** 環境に適した CIS Amazon EKS benchmark edition と kube-bench profile を選択してください。kube-bench0.16.0 には複数の EKS profile が含まれています。単一の可変な upstream Job は fleet coverage の証明にはなりません。手動/該当なしの確認と managed control plane の制限は残り、quiz/tool のスコアは認定ではありません。
+**解説:** 環境に適した CIS Amazon EKS ベンチマークの版と kube-bench profile を選択してください。kube-bench 0.16.0 には複数の EKS profile が含まれています。単一の可変な upstream Job はフリート全体を網羅した証明にはなりません。手動/該当なしの確認と managed control plane の制限は残り、クイズやツールのスコアは認定ではありません。
 
 </details>
 
@@ -259,6 +259,6 @@
 
 ## 関連ドキュメント
 
-* [EKS Security Best Practices](../../security/06-eks-security-best-practices.md)
-* [Pod Security Standards](../../security/03-pod-security-standards.md)
-* [Secrets Management](../../security/05-secrets-management.md)
+* [EKS セキュリティのベストプラクティス](../../security/06-eks-security-best-practices.md)
+* [Pod セキュリティ標準](../../security/03-pod-security-standards.md)
+* [シークレット管理](../../security/05-secrets-management.md)

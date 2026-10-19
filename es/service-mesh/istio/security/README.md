@@ -1,120 +1,64 @@
 # Seguridad
 
-> **Versiones compatibles**: Istio 1.28
-> **Última actualización**: February 19, 2026
+> **Versión revisada**: Istio 1.31.0
+> **Última actualización**: 11 de septiembre de 2026
 
-Istio proporciona sólidas características de seguridad dentro de la service mesh. Basado en el modelo de seguridad Zero Trust, cifra automáticamente la comunicación de servicio a servicio y proporciona control de acceso granular.
+Istio ofrece funciones de seguridad sólidas dentro de la malla de servicios. Basado en el modelo de seguridad Zero Trust, cifra automáticamente la comunicación entre servicios y ofrece un control de acceso detallado.
 
 ## Tabla de contenidos
 
 1. [Descripción general de la arquitectura de seguridad](#security-architecture-overview)
 2. [Características principales de seguridad](#core-security-features)
-3. [Componentes de seguridad (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#security-components)
-4. [Documentación detallada (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#next-steps)
-5. [Mejores prácticas de seguridad](#security-best-practices)
-6. [Monitoreo de seguridad](#security-monitoring)
+3. [Componentes de seguridad](#security-components)
+4. [Documentación detallada](#next-steps)
+5. [Prácticas recomendadas de seguridad](#security-best-practices)
+6. [Supervisión de seguridad](#3-security-monitoring)
 
-<span id="security-architecture-overview"></span>
-
-## Descripción general de la arquitectura de seguridad
+## Descripción general de la arquitectura de seguridad {#security-architecture-overview}
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Arquitectura de seguridad de Istio" width="900">
+  <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Istio Security Architecture" width="900">
 </p>
 
-Istio implementa un **modelo de seguridad Zero Trust** para proteger toda la comunicación dentro de la service mesh. La arquitectura de seguridad consta de 4 capas principales:
+Istio implementa un **modelo de seguridad Zero Trust** para el tráfico de las cargas de trabajo incorporadas a la malla. El tráfico excluido, los clientes que usan texto sin cifrar y los protocolos no compatibles aún requieren controles explícitos. A continuación se describen las principales responsabilidades de seguridad:
 
 ### Capas de la arquitectura de seguridad
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        CA[Certificate Authority<br/>CA Certificate Management]
-        ConfigAPI[Config API<br/>Security Policy Distribution]
-    end
+![Diagrama de la autoridad de certificación de istiod y de la API de configuración que distribuyen certificados y políticas a los sidecars Envoy de dos pods; el cifrado mTLS se aplica solo entre los sidecars, sobre una cadena de cinco capas de seguridad desde la identidad hasta la autorización.](../../../.gitbook/assets/en-service-mesh-istio-security-readme-0.png)
 
-    subgraph DataPlane["Data Plane (Envoy Proxy)"]
-        subgraph Pod1["Pod A"]
-            App1[Application]
-            Envoy1[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-readme-0.html)
 
-        subgraph Pod2["Pod B"]
-            Envoy2[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-            App2[Application]
-        end
-    end
+### Componentes de seguridad {#security-components}
 
-    subgraph SecurityLayers["Security Layers"]
-        Identity[1. Identity<br/>SPIFFE ID Based]
-        CertMgmt[2. Certificate Management<br/>Auto Issuance/Renewal]
-        PeerAuth[3. Peer Authentication<br/>Service-to-Service mTLS]
-        ReqAuth[4. Request Authentication<br/>End-User JWT]
-        AuthZ[5. Authorization<br/>Access Control]
-    end
+1. **Plano de control (istiod)**
+   - Autoridad de certificación (CA): emisión y administración de certificados X.509
+   - API de configuración: distribución y administración de políticas de seguridad
+   - Descubrimiento de servicios: administración de identidades de cargas de trabajo
 
-    CA -.->|Certificate Issuance| Envoy1
-    CA -.->|Certificate Issuance| Envoy2
-    ConfigAPI -.->|Policy Distribution| Envoy1
-    ConfigAPI -.->|Policy Distribution| Envoy2
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Identity --> CertMgmt
-    CertMgmt --> PeerAuth
-    PeerAuth --> ReqAuth
-    ReqAuth --> AuthZ
-
-    %% Style definitions
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef security fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class CA,ConfigAPI control;
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Identity,CertMgmt,PeerAuth,ReqAuth,AuthZ security;
-```
-
-**Componentes principales de la arquitectura**:
-
-1. **Control Plane (istiod)**
-   - Certificate Authority (CA): emisión y administración de certificados X.509
-   - Configuration API: distribución y administración de políticas de seguridad
-   - Service Discovery: administración de identidades de workloads
-
-2. **Data Plane (Envoy Proxy)**
-   - Puntos de terminación mTLS: comunicación cifrada entre servicios
-   - Aplicación de políticas: aplicación de políticas de autenticación/autorización
+2. **Plano de datos (sidecars Envoy o ztunnel/waypoints de ambient)**
+   - Puntos de terminación de mTLS: comunicación cifrada entre servicios
+   - Aplicación de políticas: aplicación de políticas de autenticación y autorización
    - Telemetría de seguridad: recopilación de métricas de seguridad
 
 3. **Administración de identidades**
-   - Administración robusta de identidades basada en el estándar SPIFFE
+   - Administración de identidades sólidas basada en el estándar SPIFFE
    - Integración con Kubernetes ServiceAccount
-   - Renovación automática de certificados (24 horas de forma predeterminada)
+   - La validez predeterminada de los certificados es de 24 horas; se rotan antes de que caduquen
 
 4. **Motor de políticas**
    - Políticas de seguridad declarativas (basadas en CRD)
-   - Control de acceso granular (RBAC)
+   - Control de acceso detallado (RBAC)
    - Compatibilidad con registros de auditoría
 
-<span id="core-security-features"></span>
+## Características principales de seguridad {#core-security-features}
 
-## Características principales de seguridad
-
-Istio proporciona las siguientes características principales de seguridad:
+Istio ofrece las siguientes funciones principales de seguridad:
 
 ### 1. Seguridad de la comunicación (mTLS)
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/mtls-migration.svg" alt="Migración de mTLS" width="600">
-</p>
+Migre las cargas de trabajo incluidas de PERMISSIVE a STRICT después de verificar que todos los clientes necesarios usan mTLS.
 
-Toda la comunicación de servicio a servicio se cifra automáticamente. Istio admite una migración gradual mediante el modo **PERMISSIVE**.
+El mecanismo auto mTLS cifra la comunicación entre pares de cargas de trabajo incorporadas a la malla; PERMISSIVE también acepta texto sin cifrar. Use STRICT para exigir mTLS de la malla en las cargas de trabajo de entrada seleccionadas.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -127,21 +71,23 @@ spec:
     mode: STRICT  # Production: STRICT, Migration: PERMISSIVE
 ```
 
-**Descripciones de los modos**:
-- **STRICT**: solo se permite mTLS (recomendado para producción)
-- **PERMISSIVE**: se permiten tanto mTLS como texto sin cifrar (para migración)
-- **DISABLE**: mTLS está deshabilitado
+**Descripción de los modos**:
+- **STRICT**: solo permite mTLS (recomendado para producción)
+- **PERMISSIVE**: permite tanto mTLS como texto sin cifrar (para la migración)
+- **DISABLE**: deshabilita mTLS de transporte de Istio en el modo sidecar; no es compatible con ambient
+
+Los siguientes ejemplos de políticas usan selectores de sidecars. ztunnel de ambient aplica seguridad L4; JWT y otras políticas L7 requieren un waypoint adecuado y la asociación mediante `targetRefs`.
 
 ### 2. Autenticación
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/authn.svg" alt="Arquitectura de autenticación" width="700">
+  <img src="https://istio.io/latest/docs/concepts/security/authn.svg" alt="Authentication Architecture" width="700">
 </p>
 
-Istio proporciona dos capas de autenticación:
+Istio ofrece dos capas de autenticación:
 
-- **Peer Authentication**: autenticación de servicio a servicio (mTLS + SPIFFE ID)
-- **Request Authentication**: autenticación de usuarios finales (JWT + OAuth/OIDC)
+- **Autenticación de pares (Peer Authentication)**: autenticación entre servicios (mTLS + SPIFFE ID)
+- **Autenticación de solicitudes (Request Authentication)**: verificación de JWT para emisores compatibles; los flujos de inicio de sesión y OAuth siguen siendo externos
 
 **Ejemplo**:
 ```yaml
@@ -150,23 +96,25 @@ apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://accounts.google.com"
     jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+    audiences: ["<your-google-client-id>"]
 ```
 
 ### 3. Autorización
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Arquitectura de autorización" width="600">
+  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Authorization Architecture" width="600">
 </p>
 
-Se aplican políticas de control de acceso granular. AuthorizationPolicy controla en función de:
-- Service Account / Namespace
-- Método HTTP / Ruta
+Se aplican políticas detalladas de control de acceso. AuthorizationPolicy permite controlar el acceso según:
+- Cuenta de servicio / espacio de nombres
+- Método HTTP / ruta
 - Dirección IP
-- JWT Claims
+- Claims del JWT
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -185,17 +133,13 @@ spec:
         paths: ["/api/*"]
 ```
 
-<span id="security-best-practices"></span>
-
-## Mejores prácticas de seguridad
+## Prácticas recomendadas de seguridad {#security-best-practices}
 
 ### 1. Defensa en profundidad
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/ops/best-practices/security/security-best-practices.svg" alt="Mejores prácticas de seguridad" width="700">
-</p>
+Combine la identidad de transporte, credenciales de solicitud verificadas y reglas de autorización explícitas.
 
-Implemente una defensa en profundidad aplicando seguridad en múltiples capas:
+Implemente una defensa en profundidad aplicando controles de seguridad en varias capas:
 
 **Capa de red**:
 ```yaml
@@ -217,10 +161,12 @@ apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: require-jwt
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://your-auth-provider.com"
     jwksUri: "https://your-auth-provider.com/.well-known/jwks.json"
+    audiences: ["<your-api-audience>"]
 ```
 
 **Capa de control de acceso**:
@@ -230,52 +176,56 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
+  namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}
+  action: ALLOW
+  rules: []
 ---
 # 4. Allow only required access
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-specific
+  namespace: default
 spec:
   action: ALLOW
   rules:
   - from:
     - source:
         principals: ["cluster.local/ns/frontend/sa/webapp"]
+        requestPrincipals: ["*"]
     to:
     - operation:
         methods: ["GET", "POST"]
 ```
 
+RequestAuthentication por sí sola acepta solicitudes sin token. El ejemplo ALLOW anterior requiere que se verifiquen tanto la identidad del par como el principal de la solicitud; una política ALLOW sin reglas establece la denegación predeterminada. Una regla DENY para todo tendría prioridad y bloquearía esas excepciones. Estos ejemplos de ámbito de espacio de nombres afectan a todas las cargas de trabajo coincidentes; delimite el alcance de forma intencionada con selectores o `targetRefs`. AUDIT requiere una implementación de auditoría configurada, y los registros de acceso deben habilitarse por separado.
+
 ### 2. Principio de privilegio mínimo
 
-- Otorgue solo los permisos mínimos necesarios a cada servicio
-- Separe los ServiceAccounts de forma granular
-- Utilice el aislamiento de namespace
+- Conceda a cada servicio solo los permisos mínimos necesarios
+- Separe las cuentas de servicio con granularidad
+- Use el aislamiento de espacios de nombres
 
-<span id="security-monitoring"></span>
+<span id="3-security-monitoring"></span>
 
-### 3. Monitoreo de seguridad
+### 3. Supervisión de seguridad
 
-- Habilite Istio Access Logs
+- Habilite los registros de acceso de Istio
 - Recopile métricas de seguridad con Prometheus
 - Supervise el estado de mTLS con Kiali
 
-## Próximos pasos
+## Próximos pasos {#next-steps}
 
-1. **[mTLS](01-mtls.md)**: cifrado de servicio a servicio y administración de identidades
+1. **[mTLS](01-mtls.md)**: cifrado entre servicios y administración de identidades
 2. **[Autenticación](02-authentication.md)**: integración de JWT y OAuth/OIDC
-3. **[Autorización](03-authorization.md)**: políticas de control de acceso granular
+3. **[Autorización](03-authorization.md)**: políticas detalladas de control de acceso
 
 ## Referencias
 
 ### Documentación oficial
 - [Conceptos de seguridad de Istio](https://istio.io/latest/docs/concepts/security/)
-- [Mejores prácticas de seguridad](https://istio.io/latest/docs/ops/best-practices/security/)
+- [Prácticas recomendadas de seguridad](https://istio.io/latest/docs/ops/best-practices/security/)
 - [Referencia de seguridad](https://istio.io/latest/docs/reference/config/security/)
 
 ### Estándares relacionados
@@ -285,4 +235,4 @@ spec:
 
 ## Cuestionario
 
-Para poner a prueba sus conocimientos de este capítulo, pruebe el [Cuestionario de seguridad de Istio](../../../quizzes/service-mesh/istio/security.md).
+Para poner a prueba sus conocimientos de este capítulo, pruebe el [cuestionario de seguridad de Istio](../../../quizzes/service-mesh/istio/security.md).

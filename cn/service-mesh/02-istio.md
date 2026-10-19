@@ -1,6 +1,6 @@
 # Istio
 
-> **最后更新**：2026 年 9 月 11 日 · Istio 1.31 指南
+> **最后更新**：2026 年 10 月 12 日 · Istio 1.31 指南
 
 本概述让原章节 URL 继续可用。详细流程和兼容性矩阵由持续维护的 [Istio 文档索引](istio/README.md)及[安装指南](istio/01-installation.md)提供；当前设置请使用这些指南。
 
@@ -78,7 +78,7 @@ Istio 提供强大的流量管理能力：
 
 Istio 由**控制平面**和**数据平面**组成。下图展示 Sidecar 形式，不是 Ambient 拓扑。
 
-![控制平面的 Istiod 向三个数据平面 Pod 中与应用容器并行运行的 Envoy Sidecar 代理下发配置，这些代理彼此直接建立双向 TLS 连接。](../.gitbook/assets/en-service-mesh-02-istio-0.png)
+![控制平面的 Istiod 向三个数据平面 Pod 中与应用容器并行运行的 Envoy Sidecar 代理下发配置，这些代理彼此直接建立相互 TLS（mTLS）连接。](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-02-istio-0.html)
 

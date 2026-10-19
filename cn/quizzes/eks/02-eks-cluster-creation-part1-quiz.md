@@ -137,7 +137,7 @@ aws eks create-cluster \
   --resources-vpc-config subnetIds=subnet-0123456789abcdef0,subnet-0123456789abcdef1,subnet-0123456789abcdef2,subnet-0123456789abcdef3
 ```
 
-NAT gateway 是一种可能的互联网出口路径。必需的 VPC endpoint、镜像镜像仓库和私有连接可以支持无互联网访问的运行方式。将资源放在私有子网中与消除互联网出口是两个不同的决定。请用经过审核的实际值替换示例 VPC、子网和客户端 CIDR。
+NAT gateway 是一种可能的互联网出口路径。必需的 VPC endpoint、镜像仓库和私有连接可以支持无互联网访问的运行方式。将资源放在私有子网中与消除互联网出口是两个不同的决定。请用经过审核的实际值替换示例 VPC、子网和客户端 CIDR。
 
 </details>
 
@@ -289,8 +289,8 @@ eksctl create cluster -f cluster.yaml
 **其他选项的问题：**
 
 * `eksctl create-cluster`：命令格式错误。eksctl 使用空格而不是连字符 (-) 分隔命令。
-* `eksctl new cluster`：`new` 不是有效的 eksctl 命令。
-* `eksctl start cluster`：`start` 不是有效的 eksctl 命令。应使用文档中列出的生命周期命令，而不是自行编造动词。
+* `eksctl new cluster`：“new” 不是有效的 eksctl 命令。
+* `eksctl start cluster`：“start” 不是有效的 eksctl 命令。应使用文档中列出的生命周期命令，而不是自行编造动词。
 
 eksctl 提供多种 EKS 集群管理命令：
 

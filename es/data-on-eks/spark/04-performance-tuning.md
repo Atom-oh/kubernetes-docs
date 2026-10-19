@@ -1,6 +1,6 @@
 # Parte 4: Ajuste del rendimiento y los costes
 
-> **Referencia de revisión**: 12 de septiembre de 2026 · Spark ascendente 4.2.0 · Karpenter 1.14
+> **Referencia de revisión**: 12 de septiembre de 2026 · Apache Spark 4.2.0 · Karpenter 1.14
 
 ## Alcance y medición
 
@@ -215,11 +215,11 @@ spec:
       sizeLimit: 16Gi
 ```
 
-Este emptyDir usa el sistema de archivos de kubelet preparado y respaldado por NVMe; otra configuración de nodo podría respaldarlo de otra manera. El nombre del volumen debe empezar por `spark-local-dir-`, incluido el guion final y un sufijo. El nombre antiguo `spark-local-dir` no se reconoce y puede provocar que se monte otro emptyDir en la misma ruta.
+Este emptyDir utiliza el sistema de archivos de kubelet preparado y respaldado por NVMe; la configuración de otros nodos podría respaldarlo de otra manera. El nombre del volumen debe empezar por `spark-local-dir-`, incluido el guion final y un sufijo. El nombre antiguo `spark-local-dir` no se reconoce y puede provocar que se monte otro emptyDir en la misma ruta.
 
-Establecer solo spark.local.dir puede hacer que Spark en Kubernetes cree allí un emptyDir; no se requiere hostPath. Los montajes temporales reconocidos rellenan SPARK_LOCAL_DIRS. sizeLimit no reserva capacidad: el disco del nodo podría agotarse antes. Observe conjuntamente las solicitudes y límites, los registros, las capas de escritura y la presión del disco.
+Configurar únicamente spark.local.dir puede hacer que Spark en Kubernetes cree allí un emptyDir; no se requiere hostPath. Los montajes temporales reconocidos rellenan SPARK_LOCAL_DIRS. sizeLimit no reserva capacidad: el disco del nodo podría agotarse antes. Observe conjuntamente las solicitudes y límites, los registros, las capas de escritura y la presión del disco.
 
- tmpfs consume RAM y requiere asignar presupuesto de memoria.
+El tmpfs consume RAM y requiere asignarle un presupuesto de memoria.
 
 ## 4. Dos ciclos de escalado y terminación
 
@@ -269,11 +269,11 @@ spark-submit \
   local:///opt/spark/examples/jars/spark-examples.jar 10
 ```
 
-Spark DRA ajusta el número de ejecutores según la cola de tareas y el estado de inactividad, caché y shuffle. spark.kubernetes.allocation.batch.size y batch.delay controlan la tasa de creación de pods del asignador de Kubernetes; no son exclusivos de DRA. Karpenter aporta capacidad a partir de las solicitudes y restricciones de pods que no se pueden programar. Las descargas de imágenes, la falta de IP, cuotas o capacidad en una zona y las discrepancias de taints también pueden retrasar los pods.
+Spark DRA ajusta el número de ejecutores según la cola de tareas y el estado inactivo, la caché y el shuffle. spark.kubernetes.allocation.batch.size y batch.delay controlan la tasa de creación de pods del asignador de Kubernetes; no son exclusivos de DRA. Karpenter aporta capacidad a partir de las solicitudes y restricciones de pods que no se pueden programar. Las descargas de imágenes, la falta de IP, cuotas o capacidad en una zona y las discrepancias de taints también pueden retrasar los pods.
 
-WhenEmpty con 120s es una política inicial de consolidación conservadora para pods Spark que suelen estar en ejecución. La definición de vacío de Karpenter puede incluir pods restantes sin coste de interrupción, como DaemonSets. Antes de considerar vacío un nodo que solo tenga ejecutores, inspeccione también las otras cargas de trabajo normales.
+La política WhenEmpty con 120s es un punto de partida conservador para consolidar nodos con pods de Spark en ejecución. Según la definición de Karpenter, un nodo vacío puede seguir teniendo pods sin coste de disrupción, como los DaemonSets. Antes de considerar vacío un nodo que solo aloje ejecutores, inspeccione también las demás cargas de trabajo habituales.
 
-consolidateAfter > executorIdleTimeout no garantiza que DRA libere primero los ejecutores. Los temporizadores empiezan con eventos distintos, y los datos en caché o el seguimiento de shuffle pueden mantener los ejecutores activos durante más tiempo. La deriva, la caducidad y las interrupciones de Spot son independientes de la consolidación. Los PDB, do-not-disrupt y los presupuestos de interrupción no impiden que se reclame una instancia Spot.
+Que consolidateAfter > executorIdleTimeout no garantiza que DRA libere primero los ejecutores. Los temporizadores parten de eventos distintos, y los datos en caché o el seguimiento de shuffle pueden mantener los ejecutores activos durante más tiempo. La deriva, la caducidad y las interrupciones de Spot son independientes de la consolidación. Los PDB, do-not-disrupt y los presupuestos de disrupción no impiden que AWS reclame una instancia Spot.
 
 ![La asignación de ejecutores de Spark y el aprovisionamiento de nodos de Karpenter son ciclos de control independientes.](../../.gitbook/assets/en-data-on-eks-spark-04-performance-tuning-0.png)
 
@@ -299,7 +299,7 @@ La migración depende de la capacidad de los pares, la red y el tiempo. La reser
 
 Un ejecutor JVM con heap de 4g y la sobrecarga predeterminada del 10 % añade 409 MiB tras la conversión a entero, con un total de 4505 MiB. Calcule por separado PySpark, la memoria fuera del heap y los ajustes explícitos de sobrecarga; 4g no es toda la memoria del pod. No es necesario que el controlador siempre sea mayor que el ejecutor, y los ejecutores más pequeños no son mejores en todos los casos.
 
-Compare el coste por trabajo completado correctamente y el tiempo p95 de finalización, incluidos los reintentos, la capacidad inactiva, el almacenamiento, la red y los registros, en lugar de fijarse solo en el precio por hora de la instancia. El comportamiento del entorno de ejecución de EMR, como la preasignación de ejecutores, puede diferir del de Spark ascendente; inspeccione la configuración de la versión seleccionada.
+Compare el coste por trabajo completado correctamente y el tiempo p95 de finalización, incluidos los reintentos, la capacidad inactiva, el almacenamiento, la red y los registros, en lugar de fijarse solo en el precio por hora de la instancia. El comportamiento del entorno de ejecución de EMR, como la preasignación de ejecutores, puede diferir del de Apache Spark; inspeccione la configuración de la versión seleccionada.
 
 Los ejemplos se comprobaron con los CRD y la construcción de pasos funcionales nativos de Spark. Esto no equivale a aprovisionar EC2, inicializar discos, probar interrupciones de Spot ni ejecutar un benchmark de rendimiento con un gran volumen de shuffle.
 

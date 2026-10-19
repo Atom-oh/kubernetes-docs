@@ -5,7 +5,7 @@
 
 ## Qué abarca este documento
 
-- Por qué migrar a Lattice introduce al mismo tiempo factores que aumentan y que reducen la latencia
+- Por qué migrar a Lattice introduce factores que aumentan y que reducen la latencia **al mismo tiempo**
 - Por qué el resultado depende del entorno y no se puede predecir de antemano
 - Qué medir y cómo hacerlo para obtener una respuesta: una matriz de mediciones de PoC
 
@@ -13,7 +13,7 @@
 
 El impacto en la latencia puede variar según la carga de trabajo. El procesamiento del proxy, las rutas de red, la reutilización de conexiones, la firma, la renovación de credenciales y la evaluación de políticas pueden cambiar el resultado. **Este capítulo no contiene mediciones de latencia de Lattice**, por lo que no afirma ni una magnitud ni una dirección garantizada.
 
-Qué opción prevalece depende de factores como cuánto tiempo de CPU de los nodos consumen actualmente los sidecars de Envoy, qué tan breves son las solicitudes (el peso relativo del costo fijo), si se usa keepalive, si está habilitada la autenticación IAM y qué proporción de llamadas cruza una AZ. Estos valores varían entre organizaciones.
+Qué opción prevalece depende de factores como cuánta CPU de los nodos consumen actualmente los sidecars de Envoy, qué tan breves son las solicitudes (el peso relativo del costo fijo), si se usa keepalive, si está habilitada la autenticación IAM y qué proporción de llamadas cruza una AZ. Estos valores varían entre organizaciones.
 
 Por tanto, la conclusión de este documento es **«hay que medirlo»** y su contenido explica **«qué medir para obtener una respuesta»**. A continuación, se organizan los factores por dirección y magnitud, y luego se presenta una matriz de medición que los aísla.
 
@@ -32,7 +32,7 @@ Habilitar la autenticación IAM añade dos cálculos por solicitud.
 - La firma del lado del emisor añade canonicalización y cálculo de firma. Lattice requiere `UNSIGNED-PAYLOAD`; no compare como trabajo de firma necesario de Lattice el hash genérico de la carga útil.
 - La verificación del lado de Lattice y la evaluación de políticas habilitadas añaden trabajo. Mida la ruta completa en vez de suponer una duración por operación.
 
-El costo real puede deberse menos al cifrado en sí y más a la **ruta de obtención de credenciales**. Con credenciales temporales, el proveedor configurado las almacena en caché y las renueva; IRSA usa STS, mientras que EKS Pod Identity usa el agente del nodo y EKS Auth. Una solicitud que espera la obtención o renovación puede incorporar esa latencia. Que afecte a p50, p99 o muestras más infrecuentes depende de la frecuencia de renovación y de la carga de trabajo; por ello, registre el comportamiento del proveedor/caché y la distribución de latencia alrededor de las renovaciones (consulte el [documento 03](./03-auth-flow.md)).
+En realidad, el costo puede deberse menos a la criptografía en sí que a la **ruta de obtención de credenciales**. Con credenciales temporales, el proveedor configurado las almacena en caché y las renueva; IRSA usa STS, mientras que EKS Pod Identity usa el agente del nodo y EKS Auth. Una solicitud que espera la obtención o renovación puede incorporar esa latencia. Que afecte a p50, p99 o muestras más infrecuentes depende de la frecuencia de renovación y de la carga de trabajo; por ello, registre el comportamiento del proveedor/caché y la distribución de latencia alrededor de las renovaciones (consulte el [documento 03](./03-auth-flow.md)).
 
 Si firma a través de un proxy de salida, añada el costo de otro salto de proxy.
 
@@ -50,7 +50,7 @@ Por separado, **en la facturación no se cobra adicionalmente el tráfico entre 
 
 En AS-IS, la conexión mTLS entre los Envoy era **una conexión de larga duración**. El costo del protocolo de enlace se pagaba una vez y muchas solicitudes usaban esa conexión.
 
-En TO-BE, cambian el lugar y la frecuencia con que se establecen las conexiones. Una conexión nueva incurre en costos de configuración; el protocolo de enlace TLS se aplica cuando se usa TLS. En la prueba HTTP de Pods citada, deshabilitar keepalive aumentó p50 de 0.461 → 1.079 ms en la misma AZ y de 0.704 → 1.517 ms entre AZ. Esas mediciones demuestran el efecto de reutilizar conexiones en esa configuración, no un costo aislado de TLS/Lattice ni que la reutilización importe más que un salto de proxy.
+En TO-BE, cambian el lugar y la frecuencia con que se establecen las conexiones. Establecer una conexión nueva requiere trabajo adicional; el protocolo de enlace TLS se aplica cuando se usa TLS. En la prueba HTTP de Pods citada, deshabilitar keepalive aumentó p50 de 0.461 → 1.079 ms en la misma AZ y de 0.704 → 1.517 ms entre AZ. Esas mediciones demuestran el efecto de reutilizar conexiones en esa configuración, no un costo aislado de TLS/Lattice ni que la reutilización importe más que un salto de proxy.
 
 Por eso, durante la migración debe auditar la configuración del cliente HTTP de sus aplicaciones (tamaño del pool de conexiones, keepalive y tiempo de espera inactiva). No es una característica de Lattice; es una configuración del cliente que sale a la luz cuando desaparece el proxy que antes administraba las conexiones.
 

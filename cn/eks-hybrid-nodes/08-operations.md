@@ -295,7 +295,7 @@ spec:
   value: "True"
 ```
 
-编辑前请检查 `amazon-cloud-watch` 命名空间中的 `amazoncloudwatchagents/cloudwatch-agent`，并审查附加组件/operator 如何协调该配置。之后确认 agent 已完成滚动更新并开始采集。Hybrid 集群/工作负载/Pod/容器指标可用，但由于缺少 EC2 IMDS 依赖，无法提供节点级 Container Insights 指标。如果其 operator 在 Hybrid Nodes 上运行，请确保控制平面能够访问 webhook。
+编辑前请检查 `amazon-cloudwatch` 命名空间中的 `amazoncloudwatchagents/cloudwatch-agent`，并审查附加组件/operator 如何协调该配置。之后确认 agent 已完成滚动更新并开始采集。Hybrid 集群/工作负载/Pod/容器指标可用，但由于缺少 EC2 IMDS 依赖，无法提供节点级 Container Insights 指标。如果其 operator 在 Hybrid Nodes 上运行，请确保控制平面能够访问 webhook。
 
 ### EKS Pod Identity Agent
 

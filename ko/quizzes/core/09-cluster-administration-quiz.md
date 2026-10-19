@@ -592,6 +592,7 @@ etcdutl snapshot restore snapshot.db \
 - 클러스터 네트워크 CIDR 범위 계획
 - 네트워크 모니터링 도구 구현
 </details>
+
 ## 실습 문제
 
 1. 다음 요구 사항에 맞는 ResourceQuota 매니페스트를 작성하세요:
@@ -1081,6 +1082,7 @@ python3 resource_usage_report.py
 - 정기적인 보고서 생성을 위해 cron 작업으로 설정할 수 있습니다.
 - 보고서를 이메일로 전송하거나 모니터링 시스템과 통합할 수 있습니다.
 </details>
+
 ## 고급 주제
 
 1. 실제 etcd 설정·운영 기법으로 구성된 항목 두 개는 무엇인가요? (두 개 선택)

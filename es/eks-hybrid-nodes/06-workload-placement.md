@@ -3,7 +3,7 @@
 < [Anterior: Integración de GPU](./05-gpu-integration.md) | [Tabla de contenido](./README.md) | [Siguiente: Administración del ciclo de vida de los nodos](./07-node-lifecycle.md) >
 
 > **Versiones compatibles**: versiones de EKS compatibles con Karpenter; se revisaron las interfaces de Kubernetes 1.36.5 y Karpenter/provider 1.14.1 (línea base de revisión fijada).
-> **Última actualización**: 16 de octubre de 2026
+> **Última actualización**: 18 de octubre de 2026
 
 Este capítulo ubica las cargas de trabajo en nodos Hybrid y en la nube, y explica los límites del escalado hacia la nube y del costo de eliminación de Pods. Los ejemplos son patrones de configuración y parches validados localmente. Durante la auditoría no se creó capacidad en la nube, no se modificaron nodos ni se crearon aplicaciones o cargas de trabajo de GPU.
 
@@ -426,6 +426,12 @@ No se garantiza que los nodos vacíos desaparezcan de inmediato: siguen aplicán
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-06-workload-placement-0.html)
 
 > **Corrección del diagrama:** eliminar primero los Pods de la nube y conservar todos los Pods de las instalaciones son objetivos de mejor esfuerzo, no invariantes. Incluso los nodos «vacíos» pueden contener Pods de DaemonSet. La etiqueta anterior `WhenUnderutilized` debería decir `WhenEmptyOrUnderutilized` en el ejemplo de v1. Consulte arriba el orden de evaluación y las condiciones del ciclo de vida.
+
+### Video de demostración: escalado de cargas hacia la nube y pod-deletion-cost
+
+[![Vídeo de demostración V2: escalado de cargas hacia la nube y pod-deletion-cost (sin sonido, 3 min 36 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v2-bursting.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v2-bursting.mp4)
+
+En este video sin sonido, la carga de trabajo desborda los nodos Hybrid llenos y pasa a los nodos de expansión de Karpenter; al reducirse la escala, los Pods de la nube salen primero porque Kyverno estableció pod-deletion-cost en los Pods Hybrid. Se grabó el 18 de octubre de 2026 en un entorno simulado (hosts EC2 que representan servidores locales conectados mediante TGW; no es una configuración compatible para producción) mientras se ejecutaba el escenario B (Kyverno, función de Karpenter desactivada y solicitud de 910m por Pod). En la ejecución grabada, las 15 réplicas estaban en estado Ready 35 s después de iniciar el escalado horizontal (8 Hybrid y 7 de expansión). Al escalar a 10 quedaron 8 Hybrid y 2 en la nube; al escalar a 3, las 3 quedaron en nodos Hybrid. La comparación A/B/C que aparece más adelante en el video proviene de una sola ejecución por escenario, realizada el 15 de octubre de 2026 (solicitud de 930m por Pod), por lo que las diferencias pequeñas podrían ser variación aleatoria. pod-deletion-cost es una preferencia de mejor esfuerzo y no se aplica ante fallos de nodo ni desalojos. Consulte el [material de la sesión de una hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
 
 ## Referencias principales
 

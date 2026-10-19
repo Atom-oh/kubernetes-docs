@@ -1,6 +1,6 @@
 # Perspectiva de los servicios financieros
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Qué abarca este documento
 
@@ -12,7 +12,7 @@
 
 El problema más frecuente en las evaluaciones de blockchain para servicios financieros es **seguir adelante cuando la tecnología no se ajusta al problema.** Este documento empieza con ese filtro.
 
-Como se explica en [Fundamentos](./01-fundamentals.md), la esencia de blockchain es **«llegar a un acuerdo sin un árbitro de confianza».** El precio es el rendimiento y la complejidad. Por tanto:
+Como se explica en [Fundamentos](./01-fundamentals.md), la esencia de blockchain es **«llegar a un acuerdo sin un árbitro de confianza».** El precio es un menor rendimiento y una mayor complejidad. Por tanto:
 
 | Situación | ¿Es adecuada blockchain? |
 |---|---|
@@ -27,11 +27,11 @@ Como se explica en [Fundamentos](./01-fundamentals.md), la esencia de blockchain
 
 [El caso de Amazon QLDB](./03-managed-blockchain.md) es ilustrativo. QLDB ofrecía precisamente «un libro mayor verificable criptográficamente con una parte central de confianza», partiendo de la premisa de que **eso resuelve muchos problemas.** El servicio terminó, pero la definición del problema sigue siendo válida: muchos requisitos no necesitan un consenso totalmente descentralizado.
 
-**Recomendación práctica**: si no puedes escribir en una sola frase «por qué este problema no debe tener árbitro», compara primero las alternativas que no usan blockchain.
+**Recomendación práctica**: si no puede explicar en una sola frase por qué este problema no debe tener árbitro, conviene comparar primero las alternativas que no usan blockchain.
 
 ## Por qué un consorcio
 
-Algunas aplicaciones financieras eligen redes permisionadas para controlar la pertenencia, la gobernanza y la ubicación de los datos. Otras usan redes públicas con controles adicionales. **La elección de la red por sí sola no establece el cumplimiento de KYC/AML, la privacidad ni otros requisitos normativos**; evalúa la jurisdicción, la actividad, los participantes y los flujos de datos concretos.
+Algunas aplicaciones financieras eligen redes permisionadas para controlar la pertenencia, la gobernanza y la ubicación de los datos. Otras usan redes públicas con controles adicionales. **La elección de la red por sí sola no establece el cumplimiento de KYC/AML, la privacidad ni otros requisitos normativos**; es necesario evaluar la jurisdicción, la actividad, los participantes y los flujos de datos concretos.
 
 | Restricción | El problema en una cadena pública | En un consorcio |
 |---|---|---|
@@ -42,7 +42,7 @@ Algunas aplicaciones financieras eligen redes permisionadas para controlar la pe
 | **Modelo de tarifas** | Tarifas de red más costes de operación e integración | Tarifas, gobernanza y costes de infraestructura específicos de la red; no se limita automáticamente a los costes de infraestructura |
 | **Gestión de errores** | No se pueden revertir las transacciones incorrectas | Los procedimientos de gobernanza pueden dar respuesta |
 
-La identificación de las contrapartes y la gestión de los datos de clientes deben diseñarse para la actividad y la jurisdicción específicas. Las direcciones públicas no establecen automáticamente el anonimato legal, y pertenecer a un consorcio no satisface automáticamente las obligaciones de identidad o ubicación de los datos. Consulta estos aspectos con responsables cualificados de cumplimiento normativo y asuntos legales.
+La identificación de las contrapartes y la gestión de los datos de clientes deben diseñarse para la actividad y la jurisdicción específicas. Las direcciones públicas no establecen automáticamente el anonimato legal, y pertenecer a un consorcio no satisface automáticamente las obligaciones de identidad o ubicación de los datos. Consulte estos aspectos con responsables cualificados de cumplimiento normativo y asuntos legales.
 
 ### Qué implica realmente elegir un consorcio
 
@@ -60,7 +60,7 @@ Aquí es donde hay que ser honestos. Optar por un consorcio **elimina gran parte
 
 Así pues, el valor sustantivo de una cadena de consorcio se reduce a **«hacer que las instituciones vean los mismos datos para eliminar el trabajo de conciliación».** Ese valor es real, pero es una historia distinta de «descentralizado» o «sin necesidad de confianza».
 
-**Esta distinción importa en las revisiones.** Si en una propuesta escribes «descentralizado y funciona sin confianza», la revisión preguntará «¿quién controla entonces la pertenencia?» y, si la respuesta es «la secretaría del consorcio», la lógica se desmorona. **Definir desde el principio el valor como «menores costes de conciliación entre instituciones» es defendible.**
+**Esta distinción importa en las revisiones.** Si en una propuesta escribe «descentralizado y funciona sin confianza», la revisión preguntará «¿quién controla entonces la pertenencia?» y, si la respuesta es «la secretaría del consorcio», la lógica se desmorona. **Definir desde el principio el valor como «menores costes de conciliación entre instituciones» es defendible.**
 
 ## Privacidad: el problema más difícil
 
@@ -86,9 +86,9 @@ Hay formas de resolver la tensión, cada una con un coste distinto.
 
 **La separación por canales es el punto de partida más común.** El concepto es sencillo, Fabric lo proporciona de forma nativa y «quién puede ver qué» queda explícito y es fácil de explicar en una revisión.
 
-Su limitación son **las transacciones entre canales.** Con un canal A-B y otro B-C, es difícil procesar atómicamente una transacción que mueve valor de A→C. Si tu flujo de negocio tiene esa forma, hay que reconsiderar el diseño.
+Su limitación son **las transacciones entre canales.** Con un canal A-B y otro B-C, es difícil procesar atómicamente una transacción que mueve valor de A→C. Si su flujo de negocio tiene esa forma, hay que reconsiderar el diseño.
 
-Los registros cifrados en un libro mayor público de solo anexión pueden permanecer en copias históricas; volver a cifrarlos más adelante no elimina esas copias. Una clave comprometida puede revelar los registros cifrados con ella. La eliminación de datos privados en redes permisionadas tiene semánticas distintas, así que valida el modelo real de retención y gestión de claves en lugar de afirmar que ninguna blockchain puede eliminar datos.
+Los registros cifrados en un libro mayor público de solo anexión pueden permanecer en copias históricas; volver a cifrarlos más adelante no elimina esas copias. Una clave comprometida puede revelar los registros cifrados con ella. La eliminación de datos privados en redes permisionadas tiene semánticas distintas, por lo que conviene validar el modelo real de retención y gestión de claves, en vez de afirmar que ninguna blockchain puede eliminar datos.
 
 **Las ZKP son potentes, pero cuesta superar la revisión.** Explicar a un revisor «demostrar que algo es cierto sin revelar el contenido» y garantizar la corrección de la implementación son retos distintos. Si el esquema requiere una configuración de confianza, también habrá que abordar la fiabilidad de esa configuración.
 
@@ -96,7 +96,7 @@ Los registros cifrados en un libro mayor público de solo anexión pueden perman
 
 Los requisitos de eliminación de la normativa de privacidad entran en conflicto con la inmutabilidad de blockchain.
 
-**La respuesta habitual es «no pongas datos personales en la cadena»**: guarda en la cadena solo identificadores o hashes y mantén los datos personales fuera de ella, donde se puedan eliminar. Sin embargo, alguien que conozca el valor original todavía puede buscar un hash (mediante ataques de tablas arcoíris), por lo que se combina esta medida con la eliminación de la sal o de la clave, para que la recuperación resulte prácticamente imposible (destrucción criptográfica de claves).
+**La recomendación habitual es «no incluir datos personales en la cadena»**: deben guardarse en la cadena solo identificadores o hashes, y mantener los datos personales fuera de ella, donde se puedan eliminar. Sin embargo, alguien que conozca el valor original todavía puede buscar un hash (mediante ataques de tablas arcoíris), por lo que se combina esta medida con la eliminación de la sal o de la clave, para que la recuperación resulte prácticamente imposible (destrucción criptográfica de claves).
 
 ::: warning Requiere verificación
 **La interpretación legal de los requisitos de eliminación de la normativa de privacidad (la PIPA de Corea, el RGPD, etc.) frente a la inmutabilidad de blockchain varía según la jurisdicción y el caso, y este documento no constituye asesoramiento legal.**
@@ -123,10 +123,10 @@ Esta contradicción es **el aspecto más difícil de resolver** en el diseño de
 
 | Mecanismo | Qué ofrece | Límites |
 |---|---|---|
-| **HSM** (CloudHSM, HSM local) | Firma respaldada por hardware y protecciones de claves configurables | Comprueba la compatibilidad con los algoritmos, la posibilidad de extracción o envoltura y la política de copias de seguridad del módulo elegido |
-| **AWS KMS** | Claves gestionadas, integración con IAM y auditoría de CloudTrail | Verifica si admite los algoritmos de firma que requiere la blockchain |
+| **HSM** (CloudHSM, HSM local) | Firma respaldada por hardware y protecciones de claves configurables | Compruebe la compatibilidad del módulo elegido con los algoritmos necesarios, si permite extraer o envolver las claves y cuál es su política de copias de seguridad |
+| **AWS KMS** | Claves gestionadas, integración con IAM y auditoría de CloudTrail | Verifique si admite los algoritmos de firma que requiere la blockchain |
 | **MPC** (computación multipartita) | Claves almacenadas de forma **distribuida**; las partes se combinan para firmar y no existe una clave completa en ningún lugar | Complejidad de implementación y dependencia del proveedor |
-| **Multifirma** | Se requiere un número N de firmas M a nivel de protocolo | Requiere compatibilidad de la cadena/contrato. Mayor coste por transacción |
+| **Multifirma** | El protocolo exige N de M firmas | Requiere compatibilidad de la cadena/contrato. Mayor coste por transacción |
 | **Separación entre almacenamiento en frío y en caliente** | Grandes cantidades fuera de línea; solo pequeñas cantidades en línea | Carga de los procedimientos operativos |
 
 ### Compatibilidad con las curvas: varía según la capa
@@ -138,18 +138,18 @@ Esta contradicción es **el aspecto más difícil de resolver** en el diseño de
 | **Capa de ejecución** (cuentas, transacciones) | **secp256k1** | Firma de transacciones, cuentas EOA | **✅ Compatible**: especificación de clave KMS `ECC_SECG_P256K1`, uso restringido a `SIGN_VERIFY` |
 | **Capa de consenso** (validadores) | **BLS12-381** | Firma de propuestas de bloque y atestaciones | **❌ No compatible** |
 
-`ECC_SECG_P256K1` de KMS con `SIGN_VERIFY` puede admitir un **flujo de firma ECDSA de Ethereum adaptado**. La compatibilidad con la curva por sí sola no basta: valida el tratamiento del resumen criptográfico, la conversión de firmas DER a las de la cadena, los requisitos de low-S y recuperación, y el formato exacto de la transacción. Los esquemas de firma de Bitcoin son distintos; la compatibilidad con secp256k1 no implica compatibilidad con todos los flujos de Schnorr/Taproot. Haz pruebas sin fondos reales.
+`ECC_SECG_P256K1` de KMS con `SIGN_VERIFY` puede admitir un **flujo de firma ECDSA de Ethereum adaptado**. La compatibilidad con la curva por sí sola no basta: valide el tratamiento del resumen criptográfico, la conversión de firmas DER a las de la cadena, los requisitos de low-S y recuperación, y el formato exacto de la transacción. Los esquemas de firma de Bitcoin son distintos; la compatibilidad con secp256k1 no implica compatibilidad con todos los flujos de Schnorr/Taproot. Haga pruebas sin fondos reales.
 
 **El problema está en la capa de consenso.** BLS12-381 no figura entre las especificaciones de claves de KMS y CloudHSM tampoco la admite. **Por tanto, un diseño que almacene las claves de firma de los validadores en KMS/HSM sencillamente no funciona.**
 
 La alternativa propuesta por AWS es **Nitro Enclaves**: ejecutar un firmante como Web3Signer dentro de un entorno de ejecución aislado para que la clave nunca salga del enclave. La generación de claves (keystores BLS12-381 en formato EIP-2335) también requiere un enfoque aparte.
 
-**Implicación para el diseño**: además de la contradicción relativa a las claves de validadores descrita anteriormente (siempre en línea + aisladas + sin doble firma), hay otra limitación: **la respuesta habitual de «proteger la clave en un HSM» no es aplicable.** Si estás evaluando operaciones de validadores, este es el primer punto de decisión que obliga a apartarse de un diseño basado en KMS.
+**Implicación para el diseño**: además de la contradicción relativa a las claves de validadores descrita anteriormente (siempre en línea + aisladas + sin doble firma), hay otra limitación: **la respuesta habitual de «proteger la clave en un HSM» no es aplicable.** Si está evaluando las operaciones de los validadores, este es el primer punto de decisión que obliga a apartarse de un diseño basado en KMS.
 
 ::: warning Requiere verificación
 El estado de compatibilidad anterior corresponde al momento de la investigación y **la compatibilidad de los HSM con BLS12-381 es un tema que lleva mucho tiempo debatiéndose en el sector, así que podría cambiar.** La compatibilidad con curvas de protocolos distintos de Ethereum (por ejemplo, cadenas que usan Ed25519) también debe confirmarse por separado.
 
-**Antes de diseñar, consulta la lista actual en la [referencia de especificaciones de claves de KMS](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) y verifica siempre con una PoC que la firma real sea válida en la cadena de destino.**
+**Antes de diseñar, consulte la lista actual en la [referencia de especificaciones de claves de KMS](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) y verifique siempre con una PoC que la firma real sea válida en la cadena de destino.**
 :::
 
 ### El caso especial de las claves de validadores
@@ -160,7 +160,7 @@ Ejecutar un validador PoS añade un problema.
 - **Las firmas en conflicto de un mismo validador pueden dar lugar a penalizaciones (slashing).** Varios firmantes o copias de claves sin coordinación crean ese riesgo; no toda firma idéntica duplicada implica automáticamente una penalización.
 - Por tanto, **«tener redundancia para lograr una alta disponibilidad» genera por sí mismo el riesgo**
 
-En despliegues ordinarios, usa un único firmante activo con conmutación por error protegida contra la activación simultánea y con el historial de protección contra slashing preservado. Cualquier firmante activo-activo o distribuido requiere un diseño probado de protección contra slashing compartida. No inicies un segundo firmante con copias de las claves de validador en uso solo para mejorar la disponibilidad.
+En despliegues ordinarios, utilice un único firmante activo con conmutación por error protegida contra la activación simultánea y con el historial de protección contra slashing preservado. Cualquier firmante activo-activo o distribuido requiere un diseño probado de protección contra slashing compartida. No inicie un segundo firmante con copias de las claves de validador en uso solo para mejorar la disponibilidad.
 
 ## Cuestiones normativas y de revisión
 
@@ -181,13 +181,13 @@ Las preguntas que realmente surgen en las revisiones de servicios financieros:
 | **Plan de terminación** | Si se cierra el servicio, ¿qué ocurre con los datos? | **Una estrategia de salida** |
 | **Dependencia de proveedores/servicios** | ¿Qué pasa si se interrumpe el servicio gestionado? | Protocolos estándar y capa de abstracción ([documento de AMB](./03-managed-blockchain.md)) |
 
-### Los dos aspectos que con más frecuencia se preparan insuficientemente
+### Los dos aspectos que suelen llegar menos preparados a la revisión
 
 **① Corrección de errores: «no se puede revertir» se convierte en una debilidad durante la revisión.**
 
 La inmutabilidad que se promociona como una fortaleza de blockchain es **un problema** en las operaciones financieras. Sí ocurren transacciones incorrectas, transferencias equivocadas y errores del sistema, y las instituciones financieras tienen obligaciones y procedimientos para corregirlos.
 
-**La respuesta es un proceso, no tecnología.** El enfoque habitual no es «revertir la cadena», sino **«emitir una transacción compensatoria»**: el registro original se mantiene y se añade una transacción compensatoria para corregir el resultado. Es el mismo concepto que un asiento de reversión en contabilidad. Documenta ese procedimiento y quién tiene autoridad para aprobarlo, de cara a la revisión.
+**La respuesta es un proceso, no tecnología.** El enfoque habitual no es «revertir la cadena», sino **«emitir una transacción compensatoria»**: el registro original se mantiene y se añade una transacción compensatoria para corregir el resultado. Es el mismo concepto que un asiento de reversión en contabilidad. Documente ese procedimiento y quién tiene autoridad para aprobarlo, de cara a la revisión.
 
 **② Estrategia de salida: casi nunca se prepara.**
 
@@ -228,13 +228,13 @@ El objetivo de esta tabla es señalar que **las etapas 2 y 3 preceden a la tecno
 
 ## Resumen
 
-- **Descarta primero los casos en los que blockchain no es la solución.** Si no puedes escribir en una frase «por qué esto no debe tener árbitro», compara las alternativas. Si solo se necesita detectar alteraciones, bastan los registros firmados o WORM.
+- **Descarte primero los casos en los que blockchain no es la solución.** Si no puede explicar en una frase por qué esto no debe tener árbitro, compare las alternativas. Si solo se necesita detectar alteraciones, bastan los registros firmados o WORM.
 - Las razones decisivas por las que los servicios financieros optan por consorcios son **las obligaciones de KYC/AML y la soberanía de los datos.** El rendimiento y la gobernanza son beneficios secundarios.
 - Elegir un consorcio **elimina gran parte del valor original de blockchain.** Lo que queda, en esencia, es **«reducir los costes de conciliación entre instituciones»**, y definir el valor así es defendible en una revisión.
-- Elige mecanismos de privacidad que se ajusten al modelo de datos real. Las copias históricas de texto cifrado pueden perdurar después de rotar las claves; valida explícitamente la retención, la eliminación de datos privados y las obligaciones legales.
-- La gestión de claves debe equilibrar el aislamiento y la disponibilidad para firmar. En validadores PoS, los firmantes sin coordinación pueden producir **mensajes en conflicto susceptibles de penalización (slashing)**; una firma duplicada idéntica no implica automáticamente una penalización. Usa conmutación por error protegida contra la activación simultánea y conserva el historial de slashing, o emplea un diseño probado de firma distribuida coordinada.
-- Los dos aspectos que más suelen prepararse insuficientemente para la revisión son **la corrección de errores** (la respuesta es un procedimiento de transacción compensatoria, no tecnología) y **una estrategia de salida** (las obligaciones de conservación implican que «lo apagamos» no es el final).
-- La dificultad central para integrarse con la infraestructura existente es **la falta de atomicidad.** Incorpora pronto al diseño enfoques de consistencia eventual, como Saga/outbox.
+- Elija mecanismos de privacidad que se ajusten al modelo de datos real. Las copias históricas de texto cifrado pueden perdurar después de rotar las claves; valide explícitamente la retención, la eliminación de datos privados y las obligaciones legales.
+- La gestión de claves debe equilibrar el aislamiento y la disponibilidad para firmar. En validadores PoS, los firmantes sin coordinación pueden producir **mensajes en conflicto susceptibles de penalización (slashing)**; una firma duplicada idéntica no implica automáticamente una penalización. Utilice una conmutación por error protegida contra la activación simultánea y conserve el historial de slashing, o emplee un diseño probado de firma distribuida coordinada.
+- Los dos aspectos que suelen llegar menos preparados a la revisión son **la corrección de errores** (la respuesta es un procedimiento de transacción compensatoria, no tecnología) y **una estrategia de salida** (las obligaciones de conservación implican que «lo apagamos» no es el final).
+- La dificultad central para integrarse con la infraestructura existente es **la falta de atomicidad.** Incorpore pronto al diseño enfoques de consistencia eventual, como Saga/outbox.
 - En la ruta de adopción, **asegurar la participación de las instituciones y acordar la gobernanza son pasos previos a la tecnología.**
 
 ## Referencias

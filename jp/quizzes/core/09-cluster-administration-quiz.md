@@ -592,6 +592,7 @@ etcdutl snapshot restore snapshot.db \
 - クラスターネットワークの CIDR 範囲を計画する
 - ネットワーク監視ツールを導入する
 </details>
+
 ## ハンズオン問題
 
 1. 次の要件を満たす ResourceQuota マニフェストを作成してください:
@@ -1081,6 +1082,7 @@ python3 resource_usage_report.py
 - 定期的なレポート生成には cron job として設定できます。
 - レポートはメールで送信したり、監視システムと連携したりできます。
 </details>
+
 ## 高度なトピック
 
 1. 実在する etcd 設定または運用方法を含む組み合わせを 2 つ選んでください。

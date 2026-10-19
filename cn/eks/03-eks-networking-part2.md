@@ -1,7 +1,7 @@
 # EKS 网络 - 第 2 部分：Service、负载均衡和网络策略
 
 > **已验证示例版本**：EKS Kubernetes 1.36、AWS Load Balancer Controller 3.6.0、Gateway API 1.6.0
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 概述
 
@@ -208,7 +208,7 @@ metadata:
 
 ## 网络策略
 
-在启用了策略实施的情况下，NetworkPolicy 会在 L3/L4 层筛选选定的 Pod 和流量方向。Amazon VPC CNI 在受支持的 EC2/Linux 配置上提供原生网络策略支持；并非一定要安装其他 CNI。请在[ AWS 指南](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)中检查具体的附加组件版本、内核/计算限制、standard/strict 模式以及托管 Pod 要求。
+在启用了策略实施的情况下，NetworkPolicy 会在 L3/L4 层筛选选定的 Pod 和流量方向。Amazon VPC CNI 在受支持的 EC2/Linux 配置上提供原生网络策略支持；并非一定要安装其他 CNI。请在[AWS 指南](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)中检查具体的附加组件版本、内核/计算限制、standard/strict 模式以及托管 Pod 要求。
 
 <!-- Diagram repair pending: see batch report.
 ![Four network policies govern traffic in an EKS cluster: an external-traffic policy scopes what reaches the frontend pod, a pod-communication policy allows only frontend-to-backend traffic on TCP 80, an egress policy limits the backend pod to the database pod on TCP 5432 and external HTTPS on 443, and a namespace-isolation policy applies to every pod in both namespaces.](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)

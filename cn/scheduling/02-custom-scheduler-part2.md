@@ -1,7 +1,7 @@
 # 第 2 部分：实施
 
 > **示例基线**：Kubernetes 1.35.8，Go 1.27.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 使用 [Part1 模块设置和完整的 secondary-scheduler RBAC/Deployment](01-custom-scheduler-part1.md)。以下是为该调度器扩展功能的两种替代方法。示例已在本地检查；未测试 EKS 部署、GPU 执行、TLS 推出或生产故障转移。请重新验证其他 Kubernetes 次版本，不要假定 Go 接口兼容。
 

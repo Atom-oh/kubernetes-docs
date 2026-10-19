@@ -1,7 +1,7 @@
 # 第 3 部分：高级功能
 
 > **示例基线**：Kubernetes 1.35.8，Go 1.27.2；Python 客户端 API 35.0.0
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 以下是使用[第 1 部分的辅助调度器](01-custom-scheduler-part1.md)和[第 2 部分的框架接口](02-custom-scheduler-part2.md)实现的示例模式。它们不是生产部署报告，也不是经过测量的优化结果。本地代码/架构检查并不能证明 GPU 正在执行、应用已就绪、证书已配置或生产环境可用。
 
@@ -592,7 +592,7 @@ class DeletionCostManager:
 
 ### 监控与调试
 
-这些命令用于检查注解，并验证缩容请求而不更改副本数。服务器端试运行**不会模拟 ReplicaSet 的受害 Pod 选择过程**。若要进行实际缩容实验，请使用你控制的隔离工作负载，考虑任何可能覆盖副本数的 HPA，并比较缩容前后的 Pod UID/所属 ReplicaSet。仅凭 kubelet 的 `Killing` 事件不能证明删除成本排序生效。
+这些命令用于检查注解，并验证缩容请求而不更改副本数。服务器端试运行**不会模拟 ReplicaSet 最终选择删除哪个 Pod**。若要进行实际缩容实验，请使用你控制的隔离工作负载，考虑任何可能覆盖副本数的 HPA，并比较缩容前后的 Pod UID/所属 ReplicaSet。仅凭 kubelet 的 `Killing` 事件不能证明删除成本排序生效。
 
 ```bash
 kubectl -n deletion-cost-lab get pods -l app=cache-app \

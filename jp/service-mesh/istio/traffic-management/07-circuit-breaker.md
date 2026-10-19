@@ -1,93 +1,48 @@
-# Circuit Breaker
+# サーキットブレーカー
 
-Circuit Breaker は、障害が発生しているサービスを自動的に隔離し、カスケード障害を防止します。
+サーキットブレーカーは、障害が発生したサービスを自動的に切り離し、障害の連鎖を防ぎます。
 
 ## 目次
 
-1. [Circuit Breaker が必要な理由](#why-circuit-breaker)
-2. [Circuit Breaker の概要](#circuit-breaker-overview)
+1. [サーキットブレーカーが必要な理由](#why-circuit-breaker)
+2. [サーキットブレーカーの概要](#circuit-breaker-overview)
 3. [接続プールの設定](#connection-pool-settings)
-4. [Outlier Detection](#outlier-detection)
-5. [Retry ポリシーとの組み合わせ](#combination-with-retry-policy)
+4. [異常なエンドポイントの検出](#outlier-detection)
+5. [リトライポリシーとの組み合わせ](#combination-with-retry-policy)
 6. [実践例](#practical-examples)
-7. [外部サービスの Circuit Breaker](#external-service-circuit-breaker)
+7. [外部サービス向けサーキットブレーカー](#external-service-circuit-breaker)
 8. [モニタリングとデバッグ](#monitoring-and-debugging)
 9. [重要な考慮事項](#important-considerations)
 10. [ベストプラクティス](#best-practices)
 
-<span id="why-circuit-breaker"></span>
+## サーキットブレーカーが必要な理由 {#why-circuit-breaker}
 
-## Circuit Breaker が必要な理由
+### 障害の連鎖を防ぐ
 
-### カスケード障害の防止
+マイクロサービスアーキテクチャでは、あるサービスの障害がほかのサービスへ波及するのを防ぎます。
 
-マイクロサービスアーキテクチャでは、あるサービスの障害が他のサービスへ波及することを防ぎます。
+![サーキットブレーカーがない場合、障害中のサービスBへのタイムアウトでサービスAのリソースが枯渇し、サービスCとDへ障害が連鎖する。一方、サーキットブレーカーがある場合、Bへの呼び出しは速やかに失敗し、CとDは正常なまま保たれる様子。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Circuit Breaker"]
-        A1[Service A] -->|Slow Response| B1[Service B<br/>Failure]
-        A1 -->|Resource Exhaustion| A1
-        A1 -->|Accumulated Timeouts| C1[Service C<br/>Failure]
-        C1 -->|Cascading Failure| D1[Service D<br/>Failure]
-    end
-
-    subgraph With["With Circuit Breaker"]
-        A2[Service A] -->|Fast Fail| B2[Service B<br/>Circuit Open]
-        A2 -->|Normal Operation| C2[Service C<br/>Normal]
-        C2 -->|Normal Operation| D2[Service D<br/>Normal]
-    end
-
-    %% Style definitions
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,B1,C1,D1 failure;
-    class A2,C2,D2 normal;
-    class B2 failure;
-```
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.html)
 
 ### 主な利点
 
-| 問題 | Circuit Breaker なし | Circuit Breaker あり |
+| 課題 | サーキットブレーカーなし | サーキットブレーカーあり |
 |---------|------------------------|----------------------|
-| **応答時間** | タイムアウトまで待機（30 秒以上） | 即時失敗（1ms） |
-| **リソース使用量** | スレッド/接続の枯渇 | リソースを保護 |
-| **障害の伝播** | カスケード障害が発生 | 障害を隔離 |
-| **復旧時間** | 手動介入が必要 | 自動復旧を試行 |
+| **応答時間** | タイムアウト（30秒以上）まで待つ | 設定した上限に達すると速やかに拒否する |
+| **リソース使用量** | スレッドや接続が枯渇する | リソースを保護する |
+| **障害の波及** | 障害が連鎖する | 障害を隔離する |
+| **復旧時間** | 手動対応が必要 | 自動復旧を試みる |
 
-<span id="circuit-breaker-overview"></span>
+## サーキットブレーカーの概要 {#circuit-breaker-overview}
 
-## Circuit Breaker の概要
+図は、一般的なライブラリで使われる Closed/Open/Half-Open の状態遷移パターンを示しています。Istio が実装するのは、リソース上限に基づく接続プールのサーキットブレーカーと、エンドポイント単位の受動的な異常検出・切り離しです。メッシュ全体で共有する単一の3状態ブレーカーを公開しているわけではありません。上限や健全性の観測は、各プロキシのアップストリームクラスター／優先度ごとに行われ、同時実行時には上限を超える場合があります。異常と判定されたエンドポイントは一時的に振り分け対象から外されますが、Pod が削除されるわけではありません。以下の例は、それぞれ別の設定方法です。
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: Consecutive error threshold exceeded
-    Open --> HalfOpen: Wait time elapsed
-    HalfOpen --> Closed: Request successful
-    HalfOpen --> Open: Request failed
+![連続エラー数がしきい値を超えるとサーキットブレーカーが Closed から Open へ移行し、待機時間の経過後に Half-Open となり、成功すれば Closed、失敗すれば Open に戻る状態遷移図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
-    note right of Closed
-        Normal state
-        All requests pass through
-    end note
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.html)
 
-    note right of Open
-        Blocked state
-        Requests fail immediately
-    end note
-
-    note right of HalfOpen
-        Test state
-        Limited requests allowed
-    end note
-```
-
-<span id="connection-pool-settings"></span>
-
-## 接続プールの設定
+## 接続プールの設定 {#connection-pool-settings}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -106,9 +61,9 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-## Outlier Detection
+## 異常なエンドポイントの検出 {#outlier-detection}
 
-Outlier Detection は、正常でないインスタンスを自動的に除外します。
+異常検出は、切り離し上限やパニック時の動作に従って、健全でないエンドポイントをロードバランシング対象から一時的に除外します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -119,14 +74,16 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5        # 5 consecutive errors
+      consecutive5xxErrors: 5        # 5 consecutive errors
       interval: 30s               # Check every 30 seconds
-      baseEjectionTime: 30s       # Remove for 30 seconds
+      baseEjectionTime: 30s       # Minimum; repeated ejection can last longer
       maxEjectionPercent: 50      # Remove up to 50%
-      minHealthPercent: 40        # Maintain at least 40%
+      minHealthPercent: 40        # Below this, disable outlier isolation and use all hosts
 ```
 
-### 高度な Outlier Detection の設定
+### 高度な異常検出設定
+
+連続エラーの検出では、次の定期スイープを待たずにエンドポイントが切り離されることがあります。`interval` は定期スイープの間隔であり、各切り離しの前に必ず待つ時間ではありません。`minHealthPercent` はフェイルオープンのしきい値であり、健全なエンドポイントを一定割合確保する下限ではありません。`maxEjectionTime` は Envoy のフィールドですが、Istio のこの DestinationRule API では公開されていません。これらのマニフェストに設定しないでください。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -138,27 +95,24 @@ spec:
   trafficPolicy:
     outlierDetection:
       # Consecutive error based
-      consecutiveGatewayErrors: 5    # 5xx errors 5 times
-      consecutive5xxErrors: 3        # 500~599 errors 3 times
+      consecutiveGatewayErrors: 3    # HTTP 502/503/504
+      consecutive5xxErrors: 5        # All HTTP 5xx
 
       # Time intervals
       interval: 10s                  # Check every 10 seconds
       baseEjectionTime: 30s          # First ejection time
-      maxEjectionTime: 300s          # Maximum ejection time
 
       # Rate limits
       maxEjectionPercent: 50         # Remove up to 50%
-      minHealthPercent: 30           # Maintain at least 30%
+      minHealthPercent: 30           # Fail-open/panic threshold, not a health guarantee
 
-      # Success rate based
+      # Separate local connection errors from upstream response errors
       splitExternalLocalOriginErrors: true
 ```
 
-<span id="combination-with-retry-policy"></span>
+## リトライポリシーとの組み合わせ {#combination-with-retry-policy}
 
-## Retry ポリシーとの組み合わせ
-
-耐障害性を高めるために、Circuit Breaker を Retry とともに使用します。
+可用性を高めるために、サーキットブレーカーとリトライを組み合わせます。
 
 ### 基本的な組み合わせ
 
@@ -191,12 +145,14 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
 
-### Retry Budget パターン
+### リトライ予算パターン
+
+この予算は、各プロキシのクラスターにおけるアクティブ／保留中リクエスト数に対する同時リトライ数を制限します。リクエスト数／秒の上限ではありません。リトライしても安全な読み取りにはリトライポリシーを使い、それ以外のメソッドではリトライを明示的に無効化します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -207,13 +163,21 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
       attempts: 2                    # Minimize retries
       perTryTimeout: 1s              # Fast fail
-      retryOn: retriable-4xx,5xx
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -222,21 +186,22 @@ metadata:
 spec:
   host: payment-service
   trafficPolicy:
+    retryBudget:
+      percent: 20
+      minRetryConcurrency: 3
     connectionPool:
       http:
         http1MaxPendingRequests: 5   # Low queue
         maxRequestsPerConnection: 1  # 1 request per connection
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
 
-<span id="practical-examples"></span>
+## 実践例 {#practical-examples}
 
-## 実践例
-
-### 1. メッシュ内サービス向け Circuit Breaker
+### 1. メッシュ内サービス向けサーキットブレーカー
 
 #### シナリオ: データベースサービスの保護
 
@@ -252,13 +217,8 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100          # Maximum 100 connections
-      http:
-        http1MaxPendingRequests: 50  # 50 pending requests
-        http2MaxRequests: 100        # HTTP/2 100 concurrent requests
-        maxRequestsPerConnection: 2  # Maximum 2 requests per connection
-        idleTimeout: 60s             # Idle connection timeout
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -272,11 +232,13 @@ spec:
 ```
 
 **ユースケース**:
-- データベース接続プールの枯渇を防止する
-- 遅いクエリによるカスケード障害をブロックする
-- 正常でないインスタンスを自動的に除外する
+- データベース接続プールの枯渇を防ぐ
+- 遅いクエリによる障害の連鎖を抑える
+- 健全でないインスタンスを自動的に振り分け対象から外す
 
-### 2. maxConnections: 1 パターン（単一接続）
+ここで示すネイティブデータベースプロトコルの設定は、TCP 上限と TCP の障害観測だけを対象にします。プロキシ単位の接続上限はデータベース全体のプールサイズではなく、遅い SQL クエリも検出しません。
+
+### 2. `maxConnections: 1` パターン（単一接続）
 
 #### シナリオ: レガシーシステムまたはリソース制約のあるサービス
 
@@ -296,7 +258,7 @@ spec:
         maxRequestsPerConnection: 1  # 1 request per connection
         h2UpgradePolicy: DO_NOT_UPGRADE  # Prevent HTTP/2 upgrade
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 1 error
+      consecutive5xxErrors: 1           # Block immediately on 1 error
       interval: 10s
       baseEjectionTime: 60s
 ```
@@ -306,9 +268,11 @@ spec:
 - 外部 API のレート制限が非常に厳しい場合
 - 単一接続による順次処理が必要な場合
 
-### 3. サブセットごとの Circuit Breaker
+`maxConnections: 1` は、メッシュ全体の処理を直列化したり、外部 API のクォータを強制したりしません。複数のプロキシにはそれぞれ別の上限があり、HTTP/2 では1接続上で複数のリクエストを多重化できます。また、`maxRequestsPerConnection: 1` は接続の再利用を無効にする設定であり、実行数を1つに保証するものではありません。メッシュ全体で調整するには、アプリケーションのキューやレートリミッターを使ってください。
 
-#### シナリオ: バージョンごとに異なる Circuit Breaker 設定
+### 3. サブセットごとのサーキットブレーカー
+
+#### シナリオ: バージョンごとに異なる設定
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -324,7 +288,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -343,7 +307,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -357,7 +321,7 @@ spec:
           http1MaxPendingRequests: 5
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 1
+        consecutive5xxErrors: 1
         interval: 5s
         baseEjectionTime: 120s
 ```
@@ -389,13 +353,13 @@ spec:
         idleTimeout: 300s
         h2UpgradePolicy: UPGRADE       # Use HTTP/2
     outlierDetection:
-      consecutiveErrors: 10          # Lenient setting
+      consecutive5xxErrors: 10          # Lenient setting
       interval: 60s
       baseEjectionTime: 30s
       maxEjectionPercent: 20         # Remove up to 20% only
 ```
 
-### 5. ヘルスチェックに基づく Circuit Breaker
+### 5. ヘルスチェックに基づくサーキットブレーカー
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -413,20 +377,19 @@ spec:
       # Performance based
       interval: 10s
       baseEjectionTime: 30s
-      maxEjectionTime: 300s          # Maximum 5 minutes
 
       # Dynamic adjustment
       splitExternalLocalOriginErrors: true
       consecutiveLocalOriginFailures: 5
 ```
 
-<span id="external-service-circuit-breaker"></span>
+## 外部サービス向けサーキットブレーカー {#external-service-circuit-breaker}
 
-## 外部サービスの Circuit Breaker
+以下の HTTP 例では、アプリケーションからサイドカーまでは平文 HTTP を使い、サイドカーが実際の外部ホストの 443 番ポートへ検証済み TLS で接続します。アプリケーションがすでに TLS を使用している場合は二重 TLS を避け、該当する通信レイヤーから見えるポリシーだけを設定してください。ネイティブ MongoDB のアプリケーション TLS／認証は、別途クライアントとサーバーで設定する要件です。
 
-ServiceEntry とともに使用して、外部サービスを保護します。
+外部サービスを保護するには ServiceEntry と組み合わせます。
 
-### 1. 外部 API の Circuit Breaker
+### 1. 外部 API 向けサーキットブレーカー
 
 ```yaml
 # ServiceEntry: Register external API
@@ -438,9 +401,10 @@ spec:
   hosts:
   - api.payment-provider.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -459,15 +423,18 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1  # Minimize connection reuse
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 30s
       baseEjectionTime: 120s         # Long recovery time
       maxEjectionPercent: 100        # Can completely block
     tls:
-      mode: SIMPLE                   # TLS connection
+      mode: SIMPLE
+      sni: api.payment-provider.com
+      subjectAltNames:
+      - api.payment-provider.com
 ```
 
-### 2. 外部データベースの Circuit Breaker
+### 2. 外部データベース向けサーキットブレーカー
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -496,7 +463,7 @@ spec:
         maxConnections: 50
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
@@ -512,9 +479,10 @@ spec:
   hosts:
   - api.rate-limited-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -528,12 +496,17 @@ spec:
     connectionPool:
       http:
         http1MaxPendingRequests: 1   # Minimize queue
-        maxRequestsPerConnection: 1  # Prevent rate limit exceeding
+        maxRequestsPerConnection: 0  # Reuse connections; not a quota limiter
         idleTimeout: 1s              # Fast connection release
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 429 error
+      consecutive5xxErrors: 3           # Default HTTP 5xx detection; not 429
       interval: 60s
-      baseEjectionTime: 300s         # Wait 5 minutes (rate limit reset)
+      baseEjectionTime: 30s          # Independent of provider Retry-After
+    tls:
+      mode: SIMPLE
+      sni: api.rate-limited-service.com
+      subjectAltNames:
+      - api.rate-limited-service.com
 ---
 # VirtualService: Retry settings
 apiVersion: networking.istio.io/v1
@@ -552,9 +525,9 @@ spec:
     timeout: 10s
 ```
 
-<span id="monitoring-and-debugging"></span>
+HTTP 429 に対応するには、プロバイダー固有のスロットリングと `Retry-After` の処理が必要です。既定の 5xx 異常検出や接続の頻繁な切り替えでは、API クォータを強制できず、リセット時刻も推測できません。
 
-## モニタリングとデバッグ
+## モニタリングとデバッグ {#monitoring-and-debugging}
 
 ### Envoy メトリクスを確認する
 
@@ -574,12 +547,12 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 
 ### 主なメトリクス
 
-```yaml
+```promql
 # Prometheus queries
-# Circuit Breaker Open count
+# Requests circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_open
 
-# Pending request count
+# Pending-request circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_pending_open
 
 # Outlier Detection Ejection
@@ -596,8 +569,8 @@ envoy_cluster_upstream_rq_retry
 
 ```yaml
 # Circuit Breaker Dashboard
-- expr: rate(envoy_cluster_circuit_breakers_default_rq_open[5m])
-  legend: "Circuit Breaker Open Rate"
+- expr: envoy_cluster_circuit_breakers_default_rq_open
+  legend: "Circuit Breaker Open State"
 
 - expr: envoy_cluster_outlier_detection_ejections_active
   legend: "Ejected Instances"
@@ -606,89 +579,40 @@ envoy_cluster_upstream_rq_retry
   legend: "Connection Pool Overflow"
 ```
 
-### istioctl コマンド
+### `istioctl` コマンド
 
 ```bash
 # Check Proxy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 
 # Check Outlier Detection settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
 
-<span id="important-considerations"></span>
+## 重要な考慮事項 {#important-considerations}
 
-## 重要な考慮事項
+### サーキットブレーカーはデータ整合性を保証しない
 
-### Circuit Breaker はデータ整合性を保証しない
+**基本原則**: サーキットブレーカーは**障害の隔離**に使うものであり、**リクエストの重複防止**や**データ整合性の保証**を行うものではありません。
 
-**基本原則**: Circuit Breaker は、**障害の隔離**のためのツールであり、**重複リクエストの防止**や**データ整合性の保証**のためのものではありません。
+#### サーキットブレーカーの役割と限界
 
-#### Circuit Breaker の役割と制限
+![サーキットブレーカーが行うこと（障害中のサービスの隔離、障害の連鎖防止、リソース保護、自動復旧の試行）と、行わないこと（重複防止、データ整合性、トランザクション、冪等性の保証）を線で結んで示す図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
-```mermaid
-flowchart TB
-    subgraph WhatItDoes["What Circuit Breaker Does"]
-        CB1[Isolate Failing Services]
-        CB2[Prevent Cascading Failures]
-        CB3[Protect System Resources]
-        CB4[Attempt Auto Recovery]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.html)
 
-    subgraph WhatItDoesNot["What Circuit Breaker Does NOT Do"]
-        CB5[Prevent Duplicate Requests]
-        CB6[Guarantee Data Consistency]
-        CB7[Transaction Management]
-        CB8[Idempotency Guarantee]
-    end
+#### 問題シナリオ: リトライ + サーキットブレーカー
 
-    %% Style definitions
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+![応答が失われるたびに Istio プロキシが支払い POST リクエストを再試行し、そのたびに支払い行が挿入されるため、サーキットブレーカーが5回の連続エラーで作動する前に重複行が3つ残るシーケンス図。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
 
-    %% Apply classes
-    class CB1,CB2,CB3,CB4 good;
-    class CB5,CB6,CB7,CB8 bad;
-```
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.html)
 
-#### 問題シナリオ: Retry + Circuit Breaker
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy<br/>(VirtualService Retry)
-    participant Service as Payment Service
-    participant DB as Database
-
-    Note over Proxy: Retry: attempts=3<br/>Circuit Breaker: consecutiveErrors=5
-
-    Client->>Proxy: POST /payment (Payment Request)
-
-    Proxy->>Service: Attempt 1
-    Service->>DB: INSERT payment (Success)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 1/3
-
-    Proxy->>Service: Attempt 2 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 2/3
-
-    Proxy->>Service: Attempt 3 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-
-    Note over DB: Payment duplicated 3 times!<br/>Circuit Breaker activates after 5 errors
-```
-
-**問題**: Circuit Breaker が有効化される前（連続する 5 件のエラーの後）に、すでに**3 件の重複した支払い**が発生しています。
+**問題**: サーキットブレーカーが作動する（5回連続エラーの後）前に、すでに**3件の重複した支払い**が発生しています。
 
 #### 誤った使用例
 
@@ -718,19 +642,19 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 
 # Result:
-# - Up to 15 duplicates possible before Circuit Breaker activates (3 retries x 5 errors)
+# - attempts: 3 allows up to 4 deliveries per original request; the ejection threshold is not a multiplier
 # - Critical operations like payment, inventory deduction get duplicated
 # - Data consistency destroyed
 ```
 
 #### 正しい使用パターン
 
-**パターン 1: Circuit Breaker のみ（Retry を無効化）**
+**パターン1: 読み取りは安全にリトライし、書き込みではメッシュのリトライを無効化する**
 
 ```yaml
 # Safe: Read-only + Circuit Breaker
@@ -761,7 +685,7 @@ spec:
   host: product-catalog
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -785,9 +709,6 @@ spec:
     timeout: 10s
     retries:
       attempts: 0  # Disable Retry for POST
-      # Or
-      # attempts: 1
-      # retryOn: connect-failure,refused-stream  # Network only
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -797,40 +718,16 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**パターン 2: アプリケーションレベルの冪等性 + Circuit Breaker**
+**パターン2: アプリケーションレベルの冪等性 + サーキットブレーカー**
 
-```python
-# Server: Idempotency Key validation
-@app.route('/payment', methods=['POST'])
-def create_payment():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
+冪等性キーは、認証済みの呼び出し元とリクエスト本文に結び付け、業務上の変更／結果と一緒にアトミックに記録する必要があります。Redis の存在確認後に支払い処理を行い、別々にキャッシュへ書き込む方法には競合があり、安全な実装ではありません。必要に応じて[アトミックな冪等性ワークフロー](05-retry-timeout.md)と、下流サービスの冪等性契約や Outbox を利用してください。それらを整えたうえで次のリトライポリシーを使用します。ヘッダーが存在するだけでは不十分です。
 
-    if not idempotency_key:
-        return jsonify({"error": "Missing Idempotency-Key"}), 400
 
-    # Check if request was already processed
-    if redis.exists(f"payment:idempotency:{idempotency_key}"):
-        cached_result = redis.get(f"payment:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Process new payment
-    try:
-        payment = process_payment(request.json)
-
-        # Cache result (24 hours)
-        redis.setex(f"payment:idempotency:{idempotency_key}", 86400, "1")
-        redis.setex(f"payment:result:{idempotency_key}", 86400,
-                    json.dumps(payment))
-
-        return jsonify(payment), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-```
 
 ```yaml
 # Istio: Retry is safe when Idempotency is guaranteed
@@ -860,21 +757,21 @@ spec:
       attempts: 0
 ```
 
-#### サービス種別ごとの安全戦略
+#### サービス種別ごとの安全性戦略
 
-| サービス種別 | Retry | Circuit Breaker | 冪等性が必要 |
+| サービス種別 | リトライ | サーキットブレーカー | 冪等性が必要か |
 |-------------|-------|----------------|---------------------|
-| **商品カタログ** | 3 回 | 必須 | 不要 |
-| **ショッピングカート** | 3 回 | 必須 | 不要 |
-| **注文の作成** | 0 回 | 必須 | 必須 |
-| **支払い** | 0 回 | 必須 | 必須 |
-| **在庫の差し引き** | 0 回 | 必須 | 必須 |
-| **ポイントの加算** | 0 回 | 必須 | 必須 |
-| **通知の送信** | 3 回（冪等） | 必須 | 推奨 |
+| **商品カタログ** | 3回 | 必須 | 不要 |
+| **ショッピングカート** | 読み取りは既定でリトライ | 必要に応じて調整 | リトライ可能な更新には必要 |
+| **注文作成** | 0回 | 必須 | 必須 |
+| **支払い** | 0回 | 必須 | 必須 |
+| **在庫の差し引き** | 0回 | 必須 | 必須 |
+| **ポイントの加算** | 0回 | 必須 | 必須 |
+| **通知の送信** | 配信重複排除がある場合のみ | 必要に応じて調整 | 配信／メッセージの冪等性が必要 |
 
 #### 接続プールとデータ整合性
 
-接続プールの設定も、**データ整合性を保証しません**。同時接続数を制限するだけです。
+接続プールの設定も**データ整合性を保証しません**。制限するのは同時接続数だけです。
 
 ```yaml
 # Misconception: Does maxConnections=1 prevent duplicates?
@@ -901,11 +798,11 @@ spec:
 
 **デプロイ前の確認**:
 
-- [ ] POST/PUT/DELETE/PATCH リクエストの Retry 設定を確認する
-- [ ] 非冪等リクエストには `attempts: 0` または `retryOn: connect-failure` を設定する
-- [ ] Circuit Breaker と Retry を組み合わせる際は重複の可能性を確認する
-- [ ] 重要な操作（支払い、在庫）には Idempotency Key を実装する
-- [ ] アプリケーションレベルの検証ロジックが存在することを確認する
+- [ ] POST/PUT/DELETE/PATCH リクエストのリトライ設定を確認する
+- [ ] 検証済みのアプリケーション契約で許可されている場合を除き、冪等でない書き込みには `attempts: 0` を設定する
+- [ ] サーキットブレーカーとリトライを組み合わせる際の重複の可能性を確認する
+- [ ] 支払いや在庫などの重要な操作には冪等性キーを実装する
+- [ ] アプリケーションレベルの検証ロジックがあることを確認する
 - [ ] テスト環境で障害シミュレーションを実施する
 
 **モニタリング**:
@@ -923,9 +820,7 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
 
-<span id="best-practices"></span>
-
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
 ### 1. 段階的な設定
 
@@ -943,7 +838,7 @@ spec:
         http1MaxPendingRequests: 100
         maxRequestsPerConnection: 10
     outlierDetection:
-      consecutiveErrors: 10        # Lenient
+      consecutive5xxErrors: 10        # Lenient
       interval: 60s
       baseEjectionTime: 30s
 ```
@@ -962,12 +857,12 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
     outlierDetection:
-      consecutiveErrors: 5         # Moderate
+      consecutive5xxErrors: 5         # Moderate
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 2. サービス種別に固有の設定
+### 2. サービス種別に応じた設定
 
 ```yaml
 # Frontend service: Lenient
@@ -976,34 +871,39 @@ connectionPool:
     http1MaxPendingRequests: 100
     maxRequestsPerConnection: 10
 outlierDetection:
-  consecutiveErrors: 10
+  consecutive5xxErrors: 10
+```
 
+```yaml
 # Backend service: Moderate
 connectionPool:
   http:
     http1MaxPendingRequests: 50
     maxRequestsPerConnection: 5
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
+```
 
-# Database/Cache: Strict
+```yaml
+# Native database/cache TCP example
 connectionPool:
-  http:
-    http1MaxPendingRequests: 10
-    maxRequestsPerConnection: 2
+  tcp:
+    maxConnections: 10
 outlierDetection:
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
+```
 
+```yaml
 # External API: Very strict
 connectionPool:
   http:
     http1MaxPendingRequests: 5
     maxRequestsPerConnection: 1
 outlierDetection:
-  consecutiveErrors: 1
+  consecutive5xxErrors: 1
 ```
 
-### 3. アラート設定
+### 3. アラートの設定
 
 ```yaml
 # Prometheus Alert Rules
@@ -1023,13 +923,15 @@ groups:
       summary: "Connection pool overflow rate is high"
 
   - alert: HighOutlierEjectionRate
-    expr: rate(envoy_cluster_outlier_detection_ejections_total[5m]) > 5
+    expr: rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m]) > 5
     for: 3m
     annotations:
       summary: "High outlier ejection rate"
 ```
 
 ### 4. テストシナリオ
+
+負荷テストは、準備済みのテストサービスに対してのみ実施してください。実際のメトリクスは別途確認します。`proxy-config` が示すのは設定済みのしきい値であり、現在サーキットが開いているかどうかではありません。30秒待っても、切り離しが繰り返されたエンドポイントが復旧するとは限りません。
 
 ```bash
 #!/bin/bash
@@ -1051,7 +953,7 @@ wait
 
 # 3. Check Circuit Breaker status
 echo "=== Circuit Breaker Status ==="
-istioctl proxy-config cluster <pod> | grep circuit_breakers
+istioctl proxy-config clusters <pod> -o json | jq '.[] | .circuitBreakers'
 
 # 4. Wait for recovery
 echo "=== Waiting for Recovery ==="
@@ -1062,7 +964,10 @@ echo "=== Recovery Check ==="
 curl -s http://service/api | jq .status
 ```
 
-### 5. ドキュメントテンプレート
+### 5. ドキュメントのテンプレート
+
+以下は例示用の負荷／復旧数値であり、固定された Istio の保証値ではありません。必要な Envoy 統計情報を有効にしてください。プロキシイメージに curl が含まれない場合は、ローカルの admin ポートをポートフォワードするか、`istioctl dashboard envoy` を利用します。
+
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1076,7 +981,7 @@ metadata:
     # Threshold rationale
     threshold-rationale: |
       - maxConnections: 100 (DB connection pool size)
-      - consecutiveErrors: 5 (observed error pattern)
+      - consecutive5xxErrors: 5 (observed error pattern)
       - baseEjectionTime: 30s (average recovery time)
 
     # Test results
@@ -1089,7 +994,9 @@ metadata:
     operations: |
       - Monitor: envoy_cluster_circuit_breakers_*
       - Alert: Circuit open > 1min
-      - Rollback: kubectl delete dr my-service-circuit-breaker
+      - Rollback: restore the reviewed previous DestinationRule configuration
+spec:
+  host: my-service
 ```
 
 ## 参考資料
@@ -1098,3 +1005,10 @@ metadata:
 - [Envoy Circuit Breaking](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
 - [Envoy Outlier Detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
+
+- [主な参考資料 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主な参考資料 2](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [主な参考資料 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [主な参考資料 4](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [主な参考資料 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [主な参考資料 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

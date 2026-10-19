@@ -1,6 +1,6 @@
 # ServiceEntry
 
-ServiceEntry registra servicios externos en la malla de servicios de Istio, lo que permite gestionarlos como servicios internos.
+ServiceEntry registra servicios externos en la malla de Istio para que puedan gestionarse como servicios internos.
 
 ## Tabla de contenidos
 
@@ -11,86 +11,36 @@ ServiceEntry registra servicios externos en la malla de servicios de Istio, lo q
 5. [Ejemplos prácticos](#practical-examples)
 6. [Combinación con Egress Gateway](#combining-with-egress-gateway)
 7. [Seguridad y TLS](#security-and-tls)
-8. [Monitorización y control](#monitoring-and-control)
+8. [Supervisión y control](#monitoring-and-control)
 9. [Prácticas recomendadas](#best-practices)
 
-<span id="why-serviceentry"></span>
-
-## ¿Por qué ServiceEntry?
+## ¿Por qué ServiceEntry? {#why-serviceentry}
 
 ### La necesidad de gestionar servicios externos
 
-De forma predeterminada, la malla de Istio no controla el tráfico hacia servicios externos. Con ServiceEntry:
+Con ALLOW_ANY, los destinos externos desconocidos pueden recibir tráfico, aunque con políticas y telemetría más limitadas. ServiceEntry registra un destino para que se puedan configurar políticas compatibles en los proxies; no es una regla de control de acceso.
 
-```mermaid
-flowchart TB
-    subgraph Without["Without ServiceEntry"]
-        A1[Mesh Internal<br/>Service] -->|Unknown Traffic| E1[External API]
-        A1 -.->|No Monitoring| E1
-        A1 -.->|Cannot Apply Policies| E1
-        A1 -.->|No Circuit Breaker| E1
-    end
+El registro permite configurar cada destino por separado; la supervisión, TLS y el control del tráfico dependen del protocolo y de las políticas aplicadas.
 
-    subgraph With["With ServiceEntry"]
-        A2[Mesh Internal<br/>Service] -->|Registered Traffic| E2[External API<br/>ServiceEntry]
-        A2 -->|Monitoring Enabled| E2
-        A2 -->|Policy Applied| E2
-        A2 -->|Circuit Breaker| E2
-    end
+### Ventajas principales
 
-    %% Style definitions
-    classDef internal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef unknown fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,A2 internal;
-    class E2 external;
-    class E1 unknown;
-```
-
-### Beneficios principales
-
-| Característica | Sin ServiceEntry | Con ServiceEntry |
+| Función | Sin ServiceEntry | Con ServiceEntry |
 |---------|---------------------|-------------------|
-| **Monitorización** | Sin visibilidad | Recopilación completa de métricas |
-| **Control de tráfico** | Imposible | Timeout, Retry, Circuit Breaker |
-| **Seguridad** | Limitada | mTLS, gestión de certificados |
-| **Control de Egress** | Se permite todo el tráfico externo | Permitir/bloquear explícitamente |
-| **Descubrimiento de servicios** | Gestión manual | Búsqueda DNS automática |
+| **Supervisión** | Telemetría limitada del tráfico de paso | Telemetría según el protocolo; HTTP requiere visibilidad L7 |
+| **Control del tráfico** | No disponible | Tiempos de espera, reintentos y circuit breaker |
+| **Seguridad** | TLS de la aplicación sigue siendo posible | TLS/mTLS se configura por separado; no se emiten certificados externos automáticamente |
+| **Control de salida** | Depende de las políticas de salida y de red | Configuración del registro y del enrutamiento; la aplicación de controles de red es independiente |
+| **Descubrimiento de servicios** | Administración manual | Búsqueda automática en DNS |
 
-<span id="serviceentry-overview"></span>
+## Descripción general de ServiceEntry {#serviceentry-overview}
 
-## Descripción general de ServiceEntry
+Estos ejemplos son configuraciones alternativas para sidecars. istiod y los proxies consumen ServiceEntry; no es un salto de red. `addresses` clasifica el tráfico del servicio o de su VIP, mientras que `endpoints` identifica los backends de destino. El modo de resolución controla cómo busca el proxy, no el DNS de la aplicación; configura registros DNS o captura DNS para los hosts sintéticos. ServiceEntry no incorpora un proxy de VM ni emite sus credenciales de identidad.
 
-ServiceEntry agrega servicios externos al registro de servicios de Istio.
+ServiceEntry añade servicios externos al registro de servicios de Istio.
 
-```mermaid
-flowchart LR
-    subgraph Mesh["Service Mesh"]
-        App[Application]
-        SE[ServiceEntry<br/>Registration]
-    end
+![Una aplicación dentro de la malla de servicios envía una solicitud mediante un registro ServiceEntry, que aplica controles de tráfico, supervisión y seguridad antes de distribuirla entre una API externa y una base de datos externa.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-1.png)
 
-    subgraph External["External Services"]
-        API[External API<br/>api.example.com]
-        DB[External DB<br/>db.example.com]
-    end
-
-    App -->|1. Request| SE
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| API
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| DB
-
-    %% Style definitions
-    classDef meshService fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef serviceEntry fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App meshService;
-    class SE serviceEntry;
-    class API,DB external;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-12-service-entry-1.html)
 
 ### Estructura básica
 
@@ -110,15 +60,13 @@ spec:
   resolution: DNS         # Address resolution method
 ```
 
-<span id="resolution-modes"></span>
+## Modos de resolución {#resolution-modes}
 
-## Modos de resolución
-
-ServiceEntry admite 4 modos de resolución de direcciones.
+La API de Istio 1.31 define cinco modos de resolución.
 
 ### 1. Resolución DNS
 
-El modo más común, que resuelve direcciones IP dinámicamente mediante DNS.
+Es el modo más común: resuelve direcciones IP dinámicamente mediante DNS.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -168,13 +116,13 @@ spec:
 ```
 
 **Casos de uso**:
-- Sistemas heredados (sin DNS)
+- Sistemas heredados sin DNS
 - Requisitos de cumplimiento que exigen IP fijas
 - Servicios de centros de datos internos
 
 ### 3. Resolución NONE
 
-No realiza resolución de direcciones; usa tal cual la dirección proporcionada por el cliente.
+Este modo no resuelve direcciones: utiliza tal cual la dirección proporcionada por el cliente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -193,21 +141,23 @@ spec:
 ```
 
 **Casos de uso**:
-- Dominios con comodines
+- Dominios comodín
 - Balanceo de carga del lado del cliente
 - Proxy TCP/TLS
 
-### 4. Resolución DNS_ROUND_ROBIN (obsoleta)
+### 4. Resolución DNS_ROUND_ROBIN
 
-Usa DNS round robin (ahora integrado en el modo DNS).
+Este modo es compatible y no está obsoleto. A diferencia del modo DNS, que obtiene el conjunto completo de endpoints, utiliza la primera dirección DNS al abrir una conexión nueva y mantiene las conexiones existentes aunque cambien los registros DNS. Es útil para servicios respaldados por DNS cuyos endpoints cambian a menudo y no deberían provocar el vaciado continuo de los grupos de conexiones.
 
-<span id="location-settings"></span>
+### 5. Resolución DYNAMIC_DNS
 
-## Configuración de ubicación
+Este modo resuelve un destino comodín a partir de HTTP Host/SNI en el momento de la solicitud. Su compatibilidad depende de la versión, del plano de datos y de la configuración de waypoint; no se aplica al tráfico TCP opaco del que no se puede recuperar el nombre del host. Comprueba los requisitos específicos del modo antes de utilizarlo. El ejemplo comodín concreto que aparece más abajo usa el modo NONE en un sidecar.
+
+## Configuración de ubicación {#location-settings}
 
 ### MESH_EXTERNAL (servicio externo)
 
-Registra servicios fuera de la malla.
+Registra servicios que están fuera de la malla.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -226,13 +176,13 @@ spec:
 ```
 
 **Características**:
-- mTLS no se aplica
-- Puede salir a través de Egress Gateway
+- Es posible usar TLS/mTLS externo con un DestinationRule adecuado y la configuración de confianza del servidor
+- El tráfico puede salir a través de Egress Gateway
 - Se clasifica como tráfico externo
 
 ### MESH_INTERNAL (servicio interno)
 
-Trata el servicio como interno de la malla (se usa rara vez).
+Trata el servicio como interno de la malla (uso poco frecuente).
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -255,13 +205,11 @@ spec:
 ```
 
 **Casos de uso**:
-- Incluye cargas de trabajo de VM en la malla
+- Incorporar cargas de trabajo de VM a la malla
 - Entornos multiclúster
 - Configuraciones de nube híbrida
 
-<span id="practical-examples"></span>
-
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 ### 1. Registro de una API REST externa
 
@@ -277,9 +225,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -293,14 +242,23 @@ spec:
   hosts:
   - api.payment-gateway.com
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: api.payment-gateway.com
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: api.payment-gateway.com
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 # DestinationRule: Circuit Breaker
 apiVersion: networking.istio.io/v1
@@ -316,12 +274,16 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
-      mode: SIMPLE  # TLS connection
+      mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames: [api.payment-gateway.com]
 ```
+
+En este diseño de originación, la aplicación envía HTTP al sidecar local y el proxy envía HTTPS verificado al servicio externo. No combines este diseño con HTTPS iniciado por la aplicación. Antes de habilitar reintentos para operaciones de pago de escritura, la aplicación debe contar con un contrato de idempotencia.
 
 ### 2. Registro de una base de datos externa
 
@@ -354,12 +316,14 @@ spec:
         maxConnections: 100
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
-### 3. Registro de un dominio con comodín
+### 3. Registro de un dominio comodín
+
+Configura TLS de RDS y la verificación del certificado en el controlador de la base de datos con el paquete de CA de RDS vigente. El registro TCP no configura la autenticación de la base de datos ni la negociación SSL. Para varias bases de datos externas que usan el mismo puerto, utiliza captura DNS o VIP de servicio únicas para evitar ambigüedades basadas solo en el puerto.
 
 #### Escenario: acceso a un bucket de AWS S3
 
@@ -371,8 +335,8 @@ metadata:
 spec:
   hosts:
   - "*.s3.amazonaws.com"
-  - "*.s3.*.amazonaws.com"
-  - "*.s3-*.amazonaws.com"
+  - "*.s3.us-west-2.amazonaws.com"
+  - "s3.us-west-2.amazonaws.com"
   ports:
   - number: 443
     name: https
@@ -381,9 +345,11 @@ spec:
   resolution: NONE  # Use NONE for wildcards
 ```
 
+El prefijo comodín solo puede ir al principio; enumera los sufijos de endpoint regionales reales en lugar de colocar `*` dentro del nombre. Este ejemplo es para sidecar y no cubre todas las familias de endpoints de S3 ni concede permisos de IAM.
+
 ### 4. Servicio externo con varios endpoints
 
-#### Escenario: API multirregión
+#### Escenario: API multirregional
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -394,11 +360,38 @@ spec:
   hosts:
   - api.global-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+  endpoints:
+  - address: us-west.api.global-service.com
+    labels:
+      region: us-west
+  - address: eu-central.api.global-service.com
+    labels:
+      region: eu-central
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: multi-region-api
+spec:
+  host: api.global-service.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.global-service.com
+      subjectAltNames: [api.global-service.com]
+  subsets:
+  - name: us-west
+    labels:
+      region: us-west
+  - name: eu-central
+    labels:
+      region: eu-central
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -408,36 +401,28 @@ spec:
   hosts:
   - api.global-service.com
   http:
-  # Region-based routing
   - match:
     - headers:
         x-region:
-          exact: "us-west"
+          exact: us-west
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: us-west.api.global-service.com
-
+        subset: us-west
   - match:
     - headers:
         x-region:
-          exact: "eu-central"
+          exact: eu-central
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: eu-central.api.global-service.com
-
-  # Default routing
+        subset: eu-central
   - route:
     - destination:
         host: api.global-service.com
 ```
+
+Ambos endpoints regionales deben ofrecer el mismo nombre de host canónico de la API y el certificado correspondiente. Cambiar solo el encabezado HTTP Host no cambia el endpoint DNS que selecciona el proxy. La aplicación utiliza HTTP localmente; como se muestra, el proxy origina TLS hacia el upstream.
 
 ### 5. Registro de un servicio TCP
 
@@ -450,10 +435,9 @@ metadata:
   name: external-redis
 spec:
   hosts:
-  - redis.external-cluster.com
+  - redis-primary.external-cluster.com
   addresses:
   - 203.0.113.10
-  - 203.0.113.11
   ports:
   - number: 6379
     name: tcp
@@ -464,16 +448,13 @@ spec:
   - address: 203.0.113.10
     labels:
       instance: primary
-  - address: 203.0.113.11
-    labels:
-      instance: replica
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-redis-lb
 spec:
-  host: redis.external-cluster.com
+  host: redis-primary.external-cluster.com
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -483,11 +464,11 @@ spec:
         connectTimeout: 3s
 ```
 
-<span id="combining-with-egress-gateway"></span>
+Este ejemplo selecciona únicamente el nodo principal de escritura. Registra los nodos réplica por separado para el tráfico de lectura o utiliza un cliente de clúster que entienda Redis; el balanceo round robin genérico no conserva la semántica de nodo principal/réplica ni de fragmentación de Redis. Sustituye las IP de ejemplo por endpoints accesibles.
 
-## Combinación con Egress Gateway
+## Combinación con Egress Gateway {#combining-with-egress-gateway}
 
-Controla centralizadamente el tráfico externo mediante Egress Gateway.
+Controla centralmente el tráfico externo mediante Egress Gateway.
 
 ### Configuración básica de Egress Gateway
 
@@ -512,14 +493,15 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
       number: 443
-      name: https
-      protocol: HTTPS
+      name: tls
+      protocol: TLS
     hosts:
     - api.example.com
     tls:
@@ -535,12 +517,14 @@ spec:
   - api.example.com
   gateways:
   - mesh
-  - egress-gateway
-  http:
+  - istio-system/egress-gateway
+  tls:
   - match:
     - gateways:
       - mesh
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
@@ -548,8 +532,10 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-gateway
+      - istio-system/egress-gateway
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: api.example.com
@@ -571,6 +557,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   - number: 443
     name: https
     protocol: HTTPS
@@ -591,11 +578,9 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
-<span id="security-and-tls"></span>
+## Seguridad y TLS {#security-and-tls}
 
-## Seguridad y TLS
-
-### mTLS para un servicio externo
+### mTLS con un servicio externo
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -606,9 +591,10 @@ spec:
   hosts:
   - mtls-api.example.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -621,10 +607,14 @@ spec:
   trafficPolicy:
     tls:
       mode: MUTUAL
+      sni: mtls-api.example.com
+      subjectAltNames: [mtls-api.example.com]
       clientCertificate: /etc/certs/client-cert.pem
       privateKey: /etc/certs/client-key.pem
       caCertificates: /etc/certs/ca-cert.pem
 ```
+
+Monta estos archivos de certificado y clave en el contenedor del proxy y rótalos mediante tu proceso de administración de certificados. El servidor externo debe confiar en la CA del cliente; ServiceEntry no emite estas credenciales. Este es mTLS originado por el proxy a partir de HTTP local, no una segunda capa sobre el TLS de la aplicación.
 
 ### Enrutamiento SNI
 
@@ -633,6 +623,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-sni-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -657,7 +648,7 @@ spec:
   - api2.example.com
   gateways:
   - mesh
-  - egress-sni-gateway
+  - istio-system/egress-sni-gateway
   tls:
   - match:
     - gateways:
@@ -672,7 +663,7 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-sni-gateway
+      - istio-system/egress-sni-gateway
       port: 443
       sniHosts:
       - api.example.com
@@ -681,11 +672,33 @@ spec:
         host: api.example.com
         port:
           number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - istio-system/egress-sni-gateway
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: api2.example.com
+        port:
+          number: 443
 ```
 
-<span id="monitoring-and-control"></span>
+Instala la carga de trabajo de Egress Gateway y el servicio ClusterIP como se muestra en [Control de salida](11-egress-control.md), y registra ambos hosts externos mediante ServiceEntry. Las rutas SNI configuran el reenvío, pero no obligan a que todo el tráfico pase por la gateway; utiliza controles de red para imponer ese límite.
 
-## Monitorización y control
+## Supervisión y control {#monitoring-and-control}
 
 ### Recopilación de métricas
 
@@ -695,29 +708,31 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
   curl localhost:15000/stats/prometheus | grep "api.example.com"
 
 # Egress traffic metrics
-istio_requests_total{destination_service_name="api.example.com"}
+istio_requests_total{reporter="source",destination_service_name="api.example.com"}
 ```
 
 ### Consultas de Prometheus
 
-```yaml
+Inspecciona las etiquetas de métricas reales antes de consultarlas. Las métricas HTTP de solicitudes, errores y latencia requieren visibilidad L7 (por ejemplo, originación TLS); HTTPS/TCP opaco solo expone métricas de conexiones y bytes. No des por sentado que el campo de espacio de nombres de un ServiceEntry externo está vacío.
+
+```promql
 # External service request count
-sum(rate(istio_requests_total{destination_service_namespace="",destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service error rate
-sum(rate(istio_requests_total{destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total{destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service response time
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_service_name="api.example.com"}[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="api.example.com"}[5m])) by (le)
 )
 ```
 
-### Bloqueo de tráfico Egress
+### Detección de destinos no registrados
 
 ```yaml
-# Block all Egress by default
+# Registry/configuration control, not a firewall
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
@@ -729,14 +744,14 @@ spec:
     - "./*"  # Allow only same namespace
     - "istio-system/*"  # Allow istio-system
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
+    mode: REGISTRY_ONLY  # Known Kubernetes and ServiceEntry destinations
 ```
 
-<span id="best-practices"></span>
+El ámbito de importación de sidecar y REGISTRY_ONLY no son límites de seguridad. Para exigir el control del tráfico de salida, utiliza políticas de red o firewalls, y AuthorizationPolicy cuando corresponda.
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
-### 1. Registro explícito de ServiceEntry
+### 1. Registra explícitamente cada ServiceEntry
 
 ```yaml
 # Good example: Explicit registration
@@ -760,7 +775,7 @@ spec:
   resolution: DNS
 ```
 
-### 2. Aplica siempre Circuit Breaker
+### 2. Ajusta la resiliencia al protocolo
 
 ```yaml
 # Always apply Circuit Breaker for external services
@@ -776,12 +791,12 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
 ```
 
-### 3. Configuración de Timeout
+### 3. Configura los tiempos de espera
 
 ```yaml
 # Set explicit Timeout for external services
@@ -802,7 +817,7 @@ spec:
       perTryTimeout: 5s
 ```
 
-### 4. Usa Egress Gateway (producción)
+### 4. Utiliza Egress Gateway en producción
 
 ```yaml
 # Control external traffic through Egress Gateway in production
@@ -811,7 +826,7 @@ spec:
 # - Consistent security policies
 ```
 
-### 5. Aislamiento de Namespace
+### 5. Configura la visibilidad entre espacios de nombres
 
 ```yaml
 # Isolate ServiceEntry by namespace
@@ -833,8 +848,7 @@ spec:
 ### 6. Plantilla de documentación
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+# Metadata excerpt; replace illustrative SLA/cost values with the actual service contract
 metadata:
   name: external-service
   annotations:
@@ -861,6 +875,15 @@ metadata:
 ## Referencias
 
 - [ServiceEntry de Istio](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-- [Tráfico Egress de Istio](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+- [Tráfico de salida de Istio](https://istio.io/latest/docs/tasks/traffic-management/egress/)
 - [Originación TLS de Istio](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
 - [Servicios externos de Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+
+- [Referencia principal 1](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [Referencia principal 2](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Referencia principal 3](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [Referencia principal 4](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Referencia principal 5](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/)
+- [Referencia principal 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [Referencia principal 7](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
+- [Referencia principal 8](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)

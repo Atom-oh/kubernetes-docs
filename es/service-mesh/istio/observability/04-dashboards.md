@@ -1,9 +1,9 @@
 # Paneles de Istio
 
-> **Base de revisión**: Istio 1.31; la compatibilidad de Kiali se detalla a continuación.
-> **Última actualización**: September 11, 2026
+> **Referencia de la revisión**: Istio 1.31; la compatibilidad de Kiali se detalla más adelante.
+> **Última actualización**: 11 de septiembre de 2026
 
-Utilice Grafana, Kiali y Prometheus para inspeccionar la telemetría configurada. Los ejemplos son patrones de configuración de laboratorio comprobados con referencias oficiales y validación sin conexión; no se desplegaron ni se probaron con carga de producción. La disponibilidad del backend, la autenticación, los permisos de los espacios de nombres, el almacenamiento y la compatibilidad de versiones son requisitos previos explícitos.
+Utilice Grafana, Kiali y Prometheus para consultar la telemetría configurada. Los ejemplos de laboratorio se contrastaron con las referencias oficiales y se validaron sin conexión; no se desplegaron ni se sometieron a pruebas de carga de producción. Para utilizarlos, se requieren backends disponibles, autenticación, permisos sobre los espacios de nombres, almacenamiento y versiones compatibles.
 
 ## Índice
 
@@ -19,7 +19,7 @@ Utilice Grafana, Kiali y Prometheus para inspeccionar la telemetría configurada
 
 ### Arquitectura de la pila de observabilidad
 
-Kiali lee los recursos de Istio desde la API de Kubernetes y consulta Prometheus; istiod configura los proxies en vez de enviar configuración a Kiali. Grafana consulta los backends de métricas/registros/trazas configurados. Prometheus recopila métricas de los proxies, los recopiladores entregan registros de acceso/spans y las aplicaciones con trazado deben propagar el contexto.
+Kiali lee los recursos de Istio a través de la API de Kubernetes y consulta Prometheus. istiod configura los proxies; no envía la configuración a Kiali. Grafana consulta los backends configurados para métricas, registros y trazas. Prometheus recopila las métricas de los proxies, mientras que los colectores envían los registros de acceso y los spans. Las aplicaciones con trazado deben propagar el contexto.
 
 ### Propósito de cada herramienta
 
@@ -40,15 +40,15 @@ Kiali es una **consola de observabilidad** para la malla de servicios Istio. Vis
 
 ### Valor principal de Kiali
 
-1. **Visualización del gráfico de servicios**: representa intuitivamente las relaciones y el flujo de tráfico entre microservicios
-2. **Monitorización en tiempo real**: permite ver la tasa de solicitudes, la tasa de errores y el tiempo de respuesta en tiempo real
-3. **Validación de configuración**: detecta errores en CRD de Istio como VirtualService y DestinationRule
-4. **Verificación del estado de mTLS**: confirma visualmente la aplicación de mTLS entre servicios
-5. **Integración del trazado distribuido**: permite ver trazas directamente desde el gráfico de servicios mediante la integración con Jaeger
+1. **Visualización del gráfico de servicios**: muestra de forma intuitiva las relaciones y el flujo de tráfico entre microservicios
+2. **Monitorización en tiempo real**: permite consultar la tasa de solicitudes, la tasa de errores y el tiempo de respuesta
+3. **Validación de la configuración**: detecta errores en recursos de Istio como VirtualService y DestinationRule
+4. **Verificación del estado de mTLS**: muestra visualmente el uso de mTLS entre servicios
+5. **Integración del trazado distribuido**: permite consultar las trazas desde el gráfico de servicios mediante Jaeger
 
 ### Ejemplo de instalación y compatibilidad
 
-Kiali 2.31.0 y su operador se publicaron el August 23, 2026. La tabla de compatibilidad publicada enumera actualmente Istio 1.30 con Kiali 2.26+ e Istio 1.29 con Kiali 2.21+; **todavía no enumera explícitamente Istio 1.31**. Considere lo siguiente como un ejemplo de configuración de Kiali 2.31 para un despliegue de Istio con compatibilidad documentada. Confirme la compatibilidad con 1.31 mediante las indicaciones actuales de los mantenedores y un laboratorio representativo antes de utilizar esa combinación; ni la coincidencia de números de versión ni «latest» demuestran compatibilidad. No rebaje la versión de una malla existente solo para seguir este ejemplo.
+Kiali 2.31.0 y su operador se publicaron el 23 de agosto de 2026. En la referencia utilizada para esta revisión, la tabla de compatibilidad publicada incluye Istio 1.30 con Kiali 2.26+ e Istio 1.29 con Kiali 2.21+, pero **todavía no incluye explícitamente Istio 1.31**. El ejemplo siguiente muestra la configuración de Kiali 2.31 para un despliegue de Istio con compatibilidad documentada. Antes de combinarlo con Istio 1.31, confirme la compatibilidad con las indicaciones vigentes de los mantenedores y en un laboratorio representativo. Ni la coincidencia de los números de versión ni la etiqueta «latest» demuestran compatibilidad. No reduzca la versión de una malla existente solo para seguir este ejemplo.
 
 #### 1. Instalar el operador de Kiali
 
@@ -60,9 +60,9 @@ helm install kiali-operator kiali/kiali-operator \
 kubectl get pods -n kiali-operator
 ```
 
-#### 2. Crear un CR de Kiali con ámbito limitado y solo de consulta
+#### 2. Crear un CR de Kiali con acceso limitado y de solo lectura
 
-Ya debe existir un Prometheus accesible que contenga las métricas de Istio; adapte la URL si su Service tiene otro nombre. El ejemplo de Prometheus Operator posterior define `prometheus` en `istio-system`. El operador da a Kiali acceso a su propio espacio de nombres y a los que coincidan con los selectores de descubrimiento. Con `cluster_wide_access: false`, crea acceso por espacio de nombres en vez de conceder al servidor acceso a todo el clúster. El RBAC del usuario final puede reducir aún más los espacios de nombres visibles.
+Debe existir un Prometheus accesible que contenga las métricas de Istio; adapte la URL si su Service tiene otro nombre. El ejemplo de Prometheus Operator que aparece más adelante define `prometheus` en `istio-system`. El operador concede a Kiali acceso a su propio espacio de nombres y a los seleccionados para el descubrimiento. Con `cluster_wide_access: false`, concede permisos por espacio de nombres, sin dar al servidor acceso a todo el clúster. El RBAC del usuario final puede restringir aún más los espacios de nombres visibles.
 
 ```yaml
 apiVersion: kiali.io/v1alpha1
@@ -102,7 +102,7 @@ spec:
       enabled: false
 ```
 
-Guárdelo como `kiali-cr.yaml` y aplíquelo. Cree los espacios de nombres de aplicaciones previstos antes de la reconciliación. Kiali no hereda automáticamente los selectores de descubrimiento de Istio. El antiguo campo `accessible_namespaces` se eliminó en Kiali 2.0. Las integraciones de backend Grafana/trazado permanecen deshabilitadas hasta configurar sus endpoints, credenciales y compatibilidad.
+Guarde el manifiesto como `kiali-cr.yaml` y aplíquelo. Cree previamente los espacios de nombres de las aplicaciones para que el operador pueda configurar el acceso. Kiali no hereda automáticamente los selectores de descubrimiento de Istio. El campo antiguo `accessible_namespaces` se eliminó en Kiali 2.0. Las integraciones con Grafana y el backend de trazado permanecen deshabilitadas hasta configurar los endpoints, las credenciales y la compatibilidad correspondientes.
 
 ```bash
 kubectl apply -f kiali-cr.yaml
@@ -110,11 +110,11 @@ kubectl get kiali,pods -n istio-system
 kubectl port-forward -n istio-system svc/kiali 20001:20001
 ```
 
-Para acceso externo, configure por separado un ingress/gateway mantenido, certificados TLS, autenticación y URL accesibles desde el navegador. El ejemplo no instala un controlador ingress, un emisor de cert-manager ni un endpoint público. Las funciones de estado de proxies pueden depender de la API de depuración de istiod; si está deshabilitada deliberadamente, establezca `external_services.istio.istio_api_enabled: false` y acepte esas limitaciones en vez de suponer que todas las vistas están disponibles.
+Para habilitar el acceso externo, configure por separado un Ingress o Gateway mantenido, los certificados TLS, la autenticación y las URL accesibles desde el navegador. El ejemplo no instala un controlador Ingress, un emisor de cert-manager ni un endpoint público. Algunas funciones de estado de los proxies dependen de la API de depuración de istiod. Si la ha deshabilitado deliberadamente, establezca `external_services.istio.istio_api_enabled: false` y tenga en cuenta las limitaciones de esas funciones.
 
 ### Acceder a Kiali
 
-Abra `http://localhost:20001` después del reenvío de puertos. La autenticación por token utiliza un token de ServiceAccount de Kubernetes y respeta los permisos de espacio de nombres de la cuenta. Utilice una identidad de consulta dedicada con el RBAC previsto; no utilice el ServiceAccount del servidor/operador de Kiali como inicio de sesión de administrador por comodidad. Para una cuenta ya creada y vinculada correctamente:
+Después de configurar la redirección de puertos, abra `http://localhost:20001`. La autenticación por token utiliza un token de una ServiceAccount de Kubernetes y respeta los permisos de esa cuenta sobre los espacios de nombres. Utilice una identidad dedicada a la consulta, con el RBAC correspondiente. Evite iniciar sesión como administrador con la ServiceAccount del servidor o del operador de Kiali por comodidad. Para una cuenta ya creada y vinculada a los permisos adecuados:
 
 ```bash
 kubectl create token kiali-viewer -n default --duration=1h
@@ -132,7 +132,7 @@ El servidor de API determina la duración real del token. La estrategia de token
 - Visualizar la tasa de errores y el tiempo de respuesta
 - Verificar la distribución del tráfico por versión
 
-La animación del tráfico ilustra el tráfico agregado durante la ventana temporal y el intervalo de actualización seleccionados. No es una captura de paquetes ni un punto por solicitud. Utilice las métricas de las aristas para el análisis cuantitativo.
+La animación representa el tráfico agregado durante la ventana temporal y el intervalo de actualización seleccionados. No es una captura de paquetes ni asigna un punto a cada solicitud. Para el análisis cuantitativo, utilice las métricas de los enlaces del gráfico.
 
 **Tipos de vista de gráfico**:
 
@@ -179,11 +179,11 @@ Hide: kube-system namespace
 
 Información detallada de cada aplicación:
 
-- **Descripción general**: resumen del estado global
-- **Tráfico**: métricas de tráfico entrante/saliente
+- **Descripción general**: resumen del estado de la aplicación
+- **Tráfico**: métricas del tráfico entrante y saliente
   - Volumen de solicitudes (RPS)
-  - Duración de solicitudes (P50, P95, P99)
-  - Tamaño de solicitud / tamaño de respuesta
+  - Duración de las solicitudes (P50, P95, P99)
+  - Tamaño de las solicitudes y respuestas
 - **Métricas de entrada**: análisis del tráfico entrante
   - Cargas de trabajo de origen
   - Protocolos de solicitud (HTTP/gRPC/TCP)
@@ -197,15 +197,15 @@ Información detallada de cada aplicación:
 
 Información detallada por carga de trabajo (Deployment, StatefulSet, etc.):
 
-- **Pods**: lista y estado de Pods
-- **Servicios**: lista de Services conectados
-- **Registros**: registros de pods en tiempo real (Envoy + aplicación)
-- **Métricas**: métricas de cargas de trabajo
+- **Pods**: lista de pods y su estado
+- **Servicios**: lista de Services asociados
+- **Registros**: registros de los pods en tiempo real (Envoy y aplicación)
+- **Métricas**: métricas de la carga de trabajo
   - Volumen de solicitudes
   - Duración (P50/P95/P99)
   - Tasa de errores
-- **Trazas**: trazado distribuido con integración de Jaeger
-- **Envoy**: verificación de la configuración de Envoy
+- **Trazas**: trazado distribuido mediante la integración con Jaeger
+- **Envoy**: consulta de la configuración de Envoy
   - Clústeres
   - Listeners
   - Rutas
@@ -222,7 +222,7 @@ Información detallada por Service de Kubernetes:
 
 #### 5. Validación de la configuración de Istio (Istio Config)
 
-Kiali valida los recursos de Istio compatibles usando el estado del clúster disponible. El ejemplo de solo consulta permite inspeccionar la configuración; editarla requiere permisos autorizados por separado. Una marca verde significa que se superaron las comprobaciones implementadas, no que se haya demostrado la corrección durante la ejecución.
+Kiali valida los recursos de Istio compatibles con el estado disponible del clúster. El ejemplo de solo lectura permite consultar la configuración; para editarla, se necesitan permisos adicionales. Una marca verde indica que se superaron las comprobaciones implementadas, pero no demuestra que la configuración funcione correctamente durante la ejecución.
 
 **Objetivos de validación**:
 - VirtualService
@@ -240,8 +240,8 @@ Kiali valida los recursos de Istio compatibles usando el estado del clúster dis
 | Icono | Nivel | Descripción |
 |------|-------|-------------|
 | ✅ | Válido | Se superaron las comprobaciones disponibles |
-| ⚠️ | Advertencia | Posible problema (incumplimiento de buenas prácticas) |
-| ❌ | Error | Error de configuración detectado; la admisión de la API puede aun así tener éxito |
+| ⚠️ | Advertencia | Posible problema, como un incumplimiento de las buenas prácticas |
+| ❌ | Error | Error de configuración detectado; la API puede aceptar el recurso aun así |
 
 **Ejemplo de validación: KIA1107, subconjunto no encontrado**
 
@@ -275,7 +275,7 @@ spec:
       version: v1
 ```
 
-Defina el subconjunto referenciado y despliegue endpoints de servicio coincidentes, o enrute al subconjunto existente previsto. Suponiendo que existan ambas versiones de Bookinfo, este DestinationRule proporciona ambas etiquetas:
+Defina el subconjunto referenciado y despliegue endpoints de servicio que coincidan con sus etiquetas, o dirija el tráfico al subconjunto existente que corresponda. Si ambas versiones de Bookinfo están desplegadas, este DestinationRule define las etiquetas para las dos:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -294,13 +294,13 @@ spec:
       version: v2
 ```
 
-Kubernetes puede aceptar un manifiesto con errores semánticos de enrutamiento, por lo que las advertencias/errores de configuración no son idénticos a los fallos de admisión de la API.
+Kubernetes puede aceptar un manifiesto con errores semánticos de enrutamiento. Por tanto, las advertencias y los errores de configuración no equivalen a fallos de admisión de la API.
 
 #### 6. Seguridad
 
 **Verificación del estado de mTLS**
 
-Utilice los indicadores de seguridad del gráfico junto con la ventana de tráfico seleccionada y la PeerAuthentication efectiva. Observar tráfico mTLS no demuestra que se prohíba el texto sin cifrar: PERMISSIVE puede transportar tráfico completamente cifrado durante una ventana de observación. La ausencia de tráfico/telemetría no demuestra que un servicio sea seguro, y una etiqueta de política por sí sola no establece la eficacia de la autorización. Confírmelo mediante la configuración y pruebas de tráfico permitido/denegado.
+Interprete los indicadores de seguridad del gráfico junto con la ventana de tráfico seleccionada y la PeerAuthentication efectiva. Observar tráfico mTLS no demuestra que se prohíba el tráfico sin cifrar: con PERMISSIVE, todo el tráfico observado durante una ventana puede estar cifrado. La ausencia de tráfico o telemetría tampoco demuestra que un servicio sea seguro, ni una etiqueta de política basta para confirmar que la autorización se aplica correctamente. Compruébelo con la configuración y con pruebas de tráfico permitido y denegado.
 
 **Panel de seguridad**:
 - Estado de mTLS por espacio de nombres
@@ -312,19 +312,19 @@ Utilice los indicadores de seguridad del gráfico junto con la ventana de tráfi
 Kiali se integra con Jaeger para ver trazas directamente desde el gráfico de servicios.
 
 **Modo de uso**:
-1. Haga clic en un nodo de servicio del gráfico
-2. Haga clic en el enlace «Ver trazas»
-3. Navegue automáticamente a la interfaz de Jaeger para ver las trazas de ese servicio
+1. Haga clic en un nodo de servicio del gráfico.
+2. Haga clic en el enlace «View Traces» (Ver trazas).
+3. La interfaz abrirá automáticamente Jaeger para mostrar las trazas de ese servicio.
 
 **Detalles de las trazas**:
-- Duración del span (tiempo de procesamiento de cada servicio)
-- Atributos/eventos instrumentados del span (las cabeceras no se capturan automáticamente)
-- Detalles de errores
-- Mapa de dependencias de servicios
+- Duración de cada span (tiempo de procesamiento de cada servicio)
+- Atributos y eventos instrumentados de los spans; las cabeceras no se capturan automáticamente
+- Detalles de los errores
+- Mapa de dependencias entre servicios
 
 ### Funciones avanzadas de Kiali
 
-#### Visualización del desplazamiento de tráfico
+#### Visualización de la distribución del tráfico
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -362,7 +362,7 @@ spec:
       version: v2
 ```
 
-Los pesos configurados son 90/10; Kiali muestra las tasas de solicitudes observadas para la ventana seleccionada. La variación de muestreo, los errores y las condiciones de enrutamiento pueden hacer que las proporciones observadas difieran. Este ejemplo presupone que ambos subconjuntos tienen endpoints coincidentes.
+Los pesos configurados son 90/10, mientras que Kiali muestra las tasas de solicitudes observadas en la ventana seleccionada. La variación de las muestras, los errores y las condiciones de enrutamiento pueden hacer que las proporciones observadas difieran de esos pesos. El ejemplo requiere que ambos subconjuntos tengan endpoints con las etiquetas correspondientes.
 
 **Monitorización de despliegues canary**:
 - Tasa de solicitudes observada por versión frente a los pesos 90/10 configurados
@@ -372,7 +372,7 @@ Los pesos configurados son 90/10; Kiali muestra las tasas de solicitudes observa
 
 #### Aislamiento de espacios de nombres y control de acceso
 
-Esta es una configuración alternativa de selectores para la misma instancia de Kiali, no un despliegue adicional superpuesto. Con el acceso a todo el clúster deshabilitado, limita el acceso del servidor a `team-a` más su propio espacio de nombres del plano de control; el RBAC de usuario sigue siendo aplicable. La configuración de OpenID es una tarea de autenticación independiente y Keycloak moderno utiliza `/realms/...` de forma predeterminada salvo que se configure un prefijo `/auth` personalizado.
+Esta configuración de selectores es una alternativa para la misma instancia de Kiali; no crea otro despliegue que se superponga al anterior. Al deshabilitar el acceso a todo el clúster, el servidor solo puede acceder a `team-a` y a su propio espacio de nombres del plano de control. El RBAC del usuario sigue aplicándose. La autenticación con OpenID debe configurarse por separado. Las versiones modernas de Keycloak usan `/realms/...` de forma predeterminada, salvo que se configure un prefijo `/auth` personalizado.
 
 ```yaml
 apiVersion: kiali.io/v1alpha1
@@ -404,7 +404,7 @@ spec:
 
 ### Paneles oficiales de Istio
 
-El catálogo siguiente se comprobó con las **revisiones de Istio 1.31.0** descargadas, no solo con los títulos de los paneles. Seleccione la revisión correspondiente a la versión de Istio instalada y asigne su fuente de datos Prometheus al importar. La revisión más reciente de un panel no es automáticamente compatible con una malla anterior.
+El catálogo siguiente se verificó con las **revisiones descargadas para Istio 1.31.0**, además de comprobar los títulos de los paneles. Al importar un panel, seleccione la revisión correspondiente a la versión de Istio instalada y asígnele la fuente de datos Prometheus. La revisión más reciente no es necesariamente compatible con una malla anterior.
 
 | Panel | ID | Revisión verificada | Ámbito |
 |---|---:|---:|---|
@@ -418,22 +418,22 @@ El catálogo siguiente se comprobó con las **revisiones de Istio 1.31.0** desca
 
 La variable `service` del panel Service es un host de servicio y su revisión 1.31 tiene filtros `srcns`/`dstns`, en vez de una variable `namespace` genérica. El panel Workload tiene `namespace` y `workload`. Inspeccione las variables de la revisión descargada antes de configurar enlaces directos. Los ID 7636, 11829 y 13277 corresponden respectivamente a **Service, Performance y Wasm**, no a Workload, Mesh genérico y Gateway.
 
-Importe mediante la interfaz de paneles de Grafana y elija la fuente de datos. Para un entorno de prueba nuevo, el `samples/addons/grafana.yaml` de la versión fijada de Istio incluye sus paneles; esa muestra no está reforzada para producción. Para un despliegue existente, utilice su mecanismo de aprovisionamiento documentado en vez de instalar un segundo Grafana.
+Importe el panel desde la interfaz de Grafana y seleccione la fuente de datos. En un entorno de prueba nuevo, el archivo `samples/addons/grafana.yaml` de la versión fijada de Istio incluye sus paneles, aunque ese ejemplo no está preparado para producción. Si ya existe un despliegue de Grafana, utilice su mecanismo documentado de aprovisionamiento.
 
 ### Panel comunitario de Loki 14876
 
-La entrada verificada del catálogo es **Grafana Loki Dashboard for Istio Service Mesh**, revisión 3. Utiliza un analizador `pattern` para un formato de texto específico de Envoy, con `status_code` y `req_id`, y variables de fuente de datos/etiqueta/trabajo/instancia. Sus paneles incluyen recuentos de solicitudes/estados, bytes, solicitudes recientes, duración y resúmenes de visitantes/rutas/agentes de usuario. No establece la seguridad mTLS ni proporciona todos los paneles que antes se afirmaban aquí.
+La entrada verificada del catálogo es **Grafana Loki Dashboard for Istio Service Mesh**, revisión 3. Usa un analizador `pattern` para un formato específico de texto de Envoy, con los campos `status_code` y `req_id`, y variables para la fuente de datos, las etiquetas, el job y la instancia. Sus paneles muestran recuentos de solicitudes y estados, bytes, solicitudes recientes, duración y resúmenes de visitantes, rutas y agentes de usuario. No demuestra la seguridad de mTLS ni incluye todos los paneles que se le atribuían anteriormente.
 
 ```bash
 curl -fL -o istio-loki-dashboard.json \
   https://grafana.com/api/dashboards/14876/revisions/3/download
 ```
 
-Revise el archivo, impórtelo mediante la interfaz y vincule su fuente de datos Loki. Crear un ConfigMap etiquetado no resuelve las entradas de fuentes de datos ni instala un cargador de paneles. Esta revisión comunitaria no es directamente compatible con el proveedor JSON/las etiquetas Alloy de esta guía. Utilice el [panel y las consultas comprobados del capítulo de registros](03-logging.md) para ese formato, o adapte explícitamente el analizador, los campos y las etiquetas. Las estadísticas derivadas de registros describen los registros conservados y pueden estar sesgadas por el filtrado/muestreo.
+Revise el archivo, impórtelo desde la interfaz y asígnele la fuente de datos Loki. Crear un ConfigMap con una etiqueta no resuelve las entradas de fuentes de datos ni instala un cargador de paneles. Esta revisión comunitaria no es directamente compatible con el proveedor JSON y las etiquetas de Alloy utilizados en esta guía. Para ese formato, use el [panel y las consultas verificados del capítulo de registros](03-logging.md), o adapte expresamente el analizador, los campos y las etiquetas. Las estadísticas obtenidas de los registros describen únicamente los registros conservados y pueden estar sesgadas por el filtrado o el muestreo.
 
 ### Reglas de alertas de métricas
 
-Lo siguiente es un **PrometheusRule de Prometheus Operator**, no aprovisionamiento de alertas gestionadas por Grafana. Las reglas gestionadas por Grafana utilizan campos de datos de consulta/condición/UID; configúrelas en Grafana y exporte el formato compatible si elige esa vía. El operador siguiente selecciona reglas en `istio-system`. Los umbrales son ejemplos que deben ajustarse a los SLO y al volumen de tráfico; HTTP5xx no es la definición completa de un fallo de gRPC/aplicación.
+El ejemplo siguiente define un **PrometheusRule de Prometheus Operator**. No es un archivo de aprovisionamiento de alertas gestionadas por Grafana: esas reglas utilizan campos de datos de consulta, condiciones y UID. Si elige esa opción, configure las reglas en Grafana y exporte el formato compatible. El operador del ejemplo selecciona reglas en `istio-system`. Los umbrales deben ajustarse a los SLO y al volumen de tráfico; los errores HTTP 5xx no cubren todos los fallos de gRPC o de la aplicación.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -481,15 +481,15 @@ spec:
         summary: Observed plaintext traffic; inspect intended PeerAuthentication
 ```
 
-La expresión de error sigue siendo una fracción, por lo que `humanizePercentage` la muestra correctamente. Se utilizan informes de origen para el desbordamiento ascendente que puede no llegar nunca al destino. La ausencia de métricas de texto sin cifrar no demuestra la aplicación de STRICT.
+La expresión de error conserva el valor como fracción, de modo que `humanizePercentage` lo muestra correctamente. Para detectar el desbordamiento hacia el servicio de destino, se usan las métricas del proxy de origen, pues esas solicitudes pueden no llegar al destino. La ausencia de métricas de tráfico sin cifrar no demuestra que se imponga STRICT.
 
 ## Prometheus {#prometheus}
 
 ### Configuración de laboratorio de Prometheus Operator
 
-Esto presupone un Prometheus Operator y CRD compatibles instalados por separado y un StorageClass `gp3` operativo en nodos EC2 de EKS (o la clase apropiada en otra plataforma). No instala el operador, aprovisiona EBS ni configura un diseño de almacenamiento/alta disponibilidad de producción. Los valores de memoria/CPU/almacenamiento son ilustrativos. Utilice esto o un despliegue de Prometheus existente, no pilas de recopilación duplicadas.
+El ejemplo requiere que Prometheus Operator y sus CRD compatibles estén instalados por separado. También necesita una StorageClass `gp3` operativa en los nodos EC2 de EKS, o la clase adecuada en otra plataforma. No instala el operador, aprovisiona EBS ni configura el almacenamiento o la alta disponibilidad para producción. Los valores de memoria, CPU y almacenamiento son orientativos. Utilice este despliegue o el Prometheus existente, para evitar recopilar las mismas métricas con dos sistemas.
 
-Los selectores de ServiceMonitor, PodMonitor y PrometheusRule siguientes coinciden de forma predeterminada con todos los recursos correspondientes del espacio de nombres de este CR. Por tanto, incluyen los monitores del [capítulo de métricas](01-metrics.md), que no llevaban las etiquetas discordantes del antiguo ejemplo. La selección de recursos de monitor y los espacios de nombres de cargas de trabajo que descubre cada monitor son ajustes independientes. El RBAC siguiente es para el descubrimiento de destinos de Kubernetes; otros tipos de recopilación pueden necesitar permisos distintos.
+De forma predeterminada, los selectores siguientes incluyen todos los recursos ServiceMonitor, PodMonitor y PrometheusRule del espacio de nombres de este CR. Por ello, también incluyen los monitores del [capítulo de métricas](01-metrics.md), que no tenían las etiquetas incompatibles del ejemplo antiguo. La selección de los recursos de monitorización y los espacios de nombres de las cargas de trabajo que descubre cada monitor se configuran por separado. El RBAC mostrado permite descubrir destinos de Kubernetes; otros tipos de recopilación pueden requerir permisos diferentes.
 
 ```yaml
 apiVersion: v1
@@ -583,7 +583,7 @@ spec:
   type: ClusterIP
 ```
 
-Para almacenamiento a largo plazo, combine un bloque de escritura remota solo después de desplegar y proteger el destino. La URL siguiente presupone un Service VictoriaMetrics en `observability`; adáptela al backend real. Dos réplicas de Prometheus recopilan los mismos destinos, por lo que el almacenamiento remoto necesita un diseño deliberado de alta disponibilidad/deduplicación y etiquetas de réplica. Cambiar `replicas` a 2 por sí solo no hace correctas las métricas remotas sumadas. Verifique la persistencia, el comportamiento ante fallos y la capacidad en el entorno de destino.
+Para conservar métricas a largo plazo, incorpore el bloque de escritura remota después de desplegar y proteger el destino. La URL siguiente corresponde a un Service de VictoriaMetrics en `observability`; adáptela al backend real. Dos réplicas de Prometheus recopilan métricas de los mismos destinos. Por ello, el almacenamiento remoto necesita un diseño explícito de alta disponibilidad y deduplicación, con etiquetas de réplica. Cambiar `replicas` a 2 no basta para que la suma de las métricas remotas sea correcta. Verifique la persistencia, el comportamiento ante fallos y la capacidad en el entorno de destino.
 
 ```yaml
 spec:
@@ -600,7 +600,7 @@ spec:
 
 #### Señales de oro
 
-La latencia está en milisegundos. Los ejemplos de saturación muestran conexiones activas y un indicador del estado del disyuntor; no existe una métrica estándar `cx_max` para obtener automáticamente un denominador de utilización.
+La latencia se expresa en milisegundos. Los ejemplos de saturación muestran conexiones activas y una métrica de tipo gauge para el estado del circuito. No existe una métrica estándar `cx_max` que permita calcular automáticamente el denominador de utilización.
 
 ```promql
 # 1. Latency
@@ -628,7 +628,7 @@ envoy_cluster_circuit_breakers_default_cx_open
 
 ### Plantilla JSON de panel de Grafana
 
-Este es un objeto de panel clásico para importación/aprovisionamiento mediante archivos. Proporcione un UID de fuente de datos `prometheus` existente. Todos los paneles filtran por espacio de nombres y servicio; la tabla por origen también conserva el espacio de nombres de origen.
+Este es un objeto JSON de panel clásico para importar o aprovisionar mediante archivos. Indique el UID de una fuente de datos `prometheus` existente. Todos los paneles filtran por espacio de nombres y servicio; la tabla por origen conserva también el espacio de nombres de origen.
 
 ```json
 {
@@ -902,7 +902,7 @@ Este es un objeto de panel clásico para importación/aprovisionamiento mediante
 
 ### Aprovisionamiento de paneles mediante archivos
 
-Guarde el objeto JSON completo anterior como `custom-istio-service.json`. No introduzca puntos suspensivos ni un contenedor de API HTTP `{ "dashboard": ... }` en un archivo de panel aprovisionado.
+Guarde el objeto JSON completo anterior como `custom-istio-service.json`. El archivo de panel aprovisionado no debe contener puntos suspensivos ni la estructura `{ "dashboard": ... }` que utiliza la API HTTP.
 
 ```bash
 kubectl create configmap grafana-dashboard-custom-istio \
@@ -930,7 +930,7 @@ data:
         path: /var/lib/grafana/istio-dashboards
 ```
 
-Combine estos montajes con los valores existentes de Deployment/Helm de Grafana, conservando su imagen, credenciales, almacenamiento, sondas y otros contenedores. El nombre del contenedor debe coincidir con el Deployment real. El proveedor montado con `subPath` requiere un despliegue controlado de pods cuando cambia ese archivo de proveedor. Si utiliza un sidecar de paneles ya configurado, siga los ajustes de su chart; una etiqueta `grafana_dashboard` por sí sola no instala ni configura un cargador.
+Incorpore estos montajes al Deployment existente o a los valores Helm de Grafana, conservando la imagen, las credenciales, el almacenamiento, las sondas y los demás contenedores. El nombre del contenedor debe coincidir con el del Deployment real. Cuando cambie el archivo del proveedor montado con `subPath`, actualice los pods mediante un rollout controlado. Si ya utiliza un sidecar configurado para cargar paneles, siga los ajustes de su chart. La etiqueta `grafana_dashboard` por sí sola no instala ni configura un cargador.
 
 ```yaml
 spec:
@@ -959,7 +959,7 @@ spec:
 
 ### Enlaces de Kiali → Grafana y trazas
 
-Estos son fragmentos opcionales del CR de Kiali para combinar con el ejemplo anterior. `internal_url` debe ser accesible desde el servidor Kiali; `external_url` debe ser accesible desde el navegador del usuario. Kiali debe autenticarse en la API de Grafana y encontrar los nombres exactos de los paneles. Configure credenciales mediante las referencias a Secrets compatibles de Kiali y confíe en la CA privada cuando corresponda; este fragmento no crea credenciales ni un endpoint público.
+Estos fragmentos opcionales del CR de Kiali se incorporan al ejemplo anterior. El servidor Kiali debe poder acceder a `internal_url`, y el navegador del usuario, a `external_url`. Kiali necesita autenticarse en la API de Grafana y localizar los nombres exactos de los paneles. Configure las credenciales mediante las referencias a Secrets compatibles con Kiali y, cuando corresponda, la confianza en la CA privada. El fragmento no crea credenciales ni un endpoint público.
 
 ```yaml
 spec:
@@ -981,7 +981,7 @@ spec:
           workload: var-workload
 ```
 
-Para el endpoint de consultas HTTP de Jaeger del capítulo de trazado, la configuración actual pertenece a `external_services.tracing`, con `use_grpc: false` para el puerto 16686. Valide la compatibilidad y la autenticación del backend/API antes de habilitarlo; la inyección de OAuth2 solo es compatible con transporte HTTP. Las integraciones de Jaeger y Tempo son configuraciones opcionales independientes. Los paneles personalizados de Kiali tienen su propio esquema; no se puede insertar JSON de Grafana como una lista `external_services.custom_dashboards`.
+Para usar el endpoint HTTP de consultas de Jaeger del capítulo de trazado, coloque la configuración en `external_services.tracing` y establezca `use_grpc: false` para el puerto 16686. Antes de habilitar la integración, valide la compatibilidad del backend y su API, así como la autenticación. La inyección de OAuth2 solo se admite con transporte HTTP. Las integraciones con Jaeger y Tempo son opcionales y se configuran por separado. Los paneles personalizados de Kiali tienen su propio esquema: no se puede insertar JSON de Grafana como una lista `external_services.custom_dashboards`.
 
 ```yaml
 spec:
@@ -996,7 +996,7 @@ spec:
 
 ### Enlace de Grafana → Jaeger
 
-Combine la correspondencia de ejemplares con una fuente de datos Prometheus existente. El nombre debe coincidir con una etiqueta real de ejemplar (normalmente `trace_id`) y `jaeger` debe ser un UID de fuente de datos existente; esto no genera ejemplares.
+Incorpore la correspondencia de exemplars a una fuente de datos Prometheus existente. El nombre debe coincidir con una etiqueta real del exemplar, normalmente `trace_id`, y `jaeger` debe ser el UID de una fuente de datos existente. Esta configuración no genera exemplars.
 
 ```yaml
 # Prometheus datasource configuration
@@ -1018,7 +1018,7 @@ data:
 
 ### Integración de Loki → Tempo
 
-Combine los siguientes campos con la fuente de datos Loki existente. Requieren el campo real de registro `trace_id`, trazado habilitado y la misma traza conservada en Tempo; `request_id` no es un ID de traza.
+Incorpore los campos siguientes a la fuente de datos Loki existente. Se requiere el campo real `trace_id` en los registros, el trazado habilitado y la misma traza conservada en Tempo. `request_id` no es un ID de traza.
 
 ```yaml
 # Loki datasource configuration
@@ -1096,13 +1096,13 @@ timeout = 30
 ```
 
 **Optimización de consultas**:
-- Utilice reglas de grabación para calcular previamente las consultas frecuentes
-- Utilice `$__rate_interval` para las ventanas de tasas de Prometheus; `$__interval` controla el paso/agrupamiento de la consulta
-- Utilice `rate()` para tasas por segundo e `increase()` para totales del intervalo; ambos tienen en cuenta los reinicios de contadores
+- Utilice reglas de registro para calcular previamente las consultas frecuentes.
+- Use `$__rate_interval` para las ventanas de cálculo de tasas de Prometheus; `$__interval` controla el paso temporal y la agrupación de la consulta.
+- Use `rate()` para obtener tasas por segundo e `increase()` para obtener totales del intervalo; ambas funciones tienen en cuenta los reinicios de contadores.
 
 ### 5. Control de acceso
 
-Estos ajustes deshabilitan el acceso anónimo/registro de usuarios y asignan el rol de organización Viewer predeterminado; no son una política RBAC completa por recurso. Configure la credencial de administrador del despliegue existente mediante un Secret de Kubernetes y el mecanismo de secretos documentado de Grafana antes de exponerlo. Este ConfigMap por sí solo no establece una contraseña.
+Estos ajustes deshabilitan el acceso anónimo y el registro de usuarios, y asignan Viewer como rol predeterminado de la organización. No constituyen una política RBAC completa para cada recurso. Antes de exponer el despliegue existente, configure la credencial del administrador mediante un Secret de Kubernetes y el mecanismo documentado de Grafana para utilizar secretos. Este ConfigMap por sí solo no establece una contraseña.
 
 ```yaml
 # Grafana authentication and default organization role
@@ -1132,9 +1132,9 @@ data:
 
 ### 6. Copias de seguridad y recuperación
 
-Haga copias de seguridad de los archivos de paneles/fuentes de datos aprovisionados y exporte los paneles gestionados por la interfaz utilizando la interfaz/API compatible de Grafana. La recuperación completa también necesita la base de datos, la configuración y los plugins de Grafana mediante un procedimiento de copia coherente con la aplicación. No existe el comando `grafana-cli admin export-dashboard`.
+Haga copias de seguridad de los archivos aprovisionados de paneles y fuentes de datos. Exporte los paneles gestionados desde la interfaz mediante la interfaz o la API compatible de Grafana. Para una recuperación completa, también debe respaldar la base de datos, la configuración y los plugins de Grafana con un procedimiento que preserve la coherencia de la aplicación. El comando `grafana-cli admin export-dashboard` no existe.
 
-Las instantáneas de Prometheus utilizan su API HTTP de administración, no `promtool tsdb snapshot`. La API debe habilitarse deliberadamente en un endpoint de mantenimiento protegido. Tras reenviar el pod de Prometheus seleccionado a localhost, un ejemplo de mantenimiento es:
+Las instantáneas de Prometheus se crean con su API HTTP de administración, no con `promtool tsdb snapshot`. Habilite esa API expresamente en un endpoint protegido para mantenimiento. Después de redirigir a localhost el puerto del pod de Prometheus seleccionado, puede usar este ejemplo de mantenimiento:
 
 ```bash
 curl -fsS -X POST http://localhost:9090/api/v1/admin/tsdb/snapshot

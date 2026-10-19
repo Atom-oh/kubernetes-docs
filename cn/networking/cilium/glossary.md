@@ -151,7 +151,7 @@ Cilium、eBPF、Kubernetes 和网络相关术语的字母顺序参考表。重�
 **IPAM (IP Address Management)** - 网络
 
 - IP 地址管理：地址分配、跟踪和回收。
-- Cilium 的不同模式有不同的分配方和数据源，包括集群池、多池、Kubernetes 主机范围和特定于云平台的模式。平台名称不一定对应单独的 `ipam.mode` 值。
+- Cilium 的不同模式在地址分配责任方和数据源方面各不相同，包括集群池、多池、Kubernetes 主机范围和特定于云平台的模式。平台名称不一定对应单独的 `ipam.mode` 值。
 
 **IPsec** - 网络
 

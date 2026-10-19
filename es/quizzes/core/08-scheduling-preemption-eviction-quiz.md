@@ -1,6 +1,6 @@
-# Cuestionario de Scheduling, Preemption y Eviction
+# Cuestionario sobre programación, desalojo preventivo y expulsión
 
-Este cuestionario cubre el scheduling (planificación) de Kubernetes, la selección de nodos, la affinity, los taints, la prioridad, la eviction (desalojo), los presupuestos de interrupción y el descheduling.
+Este cuestionario abarca la programación de Kubernetes, la selección de nodos, la afinidad, los taints, las tolerations, la prioridad, la expulsión de Pods, los presupuestos de interrupción y la desprogramación.
 
 ## Preguntas de opción múltiple
 
@@ -19,16 +19,16 @@ Este cuestionario cubre el scheduling (planificación) de Kubernetes, la selecci
 El scheduler filtra los nodos no adecuados, puntúa los nodos viables, selecciona un nodo y hace el binding del Pod. El encolado y otros puntos de extensión del framework rodean estos pasos.
 </details>
 
-2. ¿Cuál es la principal diferencia entre node affinity y Pod affinity?
-   - A) La node affinity solo admite restricciones estrictas; la Pod affinity solo admite restricciones flexibles
-   - B) La node affinity coincide con etiquetas de nodo; la Pod affinity relaciona la ubicación con Pods coincidentes
-   - C) La node affinity es a nivel de clúster mientras que la Pod affinity es a nivel de namespace
-   - D) Solo la Pod affinity cambia automáticamente la ubicación en tiempo de ejecución
+2. ¿Cuál es la diferencia principal entre la afinidad de nodo y la afinidad entre Pods?
+   - A) La afinidad de nodo solo admite restricciones estrictas; la afinidad entre Pods solo admite restricciones flexibles
+   - B) La afinidad de nodo coincide con etiquetas de nodo; la afinidad entre Pods relaciona la ubicación con Pods coincidentes
+   - C) La afinidad de nodo se aplica a todo el clúster, mientras que la afinidad entre Pods se aplica al namespace
+   - D) Solo la afinidad entre Pods cambia automáticamente la ubicación en tiempo de ejecución
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La node affinity coincide con etiquetas de nodo; la Pod affinity relaciona la ubicación con Pods coincidentes**
+**Respuesta: B) La afinidad de nodo coincide con etiquetas de nodo; la afinidad entre Pods relaciona la ubicación con Pods coincidentes**
 
 **Explicación:**
 Ambas admiten reglas required (obligatorias) y preferred (preferidas). La Pod affinity usa Pods coincidentes y una clave de topología para expresar la co-ubicación. IgnoredDuringExecution no desaloja Pods automáticamente cuando cambian las etiquetas.
@@ -49,8 +49,8 @@ Ambas admiten reglas required (obligatorias) y preferred (preferidas). La Pod af
 Una toleration permite que se considere un nodo con taint; no atrae al Pod ni garantiza su ubicación. Combínala con node affinity para cargas de trabajo dedicadas y controla quién puede usar la toleration.
 </details>
 
-4. ¿Cómo se relacionan la prioridad de Pod y la preemption?
-   - A) Un Pod de mayor prioridad puede desplazar (preempt) Pods de menor prioridad durante el scheduling
+4. ¿Qué relación hay entre la prioridad de un Pod y el desalojo preventivo (preemption)?
+   - A) Durante la programación, un Pod de mayor prioridad puede desalojar preventivamente a Pods de menor prioridad
    - B) La prioridad establece directamente las asignaciones de CPU/memoria
    - C) La preemption solo ocurre durante el mantenimiento
    - D) No están relacionadas
@@ -58,14 +58,14 @@ Una toleration permite que se considere un nodo con taint; no atrae al Pod ni ga
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Un Pod de mayor prioridad puede desplazar (preempt) Pods de menor prioridad durante el scheduling**
+**Respuesta: A) Durante la programación, un Pod de mayor prioridad puede desalojar preventivamente a Pods de menor prioridad**
 
 **Explicación:**
 El scheduler puede eliminar víctimas de menor prioridad si al hacerlo un Pod pendiente pasa a ser planificable. Esto no es una garantía de capacidad ni de ubicación. Una PriorityClass con preemptionPolicy: Never no desplaza a otros Pods.
 </details>
 
-5. ¿En qué se diferencian nodeSelector y node affinity?
-   - A) nodeSelector es una restricción estricta; la node affinity admite restricciones estrictas y flexibles
+5. ¿En qué se diferencian nodeSelector y la afinidad de nodo?
+   - A) nodeSelector es una restricción estricta; la afinidad de nodo admite restricciones estrictas y flexibles
    - B) nodeSelector solo admite una etiqueta
    - C) La node affinity no puede coincidir con valores de etiqueta
    - D) nodeSelector se aplica solo después del scheduling
@@ -73,13 +73,13 @@ El scheduler puede eliminar víctimas de menor prioridad si al hacerlo un Pod pe
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) nodeSelector es una restricción estricta; la node affinity admite restricciones estrictas y flexibles**
+**Respuesta: A) nodeSelector es una restricción estricta; la afinidad de nodo admite restricciones estrictas y flexibles**
 
 **Explicación:**
-La node affinity admite además In, NotIn, Exists, DoesNotExist, Gt y Lt. Todas las entradas de nodeSelector deben coincidir. La node affinity required debe coincidir; las reglas preferred afectan a las puntuaciones.
+La afinidad de nodo admite además In, NotIn, Exists, DoesNotExist, Gt y Lt. Todas las entradas de nodeSelector deben coincidir. Las reglas required de afinidad de nodo deben coincidir; las reglas preferred afectan a las puntuaciones.
 </details>
 
-6. ¿Qué condición desencadena normalmente la eviction por presión de nodo?
+6. ¿Qué condición suele desencadenar la expulsión de Pods por presión en un nodo?
    - A) Que un Pod tenga por sí mismo un valor de prioridad bajo
    - B) Que el nodo tenga escasez de memoria, espacio en disco u otros recursos monitorizados
    - C) Que un Pod haya existido durante mucho tiempo por sí mismo
@@ -124,7 +124,7 @@ El controlador del DaemonSet crea Pods dirigidos a los nodos elegibles; el sched
 Guaranteed tiene requests/limits de CPU y memoria iguales en cada contenedor. BestEffort no tiene ninguno de los dos, mientras que las configuraciones intermedias son Burstable. La QoS no es una PriorityClass y no garantiza la supervivencia ante cualquier fallo o condición de presión.
 </details>
 
-9. ¿Qué permite que se considere el scheduling en un nodo con el taint node-role.kubernetes.io/control-plane:NoSchedule?
+9. ¿Qué permite que se considere para programación un nodo con el taint node-role.kubernetes.io/control-plane:NoSchedule?
    - A) Solo la node affinity
    - B) Solo la Pod affinity
    - C) Una toleration coincidente
@@ -260,7 +260,7 @@ Los DaemonSets obtienen varias tolerations automáticas para las condiciones de 
 
 ## Preguntas prácticas
 
-1. Crea un Pod llamado web-server con nginx:1.30.4 que requiera us-east-1a o us-east-1b y prefiera nodos m5.large.
+1. Crea un Pod llamado web-server con nginx:1.30.6 que requiera us-east-1a o us-east-1b y prefiera nodos m5.large.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -275,7 +275,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -335,7 +335,7 @@ spec:
 Crea primero postgres-credentials con una clave password en el mismo namespace. El ejemplo demuestra el scheduling y no tiene almacenamiento persistente de base de datos; añade un PVC para un uso duradero. Una toleration permite worker-1, pero no fuerza la ubicación allí.
 </details>
 
-3. Crea un Deployment web-frontend de tres réplicas con nginx:1.30.4, co-ubicado con los Pods app=cache pero separado de sus propias réplicas.
+3. Crea un Deployment web-frontend de tres réplicas con nginx:1.30.6, ubicado junto a los Pods app=cache y separado de sus propias réplicas.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -378,7 +378,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 La Pod affinity y la anti-affinity required se aplican dentro del namespace. Para planificar las tres réplicas, deben existir Pods cache coincidentes en al menos tres nodos elegibles. De lo contrario, las réplicas pueden quedarse en estado Pending. Estas reglas no mueven automáticamente los Pods existentes después de que cambien las etiquetas.
@@ -410,7 +410,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 500m

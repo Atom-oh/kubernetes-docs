@@ -13,7 +13,7 @@ Este laboratorio local desechable selecciona explícitamente iptables, VXLAN y C
 | Docker | Runtime compatible y funcional con capacidad para tres nodos kind |
 | SO de nodos | Kernel/módulos Linux que cumplan los [requisitos de Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements); en macOS es el kernel de la VM de contenedores |
 | kubectl | Como máximo una versión menor de diferencia respecto al servidor API 1.36; resulta práctico un cliente 1.36 |
-| calicoctl | Cliente opcional 3.32.2 compatible con el SO/arquitectura reales del host CLI |
+| calicoctl | Cliente opcional 3.32.2 compatible con el sistema operativo y la arquitectura del host desde el que ejecutará la CLI |
 | curl / Python 3 | Descarga opcional del cliente y verificación SHA-256 descritas abajo |
 | Helm | Alternativa opcional en la [descripción general](README.md); no se necesita en este laboratorio |
 
@@ -21,7 +21,7 @@ La [política de diferencia de versiones de Kubernetes](https://kubernetes.io/re
 
 ### Opcional: un calicoctl compatible
 
-Elija una plataforma, verifique el digest publicado del artefacto exacto y conserve el binario en el directorio del laboratorio. Estos comandos no requieren instalación global ni configuración en el directorio personal.
+Elija una plataforma, verifique el digest publicado del artefacto de esa versión y conserve el binario en el directorio del laboratorio. Estos comandos no requieren instalación global ni configuración en el directorio personal.
 
 ```bash
 set -euo pipefail
@@ -94,7 +94,7 @@ kubectl config current-context
 kubectl cluster-info
 ```
 
-Los nodos y Pods ordinarios pueden permanecer no preparados hasta instalar el CNI. No instale un segundo CNI para eliminar esa condición. Si el CIDR de Pods entra en conflicto, cámbielo tanto en kind como en Installation antes de crear el clúster.
+Los nodos y los Pods ordinarios pueden no estar listos hasta que se instale el CNI. No instale un segundo CNI para eliminar esa condición. Si el CIDR de Pods entra en conflicto, cámbielo tanto en kind como en el manifiesto Installation antes de crear el clúster.
 
 ```bash
 CALICO_VERSION=v3.32.2
@@ -130,7 +130,7 @@ kubectl get tigerastatus
 kubectl -n calico-system get pods -o wide
 ```
 
-Espere a que aparezcan las cargas creadas por el operador y compruebe sus rollouts y condiciones. Una selección de etiquetas vacía o la disponibilidad de un controlador no demuestran que funcione toda la red de nodos.
+Espere a que aparezcan las cargas creadas por el operador y compruebe el progreso de sus despliegues y sus condiciones. Una selección de etiquetas vacía o la disponibilidad de un controlador no demuestran que funcione toda la red de nodos.
 
 ```bash
 kubectl -n calico-system rollout status daemonset/calico-node --timeout=300s
@@ -144,11 +144,11 @@ kubectl get installations.operator.tigera.io default -o yaml
 ./calicoctl get nodes
 ```
 
-Aquí BGP está desactivado, por lo que las sesiones BIRD y `calicoctl node status` no son criterios de readiness. Ese comando también necesita el entorno de nodo apropiado, no solo un kubeconfig de portátil. Observe los números reales de componentes; las réplicas CSI/Typha no son fijas. Use cargas desechables para comprobar conectividad de Pods, Services y DNS, así como flujos permitidos y rechazados por las políticas.
+Aquí BGP está desactivado, por lo que las sesiones BIRD y `calicoctl node status` no son criterios de preparación. Ese comando también necesita el entorno de nodo apropiado, no solo un kubeconfig de portátil. Observe los números reales de componentes; las réplicas CSI/Typha no son fijas. Use cargas desechables para comprobar conectividad de Pods, Services y DNS, así como flujos permitidos y rechazados por las políticas.
 
 ## Qué proporciona Calico
 
-Calico combina redes Kubernetes, IPAM y aplicación de políticas. En integraciones de solo políticas, otro CNI conserva redes e IPAM. Las funciones varían por sistema operativo, plano de datos y edición; que una plataforma figure en una lista no promete comportamiento idéntico.
+Calico combina redes Kubernetes, IPAM y aplicación de políticas. En integraciones de solo políticas, otro CNI conserva redes e IPAM. Las funciones varían según el sistema operativo, el plano de datos y la edición; que una plataforma aparezca en la lista no garantiza un comportamiento idéntico.
 
 ## Historia y gobernanza del proyecto
 
@@ -163,7 +163,7 @@ Project Calico comenzó en Metaswitch en 2014; Tigera se fundó en 2016 y es su 
 
 Las afirmaciones anteriores de «paridad eBPF completa» y «eBPF en Windows» eran incorrectas. Las [limitaciones actuales de Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations) siguen excluyendo eBPF de Linux, IPIP, IPv6/doble pila y WireGuard.
 
-Calico usa licencia Apache-2.0 y es mantenido por Tigera y la comunidad. Figurar en CNCF Landscape no implica propiedad de CNCF, incubación ni graduación. Enterprise es un producto comercial autogestionado; Cloud es una oferta SaaS. Open Source no está limitado a clústeres pequeños o no productivos.
+Calico se distribuye bajo la licencia Apache-2.0 y recibe mantenimiento de Tigera y la comunidad. Figurar en CNCF Landscape no implica propiedad de CNCF, incubación ni graduación. Enterprise es un producto comercial autogestionado; Cloud es una oferta SaaS. Open Source no está limitado a clústeres pequeños o no productivos.
 
 ![Relaciones entre el ecosistema Calico y los productos comerciales.](../../.gitbook/assets/en-networking-calico-01-introduction-4.png)
 
@@ -175,7 +175,7 @@ El recuadro CNCF solo representa participación en Landscape/ecosistema. Tigera 
 
 ### 1. Redes y planos de datos
 
-Encapsulación e implementación son elecciones separadas. Calico puede usar IPIP, VXLAN o una red subyacente enrutada. CrossSubnet es un ajuste condicional IPIP/VXLAN, no un servicio WAN. Los planos Linux incluyen iptables, nftables y eBPF. eBPF se ejecuta **dentro del kernel** y puede evitar partes de su ruta convencional de procesamiento de paquetes; no evita el kernel. El enrutamiento sin encapsulación omite cabeceras de túnel solo cuando la red subyacente dispone de las rutas Pod necesarias, sin garantizar la latencia mínima para toda carga.
+Encapsulación e implementación son elecciones separadas. Calico puede usar IPIP, VXLAN o una red subyacente enrutada. CrossSubnet es un ajuste condicional IPIP/VXLAN, no un servicio WAN. Los planos Linux incluyen iptables, nftables y eBPF. eBPF se ejecuta **dentro del kernel** y puede saltarse partes de la ruta convencional de procesamiento de paquetes; no evita el kernel. El enrutamiento sin encapsulación omite cabeceras de túnel solo cuando la red subyacente dispone de las rutas Pod necesarias, sin garantizar la latencia mínima para toda carga.
 
 ### 2. Políticas Kubernetes y Calico
 
@@ -282,11 +282,11 @@ BGPPeer admite `password.secretKeyRef` para autenticar sesiones. El Secret perte
 | GKE | Dataplane V2 usa **Cilium**; Calico se aplica a la configuración heredada pertinente, no se instala sobre V2 |
 | Kubernetes autogestionado | Revise distribución, kernel, propiedad del CNI, rutas y privilegios |
 | Windows | Configuraciones IPv4 concretas; sin paridad de eBPF Linux, IPIP, IPv6/doble pila o WireGuard |
-| Hosts / VM | Requisitos de instalación y funciones separados; el estado KubeVirt/Enterprise difiere de la protección básica de hosts |
+| Hosts / máquinas virtuales | Requisitos de instalación y funciones separados; el estado KubeVirt/Enterprise difiere de la protección básica de hosts |
 
 La [documentación de GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2) distingue explícitamente Cilium en V2 de la ruta Calico heredada.
 
-Typha almacena y distribuye actualizaciones mediante un conjunto separado de Pods, reduciendo las observaciones directas del datastore por Felix. Tres réplicas son un ejemplo, no un mínimo universal. La capacidad depende de políticas, endpoints, cambios de Service, hardware, datastore y plano de datos. Esta introducción no aporta evidencia reproducible de un límite fijo de «5,000 nodos / 100,000 Pods / millones de reglas».
+Typha almacena y distribuye actualizaciones mediante un conjunto separado de Pods, reduciendo los watch directos de Felix al datastore. Tres réplicas son un ejemplo, no un mínimo universal. La capacidad depende de políticas, endpoints, cambios de Service, hardware, datastore y plano de datos. Esta introducción no aporta evidencia reproducible de un límite fijo de «5.000 nodos / 100.000 Pods / millones de reglas».
 
 ## Calico, kube-proxy y rendimiento
 
@@ -300,13 +300,13 @@ kube-proxy implementa reenvío de Service, no redes CNI ni NetworkPolicy. Los pl
 | Escala | Services/endpoints, selectores, cambios y reutilización de conexiones |
 | CPU/memoria/latencia | Hardware, kernel, versiones, carga, calentamiento, repeticiones y errores |
 
-kube-proxy no se limita a iptables: Kubernetes actual también ofrece nftables y backends heredados según versión. Una consulta IP-set no convierte toda la ruta de paquetes Calico en O(1). La selección NAT inicial de Service en iptables también difiere de la ruta rápida conntrack de paquetes posteriores. El antiguo ejemplo sin fuente de reglas, latencia y memoria para 1,000 nodos/50,000 Pods no era un benchmark reproducible y no debe usarse para dimensionar.
+kube-proxy no se limita a iptables: Kubernetes actual también ofrece nftables y backends heredados según versión. Una consulta IP-set no convierte toda la ruta de paquetes Calico en O(1). La selección NAT inicial de Service en iptables también difiere de la ruta rápida conntrack de paquetes posteriores. El antiguo ejemplo sin fuente de reglas, latencia y memoria para 1.000 nodos/50.000 Pods no era un benchmark reproducible y no debe usarse para dimensionar.
 
-Las redes tradicionales de VM también pueden automatizarse y distribuirse. La política declarativa de Calico no implica capacidad IP ilimitada ni convergencia garantizada en segundos.
+Las redes tradicionales de VM también pueden automatizarse y distribuirse. La política declarativa de Calico no implica una capacidad ilimitada de direcciones IP ni garantiza convergencia en segundos.
 
 ## Escenarios de despliegue
 
-- **Local:** Coordine rutas Pod, peers/filtros BGP, rutas de retorno y protección de hosts. Desactivar encapsulación no crea rutas subyacentes.
+- **En instalaciones propias:** Coordine rutas Pod, peers/filtros BGP, rutas de retorno y protección de hosts. Desactivar encapsulación no crea rutas subyacentes.
 - **EKS:** Para conservar redes AWS, seleccione `cni.type: AmazonVPC` y siga la [descripción general revisada](README.md), incluida la propiedad del motor de políticas y las anotaciones IP de Pod. No aplique una Installation EKS a este laboratorio Kind ni ejecute dos motores de políticas.
 - **Híbrido/multiclúster:** Conectividad, descubrimiento y administración de políticas son funciones separadas. Un IPPool CrossSubnet no establece VPN, identidad compartida ni descubrimiento entre clústeres. Evalúe por separado las funciones adecuadas de cluster mesh/multiclúster y la red subyacente; «Calico Federation» no es un enlace integrado universal.
 - **Cargas reguladas:** Enterprise/Cloud pueden añadir informes, registros y seguridad; instalarlos no establece cumplimiento. Los registros de auditoría API registran cambios API y los de flujo observaciones de red, no automáticamente toda decisión de política. WireGuard también está disponible en configuraciones Linux Open Source compatibles.

@@ -1,7 +1,7 @@
 # eBPF 基础知识与 Kubernetes 应用
 
 > **支持的版本**：根据功能具体要求的内核/BTF/helper；请匹配工具和 Kubernetes 兼容性矩阵
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 eBPF 是一项革命性技术，允许沙箱化程序在 Linux 内核中运行。本文档涵盖从 eBPF 基本概念到 Kubernetes 环境中的实际应用。
 

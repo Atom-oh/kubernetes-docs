@@ -1,7 +1,7 @@
 # パート 4: Katib — ハイパーパラメータチューニングと AutoML
 
 > **対応バージョン**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
-> **最終更新**: September 12, 2026
+> **最終更新**: 2026年9月12日
 
 ## ラボ環境のセットアップ
 

@@ -1,6 +1,6 @@
 # Cilium Service Mesh 可观测性
 
-> **最后更新**：October 16, 2026 · Cilium/chart 1.20.3 · Hubble CLI 1.20.2 · Collector Contrib 0.162.0 · Loki 3.7.8。Kubernetes/EKS 和平台要求请参阅[概述](./README.md)。
+> **最后更新**：2026年10月16日 · Cilium/chart 1.20.3 · Hubble CLI 1.20.2 · Collector Contrib 0.162.0 · Loki 3.7.8。Kubernetes/EKS 和平台要求请参阅[概述](./README.md)。
 
 ## 概述
 
@@ -778,19 +778,19 @@ kubectl -n kube-system logs deployment/hubble-relay --since=10m
 
 ## 参考资料
 
-- [Cilium1.20.3 Hubble 设置](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/setup.rst)
+- [Cilium 1.20.3 Hubble 设置](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/setup.rst)
 - [Hubble TLS 和续期](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/tls.rst)
 - [Hubble 导出](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/export.rst)
 - [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-cli.rst)
-- [Hubble CLI1.20.2 发行版](https://github.com/cilium/hubble/releases/tag/v1.20.2)
+- [Hubble CLI 1.20.2 发行版](https://github.com/cilium/hubble/releases/tag/v1.20.2)
 - [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-ui.rst)
 - [指标定义](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
 - [HTTP 指标实现](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/http/handler.go)
 - [指标上下文标签](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/api/context.go)
 - [已发布的 HTTP workload 仪表板](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
 - [已发布的通用 Hubble 仪表板](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
-- [Collector0.162 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/receiver/filelogreceiver/README.md)
-- [Loki3.7.8 OTLP 摄取](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/send-data/otel/_index.md)
-- [Loki3.7.8 OTLP 映射和端点](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/shared/otel.md)
+- [Collector 0.162 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/receiver/filelogreceiver/README.md)
+- [Loki 3.7.8 OTLP 摄取](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/send-data/otel/_index.md)
+- [Loki 3.7.8 OTLP 映射和端点](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/shared/otel.md)
 - [Collector JSON parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/pkg/stanza/docs/operators/json_parser.md)
 - [Google SRE 黄金信号](https://sre.google/sre-book/monitoring-distributed-systems/)

@@ -1,7 +1,7 @@
 # 第 3 部分：故障排除
 
 > **已验证示例版本**：EKS Kubernetes 1.36、Amazon VPC CNI 1.23.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 概述
 
@@ -36,7 +36,7 @@ EKS 支持多种网络模式，各自具有不同的性能特征。
 
 ![EKS 网络模式示意图：AWS VPC CNI 通过 ENI 为 Pod 分配原生 VPC IP，并在每个 ENI 上应用安全组。](../.gitbook/assets/en-eks-03-eks-networking-part3-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-1.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-1.html)
 
 1. **Amazon VPC CNI（普通 EC2 节点）**：
    * 直接为 Pod 分配 VPC IP 地址。
@@ -114,7 +114,7 @@ spec:
 
 ![示意图：两个可用区中的 Web、缓存和 DB Pod 之间，高频 AZ 内流量与跨 AZ 的 DB 复制流量分别显示。](../.gitbook/assets/en-eks-03-eks-networking-part3-2.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-2.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-2.html)
 
 1. **可用区局部性**：
    * 将频繁通信的 Pod 放置在同一可用区，以降低延迟。
@@ -304,7 +304,7 @@ Kubernetes NetworkPolicy 的允许规则是累加的；规则顺序或策略名�
 
 ![EKS 网络故障分流图：先从 Pod 网络逐步排查到 Service 和负载均衡，再到 VPC 和子网，之后进行深入诊断。](../.gitbook/assets/en-eks-03-eks-networking-part3-3.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-3.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-3.html)
 
 ### Pod 网络问题
 
@@ -347,7 +347,7 @@ kubectl -n "$APP_NAMESPACE" exec "$DIAGNOSTIC_POD" -- curl \
 
 ![故障排除示意图：显示从 Service 到 EndpointSlice 再到 Pod 的路径，以及由 AWS Load Balancer Controller 创建的 ALB 和目标组。](../.gitbook/assets/en-eks-03-eks-networking-part3-5.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-5.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-5.html)
 
 **Service 路径**：验证命名空间、选择器标签、实际监听端口、Service 端口/targetPort、就绪状态和 EndpointSlice 地址/条件。请使用 EndpointSlices，而不是可能会截断大型后端集合的旧版 Endpoints API。随后检查实际的 service-proxy/CNI 模式，以及任何流量策略/局部性偏好。
 

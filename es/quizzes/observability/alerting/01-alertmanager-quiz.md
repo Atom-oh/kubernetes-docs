@@ -1,6 +1,6 @@
 # Cuestionario de Prometheus Alertmanager
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ---
 
@@ -84,20 +84,20 @@ Esto supone contadores de CPU de node-exporter recopilados y un intervalo de eva
    - A) Notificaciones de resolución para esa integración.
    - B) Instrucciones de remediación automática.
    - C) Cambiar la condición de alerta a saludable.
-   - D) Permiso para que el receptor repare el cluster.
+   - D) Permiso para que el receptor repare el clúster.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: A) Notificaciones de resolución para esa integración.**
 
-Controla las notificaciones de resolución para la integración elegida; los valores predeterminados difieren según el receptor. Resolved es un estado del ciclo de vida de una alerta, no una prueba independiente de que un Service se haya recuperado. Los cambios en la expresión, la falta de datos o el comportamiento de actualización/expiración del cliente también pueden afectar a ese estado.
+Controla las notificaciones de resolución para la integración elegida; los valores predeterminados difieren según el receptor. Resolved es un estado del ciclo de vida de una alerta, no una prueba independiente de que un servicio se haya recuperado. Los cambios en la expresión, la falta de datos o el comportamiento de actualización/expiración del cliente también pueden afectar a ese estado.
 
 </details>
 
 ---
 
-6. ¿Qué protocolo se utiliza para la sincronización del estado del cluster de Alertmanager?
+6. ¿Qué protocolo se utiliza para la sincronización del estado del clúster de Alertmanager?
    - A) Raft
    - B) Paxos
    - C) Gossip
@@ -108,7 +108,7 @@ Controla las notificaciones de resolución para la integración elegida; los val
 
 **Respuesta: C) Gossip**
 
-Gossip comparte los silences y el estado del registro de notificaciones con consistencia eventual. Envíe las mismas alertas a cada réplica; la capa Gossip no reemplaza esa distribución. La deduplicación se realiza según el mejor esfuerzo, y las particiones de red pueden producir duplicados. No se trata de una entrega exactamente una vez ni de una garantía contra toda pérdida de notificaciones.
+Gossip comparte los silencios y el estado del registro de notificaciones con consistencia eventual. Envíe las mismas alertas a cada réplica; la capa Gossip no reemplaza esa distribución. La deduplicación se realiza según el mejor esfuerzo, y las particiones de red pueden producir duplicados. No se trata de una entrega exactamente una vez ni de una garantía contra toda pérdida de notificaciones.
 
 </details>
 
@@ -141,8 +141,8 @@ Con el valor predeterminado `continue: false`, el primer elemento hermano coinci
 
 ---
 
-8. ¿Qué habilita AlertmanagerConfig propiedad de un namespace?
-   - A) Omitir automáticamente todas las restricciones de namespace.
+8. ¿Qué permite configurar un AlertmanagerConfig propiedad de un espacio de nombres?
+   - A) Omitir automáticamente todas las restricciones del espacio de nombres.
    - B) Gestionar rutas/receptores estructurados seleccionados por una instancia de Alertmanager.
    - C) Definir reglas de registro y de alerta de PromQL.
    - D) Reemplazar la configuración de pares Gossip.
@@ -152,7 +152,7 @@ Con el valor predeterminado `continue: false`, el primer elemento hermano coinci
 
 **Respuesta: B) Gestionar rutas/receptores estructurados seleccionados por una instancia de Alertmanager.**
 
-El Operator debe seleccionar las etiquetas y el namespace del objeto, y los Secrets referenciados deben existir en el namespace requerido. Su estrategia de matchers controla la aplicación de namespace. El chart revisado de Operator 0.93.1 sirve `v1alpha1`; no invente una actualización de API obligatoria. El uso de configuración global es una opción independiente, y la coincidencia de etiquetas de namespace no autentica a los remitentes de alertas.
+El Operator debe seleccionar las etiquetas y el espacio de nombres del objeto, y los Secrets referenciados deben existir en el espacio de nombres requerido. Su estrategia de matchers controla la aplicación de las restricciones de espacio de nombres. El chart revisado de Operator 0.93.1 sirve `v1alpha1`; no invente una actualización de API obligatoria. El uso de configuración global es una opción independiente, y la coincidencia de etiquetas del espacio de nombres no autentica a los remitentes de alertas.
 
 </details>
 
@@ -169,7 +169,7 @@ El Operator debe seleccionar las etiquetas y el namespace del objeto, y los Secr
 
 **Respuesta: C) Deshabilitar permanentemente una regla de alerta.**
 
-Un silence requiere una hora de finalización finita y afecta a las notificaciones. La expiración termina la supresión; no es una eliminación inmediata del historial de silences almacenado. Los cambios permanentes de reglas/enrutamiento requieren una revisión independiente. Registre el propietario, el motivo y el alcance aprobado; los recordatorios de expiración necesitan un flujo de trabajo configurado explícitamente.
+Un silence requiere una fecha y hora de finalización finitas y afecta a las notificaciones. La expiración pone fin a la supresión; no elimina inmediatamente el silence del historial almacenado. Los cambios permanentes de reglas/enrutamiento requieren una revisión independiente. Registre el propietario, el motivo y el alcance aprobado; los recordatorios de expiración necesitan un flujo de trabajo configurado explícitamente.
 
 </details>
 

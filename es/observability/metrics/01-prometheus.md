@@ -1,6 +1,6 @@
 # Prometheus
 
-> **Última actualización**: September 13, 2026. A continuación se describen las comprobaciones locales de configuración/consultas; no se realizó ningún despliegue en clúster ni en la nube.
+> **Última actualización**: 14 de septiembre de 2026. Más adelante se describen las comprobaciones locales de configuración y consultas; no se realizó ningún despliegue en un clúster ni en la nube.
 
 ## Contenido
 
@@ -19,9 +19,9 @@
 
 Prometheus es el conjunto de herramientas de monitoreo de la CNCF desarrollado originalmente en SoundCloud. Recopila series temporales numéricas, las almacena en una TSDB local, evalúa PromQL y reglas de registro (recording) y de alerta, y envía alertas a Alertmanager. La recopilación normal usa scraping por HTTP; remote write y las integraciones por lotes opcionales añaden otras rutas de entrega. No es un registro de eventos, un almacén de trazas ni un libro contable exacto de facturación por solicitud.
 
-La retención local es configurable y puede superar los 30 días. Un almacén separado es una decisión motivada por la retención, la capacidad, las consultas compartidas y los requisitos de fallo/recuperación.
+La retención local es configurable y puede superar los 30 días. Elegir un almacén separado depende del periodo de retención, la capacidad, las consultas compartidas y los requisitos de recuperación ante fallos.
 
-Este capítulo usa el paquete oficial **kube-prometheus-stack 90.0.0**, publicado el 6 de septiembre de 2026. Las versiones de sus componentes se inspeccionaron como un conjunto:
+Este capítulo utiliza el paquete oficial **kube-prometheus-stack 90.0.0**, publicado el 6 de septiembre de 2026. Las versiones de sus componentes se revisaron como una combinación:
 
 | Componente | Valor por defecto del paquete |
 |---|---|
@@ -32,9 +32,13 @@ Este capítulo usa el paquete oficial **kube-prometheus-stack 90.0.0**, publicad
 | kube-state-metrics | 2.20.0, subchart 8.4.2 |
 | node-exporter | 1.12.1, subchart 4.56.3 |
 
-La protección `kubeVersion` del chart es `>=1.25.0-0`. Esto no es una matriz de compatibilidad completa ni una afirmación de que todas las versiones de Kubernetes 1.25+ sigan siendo compatibles. Revise el clúster real, el soporte de los componentes, la política de admisión y el controlador de almacenamiento.
+La condición `kubeVersion` del chart exige `>=1.25.0-0`. Esto no constituye una matriz completa de compatibilidad ni significa que todas las versiones de Kubernetes 1.25 o posteriores sigan teniendo soporte. Compruebe la versión real del clúster, el soporte de los componentes, la política de admisión y el controlador de almacenamiento.
 
-El perfil está orientado a **workers de EKS con Linux sobre EC2**. Fargate no tiene DaemonSets; Auto Mode, Hybrid Nodes y Windows requieren comprobaciones de recolector/almacenamiento específicas de la plataforma.
+El perfil está destinado a **nodos de trabajo de EKS con Linux en EC2**. Fargate no admite DaemonSets; Auto Mode, Hybrid Nodes y Windows requieren comprobar la compatibilidad de los recolectores y el almacenamiento para cada plataforma.
+
+### Actualización de septiembre de 2026
+
+- Según el [artículo de Kubernetes del 11 de septiembre](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/), la compatibilidad con [histogramas nativos de Prometheus](https://prometheus.io/docs/specs/native_histograms/) para las métricas de componentes de Kubernetes (KEP-5808) pasa a Beta y se habilita de forma predeterminada en v1.37. Los intervalos de alta resolución y baja cardinalidad sustituyen a los intervalos fijos `le`, lo que mejora la precisión de las métricas de latencia y reduce la sobrecarga de almacenamiento y recolección. Para aprovechar esta función, Prometheus también debe estar configurado para ingerir histogramas nativos; las consultas y los paneles existentes que utilizan histogramas clásicos requieren una revisión aparte.
 
 ### Actualizaciones históricas de julio de 2026
 
@@ -45,11 +49,11 @@ El perfil está orientado a **workers de EKS con Linux sobre EC2**. Fargate no t
 
 ## Arquitectura y componentes
 
-![Prometheus discovery, scrape, storage/query and rule-to-Alertmanager flow.](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
+![Flujo de Prometheus: descubrimiento, recolección, almacenamiento y consultas, y envío de alertas desde las reglas hacia Alertmanager.](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-0.html)
 
-La rama de Pushgateway es opcional para trabajos por lotes adecuados a nivel de servicio, no para cada Pod de corta duración. Los grupos necesitan gestión de ciclo de vida; consulte la [visión general de métricas](README.md). `up` informa del estado del scraping, no de la disponibilidad de la aplicación.
+La ruta de Pushgateway es opcional para trabajos por lotes adecuados a nivel de servicio, no para cualquier Pod de corta duración. Los grupos requieren gestionar su ciclo de vida; consulte la [visión general de métricas](README.md). `up` indica el estado de la recolección, no la disponibilidad de la aplicación.
 
 | Componente | Responsabilidad y prerrequisitos |
 |---|---|
@@ -65,7 +69,7 @@ El chart proporciona los exporters y los recursos de apoyo. Los fragmentos incom
 
 ### Capas de TSDB y de configuración
 
-Las muestras recientes usan el head/WAL; los bloques compactados contienen chunks, un índice y metadatos. Las tombstones marcan rangos eliminados. La reproducción del WAL ayuda en la recuperación tras caídas, pero no sustituye a las copias de seguridad, no sobrevive a la pérdida del volumen ni garantiza la recuperación de todos los eventos.
+Las muestras recientes se almacenan en el bloque activo y el WAL; los bloques compactados contienen segmentos de datos, un índice y metadatos. Las marcas de eliminación indican los rangos borrados. Reproducir el WAL ayuda a recuperarse de una caída, pero no sustituye a las copias de seguridad, no protege frente a la pérdida del volumen ni garantiza recuperar todos los eventos.
 
 | Capa | Ajustes correctos |
 |---|---|
@@ -74,7 +78,7 @@ Las muestras recientes usan el head/WAL; los bloques compactados contienen chunk
 | `Prometheus.spec` del Operator | `retention`, `retentionSize`, `storage`, `replicas`, `shards` |
 | Valores de este chart | `prometheus.prometheusSpec.retention`, `storageSpec` y los valores siguientes |
 
-El antiguo YAML `storage.tsdb.path/retention.time/...` no es configuración válida del proceso. En una **instalación independiente separada**, los flags básicos tienen este aspecto:
+El antiguo YAML `storage.tsdb.path/retention.time/...` no es una configuración válida del proceso. En una **instalación independiente separada**, las opciones básicas de arranque son las siguientes:
 
 ```sh
 prometheus --config.file=prometheus.yml \
@@ -83,7 +87,7 @@ prometheus --config.file=prometheus.yml \
   --storage.tsdb.retention.size=15GB
 ```
 
-Para la instalación con el Operator, configure los valores de Helm propietarios. El tamaño de retención no es un límite rígido del disco total: deje espacio para el WAL, el head, los índices y la compactación. Use almacenamiento local/de bloques compatible; un NFS arbitrario no es un sustituto admitido.
+En la instalación con el Operator, configure los valores de la instalación de Helm que administra el despliegue. El tamaño de retención no es un límite estricto para todo el disco: deje espacio para el WAL, el bloque activo, los índices y la compactación. Utilice almacenamiento local o de bloques compatible; un servidor NFS arbitrario no es una alternativa admitida.
 
 ## PromQL
 
@@ -91,7 +95,7 @@ Los ejemplos asumen `job="example-app"` y las etiquetas de job de node-exporter/
 
 ### Selectores, rangos y tasas
 
-Los selectores instantáneos usan reglas de lookback/obsolescencia (staleness) para encontrar muestras elegibles; «actual» no garantiza una observación exactamente en el instante de evaluación. Un selector de rango elige un intervalo de muestras. Una subconsulta evalúa una expresión con su resolución, en lugar de seleccionar cada N-ésima muestra cruda almacenada.
+Los selectores instantáneos utilizan las reglas de búsqueda retrospectiva y obsolescencia para encontrar muestras válidas; «actual» no garantiza una observación exactamente en el instante de evaluación. Un selector de rango elige un intervalo de muestras. Una subconsulta evalúa una expresión con la resolución indicada, sin limitarse a seleccionar una de cada N muestras originales almacenadas.
 
 | Propósito | PromQL |
 |---|---|
@@ -131,9 +135,9 @@ Un vector de rango es una entrada para funciones de rango, no una gráfica de co
 | Marca de tiempo de la muestra seleccionada | `timestamp(up{job="example-app"})` |
 | Hora UTC de la muestra | `hour(timestamp(up{job="example-app"}))` |
 
-Contar las series `kube_pod_status_phase{phase="Running"}` también cuenta los ceros. Sumar los indicadores 0/1 después de eliminar las identidades duplicadas del exporter da cero cuando solo existen indicadores en cero, mientras que la telemetría ausente sigue ausente.
+Contar las series `kube_pod_status_phase{phase="Running"}` también cuenta las que valen cero. Sumar los indicadores 0/1 después de eliminar las identidades duplicadas de los exportadores devuelve cero si solo existen indicadores con ese valor; cuando falta la telemetría, el resultado sigue estando ausente.
 
-El ejemplo de `quantile()` sobre Gauge compara valores entre series. No calcula el p95 de latencia de solicitudes de un histograma ni combina valores p99 de Summary. Las funciones matemáticas tienen límites en su dominio de entrada; por ejemplo, un logaritmo no positivo requiere un tratamiento deliberado. Funciones relacionadas: `floor`, `round`, `clamp_min` y `clamp_max`.
+El ejemplo de `quantile()` con una métrica de tipo gauge compara valores entre series. No calcula el p95 de latencia de solicitudes de un histograma ni combina los valores p99 de métricas Summary. Las funciones matemáticas tienen restricciones sobre sus entradas; por ejemplo, aplicar un logaritmo a un valor no positivo requiere un tratamiento explícito. Otras funciones relacionadas son `floor`, `round`, `clamp_min` y `clamp_max`.
 
 Este filtro de horario laboral está en **UTC**, no en la zona horaria del navegador/clúster:
 
@@ -155,7 +159,7 @@ histogram_quantile(0.99, sum by (le,method) (rate(http_request_duration_seconds_
 sum(rate(http_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(http_request_duration_seconds_count{job="example-app"}[5m]))
 ```
 
-Agregue buckets clásicos compatibles y conserve `le`. Los cuantiles interpolan dentro de los buckets. Los cuantiles de Summary también son aproximaciones y no pueden promediarse para obtener un percentil de flota; sum/count sí puede calcular una media de flota.
+Agregue intervalos compatibles de histogramas clásicos y conserve `le`. Los cuantiles se calculan mediante interpolación dentro de los intervalos. Los cuantiles de Summary también son aproximaciones y no pueden promediarse para obtener un percentil de todo el conjunto; sum/count sí permite calcular una media conjunta.
 
 `predict_linear()` extrapola una tendencia ajustada de un Gauge. Una proyección negativa es un motivo para investigar, no un fallo de disco futuro garantizado:
 
@@ -163,7 +167,7 @@ Agregue buckets clásicos compatibles y conserve `le`. Los cuantiles interpolan 
 predict_linear(node_filesystem_avail_bytes{job="node-exporter",mountpoint="/",fstype!~"tmpfs|overlay"}[6h], 86400)
 ```
 
-Prometheus 3 renombró `holt_winters` a `double_exponential_smoothing`. Se trata de **suavizado lineal de Holt, no de una predicción estacional triple exponencial**, y requiere muestras float de tipo Gauge. Expresión opcional: `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`. El servidor que evalúa necesita `--enable-feature=promql-experimental-functions`. La auditoría local comprobó su sintaxis en el parser; no se afirma que la evaluación de valores experimentales haya sido superada.
+Prometheus 3 cambió el nombre de `holt_winters` a `double_exponential_smoothing`. Se trata de **suavizado lineal de Holt, no de predicción estacional mediante suavizado exponencial triple**, y requiere muestras de tipo gauge con valores de coma flotante. Expresión opcional: `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`. El servidor que la evalúa necesita `--enable-feature=promql-experimental-functions`. La auditoría local comprobó la sintaxis con el analizador; no se afirma que la evaluación de valores experimentales haya superado las pruebas.
 
 ### Ejemplos operativos
 
@@ -175,19 +179,19 @@ Prometheus 3 renombró `holt_winters` a `double_exponential_smoothing`. Se trata
 | Porcentaje de espacio no disponible en el sistema de archivos | `100 * (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"})` |
 | Bytes recibidos + transmitidos por segundo | `rate(node_network_receive_bytes_total{job="node-exporter",device="eth0"}[5m]) + rate(node_network_transmit_bytes_total{job="node-exporter",device="eth0"}[5m])` |
 
-Para el porcentaje de errores, un servicio saludable puede no tener series 5xx. El valor de reserva cero que aparece a continuación existe únicamente para emparejar grupos de tráfico total; no inventa datos saludables para servicios ausentes.
+Al calcular el porcentaje de errores, un servicio que funciona correctamente puede no tener series 5xx. El valor cero alternativo del ejemplo siguiente solo se genera para grupos que tienen tráfico total coincidente; no crea datos de servicios que carecen de telemetría.
 
 ```promql
 100 * (sum by (namespace, service) (rate(http_requests_total{job="example-app",status=~"5[0-9]{2}"}[5m])) or on (namespace, service) (0 * (sum by (namespace, service) (rate(http_requests_total{job="example-app"}[5m]))))) / (sum by (namespace, service) (rate(http_requests_total{job="example-app"}[5m])))
 ```
 
-El tráfico saludable observado da 0, el tráfico totalmente 5xx da 100 y un denominador cero permanece indefinido. La telemetría ausente sigue ausente; monitorice los fallos de recopilación por separado.
+El tráfico observado sin errores devuelve 0; si todo el tráfico es 5xx, devuelve 100. Un denominador cero deja el resultado indefinido. La falta de telemetría sigue siendo ausencia de datos; supervise por separado los fallos de recolección.
 
 <span id="discovery-and-operator-selectors"></span>
 
 ## Descubrimiento y selectores del Operator
 
-![Operator workload reconciliation and monitor/rule selection.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
+![Reconciliación de cargas de trabajo por el Operator y selección de recursos de monitorización y reglas.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-1.html)
 
@@ -203,7 +207,7 @@ Los nodos Prometheus/Alertmanager de esta figura representan **recursos personal
 
 RBAC, el descubrimiento y el acceso de red/TLS son requisitos separados. Los selectores no sustituyen a la autorización. Los booleanos `*SelectorNilUsesHelmValues` de Helm afectan a los valores por defecto de los selectores de etiquetas, no a todos los namespaces de destino.
 
-### Un scraping de aplicación coherente
+### Recolección coherente de métricas de aplicación
 
 Suponga un Deployment instrumentado existente en `example-app`, con la etiqueta de Pod `app: example-app` y un puerto declarado llamado `metrics` que sirve `/metrics`. El Service siguiente no crea la aplicación:
 
@@ -302,7 +306,7 @@ spec:
 
 ## Instalación de kube-prometheus-stack
 
-Estos comandos de operador modifican el clúster y **no son comandos ejecutados en la auditoría**. Use el contexto previsto y un release del que sea propietario. En instalaciones existentes, revise los valores reales, las CRDs, el almacenamiento y las notas de actualización en lugar de instalar una pila duplicada.
+Estos comandos modifican el clúster y **no se ejecutaron durante la auditoría**. Utilice el contexto previsto y una instalación de Helm que usted administre. Para instalaciones existentes, revise los valores reales, las CRD, el almacenamiento y las notas de actualización antes de instalar una segunda pila de monitorización.
 
 Prerrequisitos de este perfil:
 
@@ -312,7 +316,7 @@ Prerrequisitos de este perfil:
 - La service account `metrics-demo-grafana` necesita un rol IRSA con alcance limitado a ese secreto. Sustituya el ARN de rol de IAM de ejemplo que aparece abajo y aplique el SecretProviderClass correspondiente. Consulte los [prerrequisitos completos de identidad, KMS, montaje y rotación](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md).
 - Confianza TLS de kubelet verificada. Este perfil habilita la verificación de certificados; proporcione la CA adecuada si los certificados usan otro emisor, en lugar de omitir la verificación.
 
-El dimensionamiento es ilustrativo. Cada réplica de Prometheus obtiene su propio PVC; el tamaño de retención no acota el uso de WAL/head/compactación. Grafana se mantiene con una réplica y una base de datos respaldada por un PVC. Aumentar solo las réplicas no constituye HA con base de datos compartida.
+El dimensionamiento es un ejemplo. Cada réplica de Prometheus tiene su propio PVC; el tamaño de retención no limita el espacio usado por el WAL, el bloque activo y la compactación. Grafana mantiene una sola réplica y una base de datos almacenada en un PVC. Aumentar el número de réplicas por sí solo no proporciona alta disponibilidad con una base de datos compartida.
 
 ```yaml
 # kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.
@@ -445,9 +449,9 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
   --wait --timeout 15m
 ```
 
-Compruebe el establecimiento de las CRDs, la salud del Operator, el binding de los PVC y los targets reales. Aplique el monitor/las reglas de aplicación elegidos solo después de que sus CRDs estén establecidas.
+Compruebe que las CRD estén establecidas, que el Operator funcione correctamente, que los PVC estén enlazados y que los destinos reales sean accesibles. Aplique los recursos de monitorización y las reglas elegidos para la aplicación después de que sus CRD estén establecidas.
 
-La gestión de la actualización de CRDs del chart depende de la versión. Lea las notas de actualización en lugar de asumir que toda migración de CRD queda cubierta por un simple `helm upgrade`. El chart 90 también cambia la dependencia de Grafana al repositorio de la comunidad; valide los valores existentes de autenticación/aprovisionamiento y conserve copias de seguridad de la base de datos/PVC al actualizar.
+La gestión de las actualizaciones de CRD depende de la versión del chart. Lea las notas de actualización; no dé por hecho que una actualización normal de Helm cubra todas las migraciones de CRD. El chart 90 también traslada la dependencia de Grafana al repositorio de la comunidad. Valide los valores existentes de autenticación y aprovisionamiento, y conserve las copias de seguridad de la base de datos y los PVC al actualizar.
 
 <span id="rules-and-alertmanager"></span>
 
@@ -611,7 +615,7 @@ spec:
       sendResolved: true
 ```
 
-Por defecto, las rutas hermanas se detienen en la primera coincidencia. Las rutas críticas van primero; la ruta de backend precede a la ruta general de advertencia, de modo que se puede alcanzar. Establezca `continue` de forma deliberada solo cuando se pretendan varias entregas. La inhibición coincide tanto con la identidad del recurso como con el nombre de la alerta: una alerta crítica de un servicio/nodo no debe suprimir una advertencia no relacionada. Elija campos de etiquetas `equal` significativos para sus familias de alertas; las etiquetas ausentes en ambas alertas se consideran iguales.
+De forma predeterminada, las rutas del mismo nivel se detienen en la primera coincidencia. Las rutas críticas van primero; la ruta de backend precede a la ruta general de advertencias para que sea alcanzable. Active `continue` deliberadamente solo si pretende enviar varias notificaciones. La inhibición debe hacer coincidir la identidad del recurso y el nombre de la alerta: una alerta crítica de un servicio o nodo no debe suprimir una advertencia ajena. Elija campos de igualdad de etiquetas significativos para sus familias de alertas; las etiquetas ausentes en ambas se consideran iguales.
 
 `groupBy` en el CR se convierte en `group_by` en la configuración nativa de Alertmanager. La agrupación controla los lotes de notificación; no es lo mismo que deduplicar alertas idénticas. `groupWait`, `groupInterval` y `repeatInterval` gobiernan los tiempos de notificación de forma independiente del `for` de un PrometheusRule.
 
@@ -631,7 +635,7 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
   -f values.yaml -f alerting-values.yaml --wait --timeout 15m
 ```
 
-La comprobación del enrutamiento nativo usó nombres de receptores sin enviar notificaciones. La recuperación de secretos, la autenticación con el proveedor y la entrega real de notificaciones siguen requiriendo una verificación controlada.
+La comprobación del enrutamiento nativo utilizó nombres de receptores sin enviar notificaciones. La obtención de secretos, la autenticación con el proveedor y el envío real de notificaciones requieren todavía una verificación controlada.
 
 <span id="remote-write-and-amp"></span>
 
@@ -690,7 +694,7 @@ Combine el fichero opcional de AMP con los valores base en el mismo release tras
 
 La deduplicación de HA de AMP espera `cluster` y `__replica__`. El `replicaExternalLabelName` del Operator proporciona su identidad por Pod admitida; las etiquetas de réplica adicionales escritas a mano no son un sustituto. Inspeccione las etiquetas de métricas existentes por si colisionan con las etiquetas de HA.
 
-Este ejemplo usa intencionadamente `shards: 1`. El sharding divide los conjuntos de targets; la replicación copia un conjunto de targets. Si se introduce el sharding, el grupo de réplicas de HA de cada shard necesita una identidad de deduplicación distinta y un diseño de consulta completo. No envíe shards independientes bajo una única identidad de HA asumiendo que no se descartan datos.
+Este ejemplo utiliza deliberadamente `shards: 1`. La división en fragmentos distribuye los conjuntos de destinos; la replicación copia un mismo conjunto. Si se introducen fragmentos, el grupo de réplicas de alta disponibilidad de cada uno necesita una identidad de deduplicación distinta y un diseño que permita consultar todos los datos. No envíe fragmentos independientes con una sola identidad de alta disponibilidad suponiendo que no se perderán datos.
 
 Estas consultas describen un clúster local. Las consultas centrales/de AMP que abarcan varios clústeres deben incluir el alcance de clúster previsto o agregar explícitamente.
 
@@ -706,7 +710,7 @@ No copie la vieja regla que descartaba todos los buckets de histograma por debaj
 
 ### Ajuste a partir de mediciones
 
-Las series/chunks del head, la rotación (churn) de cardinalidad, la carga de scraping y las consultas concurrentes afectan a la memoria. Reducir la retención histórica no es una solución universal para los OOM del head activo o de las consultas. Inspeccione el uso real y la carga de consultas antes de cambiar los límites.
+Las series y segmentos del bloque activo, los cambios de cardinalidad, la carga de recolección y las consultas concurrentes afectan a la memoria. Reducir la retención histórica no resuelve todos los errores por falta de memoria del bloque activo o las consultas. Inspeccione el uso real y la carga de consultas antes de cambiar los límites.
 
 Este fragmento opcional de valores ilustra los límites de consulta, no es una recomendación de dimensionamiento:
 
@@ -720,7 +724,7 @@ prometheus:
       timeout: 2m
 ```
 
-Un timeout más largo o un `maxSamples` mayor pueden aumentar la exposición de recursos. Inspeccione las expresiones costosas, los rangos, la agregación y las reglas de registro antes de elevar ambos límites.
+Un tiempo de espera más largo o un `maxSamples` mayor pueden aumentar el consumo potencial de recursos. Examine las expresiones costosas, los rangos, la agregación y las reglas de registro antes de elevar ambos límites.
 
 Para una configuración de scraping **independiente**, este ejemplo limita un job y descarta una familia de depuración revisada:
 
@@ -741,21 +745,21 @@ scrape_configs:
     action: drop
 ```
 
-`sample_limit` es un límite de aceptación del scraping posterior al relabeling de métricas. Superarlo hace fallar el scraping; no trunca limpiamente el endpoint a 10 000 muestras. Los intervalos más largos reducen la resolución y ralentizan la detección, mientras que eliminar todas las métricas `go_.*`/`process_.*` descarta diagnósticos del runtime.
+`sample_limit` limita la aceptación de muestras después del reetiquetado de métricas. Si se supera, falla toda la recolección; el endpoint no se recorta simplemente a 10 000 muestras. Los intervalos más largos reducen la resolución y retrasan la detección, mientras que eliminar todas las métricas `go_.*`/`process_.*` suprime información de diagnóstico del entorno de ejecución.
 
-`labeldrop` puede colapsar muestras antes distintas en la misma serie; no las suma. Preserve la unicidad y evalúe los efectos sobre el receptor/la cardinalidad antes de eliminar etiquetas de identidad. Limite el alcance de las consultas de cardinalidad a un job previsto:
+`labeldrop` puede hacer que muestras antes distintas coincidan en una misma serie; no las suma. Conserve su unicidad y evalúe los efectos sobre el receptor y la cardinalidad antes de eliminar etiquetas de identidad. Limite las consultas de cardinalidad al conjunto de destinos previsto:
 
 ```promql
 topk(10, count by (__name__) ({job="example-app"}))
 ```
 
-No copie flags de TSDB no admitidos ni `additionalArgs` con forma de cadena en un CR del Operator. Su `additionalArgs` usa objetos de argumento con nombre, y un esquema de CR válido no demuestra que un flag exista en el binario de Prometheus seleccionado. Evite sobrescribir el comportamiento interno de bloques/chunks sin evidencia específica de la versión.
+No copie opciones TSDB no admitidas ni `additionalArgs` expresado como una cadena en un recurso personalizado del Operator. Su `additionalArgs` utiliza objetos de argumentos con nombre. Que el esquema del recurso sea válido no demuestra que una opción exista en el binario de Prometheus elegido. Evite modificar el comportamiento interno de bloques y segmentos sin pruebas específicas para esa versión.
 
 ### Límites de la HA
 
 Los `replicas` y `shards` de Prometheus multiplican el número de Pods, pero resuelven problemas distintos. La antiafinidad necesita nodos suficientes; la resiliencia por zonas también necesita una ubicación y un almacenamiento adecuados. Consultar un solo shard no proporciona los datos de todos los targets.
 
-La HA del recolector no hace automáticamente que Alertmanager, Grafana, los PVCs o el almacenamiento remoto sean de alta disponibilidad. Las réplicas de Alertmanager necesitan conectividad entre pares en funcionamiento y ubicación/almacenamiento independientes; la HA de Grafana necesita un diseño adecuado de base de datos compartida/autenticación. Mantenga coherentes las etiquetas de deduplicación específicas del receptor y la identidad de las alertas.
+La alta disponibilidad del recolector no hace que Alertmanager, Grafana, los PVC o el almacenamiento remoto también sean altamente disponibles. Las réplicas de Alertmanager necesitan conectividad entre pares y ubicaciones y almacenamiento independientes; Grafana requiere un diseño adecuado de autenticación y base de datos compartida. Mantenga coherentes las etiquetas de deduplicación del receptor y la identidad de las alertas.
 
 ### Solución de problemas desde un release propio
 
@@ -804,7 +808,7 @@ No se garantiza que la imagen distroless de Prometheus contenga una shell, `wget
 
 ## Validación y referencias
 
-La auditoría local renderizó los perfiles base/de alertas/de AMP de Helm fijados, validó las estructuras de las CRDs publicadas, evaluó el PromQL/las reglas principales con muestras sintéticas y comprobó el enrutamiento nativo de Alertmanager. No se ejecutaron el descubrimiento, la admisión/CEL, el binding de almacenamiento, la aplicación de IAM, los secretos externos ni la entrega de notificaciones. El suavizado experimental solo se verificó a nivel de parser; su fixture de valores no fue aceptado por el motor de pruebas de promtool publicado, pese al feature flag.
+La auditoría local renderizó los perfiles fijados de Helm para la configuración base, las alertas y AMP; validó las estructuras de las CRD publicadas; evaluó las consultas PromQL y las reglas principales con muestras sintéticas, y comprobó el enrutamiento nativo de Alertmanager. No ejecutó el descubrimiento, la admisión/CEL, el enlace de almacenamiento, la aplicación de permisos IAM, los secretos externos ni el envío de notificaciones. Del suavizado experimental solo se verificó la sintaxis; el motor de pruebas de la versión publicada de promtool no aceptó sus datos de prueba, pese a la opción de habilitación.
 
 - [Publicación del chart 90.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0) y [notas de actualización por versión](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/README.md)
 - [Referencia de la API del Operator 0.93.1](https://github.com/prometheus-operator/prometheus-operator/blob/v0.93.1/Documentation/api-reference/api.md)

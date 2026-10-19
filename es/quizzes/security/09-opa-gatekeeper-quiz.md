@@ -1,6 +1,6 @@
 # Cuestionario de OPA Gatekeeper
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Pon a prueba tu comprensión de OPA Gatekeeper y del lenguaje de políticas Rego con las siguientes preguntas.
 

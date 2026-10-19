@@ -1,73 +1,87 @@
-# Cilium IPAM と Network Policy クイズ
+# Cilium IPAM と Network Policy のクイズ
 
-> **対応バージョン**: Cilium 1.17
-> **最終更新**: February 22, 2026
+> **対応バージョン**: Cilium 1.20.3 · 2026-10-16
 
-## IPAM (IP Address Management)
+## IPAM
 
-1. **Cilium のデフォルト IPAM モードは何ですか？**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) CRD-based
-   - D) AWS ENI
-
-   <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Cluster Scope</p>
-   <p><strong>解説</strong>: Cilium のデフォルト IPAM モードは Cluster Scope であり、クラスター全体にわたって IP アドレスを一元的に割り当てます。</p>
-   </details>
-
-2. **各 node が自身の CIDR 範囲から IP を割り当てる Cilium IPAM モードはどれですか？**
-   - A) Cluster Scope
-   - B) Kubernetes Host Scope
-   - C) CRD-based
-   - D) AWS ENI
+1. **プラットフォーム固有の上書きがない場合、一般的なデフォルトの IPAM モードと割り当て方式は何ですか？**
+   - A) kubernetes。各 Pod が Kubernetes API に IP アドレスを要求する
+   - B) cluster-pool。Operator がノード CIDR を割り当て、agent がローカルで Pod IP を割り当てる
+   - C) crd。各 Pod が CiliumPodIPPool を作成する
+   - D) すべてのプラットフォームで eni
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Kubernetes Host Scope</p>
-   <p><strong>解説</strong>: Kubernetes Host Scope IPAM モードでは、各 node が自身の CIDR 範囲から IP アドレスを割り当てます。</p>
+
+   **回答: B) cluster-pool。Operator がノード CIDR を割り当て、agent がローカルで Pod IP を割り当てる**
+
+   cluster-pool は CiliumNode を使ってノード単位のプレフィックスを割り当てます。Pod ごとに中央へアドレスを要求する方式ではありません。また、プラットフォームのプロファイルによって別のバックエンドが選ばれる場合があります。
+
    </details>
 
-3. **AWS EKS で Cilium を使用する場合に推奨される IPAM モードはどれですか？**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) AWS ENI
-   - D) CRD-based
+2. **Operator による cluster-pool 割り当てではなく、Kubernetes の Node 状態からノードプレフィックスを取得するモードはどれですか？**
+   - A) cluster-pool
+   - B) kubernetes（host scope）
+   - C) multi-pool のみ
+   - D) eni のみ
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) AWS ENI</p>
-   <p><strong>解説</strong>: AWS EKS では、VPC IP アドレスを Pod に直接割り当てるため、AWS ENI IPAM モードの使用が推奨されます。</p>
+
+   **回答: B) kubernetes（host scope）**
+
+   Kubernetes が必要なノード CIDR を提供し、agent がその範囲内で IP アドレスを割り当てます。host scope と cluster-pool は、どちらも個々のアドレスをローカルで割り当てます。どちらもプレフィックスの調整が不要になるわけではありません。
+
    </details>
 
-4. **Cilium の 'PodCIDR' IPAM モードは、どの Kubernetes 機能を利用しますか？**
-   - A) NodeSpec.PodCIDR
-   - B) NodeSpec.CIDR
-   - C) NodeSpec.Subnet
-   - D) NodeSpec.IPRange
+3. **Cilium 自身が AWS ENI と VPC アドレスを管理する、準備済みの EC2 ノード環境で使うバックエンドはどれですか？**
+   - A) kubernetes
+   - B) cluster-pool
+   - C) eni
+   - D) AWS のすべてのノードで delegated-plugin
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) NodeSpec.PodCIDR</p>
-   <p><strong>解説</strong>: Cilium の PodCIDR IPAM モードは、Kubernetes が各 node に割り当てる NodeSpec.PodCIDR フィールドを利用します。</p>
+
+   **回答: C) eni**
+
+   これは ENI IPAM です。AWS VPC CNI とチェーンする場合、IP の割り当ては AWS VPC CNI が引き続き担当します。Hybrid Nodes には別の方式があり、Fargate／Auto Mode ではこの置き換え構成はサポートされません。
+
    </details>
 
-5. **Cilium の IPAM 設定を確認するにはどのコマンドを使用しますか？**
-   - A) `cilium status --ipam`
-   - B) `cilium ipam`
-   - C) `cilium config get ipam`
-   - D) `kubectl -n kube-system get configmap cilium-config -o yaml | grep -E 'ipam|allocator'`
+4. **host-scope IPAM に関係する Kubernetes のフィールドはどれですか？**
+   - A) Node.spec.podCIDRs と、旧式／単一ファミリーの Node.spec.podCIDR
+   - B) Node.spec.subnet
+   - C) Service.spec.podCIDR
+   - D) CiliumPodIPPool.spec.selector
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: D) `kubectl -n kube-system get configmap cilium-config -o yaml | grep -E 'ipam|allocator'`</p>
-   <p><strong>解説</strong>: Cilium の IPAM 設定は cilium-config ConfigMap に保存されており、このコマンドで確認できます。</p>
+
+   **回答: A) Node.spec.podCIDRs と、旧式／単一ファミリーの Node.spec.podCIDR**
+
+   これらは Kubernetes Node のフィールドです。一方、cluster-pool は CiliumNode.spec.ipam.podCIDRs を使います。どの状態が正となるかは、選択したモードによって異なります。
+
    </details>
 
-## Network Policy の基本
+5. **実際に有効な IPAM 設定を調査するには、何を確認すべきですか？**
+   - A) ipam を含む grep の行だけで設定全体を判断する
+   - B) Pod の Ready 状態だけを見る
+   - C) 常に CiliumNode の最初のアドレスと CIDR を使う
+   - D) 望ましい値とノード上書き、agent／Operator の実状態、選択した割り当て方式のリソースを照合する
 
-6. **Cilium NetworkPolicy の API バージョンは何ですか？**
+   <details>
+   <summary>回答を表示</summary>
+
+   **回答: D) 望ましい値とノード上書き、agent／Operator の実状態、選択した割り当て方式のリソースを照合する**
+
+   Helm／ConfigMap の値、ノード上書き、割り当て状態はそれぞれ補完的な情報です。CiliumNode がすべての IPAM モードで常に正となるわけではなく、アドレス配列内の位置だけでは次のホップも判断できません。
+
+   </details>
+
+## Policy の基本
+
+6. **このガイドで扱う CiliumNetworkPolicy のリソース API バージョンは何ですか？**
    - A) networking.k8s.io/v1
    - B) cilium.io/v1
    - C) cilium.io/v2
@@ -75,123 +89,153 @@
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) cilium.io/v2</p>
-   <p><strong>解説</strong>: Cilium NetworkPolicy は cilium.io/v2 API バージョンを使用します。</p>
+
+   **回答: C) cilium.io/v2**
+
+   CiliumNetworkPolicy は cilium.io/v2 を使います。CiliumPodIPPool の v2alpha1 API や、通常の Kubernetes NetworkPolicy と混同しないでください。
+
    </details>
 
-7. **Cilium NetworkPolicy における 'endpointSelector' の役割は何ですか？**
-   - A) ポリシー適用対象の Pod を選択する
-   - B) ポリシー適用対象の node を選択する
-   - C) ポリシー適用対象の namespace を選択する
-   - D) ポリシー適用対象の Service を選択する
+7. **名前空間スコープの CiliumNetworkPolicy で、endpointSelector は何を選択しますか？**
+   - A) その名前空間内でポリシーの適用対象となる endpoint
+   - B) 作成する Kubernetes Service
+   - C) すべての名前空間にあるホストノード
+   - D) 継承する別のポリシー
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) ポリシー適用対象の Pod を選択する</p>
-   <p><strong>解説</strong>: endpointSelector は、ポリシーを適用する対象の Pod（endpoint）を選択するために使用します。</p>
+
+   **回答: A) その名前空間内でポリシーの適用対象となる endpoint**
+
+   ポリシーを適用する endpoint を選択します。リソースのスコープとセレクターは、ingress／egress で記述する通信相手とは別のものです。
+
    </details>
 
-8. **Cilium NetworkPolicy の 'ingress' ルールは何を制御しますか？**
-   - A) 選択した Pod に入るトラフィック
-   - B) 選択した Pod から出るトラフィック
-   - C) 選択した Pod 内のトラフィック
-   - D) クラスター外部へのトラフィック
+8. **ingress ルールは何を表しますか？**
+   - A) 選択した endpoint に入るトラフィック
+   - B) 選択した endpoint から出るトラフィック
+   - C) 新しい IP プール
+   - D) 経路のアドバタイズ
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) 選択した Pod に入るトラフィック</p>
-   <p><strong>解説</strong>: Ingress ルールは、選択した Pod に入るトラフィックを制御します。</p>
+
+   **回答: A) 選択した endpoint に入るトラフィック**
+
+   ingress は、ポリシーの対象として選択した endpoint を基準にした受信方向です。対応する peer、ポート、サポート対象のプロトコル制約を適用してください。
+
    </details>
 
-9. **Cilium NetworkPolicy の 'egress' ルールは何を制御しますか？**
-   - A) 選択した Pod に入るトラフィック
-   - B) 選択した Pod から出るトラフィック
-   - C) 選択した Pod 内のトラフィック
-   - D) クラスター外部からのトラフィック
+9. **egress ルールは何を表しますか？**
+   - A) 選択した endpoint に入るトラフィック
+   - B) 選択した endpoint から出るトラフィック
+   - C) あらゆる場所へのすべてのトラフィック
+   - D) Kubernetes 外部からのトラフィックのみ
 
    <details>
    <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) 選択した Pod から出るトラフィック</p>
-   <p><strong>解説</strong>: Egress ルールは、選択した Pod から出るトラフィックを制御します。</p>
+
+   **回答: B) 選択した endpoint から出るトラフィック**
+
+   egress は、選択した endpoint から出るトラフィックを制御します。必要な DNS とアプリケーションの依存先を意識して許可してください。
+
    </details>
 
-10. **Cilium NetworkPolicy における 'labels' フィールドの役割は何ですか？**
-    - A) ポリシー適用対象の Pod を選択する
-    - B) ポリシー自体の識別子
-    - C) ポリシー適用対象の namespace を選択する
-    - D) ポリシー適用対象の node を選択する
+10. **任意の Cilium ルールにある spec.labels は何に使いますか？**
+    - A) endpointSelector の代わりに対象 Pod を選択する
+    - B) ルールの識別とメタデータ
+    - C) 同じラベルを持つ任意のポリシーを継承する
+    - D) Pod IP を割り当てる
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) ポリシー自体の識別子</p>
-    <p><strong>解説</strong>: labels フィールドはポリシー自体の識別子として使用され、他のポリシーがこのポリシーを参照する際に使用されます。</p>
+
+    **回答: B) ルールの識別とメタデータ**
+
+    ルールラベルは識別や検索に利用でき、必ず一意である必要はありません。別のポリシーを参照したり継承したりする機能ではありません。Kubernetes の metadata.labels はリソース自体にラベルを付けます。
+
     </details>
 
-## 高度な Network Policy
+## peer の選択
 
-11. **Cilium NetworkPolicy の 'toCIDR' ルールでは何を許可できますか？**
-    - A) 特定の IP アドレス範囲へのトラフィック
-    - B) 特定のドメイン名へのトラフィック
-    - C) 特定の Service へのトラフィック
-    - D) 特定の port へのトラフィック
+11. **toCIDR／toCIDRSet の目的とデフォルトの適用範囲は何ですか？**
+    - A) IP プレフィックスによる選択。主に外部 peer が対象で、管理対象 Pod／ノードとの照合には文書化されたデフォルト制限がある
+    - B) HTTP URL のフィルタリング
+    - C) Service の自動作成
+    - D) 指定プレフィックスからのアドレス割り当て
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) 特定の IP アドレス範囲へのトラフィック</p>
-    <p><strong>解説</strong>: toCIDR ルールは、特定の IP アドレス範囲（CIDR 表記）へのトラフィックを許可するために使用します。</p>
+
+    **回答: A) IP プレフィックスによる選択。主に外部 peer が対象で、管理対象 Pod／ノードとの照合には文書化されたデフォルト制限がある**
+
+    通常の管理対象 Pod には endpoint selector を使ってください。このリリースでは、Pod／ノードとの CIDR 照合はオプトインのベータ機能として文書化されており、identity の消費にも影響します。デフォルトの動作を無条件の IP マッチャーとして説明しないでください。
+
     </details>
 
-12. **Cilium NetworkPolicy の 'toFQDNs' ルールでは何を許可できますか？**
-    - A) 特定の IP アドレスへのトラフィック
-    - B) 特定の port へのトラフィック
-    - C) 特定のドメイン名へのトラフィック
-    - D) 特定の protocol のトラフィック
+12. **toFQDNs が許可するのは何ですか？**
+    - A) すべての DNS クエリを自動的に許可する
+    - B) そのドメイン配下の任意の HTTP URL
+    - C) 選択した名前について学習した IP への通信。ただしポートなどポリシーの制約を受ける
+    - D) 静的に設定した IP のみ
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) 特定のドメイン名へのトラフィック</p>
-    <p><strong>解説</strong>: toFQDNs ルールは特定のドメイン名（FQDN）へのトラフィックを許可し、Cilium は DNS ルックアップを監視して、それらのドメインの IP アドレスを動的に許可します。</p>
+
+    **回答: C) 選択した名前について学習した IP への通信。ただしポートなどポリシーの制約を受ける**
+
+    名前と IP の対応を観測するには、別途 DNS proxy ルールが必要です。ポート53を許可するだけでは学習は有効になりません。また、IP の許可は HTTP ホスト名の検証でも、アプリケーション利用者の認可でもありません。
+
     </details>
 
-13. **Cilium NetworkPolicy の 'toEntities' ルールにおける 'world' entity は何を意味しますか？**
-    - A) クラスター内部のすべての endpoint
-    - B) すべての外部ネットワーク
-    - C) すべての node
-    - D) すべての namespace
+13. **world entity は何を表しますか？**
+    - A) ローカルとリモートの Pod を区別せずにすべて含む
+    - B) クラスター外部にある広い identity 区分
+    - C) コントロールプレーンノードのみ
+    - D) パブリックインターネット上のアドレスのみ
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) すべての外部ネットワーク</p>
-    <p><strong>解説</strong>: 'world' entity は、クラスター外部のすべてのネットワークを指します。</p>
+
+    **回答: B) クラスター外部にある広い identity 区分**
+
+    world にはプライベートネットワーク上の外部 peer も含まれる場合があります。all entity や、名前を指定したリモートクラスターのセレクターとは異なります。必要に応じて、明示的な peer とより限定的なルールを使ってください。
+
     </details>
 
-14. **Cilium NetworkPolicy の 'toServices' ルールでは何を許可できますか？**
-    - A) 特定の Kubernetes Service へのトラフィック
-    - B) 特定の外部 Service へのトラフィック
-    - C) 特定の port へのトラフィック
-    - D) 特定の protocol のトラフィック
+14. **toServices はどのように動作しますか？**
+    - A) Kubernetes Service の selector、または selector のない Service の EndpointSlice アドレスをポリシー用セレクターに変換する
+    - B) Service を作成して自動的にルーティングする
+    - C) すべての DNS 名への通信を可能にする
+    - D) kube-apiserver entity ルールすべての置き換えとなる
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) 特定の Kubernetes Service へのトラフィック</p>
-    <p><strong>解説</strong>: toServices ルールは、特定の Kubernetes Service へのトラフィックを許可するために使用します。</p>
+
+    **回答: A) Kubernetes Service の selector、または selector のない Service の EndpointSlice アドレスをポリシー用セレクターに変換する**
+
+    selector のない Service では CIDR 由来のセレクターが使われ、その制限も引き継がれます。特殊な default／kubernetes Service が通常のワークロード用セレクターと同じように動作すると想定しないでください。
+
     </details>
 
-15. **Cilium NetworkPolicy における 'nodeSelector' の役割は何ですか？**
-    - A) ポリシー適用対象の Pod を選択する
-    - B) ポリシー適用対象の node を選択する
-    - C) ポリシー適用対象の namespace を選択する
-    - D) ポリシー適用対象の Service を選択する
+15. **ホストファイアウォールの対象を選ぶ nodeSelector はどこで使いますか？**
+    - A) 前提条件なしで、任意の名前空間スコープ CiliumNetworkPolicy に指定する
+    - B) ホストファイアウォールを設定した CiliumClusterwideNetworkPolicy に指定する
+    - C) すべての Pod IP を割り当てるため CiliumPodIPPool に指定する
+    - D) Service annotation に指定する
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) ポリシー適用対象の node を選択する</p>
-    <p><strong>解説</strong>: nodeSelector は、ポリシーを適用する対象の node を選択するために使用します。</p>
+
+    **回答: B) ホストファイアウォールを設定した CiliumClusterwideNetworkPolicy に指定する**
+
+    Rule API では nodeSelector の使用先が CiliumClusterwideNetworkPolicy に限定されています。endpointSelector や peer 選択の fromNodes／toNodes とは別の機能です。
+
     </details>
 
-## L7 Policy
+## L7 ポリシー
 
-16. **Cilium の L7 HTTP policy では、どの属性をフィルタリングできますか？**
+16. **サポート対象の Cilium L7 ルールで制約できる HTTP リクエスト属性はどれですか？**
     - A) Path
     - B) Method
     - C) Headers
@@ -199,54 +243,71 @@
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) 上記すべて</p>
-    <p><strong>解説</strong>: Cilium の L7 HTTP policy では、Path、Method、Headers を含むさまざまな HTTP request 属性をフィルタリングできます。</p>
+
+    **回答: D) 上記すべて**
+
+    Envoy は可視な HTTP トラフィックにルールを適用します。重複する L7 制約とは別に無制限の L4 許可を設定すると、その L7 制約を迂回できる場合があります。また、ポリシー上の許可はアプリケーションの成功を保証しません。
+
     </details>
 
-17. **Cilium の L7 Kafka policy では、どの属性をフィルタリングできますか？**
-    - A) Topic
-    - B) API Key
-    - C) Client ID
-    - D) 上記すべて
+17. **Cilium 1.20.3 の rules.kafka について正しい説明はどれですか？**
+    - A) デフォルトで topic の認可を提供する
+    - B) apiVersion を v2alpha1 に変えると有効になる
+    - C) broker 接続を自動的に暗号化する
+    - D) 組み込みの Kafka L7 API は削除されている。適切なネットワーク制御と broker 側の認可を使う
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) 上記すべて</p>
-    <p><strong>解説</strong>: Cilium の L7 Kafka policy では、Topic、API key、Client ID を含むさまざまな Kafka request 属性をフィルタリングできます。</p>
+
+    **回答: D) 組み込みの Kafka L7 API は削除されている。適切なネットワーク制御と broker 側の認可を使う**
+
+    旧式の topic／API key／client ID ポリシーを適用しないでください。L4 接続には実際の broker listener port を使い、認証／認可には broker が備える機能を使ってください。
+
     </details>
 
-18. **Cilium の L7 DNS policy における 'matchPattern' ルールでは何を許可できますか？**
-    - A) 完全一致のドメイン名マッチング
-    - B) ワイルドカードを使用したドメイン名パターンマッチング
-    - C) IP アドレスマッチング
-    - D) port 番号マッチング
+18. **リリースの実装に合うワイルドカードの説明はどれですか？**
+    - A) `*.example.com` は example.com と a.b.example.com にも一致する
+    - B) `*.example.com` はサブドメイン1階層に一致し、`**.example.com` は1階層以上に一致する。どちらも apex には一致しない
+    - C) アスタリスクは常にドットも含めて一致する
+    - D) matchName と matchPattern は DNS アドレスを割り当てる
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) ワイルドカードを使用したドメイン名パターンマッチング</p>
-    <p><strong>解説</strong>: matchPattern ルールでは、ワイルドカード（*）を含むドメイン名パターンにマッチさせることができます。例: *.example.com</p>
+
+    **回答: B) `*.example.com` はサブドメイン1階層に一致し、`**.example.com` は1階層以上に一致する。どちらも apex には一致しない**
+
+    実装では正規化した DNS 名を基準に照合します。完全一致、1階層のワイルドカード、複数階層を示すプレフィックスはそれぞれ意味が異なります。apex も含めるには、別途 matchName を指定できます。
+
     </details>
 
-19. **Cilium の L7 gRPC policy では、どの属性をフィルタリングできますか？**
-    - A) Method 名
-    - B) Service 名
-    - C) Metadata
-    - D) 上記すべて
+19. **サポート対象の gRPC service／method と metadata の制約は、どのように表しますか？**
+    - A) rules.grpc の protobuf フィールドフィルター
+    - B) L3 CIDR マッチのみ
+    - C) サポート対象の Envoy 経由で HTTP/2 の path と header を照合する
+    - D) CNI を kube-proxy に置き換える
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) 上記すべて</p>
-    <p><strong>解説</strong>: Cilium の L7 gRPC policy では、Method 名、Service 名、Metadata を含むさまざまな gRPC request 属性をフィルタリングできます。</p>
+
+    **回答: C) サポート対象の Envoy 経由で HTTP/2 の path と header を照合する**
+
+    gRPC の service／method 名は HTTP/2 の path に、metadata は header に現れます。任意の protobuf payload を検査する機能ではありません。また、TLS の可視性も考慮する必要があります。
+
     </details>
 
-20. **Cilium の L7 policy を適用するために必要な component は何ですか？**
-    - A) kube-proxy
-    - B) Envoy Proxy
-    - C) NGINX Ingress Controller
-    - D) HAProxy
+20. **コンポーネントの役割について正しい説明はどれですか？**
+    - A) kube-proxy がすべての L7 ルールを適用する
+    - B) Envoy がサポート対象の HTTP／gRPC ルールを処理し、Cilium の DNS proxy が DNS ポリシーを処理する
+    - C) DNS ポリシーには NGINX Ingress が必須である
+    - D) すべての L7 parser はカーネル BPF のみで動作する
 
     <details>
     <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Envoy Proxy</p>
-    <p><strong>解説</strong>: Cilium は L7 policy を適用するために Envoy Proxy を使用します。</p>
+
+    **回答: B) Envoy がサポート対象の HTTP／gRPC ルールを処理し、Cilium の DNS proxy が DNS ポリシーを処理する**
+
+    デフォルトでは DNS proxy は agent 内で動作し、単独モードは別途文書化された alpha 機能です。すべての DNS ルールに Envoy が必要だと考えたり、暗号化されていれば payload が見えると想定したりしないでください。
+
     </details>
+
+[ガイドを確認する](../../../networking/cilium/04-ipam-policy.md)

@@ -1,851 +1,441 @@
 # Cuestionario de almacenamiento de EKS - Parte 2
 
-Este cuestionario evalúa tu comprensión de conceptos avanzados de almacenamiento en Amazon EKS, incluida la optimización del almacenamiento, las estrategias de copia de seguridad y recuperación, y las soluciones de almacenamiento para diversas cargas de trabajo.
+> **Última actualización**: 11 de septiembre de 2026
+
+Este cuestionario aborda la selección de almacenamiento, las reclamaciones de StatefulSet, S3/Mountpoint, la clonación, las copias de seguridad y la recuperación. Los ejemplos reutilizan los controladores y las clases preparados en el capítulo, así como espacios de nombres dedicados. Durante esta revisión no se ejecutaron aprovisionamientos en la nube, recuperaciones de bases de datos ni pruebas de rendimiento. Comprueba quién es el propietario y sustituye los marcadores de posición antes de usar los ejemplos.
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el método más efectivo para crear PersistentVolumeClaims cuando se usa StatefulSet en Amazon EKS?
+### 1. ¿Cómo debe StatefulSet asignar un PVC separado a cada ordinal?
 
-A. Crear PVCs manualmente para cada pod B. Usar volumeClaimTemplates C. Usar ConfigMap para definir PVCs D. Deshabilitar el aprovisionamiento dinámico
+- A. Asignar manualmente el nombre de cada reclamación en un ConfigMap
+- B. Usar volumeClaimTemplates
+- C. Dar a todas las réplicas el mismo directorio de base de datos
+- D. Deshabilitar el controlador CSI
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Usar volumeClaimTemplates**
+**Respuesta: B**
 
-**Explicación:** El método más efectivo para crear PersistentVolumeClaims (PVCs) cuando se usa StatefulSet en Amazon EKS es usar `volumeClaimTemplates`. Este método crea automáticamente PVCs únicos para cada pod en el StatefulSet, y se administran independientemente del ciclo de vida del pod.
+`volumeClaimTemplates` proporciona a cada ordinal de StatefulSet su propia reclamación, con el nombre `<template>-<statefulset>-<ordinal>`. Normalmente, un Pod reiniciado reutiliza su reclamación, sujeto a la topología del almacenamiento y al ciclo de vida de la reclamación. StatefulSet no copia los datos de la base de datos entre réplicas.
 
-**Características clave de volumeClaimTemplates:**
+`OrderedReady` es la política de administración de Pods predeterminada; `Parallel` modifica el comportamiento del escalado. No hay una garantía universal de que la creación o eliminación de cada PVC siga el orden de los Pods. La retención de PVC se puede configurar con `persistentVolumeClaimRetentionPolicy`; Retain es el valor predeterminado, mientras que Delete puede eliminar reclamaciones al reducir la escala o borrar StatefulSet. reclaimPolicy del PV es una decisión de ciclo de vida del backend independiente.
 
-1.  **Creación automática de PVC**: Se crean automáticamente PVCs únicos para cada pod en el StatefulSet.
-
-    ```yaml
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: ebs-sc
-        resources:
-          requests:
-            storage: 10Gi
-    ```
-2. **Almacenamiento estable**: El mismo PVC se reutiliza incluso cuando un pod se reinicia o se reprograma.
-3. **Convención de nombres**: Los nombres de PVC se crean con el formato `<volumeClaimTemplate-name>-<statefulset-name>-<ordinal>`. Ejemplo: `data-mysql-0`, `data-mysql-1`, `data-mysql-2`
-4. **Deployment secuencial**: StatefulSet crea y elimina pods secuencialmente, por lo que las operaciones de almacenamiento también se procesan secuencialmente.
-
-**Ejemplo de StatefulSet:**
+Las tres réplicas siguientes solo muestran archivos de marcador persistentes independientes. **No son una base de datos replicada**. El Service headless aporta identidad; esta demostración de archivos con procesos inactivos no implementa un servidor HTTP en su puerto de servicio ilustrativo. Reutiliza la clase `ebs-gp3` preparada en el capítulo:
 
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-files
+  namespace: storage-demo
+spec:
+  clusterIP: None
+  selector:
+    app: stateful-files
+  ports:
+  - name: unused-demo
+    port: 8080
+    targetPort: 8080
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql
+  name: stateful-files
+  namespace: storage-demo
 spec:
+  serviceName: stateful-files
+  replicas: 3
+  podManagementPolicy: OrderedReady
   selector:
     matchLabels:
-      app: mysql
-  serviceName: mysql
-  replicas: 3
+      app: stateful-files
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   template:
     metadata:
       labels:
-        app: mysql
+        app: stateful-files
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: mysql
-        image: mysql:5.7
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: password
-        ports:
-        - containerPort: 3306
-          name: mysql
+      - name: file-owner
+        image: busybox:1.38.0
+        command:
+        - sh
+        - -c
+        args:
+        - |
+          set -eu
+          if [ ! -e /data/owner ]; then (set -C; printf "%s\n" "$POD_NAME" > /data/owner); fi
+          cat /data/owner
+          sleep 3600
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
         volumeMounts:
         - name: data
-          mountPath: /var/lib/mysql
+          mountPath: /data
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        storage-demo: stateful-files
     spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: ebs-sc
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: ebs-gp3
       resources:
         requests:
           storage: 10Gi
 ```
 
-**Beneficios de volumeClaimTemplates:**
 
-1. **Automatización**: No es necesario crear ni administrar PVCs manualmente.
-2. **Escalabilidad**: Los PVCs se crean automáticamente al ajustar las réplicas del StatefulSet.
-3. **Persistencia de datos**: Los PVCs y los datos se conservan incluso cuando los pods se eliminan.
-4. **Garantía de orden**: Se garantiza el orden de creación y eliminación de pods y PVCs.
 
-**Precauciones:**
+```bash
+kubectl -n storage-demo get pvc -l storage-demo=stateful-files -o wide
+```
 
-1.  **Política de eliminación de PVC**: Los PVCs no se eliminan automáticamente cuando se elimina el StatefulSet. Esto está diseñado para evitar la pérdida de datos.
-
-    ```bash
-    # Check PVCs after StatefulSet deletion
-    kubectl get pvc -l app=mysql
-
-    # Manually delete PVCs if needed
-    kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2
-    ```
-2. **Selección de Storage Class**: Selecciona una storage class adecuada para cumplir con los requisitos de la carga de trabajo.
-   * EBS: Acceso de un solo nodo (RWO)
-   * EFS: Acceso de múltiples nodos (RWX)
-3.  **Volume Binding Mode**: Usa `WaitForFirstConsumer` para garantizar que los volúmenes se creen en la availability zone donde se programa el pod.
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-sc
-    provisioner: ebs.csi.aws.com
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-
-Problemas con las otras opciones:
-
-* **A. Crear PVCs manualmente para cada pod**: La creación manual es propensa a errores, carece de escalabilidad y no aprovecha los beneficios de automatización de StatefulSet.
-* **C. Usar ConfigMap para definir PVCs**: ConfigMap se usa para almacenar datos de configuración y no se puede usar directamente para crear PVCs.
-* **D. Deshabilitar el aprovisionamiento dinámico**: Deshabilitar el aprovisionamiento dinámico aumenta la sobrecarga de administración, ya que los PVCs deben crearse manualmente.
+Las etiquetas de la plantilla de reclamación hacen que el selector de inspección sea útil. No elimines reclamaciones retenidas como parte de la limpieza rutinaria de Pods. WFFC selecciona una zona de disponibilidad adecuada para el volumen según las restricciones de planificación; no hace que los datos de EBS estén disponibles en todas las zonas. RWO es una restricción de acceso a nivel de nodo, no una garantía de acceso por un solo Pod; usa RWOP compatible cuando necesites limitar el acceso a un Pod.
 
 </details>
 
-### 2. ¿Cuál es el método más efectivo para optimizar el rendimiento de volúmenes EBS en Amazon EKS?
+### 2. ¿Qué debe guiar la selección del rendimiento de EBS?
 
-A. Usar el tipo provisioned IOPS (io1) para todos los volúmenes EBS B. Seleccionar tipos de volumen EBS adecuados según los requisitos de la carga de trabajo C. Aprovisionar el tamaño máximo para todos los volúmenes EBS D. Colocar todos los pods en la misma availability zone
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B. Seleccionar tipos de volumen EBS adecuados según los requisitos de la carga de trabajo**
-
-**Explicación:** El método más efectivo para optimizar el rendimiento de volúmenes EBS en Amazon EKS es seleccionar tipos de volumen EBS adecuados según los requisitos de la carga de trabajo. Cada tipo de volumen EBS tiene diferentes características de rendimiento y estructuras de costos, por lo que es importante elegir el tipo de volumen que coincida con las características de tu carga de trabajo.
-
-**Principales tipos de volumen EBS y características:**
-
-1.  **gp3 (General Purpose SSD)**:
-
-    * Rendimiento base: 3,000 IOPS, 125MB/s de throughput
-    * Rendimiento máximo: 16,000 IOPS, 1,000MB/s de throughput
-    * Casos de uso: Volúmenes de arranque, entornos de desarrollo y prueba, bases de datos pequeñas a medianas
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-gp3
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: gp3
-      iops: "8000"
-      throughput: "500"
-    ```
-2.  **io1/io2 (Provisioned IOPS SSD)**:
-
-    * Rendimiento máximo: 64,000 IOPS, 1,000MB/s de throughput
-    * Casos de uso: Bases de datos intensivas en I/O, cargas de trabajo sensibles a la latencia
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-io2
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: io2
-      iops: "25000"
-    ```
-3.  **st1 (Throughput Optimized HDD)**:
-
-    * Rendimiento máximo: 500 IOPS, 500MB/s de throughput
-    * Casos de uso: Big data, data warehouses, procesamiento de logs
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-st1
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: st1
-    ```
-4.  **sc1 (Cold HDD)**:
-
-    * Rendimiento máximo: 250 IOPS, 250MB/s de throughput
-    * Casos de uso: Datos de acceso poco frecuente, archivos
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-sc1
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: sc1
-    ```
-
-**Selección óptima del tipo de volumen por carga de trabajo:**
-
-1.  **Cargas de trabajo de bases de datos**:
-
-    * Se necesita alto rendimiento: io2 o gp3 de alto rendimiento
-    * Se necesita rendimiento medio: gp3
-
-    ```yaml
-    # StorageClass for high-performance database
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: database-storage
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: io2
-      iops: "25000"
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-2.  **Cargas de trabajo de logs y streaming**:
-
-    * Se necesita alto throughput: st1 o gp3 de alto throughput
-
-    ```yaml
-    # StorageClass for log processing
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: log-storage
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: st1
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-3.  **Servidores web y de aplicaciones**:
-
-    * Se necesita rendimiento medio: gp3
-
-    ```yaml
-    # StorageClass for web servers
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: web-storage
-    provisioner: ebs.csi.aws.com
-    parameters:
-      type: gp3
-      iops: "3000"
-      throughput: "125"
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-
-**Estrategias adicionales de optimización del rendimiento:**
-
-1. **Optimización del tamaño del volumen**: Algunos tipos de volumen (por ejemplo, gp2) escalan el rendimiento según el tamaño.
-2. **Consideración del tipo de instancia**: Usa instancias optimizadas para EBS para asegurar ancho de banda dedicado para volúmenes EBS.
-3.  **Configuración RAID**: Configura múltiples volúmenes EBS en RAID 0 para mejorar el rendimiento
-
-    ```yaml
-    # RAID configuration within pod
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: raid-pod
-    spec:
-      containers:
-      - name: raid-container
-        image: ubuntu:latest
-        command: ["/bin/bash", "-c"]
-        args:
-        - |
-          apt-get update && apt-get install -y mdadm
-          mdadm --create --verbose /dev/md0 --level=0 --raid-devices=2 /dev/xvdf /dev/xvdg
-          mkfs.ext4 /dev/md0
-          mount /dev/md0 /data
-          # Run application
-        volumeMounts:
-        - name: vol1
-          mountPath: /dev/xvdf
-        - name: vol2
-          mountPath: /dev/xvdg
-        - name: raid-mount
-          mountPath: /data
-      volumes:
-      - name: vol1
-        persistentVolumeClaim:
-          claimName: ebs-claim-1
-      - name: vol2
-        persistentVolumeClaim:
-          claimName: ebs-claim-2
-      - name: raid-mount
-        emptyDir: {}
-    ```
-4. **Optimización del sistema de archivos**: Selecciona y optimiza el sistema de archivos adecuado para la carga de trabajo
-   * XFS: Adecuado para archivos grandes y I/O paralelo
-   * ext4: Adecuado para propósitos generales
-5. **Monitoreo y ajuste**: Monitorea métricas de CloudWatch y ajusta el tipo o la configuración del volumen según sea necesario
-
-Problemas con las otras opciones:
-
-* **A. Usar el tipo provisioned IOPS (io1) para todos los volúmenes EBS**: Usar provisioned IOPS para todas las cargas de trabajo no es rentable, y algunas cargas de trabajo pueden ser más adecuadas para otros tipos de volumen.
-* **C. Aprovisionar el tamaño máximo para todos los volúmenes EBS**: Aprovisionar volúmenes más grandes de lo necesario genera costos innecesarios.
-* **D. Colocar todos los pods en la misma availability zone**: Esto compromete la alta disponibilidad, y toda la aplicación puede verse afectada por una falla de una sola availability zone.
-
-</details>
-
-### 4. ¿Cuál es el principal beneficio de usar FSx for Lustre en Amazon EKS?
-
-A. Eficiencia de costos B. Configuración simple C. Sistema de archivos paralelo de alto rendimiento D. Integración nativa con EKS
+- A. Elegir siempre io1
+- B. Las necesidades medidas de la carga de trabajo y los límites del volumen y la instancia
+- C. Aprovisionar siempre la capacidad máxima
+- D. Colocar cada aplicación en una sola zona de disponibilidad
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Sistema de archivos paralelo de alto rendimiento**
+**Respuesta: B**
 
-**Explicación:** El principal beneficio de usar FSx for Lustre en Amazon EKS es que proporciona un sistema de archivos paralelo de alto rendimiento. FSx for Lustre es un sistema de archivos completamente administrado diseñado para cargas de trabajo intensivas en cómputo, como high-performance computing (HPC), machine learning y análisis de big data, que ofrece cientos de GB/s de throughput, millones de IOPS y latencia inferior al milisegundo.
+Mide la latencia, las IOPS, el tamaño de E/S, la profundidad de cola y el rendimiento; después, ajusta el volumen y los límites de EBS de la instancia. La instancia puede ser el cuello de botella compartido de varios volúmenes, aunque cada uno tenga un aprovisionamiento generoso. También influyen el sistema de archivos, la inicialización, la caché y el comportamiento de la aplicación.
 
-**Características clave de rendimiento de FSx for Lustre:**
+| Tipo | Límite publicado actual, sujeto a condiciones | Consideración habitual |
+|---|---|---|
+| gp3 | Región: 80,000 IOPS / 2,000 MiB/s; menor en Outposts | Base de 3,000 IOPS / 125 MiB/s, con ajustes de rendimiento de pago independientes |
+| io1 | 64,000 IOPS / 1,000 MiB/s | IOPS aprovisionadas sujetas a los límites de instancia y tamaño |
+| io2 Block Express | 256,000 IOPS / 4,000 MiB/s | Requisitos de Nitro, tamaño, IOPS y carga de trabajo compatibles |
+| st1 | 500 MiB/s | HDD orientado al rendimiento secuencial y al comportamiento de ráfaga |
+| sc1 | 250 MiB/s | Acceso secuencial infrecuente en HDD |
 
-1. **Alto throughput**:
-   * Hasta 1,000GB/s de throughput
-   * Hasta 200MB/s de throughput por 1TiB de almacenamiento (basado en SSD)
-   * Adecuado para procesar grandes conjuntos de datos
-2. **Baja latencia**:
-   * Latencia inferior al milisegundo
-   * Adecuado para aplicaciones sensibles a la latencia
-3. **Acceso paralelo**:
-   * Acceso simultáneo desde miles de instancias de cómputo
-   * Mejora del rendimiento mediante procesamiento paralelo
-4. **Escalabilidad**:
-   * Escala a cientos de GB/s de throughput
-   * Soporta conjuntos de datos a escala de petabytes
-
-**Integración de FSx for Lustre con EKS:**
-
-1.  **CSI Driver**:
-
-    ```bash
-    # Install FSx for Lustre CSI driver
-    helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver/
-    helm repo update
-    helm upgrade -i aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
-      --namespace kube-system \
-      --set controller.serviceAccount.create=true \
-      --set controller.serviceAccount.name=fsx-csi-controller-sa
-    ```
-2.  **Configuración de StorageClass**:
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: fsx-lustre
-    provisioner: fsx.csi.aws.com
-    parameters:
-      subnetId: subnet-0123456789abcdef0
-      securityGroupIds: sg-0123456789abcdef0
-      deploymentType: SCRATCH_2
-      perUnitStorageThroughput: "200"
-      dataCompressionType: "LZ4"
-    mountOptions:
-      - flock
-    ```
-3.  **Creación de PersistentVolumeClaim**:
-
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: fsx-claim
-    spec:
-      accessModes:
-        - ReadWriteMany
-      storageClassName: fsx-lustre
-      resources:
-        requests:
-          storage: 1200Gi  # Minimum 1.2TiB
-    ```
-
-**Cargas de trabajo adecuadas para FSx for Lustre:**
-
-1. **Machine Learning y Deep Learning**:
-   * Entrenamiento con grandes conjuntos de datos
-   * Jobs de entrenamiento distribuido
-   * Serving de modelos
-2. **High-Performance Computing (HPC)**:
-   * Simulaciones científicas
-   * Pronóstico del tiempo
-   * Genómica
-3. **Análisis de Big Data**:
-   * Procesamiento de datos a gran escala
-   * Analítica en tiempo real
-   * Jobs ETL
-4. **Procesamiento de medios**:
-   * Renderizado de video
-   * Procesamiento de imágenes
-   * Creación de contenido
-
-**Integración con S3:**
-
-FSx for Lustre se integra sin problemas con Amazon S3, lo que facilita importar y procesar datos de S3 con el sistema de archivos de alto rendimiento.
+Los ajustes anteriores de gp3 de 16,000 IOPS/1,000 MiB/s siguen siendo ejemplos válidos; no son los máximos universales actuales. El tamaño de gp2 afecta al rendimiento base y de ráfaga, mientras que el rendimiento de gp3 se puede aprovisionar por separado, sujeto a sus proporciones. Ningún tipo de volumen es automáticamente óptimo para todas las bases de datos, registros o servidores web. RAID0 es una alternativa independiente que se trata más abajo, no una optimización CSI predeterminada.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fsx-s3
+  name: ebs-gp3
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
+```
+
+</details>
+
+### 3. ¿Cuál es la principal ventaja arquitectónica de FSx for Lustre?
+
+- A. El costo más bajo garantizado
+- B. No necesitar controladores ni requisitos de red
+- C. Un sistema de archivos paralelo para las cargas de trabajo adecuadas
+- D. Garantizar que cada PVC alcance 1,000 GB/s
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+FSx for Lustre ofrece un sistema de archivos paralelo administrado para cargas de trabajo compatibles de HPC, ML, análisis y medios. Elige conjuntamente el tipo de despliegue, el cliente y kernel, la capacidad, el rendimiento aprovisionado y la red. Las cifras máximas agregadas promocionales no representan el rendimiento de cualquier PVC pequeño.
+
+SCRATCH_1 y SCRATCH_2 están destinados a datos temporales reproducibles; SCRATCH_2 no obtiene replicación de servidores persistentes por el mero hecho de usarse con un PV. PERSISTENT_1 y PERSISTENT_2 ofrecen distintas opciones compatibles de almacenamiento y rendimiento. Por ejemplo, SSD en PERSISTENT_2 ofrece 125/250/500/1000 MB/s/TiB; no generalices a todos los sistemas de archivos una cifra de 200 MB/s/TiB o de 1,000 GB/s. Esta revisión no verificó esas afirmaciones agregadas anteriores mediante mediciones.
+
+Prepara el complemento administrado o un controlador compatible bajo tu responsabilidad, como se indica en el capítulo. El ejemplo conserva el parámetro compatible `s3ImportPath`; las importaciones y exportaciones requieren un despliegue compatible, permisos y políticas o tareas del repositorio adecuados. Crear recursos con CSI no sincroniza S3 automáticamente en ambos sentidos:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fsx-lustre-import-demo
 provisioner: fsx.csi.aws.com
+reclaimPolicy: Retain
 parameters:
   subnetId: subnet-0123456789abcdef0
   securityGroupIds: sg-0123456789abcdef0
   deploymentType: SCRATCH_2
-  perUnitStorageThroughput: "200"
-  s3ImportPath: s3://my-bucket/prefix
-  s3ExportPath: s3://my-bucket/export
+  dataCompressionType: NONE
+  s3ImportPath: s3://replace-with-owned-data-bucket/training/
 ```
 
-**Opciones de tipo de Deployment:**
-
-1. **SCRATCH\_1**:
-   * Almacenamiento temporal y procesamiento a corto plazo
-   * Rentable
-   * Sin replicación de datos
-2. **SCRATCH\_2**:
-   * Almacenamiento temporal y procesamiento a corto plazo
-   * Replicación de datos en caso de falla del servidor
-   * Mejor disponibilidad que SCRATCH\_1
-3. **PERSISTENT**:
-   * Almacenamiento a largo plazo y cargas de trabajo
-   * Replicación de datos y recuperación automática
-   * Alta durabilidad
-
-**Consejos de optimización del rendimiento:**
-
-1. **Selección adecuada de throughput**:
-   * Almacenamiento SSD: 50, 100, 200 MB/s/TiB
-   * Almacenamiento HDD: 12, 40 MB/s/TiB
-2. **Habilitar compresión de datos**:
-   * Mejor eficiencia de almacenamiento mediante compresión LZ4
-   * Menor uso de ancho de banda de red
-3. **Optimización del tamaño del sistema de archivos**:
-   * Los sistemas de archivos más grandes proporcionan más servidores y mayor rendimiento agregado
-4.  **Optimización de opciones de mount**:
-
-    ```
-    mount -t lustre -o noatime,flock file_system_dns_name@tcp:/mountname /mnt/fsx
-    ```
-
-Problemas con las otras opciones:
-
-* **A. Eficiencia de costos**: FSx for Lustre proporciona alto rendimiento, pero generalmente es más caro que EBS o EFS.
-* **B. Configuración simple**: FSx for Lustre requiere opciones de configuración avanzadas y tiene una configuración más compleja que EBS o EFS.
-* **D. Integración nativa con EKS**: FSx for Lustre no está integrado de forma nativa con EKS; el CSI driver debe instalarse por separado.
+Las solicitudes del PVC determinan la capacidad dinámica del sistema de archivos; no existe un campo genérico storageCapacity en StorageClass. Hay que medir la compresión y el striping con los datos y la concurrencia reales. Un paralelismo mayor, más stripes o LZ4 no siempre mejoran el rendimiento. Usa el catálogo de complementos administrados de EKS para comprobar la compatibilidad; «FSx no se integra de forma nativa con EKS» no es una razón correcta para descartarlo.
 
 </details>
 
-## Preguntas de respuesta corta
+### 4. ¿Qué modelo de aprovisionamiento de Mountpoint CSI es correcto?
 
-### 6. ¿Qué configuración RAID se puede usar para mejorar el rendimiento de volúmenes EBS en Amazon EKS?
+- A. Un s3-sc dinámico crea un bucket
+- B. Vinculación estática de PV/PVC a un bucket existente
+- C. Un campo de capacidad del PVC define la cuota de S3
+- D. Un PVC de sistema de archivos crea automáticamente un sistema de archivos EFS
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** RAID 0 (Striping)
+**Respuesta: B**
 
-**Explicación detallada:**
-
-La configuración RAID que se puede usar para mejorar el rendimiento de volúmenes EBS en Amazon EKS es RAID 0 (striping). RAID 0 distribuye datos entre múltiples volúmenes EBS para mejorar el rendimiento de I/O.
-
-**Cómo funciona RAID 0:**
-
-RAID 0 almacena datos distribuyéndolos entre múltiples discos, y cada disco maneja una parte de la carga total de I/O, mejorando así el rendimiento general. Por ejemplo, configurar RAID 0 con 2 volúmenes EBS puede, en teoría, duplicar el throughput y los IOPS.
-
-**Características clave de RAID 0:**
-
-1. **Mejora del rendimiento**: Las operaciones de I/O se procesan en paralelo entre múltiples volúmenes, lo que aumenta el throughput y los IOPS.
-2. **Agregación de capacidad**: La capacidad de todos los volúmenes se agrega y se usa como un único volumen grande.
-3. **Sin tolerancia a fallos**: Si un volumen falla, se pierden todos los datos de todo el arreglo RAID.
-
-**Cómo configurar RAID 0 en EKS:**
-
-1.  **Crear múltiples PVCs:**
-
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: ebs-claim-1
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      storageClassName: ebs-sc
-      resources:
-        requests:
-          storage: 100Gi
-    ---
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: ebs-claim-2
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      storageClassName: ebs-sc
-      resources:
-        requests:
-          storage: 100Gi
-    ```
-2.  **Configurar RAID 0 en Pod:**
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: raid0-pod
-    spec:
-      containers:
-      - name: raid-container
-        image: ubuntu:latest
-        command: ["/bin/bash", "-c"]
-        args:
-        - |
-          apt-get update && apt-get install -y mdadm
-          mdadm --create --verbose /dev/md0 --level=0 --raid-devices=2 /dev/xvdf /dev/xvdg
-          mkfs.ext4 /dev/md0
-          mount /dev/md0 /data
-          # Run application
-          while true; do sleep 30; done
-        volumeMounts:
-        - name: vol1
-          mountPath: /dev/xvdf
-        - name: vol2
-          mountPath: /dev/xvdg
-        - name: raid-mount
-          mountPath: /data
-        securityContext:
-          privileged: true  # Permissions required for RAID configuration
-      volumes:
-      - name: vol1
-        persistentVolumeClaim:
-          claimName: ebs-claim-1
-      - name: vol2
-        persistentVolumeClaim:
-          claimName: ebs-claim-2
-      - name: raid-mount
-        emptyDir: {}
-    ```
-
-**Consejos de optimización del rendimiento de RAID 0:**
-
-1. **Número de volúmenes**: Normalmente, 2-4 volúmenes proporcionan un rendimiento óptimo. Demasiados volúmenes pueden aumentar la sobrecarga de administración.
-2. **Tamaño del volumen**: Configura todos los volúmenes con el mismo tamaño para distribuir uniformemente el rendimiento.
-3. **Tamaño de stripe**: Selecciona un tamaño de stripe adecuado según la carga de trabajo.
-   * I/O aleatorio pequeño: Tamaño de stripe pequeño (por ejemplo, 4KB)
-   * I/O secuencial grande: Tamaño de stripe grande (por ejemplo, 64KB o 128KB)
-4. **Tipo de instancia**: Usa instancias optimizadas para EBS para asegurar ancho de banda dedicado para volúmenes EBS.
-
-**Casos de uso de RAID 0:**
-
-1. **Bases de datos de alto rendimiento**: Cargas de trabajo de bases de datos que requieren IOPS y throughput altos
-2. **Procesamiento de Big Data**: Cargas de trabajo de procesamiento y análisis de datos a gran escala
-3. **Procesamiento de medios**: Tareas intensivas en I/O como codificación/decodificación de video y renderizado
-
-**Precauciones:**
-
-1. **Durabilidad de los datos**: RAID 0 no tiene tolerancia a fallos, por lo que se necesita una estrategia de backup adecuada para datos importantes.
-2. **Falla de volumen**: Si un volumen falla, todos los datos pueden perderse, por lo que son importantes los backups regulares mediante snapshots.
-3. **Complejidad**: La configuración RAID aumenta la complejidad de administración, así que úsala solo cuando realmente sea necesario.
-4. **Costo**: Usar múltiples volúmenes EBS aumenta los costos de almacenamiento.
-
-**Consideraciones alternativas:**
-
-1. **Volumen único de alto rendimiento**: Usa volúmenes io2 o gp3 de alto rendimiento para mayor simplicidad
-2. **Instance Store**: Considera volúmenes instance store para datos temporales
-3. **FSx for Lustre**: Considera un sistema de archivos paralelo cuando se requiere un rendimiento muy alto
-
-RAID 0 es una forma efectiva de mejorar el rendimiento de volúmenes EBS, pero debe usarse con cuidado teniendo en cuenta la durabilidad de los datos y la complejidad de administración.
+Usa `s3.csi.aws.com`, un bucket existente, storageClassName vacío en ambos objetos, claimRef y volumeName explícitos, y un volumeHandle único. Coloca las opciones de la CLI en mountOptions del PV. Los metadatos de capacidad de Kubernetes no limitan la capacidad de S3.
 
 </details>
 
-### 7. ¿Qué opciones de mount se pueden usar para establecer tamaños de búfer de lectura y escritura para optimizar el rendimiento del sistema de archivos EFS en Amazon EKS?
+### 5. Con authenticationSource: pod, ¿qué identidad se usa?
+
+- A. Siempre el rol IAM del controlador
+- B. Una clave estática incrustada en el PV
+- C. Pod Identity o IRSA compatible de la ServiceAccount de la aplicación
+- D. Las credenciales de la estación de trabajo de quien creó el PVC
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** rsize y wsize
+**Respuesta: C**
 
-**Explicación detallada:**
+CSI 2.8 admite Pod Identity e IRSA a nivel de Pod; se ignoran las credenciales del controlador para ese volumen. Deben existir el rol, la asociación y la relación de confianza, el agente cuando sea necesario, y los permisos de bucket y KMS. Una anotación en ServiceAccount no es por sí misma un rol IAM.
 
-Las opciones de mount que se pueden usar para establecer tamaños de búfer de lectura y escritura para optimizar el rendimiento del sistema de archivos EFS en Amazon EKS son `rsize` (tamaño de búfer de lectura) y `wsize` (tamaño de búfer de escritura). Estas opciones determinan el tamaño de los bloques de datos usados cuando los clientes NFS se comunican con el sistema de archivos EFS.
+</details>
 
-**Rol de rsize y wsize:**
+### 6. ¿Dónde coloca CSI v2 la caché emptyDir configurada?
 
-1. **rsize (Read Buffer Size)**:
-   * Número máximo de bytes usados cuando el cliente NFS lee desde el servidor
-   * Los valores más grandes permiten leer más datos con menos solicitudes de red
-   * El valor predeterminado suele ser 1MB (1048576 bytes)
-2. **wsize (Write Buffer Size)**:
-   * Número máximo de bytes usados cuando el cliente NFS escribe en el servidor
-   * Los valores más grandes permiten escribir más datos con menos solicitudes de red
-   * El valor predeterminado suele ser 1MB (1048576 bytes)
+- A. En el Pod de Mountpoint
+- B. En cualquier emptyDir de un Pod de aplicación que tenga la misma ruta
+- C. Dentro del bucket S3 por definición
+- D. Automáticamente en el almacenamiento NVMe de una instancia GPU
 
-**Configuración de rsize y wsize en EKS:**
+<details>
+<summary>Mostrar respuesta</summary>
 
-1.  **Configuración en StorageClass:**
+**Respuesta: A**
 
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: efs-sc-optimized
-    provisioner: efs.csi.aws.com
-    parameters:
-      provisioningMode: efs-ap
-      fileSystemId: fs-0123456789abcdef0
-      directoryPerms: "700"
-    mountOptions:
-      - rsize=1048576
-      - wsize=1048576
-    ```
-2.  **Configuración en PersistentVolume:**
+Usa atributos del volumen de caché como `cache: emptyDir` y `cacheEmptyDirSizeLimit`. Memory significa RAM tmpfs. El TTL de metadatos de Mountpoint se expresa en segundos; max-cache-size independiente, en MiB; y los tamaños de las partes de lectura y escritura, en bytes. Las opciones específicas de cada versión deben coincidir con el binario Mountpoint integrado.
 
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: efs-pv
-    spec:
-      capacity:
-        storage: 5Gi
-      volumeMode: Filesystem
-      accessModes:
-        - ReadWriteMany
-      persistentVolumeReclaimPolicy: Retain
-      storageClassName: efs-sc
-      mountOptions:
-        - rsize=1048576
-        - wsize=1048576
-      csi:
-        driver: efs.csi.aws.com
-        volumeHandle: fs-0123456789abcdef0
-    ```
+</details>
 
-**Selección de valores óptimos:**
+### 7. ¿Por qué una montura con caché quizá no muestre de inmediato un cambio externo en S3?
 
-1. **Valores generales recomendados**:
-   * rsize=1048576 (1MB)
-   * wsize=1048576 (1MB)
-2. **Optimización específica de la carga de trabajo**:
-   * Lectura/escritura secuencial grande: Valores más grandes (por ejemplo, 1MB)
-   * Lectura/escritura aleatoria pequeña: Valores más pequeños (por ejemplo, 32KB o 64KB)
-3. **Consideración de las condiciones de red**:
-   * Red estable: Valores más grandes
-   * Red inestable: Valores más pequeños (reduce la sobrecarga de retransmisión ante pérdida de paquetes)
+- A. S3 siempre tiene consistencia eventual en las operaciones de listado
+- B. El TTL configurado de la caché puede conservar entradas antiguas o negativas
+- C. Todas las escrituras en S3 requieren reiniciar CSI
+- D. La capacidad del PV es demasiado pequeña
 
-**Opciones adicionales de mount para optimización del rendimiento:**
+<details>
+<summary>Mostrar respuesta</summary>
 
-1.  **timeo**: Tiempo de espera de respuesta del servidor (en unidades de 1/10 de segundo)
+**Respuesta: B**
 
-    ```
-    timeo=600  # 60 seconds
-    ```
-2.  **retrans**: Número de reintentos antes del timeout
+S3 tiene consistencia sólida de lectura y listado. La caché opcional de Mountpoint cambia lo que observa el cliente hasta que vence el TTL. No confundas el comportamiento de la caché con el modelo de consistencia de S3. Cuando la reproducibilidad sea importante, usa prefijos de conjuntos de datos inmutables o ajusta la caché de forma adecuada.
 
-    ```
-    retrans=2
-    ```
-3.  **noresvport**: Usar un nuevo puerto TCP en la recuperación de conexión
+</details>
 
-    ```
-    noresvport
-    ```
-4.  **noatime**: Deshabilitar actualizaciones de tiempo de acceso a archivos
+### 8. ¿Qué conjunto de condiciones corresponde a la clonación nativa de un PVC de EBS?
 
-    ```
-    noatime
-    ```
+- A. Cualquier espacio de nombres y zona de disponibilidad
+- B. Siempre se hereda la clase de origen
+- C. El clon es coherente con la aplicación sin coordinación
+- D. Controlador compatible, mismo espacio de nombres y zona de origen, modo compatible y tamaño de destino suficiente
 
-**Ejemplo completo de opciones de mount optimizadas:**
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+EBS CSI 1.66 utiliza la ruta real de copia nativa de volúmenes. dataSource de un PVC normal requiere el mismo espacio de nombres; las copias de EBS permanecen en la zona de disponibilidad de origen. Define explícitamente la clase y solicita al menos el tamaño del volumen de origen. El volumen puede estar disponible antes de que termine su inicialización en segundo plano; detén o coordina las aplicaciones para obtener la coherencia necesaria.
+
+</details>
+
+### 9. ¿Qué ejemplo coincide con Multi-Attach dinámico en EBS CSI1.66?
+
+- A. gp3 + RWO + multiAttachEnabled:true
+- B. io2 + RWOP + escritores ext4 independientes
+- C. io2 + RWX + Block sin formato y E/S de aplicación coordinada
+- D. Cualquier tipo de EBS que abarque varias zonas de disponibilidad
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+El controlador asigna la capacidad de escritura multiwriter en bloques de io2 a Multi-Attach; no existe una opción genérica multiAttachEnabled en StorageClass. Las instancias Nitro aptas deben estar en la zona de disponibilidad del volumen. Un dispositivo compartido no coordina las escrituras ni aplica automáticamente mecanismos de cercado. io2 admite modificaciones de tamaño e IOPS sujetas a las condiciones del servicio y del controlador; no es correcto afirmar que nunca se puede redimensionar.
+
+</details>
+
+### 10. ¿Qué ocurre con una instantánea CSI cuando vence la copia de seguridad de Velero que la posee?
+
+- A. Velero puede establecer deletionPolicy: Delete para el contenido y eliminarla aunque la clase fuera Retain
+- B. Retain siempre la conserva para siempre
+- C. Solo se elimina el PVC
+- D. La instantánea se convierte automáticamente en un objeto S3 portátil
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+Velero 1.18 es responsable del ciclo de vida de sus instantáneas CSI. Configura deliberadamente el TTL de la copia y usa un proceso independiente de retención o archivado cuando sea necesario. La compatibilidad CSI integrada también requiere EnableCSI; los metadatos de la copia, las instantáneas CSI nativas y los datos del volumen copiados son cosas distintas.
+
+</details>
+
+## Preguntas de respuesta breve
+
+### 11. ¿Qué ofrece RAID0 y qué debe tener en cuenta un diseño de EKS?
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: Distribución en bandas, sin redundancia**
+
+RAID0 distribuye bloques entre volúmenes y agrega la capacidad utilizable. El fallo de un miembro puede inutilizar todo el arreglo; no es una solución de copia de seguridad ni de alta disponibilidad. Dos volúmenes iguales podrían ofrecer teóricamente cerca del doble del rendimiento de uno solo, pero únicamente si lo permiten la aplicación, el sistema de archivos, la CPU y los límites de EBS de la instancia. Es un límite teórico, no un resultado medido de 2×.
+
+Un PVC en modo de sistema de archivos montado en `/volume1` es un directorio, no un disco sin formato para mdadm. Un diseño real de bloques requiere `volumeMode: Block`, `volumeDevices`, la identidad exacta del volumen, un componente de almacenamiento autorizado y un procedimiento explícito para inicializar un dispositivo vacío frente a ensamblar un arreglo existente. No lo formatees en cada reinicio de la aplicación. Planifica la conexión al mismo nodo y zona, la reprogramación, los permisos, el crecimiento y la copia de seguridad/restauración coherente de varios volúmenes.
+
+Por eso, la secuencia incondicional mdadm/mkfs del Pod privilegiado anterior no sirve como receta para copiar y pegar. Los ejemplos antiguos de 2–4 volúmenes y franjas de 4/64/128 KiB son candidatos de ajuste sin mediciones verificadas, no valores óptimos universales. Antes de aceptar esta complejidad adicional, compara un único volumen gp3/io2 adecuado, datos temporales reproducibles en Instance Store o FSx.
+
+</details>
+
+### 12. ¿Qué controlan rsize y wsize de EFS?
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: Tamaño máximo de las cargas útiles RPC de lectura y escritura de NFS**
+
+No son tamaños de búfer de sockets TCP. AWS recomienda 1,048,576 bytes (1 MiB) para ambos, junto con `hard,timeo=600,retrans=2,noresvport`, mediante la ruta de montaje NFS/EFS compatible. timeo se expresa en décimas de segundo, por lo que 600 significa 60 segundos. En un montaje hard, retrans=2 no significa abandonar la operación después de dos intentos. No prescribas valores menores para E/S aleatoria o pérdida de paquetes sin datos de la carga de trabajo que lo justifiquen. Configura las opciones en StorageClass/PV, no en los volúmenes del Pod; EFS no admite nconnect.
+
+Reutiliza el sistema de archivos EFS y la configuración del punto de acceso que pertenecen al capítulo:
 
 ```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-tuned
+provisioner: efs.csi.aws.com
+reclaimPolicy: Retain
 mountOptions:
-  - rsize=1048576
-  - wsize=1048576
-  - timeo=600
-  - retrans=2
-  - noresvport
-  - noatime
+- tls
+- rsize=1048576
+- wsize=1048576
+- hard
+- timeo=600
+- retrans=2
+- noresvport
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0123456789abcdef0
+  directoryPerms: '750'
+  uid: '1000'
+  gid: '1000'
+  basePath: /storage-demo
+  ensureUniqueDirectory: 'true'
 ```
 
-**Monitoreo y ajuste del rendimiento:**
+Si realizas una prueba de escritura autorizada, utiliza un directorio desechable verificado y un archivo único, no una ruta predecible como `/efs/testfile` que podría sobrescribir datos. El ejemplo GNU dd escribe 64 MiB y limpia únicamente su propio archivo/directorio. La lectura podría usar la caché del cliente, por lo que estos tiempos por sí solos no demuestran el rendimiento de EFS sin caché:
 
-1.  **Medición del rendimiento**:
+```bash
+set -euo pipefail
+: "${EFS_TEST_DIR:?Set an approved disposable directory on the verified EFS mount}"
+test -d "$EFS_TEST_DIR" && test -w "$EFS_TEST_DIR"
+EFS_TEST_PATH=$(mktemp -d "$EFS_TEST_DIR/efs-test.XXXXXX")
+cleanup() { rm -f -- "$EFS_TEST_PATH/payload"; rmdir -- "$EFS_TEST_PATH"; }
+trap cleanup EXIT
+time dd if=/dev/zero of="$EFS_TEST_PATH/payload" bs=1M count=64 conv=fsync
+time dd if="$EFS_TEST_PATH/payload" of=/dev/null bs=1M
+```
 
-    ```bash
-    # Read performance test
-    dd if=/efs/testfile of=/dev/null bs=1M count=1000
-
-    # Write performance test
-    dd if=/dev/zero of=/efs/testfile bs=1M count=1000
-    ```
-2. **Monitoreo de métricas de CloudWatch**:
-   * TotalIOBytes
-   * DataReadIOBytes
-   * DataWriteIOBytes
-   * MetadataIOBytes
-3. **Ajuste gradual**:
-   * Prueba con varios valores de rsize/wsize
-   * Selecciona valores óptimos según los patrones de la carga de trabajo
-
-Configurar correctamente las opciones rsize y wsize puede mejorar significativamente el rendimiento del sistema de archivos EFS, especialmente para cargas de trabajo que implican transferencias de archivos grandes o requisitos de alto throughput.
+Durante esta revisión no se ejecutó ninguna prueba de rendimiento de EFS. Relaciona la latencia y concurrencia de cliente/aplicación con TotalIOBytes, DataReadIOBytes, DataWriteIOBytes y MetadataIOBytes de EFS, usando las estadísticas y los períodos de CloudWatch adecuados. Un contador de bytes no es una tasa de rendimiento hasta dividirlo por el intervalo de medición.
 
 </details>
 
-### 9. ¿Cuál es el SLA (Service Level Agreement) de AWS para la durabilidad de los datos al usar volúmenes EBS en Amazon EKS?
+### 13. ¿En qué se diferencian el SLA de disponibilidad de EBS y el diseño de durabilidad?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** 99.999% (5 nueves)
+**Respuesta: Describen propiedades y condiciones diferentes**
 
-**Explicación detallada:**
+El SLA de EBS es un acuerdo de disponibilidad y créditos de servicio, no un SLA universal de durabilidad de datos del 99.999%. El compromiso a nivel de región usa un umbral del 99.99% para despliegues concurrentes que cumplan los requisitos en varias zonas de disponibilidad; el compromiso de un solo volumen usa el 99.9%. Consulta las definiciones, exclusiones y condiciones para los créditos del acuerdo, en lugar de tratar ninguna cifra como una garantía incondicional.
 
-El SLA (Service Level Agreement) de AWS para la durabilidad de los datos al usar volúmenes EBS en Amazon EKS es 99.999% (5 nueves). Esto significa que Amazon EBS tiene una probabilidad de pérdida anual de datos inferior al 0.001%.
+| Característica de diseño publicada | Tipos de volumen |
+|---|---|
+| Durabilidad del 99.8–99.9%; AFR del 0.1–0.2% | gp3/gp2/io1 y tipos HDD |
+| Durabilidad del 99.999%; AFR del 0.001% | io2 Block Express |
 
-**Características clave de la durabilidad de EBS:**
+Este acuerdo no incluye un SLA de disponibilidad «cinco nueves» independiente para io2. La durabilidad de diseño y la AFR no equivalen a la probabilidad de que una aplicación concreta pierda todos sus datos; también importan la corrupción, el borrado, las copias de seguridad y la arquitectura de recuperación. La replicación de EBS ocurre dentro de una zona de disponibilidad, no replica automáticamente una base de datos entre zonas.
 
-1. **Durabilidad de diseño**: Los volúmenes de Amazon EBS están diseñados para proporcionar una durabilidad del 99.999%.
-2. **Replicación en Availability Zone**: Los datos de volúmenes EBS se replican automáticamente entre múltiples servidores dentro de una sola availability zone.
-3. **Tasa anual de fallas (AFR)**: Apunta a un rango de tasa anual de fallas del 0.1% - 0.2%.
+Usa copias coherentes con la aplicación cuando sea necesario, conserva puntos de recuperación independientes, prueba las restauraciones y supervisa el estado del volumen y de la aplicación. Para recuperarte de un fallo de zona, restaura instantáneas accesibles en una zona permitida; para recuperar registros borrados, usa un punto de recuperación adecuado o el mecanismo PITR de la base de datos. Una instantánea de bloques no permite recuperar cualquier marca temporal arbitraria.
 
-**Durabilidad por tipo de volumen EBS:**
+Copiar instantáneas entre regiones es una operación aparte, con permisos de origen/destino/KMS y comprobaciones de finalización. El comando siguiente ilustra la creación; no se ejecutó como prueba de recuperación. Confirma primero quién controla el origen y cuál es el destino permitido, registra el SnapshotId devuelto y espera/comprueba que la copia termine antes de depender de ella:
 
-Todos los tipos de volumen EBS (gp2, gp3, io1, io2, st1, sc1) tienen el mismo diseño de durabilidad del 99.999%. Sin embargo, los volúmenes io2 proporcionan garantías adicionales de durabilidad:
+```bash
+set -euo pipefail
+: "${SOURCE_REGION:?Set the source snapshot Region}"
+: "${DESTINATION_REGION:?Set the recovery Region}"
+: "${SOURCE_SNAPSHOT_ID:?Select an owned completed snapshot}"
+: "${DESTINATION_KMS_KEY_ARN:?Set a usable customer managed key in the recovery Region}"
+STATE=$(aws ec2 describe-snapshots --region "$SOURCE_REGION" \
+  --snapshot-ids "$SOURCE_SNAPSHOT_ID" --query 'Snapshots[0].State' --output text)
+test "$STATE" = completed || { echo "Snapshot is not completed"; exit 1; }
+aws ec2 copy-snapshot --region "$DESTINATION_REGION" --source-region "$SOURCE_REGION" \
+  --source-snapshot-id "$SOURCE_SNAPSHOT_ID" --encrypted --kms-key-id "$DESTINATION_KMS_KEY_ARN" \
+  --description "Reviewed storage recovery copy" --output json
+```
 
-* **io2 Block Express**: SLA de disponibilidad del 99.999% además de durabilidad del 99.999%
-
-**Métodos de mejora de protección de datos:**
-
-1.  **EBS Snapshots**:
-
-    * Backup de datos mediante snapshots regulares
-    * Los snapshots se almacenan en S3 con una durabilidad del 99.999999999% (11 nueves)
-
-    ```yaml
-    apiVersion: snapshot.storage.k8s.io/v1
-    kind: VolumeSnapshotClass
-    metadata:
-      name: ebs-snapshot-class
-    driver: ebs.csi.aws.com
-    deletionPolicy: Retain
-    ```
-2.  **Copia de snapshots entre regiones**:
-
-    * Copiar snapshots a diferentes regiones para disaster recovery
-
-    ```bash
-    aws ec2 copy-snapshot \
-      --source-region us-west-2 \
-      --source-snapshot-id snap-0123456789abcdef0 \
-      --destination-region us-east-1 \
-      --description "Cross-region backup"
-    ```
-3.  **Políticas de backup automatizado**:
-
-    * Backups automatizados usando Amazon Data Lifecycle Manager o Kubernetes CronJob
-
-    ```yaml
-    apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      name: ebs-snapshot-job
-    spec:
-      schedule: "0 0 * * *"  # Daily at midnight
-      jobTemplate:
-        spec:
-          template:
-            spec:
-              containers:
-              - name: snapshot-creator
-                image: amazon/aws-cli:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  # Get volume ID from PVC
-                  VOLUME_ID=$(kubectl get pvc my-pvc -o jsonpath='{.spec.volumeName}' | xargs kubectl get pv -o jsonpath='{.spec.csi.volumeHandle}')
-                  # Create snapshot
-                  aws ec2 create-snapshot --volume-id $VOLUME_ID --description "Daily backup"
-              restartPolicy: OnFailure
-    ```
-
-**Escenarios de falla de volúmenes EBS y recuperación:**
-
-1. **Corrupción de volumen**:
-   * Síntomas: Errores de I/O, degradación del rendimiento
-   * Recuperación: Crear un nuevo volumen desde el snapshot más reciente
-2. **Falla de Availability Zone**:
-   * Síntomas: Volumen inaccesible
-   * Recuperación: Restaurar el volumen desde un snapshot en una availability zone diferente
-3. **Eliminación accidental de datos**:
-   * Recuperación: Restaurar a un punto específico en el tiempo desde un snapshot
-
-**Mejores prácticas de durabilidad de EBS:**
-
-1. **Snapshots regulares**:
-   * Crear snapshots diarios o más frecuentes para datos importantes
-   * Implementar políticas de retención de snapshots
-2. **Pruebas de snapshots**:
-   * Probar regularmente la restauración desde snapshots
-   * Documentar y practicar procesos de recuperación
-3. **Estrategia multirregión**:
-   * Copiar snapshots a diferentes regiones para datos críticos
-   * Establecer planes de disaster recovery
-4. **Monitoreo y alertas**:
-   * Monitorear el estado de volúmenes EBS
-   * Configurar alarmas de CloudWatch
-
-**Comparación de durabilidad de EBS frente a otros servicios de almacenamiento de AWS:**
-
-| Service        | Durability             | Availability                   |
-| -------------- | ---------------------- | ------------------------------ |
-| Amazon EBS     | 99.999%                | 99.95-99.999% (varies by type) |
-| Amazon EFS     | 99.999999999% (11 9's) | 99.99%                         |
-| Amazon S3      | 99.999999999% (11 9's) | 99.99%                         |
-| FSx for Lustre | 99.999%                | 99.95%                         |
-
-La durabilidad del 99.999% de Amazon EBS proporciona protección de datos suficiente para la mayoría de las cargas de trabajo, pero para datos críticos se recomienda implementar capas adicionales de protección mediante snapshots regulares y estrategias de backup multirregión.
+Una imagen de AWS CLI no incluye implícitamente kubectl ni concede permisos de Kubernetes/IAM. Usa un responsable de copias compatible, como Velero, Data Lifecycle Manager o AWS Backup, con el alcance adecuado, en vez de un CronJob sin configurar. Compara por separado el SLA de la clase/despliegue de almacenamiento y el diseño de durabilidad de cada servicio; una tabla universal de porcentajes entre servicios puede inducir a error.
 
 </details>
 
 ## Preguntas prácticas
 
-### 10. Diseña una solución de almacenamiento de alto rendimiento para cargas de trabajo de bases de datos en un cluster de Amazon EKS. Crea storage classes, persistent volume claims y StatefulSet que cumplan los siguientes requisitos:
-
-* Base de datos PostgreSQL que requiere IOPS altos
-* Funcionalidad automática de backup y recuperación
-* Capacidad de expansión de volumen
+### 14. Diseña un flujo de almacenamiento y recuperación de base de datos con límites explícitos.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
+**Respuesta: Una arquitectura de referencia revisada, no una garantía automática de recuperación**
 
-Así se puede diseñar una solución de almacenamiento de alto rendimiento para cargas de trabajo de bases de datos en un cluster de Amazon EKS:
+Diseña para una carga de PostgreSQL con demanda alta de E/S, copias programadas, recuperación verificada y expansión controlada. Lo siguiente es una **arquitectura de formación**, no un despliegue de producción probado. Reutiliza un espacio de nombres dedicado `database`, el Secret preparado `postgres-secret/password`, controladores de EBS/instantáneas compatibles y una instalación de Velero bajo tu responsabilidad. No lo apliques sobre recursos existentes sin consultar a su propietario.
 
-### 1. Definición de StorageClass de alto rendimiento
+#### Almacenamiento y base de datos
+
+Se conserva la asignación original de 25,000 IOPS como ajuste io2 ilustrativo; para saber si basta hay que medir y tener en cuenta los límites de la instancia. Se usa la clave EBS configurada o predeterminada para el cifrado. Si eliges una clave administrada por el cliente, prepara el ARN y la política reales de la clave, así como las concesiones del controlador, en lugar de un kmsKeyId ficticio.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -854,18 +444,32 @@ metadata:
   name: postgres-io2
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
 parameters:
   type: io2
-  iops: "25000"  # High IOPS provision
-  encrypted: "true"
-  kmsKeyId: "arn:aws:kms:region:account-id:key/key-id"  # Optional: Encryption with KMS key
-allowVolumeExpansion: true  # Allow volume expansion
-reclaimPolicy: Retain  # Retain PV on PVC deletion
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
+  iops: '25000'
 ```
 
-### 2. Definición de StatefulSet de PostgreSQL
+
 
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: database
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -877,310 +481,271 @@ spec:
   selector:
     matchLabels:
       app: postgres
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   template:
     metadata:
       labels:
         app: postgres
     spec:
+      automountServiceAccountToken: false
       securityContext:
-        fsGroup: 999  # PostgreSQL group ID
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: postgres
-        image: postgres:14
+        image: postgres:14.24
         env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/postgres-secret/password
         ports:
-        - containerPort: 5432
-          name: postgres
-        resources:
-          requests:
-            cpu: "2"
-            memory: "4Gi"
-          limits:
-            cpu: "4"
-            memory: "8Gi"
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/postgresql/data
+        - name: postgres
+          containerPort: 5432
         readinessProbe:
           exec:
             command:
             - pg_isready
             - -U
             - postgres
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        livenessProbe:
-          exec:
-            command:
-            - pg_isready
-            - -U
-            - postgres
-          initialDelaySeconds: 30
-          periodSeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: '2'
+            memory: 4Gi
+          limits:
+            cpu: '4'
+            memory: 8Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        - name: socket
+          mountPath: /var/run/postgresql
+        - name: tmp
+          mountPath: /tmp
+        - name: password
+          mountPath: /run/postgres-secret
+          readOnly: true
+      volumes:
+      - name: socket
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: password
+        secret:
+          secretName: postgres-secret
+          defaultMode: 288
+          items:
+          - key: password
+            path: password
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        app: postgres
+        storage-review: database-demo
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes:
+      - ReadWriteOnce
       storageClassName: postgres-io2
       resources:
         requests:
           storage: 100Gi
 ```
 
-### 3. Definición de Service de PostgreSQL
+Esto usa el contrato de imagen verificado de PostgreSQL 14.24 de la Parte 1: UID/GID 999, archivo de contraseña montado, volúmenes de socket/tmp con escritura y un subdirectorio de PGDATA. La versión mayor 14 llega al fin del soporte el 12 de noviembre de 2026; esta versión de enseñanza conservada no es la predeterminada para un despliegue de producción nuevo. Elige y prueba una versión mayor compatible, junto con un plan de migración. Una réplica de StatefulSet no proporciona alta disponibilidad; pg_isready comprueba la conexión, no la integridad de los datos ni la recuperación.
+
+#### Copias de seguridad y retención
+
+Usa los requisitos previos del controlador de instantáneas del capítulo y `ebs-snapshot-class`. Para crear un punto de recuperación manual, detén la base de datos de forma coherente o usa un protocolo de copia compatible antes de crear la instantánea. La reclamación real de StatefulSet es **data-postgres-0**:
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: postgres-review-snapshot
+  namespace: database
+  labels:
+    storage-review: database-demo
+spec:
+  volumeSnapshotClassName: ebs-snapshot-class
+  source:
+    persistentVolumeClaimName: data-postgres-0
+```
+
+Espera a readyToUse e inspecciona restoreSize, el contenido y el controlador antes de considerarla recuperable. El cifrado de la instantánea sigue la configuración de origen/clave; las claves de cifrado o tagSpecification no compatibles en VolumeSnapshotClass no la configuran. El controlador actual admite parámetros específicos para etiquetas de instantáneas; compruébalos en la versión de ese controlador en lugar de copiar parámetros de la clase de volúmenes.
+
+Lo siguiente crea una programación diaria de Velero con un TTL de 30 días. Aplica la programación mediante el componente responsable de las copias, después de comprobar la selección de clase CSI y los hooks/protocolos de coherencia de la base de datos. El TTL de Velero puede eliminar sus instantáneas CSI incluso si la clase original era Retain. Genera alertas ante copias fallidas o ausentes y prueba restauraciones con regularidad; una programación por sí sola no demuestra que puedas recuperar los datos:
+
+```bash
+velero schedule create database-daily --schedule="0 1 * * *" \
+  --include-namespaces=database --ttl=720h0m0s -o yaml > database-backup-schedule-review.yaml
+```
+
+#### Planificación de una expansión acotada
+
+No amplíes a ciegas un 50% cada seis horas a partir de métricas antiguas. El planificador, solo de revisión, requiere una reclamación enlazada, una clase ampliable coincidente, ninguna ampliación pendiente, métricas recientes que identifiquen el mismo UID de PVC y valores válidos en bytes para el sistema de archivos. Admite cantidades comunes de Kubernetes en formato decimal/binario y rechaza entradas incompatibles. Cuando el uso alcanza el 80%, propone al menos 1.5× la capacidad solicitada, con un límite ilustrativo de 500Gi y precondiciones de UID/resourceVersion/tamaño actual. No aplica cambios a Kubernetes.
+
+Captura `pvc.json` y `storageclass.json` actuales de los objetos exactos. `trusted-metrics.json` debe contener namespace, pvcName, pvcUID, observedAt (con zona horaria), usedBytes y capacityBytes del sistema de archivos realmente montado. El UID proporcionado por quien llama no demuestra por sí solo la procedencia de las métricas. Antes de que un operador o controlador aplique un cambio revisado, valida la correspondencia entre colector y montaje, la cuota, el costo y las restricciones del controlador.
+
+```python
+"""Generate a review-only plan from captured PVC, StorageClass and trusted metrics."""
+import datetime,decimal,json,math,re,sys
+D=decimal.Decimal
+def quantity(s):
+    match=re.fullmatch(r'([+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+))([EPTGMK]i|[EPTGMk]|m|[eE][+-]?[0-9]+)?',s)
+    if not match:raise ValueError('Unsupported/nonpositive quantity: '+s)
+    value,suffix=D(match[1]),match[2] or ''
+    if suffix.endswith('i'):value*=D(1024)**('KMGTPE'.index(suffix[0])+1)
+    elif suffix in ['k','M','G','T','P','E']:value*=D(1000)**('kMGTPE'.index(suffix)+1)
+    elif suffix=='m':value/=1000
+    elif suffix:value*=D(10)**int(suffix[1:])
+    if value<=0:raise ValueError('Capacity must be positive')
+    return value
+def plan(pvc,sc,metrics,now):
+    meta,spec,status=pvc['metadata'],pvc['spec'],pvc['status']
+    if (meta['namespace'],meta['name'])!=('database','data-postgres-0'):
+        raise ValueError('Unexpected PVC')
+    if status.get('phase')!='Bound' or not spec.get('volumeName'):
+        raise ValueError('PVC is not Bound')
+    if sc['metadata']['name']!=spec['storageClassName'] or sc.get('allowVolumeExpansion') is not True:
+        raise ValueError('StorageClass mismatch or expansion disabled')
+    if any(c.get('status')=='True' and c.get('type') in ['Resizing','FileSystemResizePending'] for c in status.get('conditions',[])):
+        raise ValueError('Resize is pending')
+    if status.get('allocatedResourceStatuses',{}).get('storage'):
+        raise ValueError('Storage allocation is pending')
+    requested=quantity(spec['resources']['requests']['storage'])
+    if requested!=quantity(status['capacity']['storage']):
+        raise ValueError('Request and capacity differ; inspect before another resize')
+    if (metrics['namespace'],metrics['pvcName'],metrics['pvcUID'])!=(meta['namespace'],meta['name'],meta['uid']):
+        raise ValueError('Metrics identify a different PVC')
+    seen=datetime.datetime.fromisoformat(metrics['observedAt'].replace('Z','+00:00'))
+    if seen.tzinfo is None or not 0<=(now-seen).total_seconds()<=300:
+        raise ValueError('Metrics are stale or future-dated')
+    used,capacity=D(str(metrics['usedBytes'])),D(str(metrics['capacityBytes']))
+    if not used.is_finite() or not capacity.is_finite() or not 0<=used<=capacity<=requested or capacity<=0:
+        raise ValueError('Invalid filesystem metrics')
+    if used/capacity<D('0.8'):return {'reviewOnly':True,'action':'none','reason':'Below 80%'}
+    target=math.ceil(max(requested*D('1.5'),used/D('0.7'))/D(1024**3))
+    if target>500:return {'reviewOnly':True,'action':'manual-review','reason':'Illustrative 500Gi cap exceeded'}
+    return {'reviewOnly':True,'action':'propose-resize','target':str(target)+'Gi','patch':[
+      {'op':'test','path':'/metadata/uid','value':meta['uid']},
+      {'op':'test','path':'/metadata/resourceVersion','value':meta['resourceVersion']},
+      {'op':'test','path':'/spec/resources/requests/storage','value':spec['resources']['requests']['storage']},
+      {'op':'replace','path':'/spec/resources/requests/storage','value':str(target)+'Gi'}]}
+if __name__=='__main__':
+    if len(sys.argv)!=4:raise SystemExit('Usage: resize-plan.py pvc.json storageclass.json trusted-metrics.json')
+    inputs=[]
+    for name in sys.argv[1:]:
+        with open(name) as f:inputs.append(json.load(f))
+    print(json.dumps(plan(*inputs,datetime.datetime.now(datetime.timezone.utc)),indent=2))
+```
+
+Si cambia el recurso, vuelve a generar el plan; no elimines las precondiciones fallidas ni registres el éxito después de un cambio fallido. Tras una ampliación aprobada, inspecciona las condiciones del PVC y la capacidad real del sistema de archivos. Mantén alineado el tamaño futuro de las reclamaciones en la plantilla de StatefulSet mediante un procedimiento de gestión admitido; no modifiques la capacidad del PV para simular que la ampliación terminó.
+
+#### Candidato de recuperación
+
+No configures un Job con reintentos para que reduzca la escala y elimine la reclamación activa como primer paso de restauración. Usa un candidato independiente cuyo tamaño sea al menos restoreSize; el ejemplo de 100Gi supone que este punto de recuperación no es mayor. Si la reclamación original se amplió, ajusta el candidato en consecuencia:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-restore-candidate
+  namespace: database
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: postgres-io2
+  resources:
+    requests:
+      storage: 100Gi
+  dataSource:
+    name: postgres-review-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+```
+
+Programa un consumidor PostgreSQL aislado y compatible, con las credenciales y la versión necesarias; espera a que se enlace y recupere, y verifica las consultas y los datos de la aplicación antes de realizar una transición controlada. Conserva los datos originales y un plan para revertir la transición. Establecer una nueva variable POSTGRES_PASSWORD no restablece las credenciales en una base de datos restaurada existente.
+
+#### Supervisión
+
+El puerto PostgreSQL 5432 habla el protocolo de base de datos, no HTTP de Prometheus. Prepara un despliegue revisado de postgres-exporter con la etiqueta `app: postgres-exporter`, un puerto con nombre `metrics` en 9187 y credenciales de base de datos con el alcance adecuado. Este Service y ServiceMonitor seleccionan ese exporter; no lo instalan. Comprueba que Prometheus seleccione este ServiceMonitor y su espacio de nombres, y que NetworkPolicy/TLS/autenticación coincidan con el despliegue:
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: postgres-exporter
   namespace: database
+  labels:
+    monitoring: postgres-exporter
 spec:
   selector:
-    app: postgres
+    app: postgres-exporter
   ports:
-  - port: 5432
-    targetPort: 5432
-  clusterIP: None  # Headless service
-```
-
-### 4. VolumeSnapshotClass y CronJob para backups automatizados
-
-```yaml
-# VolumeSnapshotClass Definition
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: postgres-snapshot-class
-driver: ebs.csi.aws.com
-deletionPolicy: Retain
-parameters:
-  # Enable snapshot encryption
-  encrypted: "true"
-  # Add snapshot tags
-  tagSpecification_0_resourceType: "snapshot"
-  tagSpecification_0_tags_Purpose: "PostgreSQL Backup"
-  tagSpecification_0_tags_Environment: "Production"
-
-# CronJob for automated backups
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: postgres-backup
-  namespace: database
-spec:
-  schedule: "0 1 * * *"  # Daily at 1 AM
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: postgres-backup-sa  # Service account with appropriate permissions
-          containers:
-          - name: snapshot-creator
-            image: bitnami/kubectl:latest
-            command:
-            - /bin/bash
-            - -c
-            - |
-              # Create snapshot name based on current date
-              SNAPSHOT_NAME="postgres-snapshot-$(date +%Y%m%d-%H%M%S)"
-
-              # Create snapshot
-              cat <<EOF | kubectl apply -f -
-              apiVersion: snapshot.storage.k8s.io/v1
-              kind: VolumeSnapshot
-              metadata:
-                name: $SNAPSHOT_NAME
-                namespace: database
-              spec:
-                volumeSnapshotClassName: postgres-snapshot-class
-                source:
-                  persistentVolumeClaimName: data-postgres-0
-              EOF
-
-              # Delete snapshots older than 30 days
-              kubectl get volumesnapshot -n database -o json | \
-                jq -r '.items[] | select(.metadata.name | startswith("postgres-snapshot-")) |
-                select(.metadata.creationTimestamp | fromnow | contains("days") and (split(" ")[0] | tonumber) > 30) |
-                .metadata.name' | \
-                xargs -r kubectl delete volumesnapshot -n database
-          restartPolicy: OnFailure
-```
-
-### 5. Script de automatización de expansión de volumen
-
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: postgres-volume-monitor
-  namespace: database
-spec:
-  schedule: "0 */6 * * *"  # Run every 6 hours
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: postgres-volume-monitor-sa
-          containers:
-          - name: volume-monitor
-            image: bitnami/kubectl:latest
-            command:
-            - /bin/bash
-            - -c
-            - |
-              # Get PostgreSQL pod name
-              POD_NAME=$(kubectl get pods -n database -l app=postgres -o jsonpath='{.items[0].metadata.name}')
-
-              # Check volume usage
-              USAGE_PERCENT=$(kubectl exec -n database $POD_NAME -- df -h /var/lib/postgresql/data | tail -1 | awk '{print $5}' | sed 's/%//')
-
-              # Expand volume if usage is 80% or higher
-              if [ $USAGE_PERCENT -ge 80 ]; then
-                # Get current PVC size
-                CURRENT_SIZE=$(kubectl get pvc data-postgres-0 -n database -o jsonpath='{.spec.resources.requests.storage}')
-
-                # Increase by 50% from current size
-                NEW_SIZE=$(echo $CURRENT_SIZE | sed 's/Gi//' | awk '{print int($1 * 1.5)}')
-
-                # Expand PVC
-                kubectl patch pvc data-postgres-0 -n database -p "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"${NEW_SIZE}Gi\"}}}}"
-
-                # Log message
-                echo "$(date): Volume expanded from ${CURRENT_SIZE} to ${NEW_SIZE}Gi due to high usage (${USAGE_PERCENT}%)"
-              fi
-          restartPolicy: OnFailure
-```
-
-### 6. Plantilla de Job para procedimientos de recuperación
-
-```yaml
-# Job template for recovering from snapshot
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: postgres-restore
-  namespace: database
-spec:
-  template:
-    spec:
-      serviceAccountName: postgres-restore-sa
-      containers:
-      - name: restore-manager
-        image: bitnami/kubectl:latest
-        command:
-        - /bin/bash
-        - -c
-        - |
-          # 1. Scale down StatefulSet
-          kubectl scale statefulset postgres -n database --replicas=0
-
-          # 2. Delete existing PVC (caution: data will be lost)
-          kubectl delete pvc data-postgres-0 -n database
-
-          # 3. Create PVC from snapshot
-          cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: data-postgres-0
-            namespace: database
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            storageClassName: postgres-io2
-            resources:
-              requests:
-                storage: 100Gi
-            dataSource:
-              name: ${SNAPSHOT_NAME}  # Snapshot name to restore
-              kind: VolumeSnapshot
-              apiGroup: snapshot.storage.k8s.io
-          EOF
-
-          # 4. Scale up StatefulSet
-          kubectl scale statefulset postgres -n database --replicas=1
-
-          # 5. Check recovery status
-          sleep 60
-          kubectl get pods -n database -l app=postgres
-      restartPolicy: OnFailure
-```
-
-### 7. Configuración de monitoreo y alertas
-
-```yaml
-# ServiceMonitor for PostgreSQL metrics collection (assuming Prometheus)
+  - name: metrics
+    port: 9187
+    targetPort: metrics
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: postgres-monitor
+  name: postgres-exporter
   namespace: database
 spec:
   selector:
     matchLabels:
-      app: postgres
-  endpoints:
-  - port: postgres
-    interval: 15s
+      monitoring: postgres-exporter
   namespaceSelector:
     matchNames:
     - database
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
 ```
 
-### Explicación del diseño
-
-#### 1. Selección de almacenamiento de alto rendimiento
-
-* **Tipo de volumen io2**: Tipo de volumen EBS optimizado para cargas de trabajo de bases de datos que requieren IOPS altos
-* **25,000 IOPS**: Aprovisionamiento de IOPS suficiente para operaciones de bases de datos de alto rendimiento
-* **Cifrado**: Habilita el cifrado de volúmenes EBS para seguridad de datos en reposo
-
-#### 2. Beneficios de usar StatefulSet
-
-* **ID de red estable**: Proporciona nombres DNS predecibles para cada pod
-* **Deployment secuencial**: Garantiza actualizaciones seguras para pods de base de datos
-* **Administración de volúmenes**: Creación y administración automática de PVC mediante volumeClaimTemplates
-
-#### 3. Estrategia de backup automatizado
-
-* **Snapshots regulares**: Creación automatizada diaria de snapshots
-* **Política de retención**: Eliminación automática de snapshots con más de 30 días
-* **Etiquetado**: Añade tags a los snapshots para mejorar la capacidad de administración
-
-#### 4. Automatización de expansión de volumen
-
-* **Monitoreo de uso**: Comprobaciones regulares del uso del volumen
-* **Expansión automática**: Aumenta automáticamente el tamaño del volumen cuando el uso alcanza el 80% o más
-* **allowVolumeExpansion**: Habilita la expansión de volumen en StorageClass
-
-#### 5. Procedimientos de recuperación
-
-* **Restauración basada en snapshots**: Crea un nuevo PVC desde un snapshot
-* **Enfoque por fases**: Escala hacia abajo el StatefulSet, reemplaza el PVC, escala hacia arriba
-* **Comprobación de estado**: Verifica el estado de la base de datos después de la recuperación
-
-#### 6. Consideraciones de rendimiento y estabilidad
-
-* **Resource Requests y Limits**: Asignación adecuada de CPU y memoria
-* **Health checks**: Monitorea el estado de la base de datos mediante readinessProbe y livenessProbe
-* **fsGroup**: Configura permisos adecuados del sistema de archivos
-
-#### 7. Consideraciones de seguridad
-
-* **Volúmenes cifrados**: Protegen los datos en reposo
-* **Snapshots cifrados**: Protegen los datos de backup
-* **Secrets**: Administración segura de credenciales de base de datos
-
-Este diseño proporciona una solución de almacenamiento de alto rendimiento para bases de datos PostgreSQL que requieren IOPS altos, incluida funcionalidad automática de backup y recuperación, y capacidad de expansión de volumen. Además, la configuración de monitoreo y alertas permite la detección y respuesta proactivas ante problemas relacionados con el almacenamiento.
+Genera alertas sobre la antigüedad o el fallo de las copias, el margen del sistema de archivos, los errores de ampliación del PVC y los límites medidos de latencia y cola de E/S. Esta arquitectura de referencia requiere pruebas de alta disponibilidad, restauración, rotación de credenciales y carga específicas para la aplicación antes de poder afirmar que está lista para producción.
 
 </details>
+
+### 15. ¿Cómo investigarías un clon nuevo lento y una vista antigua de un conjunto de datos S3?
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: Separa la inicialización, la caché y la coherencia de la aplicación**
+
+Para el clon de EBS, verifica la versión real del controlador, la zona y el tamaño de origen, el estado de la copia, el avance de la inicialización y el rendimiento aprovisionado y de la instancia. Una copia nativa recién disponible quizá todavía se esté inicializando en segundo plano. No escribas ceros, no la trates como un volumen vacío ni supongas que se aplican aceleradores de inicialización exclusivos de instantáneas.
+
+Para Mountpoint, inspecciona la versión instalada de CSI/binario, las opciones del PV, la identidad del Pod, el bucket/prefijo y el TTL de caché, incluidas las entradas negativas. La consistencia sólida de S3 no evita una caché configurada en el cliente. Comprueba si la operación de la aplicación es compatible con ese tipo de bucket; las suposiciones sobre anexado y cambio de nombre son distintas en buckets de uso general y de directorio.
+
+Usa el marcador de clonación aislado del capítulo y un conjunto de datos S3 con versiones para probar hipótesis. Conserva los valores históricos de benchmarks como contexto no verificado; si luego se autorizan pruebas, registra las mediciones junto con el entorno real. Ni una prueba de lectura ni la creación de una instantánea demuestran coherencia con la aplicación de base de datos.
+
+</details>
+
+## Referencias
+
+- [Capítulo y ejemplos alineados con la fuente](../../eks/04-eks-storage-part2.md)
+- [Retención de PVC de StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+- [Tipos de volumen de EBS](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html)
+- [SLA de EBS](https://aws.amazon.com/ebs/sla/)
+- [Copia nativa de EBS](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-copying-volume.html)
+- [Opciones de montaje de EFS](https://docs.aws.amazon.com/efs/latest/ug/mounting-fs-nfs-mount-settings.html)
+- [Configuración de Mountpoint CSI](https://github.com/awslabs/mountpoint-s3-csi-driver/blob/v2.8.0/docs/CONFIGURATION.md)
+- [Ciclo de vida de CSI en Velero](https://velero.io/docs/v1.18/csi/)
+- [Referencia de la API de Prometheus Operator](https://prometheus-operator.dev/docs/api-reference/api/)
+- [Política de versiones de PostgreSQL](https://www.postgresql.org/support/versioning/)

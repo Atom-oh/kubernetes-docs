@@ -1,21 +1,21 @@
 # Parte 8: Buenas prácticas
 
 > **Base de revisión**: Kafka 4.3.1, Strimzi 1.3.0\
-> **Última revisión**: October 16, 2026
+> **Última revisión**: 16 de octubre de 2026
 
 Este capítulo convierte los ejemplos anteriores en decisiones operativas que deben validarse.
 A continuación se encuentra el [capítulo de pruebas de rendimiento](./09-kafka-benchmark.md); una lista de comprobación no sustituye las pruebas de carga y de fallos con mediciones.
 
 ## Diseño de particiones y mediciones
 
-En un grupo de consumidores convencional, como máximo un miembro del grupo recibe una partición a la vez. Por lo tanto, veinte miembros que consumen de forma independiente necesitan al menos veinte particiones para que todos estén ocupados. Mide también el rendimiento por partición, la distribución desigual de claves, el tamaño de los registros, la sobrecarga de replicación, el tiempo de recuperación y la capacidad de los brokers/controladores. Los grupos compartidos y el procesamiento paralelo interno de la aplicación tienen semánticas diferentes; no consideres que esta regla describe universalmente todas las API de consumidores.
+En un grupo de consumidores convencional, cada partición se asigna como máximo a un miembro del grupo a la vez. Por lo tanto, veinte miembros que consumen de forma independiente necesitan al menos veinte particiones para que todos estén ocupados. Mida también el rendimiento por partición, la distribución desigual de claves, el tamaño de los registros, la sobrecarga de replicación, el tiempo de recuperación y la capacidad de los brokers/controladores. Los grupos compartidos y el procesamiento paralelo interno de la aplicación tienen semánticas diferentes; no considere que esta regla describa de forma universal todas las API de consumidores.
 
-Un mayor número de particiones aumenta el trabajo de metadatos, réplicas, búferes y recuperación. El coste no sigue una fórmula universal de memoria/descriptores de archivos por partición. Las reglas empíricas históricas de 4.000/200.000 no son límites universales vigentes. Elige las cantidades a partir del comportamiento medido en estado estable y ante fallos, incluidos los repartos de réplicas por broker, no solo las particiones lógicas del tema.
+Un mayor número de particiones aumenta el trabajo de metadatos, réplicas, búferes y recuperación. El coste no sigue una fórmula universal de memoria/descriptores de archivos por partición. Las reglas empíricas históricas de 4.000/200.000 no son límites universales vigentes. Elija las cantidades a partir del comportamiento medido en estado estable y ante fallos, incluidos los repartos de réplicas por broker, no solo las particiones lógicas del tema.
 
 ### Cuenta las particiones, no los encabezados de tema
 
 `grep -c "PartitionCount"` cuenta **líneas de resumen de temas**, no particiones.
-Guarda lo siguiente como `partition_summary.py`. Lee las filas de particiones de la CLI actual, incluida `Leader: none`, e informa por separado las particiones lógicas, las ubicaciones de réplicas y el liderazgo.
+Guarde lo siguiente como `partition_summary.py`. Lea las filas de particiones de la CLI actual, incluida `Leader: none`, e informe por separado las particiones lógicas, las ubicaciones de réplicas y el liderazgo.
 
 ```python
 import collections
@@ -81,19 +81,19 @@ bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
 python3 partition_summary.py topics.txt
 ```
 
-El resultado solo incluye los temas visibles para la identidad que realiza la llamada y los filtros del comando, incluidos los temas internos cuando se devuelven. Una consulta fallida o vacía no demuestra que un clúster tenga cero particiones ni que esté en buen estado. Usa credenciales adecuadas para esta lectura administrativa; no des por sentado que los ID de los pods broker o un listener de texto sin cifrar `localhost:9092` sean apropiados.
+El resultado solo incluye los temas visibles para la identidad que realiza la llamada y los filtros del comando, incluidos los temas internos cuando se devuelven. Una consulta fallida o vacía no demuestra que un clúster tenga cero particiones ni que esté en buen estado. Use credenciales adecuadas para esta lectura administrativa; no suponga que los ID de los Pods de broker o el listener sin cifrar `localhost:9092` sean apropiados.
 
-### Conserva el significado de la clave
+### Conserve el sentido de la clave
 
 La asignación predeterminada de claves del productor Java usa los **bytes serializados de la clave** y `toPositive(murmur2(keyBytes)) % partitionCount`, a menos que una partición explícita, un particionador personalizado o una configuración que ignore la clave cambien el comportamiento. Los demás clientes deben usar un particionador/serializador compatible si es importante mantener la misma asignación.
 
-Una cardinalidad alta por sí sola no garantiza un tráfico equilibrado: un cliente muy activo aún puede dominar. Añadir sal a las claves aleatorias o basadas en marcas de tiempo cambia el orden por clave, las uniones y la identidad de compactación. Hazlo solo cuando el contrato de datos permita esos cambios, con una estrategia explícita para recombinar y ordenar los datos si es necesario.
+Una cardinalidad alta por sí sola no garantiza un tráfico equilibrado: un cliente muy activo aún puede dominar. Añadir una sal aleatoria o basada en marcas de tiempo a las claves cambia el orden por clave, las uniones y la identidad de compactación. Hágalo solo cuando el contrato de datos permita esos cambios y defina una estrategia explícita para recombinar y ordenar los datos si es necesario.
 
-Aumentar el número de particiones puede reasignar algunas claves; no redistribuye los registros antiguos. Puede romper el orden de las claves entre particiones y las suposiciones de las uniones con particiones compartidas. Los requisitos dependen de la unión/topología; no todas las uniones de Streams usan la misma partición compartida. Para cargas de trabajo sensibles al orden o con estado, planifica y prueba la redistribución/migración, a menudo mediante un tema nuevo.
+Aumentar el número de particiones puede reasignar algunas claves; no redistribuye los registros antiguos. Puede romper el orden de las claves entre particiones y las suposiciones de las uniones con particiones alineadas. Los requisitos dependen de la unión y la topología; no todas las uniones de Kafka Streams requieren el mismo esquema de co-particionado. Para cargas de trabajo sensibles al orden o con estado, planifique y pruebe la redistribución/migración, a menudo mediante un tema nuevo.
 
 ## Ajuste del productor
 
-Considera este perfil un punto de partida sujeto a mediciones que se añade a la configuración autenticada existente del cliente, no un óptimo universal.
+Considere este perfil como un punto de partida sujeto a mediciones que se añade a la configuración autenticada existente del cliente, no un óptimo universal.
 
 ```properties
 acks=all
@@ -108,12 +108,12 @@ delivery.timeout.ms=120000
 - `acks=all` espera al ISR actual. Con RF=3 y `min.insync.replicas=2` en el tema/broker, un ISR inferior a dos rechaza las escrituras en vez de esperar indefinidamente a una segunda réplica. Un único fallo solo es tolerable mientras las réplicas/cuórum restantes y las demás dependencias sigan cumpliendo los requisitos.
 - `enable.idempotence=true` suprime los duplicados de los reintentos del productor compatibles. Requiere configuraciones compatibles de acks, reintentos y `max.in.flight.requests.per.connection`. Establecer explícitamente una propiedad compatible no lo desactiva.
 - El valor predeterminado de linger de Kafka 4.3 es 5 ms; los 10 ms y 32 KiB de este ejemplo son opciones de ajuste. `batch.size` es una configuración de asignación/agrupación por partición, no un límite máximo estricto para el tamaño del registro o la solicitud. El encolado y los plazos de entrega también afectan la latencia.
-- Compara lz4, zstd, gzip y la ausencia de compresión con datos representativos, CPU y latencia. No des por sentado que un códec siempre tendrá el mejor coste total.
+- Compare lz4, zstd, gzip y la ausencia de compresión con datos, CPU y latencia representativos. No dé por sentado que un códec siempre tendrá el menor coste total.
 
 `min.insync.replicas` pertenece al tema/broker, no a las propiedades del productor.
-`delivery.timeout.ms` limita los intentos de entrega; un número alto de reintentos no implica un tiempo de entrega infinito. Observa siempre los errores de envío.
+`delivery.timeout.ms` limita los intentos de entrega; un número alto de reintentos no implica un tiempo de entrega infinito. Observe siempre los errores de envío.
 
-La idempotencia no elimina duplicados de reenvíos arbitrarios de la aplicación ni de un efecto secundario en una base de datos externa. El procesamiento exactamente una vez de Kafka en el flujo consumir-transformar-producir también requiere el ciclo de vida adecuado de las transacciones, la confirmación atómica de la salida/desplazamiento de entrada, fencing y consumidores con `read-committed`. Una cadena `transactional.id` por sí sola no es suficiente.
+La idempotencia no elimina duplicados de reenvíos arbitrarios de la aplicación ni de un efecto secundario en una base de datos externa. El procesamiento exactamente una vez de Kafka en el flujo consumir-transformar-producir también requiere el ciclo de vida adecuado de las transacciones, la publicación de los mensajes de salida y la confirmación de los offsets de entrada en una misma transacción atómica, fencing y consumidores con read-committed. Una cadena `transactional.id` por sí sola no es suficiente.
 
 ## Procesamiento de consumidores y pertenencia al grupo
 
@@ -129,12 +129,12 @@ session.timeout.ms=45000
 heartbeat.interval.ms=15000
 ```
 
-Limita el tiempo real de procesamiento, no solo el número de registros. Un registro lento puede superar igualmente `max.poll.interval.ms`. Los miembros dinámicos y estáticos no tienen los mismos tiempos de reasignación: un miembro estático puede dejar de enviar heartbeats al superarse el tiempo de espera de poll, y la reasignación puede aplazarse hasta que expire su sesión.
+Limite el tiempo real de procesamiento, no solo el número de registros. Un registro lento puede superar igualmente `max.poll.interval.ms`. Los miembros dinámicos y estáticos no tienen los mismos tiempos de reasignación: un miembro estático puede dejar de enviar heartbeats cuando vence el intervalo de poll, y la reasignación puede aplazarse hasta que expire su sesión.
 
-### Confirma después de un procesamiento duradero
+### Confirme después de un procesamiento duradero
 
 La confirmación automática no sabe cuándo termina un efecto externo asíncrono.
-Un bucle síncrono con el orden correcto puede usar la confirmación automática, pero no des por sentado que esta sigue el progreso de un grupo de trabajo. El siguiente helper muestra un procesamiento síncrono explícito antes de la confirmación, con la confirmación automática desactivada.
+Un bucle síncrono con el orden correcto puede usar la confirmación automática, pero no dé por sentado que esta sigue el progreso de un pool de hilos. La siguiente función auxiliar muestra un procesamiento síncrono explícito antes de la confirmación, con la confirmación automática desactivada.
 
 ```java
 import java.time.Duration;
@@ -176,29 +176,29 @@ try (var consumer = new KafkaConsumer<String, String>(props)) {
 }
 ```
 
-`application.processDurably` es código de la aplicación y solo debe devolver el control cuando se haya completado correctamente el efecto requerido. Si falla el procesamiento o la confirmación, detente y recupera el estado o reposiciónate explícitamente en las posiciones correctas; **no captures un error y sigas haciendo poll** más allá de los registros fallidos. Un reinicio puede volver a reproducir registros ya procesados, por lo que los efectos externos necesitan una estrategia adecuada de idempotencia/transacción. Configura el cierre usando el patrón compatible de wakeup/close de KafkaConsumer.
+`application.processDurably` es código de la aplicación y solo debe devolver el control cuando se haya completado correctamente el efecto requerido. Si falla el procesamiento o la confirmación, deténgase y recupere el estado o reposicione explícitamente el consumidor en los offsets correctos; **no capture un error y siga sondeando** después de los registros fallidos. Un reinicio puede volver a reproducir registros ya procesados, por lo que los efectos externos necesitan una estrategia adecuada de idempotencia o transacciones. Configure el cierre usando el patrón compatible de wakeup/close de KafkaConsumer.
 
 KafkaConsumer no es, por lo general, seguro para subprocesos. Delegar el trabajo requiere colas acotadas, orden por partición, pausa/reanudación en el hilo del consumidor, seguimiento contiguo de los desplazamientos completados y gestión de rebalanceos. Pasar el trabajo a un grupo de hilos por sí solo no es una solución de fiabilidad.
 
-### Resuelve un ID estable para el miembro estático
+### Resuelva un ID estable para el miembro estático
 
 Java `Properties` **no** expande `group.instance.id=${POD_NAME}`.
-Resuelve el valor del entorno en el código de la aplicación/configuración antes de crear el consumidor:
+Resuelva el valor del entorno en el código de la aplicación o de configuración antes de crear el consumidor:
 
 ```java
 // One consumer instance per stable logical member in this example.
 ConsumerExamples.setStaticIdentity(props, System.getenv("KAFKA_GROUP_INSTANCE_ID"));
 ```
 
-Para un consumidor por pod de StatefulSet, un valor de Downward API procedente de `metadata.name` puede proporcionar una identidad lógica estable. Los nombres de los pods de Deployment cambian en muchas actualizaciones; varios consumidores en un mismo pod necesitan ID distintos. Cada instancia de consumidor activa necesita un ID único, que solo debe reutilizarse deliberadamente al sustituirla. Los ID activos duplicados pueden provocar el fencing de un miembro.
+Para un consumidor por Pod de StatefulSet, un valor de Downward API procedente de `metadata.name` puede proporcionar una identidad lógica estable. Los nombres de los Pods de Deployment cambian en muchas actualizaciones; varios consumidores en un mismo Pod necesitan ID distintos. Cada instancia de consumidor activa necesita un ID único, que solo debe reutilizarse deliberadamente al sustituirla. Los ID activos duplicados pueden provocar el fencing de un miembro.
 
-La pertenencia estática puede evitar rebalanceos innecesarios en reinicios breves compatibles; no garantiza que la asignación permanezca igual cada vez que un pod regresa antes de que se active un temporizador. También importan la topología, la pertenencia y las suscripciones, y un tiempo de espera de sesión más largo retrasa la recuperación de un miembro que realmente ha fallado.
+La pertenencia estática puede evitar rebalanceos innecesarios durante reinicios breves compatibles, pero no garantiza que la asignación permanezca igual cada vez que un Pod regresa antes de que venza un temporizador. También importan la topología, la pertenencia y las suscripciones, y un tiempo de espera de sesión más largo retrasa la recuperación de un miembro que realmente ha fallado.
 
 ## Autenticación, autorización y redes
 
-### Separa las dos CA y las propiedades del listener
+### Separe las dos CA y las propiedades del listener
 
-Con las CA gestionadas por Strimzi predeterminadas:
+Con la configuración predeterminada de las CA gestionadas por Strimzi:
 
 - La **CA del clúster** firma los certificados de brokers/componentes internos; los clientes confían en la cadena de certificados de servidor correspondiente.
 - La **CA de clientes** firma los certificados de cliente `KafkaUser` para mTLS.
@@ -208,7 +208,7 @@ La exposición de red de un listener usa `type: internal`, `loadbalancer`, etc.
 El cifrado se indica con `tls: true` y la autenticación de cliente, con
 `authentication.type: tls`. No existe un tipo de exposición de listener llamado `tls`.
 
-Lo siguiente es **una entrada de listener adicional** para la matriz existente `spec.kafka.listeners`; no sustituye al listener TLS/SCRAM de la Parte 2. Revisa todo el recurso Kafka deseado antes de añadirla:
+Lo siguiente es **una entrada de listener adicional** para la matriz existente `spec.kafka.listeners`; no sustituye al listener TLS/SCRAM de la Parte 2. Revise todo el recurso Kafka deseado antes de añadirla:
 
 ```yaml
 name: mtls
@@ -226,7 +226,7 @@ networkPolicyPeers:
       app: order-service
 ```
 
-Ambos selectores están en **un mismo peer**, por lo que el pod debe tener `app=order-service` **y** estar en el namespace `kafka-clients`. Dos entradas de peer separadas usarían una condición OR: los pods coincidentes en el namespace de la política, o cualquier pod en el namespace seleccionado. Las políticas de red se acumulan, requieren aplicación por parte del CNI y no anulan una segunda política que también permita el tráfico. Considera también el tráfico de salida y la ruta real del tráfico externo/de nodo.
+Ambos selectores están en **un mismo peer**, por lo que el Pod debe tener `app=order-service` **y** estar en el espacio de nombres `kafka-clients`. Dos entradas de peer separadas usarían una condición OR: los Pods coincidentes en el espacio de nombres de la política o cualquier Pod en el espacio de nombres seleccionado. Las políticas de red se acumulan, requieren aplicación por parte del CNI y no anulan una segunda política que también permita el tráfico. Considere también el tráfico de salida y la ruta real del tráfico externo o de nodo.
 
 Este usuario mTLS separado conserva la identidad del usuario SCRAM existente:
 
@@ -264,13 +264,13 @@ spec:
       - IdempotentWrite
 ```
 
-El User Operator debe conciliarlo y el autorizador simple del broker debe estar habilitado. Distribuye las credenciales de usuario y la confianza del broker en el namespace de la aplicación mediante un proceso de rotación controlado; Kubernetes no puede montar directamente un Secret de otro namespace. Confirma la generación actual, el éxito de TLS/autenticación y las acciones permitidas/denegadas. Hacer commit únicamente del YAML no concede un acceso funcional.
+El User Operator debe conciliarlo y el autorizador simple del broker debe estar habilitado. Distribuya las credenciales del usuario y la cadena de confianza del broker en el espacio de nombres de la aplicación mediante un proceso de rotación controlado; Kubernetes no puede montar directamente un Secret de otro espacio de nombres. Confirme la generación actual, que TLS y la autenticación funcionen y qué acciones se permiten o deniegan. Un commit que solo incluya el YAML no concede acceso operativo.
 
 La ruta SCRAM existente sigue necesitando TLS para el cifrado y la rotación de contraseñas. Ni una ACL de Kafka ni una NetworkPolicy sustituyen la otra capa.
 
 ### Cifra explícitamente el almacenamiento persistente aprovisionado recientemente
 
-Para el driver CSI estándar de EBS, utiliza una StorageClass cifrada y/o la configuración predeterminada de cifrado de EBS de la cuenta/Región. Este ejemplo también conserva los volúmenes y espera a la programación antes de seleccionar una AZ:
+Para el controlador CSI estándar de EBS, utilice una StorageClass cifrada, la configuración predeterminada de cifrado de EBS de la cuenta o región, o ambas. Este ejemplo también conserva los volúmenes y espera a que se programe el Pod antes de seleccionar una AZ:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -286,16 +286,16 @@ parameters:
   encrypted: 'true'
 ```
 
-Para Auto Mode, usa su provisioner independiente `ebs.csi.eks.amazonaws.com` y las restricciones de topología de la Parte 2, especificando también `encrypted: "true"`. No deduzcas el cifrado de PVC aprovisionados dinámicamente a partir de la afirmación de cifrado de nodos/discos efímeros de Auto Mode; la referencia de parámetros de su StorageClass indica que `encrypted` tiene el valor predeterminado false. Confirma el cifrado y la clave KMS del volumen EBS realmente creado.
+Para Auto Mode, utilice su aprovisionador independiente `ebs.csi.eks.amazonaws.com` y las restricciones de topología de la Parte 2, especificando también `encrypted: "true"`. No infiera el cifrado de los PVC aprovisionados dinámicamente a partir de la afirmación de Auto Mode sobre el cifrado de nodos o discos efímeros; la referencia de parámetros de su StorageClass indica que `encrypted` tiene false como valor predeterminado. Confirme el cifrado y la clave KMS del volumen EBS que se haya creado.
 
-Una clave gestionada por el cliente requiere su ARN real y las concesiones adecuadas para el rol/clave, no `key/xxxxxxxx`. Cambiar una StorageClass o habilitar los valores predeterminados de la cuenta no cifra retroactivamente los volúmenes existentes. Planifica una migración de datos o instantáneas compatible y verifica el acceso a la restauración antes de sustituir el almacenamiento persistente.
+Una clave gestionada por el cliente requiere su ARN real y las concesiones adecuadas para el rol/clave, no `key/xxxxxxxx`. Cambiar una StorageClass o habilitar los valores predeterminados de la cuenta no cifra retroactivamente los volúmenes existentes. Planifique una migración compatible de datos o instantáneas y verifique el acceso para restaurarlas antes de sustituir el almacenamiento persistente.
 
 ## Capacidad, niveles y retención
 
-Kafka se beneficia de la caché de páginas, pero la CPU (incluidos TLS/compresión), la red, el rendimiento/IOPS del almacenamiento y los límites de memoria de cgroups pueden ser factores determinantes. Incluye el heap, la memoria fuera del heap, la caché de páginas y otras cargas de trabajo en las mediciones. No existe una respuesta universal de «bastan 4–8 GB de heap» ni un ganador en coste entre las instancias optimizadas para memoria.
+Kafka se beneficia de la caché de páginas, pero la CPU (incluidos TLS/compresión), la red, el rendimiento/IOPS del almacenamiento y los límites de memoria de cgroups pueden ser factores determinantes. Incluya el heap, la memoria fuera del heap, la caché de páginas y otras cargas de trabajo en las mediciones. No existe una respuesta universal de «bastan 4–8 GB de heap» ni un ganador en coste entre las instancias optimizadas para memoria.
 
 El almacenamiento por niveles de Kafka está listo para producción desde la versión 3.9 y es compatible con Strimzi 1.3. Aun así, necesita un **plugin RemoteStorageManager** compatible, sus dependencias en la imagen, credenciales/permisos de acceso remoto, retención, limpieza y configuración de recuperación. La integración personalizada de Strimzi usa `spec.kafka.tieredStorage` con la clase/ruta/configuración del plugin. Activar únicamente `remote.log.storage.system.enable` no conecta Kafka con S3.
-Consulta las limitaciones de la funcionalidad de la versión y prueba la indisponibilidad del almacenamiento remoto y la restauración.
+Consulte las limitaciones de las funciones de esa versión y pruebe qué ocurre cuando el almacenamiento remoto no está disponible, además de probar la restauración.
 
 ### La retención es una decisión sobre los datos
 
@@ -314,11 +314,11 @@ bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
 ```
 
 Reducir la retención puede eliminar irreversiblemente registros necesarios para la reproducción o la recuperación. Con `cleanup.policy=compact`, la limpieza es asíncrona y conserva el último valor por clave, sujeto al comportamiento de tombstones/cleaner; una cardinalidad alta de claves y los segmentos activos/no limpiados aún pueden hacer que el almacenamiento crezca. La compactación no impone un límite estricto de almacenamiento.
-`compact,delete` también aplica la retención de eliminación, que puede quitar el último valor de una clave antigua. Diseña explícitamente los requisitos de reconstrucción del estado y de retención de tombstones.
+`compact,delete` también aplica la retención de eliminación, que puede quitar el último valor de una clave antigua. Diseñe explícitamente los requisitos de reconstrucción del estado y de retención de tombstones.
 
 ### Spot e interrupciones
 
-Mantén el cuórum de controladores en capacidad adecuada y fiable en esta base de producción. Se puede considerar capacidad Spot para los brokers en cargas de trabajo que toleren sus riesgos, pero distribuir los pods por sí solo no evita las recuperaciones correlacionadas. Combina la ubicación de réplicas de broker según racks, la distribución entre nodos/AZ, la capacidad de reemplazo en la AZ del volumen EBS y la recuperación/reserva de capacidad probadas.
+Mantenga el cuórum de controladores en capacidad adecuada y fiable para esta configuración de referencia de producción. Puede considerar capacidad Spot para los brokers en cargas de trabajo que toleren sus riesgos, pero distribuir los Pods por sí solo no evita las reclamaciones correlacionadas. Combine la ubicación de réplicas de broker con conocimiento de los racks, la distribución entre nodos/AZ, la capacidad de reemplazo en la AZ del volumen EBS y la recuperación y el margen de capacidad probados.
 
 El PDB de Strimzi 1.3 cubre los pods del clúster Kafka y limita la expulsión voluntaria. No garantiza el cuórum durante una eliminación forzada, un fallo de nodo, la recuperación de Spot ni todas las operaciones de actualización gradual del Operator. RF=3/minISR=2, un PDB y controladores On-Demand son elementos de diseño, no una prueba de que no habrá pérdidas ni tiempo de inactividad.
 
@@ -332,7 +332,7 @@ El PDB de Strimzi 1.3 cubre los pods del clúster Kafka y limita la expulsión v
 - Cobertura de extracción de métricas/alertas/notificaciones, capacidad de consumidores y SLO de la aplicación.
 - Retención, cifrado del almacenamiento, supuestos de costes y un responsable de operaciones identificado.
 
-Aplica los controles pertinentes para la carga de trabajo y registra las limitaciones pendientes.
+Aplique los controles pertinentes para la carga de trabajo y registre las limitaciones pendientes.
 Completar una lista de comprobación genérica no certifica que el sistema esté listo para producción.
 
 ## Referencias y validación

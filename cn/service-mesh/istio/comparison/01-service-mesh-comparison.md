@@ -1,6 +1,6 @@
 # 服务网格解决方案比较
 
-> **最后审阅**：September 11, 2026
+> **最后审阅**：2026年9月11日
 > **API/制品检查**：Istio 1.31.0；Linkerd edge-26.9.1；Kong Mesh/Kuma 2.14.4；Consul/chart 2.0.4
 
 这些制品版本标识了用于检查示例的来源。它们**不是共用的 Kubernetes 兼容性矩阵**，也不能证明存在已部署的生产系统。下文保留了原始 Istio 1.24/Linkerd 2.15/Kong Mesh 2.8/Consul 1.19 性能数据，并注明其历史且未经验证的状态。

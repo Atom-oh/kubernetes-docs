@@ -1,152 +1,43 @@
-# DNS Proxy と DNS キャッシュ
+# DNS プロキシと DNS キャッシュ
 
-> **サポート対象バージョン**: Istio 1.28+
-> **最終更新**: February 23, 2026
+> **検証基準**: Istio 1.31.0、Kubernetes 1.32～1.37
+> **最終レビュー日**: 2026年10月16日
 
-Istio の DNS 管理機能を通じて、外部 Service へのアクセス性能を最適化し、DNS ルックアップを制御します。
+Istio の DNS 管理機能を使って、外部サービスへのアクセス性能を最適化し、DNS の名前解決を制御します。
 
 ## 目次
 
-1. [DNS Proxy の概要](#dns-proxy-overview)
-2. [DNS Proxy と DNS キャッシュの比較](#dns-proxy-vs-dns-caching)
-3. [DNS Proxy の設定](#dns-proxy-configuration)
-4. [ServiceEntry の統合](#serviceentry-integration)
+1. [DNS プロキシの概要](#dns-proxy-overview)
+2. [DNS プロキシと DNS キャッシュの違い](#dns-proxy-vs-dns-caching)
+3. [DNS プロキシの設定](#dns-proxy-configuration)
+4. [ServiceEntry との統合](#serviceentry-integration)
 5. [DNS キャッシュの設定](#dns-caching-configuration)
-6. [自動アドレス割り当て](#automatic-address-allocation)
+6. [アドレスの自動割り当て](#automatic-address-allocation)
 7. [トラブルシューティング](#troubleshooting)
 8. [ベストプラクティス](#best-practices)
 
-<span id="dns-proxy-overview"></span>
+## DNS プロキシの概要 {#dns-proxy-overview}
 
-## DNS Proxy の概要
+サイドカー方式では、アプリケーションの DNS 要求は Envoy の HTTP/DNS リスナーではなく、**istio-agent の Go DNS サーバー**に転送されます。Agent は Istiod から受け取った名前/IP テーブルを使って応答し、未知の名前は `/etc/resolv.conf` に指定された上流リゾルバーへ転送します。UDP と TCP の DNS に対応し、通常のサイドカー DNS ポートは 15053 です。
 
-Istio DNS Proxy は、Envoy が DNS サーバーとして機能し、アプリケーションの DNS リクエストをインターセプトして処理する機能です。
+アンビエント方式では ztunnel が DNS を処理し、Istio 1.25 以降では DNS キャプチャが既定で有効です。サイドカー方式では明示的な有効化が必要です。DNS-over-HTTPS/TLS とアプリケーション管理のキャッシュは、通常のポート 53 キャプチャとは別の機能です。以下の EnvoyFilter と Agent の診断手順は**サイドカー方式**を対象にしています。
 
-### 主な機能
+## DNS プロキシと DNS キャッシュの違い {#dns-proxy-vs-dns-caching}
 
-1. **DNS クエリのインターセプト**: Envoy が UDP ポート 53 の DNS リクエストを処理します
-2. **ServiceEntry ベースの名前解決**: 外部 Service が ServiceEntry として登録されると、DNS レスポンスを自動生成します
-3. **自動 IP 割り当て**: 外部 Service に仮想 IP を自動的に割り当てます
-4. **CoreDNS のバイパス**: Kubernetes DNS サーバーの負荷を軽減します
+| 層 | 役割 | 設定 |
+|---|---|---|
+| アプリケーション/OS のリゾルバーキャッシュ | アプリケーションの名前、TTL、ネガティブキャッシュ | アプリケーションのランタイム、OS、リゾルバー |
+| Istio DNS プロキシ | メッシュ内の名前/IP テーブル。他の名前は上流へ転送 | サイドカーの `ISTIO_META_DNS_CAPTURE`、アンビエントの CNI/ztunnel |
+| Envoy の DNS サービスディスカバリー | DNS ベースの上流クラスターのエンドポイントを更新 | ServiceEntry と生成される DNS クラスター設定 |
+| Envoy dynamic forward proxy の DNS キャッシュ | リクエストの Host/SNI から動的な宛先を名前解決 | 別途設定する DYNAMIC_DNS/DFP |
 
-### アーキテクチャ
+`dns_refresh_rate` を設定しても、アプリケーションのすべての DNS 応答がキャッシュされるわけではありません。サイドカー Agent も、未知の名前に対する上流の応答を汎用キャッシュとして保持しません。既知の名前は CoreDNS への問い合わせを省けますが、上流エンドポイントの更新は別途行われます。両方の機能を有効にしても、性能が最適になるとは限りません。
 
-```mermaid
-flowchart TB
-    subgraph Pod[Application Pod]
-        App[Application<br/>curl api.example.com]
-
-        subgraph IPTables[iptables NAT]
-            DNS_Rule[DNS Rule<br/>UDP 53 -> 15053]
-            TCP_Rule[TCP Rule<br/>TCP -> 15001]
-        end
-
-        subgraph Envoy[Envoy Proxy]
-            DNS_Listener[DNS Listener<br/>15053]
-            DNS_Table[DNS Table<br/>ServiceEntry based]
-            HTTP_Listener[HTTP Listener<br/>15001]
-        end
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server<br/>ServiceEntry config]
-    end
-
-    subgraph External[External]
-        API[api.example.com<br/>Actual IP]
-        CoreDNS[CoreDNS<br/>Cluster DNS]
-    end
-
-    App -->|1. DNS Query<br/>UDP 53| DNS_Rule
-    DNS_Rule -->|2. Redirect<br/>15053| DNS_Listener
-    DNS_Listener -->|3. Lookup| DNS_Table
-
-    DNS_Table -->|4. Virtual IP<br/>240.240.0.1| DNS_Listener
-    DNS_Listener -->|5. DNS Response| App
-
-    App -->|6. HTTP Request<br/>240.240.0.1| TCP_Rule
-    TCP_Rule -->|7. Redirect| HTTP_Listener
-    HTTP_Listener -->|8. Convert to actual IP| API
-
-    XDS -.->|ServiceEntry push| DNS_Table
-
-    DNS_Listener -.->|Non-Istio domains| CoreDNS
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class DNS_Rule,TCP_Rule iptables;
-    class DNS_Listener,DNS_Table,HTTP_Listener envoy;
-    class XDS istiod;
-    class API,CoreDNS external;
-```
-
-<span id="dns-proxy-vs-dns-caching"></span>
-
-## DNS Proxy と DNS キャッシュの比較
-
-この 2 つの機能は、目的と動作が異なります。
-
-| 特性 | DNS Proxy | DNS キャッシュ |
-|------|-----------|-------------|
-| **役割** | DNS サーバーとして機能 | DNS ルックアップ結果をキャッシュ |
-| **動作** | DNS クエリをインターセプトして直接応答 | 外部 DNS ルックアップ後に結果を保存 |
-| **設定** | `ISTIO_META_DNS_CAPTURE` | `dns_refresh_rate` |
-| **対象** | ServiceEntry に登録された Service | すべての外部 DNS ルックアップ |
-| **IP 割り当て** | 仮想 IP を自動割り当て | 実際の DNS レスポンスを使用 |
-| **CoreDNS** | バイパス可能 | 引き続き使用 |
-| **Istio バージョン** | 1.8+ | すべてのバージョン |
-
-### 併用
-
-両方の機能を併用すると、最適なパフォーマンスが得られます。
-
-```mermaid
-flowchart LR
-    App[Application]
-
-    subgraph Envoy[Envoy Proxy]
-        DNS_Proxy[DNS Proxy<br/>ServiceEntry services]
-        DNS_Cache[DNS Cache<br/>Other external services]
-    end
-
-    SE[ServiceEntry<br/>api.example.com]
-    CoreDNS[CoreDNS<br/>google.com]
-
-    App -->|1. api.example.com| DNS_Proxy
-    DNS_Proxy -->|Virtual IP| App
-
-    App -->|2. google.com| DNS_Cache
-    DNS_Cache -->|Cache miss| CoreDNS
-    CoreDNS -->|Actual IP| DNS_Cache
-    DNS_Cache -->|Cached IP| App
-
-    SE -.->|Register| DNS_Proxy
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class DNS_Proxy,DNS_Cache envoy;
-    class SE,CoreDNS external;
-```
-
-<span id="dns-proxy-configuration"></span>
-
-## DNS Proxy の設定
+## DNS プロキシの設定 {#dns-proxy-configuration}
 
 ### 1. グローバルな有効化
 
-すべての namespace に DNS Proxy を適用します。
+この `istioctl` 入力を既存のインストール設定に統合してください。削除済みのクラスター内 Operator に `kubectl apply` するリソースではありません。Helm でインストールした場合は、同等の meshConfig 値を既存 chart の設定に統合します。サイドカーのキャプチャ設定は新たに注入または起動された Pod から有効になるため、確認済みのワークロードに段階的に展開してください。
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -158,90 +49,35 @@ spec:
   meshConfig:
     defaultConfig:
       proxyMetadata:
-        # Enable DNS Proxy
         ISTIO_META_DNS_CAPTURE: "true"
-        # Enable automatic IP allocation
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
 ```
 
-### 2. namespace ごとの有効化
+現在のアドレス割り当ては Istiod コントローラーが担い、既定で有効です。新規インストールの前提として、旧式の `ISTIO_META_DNS_AUTO_ALLOCATE` メタデータを追加しないでください。
 
-特定の namespace でのみ有効化します。
+### 2. Namespace ごとの有効化
 
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  labels:
-    istio-injection: enabled
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-sidecar-injector
-  namespace: istio-system
-data:
-  values: |
-    global:
-      proxy:
-        holdApplicationUntilProxyStarts: true
-    sidecarInjectorWebhook:
-      templates:
-        custom: |
-          spec:
-            containers:
-            - name: istio-proxy
-              env:
-              - name: ISTIO_META_DNS_CAPTURE
-                value: "true"
-              - name: ISTIO_META_DNS_AUTO_ALLOCATE
-                value: "true"
-```
+Namespace の注入ラベルだけでは DNS キャプチャは有効になりません。GitOps/Kustomize/Helm を使い、選択した Namespace の Deployment の Pod テンプレートに次の設定断片を統合してください。中央の `istio-sidecar-injector` ConfigMap を一部の値で置き換えても、Namespace 単位の設定にはなりません。既存の `proxy.istio.io/config` アノテーションにある他の項目も保持してください。
 
 ### 3. Pod ごとの有効化
 
-特定の Pod でのみ有効化します。
-
 ```yaml
-apiVersion: v1
-kind: Pod
+# Existing Deployment: merge into spec.template, not a complete workload
 metadata:
-  name: myapp
   annotations:
     proxy.istio.io/config: |
       proxyMetadata:
         ISTIO_META_DNS_CAPTURE: "true"
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
-spec:
-  containers:
-  - name: app
-    image: myapp:v1
 ```
 
-### 4. iptables ルールの確認
+既存のレガシー/リビジョン注入方式を維持し、選択した Pod を再作成してください。これはテンプレートの断片であり、`myapp:v1` イメージを仮定した完全な Pod 定義ではありません。アンビエント Pod では、既定のキャプチャ動作を確認し、必要なら `ambient.istio.io/dns-capture: "false"` で無効化してください。
 
-DNS Proxy が有効になると、次の iptables ルールが追加されます。
+### 4. リダイレクトと応答の確認
 
-```bash
-# Enter pod
-kubectl exec -it <pod-name> -c istio-proxy -- /bin/bash
+Pod のネットワーク名前空間における DNS リダイレクトは、インストール方式や CNI によって異なります。Proxy イメージに bash/iptables/tcpdump が含まれることや、net-admin 権限があることを前提にしないでください。本番 Pod の権限を増やす前に、以下の Agent の名前テーブル、DNS クエリ、上流エンドポイントを確認します。必要であれば、承認済みの診断環境で UDP/TCP のポート 53 と 15053 の経路を調べてください。
 
-# Check DNS redirect rules
-iptables -t nat -L ISTIO_OUTPUT -n -v
+## ServiceEntry との統合 {#serviceentry-integration}
 
-# Expected output
-Chain ISTIO_OUTPUT (1 references)
-pkts bytes target     prot opt in     out     source               destination
-   0     0 RETURN     udp  --  *      *       0.0.0.0/0            127.0.0.53           udp dpt:53
-   0     0 REDIRECT   udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:53 redir ports 15053
-```
-
-<span id="serviceentry-integration"></span>
-
-## ServiceEntry の統合
-
-DNS Proxy は ServiceEntry と緊密に統合して動作します。
+DNS プロキシは ServiceEntry と連携します。
 
 ### 基本的な ServiceEntry
 
@@ -262,47 +98,64 @@ spec:
   resolution: DNS
 ```
 
-**DNS Proxy の動作**:
-1. アプリケーションが `api.example.com` の DNS ルックアップを実行します
-2. Envoy DNS Proxy が仮想 IP（例: `240.240.0.1`）を返します
-3. アプリケーションが仮想 IP にリクエストを送信します
-4. Envoy が実際の IP に変換して送信します
+**DNS プロキシの動作**:
 
-### 複数 Host の登録
+1. アプリケーションが `api.example.com` を DNS で名前解決します
+2. Agent の DNS プロキシが割り当て済み VIP（例: `240.240.0.1`）を返します
+3. アプリケーションが仮想 IP にリクエストを送信します
+4. Envoy がこの宛先を、別途名前解決した実際の上流エンドポイントへルーティングします
+
+### 複数ホストの登録
+
+独立した上流サービスは、それぞれ具体的なホスト名で登録してください。ここにある example.com の名前は設定例です。実際の DNS/TLS と到達性を備えたバックエンドの名前に置き換えてください。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
-  name: external-services
+  name: partner-api
+  namespace: default
 spec:
-  hosts:
-  - "*.example.com"  # Wildcard supported
-  - api.partner.com
-  - cdn.assets.com
+  hosts: ["api.partner.example.com"]
   ports:
   - number: 443
     name: https
     protocol: HTTPS
-  - number: 80
-    name: http
-    protocol: HTTP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: assets-cdn
+  namespace: default
+spec:
+  hosts: ["cdn.example.com"]
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
   location: MESH_EXTERNAL
   resolution: DNS
 ```
 
-### 明示的な Endpoint
+`*.example.com` のようなワイルドカードに `resolution: DNS` を指定しても、具体的なエンドポイントがなければすべてのサブドメインを名前解決できません。サイドカーでアプリケーション本来の宛先へ転送するワイルドカード方式は、別の `resolution: NONE` パターンを使い、DNS 応答は返しません。Istio 1.31 の `DYNAMIC_DNS` は Host/SNI に基づく別の方式です。アンビエントでは waypoint が必要で、raw TCP はサポートされません。現行 API と生成設定に基づいて方式を選んでください。
+
+### エンドポイントの明示的な指定
+
+`addresses` はクライアント側の VIP、`endpoints` は実際のバックエンドを指定します。CIDR プレフィックスはトラフィックの照合には使えますが、単一の DNS A/AAAA 応答ではありません。ここにある TEST-NET アドレスでデータベースが稼働するわけではありません。実際には競合しない VIP/バックエンド/TLS 設定を使ってください。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-database
+  namespace: default
 spec:
   hosts:
   - database.external.com
   addresses:
-  - 203.0.113.0/24  # External network range
+  - 198.51.100.10  # Explicit example VIP
   ports:
   - number: 3306
     name: mysql
@@ -315,78 +168,19 @@ spec:
   - address: 203.0.113.12
 ```
 
-<span id="dns-caching-configuration"></span>
+## DNS キャッシュの設定 {#dns-caching-configuration}
 
-## DNS キャッシュの設定
+### DNS ベースの上流更新
 
-DNS キャッシュにより、外部 DNS ルックアップのパフォーマンスが向上します。
+Istio 1.31 では通常の DNS クラスターに `respect_dns_ttl: true` が設定され、メッシュの `dnsRefreshRate` の既定値は 60 秒です。正常な応答には DNS TTL が使われます。失敗時や TTL が 0 の場合の動作は、生成されたリゾルバーとクラスターの設定に従います。概念を説明する別ページの「30 秒固定で変更不可」という記述は、このリリースのソースコードと一致しません。有効な設定を確認してください。
 
-### Envoy DNS キャッシュの有効化
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dns-cache-filter
-  namespace: istio-system
-spec:
-  configPatches:
-  - applyTo: CLUSTER
-    match:
-      context: SIDECAR_OUTBOUND
-      cluster:
-        service: "*.example.com"
-    patch:
-      operation: MERGE
-      value:
-        dns_refresh_rate: 30s  # DNS cache refresh interval
-        dns_lookup_family: V4_ONLY  # Use IPv4 only
-        dns_failure_refresh_rate:
-          base_interval: 5s  # Retry interval on failure
-          max_interval: 30s
-```
-
-### 高度な DNS キャッシュ設定
+この低レベルの代替方法では、`app: frontend` を持つ `default` 名前空間に対し、**api.example.com:443 の DNS クラスター1つだけ**を変更します。`cluster.service` が照合するのは実際のサービス名であり、ワイルドカードのセレクターではありません。ルート名前空間からすべてのクラスターに広範なパッチを適用しないでください。
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: advanced-dns-cache
-  namespace: istio-system
-spec:
-  configPatches:
-  - applyTo: CLUSTER
-    match:
-      context: SIDECAR_OUTBOUND
-    patch:
-      operation: MERGE
-      value:
-        # DNS cache TTL settings
-        dns_refresh_rate: 60s
-
-        # DNS lookup timeout
-        dns_query_timeout: 5s
-
-        # IP version priority
-        dns_lookup_family: AUTO  # Auto select IPv4/IPv6
-
-        # Cache policy on failure
-        dns_failure_refresh_rate:
-          base_interval: 2s
-          max_interval: 10s
-
-        # Respect DNS TTL
-        respect_dns_ttl: true
-```
-
-### 特定の Service にのみ適用
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: api-dns-cache
+  name: external-api-dns-refresh
   namespace: default
 spec:
   workloadSelector:
@@ -395,247 +189,146 @@ spec:
   configPatches:
   - applyTo: CLUSTER
     match:
+      context: SIDECAR_OUTBOUND
       cluster:
-        service: api.external.com
+        service: api.example.com
+        portNumber: 443
     patch:
       operation: MERGE
       value:
         dns_refresh_rate: 30s
-        dns_lookup_family: V4_ONLY
+        respect_dns_ttl: true
+        dns_failure_refresh_rate:
+          base_interval: 5s
+          max_interval: 30s
 ```
 
-<span id="automatic-address-allocation"></span>
+### TTL、失敗時の再試行、リゾルバー
 
-## 自動アドレス割り当て
+`respect_dns_ttl: true` の場合、正常な名前解決をすべて 30 秒ごとに更新する設定にはなりません。`dns_failure_refresh_rate` が制御するのは失敗後の再試行間隔であり、レコードの TTL や古い応答の保持期間ではありません。`dns_query_timeout` は Cluster のフィールドではありません。リゾルバー固有の型付き設定を検証してください。IP ファミリーを一律に IPv4 のみにしたり AUTO に固定したりせず、Istio が選択したファミリーを維持してください。
 
-DNS Proxy は、ServiceEntry に登録された Service に仮想 IP を自動的に割り当てます。
+protobuf の `MERGE` で既存の `respect_dns_ttl: true` を既定のスカラー値 `false` によって解除できる、と想定しないでください。Envoy では一部の DNS クラスターフィールドが非推奨ですが、Istio 1.31 は引き続きこの形式を生成します。アップグレード時には DNS クラスターの拡張設定とリゾルバー設定を再確認してください。
 
-### 自動割り当ての動作
+### 適用済み設定の確認
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant Istiod as Istiod
-    participant External as api.example.com<br/>(Actual server)
-
-    Note over Istiod: ServiceEntry registration
-    Istiod->>Envoy: xDS config push<br/>(virtual IP allocated)
-
-    App->>Envoy: DNS Query<br/>api.example.com
-    Envoy->>Envoy: Virtual IP lookup<br/>240.240.0.1
-    Envoy->>App: DNS Response<br/>240.240.0.1
-
-    App->>Envoy: HTTP Request<br/>240.240.0.1:443
-    Envoy->>Envoy: Actual host mapping<br/>api.example.com
-    Envoy->>External: DNS lookup (actual IP)
-    External->>Envoy: 203.0.113.10
-    Envoy->>External: HTTP Request<br/>203.0.113.10:443
-    External->>Envoy: Response
-    Envoy->>App: Response
+```bash
+istioctl proxy-config clusters <client-pod> -n default --fqdn api.example.com -o json |
+  jq '.[] | {name,type,dnsRefreshRate,respectDnsTtl,dnsFailureRefreshRate,dnsLookupFamily,typedDnsResolverConfig,loadAssignment}'
 ```
 
-### アドレス範囲の設定
+## アドレスの自動割り当て {#automatic-address-allocation}
 
-デフォルトでは、`240.240.0.0/16` の範囲が使用されます。変更が必要な場合:
+### 割り当ての管理主体とステータス
+
+既定で有効な Istiod の IP 割り当てコントローラーは、対象となる ServiceEntry のホストごとに VIP を割り当て、`host` と `value` を `status.addresses` に記録します。通常の `resolution: DNS` を使うワイルドカードは割り当て対象外ですが、`DYNAMIC_DNS` のワイルドカードには別のサポートされた経路があります。`spec.addresses` が明示されている項目や `networking.istio.io/enable-autoallocate-ip: "false"` が設定された項目は、同じ割り当て経路を使いません。
+
+### アドレス範囲
+
+リリース時点の既定プレフィックスは IPv4 が `240.240.0.0/16`、IPv6 が `2001:2::/48` です。これは**既定値を含む実際のコントロールプレーン設定**です。利用者のネットワーク、VPN、Service CIDR と重複しないようにしてください。
 
 ```yaml
+# Advanced istioctl input: these are the released defaults, not new ranges.
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
-  meshConfig:
-    defaultConfig:
-      proxyMetadata:
-        ISTIO_META_DNS_CAPTURE: "true"
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
-    # Change automatic allocation address range
-    defaultServiceExportTo:
-    - "*"
-    # Address range (example, actually managed internally by Envoy)
-    outboundTrafficPolicy:
-      mode: ALLOW_ANY
+  values:
+    pilot:
+      env:
+        PILOT_ENABLE_IP_AUTOALLOCATE: "true"
+        PILOT_IP_AUTOALLOCATE_IPV4_PREFIX: "240.240.0.0/16"
+        PILOT_IP_AUTOALLOCATE_IPV6_PREFIX: "2001:2::/48"
 ```
 
-### 割り当てられた IP の確認
+`defaultServiceExportTo` は可視性を制御し、`outboundTrafficPolicy` は未登録の外向きトラフィックに関係します。どちらも割り当てプレフィックスは変更しません。既存の VIP を変更すると DNS キャッシュ、接続、ルーティングに影響する可能性があります。したがって、プレフィックス変更を無停止で移行できると実証された方法として扱わないでください。コントローラーが管理する status を手動で編集しないでください。
+
+### 割り当て済みアドレスの確認
 
 ```bash
-# Check allocated virtual IP in Envoy config
-istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.example.com -o json
+kubectl get serviceentry external-api -n default -o json |
+  jq '{hosts:.spec.hosts, explicitAddresses:.spec.addresses, allocatedAddresses:.status.addresses}'
 
-# Example output
-{
-  "name": "outbound|443||api.example.com",
-  "type": "STRICT_DNS",
-  "connectTimeout": "10s",
-  "loadAssignment": {
-    "clusterName": "outbound|443||api.example.com",
-    "endpoints": [{
-      "lbEndpoints": [{
-        "endpoint": {
-          "address": {
-            "socketAddress": {
-              "address": "240.240.0.1",  # Virtual IP
-              "portValue": 443
-            }
-          }
-        }
-      }]
-    }]
-  }
-}
+# Inspect the client's mapping and the actual upstream separately.
+istioctl proxy-config listeners <client-pod> -n default
+istioctl proxy-config clusters <client-pod> -n default --fqdn api.example.com -o json
+istioctl proxy-config endpoints <client-pod> -n default --cluster 'outbound|443||api.example.com'
 ```
 
-<span id="troubleshooting"></span>
+割り当てられた VIP は、アプリケーションへの DNS 応答と宛先照合に使われます。DNS クラスターの `loadAssignment` には名前解決する実際のバックエンドホスト名が入り、実行時エンドポイントには解決後のアドレスが入ります。VIP を実際の外部上流 IP として説明しないでください。
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
-### DNS Proxy の動作確認
+### DNS プロキシの動作確認
 
 ```bash
-# 1. Check DNS Proxy environment variable
-kubectl get pod <pod-name> -o jsonpath='{.spec.containers[?(@.name=="istio-proxy")].env[?(@.name=="ISTIO_META_DNS_CAPTURE")].value}'
+# Inspect classic or native sidecar metadata without assuming a shell in the image.
+kubectl get pod <client-pod> -n default -o json |
+  jq '[.spec.containers[], .spec.initContainers[]?] |
+      .[] | select(.name == "istio-proxy") |
+      {name,env:[.env[]? | select(.name == "ISTIO_META_DNS_CAPTURE")]}'
 
-# 2. Check iptables rules
-kubectl exec -it <pod-name> -c istio-proxy -- iptables -t nat -L ISTIO_OUTPUT -n | grep 15053
+istioctl analyze -n default
+istioctl proxy-status
+kubectl get serviceentry external-api -n default -o yaml
+kubectl logs -n default <client-pod> -c istio-proxy --tail=100
 
-# 3. Verify Envoy DNS Listener
-istioctl proxy-config listeners <pod-name> --port 15053
-
-# 4. DNS query test
-kubectl exec -it <pod-name> -c app -- nslookup api.example.com
-
-# 5. Check Envoy logs
-kubectl logs <pod-name> -c istio-proxy | grep -i dns
+# Requires a reviewed diagnostic container with nslookup in this Pod's network namespace.
+kubectl exec -n default <client-pod> -c <diagnostic-container> -- nslookup api.example.com
 ```
+
+```bash
+# Terminal 1: sidecar agent's local status server (not Envoy admin 15000)
+kubectl port-forward -n default <client-pod> 15020:15020
+```
+
+```bash
+# Terminal 2 while the forward remains active
+curl --fail --silent http://127.0.0.1:15020/debug/ndsz |
+  jq '.table["api.example.com"]'
+curl --fail --silent http://127.0.0.1:15020/stats/prometheus |
+  grep '^istio_agent_dns_'
+```
+
+Agent の `/debug/ndsz` が受け付けるのは localhost からのリクエストのみです。DNS または名前テーブルの状態を取得できない場合は 404 を返すことがあります。Envoy のポート 15000 のリスナー一覧に Agent のポート 15053 があるか探しても、有効な確認にはなりません。アプリケーションに nslookup がない場合は、ベースイメージを変更したり権限を追加したりせず、既定の診断手順を使ってください。
 
 ### よくある問題
 
-#### 問題 1: DNS クエリが引き続き CoreDNS に送信される
-
-**原因**: DNS Proxy が有効になっていません
-
-**解決策**:
-```bash
-# Check environment variable
-kubectl get pod <pod-name> -o yaml | grep ISTIO_META_DNS_CAPTURE
-
-# If not present, add annotation
-kubectl patch deployment <deployment-name> -p '
-spec:
-  template:
-    metadata:
-      annotations:
-        proxy.istio.io/config: |
-          proxyMetadata:
-            ISTIO_META_DNS_CAPTURE: "true"
-'
-
-# Restart pods
-kubectl rollout restart deployment <deployment-name>
-```
-
-#### 問題 2: ServiceEntry が DNS Proxy に反映されない
-
-**原因**: ServiceEntry の設定エラーまたは xDS 同期の遅延
-
-**解決策**:
-```bash
-# Validate ServiceEntry
-istioctl analyze serviceentry <name> -n <namespace>
-
-# Check xDS sync
-istioctl proxy-status
-
-# Verify Envoy config
-istioctl proxy-config clusters <pod-name> | grep <service-name>
-
-# Force xDS resync
-kubectl delete pod -n <namespace> <pod-name>
-```
-
-#### 問題 3: 仮想 IP で接続に失敗する
-
-**原因**: アドレスの競合またはルーティングの問題
-
-**解決策**:
-```bash
-# Verify virtual IP allocation
-istioctl proxy-config clusters <pod-name> --fqdn <service-host> -o json
-
-# Check Listener config
-istioctl proxy-config listeners <pod-name> --address 240.240.0.1
-
-# Check Envoy logs
-kubectl logs <pod-name> -c istio-proxy --tail=100 | grep -i "240.240"
-
-# Test request
-kubectl exec -it <pod-name> -c app -- curl -v http://240.240.0.1
-```
-
-### デバッグツール
-
-#### Envoy Admin API の使用
+1. **クエリが引き続き CoreDNS に届く**: 未知の名前が転送されるのは正常です。ローカルテーブルに存在する名前と存在しない名前を区別し、キャプチャ設定、検索ドメインと ndots、TCP フォールバック、アプリケーション側の DoH/TLS を確認してください。
+2. **ServiceEntry が見つからない**: `exportTo`、Namespace の検出範囲と Sidecar スコープ、resolution、割り当て status、インジェクションとリビジョン、NDS/xDS の同期を確認してください。`istioctl analyze -n default` を使います。リソース種別や名前はこのコマンドの位置引数ではありません。「同期を強制する」目的で最初に Pod を削除しないでください。
+3. **VIP への接続に失敗する**: VIP の照合と、上流 DNS/エンドポイント、ネットワーク経路、TLS の Host/SNI、証明書を分けて確認してください。ポート 443 の HTTPS サービスに `http://VIP` で接続しても、有効なテストにはなりません。
 
 ```bash
-# Port forward to pod
-kubectl port-forward <pod-name> 15000:15000
-
-# DNS Cache statistics
-curl http://localhost:15000/stats | grep dns
-
-# Cluster status
-curl http://localhost:15000/clusters
-
-# Full config dump
-curl http://localhost:15000/config_dump > config.json
+# Run inside an approved diagnostic container sharing the captured Pod network namespace.
+# Replace VIP4 with the actual IPv4 status.addresses value, and keep the real Host/SNI.
+VIP4=240.240.0.1
+curl --fail --show-error --resolve "api.example.com:443:${VIP4}" https://api.example.com/
 ```
 
-#### パケットキャプチャ
+例の VIP を実際に割り当てられた値に置き換え、対象 Pod のネットワーク名前空間内で実行してください。このルーティング可能でないアドレスに別のホストから到達できるとは想定しないでください。証明書の検証は有効のままにし、直接 VIP に接続するテストとは別に、アプリケーションの DNS 経路も確認してください。
+
+### Envoy Admin API とパケット調査
 
 ```bash
-# Capture DNS traffic
-kubectl exec -it <pod-name> -c istio-proxy -- tcpdump -i any -n port 53 -w /tmp/dns.pcap
-
-# Download file
-kubectl cp <pod-name>:/tmp/dns.pcap ./dns.pcap -c istio-proxy
-
-# Analyze with Wireshark
-wireshark dns.pcap
+# Terminal 1
+kubectl port-forward -n default <client-pod> 15000:15000
 ```
 
-<span id="best-practices"></span>
-
-## ベストプラクティス
-
-### 1. DNS Proxy の有効化戦略
-
-**推奨アプローチ**: 段階的なロールアウト
-
-```mermaid
-flowchart TD
-    Start[Start] --> Test[Enable DNS Proxy<br/>in test environment]
-    Test --> Validate{Validation<br/>successful?}
-    Validate -->|No| Debug[Troubleshoot]
-    Debug --> Test
-    Validate -->|Yes| Stage[Apply to<br/>staging environment]
-    Stage --> Monitor{Monitoring<br/>normal?}
-    Monitor -->|No| Rollback[Rollback]
-    Rollback --> Debug
-    Monitor -->|Yes| Prod[Gradual application<br/>to production]
-    Prod --> Complete[Complete]
-
-    %% Style definitions
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef warning fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Complete success;
-    class Test,Stage,Prod warning;
-    class Debug,Rollback error;
+```bash
+# Terminal 2: Envoy endpoint discovery, distinct from agent name-table metrics
+curl --fail --silent http://127.0.0.1:15000/clusters
+curl --fail --silent http://127.0.0.1:15000/config_dump > envoy-config.json
 ```
+
+パケットキャプチャが必要な場合は、承認済みの診断用コンテナまたはノードを使う手順に従い、Pod のネットワーク名前空間で UDP/TCP の 53 と 15053 を調べてください。istio-proxy に tcpdump、tar、キャプチャ権限が含まれるとは限りません。DNS 名は機密情報になり得るため、キャプチャの時間、範囲、保持期間を制限し、分析後は定められた廃棄手順に従ってください。
+
+## ベストプラクティス {#best-practices}
+
+### 1. DNS プロキシの有効化方針
+
+**推奨する方法**: 段階的な展開
+
+![テスト、ステージング、本番環境へDNSプロキシを段階的に展開し、検証と監視のゲートで失敗時にトラブルシューティングまたはロールバックへ戻すフローチャート。](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-3.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-04-dns-cache-3.html)
 
 ### 2. ServiceEntry の管理
 
@@ -651,7 +344,7 @@ metadata:
     team: platform
 spec:
   hosts:
-  - api.payment-provider.com
+  - payments.example.com
   ports:
   - number: 443
     name: https
@@ -669,7 +362,7 @@ metadata:
     team: data
 spec:
   hosts:
-  - api.analytics-provider.com
+  - analytics.example.com
   ports:
   - number: 443
     name: https
@@ -680,133 +373,77 @@ spec:
 
 ### 3. DNS キャッシュ TTL の設定
 
-```yaml
-# Adjust TTL based on service characteristics
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dns-cache-ttl
-  namespace: istio-system
-spec:
-  configPatches:
-  # Static content (long TTL)
-  - applyTo: CLUSTER
-    match:
-      cluster:
-        service: cdn.static-assets.com
-    patch:
-      operation: MERGE
-      value:
-        dns_refresh_rate: 300s  # 5 minutes
+レコードの TTL、アプリケーションキャッシュ、Agent の名前テーブル、Envoy エンドポイントの更新をそれぞれ分けて観測してください。分類だけを根拠に、すべての CDN を 300 秒、すべての API クラスターを 10 秒と設定しないでください。自分で管理する DNS ゾーンでは、フェイルオーバーの目標とクエリ負荷に基づいて TTL を決めます。ServiceEntry の `exportTo` や Sidecar スコープはプロキシごとの不要なサービス検出を減らせますが、どちらもネットワークのセキュリティ境界ではありません。
 
-  # Dynamic API (short TTL)
-  - applyTo: CLUSTER
-    match:
-      cluster:
-        service: api.dynamic-service.com
-    patch:
-      operation: MERGE
-      value:
-        dns_refresh_rate: 10s  # 10 seconds
-```
+特定の DNS クラスターで失敗時の再試行間隔を設定する場合は、上記のワークロード/ホスト/ポートを限定した例を使い、有効な設定と失敗時の動作を確認してください。
 
-### 4. モニタリングメトリクス
+### 4. メトリクスの監視
+
+これらは Istio 1.31 の**サイドカー Agent**が実際に提供するメトリクスです。Prometheus がポート 15020 の `/stats/prometheus` をスクレイプし、ターゲットラベル `namespace` と `pod` を付与する構成を前提としています。ztunnel や Envoy DFP キャッシュのメトリクスと混同しないでください。
 
 ```promql
-# DNS Proxy activity
-sum(rate(envoy_dns_cache_dns_query_attempt[5m])) by (pod)
-
-# DNS Cache hit rate
-sum(rate(envoy_dns_cache_hit[5m]))
-/
-sum(rate(envoy_dns_cache_dns_query_attempt[5m]))
-* 100
-
-# DNS lookup latency
-histogram_quantile(0.99,
-  sum(rate(envoy_dns_cache_dns_query_duration_bucket[5m])) by (le)
+# Application queries handled by the sidecar agent
+sum by (namespace, pod) (
+  rate(istio_agent_dns_requests_total{namespace="default"}[5m])
 )
 
-# DNS lookup failure rate
-sum(rate(envoy_dns_cache_dns_query_failure[5m]))
-/
-sum(rate(envoy_dns_cache_dns_query_attempt[5m]))
-* 100
+# Fraction forwarded upstream; not a DNS response-cache hit/miss ratio
+100 *
+sum by (namespace, pod) (
+  rate(istio_agent_dns_upstream_requests_total{namespace="default"}[5m])
+) /
+sum by (namespace, pod) (
+  rate(istio_agent_dns_requests_total{namespace="default"}[5m])
+)
+
+# Requests for which the agent synthesized SERVFAIL after upstream exchange failures
+100 *
+sum by (namespace, pod) (
+  rate(istio_agent_dns_upstream_failures_total{namespace="default"}[5m])
+) /
+sum by (namespace, pod) (
+  rate(istio_agent_dns_upstream_requests_total{namespace="default"}[5m])
+)
+
+# Upstream request duration p99, in seconds
+histogram_quantile(0.99,
+  sum by (le, namespace, pod) (
+    rate(istio_agent_dns_upstream_request_duration_seconds_bucket{namespace="default"}[5m])
+  )
+)
 ```
 
-### 5. セキュリティに関する考慮事項
+`dns_upstream_failures_total` は、上流との通信失敗後に Agent が生成した SERVFAIL を数えます。有効な上流応答パケットで返された NXDOMAIN/SERVFAIL をすべて数えるものではありません。リクエストがない場合、比率や分位点は NaN になったり存在しなかったりします。トラフィックとスクレイプの正常性を併せて確認してください。これらの値から「キャッシュヒット率」を作り出さないでください。
 
-```yaml
-# Integrate DNS Proxy with AuthorizationPolicy
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: external-api-access
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        hosts:
-        - api.approved-partner.com  # Only approved external services
-        - cdn.trusted-cdn.com
-        ports:
-        - "443"
----
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all-external
-  namespace: default
-spec:
-  action: DENY
-  rules:
-  - to:
-    - operation:
-        notHosts:
-        - "*.svc.cluster.local"  # Deny all requests not to cluster internal
-```
+### 5. セキュリティ上の考慮事項
 
-### 6. パフォーマンスチューニング
+DNS キャプチャ、ServiceEntry の登録、VIP の割り当ては、外部通信の許可リストを強制しません。サイドカーワークロードを選択する AuthorizationPolicy が評価するのは、そのワークロードへの**インバウンド**トラフィックであり、外向きの DNS/HTTPS リクエストではありません。Namespace 全体に適用する `DENY/notHosts` は、内部通信や HTTP 属性のない TCP 通信までブロックする可能性があります。
 
-```yaml
-# Optimization for high performance environments
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    defaultConfig:
-      proxyMetadata:
-        ISTIO_META_DNS_CAPTURE: "true"
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
-      concurrency: 4  # Envoy worker thread count
-  components:
-    pilot:
-      k8s:
-        resources:
-          requests:
-            cpu: 500m
-            memory: 2Gi
-          limits:
-            cpu: 2000m
-            memory: 4Gi
-        hpaSpec:
-          minReplicas: 2
-          maxReplicas: 5
-```
+適切な CNI/NetworkPolicy、ファイアウォール/セキュリティグループの境界を使って外向き通信を制御してください。必要な場合は、迂回できない Egress Gateway を経由させ、ゲートウェイで認可します。TLS パススルー経路では HTTP Host を検査できないため、SNI/宛先の制約と証明書検証を別途扱う必要があります。[Egress Control（外向き通信の制御）](../traffic-management/11-egress-control.md) に記載された前提条件をすべて確認してください。
+
+### 6. パフォーマンスの調整
+
+ボトルネックを変更する前に、DNS 負荷、失敗数、名前解決時間に加え、Istiod の push 遅延とサイドカー Agent/Envoy の CPU・メモリを測定してください。Envoy のワーカー並列数は Agent の Go DNS サーバーの規模を決めません。Istiod のレプリカや HPA を増やすだけで、あらゆる DNS 経路が高速化するわけではありません。
+
+アプリケーションキャッシュと ndots、DNS TTL、ServiceEntry の件数と可視性、プロキシレプリカ間の定期クエリ負荷、障害復旧中の古いエンドポイントや接続の挙動をテストしてください。測定せずに CPU/メモリ/HPA の値を固定しても、本番向けの最適化にはなりません。
 
 ## 参考資料
 
 ### 公式ドキュメント
-- [Istio DNS Proxy](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
-- [Envoy DNS Cache](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery#dns-cache)
-- [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [Istio DNS プロキシ](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Envoy DNS キャッシュ](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+- [ServiceEntry の仕様](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+
+- [Istio 1.31 DNS サーバー](https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/dns/client/dns.go)
+- [Istio 1.31 IP 割り当てとプレフィックス](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/features/pilot.go)
+- [Istio 1.31 割り当て status](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/controllers/ipallocate/ipallocate.go)
+- [Istio 1.31 DNS クラスターの生成](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_builder.go)
+- [Istio 1.31 メッシュの既定値](https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/config/mesh/mesh.go)
+- [Istio 1.31 Agent の DNS メトリクス](https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/dns/client/monitoring.go)
+- [Istio 1.31 Agent の status エンドポイント](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/cmd/pilot-agent/status/server.go)
+- [Envoy Cluster API](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
 
 ### 関連ドキュメント
-- [Istio アーキテクチャ - DNS 処理メカニズム](../03-architecture.md#dns-processing-mechanism)
-- [ServiceEntry](../traffic-management/12-service-entry.md)
-- [Egress コントロール](../traffic-management/11-egress-control.md)
+- [Istio アーキテクチャ - DNS 処理の仕組み](../03-architecture.md)
+- [ServiceEntry の仕様](../traffic-management/12-service-entry.md)
+- [Egress Control（外向き通信の制御）](../traffic-management/11-egress-control.md)

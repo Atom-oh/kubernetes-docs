@@ -1,6 +1,6 @@
 # Observabilidad de Linkerd
 
-> **Última actualización**: 11 de septiembre de 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Ejemplos de Prometheus Operator comprobados con 0.93.1
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 / charts 2026.10.1 · Ejemplos de Prometheus Operator comprobados con 0.94.1
 
 Linkerd expone métricas del proxy y de los protocolos; Viz añade Prometheus, metrics-api, tap, tap-injector y el panel web. El chart actual de Viz **no** instala Grafana. El rastreo distribuido también necesita un colector/backend configurado, contexto de traza y muestreo; no se habilita instalando un panel de métricas.
 
@@ -264,7 +264,7 @@ spec:
       replacement: linkerd-controller
 ```
 
-El segundo PodMonitor cubre los tres endpoints de métricas del **Deployment destination**. No cubre todos los controladores. Para otros componentes, use sus puertos declarados reales:
+El segundo PodMonitor cubre los tres endpoints de métricas del **Deployment de destino**. No cubre todos los controladores. Para otros componentes, use sus puertos declarados reales:
 
 | Componente | Nombre del puerto de métricas |
 |---|---|
@@ -272,7 +272,7 @@ El segundo PodMonitor cubre los tres endpoints de métricas del **Deployment des
 | Inyector del proxy | injector-admin |
 | Componentes de Viz | admin |
 
-El Service destination no expone un puerto de Service `admin-http`, por lo que un ServiceMonitor que seleccione ese puerto inexistente no descubre ningún endpoint de ese tipo. Use PodMonitors para los puertos de contenedor declarados o aprovisione deliberadamente un Service adecuado. No configure recopilaciones directas y PodMonitors duplicados para los mismos destinos.
+El Service de destino no expone un puerto de Service `admin-http`, por lo que un ServiceMonitor que seleccione ese puerto inexistente no descubre ningún endpoint de ese tipo. Use PodMonitors para los puertos de contenedor declarados o aprovisione deliberadamente un Service adecuado. No configure recopilaciones directas y PodMonitors duplicados para los mismos destinos.
 
 La federación es otra opción. En el chart de Viz seleccionado, el puerto del Service de Prometheus se llama **admin**, y el endpoint es `/federate`. Conserve las etiquetas exportadas, seleccione los trabajos previstos y autorice el ServiceAccount del cliente de la malla frente al Server `prometheus-admin` de Viz. Un ejemplo genérico del proyecto original que nombre `admin-http` no coincide con este chart.
 
@@ -828,7 +828,7 @@ spec:
 
 La alerta del proxy comprueba **Pods previstos en ejecución sin un proxy en ejecución**, no simplemente la presencia de inyección. Contempla tanto sidecars normales como sidecars nativos de inicialización e ignora los Pods que no estén marcados como dependientes de la malla. La ausencia de recopilación de kube-state-metrics puede aun así eliminar el inventario esperado; supervise la salud de la recopilación por separado.
 
-El umbral de latencia es de 1000ms de TTFB, no de duración total de la solicitud. Los umbrales de error basados en clasificación deben ajustarse a su SLI. `up == 0` detecta destinos descubiertos que fallan, no todos los destinos ausentes del descubrimiento.
+El umbral de latencia es de 1000 ms de TTFB, no de duración total de la solicitud. Los umbrales de error basados en clasificación deben ajustarse a su SLI. `up == 0` detecta destinos descubiertos que fallan, no todos los destinos ausentes del descubrimiento.
 
 Inicie una investigación validando la salud de la recopilación y el alcance del tráfico seleccionado. Después compare estadísticas de cargas de trabajo y Services, inspeccione las rutas pertinentes, utilice observaciones limitadas de Tap y registros, y compruebe la identidad y las políticas cuando corresponda. Diagnostique y corrija la causa, luego reproduzca la solicitud y verifique la recuperación. Una secuencia de comandos de diagnóstico por sí sola no resuelve un incidente.
 
@@ -839,7 +839,7 @@ Inicie una investigación validando la salud de la recopilación y el alcance de
 - [Métricas del proxy](https://linkerd.io/docs/reference/proxy-metrics/) y [configuración del proxy](https://linkerd.io/docs/reference/proxy-configuration/)
 - [Rastreo](https://linkerd.io/docs/tasks/distributed-tracing/)
 - [Implementación publicada del momento de registro de las métricas](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
-- [Configuración publicada de recopilación de Viz](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
-- [Colección publicada de paneles de Grafana](https://github.com/linkerd/linkerd2/tree/edge-26.9.1/grafana/dashboards)
+- [Configuración publicada de recopilación de Viz](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
+- [Colección publicada de paneles de Grafana](https://github.com/linkerd/linkerd2/tree/edge-26.10.1/grafana/dashboards)
 - [Métricas de Pods de kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
 - [Contexto de traza W3C](https://www.w3.org/TR/trace-context/)

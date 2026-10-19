@@ -1,6 +1,6 @@
 # Parte 1: Requisitos previos
 
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 Hay varias formas de crear un clúster de Amazon EKS. En este capítulo, aprenderemos a crear un clúster de EKS con diversas herramientas y métodos.
 

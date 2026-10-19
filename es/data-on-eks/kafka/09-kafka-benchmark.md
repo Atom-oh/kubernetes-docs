@@ -2,15 +2,14 @@
 
 > **Experimento informado**: 2 de septiembre de 2026, 02:07–02:36 UTC\
 > **Revisión actualizada**: 12 de septiembre de 2026\
-> **Versiones del experimento**: Kafka 4.3.1, EKS Kubernetes 1.36; tres pods combinados de broker/controller
+> **Versiones del experimento**: Kafka 4.3.1, EKS Kubernetes 1.36; tres pods con roles combinados de broker y controlador
 
 Esta página conserva las tablas de una única ejecución informadas en PR #166 y revisa sus
 unidades, comparaciones y procedimiento de reproducción. La telemetría sin procesar original y el hash
 del payload no están incluidos en el informe del repositorio. Esta revisión no volvió a
 ejecutar el experimento de AWS ni confirmó de forma independiente sus mediciones históricas.
 
-Los datos sugieren restricciones de almacenamiento, caché y clientes que vale la pena probar. No
-**establecen un límite universal de 130–135 MiB/s para RF3 durante varias horas**. En particular,
+Los datos apuntan a posibles límites del almacenamiento, la caché y el cliente que conviene comprobar, pero **no demuestran que exista un límite universal de 130–135 MiB/s para RF3 durante varias horas**. En particular,
 la comparación de RF también cambia `acks`, y la comparación de lotes cambia linger
 y la duración de la ejecución. Los cocientes observados no deben presentarse como efectos causales aislados.
 
@@ -33,7 +32,7 @@ y la duración de la ejecución. Los cocientes observados no deben presentarse c
 | Elemento | Valor |
 |---|---|
 | Clúster | Amazon EKS, Kubernetes 1.36, ap-northeast-2 (Seúl), nodos gestionados por Karpenter |
-| Brokers | 3 × `apache/kafka:4.3.1` (distribución Kafka 4.3.1, OpenJDK 21.0.11 informado), **modo combinado KRaft** (cada pod es broker + controller), StatefulSet, sin operador |
+| Brokers | 3 × `apache/kafka:4.3.1` (distribución Kafka 4.3.1, OpenJDK 21.0.11 informado), **modo combinado KRaft** (cada pod cumple los roles de broker y controlador), StatefulSet, sin operador |
 | Nodos de broker | 3 × **m5.xlarge** bajo demanda (4 vCPU, 16 GiB), todos en ap-northeast-2b, un broker por nodo (`podAntiAffinity`), nodos nuevos del NodePool `system` de Karpenter |
 | Recursos de los pods de broker | Solicitudes: 3 vCPU / 10 Gi; límites: 4 vCPU / 12 Gi; `KAFKA_HEAP_OPTS=-Xms4G -Xmx4G` (la memoria restante también sirve para asignaciones nativas/fuera del heap y la caché de páginas) |
 | Almacenamiento de los brokers | Un PVC **gp3 de 100 GiB** por broker (EBS CSI, StorageClass `gp3`), rendimiento predeterminado de gp3: **3,000 IOPS / 125 MiB/s** (independiente del tamaño) |
@@ -43,7 +42,7 @@ y la duración de la ejecución. Los cocientes observados no deben presentarse c
 | Generador de carga | Un pod `kafka-client` (misma imagen) en un nodo **m5.large** (2 vCPU, 8 GiB) de la misma AZ, límite de CPU de cgroup **1.9**, `KAFKA_HEAP_OPTS=-Xms2G -Xmx2G`; línea base de red de m5.large de 0.75 Gbps (ráfaga de 10 Gbps) |
 | Herramientas | `kafka-producer-perf-test.sh`, `kafka-consumer-perf-test.sh` incluidas en apache/kafka 4.3.1 |
 | Ruta de red | De pod a pod dentro de una AZ, PLAINTEXT (sin TLS ni SASL) |
-| Topics | Topic nuevo para cada prueba, 6 particiones; RF3 / `min.insync.replicas=2` salvo indicación contraria (pruebas RF1: RF1 / min.isr=1); `retention.bytes=-1` |
+| Temas | Un tema nuevo para cada prueba, 6 particiones; RF3 / `min.insync.replicas=2` salvo indicación contraria (pruebas RF1: RF1 / min.isr=1); `retention.bytes=-1` |
 | Configuración del productor de prueba | `linger.ms=5`, `batch.size=65536`, `buffer.memory=67108864` (64 MiB), `compression.type=none` salvo indicación contraria |
 | Costo por hora | 3 × m5.xlarge bajo demanda a $0.236/h + 3 × gp3 de 100 GiB a $0.0912/GB-mes (región de Seúl, API de precios, 2026-09) |
 
@@ -53,7 +52,7 @@ no se investigó hasta encontrar la causa raíz. Mantén esa distinción.
 
 Se informó que todos los brokers y el generador de carga estaban en una AZ, usando PLAINTEXT
 sin SASL ni Strimzi Operator. Esta no es una comparación de producción en tres AZ.
-TLS, el tráfico entre AZ, diferentes límites de nodos/almacenamiento y controllers aislados requieren
+TLS, el tráfico entre AZ, diferentes límites de nodos/almacenamiento y controladores aislados requieren
 sus propias mediciones.
 
 ## Semántica del payload y las herramientas
@@ -229,7 +228,7 @@ se obtuvieron 20,000 líneas válidas de 1,008 bytes con un 63.17% de relleno, p
 de 15.92× y 6.53×. Ese es un corpus nuevo, no un reemplazo de la medición histórica;
 fija la imagen/la implementación de AWK y conserva el hash del payload.
 
-Con la compresión del topic configurada como `producer`, se conserva la elección del códec en lugar
+Con la compresión del tema configurada como `producer`, se conserva la elección del códec en lugar
 de recomprimir intencionalmente a otro códec configurado. La validación del broker y otros procesamientos
 siguen consumiendo CPU. La menor latencia informada con compresión es compatible con menos bytes almacenados/
 transferidos, pero se necesitan datos sobre la CPU del cliente y las E/S específicas de cada fase
@@ -291,7 +290,7 @@ de recursos específicos de cada fase para comparar un intervalo común.
 
 ## 7. ¿Cuánto tiempo es suficiente?
 
-Las confirmaciones de Kafka no implican un fsync por registro en cada réplica. Las adiciones pueden
+Las confirmaciones de Kafka no implican un fsync por registro en cada réplica. Las escrituras pueden
 acumularse en la caché de páginas mientras la escritura diferida se ejecuta de forma asíncrona; esto no
 convierte la replicación en una garantía frente a todos los fallos correlacionados.
 
@@ -328,7 +327,7 @@ un broker más potente demuestran automáticamente qué recurso limitó la ejecu
 ## Cálculo de costos, no una factura ni un precio actual
 
 Usando las tarifas históricas del informe, `$0.236/broker-hour` y
-`$0.0912/GB-month`, y sus supuestos de atribución:
+`$0.0912/GB-mes`, y sus supuestos de atribución:
 
 | Cálculo | Resultado |
 | --- | --- |
@@ -604,10 +603,10 @@ sha256sum /tmp/results/payload-1k.txt
 wc -l -c /tmp/results/payload-1k.txt
 ```
 
-El siguiente `runs.sh` también se ejecuta dentro del pod del cliente. Crea y carga previamente los topics,
-escribe logs separados, comprueba el recuento final de éxitos del productor y usa un tiempo límite
-de pared de 20 minutos, con 30 segundos de gracia antes de terminar. `--timeout` del consumidor
-es un límite de inactividad, no un límite de tiempo de pared.
+El siguiente `runs.sh` también se ejecuta dentro del pod del cliente. Crea y carga previamente los temas,
+escribe logs separados, comprueba el recuento final de éxitos del productor y usa un límite de tiempo total
+de 20 minutos, con 30 segundos de gracia antes de terminar. `--timeout` del consumidor
+es un límite de inactividad, no de duración total.
 
 ```bash
 #!/bin/bash
@@ -664,13 +663,13 @@ printf '%s\n' "$F_TOPIC" "$B_TOPIC" "$E_TOPIC" > "$BENCH_RESULTS/topics-$RUN_ID.
 ```
 
 La plantilla muestra cargas de trabajo similares a F1, B1 y E2/E3. Para las demás filas,
-usa topics nuevos, el RF/minISR, el recuento, acks, el códec y los ajustes de batch/linger de la tabla;
+usa temas nuevos, el RF/minISR, el recuento, acks, el códec y los ajustes de batch/linger de la tabla;
 la función `produce` acepta propiedades Kafka adicionales después de sus siete
 argumentos obligatorios. Para F6, son `batch.size=262144 linger.ms=10`. Para F5, ejecuta dos
 productores de cinco millones de registros con logs separados y captura un intervalo de tiempo común.
 Para E4, registra tanto la reproducción con cliente compartido como una variante controlada que use
 capacidad de generador de carga separada. Deja que se produzca la escritura diferida/vaciado entre ejecuciones
-y verifica el contenido de los topics y los errores, especialmente para acks=0. Nunca vuelvas a etiquetar
+y verifica el contenido de los temas y los errores, especialmente para acks=0. Nunca vuelvas a etiquetar
 una ejecución finita completada como estado estable solo porque alcanzó la cantidad solicitada.
 
 ### Muestrea el dispositivo de bloques correcto y el intervalo real
@@ -762,4 +761,4 @@ la sintaxis de shell y la representación de los diagramas. No realizó un nuevo
 - [Fundamentos de Kafka](./01-kafka-fundamentals.md)
 - [Operaciones de Kafka](./03-kafka-operations.md)
 - [Buenas prácticas](./08-best-practices.md)
-- [Cuestionario sobre topics](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Cuestionario sobre temas](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)

@@ -1,8 +1,8 @@
-# vLLM デプロイと最適化
+# vLLM のデプロイと最適化
 
 > **レビュー基準**: vLLM 0.29.0、CUDA 12.9 イメージバリアント。履歴上の 0.6.4.post1 ベンチマークは分離
 > **確認した最新リリース**: vLLM 0.31.0（2026年10月5日）、2026年10月12日に確認
-> **最終更新**: October 12, 2026
+> **最終更新日**: 2026年10月12日
 
 vLLM は、生成モデルおよびサポート対象のマルチモーダル／プーリングワークロード向けのオープンソース推論エンジンです。「Vector Language Model」と展開してはいけません。この章では、特定リリースと EKS の運用境界を扱い、普遍的な高速化やモデルサポートを保証するものではありません。
 
@@ -21,7 +21,7 @@ v0.31.0 では:
 
 PyPI には Python >=3.10、<3.15 が必要ですが、タグ付き GPU ガイドでは 3.10–3.13 が記載されています。これは、すべての Python/PyTorch/CUDA の組み合わせを保証するものではありません。NVIDIA パスには compute capability 7.5 以降が必要であり、V100（7.0）は除外されます。カーネル、dtype、量子化により、追加のデバイス要件が課される場合があります。
 
-[AI/ML workloads](01-ai-ml-workloads.md) の AMI／driver／device-plugin 条件に従ってください。CUDA イメージは、そのまま使える Trainium/Inferentia デプロイではありません。Neuron またはその他のプラットフォームプラグインは個別に検証してください。g5.2xlarge や 50GB を普遍的な最小要件とみなすのではなく、モデル、キャッシュ、並行性に合わせて GPU、RAM、ディスクを選定してください。
+[AI/ML ワークロード](01-ai-ml-workloads.md) の AMI／driver／device-plugin 条件に従ってください。CUDA イメージは、そのまま使える Trainium/Inferentia デプロイではありません。Neuron またはその他のプラットフォームプラグインは個別に検証してください。g5.2xlarge や 50GB を普遍的な最小要件とみなすのではなく、モデル、キャッシュ、並行性に合わせて GPU、RAM、ディスクを選定してください。
 
 ## vLLM の概要
 
@@ -56,7 +56,7 @@ vllm serve /models/target \
   --speculative-config '{"model":"/models/draft","method":"draft_model","num_speculative_tokens":5}'
 ```
 
-これは構文を示すものであり、それらのモデルファイルを提供したり高速化を保証したりするものではありません。draft acceptance、追加メモリ、通信コストにより、利得が相殺される場合があります。
+これは構文を示すものであり、それらのモデルファイルを提供したり高速化を保証したりするものではありません。draft token の採用率、追加メモリ、通信コストにより、利得が相殺される場合があります。
 
 起動時の LoRA は --enable-lora --lora-modules adapter=/models/adapter で登録します。runtime のロード／アンロードには、別途 VLLM_ALLOW_RUNTIME_LORA_UPDATING の opt-in と制限された operator パスが必要です。--enable-auto-tool-choice には適切な --tool-call-parser が必要です。マルチモーダル URL にも SSRF 制御、許可ドメイン、download/decode 制限が必要です。
 
@@ -80,13 +80,13 @@ cached_tokens は、並行 request 全体で保持される token を合計し�
 
 p4d.24xlarge は 40GB A100 を使用します。80GB A100 の p4de instance と区別してください。p5/g6/g6e やその他の選択肢は、region の capacity、driver、workload 要件と照らし合わせて比較してください。GPU あたり CPU core を 4 個、または RAM を weight の 2 倍とする固定ルールは、測定の代わりにはなりません。
 
-## EKS Infrastructure Configuration
+## EKS インフラストラクチャの設定
 
 ![workload に合わせて選択された、例示的な EKS node、model-storage、image、permission のパス。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html)
 
-## Storage と Model の準備
+## ストレージとモデルの準備
 
 FSx for Lustre は選択肢の一つであり、必須でも普遍的に最適でもありません。ロード時間、コスト、並行性の観点から、local NVMe/EBS、再利用可能な cache、object storage、shared filesystem を比較してください。emptyDir は container restart 後には存続できますが、Pod の削除／再作成後には存続しません。
 
@@ -94,9 +94,9 @@ FSx for Lustre は選択肢の一つであり、必須でも普遍的に最適�
 
 以下の例では、token を使わずに public Qwen3-0.6B の検証済み revision を使用します。emptyDir cache は Pod の再作成後に再度 download されます。multi-node worker には、同一の model revision/path が必要です。
 
-## vLLM Deployment
+## vLLM のデプロイ
 
-### Deployment Architecture
+### デプロイアーキテクチャ
 
 次の図は、EKS で vLLM をデプロイする主な 2 つの architecture を示します:
 
@@ -104,7 +104,7 @@ FSx for Lustre は選択肢の一つであり、必須でも普遍的に最適�
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html)
 
-### Single-GPU 設定例
+### 単一 GPU の設定例
 
 これは **GPU 実行前にレビューするための template** です。namespace と GPU driver/plugin を準備してください。digest は v0.29.0-cu129 の amd64 artifact を識別し、model revision は確認済みの public Qwen3-0.6B snapshot を識別します。この audit では image pulling、non-root 実行、kernel compilation、inference は実行しておらず、環境での検証が必要です。
 
@@ -232,7 +232,7 @@ spec:
       targetPort: http
 ```
 
-### Multi-Node Sharding と Independent Replica の比較
+### マルチノードのシャーディングと独立レプリカの比較
 
 1つの model replica を sharding するには、TP/PP と Ray または multiprocessing の coordination が必要です。独立した API-server replica はそれぞれ model をロードして horizontal scaling を提供します。これらは異なる設計です。
 
@@ -251,13 +251,13 @@ vllm serve /models/model --distributed-executor-backend mp \
 
 これらの command は node、model file、connectivity を作成しません。Kubernetes には、適切な同時 worker 作成、readiness 前の DNS、Pod ごとの VLLM_HOST_IP、internal connectivity、shared memory が必要です。Ray では、--distributed-executor-backend ray を使用して API entry point を 1 つ起動する前に、機能する cluster と互換性のある Ray dependency が必要です。[Ray](ray/README.md) を参照してください。internal communication port は private に保ってください。
 
-## Performance Optimization
+## パフォーマンスの最適化
 
 ![現在の memory、offload、scheduler、communication の tuning には workload の測定が必要です。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html)
 
-### Memory、Scheduler、Communication のオプション
+### メモリ、スケジューラー、通信の設定
 
 0.29.0 の CacheConfig は gpu_memory_utilization のデフォルトを 0.92 としています。これは process VRAM 全体の hard cap ではありません。例では明示的に 0.80 を選択しています。--kv-cache-memory-bytes は自動 KV-cache sizing を override するため、option の優先順位を確認してください。
 
@@ -265,7 +265,7 @@ vllm serve /models/model --distributed-executor-backend mp \
 
 EFA には、サポート対象の EC2 device、AMI/plugin/network、AWS OFI NCCL/libfabric が必要です。架空の NCCL_IB_ENABLE_RDMA flag や任意の mlx5/GID 設定を、普遍的なデフォルトとしてコピーしないでください。現在の NVIDIA/PyTorch variable と実際の backend log を確認してください。single-node NCCL test は multi-node EFA performance を証明しません。
 
-## 履歴上の測定: Single L4 GPU 上の Qwen2.5-7B
+## 履歴上の測定: 単一 L4 GPU 上の Qwen2.5-7B
 
 これは、[2026年9月4日の repository commit](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106) で報告された履歴上の測定です。この audit では raw request result/server log または完全な client artifact は見つからず、experiment を再実行していません。報告された数値は保存されており、現在の 0.29.0 performance や独立して再現された結果として再分類していません。
 
@@ -283,7 +283,7 @@ EFA には、サポート対象の EC2 device、AMI/plugin/network、AWS OFI NCC
 ### 再現
 
 ```yaml
-# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+# NodePool (Karpenter) - dedicated, deleted after the run; nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata: { name: bench-gpu }
@@ -353,13 +353,13 @@ Client aggregate throughput は、completion-token count を測定済み wall ti
 
 これは 1 つの model、1 つの precision（bf16）、1 つの GPU type、1 つの context length における単一実行（n=1）です。一般的な vLLM/L4 performance の主張ではなく、較正された 1 つの data point として扱ってください。client は cluster 内（別の non-GPU node）で実行されたため、network latency は external caller ではなく intra-cluster hop を反映します。ここでの latency は、time-to-first-token（TTFT）ではなく完全な end-to-end HTTP response time です。streaming はテストされていません。prefix caching、speculative decoding、FP8、multi-GPU tensor parallelism（いずれもこのページの前半で説明）は実施されていません。完全な再現には欠落している execution artifact と環境詳細が必要です。これらの数値を異なる model size、GPU、prompt length に外挿しないでください。
 
-## Monitoring と Logging
+## 監視とログ
 
 ![API port 8000 の実際の metric、および分離された logging/access boundary。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html)
 
-### Metrics と Logs
+### メトリクスとログ
 
 デフォルトの /metrics endpoint は API の port 8000 を使用します。別の 8001 port や --enable-metrics=true を作り出さないでください。ServiceMonitor では Service label、named port、namespace selection を一致させてください。
 
@@ -374,19 +374,19 @@ sum by (model_name) (vllm:num_requests_waiting)
 
 vllm:kv_cache_usage_perc は、1 が 100% を意味する ratio であり、total GPU-memory bytes ではありません。gateway error/cancellation を success counter とともに観測し、healthy で idle な期間を low-throughput outage と呼ばないでください。実際の endpoint 名／label を検証してください。CRI framing と application log を区別し、無差別な prompt/output/token logging を避けてください。
 
-## Autoscaling
+## オートスケーリング
 
 ![検証済みの metric、単一の Pod scaling owner、independent replica、分離された node capacity owner。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html)
 
-### Autoscaling と Availability
+### オートスケーリングと可用性
 
 HPA/KEDA で independent replica を scale することは、sharded model の worker group を scale することとは異なります。StatefulSet replica を増やしても、TP/PP は自動的に再設定されません。adapter request/queue signal を検証し、CPU request を設定せずに CPU-utilization HPA を使用しないでください。同じ capacity に対する Karpenter/Cluster Autoscaler の競合する ownership を避けてください。
 
 PDB は一部の voluntary eviction を制約しますが、すべての failure を防ぐものではありません。independent replica は AZ をまたいで配置できます。communication-heavy な TP/PP group を AZ 間に配置することには、別途 latency/cost の影響があります。interruption-free update を主張する前に、model loading、warmup、draining、in-flight stream、spare GPU を検証してください。
 
-## Security Configuration
+## セキュリティ設定
 
 --api-key はすべての endpoint を保護するわけではありません。この version の middleware は /v1、/v2、/inference、/cohere prefix を保護します。/invocations、/metrics、および一部の operational endpoint には追加の保護が必要です。認証済み gateway では、必要な path/method だけを許可してください。distributed communication は trusted network に制限してください。CORS は authentication ではありません。
 
@@ -394,15 +394,15 @@ runtime LoRA、remote model code、マルチモーダル URL はそれぞれ、t
 
 secret は file として提供し、Pod/container securityContext field を正しく配置してください。NetworkPolicy selector、DNS、scrape direction、internal traffic を実際の configuration と一致させてください。Pod annotation で API-server auditing を有効にすることはできません。Secret の RequestResponse body を log に記録しないでください。EKS control-plane audit と application access log は別物です。
 
-## Client Integration
+## クライアント連携
 
 ![認証済み gateway の allowlist と分離された operator access により、internal vLLM endpoint を保護します。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html)
 
-### Client Request
+### クライアントリクエスト
 
-デプロイ／readiness の検証後、認可された developer は kubectl port-forward -n ml-inference service/vllm-demo 8000:8000 を使用できます。デフォルトの localhost binding を維持してください。この local example は production gateway authentication の代替ではありません。
+デプロイ／readiness の検証後、認可された developer は `kubectl port-forward -n ml-inference service/vllm-demo 8000:8000` を使用できます。デフォルトの localhost binding を維持してください。この local example は production gateway authentication の代替ではありません。
 
 ```python
 import json

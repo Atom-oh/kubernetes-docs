@@ -3,12 +3,33 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { prepareBatch, translateBatch, refreshBatch, publishBatch, checkpointBatch, statePath, batchBranch } from '../translation-batch.mjs'
 
 const source = '# Source\n\nA complete paragraph about Kubernetes Pod scheduling and networking.\n'
 const translated = source.replace('Source', 'Translated')
+const nativeReviewPath = 'results/Native-GitBook-Review-Progress-20261018.json'
+
+function nativeReview(f, overrides = {}) {
+  return {
+    status: 'IN_PROGRESS',
+    locales: {
+      cn: {
+        reviews: {
+          'cn/topic/page.md': {
+            sourcePath: 'en/topic/page.md',
+            sourceBlob: f.git('rev-parse', 'HEAD:en/topic/page.md'),
+            targetSha256: createHash('sha256').update(f.read('cn/topic/page.md')).digest('hex'),
+            completePageComparison: true, score: 96, ...overrides
+          }
+        },
+        rejected: []
+      }
+    }
+  }
+}
 
 test('full coverage queues every missing English page in all three locales and resumes validated outputs', async t => {
   const f = fixture(t, {
@@ -70,6 +91,26 @@ test('a completed batch does not create a metadata-only diff after unrelated mai
   assert.equal(f.git('diff', '--name-only'), '')
 })
 
+test('unchanged completed state retains its committed key order and formatting', t => {
+  const f = fixture(t, {
+    'en/README.md': source, 'en/a/page.md': source,
+    'cn/README.md': translated, 'cn/a/page.md': translated
+  })
+  const sourceBlob = f.git('rev-parse', 'HEAD:en/README.md')
+  const original = JSON.stringify({
+    version: 1,
+    sources: { 'cn/README.md': sourceBlob, 'cn/a/page.md': sourceBlob },
+    pending: [], sourceCommit: f.before
+  }, null, 4) + '\n'
+  f.write(statePath, original)
+  f.commit()
+  f.write('unrelated.txt', 'main advanced\n')
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root, { fillMissing: true, langs: ['cn'] }), [])
+  assert.equal(f.read(statePath), original)
+  assert.equal(f.git('diff', '--name-only'), '')
+})
+
 test('fresh pending translations survive main advancement and identical reruns avoid model calls', t => {
   const f = fixture(t)
   f.git('checkout', '-qb', 'pending')
@@ -120,6 +161,166 @@ test('reviewed translations on main supersede obsolete draft results and retry q
   assert.deepEqual(prepareBatch(f.root, { refs: [oldDraft], before: f.before }), [])
   assert.match(f.read('cn/topic/page.md'), /Reviewed main/)
   assert.deepEqual(f.state().pending, [])
+})
+
+test('committed native whole-page evidence protects partial manual reviews from old drafts', t => {
+  const f = fixture(t)
+  f.git('checkout', '-qb', 'obsolete-draft')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Older draft'))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+  }))
+  const oldDraft = f.commit()
+  f.git('checkout', '-q', 'main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Native reviewed main'))
+  f.write(nativeReviewPath, JSON.stringify(nativeReview(f)))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+  }))
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root, { refs: [oldDraft], before: f.before }), [])
+  assert.match(f.read('cn/topic/page.md'), /Native reviewed main/)
+  assert.equal(f.state().sources['cn/topic/page.md'], f.git('rev-parse', 'HEAD:en/topic/page.md'))
+  assert.deepEqual(f.state().pending, [])
+})
+
+test('native evidence protects new main translations when a running batch refreshes', t => {
+  const f = fixture(t)
+  f.git('checkout', '-qb', 'native-reviewed-main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Native reviewed main'))
+  f.write(nativeReviewPath, JSON.stringify(nativeReview(f)))
+  const latest = f.commit()
+  f.git('checkout', '-q', 'main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Older working result'))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+  }))
+  refreshBatch(f.root, latest)
+  assert.match(f.read('cn/topic/page.md'), /Native reviewed main/)
+  assert.equal(f.state().sources['cn/topic/page.md'], f.git('rev-parse', 'HEAD:en/topic/page.md'))
+  assert.deepEqual(f.state().pending, [])
+})
+
+const tableSource = `${source}\n| Item | Role |\n| --- | --- |\n| startup | resizer |\n`
+const validTableTranslation = tableSource.replace('Source', 'Translated')
+const invalidTableTranslation = validTableTranslation.replace('| startup | resizer |\n', '')
+
+function certifyInvalidTable(f) {
+  f.write('cn/topic/page.md', invalidTableTranslation)
+  f.write(nativeReviewPath, JSON.stringify(nativeReview(f)))
+  f.write(statePath, JSON.stringify({
+    version: 1,
+    sources: { 'cn/topic/page.md': f.git('rev-parse', 'HEAD:en/topic/page.md') },
+    pending: [], sourceCommit: f.before
+  }))
+  return f.commit()
+}
+
+test('current native score and hashes cannot remove a structurally invalid page from retries', t => {
+  const f = fixture(t, { 'en/topic/page.md': tableSource, 'cn/topic/page.md': validTableTranslation })
+  certifyInvalidTable(f)
+  assert.deepEqual(prepareBatch(f.root), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+  assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+  assert.equal(f.read('cn/topic/page.md'), invalidTableTranslation)
+})
+
+test('importing the same invalid draft cannot clear a native contract retry', t => {
+  const f = fixture(t, { 'en/topic/page.md': tableSource, 'cn/topic/page.md': validTableTranslation })
+  f.git('checkout', '-qb', 'older-invalid-draft')
+  f.write('cn/topic/page.md', invalidTableTranslation)
+  f.write(statePath, JSON.stringify({
+    version: 1,
+    sources: { 'cn/topic/page.md': f.git('rev-parse', 'HEAD:en/topic/page.md') },
+    pending: [], sourceCommit: f.before
+  }))
+  const draft = f.commit()
+  f.git('checkout', '-q', 'main')
+  certifyInvalidTable(f)
+  assert.deepEqual(prepareBatch(f.root, { refs: [draft] }), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+  assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+})
+
+test('a structurally repaired draft can replace a rejected native snapshot', t => {
+  const f = fixture(t, { 'en/topic/page.md': tableSource, 'cn/topic/page.md': validTableTranslation })
+  certifyInvalidTable(f)
+  f.git('checkout', '-qb', 'repaired-draft')
+  f.write('cn/topic/page.md', validTableTranslation)
+  const repaired = f.commit()
+  f.git('checkout', '-q', 'main')
+  assert.deepEqual(prepareBatch(f.root, { refs: [repaired] }), [])
+  assert.equal(f.read('cn/topic/page.md'), validTableTranslation)
+  assert.equal(f.state().sources['cn/topic/page.md'], f.git('rev-parse', 'HEAD:en/topic/page.md'))
+  assert.deepEqual(f.state().pending, [])
+})
+
+test('refreshing the same invalid working output preserves native contract retries', t => {
+  const f = fixture(t, { 'en/topic/page.md': tableSource, 'cn/topic/page.md': validTableTranslation })
+  f.git('checkout', '-qb', 'invalid-native-main')
+  const latest = certifyInvalidTable(f)
+  f.git('checkout', '-q', 'main')
+  f.write('cn/topic/page.md', invalidTableTranslation)
+  f.write(statePath, JSON.stringify({
+    version: 1,
+    sources: { 'cn/topic/page.md': f.git('rev-parse', 'HEAD:en/topic/page.md') },
+    pending: [], sourceCommit: f.before
+  }))
+  refreshBatch(f.root, latest)
+  assert.equal(f.read('cn/topic/page.md'), invalidTableTranslation)
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+  assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+})
+
+test('native recovery validates the committed source and validator rather than working edits', t => {
+  const f = fixture(t, { 'en/topic/page.md': tableSource, 'cn/topic/page.md': validTableTranslation })
+  certifyInvalidTable(f)
+  f.write('en/topic/page.md', invalidTableTranslation.replace('Translated', 'Source'))
+  f.write('scripts/validate-translation.py', 'import sys\nsys.exit(0)\n')
+  assert.deepEqual(prepareBatch(f.root), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+  assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+})
+
+test('stale, incomplete and low-scoring native evidence leaves the retry queue intact', async t => {
+  const invalid = {
+    'changed source': f => ({ sourceBlob: f.before }),
+    'changed target': () => ({ targetSha256: '0'.repeat(64) }),
+    'wrong source path': () => ({ sourcePath: 'en/another/page.md' }),
+    'incomplete comparison': () => ({ completePageComparison: false }),
+    'low score': () => ({ score: 84 }),
+    'string score': () => ({ score: '96' })
+  }
+  for (const [name, change] of Object.entries(invalid)) {
+    await t.test(name, t => {
+      const f = fixture(t)
+      f.write(nativeReviewPath, JSON.stringify(nativeReview(f, change(f))))
+      f.write(statePath, JSON.stringify({
+        version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+      }))
+      f.commit()
+      assert.deepEqual(prepareBatch(f.root), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+      assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+      assert.deepEqual(f.state().pending, ['cn/topic/page.md'])
+    })
+  }
+})
+
+test('uncommitted native reports and rejected pages cannot certify main translations', t => {
+  const f = fixture(t)
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md'], sourceCommit: f.before
+  }))
+  f.commit()
+  const report = nativeReview(f)
+  f.write(nativeReviewPath, JSON.stringify(report))
+  assert.deepEqual(prepareBatch(f.root), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
+  report.locales.cn.rejected.push({ path: 'cn/topic/page.md', issues: ['unresolved review'] })
+  f.write(nativeReviewPath, JSON.stringify(report))
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root), [['en/topic/page.md', 'cn/topic/page.md', 'cn']])
+  assert.equal(f.state().sources['cn/topic/page.md'], undefined)
 })
 
 test('overlapping locale edits preserve main and retry; non-overlapping edits merge without conflict markers', t => {

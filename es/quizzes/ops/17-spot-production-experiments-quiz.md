@@ -4,17 +4,17 @@
 
 ## 1. Una prueba de drenaje se completa correctamente en un nodo Spot con un PDB. ¿Qué demuestra?
 
-- A) Que la recuperación real de instancias Spot siempre conserva la misma disponibilidad
-- B) Que funciona la ruta de desalojo voluntario; la recuperación real requiere una prueba aparte
+- A) Que la reclamación real de capacidad Spot siempre conserva la misma disponibilidad
+- B) Que funciona la ruta de desalojo voluntario; la reclamación real requiere una prueba aparte
 - C) Que EC2 espera al PDB antes de terminar la instancia
 - D) Que la aplicación siempre dispone de dos minutos para salir
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Que funciona la ruta de desalojo voluntario; la recuperación real requiere una prueba aparte**
+**Respuesta: B) Que funciona la ruta de desalojo voluntario; la reclamación real requiere una prueba aparte**
 
-**Explicación:** Un PDB no puede evitar la pérdida de una instancia EC2. Prueba la entrega del aviso, el retraso del desalojo, la terminación forzada y el impacto en el servicio mediante una recuperación y una pérdida reales sin aviso.
+**Explicación:** Un PDB no puede evitar la pérdida de una instancia EC2. Prueba la entrega del aviso, el retraso del desalojo, la terminación forzada y el impacto en el servicio durante la interrupción real de la instancia y la pérdida de capacidad sin aviso.
 
 </details>
 
@@ -22,13 +22,13 @@
 
 - A) El Pod se mueve de inmediato, independientemente de su selector
 - B) El PDB cambia el selector a On-Demand
-- C) El Pod sigue sin poder ejecutarse en el nodo On-Demand
+- C) El Pod sigue sin ser apto para programarse en el nodo On-Demand
 - D) La ponderación de NodePool anula el selector
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) El Pod sigue sin poder ejecutarse en el nodo On-Demand**
+**Respuesta: C) El Pod sigue sin ser apto para programarse en el nodo On-Demand**
 
 **Explicación:** La alternativa requiere capacidad disponible y restricciones del Pod compatibles. Ampliar solo los tipos de capacidad de NodePool no elimina un selector del Pod exclusivo para Spot.
 
@@ -69,14 +69,14 @@
 ## 5. ¿Qué comparación evalúa correctamente el ahorro de Spot?
 
 - A) Informar el descuento de Spot como ahorro del servicio
-- B) Comparar el costo efectivo por operación única correcta que supera las comprobaciones de corrección en condiciones equivalentes
+- B) Comparar el costo efectivo por cada operación única exitosa que supera las comprobaciones de corrección, en condiciones equivalentes
 - C) Excluir los costos de reintentos y reemplazos On-Demand
 - D) Contabilizar la superposición de reemplazos tanto en la factura de EC2 como en una línea de costo adicional
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Comparar el costo efectivo por operación única correcta que supera las comprobaciones de corrección en condiciones equivalentes**
+**Respuesta: B) Comparar el costo efectivo por cada operación única exitosa que supera las comprobaciones de corrección, en condiciones equivalentes**
 
 **Explicación:** Incluye los gastos generales, los descuentos por compromiso, los reemplazos y los reintentos, sin contabilizar dos veces los cargos. Etiqueta como estimaciones las extrapolaciones mensuales a partir de ejecuciones breves.
 
@@ -126,7 +126,7 @@
 
 **Respuesta: B) El Pod conserva su clase Guaranteed original, con solicitudes y límites de CPU y memoria iguales después de la reducción**
 
-**Explicación:** La clase QoS se determina al crear el Pod y no puede cambiarse mediante redimensionamiento. Este diseño por contenedor mantiene iguales la solicitud y el límite de CPU y memoria correspondientes y positivos en cada contenedor aplicable, y reduce conjuntamente la solicitud y el límite de CPU de destino. Conservar Guaranteed no demuestra que se cumplan los SLO de la aplicación tras reducir recursos ni evita la recuperación de instancias Spot.
+**Explicación:** La clase QoS se determina al crear el Pod y no puede cambiarse mediante redimensionamiento. Este diseño por contenedor mantiene iguales la solicitud y el límite de CPU y memoria correspondientes y positivos en cada contenedor aplicable, y reduce conjuntamente la solicitud y el límite de CPU de destino. Conservar Guaranteed no demuestra que se cumplan los SLO de la aplicación tras reducir recursos ni evita la reclamación de una instancia Spot.
 
 </details>
 

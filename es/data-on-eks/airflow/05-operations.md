@@ -55,7 +55,7 @@ backend_kwargs = {"connections_prefix": "airflow/connections", "variables_prefix
 
 La búsqueda general del lado del servidor sigue este orden: backend personalizado → variables de entorno → metastore. No todos los valores externos aparecen en la interfaz de Airflow. Si edita en la interfaz una clave duplicada, puede seguir teniendo efecto el valor externo de mayor prioridad.
 
-Airflow 3 admite `secrets_backend` y `secrets_backend_kwargs` específicos de los workers [workers]. Los contextos de tarea normales del SDK de tareas también pueden resolver valores del lado del servidor a través del supervisor y la API de ejecución. Por tanto, los componentes no necesitan todos los mismos prefijos ni acceso directo a la base de datos.
+Airflow 3 admite `secrets_backend` y `secrets_backend_kwargs` específicos de la sección `[workers]`. Los contextos de tarea normales del SDK de tareas también pueden resolver valores del lado del servidor a través del supervisor y la API de ejecución. Por tanto, los componentes no necesitan todos los mismos prefijos ni acceso directo a la base de datos.
 
 Documente la ruta prevista y pruebe por separado la búsqueda desde la API, las anulaciones de workers y la resolución/caché del supervisor de registros. El código revisado registra las excepciones del backend antes de probar las rutas siguientes; no todos los fallos son silenciosos. Pruebe tanto los valores alternativos inesperados como los fallos explícitos de búsqueda. No imprima el contenido de los secretos en los registros de diagnóstico.
 
@@ -77,11 +77,11 @@ Nombre de secreto de ejemplo: airflow/connections/airflow_remote_logging_conn. V
 
 Esta conexión no contiene claves estáticas. Configure IRSA o Pod Identity y la selección de credenciales del SDK para los lectores/escritores reales de S3, junto con los permisos de prefijo del bucket/KMS y la red. Recibir metadatos de conexión mediante la API no transfiere las credenciales de AWS del servidor API. Pruebe tanto la lectura por API/interfaz como la escritura de tareas/supervisor.
 
-El supervisor revisado de 3.3.1 carga los registros remotos después de terminar el subproceso de la tarea. El controlador de Amazon S3 también almacena objetos binarios en su ruta de cierre/carga. No se garantiza que cada línea llegue a S3 de inmediato. Pruebe tareas correctas y fallidas, la terminación forzada de workers y la recuperación desde la interfaz después de eliminar el Pod. SIGKILL o un fallo del nodo antes de la carga final pueden hacer que se pierdan los registros recientes.
+El supervisor revisado de 3.3.1 carga los registros remotos después de terminar el subproceso de la tarea. El controlador de Amazon S3 también almacena los archivos durante su operación de cierre y carga. No se garantiza que cada línea llegue a S3 de inmediato. Pruebe tareas correctas y fallidas, la terminación forzada de workers y la recuperación desde la interfaz después de eliminar el Pod. SIGKILL o un fallo del nodo antes de la carga final pueden hacer que se pierdan los registros recientes.
 
 La configuración `remote_logging` de S3 configura la **ruta de registros de tareas de Airflow**. No envía automáticamente todos los registros de servicio del planificador/API/procesador a la misma ubicación de S3. La recopilación separada de stdout/stderr, por ejemplo con Fluent Bit, la complementa. Si una tarea solo escribe en archivos, recopilar stdout del contenedor no recopila automáticamente esos archivos. Los PVC o recolectores independientes pueden conservar registros después de eliminar el Pod; inspeccione el almacenamiento, la retención y los límites de pérdida reales.
 
-En KPO, el comportamiento `get_logs` de quien realiza la llamada incorpora la salida secundaria al registro de tareas de Airflow. Copiar `airflow.cfg` en una imagen secundaria arbitraria que no incluya Airflow no habilita el registro remoto.
+En KPO, el comportamiento `get_logs` de quien realiza la llamada incorpora la salida del Pod hijo al registro de tareas de Airflow. Copiar `airflow.cfg` en una imagen secundaria arbitraria que no incluya Airflow no habilita el registro remoto.
 
 ## 5. Transporte y recopilación de métricas
 
@@ -125,9 +125,9 @@ NetworkPolicy restringe la conectividad L3/L4. No sustituye la autenticación IA
 
 ## 7. Aceptación operativa
 
-- [ ] Registre los runtimes/proveedores compatibles, la elección de ejecutor y la política de entrega de DAG/repetición de versiones.
+- [ ] Registre los runtimes/proveedores compatibles, la elección de ejecutor y la política de entrega de DAG y de versión que se usa al reejecutar.
 - [ ] Pruebe una base de datos de producción adecuada, la recuperación de copias de seguridad/restauraciones y Fernet/datos externos. RDS es una opción, no la única.
-- [ ] Pruebe los límites de capacidad y la recuperación/fallo del planificador/API/procesador y los triggerers necesarios.
+- [ ] Pruebe los fallos, la recuperación y los límites de capacidad del planificador/API/procesador y de los triggerers necesarios.
 - [ ] Ensaye la migración, la admisión de nuevas ejecuciones, el drenaje y la reversión con una copia realista de la base de datos.
 - [ ] Verifique las rutas previstas de resolución de secretos y los límites IAM/RBAC/admisión/red.
 - [ ] Inspeccione los registros después del éxito, el fallo, la terminación forzada y la eliminación del Pod, y documente los límites de pérdida.

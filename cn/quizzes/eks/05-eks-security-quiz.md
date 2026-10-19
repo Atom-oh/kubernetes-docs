@@ -1,6 +1,6 @@
 # Amazon EKS 安全测验
 
-> **最后更新**：September 11, 2026
+> **最后更新**：2026 年 9 月 11 日
 
 本测验考查你对 Amazon EKS 安全功能、最佳实践和配置的理解。
 
@@ -877,7 +877,7 @@ helm install secrets-provider-aws aws-secrets-manager/secrets-store-csi-driver-p
 }
 ```
 
-下面的 Namespace、ServiceAccount、SecretProviderClass 和 Pod 构成文件交付示例。应为实际集群选择适当的 PSS 版本。JMESPath 会将字段提取到别名中；secretObjects.data.objectName 指定这些挂载的别名。secretObjects.data 中不支持 property 字段。权限 0444 让这个非 root 演示进程可以读取文件；在实际应用中，应限制可以挂载/创建 Pod 的人员，并选择与应用 UID/GID/文件权限相兼容的设置。
+下面的 Namespace、ServiceAccount、SecretProviderClass 和 Pod 构成文件交付示例。应为实际集群选择适当的 PSS 版本。JMESPath 会将字段提取到别名中；`secretObjects.data.objectName` 指定这些挂载的别名。secretObjects.data 中不支持 `property` 字段。权限 0444 让这个非 root 演示进程可以读取文件；在实际应用中，应限制可以挂载/创建 Pod 的人员，并选择与应用 UID/GID/文件权限相兼容的设置。
 
 ```yaml
 apiVersion: v1
@@ -1046,7 +1046,7 @@ spec:
 
 **轮换和重新加载**：CSI 1.6+ 使用 kubelet 的 RequiresRepublish 调用进行轮换。仅设置 requiresRepublish 并不会启用轮换；还必须启用 driver 的 enableSecretRotation 标志。此处的两分钟 rotationPollInterval 是最短缓存时长，并不保证端到端更新恰好在两分钟内完成；实际时间取决于 kubelet 的重新发布。ESO 的刷新间隔是另一个独立的协调周期。应用必须重新打开/监视已更新的文件，或执行受控滚动更新；subPath 挂载和现有环境变量不会自动刷新。
 
-Secrets Manager 的 rotate-secret 默认会立即轮换。即使使用 `--no-rotate-immediately`，仍可能测试 Lambda 轮换函数并创建/删除 AWSPENDING，而较早设定的按频率/天数轮换计划也可能继续运行。这并不是无害的“仅设置计划”或只读检查。在调用轮换前，应审查目标凭证变更、有效期重叠、应用重新加载和回滚方案。
+Secrets Manager 的 rotate-secret 默认会立即轮换。即使使用 --no-rotate-immediately，仍可能测试 Lambda 轮换函数并创建/删除 AWSPENDING，而较早设定的按频率/天数轮换计划也可能继续运行。这并不是无害的“仅设置计划”或只读检查。在调用轮换前，应审查目标凭证变更、有效期重叠、应用重新加载和回滚方案。
 
 **不包含秘密值的 Terraform 示例**：Terraform 的 sensitive 仅会抑制所选输出的显示；普通的 secret_string/random_password 值仍可能存储在状态中。以下配置只管理 secret 元数据，并使用现有的已批准 KMS 密钥。对于已存在的 secret，应先通过所有者协调/导入，再由此配置管理：
 

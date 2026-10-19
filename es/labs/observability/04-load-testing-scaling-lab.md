@@ -20,7 +20,7 @@
 <span id="verification"></span>
 
 > **Dificultad**: Intermedio · **Tiempo estimado**: 45 minutos
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Ejecute el mismo flujo de pedido/pago/lectura con k6 y Locust, y luego explique los cambios observados en los Pod y los nodos. Diríjase únicamente a su API de laboratorio desechable. Los recuentos de VU y los umbrales de latencia son configuraciones del ejercicio, no resultados medidos de rendimiento ni de escalado.
 
@@ -28,7 +28,7 @@ Ejecute el mismo flujo de pedido/pago/lectura con k6 y Locust, y luego explique 
 
 - La API de la [Parte 3](./03-msa-deployment-lab.md) debe estar lista: `POST /orders` devuelve `201` e `id`; `POST /payments` devuelve `200/201` y `status: completed`; `GET /orders/{id}` devuelve ese ID. Cambie las rutas, las cargas útiles y las aserciones conjuntamente para otra API.
 - El contexto del clúster de servicio es `service`; cada comando lo selecciona explícitamente.
-- Los ejemplos se verificaron con k6 **2.2.0** y Locust **2.46.5**/Python **3.12**. Siga la [guía oficial de instalación](https://grafana.com/docs/k6/latest/set-up/install-k6/) para la arquitectura de su SO/CPU.
+- Los ejemplos se verificaron con k6 **2.2.0** y Locust **2.46.5**/Python **3.12**. Siga la [guía oficial de instalación](https://grafana.com/docs/k6/latest/set-up/install-k6/) para el sistema operativo y la arquitectura de CPU que utilice.
 - Configure el KEDA ScaledObject y el Karpenter NodePool/EC2NodeClass en la [Parte 3](./03-msa-deployment-lab.md). Las consultas de infraestructura requieren una ingesta real de kube-state-metrics/cAdvisor.
 
 ![Observar carga, escalado de Pod y escalado de nodos](../../.gitbook/assets/en-labs-observability-04-load-testing-scaling-lab-0.png)
@@ -71,7 +71,7 @@ BASE_URL=http://127.0.0.1:8080 LOAD_PROFILE=scale \
 
 Las etapas suman tres minutos, con posible tiempo adicional de detención gradual. Una secuencia `stages` evita escenarios independientes superpuestos. Los VU no son RPS: el tiempo de respuesta, las solicitudes por iteración y la espera determinan el rendimiento. Aumente la carga solo después de comprobar la capacidad y el presupuesto del NodePool. Los límites del controlador y las notificaciones de AWS Budgets no son barreras absolutas de gasto.
 
-`k6-job.yaml` es una alternativa **solo de humo** dentro del clúster. Primero cree el ConfigMap `obs-lab-k6` mediante los comandos de su README. El Job tiene cero reintentos, un plazo de 120 segundos y límites de recursos. La creación del Job no demuestra el éxito de la prueba; inspeccione los registros, el código de salida del Pod y las condiciones Complete/Failed.
+`k6-job.yaml` es una alternativa dentro del clúster **únicamente como prueba de humo**. Primero cree el ConfigMap `obs-lab-k6` mediante los comandos de su README. El Job tiene cero reintentos, un plazo de 120 segundos y límites de recursos. La creación del Job no demuestra el éxito de la prueba; inspeccione los registros, el código de salida del Pod y las condiciones Complete/Failed.
 
 ## 3. Alternativa con Locust {#locust}
 
@@ -97,9 +97,9 @@ kubectl --context service get nodes -L karpenter.sh/nodepool,karpenter.sh/capaci
 kubectl --context service -n msa get events --sort-by=.metadata.creationTimestamp
 ```
 
-El escalador SQS lee los atributos de la cola; no consume mensajes. Compruebe que la cola del consumidor y la URL de ScaledObject coincidan. `queueLength` es un objetivo por Pod; los recuentos de mensajes, los ajustes de en vuelo/retrasados, los límites de réplicas y el comportamiento de HPA afectan los resultados. Escalar solo el productor de API no resuelve una acumulación de trabajo del consumidor.
+El escalador SQS lee los atributos de la cola; no consume mensajes. Compruebe que la cola del consumidor y la URL de ScaledObject coincidan. `queueLength` es un objetivo por Pod; los recuentos de mensajes, la configuración de mensajes en curso o retrasados, los límites de réplicas y el comportamiento de HPA afectan los resultados. Escalar solo el productor de API no resuelve una acumulación de trabajo del consumidor.
 
-Karpenter aprovisiona capacidad para Pod no programables cuyos requisitos pueden satisfacer sus NodePool. Diagnostique también las descargas de imágenes, los PVC y los taints: más nodos podrían no resolverlos. Seleccione nodos mediante etiquetas reales de NodePool, no mediante subcadenas de nombres de host.
+Karpenter aprovisiona capacidad para los Pods que no se pueden programar y cuyos requisitos pueden satisfacerse con sus NodePools. Diagnostique también las descargas de imágenes, los PVC y los taints: más nodos podrían no resolverlos. Seleccione nodos mediante etiquetas reales de NodePool, no mediante subcadenas de nombres de host.
 
 ## 5. Dashboards y consultas {#dashboard-queries}
 
@@ -130,12 +130,12 @@ Antes de añadir paneles RED, inspeccione los nombres, unidades y etiquetas de l
 
 | Control | Significado real |
 |---|---|
-| KEDA `cooldownPeriod` | Espera después del último activador activo al escalar **a cero** |
+| KEDA `cooldownPeriod` | Tiempo de espera desde la última señal activa antes de escalar **a cero** |
 | HPA `scaleDown.stabilizationWindowSeconds` | Considera la recomendación más alta de la ventana retrospectiva para el escalado de 1→N |
 | Karpenter `consolidateAfter` | Retraso antes de considerar la consolidación tras cambios en los Pod |
 | PDB/presupuesto de interrupciones/restricciones | Puede retrasar o bloquear la consolidación/terminación |
 
-No prometa una eliminación instantánea de nodos vacíos ni un recuento exacto de réplicas en un minuto fijo. Registre los RPS, errores, p99, profundidad de cola, Pod deseados/listos, NodeClaims y motivos Pending reales de línea base/pico/recuperación. El recuento de nodos por sí solo no puede cuantificar el ahorro total de AWS.
+No prometa una eliminación instantánea de nodos vacíos ni un recuento exacto de réplicas en un minuto fijo. Registre, para la línea base, el pico y la recuperación, los valores reales de RPS, errores, p99, profundidad de la cola, Pods deseados/listos, NodeClaims y motivos del estado Pending. El recuento de nodos por sí solo no puede cuantificar el ahorro total de AWS.
 
 ## Limpieza y próximos pasos {#cleanup}
 

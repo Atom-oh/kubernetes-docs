@@ -1,7 +1,7 @@
 # 可観測性スタックの設定と運用
 
-> **最終更新**: September 11, 2026: Loki 3.7.7、Tempo 3.0.3、Alloy 1.19.2、
-> OpenTelemetry Collector Contrib 0.160.0、kube-prometheus-stack 90.1.1。
+> **最終更新**: 2026年10月16日: Loki 3.7.8、Tempo 3.0.3、Alloy 1.20.1、
+> OpenTelemetry Collector Contrib 0.162.0、kube-prometheus-stack 92.9.0。
 
 この章では収集、ストレージ、権限、保持期間、シグナル間の移動を設定します。
 前章の[完全なGo/Python計装とJava JSONログの例](./08-observability-analysis.md)を使用してください。
@@ -65,7 +65,7 @@ AZ/ノード配置、クォーラム、PDB、ローリング更新を併せて�
 deploymentMode: Distributed
 loki:
   image:
-    tag: 3.7.7
+    tag: 3.7.8
   auth_enabled: false
   commonConfig:
     replication_factor: 3
@@ -322,7 +322,7 @@ crds:
 
 ```bash
 kubectl apply -f alloy-rbac.yaml
-helm upgrade --install alloy grafana/alloy --version 1.12.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
+helm upgrade --install alloy grafana/alloy --version 1.13.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
 ```
 
 `namespace`、`service_name`、`container`など値の種類が限定されたラベルを優先します。
@@ -662,7 +662,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: collector
-          image: otel/opentelemetry-collector-contrib:0.160.0
+          image: otel/opentelemetry-collector-contrib:0.162.0
           args: ["--config=/etc/otel/collector.yaml"]
           resources:
             requests:
@@ -709,7 +709,7 @@ kubectl create configmap otel-collector --namespace observability   --from-file=
 kubectl apply -f collector-deployment.yaml
 ```
 
-Collector Contrib 0.160.0は内部メトリクスに`service.telemetry.metrics.readers`を使います。
+Collector Contrib 0.162.0は内部メトリクスに`service.telemetry.metrics.readers`を使います。
 旧`metrics.address`、存在しない単独`rate_limiting`プロセッサー、削除された`loki`エクスポーターを
 残さないでください。マニフェストはConfigMap、Service、ポートを接続します。
 単一インスタンス演習は`Recreate`を使い、更新でバッファ内トレースやメモリ内キューを失う場合があります。
@@ -864,7 +864,7 @@ grafana:
 ```
 
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability -f prometheus-values.yaml
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability -f prometheus-values.yaml
 ```
 
 エグゼンプラーには、計装によるトレース/スパン関連付け、OpenMetrics公開、Prometheusのストレージ対応、
@@ -891,7 +891,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -1048,7 +1048,7 @@ Path("amp-values.yaml").write_text(yaml.safe_dump(overlay, sort_keys=False))
 ```
 
 ```bash
-helm template prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
+helm template prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
 ```
 
 ### HA、キュー、保持期間
@@ -1098,8 +1098,8 @@ EKS/Kafka/S3をデプロイせず、実際のGrafanaログインとAWS読み取�
 - [Promtailのライフサイクル](https://grafana.com/docs/loki/latest/send-data/promtail/)
 - [Tempo 3への移行](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
 - [Tempo 3.0.3のKafka設定](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
-- [Collectorのテールサンプリング](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
-- [Collectorのバッチプロセッサー](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor)
+- [Collectorのテールサンプリング](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.162.0/processor/tailsamplingprocessor)
+- [Collectorのバッチプロセッサー](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.162.0/processor/batchprocessor)
 - [AMPワークスペース設定](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
 - [AMPの高可用性](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
 

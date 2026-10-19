@@ -1,6 +1,6 @@
 # Amazon OpenSearch Service
 
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 > **示例基线**：预置型 OpenSearch Service 3.5；Terraform 1.15.7/AWS provider 6.69.1；AWS for Fluent Bit 3.4.15（Fluent Bit 5.0.9）。仅进行本地配置检查；未部署 domain、collector、SAML 会话或数据交付测试。
 
 Amazon OpenSearch Service 管理搜索集群，并支持部分 OpenSearch 和旧版 Elasticsearch OSS 版本。本章介绍 VPC domain 以及传统的 hot/UltraWarm/cold 存储层。Serverless collections 和较新的优化型实例存储选项有各自独立的配置、API 和可用性要求。

@@ -1,123 +1,123 @@
-# Cuestionario de arquitectura de Calico
+# Cuestionario sobre la arquitectura de Calico
 
 > **Documento relacionado**: [Arquitectura de Calico](../../../networking/calico/02-architecture.md)
-> **Última actualización**: February 22, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Cuestionario
 
 1. ¿Cuál es la función principal de Felix en la arquitectura de Calico?
-   - A) Distribución de rutas BGP
-   - B) Aplicación de políticas y gestión de interfaces en cada node
-   - C) Agregación de conexiones al datastore
-   - D) Procesamiento de plantillas de configuración
+   - A) Distribuir rutas BGP
+   - B) Aplicar políticas y administrar interfaces en cada nodo
+   - C) Agregar conexiones al almacén de datos
+   - D) Procesar plantillas de configuración
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aplicación de políticas y gestión de interfaces en cada node**
+**Respuesta: B) Aplicar políticas y administrar interfaces en cada nodo**
 
 **Explicación:**
-Felix es el agente central que se ejecuta en cada node de un clúster de Calico. Sus responsabilidades principales incluyen la gestión de interfaces (creación de pares veth de Pod), la programación de tablas de enrutamiento, la gestión de reglas de iptables/eBPF y la aplicación de políticas de red. Felix garantiza que el dataplane esté configurado correctamente para implementar las políticas de red deseadas.
+Felix reconcilia la configuración de las interfaces de los endpoints, las rutas aplicables y las políticas del kernel. En la red Linux completa de Calico, el runtime de contenedores invoca la cadena CNI/IPAM para asignar direcciones y crear las interfaces veth de los Pods. Felix no recibe directamente la llamada CNI ADD ni administra la asignación de IP de los Pods.
 
 </details>
 
 2. ¿Qué significa BIRD y cuál es su función en Calico?
-   - A) Basic Internet Routing Daemon - gestiona la resolución de DNS
-   - B) BIRD Internet Routing Daemon - gestiona el enrutamiento BGP
-   - C) Binary Internet Relay Daemon - gestiona el reenvío de paquetes
-   - D) Bridge Internet Routing Device - gestiona la tunelización VXLAN
+   - A) Basic Internet Routing Daemon: administra la resolución DNS
+   - B) BIRD Internet Routing Daemon: administra el enrutamiento BGP
+   - C) Binary Internet Relay Daemon: reenvía paquetes
+   - D) Bridge Internet Routing Device: administra los túneles VXLAN
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) BIRD Internet Routing Daemon - gestiona el enrutamiento BGP**
+**Respuesta: B) BIRD Internet Routing Daemon: administra el enrutamiento BGP**
 
 **Explicación:**
-BIRD (BIRD Internet Routing Daemon) es el agente BGP de Calico responsable de gestionar las conexiones entre pares BGP, intercambiar y propagar rutas entre nodes y, opcionalmente, funcionar como un Route Reflector. BIRD habilita las capacidades BGP nativas de Calico para el enrutamiento directo sin encapsulación.
+BIRD administra las sesiones BGP y el intercambio de rutas cuando se habilita ese backend. Puede funcionar como reflector de rutas y sincronizarlas con el kernel mediante su protocolo de kernel. BGP puede coexistir con la encapsulación; habilitar BGP no garantiza por sí solo el reenvío sin encapsulación. Los paquetes de las cargas de trabajo no atraviesan el proceso BIRD.
 
 </details>
 
 3. ¿Cuál es el propósito de confd en la arquitectura de Calico?
-   - A) Gestionar configuraciones de contenedores
-   - B) Generar dinámicamente archivos de configuración de BIRD
-   - C) Almacenar políticas de red
-   - D) Equilibrar el tráfico de carga
+   - A) Administrar las configuraciones de los contenedores
+   - B) Generar dinámicamente los archivos de configuración de BIRD
+   - C) Almacenar las políticas de red
+   - D) Balancear el tráfico
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Generar dinámicamente archivos de configuración de BIRD**
+**Respuesta: B) Generar dinámicamente los archivos de configuración de BIRD**
 
 **Explicación:**
-confd se encarga de generar dinámicamente archivos de configuración de BIRD a partir de plantillas. Supervisa el datastore de Calico en busca de cambios en la configuración BGP, la información de nodes y los ajustes de pares, y después actualiza automáticamente la configuración de BIRD para reflejar esos cambios sin intervención manual.
+confd observa el estado pertinente del almacén de datos y genera la configuración a partir de las plantillas de BIRD instaladas. Comprueba el resultado e invoca el comando de recarga configurado. El archivo generado no es la fuente de configuración persistente; cambie los recursos de la API de BGP en vez de editar el archivo bird.cfg generado.
 
 </details>
 
-4. ¿Cuándo se debe desplegar Typha en un clúster de Calico?
-   - A) Siempre, independientemente del tamaño del clúster
-   - B) Solo para clústeres con más de 50 nodes
-   - C) Solo cuando se usa el modo eBPF
-   - D) Solo para despliegues multi-clúster
+4. ¿Qué afirmación sobre el despliegue de Typha es correcta?
+   - A) Siempre es necesario, sin importar el tamaño del clúster
+   - B) Las instalaciones del operador pueden desplegar Typha con menos de 50 nodos; use la lógica de escalado de la versión instalada y los requisitos reales de la carga de trabajo
+   - C) Solo es necesario al usar el modo eBPF
+   - D) Solo es necesario en despliegues multiclúster
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Solo para clústeres con más de 50 nodes**
+**Respuesta: B) Las instalaciones del operador pueden desplegar Typha con menos de 50 nodos; use la lógica de escalado de la versión instalada y los requisitos reales de la carga de trabajo**
 
 **Explicación:**
-Typha se recomienda para clústeres con 50 nodes o más. Sin Typha, cada instancia de Felix se conecta directamente al datastore, lo que puede sobrecargar el API server en clústeres grandes. Typha agrega las conexiones al datastore y proporciona datos en caché a las instancias de Felix, lo que reduce significativamente la carga del API server.
+Typha reduce la distribución de actualizaciones directas del almacén de datos hacia Felix. No es obligatorio universalmente solo a partir de 50 nodos ni se requiere en todas las instalaciones que no usan el operador. El operador 1.42.6 también lo escala en clústeres pequeños: cuenta los nodos y comprueba la capacidad de ubicación en nodos Linux.
 
 </details>
 
-5. ¿Qué opciones de datastore admite Calico?
+5. ¿Qué opciones de almacén de datos admite Calico?
    - A) MySQL y PostgreSQL
-   - B) etcd y Kubernetes API
+   - B) etcd y la API de Kubernetes
    - C) MongoDB y Redis
-   - D) Solo etcd dedicado
+   - D) Solo un clúster etcd dedicado
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) etcd y Kubernetes API**
+**Respuesta: B) etcd y la API de Kubernetes**
 
 **Explicación:**
-Calico admite dos opciones de datastore: un clúster etcd dedicado o Kubernetes API (mediante CRDs). El datastore de Kubernetes API se recomienda para la mayoría de los despliegues, ya que simplifica las operaciones al usar la infraestructura de Kubernetes existente. El datastore de etcd se usa para despliegues que no son de Kubernetes o cuando se requieren funcionalidades específicas de etcd.
+Calico ofrece rutas de almacén de datos mediante la API de Kubernetes y etcdv3 directo, con restricciones de instalación y funciones. La ruta de la API de Kubernetes sigue usando el almacenamiento subyacente de Kubernetes, pero no requiere un clúster Calico etcd separado. etcd directo necesita su propio diseño de TLS, credenciales, disponibilidad y copias de seguridad; el número de nodos por sí solo no es motivo para cambiar.
 
 </details>
 
-6. ¿Qué controllers se incluyen en kube-controllers?
-   - A) Solo Policy Controller
-   - B) Policy, Namespace, ServiceAccount, WorkloadEndpoint y Node Controllers
-   - C) Solo Node y Policy Controllers
-   - D) Solo WorkloadEndpoint Controller
+6. ¿Qué controladores selecciona el operador 1.42.6 para su despliegue estándar de código abierto de kube-controllers?
+   - A) Solo el controlador de políticas
+   - B) node y loadbalancer
+   - C) Solo los controladores node y de políticas
+   - D) Solo el controlador WorkloadEndpoint
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Policy, Namespace, ServiceAccount, WorkloadEndpoint y Node Controllers**
+**Respuesta: B) node y loadbalancer**
 
 **Explicación:**
-kube-controllers incluye varios controllers que se sincronizan entre Kubernetes y el datastore de Calico: Policy Controller (sincronización de NetworkPolicy), Namespace Controller (gestión de perfiles de namespace), ServiceAccount Controller (sincronización de service accounts), WorkloadEndpoint Controller (limpieza de endpoints) y Node Controller (sincronización de información de nodes).
+El renderizador fijado del operador inicia node y loadbalancer en su despliegue estándar de código abierto. También existen controladores de políticas, espacios de nombres, cuentas de servicio y WorkloadEndpoint para las rutas pertinentes del almacén de datos y la configuración, pero no necesariamente se habilitan todos. Los perfiles de ServiceAccount no conceden permisos RBAC de Kubernetes.
 
 </details>
 
-7. ¿Cuál es la fórmula recomendada para calcular las réplicas de Typha en clústeres grandes?
-   - A) 1 réplica por cada 50 nodes
-   - B) Recuento de nodes dividido entre 200, mínimo 3
-   - C) Fijo en 5 réplicas
-   - D) 1 réplica por cada 100 nodes, mínimo 1
+7. Para 500 nodos contabilizados, ¿cuántas réplicas deseadas de Typha devuelve la función de escalado del operador 1.42.6?
+   - A) Una réplica por cada 50 nodos
+   - B) 4 réplicas, según floor(500 / 200) + 2
+   - C) Un número fijo de 5 réplicas
+   - D) Una réplica por cada 100 nodos, con un mínimo de 1
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Recuento de nodes dividido entre 200, mínimo 3**
+**Respuesta: B) 4 réplicas, según floor(500 / 200) + 2**
 
 **Explicación:**
-La fórmula recomendada para las réplicas de Typha es: recuento de nodes / 200, con un mínimo de 3 réplicas para alta disponibilidad. Por ejemplo, un clúster de 500 nodes necesitaría al menos 3 réplicas (500/200 = 2.5, redondeado hacia arriba al mínimo de 3), mientras que un clúster de 1000 nodes necesitaría 5 réplicas.
+Para más de cuatro nodos contabilizados, esta versión calcula max(3, floor(N / 200) + 2), por lo que 500 da como resultado 4. Con uno o dos nodos devuelve 1; con tres o cuatro, 2. Para 1.000 nodos devuelve 7. El escalador excluye los nodos no programables y los nodos virtuales de AKS, y comprueba la disponibilidad de nodos Linux; el resultado no garantiza un nivel de rendimiento.
 
 </details>
 
-8. En el flujo de paquetes de Calico, ¿qué componente se encarga de programar las tablas de enrutamiento en el node?
+8. ¿Qué agente de Calico reconcilia el estado local de las rutas de las cargas de trabajo y las políticas del kernel?
    - A) BIRD
    - B) confd
    - C) Felix
@@ -129,7 +129,7 @@ La fórmula recomendada para las réplicas de Typha es: recuento de nodes / 200,
 **Respuesta: C) Felix**
 
 **Explicación:**
-Felix se encarga de programar las tablas de enrutamiento en cada node. Mientras que BIRD gestiona el intercambio de rutas BGP entre nodes, Felix toma la información de rutas y la programa en las tablas de enrutamiento del kernel de Linux. Felix también gestiona las reglas de iptables/eBPF para la aplicación de políticas.
+Felix reconcilia localmente las rutas y políticas de las cargas de trabajo. Esto no significa que sea el único componente que modifica rutas: CNI crea la interfaz y las rutas iniciales, y el protocolo de kernel de BIRD puede instalar las rutas aprendidas por BGP. confd genera la configuración de BIRD; Typha distribuye el estado en caché.
 
 </details>
 
@@ -145,7 +145,7 @@ Felix se encarga de programar las tablas de enrutamiento en cada node. Mientras 
 **Respuesta: B) 5473**
 
 **Explicación:**
-Typha escucha en el puerto 5473 (calico-typha) las conexiones de las instancias de Felix. Este es el puerto predeterminado configurado en los despliegues de Typha para recibir conexiones de los pods calico-node que se ejecutan en cada node del clúster.
+TCP 5473 es el puerto de sincronización predeterminado donde Typha escucha a los clientes, como Felix. Es distinto de los puertos de métricas y estado de salud, y no actúa como proxy del tráfico de las aplicaciones. El operador también configura la confianza TLS y la identidad del cliente.
 
 </details>
 
@@ -161,27 +161,27 @@ Typha escucha en el puerto 5473 (calico-typha) las conexiones de las instancias 
 **Respuesta: B) bpfEnabled: true**
 
 **Explicación:**
-Para habilitar el modo eBPF en Calico, se configura `bpfEnabled: true` en el recurso FelixConfiguration. Esto cambia el dataplane de iptables a eBPF, lo que mejora el rendimiento y habilita funcionalidades como Direct Server Return (DSR) y el reemplazo de kube-proxy.
+`bpfEnabled` es un campo válido de bajo nivel de FelixConfiguration. En una instalación administrada por el operador, use el ajuste compatible `linuxDataplane` de Installation y coordine el cambio con kube-proxy y la accesibilidad de la API. Cambiar un booleano no constituye una migración completa y validada ni garantiza que todas las funciones de eBPF estén disponibles.
 
 </details>
 
-11. ¿Qué ocurre con las instancias de Felix cuando Typha no se despliega en un clúster grande?
+11. ¿Qué les ocurre a las instancias de Felix cuando no se despliega Typha en un clúster grande?
     - A) Las instancias de Felix no se inician
-    - B) Cada Felix se conecta directamente al datastore, lo que podría sobrecargar el API server
-    - C) Las políticas de red no se aplican
-    - D) El emparejamiento BGP falla
+    - B) Cada instancia de Felix se conecta directamente al almacén de datos, lo que puede sobrecargar el servidor de la API
+    - C) No se aplican las políticas de red
+    - D) Falla el emparejamiento BGP
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cada Felix se conecta directamente al datastore, lo que podría sobrecargar el API server**
+**Respuesta: B) Cada instancia de Felix se conecta directamente al almacén de datos, lo que puede sobrecargar el servidor de la API**
 
 **Explicación:**
-Sin Typha, cada instancia de Felix en cada node mantiene su propia conexión con el datastore (Kubernetes API server). En clústeres grandes con cientos de nodes, esto puede sobrecargar el API server con conexiones de watch y transferencias de datos. Typha resuelve este problema agregando conexiones y almacenando datos en caché.
+Las observaciones directas pueden aumentar la carga del almacén de datos y de la API a medida que crecen el número de nodos y el volumen de actualizaciones. Es un problema de capacidad, no una garantía de que las políticas o BGP dejen de funcionar sin Typha. Incluso con Typha, otros componentes siguen accediendo a la API de Kubernetes.
 
 </details>
 
-12. ¿Cuál es el puerto predeterminado para la comprobación de estado de Felix?
+12. ¿Cuál es el puerto de estado de salud predeterminado de Felix?
     - A) 8080
     - B) 9091
     - C) 9099
@@ -193,10 +193,10 @@ Sin Typha, cada instancia de Felix en cada node mantiene su propia conexión con
 **Respuesta: C) 9099**
 
 **Explicación:**
-De forma predeterminada, el endpoint de comprobación de estado de Felix escucha en el puerto 9099 cuando se establece `healthEnabled: true` en FelixConfiguration. Este puerto lo usan las liveness y readiness probes de Kubernetes para verificar que Felix se ejecute correctamente en cada node.
+El puerto de estado de salud predeterminado de Felix es 9099 cuando está habilitado el servidor de estado. De forma predeterminada, se enlaza a localhost. La configuración de sondas y red debe coincidir con el despliegue real; una solicitud a localhost desde el portátil de un administrador no inspecciona un nodo. El puerto de métricas habitual es 9091.
 
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../networking/calico/02-architecture.md) | [Cuestionario anterior: Introducción](./01-introduction-quiz.md) | [Siguiente cuestionario: Modos de red](./03-networking-modes-quiz.md)
+[Material de aprendizaje](../../../networking/calico/02-architecture.md) | [Cuestionario anterior](01-introduction-quiz.md) | [Cuestionario siguiente](03-networking-modes-quiz.md)

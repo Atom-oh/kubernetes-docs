@@ -1,209 +1,231 @@
 # Linkerd インストールクイズ
 
-このクイズでは、Linkerd のインストールとセットアップに関する理解度を確認します。
+2026年10月16日に edge-26.10.1 と charts 2026.10.1 を基準に確認しています。前提条件と検証の範囲全体については、[インストールガイド](../../../service-mesh/linkerd/01-installation.md) を参照してください。
 
-## クイズ問題
+### 1. このガイドで使う正確な公開 CLI を入手する方法はどれですか?
 
-### 1. Linkerd CLI をインストールする正しいコマンドはどれですか？
+A. `linkerd` という名前のパッケージなら、どれも同じバージョンだと仮定する
 
-A. `apt-get install linkerd`
-B. `curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh`
-C. `kubectl install linkerd`
-D. `helm install linkerd`
+B. OS/architecture に合う公式 edge-26.10.1 asset を選び、checksum と client version を検証する
+
+C. `kubectl install linkerd` を使う
+
+D. `--version stable-2.16.0` を解析しない installer に渡す
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. `curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh`**
+**答え: B**
 
-**解説:**
-Linkerd CLI は公式インストールスクリプトを通じてインストールされます。このスクリプトはオペレーティングシステムを検出し、適切なバイナリをダウンロードします。Homebrew（`brew install linkerd`）または Chocolatey（`choco install linkerd2`）も使用できますが、公式スクリプトが最も一般的な方法です。
+ガイドでは公式 release asset のバージョンを固定しています。installer を使う場合は `LINKERD2_VERSION` を指定します。古い install script は非推奨で、現在は既定で edge を使います。stable distribution についてはベンダーの手順に従ってください。Windows 用の release asset 名は `windows.exe` です。`windows-amd64.exe` という名前を作ってはいけません。
 
 </details>
 
-### 2. Linkerd のインストール前にクラスター要件を検証するコマンドはどれですか？
+### 2. 新規インストール前に実行する preflight command はどれですか?
 
 A. `linkerd check`
+
 B. `linkerd check --pre`
+
 C. `linkerd verify`
+
 D. `linkerd install --dry-run`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. `linkerd check --pre`**
+**答え: B**
 
-**解説:**
-`linkerd check --pre` コマンドは、Linkerd のインストール前にクラスターが要件を満たしていることを検証します。Kubernetes API へのアクセス性、バージョン互換性、必要な権限を確認します。インストール後は、完全なステータスを確認するために `linkerd check` を使用します。
+`check --pre` は API access、Kubernetes の最小 version、Gateway API の前提条件、インストールに必要な権限や準備状況を確認します。後続のすべての Kubernetes version との互換性を証明するものではありません。正確な version matrix を確認し、該当するインストール経路を選ぶ場合は CNI 対応の flag を使ってください。
 
 </details>
 
-### 3. Helm を使用して Linkerd をインストールする際に必要なものはどれですか？
+### 3. 手動の Helm 経路で必要な identity の素材はどれですか?
 
-A. Envoy proxy イメージ
-B. Trust Anchor および Identity Issuer 証明書
-C. Prometheus 設定ファイル
-D. Kubernetes バージョン情報
+A. Envoy image
+
+B. 公開 trust anchor と issuer certificate/private key、またはサポートされている設定済み issuer-secret integration
+
+C. 各 proxy Pod 内の root CA private key
+
+D. Prometheus 設定ファイル
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. Trust Anchor および Identity Issuer 証明書**
+**答え: B**
 
-**解説:**
-CLI によるインストールとは異なり、Helm によるインストールでは証明書が自動生成されません。ユーザーは Trust Anchor（Root CA）と Identity Issuer（Intermediate CA）の証明書を自分で作成して提供する必要があります。これにより、本番環境での証明書管理をより適切に制御できます。
+この経路では control-plane Helm chart は workload identity CA の素材を生成しません。公開 trust anchor と issuer の署名用 credential を用意してください。root private key は Kubernetes の外に保管します。外部 issuer-secret integration を使う場合は、対応する scheme/owner の設定も必要です。
 
 </details>
 
-### 4. Linkerd の HA インストールで推奨される Control plane レプリカ数はいくつですか？
+### 4. パッケージ済み HA profile は、重要な control-plane component の replica をいくつ選びますか?
 
 A. 1
+
 B. 2
+
 C. 3
+
 D. 5
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: C. 3**
+**答え: C**
 
-**解説:**
-HA 構成では、Destination、Identity、Proxy Injector の各コンポーネントに 3 つのレプリカを推奨します。3 つのレプリカがあれば、1 つが障害を起こしてもクォーラムを維持でき、ローリングアップデート中の可用性を確保できます。
+この profile は、node anti-affinity、PDB、Fail に設定した injection-webhook policy とともに、重要 component を 3 replica 選択します。これは冗長な serving instance であり、quorum voter ではありません。利用可能な node、resource、正常な credential と network path も必要です。replica 数だけでは可用性は保証されません。
 
 </details>
 
-### 5. Viz 拡張機能の主要機能ではないものはどれですか？
+### 5. Viz の主な機能ではないものはどれですか?
 
-A. Web ダッシュボード
-B. Prometheus メトリクス収集
-C. 自動カナリアデプロイメント
-D. リアルタイムトラフィックタップ
+A. Web dashboard
+
+B. Prometheus ベースの metrics
+
+C. Canary の自動昇格
+
+D. HTTP traffic tap
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: C. 自動カナリアデプロイメント**
+**答え: C**
 
-**解説:**
-Viz 拡張機能は、Web ダッシュボード、Prometheus ベースのメトリクス収集、Grafana ダッシュボード、リアルタイムトラフィックタップ機能を提供します。自動カナリアデプロイメントは、Flagger のような別のツールによって実装されます。
+Viz は metrics、dashboard、tap 機能を提供します。Canary の段階的な進行には、別の delivery controller と分析 policy が必要です。現行 Viz chart は外部 Grafana への link を提供します。`grafana.enabled` は同梱 Grafana を deploy したり、無効化したりする設定ではありません。
 
 </details>
 
-### 6. EKS の Multicluster gateway に推奨されるロードバランサーのタイプはどれですか？
+### 6. Linkerd mTLS を終端せずに gateway の raw TCP transport を維持できる AWS load balancer はどれですか?
 
-A. Classic Load Balancer
-B. Application Load Balancer (ALB)
-C. Network Load Balancer (NLB)
-D. Internal Load Balancer
+A. ALB HTTP listener
+
+B. dashboard Ingress resource
+
+C. NLB TCP listener
+
+D. Gateway Load Balancer の GENEVE appliance 経路
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: C. Network Load Balancer (NLB)**
+**答え: C**
 
-**解説:**
-NLB は TCP/TLS トラフィック向けに最適化されているため、Linkerd の mTLS gateway トラフィックに適しています。ALB は HTTP/HTTPS 向けに最適化されており、Linkerd gateway は TCP レベルで動作するため、NLB が推奨されます。
+Linkerd gateway の transport には TCP passthrough を使います。NLB を internal にするか internet-facing にするかは、別の load balancer 製品の選択ではなく、ネットワーク要件によって決まる scheme の設定です。ガイドの internal NLB 例は、AWS Load Balancer Controller が管理すること、およびリモートネットワークや probe path から到達できることを前提としています。
 
 </details>
 
-### 7. Linkerd のアップグレードの正しい順序はどれですか？
+### 7. 文書化された upgrade 手順の順序はどれですか?
 
-A. Data plane → CRD → Control plane
-B. CRD → Control plane → Data plane
-C. Control plane → CRD → Data plane
-D. CRD → Data plane → Control plane
+A. data plane の後に control plane と CRD
+
+B. target CLI、CRD、control plane、インストール済み extension、その後 data plane
+
+C. CRD、data plane、その後 control plane
+
+D. CA を削除してから、すべてを再インストールする
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. CRD → Control plane → Data plane**
+**答え: B**
 
-**解説:**
-正しいアップグレード順序は、1) CLI のアップグレード、2) CRD のアップグレード、3) Control plane のアップグレード、4) Data plane（proxy）のアップグレードです。新しい API バージョンを使用するためには、CRD を最初にアップグレードする必要があります。
+最初に target version の互換性、release note、現在の health を確認してください。trust credential を保持し、各 resource の owner を通じて更新した後、新しい proxy を適用する対象の application Pod を再作成します。CLI extension の更新 manifest は `install` で生成します。`viz upgrade` は subcommand ではありません。サポートされる version skew を守り、resource を削除する前に prune の出力を確認してください。
 
 </details>
 
-### 8. `linkerd install --crds` コマンドの目的は何ですか？
+### 8. `linkerd install --crds` 自体が行うことは何ですか?
 
-A. Linkerd CLI をインストールする
-B. Custom Resource Definitions をインストールする
-C. 証明書を生成する
-D. proxy をインジェクトする
+A. CLI binary をインストールする
+
+B. Linkerd CRD の manifest を生成する
+
+C. すべての cluster resource をすぐに適用する
+
+D. 既存の全 application Pod に proxy を inject する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. Custom Resource Definitions をインストールする**
+**答え: B**
 
-**解説:**
-`linkerd install --crds` は、Linkerd で使用される CRD（Custom Resource Definitions）のみをインストールします。これには、ServiceProfile、Server、ServerAuthorization などの CRD が含まれます。Control plane は `linkerd install` により別途インストールされます。
+この command は manifest を出力します。実際のインストールは `kubectl apply`、または選択した deployment owner が行います。Gateway API の前提条件は既定の Linkerd CRD 出力とは別です。その後で control plane をインストールします。
 
 </details>
 
-### 9. Jaeger 拡張機能をインストールするコマンドはどれですか？
+### 9. edge-26.10.1 では、どの tracing 方法を使いますか?
 
-A. `linkerd install jaeger`
-B. `linkerd jaeger install | kubectl apply -f -`
-C. `kubectl apply -f jaeger.yaml`
-D. `helm install jaeger linkerd/jaeger`
+A. すべての extension が CLI に同梱されているため、`linkerd jaeger install` を実行する
+
+B. サポートされている collector/backend と proxy tracing を設定し、application context propagation を行う
+
+C. Viz をインストールし、すべての分散 trace が保存されると仮定する
+
+D. proxy がすべての application span を再構成できるため、trace header を無視する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. `linkerd jaeger install | kubectl apply -f -`**
+**答え: B**
 
-**解説:**
-Linkerd 拡張機能は、`linkerd <extension> install` 形式でマニフェストを生成し、kubectl で適用します。Jaeger 拡張機能は分散トレーシング機能を提供します。
+この CLI に jaeger subcommand はなく、公開されている linkerd-jaeger chart の履歴も、選択した release より古いものです。現行の tracing data path を使い、receiver/export の互換性を確認してください。metrics や topology graph は、収集済み分散 trace と同じものではありません。
 
 </details>
 
-### 10. Linkerd を完全に削除する正しい順序はどれですか？
+### 10. 完全な削除計画で、最初に行うべきことは何ですか?
 
-A. Control plane → Extensions → CRD
-B. Extensions → Control plane → CRD
-C. CRD → Control plane → Extensions
-D. すべて同時に削除できる
+A. application に proxy が inject されたまま CRD を削除する
+
+B. application の injection 設定と手動 proxy を除去し、workload を再作成して確認してから extension と control plane を削除する
+
+C. すべての namespace をただちに削除する
+
+D. 残存する proxy 付き workload を無視して強制 uninstall する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: B. Extensions → Control plane → CRD**
+**答え: B**
 
-**解説:**
-削除順序はインストールの逆です。1) Viz、Jaeger、Multicluster などの拡張機能を削除する、2) Control plane を削除する、3) CRD を削除する、という順序になります。これは、拡張機能が Control plane に依存し、Control plane が CRD に依存するためです。
+まず workload owner を通じて injection 元をすべて除去し、application Pod を再作成して確認します。その後、各 owner を通じてインストール済み extension、control plane、CRD を削除してください。CRD を削除すると、その custom resource も削除されます。CNI の cleanup と namespace の ownership は別途確認してください。削除すると mesh による security/routing も失われます。
 
 </details>
 
-### 11. `linkerd check` コマンドが検証しないものはどれですか？
+### 11. `linkerd check` で検証できないものはどれですか?
 
-A. Kubernetes API 接続
-B. 証明書の有効性
-C. アプリケーションのビジネスロジック
-D. Control plane Pod ステータス
+A. Kubernetes API access
+
+B. control-plane certificate の有効性
+
+C. application の business logic
+
+D. control-plane Pod の health
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: C. アプリケーションのビジネスロジック**
+**答え: C**
 
-**解説:**
-`linkerd check` は、Kubernetes API 接続、証明書の有効性、Control plane Pod ステータス、proxy ステータスなど、Linkerd インフラストラクチャのステータスのみを検証します。アプリケーションのビジネスロジックや機能は検証しません。
+core health check は business outcome やすべての traffic/security path を検証するものではありません。`check --proxy` を使うと該当する data-plane check が加わり、インストール済み extension には個別の check があります。application test と実トラフィックの検証は分けて実施してください。
 
 </details>
 
-### 12. 自動 proxy インジェクションのために namespace に追加する必要がある annotation はどれですか？
+### 12. namespace への自動 proxy injection を要求する annotation はどれですか?
 
 A. `linkerd.io/inject: enabled`
+
 B. `linkerd.io/proxy: true`
+
 C. `sidecar.linkerd.io/inject: true`
+
 D. `linkerd/auto-inject: yes`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説</summary>
 
-**回答: A. `linkerd.io/inject: enabled`**
+**答え: A**
 
-**解説:**
-namespace に `linkerd.io/inject: enabled` annotation を追加すると、その namespace 内のすべての新しい Pod に linkerd-proxy が自動的にインジェクトされます。同じ annotation は個々の Pod にも使用できます。
+この annotation は、条件を満たす新規 Pod に対する injection を要求します。Pod 単位の override、webhook の除外設定、platform 条件によって動作が変わる場合があるため、すべての新規 Pod に必ず inject される保証ではありません。既存 Pod は再作成が必要です。また、native sidecar が `initContainers` に表示される場合があります。
 
 </details>

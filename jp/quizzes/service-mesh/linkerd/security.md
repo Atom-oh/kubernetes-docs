@@ -1,209 +1,195 @@
 # Linkerd セキュリティクイズ
 
-このクイズでは、Linkerd のセキュリティ機能に関する理解度を確認します。
+[セキュリティガイド](../../../service-mesh/linkerd/04-security.md) に基づき、2026年9月11日に確認しました。
 
-## クイズ問題
+### 1. Linkerd はどのように mesh mTLS を有効にしますか?
 
-### 1. Linkerd で mTLS はどのように有効化されますか？
-
-A. 各 Service に対して手動設定が必要
-B. mesh 内のすべてのトラフィックに自動的に適用される
-C. Kubernetes Secret による設定が必要
-D. Namespace ごとに有効化する必要がある
+- A. すべての Service が独自に Linkerd TLS を実装する
+- B. mesh に参加している Pod 間の、対象となる TCP 通信で自動的に有効にする
+- C. どの Kubernetes Secret でも、すべての network path を暗号化する
+- D. すべての UDP 通信を自動的に保護する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. mesh 内のすべてのトラフィックに自動的に適用される**
+**答え: B**
 
-**解説:**
-Linkerd の中核的な価値の 1 つは「デフォルトでセキュリティを確保すること」です。mesh 内の Service 間のすべてのトラフィックには、設定なしで自動的に mTLS が適用されます。
+両方の proxy が通信に参加し、trust chain を信頼している必要があります。mesh に参加していない endpoint や対象外の port には、Linkerd mTLS は自動適用されません。既定では inbound の平文通信を受け入れる場合もあります。認証済みアクセスを必須にするには、適切な policy を設定してください。
 
 </details>
 
-### 2. Server リソースの役割は何ですか？
+### 2. Server resource は何を選択しますか?
 
-A. 外部 Server 接続を定義する
-B. 受信トラフィックのポートとプロトコルを定義する
-C. Server 証明書を保存する
-D. Load Balancer を設定する
+- A. 外部 DNS record
+- B. 同じ namespace の対象 Pod に届く inbound port/protocol
+- C. certificate Secret
+- D. outbound load-balancer algorithm
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. 受信トラフィックのポートとプロトコルを定義する**
+**答え: B**
 
-**解説:**
-Server リソースは、特定の Pod に対する受信トラフィックを定義します。podSelector で対象の Pod を、port でポートを、proxyProtocol でプロトコル（HTTP/1、HTTP/2、gRPC、opaque）を指定します。
+Server は Pod/port の対象を選びます。application port を宣言し、Server の対象が重複しないようにしてください。`accessPolicy` が動作を変更しない限り、一致する Server がない通信は既定で拒否されます。proxy admin port 4191 に Server を作っても、admin port の interception bypass が解除されるわけではありません。
 
 </details>
 
-### 3. ServerAuthorization の meshTLS.serviceAccounts は何を指定しますか？
+### 3. ServerAuthorization の `meshTLS.serviceAccounts` は何を表しますか?
 
-A. Server が使用する ServiceAccount
-B. アクセスを許可される Client ServiceAccount
-C. 証明書発行権限を持つ ServiceAccount
-D. メトリクス収集権限を持つ ServiceAccount
+- A. server の `serviceAccountName`
+- B. 認証済み client として許可される ServiceAccount
+- C. すべての証明書を発行する account
+- D. metrics 収集だけを行う account
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. アクセスを許可される Client ServiceAccount**
+**答え: B**
 
-**解説:**
-ServerAuthorization の meshTLS.serviceAccounts は、どの Client ServiceAccount が Server にアクセスできるかを指定します。指定された ServiceAccount を持つ workload のみがアクセスを許可されます。
+この grant は、一致する mesh client identity を受け入れます。別の grant がアクセスを広げる場合もあります。この release では `ServerAuthorization/v1beta1` が提供されています。AuthorizationPolicy から ServiceAccount を直接参照することもでき、その場合この legacy grant は不要です。
 
 </details>
 
-### 4. default-deny ポリシーモードでトラフィックを許可するにはどうしますか？
+### 4. default-deny の下で、意図した application 通信を許可するにはどうしますか?
 
-A. すべてのトラフィックが自動的に許可される
-B. ServerAuthorization を明示的に定義する必要がある
-C. Namespace ラベルで許可する
-D. ConfigMap でホワイトリストを設定する
+- A. すべての request が自動的に許可される
+- B. 対象と、それに一致する認可 grant を定義する
+- C. 汎用 namespace label を付ければ、任意の caller がアクセスできる
+- D. 任意の ConfigMap whitelist だけで十分である
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. ServerAuthorization を明示的に定義する必要がある**
+**答え: B**
 
-**解説:**
-default-deny モードでは、すべてのトラフィックがデフォルトで拒否されます。トラフィックを許可するには、Server と ServerAuthorization を明示的に定義する必要があります。これはゼロトラストのセキュリティモデルです。
+Server と AuthorizationPolicy は現行の設定パターンです。ServerAuthorization は以前からある代替手段です。これらを必須の順次処理として両方設定する必要はありません。1 つの AuthorizationPolicy に複数の `requiredAuthenticationRefs` を指定した場合は、そのすべてが一致する必要があります。probe 用の通信にも適切な扱いが必要です。
 
 </details>
 
-### 5. Trust Anchor に推奨される有効期間はどれですか？
+### 5. trust anchor の有効期間はどのように選ぶべきですか?
 
-A. 24 時間
-B. 1 年
-C. 1～10 年
-D. 無期限
+- A. 常にちょうど 24 時間
+- B. 常に無期限
+- C. CA policy、計画している rotation、復旧要件に基づいて選ぶ。CLI の既定値は 1 年
+- D. すべての cluster に一律で 1～10 年を推奨する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: C. 1～10 年**
+**答え: C**
 
-**解説:**
-Trust Anchor（Root CA）は長期間有効であるべきです。一般的には 1～10 年が推奨されます。Trust Anchor の置き換えは複雑であるため、セキュリティ要件に応じて十分に長い有効期間を設定してください。
+手動で 10 年の root を設定することは可能ですが、自動的に推奨される設定ではありません。証明書 chain 全体の有効期限を追跡し、issuer の renewal/lifetime がその CA に適合することを確認してください。root rotation では証明書を重複して信頼できる期間を設け、linked cluster を含むすべての利用者に配布する必要があります。
 
 </details>
 
-### 6. 認証されていない Client（mesh 外）を許可する ServerAuthorization の設定はどれですか？
+### 6. ServerAuthorization で `client.unauthenticated: true` を設定すると何が許可されますか?
 
-A. `meshTLS.identities: ["*"]`
-B. `unauthenticated: true`
-C. `external: allowed`
-D. `client: any`
+- A. wildcard に一致する認証済み identity だけ
+- B. mesh 認証を要求しない client
+- C. 特別な外部 header を使う caller だけ
+- D. 対象とは無関係に、宣言された readiness URL だけ
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. `unauthenticated: true`**
+**答え: B**
 
-**解説:**
-`client.unauthenticated: true` を設定すると、mTLS 認証のない Client（mesh 外）からのアクセスを許可できます。これは health check または ingress からのトラフィックに使用されます。
+この設定は、対象範囲内で mesh 認証のない client からのアクセスを許可します。health path だけに自動で限定されるわけではありません。`meshTLS.identities: ["*"]` は異なる設定です。これは mesh 認証を引き続き要求しつつ、mesh identity を広く受け入れます。
 
 </details>
 
-### 7. Identity Issuer 証明書を更新する際に必要なことは何ですか？
+### 7. 信頼する root が変わらない場合、有効な issuer を更新すると通常どうなりますか?
 
-A. すべての proxy を再起動する必要がある
-B. Trust Anchor も置き換える必要がある
-C. Kubernetes Secret を更新し、Identity Controller を再起動する
-D. Cluster 全体を再起動する必要がある
+- A. すべての proxy をただちに再起動しなければならない
+- B. root も常に変更しなければならない
+- C. owner が issuer Secret を更新し、Identity が検証・再読み込みし、proxy は通常どおり leaf を更新する
+- D. cluster 全体を再起動しなければならない
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: C. Kubernetes Secret を更新し、Identity Controller を再起動する**
+**答え: C**
 
-**解説:**
-Identity Issuer を更新する場合は、1) 新しい証明書で Secret を更新し、2) Identity Controller を再起動します。proxy は新しい証明書で自動的に更新されます。Trust Anchor が同じであれば、置き換える必要はありません。
+`IssuerUpdated` を確認し、更新が skip された場合や無効な場合は調査してください。chain が有効な間は、既存の leaf が通常の更新時期まで古い issuer のまま使われる場合があります。issuer を更新するたびに Identity を一律再起動する必要はありません。trust anchor の rotation は、別途段階的に行います。
 
 </details>
 
-### 8. mesh 内からの mTLS トラフィックのみを許可するポリシーモードはどれですか？
+### 8. 適切に信頼された multicluster client を含め、認証済み mesh client を要求する既定 policy はどれですか?
 
-A. deny
-B. all-unauthenticated
-C. all-authenticated
-D. cluster-unauthenticated
+- A. deny
+- B. all-unauthenticated
+- C. all-authenticated
+- D. cluster-unauthenticated
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: C. all-authenticated**
+**答え: C**
 
-**解説:**
-`all-authenticated` モードでは、mesh 内からの mTLS 認証済みトラフィックのみが許可されます。mesh 外からの認証されていないトラフィックは拒否されます。
+`all-authenticated` は mesh 認証を要求します。特定 caller だけを許可する狭い allowlist ではありません。明示した Server policy と認可 grant も引き続き重要です。namespace の既定 annotation は proxy の初期化時に適用されます。
 
 </details>
 
-### 9. Linkerd 統合のために cert-manager Certificate リソースで必要な設定はどれですか？
+### 9. cert-manager で Linkerd の署名用 issuer certificate を発行する場合に必要なものはどれですか?
 
-A. isCA: false
-B. isCA: true
-C. usages: [digital signature]
-D. algorithm: RSA
+- A. `isCA: false`
+- B. `isCA: true`、適切な ECDSA P-256 credential、有効な chain
+- C. 任意の leaf certificate に digital-signature usage だけを設定する
+- D. 常に RSA private key を使う
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. isCA: true**
+**答え: B**
 
-**解説:**
-Linkerd Identity Issuer は中間 CA として機能するため、cert-manager Certificate には `isCA: true` が必要です。この証明書は workload 証明書に署名します。
+Identity には workload certificate に署名できる intermediate CA が必要です。`rotationPolicy` を明示し、Secret の形式と owner、CA lifetime を確認したうえで、Identity が証明書を読み込んだことを検証してください。要求に `isCA: true` と書かれていても、一般的な Vault leaf-signing 経路が CA を発行できるとは限りません。
 
 </details>
 
-### 10. linkerd viz edges コマンドで確認できるものは何ですか？
+### 10. `linkerd viz edges` では何を確認できますか?
 
-A. ネットワーク edge router のステータス
-B. Service 間の mTLS 接続ステータス
-C. Cluster 境界ポリシー
-D. DNS edge cache のステータス
+- A. 各 edge router の hardware 状態
+- B. 観測された resource 間の edge と、その mTLS/security 状態
+- C. あらゆる経路や未使用経路が暗号化されている証明
+- D. end-user 認証の完全な audit
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. Service 間の mTLS 接続ステータス**
+**答え: B**
 
-**解説:**
-`linkerd viz edges` は Service 間の接続（edge）を表示し、SECURED 列で mTLS のステータスを示します。mesh 外からのトラフィックでは、SECURED に X が表示されます。
+SECURED 表示が示すのは観測された edge の情報であり、network 全体の完全な一覧ではありません。public certificate には `linkerd identity` を、アクセス判定の調査には policy diagnostics/metrics を使ってください。CLI の表示を Prometheus の TLS label 値そのものと同一視しないでください。
 
 </details>
 
-### 11. Linkerd のセキュリティとアプリケーションセキュリティの正しい関係はどれですか？
+### 11. Linkerd と application security の適切な関係はどれですか?
 
-A. Linkerd がすべてのセキュリティを処理するため、アプリケーションセキュリティは不要である
-B. Linkerd はトランスポート層を処理し、アプリケーションはビジネスロジックのセキュリティを処理する
-C. アプリケーションセキュリティだけで十分であり、Linkerd のセキュリティは任意である
-D. 両方のセキュリティは完全に独立しており、相互作用はない
+- A. mesh mTLS があれば application security は不要である
+- B. mesh の workload/transport 制御は、user、tenant、business の認可を補完する
+- C. 許可された ServiceAccount は、すべての caller が administrator である証明になる
+- D. mesh が input validation を自動で行う
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: B. Linkerd はトランスポート層を処理し、アプリケーションはビジネスロジックのセキュリティを処理する**
+**答え: B**
 
-**解説:**
-多層防御の原則に従い、Linkerd はトランスポート暗号化（mTLS）と Service 認可を処理し、アプリケーションはユーザー認証（JWT）、RBAC、入力検証などのビジネスロジックのセキュリティを処理します。
+Linkerd は workload 認証、対象となる transport の暗号化、inbound 認可を提供します。application 側では user credential、permission、input を引き続き検証してください。proxy bypass や mesh 未登録の経路には、network/admission control も必要です。
 
 </details>
 
-### 12. Prometheus アラートで監視する Linkerd セキュリティメトリクスではないものはどれですか？
+### 12. application 側の instrumentation、または別の application-aware source が必要な metric はどれですか?
 
-A. 証明書の有効期限
-B. 非 mTLS トラフィックの割合
-C. アプリケーションのログイン失敗回数
-D. 認可により拒否されたリクエスト数
+- A. proxy workload certificate の有効期限
+- B. mesh client identity がない状態で観測された HTTP response
+- C. application の login 失敗
+- D. proxy inbound 認可の拒否 counter
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えと解説を表示</summary>
 
-**回答: C. アプリケーションのログイン失敗回数**
+**答え: C**
 
-**解説:**
-Linkerd のセキュリティメトリクスには、証明書の有効期限、非 mTLS トラフィックの割合、認可により拒否されたリクエスト数が含まれます。アプリケーションのログイン失敗は、Linkerd の対象範囲外であるアプリケーションレベルのメトリクスです。
+Linkerd は application の login 結果を自動的には把握しません。Linkerd 自体の alert では、leaf の有効期限 timestamp と issuer TTL duration を区別してください。対象を絞った traffic ratio を rate ベースで計算し、identity label を保持し、telemetry がない場合と traffic が idle の場合を別に扱います。
 
 </details>

@@ -1,7 +1,7 @@
 # EKS 安全最佳实践
 
-> **审查基线**：当前 AWS 文档、Kubernetes 1.35 API 架构、Terraform 1.15.7 / AWS provider 6.64.0。未执行实时集群部署。
-> **最后更新**：October 15, 2026
+> **审查基线**：当前 AWS 文档、Kubernetes 1.35 API schema、Terraform 1.15.7 / AWS provider 6.64.0。未执行实时集群部署。
+> **最后更新**：2026年10月15日
 
 本文档涵盖 Amazon EKS 环境的安全最佳实践。了解如何从 IAM 集成到网络安全和运行时保护，安全地运营 EKS 集群。
 
@@ -554,7 +554,7 @@ Bastion 会增加自身的访问、patching 和 audit 责任。不要默认采�
 
 ### 基于 Namespace 的多租户
 
-Namespaces 是共享集群中的管理范围，而不是相互敌对租户之间的完整边界。结合 PSS、RBAC、quota、NetworkPolicy、storage、workload identity 和 node/administrator 边界。该示例使用 Kubernetes1.35 policy baseline；请验证与实际集群的兼容性。
+Namespaces 是共享集群中的管理范围，而不是相互敌对租户之间的完整边界。结合 PSS、RBAC、quota、NetworkPolicy、storage、workload identity 和 node/administrator 边界。该示例使用 Kubernetes 1.35 策略基线；请验证与实际集群的兼容性。
 
 同 namespace peers 被允许，而 DNS 在一个 peer 中使用 kube-system namespace **和** kube-dns Pod selector。UDP 和 TCP53 均被包括在内。请单独验证实际 DNS labels、NodeLocal DNS、CNI enforcement、其他 additive policies 和 hostNetwork/node traffic。未执行实时连通性测试。
 

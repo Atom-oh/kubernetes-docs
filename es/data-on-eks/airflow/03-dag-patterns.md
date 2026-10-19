@@ -204,7 +204,7 @@ El proveedor 10.21.0 acepta `is_delete_operator_pod`, pero no usa ese argumento 
 
 ## 4. Nodos dedicados y acceso a AWS
 
-Cuando sea necesario, añade selectores/afinidad obligatoria y tolerations que coincidan con un NodePool preparado. Las tolerations permiten la asignación a pesar de los taints, pero no la fuerzan. Los pools dedicados no impiden la recuperación de Spot, los fallos de nodos, la presión en disco ni las interrupciones; además, otras cargas de trabajo pueden tolerar el mismo taint.
+Cuando sea necesario, añade selectores/afinidad obligatoria y tolerations que coincidan con un NodePool preparado. Las tolerations permiten la asignación a pesar de los taints, pero no la fuerzan. Los pools dedicados no impiden la reclamación de instancias Spot, los fallos de nodos, la presión en disco ni otras interrupciones; además, otras cargas de trabajo pueden tolerar el mismo taint.
 
 Para trabajar realmente con S3, prepara la confianza OIDC de IRSA o las asociaciones/el Agent de Pod Identity, los permisos de IAM y los SDK/proveedores compatibles para la cuenta de servicio de la carga de trabajo. Una anotación o una cadena `service_account_name` por sí solas no bastan para completar el acceso a S3. Inspecciona otras fuentes de credenciales, como las variables de entorno, IMDS y la cadena predeterminada del SDK. La duración del Pod tampoco tiene por qué coincidir con el vencimiento de las credenciales temporales. Separa RBAC de Kubernetes de los permisos de datos de AWS y prueba tanto el acceso permitido como el denegado.
 
@@ -217,7 +217,7 @@ Ni siquiera un paquete versionado obliga a que cada nueva ejecución use el comm
 1. `run_on_latest_version` explícito en la solicitud de la API.
 2. El valor `rerun_with_latest_version` del DAG.
 3. El valor global `[core] rerun_with_latest_version`.
-4. Si no está configurado, el valor predeterminado alternativo por llamada: `False` para borrar/volver a ejecutar, `True` para backfill.
+4. Si no está configurado, el valor predeterminado alternativo por llamada: `False` para limpiar/volver a ejecutar, `True` para backfill.
 
 `disable_bundle_versioning` desactiva por separado el seguimiento en las ejecuciones; los valores predeterminados para volver a ejecutar no pueden conservar una versión que no se haya seguido. Conservar un commit de Git tampoco permite reproducir resultados si cambian las imágenes, los paquetes, los datos externos o la configuración. Conserva el historial/acceso al repositorio y fija las dependencias de ejecución según sea necesario.
 
@@ -239,7 +239,7 @@ KPO puede ejecutar dbt empaquetado u otras cargas de trabajo de CLI. Spark ofrec
 
 El método antiguo de aplicar una SparkApplication con un nombre fijo y después esperar únicamente a que el estado sea COMPLETED puede confundir un estado COMPLETED anterior con una ejecución nueva correcta. También puede esperar en el namespace equivocado y no gestionar con rapidez un fallo terminal. Esa combinación no se usa aquí como configuración de referencia ejecutable.
 
-Un operador nativo no es automáticamente compatible con todas las combinaciones de versiones. El SparkKubernetesOperator revisado de la versión 10.21.0 añade `spec.labels` durante la configuración de reconexión, pero la CRD Kubeflow 2.5.2 del capítulo de Spark no incluye ese campo. La validación o eliminación de campos por parte del servidor puede afectar al comportamiento: valida el **CR final generado**. La ruta de finalización forzada de esa versión elimina el CR de Spark; `delete_on_termination=False` no lo conserva en esa ruta. Validar solo el YAML de entrada no es una prueba de integración.
+Un operador nativo no es automáticamente compatible con todas las combinaciones de versiones. El SparkKubernetesOperator revisado de la versión 10.21.0 añade `spec.labels` durante la configuración de reconexión, pero la CRD Kubeflow 2.5.2 del capítulo de Spark no incluye ese campo. La validación o eliminación de campos por parte del servidor puede afectar al comportamiento: valida el **CR final generado**. La ruta de cancelación (`kill`) de esa versión elimina el CR de Spark; `delete_on_termination=False` no lo conserva en esa ruta. Validar solo el YAML de entrada no es una prueba de integración.
 
 `demo://kpo-smoke-completed`, del DAG básico, es un **evento Asset de demostración** que se emite tras una ejecución correcta. No detecta automáticamente objetos de S3 ni valida datos. Un DAG posterior puede usar `schedule=[smoke_completed]`, pero los pipelines reales solo deberían emitir su evento de salida cuando los datos previstos ya estén confirmados.
 

@@ -1,15 +1,15 @@
 # Optimización específica para cada carga de trabajo
 
 > **Versiones compatibles**: EKS Auto Mode GA; ejemplos revisados para EKS 1.36
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
-Adapte la política de ubicación y recuperación a la carga de trabajo y, luego, valide la capacidad, el rendimiento y el costo reales. Los ejemplos de web y procesamiento por lotes son configuraciones de laboratorio acotadas. Los ejemplos de GPU son **plantillas de configuración inactivas**, no aplicaciones de entrenamiento/inferencia validadas: la inferencia tiene cero réplicas y el trabajo de entrenamiento heredado está suspendido. No se ejecutaron GPU/modelos, no se implementó ningún clúster activo ni se realizó ninguna prueba de rendimiento.
+Adapte la política de ubicación y recuperación a la carga de trabajo y, luego, valide la capacidad, el rendimiento y el costo reales. Los ejemplos de web y procesamiento por lotes son configuraciones de laboratorio acotadas. Los ejemplos de GPU son **plantillas de configuración inactivas**, no aplicaciones de entrenamiento/inferencia validadas: la inferencia tiene cero réplicas y el trabajo de entrenamiento heredado está suspendido. No se ejecutaron modelos en GPU, no se desplegó ningún clúster activo ni se realizó ninguna prueba de rendimiento.
 
-Use la protección de cuenta/contexto de [Operaciones](./05-operations.md). Todos los pools son dinámicos; no reservan capacidad física. Seleccione solo los ejemplos necesarios, revise la identidad de `default`/NodeClass personalizado y el acceso a las subredes, y tenga en cuenta los costos continuos de los nodos y el almacenamiento. Las taints y los selectores controlan la ubicación, pero no constituyen un límite de seguridad entre tenants.
+Use la protección de cuenta/contexto de [Operaciones](./05-operations.md). Todos los pools son dinámicos; no reservan capacidad física. Seleccione solo los ejemplos necesarios, revise la identidad de `default`/NodeClass personalizado y el acceso a las subredes, y tenga en cuenta los costos continuos de los nodos y el almacenamiento. Los taints y los selectores controlan la ubicación, pero no constituyen un límite de seguridad entre tenants.
 
 ## Servicios web: disponibilidad y recuperación
 
-On-Demand evita los eventos de recuperación de Spot, pero no garantiza capacidad ni disponibilidad. Siguen siendo necesarias las réplicas, la topología, la disponibilidad, las políticas de interrupción, el estado duradero y las pruebas de recuperación ante fallos.
+On-Demand evita los eventos de recuperación de Spot, pero no garantiza capacidad ni disponibilidad. Siguen siendo necesarias las réplicas, la topología, el estado de disponibilidad de los Pods, las políticas de interrupción, el estado duradero y las pruebas de recuperación ante fallos.
 
 Este ejemplo usa tres réplicas y un PDB que permite una expulsión voluntaria cuando las tres están en buen estado, en lugar de asumir que `N-1` es un valor literal de PDB. El antiguo ejemplo de diez réplicas era una decisión de dimensionamiento, no un requisito universal. La imagen/digest de nginx y la configuración sin privilegios coinciden con el ejemplo de operaciones revisado. Las sondas consultan `/` en el puerto 8080; una imagen de aplicación arbitraria no necesariamente implementa `/health`.
 
@@ -171,15 +171,15 @@ spec:
       app: web-frontend
 ```
 
-La distribución estricta entre zonas requiere al menos dos dominios aptos; la falta de capacidad puede dejar Pods en estado Pending. La distribución flexible por nombre de host es una preferencia, no garantiza una réplica por nodo ni tres zonas de disponibilidad. Compruebe las etiquetas coincidentes, la cobertura de subredes y la política ante fallos.
+La distribución obligatoria entre zonas requiere al menos dos dominios aptos; la falta de capacidad puede dejar Pods en estado Pending. La distribución flexible por nombre de host es una preferencia, no garantiza una réplica por nodo ni tres zonas de disponibilidad. Compruebe las etiquetas coincidentes, la cobertura de subredes y la política ante fallos.
 
-Una sonda de inicio protege las inicializaciones lentas frente a las comprobaciones de actividad prematuras. La disponibilidad controla si un endpoint puede recibir tráfico; la actividad reinicia un contenedor. Elija umbrales específicos para la aplicación y evite comprobaciones de actividad que reinicien todas las réplicas porque no está disponible una dependencia compartida. Los tiempos ilustrativos de las sondas aquí no constituyen un SLA de inicio medido.
+Una sonda de inicio protege las inicializaciones lentas frente a las comprobaciones prematuras de actividad. El estado Ready determina si un endpoint puede recibir tráfico; la sonda de liveness reinicia el contenedor. Elija umbrales específicos para la aplicación y evite comprobaciones de actividad que reinicien todas las réplicas porque no está disponible una dependencia compartida. Los tiempos ilustrativos de las sondas aquí no constituyen un SLA de inicio medido.
 
 ## Procesamiento por lotes: los reintentos no recuperan puntos de control
 
 Use Spot solo para trabajos que puedan tolerar interrupciones, plazos incumplidos y falta de capacidad Spot. Este pool no tiene alternativa On-Demand. `restartPolicy: OnFailure` puede reiniciar un contenedor fallido en un Pod que siga activo; no recupera la memoria del proceso perdida al terminar un nodo. `SPOT_AWARE=true` es solo una variable de entorno, a menos que una aplicación la implemente.
 
-El siguiente Job indexado imprime un número de fragmento lógico como **ejemplo de prueba básica**. Tiene paralelismo de dos, cinco completados, un plazo y reintentos limitados, en lugar del antiguo ejemplo de dimensionamiento con 20 en paralelo/100 completados. No es una implementación de procesamiento de datos. El índice de imagen de BusyBox revisado incluye Linux amd64/arm64; no se ejecutó ninguna imagen durante esta auditoría.
+El siguiente Job indexado imprime un número de fragmento lógico como **ejemplo de prueba básica**. Tiene un paralelismo de 2, 5 finalizaciones, un plazo y reintentos limitados, en lugar del antiguo ejemplo de dimensionamiento con 20 tareas en paralelo y 100 finalizaciones. No es una implementación de procesamiento de datos. El índice de imagen de BusyBox revisado incluye Linux amd64/arm64; no se ejecutó ninguna imagen durante esta auditoría.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -293,7 +293,7 @@ spec:
 
 Los trabajos reales necesitan confirmaciones de resultados idempotentes, puntos de control duraderos y lógica para reanudar. Incluso los Jobs indexados pueden ejecutar un índice más de una vez en algunos casos de fallo; no dé por hecho que los efectos secundarios ocurren exactamente una vez. Exporte los registros/artefactos necesarios antes de la limpieza por TTL. Las cachés locales del nodo y `emptyDir` no son puntos de control duraderos.
 
-`WhenEmpty` puede limpiar un nodo cuando ya no haya trabajo de aplicación apto; un valor de `consolidateAfter` de 30 segundos es un intervalo de espera, no una garantía de que un trabajo en ejecución finalice ni de que el nodo desaparezca tras 30 segundos. La deriva, el vencimiento y las interrupciones siguen siendo rutas de ciclo de vida independientes.
+`WhenEmpty` puede retirar un nodo cuando ya no quede trabajo de aplicación apto; un `consolidateAfter` de 30 segundos es un intervalo de estabilización, no una garantía de que un trabajo en ejecución finalice ni de que el nodo desaparezca al cabo de 30 segundos. La deriva, el vencimiento y las interrupciones siguen siendo rutas de ciclo de vida independientes.
 
 ## Inferencia con GPU: compruebe la forma completa del nodo
 
@@ -307,7 +307,7 @@ Auto Mode gestiona los controladores de NVIDIA y la compatibilidad con dispositi
 | g5.12xlarge | 4 A10G | 96 GB en total, 24 GB cada una | 48 / 192 GiB |
 | p5.48xlarge | 8 H100 | 640 GB en total, 80 GB cada una | 192 / 2 TiB |
 
-Estos son ejemplos, no una lista de las instancias GPU más recientes ni de las que están disponibles universalmente. La memoria total de GPU no equivale a la memoria de un único dispositivo contiguo. En particular, las solicitudes anteriores del Pod de 4 CPU/16Gi no caben en una g5.xlarge después de las reservas del nodo/sistema y la sobrecarga de DaemonSet. Este pool de inferencia permite formas G5 más grandes y evita seleccionar un nodo de entrenamiento de ocho GPU para un servicio de una GPU que no se ha revisado.
+Estos son ejemplos, no una lista de las instancias GPU más recientes ni de las que están disponibles universalmente. La memoria total de GPU no equivale a la memoria de un único dispositivo contiguo. En particular, las solicitudes anteriores del Pod (4 CPU y 16 GiB) no caben en una instancia g5.xlarge después de las reservas del nodo y del sistema, y de la sobrecarga de DaemonSet. Este pool de inferencia permite usar instancias G5 de mayor tamaño y evita seleccionar un nodo de entrenamiento de ocho GPU para un servicio de una GPU que no se ha revisado.
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1
@@ -440,7 +440,7 @@ Mantenga `replicas: 0` hasta sustituir el registro/imagen de ejemplo deliberadam
 
 `ephemeralStorage` es una configuración de almacenamiento del nodo, no almacenamiento persistente para modelos/puntos de control ni garantía de rendimiento. Inspeccione el almacenamiento realmente asignable y los dispositivos subyacentes. El cifrado del EBS raíz/de datos del nodo no establece el cifrado de PVC arbitrarios. Un límite de cantidad de GPU restringe los recursos del pool, no el costo total en dólares, y puede superarse temporalmente durante el aprovisionamiento rápido. Los ejemplos originales de 16/20 GPU eran decisiones de dimensionamiento; el laboratorio usa un límite menor de cuatro GPU.
 
-`WhenEmpty` con un intervalo de espera de diez minutos puede reducir la rotación después de que las cargas de trabajo se marchen. No retrasa la programación hasta que termine la inicialización de la GPU ni garantiza que haya un nodo listo. Hay NodePools estáticos disponibles cuando resulta apropiada la capacidad aprovisionada previamente deseada, con semánticas distintas de límites/consolidación y costos continuos.
+`WhenEmpty` con un intervalo de espera de diez minutos puede reducir la rotación después de que las cargas de trabajo se marchen. No retrasa la programación hasta que termine la inicialización de la GPU ni garantiza que haya un nodo listo. Hay NodePools estáticos cuando conviene mantener capacidad aprovisionada de antemano; tienen semánticas distintas de límites y consolidación, además de costos continuos.
 
 ## Entrenamiento distribuido y EFA
 
@@ -453,9 +453,9 @@ Revise todos estos puntos antes de activar una carga de trabajo de entrenamiento
 - Las interfaces solo EFA transportan RDMA, no direcciones IP de Pod. La interfaz principal es la tarjeta 0/dispositivo 0 de tipo `interface`. El ejemplo añade cuatro dispositivos `efa-only` y un prefijo `/28` para las direcciones IP de Pod.
 - La configuración estática de interfaces solo admite IPv4; no se añaden IP/prefijos/ENI adicionales después del lanzamiento. No combine la configuración de varias interfaces con `associatePublicIPAddress`. Planifique la capacidad de IP para los Pods de cargas de trabajo y del sistema.
 - Use un grupo de ubicación existente compatible, con zonas de disponibilidad/subredes privadas coincidentes y un grupo de seguridad EFA revisado que permita el tráfico necesario con referencia a sí mismo. Los nombres de zona/grupo del ejemplo son marcadores de posición, no pruebas de que haya capacidad P5 disponible allí.
-- Compruebe EFA/libfabric/NCCL, el inicio/reencuentro de procesos, la localidad de GPU/EFA y cualquier configuración necesaria de hugepage/bloqueo de memoria. El ejemplo de interfaz de cuatro dispositivos no afirma el ancho de banda máximo de red de P5 ni la alineación automática de GPU/EFA en los hosts Bottlerocket de Auto Mode.
+- Compruebe EFA/libfabric/NCCL, el inicio/reencuentro de procesos, la localidad de GPU/EFA y cualquier configuración necesaria de hugepage/bloqueo de memoria. El ejemplo de interfaz de cuatro dispositivos no afirma que alcance el ancho de banda máximo de red de P5 ni que Auto Mode alinee automáticamente las GPU y EFA en sus hosts Bottlerocket.
 
-El siguiente pool P5 homogéneo evita suponer que los workers P4d/P5 mixtos son intercambiables. P4d sigue siendo una alternativa que requiere validar su propio pool/entorno de ejecución compatible. Los valores anteriores de 500Gi/16.000 IOPS/1.000 de rendimiento y los 2.000Gi adicionales de disco de datos eran ilustrativos; el NodeClass compatible no crea ese dispositivo de bloque adicional arbitrario.
+El siguiente pool P5 homogéneo evita suponer que los nodos de trabajo P4d y P5 sean intercambiables. P4d sigue siendo una alternativa que requiere validar su propio pool/entorno de ejecución compatible. Los valores anteriores de 500 GiB/16.000 IOPS/1.000 de caudal y los 2.000 GiB adicionales de disco de datos eran ilustrativos; el NodeClass compatible no crea ese dispositivo de bloque adicional arbitrario.
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1
@@ -554,7 +554,7 @@ spec:
 
 `kubeflow.org/v1 PyTorchJob` requiere **Kubeflow Training Operator V1**; se usó su CRD de la versión publicada v1.9.3 para la validación estructural. Las API TrainJob/Runtime actuales de Kubeflow Trainer son distintas. Auto Mode no instala ninguno de los operadores al crear un NodePool.
 
-Esta plantilla está suspendida y usa una imagen de marcador de posición deliberadamente no válida. Ilustra un master y tres workers, ocho procesos de GPU locales por nodo y cuatro dispositivos EFA por Pod: **32 GPU / cuatro nodos de ocho GPU** al activarla. El límite de 40 GPU del pool permite como máximo cinco formas de nodo de este tipo como límite de planificación, incluido el margen para sustituciones; no es una reserva ni un límite estricto de facturación.
+Esta plantilla está suspendida y usa una imagen de marcador de posición deliberadamente no válida. Ilustra un nodo principal y tres nodos de trabajo, ocho procesos de GPU locales por nodo y cuatro dispositivos EFA por Pod: **32 GPU / cuatro nodos de ocho GPU** al activarla. El límite de 40 GPU del pool permite como máximo cinco nodos de este tipo como límite de planificación, incluido el margen para sustituciones; no es una reserva ni un límite estricto de facturación.
 
 ```yaml
 apiVersion: kubeflow.org/v1
@@ -662,7 +662,7 @@ spec:
             effect: NoSchedule
 ```
 
-Antes de reanudarlo, proporcione una imagen/punto de entrada verificados que implemente el contrato de inicio distribuido del operador, las rutas reales del conjunto de datos y la exportación duradera de puntos de control/artefactos. Valide el operador, el comportamiento de la cola/planificación en grupo, la capacidad de cuatro nodos, DNS/reencuentro, las reglas de red, los permisos del entorno de ejecución y el plazo. Esta no es una receta completa para entrenamiento en producción. La plantilla de Namespace Restricted puede necesitar una política de carga de trabajo revisada por separado si el entorno de ejecución de acelerador verificado requiere permisos que no puede satisfacer; no desactive sin más la seguridad de admisión de todo el clúster.
+Antes de reanudarlo, proporcione una imagen/punto de entrada verificados que implemente el contrato de inicio distribuido del operador, las rutas reales del conjunto de datos y la exportación duradera de puntos de control/artefactos. Valide el operador, el comportamiento de la cola/planificación en grupo, la capacidad de cuatro nodos, DNS/reencuentro, las reglas de red, los permisos del entorno de ejecución y el plazo. Esta no es una receta completa para entrenamiento en producción. La plantilla de un namespace con el nivel Restricted puede necesitar una política de carga de trabajo revisada por separado si el entorno de ejecución del acelerador validado requiere permisos que no puede satisfacer; no desactive sin más la seguridad de admisión de todo el clúster.
 
 Suspender un PyTorchJob heredado que ya está en ejecución elimina sus Pods/PodGroups activos; no es una operación de punto de control. `cleanPodPolicy: None` conserva los Pods completados para inspeccionarlos, pero no exporta artefactos. Revise la limpieza después de la exportación duradera, incluidos los PVC, los nodos y las reservas con propietario independiente.
 
@@ -688,7 +688,7 @@ jq '[.items[]|{name:.metadata.name,
 | Web / API | On-Demand o capacidad mixta con cuidado; consolidación moderada | Presupuesto de disponibilidad, réplicas, arquitectura del entorno de ejecución y latencia medida |
 | Procesamiento por lotes / CI | Spot cuando lo permitan el comportamiento de reinicio y los plazos | Idempotencia, progreso duradero, reintentos y capacidad no disponible |
 | Base de datos / streaming | Ubicación que tenga en cuenta el estado y política de interrupción | Quórum, topología de volúmenes, recuperación y comportamiento ante particiones |
-| Inferencia con GPU | GPU/CPU/RAM ajustadas al tamaño del modelo y posible capacidad lista | Compatibilidad de imagen/controlador, sondas, inicio en frío y costo |
+| Inferencia con GPU | GPU/CPU/RAM ajustadas al tamaño del modelo y posible capacidad aprovisionada de antemano | Compatibilidad de imagen/controlador, sondas, inicio en frío y costo |
 | Entrenamiento distribuido | Pool homogéneo de aceleradores y red/entorno de ejecución validados | Capacidad de grupo, puntos de control/exportación, dispositivos EFA y ubicación |
 
 Los valores anteriores de vencimiento de 24h/72h/168h/336h y consolidación de 30s/1m/5m/10m/15m/30m son ejemplos de políticas, no valores predeterminados por tipo de carga de trabajo. Siguen aplicándose la vida útil máxima de Auto Mode y el período de gracia de terminación independiente.
@@ -723,7 +723,7 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   --output "type=oci,dest=$WORK_DIR/app-multiarch.tar" "$BUILD_CONTEXT"
 ```
 
-La compilación requiere un builder de Buildx adecuado, workers nativos o emulación/compilación cruzada configurada correctamente. Ejecute pruebas de aplicación específicas para cada arquitectura antes de publicar mediante el flujo de trabajo habitual de su registro. El ahorro anterior de ~40 % con Spot/Graviton mixto sigue siendo una estimación no verificada; compare el costo real por trabajo útil según se describe en [Gestión de costos](./06-cost-management.md).
+La compilación requiere un builder de Buildx adecuado, nodos de compilación nativos o emulación/compilación cruzada configurada correctamente. Ejecute pruebas de aplicación específicas para cada arquitectura antes de publicar mediante el flujo de trabajo habitual de su registro. El ahorro anterior de ~40 % con Spot/Graviton mixto sigue siendo una estimación no verificada; compare el costo real por trabajo útil según se describe en [Gestión de costos](./06-cost-management.md).
 
 ## Referencias
 

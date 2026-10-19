@@ -1,7 +1,7 @@
 # ArgoCD 安装
 
 > **审查基线**：Argo CD 3.5.2 / Helm Chart 10.8.4；在审查发行说明后，清单和 CLI 固定版本更新为补丁版本 3.5.5（示例未重新运行）
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [先决条件](#prerequisites)
@@ -421,7 +421,7 @@ data:
   server.insecure: "false"
 ```
 
-只有在测试 SSO 授权和恢复访问后，才设置 `admin.enabled=false`。请结合 ingress 路由和 server.rootpath/basehref 一起设计任何 `/argocd` 子路径；这并非默认要求。命令行/环境设置可能需要滚动重启相应组件。
+只有在测试 SSO 授权和恢复访问后，才设置 admin.enabled=false。请结合 ingress 路由和 server.rootpath/basehref 一起设计任何 /argocd 子路径；这并非默认要求。命令行/环境设置可能需要滚动重启相应组件。
 
 对于受支持的资源（例如 Rollouts），优先使用内置健康检查。自定义 Lua 必须在 status 缺失时仍返回有效状态；不要将未知状态等同于 Healthy。自定义 Kustomize 版本需要配置 `kustomize.path.<version>` 并提供实际的可执行文件。请使用下方的 repository Secrets，而不要使用旧版 repositories/repository.credentials ConfigMap 字段。
 

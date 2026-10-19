@@ -1,7 +1,7 @@
 # Parte 6: Integración de MSK
 
-> **Referencia de revisión**: MSK Provisioned Standard/Express, MSK Serverless, MSK Connect; Java IAM helper 2.3.9\
-> **Última revisión**: October 16, 2026
+> **Referencia de revisión**: MSK Provisioned Standard/Express, MSK Serverless, MSK Connect; biblioteca auxiliar de IAM para Java 2.3.9\
+> **Última revisión**: 16 de octubre de 2026
 
 ## Responsabilidades y requisitos previos
 
@@ -10,8 +10,8 @@ Strimzi los ejecuta como cargas de trabajo de Kubernetes que opera tu equipo. Am
 decisiones sobre aplicaciones, temas, control de acceso, retención y recuperación. Un
 broker administrado no elimina la necesidad de comprender el comportamiento de Kafka.
 
-Usa AWS CLI v2 y kubectl compatibles con el clúster de EKS. Un cliente IAM necesita un
-helper de autenticación compatible y una cadena de credenciales de carga de trabajo funcional.
+Usa AWS CLI v2 y kubectl compatibles con el clúster de EKS. Un cliente IAM necesita una
+biblioteca auxiliar de autenticación compatible y una cadena de credenciales de carga de trabajo funcional.
 EKS Pod Identity o IRSA pueden proporcionar credenciales temporales; External Secrets
 Operator es opcional para otros flujos de administración de secretos, no es un requisito previo de IAM.
 
@@ -22,28 +22,26 @@ Operator es opcional para otros flujos de administración de secretos, no es un 
 | MSK Provisioned Standard | Elige brokers y almacenamiento; configura el escalado automático del almacenamiento si es necesario; solo se pueden editar los ajustes de broker compatibles | Horas de broker, almacenamiento aprovisionado, rendimiento/almacenamiento por niveles opcionales y red |
 | MSK Provisioned Express | Elige la capacidad de cómputo del broker; el almacenamiento escala automáticamente y se factura según el uso; límites de configuración/rendimiento obligatorios | Horas de broker, datos entrantes, almacenamiento utilizado y cargos de red aplicables |
 | MSK Serverless | AWS administra la capacidad de los brokers; los usuarios siguen planificando temas, particiones, retención y cuotas del servicio | **Horas de clúster**, horas de partición, datos entrantes/salientes, almacenamiento utilizado y cargos de red aplicables |
-| Strimzi en EKS | Opera nodos, discos, topología de broker/controlador y configuración compatible del Operator | EKS/EC2/EBS, redes, capacidad de reserva, observabilidad y esfuerzo operativo |
+| Strimzi en EKS | Opera nodos, discos, topología de brokers y controladores y configuración compatible del operador | EKS/EC2/EBS, redes, capacidad de reserva, observabilidad y esfuerzo operativo |
 
 Express es un **tipo de broker Provisioned**, no Serverless. Su documentación actual
 requiere tres AZ y enumera restricciones de API/funciones, incluida la compatibilidad incompleta con KStreams
 y la falta de compatibilidad con KIP-932. Comprueba la combinación compatible de broker/versión
 en lugar de suponer que todas las funciones de Kafka funcionan de la misma manera.
 
-Serverless requiere autenticación/autorización de IAM; no admite Kafka ACL. Solo permite
+Serverless requiere autenticación/autorización de IAM; no admite ACL de Kafka. Solo permite
 los ajustes de tema enumerados. Por ejemplo, la retención es configurable,
 mientras que `cleanup.policy` solo se puede establecer al crear el tema. La retención predeterminada
-también incluye un **límite de 250 GiB por partición**, no solo siete días. Un mayor volumen de tráfico puede alcanzar
-ese tamaño antes del límite de tiempo. El escalado automático de capacidad no hace ilimitado
-el número de particiones ni las tasas de ráfagas.
+también incluye un **límite de 250 GiB por partición**, no solo siete días. Un mayor volumen de datos puede alcanzar ese límite de tamaño antes del límite de tiempo. El escalado automático de capacidad no elimina los límites al número de particiones ni a las tasas de ráfagas.
 
 Hay métricas de CloudWatch para estas ofertas, pero la supervisión de Serverless no es
-la misma interfaz de Prometheus/open monitoring a nivel de broker que ofrece Provisioned.
+la misma interfaz de Prometheus/monitorización abierta a nivel de broker que ofrece Provisioned.
 Las políticas de temas/grupos de IAM siguen siendo tu responsabilidad para la multitenencia de Serverless.
 En Strimzi, los namespaces de Kubernetes por sí solos no autorizan el acceso a los temas de Kafka.
 
 MSK se puede administrar con API e infraestructura como código; GitOps no es exclusivo
 de Strimzi. La portabilidad de una implementación de Strimzi sigue dependiendo del almacenamiento, las redes,
-la identidad y las versiones compatibles del Operator. Compara el costo total medido y los
+la identidad y las versiones compatibles del operador. Compara el costo total medido y los
 requisitos de recuperación; ni «la autogestión siempre es más barata a escala» ni «Serverless
 es la opción más barata para las ráfagas» son una suposición predeterminada acertada.
 
@@ -53,8 +51,8 @@ El cliente debe poder alcanzar **todos los endpoints de broker anunciados en los
 la dirección de bootstrap. Valida DNS, rutas, grupos de seguridad, NACL, identidad de origen del Pod/nodo
 y salida. Compartir una VPC no es suficiente por sí solo.
 
-Para distintas VPC, las opciones incluyen peering/enrutamiento mediante Transit Gateway y
-**conectividad privada multi-VPC** de MSK compatible con PrivateLink. La función administrada multi-VPC es para la misma región y tiene requisitos de clúster/autenticación/subredes AZ.
+Para conectar VPC distintas, las opciones incluyen peering/enrutamiento mediante Transit Gateway y
+**conectividad privada multi-VPC** de MSK compatible con PrivateLink. La función administrada multi-VPC está disponible en la misma región y tiene requisitos de clúster, autenticación y subredes en las zonas de disponibilidad (AZ).
 Los endpoints públicos son una opción explícita para clústeres compatibles, no un requisito previo
 para el acceso entre VPC.
 
@@ -100,20 +98,20 @@ no puede tener éxito antes de establecer la conectividad TCP/TLS.
 
 | Cliente | Mecanismo IAM compatible |
 | --- | --- |
-| Java | `AWS_MSK_IAM` o `OAUTHBEARER` con el helper de Java de AWS |
-| Python, JavaScript, Go, .NET | `OAUTHBEARER` con el firmante/helper oficial de AWS correspondiente |
+| Java | `AWS_MSK_IAM` o `OAUTHBEARER` con la biblioteca auxiliar de Java de AWS |
+| Python, JavaScript, Go, .NET | `OAUTHBEARER` con el firmante o la biblioteca auxiliar oficial de AWS correspondiente |
 
 `AWS_MSK_IAM` no es un mecanismo genérico que proporcione el cliente Kafka de todos los lenguajes.
-Los helpers que no son de Java son proyectos oficiales de AWS, no simples equivalentes de la comunidad.
+Las bibliotecas auxiliares que no son de Java son proyectos oficiales de AWS, no simples equivalentes de la comunidad.
 En clústeres Provisioned, también pueden estar disponibles SCRAM o TLS mutuo; configura
-el flujo compatible de secretos/certificados y Kafka ACL. No son alternativas a
+el flujo compatible de secretos/certificados y las ACL de Kafka. No son alternativas a
 IAM en Serverless.
 
 Configura la asociación/relación de confianza del rol de carga de trabajo y la actualización de credenciales temporales
 antes de probar Kafka. No supongas que un rol de nodo heredado es la identidad prevista del Pod. Los entornos
 privados también deben poder acceder a los servicios de identidad que requiera su proveedor de credenciales.
 Prueba la reautenticación después de que se actualicen las credenciales.
-El helper de Java documenta un problema de coherencia en el nombre de sesión con algunos proveedores,
+La biblioteca auxiliar de Java documenta un problema de coherencia en el nombre de sesión con algunos proveedores,
 incluido Pod Identity; aplica la solución alternativa documentada si se produce ese problema.
 
 ### Separa las políticas de productor y consumidor
@@ -273,7 +271,7 @@ límites configurados y no paraleliza una fuente de una sola tarea.
 
 Kinesis Data Streams tiene sus propias API; reemplazar `bootstrap.servers` por un endpoint de Kinesis
 no convierte un cliente Kafka. Un conector o un puente explícito de procesamiento de flujos
-debe traducir registros, claves, comportamiento de reintento y checkpoints.
+debe traducir registros, claves, comportamiento de reintento y puntos de control.
 
 | Aspecto | Kafka / MSK / Strimzi | Kinesis Data Streams |
 | --- | --- | --- |
@@ -284,7 +282,7 @@ debe traducir registros, claves, comportamiento de reintento y checkpoints.
 
 «Kafka solo se integra con AWS mediante Connect» es incorrecto. Usa también el nombre actual
 **Amazon Managed Service for Apache Flink** en lugar de Kinesis Data Analytics.
-Para el puente, un sink de Kinesis escribe registros de Kafka en Kinesis y una source hace lo contrario. Selecciona un plugin mantenido compatible con el runtime elegido y prueba
+Para el puente, un conector de salida (sink) de Kinesis escribe registros de Kafka en Kinesis y un conector de entrada (source) hace lo contrario. Selecciona un plugin mantenido compatible con el runtime elegido y prueba
 el orden, el comportamiento de la clave de partición, los límites de tamaño de registro y la gestión de duplicados.
 Las diferencias de protocolo no prescriben un producto de puente universal.
 
@@ -308,7 +306,7 @@ la actualización de credenciales de la carga de trabajo, el acceso al broker, u
 - [Dimensiones de precios de MSK](https://aws.amazon.com/msk/pricing/)
 - [Conectividad privada multi-VPC de MSK](https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html)
 - [Información sobre puertos de MSK](https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html)
-- [Mecanismos de cliente IAM y helpers oficiales para lenguajes](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
+- [Mecanismos de cliente IAM y bibliotecas auxiliares oficiales para lenguajes](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
 - [Dependencias de acciones/recursos de IAM para MSK](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
 - [Casos de uso de IAM](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
 - [aws-msk-iam-auth 2.3.9](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.9)

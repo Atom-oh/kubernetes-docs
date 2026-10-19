@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **审查基线**：Argo CD 3.5.2、Argo Rollouts 1.10.0；根据发行说明审查结果，Argo CD 清单中的版本固定值已更新至补丁版本 3.5.5（未重新运行示例）
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [什么是 ArgoCD？](#what-is-argocd)
@@ -37,7 +37,7 @@ Argo CD 是 CNCF 毕业级 Argo 项目的一部分。仅凭采用情况并不能
 - **ApplicationSet**：基于模板的多集群部署
 - **集群生成器**：根据标签动态选择目标集群
 
-### 面向企业就绪
+### 企业级能力
 
 - **RBAC**：精细化的基于角色的访问控制
 - **SSO 集成**：直接使用 OIDC，或使用支持的 Dex 连接器对接其他身份提供方
@@ -225,7 +225,7 @@ spec:
 - 3.5.1：于 2026-08-12 发布。
 - 3.5.2：于 2026-08-27 发布。
 - 3.5.3：于 2026-09-14 发布。包含错误修复（健康检查、同步重试状态、UI）。
-- 3.5.4：于 2026-10-06 发布。这是一个**安全补丁版本**：修复了四个严重问题，分别是通过 Kustomize 远程引用和 Kustomize Helm config home 在 repo-server 中执行命令、通过 Jsonnet 导入读取 repo-server 文件，以及通过 PreDelete/PostDelete hooks 绕过 AppProject 限制（CVE-2026-77459）。相同修复也已回移植到 v3.4.10/v3.3.15。行为更改：Kustomize 构建不再遵循 `helmGlobals.configHome`，并且会拒绝超过 4 MiB 的 OCI 清单；升级前请查看[发行说明](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)。
+- 3.5.4：于 2026-10-06 发布。这是一个**安全补丁版本**：修复了四个严重级别（CRITICAL）的漏洞，分别是通过 Kustomize 远程引用和 Kustomize Helm config home 在 repo-server 中执行命令、通过 Jsonnet 导入读取 repo-server 文件，以及通过 PreDelete/PostDelete hooks 绕过 AppProject 限制（CVE-2026-77459）。相同修复也已回移植到 v3.4.10/v3.3.15。行为更改：Kustomize 构建不再遵循 `helmGlobals.configHome`，并且会拒绝超过 4 MiB 的 OCI 清单；升级前请查看[发行说明](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)。
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1)：3.6 系列的首个候选发行版，于 2026-09-15 发布。不是生产环境基线。
 
 ### 2026 年 10 月更新：Argo CD 4.0 愿景规划启动
@@ -238,7 +238,7 @@ Rollouts 是独立的 controller，即使不使用 Argo CD 也可以使用。本
 
 ### EKS 托管 Argo CD 功能
 
-EKS Capability for Argo CD 与自管理安装属于不同的运行模式。其自定义配置仅适用于**受支持的** argocd-cm 键、功能配置的命名空间，并且必须带有标签 `app.kubernetes.io/part-of: argocd`。不支持的键/标志会被忽略；不要假定标准 Lua 库或任意执行插件可用。请参阅[托管配置指南](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)。
+EKS Capability for Argo CD 与自管理安装属于不同的运行模式。其自定义配置仅适用于**受支持的** argocd-cm 键、该 capability 配置的命名空间，并且必须带有标签 `app.kubernetes.io/part-of: argocd`。不支持的键/标志会被忽略；不要假定标准 Lua 库或任意执行插件可用。请参阅[托管配置指南](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)。
 
 ## 后续步骤
 

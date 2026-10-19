@@ -1,11 +1,11 @@
 # Parte 3: Modos de red
 
 > **Base de revisión**: Calico Open Source 3.32.2 / operador 1.42.6; Kubernetes 1.34–1.36 es el intervalo probado de Calico 3.32.
-> **Última actualización**: 12 de septiembre de 2026. Los valores históricos de benchmark se conservan como informes no verificados, no como mediciones nuevas.
+> **Última actualización**: 12 de septiembre de 2026. Las cifras históricas de pruebas de rendimiento se conservan como informes no verificados, no como mediciones nuevas.
 
 ## Alcance y selección del modo
 
-Este capítulo trata las redes e IPAM de Pods Linux gestionados por Calico. En EKS de solo políticas, Amazon VPC CNI sigue gestionando la red Pod; crear IPPools de Calico no convierte esa instalación en overlay. Los ejemplos son diseños alternativos, no manifiestos para aplicar juntos ni sobre el pool ya creado del laboratorio introductorio. La auditoría no realizó migraciones ni benchmarks de red.
+Este capítulo trata las redes e IPAM de Pods Linux gestionados por Calico. En EKS de solo políticas, Amazon VPC CNI sigue gestionando la red Pod; crear IPPools de Calico no convierte esa instalación en overlay. Los ejemplos son diseños alternativos, no manifiestos para aplicar juntos ni sobre el pool ya creado del laboratorio introductorio. La auditoría no realizó migraciones de clúster ni pruebas de rendimiento de la red.
 
 | Opción | Significado | Límite importante |
 |---|---|---|
@@ -57,11 +57,11 @@ Las columnas «Felix» representan rutas/políticas del kernel programadas por F
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-3.html)
 
-4789 y VNI 4096 son los valores predeterminados ilustrados. La sobrecarga de 50 bytes y MTU 1450 se aplican a una ruta de 1500 bytes con IPv4 exterior y las cabeceras indicadas, no a toda red o familia de direcciones.
+4789 y VNI 4096 son los valores predeterminados ilustrados. La sobrecarga de 50 bytes y la MTU de 1450 se aplican a una ruta con MTU IP de 1500 bytes, IPv4 exterior y las cabeceras indicadas, no a todas las redes o familias de direcciones.
 
 ### Ejemplo CrossSubnet
 
-Con direcciones de nodo 10.0.1.10/24 y 10.0.1.11/24, la ruta dentro de la subred puede ir sin encapsular. Un peer en 10.0.2.20/24 necesita encapsulación en el diseño CrossSubnet. Las máscaras incorrectas pueden cambiar el resultado aunque los nombres de subred de nube parezcan correctos. CrossSubnet no establece conectividad entre VPC/regiones ni proporciona cifrado.
+Con direcciones de nodo 10.0.1.10/24 y 10.0.1.11/24, la ruta dentro de la subred puede ir sin encapsular. Otro nodo en 10.0.2.20/24 necesita encapsulación en el diseño CrossSubnet. Las máscaras incorrectas pueden cambiar el resultado aunque los nombres de subred de nube parezcan correctos. CrossSubnet no establece conectividad entre VPC/regiones ni proporciona cifrado.
 
 ![Los nodos de la misma subred usan una ruta sin encapsular, mientras IPIP transporta tráfico entre dos subredes de nodos configuradas.](../../.gitbook/assets/en-networking-calico-03-networking-modes-1.png)
 
@@ -71,7 +71,7 @@ Las direcciones/máscaras determinan la elección. Los valores 1500/1480 suponen
 
 ### Diagnóstico de nodos
 
-Ejecute estos comandos de solo lectura en un **namespace de red de nodo Linux** autorizado, no en un Pod de aplicación ordinario. Las interfaces solo existen para el modo habilitado. Los valores dependen de la instalación real.
+Ejecute estos comandos de solo lectura en el **espacio de nombres de red de un nodo Linux** autorizado, no en un Pod de aplicación ordinario. Las interfaces solo existen para el modo habilitado. Los valores dependen de la instalación real.
 
 ```bash
 ip link show tunl0
@@ -86,7 +86,7 @@ Una ruta Pod local típica es una ruta de host como `10.244.1.5/32 dev cali…`;
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-5.html)
 
-Son ejemplos IPv4 con red subyacente de 1500 bytes. El diagrama compara envolturas, no velocidad medida ni comportamiento idéntico del plano de control. Incluya otras encapsulaciones y rutas de Service al seleccionar la MTU de la carga.
+Son ejemplos IPv4 con una MTU IP subyacente de 1500 bytes. El diagrama compara envolturas, no velocidad medida ni comportamiento idéntico del plano de control. Incluya otras encapsulaciones y rutas de Service al seleccionar la MTU de la carga de trabajo.
 
 ## Configurar un pool mediante su propietario
 
@@ -139,7 +139,7 @@ Seleccione una fila, no varios recursos con el mismo CIDR:
 
 IPIP y VXLAN no pueden habilitarse simultáneamente en un pool. `encapsulation` es un campo del pool del operador, no el del IPPool independiente. En la instalación normal con API agregada, se rechaza crear pools solapados. Con CRD nativos v3, en vista previa técnica, la validación es asíncrona y un pool creado puede recibir una condición Disabled; crearlo con éxito no demuestra que pueda asignar direcciones.
 
-El esquema Installation de Calico 3.32 permite una lista de pools de hasta 25 entradas, sujeta a validación del controlador y restricciones de plataforma. Los ejemplos antiguos que afirmaban exactamente un pool IPv4 no son un límite actual universal.
+El esquema de Installation de Calico 3.32 permite una lista de pools de hasta 25 entradas, sujeta a validación del controlador y restricciones de plataforma. Los ejemplos antiguos que afirmaban exactamente un pool IPv4 no son un límite actual universal.
 
 ### Enrutamiento directo con BGP externo
 
@@ -196,7 +196,7 @@ spec:
   nodeSelector: topology.kubernetes.io/zone == 'ap-northeast-2b'
 ```
 
-Para asignación automática, asegure que cada nodo previsto coincida con un pool elegible; el selector no programa Pods. Las etiquetas de zona anteriores eligen pools, mientras CrossSubnet sigue usando direcciones/máscaras para decidir encapsulación.
+Para asignación automática, asegure que cada nodo previsto coincida con un pool elegible; el selector no decide dónde se ejecutan los Pods. Las etiquetas de zona anteriores eligen pools, mientras CrossSubnet sigue usando direcciones/máscaras para decidir encapsulación.
 
 ### Solicitudes explícitas de pool por namespace o Pod
 
@@ -220,7 +220,7 @@ metadata:
 | Azure con red gestionada por Calico | La guía overlay admite VXLAN donde IPIP no está soportado; configurar UDR no arregla encapsulación IPIP no admitida |
 | AKS | Use la integración Azure CNI/políticas específica admitida, no una suposición genérica de overlay Calico |
 | GCE / GKE | El enrutamiento GCE autogestionado difiere de GKE gestionado; [GKE Dataplane V2 usa Cilium](https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2) |
-| Local | Direct, rutas estáticas/BGP u overlay dependen de la conectividad subyacente; no hay una opción universalmente más rápida |
+| Centro de datos local | Direct, rutas estáticas/BGP u overlay dependen de la conectividad subyacente; no hay una opción universalmente más rápida |
 | Integración OpenStack Neutron | La guía overlay citada excluye esta integración; no copie instrucciones Kubernetes sin el procedimiento de su plataforma |
 
 Este capítulo no ofrece una receta CNI personalizada para EKS Auto Mode o Fargate. Desactivar BGP en VXLAN significa que esa configuración no lo necesita, no que AWS carezca de servicios BGP. Windows también tiene limitaciones independientes, incluido no admitir Calico IPIP ni VXLAN CrossSubnet.
@@ -229,7 +229,7 @@ Este capítulo no ofrece una receta CNI personalizada para EKS Auto Mode o Farga
 
 Use la MTU útil mínima de todas las rutas posibles, incluidas las de cifrado y Service. La [guía MTU de Calico](https://docs.tigera.io/calico/latest/networking/configuring/mtu) explica detección automática y propiedad operador/manifiestos. `mtuIfacePattern` selecciona interfaces consideradas durante la detección; no es un interruptor ni demuestra la MTU extremo a extremo.
 
-**No sume a ciegas las sobrecargas IPIP y WireGuard.** En una implementación mixta normal, WireGuard se usa entre peers habilitados; IPIP/VXLAN en otras rutas. Elija la menor MTU aplicable. Con una ruta real de 1500 bytes, WireGuard IPv4 más IPIP significa `min(1440, 1480) = 1440`, no `1500 − 60 − 20 = 1420`. WireGuard con IPv6 exterior tiene, por separado, 80 bytes de sobrecarga.
+**No sume a ciegas las sobrecargas IPIP y WireGuard.** En una implementación mixta normal, WireGuard se usa entre pares con WireGuard habilitado; IPIP/VXLAN en otras rutas. Elija la menor MTU aplicable. En una ruta con una MTU real de 1500 bytes, WireGuard IPv4 más IPIP significa `min(1440, 1480) = 1440`, no `1500 − 60 − 20 = 1420`. WireGuard con IPv6 exterior tiene, por separado, 80 bytes de sobrecarga.
 
 AKS tiene una excepción WireGuard documentada: la ruta subyacente puede ser 1400 aunque la interfaz muestre 1500, dando 1340 para WireGuard IPv4 o 1320 para IPv6. La ruta NodePort eBPF también usa VXLAN, por lo que un pool Pod sin encapsular no implica por sí solo MTU de 1500 bytes.
 
@@ -249,7 +249,7 @@ En instalaciones mediante manifiestos, el ajuste documentado es `calico-config.d
 
 Toda la ruta debe admitir jumbo; ajustar una interfaz no basta. Valide la ruta de la carga desde una carga de diagnóstico, no solo desde el nodo.
 
-Estas comprobaciones acotadas suponen un Pod Linux de diagnóstico aprobado con iputils y permisos necesarios. Use nombres/direcciones reales. Los tamaños siguientes son ejemplos **ICMP IPv4**: añada 20 bytes IPv4 y 8 ICMP. IPv6 exige otro cálculo; probes correctos no demuestran que todas las rutas ECMP sean seguras.
+Estas comprobaciones acotadas suponen un Pod Linux de diagnóstico aprobado con iputils y permisos necesarios. Use nombres/direcciones reales. Los tamaños siguientes son ejemplos **ICMP IPv4**: añada 20 bytes IPv4 y 8 ICMP. IPv6 exige otro cálculo; que las sondas respondan correctamente no demuestra que todas las rutas ECMP sean seguras.
 
 ```bash
 CHECK_NS=calico-demo
@@ -279,7 +279,7 @@ kubectl get ippool.projectcalico.org "$POOL_NAME" -o yaml > pool-before.yaml
 kubectl patch ippool.projectcalico.org "$POOL_NAME" --type merge   -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
 ```
 
-No garantiza ausencia de interrupciones. Si procede una transición planificada Direct a IPIP CrossSubnet, los campos son `ipipMode: CrossSubnet` / `vxlanMode: Never`; no requiere sustituir el CIDR. Recree únicamente las cargas necesarias para el plan validado de MTU/direcciones, usando su estrategia de rollout/readiness. Los [PodDisruptionBudgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) no limitan el rolling update de un controlador Deployment.
+No garantiza ausencia de interrupciones. Si procede una transición planificada Direct a IPIP CrossSubnet, los campos son `ipipMode: CrossSubnet` / `vxlanMode: Never`; no requiere sustituir el CIDR. Recree únicamente las cargas necesarias para el plan validado de MTU/direcciones, siguiendo la estrategia de despliegue gradual y comprobación de disponibilidad de cada aplicación. Los [PodDisruptionBudgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) no limitan el rolling update de un controlador Deployment.
 
 ### Migración independiente de IPPool/CIDR
 
@@ -288,7 +288,7 @@ Use el [procedimiento de migración de pools](https://docs.tigera.io/calico/late
 1. Inventaríe pools, CIDR de clúster Kubernetes/kube-proxy, solicitudes explícitas y todas las asignaciones. Un pool fuera del CIDR puede cambiar NAT o romper tráfico; el 10.245/16 antiguo no es automáticamente compatible con el clúster introductorio 10.244/16.
 2. Añada mediante su propietario un pool verificado sin solapamiento y pruebe asignaciones nuevas antes de retirar el antiguo. Conserve este para las cargas existentes.
 3. Detenga asignaciones nuevas en el pool antiguo mediante el propietario adecuado. `spec.disabled: true` en un pool independiente lo excluye de IPAM. `nodeSelector: "!all()"` del operador desactiva la **selección automática**, pero las solicitudes explícitas evitan selectores; elimínelas también.
-4. Migre cargas elegidas por lotes controlados, verificando direcciones, MTU, rutas, políticas y readiness. Recrear Pods puede interrumpir aplicaciones y cambiar IP; un pool nuevo no garantiza reversión transparente.
+4. Migre cargas elegidas por lotes controlados, verificando direcciones, MTU, rutas, políticas y disponibilidad de las aplicaciones. Recrear Pods puede interrumpir aplicaciones y cambiar IP; un pool nuevo no garantiza reversión transparente.
 5. Retire el pool antiguo solo después de contabilizar asignaciones y dependencias restantes, incluidos túneles o LoadBalancer cuando corresponda. Listar Pods no basta. Considere sus efectos NAT/rutas al retirarlo de la configuración del propietario.
 
 Comprobaciones útiles de solo lectura:
@@ -301,9 +301,9 @@ calicoctl ipam show --show-borrowed
 kubectl get pods --all-namespaces -o wide
 ```
 
-El tamaño de bloque es otra consideración de migración; no cambie la estructura inmutable de asignación sustituyendo un manifiesto de tutorial. El antiguo ejemplo que reiniciaba calico-node «para aplicar inmediatamente el modo» no demostraba la MTU de la carga ni la recuperación de la aplicación.
+El tamaño de bloque es otra consideración de migración; no cambie la estructura inmutable de asignación sustituyendo un manifiesto de tutorial. El antiguo ejemplo que reiniciaba calico-node «para aplicar inmediatamente el modo» no demostraba la MTU de la carga de trabajo ni la recuperación de la aplicación.
 
-## Informes de benchmark anteriores: procedencia no verificada
+## Informes anteriores de pruebas de rendimiento: procedencia no verificada
 
 Las páginas inglesa y coreana anteriores contenían cifras distintas y no aportaban resultados brutos, versiones completas, ubicación ni un entorno reproducible. Se conservan ambos registros; no pueden tratarse como un único experimento ni garantías validadas. Esta auditoría no los repitió.
 
@@ -332,9 +332,9 @@ No se aportaron hardware, número de muestras ni interpretación exacta de «64 
 
 El tamaño de cabecera no determina por sí solo qué modo es más rápido. Offloads de NIC, kernel/plano de datos, tamaño de paquete, CPU, rutas, reutilización y carga ofrecida pueden cambiar el resultado. Conserve estos registros como historia no verificada y mida el entorno objetivo, en vez de clasificar modos a partir de ellos.
 
-### Probes acotados de cliente para un experimento nuevo
+### Pruebas acotadas desde el cliente para un experimento nuevo
 
-Prepare Pods dedicados con versiones compatibles de iperf3/netperf, listeners de servidor activos y permisos de política necesarios. Los comandos son solo probes de cliente, no reproducen completamente ninguno de los registros. Capture versiones, ubicación nodo/AZ, MTU, tamaños de solicitud/respuesta, salida bruta y repeticiones. Confirme que el servidor tenga IPv4 para este ejemplo.
+Prepare Pods de prueba dedicados con versiones compatibles de iperf3/netperf, servidores a la escucha y los permisos de política necesarios. Los comandos son solo pruebas desde el cliente; no reproducen completamente ninguno de los registros. Capture versiones, ubicación nodo/AZ, MTU, tamaños de solicitud/respuesta, salida bruta y repeticiones. Confirme que el servidor tenga IPv4 para este ejemplo.
 
 ```bash
 set -euo pipefail

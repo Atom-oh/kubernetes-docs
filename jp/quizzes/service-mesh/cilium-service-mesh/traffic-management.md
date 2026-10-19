@@ -1,209 +1,195 @@
 # Cilium Service Mesh トラフィック管理クイズ
 
-このクイズでは、Cilium Service Mesh における L7 トラフィック管理、CiliumEnvoyConfig、ロードバランシング、トラフィック分割、Gateway API 統合についての理解を確認します。
+Cilium 1.20.3/Gateway API 1.6.3 に照らして確認しました。詳しい例と一次資料は[トラフィック管理ガイド](../../../service-mesh/cilium-service-mesh/02-traffic-management.md)を参照してください。
 
-## クイズ問題
+### 1. CiliumEnvoyConfig で HTTP routing rule を定義するために使う Envoy filter はどれですか?
 
-### 1. CiliumEnvoyConfig で HTTP ルーティングルールを定義するために使用される Envoy filter はどれですか？
-
-A. envoy.filters.network.tcp_proxy
-B. envoy.filters.network.http_connection_manager
-C. envoy.filters.http.fault
-D. envoy.filters.network.redis_proxy
+- **A.** `envoy.filters.network.tcp_proxy`
+- **B.** `envoy.filters.network.http_connection_manager`
+- **C.** `envoy.filters.http.fault`
+- **D.** `envoy.filters.network.redis_proxy`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. envoy.filters.network.http_connection_manager**
+**答え: B. `envoy.filters.network.http_connection_manager`**
 
-**解説:**
-HTTP Connection Manager は、HTTP トラフィックを処理するための中核となる Envoy filter です。この filter 内では、route_config を通じて、パスベース、ヘッダーベース、メソッドベースのルーティングルールを定義できます。
+HTTP Connection Manager は HTTP 通信を扱い、inline の `route_config` または RDS から route を取得します。router HTTP filter と参照先の Cluster resource も必要です。バックエンド Service を列挙するだけでは不十分です。
 
 </details>
 
-### 2. CiliumNetworkPolicy で L7 HTTP ルールを定義する際に使用できないフィールドはどれですか？
+### 2. CiliumNetworkPolicy で L7 HTTP rule を定義するとき、利用できない field はどれですか?
 
-A. method
-B. path
-C. headers
-D. body
+- **A.** `method`
+- **B.** `path`
+- **C.** `headers`
+- **D.** `body`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: D. body**
+**答え: D. `body`**
 
-**解説:**
-CiliumNetworkPolicy の HTTP L7 ルールでは、method（HTTP メソッド）、path（URL パス）、headers（HTTP ヘッダー）に基づくフィルタリングが可能です。body（リクエスト本文）は L7 ルールではサポートされていません。
+HTTP policy では、structured `headerMatches` を含め、method、path、headers に一致させられます。任意の request body 内の field を認可することはできません。認証と application-level authorization は別途必要です。
 
 </details>
 
-### 3. Cilium で Kafka L7 ポリシーを適用する際に、有効な apiKey ではないものはどれですか？
+### 3. Cilium 1.20.3 で Kafka topic 単位の access をどのように制御しますか?
 
-A. produce
-B. fetch
-C. delete
-D. metadata
+- **A.** Cilium の `rules.kafka` を変更せずに使う
+- **B.** HTTP body rule で Kafka message を検査する
+- **C.** broker の ACL を使い、到達性は別途 L4 policy で制御する
+- **D.** すべての rule を削除し、topic 権限が残ると仮定する
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: C. delete**
+**答え: C. broker の ACL を使い、到達性は別途 L4 policy で制御する**
 
-**解説:**
-Cilium の Kafka L7 ポリシーは、produce（メッセージ生成）、fetch（メッセージ取得）、metadata（メタデータ照会）、offsetcommit、offsetfetch、joingroup などの apiKey をサポートします。'delete' はサポートされる Kafka API key ではありません。
+Cilium 1.20.3 の L7 rule schema が対応するのは HTTP と DNS であり、旧 `rules.kafka` object は拒否されます。broker への到達性には L4 network policy を使い、topic、group、operation の制御には Kafka TLS/SASL と broker ACL を使ってください。旧 Kafka rule を削除しても topic 単位の認可は維持されません。
 
 </details>
 
-### 4. Cilium の eBPF ベース L4 ロードバランシングにおける Maglev hashing の利点は何ですか？
+### 4. Cilium eBPF load balancing のうち、適用可能な経路で Maglev が提供するものは何ですか?
 
-A. 完全にランダムな分散
-B. バックエンドが変更されてもセッションを維持できる
-C. 最小のメモリ使用量
-D. L7 ルーティングのサポート
+- **A.** 完全にランダムな振り分け
+- **B.** backend 選択の一貫性を保ち、membership 変更時の再割り当てを減らす
+- **C.** 削除された backend への接続が必ず維持される
+- **D.** 最小のメモリ使用量
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. バックエンドが変更されてもセッションを維持できる**
+**答え: B. backend 選択の一貫性を保ち、membership 変更時の再割り当てを減らす**
 
-**解説:**
-Maglev は一貫性ハッシュアルゴリズムであり、バックエンドサーバーが追加または削除されても、既存の接続の大部分を同じバックエンドに維持します。これはステートフルなアプリケーションや、セッションアフィニティが必要な場合に有用です。
+該当する外部 load balancing で、Maglev は backend 集合が変わったときの flow 再割り当てを抑えます。これは ClientIP session affinity とは別の機能であり、利用できなくなった backend への接続を維持できるわけではありません。Cilium の socket-level east–west 経路では、この Maglev 選択は行われません。
 
 </details>
 
-### 5. Gateway API HTTPRoute で重みベースのトラフィック分割を設定する正しい方法はどれですか？
+### 5. Gateway API HTTPRoute で weight による traffic split を正しく設定する方法はどれですか?
 
-A. split フィールドを使用する
-B. backendRefs で weight フィールドを指定する
-C. trafficPolicy を使用する
-D. destinationRule を使用する
+- **A.** `split` field を使う
+- **B.** `backendRefs` に `weight` field を指定する
+- **C.** `trafficPolicy` を使う
+- **D.** `destinationRule` を使う
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. backendRefs で weight フィールドを指定する**
+**答え: B. `backendRefs` に `weight` field を指定する**
 
-**解説:**
-Gateway API HTTPRoute では、backendRefs 配列内の各バックエンドに weight フィールドを指定してトラフィック分割を設定します。たとえば、`weight: 90` と `weight: 10` を使用すると、トラフィックは 90:10 の比率で分割されます。
+`backendRefs` の weight は相対的な選択確率を定義します。90 と 10 は 90:10 の割合を表しますが、10 request ごとに厳密に 9 対 1 になることや、user ごとの session 固定を保証しません。Service、port、parent listener が解決でき、Route の接続が受理される必要があります。
 
 </details>
 
-### 6. CiliumEnvoyConfig でリトライポリシーを設定する際、retry_on フィールドに指定できない有効な条件はどれですか？
+### 6. CiliumEnvoyConfig の retry policy で `retry_on` に指定できない値はどれですか?
 
-A. 5xx
-B. reset
-C. timeout
-D. connect-failure
+- **A.** `5xx`
+- **B.** `reset`
+- **C.** `timeout`
+- **D.** `connect-failure`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: C. timeout**
+**答え: C. `timeout`**
 
-**解説:**
-Envoy の retry_on 条件には、5xx（サーバーエラー）、reset（接続リセット）、connect-failure（接続失敗）、retriable-4xx などがあります。'timeout' は直接指定できる retry_on 条件ではありません。各リトライ試行のタイムアウトは per_try_timeout で設定します。
+`timeout` は `retry_on` token ではありません。`per_try_timeout` は最初の試行を含む各 upstream attempt の上限であり、backoff interval ではありません。ガイドでは安全な GET operation だけを再試行し、GET 以外の retry を明示的に無効にしたうえで、routing 前に caller 指定の Envoy retry/timeout override を削除します。
 
 </details>
 
-### 7. Cilium で DNS L7 ポリシーを使用する主な利点は何ですか？
+### 7. Cilium の DNS L7 policy が主に制御するものは何ですか?
 
-A. DNS サーバーのパフォーマンス向上
-B. 特定ドメインへの DNS クエリのみを許可する
-C. DNS キャッシュの無効化
-D. DNS over HTTPS のサポート
+- **A.** DNS server の性能向上
+- **B.** 選択した DNS resolver に送る、特定 domain の query だけを許可する
+- **C.** DNS cache の無効化
+- **D.** DNS over HTTPS のサポート
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. 特定ドメインへの DNS クエリのみを許可する**
+**答え: B. 選択した DNS resolver に送る、特定 domain の query だけを許可する**
 
-**解説:**
-DNS L7 ポリシーでは、ワークロードがクエリ可能なドメインを制限できます。matchPattern または matchName を使用すると、許可されたドメインのみがクエリされるようにし、データ流出や悪意あるドメインへのアクセスを防止できます。
+DNS rule は、選択した信頼できる resolver に送られる query name を制限します。それだけで応答された IP address への接続を許可するわけではなく、data exfiltration や DoH を確実に防ぐものでもありません。destination/port policy を別途追加し、UDP/TCP と実際の resolver/search-list の動作も確認してください。
 
 </details>
 
-### 8. CiliumEnvoyConfig でローカル Rate Limiting を設定するために使用される filter はどれですか？
+### 8. CiliumEnvoyConfig で local rate limiting を設定する filter はどれですか?
 
-A. envoy.filters.http.ratelimit
-B. envoy.filters.http.local_ratelimit
-C. envoy.filters.http.bandwidth_limit
-D. envoy.filters.http.throttle
+- **A.** `envoy.filters.http.ratelimit`
+- **B.** `envoy.filters.http.local_ratelimit`
+- **C.** `envoy.filters.http.bandwidth_limit`
+- **D.** `envoy.filters.http.throttle`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. envoy.filters.http.local_ratelimit**
+**答え: B. `envoy.filters.http.local_ratelimit`**
 
-**解説:**
-ローカル Rate Limiting では envoy.filters.http.local_ratelimit filter を使用します。この filter は token_bucket 設定を通じてリクエストレートを制限します。envoy.filters.http.ratelimit は、外部の Rate Limit Service と通信するグローバル Rate Limiting に使用されます。
+`envoy.filters.http.local_ratelimit` は、明示的な enabled/enforced fraction を備える token bucket を使います。route-level override を含め、fraction の既定値は 0% です。例では Envoy process ごとに 1 つの bucket を使い、その worker thread 間で共有します。cluster 全体や user ごとの quota ではありません。
 
 </details>
 
-### 9. Gateway API で HTTP -> HTTPS リダイレクトを設定するために使用される filter タイプはどれですか？
+### 9. Gateway API で HTTP から HTTPS への redirect に使う filter type はどれですか?
 
-A. URLRewrite
-B. RequestMirror
-C. RequestRedirect
-D. ResponseHeaderModifier
+- **A.** `URLRewrite`
+- **B.** `RequestMirror`
+- **C.** `RequestRedirect`
+- **D.** `ResponseHeaderModifier`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: C. RequestRedirect**
+**答え: C. `RequestRedirect`**
 
-**解説:**
-Gateway API では、HTTP から HTTPS へのリダイレクトに RequestRedirect filter を使用します。scheme: https と statusCode: 301 を設定すると、恒久的なリダイレクトが構成されます。
+`RequestRedirect` は `scheme: https` を指定した redirect response を返せます。301 は恒久 redirect ですが、client によっては request method が変わる場合があります。HTTP listener 用の Route を別に設定し、動作する HTTPS listener と certificate を用意してください。method 変更を伴う意味で write request を暗黙に redirect しないでください。
 
 </details>
 
-### 10. Cilium Service Mesh におけるトラフィックミラーリング（shadowing）の目的は何ですか？
+### 10. Cilium Service Mesh の traffic mirroring (shadowing) は何のために使いますか?
 
-A. トラフィックの暗号化
-B. 本番トラフィックをテスト環境に複製する
-C. ロードバランシングの最適化
-D. キャッシュの無効化
+- **A.** 通信の暗号化
+- **B.** production traffic を test 環境へ複製する
+- **C.** load balancing の最適化
+- **D.** cache の無効化
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. 本番トラフィックをテスト環境に複製する**
+**答え: B. production traffic を test 環境へ複製する**
 
-**解説:**
-トラフィックミラーリングは、本番トラフィックのコピーを別の Service（例: 新バージョンを含むテスト環境）に送信します。これにより、ユーザーに影響を与えることなく、実トラフィックを用いて新バージョンをテストできます。これは request_mirror_policies を通じて設定されます。
+`request_mirror_policies` は shadow backend に request のコピーを送り、その response を caller の結果には使いません。それでもデータが複製され、resource を消費し、副作用を起こす可能性があります。ガイドでは承認済み GET/HEAD traffic だけを隔離された backend に mirror し、ほかの method は mirror しません。user への影響がゼロになる保証はありません。
 
 </details>
 
-### 11. CiliumEnvoyConfig で weighted_clusters を使用した canary Deployment において、total_weight の役割は何ですか？
+### 11. 現行 Envoy は `weighted_clusters` の weight 合計をどのように扱いますか?
 
-A. リクエスト総数を制限する
-B. 重みの合計に対する基準値を定義する
-C. タイムアウト設定
-D. 接続数の制限
+- **A.** request 数の上限を設定する
+- **B.** 各 Cluster の weight の合計を使う。`total_weight` は非推奨
+- **C.** weight を timeout として扱う
+- **D.** すべての request で最小 weight の Cluster を使う
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. 重みの合計に対する基準値を定義する**
+**答え: B. 各 Cluster の weight の合計を使う。`total_weight` は非推奨**
 
-**解説:**
-total_weight は、個々の cluster の重みの合計に対する基準値を定義します。たとえば、total_weight: 100 を設定し、cluster A に 90、cluster B に 10 を割り当てると、トラフィックはそれぞれ 90% と 10% になります。
+現行 Envoy は各 Cluster の weight の合計を使います。`total_weight` は非推奨で、更新された例からは省かれています。weight 90 と 10 は相対選択比 90:10 を表しますが、自動 promotion/rollback や、一定期間内の厳密な request quota を実装するものではありません。
 
 </details>
 
-### 12. Gateway API HTTPRoute でヘッダーベースのルーティングを設定する際、matches セクションで使用するフィールドはどれですか？
+### 12. Gateway API HTTPRoute で header-based routing を設定する `matches` field はどれですか?
 
-A. headerMatchers
-B. headers
-C. requestHeaders
-D. matchHeaders
+- **A.** `headerMatchers`
+- **B.** `headers`
+- **C.** `requestHeaders`
+- **D.** `matchHeaders`
 
 <details>
-<summary>回答を表示</summary>
+<summary>答えを表示</summary>
 
-**回答: B. headers**
+**答え: B. `headers`**
 
-**解説:**
-HTTPRoute の matches セクションでは、ヘッダーベースのルーティングを設定するために headers フィールドを使用します。各ヘッダーに name と value を指定することで、特定のヘッダー値を持つリクエストを異なるバックエンドにルーティングできます。
+HTTPRoute の `matches.headers` で header の match 条件を表します。1 つの match 内に複数の header を指定すると、すべてが AND 条件になります。選択には Gateway API の path/header precedence rule が適用されます。client が送る version/canary header は認証情報ではありません。
 
 </details>

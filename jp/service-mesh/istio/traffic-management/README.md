@@ -1,72 +1,47 @@
 # トラフィック管理
 
-Istio のトラフィック管理機能により、Service Mesh 内のトラフィックフローをきめ細かく制御できます。
+Istio のトラフィック管理機能を使うと、サービスメッシュ内を流れるトラフィックを細かく制御できます。
 
 ## 目次
 
 1. [Gateway と VirtualService](01-gateway-virtualservice.md)
 2. [ルーティング](02-routing.md)
-3. [DestinationRule](03-destination-rule.md) ⭐ 必須概念
+3. [DestinationRule](03-destination-rule.md) ⭐ 重要な概念
 4. [トラフィック分割](04-traffic-splitting.md)
 5. [リトライとタイムアウト](05-retry-timeout.md)
 6. [ロードバランシング](06-load-balancing.md)
-7. [Circuit Breaker](07-circuit-breaker.md)
+7. [サーキットブレーカー](07-circuit-breaker.md)
 8. [フォールトインジェクション](08-fault-injection.md)
 9. [トラフィックミラーリング](09-traffic-mirror.md)
 10. [セッションアフィニティ](10-session-affinity.md)
 11. [Egress 制御](11-egress-control.md)
-12. [ServiceEntry（外部 Service 管理）](12-service-entry.md)
+12. [ServiceEntry（外部サービスの管理）](12-service-entry.md)
+13. [WorkloadEntry（VM の登録）](13-workload-entry.md)
 
 ## 概要
 
-トラフィック管理は Istio の中核機能の一つであり、コードを変更せずに以下の操作を可能にします。
+以下は、サポート対象の Istio リリースで使う sidecar モードの設定例です。Gateway、VirtualService、DestinationRule は proxy が読み取る API オブジェクトであり、それぞれが独立したネットワークホップになるわけではありません。mirror は選択したリクエストの追加コピーであり、90/10 の分割で残る 10% を意味するものではありません。mirror された応答は破棄されます。図は論理的な設定関係を示しています。
+
+各 snippet は個別に使う例であり、すべてを 1 つの manifest として適用するものではありません。先に参照先の Service と DestinationRule の subset を作成してください。VirtualService に `gateways` リストがない場合は mesh 全体に適用されます。Ingress route には明示的な Gateway の関連付けと一致する hostname が必要です。ambient モードでは、サポート対象の Gateway API／waypoint routing を使用してください。
+
+トラフィック管理は Istio の中核機能の 1 つで、コードを変更せずに次のような操作を行えます。
 
 ### 主な機能
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+![クライアントのリクエストが Gateway に入り、VirtualService でルーティングされ、DestinationRule のトラフィックポリシーが適用された後、メインの service、canary、shadow test 用の mirror copy という 3 つの service version に振り分けられます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-0.png)
 
-    subgraph Istio["Istio Traffic Management"]
-        Gateway[Gateway<br/>External Traffic Entry]
-        VS[VirtualService<br/>Routing Rules]
-        DR[DestinationRule<br/>Traffic Policy]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-0.html)
 
-    subgraph Services["Services"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-        V3[Version 3<br/>Mirror]
-    end
+### 1. インテリジェントなルーティング
 
-    Client -->|1. Request| Gateway
-    Gateway -->|2. Routing| VS
-    VS -->|3. Apply Policy| DR
-    DR -->|4a. Main Traffic| V1
-    DR -->|4b. Canary| V2
-    DR -->|4c. Shadow| V3
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Gateway,VS,DR istio;
-    class V1,V2,V3 service;
-```
-
-### 1. インテリジェントルーティング
-
-- **パスベース**: `/api/v1` → Service A、`/api/v2` → Service B
-- **ヘッダーベース**: `User-Agent: Mobile` → モバイルバージョン
-- **Cookie ベース**: 特定のユーザーを特定のバージョンへルーティング
-- **重みベース**: 比率に応じてトラフィックを分散
+- **path ベース**: `/api/v1` → Service A、`/api/v2` → Service B
+- **header ベース**: `User-Agent: Mobile` → モバイル版
+- **cookie ベース**: 特定のユーザーを特定の version にルーティング
+- **weight ベース**: 比率に応じてトラフィックを分散
 
 ### 2. デプロイ戦略
 
-**Canary Deployment**:
+**Canary deployment**:
 ```yaml
 # Only 10% to new version
 route:
@@ -80,7 +55,7 @@ route:
   weight: 10
 ```
 
-**Blue/Green Deployment**:
+**Blue/Green deployment**:
 ```yaml
 # Instant switch
 route:
@@ -92,22 +67,22 @@ route:
 
 ### 3. レジリエンスパターン
 
-- **Circuit Breaker**: 障害が発生している Service を隔離
-- **Retry**: 自動リトライ
-- **Timeout**: レスポンスタイムの制限
-- **Rate Limiting**: リクエストレートの制御
+- **サーキットブレーカー**: 障害中の service を隔離
+- **リトライ**: 自動的に再試行
+- **タイムアウト**: 応答時間に上限を設定
+- **レート制限**: リクエスト頻度を制御
 
 ### 4. テストとデバッグ
 
-- **Traffic Mirroring**: テストのために本番トラフィックを複製
-- **Fault Injection**: 意図的な障害の注入
-- **A/B Testing**: 異なるユーザーグループに異なるバージョンを提供
+- **トラフィックミラーリング**: テスト用に本番トラフィックを複製
+- **フォールトインジェクション**: 意図的に障害を発生させる
+- **A/B テスト**: 異なるユーザー群に異なる version を提供
 
-## コアリソース
+## 主なリソース
 
 ### Gateway
 
-Mesh への外部トラフィックのエントリポイントを定義します。
+メッシュに入る外部トラフィックの入口を定義します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -154,7 +129,7 @@ spec:
 
 ### DestinationRule
 
-宛先 Service のポリシーを定義します。
+宛先 service に適用するポリシーを定義します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -177,7 +152,7 @@ spec:
 
 ## 実践例
 
-### 安全な Canary Deployment
+### 安全な Canary deployment
 
 ```yaml
 # Step 1: Start with 5% traffic
@@ -200,10 +175,10 @@ spec:
       weight: 5
 ```
 
-監視後、問題がなければ段階的に増やします。
+監視して問題がなければ、次のように段階的に比率を上げます。
 - 5% → 10% → 25% → 50% → 100%
 
-### ヘッダーベースルーティング（開発者テスト）
+### header ベースのルーティング（開発者テスト）
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -230,7 +205,9 @@ spec:
         subset: v1
 ```
 
-### Circuit Breaker + Retry
+開発者用 header はクライアントが付与するルーティングのヒントであり、認証や認可境界ではありません。
+
+### サーキットブレーカー + リトライ
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -249,7 +226,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -271,116 +248,68 @@ spec:
     timeout: 10s
 ```
 
-## トラフィックフロー
+## トラフィックの流れ
 
-```mermaid
-flowchart LR
-    User[User]
+![ユーザーのリクエストは ingress Gateway に入り、VirtualService で path、header、weight の順に照合されます。次に DestinationRule のロードバランシング、サーキットブレーカー、接続プールのポリシーが適用され、最終的に 3 つの backing Pod のいずれかに届きます。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-1.png)
 
-    subgraph Ingress["Ingress Gateway"]
-        IGW[Gateway<br/>Port 80/443]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-1.html)
 
-    subgraph VirtualServices["VirtualService Routing"]
-        VS1[Path Matching]
-        VS2[Header Matching]
-        VS3[Weight Distribution]
-    end
+## 学習の進め方
 
-    subgraph DestinationRules["DestinationRule Policies"]
-        DR1[Load Balancing]
-        DR2[Circuit Breaker]
-        DR3[Connection Pool]
-    end
+トラフィック管理を効果的に学ぶには、次の順序がおすすめです。
 
-    subgraph Pods["Pods"]
-        P1[Pod v1-1]
-        P2[Pod v1-2]
-        P3[Pod v2-1]
-    end
-
-    User -->|Request| IGW
-    IGW --> VS1
-    VS1 --> VS2
-    VS2 --> VS3
-    VS3 --> DR1
-    DR1 --> DR2
-    DR2 --> DR3
-    DR3 --> P1
-    DR3 --> P2
-    DR3 --> P3
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class IGW gateway;
-    class VS1,VS2,VS3 routing;
-    class DR1,DR2,DR3 policy;
-    class P1,P2,P3 pod;
-```
-
-## 学習パス
-
-効果的にトラフィック管理を学習するには、以下の順序を推奨します。
-
-1. **[Gateway と VirtualService](01-gateway-virtualservice.md)** ⭐ 開始地点
-   - 基本概念の理解
+1. **[Gateway と VirtualService](01-gateway-virtualservice.md)** ⭐ 最初に学ぶ項目
+   - 基本概念
    - 外部トラフィックの処理
 
 2. **[ルーティング](02-routing.md)**
-   - 高度なルーティングパターン
+   - 応用的なルーティングパターン
    - 条件付きルーティング
 
-3. **[DestinationRule](03-destination-rule.md)** ⭐ 必須概念
-   - Subset の概念を理解する
+3. **[DestinationRule](03-destination-rule.md)** ⭐ 重要な概念
+   - subset の概念
    - Traffic Policy の基本
-   - VirtualService との統合
+   - VirtualService との連携
 
 4. **[トラフィック分割](04-traffic-splitting.md)**
-   - Canary Deployment
-   - A/B Testing
+   - Canary deployment
+   - A/B テスト
 
 5. **[リトライとタイムアウト](05-retry-timeout.md)**
    - 障害からの復旧
-   - レスポンスタイムの制御
+   - 応答時間の制御
 
 6. **[ロードバランシング](06-load-balancing.md)**
-   - さまざまなアルゴリズム
-   - パフォーマンスの最適化
+   - 各種アルゴリズム
+   - 性能の最適化
 
-7. **[Circuit Breaker](07-circuit-breaker.md)**
+7. **[サーキットブレーカー](07-circuit-breaker.md)**
    - 障害の隔離
-   - Cascading Failure の防止
+   - 障害の連鎖を防止
 
-8. **[Fault Injection](08-fault-injection.md)**
+8. **[フォールトインジェクション](08-fault-injection.md)**
    - 障害テスト
    - Chaos Engineering
 
-9. **[Traffic Mirroring](09-traffic-mirror.md)**
-   - 本番テスト
-   - 新バージョンの検証
+9. **[トラフィックミラーリング](09-traffic-mirror.md)**
+   - 本番環境でのテスト
+   - 新 version の検証
 
-10. **[Session Affinity](10-session-affinity.md)**
-    - Sticky Session
-    - 状態の維持
+10. **[セッションアフィニティ](10-session-affinity.md)**
+    - セッションの固定
+    - state の維持
 
 11. **[Egress 制御](11-egress-control.md)**
-    - 外部 Service へのアクセス
-    - セキュリティ強化
+    - 外部 service へのアクセス
+    - セキュリティの強化
 
 12. **[ServiceEntry](12-service-entry.md)**
-    - 外部 Service の登録
-    - Egress Gateway との統合
+    - 外部 service の登録
+    - Egress Gateway との連携
 
 ## ベストプラクティス
 
-### 1. 段階的ロールアウト
+### 1. 段階的なロールアウト
 
 ```yaml
 # ❌ Bad example: 100% at once
@@ -390,7 +319,7 @@ weight: 100
 # 5% → Monitor → 10% → Monitor → ...
 ```
 
-### 2. 常に Timeout を設定する
+### 2. workload に合ったタイムアウトを設定する
 
 ```yaml
 # ✅ Always set timeout
@@ -401,7 +330,9 @@ http:
   timeout: 10s
 ```
 
-### 3. Retry を慎重に使用する
+streaming request には別のタイムアウト設定が必要な場合があります。短い HTTP deadline が、すべての gRPC stream や長時間の応答に適するとは限りません。
+
+### 3. リトライを慎重に使う
 
 ```yaml
 # ✅ Only when idempotency is guaranteed
@@ -411,12 +342,12 @@ retries:
   retryOn: 5xx,reset,connect-failure
 ```
 
-### 4. Circuit Breaker のしきい値を調整する
+### 4. サーキットブレーカーのしきい値を調整する
 
 ```yaml
 # ✅ Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5      # Adjust per service
+  consecutive5xxErrors: 5      # Adjust per service
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # Maximum 50% ejection
@@ -424,11 +355,11 @@ outlierDetection:
 
 ### 5. メトリクスを監視する
 
-トラフィック管理を変更する際は、常に次の項目を監視します。
-- **リクエストレート**: リクエスト数の変化
-- **エラーレート**: エラーの割合
-- **レイテンシー**: P50、P95、P99 レイテンシー
-- **成功率**: 成功の割合
+トラフィック管理を変更するときは、必ず次の項目を監視します。
+- **リクエスト数**: リクエスト数の変化
+- **エラー率**: エラーの割合
+- **レイテンシー**: P50、P95、P99 のレイテンシー
+- **成功率**: 成功した割合
 
 ## トラブルシューティング
 
@@ -449,7 +380,7 @@ kubectl get pods --show-labels -n <namespace>
 istioctl analyze -n <namespace>
 ```
 
-### 重みが適用されない
+### weight が適用されない
 
 ```bash
 # Check Envoy configuration
@@ -467,11 +398,11 @@ istioctl proxy-config clusters <pod-name> -n <namespace>
 
 ## 参考資料
 
-- [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Istio のトラフィック管理](https://istio.io/latest/docs/concepts/traffic-management/)
 - [VirtualService リファレンス](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
 - [DestinationRule リファレンス](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Gateway リファレンス](https://istio.io/latest/docs/reference/config/networking/gateway/)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Istio Traffic Management クイズ](../../../quizzes/service-mesh/istio/traffic-management.md)に挑戦してください。
+この章の理解度を確かめるには、[Istio トラフィック管理クイズ](../../../quizzes/service-mesh/istio/traffic-management.md)に挑戦してください。

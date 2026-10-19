@@ -1,6 +1,6 @@
 # 容器技术
 
-> **支持的版本**：受维护的 Linux Docker/CRI 版本；Kubernetes CRI v1；Node.js 24 构建示例 **最后更新**：October 16, 2026
+> **支持的版本**：受维护的 Linux Docker/CRI 版本；Kubernetes CRI v1；Node.js 24 构建示例 **最后更新**：2026 年 10 月 16 日
 
 容器是一种将应用程序及其依赖项打包在一起的技术，可确保应用程序在各种环境中一致运行。本文档介绍容器的基本概念、工作原理以及容器与 Kubernetes 的关系。
 
@@ -124,9 +124,9 @@ fi
 
 ### 通过 OverlayFS 管理层
 
-全新安装的 Docker Engine 29.0+ 默认使用 containerd 镜像存储和 snapshotters。升级可能会保留传统的 overlay2；请检查 docker info。并非所有安装都提供 GraphDriver.Data 路径。
+全新安装的 Docker Engine 29.0+ 默认使用 containerd 镜像存储和快照器（snapshotters）。升级可能会保留传统的 overlay2；请检查 docker info。并非所有安装都提供 GraphDriver.Data 路径。
 
-OCI 镜像独立描述文件系统层，不依赖具体的存储实现。OverlayFS 是常见的 Linux 后端；运行时也可能使用其他存储驱动或 snapshotters。
+OCI 镜像独立描述文件系统层，不依赖具体的存储实现。OverlayFS 是常见的 Linux 后端；运行时也可能使用其他存储驱动或快照器（snapshotters）。
 
 ```bash
 # Check image layers
@@ -218,8 +218,8 @@ Kubernetes 1.26+ 要求使用 CRI v1。请使用受支持的 containerd/CRI-O �
 
 ### 镜像标签和摘要
 
-* **Tag**：人类可读的可变引用；除非镜像仓库启用了不可变性，否则可以重新分配（例如，`nginx:1.30.6`）
-* **Digest**：镜像清单或多平台索引的内容摘要（通常为 SHA256）；它引用配置/层摘要（例如，`nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`）
+* **标签（Tag）**：人类可读的可变镜像引用；除非镜像仓库启用了不可变性，否则可以重新分配（例如，`nginx:1.30.6`）
+* **摘要（Digest）**：镜像清单或多平台索引的内容摘要（通常为 SHA256）；它引用配置/层摘要（例如，`nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`）
 
 ## Dockerfile
 
@@ -313,16 +313,16 @@ docker run -p 8080:80 nginx
 
 ## 容器存储 {#container-storage}
 
-Docker 容器的可写层在停止/启动后仍会保留，但删除容器时也会被删除。请将持久数据存储在 volumes 或其他外部存储中。
+Docker 容器的可写层在停止后再启动时仍会保留，但删除容器后该层也会一并删除。请将持久数据存储在数据卷或其他外部存储中。
 
 ### 存储类型
 
 1. **临时存储**：容器内部文件系统，删除容器时数据会丢失
-2. **Volumes**：由 Docker 管理的主机文件系统区域
-3. **Bind mounts**：将特定主机路径挂载到容器中
-4. **tmpfs mounts**：基于内存的临时存储；页面可能会被换出到磁盘
+2. **数据卷（Volumes）**：由 Docker 管理的存储空间
+3. **绑定挂载（Bind mounts）**：将指定的主机路径挂载到容器中
+4. **tmpfs 挂载**：基于内存的临时存储；内存页可能会被换出到磁盘
 
-### Volume 使用示例
+### 数据卷使用示例
 
 ```bash
 # Create volume
@@ -340,8 +340,8 @@ docker run -v /host/path:/container/path:ro nginx
 
 ### 数据共享模式
 
-1. **Volume 共享**：多个容器使用同一个 volume
-2. **数据 volume 容器**：创建仅包含数据的容器，然后共享数据
+1. **数据卷共享**：多个容器使用同一个数据卷
+2. **数据卷容器**：创建仅用于存放数据的容器，再将数据共享给其他容器
 3. **外部存储集成**：使用 AWS EBS、NFS 等外部存储系统
 
 ## 容器安全 {#container-security}
@@ -682,16 +682,16 @@ AWS 托管的容器镜像仓库服务。
 
 | 术语                  | 描述                                                                                                                   |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Container**         | 一种标准化软件单元，将应用程序及其依赖项打包在一起，从而确保其能够在任何地方一致运行。      |
-| **Image**             | 用于创建容器的只读模板，包含应用程序代码、库、依赖项、工具和其他文件。 |
+| **容器（Container）**         | 一种标准化软件单元，将应用程序及其依赖项打包在一起，从而确保其能够在任何地方一致运行。      |
+| **镜像（Image）**             | 用于创建容器的只读模板，包含应用程序代码、库、依赖项、工具和其他文件。 |
 | **Dockerfile**        | 一个包含构建容器镜像指令的文本文件。                                                           |
-| **Registry**          | 用于存储和分发容器镜像的仓库。（例如 Docker Hub、Amazon ECR）                                     |
-| **Container Runtime** | 用于运行容器的软件。（例如 Docker、containerd、CRI-O）                                                              |
-| **Namespace**         | Linux 内核功能，用于隔离进程，使其无法看到系统的其他部分。                                  |
+| **镜像仓库（Registry）**          | 用于存储和分发容器镜像的仓库（例如 Docker Hub、Amazon ECR）。                                     |
+| **容器运行时（Container Runtime）** | 用于运行容器的软件（例如 Docker、containerd、CRI-O）。                                                              |
+| **命名空间（Namespace）**         | Linux 内核功能，用于隔离进程，使其无法看到系统的其他部分。                                  |
 | **cgroups**           | Linux 内核功能，用于限制和监控进程组的资源使用情况（CPU、内存等）。                         |
-| **Layer**             | 容器镜像由多个层组成，用于表示文件系统差异；仅包含元数据的指令不需要文件系统层。                                  |
-| **Volume**            | 用于持久存储容器数据的机制。                                                                          |
-| **Orchestration**     | 自动化部署、管理、扩展和网络配置多个容器的过程。                         |
+| **镜像层（Layer）**             | 容器镜像由多个层组成，用于表示文件系统差异；仅包含元数据的指令不需要文件系统层。                                  |
+| **数据卷（Volume）**            | 用于持久存储容器数据的机制。                                                                          |
+| **容器编排（Orchestration）**     | 自动化部署、管理、扩展和网络配置多个容器的过程。                         |
 | **ECS**               | Amazon Elastic Container Service，AWS 的容器编排服务。                                                      |
 | **ECR**               | Amazon Elastic Container Registry，AWS 的容器镜像仓库服务。                                                    |
 | **Fargate**           | AWS 的无服务器容器执行环境，无需管理基础设施即可运行容器。                      |

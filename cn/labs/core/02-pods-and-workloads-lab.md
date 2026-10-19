@@ -2,7 +2,7 @@
 
 > **难度**：初级
 > **预计用时**：50 分钟
-> **最后更新**：September 11, 2026
+> **最后更新**：2026 年 9 月 11 日
 
 ## 学习目标
 - 使用 YAML 创建和管理 Pod
@@ -106,7 +106,7 @@ workload_kubectl get pod nginx-lab -o wide
 ### 步骤
 
 **步骤 2.1：创建 Deployment**
-在故意使用错误镜像进行滚动更新时，Deployment 会通过 maxUnavailable0 和 maxSurge1 保留旧的就绪副本。需要预留容量来容纳 surge 和正在终止的 Pod，以及独立的 Pod。但这并不能保证在其他故障发生时仍可用。
+在故意使用错误镜像进行滚动更新时，Deployment 会通过将 `maxUnavailable` 设为 0、`maxSurge` 设为 1 来保留旧的就绪副本。需要预留容量来容纳 surge 和正在终止的 Pod，以及独立的 Pod。但这并不能保证在其他故障发生时仍可用。
 
 ```bash
 cat > "${WORKLOADS_LAB_DIR:?}/nginx-deployment.yaml" << 'EOF'

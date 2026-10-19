@@ -81,7 +81,7 @@ CPU 限制是带宽限制。`cpu.max` 为 `20000 100000` 表示“每 100 毫秒
 **答案：B) nftables 在 1.33 中成为 GA；IPVS 在 1.35 中弃用（计划在 1.40 默认禁用、1.43 移除），当前默认模式仍是 iptables**
 
 **说明：**
-nftables 模式从 alpha 1.29 → beta 1.31 → **GA 1.33** 逐步成熟，可提供 O(1) 查找和增量规则更新（工作节点要求内核 5.13+；AL2023 满足这一条件）。IPVS 模式已在 **1.35（2025 年 12 月）弃用**；上游计划在 1.40 默认禁用，并在 1.43 移除。以上均为未来计划：请查看[持续维护的 KEP-5495 时间表](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)。建议替换为 nftables，但**当前默认模式仍是 iptables**，因此切换需要明确决策。
+nftables 模式从 alpha 1.29 → beta 1.31 → **GA 1.33** 逐步成熟，可提供 O(1) 查找和增量规则更新（工作节点要求内核 5.13+；AL2023 满足这一条件）。IPVS 模式已在 **1.35（2025 年 12 月）弃用**；上游计划在 1.40 默认禁用，并在 1.43 移除。其中，1.40 默认禁用和 1.43 移除仍是未来目标：请查看[持续维护的 KEP-5495 时间表](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)。建议替换为 nftables，但**当前默认模式仍是 iptables**，因此切换需要明确决策。
 </details>
 
 6. 如何验证是否发生 conntrack 耗尽？

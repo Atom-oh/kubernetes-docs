@@ -1,7 +1,7 @@
 # Service 与网络
 
 > **支持的版本**：Kubernetes 1.35、1.36、1.37
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 在 Kubernetes 中，Service 是一种抽象层，为一组 Pod 提供单一访问点。在本章中，我们将详细探索 Kubernetes 网络概念，包括各种 Service 类型、Ingress、网络策略等。
 

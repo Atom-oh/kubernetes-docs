@@ -1,6 +1,6 @@
 # Linkerd 流量管理
 
-> **最后更新**：October 16, 2026 · Linkerd edge-26.10.1 · Gateway API 1.5.1 · Flagger 1.45.0
+> **最后更新**：2026 年 10 月 16 日 · Linkerd edge-26.10.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
 当前 Linkerd 路由使用 Gateway API 资源和受支持的注解。ServiceProfile 仍是兼容性接口，而 TrafficSplit/linkerd-smi 已弃用。这些路径不能互换：对于同一个 Service，现有的 ServiceProfile 优先于出站 HTTPRoutes，并会阻止较新的重试/超时/故障累积配置生效。
 
@@ -10,16 +10,16 @@
 
 | 策略路径 | 预期用途 | 重要边界 |
 |---|---|---|
-| Service-parent HTTPRoute | 从网格内调用方进行出站路由/可靠性管理 | 客户端必须加入网格且能够检查 HTTP |
-| Server-parent HTTPRoute | 匹配入站授权 | 附加方式和策略用途不同 |
+| 以 Service 为父级的 HTTPRoute | 从网格内调用方进行出站路由/可靠性管理 | 客户端必须加入网格且能够检查 HTTP |
+| 以 Server 为父级的 HTTPRoute | 匹配入站授权 | 附加方式和策略用途不同 |
 | ServiceProfile | 较早期的路由指标/重试/超时 | 对同一个 Service 覆盖较新的策略路径 |
 | TrafficSplit | 旧版 SMI 加权路由 | 需要已弃用的扩展/CRD |
 
-基于 Service 的策略依赖 Service 发现。直接 Pod-IP/headless 路径、未加入网格的调用方以及由应用发起的不透明 TLS，不会自动获得相同的 L7 行为。请将身份、授权和路由视为独立控制项。
+基于 Service 的策略依赖 Service 发现。直接 Pod-IP 路径、Headless Service 路径、未加入网格的调用方以及由应用发起的不透明 TLS，不会自动获得相同的 L7 行为。请将身份、授权和路由视为独立控制项。
 
 ## 当前 HTTPRoute 路由
 
-### Services 和加权路由
+### Service 与加权路由
 
 本练习需要准备 stable 和 canary Deployment，标签为 app:web 和 version:stable/canary，监听 8080，并配置适合工作负载的就绪检查。以下命名空间会将新建的符合条件的 Pod 加入网格；它不会部署这些应用：
 
@@ -77,7 +77,7 @@ spec:
     appProtocol: http
 ```
 
-顶层 Service 选择 stable Pod，供 Kubernetes/默认路由使用。它的选择器并非闲置：非网格流量或其他不受策略管理的流量仍需要明确的后端。HTTPRoute 会将符合条件的网格内客户端流量导向后端 Services：
+顶层 Service 选择 stable（稳定版）Pod，供 Kubernetes 默认路由使用。它的选择器并非闲置：非网格流量或其他不受策略管理的流量仍需要明确的后端。HTTPRoute 会将符合条件的网格内客户端流量导向后端 Service：
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -245,7 +245,7 @@ spec:
 
 此示例要求 **父 Service 上没有重试注解**、没有冲突的 ServiceProfile，且没有启用不可信的逐请求策略覆盖。否则回退规则可能继承重试策略。请检查生效的策略，并单独衡量写请求；转发写请求并不能证明每一层都已禁用重试。
 
-这些注解配置最多重试两次（最多尝试三次）、400ms 的重试超时以及 2s 的整个请求超时。请求截止时间涵盖所有尝试的时间预算，可能会在全部重试完成前终止操作。在当前参考版本中，正文大于 64KiB 的请求不会重试。
+这些注解配置最多重试两次（最多尝试三次）、400ms 的重试超时以及 2s 的整个请求超时。请求截止时间涵盖所有尝试的时间预算，可能会在全部重试完成前终止操作。在当前参考版本中，请求正文大于 64KiB 时不会重试。
 
 **在 edge-26.10.1 中，不要将 retry.linkerd.io/limit:"0" 用作禁用开关。** 请参阅[已发布的解析器](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/policy-controller/k8s/index/src/outbound/index/http.rs)。已发布的解析器会将零值过滤为未指定；存在重试条件时，它会回退为一次重试。空的 HTTP 重试条件字符串也不是受支持的禁用重试策略。混合方法的 Service 默认配置应保持不含重试配置，并且只将选择启用的策略附加到预期的读取路由上。
 
@@ -388,9 +388,9 @@ consecutive 策略的默认阈值是 7，并非自动在五次连接失败后触
 
 | 状态 | 含义 |
 |---|---|
-| Available | 负载均衡器可以选择该端点 |
-| Unavailable | 在可能的情况下，普通请求会被导向其他位置 |
-| Probation | 退避后允许真实应用请求测试是否已恢复 |
+| Available（可用） | 负载均衡器可以选择该端点 |
+| Unavailable（不可用） | 在可能的情况下，普通请求会被导向其他位置 |
+| Probation（试探恢复） | 退避后允许真实应用请求测试端点是否已恢复 |
 
 Probation 不会定期生成 Kubernetes 健康探测。如果没有符合条件的应用流量，仅有一次成功的 /ready 检查并不能恢复端点。退避包含已配置的时间间隔和抖动。如果所有可用端点都失败，请求仍可能失败，也可能选择其他已配置的后端。
 
@@ -452,7 +452,7 @@ kubectl -n route-demo get httproute web-route -o yaml
 
 ### 版本化控制器和所有权
 
-此蓝图使用 Flagger/chart 1.45.0、选定的 Linkerd/Gateway API 安装，以及现有的 Linkerd Viz Prometheus。已发布的 factory 仍会将 meshProvider:linkerd 映射到 SMI router。当前 HTTPRoute router 应使用 **gatewayapi:v1**；仅使用一个无关或不匹配的 provider 字符串并不等效。
+此蓝图使用 Flagger/chart 1.45.0、选定的 Linkerd/Gateway API 安装，以及现有的 Linkerd Viz Prometheus。已发布版本中的路由工厂仍会将 meshProvider:linkerd 映射到 SMI router。当前 HTTPRoute router 应使用 **gatewayapi:v1**；仅使用一个无关或不匹配的 provider 字符串并不等效。
 
 保存为 flagger-values.yaml：
 
@@ -483,7 +483,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --wait --timeout 10m
 ```
 
-只有在请求时，chart 才会创建 Flagger CRD。启用 crd.create 前，请检查现有资源的所有权。控制器 Pod 已加入网格，Linkerd 授权策略通过控制器 ServiceAccount 授权对现有 Viz prometheus-admin Server 的访问。外部 Prometheus 部署需要自行设计抓取、身份验证/身份认证和授权。
+只有显式启用 CRD 创建选项时，chart 才会创建 Flagger CRD。启用 crd.create 前，请检查现有资源的所有权。控制器 Pod 已加入网格，Linkerd 授权策略通过控制器 ServiceAccount 授权对现有 Viz prometheus-admin Server 的访问。外部 Prometheus 部署需要自行设计指标抓取、工作负载身份与认证，以及授权方案。
 
 ### 应用和分析蓝图
 
@@ -601,7 +601,7 @@ spec:
     )
 ```
 
-这些查询假设 Viz 抓取配置提供 namespace/deployment 标签，并特意选择目标 Deployment 的入站已完成响应。请在实际 Prometheus 中确认这些标签和时间序列。共享/联邦后端需要设置适当的集群范围并进行去重；否则，名称相同的工作负载可能会被合并。
+这些查询假设 Viz 抓取配置提供命名空间/Deployment 标签，并特意选择目标 Deployment 的入站已完成响应。请在实际 Prometheus 中确认这些标签和时间序列。共享/联邦后端需要设置适当的集群范围并进行去重；否则，名称相同的工作负载可能会被合并。
 
 这些检查用途各不相同：
 

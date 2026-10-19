@@ -8,7 +8,7 @@ Cilium Service Mesh 中的流量管理结合了基于 eBPF 的 L4 负载均衡�
 
 ## 流量管理架构
 
-![客户端请求在到达服务器之前，依次经过 Cilium 的三个流量管理层（L7 Envoy HTTP 路由、L4 eBPF 负载均衡和 L3 eBPF IP 路由），每层的其他能力均列在旁边。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
+![图示展示客户端请求到达服务器时可涉及的三个 Cilium 流量管理层：L7 Envoy HTTP 路由、L4 eBPF 负载均衡和 L3 eBPF IP 路由；各层的其他能力列在旁边。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-02-traffic-management-0.html)
 

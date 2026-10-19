@@ -1,177 +1,95 @@
 # Conceptos básicos
 
-Este documento explica los conceptos fundamentales y la arquitectura de Istio. Comprender estos conceptos básicos es importante para usar Istio eficazmente.
+Este documento explica los conceptos y la arquitectura fundamentales de Istio. Comprenderlos es importante para utilizar Istio de forma eficaz.
 
 ## Índice
 
 1. [Contexto e historia](02-basic-concepts.md#background-and-history)
 2. [¿Por qué Istio?](02-basic-concepts.md#why-istio)
 3. [Arquitectura de Istio](02-basic-concepts.md#istio-architecture)
-4. [Modos de despliegue: Sidecar vs Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
+4. [Modos de despliegue: Sidecar y Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
 5. [Recursos principales](02-basic-concepts.md#core-resources)
-6. [Conceptos de gestión de tráfico](02-basic-concepts.md#traffic-management-concepts)
+6. [Conceptos de gestión del tráfico](02-basic-concepts.md#traffic-management-concepts)
 7. [Conceptos de seguridad](02-basic-concepts.md#security-concepts)
 8. [Conceptos de observabilidad](02-basic-concepts.md#observability-concepts)
 9. [Namespaces y Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
-10. [Siguientes pasos](02-basic-concepts.md#next-steps)
+10. [Próximos pasos](02-basic-concepts.md#next-steps)
 
-<span id="background-and-history"></span>
-
-## Contexto e historia
+## Contexto e historia {#background-and-history}
 
 ### El nacimiento de Service Mesh
 
-#### Desafíos de los microservicios
+#### Los desafíos de los microservicios
 
-A principios de la década de 2010, las empresas comenzaron a descomponer las aplicaciones monolíticas en microservicios.
+A principios de la década de 2010, las empresas comenzaron a dividir las aplicaciones monolíticas en microservicios.
 
-```mermaid
-flowchart TB
-    subgraph Before[Monolithic Era]
-        M[Monolithic<br/>Application]
-        M -->|Single process| M
-    end
+![Diagrama que contrasta una aplicación monolítica única con una arquitectura de microservicios en la que varios servicios pequeños se comunican entre sí y convergen en un servicio compartido posterior.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-0.png)
 
-    subgraph After[Microservices Era]
-        S1[Service A]
-        S2[Service B]
-        S3[Service C]
-        S4[Service D]
-        S5[Service E]
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-0.html)
 
-        S1 --> S2
-        S1 --> S3
-        S2 --> S4
-        S3 --> S4
-        S4 --> S5
-    end
+**Nuevos problemas:**
 
-    Before -.->|Transition| After
+| Problema | Descripción | Impacto |
+| --- | --- | --- |
+| **Comunicación entre servicios** | Aumentan las llamadas de red | Latencia y propagación de fallos |
+| **Observabilidad** | Se necesita trazabilidad distribuida | Depuración difícil |
+| **Seguridad** | Autenticación y cifrado entre servicios | Implementar mTLS resulta complejo |
+| **Control del tráfico** | Despliegues canary y pruebas A/B | Hay que modificar el código de las aplicaciones |
+| **Gestión de fallos** | Circuit breaker y reintentos | Cada servicio debe implementarlos |
 
-    %% Style definitions
-    classDef monolith fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef micro fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+#### Primera solución: bibliotecas
 
-    %% Apply classes
-    class M monolith;
-    class S1,S2,S3,S4,S5 micro;
-```
+**Problemas:**
 
-**Nuevos problemas**:
+* Era necesario desarrollar bibliotecas para cada lenguaje (Hystrix para Java, otra biblioteca para Go, etc.).
+* Las bibliotecas quedaban estrechamente acopladas al código de la aplicación.
+* Las actualizaciones exigían volver a desplegar todos los servicios.
+* La gestión de versiones era compleja.
 
-| Problema                         | Descripción                                  | Impacto                         |
-| ------------------------------- | -------------------------------------------- | ------------------------------ |
-| **Comunicación entre servicios** | Aumento de las llamadas de red               | Latencia, propagación de fallos |
-| **Observabilidad**               | Necesidad de trazabilidad distribuida        | Depuración difícil             |
-| **Seguridad**                    | Autenticación/cifrado entre servicios        | Complejidad de implementación de mTLS |
-| **Control de tráfico**           | Despliegues Canary, pruebas A/B              | Modificaciones al código de la aplicación |
-| **Manejo de fallos**             | Circuit Breaker, Retry                       | Implementación por servicio     |
+![Diagrama de tres servicios escritos en lenguajes distintos, cada uno con su propia biblioteca de red acoplada al código: Hystrix para Java, una biblioteca de Go y Requests para Python.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
 
-#### Solución inicial: bibliotecas
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-1.html)
 
-**Problemas**:
-
-* Necesidad de desarrollar bibliotecas para cada lenguaje (Hystrix para Java, biblioteca independiente para Go...)
-* Acoplamiento estrecho con el código de la aplicación
-* Requiere volver a desplegar todos los servicios para las actualizaciones
-* Gestión de versiones compleja
-
-```mermaid
-flowchart LR
-    subgraph App1[Java Service]
-        J[Application Code]
-        H[Hystrix<br/>Netflix OSS]
-    end
-
-    subgraph App2[Go Service]
-        G[Application Code]
-        L[Go Library]
-    end
-
-    subgraph App3[Python Service]
-        P[Application Code]
-        R[Requests + Retry]
-    end
-
-    J --- H
-    G --- L
-    P --- R
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lib fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class J,G,P app;
-    class H,L,R lib;
-```
-
-**Idea de Service Mesh**: trasladar la lógica de red de la aplicación a una capa de infraestructura
+**Idea de Service Mesh:** trasladar la lógica de red de las aplicaciones a una capa de infraestructura.
 
 ### El nacimiento de Envoy Proxy
 
 #### El problema de Lyft
 
-**En 2015, Lyft** enfrentaba los siguientes problemas:
+**En 2015, Lyft** afrontaba estos problemas:
 
-* Operaba más de 200 microservicios
-* Diversos lenguajes y frameworks (Python, Go, Java, etc.)
-* Los proxies existentes (HAProxy, NGINX) eran insuficientes
-  * Cambios de configuración dinámica difíciles
-  * Falta de observabilidad
-  * Funcionalidades avanzadas de enrutamiento limitadas
+* Operaba más de 200 microservicios.
+* Utilizaba distintos lenguajes y frameworks (Python, Go, Java, entre otros).
+* Los proxies existentes (HAProxy y NGINX) no eran suficientes:
+  * Era difícil cambiar dinámicamente la configuración.
+  * Faltaba observabilidad.
+  * Las funciones avanzadas de enrutamiento eran limitadas.
 
 #### Matt Klein y Envoy
 
-**Matt Klein** (ingeniero de Lyft) publicó Envoy como código abierto en 2016.
+**Matt Klein**, ingeniero de Lyft, publicó Envoy como software de código abierto en 2016.
 
-**Problemas que Envoy resolvió**:
+**Problemas que resolvió Envoy:**
 
-```mermaid
-flowchart TB
-    subgraph Problems[Existing Proxy Problems]
-        P1[Static configuration<br/>File-based]
-        P2[Limited<br/>metrics]
-        P3[Complex<br/>restart]
-        P4[Simple<br/>routing]
-    end
+![Diagrama que relaciona cuatro limitaciones de los proxies anteriores a Envoy —configuración estática en archivos, métricas limitadas, reinicios complejos y enrutamiento sencillo— con la capacidad de Envoy que resolvió cada una.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
 
-    subgraph Solutions[Envoy's Solutions]
-        S1[Dynamic API<br/>xDS Protocol]
-        S2[Rich<br/>statistics/tracing]
-        S3[Hot Restart<br/>Zero downtime]
-        S4[Advanced L7<br/>routing]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-2.html)
 
-    P1 -.->|Solved| S1
-    P2 -.->|Solved| S2
-    P3 -.->|Solved| S3
-    P4 -.->|Solved| S4
+**Características principales de Envoy:**
 
-    %% Style definitions
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+1. **Arquitectura fuera de proceso:** funciona como un proceso independiente de la aplicación.
+2. **API xDS:** permite actualizar dinámicamente la configuración.
+3. **Proxy L7:** admite HTTP/2, gRPC y WebSocket.
+4. **Observabilidad:** ofrece métricas detalladas, trazas y registros.
+5. **Rendimiento:** está escrito en C++ y ofrece un alto rendimiento.
 
-    %% Apply classes
-    class P1,P2,P3,P4 problem;
-    class S1,S2,S3,S4 solution;
-```
+#### Adopción por la CNCF
 
-**Características principales de Envoy**:
+**Cronología:**
 
-1. **Arquitectura fuera de proceso**: proceso independiente de la aplicación
-2. **APIs xDS**: actualizaciones de configuración dinámica
-3. **Proxy L7**: soporte para HTTP/2, gRPC y WebSocket
-4. **Observabilidad**: métricas detalladas, trazabilidad y registros
-5. **Rendimiento**: escrito en C++, alto rendimiento
-
-#### Adopción por CNCF
-
-**Cronología**:
-
-* **Septiembre de 2016**: Envoy se publica como código abierto
-* **Septiembre de 2017**: aceptado como proyecto CNCF (Incubating)
-* **Noviembre de 2018**: promovido a proyecto CNCF Graduated
+* **Septiembre de 2016:** Envoy se publicó como código abierto.
+* **Septiembre de 2017:** fue aceptado como proyecto de la CNCF (Incubating).
+* **Noviembre de 2018:** pasó a ser un proyecto Graduated de la CNCF.
 
 ### El nacimiento y la historia de Istio
 
@@ -179,59 +97,27 @@ flowchart TB
 
 **En mayo de 2017**, Google, IBM y Lyft colaboraron para anunciar Istio.
 
-```mermaid
-flowchart LR
-    subgraph Companies[Participating Companies]
-        G[Google<br/>Kubernetes experience]
-        I[IBM<br/>Enterprise requirements]
-        L[Lyft<br/>Envoy Proxy]
-    end
+![Diagrama en el que Google e IBM contribuyen al plano de control de Istio y Lyft aporta el proxy Envoy como plano de datos; el anuncio conjunto se realizó en mayo de 2017.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-3.png)
 
-    subgraph Istio[Istio Service Mesh]
-        CP[Control Plane<br/>Google led]
-        DP[Data Plane<br/>Envoy-based]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-3.html)
 
-    G --> CP
-    I --> CP
-    L --> DP
+**Aportaciones de cada empresa:**
 
-    %% Style definitions
-    classDef company fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class G,I,L company;
-    class CP,DP component;
-```
-
-**Contribuciones de cada empresa**:
-
-| Empresa    | Contribución principal    | Motivo                           |
-| ---------- | -------------------- | -------------------------------- |
-| **Google** | Diseño de Control Plane | Experiencia con Borg y Kubernetes      |
-| **IBM**    | Funcionalidades empresariales  | Requisitos de clientes empresariales |
-| **Lyft**   | Envoy Proxy          | Proxy probado en producción          |
+| Empresa | Aportación principal | Motivo |
+| --- | --- | --- |
+| **Google** | Diseño del plano de control | Experiencia con Borg y Kubernetes |
+| **IBM** | Funciones empresariales | Requisitos de sus clientes empresariales |
+| **Lyft** | Envoy Proxy | Proxy probado en producción |
 
 #### Historial de versiones de Istio
 
-**Hitos principales**:
+**Hitos principales:**
 
-```mermaid
-timeline
-    title Istio Major Version History
-    2017-05 : Istio 0.1 announced
-    2018-07 : Istio 1.0 : Production ready
-    2019-03 : Istio 1.1 : Performance improvements
-    2020-03 : Istio 1.5 : Istiod consolidation
-    2021-05 : Istio 1.10 : Discovery Selectors
-    2022-02 : Istio 1.13 : Gateway API support
-    2023-11 : Istio 1.20 : Ambient Mode
-    2024-05 : Istio 1.22 : Stability improvements
-    2025-01 : Istio 1.28 : Current version
-```
+![Cronología de las principales versiones de Istio, desde el anuncio de la versión 0.1 en mayo de 2017 hasta la versión 1.28 en noviembre de 2025; destaca la versión 1.0 lista para producción, la consolidación en istiod de la versión 1.5 y la introducción de Ambient Mode en fase alfa en la 1.18.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
 
-**Versión 1.5 (marzo de 2020): punto de inflexión importante**:
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-4.html)
+
+**Versión 1.5 (marzo de 2020): un punto de inflexión importante**
 
 Arquitectura anterior (Istio 1.4 y versiones anteriores):
 
@@ -243,7 +129,7 @@ Separated into individual components:
 - Galley (configuration validation)
 ```
 
-Nueva arquitectura (Istio 1.5+, actual 1.28):
+Nueva arquitectura (Istio 1.5 y posteriores):
 
 ```
 Istiod (consolidated into single binary)
@@ -251,71 +137,33 @@ Istiod (consolidated into single binary)
 ├── Citadel functionality (Certificate Authority, Identity)
 └── Galley functionality (Configuration Validation)
 
-Mixer completely removed (functionality moved to Envoy)
+Mixer was deprecated during this transition; telemetry moved into the proxies
 ```
 
-**Motivos del cambio**:
+**Motivos del cambio:**
 
-* Complejidad reducida (4 componentes → 1)
-* Rendimiento mejorado (reducción del 50 % de la latencia al eliminar Mixer)
-* Operaciones simplificadas (gestión de un único proceso)
-* Eficiencia de recursos (menor uso de memoria y CPU)
+* Menor complejidad (de 4 componentes a 1).
+* Menos sobrecarga en la ruta de telemetría; la mejora real depende de la carga de trabajo.
+* Operaciones más sencillas al gestionar un solo proceso.
+* Mayor eficiencia en el uso de memoria y CPU.
 
-<span id="why-istio"></span>
+## ¿Por qué Istio? {#why-istio}
 
-## ¿Por qué Istio?
-
-Kubernetes proporciona orquestación de contenedores, pero tiene limitaciones para gestionar la comunicación compleja entre microservicios. Istio es una solución de Service Mesh para abordar estos problemas.
+Kubernetes orquesta contenedores, pero tiene limitaciones para gestionar la comunicación compleja entre microservicios. Istio es una solución de Service Mesh que aborda estos problemas.
 
 ### Desafíos de los microservicios
 
-```mermaid
-flowchart TB
-    subgraph Problems["Microservices Challenges"]
-        P1[Traffic Management<br/>Complex routing]
-        P2[Security<br/>Inter-service encryption]
-        P3[Observability<br/>Difficult debugging]
-        P4[Resilience<br/>Failure handling]
-    end
+![Diagrama de cuatro desafíos compartidos por los microservicios (gestión del tráfico, seguridad, observabilidad y resiliencia): sin Istio se resuelven con código duplicado e incoherente en cada servicio, mientras que con Istio se aplican políticas declarativas coherentes en la infraestructura.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
 
-    subgraph Without["Without Istio"]
-        W1[Direct implementation<br/>in application code]
-        W2[Duplicate code<br/>in each service]
-        W3[Inconsistent<br/>implementation]
-        W4[Difficult<br/>maintenance]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-5.html)
 
-    subgraph With["Using Istio"]
-        I1[Automatic handling<br/>at infrastructure level]
-        I2[Central management<br/>with declarative config]
-        I3[Consistent<br/>policy application]
-        I4[Add features<br/>without code changes]
-    end
+### Valores principales que aporta Istio
 
-    P1 & P2 & P3 & P4 -->|Traditional approach| W1
-    W1 --> W2 --> W3 --> W4
+#### 1. Gestión del tráfico
 
-    P1 & P2 & P3 & P4 -->|Istio| I1
-    I1 --> I2 --> I3 --> I4
+**Problema:** se necesita cambiar el tráfico de forma segura al desplegar una nueva versión.
 
-    %% Style definitions
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef without fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef with fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class P1,P2,P3,P4 problem;
-    class W1,W2,W3,W4 without;
-    class I1,I2,I3,I4 with;
-```
-
-### Valores principales que proporciona Istio
-
-#### 1. Gestión de tráfico
-
-**Problema**: se desea realizar una transición segura del tráfico al desplegar nuevas versiones.
-
-**Solución de Istio**:
+**Solución de Istio:**
 
 ```yaml
 # Canary deployment without code changes
@@ -338,18 +186,18 @@ spec:
       weight: 10  # New version 10%
 ```
 
-**Beneficios**:
+**Beneficios:**
 
-* No se requiere modificar el código de la aplicación
-* Ajuste de división de tráfico en tiempo real
-* Posibilidad de rollback automático
-* Soporte para pruebas A/B y despliegue Blue/Green
+* No hace falta modificar el código de la aplicación.
+* Es posible ajustar en tiempo real la distribución del tráfico.
+* Un controlador de despliegues progresivos puede automatizar la reversión; Istio aplica los pesos de enrutamiento.
+* Admite pruebas A/B y despliegues Blue/Green.
 
 #### 2. Seguridad
 
-**Problema**: se desea cifrar y autenticar la comunicación entre servicios.
+**Problema:** se necesita cifrar y autenticar la comunicación entre servicios.
 
-**Solución de Istio**:
+**Solución de Istio:**
 
 ```yaml
 # Automatic mTLS enablement
@@ -360,37 +208,37 @@ metadata:
   namespace: istio-system
 spec:
   mtls:
-    mode: STRICT  # Automatic encryption for all inter-service communication
+    mode: STRICT  # Require mTLS on enrolled inbound workloads
 ```
 
-**Beneficios**:
+**Beneficios:**
 
-* Emisión y renovación automática de certificados
-* Verificación automática de identidad del servicio
-* Control de permisos granular
-* Implementación de red Zero Trust
+* Emisión y renovación automáticas de certificados.
+* Verificación automática de la identidad de los servicios.
+* Control granular de permisos.
+* Implementación de una red Zero Trust.
 
 #### 3. Observabilidad
 
-**Problema**: es difícil rastrear el flujo de solicitudes entre decenas de microservicios.
+**Problema:** resulta difícil seguir el recorrido de las solicitudes entre decenas de microservicios.
 
-**Solución de Istio**:
+**Solución de Istio:**
 
-* Generación automática de métricas (Latency, Traffic, Errors, Saturation)
-* Trazabilidad distribuida
-* Visualización de la topología de servicios
+* Generación automática de métricas (latencia, tráfico, errores y saturación).
+* Trazabilidad distribuida.
+* Visualización de la topología de los servicios.
 
-**Beneficios**:
+**Beneficios:**
 
-* Identificación automática de cuellos de botella
-* Identificación rápida de la causa raíz de los errores
-* Supervisión del estado de los servicios en tiempo real
+* Identificación automática de cuellos de botella.
+* Identificación rápida de la causa raíz de los errores.
+* Supervisión del estado de los servicios en tiempo real.
 
 #### 4. Resiliencia
 
-**Problema**: el fallo de un servicio se propaga a todo el sistema.
+**Problema:** el fallo de un servicio puede propagarse por todo el sistema.
 
-**Solución de Istio**:
+**Solución de Istio:**
 
 ```yaml
 # Automatic Circuit Breaker configuration
@@ -402,228 +250,185 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**Beneficios**:
+**Beneficios:**
 
-* Aislamiento de fallos (Circuit Breaker)
-* Retry y timeout automáticos
-* Eliminación automática de instancias no saludables
-* Limitación de tráfico (Rate Limiting)
+* Aislamiento de fallos mediante circuit breakers.
+* Reintentos y tiempos de espera automáticos.
+* Retirada automática de instancias no saludables.
+* Limitación del tráfico (rate limiting).
 
-### Cuándo usar Istio
+### Cuándo utilizar Istio
 
-**✅ Cuándo Istio es adecuado:**
+Las cantidades de servicios indicadas a continuación son ejemplos orientativos; la idoneidad depende de los requisitos de seguridad y operación.
+
+**✅ Casos adecuados para Istio:**
 
 1. **Arquitectura de microservicios**
-   * 10 o más servicios
-   * Dependencias complejas entre servicios
-   * Despliegues frecuentes
-2. **Se necesita gestión avanzada de tráfico**
-   * Despliegues Canary, pruebas A/B
-   * Control de enrutamiento granular
-   * Traffic Mirroring
-3. **Requisitos sólidos de seguridad**
-   * Cifrado entre servicios obligatorio
-   * Control de acceso granular
-   * Cumplimiento normativo
+   * Diez servicios o más.
+   * Dependencias complejas entre servicios.
+   * Despliegues frecuentes.
+2. **Necesidad de gestión avanzada del tráfico**
+   * Despliegues canary y pruebas A/B.
+   * Control granular del enrutamiento.
+   * Replicación del tráfico (Traffic Mirroring).
+3. **Requisitos de seguridad estrictos**
+   * Cifrado obligatorio entre servicios.
+   * Control de acceso granular.
+   * Cumplimiento normativo.
 4. **Observabilidad y depuración**
-   * Seguimiento de problemas complejos entre servicios
-   * Identificación de cuellos de botella de rendimiento
-   * Supervisión de SLO/SLA
+   * Seguimiento de problemas complejos entre servicios.
+   * Identificación de cuellos de botella de rendimiento.
+   * Supervisión de SLO y SLA.
 
-**❌ Cuándo Istio puede ser excesivo:**
+**❌ Casos en los que Istio puede ser excesivo:**
 
-1. **Aplicaciones simples**
-   * Pocos servicios (menos de 5)
-   * Requisitos simples
-   * Kubernetes Ingress es suficiente
-2. **Restricciones de recursos**
-   * Cluster pequeño
-   * No se puede asumir la sobrecarga de recursos
-   * Carga de coste de memoria de Sidecar
+1. **Aplicaciones sencillas**
+   * Pocos servicios (menos de cinco).
+   * Requisitos simples.
+   * Kubernetes Ingress es suficiente.
+2. **Recursos limitados**
+   * Clúster pequeño.
+   * No se puede asumir la sobrecarga de recursos.
+   * El consumo de memoria de un sidecar es una carga importante.
 3. **Falta de capacidad operativa**
-   * Tiempo de aprendizaje insuficiente
-   * Sin equipo de plataforma dedicado
-   * Se prefieren soluciones más simples
+   * Poco tiempo para aprender a operarlo.
+   * No hay un equipo de plataforma dedicado.
+   * Se prefieren soluciones más sencillas.
 
-### Comparación de alternativas
+### Comparación con alternativas
 
-#### Kubernetes Ingress vs Istio
+#### Kubernetes Ingress frente a Istio
 
-| Característica           | Kubernetes Ingress | Istio                             |
-| ----------------- | ------------------ | --------------------------------- |
-| **Alcance**         | Externo → Cluster | Externo + entre servicios internos |
-| **Enrutamiento**       | Básico (Path, Host) | Avanzado (Header, Cookie, etc.)   |
-| **mTLS**          | Configuración manual       | Automático                         |
-| **Observabilidad** | Limitada            | Completa                              |
-| **Complejidad**    | Baja                | Alta                              |
-| **Caso de uso**      | Aplicaciones simples        | Microservicios                     |
+| Característica | Kubernetes Ingress | Istio |
+| --- | --- | --- |
+| **Ámbito** | Del exterior al clúster | Tráfico externo y comunicación interna entre servicios |
+| **Enrutamiento** | Básico (ruta y host) | Avanzado (encabezados, cookies, etc.) |
+| **mTLS** | Configuración manual | Automático |
+| **Observabilidad** | Limitada | Amplia |
+| **Complejidad** | Baja | Alta |
+| **Caso de uso** | Aplicaciones sencillas | Microservicios |
 
-#### AWS VPC Lattice vs Istio
+#### AWS VPC Lattice frente a Istio
 
-Para una comparación detallada, consulta el documento de [integración con AWS](04-aws-integration.md#istio-vs-other-solutions-comparison).
+Consulta la comparación detallada en el documento [Integración con AWS](04-aws-integration.md#istio-vs-other-solutions-comparison).
 
 **Resumen rápido:**
 
-* **VPC Lattice**: administrado por AWS, simple, comunicación entre VPC/cuentas
-* **Istio**: código abierto, funcionalidades potentes, solo para Kubernetes, control granular
+* **VPC Lattice:** servicio administrado de AWS, sencillo para la comunicación entre distintas VPC y cuentas de AWS.
+* **Istio:** solución de código abierto con funciones avanzadas y control granular para cargas de trabajo de Kubernetes y máquinas virtuales.
 
-#### Linkerd vs Istio
+#### Linkerd frente a Istio
 
-| Propiedad           | Istio     | Linkerd            |
-| ------------------ | --------- | ------------------ |
-| **Complejidad**     | Alta      | Baja                |
-| **Funcionalidades**       | Muy completas | Solo funcionalidades principales |
-| **Recursos**      | Altos      | Bajos                |
-| **Curva de aprendizaje** | Pronunciada     | Suave             |
-| **Comunidad**      | Grande     | Pequeña              |
+| Propiedad | Istio | Linkerd |
+| --- | --- | --- |
+| **Complejidad** | Alta | Baja |
+| **Funciones** | Muy amplias | Funciones esenciales |
+| **Recursos** | Elevados | Reducidos |
+| **Curva de aprendizaje** | Pronunciada | Suave |
+| **Comunidad** | Amplia | Pequeña |
 
 **Guía de selección:**
 
-* Se necesitan funcionalidades avanzadas y flexibilidad → **Istio**
-* Se necesita una malla simple y ligera → **Linkerd**
+* Si necesitas funciones avanzadas y flexibilidad, elige **Istio**.
+* Si necesitas una malla sencilla y ligera, elige **Linkerd**.
 
-<span id="deployment-modes-sidecar-vs-ambient"></span>
-
-## Modos de despliegue: Sidecar vs Ambient
+## Modos de despliegue: Sidecar y Ambient {#deployment-modes-sidecar-vs-ambient}
 
 Istio admite dos modos de despliegue: **Sidecar Mode** y **Ambient Mode**.
 
 ### Sidecar Mode (predeterminado)
 
-Inyecta un proxy Envoy como contenedor sidecar en cada Pod de la aplicación.
+Inyecta un proxy Envoy como contenedor sidecar en cada pod de la aplicación.
 
-```mermaid
-flowchart LR
-    subgraph Pod["Pod"]
-        App[Application<br/>Container]
-        Envoy[Envoy Proxy<br/>Sidecar]
-    end
+![Diagrama en el que una solicitud externa entra por el proxy Envoy sidecar de un pod y este la reenvía localmente al contenedor de la aplicación; las llamadas salientes de la aplicación pasan por el mismo sidecar hacia un servicio de destino.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-6.png)
 
-    External[External Request] -->|Traffic| Envoy
-    Envoy -->|Local| App
-    App -->|Outbound call| Envoy
-    Envoy -->|Network| Target[Target Service]
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Envoy proxy;
-    class External,Target default;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-6.html)
 
 **Ventajas:**
 
-* Maduro y estable
-* Compatibilidad con todas las funcionalidades de Istio
-* Control granular por Pod
+* Tecnología madura y estable.
+* Amplio conjunto de funciones L4/L7; la compatibilidad depende del modo del plano de datos.
+* Control granular por pod.
 
 **Desventajas:**
 
-* Sobrecarga de recursos (Envoy por Pod)
-* Mayor tiempo de inicio (Init Container)
-* Configuración de permisos compleja (iptables)
+* Sobrecarga de recursos (un Envoy por pod).
+* Mayor tiempo de inicio (Init Container).
+* Configuración de permisos compleja (iptables).
 
-### Ambient Mode (nuevo enfoque)
+### Ambient Mode (GA desde Istio 1.24)
 
-Gestiona el tráfico en el nivel de nodo sin sidecars.
+Gestiona el tráfico a nivel de nodo sin sidecars.
 
-```mermaid
-flowchart TB
-    subgraph Node["Worker Node"]
-        subgraph Pod1["Pod 1"]
-            App1[Application<br/>No sidecar]
-        end
+![Diagrama de dos pods sin sidecar en un nodo de trabajo. El tráfico se redirige de forma transparente a un ztunnel L4 compartido por nodo y, solo cuando se necesitan funciones L7, pasa por un waypoint opcional.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-7.png)
 
-        subgraph Pod2["Pod 2"]
-            App2[Application<br/>No sidecar]
-        end
-
-        Ztunnel[ztunnel<br/>1 per node<br/>L4 proxy]
-        Waypoint[Waypoint Proxy<br/>L7 proxy<br/>Optional]
-    end
-
-    App1 <-->|Transparent redirect| Ztunnel
-    App2 <-->|Transparent redirect| Ztunnel
-    Ztunnel <-->|When L7 needed| Waypoint
-
-    %% Style definitions
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App1,App2 userApp;
-    class Ztunnel,Waypoint proxy;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-7.html)
 
 **Ventajas:**
 
-* Bajo uso de recursos (1 por nodo)
-* Inicio rápido de Pod
-* Operaciones simples
-* Posibilidad de aplicación gradual de funcionalidades L7
+* Menor consumo de recursos (una instancia por nodo).
+* Inicio rápido de los pods.
+* Operaciones más sencillas.
+* Permite incorporar gradualmente funciones L7.
 
 **Desventajas:**
 
-* Tecnología relativamente nueva (menos madura)
-* Algunas funcionalidades avanzadas son limitadas
-* Control granular por Pod difícil
+* Hay que comprobar la paridad de funciones para la versión y topología elegidas.
+* Algunas funciones avanzadas tienen limitaciones.
+* El control granular por pod es más difícil.
 
 ### Tabla comparativa
 
-| Propiedad                   | Sidecar Mode                | Ambient Mode                   |
-| -------------------------- | --------------------------- | ------------------------------ |
-| **Uso de recursos**         | Alto (por Pod)              | Bajo (por nodo)                 |
-| **Tiempo de inicio**           | Lento (Init Container)       | Rápido                           |
-| **Complejidad operativa** | Alta                        | Baja                            |
-| **Funcionalidades L4**            | Compatibles                   | Compatibles                      |
-| **Funcionalidades L7**            | Compatibilidad completa                | Opcional (Waypoint)            |
-| **Madurez**               | Alta                        | Media                         |
-| **Migración**              | -                           | Posible desde Sidecar existente |
-| **Uso recomendado**        | Se necesitan funcionalidades L7 avanzadas | Prioridad: eficiencia de recursos   |
+| Propiedad | Sidecar Mode | Ambient Mode |
+| --- | --- | --- |
+| **Uso de recursos** | Alto (por pod) | Bajo (por nodo) |
+| **Tiempo de inicio** | Lento (Init Container) | Rápido |
+| **Complejidad operativa** | Alta | Baja |
+| **Funciones L4** | Admitidas | Admitidas |
+| **Funciones L7** | Compatibilidad completa | Opcionales (Waypoint) |
+| **Madurez** | Estable | Las funciones principales son GA desde la versión 1.24 |
+| **Migración** | — | Es posible migrar desde sidecars existentes |
+| **Uso recomendado** | Cuando se necesitan funciones L7 avanzadas | Cuando se prioriza la eficiencia de recursos |
 
 ### Guía de selección
 
-**Elige Sidecar Mode:**
+**Elige Sidecar Mode si:**
 
-* Se necesita utilizar todas las funcionalidades de Istio
-* Se necesita control de políticas granular por Pod
-* Se necesita estabilidad probada en producción
+* Necesitas funciones específicas de sidecar, como la integración con máquinas virtuales.
+* Necesitas control granular de políticas por pod.
+* Priorizas una tecnología probada en producción.
 
-**Elige Ambient Mode:**
+**Elige Ambient Mode si:**
 
-* La eficiencia de recursos es importante
-* Solo se necesitan funcionalidades L4 simples
-* Se planea añadir gradualmente funcionalidades L7
+* La eficiencia de recursos es importante.
+* Solo necesitas funciones L4 sencillas.
+* Planeas añadir gradualmente funciones L7.
 
-**Para más detalles**, consulta el documento [Avanzado: Ambient Mode](advanced/01-ambient-mode.md).
+Consulta los detalles en [Avanzado: Ambient Mode](advanced/01-ambient-mode.md).
 
-<span id="istio-architecture"></span>
+## Arquitectura de Istio {#istio-architecture}
 
-## Arquitectura de Istio
+Istio consta de dos componentes principales: el **plano de control** y el **plano de datos**.
 
-Istio consta de dos componentes principales: **Control Plane** y **Data Plane**.
+| Componente | Descripción |
+| --- | --- |
+| **Plano de control (istiod)** | Sistema central responsable del descubrimiento de servicios, la distribución de configuración y la gestión de certificados. |
+| **Plano de datos (proxy Envoy)** | Envoy en sidecars o ztunnel de Ambient con waypoints opcionales; gestiona el tráfico de la malla. |
 
-| Componente                    | Descripción                                                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Control Plane (istiod)**   | Sistema de control central responsable del descubrimiento de servicios, la distribución de configuración y la gestión de certificados |
-| **Data Plane (Envoy Proxy)** | Desplegado como sidecar en cada Pod; gestiona el tráfico real (enrutamiento, mTLS y métricas)                             |
+Consulta la [documentación de arquitectura](03-architecture.md) para conocer su estructura detallada, el funcionamiento interno y los mecanismos de interceptación del tráfico.
 
-**Para conocer en detalle la estructura de la arquitectura, los principios de funcionamiento interno y los mecanismos de interceptación de tráfico**, consulta el [documento de arquitectura](03-architecture.md).
+## Recursos principales {#core-resources}
 
-<span id="core-resources"></span>
+Los ejemplos siguientes utilizan las API de Sidecar. No apliques juntos todos los ejemplos de enrutamiento y políticas que se solapan. Gateway requiere pods de gateway compatibles y un Secret TLS en su namespace. Ambient utiliza el enrutamiento de Gateway API y políticas L7 dirigidas a waypoints; el recurso Sidecar no configura ztunnel.
 
-## Recursos principales
+Istio utiliza definiciones de recursos personalizadas de Kubernetes (CRD) para gestionar la configuración.
 
-Istio utiliza Kubernetes Custom Resource Definitions (CRDs) para gestionar la configuración.
+<span id="1-virtualservice"></span>
 
 ### 1. VirtualService
 
@@ -652,16 +457,16 @@ spec:
         subset: v1  # Route to v1 by default
 ```
 
-**Características principales**:
+**Funciones principales:**
 
-* Enrutamiento basado en Path (Path, Header, Query Parameter)
-* División de tráfico (Canary, pruebas A/B)
-* Retry, Timeout, Fault Injection
-* URL Rewrite, manipulación de Header
+* Enrutamiento por ruta, encabezado o parámetro de consulta.
+* División del tráfico (canary y pruebas A/B).
+* Reintentos, tiempos de espera e inyección de fallos.
+* Reescritura de URL y manipulación de encabezados.
 
 ### 2. DestinationRule
 
-DestinationRule define subconjuntos (versiones) de servicios y aplica políticas de tráfico.
+DestinationRule define subconjuntos de servicios (versiones) y aplica políticas de tráfico.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -680,7 +485,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -695,13 +500,13 @@ spec:
       version: v3
 ```
 
-**Características principales**:
+**Funciones principales:**
 
-* Definición de versión (subset) de servicio
-* Algoritmo de balanceo de carga
-* Configuración de Connection Pool
-* Circuit Breaker (Outlier Detection)
-* Configuración de TLS
+* Definición de versiones del servicio (subconjuntos).
+* Algoritmos de balanceo de carga.
+* Configuración del conjunto de conexiones.
+* Disyuntor del pool de conexiones y detección de valores atípicos.
+* Configuración de TLS.
 
 ### 3. Gateway
 
@@ -733,16 +538,16 @@ spec:
     - "bookinfo.example.com"
 ```
 
-**Características principales**:
+**Funciones principales:**
 
-* Definir el punto de entrada de tráfico externo
-* Configuración de host, puerto y protocolo
-* Terminación TLS
-* Enrutamiento SNI
+* Definición del punto de entrada del tráfico externo.
+* Configuración del host, puerto y protocolo.
+* Terminación de TLS.
+* Enrutamiento SNI.
 
 ### 4. ServiceEntry
 
-ServiceEntry permite usar servicios externos fuera de la malla como servicios internos.
+ServiceEntry permite utilizar servicios externos a la malla como si fueran internos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -760,11 +565,11 @@ spec:
   resolution: DNS
 ```
 
-**Características principales**:
+**Funciones principales:**
 
-* Registro de servicios externos
-* Control de tráfico para servicios externos
-* Gestión de tráfico de salida
+* Registro de servicios externos.
+* Control del tráfico hacia servicios externos.
+* Gestión del tráfico de salida.
 
 ### 5. PeerAuthentication
 
@@ -805,35 +610,17 @@ spec:
         methods: ["GET"]
 ```
 
-<span id="traffic-management-concepts"></span>
+## Conceptos de gestión del tráfico {#traffic-management-concepts}
 
-## Conceptos de gestión de tráfico
+### Flujo de enrutamiento del tráfico
 
-### Flujo de enrutamiento de tráfico
+El diagrama muestra las relaciones entre las configuraciones. Gateway, VirtualService y DestinationRule son objetos de API, no saltos de red secuenciales; normalmente, Envoy selecciona los endpoints de los pods a partir de EDS.
 
-```mermaid
-flowchart LR
-    Client[Client] -->|1. HTTP Request| Gateway[Gateway<br/>Ingress]
-    Gateway -->|2. VirtualService<br/>Apply routing rules| VS[VirtualService]
-    VS -->|3. Determine destination| DR[DestinationRule]
-    DR -->|4. Select subset<br/>Apply traffic policy| Service[Kubernetes<br/>Service]
-    Service -->|5. Endpoint<br/>routing| Pod1[Pod v1]
-    Service -->|5. Endpoint<br/>routing| Pod2[Pod v2]
+![Diagrama de una solicitud HTTP de un cliente que entra por Istio Gateway, atraviesa las reglas de enrutamiento de VirtualService y la selección de subconjuntos de DestinationRule, y llega a los pods v1 y v2 mediante el Service de Kubernetes.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-8.png)
 
-    %% Style definitions
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istioResource fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sResource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-8.html)
 
-    %% Apply classes
-    class Gateway gateway;
-    class VS,DR istioResource;
-    class Service,Pod1,Pod2 k8sResource;
-    class Client default;
-```
-
-### División de tráfico (despliegue Canary)
+### División del tráfico (despliegue canary)
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -855,7 +642,7 @@ spec:
       weight: 10  # 10% of traffic (canary)
 ```
 
-### Circuit Breaker
+### Circuit breaker
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -872,55 +659,29 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
 
-<span id="security-concepts"></span>
-
-## Conceptos de seguridad
+## Conceptos de seguridad {#security-concepts}
 
 ### mTLS (TLS mutuo)
 
-Istio cifra automáticamente la comunicación entre servicios.
+Auto mTLS cifra el tráfico entre las cargas de trabajo inscritas en la malla. Configura STRICT para rechazar el tráfico entrante sin cifrar; el tráfico que queda fuera de la malla no se protege automáticamente.
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[App]
-        Envoy1[Envoy]
-    end
+![Diagrama en el que las aplicaciones de los pods A y B se comunican en texto sin cifrar con sus respectivos sidecars Envoy; los dos sidecars intercambian tráfico cifrado con mTLS e istiod Citadel emite certificados para ambos.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-9.png)
 
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy]
-        App2[App]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-9.html)
 
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
+**Modos de mTLS:**
 
-    Citadel[istiod<br/>Citadel] -.->|Certificate issuance| Envoy1
-    Citadel -.->|Certificate issuance| Envoy2
+* **STRICT:** solo se permite mTLS.
+* **PERMISSIVE:** se permite mTLS o texto sin cifrar (para la migración).
+* **DISABLE:** mTLS está deshabilitado.
 
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Citadel controlPlane;
-```
-
-**Modos de mTLS**:
-
-* **STRICT**: solo se permite mTLS
-* **PERMISSIVE**: se permiten tanto mTLS como texto sin cifrar (para migración)
-* **DISABLE**: mTLS deshabilitado
+Ambient no admite `DISABLE` en PeerAuthentication; STRICT también bloquea el tráfico que evita la malla.
 
 ### Autenticación y autorización
 
@@ -948,77 +709,62 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
-<span id="observability-concepts"></span>
+## Conceptos de observabilidad {#observability-concepts}
 
-## Conceptos de observabilidad
-
-Istio genera automáticamente métricas, registros y trazas.
+Istio expone métricas del proxy; los registros de acceso, los proveedores de trazas y los recolectores requieren configuración. Las aplicaciones deben propagar el contexto de traza. En Ambient, las métricas y trazas L7 requieren un waypoint.
 
 ### Métricas generadas automáticamente
 
-```mermaid
-flowchart TB
-    subgraph Pod["Pod"]
-        App[Application]
-        Envoy[Envoy Proxy]
-    end
+![Diagrama del tráfico de una aplicación que pasa por su sidecar Envoy, el cual emite métricas a Prometheus, trazas a Jaeger y entradas a un sistema de registros; estos alimentan paneles de Grafana, la interfaz de Jaeger y el panel de Service Mesh de Kiali.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-10.png)
 
-    App <-->|Traffic| Envoy
-
-    Envoy -->|Metrics| Prometheus[Prometheus<br/>Metric Collection]
-    Envoy -->|Traces| Jaeger[Jaeger<br/>Distributed Tracing]
-    Envoy -->|Logs| Logging[Logging System]
-
-    Prometheus -->|Visualization| Grafana[Grafana<br/>Dashboard]
-    Jaeger -->|Analysis| JaegerUI[Jaeger UI]
-
-    Kiali[Kiali<br/>Service Mesh Dashboard] -->|Query| Prometheus
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Envoy proxy;
-    class Prometheus,Jaeger,Logging monitoring;
-    class Grafana,JaegerUI,Kiali visualization;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-10.html)
 
 ### Métricas principales
 
-| Métrica                                | Descripción          |
-| ------------------------------------- | -------------------- |
-| `istio_requests_total`                | Número total de solicitudes  |
-| `istio_request_duration_milliseconds` | Latencia de solicitud      |
-| `istio_request_bytes`                 | Tamaño de solicitud         |
-| `istio_response_bytes`                | Tamaño de respuesta        |
-| `istio_tcp_connections_opened_total`  | Número de conexiones TCP |
+| Métrica | Descripción |
+| --- | --- |
+| `istio_requests_total` | Número total de solicitudes |
+| `istio_request_duration_milliseconds` | Latencia de las solicitudes |
+| `istio_request_bytes` | Tamaño de las solicitudes |
+| `istio_response_bytes` | Tamaño de las respuestas |
+| `istio_tcp_connections_opened_total` | Número de conexiones TCP |
 
 ### Trazabilidad distribuida
 
 ```yaml
-# Enable tracing in Envoy
+# tracing-install.yaml: merge into the existing istioctl installation file
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
     enableTracing: true
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # 100% sampling
-        zipkin:
-          address: jaeger-collector.istio-system:9411
+    extensionProviders:
+    - name: otel-tracing
+      opentelemetry:
+        service: opentelemetry-collector.observability.svc.cluster.local
+        port: 4317
 ```
 
-<span id="namespaces-and-service-mesh"></span>
+Aplica la configuración de instalación con `istioctl install -f <merged-install-file>` o con los valores equivalentes de Helm. Despliega por separado el collector OTLP indicado. Aplica con kubectl el siguiente recurso Telemetry; el 1 % es solo un ejemplo y debe ajustarse.
 
-## Namespaces y Service Mesh
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1
+```
 
-### Aislamiento de Namespace
+## Namespaces y Service Mesh {#namespaces-and-service-mesh}
+
+### Aislamiento de namespaces
+
+Esta política DENY-all bloquea el tráfico de forma intencionada y completa. Para establecer una política predeterminada de denegación y permitir excepciones seleccionadas, utiliza una política ALLOW sin reglas. DENY tiene prioridad sobre cualquier ALLOW.
 
 ```yaml
 # Per-namespace mTLS policy
@@ -1043,7 +789,7 @@ spec:
   - {}
 ```
 
-### Alcance de Service Mesh
+### Ámbito de Service Mesh
 
 ```bash
 # Include only specific namespaces in the mesh
@@ -1056,6 +802,8 @@ kubectl label namespace kube-system istio-injection=disabled
 
 ### Multi-tenancy
 
+`Sidecar.egress.hosts` limita la configuración del proxy que se importa; no limita el acceso de red. Para aislar tenants, utiliza AuthorizationPolicy y una implementación de NetworkPolicy que aplique las políticas.
+
 ```yaml
 # Restrict mesh scope with Sidecar resource
 apiVersion: networking.istio.io/v1
@@ -1066,110 +814,38 @@ metadata:
 spec:
   egress:
   - hosts:
-    - "production/*"  # Only production namespace accessible
+    - "production/*"  # Import production configuration; not an access-control boundary
     - "istio-system/*"
 ```
 
-## Registro de cargas de trabajo de VM
+## Registro de cargas de trabajo de VM {#vm-workload-registration}
 
-Istio puede registrar no solo Pods de Kubernetes, sino también **cargas de trabajo de Virtual Machine (VM)** en la Service Mesh. Esto permite que las aplicaciones heredadas o los servicios fuera del cluster aprovechen las funcionalidades de gestión de tráfico, seguridad y observabilidad de Istio.
+Istio puede registrar en la Service Mesh no solo pods de Kubernetes, sino también **cargas de trabajo de máquinas virtuales (VM)**. De este modo, las aplicaciones heredadas o los servicios fuera del clúster pueden utilizar las funciones de gestión del tráfico, seguridad y observabilidad de Istio.
 
-### Por qué se necesitan las cargas de trabajo de VM
+### Por qué se necesitan cargas de trabajo de VM
 
-```mermaid
-flowchart TB
-    subgraph Legacy[Legacy Environment]
-        VM1[VM<br/>Legacy App]
-        VM2[VM<br/>Database]
-        VM3[VM<br/>External Service]
-    end
+![Diagrama en el que una VM heredada se comunica primero directamente con una aplicación nueva de Kubernetes y, después de registrarse en la malla, obtiene mTLS y políticas; istiod distribuye la configuración a los sidecars Envoy de los pods y a la VM registrada.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-11.png)
 
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod1[Pod]
-            App1[New App]
-            Envoy1[Envoy]
-        end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-11.html)
 
-        subgraph Pod2[Pod]
-            App2[Microservice]
-            Envoy2[Envoy]
-        end
-    end
+**Escenarios de uso:**
 
-    subgraph Istiod[Control Plane]
-        CP[istiod]
-    end
+* Migración gradual de aplicaciones heredadas.
+* Inclusión de servidores de bases de datos en la malla.
+* Integración de servicios que se encuentran fuera del clúster.
+* Configuración de entornos de nube híbrida.
 
-    VM1 -->|Before migration<br/>Direct communication| App1
-    App1 -.->|After mesh registration<br/>mTLS, policy applied| VM1
+### Arquitectura del registro de VM
 
-    CP -.->|Configuration delivery| Envoy1
-    CP -.->|Configuration delivery| Envoy2
-    CP -.->|VM can also be registered| VM1
+![Diagrama en el que Envoy, instalado manualmente en una máquina virtual, intercambia tráfico mTLS con el sidecar Envoy de un pod del clúster de Kubernetes; istiod distribuye configuración xDS y certificados a ambos proxies.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-12.png)
 
-    %% Style definitions
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class VM1,VM2,VM3 vm;
-    class App1,App2 k8sApp;
-    class Envoy1,Envoy2 proxy;
-    class CP controlPlane;
-```
-
-**Escenarios de uso**:
-
-* Migración gradual de aplicaciones heredadas
-* Inclusión de servidores de bases de datos en la malla
-* Integración de servicios fuera del cluster
-* Configuración de entorno de nube híbrida
-
-### Arquitectura de registro de VM
-
-```mermaid
-flowchart LR
-    subgraph VM[Virtual Machine]
-        LegacyApp[Legacy<br/>Application]
-        EnvoyVM[Envoy<br/>Sidecar]
-    end
-
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod[Pod]
-            App[Application]
-            EnvoyPod[Envoy<br/>Sidecar]
-        end
-
-        Istiod[istiod<br/>Control Plane]
-    end
-
-    LegacyApp <-->|Local communication| EnvoyVM
-    App <-->|Local communication| EnvoyPod
-
-    EnvoyVM <-->|mTLS| EnvoyPod
-
-    Istiod -.->|xDS configuration| EnvoyVM
-    Istiod -.->|xDS configuration| EnvoyPod
-    Istiod -.->|Certificate issuance| EnvoyVM
-
-    %% Style definitions
-    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class LegacyApp vmApp;
-    class App k8sApp;
-    class EnvoyVM,EnvoyPod proxy;
-    class Istiod controlPlane;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-12.html)
 
 ### Recurso WorkloadEntry
 
-Las cargas de trabajo de VM se registran con el recurso **WorkloadEntry**.
+Estos son fragmentos de registro. WorkloadEntry por sí solo no instala un proxy ni habilita mTLS: primero sigue la [guía de instalación de VM](https://istio.io/latest/docs/setup/install/virtual-machine/), que abarca WorkloadGroup, la cuenta de servicio, el token de arranque y la CA, el agente y la conectividad de red. Configura la captura DNS o los registros DNS de los nombres de host de ServiceEntry; ServiceEntry no crea registros de CoreDNS.
+
+Las cargas de trabajo de VM se registran mediante el recurso **WorkloadEntry**.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1187,16 +863,16 @@ spec:
     mysql: 3306
 ```
 
-**Campos principales de WorkloadEntry**:
+**Campos principales de WorkloadEntry:**
 
-* `address`: dirección IP de VM
-* `labels`: coincide con el selector de servicio
-* `serviceAccount`: cuenta de servicio para autenticación mTLS
-* `ports`: definición de puertos expuestos
+* `address`: dirección IP de la VM.
+* `labels`: etiquetas que coinciden con el selector del servicio.
+* `serviceAccount`: cuenta de servicio para la autenticación mTLS.
+* `ports`: definición de los puertos expuestos.
 
 ### Integración con ServiceEntry
 
-WorkloadEntry se usa con ServiceEntry para registrar servicios de VM en la malla.
+WorkloadEntry se utiliza junto con ServiceEntry para registrar los servicios de VM en la malla.
 
 ```yaml
 # Define service with ServiceEntry
@@ -1231,61 +907,31 @@ spec:
   serviceAccount: mysql-sa
 ```
 
-### Comparación entre registro de VM y Multi-Cluster
+### Comparación del registro de VM con Multi-Cluster
 
-| Característica                    | Registro de carga de trabajo de VM | Multi-Cluster                  | Kubernetes Pod      |
-| -------------------------- | ------------------------ | ------------------------------ | ------------------- |
-| **Ubicación de la carga de trabajo**      | VM fuera del cluster       | Cluster de Kubernetes diferente   | Dentro del cluster      |
-| **Instalación de Envoy**     | Instalación manual      | Automática (sidecar)            | Automática (sidecar) |
-| **Método de registro**    | WorkloadEntry            | ServiceEntry + EndpointSlice   | Service + Pod       |
-| **mTLS**                   | Compatible                | Compatible                      | Compatible           |
-| **Descubrimiento de servicios**      | Manual (IP especificada)    | Automático                      | Automático           |
-| **Escenario de uso**         | Aplicaciones heredadas, DB          | Multi-cloud, recuperación ante desastres | Aplicaciones cloud-native   |
-| **Complejidad operativa** | Alta                     | Media                         | Baja                 |
+| Característica | Registro de carga de trabajo de VM | Multi-Cluster | Pod de Kubernetes |
+| --- | --- | --- | --- |
+| **Ubicación de la carga de trabajo** | VM fuera del clúster | Otro clúster de Kubernetes | Dentro del clúster |
+| **Instalación de Envoy** | Manual | Automática (sidecar) | Automática (sidecar) |
+| **Método de registro** | WorkloadEntry | Descubrimiento de servicios de Kubernetes remoto | Service y Pod |
+| **mTLS** | Admitido | Admitido | Admitido |
+| **Descubrimiento de servicios** | Manual (se especifica la IP) | Automático | Automático |
+| **Escenario de uso** | Aplicaciones heredadas y bases de datos | Multi-cloud y recuperación ante desastres | Aplicaciones cloud-native |
+| **Complejidad operativa** | Alta | Media | Baja |
 
-### Beneficios del registro de VM
+### Ventajas del registro de VM
 
 #### 1. Migración gradual
 
-```mermaid
-flowchart LR
-    subgraph Phase1[Phase 1: Legacy Environment]
-        VM1[VM<br/>Monolith App]
-    end
+![Diagrama de una migración gradual en cuatro fases: una VM monolítica heredada independiente, la misma VM incorporada a la malla con Envoy, una fase híbrida donde el módulo restante de la VM se comunica mediante mTLS con los nuevos microservicios de Kubernetes y, por último, la migración completa a Kubernetes.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-13.png)
 
-    subgraph Phase2[Phase 2: VM Mesh Registration]
-        VM2[VM<br/>Monolith App<br/>+ Envoy]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-13.html)
 
-    subgraph Phase3[Phase 3: Hybrid]
-        VM3[VM<br/>Legacy Module]
-        K8S1[K8s<br/>New Microservices]
-        VM3 <-->|mTLS| K8S1
-    end
+**Beneficios:**
 
-    subgraph Phase4[Phase 4: Complete Migration]
-        K8S2[K8s<br/>All Microservices]
-    end
-
-    Phase1 -->|VM registration| Phase2
-    Phase2 -->|Partial migration| Phase3
-    Phase3 -->|Complete| Phase4
-
-    %% Style definitions
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class VM1,VM2,VM3 vm;
-    class K8S1,K8S2 k8s;
-```
-
-**Beneficios**:
-
-* Integrar aplicaciones de VM existentes en la malla sin modificaciones
-* Migrar a Kubernetes por etapas
-* Mantener seguridad y observabilidad consistentes durante la migración
+* Integrar las aplicaciones existentes en VM en la malla sin modificarlas.
+* Migrar a Kubernetes por etapas.
+* Mantener políticas coherentes de seguridad y observabilidad durante la migración.
 
 #### 2. Política de seguridad unificada
 
@@ -1317,34 +963,32 @@ spec:
         principals: ["cluster.local/ns/default/sa/app-sa"]
     to:
     - operation:
-        methods: ["*"]
+        ports: ["3306"]
 ```
 
-#### 3. Observabilidad consistente
+#### 3. Observabilidad coherente
 
-Las cargas de trabajo de VM proporcionan las mismas métricas, registros y trazabilidad distribuida que los Pods de Kubernetes.
+La telemetría de las cargas de trabajo de VM depende del protocolo, igual que la de los pods. El ejemplo de MySQL utiliza TCP y no tiene códigos de respuesta HTTP ni spans de solicitudes HTTP.
 
 ```promql
-# Unified metric query for VMs and pods
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP bytes received per second; verify the actual workload label in your metrics
+sum(rate(istio_tcp_received_bytes_total{destination_workload="mysql-vm-1"}[5m]))
 
-# Error rate from VM
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1",response_code="500"}[5m]))
-/
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP connections opened per second
+sum(rate(istio_tcp_connections_opened_total{destination_workload="mysql-vm-1"}[5m]))
 ```
 
 ### Limitaciones del registro de VM
 
-1. **Instalación manual de Envoy**: se debe instalar y configurar manualmente el proxy Envoy en la VM
-2. **Conectividad de red**: se requiere conexión de red entre la VM y el cluster de Kubernetes
-3. **Gestión de certificados**: los certificados de cuenta de servicio deben desplegarse en la VM
-4. **Carga operativa**: se requiere gestión y actualización de la versión de Envoy en la VM
-5. **Limitación de auto-scaling**: no hay auto-scaling como Kubernetes HPA
+1. **Instalación manual de Envoy:** hay que instalar y configurar manualmente el proxy Envoy en la VM.
+2. **Conectividad de red:** se necesita conectividad entre la VM y el clúster de Kubernetes.
+3. **Identidad de arranque:** aprovisiona de forma segura la CA raíz y el token de la cuenta de servicio; el agente de Istio obtiene y rota los certificados de carga de trabajo.
+4. **Carga operativa:** es necesario gestionar y actualizar la versión de Envoy de la VM.
+5. **Limitación del escalado automático:** no hay escalado automático equivalente a Kubernetes HPA.
 
-### Ejemplo de uso práctico
+### Ejemplo práctico
 
-#### Escenario: integración de base de datos heredada
+#### Escenario: integración de una base de datos heredada
 
 ```yaml
 # 1. Define database service with ServiceEntry
@@ -1406,99 +1050,81 @@ spec:
         ports: ["5432"]
 ```
 
-**Resultado**:
+**Resultado:**
 
-* Los Pods de Kubernetes acceden a la base de datos mediante `postgres.production.svc.cluster.local`
-* Cifrado mTLS automático entre la VM y los Pods
-* Política de control de acceso aplicada
-* Métricas y trazabilidad distribuida recopiladas automáticamente
+* Los pods de Kubernetes acceden a la base de datos mediante `postgres.production.svc.cluster.local`.
+* Se cifra automáticamente con mTLS la comunicación entre la VM y los pods.
+* Se aplica la política de control de acceso.
+* La base de datos ofrece métricas TCP; para obtener trazas HTTP se necesita una carga de trabajo HTTP y propagación del contexto de traza.
 
-### Resumen de la comparación de registro de cargas de trabajo
+### Resumen de la comparación del registro de cargas de trabajo
 
-```mermaid
-flowchart TB
-    subgraph Types[Workload Types]
-        K8S[Kubernetes Pod<br/>Inside cluster]
-        MC[Multi-Cluster<br/>Different cluster]
-        VM[Virtual Machine<br/>Outside cluster]
-    end
+![Diagrama que muestra tres tipos de cargas de trabajo —pods de Kubernetes, cargas de trabajo Multi-Cluster y máquinas virtuales— registrados en la Service Mesh de Istio y con funciones comunes de cifrado mTLS, gestión del tráfico, políticas de seguridad, métricas y trazas.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
 
-    subgraph Features[Common Features]
-        mTLS[mTLS Encryption]
-        Traffic[Traffic Management]
-        Policy[Security Policy]
-        Metrics[Metrics & Tracing]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-14.html)
 
-    K8S & MC & VM --> mTLS
-    K8S & MC & VM --> Traffic
-    K8S & MC & VM --> Policy
-    K8S & MC & VM --> Metrics
+Istio ofrece capacidades flexibles para registrar cargas de trabajo:
 
-    %% Style definitions
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+* **Pod de Kubernetes:** aplicaciones cloud-native.
+* **Multi-Cluster:** nube múltiple, distribución regional y recuperación ante desastres.
+* **Máquina virtual:** aplicaciones heredadas, bases de datos y entornos híbridos.
 
-    %% Apply classes
-    class K8S,MC,VM workload;
-    class mTLS,Traffic,Policy,Metrics feature;
-```
+Todas las cargas de trabajo reciben funciones coherentes de seguridad, gestión del tráfico y observabilidad.
 
-Mediante las capacidades flexibles de registro de cargas de trabajo de Istio:
+## Próximos pasos {#next-steps}
 
-* **Kubernetes Pod**: aplicaciones cloud-native
-* **Multi-Cluster**: multi-cloud, distribución regional, recuperación ante desastres
-* **Virtual Machine**: aplicaciones heredadas, bases de datos, entornos híbridos
+Ahora ya conoces los conceptos básicos de Istio. Aprende a utilizarlos en la práctica con los siguientes documentos:
 
-Todas las cargas de trabajo reciben funcionalidades coherentes de seguridad, gestión de tráfico y observabilidad.
+### Funciones principales
 
-<span id="next-steps"></span>
-
-## Siguientes pasos
-
-Ahora comprendes los conceptos básicos de Istio. Aprende a usarlos en la práctica mediante los siguientes documentos:
-
-### Funcionalidades principales
-
-1. [**Gestión de tráfico**](traffic-management/README.md)
-   * Uso de Gateway y VirtualService
-   * Definición de DestinationRule y subset
-   * ServiceEntry y WorkloadEntry (registro de VM)
-   * Patrones de enrutamiento avanzados (Canary, pruebas A/B)
-   * Traffic Mirroring y Shadowing
+1. [**Gestión del tráfico**](traffic-management/README.md)
+   * Uso de Gateway y VirtualService.
+   * Definición de DestinationRule y subconjuntos.
+   * ServiceEntry y WorkloadEntry (registro de VM).
+   * Patrones avanzados de enrutamiento (canary y pruebas A/B).
+   * Traffic Mirroring y Shadowing.
 2. [**Seguridad**](security/README.md)
-   * Configuración de mTLS y PeerAuthentication
-   * Autenticación (RequestAuthentication, JWT)
-   * Autorización (AuthorizationPolicy)
-   * Gestión de políticas de seguridad
-   * Integración de autenticación externa
+   * Configuración de mTLS y PeerAuthentication.
+   * Autenticación (RequestAuthentication y JWT).
+   * Autorización (AuthorizationPolicy).
+   * Gestión de políticas de seguridad.
+   * Integración de autenticación externa.
 3. [**Observabilidad**](observability/README.md)
-   * Recopilación de métricas (Prometheus)
-   * Trazabilidad distribuida (Jaeger, Zipkin)
-   * Configuración de registros
-   * Visualización de Service Mesh con Kiali
-   * Dashboards de Grafana
+   * Recopilación de métricas (Prometheus).
+   * Trazabilidad distribuida (Jaeger y Zipkin).
+   * Configuración de registros.
+   * Visualización de la malla con Kiali.
+   * Paneles de Grafana.
 4. [**Resiliencia**](resilience/README.md)
-   * Patrón Circuit Breaker
-   * Configuración de Retry y Timeout
-   * Rate Limiting
-   * Outlier Detection
-   * Pruebas de Fault Injection
+   * Patrón circuit breaker.
+   * Configuración de reintentos y tiempos de espera.
+   * Rate limiting.
+   * Detección de valores atípicos.
+   * Pruebas de inyección de fallos.
 
 ### Temas avanzados
 
 5. [**Temas avanzados**](advanced/README.md)
-   * Ambient Mode (malla sin sidecar)
-   * Configuración Multi-Cluster
-   * Personalización de EnvoyFilter
-   * DNS Proxy y Caching
-   * Configuración detallada de cargas de trabajo de VM
-   * Desarrollo de plugins WASM
+   * Ambient Mode (malla sin sidecars).
+   * Configuración Multi-Cluster.
+   * Personalización con EnvoyFilter.
+   * DNS Proxy y almacenamiento en caché.
+   * Configuración detallada de cargas de trabajo de VM.
+   * Desarrollo de plugins WASM.
 
 ## Referencias
 
-* [Documentación oficial de Istio - Conceptos](https://istio.io/latest/docs/concepts/)
-* [Documentación oficial de Istio - Gestión de tráfico](https://istio.io/latest/docs/concepts/traffic-management/)
-* [Documentación oficial de Istio - Seguridad](https://istio.io/latest/docs/concepts/security/)
-* [Documentación oficial de Istio - Observabilidad](https://istio.io/latest/docs/concepts/observability/)
+* [Documentación oficial de Istio: conceptos](https://istio.io/latest/docs/concepts/)
+* [Documentación oficial de Istio: gestión del tráfico](https://istio.io/latest/docs/concepts/traffic-management/)
+* [Documentación oficial de Istio: seguridad](https://istio.io/latest/docs/concepts/security/)
+* [Documentación oficial de Istio: observabilidad](https://istio.io/latest/docs/concepts/observability/)
 * [Documentación oficial de Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/)
+* [DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+* [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+* [PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
+* [Instalación de máquinas virtuales](https://istio.io/latest/docs/setup/install/virtual-machine/)
+* [OpenTelemetry](https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/)
+* [¿Sidecar o Ambient?](https://istio.io/latest/docs/overview/dataplane-modes/)
+* [Presentación de istiod: simplificación del plano de control](https://istio.io/latest/blog/2020/istiod/)
+* [Proxy de alto rendimiento para el perímetro, el middleware y los servicios nativos de la nube](https://www.cncf.io/projects/envoy/)

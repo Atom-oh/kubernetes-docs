@@ -1,6 +1,6 @@
 # Registro de contenedores
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 ## Introducción
 

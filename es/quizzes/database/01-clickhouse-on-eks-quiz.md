@@ -28,7 +28,7 @@ Cuando las condiciones de consulta coinciden con la clave de partición (diaria)
 **Respuesta: C) trace_id tenía pocos patrones repetidos y apenas se comprimió con LZ4 en esta ejecución, mientras que namespace tiene baja cardinalidad y es la primera clave ORDER BY, por lo que los valores idénticos aparecen en largas secuencias**
 
 **Explicación:**
-Este resultado con LZ4 fue de unos 3.07 GiB sin comprimir → 3.08 GiB comprimidos. Hex almacena solo cuatro bits de información por byte, así que otros códecs o representaciones binarias aún podrían reducirlo. namespace solo tiene 10 valores distintos y es la primera clave de ordenamiento, por lo que los valores idénticos se almacenan en secuencias contiguas: 95.72 MiB se redujeron a 488.63 KiB (201×). Por eso, «cómo almacenamos los ID» es la palanca de mayor impacto en el costo de almacenamiento de un esquema de registros.
+Este resultado con LZ4 fue de unos 3.07 GiB sin comprimir → 3.08 GiB comprimidos. Hex almacena solo cuatro bits de información por byte, así que otros códecs o representaciones binarias aún podrían reducirlo. namespace solo tiene 10 valores distintos y es la primera clave de ordenamiento, por lo que los valores idénticos se almacenan en secuencias contiguas: 95.72 MiB se redujeron a 488.63 KiB (201×). Por eso, «cómo almacenar los identificadores» es la decisión que más influye en el costo de almacenamiento de un esquema de registros.
 
 </details>
 
@@ -82,14 +82,14 @@ El índice de omisión `bloom_filter(0.01) GRANULARITY 4` no produce falsos nega
 
 6. ¿Qué salvedad debe acompañar la cifra de ingesta (~940 mil filas/s) de la prueba?
    - A) Se midió con tres réplicas
-   - B) Se midió mediante INSERT…SELECT dentro del servidor, por lo que no mide directamente el rendimiento de ingesta de un cliente externo que envía datos por la red y requiere análisis
+   - B) Se midió mediante INSERT…SELECT dentro del servidor, por lo que no mide directamente el rendimiento de ingesta de un cliente externo que envía datos por la red y analiza el formato
    - C) Solo escribió en memoria; nunca en disco
    - D) La compresión estaba deshabilitada durante la medición
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Se midió mediante INSERT…SELECT dentro del servidor, por lo que no mide directamente el rendimiento de ingesta de un cliente externo que envía datos por la red y requiere análisis**
+**Respuesta: B) Se midió mediante INSERT…SELECT dentro del servidor, por lo que no mide directamente el rendimiento de ingesta de un cliente externo que envía datos por la red y analiza el formato**
 
 **Explicación:**
 Las filas se generaron dentro del servidor y se insertaron directamente, lo que es más favorable que un cliente externo que envía datos TSV/Native. Se incluyen el ordenamiento, la compresión y las escrituras en disco, pero también el costo de CPU de generar los datos, así que la cifra no es un límite máximo matemático para la ingesta externa. Mide por separado el cliente, el procesamiento por lotes, la concurrencia y el formato previstos.
@@ -112,16 +112,16 @@ Una base de datos orientada a filas tendría que leer filas completas para esta 
 
 </details>
 
-8. Según el marco de decisión de esta guía, ¿cuándo es especialmente defendible ejecutar ClickHouse autogestionado en EKS en lugar de usar un servicio administrado?
+8. Según el marco de decisión de esta guía, ¿en qué caso se justifica especialmente ejecutar ClickHouse de forma autogestionada en EKS en vez de usar un servicio administrado?
    - A) Cuando no hay equipo de plataforma ni experiencia en operaciones de bases de datos
    - B) Cuando basta con un servicio administrado estándar y hay un solo inquilino
-   - C) Cuando las ofertas administradas son limitadas o tienen un costo mucho mayor, y un equipo de plataforma puede encargarse de las operaciones basadas en operadores, incluidos los ensayos de copia de seguridad y restauración
+   - C) Cuando las ofertas administradas son limitadas o cuestan varias veces más, y un equipo de plataforma puede encargarse de las operaciones basadas en operadores, incluidos los ensayos de copia de seguridad y restauración
    - D) Cuando los datos son pequeños (menos de 100 GiB)
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Cuando las ofertas administradas son limitadas o tienen un costo mucho mayor, y un equipo de plataforma puede encargarse de las operaciones basadas en operadores, incluidos los ensayos de copia de seguridad y restauración**
+**Respuesta: C) Cuando las ofertas administradas son limitadas o cuestan varias veces más, y un equipo de plataforma puede encargarse de las operaciones basadas en operadores, incluidos los ensayos de copia de seguridad y restauración**
 
 **Explicación:**
 Este marco entre servicios administrados y autogestionados proviene del [resumen de la sección Database](../../database/README.md), no del artículo de la prueba comparativa. ClickHouse usa Apache-2.0 y cuenta con un operador comunitario consolidado (Altinity), lo que hace viable la autogestión; el requisito previo es disponer tanto del operador como de un equipo que lo ejecute. En cambio, si escasea el personal de operaciones o existe una opción administrada adecuada, conviene elegir el servicio administrado. Un equipo que opere un StatefulSet sin operador debe implementar por su cuenta las mismas responsabilidades de ciclo de vida y recuperación.

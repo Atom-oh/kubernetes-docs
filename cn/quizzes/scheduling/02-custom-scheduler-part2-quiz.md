@@ -1,7 +1,7 @@
 # 自定义调度器测验（第 2 部分）
 
 > **示例基线**：Kubernetes 1.35.8，Go 1.27.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 本测验用于检验你对在 Kubernetes 中实现和使用自定义调度器的深入理解。
 
@@ -299,6 +299,7 @@ spec:
 - C. 仅将 Pod 放置到特定可用区中：这是通过节点亲和性将 Pod 放置到特定可用区的做法；拓扑分布约束的主要目的是均匀分布。
 - D. 仅将 Pod 放置到带有特定标签的节点上：这是 nodeSelector 或 nodeAffinity 的职责。
 </details>
+
 ### 4. Kubernetes 中 Taints 和 Tolerations 的主要目的是什么？
 
 A. 确保特定 Pod 只调度到特定节点上
@@ -349,7 +350,7 @@ spec:
 * `Equal`（默认运算符）用于比较 key/value。使用 `Exists` 时必须省略 value。
 * 指定的 effect 必须匹配；空 effect 会匹配该键的所有 effect。空 key 要求使用 `Exists`，并会匹配所有键，因此请谨慎使用。
 * `tolerationSeconds` 仅适用于 `NoExecute`。省略该字段表示无限期容忍匹配的污点；指定该字段则会限制容忍时长。
-* 此示例使用默认的 `Equal`/`Exists` 行为。Kubernetes1.35 中可选的比较运算符功能处于 alpha 阶段，在此处未启用。
+* 此示例使用默认的 `Equal`/`Exists` 行为。Kubernetes 1.35 中可选的比较运算符功能处于 alpha 阶段，在此处未启用。
 
 ```yaml
 tolerations:
@@ -605,6 +606,7 @@ Go 类型会将字段名序列化为首字母大写形式。`nodeCacheCapable: f
 - B. 提供过滤和优先级排序能力：Scheduler Extender 的有效特征。
 - D. 作为外部进程运行：Scheduler Extender 的有效特征。
 </details>
+
 ### 6. Kubernetes 中 Pod Affinity 和 Anti-Affinity 的主要目的是什么？
 
 A. 定义 Pod 与节点之间的关系
@@ -835,6 +837,7 @@ kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.no
 - B. 排除 Pod 无法运行的节点：这是“Filter”扩展点的职责。
 - D. 将 Pod 绑定到节点：这是“Bind”扩展点的职责。
 </details>
+
 ### 8. Kubernetes 中 Pod Priority Preemption 的主要目的是什么？
 
 A. 移除低优先级 Pod，以便高优先级 Pod 能够调度

@@ -35,7 +35,7 @@
 AWS 会将托管控制平面日志交付到 CloudWatch Logs。容器运行时会写入 CRI 日志文件；kubelet 负责管理日志轮转和日志访问，而节点采集器会读取这些文件。指标和跟踪数据使用各自配置的采集/导出路径。
 
 <!-- Audit: parent diagram repair needed for direct control-plane delivery and runtime-versus-kubelet log responsibilities.
-![Architecture diagram showing EKS control-plane logs, pod logs, and node metrics flowing through Fluent Bit and Prometheus into CloudWatch Logs/Metrics, Amazon OpenSearch, and Grafana/Alertmanager.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-0.png)
+![EKS 控制平面日志、Pod 日志和节点指标经 Fluent Bit 与 Prometheus 流入 CloudWatch Logs/Metrics、Amazon OpenSearch 及 Grafana/Alertmanager 的架构图。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-0.html)
 -->
@@ -205,7 +205,7 @@ CloudWatch Logs 目标支持 Logs Insights 查询。S3 目标是供所选 S3/Ath
 容器运行时会将 stdout/stderr 写入节点的 CRI 日志文件。kubelet 负责管理日志轮转并提供 Pod 日志访问；采集器会跟踪这些文件，并将记录转发到所选后端。JSON 格式的应用消息仍然位于 CRI 封装中，不能把整条容器日志行当作 Docker JSON 来解析。
 
 <!-- Audit: parent diagram repair needed for direct control-plane delivery and runtime-versus-kubelet log responsibilities.
-![Architecture diagram showing container stdout/stderr picked up by kubelet, read by a log agent, and fanned out to CloudWatch Logs, Amazon OpenSearch, and Amazon S3.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-1.png)
+![容器 stdout/stderr 由 kubelet 收集、日志代理读取，再分发到 CloudWatch Logs、Amazon OpenSearch 和 Amazon S3 的架构图。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-1.html)
 -->
@@ -446,7 +446,7 @@ fields @timestamp, kubernetes.namespace_name, kubernetes.pod_name, data.level, l
 
 有效的集群监控对于跟踪 EKS 集群的状态、性能和资源使用情况至关重要。本节介绍监控 EKS 集群的各种工具和技术。
 
-![Diagram mapping monitoring solutions (CloudWatch Container Insights with AMP/AMG, the Prometheus stack with kube-state-metrics, Node Exporter and Grafana, and X-Ray/OpenTelemetry tracing) to the cluster-, node-, and pod-level telemetry they cover in an EKS cluster.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
+![该图将多种监控方案映射到其覆盖的 EKS 集群、节点和 Pod 级遥测数据：包括 CloudWatch Container Insights 与 AMP/AMG、带 kube-state-metrics、Node Exporter 和 Grafana 的 Prometheus 技术栈，以及 X-Ray/OpenTelemetry 跟踪。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-2.html)
 
@@ -1151,7 +1151,7 @@ spec:
 
 有效的告警与事件管理对于快速检测并响应 EKS 集群中的问题至关重要。本节介绍管理 EKS 集群告警和事件的各种工具和技术。
 
-![Architecture diagram showing CloudWatch metrics and logs, AWS events, Prometheus metrics and Loki logs, and Kubernetes and application events routed through CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and an event router to SNS (Email and SQS subscriptions), Lambda, Slack and PagerDuty, and OpsGenie.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
+![该架构图展示了 CloudWatch 指标和日志、AWS 事件、Prometheus 指标、Loki 日志以及 Kubernetes 和应用事件，如何经由 CloudWatch Alarms、EventBridge、Prometheus Alertmanager 和事件路由器，发送到 SNS（电子邮件和 SQS 订阅）、Lambda、Slack、PagerDuty 与 OpsGenie。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-3.html)
 
@@ -1702,7 +1702,7 @@ Flux notification Providers 会将 Flux reconciliation 事件与 Flux Alert 资�
 
 日志分析与可视化对于诊断和解决 EKS 集群中出现的问题十分重要。本节介绍在 EKS 集群中分析和可视化日志的各种工具和技术。
 
-![Architecture diagram of the log analysis and visualization pipeline: control plane and AWS service logs go directly to CloudWatch Logs, container and application logs pass through log collectors (Fluent Bit, Fluentd, Vector, CloudWatch Agent) into four stores (CloudWatch Logs, Amazon OpenSearch, Amazon S3, Grafana Loki), and each store feeds its paired analysis and visualization tool: CloudWatch Logs Insights, OpenSearch Dashboards, Athena with QuickSight, and Grafana Explore with dashboards.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
+![日志分析与可视化管道的架构图：控制平面和 AWS 服务日志直接进入 CloudWatch Logs；容器和应用日志经 Fluent Bit、Fluentd、Vector 或 CloudWatch Agent 等采集器进入 CloudWatch Logs、Amazon OpenSearch、Amazon S3 或 Grafana Loki；各存储再分别连接 CloudWatch Logs Insights、OpenSearch Dashboards、Athena 与 QuickSight，以及 Grafana Explore 和仪表板等分析可视化工具。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-4.html)
 
@@ -2265,7 +2265,7 @@ route:
 
 下面介绍在 EKS 集群中排查和调试问题的各种技术。
 
-![Diagram mapping three EKS troubleshooting areas (cluster issues, workload issues, common problems) to three debugging tool families: Kubernetes kubectl tools, AWS tools, and network diagnostic tools, with the kubectl tools at the center used by all three areas.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
+![该图将 EKS 故障排除的三个领域（集群问题、工作负载问题和常见问题）映射到三类调试工具：Kubernetes kubectl 工具、AWS 工具和网络诊断工具；kubectl 工具位于中心，供这三个领域共同使用。](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-5.html)
 

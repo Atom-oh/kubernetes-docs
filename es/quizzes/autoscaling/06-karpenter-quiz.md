@@ -1,14 +1,16 @@
-# Karpenter Quiz
+# Cuestionario de Karpenter
 
-Este cuestionario evalúa tu comprensión de los conceptos del node autoscaler Karpenter, la configuración de NodePool/EC2NodeClass, la optimización de costos, Consolidation, Drift, el manejo de interrupciones y la integración con Amazon EKS.
+> **Última actualización**: 11 de septiembre de 2026
 
-## Multiple Choice Questions
+Este cuestionario evalúa tu comprensión de los conceptos del autoscaler de nodos Karpenter, la configuración de NodePool y EC2NodeClass, la optimización de costos, Consolidation, Drift, el manejo de interrupciones y la integración con Amazon EKS.
 
-1. ¿Cuál es la mayor diferencia de Karpenter en comparación con el Cluster Autoscaler existente?
+## Preguntas de opción múltiple
+
+1. En este ejemplo de AWS, ¿qué diferencia arquitectónica distingue a Karpenter de Cluster Autoscaler?
    - A) Requisitos de versión de Kubernetes más altos
    - B) Aprovisionamiento directo de instancias EC2 sin Auto Scaling Groups
    - C) Solo admite AWS y ninguna otra nube
-   - D) Solo admite escalado basado en CPU
+   - D) Solo admite el escalado basado en CPU
 
 <details>
 
@@ -17,11 +19,11 @@ Este cuestionario evalúa tu comprensión de los conceptos del node autoscaler K
 **Respuesta: B) Aprovisionamiento directo de instancias EC2 sin Auto Scaling Groups**
 
 **Explicación:**
-El mayor diferenciador de Karpenter es que evita Auto Scaling Groups (ASG) y usa directamente la EC2 Fleet API para aprovisionar nodes. Cluster Autoscaler escala mediante node groups/ASGs, por lo que los tipos de instancia están limitados por la configuración del node group. Karpenter selecciona dinámicamente el tipo de instancia óptimo entre varias opciones según los requisitos del pod y puede aprovisionar nodes en segundos.
+Con el proveedor de AWS, Karpenter solicita capacidad de EC2 (incluida EC2 Fleet) mediante NodeClaims, en lugar de escalar un Auto Scaling Group. Cluster Autoscaler suele ajustar grupos de nodos configurados. Las opciones de instancia siguen dependiendo de las restricciones de Pod, NodePool y NodeClass, las cuotas y la disponibilidad. El tiempo de lanzamiento de la API, el tiempo hasta que el nodo esté Ready y el tiempo hasta que la aplicación esté lista son etapas distintas; no se garantiza que todo ocurra en unos segundos.
 </details>
 
-2. ¿Qué CRD define las políticas de aprovisionamiento de nodes en la API v1beta1 de Karpenter?
-   - A) Provisioner
+2. ¿Qué CRD define las políticas de aprovisionamiento de nodos (tipos de instancia, tipos de capacidad y configuración de interrupciones) en la API v1 de Karpenter?
+   - A) NodeClaim
    - B) NodePool
    - C) NodeTemplate
    - D) EC2NodeClass
@@ -33,158 +35,158 @@ El mayor diferenciador de Karpenter es que evita Auto Scaling Groups (ASG) y usa
 **Respuesta: B) NodePool**
 
 **Explicación:**
-En la API v1beta1 de Karpenter, el CRD Provisioner anterior fue reemplazado por NodePool. NodePool define las políticas de aprovisionamiento de nodes (tipos de instancia, tipos de capacidad, arquitecturas, zonas de disponibilidad, etc.) y la configuración de disruption (consolidation, expireAfter, etc.). EC2NodeClass define configuraciones específicas de AWS (subnets, security groups, AMIs, block devices, etc.), y NodePool referencia EC2NodeClass mediante nodeClassRef.
+NodePool (`karpenter.sh/v1`) define los requisitos de la plantilla y la política del ciclo de vida. `expireAfter` se configura en `spec.template.spec`, mientras que la consolidación y los presupuestos se configuran en `spec.disruption`. EC2NodeClass (`karpenter.k8s.aws/v1`) proporciona la configuración de AWS mediante `nodeClassRef`. NodeClaim registra la capacidad solicitada y el ciclo de vida de un nodo individual.
 </details>
 
-3. ¿Cómo configuras Karpenter para usar instancias Spot para optimización de costos?
-   - A) disruption.capacityType: spot
-   - B) Especificar karpenter.sh/capacity-type: spot en requirements
-   - C) Establecer spotEnabled: true en nodeClassRef
-   - D) Establecer spot: true en limits
+3. ¿Cómo se configura Karpenter para usar instancias Spot y optimizar costos?
+   - A) `disruption.capacityType: spot`
+   - B) Especificar `karpenter.sh/capacity-type: spot` en los requisitos
+   - C) Establecer `spotEnabled: true` en `nodeClassRef`
+   - D) Establecer `spot: true` en `limits`
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Especificar karpenter.sh/capacity-type: spot en requirements**
+**Respuesta: B) Especificar `karpenter.sh/capacity-type: spot` en los requisitos**
 
 **Explicación:**
-Usa la clave `karpenter.sh/capacity-type` en `spec.template.spec.requirements` de NodePool para especificar el tipo de capacidad. Usa `values: ["spot"]` solo para instancias Spot, o `values: ["spot", "on-demand"]` para permitir ambas. Karpenter selecciona instancias óptimas considerando precio y disponibilidad. Las instancias Spot pueden ahorrar hasta un 90% en comparación con On-Demand.
+Los requisitos de NodePool pueden permitir capacidad Spot, On-Demand y, cuando esté configurada, Reserved. Los valores de un requisito `In` forman un conjunto: su orden no expresa preferencia. Entre los tipos de capacidad permitidos, Karpenter prioriza Reserved, luego Spot y después On-Demand, sujeto a las ofertas disponibles y a las demás restricciones. El precio y la exposición a interrupciones de Spot varían; el ahorro no está garantizado.
 </details>
 
-4. ¿Qué hace la característica Consolidation de Karpenter?
-   - A) Consolida logs de múltiples nodes
-   - B) Consolida workloads de múltiples nodes en menos nodes para ahorrar costos
-   - C) Consolida múltiples clusters en uno
-   - D) Consolida múltiples NodePools en uno
+4. ¿Qué hace la función Consolidation de Karpenter?
+   - A) Consolida los registros de varios nodos
+   - B) Evalúa la eliminación viable de nodos o su reemplazo por otros de menor costo, respetando las restricciones de las cargas de trabajo
+   - C) Consolida varios clústeres en uno
+   - D) Consolida varios NodePools en uno
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Consolida workloads de múltiples nodes en menos nodes para ahorrar costos**
+**Respuesta: B) Evalúa la eliminación viable de nodos o su reemplazo por otros de menor costo, respetando las restricciones de las cargas de trabajo**
 
 **Explicación:**
-Consolidation es la característica central de optimización de costos de Karpenter. Consolida (bin-packs) workloads de nodes infrautilizados en menos nodes para aumentar la utilización de recursos y reducir costos. `consolidationPolicy: WhenEmpty` solo elimina nodes vacíos, mientras que `consolidationPolicy: WhenUnderutilized` también consolida cuando la utilización es baja. `consolidateAfter` establece el tiempo de espera antes de la consolidación.
+Consolidation busca eliminar nodos cuando sea viable o reemplazarlos por otros de menor costo, respetando las restricciones de las cargas de trabajo y los controles de interrupción aplicables. Puede eliminar un nodo, reemplazarlo por uno más barato o consolidar varios; por lo tanto, el número de nodos no siempre disminuye. `WhenEmpty` limita la consolidación a los nodos vacíos que cumplan los requisitos. `consolidateAfter` es un período de espera para que el nodo sea elegible después de cambios pertinentes en los Pods; no es un plazo de terminación garantizado ni un umbral de utilización de CPU.
 </details>
 
-5. ¿Cuál es el propósito de la configuración expireAfter de Karpenter?
-   - A) Tiempo máximo que un pod puede ejecutarse en un node
-   - B) Tiempo máximo antes de que un node se reemplace automáticamente después de su creación
-   - C) Tiempo de expiración de la caché para el controller de Karpenter
+5. ¿Para qué sirve el parámetro `expireAfter` de Karpenter?
+   - A) Tiempo máximo que un Pod puede ejecutarse en un nodo
+   - B) Antigüedad del nodo a partir de la cual comienza el drenaje por expiración
+   - C) Tiempo de expiración de la caché del controlador de Karpenter
    - D) Período de validez de las políticas de NodePool
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Tiempo máximo antes de que un node se reemplace automáticamente después de su creación**
+**Respuesta: B) Antigüedad del nodo a partir de la cual comienza el drenaje por expiración**
 
 **Explicación:**
-La configuración `expireAfter` define la vida útil máxima de un node. Por ejemplo, establecer `expireAfter: 720h` (30 días) reemplaza automáticamente los nodes después de 30 días. Esto es útil para actualizar periódicamente los nodes con parches de seguridad, actualizaciones de AMI y para utilizar tipos de instancia más recientes. Karpenter respeta los PDBs para mover workloads de forma segura a otros nodes antes de terminar los nodes existentes.
+Cuando el nodo alcanza esa antigüedad, `expireAfter` inicia el drenaje por expiración. Un PDB que lo bloquee o un Pod con `do-not-disrupt` puede retrasar la finalización si no se ha configurado `terminationGracePeriod`. Si se configura ese período de gracia, al vencer se pueden eliminar por la fuerza los Pods restantes; las fechas límite de interrupciones externas también pueden retirar capacidad. El reemplazo utiliza AMI y tipos elegibles según la configuración actual, que no necesariamente son más recientes. La expiración no garantiza que el reemplazo esté `Ready` primero.
 </details>
 
-6. ¿Qué campo establece límites de recursos para un NodePool en Karpenter?
-   - A) spec.template.limits
-   - B) spec.limits
-   - C) spec.maxResources
-   - D) spec.resourceQuota
+6. ¿Qué campo establece los límites de recursos de un NodePool en Karpenter?
+   - A) `spec.template.limits`
+   - B) `spec.limits`
+   - C) `spec.maxResources`
+   - D) `spec.resourceQuota`
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) spec.limits**
+**Respuesta: B) `spec.limits`**
 
 **Explicación:**
-`spec.limits` de NodePool define los recursos máximos que el NodePool puede aprovisionar. Por ejemplo, `limits: { cpu: 1000, memory: 1000Gi }` limita el aprovisionamiento a un total de 1000 núcleos de CPU y 1000Gi de memoria. Esto permite el control de costos y la gestión de capacidad del cluster. Cuando se alcanzan los límites, Karpenter no aprovisionará nodes adicionales.
+`spec.limits` limita los recursos totales de un NodePool dinámico. Las cantidades en forma de cadena, como `cpu: "1000"`, evitan diferencias de tipo en la API o en GitOps. Como la comprobación de límites es eventualmente consistente durante el aprovisionamiento en paralelo, un escalado rápido puede superar temporalmente el límite. No es un tope estricto de costos o facturación.
 </details>
 
-7. ¿Qué detecta y maneja la característica Drift de Karpenter?
+7. ¿Qué detecta y gestiona la función Drift de Karpenter?
    - A) Cambios en el tráfico de red
-   - B) Estado en el que los nodes existentes no coinciden con la configuración actual debido a cambios en NodePool/EC2NodeClass
-   - C) Drift de scheduling de pods
-   - D) Cambios de versión de Kubernetes
+   - B) El estado en que los nodos existentes no coinciden con la configuración actual debido a cambios en NodePool o EC2NodeClass
+   - C) Drift en la programación de Pods
+   - D) Cambios en la versión de Kubernetes
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Estado en el que los nodes existentes no coinciden con la configuración actual debido a cambios en NodePool/EC2NodeClass**
+**Respuesta: B) El estado en que los nodos existentes no coinciden con la configuración actual debido a cambios en NodePool o EC2NodeClass**
 
 **Explicación:**
-La característica Drift detecta cuándo cambian las configuraciones de NodePool o EC2NodeClass y los nodes existentes no coinciden con la nueva configuración. Por ejemplo, cuando actualizas una AMI o cambias security groups, los nodes existentes quedan en "drift". Karpenter reemplaza gradualmente estos nodes para que todos los nodes del cluster usen la configuración más reciente. Habilítalo con `featureGates.drift=true`.
+Drift compara los NodeClaims existentes con la configuración deseada o resuelta que corresponda. Algunos cambios no causan drift (por ejemplo, los cambios en el peso o en los presupuestos), y un selector de AMI mutable puede resolver una AMI distinta aunque no se haya editado el manifiesto. La gestión de drift está sujeta a los controles de interrupción y no garantiza que todos los nodos converjan de inmediato. Drift es estable en v1; la antigua puerta de funcionalidad para drift ya no existe.
 </details>
 
-8. ¿Qué campo en EC2NodeClass establece el tamaño y tipo del volumen raíz del node?
-   - A) spec.rootVolume
-   - B) spec.blockDeviceMappings
-   - C) spec.storage
-   - D) spec.ebsConfig
+8. ¿Qué campo de EC2NodeClass configura el tamaño y tipo del volumen raíz del nodo?
+   - A) `spec.rootVolume`
+   - B) `spec.blockDeviceMappings`
+   - C) `spec.storage`
+   - D) `spec.ebsConfig`
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) spec.blockDeviceMappings**
+**Respuesta: B) `spec.blockDeviceMappings`**
 
 **Explicación:**
-`spec.blockDeviceMappings` de EC2NodeClass define la configuración del volumen EBS. Especifica el volumen raíz con `deviceName: /dev/xvda` y configura `volumeSize`, `volumeType`, `iops`, `throughput`, `encrypted`, `kmsKeyID`, etc. en el subcampo `ebs`. Por ejemplo, configura estos atributos adecuadamente para usar un volumen gp3 de 100Gi cifrado.
+`spec.blockDeviceMappings` configura los dispositivos EBS. En el ejemplo de AL2023, el mapeo raíz es `/dev/xvda`; para otras imágenes, incluidas las que usan un dispositivo de datos separado como Bottlerocket, utiliza el esquema propio de la familia de AMI. El tamaño, el tipo, el cifrado y los permisos de KMS deben corresponder a los volúmenes previstos. Un mapeo EBS adicional no formatea ni monta automáticamente un sistema de archivos.
 </details>
 
-## Short Answer Questions
+## Preguntas de respuesta breve
 
-9. ¿Cuál es el tiempo típico para que Karpenter detecte un pod que no se puede programar y aprovisione un node adecuado?
+9. ¿Qué etapas se deben medir para evaluar la latencia del escalado horizontal de Karpenter?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: En segundos**
+**Respuesta: Mide las etapas del aprovisionamiento y de la puesta en servicio; no existe una duración fija universal.**
 
 **Explicación:**
-Karpenter aprovisiona nodes en segundos después de detectar pods que no se pueden programar. Esto contrasta con Cluster Autoscaler, que tarda minutos en escalar mediante ASGs. El escalado rápido de Karpenter proviene de usar directamente la EC2 Fleet API y analizar los requisitos de los pods para seleccionar inmediatamente instancias óptimas. Esta es una gran ventaja para workloads que requieren tráfico por ráfagas o scale-out rápido.
+Mide la detección y agrupación de la demanda, la solicitud a EC2 y la obtención de capacidad, el arranque y la configuración inicial, el registro del nodo y su transición a `Ready`, y después la descarga de imágenes y la disponibilidad de la aplicación. Los reintentos de IAM o de la API, la capacidad de direcciones IP, el almacenamiento y la inicialización de la aplicación afectan etapas distintas. El documento no contiene mediciones históricas que demuestren una comparación universal de duración con Cluster Autoscaler.
 </details>
 
-10. ¿Cómo se determina la prioridad cuando existen múltiples NodePools en Karpenter?
+10. ¿Cómo se determina la prioridad cuando hay varios NodePools en Karpenter?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Prioridad basada en peso usando el campo weight**
+**Respuesta: Mediante la preferencia relativa definida por el campo `weight`.**
 
 **Explicación:**
-Cuando múltiples NodePools pueden satisfacer los requisitos de un pod, usa el campo `spec.weight` para especificar la prioridad. Los NodePools con valores de peso más altos se seleccionan primero. Por ejemplo, establece un peso alto en un NodePool de instancias Spot y un peso bajo en un NodePool On-Demand, y Karpenter intentará usar Spot primero y usará On-Demand si no está disponible.
+Para los NodePools dinámicos que sean elegibles, un valor más alto en `spec.weight` expresa una preferencia de aprovisionamiento. La agrupación de las solicitudes de programación, los requisitos de las cargas de trabajo, la capacidad existente, los límites de NodePool y la falta de ofertas disponibles pueden llevar a seleccionar otro pool. No es una garantía absoluta por Pod ni una proporción fija entre Spot y On-Demand; los NodePools estáticos tienen restricciones propias. La preferencia de tipo de capacidad dentro de un mismo pool es independiente del orden del arreglo.
 </details>
 
-11. ¿Qué recurso de Kubernetes respeta Karpenter para garantizar la disponibilidad de workloads al eliminar nodes?
+11. ¿Qué recurso de Kubernetes limita la expulsión voluntaria de Pods durante la retirada de un nodo?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: PDB (PodDisruptionBudget)**
+**Respuesta: PDB (`PodDisruptionBudget`)**
 
 **Explicación:**
-Karpenter respeta PodDisruptionBudget (PDB) al eliminar nodes (consolidation, expiration, drift, etc.). PDB define la disponibilidad mínima de la aplicación, y Karpenter solo drena nodes dentro de límites que no infrinjan el PDB. Por ejemplo, con una configuración de PDB `minAvailable: 2`, Karpenter garantiza que al menos 2 pods estén siempre en ejecución mientras elimina nodes.
+Un PDB restringe las expulsiones voluntarias según la cantidad de réplicas coincidentes que estén sanas. No crea esas réplicas ni impide la pérdida involuntaria de una instancia, una reparación forzada o la eliminación al vencer un `terminationGracePeriod` configurado. `minAvailable: 2` es una restricción para la expulsión, no una promesa de que siempre haya dos Pods en ejecución o atendiendo tráfico.
 </details>
 
-12. ¿Cómo selecciona Karpenter las subnets y security groups que se usarán en EC2NodeClass?
+12. ¿Cómo selecciona Karpenter las subnets y los grupos de seguridad que se usarán en EC2NodeClass?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Selección basada en tags mediante subnetSelectorTerms y securityGroupSelectorTerms**
+**Respuesta: Mediante `subnetSelectorTerms` y `securityGroupSelectorTerms`, que admiten tags o ID y otros selectores documentados.**
 
 **Explicación:**
-EC2NodeClass usa `subnetSelectorTerms` y `securityGroupSelectorTerms` para la selección basada en tags de subnets y security groups. Por ejemplo, `tags: { karpenter.sh/discovery: "my-cluster" }` selecciona recursos con ese tag. Los recursos de AWS deben etiquetarse previamente y, cuando se seleccionan múltiples subnets, Karpenter las distribuye adecuadamente para la distribución entre zonas de disponibilidad.
+Los selectores admiten tags o ID de recursos explícitos (y nombres de grupos de seguridad cuando corresponda). Las condiciones dentro de un término se combinan con AND; los términos se combinan con OR. Dentro de una zona de disponibilidad seleccionada, Karpenter suele elegir la subnet coincidente que tenga más direcciones IP disponibles. Esto por sí solo no garantiza una distribución uniforme entre zonas ni rutas privadas; verifica la topología, las rutas y los grupos de seguridad reales.
 </details>
 
-## Hands-on Questions
+## Preguntas prácticas
 
-13. Escribe un NodePool que priorice instancias Spot, permita varios tipos de instancia (familias m5, c5, r5) y elimine nodes vacíos después de 30 minutos.
+13. Escribe un NodePool dinámico que permita Spot con On-Demand como alternativa, admita tipos m5/c5/r5 y haga que los nodos vacíos sean elegibles para consolidación después de 30 minutos.
 
 <details>
 
@@ -203,30 +205,33 @@ spec:
         nodepool: cost-optimized
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - m5.large
-            - m5.xlarge
-            - m5.2xlarge
-            - c5.large
-            - c5.xlarge
-            - c5.2xlarge
-            - r5.large
-            - r5.xlarge
-            - r5.2xlarge
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+        - on-demand
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - m5.large
+        - m5.xlarge
+        - m5.2xlarge
+        - c5.large
+        - c5.xlarge
+        - c5.2xlarge
+        - r5.large
+        - r5.xlarge
+        - r5.2xlarge
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1
+        group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: default
   limits:
-    cpu: 1000
+    cpu: '1000'
     memory: 1000Gi
   disruption:
     consolidationPolicy: WhenEmpty
@@ -235,10 +240,10 @@ spec:
 ```
 
 **Explicación:**
-Este NodePool prioriza las instancias Spot para la optimización de costos (listando spot primero en `capacity-type`). Permitir varios tipos de instancia mejora la disponibilidad de Spot y la optimización de precios. `consolidationPolicy: WhenEmpty` con `consolidateAfter: 30m` elimina nodes que están vacíos durante 30 minutos. `weight: 100` establece una prioridad más alta que otros NodePools, por lo que este NodePool se selecciona primero.
+La preferencia por Spot procede de la política de tipos de capacidad de Karpenter, no de poner `spot` primero en la lista. Una gama más amplia de tipos elegibles puede ofrecer más opciones, pero no garantiza que haya capacidad. `WhenEmpty` con `consolidateAfter: 30m` hace que los nodos vacíos elegibles puedan consolidarse después de esa espera; los presupuestos, los PDB y la reconciliación pueden aplazar su eliminación. `weight: 100` expresa solo una preferencia relativa. El EC2NodeClass `default` y la identidad del nodo referenciados ya deben ser válidos.
 </details>
 
-14. Escribe un EC2NodeClass con un volumen raíz gp3 de 100Gi cifrado, selección de subnet/security group basada en tags y configuraciones que requieran IMDSv2.
+14. Escribe un EC2NodeClass con un volumen raíz gp3 cifrado de 100 GiB, selección de subnet y grupo de seguridad basada en tags, y opciones que exijan IMDSv2.
 
 <details>
 
@@ -251,45 +256,40 @@ kind: EC2NodeClass
 metadata:
   name: secure-nodeclass
 spec:
-  amiFamily: AL2
-
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: "my-cluster"
-        kubernetes.io/role: "private"
-
+  - tags:
+      karpenter.sh/discovery: my-cluster
+      example.com/network-role: private
   securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: "my-cluster"
-
+  - tags:
+      karpenter.sh/discovery: my-cluster
   instanceProfile: KarpenterNodeInstanceProfile-my-cluster
-
   blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 100Gi
-        volumeType: gp3
-        iops: 3000
-        throughput: 125
-        encrypted: true
-        deleteOnTermination: true
-
+  - deviceName: /dev/xvda
+    ebs:
+      volumeSize: 100Gi
+      volumeType: gp3
+      iops: 3000
+      throughput: 125
+      encrypted: true
+      deleteOnTermination: true
   metadataOptions:
     httpEndpoint: enabled
     httpProtocolIPv6: disabled
-    httpPutResponseHopLimit: 2
-    httpTokens: required  # IMDSv2 required
-
+    httpPutResponseHopLimit: 1
+    httpTokens: required
   tags:
     Environment: production
     ManagedBy: karpenter
 ```
 
 **Explicación:**
-Este EC2NodeClass sigue las mejores prácticas de seguridad. `blockDeviceMappings` configura un volumen gp3 de 100Gi con cifrado. `metadataOptions.httpTokens: required` hace que IMDSv2 sea obligatorio para prevenir ataques SSRF. Los selectores basados en tags configuran el uso únicamente de subnets privadas. `instanceProfile` referencia un IAM instance profile creado previamente.
+Este es un ejemplo didáctico de AL2023. `@latest` puede resolver una AMI distinta y provocar drift; antes de implementarlo en producción, fija y prueba una versión aprobada o una AMI específica. La etiqueta privada es personalizada y debe existir en las subnets cuyas rutas hayas verificado. IMDSv2 reduce varias vías de ataque a los metadatos, pero no impide universalmente SSRF; el límite de salto 1 restringe muchas rutas desde contenedores sin `hostNetwork` y debe probarse con la configuración de CNI e identidad de las cargas de trabajo. El perfil de instancia indicado, el acceso del nodo, la configuración de KMS y volúmenes y las rutas de red son requisitos previos.
 </details>
 
-15. Escribe comandos para verificar el estado de instalación de Karpenter y depurar problemas de aprovisionamiento.
+15. Escribe comandos para verificar el estado de la instalación de Karpenter y depurar problemas de aprovisionamiento.
 
 <details>
 
@@ -321,26 +321,32 @@ kubectl get nodes -l karpenter.sh/nodepool
 kubectl describe node <node-name>
 
 # 8. Check Karpenter events
-kubectl get events --field-selector source=karpenter --sort-by='.lastTimestamp'
+kubectl get events --all-namespaces --sort-by='.metadata.creationTimestamp'
+kubectl get nodeclaims -o wide
 
 # 9. Check detailed provisioning logs
 kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller | grep -i "provisioning\|creating\|launching"
 
-# 10. Check Karpenter metrics (if Prometheus is configured)
-kubectl port-forward -n karpenter svc/karpenter 8080:8080 &
-curl localhost:8080/metrics | grep karpenter_
+# 10. Forward the metrics endpoint; keep this terminal open until done.
+kubectl port-forward -n karpenter svc/karpenter 8080:8080
+```
+
+En otra terminal, después de que aparezca el mensaje que confirma que el reenvío está listo:
+
+```bash
+curl --fail --show-error http://127.0.0.1:8080/metrics | grep karpenter_
 ```
 
 **Explicación:**
-Al solucionar problemas de Karpenter, revisa varios aspectos. Primero verifica que los pods del controller se estén ejecutando normalmente y que los logs no tengan errores. Revisa el estado y la configuración de NodePool y EC2NodeClass. Comprueba los pods en Pending y sus razones. Los problemas comunes incluyen permisos IAM insuficientes, problemas con tags de subnet/security group y límites de instancia. Los eventos y métricas de Karpenter también son útiles para el diagnóstico.
+Revisa conjuntamente la disponibilidad del controlador, las condiciones de NodePool, EC2NodeClass y NodeClaim, los eventos de programación de Pods y los requisitos previos del lado de AWS. Un Pod en `Pending` no implica necesariamente que falte capacidad de cómputo, y no encontrar una línea de registro filtrada no demuestra que todo funcione. Ejecuta `port-forward` en una terminal aparte, espera el mensaje de disponibilidad, consulta las métricas desde otra terminal y luego detenlo con Ctrl+C. No se requiere un servidor Prometheus para leer directamente estas métricas; ninguno de estos comandos se ejecutó contra un clúster.
 </details>
 
 ---
 
 **Puntuación:**
 - 13-15 correctas: Excelente (nivel experto en Karpenter)
-- 10-12 correctas: Bueno (capaz de aplicación práctica)
-- 7-9 correctas: Promedio (se recomienda aprendizaje adicional)
-- 0-6 correctas: Insuficiente (se necesita revisar los conceptos básicos)
+- 10-12 correctas: Bueno (capacidad de aplicación práctica)
+- 7-9 correctas: Promedio (se recomienda seguir aprendiendo)
+- 0-6 correctas: Insuficiente (se recomienda repasar los conceptos básicos)
 
 [Volver a los materiales de aprendizaje](../../autoscaling/02-karpenter.md)

@@ -1,6 +1,6 @@
 # OPA Gatekeeper 测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026年9月13日
 
 通过以下问题测试您对 OPA Gatekeeper 和 Rego 策略语言的理解。
 

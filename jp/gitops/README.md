@@ -170,7 +170,7 @@ Jenkins X / JayeX は、Kubernetes 上のクラウドネイティブアプリケ
 - GitOps プロモーション
 - Tekton ベースのパイプライン
 
-**評価対象:** 統合された CI/CD とプレビュー環境のワークフロー。JayeX/Jenkins X / JayeX は、単に GitOps を有効にした Jenkins ではありません
+**評価対象:** 統合された CI/CD とプレビュー環境のワークフロー。Jenkins X / JayeX は、GitOps を有効にしただけの Jenkins ではありません
 
 ### 比較マトリクス
 

@@ -2,11 +2,11 @@
 
 > **验证基线**: Gatekeeper/Gator 3.23.1 · Helm chart 3.23.1
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026年9月13日
 
 ## 概述
 
-Gatekeeper 在 Kubernetes 准入期间及定期审计时评估策略。ConstraintTemplate 定义逻辑和参数 schema；Constraint 定义范围、值和 enforcementAction。 [完整示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/gatekeeper) 使用专用的 `policy-lab` namespace 和本地测试。请勿将每个测试 fixture 都应用到生产集群。
+Gatekeeper 在 Kubernetes 准入期间及定期审计时评估策略。ConstraintTemplate 定义逻辑和参数 schema；Constraint 定义范围、值和 enforcementAction。[完整示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/gatekeeper) 使用专用的 `policy-lab` namespace 和本地测试。请勿将每个测试 fixture 都应用到生产集群。
 
 ![Gatekeeper 准入和定期审计，其中模板定义逻辑，Constraint 选择范围。](../.gitbook/assets/en-security-09-opa-gatekeeper-0.png)
 
@@ -39,7 +39,7 @@ kubectl -n gatekeeper-system rollout status deployment/gatekeeper-audit
 
 对于分阶段发布，`values.yaml` 明确保留 webhook `failurePolicy: Ignore`。因此，即使 Constraint 指定 `deny`，webhook 调用失败仍可能允许请求。请结合 API 可用性、恢复能力和豁免 namespace 评估 `Fail`。webhook 范围可能比单个 Constraint 的范围更广。
 
-### Template 和 Constraint 的顺序
+### 模板和 Constraint 的应用顺序
 
 Template 会生成相应的 Constraint CRD。在应用 Constraint 前，等待 CRD 处于 Established 状态并检查 template Pod 状态。所有示例 Constraint 均以 `dryrun` 开始；请针对目标环境审查镜像前缀、参数和 namespace。
 
@@ -134,7 +134,7 @@ missing := {"app", "team"} - keys
 
 ## 策略和范围
 
-| Template | 检查项 | 范围和限制 |
+| 模板 | 检查项 | 范围和限制 |
 |---|---|---|
 | DocsRequiredLabels | 必需的非空标签 | Pod metadata；Deployment metadata 与 Pod template 标签不同 |
 | DocsNoPrivileged | 拒绝 privileged=true | 常规、init 和 ephemeral container；并非完整的 PSS 套件 |
@@ -144,15 +144,15 @@ missing := {"app", "team"} - keys
 
 ### 镜像边界和例外
 
-`registry.example.com/team/` 与 `registry.example.com/team-evil/` 和 `registry.example.com.evil/` 不同。前缀匹配需要分隔符边界和完整限定的镜像名称契约。该示例不提供诸如 `skip-privileged-check=true` 的 workload 可控绕过标签。Namespace 例外要求对标签变更实施受控的 RBAC、授权、到期时间和审计记录。
+`registry.example.com/team/` 与 `registry.example.com/team-evil/` 和 `registry.example.com.evil/` 不同。前缀匹配需要分隔符边界和完整限定的镜像名称契约。该示例不提供诸如 `skip-privileged-check=true` 的 workload 可控绕过标签。命名空间例外要求对标签变更实施受控的 RBAC、授权、到期时间和审计记录。
 
 ### 资源数量
 
-仅支持 Gi/Mi/Ki 的解析器对于 `9G` 或纯字节可能返回 undefined，并悄然漏掉违规。该示例固定使用上游 `K8sContainerLimits` 策略，它会将不受支持的字符串报告为违规。它并不接受 Kubernetes 允许的每种数量表示法；请记录其格式限制。原生测试区分 millicore、十进制/二进制 memory、纯字节、数值输入和显式引用的指数数字符串。请引用如 `8e9` 的字符串 fixture，以防 YAML 解析器将其转换为数字。
+仅支持 Gi/Mi/Ki 的解析器对于 `9G` 或纯字节可能返回 undefined，并悄然漏掉违规。该示例固定使用上游 `K8sContainerLimits` 策略，它会将不受支持的字符串报告为违规。它并不接受 Kubernetes 允许的每种数量表示法；请记录其格式限制。项目内测试用例区分 millicore、十进制/二进制 memory、纯字节、数值输入和显式引用的指数数字符串。请引用如 `8e9` 的字符串 fixture，以防 YAML 解析器将其转换为数字。
 
 ### PSS 和 Controller 资源
 
-不要将少量 privileged/runAsNonRoot 检查标记为完整的 Baseline/Restricted 强制执行。版本化 PSS 还涵盖 host namespace、seccomp、capability、OS 差异、Pod 级继承和 ephemeral container；请使用 [Pod Security Standards 指南](./03-pod-security-standards.md)。这些示例检查 Pod 准入。若要更早评估 controller Pod template，请配置单独的 template 或 ExpansionTemplate 测试。
+不要把少数 privileged/runAsNonRoot 检查称为完整实施 Baseline/Restricted 策略。版本化 PSS 还涵盖 host namespace、seccomp、capability、OS 差异、Pod 级继承和 ephemeral container；请使用 [Pod Security Standards 指南](./03-pod-security-standards.md)。这些示例检查 Pod 准入。若要更早评估 controller Pod template，请配置单独的 template 或 ExpansionTemplate 测试。
 
 <span id="advanced-policy-patterns"></span>
 

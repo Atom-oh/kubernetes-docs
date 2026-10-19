@@ -1,322 +1,195 @@
-# Cuestionario de la guía de migración de EKS Auto Mode
+# Cuestionario: guía de migración de EKS Auto Mode
 
 > **Documento relacionado**: [Guía de migración](../../eks-auto-mode/09-migration-guide.md)
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el primer paso al migrar de managed node groups a Auto Mode?
+### 1. ¿Qué se debe hacer antes de habilitar o retirar capacidad de migración?
 
-- A) Eliminar inmediatamente los node groups existentes
-- B) Analizar el estado actual (comprobar el uso de recursos de los nodes, distribución de workloads)
-- C) Crear Auto Mode NodePool
-- D) Drenar todos los Pods
+- A) Eliminar los grupos de nodos antiguos
+- B) Inventariar las cargas de trabajo, dependencias, responsables y requisitos de recuperación
+- C) Drenar todos los Pods
+- D) Suponer que los nombres de instancia coincidentes demuestran compatibilidad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Analizar el estado actual (comprobar el uso de recursos de los nodes, distribución de workloads)**
+**Respuesta: B) Inventariar las cargas de trabajo, dependencias, responsables y requisitos de recuperación**
 
 **Explicación:**
-El primer paso de la migración es analizar a fondo tu entorno actual.
-
-**Pasos de migración:**
-1. **Analizar el estado actual** - Comprobar node groups, uso de recursos, distribución de workloads
-2. Habilitar Auto Mode
-3. Configurar NodePool
-4. Migrar workloads
-5. Reducir la escala de los node groups existentes
-6. Eliminar los node groups existentes
-7. Validar y optimizar
+Vincula las identidades de la cuenta, el clúster y los grupos antiguos; después, inspecciona la ubicación, los datos, IAM, la red, los controladores, los costos y el estado de las aplicaciones. Valida cada etapa antes de escalar o eliminar recursos; la etapa de validación final no debe ser la primera comprobación del estado. La guía define el `WORK_DIR` privado y el `KUBE_CONTEXT` que se usan a continuación.
 
 ```bash
-# Check current node groups
-eksctl get nodegroup --cluster my-cluster
-
-# Analyze node resource usage
-kubectl top nodes
-
-# Check workload distribution
-kubectl get pods -A -o wide | awk '{print $8}' | sort | uniq -c
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get deployments,statefulsets,daemonsets,jobs,cronjobs -A -o json |
+jq '[.items[] | (.spec.template // .spec.jobTemplate.spec.template) as $t |
+ {kind,namespace:.metadata.namespace,name:.metadata.name,uid:.metadata.uid,
+  nodeSelector:$t.spec.nodeSelector,affinity:$t.spec.affinity,tolerations:$t.spec.tolerations,
+  serviceAccountName:$t.spec.serviceAccountName,hostNetwork:$t.spec.hostNetwork,
+  pvcNames:[$t.spec.volumes[]?.persistentVolumeClaim.claimName // empty]}]' \
+  > "$WORK_DIR/workload-placement.json"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pods -A -o json |
+jq '[.items[] | {namespace:.metadata.namespace,name:.metadata.name,node:.spec.nodeName,
+  phase:.status.phase,deletionTimestamp:.metadata.deletionTimestamp,
+  ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported"),
+  owners:[.metadata.ownerReferences[]?|{kind,name,controller}]}]' \
+  > "$WORK_DIR/pod-state.json"
 ```
 
 </details>
 
-### 2. ¿Cómo permites la coexistencia de los node groups existentes y Auto Mode durante la migración?
+### 2. ¿Cómo pueden coexistir de forma predecible los nodos administrados antiguos y Auto Mode?
 
-- A) No es posible; debe ser solo secuencial
-- B) Separar workloads usando nodeSelector
-- C) Requiere un cluster separado
-- D) Requiere un ticket de AWS Support
+- A) No pueden coexistir
+- B) Asignar explícitamente cada carga de trabajo y definir quién es responsable de su controlador
+- C) Usar un clúster independiente
+- D) Hacer coincidir únicamente las etiquetas de recursos de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separar workloads usando nodeSelector**
+**Respuesta: B) Asignar explícitamente cada carga de trabajo y definir quién es responsable de su controlador**
 
 **Explicación:**
-Durante el periodo de coexistencia, usa nodeSelector y affinity para separar workloads.
+Un selector específico del grupo de nodos antiguo y otro que identifique con precisión el grupo de Auto Mode y el tipo de cómputo permiten distinguir las flotas. Una etiqueta genérica de Karpenter también coincide con Karpenter autoadministrado. Mantén el DNS y los agentes que se ejecutan en nodos de ambas flotas, así como los controladores de almacenamiento y balanceadores existentes, hasta migrar sus dependencias. Estos son fragmentos de la especificación del Pod; la guía incluye Deployments canary completos.
 
+Grupo administrado antiguo:
 ```yaml
-# Workloads pinned to existing node groups
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-critical-app
-spec:
-  template:
-    spec:
-      nodeSelector:
-        eks.amazonaws.com/nodegroup: old-nodegroup
-
----
-# Workloads that can be migrated to Auto Mode
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: migrated-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: karpenter.sh/nodepool
-                    operator: Exists
+# Pod template spec fragment
+nodeSelector:
+  eks.amazonaws.com/nodegroup: REPLACE_WITH_OLD_NODEGROUP
+tolerations: []
 ```
 
-</details>
-
-### 3. ¿Cuál es el orden recomendado para la migración gradual de workloads?
-
-- A) Producción -> Staging -> Desarrollo
-- B) Desarrollo -> Staging -> Producción (workloads no críticos primero)
-- C) Todos los workloads simultáneamente
-- D) Orden aleatorio
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Desarrollo -> Staging -> Producción (workloads no críticos primero)**
-
-**Explicación:**
-La migración gradual minimiza el riesgo.
-
+Canary de Auto Mode:
 ```yaml
-# Step 1: Migrate non-critical workloads
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dev-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: node-type
-                    operator: In
-                    values: ["auto-mode"]
-```
-
-**Orden de migración:**
-1. Workloads del entorno de desarrollo
-2. Workloads de Staging
-3. Workloads no críticos de producción
-4. Workloads críticos de producción
-
-</details>
-
-### 4. ¿Cuál es la secuencia de pasos cuando se necesita rollback?
-
-- A) Eliminar y recrear el cluster
-- B) Eliminar NodePool -> Aumentar la escala de los node groups existentes -> Migrar workloads
-- C) Contactar con AWS Support
-- D) Solo deshabilitar Auto Mode
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Eliminar NodePool -> Aumentar la escala de los node groups existentes -> Migrar workloads**
-
-**Explicación:**
-El rollback procede en orden inverso.
-
-```bash
-#!/bin/bash
-# rollback.sh
-
-# 1. Disable Auto Mode NodePool
-kubectl delete nodepool migration-pool
-
-# 2. Scale up existing node groups
-eksctl scale nodegroup \
-    --cluster my-cluster \
-    --name old-nodegroup \
-    --nodes 10 \
-    --nodes-min 3
-
-# 3. Migrate workloads back to existing nodes
-kubectl patch deployment migrated-app -p '
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "nodeSelector": {
-          "eks.amazonaws.com/nodegroup": "old-nodegroup"
-        },
-        "affinity": null
-      }
-    }
-  }
-}'
-
-# 4. Drain Auto Mode Pods
-for node in $(kubectl get nodes -l karpenter.sh/nodepool=migration-pool -o name); do
-    kubectl drain $node --ignore-daemonsets --delete-emptydir-data
-done
+# Pod template spec fragment
+nodeSelector:
+  karpenter.sh/nodepool: migration-pool
+  eks.amazonaws.com/compute-type: auto
+tolerations:
+- key: migration
+  operator: Equal
+  value: auto-mode
+  effect: NoSchedule
 ```
 
 </details>
 
-### 5. ¿Cuál es el método recomendado para reducir gradualmente la escala de los node groups existentes?
+### 3. ¿Qué orden reduce el riesgo de la migración?
 
-- A) Reducir la escala a 0 inmediatamente
-- B) Reducir la escala en un 50% de forma incremental con comprobación de estabilización
-- C) Reducir la escala solo en 1
-- D) Drenar todos los nodes simultáneamente
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Reducir la escala en un 50% de forma incremental con comprobación de estabilización**
-
-**Explicación:**
-La reducción gradual de escala minimiza el impacto en el servicio.
-
-```bash
-#!/bin/bash
-CLUSTER="my-cluster"
-NODEGROUP="old-nodegroup"
-CURRENT_SIZE=$(eksctl get nodegroup --cluster $CLUSTER --name $NODEGROUP -o json | jq -r '.[0].DesiredCapacity')
-
-# Scale down by 50%
-while [ $CURRENT_SIZE -gt 0 ]; do
-    NEW_SIZE=$((CURRENT_SIZE / 2))
-    if [ $NEW_SIZE -lt 1 ]; then
-        NEW_SIZE=0
-    fi
-
-    echo "Scaling from $CURRENT_SIZE to $NEW_SIZE"
-    eksctl scale nodegroup --cluster $CLUSTER --name $NODEGROUP \
-        --nodes $NEW_SIZE --nodes-min 0
-
-    # Wait for stabilization
-    sleep 300
-
-    # Check workload status
-    kubectl get pods -A --field-selector=status.phase=Pending
-
-    CURRENT_SIZE=$NEW_SIZE
-done
-```
-
-</details>
-
-### 6. ¿Cuál NO es una métrica clave para monitorizar durante la migración?
-
-- A) Recuento de Pods en Pending
-- B) Tiempo de aprovisionamiento de nodes
-- C) Costo de instancias EC2
-- D) Disponibilidad de workloads
+- A) Empezar por producción crítica
+- B) Empezar con cargas representativas de bajo riesgo y avanzar hacia dependencias más críticas
+- C) Migrar todo a la vez
+- D) Elegir un orden aleatorio
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Costo de instancias EC2**
+**Respuesta: B) Empezar con cargas representativas de bajo riesgo y avanzar hacia dependencias más críticas**
 
 **Explicación:**
-Durante la migración, la estabilidad del servicio es la máxima prioridad, por lo que debes monitorizar las siguientes métricas.
-
-| Métrica | Rango normal | Condición de alarma |
-|--------|--------------|-----------------|
-| Recuento de Pods en Pending | 0-5 | > 10 durante 5 min |
-| Tiempo de aprovisionamiento de nodes | < 90 sec | > 120 sec |
-| Disponibilidad de workloads | > 99.9% | < 99.5% |
-| Tiempo de respuesta de API | < 200ms | > 500ms |
-
-El costo se revisa durante la fase de optimización después de completar la migración.
-
-```bash
-# Real-time monitoring
-watch -n 5 'echo "=== Pending Pods ===" && \
-kubectl get pods -A --field-selector=status.phase=Pending && \
-echo "=== Node Status ===" && kubectl get nodes -o wide'
-```
+Desarrollo y pruebas, producción no crítica y producción crítica son etapas útiles si reflejan las dependencias reales. Actualiza la ubicación en el controlador propietario o en GitOps y luego verifica el comportamiento de la aplicación, el almacenamiento, IAM, DNS y el tráfico. Una preferencia flexible o una etiqueta inventada como `node-type=auto-mode` no demuestra que la migración se haya completado. Detente si el estado es fallido o desconocido; esperar un tiempo fijo no es una validación.
 
 </details>
 
-### 7. ¿Cuál NO es un elemento que se deba verificar después de completar la migración?
+### 4. ¿Qué secuencia de reversión conserva una vía de recuperación?
 
-- A) Verificar que todos los workloads se ejecuten normalmente
-- B) Verificar la distribución de Pods en nodes de Auto Mode
-- C) Eliminación completa de los node groups existentes
-- D) Verificar el estado de NodePool
+- A) Eliminar y recrear primero el clúster
+- B) Restablecer capacidad y ubicación compatibles en los nodos antiguos, verificar el estado y luego retirar los recursos concretos de Auto Mode
+- C) Eliminar primero el NodePool de Auto Mode
+- D) Deshabilitar Auto Mode y nada más
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Eliminación completa de los node groups existentes**
+**Respuesta: B) Restablecer capacidad y ubicación compatibles en los nodos antiguos, verificar el estado y luego retirar los recursos concretos de Auto Mode**
 
 **Explicación:**
-En el punto de verificación, conserva los node groups existentes para mantener las opciones de rollback. La eliminación procede después de confirmar la estabilidad.
-
-**Checklist de verificación:**
-1. Verificar que todos los Pods estén en estado Running
-2. Verificar la distribución de workloads en nodes de Auto Mode
-3. Estado normal de NodePool y NodeClaim
-4. Pruebas de rendimiento de la aplicación
-5. Recopilación normal de logs y métricas
-6. **Eliminar los node groups existentes después de confirmar la estabilidad durante un periodo (1-2 semanas)**
+Conserva el grupo de Auto Mode mientras la capacidad antigua alcanza el estado `Ready`. Revisa y restablece la ubicación prevista sin dejar un selector de Auto Mode en conflicto ni borrar reglas de afinidad que no estén relacionadas. Verifica también los datos y el tráfico, no solo los Pods. Retira la capacidad propiedad de la migración únicamente después. Eliminar un NodePool puede provocar la eliminación en cascada de nodos; un archivo JSON de escalado no puede recrear un grupo de nodos eliminado. Esta reversión corresponde a una migración de cargas de trabajo, no a una reversión de versión de Kubernetes.
 
 </details>
 
-### 8. ¿Cuál es la precaución al pasar de un cluster que usa Karpenter directamente a Auto Mode?
+### 5. ¿Qué se necesita antes de reducir el tamaño deseado del grupo de nodos administrado antiguo?
 
-- A) Es posible la transición directa
-- B) Posible conflicto con recursos de Karpenter existentes; transición después de eliminar Karpenter
-- C) Se recomienda la operación simultánea
-- D) Se incurre en costo adicional
+- A) Establecerlo inmediatamente en cero
+- B) Validar las cargas migradas, acordonar y vaciar la capacidad antigua de aplicaciones, y coordinarse con su responsable
+- C) Reducir siempre el tamaño a la mitad
+- D) Esperar solo cinco minutos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Posible conflicto con recursos de Karpenter existentes; transición después de eliminar Karpenter**
+**Respuesta: B) Validar las cargas migradas, acordonar y vaciar la capacidad antigua de aplicaciones, y coordinarse con su responsable**
 
 **Explicación:**
-Auto Mode usa Karpenter internamente, por lo que puede entrar en conflicto con Karpenter autoadministrado existente.
-
-**Procedimiento de transición:**
-1. Hacer backup de la configuración de NodePool de Karpenter existente
-2. Migrar temporalmente los workloads gestionados por Karpenter a managed node groups
-3. Eliminar Karpenter autoadministrado
-4. Habilitar Auto Mode
-5. Configurar Auto Mode NodePool (referencia del backup)
-6. Migrar workloads
-
-```bash
-# Verify before removing Karpenter
-kubectl get nodepools
-kubectl get nodeclaims
-kubectl get nodes -l karpenter.sh/nodepool
-
-# Remove Karpenter
-helm uninstall karpenter -n karpenter
-kubectl delete namespace karpenter
-```
+Los cambios de configuración de escalado de un MNG usan el escalado del ASG y no respetan los PDB. La guía comprueba si los nodos antiguos están acordonados y si quedan Pods activos que no sean DaemonSet, y se detiene si alguna consulta falla. Revisa las dependencias del sistema y los resultados de los trabajos exportados; además, evita que los controladores vuelvan a programar cargas en los nodos antiguos. Reducir el tamaño a la mitad y esperar no demuestra que sea seguro. La gestión de IaC y del escalado sigue correspondiendo a sus responsables originales.
 
 </details>
+
+### 6. ¿Cómo se deben vigilar los costos durante la migración?
+
+- A) Ignorarlos hasta que se eliminen todos los recursos antiguos
+- B) Considerar que la cantidad actual de nodos es el costo exacto facturado
+- C) Seguir las flotas y los balanceadores de carga que coexisten junto con la disponibilidad y el rendimiento
+- D) Suponer que Auto Mode elimina automáticamente todos los cargos antiguos
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Seguir las flotas y los balanceadores de carga que coexisten junto con la disponibilidad y el rendimiento**
+
+**Explicación:**
+La coexistencia puede generar cargos por ambas flotas y por las rutas de tráfico. Usa datos reales de facturación y los publicadores operativos configurados. Los umbrales originales siguientes siguen siendo ejemplos de planificación sin verificar; no son métricas predeterminadas de Auto Mode ni intervalos normales.
+
+| Señal | Ejemplo de línea base anterior | Ejemplo de alerta anterior |
+|--------|-------------------------------|---------------------------|
+| Pods pendientes | 0–5 | >10 durante 5 min |
+| Tiempo de aprovisionamiento | <90 sec | >120 sec |
+| Disponibilidad | >99.9% | <99.5% |
+| Latencia de la API | <200 ms | >500 ms |
+
+Un Pod pendiente no necesariamente está sin posibilidad de programación; `Running` no significa que la aplicación esté lista, y la ausencia de datos del recopilador no equivale a cero fallos.
+
+</details>
+
+### 7. ¿Qué acción se puede aplazar para conservar opciones de reversión después de validar las cargas de trabajo?
+
+- A) Comprobar el comportamiento de las aplicaciones
+- B) Comprobar que la ubicación sea la prevista
+- C) Eliminar la definición del grupo de nodos antiguo
+- D) Comprobar los datos y el estado de los controladores
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Eliminar la definición del grupo de nodos antiguo**
+
+**Explicación:**
+Conserva deliberadamente la definición o configuración antigua durante un periodo de estabilización y contabiliza los recursos y costos que se mantengan. El intervalo anterior de una a dos semanas es un ejemplo, no un requisito universal. Comprueba el estado real de disponibilidad y que los Jobs hayan terminado correctamente; no exijas que todos los Pods estén en `Running`. Elimina la definición mediante el responsable original de IaC solo después de validar los datos, el tráfico y las cargas de trabajo.
+
+</details>
+
+### 8. ¿Cuál es el enfoque correcto para un controlador de Karpenter autoadministrado existente?
+
+- A) Eliminarlo siempre antes de habilitar Auto Mode
+- B) Mantener Karpenter en una versión compatible durante la coexistencia, finalizar los recursos antiguos que administra y luego desinstalarlo
+- C) Eliminar todas las CRD compartidas de Karpenter
+- D) Seleccionar para eliminación todos los nodos etiquetados con Karpenter
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Mantener Karpenter en una versión compatible durante la coexistencia, finalizar los recursos antiguos que administra y luego desinstalarlo**
+
+**Explicación:**
+AWS documenta la migración con coexistencia directa. El requisito mínimo de migración v1.1 no sustituye los requisitos actuales de compatibilidad con Kubernetes. Usa referencias distintas a NodeClass y un grupo de Auto Mode con taint. No modifiques ni elimines las CRD compartidas de NodePool y NodeClaim. Retira los NodePools y los objetos NodeClaim antiguos que sean propiedad de la instalación mientras el controlador existente todavía pueda completar su finalización; confirma que se hayan limpiado las instancias y dependencias, y luego elimina solo su release de Helm y los recursos de IAM y de la cola.
+
+</details>
+
+## Referencias
+
+- [Escalado de grupos de nodos administrados y PDB](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)
+- [Referencia de migración a Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)
+- [Migración con coexistencia de Karpenter](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)

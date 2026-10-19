@@ -1,120 +1,64 @@
 # セキュリティ
 
-> **対応バージョン**: Istio 1.28
-> **最終更新**: February 19, 2026
+> **レビュー済みバージョン**: Istio 1.31.0
+> **最終更新日**: 2026年9月11日
 
-Istio は、service mesh 内で堅牢なセキュリティ機能を提供します。Zero Trust セキュリティモデルに基づき、サービス間通信を自動的に暗号化し、きめ細かなアクセス制御を提供します。
+Istio は service mesh に堅牢なセキュリティ機能を提供します。Zero Trust セキュリティモデルに基づき、サービス間通信を自動的に暗号化し、きめ細かなアクセス制御を実現します。
 
 ## 目次
 
 1. [セキュリティアーキテクチャの概要](#security-architecture-overview)
 2. [主要なセキュリティ機能](#core-security-features)
-3. [セキュリティコンポーネント (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#security-components)
-4. [詳細ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#next-steps)
+3. [セキュリティコンポーネント](#security-components)
+4. [詳細ドキュメント](#next-steps)
 5. [セキュリティのベストプラクティス](#security-best-practices)
-6. [セキュリティモニタリング](#security-monitoring)
+6. [セキュリティモニタリング](#3-security-monitoring)
 
-<span id="security-architecture-overview"></span>
-
-## セキュリティアーキテクチャの概要
+## セキュリティアーキテクチャの概要 {#security-architecture-overview}
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Istio セキュリティアーキテクチャ" width="900">
+  <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Istio Security Architecture" width="900">
 </p>
 
-Istio は、service mesh 内のすべての通信を保護するために、**Zero Trust セキュリティモデル**を実装します。セキュリティアーキテクチャは、4 つの主要なレイヤーで構成されています。
+Istio は、メッシュに参加している通信に対して **Zero Trust セキュリティモデル**を実装します。通信の除外設定、平文を使うクライアント、サポート対象外のプロトコルには、別途明示的な制御が必要です。主なセキュリティ上の役割を以下に示します。
 
 ### セキュリティアーキテクチャのレイヤー
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        CA[Certificate Authority<br/>CA Certificate Management]
-        ConfigAPI[Config API<br/>Security Policy Distribution]
-    end
+![Diagram showing the istiod Certificate Authority and Configuration API distributing certificates and policy to the Envoy sidecars in two pods, which encrypt only the sidecar-to-sidecar hop with mTLS, above a five-step security-layer chain from identity to authorization.](../../../.gitbook/assets/en-service-mesh-istio-security-readme-0.png)
 
-    subgraph DataPlane["Data Plane (Envoy Proxy)"]
-        subgraph Pod1["Pod A"]
-            App1[Application]
-            Envoy1[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-        end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-readme-0.html)
 
-        subgraph Pod2["Pod B"]
-            Envoy2[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-            App2[Application]
-        end
-    end
+### セキュリティコンポーネント {#security-components}
 
-    subgraph SecurityLayers["Security Layers"]
-        Identity[1. Identity<br/>SPIFFE ID Based]
-        CertMgmt[2. Certificate Management<br/>Auto Issuance/Renewal]
-        PeerAuth[3. Peer Authentication<br/>Service-to-Service mTLS]
-        ReqAuth[4. Request Authentication<br/>End-User JWT]
-        AuthZ[5. Authorization<br/>Access Control]
-    end
-
-    CA -.->|Certificate Issuance| Envoy1
-    CA -.->|Certificate Issuance| Envoy2
-    ConfigAPI -.->|Policy Distribution| Envoy1
-    ConfigAPI -.->|Policy Distribution| Envoy2
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Identity --> CertMgmt
-    CertMgmt --> PeerAuth
-    PeerAuth --> ReqAuth
-    ReqAuth --> AuthZ
-
-    %% Style definitions
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef security fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class CA,ConfigAPI control;
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Identity,CertMgmt,PeerAuth,ReqAuth,AuthZ security;
-```
-
-**主要なアーキテクチャコンポーネント**:
-
-1. **Control Plane (istiod)**
-   - Certificate Authority (CA): X.509 証明書の発行と管理
+1. **コントロールプレーン（istiod）**
+   - 認証局（CA）: X.509 証明書の発行と管理
    - Configuration API: セキュリティポリシーの配布と管理
-   - Service Discovery: Workload identity の管理
+   - Service Discovery: ワークロード ID の管理
 
-2. **Data Plane (Envoy Proxy)**
-   - mTLS Termination Points: サービス間の暗号化通信
-   - Policy Enforcement: 認証/認可ポリシーの適用
-   - Security Telemetry: セキュリティメトリクスの収集
+2. **データプレーン（Envoy サイドカー、または ambient の ztunnel / waypoint）**
+   - mTLS の終端点: サービス間の暗号化通信
+   - ポリシー適用: 認証・認可ポリシーの適用
+   - セキュリティテレメトリ: セキュリティメトリクスの収集
 
-3. **アイデンティティ管理**
-   - SPIFFE 標準に基づく強力なアイデンティティ管理
-   - Kubernetes ServiceAccount との統合
-   - 証明書の自動更新（デフォルトは 24 時間）
+3. **ID 管理**
+   - SPIFFE 標準に基づく強力な ID 管理
+   - Kubernetes ServiceAccount との連携
+   - 証明書のデフォルト有効期間は 24 時間で、有効期限前にローテーションされます
 
 4. **ポリシーエンジン**
-   - 宣言型セキュリティポリシー（CRD ベース）
+   - CRD ベースの宣言型セキュリティポリシー
    - きめ細かなアクセス制御（RBAC）
    - 監査ログのサポート
 
-<span id="core-security-features"></span>
+## 主要なセキュリティ機能 {#core-security-features}
 
-## 主要なセキュリティ機能
-
-Istio は、以下の主要なセキュリティ機能を提供します。
+Istio は、次の主要なセキュリティ機能を提供します。
 
 ### 1. 通信セキュリティ（mTLS）
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/mtls-migration.svg" alt="mTLS 移行" width="600">
-</p>
+参加中のワークロードを PERMISSIVE から STRICT に移行する前に、必要なクライアントがすべて mTLS を使用していることを確認してください。
 
-すべてのサービス間通信は自動的に暗号化されます。Istio は、**PERMISSIVE** モードによる段階的な移行をサポートします。
+Auto mTLS は、メッシュに参加しているピア間の通信を暗号化します。PERMISSIVE は平文通信も受け入れます。選択したインバウンドワークロードでメッシュの mTLS を必須にするには STRICT を使用します。
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -128,20 +72,22 @@ spec:
 ```
 
 **モードの説明**:
-- **STRICT**: mTLS のみ許可（本番環境に推奨）
-- **PERMISSIVE**: mTLS と平文の両方を許可（移行用）
-- **DISABLE**: mTLS を無効化
+- **STRICT**: mTLS のみを許可します（本番環境に推奨）。
+- **PERMISSIVE**: mTLS と平文の両方を許可します（移行時に使用）。
+- **DISABLE**: sidecar モードで Istio のトランスポート mTLS を無効にします。ambient ではサポートされません。
+
+以下のポリシー例は sidecar の selector を使用します。ambient では ztunnel が L4 セキュリティを適用します。JWT などの L7 ポリシーには、適切な waypoint と targetRefs のアタッチメントが必要です。
 
 ### 2. 認証
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/authn.svg" alt="認証アーキテクチャ" width="700">
+  <img src="https://istio.io/latest/docs/concepts/security/authn.svg" alt="Authentication Architecture" width="700">
 </p>
 
-Istio は 2 層の認証を提供します。
+Istio では、次の 2 層で認証を行います。
 
-- **Peer Authentication**: サービス間認証（mTLS + SPIFFE ID）
-- **Request Authentication**: エンドユーザー認証（JWT + OAuth/OIDC）
+- **Peer Authentication**: サービス間認証（mTLS と SPIFFE ID）
+- **Request Authentication**: 対応する issuer の JWT を検証します。ログインや OAuth フローは外部で処理します。
 
 **例**:
 ```yaml
@@ -150,23 +96,25 @@ apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://accounts.google.com"
     jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+    audiences: ["<your-google-client-id>"]
 ```
 
 ### 3. 認可
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="認可アーキテクチャ" width="600">
+  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Authorization Architecture" width="600">
 </p>
 
-きめ細かなアクセス制御ポリシーが適用されます。AuthorizationPolicy は、以下に基づいて制御します。
-- Service Account / Namespace
-- HTTP Method / Path
-- IP Address
-- JWT Claims
+きめ細かなアクセス制御ポリシーを適用できます。AuthorizationPolicy は、次の情報に基づいて制御します。
+- ServiceAccount / Namespace
+- HTTP メソッド / パス
+- IP アドレス
+- JWT クレーム
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -185,19 +133,15 @@ spec:
         paths: ["/api/*"]
 ```
 
-<span id="security-best-practices"></span>
-
-## セキュリティのベストプラクティス
+## セキュリティのベストプラクティス {#security-best-practices}
 
 ### 1. 多層防御
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/ops/best-practices/security/security-best-practices.svg" alt="セキュリティのベストプラクティス" width="700">
-</p>
+トランスポート層の ID、検証済みのリクエスト資格情報、明示的な認可ルールを組み合わせます。
 
-複数のレイヤーでセキュリティを適用し、多層防御を実装します。
+複数の層にセキュリティを適用して、多層防御を実現します。
 
-**ネットワークレイヤー**:
+**ネットワーク層**:
 ```yaml
 # 1. Enable mTLS STRICT mode
 apiVersion: security.istio.io/v1
@@ -210,65 +154,71 @@ spec:
     mode: STRICT
 ```
 
-**アプリケーションレイヤー**:
+**アプリケーション層**:
 ```yaml
 # 2. Enable JWT authentication
 apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: require-jwt
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://your-auth-provider.com"
     jwksUri: "https://your-auth-provider.com/.well-known/jwks.json"
+    audiences: ["<your-api-audience>"]
 ```
 
-**アクセス制御レイヤー**:
+**アクセス制御層**:
 ```yaml
 # 3. Default deny policy
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
+  namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}
+  action: ALLOW
+  rules: []
 ---
 # 4. Allow only required access
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-specific
+  namespace: default
 spec:
   action: ALLOW
   rules:
   - from:
     - source:
         principals: ["cluster.local/ns/frontend/sa/webapp"]
+        requestPrincipals: ["*"]
     to:
     - operation:
         methods: ["GET", "POST"]
 ```
 
+RequestAuthentication だけではトークンは必須にならず、トークンのないリクエストも受け入れられます。上記の ALLOW 例では、検証済みのピアと検証済みのリクエストプリンシパルの両方を要求します。空の ALLOW ポリシーはデフォルト拒否を設定します。DENY の全拒否ルールは例外より優先され、それらもブロックします。これらの namespace 単位の例は、一致するすべてのワークロードに影響します。selector や targetRefs を使って対象を意図的に絞ってください。AUDIT の利用には監査実装の設定が必要です。また、アクセスログは別途有効にする必要があります。
+
 ### 2. 最小権限の原則
 
-- 各サービスには必要最小限の権限のみを付与する
-- ServiceAccount をきめ細かく分離する
-- Namespace の分離を活用する
+- 各サービスには必要最小限の権限だけを付与します。
+- ServiceAccount を用途に応じて細かく分離します。
+- namespace による分離を活用します。
 
-<span id="security-monitoring"></span>
+<span id="3-security-monitoring"></span>
 
 ### 3. セキュリティモニタリング
 
-- Istio Access Logs を有効にする
-- Prometheus でセキュリティメトリクスを収集する
-- Kiali で mTLS ステータスを監視する
+- Istio のアクセスログを有効にします。
+- Prometheus でセキュリティメトリクスを収集します。
+- Kiali で mTLS の状態を監視します。
 
-## 次のステップ
+## 次のステップ {#next-steps}
 
-1. **[mTLS](01-mtls.md)**: サービス間暗号化とアイデンティティ管理
-2. **[認証](02-authentication.md)**: JWT と OAuth/OIDC の統合
+1. **[mTLS](01-mtls.md)**: サービス間の暗号化と ID 管理
+2. **[認証](02-authentication.md)**: JWT と OAuth/OIDC の連携
 3. **[認可](03-authorization.md)**: きめ細かなアクセス制御ポリシー
 
 ## 参考資料
@@ -285,4 +235,4 @@ spec:
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Istio Security Quiz](../../../quizzes/service-mesh/istio/security.md)に挑戦してください。
+この章の理解を確認するには、[Istio Security Quiz](../../../quizzes/service-mesh/istio/security.md)に挑戦してください。

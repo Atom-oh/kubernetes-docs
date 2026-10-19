@@ -1,8 +1,8 @@
 # Istio のインストールと初期設定
 
-> **最終更新**: October 12, 2026 · Install pin: Istio 1.31.1
+> **最終更新**: 2026年10月16日 · インストール固定バージョン: Istio 1.31.2
 
-2026 年 10 月 12 日時点で、Istio 1.31.1 は現在の 1.31 パッチであり、`BackendTLSPolicy` の平文フォールバックを修正しています。以下の Helm コマンド例は 1.31.0 から更新されています。この以前のチャートレンダリングはすべての 1.31.1 値の検証ではないため、適用前に選択したチャートをレンダリングして確認してください。
+2026年10月16日時点で、Istio 1.31.2 は 1.31 系の最新パッチです。[ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) のセキュリティ修正に加え、1.31.1 で修正された `BackendTLSPolicy` の平文フォールバックも含みます。以下のコマンド例は 1.31.1 から 1.31.2 に更新されています。以前の chart render は 1.31.2 のすべての値を検証したものではないため、適用前に選択した chart をレンダリングして内容を確認してください。
 
 このドキュメントでは、Amazon EKS クラスターに Istio をインストールし、初期設定する方法を説明します。
 
@@ -19,13 +19,13 @@
 9. [Istio の削除](#istio-removal)
 10. [トラブルシューティング](#troubleshooting)
 
-## 前提条件
+## 前提条件 {#prerequisites}
 
 Istio をインストールする前に、以下の要件を満たす必要があります。
 
 ### 1. Amazon EKS クラスター
 
-- **Kubernetes バージョン**: この Istio 1.31.1 の例では EKS 1.34～1.37（2026 年 10 月 12 日レビュー）。Istio 1.31 は 1.32～1.37 をサポートします。EKS 1.31～1.33 は延長サポート、1.34～1.37 は標準サポートです。[Istio マトリックス](https://istio.io/latest/docs/releases/supported-releases/)と [EKS ライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)の両方を確認してください。
+- **Kubernetes バージョン**: この Istio 1.31.2 の例では EKS 1.34～1.37（2026年10月16日レビュー）。Istio 1.31 は 1.32～1.37 をサポートします。EKS 1.31～1.33 は延長サポート、1.34～1.37 は標準サポートです。[Istio マトリックス](https://istio.io/latest/docs/releases/supported-releases/)と [EKS ライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)の両方を確認してください。
 - **Node タイプ**: 最低 2 台の worker node（推奨: 3 台以上）
 - **Node サイズ**: 最低 2 vCPU、4GB RAM（推奨: t3.medium 以上）
 
@@ -53,7 +53,7 @@ kubectl get nodes
 - **Control Plane**: 1 vCPU、1.5GB RAM
 - **Sidecar（Pod ごと）**: 0.1 vCPU、128MB RAM
 
-## インストール方法の選択
+## インストール方法の選択 {#choosing-an-installation-method}
 
 サポート対象のインストールパスを 1 つ選択してください。同じ Control Plane で istioctl と Helm のインストールを併用しないでください。
 
@@ -62,7 +62,7 @@ kubectl get nodes
 | **istioctl** | シンプルで高速、検証機能を提供 | 自動化では明示的なリコンシリエーションが必要 | 開発および本番環境 |
 | **Helm** | GitOps に適しており、バージョン管理が容易 | 設定が複雑になる場合がある | 本番環境、CI/CD パイプライン |
 
-## istioctl を使用したインストール
+## istioctl を使用したインストール {#installation-using-istioctl}
 
 istioctl は Istio の公式 CLI ツールであり、最も簡単なインストール方法です。
 
@@ -70,10 +70,10 @@ istioctl は Istio の公式 CLI ツールであり、最も簡単なインス�
 
 ```bash
 # Download the current 1.31 patch
-curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.1 sh -
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.2 sh -
 
 # Add istioctl to PATH
-cd istio-1.31.1
+cd istio-1.31.2
 export PATH=$PWD/bin:$PATH
 
 # Verify installation
@@ -107,9 +107,9 @@ kubectl get all -n istio-system
 kubectl logs -n istio-system -l app=istiod
 ```
 
-## Helm を使用したインストール
+## Helm を使用したインストール {#installation-using-helm}
 
-前回のレビューでレンダリングされた 1.31.0 チャートには、`eks` プラットフォームプロファイルが含まれていませんでした。以下のチャート例は現在 1.31.1 に固定されていますが、このレビューではそのパッチのチャートをレンダリングしていません。インストール前に選択したチャートを確認してください。これらの例では、プロファイルが存在すると仮定するのではなく `global.platform=eks` を省略し、明示的な EKS 前提条件とロードバランサー設定を使用しています。
+Istiod 1.31.0 と 1.31.2 の chart archive には `eks` プラットフォームプロファイル（`files/profile-platform-eks.yaml`）が含まれていません（2026年10月16日確認）。以下の chart 例は 1.31.2 に固定されていますが、このレビューではその chart をレンダリングしていません。インストール前に選択した chart を確認してください。これらの例では profile があると仮定せず `global.platform=eks` を省略し、明示的な EKS 前提条件とロードバランサー設定を使用します。
 
 Helm は GitOps ワークフローに適した Kubernetes パッケージマネージャーです。
 
@@ -133,7 +133,7 @@ kubectl create namespace istio-system
 helm install istio-base istio/base \
   -n istio-system \
   --set defaultRevision=default \
-  --version 1.31.1
+  --version 1.31.2
 ```
 
 ### 3. istiod をインストールする
@@ -144,7 +144,7 @@ istiod は Istio Control Plane です。
 # Install istiod chart
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -159,7 +159,7 @@ helm install istio-ingressgateway istio/gateway \
   -n istio-system \
   --set labels.istio=ingressgateway \
   --set labels.app=istio-ingressgateway \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -169,7 +169,7 @@ helm install istio-ingressgateway istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.31.1
+  tag: 1.31.2
 
 autoscaleEnabled: true
 autoscaleMin: 2
@@ -187,12 +187,12 @@ meshConfig:
 # Install using values.yaml file
 helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   -f values.yaml \
   --wait
 ```
 
-## istioctl を使用した宣言的インストール
+## istioctl を使用した宣言的インストール {#declarative-installation-with-istioctl}
 
 アップストリームのクラスター内 operator は 1.23 で非推奨となり、1.24 で削除されました。`istioctl operator init/remove` および IstioOperator オブジェクトをクラスターに適用する方法は、現在のインストール方法ではありません。[IstioOperator ファイル形式は、istioctl への入力として引き続きサポートされています](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/)。
 
@@ -227,7 +227,7 @@ istioctl install -f istio-operator.yaml
 kubectl rollout status deployment/istiod -n istio-system
 ```
 
-## インストールプロファイル
+## インストールプロファイル {#installation-profiles}
 
 Istio は用途に応じたさまざまなプロファイルを提供します。
 
@@ -248,7 +248,7 @@ Istio は用途に応じたさまざまなプロファイルを提供します�
 ### プロファイルを確認する
 
 ```bash
-helm show values istio/istiod --version 1.31.1
+helm show values istio/istiod --version 1.31.2
 istioctl manifest generate --set profile=default > default.yaml
 istioctl manifest generate --set profile=demo > demo.yaml
 diff -u default.yaml demo.yaml
@@ -274,7 +274,7 @@ istioctl install --set profile=default \
   -y
 ```
 
-## インストールの検証
+## インストールの検証 {#installation-verification}
 
 ### 1. Control Plane を確認する
 
@@ -320,11 +320,11 @@ kubectl get mutatingwebhookconfiguration
 kubectl get validatingwebhookconfiguration
 ```
 
-## サンプルアプリケーションのデプロイ
+## サンプルアプリケーションのデプロイ {#sample-application-deployment}
 
 Istio には Bookinfo というサンプルアプリケーションが含まれています。
 
-デフォルト namespace を選択した状態で、展開した `istio-1.31.1` ディレクトリからこれらのコマンドを実行してください（`kubectl config set-context --current --namespace=default`）。Helm の場合は、最初に上記の任意の gateway をインストールしてください。後述の dashboard コマンドでは、別途インストールした telemetry addon が必要です。
+デフォルト namespace を選択した状態で、展開した `istio-1.31.2` ディレクトリからこれらのコマンドを実行してください（`kubectl config set-context --current --namespace=default`）。Helm の場合は、最初に上記の任意の gateway をインストールしてください。後述の dashboard コマンドでは、別途インストールした telemetry addon が必要です。
 
 ### 1. Namespace の自動 Sidecar Injection を有効にする
 
@@ -425,7 +425,7 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
-## Istio の削除
+## Istio の削除 {#istio-removal}
 
 これらのクリーンアップコマンドは使い捨てのラボ向けです。purge は共有メッシュリソースを削除します。本番稼働中のメッシュをアンインストールする前に、injection された workload を削除するか、injection なしで再起動してください。Helm のアンインストールでは CRD は保持されます。
 
@@ -462,7 +462,7 @@ helm delete istio-base -n istio-system
 kubectl delete namespace istio-system
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 ### よくある問題
 

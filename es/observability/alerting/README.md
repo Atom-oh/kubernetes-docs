@@ -1,12 +1,12 @@
 # Descripción general de alertas
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 
-> Referencia de revisión: Prometheus 3.14.0 y Alertmanager 0.34.0. Los ejemplos suponen un clúster y series sin duplicados. Verifica los jobs, las labels, los exporters y la disponibilidad de métricas reales; después, ajusta los umbrales. Solo se ejecutaron comprobaciones locales de reglas/enrutamiento; no se probó ningún clúster ni canal de notificación.
+> Referencia de revisión: Prometheus 3.14.0 y Alertmanager 0.34.0. Los ejemplos suponen un clúster y series sin duplicados. Verifica los trabajos de recolección, las etiquetas, los exportadores y la disponibilidad real de las métricas; después, ajusta los umbrales. Solo se ejecutaron comprobaciones locales de reglas y enrutamiento; no se probó ningún clúster ni canal de notificación.
 
 
-## Tabla de contenido
+## Tabla de contenidos
 
 - [El papel y la importancia de las alertas](#the-role-and-importance-of-alerting)
 - [Ciclo de vida de las alertas](#alert-lifecycle)
@@ -42,7 +42,7 @@ Las reglas de Prometheus evalúan métricas. Los logs y las trazas alimentan ale
 2. **Minimizar el tiempo de inactividad**: Mejorar la disponibilidad del servicio mediante detección y respuesta rápidas
 3. **Reducción de costes**: Reducir costes laborales mediante monitorización automatizada
 4. **Cumplimiento de SLA/SLO**: Componente esencial para alcanzar objetivos de nivel de servicio
-5. **Registro de incidentes**: Seguir y analizar el historial de ocurrencia de problemas
+5. **Registro de incidentes**: Mantener y analizar el historial de los problemas que se han producido
 
 ### Alertas buenas frente a alertas malas
 
@@ -90,16 +90,16 @@ groups:
 
 ### 2. Notificación
 
-- **Selección de canal**: Slack, Email, SMS, PagerDuty, etc.
+- **Selección de canal**: Slack, correo electrónico, SMS, PagerDuty, etc.
 - **Enrutamiento**: Entregar a receptores adecuados según el tipo de alerta
 - **Agrupación**: Reunir alertas relacionadas
 - **Eliminación de duplicados**: Reducir las notificaciones duplicadas; los recordatorios de repeat_interval y los reintentos siguen siendo posibles, sin una garantía de exactamente una vez
 
 ### 3. Escalamiento
 
-- **Basado en tiempo**: Escalar al siguiente respondedor si no hay respuesta en el plazo especificado
+- **Basado en tiempo**: Escalar al siguiente responsable de guardia si no hay respuesta en el plazo especificado
 - **Basado en gravedad**: Rutas de escalamiento diferentes según la gravedad
-- **Escalamiento automático**: Configúralo en el servicio de guardia. Alertmanager repeat_interval no comprueba el reconocimiento ni rota respondedores
+- **Escalamiento automático**: Configúralo en el servicio de guardia. El parámetro repeat_interval de Alertmanager no comprueba si hubo reconocimiento ni gestiona la rotación de guardias
 
 ![Ventanas de escalamiento ilustrativas implementadas en un servicio de guardia, con reconocimiento y comportamiento de respaldo definidos por política.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
@@ -107,7 +107,7 @@ groups:
 
 ### 4. Resolución
 
-- **Resolución manual**: Un respondedor cierra el incidente en la herramienta de incidentes; el estado de la regla se comprueba por separado
+- **Resolución manual**: La persona de guardia cierra el incidente en la herramienta de gestión de incidentes; el estado de la regla se comprueba por separado
 - **Resolución automática**: Actualizar el estado del incidente según la política de integración después de comprobar el estado de la regla y de la recopilación
 - **Notificación de resolución**: Enviar una notificación de resolución cuando se solucione el problema
 
@@ -117,9 +117,9 @@ groups:
 
 ## Principios de diseño de alertas
 
-### 1. Alertas procesables
+### 1. Alertas accionables
 
-Los avisos urgentes que interrumpen a una persona necesitan una respuesta procesable inmediata. Los eventos informativos y el trabajo a más largo plazo pueden ir en su lugar a tickets o dashboards.
+Los avisos urgentes que interrumpen a una persona requieren una respuesta inmediata que indique qué hacer. Los eventos informativos y el trabajo a más largo plazo pueden ir en su lugar a tickets o dashboards.
 
 **Ejemplo malo:**
 ```
@@ -158,7 +158,7 @@ Estos tiempos de respuesta son una política organizativa ilustrativa, no un SLA
 | **Crítica** | Interrupción total del servicio | Inmediata (en 5 min) | Servicio totalmente caído, riesgo de pérdida de datos |
 | **Alta** | Fallo de una función principal | En 15 min | Error del sistema de pagos, fallo de inicio de sesión |
 | **Advertencia** | Problema potencial | En 1 hora | 80 % de uso de disco, mayor latencia de respuesta |
-| **Info** | Alerta informativa | En horario laboral | Deployment completado, copia de seguridad correcta |
+| **Información** | Alerta informativa | En horario laboral | Despliegue completado, copia de seguridad correcta |
 
 ```yaml
 groups:
@@ -218,13 +218,13 @@ annotations:
 
 Las alertas deben entregarse a receptores adecuados según diversos criterios:
 
-![Las labels de alertas seleccionan receptores de guardia y de equipo antes de la entrega; las coincidencias exclusivas de alertas críticas no llaman también al receptor predeterminado.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
+![Las etiquetas de las alertas seleccionan receptores de guardia y de equipo antes de la entrega; las coincidencias exclusivas de alertas críticas no llaman también al receptor predeterminado.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### Diseño del árbol de enrutamiento
 
-Esta es una configuración completa de validación de enrutamiento **sin notificaciones**. Los receptores vacíos son intencionales; configura integraciones revisadas y archivos Secret antes de usarla en producción. Las alertas críticas se distribuyen al receptor de guardia y al equipo coincidente. Las labels de equipo ausentes vuelven al predeterminado, salvo que una coincidencia exclusiva de alertas críticas no llama también al predeterminado. Los retrasos de agrupación implican que no hay garantía de llamada telefónica inmediata. El estado crítico del disco inhibe la advertencia solo para la misma instance/device/mountpoint.
+Esta es una configuración completa de validación de enrutamiento **sin notificaciones**. Los receptores vacíos son intencionales; configura integraciones revisadas y archivos Secret antes de usarla en producción. Las alertas críticas se distribuyen al receptor de guardia y al equipo coincidente. Si falta la etiqueta del equipo, las alertas se envían al receptor predeterminado, excepto cuando coinciden solo con la ruta crítica; en ese caso, no se envían también al receptor predeterminado. Los retrasos de agrupación implican que no hay garantía de llamada telefónica inmediata. El estado crítico del disco inhibe la advertencia solo para la misma instancia, dispositivo y punto de montaje.
 
 ```yaml
 route:
@@ -278,7 +278,7 @@ Lo siguiente es ilustrativo. Configura las zonas horarias, las ventanas de recon
 
 ### Concepto de guardia
 
-La guardia se refiere a un respondedor designado responsable de los problemas del sistema durante un período especificado.
+La guardia es el período durante el que una persona designada responde a los problemas del sistema.
 
 ![Una rotación ilustrativa de cuatro semanas con traspasos; las zonas horarias, la dotación de personal, el respaldo y la compensación reales requieren una política acordada.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
@@ -289,14 +289,14 @@ La guardia se refiere a un respondedor designado responsable de los problemas de
 
 1. **Calendario de traspasos claro**: Rotación semanal o quincenal
 2. **Proceso de traspaso**: Transferir los problemas en curso durante el cambio de turno
-3. **Respondedor de respaldo**: Respaldo cuando el principal no está disponible
+3. **Persona de respaldo**: Sustituye a la persona principal cuando no está disponible
 4. **Compensación adecuada**: Complemento de guardia o tiempo libre compensatorio
 5. **Prevención del agotamiento**: Ciclo de rotación adecuado
 
 ### Requisitos de la herramienta de guardia
 
 - **Gestión de horarios**: Integración con calendario, gestión de turnos
-- **Sustitución**: Cambios temporales de respondedores
+- **Reasignación**: Cambios temporales de la persona de guardia
 - **Escalamiento**: Escalamiento automático
 - **Soporte móvil**: Recibir alertas en cualquier momento y lugar
 - **Informes**: Análisis de actividad de guardia
@@ -309,7 +309,7 @@ La guardia se refiere a un respondedor designado responsable de los problemas de
 
 ### Áreas de alertas específicas de EKS
 
-![Ámbitos de monitorización y límites de recopilación de EKS, que separan los fallos de scrape, la ausencia de objetivos, la preparación y las señales de recursos.](../../.gitbook/assets/en-observability-alerting-readme-4.png)
+![Ámbitos de monitorización y límites de recopilación de EKS, que separan los fallos de recolección de métricas, la ausencia de objetivos, la preparación y las señales de recursos.](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
@@ -317,7 +317,7 @@ La guardia se refiere a un respondedor designado responsable de los problemas de
 
 #### 1. Alertas de nivel de clúster
 
-Sustituye el nombre del job por el objetivo desplegado. up=0 demuestra un fallo de scrape, no una interrupción completa de la API. La regla absent cubre un ámbito de recopilación; las configuraciones de varios clústeres necesitan un inventario de objetivos esperados y labels de clúster. Usa increase para el contador acumulativo de errores de Cluster Autoscaler. Un incremento reciente presente durante cinco minutos no significa que los errores se produjeran continuamente durante cinco minutos. Esta regla no se aplica sin cambios a Karpenter ni a EKS Auto Mode.
+Sustituye el nombre del trabajo de recolección por el objetivo desplegado. up=0 demuestra un fallo de recolección, no una interrupción completa de la API. La regla absent cubre un ámbito de recopilación; las configuraciones de varios clústeres necesitan un inventario de objetivos esperados y etiquetas del clúster. Usa increase para el contador acumulativo de errores de Cluster Autoscaler. Un incremento reciente presente durante cinco minutos no significa que los errores se produjeran continuamente durante cinco minutos. Esta regla no se aplica sin cambios a Karpenter ni a EKS Auto Mode.
 
 ```yaml
 groups:
@@ -455,7 +455,7 @@ groups:
 
 ### Alertas de integración de servicios AWS
 
-EKS 1.28+ proporciona métricas seleccionadas del plano de control en AWS/EKS; esto no expone todos los componentes internos para scrape. Habilita los logs del plano de control por separado para investigar errores de autenticación. Evalúa la disponibilidad mediante el estado de recopilación, los fallos de solicitudes a la API y sondas externas:
+EKS 1.28+ proporciona métricas seleccionadas del plano de control en AWS/EKS; esto no expone todos los componentes internos para recolección de métricas. Habilita los logs del plano de control por separado para investigar errores de autenticación. Evalúa la disponibilidad mediante el estado de recopilación, los fallos de solicitudes a la API y sondas externas:
 
 | Servicio AWS | Elementos de monitorización | Herramienta de alertas |
 |-------------|------------------|------------|
@@ -497,7 +497,7 @@ EKS 1.28+ proporciona métricas seleccionadas del plano de control en AWS/EKS; e
 
 ### Enfoque híbrido
 
-Las soluciones pueden combinarse. CloudWatch no envía automáticamente de forma directa a Alertmanager. Este ejemplo usa SNS/una integración compatible con el servicio de guardia; el enrutamiento a través de Alertmanager requiere un adaptador diseñado por separado, autenticación y gestión de duplicados/resoluciones:
+Las soluciones pueden combinarse. CloudWatch no envía alertas directamente a Alertmanager de forma automática. Este ejemplo usa SNS/una integración compatible con el servicio de guardia; el enrutamiento a través de Alertmanager requiere un adaptador diseñado por separado, autenticación y gestión de duplicados/resoluciones:
 
 ![Prometheus usa Alertmanager; CloudWatch usa integraciones explícitas de SNS o de servicio con un servicio de guardia, sin puente directo automático.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
@@ -514,7 +514,7 @@ Las soluciones pueden combinarse. CloudWatch no envía automáticamente de forma
 
 ## Próximos pasos
 
-Esta sección cubrió los conceptos básicos y las estrategias de alertas. Para conocer métodos de configuración detallados de cada solución, consulta los documentos siguientes:
+Esta sección ha presentado los conceptos básicos y las estrategias de alertas. Para conocer métodos de configuración detallados de cada solución, consulta los documentos siguientes:
 
 - [Prometheus Alertmanager](./01-alertmanager.md): Gestión de alertas de código abierto
 - [CloudWatch Alarms](./02-cloudwatch-alarms.md): Alertas nativas de AWS

@@ -1,201 +1,239 @@
 # EKS Auto Mode Spot 策略测验
 
-> **相关文档**: [Spot Instance Strategies](../../eks-auto-mode/04-spot-strategies.md)
+> **相关文档**：[Spot 实例策略](../../eks-auto-mode/04-spot-strategies.md)
 
 ## 选择题
 
-### 1. 分散 Spot instance 中断风险的最佳策略是什么？
+### 1. 哪种做法能扩大可选的兼容 Spot 容量范围？
 
-- A) 仅使用单一 instance type
-- B) 使用多样化的 instance family、generation 和 size
-- C) 仅使用 On-Demand
-- D) 只选择最便宜的 instance
+- A) 只在一个可用区使用一种实例类型
+- B) 允许使用多种兼容的实例类型、大小、架构和可用区
+- C) 要求额外架构使用不兼容的镜像
+- D) 始终只选择价格最低的实例类型
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用多样化的 instance family、generation 和 size**
+**答案：B) 允许使用多种兼容的实例类型、大小、架构和可用区**
 
 **说明：**
-Spot instance 会按 capacity pool 发生中断。允许多样化的 instance type 可以从多个 capacity pool 获取 instance，从而分散中断风险。
+Spot 容量池按实例类型和可用区组合划分。多样化配置会增加可选项，但不会让中断彼此独立；仅仅列出两种架构也不会使实际容量翻倍。应先验证镜像、依赖项和性能配置是否兼容。
 
 ```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        # Diverse instance families
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["m", "c", "r", "i", "d"]
-        # Diverse generations
-        - key: karpenter.k8s.aws/instance-generation
-          operator: In
-          values: ["5", "6", "7"]
-        # Diverse sizes
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["large", "xlarge", "2xlarge"]
-        # Diverse architectures
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
+requirements:
+- key: eks.amazonaws.com/instance-category
+  operator: In
+  values:
+  - m
+  - c
+  - r
+  - i
+  - d
+- key: eks.amazonaws.com/instance-generation
+  operator: Gt
+  values:
+  - '4'
+- key: eks.amazonaws.com/instance-size
+  operator: In
+  values:
+  - large
+  - xlarge
+  - 2xlarge
+- key: kubernetes.io/arch
+  operator: In
+  values:
+  - amd64
+  - arm64
+- key: karpenter.sh/capacity-type
+  operator: In
+  values:
+  - spot
 ```
+
+这只是 requirements 片段，并不是完整的 NodePool。
 
 </details>
 
-### 2. 用于区分 Spot 和 On-Demand instance 的 Karpenter label key 是什么？
+### 2. 在这些示例中，哪个标签用于区分 Spot 和 On-Demand 容量？
 
-- A) `node.kubernetes.io/capacity-type`
-- B) `karpenter.sh/capacity-type`
-- C) `eks.amazonaws.com/instance-type`
-- D) `karpenter.k8s.aws/spot-or-ondemand`
+- A) node.kubernetes.io/capacity-type
+- B) karpenter.sh/capacity-type
+- C) eks.amazonaws.com/instance-type
+- D) karpenter.k8s.aws/spot-or-ondemand
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) `karpenter.sh/capacity-type`**
+**答案：B) karpenter.sh/capacity-type**
 
 **说明：**
-此 label 允许在 Pod nodeAffinity 或 NodePool requirements 中指定 Spot/On-Demand instance。
+可在 NodePool requirements 或 Pod 选择条件中使用 `karpenter.sh/capacity-type`。preferred affinity 不会强制使用 Spot、预留备用节点，也不会设定固定的购买选项比例。
 
 ```yaml
-# Setting Spot instance preference in Pod
 affinity:
   nodeAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        preference:
-          matchExpressions:
-            - key: karpenter.sh/capacity-type
-              operator: In
-              values: ["spot"]
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+          - spot
 ```
 
+如需强制配置基准容量，应在另一个工作负载中使用兼容的硬性 selector 或 required affinity。Downward API 中的 `spec.nodeName` 是节点名称，不是表示 Spot 的布尔值。
+
 </details>
 
-### 3. Spot instance 被中断前默认会提前多久发出警告？
+### 3. 应如何理解 EC2 Spot 停止或终止通知？
 
-- A) 30 秒
-- B) 2 分钟
-- C) 5 分钟
-- D) 10 分钟
+- A) 每个 Pod 都保证有 30 秒
+- B) 通常为两分钟，但通知尽力而为
+- C) 每个 Pod 都保证有五分钟
+- D) 可以通过 preStop 请求延长十分钟
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 2 分钟**
+**答案：B) 通常为两分钟，但通知尽力而为**
 
 **说明：**
-AWS Spot instance 在被回收前会收到 2 分钟警告。Workload 必须在此期间优雅终止。
-
-**Spot 中断处理最佳实践：**
-- 将 Pod 的 terminationGracePeriodSeconds 设置为 2 分钟或更短
-- 在应用程序中实现 SIGTERM handler
-- 优先使用 stateless workload
-- 实现 checkpointing 机制（用于 batch job）
+EC2 通常会在停止或终止实例前两分钟发出中断通知，但该通知尽力而为；休眠的开始行为则不同。Kubernetes 的检测、驱逐和应用处理都会占用这段时间。Pod 宽限期和 preStop hook 都不能延长 EC2 截止时间；休眠 90 秒也不等于检查点或优雅关闭实现。应使用定期持久化检查点、幂等恢复机制，并测试应用对信号的处理。
 
 </details>
 
-### 4. 哪种 workload 类型不推荐用于 Spot instance？
+### 4. 依赖可中断容量前，哪种模式最需要重新设计？
 
-- A) Batch processing job
-- B) Stateless web server
-- C) Single-instance database
-- D) Development/test environment
+- A) 经验证可重试的幂等批处理任务
+- B) 已复制且经过故障转移测试的无状态服务
+- C) 没有恢复路径、唯一状态存于本地存储的关键单实例数据库
+- D) 能容忍延迟并可重试的开发任务
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Single-instance database**
+**答案：C) 没有恢复路径、唯一状态存于本地存储的关键单实例数据库**
 
 **说明：**
-Single-instance database 在中断期间可能出现可用性问题，因此不适合使用 Spot。
-
-**适合 Spot 的 workload：**
-- Batch processing / Big data analytics
-- CI/CD pipeline
-- Stateless web server (Auto Scaling)
-- Development/test environment
-- Container-based microservice
-
-**需要 On-Demand 的 workload：**
-- Database
-- Message queue
-- Cluster management component
-- Long-running stateful job
+这种单实例模式可能导致服务不可用，并丢失唯一状态。使用 On-Demand 也不会让节点本地存储变得持久，或消除维护和故障风险。数据库、队列和长时间运行的任务都需要结合具体架构评估，不能仅凭工作负载名称一概而论。
 
 </details>
 
-### 5. 在 NodePool 中混合 Spot 和 On-Demand 时，如何配置优先选择 Spot？
+### 5. 在一个混合容量的 NodePool 中，如何让 Spot 优先被选用？
 
-- A) `spotPriority: high`
-- B) 通过 weight 值设置 NodePool priority
-- C) `capacityPriority: spot`
-- D) `preferSpot: true`
+- A) 设置 spotPriority: high
+- B) 允许 Spot 和 On-Demand，由 Auto Mode 按符合条件的容量优先级进行选择
+- C) 设置 capacityPriority: spot
+- D) 使用 weight 精确预留 80% 的 Spot 节点
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过 weight 值设置 NodePool priority**
+**答案：B) 允许 Spot 和 On-Demand，由 Auto Mode 按符合条件的容量优先级进行选择**
 
 **说明：**
-创建多个 NodePool，并使用 weight 值指定 priority。weight 更高的会优先使用。
+允许这两种容量类型即可。数组顺序和 weight 不会决定该池内的容量百分比。如果允许且存在合适的预留容量，其优先级高于 Spot；Spot 的优先级高于 On-Demand。实际可用性仍受容量和约束影响。
+
+单独配置两个 NodePool，可通过 weight 影响置备优先级：
 
 ```yaml
-# Spot-first NodePool (weight: 100)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: spot-first
 spec:
-  weight: 100  # High priority
+  weight: 100
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - c
+        - m
+        - r
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: spot-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        capacity-example: spot-lab
+        capacity-strategy: spot-preferred
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ---
-# On-Demand fallback NodePool (weight: 10)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: ondemand-fallback
 spec:
-  weight: 10  # Low priority
+  weight: 10
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - c
+        - m
+        - r
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: spot-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        capacity-example: spot-lab
+        capacity-strategy: spot-preferred
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
+
+两个池使用共同标签和实验用 taint。需要回退能力的工作负载必须容忍该 taint，并匹配这两个池；若将 Pod 固定到仅限 Spot 的池名，就无法回退。weight 不会迁移已调度的 Pod，也不保证立即获得回退容量。
 
 </details>
 
-### 6. 与 On-Demand 相比，Spot instance 的最高节省率是多少？
+### 6. AWS 公布的 EC2 Spot 折扣幅度是多少？
 
-- A) 30-40%
-- B) 50-60%
-- C) 70-90%
-- D) 95% 或更高
+- A) 保证节省 30–40%
+- B) 保证节省 50–60%
+- C) 相比 On-Demand 最高可达 90%，但不保证整个工作负载都能节省这些费用
+- D) 保证节省 95% 或更多
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 70-90%**
+**答案：C) 相比 On-Demand 最高可达 90%，但不保证整个工作负载都能节省这些费用**
 
 **说明：**
-与 On-Demand 相比，Spot instance 最多可实现 70-90% 的成本节省。
+实际价格以及有用工作量的成本取决于实例类型、可用区、时段、恢复方式和其他费用。Auto Mode 管理费是在 EC2 价格之外另计。下面保留原教学示例表，但其中数据未经验证：
 
-**成本优化策略组合：**
-| Strategy | Expected Savings |
-|----------|-----------------|
-| Spot instances | 70-90% |
-| Graviton (ARM) | ~20% |
-| Spot + Graviton | Up to 90% |
+| 先前的示例 | 未验证的数值 |
+|---|---|
+| Spot | 70–90% |
+| Graviton/ARM | 约 20% |
+| Spot + Graviton | 最高 90% |
 
-不过，Spot 节省率会因 instance type 和 availability zone 而异。
+对比基线和测量方法均未确定。不要将这些百分比相加，也不要把它们视为保证的节省额。Advisor 数据是可能延迟的过去一个月汇总；请使用可用区级价格历史或实际账单，并避免重复计算恢复所需时长的费用。
 
 </details>

@@ -1,871 +1,651 @@
-# Cuestionario de networking de EKS - Parte 1
+# Cuestionario de redes de EKS - Parte 1
 
-Este cuestionario evalúa tu comprensión de los conceptos básicos de networking en Amazon EKS, VPC CNI, network policies y service discovery. Se centra en la arquitectura y los componentes de networking de los clusters de EKS.
+> **Última actualización**: 11 de septiembre de 2026
+
+Este cuestionario repasa las redes de EKS, la planificación de direcciones, las políticas y la gestión de controladores. Salvo que se indique lo contrario, los ejemplos utilizan el modelo de red convencional de Linux en EC2. Las API y la configuración se contrastaron con fuentes oficiales y esquemas locales; no se modificó la red en la nube ni se hicieron pruebas de paquetes en vivo.
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el plugin CNI (Container Network Interface) predeterminado que se usa en Amazon EKS?
-
-A. Calico B. Flannel C. Amazon VPC CNI D. Weave Net
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C. Amazon VPC CNI**
-
-**Explicación:** Amazon EKS usa el plugin Amazon VPC CNI de forma predeterminada. Este plugin asigna direcciones IP de VPC a los pods de Kubernetes y permite la comunicación entre pods usando las características nativas del networking de AWS VPC.
-
-**Características clave:**
-
-1. **Networking nativo de VPC**: Cada pod recibe una dirección IP única dentro de la VPC. Esto permite que los pods se comuniquen directamente con otros servicios dentro de la VPC.
-2. **Asignación de direcciones IP secundarias**: Las direcciones IP secundarias se asignan a la Elastic Network Interface (ENI) de cada node y se proporcionan a los pods.
-3. **Integración con Security Groups**: Los AWS security groups pueden aplicarse a nivel de pod, lo que permite un control de seguridad de red granular.
-4. **Rendimiento**: El rendimiento de red mejora al no usar overlay networks.
-5. **Integración con servicios de AWS**: Se integra sin problemas con otros servicios de AWS como AWS Load Balancer Controller y AWS App Mesh.
-
-**Ejemplo de configuración:**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-network-policy: "true"
-  enable-pod-eni: "true"
-  warm-ip-target: "5"
-  minimum-ip-target: "10"
-```
-
-Amazon VPC CNI es open source y se administra en GitHub. Puede reemplazarse por otros plugins CNI como Calico o Cilium según sea necesario, pero Amazon VPC CNI es la opción predeterminada para EKS y cuenta con soporte oficial de AWS.
-
-</details>
-
-### 2. ¿Cómo asigna VPC CNI direcciones IP a los pods en Amazon EKS?
-
-A. Asigna una Elastic Network Interface (ENI) separada a cada pod B. Asigna direcciones IP secundarias a la Elastic Network Interface (ENI) del node y las proporciona a los pods C. Usa overlay networks para asignar direcciones IP virtuales D. Asigna una subnet de VPC separada a cada pod
+1. ¿Cuál es el CNI predeterminado para los nodos EC2 convencionales de EKS?
+   * A) Calico
+   * B) Flannel
+   * C) Amazon VPC CNI
+   * D) Weave Net
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Asigna direcciones IP secundarias a la Elastic Network Interface (ENI) del node y las proporciona a los pods**
+**Respuesta: C) Amazon VPC CNI**
 
-**Explicación:** Amazon VPC CNI funciona asignando direcciones IP secundarias a la Elastic Network Interface (ENI) del node y proporcionando estas direcciones IP a los pods. Este método también se llama modelo "IP-per-Pod".
+Los nodos EC2 convencionales de EKS utilizan Amazon VPC CNI. Auto Mode ofrece capacidades de red administradas, y Hybrid Nodes utiliza un CNI alternativo compatible; por tanto, afirmar que «todos los clústeres de EKS ejecutan este DaemonSet» es demasiado general.
 
-**Cómo funciona:**
+El CNI configura la red normal de los pods con direcciones de la VPC y distintas rutas para IP secundarias, prefijos y grupos de seguridad para pods. Tener una dirección enrutable no evita las rutas, los grupos de seguridad, las NACL ni las políticas; además, evitar una superposición de red no constituye una garantía de rendimiento medida.
 
-1. **Asignación de ENI**: Cada instancia EC2 (node) puede tener una o más ENIs. La cantidad de direcciones IP que pueden asignarse por ENI está determinada por el tipo de instancia.
-2. **Administración del pool de direcciones IP**: El DaemonSet `aws-node` de VPC CNI se ejecuta en cada node y administra el pool de direcciones IP disponibles.
-3. **Asignación de direcciones IP**: Cuando se crea un pod, el CNI asigna una dirección IP del pool y la conecta al namespace de red del pod.
-4. **Recuperación de direcciones IP**: Cuando un pod termina, el CNI recupera la dirección IP y la devuelve al pool.
-
-**Configuración de ejemplo:**
+En Linux, el antiguo ConfigMap `amazon-vpc-cni` con claves en minúsculas `warm-ip-target` y `enable-pod-eni` no es el mecanismo de configuración que se muestra aquí. Utiliza el esquema real del add-on, los valores de Helm o las variables de entorno admitidas de `aws-node`, gestionándolos desde su propietario. Primero inspecciona la versión instalada:
 
 ```bash
-# Maximum pods per node calculation
-Maximum pods = (Number of ENIs × (IP addresses per ENI - 1)) + 2
-
-# For m5.large instance
-# Number of ENIs: 3, IP addresses per ENI: 10
-Maximum pods = (3 × (10 - 1)) + 2 = 29
+set -euo pipefail
+CNI_ADDON_VERSION=$(aws eks describe-addon --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --addon-name vpc-cni --query addon.addonVersion --output text)
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" --addon-name vpc-cni \
+  --addon-version "$CNI_ADDON_VERSION" --query configurationSchema --output text
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system get daemonset aws-node \
+  -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{": "}{.image}{"\n"}{end}'
 ```
 
-**Consideraciones clave:**
+Por ejemplo, lo siguiente es un **fragmento de configuración del add-on**, no un ConfigMap de Kubernetes. Los valores ilustran objetivos de reserva de IP; combínalos con la configuración existente que ya se haya revisado y comprueba el esquema de la versión elegida. La configuración del ConfigMap de IPAM de Windows es una interfaz distinta.
 
-1. **Límite de direcciones IP**: La cantidad máxima de pods que pueden ejecutarse por node está limitada según el tipo de instancia.
-2. **Warm IPs**: VPC CNI puede preasignar una cierta cantidad de direcciones IP mediante la configuración `WARM_IP_TARGET` para reducir el tiempo de inicio de los pods.
-3. **Prefix Delegation**: Las versiones más recientes de VPC CNI admiten la característica de prefix delegation, que asigna bloques CIDR /28 (16 IPs) a cada ENI, aumentando la densidad de direcciones IP.
-4. **Security Groups**: Habilitar la configuración `ENABLE_POD_ENI` permite configurar security groups separados para pods específicos (característica Security Groups for Pods).
+```json
+{"env":{"WARM_IP_TARGET":"5","MINIMUM_IP_TARGET":"10"}}
+```
 
-Problemas con las otras opciones:
-
-* **A**: Por lo general, no se asigna una ENI separada a cada pod. Esto es ineficiente debido a los límites de ENI por instancia EC2.
-* **C**: VPC CNI no usa overlay networks. Esta es una característica de otros plugins CNI como Flannel o Weave Net.
-* **D**: No es posible asignar una subnet de VPC separada a cada pod en la arquitectura de AWS VPC.
+Los grupos de seguridad para pods y NetworkPolicy nativa tienen requisitos previos propios. No los habilites como efectos secundarios ajenos a un ejemplo de pool de direcciones IP ni superpongas un segundo CNI sin configurar sobre un clúster en funcionamiento.
 
 </details>
 
-### 3. ¿Por qué la comunicación pod a pod en Amazon EKS ocurre directamente dentro de la VPC sin salir al exterior?
-
-A. Porque todos los pods se encuentran en la misma subnet B. Porque los pods comparten el namespace de red del node C. Porque a los pods se les asignan directamente direcciones IP de VPC D. Porque la comunicación pod a pod siempre pasa por un service mesh
+2. ¿Cómo se asignan direcciones a los pods normales en el modo IPv4 de IP secundaria?
+   * A) Una VPC dedicada por pod
+   * B) Una dirección del pool de ENI/IP del nodo
+   * C) Solo una dirección de superposición
+   * D) Una subred distinta para cada pod
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Porque a los pods se les asignan directamente direcciones IP de VPC**
+**Respuesta: B) Una dirección del pool de ENI/IP del nodo**
 
-**Explicación:** La razón principal por la que la comunicación pod a pod en Amazon EKS ocurre directamente dentro de la VPC sin salir al exterior es que el plugin Amazon VPC CNI asigna directamente direcciones IP de VPC a cada pod.
+En el modo normal de IP secundaria IPv4, IPAMD administra pools de ENI/IP en el nodo y la configuración del CNI asigna una dirección del pool al namespace de red del pod. Después de limpiar el CNI y de cualquier demora de reutilización aplicable, las direcciones pueden volver al pool de reserva; no necesariamente se desasignan de EC2 de inmediato.
 
-**Mecanismos clave:**
+El cálculo convencional de maxPods que aparece a continuación corresponde a ese modo. Se reserva la dirección principal de cada ENI; los dos adicionales que se suman históricamente corresponden a pods del sistema con hostNetwork:
 
-1. **Asignación de direcciones IP de VPC**: Cada pod recibe una dirección IP única de la subnet de VPC. Esta dirección IP es una dirección IP secundaria conectada a la ENI del node.
-2. **Enrutamiento directo**: Como los pods tienen direcciones IP de VPC, pueden comunicarse directamente con otros recursos en la VPC (otros pods, instancias EC2, bases de datos RDS, etc.).
-3. **Tablas de enrutamiento de VPC**: La comunicación pod a pod sigue las tablas de enrutamiento de VPC y se enruta directamente dentro de la misma VPC sin salir al exterior.
+```text
+ENIs × (IPv4 addresses per ENI − 1) + 2
+m5.large: 3 × (10 − 1) + 2 = 29
+```
 
-**Ventajas:**
-
-1. **Rendimiento de red**: Latencia reducida y throughput mejorado al no usar overlay networks ni NAT.
-2. **Seguridad**: Puede aprovechar mecanismos de seguridad de red existentes de AWS, como VPC security groups y network ACLs.
-3. **Visibilidad**: Puede monitorear y analizar el tráfico pod a pod mediante VPC Flow Logs.
-4. **Integración con servicios de AWS**: Como los pods tienen direcciones IP de VPC, se integran sin problemas con servicios de AWS como VPC endpoints y PrivateLink.
-
-**Escenario de ejemplo:**
-
-Cuando Pod A (IP: 10.0.1.23) se comunica con Pod B (IP: 10.0.2.45):
-
-1. Pod A envía paquetes directamente a la dirección IP de Pod B (10.0.2.45).
-2. Los paquetes se enrutan según la tabla de enrutamiento de VPC.
-3. Los paquetes llegan directamente a Pod B dentro de la VPC.
-4. Durante todo este proceso, los paquetes no salen de la VPC.
-
-Problemas con las otras opciones:
-
-* **A**: Los pods pueden distribuirse entre varias subnets, y los pods en subnets diferentes aún pueden comunicarse directamente dentro de la VPC.
-* **B**: Los pods no comparten el namespace de red del node. Cada pod tiene su propio namespace de red.
-* **D**: La comunicación pod a pod no siempre pasa por un service mesh. Service mesh es una capa adicional opcional.
+No es un límite universal de cargas de trabajo. También influyen el espacio de la subred, maxPods de kubelet, los recursos de cómputo, la red personalizada y los límites de branch ENI. El modo de prefijos asigna un `/28` a una ranura de dirección de ENI; no asigna exactamente un prefijo por ENI. Los grupos de seguridad para pods usan una ruta independiente de branch ENI. Los pods con hostNetwork comparten la red del nodo y son otra excepción a la descripción simple de una IP secundaria por pod.
 
 </details>
 
-### 4. ¿Cuál es el recurso de Kubernetes más apropiado para controlar el tráfico entrante y saliente hacia los pods en Amazon EKS?
-
-A. Service B. Ingress C. NetworkPolicy D. SecurityContext
+3. ¿Qué permite el modelo normal de enrutamiento intra-VPC de VPC CNI?
+   * A) Que todos los pods utilicen una sola subred
+   * B) Que todos los pods compartan la red del host
+   * C) Direcciones de pods enrutables en la VPC y las rutas y controles necesarios
+   * D) Un service mesh obligatorio
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. NetworkPolicy**
+**Respuesta: C) Direcciones de pods enrutables en la VPC y las rutas y controles necesarios**
 
-**Explicación:** El recurso de Kubernetes más apropiado para controlar el tráfico entrante y saliente hacia los pods en Amazon EKS es NetworkPolicy. NetworkPolicy es el mecanismo de seguridad de red de Kubernetes que permite un control granular de la comunicación entre pods.
+En la ruta normal de VPC CNI, los pods tienen direcciones enrutables en la VPC. El tráfico entre nodos puede utilizar el enrutamiento de los nodos/ENI y de la VPC; el tráfico en el mismo nodo puede permanecer en la pila de red del host. Los grupos de seguridad, las NACL, las reglas de políticas y las rutas de inspección personalizadas siguen determinando la conectividad.
 
-**Características clave de NetworkPolicy:**
+El ejemplo `10.0.1.23 → 10.0.2.45` describe una ruta intra-VPC normal; no demuestra que todos los paquetes atraviesen siempre una tabla de rutas de la VPC ni que nunca sigan una ruta configurada hacia un dispositivo de red. El tráfico de pods en el mismo nodo no se ve por completo en VPC Flow Logs. La mayoría de los pods tienen su propio namespace de red; los pods con hostNetwork son una excepción.
 
-1. **Aplicación selectiva**: Puede aplicar policies a pods específicos usando label selectors.
-2. **Reglas de entrada y salida**: Puede controlar tanto el tráfico ingress (entrante) como egress (saliente).
-3. **Selectores variados**: Puede filtrar tráfico según namespaces, labels, bloques CIDR de IP, puertos, etc.
-4. **Default Deny Policy**: El tráfico que no está permitido explícitamente se deniega de forma predeterminada.
+No deduzcas mejoras garantizadas de latencia o rendimiento por la ausencia de una red de superposición. Mide la ruta real y ten en cuenta el tráfico entre zonas de disponibilidad, el tipo de destino, SNAT y el comportamiento de la carga de trabajo. El service mesh es una capa adicional opcional, no un requisito para el enrutamiento normal de pods.
 
-**Ejemplo de NetworkPolicy:**
+</details>
+
+4. ¿Qué recurso de Kubernetes expresa las políticas de entrada y salida de los pods?
+   * A) Service
+   * B) Ingress
+   * C) NetworkPolicy
+   * D) SecurityContext
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) NetworkPolicy**
+
+NetworkPolicy selecciona pods y aísla solo las direcciones de tráfico especificadas. Si ninguna política selecciona un pod y una dirección de tráfico, ese tráfico no está aislado. Las políticas son aditivas: una política adicional que parezca más restrictiva no puede retirar tráfico que otra política ya permite.
+
+Utiliza una implementación de aplicación de políticas compatible. Amazon VPC CNI admite actualmente políticas de red nativas cuando se habilitan; es incorrecto afirmar que no puede aplicarlas. El add-on administrado utiliza el campo de configuración `enableNetworkPolicy`, no la variable de entorno `ENABLE_NETWORK_POLICY` que a veces se supone:
+
+```json
+{"enableNetworkPolicy":"true"}
+```
+
+Este es un fragmento que se debe combinar según el esquema de la versión elegida del add-on. Antes de probarlo, comprueba el agente de políticas y sus limitaciones de cómputo de AWS, kernel, propietario del pod e interfaz. El modo de inicio estándar puede permitir tráfico brevemente antes de asociar la política; el modo estricto requiere todas las excepciones necesarias para el sistema y DNS. No instales manifiestos flotantes de Calico junto con la aplicación de políticas nativa sin un plan de migración compatible.
+
+Lo siguiente está pensado para namespaces de laboratorio revisados y cargas de trabajo gestionadas por controladores. Los selectores de namespace y de pod dentro del **mismo elemento peer se combinan con AND**; elementos peer separados se combinarían con OR. La excepción de DNS es explícita:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: api-allow
-  namespace: production
+  namespace: policy-lab
 spec:
   podSelector:
-    matchLabels:
-      app: api
-  policyTypes:
-  - Ingress
-  - Egress
+    matchLabels: {app: api}
+  policyTypes: [Ingress, Egress]
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          purpose: frontend
-    - podSelector:
-        matchLabels:
-          role: frontend
+          kubernetes.io/metadata.name: frontend-lab
+      podSelector:
+        matchLabels: {role: frontend}
     ports:
-    - protocol: TCP
-      port: 8080
+    - {protocol: TCP, port: 8080}
   egress:
   - to:
     - namespaceSelector:
         matchLabels:
-          purpose: database
+          kubernetes.io/metadata.name: database-lab
+      podSelector:
+        matchLabels: {app: database}
     ports:
-    - protocol: TCP
-      port: 5432
+    - {protocol: TCP, port: 5432}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels: {k8s-app: kube-dns}
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
 ```
 
-**Implementación de NetworkPolicy en EKS:**
-
-Para usar NetworkPolicy en Amazon EKS, se requiere un plugin CNI que admita network policies. El Amazon VPC CNI predeterminado no admite directamente network policies, por lo que se necesita configuración adicional:
-
-1.  **Instalar Calico**: Calico es la forma más común de implementar NetworkPolicy en EKS.
-
-    ```bash
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-    ```
-2.  **Habilitar Network Policy en Amazon VPC CNI**: Las versiones más recientes de Amazon VPC CNI proporcionan soporte para network policy.
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-    ```
-
-Problemas con las otras opciones:
-
-* **A. Service**: Service proporciona acceso de red a los pods, pero no tiene capacidades de control o filtrado de tráfico.
-* **B. Ingress**: Ingress se usa para enrutar tráfico HTTP/HTTPS a services dentro del cluster, pero no define network policies generales.
-* **D. SecurityContext**: SecurityContext define configuraciones de seguridad a nivel de pod o container, pero no está relacionado con el control de tráfico de red.
+Utiliza las etiquetas reales de namespaces y pods, y los puertos de escucha reales. NodeLocal DNSCache y otras rutas de DNS requieren excepciones distintas. Service e Ingress enrutan tráfico; no sustituyen estas reglas de acceso L3/L4. SecurityContext controla los privilegios de una carga de trabajo, no es una lista declarativa de permisos de red.
 
 </details>
 
-### 5. ¿Qué servicio DNS se usa para service discovery dentro de un cluster de EKS?
-
-A. Amazon Route 53 B. CoreDNS C. kube-dns D. AWS Cloud Map
+5. ¿Qué componente DNS se suele configurar para el descubrimiento de servicios en un clúster convencional de EKS?
+   * A) Solo zonas alojadas privadas de Route 53
+   * B) CoreDNS
+   * C) Un despliegue kube-dns heredado obligatorio
+   * D) Solo Cloud Map
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. CoreDNS**
+**Respuesta: B) CoreDNS**
 
-**Explicación:** El servicio DNS que se usa de forma predeterminada para service discovery dentro de los clusters de Amazon EKS es CoreDNS. CoreDNS es un servidor DNS flexible y extensible que proporciona service discovery basado en DNS dentro de clusters de Kubernetes.
+EKS convencional utiliza CoreDNS para el DNS del clúster. No supongas que todos los modos de EKS crean automáticamente un Deployment de CoreDNS visible: Auto Mode proporciona DNS administrado y las herramientas que deshabilitan los add-ons de arranque predeterminados deben configurar explícitamente los add-ons que elijan.
 
-**Características clave de CoreDNS:**
+Para el add-on de CoreDNS administrado por EKS, conserva la configuración personalizada mediante el valor de configuración `corefile` admitido y el esquema de la versión exacta. El add-on puede sobrescribir los cambios directos al ConfigMap. Si CoreDNS es autogestionado, cambia la configuración mediante el propietario de su manifiesto/GitOps. Revisa las zonas de Kubernetes necesarias, `ready`, el reenvío y el comportamiento de recarga en vez de sustituir todo el ConfigMap con un ejemplo genérico.
 
-1. **Integración con Kubernetes**: CoreDNS se integra con la Kubernetes API para crear automáticamente registros DNS para services y pods.
-2. **Arquitectura de plugins**: CoreDNS puede extender su funcionalidad mediante varios plugins.
-3. **Alta disponibilidad**: En EKS, CoreDNS normalmente se implementa con varias replicas para garantizar alta disponibilidad.
-4. **Configurabilidad**: Se pueden configurar varios ajustes de DNS mediante el Corefile.
+Las respuestas DNS dependen del tipo de recurso:
 
-**Deployment de CoreDNS en EKS:**
+| Recurso | Comportamiento DNS habitual |
+| --- | --- |
+| Service normal | `<service>.<namespace>.svc.<cluster-domain>` resuelve a la familia de direcciones IP del Service |
+| Service sin cabecera (headless) | Direcciones de endpoints, según la configuración de readiness/publicación |
+| Service ExternalName | CNAME al nombre externo configurado |
+| Registro heredado de pod IPv4 | Dirección con guiones, como `10-0-1-23.<namespace>.pod.<cluster-domain>`, según el modo `pods` de CoreDNS |
 
-Cuando creas un cluster de EKS, CoreDNS se implementa automáticamente. CoreDNS se ejecuta como un Deployment en el namespace `kube-system`:
+`cluster.local` es un valor predeterminado común, no un dominio universal. `pods insecure` proporciona respuestas heredadas basadas en IP sin comprobar que exista el pod; no constituye una garantía de seguridad. Prueba DNS desde una carga de diagnóstico aprobada dentro del clúster, no desde el resolver arbitrario de un portátil.
 
-```bash
-kubectl get deployment coredns -n kube-system
-```
+CoreDNS administrado por EKS admite el escalado automático configurado en versiones compatibles del add-on. Mantén un solo propietario del número de réplicas: `kubectl scale` manual no es el bucle de control adecuado cuando el escalado automático administrado o HPA está activo.
 
-**Ejemplo de configuración de CoreDNS:**
+El siguiente **fragmento de Corefile** sustituye una directiva `cache` existente después de revisarla; no es YAML. CoreDNS 1.14.7 acepta `denial 1000`, pero normaliza el valor a una capacidad efectiva mínima de 1024. El ejemplo especifica esa capacidad; `success 10000` se redondea a 9984:
 
-La configuración de CoreDNS se almacena en un ConfigMap:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns
-  namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-```
-
-**Cómo funciona Service Discovery:**
-
-1. **Creación de Service**: Cuando se crea un Kubernetes Service, CoreDNS crea automáticamente un registro DNS.
-2. **Formato de nombre DNS**:
-   * Service: `<service-name>.<namespace>.svc.cluster.local`
-   * Pod: `<pod-ip>.<namespace>.pod.cluster.local`
-3. **Consulta DNS**: Cuando un pod dentro del cluster realiza una consulta DNS con un nombre de service, CoreDNS responde con el ClusterIP de ese service.
-
-**Ejemplo:**
-
-```bash
-# If my-service service exists in the default namespace
-nslookup my-service.default.svc.cluster.local
-
-# Result
-Name:   my-service.default.svc.cluster.local
-Address: 10.100.43.150  # Service's ClusterIP
-```
-
-**Escalado y optimización de CoreDNS:**
-
-En EKS, CoreDNS no escala automáticamente con el tamaño del cluster, por lo que en clusters grandes puede ser necesario escalar manualmente:
-
-```bash
-kubectl scale deployment coredns --replicas=4 -n kube-system
-```
-
-Además, puedes optimizar el rendimiento ajustando la configuración de caché:
-
-```yaml
+```text
 cache {
     success 10000
-    denial 1000
+    denial 1024
     prefetch 10 10m 20%
 }
 ```
 
-Problemas con las otras opciones:
-
-* **A. Amazon Route 53**: Route 53 es el servicio DNS de AWS, pero no se usa de forma predeterminada para service discovery dentro de clusters de EKS.
-* **C. kube-dns**: kube-dns se usaba en versiones anteriores de Kubernetes, pero fue reemplazado por CoreDNS en EKS.
-* **D. AWS Cloud Map**: Cloud Map es el servicio de service discovery de AWS, pero no se usa como el servicio DNS predeterminado dentro de clusters de EKS.
+Las capacidades de caché, TTL y prefetch requieren mediciones de la carga de trabajo; esto no es una prueba de rendimiento. Después de un cambio controlado, observa los errores DNS, el comportamiento de la caché y el consumo de CPU y memoria.
 
 </details>
 
 ## Preguntas de respuesta corta
 
-### 6. ¿Cuál es el factor principal que limita la cantidad máxima de pods por node en un cluster de Amazon EKS y qué métodos se pueden usar para aumentarla?
+6. ¿Qué limita la densidad de pods y cómo la modifica la delegación de prefijos?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** El factor principal que limita la cantidad máxima de pods por node en un cluster de Amazon EKS es **la cantidad de ENIs (Elastic Network Interfaces) por tipo de instancia EC2 y la cantidad de direcciones IP asignables por ENI**. El método principal para aumentarla es **habilitar la característica Prefix Delegation**.
+Distingue tres límites: capacidad de interfaces/direcciones de EC2, direcciones disponibles en la subred y capacidad de Kubernetes/cómputo. Requieren soluciones distintas. En el modo normal de IP secundaria IPv4, la fórmula histórica es `ENIs × (IPs por ENI − 1) + 2`: t3.small da 11, m5.large da 29 y c5.4xlarge da 234. Son resultados de la fórmula, no el límite efectivo de todos los grupos administrados.
 
-**Explicación detallada:**
+En modo de prefijos IPv4, un `/28` aporta 16 direcciones y ocupa una ranura de dirección secundaria. Una ENI puede alojar varios prefijos. El antiguo cálculo «un prefijo por ENI menos una dirección», que daba 47 para m5.large, era incorrecto. Los grupos administrados compatibles limitan maxPods a 110 si tienen menos de 30 vCPU y a 250 en los demás casos; la CPU, la memoria y la configuración real del CNI pueden reducir aún más la capacidad de carga utilizable.
 
-1.  **Fórmula de cálculo de pods máximos por node**:
+Este es un ejemplo de fragmento de configuración de add-on administrado:
 
-    ```
-    Maximum pods = (Number of ENIs × (IP addresses per ENI - 1)) + 2
-    ```
+```json
+{"env":{"ENABLE_PREFIX_DELEGATION":"true","WARM_PREFIX_TARGET":"1"}}
+```
 
-    * La primera dirección IP de cada ENI está reservada para el propio node.
-    * Los 2 adicionales son para los pods kube-proxy y aws-node.
-2. **Ejemplos de límites por tipo de instancia**:
-   * **t3.small**: (3 ENIs × (4 IPs - 1)) + 2 = 11 pods
-   * **m5.large**: (3 ENIs × (10 IPs - 1)) + 2 = 29 pods
-   * **c5.4xlarge**: (8 ENIs × (30 IPs - 1)) + 2 = 234 pods
-3.  **Expansión mediante Prefix Delegation**: Prefix delegation es una característica que asigna bloques CIDR /28 (16 IPs) en lugar de direcciones IP individuales a cada ENI.
+Revisa el esquema de la versión exacta y la configuración existente antes de combinar el fragmento. WARM_PREFIX_TARGET es la capacidad de prefijos de reserva, no un máximo de un prefijo por ENI. Si se configuran WARM_IP_TARGET o MINIMUM_IP_TARGET, modifican ese comportamiento. El modo de prefijos requiere espacio contiguo `/28` y una instancia/CNI compatible; no amplía la subred.
 
-    **Cómo habilitarlo**:
+La delegación de prefijos puede coexistir con grupos de seguridad para pods. Los pods con branch ENI siguen sujetos a su propia capacidad por instancia y no obtienen la densidad de prefijos. Planifica nodos nuevos o renovados y una migración compatible con PDB; no te limites a cambiar variables suponiendo que cambiarán todos los pods en ejecución o maxPods. Las AMI AL2023 personalizadas pueden requerir un maxPods revisado en NodeConfig; aumentar solo el límite de kubelet no crea direcciones IP ni CPU.
 
-    ```bash
-    # Modify ConfigMap
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
+```bash
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -o custom-columns=NAME:.metadata.name,PODS:.status.allocatable.pods,POD_ENI:.status.allocatable.vpc\\.amazonaws\\.com/pod-eni
+```
 
-    # Optionally set prefix allocation mode
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-    ```
-
-    **Fórmula de cálculo después de habilitar Prefix Delegation**:
-
-    ```
-    Maximum pods = (Number of ENIs × (Prefixes per ENI × IPs per prefix - 1)) + 2
-    ```
-
-    Ejemplo: m5.large con prefix delegation habilitado
-
-    * Sin prefix delegation: 29 pods
-    * Con prefix delegation habilitado: (3 ENIs × (1 prefix × 16 IPs - 1)) + 2 = 47 pods
-4. **Otros métodos para aumentar el conteo máximo de pods**:
-   * **Usar tipos de instancia más grandes**: Cambiar a tipos de instancia que admitan más ENIs y direcciones IP
-   * **Configuración CNI personalizada**: Ajustar la configuración de kubelet usando el flag `--max-pods` (no recomendado)
-   * **Usar plugins CNI alternativos**: Cambiar a plugins CNI que usan overlay networks como Calico, Cilium
-5. **Consideraciones**:
-   * Prefix delegation solo se admite en instancias EC2 basadas en Nitro.
-   * Cuando prefix delegation está habilitado, no se puede usar la característica SecurityGroupsForPods.
-   * A medida que aumenta la cantidad de pods por node, puede producirse contención de recursos del node (CPU, memoria), por lo que es importante seleccionar un tamaño de instancia adecuado.
-6.  **Monitoreo y optimización**:
-
-    ```bash
-    # Check current IP address usage
-    kubectl exec -n kube-system ds/aws-node -- curl -s http://localhost:61679/v1/enis | jq
-
-    # Check prefix delegation status
-    kubectl describe daemonset aws-node -n kube-system | grep PREFIX
-    ```
-
-Aunque habilitar prefix delegation puede aumentar significativamente el conteo máximo de pods por node, es importante elegir la configuración adecuada según los requisitos del cluster y las características de las cargas de trabajo.
+Inspecciona la capacidad asignable real y la asignación del CNI/EC2. No supongas que el contenedor aws-node incluye curl; utiliza la ruta documentada de introspección/depuración para la versión instalada y el nodo elegido.
 
 </details>
 
-### 7. ¿Cómo se llama la característica que permite asignar AWS security groups específicos a pods en Amazon EKS y cómo se configura?
+7. ¿Cómo se asignan grupos de seguridad a determinados pods en nodos EC2 convencionales de EKS?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** La característica que permite asignar AWS security groups específicos a pods en Amazon EKS se llama **Security Groups for Pods** o **Pod ENI (Elastic Network Interface)**. Esta característica se puede configurar habilitando la opción **ENABLE\_POD\_ENI** en VPC CNI.
+Security Groups for Pods utiliza una **trunk ENI en el nodo y branch ENI para los pods seleccionados**. El controlador de recursos de VPC de EKS crea y gestiona esta ruta con permisos del **rol IAM del clúster**, incluido `AmazonEKSVPCResourceController`; no se trata simplemente de permisos de ServiceAccount por pod.
 
-**Explicación detallada:**
+Para el ejemplo convencional de Linux en EC2, comprueba que el tipo de instancia admite trunking (no todos los tipos Nitro cumplen este requisito), que VPC CNI es compatible y que `ENABLE_POD_ENI=true` se configura a través de su propietario. Revisa `POD_SECURITY_GROUP_ENFORCING_MODE`, DNS, sondas, rutas y reglas de los grupos de seguridad. Los modos estricto y estándar difieren en SNAT y en los grupos de seguridad aplicables, especialmente fuera de la VPC y en rutas locales al nodo.
 
-1. **Descripción general de Security Groups for Pods**: Esta característica crea una ENI separada (también llamada trunk ENI) para pods específicos y adjunta security groups a esta ENI, lo que permite un control de seguridad de red granular a nivel de pod.
-2. **Prerrequisitos**:
-   * Versión 1.7.7 o superior del plugin Amazon VPC CNI
-   * Versión 1.17 o superior de Kubernetes
-   * Instancias EC2 basadas en Nitro
-   * La característica de prefix delegation debe estar deshabilitada
-3.  **Pasos de configuración**:
+Crea el namespace dedicado `sgp-lab` y sustituye el marcador del grupo de seguridad por uno aprobado en la VPC correcta. Este cliente de laboratorio gestionado por un controlador que permanece inactivo demuestra la selección, no que se haya accedido correctamente a una base de datos:
 
-    a. **Habilitar la característica Pod ENI en VPC CNI**:
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-    ```
-
-    b. **Crear el recurso SecurityGroupPolicy**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
+```yaml
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-client-policy
+  namespace: sgp-lab
+spec:
+  podSelector:
+    matchLabels: {role: db-client}
+  securityGroups:
+    groupIds: [sg-REPLACE_WITH_APPROVED_GROUP]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-client
+  namespace: sgp-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {role: db-client}
+  template:
     metadata:
-      name: allow-db-access
-      namespace: app
+      labels: {role: db-client}
     spec:
-      podSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-0123456789abcdef0
-    ```
-
-    c. **Otorgar permisos IAM al Service Account**: El service account de VPC CNI necesita los siguientes permisos:
-
-    * ec2:CreateNetworkInterface
-    * ec2:DeleteNetworkInterface
-    * ec2:DescribeNetworkInterfaces
-    * ec2:DescribeSecurityGroups
-    * ec2:ModifyNetworkInterfaceAttribute
-    * ec2:CreateTags
-4.  **Ejemplo de configuración de Pod**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client
-      namespace: app
-      labels:
-        role: db-client
-    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
       containers:
-      - name: app
-        image: amazonlinux:2
-        command: ['sleep', '3600']
-    ```
-5. **Cómo funciona**:
-   * Cuando se crea un pod con labels que coinciden con una SecurityGroupPolicy, VPC CNI crea una branch ENI para ese pod.
-   * Los security groups especificados se adjuntan a esta branch ENI.
-   * El tráfico del pod se enruta a través de esta branch ENI, y se aplican las reglas de security group adjuntas.
-6.  **Métodos de verificación**:
+      - name: client
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command: [sleep, '3600']
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
 
-    ```bash
-    # Check pod's ENI information
-    kubectl describe pod db-client -n app
+Utiliza un selector de pods o un selector de ServiceAccount, según corresponda. Comprueba el pod recién creado, el CNINode/capacidad de branch ENI y las conexiones permitidas y denegadas a la aplicación. Cambiar la selección de SecurityGroupPolicy no modifica retroactivamente los pods en ejecución; los cambios independientes de reglas de SG tienen su propio comportamiento de seguimiento de conexiones. Los pods con hostNetwork utilizan la red del nodo.
 
-    # Check SecurityGroupPolicy
-    kubectl get securitygrouppolicy -n app
-
-    # Check VPC CNI logs
-    kubectl logs -n kube-system -l k8s-app=aws-node
-    ```
-7. **Limitaciones**:
-   * Hay límites en la cantidad de branch ENIs por node (varía según el tipo de instancia).
-   * No se puede usar junto con la característica de prefix delegation.
-   * Los security groups no pueden cambiarse después de que se crea el pod.
-   * El tiempo de inicio del pod puede aumentar ligeramente.
-8. **Casos de uso**:
-   * Pods que acceden a servicios de AWS que controlan el acceso con security groups como RDS, ElastiCache
-   * Cuando se necesita control granular del tráfico entrante/saliente para pods específicos
-   * Workloads que requieren aislamiento de red según requisitos regulatorios
-
-La característica Security Groups for Pods es una herramienta potente para mejorar la seguridad de networking de EKS, pero debe usarse de forma adecuada considerando el overhead de recursos por el uso de ENIs adicionales y sus limitaciones.
+La delegación de prefijos es compatible, pero no aumenta la capacidad de los pods con branch ENI. La función tradicional SecurityGroupPolicy no es la función de selección de subredes/SG de NodeClass de Auto Mode; sigue la API correspondiente al tipo de cómputo en vez de tratarlas como si fueran iguales.
 
 </details>
 
-### 8. Al usar Service de tipo LoadBalancer en Amazon EKS, ¿qué tipo de load balancer crea AWS Load Balancer Controller de forma predeterminada y cómo se cambia?
+8. ¿Qué balanceador crea AWS Load Balancer Controller para un Service de tipo LoadBalancer y cómo se configura su propietario?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Al usar Service de tipo LoadBalancer en Amazon EKS, AWS Load Balancer Controller crea un **Classic Load Balancer (CLB)** de forma predeterminada. Para cambiarlo a un **Network Load Balancer (NLB)**, debes agregar una **annotation** específica al service.
+AWS Load Balancer Controller reconcilia un Service LoadBalancer como un **NLB**, no como un CLB. El antiguo cuestionario lo confundía con el controlador de Service integrado heredado. LBC utiliza `service.k8s.aws/nlb` para indicar explícitamente quién administra el recurso y, desde v2.2, los NLB nuevos tienen como valor predeterminado el esquema **internal**. Configura explícitamente el esquema deseado.
 
-**Explicación detallada:**
+Este ejemplo crea un Service nuevo para una carga de trabajo `app=echo` existente y revisada en `lb-lab`, después de instalar y autorizar el controlador y validar las subredes/grupos de seguridad aptos. Aprovisiona un NLB interno con coste; no lo apliques a la ligera en un namespace de producción:
 
-1. **Comportamiento predeterminado**: Cuando creas un Kubernetes Service de tipo `LoadBalancer`, el AWS cloud controller manager aprovisiona un Classic Load Balancer de forma predeterminada.
-2.  **Cómo cambiar a Network Load Balancer**: Agrega la siguiente annotation al Service:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb
-    ```
-3.  **Ejemplo completo de Service (usando NLB)**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: my-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: my-app
-    ```
-4.  **Configuración de Load Balancer interno**: De forma predeterminada, los load balancers creados son internet-facing. Para configurarlo como load balancer interno:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-    ```
-5.  **Opciones de configuración adicionales**:
-
-    a. **Configuración de Target Type (IP Mode)**:
-
-    ```yaml
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-nlb
+  namespace: lb-lab
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
-    ```
+spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector: {app: echo}
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+```
 
-    b. **Especificar Security Groups**:
+Los destinos IP envían tráfico a las IP de pods aptas; los destinos instance utilizan rutas de nodo/NodePort. En modo IP, el ejemplo deshabilita la asignación de NodePort no utilizada. Auto Mode utiliza su propia clase de propietario (`eks.amazonaws.com/nlb`) y un conjunto de configuración compatible. No cambies las anotaciones/clases de selección del controlador de un Service heredado existente para intentar una migración no revisada; podrías filtrar o exponer recursos.
 
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-security-groups: sg-0123456789abcdef0
-    ```
+Las **opciones de configuración** deben coincidir con la versión del controlador y el diseño de listeners elegidos. En la tabla se omite el prefijo común `service.beta.kubernetes.io/` de los nombres de anotación.
 
-    c. **Especificar Subnets**:
+| Requisito | Configuración/consideración actual |
+| --- | --- |
+| Esquema interno o público | `aws-load-balancer-scheme: internal` o `internet-facing`; las rutas y subredes deben coincidir |
+| Destinos IP | `aws-load-balancer-nlb-target-type: ip` |
+| Grupos de seguridad frontend personalizados | `aws-load-balancer-security-groups`; revisa la gestión de reglas backend y las rutas de health check |
+| Subredes explícitas | `aws-load-balancer-subnets`; siguen aplicándose los requisitos de aptitud, zona de disponibilidad e IP |
+| Comportamiento entre zonas | `aws-load-balancer-attributes` con `load_balancing.cross_zone.enabled`; evalúa disponibilidad, topología y coste |
+| Registros S3 heredados | `aws-load-balancer-attributes` con `access_logs.s3.*`; los registros de acceso de NLB solo cubren solicitudes TLS y requieren revisar el bucket y los permisos de entrega |
+| Terminación TLS | `aws-load-balancer-ssl-cert` y los puertos de listener del Service correspondientes en `aws-load-balancer-ssl-ports`; es terminación TLS de NLB, no enrutamiento HTTP de ALB |
 
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0123456789abcdef0,subnet-0123456789abcdef1
-    ```
+Las anotaciones antiguas `aws-load-balancer-internal`, de balanceo entre zonas y de registro de acceso están obsoletas y se sustituyen por opciones de esquema/atributos. El NLB actual también ofrece entrega mejorada de registros de CloudWatch; utiliza su integración documentada en vez de suponer que las anotaciones S3 la configuran. Los registros de acceso son de mejor esfuerzo, no un registro exhaustivo de solicitudes.
 
-    d. **Deshabilitar Cross-Zone Load Balancing**:
+**Alternativa ALB:** utiliza un Ingress con una IngressClass `alb` configurada y destinos IP hacia un backend ClusterIP. Así se evita crear por accidente un NLB y un ALB para el mismo backend de ejemplo:
 
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "false"
-    ```
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-backend
+  namespace: lb-lab
+spec:
+  type: ClusterIP
+  selector: {app: echo}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo-alb
+  namespace: lb-lab
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: echo-backend
+            port: {number: 8080}
+```
 
-    e. **Habilitar Access Logs**:
+Antes de instalarlo, prepara el ServiceAccount del controlador y permisos IAM de alcance limitado. El chart revisado 3.5.0 contiene el controlador v3.5.0; la región y la VPC se especifican explícitamente en entornos donde no está disponible la detección por IMDS. Renderiza e inspecciona antes de desplegar:
 
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
-    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: "my-elb-logs"
-    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix: "my-app"
-    ```
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --version 3.5.0 --kube-version 1.36.0 --namespace kube-system \
+  --set-string clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string region="${EXAMPLE_REGION:?}" --set-string vpcId="${EXAMPLE_VPC_ID:?}" \
+  --set serviceAccount.create=false --set-string serviceAccount.name=aws-load-balancer-controller \
+  > lbc-reviewed.yaml
+```
 
-    f. **Configuración de certificado SSL (HTTPS)**:
+| Capacidad | CLB (heredado) | NLB | ALB |
+| --- | --- | --- | --- |
+| Capa principal de enrutamiento | Listeners L4/L7 heredados | L4 | L7 HTTP/HTTPS |
+| Destinos IP directos | No | Sí | Sí |
+| Opción de dirección estática por zona | No | Sí | No tiene una IP frontend estática nativa |
+| Enrutamiento por ruta HTTP | No | No | Sí |
 
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:region:account-id:certificate/certificate-id
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-    ```
-6.  **Uso de AWS Load Balancer Controller**: En clusters de EKS más recientes, puedes usar AWS Load Balancer Controller para aprovechar más características:
-
-    a. **Instalación**:
-
-    ```bash
-    helm repo add eks https://aws.github.io/eks-charts
-    helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-      -n kube-system \
-      --set clusterName=my-cluster \
-      --set serviceAccount.create=false \
-      --set serviceAccount.name=aws-load-balancer-controller
-    ```
-
-    b. **Uso de Application Load Balancer (ALB) con Ingress**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: my-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/scheme: internet-facing
-    spec:
-      rules:
-      - http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-service
-                port:
-                  number: 80
-    ```
-7.  **Comparación de tipos de Load Balancer**:
-
-    | Característica          | Classic Load Balancer | Network Load Balancer | Application Load Balancer |
-    | ----------------------- | --------------------- | --------------------- | ------------------------- |
-    | Protocolo               | TCP, SSL, HTTP, HTTPS | TCP, UDP, TLS         | HTTP, HTTPS               |
-    | Capa                    | 4 & 7                 | 4                     | 7                         |
-    | Rendimiento             | Bueno                 | Muy bueno             | Bueno                     |
-    | Latencia                | Media                 | Muy baja              | Baja                      |
-    | IP estática             | No                    | Sí                    | No                        |
-    | Enrutamiento por path   | No                    | No                    | Sí                        |
-    | WebSockets              | Limitado              | Sí                    | Sí                        |
-    | Targets basados en containers | No             | Sí (IP mode)          | Sí (IP mode)              |
-8. **Prácticas recomendadas**:
-   * Usa Ingress con ALB para la mayoría del tráfico HTTP/HTTPS
-   * Usa NLB para tráfico TCP/UDP o cuando se necesita throughput muy alto
-   * A menos que existan aplicaciones legacy o requisitos especiales, usa NLB o ALB en lugar de CLB
-   * Habilita siempre cross-zone load balancing en entornos de producción
-
-Usar AWS Load Balancer Controller permite una administración más eficaz de los load balancers de AWS mediante Kubernetes Services y recursos Ingress, con configuración granular posible mediante varias annotations.
+NLB admite actualmente listeners TCP, TLS, UDP, TCP_UDP, QUIC y TCP_QUIC. El soporte y la configuración del controlador deben comprobarse por separado (LBC 3.5 documenta anotaciones de puerto QUIC). La antigua tabla cualitativa «bueno/muy bueno» no era un benchmark. Elige y mide según la aplicación; habilitar universalmente el tráfico entre zonas o aplicar una clasificación general de latencia no es una regla de producción.
 
 </details>
 
 ## Preguntas prácticas
 
-### 9. Escribe una NetworkPolicy que permita la comunicación solo entre pods dentro de un namespace específico y bloquee la comunicación con pods de otros namespaces en un cluster de Amazon EKS.
+9. Implementa y valida tráfico dentro del mismo namespace con una excepción DNS y rutas TCP bloqueadas entre namespaces.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** La siguiente es una NetworkPolicy que permite la comunicación solo entre pods dentro de un namespace específico y bloquea la comunicación con pods de otros namespaces:
+Utiliza una política que seleccione todos los pods del namespace previsto y permita los pods del mismo namespace más una excepción DNS explícita. Es una política L3/L4, no una prueba de aislamiento completo de tenants o nodos.
+
+**Requisitos previos:** un clúster de prueba aprobado, convencional, Linux e IPv4, con NetworkPolicy nativa de VPC CNI ya habilitada mediante el propietario/mecanismo de configuración admitido; pods de prueba gestionados por controladores; CoreDNS operativo; y ninguna política organizativa en conflicto. No instales Calico ni cambies como parte de este laboratorio una variable `ENABLE_NETWORK_POLICY` inventada.
+
+Crea dos namespaces nuevos y registra sus UID. Utiliza una única sesión de Bash para los siguientes fragmentos:
+
+```bash
+set -euo pipefail
+umask 077
+: "${EXAMPLE_KUBECONFIG:?Use the reviewed IPv4 Linux lab cluster kubeconfig}"
+NP_LAB_DIR=$(mktemp -d /tmp/eks-network-policy.XXXXXX)
+NP_LAB_ID="$(date +%s)-$$"
+NP_NAMESPACE_A="np-a-$NP_LAB_ID"
+NP_NAMESPACE_B="np-b-$NP_LAB_ID"
+for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create namespace "$ns" -o json \
+    > "$NP_LAB_DIR/$ns-created.json"
+  jq -e '.metadata.uid | type == "string" and length > 0' \
+    "$NP_LAB_DIR/$ns-created.json" >/dev/null
+done
+```
+
+Los servidores HTTP también ofrecen un diagnóstico TCP conocido en Python. Cada Service y contenedor utiliza el puerto 8080. Son cargas de prueba, no valores de dimensionamiento para producción; registra los digest de imagen para poder repetir la prueba.
+
+```bash
+for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$ns" create -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: network-probe}
+  template:
+    metadata:
+      labels: {app: network-probe}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: probe
+        image: python:3.13-alpine
+        command: [python, -m, http.server, "8080", --directory, /tmp]
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket: {port: 8080}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-probe
+spec:
+  type: ClusterIP
+  selector: {app: network-probe}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+EOF
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$ns" \
+    rollout status deployment/network-probe --timeout=180s
+done
+```
+
+**Línea base:** antes de aplicar una política, exige que funcionen las conexiones TCP dentro del mismo namespace y entre namespaces. Los fallos de DNS/exec no son lo mismo que las conexiones TCP denegadas. Hacer ping por ICMP no es una prueba portátil de aplicación de NetworkPolicy.
+
+```bash
+check_tcp() {
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$1" exec deployment/network-probe \
+    -c probe -- python -c '
+import socket, sys
+try:
+    address = socket.gethostbyname(sys.argv[1])
+except OSError as error:
+    print("DNS failed:", error, file=sys.stderr)
+    sys.exit(43)
+try:
+    connection = socket.create_connection((address, 8080), timeout=3)
+    connection.close()
+except OSError as error:
+    print("TCP failed:", error, file=sys.stderr)
+    sys.exit(42)
+print("TCP succeeded")
+' "network-probe.$2"
+}
+
+# All four paths must work before applying the policy.
+check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"
+check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_A"
+```
+
+**Aplicar solo al namespace A:** un podSelector peer vacío selecciona los pods de ese namespace de política. El peer DNS combina el namespace kube-system con la etiqueta del pod CoreDNS. Adáptalo si utilizas NodeLocal DNSCache u otra ruta DNS. La asociación de políticas estándar es asíncrona; prueba su propagación con controles positivos y las dos direcciones bloqueadas:
+
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NP_NAMESPACE_A" create -f - <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: namespace-boundary
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+EOF
+
+expect_tcp_block() {
+  if check_tcp "$1" "$2"; then
+    return 1
+  else
+    result=$?
+    [ "$result" -eq 42 ] || {
+      printf '%s\n' 'DNS or exec failure is not proof of policy denial.' >&2
+      exit 1
+    }
+    return 0
+  fi
+}
+NP_VERIFIED=false
+for attempt in $(seq 1 30); do
+  check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+  check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+  if expect_tcp_block "$NP_NAMESPACE_A" "$NP_NAMESPACE_B" &&
+     expect_tcp_block "$NP_NAMESPACE_B" "$NP_NAMESPACE_A"; then
+    # Repeat positive controls after observing both blocked cross-namespace paths.
+    check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+    check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+    NP_VERIFIED=true
+    break
+  fi
+  sleep 2
+done
+[ "$NP_VERIFIED" = true ] || {
+  printf '%s\n' 'Expected policy behavior was not observed; inspect the enforcement path.' >&2
+  exit 1
+}
+```
+
+El resultado correcto significa que las rutas TCP probadas se comportaron como se esperaba y que las comprobaciones de DNS y disponibilidad del servidor pasaron. No demuestra que se filtren todos los protocolos o interfaces. Mantén aparte los controles de nodo, el servicio de metadatos y los grupos de seguridad de la plataforma.
+
+**Extensiones:** para permitir únicamente ciertos pods o puertos del mismo namespace, sustituye/revisa las reglas amplias que los permiten. Añadir una política más estrecha no puede retirar una regla de permiso amplia ya existente. Para una API externa revisada, una política adicional de egress puede seleccionar el CIDR/puerto requerido; el prefijo de documentación de este ejemplo no es un destino activo:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: restrict-to-same-namespace
-  namespace: app-namespace  # Namespace name to apply
+  name: allow-reviewed-external-api
+  namespace: app-namespace
 spec:
-  podSelector: {}  # Apply to all pods in the namespace
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: app-namespace  # Same namespace
+  podSelector:
+    matchLabels: {app: web}
+  policyTypes: [Egress]
   egress:
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: app-namespace  # Same namespace
-  # Allow DNS lookups (to CoreDNS in kube-system)
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
+    - ipBlock:
+        cidr: 203.0.113.0/24
     ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
+    - {protocol: TCP, port: 443}
 ```
 
-**Explicación detallada:**
+NetworkPolicy estándar no proporciona una lista de permitidos por FQDN. NAT y la selección de endpoints pueden afectar a la IP evaluada. Una regla general `0.0.0.0/0` que solo excluya rangos RFC1918 no es una regla específica para un servicio externo ni una protección completa para los endpoints de metadatos link-local.
 
-1. **Explicación de componentes de NetworkPolicy**:
-   * **metadata.namespace**: Especifica el namespace donde se aplicará esta policy.
-   * **spec.podSelector: {}**: Un selector de pod vacío aplica la policy a todos los pods del namespace.
-   * **policyTypes**: Controla tanto el tráfico Ingress (entrante) como Egress (saliente).
-   * **ingress.from.namespaceSelector**: Permite tráfico solo desde el mismo namespace.
-   * **egress.to.namespaceSelector**: Permite tráfico solo hacia el mismo namespace.
-   * **Allow DNS Lookups**: Permite tráfico DNS hacia CoreDNS en el namespace kube-system.
-2.  **Pasos de implementación**:
+Después de la prueba, elimina solo los namespaces cuyos UID registraste:
 
-    a. **Crear Namespace**:
-
-    ```bash
-    kubectl create namespace app-namespace
-    ```
-
-    b. **Agregar Label al Namespace** (se agrega automáticamente en Kubernetes 1.21+):
-
-    ```bash
-    kubectl label namespace app-namespace kubernetes.io/metadata.name=app-namespace
-    ```
-
-    c. **Aplicar NetworkPolicy**:
-
-    ```bash
-    kubectl apply -f network-policy.yaml
-    ```
-
-    d. **Verificar Policy**:
-
-    ```bash
-    kubectl describe networkpolicy restrict-to-same-namespace -n app-namespace
-    ```
-3.  **Método de prueba**:
-
-    a. **Implementar Pod de prueba en el mismo Namespace**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: test-pod-1
-      namespace: app-namespace
-    spec:
-      containers:
-      - name: busybox
-        image: busybox
-        command: ['sleep', '3600']
-    ```
-
-    b. **Implementar Pod de prueba en un Namespace diferente**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: test-pod-2
-      namespace: default
-    spec:
-      containers:
-      - name: busybox
-        image: busybox
-        command: ['sleep', '3600']
-    ```
-
-    c. **Prueba de conexión**:
-
-    ```bash
-    # Test communication within same namespace (should succeed)
-    kubectl exec -n app-namespace test-pod-1 -- ping -c 2 $(kubectl get pod test-pod-3 -n app-namespace -o jsonpath='{.status.podIP}')
-
-    # Test communication to other namespace (should fail)
-    kubectl exec -n app-namespace test-pod-1 -- ping -c 2 $(kubectl get pod test-pod-2 -n default -o jsonpath='{.status.podIP}')
-    ```
-4.  **Notas y consideraciones**:
-
-    a. **Verificar soporte de NetworkPolicy**: Para usar NetworkPolicy en Amazon EKS, se requiere un plugin CNI que admita network policies:
-
-    ```bash
-    # Install Calico
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-
-    # Or enable network policy in Amazon VPC CNI
-    kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-    ```
-
-    b. **Default Deny Policy**: Cuando se aplica NetworkPolicy, todo el tráfico que no está explícitamente permitido se deniega de forma predeterminada.
-
-    c. **Permitir acceso DNS**: Debes permitir tráfico hacia CoreDNS en el namespace kube-system para que los pods puedan realizar consultas DNS.
-
-    d. **Acceso a servicios del sistema**: Puede que necesites permitir acceso a servicios del sistema como el Kubernetes API server y servicios de monitoreo según sea necesario.
-5.  **Extensiones y mejoras**:
-
-    a. **Permitir comunicación solo entre pods específicos**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-specific-pods
-      namespace: app-namespace
-    spec:
-      podSelector:
-        matchLabels:
-          app: web
-      policyTypes:
-      - Ingress
-      ingress:
-      - from:
-        - podSelector:
-            matchLabels:
-              app: api
-    ```
-
-    b. **Permitir solo puertos específicos**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-specific-ports
-      namespace: app-namespace
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: app-namespace
-        ports:
-        - protocol: TCP
-          port: 8080
-    ```
-
-    c. **Permitir acceso a servicios externos**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-external-service
-      namespace: app-namespace
-    spec:
-      podSelector:
-        matchLabels:
-          app: web
-      policyTypes:
-      - Egress
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.0.0.0/16  # VPC CIDR
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-            - 10.0.0.0/8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
-    ```
-
-Usar NetworkPolicy permite implementar un control de seguridad de red granular dentro de clusters de EKS, lo que resulta especialmente útil en entornos multi-tenant o workloads con requisitos regulatorios.
+```bash
+for ns in "${NP_NAMESPACE_A:?}" "${NP_NAMESPACE_B:?}"; do
+  expected_uid=$(jq -er '.metadata.uid' "${NP_LAB_DIR:?}/$ns-created.json") || exit 1
+  current_uid=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get namespace "$ns" \
+    --ignore-not-found -o jsonpath='{.metadata.uid}') || exit 1
+  if [ -z "$current_uid" ]; then
+    continue
+  elif [ "$current_uid" = "$expected_uid" ]; then
+    kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" delete namespace "$ns" --wait=true || exit 1
+  else
+    printf '%s\n' 'Namespace UID changed; no deletion attempted for this namespace.' >&2
+    exit 1
+  fi
+done
+```
 
 </details>
 
 ## Preguntas avanzadas
 
-### 10. Explica varias estrategias para resolver el problema de agotamiento de direcciones IP con VPC CNI en un cluster de Amazon EKS y compara las ventajas y desventajas de cada enfoque.
+10. Compara soluciones para el agotamiento de direcciones de VPC CNI y distingue la densidad de nodos del espacio total de direcciones.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Las siguientes son varias estrategias para resolver el problema de agotamiento de direcciones IP con VPC CNI en un cluster de Amazon EKS y las ventajas y desventajas de cada enfoque:
+Primero identifica qué recurso se agotó: direcciones de subred, bloques de prefijos contiguos, ranuras de ENI por nodo, branch ENI, maxPods de kubelet o capacidad de cómputo. Cada caso necesita una solución distinta. La conclusión anterior de que «la delegación de prefijos siempre es la solución más sencilla» era demasiado general.
 
-### 1. Habilitar Prefix Delegation
+| Enfoque | Para qué ayuda | Limitación importante |
+| --- | --- | --- |
+| Delegación de prefijos | Más direcciones de pods por ranura de ENI normal; eficiencia de asignación | Requiere `/28` contiguos; no amplía el espacio IPv4 ni la capacidad de branch ENI |
+| Ajuste de pools warm/minimum | Direcciones preasignadas sin utilizar | Intercambia disponibilidad inmediata de asignación/llamadas de API por uso de direcciones |
+| Red personalizada | Separa la demanda de subred de nodos y pods | Mismos requisitos de VPC/zona de disponibilidad, rutas/SG y migración planificada de nodos |
+| CIDR/subredes adicionales de VPC | Más espacio de direcciones asignables | Hay que revisar solapamientos/cuotas/enrutamiento y reconciliación del plano de control |
+| Rangos mayores en subredes nuevas | Crecimiento planificado de direcciones | Las subredes existentes no se pueden ampliar sin más; los rangos deben caber en CIDR de VPC asociados |
+| Diseño de clúster IPv6 | Elimina gran parte de la presión de direcciones IPv4 compartidas para pods | Planificación de nuevo clúster/familia IP, cómputo/CNI compatible y requisitos de egress |
+| CNI alternativo | Otro modelo de IPAM/enrutamiento | Requiere una migración compatible y probada; no basta con cambiar un manifiesto en el sitio |
+| Fargate | Delega operaciones de asignación de nodos/IP | Cada pod sigue consumiendo direcciones de subred/VPC; no soluciona el agotamiento de una subred |
 
-**Descripción**: Una característica que asigna bloques CIDR /28 (16 IPs) en lugar de direcciones IP individuales a cada ENI.
+**Modo de prefijos:** los prefijos IPv4 normales son bloques `/28`, cada uno de los cuales consume una ranura de dirección. La afirmación original de «hasta 5x» es genérica y no está verificada como benchmark; utiliza los límites reales de instancia/CNI/kubelet. Los grupos de seguridad para pods pueden coexistir, pero los pods con branch ENI conservan sus propios límites. Si es necesario, comprueba la fragmentación y reserva espacio para prefijos o utiliza subredes nuevas; no supongas que el número de IP individuales libres demuestra que hay un bloque contiguo disponible.
 
-**Método de implementación**:
+**Pools warm:** `WARM_IP_TARGET` es el margen de direcciones libres y `MINIMUM_IP_TARGET` es la asignación total mínima. Pueden prevalecer sobre el comportamiento de objetivos warm para prefijos/ENI. Los valores de ejemplo 5/10 deben ajustarse a la carga de trabajo y al presupuesto de llamadas de API:
 
-```bash
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
+```json
+{"env":{"WARM_IP_TARGET":"5","MINIMUM_IP_TARGET":"10"}}
 ```
 
-**Ventajas**:
+`MAX_ENI` limita las asignaciones del nodo hasta el máximo permitido por el tipo de instancia EC2; establecerlo en 5 no permite utilizar cinco ENI en un tipo que admita menos. Revisa las métricas de asignación reales antes de cambiar los límites.
 
-* Aumenta significativamente las direcciones IP disponibles por node (hasta 5x)
-* Compatible con las características existentes de VPC CNI
-* Velocidad de asignación de direcciones IP mejorada
+**Red personalizada:** combina esta configuración a través del propietario existente del CNI, después de preparar subredes de pods y grupos de seguridad en la misma VPC y zona de disponibilidad. La etiqueta de zona estable es `topology.kubernetes.io/zone`, no la etiqueta beta obsoleta:
 
-**Desventajas**:
-
-* Solo se admite en instancias EC2 basadas en Nitro
-* No se puede usar junto con la característica Security Groups for Pods
-* Posibles problemas de compatibilidad con algunos servicios de AWS
-
-### 2. Habilitar Custom Networking Mode
-
-**Descripción**: Una característica que asigna direcciones IP de pod desde subnets separadas en lugar de la subnet donde se encuentran los nodes.
-
-**Método de implementación**:
-
-```bash
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
-kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=failure-domain.beta.kubernetes.io/zone
+```json
+{
+  "env": {
+    "AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG": "true",
+    "ENI_CONFIG_LABEL_DEF": "topology.kubernetes.io/zone"
+  }
+}
 ```
-
-Crear ENIConfig para cada availability zone:
 
 ```yaml
 apiVersion: crd.k8s.amazonaws.com/v1alpha1
@@ -873,197 +653,118 @@ kind: ENIConfig
 metadata:
   name: us-west-2a
 spec:
+  subnet: subnet-REPLACE_WITH_POD_SUBNET_IN_SAME_VPC_AND_AZ
   securityGroups:
-    - sg-0123456789abcdef0
-  subnet: subnet-0123456789abcdef0
+  - sg-REPLACE_WITH_APPROVED_POD_GROUP
 ```
 
-**Ventajas**:
+Crea un ENIConfig correspondiente para cada zona de disponibilidad utilizada. Revisa las anulaciones de anotaciones de nodo. Los nodos de sustitución con la etiqueta de zona correcta pueden reutilizar el ENIConfig existente; no es necesario recrearlo cada vez. La red de todos los pods existentes no cambia de inmediato. Valida los nodos de sustitución y migra con comprobaciones de capacidad, PDB y datos.
 
-* Evita el agotamiento de direcciones IP de las subnets de nodes
-* Permite configuración de subnet dedicada para networking de pods
-* Puede usar bloques CIDR más grandes
+**Cambios de CIDR/subred:** añade CIDR no solapados aptos y sus subredes asociadas a través del propietario de IaC; después revisa rutas, seguridad, endpoints y etiquetas de descubrimiento. EKS puede tardar hasta una hora en reconocer un CIDR de VPC recién asociado para operaciones del plano de control. Para crear una subred `/16` también se necesita un rango `/16` asociado disponible; elegir un rango «mayor» no evita los límites de VPC.
 
-**Desventajas**:
+**CNI alternativo/IPv6:** planifica la ruta completa de plano de control, DNS, servicios/balanceadores de carga, políticas, arranque y reversión. No apliques un manifiesto flotante de overlay de Calico ni desactives aws-node en un clúster activo como cambio genérico. La familia IP de un clúster EKS existente no se puede cambiar sin más a IPv6. La compatibilidad y la integración con AWS dependen del modo específico de cómputo/CNI.
 
-* Configuración y administración complejas
-* Se requieren subnets adicionales
-* Se necesita reconfigurar ENIConfig cuando se reemplazan nodes
-
-### 3. Agregar bloques CIDR secundarios
-
-**Descripción**: Agregar bloques CIDR secundarios a la VPC y asignarlos a nuevas subnets para ampliar el espacio de direcciones IP.
-
-**Método de implementación**:
-
-1. Agregar un bloque CIDR secundario a la VPC mediante la consola de AWS o CLI
-2. Crear nuevas subnets en el bloque CIDR secundario
-3. Usarlo junto con custom networking mode
-
-**Ventajas**:
-
-* Amplía en gran medida el espacio de direcciones IP de la VPC existente
-* Puede implementarse sin afectar la infraestructura existente
-* Puede usar bloques CIDR más grandes
-
-**Desventajas**:
-
-* Mayor complejidad de configuración de networking con VPC peering, Transit Gateway, etc.
-* Se requieren actualizaciones de tablas de enrutamiento
-* Es posible que algunos servicios de AWS no admitan completamente CIDRs secundarios
-
-### 4. Usar plugins CNI alternativos
-
-**Descripción**: Usar plugins CNI alternativos como Calico o Cilium en lugar de Amazon VPC CNI.
-
-**Método de implementación**:
+**Fargate:** una etiqueta de namespace no crea un perfil y `eks.amazonaws.com/v1alpha1 kind: FargateProfile` no es una API integrada de Kubernetes. Utiliza la API de EKS o eksctl (o un controlador compatible instalado explícitamente). Este ejemplo de API requiere un nombre de perfil sin utilizar, subredes privadas revisadas y un rol de ejecución:
 
 ```bash
-# Calico installation example
-kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-
-# Disable Amazon VPC CNI
-kubectl patch daemonset aws-node -n kube-system -p '{"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}}'
+# New profile example; this does not create or enlarge subnet address space.
+aws eks create-fargate-profile --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --fargate-profile-name "${NEW_FARGATE_PROFILE:?}" \
+  --pod-execution-role-arn "${FARGATE_EXECUTION_ROLE_ARN:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --selectors '[{"namespace":"ipam-fargate"}]'
 ```
 
-**Ventajas**:
-
-* Resuelve las limitaciones de direcciones IP mediante overlay networks
-* Características de network policy más completas
-* Networking independiente del cloud provider
-
-**Desventajas**:
-
-* Falta de integración con características nativas de AWS (security groups, etc.)
-* Posible overhead de rendimiento
-* Complejidad adicional de administración
-* Fuera del alcance del soporte de AWS
-
-### 5. Usar CIDRs de subnet más grandes
-
-**Descripción**: Usar subnets con bloques CIDR más grandes al crear clusters.
-
-**Método de implementación**: Al crear nuevos clusters, usar subnets con bloques CIDR más grandes (por ejemplo, /16 o /17)
-
-**Ventajas**:
-
-* Implementación simple
-* No se necesita configuración adicional
-* Todas las características existentes de VPC CNI disponibles
-
-**Desventajas**:
-
-* Difícil de aplicar a clusters existentes
-* Posible uso ineficiente del espacio de direcciones IP
-* Se requieren cambios en el diseño de VPC
-
-### 6. Optimizar la configuración de Warm IP y Minimum IP
-
-**Descripción**: Mejorar la eficiencia del uso de direcciones IP optimizando el comportamiento de asignación de direcciones IP de VPC CNI.
-
-**Método de implementación**:
-
-```bash
-# Set warm IP target
-kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-
-# Set minimum IP target
-kubectl set env daemonset aws-node -n kube-system MINIMUM_IP_TARGET=10
-
-# Set maximum ENI
-kubectl set env daemonset aws-node -n kube-system MAX_ENI=5
-```
-
-**Ventajas**:
-
-* Puede implementarse con un ajuste simple de la configuración existente
-* No se necesitan cambios de infraestructura adicionales
-* Eficiencia mejorada en la asignación de direcciones IP
-
-**Desventajas**:
-
-* Puede no resolver completamente el problema de escasez de direcciones IP
-* Posibles retrasos en el inicio de pods
-* Efectividad limitada según el tipo de node
-
-### 7. Enfoque híbrido
-
-**Descripción**: Usar una combinación de varias estrategias. Por ejemplo, usar prefix delegation junto con custom networking o mover algunas workloads a Fargate.
-
-**Método de implementación**: Aplicar selectivamente varias estrategias según las características de las workloads
-
-**Ventajas**:
-
-* Solución optimizada para las características de las workloads
-* Eficiencia de recursos mejorada
-* Implementación gradual posible
-
-**Desventajas**:
-
-* Mayor complejidad de configuración y administración
-* Necesidad de comprender varios modelos de networking
-* Mayor dificultad de troubleshooting
-
-### 8. Usar Fargate
-
-**Descripción**: Usar Fargate en lugar de workloads basadas en nodes para delegar la administración de direcciones IP a AWS.
-
-**Método de implementación**:
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
-  labels:
-    fargate: "true"
-
----
-apiVersion: eks.amazonaws.com/v1alpha1
-kind: FargateProfile
-metadata:
-  name: my-fargate-profile
-  namespace: default
-spec:
-  selectors:
-  - namespace: my-app
-```
-
-**Ventajas**:
-
-* Elimina el overhead de administración de direcciones IP
-* No se necesita administración de nodes
-* Escalabilidad serverless
-
-**Desventajas**:
-
-* Posible aumento de costos
-* Algunas limitaciones de características de Kubernetes (DaemonSets, containers privilegiados, etc.)
-* No es adecuado para todas las workloads
-
-### Enfoques recomendados y prácticas recomendadas
-
-1. **Evaluar la situación actual**:
-   * Analizar el uso actual de direcciones IP y la tasa de crecimiento esperada
-   * Comprender las características y requisitos de las workloads
-   * Revisar la configuración de red existente
-2. **Soluciones a corto plazo**:
-   * Habilitar prefix delegation (el método más simple y eficaz)
-   * Optimizar la configuración de warm IP y minimum IP
-   * Limpiar pods innecesarios
-3. **Soluciones a mediano y largo plazo**:
-   * Configurar custom networking
-   * Agregar bloques CIDR secundarios
-   * Implementar un enfoque híbrido
-4. **Monitoreo y alertas**:
-   * Monitorear el uso de direcciones IP
-   * Configurar alertas basadas en umbrales
-   * Revisiones periódicas de planificación de capacidad
-5. **Automatización**:
-   * Automatizar el monitoreo y reporting del uso de direcciones IP
-   * Ajustar automáticamente la configuración de red cuando el cluster escala
-   * Establecer documentación y procedimientos operativos
-
-El agotamiento de direcciones IP es un problema común a medida que los clusters de EKS crecen, y se deben seleccionar o combinar estrategias adecuadas según la escala del cluster y las características de las workloads. Prefix delegation es la solución más simple y eficaz en la mayoría de los casos, pero puede que se necesite un diseño de red más completo a largo plazo.
+Crea por separado el namespace y las cargas de trabajo correspondientes, y verifica la activación del perfil. Fargate cambia quién se responsabiliza de las operaciones, no la capacidad finita de direcciones de las subredes elegidas. Compara las soluciones con la demanda medida en lugar de aplicar todas a la vez. En esta revisión no se ejecutó ninguna migración de red ni benchmark de rendimiento.
 
 </details>
+
+## Comprobaciones de la base de VPC
+
+11. ¿Qué par de subredes privadas está alineado y evita las subredes públicas 10.0.0.0/24 y 10.0.1.0/24?
+   * A) 10.0.2.0/22 y 10.0.6.0/22
+   * B) 10.0.4.0/22 y 10.0.8.0/22
+   * C) 10.0.0.0/22 y 10.0.1.0/22
+   * D) Cualquier par de cadenas distintas
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) 10.0.4.0/22 y 10.0.8.0/22**
+
+Una subred `/22` empieza en un múltiplo de cuatro en el tercer octeto. La canonicalización de 10.0.2.0/22 produce 10.0.0.0/22, que se solapa con los rangos públicos.
+
+</details>
+
+12. Antes de utilizar recursos, ¿cuántas direcciones se pueden asignar en una subred IPv4 normal de AWS `/24`?
+   * A) 256
+   * B) 254
+   * C) 251
+   * D) Siempre 240
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) 251**
+
+AWS reserva las primeras cuatro direcciones y la última de cada subred normal. El total es 256 y se pueden asignar 251; BYOIP tiene excepciones documentadas.
+
+</details>
+
+13. ¿Una etiqueta de rol de subred `elb` crea una ruta a un Internet Gateway?
+   * A) Sí
+   * B) No; la configuración de rutas y el descubrimiento del controlador son independientes
+   * C) Solo en una subred privada
+   * D) También abre todos los grupos de seguridad
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) No; la configuración de rutas y el descubrimiento del controlador son independientes**
+
+Las etiquetas pueden afectar al descubrimiento, según el controlador, su versión y las feature gates. No crean rutas ni constituyen un límite de seguridad.
+
+</details>
+
+14. ¿Todos los nodos de EKS necesitan una ruta pública a Internet?
+   * A) Sí, siempre a través de una gateway NAT
+   * B) Sí, siempre a través de un IGW
+   * C) No; el acceso necesario a servicios puede utilizar endpoints privados/mirrors adecuados
+   * D) No se necesita acceso de red
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) No; el acceso necesario a servicios puede utilizar endpoints privados/mirrors adecuados**
+
+Planifica las dependencias reales de API, registros de contenedores, DNS y cargas de trabajo. El endpoint del servicio EKS de AWS no es el endpoint de API del clúster de Kubernetes.
+
+</details>
+
+15. ¿Cuál es el puerto de destino habitual de kubelet para el tráfico del plano de control?
+   * A) Todos los puertos TCP 1025–65535
+   * B) TCP 10250
+   * C) Todos los NodePort de forma predeterminada
+   * D) Solo UDP 53
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) TCP 10250**
+
+Revisa por separado TCP 443 de la API privada, TCP/UDP 53 de DNS, los puertos reales de webhooks/cargas de trabajo y las asociaciones reales de grupos de seguridad. El tráfico de retorno de SG con estado se comporta de forma distinta a las reglas NACL sin estado.
+
+</details>
+
+## Referencias
+
+- [Requisitos de VPC/subred](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md)
+- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Políticas nativas de EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [Anotaciones de Service de LBC 3.5](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
+- [Descubrimiento de subredes de LBC](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
+- [Listeners de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Registros de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html)
+- [Caché de CoreDNS](https://coredns.io/plugins/cache/)
+- [Implementación de la caché de CoreDNS](https://github.com/coredns/coredns/blob/v1.14.7/plugin/pkg/cache/cache.go)

@@ -1,6 +1,6 @@
 # コンテナ技術クイズ
 
-このクイズでは、コンテナ技術の基礎、それがどのように動作するか、そして Kubernetes との関係についての理解を確認します。
+このクイズでは、コンテナ技術の基礎、それがどのように動作するか、そして Kubernetes との関係についての理解を確認します。通常の Linux プロセス分離型コンテナを前提に回答してください。Kata や Fargate のように VM を使うランタイムと Windows では、挙動や対応状況が異なります。
 
 ## 選択式問題
 
@@ -113,7 +113,7 @@ bridge は Docker のデフォルトネットワークドライバーで、同�
 **回答: B) Volume**
 
 **解説:**
-Volume は Docker が管理するホストファイルシステム上の領域であり、コンテナ内の永続データ保存に最も適した方法です。エフェメラルストレージはコンテナ内部のファイルシステムで、コンテナが削除されるとデータが失われます。Bind mount は特定のホストパスをコンテナにマウントし、tmpfs mount はデータをメモリ内にのみ保存します。
+Volume は Docker が管理するホストファイルシステム上の領域であり、コンテナ内の永続データ保存に最も適した方法です。エフェメラルストレージはコンテナ内部のファイルシステムで、コンテナが削除されるとデータが失われます。Bind mount は特定のホストパスをコンテナにマウントし、tmpfs はメモリを基盤としますが、swap を使用する場合があります。
 </details>
 
 8. コンテナセキュリティを強化する方法ではないものはどれですか？
@@ -164,7 +164,7 @@ Amazon Fargate は AWS のサーバーレスコンテナ実行環境で、サー
 コンテナイメージのビルドは通常、CI/CD パイプラインや Docker のようなコンテナビルドツールの役割です。コンテナオーケストレーションツール（Kubernetes、Docker Swarm など）の主な機能は、自動デプロイとロールバック、サービスディスカバリとロードバランシング、Auto scaling、自己修復、構成管理、ストレージオーケストレーションです。
 </details>
 
-11. コンテナが実行中でないときに取り得ない状態はどれですか？
+11. 次のうち、Docker コンテナのライフサイクル状態ではないものはどれですか？
     - A) Created
     - B) Exited
     - C) Building
@@ -193,7 +193,7 @@ Amazon Fargate は AWS のサーバーレスコンテナ実行環境で、サー
 **回答: D) unless-stopped**
 
 **解説:**
-`unless-stopped` 再起動ポリシーは、明示的に停止されていない限り、常にコンテナを再起動します。Docker デーモンが再起動した場合でもコンテナは自動的に起動しますが、ユーザーが `docker stop` コマンドで手動停止していた場合、デーモン再起動後にコンテナは起動しません。`always` は手動停止の状態に関係なく再起動します。
+`unless-stopped` 再起動ポリシーは、明示的に停止されていない限りコンテナを再起動します。Docker デーモンが再起動した場合も自動的に起動しますが、ユーザーが `docker stop` で手動停止していた場合は、デーモン再起動後も起動しません。`always` では手動停止後もデーモン再起動または明示的なコンテナ起動の後に再起動します。
 </details>
 
 13. コンテナと元のイメージの間のファイルシステム変更を確認する Docker コマンドはどれですか？
@@ -223,7 +223,7 @@ Amazon Fargate は AWS のサーバーレスコンテナ実行環境で、サー
 **回答: Digest**
 
 **解説:**
-Digest はコンテナイメージ内容の SHA256 ハッシュであり、イメージの一意の識別子として機能します。タグとは異なり、イメージ内容が変更されると Digest も変わるため、特定のイメージバージョンを正確に参照するために使用されます。例: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
+イメージ参照のダイジェストは、マニフェストまたはマルチプラットフォームインデックスのバイト列を識別し、通常 SHA256 で表されます。マニフェストはレイヤーと設定のダイジェストを参照します。タグと異なり、対象の内容が変わるとダイジェストも変わるため、特定のイメージを正確に参照できます。例: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
 15. コンテナ起動時に実行するコマンドを指定する Dockerfile ディレクティブは何ですか？
@@ -301,7 +301,7 @@ Amazon ECR (Elastic Container Registry) は AWS のマネージドコンテナ�
 ## ハンズオン問題
 
 21. 次の要件を満たす Dockerfile を作成してください。
-    - Node.js 14 Alpine イメージを使用する
+    - Node.js 24 Alpine イメージを使用する
     - 作業ディレクトリを /app に設定する
     - package.json と package-lock.json ファイルを最初にコピーする
     - 依存関係をインストールする
@@ -315,15 +315,17 @@ Amazon ECR (Elastic Container Registry) は AWS のマネージドコンテナ�
 
 **回答:**
 ```dockerfile
-FROM node:14-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3000
 
@@ -349,10 +351,10 @@ CMD ["node", "server.js"]
     - `--name my-app`: コンテナ名を "my-app" に設定する
     - `-p 8080:80`: ホストポート 8080 をコンテナポート 80 にマッピングする
     - `-v data:/app/data`: "data" という名前の Volume をコンテナ内の /app/data パスにマウントする
-    - `--restart always`: コンテナが終了したときに常に自動再起動する
-    - `nginx:latest`: nginx イメージの最新バージョンを使用する
+    - `--restart always`: 終了後に再起動する。手動停止すると、デーモン再起動または明示的に起動するまで再起動を抑止する
+    - `nginx:latest`: `latest` という可変タグを使う。最新のイメージを取得するには pull が必要
 
-このコマンドは nginx Web サーバーをバックグラウンドで実行し、ホストポート 8080 経由でアクセス可能にし、永続データ保存用の Volume を設定し、コンテナ終了時の自動再起動を構成します。
+このコマンドは nginx Web サーバーをバックグラウンドで実行し、ホストポート 8080 をコンテナのポート 80 に公開し、名前付き Volume をマウントします。`/app/data` のマウント先を変更しても、NGINX のドキュメントルートは変わりません。ポート公開は既定でホストの全アドレスにバインドされます。ローカルからのみアクセスさせる場合は `127.0.0.1:8080:80` を使ってください。
 </details>
 
 23. マルチステージビルドを使用して、React アプリケーション用に最適化された Dockerfile を作成してください。
@@ -364,20 +366,20 @@ CMD ["node", "server.js"]
 **回答:**
 ```dockerfile
 # Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
 # Run stage
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy build artifacts to nginx's service directory
 COPY --from=build /app/build /usr/share/nginx/html
@@ -405,14 +407,15 @@ CMD ["nginx", "-g", "daemon off;"]
 
 **回答:**
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Copy application (example)
 COPY ./html /usr/share/nginx/html
+RUN printf 'ok\n' > /usr/share/nginx/html/health
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1
 
 EXPOSE 80
 
@@ -423,11 +426,11 @@ CMD ["nginx", "-g", "daemon off;"]
 各 HEALTHCHECK ディレクティブオプションの意味:
 - `--interval=30s`: 30 秒ごとにヘルスチェックを実行する
 - `--timeout=3s`: ヘルスチェックコマンドは 3 秒以内に完了する必要がある
-- `--start-period=10s`: コンテナ起動後 10 秒間はヘルスチェックの失敗を無視する（初期化時間）
+- `--start-period=10s`: 初期化中の失敗を最大 10 秒間許容する。期間内でも一度成功すると猶予期間は終了する
 - `--retries=3`: 3 回連続で失敗した後にコンテナを unhealthy とマークする
-- `CMD`: 実行するヘルスチェックコマンド。wget を使用して /health エンドポイントを確認する
+- `CMD`: 実行するヘルスチェックコマンド。wget で /health エンドポイントを確認する
 
-ヘルスチェックは、コンテナオーケストレーションツールが自動復旧やトラフィックルーティングの判断のためにコンテナの状態を判定する際に使用されます。
+Docker はコンテナを unhealthy と判定しますが、その状態だけを理由にスタンドアロンコンテナを再起動することはありません。オーケストレーターは対応するヘルス信号に反応する場合があります。Kubernetes は独自の probe が必要で、Dockerfile の HEALTHCHECK は利用しません。この例では /health が HTTP 200 を返す必要があります。
 </details>
 
 25. デバッグ目的で、実行中のコンテナの環境変数、ネットワーク設定、プロセス一覧を確認する Docker コマンドを書いてください。
@@ -509,7 +512,7 @@ docker stats <container-id>
     - CPU 時間の制限
     - メモリ使用量の制限
     - ブロック I/O 帯域幅の制限
-    - ネットワーク帯域幅の制限
+    - tc/eBPF 連携によるネットワークトラフィック制御
     - デバイスアクセス制御
 
 **コンテナ分離への貢献**:
@@ -520,7 +523,7 @@ Namespaces と cgroups は相互補完的な役割を果たします。
 
     - cgroups は、コンテナが使用できるシステムリソース（CPU、メモリ、ディスク I/O など）を制限し、物理的なリソース分離を提供します。これにより、1 つのコンテナが過剰なリソースを使用して、他のコンテナやホストシステムに影響を与えることを防ぎます。
 
-これら 2 つの技術が連携することで、コンテナはリソース使用量を制限された分離環境で実行できます。この分離は仮想マシンより軽量ですが、セキュリティとリソース管理に十分な分離を提供します。
+これら 2 つの技術が連携することで、コンテナはリソース使用量を制限された分離環境で実行できます。この分離は仮想マシンより軽量ですが、セキュリティはカーネルへの露出、権限、ランタイム設定に左右され、完全な分離を保証するものではありません。
 </details>
 
 27. コンテナイメージのレイヤーシステムがどのように動作するか、また Copy-on-Write（CoW）戦略がコンテナの効率性にどのように貢献するかを説明してください。
@@ -533,7 +536,7 @@ Namespaces と cgroups は相互補完的な役割を果たします。
 
 **Container Image Layering System**:
 
-コンテナイメージは複数のレイヤーのスタックで構成されます。各レイヤーはファイルシステムの変更を表し、各 Dockerfile コマンド（FROM、RUN、COPY など）が新しいレイヤーを作成します。これらのレイヤーは読み取り専用で、階層的に積み重なって最終イメージを形成します。
+コンテナイメージは複数のレイヤーのスタックで構成されます。各レイヤーはファイルシステムの変更を表します。RUN/COPY/ADD はファイルシステムの差分を作る場合がありますが、ENV/CMD などメタデータだけを変更する命令はファイルシステムレイヤーを作りません。これらのレイヤーは読み取り専用で、階層的に積み重なって最終イメージを形成します。
 
 レイヤーシステムの主な特徴:
 1. **増分ビルド**: イメージビルド中に変更されたレイヤーだけが再生成される
@@ -547,7 +550,7 @@ Copy-on-Write は、データが実際に変更されるまでコピー操作を
 1. **コンテナ起動**: コンテナが起動すると、既存のイメージレイヤーの上に薄い書き込み可能レイヤーが追加されます。
 2. **読み取り操作**: ファイルを読み取るとき、システムは上から下へレイヤーを検索し、最初に見つかったファイルのバージョンを使用します。
 3. **書き込み操作**: ファイルを変更するとき、まずファイルが書き込み可能レイヤーにコピーされ、その後変更されます（Copy-on-Write）。元のファイルは変更されません。
-4. **削除操作**: ファイルを削除するとき、ファイルは実際には削除されません。代わりに、書き込み可能レイヤーに「whiteout」ファイルが作成され、削除されたように見せます。
+4. **削除操作**: 下位レイヤーにあるファイルを削除すると、書き込み可能レイヤーに whiteout が作られます。上位の書き込み可能レイヤーにだけ存在するファイルは、そのレイヤーから削除できます。
 
 **効率性への貢献**:
 
@@ -592,18 +595,18 @@ Copy-on-Write は、データが実際に変更されるまでコピー操作を
      - `docker pause` → Paused
      - `docker stop` → Exited
      - `docker kill` → Exited
-     - `docker restart` → Restarting → Running
+     - `docker restart` → 停止／起動 → Running
      - プロセス終了時 → Exited
 
 3. **Paused**
-   - すべてのプロセスが SIGSTOP により一時停止している
+   - Linux プロセスは SIGSTOP ではなく freezer cgroup によって凍結される
    - `docker pause` コマンドによって移行する
    - メモリは保持されるが CPU は使用しない
    - 遷移: `docker unpause` → Running
 
 4. **Restarting**
    - コンテナが再起動中の一時的な状態
-   - `docker restart` または再起動ポリシーによって発生する
+   - 再起動ポリシーによる自動再起動中の状態。明示的な `docker restart` は停止／起動シーケンスを要求する
    - 遷移: 自動的に Running または Exited に遷移する
 
 5. **Exited**
@@ -639,8 +642,8 @@ docker rm <id>                  # Delete
 **再起動ポリシーとライフサイクル:**
 - `no`: 自動再起動しない
 - `on-failure[:max]`: 異常終了時に再起動し、最大回数を指定できる
-- `always`: 常に再起動する（デーモン再起動を含む）
-- `unless-stopped`: 手動停止されるまで常に再起動する
+- `always`: 終了後やデーモン再起動時に再起動する。手動停止すると、デーモン再起動または明示的な起動まで再起動を抑止する
+- `unless-stopped`: 手動停止されていない限り再起動する
 
 コンテナライフサイクルを理解することで、アプリケーションの可用性を確保し、問題発生時に適切な復旧戦略を確立できます。
 </details>
@@ -648,3 +651,30 @@ docker rm <id>                  # Delete
 ---
 
 [学習資料に戻る](../../basics/03-container-technology.md) | [次のクイズ: Kubernetes 入門](./04-kubernetes-introduction-quiz.md)
+
+## 参考資料
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

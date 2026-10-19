@@ -144,8 +144,8 @@ Los valores son segundos transcurridos desde el inicio. Esta solicitud usa una I
 | Medición | Significado | Condiciones que se deben controlar |
 |---|---|---|
 | Latencia | Duración de una operación o ida y vuelta | Tamaño de la solicitud, ruta y carga del servidor |
-| Rendimiento | Cantidad entregada por unidad de tiempo | Concurrencia, dirección, bytes frente a bits y duración |
-| Pérdida/retransmisión | Paquetes ausentes observados o recuperación de TCP | Punto de captura/descartes, cambios de ruta e intervalo de tiempo |
+| Caudal (throughput) | Cantidad entregada por unidad de tiempo | Concurrencia, dirección, bytes frente a bits y duración |
+| Pérdida/retransmisión | Pérdida de paquetes observada o recuperación de TCP | Punto de captura/descartes, cambios de ruta e intervalo de tiempo |
 | Uso de recursos | Actividad o espera de CPU, memoria y E/S | Proceso, recursos asignados a la VM y otras cargas de trabajo |
 
 `1 byte = 8 bits`. No equipares `100 Mbit/s` con `100 MB/s`. Para mediciones repetidas, registra las condiciones y los valores mínimo/mediano/máximo u otra distribución adecuada.
@@ -163,7 +163,7 @@ lsblk -o NAME,TYPE,SIZE
 
 Los valores de política de búfer devueltos por `sysctl` no corresponden al uso actual de cada socket. Antes de aumentarlos, distingue entre [búferes de socket, ventanas y BDP](../../kernel/02-network-stack.md#tcp-buffer-policy). Después de identificar un disco con `lsblk`, leer `/sys/block/DEVICE/queue/scheduler` muestra los planificadores de E/S de bloques admitidos/seleccionados; no todos los dispositivos virtuales ofrecen las mismas opciones.
 
-Un planificador de E/S de bloques gestiona solicitudes de almacenamiento, mientras que una qdisc de red gestiona la puesta en cola de transmisión de red. Que ambas incluyan la palabra «planificador» no las convierte en controles de ajuste intercambiables. Esta lección no cambia sysctl, MTU, qdisc ni planificadores de E/S. El trabajo avanzado requiere un experimento independiente con una sola variable modificada, mediciones y reversión.
+Un planificador de E/S de bloques gestiona solicitudes de almacenamiento, mientras que una qdisc de red gestiona el encolado del tráfico saliente. Que ambas incluyan la palabra «planificador» no las convierte en controles de ajuste intercambiables. Esta lección no cambia sysctl, MTU, qdisc ni planificadores de E/S. El trabajo avanzado requiere un experimento independiente con una sola variable modificada, mediciones y reversión.
 
 ## Limpieza y finalización {#completion}
 

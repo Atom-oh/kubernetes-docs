@@ -18,7 +18,7 @@
    </details>
 
 2. **El tráfico de Pod a Pod en el mismo nodo usa el enrutamiento de host de BPF y `bpf_redirect_peer`. ¿Dónde se aplica la política de ingreso del Pod de destino?**
-   - A) En el programa `bpf_lxc` del emisor, que realiza una llamada en cadena a `cilium_call_policy[destination endpoint ID]`
+   - A) En el programa `bpf_lxc` del emisor, que realiza una llamada encadenada a `cilium_call_policy[destination endpoint ID]`
    - B) En el hook tc de salida del veth de destino, mediante el mapa de políticas fijado para el endpoint emisor
    - C) En una cadena iptables en el espacio de nombres de red del destino, que el agente instala para cada endpoint
    - D) En el programa XDP de la NIC del nodo, antes de que el paquete llegue a un veth
@@ -26,7 +26,7 @@
    <details>
    <summary>Mostrar respuesta</summary>
 
-   **Respuesta: A) En el programa `bpf_lxc` del emisor, que realiza una llamada en cadena a `cilium_call_policy[destination endpoint ID]`**
+   **Respuesta: A) En el programa `bpf_lxc` del emisor, que realiza una llamada encadenada a `cilium_call_policy[destination endpoint ID]`**
 
    `redirect_peer` omite el hook tc de salida del destino, así que `cil_lxc_policy` del destino se almacena en una matriz global de programas y la invoca el emisor. Una ranura vacía genera `DROP_EP_NOT_READY`.
 
@@ -35,7 +35,7 @@
 3. **¿Cuál es el tipo y la estructura de claves del mapa de políticas por endpoint `cilium_policy_v3_<id>`?**
    - A) HASH con clave de dirección IP del Pod remoto y puerto de destino
    - B) ARRAY indexada por número de puerto, con una ranura por protocolo
-   - C) PROG_ARRAY indexada por número de regla de política, con una llamada en cadena a un programa por regla
+   - C) PROG_ARRAY indexada por número de regla de política, con una llamada encadenada a un programa por regla
    - D) LPM_TRIE con clave de identidad, dirección, protocolo y prefijo de puerto
 
    <details>
@@ -81,14 +81,14 @@
    - A) Solo el mapa `cilium_lb4_services_v2`; los backends y rev-NAT conservan sus propios valores predeterminados
    - B) La cantidad de backends por Service; se rechazan los endpoints adicionales al superar el límite
    - C) El tamaño de la tabla de búsqueda Maglev, que debe ser un número primo de una lista fija
-   - D) El tamaño de reserva para seis marcas por mapa LB (services, backends, rev-NAT, affinity, source-range y Maglev)
+   - D) El tamaño de reserva para seis opciones por mapa LB (services, backends, rev-NAT, affinity, source-range y Maglev)
 
    <details>
    <summary>Mostrar respuesta</summary>
 
-   **Respuesta: D) El tamaño de reserva para seis marcas por mapa LB (services, backends, rev-NAT, affinity, source-range y Maglev)**
+   **Respuesta: D) El tamaño de reserva para seis opciones por mapa LB (services, backends, rev-NAT, affinity, source-range y Maglev)**
 
-   Cada una de las seis marcas por mapa tiene el valor predeterminado 0, que significa «usar `lb-map-max`». El tamaño de la tabla Maglev se controla mediante una marca aparte. Al cambiar el tamaño, se vuelven a crear los mapas y se interrumpen las conexiones hasta que se llenan de nuevo.
+   Cada una de las seis opciones por mapa tiene el valor predeterminado 0, que significa «usar `lb-map-max`». El tamaño de la tabla Maglev se controla mediante una marca aparte. Al cambiar el tamaño, se vuelven a crear los mapas y se interrumpen las conexiones hasta que se llenan de nuevo.
 
    </details>
 
@@ -103,7 +103,7 @@
 
    **Respuesta: B) En `connect()`/`sendmsg()` mediante hooks cgroup; los hooks `recvmsg`/`getpeername` usan `cilium_lb4_reverse_sk` para restaurarla**
 
-   No se realiza DNAT en el cable, por lo que tcpdump en el Pod muestra la IP del backend. La ruta por paquete que usa `cilium_lb4_reverse_nat` solo se aplica cuando socket-LB no corresponde (por ejemplo, en modo exclusivo del espacio de nombres de host, L7 LB o SCTP).
+   No se realiza DNAT en el tráfico de red, por lo que tcpdump en el Pod muestra la IP del backend. La ruta por paquete que usa `cilium_lb4_reverse_nat` solo se aplica cuando no se puede usar socket-LB (por ejemplo, en modo exclusivo del espacio de nombres de host, L7 LB o SCTP).
 
    </details>
 
@@ -139,14 +139,14 @@
 
 10. **¿Qué afirmación sobre la canalización de eventos de Hubble en 1.20 es correcta?**
     - A) BPF escribe en un búfer circular que Hubble Relay lee directamente del sistema de archivos BPF de cada nodo
-    - B) Los eventos van a `cilium_events` (matriz perf), luego al monitor del agente y a una cola de Hubble, y finalmente a un búfer circular en memoria (4095 flujos)
+    - B) Los eventos van a `cilium_events` (matriz de eventos perf), luego al monitor del agente y a una cola de Hubble, y finalmente a un búfer circular en memoria (4095 flujos)
     - C) El agente persiste los flujos en disco y los reproduce para Hubble Relay después de un reinicio
     - D) Los programas de llamada en cadena de `bpf_lxc` emiten los eventos L7 cuando coincide el mapa de redirección del proxy
 
     <details>
     <summary>Mostrar respuesta</summary>
 
-    **Respuesta: B) Los eventos van a `cilium_events` (matriz perf), luego al monitor del agente y a una cola de Hubble, y finalmente a un búfer circular en memoria (4095 flujos)**
+    **Respuesta: B) Los eventos van a `cilium_events` (matriz de eventos perf), luego al monitor del agente y a una cola de Hubble, y finalmente a un búfer circular en memoria (4095 flujos)**
 
     Puede haber pérdidas en el búfer perf (`perf_event_ring_buffer`) o en la cola del observador (`observer_events_queue`). Los registros L7 proceden de Envoy y del proxy DNS como eventos del agente, no de BPF.
 

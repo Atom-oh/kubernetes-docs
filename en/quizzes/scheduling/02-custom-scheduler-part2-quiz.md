@@ -299,6 +299,7 @@ This EKS lab uses EC2 nodes in one AWS Region; a `topology.kubernetes.io/region`
 - C. Place pods only in specific zones: This is placing pods in specific zones using node affinity; the main purpose of topology spread constraints is even distribution.
 - D. Place pods only on nodes with specific labels: This is the role of nodeSelector or nodeAffinity.
 </details>
+
 ### 4. What is the main purpose of Taints and Tolerations in Kubernetes?
 
 A. Ensure specific pods are scheduled only on specific nodes
@@ -605,6 +606,7 @@ Cons:
 - B. Provides filtering and prioritization capabilities: A valid characteristic of scheduler extender.
 - D. Runs as an external process: A valid characteristic of scheduler extender.
 </details>
+
 ### 6. What is the main purpose of Pod Affinity and Anti-Affinity in Kubernetes?
 
 A. Define relationships between pods and nodes
@@ -835,6 +837,7 @@ kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.no
 - B. Exclude nodes where pods cannot run: This is the role of the "Filter" extension point.
 - D. Bind pods to nodes: This is the role of the "Bind" extension point.
 </details>
+
 ### 8. What is the main purpose of Pod Priority Preemption in Kubernetes?
 
 A. Remove lower priority pods so that higher priority pods can be scheduled

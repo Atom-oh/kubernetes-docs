@@ -10,7 +10,7 @@ Los parches 3.16.1 y la línea posterior 3.17.x (última versión: 3.17.1) está
 
 ## ¿Qué es MLflow Tracking?
 
-Tracking proporciona API e interfaz de usuario para experimentos, ejecuciones, parámetros, métricas, artefactos, modelos registrados y trazas. El SDK puede conectarse a un servidor de seguimiento HTTP o directamente a un backend local de archivos o SQL. No es necesario ejecutar un proceso de servidor aparte para cada uso.
+Tracking proporciona API e interfaz de usuario para experimentos, ejecuciones, parámetros, métricas, artefactos, modelos de tipo `LoggedModel` y trazas. El SDK puede conectarse a un servidor de seguimiento HTTP o directamente a un backend local de archivos o SQL. No es necesario ejecutar un proceso de servidor aparte para cada uso.
 
 Incluso con un servidor remoto, los metadatos y las transferencias de artefactos pueden seguir rutas distintas. Los metadatos pasan por la API de seguimiento; el servidor puede actuar como proxy de los artefactos o estos pueden transferirse directamente entre el cliente y un almacén como S3. A continuación se distinguen estas configuraciones.
 
@@ -74,7 +74,7 @@ assert model.source_run_id is None
 print(model.model_id, model.status)  # PENDING
 ```
 
-Todavía no contiene pesos de modelo utilizables ni un sabor de modelo. Completa el registro real del modelo, la conservación de artefactos y su finalización antes de usarlo. El estado `READY` no demuestra que el modelo tenga aprobación para su implementación ni que haya superado una revisión de calidad o seguridad.
+Todavía no contiene pesos de modelo utilizables ni una variante de modelo (flavor) de MLflow. Completa el registro real del modelo, la conservación de artefactos y su finalización antes de usarlo. El estado `READY` no demuestra que el modelo tenga aprobación para su implementación ni que haya superado una revisión de calidad o seguridad.
 
 ## Observabilidad de GenAI y LLM: trazas
 

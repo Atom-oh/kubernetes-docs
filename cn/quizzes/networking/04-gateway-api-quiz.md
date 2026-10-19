@@ -1,389 +1,347 @@
 # Gateway API 测验
 
-本测验测试您对 Kubernetes Gateway API 资源模型、实现方式以及从 Ingress 迁移的理解。
+基于 v1.6 API 基线以及指南中针对具体实现的前置条件。每个代码示例都是一个独立场景。
 
-## 测验题目
+## 1. 以下哪项不是 Gateway API 的设计目标？
 
-### 1. 以下哪项不是 Gateway API 相较于现有 Ingress API 的改进方式？
-
-A. 基于角色的资源分离（基础设施提供商、集群运维人员、应用开发人员）
-B. 原生支持 TCP、UDP、gRPC 等多种协议
-C. 通过标准化字段而非注解实现功能
-D. 将所有网络功能集成到单一资源中
+- A. 更明确地划分基础设施、运维人员和应用各自负责的资源
+- B. 为多种流量协议定义 API 类型
+- C. 使用标准字段，并明确各功能的支持级别
+- D. 将所有网络功能合并到一个对象中
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. 将所有网络功能集成到单一资源中**
-
-**说明：**
-Gateway API 的改进：
-- **角色分离**：职责划分为 GatewayClass（基础设施）、Gateway（运维人员）和 Routes（开发人员）
-- **多种协议**：HTTPRoute、GRPCRoute、TCPRoute、TLSRoute、UDPRoute
-- **标准化**：通过显式字段定义功能，无需注解
-- **可扩展性**：可基于 CRD 轻松添加新功能
-
-Gateway API 被拆分为多个资源，因此“集成到单一资源中”是不正确的。
+D. GatewayClass、Gateway 和 Route 资源将职责分开。控制器仍需实现相应的 API 版本、配置档案和功能；RBAC 与准入控制负责执行权限边界。标准字段提升可移植性，但并不意味着可以省去实现特定的扩展。
 
 </details>
 
-### 2. 在 Gateway API 的角色分离中，谁负责管理 GatewayClass？
+## 2. 在按角色分工的模型中，通常由谁管理 GatewayClass？
 
-A. 应用开发人员
-B. 集群运维人员
-C. 基础设施提供商
-D. 安全管理员
+- A. 每位应用开发人员各自管理
+- B. 只有后端 Service 的所有者
+- C. 基础设施提供方或平台/网络团队
+- D. 未经身份验证的应用客户端
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 基础设施提供商**
-
-**说明：**
-Gateway API 角色分离：
-
-| 角色 | 管理的资源 | 职责 |
-|------|------------------|----------------|
-| **基础设施提供商** | GatewayClass | 定义基础设施基本配置，指定 controller |
-| **集群运维人员** | Gateway、ReferenceGrant | Load balancer 配置、namespace 权限管理 |
-| **应用开发人员** | HTTPRoute、GRPCRoute 等 | 定义应用路由规则 |
-
-GatewayClass 由云服务提供商或网络团队定义。
+C. GatewayClass 用于选择已安装的控制器以及该实现支持的专用参数。平台运维人员管理 Gateway 和路由附加策略；开发人员管理 Route；被引用命名空间的所有者管理该命名空间中的 ReferenceGrant。这些是运维角色的划分，不会自动成为 Kubernetes 权限。
 
 </details>
 
-### 3. Gateway 中 TLS termination 和 passthrough 的正确区别是什么？
+## 3. TLS 终止与透传有什么区别？
 
-A. Terminate 将 TLS 传递给 backend，Passthrough 在 Gateway 处终止 TLS
-B. Terminate 在 Gateway 处终止 TLS，Passthrough 将 TLS 传递给 backend
-C. 两种模式的行为完全相同
-D. Terminate 仅支持 HTTP，Passthrough 仅支持 HTTPS
+- A. Terminate 会原样传递加密字节
+- B. Terminate 在网关处结束下游 TLS；Passthrough 则由后端结束 TLS
+- C. 两者都要求使用可互换模式的 HTTPS 监听器
+- D. 终止 TLS 一定会使网关到后端的流量变成明文
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Terminate 在 Gateway 处终止 TLS，Passthrough 将 TLS 传递给 backend**
-
-**说明：**
-TLS 模式：
-
-| 模式 | 描述 | 使用场景 |
-|------|-------------|----------|
-| **Terminate** | TLS 在 Gateway 处终止，backend 接收明文 | 标准 HTTPS、集中式证书管理 |
-| **Passthrough** | TLS 原样透传至 backend | 端到端加密、backend 管理证书 |
+B. HTTPS 终止与 TLS 透传需要不同的监听器配置。终止 TLS 后是否加密网关到后端的连接，是另一个独立决策；可使用受支持的 BackendTLSPolicy 或实现专用配置。
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-tls
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
     protocol: HTTPS
+    port: 443
     tls:
-      mode: Terminate  # or Passthrough
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
+  - name: tls-passthrough
+    protocol: TLS
+    port: 8443
+    tls:
+      mode: Passthrough
 ```
+
+被引用的 TLS Secret 以及相应的 Route 和后端都必须存在。不能只把 HTTPS 监听器的 mode 改成 Passthrough 来启用 TLS 透传。
 
 </details>
 
-### 4. 如何在 HTTPRoute 中实现流量拆分（权重）？
+## 4. HTTPRoute 如何表达按权重拆分后端流量？
 
-A. 使用 `trafficSplit` 字段
-B. 在多个 `backendRefs` 上指定 `weight` 字段
-C. 使用 `canary` 注解
-D. 创建单独的 TrafficSplit CRD
+- A. 使用 trafficSplit 字段
+- B. 在多个 backendRefs 上设置 weight
+- C. 使用必需的 canary 注解
+- D. 创建其他 API 提供的 TrafficSplit CRD
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 在多个 `backendRefs` 上指定 `weight` 字段**
-
-**说明：**
-HTTPRoute 中的流量拆分：
+B. 在指南所用的 Gateway/Namespace 配置以及后端 Service 已存在的前提下：
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
+metadata:
+  name: quiz-split
+  namespace: production
 spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
   rules:
-    - backendRefs:
-        - name: app-stable
-          port: 80
-          weight: 90  # 90%
-        - name: app-canary
-          port: 80
-          weight: 10  # 10%
+  - backendRefs:
+    - name: app-stable
+      port: 80
+      weight: 90
+    - name: app-canary
+      port: 80
+      weight: 10
 ```
 
-使用场景：
-- Canary 部署
-- A/B 测试
-- 蓝绿部署
-
-权重之和无需为 100；它们按比例计算。
+weight 表示相对流量分配，无需加总为 100；小样本中的实际比例也不一定精确匹配权重。它控制发往此 Gateway 后端的流量，不会把客户端从旧 Ingress 前端切换到新的 Gateway 前端。
 
 </details>
 
-### 5. ReferenceGrant 的主要目的是什么？
+## 5. 跨命名空间引用后端时，应在哪里创建 ReferenceGrant？
 
-A. Gateway 资源权限管理
-B. 允许跨 namespace 引用
-C. API 版本兼容性管理
-D. TLS 证书授权
+- A. 始终在 Route 所在的命名空间
+- B. 在被引用后端所在的命名空间，由其所有者创建
+- C. 只能在 kube-system 中
+- D. 在客户端工作站上
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 允许跨 namespace 引用**
-
-**说明：**
-ReferenceGrant 用法：
+B. 由接收引用的一方授予权限。例如：
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: allow-routes
+  name: allow-shared-api
   namespace: backend-services
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: frontend
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: production
   to:
-    - group: ""
-      kind: Service
+  - group: ''
+    kind: Service
+    name: shared-api
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: shared-api
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /shared
+    backendRefs:
+    - name: shared-api
+      namespace: backend-services
+      port: 80
 ```
 
-使用场景：
-- 允许引用其他 namespace 中的 Service
-- Gateway 引用其他 namespace 中的 Secret（TLS 证书）
-- 为安全性进行显式授权
-
-默认会阻止跨 namespace 引用。
+backend-services 命名空间中必须存在 shared-api Service。`to.name` 将授权范围限制为该 Service。Route 附加到 Gateway 使用的是 parentRefs 和 allowedRoutes，不需要为这种附加关系创建 ReferenceGrant。ReferenceGrant 不负责验证应用用户身份。
 
 </details>
 
-### 6. 以下哪项不是 Gateway API Standard channel 中包含的资源？
+## 6. 哪项资源不属于 Gateway API v1.6 Standard 资源集合？
 
-A. GatewayClass
-B. Gateway
-C. HTTPRoute
-D. TCPRoute
+- A. GatewayClass
+- B. GRPCRoute
+- C. TCPRoute
+- D. Istio VirtualService
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. TCPRoute**
-
-**说明：**
-Gateway API channel 分类：
-
-**Standard Channel (GA)**：
-- GatewayClass
-- Gateway
-- HTTPRoute
-- ReferenceGrant
-
-**Experimental Channel (Beta/Alpha)**：
-- GRPCRoute
-- TCPRoute
-- TLSRoute
-- UDPRoute
-
-Standard channel 资源使用 `gateway.networking.k8s.io/v1` API 版本，Experimental 使用 `v1alpha2` 或 `v1beta1`。
+D. VirtualService 是 Istio API。v1.6 Standard 资源集合包括 HTTPRoute、GRPCRoute、TCPRoute、TLSRoute 和 UDPRoute 等资源。旧版答案中“TCPRoute 属于 Experimental”的说法已不再正确。Channel 与 API 版本是不同概念：ReferenceGrant v1beta1 仍与 v1 一起在 Standard 中提供；Experimental 资源集合中的字段也可能出现在 v1 资源上。
 
 </details>
 
-### 7. 哪种 HTTPRoute filter 类型会将请求更改为不同的 URL？
+## 7. 哪种过滤器会改写发往上游的请求，而不向客户端返回重定向？
 
-A. RequestHeaderModifier
-B. ResponseHeaderModifier
-C. URLRewrite
-D. RequestMirror
+- A. RequestHeaderModifier
+- B. ResponseHeaderModifier
+- C. URLRewrite
+- D. RequestMirror
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. URLRewrite**
-
-**说明：**
-HTTPRoute filter 类型：
-
-| Filter | 描述 |
-|--------|-------------|
-| RequestHeaderModifier | 添加、修改或删除请求 header |
-| ResponseHeaderModifier | 添加、修改或删除响应 header |
-| **URLRewrite** | 更改 URL path 或 host |
-| RequestRedirect | 重定向到其他 URL（3xx 响应） |
-| RequestMirror | 镜像流量（复制到 shadow Service） |
+C. URLRewrite 会更改上游请求的路径或 Host；后端目标仍由 backendRefs 选择。RequestRedirect 则会向客户端返回 3xx 响应。
 
 ```yaml
-filters:
-  - type: URLRewrite
-    urlRewrite:
-      path:
-        type: ReplacePrefixMatch
-        replacePrefixMatch: /new-api
-      hostname: "new-api.example.com"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: quiz-rewrite
+  namespace: production
+spec:
+  parentRefs:
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
+  hostnames:
+  - api.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /old-api
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /new-api
+        hostname: new-api.example.com
+    backendRefs:
+    - name: new-api-service
+      port: 80
 ```
 
+此处 `/old-api/users` 会变成 `/new-api/users`。ReplaceFullPath 则会替换整个路径。迁移旧版重写规则时，必须区分这两种行为。
+
 </details>
 
-### 8. 以下哪项不是支持 Gateway API 的实现？
+## 8. 哪个组件不会协调 Gateway API 资源？
 
-A. Istio
-B. Cilium
-C. kube-proxy
-D. Envoy Gateway
+- A. Istio Gateway 控制器
+- B. Cilium Gateway 控制器
+- C. kube-proxy
+- D. Envoy Gateway
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. kube-proxy**
-
-**说明：**
-Gateway API 实现：
-
-| 实现 | Controller |
-|----------------|------------|
-| **Istio** | istio.io/gateway-controller |
-| **Cilium** | io.cilium/gateway-controller |
-| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller |
-| **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller |
-| **Contour** | projectcontour.io/gateway-controller |
-| **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller |
-
-kube-proxy 处理 Service ClusterIP/NodePort 路由，与 Gateway API 无关。
+C. kube-proxy 负责 Service 转发，也可能参与后端网络路径，但它不会协调 GatewayClass、Gateway 或 Route 资源。仅安装 Gateway API CRD 并不会安装以上任何一个控制器。
 
 </details>
 
-### 9. 从 Ingress 迁移到 Gateway API 时，哪项 Gateway API 功能对应于 Ingress 注解？
+## 9. 旧 Ingress 配置中的 HTTP 路径重写，在 Gateway API 中应使用什么配置？
 
-A. Gateway metadata
-B. HTTPRoute matches 和 filters
-C. GatewayClass parameters
-D. ReferenceGrant spec
+- A. Gateway 对象名称
+- B. HTTPRoute 的 URLRewrite 过滤器
+- C. 来自任意命名空间的 ReferenceGrant
+- D. 仅使用命名空间标签
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. HTTPRoute matches 和 filters**
-
-**说明：**
-Ingress 注解 → Gateway API 映射：
-
-| Ingress 注解 | Gateway API |
-|-------------------|-------------|
-| `nginx.ingress.kubernetes.io/rewrite-target` | HTTPRoute filter: URLRewrite |
-| `nginx.ingress.kubernetes.io/ssl-redirect` | HTTPRoute filter: RequestRedirect |
-| `nginx.ingress.kubernetes.io/canary-weight` | HTTPRoute backendRefs weight |
-| 基于 path 的路由 | HTTPRoute matches path |
-| 基于 header 的路由 | HTTPRoute matches headers |
-
-Gateway API 使用显式字段而非注解，以提供更好的可移植性。
+B. 选择 ReplaceFullPath 还是 ReplacePrefixMatch 前，应先确认旧重写规则的实际语义。指南中的固定 `rewrite-target: /` 会替换完整路径，而不是保留后缀。其他 Ingress 注解可能对应 Gateway 设置或控制器策略 CRD，也可能没有受支持的等效项。HTTP 到 HTTPS 的重定向必须绑定到 HTTP 监听器。
 
 </details>
 
-### 10. 在 Gateway 中，仅允许来自特定 namespace 的 Routes 的配置是什么？
+## 10. 如何限制哪些命名空间中的 Route 可以附加到 Gateway？
 
-A. `allowedRoutes.namespaces.from: All`
-B. `allowedRoutes.namespaces.from: Same`
-C. `allowedRoutes.namespaces.from: Selector`
-D. B 和 C 都可以
+- A. `from: All` 将附加范围限制在一个命名空间
+- B. `from: Same` 允许同一命名空间中的 Route
+- C. `from: Selector` 根据 Namespace 标签选择
+- D. B 和 C 都有效，但适用范围不同
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. B 和 C 都可以**
-
-**说明：**
-Gateway allowedRoutes 配置：
+D. `from` 应选择其中一个值。使用标签选择器的示例：
 
 ```yaml
-listeners:
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quiz-namespace-selector
+  namespace: gateway-system
+spec:
+  gatewayClassName: istio
+  listeners:
   - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: tls-cert
     allowedRoutes:
       namespaces:
-        from: All  # All namespaces
-        # or
-        from: Same  # Only same namespace as Gateway
-        # or
-        from: Selector  # Select by label selector
+        from: Selector
         selector:
           matchLabels:
-            gateway-access: "true"
+            gateway-access: 'true'
 ```
 
-- **All**：允许来自所有 namespace 的 Routes
-- **Same**：仅允许与 Gateway 位于同一 namespace 的 Routes
-- **Selector**：仅允许来自具有特定 label 的 namespace 的 Routes
+标签属于 Namespace，而非 Route 或 Pod。应控制哪些主体可以更改 Namespace 标签。allowedRoutes 限制的是 Route 附加范围；它既不会授权跨命名空间访问后端，也不会授权应用请求。
 
 </details>
 
-### 11. 在 GRPCRoute 中，路由到特定 Service 的特定 method 的 matches 配置是什么？
+## 11. GRPCRoute 中哪种匹配条件可以选择某个 Service 的特定 method？
 
-A. `path.service` 和 `path.method`
-B. `method.service` 和 `method.method`
-C. `grpc.service` 和 `grpc.method`
-D. `rpc.service` 和 `rpc.method`
+- A. path.service 和 path.method
+- B. method.service 和 method.method
+- C. grpc.service 和 grpc.method
+- D. rpc.service 和 rpc.method
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `method.service` 和 `method.method`**
-
-**说明：**
-GRPCRoute 匹配：
+B. 对于指南中的 gRPC 监听器：
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GRPCRoute
+metadata:
+  name: quiz-grpc
+  namespace: production
 spec:
+  parentRefs:
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: grpc
+  hostnames:
+  - grpc.example.com
   rules:
-    - matches:
-        - method:
-            service: "myapp.UserService"
-            method: "GetUser"
-      backendRefs:
-        - name: user-service
-          port: 50051
+  - matches:
+    - method:
+        service: myapp.UserService
+        method: GetUser
+    backendRefs:
+    - name: user-service
+      port: 50051
 ```
 
-gRPC 路由选项：
-- 仅 Service：该 Service 的所有 method
-- Service + method：仅特定 method
-- 也支持基于 header 的路由
+默认采用 Exact 匹配时，method 名称区分大小写。后端必须提供预期的 gRPC 传输协议，并配置适当的 TLS；仅凭端口号无法确认这些条件。只指定 service 的 method 匹配会涵盖该 Service 下的所有 method。
 
 </details>
 
-### 12. 以下 Gateway API 与 Ingress API 的比较中，哪项不正确？
+## 12. 以下哪项对 Gateway API 与 Ingress 的比较不正确？
 
-A. Gateway API 支持基于角色的分离，Ingress 不支持
-B. Gateway API 原生支持 TCP/UDP，Ingress 不支持
-C. Gateway API 原生支持流量拆分，Ingress 需要注解
-D. Gateway API 使用的资源类型比 Ingress 少
+- A. Gateway API 更明确地分离监听器和 Route 的所有权
+- B. Gateway API 为 TCP、UDP 和 gRPC 定义了专用路由类型
+- C. Standard 路由字段有实现支持要求
+- D. Gateway API 的资源类型比 Ingress 更少
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. Gateway API 使用的资源类型比 Ingress 少**
-
-**说明：**
-Gateway API 与 Ingress：
-
-| 功能 | Ingress | Gateway API |
-|---------|---------|-------------|
-| 资源数量 | 1 (Ingress) | 多个（GatewayClass、Gateway、Routes 等） |
-| 角色分离 | 无 | 3 层分离 |
-| TCP/UDP | 不支持 | 原生支持 |
-| 流量拆分 | 注解 | 原生（weight） |
-| 可扩展性 | 有限 | 基于 CRD |
-
-Gateway API 使用更多资源类型，但这提供了角色分离和灵活性。
+D. Gateway API 引入了多种资源类型。Ingress 也有 IngressClass，并且可以使用 RBAC 和准入控制；说它没有任何授权或所有权控制并不准确。Gateway API 更明确地表达了若干职责划分和跨命名空间授权流程。应检查控制器及其版本支持情况，而不要假设每个 API 字段在所有实现中的行为都相同。
 
 </details>
 
----
-
-## 补充学习资源
-
-- [Gateway API 官方文档](https://gateway-api.sigs.k8s.io/)
-- [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [特定实现指南](https://gateway-api.sigs.k8s.io/implementations/)
+[返回指南](../../networking/04-gateway-api.md)

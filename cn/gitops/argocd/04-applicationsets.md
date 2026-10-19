@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
 > **已根据以下版本审查**：Argo CD 3.5.2，包括其捆绑的 ApplicationSet controller；在审查发布说明后更新至补丁版本 3.5.4（示例未重新运行）
-> **最后更新**：October 12, 2026
+> **最后更新**：2026年10月12日
 
 ## 目录
 - [ApplicationSet 概述](#applicationset-overview)

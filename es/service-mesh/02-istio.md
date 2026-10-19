@@ -1,6 +1,6 @@
 # Istio
 
-> **Última actualización**: October 12, 2026 · guía de Istio 1.31
+> **Última actualización**: 12 de octubre de 2026 · guía de Istio 1.31
 
 Esta descripción general mantiene utilizable la URL del capítulo anterior. El [índice de documentación de Istio](istio/README.md) y la [guía de instalación](istio/01-installation.md) mantenidos contienen los procedimientos detallados y la matriz de compatibilidad; utilícelos para la configuración actual.
 
@@ -15,7 +15,7 @@ Esta descripción general mantiene utilizable la URL del capítulo anterior. El 
 
 ## Introducción {#introduction}
 
-Istio es una plataforma de service mesh de código abierto para aplicaciones de microservicios. Un service mesh es una capa de infraestructura que gestiona la comunicación entre servicios, lo que permite el control y la observación de esa comunicación a nivel de infraestructura. La propagación de trace-context de la aplicación, el apagado controlado y la idempotencia de negocio aún requieren la participación de la aplicación.
+Istio es una plataforma de service mesh de código abierto para aplicaciones de microservicios. Un service mesh es una capa de infraestructura que gestiona la comunicación entre servicios, lo que permite el control y la observación de esa comunicación a nivel de infraestructura. La propagación del contexto de traza, el apagado controlado y la idempotencia de negocio aún requieren la participación de la aplicación.
 
 ### ¿Qué es un Service Mesh?
 
@@ -29,7 +29,7 @@ Un service mesh proporciona las siguientes capacidades principales:
 
 - **Independencia de plataforma**: Funciona en diversos entornos (Kubernetes, VM, etc.)
 - **Integración transparente**: Se pueden añadir muchos controles de red sin cambiar la lógica de negocio de la aplicación
-- **mTLS de workload**: Identidad administrada y protección de transporte en las rutas del mesh inscritas; verifique la aplicación y las excepciones
+- **mTLS de cargas de trabajo**: Identidad administrada y protección del transporte en las rutas inscritas en el mesh; verifique su aplicación y las excepciones
 - **Gestión avanzada de tráfico**: Enrutamiento, balanceo de carga, inyección de fallos, etc.
 - **Métricas detalladas**: Métricas detalladas de la comunicación entre servicios
 - **Aplicación de políticas**: Control de acceso y rate limiting local/global configurado explícitamente
@@ -78,7 +78,7 @@ Patrones de resiliencia de servicios:
 
 Istio consta de un **Control Plane** y un **Data Plane**. El siguiente diagrama muestra la forma sidecar, no la topología ambient.
 
-![Istiod en el control plane envía la configuración a los proxies sidecar de Envoy que se ejecutan junto a los contenedores de aplicaciones en tres Pods de data plane, y esos proxies establecen conexiones TLS mutuas directamente entre sí.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
+![Istiod en el control plane envía la configuración a los proxies sidecar de Envoy que se ejecutan junto a los contenedores de aplicaciones en tres Pods de data plane, y esos proxies establecen conexiones mTLS directamente entre sí.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-02-istio-0.html)
 
@@ -176,7 +176,7 @@ Los enlaces siguientes son un mapa de aprendizaje hacia el subárbol mantenido. 
 ## Inicio rápido {#quick-start}
 
 1. Compruebe la intersección exacta de compatibilidad de Istio/Kubernetes/EKS en la [guía de instalación](istio/01-installation.md). Un requisito previo genérico de “Kubernetes 1.28+” no es suficiente para una versión actual de Istio.
-2. Elija sidecar o ambient y siga el CLI/chart fijado, el namespace aislado y los requisitos previos de la plataforma de esa guía. No descargue un CLI latest no especificado para después cambiar a un directorio de una versión antigua.
+2. Elija sidecar o ambient y siga las instrucciones de la guía sobre las versiones fijadas del CLI/chart, el namespace aislado y los requisitos previos de la plataforma. No descargue un CLI latest no especificado para después cambiar a un directorio de una versión antigua.
 3. Utilice el procedimiento Bookinfo de versión correspondiente y las instrucciones de Gateway de la guía mantenida. El perfil predeterminado no proporciona automáticamente un Deployment de ingress gateway, y un objeto de configuración Gateway por sí solo no crea el gateway/LoadBalancer requerido por todas las instalaciones.
 4. Verifique la dirección real del gateway, el puerto de Service, el estado de la ruta y la respuesta HTTP. Un load balancer puede publicar una IP o un hostname; no suponga un campo de hostname exclusivo de AWS ni un nombre de puerto concreto.
 5. Instale o configure los [backends de observabilidad](istio/observability/README.md) elegidos antes de utilizar comandos de dashboard. Prometheus, Grafana, Kiali y el almacenamiento de trazado no se instalan automáticamente con el perfil predeterminado de Istio.

@@ -1,10 +1,10 @@
-# Cuestionario de arquitectura de cluster
+# Cuestionario sobre arquitectura de clústeres
 
-Este cuestionario evalúa tu comprensión de la arquitectura de cluster de Kubernetes, sus componentes principales, las rutas de comunicación y las configuraciones de alta disponibilidad.
+Este cuestionario evalúa tu comprensión de la arquitectura de clústeres de Kubernetes, sus componentes principales, las rutas de comunicación y las configuraciones de alta disponibilidad.
 
 ## Preguntas de opción múltiple
 
-1. ¿Cuál de los siguientes NO es un componente principal del control plane de Kubernetes?
+1. ¿Cuál de los siguientes NO es un componente principal del plano de control de Kubernetes?
    - A) kube-apiserver
    - B) etcd
    - C) kube-proxy
@@ -17,10 +17,10 @@ Este cuestionario evalúa tu comprensión de la arquitectura de cluster de Kuber
 **Respuesta: C) kube-proxy**
 
 **Explicación:**
-kube-proxy es un componente de node, no un componente del control plane. Los componentes principales del control plane son kube-apiserver, etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager. kube-proxy se ejecuta en cada node, mantiene las reglas de red y realiza el reenvío de conexiones.
+kube-proxy es un componente de nodo, no del plano de control. Los componentes principales del plano de control son kube-apiserver, etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager. kube-proxy se ejecuta en cada nodo, mantiene las reglas de red y reenvía las conexiones.
 </details>
 
-2. ¿Qué componente en Kubernetes actúa como la "fuente de verdad" que almacena todos los datos del cluster?
+2. ¿Qué componente de Kubernetes actúa como la «fuente de verdad» que almacena el estado de la API?
    - A) kube-apiserver
    - B) etcd
    - C) kube-controller-manager
@@ -33,13 +33,13 @@ kube-proxy es un componente de node, no un componente del control plane. Los com
 **Respuesta: B) etcd**
 
 **Explicación:**
-etcd es un almacén clave-valor consistente y de alta disponibilidad que guarda todos los datos del cluster y actúa como la "fuente de verdad" de Kubernetes. Todo el estado, la configuración y los metadatos del cluster se almacenan en etcd, y todos los demás componentes del control plane interactúan a través de kube-apiserver para leer y escribir información en etcd.
+etcd es un almacén de clave-valor coherente y de alta disponibilidad que guarda el estado de la API de Kubernetes y actúa como su «fuente de verdad». El estado, la configuración y los metadatos del clúster se almacenan en etcd. Los demás componentes del plano de control leen y escriben esa información a través de kube-apiserver.
 </details>
 
-3. ¿Cuál de los siguientes NO es un componente de node de Kubernetes?
+3. ¿Cuál de los siguientes NO es un componente de nodo de Kubernetes?
    - A) kubelet
    - B) kube-proxy
-   - C) Container runtime
+   - C) Runtime de contenedores
    - D) kube-controller-manager
    
 <details>
@@ -49,10 +49,10 @@ etcd es un almacén clave-valor consistente y de alta disponibilidad que guarda 
 **Respuesta: D) kube-controller-manager**
 
 **Explicación:**
-kube-controller-manager es un componente del control plane, no un componente de node. Los componentes de node son kubelet, kube-proxy y container runtime (containerd, CRI-O, etc.). kube-controller-manager se ejecuta en el control plane y ejecuta varios procesos de controller, como node controller y replication controller.
+kube-controller-manager es un componente del plano de control, no de nodo. Los componentes de nodo son kubelet, kube-proxy y un runtime de contenedores, como containerd o CRI-O. kube-controller-manager se ejecuta en el plano de control y ejecuta varios procesos de controladores, como el controlador de nodos y el de replicación.
 </details>
 
-4. ¿Qué componente del control plane en Kubernetes selecciona los nodes para ejecutar pods recién creados?
+4. ¿Qué componente del plano de control de Kubernetes selecciona los nodos donde se ejecutarán los Pods recién creados?
    - A) kube-apiserver
    - B) kube-scheduler
    - C) kubelet
@@ -65,10 +65,10 @@ kube-controller-manager es un componente del control plane, no un componente de 
 **Respuesta: B) kube-scheduler**
 
 **Explicación:**
-kube-scheduler es el componente del control plane que selecciona los nodes para ejecutar pods recién creados. El proceso de scheduling consta de filtering (identificar los nodes que pueden ejecutar el pod) y scoring (asignar puntuaciones a los nodes adecuados), y finalmente asigna el pod al node óptimo. kube-scheduler considera requisitos de recursos, restricciones de hardware/software/política, especificaciones de affinity/anti-affinity, localidad de datos e interferencia de workload.
+kube-scheduler es el componente del plano de control que selecciona los nodos donde se ejecutarán los Pods nuevos. Primero filtra los nodos aptos y luego asigna puntuaciones a los candidatos antes de elegir el nodo más adecuado. Considera los requisitos de recursos, las restricciones de hardware, software y políticas, las reglas de afinidad y antiafinidad, la localidad de los datos y la interferencia entre cargas de trabajo.
 </details>
 
-5. ¿Qué componente del control plane interactúa con las APIs del cloud provider?
+5. ¿Qué componente del plano de control interactúa con las API del proveedor de nube?
    - A) kube-apiserver
    - B) etcd
    - C) cloud-controller-manager
@@ -81,10 +81,10 @@ kube-scheduler es el componente del control plane que selecciona los nodes para 
 **Respuesta: C) cloud-controller-manager**
 
 **Explicación:**
-cloud-controller-manager es un componente del control plane que contiene lógica de control específica de la cloud e interactúa con las APIs del cloud provider. Esto permite separar el core de Kubernetes de las APIs del cloud provider. cloud-controller-manager ejecuta controllers específicos de la cloud, como node controller, route controller, service controller y volume controller.
+cloud-controller-manager es un componente del plano de control que contiene lógica específica de la nube e interactúa con las API del proveedor de nube. Así se separa el núcleo de Kubernetes de esas API. cloud-controller-manager ejecuta controladores específicos de la nube, como los de nodos, rutas y servicios. Los controladores CSI y sus plugins de nodo se encargan del aprovisionamiento, la conexión y el montaje del almacenamiento.
 </details>
 
-6. ¿Cuál es el agent que se ejecuta en cada node y gestiona la ejecución de containers dentro de pods?
+6. ¿Qué agente se ejecuta en cada nodo y administra la ejecución de contenedores dentro de los Pods?
    - A) kube-proxy
    - B) kubelet
    - C) containerd
@@ -97,10 +97,10 @@ cloud-controller-manager es un componente del control plane que contiene lógica
 **Respuesta: B) kubelet**
 
 **Explicación:**
-kubelet es un agent que se ejecuta en cada node y gestiona la ejecución de containers dentro de pods. kubelet recibe PodSpecs mediante varios mecanismos y garantiza que los containers se ejecuten de forma saludable según esas especificaciones. Las funciones clave incluyen ejecutar containers según los PodSpecs, supervisar e informar el estado de los containers, gestionar el ciclo de vida de los containers, gestionar los mounts de volumes, informar el estado del node y realizar health checks de containers.
+kubelet es un agente que se ejecuta en cada nodo y administra los contenedores de los Pods. Recibe PodSpecs por varios mecanismos y procura que los contenedores se ejecuten de acuerdo con esas especificaciones. Entre sus funciones están iniciar los contenedores, supervisar e informar su estado, administrar su ciclo de vida y los montajes de volúmenes, informar el estado del nodo y realizar comprobaciones de estado.
 </details>
 
-7. ¿Qué componente de node en Kubernetes mantiene las reglas de red para las IPs de Service y realiza el reenvío de conexiones?
+7. ¿Qué componente de nodo de Kubernetes mantiene las reglas de red para las IP de los Service y reenvía las conexiones?
    - A) kubelet
    - B) kube-proxy
    - C) CNI plugin
@@ -113,10 +113,10 @@ kubelet es un agent que se ejecuta en cada node y gestiona la ejecución de cont
 **Respuesta: B) kube-proxy**
 
 **Explicación:**
-kube-proxy es un proxy de red que se ejecuta en cada node y es responsable de implementar el concepto de Service de Kubernetes. Mantiene reglas de red en los nodes y realiza el reenvío de conexiones. Las funciones clave incluyen mantener reglas de red para IPs y puertos de Service, reenvío de conexiones, implementación de load balancing y soporte para service discovery. kube-proxy admite varios modos de operación, incluidos userspace mode, iptables mode e IPVS mode.
+kube-proxy es un proxy de red que se ejecuta en cada nodo e implementa el concepto de Service de Kubernetes. Mantiene reglas de red y reenvía conexiones a las IP y los puertos de Service. También proporciona balanceo de carga y detección de servicios. En Linux admite los modos iptables y nftables; en Windows, kernelspace. IPVS dejó de estar recomendado en Kubernetes 1.35 y el modo userspace se eliminó.
 </details>
 
-8. ¿Cuál es la interfaz estándar para ejecutar containers en Kubernetes?
+8. ¿Cuál es la interfaz estándar para ejecutar contenedores en Kubernetes?
    - A) CRI (Container Runtime Interface)
    - B) CNI (Container Network Interface)
    - C) CSI (Container Storage Interface)
@@ -129,10 +129,10 @@ kube-proxy es un proxy de red que se ejecuta en cada node y es responsable de im
 **Respuesta: A) CRI (Container Runtime Interface)**
 
 **Explicación:**
-CRI (Container Runtime Interface) es la interfaz estándar para ejecutar containers en Kubernetes. A través de CRI, Kubernetes puede admitir varios container runtimes como containerd y CRI-O. CRI define APIs para la comunicación entre kubelet y container runtimes, lo que permite operaciones como crear, iniciar, detener y eliminar containers. CNI (Container Network Interface) es la interfaz para networking, y CSI (Container Storage Interface) es la interfaz para storage.
+CRI (Container Runtime Interface) es la interfaz estándar para ejecutar contenedores en Kubernetes. Mediante CRI, Kubernetes admite distintos runtimes de contenedores, como containerd y CRI-O. CRI define las API para la comunicación entre kubelet y el runtime, lo que permite crear, iniciar, detener y eliminar contenedores. CNI (Container Network Interface) proporciona la interfaz de red y CSI (Container Storage Interface), la de almacenamiento.
 </details>
 
-9. ¿Qué interfaz se utiliza para implementar pod networking en clusters de Kubernetes?
+9. ¿Qué interfaz se usa para implementar la red de Pods en clústeres de Kubernetes?
    - A) CRI (Container Runtime Interface)
    - B) CNI (Container Network Interface)
    - C) CSI (Container Storage Interface)
@@ -145,10 +145,10 @@ CRI (Container Runtime Interface) es la interfaz estándar para ejecutar contain
 **Respuesta: B) CNI (Container Network Interface)**
 
 **Explicación:**
-CNI (Container Network Interface) es la interfaz estándar para implementar pod networking en Kubernetes. Los CNI plugins son responsables de conectar interfaces de red a pods y asignar direcciones IP. Existen varios CNI plugins, incluidos Calico, Cilium, Flannel y Weave Net, cada uno con diferentes características y rendimiento. A través de CNI, Kubernetes puede admitir diversas soluciones de networking.
+CNI (Container Network Interface) es la interfaz estándar para implementar la red de Pods de Kubernetes. Los plugins de CNI conectan las interfaces de red a los Pods y les asignan direcciones IP. Entre los plugins disponibles están Calico, Cilium y Flannel, cada uno con distintas funciones y características de rendimiento. CNI permite que Kubernetes use diferentes soluciones de red.
 </details>
 
-10. ¿Qué proporciona una interfaz estándar con sistemas de storage en clusters de Kubernetes?
+10. ¿Qué interfaz proporciona una conexión estándar entre Kubernetes y los sistemas de almacenamiento?
     - A) CRI (Container Runtime Interface)
     - B) CNI (Container Network Interface)
     - C) CSI (Container Storage Interface)
@@ -161,12 +161,12 @@ CNI (Container Network Interface) es la interfaz estándar para implementar pod 
 **Respuesta: C) CSI (Container Storage Interface)**
 
 **Explicación:**
-CSI (Container Storage Interface) proporciona una interfaz estándar entre Kubernetes y los sistemas de storage. A través de CSI, los storage providers pueden desarrollar sus propios storage drivers sin modificar el código de Kubernetes. CSI define APIs estandarizadas para operaciones como creación, eliminación, mounting y unmounting de volumes. Existen varios CSI drivers, incluidos AWS EBS CSI driver, Azure Disk CSI driver y GCP PD CSI driver.
+CSI (Container Storage Interface) proporciona una interfaz estándar entre Kubernetes y los sistemas de almacenamiento. Los proveedores pueden desarrollar drivers de almacenamiento sin modificar el código de Kubernetes. CSI define API para crear y eliminar volúmenes, y para montarlos y desmontarlos. Hay distintos drivers CSI, como AWS EBS CSI, Azure Disk CSI y GCP PD CSI.
 </details>
 
 ## Preguntas de respuesta corta
 
-11. ¿Cuál es el nombre del componente en el control plane de Kubernetes que ejecuta múltiples procesos de controller?
+11. ¿Cómo se llama el componente del plano de control de Kubernetes que ejecuta varios procesos de controladores?
 
 <details>
 
@@ -175,7 +175,7 @@ CSI (Container Storage Interface) proporciona una interfaz estándar entre Kuber
 **Respuesta: kube-controller-manager**
 
 **Explicación:**
-kube-controller-manager es el componente del control plane que ejecuta múltiples procesos de controller. Cada controller gestiona un aspecto específico del cluster. Los controllers principales incluyen node controller, replication controller, endpoint controller, service account & token controller, job controller, cronjob controller, daemonset controller, statefulset controller, PV controller, namespace controller y garbage collector.
+kube-controller-manager ejecuta varios procesos de controladores, cada uno responsable de un aspecto del clúster. Entre ellos están los controladores de nodos, replicación, endpoints, cuentas de servicio y tokens, Jobs, CronJobs, DaemonSets, StatefulSets, PV y namespaces, además del recolector de basura.
 </details>
 
 12. ¿Qué algoritmo de consenso utiliza Kubernetes para garantizar la consistencia de los datos de etcd?
@@ -187,10 +187,10 @@ kube-controller-manager es el componente del control plane que ejecuta múltiple
 **Respuesta: Raft**
 
 **Explicación:**
-etcd utiliza el algoritmo de consenso Raft para garantizar una consistencia fuerte de los datos en sistemas distribuidos. Raft logra consenso en sistemas distribuidos mediante leader election, log replication y safety. Los clusters de etcd suelen estar compuestos por 3 o 5 nodes, y el cluster puede seguir operando mientras una mayoría (quorum) de nodes funcione normalmente.
+etcd usa el algoritmo de consenso Raft para mantener la coherencia de los datos en sistemas distribuidos. Raft alcanza el consenso mediante la elección de líder, la replicación del log y propiedades de seguridad. Los clústeres de etcd suelen tener 3 o 5 nodos y pueden seguir funcionando mientras esté operativa la mayoría (quorum).
 </details>
 
-13. ¿Cuál es el modo de operación predeterminado de kube-proxy en Kubernetes?
+13. ¿Qué modo usa kube-proxy de forma predeterminada en Linux si no se selecciona explícitamente ninguno?
 
 <details>
 
@@ -199,10 +199,10 @@ etcd utiliza el algoritmo de consenso Raft para garantizar una consistencia fuer
 **Respuesta: iptables**
 
 **Explicación:**
-El modo de operación predeterminado de kube-proxy es iptables mode. En este modo, kube-proxy usa Linux iptables para implementar NAT y enrutar el tráfico hacia las IPs de Service a pods. Otros modos de operación incluyen userspace mode (legacy) e IPVS mode (alto rendimiento). IPVS mode proporciona mejor rendimiento para clusters grandes, pero requiere el módulo IPVS en el kernel de Linux.
+El modo predeterminado de kube-proxy es iptables. En ese modo, kube-proxy usa iptables de Linux para implementar NAT y dirigir a los Pods el tráfico destinado a las IP de Service. nftables es otro modo de Linux y es estable desde Kubernetes 1.33; antes de migrar, comprueba la compatibilidad del kernel y de CNI. IPVS dejó de estar recomendado en 1.35; se prevé deshabilitarlo de forma predeterminada en 1.40 y eliminarlo en 1.43. El modo userspace se eliminó. Windows usa kernelspace.
 </details>
 
-14. ¿Cuál es el nombre del archivo de configuración para comunicarse con el API server en un cluster de Kubernetes?
+14. ¿Cómo se llama el archivo de configuración que se usa para comunicarse con el API server de un clúster de Kubernetes?
 
 <details>
 
@@ -211,10 +211,10 @@ El modo de operación predeterminado de kube-proxy es iptables mode. En este mod
 **Respuesta: kubeconfig**
 
 **Explicación:**
-kubeconfig es un archivo de configuración para comunicarse con el Kubernetes API server. Este archivo contiene información del cluster, información de autenticación (certificados, tokens, etc.) y contexts (combinaciones de clusters y users). El comando kubectl usa el archivo $HOME/.kube/config de forma predeterminada, pero se puede especificar otro archivo mediante la flag --kubeconfig o la variable de entorno KUBECONFIG.
+kubeconfig es el archivo de configuración que se usa para comunicarse con el servidor de la API de Kubernetes. Contiene información del clúster, credenciales de autenticación (certificados, tokens, etc.) y contextos, que combinan clústeres y usuarios. kubectl usa $HOME/.kube/config de forma predeterminada, pero puedes indicar otro archivo mediante la opción --kubeconfig o la variable de entorno KUBECONFIG.
 </details>
 
-15. ¿Cuántos control plane nodes se recomiendan generalmente como mínimo para configurar un cluster de alta disponibilidad en Kubernetes?
+15. ¿Cuál es el número mínimo recomendado habitualmente de nodos del plano de control para configurar un clúster de Kubernetes de alta disponibilidad?
 
 <details>
 
@@ -223,12 +223,12 @@ kubeconfig es un archivo de configuración para comunicarse con el Kubernetes AP
 **Respuesta: 3**
 
 **Explicación:**
-El número mínimo generalmente recomendado de control plane nodes para un cluster de alta disponibilidad en Kubernetes es 3. Esto se debe a que los clusters de etcd operan sobre una base de mayoría (quorum). Con 3 nodes, el cluster puede seguir operando incluso si falla 1 node (2 es la mayoría). Con 5 nodes, el cluster puede seguir operando incluso si fallan 2 nodes (3 es la mayoría). Generalmente se recomienda usar un número impar de nodes.
+El mínimo recomendado habitualmente es de 3 nodos del plano de control, porque los clústeres de etcd requieren una mayoría (quorum). Con 3 nodos, el clúster sigue funcionando si falla 1 (2 forman la mayoría). Con 5 nodos, puede tolerar el fallo de 2 (3 forman la mayoría). En general, se recomienda usar un número impar de nodos.
 </details>
 
 ## Preguntas prácticas
 
-16. Escribe un comando para crear un backup de la base de datos de etcd. El archivo de backup debe guardarse en `/backup/etcd-snapshot-$(date +%Y%m%d).db`, el endpoint de etcd es `https://127.0.0.1:2379`, y los archivos de certificado están en el directorio `/etc/kubernetes/pki/etcd/`.
+16. Escribe un comando para crear una copia de seguridad de la base de datos de etcd. El archivo debe guardarse en `/backup/etcd-snapshot-$(date +%Y%m%d).db`, el endpoint de etcd es `https://127.0.0.1:2379`, y los archivos de certificado están en el directorio `/etc/kubernetes/pki/etcd/`.
 
 <details>
 
@@ -244,14 +244,14 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d).db \
 ```
 
 **Explicación:**
-Este comando establece la variable de entorno ETCDCTL_API en 3 para usar la API etcdctl v3 y crea un snapshot de la base de datos de etcd con el comando snapshot save. La flag --endpoints especifica el endpoint del servidor etcd, y las flags --cacert, --cert, --key especifican los archivos de certificado necesarios para la autenticación TLS. El archivo de backup se guarda en el directorio /backup con un nombre que incluye la fecha actual.
+Este comando establece ETCDCTL_API=3 para usar la API v3 de etcdctl y crea una instantánea de la base de datos con snapshot save. El parámetro --endpoints indica el endpoint del servidor etcd; --cacert, --cert y --key especifican los certificados necesarios para la autenticación TLS. El archivo de copia de seguridad se guarda en el directorio /backup con un nombre que incluye la fecha actual.
 </details>
 
 17. Escribe un archivo de configuración de kube-scheduler (YAML) que cumpla los siguientes requisitos:
     - Nombre del scheduler: custom-scheduler
-    - Leader election habilitada
-    - Plugin de scoring: establecer el peso de NodeResourcesBalancedAllocation en 2
-    - Plugin de filtering: deshabilitar NodeUnschedulable
+    - Elección de líder habilitada
+    - Plugin de puntuación: establecer el peso de NodeResourcesBalancedAllocation en 2
+    - Plugin de filtrado: mantener habilitado NodeUnschedulable para excluir los nodos marcados como no programables
 
 <details>
 
@@ -270,22 +270,20 @@ profiles:
       score:
         enabled:
           - name: NodeResourcesBalancedAllocation
+            weight: 2
         disabled: []
-      filter:
-        disabled:
-          - name: NodeUnschedulable
 ```
 
 **Explicación:**
-Este archivo YAML define un objeto KubeSchedulerConfiguration. leaderElection.leaderElect: true habilita leader election, y la sección profiles define un perfil de scheduler llamado custom-scheduler. En la sección plugins, el peso de NodeResourcesBalancedAllocation se establece en 2 en los plugins de score, y NodeUnschedulable se deshabilita en los plugins de filter.
+Este archivo YAML define un objeto KubeSchedulerConfiguration. leaderElection.leaderElect: true habilita elección de líder, y la sección profiles define un perfil de scheduler llamado custom-scheduler. En la sección plugins, el peso de NodeResourcesBalancedAllocation se establece en 2 en los plugins de puntuación. El filtro NodeUnschedulable permanece habilitado y excluye los nodos marcados como no programables; deshabilitarlo permitiría programar Pods en nodos acordonados.
 </details>
 
-18. Escribe un comando de inicio de etcd para configurar un cluster etcd de alta disponibilidad que cumpla los siguientes requisitos:
-    - Nombre del node: etcd-1
-    - Nombre del cluster: etcd-cluster
+18. Escribe un comando de inicio de etcd para configurar un clúster etcd de alta disponibilidad que cumpla los siguientes requisitos:
+    - Nombre del nodo: etcd-1
+    - Nombre del clúster: etcd-cluster
     - URL de cliente: https://192.168.1.10:2379
-    - Peer URL: https://192.168.1.10:2380
-    - Cluster inicial: etcd-1=https://192.168.1.10:2380,etcd-2=https://192.168.1.11:2380,etcd-3=https://192.168.1.12:2380
+    - URL de comunicación entre pares: https://192.168.1.10:2380
+    - Clúster inicial: etcd-1=https://192.168.1.10:2380,etcd-2=https://192.168.1.11:2380,etcd-3=https://192.168.1.12:2380
     - Directorio de datos: /var/lib/etcd
     - Los archivos de certificado están en el directorio /etc/kubernetes/pki/etcd/
 
@@ -308,18 +306,20 @@ etcd \
 --cert-file=/etc/kubernetes/pki/etcd/server.crt \
 --key-file=/etc/kubernetes/pki/etcd/server.key \
 --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--client-cert-auth=true \
 --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
 --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
---peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+--peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--peer-client-cert-auth=true
 ```
 
 **Explicación:**
-Este comando inicia un node etcd llamado etcd-1. --initial-advertise-peer-urls y --listen-peer-urls especifican URLs para la comunicación entre peers, y --listen-client-urls y --advertise-client-urls especifican URLs para la comunicación con clientes. --initial-cluster-token especifica un identificador único para el cluster, y --initial-cluster enumera todos los nodes del cluster. --initial-cluster-state=new indica que se está creando un cluster nuevo. --data-dir especifica el directorio donde se almacenarán los datos de etcd. Finalmente, las flags relacionadas con certificados especifican los archivos de certificado para la comunicación TLS.
+Este comando inicia un nodo etcd llamado etcd-1. --initial-advertise-peer-urls y --listen-peer-urls especifican las URL para la comunicación entre pares; --listen-client-urls y --advertise-client-urls especifican las URL para la comunicación con clientes. --initial-cluster-token define un identificador único del clúster, y --initial-cluster enumera sus nodos. --initial-cluster-state=new indica que se crea un clúster nuevo. --data-dir indica dónde se almacenarán sus datos. Por último, los parámetros de certificados especifican los archivos necesarios para la comunicación TLS.
 </details>
 
 ## Preguntas avanzadas
 
-19. Diseña una arquitectura de alta disponibilidad para un cluster de Kubernetes y explica los métodos de despliegue para los componentes del control plane y etcd, la configuración del load balancer y las medidas de respuesta para escenarios de fallo.
+19. Diseña una arquitectura de alta disponibilidad para un clúster de Kubernetes y explica los métodos de despliegue para los componentes del plano de control y etcd, la configuración del balanceador de carga y las medidas de respuesta para escenarios de fallo.
 
 <details>
 
@@ -327,55 +327,52 @@ Este comando inicia un node etcd llamado etcd-1. --initial-advertise-peer-urls y
 
 **Respuesta:**
 
-**Diseño de arquitectura de cluster Kubernetes de alta disponibilidad**
+**Diseño de una arquitectura de alta disponibilidad para Kubernetes**
 
-1. **Despliegue de componentes del control plane**:
-  - Distribuir al menos 3 control plane nodes entre múltiples availability zones
-  - Desplegar kube-apiserver, kube-scheduler y kube-controller-manager en cada node
-  - Ejecutar kube-scheduler y kube-controller-manager en modo leader election (solo una instancia activa a la vez)
-  - kube-apiserver es escalable horizontalmente (todas las instancias activas simultáneamente)
+1. **Despliegue de los componentes del plano de control**:
+  - Distribuye al menos 3 nodos del plano de control entre varias zonas de disponibilidad.
+  - Despliega kube-apiserver, kube-scheduler y kube-controller-manager en cada nodo.
+  - Ejecuta kube-scheduler y kube-controller-manager con elección de líder; solo una instancia está activa a la vez.
+  - kube-apiserver escala horizontalmente: todas sus instancias pueden estar activas al mismo tiempo.
 
 2. **Métodos de despliegue de etcd**:
-  - Topología stacked: desplegar etcd junto con los control plane nodes
-  - Topología external: desplegar etcd en nodes separados (mayor aislamiento y escalabilidad)
-  - Distribuir al menos 3 etcd nodes entre múltiples availability zones (se recomiendan 5)
-  - El cluster etcd usa el algoritmo de consenso Raft para garantizar la consistencia de los datos
+  - Topología apilada: despliega etcd junto con los nodos del plano de control.
+  - Topología externa: despliega etcd en nodos separados para lograr mayor aislamiento y escalabilidad.
+  - Distribuye al menos 3 nodos de etcd entre varias zonas de disponibilidad. Elige 3 o 5 según la tolerancia a fallos y la latencia.
+  - El clúster de etcd usa el consenso Raft para mantener la coherencia de los datos.
 
-3. **Configuración del load balancer**:
-  - Colocar el load balancer delante de kube-apiserver
-  - El load balancer puede operar a nivel L4 (TCP) o L7 (HTTP/HTTPS)
-  - Detectar instancias no saludables de kube-apiserver mediante health checks y excluir el tráfico
-  - En entornos cloud, usar load balancers gestionados por el cloud provider (AWS ELB, GCP Cloud Load Balancer, etc.)
-  - En entornos on-premises, usar HAProxy, NGINX, keepalived, etc.
+3. **Configuración del balanceador de carga**:
+  - Coloca un balanceador de carga delante de kube-apiserver.
+  - Usa paso TCP de capa 4 para conservar TLS de extremo a extremo y la autenticación mediante certificados de cliente.
+  - Detecta con comprobaciones de estado las instancias de kube-apiserver que no estén sanas y exclúyelas del tráfico.
+  - En la nube, usa balanceadores administrados por el proveedor, como AWS ELB o GCP Cloud Load Balancer.
+  - En instalaciones locales, puedes usar HAProxy, NGINX o keepalived.
 
 4. **Escenarios de fallo y medidas de respuesta**:
-  - **Fallo de un solo control plane node**:
-  - kube-apiserver: el load balancer enruta el tráfico a nodes saludables
-  - kube-scheduler/kube-controller-manager: la instancia en otro node se activa mediante leader election
-  - etcd: el cluster sigue operando si la mayoría está saludable (2 de 3, 3 de 5)
-
-  - **Fallo de availability zone**:
-  - Distribuir nodes entre múltiples availability zones para manejar fallos de una sola zone
-  - Distribuir también worker nodes entre múltiples availability zones
-
+  - **Fallo de un nodo del plano de control**:
+    - kube-apiserver: el balanceador dirige el tráfico a nodos sanos.
+    - kube-scheduler y kube-controller-manager: la elección de líder activa una instancia de otro nodo.
+    - etcd: el clúster sigue operando si la mayoría permanece sana (2 de 3 o 3 de 5).
+  - **Fallo de una zona de disponibilidad**:
+    - Distribuye los nodos entre varias zonas para tolerar el fallo de una zona.
+    - Distribuye también los nodos de trabajo entre varias zonas.
   - **Partición de red**:
-  - etcd opera sobre una base de mayoría para evitar "split brain" durante particiones de red
-  - Los nodes de etcd en la partición minoritaria cambian a modo read-only
-
-  - **Corrupción/pérdida de datos de etcd**:
-  - Realizar backups regulares de etcd
-  - Documentar y probar procedimientos de recuperación desde backups
+    - etcd usa la mayoría para evitar el split brain durante una partición.
+    - La minoría no puede confirmar escrituras ni atender lecturas linealizables. Las lecturas serializables solicitadas explícitamente pueden devolver datos locales obsoletos.
+  - **Corrupción o pérdida de datos de etcd**:
+    - Realiza copias de seguridad periódicas de etcd.
+    - Documenta y prueba los procedimientos de recuperación a partir de las copias.
 
 5. **Consideraciones adicionales**:
-  - **Gestión de certificados**: monitorizar la expiración de certificados y la renovación automática
-  - **Audit logging**: habilitar audit logs para operaciones importantes y almacenarlos externamente
-  - **Monitoring and alerting**: configurar monitoring y alerting para el estado de los componentes del control plane
-  - **Recuperación automatizada**: implementar mecanismos de recuperación automatizada (por ejemplo, reinicio automático del servicio systemd)
+  - **Administración de certificados**: supervisa su vencimiento y renovación automática.
+  - **Registro de auditoría**: habilita registros de auditoría para operaciones importantes y almacénalos fuera del clúster.
+  - **Supervisión y alertas**: configura la supervisión y las alertas del estado de los componentes del plano de control.
+  - **Recuperación automatizada**: implementa mecanismos de recuperación, por ejemplo, el reinicio automático mediante systemd.
 
-Con esta arquitectura de alta disponibilidad, el cluster de Kubernetes puede seguir operando incluso si falla un solo node, una sola availability zone o algunos componentes.
+Con esta arquitectura de alta disponibilidad, el clúster de Kubernetes puede seguir funcionando aunque falle un nodo, una zona de disponibilidad o algunos componentes.
 </details>
 
-20. Explica la arquitectura de networking de un cluster de Kubernetes, describe cómo funcionan la comunicación pod-to-pod, service networking y la comunicación externa, y explica el rol de los CNI plugins. También explica cómo restringir la comunicación pod-to-pod usando NetworkPolicy.
+20. Explica la arquitectura de red de un clúster de Kubernetes, cómo funcionan la comunicación de Pod a Pod, la red de Service y la comunicación externa, y qué función cumplen los plugins de CNI. Explica también cómo restringir la comunicación entre Pods mediante NetworkPolicy.
 
 <details>
 
@@ -383,54 +380,52 @@ Con esta arquitectura de alta disponibilidad, el cluster de Kubernetes puede seg
 
 **Respuesta:**
 
-**Arquitectura de networking de Kubernetes**
+**Arquitectura de red de Kubernetes**
 
-1. **Modelo de networking de Kubernetes**:
-  - Todos los pods tienen direcciones IP únicas
-  - Los pods pueden comunicarse sin NAT
-  - Los nodes y pods pueden comunicarse sin NAT
-  - Los containers dentro de un pod se comunican a través de localhost
+1. **Modelo de red de Kubernetes**:
+  - Todos los Pods tienen direcciones IP únicas.
+  - Los Pods pueden comunicarse sin NAT.
+  - Los nodos y los Pods pueden comunicarse sin NAT.
+  - Los contenedores de un mismo Pod se comunican mediante localhost.
 
-2. **Comunicación pod-to-pod**:
-  - **Entre pods en el mismo node**: comunicación a través de la red bridge local del node
-  - **Entre pods en diferentes nodes**: comunicación a través de una overlay network o tablas de routing
-  - Los CNI plugins gestionan la asignación de direcciones IP de pods y el routing
+2. **Comunicación de Pod a Pod**:
+  - **Pods en el mismo nodo**: se comunican a través del plano de datos local, que puede usar un bridge, enrutamiento o eBPF según el plugin.
+  - **Pods en nodos distintos**: se comunican mediante una red superpuesta o tablas de enrutamiento.
+  - Los plugins de CNI asignan las direcciones IP de los Pods y configuran el enrutamiento.
 
-3. **Service networking**:
-  - **ClusterIP**: IP virtual accesible solo dentro del cluster
-  - **kube-proxy**: enruta el tráfico hacia IPs de Service a pods
-  - iptables mode: implementa NAT usando reglas de Linux iptables
-  - IPVS mode: proporciona load balancing de alto rendimiento usando IP Virtual Server del kernel de Linux
-  - **CoreDNS**: Service DNS que resuelve nombres de Service a ClusterIPs
-  - **Service discovery**: descubre Services mediante variables de entorno o DNS
+3. **Red de los Services**:
+  - **ClusterIP**: IP virtual accesible solo dentro del clúster.
+  - **kube-proxy**: dirige a los Pods el tráfico destinado a las IP de Service.
+  - Modo iptables: implementa NAT mediante reglas de iptables de Linux.
+  - Modo nftables: programa el plano de datos de nftables en Linux; IPVS está obsoleto.
+  - **CoreDNS**: servicio DNS que resuelve los nombres de Service a ClusterIP.
+  - **Detección de servicios**: permite descubrir Services mediante variables de entorno o DNS.
 
 4. **Comunicación externa**:
-  - **Ingress**: enruta tráfico HTTP/HTTPS a Services
-  - **NodePort**: expone Services a través de puertos específicos en nodes
-  - **LoadBalancer**: expone Services a través del load balancer del cloud provider
-  - **ExternalName**: crea registros CNAME para Services externos
+  - **Ingress**: dirige el tráfico HTTP/HTTPS a los Services.
+  - **NodePort**: expone Services en puertos específicos de los nodos.
+  - **LoadBalancer**: expone Services mediante un balanceador del proveedor de nube.
+  - **ExternalName**: crea registros CNAME para servicios externos.
 
-5. **Rol de los CNI (Container Network Interface) Plugins**:
-  - Conectar interfaces de red a pods
-  - Asignar y gestionar direcciones IP
-  - Configurar tablas de routing
-  - Implementar NetworkPolicy
-  - CNI plugins principales:
-  - **Calico**: networking basado en BGP, soporte de NetworkPolicy, alto rendimiento
-  - **Cilium**: networking y seguridad basados en eBPF, políticas de seguridad L3-L7, alto rendimiento
-  - **Flannel**: overlay network simple, configuración sencilla
-  - **Weave Net**: networking de containers multi-host, soporte de cifrado
+5. **Función de los plugins CNI (Container Network Interface)**:
+  - Conectan interfaces de red a los Pods.
+  - Asignan y administran direcciones IP.
+  - Configuran tablas de enrutamiento.
+  - Implementan políticas de red.
+  - Algunos plugins de CNI:
+    - **Calico**: red basada en BGP, compatible con políticas de red y de alto rendimiento.
+    - **Cilium**: red y seguridad basadas en eBPF, políticas de seguridad L3-L7 y alto rendimiento.
+    - **Flannel**: red superpuesta sencilla y fácil de configurar.
 
-6. **Restricción de comunicación pod-to-pod usando NetworkPolicy**:
-  - Controlar la comunicación pod-to-pod usando recursos NetworkPolicy
-  - De forma predeterminada, todos los pods pueden comunicarse entre sí (cuando no existen políticas)
-  - Componentes de una NetworkPolicy:
-  - **podSelector**: selecciona los pods a los que se aplica la política
-  - **policyTypes**: Ingress (entrante), Egress (saliente) o ambos
-  - **ingress**: reglas para tráfico entrante
-  - **egress**: reglas para tráfico saliente
-
-  - **Ejemplo de política default deny**:
+6. **Restricción de la comunicación entre Pods mediante NetworkPolicy**:
+  - Controla la comunicación entre Pods con recursos NetworkPolicy.
+  - Si no hay políticas, de forma predeterminada todos los Pods pueden comunicarse entre sí.
+  - Una NetworkPolicy incluye:
+    - **podSelector**: selecciona los Pods a los que se aplica la política.
+    - **policyTypes**: Ingress (entrada), Egress (salida) o ambos.
+    - **ingress**: reglas para el tráfico entrante.
+    - **egress**: reglas para el tráfico saliente.
+  - **Ejemplo de política de denegación predeterminada**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -442,8 +437,7 @@ spec:
     - Ingress
     - Egress
 ```
-
-  - **Ejemplo de política que permite comunicación solo entre pods específicos**:
+  - **Ejemplo de política que solo permite la comunicación entre Pods específicos**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -464,8 +458,7 @@ spec:
         - protocol: TCP
           port: 8080
 ```
-
-  - **Ejemplo de control de comunicación namespace-to-namespace**:
+  - **Ejemplo de control de comunicación entre namespaces**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -487,15 +480,15 @@ spec:
           port: 9090
 ```
 
-7. **Consideraciones para la implementación de NetworkPolicy**:
-  - Las NetworkPolicies son implementadas por CNI plugins
-  - No todos los CNI plugins admiten NetworkPolicy
-  - Verificar en un entorno de prueba antes de aplicar políticas
-  - Se recomienda comenzar con una política default deny y permitir solo la comunicación necesaria
+7. **Consideraciones para implementar NetworkPolicy**:
+  - Los plugins de CNI implementan las políticas de red.
+  - No todos los plugins de CNI las admiten.
+  - Comprueba su comportamiento en un entorno de pruebas antes de aplicar las políticas.
+  - Conviene empezar con una política de denegación predeterminada y permitir solo la comunicación necesaria.
 
-La arquitectura de networking de Kubernetes permite la comunicación entre containers de una manera flexible y escalable, y proporciona control de seguridad granular mediante NetworkPolicy.
+La arquitectura de red de Kubernetes permite una comunicación flexible y escalable entre contenedores, y ofrece un control de seguridad detallado mediante políticas de red.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../core/01-cluster-architecture.md) | [Siguiente cuestionario: Pods y Workloads](../core/02-pods-and-workloads-quiz.md)
+[Volver a los materiales de aprendizaje](../../core/01-cluster-architecture.md) | [Siguiente cuestionario: Pods y cargas de trabajo](../core/02-pods-and-workloads-quiz.md)

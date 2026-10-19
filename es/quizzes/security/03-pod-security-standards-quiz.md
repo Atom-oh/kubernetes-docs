@@ -1,9 +1,11 @@
 # Cuestionario sobre Pod Security Standards
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 > **Documento relacionado**: [Pod Security Standards](../../security/03-pod-security-standards.md)
 
-Responde para Pods Linux comunes; consulta la guía para conocer las excepciones específicas de versión para Windows y los espacios de nombres de usuario.
+Responde considerando Pods Linux comunes; consulta la guía para conocer las excepciones específicas de cada versión para Windows y los espacios de nombres de usuario.
+
+Este cuestionario evalúa tus conocimientos sobre Pod Security Standards (PSS), Pod Security Admission (PSA) y los perfiles de seguridad.
 
 ## Preguntas del cuestionario
 
@@ -47,11 +49,11 @@ PSA proporciona tres modos:
 - **audit**: Registra las infracciones en los registros de auditoría, pero las permite
 - **warn**: Muestra un mensaje de advertencia al usuario, pero las permite
 
-deny no es un modo de PSA válido. audit/warn no rechazan por sí mismos; enforce u otras comprobaciones aún pueden rechazar la misma solicitud. La retención de auditorías requiere una configuración de registros adecuada.
+deny no es un modo de PSA válido. audit/warn no rechazan por sí mismos; enforce u otras comprobaciones aún pueden rechazar la misma solicitud. La conservación de los registros de auditoría requiere una configuración adecuada.
 
 </details>
 
-### 3. ¿Qué formato de etiqueta se utiliza para aplicar PSS a un namespace?
+### 3. ¿Qué formato de etiqueta se utiliza para aplicar PSS a un espacio de nombres?
 
 - A) security.kubernetes.io/enforce: restricted
 - B) pod-security.kubernetes.io/enforce: restricted
@@ -64,7 +66,7 @@ deny no es un modo de PSA válido. audit/warn no rechazan por sí mismos; enforc
 **Respuesta: B) pod-security.kubernetes.io/enforce: restricted**
 
 **Explicación:**
-PSA se configura mediante etiquetas de namespace:
+PSA se configura mediante etiquetas del espacio de nombres:
 ```yaml
 metadata:
   labels:
@@ -97,7 +99,7 @@ El nivel Baseline evita la escalada de privilegios conocida. Se prohíbe lo sigu
 - Adiciones explícitas de capacidades fuera de la lista permitida de Baseline, incluida NET_RAW
 - Todos los volúmenes hostPath; PSA integrado no proporciona ninguna lista de rutas permitidas
 
-Baseline no requiere runAsNonRoot ni allowPrivilegeEscalation: false. Restricted añade esos controles para el tipo de Pod asumido. readOnlyRootFilesystem es un fortalecimiento recomendado, no un requisito de ninguno de los perfiles. La comprobación de capacidades se refiere a adiciones explícitas; no elimina el conjunto predeterminado del runtime.
+Baseline no requiere runAsNonRoot ni allowPrivilegeEscalation: false. Restricted añade esos controles para el tipo de Pod contemplado. readOnlyRootFilesystem es una medida de endurecimiento recomendada, no un requisito de ninguno de los perfiles. La comprobación de capacidades se refiere a adiciones explícitas; no elimina el conjunto predeterminado del runtime.
 
 </details>
 
@@ -180,7 +182,7 @@ Los valores utilizan `v1.XX` o `latest`. La fijación selecciona la definición 
 **Respuesta: B) Habilitado de forma predeterminada**
 
 **Explicación:**
-PSA alcanzó GA y está habilitado de forma predeterminada en Kubernetes upstream 1.25+. AWS documenta la habilitación predeterminada de EKS desde la versión 1.23, con valores predeterminados permisivos privileged/latest y sin exenciones estáticas. Revisa las etiquetas reales de los namespaces; añade una política adecuada en lugar de asumir que la habilitación por sí sola proporciona la aplicación de Baseline/Restricted.
+PSA alcanzó el estado de disponibilidad general (GA) y viene habilitado de forma predeterminada en Kubernetes estándar (upstream) a partir de la versión 1.25. AWS documenta que EKS lo habilita de forma predeterminada desde la versión 1.23, con valores predeterminados permisivos `privileged`/`latest` y sin exenciones estáticas. Revisa las etiquetas reales de los espacios de nombres y añade una política adecuada; no des por hecho que la habilitación por sí sola hace cumplir Baseline o Restricted.
 
 </details>
 
@@ -188,7 +190,7 @@ PSA alcanzó GA y está habilitado de forma predeterminada en Kubernetes upstrea
 
 - A) Exención de RuntimeClass
 - B) Exención de usuario
-- C) Exención de namespace
+- C) Exención de espacio de nombres
 - D) Exención de etiqueta de Pod
 
 <details>
@@ -200,9 +202,9 @@ PSA alcanzó GA y está habilitado de forma predeterminada en Kubernetes upstrea
 PSA admite los siguientes tipos de exención:
 - **usernames**: Exenciones para usuarios específicos
 - **runtimeClasses**: Exenciones para RuntimeClasses específicas
-- **namespaces**: Exenciones para namespaces específicos
+- **namespaces**: Exenciones para espacios de nombres específicos
 
-Las etiquetas de Pods no crean exenciones. Las entradas de exención estáticas son nombres exactos, no selectores de comodines ni de grupos. Las exenciones de usuario coinciden con la identidad de la solicitud, no con spec.serviceAccountName. EKS no permite editar esta configuración del control plane; elegir la aplicación de namespace privileged es diferente de una exención estática.
+Las etiquetas de Pods no crean exenciones. Las entradas de exención estáticas son nombres exactos, no selectores de comodines ni de grupos. Las exenciones de usuario coinciden con la identidad de la solicitud, no con `spec.serviceAccountName`. EKS no permite modificar esta configuración del plano de control; aplicar el nivel `privileged` a un espacio de nombres no equivale a una exención estática.
 
 </details>
 
@@ -230,7 +232,7 @@ Unconfined no está permitido en el nivel Restricted. Desactiva el filtrado de s
 ### 11. ¿Cuál es el primer paso recomendado al migrar de PSP a PSA?
 
 - A) Eliminar PSP inmediatamente
-- B) Aplicar el modo enforce a todos los namespaces
+- B) Aplicar el modo enforce a todos los espacios de nombres
 - C) Empezar con el modo audit/warn para identificar infracciones
 - D) Crear un nuevo clúster
 
@@ -246,7 +248,7 @@ Pasos recomendados para la migración de PSA:
 3. **Cambiar al modo enforce**: Aplicar gradualmente
 4. **Eliminar PSP**: Después de completar la migración
 
-Los Pods existentes en ejecución no se expulsan simplemente al volver a etiquetar. Se pueden denegar sus reemplazos o actualizaciones relevantes, por lo que una implementación posterior puede bloquearse. Esta secuencia de eliminación de PSP es histórica para los clústeres que aún servían PSP antes de la versión 1.25.
+Los Pods existentes en ejecución no se expulsan simplemente al volver a etiquetar. Se pueden denegar sus reemplazos o actualizaciones relevantes, por lo que un despliegue posterior puede quedar bloqueado. Esta secuencia de eliminación de PSP es histórica para los clústeres que aún servían PSP antes de la versión 1.25.
 
 </details>
 
@@ -255,14 +257,14 @@ Los Pods existentes en ejecución no se expulsan simplemente al volver a etiquet
 ### 12. ¿Cuál de estos elementos prohíbe el propio perfil PSS Privileged?
 
 - A) Uso de hostNetwork
-- B) contenedores privilegiados
-- C) Ninguno de estos por PSS mismo
+- B) Contenedores privilegiados
+- C) El propio PSS no prohíbe ninguno de estos elementos
 - D) volúmenes hostPath
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Ninguno de estos por PSS mismo**
+**Respuesta: C) El propio PSS no prohíbe ninguno de estos elementos**
 
 **Explicación:**
 Privileged no añade restricciones de PSS sobre estos campos válidos de Pod:
@@ -272,6 +274,6 @@ Privileged no añade restricciones de PSS sobre estos campos válidos de Pod:
 - Se permiten todas las capacidades
 - Se permiten todos los tipos de volumen
 
-Esto no concede permisos de IAM/RBAC, omite la validación de esquemas ni otras políticas de admisión, ni fuerza privileged: true. Limita estos namespaces a componentes de acceso al host revisados.
+Esto no concede permisos de IAM/RBAC, omite la validación de esquemas ni otras políticas de admisión, ni fuerza privileged: true. Limita esos espacios de nombres a componentes de acceso al host previamente revisados.
 
 </details>

@@ -1,6 +1,6 @@
 # 容器镜像安全
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 > **验证基线**：Trivy 0.76.0、Trivy Operator 0.35.0/chart 0.37.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.13.0/chart 2.13.0。这些是 CLI/配置基线，不代表已在所有 Kubernetes 版本上完成部署测试。
 
 镜像安全首先要确认**构建、扫描和部署的是同一个制品**。扫描可识别已知漏洞和配置问题；签名可将签名者与摘要关联起来。但两者都不能保证应用安全。
@@ -32,7 +32,7 @@
 | 许可证/SBOM | 组件和许可证检测覆盖范围 | Syft、Trivy |
 | 运行时行为 | 实时系统调用、进程、网络活动 | Falco 等独立工具 |
 
-流程为 `源代码检查 → 仅构建一次 → 扫描该制品 → 推送 → 对摘要签名/验证 → 准入检查 → 重新扫描`。组织应定义严重性门槛，并为例外指定负责人、理由和到期时间。
+流程为 `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`。组织应定义严重性门槛，并为例外指定负责人、理由和到期时间。
 
 <span id="trivy-installation"></span>
 <span id="image-scanning"></span>

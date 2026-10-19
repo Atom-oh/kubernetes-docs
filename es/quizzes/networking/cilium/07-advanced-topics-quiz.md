@@ -1,318 +1,420 @@
 # Cuestionario avanzado de Cilium
 
-> **Versión compatible**: Cilium 1.17
-> **Última actualización**: February 22, 2026
+> **Base de revisión**: Cilium 1.20.3; Cilium CLI 0.20.1; Hubble CLI 1.20.2.
+> **Última revisión**: 16 de octubre de 2026.
+
+[Volver a la guía](../../../networking/cilium/07-advanced-topics.md)
 
 ## Tecnología eBPF
 
-1. **¿Dónde se ejecutan los programas eBPF?**
-   - A) Espacio de usuario
-   - B) Espacio del kernel
-   - C) Dentro de contenedores
-   - D) Dentro de máquinas virtuales
+1. **¿Dónde se ejecutan los programas eBPF del plano de datos de Linux que se analizan en este curso?**
+
+   - A) Solo en un navegador
+   - B) En hooks compatibles del kernel de Linux
+   - C) Solo dentro de Envoy
+   - D) En el servidor de API de Kubernetes
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: B) Espacio del kernel</p>
-   <p><strong>Explicación</strong>: Los programas eBPF se ejecutan de forma segura dentro del kernel de Linux y pueden ampliar y modificar la funcionalidad del kernel.</p>
+
+   **Respuesta: B) En hooks compatibles del kernel de Linux**
+
+   Cilium conecta programas eBPF a hooks del kernel. Los componentes de espacio de usuario los cargan y administran.
+
    </details>
 
-2. **¿Qué mecanismo garantiza la seguridad de los programas eBPF?**
-   - A) Virtualización
-   - B) Contenerización
-   - C) Verificador estático
-   - D) Cifrado
+2. **¿Qué mecanismo comprueba un programa eBPF antes de que el kernel lo acepte?**
+
+   - A) El cifrado
+   - B) La planificación de contenedores
+   - C) El verificador
+   - D) DNS
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) Verificador estático</p>
-   <p><strong>Explicación</strong>: El verificador de eBPF comprueba la seguridad de los programas antes de cargarlos para evitar bucles infinitos o fallos del kernel.</p>
+
+   **Respuesta: C) El verificador**
+
+   El verificador comprueba propiedades como el acceso a memoria y la ejecución acotada. No ofrece una garantía absoluta frente a vulnerabilidades de implementación ni a todos los fallos del kernel.
+
    </details>
 
-3. **¿Cuál NO es un beneficio principal de usar eBPF en Cilium?**
-   - A) Implementar funcionalidades de red sin módulos del kernel
-   - B) Alto rendimiento y baja sobrecarga
-   - C) Aplicación detallada de políticas de red
-   - D) Aceleración de hardware requerida
+3. **¿Cuál no es un requisito general del plano de datos eBPF por software de Cilium?**
+
+   - A) Funciones compatibles del kernel
+   - B) Privilegios adecuados
+   - C) Una configuración de red compatible
+   - D) Descarga de procesamiento a hardware dedicado
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: D) Aceleración de hardware requerida</p>
-   <p><strong>Explicación</strong>: eBPF puede proporcionar alto rendimiento mediante software sin requerir aceleración de hardware.</p>
+
+   **Respuesta: D) Descarga de procesamiento a hardware dedicado**
+
+   La descarga a hardware no es obligatoria. El rendimiento depende de la ruta, la carga de trabajo, el kernel y el hardware reales.
+
    </details>
 
 ## Modelos de red
 
-4. **¿Qué modo de ruta de datos NO es compatible con Cilium?**
+4. **¿Cuál no es una de las opciones nativas o de túnel de Cilium descritas en este curso?**
+
    - A) VXLAN
    - B) Geneve
-   - C) Direct Routing
-   - D) MPLS
+   - C) Enrutamiento nativo
+   - D) Un modo de plano de datos MPLS
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: D) MPLS</p>
-   <p><strong>Explicación</strong>: Cilium admite VXLAN, Geneve y Direct Routing, pero no admite MPLS.</p>
+
+   **Respuesta: D) Un modo de plano de datos MPLS**
+
+   Esto describe las opciones de configuración de Cilium; no prohíbe usar una infraestructura de red subyacente externa basada en MPLS.
+
    </details>
 
-5. **¿Qué tecnología utiliza Cilium en el modo de reemplazo de kube-proxy?**
-   - A) iptables
-   - B) IPVS
-   - C) XDP basado en eBPF
-   - D) netfilter
+5. **¿Qué implementa el reemplazo de kube-proxy de Cilium?**
+
+   - A) Solo cadenas iptables
+   - B) Solo reglas IPVS
+   - C) Gestión de Services mediante eBPF, con aceleración XDP opcional
+   - D) Un conmutador de hardware externo obligatorio
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) XDP basado en eBPF</p>
-   <p><strong>Explicación</strong>: Cilium utiliza eBPF y XDP (eXpress Data Path) para reemplazar kube-proxy y proporcionar mayor rendimiento.</p>
+
+   **Respuesta: C) Gestión de Services mediante eBPF, con aceleración XDP opcional**
+
+   Los programas eBPF en la ruta de sockets y paquetes implementan la gestión de Services. XDP acelera rutas de reenvío externas compatibles; no es necesario para todos los Services.
+
    </details>
 
-6. **¿Qué funcionalidad del modelo de red de Cilium rastrea las rutas de los paquetes durante la comunicación de Pod a Pod?**
-   - A) tcpdump
-   - B) Hubble Flow Monitoring
-   - C) Wireshark
-   - D) Prometheus
+6. **¿Qué componente de observabilidad de Cilium expone registros de flujo con contexto de Kubernetes?**
+
+   - A) Helm
+   - B) Hubble
+   - C) kube-scheduler
+   - D) etcdctl
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: B) Hubble Flow Monitoring</p>
-   <p><strong>Explicación</strong>: Hubble es la herramienta Hubble Flow Monitoring de Cilium que puede rastrear y visualizar la comunicación de Pod a Pod en tiempo real.</p>
+
+   **Respuesta: B) Hubble**
+
+   Hubble expone observaciones acotadas, no una captura sin pérdida de todos los paquetes. Las herramientas de análisis de paquetes tienen otras funciones.
+
    </details>
 
 ## IPAM y políticas de red
 
-7. **¿Qué modo de IPAM (gestión de direcciones IP) en Cilium se integra con AWS EKS?**
-   - A) Cluster Pool
-   - B) Kubernetes Host Scope
-   - C) AWS ENI
-   - D) CRD-based
+7. **¿Qué modo IPAM de Cilium usa ENI de EC2 para asignar direcciones de la VPC?**
+
+   - A) Cluster pool
+   - B) Ámbito de host de Kubernetes
+   - C) ENI
+   - D) Basado en CRD genéricas
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) AWS ENI</p>
-   <p><strong>Explicación</strong>: Cilium se integra con EKS mediante el modo AWS ENI (Elastic Network Interface) para asignar directamente direcciones IP de VPC a los Pods.</p>
+
+   **Respuesta: C) ENI**
+
+   El modo ENI usa interfaces de red y asignación de direcciones de AWS. Esto no significa que todos los modos de cómputo de EKS admitan un CNI alternativo; compruebe los requisitos previos de la plataforma.
+
    </details>
 
-8. **¿Qué permite la regla 'toFQDNs' en las políticas de red de Cilium?**
-   - A) Tráfico hacia direcciones IP específicas
-   - B) Tráfico hacia puertos específicos
-   - C) Tráfico hacia nombres de dominio específicos
-   - D) Tráfico de protocolos específicos
+8. **¿Qué usa `toFQDNs` para permitir conexiones salientes?**
+
+   - A) Un JWT verificado
+   - B) Solo un puerto fijo de Service
+   - C) Direcciones IP de destino aprendidas para nombres DNS coincidentes
+   - D) Descifrado automático de TLS
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) Tráfico hacia nombres de dominio específicos</p>
-   <p><strong>Explicación</strong>: La regla toFQDNs permite el tráfico hacia nombres de dominio específicos (FQDNs) y Cilium supervisa las consultas DNS para permitir dinámicamente las direcciones IP de esos dominios.</p>
+
+   **Respuesta: C) Direcciones IP de destino aprendidas para nombres DNS coincidentes**
+
+   Permitir consultas DNS u observarlas mediante el proxy y permitir después la conectividad IP son aspectos distintos. La regla no autentica la aplicación remota.
+
    </details>
 
-9. **¿Qué selector NO es compatible con Cilium CiliumNetworkPolicy?**
-   - A) endpointSelector
-   - B) nodeSelector
-   - C) namespaceSelector
-   - D) serviceSelector
+9. **¿Qué selector se usa para una política de host de nodos en un CiliumClusterwideNetworkPolicy?**
+
+   - A) `endpointSelector` para todos los nodos
+   - B) `nodeSelector`
+   - C) Un `serviceSelector` de nivel superior
+   - D) Un `namespaceSelector` de nivel superior
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: D) serviceSelector</p>
-   <p><strong>Explicación</strong>: Cilium admite endpointSelector, nodeSelector y namespaceSelector, pero no admite directamente serviceSelector.</p>
+
+   **Respuesta: B) `nodeSelector`**
+
+   `nodeSelector` es un campo de política de host para todo el clúster. No describa todas las formas de selector de Kubernetes como campos de nivel superior intercambiables de CiliumNetworkPolicy.
+
    </details>
 
 ## Redes L2-L7
 
-10. **¿Qué atributo no puede filtrarse mediante las políticas L7 de Cilium para solicitudes HTTP?**
-    - A) Ruta
-    - B) Método
-    - C) Encabezados
-    - D) Tiempo de respuesta
+10. **¿Cuál no es un campo de coincidencia de solicitudes en una política HTTP de Cilium?**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Tiempo de respuesta</p>
-    <p><strong>Explicación</strong>: Las políticas L7 de Cilium pueden filtrar atributos de solicitudes HTTP como la ruta, el método y los encabezados, pero el tiempo de respuesta no es un objetivo de filtrado.</p>
-    </details>
+   - A) Ruta
+   - B) Método
+   - C) Encabezados
+   - D) Latencia de respuesta
 
-11. **¿Qué NO proporcionan las funcionalidades de Service Mesh de Cilium?**
-    - A) TLS mutuo (mTLS)
-    - B) División de tráfico
-    - C) Descubrimiento de servicios
-    - D) Autenticación de usuarios
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Autenticación de usuarios</p>
-    <p><strong>Explicación</strong>: Cilium Service Mesh proporciona TLS mutuo, división de tráfico y descubrimiento de servicios, pero la autenticación de usuarios suele gestionarse mediante un sistema de autenticación independiente.</p>
-    </details>
+   **Respuesta: D) Latencia de respuesta**
 
-12. **¿Qué funcionalidad proporciona la integración de Cilium con Envoy?**
-    - A) Balanceo de carga L7
-    - B) Visibilidad L7
-    - C) Aplicación de políticas L7
-    - D) Todas las anteriores
+   Las reglas HTTP inspeccionan los campos de solicitud compatibles cuando HTTP está visible. Medir la latencia no añade un campo de reglas de permiso basado en latencia.
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Todas las anteriores</p>
-    <p><strong>Explicación</strong>: Cilium se integra con el proxy Envoy para proporcionar balanceo de carga L7, visibilidad y aplicación de políticas.</p>
-    </details>
+   </details>
+
+11. **¿Qué no proporciona por sí sola una política de red basada en identidades?**
+
+   - A) Selección de endpoints
+   - B) Restricciones de acceso de red
+   - C) Reglas específicas por dirección
+   - D) Autenticación de tokens de usuario final
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: D) Autenticación de tokens de usuario final**
+
+   La autenticación de usuarios requiere la lógica adecuada en la aplicación o la puerta de enlace. La autenticación mutua con SPIRE y mTLS de cargas de trabajo con ztunnel Beta son funciones configuradas por separado y tienen sus propias limitaciones.
+
+   </details>
+
+12. **¿Qué puede proporcionar la integración de Cilium con Envoy cuando se configura en la ruta adecuada?**
+
+   - A) Balanceo de carga HTTP
+   - B) Visibilidad HTTP
+   - C) Aplicación de políticas HTTP
+   - D) Todo lo anterior
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: D) Todo lo anterior**
+
+   Estas funciones dependen de la ruta del proxy y de la configuración elegidas; habilitar una función de red distinta no activa todas las capacidades L7.
+
+   </details>
 
 ## Seguridad y visibilidad
 
-13. **¿Qué funcionalidad NO proporciona Hubble UI?**
-    - A) Mapa de dependencias de servicios
-    - B) Visualización de flujos de red
-    - C) Alertas de violación de políticas
-    - D) Gestión de despliegues de código
+13. **¿Cuál es una función de Hubble UI?**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Gestión de despliegues de código</p>
-    <p><strong>Explicación</strong>: Hubble UI proporciona mapas de dependencias de servicios, visualización de flujos de red y alertas de violación de políticas, pero no proporciona gestión de despliegues de código.</p>
-    </details>
+   - A) Crear incidentes automáticamente en Slack
+   - B) Mapas de dependencias de Services y exploración de flujos
+   - C) Administrar despliegues de código fuente
+   - D) Rotar claves de firma JWT
 
-14. **¿Qué protocolos pueden utilizarse para el cifrado del tráfico de red en Cilium?**
-    - A) IPsec y WireGuard
-    - B) TLS y SSH
-    - C) SSL y HTTPS
-    - D) DTLS y QUIC
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: A) IPsec y WireGuard</p>
-    <p><strong>Explicación</strong>: Cilium puede cifrar el tráfico de red entre nodos mediante los protocolos IPsec y WireGuard.</p>
-    </details>
+   **Respuesta: B) Mapas de dependencias de Services y exploración de flujos**
 
-15. **¿Qué funcionalidad de seguridad de Cilium coincide con esta descripción? "Filtra el tráfico según campos o patrones específicos de protocolos específicos de la capa de aplicación"**
-    - A) Políticas de red
-    - B) Políticas L7
-    - C) Cifrado
-    - D) Detección de intrusiones
+   Las notificaciones y respuestas automatizadas necesitan integraciones adicionales. La interfaz visualiza los flujos de red observados.
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Políticas L7</p>
-    <p><strong>Explicación</strong>: Las políticas L7 (capa de aplicación) pueden filtrar tráfico según campos o patrones específicos en protocolos como HTTP, gRPC y Kafka.</p>
-    </details>
+   </details>
 
-## Temas avanzados y casos de uso reales
+14. **¿Qué modos alternativos de cifrado del transporte entre nodos ofrece Cilium?**
 
-16. **¿Cuál NO es una funcionalidad principal de Cilium Cluster Mesh?**
-    - A) Descubrimiento de servicios entre clústeres
-    - B) Políticas de red entre clústeres
-    - C) Balanceo de carga entre clústeres
-    - D) Uso compartido de almacenamiento entre clústeres
+   - A) IPsec y WireGuard
+   - B) HTTP y DNS
+   - C) Relay y Prometheus
+   - D) TCP y UDP
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Uso compartido de almacenamiento entre clústeres</p>
-    <p><strong>Explicación</strong>: Cilium Cluster Mesh proporciona descubrimiento de servicios, políticas de red y balanceo de carga entre clústeres, pero no proporciona uso compartido de almacenamiento.</p>
-    </details>
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-17. **¿Qué proporciona la funcionalidad Bandwidth Manager de Cilium?**
-    - A) Monitoreo del ancho de banda de red
-    - B) Limitación del ancho de banda de red y QoS
-    - C) Optimización del ancho de banda de red
-    - D) Predicción del ancho de banda de red
+   **Respuesta: A) IPsec y WireGuard**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Limitación del ancho de banda de red y QoS</p>
-    <p><strong>Explicación</strong>: Bandwidth Manager de Cilium utiliza eBPF para proporcionar limitación del ancho de banda de red y QoS (Quality of Service) por Pod.</p>
-    </details>
+   Deben comprobarse su cobertura y requisitos previos. El tráfico dentro del mismo nodo no se cifra mediante túneles entre nodos, y mTLS de cargas de trabajo es una función distinta.
 
-18. **¿Qué protege la funcionalidad Host Firewall de Cilium?**
-    - A) Solo la comunicación de contenedor a contenedor
-    - B) Solo la comunicación de nodo a nodo
-    - C) Las propias interfaces de red del host
-    - D) Servicios externos en la nube
+   </details>
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: C) Las propias interfaces de red del host</p>
-    <p><strong>Explicación</strong>: Host Firewall de Cilium protege las propias interfaces de red del host, mejorando la seguridad a nivel de host.</p>
-    </details>
+15. **¿Qué capa de políticas coincide con los métodos y las rutas HTTP?**
 
-19. **¿Cuál es el propósito principal de la funcionalidad Egress Gateway de Cilium?**
-    - A) Conservar la dirección IP de origen del tráfico externo
-    - B) Cambiar la dirección IP de destino del tráfico externo
-    - C) Cifrar el tráfico externo
-    - D) Bloquear el tráfico externo
+   - A) Solo coincidencia de direcciones L2
+   - B) Política L7
+   - C) Solo coincidencia CIDR de L3
+   - D) Cifrado del transporte
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: A) Conservar la dirección IP de origen del tráfico externo</p>
-    <p><strong>Explicación</strong>: Egress Gateway de Cilium aplica SNAT al tráfico saliente desde los Pods hacia fuera del clúster a una IP específica, proporcionando una IP de origen coherente.</p>
-    </details>
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-20. **¿Qué NO es posible mediante la compatibilidad con BGP de Cilium?**
-    - A) Intercambio de rutas con routers externos
-    - B) Anuncio de IP externas para servicios LoadBalancer
-    - C) Enrutamiento directo entre clústeres
-    - D) Creación automática de registros DNS
+   **Respuesta: B) Política L7**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Creación automática de registros DNS</p>
-    <p><strong>Explicación</strong>: La compatibilidad con BGP de Cilium proporciona intercambio de rutas con routers externos, anuncio de IP externas para servicios LoadBalancer y enrutamiento directo entre clústeres, pero no proporciona creación automática de registros DNS.</p>
-    </details>
+   La política HTTP actual de Cilium puede inspeccionar estos campos; se eliminaron las reglas para temas de Kafka. La coincidencia de encabezados no equivale a autenticar tokens.
+
+   </details>
+
+## Temas avanzados y casos de uso
+
+16. **¿Cuál no es una capacidad de ClusterMesh?**
+
+   - A) Descubrimiento de Services entre clústeres
+   - B) Uso de identidades de endpoints remotos en políticas
+   - C) Balanceo de carga de Services entre clústeres
+   - D) Almacenamiento persistente compartido
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: D) Almacenamiento persistente compartido**
+
+   ClusterMesh gestiona metadatos y conectividad de red. No proporciona almacenamiento compartido ni replica automáticamente todos los recursos de políticas.
+
+   </details>
+
+17. **¿Qué descripción de Bandwidth Manager es correcta?**
+
+   - A) Solo muestra gráficos de ancho de banda
+   - B) Aplica los límites de ancho de banda configurados por Pod
+   - C) Garantiza una reserva de capacidad del enlace físico para cada Pod
+   - D) Predice el tráfico futuro mediante aprendizaje automático
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: B) Aplica los límites de ancho de banda configurados por Pod**
+
+   El tráfico de salida usa EDT y el de entrada, un token bucket de eBPF. Los límites se aplican por Pod, con las limitaciones documentadas para egress-L7 y kind; no son reservas de capacidad garantizadas.
+
+   </details>
+
+18. **¿Cuál es el ámbito del cortafuegos de host de Cilium?**
+
+   - A) Solo HTTP entre contenedores
+   - B) Solo el cifrado del almacenamiento
+   - C) El tráfico de red del host
+   - D) La autorización de SaaS externo
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: C) El tráfico de red del host**
+
+   El cortafuegos de host aplica políticas de red al nodo o host; no es un sistema general de control de llamadas al sistema en tiempo de ejecución.
+
+   </details>
+
+19. **¿Qué hace Egress Gateway con el tráfico saliente coincidente?**
+
+   - A) Aplica SNAT para usar una IP de puerta de enlace seleccionada y predecible
+   - B) Conserva siempre la IP de origen original del Pod
+   - C) Cifra automáticamente todas las conexiones externas
+   - D) Crea una IP pública en cualquier nube sin requisitos previos
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: A) Aplica SNAT para usar una IP de puerta de enlace seleccionada y predecible**
+
+   Es necesario aprovisionar las IP, interfaces y rutas de la puerta de enlace. Los Pods nuevos pueden enviar tráfico antes de que se aplique la política; también hay incompatibilidades con ClusterMesh y CiliumEndpointSlice.
+
+   </details>
+
+20. **¿Qué acción realiza Cilium BGP Control Plane?**
+
+   - A) Instalar todas las rutas aprendidas en el plano de datos local de Linux
+   - B) Anunciar a los peers prefijos seleccionados de Pods o Services
+   - C) Crear registros DNS para todos los Services
+   - D) Asignar interfaces de router externas
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: B) Anunciar a los peers prefijos seleccionados de Pods o Services**
+
+   El anuncio BGP es independiente del enrutamiento del plano de datos local, la asignación de direcciones y DNS. Compruebe el router externo y las rutas reales de ida y vuelta.
+
+   </details>
 
 ## Rendimiento y solución de problemas
 
-21. **¿Qué tecnología de optimización del rendimiento de Cilium reduce significativamente la latencia de procesamiento de paquetes?**
-    - A) TCP BBR
-    - B) XDP (eXpress Data Path)
-    - C) DPDK
-    - D) TSO (TCP Segmentation Offload)
+21. **¿Qué mecanismo puede gestionar el reenvío de Services externos compatible desde el hook del controlador nativo?**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) XDP (eXpress Data Path)</p>
-    <p><strong>Explicación</strong>: XDP procesa paquetes a nivel del controlador de red, omitiendo la pila de red del kernel para reducir significativamente la latencia.</p>
-    </details>
+   - A) Un panel de Grafana
+   - B) Aceleración XDP
+   - C) Un sufijo de búsqueda DNS
+   - D) Un archivo de registro de aplicación más grande
 
-22. **¿Cuál es el comando para diagnosticar problemas de conectividad de red en Cilium?**
-    - A) `cilium status`
-    - B) `cilium connectivity test`
-    - C) `cilium monitor`
-    - D) `cilium endpoint list`
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) `cilium connectivity test`</p>
-    <p><strong>Explicación</strong>: El comando `cilium connectivity test` prueba diversos escenarios de conectividad de red dentro del clúster para diagnosticar problemas.</p>
-    </details>
+   **Respuesta: B) Aceleración XDP**
 
-23. **¿Cuál es el comando para comprobar el estado de la política de red de un Pod específico en Cilium?**
-    - A) `cilium endpoint list`
-    - B) `cilium policy get`
-    - C) `cilium endpoint get <endpoint-id>`
-    - D) `cilium status --all-endpoints`
+   XDP requiere una NIC, un controlador y una ruta compatibles. No se puede presuponer una mejora fija de latencia o rendimiento para cualquier carga de trabajo.
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: C) <code>cilium endpoint get &lt;endpoint-id&gt;</code></p>
-    <p><strong>Explicación</strong>: El comando <code>cilium endpoint get &lt;endpoint-id&gt;</code> muestra información detallada y el estado de las políticas de red aplicadas a un endpoint (Pod) específico.</p>
-    </details>
+   </details>
 
-24. **¿Cuál es el comando para comprobar el estado de los mapas BPF en Cilium?**
-    - A) `cilium map list`
-    - B) `cilium bpf maps`
-    - C) `cilium status --maps`
-    - D) `cilium bpf map list`
+22. **¿Qué comando independiente de Cilium CLI crea activamente cargas de trabajo para probar escenarios de conectividad?**
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) `cilium bpf maps`</p>
-    <p><strong>Explicación</strong>: El comando `cilium bpf maps` muestra una lista y el estado de todos los mapas BPF utilizados por Cilium.</p>
-    </details>
+   - A) `cilium status`
+   - B) `cilium connectivity test`
+   - C) `hubble status`
+   - D) `kubectl get nodes`
 
-25. **¿Cuál es el comando para la captura y el análisis de paquetes de red en Cilium?**
-    - A) `cilium tcpdump`
-    - B) `cilium capture`
-    - C) `cilium monitor`
-    - D) `cilium packet-capture`
+   <details>
+   <summary>Mostrar respuesta</summary>
 
-    <details>
-    <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: C) `cilium monitor`</p>
-    <p><strong>Explicación</strong>: El comando `cilium monitor` puede capturar y analizar en tiempo real los paquetes que pasan por la ruta de datos eBPF de Cilium.</p>
-    </details>
+   **Respuesta: B) `cilium connectivity test`**
+
+   Es una prueba activa que crea recursos y genera tráfico, no una consulta de estado de solo lectura. Use un ámbito de prueba aislado y revise la limpieza.
+
+   </details>
+
+23. **Dentro del agente de Cilium propietario del endpoint, ¿qué comando muestra los detalles de un endpoint?**
+
+   - A) `cilium endpoint list`
+   - B) `cilium policy get`
+   - C) `cilium-dbg endpoint get ENDPOINT_ID`
+   - D) `cilium status --all-endpoints`
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: C) `cilium-dbg endpoint get ENDPOINT_ID`**
+
+   Obtenga el ID local del nodo en la lista de ese agente. Un ID de otro agente no tiene por qué identificar la misma carga de trabajo.
+
+   </details>
+
+24. **¿Qué comando local del agente enumera los mapas BPF abiertos que conoce el administrador de mapas?**
+
+   - A) `cilium-dbg map list`
+   - B) `cilium bpf maps`
+   - C) `cilium status --maps`
+   - D) `cilium bpf map list`
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: A) `cilium-dbg map list`**
+
+   No es un inventario de todos los mapas BPF del kernel. La respuesta anterior `cilium bpf maps` no era un comando válido.
+
+   </details>
+
+25. **¿Qué comando muestra los eventos locales emitidos por programas BPF de Cilium?**
+
+   - A) `cilium tcpdump`
+   - B) `cilium capture`
+   - C) `cilium-dbg monitor`
+   - D) `cilium packet-capture`
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: C) `cilium-dbg monitor`**
+
+   Muestra los tipos de eventos o trazas compatibles. La agregación, supresión y los búferes afectan a la visibilidad; no garantiza capturar todos los paquetes.
+
+   </details>

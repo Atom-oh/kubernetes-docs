@@ -1,27 +1,27 @@
 # Gestión del tráfico de Linkerd
 
-> **Última actualización**: 11 de septiembre de 2026 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
-El enrutamiento actual de Linkerd utiliza recursos de Gateway API y anotaciones compatibles. Los ServiceProfiles siguen siendo una interfaz de compatibilidad, mientras que TrafficSplit/linkerd-smi está obsoleto. Estas vías no son intercambiables: un ServiceProfile existente tiene prioridad sobre los HTTPRoutes de salida del mismo Service e impide que surta efecto la configuración más reciente de reintentos, tiempos de espera y acumulación de fallos.
+El enrutamiento actual de Linkerd utiliza recursos de Gateway API y las anotaciones compatibles. ServiceProfile mantiene la compatibilidad con la configuración anterior; TrafficSplit y linkerd-smi están obsoletos. Estas opciones no son intercambiables: un ServiceProfile existente tiene prioridad sobre los HTTPRoutes de salida del mismo Service e impide que se aplique la configuración más reciente de reintentos, tiempos de espera y detección de fallos acumulados.
 
-Los ejemplos siguientes son ejercicios independientes para cargas de trabajo de aplicaciones existentes y probadas. Presuponen los [requisitos previos de instalación](01-installation.md), la incorporación adecuada de los namespaces, puertos de Service/contenedor declarados y endpoints listos. En esta revisión no se ejecutó ninguna instalación de clúster, cambio de tráfico ni prueba con carga de producción.
+Los ejemplos siguientes son ejercicios independientes para aplicaciones existentes y probadas. Requieren los [requisitos previos de instalación](01-installation.md), la incorporación adecuada de los namespaces a la malla, la declaración de los puertos de los Services y contenedores, y endpoints disponibles. Durante esta revisión no se instaló ningún clúster ni se modificó la distribución del tráfico ni se ejecutaron pruebas con carga de producción.
 
 ## Arquitectura de gestión del tráfico
 
-| Vía de políticas | Función prevista | Límite importante |
+| Configuración de la política | Función prevista | Limitación importante |
 |---|---|---|
-| HTTPRoute con un Service como padre | Enrutamiento y fiabilidad de salida desde clientes de la malla | El cliente debe pertenecer a la malla y poder inspeccionar HTTP |
-| HTTPRoute con un Server como padre | Coincidencia para la autorización de entrada | Vinculación y función de política diferentes |
-| ServiceProfile | Métricas, reintentos y tiempos de espera de rutas de la interfaz anterior | Anula la vía de políticas más reciente para el mismo Service |
-| TrafficSplit | Enrutamiento ponderado SMI heredado | Requiere su extensión y sus CRDs obsoletos |
+| HTTPRoute vinculado a un Service padre | Enrutamiento y fiabilidad de salida para clientes de la malla | El cliente debe estar incorporado a la malla y poder inspeccionar HTTP |
+| HTTPRoute vinculado a un Server padre | Coincidencias para la autorización de entrada | La vinculación y la función de la política son diferentes |
+| ServiceProfile | Métricas, reintentos y tiempos de espera de la configuración anterior de rutas | Tiene prioridad sobre la configuración más reciente del mismo Service |
+| TrafficSplit | Enrutamiento ponderado mediante SMI heredado | Requiere su extensión y sus CRDs obsoletos |
 
-Las políticas basadas en Services dependen del descubrimiento de Services. Las rutas directas a IP de Pod o sin IP de clúster, los clientes ajenos a la malla y el TLS opaco originado por la aplicación no reciben automáticamente el mismo comportamiento de L7. Trate la identidad, la autorización y el enrutamiento como controles independientes.
+Las políticas basadas en Services dependen del descubrimiento de servicios. Las conexiones directas a IP de Pods, los Services headless, los clientes fuera de la malla y el tráfico TLS opaco iniciado por la aplicación no reciben automáticamente el mismo comportamiento de L7. Gestione por separado la identidad, la autorización y el enrutamiento.
 
 ## Enrutamiento actual con HTTPRoute
 
 ### Services y enrutamiento ponderado
 
-Para este ejercicio, prepare Deployments estables y canary etiquetados con app:web y version:stable/canary, que escuchen en 8080 y tengan comprobaciones de disponibilidad adecuadas para la carga de trabajo. El namespace siguiente incorpora los Pods aptos de nueva creación; no despliega esas aplicaciones:
+Para este ejercicio, prepare Deployments estables y canary con las etiquetas app:web y version:stable/canary, que escuchen en el puerto 8080 y tengan comprobaciones de disponibilidad adecuadas para la carga de trabajo. El namespace siguiente incorpora a la malla los nuevos Pods que cumplan los requisitos; no despliega las aplicaciones:
 
 ```yaml
 apiVersion: v1
@@ -77,7 +77,7 @@ spec:
     appProtocol: http
 ```
 
-El Service de entrada selecciona Pods **estables** para el enrutamiento predeterminado de Kubernetes. Su selector sí se utiliza: el tráfico ajeno a la malla o no sujeto a la política sigue necesitando un backend elegido deliberadamente. El HTTPRoute dirige el tráfico apto de los clientes de la malla hacia los Services de backend:
+El Service principal, o apex, selecciona Pods **estables** para el enrutamiento predeterminado de Kubernetes. Su selector sigue siendo necesario: el tráfico de clientes fuera de la malla o no sujeto a la política debe tener un backend elegido expresamente. El HTTPRoute dirige el tráfico de los clientes de la malla al que se aplica la política hacia los Services de backend:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -101,9 +101,9 @@ spec:
       weight: 10
 ```
 
-group:"" es el grupo de API principal canónico para las referencias a Services. Linkerd conserva un alias core heredado en algunas vías, pero los recursos portables de Gateway API deben usar el grupo vacío. El 80 referenciado es el puerto del Service, no el 8080 del contenedor.
+group:"" identifica el grupo principal de la API de Kubernetes en las referencias a Services. Linkerd conserva el alias heredado core en algunas configuraciones, pero los recursos portables de Gateway API deben utilizar el grupo vacío. El puerto 80 de la referencia corresponde al Service, no al puerto 8080 del contenedor.
 
-Los pesos son valores relativos no negativos con un total positivo utilizable. 90/10 y 9/1 expresan la misma proporción; la suma no tiene que ser 100. Son una configuración de enrutamiento, no una garantía de recuentos exactos de solicitudes a corto plazo, conexiones iguales ni recuentos de réplicas correspondientes.
+Los pesos son valores relativos no negativos cuya suma debe ser positiva y utilizable. 90/10 y 9/1 expresan la misma proporción; no es necesario que sumen 100. Configuran el enrutamiento, pero no garantizan un número exacto de solicitudes en periodos cortos, el mismo reparto de conexiones ni una cantidad equivalente de réplicas.
 
 ```bash
 kubectl -n route-demo get httproute web-route -o yaml
@@ -114,11 +114,11 @@ linkerd viz stat deploy/client -n route-demo --to svc/web
 linkerd viz stat pods -n route-demo
 ```
 
-Inspeccione las condiciones Accepted/ResolvedRefs de la ruta, la política real del controlador y el tráfico real de los clientes. Una vista de la política del controlador no demuestra que todos los proxies ya la hayan aplicado.
+Revise las condiciones Accepted/ResolvedRefs de la ruta, la política efectiva del controlador y el tráfico real de los clientes. Consultar la política del controlador no demuestra que todos los proxies ya la hayan aplicado.
 
 ### Cabeceras y rutas
 
-Lo siguiente es una **sustitución alternativa** de web-route, que añade una cabecera de cohorte canary antes de la regla predeterminada ponderada:
+El siguiente ejemplo **sustituye web-route por una configuración alternativa**: añade una regla para una cabecera que identifica al grupo canary antes de la regla ponderada predeterminada:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -150,7 +150,7 @@ spec:
       weight: 10
 ```
 
-Los valores de las cabeceras no son identidades autenticadas. Un cliente no confiable puede establecer x-release-track o x-debug; utilice una autorización independiente para los backends privilegiados o de depuración. La coincidencia exacta con Cookie:beta=true solo coincide con ese valor completo de cabecera, no con cualquier aparición de una cookie entre otros pares de cookies. Normalice una señal de cohorte autorizada o implemente un análisis deliberado de cookies, en lugar de atribuir una semántica general de cookies a una coincidencia exacta de cabecera.
+Los valores de las cabeceras no acreditan una identidad autenticada. Un cliente no confiable puede establecer x-release-track o x-debug; los backends privilegiados o de depuración requieren una autorización independiente. La coincidencia exacta con Cookie:beta=true exige que ese sea el valor completo de la cabecera, no que la cookie aparezca entre otros pares. Normalice una señal de grupo autorizada o analice las cookies de forma explícita; una coincidencia exacta de cabecera no implementa por sí sola el comportamiento general de las cookies.
 
 Un ejemplo de enrutamiento por ruta para Services preparados por separado:
 
@@ -186,14 +186,14 @@ spec:
       port: 80
 ```
 
-Las coincidencias dentro de una entrada se combinan con AND; las entradas o reglas alternativas y las rutas en competencia siguen la precedencia de Gateway API. No suponga que el orden en el archivo por sí solo resuelve los conflictos entre distintos objetos HTTPRoute.
+Las condiciones de una misma entrada se combinan con AND. Las entradas o reglas alternativas y las rutas que compiten entre sí siguen la precedencia de Gateway API. No suponga que el orden en un archivo resuelve por sí solo los conflictos entre distintos objetos HTTPRoute.
 
 
 ## Reintentos y tiempos de espera
 
-Los reintentos son un comportamiento de salida que se activa explícitamente, no una garantía automática de recuperación de las solicitudes fallidas. Úselos solo cuando repetir la operación real sea seguro. Un reinicio de conexión, error o tiempo de espera agotado puede dejar desconocido el resultado de una escritura en el servidor; la idempotencia de la aplicación y los reintentos del cliente requieren controles independientes.
+Los reintentos se habilitan explícitamente para el tráfico de salida; no garantizan que una solicitud fallida se recupere. Utilícelos solo cuando sea seguro repetir la operación concreta. Un reinicio de conexión, un error o un tiempo de espera agotado pueden dejar incierto el resultado de una escritura en el servidor. Controle por separado la idempotencia de la aplicación y los reintentos del cliente.
 
-Para un Service api existente en retry-demo, este par configura reintentos solo para GET /api/read y sus rutas descendientes, con una alternativa de reenvío para las demás solicitudes:
+Para un Service api existente en retry-demo, estos dos recursos configuran reintentos únicamente para GET /api/read y sus rutas descendientes, y una ruta predeterminada que reenvía las demás solicitudes:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -243,35 +243,35 @@ spec:
       port: 80
 ```
 
-Este ejemplo requiere que **no haya anotaciones de reintento en el Service padre**, que no haya un ServiceProfile en conflicto y que no estén habilitadas modificaciones de políticas por solicitud provenientes de fuentes no confiables. De lo contrario, la alternativa puede heredar una política de reintentos. Inspeccione la política efectiva y mida las solicitudes de escritura por separado; reenviar una escritura no demuestra que todas las capas hayan deshabilitado los reintentos.
+Este ejemplo requiere **que el Service padre no tenga anotaciones de reintentos**, que no exista un ServiceProfile en conflicto y que no se habiliten cambios de política por solicitud procedentes de clientes no confiables. De lo contrario, la ruta predeterminada puede heredar reintentos. Revise la política efectiva y mida por separado las solicitudes de escritura: reenviar una escritura no demuestra que todas las capas hayan deshabilitado los reintentos.
 
-Las anotaciones configuran como máximo dos reintentos (hasta tres intentos), un tiempo de espera de reintento de 400ms y uno de 2s para la solicitud completa. El plazo de la solicitud incluye el presupuesto de intentos y puede terminar la operación antes de que se efectúen todos los reintentos. En la referencia actual, las solicitudes con cuerpos mayores de 64KiB no se reintentan.
+Las anotaciones permiten como máximo dos reintentos, es decir, hasta tres intentos en total, con un tiempo de espera de 400 ms para cada intento reintentable y de 2 s para la solicitud completa. El plazo total incluye los intentos y puede terminar la operación antes de que se realicen todos los reintentos. En la referencia actual, no se reintentan las solicitudes cuyo cuerpo supera 64 KiB.
 
-**No use retry.linkerd.io/limit:"0" como interruptor de desactivación en edge-26.9.1.** Consulte el [analizador de la versión publicada](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/policy-controller/k8s/index/src/outbound/index/http.rs). Ese analizador filtra el cero y lo convierte en un valor no especificado; si hay condiciones de reintento, recurre a un reintento. Una cadena vacía de condiciones de reintento HTTP tampoco es una política compatible para impedir reintentos. Mantenga los valores predeterminados de los Services con métodos mixtos libres de configuración de reintentos y adjunte políticas de activación explícita solo a las rutas de lectura previstas.
+**No utilice retry.linkerd.io/limit:"0" para deshabilitar los reintentos en edge-26.10.1.** Consulte el [analizador de la versión publicada](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/policy-controller/k8s/index/src/outbound/index/http.rs). El analizador interpreta el cero como un valor no especificado; si hay condiciones de reintento, aplica un reintento de forma predeterminada. Una cadena vacía de condiciones de reintento HTTP tampoco es una política compatible para deshabilitarlos. Mantenga los Services que atienden distintos métodos sin una configuración predeterminada de reintentos y habilítelos únicamente en las rutas de lectura previstas.
 
-Las anotaciones de reintento de la ruta anulan en conjunto la configuración de reintentos del Service, y las anotaciones de tiempo de espera de la ruta anulan de forma similar las del Service. Los ServiceProfiles tienen prioridad sobre estas anotaciones. Linkerd puede respetar opcionalmente las cabeceras l5d-* por solicitud cuando se habilita explícitamente; no acepte modificaciones de políticas de clientes no confiables ni trate esas cabeceras como autenticación.
+Las anotaciones de reintento de una ruta sustituyen, en conjunto, la configuración de reintentos del Service. Las anotaciones de tiempo de espera de la ruta sustituyen de forma similar las del Service. ServiceProfile tiene prioridad sobre estas anotaciones. Linkerd puede respetar las cabeceras l5d-* de cada solicitud si se habilita esa opción expresamente; no permita que clientes no confiables cambien la política mediante ellas ni las utilice como autenticación.
 
-### Alcance del plazo
+### Alcance de los tiempos de espera
 
 | Configuración | Alcance |
 |---|---|
-| timeout.linkerd.io/request | Flujo completo de solicitud/respuesta |
-| timeout.linkerd.io/response | Duración de la respuesta del backend en curso |
+| timeout.linkerd.io/request | Flujo completo de solicitud y respuesta |
+| timeout.linkerd.io/response | Duración de la respuesta del backend mientras está en curso |
 | timeout.linkerd.io/idle | Inactividad del flujo |
 | retry.linkerd.io/timeout | Tiempo de espera de un intento reintentable, sujeto a la política y al límite de reintentos |
-| Tiempo de espera de ruta de ServiceProfile | Espera total de la ruta heredada, incluidos los reintentos |
+| Tiempo de espera de una ruta de ServiceProfile | Espera total de la ruta heredada, incluidos los reintentos |
 
-Los tiempos de espera ordinarios de solicitud, respuesta e inactividad no son el tiempo de espera de reintento. Un tiempo de espera agotado no demuestra la cancelación del trabajo de negocio. Una vez iniciado el envío de las cabeceras o el cuerpo de la respuesta, un fallo puede terminar o reiniciar un flujo en vez de generar una nueva respuesta de error HTTP.
+Los tiempos de espera de solicitud, respuesta e inactividad son distintos del tiempo de espera de los intentos reintentables. Agotar un tiempo de espera no demuestra que se haya cancelado el trabajo de negocio. Una vez iniciado el envío de las cabeceras o del cuerpo de la respuesta, un fallo puede cerrar o reiniciar el flujo en lugar de generar una nueva respuesta de error HTTP.
 
-![Resultados alternativos de un plazo HTTP antes de confirmar las cabeceras de respuesta: una respuesta a tiempo tiene éxito, mientras que un tiempo de espera agotado puede devolver 504. El agotamiento del tiempo de espera del cliente no demuestra que el trabajo del backend se haya detenido.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-2.png)
+![Posibles resultados de un plazo HTTP antes de enviar las cabeceras de respuesta: una respuesta dentro del plazo tiene éxito; al agotarse el tiempo de espera puede devolverse un error 504. El tiempo de espera del cliente no demuestra que el trabajo del backend se haya detenido.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-2.html)
 
-No prescriba valores de 5/60/600 segundos basándose únicamente en etiquetas como «síncrono», «asíncrono» o «carga de archivos». Parta del plazo de extremo a extremo de la aplicación, del comportamiento de procesamiento o transmisión esperado y de la semántica de cancelación del cliente y el servidor. Omitir un tiempo de espera de una política no elimina otros límites de la aplicación, el transporte, el proxy o el balanceador de carga.
+No asigne tiempos de 5, 60 o 600 segundos únicamente porque la operación se describa como «síncrona», «asíncrona» o «carga de archivos». Parta del plazo total de la aplicación, del procesamiento o la transmisión esperados y del comportamiento de cancelación del cliente y del servidor. Omitir el tiempo de espera de una política no elimina los demás límites de la aplicación, el transporte, el proxy o el balanceador de carga.
 
 ## ServiceProfiles: configuración de compatibilidad admitida
 
-Los ServiceProfiles siguen siendo compatibles, pero la configuración de Gateway API los ha sustituido para el desarrollo de nuevas funciones. Este **ejercicio independiente de profile-demo** ilustra una coincidencia válida de rutas heredadas y la exclusión explícita de reintentos para escrituras:
+ServiceProfile sigue siendo compatible, pero el desarrollo de funciones nuevas utiliza la configuración de Gateway API. Este **ejercicio independiente en profile-demo** muestra condiciones válidas para rutas heredadas y la desactivación explícita de reintentos para escrituras:
 
 ```yaml
 apiVersion: linkerd.io/v1alpha2
@@ -318,19 +318,19 @@ spec:
     ttl: 10s
 ```
 
-method es un método HTTP exacto, no una expresión regular. POST|PUT|DELETE no es una unión de métodos. Use condiciones any/all explícitas o rutas independientes, incluido PATCH cuando corresponda. La selección de rutas y la clasificación de respuestas deben ajustarse a la aplicación; un indicador retryable configurado es una afirmación de seguridad del operador, no una prueba automática de idempotencia.
+method exige un método HTTP exacto, no una expresión regular. POST|PUT|DELETE no representa una unión de métodos. Utilice condiciones explícitas any/all o rutas independientes, e incluya PATCH cuando corresponda. La selección de rutas y la clasificación de respuestas deben ajustarse a la aplicación. Marcar una ruta como reintentable expresa el criterio de seguridad del operador; no demuestra automáticamente que la operación sea idempotente.
 
-isRetryable:false deshabilita este mecanismo de ServiceProfile para la ruta coincidente. No impide que un SDK, un cliente u otro intermediario reintente. La ruta de transmisión omite un tiempo de espera del perfil; eso significa que este campo no impone un tiempo de espera, no que la operación de extremo a extremo sea ilimitada.
+isRetryable:false deshabilita el mecanismo de reintentos de ServiceProfile para la ruta coincidente. No impide los reintentos de un SDK, un cliente u otro intermediario. La ruta de transmisión omite el tiempo de espera del perfil: ese campo no impone un límite, pero la operación completa puede seguir teniendo otros límites.
 
 ### Presupuesto de reintentos
 
-retryRatio:0.2 aporta una asignación proporcional de reintentos. minRetriesPerSecond:10 añade una asignación independiente, por lo que esto **no es un límite estricto del 20%** con poco tráfico. ttl es la ventana retrospectiva o de retención para calcular el presupuesto, no un temporizador de reinicio periódico. Los reintentos reales también dependen de la elegibilidad de la ruta, la clasificación de respuestas, el almacenamiento en búfer, los plazos y los endpoints disponibles.
+retryRatio:0.2 aporta una cantidad proporcional de reintentos permitidos. minRetriesPerSecond:10 añade otra cantidad independiente, por lo que **no se establece un límite estricto del 20 %** cuando hay poco tráfico. ttl es la ventana de observación o retención utilizada para calcular el presupuesto, no un temporizador que lo restablece periódicamente. Los reintentos efectivos también dependen de la elegibilidad de la ruta, la clasificación de respuestas, el almacenamiento en búfer, los plazos y los endpoints disponibles.
 
 ![Ejemplo de reintento de ServiceProfile: una solicitud apta falla una vez y un reintento permitido tiene éxito. Esto no garantiza que un reintento tenga éxito ni que solo deban medirse los resultados finales.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-1.html)
 
-Observe por separado los intentos fallidos sin procesar, las entregas adicionales al servidor de destino y los resultados finales. La imagen es un ejemplo de reintento exitoso, no una promesa de ocultar todos los fallos.
+Observe por separado los intentos fallidos, las entregas adicionales al servidor de destino y los resultados finales. El diagrama muestra un reintento exitoso concreto; no garantiza que se oculten todos los fallos.
 
 ### Generación y observación de perfiles
 
@@ -344,7 +344,7 @@ linkerd viz profile -n profile-demo api --tap deploy/api --tap-duration 60s \
 # For offline generation with default assumptions, use --ignore-cluster.
 ```
 
-La CLI nativa requiere un nombre corto de Service; el argumento original con nombre completo se rechaza. El comando tap también requiere su argumento final de Service. La salida de OpenAPI/protobuf/tap necesita revisión: el tráfico observado no es un inventario completo de rutas, y las rutas generadas pueden crear métricas de alta cardinalidad. La generación no demuestra que sea seguro reintentar todas las operaciones.
+La CLI requiere el nombre corto del Service y rechaza el argumento original con el nombre completo. El comando tap también exige su argumento final de Service. Revise los perfiles generados a partir de OpenAPI, protobuf o tap: el tráfico observado no constituye un inventario completo de rutas y las rutas generadas pueden producir métricas de alta cardinalidad. Generar un perfil no demuestra que sea seguro reintentar todas sus operaciones.
 
 ```bash
 linkerd viz routes service/api -n profile-demo -o wide
@@ -352,16 +352,16 @@ linkerd viz routes deploy/client -n profile-demo --to svc/api -o wide
 linkerd viz stat deploy/client -n profile-demo --to svc/api
 ```
 
-viz routes es la vista de rutas orientada a ServiceProfile. Use la salida wide/JSON de la versión real y las métricas documentadas; la antigua fila inventada [RETRIES] y un campo de nivel superior .success_rate supuesto no son una interfaz fiable para la automatización.
+viz routes muestra las rutas de ServiceProfile. Utilice la salida wide/JSON y las métricas documentadas de la versión instalada. La antigua fila inventada [RETRIES] y la suposición de un campo .success_rate en el nivel superior no constituyen una interfaz fiable para automatizar comprobaciones.
 
 
-## Balanceo de carga y acumulación de fallos
+## Balanceo de carga y detección de fallos acumulados
 
-Linkerd utiliza un comportamiento EWMA que tiene en cuenta la latencia para las solicitudes HTTP; TCP se balancea por conexión. Esto favorece a los candidatos sanos y rápidos, pero no implica que cada solicitud seleccione de forma determinista la puntuación mostrada globalmente más baja. Las estadísticas por Pod y de origen a Service miden agregaciones diferentes.
+Para solicitudes HTTP, Linkerd utiliza EWMA teniendo en cuenta la latencia; para TCP, distribuye conexiones. Este comportamiento favorece los destinos saludables y rápidos, pero no significa que cada solicitud seleccione de forma determinista el destino con la puntuación más baja de todo el sistema. Las estadísticas por Pod y las de tráfico desde un origen hacia un Service representan agregaciones diferentes.
 
-### Activación explícita del disyuntor
+### Habilitación explícita del circuit breaker
 
-La acumulación actual de fallos HTTP está **deshabilitada salvo que se configure en el Service**. Es incompatible con un ServiceProfile para ese Service. Para cargas de trabajo api preparadas en un namespace circuit-demo independiente:
+La detección de fallos HTTP acumulados está **deshabilitada salvo que se configure en el Service** y es incompatible con un ServiceProfile para ese Service. El ejemplo siguiente requiere cargas de trabajo api preparadas en un namespace circuit-demo independiente:
 
 ```yaml
 apiVersion: v1
@@ -384,15 +384,15 @@ spec:
     appProtocol: http
 ```
 
-El umbral predeterminado de la política consecutive es 7, no cinco fallos de conexión automáticos. Hace seguimiento de los fallos de respuesta HTTP/gRPC compatibles; no es una afirmación genérica sobre todos los errores de conexión TCP. La versión seleccionada también documenta una política unified con tratamiento de la tasa de éxito y la limitación de solicitudes; revise sus parámetros independientes antes de usarla.
+El umbral predeterminado de la política consecutive es 7; no se aplica automáticamente un umbral de cinco fallos de conexión. Esta política observa los fallos de respuesta HTTP/gRPC compatibles y no abarca de forma genérica todos los errores de conexión TCP. La versión seleccionada también documenta la política unified, con tratamiento de la tasa de éxito y de los límites de solicitudes; revise sus parámetros específicos antes de utilizarla.
 
 | Estado | Significado |
 |---|---|
 | Disponible | El balanceador de carga puede seleccionar el endpoint |
-| No disponible | Las solicitudes ordinarias se dirigen a otro lugar cuando es posible |
-| En prueba | Se permite que una solicitud real de la aplicación compruebe la recuperación tras la espera de retroceso |
+| No disponible | Las solicitudes ordinarias se dirigen a otros destinos cuando es posible |
+| En prueba | Tras la espera de retroceso, una solicitud real de la aplicación puede comprobar la recuperación |
 
-El estado de prueba no genera periódicamente sondas de salud de Kubernetes. Sin tráfico apto de la aplicación, una comprobación /ready exitosa por sí sola no restablece el endpoint. La espera de retroceso incluye los tiempos configurados y variación aleatoria. Si fallan todos los endpoints utilizables, las solicitudes pueden seguir fallando o puede seleccionarse otro backend configurado.
+El estado de prueba no genera sondas periódicas de salud de Kubernetes. Sin tráfico de aplicación al que se aplique la política, una comprobación /ready exitosa no basta para restablecer el endpoint. La espera de retroceso incluye los tiempos configurados y una variación aleatoria. Si fallan todos los endpoints utilizables, las solicitudes pueden seguir fallando o dirigirse a otro backend configurado.
 
 ```bash
 linkerd diagnostics policy -n circuit-demo svc/api 80 -o json
@@ -400,19 +400,19 @@ linkerd viz stat pods -n circuit-demo
 linkerd viz stat deploy/client -n circuit-demo --to svc/api
 ```
 
-Inspeccione la política real y los resultados, no solo la disponibilidad de los Pods o el éxito agregado. La métrica outbound_http_balancer_endpoints distingue los recuentos de endpoints ready/pending; pending no es exclusivamente un diagnóstico de acumulación de fallos.
+Revise la política efectiva y los resultados, además de la disponibilidad de los Pods y el éxito agregado. La métrica outbound_http_balancer_endpoints distingue los recuentos ready y pending; un endpoint pending no indica exclusivamente un problema de fallos acumulados.
 
 ## TrafficSplit y SMI heredados
 
 TrafficSplit y linkerd-smi están obsoletos y requieren su extensión y sus CRDs independientes. Una instalación ordinaria actual de Linkerd no proporciona ese flujo de trabajo por el mero hecho de aplicar un YAML de TrafficSplit. Prefiera el enrutamiento compatible de Gateway API para trabajos nuevos y planifique la migración de una instalación SMI existente.
 
-![Ilustración de SMI TrafficSplit heredado con pesos relativos de 90/10. Los proxies de los clientes de la malla realizan el enrutamiento; el Service de entrada de Kubernetes no implementa esos pesos por sí mismo. Los ejemplos nuevos usan Gateway API.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-4.png)
+![Ejemplo de TrafficSplit de SMI heredado con pesos relativos de 90/10. Los proxies de los clientes de la malla realizan el enrutamiento; el Service principal de Kubernetes no aplica esos pesos por sí mismo. Los ejemplos nuevos utilizan Gateway API.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-4.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-4.html)
 
-El campo service del recurso heredado nombra un Service de entrada, y los backends contienen pesos relativos. Esto resulta útil para reconocer una configuración existente, pero los ejemplos activos anteriores usan HTTPRoute. Los selectores de Service siguen siendo importantes para el tráfico ajeno a la malla o alternativo; un selector del Service de entrada no debe exponer accidentalmente Pods canary a clientes fuera de la política de tráfico.
+El campo service del recurso heredado identifica el Service principal, o apex, y los backends especifican pesos relativos. Conocerlo ayuda a interpretar configuraciones existentes, pero los ejemplos activos anteriores utilizan HTTPRoute. Los selectores de Service siguen siendo necesarios para el tráfico de clientes fuera de la malla o que utiliza la ruta predeterminada. El selector del Service principal debe evitar que esos clientes accedan accidentalmente a Pods canary fuera de la política de tráfico.
 
-Para los cambios manuales progresivos, revise cada etapa configurada —como 99/1, 90/10 y 50/50— frente a pruebas reales de tráfico, errores y latencia. No aplique varios recursos con el mismo nombre en un archivo suponiendo que ejecutan un despliegue temporizado; prevalece el último estado aplicado.
+Al modificar el tráfico manualmente de forma progresiva, evalúe una etapa cada vez, por ejemplo 99/1, 90/10 y 50/50, con datos reales de tráfico, errores y latencia. Aplicar varios recursos con el mismo nombre en un archivo no ejecuta un despliegue programado: prevalece el último estado aplicado.
 
 ### Reversión manual explícita
 
@@ -446,13 +446,13 @@ kubectl apply -f web-stable-only.yaml
 kubectl -n route-demo get httproute web-route -o yaml
 ```
 
-Verifique la aceptación del controlador, los endpoints estables listos y los resultados reales de los clientes después del cambio. El antiguo bucle de shell imprimía «Revirtiendo» y después solo salía del bucle; nunca restauraba los pesos. También carecía de un tratamiento fiable de la falta de datos y los errores. Use un controlador de entrega real para la automatización y no sobrescriba manualmente una ruta gestionada por Flagger al margen de ese controlador.
+Después del cambio, compruebe la aceptación del controlador, la disponibilidad de los endpoints estables y los resultados reales de los clientes. El antiguo bucle de shell imprimía «Revirtiendo» y solo salía del bucle, sin restaurar los pesos. Tampoco gestionaba de forma fiable los errores ni la ausencia de datos. Utilice un controlador de entrega para automatizar el proceso y no sobrescriba manualmente una ruta gestionada por Flagger al margen de ese controlador.
 
 ## Entrega progresiva con Flagger
 
 ### Versión del controlador y responsabilidad de gestión
 
-Este esquema utiliza Flagger/chart 1.45.0, la instalación seleccionada de Linkerd/Gateway API y un Prometheus de Linkerd Viz existente. La factoría publicada sigue asociando meshProvider:linkerd al enrutador SMI. Use **gatewayapi:v1** para el enrutador HTTPRoute actual; una cadena de proveedor sin versión o no relacionada no es equivalente.
+Este esquema utiliza Flagger y su chart 1.45.0, la instalación seleccionada de Linkerd/Gateway API y un Prometheus de Linkerd Viz existente. La implementación publicada sigue asignando meshProvider:linkerd al enrutador SMI. Para el enrutador HTTPRoute actual, utilice **gatewayapi:v1**; una cadena sin versión o correspondiente a otro proveedor no es equivalente.
 
 Guarde como flagger-values.yaml:
 
@@ -483,13 +483,13 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --wait --timeout 10m
 ```
 
-El chart crea los CRDs de Flagger solo cuando se solicita. Revise la responsabilidad de gestión existente antes de habilitar crd.create. El Pod del controlador pertenece a la malla, y la autorización de Linkerd apunta al Server prometheus-admin existente de Viz con el ServiceAccount del controlador. Los despliegues externos de Prometheus necesitan su propio diseño de recopilación de métricas, identidad/autenticación y autorización.
+El chart solo crea los CRDs de Flagger cuando se solicita. Antes de habilitar crd.create, compruebe quién gestiona los CRDs existentes. El Pod del controlador se incorpora a la malla y la autorización de Linkerd se aplica al Server prometheus-admin existente de Viz mediante el ServiceAccount del controlador. Una instalación externa de Prometheus necesita su propio diseño de recopilación de métricas, identidad, autenticación y autorización.
 
 ### Esquema de aplicación y análisis
 
-Prepare un Deployment web existente en progressive-demo, con un puerto HTTP 8080 declarado, comprobaciones de disponibilidad operativas, imágenes probadas y capacidad suficiente. Aplicar un Canary delega en Flagger el ciclo de vida del despliegue y los Services: crea un Deployment primario y Services de entrada, primario y canary, y puede reducir el destino original a cero entre análisis. Esto difiere de los Deployments estables y canary gestionados manualmente antes.
+Prepare un Deployment web existente en progressive-demo con un puerto HTTP 8080 declarado, comprobaciones de disponibilidad operativas, imágenes probadas y capacidad suficiente. Aplicar un Canary delega en Flagger la gestión del ciclo de vida del despliegue y de los Services: crea un Deployment primario y los Services principal, primario y canary; además, puede reducir a cero el destino original entre análisis. Esta configuración es distinta de los Deployments estables y canary gestionados manualmente en el ejercicio anterior.
 
-El cliente debe pertenecer a la malla para utilizar un HTTPRoute con un Service como padre. Use tráfico controlado hacia el Service de entrada para validar el enrutamiento. La carga directa al Service canary es útil para probar esa versión, pero elude la decisión ponderada del Service de entrada.
+El cliente debe estar incorporado a la malla para aplicar un HTTPRoute vinculado a un Service padre. Utilice tráfico controlado hacia el Service principal para validar el enrutamiento. Enviar carga directamente al Service canary permite probar esa versión, pero evita la decisión de reparto ponderado del Service principal.
 
 ```yaml
 apiVersion: v1
@@ -551,14 +551,14 @@ spec:
       interval: 1m
 ```
 
-gatewayRefs apunta deliberadamente a un Service, y el enrutador v1 del controlador conserva esa referencia al padre. Ningún ServiceProfile debe prevalecer sobre estas rutas generadas. No otorgue a otro controlador ni a un bucle manual la gestión del mismo HTTPRoute.
+gatewayRefs apunta deliberadamente a un Service, y el enrutador v1 del controlador conserva esa referencia al recurso padre. Ningún ServiceProfile debe tener prioridad sobre las rutas generadas. Mantenga un único responsable del HTTPRoute: no permita que otro controlador o un bucle manual lo gestionen simultáneamente.
 
-threshold:5 es el umbral de comprobaciones fallidas, maxWeight:50 es el techo de tráfico canary durante el análisis y stepWeight:10 es el incremento en puntos porcentuales. No significan cinco comprobaciones exitosas obligatorias ni 50 fallos permitidos. La reversión se produce mediante reconciliación tras alcanzar el umbral registrado de fallos u otra condición de fallo; no es una garantía instantánea.
+threshold:5 es el umbral de comprobaciones fallidas; maxWeight:50 limita el porcentaje de tráfico canary durante el análisis; y stepWeight:10 aumenta ese porcentaje en pasos de diez puntos. No significan que se exijan cinco comprobaciones exitosas ni que se permitan 50 fallos. La reversión se realiza durante la reconciliación, después de alcanzar el umbral registrado de fallos o de producirse otra condición de fallo; no garantiza un efecto instantáneo.
 
 
 ### Plantillas explícitas de métricas de Linkerd
 
-Cree estos MetricTemplates antes de habilitar el análisis del Canary. Sus nombres de métricas personalizados evitan los observadores integrados request-success-rate/request-duration específicos del proveedor, que no son intercambiables con esta configuración del enrutador de Gateway API.
+Cree estos MetricTemplates antes de habilitar el análisis del Canary. Los nombres personalizados evitan los observadores integrados request-success-rate/request-duration específicos de cada proveedor; no son intercambiables con esta configuración del enrutador de Gateway API.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -601,19 +601,19 @@ spec:
     )
 ```
 
-Las consultas suponen que la configuración de recopilación de Viz proporciona etiquetas namespace/deployment y seleccionan deliberadamente las respuestas de entrada completadas del Deployment de destino. Confirme esas etiquetas y series en el Prometheus real. Un backend compartido o federado necesita el alcance de clúster y la deduplicación adecuados; de lo contrario, podrían combinarse cargas de trabajo con nombres similares.
+Las consultas suponen que la configuración de recopilación de Viz proporciona las etiquetas namespace/deployment y seleccionan expresamente las respuestas de entrada completadas del Deployment de destino. Confirme las etiquetas y las series en la instalación real de Prometheus. Un backend compartido o federado necesita el alcance de clúster y la eliminación de duplicados adecuados; de lo contrario, podrían combinarse cargas de trabajo con nombres similares.
 
 Las comprobaciones tienen objetivos diferentes:
 
-- completed-responses exige al menos 20 respuestas completadas en la ventana retrospectiva. increase es una estimación extrapolada del contador, no un recuento exacto de un registro de auditoría. El contador incluye observaciones finalizadas o con errores; no cuenta operaciones de negocio exitosas ni solicitudes únicas de usuarios.
-- http-availability devuelve 0 para una ventana en la que todo falla, aunque no exista ninguna serie de éxitos. Requiere un total positivo, por lo que el tráfico ausente o inactivo no se considera un estado sano al 100%.
-- ttfb-p99-ms utiliza response_latency_ms, el histograma de tiempo hasta el primer byte de Linkerd, en **milisegundos**. No es la duración completa de la respuesta. El proxy publicado registra la latencia en el primer fragmento disponible del cuerpo de la respuesta, con una alternativa cuando se descarta el cuerpo; generalmente no espera a que termine todo el flujo. La clasificación y el recuento finales de respuestas son independientes, por lo que las muestras del histograma y del contador de respuestas no tienen por qué aparecer juntas.
+- completed-responses exige al menos 20 respuestas completadas durante la ventana de observación. increase es una estimación extrapolada del contador, no un recuento exacto de un registro de auditoría. El contador incluye observaciones finalizadas o con errores y no cuenta operaciones de negocio exitosas ni solicitudes únicas de usuarios.
+- http-availability devuelve 0 cuando todas las respuestas de la ventana fallan, aunque no exista una serie de éxitos. Exige un total positivo, por lo que la ausencia de tráfico o un periodo sin actividad no se considera un estado saludable al 100 %.
+- ttfb-p99-ms utiliza response_latency_ms, el histograma de tiempo hasta el primer byte de Linkerd, en **milisegundos**. No mide la duración de la respuesta completa. El proxy de la versión publicada registra la latencia al recibir el primer fragmento disponible del cuerpo, con un comportamiento alternativo si se descarta el cuerpo; por lo general, no espera a que termine todo el flujo. La clasificación y el recuento final de respuestas son independientes, por lo que las muestras del histograma y del contador de respuestas no tienen por qué registrarse a la vez.
 
-Cada consulta se agrega a un único resultado. El proveedor de Prometheus publicado rechaza resultados vacíos y NaN; los límites inferior y superior explícitos de disponibilidad y latencia también impiden que valores infinitos superen esas comprobaciones. Estos ejemplos no prometen identificar todo tipo de telemetría ausente u obsoleta mediante una sola consulta: verifique por separado la actualidad de los datos, la salud de la recopilación, las etiquetas del destino y la ventana de muestreo.
+Cada consulta agrega los datos en un único resultado. El proveedor de Prometheus de la versión publicada rechaza resultados vacíos y NaN. Los límites inferior y superior explícitos de disponibilidad y latencia también impiden que un valor infinito supere esas comprobaciones. Una consulta no garantiza que se detecten todos los casos de telemetría ausente u obsoleta: compruebe por separado la actualidad de los datos, el funcionamiento de la recopilación, las etiquetas del destino y la ventana de muestreo.
 
 ### Tráfico, hooks y observación
 
-Un tráfico sostenido y representativo es un requisito previo para un análisis significativo. El ejemplo no instala un generador de carga ni una aplicación. Los webhooks opcionales de aceptación previa al despliegue y de pruebas de carga durante el despliegue requieren un endpoint privado compatible desplegado por separado, una política de autenticación y red definida, ejecución limitada y semántica de prueba. No pegue una URL de webhook para un Service que nunca se haya creado.
+Un análisis útil requiere tráfico sostenido y representativo. El ejemplo no instala una aplicación ni un generador de carga. Los webhooks opcionales de aceptación previa al despliegue y de pruebas de carga durante el despliegue necesitan un endpoint privado compatible instalado por separado, políticas definidas de autenticación y red, una ejecución acotada y un comportamiento de prueba definido. Utilice una URL de webhook únicamente cuando el Service correspondiente exista.
 
 ```bash
 kubectl -n progressive-demo get canary web
@@ -625,25 +625,25 @@ kubectl -n progressive-demo get events \
   --field-selector involvedObject.kind=Canary
 ```
 
-Compruebe los Services web-primary/web-canary generados, el HTTPRoute de entrada, los endpoints activos, los eventos del controlador y los valores reales de las métricas. Una prueba directa al canary que muestra un estado sano no demuestra que el tráfico de entrada siga la distribución prevista.
+Revise los Services web-primary/web-canary generados, el HTTPRoute del Service principal, los endpoints activos, los eventos del controlador y los valores reales de las métricas. Una prueba exitosa dirigida al canary no demuestra que el tráfico del Service principal siga la distribución prevista.
 
-La reversión cambia el enrutamiento posterior y el estado del despliegue; no puede deshacer escrituras ya confirmadas ni demostrar que las solicitudes en curso se hayan detenido. Defina por separado los procedimientos de recuperación de los datos de la aplicación y de los efectos secundarios.
+La reversión modifica el enrutamiento de las solicitudes posteriores y el estado del despliegue. No deshace escrituras ya confirmadas ni demuestra que se hayan detenido las solicitudes en curso. Defina por separado cómo recuperar los datos de la aplicación y gestionar los efectos de las operaciones.
 
 ## Lista de comprobación operativa
 
-- Mantenga explícita la responsabilidad del enrutamiento: HTTPRoute manual, Flagger o un controlador SMI heredado.
-- Compruebe la precedencia de ServiceProfile antes de diagnosticar anotaciones de HTTPRoute que parezcan ignoradas.
-- Mantenga los reintentos como una opción explícita para operaciones cuya repetición se haya verificado como segura, con plazos y pruebas de los intentos adicionales.
-- Verifique tanto la política aceptada por el controlador como los resultados observados desde clientes de la malla.
-- Supervise conjuntamente la disponibilidad de los endpoints, la latencia, los fallos sin procesar, los resultados finales y la disponibilidad de la telemetría.
-- Trate la capacidad, la generación de carga, las imágenes de la aplicación y el comportamiento de reversión como requisitos previos específicos del entorno, no como garantías probadas en producción por este documento.
+- Defina quién gestiona el enrutamiento: una configuración manual de HTTPRoute, Flagger o un controlador SMI heredado.
+- Compruebe la prioridad de ServiceProfile antes de diagnosticar anotaciones de HTTPRoute que parezcan ignoradas.
+- Habilite reintentos únicamente para operaciones cuya repetición se haya verificado como segura; establezca plazos y observe los intentos adicionales.
+- Verifique tanto la política aceptada por el controlador como los resultados observados por clientes de la malla.
+- Supervise conjuntamente la disponibilidad de los endpoints, la latencia, los intentos fallidos, los resultados finales y la disponibilidad de la telemetría.
+- Trate la capacidad, la generación de carga, las imágenes de las aplicaciones y la reversión como requisitos específicos de cada entorno. Este documento no ofrece garantías verificadas en producción.
 
 ## Referencias
 
 - [Referencia de HTTPRoute de Linkerd](https://linkerd.io/docs/reference/httproute/)
 - [Reintentos](https://linkerd.io/docs/reference/retries/) y [tiempos de espera](https://linkerd.io/docs/reference/timeouts/)
 - [ServiceProfiles](https://linkerd.io/docs/reference/service-profiles/)
-- [Disyuntores](https://linkerd.io/docs/reference/circuit-breaking/)
+- [Circuit breakers](https://linkerd.io/docs/reference/circuit-breaking/)
 - [Balanceo de carga](https://linkerd.io/docs/features/load-balancing/)
 - [División del tráfico y obsolescencia de SMI](https://linkerd.io/docs/features/traffic-split/)
 - [Métricas del proxy](https://linkerd.io/docs/reference/proxy-metrics/)

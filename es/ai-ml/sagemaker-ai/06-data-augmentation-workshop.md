@@ -1,6 +1,6 @@
 # Taller: datos sintéticos de PII y aumento de datos
 
-> **Última actualización**: September 15, 2026
+> **Última actualización**: 15 de septiembre de 2026
 
 Este ejercicio con datos sintéticos se ejecuta con Python 3.12 y no requiere pesos de modelos, una cuenta de AWS ni GPU.
 
@@ -193,7 +193,7 @@ La comprobación final puede rechazar una etiqueta de referencia omitida incluso
 
 No cumplir estas condiciones antes del entrenamiento evita atribuir erróneamente más adelante a un problema del modelo lo que en realidad es contaminación de datos. Los casi duplicados, el significado de las anotaciones, las longitudes del tokenizador y la cobertura completa de PII aún requieren comprobaciones independientes.
 
-## 9. Interpreta el corpus histórico de 2,200 registros
+## 9. Interpreta el corpus histórico de 2.200 registros
 
 [La parte 2](02-pii-data-tokenization.md) conserva el generador 1.0.0, la semilla 42 y los hashes originales de las particiones. La regeneración con CPU realizada en esta revisión reprodujo esos hashes.
 
@@ -223,7 +223,7 @@ Prepara conjuntamente lo siguiente para una versión de entrenamiento real:
 
 El empaquetador/cargador actual usa rutas de paquete fijas. Generar el directorio `--output-dir` no conecta automáticamente ese directorio al entrenamiento de SageMaker. Integra y valida una nueva versión del conjunto de datos en una copia de trabajo aparte; después, sigue el [taller de QLoRA](05-qlora-finetuning-workshop.md) y el [contrato de ejecución](03-sagemaker-mlflow-execution.md).
 
-Compara el entrenamiento original con el aumentado usando el mismo conjunto de validation, la misma decodificación y el mismo presupuesto de comparación. La misma cantidad de pasos aún puede exponer cantidades distintas de ejemplos o tokens cuando cambia el tamaño/la longitud de los datos; registra también los presupuestos de ejemplos/tokens.
+Compara el entrenamiento original con el aumentado usando el mismo conjunto de validación, la misma decodificación y el mismo presupuesto de comparación. Aunque el número de pasos sea el mismo, si cambia el tamaño o la longitud de los datos pueden procesarse cantidades distintas de ejemplos o tokens; registra también los presupuestos de ejemplos y tokens.
 
 ## Comprueba lo que has aprendido
 

@@ -62,7 +62,7 @@ TGW attachment、endpoint、NAT subnet の route table はそれぞれ役割が�
 
 ## 4. 中央検査の route をレビューする
 
-以下は IPv4 の中央 egress と VPC 間検査の pattern です。実際の CIDR、AZ、endpoint／attachment ID、prefix 優先順位、既存 route を確認してください。Consumer 間が接続できても、全方向が検査されるとは限りません。
+以下は IPv4 の中央 egress と VPC 間検査の pattern です。実際の CIDR、AZ、endpoint／attachment ID、prefix 優先順位、既存 route を確認してください。Consumer VPC の接続性だけでは、全方向が検査されるとは限りません。
 
 | 場所 | 選択される宛先 | 次の hop／目的の例 |
 |---|---|---|

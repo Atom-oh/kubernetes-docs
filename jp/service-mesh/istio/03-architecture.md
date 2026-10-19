@@ -1,61 +1,63 @@
 # アーキテクチャ
 
-> **対応バージョン**: Istio 1.28+ **API バージョン**: `networking.istio.io/v1`, `security.istio.io/v1` **最終更新**: February 19, 2026
+> **レビュー対象バージョン**: Istio 1.31.0 **API バージョン**: `networking.istio.io/v1`、`security.istio.io/v1` **最終更新**: 2026年9月11日
 
-このドキュメントでは、Istio の内部アーキテクチャとネットワーキングの仕組みを詳しく解説します。
+このドキュメントでは、Istioの内部アーキテクチャとネットワークの仕組みを詳しく解説します。
 
-**背景と歴史**については、[基本概念](02-basic-concepts.md#background-and-history)のドキュメントを参照してください。
+**背景と歴史**については、[基本概念](02-basic-concepts.md#background-and-history)を参照してください。
 
-**重要な変更点（Istio 1.5+）**:
+**重要な変更点（Istio 1.5以降）**:
 
-* Pilot、Citadel、Galley は、**もはや独立したコンポーネントではありません**
-* これらは Istiod（`pilot-discovery`）という**単一バイナリ**に統合されています
-* Pilot/Citadel/Galley という用語は、**機能を説明する歴史的な名称**を指します
+* Pilot、Citadel、Galleyは**独立したコンポーネントではなくなりました**。
+* これらはIstiod（`pilot-discovery`）という**単一バイナリ**に統合されています。
+* Pilot/Citadel/Galleyという用語は、機能を説明する**歴史的な名称**です。
 
 ## 目次
 
-1. [Istio アーキテクチャの概要](03-architecture.md#istio-architecture-overview)
-2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
-3. [Data Plane: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
-4. [Sidecar インジェクションの仕組み](03-architecture.md#sidecar-injection-mechanism)
-5. [iptables とトラフィックのインターセプト](03-architecture.md#iptables-and-traffic-interception)
-6. [DNS 処理の仕組み](03-architecture.md#dns-processing-mechanism)
-7. [xDS API 通信](03-architecture.md#xds-api-communication)
-8. [Sidecar リソースによる最適化](03-architecture.md#optimization-with-sidecar-resource)
+この章では主にサイドカーモードを説明します。Ambientモードでは、ノードごとにRust製のztunnelを使い、必要に応じてL7 waypointプロキシも配置します。トラフィックの捕捉方法やDNS経路はサイドカーモードとは異なります。Mixerは廃止され、そのテレメトリ機能はistiodに統合されたのではなく、プロキシ側へ移されました。以下のJSONと注入後Podの抜粋は模式例であり、そのままデプロイできる完全なマニフェストではありません。
 
-<span id="istio-architecture-overview"></span>
+1. [Istioアーキテクチャの概要](03-architecture.md#istio-architecture-overview)
+2. [コントロールプレーン: Istiod](03-architecture.md#control-plane-istiod)
+3. [データプレーン: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+4. [サイドカー注入の仕組み](03-architecture.md#sidecar-injection-mechanism)
+5. [iptablesとトラフィックの捕捉](03-architecture.md#iptables-and-traffic-interception)
+6. [DNS処理の仕組み](03-architecture.md#dns-processing-mechanism)
+7. [xDS API通信](03-architecture.md#xds-api-communication)
+8. [Sidecarリソースによる最適化](03-architecture.md#optimization-with-sidecar-resource)
 
-## Istio アーキテクチャの概要
+## Istioアーキテクチャの概要 {#istio-architecture-overview}
 
-### 全体構造
+### 全体構成
 
-![Istio アーキテクチャの概要: Istiod は Kubernetes API server を監視し、Ingress Gateway と sidecar に xDS 設定を配信する一方、Pod は mTLS を介して相互に通信します。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
+![Istioアーキテクチャの概要。IstiodはKubernetes APIサーバーを監視し、xDS設定をIngress Gatewayとサイドカーへ配信します。Pod同士はmTLSで通信します。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
 
-### Control Plane と Data Plane
+### コントロールプレーンとデータプレーン
 
-| カテゴリ        | Control Plane (Istiod)                        | Data Plane (Envoy)        |
-| --------------- | --------------------------------------------- | ------------------------- |
-| **役割**        | ポリシー管理、設定配信                        | 実際のトラフィック処理    |
-| **配置場所**    | 分離された Pod（通常 1～3 個）                | すべてのアプリケーション Pod |
-| **言語**        | Go                                            | C++                       |
-| **負荷**        | 低                                            | 高（すべてのトラフィック） |
-| **スケーラビリティ** | 水平スケーリング（HA）                    | 自動（Pod ごとに 1 個）   |
+| 分類 | コントロールプレーン（Istiod） | データプレーン（Envoy） |
+| --- | --- | --- |
+| **役割** | ポリシー管理、設定の配布 | 実際のトラフィック処理 |
+| **配置場所** | 独立したPod（通常1～3個） | すべてのアプリケーションPod |
+| **実装言語** | Go | C++ |
+| **負荷** | 低い | 高い（全トラフィックを処理） |
+| **スケーラビリティ** | 水平スケーリング（HA） | 自動（Podごとに1つ） |
 
-## Control Plane: Istiod
+## コントロールプレーン: Istiod {#control-plane-istiod}
 
-### Istiod の内部構造
+### Istiodの内部構造
 
-**重要**: Istio 1.5 以降、Pilot、Citadel、Galley は**独立したコンポーネントではなく、Istiod の内部機能です**。
+**重要**: Istio 1.5以降、Pilot、Citadel、Galleyは独立したコンポーネントではなく、**Istiodの内部機能**です。
 
-![Istiod の単一プロセスが Pilot、Citadel、Galley の機能を統合し、Kubernetes API の設定を検証して Envoy sidecar proxy に xDS 設定と X.509 証明書を配信する様子を示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg)
+![Istiodの単一プロセスにPilot、Citadel、Galleyの機能が統合されています。Kubernetes APIからの設定を検証し、xDS設定とX.509証明書をEnvoyサイドカープロキシへ配信します。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-10.png)
 
-### Istiod の主な機能
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-10.html)
 
-**注記**: 以下の機能は、Istio 1.28 では Istiod 内に統合されています。機能を説明するために、歴史的な名称（Pilot、Citadel、Galley）を使用しています。
+### Istiodの主な機能
 
-#### 1. Service Discovery（Pilot の機能）
+**注記**: 以下の機能はIstio 1.31ではIstiodに統合されています。Pilot、Citadel、Galleyという歴史的な名称は、それぞれの機能を説明するために使います。
+
+#### 1. サービスディスカバリー（Pilotの機能）
 
 ```yaml
 # Kubernetes Service detection
@@ -70,16 +72,16 @@ spec:
   - port: 9080
 ```
 
-Istiod は以下を追跡します:
+Istiodは次の情報を追跡します。
 
 * Kubernetes Service
-* Endpoint（Pod IP）
-* Pod の状態変更
-* 外部 Service（ServiceEntry）
+* EndpointSlice（Pod IP）
+* Podの状態変更
+* 外部サービス（ServiceEntry）
 
-#### 2. Traffic Management（Pilot の機能）
+#### 2. トラフィック管理（Pilotの機能）
 
-Istio CRD を Envoy 設定に変換します:
+Istio CRDをEnvoy設定に変換します。
 
 ```yaml
 # VirtualService (user-defined)
@@ -102,35 +104,40 @@ spec:
       weight: 10
 ```
 
-↓ Istiod が Envoy 設定に変換 ↓
+↓ IstiodがEnvoy設定に変換 ↓
 
 ```json
 {
-  "route_config": {
+  "match": {"prefix": "/"},
+  "route": {
     "weighted_clusters": {
       "clusters": [
-        {"name": "outbound|9080|v1|reviews", "weight": 90},
-        {"name": "outbound|9080|v2|reviews", "weight": 10}
+        {"name": "outbound|9080|v1|reviews.default.svc.cluster.local", "weight": 90},
+        {"name": "outbound|9080|v2|reviews.default.svc.cluster.local", "weight": 10}
       ]
     }
   }
 }
 ```
 
-#### 3. Certificate Management（Citadel の機能）
+<span id="3-certificate-management-citadel-functionality"></span>
 
-![Envoy が Istiod に証明書を要求し、Istiod が SPIFFE で workload identity を検証して mTLS 用の X.509 証明書に署名・発行し、その後有効期限前に更新する様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg)
+#### 3. 証明書管理（Citadelの機能）
 
-**SPIFFE ID 形式**:
+Istio agentが秘密鍵とCSRを作成し、istiodに対して認証を行って、署名済み証明書を受け取ります。EnvoyはローカルagentからSDS経由でその証明書と鍵を取得します。証明書の有効期間は設定でき、有効期限より前にローテーションされます。
+
+**SPIFFE IDの形式**:
 
 ```
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-#### 4. Configuration Validation（Galley の機能）
+#### 4. 設定検証（Galleyの機能）
+
+Admission時の検証では、スキーマとローカル設定の制約を確認します。リソース間の参照先が存在するかどうかは`istioctl analyze`で確認してください。宛先が存在しなくても、Admission webhookが必ず拒否するとは限りません。以下の例では存在しないGatewayを参照します。
 
 ```yaml
-# Invalid configuration
+# invalid-vs.yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -138,72 +145,60 @@ metadata:
 spec:
   hosts:
   - reviews
+  gateways:
+  - missing-gateway
   http:
   - route:
     - destination:
-        host: non-existent-service  # ❌ Non-existent service
+        host: reviews
 ```
-
-Istiod は適用前に検証します:
 
 ```bash
-$ kubectl apply -f invalid-vs.yaml
-Error from server: admission webhook "validation.istio.io" denied the request:
-configuration is invalid: host "non-existent-service" not found
+istioctl analyze invalid-vs.yaml --use-kube=false
+# IST0101: Referenced gateway not found: "missing-gateway"
 ```
 
-### Istiod のプロセス構造
+### Istiodのプロセス構造
 
-**Istio 1.28 における実際の実装**:
+**Istio 1.31での実装**:
 
 ```bash
-# Processes inside Istiod pod
-$ kubectl exec -n istio-system deploy/istiod -- ps aux
-USER       PID  COMMAND
-istio-p+     1  /usr/local/bin/pilot-discovery discovery
-
-# Single binary 'pilot-discovery' performs all functions
+# Inspect the configured binary arguments; no shell in the image is required
+kubectl get deployment istiod -n istio-system   -o jsonpath='{.spec.template.spec.containers[?(@.name=="discovery")].args}'
+# The discovery container runs pilot-discovery discovery.
 ```
 
-**主なポイント**:
+**要点**:
 
-* Istiod は `pilot-discovery` という**単一の Go バイナリ**として実行されます
-* Pilot、Citadel、Galley は**コードレベルの package/module**として存在しますが、独立したプロセスではありません
-* すべての機能は単一プロセス内で goroutine として実行されます
+* Istiodは`pilot-discovery`という**単一のGoバイナリ**として動作します。
+* Pilot、Citadel、Galleyは機能上の歴史的な役割名であり、現在のパッケージ名を保証するものではありません。
+* すべての機能は単一プロセス内のgoroutineとして動作します。
 
-**Istiod が提供する主なポート**:
+**Istiodが提供する主なポート**:
 
-| ポート      | プロトコル | 用途                     | 機能                      |
-| --------- | -------- | ------------------------ | ------------------------- |
-| **15010** | gRPC     | xDS（legacy）            | 後方互換性                 |
-| **15012** | gRPC     | TLS 経由の xDS           | 主な xDS API エンドポイント |
-| **15014** | HTTP     | Control Plane の監視     | Metrics とヘルスチェック  |
-| **15017** | HTTPS    | Webhook                  | Sidecar インジェクション  |
-| **8080**  | HTTP     | Debug                    | デバッグインターフェース  |
+| ポート | プロトコル | 用途 | 機能 |
+| --- | --- | --- | --- |
+| **15010** | gRPC | xDS（旧方式） | 後方互換性 |
+| **15012** | gRPC | TLS経由のxDS | 主なxDS APIエンドポイント |
+| **15014** | HTTP | コントロールプレーン監視 | メトリクスとヘルスチェック |
+| **15017** | HTTPS | Webhook | 注入と検証 |
+| **8080** | HTTP | デバッグ | デバッグ用インターフェイス |
 
-### Istiod の Deployment
+### Istiodのデプロイ
 
-**高可用性設定**:
+**高可用性の設定**:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: istiod
-  namespace: istio-system
+# Merge into the existing istioctl install file; do not replace a managed Deployment
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  replicas: 3  # 3 replicas for HA
-  selector:
-    matchLabels:
-      app: istiod
-  template:
-    metadata:
-      labels:
-        app: istiod
-    spec:
-      containers:
-      - name: discovery
-        image: istio/pilot:1.28.0
+  components:
+    pilot:
+      k8s:
+        hpaSpec:
+          minReplicas: 3
+          maxReplicas: 5
         resources:
           requests:
             cpu: 500m
@@ -212,23 +207,23 @@ spec:
 
 **一般的なリソース使用量**:
 
-* CPU: 0.5～2 コア
-* Memory: 2～4 GB
-* 数千の Service と Pod を処理可能
+* CPU: 0.5～2コア
+* メモリ: 2～4 GB
+* 数千のServiceとPodを処理可能
 
-## Data Plane: Envoy Proxy
+## データプレーン: Envoy Proxy {#data-plane-envoy-proxy}
 
-### Envoy のアーキテクチャ
+### Envoyのアーキテクチャ
 
-![受信リクエストが Envoy の listener、filter chain、router を通過して upstream service の cluster に入り、送信リクエストとして出ていく様子を示すアーキテクチャ図。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
+![Envoyのlistener、filter chain、routerを通る受信リクエストがupstream serviceのclusterへ渡され、送信リクエストとして出ていく様子を示すアーキテクチャ図。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
 
-### Envoy の主なコンポーネント
+### Envoyの主なコンポーネント
 
 #### 1. Listener
 
-**ポートで接続を受信します**:
+**ポートで接続を受け付けます**:
 
 ```json
 {
@@ -243,22 +238,24 @@ spec:
 }
 ```
 
-**デフォルトの Istio Listener**:
+**Istioの既定Listener**:
 
-* `0.0.0.0:15001`: すべての送信 TCP トラフィック
-* `0.0.0.0:15006`: すべての受信 TCP トラフィック
+* `0.0.0.0:15001`: すべての送信TCPトラフィック
+* `0.0.0.0:15006`: すべての受信TCPトラフィック
 * `0.0.0.0:15021`: ヘルスチェック
-* `0.0.0.0:15090`: Prometheus metrics
+* `0.0.0.0:15090`: Prometheusメトリクス
 
 #### 2. Filter
 
-**リクエスト/レスポンスを処理する plugin**:
+**リクエスト/レスポンスを処理するプラグイン**:
 
-![HTTP リクエストが Envoy の JWT authentication、rate limiting、RBAC validation、stats collection、router filter を順に通過し、HTTP レスポンスになるまでを示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg)
+![HTTPリクエストがEnvoyのJWT認証、レート制限、RBAC検証、統計収集、router filterを順に通過してHTTPレスポンスになる様子を示すフローチャート。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-3.png)
+
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-3.html)
 
 #### 3. Cluster
 
-**upstream service の論理グループ**:
+**upstream serviceの論理グループ**:
 
 ```json
 {
@@ -274,7 +271,7 @@ spec:
 
 #### 4. Endpoint
 
-**実際の Pod IP リスト**:
+**実際のPod IP一覧**:
 
 ```json
 {
@@ -290,26 +287,23 @@ spec:
 }
 ```
 
-### Envoy のパフォーマンス
+### Envoyのパフォーマンス
 
-**ベンチマーク**（一般的な環境）:
+実際のトラフィックパターン、設定サイズ、テレメトリ設定を測定してください。[公式ベンチマーク](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)はIstio 1.24を対象としています。RPS/コア数、サブミリ秒のP99、メモリ使用量について、あらゆる環境に当てはまる保証はありません。istiodの規模もService/プロキシ数と設定変更頻度に基づいて決めてください。
 
-* Throughput: コアあたり 10,000+ RPS
-* 追加レイテンシ: < 1ms（P99）
-* Memory: 50～100 MB（デフォルト設定）
-* CPU: 0.1～0.5 コア（一般的な負荷）
+## サイドカー注入の仕組み {#sidecar-injection-mechanism}
 
-<span id="sidecar-injection-mechanism"></span>
+### 注入の流れ
 
-## Sidecar インジェクションの仕組み
+![Deploymentの作成リクエストがAPI ServerとMutating Webhookを通り、Istio Sidecar InjectorがPod specを変更します。作成されるPodにはistio-init、アプリケーションコンテナ、istio-proxyサイドカーが含まれます。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-4.png)
 
-### インジェクションプロセス
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-4.html)
 
-![Deployment の Pod 作成呼び出しが Kubernetes API に対して行われ、mutating webhook が Istio の sidecar injector に Pod spec の変更を依頼し、アプリケーション container とともに istio-init container および istio-proxy sidecar を持つ Pod が作成される様子を示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg)
+Webhookが変更するのはPodの作成リクエストであり、Deployment自体ではありません。注入を有効にした後は既存Podを再作成する必要があります。Istio CNIを使うと、ネットワーク設定はPodごとの特権initコンテナの外に移されます。Native sidecarを使う場合も、生成されるPodの構成が変わることがあります。
 
-### インジェクション前と後の比較
+### 注入前と注入後
 
-**元の Deployment**:
+**注入前のDeployment**:
 
 ```yaml
 apiVersion: apps/v1
@@ -317,7 +311,13 @@ kind: Deployment
 metadata:
   name: reviews
 spec:
+  selector:
+    matchLabels:
+      app: reviews
   template:
+    metadata:
+      labels:
+        app: reviews
     spec:
       containers:
       - name: reviews
@@ -326,7 +326,7 @@ spec:
         - containerPort: 9080
 ```
 
-**インジェクション後**:
+**注入後**:
 
 ```yaml
 apiVersion: v1
@@ -337,7 +337,7 @@ metadata:
 spec:
   initContainers:
   - name: istio-init
-    image: istio/proxyv2:1.28.0
+    image: istio/proxyv2:1.31.0
     command: ['istio-iptables', ...]
     securityContext:
       capabilities:
@@ -348,15 +348,15 @@ spec:
     ports:
     - containerPort: 9080
   - name: istio-proxy
-    image: istio/proxyv2:1.28.0
+    image: istio/proxyv2:1.31.0
     args: ['proxy', 'sidecar', ...]
 ```
 
-### Sidecar インジェクションの有効化
+### サイドカー注入の有効化
 
-#### 自動インジェクション（推奨）
+#### 自動注入（推奨）
 
-**Namespace レベル**:
+**Namespaceレベル**:
 
 ```bash
 # Add label to namespace
@@ -366,13 +366,14 @@ kubectl label namespace default istio-injection=enabled
 kubectl apply -f deployment.yaml
 ```
 
-**Pod レベル**（Annotation）:
+**Podレベル（ラベル）**:
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
+  name: example-app
+  labels:
     sidecar.istio.io/inject: "true"  # Enable injection per pod
 spec:
   containers:
@@ -380,9 +381,9 @@ spec:
     image: myapp:v1
 ```
 
-#### 手動インジェクション
+#### 手動注入
 
-`istioctl kube-inject` コマンドを使用して、YAML ファイルに直接 sidecar をインジェクションします。
+`istioctl kube-inject`コマンドを使用して、YAMLファイルにサイドカーを直接注入します。
 
 ```bash
 # Inject sidecar into YAML file and deploy
@@ -393,25 +394,25 @@ istioctl kube-inject -f deployment.yaml -o deployment-injected.yaml
 kubectl apply -f deployment-injected.yaml
 ```
 
-**手動インジェクションのシナリオ**:
+**手動注入を使う場面**:
 
-* 自動インジェクションを使用できない環境
-* CI/CD pipeline で明示的な制御が必要な場合
-* デバッグのためにインジェクションされた YAML を確認したい場合
+* 自動注入を使用できない環境
+* CI/CDパイプラインで明示的に制御する必要がある場合
+* デバッグ用に注入後のYAMLを確認する場合
 
-<span id="iptables-and-traffic-interception"></span>
+## iptablesとトラフィックの捕捉 {#iptables-and-traffic-interception}
 
-## iptables とトラフィックのインターセプト
+### istio-initコンテナ
 
-### istio-init Container
+**役割**: PodのネットワークトラフィックをEnvoy Proxyへリダイレクトするiptablesルールを設定します。
 
-**役割**: Pod ネットワークトラフィックを Envoy Proxy にリダイレクトする iptables ルールを設定します
+![istio-initコンテナがアプリケーションとEnvoy proxyの起動前にiptablesを設定し、Podの通信をEnvoyへ転送します。その後の送信リクエストは透過的に捕捉され、Envoyのlistenerへリダイレクトされます。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-5.png)
 
-![istio-init container がアプリケーションと Envoy proxy の起動前に iptables を設定して Pod のトラフィックを Envoy にリダイレクトするため、その後の送信リクエストが透過的にインターセプトされて Envoy の listener にリダイレクトされる様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-5.html)
 
-### iptables ルールの詳細
+### iptablesルールの詳細
 
-**istio-init が実行するコマンド**:
+**実行用スクリプトではなく、簡略化したルールの例です**:
 
 ```bash
 #!/bin/bash
@@ -419,7 +420,7 @@ kubectl apply -f deployment-injected.yaml
 
 # 1. OUTPUT chain: Application outbound traffic
 iptables -t nat -A OUTPUT -p tcp \
-  -m owner ! --uid-owner 1337 \  # Exclude Envoy UID
+  -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15001     # Envoy outbound port
 
 # 2. PREROUTING chain: Inbound traffic to pod
@@ -437,21 +438,19 @@ iptables -t nat -I OUTPUT -p tcp --dport 15012 -j RETURN
 iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 ```
 
-### トラフィックフロー（iptables 適用後）
+### iptables適用後のトラフィックフロー
 
-![アプリケーションの送信リクエストが iptables の OUTPUT chain ルールによって Envoy の送信 listener にリダイレクトされ、proxy 自身の UID を使用してさらなるインターセプトを回避しながら外部 Service に転送される様子と、mTLS 検証後に PREROUTING chain を通って Envoy の受信 listener からアプリケーションへ戻る対称的な受信パスを示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg)
+![アプリケーションの送信リクエストはiptablesのOUTPUT chainからEnvoyの15001 listenerへリダイレクトされ、外部サービスへ出ていきます。受信トラフィックはPREROUTINGから15006 listenerへ入り、mTLS検証後にアプリケーションへ渡されます。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-6.png)
 
-### iptables ルールの確認
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-6.html)
 
-**Pod 内から確認**:
+### iptablesルールの確認
 
-```bash
-# Enter pod
-kubectl exec -it <pod-name> -c istio-proxy -- /bin/bash
+**Pod内から確認する場合**:
 
-# Check iptables rules
-iptables -t nat -L -n -v
+通常のistio-proxyコンテナはdistrolessで、NET_ADMINを持たないことがあります。ルールの調査には、必要なツールと権限を備えた承認済みのノードまたはPodネットワーク名前空間のデバッグセッションを使用してください。以下は`iptables -t nat -L -n -v`の出力例です。
 
+```text
 # OUTPUT chain
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source     destination
@@ -472,24 +471,19 @@ Chain ISTIO_INBOUND (1 references)
 REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 ```
 
-### iptables と eBPF（CNI Plugin）の比較
+### initコンテナとIstio CNI
 
-Istio は 2 つのトラフィックインターセプト方式をサポートしています:
+どちらの方式もトラフィックのリダイレクトを設定します。Istio CNIはAWS VPC CNIなどのプライマリCNIに連結される、特権を持つノードDaemonSetです。プライマリCNIを置き換えるeBPF実装ではありません。サイドカーモードでは任意ですが、Ambientモードでは必要です。
 
-| 方式         | 利点                 | 欠点                    | 使用シナリオ                   |
-| -------------- | -------------------- | ----------------------- | ------------------------------ |
-| **iptables**   | シンプル、汎用的     | Init Container が必要   | デフォルト設定                 |
-| **eBPF (CNI)** | Init 不要、高速      | モダンな kernel が必要  | 高パフォーマンス、Ambient Mode |
+## DNS処理の仕組み {#dns-processing-mechanism}
 
-<span id="dns-processing-mechanism"></span>
+### Kubernetes DNSの基本動作
 
-## DNS 処理の仕組み
+![アプリケーションの標準DNS名前解決経路。名前解決リクエストはPodのresolv.confを通じてCoreDNSへ送られ、CoreDNSはServiceのClusterIPをアプリケーションへ返します。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-7.png)
 
-### Kubernetes DNS の基本動作
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-7.html)
 
-![アプリケーションのデフォルト DNS lookup パスを示すフローチャート: 名前解決リクエストは Pod の resolv.conf を通って CoreDNS に送られ、CoreDNS が Service の ClusterIP をアプリケーションに返します。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg)
-
-**/etc/resolv.conf**（Pod 内）:
+**Pod内の/etc/resolv.conf**:
 
 ```bash
 nameserver 10.96.0.10  # kube-dns ClusterIP
@@ -497,21 +491,23 @@ search default.svc.cluster.local svc.cluster.local cluster.local
 options ndots:5
 ```
 
-### Envoy の DNS 処理
+### EnvoyのDNS処理
 
-**Istio では、Envoy が DNS を処理します**:
+**アプリケーションのDNS名前解決とEnvoyのエンドポイント検出は別の処理です**。
 
-![Envoy がアプリケーションの TCP 接続をインターセプトし、Host header を検査して route を解決し、cluster を選択して、CoreDNS を呼び出すのではなく Istiod の xDS server を通じて endpoint を照会する様子を示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg)
+最初にアプリケーションがService名を解決します。その後Envoyはルーティング設定とEDSのエンドポイント情報を使ってupstreamを選びます。EDSはアプリケーションのDNS名前解決を置き換えません。
 
 **利点**:
 
-* CoreDNS 呼び出しが不要（パフォーマンス向上）
-* 動的な Endpoint 更新
-* 高度な routing（version、weight など）
+* EDSはエンドポイントをEnvoyへ配布します。DNS captureがローカルで応答する場合を除き、アプリケーションのDNSは設定済みリゾルバーを引き続き使います。
+* Endpointを動的に更新できます。
+* 高度なルーティング（バージョン、重みなど）を利用できます。
 
-### DNS Proxy（オプション）
+### DNS Proxy（サイドカーモードでは任意）
 
-**Istio 1.8+ で追加された DNS Proxy 機能**:
+**Istio 1.8以降で追加されたDNS Proxy機能**:
+
+サイドカーのDNS proxyはIstio agent内で動作し、istiodから提供されるローカルキャッシュ済みの名前テーブルに基づいて応答します。DNSリクエストごとにistiodへ問い合わせるわけではありません。未知の名前は`/etc/resolv.conf`に設定されたリゾルバーへ送ります。Istio 1.25以降、AmbientのDNS captureは既定で有効です。以下をインストール用ファイルにマージし、影響を受けるサイドカーワークロードを再起動してください。
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -525,67 +521,52 @@ spec:
 
 **動作**:
 
-![Envoy の DNS proxy がリダイレクトされた DNS query をインターセプトして分岐する様子を示すシーケンス図: mesh 内の Istio Service の場合は Istiod の xDS server に ClusterIP を要求し、それ以外の場合は CoreDNS への query にフォールバックして、どちらの場合もアプリケーションに IP を返します。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg)
+DNS captureを有効にすると、アプリケーションの問い合わせはIstio agentのDNS proxyに送られ、ローカル名テーブルで応答するか、名前が不明な場合は上流リゾルバーへ転送されます。
 
-**DNS Proxy の iptables ルール**:
+**DNS Proxyのiptablesルール**:
 
 ```bash
-# Redirect UDP port 53 to Envoy DNS Proxy
+# Redirect UDP port 53 to Istio agent DNS proxy
 iptables -t nat -A OUTPUT -p udp --dport 53 \
   -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15053
 ```
 
-<span id="xds-api-communication"></span>
+## xDS API通信 {#xds-api-communication}
 
-## xDS API 通信
+### xDSプロトコルの概要
 
-### xDS Protocol の概要
+**xDS**はDiscovery Serviceの略で、Envoyの動的設定プロトコルです。
 
-**xDS**: Discovery Service の略であり、Envoy の動的設定 protocol です。
+LDS、RDS、CDS、EDSは論理リソース種別で、通常はAggregated Discovery Service（ADS）の集約ストリーム上で多重化されます。サイドカー向けSDSはistiodへの5本目の直接ストリームではなく、ローカルIstio agentから提供されます。
 
-![Istiod の Pilot component が Envoy と 5 つの双方向 gRPC stream を維持する様子を示すアーキテクチャ図: Listener、Route、Cluster、Endpoint、Secret Discovery Service。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg)
+### xDS APIの種類
 
-### xDS API の種類
+| API | 名称 | 役割 | 例 |
+| --- | --- | --- | --- |
+| **LDS** | Listener Discovery | ポート設定を受信 | 15001、15006 |
+| **RDS** | Route Discovery | HTTPルーティングルール | VirtualService |
+| **CDS** | Cluster Discovery | upstream service | DestinationRule |
+| **EDS** | Endpoint Discovery | Pod IP一覧 | Service Endpoint |
+| **SDS** | Secret Discovery | TLS証明書 | mTLS証明書 |
 
-| API     | 名前               | 役割                       | 例                |
-| ------- | ------------------ | -------------------------- | ----------------- |
-| **LDS** | Listener Discovery | ポート設定を受信           | 15001、15006      |
-| **RDS** | Route Discovery    | HTTP routing ルール        | VirtualService    |
-| **CDS** | Cluster Discovery  | upstream service           | DestinationRule   |
-| **EDS** | Endpoint Discovery | Pod IP リスト              | Service Endpoint  |
-| **SDS** | Secret Discovery   | TLS 証明書                 | mTLS 証明書       |
+### xDS通信フロー
 
-### xDS 通信フロー
+起動時、agentはアイデンティティを初期化し、istiodへのディスカバリー接続をプロキシします。Envoyは受け入れた設定を確認応答します。設定やエンドポイントが変わると、istiodは更新を配信します。SDSはローカルagentを通じて別途証明書を提供します。
 
-![新たに起動した Envoy proxy が mTLS 経由で Istiod に接続し、完全に設定されるまで各 discovery resource type の xDS request/response 往復を繰り返した後、Istiod が Kubernetes Service の変更を検出すると endpoint 更新の push を受信する様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg)
+### xDS通信の検証
 
-### xDS 通信の検証
-
-**Envoy Admin API で確認**:
+**Envoy Admin APIで確認**:
 
 ```bash
-# From inside pod
-kubectl exec -it <pod-name> -c istio-proxy -- curl localhost:15000/config_dump
-
-# LDS (Listeners)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[0].dynamic_listeners'
-
-# CDS (Clusters)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[1].dynamic_active_clusters'
-
-# EDS (Endpoints)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/clusters | grep -A 5 "reviews"
-
-# RDS (Routes)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[2].dynamic_route_configs'
+# Export via istioctl; no curl or shell is required inside the proxy image
+istioctl proxy-config all <pod-name> -n default -o json > config-dump.json
+jq '.configs[] | select(."@type" | endswith("ListenersConfigDump")) | .dynamic_listeners' config-dump.json
+jq '.configs[] | select(."@type" | endswith("ClustersConfigDump")) | .dynamic_active_clusters' config-dump.json
+jq '.configs[] | select(."@type" | endswith("RoutesConfigDump")) | .dynamic_route_configs' config-dump.json
 ```
 
-**istioctl で確認**:
+**istioctlで確認**:
 
 ```bash
 # Listener configuration
@@ -601,26 +582,26 @@ istioctl proxy-config endpoints <pod-name> -n default
 istioctl proxy-config routes <pod-name> -n default
 ```
 
-<span id="optimization-with-sidecar-resource"></span>
+## Sidecarリソースによる最適化 {#optimization-with-sidecar-resource}
 
-## Sidecar リソースによる最適化
+### 問題: すべてのService情報を受信する
 
-### 問題: すべての Service 情報の受信
+既定では、各Envoyは**メッシュ全体のすべてのService情報**を受け取ります。
 
-デフォルトでは、各 Envoy は**mesh 全体のすべての Service に関する情報**を受信します:
+![1,000 Serviceのメッシュでは、各Podのアプリケーションが2つのServiceとしか通信しなくても、既定ではすべてのEnvoyサイドカーに全Serviceの設定が配信される様子を示す図。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-13.png)
 
-![デフォルトでは、1,000 Service の mesh 内のすべての Envoy sidecar が、Pod 内のアプリケーションがそのうち 2 つとしか通信しない場合でも、すべての Service の設定を受信する様子を示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-13.html)
 
 **問題点**:
 
-* Memory 使用量の増加
-* CPU 使用量の増加（設定処理）
-* ネットワーク帯域幅の浪費
-* Istiod の負荷増加
+* メモリ使用量の増加
+* 設定処理によるCPU使用量の増加
+* ネットワーク帯域の浪費
+* Istiodの負荷増加
 
-### 解決策: Sidecar リソース
+### 解決策: Sidecarリソース
 
-**Sidecar リソース**を使用して、必要な Service のみを受信するように制限します:
+**Sidecarリソース**を使うと、必要なServiceだけを受け取るように範囲を制限できます。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -633,12 +614,14 @@ spec:
   - hosts:
     - "./*"  # All services in same namespace
     - "istio-system/*"  # All services in istio-system
-    - "production/reviews"  # Only reviews in production namespace
+    - "production/reviews.production.svc.cluster.local"  # Only reviews in production namespace
 ```
 
-### Sidecar リソースの例
+設定スコープや`REGISTRY_ONLY`は送信トラフィックを遮断するファイアウォールではありません。通信を隔離するにはAuthorizationPolicyとネットワーク制御を使用してください。SidecarリソースはAmbientプロキシを設定するものではありません。
 
-#### 1. Namespace の分離
+### Sidecarリソースの例
+
+#### 1. Namespace単位の設定スコープ
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -654,7 +637,7 @@ spec:
     - "shared/*"  # Shared services
 ```
 
-#### 2. 特定の Service のみにアクセス
+#### 2. 特定のServiceをインポート
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -667,18 +650,19 @@ spec:
     labels:
       app: frontend
   egress:
-  - hosts:
-    - "default/reviews"
-    - "default/ratings"
-    - "default/details"
   - port:
       number: 443
+      name: https
       protocol: HTTPS
     hosts:
     - "external/*"
+  - hosts:
+    - "default/reviews.default.svc.cluster.local"
+    - "default/ratings.default.svc.cluster.local"
+    - "default/details.default.svc.cluster.local"
 ```
 
-#### 3. 外部 Service のみにアクセス
+#### 3. 未登録の宛先を検出
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -694,24 +678,14 @@ spec:
   - hosts:
     - "./*"  # Same namespace
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # Only those registered in ServiceEntry
+    mode: REGISTRY_ONLY  # Known Kubernetes services and ServiceEntry destinations
 ```
 
-### Sidecar リソースの効果
+### Sidecarリソースの効果
 
-**導入前（Sidecar なし）**:
+インポートするServiceを減らすと設定サイズが小さくなり、プロキシのメモリ使用量や設定配信の処理量を抑えられる場合があります。Cluster数はポートやsubsetにも左右されるため、Serviceが1つならEnvoy Clusterも必ず1つとは限りません。実際に測定してください。メモリ使用量や配信時間の削減量は保証されません。
 
-* 1,000 Service → 1,000 Cluster 設定
-* Envoy Memory: \~500 MB
-* 設定の push 時間: 5～10 秒
-
-**導入後（Sidecar 適用済み）**:
-
-* 10 Service → 10 Cluster 設定
-* Envoy Memory: \~80 MB
-* 設定の push 時間: < 1 秒
-
-### DNS と Sidecar の統合
+### DNSとSidecarの連携
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -722,35 +696,45 @@ metadata:
 spec:
   egress:
   - hosts:
-    - "default/reviews"
-    - "default/ratings"
-  # Envoy only handles DNS for reviews, ratings
-  # Rest forwarded to CoreDNS
+    - "default/reviews.default.svc.cluster.local"
+    - "default/ratings.default.svc.cluster.local"
+  # Scope imported service configuration
+  # DNS capture is configured separately
 ```
 
 **結果**:
 
-* Envoy は `reviews`、`ratings` のみを解決
-* `google.com` などの外部 domain は CoreDNS に転送
-* Memory と CPU を節約
+* プロキシがインポートするのは選択したService設定です。DNSの許可リストではありません。
+* `google.com`などの外部ドメインはCoreDNSへ転送されます。
+* メモリとCPUの節約につながります。
 
 ## 参考資料
 
 ### 公式ドキュメント
 
-* [Istio Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
+* [Istioアーキテクチャ](https://istio.io/latest/docs/ops/deployment/architecture/)
 * [Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/intro/intro)
-* [xDS Protocol](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
+* [xDSプロトコル](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
 * [SPIFFE](https://spiffe.io/)
 
 ### 歴史と背景
 
-* [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
-* [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
-* [Service Mesh History](https://www.nginx.com/blog/what-is-a-service-mesh/)
+* [Envoyプロジェクトの節目（CNCF）](https://www.cncf.io/projects/envoy/)
+* [Istioの発表（Google Cloud Blog）](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
+* [サービスメッシュの歴史](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
-### 発展的な学習
+### さらに学ぶ
 
-* [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
-* [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-* [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+* [Envoyアーキテクチャの概要](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
+* [Istioのパフォーマンスとスケーラビリティ](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+* [iptablesチュートリアル](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+
+* [アーキテクチャ](https://istio.io/latest/docs/ops/deployment/architecture/)
+* [DNS Proxy](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+* [Istio CNIノードエージェントのインストール](https://istio.io/latest/docs/setup/additional-setup/cni/)
+* [セキュリティ](https://istio.io/latest/docs/concepts/security/)
+* [ReferencedResourceNotFound](https://istio.io/latest/docs/reference/config/analysis/ist0101/)
+* [サイドカーのインストール](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+* [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+* [設定スコープ](https://istio.io/latest/docs/ops/configuration/mesh/configuration-scoping/)
+* [パフォーマンスとスケーラビリティ](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)

@@ -1,1604 +1,691 @@
-# Despliegue Multi-Cluster de ArgoCD e IAM Identity Center
+# Despliegue de Argo CD en varios clusters e IAM Identity Center
 
-> **Versiones compatibles**: ArgoCD 2.10+, EKS 1.28+, External Secrets Operator 0.9+
-> **Última actualización**: February 23, 2026
+> **Versiones de referencia de la revisión**: Argo CD 3.5.5 / chart 10.10.5, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.12.0\
+> **Última revisión**: 16 de octubre de 2026. Se comprobaron localmente los esquemas, el renderizado y los dobles de prueba. No se realizó una instalación real en EKS, un inicio de sesión SSO ni una lectura de Secrets Manager.
 
-< [Anterior: Pipelines de CI](./03-ci-pipelines.md) | [Tabla de contenido](./README.md) | [Siguiente: Automatización GitOps](./05-gitops-automation.md) >
+< [Anterior: Pipelines de CI](03-ci-pipelines.md) | [Índice](README.md) | [Siguiente: Automatización GitOps](05-gitops-automation.md) >
 
----
+Este capítulo utiliza Argo CD en un cluster EKS de administración (hub) para gestionar dos clusters de cargas de trabajo (spokes). CI genera digests de imágenes aprobados; los cambios revisados en Git seleccionan el digest que se desplegará. La administración centralizada no sustituye la autenticación, la autorización ni la configuración de red de cada cluster.
 
-## Descripción general
+## Arquitectura con varios clusters
 
-Gestionar múltiples clusters EKS mediante GitOps requiere un plano de control centralizado con autenticación y autorización sólidas. Esta guía cubre el despliegue de ArgoCD en una arquitectura hub-spoke, la integración con AWS IAM Identity Center para SSO y la implementación de patrones avanzados de despliegue mediante ApplicationSets.
+| Ubicación | Responsabilidad | Acceso necesario |
+|---|---|---|
+| Application Controller del hub | Comparar y sincronizar el estado deseado | API EKS de destino y recursos Kubernetes permitidos |
+| Server/ApplicationSet del hub | Solicitudes de usuarios y operaciones relacionadas con clusters | Credenciales necesarias para esas funciones y Secrets del hub |
+| Repo Server | Renderizar fuentes de Git/Helm | Repositorios aprobados y credenciales válidas de los repositorios |
+| Spoke | Ejecutar aplicaciones y NodePools | Access Entry de EKS y RBAC del principal IAM de destino |
+| ESO | Sincronizar valores externos con Secrets de Kubernetes | Acceso del rol real del controlador a los secretos indicados |
 
-**Objetivos de arquitectura:**
-- Una única instancia de ArgoCD que gestiona múltiples clusters
-- Autenticación SSO mediante IAM Identity Center (AWS SSO)
-- Gestión del ciclo de vida de NodePool mediante GitOps
-- Gestión segura de secretos con External Secrets Operator
+Blue y green identifican clusters. Los NodePools de ejemplo se restringen a distintas AZ, mientras que los planos de control EKS son regionales. Un fallo del hub no tiene por qué detener inmediatamente los Pods existentes en los spokes, pero puede detener el despliegue y la reconciliación. Unas credenciales comprometidas del hub pueden afectar a varios spokes. El historial de Git por sí solo no audita todos los cambios manuales, inicios de sesión u operaciones de bases de datos.
 
----
+### Requisitos de los destinos
 
-## 1. Arquitectura Multi-Cluster
+1. Configure Pod Identity o IRSA compatibles para las cuentas de Application Controller y Server/ApplicationSet del hub que necesitan autenticarse en los destinos. El acceso de Repo Server a Git/ECR es independiente.
+2. Permita que el rol de administración asuma **los ARN exactos de los roles de destino** y restrinja la relación de confianza de cada rol de destino al rol de administración previsto.
+3. Compruebe el modo de autenticación EKS del destino y cree la Access Entry del rol. Separe las políticas de acceso/RBAC para los recursos necesarios del namespace `demo-app` de la administración de NodePools a nivel de cluster. En este ejemplo, cree el namespace previamente.
+4. Verifique DNS, rutas y acceso mediante grupos de seguridad desde el hub a los endpoints API privados de destino. Los permisos IAM no proporcionan conectividad de red.
 
-### 1.1 Modelo Hub-Spoke
+Utilice las guías revisadas de [instalación de Argo CD](../gitops/argocd/01-installation.md) y [gestión de acceso a EKS](../eks/02-eks-cluster-creation-part3.md) para los roles y las Access Entries. No reemplace el valor completo de `aws-auth.mapRoles` ni use `system:masters` como opción predeterminada.
 
-```
-                    ┌─────────────────────────────────────────┐
-                    │         Management Cluster              │
-                    │  ┌─────────────────────────────────┐    │
-                    │  │           ArgoCD                 │    │
-                    │  │  ┌─────────┐  ┌─────────────┐   │    │
-                    │  │  │ Server  │  │ Application │   │    │
-                    │  │  │         │  │ Controller  │   │    │
-                    │  │  └────┬────┘  └──────┬──────┘   │    │
-                    │  │       │              │          │    │
-                    │  │  ┌────┴──────────────┴────┐     │    │
-                    │  │  │    Redis HA Cluster    │     │    │
-                    │  │  └───────────────────────┘     │    │
-                    │  └─────────────────────────────────┘    │
-                    │                  │                      │
-                    └──────────────────┼──────────────────────┘
-                                       │
-          ┌────────────────────────────┼────────────────────────────┐
-          │                            │                            │
-          ▼                            ▼                            ▼
-┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│  Workload Cluster   │    │  Workload Cluster   │    │  Workload Cluster   │
-│     (Dev/Test)      │    │     (Staging)       │    │    (Production)     │
-│                     │    │                     │    │                     │
-│  ┌───────────────┐  │    │  ┌───────────────┐  │    │  ┌───────────────┐  │
-│  │  Applications │  │    │  │  Applications │  │    │  │  Applications │  │
-│  └───────────────┘  │    │  └───────────────┘  │    │  └───────────────┘  │
-│  ┌───────────────┐  │    │  ┌───────────────┐  │    │  ┌───────────────┐  │
-│  │   NodePools   │  │    │  │   NodePools   │  │    │  │   NodePools   │  │
-│  └───────────────┘  │    │  └───────────────┘  │    │  └───────────────┘  │
-└─────────────────────┘    └─────────────────────┘    └─────────────────────┘
-```
+La ruta `awsAuthConfig.roleARN` de Argo CD 3.5.5 asume un rol, pero no expone un campo ExternalId. Una condición de confianza que exija un ExternalId que esta ruta no envía impide la autenticación. Si esa condición es necesaria, diseñe una ruta de autenticación independiente y compatible.
 
-### 1.2 Registro de clusters
+### Registro declarativo con endpoints reales
 
-Registra los clusters de workload con ArgoCD:
+Ejecute este script por separado para cada destino. Cambiar `CLUSTER_COLOR`, el nombre del cluster y el rol crea Secrets distintos sin cambiar el contexto predeterminado de kubeconfig. El acceso a namespaces se limita a `demo-app`; se habilita el acceso a recursos del cluster para los NodePools. Esto no concede los permisos RBAC correspondientes en el destino.
 
 ```bash
-# Get the management cluster context
-kubectl config use-context management-cluster
-
-# Add workload clusters
-argocd cluster add dev-cluster --name dev --grpc-web
-argocd cluster add staging-cluster --name staging --grpc-web
-argocd cluster add prod-cluster --name prod --grpc-web
-
-# Verify cluster registration
-argocd cluster list
+# fixtures/register-cluster.sh
+#!/usr/bin/env bash
+set -euo pipefail
+: "${ARGOCD_CONTEXT:?Set the hub kubeconfig context}"
+: "${TARGET_EKS_NAME:?Set the actual target EKS cluster name}"
+: "${TARGET_AWS_REGION:?Set the target AWS region}"
+: "${TARGET_ROLE_ARN:?Set the pre-authorized target role ARN}"
+: "${CLUSTER_COLOR:?Set blue or green}"
+case "$CLUSTER_COLOR" in blue|green) ;; *) exit 2 ;; esac
+[[ "$TARGET_ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/.+ ]] || exit 2
+umask 077
+REVIEW_TMP="$(mktemp -d)"
+trap 'rm -rf -- "$REVIEW_TMP"' EXIT
+aws eks describe-cluster --name "$TARGET_EKS_NAME" --region "$TARGET_AWS_REGION" \
+  --query 'cluster.{name:name,server:endpoint,ca:certificateAuthority.data}' \
+  --output json > "$REVIEW_TMP/cluster.json"
+jq -e '(.name | type == "string" and length > 0)
+  and (.server | type == "string" and startswith("https://"))
+  and (.ca | type == "string" and length > 0)' "$REVIEW_TMP/cluster.json" >/dev/null
+jq --arg role "$TARGET_ROLE_ARN" --arg color "$CLUSTER_COLOR" '{
+  apiVersion:"v1",kind:"Secret",
+  metadata:{name:("workload-"+$color),namespace:"argocd",labels:{
+    "argocd.argoproj.io/secret-type":"cluster",
+    "environment":"production","cluster-color":$color,"gitops-target":"true"
+  }},
+  type:"Opaque",
+  stringData:{
+    name:("workload-"+$color),server:.server,namespaces:"demo-app",
+    clusterResources:"true",
+    config:({
+      awsAuthConfig:{clusterName:.name,roleARN:$role},
+      tlsClientConfig:{insecure:false,caData:.ca}
+    }|tojson)
+  }
+}' "$REVIEW_TMP/cluster.json" > "$REVIEW_TMP/secret.json"
+kubectl --context "$ARGOCD_CONTEXT" apply -f "$REVIEW_TMP/secret.json"
 ```
 
-Como alternativa, usa secretos de cluster declarativos:
+El operador que descubre el cluster y el rol utilizado por los Pods del hub son identidades diferentes. No invente un nombre de host EKS ni un certificado. Para añadir namespaces, actualice conjuntamente el Secret del cluster, el AppProject y los permisos de destino. Revise la configuración de caché, como `resource.respectRBAC`, junto con el RBAC de destino para evitar observar recursos innecesariamente.
 
-```yaml
-# cluster-secret-dev.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: dev-cluster-secret
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: cluster
-type: Opaque
-stringData:
-  name: dev
-  server: https://DEV_CLUSTER_ENDPOINT.eks.amazonaws.com
-  config: |
-    {
-      "awsAuthConfig": {
-        "clusterName": "dev-cluster",
-        "roleARN": "arn:aws:iam::123456789012:role/ArgoCD-Dev-Role"
-      },
-      "tlsClientConfig": {
-        "insecure": false,
-        "caData": "BASE64_ENCODED_CA_DATA"
-      }
+`argocd cluster add <kubeconfig-context>` es una alternativa que puede crear ServiceAccounts y RBAC en el destino; no es un comando de solo lectura. Use un inicio de sesión interactivo o SSO para la CLI, en lugar de pasar la contraseña como argumento.
+
+## Instalación de Argo CD con Terraform
+
+Este módulo raíz presupone un hub existente, permisos de instalación y AWS CLI en el entorno de ejecución. Helm Provider 3 utiliza la sintaxis de objeto `kubernetes = { ... }`. La autenticación exec obtiene un token EKS de corta duración sin guardar un token de un data source de autenticación EKS en el estado de Terraform. Si solo AWS Provider asume un rol, configure también su proceso independiente de AWS CLI exec para utilizar las credenciales previstas.
+
+```hcl
+# terraform/main.tf
+terraform {
+  required_version = ">= 1.10, < 2.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.69.1"
     }
-```
-
-### 1.3 Rol IAM entre clusters
-
-```hcl
-# argocd-cross-cluster-role.tf
-
-# Role in workload cluster account
-resource "aws_iam_role" "argocd_workload" {
-  name = "ArgoCD-Workload-Role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${var.management_account_id}:role/ArgoCD-Management-Role"
-        }
-        Action = "sts:AssumeRole"
-        Condition = {
-          StringEquals = {
-            "sts:ExternalId" = var.external_id
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "argocd_workload" {
-  name = "eks-access"
-  role = aws_iam_role.argocd_workload.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "eks:DescribeCluster",
-          "eks:ListClusters"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# aws-auth ConfigMap entry
-resource "kubernetes_config_map_v1_data" "aws_auth" {
-  metadata {
-    name      = "aws-auth"
-    namespace = "kube-system"
+    helm = {
+      source  = "hashicorp/helm"
+      version = "= 3.3.0"
+    }
   }
-
-  data = {
-    mapRoles = yamlencode([
-      {
-        rolearn  = aws_iam_role.argocd_workload.arn
-        username = "argocd"
-        groups   = ["system:masters"]
-      }
-    ])
-  }
-
-  force = true
+  backend "s3" {}
 }
-```
 
----
+provider "aws" {
+  region = var.aws_region
+}
 
-## 2. Instalación de ArgoCD con Terraform
+data "aws_eks_cluster" "hub" {
+  name = var.management_cluster_name
+}
 
-### 2.1 Despliegue de ArgoCD con Helm
-
-```hcl
-# argocd.tf
-
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = "argocd"
-    labels = {
-      "app.kubernetes.io/managed-by" = "terraform"
+provider "helm" {
+  kubernetes = {
+    host                   = data.aws_eks_cluster.hub.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.hub.certificate_authority[0].data)
+    exec = {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", var.management_cluster_name, "--region", var.aws_region]
     }
   }
 }
 
 resource "helm_release" "argocd" {
-  name       = "argocd"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  version    = "6.7.3"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
-
-  values = [
-    templatefile("${path.module}/argocd-values.yaml", {
-      domain                = var.argocd_domain
-      certificate_arn       = var.certificate_arn
-      oidc_issuer_url       = var.oidc_issuer_url
-      oidc_client_id        = var.oidc_client_id
-      redis_ha_enabled      = var.environment == "production"
-      replicas              = var.environment == "production" ? 3 : 1
-    })
-  ]
-
-  depends_on = [
-    kubernetes_namespace.argocd
-  ]
-}
-
-# ArgoCD admin password
-resource "random_password" "argocd_admin" {
-  length  = 32
-  special = true
-}
-
-resource "aws_secretsmanager_secret" "argocd_admin" {
-  name = "argocd/admin-password"
-}
-
-resource "aws_secretsmanager_secret_version" "argocd_admin" {
-  secret_id     = aws_secretsmanager_secret.argocd_admin.id
-  secret_string = bcrypt(random_password.argocd_admin.result)
+  name             = "argocd"
+  namespace        = "argocd"
+  create_namespace = true
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "10.10.5"
+  timeout          = 900
+  wait             = true
+  values           = [file("${path.module}/argocd-values.yaml")]
 }
 ```
 
-### 2.2 Valores Helm de ArgoCD (configuración HA)
+```hcl
+# terraform/variables.tf
+variable "aws_region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "management_cluster_name" {
+  type = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$", var.management_cluster_name))
+    error_message = "Use the actual EKS management cluster name."
+  }
+}
+```
+
+Configure un archivo independiente `backend.hcl` con el bucket específico de la cuenta y el entorno del [capítulo 01](01-infrastructure-setup.md), una clave de estado única, `encrypt = true` y `use_lockfile = true`. Ejecute `terraform init -backend-config=backend.hcl` y revise el plan. No copie una configuración obsoleta de bloqueo con DynamoDB ni la clave de estado de otro módulo raíz.
+
+Guarde este `argocd-values.yaml` junto a los archivos Terraform. Reutiliza la configuración inicial de alta disponibilidad de la [guía de instalación revisada](../gitops/argocd/01-installation.md). Evite que otro recurso Terraform o un flujo de kubectl compita con Helm por el mismo ConfigMap.
 
 ```yaml
-# argocd-values.yaml
-
+# fixtures/argocd-values.yaml
+fullnameOverride: argocd
 global:
-  domain: ${domain}
-  logging:
-    format: json
-    level: info
-
-# HA Configuration
+  domain: argocd.example.com
+configs:
+  params:
+    server.insecure: false
+  cm:
+    url: https://argocd.example.com
+    users.anonymous.enabled: 'false'
+    exec.enabled: 'false'
 controller:
-  replicas: ${replicas}
-
+  replicas: 2
   resources:
-    limits:
-      cpu: "2"
-      memory: 4Gi
     requests:
-      cpu: "500m"
-      memory: 1Gi
-
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-
-  env:
-    - name: ARGOCD_CONTROLLER_REPLICAS
-      value: "${replicas}"
-
-server:
-  replicas: ${replicas}
-
-  autoscaling:
-    enabled: true
-    minReplicas: ${replicas}
-    maxReplicas: 5
-    targetCPUUtilizationPercentage: 80
-
-  resources:
+      cpu: 250m
+      memory: 512Mi
     limits:
-      cpu: "1"
-      memory: 1Gi
-    requests:
-      cpu: "250m"
-      memory: 256Mi
-
-  ingress:
-    enabled: true
-    ingressClassName: alb
-    annotations:
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/backend-protocol: HTTPS
-      alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
-      alb.ingress.kubernetes.io/healthcheck-path: /healthz
-      alb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
-      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-      alb.ingress.kubernetes.io/ssl-redirect: '443'
-    hosts:
-      - ${domain}
-    tls:
-      - hosts:
-          - ${domain}
-        secretName: argocd-server-tls
-
-  extraArgs:
-    - --insecure  # TLS terminated at ALB
-
-repoServer:
-  replicas: ${replicas}
-
-  autoscaling:
-    enabled: true
-    minReplicas: ${replicas}
-    maxReplicas: 5
-
-  resources:
-    limits:
-      cpu: "2"
+      cpu: '1'
       memory: 2Gi
-    requests:
-      cpu: "500m"
-      memory: 512Mi
-
-  env:
-    - name: ARGOCD_EXEC_TIMEOUT
-      value: "5m"
-
-applicationSet:
-  replicas: ${replicas}
-
+  pdb:
+    enabled: true
+    minAvailable: 1
+server:
+  replicas: 2
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
   resources:
-    limits:
-      cpu: "500m"
-      memory: 512Mi
     requests:
-      cpu: "100m"
+      cpu: 100m
       memory: 128Mi
-
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  pdb:
+    enabled: true
+    minAvailable: 1
+repoServer:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+  pdb:
+    enabled: true
+    minAvailable: 1
+applicationSet:
+  replicas: 2
+  pdb:
+    enabled: true
+    minAvailable: 1
 notifications:
   enabled: true
-
-  resources:
-    limits:
-      cpu: "200m"
-      memory: 256Mi
-    requests:
-      cpu: "50m"
-      memory: 64Mi
-
-%{ if redis_ha_enabled }
+redis:
+  enabled: false
 redis-ha:
   enabled: true
   replicas: 3
-
+  persistentVolume:
+    enabled: false
   haproxy:
     enabled: true
     replicas: 3
-
-  persistence:
-    enabled: true
-    storageClass: gp3
-    size: 10Gi
-
-  resources:
-    limits:
-      cpu: "500m"
-      memory: 512Mi
-    requests:
-      cpu: "100m"
-      memory: 128Mi
-%{ else }
-redis:
-  enabled: true
-  resources:
-    limits:
-      cpu: "200m"
-      memory: 256Mi
-    requests:
-      cpu: "50m"
-      memory: 64Mi
-%{ endif }
-
-configs:
-  cm:
-    url: https://${domain}
-
-    # Enable status badge
-    statusbadge.enabled: "true"
-
-    # Resource tracking method
-    application.resourceTrackingMethod: annotation
-
-    # Health checks
-    resource.customizations.health.argoproj.io_Application: |
-      hs = {}
-      hs.status = "Progressing"
-      hs.message = ""
-      if obj.status ~= nil then
-        if obj.status.health ~= nil then
-          hs.status = obj.status.health.status
-          if obj.status.health.message ~= nil then
-            hs.message = obj.status.health.message
-          end
-        end
-      end
-      return hs
-
-    # Kustomize build options
-    kustomize.buildOptions: --enable-helm --load-restrictor LoadRestrictionsNone
-
-  params:
-    server.insecure: true
-    controller.status.processors: 20
-    controller.operation.processors: 10
-    controller.self.heal.timeout.seconds: 5
-    controller.repo.server.timeout.seconds: 60
-    reposerver.parallelism.limit: 0
-
-  rbac:
-    policy.default: role:readonly
-    policy.csv: |
-      g, argocd-admins, role:admin
-      g, platform-team, role:admin
-      g, dev-team, role:developer
-
-      p, role:developer, applications, get, */*, allow
-      p, role:developer, applications, sync, */dev-*, allow
-      p, role:developer, applications, sync, */staging-*, allow
-      p, role:developer, logs, get, */*, allow
-      p, role:developer, exec, create, */dev-*, allow
 ```
 
-### 2.3 Service Account de ArgoCD para AWS
+La configuración inicial expone un ClusterIP HTTPS y deshabilita el ingress externo. Un SSO real requiere un dominio HTTPS accesible con rutas correctas. Si añade el ejemplo ALB de la guía de instalación, haga coincidir su backend HTTPS con `server.insecure=false`. Si cambia a HTTP, cambie juntos los protocolos del backend y de las comprobaciones de salud. Distinga las rutas de gRPC nativo y gRPC-Web.
 
-```hcl
-# argocd-iam.tf
+Las réplicas de Application Controller implementan **particionamiento por clusters**, no un único líder activo con todas las demás réplicas en espera. ApplicationSet tiene su propia elección de líder. Server es stateless y no necesita sesiones persistentes por el simple hecho de tener varias réplicas. Mantenga Dex con su réplica única predeterminada para la configuración de almacenamiento incluida.
 
-resource "aws_iam_role" "argocd" {
-  name = "ArgoCD-Management-Role"
+Redis es una caché reconstruible; la configuración principal reside en objetos Kubernetes. Redis HA no garantiza el funcionamiento ininterrumpido ante cualquier fallo. Diseñe conjuntamente las réplicas, PDB, ubicación de nodos y capacidad de reserva; los PDB no impiden fallos de AZ ni todas las terminaciones forzadas. Habilite ServiceMonitor solo cuando exista su CRD de Prometheus Operator.
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
+## Gestión de NodePools con GitOps
 
-resource "aws_iam_role_policy" "argocd_assume_role" {
-  name = "assume-workload-roles"
-  role = aws_iam_role.argocd.id
+Los NodePools son recursos personalizados de Kubernetes y pueden gestionarse con Argo CD. Esto no significa que Terraform no pueda gestionarlos. Elija un único responsable por recurso y migre su gestión de forma deliberada, en lugar de adoptar accidentalmente recursos integrados o gestionados por Terraform con el mismo nombre.
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = "sts:AssumeRole"
-        Resource = var.workload_cluster_role_arns
-      }
-    ]
-  })
-}
+El ejemplo siguiente utiliza el NodeClass `default` existente de Auto Mode. Sus selectores de subred deben incluir la AZ deseada. Cree la estructura completa de archivos:
 
-resource "aws_eks_pod_identity_association" "argocd_server" {
-  cluster_name    = var.cluster_name
-  namespace       = "argocd"
-  service_account = "argocd-server"
-  role_arn        = aws_iam_role.argocd.arn
-}
-
-resource "aws_eks_pod_identity_association" "argocd_controller" {
-  cluster_name    = var.cluster_name
-  namespace       = "argocd"
-  service_account = "argocd-application-controller"
-  role_arn        = aws_iam_role.argocd.arn
-}
+```text
+nodepools/
+  base/kustomization.yaml
+  base/nodepool.yaml
+  overlays/blue/kustomization.yaml
+  overlays/green/kustomization.yaml
 ```
-
----
-
-## 3. Gestión de NodePool con GitOps
-
-### 3.1 NodePool como CRD de Kubernetes
-
-En EKS Auto Mode, los NodePools se gestionan como recursos personalizados de Kubernetes en lugar de Terraform. Esto habilita flujos de trabajo GitOps para la configuración de nodos:
 
 ```yaml
-# nodepools/base/general-purpose.yaml
+# nodepools/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - nodepool.yaml
+```
+
+```yaml
+# nodepools/base/nodepool.yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-purpose
+  name: workloads
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm
 spec:
   template:
     metadata:
       labels:
-        workload-type: general
+        workload-type: applications
     spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - m6i.large
-            - m6i.xlarge
-            - m7g.large
-            - m7g.xlarge
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
-
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: [amd64, arm64]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge]
   limits:
-    cpu: 1000
-    memory: 2000Gi
-
+    cpu: "100"
+    memory: 200Gi
   disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 1m
-
-  weight: 100
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 10m
+    budgets:
+      - nodes: "10%"
 ```
 
-### 3.2 Overlays de NodePool específicos por entorno
-
 ```yaml
-# nodepools/overlays/dev/kustomization.yaml
+# nodepools/overlays/blue/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
   - ../../base
-
 patches:
-  - patch: |
-      - op: replace
-        path: /spec/limits/cpu
-        value: 100
-      - op: replace
-        path: /spec/limits/memory
-        value: 200Gi
-      - op: replace
-        path: /spec/template/spec/requirements/1/values
-        value: ["spot"]
-    target:
+  - target:
+      group: karpenter.sh
+      version: v1
       kind: NodePool
-      name: general-purpose
-```
-
-```yaml
-# nodepools/overlays/production/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - ../../base
-
-patches:
-  - patch: |
-      - op: replace
-        path: /spec/limits/cpu
-        value: 2000
-      - op: replace
-        path: /spec/limits/memory
-        value: 4000Gi
-      - op: replace
-        path: /spec/template/spec/requirements/1/values
-        value: ["on-demand"]
+      name: workloads
+    patch: |
       - op: add
-        path: /spec/disruption/budgets
+        path: /spec/template/metadata/labels/cluster-color
+        value: blue
+      - op: add
+        path: /spec/template/spec/requirements/-
         value:
-          - nodes: "10%"
-            schedule: "0 9 * * 1-5"
-            duration: 8h
-    target:
+          key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2a]
+```
+
+```yaml
+# nodepools/overlays/green/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      group: karpenter.sh
+      version: v1
       kind: NodePool
-      name: general-purpose
+      name: workloads
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/cluster-color
+        value: green
+      - op: add
+        path: /spec/template/spec/requirements/-
+        value:
+          key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2c]
 ```
 
-### 3.3 NodePools especializados
+Revise tanto `kustomize build nodepools/overlays/blue` como su equivalente green. Los requisitos estándar de tipos de instancia evitan mezclar las claves `karpenter.k8s.aws/*` de Karpenter autogestionado con Auto Mode. Haga coincidir los selectores, la arquitectura y los requisitos de ubicación de las cargas con los pools.
+
+No copie campos de `EC2NodeClass` autogestionado, como `amiSelectorTerms`, `blockDeviceMappings` o `instanceStorePolicy`, en un `NodeClass` de Auto Mode. Las clases personalizadas de Auto Mode utilizan roles de nodo reales, selectores de subred/grupos de seguridad y campos compatibles, como `ephemeralStorage`; otro rol de nodo también necesita su Access Entry de nodos de Auto Mode. Diseñe por separado el almacenamiento persistente de las bases de datos y los discos efímeros. Consulte la [guía de NodePool/NodeClass](../eks-auto-mode/02-nodepool-configuration.md).
+
+### Proyectos y aprobación manual
+
+Cree estos AppProjects en el hub y sustituya las URL Git por repositorios aprobados. Los nombres de destino coinciden con el script de registro. El proyecto de infraestructura permite NodePools; el de aplicaciones permite únicamente los tipos de recursos con namespace necesarios. Los AppProjects no sustituyen el RBAC de Kubernetes ni aíslan código no confiable.
 
 ```yaml
-# nodepools/base/data-workloads.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
+# fixtures/projects.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
 metadata:
-  name: data-workloads
+  name: infrastructure
+  namespace: argocd
 spec:
-  template:
-    metadata:
-      labels:
-        workload-type: data
-        storage-optimized: "true"
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - i3.xlarge
-            - i3.2xlarge
-            - i3en.xlarge
-            - i3en.2xlarge
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - us-east-1a
-            - us-east-1b
-
-      taints:
-        - key: data-workload
-          value: "true"
-          effect: NoSchedule
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: data-optimized
-
-  limits:
-    cpu: 500
-    memory: 1000Gi
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30m
-
-  weight: 50
-```
-
-```yaml
-# nodepools/base/gpu-workloads.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
+  sourceRepos: [https://github.com/REPLACE_ORG/infra-manifests.git]
+  destinations:
+    - name: workload-blue
+      namespace: demo-app
+    - name: workload-green
+      namespace: demo-app
+  clusterResourceWhitelist:
+    - group: karpenter.sh
+      kind: NodePool
+  namespaceResourceWhitelist: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
 metadata:
-  name: gpu-workloads
+  name: applications
+  namespace: argocd
 spec:
-  template:
-    metadata:
-      labels:
-        workload-type: gpu
-        nvidia.com/gpu.present: "true"
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - p4d.24xlarge
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - us-east-1a
-            - us-east-1b
-
-      taints:
-        - key: nvidia.com/gpu
-          value: "true"
-          effect: NoSchedule
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: gpu-optimized
-
-  limits:
-    cpu: 200
-    memory: 800Gi
-    nvidia.com/gpu: 50
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 1h
-
-  weight: 25
+  sourceRepos: [https://github.com/REPLACE_ORG/app-manifests.git]
+  destinations:
+    - name: workload-blue
+      namespace: demo-app
+    - name: workload-green
+      namespace: demo-app
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
 ```
 
-### 3.4 Application de ArgoCD para NodePool
-
 ```yaml
-# applications/nodepools.yaml
+# fixtures/nodepool-application.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nodepools
+  name: nodepools-blue
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: infrastructure
-
   source:
-    repoURL: https://github.com/myorg/eks-config.git
-    targetRevision: HEAD
-    path: nodepools/overlays/production
-
+    repoURL: https://github.com/REPLACE_ORG/infra-manifests.git
+    targetRevision: main
+    path: nodepools/overlays/blue
   destination:
-    server: https://kubernetes.default.svc
-    namespace: kube-system
-
+    name: workload-blue
+    namespace: demo-app
   syncPolicy:
-    automated:
-      prune: false  # Don't auto-delete NodePools
-      selfHeal: true
-
     syncOptions:
-      - CreateNamespace=false
-      - PruneLast=true
-      - ApplyOutOfSyncOnly=true
-
+      - ServerSideApply=true
     retry:
-      limit: 5
+      limit: 3
       backoff:
         duration: 5s
         factor: 2
-        maxDuration: 3m
-
-  ignoreDifferences:
-    - group: karpenter.sh
-      kind: NodePool
-      jsonPointers:
-        - /status
+        maxDuration: 1m
 ```
 
----
+Para green, cambie conjuntamente el nombre de Application, el destino y la ruta del overlay. Este ejemplo de infraestructura mantiene deshabilitada la sincronización automática para permitir su revisión. Omite un finalizer de borrado en cascada de Application y exige confirmación para podar o eliminar NodePools. `automated.prune=false` por sí solo no bloquea todas las vías de eliminación.
 
-## 4. Estrategias de ApplicationSet
+Los cambios en NodePool pueden generar drift y reemplazar nodos. Los presupuestos de interrupción limitan las interrupciones voluntarias a las que se aplican, no toda expiración, interrupción Spot o eliminación forzada. Considere conjuntamente los límites de vida de nodos de Auto Mode, los PDB, el tiempo de drenaje y la capacidad de reemplazo.
 
-### 4.1 Generador de clusters
+## Estrategias de ApplicationSet
 
-Despliega applications en todos los clusters registrados:
+Examine las Applications generadas y sus rutas reales antes de habilitar la reconciliación. Estos ejemplos usan el namespace `demo-app` existente. Cada directorio de aplicación necesita una Kustomization válida y nombres de recursos sin colisiones.
+
+### Generador de clusters
+
+Seleccione únicamente clusters registrados con la etiqueta `gitops-target=true`. Este ejemplo y el siguiente ejemplo Matrix son **alternativas**: evite que ambos gestionen los mismos recursos frontend.
 
 ```yaml
-# applicationsets/platform-services.yaml
+# fixtures/cluster-appset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: platform-services
+  name: frontend-clusters
   namespace: argocd
 spec:
   goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
-
+  goTemplateOptions: [missingkey=error]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - clusters:
         selector:
           matchLabels:
+            gitops-target: "true"
             environment: production
-        values:
-          revision: main
-    - clusters:
-        selector:
-          matchLabels:
-            environment: staging
-        values:
-          revision: develop
-    - clusters:
-        selector:
-          matchLabels:
-            environment: dev
-        values:
-          revision: develop
-
   template:
     metadata:
-      name: '{{.name}}-platform-services'
-      labels:
-        cluster: '{{.name}}'
-        environment: '{{.metadata.labels.environment}}'
+      name: '{{.nameNormalized}}-frontend'
     spec:
-      project: platform
-
+      project: applications
       source:
-        repoURL: https://github.com/myorg/platform-services.git
-        targetRevision: '{{.values.revision}}'
-        path: 'clusters/{{.metadata.labels.environment}}'
-        helm:
-          valueFiles:
-            - values.yaml
-            - 'values-{{.name}}.yaml'
-
+        repoURL: https://github.com/REPLACE_ORG/app-manifests.git
+        targetRevision: main
+        path: 'apps/frontend/overlays/{{index .metadata.labels "cluster-color"}}'
       destination:
-        server: '{{.server}}'
-        namespace: platform
-
+        name: '{{.name}}'
+        namespace: demo-app
       syncPolicy:
         automated:
-          prune: true
+          prune: false
           selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
 ```
 
-### 4.2 Generador Git (directorio)
+`nameNormalized` es adecuado para nombres Kubernetes; `name` es el nombre del destino registrado. Use `index` de Go template para claves de etiquetas que contengan guiones. En los generadores de archivos Git, prefiera un campo de configuración como `sourcePath` para evitar colisiones con los metadatos `.path` generados.
 
-Genera applications a partir de la estructura de directorios:
+### Generadores Matrix y de directorios Git
 
 ```yaml
-# applicationsets/microservices.yaml
+# fixtures/matrix-appset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: microservices
+  name: application-matrix
   namespace: argocd
 spec:
   goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
-
-  generators:
-    - git:
-        repoURL: https://github.com/myorg/microservices.git
-        revision: HEAD
-        directories:
-          - path: 'services/*'
-          - path: 'services/internal/*'
-            exclude: true
-
-  template:
-    metadata:
-      name: '{{.path.basename}}'
-      annotations:
-        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
-    spec:
-      project: microservices
-
-      source:
-        repoURL: https://github.com/myorg/microservices.git
-        targetRevision: HEAD
-        path: '{{.path.path}}'
-        helm:
-          valueFiles:
-            - values.yaml
-
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: '{{.path.basename}}'
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - PrunePropagationPolicy=foreground
-```
-
-### 4.3 Generador Matrix
-
-Combina generadores para despliegues complejos:
-
-```yaml
-# applicationsets/multi-cluster-apps.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: multi-cluster-apps
-  namespace: argocd
-spec:
-  goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
-
+  goTemplateOptions: [missingkey=error]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - matrix:
         generators:
-          # First generator: clusters
           - clusters:
               selector:
-                matchExpressions:
-                  - key: environment
-                    operator: In
-                    values: ["staging", "production"]
-
-          # Second generator: applications from git
+                matchLabels:
+                  gitops-target: "true"
+                  environment: production
           - git:
-              repoURL: https://github.com/myorg/apps.git
-              revision: HEAD
-              files:
-                - path: 'apps/*/config.json'
-
+              repoURL: https://github.com/REPLACE_ORG/app-manifests.git
+              revision: main
+              directories:
+                - path: apps/*
+                - path: apps/internal
+                  exclude: true
   template:
     metadata:
-      name: '{{.name}}-{{.path.basename}}'
-      labels:
-        app: '{{.path.basename}}'
-        cluster: '{{.name}}'
-        environment: '{{.metadata.labels.environment}}'
+      name: '{{.nameNormalized}}-{{.path.basenameNormalized}}'
     spec:
       project: applications
-
       source:
-        repoURL: https://github.com/myorg/apps.git
-        targetRevision: '{{if eq .metadata.labels.environment "production"}}main{{else}}develop{{end}}'
-        path: 'apps/{{.path.basename}}/overlays/{{.metadata.labels.environment}}'
-        kustomize:
-          images:
-            - '{{.image.repository}}:{{.image.tag}}'
-
+        repoURL: https://github.com/REPLACE_ORG/app-manifests.git
+        targetRevision: main
+        path: '{{.path.path}}/overlays/{{index .metadata.labels "cluster-color"}}'
       destination:
-        server: '{{.server}}'
-        namespace: '{{.namespace}}'
-
+        name: '{{.name}}'
+        namespace: demo-app
       syncPolicy:
         automated:
-          prune: true
+          prune: false
           selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
 ```
 
-### 4.4 Generador de Pull Request
+Este Matrix tiene **dos generadores hijos**. Dos clusters y tres aplicaciones coincidentes producen seis combinaciones. Los generadores de combinación no pueden anidarse a cualquier profundidad. Excluya el propio `apps/internal`; excluir únicamente `apps/internal/*` no elimina necesariamente su directorio padre.
 
-Entornos de vista previa para pull requests:
+Las plantillas Go se aplican a campos de texto. No coloque una plantilla de texto en un campo booleano, como `prune: '{{.prune}}'`, ni use una expresión `if` como clave YAML. Use booleanos explícitos o un `templatePatch` validado para objetos condicionales. Permitir que entradas externas seleccionen libremente rutas de origen, proyectos o destinos puede abrir vías de escalada de privilegios.
+
+`preserveResourcesOnDeletion=true` permite conservar recursos cuando se eliminan las Applications generadas. No es una migración que quite finalizers existentes y es distinto de la poda explícita o la eliminación manual de recursos. Defina quién limpia los recursos retirados de Git.
+
+### Orden de despliegue y entornos de vista previa de PR
+
+- Una sync wave ordena recursos dentro de la sincronización de una Application. Las anotaciones wave en las Applications generadas no serializan por sí solas los despliegues de ApplicationSet entre clusters.
+- Para la aprobación y progresión según la salud entre clusters, use un flujo de promoción independiente o RollingSync compatible de ApplicationSet. Siga la [guía de ApplicationSet](../gitops/argocd/04-applicationsets.md) para configurar la función, los controles de salud y las restricciones de sincronización automática.
+- Los generadores de PR pueden ejecutar código y manifiestos de la PR. Utilice un cluster de vista previa independiente y protegido, AppProject/RBAC restringidos, cuotas de recursos y digests de imágenes verificados. Una etiqueta `preview` no establece un límite de confianza.
+- Al cerrar una PR, esta desaparece de la salida del generador y se aplica el comportamiento de eliminación configurado. `info` no es un TTL, y no se garantiza que un namespace creado mediante `CreateNamespace=true` se elimine junto con la Application. Defina los finalizers, la conservación de recursos y el responsable de limpiar namespaces.
+
+Los ejemplos validados de PR, templatePatch y RollingSync están en el [capítulo de ApplicationSet](../gitops/argocd/04-applicationsets.md).
+
+## SSO con IAM Identity Center
+
+Este capítulo utiliza **SAML 2.0 con Dex**, la ruta que Argo CD documenta para IAM Identity Center. La funcionalidad OAuth/de propagación de identidad de confianza de Identity Center no debe reinterpretarse como un emisor OIDC genérico para Argo CD. Una URL de inicio de sesión SAML no es un endpoint de descubrimiento OIDC.
+
+1. Cree una aplicación SAML 2.0 administrada por el cliente en **Applications** de IAM Identity Center.
+2. Haga coincidir su URL ACS y audiencia con `https://argocd.example.com/api/dex/callback`, utilizando el dominio real. Asigne a esta aplicación los usuarios/grupos permitidos.
+3. Obtenga la URL de inicio de sesión y el certificado de firma de **esta aplicación**. No los confunda con los metadatos de origen de identidad utilizados para conectar un IdP externo a Identity Center.
+4. Mapee los atributos de usuario necesarios, como `email`, mediante asignaciones compatibles. Verifique el subject y los atributos exactos en una aserción real.
+5. Codifique en base64 el PEM completo, incluidas las líneas BEGIN/END, para `caData`. Mantenga habilitada la verificación de firmas.
+
+Integre estos parámetros en el archivo `argocd-values.yaml` gestionado por Helm. Las URL/certificados de marcador y un PEM sin codificar en `caData` no proporcionan una autenticación funcional:
 
 ```yaml
-# applicationsets/pr-previews.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: pr-previews
-  namespace: argocd
-spec:
-  goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
-
-  generators:
-    - pullRequest:
-        github:
-          owner: myorg
-          repo: myapp
-          tokenRef:
-            secretName: github-token
-            key: token
-          labels:
-            - preview
-        requeueAfterSeconds: 60
-
-  template:
-    metadata:
-      name: 'preview-{{.number}}'
-      annotations:
-        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: previews
-      labels:
-        app.kubernetes.io/part-of: myapp
-        preview: "true"
-    spec:
-      project: previews
-
-      source:
-        repoURL: 'https://github.com/myorg/myapp.git'
-        targetRevision: '{{.head_sha}}'
-        path: deploy/preview
-        helm:
-          parameters:
-            - name: image.tag
-              value: 'pr-{{.number}}'
-            - name: ingress.host
-              value: 'pr-{{.number}}.preview.example.com'
-
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: 'preview-{{.number}}'
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-
-      # Auto-delete after PR is closed
-      info:
-        - name: PR
-          value: 'https://github.com/myorg/myapp/pull/{{.number}}'
+# fixtures/sso-values.yaml
+# Merge into the Helm-owned argocd-values.yaml after configuring the SAML app.
+dex:
+  enabled: true
+configs:
+  cm:
+    url: https://argocd.example.com
+    dex.config: |
+      connectors:
+        - type: saml
+          id: identity-center
+          name: AWS IAM Identity Center
+          config:
+            ssoURL: https://REPLACE_WITH_APPLICATION_SIGN_IN_URL
+            caData: BASE64_OF_COMPLETE_APPLICATION_SIGNING_CERTIFICATE_PEM
+            entityIssuer: https://argocd.example.com/api/dex/callback
+            redirectURI: https://argocd.example.com/api/dex/callback
+            usernameAttr: email
+            emailAttr: email
+  rbac:
+    policy.default: role:authenticated
+    scopes: '[email]'
+    policy.csv: |
+      p, role:application-viewer, applications, get, applications/*, allow
+      p, role:application-operator, applications, get, applications/*, allow
+      p, role:application-operator, applications, sync, applications/*, allow
+      g, viewer@example.com, role:application-viewer
+      g, operator@example.com, role:application-operator
 ```
 
-### 4.5 Políticas y waves de sync
+El ejemplo mínimo mapea explícitamente **claims de correo electrónico verificados** de Identity Center. Sustituya los ejemplos por identidades exactas controladas por la organización y mantenga las asignaciones cuando cambien las cuentas o se den de baja. El rol predeterminado `role:authenticated` no tiene permisos. Usar `role:readonly` como predeterminado concedería esos permisos a todos los usuarios autenticados; las políticas de denegación posteriores no pueden retirar los permisos del rol predeterminado.
+
+**Asignar un grupo a la aplicación y recibir una aserción de grupos son cosas distintas.** La propia guía de Argo CD para Identity Center describe el mapeo del atributo de grupos como una solución alternativa no admitida oficialmente por la documentación de AWS. No presuponga propagación automática de grupos ni intercambie nombres visibles y Group IDs. Si necesita RBAC por grupos, verifique primero la ruta IdP compatible y los claims reales; después alinee `groupsAttr`, `scopes` y los valores exactos de las políticas.
+
+El SSO de Argo CD no requiere crear un proveedor IAM SAML ni un rol `sts:AssumeRoleWithSAML`; eso corresponde a otro flujo de federación de roles de AWS. El RBAC de Argo CD, IAM de EKS y RBAC de Kubernetes tampoco conceden automáticamente accesos idénticos.
+
+Deshabilite el administrador local solo después de verificar los usuarios SSO, al menos un administrador aprobado y la vía de recuperación. Los registros de depuración y las aserciones SAML pueden contener datos personales y de autenticación; no los imprima en registros compartidos. Diagnostique por separado ACS/audiencia, certificado/hora, asignación, atributos y RBAC.
+
+## Gestión de secretos
+
+Instale ESO 2.12.0 y sus CRD v1 en cada spoke. Reutilice la asociación Pod Identity del [capítulo 01](01-infrastructure-setup.md) para el namespace/ServiceAccount `external-secrets` y los permisos de lectura de los secretos indicados. Los Pods ESO de los spokes no heredan un rol asociado únicamente al hub.
 
 ```yaml
-# applicationsets/staged-rollout.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: staged-rollout
-  namespace: argocd
-spec:
-  goTemplate: true
-
-  generators:
-    - list:
-        elements:
-          - cluster: dev
-            server: https://dev.eks.amazonaws.com
-            wave: "1"
-            autoSync: true
-          - cluster: staging
-            server: https://staging.eks.amazonaws.com
-            wave: "2"
-            autoSync: true
-          - cluster: prod-west
-            server: https://prod-west.eks.amazonaws.com
-            wave: "3"
-            autoSync: false
-          - cluster: prod-east
-            server: https://prod-east.eks.amazonaws.com
-            wave: "4"
-            autoSync: false
-
-  template:
-    metadata:
-      name: 'myapp-{{.cluster}}'
-      annotations:
-        argocd.argoproj.io/sync-wave: '{{.wave}}'
-    spec:
-      project: default
-
-      source:
-        repoURL: https://github.com/myorg/myapp.git
-        targetRevision: HEAD
-        path: 'deploy/{{.cluster}}'
-
-      destination:
-        server: '{{.server}}'
-        namespace: myapp
-
-      syncPolicy:
-        '{{if eq .autoSync "true"}}':
-          automated:
-            prune: true
-            selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - PruneLast=true
-        retry:
-          limit: 5
-          backoff:
-            duration: 5s
-            factor: 2
-            maxDuration: 3m
+# fixtures/eso-values.yaml
+# Reuse the existing external-secrets ServiceAccount Pod Identity association.
+installCRDs: true
+replicaCount: 2
+leaderElect: true
+serviceAccount:
+  create: true
+  name: external-secrets
+  annotations: {}
+serviceMonitor:
+  enabled: false
 ```
 
----
-
-## 5. Integración SSO con IAM Identity Center
-
-### 5.1 Aplicación SAML de IAM Identity Center
-
-```hcl
-# iam-identity-center.tf
-
-data "aws_ssoadmin_instances" "this" {}
-
-resource "aws_ssoadmin_application" "argocd" {
-  name                     = "ArgoCD"
-  application_provider_arn = "arn:aws:sso::aws:applicationProvider/custom"
-  instance_arn            = tolist(data.aws_ssoadmin_instances.this.arns)[0]
-
-  portal_options {
-    sign_in_options {
-      application_url = "https://argocd.example.com"
-      origin          = "APPLICATION"
-    }
-    visibility = "ENABLED"
-  }
-}
-
-resource "aws_ssoadmin_application_assignment" "argocd_admins" {
-  application_arn = aws_ssoadmin_application.argocd.application_arn
-  principal_id    = aws_identitystore_group.argocd_admins.group_id
-  principal_type  = "GROUP"
-}
-
-resource "aws_ssoadmin_application_assignment" "argocd_developers" {
-  application_arn = aws_ssoadmin_application.argocd.application_arn
-  principal_id    = aws_identitystore_group.developers.group_id
-  principal_type  = "GROUP"
-}
-
-# Identity Store groups
-data "aws_identitystore_group" "argocd_admins" {
-  identity_store_id = tolist(data.aws_ssoadmin_instances.this.identity_store_ids)[0]
-
-  alternate_identifier {
-    unique_attribute {
-      attribute_path  = "DisplayName"
-      attribute_value = "ArgoCD-Admins"
-    }
-  }
-}
-
-data "aws_identitystore_group" "developers" {
-  identity_store_id = tolist(data.aws_ssoadmin_instances.this.identity_store_ids)[0]
-
-  alternate_identifier {
-    unique_attribute {
-      attribute_path  = "DisplayName"
-      attribute_value = "Developers"
-    }
-  }
-}
+```bash
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+helm upgrade --install external-secrets external-secrets/external-secrets \
+  --version 2.12.0 --namespace external-secrets --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values eso-values.yaml
 ```
 
-### 5.2 Configuración OIDC de ArgoCD
-
-Configura ArgoCD para usar IAM Identity Center como proveedor OIDC:
+Pod Identity utiliza la cadena predeterminada de credenciales AWS del **controlador ESO en ejecución**. No añada `auth.jwt.serviceAccountRef` ni una anotación IRSA a esta ruta. ESO no puede suplantar el ServiceAccount de otro namespace para obtener su asociación Pod Identity.
 
 ```yaml
-# argocd-cm ConfigMap patch
-apiVersion: v1
-kind: ConfigMap
+# fixtures/external-secrets.yaml
+apiVersion: external-secrets.io/v1
+kind: SecretStore
 metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  url: https://argocd.example.com
-
-  # OIDC configuration for IAM Identity Center
-  oidc.config: |
-    name: AWS SSO
-    issuer: https://identitycenter.amazonaws.com/ssoins-XXXXXXXXXXXX
-    clientID: <APPLICATION_CLIENT_ID>
-    clientSecret: $oidc.aws-sso.clientSecret
-    requestedScopes:
-      - openid
-      - email
-      - profile
-    requestedIDTokenClaims:
-      email:
-        essential: true
-      groups:
-        essential: true
-    logoutURL: https://identitycenter.amazonaws.com/ssoins-XXXXXXXXXXXX/logout
-
-  # Admin account settings
-  admin.enabled: "false"  # Disable local admin when using SSO
-```
-
-### 5.3 Secreto de cliente OIDC
-
-```yaml
-# argocd-secret patch
-apiVersion: v1
-kind: Secret
-metadata:
-  name: argocd-secret
-  namespace: argocd
-type: Opaque
-stringData:
-  oidc.aws-sso.clientSecret: <CLIENT_SECRET_FROM_IAM_IDENTITY_CENTER>
-```
-
-O usa External Secrets:
-
-```yaml
-# external-secret-oidc.yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: argocd-oidc-secret
-  namespace: argocd
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: SecretStore
-  target:
-    name: argocd-secret
-    creationPolicy: Merge
-  data:
-    - secretKey: oidc.aws-sso.clientSecret
-      remoteRef:
-        key: argocd/oidc-client-secret
-        property: secret
-```
-
-### 5.4 Mapeo de grupos a roles
-
-```yaml
-# argocd-rbac-cm ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-rbac-cm
-  namespace: argocd
-data:
-  policy.default: role:readonly
-
-  policy.csv: |
-    # Admin access for ArgoCD-Admins group
-    g, ArgoCD-Admins, role:admin
-
-    # Platform team - full access to infrastructure projects
-    g, Platform-Team, role:platform-admin
-    p, role:platform-admin, applications, *, infrastructure/*, allow
-    p, role:platform-admin, applications, *, platform/*, allow
-    p, role:platform-admin, clusters, get, *, allow
-    p, role:platform-admin, repositories, *, *, allow
-    p, role:platform-admin, projects, get, *, allow
-
-    # Developers - sync and view for their projects
-    g, Developers, role:developer
-    p, role:developer, applications, get, */*, allow
-    p, role:developer, applications, sync, applications/*, allow
-    p, role:developer, applications, action/*, applications/*, allow
-    p, role:developer, logs, get, */*, allow
-    p, role:developer, exec, create, applications/dev-*, allow
-
-    # SRE team - operations access
-    g, SRE-Team, role:sre
-    p, role:sre, applications, *, */*, allow
-    p, role:sre, clusters, *, *, allow
-    p, role:sre, logs, get, */*, allow
-    p, role:sre, exec, create, */*, allow
-
-    # QA team - view and sync staging
-    g, QA-Team, role:qa
-    p, role:qa, applications, get, */*, allow
-    p, role:qa, applications, sync, */staging-*, allow
-    p, role:qa, logs, get, */*, allow
-
-  scopes: '[groups, email]'
-```
-
-### 5.5 Terraform para RBAC ConfigMap
-
-```hcl
-# argocd-rbac.tf
-
-resource "kubernetes_config_map" "argocd_rbac" {
-  metadata {
-    name      = "argocd-rbac-cm"
-    namespace = "argocd"
-  }
-
-  data = {
-    "policy.default" = "role:readonly"
-
-    "policy.csv" = <<-EOT
-      # SSO Group mappings
-      g, ${var.admin_group}, role:admin
-      g, ${var.platform_group}, role:platform-admin
-      g, ${var.developer_group}, role:developer
-      g, ${var.sre_group}, role:sre
-
-      # Platform admin role
-      p, role:platform-admin, applications, *, infrastructure/*, allow
-      p, role:platform-admin, applications, *, platform/*, allow
-      p, role:platform-admin, clusters, get, *, allow
-      p, role:platform-admin, repositories, *, *, allow
-
-      # Developer role
-      p, role:developer, applications, get, */*, allow
-      p, role:developer, applications, sync, applications/*, allow
-      p, role:developer, logs, get, */*, allow
-
-      # SRE role
-      p, role:sre, applications, *, */*, allow
-      p, role:sre, clusters, *, *, allow
-      p, role:sre, exec, create, */*, allow
-    EOT
-
-    "scopes" = "[groups, email]"
-  }
-
-  depends_on = [helm_release.argocd]
-}
-```
-
----
-
-## 6. Gestión de secretos con External Secrets Operator
-
-### 6.1 Instalación de External Secrets Operator
-
-```hcl
-# external-secrets.tf
-
-resource "helm_release" "external_secrets" {
-  name       = "external-secrets"
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  version    = "0.9.13"
-  namespace  = "external-secrets"
-
-  create_namespace = true
-
-  values = [<<-EOT
-    installCRDs: true
-
-    serviceAccount:
-      create: true
-      name: external-secrets
-      annotations:
-        eks.amazonaws.com/role-arn: ${aws_iam_role.external_secrets.arn}
-
-    webhook:
-      port: 9443
-
-    certController:
-      requeueInterval: 5m
-
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-      requests:
-        cpu: 50m
-        memory: 64Mi
-  EOT
-  ]
-}
-
-# IAM Role for External Secrets
-resource "aws_iam_role" "external_secrets" {
-  name = "ExternalSecretsRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "external_secrets" {
-  name = "secrets-access"
-  role = aws_iam_role.external_secrets.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetResourcePolicy",
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecretVersionIds"
-        ]
-        Resource = "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath"
-        ]
-        Resource = "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = "kms:Decrypt"
-        Resource = var.kms_key_arns
-      }
-    ]
-  })
-}
-
-resource "aws_eks_pod_identity_association" "external_secrets" {
-  cluster_name    = var.cluster_name
-  namespace       = "external-secrets"
-  service_account = "external-secrets"
-  role_arn        = aws_iam_role.external_secrets.arn
-}
-```
-
-### 6.2 Configuración de SecretStore
-
-```yaml
-# secret-store.yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
-metadata:
-  name: aws-secrets-manager
+  name: application-config
+  namespace: demo-app
 spec:
   provider:
     aws:
       service: SecretsManager
-      region: us-east-1
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: external-secrets
-            namespace: external-secrets
+      region: ap-northeast-2
 ---
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
-metadata:
-  name: aws-parameter-store
-spec:
-  provider:
-    aws:
-      service: ParameterStore
-      region: us-east-1
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: external-secrets
-            namespace: external-secrets
-```
-
-### 6.3 Ejemplos de ExternalSecret
-
-Credenciales de base de datos:
-
-```yaml
-# external-secret-db.yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: database-credentials
-  namespace: myapp
+  namespace: demo-app
 spec:
+  refreshPolicy: Periodic
   refreshInterval: 1h
-
   secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-
+    name: application-config
+    kind: SecretStore
   target:
-    name: database-secret
+    name: database-credentials
     creationPolicy: Owner
-    template:
-      type: Opaque
-      data:
-        DATABASE_URL: "postgresql://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}/{{ .database }}"
-
+    deletionPolicy: Retain
   data:
     - secretKey: username
       remoteRef:
-        key: myapp/database
+        key: myapp/production/database
         property: username
     - secretKey: password
       remoteRef:
-        key: myapp/database
+        key: myapp/production/database
         property: password
+        version: AWSCURRENT
     - secretKey: host
       remoteRef:
-        key: myapp/database
+        key: myapp/production/database
         property: host
     - secretKey: port
       remoteRef:
-        key: myapp/database
+        key: myapp/production/database
         property: port
     - secretKey: database
       remoteRef:
-        key: myapp/database
+        key: myapp/production/database
         property: dbname
 ```
 
-Claves API:
+El secreto `myapp/production/database` debe contener los campos username/password/host/port/dbname y la política IAM del controlador debe permitir su ARN exacto. Una clave KMS administrada por el cliente también necesita permiso de descifrado limitado y una política de clave compatible. Es un ejemplo de lectura por nombre, sin permisos de descubrimiento ni escritura.
 
-```yaml
-# external-secret-api-keys.yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: api-keys
-  namespace: myapp
-spec:
-  refreshInterval: 15m
+Construya las URL de conexión con el generador de URL de la aplicación, en lugar de concatenar contraseñas que contengan `@`, `:` o `/`. Las variables de entorno de secretos no se actualizan automáticamente dentro de los Pods existentes; establezca la estrategia de recarga o reinicio de la aplicación.
 
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
+Los SecretStores con namespace que utilizan un mismo rol de controlador no proporcionan automáticamente aislamiento IAM. Diseñe roles y ámbitos de controlador separados o configure, tras revisarla, la asunción de roles mediante `provider.aws.role`, junto con los permisos de modificación de Stores y las políticas de admisión. IRSA con `auth.jwt.serviceAccountRef` es otra ruta de autenticación que requiere su propia relación de confianza OIDC y ServiceAccount.
 
-  target:
-    name: api-keys-secret
-    creationPolicy: Owner
+### Responsabilidad, actualización y rotación
 
-  dataFrom:
-    - extract:
-        key: myapp/api-keys
-```
+- Git/Argo CD gestiona el ExternalSecret; ESO gestiona el Secret generado. Evite que Helm/Git/ESO sobrescriban repetidamente los mismos campos. Instale primero el CRD, el controlador y el Store y compruebe que estén listos.
+- `refreshInterval` vuelve a leer los valores; no rota contraseñas de Secrets Manager ni emite certificados. Las funciones de rotación, las redes, los permisos de bases de datos y la rotación específica de cada servicio requieren configuración independiente.
+- `AWSCURRENT` y `AWSPREVIOUS` son etapas de versión. Exigir `AWSPREVIOUS` antes de que exista puede hacer fallar toda la sincronización. No garantiza que la contraseña anterior siga siendo válida ni proporciona una reversión de la base de datos.
+- `creationPolicy: Owner` y `deletionPolicy: Retain` afectan a eventos de ciclo de vida distintos. Conservar el Secret cuando desaparece un valor externo no anula su limpieza mediante la referencia al propietario al eliminar el propio ExternalSecret.
+- `IgnoreExtraneous` afecta al estado de comparación; no excluye automáticamente un ExternalSecret gestionado de la sincronización o la poda.
+- `PushSecret` escribe en AWS y no funciona con un rol de solo lectura. Revise los permisos de creación/actualización/etiquetado, los permisos de funciones opcionales, los conflictos de gestión, la eliminación y el cifrado. Evite crear accidentalmente un bucle de sincronización bidireccional.
 
-Certificados TLS:
+## Orden de verificación
 
-```yaml
-# external-secret-tls.yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: tls-certificate
-  namespace: myapp
-spec:
-  refreshInterval: 24h
+Verifique la instalación/HTTPS del hub, los roles/Access Entries/RBAC/red de destino, los Secrets de clusters, AppProjects, NodePools revisados manualmente, Applications generadas, casos reales de permiso y denegación SSO, y disponibilidad de ESO y recarga de aplicaciones. Examine estados y condiciones sin imprimir los valores de Secrets.
 
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
+## Referencias
 
-  target:
-    name: tls-secret
-    creationPolicy: Owner
-    template:
-      type: kubernetes.io/tls
-      data:
-        tls.crt: "{{ .certificate }}"
-        tls.key: "{{ .private_key }}"
+- [SAML de Identity Center para Argo CD](https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/identity-center/)
+- [Aplicaciones SAML administradas por el cliente en IAM Identity Center](https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html)
+- [Asignación de atributos de IAM Identity Center](https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html)
+- [Autenticación AWS en ESO 2.12](https://external-secrets.io/v2.12.0/provider/aws-access/)
+- [Helm Provider](https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs)
+- [Proyectos y RBAC](../gitops/argocd/06-projects-rbac.md)
+- [Cuestionario del capítulo](../quizzes/ops/04-gitops-multi-cluster-quiz.md)
 
-  data:
-    - secretKey: certificate
-      remoteRef:
-        key: myapp/tls-cert
-        property: certificate
-    - secretKey: private_key
-      remoteRef:
-        key: myapp/tls-cert
-        property: private_key
-```
-
-### 6.4 PushSecret para sincronización de secretos
-
-Sincroniza secretos de Kubernetes de vuelta a AWS Secrets Manager:
-
-```yaml
-# push-secret.yaml
-apiVersion: external-secrets.io/v1alpha1
-kind: PushSecret
-metadata:
-  name: backup-secrets
-  namespace: myapp
-spec:
-  refreshInterval: 1h
-
-  secretStoreRefs:
-    - name: aws-secrets-manager
-      kind: ClusterSecretStore
-
-  selector:
-    secret:
-      name: generated-credentials
-
-  data:
-    - match:
-        secretKey: password
-        remoteRef:
-          remoteKey: myapp/generated-credentials
-          property: password
-```
-
----
-
-## Resumen
-
-Esta guía cubrió el despliegue multi-cluster de ArgoCD con características empresariales:
-
-| Componente | Propósito | Características clave |
-|-----------|---------|--------------|
-| Modelo Hub-Spoke | Gestión centralizada | Un único plano de control, IAM entre clusters |
-| ArgoCD HA | Alta disponibilidad | Cluster Redis, múltiples réplicas |
-| GitOps para NodePool | Gestión del ciclo de vida de nodos | Overlays de Kustomize, configuración declarativa |
-| ApplicationSets | Despliegue multi-cluster | Generadores de Cluster/Git/Matrix/PR |
-| IAM Identity Center | Autenticación SSO | SAML/OIDC, mapeo de grupos a roles |
-| External Secrets | Gestión de secretos | Integración con AWS Secrets Manager |
-
-**Mejores prácticas:**
-- Usa registro de clusters declarativo con secretos
-- Gestiona NodePools mediante GitOps, no Terraform
-- Implementa RBAC con mapeos de grupos SSO
-- Usa ApplicationSets para despliegues multi-cluster consistentes
-- Centraliza los secretos en AWS Secrets Manager
-
----
-
-## Documentación relacionada
-
-- [Fundamentos de ArgoCD](../gitops/argocd/README.md)
-- [Configuración de NodePool](../eks-auto-mode/02-nodepool-configuration.md)
-- [Acceso a clusters EKS](../eks/02-eks-cluster-creation-part3.md)
-- [Pipelines de CI](./03-ci-pipelines.md)
-
----
-
-< [Anterior: Pipelines de CI](./03-ci-pipelines.md) | [Tabla de contenido](./README.md) | [Siguiente: Automatización GitOps](./05-gitops-automation.md) >
+< [Anterior: Pipelines de CI](03-ci-pipelines.md) | [Índice](README.md) | [Siguiente: Automatización GitOps](05-gitops-automation.md) >

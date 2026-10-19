@@ -1,826 +1,301 @@
-# EKS Storage Quiz - Part 1
+# EKS ストレージクイズ - パート1
 
-このクイズでは、persistent volumes、storage classes、dynamic provisioning を含む Amazon EKS のストレージ概念についての理解を確認します。
+> **最終更新**: 2026年9月11日
 
-## Multiple Choice Questions
+解答は[ストレージ章](../../eks/04-eks-storage-part1.md)に記載された所有者と前提条件に基づいています。特に明記しない限り、例は一般的なLinux EC2ストレージを使用します。Auto Mode、Fargate、Hybridではサポート範囲が異なります。ローカルのスキーマ/モック検証は、AWSボリュームのアタッチ、データ復旧、本番性能の証明にはなりません。
 
-### 1. What storage driver is natively supported by Amazon EKS by default?
+### 1. プロビジョナー `ebs.csi.aws.com` で一般的なEBSボリュームを管理するドライバーはどれですか？
 
-A. Amazon EFS CSI Driver B. Amazon EBS CSI Driver C. Amazon FSx for Lustre CSI Driver D. Amazon S3 CSI Driver
+- A. Amazon EFS CSI Driver
+- B. Amazon EBS CSI Driver
+- C. FSx for Lustre CSI Driver
+- D. Mountpoint for Amazon S3 CSI Driver
 
 <details>
-
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
 **解答: B. Amazon EBS CSI Driver**
 
-**解説:** Amazon EKS でデフォルトでネイティブにサポートされているストレージドライバーは、Amazon EBS CSI (Container Storage Interface) Driver です。このドライバーにより、Amazon Elastic Block Store (EBS) ボリュームを Amazon EKS clusters の persistent storage として使用できます。
+このドライバーはEKSアドオンとして利用できますが、利用可能であることはすべてのクラスターに自動インストールされるという意味ではありません。EKS Auto Modeには、組み込みの `ebs.csi.eks.amazonaws.com` パスがあります。選択したコンピューティング方式、アドオンの管理者、Kubernetes/ドライバーの互換性、実際のインストール状態を確認してください。
 
-**主な機能:**
+コントローラー用のPod IdentityまたはIRSA信頼設定と、必要に応じてカスタマー管理KMSキーの権限を含む、レビュー済みの `AmazonEBSCSIDriverPolicyV2` またはスコープを絞った権限を準備します。過去のポリシーをコピーしても、現在のドライバーポリシーや信頼関係の代わりにはなりません。元の章にあるガード付きのカタログ/インストール手順を使い、AWS APIアドオンバージョンの文字列 `latest` を指定したり、別の所有者が管理するインストールを上書きしたりしないでください。
 
-1.  **EKS Add-on として利用可能**: Amazon EBS CSI driver は、簡単なインストールと管理のために EKS add-on として提供されています。
-
-    ```bash
-    aws eks create-addon \
-      --cluster-name my-cluster \
-      --addon-name aws-ebs-csi-driver \
-      --service-account-role-arn arn:aws:iam::111122223333:role/AmazonEKS_EBS_CSI_DriverRole
-    ```
-2.  **Dynamic Provisioning のサポート**: StorageClass を通じた EBS volumes の dynamic provisioning をサポートします。
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-sc
-    provisioner: ebs.csi.aws.com
-    volumeBindingMode: WaitForFirstConsumer
-    parameters:
-      type: gp3
-      encrypted: "true"
-    ```
-3.  **Volume Snapshot のサポート**: volume snapshot と restore 機能をサポートします。
-
-    ```yaml
-    apiVersion: snapshot.storage.k8s.io/v1
-    kind: VolumeSnapshot
-    metadata:
-      name: ebs-volume-snapshot
-    spec:
-      volumeSnapshotClassName: ebs-snapshot-class
-      source:
-        persistentVolumeClaimName: ebs-claim
-    ```
-4. **さまざまな EBS Volume Types**: gp2、gp3、io1、io2、sc1、st1 を含むさまざまな EBS volume types をサポートします。
-
-**必要な IAM Permissions:**
-
-EBS CSI driver が動作するには、次の IAM permissions が必要です:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateSnapshot",
-        "ec2:AttachVolume",
-        "ec2:DetachVolume",
-        "ec2:ModifyVolume",
-        "ec2:DescribeAvailabilityZones",
-        "ec2:DescribeInstances",
-        "ec2:DescribeSnapshots",
-        "ec2:DescribeTags",
-        "ec2:DescribeVolumes",
-        "ec2:DescribeVolumesModifications"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateTags"
-      ],
-      "Resource": [
-        "arn:aws:ec2:*:*:volume/*",
-        "arn:aws:ec2:*:*:snapshot/*"
-      ],
-      "Condition": {
-        "StringEquals": {
-          "ec2:CreateAction": [
-            "CreateVolume",
-            "CreateSnapshot"
-          ]
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteTags"
-      ],
-      "Resource": [
-        "arn:aws:ec2:*:*:volume/*",
-        "arn:aws:ec2:*:*:snapshot/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateVolume"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "aws:RequestTag/ebs.csi.aws.com/cluster": "true"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateVolume"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "aws:RequestTag/CSIVolumeName": "*"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteVolume"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "ec2:ResourceTag/ebs.csi.aws.com/cluster": "true"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteVolume"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "ec2:ResourceTag/CSIVolumeName": "*"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteVolume"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "ec2:ResourceTag/kubernetes.io/created-for/pvc/name": "*"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteSnapshot"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "ec2:ResourceTag/CSIVolumeSnapshotName": "*"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DeleteSnapshot"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "ec2:ResourceTag/ebs.csi.aws.com/cluster": "true"
-        }
-      }
-    }
-  ]
-}
+このクラスは、暗号化されたgp3、スケジューラーを考慮したプロビジョニング、拡張、意図的な保持を有効にします。
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-gp3
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
 ```
+スナップショットには、さらにスナップショットCRD/コントローラーと対応するVolumeSnapshotClassが必要です。このドライバーは複数のEBSボリュームタイプをサポートし、それぞれにサイズ/性能の制約があります。通常のEBSボリュームは1つのAZ内に限られます。Fargate PodはEBSをマウントできませんが、別途設計したEBSコントローラーをFargate上で実行することはできます。EBSはHybrid Nodesと互換性がありません。
 
-**制限事項:**
-
-1. **Availability Zone の制限**: EBS volumes は単一の availability zone に制限されるため、pods は volume と同じ availability zone で実行する必要があります。
-2. **Single Node Mount**: EBS volumes は一度に 1 つの node にのみ mount できます (ReadWriteOnce access mode)。
-3. **Fargate の制限**: Amazon EKS Fargate は現在、EBS CSI driver をサポートしていません。
-
-他の選択肢の問題点:
-
-* **A. Amazon EFS CSI Driver**: EFS CSI driver は EKS でサポートされていますが、デフォルトではインストールされません。別途インストールする必要があります。
-* **C. Amazon FSx for Lustre CSI Driver**: FSx for Lustre CSI driver は EKS でサポートされていますが、デフォルトではインストールされません。別途インストールする必要があります。
-* **D. Amazon S3 CSI Driver**: 現在、公式の Amazon S3 CSI driver はありません。S3 は通常、CSI 経由で直接 mount するのではなく、S3 API を通じてアクセスします。
+EFSとFSxにはそれぞれ対応するドライバーがあります。「公式のS3 CSIドライバーはない」という以前の説明は誤りでした。Mountpoint CSIは既存のS3バケットを限定的なPOSIXセマンティクスで公開し、S3 Filesは別の共有ファイルシステムインターフェイスをEFS CSI 3.0以降で提供します。
 
 </details>
 
-### 2. What is the most suitable storage solution when multiple pods in Amazon EKS need simultaneous read/write access?
+### 2. Lustreクライアントを使わず、Linuxノード間でファイルを共有するには、どのマネージドNFSサービスが適していますか？
 
-A. Amazon EBS B. Amazon EFS C. Amazon S3 D. Amazon FSx for Lustre
+- A. 通常のgp3ファイルシステム
+- B. Amazon EFS
+- C. S3オブジェクトのGET/PUT API
+- D. FSx for Lustre
 
 <details>
-
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
 **解答: B. Amazon EFS**
 
-**解説:** Amazon EKS で複数の pods が同時に読み取り/書き込みアクセスを必要とする場合に最も適したストレージソリューションは、Amazon EFS (Elastic File System) です。EFS は ReadWriteMany (RWX) access mode をサポートする managed NFS (Network File System) service であり、複数の pods が同じ volume に対して同時に読み取りと書き込みを行えます。
+EFSは共有NFSアクセスを提供し、RWXをサポートします。ただし、Podが複数あるというだけではEFSとは決まりません。RWOでも同じノード上の複数Podから利用でき、FSx for Lustreも共有に対応します。実際のプロトコル、一貫性、レイテンシー、スループット、耐久性、コストの要件で選択してください。
 
-**主な機能:**
-
-1. **Multi-Availability Zone Access**: EFS は複数の availability zones にまたがってアクセスでき、異なる nodes や availability zones で実行されている pods が同じデータにアクセスできます。
-2.  **ReadWriteMany のサポート**: EFS は ReadWriteMany (RWX) access mode をサポートし、複数の pods が同じ volume に対して同時に読み取りと書き込みを行えます。
-
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: efs-claim
-    spec:
-      accessModes:
-        - ReadWriteMany
-      storageClassName: efs-sc
-      resources:
-        requests:
-          storage: 5Gi
-    ```
-3. **Scalability**: EFS は自動的にスケールするため、capacity planning が不要になります。
-4. **耐久性と可用性**: 99.999999999% (11 9's) の耐久性と 99.99% の可用性を提供します。
-
-**EFS CSI Driver Installation:**
-
-```bash
-# Install using Helm
-helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm repo update
-helm upgrade -i aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver \
-  --namespace kube-system \
-  --set controller.serviceAccount.create=true \
-  --set controller.serviceAccount.name=efs-csi-controller-sa
-```
-
-**EFS File System Creation:**
-
-```bash
-# Create EFS file system
-aws efs create-file-system \
-  --creation-token eks-efs \
-  --performance-mode generalPurpose \
-  --throughput-mode bursting \
-  --tags Key=Name,Value=EKS-EFS
-
-# Create mount target
-aws efs create-mount-target \
-  --file-system-id fs-0123456789abcdef0 \
-  --subnet-id subnet-0123456789abcdef0 \
-  --security-groups sg-0123456789abcdef0
-```
-
-**StorageClass and PVC Configuration:**
-
+必要なコントローラーIAMロールと、既存の暗号化済みファイルシステムを備えた、サポート対象のEFS CSI構成を使います。実際のクライアントAZにマウントターゲットを用意し、各AZにつきサブネットは最大1つにします。SG、DNS、NFSの経路も整えます。元の章のセットアップではIDとAZ/VPCの所有関係を取得・確認します。異なる暗号化設定で同じ作成トークンを再利用しても、既存ファイルシステムがその場で暗号化されるわけではありません。
 ```yaml
-# Create StorageClass
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: efs-sc
 provisioner: efs.csi.aws.com
+reclaimPolicy: Retain
+mountOptions:
+- tls
 parameters:
   provisioningMode: efs-ap
   fileSystemId: fs-0123456789abcdef0
-  directoryPerms: "700"
-
-# Create PVC
+  directoryPerms: '750'
+  uid: '1000'
+  gid: '1000'
+  basePath: /storage-demo
+  ensureUniqueDirectory: 'true'
+```
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: efs-claim
+  namespace: storage-demo
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   storageClassName: efs-sc
   resources:
     requests:
       storage: 5Gi
 ```
+5 Giという要求値はバインディング用のメタデータであり、ディレクトリクォータではありません。アクセスポイントはPOSIX IDとルートディレクトリを強制しますが、許可されるアクセスはIAM/ファイルシステムポリシーとネットワーク制御で決まります。動的アクセスポイントのプロビジョニングはFargateの経路ではありません。Fargateではサポートされる静的統合を使います。TLS/クライアントのマウント認可と、コントローラーのプロビジョニング権限は別です。
 
-**ユースケース:**
+EFS RegionalとOne Zoneでは障害特性が異なります。公表されている耐久性/設計目標やサービスレベルの約束は、このアプリケーションで測定された稼働率の保証ではありません。ストレージの自動拡張があっても、スループット/IOPS、クォータ、バックアップ、コストの計画は必要です。AWSはGeneral Purpose性能モードを推奨しています。Max I/Oは操作レイテンシーが高くなります。Elastic、Provisioned、Burstingは一律の既定値と考えず、要件に沿って選んでください。
 
-1. **Shared File System**: 複数の pods が同じ files にアクセスする必要がある場合
-2. **Web Server Content**: 複数の web server pods が同じ static content を提供する必要がある場合
-3. **Log Aggregation**: 複数の pods が同じ log directory に書き込む場合
-4. **CI/CD Pipelines**: build artifacts を共有する必要がある場合
-
-**Performance Considerations:**
-
-1. **Performance Modes**:
-   * General Purpose: ほとんどの workloads に適しています
-   * Max I/O: 高い throughput を必要とする workloads に適しています
-2. **Throughput Modes**:
-   * Bursting: デフォルトモードで、file system size に基づく burst credits を提供します
-   * Provisioned: 一貫した throughput が必要な場合に特定の throughput を provision します
-3. **Latency**: EFS は block storage より latency が高い場合があるため、latency-sensitive applications には適さない可能性があります。
-
-**Security Considerations:**
-
-1.  **Encryption**: EFS は転送中および保管時の暗号化をサポートします。
-
-    ```bash
-    aws efs create-file-system \
-      --creation-token eks-efs \
-      --encrypted \
-      --kms-key-id 1234abcd-12ab-34cd-56ef-1234567890ab
-    ```
-2. **Access Control**: IAM policies、network ACLs、security groups を通じてアクセスを制御できます。
-3. **Access Points**: EFS access points を使用して、特定の directories へのアクセスを制限できます。
-
-他の選択肢の問題点:
-
-* **A. Amazon EBS**: EBS は ReadWriteOnce (RWO) access mode のみをサポートするため、一度に 1 つの node にしか mount できません。
-* **C. Amazon S3**: S3 は object storage であり file system ではないため、標準の file system interfaces を通じて直接 mount することはできません。
-* **D. Amazon FSx for Lustre**: FSx for Lustre は high-performance workloads に適していますが、EFS と比較して setup がより複雑で cost も高くなります。
+静的なアプリケーション設定には、ConfigMap/Secretの方が適する場合があります。共有の可変ファイルには、アプリケーション側のロック/一貫性設計が必要です。S3 API、Mountpoint、S3 Filesはそれぞれ異なるインターフェイスです。S3のファイルアクセスを一括して否定しないでください。FSx for Lustreは別の並列ファイルシステムであり、セットアップが異なるだけで不適切になるわけではありません。
 
 </details>
 
-### 4. What is a limitation when using EBS volumes in Amazon EKS?
+### 3. 一般的なEBSファイルシステムの制約を正しく説明している文はどれですか？
 
-A. EBS volumes は複数の pods から同時に読み取り/書き込みアクセスできる B. EBS volumes は複数の availability zones にまたがってアクセスできる C. EBS volumes は一度に 1 つの pod からのみ読み取り/書き込みアクセスできる D. EBS volumes は Fargate pods で使用できる
-
-<details>
-
-<summary>答えを表示</summary>
-
-**解答: C. EBS volumes は一度に 1 つの pod からのみ読み取り/書き込みアクセスできる**
-
-**解説:** Amazon EBS (Elastic Block Store) volumes は、一度に 1 つの pod からのみ読み取り/書き込みアクセスできます。これは EBS の基本的な制限であり、EBS volumes は ReadWriteOnce (RWO) access mode のみをサポートするためです。
-
-**主な制限事項:**
-
-1. **Single Node Mount**: EBS volumes は一度に 1 つの EC2 instance にのみ mount できます。そのため、複数の nodes にまたがる pods は同じ EBS volume にアクセスできません。
-2.  **Availability Zone の制限**: EBS volumes は作成された availability zone に制限されます。異なる availability zones の nodes で実行されている pods は、その volume にアクセスできません。
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-sc
-    provisioner: ebs.csi.aws.com
-    volumeBindingMode: WaitForFirstConsumer  # Delay volume creation until pod is scheduled
-    ```
-3. **Fargate 非互換**: Amazon EKS Fargate は現在 EBS volumes をサポートしていません。Fargate pods は EBS volumes を mount できません。
-4.  **Access Mode の制限**: EBS は次の access mode のみをサポートします:
-
-    * ReadWriteOnce (RWO): 単一 node による read-write mount
-
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: ebs-claim
-    spec:
-      accessModes:
-        - ReadWriteOnce  # The only access mode supported by EBS
-      storageClassName: ebs-sc
-      resources:
-        requests:
-          storage: 10Gi
-    ```
-
-**これらの制限に対処する代替案:**
-
-1.  **StatefulSet を使用する**: 各 pod に専用の EBS volumes を提供して stateful applications を実行します
-
-    ```yaml
-    apiVersion: apps/v1
-    kind: StatefulSet
-    metadata:
-      name: web
-    spec:
-      serviceName: "nginx"
-      replicas: 3
-      selector:
-        matchLabels:
-          app: nginx
-      template:
-        metadata:
-          labels:
-            app: nginx
-        spec:
-          containers:
-          - name: nginx
-            image: nginx
-            volumeMounts:
-            - name: www
-              mountPath: /usr/share/nginx/html
-      volumeClaimTemplates:
-      - metadata:
-          name: www
-        spec:
-          accessModes: [ "ReadWriteOnce" ]
-          storageClassName: ebs-sc
-          resources:
-            requests:
-              storage: 10Gi
-    ```
-2. **Amazon EFS を使用する**: 複数の pods が同じ volume にアクセスする必要がある場合、ReadWriteMany (RWX) access mode をサポートする EFS を使用します
-3. **Volume Replication**: 複数の pods からアクセスできるように、データを複数の EBS volumes に replicate します
-4. **Topology-Aware Scheduling**: `volumeBindingMode: WaitForFirstConsumer` を使用して、pod が schedule された availability zone に volumes を作成します
-
-**Availability Zone Considerations:**
-
-1.  **Node Selector を使用する**: 特定の availability zones の nodes に pods を schedule します
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: az-pod
-    spec:
-      nodeSelector:
-        topology.kubernetes.io/zone: us-west-2a
-      containers:
-      - name: app
-        image: nginx
-    ```
-2.  **Volume Snapshot and Restore**: データを異なる availability zones に移動する必要がある場合は volume snapshots を使用します
-
-    ```yaml
-    apiVersion: snapshot.storage.k8s.io/v1
-    kind: VolumeSnapshot
-    metadata:
-      name: ebs-snapshot
-    spec:
-      volumeSnapshotClassName: ebs-snapshot-class
-      source:
-        persistentVolumeClaimName: ebs-claim
-    ```
-
-**Best Practices:**
-
-1. **適切な Storage の選択**: workload requirements に基づいて適切な storage type を選択します
-   * Single pod access: EBS
-   * Multi-pod access: EFS
-   * High-performance workloads: FSx for Lustre
-2. **Availability Zone-Aware Deployment**: pods と volumes が同じ availability zone にあることを確認します
-3. **Volume Backup**: 定期的な snapshots でデータを保護します
-
-他の選択肢の問題点:
-
-* **A. EBS volumes は複数の pods から同時に読み取り/書き込みアクセスできる**: これは誤りです。EBS volumes は ReadWriteOnce (RWO) access mode のみをサポートします。
-* **B. EBS volumes は複数の availability zones にまたがってアクセスできる**: これは誤りです。EBS volumes は作成された availability zone に制限されます。
-* **D. EBS volumes は Fargate pods で使用できる**: これは誤りです。Amazon EKS Fargate は現在 EBS volumes をサポートしていません。
-
-</details>
-
-## Short Answer Questions
-
-### 6. What access mode must be specified in a PersistentVolumeClaim for dynamic provisioning of EBS volumes in Amazon EKS?
+- A. 同じボリュームをどのAZにもアタッチできる
+- B. Fargate Podは任意のEBSボリュームをマウントできる
+- C. 1つのAZ内に限られ、RWOは同じノード上の複数Podで利用できる
+- D. RWOはPodが必ず1つだけであることを保証する
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: C. ボリュームは1つのAZ内に限られ、RWOは同じノード上の複数Podで共有できます。**
 
-**解答:** ReadWriteOnce (RWO)
-
-**詳細な解説:**
-
-Amazon EKS で EBS volumes の dynamic provisioning を行うために PersistentVolumeClaim (PVC) で指定する必要がある access mode は ReadWriteOnce (RWO) です。これは EBS volumes の基本的な特性によるもので、EBS volumes は一度に 1 つの node からのみ読み取り/書き込みアクセスできます。
-
-**Access Mode Descriptions:**
-
-1. **ReadWriteOnce (RWO)**: volume は単一 node によって read-write mode で mount できます。
-2. **ReadOnlyMany (ROX)**: volume は複数の nodes によって read-only mode で mount できます。
-3. **ReadWriteMany (RWX)**: volume は複数の nodes によって read-write mode で mount できます。
-
-**EBS が RWO のみをサポートする理由:**
-
-Amazon EBS は、一度に 1 つの EC2 instance にのみ attach されるように設計された block storage service です。これはハードウェアの制限ではなく、EBS service の設計上の特性です。そのため、EBS volumes は ReadWriteOnce access mode のみをサポートします。
-
-**PVC Example:**
-
+RWOは「1つのノードから読み書き可能」という意味であり、「Podが1つだけ」という意味ではありません。同じAZ内の別ノードに置き換えたPodは、安全なデタッチ/アタッチ後に同じPVCを使用できます。同じボリュームをAZ間でアタッチすることはできません。スナップショットからの復元では対象AZに別のボリュームが作成されます。インプレース移動でも継続レプリケーションでもありません。
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: ebs-claim
+  namespace: storage-demo
 spec:
   accessModes:
-    - ReadWriteOnce  # The only access mode supported by EBS
-  storageClassName: ebs-sc
+  - ReadWriteOnce
+  storageClassName: ebs-gp3
   resources:
     requests:
       storage: 10Gi
 ```
+`WaitForFirstConsumer` を使い、スケジューリング制約を初期ボリューム配置に反映させます。バインド済みPVCはPVのトポロジー制約を引き継ぎます。ノードセレクターを変更してもデータは移動しません。StatefulSetのレプリカごとのPVCは別々のボリュームを作りますが、データベースのレプリケーションではありません。マルチAZ可用性には、アプリケーション/データのレプリケーションまたは復旧設計が必要です。
 
-**他の Access Modes が必要な場合の代替案:**
-
-1. **ReadOnlyMany (ROX) が必要な場合:**
-   * EBS snapshot を作成し、複数の read-only EBS volumes を作成します
-   * 各 node に個別の read-only volumes を提供します
-2.  **ReadWriteMany (RWX) が必要な場合:**
-
-    * Amazon EFS (NFS-based file system) を使用します
-
-    ```yaml
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: efs-claim
-    spec:
-      accessModes:
-        - ReadWriteMany
-      storageClassName: efs-sc
-      resources:
-        requests:
-          storage: 5Gi
-    ```
-
-**EBS Volumes を使用する際の考慮事項:**
-
-1. **Pod Scheduling**: EBS volumes を使用する pods は、volume が attach されている nodes でのみ実行できます。
-2. **Availability Zone の制限**: EBS volumes は作成された availability zone に制限されます。そのため、pods はその availability zone 内の nodes でのみ実行できます。
-3.  **Volume Binding Mode**: pod が schedule された後に volumes を作成するため、`WaitForFirstConsumer` の使用が推奨されます。
-
-    ```yaml
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ebs-sc
-    provisioner: ebs.csi.aws.com
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-4. **StatefulSet との使用**: StatefulSet は各 pod に一意の PVCs を提供するため、EBS volumes との使用に適しています。
-
-**Access Mode Selection Guide:**
-
-| Storage Type   | ReadWriteOnce | ReadOnlyMany | ReadWriteMany |
-| -------------- | ------------- | ------------ | ------------- |
-| Amazon EBS     | ✓             | ✗            | ✗             |
-| Amazon EFS     | ✓             | ✓            | ✓             |
-| FSx for Lustre | ✓             | ✓            | ✓             |
-
-EBS volumes を使用する場合は、常に ReadWriteOnce access mode を指定してください。複数の nodes からの同時アクセスが必要な場合は、EFS や FSx for Lustre などの代替案を検討してください。
+EBS CSI 1.66.0は、対応するインフラストラクチャとアプリケーションの連携を前提に、io2のraw-block Multi-Attach経路でRWXもサポートします。これは通常のgp3/ext4ボリュームをマルチノード共有ファイルシステムに変えるものではありません。Fargate Podは引き続きEBSをマウントできません。共有ファイルシステムが必要なら適切なものを使ってください。
 
 </details>
 
-### 7. What happens to the data when a pod using an EBS volume in Amazon EKS moves to a different node?
+### 4. 動的にプロビジョニングするEBSクレームは、必ずReadWriteOnceだけを使わなければなりませんか？
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: いいえ。通常の例はRWOですが、RWOPや特殊なraw-blockモードには別の要件があります。**
 
-**解答:** EBS volume は以前の node から detach され、新しい node に attach されます。データは保持されますが、volume reattachment process 中に遅延が発生する可能性があります。
-
-**詳細な解説:**
-
-Amazon EKS で EBS volume を使用している pod が別の node に移動する場合 (例: node failure、scaling、updates などによる)、EBS volume は以前の node から detach され、新しい node に attach されます。この process 中、データは保持されますが、volume reattachment process 中に遅延が発生する可能性があります。
-
-**Volume Reattachment Process:**
-
-1. **Pod Termination**: pod は元の node で終了されます。
-2. **Volume Detachment**: EBS volume は元の node から detach されます。
-3. **Volume Attachment**: EBS volume は新しい node に attach されます。
-4. **Pod Startup**: pod は新しい node で起動し、volume が mount されます。
-
-**この Process の影響:**
-
-1. **Delay Time**: Volume detachment と attachment operations は通常 10〜30 秒かかりますが、場合によってはさらに長くかかることがあります。
-2. **Availability Zone の制限**: EBS volumes は作成された availability zone に制限されるため、pods は同じ availability zone 内の他の nodes にのみ移動できます。
-3. **Data Persistence**: volume reattachment process 中もデータは保持され、失われません。
-
-**この動作に対処するための戦略:**
-
-1.  **PodDisruptionBudget を使用する**: 同時に中断される可能性のある pods の数を制限して可用性を確保します
-
-    ```yaml
-    apiVersion: policy/v1
-    kind: PodDisruptionBudget
-    metadata:
-      name: app-pdb
-    spec:
-      minAvailable: 2  # or maxUnavailable: 1
-      selector:
-        matchLabels:
-          app: my-app
-    ```
-2.  **適切な readinessProbe と livenessProbe を設定する**: volume が適切に mount され、application の準備が整うまで traffic reception を遅延させます
-
-    ```yaml
-    readinessProbe:
-      exec:
-        command:
-        - cat
-        - /data/ready
-      initialDelaySeconds: 5
-      periodSeconds: 5
-    ```
-3. **StatefulSet を使用する**: StatefulSet は順次 deployment と scaling を提供し、volume reattachment の影響を最小限に抑えます。
-4.  **Volume Binding Mode を最適化する**: `WaitForFirstConsumer` を使用して、pod が schedule された availability zone に volumes を作成します
-
-    ```yaml
-    volumeBindingMode: WaitForFirstConsumer
-    ```
-
-**Availability Zone Considerations:**
-
-1. **Multi-AZ Deployment**: 単一 AZ 障害に対する resilience のため、applications を複数の availability zones にまたがって deploy します
-2.  **Topology Spread**: `topologySpreadConstraints` を使用して pods を複数の availability zones に分散します
-
-    ```yaml
-    topologySpreadConstraints:
-    - maxSkew: 1
-      topologyKey: topology.kubernetes.io/zone
-      whenUnsatisfiable: DoNotSchedule
-      labelSelector:
-        matchLabels:
-          app: my-app
-    ```
-3. **Availability Zone-Aware PDB**: availability zone ごとに個別の PodDisruptionBudgets を設定します
-
-**Best Practices:**
-
-1. **高速再起動のために Applications を最適化する**: applications が迅速に起動し初期化されるよう設計します
-2.  **適切な Termination Grace Period を設定する**: applications が graceful に終了するための十分な時間を提供します
-
-    ```yaml
-    terminationGracePeriodSeconds: 60
-    ```
-3. **Critical Data の Backup Strategy**: 定期的な snapshots または backups を通じてデータを保護します
-4. **Stateless Design を検討する**: 可能な場合は、node 移動の影響を最小化するために applications を stateless として設計します
-
-EBS volume を使用する pod が nodes 間を移動する場合、データは保持されますが、volume reattachment process 中に遅延が発生する可能性があるため、これを考慮した application design と configuration が重要です。
-
-</details>
-
-### 9. What Kubernetes API resource is used to create EBS volume snapshots in Amazon EKS?
-
-<details>
-
-<summary>答えを表示</summary>
-
-**解答:** VolumeSnapshot
-
-**詳細な解説:**
-
-Amazon EKS で EBS volume snapshots を作成するために使用される Kubernetes API resource は `VolumeSnapshot` です。この resource は Kubernetes Volume Snapshot API の一部であり、CSI (Container Storage Interface) drivers と連携して persistent volumes の point-in-time copies を作成します。
-
-**VolumeSnapshot を使用するための前提条件:**
-
-1. **EBS CSI Driver Installation**: AWS EBS CSI driver が cluster にインストールされている必要があります。
-2.  **Snapshot Controller Installation**: Kubernetes snapshot controller が cluster にインストールされている必要があります。
-
-    ```bash
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
-    ```
-3. **VolumeSnapshotClass を作成する**: snapshots の作成方法を定義する VolumeSnapshotClass を作成します。
-
-**VolumeSnapshotClass Example:**
-
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: ebs-snapshot-class
-driver: ebs.csi.aws.com
-deletionPolicy: Delete
-```
-
-**VolumeSnapshot Creation Example:**
-
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshot
-metadata:
-  name: ebs-volume-snapshot
-spec:
-  volumeSnapshotClassName: ebs-snapshot-class
-  source:
-    persistentVolumeClaimName: ebs-claim
-```
-
-**Check Snapshot Status:**
-
-```bash
-kubectl get volumesnapshot ebs-volume-snapshot
-```
-
-**Create New PVC from Snapshot:**
-
+RWOPはRWOにはない、Podを1つに制限する機能を提供します。Kubernetes 1.29からstableで、互換性のあるCSI sidecar stackが必要です。CSIのアクセスモード変換では、新しいsingle-node capabilityを持たないドライバー向けにRWOPを `SINGLE_NODE_WRITER` に対応づけることがあります。ドライバー定数だけを見てもRWOP非対応とは判断できません。次は1 Podのワークロード向けの**別案のクレーム**です。
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ebs-claim-from-snapshot
+  name: ebs-exclusive
+  namespace: storage-demo
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: ebs-sc
+  - ReadWriteOncePod
+  storageClassName: ebs-gp3
   resources:
     requests:
       storage: 10Gi
-  dataSource:
-    name: ebs-volume-snapshot
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
 ```
+| モード | 意味 |
+|---|---|
+| RWO | 1つの読み書きノード。同じノード上の複数Podで共有できる |
+| RWOP | 互換性のあるCSI/Kubernetesサポートのもと、クラスター全体で1 Podに制限 |
+| RWX | バックエンド/ドライバーとアプリケーションが対応する場合にマルチノード書き込み |
+| ROX | マルチノード読み取り機能。すべてのCSIドライバーが対応するわけではない |
 
-**VolumeSnapshot の主な利点:**
-
-1. **Data Protection**: 重要なデータの point-in-time backups を作成します
-2. **Disaster Recovery**: データ損失や破損時の recovery をサポートします
-3. **Environment Replication**: development または test environments のために production data を replicate します
-4. **Data Migration**: ある cluster から別の cluster へデータを移動します
-
-**Snapshot Lifecycle Management:**
-
-1.  **Automated Snapshot Creation**: CronJob を使用して定期的な snapshot creation を自動化します
-
-    ```yaml
-    apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      name: volume-snapshot-job
-    spec:
-      schedule: "0 0 * * *"  # Daily at midnight
-      jobTemplate:
-        spec:
-          template:
-            spec:
-              serviceAccountName: snapshot-creator
-              containers:
-              - name: snapshot-creator
-                image: bitnami/kubectl:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  cat <<EOF | kubectl apply -f -
-                  apiVersion: snapshot.storage.k8s.io/v1
-                  kind: VolumeSnapshot
-                  metadata:
-                    name: ebs-snapshot-$(date +%Y%m%d)
-                  spec:
-                    volumeSnapshotClassName: ebs-snapshot-class
-                    source:
-                      persistentVolumeClaimName: ebs-claim
-                  EOF
-              restartPolicy: OnFailure
-    ```
-2.  **Snapshot Retention Policy**: 古い snapshots を自動的に削除します
-
-    ```yaml
-    apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      name: snapshot-cleanup-job
-    spec:
-      schedule: "0 1 * * *"  # Daily at 1 AM
-      jobTemplate:
-        spec:
-          template:
-            spec:
-              serviceAccountName: snapshot-manager
-              containers:
-              - name: snapshot-cleaner
-                image: bitnami/kubectl:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  # Delete snapshots older than 30 days
-                  kubectl get volumesnapshot -o json | jq -r '.items[] | select(.metadata.creationTimestamp | fromnow | contains("days") and (split(" ")[0] | tonumber) > 30) | .metadata.name' | xargs -r kubectl delete volumesnapshot
-              restartPolicy: OnFailure
-    ```
-
-**Best Practices:**
-
-1. **Regular Snapshots**: 重要なデータに対して定期的な snapshot schedules を設定します
-2. **Test Snapshots**: backup の有効性を確認するため、snapshots からの restore を定期的にテストします
-3. **Tagging**: 管理と cost tracking を容易にするため、snapshots に適切な tags を適用します
-4. **Cost Monitoring**: EBS snapshots には追加料金が発生するため、cost を監視し最適化します
-5. **Encryption**: sensitive data には encrypted snapshots を使用します
-
-VolumeSnapshot API を使用すると、Kubernetes-native な方法で EBS volume snapshots を作成および管理でき、data protection と recovery strategies を効果的に実装できます。
+アクセスモードが一致しても、ファイルシステム/IAM権限や明示的な読み取り専用マウントの代わりにはなりません。スナップショットから復元した別々のボリュームは独立したコピーであり、1つの共有ROXボリュームではありません。通常のext4/XFSを複数ライターから個別にマウントし、クラスター対応ストレージの代わりにしないでください。
 
 </details>
 
-## Hands-on Questions
-
-### 10. Design a storage solution for applications with diverse storage requirements in an Amazon EKS cluster. Create storage classes and persistent volume claims that meet the following requirements:
-
-* データベース向けの high-performance block storage
-* 複数の pods 間で共有する必要がある configuration files
-* AI/ML workloads 向けの high-performance parallel file system
+### 5. EBSを使うPodが別ノードに置き換わったとき、何が起きますか？
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: 保持されたボリュームは同じAZ内で安全にデタッチ/アタッチできます。復旧時間とアプリケーション一貫性は確認が必要です。**
 
-**解答:**
+Kubernetesは置き換えPodを作成します。元のPodオブジェクトを移動させるわけではありません。単一アタッチのボリュームでは、新しいノードにアタッチする前に、旧ライターを停止/フェンスし、安全にデタッチする必要があります。ボリュームはライフサイクル設定に従って保持されますが、突然の障害では未フラッシュの書き込みが失われたり、ファイルシステム/データベースの復旧が必要になったりします。すべての書き込みが必ず残るとは言わないでください。
 
-Amazon EKS cluster における多様な storage requirements を満たす storage solution は次のとおりです:
+元の「10〜30秒」という再アタッチ時間には、ここでは検証済みの測定根拠がありません。**未検証の過去の推定値**として残されているもので、AWS SLAや復旧時間の保証ではありません。ノード障害の検出、フェンシング、コントローラーの再調整、ボリューム操作、アプリケーション起動にはさらに時間がかかる場合があります。
 
-### 1. High-Performance Block Storage for Databases (Amazon EBS gp3)
+PDBが制約するのは該当する自発的な退避であり、ノード/AZ障害ではありません。実際のレプリカ数/クォーラムに合わせて設定してください。データベースのレプリカが1つなら、PDBを設定しても高可用性にはなりません。Readinessは永続的な `/data/ready` マーカーだけでなく、アプリケーションの準備状態を確認してください。Livenessはコンテナを再起動するもので、Serviceトラフィックを制御するものではありません。StatefulSetの順序制御やトポロジー分散で、1つのEBSボリュームがAZ間に複製されるわけではありません。AZごとのPDB案にも実際に一致するPodラベルが必要です。ノードのAZラベルが自動でPodに複製されるわけではありません。
 
-#### StorageClass Definition:
+可能な場合はグレースフルシャットダウンを使い、VolumeAttachment/Podイベントと実際のノード状態を診断し、文書化された復旧手順に従ってください。フェンシングせずに強制デタッチしたり、アタッチメントのメタデータを削除したりするのは、一般的な短縮策ではありません。独立したバックアップで、復元後のアプリケーションデータと復旧目標をテストしてください。
 
+</details>
+
+### 6. EBSスナップショットを要求するリソースと、バックアップを利用可能にする条件は何ですか？
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: `VolumeSnapshot`**
+
+互換性のあるスナップショットCRD/コントローラーとEBS snapshotterを準備し、実際のプロビジョナーに一致するクラスを使います。アドオンの所有者を維持し、固定されていないmasterマニフェストを適用しないでください。スナップショットがreadyでもアプリケーションの復旧が証明されるわけではありません。整合性を保つにはデータベースに対応したバックアップ/静止化が必要な場合があります。
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: ebs-snapshot-retain
+driver: ebs.csi.aws.com
+deletionPolicy: Retain
+```
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: ebs-snapshot
+  namespace: storage-demo
+  labels:
+    storage-demo: ebs
+spec:
+  volumeSnapshotClassName: ebs-snapshot-retain
+  source:
+    persistentVolumeClaimName: ebs-claim
+```
+```bash
+set -euo pipefail
+kubectl -n storage-demo wait --for=jsonpath='{.status.readyToUse}'=true \
+  volumesnapshot/ebs-snapshot --timeout=300s
+kubectl -n storage-demo get volumesnapshot ebs-snapshot -o yaml
+```
+`status.restoreSize` 以上の容量で、同じnamespaceに新しいクレームとして復元します。WaitForFirstConsumerのバインディングには適切なconsumerを使い、データを検証してください。このマニフェストは上記の**固定名 `ebs-snapshot` を復元します**。別のスナップショットを復元する場合は名前を変更してください。
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-restored
+  namespace: storage-demo
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-gp3
+  resources:
+    requests:
+      storage: 20Gi
+  dataSource:
+    name: ebs-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+```
+繰り返し作成する場合は、こちらのコマンドを使うと一意のスナップショットを作成し、readyになるまで待つ**別案**になります。生成された名前を記録してください。スケジュール実行には、意図した範囲に絞ったServiceAccount/RBAC、バージョン固定ツール、UTC/タイムゾーンの選択、重複実行防止、エラー/保持処理が必要です。ServiceAccountを指定しない古い例は、導入済みのバックアップシステムではありませんでした。
+```bash
+set -euo pipefail
+SNAPSHOT_NAME="ebs-snapshot-$(date -u +%Y%m%d%H%M%S)-$RANDOM"
+kubectl -n storage-demo create -f - <<EOF
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: $SNAPSHOT_NAME
+  labels:
+    storage-demo: ebs
+spec:
+  volumeSnapshotClassName: ebs-snapshot-retain
+  source:
+    persistentVolumeClaimName: ebs-claim
+EOF
+kubectl -n storage-demo wait --for=jsonpath='{.status.readyToUse}'=true \
+  "volumesnapshot/$SNAPSHOT_NAME" --timeout=300s
+```
+保持処理では、絶対時刻を解析し、namespace、バックアップラベル、元のPVCで対象を絞ります。次は**レビュー専用の候補一覧**を生成し、何も削除しません。自動削除の前に、各バインド済みVolumeSnapshotContentのdeletionPolicy、所有者、依存関係、検証済みの復旧ポイントを確認してください。DeleteポリシーはAWSスナップショットを削除する可能性があります。Retainはスナップショットを保持し、ストレージ料金が残る場合があります。本番バックアップコントローラーには、UID/事前条件の処理と復旧テストが必要です。範囲を絞らないxargs削除パイプラインでは不十分です。
+```bash
+set -euo pipefail
+kubectl -n storage-demo get volumesnapshots -l storage-demo=ebs \
+  -o json > storage-demo-snapshots.json
+python3 - storage-demo-snapshots.json <<'PY'
+import datetime, json, sys
+now = datetime.datetime.now(datetime.timezone.utc)
+cutoff = now - datetime.timedelta(days=30)
+with open(sys.argv[1]) as stream:
+    snapshots = json.load(stream)["items"]
+candidates = []
+for snapshot in snapshots:
+    meta, spec, status = snapshot["metadata"], snapshot["spec"], snapshot.get("status", {})
+    if meta.get("namespace") != "storage-demo" or meta.get("labels", {}).get("storage-demo") != "ebs":
+        continue
+    if spec.get("source", {}).get("persistentVolumeClaimName") != "ebs-claim":
+        continue
+    if status.get("readyToUse") is not True or meta.get("deletionTimestamp"):
+        continue
+    created = datetime.datetime.fromisoformat(meta["creationTimestamp"].replace("Z", "+00:00"))
+    if created.tzinfo is None:
+        raise SystemExit("Snapshot timestamp must include a timezone")
+    if created < cutoff:
+        candidates.append({"name": meta["name"], "uid": meta["uid"],
+                           "content": status.get("boundVolumeSnapshotContentName"),
+                           "createdAt": meta["creationTimestamp"]})
+print(json.dumps({"reviewOnly": True, "candidates": candidates}, indent=2))
+PY
+```
+クラスター/アカウント/Region間でスナップショットを移すには、明示的なインポート/コピー、KMSアクセス、復元設定が必要です。本番データをテスト環境にコピーする場合も、同じアクセス/保持管理を適用してください。VolumeSnapshotオブジェクトの存在だけでなく、実際のデータを検証してください。
+
+</details>
+
+### 7. データベース、共有ファイル、並列MLデータ向けのストレージを設計してください。
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: 各要件に合わせて、前提条件を明示したバックエンドとライフサイクルを選びます。**
+
+これはレビュー済みの構成ブループリントであり、**本番環境にデプロイされたシステムではありません**。まず `database`、`application`、`ml-workloads` namespace、互換性のあるCSIドライバーとIAMロール、KMS/ネットワーク権限、実際のEFS/FSx/S3リソース、イメージ/コンピューティングの互換性を作成/レビューしてください。StorageClassはクラスター全体のリソースです。以下の例は、1人の所有者が管理する別案です。容量、アプリケーション復旧、性能は対象環境でテストしてください。
+
+**1. データベースのブロックストレージ。** 元の例示値である16,000 IOPS/1,000 MiB/sは維持しますが、gp3の一律の上限とは扱わないでください。現在のRegional gp3は、ボリュームサイズ/IOPS比とインスタンス上限の範囲内で最大80,000 IOPS/2,000 MiB/sをサポートします。Outpostsの上限は異なります。この値は構成の選択であり、ベンチマークでも、その費用がデータベースに必要だという証拠でもありません。
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -828,119 +303,157 @@ metadata:
   name: ebs-gp3-db
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
 parameters:
   type: gp3
-  iops: "16000"  # Maximum IOPS
-  throughput: "1000"  # Maximum throughput (MB/s)
-  encrypted: "true"
-allowVolumeExpansion: true
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
+  iops: '16000'
+  throughput: '1000'
 ```
-
-#### PersistentVolumeClaim Definition:
-
+StatefulSetは `data` クレームテンプレートから **data-postgres-0** を作成します。元の未使用 `database-data` PVCを別途作成したり、その未使用クレームをスナップショットしたりしないでください。安全に管理する `password` キーを持つ `postgres-secret` を準備します。ここではパスワード値を指定しません。イメージはマウントされたファイルから読み取り、PGDATAはサブディレクトリを使います。これによりボリュームルートのファイルシステムメタデータが初期化を妨げません。
 ```yaml
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Service
 metadata:
-  name: database-data
+  name: postgres
   namespace: database
 spec:
-  accessModes:
-    - ReadWriteOnce  # EBS can only be mounted to a single node
-  storageClassName: ebs-gp3-db
-  resources:
-    requests:
-      storage: 100Gi
-```
-
-#### Database Pod Example:
-
-```yaml
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
   namespace: database
 spec:
-  serviceName: "postgres"
+  serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
       app: postgres
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   template:
     metadata:
       labels:
         app: postgres
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: postgres
-        image: postgres:14
+        image: postgres:14.24
         env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/postgres-secret/password
         ports:
-        - containerPort: 5432
+        - name: postgres
+          containerPort: 5432
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: '2'
+            memory: 4Gi
+          limits:
+            cpu: '4'
+            memory: 8Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - name: data
           mountPath: /var/lib/postgresql/data
-        resources:
-          requests:
-            cpu: "2"
-            memory: "4Gi"
-          limits:
-            cpu: "4"
-            memory: "8Gi"
+        - name: socket
+          mountPath: /var/run/postgresql
+        - name: tmp
+          mountPath: /tmp
+        - name: password
+          mountPath: /run/postgres-secret
+          readOnly: true
+      volumes:
+      - name: socket
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: password
+        secret:
+          secretName: postgres-secret
+          defaultMode: 288
+          items:
+          - key: password
+            path: password
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes:
+      - ReadWriteOnce
       storageClassName: ebs-gp3-db
       resources:
         requests:
           storage: 100Gi
 ```
+この例はPostgreSQL 14の検証済み最新マイナーリリース14.24を使います。メジャー14のサポートは2026年11月12日に終了します。サポート対象バージョンへの移行をテストして計画し、本番では承認済みイメージのdigestを固定してください。この構成はレプリカ1つであり、レプリケーション/HAデータベースではありません。データベースレプリケーション設計なしにレプリカを増やしても解決しません。明示的なPVC保持ポリシーは、StatefulSet削除/縮小後もクレームを残すため、データとストレージ料金が残る場合があります。
 
-**解説:**
-
-* **gp3 Volume Type**: 最大 16,000 IOPS と 1,000MB/s throughput を提供し、database workloads に適しています。
-* **WaitForFirstConsumer**: availability zone issues を防ぐため、pod scheduling まで volume creation を遅延させます。
-* **Encryption**: data-at-rest security のために EBS volume encryption を有効にします。
-* **Volume Expansion**: 将来の database size increases に備えて volume expansion を可能にします。
-* **StatefulSet**: databases に対して stable network IDs と persistent storage を提供します。
-
-### 2. Configuration Files Shared Across Multiple Pods (Amazon EFS)
-
-#### EFS CSI Driver Installation:
-
-```bash
-helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm repo update
-helm upgrade -i aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver \
-  --namespace kube-system \
-  --set controller.serviceAccount.create=true \
-  --set controller.serviceAccount.name=efs-csi-controller-sa
+アプリケーション整合性を保つバックアップ/静止化の後、データベースが実際に使うクレームをスナップショットします。クラスは前述の保持対象EBSスナップショットクラスです。
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: database-snapshot
+  namespace: database
+  labels:
+    backup-set: postgres-demo
+spec:
+  volumeSnapshotClassName: ebs-snapshot-retain
+  source:
+    persistentVolumeClaimName: data-postgres-0
 ```
-
-#### StorageClass Definition:
-
+**2. 共有ファイル。** 静的な設定にはConfigMap/Secretが適することがよくあります。変更可能な共有ファイルが必要なら、元の章にあるEFSクラスが別々のAPディレクトリとUID/GID 1000を提供します。ファイルシステムIDを置き換えて、クライアントパス/権限を検証してください。このクレームは5 Giクォータを課しません。
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: efs-sc
 provisioner: efs.csi.aws.com
+reclaimPolicy: Retain
+mountOptions:
+- tls
 parameters:
   provisioningMode: efs-ap
-  fileSystemId: fs-0123456789abcdef0  # Existing EFS file system ID
-  directoryPerms: "700"
+  fileSystemId: fs-0123456789abcdef0
+  directoryPerms: '750'
+  uid: '1000'
+  gid: '1000'
+  basePath: /storage-demo
+  ensureUniqueDirectory: 'true'
 ```
-
-#### PersistentVolumeClaim Definition:
-
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -949,91 +462,142 @@ metadata:
   namespace: application
 spec:
   accessModes:
-    - ReadWriteMany  # Multiple pods can read/write simultaneously
+  - ReadWriteMany
   storageClassName: efs-sc
   resources:
     requests:
-      storage: 5Gi  # This value is symbolic as EFS auto-scales
+      storage: 5Gi
 ```
-
-#### Deployment Example Using Configuration Files:
-
+このseed Jobは機密情報ではないデモ設定だけを書き込み、既存ファイルを保持します。3つのreader Podは読み取り専用でマウントし、読み取れることを確認します。これはファイル配信のデモです。実際のアプリケーションでは設定を解析/再読み込みする必要があります。未設定のnginxに `/etc/config` をマウントしても、そのファイルをnginxが使うようにはなりません。
 ```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: config-seed
+  namespace: application
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: seed
+        image: busybox:1.38.0
+        command:
+        - sh
+        - -c
+        args:
+        - |
+          set -eu
+          if test -e /config/settings.txt; then
+            echo "Existing settings preserved"
+          else
+            (set -C; printf 'MODE=demo\n' > /config/settings.txt)
+          fi
+          sync
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: config-storage
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-app
+  name: config-reader
   namespace: application
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: web-app
+      app: config-reader
   template:
     metadata:
       labels:
-        app: web-app
+        app: config-reader
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: web-app
-        image: nginx:latest
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/config
+      - name: reader
+        image: busybox:1.38.0
+        command:
+        - sleep
+        - '3600'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        readinessProbe:
+          exec:
+            command:
+            - test
+            - -r
+            - /etc/config/settings.txt
         resources:
           requests:
-            cpu: "500m"
-            memory: "512Mi"
+            cpu: 10m
+            memory: 16Mi
           limits:
-            cpu: "1"
-            memory: "1Gi"
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+          readOnly: true
       volumes:
-      - name: config-volume
+      - name: config
         persistentVolumeClaim:
           claimName: config-storage
 ```
-
-**解説:**
-
-* **ReadWriteMany Access Mode**: EFS は複数の pods が同じ volume に対して同時に読み取りと書き込みを行うことをサポートします。
-* **Multi-Availability Zone Support**: EFS は複数の availability zones にまたがってアクセスでき、node failures に対する resilience を提供します。
-* **Auto Scaling**: EFS は使用量に基づいて自動的にスケールし、capacity planning の必要性をなくします。
-* **Access Points**: EFS access points を使用して、特定の directories へのアクセスを制限できます。
-
-### 3. High-Performance Parallel File System for AI/ML Workloads (Amazon FSx for Lustre)
-
-#### FSx CSI Driver Installation:
-
-```bash
-helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver/
-helm repo update
-helm upgrade -i aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
-  --namespace kube-system \
-  --set controller.serviceAccount.create=true \
-  --set controller.serviceAccount.name=fsx-csi-controller-sa
-```
-
-#### StorageClass Definition:
-
+**3. 並列MLデータ。** サポート対象のLustreクライアント/kernel、CSI/IAM、ファイルシステム/S3統合を準備してください。このSCRATCH_2例は再生成可能なデータ向けです。永続ストレージ専用の単位当たりスループット設定や自動バックアップ設定は含みません。`s3ImportPath` はFSx CSI 1.10.0で有効なパラメーターです。所有権とアクセス権のあるデータセットのバケット/プレフィックスに置き換え、サポートされる統合/Region設定を確認してください。LZ4はストレージ機能であり、圧縮率やスループットの測定結果を示すものではありません。
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: fsx-lustre
 provisioner: fsx.csi.aws.com
+reclaimPolicy: Retain
 parameters:
-  subnetId: subnet-0123456789abcdef0  # Subnet for FSx file system
-  securityGroupIds: sg-0123456789abcdef0  # Security group for FSx file system
-  deploymentType: SCRATCH_2  # High-performance temporary storage
-  perUnitStorageThroughput: "200"  # MB/s/TiB
-  dataCompressionType: "LZ4"  # Enable data compression
-  s3ImportPath: s3://ml-training-data-bucket/  # Optional: Import data from S3
+  subnetId: subnet-0123456789abcdef0
+  securityGroupIds: sg-0123456789abcdef0
+  deploymentType: SCRATCH_2
+  dataCompressionType: LZ4
+  s3ImportPath: s3://example-training-data/dataset/
 mountOptions:
-  - flock
+- flock
 ```
-
-#### PersistentVolumeClaim Definition:
-
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1042,15 +606,13 @@ metadata:
   namespace: ml-workloads
 spec:
   accessModes:
-    - ReadWriteMany  # Multiple pods can read/write simultaneously
+  - ReadWriteMany
   storageClassName: fsx-lustre
   resources:
     requests:
-      storage: 1200Gi  # FSx for Lustre starts at minimum 1.2TiB
+      storage: 1200Gi
 ```
-
-#### ML Training Job Example:
-
+1200 Giのクレームは割当量の例です。ドライバーの丸めとサービス側の容量選択を確認してください。以下のJobは**テンプレート**です。実測済みで非rootのGPUイメージに置き換え、そのイメージが `/opt/training/train.py` を含み、指定引数を受け付けることを確認してから実行し、データセットを用意してください。学習コードはデータマウントで隠さず、イメージに含めます。4つのGPUを要求するPodを4つ並列に実行すると、要求CPU/メモリと該当クォータに加え、**GPUが16個必要**になる場合があります。Indexed completionは4つのタスクを識別しますが、分散学習/勾配同期を自動実装するものではありません。
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -1058,88 +620,186 @@ metadata:
   name: ml-training
   namespace: ml-workloads
 spec:
-  parallelism: 4  # Number of parallel jobs
+  parallelism: 4
+  completions: 4
+  completionMode: Indexed
+  backoffLimit: 2
   template:
     spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: training
-        image: tensorflow/tensorflow:latest-gpu
+        image: registry.example.com/team/trainer:reviewed
         command:
-          - "python"
-          - "/training/train.py"
-        volumeMounts:
-        - name: training-data
-          mountPath: "/training"
+        - python
+        - /opt/training/train.py
+        args:
+        - --data-dir
+        - /training
+        - --shard-index
+        - $(JOB_COMPLETION_INDEX)
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
         resources:
           limits:
-            nvidia.com/gpu: 4  # GPU resource request
+            nvidia.com/gpu: '4'
           requests:
-            cpu: "8"
-            memory: "32Gi"
+            cpu: '8'
+            memory: 32Gi
+        volumeMounts:
+        - name: data
+          mountPath: /training
       volumes:
-      - name: training-data
+      - name: data
         persistentVolumeClaim:
           claimName: ml-training-data
-      restartPolicy: Never
-  backoffLimit: 2
 ```
+「数百GB/s」や「数百万IOPS」という元の集約性能の記述は、この小規模なSCRATCH_2例を測定したものではありません。これらを根拠にサイジングせず、代表的なワークロードで選択したファイルシステム/クライアント設定を検証してください。学習は実行していません。
 
-**解説:**
-
-* **High Performance**: FSx for Lustre は数百 GB/s の throughput と数百万 IOPS を提供し、AI/ML workloads に適しています。
-* **Parallel Access**: 複数の compute nodes が同じデータに同時にアクセスできるため、distributed training に最適です。
-* **S3 Integration**: Training data は S3 に保存し、processing のために FSx for Lustre に import できます。
-* **Data Compression**: storage efficiency を向上させるため LZ4 compression を使用します。
-* **SCRATCH\_2 Deployment Type**: temporary processing 向けの high-performance で cost-effective なオプションです。
-
-### Additional Considerations and Best Practices
-
-#### 1. Backup and Disaster Recovery:
-
-```yaml
-# EBS volume snapshot creation
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: ebs-snapshot-class
-driver: ebs.csi.aws.com
-deletionPolicy: Retain
-
----
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshot
-metadata:
-  name: database-snapshot
-  namespace: database
-spec:
-  volumeSnapshotClassName: ebs-snapshot-class
-  source:
-    persistentVolumeClaimName: database-data
-```
-
-#### 2. Monitoring and Alerting:
-
-* storage usage、latency、throughput を監視するために CloudWatch alarms を設定します。
-* Prometheus と Grafana を使用して storage metrics を可視化します。
-
-#### 3. Cost Optimization:
-
-* 未使用 volumes は削除前に削除するか snapshots を作成します。
-* cost を最適化するため、適切な storage types と sizes を選択します。
-* FSx for Lustre では、long-term storage が不要な場合は SCRATCH deployment type を使用します。
-
-#### 4. Security:
-
-* すべての volumes で encryption を有効にします。
-* 適切な IAM permissions と security groups を設定します。
-* volume access を制限するために PodSecurityPolicy または SecurityContext を使用します。
-
-この design は、多様な workload requirements を満たす包括的な storage solution を提供します:
-
-* databases 向けの high-performance EBS gp3 volumes
-* configuration file sharing 向けに multi-read/write access をサポートする EFS
-* AI/ML workloads 向けの high-performance parallel file system FSx for Lustre
-
-各 storage solution は特定の workload requirements に合わせて最適化され、scalability、performance、cost efficiency を考慮して設計されています。
+**復旧、監視、コスト:** バックエンドとファイルシステム/アプリケーションのメトリクスを明示的に選び、実際のクォータ/スループット/レイテンシー/使用量を監視して、既知データで復元をテストします。PVやスナップショットを保持しても、バックアップスケジュールができるわけではありません。不要に見えるボリュームを削除する前に、所有者、参照先、検証済みの復旧コピーを確認してください。セキュリティにはPod Security admission/securityContext、スコープを絞ったIAM、TLS、ファイルシステム権限を使います。削除済みのPodSecurityPolicyは選択肢ではありません。このブループリントは本番準備完了も、最適なコスト/性能も示していません。
 
 </details>
+
+### 8. Podを削除すると、ボリュームデータも必ず削除されますか？
+
+- A. はい。すべてのボリュームが削除される
+- B. いいえ。ライフサイクルを確認する
+- C. Podにコンテナが2つある場合のみ
+- D. いいえ。すべてのボリュームが永続する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B. いいえ。ボリューム種別、PVCの所有関係、reclaim policyで決まります。**
+
+emptyDirのデータはPod単位ですが、保持されるPVCベースのボリュームはPodより長く残る場合があります。汎用エフェメラルPVCはPodに所有されることがあります。物理的なインスタンスストアのデータは、CSIドライバーがPVとして公開していてもノード/メディアのライフサイクルに結びつきます。実在する2026年5月のEC2 Instance Store CSIアドオンを使っても、耐久性のあるレプリケートストレージにはなりません。
+
+</details>
+
+### 9. 5 Giを要求するEFS PVCは、ディレクトリに5 Giのクォータを設定しますか？
+
+- A. はい。5 Giを超えると書き込みに失敗する
+- B. はい。各アクセスポイントにブロックデバイスが割り当てられる
+- C. いいえ。要求値はバインディング用のメタデータである
+- D. directoryPermsを700にした場合のみ
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C. いいえ。これはKubernetesの容量/バインディング用メタデータです。**
+
+EFSは保存データに応じて拡張され、このクレームはディレクトリをその容量で事前割当/制限しません。ファイルシステムのスループット、アクセスポイント、クライアントの動作、保持、コストは別途計画してください。クォータを強制する必要がある場合は、アプリケーション/アカウント側の明示的な制御を使います。
+
+</details>
+
+### 10. StorageClassで初期reclaim policyを設定するフィールドはどれですか？
+
+- A. `persistentVolumeReclaimPolicy`
+- B. `reclaimPolicy`
+- C. `deletionPolicy`
+- D. `dataRetention`
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B. `reclaimPolicy`**
+
+`persistentVolumeReclaimPolicy` は `PersistentVolume.spec` のフィールドです。StorageClassのポリシーは新しくプロビジョニングされるPVにコピーされます。クラスを変更しても、既存のすべてのPVが自動的に変更されるわけではありません。スナップショットのdeletionPolicyは別のライフサイクル設定です。
+
+</details>
+
+### 11. 動的にプロビジョニングされたEFSアクセスポイントでDeleteを実行すると、通常は何が削除されますか？
+
+- A. VPC内のすべてのファイルシステム
+- B. 常にEFSファイルシステム全体
+- C. アクセスポイント。ルートディレクトリの削除は任意
+- D. AWSリソースは一切削除できない
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C. アクセスポイントです。ディレクトリデータの削除はコントローラー設定に依存します。**
+
+アクセスポイントプロビジョナーは通常、EFSファイルシステムを削除しません。レビューしたチャートでは `deleteAccessPointRootDir` の既定値はfalseです。有効にするとデータ削除の動作が変わります。クレームを削除する前に、実際のコントローラー値と共有/再利用されるアクセスポイントの所有関係を確認してください。
+
+</details>
+
+### 12. EKSからのS3アクセスについて、正しい説明はどれですか？
+
+- A. 公式のS3 CSIドライバーは存在しない
+- B. インターフェイスと前提条件はそれぞれ異なる
+- C. Mountpointは新しいバケットを自動作成する
+- D. すべてのS3マウントがあらゆるPOSIX操作に対応する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B. S3 API、Mountpoint CSI、S3 Filesではインターフェイスと要件が異なります。**
+
+公式のMountpoint CSIは、限定されたPOSIXセマンティクスを持つファイルインターフェイスを通じて既存バケットをサポートします。S3 FilesはEFS CSI 3.0以降がサポートする別の共有ファイルシステムサービスであり、コントローラー/ノード権限も異なります。S3ベースの経路すべてで同じ操作、コンピューティング方式、プロビジョニングモデルが使えると考えないでください。
+
+</details>
+
+### 13. WaitForFirstConsumerのPVCが正当にPendingになり得るのはどのような場合ですか？
+
+- A. すべてのCSIドライバーが壊れている
+- B. 適切なconsumerがまだスケジュールされていない
+- C. Retainによりバインドが禁止されている
+- D. PVCで空のStorageClassを指定する必要がある
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B. 適切なconsumerがまだスケジュールされていません。**
+
+遅延バインディングでは、スケジューラーのトポロジー/リソース制約を配置に反映します。必ずしもストレージ障害ではありません。`spec.nodeName` を指定するとスケジューラーを迂回し、このバインディングフローを妨げる可能性があります。サポートされるスケジューリング制約を使ってください。StorageClassを変更したり、手動でボリュームを作ったりする前にイベントを確認します。
+
+</details>
+
+### 14. 互換性のあるCSIサポートのもとで、Podを1つに制限するアクセスモードはどれですか？
+
+- A. ReadWriteOnce
+- B. ReadWriteMany
+- C. ReadOnlyMany
+- D. ReadWriteOncePod
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: D. ReadWriteOncePod**
+
+RWOは読み書きアタッチを1ノードに制限しますが、そのノード上では複数のPodが利用できます。RWOPは別の1 Podモードです。それでもアプリケーションの一貫性、バックアップ、認可の設計に代わるものではありません。同じクレームでRWOPと他のアクセスモードを組み合わせないでください。
+
+</details>
+
+### 15. 10 GiのEBS例をどう拡張し、復旧を確認すべきですか？
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: サポートされる拡張を許可し、PVCの要求容量を増やして、実際の容量を確認し、別の復元テストを行います。**
+
+StorageClassのallowVolumeExpansionとドライバー/ファイルシステムのサポートを確認し、アプリケーション整合性を保つバックアップを取ってから、所有者を通じてクレームを拡張します。このデモの目標は20 Giです。ボリュームを縮小したり、サイズ変更を装うためにPV容量を書き換えたりしないでください。
+```bash
+set -euo pipefail
+kubectl -n storage-demo get pvc ebs-claim -o yaml
+kubectl -n storage-demo patch pvc ebs-claim --type merge \
+  -p '{"spec":{"resources":{"requests":{"storage":"20Gi"}}}}'
+kubectl -n storage-demo describe pvc ebs-claim
+```
+PVCのconditions/status、マウント済みファイルシステム、アプリケーションI/Oを確認します。ファイルシステム拡張が保留中なら、文書化された再マウント/再起動手順に従います。スナップショットを新しいクレームに復元し、適切なconsumerからマウントして、既知のアプリケーションデータを検証してください。PVC要求容量を増やすことやスナップショットオブジェクトがreadyになることだけでは、データ復旧テストの完了になりません。
+
+</details>
+
+公式リファレンス: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[Kubernetes PV](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[gp3仕様](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)、[PostgreSQLサポート](https://www.postgresql.org/support/versioning/)、[S3 Files](https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html)。

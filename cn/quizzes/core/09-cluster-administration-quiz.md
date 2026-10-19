@@ -592,6 +592,7 @@ etcdutl snapshot restore snapshot.db \
 - 规划集群网络 CIDR 范围
 - 部署网络监控工具
 </details>
+
 ## 实践题
 
 1. 编写一个满足以下要求的 ResourceQuota manifest：
@@ -645,7 +646,7 @@ kubectl create namespace development
 ```
 </details>
 
-2. 编写一个脚本，检查集群中所有 Node 上的 kubelet 服务状态，并在发现问题时解决问题。
+2. 请为自管 Linux 集群编写 kubelet 检查脚本。假设每个节点都配置了 SSH 别名，并提供一个需显式启用的修复模式。
 
 <details>
 <summary>显示答案</summary>
@@ -1073,6 +1074,7 @@ python3 resource_usage_report.py
 - 可以设置为 cron job 以定期生成报告。
 - 报告可以通过电子邮件发送，或与监控系统集成。
 </details>
+
 ## 高级主题
 
 1. 哪两组选项包含真实的 etcd 设置或运维实践？（选择两项。）

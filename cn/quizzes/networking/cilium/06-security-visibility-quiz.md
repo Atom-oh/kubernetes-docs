@@ -35,7 +35,7 @@
 
    **答案：B) cilium.io/v2**
 
-   该组为 cilium.io，本章使用的已提供策略版本为 v2。
+   该 API 组为 cilium.io，本章使用的策略 API 版本为 v2。
 
    </details>
 

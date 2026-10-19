@@ -1,6 +1,6 @@
 # Fundamentos de redes, parte 2: la capa de transporte y TLS
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 ::: tip Esta es una serie de cuatro partes
 [Parte 1: El modelo de capas, las capas de enlace y de enrutamiento](./06-network-fundamentals-part1.md) ·
@@ -13,7 +13,7 @@ En la parte 1, los paquetes llegaron al host de destino. En esta parte se compar
 
 Una imagen resume la idea central de esta parte:
 
-![Conexión nueva típica: TCP más un handshake completo de TLS 1.3 tardan aproximadamente 2 RTT antes de una solicitud, mientras que QUIC combina ambos en aproximadamente 1 RTT. La reanudación apta puede enviar datos tempranos 0-RTT antes de que se complete el handshake.](../.gitbook/assets/en-basics-06-network-fundamentals-part2-0.png)
+![Conexión nueva típica: TCP más un handshake completo de TLS 1.3 tardan aproximadamente 2 RTT antes de una solicitud, mientras que QUIC combina ambos en aproximadamente 1 RTT. Una reanudación que cumple los requisitos puede enviar datos tempranos 0-RTT antes de que se complete el handshake.](../.gitbook/assets/en-basics-06-network-fundamentals-part2-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-06-network-fundamentals-part2-0.html)
 
@@ -54,13 +54,13 @@ La salvedad: al ser un protocolo sin estado, UDP puede facilitar los ataques de 
 **Cómo funciona:** QUIC rediseña desde cero sobre UDP todo lo que antes hacían TCP+TLS. Tiene cuatro propiedades clave:
 
 1. **Entrega independiente de los flujos**: cada flujo tiene su propio orden de bytes, por lo que la pérdida en un flujo no necesariamente impide entregar los datos disponibles de otro. La recuperación de paquetes y el control de congestión siguen operando en toda la conexión/ruta; un flujo puede bloquearse por sus propios bytes faltantes, y las dependencias de la aplicación o de QPACK en HTTP/3 también pueden causar bloqueos.
-2. **Cifrado integrado**: QUIC integra el handshake de TLS 1.3 y utiliza su propia protección de paquetes, en lugar de registros TLS. Un handshake completo normal tarda aproximadamente 1 RTT. La reanudación apta y aceptada puede incluir **datos tempranos 0-RTT**, pero el handshake se completa después; Retry u otros intercambios adicionales del handshake pueden aumentar la latencia.
+2. **Cifrado integrado**: QUIC integra el handshake de TLS 1.3 y utiliza su propia protección de paquetes, en lugar de registros TLS. Un handshake completo normal tarda aproximadamente 1 RTT. Una reanudación que cumple los requisitos y es aceptada puede transportar **datos tempranos 0-RTT**, pero el handshake se completa después; Retry u otros intercambios adicionales del handshake pueden aumentar la latencia.
 3. **Identificadores de conexión**: permiten mantener la continuidad de la conexión cuando cambia la dirección, con validación de ruta y compatibilidad del endpoint. Las restricciones de migración o la falta de rutas disponibles aún pueden interrumpir la transición de Wi-Fi a la red celular; la continuidad no está garantizada.
 4. **Flexibilidad de implementación**: QUIC suele implementarse en espacio de usuario, lo que permite distribuir cambios de transporte junto con una aplicación o biblioteca. La implementación en espacio de usuario no es un requisito del protocolo.
 
 **En la práctica:** HTTP/3 suele usar UDP 443. Si esa ruta está bloqueada, un cliente HTTP puede probar HTTP/2 o HTTP/1.1 sobre TCP, si el servidor los admite; QUIC no se convierte en TCP. Comprueba la conectividad, el protocolo negociado y el comportamiento de la implementación y la descarga de procesamiento antes de atribuir un resultado de rendimiento a QUIC. El costo de CPU depende de la implementación y de la carga de trabajo.
 
-Una salvedad de seguridad: **los datos 0-RTT se pueden reproducir**. Reproducir un intercambio de datos tempranos puede hacer que una aplicación procese una solicitud más de una vez; la deduplicación de paquetes de transporte por sí sola no proporciona protección frente a la reproducción a nivel de aplicación. Permite solo las operaciones que la aplicación haya evaluado explícitamente como seguras frente a la reproducción. Que el método se llame GET o que se afirme que una operación es idempotente no basta. Los servidores pueden rechazar los datos tempranos; los servidores HTTP pueden usar `425 Too Early` para que el cliente vuelva a intentarlo después del handshake. Configura esta política en el cliente, la CDN y el origen.
+Una salvedad de seguridad: **los datos 0-RTT pueden sufrir ataques de repetición**. Repetir un intercambio de datos tempranos puede hacer que una aplicación procese una solicitud más de una vez; la deduplicación de paquetes de transporte por sí sola no protege frente a ataques de repetición en la aplicación. Permite solo las operaciones que la aplicación haya evaluado explícitamente como seguras ante la repetición. Que el método se llame GET o que se afirme que una operación es idempotente no basta. Los servidores pueden rechazar los datos tempranos; los servidores HTTP pueden usar `425 Too Early` para que el cliente vuelva a intentarlo después del handshake. Configura esta política en el cliente, la CDN y el origen.
 
 ---
 

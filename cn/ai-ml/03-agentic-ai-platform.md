@@ -1,7 +1,7 @@
 # 在 EKS 上构建智能体式 AI 平台
 
 > **审查基线**：Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 智能体式 AI 不止于简单问答，还能自主制定计划、使用工具并通过迭代实现目标。本章介绍如何设计智能体式 AI 平台及其在 EKS 上的运行边界。
 

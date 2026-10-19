@@ -50,7 +50,7 @@ HTTP handler 是应用程序代码，不是内核钩子。Cilium 可以使用 TC
 
 </details>
 
-### 4. CiliumEnvConfig 定义什么？
+### 4. CiliumEnvoyConfig 定义什么？
 
 - **A.** 仅 Pod 调度
 - **B.** 命名空间范围的低级 Envoy 资源，以及关联的 Service 流量重定向/后端同步

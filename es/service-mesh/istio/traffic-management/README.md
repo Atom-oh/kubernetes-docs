@@ -1,72 +1,47 @@
 # Gestión del tráfico
 
-Las capacidades de gestión del tráfico de Istio permiten un control detallado del flujo de tráfico dentro de la malla de servicios.
+Las capacidades de gestión del tráfico de Istio permiten controlar con precisión el flujo de tráfico dentro de la malla de servicios.
 
-## Índice
+## Tabla de contenido
 
 1. [Gateway y VirtualService](01-gateway-virtualservice.md)
 2. [Enrutamiento](02-routing.md)
 3. [DestinationRule](03-destination-rule.md) ⭐ Concepto esencial
 4. [División del tráfico](04-traffic-splitting.md)
-5. [Reintentos y tiempo de espera](05-retry-timeout.md)
+5. [Reintentos y tiempos de espera](05-retry-timeout.md)
 6. [Balanceo de carga](06-load-balancing.md)
 7. [Circuit Breaker](07-circuit-breaker.md)
 8. [Inyección de fallos](08-fault-injection.md)
 9. [Duplicación del tráfico](09-traffic-mirror.md)
 10. [Afinidad de sesión](10-session-affinity.md)
 11. [Control de salida](11-egress-control.md)
-12. [ServiceEntry (Gestión de servicios externos)](12-service-entry.md)
+12. [ServiceEntry (gestión de servicios externos)](12-service-entry.md)
+13. [WorkloadEntry (registro de máquinas virtuales)](13-workload-entry.md)
 
 ## Descripción general
 
-La gestión del tráfico es una de las funciones principales de Istio y permite realizar las siguientes operaciones sin cambios en el código:
+Estos son ejemplos de configuración para el modo sidecar de una versión compatible de Istio. Gateway, VirtualService y DestinationRule son objetos de API que consumen los proxies, no saltos de red independientes. Un mirror es una copia adicional de las solicitudes seleccionadas, no la parte restante de una división 90/10; las respuestas duplicadas se descartan. Los diagramas muestran relaciones de configuración lógicas.
+
+Los fragmentos son ejemplos alternativos, no un único manifiesto para aplicar en conjunto. Crea primero los Services y subconjuntos de DestinationRule a los que hacen referencia. Si una VirtualService no incluye una lista `gateways`, se aplica a la malla; las rutas de ingreso requieren una asociación explícita a un Gateway y un nombre de host coincidente. Para el modo ambient, usa el enrutamiento compatible de Gateway API/waypoint.
+
+La gestión del tráfico es una de las funciones principales de Istio y permite realizar estas operaciones sin cambios en el código:
 
 ### Funciones principales
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+![Una solicitud del cliente entra por el Gateway, VirtualService la enruta, DestinationRule aplica la política de tráfico y, después, la solicitud se distribuye entre tres versiones del servicio: la versión principal, una canaria y una copia duplicada para pruebas en sombra.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-0.png)
 
-    subgraph Istio["Istio Traffic Management"]
-        Gateway[Gateway<br/>External Traffic Entry]
-        VS[VirtualService<br/>Routing Rules]
-        DR[DestinationRule<br/>Traffic Policy]
-    end
-
-    subgraph Services["Services"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-        V3[Version 3<br/>Mirror]
-    end
-
-    Client -->|1. Request| Gateway
-    Gateway -->|2. Routing| VS
-    VS -->|3. Apply Policy| DR
-    DR -->|4a. Main Traffic| V1
-    DR -->|4b. Canary| V2
-    DR -->|4c. Shadow| V3
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Gateway,VS,DR istio;
-    class V1,V2,V3 service;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. Enrutamiento inteligente
 
-- **Basado en rutas**: `/api/v1` → Service A, `/api/v2` → Service B
-- **Basado en encabezados**: `User-Agent: Mobile` → Versión móvil
-- **Basado en cookies**: Enrutar usuarios específicos a versiones específicas
-- **Basado en ponderación**: Distribuir el tráfico por proporción
+- **Basado en la ruta**: `/api/v1` → Service A, `/api/v2` → Service B
+- **Basado en encabezados**: `User-Agent: Mobile` → versión móvil
+- **Basado en cookies**: enruta usuarios específicos a versiones específicas
+- **Basado en pesos**: distribuye el tráfico según una proporción
 
-### 2. Estrategias de Deployment
+### 2. Estrategias de despliegue
 
-**Canary Deployment**:
+**Despliegue canario**:
 ```yaml
 # Only 10% to new version
 route:
@@ -80,7 +55,7 @@ route:
   weight: 10
 ```
 
-**Blue/Green Deployment**:
+**Despliegue azul/verde**:
 ```yaml
 # Instant switch
 route:
@@ -92,22 +67,22 @@ route:
 
 ### 3. Patrones de resiliencia
 
-- **Circuit Breaker**: Aislar servicios con fallos
-- **Retry**: Reintentos automáticos
-- **Timeout**: Límites de tiempo de respuesta
-- **Rate Limiting**: Control de la tasa de solicitudes
+- **Circuit Breaker**: aislar los servicios que fallan
+- **Reintentos**: reintentos automáticos
+- **Tiempo de espera**: límites para el tiempo de respuesta
+- **Limitación de velocidad**: controlar la tasa de solicitudes
 
 ### 4. Pruebas y depuración
 
-- **Traffic Mirroring**: Replicar el tráfico de producción para pruebas
-- **Fault Injection**: Inyección intencional de fallos
-- **A/B Testing**: Ofrecer diferentes versiones a distintos grupos de usuarios
+- **Duplicación del tráfico**: replicar tráfico de producción para probarlo
+- **Inyección de fallos**: inyectar fallos de forma intencional
+- **Pruebas A/B**: ofrecer versiones distintas a grupos de usuarios distintos
 
 ## Recursos principales
 
 ### Gateway
 
-Define el punto de entrada para el tráfico externo hacia la malla.
+Define el punto de entrada del tráfico externo a la malla.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -128,7 +103,7 @@ spec:
 
 ### VirtualService
 
-Define cómo enrutar las solicitudes.
+Define cómo se enrutan las solicitudes.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -154,7 +129,7 @@ spec:
 
 ### DestinationRule
 
-Define las políticas para el Service de destino.
+Define las políticas del servicio de destino.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -177,7 +152,7 @@ spec:
 
 ## Ejemplos prácticos
 
-### Canary Deployment seguro
+### Despliegue canario seguro
 
 ```yaml
 # Step 1: Start with 5% traffic
@@ -200,10 +175,10 @@ spec:
       weight: 5
 ```
 
-Después de monitorear, aumente gradualmente si no hay problemas:
+Después de supervisar el resultado, aumenta gradualmente el porcentaje si no hay problemas:
 - 5% → 10% → 25% → 50% → 100%
 
-### Enrutamiento basado en encabezados (pruebas de desarrolladores)
+### Enrutamiento basado en encabezados (pruebas para desarrolladores)
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -230,7 +205,9 @@ spec:
         subset: v1
 ```
 
-### Circuit Breaker + Retry
+El encabezado del desarrollador es una indicación de enrutamiento que proporciona el cliente; no es autenticación ni un límite de autorización.
+
+### Circuit Breaker + reintentos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -249,7 +226,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -273,85 +250,37 @@ spec:
 
 ## Flujo de tráfico
 
-```mermaid
-flowchart LR
-    User[User]
+![Una solicitud de usuario entra por el Gateway de ingreso, pasa por el enrutamiento de VirtualService (coincidencias por ruta, encabezado y, después, peso), se ajusta según las políticas de DestinationRule (balanceo de carga, circuit breaker y pool de conexiones) y finalmente llega a uno de los tres Pods de respaldo.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-1.png)
 
-    subgraph Ingress["Ingress Gateway"]
-        IGW[Gateway<br/>Port 80/443]
-    end
-
-    subgraph VirtualServices["VirtualService Routing"]
-        VS1[Path Matching]
-        VS2[Header Matching]
-        VS3[Weight Distribution]
-    end
-
-    subgraph DestinationRules["DestinationRule Policies"]
-        DR1[Load Balancing]
-        DR2[Circuit Breaker]
-        DR3[Connection Pool]
-    end
-
-    subgraph Pods["Pods"]
-        P1[Pod v1-1]
-        P2[Pod v1-2]
-        P3[Pod v2-1]
-    end
-
-    User -->|Request| IGW
-    IGW --> VS1
-    VS1 --> VS2
-    VS2 --> VS3
-    VS3 --> DR1
-    DR1 --> DR2
-    DR2 --> DR3
-    DR3 --> P1
-    DR3 --> P2
-    DR3 --> P3
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class IGW gateway;
-    class VS1,VS2,VS3 routing;
-    class DR1,DR2,DR3 policy;
-    class P1,P2,P3 pod;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-1.html)
 
 ## Ruta de aprendizaje
 
-Para aprender eficazmente la gestión del tráfico, se recomienda el siguiente orden:
+Para aprender eficazmente la gestión del tráfico, se recomienda seguir este orden:
 
 1. **[Gateway y VirtualService](01-gateway-virtualservice.md)** ⭐ Punto de partida
    - Comprender los conceptos básicos
-   - Manejo del tráfico externo
+   - Gestionar el tráfico externo
 
 2. **[Enrutamiento](02-routing.md)**
    - Patrones de enrutamiento avanzados
    - Enrutamiento condicional
 
 3. **[DestinationRule](03-destination-rule.md)** ⭐ Concepto esencial
-   - Comprender el concepto de Subset
-   - Fundamentos de Traffic Policy
+   - Comprender el concepto de subconjunto
+   - Fundamentos de la política de tráfico
    - Integración con VirtualService
 
 4. **[División del tráfico](04-traffic-splitting.md)**
-   - Canary Deployment
+   - Despliegue canario
    - Pruebas A/B
 
-5. **[Reintentos y tiempo de espera](05-retry-timeout.md)**
+5. **[Reintentos y tiempos de espera](05-retry-timeout.md)**
    - Recuperación ante fallos
    - Control del tiempo de respuesta
 
 6. **[Balanceo de carga](06-load-balancing.md)**
-   - Diversos algoritmos
+   - Distintos algoritmos
    - Optimización del rendimiento
 
 7. **[Circuit Breaker](07-circuit-breaker.md)**
@@ -360,19 +289,19 @@ Para aprender eficazmente la gestión del tráfico, se recomienda el siguiente o
 
 8. **[Inyección de fallos](08-fault-injection.md)**
    - Pruebas de fallos
-   - Chaos Engineering
+   - Ingeniería del caos
 
 9. **[Duplicación del tráfico](09-traffic-mirror.md)**
-   - Pruebas de producción
-   - Validación de nuevas versiones
+   - Pruebas en producción
+   - Validación de versiones nuevas
 
 10. **[Afinidad de sesión](10-session-affinity.md)**
-    - Sticky Session
+    - Sesión persistente
     - Conservación del estado
 
 11. **[Control de salida](11-egress-control.md)**
     - Acceso a servicios externos
-    - Fortalecimiento de la seguridad
+    - Refuerzo de la seguridad
 
 12. **[ServiceEntry](12-service-entry.md)**
     - Registro de servicios externos
@@ -380,7 +309,7 @@ Para aprender eficazmente la gestión del tráfico, se recomienda el siguiente o
 
 ## Prácticas recomendadas
 
-### 1. Implementación gradual
+### 1. Despliegue gradual
 
 ```yaml
 # ❌ Bad example: 100% at once
@@ -390,7 +319,7 @@ weight: 100
 # 5% → Monitor → 10% → Monitor → ...
 ```
 
-### 2. Configure siempre Timeout
+### 2. Define tiempos de espera adecuados para la carga de trabajo
 
 ```yaml
 # ✅ Always set timeout
@@ -401,7 +330,9 @@ http:
   timeout: 10s
 ```
 
-### 3. Use Retry con cuidado
+Las solicitudes de streaming pueden necesitar tiempos de espera distintos. Un plazo HTTP corto no es adecuado para todos los streams de gRPC ni para respuestas de larga duración.
+
+### 3. Usa los reintentos con cuidado
 
 ```yaml
 # ✅ Only when idempotency is guaranteed
@@ -411,28 +342,28 @@ retries:
   retryOn: 5xx,reset,connect-failure
 ```
 
-### 4. Ajuste los umbrales de Circuit Breaker
+### 4. Ajusta los umbrales del Circuit Breaker
 
 ```yaml
 # ✅ Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5      # Adjust per service
+  consecutive5xxErrors: 5      # Adjust per service
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # Maximum 50% ejection
 ```
 
-### 5. Monitoree las métricas
+### 5. Supervisa las métricas
 
-Monitoree siempre al modificar la gestión del tráfico:
-- **Tasa de solicitudes**: Cambio en el número de solicitudes
-- **Tasa de errores**: Proporción de errores
-- **Latencia**: Latencia P50, P95, P99
-- **Tasa de éxito**: Proporción de éxitos
+Supervisa siempre las métricas al cambiar la gestión del tráfico:
+- **Tasa de solicitudes**: cambio en el número de solicitudes
+- **Tasa de errores**: proporción de errores
+- **Latencia**: latencia P50, P95 y P99
+- **Tasa de éxito**: proporción de solicitudes correctas
 
 ## Solución de problemas
 
-### El tráfico no se está enrutando
+### El tráfico no se enruta
 
 ```bash
 # 1. Check VirtualService
@@ -449,7 +380,7 @@ kubectl get pods --show-labels -n <namespace>
 istioctl analyze -n <namespace>
 ```
 
-### La ponderación no se está aplicando
+### No se aplica la ponderación
 
 ```bash
 # Check Envoy configuration
@@ -462,16 +393,16 @@ istioctl proxy-config clusters <pod-name> -n <namespace>
 ## Próximos pasos
 
 1. **[Seguridad](../security/README.md)**: mTLS y autenticación/autorización
-2. **[Observabilidad](../observability/README.md)**: Métricas, logs, traces
-3. **[Resiliencia](../resilience/README.md)**: Rate Limiting, Zone Aware Routing
+2. **[Observabilidad](../observability/README.md)**: métricas, registros y trazas
+3. **[Resiliencia](../resilience/README.md)**: limitación de velocidad y enrutamiento con conocimiento de zona
 
 ## Referencias
 
-- [Gestión del tráfico de Istio](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Gestión del tráfico en Istio](https://istio.io/latest/docs/concepts/traffic-management/)
 - [Referencia de VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
 - [Referencia de DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Referencia de Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/)
 
 ## Cuestionario
 
-Para comprobar lo aprendido en este capítulo, pruebe el [Cuestionario de gestión del tráfico de Istio](../../../quizzes/service-mesh/istio/traffic-management.md).
+Para comprobar lo aprendido en este capítulo, intenta el [cuestionario de gestión del tráfico de Istio](../../../quizzes/service-mesh/istio/traffic-management.md).

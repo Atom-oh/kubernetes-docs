@@ -1,7 +1,7 @@
 # Flagger 渐进式交付
 
 > **审查基线**：Flagger/Chart 1.45.0、Loadtester 0.39.0、Flux 2.9.5（发布说明审查后更新至补丁版本 2.9.6；示例未重新运行）、Podinfo 6.15.0
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 Flagger 通过 Canary CRD 管理 Kubernetes 工作负载的渐进式交付。它控制流量和修订版本，而不负责数据库或外部副作用的事务性回滚。这些实验示例要求网络、监控指标、授权和服务 SLO 相匹配。
 
@@ -28,7 +28,7 @@ Kubernetes Deployment 的 RollingUpdate 已会逐步替换 Pod。Flagger 增加�
 |---|---|---|
 | Canary | 逐步调整权重 | 额外副本、最小流量、失败条件 |
 | 蓝绿 | 验证独立修订版本后切换 | 两个工作负载加上突增资源、数据库兼容性 |
-| A/B | 支持的 header/cookie 匹配 | 队列分配、统计、独立授权 |
+| A/B | 支持的 header/cookie 匹配 | 实验对象分组、统计方法、独立授权 |
 
 蓝绿并不保证恰好两倍资源、即时回滚或零停机。Flagger 将 primary 更新为新修订版本；之后它不会保留一个完整的旧版本待命实例。
 
@@ -1313,7 +1313,7 @@ increase(flagger_canary_successes_total{namespace="flagger-demo",analysis_status
 increase(flagger_canary_failures_total{namespace="flagger-demo",analysis_status="completed"}[7d])
 ```
 
-官方 Istio dashboard JSON 是参考；请在当前 Grafana 中验证其 datasource 名称和 panel/schema 兼容性，然后再导出。Dashboard JSON 不是 Kubernetes manifest。请提供导出的 dashboard model，而不是 HTTP API `{"dashboard": ...}` envelope。
+官方 Istio dashboard JSON 是参考；请在当前 Grafana 中验证其 datasource 名称和 panel/schema 兼容性，然后再导出。Dashboard JSON 不是 Kubernetes manifest。请提供导出的 dashboard model，而不是 HTTP API {"dashboard": ...} envelope。
 
 ```bash
 curl -fsSL -o flagger-istio-reference.json \

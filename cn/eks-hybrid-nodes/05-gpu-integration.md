@@ -3,7 +3,7 @@
 < [上一节：节点引导](./04-node-bootstrap.md) | [目录](./README.md) | [下一节：工作负载放置](./06-workload-placement.md) >
 
 > **支持的版本**：DRA GPU 示例要求在受支持的 EKS 版本上运行 Kubernetes 1.34.2+。已审查的接口：GPU Operator 26.7.0、DRA driver 0.5.0、device plugin 0.20.0。
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 18 日
 
 本章将准备就绪的 NVIDIA GPU 主机集成到 EKS Hybrid Nodes。内容涵盖分配、GPU Operator 所有权、MIG 和时间切片。**本次审计未执行 GPU、驱动程序安装、模型下载或推理基准测试**。这些示例要求使用已获批准的 OS/kernel/driver/toolkit/runtime/image 组合，并在实际硬件上进行测试。
 
@@ -326,6 +326,12 @@ spec:
 不要为单设备 claim 设置 `CUDA_VISIBLE_DEVICES=0,1,2,3`。device manager/runtime 会提供已分配的设备；CUDA 的进程可见索引可能不同于物理 GPU 索引。手动覆盖可能隐藏或错误识别该分配，且不会授予额外 GPU。
 
 `nvidia-smi -L` 仅确认设备可见性。请在获批准的硬件上分别验证有界 CUDA 操作和实际应用；本文不声称已执行此类操作或获得性能结果。
+
+### 实测演示
+
+[![V4 演示视频：Hybrid GPU 推理（无声，2 分 14 秒）](../.gitbook/assets/en-eks-hybrid-nodes-demo-v4-gpu.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v4-gpu.mp4)
+
+与上面的 smoke Job 分开，这段无声视频展示了在 Hybrid GPU 节点上的 vLLM（v0.19.1，`Qwen/Qwen2.5-0.5B-Instruct`）推理 Pod：该节点使用 device plugin（v0.17.1），并由云端节点上的客户端 Job 调用。这是 2026 年 10 月 18 日在模拟环境中录制的真实终端画面（将 g6.xlarge NVIDIA L4 主机从通过 TGW 连接的本地 VPC 加入集群；这不是受支持的生产配置）。录制的运行中，只有 GPU 节点发布了 1 个 `nvidia.com/gpu`；推理 Pod 仅运行一个容器（没有 `istio-proxy`，且 `hostNetwork=false`），响应耗时不到 1 秒。首次拉取 vLLM 镜像（经 NAT 路径传输 9.6 GB）耗时 4 分 35 秒，未包含在录制中。这是功能检查，不是性能结果。完整演练请参阅[1 小时课程演示文稿](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)。
 
 ## MIG 和时间切片
 

@@ -1,6 +1,6 @@
 # Grafana OnCall
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 <span id="tabla-de-contenido"></span>
 
@@ -144,7 +144,7 @@ receivers:
         send_resolved: true
 ```
 
-amtool 0.34 validó la sintaxis y cuatro casos de enrutamiento critical/warning/info/fallback. send_resolved reenvía los mensajes de resolución del origen; no hace que la resolución manual en OnCall cambie automáticamente la regla del origen.
+`amtool 0.34` validó la sintaxis y cuatro escenarios de enrutamiento: crítico, advertencia, informativo y ruta de respaldo. `send_resolved` reenvía las notificaciones de resolución del sistema de origen; no hace que una resolución manual en OnCall actualice automáticamente la regla en el sistema de origen.
 
 ### Integración con Grafana Alerting
 
@@ -160,7 +160,7 @@ Utilice los requisitos de confirmación de SNS, firma y tratamiento del payload 
 
 Un payload de webhook genérico debe coincidir con las plantillas de parseo, agrupación y resolución configuradas explícitamente. Enviar alert_uid, state y labels no hace que todas las integraciones los interpreten igual. Serialice el JSON correctamente y diseñe la verificación HTTPS, los tiempos de espera, el manejo de errores y el comportamiento de reintento/deduplicación. Mantenga las URL, los tokens y los datos personales fuera de los logs.
 
-La API pública utiliza el **token de Authorization sin procesar** documentado; no añada Bearer automáticamente. La autenticación con service-account-token de Grafana también requiere X-Grafana-URL. El origen de la API y el webhook de integración son rutas de autenticación distintas.
+La API pública utiliza el valor sin procesar del token de `Authorization` documentado; no añada el prefijo `Bearer` automáticamente. La autenticación con service-account-token de Grafana también requiere X-Grafana-URL. El origen de la API y el webhook de integración son rutas de autenticación distintas.
 
 La [herramienta de inventario de solo lectura](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall) utiliza únicamente GET y valida el origen/la colección/el recuento de la paginación, TLS, las redirecciones y los permisos de archivo. Su salida puede contener URL de integración secretas y datos personales; no es una copia de seguridad completa de base de datos/claves/historial ni una instantánea de migración atómica. Doce pruebas locales con fixtures TLS pasaron sin consultar una cuenta real.
 
@@ -332,7 +332,7 @@ Elija las variables de plantilla a partir del payload real de la integración. p
 
 ### Integración con Slack
 
-Verifique los secretos de OAuth y de firma, los scopes y la conexión con el workspace de la aplicación de Slack instalada. Referencie los slack_channels descubiertos mediante los ajustes anidados de Slack de la ruta; no dé por supuesto que el antiguo ejemplo POST /slack_channels crea o conecta un canal. La instalación de la aplicación y las acciones de usuario requieren un procedimiento operativo autorizado aparte y aquí no se realizaron.
+Verifique los secretos de OAuth y de firma, los permisos OAuth y la conexión con el espacio de trabajo de la aplicación de Slack instalada. Referencie los slack_channels descubiertos mediante los ajustes anidados de Slack de la ruta; no dé por supuesto que el antiguo ejemplo POST /slack_channels crea o conecta un canal. La instalación de la aplicación y las acciones de usuario requieren un procedimiento operativo autorizado aparte y aquí no se realizaron.
 
 
 ### Comandos de Slack
@@ -388,7 +388,7 @@ El código fuente inspeccionado contiene un paso declare_incident real, pero val
 
 ### Funcionalidades de la aplicación móvil
 
-Las combinaciones admitidas de aplicación y despliegue pueden ofrecer feeds de alertas, acciones de estado, calendarios y notificaciones, sujetas a la conectividad del backend, los permisos del sistema operativo, la red y las reglas de usuario. No se garantiza la entrega inmediata ni el funcionamiento de las notificaciones push en toda instalación autoalojada.
+Las combinaciones admitidas de aplicación y despliegue pueden ofrecer lista de alertas, acciones de estado, calendarios y notificaciones, sujetas a la conectividad del backend, los permisos del sistema operativo, la red y las reglas de usuario. No se garantiza la entrega inmediata ni el funcionamiento de las notificaciones push en toda instalación autoalojada.
 
 
 ### Configuración de la aplicación móvil
@@ -423,7 +423,7 @@ Compare los mismos requisitos frente a planes, uso y contratos reales. Los preci
 
 ### Consideraciones sobre la migración
 
-La dirección por defecto ya no es una nueva migración desde PagerDuty/Opsgenie hacia OnCall OSS. Inventaríe los datos y dependencias de OnCall o de la herramienta que finaliza y, a continuación, valide las diferencias funcionales y la recuperación en un destino con mantenimiento. El código gratuito no elimina los costes de alojamiento, operación, soporte ni comunicación.
+OnCall OSS ya no debe ser el destino predeterminado de una nueva migración desde PagerDuty u Opsgenie. Inventaríe los datos y dependencias de OnCall o de la herramienta que finaliza y, a continuación, valide las diferencias funcionales y la recuperación en un destino con mantenimiento. El código gratuito no elimina los costes de alojamiento, operación, soporte ni comunicación.
 
 ![Inventario, copia de seguridad, revisión de contratos, pruebas de entrega/recuperación y cambio controlado a un destino con mantenimiento. Cloud Connection finalizó el 2026-03-24; los canales con soporte independiente deben verificarse.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
 
@@ -480,8 +480,8 @@ Pon a prueba tus conocimientos con el [Cuestionario de Grafana OnCall](../../qui
 
 ## Referencias
 
-- [OnCall OSS lifecycle](https://grafana.com/docs/oncall/latest/)
-- [OnCall API reference](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
-- [Archived source contract](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
-- [Opsgenie lifecycle](https://www.atlassian.com/software/opsgenie)
-- [Cloud Connection cutoff and alternatives](https://grafana.com/docs/oncall/latest/set-up/open-source/)
+- [Ciclo de vida de OnCall OSS](https://grafana.com/docs/oncall/latest/)
+- [Referencia de la API de OnCall](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
+- [Contrato del código fuente archivado](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
+- [Ciclo de vida de Opsgenie](https://www.atlassian.com/software/opsgenie)
+- [Fin de Cloud Connection y alternativas](https://grafana.com/docs/oncall/latest/set-up/open-source/)

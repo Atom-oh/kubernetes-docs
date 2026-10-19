@@ -4,7 +4,7 @@
 
 本节介绍 Cilium 网络、策略和可观测性。示例已根据 **Cilium/Helm chart 1.20.3**、Cilium CLI **0.20.1** 和 Hubble CLI **1.20.2** 进行审查。Cilium 1.20 Kubernetes 兼容性页面列出的测试版本为 **1.33–1.36**；上游发布 1.37 并不会自动扩展该兼容性矩阵。支持的主机为 AMD64/AArch64 Linux，内核版本需为 **5.10+**；或者使用文档中列出的发行版等效版本，例如 RHEL 8.10 回移植的 4.18 内核。各项功能还有额外要求。
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 ### 历史版本发布说明
 
@@ -12,19 +12,19 @@
 
 | 日期 | 版本 | 已核实的要点 |
 | --- | --- | --- |
-| July 14, 2026 | [1.20.0-rc.0](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.0) | 首个 1.20 候选版本 |
-| July 16, 2026 | [1.19.6](https://github.com/cilium/cilium/releases/tag/v1.19.6), [1.18.12](https://github.com/cilium/cilium/releases/tag/v1.18.12), [1.17.18](https://github.com/cilium/cilium/releases/tag/v1.17.18) | Gateway 访问日志配置列于 1.19.6/1.18.12；此处提到的重启策略和 ClusterMesh 亲和性修复列于 1.19.6，并非全部三个版本 |
-| July 21, 2026 | [1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) | 第二个 1.20 候选版本 |
-| July 29, 2026 | [1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) | GA 版本；下文列出部分变更 |
-| August 3, 2026 | [1.21.0-pre.0](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0) | 下一周期的预发布版本，不是本指南的部署基线 |
-| August 18, 2026 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh 文档和错误修复，包括重启/CIDR 策略处理 |
-| August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | 包含 ENI 接口时序、Service/LB 及其他修复 |
-| August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP 主机防火墙支持及相关修复 |
-| September 9, 2026 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | 预发布版本；其变更日志涵盖 pre.0 到 pre.2，因为 **1.21.0-pre.1 从未发布** |
-| September 16, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | 错误修复包括 ENI IPAM 前缀委派的分配/释放和辅助 VPC CIDR 处理、ClusterMesh 修复、策略变更后立即创建的 Pod 的策略修订、LocalRedirectPolicy 回归，以及升级在 v1.15 或更早版本中创建的集群（`CiliumNodeConfig v2alpha1` CRD 版本） |
-| September 16, 2026 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 较旧受支持版本线的补丁版本 |
-| October 2, 2026 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 最新的 1.21 预发布版本；**1.21 目前仅有预发布版本（尚无 GA 版本）**，本指南中标记为 1.21 的内容可能会变更 |
-| October 15, 2026 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API 依赖项 v1.6.3、conntrack GC 和对带有 `nodeSelector` 的 CNP 的处理等修复；也是本指南当前审查的基线 |
+| 2026年7月14日 | [1.20.0-rc.0](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.0) | 首个 1.20 候选版本 |
+| 2026年7月16日 | [1.19.6](https://github.com/cilium/cilium/releases/tag/v1.19.6), [1.18.12](https://github.com/cilium/cilium/releases/tag/v1.18.12), [1.17.18](https://github.com/cilium/cilium/releases/tag/v1.17.18) | Gateway 访问日志配置列于 1.19.6/1.18.12；此处提到的重启策略和 ClusterMesh 亲和性修复列于 1.19.6，并非全部三个版本 |
+| 2026年7月21日 | [1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) | 第二个 1.20 候选版本 |
+| 2026年7月29日 | [1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) | GA 版本；下文列出部分变更 |
+| 2026年8月3日 | [1.21.0-pre.0](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0) | 下一周期的预发布版本，不是本指南的部署基线 |
+| 2026年8月18日 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh 文档和错误修复，包括重启/CIDR 策略处理 |
+| 2026年8月18日 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | 包含 ENI 接口时序、Service/LB 及其他修复 |
+| 2026年8月18日 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP 主机防火墙支持及相关修复 |
+| 2026年9月9日 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | 预发布版本；其变更日志涵盖 pre.0 到 pre.2，因为 **1.21.0-pre.1 从未发布** |
+| 2026年9月16日 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | 错误修复包括 ENI IPAM 前缀委派的分配/释放和辅助 VPC CIDR 处理、ClusterMesh 修复、策略变更后立即创建的 Pod 的策略修订、LocalRedirectPolicy 回归，以及升级在 v1.15 或更早版本中创建的集群（`CiliumNodeConfig v2alpha1` CRD 版本） |
+| 2026年9月16日 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 较旧受支持版本线的补丁版本 |
+| 2026年10月2日 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 最新的 1.21 预发布版本；**1.21 目前仅有预发布版本（尚无 GA 版本）**，本指南中标记为 1.21 的内容可能会变更 |
+| 2026年10月15日 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API 依赖项 v1.6.3、conntrack GC 和对带有 `nodeSelector` 的 CNP 的处理等修复；也是本指南当前审查的基线 |
 
 2026 年 9 月 14 日，CNCF 博客发布了 [Cilium 1.20 功能回顾](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)（Gateway API ExternalAuth、TCPRoute/UDPRoute、IPv6 ENI IPAM 等），覆盖了与下文 1.20.0 公告摘要相同的范围。
 
@@ -40,7 +40,7 @@
 
 ### NetworkPolicy 安全公告
 
-[GHSA-fm8w-2m5w-9j7r / CVE-2026-56743](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) 的项目公告发布日期为 **July 6, 2026**。项目 API 与 GitHub 全局公告 API 暴露的日期不同：后者记录的日期为 September 3。此版本时间线采用项目披露日期；全局记录日期并不代表有更晚的修复版本。根据公告中的自定义集群名称条件，此问题影响 **1.19.0–1.19.4**：仅包含 `ipBlock` 的标准 Kubernetes NetworkPolicy 对等端可能会无意中允许来自所选 Pod 所在命名空间中工作负载的入口流量。**1.19.5** 修复了此问题；部署时请使用适当的当前已打补丁版本。公告称，CiliumNetworkPolicy/ClusterwideNetworkPolicy 以及低于 1.19.0 的版本不受此特定错误影响。
+[GHSA-fm8w-2m5w-9j7r / CVE-2026-56743](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) 的项目公告发布日期为 **2026年7月6日**。项目 API 与 GitHub 全局公告 API 暴露的日期不同：后者记录的日期为 9月3日。此版本时间线采用项目披露日期；全局记录日期并不代表有更晚的修复版本。根据公告中的自定义集群名称条件，此问题影响 **1.19.0–1.19.4**：仅包含 `ipBlock` 的标准 Kubernetes NetworkPolicy 对等端可能会无意中允许来自所选 Pod 所在命名空间中工作负载的入口流量。**1.19.5** 修复了此问题；部署时请使用适当的当前已打补丁版本。公告称，CiliumNetworkPolicy/ClusterwideNetworkPolicy 以及低于 1.19.0 的版本不受此特定错误影响。
 
 ## 简介
 

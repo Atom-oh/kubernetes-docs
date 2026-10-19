@@ -1,32 +1,32 @@
-# Observability 最適化クイズ
+# 可観測性の最適化クイズ
 
-> **検証済みのサンプルバージョン**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0
+> **検証済みの例示バージョン**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0
 
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 
-このクイズでは、EKS Observability 最適化ガイドの理解度を確認します。Observability の3つの柱である logging、metrics、tracing に加え、eBPF ベースの monitoring とコスト最適化戦略を扱います。
+このクイズでは、EKS 可観測性最適化ガイドの理解度を確認します。可観測性の三本柱であるログ、メトリクス、トレースに加え、eBPF ベースの監視とコスト最適化の方針を扱います。
 
 ---
 
 ## 選択式問題
 
-1. Observability の3つの柱のうち、「なぜ遅いのか？」という質問に答えるのに最も適したデータタイプはどれですか？
-   - A) Logging
-   - B) Metrics
-   - C) Tracing
-   - D) Events
+1. 可観測性の三本柱のうち、「なぜ遅いのか」という問いに答えるのに最も適したデータはどれですか？
+   - A) ログ
+   - B) メトリクス
+   - C) トレース
+   - D) イベント
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Tracing**
+**回答: C) トレース**
 
 **解説:**
-Observability の3つの柱は、それぞれ異なる種類の質問に答えます。Logging は「何が起きたか？」、Metrics は「システムは健全か？」、Tracing は「なぜ遅いのか？」に答えます。Tracing は、因果関係を理解してボトルネックを分析するため、リクエストフローを追跡する用途に最適化されています。分散システムでは、複数の Service をまたぐリクエストのレイテンシーを分析する際に Tracing が不可欠です。
+可観測性の三本柱は、それぞれ異なる問いに答えます。ログは「何が起きたか」、メトリクスは「システムは健全か」、トレースは「なぜ遅いのか」を示します。トレースは、因果関係を理解してボトルネックを分析できるよう、リクエストの経路を追跡する用途に適しています。分散システムで複数のサービスを通るリクエストの遅延を調べる際に役立ちます。
 
 </details>
 
-2. ラベルベースの高速フィルタリングに優れ、object storage（S3）を利用して高いコスト効率を実現する log storage solution はどれですか？
+2. ラベルによる高速な絞り込みに優れ、S3 などのオブジェクトストレージを利用するログ保存先はどれですか？
    - A) CloudWatch Logs
    - B) OpenSearch
    - C) Loki
@@ -38,11 +38,11 @@ Observability の3つの柱は、それぞれ異なる種類の質問に答え�
 **回答: C) Loki**
 
 **解説:**
-Loki は label indexing と object storage を使用しますが、総コストには compute、cache、object request、query、operation が含まれます。S3 の storage price を総コストと見なすのではなく、同じ Region、volume、retention、availability で比較してください。
+Loki はラベル索引とオブジェクトストレージを使いますが、総コストにはコンピューティング、キャッシュ、オブジェクト要求、クエリ、運用も含まれます。S3 の保存料金を総コストと見なさず、同じリージョン、データ量、保持期間、可用性の条件で比較してください。
 
 </details>
 
-3. EKS で logs を収集できる C ベースの agent はどれですか？
+3. EKS でログを収集できる、C 言語で実装されたエージェントはどれですか？
    - A) Fluentd
    - B) Fluent Bit
    - C) Vector
@@ -54,27 +54,27 @@ Loki は label indexing と object storage を使用しますが、総コスト�
 **回答: B) Fluent Bit**
 
 **解説:**
-Fluent Bit は AWS deployment で使用できる C ベースの collector です。Memory と throughput は version、parser、record size、buffering、hardware に依存します。固定の 15 MB や 200K msg/s という主張は保証ではありません。
+Fluent Bit は AWS 環境で使用できる C 言語ベースのコレクターです。メモリ使用量やスループットは、バージョン、パーサー、レコードサイズ、バッファリング、ハードウェアによって変わります。15 MB や毎秒 20 万メッセージといった固定値は保証ではありません。
 
 </details>
 
-4. Prometheus における cardinality explosion の主な原因は何ですか？
-   - A) scrape interval が長すぎる場合
-   - B) Pod UID または timestamp を label として使用する場合
-   - C) Recording Rules を多用する場合
-   - D) Remote Write を有効にする場合
+4. Prometheus で cardinality が急増する主な原因は何ですか？
+   - A) scrape interval が長すぎる
+   - B) Pod UID や timestamp を label に使う
+   - C) Recording Rule を多用する
+   - D) Remote Write を有効にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Pod UID または timestamp を label として使用する場合**
+**回答: B) Pod UID や timestamp を label に使う**
 
 **解説:**
-変化する request-ID/timestamp label は series count を増加させます。source で label を制限し、一意性を検証してください。labeldrop は sample を集約せず、collision を引き起こす可能性があります。target relabeling と metric relabeling は異なる段階で実行されます。
+変化する request ID や timestamp を label にすると、時系列数が増加します。データの発生元で label の種類を制限し、一意性も確認してください。`labeldrop` はサンプルを集約せず、衝突を起こすことがあります。target relabeling と metric relabeling は異なる段階で実行されます。
 
 </details>
 
-5. OpenTelemetry Collector の Tail Sampling 戦略で、ERROR span を含む受信 trace を選択する policy type はどれですか？
+5. OpenTelemetry Collector の Tail Sampling で、ERROR span を含む受信済み trace を選ぶ policy type はどれですか？
    - A) probabilistic
    - B) latency
    - C) status_code
@@ -86,87 +86,87 @@ Fluent Bit は AWS deployment で使用できる C ベースの collector です
 **回答: C) status_code**
 
 **解説:**
-ERROR status_code policy は、その sampler が受信した error span を使用して trace を選択します。Trace affinity、decision timing、buffer limit、late span、upstream head sampling により、失敗したすべての request が保持されることは保証されません。
+`ERROR` の `status_code` policy は、その sampler が受信した error span を使って trace を選択します。trace affinity、判定タイミング、バッファ上限、遅れて届く span、上流の head sampling が影響するため、失敗したすべてのリクエストが保持されるとは限りません。
 
 </details>
 
-6. eBPF ベースの monitoring の最大の利点は何ですか？
-   - A) より多くの種類の metrics を収集できる
-   - B) コードを変更せずに application を instrument できる
-   - C) metric storage cost を削減できる
-   - D) query performance を改善できる
+6. eBPF ベースの監視の最大の利点は何ですか？
+   - A) より多くの種類のメトリクスを収集できる
+   - B) コードを変更せずにアプリケーションを計測できる
+   - C) メトリクスの保存コストを削減できる
+   - D) クエリ性能を改善できる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) コードを変更せずに application を instrument できる**
+**回答: B) コードを変更せずにアプリケーションを計測できる**
 
 **解説:**
-対応する kernel、runtime、protocol では source change を削減できますが、すべての language、TLS library、business span を同等にカバーするわけではありません。permission、overhead、sensitive payload を検証してください。SDK auto-instrumentation でも source change を回避できる場合があります。
+対応するカーネル、ランタイム、プロトコルでは、ソースコードの変更を減らせます。ただし、あらゆる言語、TLS ライブラリ、業務上の span を同等にカバーするわけではありません。権限、オーバーヘッド、機微なペイロードを検証してください。SDK による自動計測でも、コード変更を避けられる場合があります。
 
 </details>
 
 7. Cilium Hubble の主な用途は何ですか？
-   - A) Container resource usage monitoring
-   - B) Network flow の観測と分析
-   - C) Log の収集と storage
-   - D) Distributed tracing backend
+   - A) コンテナのリソース使用量の監視
+   - B) ネットワークフローの観測と分析
+   - C) ログの収集と保存
+   - D) 分散トレースのバックエンド
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Network flow の観測と分析**
+**回答: B) ネットワークフローの観測と分析**
 
 **解説:**
-Hubble は、互換性のある Cilium deployment で network flow を観測します。L7 visibility は protocol と proxy/policy configuration に依存します。すべての flow や完全な application tracing を約束するのではなく、実際の coverage を検証してください。
+Hubble は、対応する Cilium 環境でネットワークフローを観測します。L7 の可視性は、プロトコルとプロキシ／ポリシーの設定に左右されます。すべてのフローが見える、またはアプリケーション全体のトレースができると決めつけず、実際の対象範囲を確認してください。
 
 </details>
 
-8. Kepler（Kubernetes Efficient Power Level Exporter）が主に測定する metric は何ですか？
-   - A) CPU temperature
-   - B) Network bandwidth
-   - C) Energy（joules）と power（watts）
-   - D) Disk I/O latency
+8. Kepler（Kubernetes Efficient Power Level Exporter）が主に測定するものは何ですか？
+   - A) CPU 温度
+   - B) ネットワーク帯域幅
+   - C) エネルギー（joule）と電力（watt）
+   - D) ディスク I/O 遅延
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Energy（joules）と power（watts）**
+**回答: C) エネルギー（joule）と電力（watt）**
 
 **解説:**
-Kepler 0.10+ は legacy 0.7 と異なります。0.11.4 では、kepler_pod_cpu_watts は power gauge であり、rate(kepler_pod_cpu_joules_total[5m]) は J/s=W です。1000 を掛けると milliwatts になります。hardware access と attribution support を検証してください。
+Kepler 0.10 以降は、旧版 0.7 と動作が異なります。0.11.4 では `kepler_pod_cpu_watts` は電力の gauge であり、`rate(kepler_pod_cpu_joules_total[5m])` は J/s、つまり W です。1000 を掛けると milliwatt になります。ハードウェアへのアクセス条件と attribution の対応状況を確認してください。
 
 </details>
 
-9. OpenCost/KubeCost で team ごとの cost を追跡する推奨方法は何ですか？
-   - A) team ごとに別々の Kubernetes cluster を作成する
-   - B) namespace と Pod で cost-center や team などの label を標準化する
-   - C) team ごとに別々の AWS account を割り当てる
-   - D) ResourceQuotas のみを設定する
+9. OpenCost／KubeCost でチームごとのコストを追跡する推奨方法は何ですか？
+   - A) チームごとに Kubernetes クラスターを分ける
+   - B) namespace と Pod に cost-center や team などの label を統一して付ける
+   - C) チームごとに AWS account を分ける
+   - D) ResourceQuota だけを設定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) namespace と Pod で cost-center や team などの label を標準化する**
+**回答: B) namespace と Pod に cost-center や team などの label を統一して付ける**
 
 **解説:**
-OpenCost は Kubernetes label に基づいて cost を配分します。namespace と Pod に `cost-center`、`team`、`environment` などの label を一貫して適用することで、`aggregate=label:team` を使用して OpenCost API 経由で team ごとの cost を query できます。このアプローチにより、既存の cluster structure を維持しながら、詳細な cost analysis と chargeback が可能になります。
+OpenCost は Kubernetes label に基づいてコストを配分します。namespace と Pod に `cost-center`、`team`、`environment` などの label を一貫して付けると、OpenCost API で `aggregate=label:team` を指定してチーム別のコストを照会できます。既存のクラスター構成を維持しながら、詳細なコスト分析と費用配賦を行えます。
 
 </details>
 
-10. SLO（Service Level Objective）ベースの monitoring において、「Error Budget」とは何を意味しますか？
-    - A) monitoring system operation に割り当てられた budget
-    - B) SLO target から逸脱する際に許容される error の量
+10. SLO（Service Level Objective）ベースの監視で「Error Budget」とは何ですか？
+    - A) 監視システムの運用に割り当てる予算
+    - B) SLO の目標から逸脱することが許されるエラー量
     - C) alert の送信コスト
-    - D) log storage に使用できる storage capacity
+    - D) ログ保存に使える容量
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) SLO target から逸脱する際に許容される error の量**
+**回答: B) SLO の目標から逸脱することが許されるエラー量**
 
 **解説:**
-request ベースの 99.9% SLO では、許容される bad request は定義された window における total requests×0.001 に等しくなります。これを time ベースの downtime と混同しないでください。残りの 30-day budget には、直近5分間の ratio ではなく、30-day の request-weighted error ratio が必要です。
+リクエスト数に基づく 99.9% SLO では、定義した期間内に許容される不良リクエスト数は、総リクエスト数×0.001 です。これを時間ベースの停止時間と混同しないでください。30 日間の残り予算を求めるには、直近 5 分間の比率ではなく、30 日間のリクエスト数で重み付けしたエラー比率が必要です。
 
 </details>
 
@@ -174,7 +174,7 @@ request ベースの 99.9% SLO では、許容される bad request は定義さ
 
 ## 短答式問題
 
-1. 複雑な query を事前計算して保存することで dashboard query performance を向上させる Prometheus feature の名前は何ですか？
+1. 複雑なクエリを事前計算して保存し、dashboard のクエリを高速化する Prometheus の機能は何ですか？
 
 <details>
 <summary>回答を表示</summary>
@@ -182,11 +182,11 @@ request ベースの 99.9% SLO では、許容される bad request は定義さ
 **回答:** Recording Rules
 
 **解説:**
-Recording Rules は PromQL expression を定期的に評価し、結果を新しい time series として保存します。たとえば、`record: node:cpu_utilization:ratio` を使用して node CPU utilization を事前計算すると、dashboard は複雑な query を実行する代わりにこの metric を直接 query でき、応答が高速化されます。これらは PrometheusRule CRD の `record` field で定義されます。
+Recording Rule は PromQL 式を定期的に評価し、その結果を新しい時系列として保存します。たとえば `record: node:cpu_utilization:ratio` で node の CPU 使用率を事前計算すれば、dashboard は複雑なクエリを実行せずにこの metric を直接参照でき、応答が速くなります。PrometheusRule CRD の `record` field で定義します。
 
 </details>
 
-2. OpenTelemetry で、decision window の span を収集し、観測された outcome を使用して sample を行う sampling method は何と呼ばれますか？
+2. OpenTelemetry で、判定期間中に span を集め、観測した結果に基づいてサンプリングする方式は何と呼ばれますか？
 
 <details>
 <summary>回答を表示</summary>
@@ -194,11 +194,11 @@ Recording Rules は PromQL expression を定期的に評価し、結果を新し
 **回答:** Tail Sampling
 
 **解説:**
-デフォルトの trace-complete sampling は、decision window 中に受信した span を使用して決定します。すべての span の完了や到着を証明することはできません。affinity、buffer、late span、restart、upstream sampling を考慮してください。
+標準的な trace-complete sampling は、判定期間中に受信した span に基づいて判断します。すべての span が完了した、または到着したと証明するものではありません。affinity、バッファ、遅れて届く span、再起動、上流での sampling を考慮してください。
 
 </details>
 
-3. trace ID を metric data point にリンクし、metrics から traces への直接 navigation を可能にする Prometheus feature は何ですか？
+3. trace ID を metric のデータ点に結び付け、メトリクスからトレースへ直接移動できるようにする Prometheus の機能は何ですか？
 
 <details>
 <summary>回答を表示</summary>
@@ -206,11 +206,11 @@ Recording Rules は PromQL expression を定期的に評価し、結果を新し
 **回答:** Exemplars
 
 **解説:**
-Exemplars は、追加の context（通常は traceID）を metric sample に付加する feature です。histogram または counter metric に exemplar を追加すると、Grafana の metric graph 上の特定の point をクリックして、その時点の trace に直接移動できます。これにより Observability data 間の correlation analysis が容易になり、trace で「なぜこの時点で latency が急増したのか」を分析できます。
+Exemplar は、traceID などの補足情報を metric sample に付加する機能です。histogram や counter に exemplar を付けると、Grafana のグラフ上の点をクリックして、その時点の trace に直接移動できます。可観測性データを関連付け、「この時点で遅延が急増したのはなぜか」を trace で調べられます。
 
 </details>
 
-4. VictoriaMetrics cluster mode で、metric data storage を担当する component の名前は何ですか？
+4. VictoriaMetrics の cluster mode で、メトリクスデータを保存するコンポーネントは何ですか？
 
 <details>
 <summary>回答を表示</summary>
@@ -218,11 +218,11 @@ Exemplars は、追加の context（通常は traceID）を metric sample に付
 **回答:** vmstorage
 
 **解説:**
-vmstorage が data を保存します。複数の instance だけでは replication は確立されません。replication factor、vminsert/vmselect behavior、query deduplication、failure handling を設定してください。
+vmstorage がデータを保存します。インスタンスを複数起動しただけでは replication は成立しません。replication factor、vminsert／vmselect の動作、クエリの重複排除、障害時の処理を設定してください。
 
 </details>
 
-5. 古い data を S3 Glacier のような低コスト storage に移動して log/metric storage cost を削減する戦略は何と呼ばれますか？
+5. 古いログやメトリクスを S3 Glacier などの低コストストレージへ移し、保存費用を下げる戦略は何と呼ばれますか？
 
 <details>
 <summary>回答を表示</summary>
@@ -230,7 +230,7 @@ vmstorage が data を保存します。複数の instance だけでは replicat
 **回答:** Tiered Storage
 
 **解説:**
-Tiering は access frequency、restore delay、retention に依存します。active な Loki/Tempo block を Glacier に移すと query が機能しなくなる場合があります。compatibility/recovery を検証するか、別の archive を使用してください。節約額は固定の割合ではありません。
+階層化の設計は、アクセス頻度、復元時間、保持期間によって変わります。稼働中の Loki／Tempo block を Glacier へ移すと、クエリに支障が出ることがあります。互換性と復旧手順を検証するか、別の archive を使ってください。削減率は一定ではありません。
 
 </details>
 
@@ -238,7 +238,7 @@ Tiering は access frequency、restore delay、retention に依存します。ac
 
 ## ハンズオン問題
 
-1. DEBUG および TRACE level の log をフィルタリングして除外する Fluent Bit configuration を記述してください。
+1. DEBUG と TRACE レベルのログを抽出対象から除外する Fluent Bit の設定を記述してください。
 
 <details>
 <summary>回答を表示</summary>
@@ -252,11 +252,11 @@ Tiering は access frequency、restore delay、retention に依存します。ac
 ```
 
 **解説:**
-arbitrary な message text ではなく、parse された level field に対して ^(DEBUG|TRACE)$ を match させます。drop と incident investigation への影響を測定してください。40～60% の節約は保証されません。
+任意の message text ではなく、parse 済みの level field に対して `^(DEBUG|TRACE)$` を照合します。破棄されるログ量と、障害調査への影響を測定してください。40～60% のコスト削減は保証されません。
 
 </details>
 
-2. service ごとの HTTP error rate が 5% を超え、その状態が5分間継続した場合に warning を発生させる PrometheusRule を記述してください。
+2. service ごとの HTTP error rate が 5% を超え、その状態が 5 分続いたら warning を発生させる PrometheusRule を記述してください。
 
 <details>
 <summary>回答を表示</summary>
@@ -291,11 +291,11 @@ spec:
 ```
 
 **解説:**
-この alert rule は、service ごとの 5XX status code ratio を計算します。`status=~"5.."` は status code 500～599 に一致する regex です。`for: 5m` により、condition が5分間継続した場合にのみ alert が発生し、一時的な spike による false alert を防止します。`sum by (service)` を使用すると、各 service に対して独立した alert が生成されます。
+この alert rule は service ごとに 5XX status code の比率を計算します。`status=~"5.."` は 500～599 の status code に一致する正規表現です。`for: 5m` によって condition が 5 分続いた場合にだけ alert を発生させ、一時的な急増による誤報を抑えます。`sum by (service)` により、service ごとに独立した alert が生成されます。
 
 </details>
 
-3. error trace を100%、latency が1秒を超える trace を100%、残りを10%のみ sample する OpenTelemetry Collector 向け tail_sampling processor configuration を記述してください。
+3. error trace を 100%、latency が 1 秒を超える trace も 100%、残りを 10% サンプリングする OpenTelemetry Collector の tail_sampling processor 設定を記述してください。
 
 <details>
 <summary>回答を表示</summary>
@@ -324,7 +324,7 @@ processors:
 ```
 
 **解説:**
-これらの positive policy は、一致する受信済み error/slow trace を保持し、残りを probabilistic に sample します。buffer、affinity、late-span limit は引き続き存在します。全体の retention は error/slow の割合に依存するため、90% の削減は保証されません。first-match semantics を drop/composite policy に一般化しないでください。
+これらの肯定条件の policy は、一致した受信済み error／slow trace を保持し、それ以外を確率的にサンプリングします。バッファ、affinity、遅れて届く span の上限は引き続き影響します。error／slow trace の割合によって全体の保持率は変わるため、90% 削減は保証されません。first-match の動作を drop／composite policy にまで一般化しないでください。
 
 </details>
 
@@ -332,38 +332,38 @@ processors:
 
 ## 上級問題
 
-1. 大規模 EKS cluster（500+ node）で Observability stack の high availability を実現するための architecture を設計してください。collection、storage、query の各 layer について、どの component をどのように deployment すべきか説明してください。
+1. 500 ノードを超える大規模 EKS クラスターで、可観測性スタックの高可用性を実現する構成を設計してください。収集、保存、クエリの各層にどのコンポーネントをどう配置するか説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-node count のみから replica count を導き出さないでください。node log agent と gateway を分離し、trace ID によって tail sampling を route し、buffering/backpressure と drop を測定します。現在の Loki/Tempo mode の replication/quorum/AZ requirement に従ってください。VictoriaMetrics replication/query deduplication と AMP quota/retention を設定します。Prometheus replica×shard の PVC/memory を予算化し、shard query を merge します。Grafana には shared DB と独立した Alerting HA が必要です。query caching の edition support を検証してください。PDB と S3 durability は end-to-end availability を保証しません。failure と recovery をテストしてください。
+ノード数だけから replica 数を決めないでください。ノード上のログ agent と gateway を分け、trace ID に基づいて tail sampling を振り分け、バッファリング、backpressure、drop を測定します。Loki／Tempo の現行モードに必要な replication、quorum、AZ の要件に従ってください。VictoriaMetrics の replication と query 重複排除、AMP の quota と retention を設定します。Prometheus の replica 数×shard 数に応じた PVC とメモリを確保し、shard のクエリ結果を統合します。Grafana には共有 DB と、別途高可用性を構成した Alerting が必要です。query caching が利用できる edition か確認してください。PDB や S3 の耐久性だけでは、エンドツーエンドの可用性は保証されません。障害と復旧をテストしてください。
 
 </details>
 
-2. Observability cost が月額 $5,000 の環境で、品質を維持しながら50%の cost reduction を実現する最適化戦略を提案してください。logging、metrics、tracing の各領域について、具体的な方法を説明してください。
+2. 月額 $5,000 の可観測性コストがかかる環境で、品質を維持しながら 50% 削減する方針を提案してください。ログ、メトリクス、トレースごとに具体策を説明してください。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答:**
 
-$5,000 の baseline と 50% の target は仮定です。最大の category を最適化する前に、ingestion、storage、scan、compute、operation cost を attribution してください。parsed-level filtering、request-level probability sampling、安全な metric/bucket reduction、tail sampling、retention をそれぞれ試行してください。throttling は 10% sampler ではなく、recording rule は raw-data retention を変更しません。等しい Region、availability、query、retention requirement で総コストを比較してください。節約効果は重複します。percentage を加算するのではなく、bill、data loss、SLO coverage、investigation success を評価してください。target が確立されていない場合は、evidence と次の experiment を報告してください。
+$5,000 の基準額と 50% の目標は仮定です。最大の費目に取り組む前に、取り込み、保存、スキャン、計算、運用の各コストを把握してください。parse 済み level による filter、request 単位の確率サンプリング、安全な metric／bucket 削減、tail sampling、保持期間の変更を個別に試します。throttling は 10% sampler ではなく、recording rule は生データの保持期間を変えません。同じリージョン、可用性、クエリ、保持期間の要件で総コストを比較してください。削減効果は重なるため、割合を単純に足し合わせず、請求額、データ損失、SLO のカバー範囲、調査の成功率を評価します。目標を達成できる根拠がなければ、確認できた証拠と次の実験を報告してください。
 
 </details>
 
 ---
 
 **スコア計算:**
-- 正解数 18～20: 優秀（Observability expert level）
+- 正解数 18～20: 優秀（可観測性の専門家レベル）
 - 正解数 14～17: 良好（実務で活用可能）
 - 正解数 10～13: 平均（追加学習を推奨）
 - 正解数 6～9: 基礎（基本概念を復習）
-- 正解数 0～5: 不十分（内容全体の復習が必要）
+- 正解数 0～5: 不十分（全体を復習）
 
 ---
 
 **関連学習資料:**
-- [EKS Observability 最適化ガイド](../../observability/09-observability-optimization.md)
+- [EKS 可観測性最適化ガイド](../../observability/09-observability-optimization.md)

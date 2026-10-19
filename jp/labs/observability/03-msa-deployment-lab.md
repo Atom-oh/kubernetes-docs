@@ -1,4 +1,4 @@
-# パート3: MSA のデプロイとカナリア
+# パート3: MSAのデプロイとカナリア
 
 <span id="application-structure"></span>
 <span id="architecture-overview"></span>
@@ -34,30 +34,30 @@
 <span id="verification-5"></span>
 
 > **難易度**: 上級
-> **最終更新**: September 13, 2026
-実行可能な 5 つの Python ロールを個別のワークロードとしてデプロイします。[アプリケーション README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application) がコード、DB、イメージ、チャートの入力を定義します。決済と通知は疑似実装であり、実際の課金やメール/SMS の送信は行われません。
+> **最終更新日**: 2026年10月16日
+実行可能な5つのPythonロールを、それぞれ独立したワークロードとしてデプロイします。[アプリケーションREADME](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)でコード、データベース、イメージ、チャートの入力を定義しています。決済と通知は疑似処理であり、実際の課金やメール/SMS送信は行いません。
 
-![Separate workloads, transactional outbox, SNS fanout and consumers](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
+![独立したワークロード、トランザクショナルアウトボックス、SNSファンアウト、コンシューマー](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-10.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-10.html)
 
-## 1. 共有 API と永続化のコントラクト {#contracts}
+## 1. 共有APIと永続化の契約 {#contracts}
 
-| リクエスト/ロール | コントラクト |
+| リクエスト/ロール | 契約 |
 |---|---|
-| `POST /orders` | 201 + `id`。order と outbox を同一トランザクションでコミット |
-| `POST /payments` | 200 + `status: completed`。同一の order/amount/method は冪等 |
-| `GET /orders/{id}` | 200 + 同一 ID、または 404 |
-| `notification` | 専用の SQS キュー、永続化された疑似通知 |
-| `analytics` | 別の SQS キュー、独立して永続化される結果 |
+| `POST /orders` | 201 + `id`。注文とoutboxを同時にコミット |
+| `POST /payments` | 200 + `status: completed`。注文/金額/方式が同一なら冪等。値が競合する場合は409を返す |
+| `GET /orders/{id}` | 200 + 同じID、または404 |
+| `notification` | 専用のSQSキュー、永続化された疑似通知 |
+| `analytics` | 別のSQSキュー、独立して永続化される結果 |
 
-W3C コンテキストは gateway/service 間の HTTP と producer/consumer の境界を越えて伝播します。outbox への publish 後、DB へのマーク付け前にクラッシュすると再配信が発生するため、consumer はイベント ID をトランザクション内で重複排除します。ただしこれによって外部のメールや決済の副作用が exactly once になるわけではありません。order の POST に対する汎用的な Idempotency-Key の処理は含まれていません。
+W3Cコンテキストは、gateway/service間のHTTP通信とproducer/consumer間の境界を越えて伝播します。outboxへの公開後、データベースに処理済みの印を付ける前にクラッシュすると再配信されるため、コンシューマーはイベントIDをトランザクション内で重複排除します。これによって外部のメール送信や決済処理がexactly onceになるわけではありません。注文POSTに対する汎用的なIdempotency-Key処理は含まれていません。
 
-アプリのメトリクスは `lab_http_requests_total` と `lab_http_request_duration_seconds` で、service/route/status/revision のラベルが付きます。JSON ログには service/level/trace_id/span_id が含まれます。顧客や決済のペイロードはメトリクスのラベルにはしません。
+アプリケーションメトリクスは`lab_http_requests_total`と`lab_http_request_duration_seconds`で、service/route/status/revisionをラベルに持ちます。JSONログにはservice/level/trace_id/span_idが含まれます。顧客や決済のペイロードをメトリクスのラベルに含めません。
 
 ## 2. データベースファイルとイメージ {#image-database}
 
-パート1 の専用ランタイムアカウントとプライベート接続ファイルを使用します。Pod 内のパスは `/run/database-ca/global-bundle.pem` と `/run/database/connection.json` です。接続ファイルとパブリックな RDS CA を、それぞれ Secret / ConfigMap として個別にマウントします。
+パート1で用意した専用のランタイムアカウントとプライベート接続ファイルを使います。Pod内のパスは`/run/database-ca/global-bundle.pem`と`/run/database/connection.json`です。接続ファイルとパブリックなRDS CAは、それぞれSecretとConfigMapとして別個にマウントします。
 
 ```bash
 cd examples/labs/observability/application
@@ -68,9 +68,10 @@ docker buildx build --platform linux/amd64 \
   --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
 docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
-パート1 で選択したイミュータブルなバージョンを使用します。既存の Secret を更新する場合は、値を出力したりチャートファイルに埋め込んだりせず、組織のローテーション手順に従ってください。Dockerfile ではベースイメージのダイジェスト、UID 10001、範囲を限定したビルドコンテキストを固定しています。
 
-生成される `m6i.large` ノードは AMD64 です。AMD64 対応またはクロスプラットフォーム対応の Buildx builder を使用し、デプロイ前にプッシュしたマニフェストに `linux/amd64` が含まれることを確認してください。監査時のローカル ARM64 スモークテストでは AMD64 ビルドを検証できません。
+パート1で選択したイミュータブルなバージョンを使います。既存のSecretは、値を表示したりチャートファイルに記載したりせず、組織のローテーション手順に従って更新してください。Dockerfileではベースイメージのダイジェスト、UID 10001、範囲を限定したビルドコンテキストを固定しています。
+
+生成される`m6i.large`ノードはAMD64を使います。AMD64対応またはクロスプラットフォーム対応のBuildxビルダーを使い、デプロイ前にプッシュしたマニフェストで`linux/amd64`を確認してください。監査時のローカルARM64スモークテストでは、AMD64向けビルドを検証できません。
 
 ## 3. コントローラーとチャートのインストール {#deployment}
 
@@ -82,38 +83,40 @@ helm upgrade --install argo-rollouts argo/argo-rollouts --version 2.43.1   --kub
 helm upgrade --install observability-lab ./chart --kube-context service -n msa   -f "$LAB_STATE/helm-inputs/application.yaml"
 kubectl --context service -n msa get deployment,rollout,pods,svc,scaledobject
 ```
-5 つの ServiceAccount と IRSA のサブジェクトをすべて確認します。Gateway に AWS ロールはありません。publisher は SNS に、consumer は自身のキューに、KEDA はキューの属性のみにアクセスします。1 つのワークロードに Pod Identity と IRSA の経路を重複して設定しないでください。Readiness は DB とスキーマを確認するもので、SQS/IAM への配信成功を確認するものではありません。
 
-ServiceMonitor のラベルは service クラスターの Prometheus リリースと一致し、`honorLabels` によりアプリ側の service ラベルが保持されます。マネージドノードグループでベースラインを実行できます。Karpenter を追加するのは、[別ガイド](../../autoscaling/02-karpenter.md) で IAM/ディスカバリー/EC2NodeClass/AMI/taint を検証した後にしてください。
+5つのServiceAccountとIRSAサブジェクトをすべて確認してください。GatewayにはAWSロールがありません。publisherはSNSに、consumerはそれぞれ自身のキューに、KEDAはキュー属性のみにアクセスします。1つのワークロードにPod IdentityとIRSAの経路を重複して構成しないでください。Readinessチェックが確認するのはデータベース/スキーマであり、SQS/IAMへの配信成功ではありません。
 
-![Deployment and observability across management/service scopes](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png)
+ServiceMonitorのラベルはservice用Prometheusリリースと一致し、`honorLabels`によってアプリケーションのserviceラベルが保持されます。ベースラインはマネージドノードグループ上で実行できます。Karpenterを追加するのは、[別のガイド](../../autoscaling/02-karpenter.md)でIAM/ディスカバリー/EC2NodeClass/AMI/taintを確認した後にしてください。
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-0.html)
+![管理スコープとサービススコープにまたがるデプロイとオブザーバビリティ](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png)
 
-## 4. HTTP と非同期処理の検証 {#verify}
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-0.html)
+
+## 4. HTTPと非同期処理の検証 {#verify}
 
 ```bash
 kubectl --context service -n msa port-forward svc/api-gateway 8080:8080
 # Run in another terminal from the repository root:
 BASE_URL=http://127.0.0.1:8080 LOAD_PROFILE=smoke   k6 run --no-usage-report examples/labs/observability/load-test/k6-scenario.js
 ```
-作成された ID のみを読み取り、疑似決済の状態を検証します。キューごとに独立して配信されていること、および consumer の `/stats`、DB のカウント、ログが増加していることを確認します。notification と analytics は別々のキューを使用します。1 つのキューに競合する consumer を並べても fanout にはなりません。処理に失敗したメッセージや poison メッセージは、DLQ ポリシーのために ack されないまま残ります。
 
-CloudWatch/Loki の JSON に含まれる trace_id、Tempo の実際のスパン、Prometheus の exemplar の ID を比較します。collector をインストールしただけではエンドツーエンドの検証にはなりません。
+作成されたIDだけを読み取り、疑似決済の状態を検証してください。キューごとに独立して配信されること、およびconsumerの`/stats`、データベースの件数、ログが増加することを確認します。notificationとanalyticsには別々のキューを使います。1つのキューにconsumerを複数登録してもfanoutにはなりません。処理に失敗したメッセージや有害なメッセージは、DLQポリシーに従い未acknowledgedのまま残ります。
 
-## 5. カナリアと GitOps の所有権 {#canary}
+CloudWatch/LokiのJSONにあるtrace_id、Tempoの実際のスパン、Prometheusのexemplar IDを照合してください。collectorをインストールしただけでは、エンドツーエンドで検証したことにはなりません。
+
+## 5. カナリアとGitOpsの所有権 {#canary}
 
 
-![Manual inspection, canary-only analysis, promotion or abort](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
+![手動確認、カナリアのみを対象とする分析、昇格または中止](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-1.html)
-1 つの Rollout が payment-service を所有します。レプリカ数が 5 の場合、20% のステップはレプリカ単位であり、実際のリクエストの 20% を保証するものではありません。分析の前の manual pause の間に、新しいリビジョンへトラフィックを流してください。クエリは `rollouts-pod-template-hash` で対象を選択し、直近のリクエストが 5 件以上、成功率 99% を要求し、空/NaN/Inf/複数系列の結果を拒否します。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-1.html)
+1つのRolloutがpayment-serviceを管理します。レプリカが5つの場合、20%のステップはレプリカ数に基づくため、実際のリクエストの20%を保証しません。分析の前にある手動pause中に、新しいリビジョンへトラフィックを送ります。クエリは`rollouts-pod-template-hash`で対象を選択し、直近のリクエストが5件以上、成功率が99%であることを要求し、空/NaN/Inf/複数系列の結果を拒否します。
 
-実際の Rollouts 1.10.0 の条件評価と PromQL はテスト済みですが、クラスターでの promote は実行していません。abort は Git の revert や目的のイメージへの復元ではありません。ArgoCD を任意で利用する場合は、[インストールガイド](../../gitops/argocd/01-installation.md) に従い、このリポジトリの実際のチャートパスとレビュー済みリビジョンを指定し、Helm による直接の所有権と同時に使用しないでください。Secret はコミットせず、既存の Secret を参照します。app-of-apps の sync wave だけでは子リソースの Readiness は保証されません。
+実際のRollouts 1.10.0で条件評価とPromQLをテストしましたが、クラスター上で昇格は実行していません。abortはGitのrevertでも、意図したイメージの復元でもありません。ArgoCDを任意で使う場合は、[インストールガイド](../../gitops/argocd/01-installation.md)に従い、このリポジトリに存在するチャートパスとレビュー済みリビジョンを指定し、Helmによる直接管理と同時に使わないでください。Secretはコミットせず、既存のSecretを参照します。app-of-appsのsync waveだけでは、子リソースのReadinessは保証されません。
 
-### manual pause を体験する
+### 手動pauseを試す
 
-以下の手順では Helm を望ましい状態 (desired state) の所有者として使用します。GitOps では、イメージの変更と復旧を Git 上でレビューし、Helm による直接の書き込みを混在させないでください。[Argo Rollouts 1.10.0 リリース](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0) のバイナリとチェックサムを確認したうえで、OS/CPU に合致するプラグインをインストールします。
+次の手順ではHelmを望ましい状態の管理元として使います。GitOpsを使う場合は、イメージの変更と復旧をGit上でレビューし、Helmからの直接書き込みと混在させないでください。[Argo Rollouts 1.10.0のリリース](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0)でバイナリとチェックサムを確認してから、OS/CPUに合ったプラグインをインストールします。
 
 ```bash
 # ROLLOUTS_BINARY: checksum-verified binary for your OS/architecture.
@@ -124,7 +127,7 @@ export PATH="$HOME/.local/bin:$PATH"
 kubectl argo rollouts version --short
 ```
 
-Rollout が stable であることを確認し、その完全な values を保持したうえで、パート3 のビルド手順で実際にレビュー済みの AMD64 イメージを新しいイミュータブルタグとして公開します。初回インストールでは以前の stable リビジョンが存在しないため、この更新演習には該当しません。チャートは 1 つのイメージ設定をすべてのロールで共有するため、これを変更すると他のロールも通常の Deployment として更新されます。Rollout のステップに従うのは payment のみです。
+安定したRolloutであることを確認し、現在の完全なvaluesを保持してから、パート3のビルド手順に従って、実際にレビュー済みのAMD64イメージを新しいイミュータブルタグで公開します。初回インストールには以前の安定リビジョンがないため、この更新演習には該当しません。チャートでは全ロールが1つのイメージ設定を共有するため、これを変更するとほかのロールも通常のDeploymentとして更新されます。Rolloutのステップが適用されるのはpaymentのみです。
 
 ```bash
 # Run from examples/labs/observability/application.
@@ -141,9 +144,9 @@ helm upgrade observability-lab ./chart --kube-context service -n msa \
 kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
---watch の表示は別のターミナルで維持し、必要に応じて Ctrl+C で停止します。トラフィック生成と promote/abort のコマンドは、さらに別のターミナルで実行してください。
+--watchの表示は別のターミナルに出し、必要に応じてCtrl+Cで終了します。トラフィック生成と昇格/中止のコマンドは、別のターミナルで実行してください。
 
-Paused の間はセクション 4 のトラフィックを継続し、新しい rollouts-pod-template-hash のリビジョンに直近のリクエストが 5 件以上到達していることを Prometheus で確認します。トラフィックの欠落やクエリの失敗は成功ではありません。確認後、下記の manual pause を進めることで、設定済みの AnalysisRun と後続のステップが実行されます。--full は使用しないでください。分析と pause をスキップしてしまいます。
+Paused中はセクション4のトラフィックを継続し、Prometheusで新しい`rollouts-pod-template-hash`リビジョンに直近のリクエストが5件以上到達したことを確認します。トラフィックが届かない、またはクエリに失敗した場合は成功と判断しません。確認後、下のコマンドで手動pauseを解除し、設定済みのAnalysisRunと後続ステップを実行します。`--full`は使用しないでください。分析とpauseをスキップします。
 
 ```bash
 kubectl argo rollouts promote payment-service --context service -n msa
@@ -151,7 +154,7 @@ kubectl argo rollouts get rollout payment-service --context service -n msa --wat
 kubectl --context service -n msa get analysisruns
 ```
 
-問題が発生した場合は promote せずに abort し、元の完全な values を通じて目的のイメージへ復元します。abort だけでは spec.template や Git は復元されません。
+問題が起きた場合は昇格せずabortし、元の完全なvaluesを使って意図したイメージに戻してください。abortだけではspec.templateもGitも復元されません。
 
 ```bash
 kubectl argo rollouts abort payment-service --context service -n msa
@@ -160,10 +163,10 @@ helm upgrade observability-lab ./chart --kube-context service -n msa \
 kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
-promote に成功したら、承認済みイメージのオーバーレイを以降の Helm コマンドでも保持するか、管理している望ましい values に取り込みます。障害分析の証跡を保存し、最終状態を確認してください。本監査では CLI のチェックサム/ヘルプと、チャートおよび分析ロジックを検証しましたが、これらのクラスターに対する update/promote/abort コマンドは実行していません。
+昇格後も、承認済みイメージのオーバーレイを以降のHelmコマンドに含めるか、管理対象のdesired valuesに取り込んでください。障害分析の証跡を保持し、最終状態を確認します。この監査ではCLIのチェックサム/ヘルプとチャート/分析ロジックを検証しましたが、クラスター更新/昇格/中止の各コマンドは実行していません。
 
-[パート4](./04-load-testing-scaling-lab.md) に進みます。所有権と依存関係を考慮したクリーンアップは [パート6](./06-distributed-tracing-lab.md#cleanup) に従ってください。
+[パート4](./04-load-testing-scaling-lab.md)に進んでください。所有権と依存関係を考慮したクリーンアップについては[パート6](./06-distributed-tracing-lab.md#cleanup)に従います。
 
 ## 検証範囲
 
-検証対象は、ローカルの SQLite/PostgreSQL、3 つの HTTP サービス、OTel の相関付け、SNS/SQS SDK のスタブ、コンテナのスモークテスト、Helm/CRD、PromQL/Argo の条件です。実際の Aurora TLS、EKS/IRSA、SNS fanout、KEDA/Karpenter、カナリアのトラフィック分割は実施していません。
+ローカルSQLite/PostgreSQL、3つのHTTPサービス、OTelの相関付け、SNS/SQS SDKスタブ、コンテナのスモークテスト、Helm/CRD、PromQL/Argoの条件を検証しました。実際のAurora TLS、EKS/IRSA、SNSファンアウト、KEDA/Karpenter、カナリアのトラフィック分割は実行していません。

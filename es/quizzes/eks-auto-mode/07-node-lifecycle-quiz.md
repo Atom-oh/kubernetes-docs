@@ -1,10 +1,11 @@
-# Cuestionario sobre el ciclo de vida de Node de EKS Auto Mode
+# Cuestionario sobre el ciclo de vida de nodos de EKS Auto Mode
 
-> **Documento relacionado**: [Ciclo de vida de Node](../../eks-auto-mode/07-node-lifecycle.md)
+> **Documento relacionado**: [Ciclo de vida de los nodos](../../eks-auto-mode/07-node-lifecycle.md)
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es el nombre del campo de configuración para reemplazar periódicamente nodos en NodePool?
+### 1. ¿Qué campo de NodePool especifica la expiración por antigüedad de los NodeClaims recién creados?
 
 - A) `nodeLifetime`
 - B) `maxAge`
@@ -17,266 +18,160 @@
 **Respuesta: C) `expireAfter`**
 
 **Explicación:**
-El campo `expireAfter` permite establecer la vida útil máxima del Node para el reemplazo periódico de nodos, con el fin de aplicar parches de seguridad o actualizaciones de AMI.
-
+El campo se encuentra en `spec.template.spec`. Auto Mode documenta un valor predeterminado de `336h` y aplica una gracia de terminación de NodeClaim de `24h` si el campo se omite en el pool. La vida máxima de una instancia administrada es de 21 días; no es una garantía de tiempo mínimo de actividad. Actualizar la plantilla no sobrescribe los claims existentes. Los valores mencionados en el cuestionario anterior —desarrollo: 336h, staging: 168h, producción: 72–168h y seguridad: 24–48h— son ejemplos de políticas sin verificación, no intervalos de cumplimiento obligatorios.
 ```yaml
-spec:
-  template:
-    spec:
-      # Set maximum node lifetime
-      expireAfter: 168h  # Auto-replace after 7 days
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
 
-**Configuraciones comunes:**
-- Entorno de desarrollo: 336h (14 días)
-- Staging: 168h (7 días)
-- Producción: 72h ~ 168h (3-7 días)
-- Entorno crítico para la seguridad: 24h ~ 48h (1-2 días)
 
 </details>
 
-### 2. ¿Qué ocurre cuando vence un Node que tiene expireAfter configurado?
+### 2. ¿Qué ocurre cuando vence un NodeClaim de Auto Mode?
 
-- A) El Node se elimina inmediatamente
-- B) El Node se marca como no programable, se drena y luego se elimina
-- C) Solo se envía una notificación al administrador
-- D) El Node se reinicia automáticamente
+- A) Desaparece siempre de forma instantánea
+- B) Comienza la terminación y el drenaje sin garantizar que haya un reemplazo listo previamente
+- C) Solo se envía una notificación
+- D) Se reinicia la misma instancia
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El Node se marca como no programable, se drena y luego se elimina**
+**Respuesta: B) Comienza la terminación y el drenaje sin garantizar que haya un reemplazo listo previamente**
 
 **Explicación:**
-Cuando un Node vence, Karpenter ejecuta un proceso ordenado:
-
-1. **Cordon**: Bloquea la programación de nuevos Pods
-2. **Drain**: Mueve los Pods existentes a otros nodos
-3. **Delete**: Termina la instancia EC2
-
-PodDisruptionBudgets y Disruption Budgets se respetan durante este proceso.
-
-```yaml
-disruption:
-  budgets:
-    # Expiration-based replacement also follows this budget
-    - nodes: "10%"
-```
+La expiración es un desencadenante forzoso y no está limitada por los presupuestos de interrupción de NodePool. El controlador impide la programación ordinaria de nuevos Pods e intenta drenar y limpiar el nodo. Los PDB y las anotaciones de Pod pueden afectar la expulsión, pero el período de gracia de terminación y el límite de vida de AWS acotan la protección. Por tanto, un presupuesto `nodes: 10%` no convierte las expiraciones en una actualización gradual controlada del 10 %. La capacidad de reemplazo y la disponibilidad de la aplicación deben comprobarse por separado.
 
 </details>
 
-### 3. ¿Qué AMI proporciona un tiempo de arranque más rápido entre AL2023 y Bottlerocket?
+### 3. ¿Qué afirmación sobre la selección del sistema operativo en EKS Auto Mode es correcta?
 
-- A) AL2023
-- B) Bottlerocket
-- C) Son iguales
-- D) Depende del tipo de instancia
+- A) Se elige AL2023 con `amiFamily`
+- B) AWS administra las variantes de Bottlerocket; NodeClass no sirve para seleccionar una familia de AMI
+- C) Se selecciona una AMI personalizada con `amiSelectorTerms`
+- D) Los nodos GPU deben usar AL2023 administrado por el cliente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Bottlerocket**
+**Respuesta: B) AWS administra las variantes de Bottlerocket; NodeClass no sirve para seleccionar una familia de AMI**
 
 **Explicación:**
-Bottlerocket es un OS optimizado para workloads de contenedores, que proporciona tiempos de arranque más rápidos que AL2023.
-
-**Comparación de tiempo de arranque:**
-| AMI | Tiempo de arranque | Características |
-|-----|-----------|-----------------|
-| AL2023 | 20-40 sec | Paquetes generales, flexibilidad |
-| Bottlerocket | 15-25 sec | Solo contenedores, OS mínimo |
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: fast-boot
-spec:
-  amiFamily: Bottlerocket  # Fast boot
-```
-
-Beneficios adicionales de Bottlerocket:
-- Sistema de archivos raíz inmutable
-- Actualizaciones de seguridad automáticas
-- Superficie de ataque menor
+Auto Mode no expone esas interfaces para AMI personalizadas ni acceso SSH/SSM. Sus imágenes administradas también admiten cargas de trabajo aceleradas. Las cifras del cuestionario anterior (AL2023: 20–40 s frente a Bottlerocket: 15–25 s) y las del texto fuente (40–60 s frente a 20–30 s/20–40 s) no tienen mediciones verificadas; por tanto, no demuestran un orden universal de velocidad de arranque. Las comparaciones generales entre sistemas operativos son independientes de la interfaz administrada de Auto Mode.
 
 </details>
 
-### 4. ¿Qué ocurre cuando se detecta Drift en nodos existentes debido a actualizaciones de AMI?
+### 4. ¿Qué puede ocurrir si una actualización de imagen administrada de Auto Mode hace que los NodeClaims existentes queden en estado `Drifted`?
 
-- A) El Node se actualiza automáticamente in-place
-- B) Los nodos se reemplazan secuencialmente con la nueva AMI
-- C) Reemplazo después de la aprobación del administrador
-- D) No ocurre nada
+- A) Todas las instancias se actualizan inmediatamente en el sitio
+- B) Los claims aptos pueden reemplazarse conforme a los controles aplicables para interrupciones graduales
+- C) No ocurre nada hasta que cambie una etiqueta arbitraria del Node
+- D) Hay que eliminar todos los nodos simultáneamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los nodos se reemplazan secuencialmente con la nueva AMI**
+**Respuesta: B) Los claims aptos pueden reemplazarse conforme a los controles aplicables para interrupciones graduales**
 
 **Explicación:**
-Cuando una nueva AMI está disponible, EKS Auto Mode detecta Drift y reemplaza los nodos secuencialmente.
-
-**Condiciones de detección de Drift:**
-- Nueva versión de AMI optimizada para EKS
-- Cambio de amiFamily en NodeClass
-- Cambios en security group
-- Cambios en la configuración de subnet
-
-```yaml
-# Drift-based replacement also follows Disruption Budget
-disruption:
-  budgets:
-    - nodes: "10%"  # Only 10% replaced at a time
-```
+Revisa las condiciones `Drifted`, sus motivos y la política vigente. Un presupuesto del 10 % se redondea hacia arriba y se combina con los demás límites activos; no implica que se reemplace un nodo por vez. También importan las restricciones de planificación, los PDB y la semántica del período de gracia. No todos los cambios de NodePool generan drift: ampliar de forma compatible los requisitos o cambiar el peso, los límites de comportamiento o la configuración de interrupciones es distinto de un drift del estado deseado. `amiFamily` no es un campo de Auto Mode.
 
 </details>
 
-### 5. ¿Cuál es un trade-off potencial al configurar expireAfter con un valor corto para mantener los nodos actualizados?
+### 5. ¿Qué contrapartida puede introducir una política de expiración más corta?
 
-- A) Reducción de costos
-- B) Posible degradación temporal del rendimiento debido al aumento de la frecuencia de reemplazo de nodos
-- C) Aumento de vulnerabilidades de seguridad
-- D) Mejora de la estabilidad del cluster
+- A) Una reducción garantizada de costos
+- B) Más reprogramación, trabajo de calentamiento y recuperación, y posible impacto en la disponibilidad
+- C) La garantía de que habrá más CVE
+- D) Estabilidad garantizada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Posible degradación temporal del rendimiento debido al aumento de la frecuencia de reemplazo de nodos**
+**Respuesta: B) Más reprogramación, trabajo de calentamiento y recuperación, y posible impacto en la disponibilidad**
 
 **Explicación:**
-Un expireAfter corto mejora la seguridad, pero tiene los siguientes trade-offs:
-
-**Ventajas:**
-- Se aplican los parches de seguridad más recientes
-- Aplicación rápida de actualizaciones de AMI
-- Prevención de drift de nodos
-
-**Desventajas:**
-- Reducción temporal de capacidad durante el reemplazo de nodos
-- Más reprogramación de Pods
-- Posibilidad adicional de interrupciones para instancias Spot
-
-**Recomendaciones:**
+Reemplazar nodos con frecuencia puede hacer más frecuente el despliegue de imágenes administradas, pero no demuestra que el parche necesario esté disponible ni corrige todas las vulnerabilidades de una carga de trabajo. También puede aumentar los costos de capacidad, descarga de imágenes, puntos de control y recuperación. Por sí sola, la expiración no aumenta la probabilidad de interrupción de una instancia EC2 Spot. Evalúa por separado la recuperación de la aplicación y la gracia del nodo; el presupuesto de NodePool no puede limitar la tasa de expiración.
 ```yaml
-# Balanced setting
-spec:
-  template:
-    spec:
-      expireAfter: 168h  # 7 days
-  disruption:
-    budgets:
-      - nodes: "10%"  # Limit concurrent replacement
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
+
 
 </details>
 
-### 6. ¿Qué tiene precedencia cuando Consolidation y Expiration se activan simultáneamente?
+### 6. ¿Cómo se deben entender la consolidación y la expiración cuando sus condiciones coinciden?
 
-- A) Consolidation siempre tiene precedencia
-- B) Expiration siempre tiene precedencia
-- C) Se ejecuta lo que alcance primero la condición de reemplazo de Node
-- D) El administrador debe elegir
+- A) La consolidación siempre prevalece
+- B) La expiración siempre espera a que haya drift y luego a la consolidación
+- C) Los métodos graduales y la expiración forzosa siguen rutas de control distintas, sin un orden total universal
+- D) Un administrador debe elegir manualmente cada acción
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Se ejecuta lo que alcance primero la condición de reemplazo de Node**
+**Respuesta: C) Los métodos graduales y la expiración forzosa siguen rutas de control distintas, sin un orden total universal**
 
 **Explicación:**
-Karpenter evalúa múltiples razones de disruption de forma independiente y ejecuta la acción cuando se cumplen las condiciones.
-
-**Prioridad de disruption (orden típico de evaluación):**
-1. **Drift**: Se detecta un cambio de configuración o una actualización de AMI
-2. **Expiration**: Se excedió el tiempo de expireAfter
-3. **Consolidation**: Node subutilizado o vacío
-
-```yaml
-# Example: 5-day-old underutilized node
-# - expireAfter: 7 days -> Not expired yet
-# - Consolidation condition met -> Replaced by Consolidation
-
-# Example: 8-day-old normal utilization node
-# - expireAfter: 7 days -> Expired
-# - Replaced by Expiration
-```
+El controlador de interrupciones graduales evalúa el drift antes de la consolidación; la expiración es una ruta forzosa independiente. No hay un orden global documentado como `drift > expiration > consolidation` ni una garantía de que siempre gane la primera condición. Un nodo de cinco días puede consolidarse antes de vencer a los siete días. Un NodeClaim vencido de ocho días puede empezar a terminar aunque el nodo esté muy utilizado.
 
 </details>
 
-### 7. ¿Qué método se usa cuando los nodos deben reemplazarse inmediatamente para aplicar parches de seguridad?
+### 7. ¿Cuál es un punto de partida adecuado para remediar urgentemente una vulnerabilidad de nodos?
 
-- A) Configurar expireAfter en 0
-- B) Agregar la anotación Drift al Node
-- C) Actualizar NodeClass para activar Drift o drenar el Node
-- D) Reiniciar el cluster
+- A) Establecer `expireAfter` en cero para todos los pools
+- B) Inventar una anotación de drift
+- C) Verificar la corrección administrada, identificar los claims afectados y seguir un procedimiento de un solo recurso con comprobaciones de estado
+- D) Eliminar un pool en bloque y llamarlo reemplazo secuencial
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Actualizar NodeClass para activar Drift o drenar el Node**
+**Respuesta: C) Verificar la corrección administrada, identificar los claims afectados y seguir un procedimiento de un solo recurso con comprobaciones de estado**
 
 **Explicación:**
-Métodos de aplicación de parches de seguridad de emergencia:
+Confirma que la imagen administrada o la corrección esté disponible. Después, en el contexto revisado, inspecciona el UID de un solo NodeClaim, su asociación con el nodo, los PDB, el estado persistente y la capacidad disponible o que se pueda obtener. Si corresponde, usa drift administrado; evalúa por separado el reemplazo manual y vuelve a comprobar el estado del nodo y la evidencia de la imagen antes de pasar al siguiente. Una etiqueta cosmética `SecurityPatch` no garantiza que se active un parche, y eliminar en bloque todos los nodos etiquetados no constituye una actualización gradual. `--delete-emptydir-data` puede descartar datos locales.
 
-**Método 1: Actualización de NodeClass (recomendado)**
-```yaml
-# Trigger drift by changing tags or settings
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: default
-spec:
-  tags:
-    SecurityPatch: "2025-02-19"  # Drift triggered by tag change
-```
+La guía relacionada establece `KUBE_CONTEXT`; el comando siguiente solo recopila evidencia.
 
-**Método 2: Drain manual**
 ```bash
-# Drain specific node
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# Delete node (Auto Mode provisions new node)
-kubectl delete node <node-name>
+: "${NODECLAIM_NAME:?Select one NodeClaim for review}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaim "$NODECLAIM_NAME" -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,node:.status.nodeName,
+       pool:.metadata.labels["karpenter.sh/nodepool"],imageID:.status.imageID,
+       expireAfter:.spec.expireAfter,terminationGracePeriod:.spec.terminationGracePeriod,
+       conditions:[.status.conditions[]?|{type,status,reason}]}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
+  jq '[.items[]|{namespace:.metadata.namespace,name:.metadata.name,
+       observedGeneration:.status.observedGeneration,generation:.metadata.generation,
+       currentHealthy:.status.currentHealthy,desiredHealthy:.status.desiredHealthy,
+       disruptionsAllowed:.status.disruptionsAllowed}]'
 ```
 
-**Método 3: Reemplazo continuo**
-```bash
-# Sequentially replace all nodes
-kubectl delete nodes -l karpenter.sh/nodepool=general-purpose
-```
 
 </details>
 
-### 8. ¿Qué comportamiento resulta de configurar expireAfter en Never?
+### 8. ¿El valor upstream `expireAfter: Never` permite conservar indefinidamente un nodo de Auto Mode?
 
-- A) El Node vence inmediatamente
-- B) El reemplazo automático basado en tiempo queda deshabilitado
-- C) La configuración se invalida y se aplica el valor predeterminado
-- D) Se produce un error
+- A) Sí, incluso ante cualquier mantenimiento o interrupción
+- B) No; sigue aplicándose el límite de 21 días para las instancias administradas de Auto Mode
+- C) Sí, si el Pod tiene un PDB
+- D) Sí, para cualquier carga de trabajo con estado
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El reemplazo automático basado en tiempo queda deshabilitado**
+**Respuesta: B) No; sigue aplicándose el límite de 21 días para las instancias administradas de Auto Mode**
 
 **Explicación:**
-Configurar `expireAfter: Never` deshabilita la expiración de nodos basada en tiempo.
-
-```yaml
-spec:
-  template:
-    spec:
-      expireAfter: Never  # Disable time-based expiration
-```
-
-**Precauciones:**
-- Drift y Consolidation siguen funcionando
-- La aplicación de parches de seguridad puede demorarse
-- Recomendado solo para workloads de larga duración
-
-**Casos de uso recomendados:**
-- Workloads con estado (bases de datos)
-- Jobs de muy larga duración
-- Entornos con cronogramas de mantenimiento manual
+La sintaxis upstream no permite anular la vida útil del servicio Auto Mode. No recomiendes `Never` como forma de ejecutar indefinidamente una base de datos de Auto Mode o un trabajo prolongado en una sola instancia, ni supongas una respuesta concreta de admisión sin probarla. Planifica puntos de control, almacenamiento duradero externo y recuperación. El drift, las interrupciones y otras acciones del ciclo de vida pueden ocurrir antes.
 
 </details>
+
+## Referencias
+
+- [Valores predeterminados de NodePool en Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
+- [Vida útil máxima de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html)
+- [Interrupciones y drift](https://karpenter.sh/v1.14/concepts/disruption/)

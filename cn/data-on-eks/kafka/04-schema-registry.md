@@ -1,7 +1,7 @@
 # 第 4 部分：架构注册表
 
 > **审查基线**：Karapace 6.2.4、Apicurio Registry 3.3.3、Strimzi 1.3.0 / Kafka 4.3.1\
-> **最后审阅**：October 16, 2026
+> **最后审阅**：2026 年 10 月 16 日
 
 ## 为什么要使用架构注册表？
 
@@ -27,7 +27,7 @@ JSON 同样可以有契约：无论是否使用注册表，都可以使用 JSON 
 
 Karapace 和 Apicurio 发布时采用 Apache-2.0 许可证。该许可证包含一些条件，包括保留所需声明；这并不意味着“没有限制”。Confluent 的代码库区分了采用 Community 许可证的服务器模块和采用 Apache-2.0 许可证的客户端/Avro 模块。请检查实际组件许可证及任何支持合同，不要根据集群大小推断商业条款。
 
-API 兼容性很有用，但**只更改 URL 并不构成迁移计划**。请针对保留的记录测试架构 ID、引用、主题命名、身份验证、客户端版本和线上编码。例如，Apicurio 的兼容性 API 并未实现 Confluent 的所有导出器/加密功能；接受可选请求字段并不一定意味着会强制执行其规则。
+API 兼容性很有用，但**只更改 URL 并不构成迁移计划**。请针对保留的记录测试架构 ID、引用、subject 命名策略、身份验证、客户端版本和线上编码。例如，Apicurio 的兼容性 API 并未实现 Confluent 的所有导出器/加密功能；接受可选请求字段并不一定意味着会强制执行其规则。
 Apicurio 能够存储的制品类型，并不代表每个 Kafka 序列化器都支持它。Karapace 也需要配置 broker、身份验证和架构主题；基于 Kafka 并不意味着无需配置。
 
 ## 序列化格式
@@ -99,7 +99,7 @@ JSON Schema 用于验证 JSON。不同注册表对草案版本和兼容性分析
 
 ## 兼容性和部署顺序
 
-在与 Confluent 兼容的 API 中，可在**主题**级别配置兼容性（或继承全局默认值）。使用默认的 `TopicNameStrategy` 时，主题 `orders` 中的值使用主题 `orders-value`；其他策略可以让多个主题共用一个主题，也可以在同一主题中分离不同的记录类型。
+在与 Confluent 兼容的 API 中，可在 **subject（主题）级别**配置兼容性，或继承全局默认值。使用默认的 `TopicNameStrategy` 时，Kafka 主题 `orders` 中的值使用 subject `orders-value`；其他策略可以让多个 Kafka 主题共用一个 subject，也可以在同一 Kafka 主题中为不同记录类型使用不同 subject。
 
 | 模式 | 必需关系 | 典型架构发布顺序 |
 | --- | --- | --- |
@@ -381,7 +381,7 @@ kubectl -n kafka port-forward --address=127.0.0.1 service/apicurio-registry 8080
 
 ## 注册与应用程序使用的同一架构
 
-在另一个终端中，将 `order.avsc` 注册到 `orders-value` 下。这避免了旧示例中带命名空间的多字段架构与藏在 curl 字符串中的不同单字段架构不匹配的问题。第一个请求会显式配置主题的兼容性；HTTP 请求失败时，curl 会以非零状态退出。
+在另一个终端中，将 `order.avsc` 注册到 `orders-value` 下。这避免了旧示例中带命名空间的多字段架构与藏在 curl 字符串中的不同单字段架构不匹配的问题。第一个请求会显式配置该 subject 的兼容性；HTTP 请求失败时，curl 会以非零状态退出。
 
 ```bash
 # Run from a directory containing the order.avsc above.
@@ -431,7 +431,7 @@ specific.avro.reader=false
 ```
 
 生产者示例要求先注册匹配的架构。
-当 `specific.avro.reader=false` 时，消费者会使用通用 Avro 记录；使用生成的 SpecificRecord 类则需要匹配的代码和读取方设置。默认主题策略假定应用程序的 Kafka 主题为 `orders`。
+当 `specific.avro.reader=false` 时，消费者会使用通用 Avro 记录；使用生成的 SpecificRecord 类则需要匹配的代码和读取方设置。默认 subject 命名策略假定应用程序的 Kafka 主题为 `orders`。
 
 更换注册表之前，请使用冷缓存消费者测试保留记录、新版本注册、兼容性拒绝、架构引用以及重启/恢复流程。保留原始架构 ID 映射，或执行明确且受支持的数据/标识符迁移。HTTP 健康检查成功并不等同于序列化测试成功。
 

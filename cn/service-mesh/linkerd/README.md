@@ -1,22 +1,22 @@
 # Linkerd
 
-> **最后更新**：October 16, 2026 · 已使用 edge-26.10.1 检查公开 CLI 示例
+> **最后更新**：2026年10月16日 · 已使用 edge-26.10.1 检查公开 CLI 示例
 
-上游项目发布 edge 构建；稳定版发行版及其支持生命周期由供应商提供。Linkerd 2.20 是一个功能里程碑，并非下载的 CLI 通用版本号。请选择确切的发行版/版本，并检查其与 Kubernetes 和 Gateway API 的兼容性。此处当前的公开示例为 edge-26.10.1（proxy v2.370.0），于 October 5, 2026 发布。edge-26.9.1 修复了多集群场景下对远程凭证 exec-auth-provider 的接受问题，以及可重试的 destination-IP 冲突处理问题。请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)和[发行版本模型](https://linkerd.io/releases/)。
+上游项目发布 edge 构建；稳定版发行版及其支持生命周期由供应商提供。Linkerd 2.20 是一个功能里程碑，并非下载的 CLI 通用版本号。请选择确切的发行版/版本，并检查其与 Kubernetes 和 Gateway API 的兼容性。此处当前的公开示例为 edge-26.10.1（proxy v2.370.0），于 2026年10月5日 发布。edge-26.9.1 修复了多集群场景下对远程凭证 exec-auth-provider 的接受问题，以及可重试的 destination-IP 冲突处理问题。请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)和[发行版本模型](https://linkerd.io/releases/)。
 
 以下条目保留了历史版本背景。edge-26.8.2 测试的 Kubernetes 最高版本，并不会自动扩展稳定版供应商发行版的支持矩阵。
 
 ### 2026 年 8 月更新：edge-26.8.4
 
-edge-26.8.4 于 August 25, 2026 发布，可防止在不透明协议处理期间出现 nil ExternalWorkload，将 policy controller 改为与集群协商 TLSRoute API 版本，并将 Go 升级至 1.26.7。详情请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)。
+edge-26.8.4 于 2026年8月25日 发布，可防止在不透明协议处理期间出现 nil ExternalWorkload，将 policy controller 改为与集群协商 TLSRoute API 版本，并将 Go 升级至 1.26.7。详情请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)。
 
 ### 2026 年 8 月更新：edge-26.8.2（支持 Gateway API 1.5.1）
 
-edge-26.8.2 于 August 14, 2026 发布，新增对 Gateway API 1.5.1 的支持（通过 linkerd-kubert 0.27.0），并将测试的 Kubernetes 最高版本提升至 1.36。它还包含稳定性修复：移除 destination controller 中重复的 Job informer，并在 policy controller 的租约监视任务退出时使其退出。详情请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)。
+edge-26.8.2 于 2026年8月14日 发布，新增对 Gateway API 1.5.1 的支持（通过 linkerd-kubert 0.27.0），并将测试的 Kubernetes 最高版本提升至 1.36。它还包含稳定性修复：移除 destination controller 中重复的 Job informer，并在 policy controller 的租约监视任务退出时使其退出。详情请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)。
 
 ### 2026 年 7 月更新：edge-26.7.1（禁止向未定义的 Service 端口发送请求）
 
-edge-26.7.1 的 GitHub 发行版于 July 21, 2026 发布。其中包含一项会改变行为的修复：即使存在 ServiceProfile，也会拒绝发往 destination Service 未声明端口的请求。升级前请检查实际的 Service 端口声明。此发行版还新增了 Gateway API 安装检查。请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)。
+edge-26.7.1 的 GitHub 发行版于 2026年7月21日 发布。其中包含一项会改变行为的修复：即使存在 ServiceProfile，也会拒绝发往 destination Service 未声明端口的请求。升级前请检查实际的 Service 端口声明。此发行版还新增了 Gateway API 安装检查。请参阅[发行说明](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)。
 
 ## 概述
 

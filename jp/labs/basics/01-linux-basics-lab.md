@@ -1,95 +1,99 @@
-# Linux Basics Lab Guide
+# Linux 基礎ラボガイド
 
 > **難易度**: 初級
-> **推定時間**: 45 分
-> **最終更新**: February 11, 2026
+> **所要時間の目安**: 45 分
+> **最終更新日**: 2026年10月16日
 
-## Learning Objectives
+## 学習目標
 - Linux のプロセス管理コマンドを練習する
-- Linux namespaces の分離効果を直接確認する
-- cgroups を通じてリソース制限を理解する
-- ファイルのパーミッションと所有権の管理を練習する
+- Linux namespace による分離の効果を直接確認する
+- cgroups によるリソース制限を理解する
+- ファイルの権限と所有者を管理する
 
-## Prerequisites
-- [ ] Linux ターミナルへのアクセス（Ubuntu 20.04+ 推奨）
+## 前提条件
+- [ ] 演習 3 用に Bash、systemd、cgroup v2 を備えた保守対象の Linux VM
+- [ ] ツール: coreutils、procps/procps-ng、util-linux、iproute2/iproute、Python 3
 - [ ] sudo 権限
-- [ ] [Linux Basics](../../basics/01-linux-basics.md) の学習を完了していること
+- [ ] [Linux 基礎](../../basics/01-linux-basics.md)の学習を完了していること
+
+ラボ変数を保持できるよう、同じ Bash ターミナルで各ブロックを順番に実行してください。sudo を使う namespace／cgroup 演習には分離された VM を使用します。コンテナや制限付き環境では、sudo があっても必要な機能が使えないことがあります。以下の出力は例示です。この監査では特権を要する演習を実行していません。
 
 ---
 
-## Exercise 1: Process Management
+## 演習 1: プロセス管理
 
-### Goal
-プロセス一覧表示、バックグラウンド実行、シグナル送信を練習します。
+### 目標
+プロセス一覧、バックグラウンド実行、シグナル送信を練習します。
 
-### Steps
+### 手順
 
-**Step 1.1: Check currently running processes**
+**手順 1.1: 実行中のプロセスを確認する**
 ```bash
-# Processes in the current terminal
+# Snapshot of processes visible in the current PID namespace
 ps aux | head -20
 
 # View process relationships in tree format
 ps auxf | head -30
 ```
 
-**Step 1.2: Run a background process**
+**手順 1.2: バックグラウンドプロセスを実行する**
 ```bash
-# Run a sleep process in the background
 sleep 300 &
-echo "PID: $!"
-
-# Check background jobs
+LINUX_LAB_SLEEP_PID=$!
+printf 'Lab child PID: %s\n' "$LINUX_LAB_SLEEP_PID"
 jobs -l
 ```
 
-**Step 1.3: Send a signal to a process**
+**手順 1.3: プロセスにシグナルを送信する**
 ```bash
-# Get the process ID
-SLEEP_PID=$(pgrep -f "sleep 300")
-echo "Sleep PID: $SLEEP_PID"
-
-# Request termination with SIGTERM
-kill $SLEEP_PID
-
-# Verify the process has terminated
-ps aux | grep "sleep 300" | grep -v grep
+# Run in the same Bash session as Step 1.2.
+: "${LINUX_LAB_SLEEP_PID:?Run Step 1.2 first}"
+if jobs -pr | grep -Fxq -- "$LINUX_LAB_SLEEP_PID"; then
+  kill -TERM "$LINUX_LAB_SLEEP_PID"
+fi
+if wait "$LINUX_LAB_SLEEP_PID"; then
+  LINUX_LAB_EXIT_STATUS=0
+else
+  LINUX_LAB_EXIT_STATUS=$?
+fi
+printf 'Lab child exit status: %s\n' "$LINUX_LAB_EXIT_STATUS"
+unset LINUX_LAB_SLEEP_PID
 ```
 
 <details>
-<summary>ヒントが必要ですか？</summary>
+<summary>ヒントを見る</summary>
 
-- `kill -l` を使うと、利用可能なシグナルの一覧を確認できます
-- `kill -9 PID` は SIGKILL で強制終了します
-- `pkill -f "pattern"` を使うと、名前ベースで終了できます
+- 利用可能なシグナルの一覧は `kill -l` で確認できます。
+- `kill -9 PID` は SIGKILL で強制終了します。
+- `$!` で取得した PID を使ってください。名前パターンは無関係なジョブにも一致する可能性があります。
 </details>
 
-### Verification
+### 確認
 ```bash
-# The sleep process should not exist
-pgrep -f "sleep 300" && echo "Still running" || echo "Termination complete"
+printf 'Recorded lab child exit status: %s\n' "${LINUX_LAB_EXIT_STATUS:?Complete Step 1.3}"
+jobs -l
 ```
 
 ---
 
-## Exercise 2: Linux Namespace Isolation
+## 演習 2: Linux namespace による分離
 
-### Goal
-namespaces を作成し、プロセスとネットワークの分離を確認します。
+### 目標
+namespace を作成し、プロセスとネットワークの分離を確認します。
 
-### Steps
+### 手順
 
-**Step 2.1: Verify PID namespace isolation**
+**手順 2.1: PID namespace の分離を確認する**
 ```bash
 # Run bash in a new PID namespace
-sudo unshare --pid --fork --mount-proc bash -c '
+sudo unshare --mount --pid --fork --mount-proc bash -c '
 echo "PID list inside the new namespace:"
 ps aux
 echo "Current process PID: $$"
 '
 ```
 
-Expected output:
+期待される出力:
 ```
 PID list inside the new namespace:
 USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
@@ -98,57 +102,64 @@ root         2  0.0  0.0   ...   ...  ...      R    ...    0:00 ps aux
 Current process PID: 1
 ```
 
-**Step 2.2: Network namespace isolation**
+**手順 2.2: network namespace による分離**
 ```bash
-# Create a network namespace
-sudo ip netns add test-ns
-
-# List namespaces
-sudo ip netns list
-
-# Check network inside the isolated namespace
-sudo ip netns exec test-ns ip addr
-
-# Cleanup
-sudo ip netns delete test-ns
+LINUX_LAB_NETNS="k8s-docs-netns-${UID}-$$"
+(
+  # Install cleanup only after creating this namespace successfully.
+  sudo ip netns add "$LINUX_LAB_NETNS" || exit 1
+  trap 'sudo ip netns delete "$LINUX_LAB_NETNS"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  sudo ip netns exec "$LINUX_LAB_NETNS" ip addr
+)
 ```
 
 <details>
-<summary>ヒントが必要ですか？</summary>
+<summary>ヒントを見る</summary>
 
-- ホストのネットワークインターフェイスは network namespace 内では表示されません
-- `lo`（loopback）インターフェイスのみが存在し、デフォルトでは DOWN です
-- これはコンテナのネットワーク分離の基礎となる仕組みです
+- ホストのネットワークインターフェイスは network namespace 内からは見えません。
+- `lo`（loopback）インターフェイスだけが存在し、デフォルトでは DOWN です。
+- これはコンテナのネットワーク分離の基本原理です。
 </details>
 
-### Verification
+### 確認
 ```bash
-# Verify the namespace has been deleted
-sudo ip netns list | grep test-ns && echo "Still exists" || echo "Deletion complete"
+if LINUX_LAB_NS_LIST=$(sudo ip netns list); then
+  if printf '%s\n' "$LINUX_LAB_NS_LIST" | awk '{print $1}' | grep -Fxq -- "$LINUX_LAB_NETNS"; then
+    printf 'Named handle still exists: %s\n' "$LINUX_LAB_NETNS"
+  else
+    printf 'Named handle is not listed: %s\n' "$LINUX_LAB_NETNS"
+  fi
+else
+  printf 'Could not verify namespace handles\n' >&2
+fi
 ```
 
 ---
 
-## Exercise 3: cgroup Resource Limits
+名前付き netns ハンドルを削除しても、プロセスやファイル記述子が保持している namespace と、その中のプロセスは破棄されません。この例では `ip addr` コマンドの終了を待ってからクリーンアップします。
 
-### Goal
-cgroups を使用してプロセスのメモリ使用量を制限します。
+## 演習 3: cgroup によるリソース制限
 
-### Steps
+### 目標
+cgroups を使ってプロセスのメモリ使用量を制限します。
 
-**Step 3.1: Check cgroup information**
+### 手順
+
+**手順 3.1: cgroup の情報を確認する**
 ```bash
-# Check cgroup v2 mount
-mount | grep cgroup
-
-# Check cgroup of current process
+# cgroup2fs identifies a cgroup v2 mount.
+stat -fc '%T' /sys/fs/cgroup
 cat /proc/self/cgroup
-
-# Check cgroup controllers
-cat /sys/fs/cgroup/cgroup.controllers 2>/dev/null || echo "Using cgroup v1"
+if [ -r /sys/fs/cgroup/cgroup.controllers ]; then
+  cat /sys/fs/cgroup/cgroup.controllers
+else
+  printf 'Controllers are not readable here; inspect the mount and permissions\n'
+fi
 ```
 
-**Step 3.2: Check memory usage**
+**手順 3.2: メモリ使用量を確認する**
 ```bash
 # System memory information
 free -h
@@ -157,9 +168,31 @@ free -h
 ps aux --sort=-%mem | head -10
 ```
 
-**Step 3.3: Connection to Kubernetes resource limits**
+**手順 3.3: 一時的な service に制限を適用する**
+
+systemd と cgroup v2 の memory controller を利用できる VM で実行してください。これは自動命名される service を作成し、メモリ上限を 128 MiB、swap の使用量を 0 に設定します。意図的に OOM を起こすのではなく 16 MiB を使用し、`--wait --collect` により処理の完了を待って一時 unit をアンロードします。親階層の上限が、さらに厳しい場合があります。
+
 ```bash
-# This is how resources.limits works in K8s
+sudo systemd-run --wait --collect --pipe \
+  --property=MemoryMax=128M --property=MemorySwapMax=0 \
+  python3 -c '
+from pathlib import Path
+entry = next(line for line in Path("/proc/self/cgroup").read_text().splitlines()
+             if line.startswith("0::"))
+group = Path("/sys/fs/cgroup") / entry.split(":", 2)[2].lstrip("/")
+print("Configured memory.max:", (group / "memory.max").read_text().strip())
+data = bytearray(16 * 1024 * 1024)
+for offset in range(0, len(data), 4096):
+    data[offset] = 1
+print("Touched allocation bytes:", len(data))
+'
+```
+
+128M の場合、設定される `memory.max` は 134217728 バイト、割り当てるメモリは 16777216 バイトであることを確認します。これらは設定と算術上の想定値であり、この監査で測定した結果ではありません。次の manifest は表示するだけで、Kubernetes Pod は作成しません。
+
+**手順 3.4: Kubernetes のリソース制限との関係**
+```bash
+# Linux container memory-limit example; this block only prints YAML
 # Let's look at a Pod manifest example
 cat << 'EOF'
 apiVersion: v1
@@ -169,7 +202,7 @@ metadata:
 spec:
   containers:
   - name: memory-demo
-    image: nginx
+    image: nginx:1.30.6
     resources:
       requests:
         memory: "64Mi"
@@ -179,95 +212,117 @@ EOF
 ```
 
 <details>
-<summary>ヒントが必要ですか？</summary>
+<summary>ヒントを見る</summary>
 
-- K8s の `resources.limits.memory` はコンテナの cgroup メモリ制限に変換されます
-- 制限を超えると OOMKilled ステータスになります
-- リソース制限は `kubectl describe pod` で確認できます
+- Linux コンテナでは、runtime／kubelet がメモリ cgroup の上限を設定します。
+- メモリ圧迫時の挙動は、割り当て状況と OOM group のポリシーにより、reclaim、割り当て失敗、OOM kill などになります。OOM で終了したコンテナは `OOMKilled` と報告される場合がありますが、割り当て失敗がすべてその状態になるわけではありません。
+- `kubectl describe pod` では要求された上限と記録済みのコンテナ終了状態を確認できますが、カーネルのメモリイベントすべてが証明されるわけではありません。
 </details>
 
 ---
 
-## Exercise 4: File Permission Management
+## 演習 4: ファイル権限の管理
 
-### Goal
-ファイルのパーミッションと所有権の管理を練習します。
+### 目標
+ファイルの権限と所有者を管理します。
 
-### Steps
+### 手順
 
-**Step 4.1: Create a file and check permissions**
+**手順 4.1: ファイルを作成して権限を確認する**
 ```bash
-# Create a test file
-mkdir -p /tmp/linux-lab
-echo "Hello Linux" > /tmp/linux-lab/test.txt
-
-# Check current permissions
-ls -la /tmp/linux-lab/test.txt
+LINUX_LAB_DIR=$(mktemp -d /tmp/k8s-docs-linux-basics.XXXXXX)
+: "${LINUX_LAB_DIR:?mktemp failed}"
+printf 'Hello Linux\n' > "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+ls -ld "$LINUX_LAB_DIR"
+ls -l "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
-**Step 4.2: Change permissions**
+**手順 4.2: 権限を変更する**
 ```bash
 # Add execute permission
-chmod +x /tmp/linux-lab/test.txt
-ls -la /tmp/linux-lab/test.txt
+chmod +x "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+ls -la "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 
 # Set with numeric mode (read/write - read - none)
-chmod 640 /tmp/linux-lab/test.txt
-ls -la /tmp/linux-lab/test.txt
+chmod 640 "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+ls -la "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 
 # Set the same permissions as K8s Secret volume defaults
-chmod 0644 /tmp/linux-lab/test.txt
+chmod 0644 "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
-**Step 4.3: Change ownership**
+実行権限を追加しても、任意のテキストが有効なプログラムになるわけではありません。mode 0644 は、ディレクトリをたどれる場合に group／other にも読み取りを許可します。このラボでは、非公開の mktemp ディレクトリによりアクセスを制限します。Kubernetes Secret volume の既定権限は 0644 ですが、実際の Secret では利用する user／group と必要なアクセスに合わせて権限を設定してください。
+
+**手順 4.3: 所有者を変更する**
 ```bash
-# Check current user and group
 id
-
-# Change group (if executable)
-sudo chown $USER:root /tmp/linux-lab/test.txt
-ls -la /tmp/linux-lab/test.txt
+# Demonstrate an owner change only on the private lab file, then restore it.
+sudo chown "root:$(id -g)" "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+stat -c '%a %U %G' "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+sudo chown "$(id -u):$(id -g)" "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
-### Verification
+### 確認
 ```bash
-# Verify permissions are -rw-r--r--
-stat -c "%a %U %G" /tmp/linux-lab/test.txt
+# Expect mode644 and the restored user/group
+stat -c "%a %U %G" "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
 ---
 
-## Cleanup
+## クリーンアップ
 ```bash
-# Delete test files
-rm -rf /tmp/linux-lab
+# Delete only the file created by this lab; keep an unexpected nonempty directory.
+if [[ -n ${LINUX_LAB_DIR:-} ]]; then
+  rm -f -- "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
+  if rmdir -- "$LINUX_LAB_DIR"; then
+    unset LINUX_LAB_DIR
+  fi
+fi
 
-# Clean up remaining processes
-pkill -f "sleep 300" 2>/dev/null
+# Only an unfinished job created in this Bash session may be terminated.
+if [[ -n ${LINUX_LAB_SLEEP_PID:-} ]]; then
+  if jobs -pr | grep -Fxq -- "$LINUX_LAB_SLEEP_PID"; then
+    kill -TERM "$LINUX_LAB_SLEEP_PID"
+  fi
+  wait "$LINUX_LAB_SLEEP_PID" 2>/dev/null || true
+  unset LINUX_LAB_SLEEP_PID
+fi
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
 <details>
-<summary>unshare コマンドが見つかりません</summary>
+<summary>unshare コマンドが見つからない</summary>
 
-`util-linux` パッケージをインストールします:
+`util-linux` パッケージをインストールします。
 ```bash
 sudo apt-get install util-linux   # Ubuntu/Debian
-sudo yum install util-linux       # CentOS/RHEL
+sudo dnf install util-linux       # Fedora/RHEL
 ```
 </details>
 
 <details>
-<summary>ip netns コマンドが動作しません</summary>
+<summary>ip netns コマンドが動作しない</summary>
 
-`iproute2` パッケージが必要です:
+`iproute2` パッケージが必要です。
 ```bash
 sudo apt-get install iproute2     # Ubuntu/Debian
-sudo yum install iproute          # CentOS/RHEL
+sudo dnf install iproute          # Fedora/RHEL
 ```
 </details>
 
-## Next Steps
-- [Linux Basics Quiz](../../quizzes/basics/01-linux-basics-quiz.md)
-- [Linux Advanced Skills Lab](./02-linux-advanced-lab.md)
+## 参考資料と検証範囲
+
+* [systemd-run](https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html)
+* [systemd memory resource control](https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html)
+* [Kernel cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html)
+* [unshare](https://man7.org/linux/man-pages/man1/unshare.1.html)
+* [ip netns](https://man7.org/linux/man-pages/man8/ip-netns.8.html)
+* [GNU mktemp manual](https://man7.org/linux/man-pages/man1/mktemp.1.html)
+
+監査では分離された環境で、特権を要しないプロセス／ファイルの確認と構文チェックのみ実行しました。namespace の作成、所有者の変更、cgroup／systemd 操作は実行していません。
+
+## 次のステップ
+- [Linux 基礎クイズ](../../quizzes/basics/01-linux-basics-quiz.md)
+- [Linux 応用スキルラボ](./02-linux-advanced-lab.md)

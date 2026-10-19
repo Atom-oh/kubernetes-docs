@@ -246,7 +246,7 @@ spec:
 
 このラボには、互換性のある Linux node と必要な Istio CNI/ztunnel DaemonSet が必要です。EKS Fargate ではこれらの node DaemonSet を実行できません。サポート対象の EC2 ベース配置を使用し、実際の node/CNI platform を確認してください。[プラットフォームの前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)には、CNI パス、権限、health probe が記載されています。SecurityGroupPolicy を使用する VPC CNI Pod ENI trunking では、standard enforcing mode または適切な exec probe が必要になる場合があります。ポリシーへの影響を評価してください。GKE、OpenShift、k3s、その他の platform では異なる設定が必要になる場合があります。
 
-Istio1.31 は Kubernetes1.32–1.37 をサポートします。EKS との互換性については[インストールガイド](../01-installation.md)を参照してください。以下の Gateway API1.6.0 は Istio1.31 の依存関係および公式 ambient tutorial に一致します。既存 bundle の互換性を確認してください。例をコピーするためだけに、新しい互換性のある bundle をダウングレードしないでください。
+Istio 1.31 は Kubernetes 1.32–1.37 をサポートします。EKS との互換性については[インストールガイド](../01-installation.md)を参照してください。以下の Gateway API 1.6.0 は Istio 1.31 の依存関係および公式 ambient tutorial に一致します。既存 bundle の互換性を確認してください。例をコピーするためだけに、新しい互換性のある bundle をダウングレードしないでください。
 
 ### 1. Istio のインストール（Ambient Mode）
 
@@ -272,7 +272,7 @@ kubectl get pods,daemonsets -n istio-system
 
 ### 2. Ambient Mode を有効にしてアプリケーションをデプロイ
 
-sidecar-injection/revision override のない、新しく使い捨て可能な namespace を使用してください。既存の sidecar Pod は、ambient ラベルを追加しても変換されません。1.31 distribution の完全な Bookinfo manifest は、古い単一 Deployment の例にはない reviews Service、version ラベル、ServiceAccount、ratings dependency を提供します。これは Bookinfo1.20.3 image を使用します。
+sidecar-injection/revision override のない、新しく使い捨て可能な namespace を使用してください。既存の sidecar Pod は、ambient ラベルを追加しても変換されません。1.31 distribution の完全な Bookinfo manifest は、古い単一 Deployment の例にはない reviews Service、version ラベル、ServiceAccount、ratings dependency を提供します。これは Bookinfo 1.20.3 image を使用します。
 
 ```bash
 kubectl create namespace ambient-demo
@@ -406,7 +406,7 @@ kubectl logs "$ztunnel_pod" -n istio-system --since=5m
 
 #### ステップ 4: 選択したワークロードを切り替え
 
-次の例は、L4 のみの要件を持つ、確認済みで namespace-injected の curl/httpbin Deployment だけを含む、別の既存 `migration-demo` namespace を前提としています。Pod-template injection override または手動注入された proxy を確認してください。これらのコマンドではそれらを削除しません。L7 ワークロードについては、まず `targetRefs` および必須経由 guard を含む waypoint 登録とポリシー変換を検証してください。移行中のポリシー共存を計画してください。ztunnel によって適用される selector ベースの L7 ポリシーは fail closed になる可能性があります。
+次の例では、別の既存 `migration-demo` namespace に、L4 のみを必要とする確認済みの namespace 注入済み curl/httpbin Deployment だけがあるものとします。Pod テンプレートの injection override や手動で注入された proxy がないか確認してください。以下のコマンドでは、それらを削除しません。L7 ワークロードでは、まず waypoint の登録とポリシー変換を検証し、`targetRefs` と、経由を必須にするための guard を確認してください。移行中にポリシーが共存する状態を想定してください。selector ベースの L7 ポリシーを ztunnel で適用すると、通信が遮断される可能性があります。
 
 ```bash
 # Reference snapshots, not manifests to blindly reapply with stale server metadata
@@ -517,7 +517,7 @@ metadata:
 
 ### 2. 選択的な L7 機能の使用
 
-デモでは、Service レベルで ready 状態の reviews waypoint を選択します。Namespace と直接 workload の登録は、別個のサポート対象スコープです。ServiceAccount ラベルは selector ではありません。
+デモでは、Service レベルで準備完了した reviews waypoint を選択します。Namespace と直接 workload の登録は、別個のサポート対象スコープです。ServiceAccount ラベルは selector ではありません。
 
 ```bash
 kubectl label service reviews -n ambient-demo istio.io/use-waypoint=reviews-waypoint --overwrite
@@ -598,4 +598,4 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ## まとめ
 
-Ambient は共有 L4 トランスポートを、選択した L7 waypoint 処理から分離します。mesh 未参加ワークロードの登録と proxy ライフサイクル管理を簡素化できる一方、リソース削減、ポリシーの維持、可用性には、同等ポリシーでの測定と検証済み移行計画が必要です。Linux/CNI/platform の制約、TCP15008 の接続性、各 API の機能ステータスを考慮してください。
+Ambient は共有 L4 トランスポートを、選択した L7 waypoint 処理から分離します。mesh 未参加ワークロードの登録と proxy ライフサイクル管理を簡素化できる一方、リソース削減、ポリシーの維持、可用性には、同等ポリシーでの測定と検証済み移行計画が必要です。Linux/CNI/platform の制約、TCP 15008 の接続性、各 API の機能ステータスを考慮してください。

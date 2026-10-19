@@ -1,191 +1,125 @@
-# Custom Scheduler Quiz (Part 1)
+# カスタムスケジューラークイズ（パート1）
 
-このクイズでは、Kubernetes における Custom Scheduler の実装と使用に関する理解を確認します。
+> **例で使用する基準**: Kubernetes 1.35.8、Go 1.27.2
+> **最終更新日**: 2026年10月16日
 
-## Quiz Questions
+このクイズでは、Kubernetes におけるカスタムスケジューラーの実装と使用方法について理解を確認します。
 
-### 1. What is the main role of a scheduler in Kubernetes?
+## クイズ
+
+### 1. Kubernetes におけるスケジューラーの主な役割は何ですか？
 
 A. Pod の作成と削除
-B. Pod を適切な node に割り当てる
+B. Pod を適切な Node に割り当てる
 C. Node リソースの監視
-D. Container image のダウンロード
+D. コンテナイメージのダウンロード
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. Pod を適切な node に割り当てる**
+**回答: B. Pod を適切な Node に割り当てる**
 
 **解説:**
-Kubernetes における scheduler の主な役割は、Pod を適切な node に割り当てることです。scheduler は新しく作成された Pod を監視し、まだ node に割り当てられていない Pod を実行するための最適な node を見つけます。
+Kubernetes におけるスケジューラーの主な役割は、Pod を適切な Node に割り当てることです。スケジューラーは新しく作成された Pod を監視し、まだ Node に割り当てられていない Pod の実行先として最適な Node を探します。
 
-**Scheduler の主な機能:**
-1. **Pod-Node 割り当て**: Pod の要件と node の利用可能なリソースを考慮して、最適な node を選択します。
-2. **Filtering**: Pod を実行できない node（例: リソース不足、taints など）を除外します。
-3. **Scoring**: 適切な node にスコアを付け、最適な node を選択します。
-4. **Binding**: Pod を選択された node にバインドし、スケジューリングの決定を確定します。
+**スケジューラーの主な機能:**
+1. **Pod と Node の割り当て**: Pod の要件と Node で利用できるリソースを考慮し、最適な Node を選びます。
+2. **フィルタリング**: リソース不足や taint などの理由で Pod を実行できない Node を候補から除外します。
+3. **スコアリング**: 条件に合う Node にスコアを付け、最適な Node を選びます。
+4. **バインド**: 選択した Node に Pod をバインドして、スケジューリングの決定を確定します。
 
-**Scheduling プロセス:**
-1. **Filtering Stage (Predicates)**: Pod を実行できない node を除外します。
-   - PodFitsResources: node が Pod のリソース要求を満たす十分なリソースを持っているか確認します
-   - PodFitsHostPorts: 要求された host port が利用可能か確認します
-   - PodMatchNodeSelector: Pod の node selector が node labels と一致するか確認します
-   - NoVolumeZoneConflict: volume zone の制約を確認します
-   - CheckNodeMemoryPressure: node の memory pressure 状態を確認します
-   - CheckNodeDiskPressure: node の disk pressure 状態を確認します
+**スケジューリングの流れ（Kubernetes 1.35.8）:**
+1. **Filter**: `NodeResourcesFit` は Pod の実効リソース要求と、残りの割り当て可能リソースを照合します。`NodePorts` は要求されたホストポートを確認し、`NodeAffinity` は Node セレクターとアフィニティを処理し、`TaintToleration` は taint を確認します。`VolumeBinding`、`VolumeZone`、`NodeVolumeLimits` などのボリュームプラグインはストレージ制約を適用します。Node の圧迫状態は Node condition や taint に反映されます。`CheckNodeDiskPressure` などの名前は過去の predicate であり、現在設定可能なプラグイン名ではありません。
+2. **Score**: `NodeResourcesFit`（既定値は `LeastAllocated`）、`NodeResourcesBalancedAllocation`、`NodeAffinity`、`InterPodAffinity`、`PodTopologySpread`、`TaintToleration`、`ImageLocality` が配置先の選好に寄与します。これらすべてが実リソース使用率を測定するわけではありません。
+3. **Bind**: 残りの framework フェーズが成功すると、スケジューラーは Node の割り当てを記録します。その後、kubelet とコンテナランタイムが実行を管理します。スコアが高くても、起動、レイテンシー、可用性が保証されるわけではありません。
 
-2. **Scoring Stage (Priorities)**: 適切な node にスコアを付けます。
-   - LeastRequestedPriority: 要求済みリソースが少ない node に高いスコアを与えます
-   - BalancedResourceAllocation: リソース使用のバランスがよい node に高いスコアを与えます
-   - NodeAffinityPriority: node affinity ルールに基づいてスコアを付けます
-   - TaintTolerationPriority: taint toleration に基づいてスコアを付けます
-   - InterPodAffinityPriority: inter-pod affinity/anti-affinity に基づいてスコアを付けます
-
-3. **Binding**: 最も高いスコアを持つ node に Pod をバインドします。
-
-**Default Scheduler Configuration Example:**
+**セカンダリースケジューラーの設定例:**
+この設定は既定のフィルターを残したまま、スコアリングの重みを変更します。このクイズに登場する設定は `--config` で読み込むファイルであり、`kubectl` で適用する Kubernetes API リソースではありません。
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   plugins:
     score:
-      disabled:
-      - name: NodeResourcesLeastAllocated
       enabled:
       - name: NodeResourcesBalancedAllocation
-        weight: 1
+        weight: 2
 ```
 
-**他の選択肢の問題点:**
-- A. Pod の作成と削除: これは主に controller manager と API server の役割です。
-- C. Node リソースの監視: これは主に kubelet と metrics server の役割です。
-- D. Container image のダウンロード: これは kubelet と container runtime の役割です。
+**ほかの選択肢が誤りである理由:**
+- A. Pod の作成と削除: 主に controller manager と API server の役割です。
+- C. Node リソースの監視: 主に kubelet と metrics server の役割です。
+- D. コンテナイメージのダウンロード: kubelet とコンテナランタイムの役割です。
 </details>
 
-### 2. Which of the following is NOT a method for implementing a Custom Scheduler?
+### 2. 次のうち、カスタムスケジューラーを実装する方法ではないものはどれですか？
 
 A. 既存の kube-scheduler を拡張する
-B. 完全に新しい scheduler を実装する
-C. scheduling framework plugin を開発する
+B. 独自のスケジューラーを一から実装する
+C. scheduling framework のプラグインを開発する
 D. kubelet を変更する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
 **回答: D. kubelet を変更する**
 
 **解説:**
-kubelet を変更することは、Custom Scheduler を実装する方法ではありません。kubelet は各 node で実行され、Pod の実行を管理する agent ですが、スケジューリングの決定は行いません。スケジューリングは kube-scheduler または custom scheduler によって実行されます。
+kubelet の変更は、カスタムスケジューラーの実装方法ではありません。kubelet は各 Node 上で動作し、Pod の実行を管理するエージェントですが、スケジューリングの決定は行いません。スケジューリングは kube-scheduler またはカスタムスケジューラーが担当します。
 
-**Custom Scheduler を実装する方法:**
+**カスタムスケジューラーを実装する方法:**
 
-1. **既存の kube-scheduler を拡張する**:
-   - KubeSchedulerConfiguration を使用して default scheduler の動作をカスタマイズします。
-   - plugin の weight、enable/disable などを調整します。
+1. **kube-scheduler を基にセカンダリースケジューラーを設定する**: 既定のプラグインを維持し、必要な動作だけを調整します。Part 1 には、コマンド、RBAC、ConfigMap、Deployment を含む一式があります。
 
-   ```yaml
-   apiVersion: kubescheduler.config.k8s.io/v1
-   kind: KubeSchedulerConfiguration
-   profiles:
-   - schedulerName: custom-scheduler
-     plugins:
-       score:
-         disabled:
-         - name: NodeResourcesLeastAllocated
-         enabled:
-         - name: NodeResourcesBalancedAllocation
-           weight: 2
-   ```
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+  plugins:
+    score:
+      enabled:
+      - name: NodeResourcesBalancedAllocation
+        weight: 2
+```
 
-2. **完全に新しい scheduler を実装する**:
-   - Kubernetes API と通信する独立した scheduler を開発します。
-   - Pod の監視、node 選択、binding ロジックを直接実装します。
+2. **独立したスケジューラーを実装する**: 正しいキャッシュ、キュー、list/watch の復旧、リソース計算、ボリューム調整、再試行、leader election、バインドを実装する必要があります。watch だけを使うループでは既存 Pod や接続断を見落とします。本番用コードでは informer と workqueue を使い、tombstone、キャンセル、古いオブジェクトを処理してください。Ready な Node を選んだだけでは、Pod の要件を満たすことを確認したことにはなりません。そのため Part 1 の例では、これらの処理を upstream の kube-scheduler に委ねています。
 
-   ```go
-   // Simple Go scheduler example
-   func main() {
-       config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
-       if err != nil {
-           log.Fatal(err)
-       }
-
-       clientset, err := kubernetes.NewForConfig(config)
-       if err != nil {
-           log.Fatal(err)
-       }
-
-       // Watch unscheduled pods
-       watchPods(clientset)
-   }
-
-   func watchPods(clientset *kubernetes.Clientset) {
-       watch, err := clientset.CoreV1().Pods("").Watch(context.TODO(), metav1.ListOptions{
-           FieldSelector: "spec.schedulerName=custom-scheduler,spec.nodeName=",
-       })
-       if err != nil {
-           log.Fatal(err)
-       }
-
-       for event := range watch.ResultChan() {
-           if event.Type != watch.Added {
-               continue
-           }
-
-           pod := event.Object.(*v1.Pod)
-           // Implement node selection logic
-           node := selectNode(clientset, pod)
-           if node != "" {
-               bindPod(clientset, pod, node)
-           }
-       }
-   }
-   ```
-
-3. **scheduling framework plugin を開発する**:
-   - Kubernetes scheduling framework を使用して、特定の scheduling stage 用の plugin を開発します。
-   - filter、score、bind などの extension point を実装します。
-
-   ```go
-   // Scoring plugin example
-   type MyScorePlugin struct{}
-
-   func (pl *MyScorePlugin) Name() string {
-       return "MyScorePlugin"
-   }
-
-   func (pl *MyScorePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-       // Implement custom scoring logic
-       return score, nil
-   }
-
-   func (pl *MyScorePlugin) ScoreExtensions() framework.ScoreExtensions {
-       return pl
-   }
-
-   func (pl *MyScorePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-       // Implement score normalization logic
-       return nil
-   }
-   ```
+3. **framework プラグインを開発する**: プラグインをスケジューラーのバイナリに組み込み、`app.WithPlugin` で登録します。Q4 では Filter プラグイン、Q6 では Score プラグイン、Q7 では登録用コマンドを示します。各インターフェイスは `k8s.io/kube-scheduler/framework` v0.35.8 に固定されています。シグネチャは Kubernetes のマイナーバージョンによって異なります。
 
 **kubelet の役割:**
-kubelet は各 node で実行され、次の役割を担う agent です。
-- Pod spec に従って container を実行および管理する
-- Node の状態を監視し報告する
-- Container の health check を実行する
-- volume mount を管理する
+kubelet は各 Node 上で動作するエージェントで、次の処理を担当します。
+- Pod spec に従ってコンテナを実行、管理する
+- Node の状態を監視して報告する
+- コンテナのヘルスチェックを行う
+- ボリュームのマウントを管理する
 
-kubelet は scheduler が行った決定（どの Pod をどの node で実行するか）を実行するものであり、自身でスケジューリングの決定は行いません。
+kubelet は、どの Pod をどの Node で実行するかというスケジューラーの決定を実行します。kubelet 自身はスケジューリングを決定しません。
 
-**他の選択肢の解説:**
-- A. 既存の kube-scheduler を拡張する: 有効な Custom Scheduler 実装方法です。
-- B. 完全に新しい scheduler を実装する: 有効な Custom Scheduler 実装方法です。
-- C. scheduling framework plugin を開発する: 有効な Custom Scheduler 実装方法です。
+**ほかの選択肢の解説:**
+- A. 既存の kube-scheduler を拡張する: カスタムスケジューラーを実装する有効な方法です。
+- B. 独自のスケジューラーを一から実装する: カスタムスケジューラーを実装する有効な方法です。
+- C. scheduling framework のプラグインを開発する: カスタムスケジューラーを実装する有効な方法です。
 </details>
 
-### 3. What field is used in a pod to specify a specific scheduler?
+### 3. Pod で特定のスケジューラーを指定するフィールドはどれですか？
 
 A. spec.scheduler
 B. spec.schedulerName
@@ -193,14 +127,14 @@ C. metadata.scheduler
 D. spec.nodeName
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
 **回答: B. spec.schedulerName**
 
 **解説:**
-Pod で特定の scheduler を指定するために使用される field は `spec.schedulerName` です。この field が設定されると、Pod は指定された名前の scheduler によってのみスケジューリングされます。default value は "default-scheduler" です。
+Pod で特定のスケジューラーを指定するフィールドは `spec.schedulerName` です。このフィールドを設定すると、指定した名前のスケジューラーだけがその Pod をスケジュールします。既定値は `default-scheduler` です。
 
-**Pod Spec Example:**
+**Pod spec の例:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -209,10 +143,10 @@ metadata:
   labels:
     app: my-app
 spec:
-  schedulerName: my-custom-scheduler  # Specify custom scheduler
+  schedulerName: custom-scheduler  # Specify custom scheduler
   containers:
   - name: main-container
-    image: nginx:1.19
+    image: nginx:1.30.6
     resources:
       requests:
         memory: "64Mi"
@@ -222,42 +156,33 @@ spec:
         cpu: "500m"
 ```
 
-この Pod は "my-custom-scheduler" という名前の scheduler によってのみスケジューリングされます。その名前の scheduler が cluster 内に存在しない場合、Pod は `Pending` 状態のままになります。
+この Pod は `custom-scheduler` という名前のスケジューラーだけがスケジュールします。クラスタ内にその名前のスケジューラーがなければ、Pod は `Pending` 状態のままになります。
 
-**複数の Scheduler をデプロイする例:**
+**スケジューラー名の設定:**
+Part 1 の Deployment 一式を使い、この設定を `/etc/scheduler/config.yaml` としてマウントし、`--config=/etc/scheduler/config.yaml` を指定します。現在の設定方法は `--scheduler-name` ではありません。ServiceAccount と Lease の権限も事前に必要です。
+
 ```yaml
-# Custom scheduler deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-custom-scheduler
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      component: my-custom-scheduler
-  template:
-    metadata:
-      labels:
-        component: my-custom-scheduler
-    spec:
-      serviceAccountName: my-custom-scheduler
-      containers:
-      - name: scheduler
-        image: my-custom-scheduler:v1.0
-        args:
-        - --scheduler-name=my-custom-scheduler
-        - --leader-elect=false
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
 ```
 
-**Scheduler を選択する際の考慮事項:**
-1. **Availability**: 指定した scheduler が実行されていない場合、Pod はスケジューリングされません。
-2. **Functionality**: 各 scheduler は異なる scheduling algorithm や policy を持つことができます。
-3. **Resource isolation**: 異なる scheduler を使用して workload を分離できます。
-4. **Special hardware**: GPU や FPGA などの特殊 hardware 用に専用 scheduler を使用できます。
+**スケジューラーを選ぶ際の考慮事項:**
+1. **可用性**: 指定したスケジューラーが稼働していなければ、Pod はスケジュールされません。
+2. **機能**: スケジューラーごとにアルゴリズムやポリシーを変えられます。
+3. **ポリシーによる振り分け**: `schedulerName` が選ぶのはスケジューラープロファイルです。この設定だけでセキュリティやリソースが分離されるわけではありません。
+4. **特殊なハードウェア**: GPU や FPGA などを対象に専用スケジューラーを使えます。
 
-**Scheduler Status の確認:**
+**スケジューラーの状態確認:**
 ```bash
 # Check pod status
 kubectl get pod custom-scheduled-pod
@@ -266,603 +191,432 @@ kubectl get pod custom-scheduled-pod
 kubectl describe pod custom-scheduled-pod | grep -A 5 Events
 
 # Check scheduler logs
-kubectl logs -n kube-system -l component=my-custom-scheduler
+kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 ```
 
-**他の選択肢の問題点:**
-- A. spec.scheduler: Kubernetes API に存在しない field です。
-- C. metadata.scheduler: Kubernetes API に存在しない field です。
-- D. spec.nodeName: この field は scheduler をバイパスし、Pod を特定の node に直接割り当てるために使用されます。scheduler を指定するための field ではありません。
+**ほかの選択肢が誤りである理由:**
+- A. spec.scheduler: Kubernetes API に存在しないフィールドです。
+- C. metadata.scheduler: Kubernetes API に存在しないフィールドです。
+- D. spec.nodeName: このフィールドはスケジューラーを介さず、Pod を特定の Node に直接割り当てるためのものです。スケジューラーを指定するフィールドではありません。
 </details>
-### 4. What is the role of the "Filter" extension point in the Kubernetes scheduling framework?
 
-A. node にスコアを付ける
-B. Pod を node にバインドする
-C. Pod を実行できない node を除外する
+### 4. Kubernetes のスケジューリング framework における「Filter」拡張ポイントの役割は何ですか？
+
+A. Node にスコアを付ける
+B. Pod を Node にバインドする
+C. Pod を実行できない Node を除外する
 D. scheduling queue 内の Pod を並べ替える
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. Pod を実行できない node を除外する**
+**回答: C. Pod を実行できない Node を除外する**
 
 **解説:**
-Kubernetes scheduling framework における "Filter" extension point（以前は "Predicate" と呼ばれていました）の役割は、Pod を実行できない node を除外することです。Filter plugin は各 node が Pod の要件を満たすかどうかを確認し、要件を満たさない node を候補リストから除外します。
+Kubernetes のスケジューリング framework における「Filter」拡張ポイント（旧称「Predicate」）は、Pod を実行できない Node を除外します。Filter プラグインは各 Node が Pod の要件を満たすか確認し、満たさない Node を候補から除きます。
 
-**Scheduling Framework Extension Points:**
-Scheduling framework は、scheduling cycle のさまざまな stage で plugin を統合できる各種 extension point を提供します。
+**Scheduling Framework の拡張ポイント:**
+* **PreEnqueue / QueueSort**: キューへの追加を制御し、キュー内の Pod を並べ替えます。
+* **PreFilter / Filter**: 共有状態を準備し、実行可能でない Node を除外します。
+* **PostFilter**: 実行可能な Node がない場合に、preemption などによる回復を試みます。
+* **PreScore / Score / optional NormalizeScore**: 実行可能な Node を評価して順位付けします。正規化後のプラグインスコアは 0～100 でなければなりません。
+* **Reserve / Unreserve**: 仮定した状態を記録し、スケジューリングに失敗した場合は取り消します。物理的な CPU やデバイスを割り当てる処理ではありません。
+* **Permit**: 次の処理への続行を許可、拒否、または待機させます。
+* **PreBind / Bind / PostBind**: 依存関係を準備し、バインドを確定して、その後の処理を実行します。`PostBind` から確定済みのバインドを取り消すことはできません。インターフェイスにバージョン固有のメソッドが加わることがあるため、対象リリースに合わせてコンパイルしてください。
 
-1. **Queue Sort**: scheduling queue 内の Pod の順序を決定します。
-2. **PreFilter**: filtering の前に Pod と cluster state の前処理を実行します。
-3. **Filter**: Pod を実行できない node を除外します。
-4. **PreScore**: scoring の前に必要な計算を実行します。
-5. **Score**: filtering を通過した node にスコアを割り当てます。
-6. **NormalizeScore**: 各 scoring plugin のスコアを正規化します。
-7. **Reserve**: 選択された node 上に Pod のリソースを予約します。
-8. **Permit**: Pod のスケジューリングを許可、拒否、または遅延します。
-9. **PreBind**: binding の前に必要な処理を実行します。
-10. **Bind**: Pod を node にバインドします。
-11. **PostBind**: binding 後の cleanup 処理を実行します。
+**既定の Filter プラグイン:**
+`NodeResourcesFit`、`NodeName`、`NodeUnschedulable`、`NodePorts`、`TaintToleration`、`NodeAffinity`、`InterPodAffinity`、`PodTopologySpread`、`VolumeRestrictions`、`NodeVolumeLimits`、`VolumeBinding`、`VolumeZone` は、それぞれ異なる制約を扱います。古い predicate 名や、プロバイダー固有の `EBSLimits` は現在のプラグイン名ではありません。
 
-**Default Filter Plugins:**
-Kubernetes は次の default filter plugin を提供しています。
+**カスタム Filter の例（`plugins/filter.go`）:**
+この単純なラベル規則は、通常なら必須の Node affinity で表現できます。ここでは framework のインターフェイスを示しています。ラベルがない場合、ほかの Pod を preempt しても解決しませんが、後から Node ラベルが変われば再試行時に Pod が適格になることがあります。
 
-1. **NodeResourcesFit**: node が Pod のリソース要求を満たす十分なリソースを持っているか確認します。
-2. **NodeName**: Pod の spec.nodeName field が node name と一致するか確認します。
-3. **NodeUnschedulable**: node が unschedulable としてマークされているか確認します。
-4. **TaintToleration**: Pod が node の taints を tolerates しているか確認します。
-5. **NodeAffinity**: Pod の node affinity 要件が満たされているか確認します。
-6. **PodAffinity**: Pod の pod affinity 要件が満たされているか確認します。
-7. **VolumeRestrictions**: volume constraints を確認します。
-8. **EBSLimits**: Amazon EBS volume limits を確認します。
-9. **NoVolumeZoneConflict**: volume zone constraints を確認します。
-10. **CheckNodeMemoryPressure**: node の memory pressure 状態を確認します。
-11. **CheckNodeDiskPressure**: node の disk pressure 状態を確認します。
-
-**Custom Filter Plugin Example:**
 ```go
-// Custom filter plugin example
+package plugins
+
+import (
+	"context"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
 type MyFilterPlugin struct{}
 
-func (pl *MyFilterPlugin) Name() string {
-    return "MyFilterPlugin"
+var _ fwk.FilterPlugin = &MyFilterPlugin{}
+
+func (*MyFilterPlugin) Name() string { return "MyFilterPlugin" }
+
+func (*MyFilterPlugin) Filter(_ context.Context, _ fwk.CycleState, _ *v1.Pod, info fwk.NodeInfo) *fwk.Status {
+	if info == nil || info.Node() == nil {
+		return fwk.NewStatus(fwk.Error, "missing node")
+	}
+	if info.Node().Labels["custom-label"] != "required-value" {
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, "node lacks required label")
+	}
+	return nil
 }
 
-// Filter method implementation
-func (pl *MyFilterPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    // Check if the node meets certain conditions
-    node := nodeInfo.Node()
-    if node == nil {
-        return framework.NewStatus(framework.Error, "node not found")
-    }
-
-    // Example: Only allow nodes with a specific label
-    if value, exists := node.Labels["custom-label"]; !exists || value != "required-value" {
-        return framework.NewStatus(framework.Unschedulable, "node does not have required label")
-    }
-
-    return nil // Returning nil means the node is suitable
+func NewFilter(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &MyFilterPlugin{}, nil
 }
 ```
 
-**Scheduler Configuration で Filter Plugin を有効化する:**
+**既定のプラグインを維持してカスタム Filter を有効にする:**
+このプラグインは Q7 で登録します。ラベルチェックを追加するために `NodeResourcesFit` を無効にしてはいけません。
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     filter:
       enabled:
       - name: MyFilterPlugin
-      disabled:
-      - name: NodeResourcesFit  # Disable default plugin
 ```
 
-**他の選択肢の問題点:**
-- A. node にスコアを付ける: これは "Score" extension point の役割です。
-- B. Pod を node にバインドする: これは "Bind" extension point の役割です。
-- D. scheduling queue 内の Pod を並べ替える: これは "Queue Sort" extension point の役割です。
+**ほかの選択肢が誤りである理由:**
+- A. Node にスコアを付ける: 「Score」拡張ポイントの役割です。
+- B. Pod を Node にバインドする: 「Bind」拡張ポイントの役割です。
+- D. scheduling queue 内の Pod を並べ替える: 「Queue Sort」拡張ポイントの役割です。
 </details>
 
-### 5. Which of the following is NOT something to consider when implementing a Custom Scheduler?
+### 5. スケジューラーではなく kubelet とコンテナランタイムが行う処理はどれですか？
 
-A. Node リソース使用量
-B. Pod priority と preemption
-C. Container image size
-D. Node affinity と anti-affinity
+A. Node のリソース要求と割り当て可能リソースを評価する
+B. Pod の priority と preemption を考慮する
+C. イメージレイヤーをダウンロードしてコンテナを作成する
+D. Node affinity と Pod 間 affinity を評価する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. Container image size**
+**回答: C. イメージレイヤーをダウンロードしてコンテナを作成する**
 
 **解説:**
-Container image size は、Custom Scheduler を実装する際に一般的には考慮すべきものではありません。Image size は scheduling decision ではなく、image download と container startup time に影響し、それらは kubelet と container runtime の責任です。
+スケジューラーは配置先の Node を選び、kubelet はランタイムにイメージの取得とコンテナの作成を依頼します。ただし、**イメージのローカルキャッシュはスケジューリングに影響することがあります**。既定の `ImageLocality` Score プラグインは、Node から報告されたキャッシュ済みイメージとイメージサイズを使います。キャッシュ情報が古い場合もあり、キャッシュがあれば取得を避けられるとは限りません。
 
-**Custom Scheduler 実装時の主な考慮事項:**
+**実装時の考慮事項:**
+1. **リソース**: `NodeResourcesFit` を維持してください。このプラグインは実効リソース要求と、スケジューラーのキャッシュにある割り当て済み・仮定済みの使用量を使います。CPU やメモリの実測値は別の入力です。CPU とメモリの limit は過剰割り当てが可能であり、既定の適合判定ではありません。
+2. **Priority**: PriorityClass と `preemptionPolicy` を意図して使ってください。affinity、ボリューム、その他の制約を preemption で解決できなければ、高 priority の Pod でも `Pending` のままになる場合があります。
+3. **配置**: 必須の Node affinity は配置可能な Node を制限し、優先 affinity はスコアに影響します。以下の例の AZ は、実際に適格な容量があるゾーンに置き換えてください。通常の GPU 要件や topology 要件には、カスタムスケジューラーが不要なこともよくあります。
 
-1. **Node resource usage**:
-   - CPU、memory、disk、network などのリソース使用量
-   - 現在の使用量と requests を考慮した最適な配置
-   - Resource overcommit policy
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values: [us-east-1a, us-east-1b]
+  containers:
+  - name: nginx
+    image: nginx:1.30.6
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+```
 
-   ```go
-   // Resource usage based filtering example
-   func filterByResourceUsage(pod *v1.Pod, node *v1.Node) bool {
-       // Check node's allocatable resources
-       allocatable := node.Status.Allocatable
-       // Calculate sum of resource requests for pods running on the node
-       // Check if new pod's resource requests exceed available resources
-       return podFitsResources(pod, allocatable, usedResources)
-   }
-   ```
+4. **その他の制約**: taint/toleration、topology spread、ストレージの topology とアタッチ上限、ハードウェアリソースのチェックを維持してください。ネットワーク上の近さをモデル化する場合は、信頼できる topology データを使います。ラベルだけではレイテンシーを証明できません。
+5. **イメージの扱い**: `ImageLocality` は選好であり、容量や起動の保証ではありません。Node 上ではイメージのガベージコレクション、レジストリ認証、取得失敗も発生します。
 
-2. **Pod priority and preemption**:
-   - 優先度の高い Pod を先にスケジューリングする
-   - 必要に応じて優先度の低い Pod を preempt する
-   - PriorityClass と preemptionPolicy を考慮する
-
-   ```yaml
-   # Priority class example
-   apiVersion: scheduling.k8s.io/v1
-   kind: PriorityClass
-   metadata:
-     name: high-priority
-   value: 1000000
-   globalDefault: false
-   description: "High priority pods"
-   ```
-
-3. **Node affinity and anti-affinity**:
-   - Pod の nodeSelector、nodeAffinity 要件を満たす
-   - inter-pod affinity と anti-affinity ルールを適用する
-   - topology spread constraints を考慮する
-
-   ```yaml
-   # Node affinity example
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: with-node-affinity
-   spec:
-     affinity:
-       nodeAffinity:
-         requiredDuringSchedulingIgnoredDuringExecution:
-           nodeSelectorTerms:
-           - matchExpressions:
-             - key: kubernetes.io/e2e-az-name
-               operator: In
-               values:
-               - e2e-az1
-               - e2e-az2
-   ```
-
-4. **その他の重要な考慮事項**:
-   - **Taints and tolerations**: node taints と Pod tolerations の一致
-   - **Topology spread**: Pod をさまざまな topology domain に分散すること
-   - **Node status**: Node status（Ready、MemoryPressure、DiskPressure など）
-   - **Workload characteristics**: batch、service、daemonset など、さまざまな workload type の要件
-   - **Network topology**: node 間の network latency と bandwidth
-   - **Hardware characteristics**: GPU、FPGA などの特殊 hardware 要件
-
-**container image size に関連する考慮事項:**
-Container image size は、一般的に次の理由から scheduling decision に直接影響しません。
-
-1. **Image availability**: image が node にすでにキャッシュされているかどうかは、scheduler ではなく kubelet が扱います。
-2. **Download time**: Image download は scheduling decision の後に発生し、kubelet の責任です。
-3. **Storage usage**: Image storage は一般的に node の allocatable resources の計算に含まれません。
-
-ただし、特殊なケースでは、image locality を考慮する custom scheduler を実装できます。これにより、image がすでにキャッシュされている node を優先して startup time を短縮できます。
-
-**他の選択肢の解説:**
-- A. Node リソース使用量: scheduling decision における重要な要素であり、Pod のリソース要求を満たせる node を選択するために不可欠です。
-- B. Pod priority と preemption: resource contention 時にどの Pod を先にスケジューリングするか、必要な場合にどの Pod を preempt するかを決定する上で重要です。
-- D. Node affinity と anti-affinity: Pod を特定の node または他の Pod と一緒に、あるいは離してスケジューリングすべき制約を扱う上で重要です。
+**ほかの選択肢について:**
+A、B、D はいずれもスケジューリング時に考慮する内容です。ここでの違いは、配置の判断とランタイムの処理の区別であり、スケジューリングとイメージ情報の区別ではありません。
 </details>
-### 6. What is the role of the "Score" extension point in the Kubernetes scheduling framework?
 
-A. Pod を実行できない node を除外する
-B. filtering を通過した node にスコアを付ける
-C. Pod を node にバインドする
+### 6. Kubernetes のスケジューリング framework における「Score」拡張ポイントの役割は何ですか？
+
+A. Pod を実行できない Node を除外する
+B. フィルタリングを通過した Node にスコアを付ける
+C. Pod を Node にバインドする
 D. scheduling queue 内の Pod を並べ替える
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. filtering を通過した node にスコアを付ける**
+**回答: B. フィルタリングを通過した Node にスコアを付ける**
 
 **解説:**
-Kubernetes scheduling framework における "Score" extension point（以前は "Priority" と呼ばれていました）の役割は、filtering を通過した node にスコアを割り当てることです。Scoring plugin は各 node にスコアを割り当て、これらのスコアに基づいて最適な node が選択されます。
+Kubernetes のスケジューリング framework における「Score」拡張ポイント（旧称「Priority」）は、フィルタリングを通過した Node にスコアを割り当てます。スコアリングプラグインが各 Node を評価し、そのスコアに基づいて配置先が選ばれます。
 
-**Scoring Process:**
-1. 各 scoring plugin は各 node に対してスコアを計算します（通常は 0〜100 の範囲）。
-2. 各 plugin のスコアは、設定された weight に従って重み付けされます。
-3. すべての plugin からの weighted score が合計されます。
-4. 合計スコアが最も高い node が Pod の配置先として選択されます。
+**スコアリングの流れ:**
+1. 各スコアリングプラグインがスコアを計算します。必要に応じて正規化した後の範囲は 0～100 です。
+2. 設定された重みに従って、プラグインごとのスコアを重み付けします。
+3. すべてのプラグインの重み付きスコアを合計します。
+4. 合計スコアが最も高い Node を Pod の配置先に選びます。
 
-**Default Scoring Plugins:**
-Kubernetes は次の default scoring plugin を提供しています。
+**既定のスコアリングプラグイン:**
+Kubernetes には次の既定プラグインがあります。
 
-1. **NodeResourcesBalancedAllocation**: CPU と memory の使用量がよくバランスした node に高いスコアを与えます。
-2. **NodeResourcesFit**: requested resources に対して利用可能なリソースが多い node に高いスコアを与えます。
-3. **NodeAffinity**: node affinity ルールに基づいてスコアを付けます。
-4. **InterPodAffinity**: inter-pod affinity/anti-affinity ルールに基づいてスコアを付けます。
-5. **PodTopologySpread**: Pod を topology domain 全体に均等に分散する node に高いスコアを与えます。
-6. **TaintToleration**: taints が少ない node に高いスコアを与えます。
-7. **ImageLocality**: 必要な container image をすでに持っている node に高いスコアを与えます。
+1. **NodeResourcesBalancedAllocation**: 実測使用率ではなく、要求済み CPU とメモリの割合が均衡した Node を優先します。
+2. **NodeResourcesFit**: 要求量と割り当て可能量に対して、設定済みの LeastAllocated、MostAllocated、RequestedToCapacityRatio 戦略を使います。
+3. **NodeAffinity**: Node affinity ルールに基づいてスコアを付けます。
+4. **InterPodAffinity**: Pod 間の affinity/anti-affinity ルールに基づいてスコアを付けます。
+5. **PodTopologySpread**: topology domain 全体に Pod を均等に分散できる Node を高く評価します。
+6. **TaintToleration**: toleration されない PreferNoSchedule taint にペナルティを与えます。強制的な taint はフィルタリング時に処理します。
+7. **ImageLocality**: 必要なコンテナイメージをすでに持つ Node を高く評価します。
 
-**Custom Scoring Plugin Example:**
+**カスタムスコアリングプラグイン（`plugins/score.go`）:**
+この例では、Node ラベルは管理者が制御するポリシー入力です。無効な値は暗黙に選好を作り出すのではなく、スコアリングサイクルを失敗させます。有効なスコア 0 はフィルターではありません。
+
 ```go
-// Custom scoring plugin example
+package plugins
+
+import (
+	"context"
+	"strconv"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
 type MyScorePlugin struct{}
 
-func (pl *MyScorePlugin) Name() string {
-    return "MyScorePlugin"
+var _ fwk.ScorePlugin = &MyScorePlugin{}
+
+func (*MyScorePlugin) Name() string { return "MyScorePlugin" }
+
+func (*MyScorePlugin) Score(_ context.Context, _ fwk.CycleState, _ *v1.Pod, info fwk.NodeInfo) (int64, *fwk.Status) {
+	if info == nil || info.Node() == nil {
+		return 0, fwk.NewStatus(fwk.Error, "missing node")
+	}
+	value := info.Node().Labels["custom-score-label"]
+	if value == "" {
+		return 0, nil
+	}
+	score, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || score < fwk.MinNodeScore || score > fwk.MaxNodeScore {
+		return 0, fwk.NewStatus(fwk.Error, "custom-score-label must be an integer from 0 to 100")
+	}
+	return score, nil
 }
 
-// Score method implementation
-func (pl *MyScorePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    // Get node info
-    nodeInfo, err := pl.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("getting node %q from Snapshot: %v", nodeName, err))
-    }
+// Scores are already absolute 0-100 values; no relative rescaling is needed.
+func (*MyScorePlugin) ScoreExtensions() fwk.ScoreExtensions { return nil }
 
-    node := nodeInfo.Node()
-
-    // Example: Score based on specific label value
-    if value, exists := node.Labels["custom-score-label"]; exists {
-        score, err := strconv.ParseInt(value, 10, 64)
-        if err != nil {
-            return 0, framework.NewStatus(framework.Error, fmt.Sprintf("invalid score value: %v", err))
-        }
-        // Score range should be 0-100
-        if score < 0 {
-            score = 0
-        } else if score > 100 {
-            score = 100
-        }
-        return score, nil
-    }
-
-    return 0, nil
-}
-
-// ScoreExtensions interface implementation
-func (pl *MyScorePlugin) ScoreExtensions() framework.ScoreExtensions {
-    return pl
-}
-
-// NormalizeScore method implementation
-func (pl *MyScorePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-    // Score normalization logic
-    var highest int64 = 0
-    for _, nodeScore := range scores {
-        if nodeScore.Score > highest {
-            highest = nodeScore.Score
-        }
-    }
-
-    if highest == 0 {
-        return nil
-    }
-
-    // Adjust all scores relative to the highest score
-    for i := range scores {
-        scores[i].Score = scores[i].Score * 100 / highest
-    }
-
-    return nil
+func NewScore(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &MyScorePlugin{}, nil
 }
 ```
 
-**Scheduler Configuration で Scoring Plugin を有効化し Weight を設定する:**
+**2つのプラグインを使う計算例の重み:**
+次の例では Score プラグインのセットだけを意図的に置き換えます。既定の Filter プラグインは有効なままです。実際のポリシーでは、必要なほかのスコアリング選好も残してください。
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     score:
+      disabled:
+      - name: "*"
       enabled:
       - name: MyScorePlugin
-        weight: 5  # Set weight
+        weight: 5
       - name: NodeResourcesBalancedAllocation
-        weight: 2  # Change default plugin weight
-      disabled:
-      - name: NodeResourcesFit  # Disable default plugin
+        weight: 2
 ```
 
-**Scoring Result Example:**
-node A、B、C が filtering を通過し、2 つの scoring plugin があると仮定します。
+**スコア計算の例:**
+これは測定結果ではなく、計算例です。A、B、C がフィルタリングを通過し、有効な2つのプラグインが次の最終スコア（0～100）を返したとします。
 
-1. MyScorePlugin (weight: 5)
-   - Node A: 80 points
-   - Node B: 60 points
-   - Node C: 90 points
+1. MyScorePlugin（重み: 5）
+   - Node A: 80 点
+   - Node B: 60 点
+   - Node C: 90 点
 
-2. NodeResourcesBalancedAllocation (weight: 2)
-   - Node A: 70 points
-   - Node B: 90 points
-   - Node C: 50 points
+2. NodeResourcesBalancedAllocation（重み: 2）
+   - Node A: 70 点
+   - Node B: 90 点
+   - Node C: 50 点
 
-Weighted total scores:
-- Node A: (80 x 5) + (70 x 2) = 400 + 140 = 540 points
-- Node B: (60 x 5) + (90 x 2) = 300 + 180 = 480 points
-- Node C: (90 x 5) + (50 x 2) = 450 + 100 = 550 points
+重み付き合計スコア:
+- Node A: (80 x 5) + (70 x 2) = 400 + 140 = 540 点
+- Node B: (60 x 5) + (90 x 2) = 300 + 180 = 480 点
+- Node C: (90 x 5) + (50 x 2) = 450 + 100 = 550 点
 
-この場合、Node C が最も高いスコアを受け取ったため、Pod は Node C にスケジューリングされます。
+この例では Node C が最も高いスコアになったため、Pod は Node C にスケジュールされます。
 
-**他の選択肢の問題点:**
-- A. Pod を実行できない node を除外する: これは "Filter" extension point の役割です。
-- C. Pod を node にバインドする: これは "Bind" extension point の役割です。
-- D. scheduling queue 内の Pod を並べ替える: これは "Queue Sort" extension point の役割です。
+**ほかの選択肢が誤りである理由:**
+- A. Pod を実行できない Node を除外する: 「Filter」拡張ポイントの役割です。
+- C. Pod を Node にバインドする: 「Bind」拡張ポイントの役割です。
+- D. scheduling queue 内の Pod を並べ替える: 「Queue Sort」拡張ポイントの役割です。
 </details>
 
-### 7. Which of the following is NOT a method for extending the scheduler in Kubernetes?
+### 7. Kubernetes でスケジューラーを拡張する方法ではないものはどれですか？
 
-A. Scheduling framework plugin
+A. Scheduling framework プラグイン
 B. Scheduler extender
-C. 複数の scheduler をデプロイする
-D. node controller を変更する
+C. 複数のスケジューラーをデプロイする
+D. Node controller を変更する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. node controller を変更する**
-
-**解説:**
-node controller を変更することは、Kubernetes における scheduler の拡張方法ではありません。node controller は node status を監視および管理する control plane component であり、scheduling decision には直接関係しません。
-
-**Kubernetes で scheduler を拡張する方法:**
-
-1. **Scheduling framework plugin**:
-   - Kubernetes 1.15 で導入され、scheduling cycle のさまざまな stage に plugin を挿入できます。
-   - filter、score、bind などの extension point を提供します。
-   - 効率のため scheduler codebase と直接統合されます。
-
-   ```go
-   // Scheduling framework plugin registration example
-   func NewPlugin(args runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-       // Parse plugin configuration
-       config, ok := args.(*Config)
-       if !ok {
-           return nil, fmt.Errorf("want args to be of type Config, got %T", args)
-       }
-
-       // Create plugin instance
-       return &Plugin{
-           handle: handle,
-           config: config,
-       }, nil
-   }
-
-   // Plugin interface implementation
-   type Plugin struct {
-       handle framework.Handle
-       config *Config
-   }
-
-   func (pl *Plugin) Name() string { return "MyPlugin" }
-
-   // Implement required extension point methods
-   func (pl *Plugin) Filter(...) { ... }
-   func (pl *Plugin) Score(...) { ... }
-   ```
-
-2. **Scheduler extender**:
-   - 外部 HTTP service を通じて scheduler の機能を拡張します。
-   - filtering、prioritization、binding stage を拡張できます。
-   - scheduler とは別に実行されるため、performance overhead が発生する場合があります。
-
-   ```yaml
-   # Scheduler extender configuration example
-   apiVersion: kubescheduler.config.k8s.io/v1
-   kind: KubeSchedulerConfiguration
-   profiles:
-   - schedulerName: default-scheduler
-     extenders:
-     - urlPrefix: "http://extender-service:8080"
-       filterVerb: "filter"
-       prioritizeVerb: "prioritize"
-       weight: 5
-       bindVerb: "bind"
-       enableHTTPS: false
-   ```
-
-3. **複数の scheduler をデプロイする**:
-   - default scheduler と並行して custom scheduler をデプロイします。
-   - 各 scheduler は独立して動作し、Pod は `spec.schedulerName` を介して特定の scheduler を指定できます。
-   - 完全な柔軟性を提供しますが、実装と保守が複雑になる場合があります。
-
-   ```yaml
-   # Custom scheduler deployment example
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-custom-scheduler
-     namespace: kube-system
-   spec:
-     replicas: 1
-     selector:
-       matchLabels:
-         component: my-custom-scheduler
-     template:
-       metadata:
-         labels:
-           component: my-custom-scheduler
-       spec:
-         serviceAccountName: my-custom-scheduler
-         containers:
-         - name: scheduler
-           image: my-custom-scheduler:v1.0
-           args:
-           - --scheduler-name=my-custom-scheduler
-           - --leader-elect=false
-   ```
-
-**Node Controller の役割:**
-node controller は次の役割を実行する control plane component です。
-- Node registration と status monitoring
-- Node status updates（Ready、NotReady など）
-- Node status に基づく Pod removal（node が長時間 NotReady の場合）
-- Node lifecycle management
-
-node controller は scheduling decision には直接関与せず、scheduler が使用する node 情報を更新します。したがって、node controller を変更することは scheduler を拡張する方法ではありません。
-
-**Scheduler Extension Method を選択する際の考慮事項:**
-1. **Complexity**: Scheduling framework plugin は実装が複雑になる場合がありますが、scheduler と密接に統合されています。
-2. **Performance**: Scheduler extender では HTTP call overhead が performance に影響する場合があります。
-3. **Maintenance**: 複数の scheduler では、別々の codebase を保守する必要があります。
-4. **Upgrades**: Kubernetes upgrade 時に compatibility issue が発生する場合があります。
-5. **Features**: 各方法は異なるレベルの functionality と flexibility を提供します。
-
-**他の選択肢の解説:**
-- A. Scheduling framework plugin: 有効な scheduler 拡張方法です。
-- B. Scheduler extender: 有効な scheduler 拡張方法です。
-- C. 複数の scheduler をデプロイする: 有効な scheduler 拡張方法です。
-</details>
-### 8. What is the purpose of the `--leader-elect` flag in the Kubernetes scheduler?
-
-A. scheduler に leadership authority を付与する
-B. 複数の scheduler instance のうち 1 つだけを active にする
-C. cluster の leader node 上でのみ scheduler を実行する
-D. scheduler に他の component より高い priority を与える
-
-<details>
-<summary>答えを表示</summary>
-
-**回答: B. 複数の scheduler instance のうち 1 つだけを active にする**
+**回答: D. Node controller を変更する**
 
 **解説:**
-Kubernetes scheduler における `--leader-elect` flag の目的は、高可用性（HA）構成で 1 つの scheduler instance だけが active になり作業を実行するようにすることです。これにより、複数の scheduler instance が同時に動作した場合に発生し得る conflict や race condition を防ぎます。
+Node controller の変更は、Kubernetes でスケジューラーを拡張する方法ではありません。Node controller は Node の状態を監視、管理する control plane コンポーネントであり、スケジューリングの判断には直接関与しません。
 
-**Leader Election Mechanism:**
-1. 複数の scheduler instance がデプロイされると、leader election algorithm が 1 つの instance だけを leader として選出します。
-2. leader として選出された instance だけが実際の scheduling work を実行します。
-3. 他の instance は standby mode のままで、現在の leader が失敗した場合には新しい leader が選出されます。
-4. この mechanism は Kubernetes resource locks を使用して実装されます。
+**スケジューラーを拡張する方法:**
 
-**Leader Election Related Flags:**
-```
---leader-elect=true                      # Whether to enable leader election (default: true)
---leader-elect-lease-duration=15s        # Leadership lease duration
---leader-elect-renew-deadline=10s        # Leadership renewal deadline
---leader-elect-retry-period=2s           # Leadership retry period
---leader-elect-resource-lock=leases      # Resource type to use for leadership lock
---leader-elect-resource-name=kube-scheduler  # Leadership lock resource name
---leader-elect-resource-namespace=kube-system  # Leadership lock resource namespace
-```
-
-**High Availability Scheduler Deployment Example:**
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kube-scheduler
-  namespace: kube-system
-spec:
-  replicas: 3  # Deploy multiple instances
-  selector:
-    matchLabels:
-      component: kube-scheduler
-  template:
-    metadata:
-      labels:
-        component: kube-scheduler
-    spec:
-      containers:
-      - name: kube-scheduler
-        image: k8s.gcr.io/kube-scheduler:v1.23.0
-        command:
-        - kube-scheduler
-        - --leader-elect=true  # Enable leader election
-        - --leader-elect-lease-duration=15s
-        - --leader-elect-renew-deadline=10s
-        - --leader-elect-retry-period=2s
-```
-
-**Leader Election Status の確認:**
-```bash
-# Check leadership resource
-kubectl get leases -n kube-system | grep kube-scheduler
-
-# Check leadership details
-kubectl describe lease kube-scheduler -n kube-system
-
-# Check leadership related messages in scheduler logs
-kubectl logs -n kube-system -l component=kube-scheduler | grep -i leader
-```
-
-**Custom Scheduler における Leader Election:**
-custom scheduler を実装する場合、同じ leader election mechanism を使用できます。これは client-go library の leaderelection package を利用します。
+1. **Framework プラグイン**はスケジューラー内で動作します。Q4 と Q6 の Filter/Score の例を Part 1 モジュール内の `plugins/` に保存し、このコマンドを `cmd/with-plugins/main.go` として保存します。`CGO_ENABLED=0 go build -buildvcs=false -o custom-scheduler ./cmd/with-plugins` でビルドします。プラグインを登録しただけでは有効になりません。設定でそのプラグインを参照する必要があります。
 
 ```go
-// Leader election implementation example in custom scheduler
-import (
-    "context"
-    "time"
+package main
 
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    clientset "k8s.io/client-go/kubernetes"
-    "k8s.io/client-go/tools/leaderelection"
-    "k8s.io/client-go/tools/leaderelection/resourcelock"
+import (
+	"os"
+
+	"example.com/custom-scheduler/plugins"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 )
 
-func runWithLeaderElection(ctx context.Context, client clientset.Interface, schedulerName string) {
-    // Leader election configuration
-    lock := &resourcelock.LeaseLock{
-        LeaseMeta: metav1.ObjectMeta{
-            Name:      schedulerName,
-            Namespace: "kube-system",
-        },
-        Client: client.CoordinationV1(),
-        LockConfig: resourcelock.ResourceLockConfig{
-            Identity: schedulerName + "-" + uuid.New().String(),
-        },
-    }
-
-    // Execute leader election
-    leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
-        Lock:            lock,
-        ReleaseOnCancel: true,
-        LeaseDuration:   15 * time.Second,
-        RenewDeadline:   10 * time.Second,
-        RetryPeriod:     2 * time.Second,
-        Callbacks: leaderelection.LeaderCallbacks{
-            OnStartedLeading: func(ctx context.Context) {
-                // Execute scheduler logic when becoming leader
-                runScheduler(ctx)
-            },
-            OnStoppedLeading: func() {
-                // Handle when leadership is lost
-                log.Printf("Lost leadership, shutting down")
-                os.Exit(0)
-            },
-            OnNewLeader: func(identity string) {
-                // Handle when a new leader is elected
-                log.Printf("New leader elected: %s", identity)
-            },
-        },
-    })
+func main() {
+	command := app.NewSchedulerCommand(
+		app.WithPlugin("MyFilterPlugin", plugins.NewFilter),
+		app.WithPlugin("MyScorePlugin", plugins.NewScore),
+	)
+	os.Exit(cli.Run(command))
 }
 ```
 
-**Leader Election を無効にすべきケース:**
-1. **Single instance deployment**: scheduler が 1 つの instance としてのみデプロイされる場合
-2. **異なる leader election mechanism の使用**: 外部 orchestration tool が instance activation を管理する場合
-3. **異なる scheduler names**: 各 scheduler instance が異なる `schedulerName` を使用する場合
+このバージョンでは factory が `(context.Context, runtime.Object, framework.Handle)` を受け取ります。これらの例には独自引数がありません。設定を追加する場合は、バージョン管理された framework runtime decoder で `runtime.Unknown` の payload をデコード、検証してください。未登録の独自型に対する型アサーションは避けます。
 
-これらの場合、`--leader-elect=false` を設定して leader election を無効化できます。
+2. **HTTP extender** は外部のフィルタリング、優先順位付け、必要に応じたバインドを追加します。`extenders` は profile の下ではなく、最上位に置きます。この設定例を使うには、extender service の実装、指定パスにマウントした対応する TLS 証明書、ネットワーク接続性、上限付きのエラー処理が必要です。単体で動くサーバーや EKS マネージドスケジューラーの設定例ではありません。`bindVerb` を省略すると既定の binder が使われます。
 
-**他の選択肢の問題点:**
-- A. scheduler に leadership authority を付与する: これは leader election の具体的な目的を説明していない曖昧な説明です。
-- C. cluster の leader node 上でのみ scheduler を実行する: Kubernetes には "leader node" という概念はありません。scheduler は control plane node 上で実行されます。
-- D. scheduler に他の component より高い priority を与える: leader election は priority とは関係なく、複数の scheduler instance 間の coordination のためのものです。
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+extenders:
+- urlPrefix: https://extender.scheduler-lab.svc:8443
+  filterVerb: filter
+  prioritizeVerb: prioritize
+  weight: 5
+  enableHTTPS: true
+  tlsConfig:
+    caFile: /etc/extender-tls/ca.crt
+    certFile: /etc/extender-tls/tls.crt
+    keyFile: /etc/extender-tls/tls.key
+  httpTimeout: 2s
+  nodeCacheCapable: false
+  ignorable: false
+```
+
+`ignorable: false` の場合、extender の Filter が失敗すると、そのスケジューリング試行はブロックされます。`true` にすると、必須の独自制約を迂回するおそれがあります。Prioritization のエラー処理は異なります。Kubernetes 1.35.8 は失敗を記録して extender のスコアを除外するため、スコアを必須ルールの強制に使ってはいけません。可能な場合は framework プラグインを優先し、タイムアウト、再試行、障害時の挙動をテストしてください。
+
+3. **複数のスケジューラー**では、異なる `profiles[].schedulerName` と独立した leader-election group を使います。既定スケジューラーと同じ identity や Lease で2つ目のプロセスを起動せず、Part 1 の Deployment/RBAC 一式を使ってください。
+
+**Node controller の役割:**
+kubelet は通常 Node を登録し、ヘルス状態を報告します。Node lifecycle controller は heartbeat を監視し、condition や taint を更新して、Node が不健全な場合の対応を調整します。これらの情報はスケジューリングに影響しますが、Node controller の変更はスケジューラーの拡張 API ではありません。
+
+**方法を選ぶ際の考慮事項:**
+実装の複雑さ、Node ごとの HTTP オーバーヘッド、キャッシュの整合性、障害時の動作、アップグレードとの互換性を評価してください。EKS ではセカンダリースケジューラーをデプロイします。マネージド既定スケジューラーのフラグや registry を置き換えることはできません。
+
+**ほかの選択肢の解説:**
+- A. Scheduling framework プラグイン: 有効なスケジューラー拡張方法です。
+- B. Scheduler extender: 有効なスケジューラー拡張方法です。
+- C. 複数のスケジューラーをデプロイする: 有効なスケジューラー拡張方法です。
 </details>
 
-### 9. What resource is used in Kubernetes to set pod scheduling priority?
+### 8. Kubernetes スケジューラーの `--leader-elect` フラグは何のために使いますか？
+
+A. スケジューラーにリーダーシップ権限を与える
+B. 複数のスケジューラーインスタンスのうち1つだけを稼働させる
+C. クラスタのリーダー Node 上だけでスケジューラーを実行する
+D. スケジューラーにほかのコンポーネントより高い優先度を与える
+
+<details>
+<summary>解答を表示</summary>
+
+**回答: B. 複数のスケジューラーインスタンスのうち1つだけを稼働させる**
+
+**解説:**
+Kubernetes スケジューラーの `--leader-elect` フラグは、高可用性（HA）構成で1つのスケジューラーインスタンスだけが有効になり、処理を行うようにします。同じ Lease group 内のレプリカを調整する機能です。あらゆる障害を防ぐ fencing ではなく、競合に安全な API 操作の代わりにもなりません。
+
+**Leader election の仕組み:**
+1. 複数のスケジューラーインスタンスをデプロイすると、leader election のアルゴリズムで1つがリーダーに選出されます。
+2. 選出されたインスタンスだけが実際のスケジューリング処理を行います。
+3. ほかのインスタンスは standby となり、現在のリーダーが失敗すると新しいリーダーが選出されます。
+4. この仕組みでは Kubernetes の resource lock を使用します。
+
+**Leader election の設定:**
+Lease の identity とタイミングには、バージョン管理された設定ファイルを使用します。
+
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+```
+
+**HA デプロイ:**
+Part 1 の Deployment 一式では、同じ設定と ServiceAccount を使う2つのレプリカをすでに実行します。独立したラボでは3レプリカに増やせます。これだけで本番環境の HA が実証されるわけではありません。障害ドメインの分離、API への接続性、起動時の容量、フェイルオーバー動作を確認してください。
+
+```bash
+kubectl -n scheduler-lab scale deployment/custom-scheduler --replicas=3
+kubectl -n scheduler-lab get lease custom-scheduler -o yaml
+kubectl -n scheduler-lab logs -l app=custom-scheduler --prefix --tail=100
+```
+
+**独自実装の場合:**
+kube-scheduler コマンドには client-go の leader election がすでに組み込まれています。独自実装では、プロセスごとに一意な identity、スケジューラー group 内で共有する Lease、更新権限、リーダーシップを失った際にスケジューリング処理を停止する仕組みが必要です。client-go の仕組みでも、同時に動作するすべてのプロセスを fencing できるわけではありません。バインドや外部副作用は、競合に安全な設計にする必要があります。`ReleaseOnCancel` を使う場合は、Lease を解放する前に保護対象の処理を停止してください。
+
+**Election を無効にしてよい場合:**
+隔離された実験、またはロールアウトや障害時も含めて別の仕組みが常に単一プロセスの稼働を保証する場合に限り、無効化してください。`replicas: 1` でもローリングアップデート中にプロセスが重複することがあります。スケジューラー名が異なる場合は election group も分ける必要があります。名前が異なるだけでは election を安全に無効化できません。
+
+**ほかの選択肢が誤りである理由:**
+- A. スケジューラーにリーダーシップ権限を与える: leader election の具体的な目的を説明していない曖昧な表現です。
+- C. クラスタのリーダー Node 上だけでスケジューラーを実行する: リーダーシップはプロセスに属し、クラスタ全体で共通する「リーダー Node」はありません。セカンダリースケジューラーを worker Node 上の Pod として実行することもできます。
+- D. スケジューラーにほかのコンポーネントより高い優先度を与える: leader election は優先度ではなく、複数のスケジューラーインスタンス間の調整に使います。
+</details>
+
+### 9. Kubernetes で Pod のスケジューリング優先度を設定するリソースはどれですか？
 
 A. PodSchedulingPolicy
 B. PriorityClass
@@ -870,14 +624,14 @@ C. SchedulingPriority
 D. PodPriority
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
 **回答: B. PriorityClass**
 
 **解説:**
-Kubernetes で Pod の scheduling priority を設定するために使用される resource は `PriorityClass` です。PriorityClass は Pod の相対的な重要度を定義し、scheduler が scheduling と preemption の決定を行う際に priority を考慮できるようにします。
+Kubernetes で Pod のスケジューリング優先度を設定するリソースは `PriorityClass` です。PriorityClass は Pod の相対的な重要度を定義し、スケジューラーが配置先や preemption を判断する際に優先度を考慮できるようにします。
 
-**PriorityClass Resource:**
+**PriorityClass リソース:**
 ```yaml
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -889,13 +643,13 @@ description: "High priority pods"  # Description
 preemptionPolicy: PreemptLowerPriority  # Preemption policy (default: PreemptLowerPriority)
 ```
 
-**Key Fields:**
-1. **value**: Priority value。値が大きいほど priority が高くなります。System Pod は通常 1000000000（10 億）以上の値を使用します。
-2. **globalDefault**: true に設定すると、この priority class は priority class を指定しない Pod に適用されます。
-3. **description**: priority class の説明です。
-4. **preemptionPolicy**: Preemption policy。`PreemptLowerPriority`（default）または `Never` に設定できます。
+**主なフィールド:**
+1. **value**: 優先度の値です。値が大きいほど優先度が高くなります。ユーザー定義の値は最大 `1000000000` です。組み込みの critical class には、これより大きい予約済み範囲が使われます。
+2. **globalDefault**: `true` にすると、PriorityClass を指定せず新規に admission された Pod にクラスタ全体の既定値として適用されます。既存 Pod は遡って変更されません。以下のラボ用 class はすべて `false` です。
+3. **description**: PriorityClass の説明です。
+4. **preemptionPolicy**: preemption のポリシーです。`PreemptLowerPriority`（既定値）または `Never` を指定できます。
 
-**PriorityClass を Pod に適用する:**
+**Pod への PriorityClass の適用:**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -905,25 +659,25 @@ spec:
   priorityClassName: high-priority  # Reference PriorityClass name
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.6
 ```
 
-**Priority と Preemption の動作:**
-1. **Scheduling priority**: より高い priority の Pod は scheduling queue で先に処理されます。
-2. **Preemption**: 高 priority Pod をスケジューリングする node がない場合、scheduler は低 priority Pod を削除（preempt）して空き容量を確保できます。
-3. **Preemption policy**: `preemptionPolicy: Never` を持つ PriorityClass を使用する Pod は、他の Pod を preempt しません。
+**優先度と preemption の動作:**
+1. **スケジューリング優先度**: 優先度の高い Pod が scheduling queue で先に処理されます。
+2. **Preemption**: 優先度の高い Pod を配置できる Node がない場合、スケジューラーは優先度の低い Pod を削除（preempt）して空きを作ることがあります。
+3. **Preemption policy**: `preemptionPolicy: Never` を使う Pod はほかの Pod を preempt しませんが、自身が preempt される可能性はあります。優先度の高い Pod を配置できず queue backoff になる間に、優先度の低い Pod が先に進むこともあります。
 
-**System PriorityClasses:**
-Kubernetes は次の system PriorityClasses を提供しています。
-- **system-cluster-critical**: cluster operation に重要な Pod 用（value: 2000000000）
-- **system-node-critical**: node operation に重要な Pod 用（value: 2000001000）
+**システム PriorityClass:**
+Kubernetes には次のシステム PriorityClass があります。
+- **system-cluster-critical**: クラスタ運用に不可欠な Pod 用（値: 2000000000）
+- **system-node-critical**: Node 運用に不可欠な Pod 用（値: 2000001000）
 
 ```bash
 # Check system PriorityClasses
 kubectl get priorityclasses | grep system
 ```
 
-**PriorityClass Usage Example:**
+**PriorityClass の使用例:**
 ```yaml
 # Define multiple priority classes
 apiVersion: scheduling.k8s.io/v1
@@ -939,7 +693,7 @@ kind: PriorityClass
 metadata:
   name: medium-priority
 value: 100000
-globalDefault: true
+globalDefault: false
 description: "Medium priority pods"
 ---
 apiVersion: scheduling.k8s.io/v1
@@ -952,7 +706,7 @@ description: "Low priority pods"
 preemptionPolicy: Never  # Do not preempt
 ```
 
-**Priority と Preemption 関連 Metrics の監視:**
+**優先度と preemption 関連メトリクスの監視:**
 ```bash
 # Check preemption events
 kubectl get events | grep -i preempt
@@ -961,78 +715,79 @@ kubectl get events | grep -i preempt
 kubectl get pods -o custom-columns=NAME:.metadata.name,PRIORITY:.spec.priority
 ```
 
-**Custom Scheduler で Priority を扱う:**
-custom scheduler を実装する場合、scheduling decision を行う際に Pod priority を考慮する必要があります。
+**カスタムスケジューラーで優先度を扱う:**
+カスタムスケジューラーを実装する場合は、スケジューリングを判断する際に Pod の優先度を考慮してください。
 
 ```go
-// Pod priority check example
-func getPodPriority(pod *v1.Pod) int32 {
-    if pod.Spec.Priority != nil {
-        return *pod.Spec.Priority
+package priorityexample
+
+import (
+    "sort"
+    v1 "k8s.io/api/core/v1"
+)
+
+func podPriority(pod *v1.Pod) int32 {
+    if pod == nil || pod.Spec.Priority == nil {
+        return 0
     }
-    return 0
+    return *pod.Spec.Priority
 }
 
-// Priority-based pod sorting example
+// Demonstrates only priority comparison, not queue backoff or requeue handling.
 func sortPodsByPriority(pods []*v1.Pod) {
-    sort.Slice(pods, func(i, j int) bool {
-        return getPodPriority(pods[i]) > getPodPriority(pods[j])
+    sort.SliceStable(pods, func(i, j int) bool {
+        return podPriority(pods[i]) > podPriority(pods[j])
     })
 }
 ```
 
-**他の選択肢の問題点:**
-- A. PodSchedulingPolicy: Kubernetes API に存在しない resource です。
-- C. SchedulingPriority: Kubernetes API に存在しない resource です。
-- D. PodPriority: これは resource type ではなく、Pod spec の field（`spec.priority`）です。この field は PriorityClass によって自動的に設定されます。
+**ほかの選択肢が誤りである理由:**
+- A. PodSchedulingPolicy: Kubernetes API に存在しないリソースです。
+- C. SchedulingPriority: Kubernetes API に存在しないリソースです。
+- D. PodPriority: リソース型ではなく、Pod spec のフィールド（`spec.priority`）です。このフィールドは PriorityClass によって自動的に設定されます。
 </details>
 
-### 10. What is the role of the Kubernetes scheduler's `NodeResourcesFit` plugin?
+### 10. Kubernetes スケジューラーの `NodeResourcesFit` プラグインの役割は何ですか？
 
-A. node の物理的な場所に従って Pod を配置する
-B. node の resource capacity と Pod の resource requests を比較する
-C. node operating system と Pod の互換性を確認する
-D. node network bandwidth を測定する
+A. Node の物理的な場所に応じて Pod を配置する
+B. 残りの割り当て可能リソースと Pod の実効要求を比較する
+C. Node の OS と Pod の互換性を確認する
+D. Node のネットワーク帯域幅を測定する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. node の resource capacity と Pod の resource requests を比較する**
+**回答: B. 残りの割り当て可能リソースと Pod の実効要求を比較する**
 
 **解説:**
-Kubernetes scheduler の `NodeResourcesFit` plugin の役割は、node の resource capacity と Pod の resource requests を比較し、Pod がその node で実行できるかどうかを確認することです。この plugin は CPU、memory、ephemeral storage、extended resources（GPU など）を含むさまざまな resource type を考慮します。
+`NodeResourcesFit` は、Pod の実効要求を、すでに割り当て済みまたは仮定済みの要求を差し引いた Node の **allocatable resources** と比較します。Pod 数の上限と、関連する extended resource も確認します。新しい Pod と `Capacity` 全体を単純に比較するわけではありません。また、CPU やメモリの limit の合計が容量を超えた場合に、通常それを拒否するものでもありません。
 
-**NodeResourcesFit Plugin の主な機能:**
-1. **Resource request verification**: Pod の resource requests が node の allocatable resources を超えないか確認します。
-2. **Resource limit verification**: Pod の resource limits が node の capacity を超えないか確認します。
-3. **Extended resource verification**: GPU、FPGA などの extended resource requests が node で利用可能か確認します。
-4. **Scoring**: filtering stage を通過した node に、resource usage に基づいてスコアを割り当てます。
+**リソースの計算:**
+* 通常のコンテナ、順番に実行される init container、再起動可能な sidecar、Pod overhead、サポート対象の Pod-level resource 設定を考慮します。API の defaulting により limit から request が導出される場合もあります。
+* scheduler snapshot を使用してください。そこには仮定済みバインドも含まれます。API から Running Pod だけを列挙して合計すると、予約済みの需要を見落とします。
+* 対象バージョンの feature gate と DRA の動作を維持してください。CPU とメモリの計算だけでは、リソース適合を完全には実装できません。
 
-**Resource Verification Process:**
-1. Pod 内のすべての container の resource requests を合計します。
-2. node の allocatable resources を確認します。
-3. Pod の resource requests が node の allocatable resources を超えないか確認します。
-4. 超えている場合、その node は filtered out されます。
+**設定:**
+`NodeResourcesFit` は既定で有効です。この例では Filter 段階を維持したまま、スコアリング戦略を変更します。
 
-**Scheduler における NodeResourcesFit Configuration:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
-- schedulerName: default-scheduler
-  plugins:
-    filter:
-      enabled:
-      - name: NodeResourcesFit
-    score:
-      enabled:
-      - name: NodeResourcesFit
-        weight: 1
+- schedulerName: custom-scheduler
   pluginConfig:
   - name: NodeResourcesFit
     args:
       scoringStrategy:
-        type: MostAllocated  # or LeastAllocated, RequestedToCapacityRatio
+        type: MostAllocated
         resources:
         - name: cpu
           weight: 1
@@ -1040,30 +795,30 @@ profiles:
           weight: 1
 ```
 
-**Scoring Strategies:**
-NodeResourcesFit plugin は次の scoring strategies をサポートします。
+**スコアリング戦略:**
+NodeResourcesFit プラグインは次のスコアリング戦略をサポートします。
 
-1. **LeastAllocated**: 使用済みリソースが少ない node に高いスコアを与えます。これは resource usage を分散するのに役立ちます。
+1. **LeastAllocated**: 要求済みリソースの割合が低い Node に高いスコアを与えます。リソース使用を分散するのに役立ちます。
    ```
-   score = (capacity - requested) / capacity
-   ```
-
-2. **MostAllocated**: 使用済みリソースが多い node に高いスコアを与えます。これは node の数を最小化するために resource usage を集約するのに役立ちます。
-   ```
-   score = requested / capacity
+   score ≈ 100 × (allocatable - requested) / allocatable
    ```
 
-3. **RequestedToCapacityRatio**: custom function を使用して requested resources と capacity の比率に基づいてスコアを割り当てます。
+2. **MostAllocated**: 要求済みリソースの割合が高い Node に高いスコアを与えます。Node 数を抑えるため、リソース使用を集約するのに役立ちます。
+   ```
+   score ≈ 100 × requested / allocatable
+   ```
 
-**Resource Types:**
-NodeResourcesFit plugin は次の resource types を考慮します。
+3. **RequestedToCapacityRatio**: 設定した区分線形の形状を使い、要求リソースと容量の比率に基づいてスコアを付けます。上記の単一リソースの簡略式では、整数の丸め、ゼロまたは容量超過時の扱い、リソースの重みを省略しています。実使用率に基づく式ではありません。
 
-1. **CPU**: core または millicore で測定されます。
-2. **Memory**: byte で測定されます。
-3. **Ephemeral storage**: node の local ephemeral storage です。
-4. **Extended resources**: GPU、FPGA などの custom resources です。
+**リソースの種類:**
+NodeResourcesFit プラグインは次のリソースを扱います。
 
-**Node Resources の確認:**
+1. **CPU**: コアまたはミリコアで測定します。
+2. **メモリ**: バイト単位で測定します。
+3. **Ephemeral storage**: Node のローカル一時ストレージです。
+4. **Extended resources**: GPU、FPGA などのカスタムリソースです。
+
+**Node リソースの確認:**
 ```bash
 # Check node's allocatable resources
 kubectl describe node <node-name> | grep Allocatable -A 5
@@ -1072,52 +827,29 @@ kubectl describe node <node-name> | grep Allocatable -A 5
 kubectl top node <node-name>
 ```
 
-**Pod Resource Requests の確認:**
+**Pod のリソース要求の確認:**
 ```bash
 # Check pod's resource requests
 kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].resources.requests}'
 ```
 
-**Custom Scheduler で Resource Fit Check を実装する:**
-```go
-// Node resource fit check example
-func checkNodeResourcesFit(pod *v1.Pod, node *v1.Node) bool {
-    // Get node's allocatable resources
-    allocatable := node.Status.Allocatable
+**安全な適合判定の実装:**
+scheduler framework では upstream のプラグインを維持してください。新しい Pod の CPU/メモリだけを合計し、既存の需要を無視して `true` を返す自作関数は、正しい置き換えになりません。付属の監査では、2コアの Node に既存の 1500m 要求があるケースについて、固定された upstream の適合判定をローカルで確認します。追加の 1コア要求は拒否され、CPU limit がより大きくても 250m の要求は適合します。これはローカルの計算確認であり、クラスタのスケジューリング性能試験ではありません。
 
-    // Calculate pod's resource requests
-    var requestedCPU, requestedMemory resource.Quantity
-    for _, container := range pod.Spec.Containers {
-        if request, ok := container.Resources.Requests[v1.ResourceCPU]; ok {
-            requestedCPU.Add(request)
-        }
-        if request, ok := container.Resources.Requests[v1.ResourceMemory]; ok {
-            requestedMemory.Add(request)
-        }
-    }
+Metrics Server が利用できる場合、`kubectl top` は現在のメトリクスを表示します。これらは既定の適合判定やスコアリングに使う要求量の合計ではありません。差異を調べる際は init container と overhead を含む Pod spec 全体を確認してください。
 
-    // Calculate resources already in use on the node
-    // (In actual implementation, sum resource requests of all pods running on the node)
-
-    // Check resource fit
-    if allocatableCPU, ok := allocatable[v1.ResourceCPU]; ok {
-        if requestedCPU.Cmp(allocatableCPU) > 0 {
-            return false  // CPU request exceeds allocatable amount
-        }
-    }
-
-    if allocatableMemory, ok := allocatable[v1.ResourceMemory]; ok {
-        if requestedMemory.Cmp(allocatableMemory) > 0 {
-            return false  // Memory request exceeds allocatable amount
-        }
-    }
-
-    return true  // All resource requests are satisfied
-}
-```
-
-**他の選択肢の問題点:**
-- A. node の物理的な場所に従って Pod を配置する: これは topology 関連 plugin（例: NodeAffinity、PodTopologySpread）の役割です。
-- C. node operating system と Pod の互換性を確認する: これは NodeSelector または NodeAffinity を通じて処理され、個別の plugin ではありません。
-- D. node network bandwidth を測定する: Kubernetes scheduler は default では network bandwidth を考慮しません。これには custom metrics と plugin が必要です。
+**ほかの選択肢が誤りである理由:**
+- A. Node の物理的な場所に応じて Pod を配置する: NodeAffinity や PodTopologySpread など、topology 関連プラグインの役割です。
+- C. Node の OS と Pod の互換性を確認する: 必要に応じて OS label と配置制約を使います。それだけでイメージやランタイムの互換性が証明されるわけではありません。`NodeResourcesFit` の役割でもありません。
+- D. Node のネットワーク帯域幅を測定する: Kubernetes スケジューラーは既定ではネットワーク帯域幅を考慮しません。カスタムメトリクスとプラグインが必要です。
 </details>
+
+## 参考資料
+
+この例は [Part 1 モジュールと Deployment](../../scheduling/01-custom-scheduler-part1.md) を使用します。ローカルのコンパイル、設定、計算の確認は本番運用への適合性を証明するものではありません。クラスタや AWS へのデプロイは行っていません。
+
+* [Scheduler configuration and default plugins](https://kubernetes.io/docs/reference/scheduling/config/)
+* [Framework extension points](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
+* [Resource scoring](https://kubernetes.io/docs/concepts/scheduling-eviction/resource-bin-packing/)
+* [Priority and preemption](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)
+* [Pinned Go interfaces](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)

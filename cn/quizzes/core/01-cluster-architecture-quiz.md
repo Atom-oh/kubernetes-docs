@@ -81,7 +81,7 @@ kube-scheduler 是负责选择运行新建 Pod 的节点的 control plane 组件
 **答案：C) cloud-controller-manager**
 
 **解释：**
-cloud-controller-manager 是一个包含云服务提供商专用控制逻辑并与其 API 交互的 control plane 组件。这使 Kubernetes 核心能够与云服务提供商的 API 分离。cloud-controller-manager 会运行云服务提供商专用控制器，例如 node、route 和 service 控制器。CSI 控制器和节点插件负责处理存储配置、挂载和卸载。
+cloud-controller-manager 是一个包含云服务提供商专用控制逻辑并与其 API 交互的 control plane 组件。这使 Kubernetes 核心能够与云服务提供商的 API 分离。cloud-controller-manager 会运行云服务提供商专用控制器，例如 node、route 和 service 控制器。CSI 控制器和节点插件负责存储预置、卷附加和挂载。
 </details>
 
 6. 在每个节点上运行并管理 Pod 中容器执行的代理是什么？

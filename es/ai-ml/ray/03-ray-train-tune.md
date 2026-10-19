@@ -12,11 +12,11 @@ Las comprobaciones de aquí cubren la configuración, las API de callbacks/check
 
 En 2.58.0, V2 es el valor predeterminado cuando `RAY_TRAIN_V2_ENABLED` no está definido. La importación de `ray.train.torch.TorchTrainer` selecciona su implementación V2 según corresponda. No asumas contratos idénticos cuando una variable de entorno selecciona la implementación anterior.
 
-El Trainer coordina los workers y los grupos de procesos distribuidos subyacentes. No crea automáticamente modelos, optimizadores, bucles de pérdida/datos, particionamiento de datos ni lógica para guardar/restaurar estado. Con PyTorch, utiliza asistentes adecuados como `prepare_model` y `prepare_data_loader` para la configuración de device/DDP/sampler; después verifica la duplicación de datos, la sincronización de gradientes y la evaluación. No todas las collectives de los frameworks pueden describirse como transferencias del object store de Ray.
+El Trainer coordina los workers y los grupos de procesos distribuidos subyacentes. No crea automáticamente modelos, optimizadores, bucles de pérdida/datos, particionamiento de datos ni lógica para guardar/restaurar estado. Con PyTorch, utiliza asistentes adecuados como `prepare_model` y `prepare_data_loader` para la configuración de device/DDP/sampler; después verifica la duplicación de datos, la sincronización de gradientes y la evaluación. No todas las operaciones colectivas de los frameworks pueden describirse como transferencias del object store de Ray.
 
 ## ScalingConfig y demanda de recursos
 
-`ScalingConfig` especifica el número de workers y los recursos lógicos de CPU/GPU por worker. También existen configuraciones elásticas compatibles, así que verifica el modo real y sus requisitos de datos/recuperación. Configurar el `trainer_resources` heredado genera un error de deprecación en V2 de 2.58.0. Distingue los recursos del controller de V2, los workers de entrenamiento y los trial drivers de Tune.
+`ScalingConfig` especifica el número de workers y los recursos lógicos de CPU/GPU por worker. También existen configuraciones elásticas compatibles, así que verifica el modo real y sus requisitos de datos/recuperación. Configurar el `trainer_resources` heredado genera un error de deprecación en V2 de 2.58.0. Distingue los recursos del controlador de V2, los workers de entrenamiento y los drivers de cada trial de Tune.
 
 Los placement groups y los bundles de workers necesitan capacidad suficiente antes de que los procesos del framework puedan inicializarse. Esto no reemplaza la programación de Kubernetes ni garantiza la programación atómica de cada Pod. Una cantidad insuficiente de GPUs puede causar esperas, timeouts o fallos; también importan los límites de Ray/KubeRay, las cuotas, la disponibilidad de las imágenes y la disponibilidad de EC2.
 
@@ -32,7 +32,7 @@ Para varios nodos, configura `train.RunConfig(storage_path=...)` en almacenamien
 
 ### Clases de fallos y reintentos
 
-Los valores predeterminados de `FailureConfig` de V2 en 2.58.0 son `max_failures=0` para errores de workers de entrenamiento, `controller_failure_limit=-1` para errores del controller y `max_preemption_failures=-1` para preemption. **Configurar solo `max_failures=0` no desactiva todas las clases de reintentos.** Configura cada límite junto con los plazos operativos/RayJob. Los reintentos no pueden recuperar el progreso de un checkpoint ausente o incompleto.
+Los valores predeterminados de `FailureConfig` de V2 en 2.58.0 son `max_failures=0` para errores de workers de entrenamiento, `controller_failure_limit=-1` para errores del controlador y `max_preemption_failures=-1` para preemption. **Configurar solo `max_failures=0` no desactiva todas las clases de reintentos.** Configura cada límite junto con los plazos operativos/RayJob. Los reintentos no pueden recuperar el progreso de un checkpoint ausente o incompleto.
 
 ## Ray Tune: Searchers y Schedulers
 
@@ -42,7 +42,7 @@ Revisa conjuntamente `max_concurrent_trials`, los recursos de los trials, los pl
 
 ## Ejemplo pequeño de Tune
 
-Esto ejecuta **dos trials de objetivo escalar**, no entrenamiento de modelos. La comprobación real recopiló ambos resultados y seleccionó `x=3` con puntuación 0.
+Esto ejecuta **dos trials con un objetivo escalar**, no entrenamiento de modelos. La comprobación real recopiló ambos resultados y seleccionó `x=3` con puntuación 0.
 
 ```python
 from pathlib import Path
@@ -79,11 +79,11 @@ Los recursos lógicos de Ray y el tamaño del object store no son límites del s
 
 **No presentes pasar directamente una instancia de Trainer V2 a `Tuner` como la ruta recomendada actual.** La comprobación nativa generó `TuneError` para una instancia V2 de DataParallelTrainer. Distingue el manejo de compatibilidad/deprecación del BaseTrainer anterior de V2.
 
-El patrón documentado actual utiliza un **function trainable** que construye un Trainer de framework y llama a `.fit()`. Pasa los parámetros del trial mediante `train_loop_config` y usa nombres de ejecución de Train y rutas de almacenamiento únicos para cada trial.
+El patrón documentado actual utiliza una **función de entrenamiento** (*function trainable*) que construye un Trainer del framework y llama a `.fit()`. Pasa los parámetros del trial mediante `train_loop_config` y usa nombres de ejecución de Train y rutas de almacenamiento únicos para cada trial.
 
 Para reenviar métricas intermedias y rutas de checkpoints, adjunta `ray.tune.integration.ray_train.TuneReportCallback` mediante el `RunConfig(callbacks=[...])` de Train. Constrúyelo dentro de una sesión de Tune. La implementación 2.58.0 reenvía el diccionario de métricas del primer worker, sin promediar. Agrega una ruta de checkpoint existente a las métricas en lugar de cargar el checkpoint nuevamente.
 
-Utiliza `tune.RunConfig` para Tuner y `train.RunConfig` para el Trainer. Mantén separadas sus configuraciones de fallos, almacenamiento y callbacks. Esta integración necesita conexión explícita y planificación de recursos.
+Utiliza `tune.RunConfig` para Tuner y `train.RunConfig` para el Trainer. Mantén separadas sus configuraciones de fallos, almacenamiento y callbacks. Esta integración requiere configuración explícita y planificación de recursos.
 
 ![Las funciones de trial de Tune crean ejecuciones de Train independientes, cuyos workers utilizan comunicación del framework. Los checkpoints van al almacenamiento persistente compartido; un callback reenvía métricas y rutas de checkpoints a Tune.](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
@@ -93,7 +93,7 @@ Utiliza `tune.RunConfig` para Tuner y `train.RunConfig` para el Trainer. Mantén
 
 Inspecciona por separado la demanda de recursos/placement de Ray, los límites de los worker groups de KubeRay, la ubicación de Pods de Kubernetes y el suministro físico de nodos. Incluso con capacidad disponible, las descargas de imágenes, el acceso al dataset, la inicialización/comunicación del framework y los permisos de checkpoints pueden retrasar el inicio.
 
-El autoscaling no proporciona GPUs instantáneas ni un límite automático de coste/finalización. Coordina la concurrencia de trials, los workers, las réplicas máximas, las clases de reintentos y los plazos operativos. Verifica la preservación de resultados/checkpoints antes de eliminar un RayJob o clúster.
+El escalado automático no proporciona GPUs instantáneas ni un límite automático de coste/finalización. Coordina la concurrencia de trials, los workers, las réplicas máximas, las clases de reintentos y los plazos operativos. Verifica la preservación de resultados/checkpoints antes de eliminar un RayJob o clúster.
 
 ## Fuentes principales
 

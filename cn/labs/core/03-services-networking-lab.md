@@ -2,18 +2,18 @@
 
 > **难度**：中级
 > **预计时间**：45 分钟
-> **最后更新**：September 11, 2026
+> **最后更新**：2026 年 9 月 11 日
 
 ## 学习目标
-- 创建 ClusterIP 和 NodePort Services
-- 练习通过 Services 访问 Pods
+- 创建 ClusterIP 和 NodePort 类型的 Service
+- 练习通过 Service 访问 Pod
 - 验证基于 DNS 的服务发现
 
 ## 先决条件
 - [ ] kubectl、Kubernetes 集群（minikube/kind）
-- [ ] 已完成 [Services 和网络](../../core/03-services-networking.md)学习
+- [ ] 已完成[服务与网络](../../core/03-services-networking.md)学习
 
-请使用一次性 kind/minikube 集群、相匹配的 kubectl context、创建 namespaces 的权限，以及可用的集群 DNS/CNI/registry 访问。网络策略必须允许这些测试流量。NodePort 可能会向外暴露节点网络接口，因此请使用预期的测试网络。在同一个 Bash 会话中运行；本次审查未执行集群/流量测试。
+请使用一次性 kind/minikube 集群、与其对应的 kubectl 上下文、创建命名空间的权限，以及可用的集群 DNS/CNI 和镜像仓库访问。网络策略必须允许这些测试流量。NodePort 可能会暴露节点的网络接口，因此请在预期的测试网络中执行。本指南的命令应在同一个 Bash 会话中运行；本次审查未执行集群或流量测试。
 
 ```bash
 SERVICE_LAB_DIR=$(mktemp -d /tmp/k8s-docs-services.XXXXXX)
@@ -115,11 +115,11 @@ exit 1
 
 - ClusterIP 提供内部虚拟地址；它不是安全边界，路由可达性取决于网络。
 - 完整 DNS 格式为 `<service>.<namespace>.svc.<cluster-domain>`；`cluster.local` 只是常见默认值。
-- 使用常规 Pod DNS 搜索设置时，同一 namespace 中可以使用 `<service>`，其他 namespace 中可以使用 `<service>.<namespace>`。
+- 按常规 Pod DNS 搜索设置，同一命名空间内可使用 `<service>`，跨命名空间访问可使用 `<service>.<namespace>`。
 </details>
 
 ### 验证
-EndpointSlices 已取代弃用的 Endpoints 视图。确认就绪后端地址；更新是异步的，且切片/地址族可能会拆分结果。三个就绪副本并不意味着每种输出格式中都恰好有三行。
+EndpointSlices 已取代弃用的 Endpoints 视图。确认就绪后端的地址；更新是异步的，且切片或地址族可能会拆分结果。三个就绪副本并不意味着每种输出格式中都恰好有三行。
 
 ```bash
 service_kubectl get endpointslices -l kubernetes.io/service-name=web-clusterip -o wide
@@ -172,7 +172,7 @@ curl --disable --noproxy '*' --fail --show-error --silent --max-time 5 \
   "http://$SERVICE_LAB_NODE_URL_HOST:$SERVICE_LAB_NODE_PORT/"
 ```
 
-在 minikube 上，请选择匹配的 profile。某些 Docker 驱动平台需要在另一个终端中运行 service 命令以保持隧道开启；请使用该命令打印的 URL。不要隐藏错误，也不要用硬编码端口替代。如果要从主机访问 kind，预先配置的 extraPortMappings 必须与 Service 的 nodePort 相匹配。如果无法访问节点 IP，可以另行选择 `service_kubectl port-forward --address=127.0.0.1 service/web-nodeport 18080:80` 来测试应用，但这**不会**验证 NodePort 数据路径。
+在 minikube 上，请选择与当前上下文匹配的配置档案（profile）。某些 Docker 驱动平台需要在另一个终端中运行 service 命令以保持隧道开启；请使用该命令打印的 URL。不要隐藏错误，也不要用硬编码端口替代。如果要从主机访问 kind，预先配置的 extraPortMappings 必须与 Service 的 nodePort 相匹配。如果无法访问节点 IP，可以另行选择 `service_kubectl port-forward --address=127.0.0.1 service/web-nodeport 18080:80` 来测试应用，但这**不会**验证 NodePort 数据路径。
 
 ```bash
 # Only for minikube: the profile must correspond to SERVICE_LAB_CONTEXT.
@@ -199,9 +199,9 @@ service_kubectl run dns-check --image=busybox:1.38.0 \
 service_kubectl get service web-clusterip -o jsonpath='{.spec.clusterIP}{"\n"}'
 ```
 
-解析器 IP、应答 IP 和集群域名取决于集群。对于这个常规 ClusterIP Service，DNS 应解析为上方显示的 Service 虚拟 IP，而不是各个后端 Pod IP。完整名称包含本实验的 namespace，而不是硬编码的默认 namespace。
+解析器 IP、应答 IP 和集群域名取决于集群。对于这个常规 ClusterIP Service，DNS 应解析为上方显示的 Service 虚拟 IP，而不是各个后端 Pod IP。完整名称包含本实验的命名空间，而不是硬编码的默认命名空间。
 
-**步骤 3.2：从不同 namespace 访问**
+**步骤 3.2：从其他命名空间访问**
 ```bash
 SERVICE_LAB_CLIENT_CANDIDATE="${SERVICE_LAB_NAMESPACE:?}-client"
 unset SERVICE_LAB_CLIENT_NAMESPACE
@@ -220,7 +220,7 @@ fi
 <details>
 <summary>需要提示吗？</summary>
 
-- 使用标准 DNS 搜索路径时，跨 namespace 访问只需 `service.namespace`；也可以使用完整集群域名。
+- 使用标准 DNS 搜索路径时，跨命名空间访问只需 `service.namespace`；也可以使用完整集群域名。
 - CoreDNS 或配置的集群 DNS 实现会发布 Service 记录。
 - 使用 `kubectl get pods -n kube-system -l k8s-app=kube-dns` 检查 DNS Pods
 </details>
@@ -257,8 +257,8 @@ unset -f service_kubectl delete_service_lab_namespace
 * [minikube 访问](https://minikube.sigs.k8s.io/docs/handbook/accessing/)
 * [kind 端口映射](https://kind.sigs.k8s.io/docs/user/configuration/#extra-port-mappings)
 
-验证仅包括本地 manifest/命令检查，并非有记录的 CNI、DNS 或 NodePort 测试。临时客户端使用显式命令，无需 service-account tokens。
+验证仅包括本地清单和命令检查，并非有记录的 CNI、DNS 或 NodePort 测试。临时客户端使用显式命令，无需 ServiceAccount 令牌。
 
 ## 后续步骤
-- [Services 和网络测验](../../quizzes/core/03-services-networking-quiz.md)
+- [服务与网络测验](../../quizzes/core/03-services-networking-quiz.md)
 - [存储实验](./04-storage-lab.md)

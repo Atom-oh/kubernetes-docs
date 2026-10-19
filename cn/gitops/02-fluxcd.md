@@ -1,7 +1,7 @@
 # FluxCD
 
 > **审查基线**：自管理的 Flux 2.9.5；在发布说明审查后更新至补丁版本 2.9.6（示例未重新运行）
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 FluxCD 是一组面向 Kubernetes 的持续交付和渐进式交付解决方案，具有开放性和可扩展性。FluxCD 于 2022 年 11 月从 CNCF 毕业，使其成为云原生生态系统中最成熟的 GitOps 工具之一。
 
@@ -655,7 +655,7 @@ kubectl rollout status deployment/source-controller -n flux-system --timeout=180
 
 ### ECR 中的 GitOps Artifact
 
-这些 source-controller 权限读取专用的 gitops-artifacts 仓库。GetAuthorizationToken 不支持 repository-ARN 范围限定，因此其 resource 为 `*`，并带有 requested-region 条件。内容读取操作的范围限定为仓库 ARN。请替换 account/region/repository 值。
+这些 source-controller 权限读取专用的 gitops-artifacts 仓库。GetAuthorizationToken 不支持 repository-ARN 范围限定，因此其 resource 为 *，并带有 requested-region 条件。内容读取操作的范围限定为仓库 ARN。请替换 account/region/repository 值。
 
 ```json
 {

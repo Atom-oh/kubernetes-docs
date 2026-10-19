@@ -1,11 +1,11 @@
 # オブザーバビリティクイズ
 
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 >
 > **バージョン**: Kubernetes 1.32–1.37 をサポートする Istio 1.31。
 > EKS および Kiali の互換性制限については、インストールとダッシュボードの章を参照してください。
 
-このクイズでは、設定済みの sidecar/waypoint テレメトリを扱います。各解説例は独立しており、記載されたバックエンド、namespace、権限、トラフィックが存在することを前提とします。YAML/API/クエリの確認は、production または live-cluster テストではありません。ztunnel L4、native sidecar、HA Deployment には、それぞれ固有の収集設定が必要です。
+このクイズでは、設定済みの sidecar/waypoint テレメトリを扱います。各解説例は独立しており、記載されたバックエンド、namespace、権限、トラフィックが存在することを前提とします。YAML/API/クエリの確認は、本番環境や稼働中クラスタでのテストではありません。ztunnel の L4、native sidecar、高可用性の Deployment には、それぞれ個別の収集設定が必要です。
 
 ## 選択式問題 (1-5)
 
@@ -398,7 +398,7 @@ D. Prometheus query で JSON に変換する
 
 **回答: A**
 
-A は有効な MeshConfig の方法です。`istioctl install -f` 入力で logging を有効にして `accessLogEncoding: JSON` を使用します。これは cluster 内の operator resource ではありません。logging の章で説明した custom `envoyFileAccessLog.logFormat.labels` provider も、別のサポートされる方法です。
+A は MeshConfig を設定する有効な方法です。logging を有効にし、`accessLogEncoding: JSON` を指定した `istioctl install -f` の入力を使用します。これは cluster 内の operator resource ではありません。logging の章で説明した custom `envoyFileAccessLog.logFormat.labels` provider も、別のサポートされる方法です。
 
 **解説:**
 
@@ -583,7 +583,7 @@ D. Istio は traffic/control-plane ダッシュボードを公開しています
 
 **解説:**
 
-1.31 catalog には Service7636、Workload7630、Mesh7639、Performance11829、Control Plane7645、Wasm13277、Ztunnel21306 が含まれます。Performance は resource/data usage に焦点を当てています。xDS/webhook panel は主に Control Plane に属します。Mesh にはグローバルなトラフィックと component version が含まれますが、以前ここに列挙されたすべての latency panel は含まれません。インストール済み Istio release に一致する revision を選択してください。
+Istio 1.31 の catalog には、Service Dashboard（ID 7636）、Workload Dashboard（ID 7630）、Mesh Dashboard（ID 7639）、Performance Dashboard（ID 11829）、Control Plane Dashboard（ID 7645）、Wasm Dashboard（ID 13277）、Ztunnel Dashboard（ID 21306）が含まれます。Performance Dashboard はリソースとデータ使用量を中心に表示します。xDS/webhook のパネルは主に Control Plane Dashboard に属します。Mesh Dashboard にはグローバルなトラフィックとコンポーネントのバージョンが含まれますが、以前ここに列挙されていたレイテンシのパネルがすべて含まれるわけではありません。インストール済みの Istio リリースに一致する revision を選択してください。
 
 Cost は `istio_requests_total` に GB transfer price を掛けて計算できません。request は byte ではなく、`source_cluster`/`destination_cluster` は Availability Zone ではなく cluster を識別します。Proxy memory は usage であり請求額ではありません。Network costing には課金対象 byte の計測値と、実際の source/destination location/service rule が必要です。Resource cost allocation には node price、時間、明示的な allocation model が必要です。固定の式を主張する代わりに、AWS billing/CUR data と該当する pricing で見積もりを照合してください。
 
@@ -700,9 +700,9 @@ spec:
 
 ***
 
-### 問題 7: Jaeger による Performance Bottleneck の特定
+### 問題 7: Jaeger による性能ボトルネックの特定
 
-分散トレーシングツール Jaeger を使用して、microservices architecture の **performance bottleneck** を見つける方法を説明してください。**Trace analysis method** と**実践的な debugging scenario** を含めてください。
+分散トレーシングツール Jaeger を使って、マイクロサービス構成の**性能ボトルネック**を特定する方法を説明してください。**トレースの分析方法**と**実践的なデバッグシナリオ**を含めてください。
 
 <details>
 
@@ -819,15 +819,15 @@ Traffic animation は選択された window を要約するものであり、byt
 
 ***
 
-### 問題 9: Production Observability Stack のセットアップ
+### 問題 9: 本番環境向け可観測性スタックの構築
 
-production Kubernetes cluster 向けに、Istio observability stack（Prometheus、Grafana、Jaeger、Kiali）を **High Availability (HA)** 構成で Deployment する方法を説明してください。**persistent storage**、**scaling**、**backup** 戦略を含めてください。
+本番環境の Kubernetes クラスタ向けに、Istio の可観測性スタック（Prometheus、Grafana、Jaeger、Kiali）を **高可用性**（HA）構成でデプロイする方法を説明してください。**永続ストレージ**、**スケーリング**、**バックアップ**の戦略も含めてください。
 
 <details>
 
 <summary>回答を表示</summary>
 
-production HA stack は、環境固有の設計および検証作業です。以下では主な要件を扱いますが、production-tested Deployment bundle ではありません。互換性のある Kubernetes/Istio/operator/chart/backend version を固定し、実際に使用する chart value をレビューし、rollout 前に failure と restore behavior を検証してください。[dashboard の章](../../../service-mesh/istio/observability/04-dashboards.md)には現在の Kiali compatibility gap が記録されています。latest release から compatibility を推測しないでください。
+本番環境向けの HA スタックは、環境に応じた設計と検証が必要です。以下は主な要件を示すもので、本番環境での検証済みデプロイ一式ではありません。互換性のある Kubernetes/Istio/operator/chart/backend のバージョンを固定し、実際に使う chart の設定値を確認してください。展開前に障害時の動作と復旧方法を検証します。[ダッシュボードの章](../../../service-mesh/istio/observability/04-dashboards.md)には現行の Kiali 互換性上の制約が記載されています。最新リリースであることだけを根拠に互換性を推測しないでください。
 
 | Component | State と HA 要件 |
 |---|---|
@@ -861,17 +861,17 @@ production HA stack は、環境固有の設計および検証作業です。以
 
 ***
 
-### 問題 10: Custom Metrics と Dashboard の作成
+### 問題 10: カスタムメトリクスとダッシュボードの作成
 
-Istio Envoy が収集する default metrics を超えて、**business metrics**（例: order count、payment success rate）を収集し、Grafana custom dashboard を作成する方法を説明してください。
+Istio Envoy が収集するデフォルトメトリクスに加えて、**ビジネスメトリクス**（注文数や決済成功率など）を収集し、Grafana のカスタムダッシュボードを作成する方法を説明してください。
 
 <details>
 
 <summary>回答を表示</summary>
 
-metric を選択する前に、business event と counting boundary を定義してください。Envoy は request を認識しますが、order が durably created されたか、payment が settled したかは認識しません。以下の**integration fragment は完了した processing attempt を数える**ものであり、unique order や accounting revenue ではありません。アプリケーションは processing function/error contract、idempotency、validation を提供する必要があります。真の payment-success metric では、payment boundary で payment outcome を instrument し、outcome counter から ratio を導出してください。保守されない Gauge は success rate ではありません。
+メトリクスを選ぶ前に、ビジネスイベントと計測範囲を定義してください。Envoy が把握するのはリクエストであり、注文が永続化されたか、決済が確定したかではありません。以下の**組み込み用コード断片は処理試行の完了を数える**もので、注文の一意性や会計上の売上を示すものではありません。アプリケーション側で処理関数、エラー処理の契約、冪等性、検証を実装してください。実際の決済成功率を計測するには、決済境界で結果を計測し、結果別カウンターから比率を導出してください。適切に更新されない Gauge は成功率を表しません。
 
-bounded category/status label、attempt 用の Counter、nonnegative amount/duration 用の Histogram を使用します。failure を含めるため、`finally` で duration を observe してください。order ID、user ID、raw URL を metric の label にしないでください。これらの例は single-process 向けです。multi-worker aggregation には client library のサポート対象 setup が必要です。
+値の種類を限定した category/status label、試行数を数える Counter、0 以上の金額や処理時間を測る Histogram を使用します。失敗も含めて計測するため、`finally` で処理時間を記録してください。order ID、user ID、raw URL をメトリクスの label に含めてはいけません。これらの例は単一プロセス向けです。複数 worker の集計には、client library がサポートする構成が必要です。
 
 **Python/Flask**（アプリケーションが `process_order` と `PaymentException` を提供します）:
 
@@ -973,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Kubernetes collection**: この sidecar lab は、plaintext application scrape が STRICT mTLS を通過すると想定しないよう Istio の merged endpoint を使用します。これらの label/annotation を、`default` の実際の `order-service` Deployment にマージしてください。その image には application を含め、8080 で `/metrics` を公開する必要があります。mesh では Prometheus merging を有効にする必要があります。agent endpoint15020 は cleartext のため、network access を制限してください。既存 scraper がすでにこれらの business metrics を収集している場合は、duplicate monitor を追加しないでください。
+**Kubernetes での収集**: この sidecar の例では、平文のアプリケーションスクレイプが STRICT mTLS を通過すると想定せず、Istio の統合エンドポイントを使用します。これらの label/annotation を、実際の `order-service` Deployment（namespace `default`）にマージしてください。コンテナイメージにはアプリケーションを含め、8080 番ポートで `/metrics` を公開する必要があります。mesh では Prometheus メトリクスの統合を有効にしてください。agent の endpoint 15020 は平文通信のため、ネットワークアクセスを制限します。既存の scraper がすでにこれらのビジネスメトリクスを収集している場合は、重複する monitor を追加しないでください。
 
 ```yaml
 spec:
@@ -1034,7 +1034,7 @@ spec:
 
 Prometheus resource は `istio-system` の ServiceMonitor を選択する必要があり、`default` の Service を検出します。business metric family のみを維持することで、他で既に scrape されている proxy metric の重複を避けます。`targetLabels` は Service の `app` label を明示的に追加します。これは sidecar の例です。ambient/direct TLS scraping には独自のサポート対象 design が必要です。
 
-**Query**（順に、interval attempt count、attempt/second、success fraction、observed amount P95、duration P99、category rate、order attempt における payment-failure fraction）:
+**クエリ**（順に、期間内の試行数、毎秒の試行数、成功率、計測金額のP95、処理時間のP99、カテゴリ別の割合、注文試行に対する決済失敗率）:
 
 ```promql
 sum(increase(orders_total{namespace="default",app="order-service"}[5m]))
@@ -1052,9 +1052,9 @@ sum by (product_category) (rate(orders_total{namespace="default",app="order-serv
 sum(rate(orders_total{namespace="default",app="order-service",status="payment_failed"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
 ```
 
-`increase` は interval total を推定します。`rate` は秒あたりです。process restart、retry、missed scrape は、operational counter/amount sum が accounting ledger ではないことを意味します。unique committed order や revenue については、telemetry が exactly-once であると想定するのではなく、durable business system と照合してください。
+`increase` は期間内の合計値を推定し、`rate` は毎秒の値を返します。プロセスの再起動、再試行、スクレイプ漏れがあるため、運用上のカウンターや金額の合計は会計台帳にはなりません。一意に確定した注文数や売上については、テレメトリが exactly-once であると仮定せず、永続化された業務システムと照合してください。
 
-**Grafana**: この完全な dashboard object は datasource UID `prometheus` と上記 monitor の label を想定します。API wrapper なしで保存し、[文書化された dashboard file provisioning](../../../service-mesh/istio/observability/04-dashboards.md)を使用してください。ConfigMap label 単体では provider を設定しません。
+**Grafana**: この完全なダッシュボードオブジェクトは、データソース UID `prometheus` と上記 monitor の label を前提とします。API wrapper は使わずに保存し、[文書化された dashboard file provisioning](../../../service-mesh/istio/observability/04-dashboards.md)を使用してください。ConfigMap の label だけでは provider は設定されません。
 
 ```json
 {
@@ -1170,7 +1170,7 @@ sum(rate(orders_total{namespace="default",app="order-service",status="payment_fa
 }
 ```
 
-**Alert**: この rule はインストール済み Prometheus Operator が選択します。minimum traffic threshold は no traffic での ratio alert を回避します。absence/scrape failure には別の signal が必要です。threshold は例であり、business SLO guarantee ではありません。
+**アラート**: この rule はインストール済みの Prometheus Operator に選択される必要があります。最小トラフィックしきい値を設けると、トラフィックがないときの比率アラートを避けられます。データ不在やスクレイプ失敗には別の signal が必要です。しきい値は例であり、ビジネス SLO を保証するものではありません。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1200,7 +1200,7 @@ spec:
         summary: P95 processing attempt duration exceeds2s
 ```
 
-metric type、exposition、process model については、[Python client](https://prometheus.github.io/client_python/) と [JavaScript client](https://github.com/prometheus/client_js) のドキュメントを参照してください。
+メトリクスの型、公開形式、プロセスモデルについては、[Python client](https://prometheus.github.io/client_python/) と [JavaScript client](https://github.com/prometheus/client_js) のドキュメントを参照してください。
 
 </details>
 
@@ -1215,7 +1215,7 @@ metric type、exposition、process model については、[Python client](https
 **評価基準:**
 
 * 90-100 点: これらのトピックについて優れた理解がある
-* 80-89 点: 十分な理解がある。Deployment の検証は別途必要
+* 80-89 点: 十分な理解がある。デプロイの検証は別途必要
 * 70-79 点: 平均的（追加の学習を推奨）
 * 60-69 点: 平均以下（基本概念の見直しが必要）
 * 0-59 点: 再学習が必要

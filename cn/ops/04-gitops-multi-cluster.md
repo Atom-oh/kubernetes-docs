@@ -1,7 +1,7 @@
 # ArgoCD 多集群部署与 IAM Identity Center
 
 > **审查基线**：Argo CD 3.5.5 / chart 10.10.5，Terraform 1.15.7 / Helm Provider 3.3.0，ESO 2.12.0\
-> **最后审核**：October 16, 2026。已检查本地 schema、渲染结果和测试替身。未执行实时 EKS 安装、SSO 登录或 Secrets Manager 读取。
+> **最后审核**：2026年10月16日。已检查本地 schema、渲染结果和测试替身。未执行实时 EKS 安装、SSO 登录或 Secrets Manager 读取。
 
 < [上一章：CI 流水线](03-ci-pipelines.md) | [目录](README.md) | [下一章：GitOps 自动化](05-gitops-automation.md) >
 
@@ -336,11 +336,11 @@ patches:
           values: [ap-northeast-2c]
 ```
 
-审查 `kustomize build nodepools/overlays/blue` 和 `kustomize build nodepools/overlays/green` 的结果。标准实例类型要求可避免将自管 Karpenter 的 `karpenter.k8s.aws/*` 键混入 Auto Mode。工作负载选择器、架构和放置要求应与这些 NodePool 相匹配。
+同时审查蓝色 overlay 的 `kustomize build nodepools/overlays/blue` 和绿色 overlay 的构建结果。标准实例类型要求可避免将自管 Karpenter 的 `karpenter.k8s.aws/*` 键混入 Auto Mode。工作负载选择器、架构和放置要求应与这些 NodePool 相匹配。
 
 不要将 `amiSelectorTerms`、`blockDeviceMappings` 或 `instanceStorePolicy` 等自管 `EC2NodeClass` 字段复制到 Auto Mode `NodeClass` 中。自定义 Auto Mode 类使用实际节点角色、子网/安全组选择器以及 `ephemeralStorage` 等受支持字段；如果使用不同的节点角色，还需要相应的 Auto Mode 节点访问条目。持久数据库存储应与临时磁盘分开设计。请参阅 [NodePool/NodeClass 指南](../eks-auto-mode/02-nodepool-configuration.md)。
 
-### Projects 和手动审批
+### 项目与手动审批
 
 在 hub 上创建这些 AppProjects，并将 Git URL 替换为获准的仓库。目标名称与注册脚本中的名称一致。基础设施项目允许使用 NodePools；应用程序项目只允许所需的命名空间范围内的资源类型。AppProjects 不能取代 Kubernetes RBAC，也不能代替对不可信代码进行沙箱隔离。
 
@@ -426,7 +426,7 @@ NodePool 变更可能触发漂移和节点替换。Disruption budget 会限制�
 
 ### Cluster Generator
 
-仅选择带有 `gitops-target=true` 标签的已注册集群。此示例与后续 Matrix 示例是**互为替代的方案**：不要让它们同时管理相同的 frontend 资源。
+仅选择带有 `gitops-target=true` 标签的已注册集群。此示例与后续 Matrix 示例是**互为替代的方案**：不要让它们同时管理相同的前端资源。
 
 ```yaml
 # fixtures/cluster-appset.yaml
@@ -466,7 +466,7 @@ spec:
 
 `nameNormalized` 适用于 Kubernetes 名称；`name` 是已注册的目标名称。对于包含连字符的标签键，请使用 Go template 的 `index`。对于 Git 文件生成器，最好使用 `sourcePath` 之类的配置字段，以避免与生成的 `.path` 元数据冲突。
 
-### Matrix 和 Git Directory Generators
+### Matrix 和 Git 目录生成器
 
 ```yaml
 # fixtures/matrix-appset.yaml

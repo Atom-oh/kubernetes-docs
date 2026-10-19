@@ -1,198 +1,186 @@
 # 運用クイズ
 
 > **関連ドキュメント**: [運用](../../../networking/calico/09-operations.md)
-> **最終更新**: February 22, 2026
+> **最終更新**: 2026年9月12日
 
 ## クイズ
 
-1. Calico の主なインストール方法は 3 つありますか？
-   - A) Docker、Podman、containerd
-   - B) Manifest-based (kubectl)、Operator-based (Tigera)、Helm
-   - C) CLI、GUI、API
-   - D) バイナリ、パッケージマネージャー、ソースからのコンパイル
+1. Calico のインストール管理について、正しい説明はどれですか？
+   - A) 冗長化のため、インストール用 manifest と Helm operator を併用する
+   - B) プラットフォームに合った operator/Helm または直接 manifest を管理する主体を 1 つ選ぶ
+   - C) すべてのインストールで BPF を有効にする必要がある
+   - D) operator の新しい manifest には、すべての Calico CRD が自動的に含まれる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Manifest-based (kubectl)、Operator-based (Tigera)、Helm**
+**回答: B) プラットフォームに合った operator/Helm または直接 manifest を管理する主体を 1 つ選ぶ**
 
-**解説:**
-Calico は、1) YAML Manifest に対して kubectl apply を使用する Manifest-based インストール、2) Tigera Operator を使用する Operator-based インストール（推奨）、3) カスタマイズ可能な Deployment のための Helm chart を使用してインストールできます。Operator の方法は Calico のライフサイクルを管理するため、通常は本番環境に推奨されます。
+Helm chart は Tigera Operator をインストールします。管理主体は 1 つにし、バージョンを固定し、対応する CRD を管理したうえで、実際のネットワークプロファイルを選択してください。この例は、自己管理 Linux 上の完全な Calico CNI を対象とします。EKS VPC CNI のポリシー専用構成とは異なります。
 
 </details>
 
-2. BGP peer のステータスを含む Calico node のステータスを表示する calicoctl コマンドはどれですか？
-   - A) calicoctl get nodes
-   - B) calicoctl node status
-   - C) calicoctl describe node
-   - D) calicoctl show peers
+2. `calicoctl node status` が調べるのは何ですか？
+   - A) kubeconfig context 内のすべてのノード
+   - B) 必要なノードアクセスを用いた、ローカルノードの BGP 状態
+   - C) すべてのアプリケーションの HTTP readiness
+   - D) すべての IPAM 割り当て漏れ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) calicoctl node status**
+**回答: B) 必要なノードアクセスを用いた、ローカルノードの BGP 状態**
 
-**解説:**
-`calicoctl node status` コマンドは、BGP peering 情報を含む Calico node のステータスを表示し、確立済みの peer、その状態、および接続の問題を示します。これは BGP routing の問題をトラブルシューティングするために不可欠です。
+これはローカルノードの BGP 診断であり、クラスター全体の readiness probe ではありません。BGP を使わないプロファイルでは、BGP の成功結果は必要ありません。影響を受けたノードを選び、必要に応じて実際の BIRD socket を調べてください。
 
 </details>
 
-3. node 間の IPAM block 割り当てを表示するコマンドはどれですか？
-   - A) calicoctl ipam show --show-blocks
-   - B) calicoctl get ipamblocks
-   - C) kubectl get ipamblocks -o wide
-   - D) calicoctl describe ipam
+3. `calicoctl ipam show --show-blocks` で何を確認できますか？
+   - A) Calico IPAM の block 使用状況。ノードとの紐付けは別途調べる
+   - B) 空の block を自動的に安全に解放する
+   - C) すべての VPC CNI ENI 割り当て
+   - D) トランザクション整合性のある datastore backup
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) calicoctl ipam show --show-blocks**
+**回答: A) Calico IPAM の block 使用状況。ノードとの紐付けは別途調べる**
 
-**解説:**
-`calicoctl ipam show --show-blocks` コマンドは、どの IP block がどの node に割り当てられているか、各 block の使用率、全体の IP pool 統計など、詳細な IPAM 情報を表示します。これは IP 割り当ての問題を診断するうえで重要です。
+このコマンドは IP block と pool の使用状況を報告します。block とノードの対応関係は BlockAffinity で確認してください。対象は Calico IPAM です。VPC CNI や host-local を使う場合は、実際のアドレス割り当て機構を調べます。
 
 </details>
 
-4. Felix のパフォーマンスと policy 統計を公開する Prometheus metrics endpoint はどれですか？
-   - A) :9090/metrics
-   - B) :9091/metrics
-   - C) :9094/metrics
-   - D) :8080/metrics
+4. 確認対象のリリースにおける `felix_int_dataplane_apply_time_seconds` の型は何ですか？
+   - A) 拒否したパケット数を示す Counter
+   - B) 必須の _bucket series を持つ Histogram
+   - C) quantile、_sum、_count を持つ Summary
+   - D) 割り当て済み IP block 数を示す Gauge
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) :9091/metrics**
+**回答: C) quantile、_sum、_count を持つ Summary**
 
-**解説:**
-Felix はデフォルトでポート 9091 に Prometheus metrics を公開します。これらの metrics には、policy rule 数、dataplane プログラミングのレイテンシ、iptables/eBPF 統計、エラー数が含まれます。これは FelixConfiguration で `prometheusMetricsEnabled: true` を使用して有効にする必要があります。
+これは dataplane 適用時間の増分を観測する Summary です。ローカルの quantile はクラスター全体の p99 ではありません。観測値がある場合は sum/count の rate から平均を算出し、存在しない histogram bucket を仮定してはいけません。
 
 </details>
 
-5. Typha が Prometheus metrics endpoint に使用するポートはどれですか？
-   - A) :9091/metrics
-   - B) :9093/metrics
-   - C) :9094/metrics
-   - D) :9095/metrics
+5. Typha の metrics port について、正しい説明はどれですか？
+   - A) バイナリのデフォルトは 9091。ガイドでは Operator の Typha metrics を 9093 に明示設定する
+   - B) すべての Typha インストールで 9093 が自動的に使われる
+   - C) Typha は常に kube-controllers の port 9094 を共有する
+   - D) Service を作成するだけで metrics が有効になる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) :9093/metrics**
+**回答: A) バイナリのデフォルトは 9091。ガイドでは Operator の Typha metrics を 9093 に明示設定する**
 
-**解説:**
-Typha はデフォルトでポート 9093 に Prometheus metrics を公開します。Typha metrics には、Felix instance への接続数、datastore sync のレイテンシ、cache 統計が含まれます。大規模 cluster における datastore fan-out のパフォーマンスを理解するためには、Typha の監視が重要です。
+Typha metrics はデフォルトでは無効です。Operator の typhaMetricsPort で metrics の公開と Service を有効化・設定します。ServiceMonitor は対応する Service port を選び、Prometheus にも選択される必要があります。
 
 </details>
 
-6. Pod が IP address を取得できません。最初に確認すべきことは何ですか？
-   - A) kube-proxy logs
-   - B) IPPool の可用性と IPAM block 割り当て
-   - C) DNS 設定
-   - D) Node CPU 使用率
+6. Pod に IP アドレスが割り当てられないとき、何を確認すべきですか？
+   - A) 直ちにアドレスを解放して、すべての Calico agent を再起動する
+   - B) スケジューリングと event、選択されたノード、実際の CNI/IPAM 割り当て元
+   - C) DNS レコードだけ
+   - D) すべての BGP session の ASN が同じかどうか
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) IPPool の可用性と IPAM block 割り当て**
+**回答: B) スケジューリングと event、選択されたノード、実際の CNI/IPAM 割り当て元**
 
-**解説:**
-Pod が IP を取得できない場合、まず `calicoctl ipam show` を使用して IPPool に利用可能な address があるか確認します。IPAM block を node に割り当てられること、および IPPool selector が node に一致することを確認します。IPAM 関連のエラーについて Felix logs も確認してください。
+Pending の Pod は、まだスケジュールされていない可能性があります。割り当てに失敗した場合は、kubelet/CNI と IPAM の証拠、対象となる pool、容量と affinity の制約を調べてください。すべての Pod IP 割り当てエラーの原因が Felix process log にあるわけではありません。
 
 </details>
 
-7. node 間の BGP peering が確立できない場合、何を確認すべきですか？
-   - A) Pod DNS 解決
-   - B) BGP port (179) でのネットワーク接続、BGPConfiguration、および node selector
-   - C) Persistent volume binding
-   - D) Service account token
+7. BGP のトラブルシューティングでは何を確認すべきですか？
+   - A) ping が成功することだけ
+   - B) 影響を受けたノードの session 状態、送信元/peer address と ASN、TCP 179、認証/TTL、filter
+   - C) session が開くまで ASN を無作為に変更する
+   - D) 対象ノードに関係なく、クラスター内で最初の Calico Pod を調べる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) BGP port (179) でのネットワーク接続、BGPConfiguration、および node selector**
+**回答: B) 影響を受けたノードの session 状態、送信元/peer address と ASN、TCP 179、認証/TTL、filter**
 
-**解説:**
-BGP peering の問題では、次を確認します。1) TCP port 179 での node 間のネットワーク接続、2) BGPConfiguration および BGPPeer resource が正しく定義されていること、3) Node selector が対象の node に一致すること、4) 特定の peering エラーについて `calicoctl node status` と BIRD logs を確認すること。
+TCP 接続が確立しても、BGP が Established 状態であることや prefix が受理されていることの証明にはなりません。想定される route と、正しい IPv4/IPv6 の BIRD socket を確認してください。選択したネットワークプロファイルで BGP が有効な場合にのみ、これらの確認を行います。
 
 </details>
 
-8. network policy は適用されていますが、トラフィックがブロックされません。考えられる原因は何ですか？
-   - A) cluster が使用するメモリが多すぎる
-   - B) Policy selector が対象の Pod に一致しない、または policy の順序/tier が正しくない
-   - C) node を再起動する必要がある
-   - D) Kubernetes version が古すぎる
+8. ポリシーがあるように見えるのに通信が拒否されない場合、正しい調査方法はどれですか？
+   - A) kube-proxy や Service 変換は調査に影響しない
+   - B) Pod annotation に有効なポリシー判定がすべて表示される
+   - C) Felix Debug log はパケットごとの拒否を自動的に記録する
+   - D) endpoint identity、selector、方向、tier/order、既存 flow、実際の Service/dataplane 経路を確認する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Policy selector が対象の Pod に一致しない、または policy の順序/tier が正しくない**
+**回答: D) endpoint identity、selector、方向、tier/order、既存 flow、実際の Service/dataplane 経路を確認する**
 
-**解説:**
-policy が期待どおりに機能しない場合、次を確認します。1) Pod selector が対象の Pod に正しく一致すること（label を確認）、2) Namespace selector が正しいこと、3) Policy tier の順序（優先度が高い tier が先に評価されます）、4) 評価順序の前段に競合する Allow policy がないこと。適用済みの policy を確認するには `calicoctl get policy` を使用します。
+Calico はポリシーを適用しますが、Service 変換、endpoint の選択、送信元アドレスの変更によって評価対象の通信が変わることがあります。特定のコンポーネントは無関係だと決めつけず、経路全体を調べ、許可されるケースと拒否されるケースを両方テストしてください。
 
 </details>
 
-9. Calico version をアップグレードするための推奨手順は何ですか？
-   - A) すべての resource を削除して再インストールする
-   - B) version 固有の migration guide に従ってインプレースでアップグレードする
-   - C) 新しい cluster を作成して workload を移行する
-   - D) Calico は Kubernetes とともに自動的にアップグレードされる
+9. Calico のアップグレードに必要な対応はどれですか？
+   - A) 管理対象 DaemonSet を変更し、すべての canary agent を削除する
+   - B) インストール方法とバージョンに対応する CRD、operator、保存データの移行手順に従う
+   - C) 必ず開始前に Installation.spec.version を設定する
+   - D) Helm rollback ですべての CRD とデータの変更が戻ると想定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) version 固有の migration guide に従ってインプレースでアップグレードする**
+**回答: B) インストール方法とバージョンに対応する CRD、operator、保存データの移行手順に従う**
 
-**解説:**
-Calico のアップグレードでは、使用しているインストール方法に対応する公式のアップグレードドキュメントに従う必要があります。通常、Operator または Manifest を新しい version に更新します。一部のアップグレードでは追加の手順が必要になるため、version 固有の migration note を確認してください。まずは非本番環境でテストします。
+互換性のある移行元/移行先バージョンを使い、現在のインストール管理主体を更新します。新しいフィールドが必要になる前に CRD も管理してください。ロールアウトと復旧をテストします。古い operator や未加工の YAML export が、確実なダウングレード手段になるとは限りません。
 
 </details>
 
-10. Calico network policy における default deny のベストプラクティスは何ですか？
-    - A) deny policy は決して使用しない
-    - B) Namespace に default deny policy を適用し、その後に必要なトラフィックを明示的に許可する
-    - C) 外部ソースからのトラフィックのみを拒否する
-    - D) すべての egress を拒否し、すべての ingress を許可する
+10. default-deny ポリシーはどのように導入すべきですか？
+    - A) 対象 namespace を選び、必要な依存先を明示的に許可してから適用範囲を広げる
+    - B) すべての endpoint に適用する空の GlobalNetworkPolicy を直ちに適用する
+    - C) 作り上げた Pod label から API server の endpoint を推測する
+    - D) endpoint 数が 0 なら拒否が機能している証拠とみなす
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Namespace に default deny policy を適用し、その後に必要なトラフィックを明示的に許可する**
+**回答: A) 対象 namespace を選び、必要な依存先を明示的に許可してから適用範囲を広げる**
 
-**解説:**
-セキュリティのベストプラクティスは、Namespace 内の Pod へのすべての ingress（および必要に応じて egress）トラフィックをブロックする default deny policy を適用し、その後に必要なトラフィック flow のみを許可する特定の policy を作成することです。これにより、network access に最小権限の原則が実装されます。
+DNS、API、identity、監視、アプリケーションの各経路を明示的に確認します。拒否と許可の両方をテストし、復旧手段を確保して、ワークロード endpoint と host endpoint のポリシーを考慮してください。
 
 </details>
 
-11. network visibility のために flow log をエクスポートするよう Calico を設定するにはどうすればよいですか？
-    - A) kube-apiserver flag で有効にする
-    - B) FelixConfiguration で FlowLogsFileReporter または FlowLogsNetworkReporter を設定する
-    - C) flow log はデフォルトで常に有効である
-    - D) 別の flow log Operator をインストールする
+11. 現在の OSS flow observability について、正しい説明はどれですか？
+    - A) FlowLogsFileReporter は必須の OSS API field である
+    - B) すべての flow log は常に 1 パケットにつき 1 record である
+    - C) Operator/Helm で Goldmane と Whisker を導入でき、現行の flow-log ガイドではこの機能は tech preview とされている
+    - D) flow log と Felix process log は同じものである
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) FelixConfiguration で FlowLogsFileReporter または FlowLogsNetworkReporter を設定する**
+**回答: C) Operator/Helm で Goldmane と Whisker を導入でき、現行の flow-log ガイドではこの機能は tech preview とされている**
 
-**解説:**
-flow log は、FlowLogsFileReporter（file に書き込む）または FlowLogsNetworkReporter（collector に送信する）を有効にして、FelixConfiguration で設定します。log interval、aggregation level、キャプチャする flow などの parameter を設定します。注: 完全な flow log 機能には Calico Enterprise が必要です。
+Goldmane は集約した flow data を Whisker に提供します。文書に記載された導入前提を満たせば OSS でも利用できます。古い file/DNS logger field は代替手段になりません。機微な flow data を保護し、tech preview である点を考慮してください。
 
 </details>
 
-12. calicoctl が datastore に接続するために設定する必要がある environment variable は何ですか？
-    - A) CALICO_HOST および CALICO_PORT
-    - B) DATASTORE_TYPE および KUBECONFIG（または etcd datastore の ETCD_ENDPOINTS）
-    - C) CALICO_API_SERVER および CALICO_TOKEN
-    - D) CNI_PATH および CNI_CONFIG
+12. calicoctl が Kubernetes datastore にアクセスするには、どの設定を使えますか？
+    - A) CNI_PATH だけを設定する
+    - B) DATASTORE_TYPE=kubernetes と適切な kubeconfig access を使うか、サポート対象の設定ファイルを明示する
+    - C) 任意の ~/.config path が常に自動検出される
+    - D) Calico 用 kubeconfig から EKS 管理の etcd にアクセスできる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) DATASTORE_TYPE および KUBECONFIG（または etcd datastore の ETCD_ENDPOINTS）**
+**回答: B) DATASTORE_TYPE=kubernetes と適切な kubeconfig access を使うか、サポート対象の設定ファイルを明示する**
 
-**解説:**
-calicoctl を datastore に接続するには、`DATASTORE_TYPE=kubernetes` を設定し、KUBECONFIG が有効な kubeconfig file を指すことを確認します。etcd datastore の場合は、`DATASTORE_TYPE=etcdv3` を `ETCD_ENDPOINTS` とともに設定し、安全な接続のために必要に応じて TLS 関連の variable も設定します。
+ガイドには一般的な環境変数の設定例があります。サポートされる別の方法として、--config file を明示することもできます。対象クラスターと RBAC を選んでください。etcdv3 への直接アクセスは別のデプロイ構成です。
 
 </details>

@@ -2,7 +2,7 @@
 
 Amazon VPC LatticeはVPCやAWSアカウントをまたいでアプリケーションを接続します。この章ではリソースモデル、EKSとの統合、ルーティング、IAM認可、監視、トラブルシューティングを説明します。
 
-> **最終更新**: September 11, 2026。AWS Gateway API Controller **v2.1.3**とGateway API **v1.5.0**に照らして確認しました。例は設定と検証の手順を示しており、このレビューの一環としてAWSアカウントにデプロイしてはいません。
+> **最終更新**: 2026年9月11日。AWS Gateway API Controller **v2.1.3**とGateway API **v1.5.0**に照らして確認しました。例は設定と検証の手順を示しており、このレビューの一環としてAWSアカウントにデプロイしてはいません。
 
 ## 目次
 
@@ -34,7 +34,7 @@ VPC Latticeは、各アプリケーションの隣にプロキシを配置せず
 |---|---|---|
 | VPC Lattice | プライベートなアプリケーションとリソースの接続 | HTTP/HTTPS/gRPCのサービスルーティングと、別個のTLS/TCPリソース機能。インターネット向けAPIの入口ではない |
 | API Gateway | マネージドAPIエンドポイントとAPI管理 | REST、HTTP、WebSocket APIは機能が異なる。GraphQLは独立したAPI GatewayのAPIタイプではない |
-| AWS App Mesh | Envoyベースのサービスメッシュ | AWSは**2026-09-30**にサポートを終了する。このレビュー時点では将来の日付。新規インストールではなく移行を計画する |
+| AWS App Mesh | Envoyベースのサービスメッシュ | AWSは**2026-09-30**にサポートを終了し、コンソールとリソースにアクセスできなくなりました。既存デプロイを移行してください。新規インストールには使用しないでください。 |
 | Transit Gateway | IPルーティングによるネットワーク接続 | ネットワークを接続する。サービスごとのHTTPルーティングと認可を代替しない |
 | Istio / Linkerd / Cilium | それぞれのデータプレーンで実装されるメッシュ機能 | 機能と運用コストは異なる。すべてのメッシュ構成でサイドカーが必須ではない |
 
@@ -358,7 +358,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: app
-        image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+        image: nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
         command:
         - nginx
         args:

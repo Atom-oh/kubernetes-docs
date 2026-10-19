@@ -1,15 +1,15 @@
-# Helm パッケージマネージャークイズ
+# Helm パッケージマネージャーのクイズ
 
 > **関連ガイド**: [Helm](../../platform-engineering/01-helm.md)
 
-この20問のトピックは、Helm 3.21.3 / 4.3.0 の復習に沿っています。
+この20問は、Helm 3.21.3 / 4.3.0 のレビューに基づいています。
 
-## 選択問題
+## 選択式問題
 
-### 1. Tiller を削除したことで何が変わりましたか？
+### 1. Tiller を削除したことで、何が変わりましたか？
 
 - A) Chart のサイズだけが変わる。
-- B) クライアントは自身の Kubernetes 認証情報と RBAC を使用する。
+- B) クライアントが自身の Kubernetes 認証情報と RBAC を使う。
 - C) すべての Chart が安全になる。
 - D) Kubernetes API が不要になる。
 
@@ -18,31 +18,31 @@
 
 **回答: B**
 
-Helm 3 は Tiller を削除し、権限の経路を簡素化しました。安全でない manifest と広範なクライアント権限は、引き続きレビューが必要です。
+Helm 3 では Tiller が削除され、権限を適用する経路が簡素化されました。ただし、安全でないマニフェストや広すぎるクライアント権限は、引き続き確認が必要です。
 
 </details>
 
-### 2. values.yaml は何のためにありますか？
+### 2. values.yaml は何のために使いますか？
 
-- A) Chart メタデータ
-- B) template によって使用されるデフォルト設定データ
-- C) Release 履歴
-- D) 自動的に実行される template
+- A) Chart のメタデータ
+- B) テンプレートが参照するデフォルト設定値
+- C) Release の履歴
+- D) 自動実行されるテンプレート
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-template によって使用される values だけが効果を持ちます。ファイルと --set バリアントでそれらを上書きできます。埋め込まれた template 文字列は自動的には評価されません。
+テンプレートから参照される値だけが反映されます。値はファイルや `--set` の指定で上書きできます。値に埋め込んだテンプレート文字列は、自動では評価されません。
 
 </details>
 
 ### 3. helm upgrade --install は何をしますか？
 
 - A) 常に新しい Release を作成する。
-- B) 常に削除して再作成する。
-- C) 存在しない Release を install するか、既存の Release を upgrade する。
+- B) 常に削除して作り直す。
+- C) Release がなければインストールし、あればアップグレードする。
 - D) 外部操作の冪等性を保証する。
 
 <details>
@@ -50,11 +50,11 @@ template によって使用される values だけが効果を持ちます。フ
 
 **回答: C**
 
-これは installation または upgrade を選択します。Hook、ランダム値、外部データベースの変更は冪等であるとは限りません。
+Release をインストールするか、既存の Release をアップグレードするかを選びます。Hook、ランダム値、外部データベースへの変更は、冪等とは限りません。
 
 </details>
 
-### 4. Release.Name とは何ですか？
+### 4. Release.Name が表すものは何ですか？
 
 - A) Chart 名
 - B) Cluster 名
@@ -66,14 +66,14 @@ template によって使用される values だけが効果を持ちます。フ
 
 **回答: C**
 
-`helm install demo ./chart` では、名前は demo です。これは Chart 名、appVersion、および Release revision とは異なります。
+`helm install demo ./chart` の場合、Release 名は `demo` です。Chart 名、appVersion、Release revision とは異なります。
 
 </details>
 
-### 5. dependency condition は何を指定しますか？
+### 5. dependency の condition は何を指定しますか？
 
 - A) Image tag
-- B) dependency を有効にするか制御する values path
+- B) dependency を有効にするかを制御する values path
 - C) Registry password
 - D) Pod priority
 
@@ -82,140 +82,140 @@ template によって使用される values だけが効果を持ちます。フ
 
 **回答: B**
 
-alias cache では、cache.enabled のような実際の Boolean path を使用します。path がない場合の動作をテストし、subchart に渡される values とは区別してください。
+`cache` という alias を付けた dependency では、`cache.enabled` のような実在する Boolean path を使います。path がない場合の動作をテストし、subchart に渡す values とは区別してください。
 
 </details>
 
 ### 6. pre-upgrade Hook はいつ実行されますか？
 
 - A) 削除後
-- B) rendering の後、通常の resource が upgrade される前
+- B) レンダリング後、通常のリソースをアップグレードする前
 - C) 常に新しい Pod が Ready になった後
-- D) rollback 後のみ
+- D) rollback の後だけ
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-データベース migration では、データベースの可用性、retry、failure、および以前の app との互換性を考慮する必要があります。rollback はデータベースの変更を自動的に元に戻しません。
+データベースのマイグレーションでは、データベースの可用性、再試行、失敗時の動作、以前のアプリとの互換性を考慮する必要があります。rollback しても、データベースの変更は自動で元に戻りません。
 
 </details>
 
 ### 7. 通常の helm template の目的は何ですか？
 
-- A) Cluster に install する。
-- B) manifest をローカルで render する。
+- A) Cluster にインストールする。
+- B) マニフェストをローカルでレンダリングする。
 - C) 実際の webhook を検証する。
-- D) 自動的に roll back する。
+- D) 自動で rollback する。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-デフォルトのローカル rendering は、admission、RBAC、Image 実行、または接続性を証明しません。server に接続するオプションとは区別してください。
+デフォルトのローカルレンダリングだけでは、admission、RBAC、イメージの実行、接続性は確認できません。サーバーに接続するオプションとは区別してください。
 
 </details>
 
-### 8. _helpers.tpl は何のためにありますか？
+### 8. _helpers.tpl は何のために使いますか？
 
-- A) metadata を保存する。
-- B) 再利用可能な名前付き template を定義する。
-- C) デフォルト values を保存する。
-- D) Release 履歴を保存する。
+- A) メタデータを保存する。
+- B) 再利用可能な名前付きテンプレートを定義する。
+- C) デフォルト値を保存する。
+- D) Release の履歴を保存する。
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-名前付き template には define を使用し、それらを使用するには include を使用します。衝突を避けるために名前に prefix を付け、意図した context を渡してください。
+名前付きテンプレートの定義には `define` を、呼び出しには `include` を使います。名前には prefix を付けて衝突を避け、意図した context を渡してください。
 
 </details>
 
 ### 9. helm get values demo --all は何を出力しますか？
 
-- A) ユーザーによる override のみ
-- B) Chart defaults を含む計算済み values
-- C) manifest のみ
-- D) 履歴のみ
+- A) ユーザーが上書きした値だけ
+- B) Chart のデフォルト値を含む計算済み values
+- C) マニフェストだけ
+- D) 履歴だけ
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-正しい namespace と Release を選択してください。values には機密情報が含まれる可能性があるため、出力を保護してください。
+正しい namespace と Release を指定してください。values に機密情報が含まれる場合があるため、出力を適切に保護してください。
 
 </details>
 
 ### 10. toYaml と nindent を組み合わせるのはなぜですか？
 
-- A) 自動 encryption
-- B) 構造化された values を YAML に serialize し、改行と indentation を追加する。
-- C) JSON のみを生成する。
-- D) 常に数値を文字列に変換する。
+- A) 自動で暗号化するため
+- B) 構造化データを YAML に変換し、改行とインデントを加えるため
+- C) JSON だけを生成するため
+- D) 数値を必ず文字列に変換するため
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B**
 
-indent とは異なり、nindent は改行も先頭に追加します。挿入箇所で必要な indentation に合わせてください。
+`indent` と違い、`nindent` は先頭に改行も追加します。挿入する位置で必要なインデントに合わせてください。
 
 </details>
 
 ## 短答問題
 
-### 1. デフォルトの Release storage resource は何ですか？
+### 1. Release 情報を保存するデフォルトのリソースは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-Release namespace 内の Secret で、名前は `sh.helm.release.v1.<release>.v<revision>` です。ConfigMap や SQL などの他の backend も設定できます。Base64 は encryption ではありません。
+Release の namespace 内にある Secret で、名前は `sh.helm.release.v1.<release>.v<revision>` です。ConfigMap や SQL など、別のバックエンドも設定できます。Base64 は暗号化ではありません。
 
 </details>
 
-### 2. dependency update はどの lock file を作成し、その制限は何ですか？
+### 2. dependency update が作成する lock file は何ですか？また、その限界は何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-Chart.lock。dependency build は lock された version を使用しますが、lock 単体では artifact integrity、固定された Image、または完全な再現性を保証しません。
+`Chart.lock` です。dependency build はロックされたバージョンを使いますが、この lock file だけでは、成果物の完全性、固定されたイメージ、完全な再現性は保証されません。
 
 </details>
 
-### 3. default を使用する際、どの空の values が重要ですか？
+### 3. default を使うとき、どの値が「空」として扱われますか？
 
 <details>
 <summary>回答を表示</summary>
 
-false、zero、空文字列、および collection は空として扱われます。明示的な false/zero を保持する必要がある場合は、存在と type を確認してください。default はすべての nested lookup を保護するわけではありません。
+`false`、ゼロ、空文字列、空のコレクションです。明示的な `false` やゼロを保持する必要がある場合は、値の有無と型を確認してください。`default` は、すべてのネストした lookup を保護するわけではありません。
 
 </details>
 
-### 4. Hook の順序を制御する annotation はどれですか？
+### 4. Hook の実行順を制御する annotation はどれですか？
 
 <details>
 <summary>回答を表示</summary>
 
-`helm.sh/hook-weight`。phase 内では、negative weight を含め、より小さい weight が先に実行されます。kind/name による同順位時の順序、Job completion、および timeout も考慮してください。
+`helm.sh/hook-weight` です。同じ phase では、負の値も含め、weight が小さいものから先に実行されます。同じ weight の場合の kind/name 順、Job の完了、timeout も考慮してください。
 
 </details>
 
-### 5. NOTES.txt はいつ、なぜ使用されますか？
+### 5. NOTES.txt はいつ、何のために使いますか？
 
 <details>
 <summary>回答を表示</summary>
 
-成功した install/upgrade の後に表示され、`helm get notes` から利用できる手順を template 化します。手順を正確に保ち、Secret を避けてください。Notes は application readiness を証明しません。
+インストールやアップグレードが成功した後に表示する手順をテンプレート化します。`helm get notes` でも確認できます。手順を正確に保ち、Secret を含めないでください。Notes はアプリケーションの readiness を証明しません。
 
 </details>
 
 ## ハンズオン
 
-### 1. 例を frontend に web-server として 3 replicas で install してください。
+### 1. 例を web-server という名前で frontend にインストールし、レプリカを 3 つにしてください。
 
 <details>
 <summary>回答を表示</summary>
@@ -226,11 +226,11 @@ helm install web-server examples/platform/helm/reviewed-app \
   --set replicaCount=3
 ```
 
-承認済みの Cluster context と権限で、repository root から実行します。この監査では lint/template/package を実行しており、installation は実行していません。
+承認された Cluster context と権限を使い、repository のルートから実行してください。この監査では lint、template、package を確認しましたが、インストールは実行していません。
 
 </details>
 
-### 2. LOG_LEVEL=debug と MAX_CONNECTIONS="100" は env としてどのように render されるべきですか？
+### 2. LOG_LEVEL=debug と MAX_CONNECTIONS="100" は、env としてどうレンダリングすべきですか？
 
 <details>
 <summary>回答を表示</summary>
@@ -243,11 +243,11 @@ env:
     value: "100"
 ```
 
-map を range で反復し、両方が文字列のままになるよう各 value を quote します。Go template は、基本的な順序付き key を持つ map を key 順に走査します。これは list の順序とは異なります。
+map を `range` で走査し、どちらも文字列として保持されるよう各値を quote します。Go template では、基本型のキーを持つ map はキー順に反復処理されます。これは list の順序とは異なります。
 
 </details>
 
-### 3. Chart、Release、および appVersion label のための helper を書いてください。
+### 3. Chart、Release、appVersion の label を定義する helper を書いてください。
 
 <details>
 <summary>回答を表示</summary>
@@ -260,26 +260,26 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 ```
 
-意図した root context を渡し、call site で indent してください。appVersion は metadata であり、Image tag を自動的に選択しません。
+意図した root context を渡し、呼び出し箇所でインデントしてください。appVersion はメタデータであり、Image tag を自動で選択するものではありません。
 
 </details>
 
-## 応用
+## 応用問題
 
-### 1. Helm による Blue/Green と canary delivery には何が必要ですか？
+### 1. Helm で Blue/Green と canary 配信を行うには、何が必要ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-Blue/Green には、label を持つ 2 つの Deployment と、検証後に active color を選択する実際の Service template が必要です。values.yaml 内の template 文字列は自動的には評価されません。Canary には、実際の route/subset または rollout controller、weight、observation metrics、および abort condition が必要です。values だけでは自動分析や rollback は作成されません。データベース互換性と in-flight request を考慮してください。
+Blue/Green には、label を設定した 2 つの Deployment と、検証後に有効な色を選択する実際の Service template が必要です。values.yaml 内のテンプレート文字列は自動では評価されません。Canary には、実際の route/subset または rollout controller、weight、観測メトリクス、abort 条件が必要です。values だけでは自動分析も rollback も構成されません。データベースとの互換性と処理中のリクエストも考慮してください。
 
 </details>
 
-### 2. Chart security と Secret management を設計してください。
+### 2. Chart のセキュリティと Secret 管理を設計してください。
 
 <details>
 <summary>回答を表示</summary>
 
-サポートされている values.schema.json で必須 values と type を検証し、レビュー済みの Chart/Image revision を固定します。必要な ServiceAccount と RoleBinding を最小限の API 権限で接続します。Secret volume があるからといって、app にすべての Secret へのアクセスを付与する理由にはなりません。Secret value を default、CLI argument、および debug log に含めないでください。承認済みの file mount、rotation、および再読み込みを計画してください。ESO v1、Sealed Secrets、および helm-secrets には、それらの controller/plugin と provider/key 権限が必要です。復号された values が Release record に入るかを確認してください。non-root UID、drop した capability、read-only root、および必要な writable volume を組み合わせ、実際の Image compatibility を検証してください。
+対応する `values.schema.json` で必須 values と型を検証し、レビュー済みの Chart と Image の revision を固定します。必要な ServiceAccount と RoleBinding を、最小限の API 権限で構成してください。Secret volume を使うからといって、アプリにすべての Secret へのアクセスを許可してよいわけではありません。Secret の値をデフォルト値、CLI 引数、debug log に含めないでください。承認済みのファイルマウント、ローテーション、再読み込みの手順を計画します。ESO v1、Sealed Secrets、helm-secrets には、それぞれの controller/plugin と、provider/key への権限が必要です。復号した値が Release の記録に残るかも確認してください。non-root UID、capability の削除、root filesystem の読み取り専用化、必要な書き込み可能ボリュームを組み合わせ、実際の Image との互換性を検証してください。
 
 </details>

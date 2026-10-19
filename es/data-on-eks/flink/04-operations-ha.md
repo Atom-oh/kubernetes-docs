@@ -176,11 +176,11 @@ Dos réplicas de JM pueden reducir el retraso de inicio, pero no garantizan una 
 
 ## 4. El autoescalado y la capacidad de los nodos se afectan mutuamente
 
-El autoescalador de Flink ajusta principalmente el paralelismo de los vértices; los autoescaladores de nodos ajustan la capacidad programable. Se aplican las limitaciones de presión/cuota y de estado/in situ de la Parte 2. No existe un orden universal en el que Flink actúe siempre primero y Karpenter solo después. Los fallos de nodos, la reclamación de instancias Spot, la deriva o la consolidación pueden cambiar primero la recuperación del trabajo y la demora.
+El autoescalador de Flink ajusta principalmente el paralelismo de los vértices; los autoescaladores de nodos ajustan la capacidad programable. Se aplican las limitaciones de presión/cuota y de estado/in situ de la Parte 2. No existe un orden universal en el que Flink actúe siempre primero y Karpenter solo después. Los fallos de nodos, la reclamación de instancias Spot, la deriva o la consolidación pueden cambiar primero la recuperación del trabajo y el atraso de procesamiento.
 
 No todos los pods Pending necesitan otro nodo. Distinga los fallos de programación de las descargas de imágenes, los PVC, la admisión y otras causas. También influyen los requisitos y taints de NodePool, las solicitudes de recursos, las instancias disponibles, las cuotas, los PDB y la política de interrupciones. La consolidación puede dirigirse tanto a los nodos infrautilizados que cumplan los requisitos como a los vacíos.
 
-Un retraso de consolidación mayor que el tiempo de estabilización de Flink no garantiza conservar la capacidad ni ejecutar el trabajo sin interrupciones. Mida el aprovisionamiento, la restauración del estado y la recuperación de la cola de trabajo; ajuste conjuntamente la capacidad sobrante, los objetivos de reintento/checkpoint y la política de interrupciones.
+Un retraso de consolidación mayor que el tiempo de estabilización de Flink no garantiza conservar la capacidad ni ejecutar el trabajo sin interrupciones. Mida el aprovisionamiento, la restauración del estado y la reducción del atraso acumulado; ajuste conjuntamente la capacidad sobrante, los objetivos de reintento/checkpoint y la política de interrupciones.
 
 ![El paralelismo del trabajo, la ubicación de TaskManager y la capacidad de los nodos interactúan en ambas direcciones.](../../.gitbook/assets/en-data-on-eks-flink-04-operations-ha-0.png)
 
@@ -200,10 +200,10 @@ AWS ahora documenta la **compatibilidad con Flink 2.3.0**, Java 17 como versión
 
 La HA/migración administrada no corrige automáticamente los errores de aplicación ni los estados o conectores incompatibles. Valide los checkpoints/snapshots y la restauración. La documentación de resiliencia del servicio describe internamente HA multi-AZ basada en ZooKeeper; el cliente no administra ese ensemble ni el clúster interno de EKS.
 
-El escalado automático predeterminado utiliza CPU para cambiar el paralelismo de la aplicación, lo cual difiere del autoescalado por vértice de Flink. Revise Parallelism, ParallelismPerKPU, AutoScalingEnabled y las cuotas. El escalado y los reinicios pueden pausar el procesamiento y exigir recuperar el atraso acumulado.
+El escalado automático predeterminado utiliza CPU para cambiar el paralelismo de la aplicación, lo cual difiere del autoescalado por vértice de la implementación upstream de Flink. Revise Parallelism, ParallelismPerKPU, AutoScalingEnabled y las cuotas. El escalado y los reinicios pueden pausar el procesamiento y exigir recuperar el atraso acumulado.
 
 Una KPU proporciona una vCPU, 4 GB de memoria y almacenamiento en ejecución. La documentación también indica un cargo adicional de KPU de orquestación. No compare únicamente el precio de una KPU en ejecución. Del mismo modo, evalúe el ahorro de Spot junto con los costes de interrupción y recuperación.
-Compare un rendimiento, una latencia y unos objetivos de recuperación equivalentes; cambiar los valores predeterminados no es por sí mismo un objetivo.
+Compare caudales, latencias y objetivos de recuperación equivalentes; cambiar los valores predeterminados no es un objetivo en sí mismo.
 
 ## 6. Aceptación operativa
 
@@ -211,14 +211,14 @@ Compare un rendimiento, una latencia y unos objetivos de recuperación equivalen
 - [ ] Verifique los destinos reales de Prometheus y las métricas de CloudWatch, los registros del servicio/trabajo y la entrega de alertas.
 - [ ] Mida heap, memoria administrada, de red y nativa, disco y GC con carga máxima.
 - [ ] Pruebe la coordinación de HA, el almacenamiento de checkpoints, las credenciales, la restauración y los resultados de escrituras externas.
-- [ ] Mida los fallos de nodo/zona de disponibilidad, los retrasos de capacidad, Spot/interrupciones y la recuperación de la cola acumulada.
+- [ ] Mida los fallos de nodo/zona de disponibilidad, los retrasos de capacidad, Spot/interrupciones y la reducción del atraso acumulado.
 - [ ] Registre las actualizaciones y reversiones, la retención/eliminación de snapshots, el coste y quién responde ante incidentes.
 
 Mantener los valores predeterminados es válido si se cumplen los requisitos. Acepte resultados medidos y limitaciones restantes, en vez de considerar las casillas marcadas como una garantía de producción.
 
 ## Alcance de la validación
 
-Las comprobaciones abarcaron dos cálculos de memoria nativa de Flink 2.2.1, los CRD de cargas de trabajo/PodMonitor, la renderización de Helm de Operator y la correspondencia entre selectores y puertos con nombre. No se realizaron una captura activa de Prometheus, una implementación en clúster, una conmutación por error de HA, una ejecución de aplicación administrada ni una medición de costes.
+Las comprobaciones abarcaron dos cálculos del modelo de memoria de Flink 2.2.1, los CRD de cargas de trabajo/PodMonitor, la renderización de Helm de Operator y la correspondencia entre selectores y puertos con nombre. No se extrajeron métricas de Prometheus en vivo ni se realizaron despliegues en clúster, pruebas de conmutación por error de HA, ejecuciones de aplicaciones administradas o mediciones de costes.
 
 ## Referencias
 

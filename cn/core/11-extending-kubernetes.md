@@ -1,7 +1,7 @@
 # 扩展 Kubernetes
 
 > **审阅的上游 Kubernetes 版本**：Kubernetes 1.35、1.36、1.37
-> **最后更新**：October 12, 2026
+> **最后更新**：2026年10月12日
 
 Kubernetes 是一个设计时便考虑了可扩展性的平台，允许您以多种方式扩展其功能。本章将探讨扩展 Kubernetes 的各种方法，以及如何在 Amazon EKS 中利用扩展功能。
 
@@ -20,7 +20,7 @@ Kubernetes 是一个设计时便考虑了可扩展性的平台，允许您以多
 12. [最佳实践](#best-practices)
 13. [结论](#conclusion)
 
-## Kubernetes 扩展概述
+## Kubernetes 扩展概述 {#kubernetes-extension-overview}
 
 Kubernetes 提供了多种扩展点，可用于扩展和自定义其基础功能。主要扩展点包括：
 
@@ -50,7 +50,7 @@ Kubernetes 提供了多种扩展点，可用于扩展和自定义其基础功能
 4. **升级兼容性**：与 Kubernetes 版本升级的兼容性
 5. **社区支持**：扩展方法获得的社区支持程度
 
-## 自定义资源
+## 自定义资源 {#custom-resources}
 
 自定义资源是一种扩展 Kubernetes API 以定义新对象类型的方法。
 
@@ -199,7 +199,7 @@ spec:
       - v1
 ```
 
-## Operator 模式
+## Operator 模式 {#operator-pattern}
 
 Operator 模式是一种通过结合自定义资源和控制器，将复杂应用程序的运维知识自动化的方法。
 
@@ -329,7 +329,7 @@ make deploy IMG="$OPERATOR_IMAGE"
 5. **OpenTelemetry Operator**：部署 Jaeger v2；之前的 Jaeger Operator 仅支持已淘汰的 Jaeger v1。
 6. **Strimzi Kafka Operator**：管理 Apache Kafka 集群
 7. **Istio 集群内 Operator（在 1.24 中移除）**：历史示例；请使用受支持的 Helm/istioctl 安装工作流程。
-## 准入控制器
+## 准入控制器 {#admission-controllers}
 
 准入控制器是拦截对 Kubernetes API server 的请求并对其进行修改或验证的插件。
 
@@ -531,7 +531,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**：Service Mesh 边车注入
 4. **cert-manager**：TLS 证书管理
 
-## API Server 扩展
+## API Server 扩展 {#api-server-extensions}
 
 API Server 扩展是一种向 Kubernetes API server 添加新端点的方法。
 
@@ -631,7 +631,7 @@ func main() {
           +-----------------------+               +-------------------------+
 ```
 
-## 调度器扩展
+## 调度器扩展 {#scheduler-extensions}
 
 调度器扩展是一种自定义 Kubernetes 调度器行为的方法。
 
@@ -723,7 +723,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ## Cloud Controller Manager
@@ -744,7 +744,7 @@ Cloud Controller Manager 由以下控制器构成：
 
 您不能将此 DaemonSet 安装到 AWS 托管的 EKS 控制平面中，也不能挂载其 scheduler.conf。在 EKS 上，请使用服务托管的云集成及受支持的 AWS Load Balancer Controller 或 Auto Mode 功能，并确保每个资源只有一个控制器所有者。
 
-## CSI（容器存储接口）
+## CSI（容器存储接口） {#csi-container-storage-interface}
 
 CSI 在 Kubernetes 与存储系统之间提供标准接口。
 
@@ -966,7 +966,7 @@ spec:
 5. **Ceph RBD CSI Driver**：Ceph RBD 卷管理
 6. **NFS CSI Driver**：NFS 卷管理
 
-## CNI（容器网络接口）
+## CNI（容器网络接口） {#cni-container-network-interface}
 
 CNI 在 Kubernetes 与网络解决方案之间提供标准接口。
 
@@ -1053,7 +1053,7 @@ kubectl get nodes -o wide
 kubectl -n kube-system get daemonsets
 ```
 
-## 设备插件
+## 设备插件 {#device-plugins}
 
 设备插件为 Kubernetes 与特殊硬件之间提供接口。
 
@@ -1125,7 +1125,7 @@ spec:
 4. **InfiniBand Device Plugin**：InfiniBand 设备管理
 5. **SR-IOV Network Device Plugin**：SR-IOV 网络设备管理
 
-## Amazon EKS 中的扩展功能
+## Amazon EKS 中的扩展功能 {#extension-features-in-amazon-eks}
 
 EKS 的版本支持不同于上游。截至 2026-10-12，EKS 标准支持涵盖 1.34–1.37；还请检查每个 add-on/controller 的兼容性矩阵。
 
@@ -1133,7 +1133,7 @@ Amazon EKS 支持多种扩展功能，以扩展 Kubernetes 集群功能。
 
 下图展示了 Amazon EKS 中的扩展功能架构：
 
-![EKS 管理控制平面；add-on 工作负载在兼容的工作计算资源上运行。IRSA 向使用 ServiceAccounts 的 Pods 授予权限，而节点 IAM 角色是独立的。ACK 通过 AWS APIs 协调 AWS 资源。](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
+![EKS 管理控制平面；add-on 工作负载在兼容的工作节点计算资源上运行。IRSA 向使用 ServiceAccounts 的 Pods 授予权限，而节点 IAM 角色是独立的。ACK 通过 AWS APIs 协调 AWS 资源。](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-6.html)
 
@@ -1254,7 +1254,7 @@ spec:
 EOF
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 让我们探讨实现 Kubernetes 扩展功能时需要考虑的最佳实践。
 
@@ -1262,7 +1262,7 @@ EOF
 
 1. **使用标准接口**：尽可能使用 CSI、CNI 等标准接口
 2. **声明式 API 设计**：设计声明式 API，而不是命令式 API
-3. **遵循 Kubernetes 设计原则**：遵循控制器模式、水平触发等原则
+3. **遵循 Kubernetes 设计原则**：遵循控制器模式、基于当前状态持续协调（level-triggering）等原则
 4. **版本管理**：管理 API 版本并保持兼容性
 5. **最小权限原则**：仅授予必要的最少权限
 
@@ -1298,7 +1298,7 @@ EOF
 4. **安全组**：配置适当的安全组
 5. **成本优化**：选择适当的实例类型和大小
 
-## 结论
+## 结论 {#conclusion}
 
 Kubernetes 提供多种扩展点，用于扩展和自定义其基础功能。自定义资源、Operator、准入控制器、API Server 扩展、调度器扩展、CSI、CNI 和设备插件让您能够使 Kubernetes 适应各种环境和要求。
 

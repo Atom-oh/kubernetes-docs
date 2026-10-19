@@ -1,4 +1,4 @@
-# Pod と Workload クイズ
+# Podとワークロードのクイズ
 
 このクイズでは、Kubernetes の基本的な実行単位である Pod と、それらを管理するさまざまな Workload リソースについての理解を確認します。
 
@@ -230,7 +230,7 @@ CronJob の `Forbid` 並行実行ポリシーは、以前の Job がまだ実行
 
 16. 次の要件を満たすマルチ Container Pod YAML ファイルを作成してください。
     - Pod 名: web-app
-    - 1 つ目の Container: nginx Web Server（image: nginx:1.30.4）
+    - 1 つ目の Container: nginx Web Server（image: nginx:1.30.6）
     - 2 つ目の Container: ログコレクター（image: fluentd:v1.19-debian-1）
     - 2 つの Container 間でログディレクトリを共有するための emptyDir Volume
     - nginx Container は port 80 を公開する
@@ -249,7 +249,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.30.4
+      image: nginx:1.30.6
       ports:
         - containerPort: 80
       volumeMounts:
@@ -274,7 +274,7 @@ spec:
     - Label: app=nginx, tier=frontend
     - Replica 数: 3
     - Rolling Update 戦略: max surge 1、max unavailable 0
-    - Container image: nginx:1.30.4
+    - Container image: nginx:1.30.6
     - Container port: 80
     - Resource request: CPU 100m、memory 128Mi
     - Resource limit: CPU 200m、memory 256Mi
@@ -312,7 +312,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.30.4
+          image: nginx:1.30.6
           ports:
             - containerPort: 80
           resources:
@@ -337,7 +337,7 @@ spec:
 ```
 
 **解説:**
-この YAML ファイルは、nginx:1.30.4 image を使用する 3 Replica の Deployment を定義します。Rolling Update 戦略は、max surge 1（希望する数を超えて作成できる Pod の最大数）および max unavailable 0（更新中に利用不可にできる Pod の最大数）で構成され、ダウンタイムなしの更新を可能にします。各 Container は port 80 を公開し、CPU request 100m、memory request 128Mi、CPU limit 200m、memory limit 256Mi の Resource 制約を持ちます。Liveness Probe と Readiness Probe は、HTTP GET リクエストを通じて Container の状態を確認します。
+この YAML ファイルは、nginx:1.30.6 image を使用する 3 Replica の Deployment を定義します。Rolling Update 戦略は、max surge 1（希望する数を超えて作成できる Pod の最大数）および max unavailable 0（更新中に利用不可にできる Pod の最大数）で構成され、ダウンタイムなしの更新を可能にします。各 Container は port 80 を公開し、CPU request 100m、memory request 128Mi、CPU limit 200m、memory limit 256Mi の Resource 制約を持ちます。Liveness Probe と Readiness Probe は、HTTP GET リクエストを通じて Container の状態を確認します。
 </details>
 
 18. 次の要件を満たす CronJob YAML ファイルを作成してください。

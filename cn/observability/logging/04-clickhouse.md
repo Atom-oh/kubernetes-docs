@@ -12,9 +12,9 @@ ClickHouse 是一个列式分析数据库。它适合需要 SQL 筛选、聚合�
 4. [日志摄取管道](#log-ingestion-pipeline)
 5. [SQL 查询](#sql-queries)
 6. [Grafana 集成](#grafana-integration)
-7. [HyperDX (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#hyperdx-clickhouse-native-viewer)
+7. [HyperDX](#hyperdx-clickhouse-native-viewer)
 8. [性能优化](#performance-optimization)
-9. [S3 归档 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#s3-archiving-and-long-term-retention)
+9. [S3 归档](#s3-archiving-and-long-term-retention)
 
 <span id="overview"></span>
 
@@ -545,7 +545,7 @@ GROUP BY time ORDER BY time;
 
 没有 heartbeat 时，此查询不返回任何时间序列行。请审慎配置 No Data 和执行错误，考虑摄取 lag，并测试通知交付。
 
-## HyperDX（ClickHouse 原生查看器）
+## HyperDX（ClickHouse 原生查看器） {#hyperdx-clickhouse-native-viewer}
 
 ### 主要优势
 
@@ -627,7 +627,7 @@ FROM logs.sample_demo SAMPLE 0.1;
 
 在 EKS 上，请包括 EBS 预配性能/容量、跨 AZ 流量、node 架构、故障域放置和替换容量。Fargate 不提供与基于 node 的采集器/ClickHouse 部署相同的主机日志/卷拓扑。
 
-## S3 归档和长期保留
+## S3 归档和长期保留 {#s3-archiving-and-long-term-retention}
 
 ### 归档管道
 

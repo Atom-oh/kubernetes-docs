@@ -1,23 +1,21 @@
 # CloudWatch Logs
 
-> **Última actualización**: September 13, 2026
-> **Ejemplos comprobados**: proveedor AWS 6.64.0; Helm chart opcional de CloudWatch Observability 6.6.0; AWS for Fluent Bit manual 3.4.15/Fluent Bit 5.0.9. Solo se realizaron comprobaciones de configuración local, SDK y carga útil sintética. No se ejecutaron recursos AWS, entrega de logs, consultas de Insights ni alarmas.
+> **Última actualización**: 13 de septiembre de 2026
+> **Ejemplos comprobados**: proveedor AWS 6.69.1; chart opcional de Helm de CloudWatch Observability 6.6.0; AWS for Fluent Bit manual 3.4.15/Fluent Bit 5.0.9. Solo se comprobaron configuraciones locales, el SDK y cargas útiles sintéticas. No se crearon recursos de AWS ni se probaron la entrega de logs, las consultas de Insights o las alarmas.
 
-Amazon CloudWatch Logs gestiona la ingesta, el almacenamiento y el análisis de logs. Aun así, debe configurar los productores, la identidad, las redes, la retención, las cuotas y los consumidores posteriores. Los logs del control plane de EKS, los logs de cargas de trabajo y los logs de componentes administrados de EKS Auto Mode son rutas de recopilación independientes.
+Amazon CloudWatch Logs administra la ingesta, el almacenamiento y el análisis de logs. Aun así, debes configurar los productores, la identidad, la red, la retención, las cuotas y los consumidores posteriores. Los logs del plano de control de EKS, los logs de las cargas de trabajo y los logs de componentes administrados de EKS Auto Mode siguen rutas de recopilación separadas.
 
 ## Tabla de contenido
 
 1. [Descripción general](#overview)
-2. [Logging del control plane de EKS](#eks-control-plane-logging)
+2. [Registro del plano de control de EKS](#eks-control-plane-logging)
 3. [Container Insights](#container-insights)
-4. [Integración con FluentBit](#fluentbit-integration)
+4. [Integración de Fluent Bit](#fluentbit-integration)
 5. [CloudWatch Logs Insights](#cloudwatch-logs-insights)
 6. [Filtros de suscripción](#subscription-filters)
 7. [Optimización de costos](#cost-optimization)
 
-<span id="overview"></span>
-
-## Descripción general
+## Descripción general {#overview}
 
 <span id="cloudwatch-logs-features"></span>
 
@@ -25,15 +23,15 @@ Amazon CloudWatch Logs gestiona la ingesta, el almacenamiento y el análisis de 
 
 | Área | Qué comprobar |
 |---|---|
-| Servicio administrado | No hay un clúster de búsqueda que operar, pero los colectores y las integraciones de entrega aún necesitan un responsable |
+| Servicio administrado | No hay un clúster de búsqueda que operar, pero los recolectores y las integraciones de entrega aún necesitan un responsable |
 | Capacidad | Se aplican cuotas de tamaño de evento, API, suscripción y destino; la ingesta no es ilimitada |
-| Seguridad | IAM, cifrado, protección de datos y conectividad privada tienen configuraciones independientes |
-| Oportunidad | La entrega y las alertas son asíncronas; deben considerarse los reintentos y las entregas duplicadas o ausentes |
-| Clase Standard | Admite los filtros de métricas y las suscripciones utilizados en este capítulo |
-| Infrequent Access | Precio de ingesta menor y un conjunto de características diferente; sin filtros de suscripción, filtros de métricas ni EMF |
-| Clase Delivery | Una opción separada para logs de Lambda entregados a S3/Firehose; retención fija de dos días en CloudWatch y sin consultas de Logs Insights |
+| Seguridad | IAM, cifrado, protección de datos y conectividad privada requieren configuraciones independientes |
+| Oportunidad | La entrega y las alertas son asíncronas; hay que considerar los reintentos y las entregas duplicadas o ausentes |
+| Clase Standard | Admite los filtros de métricas y las suscripciones que se usan en este capítulo |
+| Infrequent Access | Menor precio de ingesta y un conjunto de características distinto; no admite filtros de suscripción, filtros de métricas ni EMF |
+| Clase Delivery | Opción independiente para logs de Lambda que se entregan a S3/Firehose; retención fija de dos días en CloudWatch y sin consultas de Logs Insights |
 
-La clase de un grupo de logs no se puede cambiar después de su creación. Actualmente, Infrequent Access admite características como la exportación a S3, Logs Insights y la protección de datos, por lo que las afirmaciones generales antiguas de que no admite ninguna de ellas son incorrectas. Consulte la tabla de características actual antes de cambiar el diseño de recopilación.
+La clase de un grupo de logs no se puede cambiar después de crearlo. Infrequent Access admite actualmente, entre otras funciones, la exportación a S3, Logs Insights y la protección de datos; por tanto, son incorrectas las afirmaciones generales antiguas de que no admite ninguna de ellas. Antes de cambiar el diseño de recopilación, consulta la tabla actual de características.
 
 <span id="terminology"></span>
 
@@ -56,30 +54,28 @@ flowchart LR
   GROUPS -.->|Separate asynchronous export task| S3
 ```
 
-Los filtros de suscripción **no** aceptan como destino el ARN de un bucket S3. La entrega continua a S3 mediante Firehose y una tarea de exportación asíncrona a S3 son rutas diferentes. Los lotes de CloudWatch Logs tampoco se pueden entregar a través del destino OpenSearch de Firehose; use en su lugar la integración documentada de CloudWatch a OpenSearch. Los registros de aplicaciones enviados directamente a Firehose tienen un contrato de entrada diferente.
+Los filtros de suscripción **no** aceptan como destino el ARN de un bucket de S3. La entrega continua a S3 mediante Firehose y una tarea de exportación asíncrona a S3 son rutas distintas. Tampoco se pueden entregar lotes de CloudWatch Logs al destino OpenSearch de Firehose; usa en su lugar la integración documentada de CloudWatch a OpenSearch. Los registros de aplicaciones enviados directamente a Firehose tienen un contrato de entrada diferente.
 
 | Término | Significado |
 |---|---|
 | Grupo de logs | Límite común de retención, acceso y configuración; por ejemplo, `/aws/eks/example-eks/cluster` |
-| Stream de logs | Una secuencia de eventos de log dentro de un grupo |
+| Flujo de logs | Secuencia de eventos de log dentro de un grupo |
 | Evento de log | Marca de tiempo y mensaje, sujetos a los límites del servicio |
-| Retención | Un período de retención discreto admitido o sin vencimiento si no se establece la retención |
+| Retención | Período discreto de retención admitido o ausencia de vencimiento si no se establece una retención |
 
-<span id="eks-control-plane-logging"></span>
-
-## Logging del control plane de EKS
+## Registro del plano de control de EKS {#eks-control-plane-logging}
 
 ### Tipos de logs
 
-Los cinco tipos son `api`, `audit`, `authenticator`, `controllerManager` y `scheduler`. Cubren, respectivamente, diagnósticos del API server, eventos de auditoría, autenticación IAM, diagnósticos del controller manager y programación. Los logs de nodos worker y de aplicaciones son independientes.
+Los cinco tipos son `api`, `audit`, `authenticator`, `controllerManager` y `scheduler`. Corresponden, respectivamente, a diagnósticos del servidor de API, eventos de auditoría, autenticación de IAM, diagnósticos del administrador de controladores y programación. Los logs de los nodos de trabajo y de las aplicaciones se recopilan por separado.
 
-El logging del control plane está deshabilitado de forma predeterminada. Seleccione los tipos según sus requisitos de diagnóstico, seguridad y retención; la API no exige las elecciones «requeridas» de la tabla anterior. La entrega normalmente tarda minutos y se realiza bajo el mejor esfuerzo. Habilitar el logging no recupera logs históricos que ya se rotaron.
+El registro del plano de control está desactivado de forma predeterminada. Selecciona los tipos según tus necesidades de diagnóstico, seguridad y retención; la API no obliga a elegir las opciones que la tabla anterior marcaba como «obligatorias». La entrega suele tardar varios minutos y se realiza según disponibilidad. Habilitar el registro no recupera logs históricos que ya se rotaron.
 
 <span id="enable-via-aws-cli"></span>
 
-### Habilitar y observar la actualización
+### Habilitar el registro y observar la actualización
 
-Para un clúster existente, guarde lo siguiente como `control-plane-logging.json`:
+Para un clúster existente, guarda lo siguiente como `control-plane-logging.json`:
 
 ```json
 {
@@ -113,22 +109,22 @@ aws eks describe-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-La actualización debe alcanzar `Successful`; la aceptación de la solicitud por sí sola no es suficiente. Las actualizaciones de logging pueden requerir hasta cinco direcciones IP libres por subred del clúster. Para deshabilitar un tipo, revise explícitamente ese cambio en lugar de copiar un segundo ejemplo que desactive silenciosamente logs existentes.
+La actualización debe alcanzar el estado `Successful`; aceptar la solicitud no basta. Las actualizaciones del registro pueden requerir hasta cinco direcciones IP libres por subred del clúster. Para desactivar un tipo, revisa ese cambio explícitamente en lugar de copiar un segundo ejemplo que desactive en silencio logs existentes.
 
 <span id="configure-with-terraform"></span>
 
 ### Propiedad de Terraform y retención
 
-Para clústeres administrados por Terraform, cambie `enabled_cluster_log_types` en la **configuración propietaria del recurso de clúster existente**. No cree otro recurso `aws_eks_cluster` solo para habilitar logs, ni copie el ejemplo obsoleto de creación para Kubernetes 1.29.
+Para clústeres administrados con Terraform, cambia `enabled_cluster_log_types` en la **configuración propietaria del recurso de clúster existente**. No crees otro recurso `aws_eks_cluster` solo para habilitar logs ni copies el ejemplo obsoleto de creación para Kubernetes 1.29.
 
-El siguiente archivo separado administra los grupos de logs y la política del colector manual:
+El siguiente archivo independiente administra los grupos de logs y la política del recolector manual:
 
 ```hcl
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -192,11 +188,11 @@ output "collector_policy_arn" {
 }
 ```
 
-Si ya existe un grupo, reutilice su propietario o impórtelo al estado previsto antes de aplicar. Por ejemplo, el grupo del control plane usa el ID de importación `/aws/eks/example-eks/cluster`. No declare el mismo grupo otra vez como un grupo de «audit»: los cinco tipos del control plane comparten este grupo y su retención.
+Si el grupo ya existe, reutiliza la configuración que lo administra o impórtalo al estado previsto antes de aplicar cambios. Por ejemplo, el ID de importación del grupo del plano de control es `/aws/eks/example-eks/cluster`. No declares el mismo grupo otra vez como grupo de «auditoría»: los cinco tipos de logs del plano de control comparten ese grupo y su retención.
 
-Los valores de 30 días son ejemplos, no requisitos legales. `prevent_destroy` bloquea la destrucción mediante Terraform, pero no evita reducciones de retención ni eliminaciones fuera de Terraform. CloudWatch cifra los datos de log almacenados; una clave KMS administrada por el cliente requiere su propia política de claves y planificación operativa.
+Los valores de 30 días son ejemplos, no requisitos legales. `prevent_destroy` bloquea que Terraform destruya el recurso, pero no evita que se reduzca la retención ni que se elimine fuera de Terraform. CloudWatch cifra los datos de logs almacenados; una clave de KMS administrada por el cliente requiere su propia política de claves y planificación operativa.
 
-### Estructura del grupo de logs
+### Estructura de los grupos de logs
 
 ```text
 /aws/eks/example-eks/cluster
@@ -207,7 +203,7 @@ Los valores de 30 días son ejemplos, no requisitos legales. `prevent_destroy` b
   kube-scheduler-...         Scheduler
 ```
 
-Los sufijos de los streams rotan. El ejemplo `/aws/eks/cluster/logs` de la figura antigua no era la convención de nombres real del grupo del control plane.
+Los sufijos de los flujos rotan. El ejemplo antiguo `/aws/eks/cluster/logs` de la figura no seguía la convención real de nombres del grupo del plano de control.
 
 ## Container Insights
 
@@ -219,9 +215,9 @@ Los sufijos de los streams rotan. El ejemplo `/aws/eks/cluster/logs` de la figur
 
 ### Opciones de instalación
 
-Use el **add-on de Amazon CloudWatch Observability para EKS** actual o su Helm chart **amazon-cloudwatch-observability**. El anterior chart de exportador ADOT y una URL de inicio rápido sin sustituir no son instalaciones equivalentes.
+Usa el **add-on de Amazon CloudWatch Observability para EKS** actual o su chart de Helm **amazon-cloudwatch-observability**. El antiguo chart del exportador ADOT y una URL de inicio rápido sin sustituir no son instalaciones equivalentes.
 
-Para un add-on, descubra las versiones compatibles con el clúster real, inspeccione el esquema de configuración seleccionado y configure la asociación IAM documentada. Una versión de chart no es una cadena de versión de add-on de EKS.
+Para un add-on, busca versiones compatibles con el clúster real, inspecciona el esquema de configuración seleccionado y configura la asociación de IAM documentada. La versión de un chart no es la cadena de versión de un add-on de EKS.
 
 ```bash
 K8S_VERSION=$(aws eks describe-cluster --name "$DOCS_CLUSTER" \
@@ -231,7 +227,7 @@ aws eks describe-addon-versions \
   --kubernetes-version "$K8S_VERSION" --region "$DOCS_REGION"
 ```
 
-El ejemplo opcional de Helm utiliza el siguiente `cloudwatch-values.yaml`. Selecciona la ruta tradicional de Container Insights y los logs de contenedores; Application Signals y el pipeline independiente OTel Container Insights se deshabilitan aquí.
+El ejemplo opcional de Helm usa el siguiente `cloudwatch-values.yaml`. Selecciona la ruta tradicional de Container Insights y los logs de contenedores; aquí se desactivan Application Signals y el flujo independiente de OTel Container Insights.
 
 ```yaml
 clusterName: example-eks
@@ -257,37 +253,35 @@ helm upgrade --install cloudwatch-observability \
   --values cloudwatch-values.yaml
 ```
 
-Establezca los permisos IAM **antes de la instalación**. En este chart, los DaemonSet de Fluent Bit usan la ServiceAccount `cloudwatch-agent`; su nombre y namespace deben coincidir con la asociación seleccionada de Pod Identity. Siga los requisitos oficiales de asociación y confianza de roles. Un rol IRSA para una ServiceAccount con un nombre diferente no autorizará a un Pod `fluent-bit` creado manualmente. No instale este chart sobre un add-on administrado por EKS ni ejecute colectores duplicados sobre los mismos logs.
+Configura los permisos de IAM **antes de la instalación**. En este chart, los DaemonSets de Fluent Bit usan la cuenta de servicio `cloudwatch-agent`; su nombre y namespace deben coincidir con la asociación de Pod Identity elegida. Sigue los requisitos oficiales de asociación y confianza del rol. Un rol de IRSA para una cuenta de servicio con otro nombre no autoriza un Pod `fluent-bit` creado manualmente. No instales este chart sobre un add-on administrado por EKS ni ejecutes recolectores duplicados para los mismos logs.
 
 <span id="collected-logs"></span>
 
 ### Logs y plataformas recopilados
 
-| Sufijo de grupo típico | Contenido y límites |
+| Sufijo de grupo habitual | Contenido y límites |
 |---|---|
-| `application` | stdout/stderr de contenedores en `/aws/containerinsights/CLUSTER/application` |
+| `application` | Salida estándar y error estándar de contenedores en `/aws/containerinsights/CLUSTER/application` |
 | `dataplane` | Fuentes configuradas de kubelet/runtime/VPC CNI/kube-proxy; los componentes reales varían según la plataforma |
 | `host` | Archivos/journals de Linux o logs de eventos de Windows configurados; no todos los sistemas operativos tienen `/var/log/messages`, `/var/log/secure` o `/var/log/dmesg` |
-| `performance` | Eventos de rendimiento, a menudo EMF; no intercambiables con mensajes de logs de aplicaciones |
+| `performance` | Eventos de rendimiento, a menudo EMF; no son intercambiables con mensajes de logs de aplicaciones |
 
-El add-on/chart compatible tiene rutas para Linux y Windows, pero Application Signals no es compatible con EKS Windows. Fargate usa su enrutador de logs de plataforma, no este DaemonSet manual. Verifique Hybrid Nodes y Auto Mode por separado; no suponga que las rutas host tradicionales de EC2 existen en todas partes.
+El add-on/chart compatible admite rutas para Linux y Windows, pero Application Signals no es compatible con EKS Windows. Fargate usa su enrutador de logs de plataforma, no este DaemonSet manual. Verifica Hybrid Nodes y Auto Mode por separado; no supongas que las rutas tradicionales del host de EC2 existen en todas partes.
 
-Los logs de Karpenter, EBS CSI, load-balancer-controller e IPAM administrados por AWS de EKS Auto Mode usan una configuración independiente de **entrega de logs suministrados**. Sus tipos de logs son `AUTO_MODE_COMPUTE_LOGS`, `AUTO_MODE_BLOCK_STORAGE_LOGS`, `AUTO_MODE_LOAD_BALANCING_LOGS` y `AUTO_MODE_IPAM_LOGS`. El flujo documentado `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` puede dirigirse a un grupo de logs, S3 o Firehose. Es distinto de `PutSubscriptionFilter` y de habilitar los cinco tipos de logs del control plane.
+Los logs de Karpenter, EBS CSI, el controlador del balanceador de carga e IPAM administrados por AWS en EKS Auto Mode usan una configuración independiente de **entrega de logs suministrados por el servicio**. Sus tipos son `AUTO_MODE_COMPUTE_LOGS`, `AUTO_MODE_BLOCK_STORAGE_LOGS`, `AUTO_MODE_LOAD_BALANCING_LOGS` y `AUTO_MODE_IPAM_LOGS`. El flujo documentado `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` puede apuntar a un grupo de logs, S3 o Firehose. Es distinto de `PutSubscriptionFilter` y de habilitar los cinco tipos de logs del plano de control.
 
-<span id="fluentbit-integration"></span>
-
-## Integración con FluentBit
+## Integración de Fluent Bit {#fluentbit-integration}
 
 <span id="fluentbit-configmap"></span>
 <span id="fluentbit-daemonset"></span>
 
-### Colector manual de logs de aplicaciones
+### Recolector manual de logs de aplicaciones
 
-Este es un perfil alternativo **solo para logs de aplicaciones** para nodos EC2 Linux elegibles. No instala el pipeline completo de métricas de Container Insights ni promete la recopilación universal de host/dataplane.
+Este es un **perfil alternativo solo para logs de aplicaciones** en nodos Linux de EC2 aptos. No instala todo el flujo de métricas de Container Insights ni promete recopilar todos los logs del host o del plano de datos.
 
-Primero cree o reutilice el grupo de aplicaciones. La política del colector anterior permite la creación de streams y la escritura de eventos en ese grupo; deliberadamente no crea grupos ni modifica la retención. Por lo tanto, el perfil manual no necesita permisos `cloudwatch:PutMetricData`, `s3:PutObject` ni permisos generales `logs:*`.
+Primero crea o reutiliza el grupo de logs de aplicaciones. La política del recolector anterior permite crear flujos y escribir eventos en ese grupo; deliberadamente no crea grupos ni cambia la retención. Por eso, este perfil manual no necesita `cloudwatch:PutMetricData`, `s3:PutObject` ni permisos generales `logs:*`.
 
-Prepare un rol IRSA aprobado cuya confianza OIDC coincida con `system:serviceaccount:logging:fluent-bit-cloudwatch` y la audiencia `sts.amazonaws.com`, y adjunte la política generada. Un flujo de trabajo `eksctl --role-only` puede crear el rol mientras el manifiesto es propietario de la ServiceAccount. Sustituya el ARN del rol, el nombre del clúster y la Region de forma coherente.
+Prepara un rol de IRSA aprobado cuya relación de confianza OIDC coincida con `system:serviceaccount:logging:fluent-bit-cloudwatch` y la audiencia `sts.amazonaws.com`, y adjúntale la política generada. Un flujo de trabajo `eksctl --role-only` puede crear el rol mientras el manifiesto administra la cuenta de servicio. Sustituye de forma coherente el ARN del rol, el nombre del clúster y la región.
 
 ```yaml
 apiVersion: v1
@@ -456,27 +450,27 @@ spec:
       terminationGracePeriodSeconds: 45
 ```
 
-El plugin nativo es `cloudwatch_logs`; el plugin Go antiguo se llama `cloudwatch`. El comando predeterminado de la imagen es un script de entrypoint, por lo que el manifiesto manual inicia explícitamente el binario nativo de Fluent Bit con su configuración.
+El plugin nativo es `cloudwatch_logs`; el plugin antiguo escrito en Go se llama `cloudwatch`. El comando predeterminado de la imagen es un script de entrada, así que el manifiesto manual inicia explícitamente el binario nativo de Fluent Bit con su configuración.
 
-La Tail DB y el búfer del sistema de archivos se pueden escribir y están separados del montaje de logs de solo lectura. Grace es de 30 segundos y el período de gracia de terminación del Pod es de 45 segundos, pero eso no garantiza que se entreguen todos los datos almacenados en búfer. La pérdida de nodos, los discos llenos, las líneas largas, los reintentos finitos y los offsets de reinicio aún pueden perder logs. `Read_from_Head Off` afecta a archivos no vistos previamente; los offsets persistentes aún importan.
+La base de datos de Tail y el búfer del sistema de archivos permiten escritura y están separados del montaje de logs de solo lectura. El período de gracia es de 30 segundos y el período de gracia de terminación del Pod es de 45 segundos, pero eso no garantiza que se entreguen todos los datos almacenados en el búfer. La pérdida de nodos, los discos llenos, las líneas largas, los reintentos finitos y los desplazamientos al reiniciar aún pueden causar pérdida de logs. `Read_from_Head Off` afecta a archivos que no se habían visto antes; los desplazamientos persistentes también importan.
 
-El perfil usa la búsqueda de metadatos del API server en lugar del acceso al kubelet de host-network. Las anotaciones de aplicaciones no pueden cambiar el análisis ni excluir logs. No establezca el valor reservado `extra_user_agent: container-insights` en un colector personalizado para insinuar que es la instalación administrada.
+El perfil consulta metadatos mediante el servidor de API, en lugar de acceder al kubelet por la red del host. Las anotaciones de las aplicaciones no pueden cambiar el análisis ni excluir logs. No configures el valor reservado `extra_user_agent: container-insights` en un recolector personalizado para dar a entender que es la instalación administrada.
 
-### Contrato de registros y fuentes host
+### Contrato de registros y fuentes del host
 
-Un evento enriquecido ilustrativo enviado a CloudWatch es:
+Este es un ejemplo ilustrativo de un evento enriquecido que se envía a CloudWatch:
 
 ```json
 {"log":"{\"level\":\"error\",\"message\":\"upstream request failed\",\"error_type\":\"upstream_timeout\",\"http\":{\"response_time_ms\":1250,\"status_code\":503}}","stream":"stderr","kubernetes":{"namespace_name":"production","pod_name":"api-example","container_name":"api"},"log_processed":{"level":"error","message":"upstream request failed","error_type":"upstream_timeout","http":{"response_time_ms":1250,"status_code":503}}}
 ```
 
-Los campos de aplicación están bajo `log_processed`, mientras que los metadatos confiables de Kubernetes están bajo `kubernetes`. La cadena `log` sin procesar duplica datos de aplicaciones; elimine los campos prohibidos antes de la recopilación. Los ejemplos de consulta, suscripción y filtro de métricas siguientes usan esta envoltura JSON exacta y `level: error` en minúsculas.
+Los campos de la aplicación están bajo `log_processed`, mientras que los metadatos confiables de Kubernetes están bajo `kubernetes`. La cadena `log` sin procesar duplica datos de la aplicación; redacta los campos prohibidos antes de recopilarla. Los ejemplos siguientes de consulta, suscripción y filtro de métricas usan exactamente esta estructura JSON y el valor en minúsculas `level: error`.
 
-Si necesita recopilación del journal de Linux, verifique si existen journals persistentes en `/var/log/journal` o journals volátiles en `/run/log/journal`. Configure una entrada `systemd`, filtros de unidad adecuados, montajes de solo lectura, una DB escribible independiente, un grupo de salida y permisos IAM. No monte a ciegas la ruta antigua de Docker `/var/lib/docker/containers` ni requiera archivos de texto inexistentes en nodos containerd/Bottlerocket/AL2023. Estas configuraciones host específicas de la plataforma no se implementan mediante el perfil manual.
+Si necesitas recopilar el journal de Linux, comprueba si hay journals persistentes en `/var/log/journal` o volátiles en `/run/log/journal`. Configura una entrada `systemd`, filtros de unidad adecuados, montajes de solo lectura, una base de datos de escritura independiente, un grupo de salida y permisos de IAM. No montes a ciegas la ruta antigua de Docker `/var/lib/docker/containers` ni exijas archivos de texto que no existen en nodos containerd/Bottlerocket/AL2023. El perfil manual no implementa estas configuraciones del host específicas de cada plataforma.
 
 ## CloudWatch Logs Insights
 
-Estos ejemplos usan **Logs Insights QL**, no SQL. Seleccione el grupo de logs previsto y un rango de tiempo acotado. La revisión local comprobó la sintaxis y los contratos publicados; no se llamó a ningún servicio de consultas administrado.
+Estos ejemplos usan **Logs Insights QL**, no SQL. Selecciona el grupo de logs adecuado y un rango de tiempo acotado. La revisión local comprobó la sintaxis y los contratos publicados; no se consultó ningún servicio administrado.
 
 ### Sintaxis básica de consulta
 
@@ -487,9 +481,9 @@ fields @timestamp, @message
 | limit 100
 ```
 
-La regex sin distinción entre mayúsculas y minúsculas usa `/(?i)error/`, no el sufijo JavaScript `/error/i`. La coincidencia de texto puede coincidir con palabras que no son un nivel de error estructurado de una aplicación.
+La expresión regular que ignora mayúsculas y minúsculas usa `/(?i)error/`, no el sufijo de JavaScript `/error/i`. Una coincidencia de texto puede encontrar palabras que no son un nivel de error estructurado de la aplicación.
 
-Para la envoltura JSON del colector:
+Para la estructura JSON del recolector:
 
 ```text
 fields jsonParse(@message) as record
@@ -508,11 +502,11 @@ fields @timestamp, @message
 | limit 100
 ```
 
-No dependa de un glob que suponga un orden y espaciado arbitrarios de claves JSON. `jsonParse` y los campos anidados explícitos aclaran la estructura de registro esperada.
+No dependas de un patrón glob que suponga un orden y espacios arbitrarios entre las claves JSON. `jsonParse` y los campos anidados explícitos hacen clara la estructura esperada del registro.
 
 ### Ejemplos de consultas de logs de EKS
 
-Los diagnósticos del API server excluyen el prefijo de stream de auditoría superpuesto:
+Los diagnósticos del servidor de API excluyen el prefijo de flujo que se superpone con el de auditoría:
 
 ```text
 fields @timestamp, @logStream, @message
@@ -523,7 +517,7 @@ fields @timestamp, @logStream, @message
 | limit 50
 ```
 
-Actividad de auditoría para un nombre de usuario específico de Kubernetes:
+Actividad de auditoría de un nombre de usuario específico de Kubernetes:
 
 ```text
 fields jsonParse(@message) as audit
@@ -544,7 +538,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-Eventos de auditoría de creación/eliminación de Pod:
+Eventos de auditoría de creación/eliminación de Pods:
 
 ```text
 fields jsonParse(@message) as audit
@@ -556,7 +550,7 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-Estas son búsquedas de diagnóstico, no una prueba de que la auditoría capture cada acción ni de que las coincidencias de texto establezcan la causa raíz.
+Estas son búsquedas de diagnóstico; no prueban que la auditoría capture todas las acciones ni que una coincidencia de texto establezca la causa raíz.
 
 ### Consultas de logs de aplicaciones
 
@@ -569,7 +563,7 @@ fields jsonParse(@message) as record
 | sort error_count desc
 ```
 
-Respuestas lentas que usan el campo declarado numérico de milisegundos:
+Respuestas lentas que usan el campo numérico declarado en milisegundos:
 
 ```text
 fields jsonParse(@message) as record
@@ -587,7 +581,7 @@ stats count(*) as log_count by bin(1h) as bucket
 | sort bucket asc
 ```
 
-Después de `stats`, ordene el alias de bucket definido; el `@timestamp` original por evento ya no es una salida de agrupación.
+Después de `stats`, ordena por el alias del intervalo definido; el `@timestamp` original de cada evento ya no está disponible como resultado de agrupación.
 
 Principales categorías de error:
 
@@ -599,7 +593,7 @@ fields jsonParse(@message) as record
 | limit 10
 ```
 
-Una categoría acotada suele ser más interpretable que agrupar por cada mensaje completo único. No convierta los ID de solicitud ni mensajes arbitrarios en dimensiones de métricas sin límite.
+Una categoría acotada suele ser más fácil de interpretar que agrupar por cada mensaje completo y único. No conviertas los ID de solicitud ni mensajes arbitrarios en dimensiones de métricas sin límite.
 
 ### Consultas avanzadas
 
@@ -613,7 +607,7 @@ fields jsonParse(@message) as record
 | sort bucket asc
 ```
 
-El agregado QL es `pct`, no `percentile`. El productor debe emitir milisegundos numéricos; los ejemplos antiguos de nginx tenían recuentos de comodines no coincidentes y posiciones de campos inventadas.
+La función de agregación de QL es `pct`, no `percentile`. El productor debe emitir milisegundos numéricos; los ejemplos antiguos de nginx tenían cantidades de comodines que no coincidían y posiciones de campos inventadas.
 
 ```text
 fields @timestamp, @message, @logStream
@@ -622,7 +616,7 @@ fields @timestamp, @message, @logStream
 | sort backoff_log_events desc
 ```
 
-Esto cuenta **eventos de log** coincidentes, no reinicios de contenedores. Un evento/mensaje de kubelet puede estar ausente, repetirse o agregarse. Use una métrica de reinicios de Kubernetes adecuada cuando necesite un recuento real de reinicios.
+Esto cuenta los **eventos de log** coincidentes, no los reinicios de contenedores. Un evento o mensaje de kubelet puede faltar, repetirse o agregarse. Si necesitas un recuento real de reinicios, usa una métrica de reinicios adecuada de Kubernetes.
 
 `SOURCE` se admite en consultas de CLI/API, no en el editor de consultas de la consola:
 
@@ -634,21 +628,19 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 | limit 100
 ```
 
-`accountIdentifier` está en singular. Las consultas entre cuentas requieren una configuración y permisos aprobados de cuenta de monitorización/origen; mencionar una segunda cuenta o grupo no crea ese acceso. Omitir la selección de cuenta/prefijo puede ampliar considerablemente una consulta.
+`accountIdentifier` es singular. Las consultas entre cuentas requieren una configuración aprobada de cuenta de monitoreo/cuenta de origen y los permisos correspondientes; mencionar otra cuenta o grupo no otorga acceso. Omitir la selección de cuenta o prefijo puede ampliar considerablemente la consulta.
 
-<span id="subscription-filters"></span>
+## Filtros de suscripción {#subscription-filters}
 
-## Filtros de suscripción
+Los filtros de suscripción reenvían de forma asíncrona los nuevos eventos coincidentes. La entrega es al menos una vez, por lo que puede haber duplicados. Los fallos reintentables del destino pueden volver a intentarse durante un máximo de 24 horas; los errores no reintentables y los fallos sostenidos pueden causar pérdida de entregas. Supervisa las cuotas, `DeliveryErrors` y `DeliveryThrottling`. Las suscripciones no recuperan todos los logs históricos.
 
-Los filtros de suscripción reenvían de forma asíncrona nuevos eventos coincidentes. La entrega es al menos una vez; pueden producirse duplicados. Los fallos de destino reintentables pueden reintentarse hasta 24 horas; los errores no reintentables y los fallos sostenidos pueden perder entregas. Supervise las cuotas, `DeliveryErrors` y `DeliveryThrottling`. Las suscripciones no rellenan todos los logs históricos.
-
-Los destinos directos Lambda, Kinesis y Firehose de estos ejemplos pertenecen a la misma cuenta que el grupo de logs. La entrega entre cuentas usa un destino lógico compatible y su política de destino; un ARN Lambda arbitrario entre cuentas no es un sustituto.
+Los destinos directos de Lambda, Kinesis y Firehose de estos ejemplos pertenecen a la misma cuenta que el grupo de logs. La entrega entre cuentas usa un destino lógico compatible y su política de destino; un ARN arbitrario de Lambda en otra cuenta no lo sustituye.
 
 <span id="export-to-s3"></span>
 
 ### Archivar en S3 mediante Firehose
 
-Este archivo opcional usa el grupo anterior, un bucket S3 privado existente y un rol de entrega Firehose aprobado:
+Este archivo opcional usa el grupo anterior, un bucket privado de S3 existente y un rol de entrega aprobado de Firehose:
 
 ```hcl
 variable "firehose_delivery_role_arn" {
@@ -729,15 +721,15 @@ resource "aws_cloudwatch_log_subscription_filter" "archive" {
 }
 ```
 
-El rol de entrega necesita su confianza Firehose revisada, acceso al bucket/prefijo, permisos KMS opcionales y permisos de logs de destino. El rol de CloudWatch a Firehose es independiente, y el implementador necesita `iam:PassRole` con alcance definido. Evite suscribir logs de errores de entrega de vuelta a su propio pipeline.
+El rol de entrega necesita una relación de confianza de Firehose revisada, acceso al bucket/prefijo, permisos opcionales de KMS y permisos sobre los logs de destino. El rol de CloudWatch a Firehose es independiente, y quien despliega necesita `iam:PassRole` con alcance limitado. No vuelvas a suscribir los logs de errores de entrega al mismo flujo.
 
-Los registros de suscripción de CloudWatch ya están comprimidos con gzip. `UNCOMPRESSED` aquí deshabilita la **compresión adicional de Firehose**; no convierte la carga útil entrante en texto sin formato ni elimina la envoltura de CloudWatch. Los consumidores deben manejar el formato real de registro archivado.
+Los registros de suscripción de CloudWatch ya están comprimidos con gzip. Aquí, `UNCOMPRESSED` desactiva la **compresión adicional de Firehose**; no convierte la carga útil entrante en texto sin formato ni elimina el envoltorio de CloudWatch. Los consumidores deben procesar el formato real del registro archivado.
 
-Para una salida descomprimida, configure deliberadamente la característica documentada de descompresión de Firehose. La extracción opcional de mensajes elimina `owner`, `logGroup`, `logStream` y otros metadatos de envoltura. No mezcle entrada de logs suministrados con un stream configurado para descompresión de suscripciones CloudWatch, ni suponga que estos ajustes hacen válida la ruta no compatible CloudWatch→Firehose→OpenSearch.
+Para obtener una salida descomprimida, configura deliberadamente la función documentada de descompresión de Firehose. La extracción opcional del mensaje elimina `owner`, `logGroup`, `logStream` y otros metadatos del envoltorio. No mezcles entradas de logs suministrados por el servicio con un flujo configurado para descomprimir suscripciones de CloudWatch ni supongas que estos ajustes hacen válida la ruta no admitida CloudWatch→Firehose→OpenSearch.
 
 ### Procesar con Lambda
 
-El ejemplo procesa la envoltura estructurada anterior, ignora los mensajes de control y envía un **resumen** de errores en lugar de texto de log sin procesar. Guárdelo como `log_processor.py`:
+El ejemplo procesa el envoltorio estructurado anterior, ignora los mensajes de control y envía un **resumen** de errores en lugar del texto sin procesar de los logs. Guárdalo como `log_processor.py`:
 
 ```python
 import base64
@@ -812,17 +804,17 @@ def lambda_handler(event, context):
     return {"notified": True, "errorCount": summary["errorCount"]}
 ```
 
-`ALERT_TOPIC_ARN` es un identificador de destino no secreto para un topic aprobado de la misma Region. El rol de ejecución Lambda necesita `sns:Publish` con alcance definido y sus propios permisos de logs, además de los permisos KMS aplicables. Su grupo de logging no debe alimentar recursivamente la misma suscripción.
+`ALERT_TOPIC_ARN` es un identificador de destino no secreto para un topic aprobado en la misma región. El rol de ejecución de Lambda necesita permiso `sns:Publish` con alcance limitado y sus propios permisos de logs, además de los permisos de KMS que correspondan. Su grupo de logs no debe alimentar recursivamente la misma suscripción.
 
-El límite de procesamiento de 8MiB es un límite de ejemplo elegido, no una cuota de AWS. Las envolturas no válidas generan errores; los registros fuera del esquema de aplicación esperado no se tratan como errores estructurados. Supervise los fallos de análisis, configure la gestión de fallos y pruebe la reproducción antes de la implementación. Los mensajes SNS que no son SMS están limitados por **bytes UTF-8**, no por una regla de 1.000 caracteres; el asunto fijo también permanece por debajo del límite del asunto.
+El límite de procesamiento de 8 MiB es un valor de ejemplo elegido, no una cuota de AWS. Los envoltorios no válidos producen errores; los registros que no cumplen el esquema de aplicación esperado no se tratan como errores estructurados. Supervisa los errores de análisis, configura la gestión de fallos y prueba la reproducción antes del despliegue. Los mensajes de SNS que no son SMS tienen un límite en **bytes UTF-8**, no una regla de 1.000 caracteres; el asunto fijo también está por debajo de su límite.
 
-Las claves de evento ayudan a la investigación; **no son deduplicación persistente**. Las invocaciones repetidas pueden enviar notificaciones repetidas. Un consumidor de producción necesita decisiones explícitas de idempotencia y destino de fallos.
+Las claves de evento ayudan en la investigación; **no proporcionan deduplicación persistente**. Las invocaciones repetidas pueden enviar notificaciones repetidas. En producción, el consumidor necesita decisiones explícitas de idempotencia y de destino de fallos.
 
 <span id="create-alerts-with-metric-filters"></span>
 
 ### Filtros de métricas y alarmas
 
-El siguiente archivo opcional conecta un ARN de función Lambda sin calificar ya implementado y crea una métrica/alarma de recuento. Usa el mismo campo JSON que el colector y las consultas:
+El siguiente archivo opcional se conecta a un ARN sin calificador de una función Lambda ya desplegada y crea una métrica/alarma de recuento. Usa el mismo campo JSON que el recolector y consulta:
 
 ```hcl
 variable "processor_function_arn" {
@@ -881,53 +873,51 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 }
 ```
 
-El permiso precede a la suscripción Lambda y está restringido por el ARN del grupo de logs y la cuenta de origen. El destino de alarma SNS también necesita su política de topic adecuada. La implementación de la función, la política del rol de ejecución, las suscripciones al topic y la notificación de extremo a extremo son requisitos previos independientes.
+El permiso se establece antes de la suscripción de Lambda y se limita al ARN del grupo de logs y a la cuenta de origen. El destino SNS de la alarma también requiere la política de topic adecuada. El despliegue de la función, la política del rol de ejecución, las suscripciones al topic y la notificación de extremo a extremo son requisitos independientes.
 
-La alarma es **un recuento de errores**, no una tasa de errores: más de 100 eventos coincidentes en cada uno de dos períodos de cinco minutos. `default_value = 0` se aplica cuando llegan logs pero ninguno coincide; la ausencia de logs entrantes aún puede significar datos ausentes. `treat_missing_data = "missing"` no trata el silencio como salud. Los filtros de métricas no rellenan eventos históricos, y los duplicados pueden afectar a los recuentos.
+La alarma mide **un recuento de errores**, no una tasa: más de 100 eventos coincidentes en cada uno de dos períodos de cinco minutos. `default_value = 0` se aplica cuando llegan logs, pero ninguno coincide; si no llegan logs, puede haber datos faltantes. `treat_missing_data = "missing"` no interpreta el silencio como estado saludable. Los filtros de métricas no rellenan eventos históricos y los duplicados pueden afectar los recuentos.
 
 <span id="_3-archive-to-s3"></span>
 
 ### Tareas de exportación y ciclo de vida de S3
 
-Para una exportación histórica acotada, use la API independiente de tareas de exportación S3 de CloudWatch y sus permisos de bucket/KMS. La disponibilidad de exportación puede retrasarse hasta 12 horas, no se garantiza el orden y el servicio no recomienda tareas de exportación periódicas para archivado continuo.
+Para una exportación histórica acotada, usa la API independiente de tareas de exportación de S3 de CloudWatch y los permisos de bucket/KMS correspondientes. La exportación puede tardar hasta 12 horas en estar disponible, no se garantiza el orden y el servicio no recomienda ejecutar tareas periódicas para archivar continuamente.
 
-Las reglas de ciclo de vida de archivo pertenecen al propietario único de la configuración del bucket. Combine una regla revisada con alcance de prefijo en esa configuración en lugar de reemplazar reglas existentes con un segundo recurso Terraform. Considere el comportamiento de transición de objetos pequeños, las duraciones mínimas de almacenamiento, los costos de recuperación y Object Lock antes de seleccionar los niveles Standard-IA o Glacier.
+Las reglas de ciclo de vida del archivo pertenecen al único responsable de la configuración del bucket. Integra una regla revisada y acotada a un prefijo en esa configuración, en lugar de reemplazar reglas existentes con un segundo recurso de Terraform. Antes de elegir las clases Standard-IA o Glacier, considera el comportamiento de transición de objetos pequeños, las duraciones mínimas de almacenamiento, los costos de recuperación y Object Lock.
 
-<span id="cost-optimization"></span>
-
-## Optimización de costos
+## Optimización de costos {#cost-optimization}
 
 ### Estructura de costos
 
-Compruebe los precios regionales/de clase/nivel actuales para ingesta, almacenamiento retenido, análisis de consultas, entrega suministrada, transformación y servicios posteriores. Firehose, S3, KMS, Lambda, métricas personalizadas y alarmas no son universalmente gratuitos. La tabla antigua no fundamentaba sus tarifas de Seúl ni una ruta de «Logs a S3» de costo cero.
+Consulta los precios regionales actuales por clase y nivel para ingesta, almacenamiento retenido, análisis de consultas, entrega de logs suministrados, transformación y servicios posteriores. Firehose, S3, KMS, Lambda, las métricas personalizadas y las alarmas no son siempre gratuitos. La tabla anterior no justificaba sus tarifas de Seúl ni una ruta «Logs a S3» sin costo.
 
-Lo siguiente es **aritmética hipotética, no precios regionales actuales**:
+Lo siguiente es **un cálculo hipotético, no precios regionales actuales**:
 
-| Suposición | Cálculo mensual |
+| Supuesto | Cálculo mensual |
 |---|---|
-| 100GB/día ingeridos durante 30 días a un supuesto de $0.50/GB | 3,000 × $0.50 = $1,500 |
-| Retención de 30 días en estado estable, fracción almacenada supuesta de 0.5, $0.03/GB-mes | Promedio de 1,500GB × $0.03 = $45 |
-| 200GB analizados diariamente durante 30 días a un supuesto de $0.005/GB | 6,000 × $0.005 = $30 |
+| Ingesta de 100 GB/día durante 30 días, a un precio supuesto de $0.50/GB | 3,000 × $0.50 = $1,500 |
+| Retención estable de 30 días, fracción almacenada supuesta de 0.5 y $0.03/GB-mes | Promedio de 1,500 GB × $0.03 = $45 |
+| Análisis de 200 GB diarios durante 30 días, a un precio supuesto de $0.005/GB | 6,000 × $0.005 = $30 |
 | Subtotal solo bajo estos supuestos | **$1,575** |
 
-No se trata de la rampa de almacenamiento del primer mes, un punto de referencia de compresión ni una factura completa. El total original de $1,576 mezclaba valores de consulta diarios y mensuales. Use bytes retenidos promedio medidos, volumen de análisis, tarifas actuales y todas las demás categorías de cargos.
+Esto no representa la acumulación de almacenamiento del primer mes, un benchmark de compresión ni una factura completa. El total original de $1,576 mezclaba valores de consulta diarios y mensuales. Usa el promedio medido de bytes retenidos, el volumen analizado, los precios actuales y todas las demás categorías de cargos.
 
 <span id="cost-reduction-strategies"></span>
 <span id="_1-log-filtering"></span>
 <span id="_2-retention-period-optimization"></span>
 <span id="_4-adjust-log-levels"></span>
 
-### Filtrado, retención y niveles de logs
+### Filtrado, retención y niveles de log
 
-Filtre solo los registros que sus requisitos de diagnóstico y seguridad permitan descartar. La configuración clásica de Fluent Bit no es YAML. Con esta estructura de registro, un filtro de namespace usa un accessor de registro como `$kubernetes['namespace_name']`, no el campo plano inexistente `kubernetes_namespace_name`.
+Filtra solo los registros que tus requisitos de diagnóstico y seguridad permitan descartar. La configuración clásica de Fluent Bit no es YAML. Con esta estructura de registros, un filtro de namespace usa un accesor de registros como `$kubernetes['namespace_name']`, no el campo plano inexistente `kubernetes_namespace_name`.
 
-Evite filtros amplios de subcadenas que descarten errores útiles solo porque mencionan una ruta de health check. Prefiera campos explícitos como un tipo de evento revisado y verifique ejemplos que deban conservarse, así como los que deban descartarse.
+Evita filtros amplios por subcadenas que descarten errores útiles solo porque mencionan una ruta de health check. Prefiere campos explícitos, como un tipo de evento revisado, y comprueba tanto los ejemplos que se deban conservar como los que se deban descartar.
 
-Diferentes períodos de retención pueden ser apropiados para las necesidades de desarrollo, producción y auditoría, pero cambiar la retención puede eliminar datos. Todos los streams del control plane en un grupo comparten la política del grupo. Los niveles de logs de aplicaciones son un contrato de aplicación: poner `LOG_LEVEL: INFO` en un ConfigMap no hace nada a menos que la aplicación lo consuma e implemente. El aumento temporal de verbosidad necesita controles de acceso, una caducidad y un presupuesto de volumen.
+Puede convenir usar períodos de retención distintos para desarrollo, producción y auditoría, pero cambiar la retención puede eliminar datos. Todos los flujos del plano de control de un grupo comparten la política de retención del grupo. Los niveles de log de las aplicaciones forman parte del contrato de la aplicación: agregar `LOG_LEVEL: INFO` a un ConfigMap no hace nada a menos que la aplicación lo lea y lo implemente. Un aumento temporal de verbosidad requiere controles de acceso, una fecha de expiración y un presupuesto de volumen.
 
-### Monitorización de costos
+### Monitoreo de costos
 
-Use métricas `AWS/Logs` como `IncomingBytes` e `IncomingLogEvents` con la dimensión `LogGroupName` y la estadística `Sum`. Describen la ingesta, no toda la factura. `@billedDuration` es un campo de Lambda, no una métrica de facturación de almacenamiento o ingesta de CloudWatch Logs.
+Usa métricas de `AWS/Logs` como `IncomingBytes` e `IncomingLogEvents` con la dimensión `LogGroupName` y la estadística `Sum`. Describen la ingesta, no la factura completa. `@billedDuration` es un campo de Lambda, no una métrica de facturación por almacenamiento o ingesta de CloudWatch Logs.
 
 ```bash
 aws logs describe-log-groups --region "$DOCS_REGION" \
@@ -940,23 +930,23 @@ aws ce get-dimension-values --region us-east-1 \
   --dimension SERVICE --search-string CloudWatch
 ```
 
-Use el valor de servicio de facturación devuelto en un filtro de Cost Explorer e incluya servicios relacionados al estimar el pipeline completo. `storedBytes` es un atributo de grupo de logs, no una métrica `AWS/Logs` garantizada con ese nombre. Consultar todos los logs para estimar su costo puede generar cargos de consulta.
+Usa el valor de servicio de facturación devuelto en un filtro de Cost Explorer e incluye los servicios relacionados al estimar el flujo completo. `storedBytes` es un atributo del grupo de logs, no una métrica garantizada de `AWS/Logs` con ese nombre. Consultar todos los logs para estimar su costo puede generar cargos por las consultas.
 
 ## Validación y referencias
 
-La auditoría comprobó la configuración local de Terraform/Helm, el esquema de Kubernetes, los tipos de carga útil del SDK, eventos Lambda sintéticos, ejemplos bilingües, respuestas de cuestionarios y el renderizado de Markdown. Estas comprobaciones no demuestran IAM en vivo, entrega del colector, ejecución QL administrada, archivos de Firehose, entrega de alarmas ni costos reales.
+La auditoría comprobó configuraciones locales de Terraform/Helm, el esquema de Kubernetes, tipos de carga útil del SDK, eventos sintéticos de Lambda, ejemplos bilingües, respuestas del cuestionario y el renderizado de Markdown. Estas comprobaciones no demuestran que IAM en vivo, la entrega del recolector, la ejecución de QL administrado, los archivos de Firehose, la entrega de alarmas o los costos reales funcionen.
 
-- [Logs del control plane de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-- [Add-on CloudWatch Observability e instalación de Helm](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [Logs del plano de control de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [Add-on de CloudWatch Observability e instalación de Helm](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
 - [Entrega de logs de componentes administrados de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
 - [Clases de logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html) y [cuotas](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
-- [Salida nativa CloudWatch de Fluent Bit](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md)
+- [Salida nativa de CloudWatch para Fluent Bit](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md)
 - [Filtro QL](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html), [stats](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html), [funciones](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html) y [SOURCE](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html)
 - [Ejemplos de suscripción](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html) y [API de destino](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html)
 - [Limitaciones de CloudWatch Logs a Firehose](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html), [descompresión](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html) y [extracción de mensajes](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)
-- [Filtros de métricas](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html), [tareas de exportación S3](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html) y [métricas de servicio de CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
+- [Filtros de métricas](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html), [tareas de exportación a S3](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html) y [métricas de servicio de CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
 - [API Publish de SNS](https://docs.aws.amazon.com/sns/latest/api/API_Publish.html) y [precios actuales de CloudWatch](https://aws.amazon.com/cloudwatch/pricing/)
 
 ## Cuestionario
 
-Compruebe las distinciones con el [Cuestionario de CloudWatch Logs](../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md).
+Comprueba estas distinciones con el [Cuestionario de CloudWatch Logs](../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md).

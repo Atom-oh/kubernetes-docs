@@ -1,10 +1,10 @@
 # パート 1: 前提条件
 
-> **最終更新**: October 12, 2026
+> **最終更新日**: 2026 年 10 月 16 日
 
 Amazon EKS クラスターを作成する方法はいくつかあります。この章では、さまざまなツールと方法を使用して EKS クラスターを作成する方法を学びます。
 
-**現在のリリース:** EKS 1.37 は October 1, 2026 に利用可能になりました。
+**現在のリリース:** EKS 1.37 は 2026 年 10 月 1 日に利用可能になりました。
 
 **例のベースライン:** クラスター作成の章では、レビュー済みの EKS 1.36 ベースラインを使用します。別のサポート対象バージョンを選択する前に、そのツール、ノードイメージ、アドオンとの互換性を確認してください。
 
@@ -12,18 +12,18 @@ Amazon EKS クラスターを作成する方法はいくつかあります。こ
 
 1. [前提条件](#prerequisites)
 2. [eksctl](02-eks-cluster-creation-part2.md)
-3. [AWS Management Console と CLI](02-eks-cluster-creation-part3.md)
+3. [AWS マネジメントコンソールと CLI](02-eks-cluster-creation-part3.md)
 4. [Terraform](02-eks-cluster-creation-part4.md)
 5. [アクセス、検証、アップグレード、削除](02-eks-cluster-creation-part5.md)
 6. [完全ガイドと CDK](02-eks-cluster-creation.md)
 
-## 前提条件
+## 前提条件 {#prerequisites}
 
 EKS クラスターを作成する前に、次の前提条件を満たす必要があります。
 
 ### 1. AWS アカウント
 
-有効な AWS アカウントが必要です。AWS アカウントをお持ちでない場合は、[AWS website](https://aws.amazon.com/) で登録できます。
+有効な AWS アカウントが必要です。AWS アカウントをお持ちでない場合は、[AWS ウェブサイト](https://aws.amazon.com/) で登録できます。
 
 ### 2. IAM 権限
 
@@ -39,13 +39,13 @@ EKS クラスターを作成する前に、次の前提条件を満たす必要�
 
 プロビジョニングアイデンティティ、クラスターサービスロール、ノードロールはそれぞれ別です。SCP、permissions boundary、セッションポリシーは引き続き適用されます。組織のプロビジョニング権限を、生成されたテンプレート／プランに照らして確認してください。Auto Mode のロール要件は、従来のノードグループとは異なります。
 
-参照: [EKS IAM actions and resources](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode roles](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
+参照: [EKS IAM アクションとリソース](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode のロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
 ### 3. ツールのインストール
 
 #### AWS CLI
 
-OS/CPU 用のパッケージを選択し、[official AWS CLI v2 installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) に従って署名を検証してください。既存の v1/v2 インストールがある場合は、先にその更新／移行手順を確認してください。
+OS/CPU 用のパッケージを選択し、[AWS CLI v2 公式インストールガイド](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) に従って署名を検証してください。既存の v1/v2 インストールがある場合は、先にその更新／移行手順を確認してください。
 
 | 環境 | 公式パッケージ／インストール方法 |
 | --- | --- |
@@ -63,11 +63,11 @@ aws sts get-caller-identity --profile eks-docs
 export AWS_PROFILE=eks-docs
 ```
 
-[IAM Identity Center authentication](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html) を参照してください。以降のコマンドでは、引き続き承認済みのアカウント、ロール、リージョンを使用してください。
+[IAM Identity Center 認証](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html) を参照してください。以降のコマンドでは、引き続き承認済みのアカウント、ロール、リージョンを使用してください。
 
 #### kubectl と eksctl — Linux/macOS
 
-この章の EKS 1.36 の例では、kubectl **1.36.4** と eksctl **0.230.0** をベースラインとして使用します。サーバーと同じ kubectl マイナーバージョンを優先してください。サポートされるバージョンの差は ±1 マイナーです。古い EKS クラスターに対して、upstream の `stable.txt` から最新のマイナーバージョンを無条件にインストールしないでください。
+この章の EKS 1.36 の例では、kubectl **1.36.5** と eksctl **0.231.0** をベースラインとして使用します。サーバーと同じ kubectl マイナーバージョンを優先してください。サポートされるバージョンの差は ±1 マイナーです。古い EKS クラスターに対して、上流の `stable.txt` から最新のマイナーバージョンを無条件にインストールしないでください。
 
 この Bash の例では、AMD64/ARM64 を選択し、インストール前に公式チェックサムを検証します。`curl`、`tar`、`awk`、および `sha256sum` または `shasum` が必要です。`/usr/local/bin` へのインストールには管理者権限が必要です。ダウンロードまたはチェックサムの検証に失敗すると、インストールは停止します。
 
@@ -96,13 +96,13 @@ export AWS_PROFILE=eks-docs
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -116,11 +116,11 @@ export AWS_PROFILE=eks-docs
 )
 ```
 
-公式手順: [Linux kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)、[macOS kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)、[eksctl installation](https://eksctl.io/installation/)。
+公式の手順: [Linux 版 kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)、[macOS 版 kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)、[eksctl のインストール](https://eksctl.io/installation/)。
 
 #### Windows
 
-PowerShell では、[official kubectl installation procedure](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) に従ってください。この章の AMD64 の例では、[kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe) と同じパスにある `.sha256` ファイルを使用してください。CPU に一致する Windows ZIP と、[eksctl 0.230.0 release](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0) の `eksctl_checksums.txt` を選択してください。
+PowerShell では、[kubectl の公式インストール手順](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) に従ってください。この章の AMD64 の例では、[kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe) と同じパスにある `.sha256` ファイルを使用してください。CPU に一致する Windows ZIP と、[eksctl 0.231.0 リリース](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0) の `eksctl_checksums.txt` を選択してください。
 
 `Get-FileHash -Algorithm SHA256` を公式ハッシュと比較し、不一致の場合は停止してください。検証後、ZIP を展開し、実行可能ファイルのディレクトリを PATH に追加して、`kubectl version --client` と `eksctl version` を確認してください。Bash で PowerShell 構文を実行しないでください。
 
@@ -145,8 +145,8 @@ PowerShell では、[official kubectl installation procedure](https://kubernetes
 - パブリックロードバランサー用のサブネット: `kubernetes.io/role/elb=1`
 - 内部ロードバランサー用のサブネット: `kubernetes.io/role/internal-elb=1`
 
-タグによってルーティング、セキュリティグループ、または空き IP 容量が構成されることはありません。[VPC/subnet requirements](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html) および [clusters without internet access](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html) を参照してください。
+タグによってルーティング、セキュリティグループ、または空き IP 容量が構成されることはありません。[VPC／サブネット要件](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html) および [インターネットアクセスのないクラスター](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html) を参照してください。
 
 ## クイズ
 
-この章で学んだ内容をテストするには、[EKS Cluster Creation - Part 1 Quiz](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md) を試してください。
+この章で学んだ内容をテストするには、[EKS クラスター作成パート 1 のクイズ](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md) を試してください。

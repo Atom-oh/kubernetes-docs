@@ -1,7 +1,7 @@
 # ArgoCD Applications
 
 > **レビュー基準**: Argo CD 3.5.2。リリースノートの確認後にパッチ 3.5.4 へ更新（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026 年 10 月 16 日
 
 ## 目次
 - [Application CRD の概要](#application-crd-overview)
@@ -13,7 +13,7 @@
 - [差分の無視](#ignore-differences)
 - [App of Apps パターン](#app-of-apps-pattern)
 
-## Application CRD の概要
+## Application CRD の概要 {#application-crd-overview}
 
 例はそれぞれ独立した設定です。myorg/accounts/clusters/paths は実際に認可されたソースに置き換えてください。すべての代替案を一度に有効にするのではなく、シナリオに応じて source/sources、renderer、destination.server/name を選択してください。
 
@@ -92,7 +92,7 @@ Application.status は controller が報告する状態です。control-plane na
 | `info` | 表示用のカスタムメタデータ |
 | `revisionHistoryLimit` | 保持するデプロイ revision の数 |
 
-## ソースの種類
+## ソースの種類 {#source-types}
 
 ArgoCD は Kubernetes manifest の取得に複数のソースタイプをサポートしています。
 
@@ -344,7 +344,7 @@ spec:
     namespace: production
 ```
 
-## 複数のソース
+## 複数のソース {#multiple-sources}
 
 sources が存在する場合、単数形の source は無視されます。chart と values repository など、関連する 1 つの application の設定を組み合わせます。独立して管理される platform stack には ApplicationSet/App of Apps を使用してください。
 
@@ -375,7 +375,7 @@ spec:
 
 ref: values は $values をその Git repository root にマッピングします。path がない場合は values のみを提供します。path がある場合は、そこでも manifest を生成します。ref ソースに chart を指定することはできません。group/kind/name/namespace が重複するリソースでは最後のソースが使用され、RepeatedResourceWarning が発生します。これはフィールド単位の自動 merge ではありません。
 
-## 宛先設定
+## 宛先設定 {#destination-configuration}
 
 登録済みの宛先には server または name を選択してください。destination.namespace は、独自の namespace を持たない namespaced resource のデフォルトを提供します。CreateNamespace はその宛先のみを作成し、chart に明示的に埋め込まれたすべての namespace を作成するわけではありません。namespace 作成時は managedNamespaceMetadata を使用し、既存 namespace を更新する前に ownership を確認してください。
 
@@ -403,7 +403,7 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-## ヘルス評価
+## ヘルス評価 {#health-assessment}
 
 Synced は、service が request を処理できることの証明ではなく、比較した desired/live field を示します。Healthy は resource ごとに設定された check に従います。check のない custom resource は application health から除外される場合があり、適切な定義が必要です。
 
@@ -473,7 +473,7 @@ data:
 
 これは controller が報告した状態を解釈するものであり、AWS を直接 query しません。既存の argocd-cm に key を merge し、実際の CR で missing/waiting/ready/error/new-spec の状態をテストしてください。EKS managed Argo CD は ACK/kro check を提供するため、まず既存の check とサポートされる設定を確認してください。
 
-## リソースフック
+## リソースフック {#resource-hooks}
 
 PostSync は、成功した Sync と関連する Healthy resource を待機します。明示的な resource-selective sync では hook は実行されません。3.5.4 では、ApplyOutOfSyncOnly は引き続き hook を実行し、history を記録します。SyncFail は対象となる synchronization failure を処理します。manifest-generation failure を含むすべての error に対する保証された cleanup/backup path として依存しないでください。
 
@@ -543,7 +543,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -576,7 +576,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -595,7 +595,7 @@ spec:
 
 固定名の Job では、繰り返し実行のために BeforeHookCreation などの lifecycle rule が必要です。cleanup 前に failure log を外部に保存してください。HookSucceeded cleanup は Argo sync phase/result semantics に従います。migration image、database Secret、ServiceAccount を準備し、idempotence、locking、rollback compatibility を別途検証してください。hook の失敗で database や既存 Deployment が自動的に revert されることはありません。PreDelete/PostDelete は通常の sync pruning ではなく、Application の削除に適用されます。
 
-## 差分の無視
+## 差分の無視 {#ignore-differences}
 
 既知の別 controller が所有する特定のフィールドのみを除外してください。この Application.spec フラグメントは、production の my-deployment で HPA が管理する replica を無視します。
 
@@ -629,7 +629,7 @@ spec:
 
 グローバルな resource.customizations.ignoreDifferences 設定は、すべての Application に影響します。application-scoped rule を優先してください。managedFieldsManagers は、その manager が実際に所有する field を確認してから選択してください。
 
-## App of Apps パターン
+## App of Apps パターン {#app-of-apps-pattern}
 
 App of Apps は管理用の bootstrap pattern です。親ソースの writer は management namespace 内の強力な Application/AppProject に影響を与えられます。write/review/destination privileges を制限してください。親/子 finalizer と pruning は削除を連鎖させる可能性があります。子 Application を順番に作成しても、それ自体では子 workload の readiness は保証されません。Application health propagation、sync policy、wave behavior を検証してください。
 

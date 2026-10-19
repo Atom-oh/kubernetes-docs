@@ -1,252 +1,342 @@
 # Cilium セキュリティと可視性クイズ
 
-> **対応バージョン**: Cilium 1.17
-> **最終更新**: February 22, 2026
+> **レビュー時の基準**: Cilium 1.20.3、Hubble CLI 1.20.2
+> **最終レビュー日**: 2026年10月16日
+
+[ガイドに戻る](../../../networking/cilium/06-security-visibility.md)
 
 ## Network Policy の基本
 
-1. **Kubernetes NetworkPolicy と Cilium NetworkPolicy の主な違いは何ですか？**
-   - A) Cilium NetworkPolicy は L7 ポリシーをサポートしていない
-   - B) Kubernetes NetworkPolicy は L7 ポリシーをサポートしていない
-   - C) Cilium NetworkPolicy は特定の Node にのみ適用できる
-   - D) Kubernetes NetworkPolicy の方が高いパフォーマンスを提供する
+<span id="_1-what-authentication-method-does-a-pod-use-when-calling-aws-apis-with-irsa-iam-roles-for-service-accounts"></span>
+
+1. **CiliumNetworkPolicy は標準の Kubernetes NetworkPolicy をどのように拡張しますか？**
+
+   - A) Pod を選択できない
+   - B) サポートされる L7 プロトコルのルールを追加できる
+   - C) ノードのみを保護する
+   - D) レイテンシの低下を保証する
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Kubernetes NetworkPolicy は L7 ポリシーをサポートしていない</p>
-   <p><strong>解説</strong>: Kubernetes NetworkPolicy は L3/L4 レベルのポリシーのみをサポートしますが、Cilium NetworkPolicy は L3 から L7 までのより幅広いポリシーをサポートします。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) サポートされる L7 プロトコルのルールを追加できる**
+
+   標準の NetworkPolicy は L3/L4 の接続を制御します。Cilium は HTTP や DNS のポリシーなどの機能を追加しますが、API の選択によって性能が保証されるわけではありません。
+
    </details>
 
-2. **Cilium NetworkPolicy の API group は何ですか？**
-   - A) networking.k8s.io
-   - B) cilium.io
-   - C) policy.cilium.io
-   - D) network.cilium.io
+2. **CiliumNetworkPolicy で使用する API バージョンはどれですか？**
+
+   - A) networking.k8s.io/v1
+   - B) cilium.io/v2
+   - C) policy.cilium.io/v1
+   - D) network.cilium.io/v1
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) cilium.io</p>
-   <p><strong>解説</strong>: Cilium NetworkPolicy は cilium.io API group を使用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) cilium.io/v2**
+
+   API group は cilium.io で、この章では提供されているポリシーバージョン v2 を使用します。
+
    </details>
 
-3. **Cilium NetworkPolicy における 'endpointSelector' の役割は何ですか？**
-   - A) ポリシーが適用される対象 Pod を選択する
-   - B) ポリシーが適用される対象 Node を選択する
-   - C) ポリシーが適用される対象 namespace を選択する
-   - D) ポリシーが適用される対象 Service を選択する
+<span id="_3-which-is-not-a-requirement-for-using-security-groups-for-pods"></span>
+
+3. **namespace 内の CiliumNetworkPolicy で `endpointSelector` が選択する対象は何ですか？**
+
+   - A) ポリシーの namespace 内で条件に一致する endpoint
+   - B) すべての Kubernetes ノード
+   - C) Prometheus サーバー
+   - D) LoadBalancer Service のみ
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) ポリシーが適用される対象 Pod を選択する</p>
-   <p><strong>解説</strong>: endpointSelector は、ポリシーが適用される対象 Pod（endpoint）を選択するために使用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: A) ポリシーの namespace 内で条件に一致する endpoint**
+
+   これはポリシーの適用対象となる endpoint を指定します。ノードポリシーでは、別の仕組みである clusterwide の `nodeSelector` を使用します。
+
    </details>
 
-4. **Cilium NetworkPolicy の 'ingress' ルールは何を制御しますか？**
-   - A) 選択した Pod への受信トラフィック
-   - B) 選択した Pod からの送信トラフィック
-   - C) 選択した Pod 内の内部トラフィック
-   - D) cluster 外部へのトラフィック
+4. **`policyTypes: [Ingress]` を指定した標準 NetworkPolicy で、受信を許可するルールが含まれない値はどれですか？**
+
+   - A) `ingress: [{}]`
+   - B) `ingress: []`
+   - C) `ingress: [{from: [{}]}]`
+   - D) すべての送信元アドレスを許可するルール
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) 選択した Pod への受信トラフィック</p>
-   <p><strong>解説</strong>: Ingress ルールは、選択した Pod への受信トラフィックを制御します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) `ingress: []`**
+
+   空のリストは許可ルールを含みません。空のルールオブジェクトはすべての受信を許可します。ほかに適用される許可ポリシーは引き続き加算的に作用します。
+
    </details>
 
-5. **Cilium NetworkPolicy の 'egress' ルールは何を制御しますか？**
-   - A) 選択した Pod への受信トラフィック
-   - B) 選択した Pod からの送信トラフィック
-   - C) 選択した Pod 内の内部トラフィック
-   - D) cluster 外部からのトラフィック
+5. **選択した Pod に対する egress ポリシーが制御する方向はどれですか？**
+
+   - A) 受信接続のみ
+   - B) 送信接続
+   - C) プロセス内のトラフィックのみ
+   - D) API server の応答のみ
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) 選択した Pod からの送信トラフィック</p>
-   <p><strong>解説</strong>: Egress ルールは、選択した Pod からの送信トラフィックを制御します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) 送信接続**
+
+   Egress は外向きの接続を制御します。隔離された Pod では、実際の DNS resolver など依存先への明示的な許可が必要です。
+
    </details>
 
 ## L7 ポリシー
 
-6. **Cilium の L7 HTTP ポリシーでフィルタリングできない属性はどれですか？**
+<span id="_6-which-aws-service-does-not-require-vpc-endpoints-in-an-eks-cluster"></span>
+
+6. **Cilium の HTTP ポリシーで、リクエストの照合に使えないフィールドはどれですか？**
+
    - A) Path
    - B) Method
    - C) Headers
-   - D) Response Time
+   - D) Response latency
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: D) Response Time</p>
-   <p><strong>解説</strong>: Cilium の L7 HTTP ポリシーでは、path、method、headers などの HTTP リクエスト属性をフィルタリングできますが、response time はフィルタリング対象ではありません。</p>
+   <summary>解答を表示</summary>
+
+   **解答: D) Response latency**
+
+   HTTP ポリシーは、サポートされるリクエスト属性を照合します。応答時間を観測できても、レイテンシが HTTP 許可ルールのフィールドになるわけではありません。
+
    </details>
 
-7. **Cilium の L7 Kafka ポリシーでフィルタリングできる属性はどれですか？**
-   - A) Topic
-   - B) Partition
-   - C) Offset
-   - D) 上記すべて
+7. **例にある `toFQDNs` ポリシーが DNS 応答を学習するには何が必要ですか？**
+
+   - A) TCP 443 のルールだけ
+   - B) 任意の外部 IP だけ
+   - C) 到達可能な resolver と、対応する DNS proxy ルール
+   - D) Kafka topic のルール
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) Topic</p>
-   <p><strong>解説</strong>: Cilium の L7 Kafka ポリシーでは、主に topic、API key、および類似の属性に基づいてフィルタリングできます。</p>
+   <summary>解答を表示</summary>
+
+   **解答: C) 到達可能な resolver と、対応する DNS proxy ルール**
+
+   DNS の許可/DNS proxy による観測と、その後の宛先 IP の許可は別々です。この例では、検証済みの resolver endpoint への UDP および TCP の DNS 通信を扱います。
+
    </details>
 
-8. **Cilium の L7 DNS ポリシーにおいて、'matchPattern' ルールで可能になることは何ですか？**
-   - A) 完全一致の domain name マッチング
-   - B) wildcard を使用した domain name パターンマッチング
-   - C) IP address マッチング
-   - D) port number マッチング
+8. **DNS の `matchPattern` が提供する機能は何ですか？**
+
+   - A) ポートの割り当て
+   - B) ドメイン名のワイルドカード照合
+   - C) JWT 署名の検証
+   - D) 悪意のあるドメインの自動評価
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) wildcard を使用した domain name パターンマッチング</p>
-   <p><strong>解説</strong>: matchPattern ルールは、wildcard（*）を含む domain name パターンにマッチできます。例: *.example.com</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) ドメイン名のワイルドカード照合**
+
+   サポートされるワイルドカード構文を使って、クエリ/ドメイン名を照合します。脅威インテリジェンスのフィードを取得する機能ではありません。
+
    </details>
 
-9. **Cilium の L7 ポリシーを適用するために必要な component は何ですか？**
+9. **ここで扱う HTTP ルールを実装する proxy はどれですか？**
+
    - A) kube-proxy
-   - B) Envoy proxy
-   - C) NGINX ingress controller
-   - D) HAProxy
+   - B) Envoy
+   - C) Prometheus
+   - D) Hubble Relay
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Envoy proxy</p>
-   <p><strong>解説</strong>: Cilium は L7 ポリシーを適用するために Envoy proxy を使用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) Envoy**
+
+   Cilium は HTTP ポリシーに Envoy を統合します。DNS ポリシーは DNS proxy を使用するため、すべての L7 ルールを Envoy のルールとして説明できるわけではありません。
+
    </details>
 
-10. **Cilium の L7 ポリシーでサポートされていない protocol はどれですか？**
-    - A) HTTP
-    - B) gRPC
-    - C) Kafka
-    - D) SMTP
+10. **以前の Cilium L7 ポリシー機能のうち、現行 API にないものはどれですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) SMTP</p>
-    <p><strong>解説</strong>: Cilium は HTTP、gRPC、Kafka などの L7 protocol をサポートしますが、SMTP はデフォルトではサポートされていません。</p>
-    </details>
+   - A) HTTP method の照合
+   - B) HTTP path の照合
+   - C) Kafka topic のルール
+   - D) DNS 名のルール
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: C) Kafka topic のルール**
+
+   Kafka の L7 ポリシーは削除されました。古い Kafka ルールを現行の CiliumNetworkPolicy リソースにコピーしないでください。
+
+   </details>
 
 ## 暗号化とセキュリティ
 
-11. **Cilium で network traffic の暗号化に使用できる protocol はどれですか？**
-    - A) IPsec
-    - B) WireGuard
-    - C) A と B の両方
-    - D) TLS
+11. **Cilium のノード間トランスポート暗号化モードの組み合わせはどれですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) A と B の両方</p>
-    <p><strong>解説</strong>: Cilium は IPsec と WireGuard の両方を使用して Node 間のトラフィックを暗号化できます。</p>
-    </details>
+   - A) IPsec と WireGuard
+   - B) HTTP と DNS
+   - C) Relay と Grafana
+   - D) SYN と ACK
 
-12. **Cilium の暗号化機能はどのトラフィックを保護しますか？**
-    - A) Node 間のトラフィックのみ
-    - B) Pod 間のトラフィックのみ
-    - C) Node から Pod へのトラフィックのみ
-    - D) すべての cluster トラフィック
+   <details>
+   <summary>解答を表示</summary>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Pod 間のトラフィックのみ</p>
-    <p><strong>解説</strong>: Cilium の暗号化機能は主に Pod 間のトラフィックを保護します。</p>
-    </details>
+   **解答: A) IPsec と WireGuard**
 
-13. **Cilium の Host Firewall 機能は何を保護しますか？**
-    - A) Pod network interface
-    - B) Host network interface
-    - C) Service endpoint
-    - D) Container runtime
+   必要なモードとその前提条件を選択してください。SPIRE による相互認証と、beta の ztunnel によるワークロード mTLS は、適用範囲の異なる別機能です。
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Host network interface</p>
-    <p><strong>解説</strong>: Cilium の Host Firewall は Host 自身の network interface を保護し、Host レベルのセキュリティを強化します。</p>
-    </details>
+   </details>
 
-14. **次の説明に該当する Cilium のセキュリティ機能はどれですか？「特定の application layer protocol の特定の field または pattern に基づいてトラフィックをフィルタリングする」**
-    - A) Network policies
-    - B) L7 policies
-    - C) Encryption
-    - D) Intrusion detection
+<span id="_12-which-component-is-responsible-for-integrating-kubernetes-rbac-with-aws-iam-in-eks"></span>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) L7 policies</p>
-    <p><strong>解説</strong>: L7（application layer）ポリシーは、HTTP、gRPC、Kafka などの protocol 内の特定の field または pattern に基づいてトラフィックをフィルタリングできます。</p>
-    </details>
+12. **この章のデフォルトの WireGuard ノードトンネルプロファイルが対象とする通信はどれですか？**
 
-15. **Cilium の Identity-based security model は何に基づいていますか？**
-    - A) Pod name
-    - B) Node name
-    - C) Labels
-    - D) IP address
+   - A) 任意の外部トラフィックを含むすべてのパケット
+   - B) ノード間を通過する、サポート対象の Cilium 管理下 Pod トラフィック
+   - C) トンネルを経由する同一ノード上のすべての Pod トラフィック
+   - D) 例外のないすべてのホストトラフィック
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) Labels</p>
-    <p><strong>解説</strong>: Cilium の Identity は Pod labels に基づいているため、IP address が変更されても一貫したセキュリティポリシーを適用できます。</p>
-    </details>
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) ノード間を通過する、サポート対象の Cilium 管理下 Pod トラフィック**
+
+   同一ノード上のトラフィックは、このノードトンネルを使いません。ノード間暗号化は別の beta オプションであり、control plane の通信は対象外です。アプリケーション TLS が引き続き必要な場合もあります。
+
+   </details>
+
+13. **Cilium Host Firewall が保護する対象は何ですか？**
+
+   - A) ブラウザーの JavaScript のみ
+   - B) ホストのネットワークトラフィック
+   - C) すべてのコンテナ syscall を自動的に
+   - D) Grafana のパスワードデータベース
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) ホストのネットワークトラフィック**
+
+   Host policy はネットワーク制御です。プロセスや syscall の実行時制御には、設定済みの Tetragon policy など別の仕組みを使います。暗号化との互換性も確認してください。
+
+   </details>
+
+14. **Authorization ヘッダーに一致するだけで、その bearer token を認証できますか？**
+
+   - A) はい。ヘッダーがあれば JWT の検証も完了する
+   - B) はい。正規表現のような値で署名が検証される
+   - C) いいえ。ヘッダーの照合では token は検証されない
+   - D) はい。HTTP がポート 8443 を使う場合
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: C) いいえ。ヘッダーの照合では token は検証されない**
+
+   実際の認証/認可のロジックを使用してください。値を持つ `headers` 文字列はリテラル照合を行います。また、TLS のポート番号だけでは payload は復号されません。
+
+   </details>
+
+15. **Cilium のセキュリティ identity を主に決めるものは何ですか？**
+
+   - A) 常に一意で変わらないことが保証された Pod IP
+   - B) セキュリティ上重要なラベルの集合
+   - C) ユーザーのブラウザー cookie
+   - D) 最後に観測された HTTP 応答
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) セキュリティ上重要なラベルの集合**
+
+   セキュリティ上重要なラベルが同じ endpoint は、同じ identity を共有できます。identity ベースのポリシーだけでは、エンドユーザー認証や通信の暗号化は提供されません。
+
+   </details>
 
 ## 可視性とモニタリング
 
-16. **Hubble とは何ですか？**
-    - A) Cilium の network visibility tool
-    - B) Cilium の load balancer
-    - C) Cilium の encryption protocol
-    - D) Cilium の DNS server
+16. **Hubble の主な役割は何ですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) Cilium の network visibility tool</p>
-    <p><strong>解説</strong>: Hubble は、eBPF に基づいて network flow を監視および分析できる Cilium の network visibility tool です。</p>
-    </details>
+   - A) ネットワークフローの可観測性
+   - B) コンテナイメージのデプロイ
+   - C) ルールのない完全な WAF
+   - D) 疑わしい Pod をすべて自動隔離すること
 
-17. **Hubble UI で提供されない機能はどれですか？**
-    - A) Service dependency map
-    - B) Network flow visualization
-    - C) Policy violation alert
-    - D) Code deployment management
+   <details>
+   <summary>解答を表示</summary>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) Code deployment management</p>
-    <p><strong>解説</strong>: Hubble UI は Service dependency map、network flow visualization、policy violation alert を提供しますが、code deployment management は提供しません。</p>
-    </details>
+   **解答: A) ネットワークフローの可観測性**
 
-18. **Hubble CLI を使用して特定の Pod の network flow を監視する command は何ですか？**
-    - A) `hubble observe --pod <pod-name>`
-    - B) `hubble watch --pod <pod-name>`
-    - C) `hubble monitor --pod <pod-name>`
-    - D) `hubble inspect --pod <pod-name>`
+   Hubble はフローのメタデータ、判定結果、サポートされるプロトコルの観測情報を提供します。検出ルールと応答連携には別途構成が必要です。
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) <code>hubble observe --pod &lt;pod-name&gt;</code></p>
-    <p><strong>解説</strong>: <code>hubble observe --pod &lt;pod-name&gt;</code> command を使用すると、特定の Pod の network flow をリアルタイムで監視できます。</p>
-    </details>
+   </details>
 
-19. **Hubble が収集しない metric はどれですか？**
-    - A) HTTP status code
-    - B) TCP connection status
-    - C) Dropped packet count
-    - D) Container CPU usage
+17. **Hubble UI が提供する機能はどれですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) Container CPU usage</p>
-    <p><strong>解説</strong>: Hubble は network 関連の metric（HTTP status code、TCP connection status、dropped packet count など）を収集しますが、container CPU usage などの system metric は収集しません。</p>
-    </details>
+   - A) アプリケーション認証情報のローテーション
+   - B) サービス依存関係マップとフローの探索
+   - C) Slack へのインシデント自動通知
+   - D) 実行時 syscall policy のインストール
 
-20. **Cilium を Prometheus と統合するにはどうすればよいですか？**
-    - A) Cilium Operator に Prometheus annotation を追加する
-    - B) Prometheus server に Cilium plugin をインストールする
-    - C) Cilium 用の ServiceMonitor resource を作成する
-    - D) Cilium dashboard を Prometheus に import する
+   <details>
+   <summary>解答を表示</summary>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) Cilium 用の ServiceMonitor resource を作成する</p>
-    <p><strong>解説</strong>: Prometheus Operator を使用する場合、Cilium 用の ServiceMonitor resource を作成することで Cilium metric を収集できます。</p>
-    </details>
+   **解答: B) サービス依存関係マップとフローの探索**
+
+   UI は Relay を通じてネットワーク観測情報を可視化します。通知、デプロイ、実行時ポリシーを管理する controller ではありません。
+
+   </details>
+
+18. **frontend Pod に一致するどちらかの endpoint のフローイベントを追跡するコマンドはどれですか？**
+
+   - A) `hubble observe --pod cilium-security-demo/frontend --follow`
+   - B) `hubble watch --pod frontend`
+   - C) `cilium hubble status`
+   - D) `hubble observe --pod app=frontend`
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: A) `hubble observe --pod cilium-security-demo/frontend --follow`**
+
+   namespace を含む Pod 名を指定し、ストリームを追跡するには `--follow` を使います。Pod 名は label selector ではありません。方向と label の絞り込みには別のフラグを使用します。
+
+   </details>
+
+19. **図示されている Hubble metric plugin が提供しないものはどれですか？**
+
+   - A) HTTP 応答ステータスの件数
+   - B) TCP flag の件数
+   - C) 観測された drop の件数
+   - D) コンテナの CPU 使用率
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: D) コンテナの CPU 使用率**
+
+   これらの plugin が観測するのはネットワーク/プロキシイベントです。TCP plugin は一般的な同時接続数や RTT の metric を提供しません。また、観測の欠落や喪失も考慮してください。
+
+   </details>
+
+20. **Prometheus Operator がインストール済みの場合、ServiceMonitor 経由で Hubble を scrape するには何が必要ですか？**
+
+   - A) Grafana dashboard を import するだけ
+   - B) 静的な public `hubble-metrics.cilium.io:9091` target
+   - C) metrics を有効にし、Prometheus が選択する ServiceMonitor を用意する
+   - D) 無関係な ConfigMap を作成するだけ
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: C) metrics を有効にし、Prometheus が選択する ServiceMonitor を用意する**
+
+   chart の headless Service は、通常 9965 の名前付き `hubble-metrics` port を公開します。Prometheus の namespace/label selector と endpoint への到達性を一致させる必要があります。
+
+   </details>

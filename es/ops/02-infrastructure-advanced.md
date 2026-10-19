@@ -1,855 +1,438 @@
 # Infraestructura avanzada
 
-> **Versiones compatibles**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **Última actualización**: February 19, 2026
+> **Baseline de revisión**: Terraform 1.15.7, AWS Provider 6.69.1, AWS Load Balancer Controller 3.5.0, Boto3 1.43.92
+> **Última revisión**: 16 de octubre de 2026. Los ejemplos se comprobaron localmente con esquemas y dobles de prueba; no se realizó ningún cambio de tráfico real en AWS.
 
-< [Anterior: Infraestructura de Terraform de 3 capas](01-infrastructure-setup.md) | [Tabla de contenido](./README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
+< [Anterior: Infraestructura de Terraform](01-infrastructure-setup.md) | [Tabla de contenido](README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
 
-***
+Esta guía separa dos diseños de tráfico: **un NLB con grupos de destino ponderados** y la **selección DNS entre dos balanceadores de carga independientes**. Son alternativas; no son dos controles que puedan seleccionar clústeres por separado detrás del mismo NLB compartido.
 
-## Descripción general
+## 1. Resumen de la arquitectura Blue/Green
 
-Esta guía cubre patrones avanzados de infraestructura para ejecutar cargas de trabajo de producción en EKS con alta disponibilidad y despliegues sin tiempo de inactividad. La arquitectura de clústeres Blue/Green permite actualizaciones de clústeres sin interrupciones, recuperación ante desastres y gestión de tráfico en múltiples zonas de disponibilidad.
+Blue/Green proporciona otro entorno para validar y una ruta para devolver el tráfico. No garantiza tiempo de inactividad cero, reversión instantánea, replicación automática de datos ni coste cero entre zonas de disponibilidad. Dimensiona el destino para la carga entrante y mantén los cambios de base de datos/esquema compatibles con ambas versiones.
 
-**Temas clave:**
+El [ejemplo de base](01-infrastructure-setup.md) usa varias zonas de disponibilidad y los grupos integrados de Auto Mode. El color de un clúster no fija sus nodos de trabajo a una zona. El plano de control administrado de EKS es regional; una celda de **nodos de trabajo** en una sola zona requiere restricciones de NodePool/NodeClass independientes y capacidad de recuperación. Consulta [Operaciones por zona](15-zonal-operations-guide.md).
 
-* Arquitectura de dos clústeres Blue/Green
-* Grupos de destino ponderados de NLB para la distribución de tráfico
-* Cambio de tráfico basado en DNS con Route53
-* Ubicación de datos consciente de la zona para cargas de trabajo con estado
-* Failover automatizado con CloudWatch y Lambda
+| Aspecto | Planificación requerida |
+|---|---|
+| Transición del tráfico | Flujos nuevos, conexiones persistentes, propagación, reintentos del cliente, SLO |
+| Datos | Replicación, coherencia, propiedad de escritura, compatibilidad de migraciones, punto de recuperación |
+| Capacidad | Destinos saludables en el entorno de destino y capacidad probada bajo carga, incluso si falla una AZ |
+| Propiedad de configuración | Un solo escritor para las acciones del listener; coordina Terraform, scripts y automatización |
+| Costes | Ambas flotas de clústeres, balanceadores/endpoints, replicación y rutas entre zonas; mide el uso real |
 
-***
+![Un listener NLB compartido selecciona los grupos de destino Blue/Green; cada clúster usa un AWS Load Balancer Controller instalado por separado para registrar los destinos de servicio TLS.](../.gitbook/assets/en-ops-02-infrastructure-advanced-0.png)
 
-## 1. Descripción general de la arquitectura Blue/Green
-
-### ¿Por qué clústeres Blue/Green?
-
-Las actualizaciones tradicionales de clústeres en el lugar conllevan un riesgo significativo:
-
-* Interrupción de las cargas de trabajo durante las actualizaciones del plano de control
-* El drenaje de nodos puede causar problemas de capacidad
-* Complejidad de la reversión cuando surgen problemas
-* Ventanas de mantenimiento prolongadas
-
-La arquitectura Blue/Green elimina estos riesgos al mantener dos clústeres independientes:
-
-| Aspecto        | Actualización en el lugar | Blue/Green                     |
-| ------------- | ---------------- | ------------------------------ |
-| Riesgo de tiempo de inactividad | Medio-alto      | Casi cero                      |
-| Tiempo de reversión | 30-60 minutos    | Segundos (DNS/NLB)              |
-| Pruebas       | Limitadas          | Tráfico completo de producción        |
-| Costo          | Un solo clúster   | 2x clúster (durante la transición) |
-
-### Diagrama de arquitectura
-
-![Diagrama de un NLB compartido que divide el tráfico 80/20 entre los grupos de destino Blue y Green, cada uno vinculado a su propio clúster EKS.](../.gitbook/assets/en-ops-02-infrastructure-advanced-0.png)
-
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-02-infrastructure-advanced-0.html)
-
-### Justificación del diseño de una sola zona
-
-Cada clúster opera en una sola zona de disponibilidad:
-
-**Ventajas:**
-
-1. **Localidad de datos**: Los Pods siempre se programan cerca de sus volúmenes de almacenamiento
-2. **Optimización de costos**: Cero costos de transferencia de datos entre AZ
-3. **Aislamiento de fallos**: Un fallo de AZ afecta solo a un clúster
-4. **Redes simplificadas**: Sin balanceo de carga complejo entre múltiples AZ
-
-**Compensaciones:**
-
-* Mayor riesgo de una sola AZ (mitigado por el failover Blue/Green)
-* Requiere una planificación cuidadosa de la capacidad por zona
-
-### Asignación de zonas
-
-| Clúster | Zona de disponibilidad | Propósito                  |
-| ------- | ----------------- | ------------------------ |
-| Blue    | ap-northeast-2a   | Producción principal       |
-| Green   | ap-northeast-2c   | Objetivo secundario/de actualización |
-
-***
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-02-infrastructure-advanced-0.html)
 
 ## 2. Grupos de destino ponderados de NLB
 
-### Configuración de Network Load Balancer
+El ejemplo tiene un **listener TCP/443 con paso directo de TLS al puerto 8443 del Pod**. Cada clúster debe tener ya `production/app-https`, el puerto 443 del Service asignado a targetPort 8443, un endpoint TLS funcional y una ruta HTTPS `/healthz` que devuelva 200. El backend termina TLS y presenta el certificado de la aplicación. Un listener TCP de NLB no puede generar una redirección de HTTP a HTTPS.
 
-El NLB compartido distribuye el tráfico entre los clústeres Blue y Green según los pesos de los grupos de destino.
+Usa el estado de red del capítulo 01. Coloca los siguientes archivos en una nueva raíz Terraform `nlb/`; inicializa su backend S3 con una clave independiente, como `nlb/terraform.tfstate`. Proporciona el bucket de estado real, el CIDR de VPC y los CIDR de clientes aprobados. Las direcciones de documentación no son permisos de cliente válidos.
+
+### NLB y grupos de destino
 
 ```hcl
 # nlb/main.tf
-
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.10.0"
+  backend "s3" {}
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.40.0"
-    }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
-
-provider "aws" {
-  region = var.region
-
-  default_tags {
-    tags = local.tags
-  }
-}
-
-locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "terraform"
-    Component   = "nlb"
-  }
-}
-
-# Reference network layer for VPC and subnets
+provider "aws" { region = var.region }
+data "aws_caller_identity" "current" {}
 data "terraform_remote_state" "network" {
   backend = "s3"
-
   config = {
-    bucket = "${var.project_name}-${var.environment}-tfstate"
+    bucket = var.state_bucket_name
     key    = "network/terraform.tfstate"
     region = var.region
   }
 }
-
-#------------------------------------------------------------------------------
-# Network Load Balancer
-#------------------------------------------------------------------------------
-
-resource "aws_lb" "main" {
-  name               = "${local.name_prefix}-nlb"
-  internal           = false
-  load_balancer_type = "network"
-
-  # Deploy in both AZs for high availability
-  subnets = data.terraform_remote_state.network.outputs.public_subnet_ids
-
-  enable_deletion_protection = var.environment == "prod"
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+  tags        = { Project = var.project_name, Environment = var.environment, ManagedBy = "terraform" }
+  alarm_names = { for color in ["blue", "green"] : color => "${local.name_prefix}-${color}-no-healthy" }
+  alarm_arns  = { for color, name in local.alarm_names : color => "arn:aws:cloudwatch:${var.region}:${data.aws_caller_identity.current.account_id}:alarm:${name}" }
+}
+resource "aws_security_group" "nlb" {
+  name_prefix = "docs-nlb-"
+  description = "Approved clients to the TLS passthrough listener"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  tags        = local.tags
+}
+resource "aws_vpc_security_group_ingress_rule" "clients" {
+  for_each          = toset(var.allowed_client_cidrs)
+  security_group_id = aws_security_group.nlb.id
+  cidr_ipv4         = each.value
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+}
+resource "aws_vpc_security_group_egress_rule" "targets" {
+  security_group_id = aws_security_group.nlb.id
+  cidr_ipv4         = var.target_vpc_cidr
+  ip_protocol       = "tcp"
+  from_port         = var.backend_port
+  to_port           = var.backend_port
+}
+resource "aws_lb" "shared" {
+  name_prefix                      = "docs-"
+  internal                         = false
+  load_balancer_type               = "network"
+  subnets                          = data.terraform_remote_state.network.outputs.public_subnet_ids
+  security_groups                  = [aws_security_group.nlb.id]
   enable_cross_zone_load_balancing = true
-
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-nlb"
-  })
+  enable_deletion_protection       = var.environment == "prod"
+  tags                             = local.tags
 }
-
-#------------------------------------------------------------------------------
-# Target Groups - Blue Cluster
-#------------------------------------------------------------------------------
-
-resource "aws_lb_target_group" "blue_http" {
-  name        = "${local.name_prefix}-blue-http"
-  port        = 80
+resource "aws_lb_target_group" "cluster" {
+  for_each    = toset(["blue", "green"])
+  name_prefix = each.key == "blue" ? "doc-b-" : "doc-g-"
+  port        = var.backend_port
   protocol    = "TCP"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
   target_type = "ip"
-
-  health_check {
-    enabled             = true
-    protocol            = "HTTP"
-    port                = "traffic-port"
-    path                = "/healthz"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    interval            = 10
-    timeout             = 5
-  }
-
-  # Deregistration delay for graceful shutdown
-  deregistration_delay = 30
-
-  tags = merge(local.tags, {
-    Name    = "${local.name_prefix}-blue-http"
-    Cluster = "blue"
-  })
-}
-
-resource "aws_lb_target_group" "blue_https" {
-  name        = "${local.name_prefix}-blue-https"
-  port        = 443
-  protocol    = "TCP"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
-  target_type = "ip"
-
   health_check {
     enabled             = true
     protocol            = "HTTPS"
     port                = "traffic-port"
     path                = "/healthz"
+    matcher             = "200"
+    interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
-    interval            = 10
-    timeout             = 5
   }
-
-  deregistration_delay = 30
-
-  tags = merge(local.tags, {
-    Name    = "${local.name_prefix}-blue-https"
-    Cluster = "blue"
-  })
+  deregistration_delay   = 30
+  connection_termination = true
+  preserve_client_ip     = true
+  proxy_protocol_v2      = false
+  lifecycle { create_before_destroy = true }
+  tags = merge(local.tags, { Cluster = each.key })
 }
-
-#------------------------------------------------------------------------------
-# Target Groups - Green Cluster
-#------------------------------------------------------------------------------
-
-resource "aws_lb_target_group" "green_http" {
-  name        = "${local.name_prefix}-green-http"
-  port        = 80
-  protocol    = "TCP"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
-  target_type = "ip"
-
-  health_check {
-    enabled             = true
-    protocol            = "HTTP"
-    port                = "traffic-port"
-    path                = "/healthz"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    interval            = 10
-    timeout             = 5
-  }
-
-  deregistration_delay = 30
-
-  tags = merge(local.tags, {
-    Name    = "${local.name_prefix}-green-http"
-    Cluster = "green"
-  })
-}
-
-resource "aws_lb_target_group" "green_https" {
-  name        = "${local.name_prefix}-green-https"
-  port        = 443
-  protocol    = "TCP"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
-  target_type = "ip"
-
-  health_check {
-    enabled             = true
-    protocol            = "HTTPS"
-    port                = "traffic-port"
-    path                = "/healthz"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    interval            = 10
-    timeout             = 5
-  }
-
-  deregistration_delay = 30
-
-  tags = merge(local.tags, {
-    Name    = "${local.name_prefix}-green-https"
-    Cluster = "green"
-  })
-}
-
-#------------------------------------------------------------------------------
-# Listeners with Weighted Target Groups
-#------------------------------------------------------------------------------
-
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = 80
-  protocol          = "TCP"
-
-  default_action {
-    type = "forward"
-
-    forward {
-      target_group {
-        arn    = aws_lb_target_group.blue_http.arn
-        weight = var.blue_weight
-      }
-      target_group {
-        arn    = aws_lb_target_group.green_http.arn
-        weight = var.green_weight
-      }
-
-      stickiness {
-        enabled  = true
-        duration = 3600  # 1 hour session stickiness
-      }
-    }
-  }
-
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-http-listener"
-  })
-}
-
-resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.main.arn
+resource "aws_lb_listener" "tls_passthrough" {
+  load_balancer_arn = aws_lb.shared.arn
   port              = 443
   protocol          = "TCP"
-
   default_action {
     type = "forward"
-
     forward {
       target_group {
-        arn    = aws_lb_target_group.blue_https.arn
-        weight = var.blue_weight
+        arn    = aws_lb_target_group.cluster["blue"].arn
+        weight = var.traffic_weights.blue
       }
       target_group {
-        arn    = aws_lb_target_group.green_https.arn
-        weight = var.green_weight
-      }
-
-      stickiness {
-        enabled  = true
-        duration = 3600
+        arn    = aws_lb_target_group.cluster["green"].arn
+        weight = var.traffic_weights.green
       }
     }
   }
-
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-https-listener"
-  })
+  tags = local.tags
 }
 ```
 
-### Variables
+### Entradas
 
 ```hcl
 # nlb/variables.tf
-
 variable "region" {
-  description = "AWS region"
-  type        = string
-  default     = "ap-northeast-2"
+  type    = string
+  default = "ap-northeast-2"
 }
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "prod"
-}
-
 variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "eks-platform"
+  type    = string
+  default = "eks-platform"
 }
-
-variable "blue_weight" {
-  description = "Traffic weight for blue cluster (0-100)"
-  type        = number
-  default     = 100
-
+variable "environment" {
+  type    = string
+  default = "dev"
+}
+variable "state_bucket_name" { type = string }
+variable "target_vpc_cidr" {
+  description = "CIDR of the same VPC containing the target Pods"
+  type        = string
+}
+variable "allowed_client_cidrs" {
+  description = "Approved IPv4 client CIDRs. Supply real values, not documentation addresses"
+  type        = list(string)
   validation {
-    condition     = var.blue_weight >= 0 && var.blue_weight <= 100
-    error_message = "Blue weight must be between 0 and 100."
+    condition     = length(var.allowed_client_cidrs) > 0 && alltrue([for cidr in var.allowed_client_cidrs : can(cidrnetmask(cidr)) && cidr != "0.0.0.0/0"])
+    error_message = "Supply explicit IPv4 CIDRs. Do not expose this example to 0.0.0.0/0."
   }
 }
-
-variable "green_weight" {
-  description = "Traffic weight for green cluster (0-100)"
-  type        = number
-  default     = 0
-
+variable "traffic_weights" {
+  type    = object({ blue = number, green = number })
+  default = { blue = 100, green = 0 }
   validation {
-    condition     = var.green_weight >= 0 && var.green_weight <= 100
-    error_message = "Green weight must be between 0 and 100."
+    condition     = alltrue([for value in values(var.traffic_weights) : value >= 0 && value <= 999 && floor(value) == value]) && var.traffic_weights.blue + var.traffic_weights.green > 0
+    error_message = "Use integer weights 0..999 with at least one positive weight. The sum need not be 100."
+  }
+}
+variable "automatic_failover" {
+  description = "Opt in only after validating capacity, reconnection behavior, and single-writer ownership"
+  type        = bool
+  default     = false
+}
+variable "minimum_destination_targets" {
+  description = "A demo health gate, not proof of enough capacity. Size from load testing"
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.minimum_destination_targets >= 1 && floor(var.minimum_destination_targets) == var.minimum_destination_targets
+    error_message = "Use a positive integer destination target count."
+  }
+}
+variable "notification_email" {
+  type    = string
+  default = null
+}
+
+variable "backend_port" {
+  description = "Actual Pod TLS targetPort, shared with the Service/TGB networking example"
+  type        = number
+  default     = 8443
+  validation {
+    condition     = var.backend_port >= 1 && var.backend_port <= 65535 && floor(var.backend_port) == var.backend_port
+    error_message = "Use an integer TCP backend port."
   }
 }
 ```
+
+Los pesos son **enteros relativos de 0–999**, no porcentajes obligatorios. 5:5 y 50:50 expresan la misma proporción relativa. El tamaño de los flujos, las sesiones persistentes y el muestreo pueden hacer que las proporciones observadas de solicitudes/bytes sean distintas. Este ejemplo rechaza explícitamente una configuración con todos los pesos en cero.
+
+La [documentación de listeners NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html) distingue los cambios de peso normales del valor cero: poco después de establecer cero, dejan de aceptarse conexiones nuevas y se cierran las existentes. El retraso de anulación del registro es un control diferente. Valida el comportamiento de conexiones y reintentos antes de cambiar un peso a cero; después del cambio, observa `NewFlowCount`, `ActiveFlowCount`, los errores y la latencia.
+
+El balanceo entre zonas está habilitado porque un grupo restringido a una AZ debe seguir siendo accesible desde los otros nodos del NLB durante la transición de la flota. Deshabilitarlo cambia las restricciones de enrutamiento y puede impedir la división prevista. Ten en cuenta la ruta real entre zonas y su coste. Los grupos de seguridad se asocian al crear el NLB: un NLB que se crea sin ellos no puede adquirirlos después.
+
+### Registro dinámico de destinos
+
+Instala y configura el **AWS Load Balancer Controller autogestionado** en cada clúster. Usa TGB `elbv2.k8s.aws/v1beta1`, un grupo de destino distinto por clúster. Terraform es propietario del LB/TG y del grupo de seguridad frontal; la configuración de red del TGB solicita las reglas de backend a ese controlador. No administres también con Terraform esas mismas reglas de backend ni los cambios de asociaciones de IP de Pods.
+
+```yaml
+# tgb.yaml
+# Separately installed AWS Load Balancer Controller, not the built-in Auto Mode TGB API.
+# Replace all IDs. The production/app-https Service and its TLS targetPort 8443 must exist.
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: app-tls
+  namespace: production
+spec:
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:111122223333:targetgroup/REPLACE_BLUE_GROUP/0000000000000001
+  targetType: ip
+  vpcID: vpc-REPLACE_ME
+  serviceRef:
+    name: app-https
+    port: 443
+  networking:
+    ingress:
+      - from:
+          - securityGroup:
+              groupID: sg-REPLACE_NLB_SG
+        ports:
+          - protocol: TCP
+            port: 8443
+```
+
+Usa el ARN de Blue en el clúster Blue y el ARN de Green en el clúster Green, y reemplaza los ID del grupo de seguridad de VPC/NLB. Si cambia el targetPort del Pod, actualiza tanto `backend_port` como el puerto de red del TGB. El controlador necesita permisos para registrar destinos y reconciliar los grupos de seguridad de backend correspondientes.
+
+El TGB integrado de Auto Mode usa `eks.amazonaws.com/v1`. Sus [reglas de etiquetas y ciclo de vida](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html) son distintas: AWS documenta que se elimina el grupo de destino cuando se elimina ese TGB o el clúster. No lo sustituyas por el grupo de destino de propiedad externa de este ejemplo. `multiClusterTargetGroup` es pertinente cuando se comparte intencionadamente un TG entre clústeres; esta receta usa TG distintos.
 
 ### Salidas
 
 ```hcl
 # nlb/outputs.tf
+output "nlb_arn" { value = aws_lb.shared.arn }
+output "nlb_dns_name" { value = aws_lb.shared.dns_name }
+output "nlb_zone_id" { value = aws_lb.shared.zone_id }
+output "listener_arn" { value = aws_lb_listener.tls_passthrough.arn }
+output "nlb_security_group_id" { value = aws_security_group.nlb.id }
+output "target_group_arns" { value = { for color, group in aws_lb_target_group.cluster : color => group.arn } }
+output "traffic_weights" { value = var.traffic_weights }
+output "automatic_failover" { value = var.automatic_failover }
+output "minimum_destination_targets" { value = var.minimum_destination_targets }
 
-output "nlb_arn" {
-  description = "NLB ARN"
-  value       = aws_lb.main.arn
-}
-
-output "nlb_dns_name" {
-  description = "NLB DNS name"
-  value       = aws_lb.main.dns_name
-}
-
-output "nlb_zone_id" {
-  description = "NLB hosted zone ID"
-  value       = aws_lb.main.zone_id
-}
-
-output "blue_http_target_group_arn" {
-  description = "Blue HTTP target group ARN"
-  value       = aws_lb_target_group.blue_http.arn
-}
-
-output "blue_https_target_group_arn" {
-  description = "Blue HTTPS target group ARN"
-  value       = aws_lb_target_group.blue_https.arn
-}
-
-output "green_http_target_group_arn" {
-  description = "Green HTTP target group ARN"
-  value       = aws_lb_target_group.green_http.arn
-}
-
-output "green_https_target_group_arn" {
-  description = "Green HTTPS target group ARN"
-  value       = aws_lb_target_group.green_https.arn
-}
-
-output "current_weights" {
-  description = "Current traffic weights"
-  value = {
-    blue  = var.blue_weight
-    green = var.green_weight
-  }
-}
+output "backend_port" { value = var.backend_port }
 ```
-
-### Ajuste de pesos para despliegues
-
-Ajuste los pesos progresivamente para despliegues de estilo canary:
-
-```hcl
-# terraform.tfvars examples for different deployment stages
-
-# Stage 1: All traffic to Blue (default)
-blue_weight  = 100
-green_weight = 0
-
-# Stage 2: Canary - 10% to Green
-blue_weight  = 90
-green_weight = 10
-
-# Stage 3: 50/50 split
-blue_weight  = 50
-green_weight = 50
-
-# Stage 4: All traffic to Green
-blue_weight  = 0
-green_weight = 100
-```
-
-Aplique los cambios de peso:
-
-```bash
-# Update weights
-terraform apply -var="blue_weight=90" -var="green_weight=10"
-
-# Verify listener configuration
-aws elbv2 describe-listeners \
-  --load-balancer-arn $(terraform output -raw nlb_arn) \
-  --query 'Listeners[*].DefaultActions[*].ForwardConfig.TargetGroups'
-```
-
-***
 
 ## 3. Cambio de tráfico basado en DNS
 
-### Enrutamiento ponderado de Route53
+Para seleccionar destinos mediante DNS, proporciona **dos endpoints reales e independientes de ALB/NLB**, cada uno dirigido a su clúster correspondiente. Apuntar `blue.example.com` y `green.example.com` al mismo NLB compartido no selecciona grupos de destino diferentes, ni siquiera con distintos pesos de registro o nombres de comprobación de estado.
 
-Para un control más granular y enrutamiento global, use registros ponderados de Route53 junto con los pesos de NLB o en lugar de ellos.
+Esta raíz `dns/` independiente supone que esos dos balanceadores ya existen. Muestra `app.<domain>` ponderado, registros directos por color y un nombre aparte `failover.<domain>`. Elige los nombres que necesites; no combines políticas de enrutamiento incompatibles en un mismo nombre/tipo.
 
 ```hcl
 # dns/main.tf
-
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.10.0"
+  backend "s3" {}
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.40.0"
-    }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
-
-provider "aws" {
-  region = var.region
-}
-
-locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-}
-
-# Reference NLB outputs
-data "terraform_remote_state" "nlb" {
-  backend = "s3"
-
-  config = {
-    bucket = "${var.project_name}-${var.environment}-tfstate"
-    key    = "nlb/terraform.tfstate"
-    region = var.region
-  }
-}
-
-#------------------------------------------------------------------------------
-# Route53 Hosted Zone
-#------------------------------------------------------------------------------
-
-data "aws_route53_zone" "main" {
-  name         = var.domain_name
-  private_zone = false
-}
-
-#------------------------------------------------------------------------------
-# Health Checks
-#------------------------------------------------------------------------------
-
-resource "aws_route53_health_check" "blue" {
-  fqdn              = "blue.${var.domain_name}"
-  port              = 443
-  type              = "HTTPS"
-  resource_path     = "/healthz"
-  failure_threshold = 3
-  request_interval  = 10
-
-  tags = {
-    Name        = "${local.name_prefix}-blue-health"
-    Environment = var.environment
-    Cluster     = "blue"
-  }
-}
-
-resource "aws_route53_health_check" "green" {
-  fqdn              = "green.${var.domain_name}"
-  port              = 443
-  type              = "HTTPS"
-  resource_path     = "/healthz"
-  failure_threshold = 3
-  request_interval  = 10
-
-  tags = {
-    Name        = "${local.name_prefix}-green-health"
-    Environment = var.environment
-    Cluster     = "green"
-  }
-}
-
-#------------------------------------------------------------------------------
-# Weighted DNS Records
-#------------------------------------------------------------------------------
-
-# Primary record - Blue cluster
-resource "aws_route53_record" "app_blue" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "app.${var.domain_name}"
-  type    = "A"
-
-  set_identifier = "blue"
-  weighted_routing_policy {
-    weight = var.blue_dns_weight
-  }
-
+provider "aws" { region = var.region }
+# This is an ALTERNATIVE with two independently provisioned load balancers.
+# Supplying the shared NLB from the first example for both entries is rejected.
+resource "aws_route53_record" "weighted" {
+  for_each       = var.endpoints
+  zone_id        = var.hosted_zone_id
+  name           = "app.${var.domain_name}"
+  type           = "A"
+  set_identifier = each.key
+  weighted_routing_policy { weight = each.value.weight }
   alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
-    evaluate_target_health = true
-  }
-
-  health_check_id = aws_route53_health_check.blue.id
-}
-
-# Secondary record - Green cluster
-resource "aws_route53_record" "app_green" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "app.${var.domain_name}"
-  type    = "A"
-
-  set_identifier = "green"
-  weighted_routing_policy {
-    weight = var.green_dns_weight
-  }
-
-  alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
-    evaluate_target_health = true
-  }
-
-  health_check_id = aws_route53_health_check.green.id
-}
-
-#------------------------------------------------------------------------------
-# Direct Cluster Access Records
-#------------------------------------------------------------------------------
-
-# Blue cluster direct access
-resource "aws_route53_record" "blue_direct" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "blue.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
+    name                   = each.value.dns_name
+    zone_id                = each.value.zone_id
     evaluate_target_health = true
   }
 }
-
-# Green cluster direct access
-resource "aws_route53_record" "green_direct" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "green.${var.domain_name}"
-  type    = "A"
-
+resource "aws_route53_record" "direct" {
+  for_each = var.endpoints
+  zone_id  = var.hosted_zone_id
+  name     = "${each.key}.${var.domain_name}"
+  type     = "A"
   alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
+    name                   = each.value.dns_name
+    zone_id                = each.value.zone_id
     evaluate_target_health = true
   }
 }
-
-#------------------------------------------------------------------------------
-# Failover Configuration
-#------------------------------------------------------------------------------
-
-# Primary failover record
-resource "aws_route53_record" "app_primary" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "failover.${var.domain_name}"
-  type    = "A"
-
-  set_identifier = "primary"
+# Different DNS name from the weighted example: don't mix policies on one name/type.
+resource "aws_route53_record" "failover" {
+  for_each       = var.endpoints
+  zone_id        = var.hosted_zone_id
+  name           = "failover.${var.domain_name}"
+  type           = "A"
+  set_identifier = each.key
   failover_routing_policy {
-    type = "PRIMARY"
+    type = each.key == "blue" ? "PRIMARY" : "SECONDARY"
   }
-
   alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
+    name                   = each.value.dns_name
+    zone_id                = each.value.zone_id
     evaluate_target_health = true
   }
-
-  health_check_id = aws_route53_health_check.blue.id
-}
-
-# Secondary failover record
-resource "aws_route53_record" "app_secondary" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "failover.${var.domain_name}"
-  type    = "A"
-
-  set_identifier = "secondary"
-  failover_routing_policy {
-    type = "SECONDARY"
-  }
-
-  alias {
-    name                   = data.terraform_remote_state.nlb.outputs.nlb_dns_name
-    zone_id                = data.terraform_remote_state.nlb.outputs.nlb_zone_id
-    evaluate_target_health = true
-  }
-
-  health_check_id = aws_route53_health_check.green.id
 }
 ```
-
-### Variables
 
 ```hcl
 # dns/variables.tf
-
 variable "region" {
-  description = "AWS region"
-  type        = string
-  default     = "ap-northeast-2"
+  type    = string
+  default = "ap-northeast-2"
 }
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "prod"
-}
-
-variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "eks-platform"
-}
-
-variable "domain_name" {
-  description = "Domain name for Route53 records"
-  type        = string
-}
-
-variable "blue_dns_weight" {
-  description = "DNS weight for blue cluster (0-255)"
-  type        = number
-  default     = 255
-
+variable "hosted_zone_id" { type = string }
+variable "domain_name" { type = string }
+variable "endpoints" {
+  description = "Two existing independent ALB/NLB endpoints with healthy targets"
+  type        = map(object({ dns_name = string, zone_id = string, weight = number }))
   validation {
-    condition     = var.blue_dns_weight >= 0 && var.blue_dns_weight <= 255
-    error_message = "DNS weight must be between 0 and 255."
+    condition     = toset(keys(var.endpoints)) == toset(["blue", "green"])
+    error_message = "Exactly blue and green endpoints are required."
   }
-}
-
-variable "green_dns_weight" {
-  description = "DNS weight for green cluster (0-255)"
-  type        = number
-  default     = 0
-
   validation {
-    condition     = var.green_dns_weight >= 0 && var.green_dns_weight <= 255
-    error_message = "DNS weight must be between 0 and 255."
+    condition     = length(distinct([for e in values(var.endpoints) : trimprefix(lower(trimsuffix(e.dns_name, ".")), "dualstack.")])) == 2
+    error_message = "Two records pointing at the same shared NLB cannot select different clusters."
+  }
+  validation {
+    condition     = alltrue([for e in values(var.endpoints) : e.weight >= 0 && e.weight <= 255 && floor(e.weight) == e.weight]) && sum([for e in values(var.endpoints) : e.weight]) > 0
+    error_message = "Use integer DNS weights0..255 with a positive total for this example."
   }
 }
 ```
 
-### Estrategia de TTL
+Los pesos de Route 53 son enteros de **0–255**, a diferencia de los pesos de ELB. Los registros ponderados comparten un mismo nombre/tipo DNS y tienen identificadores de conjunto distintos. Las respuestas DNS quedan en caché y las conexiones pueden durar más que las entradas DNS. Los registros Alias heredan el TTL del destino ELB; no reemplaces los endpoints DNS generados por el balanceador con direcciones IP copiadas manualmente solo para establecer un TTL.
 
-El TTL de DNS afecta la rapidez con la que se desplaza el tráfico cuando cambian los pesos:
-
-| Valor de TTL    | Tiempo de cambio     | Caso de uso          |
-| ------------ | --------------- | ----------------- |
-| 60 segundos   | \~2-3 minutos   | Failover rápido    |
-| 300 segundos  | \~10-15 minutos | Operaciones normales |
-| 3600 segundos | \~1-2 horas     | Enrutamiento estable    |
-
-Para los registros Alias de Route53, el TTL se hereda del destino (NLB). Para un control explícito de TTL, use registros que no sean Alias con direcciones IP.
-
-***
+`evaluate_target_health` evalúa el balanceador de destino, no una transacción específica de la aplicación. Si ninguna opción está saludable, las políticas DNS tienen un comportamiento alternativo; no garantizan detener el tráfico. El TTL, la detección de estado, el comportamiento del resolver, la propagación y la reconexión determinan conjuntamente el tiempo de recuperación. No interpretes un TTL de 60 segundos como un SLA de recuperación de 60 segundos.
 
 ## 4. Ubicación de nodos de datos
 
-### Conceptos de afinidad de zona
+Las restricciones de topología controlan la ubicación, no la replicación ni la recuperación. Un volumen EBS zonal y quien lo consume deben ser compatibles; `WaitForFirstConsumer` permite que el aprovisionamiento siga al nodo elegido por el planificador. nodeSelector/afinidad del Pod selecciona nodos aptos, mientras que los requisitos de NodePool limitan el aprovisionamiento del autoescalador y NodeClass controla la selección de subredes.
 
-Para las cargas de trabajo con estado, los Pods deben programarse en la misma zona que sus volúmenes persistentes. EKS Auto Mode gestiona gran parte de esto automáticamente, pero comprender los conceptos ayuda en la resolución de problemas.
-
-### Configuración de zona de NodePool
-
-El YAML real de NodePool es administrado por ArgoCD GitOps (consulte [Configuración del pipeline de GitOps](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)), pero estos son los conceptos clave:
+El siguiente **laboratorio de PostgreSQL de instancia única no es una base de datos de alta disponibilidad**. Supone que los grupos integrados de Auto Mode del capítulo 01 ya crearon la NodeClass predeterminada, que hay capacidad en la AZ seleccionada y que se preparó `data-demo/postgresql-auth` con una clave `password` mediante el flujo aprobado de secretos. Crea el namespace y el secreto antes de la carga de trabajo. El digest de imagen y los UID/GID 999 se comprobaron con la imagen oficial de PostgreSQL 17 Bookworm.
 
 ```yaml
-# Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
-# Actual resource managed by ArgoCD, not Terraform
+# data-placement.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-demo
+---
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: blue-data-nodes
+  name: database-a
 spec:
   template:
+    metadata:
+      labels:
+        workload-type: database
     spec:
-      requirements:
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - ap-northeast-2a
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values:
-            - on-demand
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - r6i.xlarge
-            - r6i.2xlarge
-            - r6i.4xlarge
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      requirements:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2a]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [r6i.2xlarge, r6i.4xlarge]
+      taints:
+        - key: dedicated
+          value: database
+          effect: NoSchedule
   limits:
-    cpu: 1000
-    memory: 4000Gi
+    cpu: "100"
+    memory: 400Gi
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30m
-```
-
-### TopologySpreadConstraints
-
-Asegúrese de que las cargas de trabajo se distribuyan correctamente dentro de un clúster de una sola zona:
-
-```yaml
-# Example Deployment with topology constraints
-apiVersion: apps/v1
-kind: Deployment
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
 metadata:
-  name: api-server
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      topologySpreadConstraints:
-        # Spread across nodes within the zone
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: api-server
-      containers:
-        - name: api-server
-          image: myapp/api-server:latest
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-```
-
-### Afinidad de Pod para la colocación conjunta
-
-Coloque conjuntamente Pods relacionados para reducir la latencia:
-
-```yaml
-# Cache pods should be near API pods
-apiVersion: apps/v1
-kind: Deployment
+  name: demo-gp3-auto
+provisioner: ebs.csi.eks.amazonaws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: eks.amazonaws.com/compute-type
+        values: [auto]
+---
+apiVersion: v1
+kind: Service
 metadata:
-  name: cache
+  name: postgresql
+  namespace: data-demo
 spec:
-  replicas: 3
+  clusterIP: None
   selector:
-    matchLabels:
-      app: cache
-  template:
-    metadata:
-      labels:
-        app: cache
-    spec:
-      affinity:
-        podAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchLabels:
-                    app: api-server
-                topologyKey: kubernetes.io/hostname
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: cache
-              topologyKey: kubernetes.io/hostname
-      containers:
-        - name: redis
-          image: redis:7-alpine
-```
-
-### StatefulSet con almacenamiento específico de zona
-
-Para bases de datos y otras cargas de trabajo con estado:
-
-```yaml
-# PostgreSQL StatefulSet with zone-locked storage
+    app: postgresql
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+# Create data-demo/postgresql-auth with a password key through the approved
+# secret-management workflow before deploying this single-instance lab.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgresql
+  namespace: data-demo
 spec:
   serviceName: postgresql
   replicas: 1
@@ -861,538 +444,535 @@ spec:
       labels:
         app: postgresql
     spec:
-      # Node selector ensures pod schedules in correct zone
       nodeSelector:
+        workload-type: database
         topology.kubernetes.io/zone: ap-northeast-2a
+        eks.amazonaws.com/compute-type: auto
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: database
+          effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: postgresql
-          image: postgres:15
+        - name: postgres
+          image: docker.io/library/postgres@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0
+          env:
+            - name: POSTGRES_USER
+              value: app
+            - name: POSTGRES_DB
+              value: app
+            - name: POSTGRES_PASSWORD_FILE
+              value: /run/postgresql-auth/password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
-            - containerPort: 5432
+            - name: postgres
+              containerPort: 5432
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, app, -d, app]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-          env:
-            - name: POSTGRES_DB
-              value: myapp
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
+            - name: auth
+              mountPath: /run/postgresql-auth
+              readOnly: true
+      volumes:
+        - name: auth
+          secret:
+            secretName: postgresql-auth
+            defaultMode: 0440
   volumeClaimTemplates:
     - metadata:
         name: data
       spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: ebs-sc  # Auto Mode managed
+        accessModes: [ReadWriteOnce]
+        storageClassName: demo-gp3-auto
         resources:
           requests:
-            storage: 100Gi
+            storage: 10Gi
 ```
 
-### Storage Class para el aprovisionamiento específico de zona
+El Pod selecciona la etiqueta del grupo de base de datos, tolera su taint y selecciona AZ-a. StorageClass usa el aprovisionador de Auto Mode; WFFC selecciona el almacenamiento para esa ubicación. El subdirectorio `pgdata` evita inicializar PostgreSQL en la raíz de un sistema de archivos EBS que contiene `lost+found`. `Retain` conserva el volumen tras eliminar el claim; no es una copia de seguridad. Al limpiar el laboratorio, revisa los PV y recursos EBS retenidos.
+
+Para usar otra AZ, cambia a la vez el requisito de NodePool y la ubicación del consumidor. Un volumen no se mueve a otra AZ cuando cambia el peso de un NLB. Producción necesita copias de seguridad, replicación/conmutación por error, migraciones y procedimientos de recuperación medidos; consulta [Almacenamiento](../core/04-storage.md) y [Kafka en EKS](../data-on-eks/kafka/README.md).
+
+### Fragmentos de distribución y afinidad
+
+Para distribuir réplicas entre nodos aptos, integra una regla de distribución de topología en una carga de trabajo existente. `maxSkew: 1` con `DoNotSchedule` limita el desequilibrio entre dominios aptos; no crea los nodos que faltan ni garantiza que existan tres AZ.
 
 ```yaml
-# StorageClass that provisions in specific zone
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ebs-sc-zone-a
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  iops: "3000"
-  throughput: "125"
-  encrypted: "true"
-allowedTopologies:
-  - matchLabelExpressions:
-      - key: topology.kubernetes.io/zone
-        values:
-          - ap-northeast-2a
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Retain
+# Fragment under spec.template.spec of an existing Deployment.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app: api-server
 ```
 
-***
+Una caché que está en otro namespace debe especificar dónde están sus pares de afinidad. Es una preferencia flexible por AZ, no una configuración de replicación ni una garantía de que los Pods se ubiquen en el mismo nodo:
 
-## 5. Automatización de failover
-
-### Alarmas de CloudWatch
-
-Supervise el estado del clúster y active el failover automatizado:
-
-```hcl
-# failover/cloudwatch.tf
-
-resource "aws_cloudwatch_metric_alarm" "blue_unhealthy" {
-  alarm_name          = "${local.name_prefix}-blue-unhealthy"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "HealthyHostCount"
-  namespace           = "AWS/NetworkELB"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 1
-  alarm_description   = "Blue cluster has no healthy targets"
-
-  dimensions = {
-    TargetGroup  = aws_lb_target_group.blue_http.arn_suffix
-    LoadBalancer = aws_lb.main.arn_suffix
-  }
-
-  alarm_actions = [
-    aws_sns_topic.alerts.arn,
-    aws_lambda_function.failover.arn
-  ]
-
-  ok_actions = [
-    aws_sns_topic.alerts.arn
-  ]
-
-  tags = local.tags
-}
-
-resource "aws_cloudwatch_metric_alarm" "green_unhealthy" {
-  alarm_name          = "${local.name_prefix}-green-unhealthy"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "HealthyHostCount"
-  namespace           = "AWS/NetworkELB"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 1
-  alarm_description   = "Green cluster has no healthy targets"
-
-  dimensions = {
-    TargetGroup  = aws_lb_target_group.green_http.arn_suffix
-    LoadBalancer = aws_lb.main.arn_suffix
-  }
-
-  alarm_actions = [
-    aws_sns_topic.alerts.arn
-  ]
-
-  tags = local.tags
-}
-
-# SNS Topic for alerts
-resource "aws_sns_topic" "alerts" {
-  name = "${local.name_prefix}-failover-alerts"
-  tags = local.tags
-}
-
-resource "aws_sns_topic_subscription" "email" {
-  topic_arn = aws_sns_topic.alerts.arn
-  protocol  = "email"
-  endpoint  = var.alert_email
-}
+```yaml
+# Fragment under spec.template.spec.
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          namespaces: [production]
+          labelSelector:
+            matchLabels:
+              app: api-server
+          topologyKey: topology.kubernetes.io/zone
 ```
 
-### Función Lambda de failover
+El antiguo StatefulSet básico de Kafka/ZooKeeper no es un despliegue completo de Kafka: el nombre de un Pod no es un ID numérico de broker, y el quorum, los listeners, las direcciones anunciadas, el almacenamiento y la replicación deben configurarse en conjunto. Usa la [guía de Strimzi](../data-on-eks/kafka/02-strimzi-operator.md) y la [explicación de rack awareness](15-zonal-operations-guide.md). Distribuir solo los Pods de Kubernetes no crea replicación de Kafka entre clústeres.
 
-Cambio de peso automatizado cuando un clúster deja de estar en buen estado:
+## 5. Automatización de la conmutación por error
+
+Esta es una **referencia para un solo listener**, no una garantía de conmutación por error segura en producción. El valor predeterminado `automatic_failover=false` solo propone un cambio y no concede permiso `ModifyListener`. Actívalo únicamente después de validar la capacidad del destino, la terminación/reconexión de las conexiones, la monitorización y un procedimiento operativo con un solo escritor.
+
+Usa una sola ruta de eventos: **alarma de métrica de CloudWatch → SNS de entrada de alarmas → Lambda**. Envía las decisiones y los fallos a otro tema SNS. No añadas también el ARN de Lambda directamente a las acciones de la alarma: las acciones directas de CloudWatch para Lambda usan `alarmData.state.value`, mientras que este handler acepta deliberadamente solo la envoltura SNS.
 
 ```hcl
-# failover/lambda.tf
-
-resource "aws_lambda_function" "failover" {
-  filename         = data.archive_file.failover.output_path
-  function_name    = "${local.name_prefix}-failover"
-  role             = aws_iam_role.failover_lambda.arn
-  handler          = "index.handler"
-  source_code_hash = data.archive_file.failover.output_base64sha256
-  runtime          = "python3.11"
-  timeout          = 30
-
-  environment {
-    variables = {
-      LISTENER_ARN_HTTP  = aws_lb_listener.http.arn
-      LISTENER_ARN_HTTPS = aws_lb_listener.https.arn
-      BLUE_TG_ARN_HTTP   = aws_lb_target_group.blue_http.arn
-      BLUE_TG_ARN_HTTPS  = aws_lb_target_group.blue_https.arn
-      GREEN_TG_ARN_HTTP  = aws_lb_target_group.green_http.arn
-      GREEN_TG_ARN_HTTPS = aws_lb_target_group.green_https.arn
-      SNS_TOPIC_ARN      = aws_sns_topic.alerts.arn
-    }
-  }
-
+# nlb/failover.tf
+resource "aws_sns_topic" "alarm_input" {
+  name = "${local.name_prefix}-alarm-input"
   tags = local.tags
 }
-
-data "archive_file" "failover" {
-  type        = "zip"
-  source_file = "${path.module}/lambda/failover.py"
-  output_path = "${path.module}/lambda/failover.zip"
-}
-
-# Lambda IAM Role
-resource "aws_iam_role" "failover_lambda" {
-  name = "${local.name_prefix}-failover-lambda-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-
+resource "aws_sns_topic" "notifications" {
+  name = "${local.name_prefix}-transition-notifications"
   tags = local.tags
 }
-
-resource "aws_iam_role_policy" "failover_lambda" {
-  name = "failover-policy"
-  role = aws_iam_role.failover_lambda.id
-
+resource "aws_sns_topic_policy" "alarms" {
+  for_each = { input = aws_sns_topic.alarm_input.arn, output = aws_sns_topic.notifications.arn }
+  arn      = each.value
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "elasticloadbalancing:ModifyListener",
-          "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:DescribeTargetGroups",
-          "elasticloadbalancing:DescribeTargetHealth"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = aws_sns_topic.alerts.arn
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "cloudwatch.amazonaws.com" }
+      Action    = "sns:Publish"
+      Resource  = each.value
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id }
+        ArnEquals    = { "aws:SourceArn" = values(local.alarm_arns) }
       }
-    ]
+    }]
   })
 }
 
-# CloudWatch permission to invoke Lambda
-resource "aws_lambda_permission" "cloudwatch" {
-  statement_id  = "AllowCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.failover.function_name
-  principal     = "lambda.alarms.cloudwatch.amazonaws.com"
-  source_arn    = aws_cloudwatch_metric_alarm.blue_unhealthy.arn
+resource "aws_cloudwatch_metric_alarm" "health" {
+  for_each            = toset(["blue", "green"])
+  alarm_name          = local.alarm_names[each.key]
+  namespace           = "AWS/NetworkELB"
+  metric_name         = "HealthyHostCount"
+  statistic           = "Maximum"
+  period              = 60
+  evaluation_periods  = 2
+  datapoints_to_alarm = 2
+  comparison_operator = "LessThanThreshold"
+  threshold           = 1
+  treat_missing_data  = "missing"
+  dimensions = {
+    LoadBalancer = aws_lb.shared.arn_suffix
+    TargetGroup  = aws_lb_target_group.cluster[each.key].arn_suffix
+  }
+  alarm_actions             = [aws_sns_topic.alarm_input.arn]
+  ok_actions                = [aws_sns_topic.notifications.arn]
+  insufficient_data_actions = [aws_sns_topic.notifications.arn]
+  depends_on                = [aws_sns_topic_policy.alarms]
+  tags                      = local.tags
 }
-```
-
-### Código de la función Lambda
-
-```python
-# failover/lambda/failover.py
-"""
-Automated failover handler for Blue/Green EKS clusters.
-Triggered by CloudWatch alarms when a cluster becomes unhealthy.
-"""
-
-import json
-import os
-import boto3
-from datetime import datetime
-
-elbv2 = boto3.client('elbv2')
-sns = boto3.client('sns')
-
-def handler(event, context):
-    """
-    Handle CloudWatch alarm and adjust NLB weights.
-    """
-    print(f"Event received: {json.dumps(event)}")
-
-    # Parse CloudWatch alarm
-    alarm_name = event.get('alarmName', '')
-    alarm_state = event.get('newStateValue', '')
-
-    if alarm_state != 'ALARM':
-        print(f"Alarm state is {alarm_state}, not ALARM. No action needed.")
-        return {'statusCode': 200, 'body': 'No action needed'}
-
-    # Determine which cluster is unhealthy
-    if 'blue' in alarm_name.lower():
-        unhealthy_cluster = 'blue'
-        healthy_cluster = 'green'
-    elif 'green' in alarm_name.lower():
-        unhealthy_cluster = 'green'
-        healthy_cluster = 'blue'
-    else:
-        print(f"Cannot determine cluster from alarm name: {alarm_name}")
-        return {'statusCode': 400, 'body': 'Unknown alarm'}
-
-    print(f"Unhealthy cluster: {unhealthy_cluster}")
-    print(f"Switching traffic to: {healthy_cluster}")
-
-    # Get environment variables
-    listener_arns = [
-        os.environ['LISTENER_ARN_HTTP'],
-        os.environ['LISTENER_ARN_HTTPS']
-    ]
-
-    target_groups = {
-        'blue': {
-            'http': os.environ['BLUE_TG_ARN_HTTP'],
-            'https': os.environ['BLUE_TG_ARN_HTTPS']
-        },
-        'green': {
-            'http': os.environ['GREEN_TG_ARN_HTTP'],
-            'https': os.environ['GREEN_TG_ARN_HTTPS']
-        }
-    }
-
-    # Check health of target cluster before switching
-    healthy_tg_arn = target_groups[healthy_cluster]['http']
-    health_response = elbv2.describe_target_health(TargetGroupArn=healthy_tg_arn)
-    healthy_targets = [
-        t for t in health_response['TargetHealthDescriptions']
-        if t['TargetHealth']['State'] == 'healthy'
-    ]
-
-    if len(healthy_targets) == 0:
-        message = f"CRITICAL: Both clusters unhealthy! Cannot failover."
-        print(message)
-        notify(message, 'CRITICAL')
-        return {'statusCode': 500, 'body': message}
-
-    # Update listener weights
-    for listener_arn in listener_arns:
-        protocol = 'https' if '443' in listener_arn else 'http'
-
-        new_action = {
-            'Type': 'forward',
-            'ForwardConfig': {
-                'TargetGroups': [
-                    {
-                        'TargetGroupArn': target_groups[unhealthy_cluster][protocol],
-                        'Weight': 0
-                    },
-                    {
-                        'TargetGroupArn': target_groups[healthy_cluster][protocol],
-                        'Weight': 100
-                    }
-                ],
-                'TargetGroupStickinessConfig': {
-                    'Enabled': True,
-                    'DurationSeconds': 3600
-                }
-            }
-        }
-
-        elbv2.modify_listener(
-            ListenerArn=listener_arn,
-            DefaultActions=[new_action]
-        )
-
-        print(f"Updated listener {listener_arn}")
-
-    # Send notification
-    message = (
-        f"FAILOVER EXECUTED\n"
-        f"Time: {datetime.utcnow().isoformat()}Z\n"
-        f"Unhealthy Cluster: {unhealthy_cluster}\n"
-        f"Traffic Redirected To: {healthy_cluster}\n"
-        f"Healthy Targets in {healthy_cluster}: {len(healthy_targets)}\n"
-        f"\n"
-        f"Action Required: Investigate {unhealthy_cluster} cluster health."
-    )
-    notify(message, 'FAILOVER')
-
-    return {
-        'statusCode': 200,
-        'body': f'Failover to {healthy_cluster} completed'
-    }
-
-
-def notify(message, severity):
-    """Send notification via SNS."""
-    sns_topic_arn = os.environ.get('SNS_TOPIC_ARN')
-    if sns_topic_arn:
-        sns.publish(
-            TopicArn=sns_topic_arn,
-            Subject=f'[{severity}] EKS Cluster Failover Alert',
-            Message=message
-        )
-```
-
-### Regla de EventBridge
-
-Active comprobaciones de failover según una programación:
-
-```hcl
-# failover/eventbridge.tf
-
-resource "aws_cloudwatch_event_rule" "health_check" {
-  name                = "${local.name_prefix}-health-check"
-  description         = "Periodic health check for EKS clusters"
-  schedule_expression = "rate(1 minute)"
-
+resource "aws_iam_role" "failover" {
+  name_prefix = "docs-failover-"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{ Effect = "Allow", Action = "sts:AssumeRole", Principal = { Service = "lambda.amazonaws.com" } }]
+  })
   tags = local.tags
 }
-
-resource "aws_cloudwatch_event_target" "health_check" {
-  rule      = aws_cloudwatch_event_rule.health_check.name
-  target_id = "HealthCheckLambda"
-  arn       = aws_lambda_function.health_check.arn
+resource "aws_cloudwatch_log_group" "failover" {
+  name              = "/aws/lambda/${local.name_prefix}-failover"
+  retention_in_days = 30
+  tags              = local.tags
 }
-
-resource "aws_lambda_permission" "eventbridge" {
-  statement_id  = "AllowEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.health_check.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.health_check.arn
+resource "aws_iam_role_policy" "failover" {
+  role = aws_iam_role.failover.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat([
+      {
+        Effect    = "Allow"
+        Action    = ["elasticloadbalancing:DescribeListeners", "elasticloadbalancing:DescribeTargetHealth", "cloudwatch:DescribeAlarms"]
+        Resource  = "*"
+        Condition = { StringEquals = { "aws:RequestedRegion" = var.region } }
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "${aws_cloudwatch_log_group.failover.arn}:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.notifications.arn
+      }
+      ], var.automatic_failover ? [{
+        Effect   = "Allow"
+        Action   = "elasticloadbalancing:ModifyListener"
+        Resource = aws_lb_listener.tls_passthrough.arn
+    }] : [])
+  })
+}
+resource "aws_lambda_function" "failover" {
+  function_name                  = "${local.name_prefix}-failover"
+  filename                       = "${path.module}/lambda/failover.zip"
+  source_code_hash               = filebase64sha256("${path.module}/lambda/failover.zip")
+  handler                        = "failover.lambda_handler"
+  runtime                        = "python3.12"
+  timeout                        = 60
+  memory_size                    = 256
+  reserved_concurrent_executions = 1
+  role                           = aws_iam_role.failover.arn
+  environment {
+    variables = {
+      ACCOUNT_ID                  = data.aws_caller_identity.current.account_id
+      LISTENER_ARN                = aws_lb_listener.tls_passthrough.arn
+      ALARM_ARNS_JSON             = jsonencode(local.alarm_arns)
+      TARGET_GROUP_ARNS_JSON      = jsonencode({ for color, group in aws_lb_target_group.cluster : color => group.arn })
+      ALARM_TOPIC_ARN             = aws_sns_topic.alarm_input.arn
+      NOTIFICATION_TOPIC_ARN      = aws_sns_topic.notifications.arn
+      AUTOMATIC_FAILOVER          = tostring(var.automatic_failover)
+      MINIMUM_DESTINATION_TARGETS = tostring(var.minimum_destination_targets)
+    }
+  }
+  depends_on = [aws_iam_role_policy.failover, aws_cloudwatch_log_group.failover]
+  tags       = local.tags
+}
+resource "aws_lambda_permission" "sns" {
+  statement_id   = "AlarmTopicOnly"
+  action         = "lambda:InvokeFunction"
+  function_name  = aws_lambda_function.failover.function_name
+  principal      = "sns.amazonaws.com"
+  source_arn     = aws_sns_topic.alarm_input.arn
+  source_account = data.aws_caller_identity.current.account_id
+}
+resource "aws_sns_topic_subscription" "lambda" {
+  topic_arn  = aws_sns_topic.alarm_input.arn
+  protocol   = "lambda"
+  endpoint   = aws_lambda_function.failover.arn
+  depends_on = [aws_lambda_permission.sns, aws_lambda_function_event_invoke_config.failover]
+}
+resource "aws_sns_topic_subscription" "operator" {
+  for_each = var.notification_email == null ? {} : {
+    alarms    = aws_sns_topic.alarm_input.arn
+    decisions = aws_sns_topic.notifications.arn
+  }
+  topic_arn = each.value
+  protocol  = "email"
+  endpoint  = var.notification_email
+}
+resource "aws_lambda_function_event_invoke_config" "failover" {
+  function_name                = aws_lambda_function.failover.function_name
+  maximum_event_age_in_seconds = 300
+  maximum_retry_attempts       = 1
+  destination_config {
+    on_failure { destination = aws_sns_topic.notifications.arn }
+  }
 }
 ```
 
-### Procedimiento de conmutación manual
+La alarma de estado usa Maximum de HealthyHostCount para detectar la ausencia de destinos saludables en todos los informes. Si faltan métricas, el estado permanece en `INSUFFICIENT_DATA` y se notifica a los operadores; no se inventa un cero ni se activa a ciegas una conmutación. Que el destino tenga más de cero destinos es una comprobación necesaria, no una prueba de capacidad suficiente ni de que la aplicación esté saludable de extremo a extremo.
 
-Para mantenimiento planificado o failover manual:
+### Handler y paquete
+
+El handler comprueba la identidad exacta de alarma/origen/cuenta, la antigüedad del evento, los estados actuales de la alarma, el estado actual de los destinos y la asignación exacta de listener/TG. Conserva los demás atributos de la acción de reenvío y omite una transición ya aplicada. No deduce puertos del texto del ARN del listener. Las notificaciones no pueden retroalimentar la entrada de alarmas.
+
+```python
+# nlb/lambda/failover.py
+"""SNS alarm -> checked proposal or single-listener update. No automatic failback."""
+import copy
+import json
+import logging
+import os
+from datetime import datetime, timezone
+from functools import lru_cache
+
+import boto3
+from botocore.config import Config
+
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
+
+
+def timestamp(value):
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("Timezone is required")
+    return parsed.astimezone(timezone.utc)
+
+
+def configuration(env):
+    alarms = json.loads(env["ALARM_ARNS_JSON"])
+    targets = json.loads(env["TARGET_GROUP_ARNS_JSON"])
+    if set(alarms) != {"blue", "green"} or set(targets) != {"blue", "green"}:
+        raise ValueError("Exactly blue and green are required")
+    if len(set(alarms.values())) != 2 or len(set(targets.values())) != 2:
+        raise ValueError("Alarm and target-group ARNs must be distinct")
+    if env["ALARM_TOPIC_ARN"] == env["NOTIFICATION_TOPIC_ARN"]:
+        raise ValueError("Alarm input and notification output must be separate")
+    minimum = int(env.get("MINIMUM_DESTINATION_TARGETS", "1"))
+    if minimum < 1:
+        raise ValueError("Destination target minimum must be positive")
+    return {
+        "alarms": alarms, "targets": targets,
+        "listener": env["LISTENER_ARN"], "account": env["ACCOUNT_ID"],
+        "input_topic": env["ALARM_TOPIC_ARN"], "output_topic": env["NOTIFICATION_TOPIC_ARN"],
+        "apply": env.get("AUTOMATIC_FAILOVER", "false") == "true",
+        "minimum": minimum,
+    }
+
+
+def healthy_count(elb, arn):
+    response = elb.describe_target_health(TargetGroupArn=arn)
+    return sum(t["TargetHealth"]["State"] == "healthy" for t in response["TargetHealthDescriptions"])
+
+
+def listener_actions(elb, cfg):
+    listeners = elb.describe_listeners(ListenerArns=[cfg["listener"]])["Listeners"]
+    if len(listeners) != 1 or listeners[0]["Port"] != 443 or listeners[0]["Protocol"] != "TCP":
+        raise ValueError("Expected the configured TCP/443 listener")
+    actions = listeners[0]["DefaultActions"]
+    if len(actions) != 1 or actions[0]["Type"] != "forward":
+        raise ValueError("Expected one forward action")
+    groups = actions[0].get("ForwardConfig", {}).get("TargetGroups", [])
+    if len(groups) != 2 or {g["TargetGroupArn"] for g in groups} != set(cfg["targets"].values()):
+        raise ValueError("Unexpected target groups: refusing to overwrite listener configuration")
+    return actions
+
+
+def process_record(record, cfg, clients, now):
+    if not isinstance(record, dict):
+        return {"status": "invalid_record"}
+    if record.get("EventSource") != "aws:sns" or record.get("Sns", {}).get("TopicArn") != cfg["input_topic"]:
+        return {"status": "ignored_source"}
+    try:
+        message = json.loads(record["Sns"]["Message"])
+        if not isinstance(message, dict) or message.get("NewStateValue") != "ALARM":
+            return {"status": "ignored_state"}
+        source = next((color for color, arn in cfg["alarms"].items() if message.get("AlarmArn") == arn), None)
+        if source is None or str(message.get("AWSAccountId")) != cfg["account"]:
+            return {"status": "ignored_alarm"}
+        changed = timestamp(message["StateChangeTime"])
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return {"status": "invalid_message"}
+    age = (now - changed).total_seconds()
+    if age < -30 or age > 300:
+        return {"status": "stale_message"}
+
+    destination = "green" if source == "blue" else "blue"
+    names = [arn.split(":alarm:", 1)[1] for arn in cfg["alarms"].values()]
+    alarms = clients["cloudwatch"].describe_alarms(AlarmNames=names)["MetricAlarms"]
+    states = {alarm["AlarmArn"]: alarm for alarm in alarms}
+    current = states.get(cfg["alarms"][source])
+    other = states.get(cfg["alarms"][destination])
+    if not current or not other or current["StateValue"] != "ALARM" or other["StateValue"] != "OK":
+        return {"status": "alarm_state_changed"}
+    transition = timestamp(current.get("StateTransitionedTimestamp") or current.get("StateUpdatedTimestamp"))
+    if abs((transition - changed).total_seconds()) > 1:
+        return {"status": "stale_transition"}
+
+    elb = clients["elbv2"]
+    if healthy_count(elb, cfg["targets"][source]) != 0:
+        return {"status": "source_recovered"}
+    if healthy_count(elb, cfg["targets"][destination]) < cfg["minimum"]:
+        return {"status": "destination_not_ready"}
+    before = listener_actions(elb, cfg)
+    groups = before[0]["ForwardConfig"]["TargetGroups"]
+    weights = {g["TargetGroupArn"]: g.get("Weight", 1) for g in groups}
+    if weights[cfg["targets"][source]] == 0 and weights[cfg["targets"][destination]] > 0:
+        return {"status": "already_shifted"}
+    proposed = copy.deepcopy(before)
+    for group in proposed[0]["ForwardConfig"]["TargetGroups"]:
+        group["Weight"] = 100 if group["TargetGroupArn"] == cfg["targets"][destination] else 0
+
+    status = "proposal"
+    if cfg["apply"]:
+        # Point-in-time checks, not an atomic compare-and-swap with external writers.
+        if listener_actions(elb, cfg) != before:
+            return {"status": "concurrent_change"}
+        if healthy_count(elb, cfg["targets"][destination]) < cfg["minimum"]:
+            return {"status": "destination_changed"}
+        elb.modify_listener(ListenerArn=cfg["listener"], DefaultActions=proposed)
+        status = "weights_updated"
+    result = {"status": status, "from": source, "to": destination}
+    try:
+        clients["sns"].publish(
+            TopicArn=cfg["output_topic"], Subject="EKS traffic transition decision",
+            Message=json.dumps(result),
+        )
+    except Exception:
+        # Do not replay a successful listener mutation merely because notification failed.
+        LOG.exception("Decision notification failed", extra={"decision_status": status})
+        result["notification_failed"] = True
+    LOG.info("Traffic transition decision: %s", json.dumps(result))
+    return result
+
+
+def handle(event, cfg, clients, now):
+    if not isinstance(event, dict) or not isinstance(event.get("Records"), list):
+        return [{"status": "unsupported_envelope"}]
+    return [process_record(record, cfg, clients, now) for record in event["Records"]]
+
+
+@lru_cache(maxsize=1)
+def aws_clients():
+    config = Config(connect_timeout=2, read_timeout=5, retries={"mode": "standard", "total_max_attempts": 2})
+    return {name: boto3.client(name, config=config) for name in ("elbv2", "cloudwatch", "sns")}
+
+
+def lambda_handler(event, context):
+    return handle(event, configuration(os.environ), aws_clients(), datetime.now(timezone.utc))
+```
+
+`nlb/lambda/requirements.txt`:
+
+```text
+boto3==1.43.92
+botocore==1.43.92
+jmespath==1.1.0
+python-dateutil==2.9.0.post0
+s3transfer==0.19.2
+six==1.17.0
+urllib3==2.7.0
+```
+
+Compila el artefacto antes de planificar con Terraform. Las dependencias se empaquetan junto a `failover.py`, en concordancia con el punto de entrada configurado `failover.lambda_handler`:
 
 ```bash
-#!/bin/bash
-# manual-switchover.sh - Manually switch traffic between clusters
+# From nlb/, in a clean build environment with Python 3.12.
+python3.12 -m pip install --target lambda/package -r lambda/requirements.txt
+cp lambda/failover.py lambda/package/failover.py
+python3.12 - <<'PYCODE'
+from pathlib import Path
+from zipfile import ZipFile, ZIP_DEFLATED
+package = Path("lambda/package")
+with ZipFile("lambda/failover.zip", "w", ZIP_DEFLATED) as archive:
+    for file in sorted(package.rglob("*")):
+        if file.is_file() and "__pycache__" not in file.parts:
+            archive.write(file, file.relative_to(package))
+PYCODE
+terraform init -backend-config=../environment.backend.json -backend-config=key=nlb/terraform.tfstate
+terraform validate
+terraform plan -var-file=environment.tfvars.json
+# Review the plan; apply only after prerequisites and notification subscriptions are ready.
+terraform apply -var-file=environment.tfvars.json
+```
 
-set -e
+Los archivos de backend y variables deben contener los valores reales del entorno. Usa un directorio de paquete limpio para cada compilación. El hash del código de Lambda corresponde al ZIP resultante. Las dependencias de Python puro de este ejemplo son compatibles con el entorno de ejecución de Lambda y no requieren compilar una rueda nativa.
 
-TARGET_CLUSTER="${1:-green}"  # Target cluster to receive traffic
-REGION="${2:-ap-northeast-2}"
+La concurrencia reservada serializa las invocaciones de esta función; no serializa Terraform ni a los escritores de API manuales. Las comprobaciones finales de estado y salud son puntuales, no una comparación e intercambio atómicos. Coordina con los demás escritores, pausa la automatización durante despliegues planificados y reconcilia los pesos resultantes en IaC antes de una aplicación posterior. Los fallos de API, límites de cuota, entrega de notificaciones y falta de disponibilidad del plano de control requieren tratamiento operativo. No hay un temporizador de recuperación automática a 80/20.
 
-echo "=== Manual Cluster Switchover ==="
-echo "Target: $TARGET_CLUSTER"
-echo "Region: $REGION"
-echo ""
+No se declara intencionadamente un verificador de estado programado de EventBridge sin su propia implementación y permisos. CloudWatch ya evalúa estas métricas de salud. Si se necesitan sondeos periódicos de la aplicación, define y prueba esa carga de trabajo independiente y su contrato de eventos.
 
-# Validate target
-if [[ "$TARGET_CLUSTER" != "blue" && "$TARGET_CLUSTER" != "green" ]]; then
-  echo "ERROR: Target cluster must be 'blue' or 'green'"
+### Transiciones manuales y graduales
+
+Usa lo siguiente solo en una raíz NLB inicializada con el backend/caché previsto y un archivo completo de variables. Primero pausa la conmutación automática y los demás escritores. Valida los pesos numéricos, comprueba la salud de los destinos, muestra un plan completo y exige la aprobación de ese plan. No utiliza `-target` como práctica habitual, un destino predeterminado ni un bucle con temporizador sin límite.
+
+```bash
+# traffic-shift.sh
+#!/usr/bin/env bash
+set -euo pipefail
+if (( $# != 4 )); then
+  echo "Usage: $0 <initialized-nlb-root> <variables-file> <blue-weight> <green-weight>" >&2
+  exit 2
+fi
+DOCS_NLB_ROOT="$(cd -- "$1" && pwd -P)"
+DOCS_VARIABLES_FILE="$(cd -- "$(dirname -- "$2")" && pwd -P)/$(basename -- "$2")"
+[[ -f "$DOCS_VARIABLES_FILE" ]] || exit 2
+for value in "$3" "$4"; do
+  [[ "$value" =~ ^[0-9]{1,3}$ ]] || { echo "Weights must be integers 0..999" >&2; exit 2; }
+done
+blue_weight=$((10#$3))
+green_weight=$((10#$4))
+(( blue_weight + green_weight > 0 )) || { echo "At least one weight must be positive" >&2; exit 2; }
+: "${AWS_REGION:?Set the intended AWS region}"
+outputs="$(terraform -chdir="$DOCS_NLB_ROOT" output -json)"
+[[ "$(jq -er '.automatic_failover.value | tostring' <<<"$outputs")" == false ]] || {
+  echo "Pause automatic failover and other writers before manual changes" >&2
   exit 1
-fi
-
-# Set weights based on target
-if [ "$TARGET_CLUSTER" == "blue" ]; then
-  BLUE_WEIGHT=100
-  GREEN_WEIGHT=0
-else
-  BLUE_WEIGHT=0
-  GREEN_WEIGHT=100
-fi
-
-echo "Setting weights: Blue=$BLUE_WEIGHT%, Green=$GREEN_WEIGHT%"
-echo ""
-
-# Confirm with user
-read -p "Proceed with switchover? (yes/no): " CONFIRM
-if [ "$CONFIRM" != "yes" ]; then
-  echo "Aborted."
-  exit 0
-fi
-
-# Apply Terraform changes
-cd "$(dirname "$0")/../nlb"
-terraform apply \
-  -var="blue_weight=$BLUE_WEIGHT" \
-  -var="green_weight=$GREEN_WEIGHT" \
-  -auto-approve
-
-echo ""
-echo "=== Switchover Complete ==="
-echo "Traffic is now routed to: $TARGET_CLUSTER"
-echo ""
-echo "Verify with:"
-echo "  aws elbv2 describe-listeners --load-balancer-arn \$(terraform output -raw nlb_arn)"
-```
-
-### Script de reversión gradual
-
-```bash
-#!/bin/bash
-# gradual-rollback.sh - Gradually shift traffic back to original cluster
-
-set -e
-
-FROM_CLUSTER="${1:-green}"
-TO_CLUSTER="${2:-blue}"
-STEP="${3:-10}"  # Percentage step
-INTERVAL="${4:-60}"  # Seconds between steps
-
-echo "=== Gradual Traffic Shift ==="
-echo "From: $FROM_CLUSTER"
-echo "To: $TO_CLUSTER"
-echo "Step: $STEP%"
-echo "Interval: ${INTERVAL}s"
-echo ""
-
-cd "$(dirname "$0")/../nlb"
-
-# Current weights
-CURRENT_FROM=100
-CURRENT_TO=0
-
-while [ $CURRENT_TO -lt 100 ]; do
-  CURRENT_FROM=$((CURRENT_FROM - STEP))
-  CURRENT_TO=$((CURRENT_TO + STEP))
-
-  # Clamp values
-  [ $CURRENT_FROM -lt 0 ] && CURRENT_FROM=0
-  [ $CURRENT_TO -gt 100 ] && CURRENT_TO=100
-
-  echo "Setting: $FROM_CLUSTER=$CURRENT_FROM%, $TO_CLUSTER=$CURRENT_TO%"
-
-  if [ "$TO_CLUSTER" == "blue" ]; then
-    terraform apply \
-      -var="blue_weight=$CURRENT_TO" \
-      -var="green_weight=$CURRENT_FROM" \
-      -auto-approve
-  else
-    terraform apply \
-      -var="blue_weight=$CURRENT_FROM" \
-      -var="green_weight=$CURRENT_TO" \
-      -auto-approve
-  fi
-
-  if [ $CURRENT_TO -lt 100 ]; then
-    echo "Waiting ${INTERVAL}s before next step..."
-    sleep $INTERVAL
+}
+listener="$(jq -er '.listener_arn.value' <<<"$outputs")"
+minimum="$(jq -er '.minimum_destination_targets.value' <<<"$outputs")"
+[[ "$minimum" =~ ^[1-9][0-9]*$ ]] || exit 1
+aws elbv2 describe-listeners --region "$AWS_REGION" --listener-arns "$listener" \
+  --query 'Listeners[0].DefaultActions' --output json
+for color in blue green; do
+  weight="$blue_weight"
+  [[ "$color" == green ]] && weight="$green_weight"
+  target="$(jq -er --arg color "$color" '.target_group_arns.value[$color]' <<<"$outputs")"
+  count="$(aws elbv2 describe-target-health --region "$AWS_REGION" \
+    --target-group-arn "$target" --output json | jq '[.TargetHealthDescriptions[] | select(.TargetHealth.State == "healthy")] | length')"
+  if (( weight > 0 )) && ! jq -en --argjson count "$count" --argjson minimum "$minimum" '$count >= $minimum' >/dev/null; then
+    echo "$color has insufficient healthy targets ($count < $minimum)" >&2
+    exit 1
   fi
 done
-
-echo ""
-echo "=== Traffic Shift Complete ==="
-echo "All traffic now routed to: $TO_CLUSTER"
+workdir="$(mktemp -d "${TMPDIR:-/tmp}/docs-traffic.XXXXXX")"
+plan="$workdir/traffic.tfplan"
+trap 'rm -f -- "$plan"; rmdir -- "$workdir"' EXIT
+terraform -chdir="$DOCS_NLB_ROOT" plan -input=false -out="$plan" -var-file="$DOCS_VARIABLES_FILE" \
+  -var=automatic_failover=false -var="traffic_weights={blue=$blue_weight,green=$green_weight}"
+terraform -chdir="$DOCS_NLB_ROOT" show -no-color "$plan"
+echo "Review the FULL plan and capacity/SLO checks. Weight zero can close existing connections."
+read -r -p "Type apply to execute this reviewed plan: " confirmation
+[[ "$confirmation" == apply ]] || { echo "No changes applied"; exit 0; }
+terraform -chdir="$DOCS_NLB_ROOT" apply "$plan"
+echo "Configuration applied. Verify new/active flows, errors, and latency before another step."
 ```
 
-***
+```bash
+# One reviewed step at a time; replace paths and AWS context.
+export AWS_REGION=ap-northeast-2
+bash traffic-shift.sh ./nlb ./nlb/environment.tfvars.json 95 5
+# Check new/active flows, errors, latency, destination capacity, and data compatibility.
+bash traffic-shift.sh ./nlb ./nlb/environment.tfvars.json 50 50
+# Only after the checks pass and reconnection behavior is acceptable:
+bash traffic-shift.sh ./nlb ./nlb/environment.tfvars.json 0 100
+```
 
-## Resumen
+Una llamada de API/aplicación exitosa cambia la configuración; no demuestra que todo el tráfico o las conexiones existentes se hayan desplazado. Elige los umbrales de detención/reversión de acuerdo con el SLO de la carga de trabajo, no con una regla universal de «5 % de errores / 200 % de latencia».
 
-La arquitectura de clústeres Blue/Green con enrutamiento ponderado de NLB proporciona:
+## Referencias
 
-1. **Despliegues sin tiempo de inactividad**: Desplace el tráfico de forma gradual o instantánea
-2. **Reversión rápida**: Segundos para volver al clúster anterior
-3. **Dominios de fallo aislados**: Los fallos de AZ afectan solo a un clúster
-4. **Pruebas en producción**: Dirija un pequeño porcentaje al nuevo clúster
-5. **Recuperación automatizada**: CloudWatch + Lambda para failover automático
+- [Listeners NLB y grupos ponderados](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Grupos de seguridad de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html)
+- [Métricas de CloudWatch para NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-cloudwatch-metrics.html)
+- [Valores de registros ponderados de Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-weighted.html)
+- [Formato de eventos de Lambda directa de CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html)
+- [TargetGroupBinding de LBC 3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
 
-### Documentación relacionada
-
-* [Infraestructura de Terraform de 3 capas](01-infrastructure-setup.md)
-* [Pipelines de CI](03-ci-pipelines.md)
-* [Configuración del pipeline de GitOps](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
-* [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
-
-***
-
-< [Anterior: Infraestructura de Terraform de 3 capas](01-infrastructure-setup.md) | [Tabla de contenido](./README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
+< [Anterior: Infraestructura de Terraform](01-infrastructure-setup.md) | [Tabla de contenido](README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >

@@ -1,7 +1,7 @@
 # Grafana Tempo
 
 > **审阅基线**：Tempo 3.0.3；`tempo-distributed` chart 3.6.0（appVersion 3.0.3）
-> **最后更新**：September 13, 2026
+> **最后更新**：2026年9月13日
 
 ## 简介
 
@@ -144,10 +144,10 @@ tempo:
 部署前，请解决以下要求：
 
 - 单独创建并拥有 Kafka topic。默认的三个 live-store/block-builder 副本和 `partitions_per_instance: 1` 需要相匹配的分区设计；仅扩展 Pod 并不会重新分配所有 block-builder 分配项。
-- 端到端验证 Kafka 传输和身份验证。**Tempo 3.0.3 的 Kafka 客户端支持 SASL/PLAIN，但不提供 Kafka TLS、SCRAM 或 MSK IAM 配置**。PLAIN 不提供加密。此示例不是可直接用于生产的安全 MSK 配置。网络/代理解决方案必须覆盖所有广播的 broker 端点，而不仅仅是 bootstrap 端点，并且必须在投入生产前进行独立测试。
+- 端到端验证 Kafka 传输和身份验证。**Tempo 3.0.3 的 Kafka 客户端支持 SASL/PLAIN，但不提供 Kafka TLS、SCRAM 或 MSK IAM 配置**。PLAIN 不提供加密。此示例不是可直接用于生产的安全 MSK 配置。网络/代理解决方案必须覆盖所有由 broker 对外公布的端点，而不仅仅是 bootstrap 端点，并且必须在投入生产前进行独立测试。
 - 使用下一节中的 S3 存储桶和角色。设置确切的 ServiceAccount 名称和角色注解；创建一个不相关的 ServiceAccount 并不足够。
 - 使用实际的集群网络控制和经过身份验证的传输，限制 OTLP、查询、memberlist 和组件 RPC 的访问。内部负载均衡器或单独的 `X-Scope-OrgID` header 都不构成身份验证。
-- 为工作负载设置资源、调度、干扰预算和存储/恢复策略。PodDisruptionBudget 限制自愿驱逐；反亲和性控制 Pod 放置。两者都不能证明服务具备可用性。
+- 为工作负载设置资源、调度、中断预算和存储/恢复策略。PodDisruptionBudget 限制自愿驱逐；反亲和性控制 Pod 放置。两者都不能证明服务具备可用性。
 
 接收大小限制以 **MiB** 为单位；摄取速率/突发值以 **字节** 为单位。16 MiB 和 15/20 MB 只是示例限制，并非经测量得出的容量值。
 
@@ -293,7 +293,7 @@ curl --fail http://127.0.0.1:3200/ready
 - `A ~ B` 匹配兄弟节点。它不能证明存在从 A 到 B 的网络调用。
 - `count()` 统计**当前 spanset** 中的 span。如果先筛选出错误再计数，统计的是错误 span，而不是追踪中的所有 span。`traceSpanCount` 不是有效的 intrinsic。
 - 此版本接受 `nestedSetParent`，但它是内部嵌套集父级标记，并非嵌套深度计数器。
-- `by(...) | avg(...) > ...` 用于筛选逐追踪 spanset；`rate()` 和 `avg_over_time(...)` 会生成时间序列。前者表示错误 span 速率，**不是错误率占比**。在 Grafana 或查询 API 中选择时间区间；时长筛选条件并非墙上时钟时间范围。
+- `by(...) | avg(...) > ...` 用于筛选逐追踪 spanset；`rate()` 和 `avg_over_time(...)` 会生成时间序列。前者表示错误 span 速率，**不是错误比例**。在 Grafana 或查询 API 中选择时间区间；时长筛选条件并不等同于按实际时间设定的范围。
 
 类似 `{ span.user.id = "synthetic-user-123" }` 的查询需要明确发送该属性。使用合成或经批准的假名化标识符；不要把个人数据作为追踪的前提。优先使用低基数的 `http.route`，而不是包含用户 ID 或查询字符串的字面 URL。
 

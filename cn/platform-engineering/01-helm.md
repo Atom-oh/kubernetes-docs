@@ -1,19 +1,19 @@
 # Helm 包管理器
 
-> **最后更新**: September 12, 2026
-> **本地验证**: Helm 3.21.3 / Helm 4.3.0
+> **最后更新**：2026年9月12日
+> **本地验证**：Helm 3.21.3 / Helm 4.3.0
 
-Helm 渲染 chart，并管理 Kubernetes 资源和 release 历史记录。Chart 版本、appVersion、镜像标签/摘要和 release 修订版本是不同的值。Helm 4 接受现有的 apiVersion:v2 chart，但必须针对确切版本检查 CLI/apply/wait 行为。
+Helm 会渲染 chart，并管理 Kubernetes 资源和 release 历史记录。Chart 版本、appVersion、镜像标签/摘要和 release 修订版本是不同的值。Helm 4 接受现有的 apiVersion:v2 chart，但必须针对确切版本检查 CLI/apply/wait 行为。
 
-## 核心概念和权限
+## 核心概念与权限
 
-Helm 3 移除了 Tiller；客户端使用各自的 Kubernetes 凭据/RBAC。Chart 仓库/OCI 注册表通信与 Kubernetes API 访问彼此独立。移除 Tiller 并不意味着不安全的 chart 或过于宽泛的权限就无害了。
+Helm 3 移除了 Tiller；客户端使用各自的 Kubernetes 凭据和 RBAC。Chart 仓库/OCI 注册表通信与 Kubernetes API 访问彼此独立。移除 Tiller 并不意味着不安全的 chart 或过于宽泛的权限就无害了。
 
-Release 存储默认使用 release 命名空间中的 Secrets；也可配置 ConfigMap/SQL 等后端。存储的 release 数据包括清单/值，可能会暴露敏感信息。Base64 并非加密；应限制对 release Secrets 的访问。
+Release 存储默认使用 release 命名空间中的 Secrets；也可以配置 ConfigMap/SQL 等后端。已存储的 release 数据包括清单和值，可能会暴露敏感信息。Base64 并非加密；应限制对 release Secrets 的访问。
 
 ## 完整的本地 Chart 示例
 
-`examples/platform/helm/reviewed-app` 包含以下八个文件。已测试 Helm 3/4 的 lint/render 输出、打包、值覆盖以及对无效 replicaCount 的拒绝。未安装 Kubernetes，也未执行容器。执行操作前，请验证镜像摘要、命名空间、硬件和策略。
+`examples/platform/helm/reviewed-app` 包含以下八个文件。已测试 Helm 3/4 的 lint/render 输出、打包、值覆盖以及对无效 replicaCount 的拒绝。此处未安装 Kubernetes，也未执行容器。执行操作前，请验证镜像摘要、命名空间、硬件和策略。
 
 ### Chart.yaml
 
@@ -215,9 +215,9 @@ helm template demo examples/platform/helm/reviewed-app   --set replicaCount=3 --
 helm package examples/platform/helm/reviewed-app --destination ./chart-packages
 ```
 
-Lint/template 成功并不能验证准入、CEL、RBAC、镜像执行、Service 连通性或就绪状态。测试 hook 必须在集群中实际执行。`helm template --api-versions` 提供离线能力信息；它不会安装 CRD。
+lint/template 成功并不能验证准入、CEL、RBAC、镜像执行、Service 连通性或就绪状态。测试 hook 必须在集群中实际执行。`helm template --api-versions` 提供离线能力信息；它不会安装 CRD。
 
-## 命令和 Helm 3/4 差异
+## 命令和 Helm 3/4 的差异
 
 | 用途 | 示例和限制 |
 | --- | --- |
@@ -304,13 +304,13 @@ ServiceAccount/Role 本身不会授予工作负载权限。需要时请关联 Ro
 
 ## 验证和参考资料
 
-已审查全部 764 行指南、每种语言区域 462 行测验以及 58 个唯一内容块。检查覆盖了完整 chart 的 Helm 3/4 lint/template/package、覆盖值/负向 schema 以及本地依赖/别名；4.3 client dry-run 已通过。已记录 3.21.3 install dry-run 访问集群失败的情况。未验证真实 Kubernetes 安装、升级、回滚、hook 或应用 HTTP 行为。
+已审阅指南全文（764 行）、各语言版本的测验全文（每份 462 行）和 58 个不同内容块。检查覆盖完整 chart 的 Helm 3/4 lint/template/package、值覆盖/负向 schema 以及本地依赖/别名；4.3 client dry-run 已通过。已记录 3.21.3 install dry-run 访问集群失败的情况。未验证真实 Kubernetes 安装、升级、回滚、hook 或应用 HTTP 行为。
 
 - [Helm 安装](https://helm.sh/docs/helm/helm_install/)
 - [Helm 升级](https://helm.sh/docs/helm/helm_upgrade/)
-- [Chart 和 values](https://helm.sh/docs/topics/charts/)
-- [Chart hook](https://helm.sh/docs/topics/charts_hooks/)
-- [Dependency build](https://helm.sh/docs/helm/helm_dependency_build/)
+- [Charts 和 values](https://helm.sh/docs/topics/charts/)
+- [Chart hooks](https://helm.sh/docs/topics/charts_hooks/)
+- [依赖构建](https://helm.sh/docs/helm/helm_dependency_build/)
 - [Helm 4.3.0 发布版本](https://github.com/helm/helm/releases/tag/v4.3.0)
 
 [Helm 测验](../quizzes/platform-engineering/01-helm-quiz.md)

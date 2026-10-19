@@ -1,6 +1,6 @@
 # Linkerd 最佳实践
 
-> **最后更新**：October 16, 2026 · Linkerd edge-26.10.1 / charts 2026.10.1
+> **最后更新**：2026 年 10 月 16 日 · Linkerd edge-26.10.1 / charts 2026.10.1
 
 请参阅[安装](01-installation.md)、[安全](04-security.md)、[可观测性](05-observability.md)和[多集群](06-multi-cluster.md)指南，了解所选版本及其前置条件。本章将这些流程整合为一份运维审查指南；它不会认证某个环境已达到生产就绪状态。
 

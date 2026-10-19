@@ -26,7 +26,7 @@
 <span id="verification"></span>
 
 > **难度**：高级 · **预计时间**：45 分钟
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 从指标出发，经由 exemplar 追踪到其 trace 和日志，跟踪一个真实请求，并区分观测结果与因果假设。这需要 [第 2 部分](./02-observability-stack-lab.md)的采集路径以及[第 3 部分](./03-msa-deployment-lab.md)的上下文传播。以下 TraceQL 已使用实际 Tempo **3.0.3** 解析器验证，并采用当前的 OTel 属性。
 
@@ -56,7 +56,7 @@
 
 `span:duration` 测量单个 span；`trace:duration` 测量整个 trace。对于显式内置属性使用 `span:`，对于属性使用 `span.`/`resource.`。`>>` 查找从左侧 span 派生的右侧 span。查找 DB span 的后代不同于查找某个 Service 下的 DB 工作。
 
-`sort(duration)`、SQL `order by`、`| limit 20` 和 `{ duration > p99 }` 均不属于此搜索语法。请在 Grafana 中配置结果排序、搜索限制和时间范围，并将测得的 p99 替换为时长文字量，例如 `800ms`。`select()` 请求显示属性；它无法重新创建从未存储的 span。
+`sort(duration)`、SQL `order by`、`| limit 20` 和 `{ duration > p99 }` 均不属于此搜索语法。请在 Grafana 中配置结果排序、搜索限制和时间范围，并将测得的 p99 替换为时长字面量，例如 `800ms`。`select()` 请求显示属性；它无法重新创建从未存储的 span。
 
 较旧的 SDK 可能会生成 `http.status_code`、`http.method`、`db.system`、`db.statement` 或 `messaging.operation`。在使用当前的 `http.response.status_code`、`http.request.method`、`db.system.name`、`db.query.text` 或 `messaging.operation.type` 之前，请检查实际 span 和 SDK 版本。重命名查询属性不会转换已采集的数据。仅在明确的数据脱敏策略下采集查询文本；排除密码、SQL 文字量和客户数据。
 
@@ -104,7 +104,7 @@ sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[
 {service_name="order-service"} | json | trace_id="0123456789abcdef0123456789abcdef"
 ```
 
-这些查询假定实际存在 `service_name` stream label 和 JSON `trace_id` 字段。请使用真实请求 ID 替换 32 字符的示例 trace ID。`traceID`、`traceId` 和 `trace_id` 是不同字段。将 trace ID 保留在日志字段/结构化元数据中，而不是唯一的 stream labels 中。在 Grafana/HTTP 参数中设置时间边界；不要将 `timestamp >= 2025-...` 追加到 LogQL。
+这些查询假定实际存在 `service_name` stream label 和 JSON `trace_id` 字段。请使用真实请求 ID 替换 32 字符的示例 trace ID。`traceID`、`traceId` 和 `trace_id` 是不同字段。将 trace ID 保留在日志字段/结构化元数据中，而不是唯一的 stream labels 中。在 Grafana/HTTP 参数中设置时间范围；不要将 `timestamp >= 2025-...` 追加到 LogQL。
 
 Loki derived field 会提取 trace ID 并链接到 Tempo datasource UID。在 Grafana provisioning YAML 中，将内部链接表达式转义为 `$${__value.raw}`。双引号的 regex 和范围宽泛的 shell envsubst 可能会更改反斜杠或 Grafana 变量；请使用适当的单引号和范围狭窄的替换。
 

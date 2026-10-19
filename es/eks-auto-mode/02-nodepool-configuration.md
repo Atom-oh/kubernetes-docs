@@ -7,7 +7,7 @@ Este capítulo distingue entre los valores predeterminados administrados por AWS
 
 Los ejemplos de NodePool se contrastaron con el esquema estructural de la CRD de Karpenter 1.14.1 publicada; los campos de NodeClass específicos de AWS se compararon con la documentación de AWS. Esto no permite identificar la versión interna del controlador de Auto Mode ni demuestra la admisión o la disponibilidad en un clúster activo. No se aprovisionaron nodos durante esta auditoría.
 
-## Comprender los NodePool integrados
+## Comprender los NodePools integrados
 
 Cuando está habilitado, Auto Mode proporciona los siguientes pools. Son administrados por AWS; crea pools personalizados en lugar de editar su configuración administrada.
 
@@ -16,7 +16,7 @@ Cuando está habilitado, Auto Mode proporciona los siguientes pools. Son adminis
 | `general-purpose` | `amd64` | On-Demand, familias C/M/R, generación 5 o posterior | Cargas de trabajo generales |
 | `system` | `amd64` y `arm64` | On-Demand, familias C/M/R, generación 5 o posterior | Cargas de trabajo críticas para el clúster que toleran `CriticalAddonsOnly` |
 
-El pool integrado general-purpose **no** habilita Spot. Usa un pool personalizado cuando necesites Spot o restricciones distintas de arquitectura/instancia. Auto Mode proporciona funciones de DNS local de nodo y de redes de Service; un clúster solo de Auto Mode no necesita Pods ordinarios de CoreDNS/kube-proxy únicamente para poblar el pool system. Los clústeres mixtos siguen necesitando el Deployment tradicional de CoreDNS para los nodos que no son de Auto Mode.
+El pool integrado general-purpose **no** habilita Spot. Usa un pool personalizado cuando necesites Spot o restricciones distintas de arquitectura/instancia. Auto Mode proporciona DNS local en los nodos y funciones de red para los Services; un clúster solo de Auto Mode no necesita Pods ordinarios de CoreDNS/kube-proxy únicamente para poblar el pool system. Los clústeres mixtos siguen necesitando el Deployment tradicional de CoreDNS para los nodos que no son de Auto Mode.
 
 Inspecciona los objetos administrados reales para comprobar la configuración de interrupciones y los detalles de los taints, en lugar de aplicar un YAML predeterminado supuesto:
 
@@ -25,9 +25,9 @@ kubectl --context "$CLUSTER_NAME" get nodepool general-purpose system -o yaml
 kubectl --context "$CLUSTER_NAME" get nodeclass default -o yaml
 ```
 
-Debe haber habilitado al menos un pool integrado para que AWS proporcione el NodeClass `default`. Si ambos están deshabilitados, crea tu propio NodeClass y actualiza las referencias siguientes. Todas las etiquetas y los taints de `template` se aplican a los nodos nuevos; una etiqueta solo en los metadatos de NodePool no etiqueta los nodos.
+Debe haber al menos un pool integrado habilitado para que AWS proporcione el NodeClass `default`. Si ambos están deshabilitados, crea tu propio NodeClass y actualiza las referencias siguientes. Quitar un nombre integrado de `computeConfig.nodePools` elimina ese pool y drena/termina sus nodos; no equivale simplemente a ocultarlo para cargas de trabajo nuevas.
 
-## Crear NodePool personalizados
+## Crear NodePools personalizados
 
 Estos ejemplos hacen referencia al NodeClass `default` existente para centrarse en las restricciones de programación. Para usar el NodeClass personalizado más adelante en este capítulo, créalo primero y cambia `nodeClassRef.name` en el pool previsto. Todas las etiquetas y los taints de `template` se aplican a los nodos nuevos; una etiqueta solo en los metadatos de NodePool no etiqueta los nodos.
 
@@ -86,7 +86,7 @@ spec:
 
 ### Cargas de trabajo optimizadas para memoria
 
-Este ejemplo permite instancias de la familia R de generación 6 y posteriores en cualquiera de las dos arquitecturas. La imagen de contenedor y las dependencias de la aplicación deben admitir la arquitectura que seleccione el scheduler.
+Este ejemplo permite instancias de la familia R de generación 6 y posteriores en cualquiera de las dos arquitecturas. La imagen de contenedor y las dependencias de la aplicación deben admitir la arquitectura que seleccione el planificador.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -141,7 +141,7 @@ spec:
 
 ## Configurar el NodeClass de AWS
 
-Auto Mode usa `eks.amazonaws.com/v1`, tipo `NodeClass`. Sus campos difieren de `EC2NodeClass` de AWS Karpenter autoadministrado: no copies `amiFamily`, `blockDeviceMappings`, `userData` arbitrario de shell ni `metadataOptions` a esta API. AWS selecciona su variante administrada de Bottlerocket.
+Auto Mode usa `eks.amazonaws.com/v1`, tipo `NodeClass`. Sus campos difieren de `EC2NodeClass` de AWS Karpenter autoadministrado: no copies `amiFamily`, `blockDeviceMappings`, `userData` con scripts arbitrarios de shell ni `metadataOptions` a esta API. AWS selecciona su variante administrada de Bottlerocket.
 
 Guarda lo siguiente como `custom-nodeclass.yaml` y reemplaza los valores ilustrativos de perfil y selector por recursos revisados. Se admite `instanceProfile`; su nombre debe comenzar por `eks`. Como alternativa, establece `role` con el nombre del rol IAM del nodo. **Especifica exactamente uno de `role` o `instanceProfile`.** El rol incluido en el perfil necesita la entrada de acceso de EKS y los permisos apropiados para Auto Mode; reutilizar un rol configurado no requiere una entrada duplicada. Para un rol nuevo, sigue el procedimiento de entrada de acceso de la referencia de NodeClass de AWS.
 
@@ -181,7 +181,7 @@ Verifica que el rol del clúster pueda crear y etiquetar recursos con cualquier 
 
 `ephemeralStorage` configura el almacenamiento efímero del nodo, no asignaciones arbitrarias de dispositivos de bloques. El tamaño `100Gi` y los valores de 3000 IOPS/125 MiB/s son ejemplos; comprueba los límites actuales de los campos de Auto Mode, el comportamiento del almacenamiento de la instancia y el costo. La configuración de KMS del cliente corresponde a `ephemeralStorage.kmsKeyID` y se aplica a los volúmenes **EBS** raíz y de datos del nodo. No selecciona la clave para el cifrado del almacenamiento local NVMe de la instancia ni establece el cifrado de los PVC de las aplicaciones.
 
-El ejemplo de bootstrap anterior modificaba `vm.max_map_count`. El reemplazo compatible es `advancedCompute.kernel.sysctl`, que se aplica durante el arranque del nodo. Cambiar la configuración compatible del kernel marca los nodos existentes para su detección de desviaciones/reemplazo; no es una actualización inmediata de shell en el sitio. Configúrala solo para las cargas de trabajo que necesiten ese ajuste y revisa el comportamiento ante interrupciones.
+El ejemplo de bootstrap anterior modificaba `vm.max_map_count`. El reemplazo compatible es `advancedCompute.kernel.sysctl`, que se aplica durante el arranque del nodo. Cambiar la configuración compatible del kernel marca los nodos existentes para su reemplazo por deriva; no modifica los nodos de inmediato mediante shell. Usa este ajuste solo en las cargas de trabajo que lo necesiten y revisa el comportamiento de las interrupciones.
 
 ### Configuración de seguridad fija de IMDS
 
@@ -237,7 +237,7 @@ PY
 | `podSubnetSelectorTerms` | Subredes separadas para Pods seleccionadas para este NodeClass |
 | `podSecurityGroupSelectorTerms` | Grupos de seguridad de red de Pods; configúralos junto con los selectores de subredes de Pods |
 
-Los selectores de subredes y grupos de seguridad de Pods deben configurarse juntos y tener una cobertura compatible de VPC/AZ. La configuración se aplica por NodeClass, no por namespace ni por ServiceAccount. El tráfico que usa la red del host utiliza la red del nodo; SNAT de salida también puede cambiar la dirección de origen y los grupos de seguridad aplicables. Revisa los efectos del enrutamiento, SNAT y la densidad de Pods antes de afirmar que todo el tráfico está aislado.
+Los selectores de subredes y grupos de seguridad de Pods deben configurarse juntos y tener una cobertura compatible de VPC/AZ. La configuración se aplica por NodeClass, no por espacio de nombres ni por ServiceAccount. El tráfico que usa la red del host utiliza la red del nodo; SNAT de salida también puede cambiar la dirección de origen y los grupos de seguridad aplicables. Revisa los efectos del enrutamiento, SNAT y la densidad de Pods antes de afirmar que todo el tráfico está aislado.
 
 ## Separar cargas de trabajo y entornos
 
@@ -314,7 +314,7 @@ spec:
     memory: 800Gi
 ```
 
-Por ejemplo, crea un namespace `nodepool-lab` de tu propiedad y usa tanto un selector como una tolerancia para comprobar la ubicación en frontend:
+Por ejemplo, crea un espacio de nombres `nodepool-lab` de tu propiedad y usa tanto un selector como una tolerancia para comprobar la ubicación en frontend:
 
 ```yaml
 apiVersion: v1
@@ -348,7 +348,7 @@ spec:
       periodSeconds: 5
 ```
 
-Revisa antes de aplicar: este Pod puede provocar el aprovisionamiento de nodos facturables. Comprueba el nodo asignado, la disponibilidad y las etiquetas del nodo; luego elimina el Pod de prueba de ese namespace. `NoSchedule` no expulsa un Pod que ya está en ejecución, y las etiquetas/taints por sí solas no constituyen un límite de seguridad entre tenants no confiables.
+Revisa antes de aplicar: este Pod puede provocar el aprovisionamiento de nodos facturables. Comprueba el nodo asignado, la disponibilidad y las etiquetas del nodo; luego elimina el Pod de prueba de ese espacio de nombres. `NoSchedule` no expulsa un Pod que ya está en ejecución, y las etiquetas/taints por sí solas no constituyen un límite de seguridad entre inquilinos no confiables.
 
 ### Pool de desarrollo
 
@@ -398,9 +398,9 @@ spec:
 
 `limits.cpu` y `limits.memory` limitan los recursos agregados del pool; no son un número máximo de nodos ni un presupuesto monetario. Escribe entre comillas las cantidades de CPU para evitar divergencias de GitOps entre enteros y cadenas. Por ejemplo, `memory: 4000Gi` son 4000 GiB (aproximadamente 3,91 TiB), no exactamente 4 TB.
 
-Karpenter upstream documenta una consistencia eventual y posibles excesos de los límites durante un aprovisionamiento rápido. No prometas un límite de facturación instantáneo basándote en estos campos. Deja margen para los reemplazos, supervisa el uso y prueba el comportamiento del entorno administrado.
+La documentación de Karpenter (proyecto upstream) describe una consistencia eventual y posibles excesos de los límites durante un aprovisionamiento rápido. No prometas un límite de facturación instantáneo basándote en estos campos. Deja margen para los reemplazos, supervisa el uso y prueba el comportamiento del entorno administrado.
 
-`weight` influye en la preferencia de aprovisionamiento entre los pools aptos. No asigna prioridad del scheduler de Kubernetes a un nodo, no expulsa cargas de trabajo existentes ni obliga a un Pod a usar un pool determinado. Usa restricciones explícitas para las cargas de trabajo y evita superposiciones no deseadas.
+`weight` influye en la preferencia de aprovisionamiento entre los pools aptos. No otorga a un nodo prioridad en el planificador de Kubernetes, no expulsa cargas de trabajo existentes ni obliga a un Pod a usar un pool determinado. Usa restricciones explícitas para las cargas de trabajo y evita superposiciones no deseadas.
 
 ```bash
 # Validate against the target cluster's actual schemas; no object is persisted.
@@ -412,7 +412,7 @@ kubectl --context "$CLUSTER_NAME" describe nodeclass secure-network-nodeclass
 kubectl --context "$CLUSTER_NAME" get nodeclaims
 ```
 
-La simulación del lado del servidor puede comprobar la admisión, pero no demuestra IAM, conectividad de red, aprovisionamiento, almacenamiento ni el comportamiento de la aplicación. Resuelve las condiciones de disponibilidad falsas o desconocidas y valida las cargas de trabajo controladas antes de usarlo en producción.
+La simulación del lado del servidor puede comprobar la admisión, pero no demuestra IAM, conectividad de red, aprovisionamiento, almacenamiento ni el comportamiento de la aplicación. Resuelve las condiciones de disponibilidad con estado false o unknown y valida las cargas de trabajo controladas antes de usarlo en producción.
 
 ## Referencias
 

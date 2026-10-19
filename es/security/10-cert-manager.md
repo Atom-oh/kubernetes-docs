@@ -1,9 +1,9 @@
 # Gestión de certificados con cert-manager
 
-> **Última actualización**: October 12, 2026
-> **Base de validación**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. El rango de Kubernetes compatible/probado publicado por cert-manager 1.21 es 1.33–1.36; Kubernetes 1.37 está fuera de ese rango, por lo que esta guía no afirma compatibilidad con él.
+> **Última actualización**: 16 de octubre de 2026
+> **Base de validación**: cert-manager 1.21.2, cmctl 2.6.1, trust-manager 0.25.0, istio-csr 0.18.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. El intervalo de versiones de Kubernetes que cert-manager 1.21 publica como compatibles o probadas es 1.33–1.36. Kubernetes 1.37 queda fuera de ese intervalo, por lo que esta guía no afirma que sea compatible.
 
-cert-manager administra la emisión y renovación de certificados como recursos de Kubernetes. **La distribución de confianza de CA, la recarga de aplicaciones, la revocación y las operaciones CRL/OCSP siguen siendo responsabilidades independientes.** Los ejemplos se verificaron con esquemas, configuración y bibliotecas locales; no son evidencia de emisión por una CA externa ni de despliegue de AWS/Kubernetes. Una prueba local efímera independiente de Vault 2.1.0 utilizó una CA sintética para dieciséis casos de aceptación/rechazo de emisión/firma de CSR.
+cert-manager gestiona la emisión y la renovación de certificados mediante recursos de Kubernetes. **La distribución de la confianza en las CA, la recarga de las aplicaciones, la revocación y las operaciones de CRL y OCSP siguen siendo responsabilidades independientes.** Los ejemplos se comprobaron con esquemas, configuración y bibliotecas locales; no demuestran una emisión mediante una CA externa ni un despliegue en AWS o Kubernetes. Una prueba independiente con una instancia local efímera de Vault 2.1.0 utilizó una CA sintética para dieciséis casos de aceptación y rechazo de emisión de certificados y firma de CSR.
 
 <span id="what-cert-manager-solves"></span>
 <span id="project-status"></span>
@@ -12,17 +12,17 @@ cert-manager administra la emisión y renovación de certificados como recursos 
 
 ## Descripción general
 
-cert-manager se incorporó a CNCF el 10 de noviembre de 2020, pasó a Incubating el 19 de septiembre de 2022 y **Graduated el 29 de septiembre de 2024**. Graduated no garantiza la seguridad ni la disponibilidad de un despliegue concreto.
+cert-manager se incorporó a CNCF el 10 de noviembre de 2020, pasó a la fase Incubating el 19 de septiembre de 2022 y **alcanzó la fase Graduated el 29 de septiembre de 2024**. Esta graduación no garantiza la seguridad ni la disponibilidad de un despliegue concreto.
 
 | Aspecto del ciclo de vida | Responsabilidad |
 |---|---|
-| Emisión | Autenticación del Issuer, aprobación del solicitante, política de SAN/uso/duración |
-| Renovación | Duración realmente emitida, ARI/renewBefore, reintentos y alertas |
-| Rotación de claves | Acceso a Secret, recarga del consumidor, orden de sustitución de CA |
-| Confianza | Qué raíces/intermedios confía cada namespace/proceso |
-| Revocación | Procedimiento de revocación de CA y publicación/consumo de CRL/OCSP |
+| Emisión | Autenticar el Issuer, aprobar al solicitante y definir las políticas de SAN, usos y validez |
+| Renovación | Considerar la validez realmente emitida, ARI y renewBefore, los reintentos y las alertas |
+| Rotación de claves | Controlar el acceso al Secret, la recarga del consumidor y el orden de sustitución de las CA |
+| Confianza | Definir en qué raíces y certificados intermedios confía cada espacio de nombres o proceso |
+| Revocación | Establecer el procedimiento de revocación de la CA y la publicación y el consumo de CRL y OCSP |
 
-No use la antigua tabla de instalación y compatibilidad 1.16.2 como guía de soporte actual. La versión 1.16 llegó a EOL en junio de 2025. Planifique las actualizaciones mediante las notas de versiones intermedias y los cambios de CRD.
+No utilice la antigua instalación 1.16.2 ni su tabla de compatibilidad como referencia de soporte actual. La versión 1.16 llegó al fin de su soporte en junio de 2025. Planifique las actualizaciones teniendo en cuenta las notas de las versiones intermedias y los cambios de CRD.
 
 <span id="component-overview"></span>
 <span id="component-responsibilities"></span>
@@ -30,11 +30,11 @@ No use la antigua tabla de instalación y compatibilidad 1.16.2 como guía de so
 
 ## Arquitectura
 
-![Componentes de cert-manager y relaciones de Issuer/Secret](../.gitbook/assets/en-security-10-cert-manager-0.png)
+![Componentes de cert-manager y relaciones entre Issuer y Secret](../.gitbook/assets/en-security-10-cert-manager-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-0.html)
 
-El controller reconcilia Certificates y crea CertificateRequests; los controllers de Issuer gestionan la emisión. El webhook valida/asigna valores predeterminados/convierte recursos personalizados, y cainjector administra paquetes de CA en configuraciones de API/webhook compatibles. Los Issuers CA/SelfSigned no son necesariamente servicios externos.
+El controlador reconcilia los Certificates y crea CertificateRequests; los controladores de Issuer gestionan la emisión. El webhook valida los recursos personalizados, les asigna valores predeterminados y los convierte. cainjector gestiona los paquetes de CA en las configuraciones de API y webhook compatibles. Los Issuers CA y SelfSigned no son necesariamente servicios externos.
 
 <span id="prerequisites"></span>
 <span id="installation-with-helm-recommended"></span>
@@ -44,7 +44,7 @@ El controller reconcilia Certificates y crea CertificateRequests; los controller
 
 ## Instalación
 
-Compruebe las versiones compatibles de Kubernetes, los permisos de Helm/cluster, los CRD de Gateway API y un controller de Gateway real, y los CRD opcionales de Prometheus Operator. Si los CRD de Gateway API se instalan después del inicio del controller, compruebe los requisitos de reinicio/detección.
+Compruebe las versiones de Kubernetes admitidas, los permisos de Helm y del clúster, los CRD de Gateway API y la presencia de un controlador de Gateway operativo, además de los CRD opcionales de Prometheus Operator. Si instala los CRD de Gateway API después de arrancar el controlador, compruebe los requisitos de reinicio y descubrimiento.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
@@ -86,9 +86,9 @@ cainjector:
     minAvailable: 1
 ```
 
-Este perfil habilita ServiceMonitor y Gateway API, por lo que sus CRD/controllers ya deben existir. Deshabilite esas opciones para una instalación mínima sin estas dependencias. Las réplicas/PDB no sustituyen la distribución de nodos/AZ ni la conectividad de API. La configuración actual usa config.gatewayAPI.enabled; el campo más antiguo enableGatewayAPI sigue siendo aceptado, pero está en desuso en el decodificador 1.21.2.
+Este perfil habilita ServiceMonitor y Gateway API, por lo que sus CRD y controladores deben existir previamente. Deshabilite esas opciones si necesita una instalación mínima sin esas dependencias. Las réplicas y los PDB no sustituyen la distribución entre nodos y zonas de disponibilidad ni la conectividad con la API. La configuración actual utiliza config.gatewayAPI.enabled; el decodificador de 1.21.2 todavía acepta el antiguo campo enableGatewayAPI, pero está obsoleto.
 
-Compruebe la retención de CRD y la propiedad real de la desinstalación. Eliminar un CRD puede eliminar sus recursos personalizados; no es un paso rutinario de resolución de problemas de actualización.
+Compruebe la retención de los CRD y qué herramienta o responsable gestiona la desinstalación. Eliminar un CRD puede borrar sus recursos personalizados; no es un paso habitual para resolver problemas de actualización.
 
 <span id="custom-resource-definitions-crds"></span>
 <span id="certificate-resource"></span>
@@ -97,19 +97,19 @@ Compruebe la retención de CRD y la propiedad real de la desinstalación. Elimin
 
 ## Conceptos básicos
 
-![Recursos Certificate y solicitudes creadas por el controller](../.gitbook/assets/en-security-10-cert-manager-1.png)
+![Recursos Certificate y solicitudes creadas por el controlador](../.gitbook/assets/en-security-10-cert-manager-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-1.html)
 
-| Recurso | Ámbito y propósito |
+| Recurso | Ámbito y finalidad |
 |---|---|
-| Certificate | Certificado deseado y Secret de salida dentro de un namespace |
-| Issuer | Configuración de emisión referenciada dentro de su namespace |
-| ClusterIssuer | Configuración de emisión referenciada entre namespaces |
-| CertificateRequest | CSR, issuerRef y estado de aprobación/denegación |
-| Order/Challenge | Recursos de pedido/validación utilizados por la ruta ACME |
+| Certificate | Certificado deseado y Secret de salida dentro de un espacio de nombres |
+| Issuer | Configuración de emisión a la que se hace referencia dentro de su espacio de nombres |
+| ClusterIssuer | Configuración de emisión a la que se puede hacer referencia desde distintos espacios de nombres |
+| CertificateRequest | CSR, issuerRef y estado de aprobación o denegación |
+| Order/Challenge | Recursos de solicitud y validación utilizados en el flujo ACME |
 
-Los Secrets de credenciales/CA de ClusterIssuer se encuentran en el namespace de recursos de cluster del controller, de forma predeterminada cert-manager. Los Secrets de Issuer se encuentran en el namespace de Issuer. El permiso para crear un Certificate no restringe por sí mismo los SAN ni issuerRef.
+Los Secrets de credenciales y de CA de un ClusterIssuer se almacenan en el espacio de nombres de recursos de clúster del controlador, que es cert-manager de forma predeterminada. Los Secrets de un Issuer se almacenan en el espacio de nombres de ese Issuer. El permiso para crear un Certificate no restringe, por sí solo, los SAN ni issuerRef.
 
 ### Certificate y renovación
 
@@ -136,13 +136,13 @@ spec:
     group: cert-manager.io
 ```
 
-La duración solicitada puede diferir de la que emite la CA. La renovación predeterminada ocurre **a los dos tercios de la duración real de X.509**, no a un número fijo de 15/30 días antes de la expiración. renewBeforePercentage deriva el margen de la duración real. Elija renewBefore o percentage, no ambos; duration es de al menos 1 hora y el margen de renovación efectivo debe ser de al menos 5 minutos y menor que duration.
+La validez solicitada puede diferir de la que emite la CA. De forma predeterminada, la renovación se produce **cuando han transcurrido dos tercios de la validez real del certificado X.509**, no un número fijo de 15 o 30 días antes de la caducidad. renewBeforePercentage calcula el margen a partir de esa validez real. Elija renewBefore o el porcentaje, no ambos: duration debe ser de al menos una hora, y el margen efectivo de renovación debe ser de al menos cinco minutos y menor que duration.
 
-La política/ventanas de renovación de la versión 1.21.2 y las rutas ARI compatibles pueden afectar la sincronización. renewal.policy:Disabled deshabilita la renovación automática. Inspeccione status.renewalTime, los valores reales notBefore/notAfter y las alertas de fallo. Desde 1.18, privateKey.rotationPolicy tiene Always como valor predeterminado. Actualizar un Secret de clave/certificado no garantiza la recarga de una aplicación.
+La política y las ventanas de renovación de 1.21.2, junto con los flujos ARI admitidos, pueden afectar al momento de la renovación. renewal.policy:Disabled deshabilita la renovación automática. Inspeccione status.renewalTime, los valores reales de notBefore y notAfter, y las alertas de fallo. Desde 1.18, privateKey.rotationPolicy tiene Always como valor predeterminado. Actualizar un Secret de clave y certificado no garantiza que la aplicación los recargue.
 
 ### CertificateRequest y claves privadas
 
-Las solicitudes directas requieren una CSR PEM real; no aplique ejemplos de base64 truncados. cmctl create certificaterequest **crea una solicitud en un cluster** y no es un comando de validación sin conexión. Restrinja los permisos de cmctl approve/deny por separado. Esta auditoría utilizó la biblioteca PKI de cert-manager para generar y verificar únicamente una clave/CSR local sintética.
+Las solicitudes directas requieren una CSR real en formato PEM; no aplique ejemplos con base64 truncado. cmctl create certificaterequest **crea una solicitud en el clúster** y no es un comando de validación sin conexión. Restrinja por separado los permisos de cmctl approve y deny. Esta auditoría utilizó la biblioteca PKI de cert-manager únicamente para generar y verificar una clave y una CSR sintéticas locales.
 
 <span id="selfsigned-issuer-development-testing"></span>
 <span id="ca-issuer-internal-pki"></span>
@@ -155,9 +155,9 @@ Las solicitudes directas requieren una CSR PEM real; no aplique ejemplos de base
 
 ## Tipos de Issuer
 
-### Bootstrap de SelfSigned y CA
+### Inicialización con SelfSigned y CA
 
-El [ejemplo completo de bootstrap](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/bootstrap.yaml) crea una raíz y una hoja de laboratorio dedicadas. La raíz usa explícitamente renovación Disabled y rotación de clave Never para evitar el **reemplazo no planificado de la ancla de confianza**. La custodia de la raíz de producción, las CA sin conexión, la separación de intermedios, la auditoría y la revocación requieren un diseño independiente.
+El [ejemplo completo de inicialización](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/bootstrap.yaml) crea una raíz dedicada de laboratorio y un certificado para una carga de trabajo. La raíz utiliza explícitamente la renovación Disabled y la rotación de clave Never para evitar la **sustitución no planificada del ancla de confianza**. La custodia de la raíz de producción, las CA sin conexión, la separación de certificados intermedios, la auditoría y la revocación requieren un diseño independiente.
 
 ```yaml
 apiVersion: v1
@@ -238,7 +238,7 @@ spec:
     group: cert-manager.io
 ```
 
-El Issuer CA utiliza un Secret que contiene una clave privada/certificado de CA. Reemplazar ese Secret no vuelve a emitir inmediatamente todas las hojas ni actualiza cada almacén de confianza de clientes. Los Issuers CA pueden incluir URL de CRL/OCSP, pero no generan ni mantienen CRL/respuestas OCSP. Aplique una política que impida que las hojas sobrevivan a su CA.
+El Issuer CA utiliza un Secret que contiene un certificado de CA y su clave privada. Sustituir ese Secret no vuelve a emitir inmediatamente todos los certificados de las cargas de trabajo ni actualiza los almacenes de confianza de todos los clientes. Los Issuers CA pueden incluir URL de CRL y OCSP, pero no generan ni mantienen las CRL o las respuestas OCSP. Imponga una política que evite que los certificados emitidos caduquen después de su CA.
 
 ### ACME: HTTP-01 y DNS-01
 
@@ -246,11 +246,11 @@ El Issuer CA utiliza un Secret que contiene una clave privada/certificado de CA.
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-2.html)
 
-HTTP-01 necesita acceso al nombre de host en el puerto 80 y no admite comodines. DNS-01 utiliza permisos DNS TXT para la validación de comodines. Las autorizaciones reutilizadas y el flujo de prevalidación de ACM significan que no necesariamente se crea un nuevo Challenge para cada solicitud.
+HTTP-01 requiere que el nombre de host sea accesible en el puerto 80 y no admite comodines. DNS-01 utiliza permisos sobre registros DNS TXT para validar comodines. La reutilización de autorizaciones y el flujo de prevalidación de ACM hacen que no sea necesario crear un nuevo Challenge para cada solicitud.
 
-No recomiende el ingress-nginx de la comunidad, cuyo mantenimiento terminó en marzo de 2026, como valor predeterminado para una instalación nueva. El [ejemplo HTTP-01 Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml) presupone un Envoy Gateway instalado y su GatewayClass envoy-gateway. Compruebe la clase real y alinee la etiqueta cert-manager-http01:enabled del namespace del solver con allowedRoutes. El shimming de certificados de Gateway no instala un controller de Gateway ni implementa su recarga TLS.
+No recomiende el ingress-nginx de la comunidad como opción predeterminada para una instalación nueva, ya que su mantenimiento terminó en marzo de 2026. El [ejemplo HTTP-01 con Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml) presupone un Envoy Gateway instalado y su GatewayClass envoy-gateway. Compruebe la clase en uso y haga que la etiqueta cert-manager-http01:enabled del espacio de nombres del solver coincida con allowedRoutes. La integración automática de certificados de Gateway no instala un controlador de Gateway ni implementa su recarga de TLS.
 
-El [Issuer de Route53](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml) y la [política IAM](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json) especifican un hostedZoneID y limitan los cambios a nombres TXT de Challenge. Especificar la zona evita requerir acceso global a ListHostedZonesByName. Compruebe las credenciales del controller mediante IRSA o Pod Identity compatible, y cualquier cadena de roles entre cuentas. La selección de namespace y dnsZones no sustituyen la autorización IAM.
+El [Issuer de Route53](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml) y la [política IAM](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json) especifican un hostedZoneID y limitan los cambios a los nombres TXT utilizados por los desafíos. Especificar la zona evita necesitar acceso global a ListHostedZonesByName. Compruebe las credenciales del controlador mediante IRSA o una configuración compatible de Pod Identity, así como cualquier cadena de roles entre cuentas. Seleccionar un espacio de nombres o dnsZones no sustituye la autorización de IAM.
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -272,11 +272,11 @@ spec:
             hostedZoneID: Z1234567890ABC
 ```
 
-El entorno de staging de Let’s Encrypt tiene límites de tasa y raíces en las que los navegadores de producción no confían. Las cuentas ACME son específicas de cada entorno. Los correos electrónicos de notificación de expiración terminaron en 2025; el campo email no reemplaza el monitoreo de expiración. Siga Retry-After y la política de recarga correspondiente para las respuestas 429, en lugar de volver a intentarlo siempre después de una hora. Las renovaciones ARI y las nuevas emisiones tienen un tratamiento de límite de tasa diferente.
+El entorno de pruebas de Let’s Encrypt tiene límites de solicitudes y raíces en las que los navegadores de producción no confían. Cada entorno tiene sus propias cuentas ACME. Los avisos de caducidad por correo electrónico dejaron de enviarse en 2025; el campo email no sustituye la monitorización de la caducidad. Ante respuestas 429, respete Retry-After y la política correspondiente de reposición de cuota, en lugar de reintentar siempre al cabo de una hora. Las renovaciones ARI y las nuevas emisiones reciben un tratamiento diferente en los límites de solicitudes.
 
 ### AWS Private CA
 
-El controller externo aws-privateca-issuer necesita permisos de emisión/lectura delimitados al CA-ARN y una identidad de carga de trabajo EKS. Las acciones documentadas son acm-pca:DescribeCertificateAuthority, acm-pca:GetCertificate y acm-pca:IssueCertificate; restrinja su Resource al ARN de CA previsto. Reemplace el ARN real de CA en el [ejemplo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/pca-issuer.yaml) y valide el modo de CA, plantilla, algoritmo, usos y duración solicitada. Compruebe por separado los límites y precios de CA de corta duración. No omita las comprobaciones de aprobación con disableApprovedCheck.
+El controlador externo aws-privateca-issuer necesita permisos de emisión y lectura limitados al ARN de la CA, además de una identidad de carga de trabajo de EKS. Las acciones documentadas son acm-pca:DescribeCertificateAuthority, acm-pca:GetCertificate y acm-pca:IssueCertificate; restrinja su Resource al ARN de la CA prevista. Sustituya el ARN de la CA en el [ejemplo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/pca-issuer.yaml) y valide el modo de CA, la plantilla, el algoritmo, los usos y la validez solicitada. Compruebe por separado los límites y los precios de las CA de corta duración. No omita las comprobaciones de aprobación mediante disableApprovedCheck.
 
 ```bash
 helm repo add awspca https://cert-manager.github.io/aws-privateca-issuer
@@ -286,27 +286,27 @@ helm upgrade --install aws-pca-issuer awspca/aws-privateca-issuer \
 
 ### Vault PKI
 
-El [ejemplo de RBAC de Issuer/token](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-issuer.yaml) limita la creación de tokens a demo-app/vault-issuer. Proporcione el Secret de CA TLS del servidor Vault por separado. El [script de rol/política PKI](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-setup.sh) presupone montajes PKI/Kubernetes-auth existentes, una identidad Vault aprobada y acceso TokenReview configurado.
+El [ejemplo de Issuer y RBAC para tokens](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-issuer.yaml) limita la creación de tokens a demo-app/vault-issuer. Proporcione por separado el Secret de la CA TLS del servidor Vault. El [script de rol y política PKI](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-setup.sh) presupone montajes de PKI y autenticación Kubernetes ya existentes, una identidad de Vault aprobada y acceso a TokenReview configurado.
 
-Limite los SAN en el rol Vault y vincule la audiencia vault://demo-app/vault-pki a este Issuer. Los JWT de revisor, las audiencias de API Kubernetes y el acceso OIDC dependen de dónde se ejecute Vault. No omita los problemas de conectividad con tls-skip-verify ni con una política predeterminada amplia de Vault.
+Limite los SAN en el rol de Vault y vincule la audiencia vault://demo-app/vault-pki a este Issuer. Los JWT del revisor, las audiencias de la API de Kubernetes y el acceso OIDC dependen de dónde se ejecute Vault. No intente sortear problemas de conectividad mediante tls-skip-verify ni mediante una política predeterminada de Vault con permisos amplios.
 
 <span id="tls-termination-comparison"></span>
 <span id="alb-ingress-with-acm-vs-cert-manager"></span>
 <span id="nlb-with-tls-termination-at-ingress-controller"></span>
 <span id="gateway-api-integration"></span>
 
-El rol DNS establece explícitamente allow_ip_sans=false y allow_localhost=false. allowed_domains no restringe los SAN de IP, y localhost tiene un valor predeterminado permisivo independiente. Un POST de vault write restablece los campos de rol omitidos a los valores predeterminados; vuelva a leer el rol completo y pruebe las solicitudes DNS permitidas y las de IP/localhost rechazadas después de aplicarlo.
+El rol DNS establece explícitamente allow_ip_sans=false y allow_localhost=false. allowed_domains no restringe los SAN de direcciones IP, y localhost tiene su propio valor predeterminado permisivo. Un POST realizado con vault write restablece los campos del rol que se omitan a sus valores predeterminados. Tras aplicarlo, consulte el rol completo y pruebe tanto las solicitudes DNS permitidas como el rechazo de las solicitudes de IP y localhost.
 
 ## Patrones de integración de EKS
 
-| Ruta | Terminación TLS y ubicación de la clave |
+| Ruta | Terminación de TLS y ubicación de la clave |
 |---|---|
-| Listener TLS de ALB/NLB con ACM | El balanceador de carga AWS utiliza un ARN de ACM |
-| NLB TCP con Gateway/Pod | El backend termina TLS mediante un Secret de Kubernetes |
-| Listener HTTPS de Gateway | El controller de Gateway hace referencia a un Secret TLS del mismo namespace |
-| Certificado público exportable de ACM | Clave/certificado exportado explícitamente utilizado por cargas de trabajo administradas por el cliente |
+| Listener TLS de ALB o NLB con ACM | El balanceador de carga de AWS utiliza un ARN de ACM |
+| NLB TCP con Gateway o Pod | El backend termina TLS mediante un Secret de Kubernetes |
+| Listener HTTPS de Gateway | El controlador de Gateway hace referencia a un Secret TLS del mismo espacio de nombres |
+| Certificado público exportable de ACM | La clave y el certificado se exportan explícitamente para utilizarlos en cargas de trabajo gestionadas por el cliente |
 
-ALB no lee directamente un Secret de Kubernetes de cert-manager como certificado de listener; la relación de importación/exportación y ARN de ACM son pasos independientes. El [ejemplo de ALB](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/alb-acm-ingress.yaml) requiere un ARN de ACM real y un Service backend. El [ejemplo NLB TCP](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/nlb-tcp-service.yaml) pasa TLS al puerto backend 8443, que debe servir TLS realmente.
+ALB no utiliza directamente un Secret de Kubernetes de cert-manager como certificado de su listener. La importación o exportación y la asociación con un ARN de ACM son pasos independientes. El [ejemplo de ALB](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/alb-acm-ingress.yaml) requiere un ARN de ACM real y un Service backend. El [ejemplo de NLB TCP](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/nlb-tcp-service.yaml) transmite TLS al puerto 8443 del backend, que debe atender conexiones TLS.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -348,7 +348,7 @@ spec:
           port: 8080
 ```
 
-Este Gateway utiliza lab-ca, en el que los navegadores comunes no confían. La emisión pública real necesita una ruta y un controller de Issuer/validación de dominio aprobados. Compruebe los nombres de GatewayClass y el ámbito/tipo de certificateRefs; evite que dos controllers sean propietarios del mismo Secret.
+Este Gateway utiliza lab-ca, en la que los navegadores habituales no confían. Para una emisión pública real se necesitan un Issuer aprobado, un proceso de validación de dominio y un controlador. Compruebe los nombres de GatewayClass y el ámbito y tipo de certificateRefs; evite que dos controladores gestionen el mismo Secret.
 
 <span id="july-2026-update-acm-now-supports-the-acme-protocol"></span>
 <span id="supported-certificate-types"></span>
@@ -362,7 +362,7 @@ Este Gateway utiliza lab-ca, en el que los navegadores comunes no confían. La e
 
 ### ACM RequestCertificate y exportación ACK
 
-ACK ACM es en sí mismo un controller de código abierto instalado y operado. El [ejemplo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml) 1.8.1 configura explícitamente options.export:ENABLED, exportTo y el Secret de salida. Definir solamente una solicitud de emisión no crea un Secret TLS. En el CRD 1.8.1 (sin cambios en v1.10.0), validationMethod aparece únicamente en los campos domainValidations de status de solo lectura, no en spec; no lo copie en una solicitud a partir de ejemplos antiguos.
+ACK ACM es un controlador de código abierto que también debe instalarse y operarse. El [ejemplo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml) de 1.8.1 configura expresamente options.export:ENABLED, exportTo y el Secret de salida. Definir solo una solicitud de emisión no crea un Secret TLS. En el CRD de 1.8.1, sin cambios en v1.10.0, validationMethod aparece únicamente en los campos de solo lectura domainValidations de status, no en spec. No copie ese campo en una solicitud a partir de ejemplos antiguos.
 
 ```yaml
 apiVersion: v1
@@ -391,11 +391,11 @@ spec:
     key: tls.crt
 ```
 
-La validación de dominio es independiente. Route53 ACK puede administrar el CNAME proporcionado por ACM, pero instalar el controller ACM no valida automáticamente cada proveedor DNS. Evalúe los precios de certificados exportables, los límites de IAM/RBAC/namespace del controller y el acceso al Secret de clave privada. La identidad mTLS de Private-CA/SPIFFE necesita su propio diseño de Issuer/confianza.
+La validación del dominio es un proceso independiente. Route53 ACK puede gestionar el CNAME que proporciona ACM, pero instalar el controlador de ACM no valida automáticamente todos los proveedores DNS. Evalúe los precios de los certificados exportables, los límites de IAM, RBAC y espacios de nombres del controlador, y el acceso al Secret de la clave privada. La identidad mTLS mediante Private CA o SPIFFE requiere su propio diseño de emisor y confianza.
 
 ### ACM ACME: EAB y dominios prevalidados
 
-Anunciado el 6 de julio de 2026, ACM ACME emite certificados públicos de 45 días. Un administrador PKI prepara la validación de endpoint/dominio y las credenciales EAB asociadas con un rol IAM, y luego registra clientes. **Cambiar solamente la URL del servidor es insuficiente.** Almacene la clave HMAC de forma segura y proporcione la entrada Secret/hmac de acm-eab en el namespace de recursos de cluster de cert-manager.
+ACM ACME, anunciado el 6 de julio de 2026, emite certificados públicos de 45 días. Un administrador de PKI prepara un endpoint, la validación de dominio y las credenciales EAB asociadas a un rol de IAM; después registra a los clientes. **Cambiar únicamente la URL del servidor no basta.** Almacene la clave HMAC de forma segura y proporcione la entrada hmac del Secret acm-eab en el espacio de nombres de recursos de clúster de cert-manager.
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -415,16 +415,16 @@ spec:
         key: hmac
 ```
 
-El valor de Secret referenciado por externalAccountBinding debe contener la clave HMAC codificada en base64url; la codificación de datos de Kubernetes Secret es una capa independiente. Conserve un valor de proveedor ya codificado en lugar de codificarlo dos veces. Consulte la [configuración de ACME EAB](https://cert-manager.io/docs/configuration/acme/).
+El valor del Secret al que hace referencia externalAccountBinding debe contener la clave HMAC codificada en base64url. La codificación de los datos de un Secret de Kubernetes es una capa distinta. Conserve el valor ya codificado por el proveedor en lugar de codificarlo dos veces. Consulte la [configuración de ACME EAB](https://cert-manager.io/docs/configuration/acme/).
 
-El ID de endpoint y el keyID de EAB son marcadores de posición. Los dominios deben estar prevalidados en el endpoint. El cliente ACME genera/mantiene la clave privada y administra la renovación. Que aparezca un ARN en el inventario ACM no hace que este certificado sea utilizable directamente con las integraciones administradas de ALB/CloudFront/API Gateway. ExportCertificate, RenewCertificate y RevokeCertificate no se aplican a esta ruta de emisión; el cliente ACME es propietario de su ciclo de vida. Distinga RequestCertificate para servicios integrados con AWS.
+El ID del endpoint y el keyID de EAB son marcadores de posición. Los dominios deben estar prevalidados en el endpoint. El cliente ACME genera y conserva la clave privada, y gestiona la renovación. Que un ARN aparezca en el inventario de ACM no permite utilizar directamente ese certificado con las integraciones gestionadas de ALB, CloudFront o API Gateway. ExportCertificate, RenewCertificate y RevokeCertificate no se aplican a esta vía de emisión: el cliente ACME gestiona el ciclo de vida. Distinga este flujo de RequestCertificate para los servicios integrados con AWS.
 
 <span id="istio-with-istio-csr"></span>
 <span id="installing-istio-csr"></span>
 <span id="configuring-istio-to-use-istio-csr"></span>
 <span id="linkerd-trust-anchor-management"></span>
 
-## Integración de Service Mesh
+## Integración con mallas de servicios
 
 ![istio-agent, istio-csr, SDS y mTLS entre pares](../.gitbook/assets/en-security-10-cert-manager-3.png)
 
@@ -432,18 +432,18 @@ El ID de endpoint y el keyID de EAB son marcadores de posición. Los dominios de
 
 ### Istio e istio-csr
 
-En el flujo de sidecar, istio-agent crea la CSR e istio-csr envía una CertificateRequest. El agente entrega el material de clave/certificado a Envoy mediante SDS; los proxies de carga de trabajo establecen mTLS. El salto de aplicación dentro del mismo Pod no es mTLS automáticamente.
+En el flujo con sidecar, istio-agent crea la CSR e istio-csr envía una CertificateRequest. El agente entrega la clave y el certificado a Envoy mediante SDS; los proxies de las cargas de trabajo establecen mTLS. El salto hasta la aplicación dentro del mismo Pod no queda protegido automáticamente con mTLS.
 
-Los [valores de istio-csr](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/istio-csr-values.yaml) configuran un volumen/montaje ConfigMap real para rootCAFile. Cree el paquete de confianza de la aplicación en cert-manager y espere primero la preparación del Issuer. Una ruta de archivo por sí sola o un PEM vacío en meshConfig es insuficiente. Use la configuración de CA externa actual de Helm/istioctl de Istio; no mezcle la ruta istio-csr con el modo Kubernetes CSR RA. Evalúe por separado la compatibilidad con Ambient.
+Los [valores de istio-csr](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/istio-csr-values.yaml) configuran un volumen de ConfigMap y su montaje para rootCAFile. Cree el paquete application-trust en cert-manager y espere a que el Issuer esté preparado antes de continuar. Definir solo una ruta de archivo o un PEM vacío en meshConfig no basta. Utilice la configuración actual de CA externa de Helm o istioctl de Istio; no mezcle el flujo istio-csr con el modo RA de CSR de Kubernetes. Evalúe por separado la compatibilidad con Ambient.
 
 ```bash
 helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
-  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
+  --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
-### Linkerd y trust-manager
+### Linkerd y trust-manager {#linkerd-and-trust-manager}
 
-El [ejemplo de identidad Linkerd](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml) prepara el Secret de Issuer y el ConfigMap de paquete raíz. El chart de plano de control 2026.9.1 fijado hace referencia a linkerd-identity-issuer y linkerd-identity-trust-roots.
+El [ejemplo de identidad de Linkerd](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml) prepara el Secret del emisor y el ConfigMap del paquete de raíces. El chart del plano de control, fijado a la versión 2026.9.1, hace referencia a linkerd-identity-issuer y linkerd-identity-trust-roots.
 
 ```yaml
 identity:
@@ -452,7 +452,7 @@ identity:
     scheme: kubernetes.io/tls
 ```
 
-Esto conecta el plano de control a un Secret de Issuer renovado externamente, en lugar de copiar una clave una vez durante la instalación. La sustitución de la raíz requiere la superposición de raíces antiguas/nuevas, la renovación de las cargas de trabajo y la recarga de confianza. La raíz de laboratorio del ejemplo se administra manualmente con la renovación automática deshabilitada.
+Esta configuración conecta el plano de control a un Secret del emisor que se renueva externamente, en lugar de copiar una clave una sola vez durante la instalación. Sustituir la raíz requiere mantener las raíces anterior y nueva durante la transición, renovar las credenciales de las cargas de trabajo y recargar la confianza. La raíz de laboratorio del ejemplo se gestiona manualmente y tiene la renovación automática deshabilitada.
 
 <span id="installing-trust-manager"></span>
 <span id="bundle-resource"></span>
@@ -460,7 +460,7 @@ Esto conecta el plano de control a un Secret de Issuer renovado externamente, en
 
 ## trust-manager
 
-El chart predeterminado de trust-manager 0.25.0 procesa Bundle trust.cert-manager.io/v1alpha1. Un CRD adicional en el repositorio no cambia por sí solo la API instalada predeterminada. Los Secrets/ConfigMaps de origen se leen desde el namespace de confianza configurado.
+El chart predeterminado de trust-manager 0.25.0 renderiza un Bundle de trust.cert-manager.io/v1alpha1. La presencia de otro CRD en el repositorio no cambia, por sí sola, la API instalada de forma predeterminada. Los Secrets y ConfigMaps de origen se leen del espacio de nombres de confianza configurado.
 
 ```yaml
 apiVersion: trust.cert-manager.io/v1alpha1
@@ -480,9 +480,9 @@ spec:
         trust-bundle: enabled
 ```
 
-El campo PEM en línea es inLine, no inlineString. Minimice las raíces de confianza públicas/privadas y seleccione explícitamente los namespaces de destino. Los destinos Secret requieren habilitación/RBAC independientes; el ejemplo utiliza ConfigMaps. Un paquete de confianza distribuye anclas de confianza, no claves privadas.
+El campo para PEM en línea se llama inLine, no inlineString. Reduzca al mínimo las raíces de confianza públicas y privadas, y seleccione expresamente los espacios de nombres de destino. Los destinos de tipo Secret requieren habilitación y RBAC independientes; el ejemplo utiliza ConfigMaps. Un paquete de confianza distribuye anclas de confianza, no claves privadas.
 
-El [Deployment de consumidor](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/trust-consumer.yaml) monta un directorio. Los cambios de ConfigMap no se propagan mediante un montaje de archivo subPath. Incluso la proyección de directorio no recarga el contexto TLS almacenado en caché de un proceso; pruebe si la aplicación utiliza realmente SSL_CERT_FILE o su almacén de confianza configurado.
+El [Deployment consumidor](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/trust-consumer.yaml) monta un directorio. Los cambios de ConfigMap no se propagan mediante un archivo montado con subPath. Incluso al proyectar un directorio, el proceso no recarga automáticamente el contexto TLS que tiene en caché. Compruebe si la aplicación utiliza realmente SSL_CERT_FILE o el almacén de confianza que tiene configurado.
 
 <span id="prometheus-metrics"></span>
 <span id="key-metrics"></span>
@@ -491,9 +491,9 @@ El [Deployment de consumidor](https://github.com/Atom-oh/kubernetes-docs/blob/ma
 <span id="common-errors-and-solutions"></span>
 <span id="cmctl-cli-tool"></span>
 
-## Monitoreo y solución de problemas
+## Monitorización y solución de problemas
 
-Inspeccione los valores de selector y puerto/targetPort en el ServiceMonitor del chart instalado. El perfil 1.21.2 apunta a http-metrics para controller/cainjector/webhook. No invente un nombre de puerto tcp-prometheus-servicemonitor.
+Inspeccione los selectores y los valores de port y targetPort del ServiceMonitor en el chart instalado. El perfil de 1.21.2 utiliza http-metrics para el controlador, cainjector y el webhook. No invente un nombre de puerto tcp-prometheus-servicemonitor.
 
 ```yaml
 groups:
@@ -521,7 +521,7 @@ groups:
           severity: critical
 ```
 
-Las métricas de preparación incluyen series True/False/Unknown; un ==0 sin filtrar puede activarse en certificados saludables. Estas reglas superaron 5 casos / 20 aserciones que cubren certificados saludables, NotReady, expiración de advertencia, expiración crítica y certificados expirados. La ausencia de scrape/métrica necesita alertas independientes.
+Las métricas de disponibilidad incluyen series True, False y Unknown; una comparación ==0 sin filtrar puede activar una alerta para certificados válidos y preparados. Estas reglas superaron cinco casos con veinte aserciones que cubren certificados en buen estado, NotReady, caducidad con nivel de advertencia, caducidad crítica y certificados caducados. La ausencia de recopilación o de métricas requiere alertas independientes.
 
 ```bash
 kubectl get certificates,certificaterequests -A
@@ -532,7 +532,7 @@ cmctl status certificate app-tls -n demo-app
 cmctl renew app-tls -n demo-app
 ```
 
-Seleccionar resolvers DNS recursivos no aumenta el tiempo de espera de propagación. Inspeccione DNS de horizonte dividido, CAA, autorización TXT, CNAME, rutas HTTP y los motivos de Challenge. Investigue la conectividad/autenticación/enrutamiento de webhook antes de ajustar timeoutSeconds del chart (1–30 segundos); no hay un indicador genérico webhook-timeout que aplicar a ciegas.
+Seleccionar resolvedores DNS recursivos no aumenta el tiempo de espera para la propagación. Inspeccione el DNS de horizonte dividido, CAA, la autorización de registros TXT, los CNAME, las rutas HTTP y los motivos de Challenge. Investigue la conectividad, autenticación y rutas del webhook antes de ajustar timeoutSeconds del chart, cuyo intervalo es de 1 a 30 segundos. No existe una opción genérica webhook-timeout que deba aplicarse a ciegas.
 
 <span id="renewal-buffer-configuration"></span>
 <span id="backup-ca-strategy"></span>
@@ -542,12 +542,12 @@ Seleccionar resolvers DNS recursivos no aumenta el tiempo de espera de propagaci
 
 ## Prácticas recomendadas
 
-- El [Role de namespace](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/certificate-requester-rbac.yaml) administra Certificates sin otorgar a los desarrolladores lecturas de Secret en todo el cluster. Las restricciones de SAN/issuerRef/secretName requieren una política de admisión/aprobación independiente.
-- Separe la aprobación de CertificateRequest del acceso a credenciales de CA. Compruebe el comportamiento predeterminado del controller de aprobación y configure una política de emisión como approver-policy cuando sea necesario.
-- Las copias de seguridad de claves de CA requieren cifrado, control de acceso y pruebas de restauración; no vuelque YAML de Secret en texto sin formato en directorios normales. Base64 no es cifrado.
-- Una CA privada no es una alternativa automática para una CA pública: valide la confianza del cliente, nombres, usos, acceso a claves y tiempo de recuperación.
-- Las anotaciones/etiquetas de secretTemplate son metadatos; no activan por sí mismas la sincronización de secretos externos.
-- Pruebe por separado la renovación, sustitución de CA, recarga del consumidor y revocación. El éxito de Schema/Helm no demuestra una emisión correcta.
+- El [Role del espacio de nombres](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/certificate-requester-rbac.yaml) permite gestionar Certificates sin conceder a los desarrolladores acceso de lectura a Secrets de todo el clúster. Las restricciones de SAN, issuerRef y secretName requieren políticas independientes de admisión o aprobación.
+- Separe la aprobación de CertificateRequest del acceso a las credenciales de la CA. Compruebe el comportamiento predeterminado del controlador de aprobación y configure una política de emisión, como approver-policy, cuando sea necesario.
+- Las copias de seguridad de las claves de CA requieren cifrado, control de acceso y pruebas de restauración. No guarde YAML de Secrets sin cifrar en directorios comunes. Base64 no es cifrado.
+- Una CA privada no sustituye automáticamente a una pública: valide la confianza del cliente, los nombres, los usos, el acceso a las claves y el tiempo de recuperación.
+- Las anotaciones y etiquetas de secretTemplate son metadatos; no activan por sí solas la sincronización con sistemas externos de secretos.
+- Pruebe por separado la renovación, la sustitución de CA, la recarga del consumidor y la revocación. Una validación correcta del esquema o de Helm no demuestra que la emisión funcione.
 
 <span id="table-of-contents"></span>
 <span id="key-concepts-summary"></span>
@@ -557,7 +557,7 @@ Seleccionar resolvers DNS recursivos no aumenta el tiempo de espera de propagaci
 
 ## Resumen y referencias
 
-Las comprobaciones locales incluyen esquemas Helm/CRD fijados, decodificación de configuración de controller, 6 casos de renovación, generación/comprobación de firma de CSR reales, 5 casos Prometheus / 20 aserciones, 24 casos de navegador de diagramas y dieciséis casos sintéticos de emisión/firma de CSR en Vault local efímero. No se ejecutó ninguna emisión de CA/ACME externa, creación de recursos AWS, inicio de sesión de Vault desplegado, instalación de mesh ni mTLS en tiempo de ejecución.
+Las comprobaciones locales incluyen esquemas de Helm y CRD con versiones fijadas, la decodificación de la configuración del controlador, seis casos de renovación, la generación de CSR reales y la comprobación de sus firmas, cinco casos de Prometheus con veinte aserciones, veinticuatro casos de diagramas en el navegador y dieciséis casos sintéticos de emisión de certificados y firma de CSR en una instancia local efímera de Vault. No se realizaron emisiones externas mediante CA o ACME, creación de recursos de AWS, inicio de sesión en un Vault desplegado, instalación de la malla ni comprobaciones de mTLS en ejecución.
 
 - [versiones de cert-manager](https://cert-manager.io/docs/releases/)
 - [versión 1.21.2 de cert-manager](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)

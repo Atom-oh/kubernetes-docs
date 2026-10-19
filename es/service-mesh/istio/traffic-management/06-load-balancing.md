@@ -1,147 +1,69 @@
 # Balanceo de carga
 
-Istio proporciona varios algoritmos de balanceo de carga mediante Envoy para distribuir el tráfico de forma eficiente.
+Istio ofrece varios algoritmos de balanceo de carga mediante Envoy para distribuir el tráfico de forma eficiente.
 
 ## Tabla de contenido
 
-1. [¿Por qué el balanceo de carga?](#why-load-balancing)
-2. [Descripción general del balanceo de carga](#load-balancing-overview)
+1. [¿Por qué usar balanceo de carga?](#why-load-balancing)
+2. [Descripción general](#load-balancing-overview)
 3. [Algoritmos de balanceo de carga](#load-balancing-algorithms)
-4. [Detalles de Consistent Hash](#consistent-hash-details)
-5. [Balanceo de carga basado en localidad](#locality-based-load-balancing)
-6. [Configuración de Connection Pool](#connection-pool-settings)
+4. [Detalles del hash consistente](#consistent-hash-details)
+5. [Balanceo basado en localidad](#locality-based-load-balancing)
+6. [Configuración de pools de conexiones](#connection-pool-settings)
 7. [Ejemplos prácticos](#practical-examples)
 8. [Guía de selección de algoritmos](#algorithm-selection-guide)
-9. [Mejores prácticas](#best-practices)
+9. [Prácticas recomendadas](#best-practices)
 10. [Solución de problemas](#troubleshooting)
 
-<span id="why-load-balancing"></span>
+## ¿Por qué usar balanceo de carga? {#why-load-balancing}
 
-## ¿Por qué el balanceo de carga?
+### Uso eficiente de los recursos
 
-### Uso eficiente de recursos
+El balanceo de carga reparte el tráfico entre varias instancias para mejorar el rendimiento general y la estabilidad del sistema.
 
-El balanceo de carga distribuye el tráfico entre varias instancias para mejorar el rendimiento general y la estabilidad del sistema.
+![Sin balanceo, todas las solicitudes saturan un servicio y otros dos quedan inactivos; con un balanceador, el tráfico se reparte entre los tres.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Load Balancing"]
-        C1[All Requests] -->|Overload| S1[Service 1<br/>100% Load]
-        S2[Service 2<br/>0% Load]
-        S3[Service 3<br/>0% Load]
-    end
-
-    subgraph With["With Load Balancing"]
-        C2[Distributed Requests] --> LB[Load Balancer]
-        LB -->|33%| S4[Service 1<br/>33% Load]
-        LB -->|33%| S5[Service 2<br/>33% Load]
-        LB -->|34%| S6[Service 3<br/>34% Load]
-    end
-
-    %% Style definitions
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef idle fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef balanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class C1,C2 client;
-    class S1 overload;
-    class S2,S3 idle;
-    class LB lb;
-    class S4,S5,S6 balanced;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### Beneficios principales
 
 | Problema | Sin balanceo de carga | Con balanceo de carga |
 |---------|------------------------|---------------------|
-| **Disponibilidad** | Punto único de fallo (SPOF) | Failover automático ante fallos |
-| **Rendimiento** | Sobrecarga de una instancia específica | Distribución uniforme de carga |
-| **Escalabilidad** | Escalado horizontal difícil | Scale-out sencillo |
-| **Tiempo de respuesta** | Inconsistente (0-1000 ms+) | Tiempo de respuesta consistente |
-| **Uso de recursos** | Ineficiente (uso parcial) | Uso eficiente de recursos |
+| **Disponibilidad** | Punto único de fallo (SPOF) | Conmutación automática ante fallos |
+| **Rendimiento** | Una instancia sobrecargada | Reparto uniforme de la carga |
+| **Escalabilidad** | Escalado horizontal difícil | Ampliación horizontal sencilla |
+| **Tiempo de respuesta** | Variable (0-1000ms+) | Tiempo de respuesta consistente |
+| **Uso de recursos** | Uso parcial e ineficiente | Uso eficiente |
 
-<span id="load-balancing-overview"></span>
+## Descripción general del balanceo de carga {#load-balancing-overview}
 
-## Descripción general del balanceo de carga
+![Una solicitud llega al algoritmo de Istio, que selecciona entre tres Pods con distintas cargas mediante round robin, least request o selección aleatoria.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-1.png)
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
-    subgraph LB["Load Balancer"]
-        Algorithm[Load Balancing<br/>Algorithm]
-    end
+## Algoritmos de balanceo de carga {#load-balancing-algorithms}
 
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Load: 30%]
-        Pod2[Pod 2<br/>Load: 50%]
-        Pod3[Pod 3<br/>Load: 20%]
-    end
+En Istio 1.31.0, el algoritmo predeterminado es LEAST_REQUEST. Los ejemplos son DestinationRules independientes; no deben combinarse como una única configuración para el mismo host. Los resultados dependen de la salud de los endpoints, el costo de las solicitudes, la reutilización de conexiones y la localidad del proxy. Ningún algoritmo garantiza un uso idéntico de CPU ni una latencia constante. `consistentHash` es una rama de configuración independiente, no un valor enumerado `simple: CONSISTENT_HASH`.
 
-    Client --> Algorithm
-    Algorithm -->|Round Robin| Pod1
-    Algorithm -->|Least Request| Pod3
-    Algorithm -->|Random| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Algorithm lb;
-    class Pod1,Pod2,Pod3 pod;
-```
-
-<span id="load-balancing-algorithms"></span>
-
-## Algoritmos de balanceo de carga
-
-Istio proporciona los siguientes algoritmos de balanceo de carga.
+Istio dispone de los siguientes algoritmos de balanceo de carga.
 
 ### Comparación de algoritmos
 
 | Algoritmo | Descripción | Casos de uso | Ventajas | Desventajas |
 |-----------|-------------|-----------|------|------|
-| **ROUND_ROBIN** | Distribución secuencial (predeterminado) | Servicios sin estado | Simple, equitativo | Posible desequilibrio de carga |
-| **LEAST_REQUEST** | Mínimo de solicitudes activas | APIs de alto rendimiento, conexiones de DB | Ecualización de carga | Ligera sobrecarga |
-| **RANDOM** | Distribución aleatoria | Alto volumen de tráfico | Simple, rápido | Posible desequilibrio a corto plazo |
-| **PASSTHROUGH** | Destino original | Proxy TCP, enrutamiento SNI | Flexibilidad | Control limitado |
-| **CONSISTENT_HASH** | Persistencia basada en hash | Persistencia de sesión, caché | Sesiones persistentes | Posible desequilibrio |
+| **ROUND_ROBIN** | Reparto secuencial, seleccionado explícitamente | Servicios sin estado | Simple y equitativo | Puede haber desequilibrio de carga |
+| **LEAST_REQUEST** | Menor número de solicitudes activas | APIs de alto rendimiento y conexiones de base de datos | Equilibra la carga | Ligera sobrecarga |
+| **RANDOM** | Reparto aleatorio | Tráfico de gran volumen | Simple y rápido | Posible desequilibrio a corto plazo |
+| **PASSTHROUGH** | Destino original | Proxy TCP y enrutamiento SNI | Flexibilidad | Control limitado |
+| **CONSISTENT_HASH** | Afinidad basada en hash | Sesiones y cachés | Afinidad de sesión | Puede haber desequilibrio |
 
-### 1. ROUND_ROBIN (predeterminado)
+### 1. ROUND_ROBIN
 
-Distribuye las solicitudes secuencialmente a cada endpoint.
+Reparte las solicitudes de forma secuencial entre los endpoints.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LB as Load Balancer<br/>(ROUND_ROBIN)
-    participant Pod1 as Pod 1
-    participant Pod2 as Pod 2
-    participant Pod3 as Pod 3
+![Cuatro solicitudes consecutivas se envían al Pod 1, Pod 2, Pod 3 y de nuevo al Pod 1 mediante ROUND_ROBIN.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-2.png)
 
-    Client->>LB: Request 1
-    LB->>Pod1: Route
-    Pod1-->>Client: Response
-
-    Client->>LB: Request 2
-    LB->>Pod2: Route
-    Pod2-->>Client: Response
-
-    Client->>LB: Request 3
-    LB->>Pod3: Route
-    Pod3-->>Client: Response
-
-    Client->>LB: Request 4
-    LB->>Pod1: Route (cycle)
-    Pod1-->>Client: Response
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **Ejemplo de configuración:**
 
@@ -159,50 +81,22 @@ spec:
 
 **Casos de uso:**
 - APIs REST sin estado
-- Pods con rendimiento idéntico
-- Cuando la configuración predeterminada es suficiente
+- Pods con rendimiento equivalente
+- Cuando bastan las opciones predeterminadas
 
 **Ventajas:**
 - Implementación simple y predecible
-- Distribución equitativa
+- Reparto equitativo
 
 **Desventajas:**
-- No considera las diferencias de carga por Pod
+- No considera las diferencias de carga entre Pods
 - Las solicitudes largas pueden provocar desequilibrio
 
-### 2. LEAST_REQUEST
+### 2. LEAST_REQUEST (predeterminado)
 
-Enruta al endpoint con menos solicitudes activas.
+Cuando los endpoints tienen el mismo peso, Envoy normalmente elige dos hosts disponibles al azar y selecciona el que tiene menos solicitudes activas. No examina todos los Pods ni mide su CPU o la carga de sus consultas de base de datos. Con pesos distintos utiliza otro algoritmo ponderado.
 
-```mermaid
-flowchart LR
-    Client[Client<br/>New Request]
-    LB[Load Balancer<br/>LEAST_REQUEST]
-
-    subgraph Pods[Pod Status]
-        Pod1[Pod 1<br/>Active Requests: 5]
-        Pod2[Pod 2<br/>Active Requests: 2 ✅]
-        Pod3[Pod 3<br/>Active Requests: 8]
-    end
-
-    Client --> LB
-    LB -.->|Check| Pod1
-    LB -.->|Check| Pod2
-    LB -.->|Check| Pod3
-    LB -->|Route to<br/>Least Loaded| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef selected fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% Class applications
-    class Client client;
-    class LB lb;
-    class Pod1,Pod3 pod;
-    class Pod2 selected;
-```
+Con pesos iguales, LEAST_REQUEST selecciona de forma predeterminada el endpoint menos ocupado de dos candidatos aleatorios.
 
 **Ejemplo de configuración:**
 
@@ -216,7 +110,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 60 second warmup (optional)
+      warmup:
+        duration: 60s  # 60 second warmup (optional)
 ```
 
 **Configuración avanzada:**
@@ -231,7 +126,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 120  # New pod warmup
+      warmup:
+        duration: 120s  # New pod warmup
     connectionPool:
       http:
         http2MaxRequests: 100
@@ -242,19 +138,19 @@ spec:
 - APIs con tiempos de respuesta variables
 - Pools de conexiones de base de datos
 - Servicios con procesamiento intensivo
-- Cuando el balanceo de carga en tiempo real es importante
+- Necesidad de adaptar el reparto a la carga en tiempo real
 
 **Ventajas:**
 - Se adapta a la carga en tiempo real
 - Mejora la consistencia del tiempo de respuesta
-- Absorbe las diferencias de rendimiento por Pod
+- Compensa diferencias de rendimiento entre Pods
 
 **Desventajas:**
-- Ligera sobrecarga (seguimiento de solicitudes activas)
+- Ligera sobrecarga para registrar solicitudes activas
 
 ### 3. RANDOM
 
-Selecciona un endpoint aleatoriamente.
+Selecciona un endpoint al azar.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -269,22 +165,22 @@ spec:
 ```
 
 **Casos de uso:**
-- Tráfico de alto volumen (estadísticamente uniforme)
-- Cuando se necesita una selección simple y rápida
-- Cuando el rendimiento de los Pods es idéntico
+- Tráfico de gran volumen con reparto estadísticamente uniforme
+- Selección simple y rápida
+- Pods con rendimiento equivalente
 
 **Ventajas:**
 - Selección muy rápida
 - Implementación simple
-- Estadísticamente uniforme a escala
+- Reparto estadísticamente uniforme a gran escala
 
 **Desventajas:**
 - Posible desequilibrio a corto plazo
-- Impredecible
+- Selección impredecible
 
 ### 4. PASSTHROUGH
 
-Se conecta directamente al destino original especificado por el cliente.
+Conecta directamente con el destino original indicado por el cliente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -306,12 +202,14 @@ spec:
 
 **Ventajas:**
 - Conserva la dirección de destino original
-- Enrutamiento flexible
+- Permite un enrutamiento flexible
 
 **Desventajas:**
 - Control limitado del balanceo de carga
 
-### 5. LEAST_CONN (obsoleto -> LEAST_REQUEST)
+PASSTHROUGH en DestinationRule utiliza balanceo hacia el destino original. En un Gateway, `tls.mode: PASSTHROUGH` controla la terminación TLS y es una opción distinta. El enrutamiento SNI requiere una ruta TLS en VirtualService.
+
+### 5. LEAST_CONN (obsoleto → LEAST_REQUEST)
 
 **Nota**: `LEAST_CONN` está **obsoleto** y se sustituye por `LEAST_REQUEST`.
 
@@ -321,62 +219,28 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: LEAST_CONN
+```
 
+```yaml
 # New version
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
 
-<span id="consistent-hash-details"></span>
+## Detalles del hash consistente {#consistent-hash-details}
 
-## Detalles de Consistent Hash
+El hash consistente ofrece afinidad flexible para la misma clave mientras se mantenga estable la vista de endpoints. Añadir o retirar endpoints, cambiar su salud o usar proxies con distintas localidades puede reasignar solicitudes. Este algoritmo no almacena sesiones de forma duradera.
 
-Consistent Hash enruta al mismo endpoint según atributos específicos para garantizar la persistencia de sesión.
+### Principio de funcionamiento del hash consistente
 
-### Principio de funcionamiento de Consistent Hash
+![La clave de cada solicitud se asigna a una posición del anillo: con endpoints estables, la misma cookie del usuario A llega al Pod 1 y la del usuario B al Pod 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-4.png)
 
-```mermaid
-flowchart TD
-    subgraph Requests[Requests]
-        R1[User A<br/>Cookie: abc123]
-        R2[User B<br/>Cookie: def456]
-        R3[User A<br/>Cookie: abc123]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
-    subgraph Hash[Hash Calculation]
-        H1[Hash abc123<br/>-> 0x1A2B]
-        H2[Hash def456<br/>-> 0x7C8D]
-        H3[Hash abc123<br/>-> 0x1A2B]
-    end
+### 1. Basado en un encabezado HTTP
 
-    subgraph Ring[Consistent Hash Ring]
-        P1[Pod 1<br/>0x0000-0x4FFF]
-        P2[Pod 2<br/>0x5000-0x9FFF]
-        P3[Pod 3<br/>0xA000-0xFFFF]
-    end
-
-    R1 -->|1| H1
-    H1 -->|2| P1
-    R2 -->|1| H2
-    H2 -->|2| P2
-    R3 -->|1| H3
-    H3 -->|2| P1
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef hash fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class R1,R2,R3 request;
-    class H1,H2,H3 hash;
-    class P1,P2,P3 pod;
-```
-
-### 1. Basado en encabezado HTTP
-
-Calcula el hash a partir del valor de un encabezado HTTP específico.
+Calcula un hash a partir del valor de un encabezado HTTP específico.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -392,13 +256,13 @@ spec:
 ```
 
 **Casos de uso:**
-- Persistencia de sesión por usuario
-- Enrutamiento basado en clave de API
-- Aislamiento por tenant
+- Afinidad de sesión por usuario
+- Enrutamiento basado en una clave de API
+- Afinidad por clave de tenant; el aislamiento debe aplicarse por separado
 
-### 2. Basado en cookie HTTP
+### 2. Basado en una cookie HTTP
 
-Calcula el hash a partir del valor de la cookie y genera automáticamente una cookie si no existe.
+Calcula un hash a partir de una cookie y genera una automáticamente si falta.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -416,13 +280,13 @@ spec:
 ```
 
 **Casos de uso:**
-- Persistencia de sesión de aplicaciones web
-- Persistencia del carrito de compra
-- Consistencia de la experiencia de usuario
+- Afinidad de sesión en aplicaciones web
+- Continuidad del carrito de compras
+- Experiencia de usuario consistente
 
-### 3. Basado en IP de origen
+### 3. Basado en la IP de origen
 
-Calcula el hash a partir de la dirección IP de origen del cliente.
+Calcula un hash a partir de la dirección IP de origen del cliente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -438,17 +302,17 @@ spec:
 ```
 
 **Casos de uso:**
-- Persistencia de sesión basada en IP
-- Limitación de tasa (por IP)
+- Afinidad de sesión por IP
+- Afinidad para un limitador externo de tasa por IP; el hash no aplica el límite
 - Caché regional
 
 **Precauciones:**
-- Los clientes detrás de NAT pueden enrutarse al mismo Pod
-- Al usar proxies, verifique la IP real del cliente
+- Los clientes detrás de NAT pueden terminar en el mismo Pod
+- Con proxies, compruebe qué IP de cliente se observa realmente
 
-### 4. Basado en parámetro de consulta HTTP
+### 4. Basado en un parámetro de consulta HTTP
 
-Calcula el hash a partir del valor de un parámetro de consulta.
+Calcula un hash a partir del valor de un parámetro de consulta.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -464,13 +328,13 @@ spec:
 ```
 
 **Casos de uso:**
-- Enrutamiento basado en ID de recurso en APIs RESTful
-- Enrutamiento compatible con caché
-- Estrategias de sharding
+- Enrutamiento por ID de recurso en APIs RESTful
+- Enrutamiento que favorece la caché
+- Estrategias de particionamiento (sharding)
 
-### 5. Configuración de tamaño mínimo del anillo
+### 5. Tamaño mínimo del anillo
 
-Establezca el tamaño mínimo del anillo de Consistent Hash para minimizar la redistribución.
+Ajuste el número de nodos virtuales del anillo para mejorar el reparto de claves distintas. El ajuste no elimina las reasignaciones ni la concentración de tráfico en una clave muy utilizada.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -483,20 +347,21 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 1024  # Default: 1024
+        ringHash:
+          minimumRingSize: 1024  # Default: 1024
 ```
 
 **Explicación:**
-- Un tamaño de anillo mayor proporciona una distribución más uniforme
-- Reduce la proporción de claves redistribuidas al añadir o eliminar un Pod
-- Uso de memoria ligeramente mayor
+- Un anillo mayor puede repartir las claves de forma más uniforme
+- No garantiza una menor proporción de reasignaciones al cambiar los endpoints
+- Aumenta ligeramente el uso de memoria
 
-**Valores recomendados:**
+**Valores ilustrativos que deben medirse, no umbrales universales de dimensionamiento:**
 - Escala pequeña (< 10 Pods): 1024 (predeterminado)
 - Escala media (10-50 Pods): 2048
 - Escala grande (50+ Pods): 4096
 
-### Ejemplo de combinación de Consistent Hash
+### Ejemplo de configuración de hash consistente
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -512,49 +377,30 @@ spec:
           name: "session-id"
           path: "/api"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       http:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
 ```
 
-### Precauciones de Consistent Hash
+### Precauciones del hash consistente
 
 #### 1. Riesgo de desequilibrio
 
-```mermaid
-flowchart LR
-    subgraph Problem[Problem Situation]
-        Users[1000 Users]
-        P1[Pod 1<br/>800 users ⚠️]
-        P2[Pod 2<br/>150 users]
-        P3[Pod 3<br/>50 users]
-    end
+![Si muchas claves se asignan al mismo tramo del anillo, un Pod puede recibir la mayor parte del tráfico mientras otros quedan casi inactivos.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
-    Users -->|80%| P1
-    Users -->|15%| P2
-    Users -->|5%| P3
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Users user;
-    class P1 overload;
-    class P2,P3 normal;
-```
-
-**Causa**: Concentración de tráfico en valores hash específicos
+**Causa**: concentración de tráfico en determinados valores de hash.
 
 **Soluciones:**
-- Aumente `minimumRingSize`
-- Use combinaciones de varias claves hash
-- Considere el algoritmo Bounded Load (no compatible con Envoy)
+- Aumente `ringHash.minimumRingSize` solo si las claves distintas están mal distribuidas; una clave muy utilizada sigue correspondiendo a un único host
+- Use combinaciones de varias claves de hash
+- Envoy admite hash con carga acotada mediante hash_balance_factor, pero DestinationRule de Istio no expone esa opción directamente
 
-#### 2. Redistribución al añadir/eliminar un Pod
+#### 2. Reasignación al añadir o retirar Pods
 
 ```yaml
 # On pod scale out
@@ -564,15 +410,15 @@ flowchart LR
 ```
 
 **Estrategias de mitigación:**
-- Use apagado controlado
-- Use almacenamiento de sesión externo (Redis, Memcached)
+- Use un apagado controlado
+- Almacene las sesiones fuera de los Pods, por ejemplo en Redis o Memcached
 - Escale gradualmente
 
-<span id="locality-based-load-balancing"></span>
+## Balanceo basado en localidad {#locality-based-load-balancing}
 
-## Balanceo de carga basado en localidad
+Configure porcentajes `distribute` o reglas explícitas `failover`, pero no ambos en la misma opción de localidad. La conmutación requiere detección de fallos y endpoints saludables accesibles. Las etiquetas de región y zona representan topología, no distancia medida. DestinationRule no crea conectividad entre regiones ni descubrimiento de servicios. En EKS, use los valores reales de topología de los nodos.
 
-El balanceo de carga basado en localidad prioriza endpoints geográficamente más cercanos.
+El balanceo basado en localidad prioriza endpoints geográficamente cercanos.
 
 ### Configuración básica de localidad
 
@@ -589,7 +435,7 @@ spec:
         enabled: true
 ```
 
-### Proporción de distribución por localidad
+### Porcentajes de distribución por localidad
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -609,7 +455,7 @@ spec:
             "us-west/zone-2/*": 20  # 20% to other zone
 ```
 
-### Failover por localidad
+### Conmutación por localidad
 
 Cambia automáticamente a otra región cuando una falla.
 
@@ -627,6 +473,10 @@ spec:
         failover:
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### Ejemplo multirregión
@@ -654,30 +504,23 @@ spec:
           to:
             "us-east/*": 90
             "us-west/*": 10
-        failover:
-        - from: us-west
-          to: us-east
-        - from: us-east
-          to: us-west
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **Casos de uso:**
-- Implementaciones multirregión
-- Minimización de latencia
+- Despliegues multirregión
+- Reducción de latencia
 - Recuperación ante desastres entre regiones
-- Optimización de costes (comunicación dentro de la misma AZ)
+- Optimización de costos mediante comunicación dentro de la misma AZ
 
-<span id="connection-pool-settings"></span>
+## Configuración de pools de conexiones {#connection-pool-settings}
 
-## Configuración de Connection Pool
+Configure el pool de conexiones junto con el balanceo de carga para optimizar el rendimiento.
 
-Configure Connection Pool junto con el balanceo de carga para optimizar el rendimiento.
-
-### Connection Pool de HTTP/1.1
+### Pool de conexiones HTTP/1.1
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -699,7 +542,7 @@ spec:
         idleTimeout: 300s             # Idle connection timeout
 ```
 
-### Connection Pool de HTTP/2
+### Pool de conexiones HTTP/2
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -720,11 +563,9 @@ spec:
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
 
-<span id="practical-examples"></span>
+## Ejemplos prácticos {#practical-examples}
 
-## Ejemplos prácticos
-
-### Ejemplo 1: Servicio de API de alto rendimiento
+### Ejemplo 1: servicio de API de alto rendimiento
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -737,7 +578,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
     connectionPool:
       tcp:
         maxConnections: 200
@@ -747,7 +589,7 @@ spec:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -756,9 +598,9 @@ spec:
 **Escenarios de uso:**
 - APIs REST de alto rendimiento
 - Solicitudes con tiempos de respuesta variables
-- Entornos con diferencias de rendimiento por Pod
+- Diferencias de rendimiento entre Pods
 
-### Ejemplo 2: Enrutamiento basado en sesión de usuario
+### Ejemplo 2: enrutamiento por sesión de usuario
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -773,7 +615,8 @@ spec:
         httpCookie:
           name: "session-id"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       tcp:
         maxConnections: 500
@@ -783,11 +626,11 @@ spec:
 ```
 
 **Escenarios de uso:**
-- Persistencia de sesión de aplicaciones web
-- Consistencia del carrito de compra
-- Uso de caché por usuario
+- Afinidad de sesión en aplicaciones web
+- Consistencia del carrito de compras
+- Aprovechamiento de la caché por usuario
 
-### Ejemplo 3: Servicio global multirregión
+### Ejemplo 3: servicio global multirregión
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -819,29 +662,26 @@ spec:
           to:
             "eu-central-1/*": 90
             "eu-west-1/*": 10
-        failover:
-        - from: us-west-1
-          to: us-west-2
-        - from: us-east-1
-          to: us-east-2
     connectionPool:
       tcp:
         maxConnections: 1000
       http:
         http2MaxRequests: 2000
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 60s
 ```
 
 **Escenarios de uso:**
 - Servicios SaaS globales
-- Minimización de latencia
+- Reducción de latencia
 - Recuperación ante desastres por región
-- Reducción de costes de tráfico entre AZ
+- Reducción del costo de tráfico entre AZ
 
-### Ejemplo 4: Optimización de servicio de caché
+### Ejemplo 4: optimización de un servicio de caché
+
+Este ejemplo supone una caché HTTP que acepta x-cache-key. El tráfico nativo de Redis no incluye un encabezado HTTP. Para repartir claves Redis, utilice un cliente compatible con Redis o el mecanismo de particionamiento de su clúster.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -849,12 +689,13 @@ kind: DestinationRule
 metadata:
   name: cache-service-optimized
 spec:
-  host: redis-cache
+  host: http-cache
   trafficPolicy:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 4096  # Large ring size to minimize redistribution
+        ringHash:
+          minimumRingSize: 4096  # Large ring size to minimize redistribution
     connectionPool:
       tcp:
         maxConnections: 100
@@ -864,17 +705,17 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 600s
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
 ```
 
 **Escenarios de uso:**
-- Maximizar la tasa de aciertos de caché
-- Enrutamiento consistente de claves de caché
-- Estrategias de sharding
+- Mejorar la tasa de aciertos de caché
+- Enrutar de forma consistente las claves de caché
+- Aplicar estrategias de particionamiento
 
-### Ejemplo 5: Pool de conexiones de base de datos
+### Ejemplo 5: pool de conexiones de base de datos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -885,26 +726,23 @@ spec:
   host: postgres-primary
   trafficPolicy:
     loadBalancer:
-      simple: LEAST_REQUEST
+      simple: ROUND_ROBIN
     connectionPool:
       tcp:
         maxConnections: 50  # DB connection limit
         connectTimeout: 5s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
 ```
 
 **Escenarios de uso:**
-- Gestión de pools de conexiones de base de datos
-- Distribución de consultas lentas
-- Aplicación de límites de conexión
+- Administración del pool de conexiones de base de datos
+- Selección de conexiones nuevas; las consultas SQL en conexiones existentes no se redistribuyen
+- Aplicación de límites de conexiones
 
-### Ejemplo 6: Procesamiento de alto tráfico
+### Ejemplo 6: procesamiento de gran volumen de tráfico
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -925,78 +763,38 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 60s
     outlierDetection:
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 20  # Limited ejection at scale
 ```
 
 **Escenarios de uso:**
-- Recopilación de eventos (Analytics)
+- Recopilación de eventos para análisis
 - Recopilación de logs
 - Procesamiento de datos a gran escala
 
-<span id="algorithm-selection-guide"></span>
-
-## Guía de selección de algoritmos
+## Guía de selección de algoritmos {#algorithm-selection-guide}
 
 ### Árbol de decisión
 
-```mermaid
-flowchart TD
-    Start[Load Balancing Needed]
-
-    Q1{Session<br/>Persistence<br/>Required?}
-    Q2{Very High<br/>Traffic?}
-    Q3{Variable<br/>Response Times?}
-    Q4{Geographic<br/>Distribution?}
-    Q5{TCP<br/>Proxy?}
-
-    R1[CONSISTENT_HASH<br/>httpCookie or<br/>httpHeaderName]
-    R2[RANDOM]
-    R3[LEAST_REQUEST]
-    R4[LEAST_REQUEST +<br/>Locality Setting]
-    R5[PASSTHROUGH]
-    R6[ROUND_ROBIN<br/>Default]
-
-    Start --> Q1
-    Q1 -->|Yes| R1
-    Q1 -->|No| Q2
-    Q2 -->|Yes| R2
-    Q2 -->|No| Q3
-    Q3 -->|Yes| Q4
-    Q3 -->|No| Q4
-    Q4 -->|Yes| R4
-    Q4 -->|No| Q5
-    Q5 -->|Yes| R5
-    Q5 -->|No| R6
-
-    %% Style definitions
-    classDef question fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class Start start;
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class R1,R2,R3,R4,R5,R6 result;
-```
+Para tráfico HTTP, empiece con LEAST_REQUEST. Use hash consistente cuando necesite afinidad flexible y compare otros algoritmos con una carga representativa.
 
 ### Algoritmos recomendados por tipo de servicio
 
 | Tipo de servicio | Algoritmo recomendado | Motivo |
 |-------------|----------------------|--------|
 | **API REST** | LEAST_REQUEST | Consistencia del tiempo de respuesta |
-| **API GraphQL** | LEAST_REQUEST | Distribución de consultas complejas |
-| **gRPC** | LEAST_REQUEST | Balanceo de carga de streaming |
-| **Frontend web** | CONSISTENT_HASH (cookie) | Persistencia de sesión |
-| **WebSocket** | CONSISTENT_HASH (encabezado) | Persistencia de conexión |
+| **API GraphQL** | LEAST_REQUEST | Reparto de consultas complejas |
+| **gRPC** | LEAST_REQUEST | Balanceo de carga de streams |
+| **Frontend web** | CONSISTENT_HASH (cookie) | Afinidad de sesión |
+| **WebSocket** | Afinidad opcional al reconectar | Una conexión establecida permanece en su upstream |
 | **Servicio de caché** | CONSISTENT_HASH (encabezado) | Tasa de aciertos de caché |
-| **Recopilación de Analytics/logs** | RANDOM | Procesamiento a gran escala |
-| **Base de datos** | LEAST_REQUEST | Gestión de pool de conexiones |
+| **Análisis/recopilación de logs** | RANDOM | Procesamiento a gran escala |
+| **Base de datos** | Cliente/pool que conozca la base de datos; política TCP según se necesite | Conservar la semántica de primarios y réplicas |
 | **Contenido estático** | ROUND_ROBIN | Simple y suficiente |
-| **Cola de mensajes** | LEAST_REQUEST | Balanceo de carga de cola |
-| **Procesamiento por lotes** | LEAST_REQUEST | Distribución de trabajos |
+| **Cola de mensajes** | Asignación de consumidores mediante broker/cliente | Las solicitudes HTTP activas no miden la carga de una cola |
+| **Procesamiento por lotes** | LEAST_REQUEST | Reparto de trabajos |
 
 ### Selección según el patrón de tráfico
 
@@ -1005,17 +803,23 @@ flowchart TD
 trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN  # Simple and efficient
+```
 
+```yaml
 # 2. Variable requests (10ms ~ 1s+)
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST  # Load adaptive
+```
 
+```yaml
 # 3. Very high traffic (10,000+ RPS)
 trafficPolicy:
   loadBalancer:
     simple: RANDOM  # Minimize overhead
+```
 
+```yaml
 # 4. Session-based (user state)
 trafficPolicy:
   loadBalancer:
@@ -1023,7 +827,9 @@ trafficPolicy:
       httpCookie:
         name: "session-id"
         ttl: 3600s
+```
 
+```yaml
 # 5. Multi-region
 trafficPolicy:
   loadBalancer:
@@ -1032,9 +838,7 @@ trafficPolicy:
       enabled: true
 ```
 
-<span id="best-practices"></span>
-
-## Mejores prácticas
+## Prácticas recomendadas {#best-practices}
 
 ### 1. Principios de selección de algoritmos
 
@@ -1050,7 +854,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST  # Load adaptive
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
 ```
 
 **Mal ejemplo:**
@@ -1067,9 +872,9 @@ spec:
       simple: ROUND_ROBIN  # Causes load imbalance
 ```
 
-### 2. Configuración obligatoria de Connection Pool
+### 2. Ajustar los pools de conexiones
 
-Configure siempre Connection Pool con el balanceo de carga:
+Ajuste los límites opcionales de los pools según la demanda medida. Son límites por proxy, no un presupuesto global de conexiones del servicio:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1081,7 +886,7 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    connectionPool:  # Required
+    connectionPool:  # Optional tuning
       tcp:
         maxConnections: 100
       http:
@@ -1089,9 +894,9 @@ spec:
         maxRequestsPerConnection: 100
 ```
 
-### 3. Combinación con Outlier Detection
+### 3. Combinar con detección de endpoints anómalos
 
-Úselo con Circuit Breaker para eliminar Pods con fallos:
+Combínelo con Circuit Breaker para retirar de la selección los Pods que fallan:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1103,13 +908,13 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Health-based ejection
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 4. Precauciones al usar Consistent Hash
+### 4. Precauciones al usar hash consistente
 
 ```yaml
 # Good example: Using session storage
@@ -1150,7 +955,7 @@ spec:
     # Warning: Sessions lost on pod restart
 ```
 
-### 5. Implementación multirregión
+### 5. Despliegue multirregión
 
 ```yaml
 # Good example: Locality + Failover
@@ -1165,56 +970,41 @@ spec:
       simple: LEAST_REQUEST
       localityLbSetting:
         enabled: true
-        distribute:
-        - from: us-west/*
-          to:
-            "us-west/*": 80
-            "us-east/*": 20
         failover:  # Required
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### 6. Monitorización y métricas
 
 Supervise la eficacia del balanceo de carga:
 
-```yaml
-# Prometheus queries
-# Request distribution per pod
-sum by (destination_workload) (rate(istio_requests_total[5m]))
+```promql
+# Per-pod inbound request distribution (assumes scrape labels retain namespace/pod)
+sum by (namespace, pod) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# Response time per pod
+# Per-pod inbound P95 latency
 histogram_quantile(0.95,
-  sum by (destination_workload, le) (
-    rate(istio_request_duration_milliseconds_bucket[5m])
+  sum by (namespace, pod, le) (
+    rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])
   )
 )
 
-# Active connection count
-sum by (destination_workload) (envoy_cluster_upstream_cx_active)
+# Raw Envoy connection statistics do not have Istio destination_workload labels
+sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 ```
 
 ### 7. Aplicación gradual
 
-```yaml
-# Step 1: Default ROUND_ROBIN
-simple: ROUND_ROBIN
-
-# Step 2: LEAST_REQUEST after monitoring
-simple: LEAST_REQUEST
-
-# Step 3: Add Connection Pool
-simple: LEAST_REQUEST
-connectionPool: ...
-
-# Step 4: Add Outlier Detection
-simple: LEAST_REQUEST
-connectionPool: ...
-outlierDetection: ...
-```
+Empiece con LEAST_REQUEST, el algoritmo predeterminado actual. Mida tráfico representativo y después ajuste por separado el algoritmo, el pool de conexiones, el calentamiento y la detección de endpoints anómalos. Los valores de los ejemplos son puntos de partida, no umbrales de rendimiento garantizados.
 
 ### 8. Documentación
+
+Las anotaciones siguientes contienen valores ilustrativos. Sustituya las cifras de latencia y carga por sus mediciones; no son resultados de rendimiento obtenidos en esta revisión. El almacenamiento de sesiones Redis requiere integración en la aplicación; una anotación DestinationRule no lo configura.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1228,7 +1018,7 @@ metadata:
     # Algorithm selection basis
     algorithm-rationale: |
       - LEAST_REQUEST: Response times vary 10ms-500ms
-      - warmupDurationSecs: New pods need 60s to warm up cache
+      - warmup.duration: New pods need 60s to warm up cache
 
     # Test results
     test-results: |
@@ -1240,11 +1030,11 @@ metadata:
     monitoring: |
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
+spec:
+  host: api-service
 ```
 
-<span id="troubleshooting"></span>
-
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### Distribución de carga desequilibrada
 
@@ -1255,9 +1045,9 @@ kubectl top pods -n production
 
 # Output:
 # NAME                CPU    MEMORY
-# api-pod-1           80%    2Gi
-# api-pod-2           20%    1Gi
-# api-pod-3           15%    1Gi
+# api-pod-1           800m   2048Mi
+# api-pod-2           200m   1024Mi
+# api-pod-3           150m   1024Mi
 ```
 
 **Causas y soluciones:**
@@ -1275,16 +1065,17 @@ spec:
       simple: LEAST_REQUEST  # Changed
 
 # 2. Add Warmup
-      warmupDurationSecs: 60
+      warmup:
+        duration: 60s
 
 # 3. Add Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### Desequilibrio de Consistent Hash
+### Desequilibrio del hash consistente
 
 **Síntomas:**
 ```bash
@@ -1308,39 +1099,31 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-user-id"
-        minimumRingSize: 4096  # Increase 2048 -> 4096
+        ringHash:
+          minimumRingSize: 4096  # Increase 2048 -> 4096
 ```
 
-### El enrutamiento basado en localidad no funciona
+### El enrutamiento por localidad no funciona
 
-**Pasos de verificación:**
+Compruebe la topología del nodo que ejecuta la carga y la localidad de los endpoints en Envoy. Kubernetes/EKS normalmente añade etiquetas de región y zona a los Nodes, no a los Pods de aplicaciones. Corrija la configuración real de los nodos o de su aprovisionador; evite inventar etiquetas de región o zona para forzar el enrutamiento.
 
 ```bash
-# 1. Check pod locality labels
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.topology\.kubernetes\.io/region}{"\t"}{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}{end}'
-
-# 2. Check Istio Proxy configuration
-istioctl proxy-config endpoints pod-name | grep locality
-
-# 3. Check DestinationRule application
-istioctl proxy-config clusters pod-name --fqdn api-service.default.svc.cluster.local -o json | jq '.[] | .localityLbEndpoints'
-```
-
-**Corrección:**
-
-```yaml
-# Check and add node labels
-apiVersion: v1
-kind: Node
-metadata:
-  labels:
-    topology.kubernetes.io/region: us-west
-    topology.kubernetes.io/zone: us-west-1
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
+istioctl proxy-config clusters <pod-name> --fqdn api-service.default.svc.cluster.local -o json
 ```
 
 ## Referencias
 
-- [Istio Load Balancing](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
-- [Envoy Load Balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
-- [Consistent Hashing](https://www.toptal.com/big-data/consistent-hashing)
-- [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+- [Balanceo de carga de Istio](https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings)
+- [Balanceo de carga de Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
+- [Hash consistente](https://www.toptal.com/big-data/consistent-hashing)
+- [Balanceo por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+- [Referencia primaria 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Referencia primaria 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)
+- [Referencia primaria 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
+- [Referencia primaria 4](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
+- [Referencia primaria 5](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Referencia primaria 6](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/)

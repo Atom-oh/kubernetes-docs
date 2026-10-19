@@ -30,7 +30,7 @@
 <span id="verification-checklist"></span>
 
 > **难度**：高级 · **预计时间**：60 分钟
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 接收告警，检查实际指标和聚合日志，然后生成供人工审阅的诊断假设。[可运行示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops)是一个 Lambda 报告程序，具有独立的输入/输出 SNS topic。它不包含自动修复或匿名 HTTP webhook。
 

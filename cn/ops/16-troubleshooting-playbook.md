@@ -1,7 +1,7 @@
 # Kubernetes/EKS 故障排查手册：症状 → 诊断 → 原因 → 修复
 
 > **原始示例记录的版本**：原始 Amazon EKS 1.36 输出示例（控制平面 v1.36.2-eks-bca9cf6，平台版本 eks.9，Karpenter 1.4，VPC CNI v1.21，CoreDNS v1.14）
-> **最后更新**：September 11, 2026
+> **最后审阅**：2026 年 9 月 11 日
 
 < [上一页：可用区集群运维](15-zonal-operations-guide.md) | [目录](./README.md) >
 
@@ -9,7 +9,7 @@
 
 凌晨 3 点，寻呼器响起，你打开终端时，你需要的不是概念解释，而是“**根据我现在看到的情况，接下来要输入什么命令**。”本文档从**症状**出发，而不是从概念出发。对于每种症状，它都会在一个区块中汇总“你看到什么 → 运行什么 → 输出是什么样 → 最常见的原因以及如何修复”。
 
-下面的输出展示了原始 September 2, 2026 文档记录的环境，以及来自官方文档的信息。本次审查没有重新运行该集群，也没有独立核实原始捕获日志。特别是，[Karpenter 兼容性矩阵](https://karpenter.sh/docs/upgrading/compatibility/)要求 Kubernetes 1.36 使用 Karpenter 1.13 或更高版本。请勿将记录中的 1.4.0 组合重新用于受支持的部署。
+下面的输出展示了原始 2026 年 9 月 2 日文档记录的环境，以及来自官方文档的信息。本次审查没有重新运行该集群，也没有独立核实原始捕获日志。特别是，[Karpenter 兼容性矩阵](https://karpenter.sh/docs/upgrading/compatibility/)要求 Kubernetes 1.36 使用 Karpenter 1.13 或更高版本。请勿将记录中的 1.4.0 组合重新用于受支持的部署。
 
 深入的根因分析（控制平面日志、CloudWatch Logs Insights 查询、节点加入失败的八种原因等）已收录在 [EKS 故障排查](../eks/09-eks-troubleshooting.md)和 [EKS 高级调试](../eks/11-eks-advanced-debugging.md)中。本页位于它们之前：它的作用是**在 30 秒内决定要打开哪个页面**，因此会链接到这些文档，而不是重复其中的内容。
 
@@ -550,7 +550,7 @@ kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-load-balancer-cont
 kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 ```
 
-原始文档记录了 LBC v3.2.1 在 September 2, 2026 反复重启及以下日志。本次审查未独立核实历史重启次数或持续时间，因此不会将其描述为复现结果。可采取行动的证据是已安装 CRD 与 controller 请求的 API 版本不匹配。
+原始文档记录了 LBC v3.2.1 在 2026 年 9 月 2 日反复重启及以下日志。本次审查未独立核实历史重启次数或持续时间，因此不会将其描述为复现结果。可采取行动的证据是已安装 CRD 与 controller 请求的 API 版本不匹配。
 
 ```
 {"ts":"2026-09-02T07:54:42Z","logger":"setup","msg":"Disabling NLBGatewayAPI: missing required Gateway API CRDs","missing":["TLSRoute","TCPRoute","UDPRoute"]}
@@ -660,7 +660,7 @@ kubectl rollout status deploy/<name> -n <ns>
 kubectl rollout history deploy/<name> -n <ns>
 ```
 
-`kubectl debug` 的有效 `--profile` 值包括 `legacy`、`general`、`baseline`、`restricted`、`netadmin` 和 `sysadmin`（默认值为 `legacy` 或 `general`，具体取决于 kubectl 版本；请查看 `kubectl debug --help`）；在受限策略下，请使用与 `--profile=restricted` 兼容的镜像/安全上下文；其他准入策略仍可能拒绝操作。特权节点调试需要单独授权。
+`kubectl debug` 的有效 `--profile` 值包括 `legacy`、`general`、`baseline`、`restricted`、`netadmin` 和 `sysadmin`（默认值为 `legacy` 或 `general`，具体取决于 kubectl 版本；请查看 `kubectl debug --help`）；在受限策略下，请使用与 --profile=restricted 兼容的镜像/安全上下文；其他准入策略仍可能拒绝操作。特权节点调试需要单独授权。
 
 ***
 

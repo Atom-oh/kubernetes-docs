@@ -1,13 +1,13 @@
 # Cuestionario de seguridad
 
-Este cuestionario evalúa tu comprensión de los conceptos de seguridad de Kubernetes, incluidos autenticación, autorización, network policies, security contexts y gestión de Secret.
+Este cuestionario evalúa tu comprensión de los conceptos de seguridad de Kubernetes, como la autenticación, la autorización, las políticas de red, los contextos de seguridad y la gestión de secretos.
 
 ## Preguntas de opción múltiple
 
-1. ¿Qué método de autenticación NO es compatible con Kubernetes para la autenticación de usuarios?
+1. ¿Qué método no admite Kubernetes para autenticar usuarios?
    - A) Certificados X.509
-   - B) Tokens de service account
-   - C) Tokens OAuth
+   - B) Tokens de cuentas de servicio
+   - C) Tokens de ID de OpenID Connect
    - D) Base de datos de usuarios integrada
    
 <details>
@@ -16,10 +16,10 @@ Este cuestionario evalúa tu comprensión de los conceptos de seguridad de Kuber
 **Respuesta: D) Base de datos de usuarios integrada**
 
 **Explicación:**
-Kubernetes no proporciona una base de datos de usuarios integrada. En su lugar, admite métodos de autenticación como certificados X.509, tokens de service account, tokens OAuth, tokens OpenID Connect y autenticación mediante webhook token. La gestión de usuarios normalmente se realiza mediante integración con sistemas externos (por ejemplo, LDAP, Active Directory).
+Kubernetes no proporciona una base de datos de usuarios integrada. Admite métodos de autenticación como certificados X.509, tokens de cuentas de servicio, tokens de ID de OIDC y autenticación de tokens mediante webhook. Para aceptar tokens de acceso OAuth arbitrarios, se debe configurar un autenticador adecuado. La gestión de usuarios suele integrarse con sistemas externos, como LDAP o Active Directory.
 </details>
 
-2. ¿Cuál NO es un componente principal de RBAC (Role-Based Access Control) en Kubernetes?
+2. ¿Cuál de los siguientes no es un componente principal de RBAC (control de acceso basado en roles) en Kubernetes?
    - A) Role
    - B) ClusterRole
    - C) RoleBinding
@@ -31,44 +31,44 @@ Kubernetes no proporciona una base de datos de usuarios integrada. En su lugar, 
 **Respuesta: D) SecurityPolicy**
 
 **Explicación:**
-Los componentes principales de Kubernetes RBAC son Role, ClusterRole, RoleBinding y ClusterRoleBinding. Role y ClusterRole definen conjuntos de permisos, mientras que RoleBinding y ClusterRoleBinding asocian estos permisos con usuarios, grupos o service accounts. SecurityPolicy no es un componente de RBAC; recursos similares incluyen PodSecurityPolicy (ahora obsoleto) o PodSecurityStandard.
+Los componentes principales de RBAC en Kubernetes son Role, ClusterRole, RoleBinding y ClusterRoleBinding. Role y ClusterRole definen conjuntos de permisos; RoleBinding y ClusterRoleBinding los conceden a usuarios, grupos o cuentas de servicio. SecurityPolicy no forma parte de RBAC. PodSecurityPolicy se eliminó en la versión 1.25. Pod Security Standards son definiciones de políticas que aplica Pod Security Admission; no existe un recurso de API llamado PodSecurityStandard.
 </details>
 
-3. ¿Qué NO se puede configurar mediante el Security Context de un pod en Kubernetes?
-   - A) ID de usuario del container (UID)
-   - B) ID de grupo del container (GID)
-   - C) Network policy del container
-   - D) Capacidad de escalada de privilegios del container
+3. ¿Qué no se puede configurar mediante el SecurityContext de un pod en Kubernetes?
+   - A) ID de usuario del contenedor (UID)
+   - B) ID de grupo del contenedor (GID)
+   - C) Política de red del contenedor
+   - D) Posibilidad de escalar privilegios del contenedor
    
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Network policy del container**
+**Respuesta: C) Política de red del contenedor**
 
 **Explicación:**
-Security Context define configuraciones de privilegios y control de acceso a nivel de pod o container. Esto incluye ID de usuario (runAsUser), ID de grupo (runAsGroup), capacidad de escalada de privilegios (allowPrivilegeEscalation), containers privilegiados (privileged) y capabilities. Sin embargo, las network policies se definen mediante recursos NetworkPolicy separados, no mediante Security Context.
+El SecurityContext define opciones de privilegios y control de acceso para el pod o el contenedor. Incluye el ID de usuario (runAsUser), el ID de grupo (runAsGroup), la posibilidad de escalar privilegios (allowPrivilegeEscalation), el modo privilegiado (privileged) y las capabilities. Las políticas de red se definen mediante recursos NetworkPolicy independientes, no en SecurityContext.
 </details>
 
-4. ¿Cuál es el propósito principal de un ServiceAccount en Kubernetes?
-   - A) Autenticación para usuarios fuera del cluster
-   - B) Proporcionar identidad a los pods para comunicarse con el API server
-   - C) Cifrar la comunicación entre nodes
-   - D) Conceder privilegios de administrador del cluster
+4. ¿Cuál es la función principal de una cuenta de servicio (ServiceAccount) en Kubernetes?
+   - A) Autenticar a usuarios externos al clúster
+   - B) Proporcionar identidad a los pods para comunicarse con el servidor de API
+   - C) Cifrar la comunicación entre nodos
+   - D) Conceder privilegios de administrador del clúster
    
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Proporcionar identidad a los pods para comunicarse con el API server**
+**Respuesta: B) Proporcionar identidad a los pods para comunicarse con el servidor de API**
 
 **Explicación:**
-Las service accounts proporcionan identidad a los procesos que se ejecutan dentro de pods para comunicarse con el Kubernetes API server. Cada namespace tiene una service account predeterminada, y los pods usan esta service account predeterminada a menos que se especifique explícitamente otra. Las service accounts se pueden usar con RBAC para limitar qué operaciones pueden realizar los pods.
+Las cuentas de servicio proporcionan identidad a los procesos que se ejecutan dentro de los pods para comunicarse con el servidor de API de Kubernetes. Cada namespace tiene una cuenta de servicio predeterminada, que usan los pods salvo que se especifique otra. RBAC permite limitar las operaciones que pueden realizar los pods con esas identidades.
 </details>
 
-5. ¿Cuál es el propósito principal de NetworkPolicy en Kubernetes?
-   - A) Enrutar tráfico desde fuera del cluster hacia dentro
+5. ¿Cuál es la función principal de NetworkPolicy en Kubernetes?
+   - A) Enrutar tráfico desde fuera del clúster hacia su interior
    - B) Controlar y restringir la comunicación entre pods
-   - C) Cifrar la comunicación entre nodes
-   - D) Proporcionar service discovery
+   - C) Cifrar la comunicación entre nodos
+   - D) Proporcionar descubrimiento de servicios
    
 <details>
 <summary>Mostrar respuesta</summary>
@@ -76,10 +76,10 @@ Las service accounts proporcionan identidad a los procesos que se ejecutan dentr
 **Respuesta: B) Controlar y restringir la comunicación entre pods**
 
 **Explicación:**
-NetworkPolicy proporciona una forma de controlar la comunicación entre grupos de pods. Mediante esto, puedes especificar qué pods pueden comunicarse con qué otros pods, y qué ports y protocols se pueden usar. Las network policies son importantes para el control detallado de la comunicación service-to-service y para mejorar la seguridad en arquitecturas de microservices.
+NetworkPolicy permite controlar la comunicación entre grupos de pods. Se puede especificar qué pods se comunican entre sí y qué puertos y protocolos pueden usar. Las políticas de red permiten controlar con precisión la comunicación entre servicios y mejorar la seguridad de las arquitecturas de microservicios.
 </details>
 
-6. ¿Cuál es el más restrictivo de los tres niveles de política en Pod Security Standards?
+6. ¿Cuál es el nivel más restrictivo de los tres niveles de políticas de Pod Security Standards?
    - A) Privileged
    - B) Baseline
    - C) Restricted
@@ -91,19 +91,19 @@ NetworkPolicy proporciona una forma de controlar la comunicación entre grupos d
 **Respuesta: C) Restricted**
 
 **Explicación:**
-Pod Security Standards define tres niveles de política:
-  - Privileged: Sin restricciones, todos los privilegios permitidos
-  - Baseline: Evita rutas conocidas de escalada de privilegios
-  - Restricted: La política más restrictiva, con configuraciones de seguridad mejoradas aplicadas
+Pod Security Standards establecen tres niveles de políticas:
+  - Privileged: sin restricciones; permite todos los privilegios
+  - Baseline: bloquea vías conocidas de escalada de privilegios
+  - Restricted: el nivel más estricto, con opciones de seguridad reforzadas
 
-La política Restricted es la más restrictiva, sigue el principio de privilegio mínimo y aplica buenas prácticas de seguridad. Esta política prohíbe containers privilegiados, el uso compartido de host namespace, montajes de host path y más.
+La política Restricted es la más estricta: sigue el principio de privilegio mínimo y aplica prácticas recomendadas de seguridad. Prohíbe, entre otras cosas, los contenedores privilegiados, compartir namespaces del host y montar rutas del host.
 </details>
 
-7. ¿Cuál es el método más efectivo para proteger los datos de Secret en Kubernetes?
+7. ¿Qué opción cifra en reposo los datos de Secret almacenados en etcd?
    - A) Codificación Base64
    - B) Configuración de cifrado de etcd
    - C) Aislamiento por namespace
-   - D) Agregar labels
+   - D) Añadir etiquetas
    
 <details>
 <summary>Mostrar respuesta</summary>
@@ -111,121 +111,121 @@ La política Restricted es la más restrictiva, sigue el principio de privilegio
 **Respuesta: B) Configuración de cifrado de etcd**
 
 **Explicación:**
-Los datos de Secret en Kubernetes se almacenan codificados en Base64 de forma predeterminada, pero esto es una codificación simple, no cifrado. Usar la configuración de cifrado de etcd cifra los datos de Secret antes de almacenarlos en etcd, lo que protege la información confidencial frente al acceso no autorizado a la base de datos etcd. El aislamiento por namespace y los labels pueden ayudar con el control de acceso, pero no protegen los datos en sí.
+De forma predeterminada, los datos de Secret se codifican en Base64, pero eso es codificación, no cifrado. La configuración de cifrado de etcd cifra los datos antes de guardarlos en etcd y los protege frente al acceso no autorizado a esa base de datos. El aislamiento por namespace y las etiquetas pueden ayudar a controlar el acceso, pero no protegen los datos en sí.
 </details>
 
-8. ¿Cuál NO es un método para mejorar la seguridad de las container images en Kubernetes?
-   - A) Escaneo de vulnerabilidades de images
-   - B) Uso de registries de confianza
-   - C) Firma y verificación de images
-   - D) Conceder privilegios root a los containers
+8. ¿Cuál de estas opciones no mejora la seguridad de las imágenes de contenedor en Kubernetes?
+   - A) Analizar las imágenes en busca de vulnerabilidades
+   - B) Usar registros de confianza
+   - C) Firmar y verificar imágenes
+   - D) Conceder privilegios de root a los contenedores
    
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Conceder privilegios root a los containers**
+**Respuesta: D) Conceder privilegios de root a los contenedores**
 
 **Explicación:**
-Conceder privilegios root a los containers debilita la seguridad. Los métodos para mejorar la seguridad de las container images incluyen el escaneo de vulnerabilidades de images, el uso de registries de confianza, la firma y verificación de images, la aplicación del principio de privilegio mínimo, la eliminación de paquetes innecesarios y la ejecución de containers como usuarios no root.
+Conceder privilegios de root a los contenedores debilita la seguridad. Para proteger las imágenes, se pueden analizar vulnerabilidades, usar registros de confianza, firmar y verificar imágenes, aplicar el principio de privilegio mínimo, eliminar paquetes innecesarios y ejecutar los contenedores sin privilegios de root.
 </details>
 
-9. ¿Cuál es el propósito principal de Audit Logging en Kubernetes?
-   - A) Recopilar logs de pod
-   - B) Registrar solicitudes al API server
-   - C) Monitorear el estado de node
-   - D) Analizar tráfico de red
+9. ¿Cuál es la función principal del registro de auditoría en Kubernetes?
+   - A) Recopilar los registros de los pods
+   - B) Registrar las solicitudes al servidor de API
+   - C) Supervisar el estado de los nodos
+   - D) Analizar el tráfico de red
    
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Registrar solicitudes al API server**
+**Respuesta: B) Registrar las solicitudes al servidor de API**
 
 **Explicación:**
-Audit logging es un mecanismo que registra solicitudes al Kubernetes API server. Esto permite rastrear quién hizo qué en el cluster, lo cual es útil para la investigación de incidentes de seguridad, requisitos de cumplimiento y troubleshooting. Los audit logs pueden incluir información como la hora de la solicitud, el usuario, el contenido de la solicitud y la respuesta.
+El registro de auditoría guarda las solicitudes dirigidas al servidor de API de Kubernetes. Permite rastrear quién hizo qué en el clúster y resulta útil para investigar incidentes de seguridad, cumplir requisitos y solucionar problemas. Los registros pueden incluir la hora, el usuario, el contenido de la solicitud y la respuesta.
 </details>
 
-10. ¿Cuál NO es una característica de los containers privilegiados en Kubernetes?
-    - A) Acceso a todos los dispositivos del host
-    - B) Uso del network stack del host
-    - C) Capacidad de cargar módulos del kernel del host
-    - D) Acceso automático a recursos en otros namespaces
+10. ¿Cuál de estas opciones no es una característica de los contenedores privilegiados en Kubernetes?
+    - A) Acceder a todos los dispositivos del host
+    - B) Recibir todas las capacidades de Linux
+    - C) Poder cargar módulos del kernel del host
+    - D) Acceder automáticamente a recursos de otros namespaces
     
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Acceso automático a recursos en otros namespaces**
+**Respuesta: D) Acceder automáticamente a recursos de otros namespaces**
 
 **Explicación:**
-Los containers privilegiados pueden acceder a casi todas las capacidades del host, pero no tienen automáticamente acceso a recursos de Kubernetes en otros namespaces. El acceso entre namespaces está controlado por permisos RBAC. Los containers privilegiados pueden acceder a dispositivos del host, network stack, módulos del kernel, etc., lo que representa riesgos de seguridad significativos, por lo que deben usarse solo cuando sea absolutamente necesario.
+Los contenedores privilegiados pueden acceder a casi todas las capacidades del host, pero no obtienen automáticamente acceso a recursos de Kubernetes de otros namespaces. RBAC controla el acceso entre namespaces. `privileged: true` no establece por sí solo `hostNetwork: true`. Este modo elimina barreras importantes de aislamiento del host; si se compromete el host, pueden quedar expuestas credenciales y sortearse el aislamiento previsto. Por eso, RBAC no protege frente a una carga de trabajo privilegiada comprometida.
 </details>
 
-## Preguntas de respuesta corta
+## Preguntas de respuesta breve
 
-1. ¿Cuál es la diferencia principal entre 'Role' y 'ClusterRole' en Kubernetes RBAC?
+1. ¿Cuál es la diferencia principal entre 'Role' y 'ClusterRole' en RBAC de Kubernetes?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Role define y aplica permisos solo dentro de un namespace específico, mientras que ClusterRole se aplica a nivel de cluster y define permisos en todos los namespaces. ClusterRole también se usa para definir permisos para recursos que no pertenecen a un namespace (nodes, PVs, etc.).
+Un Role define permisos dentro de un namespace. Un ClusterRole es una definición con alcance de clúster que puede abarcar recursos con alcance de namespace o de clúster. RoleBinding puede conceder, dentro de un namespace, los permisos de un ClusterRole para recursos con alcance de namespace; ClusterRoleBinding concede permisos en todo el clúster. Definir cualquiera de los dos roles por sí solo no concede acceso a nadie.
 </details>
 
-2. Explica tres métodos para aplicar el 'principio de privilegio mínimo' en Kubernetes.
+2. Explica tres formas de aplicar el principio de privilegio mínimo en Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-1. Usar RBAC para conceder solo los permisos mínimos necesarios
-2. Ejecutar containers como usuarios no root en el pod security context
-3. Usar network policies para permitir solo la comunicación necesaria
-4. Restringir el uso de containers privilegiados
-5. Restringir las capabilities del container
-6. Aplicar el perfil Restricted de Pod Security Standards
+1. Usa RBAC para conceder solo los permisos imprescindibles
+2. Ejecuta los contenedores sin privilegios de root mediante el contexto de seguridad del pod
+3. Usa políticas de red para permitir únicamente la comunicación necesaria
+4. Limita el uso de contenedores privilegiados
+5. Limita las capacidades de los contenedores
+6. Aplica el perfil Restricted de Pod Security Standards
 
-(Solo es necesario explicar tres de los anteriores)
+(Solo es necesario explicar tres de las opciones anteriores)
 </details>
 
-3. ¿Cuál es la diferencia principal entre Secret y ConfigMap desde una perspectiva de seguridad en Kubernetes?
+3. ¿Cuál es la diferencia principal entre Secret y ConfigMap desde el punto de vista de la seguridad en Kubernetes?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Secret es para almacenar información confidencial (contraseñas, tokens, claves, etc.), mientras que ConfigMap es para almacenar datos de configuración generales. Los Secrets se almacenan codificados en Base64 (no cifrados de forma predeterminada), se pueden configurar para montarse solo en memoria y solo se referencian cuando se crean pods. Sin embargo, sin configuración adicional, ambos se almacenan en texto plano en etcd, por lo que se requieren configuraciones de cifrado de etcd para una seguridad completa.
+Secret almacena información confidencial, como contraseñas, tokens y claves; ConfigMap almacena datos de configuración generales. El campo `data` de Secret aparece codificado en Base64 en las representaciones de la API, pero eso no es cifrado. En Linux, los volúmenes completos de Secret usan almacenamiento respaldado por memoria y pueden recibir actualizaciones después de crear el pod; la aplicación debe volver a leerlos. El cifrado en reposo depende del clúster (EKS cifra los datos de la API de forma predeterminada desde la versión 1.28). Siguen siendo necesarios RBAC y limitar el acceso de los pods.
 </details>
 
-4. ¿Cuál es el propósito y beneficio de 'service account token volume projection' en Kubernetes?
+4. ¿Para qué sirve la proyección de volúmenes de tokens de cuentas de servicio y qué ventajas ofrece en Kubernetes?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Service account token volume projection proporciona características de seguridad adicionales para los service account tokens montados en pods, como límites de tiempo y restricciones de audience. Esto permite limitar la vida útil del token y garantizar que solo API servers específicos acepten el token, reduciendo el riesgo en caso de filtración del token. Además, los tokens se renuevan automáticamente, lo que evita problemas de autenticación en aplicaciones de larga duración.
+La proyección de volúmenes de tokens de cuentas de servicio añade medidas de seguridad, como limitar la duración del token y restringir su audiencia. Así, solo los servidores de API previstos aceptan el token y se reduce el riesgo si se filtra. Kubelet rota el token proyectado; la aplicación debe volver a leerlo y el servicio receptor debe comprobar su audiencia y vencimiento. La rotación por sí sola no actualiza un token que la aplicación haya almacenado en caché indefinidamente.
 </details>
 
-5. ¿Qué es 'container sandboxing' en Kubernetes y qué tecnologías se pueden usar para implementarlo?
+5. ¿Qué es el aislamiento en sandbox de contenedores en Kubernetes y qué tecnologías permiten implementarlo?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
-Container sandboxing es una técnica que mejora la seguridad al aislar los containers del sistema host y de otros containers. Las tecnologías para implementarlo incluyen:
-1. Linux namespaces y cgroups: Proporcionan aislamiento básico de containers
-2. seccomp: Restringe llamadas al sistema
-3. AppArmor/SELinux: Control de acceso obligatorio
-4. gVisor: Aislamiento adicional mediante implementación de kernel en user-space
-5. Kata Containers: Aislamiento a nivel de hardware usando VMs ligeras
-6. Firecracker: Aislamiento basado en MicroVM
+El aislamiento mediante sandbox aumenta la seguridad al separar los contenedores del sistema host y de otros contenedores. Entre las tecnologías que pueden implementarlo se incluyen:
+1. Namespaces y cgroups de Linux: proporcionan el aislamiento básico de contenedores
+2. seccomp: restringe las llamadas al sistema
+3. AppArmor/SELinux: control de acceso obligatorio
+4. gVisor: añade aislamiento mediante un kernel implementado en espacio de usuario
+5. Kata Containers: proporciona aislamiento a nivel de hardware mediante máquinas virtuales ligeras
+6. Firecracker: proporciona aislamiento mediante microVM
 
-Estas tecnologías limitan el impacto que los containers pueden tener en el sistema host y reducen el riesgo de ataques de escape de container.
+Estas tecnologías limitan el impacto de los contenedores sobre el host y reducen el riesgo de que escapen de su aislamiento.
 </details>
 
 ## Preguntas prácticas
 
-1. Crea recursos RBAC que cumplan los siguientes requisitos:
+1. Crea recursos RBAC que cumplan estos requisitos:
    - Un Role que pueda leer pods en el namespace 'monitoring'
-   - Un RoleBinding que vincule este Role a la service account 'monitoring-team'
+   - Un RoleBinding que asocie este Role con la cuenta de servicio 'monitoring-team'
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-  - apiGroups: [""]
+- apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -260,16 +260,16 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-Cómo aplicar:
+Cómo aplicarlos:
 ```bash
 kubectl apply -f monitoring-role.yaml
 kubectl apply -f monitoring-rolebinding.yaml
 ```
 </details>
 
-2. Crea una NetworkPolicy que cumpla los siguientes requisitos:
-   - Se aplica a todos los pods en el namespace 'backend'
-   - Permite tráfico entrante solo desde pods en el namespace 'frontend' en el port 8080
+2. Crea una NetworkPolicy que cumpla estos requisitos:
+   - Se aplica a todos los pods del namespace 'backend'
+   - Permite tráfico entrante en el puerto 8080 solo desde pods del namespace 'frontend'
    - Permite todo el tráfico saliente
 
 <details>
@@ -293,7 +293,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: frontend
+          kubernetes.io/metadata.name: frontend
     ports:
     - protocol: TCP
       port: 8080
@@ -301,21 +301,18 @@ spec:
   - {}  # Allow all outgoing traffic
 ```
 
-Cómo aplicar:
+Cómo aplicarlo:
 ```bash
 kubectl apply -f backend-network-policy.yaml
 ```
 
-Nota: Para que esta NetworkPolicy funcione, el namespace 'frontend' debe tener el label 'name: frontend'. Si no lo tiene, agrégalo con:
-```bash
-kubectl label namespace frontend name=frontend
-```
+La etiqueta integrada del namespace `kubernetes.io/metadata.name: frontend` selecciona el namespace `frontend` sin necesidad de una etiqueta personalizada. Otras políticas aditivas y la política de egreso del pod de origen también afectan la conectividad.
 </details>
 
-3. Crea un pod con los siguientes requisitos de security context:
-   - El container se ejecuta como UID 1000
-   - No se permite la escalada de privilegios
-   - Root filesystem de solo lectura
+3. Crea un pod que cumpla estos requisitos de contexto de seguridad:
+   - El contenedor se ejecuta con UID 1000
+   - No se permite escalar privilegios
+   - El sistema de archivos raíz es de solo lectura
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -331,37 +328,38 @@ metadata:
 spec:
   containers:
   - name: secure-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       runAsUser: 1000
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
 ```
 
-Cómo aplicar:
+Cómo aplicarlo:
 ```bash
 kubectl apply -f secure-pod.yaml
 ```
 </details>
 
-4. Crea un Secret y móntalo como volumen en un pod con los siguientes requisitos:
-   - Secret llamado 'db-credentials'
+4. Crea un Secret y móntalo como volumen en un pod con estos requisitos:
+   - El Secret se llama 'db-credentials'
    - Contiene 'username=admin' y 'password=s3cr3t'
-   - Montado en la ruta '/etc/db-credentials' en el pod
+   - Se monta en la ruta '/etc/db-credentials' del pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-Crear Secret:
+Crear el Secret:
 ```bash
 kubectl create secret generic db-credentials \
   --from-literal=username=admin \
   --from-literal=password=s3cr3t
 ```
 
-O como YAML:
+O bien, como YAML:
 ```yaml
 # db-secret.yaml
 apiVersion: v1
@@ -374,7 +372,7 @@ data:
   password: czNjcjN0  # base64 encoding of 's3cr3t'
 ```
 
-Montar en el pod:
+Montarlo en el pod:
 ```yaml
 # pod-with-secret.yaml
 apiVersion: v1
@@ -395,7 +393,7 @@ spec:
       secretName: db-credentials
 ```
 
-Cómo aplicar:
+Cómo aplicarlos:
 ```bash
 kubectl apply -f db-secret.yaml
 kubectl apply -f pod-with-secret.yaml
@@ -404,16 +402,16 @@ kubectl apply -f pod-with-secret.yaml
 
 ## Temas avanzados
 
-1. Proporciona tres ejemplos de políticas que se pueden implementar usando OPA (Open Policy Agent) Gatekeeper en Kubernetes y explícalas.
+1. Proporciona tres ejemplos de políticas que se pueden implementar con OPA (Open Policy Agent) Gatekeeper en Kubernetes y explícalos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-OPA Gatekeeper es una herramienta potente para aplicar políticas a clusters de Kubernetes. Estos son ejemplos de políticas que se pueden aplicar:
+OPA Gatekeeper permite aplicar políticas a clústeres de Kubernetes. Antes de crear estas restricciones, instala Gatekeeper y los ConstraintTemplates correspondientes de la biblioteca oficial. Los tipos de restricciones no son API integradas de Kubernetes, y permitir imágenes de ciertos registros no verifica por sí solo sus firmas. Estos son algunos ejemplos:
 
-1. **Restricción de Image Registry**: Obliga a que las images se descarguen solo desde registries aprobados, evitando el uso de images de fuentes no confiables.
+1. **Restringir los registros de imágenes**: obliga a descargar imágenes únicamente de registros aprobados para impedir el uso de imágenes de fuentes no confiables.
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sAllowedRepos
@@ -430,7 +428,7 @@ OPA Gatekeeper es una herramienta potente para aplicar políticas a clusters de 
          - "gcr.io/company/"
    ```
 
-2. **Prevenir containers privilegiados**: Prohíbe el uso de containers privilegiados para reducir riesgos de seguridad.
+2. **Impedir contenedores privilegiados**: prohíbe su uso para reducir los riesgos de seguridad.
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sPSPPrivilegedContainer
@@ -443,7 +441,7 @@ OPA Gatekeeper es una herramienta potente para aplicar políticas a clusters de 
            kinds: ["Pod"]
    ```
 
-3. **Aplicar Resource Limits**: Obliga a que todos los containers tengan limits de CPU y memoria configurados para prevenir ataques de agotamiento de recursos.
+3. **Exigir límites de recursos**: exige límites de CPU y memoria en todos los contenedores para prevenir ataques de agotamiento de recursos.
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
    kind: K8sRequiredResources
@@ -460,24 +458,24 @@ OPA Gatekeeper es una herramienta potente para aplicar políticas a clusters de 
          - memory
    ```
 
-OPA Gatekeeper también puede aplicar varias otras políticas, como exigir labels específicos en namespaces, restringir ingress hostnames, limitar tipos de volume y prevenir montajes de host path.
+OPA Gatekeeper también puede exigir etiquetas específicas en los namespaces, restringir nombres de host de Ingress, limitar tipos de volúmenes y evitar montajes de rutas del host, entre otras políticas.
 </details>
 
-2. Explica cómo implementar mTLS (mutual TLS) en Kubernetes y sus beneficios.
+2. Explica cómo implementar mTLS (TLS mutuo) en Kubernetes y cuáles son sus ventajas.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-mTLS (mutual TLS) es un método en el que tanto el client como el server se autentican mutuamente mediante certificados. Así se implementa mTLS en Kubernetes y estos son sus beneficios:
+mTLS (TLS mutuo) permite que el cliente y el servidor se autentiquen entre sí mediante certificados. A continuación se describen formas de implementarlo en Kubernetes y sus ventajas:
 
 **Métodos de implementación:**
 
-1. **Uso de Service Mesh**: Service meshes como Istio y Linkerd implementan automáticamente mTLS mediante sidecar proxies.
+1. **Usar una malla de servicios**: herramientas como Istio y Linkerd pueden aplicar mTLS mediante proxies sidecar.
    ```yaml
    # Istio example
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -487,9 +485,9 @@ mTLS (mutual TLS) es un método en el que tanto el client como el server se aute
        mode: STRICT
    ```
 
-2. **Uso con Network Policies**: Combina mTLS con network policies para permitir solo tráfico autenticado.
+2. **Combinarlo con políticas de red**: NetworkPolicy limita la conectividad de las capas L3/L4; la malla autentica los certificados. Incorpora las cargas de trabajo, exige mTLS y aplica autorización de la malla para restringir las identidades autenticadas.
 
-3. **Gestión de certificados**: Usa herramientas como cert-manager para gestionar el ciclo de vida de los certificados.
+3. **Gestionar certificados**: usa herramientas como cert-manager para administrar su ciclo de vida.
    ```yaml
    apiVersion: cert-manager.io/v1
    kind: Certificate
@@ -506,60 +504,60 @@ mTLS (mutual TLS) es un método en el que tanto el client como el server se aute
      - service.default.svc.cluster.local
    ```
 
-**Beneficios:**
+**Ventajas:**
 
-1. **Autenticación mutua**: El client y el server se autentican mutuamente, evitando ataques man-in-the-middle
-2. **Comunicación cifrada**: Todo el tráfico service-to-service está cifrado, evitando eavesdropping
-3. **Control de acceso detallado**: La identidad basada en certificados permite control de acceso detallado
-4. **Arquitectura Zero Trust**: Requiere autenticación para toda comunicación, independientemente de la ubicación en la red
-5. **Soporte de cumplimiento**: Ayuda a cumplir requisitos de cumplimiento como PCI DSS, HIPAA
+1. **Autenticación mutua**: el cliente y el servidor se autentican entre sí, lo que ayuda a prevenir ataques de intermediario.
+2. **Comunicación cifrada**: cifra el tráfico entre servicios y evita que terceros lo intercepten.
+3. **Control de acceso granular**: la identidad basada en certificados permite aplicar controles precisos.
+4. **Arquitectura de confianza cero**: exige autenticación para todas las comunicaciones, sin importar su ubicación en la red.
+5. **Apoyo al cumplimiento**: ayuda a satisfacer requisitos como PCI DSS e HIPAA.
 
-mTLS es un método importante para mejorar la seguridad de la comunicación service-to-service en arquitecturas de microservices.
+mTLS es una forma importante de proteger la comunicación entre servicios en arquitecturas de microservicios.
 </details>
 
-3. Explica métodos para mejorar la 'supply chain security' en Kubernetes.
+3. Explica cómo mejorar la seguridad de la cadena de suministro de software en Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-Los métodos para mejorar la supply chain security en Kubernetes incluyen:
+Entre las medidas para proteger la cadena de suministro de software en Kubernetes se incluyen:
 
-1. **Firma y verificación de images**:
-   - Firmar container images usando herramientas como Cosign, Notary
-   - Aplicar políticas para garantizar que solo se desplieguen images firmadas (por ejemplo, OPA Gatekeeper, Kyverno)
+1. **Firma y verificación de imágenes**:
+   - Firma imágenes de contenedor con herramientas como Cosign o Notary.
+   - Aplica políticas para desplegar solo imágenes firmadas (por ejemplo, con OPA Gatekeeper o Kyverno).
    ```bash
-   cosign sign --key cosign.key docker.io/company/app:latest
+   cosign sign --key cosign.key "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
-2. **Generación y verificación de Software Bill of Materials (SBOM)**:
-   - Generar SBOMs usando herramientas como Syft, Anchore
-   - Rastrear todos los componentes de software incluidos en las images
+2. **Generación y verificación de la lista de materiales de software (SBOM)**:
+   - Genera SBOM con herramientas como Syft o Anchore.
+   - Registra todos los componentes de software incluidos en las imágenes.
    ```bash
-   syft docker.io/company/app:latest -o spdx-json > sbom.json
+   syft "${IMAGE_REF:?Set repository@sha256:digest}" -o spdx-json > sbom.json
    ```
 
-3. **Escaneo de vulnerabilidades**:
-   - Escanear images en busca de vulnerabilidades usando herramientas como Trivy, Clair
-   - Integrar el escaneo en CI/CD pipelines
+3. **Análisis de vulnerabilidades**:
+   - Analiza las imágenes con herramientas como Trivy o Clair.
+   - Integra el análisis en los pipelines de CI/CD.
    ```bash
-   trivy image docker.io/company/app:latest
+   trivy image "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
-4. **Usar Base Images mínimas**:
-   - Usar images mínimas como distroless, scratch para reducir la superficie de ataque
+4. **Usar imágenes base mínimas**:
+   - Usa imágenes como distroless o scratch para reducir la superficie de ataque.
    ```dockerfile
-   FROM gcr.io/distroless/java:11
-   COPY --from=build /app/target/app.jar /app.jar
+   FROM gcr.io/distroless/java21-debian13:nonroot
+   COPY app.jar /app.jar
    CMD ["app.jar"]
    ```
 
-5. **Aplicar Image Policies**:
-   - Aplicar políticas basadas en la antigüedad de la image, la gravedad de vulnerabilidades, el origen del registry, etc.
+5. **Aplicar políticas de imágenes**:
+   - Aplica políticas según la antigüedad de la imagen, la gravedad de sus vulnerabilidades, el registro de origen y otros criterios.
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
+   kind: K8sAllowedRepos
    metadata:
      name: trusted-images
    spec:
@@ -568,36 +566,36 @@ Los métodos para mejorar la supply chain security en Kubernetes incluyen:
          - apiGroups: [""]
            kinds: ["Pod"]
      parameters:
-       allowedRegistries:
+       repos:
          - "docker.io/company/"
          - "gcr.io/verified/"
    ```
 
-6. **Supply Chain Levels for Software Artifacts (SLSA)**:
-   - Rastrear la procedencia de la compilación
-   - Garantizar builds reproducibles
-   - Verificar la integridad del build
+6. **Niveles de garantía de la cadena de suministro de software (SLSA)**:
+   - Registra la procedencia de las compilaciones.
+   - Garantiza compilaciones reproducibles.
+   - Verifica la integridad de las compilaciones.
 
-7. **Monitoreo y auditoría continuos**:
-   - Usar herramientas de runtime security para detectar comportamiento anómalo
-   - Realizar auditorías de seguridad periódicas
+7. **Supervisión y auditoría continuas**:
+   - Usa herramientas de seguridad en tiempo de ejecución para detectar comportamientos anómalos.
+   - Realiza auditorías de seguridad periódicas.
 
-Combinar estos métodos ayuda a proteger entornos de Kubernetes contra ataques a la software supply chain.
+La combinación de estas medidas ayuda a proteger los entornos de Kubernetes frente a ataques a la cadena de suministro de software.
 </details>
 
-4. Explica el enfoque para implementar un 'zero trust security model' en Kubernetes.
+4. Explica cómo implementar un modelo de seguridad de confianza cero en Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-El zero trust security model se basa en el principio de "nunca confiar, siempre verificar". Este es el enfoque para implementar zero trust en Kubernetes:
+El modelo de confianza cero se basa en el principio «nunca confíes, verifica siempre». Este es un enfoque para implementarlo en Kubernetes:
 
-1. **Gestión detallada de identidad y acceso**:
-   - Implementar políticas RBAC sólidas
-   - Conceder los permisos mínimos necesarios a service accounts
-   - Integrar con proveedores de identidad externos (OIDC, LDAP, etc.)
+1. **Gestión granular de identidades y accesos**:
+   - Implementa políticas RBAC sólidas.
+   - Concede a las cuentas de servicio solo los permisos necesarios.
+   - Integra proveedores de identidad externos, como OIDC o LDAP.
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: Role
@@ -607,14 +605,14 @@ El zero trust security model se basa en el principio de "nunca confiar, siempre 
    rules:
    - apiGroups: [""]
      resources: ["pods"]
-     verbs: ["get", "list"]
+     verbs: ["get"]
      resourceNames: ["app-pod"]
    ```
 
 2. **Segmentación de red**:
-   - Denegar todo el tráfico de forma predeterminada
-   - Aplicar network policies que permitan solo la comunicación requerida explícitamente
-   - Implementar microsegmentación
+   - Deniega todo el tráfico de forma predeterminada.
+   - Aplica políticas de red que permitan únicamente las comunicaciones requeridas explícitamente.
+   - Implementa microsegmentación.
    ```yaml
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
@@ -627,11 +625,11 @@ El zero trust security model se basa en el principio de "nunca confiar, siempre 
      - Egress
    ```
 
-3. **Aplicar Mutual TLS (mTLS)**:
-   - Usar service mesh (Istio, Linkerd, etc.) para aplicar mTLS a toda la comunicación service-to-service
-   - Verificación de identidad de services basada en certificados
+3. **Aplicar TLS mutuo (mTLS)**:
+   - Usa una malla de servicios, como Istio o Linkerd, para aplicar mTLS a toda la comunicación entre servicios.
+   - Verifica la identidad de los servicios mediante certificados.
    ```yaml
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -642,72 +640,83 @@ El zero trust security model se basa en el principio de "nunca confiar, siempre 
    ```
 
 4. **Verificación y autenticación continuas**:
-   - Autenticación y autorización continuas para todas las solicitudes
-   - Control de acceso basado en contexto (hora, ubicación, estado del dispositivo, etc.)
-   - Aplicación dinámica de políticas usando OPA Gatekeeper o Kyverno
+   - Autentica y autoriza continuamente todas las solicitudes.
+   - Aplica control de acceso según el contexto (hora, ubicación, estado del dispositivo, etc.).
+   - Aplica políticas dinámicamente con OPA Gatekeeper o Kyverno.
 
 5. **Cifrado**:
-   - Cifrado de datos en reposo (cifrado de etcd, PVs cifrados, etc.)
-   - Cifrado de datos en tránsito (TLS, mTLS)
-   - Integración con herramientas de gestión de Secret (Vault, Sealed Secrets, etc.)
+   - Cifra los datos en reposo (cifrado de etcd, PV cifrados, etc.).
+   - Cifra los datos en tránsito mediante TLS o mTLS.
+   - Integra herramientas de gestión de secretos, como Vault o Sealed Secrets.
 
 6. **Detección y respuesta ante amenazas**:
-   - Desplegar herramientas de monitoreo de runtime security
-   - Detectar comportamiento anómalo y alertar
-   - Implementar mecanismos de respuesta automatizados
+   - Implementa herramientas de supervisión de seguridad en tiempo de ejecución.
+   - Detecta comportamientos anómalos y genera alertas.
+   - Implementa mecanismos de respuesta automatizada.
 
-7. **Configuración de workloads con privilegio mínimo**:
-   - Ejecutar containers como usuarios no root
-   - Usar filesystems de solo lectura
-   - Aplicar restricciones de security context
+7. **Configurar las cargas de trabajo con privilegio mínimo**:
+   - Ejecuta los contenedores sin privilegios de root.
+   - Usa sistemas de archivos de solo lectura.
+   - Aplica restricciones mediante el contexto de seguridad.
    ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-     readOnlyRootFilesystem: true
-     allowPrivilegeEscalation: false
+   spec:
+     securityContext:
+       runAsUser: 1000
+       runAsGroup: 3000
+       fsGroup: 2000
+       runAsNonRoot: true
+       seccompProfile:
+         type: RuntimeDefault
+     containers:
+     - name: app
+       image: busybox:1.36
+       command: ["sh", "-c", "sleep 3600"]
+       securityContext:
+         readOnlyRootFilesystem: true
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop: ["ALL"]
    ```
 
 8. **Evaluación continua de la postura de seguridad**:
-   - Escaneo regular de vulnerabilidades
-   - Pruebas de penetración y auditorías de seguridad
-   - Monitoreo de cumplimiento
+   - Analiza vulnerabilidades periódicamente.
+   - Realiza pruebas de penetración y auditorías de seguridad.
+   - Supervisa el cumplimiento.
 
-El zero trust model no es una solución única, sino un enfoque que combina múltiples capas de seguridad, basado en la verificación continua y el principio de privilegio mínimo.
+La confianza cero no es una solución única, sino un enfoque que combina varias capas de seguridad y se basa en la verificación continua y el principio de privilegio mínimo.
 </details>
 
-5. Compara y explica herramientas y tecnologías para 'runtime security' en Kubernetes.
+5. Compara y explica herramientas y tecnologías de seguridad en tiempo de ejecución para Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-Las principales herramientas y tecnologías para runtime security en Kubernetes incluyen:
+Entre las principales herramientas y tecnologías de seguridad en tiempo de ejecución para Kubernetes se incluyen:
 
 1. **Falco**:
-   - **Cómo funciona**: Monitorea llamadas al sistema para detectar comportamiento anómalo
+   - **Funcionamiento**: supervisa las llamadas al sistema para detectar comportamientos anómalos.
    - **Características**: 
-     - Opera a nivel de kernel para monitorear la actividad interna del container
-     - Reglas personalizadas para detectar diversas amenazas de seguridad
-     - Soporte de alertas y respuesta en tiempo real
+     - Opera a nivel del kernel para supervisar la actividad interna de los contenedores.
+     - Permite crear reglas para detectar diversas amenazas de seguridad.
+     - Admite alertas y respuestas en tiempo real.
    - **Regla de ejemplo**:
      ```yaml
      - rule: Terminal shell in container
        desc: A shell was spawned by a container
-       condition: container and proc.name = bash
+       condition: spawned_process and container and proc.name = bash and proc.tty != 0
        output: Shell opened in container (user=%user.name container=%container.name)
        priority: WARNING
      ```
 
 2. **Seccomp (Secure Computing Mode)**:
-   - **Cómo funciona**: Restringe las llamadas al sistema que los containers pueden usar
+   - **Funcionamiento**: restringe las llamadas al sistema que pueden realizar los contenedores.
    - **Características**:
-     - Usa una característica integrada del kernel de Linux
-     - Solo se pueden ejecutar llamadas al sistema permitidas
-     - Reduce la superficie de ataque
-   - **Ejemplo de implementación**:
+     - Usa una función integrada en el kernel de Linux.
+     - Solo permite ejecutar las llamadas al sistema autorizadas.
+     - Reduce la superficie de ataque.
+   - **Ejemplo de configuración**:
      ```yaml
      apiVersion: v1
      kind: Pod
@@ -718,31 +727,42 @@ Las principales herramientas y tecnologías para runtime security en Kubernetes 
          seccompProfile:
            type: Localhost
            localhostProfile: profiles/audit.json
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 3. **AppArmor**:
-   - **Cómo funciona**: Aplica perfiles de control de acceso por programa
+   - **Funcionamiento**: aplica perfiles de control de acceso para cada programa.
    - **Características**:
-     - Control de acceso detallado para archivos, red, capabilities, etc.
-     - Incluido de forma predeterminada en distribuciones Linux
-     - Posible aplicación de perfiles por container
-   - **Ejemplo de implementación**:
+     - Ofrece controles precisos para archivos, red, capacidades y otros recursos.
+     - Requiere un nodo Linux con AppArmor habilitado y el perfil cargado previamente.
+     - Permite aplicar perfiles por contenedor.
+   - **Ejemplo de configuración**:
      ```yaml
      apiVersion: v1
      kind: Pod
      metadata:
        name: apparmor-pod
-       annotations:
-         container.apparmor.security.beta.kubernetes.io/container1: localhost/restricted
+     spec:
+       containers:
+       - name: container1
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
+         securityContext:
+           appArmorProfile:
+             type: Localhost
+             localhostProfile: restricted
      ```
 
 4. **SELinux**:
-   - **Cómo funciona**: Aplica políticas Mandatory Access Control (MAC)
+   - **Funcionamiento**: aplica políticas de control de acceso obligatorio (MAC).
    - **Características**:
-     - Políticas de seguridad detalladas basadas en labels
-     - Soporte de estándar de seguridad de nivel militar
-     - Requiere configuración compleja
-   - **Ejemplo de implementación**:
+     - Usa políticas de seguridad granulares basadas en etiquetas.
+     - Aplica la política SELinux configurada en el host.
+     - Requiere una configuración compleja.
+   - **Ejemplo de configuración**:
      ```yaml
      apiVersion: v1
      kind: Pod
@@ -752,29 +772,33 @@ Las principales herramientas y tecnologías para runtime security en Kubernetes 
        securityContext:
          seLinuxOptions:
            level: "s0:c123,c456"
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 5. **OPA Gatekeeper**:
-   - **Cómo funciona**: Gobernanza en runtime basada en políticas
+   - **Funcionamiento**: aplica políticas durante la admisión y audita periódicamente los objetos de API; no supervisa llamadas al sistema.
    - **Características**:
-     - Definición declarativa de políticas
-     - Amplio alcance de aplicación de políticas
-     - Soporte de modo audit y enforcement
+     - Permite definir políticas de forma declarativa.
+     - Permite aplicar políticas a muchos tipos de objetos.
+     - Admite modos de auditoría y aplicación.
 
 6. **Herramientas comerciales (Aqua, Sysdig, StackRox, etc.)**:
-   - **Cómo funciona**: Proporcionan plataformas integrales de seguridad de containers
+   - **Funcionamiento**: ofrecen plataformas integrales de seguridad de contenedores.
    - **Características**:
-     - Escaneo de vulnerabilidades, protección en runtime y monitoreo de cumplimiento integrados
-     - Detección de anomalías basada en machine learning
-     - Funciones de dashboard y reportes
+     - Integran análisis de vulnerabilidades, protección en tiempo de ejecución y supervisión del cumplimiento.
+     - Detectan anomalías mediante aprendizaje automático.
+     - Incluyen paneles e informes.
 
 7. **gVisor**:
-   - **Cómo funciona**: Proporciona un kernel en user-space entre la aplicación y el kernel del host
+   - **Funcionamiento**: interpone un kernel en espacio de usuario entre la aplicación y el kernel del host.
    - **Características**:
-     - Capa de aislamiento adicional entre container y host
-     - Intercepción y emulación de llamadas al sistema
-     - Existe overhead de rendimiento
-   - **Ejemplo de implementación**:
+     - Añade una capa de aislamiento entre el contenedor y el host.
+     - Intercepta y emula llamadas al sistema.
+     - Introduce una sobrecarga de rendimiento.
+   - **Ejemplo de configuración**:
      ```yaml
      apiVersion: node.k8s.io/v1
      kind: RuntimeClass
@@ -784,18 +808,20 @@ Las principales herramientas y tecnologías para runtime security en Kubernetes 
      ```
 
 8. **Kata Containers**:
-   - **Cómo funciona**: Ejecuta containers usando VMs ligeras
+   - **Funcionamiento**: ejecuta contenedores dentro de máquinas virtuales ligeras.
    - **Características**:
-     - Aislamiento a nivel de hardware
-     - Se mantiene la compatibilidad OCI
-     - Mayor overhead que los containers normales
+     - Proporciona aislamiento a nivel de hardware.
+     - Mantiene la compatibilidad con OCI.
+     - Tiene más sobrecarga que los contenedores normales.
 
-**Comparación y criterios de selección**:
-  - **Nivel de seguridad**: Kata Containers y gVisor proporcionan el aislamiento más fuerte
-  - **Impacto en el rendimiento**: Seccomp tiene overhead mínimo; Kata Containers tiene el más alto
-  - **Complejidad de implementación**: Seccomp y AppArmor son relativamente fáciles; SELinux es complejo
-  - **Monitoreo vs prevención**: Falco es principalmente monitoreo; otros proporcionan protección preventiva
-  - **Facilidad de integración**: OPA Gatekeeper se integra estrechamente con Kubernetes
+En los nodos compatibles, el perfil seccomp de tipo Localhost debe existir en el directorio de perfiles seccomp de kubelet; un perfil de solo auditoría registra las llamadas, pero no las bloquea. AppArmor y SELinux requieren compatibilidad del host y perfiles o etiquetas configurados. Los controladores de RuntimeClass (`runsc`, `kata`) deben estar instalados y configurados en el runtime CRI, y los pods deben indicar `runtimeClassName`; crear un RuntimeClass no instala el runtime. El Dockerfile de Java presupone que `app.jar`, ya compilado y compatible, está en el contexto de compilación.
 
-Elige la combinación adecuada de herramientas según los requisitos de seguridad de tu organización, los objetivos de rendimiento y la tolerancia a la complejidad operativa.
+**Criterios de comparación y selección**:
+  - **Nivel de seguridad**: Kata Containers y gVisor añaden fronteras de aislamiento; elige según el modelo de amenazas.
+  - **Impacto en el rendimiento**: mide el arranque, la E/S, la memoria y la sobrecarga de llamadas al sistema con la carga de trabajo real.
+  - **Complejidad de implementación**: seccomp y AppArmor son relativamente sencillos; SELinux es complejo.
+  - **Supervisión frente a prevención**: Falco se centra principalmente en la supervisión; otras herramientas ofrecen protección preventiva.
+  - **Facilidad de integración**: OPA Gatekeeper se integra estrechamente con Kubernetes.
+
+Elige la combinación de herramientas que mejor se ajuste a los requisitos de seguridad, los objetivos de rendimiento y la complejidad operativa que tu organización pueda asumir.
 </details>

@@ -1,6 +1,6 @@
 # CloudWatch 指标
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 > Helm 示例：amazon-cloudwatch-observability 6.6.0。
 > 下文历史性的 4 月/7 月公告保留其实际日期。
 
@@ -406,8 +406,7 @@ service:
 ```
 
 collector 必须以配置 mount 和指向该文件的 `--config` 运行，
-其工作负载 IAM 凭证必须允许写入预期的 **Standard-class** EMF log
- group/stream，并且内存限制应与 limiter 一致。它还需要
+其工作负载 IAM 凭证必须有权写入预期的 **Standard-class** EMF 日志组及日志流，并且内存限制应与 limiter 一致。它还需要
 Kubernetes 发现 RBAC，以及访问选定目标和 AWS Logs 的网络权限。
 以下 Role 的范围限于一个被发现的 namespace；请先创建
 `amazon-cloudwatch` namespace，并将此 SA 绑定到实际 collector。

@@ -1,7 +1,7 @@
 # Istio 术语表
 
 > **已审阅版本**: Istio 1.31.0
-> **最后更新**: October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 本术语表按分组参考章节整理了与 Istio 和 Service Mesh 相关的关键术语。
 
@@ -1466,7 +1466,7 @@ kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 
 ---
 
-**最后更新**: September 13, 2026
+**最后更新**：2026 年 9 月 13 日
 
 - [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Install the Istio CNI node agent](https://istio.io/latest/docs/setup/additional-setup/cni/)

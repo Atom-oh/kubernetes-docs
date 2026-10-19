@@ -1,314 +1,139 @@
 # Guía de comparación
 
-> **Última actualización**: July 7, 2026
-> **Público objetivo**: Arquitectos, ingenieros DevOps, ingenieros de plataforma
+> **Última revisión**: 11 de septiembre de 2026
+> **Público objetivo**: Arquitectos, ingenieros de DevOps e ingenieros de plataforma
 
-Esta sección compara diversas soluciones de Service Mesh y redes, y presenta las ventajas y desventajas de cada solución, junto con los casos de uso adecuados.
+Antes de elegir una malla, compare los contratos necesarios de tráfico, identidad, plataforma y operación. El tamaño de la organización, las estrellas de funcionalidades o un porcentaje fijo de sobrecarga de recursos no determinan si una solución es adecuada. Compruebe por separado la compatibilidad de versiones y las opciones de canal de publicación; no se deducen de la comparación arquitectónica.
 
-## Tabla de contenidos
+## Contenido
 
 ### 1. [Comparación de soluciones de Service Mesh](01-service-mesh-comparison.md)
 
-Comparación de las principales soluciones de Service Mesh disponibles en entornos Kubernetes:
+La comparación detallada incluye Istio, Linkerd, Kong Mesh/Kuma y Consul Service Mesh. Al evaluar conjuntamente las funciones de red y de malla, considere también la [guía mantenida de Cilium Service Mesh](../../cilium-service-mesh/README.md).
 
-* **Istio** - Service Mesh de nivel empresarial y con abundantes funcionalidades
-* **Linkerd** - Service Mesh ligero y fácil de usar
-* **Kong Mesh** - Service Mesh universal basado en Kuma
-* **Consul Connect** - Solución de Service Mesh de HashiCorp
+Compare los planos de datos y de control, las políticas de tráfico admitidas, la identidad y el cifrado, la observabilidad, la compatibilidad con Kubernetes y VM, la topología multiclúster, el ciclo de vida y las condiciones de distribución comercial. Mida el uso de recursos con políticas y tráfico equivalentes, en lugar de asignar de antemano una clasificación intrínseca alta/media/baja.
 
-**Criterios de comparación**:
+### 2. [Istio frente a VPC Lattice](02-istio-vs-lattice.md)
 
-* Arquitectura y componentes
-* Rendimiento y uso de recursos
-* Conjunto de funcionalidades (gestión de tráfico, seguridad, observabilidad)
-* Curva de aprendizaje y complejidad operativa
-* Soporte para múltiples clústeres
-* Escalabilidad y soporte de plataformas
+Istio es una malla que se puede desplegar, con integración documentada para Kubernetes y VM. VPC Lattice es un servicio de redes de aplicaciones administrado por AWS para servicios y recursos, incluidos destinos compatibles de EC2, contenedores y Lambda. No exige que todas las aplicaciones sean sin servidor.
 
-### 2. [Istio vs VPC Lattice](02-istio-vs-lattice.md)
+Compare el comportamiento de protocolos y enrutamiento, la identidad en cada límite TLS, la conectividad regional, las responsabilidades de cada propietario y las dimensiones reales de facturación. Una red administrada no elimina las tareas operativas de la aplicación, DNS, IAM, estado de los destinos ni costos.
 
-Comparación entre Kubernetes Service Mesh (Istio) y las redes de servicios nativas de AWS (VPC Lattice):
+### 3. [Sidecar frente a Ambient](03-sidecar-vs-ambient.md)
 
-**Istio Service Mesh**:
+Esta guía incluye experimentos registrados en EKS sobre mTLS, NetworkPolicy, latencia y fallos durante despliegues. Mantenga vinculados a cada conclusión las versiones, la carga de trabajo, la ventana de medición y los resultados brutos de 503 de cada experimento. Los resultados visibles para el cliente después de los reintentos son otra medición; los reintentos pueden ocultar fallos y duplicar operaciones no idempotentes.
 
-* Service Mesh centrado en Kubernetes
-* Funcionalidades completas de gestión de tráfico y observabilidad
-* Neutral respecto a la nube
+Use esas observaciones para diseñar una prueba para la carga de trabajo prevista. No demuestran una clasificación universal de la fiabilidad de sidecars frente a waypoints ni establecen una regla obligatoria para ubicar cargas de trabajo en niveles centrales, semicentrales o periféricos.
 
-**AWS VPC Lattice**:
+## Criterios de selección
 
-* Redes de servicios nativas de AWS
-* Arquitectura serverless
-* Conectividad simplificada entre múltiples cuentas/VPC
+| Requisito | Funciones candidatas que evaluar | Evidencia necesaria |
+|---|---|---|
+| Tráfico y políticas L7 detallados | Istio; además, las funciones concretas requeridas de Linkerd/Kong/Consul/Cilium | API admitidas, comportamiento de protocolos, configuración generada y pruebas de actualización |
+| Una malla Kubernetes enfocada | Linkerd o un despliegue de Istio con alcance adecuado | Esfuerzo operativo real, ciclo de vida de identidad, cobertura funcional y mediciones con carga equivalente |
+| Redes Cilium existentes | Plano de datos eBPF de Cilium y funciones L7 basadas en proxy | Compatibilidad del kernel/CNI, funciones L7 habilitadas y requisitos separados de autenticación/cifrado |
+| Conectividad de servicios y recursos de AWS | VPC Lattice | Ruta de red/endpoints regionales, compatibilidad de destinos, contratos IAM/TLS y responsabilidades de propietarios de servicios/recursos |
+| Cargas de trabajo de VM o híbridas | Integración de VM de Istio, expansión de malla de Linkerd, modo Universal de Kong o entornos de ejecución admitidos por Consul | Identidad de carga de trabajo, DNS, accesibilidad de IP/API y limitaciones específicas del entorno de ejecución |
+| Multiclúster o multinube | Topología admitida por la malla elegida y la red externa necesaria | Límites de confianza, distribución de configuración, recuperación de datos, latencia y costos de transferencia |
+| Observabilidad profunda | La malla elegida y los backends adecuados de métricas/logs/trazas | Etiquetas reales de telemetría, propagación de trazas de la aplicación, muestreo, retención y controles de acceso |
 
-**Criterios de comparación**:
+Estas son opciones candidatas, no recomendaciones automáticas de productos. Un backend de trazado o un dashboard es una dependencia adicional que debe configurarse; ninguna malla genera una traza completa de la aplicación sin la propagación de contexto y la instrumentación necesarias.
 
-* Arquitectura y modelo de implementación
-* Funcionalidades de gestión de tráfico
-* Modelo de seguridad
-* Sobrecarga operativa
-* Estructura de costes
-* Soporte híbrido y multinube
+## Comparación rápida de arquitecturas
 
-### 3. [Guía de selección entre el modo Sidecar y Ambient](03-sidecar-vs-ambient.md)
+| Solución | Plano de datos | Consideraciones de plataforma y operación |
+|---|---|---|
+| Istio | Sidecars Envoy; Ambient usa ztunnel por nodo y waypoints Envoy opcionales | Kubernetes e integración documentada con VM; compatibilidad de funciones/topología según el modo; distribución autogestionada o de proveedor |
+| Linkerd | Proxy linkerd2-proxy escrito en Rust | Kubernetes y expansión de malla documentada a entornos no Kubernetes mediante ExternalWorkload e identidad/red compatibles; no equivale a «sin compatibilidad con VM» |
+| Kong Mesh | Proxies Envoy en el plano de datos | Modos Universal para Kubernetes y VM/bare metal; opciones autogestionadas o con plano de control global administrado, con funciones según la edición |
+| Consul Service Mesh | Sidecars Envoy con descubrimiento/plano de control de Consul | Integraciones documentadas con Kubernetes, VM y otros entornos; verifique la edición/versión y la compatibilidad del proxy elegidos |
+| Cilium | Plano de datos de red eBPF y proxies como Envoy para L7 | Verifique los componentes habilitados y la compatibilidad de la plataforma; la implementación L7 no está totalmente libre de proxies |
 
-Una guía de decisión basada en resultados de pruebas para elegir entre el modo sidecar y el modo ambient de Istio en EKS 1.36:
+Cilium 1.20.1 documenta la autenticación mutua fuera de banda como **Beta**, mediante un protocolo de enlace fuera de banda. El cifrado del tráfico requiere una configuración independiente de WireGuard/IPsec; esa función de autenticación no equivale a envolver automáticamente cada conexión de aplicación en una sesión TLS al estilo de Istio. También importan las limitaciones documentadas para Cluster Mesh y mTLS externo.
 
-* Resultados de pruebas frente a 4 requisitos: mTLS, NetworkPolicy, latencia y rollout sin tiempo de inactividad (waypoint 503)
-* Datos medidos que muestran una mayor tasa de 503 a través del waypoint ambient que del sidecar
-* Una recomendación de implementación mixta por niveles según el nivel de workload (núcleo / seminúcleo / periferia)
+Cilium 1.20.1 también proporciona una [versión beta de cifrado transparente con ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), que se selecciona con `encryption.type: ztunnel`. Proporciona mTLS TCP para cargas de trabajo inscritas por namespace; ambos extremos deben estar inscritos. Excluye ClusterMesh y los Pods que usan la red del host, y la guía publicada advierte que las políticas L4 ordinarias no funcionan en esta ruta, salvo al dirigirse al puerto HBONE 15008. Es una opción de despliegue distinta, con requisitos propios de CA y bootstrap.
 
-**Criterios de comparación**:
+La versión de hito del proyecto Linkerd y el artefacto instalado son decisiones distintas. La página oficial de publicaciones enumera Linkerd 2.20 y su versión edge correspondiente; el proyecto de código abierto publica artefactos edge, mientras que los artefactos estables provienen de proveedores. Revise las directrices de publicación, la compatibilidad con Kubernetes, las condiciones de actualización/soporte y cualquier costo de suscripción. No deduzca el artefacto o canal a partir de un enlace de documentación antiguo.
 
-* Aplicación y verificación de mTLS
-* Interacción de NetworkPolicy con el puerto HBONE
-* Tasa de 503 durante los rollouts (medida)
-* Riesgo de la política de reintentos en API no idempotentes
+### Istio y VPC Lattice
 
-## Guía de selección
+| Dimensión | Istio | VPC Lattice |
+|---|---|---|
+| Despliegue | Planos de control/datos operados por el usuario o distribución de proveedor elegida | AWS opera el servicio de red; los usuarios configuran servicios/recursos, acceso y destinos |
+| Plataforma | Integración con Kubernetes y VM, con requisitos explícitos de red/confianza | Redes de AWS con destinos de servicio y configuraciones de recursos admitidos, además de rutas de cliente documentadas |
+| Modelo de tráfico/seguridad | Enrutamiento de malla, identidad de cargas de trabajo y políticas según el modo | Contratos de listeners/reglas/destinos y políticas de autenticación del servicio; las configuraciones de recursos tienen controles distintos |
+| Operación | Ciclo de vida de proxies/plano de control, capacidad, certificados, políticas y telemetría | IAM/compartición, DNS/endpoints, estado de destinos, integración con controladores, cuotas y telemetría siguen siendo tareas del usuario |
+| Costo | Cómputo, balanceadores de carga, transferencia, almacenamiento/telemetría y soporte opcional | Dimensiones de facturación aplicables por capacidad aprovisionada/uso, además de infraestructura y operación circundantes |
+| Integración híbrida | Diseño explícito de gateway/confianza/identidad | Ruta explícita de endpoint/red regional y límite TLS/autenticación; no es federación automática de mallas entre nubes |
 
-### Criterios de selección de Service Mesh
+Se omiten las puntuaciones de funciones y las celdas de «soporte empresarial» de un proveedor: disponibilidad, licencias y soporte dependen de la distribución y el contrato reales; las integraciones mencionadas no certifican una configuración.
 
-![Diagrama de flujo de dos rutas de decisión para elegir un service mesh: una ruta que prioriza la plataforma Kubernetes y termina en Istio, Linkerd o Consul/Kong Mesh, y una ruta centrada en AWS que termina en VPC Lattice, Istio en EKS, Istio Multi-cluster o una solución regional.](../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png)
-
-### Recomendaciones de casos de uso
-
-#### Gran empresa
-
-**Recomendado**: Istio
-
-* Conjunto de funcionalidades completo
-* Control de tráfico granular
-* Seguridad sólida (Authorization Policies, mTLS)
-* Federación de múltiples clústeres
-* Ecosistema y comunidad extensos
-
-**Alternativa**: Kong Mesh (cuando se necesita un control plane universal)
-
-#### Startup / inicio rápido
-
-**Recomendado**: Linkerd
-
-* Instalación y operación sencillas
-* Baja sobrecarga de recursos
-* Curva de aprendizaje rápida
-* mTLS y métricas automáticas
-
-**Alternativa**: VPC Lattice (para arquitecturas centradas en AWS)
-
-#### Arquitectura nativa de AWS
-
-**Recomendado**: VPC Lattice
-
-* Servicio totalmente gestionado
-* Sobrecarga operativa cero
-* Integración con servicios de AWS (Lambda, ECS, EKS)
-* Conectividad sencilla entre VPC/cuentas
-
-**Alternativa**: Istio en EKS (cuando se necesitan funcionalidades más completas)
-
-#### Multinube / híbrido
-
-**Recomendado**: Istio o Consul Connect
-
-* Neutral respecto a la nube
-* Soporte para workloads de VM
-* Federación de múltiples clústeres
-* Políticas y observabilidad coherentes
-
-#### Integración de sistemas heredados
-
-**Recomendado**: Consul Connect o Kong Mesh
-
-* Soporte prioritario para workloads de VM
-* Migración gradual posible
-* Integración con Service Discovery
-* Soporte para diversas plataformas
-
-#### Requisitos estrictos de observabilidad
-
-**Recomendado**: Istio
-
-* Métricas completas (Prometheus, OpenTelemetry)
-* Trazado distribuido (Jaeger, Zipkin, Tempo)
-* Registros de acceso detallados
-* Integración con Kiali
-* Dashboards de Grafana
-
-**Alternativa**: Linkerd (para requisitos sencillos de observabilidad)
-
-## Tablas de comparación rápida
-
-### Comparación de Service Mesh
-
-| Criterios               | Istio        | Linkerd        | Kong Mesh   | Consul Connect |
-| ---------------------- | ------------ | -------------- | ----------- | -------------- |
-| **Arquitectura**       | Envoy proxy  | Linkerd2-proxy | Envoy proxy | Consul proxy   |
-| **Uso de recursos**     | Alto         | Bajo           | Medio       | Medio          |
-| **Curva de aprendizaje**     | Pronunciada        | Suave         | Media       | Media          |
-| **Riqueza de funcionalidades**   | 5/5          | 3/5            | 4/5         | 4/5            |
-| **Múltiples clústeres**      | Excelente    | Compatible      | Excelente   | Excelente      |
-| **Soporte de VM**         | Limitado      | Ninguno           | Excelente   | Excelente      |
-| **Comunidad**          | Muy grande   | Mediana         | Mediana      | Grande          |
-| **Soporte empresarial** | Google Cloud | Buoyant        | Kong        | HashiCorp      |
-
-### Comparación de Istio vs VPC Lattice
-
-| Criterios                   | Istio             | VPC Lattice                 |
-| -------------------------- | ----------------- | --------------------------- |
-| **Modelo de implementación**       | Autogestionado      | Totalmente gestionado               |
-| **Plataforma**               | Kubernetes        | AWS (EKS, ECS, EC2, Lambda) |
-| **Complejidad operativa** | Alta              | Baja                         |
-| **Riqueza de funcionalidades**       | 5/5               | 3/5                         |
-| **Control de tráfico**        | Muy granular | Básico                       |
-| **Modelo de costes**             | Basado en recursos    | Basado en el uso                 |
-| **Dependencia del proveedor**         | Baja               | Alta (AWS)                  |
-| **Multinube**            | Compatible         | Solo AWS                    |
-
-## Recursos relacionados
-
-### Documentación de Istio
-
-* [Arquitectura de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
-* [Gestión de tráfico de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/)
-* [Seguridad de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/)
-* [Observabilidad de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/)
-
-### Documentación de VPC Lattice
-
-* [Descripción general de VPC Lattice](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)
-
-### Referencias externas
-
-* [Documentación oficial de Istio](https://istio.io/latest/docs/)
-* [Documentación oficial de Linkerd](https://linkerd.io/2.15/overview/)
-* [Documentación oficial de Kong Mesh](https://docs.konghq.com/mesh/)
-* [Documentación de Consul Connect](https://www.consul.io/docs/connect)
-* [Documentación de AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/)
-
-## Guías de migración
+## Guía de migración
 
 ### De Linkerd a Istio
 
-* Cuando se necesitan más funcionalidades
-* Migración gradual: transición por namespace
-* Transición de configuración basada en anotaciones a Istio CRD
+Antes de traducir la configuración, inventaríe las API de tráfico, el comportamiento de reintentos/timeouts, la autorización, las identidades, los certificados y la telemetría. Linkerd usa CRD además de anotaciones; la migración no consiste en convertir mecánicamente anotaciones en CRD de Istio. Pruebe la coexistencia y migre por etapas un grupo de servicios o namespaces; evite solapar la captura de tráfico o inyectar dos sidecars de malla en el mismo Pod.
 
-### De Kubernetes básico a Service Mesh
+### De Kubernetes a una malla
 
-* Aumento de las necesidades de gestión de tráfico, seguridad y observabilidad
-* Implementación Canary: comenzar con algunos servicios
-* Evaluar el impacto de la inyección de sidecar
+Parta de un requisito no satisfecho: identidad de cargas de trabajo, políticas, resiliencia u observabilidad. El número de servicios por sí solo no determina la necesidad de una malla. Es posible que Services existentes, una implementación mantenida de Ingress/Gateway API, NetworkPolicy e instrumentación de la aplicación ya satisfagan el requisito. Pruebe la inyección o inscripción en Ambient, el inicio/drenaje, la aplicación de políticas y la reversión en una carga de trabajo acotada.
 
-### De VPC Lattice a Istio (o viceversa)
+### Istio y VPC Lattice
 
-* Requisitos multinube frente a preferencia por AWS nativo
-* Riqueza de funcionalidades frente a simplicidad operativa
-* Enfoque híbrido: uso simultáneo posible
+Una solución híbrida puede usar Istio dentro de un clúster y Lattice a través de una ruta de servicio configurada explícitamente. Trace cada terminación TLS y la identidad del cliente. Una solicitud autenticada mediante IAM en Lattice requiere la ruta documentada de firma/autorización; mTLS de la malla por sí solo no crea identidad SigV4 ni propagación SPIFFE de extremo a extremo. No ejecute controladores que compitan por la misma ruta, destino o recurso DNS.
 
 ## Preguntas frecuentes
 
 <details>
+<summary>¿Siempre se necesita una malla de servicios?</summary>
 
-<summary>P1: ¿Es absolutamente necesario Service Mesh?</summary>
-
-**Respuesta**: Service Mesh se recomienda en los siguientes casos:
-
-* Decenas o más microservicios
-* Necesidad de control de tráfico granular (Canary, pruebas A/B)
-* Requisitos estrictos de seguridad (mTLS, Authorization)
-* Trazado distribuido y observabilidad
-* Comunicación entre múltiples clústeres
-
-Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e Ingress básicos pueden ser suficientes.
+No. Determine qué requisito de red, identidad, políticas u observabilidad aún no se satisface. Un servicio pequeño puede necesitar controles de identidad estrictos, mientras que un sistema mayor quizá ya implemente los controles necesarios en otros componentes. Evalúe el beneficio frente al costo operativo y de recursos real.
 
 </details>
 
 <details>
+<summary>¿Debo elegir Istio o Linkerd?</summary>
 
-<summary>P2: ¿Debo elegir Istio o Linkerd?</summary>
-
-**Elegir Istio**:
-
-* Cuando se necesitan funcionalidades completas
-* Entornos de grandes empresas
-* Control de tráfico y políticas granulares
-* Federación de múltiples clústeres
-
-**Elegir Linkerd**:
-
-* Cuando se necesita un inicio sencillo y rápido
-* Cuando la eficiencia de recursos es importante
-* Cuando solo se necesitan funcionalidades básicas de Service Mesh
-* Cuando se busca minimizar la complejidad operativa
+Compare las funciones exactas de enrutamiento/seguridad/observabilidad, la compatibilidad de plataforma y el flujo operativo. Linkerd no se limita a funciones «básicas» ni a cargas de trabajo exclusivamente Kubernetes, e Istio tiene perfiles distintos de recursos y funciones en los modos sidecar y Ambient. Ejecute la misma carga de trabajo representativa y revise las opciones de publicación y soporte antes de decidir.
 
 </details>
 
 <details>
+<summary>¿Cuándo es VPC Lattice una opción candidata?</summary>
 
-<summary>P3: ¿Cuándo debo usar VPC Lattice?</summary>
-
-**VPC Lattice recomendado**:
-
-* Arquitectura centrada en AWS
-* Entorno mixto de EKS + ECS + Lambda
-* Estrategia que prioriza serverless
-* Minimizar la sobrecarga operativa
-* Conectividad simplificada entre múltiples VPC/cuentas
-
-**Istio recomendado** (en lugar de VPC Lattice):
-
-* Estrategia multinube
-* Necesidad de control de tráfico granular
-* Requisitos completos de observabilidad
-* Arquitectura centrada en Kubernetes
+Cuando el modelo de servicios/recursos admitido y los contratos de red/autenticación de AWS se ajusten a la aplicación. Pueden ser relevantes los destinos mixtos de contenedores, EC2 y Lambda; que la solución esté «centrada en AWS» o sea «sin servidor» no basta por sí solo. Confirme la región, la ruta del cliente, el tipo de destino, el protocolo, la identidad y las hipótesis de costo.
 
 </details>
 
 <details>
+<summary>¿Cuánta sobrecarga debo esperar?</summary>
 
-<summary>P4: ¿Cuál es la sobrecarga de rendimiento de Service Mesh?</summary>
-
-**Istio**:
-
-* Aumento de latencia: 1-3ms (promedio)
-* Sobrecarga de CPU: 5-15%
-* Memoria: +50-150MB por pod
-
-**Linkerd**:
-
-* Aumento de latencia: 0.5-1ms (promedio)
-* Sobrecarga de CPU: 3-8%
-* Memoria: +20-50MB por pod
-
-**VPC Lattice**:
-
-* Sin sobrecarga de infraestructura al ser un servicio gestionado
-* Ligero aumento de la latencia debido a un salto de red adicional
-* Se incurre en un coste basado en el uso
+No existe una cifra universal de latencia, porcentaje de CPU o memoria por Pod que se aplique a todos estos productos. Mida políticas, TLS, tráfico, concurrencia, cantidad de nodos/proxies/waypoints y comportamiento ante fallos equivalentes. Conserve las versiones originales y los datos brutos de un benchmark reproducible. Las redes administradas también añaden una ruta de procesamiento, trabajo de observabilidad y uso facturable; no tienen impacto nulo en la infraestructura.
 
 </details>
 
 <details>
+<summary>¿Pueden coexistir varias mallas?</summary>
 
-<summary>P5: ¿Puedo usar varios Service Mesh simultáneamente?</summary>
-
-**Respuesta**: Técnicamente es posible, pero no se recomienda.
-
-**Problemas**:
-
-* Posibles conflictos de sidecar
-* Resolución de problemas compleja
-* Sobrecarga doble
-* Separación de responsabilidades poco clara
-
-**Casos de uso excepcionales**:
-
-* **Istio + VPC Lattice**: Istio para el interior del clúster, VPC Lattice para la conectividad entre clústeres/externa
-* **Migración gradual**: de Linkerd a Istio (transición por namespace)
+Pueden coexistir en clústeres/grupos de cargas de trabajo separados o a través de un límite de migración/híbrido explícito. Varios interceptores en el mismo Pod o ruta de red pueden entrar en conflicto. Defina la propiedad del tráfico, la traducción de confianza/identidad, la telemetría y la reversión; no dé por hecho que separar namespaces hace interoperables los sistemas.
 
 </details>
 
-***
+## Recursos relacionados
 
-**Próximos pasos**: Lea los documentos de comparación detallados y seleccione la solución más adecuada para su entorno.
+- [Arquitectura de Istio](../03-architecture.md)
+- [Gestión del tráfico](../traffic-management/README.md)
+- [Seguridad](../security/README.md)
+- [Observabilidad](../observability/README.md)
+- [VPC Lattice](../../../networking/02-vpc-lattice.md)
+- [Linkerd](../../linkerd/README.md)
+- [Service Mesh de Cilium](../../cilium-service-mesh/README.md)
+
+## Referencias oficiales
+
+- [Documentación de Istio](https://istio.io/latest/docs/) e [integración con VM](https://istio.io/latest/docs/setup/install/virtual-machine/)
+- [Descripción general de Linkerd](https://linkerd.io/docs/overview/), [expansión de malla](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) y [canales de publicación](https://linkerd.io/releases/)
+- [Kong Mesh](https://developer.konghq.com/mesh/) y su [arquitectura](https://developer.konghq.com/mesh/architecture/)
+- [Service Mesh de Consul](https://developer.hashicorp.com/consul/docs/connect)
+- [Fuente sobre la arquitectura de malla de Cilium 1.20.1](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/index.rst) y [estado de la autenticación mutua](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Componentes y responsabilidades de VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
