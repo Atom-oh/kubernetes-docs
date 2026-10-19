@@ -279,6 +279,7 @@ profiles:
 - C. 파드를 실행할 수 없는 노드 제외: 이는 "Filter" 확장 포인트의 역할입니다.
 - D. 노드에 점수 부여: 이는 "Score" 확장 포인트의 역할입니다.
 </details>
+
 ### 3. Kubernetes에서 Gang 스케줄링(Gang Scheduling)의 주요 목적은 무엇인가요?
 
 A. 파드를 특정 노드에만 배치  
@@ -418,6 +419,7 @@ extenders:
 
 [Part2](../../scheduling/02-custom-scheduler-part2.md)의 입력이 제한된 전체 핸들러를 사용합니다. 그 예제는 `bindVerb`를 생략해 `DefaultBinder`를 유지합니다. 여기서는 추가 HTTP 서버나 가짜 성공을 반환하는 바인딩 엔드포인트를 제공하지 않습니다.
 </details>
+
 ### 5. Kubernetes에서 스케줄러 프레임워크의 "PostFilter" 확장 포인트의 역할은 무엇인가요?
 
 A. 필터링 후 노드에 점수 부여  
@@ -617,6 +619,7 @@ func WeightedGPUScore(packing int64, utilization float64) (int64, error) {
 - C. 노드의 리소스 사용량이 많은 노드에 높은 점수 부여: 이는 NodeResourcesFit의 MostAllocated 전략입니다.
 - D. 노드의 리소스 제한을 설정: 이는 스케줄러 플러그인의 역할이 아니며, 노드 리소스 제한은 노드 자체의 속성입니다.
 </details>
+
 ### 7. Kubernetes에서 스케줄러의 "PreBind" 확장 포인트의 역할은 무엇인가요?
 
 A. 파드를 노드에 바인딩  
@@ -825,6 +828,7 @@ spec:
 - B. 노드의 리소스 제한 설정: 이는 노드 자체의 구성이나 kubelet의 역할입니다.
 - D. 노드의 리소스 사용 균형 유지: 이는 "NodeResourcesBalancedAllocation" 플러그인의 역할입니다.
 </details>
+
 ### 9. Kubernetes에서 스케줄러의 "InterPodAffinity" 플러그인의 주요 목적은 무엇인가요?
 
 A. 파드와 노드 간의 어피니티 규칙 처리  

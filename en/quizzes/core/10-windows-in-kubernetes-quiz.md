@@ -418,6 +418,7 @@ Considerations for resource management of Windows containers:
 
 You can monitor resource usage on Windows nodes using `kubectl top pods` and `kubectl top nodes` commands.
 </details>
+
 ## Short Answer Questions
 
 1. Explain the main steps and requirements for adding Windows nodes to a Kubernetes cluster.
