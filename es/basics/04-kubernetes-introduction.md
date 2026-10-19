@@ -3,21 +3,21 @@
 > **Versiones compatibles**: Kubernetes upstream 1.35–1.37; soporte estándar de EKS 1.34–1.37 (al 12 de octubre de 2026)
 > **Última actualización**: 16 de octubre de 2026
 
-El proyecto Kubernetes mantiene ramas de lanzamiento para las tres versiones menores más recientes (1.35–1.37). Kubernetes upstream 1.34 está en modo de mantenimiento y sigue recibiendo versiones de parche hasta el final de su vida útil, el **27 de octubre de 2026**; esa fecha es distinta de la fecha de fin del soporte de EKS de AWS. Consulta el [ciclo de vida de AWS EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) para conocer la cobertura y las fechas de EKS.
+El proyecto Kubernetes mantiene ramas de publicación para las tres versiones menores más recientes (1.35–1.37). Kubernetes 1.34, en su distribución original, está en fase de mantenimiento y recibe parches hasta el **27 de octubre de 2026**. Esa fecha difiere del fin de soporte de la versión en Amazon EKS. Consulte el [ciclo de vida de AWS EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) para comprobar las versiones cubiertas y sus fechas.
 
-Kubernetes (K8s) es una plataforma de orquestación de contenedores de código abierto que automatiza la implementación, el escalado y la administración de aplicaciones contenerizadas. Este documento explica los conceptos básicos, la arquitectura, los componentes principales y las características de Kubernetes.
+Kubernetes (K8s) es una plataforma de código abierto para orquestar contenedores. Automatiza el despliegue, el escalado y la administración de aplicaciones en contenedores. Esta guía explica sus conceptos básicos, arquitectura, componentes principales y funciones.
 
-Estos ejemplos de aprendizaje independientes se revisaron estáticamente frente a esquemas y documentación oficial. No son configuraciones de producción validadas mediante una implementación. Verifica las imágenes personalizadas, los nombres/las etiquetas, TLS, IAM/RBAC, CNI y los requisitos previos de almacenamiento en el entorno de destino, y reemplaza los marcadores de posición.
+Los ejemplos independientes de esta guía se revisaron mediante análisis estático de los esquemas y la documentación oficial; no se validaron con despliegues de producción. Antes de aplicarlos, compruebe en el entorno de destino las imágenes personalizadas, los nombres y las etiquetas, TLS, IAM/RBAC, CNI y los requisitos de almacenamiento. Sustituya también los marcadores de posición.
 
 ## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y el siguiente entorno:
+Para practicar con los ejemplos de esta guía, prepare las herramientas y el entorno siguientes:
 
 ### Herramientas necesarias
 
 * **kubectl**: herramienta de línea de comandos para interactuar con clústeres de Kubernetes
-* **Controlador de clúster local**: un motor de contenedores o controlador de VM compatible con minikube/kind; los nodos de Kubernetes usan un entorno de ejecución CRI v1.
-* **minikube** o **kind**: clúster local de Kubernetes (para desarrollo y aprendizaje)
+* **Controlador para el clúster local**: motor de contenedores o controlador de máquina virtual compatible con minikube/kind. Los nodos de Kubernetes utilizan un entorno de ejecución compatible con CRI v1.
+* **minikube** o **kind**: herramientas para crear un clúster local de Kubernetes y practicar durante el desarrollo o el aprendizaje
 
 ### Métodos de instalación
 
@@ -57,7 +57,7 @@ if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.e
 
 **Instalación de minikube**:
 
-Usa la guía oficial de inicio de minikube para elegir el binario, la suma de comprobación y el controlador correspondientes a tu sistema operativo y arquitectura. Ejecuta las instrucciones para Linux y Windows en sus respectivos shells y agrega el binario verificado a PATH. Para macOS:
+Siga la guía oficial de inicio de minikube para elegir el binario, su suma de comprobación y el controlador adecuado para su sistema operativo y arquitectura. Ejecute las instrucciones de Linux y Windows en el shell correspondiente y añada el binario verificado a PATH. En macOS:
 
 ```bash
 brew install minikube
@@ -86,28 +86,28 @@ minikube start
 
 ## ¿Qué es Kubernetes? {#what-is-kubernetes}
 
-Kubernetes significa «timonel» o «piloto» en griego, y es un sistema de código abierto que automatiza la implementación, el escalado y el funcionamiento de aplicaciones contenerizadas. Se inspiró en el sistema interno Borg de Google y se publicó como código abierto en 2014.
+Kubernetes significa «timonel» o «piloto» en griego. Este sistema de código abierto automatiza el despliegue, el escalado y la operación de aplicaciones en contenedores. Se inspiró en Borg, el sistema interno de Google, y se publicó como código abierto en 2014.
 
 ### Características principales de Kubernetes
 
-1. **Descubrimiento de servicios y balanceo de carga**: exponer contenedores externamente y distribuir el tráfico
-2. **Orquestación del almacenamiento**: montar automáticamente sistemas de almacenamiento local o en la nube
-3. **Lanzamientos y reversiones**: actualizar gradualmente las aplicaciones y admitir reversiones activadas por operadores/herramientas; un Deployment fallido no se revierte automáticamente.
-4. **Empaquetado automático**: ubicar contenedores en nodos según los requisitos de recursos
+1. **Descubrimiento de servicios y balanceo de carga**: exponer contenedores al exterior y distribuir el tráfico
+2. **Orquestación del almacenamiento**: montar automáticamente sistemas de almacenamiento locales o en la nube
+3. **Despliegues y reversiones**: actualizar aplicaciones gradualmente y permitir que un operador o una herramienta revierta los cambios; un Deployment fallido no se revierte automáticamente.
+4. **Asignación eficiente de recursos**: distribuir contenedores entre nodos según sus requisitos de recursos
 5. **Autorreparación**: reiniciar contenedores fallidos y reemplazar los que no responden
 6. **Administración de Secrets y configuración**: almacenar información confidencial y actualizar la configuración
-7. **Escalado horizontal**: escalar aplicaciones mediante comandos sencillos o una interfaz de usuario
-8. **Ejecución por lotes**: administrar cargas de trabajo por lotes y de CI
+7. **Escalado horizontal**: ajustar el tamaño de las aplicaciones mediante comandos sencillos o una interfaz de usuario
+8. **Ejecución por lotes**: administrar cargas de trabajo por lotes y de integración continua
 
 ### Problemas que resuelve Kubernetes
 
-* **Orquestación de contenedores**: administrar eficientemente cientos o miles de contenedores
-* **Alta disponibilidad**: admite un diseño de aplicaciones resiliente mediante réplicas, ubicación, sondeos y capacidad
-* **Escalabilidad**: escalado automático en función del aumento del tráfico
-* **Recuperación**: reconcilia las cargas de trabajo fallidas; la recuperación ante desastres también requiere copias de seguridad probadas y planes de restauración
-* **Eficiencia de recursos**: utilizar eficientemente los recursos de hardware
+* **Orquestación de contenedores**: administrar cientos o miles de contenedores de forma eficiente
+* **Alta disponibilidad**: facilitar aplicaciones resilientes mediante réplicas, distribución, comprobaciones de estado y capacidad suficiente
+* **Escalabilidad**: ampliar la capacidad automáticamente cuando aumenta el tráfico
+* **Recuperación**: restablecer las cargas de trabajo fallidas mediante reconciliación; la recuperación ante desastres también requiere copias de seguridad probadas y planes de restauración
+* **Eficiencia de recursos**: aprovechar los recursos de hardware de forma eficiente
 * **Configuración declarativa**: administrar la infraestructura como código
-* **Multinube y nube híbrida**: implementación y administración coherentes en diversos entornos
+* **Multinube y nube híbrida**: mantener un despliegue y una administración coherentes en distintos entornos
 
 ## Historia de Kubernetes {#history-of-kubernetes}
 
@@ -121,15 +121,15 @@ Kubernetes significa «timonel» o «piloto» en griego, y es un sistema de cód
 
 ### Origen del nombre
 
-Kubernetes (κυβερνήτης) significa «timonel» o «piloto» en griego. Esto simboliza su función de guiar las aplicaciones contenerizadas. Se utiliza la abreviatura K8s porque hay 8 caracteres entre «K» y «s».
+Kubernetes (κυβερνήτης) significa «timonel» o «piloto» en griego y alude a su papel de dirigir aplicaciones en contenedores. La abreviatura K8s sustituye por un 8 las ocho letras entre «K» y «s».
 
 ### Significado del logotipo
 
-El logotipo de Kubernetes representa un timón (la rueda de dirección de un barco) con 7 radios, que simboliza la función de Kubernetes de guiar el rumbo de las aplicaciones contenerizadas.
+El logotipo de Kubernetes representa un timón de barco con siete radios. Simboliza su función de dirigir el rumbo de las aplicaciones en contenedores.
 
 ## Arquitectura de Kubernetes {#kubernetes-architecture}
 
-Kubernetes sigue una arquitectura de nodo maestro. Los nodos maestros (plano de control) administran el clúster, y los nodos worker ejecutan las cargas de trabajo de las aplicaciones.
+Kubernetes organiza el clúster en un plano de control y nodos de trabajo. Los nodos maestros, que forman el plano de control, administran el clúster; los nodos de trabajo ejecutan las cargas de las aplicaciones.
 
 ### Componentes del plano de control (maestro)
 
@@ -152,7 +152,7 @@ Kubernetes sigue una arquitectura de nodo maestro. Los nodos maestros (plano de 
 
 ### Componentes de los nodos
 
-![Nodo worker de Kubernetes: kubelet recibe instrucciones del plano de control y controla el entorno de ejecución CRI (containerd/CRI-O, o Docker Engine mediante un adaptador externo) que ejecuta los contenedores del Pod, mientras que kube-proxy mantiene sus reglas de red.](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
+![Nodo de trabajo de Kubernetes: kubelet recibe instrucciones del plano de control y dirige el entorno de ejecución CRI (containerd/CRI-O, o Docker Engine mediante un adaptador externo), que ejecuta los contenedores del Pod. kube-proxy mantiene las reglas de red.](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-1.html)
 
@@ -162,7 +162,7 @@ Kubernetes sigue una arquitectura de nodo maestro. Los nodos maestros (plano de 
 
 ### Arquitectura completa
 
-![Clúster completo de Kubernetes: los clientes kubectl llegan a kube-apiserver, que coordina etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager, y controla kubelet, el entorno de ejecución de contenedores y kube-proxy en dos nodos worker.](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
+![Clúster completo de Kubernetes: los clientes kubectl se conectan a kube-apiserver, que coordina etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager, y dirige kubelet, el entorno de ejecución de contenedores y kube-proxy en dos nodos de trabajo.](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
@@ -192,9 +192,9 @@ etcd es un almacén de pares clave-valor coherente y de alta disponibilidad que 
 * Almacenamiento seguro de datos
 * Función de observación para supervisar los cambios
 
-### Scheduler (kube-scheduler)
+### Planificador (kube-scheduler)
 
-El scheduler es un componente del plano de control que selecciona los nodos donde se ejecutarán los pods recién creados.
+El planificador es el componente del plano de control que elige los nodos donde se ejecutarán los Pod recién creados.
 
 **Proceso de planificación**:
 
@@ -204,15 +204,15 @@ El scheduler es un componente del plano de control que selecciona los nodos dond
 
 **Consideraciones**:
 
-* Requisitos de recursos (CPU, memoria)
-* Restricciones de hardware/software/políticas
-* Especificaciones de afinidad/anti-afinidad
-* Localidad de los datos
+* Requisitos de recursos (CPU y memoria)
+* Restricciones de hardware, software y políticas
+* Reglas de afinidad y antiafinidad
+* Ubicación de los datos
 * Interferencia entre cargas de trabajo
 
-### Controller Manager (kube-controller-manager)
+### Administrador de controladores (kube-controller-manager)
 
-El controller manager es un componente del plano de control que ejecuta varios procesos de controladores.
+El administrador de controladores es el componente del plano de control que ejecuta los distintos procesos de control.
 
 **Controladores principales**:
 
@@ -226,9 +226,9 @@ El controller manager es un componente del plano de control que ejecuta varios p
 * **Controlador de StatefulSet**: administra aplicaciones con estado
 * **Controlador de PV**: administra volúmenes persistentes
 
-### Cloud Controller Manager (cloud-controller-manager)
+### Administrador de controladores de nube (cloud-controller-manager)
 
-El cloud controller manager contiene lógica de control específica de la nube. Los controladores secundarios/controladores CSI y los complementos de kubelet/nodo gestionan el aprovisionamiento, la conexión y el montaje del almacenamiento; esto no es un controlador de volúmenes de CCM.
+El administrador de controladores de nube contiene la lógica específica del proveedor de nube. Los sidecars y controladores CSI, junto con kubelet y los complementos de nodo, gestionan el aprovisionamiento, la conexión y el montaje del almacenamiento. Esas funciones no corresponden a un controlador de volúmenes de CCM.
 
 **Controladores principales**:
 
@@ -260,13 +260,13 @@ kube-proxy es un proxy de red que se ejecuta en cada nodo e implementa el concep
 
 **Modos de funcionamiento**:
 
-* **Modo nftables**: estable desde 1.33; verifica la compatibilidad del kernel y del complemento de red
-* **Modo iptables**: implementación de NAT mediante iptables de Linux (predeterminado)
-* **Modo IPVS**: obsoleto desde 1.35; planifica la migración. El modo userspace histórico se eliminó.
+* **Modo nftables**: estable desde 1.33; compruebe la compatibilidad del kernel y del complemento de red
+* **Modo iptables**: implementación de NAT mediante iptables de Linux; es el modo predeterminado
+* **Modo IPVS**: obsoleto desde 1.35; planifique la migración. El antiguo modo userspace se eliminó.
 
 ## Objetos básicos de Kubernetes {#kubernetes-basic-objects}
 
-Los objetos de Kubernetes son entidades persistentes que representan el estado del clúster. Describen las aplicaciones en ejecución, los recursos disponibles, las políticas, etc. del clúster.
+Los objetos de Kubernetes son entidades persistentes que representan el estado del clúster: las aplicaciones en ejecución, los recursos disponibles y las políticas, entre otros elementos.
 
 ### Pod
 
@@ -274,11 +274,11 @@ Un Pod es la unidad desplegable más pequeña de Kubernetes y representa un grup
 
 **Características principales**:
 
-* Tiene una dirección IP única
-* Espacio de nombres de red compartido (misma IP y espacio de puertos)
+* Dirección IP única
+* Espacio de nombres de red compartido, con la misma IP y el mismo espacio de puertos
 * Espacio de nombres IPC compartido
 * Nombre de host compartido
-* Posibilidad de comunicación localhost entre contenedores
+* Comunicación entre contenedores mediante localhost
 
 **Ejemplo de Pod**:
 
@@ -315,7 +315,7 @@ spec:
 
 ### Namespace
 
-Los Namespace ofrecen una forma de aislar grupos de recursos dentro de un mismo clúster. Esto ayuda a organizar equipos/proyectos; por sí solos, los Namespace no aplican aislamiento de red ni de autorización.
+Los Namespace permiten separar grupos de recursos dentro de un mismo clúster y organizar equipos o proyectos. Por sí solos, no imponen aislamiento de red ni restricciones de autorización.
 
 **Namespace predeterminados**:
 
@@ -380,7 +380,7 @@ metadata:
 
 ### Nodo
 
-Un nodo es una máquina worker de un clúster de Kubernetes que ejecuta pods. Puede ser una máquina física o virtual.
+Un nodo es una máquina de trabajo de un clúster de Kubernetes que ejecuta Pod. Puede ser física o virtual.
 
 **Estado del nodo**:
 
@@ -389,7 +389,7 @@ Un nodo es una máquina worker de un clúster de Kubernetes que ejecuta pods. Pu
 * **Capacidad**: CPU, memoria, cantidad máxima de pods
 * **Información**: versión del kernel, versión del entorno de ejecución de contenedores, versión de kubelet
 
-**Estado ilustrativo de un nodo (informado por el nodo/controladores, no es un manifiesto para aprovisionar nodos)**:
+**Ejemplo de estado de un nodo (lo comunican el nodo y los controladores; no es un manifiesto de aprovisionamiento)**:
 
 ```yaml
 apiVersion: v1
@@ -417,7 +417,7 @@ Los recursos de cargas de trabajo son objetos que se utilizan para administrar y
 
 ### ReplicaSet
 
-Un ReplicaSet reconcilia la cantidad deseada de objetos Pod; el estado de disponibilidad también depende de la capacidad, una configuración válida y la aplicación. Si los pods fallan o se eliminan, ReplicaSet crea automáticamente pods de reemplazo.
+Un ReplicaSet reconcilia el número de objetos Pod con la cantidad deseada. Que esos Pod estén listos también depende de la capacidad, de una configuración válida y de la aplicación. Si los Pod fallan o se eliminan, ReplicaSet crea reemplazos automáticamente.
 
 **Funciones principales**:
 
@@ -453,7 +453,7 @@ spec:
 
 ### Deployment
 
-Un Deployment añade un nivel de abstracción sobre ReplicaSets y proporciona actualizaciones declarativas para las aplicaciones. Los Deployment ofrecen funciones como actualizaciones graduales, reversiones y escalado.
+Un Deployment añade un nivel de abstracción sobre ReplicaSet y permite actualizar aplicaciones de forma declarativa. Ofrece actualizaciones graduales, reversiones y escalado.
 
 **Funciones principales**:
 
@@ -512,7 +512,7 @@ spec:
           periodSeconds: 5
 ```
 
-El ejemplo de MySQL es una única instancia persistente. StatefulSet no configura la replicación de la base de datos, la conmutación por error ni las copias de seguridad. Primero, proporciona mysql-secret/password y reemplaza el marcador de posición de StorageClass. Aumentar las réplicas por sí solo crea bases de datos independientes; la alta disponibilidad requiere una configuración de operador/replicación de base de datos probada.
+El ejemplo de MySQL utiliza una sola instancia con almacenamiento persistente. StatefulSet no configura la replicación de la base de datos, la conmutación por error ni las copias de seguridad. Prepare primero mysql-secret/password y sustituya el marcador de posición de StorageClass. Aumentar únicamente las réplicas crea bases de datos independientes; para obtener alta disponibilidad, necesita un operador de bases de datos o una configuración de replicación que haya probado.
 
 ### StatefulSet
 
@@ -589,11 +589,11 @@ spec:
           storage: 10Gi
 ```
 
-El ejemplo de Fluent Bit para Linux envía registros CRI a stdout con fines demostrativos. Excluye sus propios registros para evitar un ciclo de retroalimentación y conserva su base de datos de posiciones por separado. No lo implementes junto con otro recopilador que vuelva a publicar los mismos registros en stdout. Para producción, se necesita un destino externo y revisar las rutas del host, los permisos y las excepciones de PSS.
+El ejemplo de Fluent Bit para Linux envía los registros CRI a stdout con fines demostrativos. Excluye sus propios registros para evitar un bucle y guarda por separado la base de datos que registra la posición de lectura. No lo despliegue junto con otro recopilador que vuelva a publicar esos mismos registros en stdout. En producción, configure un destino externo y revise las rutas del host, los permisos y las excepciones de PSS.
 
 ### DaemonSet
 
-DaemonSet crea un Pod en cada nodo apto; siguen aplicándose los selectores de nodos, las taints, la capacidad y las políticas de admisión. Cuando se agregan nodos al clúster, se agregan pods automáticamente; cuando se eliminan nodos, también se eliminan los pods.
+Un DaemonSet crea un Pod en cada nodo apto, sujeto a los selectores de nodo, las taints, la capacidad y las políticas de admisión. Añade Pod cuando se incorporan nodos al clúster y los retira cuando se eliminan esos nodos.
 
 **Casos de uso principales**:
 
@@ -698,8 +698,8 @@ Job crea uno o más pods y continúa la ejecución hasta que finaliza correctame
 
 * Ejecución de tareas puntuales
 * Ejecución paralela de tareas
-* Seguimiento de finalizaciones correctas; los límites de fallos/plazos aún pueden hacer que Job falle
-* Reintento en caso de fallo
+* Seguimiento de ejecuciones completadas correctamente; el Job puede fallar si supera los límites de reintentos o de tiempo
+* Reintentos tras un fallo
 
 **Ejemplo de Job**:
 
@@ -721,7 +721,7 @@ spec:
       restartPolicy: Never
 ```
 
-Los Job pueden fallar debido a los límites de reintentos/plazo y pueden ejecutar el mismo trabajo de nuevo, por lo que las tareas deben ser idempotentes. La programación de CronJob no garantiza exactamente una ejecución; Forbid solo controla la superposición de Job de ese CronJob.
+Los Job pueden fallar al superar sus límites de reintentos o de tiempo, y pueden repetir el mismo trabajo. Por ello, las tareas deben ser idempotentes. CronJob no garantiza que cada tarea se ejecute exactamente una vez; Forbid solo evita que se solapen los Job del mismo CronJob.
 
 ### CronJob
 
@@ -762,7 +762,7 @@ spec:
 
 ## Servicios y redes de Kubernetes {#kubernetes-services-and-networking}
 
-El modelo de red de Kubernetes parte de la premisa de que un CNI compatible proporciona la red de los Pod; la capacidad de enrutamiento está sujeta a NetworkPolicy, los firewalls y la topología. Los Service proporcionan endpoints estables para conjuntos de pods.
+En Kubernetes, un CNI compatible proporciona la red de los Pod. La conectividad depende de NetworkPolicy, los firewalls y la topología. Los Service ofrecen puntos de acceso estables a conjuntos de Pod.
 
 ### Service
 
@@ -775,7 +775,7 @@ Un Service proporciona un único endpoint y balanceo de carga para un conjunto d
 * **LoadBalancer**: accesible externamente mediante el balanceador de carga del proveedor de nube
 * **ExternalName**: crea un registro CNAME para un servicio externo
 
-![El diagrama ilustra el acceso externo mediante los Service NodePort y LoadBalancer; también son posibles otros puntos de entrada, como Ingress/Gateway; un Service ClusterIP permanece interno, y los tres tipos de Service balancean las solicitudes al puerto 80 hacia los mismos pods (Pod 1, 2, 3).](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
+![Acceso externo mediante Service NodePort y LoadBalancer, con otros puntos de entrada posibles como Ingress/Gateway. ClusterIP ofrece acceso interno. Los tres tipos de Service distribuyen las solicitudes al puerto 80 entre los mismos Pod (Pod 1, 2, 3).](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-3.html)
 
@@ -812,7 +812,7 @@ spec:
   type: NodePort
 ```
 
-Este ejemplo de AWS requiere AWS Load Balancer Controller y sus requisitos previos de IAM/red. EKS Auto Mode utiliza un loadBalancerClass distinto; los clústeres locales requieren su propia implementación de LoadBalancer.
+Este ejemplo de AWS requiere instalar AWS Load Balancer Controller y configurar sus requisitos de IAM y red. EKS Auto Mode utiliza otro loadBalancerClass. Los clústeres locales necesitan su propia implementación de LoadBalancer.
 
 **Ejemplo de Service LoadBalancer**:
 
@@ -834,7 +834,7 @@ spec:
   loadBalancerClass: service.k8s.aws/nlb
 ```
 
-Este ejemplo requiere Traefik instalado, su IngressClass traefik, los Service app1/app2 y el Secret TLS. Las rutas /app1 y /app2 se conservan y deben ser atendidas por los backends. Un recurso Ingress no instala un controlador.
+Para este ejemplo, instale Traefik y prepare su IngressClass traefik, los Service app1/app2 y el Secret TLS. Las rutas /app1 y /app2 se conservan al enviar las solicitudes, por lo que los servicios de destino deben atenderlas. Crear un recurso Ingress no instala el controlador.
 
 ### Ingress
 
@@ -842,7 +842,7 @@ Ingress es un objeto de API que administra el enrutamiento HTTP y HTTPS desde fu
 
 **Controladores Ingress**:
 
-* **ingress-nginx (retirado en marzo de 2026)**: controlador comunitario histórico; elige un controlador con mantenimiento activo para instalaciones nuevas. F5 NGINX Ingress Controller es un proyecto independiente.
+* **ingress-nginx (retirado en marzo de 2026)**: antiguo controlador comunitario; elija un controlador con mantenimiento activo para instalaciones nuevas. F5 NGINX Ingress Controller es un proyecto independiente.
 * **AWS Load Balancer Controller**: controlador de Ingress basado en Application Load Balancer de AWS
 * **Traefik**: enrutador perimetral nativo de la nube
 * **Istio Ingress**: Ingress basado en una malla de servicios
@@ -882,7 +882,7 @@ spec:
 
 ### NetworkPolicy
 
-NetworkPolicy permite controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero puedes restringirlo mediante políticas de red.&#x20;
+NetworkPolicy permite controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero puede restringirlo mediante políticas de red.&#x20;
 
 ![Las solicitudes externas pasan por los pods de frontend, API y base de datos en el Namespace predeterminado; una NetworkPolicy db-network-policy protege los pods role=db, y Prometheus en el Namespace monitoring recopila métricas de los tres niveles.](../.gitbook/assets/en-basics-04-kubernetes-introduction-4.png)
 
@@ -890,10 +890,10 @@ NetworkPolicy permite controlar la comunicación entre pods. De forma predetermi
 
 **Funciones principales**:
 
-* Controlar la comunicación entre pods
+* Controlar la comunicación entre Pod
 * Controlar la comunicación entre Namespace
-* Controlar el tráfico de entrada (entrante) y de salida (saliente)
-* Filtrado basado en puertos y protocolos
+* Controlar el tráfico entrante y saliente
+* Filtrar por puerto y protocolo
 
 **Ejemplo de NetworkPolicy**:
 
@@ -943,11 +943,11 @@ spec:
       port: 53
 ```
 
-Los permisos de NetworkPolicy son aditivos. La política permite que role=api acceda al puerto 3306 de la base de datos y que app=prometheus en monitoring acceda a un exportador de base de datos instalado por separado en el puerto 9104. No permite que la base de datos se conecte a Prometheus en el puerto 9090. Adapta los selectores de salida de DNS a la configuración real de DNS del clúster/NodeLocal DNS.
+Los permisos de NetworkPolicy se suman. La política permite el acceso desde role=api al puerto 3306 de la base de datos, y desde app=prometheus en monitoring al puerto 9104 de un exportador de base de datos instalado por separado. No permite que la base de datos se conecte a Prometheus en el puerto 9090. Adapte los selectores de salida DNS a la configuración real de DNS del clúster o de NodeLocal DNS.
 
 ### DNS
 
-Las distribuciones de Kubernetes suelen implementar CoreDNS para el descubrimiento de servicios. Conserva la configuración administrada por la distribución al editar su ConfigMap. El modo insecure de pods que se muestra a continuación proporciona registros heredados basados en IP sin verificar la existencia del Pod; usa disabled si esos registros no son necesarios o verified si aceptas su costo adicional de observación/memoria.
+Las distribuciones de Kubernetes suelen incluir CoreDNS para el descubrimiento de servicios. Al editar su ConfigMap, conserve los ajustes que gestiona la distribución. El modo pods insecure del ejemplo genera registros heredados basados en IP sin verificar que el Pod exista. Use disabled si no necesita esos registros, o verified si acepta el consumo adicional de memoria y la observación de los Pod.
 
 **Formato de nombres DNS**:
 
@@ -1040,17 +1040,17 @@ Kubernetes ofrece varias opciones de almacenamiento para aplicaciones conteneriz
 
 ### Volume
 
-Un volume es un directorio que puede montarse en los contenedores de un pod y que conserva los datos durante el ciclo de vida del pod. Los volumes también se utilizan para compartir datos entre contenedores de un pod.
+Un volumen es un directorio que puede montarse en los contenedores de un Pod para conservar datos durante su ciclo de vida. También permite compartir datos entre los contenedores del mismo Pod.
 
-**Tipos principales de volume**:
+**Tipos principales de volumen**:
 
-* **emptyDir**: comienza como un directorio vacío y se elimina cuando se elimina el pod
-* **hostPath**: monta en el pod un directorio del sistema de archivos del nodo host
-* **configMap**: monta ConfigMap como volume
-* **secret**: monta Secret como volume
-* **persistentVolumeClaim**: monta un volumen persistente en el pod
+* **emptyDir**: comienza como un directorio vacío y se elimina al eliminar el Pod
+* **hostPath**: monta en el Pod un directorio del sistema de archivos del nodo host
+* **configMap**: monta ConfigMap como volumen
+* **secret**: monta Secret como volumen
+* **persistentVolumeClaim**: monta un volumen persistente en el Pod
 
-**Ejemplo de volume emptyDir**:
+**Ejemplo de volumen emptyDir**:
 
 ```yaml
 apiVersion: v1
@@ -1080,7 +1080,7 @@ PersistentVolume es un objeto de API que representa un recurso de almacenamiento
 * **ReadWriteMany (RWX)**: puede montarse con acceso de lectura/escritura desde varios nodos
 * **ReadWriteOncePod (RWOP)**: acceso de un único Pod para volúmenes CSI compatibles; RWO por sí solo sigue permitiendo varios Pod en el mismo nodo
 
-El controlador CSI de EBS y los permisos de IAM deben estar instalados previamente. Usa un ID de volumen existente y su zona de disponibilidad real; nunca reutilices un volumen que siga en uso en otro lugar. Estos ejemplos de almacenamiento son específicos de AWS; los clústeres locales necesitan su propio aprovisionador.
+Instale previamente el controlador CSI de EBS y configure los permisos de IAM. Utilice un ID de volumen existente y su zona de disponibilidad real; no reutilice un volumen que siga en uso en otro lugar. Estos ejemplos de almacenamiento son específicos de AWS. Para un clúster local, prepare su propio aprovisionador.
 
 **Ejemplo de PersistentVolume**:
 
@@ -1152,7 +1152,7 @@ spec:
 
 ### StorageClass
 
-StorageClass describe las «clases» de almacenamiento que proporcionan los administradores. Se pueden ofrecer distintos niveles de calidad de servicio, políticas de copia de seguridad o políticas arbitrarias determinadas por los administradores del clúster.
+StorageClass describe las «clases» de almacenamiento que ofrecen los administradores del clúster. Cada clase puede tener distintos niveles de servicio, políticas de copia de seguridad u otras políticas que los administradores definan.
 
 **Ejemplo de StorageClass**:
 
@@ -1242,7 +1242,7 @@ data:
   max-connections: "100"
 ```
 
-Los valores de entorno no se actualizan automáticamente; vuelve a crear los Pod después de los cambios. Las actualizaciones de los volumes son eventuales y requieren que la aplicación se recargue; los montajes subPath no reciben actualizaciones.
+Los valores de las variables de entorno no se actualizan automáticamente; vuelva a crear los Pod después de cambiarlos. Los cambios en volúmenes se propagan con cierto retraso y requieren que la aplicación recargue la configuración. Los montajes subPath no reciben esas actualizaciones.
 
 **Ejemplo de Pod que usa ConfigMap**:
 
@@ -1284,7 +1284,7 @@ Secret es un objeto de API que almacena información confidencial, como contrase
 * **kubernetes.io/ssh-auth**: credenciales para autenticación SSH
 * **kubernetes.io/tls**: datos para TLS de cliente o servidor
 
-El campo data usa codificación base64, no cifrado. Protege los Secret con RBAC y un cifrado en reposo adecuado para el clúster; EKS cifra de forma predeterminada todos los datos de la API de Kubernetes para las versiones 1.28 y posteriores. Los valores siguientes son solo demostrativos y deben reemplazarse.
+El campo data utiliza codificación base64, no cifrado. Proteja los Secret con RBAC y el cifrado en reposo adecuado para el clúster. EKS cifra de forma predeterminada todos los datos de la API de Kubernetes en las versiones 1.28 y posteriores. Sustituya los valores de demostración del ejemplo.
 
 **Ejemplo de Secret**:
 
@@ -1330,7 +1330,7 @@ RBAC es un mecanismo para controlar el acceso a la API de Kubernetes. Otorga per
 **Objetos principales de RBAC**:
 
 * **Role**: define un conjunto de permisos dentro de un Namespace
-* **ClusterRole**: reglas reutilizables para recursos del clúster o con ámbito de Namespace; el binding determina su ámbito efectivo
+* **ClusterRole**: define reglas reutilizables para recursos de ámbito de clúster o de Namespace; la vinculación determina dónde se aplican
 * **RoleBinding**: vincula un rol a usuarios, grupos o cuentas de servicio
 * **ClusterRoleBinding**: vincula un rol de clúster a usuarios, grupos o cuentas de servicio
 
@@ -1396,7 +1396,7 @@ spec:
 
 ### NetworkPolicy
 
-NetworkPolicy permite controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero puedes restringirlo mediante políticas de red.
+NetworkPolicy permite controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero puede restringirlo mediante políticas de red.
 
 **Ejemplo de NetworkPolicy**:
 
@@ -1498,7 +1498,7 @@ metadata:
 
 ## Kubernetes frente a Amazon EKS {#kubernetes-vs-amazon-eks}
 
-Amazon EKS (Elastic Kubernetes Service) es un servicio de Kubernetes administrado que proporciona AWS. EKS expone la API estándar de Kubernetes con integraciones de AWS. La comparación siguiente presupone grupos de nodos EC2 convencionales; las responsabilidades y las funciones compatibles varían en Auto Mode, Fargate y Hybrid Nodes.
+Amazon EKS (Elastic Kubernetes Service) es el servicio de Kubernetes administrado de AWS. Expone la API estándar de Kubernetes y ofrece integraciones con AWS. Esta comparación se refiere a grupos de nodos EC2 convencionales. Las responsabilidades y las funciones admitidas difieren en Auto Mode, Fargate y Hybrid Nodes.
 
 ### Diferencias principales
 
@@ -1607,9 +1607,9 @@ Docker Desktop ofrece una función para ejecutar Kubernetes fácilmente en Mac y
 
 **Configuración**:
 
-1. Instala Docker Desktop
-2. Settings > Kubernetes > marca "Enable Kubernetes"
-3. Haz clic en "Apply & Restart"
+1. Instale Docker Desktop
+2. En Settings > Kubernetes, marque "Enable Kubernetes"
+3. Haga clic en "Apply & Restart"
 
 ### AWS EKS
 
@@ -1642,18 +1642,18 @@ kubectl get nodes
 
 #### Crear un clúster de EKS con la consola de administración de AWS
 
-También puedes crear clústeres de EKS mediante la consola de administración de AWS.
+También puede crear clústeres de EKS mediante la consola de administración de AWS.
 
 **Pasos**:
 
-1. Inicia sesión en la consola de administración de AWS
-2. Ve al servicio EKS
-3. Haz clic en "Create cluster"
-4. Configura el nombre del clúster, el rol de IAM, la VPC y las subredes
-5. Configura los grupos de seguridad
-6. Configura las opciones de registro
-7. Crea el clúster
-8. Agrega grupos de nodos
+1. Inicie sesión en la consola de administración de AWS
+2. Abra el servicio EKS
+3. Haga clic en "Create cluster"
+4. Configure el nombre del clúster, el rol de IAM, la VPC y las subredes
+5. Configure los grupos de seguridad
+6. Configure las opciones de registro
+7. Cree el clúster
+8. Añada los grupos de nodos
 
 ### Instalación y configuración de kubectl
 
@@ -1722,7 +1722,7 @@ kubectl exec -it <pod-name> -- /bin/bash
 
 ### Uso de la interfaz de Headlamp
 
-Kubernetes Dashboard está archivado y ya no se mantiene. Usa Headlamp con una identidad limitada por el RBAC existente. El ejemplo de Helm desactiva la vinculación automática de cluster-admin y no habilita el modo inseguro de token de ServiceAccount compartido. Un administrador puede otorgar permisos de ámbito limitado por separado.
+Kubernetes Dashboard está archivado y carece de mantenimiento. Utilice Headlamp con una identidad cuyos permisos estén limitados por el RBAC existente. El ejemplo de Helm desactiva la vinculación automática de cluster-admin y el modo inseguro que utiliza un token compartido de ServiceAccount. Un administrador puede conceder por separado los permisos limitados que hagan falta.
 
 ```bash
 helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
@@ -1735,17 +1735,17 @@ helm upgrade --install headlamp headlamp/headlamp \
 kubectl -n kube-system port-forward service/headlamp 8080:80
 ```
 
-Abre `http://localhost:8080` localmente y sigue el flujo de inicio de sesión de la versión instalada de Headlamp. Para el Ingress público, se necesitan TLS y autenticación configurados por separado.
+Abra `http://localhost:8080` desde su equipo y siga el procedimiento de inicio de sesión de la versión instalada de Headlamp. Si expone la interfaz mediante Ingress público, configure TLS y autenticación por separado.
 
 ## Conclusión
 
-Kubernetes es una plataforma potente que automatiza la implementación, el escalado y la administración de aplicaciones contenerizadas. A continuación, se resumen los contenidos principales abordados en este documento:
+Kubernetes automatiza el despliegue, el escalado y la administración de aplicaciones en contenedores. Esta guía ha presentado los conceptos siguientes:
 
 ### Arquitectura básica
 
-* **Plano de control**: cerebro del clúster (API Server, etcd, Scheduler, Controller Manager)
-* **Nodos worker**: nodos que ejecutan las aplicaciones (kubelet, kube-proxy, entorno de ejecución de contenedores)
-* **Configuración declarativa**: definir el estado deseado para que Kubernetes ajuste el estado actual al estado deseado
+* **Plano de control**: coordina el clúster mediante API Server, etcd, Scheduler y Controller Manager
+* **Nodos de trabajo**: ejecutan las aplicaciones mediante kubelet, kube-proxy y el entorno de ejecución de contenedores
+* **Configuración declarativa**: define el estado deseado para que Kubernetes ajuste el estado actual
 
 ### Objetos y recursos principales
 
@@ -1759,16 +1759,16 @@ Kubernetes es una plataforma potente que automatiza la implementación, el escal
 
 **Paso 1: crear un entorno local**
 
-* Crea un clúster local con minikube o kind
-* Aprende los comandos de kubectl
-* Practica con objetos básicos (Pod, Deployment, Service)
+* Cree un clúster local con minikube o kind
+* Aprenda los comandos de kubectl
+* Practique con objetos básicos: Pod, Deployment y Service
 
 **Paso 2: dominar los conceptos básicos**
 
-* Comprende y practica con los recursos de cargas de trabajo
-* Administración de la configuración con ConfigMap y Secret
-* Configura las redes con Service e Ingress
-* Administra el almacenamiento con PV y PVC
+* Comprenda los recursos de cargas de trabajo y practique con ellos
+* Administre la configuración con ConfigMap y Secret
+* Configure las redes con Service e Ingress
+* Administre el almacenamiento con PV y PVC
 
 **Paso 3: aprender funciones avanzadas**
 
@@ -1779,10 +1779,10 @@ Kubernetes es una plataforma potente que automatiza la implementación, el escal
 
 **Paso 4: operaciones de producción**
 
-* Usa Amazon EKS u otro Kubernetes administrado
-* Integración con la canalización de CI/CD
-* Estrategias de recuperación ante desastres y copias de seguridad
-* Optimización de costos y administración de recursos
+* Utilice Amazon EKS u otro servicio de Kubernetes administrado
+* Integre una canalización de CI/CD
+* Prepare estrategias de recuperación ante desastres y copias de seguridad
+* Optimice los costos y administre los recursos
 
 ### Próximos pasos
 
@@ -1792,7 +1792,7 @@ Kubernetes es una plataforma potente que automatiza la implementación, el escal
 * **GitOps**: ArgoCD, Flux
 * **Refuerzo de la seguridad**: estándares de seguridad de Pod, políticas de red, OPA/Gatekeeper
 
-Kubernetes sigue evolucionando y se ha convertido en un elemento fundamental del desarrollo y las operaciones de aplicaciones nativas de la nube. Esperamos que este documento te ayude a comenzar tu recorrido con Kubernetes.
+Kubernetes sigue evolucionando y es una parte fundamental del desarrollo y la operación de aplicaciones nativas de la nube. Esta guía ofrece una base para empezar a trabajar con él.
 
 ### Recursos de aprendizaje adicionales
 
@@ -1804,7 +1804,7 @@ Kubernetes sigue evolucionando y se ha convertido en un elemento fundamental del
 
 ## Cuestionario
 
-Para poner a prueba lo que has aprendido en este capítulo, responde el [Cuestionario de introducción a Kubernetes](../quizzes/basics/04-kubernetes-introduction-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, responda el [cuestionario de introducción a Kubernetes](../quizzes/basics/04-kubernetes-introduction-quiz.md).
 
 ## Referencias
 

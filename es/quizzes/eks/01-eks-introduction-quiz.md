@@ -1,8 +1,8 @@
 # Cuestionario de introducción a EKS
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Este cuestionario evalúa su comprensión de los conceptos y las características básicos de Amazon Elastic Kubernetes Service (EKS). Abarca temas como la arquitectura de EKS, los componentes, los métodos de administración y los modelos de precios.
+Este cuestionario evalúa su comprensión de los conceptos básicos y las características principales de Amazon Elastic Kubernetes Service (EKS). Abarca temas como la arquitectura de EKS, los componentes, los métodos de administración y los modelos de precios.
 
 Para los ejemplos de API independientes, establezca `EXAMPLE_CLUSTER`, `EXAMPLE_REGION`, `EXAMPLE_CONTEXT` y las demás variables marcadas en el destino revisado. El ejemplo de IRSA requiere un `EXAMPLE_NAMESPACE` existente, un `APP_POLICY_ARN` limitado al bucket/prefijo requerido y una aplicación que use un AWS SDK compatible con IRSA. Los dos ejercicios usan variables `EKS_INTRO_*` separadas para su clúster dedicado.
 
@@ -26,7 +26,7 @@ Beneficios principales de EKS:
 
 * **Plano de control administrado**: AWS administra los nodos del plano de control, el clúster etcd, el servidor de API, etc.
 * **Alta disponibilidad**: El plano de control regional abarca varias zonas de disponibilidad. La disponibilidad de las cargas de trabajo aún depende de las réplicas, la ubicación, la capacidad y las dependencias.
-* **Mantenimiento administrado**: AWS aplica parches al plano de control. Los operadores planifican las actualizaciones de versiones secundarias; también se producen actualizaciones automáticas conforme a la política de soporte de versiones.
+* **Mantenimiento administrado**: AWS aplica parches al plano de control. Los operadores planifican las actualizaciones de versiones menores; también se producen actualizaciones automáticas conforme a la política de soporte de versiones.
 * **Integración con servicios de AWS**: Se integra sin problemas con diversos servicios de AWS, incluidos IAM, VPC, ELB, ECR, etc.
 * **Kubernetes estándar**: Las API de Kubernetes conformes mejoran la portabilidad; las identidades, el almacenamiento y las integraciones específicos de AWS todavía requieren trabajo de migración.
 
@@ -265,7 +265,7 @@ Problemas de las demás opciones:
 
 **Respuesta: D) Tarifas de licencia de Kubernetes**
 
-**Explicación:** Las tarifas de licencia de Kubernetes no son un componente de costo de los clústeres de Amazon EKS. Kubernetes es software de código abierto administrado por Cloud Native Computing Foundation (CNCF) y es gratuito de usar bajo la licencia Apache 2.0. Por lo tanto, no existen tarifas de licencia de Kubernetes separadas al usar EKS.
+**Explicación:** Las tarifas de licencia de Kubernetes no son un componente de costo de los clústeres de Amazon EKS. Kubernetes es software de código abierto administrado por Cloud Native Computing Foundation (CNCF) y se distribuye gratuitamente bajo la licencia Apache 2.0. Por lo tanto, no existen tarifas de licencia de Kubernetes separadas al usar EKS.
 
 Los componentes de costo reales de los clústeres de Amazon EKS incluyen:
 
@@ -274,7 +274,7 @@ Los componentes de costo reales de los clústeres de Amazon EKS incluyen:
    * Un clúster de EKS es un recurso regional; una implementación multirregional necesita clústeres y cargos independientes.
    * Contabilice por separado Auto Mode, EKS Capabilities, Hybrid Nodes y los cargos de infraestructura de AWS.
 2. **Costos de instancias EC2 para nodos de trabajo**:
-   * Se incurren costos por las instancias EC2 utilizadas en grupos de nodos autoadministrados o administrados.
+   * Se generan costos por las instancias EC2 utilizadas en grupos de nodos autoadministrados o administrados.
    * Los costos varían según el tipo, tamaño, cantidad y tiempo de ejecución de la instancia.
    * Los costos pueden optimizarse mediante Reserved Instances, Savings Plans y Spot Instances.
 3. **Costos de ejecución de Pods de Fargate**:
@@ -503,7 +503,7 @@ Prácticas recomendadas de administración de almacenamiento:
 
 La ejecución de estos comandos de implementación crea recursos facturables de AWS. No se ejecutaron durante la auditoría. Prepare Bash, una versión actual de AWS CLI v2, kubectl 1.36 y Helm, y use el [procedimiento oficial de instalación de eksctl](https://eksctl.io/installation/) para comprobar la arquitectura de SO/CPU y las sumas de comprobación. El ejemplo se revisó frente al esquema de eksctl 0.230.0 y EKS 1.36; no es una configuración de producción validada.
 
-Ejecute los pasos en una sola shell y deténgase si falla un comando. Establezca `EKS_INTRO_ADMIN_CIDR` en el CIDR IPv4 externo real del cliente aprobado, normalmente `/32`. El nuevo clúster usa nodos privados/acceso de API privado más acceso de API público restringido. Una única NAT gateway es una elección de laboratorio de desarrollo, no un diseño de disponibilidad de producción. El acceso de administrador del creador del clúster es únicamente para inicializar este laboratorio dedicado.
+Ejecute los pasos en una sola sesión de shell y deténgase si falla un comando. Establezca `EKS_INTRO_ADMIN_CIDR` en el CIDR IPv4 externo real del cliente aprobado, normalmente `/32`. El nuevo clúster usa nodos privados/acceso de API privado más acceso de API público restringido. Una sola puerta de enlace NAT es una elección de laboratorio de desarrollo, no un diseño de disponibilidad de producción. El acceso administrativo de la identidad que crea el clúster es únicamente para inicializar este laboratorio dedicado.
 
 **1. Crear un clúster dedicado**
 
@@ -645,7 +645,7 @@ intro_kubectl cluster-info
 
 ```bash
 intro_kubectl create namespace intro-smoke
-intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.4-alpine
+intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.6-alpine
 intro_kubectl -n intro-smoke rollout status deployment/nginx --timeout=180s
 intro_kubectl -n intro-smoke expose deployment nginx --port=80 --type=ClusterIP
 intro_kubectl -n intro-smoke get deployment,service
@@ -674,7 +674,7 @@ Mientras se ejecuta el reenvío de puerto, abra `http://127.0.0.1:8080`; detenga
 <details>
 <summary>Mostrar solución</summary>
 
-Use el clúster dedicado y las variables de shell del ejercicio1, AWS LBC/IngressClass `alb` y un Metrics Server en buen estado. Esta demostración HTTP solo sirve respuestas ficticias públicas y restringe el acceso a ALB al CIDR de cliente seleccionado. No implementa autenticación de aplicación, TLS ni validación de carga de producción.
+Use el clúster dedicado y las variables de shell del ejercicio 1, AWS LBC/IngressClass `alb` y un Metrics Server en buen estado. Esta demostración HTTP solo sirve respuestas ficticias públicas y restringe el acceso a ALB al CIDR de cliente seleccionado. No implementa autenticación de aplicación, TLS ni validación de carga de producción.
 
 **1. Crear el espacio de nombres**
 
@@ -687,7 +687,7 @@ EKS_INTRO_WEB_UID=$(intro_kubectl create namespace web-app -o jsonpath='{.metada
 
 **2. Configurar el backend**
 
-Configure NGINX para escuchar en el puerto80 y devolver JSON ficticio para rutas que incluyen `/api`.
+Configure NGINX para escuchar en el puerto 80 y devolver JSON ficticio para rutas que incluyen `/api`.
 
 ```bash
 cat > "${EKS_INTRO_DIR:?}/backend-deployment.yaml" << 'EOF'
@@ -724,7 +724,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: backend
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80
@@ -805,7 +805,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: frontend
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80
@@ -1086,11 +1086,11 @@ Problemas de las demás opciones:
 
 **Respuesta: B) Preparar la compatibilidad/versiones actuales, después plano de control → nodos, coordinando cada actualización de complemento**
 
-Primero compruebe las versiones actuales de clúster/nodo, los insights de actualización, las API eliminadas, la compatibilidad de webhook/CRD/complementos, las IP de subred disponibles y el plan de recuperación. Lleve los nodos atrasados a la versión actual del plano de control antes de pasar a la siguiente versión secundaria.
+Primero compruebe las versiones actuales de clúster/nodo, los insights de actualización, las API eliminadas, la compatibilidad de webhook/CRD/complementos, las IP de subred disponibles y el plan de recuperación. Lleve los nodos atrasados a la versión actual del plano de control antes de pasar a la siguiente versión menor.
 
 **1. Plano de control**
 
-Avance una versión secundaria cada vez. Los kubelets actuales no pueden ser más nuevos que el servidor de API y pueden tener hasta tres versiones secundarias menos, pero EKS recomienda igualar las versiones antes y después de las actualizaciones. La desviación máxima permitida no es un objetivo de estado estable.
+Avance una versión menor cada vez. Los kubelets actuales no pueden ser más nuevos que el servidor de API y pueden tener hasta tres versiones menores menos, pero EKS recomienda igualar las versiones antes y después de las actualizaciones. La desviación máxima permitida no es un objetivo de estado estable.
 
 ```bash
 # Inspect the current version and node versions before choosing the next minor.
@@ -1138,7 +1138,7 @@ aws eks update-addon --cluster-name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_RE
 
 `PRESERVE` conserva la configuración del usuario; no garantiza compatibilidad. Compruebe PDB, capacidad disponible y terminación ordenada, y no oculte fallos con indicadores force. Valide cada etapa y prepare copias de seguridad restaurables de aplicación/datos. Las copias de seguridad del plano de control de AWS no reemplazan un plan de recuperación de datos del cliente.
 
-EKS ahora admite reversión a la versión secundaria anterior dentro de los siete días posteriores a una actualización elegible completada. Se aplican restricciones de nodos, complementos, cambios de API y política de soporte, y los datos de aplicaciones no se restauran automáticamente. Siga el [procedimiento de actualización](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) y las [condiciones de reversión](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html).
+EKS ahora admite reversión a la versión menor anterior dentro de los siete días siguientes a completar una actualización elegible. Se aplican restricciones de nodos, complementos, cambios de API y política de soporte, y los datos de aplicaciones no se restauran automáticamente. Siga el [procedimiento de actualización](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) y las [condiciones de reversión](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html).
 
 </details>
 
@@ -1297,12 +1297,12 @@ Como alternativa, asocie una política de acceso de EKS limitada al espacio de n
 
 **Respuesta: D) 14 meses de soporte estándar más 12 meses de soporte extendido de pago después del lanzamiento de EKS**
 
-Una versión secundaria de EKS recibe **14 meses de soporte estándar desde la fecha de lanzamiento de EKS**, seguidos de **12 meses de soporte extendido de pago**. El plazo no comienza en la fecha de lanzamiento upstream.
+Una versión menor de EKS recibe **14 meses de soporte estándar desde la fecha de lanzamiento de EKS**, seguidos de **12 meses de soporte extendido de pago**. El plazo no comienza en la fecha de lanzamiento upstream.
 
 * Lista oficial al 12 de octubre de 2026: soporte estándar **1.34–1.37**, soporte extendido **1.31–1.33**. EKS 1.37 estuvo disponible el 1 de octubre de 2026, después de su lanzamiento upstream el 26 de agosto.
 * El soporte extendido está habilitado de forma predeterminada. Seleccionar la política de actualización `STANDARD` lo desactiva y hace que el clúster esté sujeto a actualización automática al finalizar el soporte estándar.
 * Después de que termina el soporte extendido, AWS actualiza automáticamente el plano de control a una versión compatible. El momento exacto de ejecución no está garantizado, por lo que los operadores deben planificar las actualizaciones de forma proactiva.
-* Los nodos administrados/autoadministrados/Hybrid Nodes no se actualizan únicamente porque el plano de control se haya actualizado automáticamente. Planifique por separado el reemplazo de Pods de Fargate y las actualizaciones de complementos; los nodos de Auto Mode siguen actualizaciones administradas.
+* Los nodos administrados/autoadministrados/Hybrid Nodes no se actualizan únicamente porque el plano de control se haya actualizado automáticamente. Planifique por separado el reemplazo de Pods de Fargate y las actualizaciones de complementos; los nodos de Auto Mode siguen el proceso de actualización administrado.
 * Las versiones compatibles reciben parches de seguridad; no se admite conservar indefinidamente todas las versiones. No se pueden crear clústeres nuevos en versiones posteriores al fin de soporte.
 
 Compruebe el calendario de lanzamiento y la información de versiones en la región real. Buscar con grep los metadatos de complementos no sustituye a la lista de soporte de versiones de clúster.
@@ -1313,7 +1313,7 @@ aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION
   --query 'cluster.{version:version,upgradePolicy:upgradePolicy}' --output json
 ```
 
-Mantenga un calendario de actualización, revise las API eliminadas/la compatibilidad, pruebe en un entorno ajeno a producción, prepare recuperación de aplicación/datos y avance una versión secundaria cada vez. EKS ofrece al menos tres versiones con soporte estándar, sin una regla fija de «solo la última más tres».
+Mantenga un calendario de actualización, revise las API eliminadas/la compatibilidad, pruebe en un entorno ajeno a producción, prepare recuperación de aplicación/datos y avance una versión menor cada vez. EKS ofrece al menos tres versiones con soporte estándar, sin una regla fija de «solo la última más tres».
 
 </details>
 

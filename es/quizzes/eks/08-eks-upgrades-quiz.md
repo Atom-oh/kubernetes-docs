@@ -1,1081 +1,1124 @@
-# Cuestionario de actualizaciones de Amazon EKS
+# Cuestionario sobre actualizaciones de Amazon EKS
 
-Este cuestionario evalúa tu comprensión de los procesos de actualización de clústeres de Amazon EKS, las buenas prácticas, la resolución de problemas y las consideraciones relacionadas.
+> **Última actualización**: 12 de septiembre de 2026
+
+Este cuestionario evalúa tus conocimientos sobre los procesos de actualización de clústeres de Amazon EKS, las prácticas recomendadas, la resolución de problemas y otros aspectos relacionados.
 
 ## Descripción general del cuestionario
+
 - Planificación de actualizaciones de clústeres EKS
-- Actualizaciones del control plane
-- Actualizaciones de node groups
-- Actualizaciones de add-ons y componentes
+- Actualizaciones del plano de control
+- Actualizaciones de grupos de nodos
+- Actualizaciones de complementos y componentes
 - Pruebas y validación de actualizaciones
-- Resolución de problemas de actualización
+- Resolución de problemas durante las actualizaciones
 
 ## Preguntas de opción múltiple
 
 ### 1. ¿Cuál es el primer paso más importante al planificar una actualización de un clúster de Amazon EKS?
 
-A. Realizar inmediatamente la actualización del control plane
-B. Actualizar todas las cargas de trabajo a la vez
-C. Revisar la compatibilidad de la actualización y establecer un plan de pruebas
-D. Actualizar todos los node groups simultáneamente
+- A. Actualizar de inmediato el plano de control
+- B. Actualizar todas las cargas de trabajo a la vez
+- C. Revisar la compatibilidad y definir un plan de pruebas y recuperación
+- D. Actualizar todos los grupos de nodos simultáneamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Revisar la compatibilidad de la actualización y establecer un plan de pruebas**
+**Respuesta: C. Revisar la compatibilidad y definir un plan de pruebas y recuperación**
 
-**Explicación:**
-El primer paso más importante al planificar una actualización de un clúster de Amazon EKS es revisar la compatibilidad de la actualización y establecer un plan de pruebas. Este paso ayuda a identificar posibles problemas durante el proceso de actualización, minimizar interrupciones en las cargas de trabajo y sentar las bases para una actualización exitosa.
+Antes de elegir la secuencia de cambios, revisa la versión objetivo de EKS, los cambios de API y las dependencias de las cargas de trabajo. El inventario de compatibilidad aporta información para decidir, pero no certifica la disponibilidad.
 
-**Componentes clave de la revisión de compatibilidad de actualización y la planificación de pruebas:**
+**Revisión de compatibilidad**
 
-1. **Revisión de compatibilidad de versiones**:
-   - Comprobar los cambios de API entre versiones de Kubernetes
-   - Revisar el estado de soporte de las versiones de API y las características en uso
-   - Identificar APIs obsoletas o eliminadas
+- Inspecciona los manifiestos, las versiones de Helm, los clientes de API, las CRD, los webhooks de conversión y admisión, y los operadores. Incluye los componentes de CNI y DNS, balanceadores de carga, service mesh, almacenamiento, supervisión, registro y copias de seguridad.
+- Consulta el catálogo de versiones de clúster de EKS para ver las versiones de clúster admitidas. En cambio, `describe-addon-versions` muestra la compatibilidad de los complementos con una versión de Kubernetes.
+- Revisa EKS Upgrade Insights y los registros y métricas de auditoría disponibles durante un período representativo. `apiserver_requested_deprecated_apis` es la métrica pertinente del servidor de API cuando está expuesta. Una serie ausente, una solicitud denegada o un análisis vacío no demuestra que no haya clientes obsoletos. Insights puede conservar el uso histórico dentro de su período de observación.
+- El `.apiVersion` actual de un objeto representa la forma en que se devuelve, no necesariamente la versión de API que solicitó originalmente un cliente. Revisa la configuración desplegada, el código fuente y los consumidores en tiempo de ejecución.
 
-2. **Evaluación de compatibilidad de cargas de trabajo**:
-   - Revisar las versiones de API en los manifiestos de las aplicaciones
-   - Verificar la compatibilidad de los controllers y operators en uso
-   - Revisar la compatibilidad de Custom Resource Definition (CRD) y webhooks
+Guarda `eks-upgrade-preflight.py` de la [guía de origen](../../eks/08-eks-upgrades.md), revisa sus requisitos previos y ejecuta su inventario de solo lectura de cuenta, contexto y versión objetivo:
 
-3. **Verificación de compatibilidad de add-ons y herramientas**:
-   - Compatibilidad de versiones de CNI, CoreDNS y kube-proxy
-   - Compatibilidad de Ingress controller y service mesh
-   - Compatibilidad de herramientas de monitoreo, logging y backup
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${EXPECTED_ACCOUNT_ID:?}"
+: "${KUBE_CONTEXT:?}"; : "${TARGET_VERSION:?}"
+export CLUSTER_NAME AWS_REGION EXPECTED_ACCOUNT_ID KUBE_CONTEXT TARGET_VERSION
+umask 077
+python3 eks-upgrade-preflight.py > preflight.json
+# Review this evidence and the workload/backup/capacity plan before a separate change step.
+```
 
-4. **Establecimiento del plan de pruebas**:
-   - Pruebas de actualización en entornos que no sean de producción
-   - Planes de prueba para la funcionalidad clave de las cargas de trabajo
-   - Definición de procedimientos y criterios de rollback
+El ayudante se detiene si falla una consulta. Revisa todos los hallazgos de `preflight.json`; el script no ejecuta una actualización ni certifica la compatibilidad. Selecciona una versión menor superior a la actual que esté admitida según el catálogo vigente de AWS.
 
-**Métodos de implementación:**
+Con una versión revisada de Pluto, analiza los manifiestos renderizados, los metadatos de Helm y la configuración aplicada por última vez:
 
-1. **Revisar la ruta de actualización y la compatibilidad**:
-   ```bash
-   # Check current EKS cluster version
-   aws eks describe-cluster --name my-cluster --query "cluster.version"
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${TARGET_VERSION:?}"; : "${MANIFEST_DIR:?}"
+pluto detect-files --directory "$MANIFEST_DIR" --target-versions "k8s=v${TARGET_VERSION}.0" --output wide
+pluto detect-helm --kube-context "$KUBE_CONTEXT" --target-versions "k8s=v${TARGET_VERSION}.0" --output wide
+pluto detect-api-resources --kube-context "$KUBE_CONTEXT" --target-versions "k8s=v${TARGET_VERSION}.0" --output wide
+```
 
-   # Check available EKS versions
-   aws eks describe-addon-versions --kubernetes-version 1.28
+Un resultado distinto de cero anterior detiene este bloque de shell para que se investigue; una vez atendido, completa las comprobaciones restantes. La detección de recursos de API depende de las anotaciones almacenadas y no puede observar todas las solicitudes en tiempo de ejecución. El proyecto kube-no-trouble proporciona el binario `kubent`, no `kubectl-no-trouble`.
 
-   # Check deprecated API usage
-   kubectl get --raw /metrics | grep "deprecated_api_requests_total"
+**Ejemplos históricos de eliminación de API** (historial de migración, no versiones objetivo para las actualizaciones actuales de EKS):
 
-   # Review API versions in use
-   kubectl get deployment,statefulset,daemonset,cronjob,job -A -o json | jq '.items[].apiVersion' | sort | uniq
-   ```
+| Versión de Kubernetes | API de servicio eliminada o migración |
+| --- | --- |
+| 1.22 | Se eliminaron varias API beta, incluida Ingress `networking.k8s.io/v1beta1`; migra a las API estables y sus esquemas de campos |
+| 1.25 | PodSecurityPolicy `policy/v1beta1`: migra la aplicación de políticas. CronJob `batch/v1beta1` → `batch/v1` |
+| 1.26 | HPA `autoscaling/v2beta2` → `autoscaling/v2`; se eliminó `v1beta1` de control de flujo |
+| 1.27 | CSIStorageCapacity `storage.k8s.io/v1beta1` → `storage.k8s.io/v1` |
+| 1.29 / 1.32 | Se eliminaron, respectivamente, `v1beta2` / `v1beta3` de FlowSchema / PriorityLevelConfiguration; usa `flowcontrol.apiserver.k8s.io/v1` y migra los campos y valores predeterminados |
 
-2. **Usar herramientas de comprobación de compatibilidad de cargas de trabajo**:
-   ```bash
-   # Check deprecated API versions using pluto
-   pluto detect-helm --output wide
-   pluto detect-kubectl --output wide
+Para kubelet 1.25 y posteriores, la política upstream permite que kubelet esté hasta tres versiones menores por detrás del servidor de API, pero nunca que sea más nuevo; para versiones anteriores de kubelet, el límite es de dos versiones menores. Durante una actualización de alta disponibilidad del servidor de API, las distintas versiones de los servidores reducen ese margen. Este límite de soporte no demuestra que todas las aplicaciones o complementos funcionen. Como preparación conservadora para EKS, actualiza los nodos hasta la versión actual del plano de control antes de la siguiente actualización de este.
 
-   # Use kube-no-trouble
-   kubectl-no-trouble
-   ```
+**Ensayo y plantilla del plan**
 
-3. **Crear un clúster de prueba y probar la actualización**:
-   ```bash
-   # Create test cluster
-   eksctl create cluster \
-     --name test-upgrade \
-     --version 1.27 \
-     --region us-west-2 \
-     --nodegroup-name standard-workers \
-     --node-type m5.large \
-     --nodes 2
+Usa definiciones de infraestructura revisadas para preparar un entorno separado con redes, IAM, tipos de cómputo, datos y controladores representativos. Registra las diferencias con producción, los costos y quién se encargará de la limpieza. Empieza en desarrollo o ensayo y prueba las funciones de negocio, el escalado, la recuperación y las alertas; no ejecutes pruebas de fallos de forma incidental en producción. El antiguo ejemplo de 1.27→1.28 es histórico y no una recomendación actual de aprovisionamiento.
 
-   # Upgrade test cluster
-   eksctl upgrade cluster \
-     --name test-upgrade \
-     --version 1.28 \
-     --approve
-   ```
+```markdown
+# EKS upgrade plan: fill from evidence, not assumed results
 
-4. **Crear documentación del plan de actualización**:
-   ```markdown
-   # EKS Cluster Upgrade Plan
+- Account / Region / cluster ARN / kube context: TBD
+- Current / target minor and EKS support status: TBD
+- Node groups, Fargate, Auto Mode, hybrid nodes: inventory required
+- Add-on / controller / CRD / webhook versions and owner: TBD
+- Compatibility evidence, observation window and unresolved findings: TBD
+- Backup coverage, application consistency, restore test and RPO/RTO: TBD
+- Subnet IPs, EC2 quotas, placement, surge capacity and cost: TBD
+- Rehearsal environment and differences from production: TBD
 
-   ## Current State
-   - Cluster version: 1.27
-   - Node groups: 3 (system: 1.27, app: 1.27, batch: 1.27)
-   - Key add-ons: AWS VPC CNI 1.12.0, CoreDNS 1.8.7, kube-proxy 1.27.1
+## Ordered change gates
 
-   ## Target State
-   - Cluster version: 1.28
-   - Node groups: 3 (system: 1.28, app: 1.28, batch: 1.28)
-   - Key add-ons: AWS VPC CNI 1.13.0, CoreDNS 1.9.3, kube-proxy 1.28.1
+- [ ] Align nodes to the current control-plane version; verify supported skew
+- [ ] Complete API migrations and any required bridge add-on versions
+- [ ] Complete a representative non-production rehearsal
+- [ ] Upgrade the control plane by one minor; verify the exact update ID
+- [ ] Upgrade nodes/add-ons in their reviewed dependency order
+- [ ] Verify workloads and monitor agreed SLOs before retiring old capacity
 
-   ## Compatibility Review Results
-   - Deprecated APIs: batch/v1beta1 CronJob -> batch/v1 CronJob
-   - Add-on compatibility: All compatible
-   - Custom resources: No updates needed
+## Test coverage and evidence
 
-   ## Upgrade Steps
-   1. Upgrade and test non-production environment
-   2. Upgrade control plane
-   3. Upgrade add-ons
-   4. Sequentially upgrade node groups
-   5. Validation and monitoring
+- [ ] Deployments: create, readiness, rollout and scaling
+- [ ] StatefulSets / PVCs: write, reschedule, read and restore
+- [ ] Services, DNS, Ingress / Gateway and external dependencies
+- [ ] Jobs / CronJobs, operators, CRDs and admission webhooks
+- [ ] API latency, Pod startup, network and resource baselines
+- [ ] Controlled node/network/resource-pressure recovery in a test environment
+- [ ] Alert delivery and incident ownership
+- Result / timestamp / environment / evidence location: NOT RUN
 
-   ## Rollback Plan
-   - Rollback criteria: Critical workload failure
-   - Rollback procedure: Create new node group (previous version), migrate workloads
-   ```
+## Recovery decision
 
-**Áreas clave para la revisión de compatibilidad de actualización:**
+- Stop criteria and incident owner: TBD
+- Previous minor, upgrade completion time and 7-day rollback deadline: TBD
+- Rollback eligibility, compute-type order and add-on compatibility: TBD
+- Data restore or forward-fix procedure when version rollback is unsuitable: TBD
+```
 
-1. **Cambios de API**:
-   - Kubernetes 1.22: Se eliminaron muchas APIs beta
-   - Kubernetes 1.25: Se eliminó PodSecurityPolicy
-   - Kubernetes 1.26: Se eliminó HorizontalPodAutoscaler v2beta2
-   - Kubernetes 1.27: Cambios en las APIs FlowSchema y PriorityLevelConfiguration
-   - Kubernetes 1.28: Algunas APIs beta se eliminaron y cambiaron
+Registra las observaciones en lugar de rellenar de antemano «todo es compatible» o «no hay cambios de CRD». Revertir una versión no restaura los datos de la aplicación; la pregunta 5 explica los requisitos y el orden del cómputo. Las opciones A, B y D omiten pruebas o combinan cambios de forma tan amplia que dificultan el diagnóstico y la recuperación.
 
-2. **Compatibilidad de componentes de node**:
-   - La versión de kubelet admite hasta 2 versiones menores por detrás del control plane
-   - Se recomienda que kube-proxy coincida con la versión del control plane
-   - Verificar la compatibilidad del container runtime
+Fuentes: [guía de migración de API](https://kubernetes.io/docs/reference/using-api/deprecation-guide/), [política de desfase de versiones](https://kubernetes.io/releases/version-skew-policy/), [actualizaciones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html), [Pluto](https://pluto.docs.fairwinds.com/), [kube-no-trouble](https://github.com/doitintl/kube-no-trouble).
 
-3. **Compatibilidad de add-ons**:
-   - Compatibilidad de la versión del plugin CNI
-   - Compatibilidad de la versión de CoreDNS
-   - Compatibilidad de Ingress controller y service mesh
-
-Problemas con las otras opciones:
-- **A. Realizar inmediatamente la actualización del control plane**: Actualizar sin revisión de compatibilidad ni pruebas puede provocar problemas inesperados y un alto riesgo de interrupción de las cargas de trabajo.
-- **B. Actualizar todas las cargas de trabajo a la vez**: Este es un enfoque arriesgado que puede afectar a todo el sistema si ocurren problemas. Un enfoque por fases es más seguro.
-- **D. Actualizar todos los node groups simultáneamente**: Actualizar todos los nodes simultáneamente implica el riesgo de interrumpir todas las cargas de trabajo y dificulta el rollback si ocurren problemas.
 </details>
 
-### 2. ¿Cuál es el enfoque correcto al actualizar el control plane de un clúster de Amazon EKS?
+### 2. Después de alinear previamente los nodos, ¿cuál es el orden correcto para realizar una actualización in situ a la siguiente versión menor?
 
-A. Actualizar primero los node groups y luego actualizar el control plane
-B. Actualizar primero el control plane y luego actualizar los node groups
-C. Actualizar el control plane y los node groups simultáneamente
-D. Crear un clúster nuevo y migrar las cargas de trabajo sin actualizar
+- A. Pasar kubelet a la versión menor objetivo mientras el servidor de API sigue en la versión menor anterior
+- B. Actualizar el plano de control a la versión menor objetivo y luego actualizar en etapas revisadas los grupos de nodos que usarán esa versión
+- C. Iniciar al mismo tiempo los cambios del plano de control y de todos los nodos objetivo
+- D. Es obligatorio crear un clúster nuevo para cada actualización de versión menor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Actualizar primero el control plane y luego actualizar los node groups**
+**Respuesta: B. Actualizar el plano de control a la versión menor objetivo y luego actualizar en etapas revisadas los grupos de nodos que usarán esa versión**
 
-**Explicación:**
-El enfoque correcto al actualizar el control plane de un clúster de Amazon EKS es actualizar primero el control plane y luego actualizar los node groups. Este enfoque sigue el modelo de compatibilidad de versiones de Kubernetes y minimiza los problemas que pueden ocurrir durante el proceso de actualización.
+Llevar los nodos a la versión menor **actual** del plano de control es una preparación. Los nodos pasan a la versión menor **objetivo** después de que el plano de control la admita. EKS se actualiza una versión menor a la vez. El desfase admitido no garantiza la compatibilidad de la aplicación. Sigue los requisitos de dependencia de cada componente, incluidas las versiones puente de complementos que quizá sean necesarias antes de cambiar el plano de control.
 
-**Razones para actualizar primero el control plane:**
+**Preparación y ejecución**
 
-1. **Modelo de compatibilidad de versiones de Kubernetes**:
-   - El control plane puede estar hasta 2 versiones menores por delante de los nodes
-   - Los nodes no pueden estar por delante del control plane
-   - Este modelo garantiza la compatibilidad hacia atrás
+1. Confirma la cuenta, el contexto, el soporte de la versión actual y la objetivo, el estado del clúster y de los nodos, Insights, la capacidad de IP de las subredes y el acceso. Planifica capacidad de reemplazo y controles para las interrupciones de las cargas de trabajo.
+2. Valida las copias de seguridad y la restauración. Los usuarios de EKS no pueden ejecutar `etcdctl` en el plano de control administrado. `kubectl get all` omite muchos recursos y datos persistentes. Usa AWS Backup para EKS, Velero o copias de seguridad de aplicaciones con la configuración adecuada; prueba su cobertura y restauración.
+3. Revisa el análisis previo de la pregunta 1. Antes de esta fase de cambio independiente, guarda `eks-wait-update.py` de la [guía de origen](../../eks/08-eks-upgrades.md) para la versión objetivo revisada, sin actualizaciones que entren en conflicto.
 
-2. **Compatibilidad del API Server**:
-   - El API server de la nueva versión puede comunicarse con kubelet de una versión anterior
-   - Por el contrario, kubelet de una nueva versión puede tener problemas de compatibilidad con un API server de versión anterior
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the reviewed cluster}"
+: "${AWS_REGION:?Set the reviewed Region}"
+: "${TARGET_VERSION:?Set the next supported EKS minor version}"
+umask 077
+aws eks update-cluster-version \
+  --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$TARGET_VERSION" --output json --no-cli-pager \
+  > control-plane-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' control-plane-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID
+unset NODEGROUP_NAME ADDON_NAME
+python3 eks-wait-update.py
+```
 
-3. **Permite actualizaciones graduales**:
-   - Los node groups pueden actualizarse gradualmente después de la actualización del control plane
-   - Limita el alcance del impacto y facilita el rollback cuando ocurren problemas
+El monitor sigue exactamente esta solicitud. Solo el estado `Successful` cuenta como éxito; si hay errores, cancelación, un estado desconocido o errores de API, el procedimiento se detiene. El tiempo de espera del cliente no cancela la operación de AWS. Que el clúster esté `ACTIVE` por sí solo no demuestra que la actualización se haya completado correctamente; `aws eks wait update-successful` no es un waiter de la CLI de EKS.
 
-**Métodos de implementación:**
+Como alternativa, `eksctl upgrade cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" --version "$TARGET_VERSION"` muestra una vista previa del cambio; `--approve` lo inicia. Elige un único responsable y una vía de ejecución, en lugar de enviar cambios tanto por la CLI como por Terraform.
 
-1. **Actualización del control plane**:
-   ```bash
-   # Control plane upgrade using AWS CLI
-   aws eks update-cluster-version \
-     --name my-cluster \
-     --kubernetes-version 1.28
+**Después de que la solicitud se complete correctamente**
 
-   # Check upgrade status
-   aws eks describe-update \
-     --name my-cluster \
-     --update-id <update-id>
-   ```
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{version:version,status:status,platformVersion:platformVersion}'
+aws eks list-nodegroups --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+kubectl --context "$KUBE_CONTEXT" get --raw='/readyz'
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
+kubectl --context "$KUBE_CONTEXT" get pods -n kube-system
+kubectl --context "$KUBE_CONTEXT" get events -A --sort-by='.metadata.creationTimestamp'
+```
 
-   ```bash
-   # Control plane upgrade using eksctl
-   eksctl upgrade cluster \
-     --name my-cluster \
-     --version 1.28 \
-     --approve
-   ```
+El endpoint de disponibilidad de la API requiere permisos y es solo una señal. Inspecciona las cargas de trabajo, el DNS y los controladores reales, no objetos `ComponentStatus` obsoletos ni un Pod de etcd administrado que se dé por supuesto. Auto Mode puro usa CoreDNS a nivel de nodo; los clústeres mixtos mantienen DNS para los nodos que no usan Auto Mode. La ausencia de despliegues estándar de `aws-node`, kube-proxy o CoreDNS no constituye por sí misma un fallo de Auto Mode. `kubectl top` requiere Metrics Server; que haya métricas disponibles es algo distinto de que la solicitud haya tenido éxito.
 
-2. **Verificar la finalización de la actualización del control plane**:
-   ```bash
-   # Check cluster version
-   aws eks describe-cluster \
-     --name my-cluster \
-     --query "cluster.version" \
-     --output text
+Continúa con un grupo de nodos o un canario revisado y la secuencia necesaria de complementos, validando cada etapa. Auto Mode administra los nodos después de la actualización del plano de control. Los Pods de Fargate existentes conservan su versión de kubelet; coordina con el responsable el reemplazo de los Pods y su disponibilidad.
 
-   # Check cluster status
-   kubectl get componentstatuses
-   kubectl get nodes
-   ```
+**Disponibilidad y duración**
 
-3. **Preparar la actualización de node groups**:
-   ```bash
-   # Check current node groups
-   aws eks list-nodegroups \
-     --cluster-name my-cluster
+La antigua estimación de «20–30 minutos» no tiene una procedencia de medición indicada y se conserva solo como referencia histórica para planificar, no como garantía de duración. Reserva una ventana según los ensayos. Los clientes de API deben volver a conectarse mientras se reemplazan los servidores de API. Los contenedores existentes pueden seguir ejecutándose, pero los controladores y aplicaciones que dependen de la API aún pueden verse afectados. Una actualización normal del plano de control que ya empezó no se puede pausar ni cancelar. Conserva los ID y errores de la actualización y contacta con AWS Support cuando corresponda; la elegibilidad para revertir después la versión tiene requisitos propios.
 
-   # Check node group version
-   aws eks describe-nodegroup \
-     --cluster-name my-cluster \
-     --nodegroup-name my-nodegroup \
-     --query "nodegroup.version" \
-     --output text
-   ```
+**Ejemplo de propiedad en Terraform**
 
-**Proceso de actualización del control plane:**
+Modifica el recurso o módulo existente y conserva sus demás ajustes y dependencias. Este fragmento no es una definición completa ni un segundo recurso que debas crear para un clúster existente:
 
-1. **Preparación previa a la actualización**:
-   - Verificar el estado del clúster
-   - Realizar backups
-   - Verificar las cargas de trabajo críticas
+```hcl
+# Fragment of the existing, state-managed cluster resource.
+resource "aws_eks_cluster" "main" {
+  name     = var.cluster_name
+  role_arn = var.cluster_role_arn
+  version  = var.target_version
 
-2. **Iniciar la actualización**:
-   - Usar AWS Management Console, AWS CLI o eksctl
-   - Monitorear el progreso de la actualización
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [var.cluster_security_group_id]
+  }
 
-3. **Monitoreo durante la actualización**:
-   - Disponibilidad del endpoint del control plane
-   - Estado de las cargas de trabajo del sistema
-   - Monitoreo de logs y eventos
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
 
-4. **Validación posterior a la actualización**:
-   - Verificar el estado de los componentes del control plane
-   - Probar la funcionalidad del API server
-   - Confirmar que las cargas de trabajo del sistema operan normalmente
+Proporciona los valores existentes de IAM, subredes y grupos de seguridad, así como un objetivo revisado. Inspecciona el plan del proveedor para detectar reemplazos no previstos o cambios ajenos a la actualización. `prevent_destroy` protege frente a la destrucción de Terraform, no frente a interrupciones del servicio. `ignore_changes = []` vacío no espera ni valida una actualización; el proveedor tiene sus propios tiempos de espera y waiter. Un timeout de IaC no cancela el servicio, y revertir Git no revierte la versión de EKS. Después del cambio, usa la validación acotada de la pregunta 6. Esta revisión no ejecutó ningún clúster en vivo.
 
-**Consideraciones sobre la actualización del control plane:**
+A hace que kubelet sea más reciente que el servidor de API. C elimina controles de validación. D es incorrecta: migrar a un clúster nuevo es opcional e implica costos diferenciados de migración de tráfico y datos.
 
-1. **Tiempo de actualización**:
-   - Normalmente tarda entre 20 y 30 minutos
-   - Varía según el tamaño y la complejidad del clúster
-   - Se recomienda realizarla durante ventanas de mantenimiento
+Fuentes: [procedimiento de actualización de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html), [copias de seguridad de EKS](https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html), [recurso EKS de Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster).
 
-2. **Disponibilidad del API Server durante la actualización**:
-   - Es posible una interrupción temporal del API server durante la actualización
-   - Las cargas de trabajo existentes continúan ejecutándose
-   - Los nuevos deployments y cambios de configuración pueden retrasarse
-
-3. **Respuesta ante fallos de actualización**:
-   - Contactar al equipo de soporte de AWS
-   - Recopilar el estado y los logs del clúster
-   - Ejecutar planes alternativos
-
-**Buenas prácticas:**
-
-1. **Verificar el estado del clúster antes de la actualización**:
-   ```bash
-   # Check cluster status
-   kubectl get nodes
-   kubectl get pods --all-namespaces
-   kubectl get componentstatuses
-
-   # Check events
-   kubectl get events --all-namespaces --sort-by='.lastTimestamp'
-
-   # Check resource usage
-   kubectl top nodes
-   kubectl top pods --all-namespaces
-   ```
-
-2. **Realizar backup de etcd antes de la actualización**:
-   ```bash
-   # etcd backup (for self-managed clusters)
-   ETCDCTL_API=3 etcdctl snapshot save snapshot.db
-
-   # For EKS, backup key resources
-   kubectl get all --all-namespaces -o yaml > all-resources.yaml
-   ```
-
-3. **Planificar actualizaciones graduales de node groups**:
-   ```bash
-   # Node group upgrade plan
-   # 1. Start with less critical node groups
-   # 2. Upgrade one node group at a time
-   # 3. Validate after each node group upgrade
-   ```
-
-4. **Verificar los componentes del sistema después de la actualización**:
-   ```bash
-   # Check system pod status
-   kubectl get pods -n kube-system
-
-   # Check CoreDNS status
-   kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-   # Check CNI plugin status
-   kubectl get pods -n kube-system -l k8s-app=aws-node
-   ```
-
-Problemas con las otras opciones:
-- **A. Actualizar primero los node groups y luego actualizar el control plane**: Esto infringe el modelo de compatibilidad de versiones de Kubernetes, y que la versión de kubelet esté por delante de la versión del API server puede causar problemas de compatibilidad.
-- **C. Actualizar el control plane y los node groups simultáneamente**: La actualización simultánea es arriesgada y puede afectar a todo el clúster si ocurren problemas. La validación gradual también es difícil.
-- **D. Crear un clúster nuevo y migrar las cargas de trabajo sin actualizar**: Este método es posible, pero tiene problemas como duplicación de recursos, procedimientos de migración complejos y costos adicionales, por lo que no se recomienda para actualizaciones típicas.
 </details>
 
-### 3. ¿Cuál es el método más seguro y efectivo para actualizar node groups de Amazon EKS?
+### 3. ¿Qué enfoque permite actualizar de forma controlada un grupo de nodos de EKS?
 
-A. Terminar todos los nodes simultáneamente y reemplazarlos con la nueva versión
-B. Usar la actualización de managed node group o una estrategia de blue/green deployment
-C. Actualizar solo el control plane sin actualizar los node groups
-D. Actualizar manualmente la versión de kubelet en cada node
+- A. Terminar todos los nodos simultáneamente
+- B. Usar una actualización escalonada de un grupo de nodos administrado o una migración blue/green validada
+- C. Dejar indefinidamente las versiones de los nodos sin cambios
+- D. Reemplazar individualmente los binarios de kubelet en los nodos administrados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Usar la actualización de managed node group o una estrategia de blue/green deployment**
+**Respuesta: B. Usar una actualización escalonada de un grupo de nodos administrado o una migración blue/green validada**
 
-**Explicación:**
-El método más seguro y efectivo para actualizar node groups de Amazon EKS es usar la funcionalidad de actualización de managed node group o implementar una estrategia de blue/green deployment. Estos enfoques permiten actualizaciones de nodes seguras mientras minimizan las interrupciones de las cargas de trabajo.
+Elige la estrategia según la tolerancia de las cargas de trabajo a las interrupciones, la capacidad, el almacenamiento con estado y quién administra el cómputo. Ni una actualización administrada ni una migración blue/green garantizan un servicio ininterrumpido.
 
-**Beneficios clave de la actualización de managed node group y blue/green deployment:**
+**Grupos de nodos administrados**
 
-1. **Actualización de managed node group**:
-   - Proceso de rolling upgrade administrado por AWS
-   - Respeta los Pod Disruption Budgets (PDB)
-   - Draining y cordon automáticos
-   - Rollback automático ante fallos de actualización
+La estrategia de actualización `DEFAULT` crea capacidad de reemplazo antes de retirar los nodos antiguos; `MINIMAL` retira primero la capacidad antigua. `maxUnavailable` limita la cantidad de nodos que pueden no estar disponibles al mismo tiempo. La ruta normal de desalojo gradual respeta los PDB, pero una actualización forzada puede omitirlos. Estas estrategias difieren de la elección de actualización gradual o forzada de la consola. Una actualización fallida **no** implica una reversión automática de toda la flota.
 
-2. **Estrategia de blue/green deployment**:
-   - Crear node group con la nueva versión
-   - Migración gradual de cargas de trabajo
-   - Eliminar el node group antiguo después de la validación
-   - Rollback rápido posible cuando ocurren problemas
+Guarda `eks-wait-update.py` de la guía de origen y completa la revisión de cuenta, contexto y capacidad de la pregunta 1. Para un grupo existente que usa una AMI optimizada para EKS, selecciona explícitamente tanto la versión de Kubernetes como la versión compatible de la AMI:
 
-**Métodos de implementación:**
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+: "${TARGET_VERSION:?Set the reviewed target, no newer than the control plane}"
+: "${TARGET_AMI_RELEASE:?Set the reviewed EKS-optimized AMI release}"
+umask 077
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" --output json > nodegroup-before.json
+if jq -e '.nodegroup.amiType == "CUSTOM"' nodegroup-before.json >/dev/null; then
+  echo "Use the custom launch-template path for this node group" >&2
+  exit 1
+fi
+aws eks update-nodegroup-version \
+  --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$TARGET_VERSION" --release-version "$TARGET_AMI_RELEASE" \
+  --output json > nodegroup-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' nodegroup-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID NODEGROUP_NAME
+unset ADDON_NAME
+python3 eks-wait-update.py
+```
 
-1. **Actualización de managed node group**:
-   ```bash
-   # Managed node group upgrade using AWS CLI
-   aws eks update-nodegroup-version \
-     --cluster-name my-cluster \
-     --nodegroup-name my-nodegroup \
-     --kubernetes-version 1.28
+El script se detiene si falla la solicitud o el sondeo. Antes de pasar al siguiente grupo, comprueba las versiones y la disponibilidad reales de los nodos, la ubicación de los Pods, los eventos y los SLO de la aplicación. Para una AMI personalizada, usa una nueva versión revisada de la **misma plantilla de lanzamiento original** y omite `--kubernetes-version` y `--release-version`; sigue la ruta separada para AMI personalizadas de la guía de origen. No edites paquetes de kubelet in situ suponiendo que así se actualizaron la AMI, el entorno de ejecución y el arranque.
 
-   # Check upgrade status
-   aws eks describe-update \
-     --name my-cluster \
-     --nodegroup-name my-nodegroup \
-     --update-id <update-id>
-   ```
+`eksctl upgrade nodegroup` usa `--kubernetes-version`; `eksctl create nodegroup` usa `--version`. Para crear el grupo, conserva en la configuración existente del clúster las subredes, IAM, AMI, etiquetas y taints revisados, en lugar de usar una opción `--taints` no admitida o una receta incompleta de una sola línea.
 
-   ```bash
-   # Managed node group upgrade using eksctl
-   eksctl upgrade nodegroup \
-     --cluster my-cluster \
-     --name my-nodegroup \
-     --kubernetes-version 1.28
-   ```
+**Secuencia blue/green**
 
-2. **Estrategia de blue/green deployment**:
-   ```bash
-   # Create new node group
-   eksctl create nodegroup \
-     --cluster my-cluster \
-     --name my-nodegroup-v2 \
-     --node-type m5.large \
-     --nodes 3 \
-     --nodes-min 3 \
-     --nodes-max 6 \
-     --node-labels "kubernetes.io/role=worker,environment=production,version=v2" \
-     --node-ami auto \
-     --kubernetes-version 1.28
+1. Conserva la capacidad azul. El responsable de infraestructura debe crear el entorno verde con una versión no más nueva que el plano de control, la AMI y arquitectura correspondientes, redes privadas y cuota, IP y capacidad de AZ suficientes.
+2. Comprueba que los nodos verdes estén `Ready` y prueba DNS, redes, almacenamiento y dependencias de las cargas de trabajo. Aplica un taint a los nodos verdes para los canarios hasta que las cargas adecuadas tengan la tolerancia necesaria.
+3. Migra por etapas las plantillas de Pods de las cargas de trabajo. La afinidad preferida es solo una preferencia y no mueve los Pods existentes. Cuando la ubicación sea obligatoria, usa una selección explícita e inicia un despliegue controlado con el responsable de la carga de trabajo.
+4. Inspecciona las cargas de trabajo de cada nodo antiguo y drénalo de uno en uno. Si falla el desalojo, detente; no termines el nodo después de un drenaje fallido.
+5. Retira la flota azul solo después de revisar las evidencias de cargas de trabajo, datos y tráfico, además de la ventana de recuperación. Una respuesta afirmativa a una pregunta de confirmación o una lista de nodos `Ready` no demuestra que la migración haya terminado.
 
-   # Workload migration (using node affinity)
-   kubectl apply -f - <<EOF
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-app
-   spec:
-     replicas: 3
-     template:
-       spec:
-         affinity:
-           nodeAffinity:
-             preferredDuringSchedulingIgnoredDuringExecution:
-             - weight: 100
-               preference:
-                 matchExpressions:
-                 - key: version
-                   operator: In
-                   values:
-                   - v2
-   EOF
+Lo siguiente es un **ejemplo de canario independiente y completo**, no un manifiesto sustituto de una aplicación existente. Prepara su espacio de nombres deliberadamente. Necesita al menos tres nodos Linux verdes aptos por la antiafinidad obligatoria de nombre de host. La tolerancia permite el taint; el selector de nodos elige la flota verde. Adapta por separado la imagen y configuración de la aplicación, la política de interrupciones y los parámetros del despliegue.
 
-   # Remove old node group
-   eksctl delete nodegroup \
-     --cluster my-cluster \
-     --name my-nodegroup-v1
-   ```
+```yaml
+# Independent fixture in an explicitly prepared test namespace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upgrade-canary
+  namespace: upgrade-canary
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: upgrade-canary
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: upgrade-canary
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/os: linux
+        example.com/upgrade: green
+      tolerations:
+        - key: example.com/upgrade
+          operator: Equal
+          value: green
+          effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: upgrade-canary
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: http
+          image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+          command: [sh, -ec]
+          args:
+            - mkdir -p /tmp/www; printf 'ok\n' > /tmp/www/index.html; exec httpd -f -p 8080 -h /tmp/www
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: upgrade-canary
+  namespace: upgrade-canary
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: upgrade-canary
+```
 
-**Proceso de actualización de node groups:**
+La estrategia del propio Deployment controla su actualización gradual, no el PDB. Un PDB rige el desalojo voluntario, no la reducción ordinaria de escala de un Deployment o ReplicaSet ni todos los casos de terminación de infraestructura. La antiafinidad obligatoria puede impedir la programación si desaparece capacidad adecuada. No se afirma que esta plantilla se haya ejecutado en una imagen o clúster.
 
-1. **Proceso de actualización de managed node group**:
-   - Establecer el número máximo de nodes no disponibles
-   - Crear nuevos nodes y unirlos al clúster
-   - Drenar y terminar los nodes existentes
-   - Repetir hasta que todos los nodes estén actualizados
+Para un nodo antiguo revisado, el drenaje acotado de la guía de origen conserva las protecciones para los Pods no administrados y los datos de `emptyDir`:
 
-2. **Proceso de blue/green deployment**:
-   - Crear un node group con la nueva versión
-   - Desplegar cargas de trabajo de prueba en el nuevo node group
-   - Migrar gradualmente las cargas de trabajo
-   - Eliminar el node group antiguo después de migrar todas las cargas de trabajo
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed cluster context}"
+: "${NODE_NAME:?Set one reviewed old node}"
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o wide
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" \
+  -o jsonpath='{.spec.providerID}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces \
+  --field-selector "spec.nodeName=$NODE_NAME" -o wide
+# Stop on failure. Do not terminate the instance or delete the node group here.
+kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeout=10m
+```
 
-**Consideraciones sobre la actualización de node groups:**
+Si falla el drenaje, el nodo puede quedar en cuarentena o drenado parcialmente; investiga y recupéralo de forma deliberada. No agregues `--force`, `--delete-emptydir-data` ni `--disable-eviction` solo para terminar la migración.
 
-1. **Configurar Pod Disruption Budget (PDB)**:
-   ```yaml
-   apiVersion: policy/v1
-   kind: PodDisruptionBudget
-   metadata:
-     name: app-pdb
-   spec:
-     minAvailable: 2  # or maxUnavailable: 1
-     selector:
-       matchLabels:
-         app: my-app
-   ```
+**Ejemplo blue/green en Terraform**
 
-2. **Establecer Node Affinity y Anti-affinity**:
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-app
-   spec:
-     template:
-       spec:
-         affinity:
-           podAntiAffinity:
-             requiredDuringSchedulingIgnoredDuringExecution:
-             - labelSelector:
-                 matchExpressions:
-                 - key: app
-                   operator: In
-                   values:
-                   - my-app
-               topologyKey: "kubernetes.io/hostname"
-   ```
+Conserva las direcciones y los ajustes de los recursos existentes. Estos fragmentos para AMI optimizadas para EKS mantienen **ambos** grupos con capacidad positiva; el taint verde coincide intencionalmente con el canario anterior.
 
-3. **Utilizar Taints y Tolerations**:
-   ```yaml
-   # Apply taint to new node group
-   eksctl create nodegroup \
-     --cluster my-cluster \
-     --name my-nodegroup-v2 \
-     --node-labels "version=v2" \
-     --taints "upgrade=v2:NoSchedule" \
-     --kubernetes-version 1.28
+```hcl
+# Existing blue resource address is retained; green is separate capacity.
+# Inputs describe reviewed EKS-optimized AMIs, not a custom launch template.
+variable "capacity" {
+  type    = object({ desired = number, min = number, max = number })
+  default = { desired = 3, min = 3, max = 6 }
+  validation {
+    condition = (
+      var.capacity.min >= 1 &&
+      var.capacity.desired >= var.capacity.min &&
+      var.capacity.max >= var.capacity.desired &&
+      alltrue([for n in values(var.capacity) : floor(n) == n])
+    )
+    error_message = "Retain positive integer capacity: 1 <= min <= desired <= max."
+  }
+}
 
-   # Apply toleration to specific workloads
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-app
-   spec:
-     template:
-       spec:
-         tolerations:
-         - key: "upgrade"
-           operator: "Equal"
-           value: "v2"
-           effect: "NoSchedule"
-   ```
+resource "aws_eks_node_group" "blue" {
+  cluster_name    = var.cluster_name
+  node_group_name = "blue-nodegroup"
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = var.private_subnet_ids
+  version         = var.blue_version
+  release_version = var.blue_ami_release
+  ami_type        = var.ami_type
+  instance_types  = var.instance_types
+  scaling_config {
+    desired_size = var.capacity.desired
+    min_size     = var.capacity.min
+    max_size     = var.capacity.max
+  }
+  labels = { "example.com/upgrade" = "blue" }
+  update_config {
+    max_unavailable = 1
+  }
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
+}
 
-**Buenas prácticas:**
+resource "aws_eks_node_group" "green" {
+  cluster_name    = var.cluster_name
+  node_group_name = "green-nodegroup"
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = var.private_subnet_ids
+  version         = var.green_version
+  release_version = var.green_ami_release
+  ami_type        = var.ami_type
+  instance_types  = var.instance_types
+  scaling_config {
+    desired_size = var.capacity.desired
+    min_size     = var.capacity.min
+    max_size     = var.capacity.max
+  }
+  labels = { "example.com/upgrade" = "green" }
+  taint {
+    key    = "example.com/upgrade"
+    value  = "green"
+    effect = "NO_SCHEDULE"
+  }
+  update_config {
+    max_unavailable = 1
+  }
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
+}
+```
 
-1. **Preparación previa a la actualización**:
-   ```bash
-   # Check node status
-   kubectl get nodes
+Proporciona el clúster, rol y subredes existentes, tipos de instancia y familia de AMI compatibles, y versiones y revisiones de lanzamiento azul y verde por separado. El plano de control ya debe admitir la versión verde. La regla `desired_size` de ignorar cambios presupone que un escalador administra ese campo; quítala si Terraform debe ser su responsable. Los cambios de mínimo y máximo siguen aplicándose, y cambiar la configuración de escalado de un grupo de nodos administrado **no** respeta los PDB. No uses un interruptor booleano para reducir la flota azul a cero mientras creas la verde ni asignes `max_size = 0` (valor no válido). Crear nodos, migrar cargas de trabajo y retirar nodos son cambios separados; una dependencia de Terraform no demuestra por sí sola que las cargas estén listas.
 
-   # Check pod distribution
-   kubectl get pods -o wide --all-namespaces
+Define de antemano los criterios de recuperación. Mientras conserves la flota azul, la ubicación de las cargas de trabajo puede ser reversible según la compatibilidad de API y datos. La reversión del plano de control y la de la versión de un MNG tienen las condiciones adicionales indicadas en la pregunta 5. A, C y D aumentan el alcance de las interrupciones, acumulan un desfase de versiones no admitido o eluden el ciclo de reemplazo administrado.
 
-   # Check resource usage
-   kubectl top nodes
-   kubectl top pods --all-namespaces
-   ```
+Fuentes: [actualizaciones de nodos administrados](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html), [comportamiento de actualización](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html), [PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/), [grupos de nodos de Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group).
 
-2. **Actualización gradual**:
-   - Actualizar un node group a la vez
-   - Comenzar con cargas de trabajo menos críticas
-   - Validar después de cada paso
-
-3. **Monitoreo reforzado durante la actualización**:
-   - Monitorear el estado de los nodes
-   - Monitorear eventos de Pods
-   - Monitorear el rendimiento y la disponibilidad de las aplicaciones
-
-4. **Establecer un plan de rollback**:
-   - Definir criterios claros de rollback
-   - Documentar procedimientos de rollback
-   - Prepararse para un rollback rápido
-
-Problemas con las otras opciones:
-- **A. Terminar todos los nodes simultáneamente y reemplazarlos con la nueva versión**: Este método interrumpe todas las cargas de trabajo simultáneamente, lo que afecta gravemente la disponibilidad del servicio.
-- **C. Actualizar solo el control plane sin actualizar los node groups**: No actualizar los node groups impide aprovechar por completo las nuevas características de Kubernetes, y pueden ocurrir problemas de compatibilidad a medida que aumentan las diferencias de versión.
-- **D. Actualizar manualmente la versión de kubelet en cada node**: Este método no se recomienda para EKS managed nodes, tiene un alto potencial de errores y dificulta mantener la consistencia.
 </details>
 
-### 4. ¿Cuál es el enfoque correcto para la administración de add-ons durante las actualizaciones de clústeres de Amazon EKS?
+### 4. ¿Cuál es el enfoque correcto para administrar complementos durante una actualización de EKS?
 
-A. Ignorar las actualizaciones de add-ons
-B. Actualizar todos los add-ons antes de la actualización del control plane
-C. Actualizar los add-ons a versiones compatibles después de la actualización del control plane
-D. Eliminar todos los add-ons y reinstalarlos
+- A. Ignorar las actualizaciones de complementos
+- B. Actualizar todos los complementos antes del plano de control, sin importar la compatibilidad
+- C. Elegir versiones compatibles y seguir las dependencias y las versiones puente de cada componente
+- D. Eliminar todos los complementos y volver a instalarlos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Actualizar los add-ons a versiones compatibles después de la actualización del control plane**
+**Respuesta: C. Elegir versiones compatibles y seguir las dependencias y las versiones puente de cada componente**
 
-**Explicación:**
-El enfoque correcto para la administración de add-ons durante las actualizaciones de clústeres de Amazon EKS es actualizar los add-ons a versiones compatibles después de la actualización del control plane. Este enfoque garantiza la compatibilidad entre las versiones de Kubernetes y los add-ons, minimizando los problemas que pueden ocurrir durante el proceso de actualización.
+No existe una regla universal según la cual «todos los complementos se actualizan después del plano de control». Algunos componentes necesitan antes del cambio una versión intermedia compatible con ambas versiones del plano de control; otros se actualizan después. Revisa para cada versión las versiones de Kubernetes, arquitecturas, tipos de cómputo, API y ruta de actualización que admite. Las versiones de los complementos administrados por EKS no se actualizan automáticamente junto con el plano de control, y el hecho de que sean «administrados» no promete que se instale automáticamente cada actualización de seguridad.
 
-**Beneficios clave de actualizar los add-ons después del control plane:**
+**Inspeccionar, elegir y conservar la configuración**
 
-1. **Garantía de compatibilidad de versiones**:
-   - Seleccionar versiones compatibles de add-ons para cada versión de Kubernetes
-   - Evitar problemas de compatibilidad entre la API del control plane y los add-ons
-   - Proporcionar una ruta de actualización estable
+Para un complemento administrado instalado y bajo tu responsabilidad, inspecciona el estado actual, las versiones compatibles y el esquema de la versión candidata revisada. El primer elemento de una matriz no garantiza ser «la versión compatible más reciente».
 
-2. **Permite actualizaciones por fases**:
-   - Actualizar los add-ons después de validar la actualización del control plane
-   - Facilita aislar causas cuando ocurren problemas
-   - Permite validación paso a paso
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ADDON_NAME:?}"
+: "${TARGET_VERSION:?Set the Kubernetes version for this stage}"
+umask 077
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --region "$AWS_REGION" --output json > addon-before.json
+aws eks describe-addon-versions --addon-name "$ADDON_NAME" \
+  --kubernetes-version "$TARGET_VERSION" --region "$AWS_REGION" \
+  --output json > addon-candidates.json
+# Select ADDON_VERSION after reviewing compatibility, architecture, compute type, and upgrade path.
+: "${ADDON_VERSION:?Set the reviewed add-on version}"
+aws eks describe-addon-configuration --addon-name "$ADDON_NAME" \
+  --addon-version "$ADDON_VERSION" --region "$AWS_REGION" \
+  --output json > addon-schema.json
+jq -r '.addon.configurationValues // "{}"' addon-before.json > addon-config-candidate.json
+```
 
-3. **Utilizar EKS Managed Add-ons**:
-   - Ciclo de vida de add-ons administrado por AWS
-   - Se proporcionan versiones compatibles verificadas
-   - Parches y actualizaciones de seguridad automáticos
+`addon-before.json` incluye información de versión, configuración e identidad. Un único ConfigMap `aws-node` no es una copia de seguridad completa de CNI; también pueden ser pertinentes la configuración del DaemonSet, los recursos personalizados y IAM o Pod Identity. Protege los archivos de evidencia. `addon-config-candidate.json` es un dato de entrada que debe revisarse, no una configuración objetivo automáticamente válida. Combina los ajustes deseados con el esquema nuevo y revisa los campos eliminados o predeterminados y las notas de la versión.
 
-**Métodos de implementación:**
+Después de completar esa revisión, usa el monitor de solicitudes exactas de la guía de origen y un archivo completo de configuración objetivo:
 
-1. **Actualizar EKS Managed Add-ons**:
-   ```bash
-   # Check available add-on versions
-   aws eks describe-addon-versions \
-     --addon-name vpc-cni \
-     --kubernetes-version 1.28
+```bash
+umask 077
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ADDON_NAME:?}"; : "${ADDON_VERSION:?}"
+: "${REVIEWED_ADDON_CONFIG_FILE:?Provide the complete reviewed target configuration JSON}"
+aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --addon-version "$ADDON_VERSION" --region "$AWS_REGION" \
+  --configuration-values "file://$REVIEWED_ADDON_CONFIG_FILE" \
+  --resolve-conflicts PRESERVE --output json > addon-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' addon-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID ADDON_NAME
+unset NODEGROUP_NAME
+python3 eks-wait-update.py
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --addon-name "$ADDON_NAME" \
+  --region "$AWS_REGION" --output json
+```
 
-   # Upgrade add-on
-   aws eks update-addon \
-     --cluster-name my-cluster \
-     --addon-name vpc-cni \
-     --addon-version v1.13.0-eksbuild.1 \
-     --resolve-conflicts PRESERVE
-   ```
+`PRESERVE` aborda los conflictos con campos existentes; no garantiza que la carga útil explícita de configuración se combine por completo, sea aceptada o funcione correctamente. `NONE` falla ante conflictos; `OVERWRITE` puede reemplazar las personalizaciones con valores predeterminados de EKS. No uses `OVERWRITE` como atajo de recuperación automático. Antes de avanzar con la siguiente dependencia, comprueba que la actualización se haya completado **y** que el complemento y las cargas de trabajo estén sanos; esperar 30 segundos no es una comprobación de finalización.
 
-2. **Actualizar add-ons clave de EKS**:
-   ```bash
-   # Upgrade VPC CNI
-   aws eks update-addon \
-     --cluster-name my-cluster \
-     --addon-name vpc-cni \
-     --addon-version v1.13.0-eksbuild.1
+**Comprobaciones específicas de los componentes**
 
-   # Upgrade CoreDNS
-   aws eks update-addon \
-     --cluster-name my-cluster \
-     --addon-name coredns \
-     --addon-version v1.9.3-eksbuild.3
+| Componente | Comprobación antes de continuar |
+| --- | --- |
+| VPC CNI | Ruta de actualización admitida, asignación de IP, redes de nodos y Pods, redes personalizadas e IAM |
+| CoreDNS | Resolución DNS, cambios en Corefile o esquema, programación y disponibilidad, y ajustes de PDB |
+| kube-proxy | Desfase de versión de Kubernetes, acceso a los Services y plano de datos real del clúster |
+| Cluster Autoscaler | Versión menor de Kubernetes admitida, descubrimiento e IAM, y responsabilidad del escalado |
+| Metrics Server | Versiones admitidas, disponibilidad de APIService y acceso o TLS de kubelet |
+| Load Balancer Controller / ExternalDNS / mesh | Compatibilidad de controlador, chart, CRD y API; IAM, webhook y comportamiento del tráfico |
 
-   # Upgrade kube-proxy
-   aws eks update-addon \
-     --cluster-name my-cluster \
-     --addon-name kube-proxy \
-     --addon-version v1.28.1-eksbuild.1
-   ```
+Auto Mode puro proporciona DNS y redes a nivel de nodo y no requiere estos complementos de nodos estándar de la misma manera. Los clústeres mixtos deben conservar los componentes que necesitan los nodos que no usan Auto Mode, incluida la cobertura del Deployment de CoreDNS. Identifica quién es responsable antes de actualizar o quitar componentes.
 
-3. **Actualizar add-ons self-managed**:
-   ```bash
-   # Upgrade add-ons using Helm
-   helm repo update
-   helm upgrade --install metrics-server metrics-server/metrics-server \
-     --namespace kube-system \
-     --version 3.8.2 \
-     --set apiService.create=true
-   ```
+**Complementos administrados por Terraform**
 
-**Add-ons clave de EKS y compatibilidad:**
+Usa mapas de versiones y configuración revisados en los recursos existentes bajo control del estado; conserva sus ajustes de IAM y Pod Identity. Estos fragmentos se aplican a complementos de nodos estándar, no a una instalación universal de Auto Mode:
 
-1. **Amazon VPC CNI**:
-   - Administración de interfaces de red
-   - Asignación de IP de Pod
-   - La compatibilidad de versiones es importante
+```hcl
+# Fragments of existing, imported/state-managed standard-node add-ons.
+# Preserve each resource's existing IAM/Pod Identity settings as applicable.
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "vpc-cni"
+  addon_version               = var.addon_versions["vpc-cni"]
+  configuration_values        = file(var.addon_config_files["vpc-cni"])
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
 
-2. **CoreDNS**:
-   - Servicio DNS dentro del clúster
-   - Service discovery
-   - Existen versiones recomendadas por versión de Kubernetes
+resource "aws_eks_addon" "coredns" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "coredns"
+  addon_version               = var.addon_versions["coredns"]
+  configuration_values        = file(var.addon_config_files["coredns"])
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
 
-3. **kube-proxy**:
-   - Network proxy
-   - Enrutamiento de IP de Service
-   - Se recomienda que coincida con la versión del control plane
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "kube-proxy"
+  addon_version               = var.addon_versions["kube-proxy"]
+  configuration_values        = file(var.addon_config_files["kube-proxy"])
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
+```
 
-4. **Otros add-ons comunes**:
-   - Cluster Autoscaler
-   - Metrics Server
-   - AWS Load Balancer Controller
-   - External DNS
+El proveedor actual distingue `resolve_conflicts_on_create` de `resolve_conflicts_on_update`. Al crear, no se acepta `PRESERVE`; `NONE` deja que se manifiesten deliberadamente los conflictos de migración. No agregues un recurso duplicado de clúster para actualizar un complemento. Cambia solo el componente previsto para la etapa actual; enumerar tres recursos independientes no establece un orden de actualización seguro. La destrucción de recursos o los cambios de configuración requieren una revisión propia.
 
-**Consideraciones sobre la actualización de add-ons:**
+**Versiones de Helm administradas por separado**
 
-1. **Estrategia de resolución de conflictos**:
-   - OVERWRITE: Sobrescribir la configuración existente
-   - PRESERVE: Mantener la configuración personalizada existente
-   - NONE: Fallar la actualización en caso de conflicto
+Usa el responsable existente de la versión, una referencia y versión de chart revisadas y valores migrados. La instalación, la migración de propiedad y la actualización son operaciones distintas. Conserva las CRD, identidad, ServiceAccount, ajustes de recursos y programación, y comportamiento actual:
 
-2. **Orden de actualización**:
-   - Determinar el orden según la importancia y las dependencias
-   - Generalmente CNI -> CoreDNS -> kube-proxy -> otros add-ons
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${RELEASE:?}"; : "${ADDON_NAMESPACE:?}"
+: "${CHART_REF:?Set the verified repository/chart or OCI reference}"
+: "${CHART_VERSION:?Set a reviewed compatible chart version}"
+: "${REVIEWED_VALUES_FILE:?Set the complete reviewed target values file}"
+umask 077
+helm get values "$RELEASE" --namespace "$ADDON_NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  --all > addon-values-before.yaml
+helm show values "$CHART_REF" --version "$CHART_VERSION" > addon-values-defaults.yaml
+# Merge/migrate values and handle CRDs/IAM through the owner before this step.
+helm upgrade "$RELEASE" "$CHART_REF" --version "$CHART_VERSION" \
+  --namespace "$ADDON_NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  -f "$REVIEWED_VALUES_FILE" --wait --timeout 15m
+```
 
-3. **Validación de actualización**:
-   - Validar la funcionalidad después de cada actualización de add-on
-   - Monitorear logs y eventos
-   - Verificar el impacto en las cargas de trabajo
+Prepara los valores revisados antes del último comando. `--wait` no demuestra que se cumplan los SLO de la aplicación ni gestiona todas las migraciones de CRD. No instales en bloque un segundo controlador ni cambies indicadores ajenos del escalador durante una actualización. Valida los Pods, eventos y funciones representativas de cada versión; registra los fallos en lugar de declarar incondicionalmente que todo terminó.
 
-**Buenas prácticas:**
+A ignora el mantenimiento de seguridad y compatibilidad. B puede instalar versiones incompatibles con el plano de control, que aún es anterior. D descarta innecesariamente la propiedad y configuración, y puede interrumpir las redes o el DNS.
 
-1. **Verificar la compatibilidad de versiones de add-ons**:
-   ```bash
-   # Check compatible add-on versions for each Kubernetes version
-   aws eks describe-addon-versions \
-     --kubernetes-version 1.28 \
-     --query "addons[].{Name:addonName,LatestVersion:addonVersions[0].addonVersion}"
-   ```
+Fuentes: [actualización de complementos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html), [redes de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html), [complementos de Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon), [actualización de Helm](https://helm.sh/docs/helm/helm_upgrade/).
 
-2. **Verificar el estado de add-ons antes de la actualización**:
-   ```bash
-   # Check current add-on status
-   aws eks describe-addon \
-     --cluster-name my-cluster \
-     --addon-name vpc-cni
-
-   # Check add-on pod status
-   kubectl get pods -n kube-system -l k8s-app=aws-node
-   ```
-
-3. **Actualización por fases de add-ons**:
-   - Actualizar un add-on a la vez
-   - Validar después de cada actualización
-   - Prepararse para rollback cuando ocurran problemas
-
-4. **Hacer backup de configuraciones personalizadas**:
-   ```bash
-   # Backup add-on configuration
-   kubectl get configmap aws-node -n kube-system -o yaml > vpc-cni-configmap-backup.yaml
-   ```
-
-Problemas con las otras opciones:
-- **A. Ignorar las actualizaciones de add-ons**: No actualizar los add-ons puede causar problemas de compatibilidad con las versiones de Kubernetes, y no se aplicarán parches de seguridad ni correcciones de errores.
-- **B. Actualizar todos los add-ons antes de la actualización del control plane**: Actualizar los add-ons antes de la actualización del control plane puede provocar que los add-ons de la nueva versión sean incompatibles con el control plane de una versión anterior.
-- **D. Eliminar todos los add-ons y reinstalarlos**: Este método es innecesariamente complejo y arriesgado, y las configuraciones y ajustes de los add-ons pueden perderse.
 </details>
 
-### 5. ¿Cuál es el enfoque más efectivo para solucionar problemas que pueden ocurrir durante las actualizaciones de clústeres de Amazon EKS?
+### 5. ¿Cuál es el enfoque más eficaz para resolver problemas durante una actualización de EKS?
 
-A. Crear inmediatamente un clúster nuevo
-B. Depender únicamente del equipo de soporte de AWS cuando ocurran problemas
-C. Usar un enfoque sistemático de troubleshooting y análisis de logs
-D. Ignorar los problemas de actualización
+- A. Crear inmediatamente un clúster nuevo
+- B. Depender únicamente de AWS Support sin recopilar evidencia
+- C. Diagnosticar sistemáticamente con registros y comprobación de hipótesis
+- D. Ignorar los problemas de actualización
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Usar un enfoque sistemático de troubleshooting y análisis de logs**
+**Respuesta: C. Diagnosticar sistemáticamente con registros y comprobación de hipótesis**
 
-**Explicación:**
-El enfoque más efectivo para solucionar problemas que pueden ocurrir durante las actualizaciones de clústeres de Amazon EKS es usar un enfoque sistemático de troubleshooting y análisis de logs. Este enfoque ayuda a identificar las causas raíz, aplicar soluciones adecuadas y evitar la recurrencia de problemas similares.
+Define los síntomas, la hora de inicio, las cargas de trabajo afectadas y el impacto en el negocio; relaciónalos con cambios concretos. Recopila evidencia antes de probar hipótesis. Aplica una corrección específica solo tras revisar su impacto previsto; después verifica la recuperación y registra medidas preventivas. Las causas posibles no son causas raíz confirmadas.
 
-**Componentes clave del enfoque sistemático de troubleshooting:**
+**Diagnóstico de solo lectura**
 
-1. **Identificación y definición del problema**:
-   - Identificar síntomas y alcance del impacto
-   - Confirmar el momento y las condiciones en que ocurrió el problema
-   - Identificar diferencias respecto de la operación normal
+Confirma la cuenta, el contexto y el ID exacto de la operación. El siguiente recopilador valida el tipo de operación antes de consultar y usa un nuevo directorio privado de evidencias. Si falla una consulta, se detiene; los archivos ya escritos son evidencia parcial, no un diagnóstico satisfactorio.
 
-2. **Recopilación y análisis de información**:
-   - Recopilar logs y eventos
-   - Verificar el estado y la configuración de los recursos
-   - Analizar mensajes y patrones de error
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+: "${UPDATE_ID:?Set the exact affected update ID}"
+: "${ISSUE_KIND:?Set control-plane, nodegroup, or addon}"
+: "${EVIDENCE_PARENT:?Set an existing private evidence directory}"
+args=(--name "$CLUSTER_NAME" --region "$AWS_REGION" --update-id "$UPDATE_ID")
+case "$ISSUE_KIND" in
+  control-plane) ;;
+  nodegroup) : "${NODEGROUP_NAME:?}"; args+=(--nodegroup-name "$NODEGROUP_NAME") ;;
+  addon) : "${ADDON_NAME:?}"; args+=(--addon-name "$ADDON_NAME") ;;
+  *) echo "Unknown ISSUE_KIND" >&2; exit 2 ;;
+esac
+umask 077
+EVIDENCE_DIR=$(mktemp -d "$EVIDENCE_PARENT/eks-upgrade-diagnosis.XXXXXXXX")
+printf 'Evidence directory: %s\n' "$EVIDENCE_DIR"
+aws eks describe-update "${args[@]}" --output json --no-cli-pager \
+  > "$EVIDENCE_DIR/update.json" 2> "$EVIDENCE_DIR/update.stderr"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{version:version,status:status,health:health,logging:logging}' \
+  --output json --no-cli-pager > "$EVIDENCE_DIR/cluster.json"
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide > "$EVIDENCE_DIR/nodes.txt"
+kubectl --context "$KUBE_CONTEXT" get pods -A -o wide > "$EVIDENCE_DIR/pods.txt"
+kubectl --context "$KUBE_CONTEXT" get events -A --sort-by='.metadata.creationTimestamp' \
+  > "$EVIDENCE_DIR/events.txt"
+printf 'Snapshots collected; review errors and workload evidence before changing anything.\n'
+```
 
-3. **Formulación y verificación de hipótesis**:
-   - Identificar posibles causas
-   - Probar y verificar hipótesis
-   - Confirmar la causa raíz
+Para una operación de grupo de nodos o complemento, inspecciona también `health.issues` de ese recurso y su versión y configuración mediante `describe-nodegroup` o `describe-addon`. Según corresponda, comprueba los ProviderID de los nodos, el estado de EC2, IAM, el arranque, la AMI, las redes y CNI, y las restricciones de programación. No deduzcas la causa solo porque una actualización tenga el estado `Failed`.
 
-4. **Implementación y verificación de la solución**:
-   - Aplicar soluciones adecuadas
-   - Verificar la efectividad de la solución
-   - Tomar medidas para evitar recurrencias
+Lee los registros existentes del plano de control durante un intervalo acotado:
 
-**Métodos de implementación:**
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+: "${START_TIME_MS:?Set the reviewed start timestamp in epoch milliseconds}"
+: "${END_TIME_MS:?Set the reviewed analysis-window end timestamp}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging' --output json --no-cli-pager
+# Read existing logs; enabling logging is a separate change and does not backfill history.
+aws logs filter-log-events --region "$AWS_REGION" \
+  --log-group-name "/aws/eks/$CLUSTER_NAME/cluster" \
+  --start-time "$START_TIME_MS" --end-time "$END_TIME_MS" \
+  --max-items 200 --output json --no-cli-pager
+```
 
-1. **Diagnóstico de problemas de actualización**:
-   ```bash
-   # Check cluster status
-   aws eks describe-cluster \
-     --name my-cluster \
-     --query "cluster.status"
+Habilitar el registro es un cambio independiente del clúster y no completa registros de eventos anteriores. Si no hay grupo de registros, falta permiso o la consulta está vacía, hay una limitación de visibilidad. Cuando exista un Pod pertinente, inspecciónalo de forma explícita:
 
-   # Check upgrade status
-   aws eks describe-update \
-     --name my-cluster \
-     --update-id <update-id>
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${AFFECTED_NAMESPACE:?}"; : "${AFFECTED_POD:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$AFFECTED_NAMESPACE" describe pod "$AFFECTED_POD"
+kubectl --context "$KUBE_CONTEXT" -n "$AFFECTED_NAMESPACE" logs "$AFFECTED_POD" \
+  --all-containers=true --prefix=true --since=15m --tail=100
+```
 
-   # Check control plane logs
-   aws eks update-cluster-config \
-     --name my-cluster \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+Los registros del agente del Pod no son todos los diarios del host de kubelet y del entorno de ejecución. Auto Mode, Fargate y EC2 estándar ofrecen distintos accesos de diagnóstico. Protege las capturas y elimina la configuración sensible antes de compartirla con AWS Support; evita volcar el clúster indiscriminadamente.
 
-   # Check logs in CloudWatch Logs
-   aws logs filter-log-events \
-     --log-group-name /aws/eks/my-cluster/cluster \
-     --filter-pattern "Error"
-   ```
+| Síntoma | Hipótesis que se deben probar con evidencia |
+| --- | --- |
+| Falló la solicitud del plano de control | Errores exactos de la actualización, requisitos previos, IP de subredes, grupos de seguridad y fallo del servicio de AWS |
+| Nodo no está `Ready` / Pod en `Pending` | AMI o arranque, capacidad de EC2, IAM, redes o CNI, taints, afinidad, topología de PVC o recursos |
+| Complemento en `CrashLoopBackOff` | Configuración o esquema, identidad, imagen o inicio, recursos o compatibilidad de versiones |
+| Errores de API de la aplicación | Clientes de API eliminadas, webhooks de admisión o conversión, permisos o regresión de la aplicación |
 
-2. **Diagnóstico de problemas de node group**:
-   ```bash
-   # Check node group status
-   aws eks describe-nodegroup \
-     --cluster-name my-cluster \
-     --nodegroup-name my-nodegroup
+Reintentar, eliminar un grupo de nodos o sobrescribir la configuración de un complemento no es un diagnóstico. La recuperación del complemento requiere una versión compatible **y** configuración e identidad revisadas, además del seguimiento exacto de actualización explicado en la pregunta 4.
 
-   # Check node status
-   kubectl get nodes
-   kubectl describe node <node-name>
+**Condiciones actuales de reversión de EKS**
 
-   # Check node logs
-   kubectl logs -n kube-system <node-agent-pod>
-   ```
+La guía actual de EKS admite revertir un plano de control actualizado in situ. Esto es distinto de restaurar datos de aplicaciones y de reemplazar un nodo averiado.
 
-3. **Diagnóstico de problemas de add-ons**:
-   ```bash
-   # Check add-on status
-   aws eks describe-addon \
-     --cluster-name my-cluster \
-     --addon-name vpc-cni
+- Inicia la reversión en un plazo de siete días desde una actualización in situ completada, hacia la versión menor inmediatamente anterior. Un clúster creado en la versión actual no reúne los requisitos; no se admiten reversiones repetidas a versiones menores progresivamente más antiguas.
+- La versión objetivo debe seguir estando admitida. Una versión objetivo con soporte extendido requiere la política `EXTENDED` y genera cargos. No se puede revertir una actualización automática al finalizar el soporte extendido; los casos al terminar el soporte estándar están sujetos a las condiciones de política documentadas.
+- Comprueba el estado `ACTIVE`, que no haya actualizaciones en conflicto, las funciones incompatibles hacia atrás y los demás requisitos previos. Las conclusiones `ERROR` o `UNKNOWN` de `ROLLBACK_READINESS` bloquean la reversión; `WARNING` es consultiva. `--force` omite las comprobaciones de insights, no los requisitos previos y de elegibilidad ni los controles de interrupción de Auto Mode. Esto difiere de la aplicación temporal de `--force` en los insights normales de actualización.
 
-   # Check add-on pod status
-   kubectl get pods -n kube-system -l k8s-app=aws-node
-   kubectl describe pod -n kube-system <addon-pod-name>
-   kubectl logs -n kube-system <addon-pod-name>
-   ```
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+aws eks list-insights --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --filter '{"categories":["ROLLBACK_READINESS"]}' --output json --no-cli-pager
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
+```
 
-**Problemas comunes de actualización y soluciones:**
+Inspecciona cada hallazgo con `describe-insight --id "$INSIGHT_ID"`. Una lista de insights vacía no demuestra que se cumplan todos los requisitos previos.
 
-1. **Fallo de actualización del control plane**:
-   - **Síntomas**: El estado de la actualización muestra "Failed"
-   - **Causas**: Problemas de configuración del API server, restricciones de recursos, problemas de red
-   - **Soluciones**:
-     - Revisar los mensajes de error de la actualización
-     - Contactar al equipo de soporte de AWS
-     - Proporcionar el estado y los logs del clúster
+| Tipo de cómputo | Orden y límites |
+| --- | --- |
+| Grupos de nodos administrados | Antes del plano de control, revierte los grupos pertinentes mediante `UpdateNodegroupVersion`, según la guía de origen y los requisitos de AMI personalizada; verifica los nodos reales |
+| Nodos autoadministrados / híbridos | El responsable coordina nodos compatibles y la migración de cargas de trabajo antes del plano de control |
+| Auto Mode | El servicio revierte primero los nodos y luego el plano de control; sigue el ID de actualización aunque el estado del clúster sea `ACTIVE` durante la fase de nodos |
+| Fargate | No se puede revertir in situ kubelet; coordina el comportamiento y la disponibilidad de Pods, controladores, HPA, GitOps y Jobs para que los Pods de reemplazo no vuelvan a crear inmediatamente el kubelet más nuevo antes de revertir el plano de control |
 
-2. **Fallo de actualización de node group**:
-   - **Síntomas**: Los nodes no pasan a Ready, fallos de scheduling de Pods
-   - **Causas**: Problemas de inicio de instancias, errores de configuración de kubelet, problemas de CNI
-   - **Soluciones**:
-     - Revisar los logs de los nodes
-     - Verificar el estado de las instancias
-     - Verificar security groups y permisos de IAM
+Después de validar la secuencia de nodos pertinente y todos los requisitos, la solicitud al plano de control usa `update-cluster-version`, no un comando `rollback-cluster`. Guarda antes el monitor de la guía de origen:
 
-3. **Problemas de actualización de add-ons**:
-   - **Síntomas**: Pods de add-on en estado CrashLoopBackOff o Error
-   - **Causas**: Problemas de compatibilidad de versiones, conflictos de configuración, restricciones de recursos
-   - **Soluciones**:
-     - Revisar logs de Pods
-     - Resolver conflictos de configuración
-     - Reintentar con una versión compatible
+```bash
+umask 077
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${ROLLBACK_VERSION:?}"
+: "${WAIT_TIMEOUT_SECONDS:?Set an explicit client wait for the approved rollback}"
+aws eks update-cluster-version --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubernetes-version "$ROLLBACK_VERSION" --output json --no-cli-pager > rollback-update.json
+UPDATE_ID=$(jq -er '.update.id | select(type == "string" and length > 0)' rollback-update.json)
+export CLUSTER_NAME AWS_REGION UPDATE_ID WAIT_TIMEOUT_SECONDS
+unset NODEGROUP_NAME ADDON_NAME
+python3 eks-wait-update.py
+```
 
-4. **Problemas de compatibilidad de cargas de trabajo**:
-   - **Síntomas**: Fallos de inicio de Pods de aplicaciones, errores de API
-   - **Causas**: Uso de APIs obsoletas, características incompatibles
-   - **Soluciones**:
-     - Actualizar manifiestos
-     - Revisar logs de aplicaciones
-     - Resolver problemas de compatibilidad
+Para Auto Mode, usa la solicitud alternativa `--rollback-config timeoutMinutes=...` de la guía de origen, no una segunda solicitud simultánea. El valor predeterminado es 720 minutos y el intervalo admitido va de 120 a 10080; no es una fecha límite exacta de finalización. Los presupuestos de desviación en cero o las exclusiones de interrupción de nodos pueden bloquear el progreso. Los PDB y las exclusiones de interrupción de Pods interactúan con los períodos de gracia de terminación y no implican protección indefinida. `--force` no omite esos controles.
 
-**Buenas prácticas:**
+Solo se admite el mejor esfuerzo de `CancelUpdate` durante la fase de nodos de Auto Mode y antes de revertir el plano de control; las interrupciones ya iniciadas pueden completarse. Un timeout o cancelación deja intacto el plano de control y reconcilia los nodos hacia su versión. Un timeout del cliente por sí solo no cancela la operación. Los reintentos siguen sujetos al plazo de elegibilidad original.
 
-1. **Recopilar logs para troubleshooting**:
-   ```bash
-   # Collect cluster information
-   kubectl cluster-info dump > cluster-info.txt
+La reversión conserva los datos de etcd, cargas de trabajo y PV en vez de restaurar una copia de seguridad; los complementos no se revierten automáticamente. La versión menor anterior recibe su última versión de plataforma, no necesariamente la versión exacta que tenía antes. Revertir CloudFormation o Git no equivale a esta operación del servicio. Sigue el procedimiento completo de decisión de la guía de origen; ninguno de estos comandos se ejecutó en AWS para esta revisión.
 
-   # Collect node information
-   kubectl describe nodes > nodes-info.txt
+**Registro del incidente**
 
-   # Collect system pod logs
-   kubectl logs -n kube-system -l k8s-app=aws-node > vpc-cni-logs.txt
-   kubectl logs -n kube-system -l k8s-app=kube-dns > coredns-logs.txt
-   kubectl logs -n kube-system -l k8s-app=kube-proxy > kube-proxy-logs.txt
+Se conserva la marca de tiempo original. El escenario y la causa atribuida no tienen evidencia de incidente adjunta, por lo que se mantienen como un ejemplo con hipótesis:
 
-   # Collect events
-   kubectl get events --all-namespaces --sort-by='.lastTimestamp' > events.txt
-   ```
+```markdown
+# Upgrade troubleshooting report (illustrative, not a verified incident)
 
-2. **Preparar procedimientos de rollback**:
-   ```bash
-   # Node group rollback (create new node group)
-   eksctl create nodegroup \
-     --cluster my-cluster \
-     --name rollback-nodegroup \
-     --node-type m5.large \
-     --nodes 3 \
-     --nodes-min 3 \
-     --nodes-max 6 \
-     --node-ami auto \
-     --kubernetes-version 1.27  # previous version
+## Problem description
 
-   # Workload migration
-   kubectl cordon -l eks.amazonaws.com/nodegroup=problematic-nodegroup
-   kubectl drain --ignore-daemonsets --delete-emptydir-data -l eks.amazonaws.com/nodegroup=problematic-nodegroup
-   ```
+- Example symptom: CoreDNS Pods in CrashLoopBackOff after a node-group update
+- Example impact: service discovery and application connections affected
+- Original illustrative timestamp: 2023-07-15 14:30 UTC
+- Provenance: no incident logs or measurement evidence supplied
 
-3. **Documentar troubleshooting**:
-   ```markdown
-   # Upgrade Troubleshooting Report
+## Investigation
 
-   ## Problem Description
-   - Symptom: CoreDNS pods in CrashLoopBackOff state after node group upgrade
-   - Impact: Service discovery failure, application connection issues
-   - Occurrence time: 2023-07-15 14:30 UTC, immediately after node group upgrade
+1. Record the exact update ID, versions, changes and affected workloads.
+2. Inspect CoreDNS logs/events, node conditions and resource availability.
+3. Compare the owned Corefile/configuration with the reviewed baseline.
+4. Check connectivity, network policies, scheduling and dependency changes.
 
-   ## Investigation Process
-   1. Check CoreDNS pod status
-   2. Analyze CoreDNS logs
-   3. Verify node status and resources
-   4. Review network policies
+## Hypotheses, not established findings
 
-   ## Findings
-   - Configuration error found in CoreDNS pod logs
-   - CoreDNS ConfigMap incorrectly modified during upgrade
+- A configuration parsing error is one possible explanation.
+- A ConfigMap modification requires a diff/audit record and relevant log evidence.
+- Record evidence that supports or rejects each hypothesis.
 
-   ## Resolution
-   1. Restore CoreDNS ConfigMap
-   2. Restart CoreDNS pods
-   3. Verify service connectivity
+## Conditional remediation
 
-   ## Preventive Measures
-   1. Backup critical configurations before upgrade
-   2. Implement automated validation tests
-   3. Improve phased upgrade process
-   ```
+1. If a configuration regression is demonstrated, restore compatible reviewed settings.
+2. Coordinate any restart with replicas, readiness, PDB and DNS availability.
+3. Verify service discovery and application SLOs, not just Pod phase.
 
-4. **Colaborar eficazmente con el equipo de soporte de AWS**:
-   - Proporcionar una descripción clara del problema
-   - Compartir logs y mensajes de error relevantes
-   - Explicar los pasos de troubleshooting realizados
+## Prevention and record
 
-Problemas con las otras opciones:
-- **A. Crear inmediatamente un clúster nuevo**: Este es un enfoque extremo que consume mucho tiempo y recursos sin resolver la causa raíz.
-- **B. Depender únicamente del equipo de soporte de AWS cuando ocurran problemas**: El equipo de soporte de AWS es un recurso importante, pero realizar primero pasos básicos de troubleshooting puede reducir el tiempo de resolución.
-- **D. Ignorar los problemas de actualización**: Ignorar los problemas de actualización puede tener impactos a largo plazo en la estabilidad, la seguridad y el rendimiento del clúster.
+- Version and back up owned configuration; rehearse restoration.
+- Add regression checks and staged rollout gates.
+- Actual actions, results and evidence: NOT RUN / TO BE RECORDED.
+```
+
+Comparte con AWS Support el ID exacto de actualización, los errores y registros acotados, el impacto y las medidas ya probadas. A puede añadir una migración no planificada sin resolver la causa; B omite evidencia útil; D deja sin atender problemas de fiabilidad y seguridad.
+
+Fuentes: [reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), [reversión de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html), [resolución de problemas de EKS](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html).
+
 </details>
 
-### 6. ¿Cuál es el enfoque más completo para la validación después de actualizaciones de clústeres de Amazon EKS?
+### 6. ¿Cuál es el enfoque más completo para validar después de una actualización?
 
-A. Verificar solo el número de nodes
-B. Verificar solo la versión del clúster
-C. Realizar una validación de varias etapas que incluya componentes del sistema, funcionalidad de cargas de trabajo y métricas de rendimiento
-D. Usar en producción inmediatamente sin validación después de la actualización
+- A. Contar únicamente los nodos
+- B. Verificar únicamente la versión del clúster
+- C. Validar por etapas el estado de la solicitud, los componentes, las funciones de las cargas de trabajo y el rendimiento representativo
+- D. Enviar de inmediato todo el tráfico de producción sin validar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Realizar una validación de varias etapas que incluya componentes del sistema, funcionalidad de cargas de trabajo y métricas de rendimiento**
+**Respuesta: C. Validar por etapas el estado de la solicitud, los componentes, las funciones de las cargas de trabajo y el rendimiento representativo**
 
-**Explicación:**
-El enfoque más completo para la validación después de actualizaciones de clústeres de Amazon EKS es realizar una validación de varias etapas que incluya componentes del sistema, funcionalidad de cargas de trabajo y métricas de rendimiento. Este enfoque ayuda a verificar que la actualización se completó correctamente y que el clúster opera como se espera.
+Primero verifica la solicitud de actualización exacta, la versión y el estado de nodos y complementos. Después prueba la funcionalidad y compara las métricas de la aplicación con una línea de base registrada. Superar una prueba rápida cubre menos que demostrar que está lista para producción o que cumple un SLO.
 
-**Componentes clave de la validación de varias etapas:**
+| Área | Evidencia |
+| --- | --- |
+| Plano de control | Resultado de actualización, disponibilidad y respuesta de API, y métricas o registros admitidos; no se puede acceder directamente a etcd administrado |
+| Nodos | Condiciones `Ready`, kubelet, AMI y entorno de ejecución esperados, programación y estado específico del tipo de cómputo |
+| Red | Comunicación de Pod y Service, DNS, Ingress y Gateway, salida y conectividad con dependencias |
+| Almacenamiento | Aprovisionamiento, escritura y lectura entre consumidores, topología, reprogramación y restauración coherente con la aplicación |
+| Seguridad | Comportamiento previsto de autenticación y autorización, seguridad de Pods, NetworkPolicy y cifrado |
+| Cargas de trabajo | Despliegue y escalado, StatefulSets, Jobs y CronJobs, CRD y operadores, y webhooks |
+| Rendimiento | Tasa de solicitudes comparable, latencia y distribución de errores, tiempo de inicio y uso de recursos durante un período representativo |
 
-1. **Validación de componentes del sistema**:
-   - Estado de los componentes del control plane
-   - Estado y versiones de los nodes
-   - Estado de Pods del sistema y add-ons
+Usa `eks-upgrade-smoke.py` de la guía de origen para una prueba acotada en una instancia Linux de EC2, después de revisar el contexto, la StorageClass compatible, el controlador CSI y su IAM, la programación, la política de admisión y red, y los costos. Guarda la implementación proporcionada; esto no hace referencia a una imagen o script de validación no definido.
 
-2. **Validación de funcionalidad de cargas de trabajo**:
-   - Deployment y escalado de aplicaciones
-   - Conectividad y routing de Services
-   - Funcionalidad de storage y volúmenes
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed test cluster context}"
+: "${TEST_STORAGE_CLASS:?Set an existing compatible test StorageClass}"
+export KUBE_CONTEXT TEST_STORAGE_CLASS
+export RUN_SMOKE_TEST=yes
+export CLEANUP_ON_SUCCESS=no
+python3 eks-upgrade-smoke.py
+```
 
-3. **Validación de métricas de rendimiento**:
-   - Uso y eficiencia de recursos
-   - Latencia y throughput
-   - Tasas de error y disponibilidad
+El ayudante crea un espacio de nombres único, registra su UID, ejecuta el despliegue y escalado de un Deployment y 20 solicitudes HTTP, y escribe y luego lee un marcador de PVC mediante Jobs separados. El proceso de escritura se crea antes de esperar a que se vincule el volumen, para que un consumidor pueda programarse con `WaitForFirstConsumer`; el escritor se elimina antes de crear el lector. Los fallos conservan la evidencia y los recursos. La limpieza opcional tras el éxito exige que coincida el UID del espacio de nombres; un PV con política `Retain` puede seguir generando cargos. La prueba no cubre todas las cargas de trabajo, los procedimientos de restauración, Fargate o Auto Mode, los límites de rendimiento ni los controles de seguridad.
 
-**Métodos de implementación:**
+Elige pruebas funcionales y de carga adicionales revisadas por sus responsables a partir de la tabla. `kubectl top` depende de Metrics Server y muestra el uso actual, no prueba el rendimiento ni la latencia. No ejecutes en producción un bucle ilimitado de wget. Registra el tráfico objetivo, la duración, los criterios de éxito y error, la línea de base, las diferencias del entorno y los resultados reales; no infieras un benchmark a partir de plantillas sintéticas.
 
-1. **Validación de componentes del sistema**:
-   ```bash
-   # Check cluster version
-   aws eks describe-cluster \
-     --name my-cluster \
-     --query "cluster.version" \
-     --output text
+**Plantilla opcional de Terraform**
 
-   # Check control plane component status
-   kubectl get componentstatuses
+Esta plantilla administrada por separado conserva el ejemplo didáctico del espacio de nombres, Deployment, Service y PVC. Configura el proveedor para el contexto revisado, indica un espacio de nombres nuevo y una StorageClass compatible, e inspecciona el plan. No adoptes ni destruyas un espacio de nombres preexistente. Es una plantilla de ejemplo, no un veredicto automatizado de validación.
 
-   # Check node status and versions
-   kubectl get nodes -o wide
+```hcl
+# Separate disposable fixture; configure the Kubernetes provider/context externally.
+variable "validation_namespace" {
+  type = string
+  validation {
+    condition     = can(regex("^eks-upgrade-validation-[a-z0-9]{8,16}$", var.validation_namespace))
+    error_message = "Supply a new, unique namespace with the required validation prefix."
+  }
+}
+variable "test_storage_class" {
+  type = string
+  validation {
+    condition     = length(trimspace(var.test_storage_class)) > 0
+    error_message = "Select an existing compatible test StorageClass."
+  }
+}
 
-   # Check system pod status
-   kubectl get pods -n kube-system
-   ```
+resource "kubernetes_namespace_v1" "validation" {
+  metadata {
+    name = var.validation_namespace
+  }
+}
 
-2. **Validación de funcionalidad de cargas de trabajo**:
-   ```bash
-   # Create test deployment
-   kubectl create deployment nginx-test --image=nginx
+resource "kubernetes_persistent_volume_claim_v1" "validation_pvc" {
+  metadata {
+    name      = "validation-pvc"
+    namespace = kubernetes_namespace_v1.validation.metadata[0].name
+  }
+  wait_until_bound = false
+  spec {
+    access_modes       = ["ReadWriteOnce"]
+    storage_class_name = var.test_storage_class
+    resources {
+      requests = { storage = "1Gi" }
+    }
+  }
+}
 
-   # Scale deployment
-   kubectl scale deployment nginx-test --replicas=3
+resource "kubernetes_deployment_v1" "validation_app" {
+  metadata {
+    name      = "validation-app"
+    namespace = kubernetes_namespace_v1.validation.metadata[0].name
+  }
+  wait_for_rollout = true
+  spec {
+    replicas = 1
+    strategy {
+      type = "Recreate"
+    }
+    selector {
+      match_labels = { app = "validation-app" }
+    }
+    template {
+      metadata {
+        labels = { app = "validation-app" }
+      }
+      spec {
+        automount_service_account_token = false
+        node_selector                   = { "kubernetes.io/os" = "linux" }
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 65532
+          run_as_group    = 65532
+          fs_group        = "65532"
+          seccomp_profile {
+            type = "RuntimeDefault"
+          }
+        }
+        container {
+          name    = "http"
+          image   = "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+          command = ["sh", "-ec"]
+          args = [
+            "test -f /data/index.html || printf 'fixture\\n' > /data/index.html; exec httpd -f -p 8080 -h /data"
+          ]
+          port {
+            container_port = 8080
+          }
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = "8080"
+            }
+            period_seconds = 5
+          }
+          resources {
+            requests = { cpu = "10m", memory = "16Mi" }
+            limits   = { cpu = "100m", memory = "64Mi" }
+          }
+          security_context {
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
+          volume_mount {
+            name       = "data"
+            mount_path = "/data"
+          }
+        }
+        volume {
+          name = "data"
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim_v1.validation_pvc.metadata[0].name
+          }
+        }
+      }
+    }
+  }
+}
 
-   # Create service and test connectivity
-   kubectl expose deployment nginx-test --port=80 --type=ClusterIP
-   kubectl run -it --rm --restart=Never busybox --image=busybox -- wget -O- nginx-test
+resource "kubernetes_service_v1" "validation_service" {
+  metadata {
+    name      = "validation-service"
+    namespace = kubernetes_namespace_v1.validation.metadata[0].name
+  }
+  spec {
+    selector = { app = "validation-app" }
+    type     = "ClusterIP"
+    port {
+      port        = 80
+      target_port = "8080"
+    }
+  }
+}
+```
 
-   # Test volume functionality
-   kubectl apply -f - <<EOF
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: test-pvc
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     resources:
-       requests:
-         storage: 1Gi
-   EOF
+`wait_until_bound = false` permite que Terraform cree el consumidor antes de que se vincule un PVC con `WaitForFirstConsumer`. El Deployment espera a que finalice el despliegue y esté listo. Una réplica y `Recreate` evitan presuponer que un volumen RWO pueda adjuntarse durante una actualización gradual en varios nodos; esto provoca indisponibilidad deliberadamente. El PVC sí está montado, pero servir un archivo no demuestra persistencia tras un reemplazo ni una restauración correcta de una copia de seguridad. Reúne evidencia independiente de escritura, reemplazo y lectura, y de restauración. Revisa la política de recuperación del PV antes de limpiarlo. Los campos de recursos `_v1` se contrastaron con la documentación del proveedor; no se ejecutó `apply` del proveedor de Kubernetes ni la plantilla en un entorno activo.
 
-   kubectl apply -f - <<EOF
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: volume-test
-   spec:
-     containers:
-     - name: volume-test
-       image: busybox
-       command: ["sh", "-c", "echo 'test' > /data/test.txt && sleep 3600"]
-       volumeMounts:
-       - name: data
-         mountPath: /data
-     volumes:
-     - name: data
-       persistentVolumeClaim:
-         claimName: test-pvc
-   EOF
-   ```
+**Panel de validación**
 
-3. **Validación de métricas de rendimiento**:
-   ```bash
-   # Check node resource usage
-   kubectl top nodes
+El siguiente ConfigMap presupone que existe un sidecar de paneles de Grafana que observa `monitoring` con la etiqueta `grafana_dashboard=1`, el UID de origen de datos `prometheus` y una disposición de scrape de kube-prometheus-stack de un solo clúster. Ajusta esos valores y las etiquetas de job a la instalación real. No instales una segunda pila de supervisión para esta plantilla.
 
-   # Check pod resource usage
-   kubectl top pods --all-namespaces
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-validation-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  cluster-validation.json: |
+    {
+      "uid": "eks-upgrade-validation",
+      "title": "EKS Upgrade Validation",
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "utc",
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Ready nodes",
+          "type": "stat",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(max by (node) (kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"}))"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Ready active Pods (%)",
+          "type": "stat",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * sum(max by (namespace, pod, uid) (kube_pod_status_ready{job=\"kube-state-metrics\",condition=\"true\"}) and on (namespace, pod, uid) (max by (namespace, pod, uid) (kube_pod_status_phase{job=\"kube-state-metrics\",phase=~\"Pending|Running|Unknown\"}) == 1)) / sum(max by (namespace, pod, uid) (kube_pod_status_phase{job=\"kube-state-metrics\",phase=~\"Pending|Running|Unknown\"}))"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "API requests / second",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (code) (rate(apiserver_request_total{job=\"apiserver\"}[5m]))"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Node CPU busy (%)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * (1 - avg by (instance) (max by (instance, cpu) (rate(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"}[5m]))))"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Node memory used (%)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * (1 - max by (instance) (node_memory_MemAvailable_bytes{job=\"node-exporter\"}) / max by (instance) (node_memory_MemTotal_bytes{job=\"node-exporter\"}))"
+            }
+          ]
+        }
+      ]
+    }
+```
 
-   # Perform load test
-   kubectl run -it --rm --restart=Never loadtest --image=busybox -- sh -c "while true; do wget -q -O- http://nginx-test; done"
-   ```
+«Pods activos listos» usa el estado de disponibilidad y excluye las fases completadas o fallidas; `Running` por sí solo no indica disponibilidad. El panel de CPU usa la tasa del contador de tiempo inactivo, y la memoria tiene su propio panel de porcentaje. Las muestras duplicadas del exportador se reducen dentro del ámbito declarado de un solo clúster. Para fuentes de varios clústeres, filtra o agrupa por la etiqueta del clúster antes de combinar series. Si faltan métricas o el denominador de Pods activos es cero, el resultado debe quedar como desconocido o sin datos, no reemplazarse por un cero que parezca saludable. El panel no verifica por sí mismo una actualización ni aplica una condición de lanzamiento.
 
-**Áreas de validación y checklist:**
+Guarda los ID de actualización, evidencias de la prueba rápida, entorno y hora de las pruebas, consultas y períodos de métricas, fallos y cobertura pendiente en un directorio privado de resultados. Observa el tráfico canario y los criterios de recuperación antes de aumentarlo en producción. A y B son comprobaciones parciales útiles; ninguna cubre la funcionalidad. D expone a los usuarios antes de completar las comprobaciones.
 
-1. **Validación del control plane**:
-   - Capacidad de respuesta del API server
-   - Estado y rendimiento de etcd
-   - Funcionalidad de controller manager y scheduler
+Fuentes: [volúmenes persistentes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), [ciclo de vida de Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/), [PVC de Terraform](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/persistent_volume_claim_v1), [funciones de Prometheus](https://prometheus.io/docs/prometheus/latest/querying/functions/).
 
-2. **Validación del data plane**:
-   - Estado y disponibilidad de nodes
-   - Funcionalidad de kubelet
-   - Estado del container runtime
-
-3. **Validación de networking**:
-   - Comunicación Pod-to-Pod
-   - Service discovery
-   - Tráfico ingress y egress
-
-4. **Validación de storage**:
-   - Aprovisionamiento de volúmenes
-   - Persistencia de datos
-   - Funcionalidad de StorageClass
-
-5. **Validación de seguridad**:
-   - Autenticación y autorización
-   - Network policies
-   - Encryption y security contexts
-
-**Buenas prácticas:**
-
-1. **Enfoque de validación por fases**:
-   ```bash
-   # Phase 1: System component validation
-   ./validate-system-components.sh
-
-   # Phase 2: Basic workload functionality validation
-   ./validate-basic-workloads.sh
-
-   # Phase 3: Advanced feature validation
-   ./validate-advanced-features.sh
-
-   # Phase 4: Performance and load testing
-   ./validate-performance.sh
-   ```
-
-2. **Pruebas de validación automatizadas**:
-   ```yaml
-   # Validation job definition
-   apiVersion: batch/v1
-   kind: Job
-   metadata:
-     name: cluster-validation
-   spec:
-     template:
-       spec:
-         containers:
-         - name: validation
-           image: validation-tools:latest
-           command: ["/scripts/validate-cluster.sh"]
-         restartPolicy: Never
-   ```
-
-3. **Documentar los resultados de validación**:
-   ```bash
-   # Collect validation results
-   kubectl get nodes -o wide > validation-results/nodes.txt
-   kubectl get pods --all-namespaces > validation-results/pods.txt
-   kubectl get events --all-namespaces --sort-by='.lastTimestamp' > validation-results/events.txt
-
-   # Collect performance metrics
-   kubectl top nodes > validation-results/node-metrics.txt
-   kubectl top pods --all-namespaces > validation-results/pod-metrics.txt
-   ```
-
-4. **Transición gradual del tráfico de producción**:
-   - Usar canary deployments
-   - Aumentar gradualmente el tráfico
-   - Monitorear métricas y detectar anomalías
-
-Problemas con las otras opciones:
-- **A. Verificar solo el número de nodes**: La verificación del número de nodes es una validación básica, pero puede omitir aspectos importantes como el estado de los nodes, los componentes del sistema y la funcionalidad de las cargas de trabajo.
-- **B. Verificar solo la versión del clúster**: La verificación de la versión del clúster ayuda a confirmar la finalización de la actualización, pero carece de validación funcional.
-- **D. Usar en producción inmediatamente sin validación después de la actualización**: Usar en producción sin validación es arriesgado, y los posibles problemas pueden afectar a los usuarios.
 </details>
