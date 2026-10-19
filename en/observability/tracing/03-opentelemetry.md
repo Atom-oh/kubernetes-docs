@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Review baseline**: Collector Contrib 0.160.0; Operator 0.158.0; language versions below
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 19, 2026
 
 ## Introduction
 
@@ -1467,6 +1467,10 @@ The [July 8 CNCF article](https://www.cncf.io/blog/2026/07/08/network-boundary-f
 ### August 2026 Update: Distilling Slow SQL Queries into Reliability Metrics
 
 The [August 21 CNCF article](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/) and its [lab](https://github.com/causely-oss/slow-query-lab) compare query duration, traffic-weighted impact and span-derived metrics with anomaly baselines. Preserve the article's historical examples as examples, not capacity measurements for your cluster. The article itself warns about raw SQL in metric labels, sensitive parameters, cardinality and baseline warm-up. Sanitize and bound dimensions before adopting a lab configuration; a latency anomaly is a symptom, not proof of a root cause.
+
+### October 2026 Update: Software Carbon Intensity (SCI) as an OTel Signal
+
+In an [October 15 CNCF post](https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/), Diana Todea — a Kepler maintainer and CNCF Ambassador — builds on her Observability Summit Europe 2026 keynote to propose treating the Green Software Foundation's Software Carbon Intensity (SCI) standard as OpenTelemetry semantic conventions, connecting carbon emissions to workloads and services as an observable signal. This is a direction-setting proposal still under standardization discussion, not a feature shipped in a specific OTel release or a finished semantic convention; check upstream progress before planning adoption.
 
 ### October 2026 Update: Rebuilding Incident Detection on OTel Streams
 

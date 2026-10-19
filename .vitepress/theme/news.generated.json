@@ -4,6 +4,139 @@
     "ko": {
       "entries": [
         {
+          "id": "03e87daf9e4169b3",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/news/releases/1.31.x/announcing-1.31.2/"
+          ],
+          "title": "Istio 1.31.2/1.30.6/1.29.9 패치 릴리스 공개",
+          "summary": "Istio 1.31.2/1.30.6/1.29.9 패치 릴리스 공개(ISTIO-SECURITY-2026-007 보안 패치 포함, 문서에는 기존 검토로 이미 반영됨)",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "2540883ab68e701f",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.20.3"
+          ],
+          "title": "Cilium 1.20.3/1.19.9/1.18.15 패치 릴리스",
+          "summary": "Cilium 1.20.3/1.19.9/1.18.15 패치 릴리스(conntrack GC, nodeSelector CNP 처리 등 버그 수정) 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "806d72c4d7cd9450",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.5.5"
+          ],
+          "title": "Argo CD v3.5.5/v3.4.11/v3.3.16 버그 수정 패치 릴리스",
+          "summary": "Argo CD v3.5.5/v3.4.11/v3.3.16 버그 수정 패치 릴리스 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "5ccc0800ccfe1ab5",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3"
+          ],
+          "title": "Argo CD v3.6.0-rc3 release candidate 공개",
+          "summary": "Argo CD v3.6.0-rc3 release candidate 공개 반영",
+          "topic": "gitops",
+          "category": "preview"
+        },
+        {
+          "id": "11b50f2a019fee97",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "security/14-waf-edge-api-security.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/"
+          ],
+          "title": "CloudFront VPC origin의 dual-stack",
+          "summary": "CloudFront VPC origin의 dual-stack(IPv6) 지원 발표 반영",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "b0d658c584e4b565",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "blockchain/01-fundamentals.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/"
+          ],
+          "title": "Blockchain Snapshots on AWS 출시",
+          "summary": "Blockchain Snapshots on AWS 출시(Ethereum·Solana 노드 부트스트랩용 무료 사전 동기화 스냅샷) 반영",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "a0f4726887a07600",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "security/01-kyverno-policy-management.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/"
+          ],
+          "title": "Nirmata Runtime for Kyverno",
+          "summary": "Nirmata Runtime for Kyverno(eBPF·LSM 기반 커널 수준 런타임 정책 적용) CNCF 블로그 소개 반영",
+          "topic": "security",
+          "category": "guide"
+        },
+        {
+          "id": "5397394db1517ff0",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/"
+          ],
+          "title": "소프트웨어 탄소 집약도",
+          "summary": "소프트웨어 탄소 집약도(SCI)를 OpenTelemetry semantic convention으로 다루자는 CNCF 블로그 제안 반영",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "6c3a0988cfecd2c3",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/"
+          ],
+          "title": "Kueue가 관리하는 Job의 admission 상태를 Headlamp로 추적하기, Kubernetes 블로그",
+          "summary": "Kueue가 관리하는 Job의 admission 상태를 Headlamp로 추적하기, Kubernetes 블로그",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
           "id": "f36c8c35ad236185",
           "period": "2026-W42",
           "week": "2026-W42",
@@ -1226,10 +1359,143 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-12"
+      "updated": "2026-10-19"
     },
     "en": {
       "entries": [
+        {
+          "id": "03e87daf9e4169b3",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/news/releases/1.31.x/announcing-1.31.2/"
+          ],
+          "title": "Istio 1.31.2/1.30.6/1.29.9 patch releases published",
+          "summary": "Istio 1.31.2/1.30.6/1.29.9 patch releases published (including the ISTIO-SECURITY-2026-007 security patch; already reflected in the doc by its earlier review)",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "2540883ab68e701f",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.20.3"
+          ],
+          "title": "Cilium 1.20.3/1.19.9/1.18.15 patch releases",
+          "summary": "applied the Cilium 1.20.3/1.19.9/1.18.15 patch releases (bug fixes including conntrack GC and handling of CNPs with nodeSelector)",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "806d72c4d7cd9450",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.5.5"
+          ],
+          "title": "Argo CD v3.5.5/v3.4.11/v3.3.16 bug-fix patch releases",
+          "summary": "applied the Argo CD v3.5.5/v3.4.11/v3.3.16 bug-fix patch releases",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "5ccc0800ccfe1ab5",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3"
+          ],
+          "title": "Argo CD v3.6.0-rc3 release candidate",
+          "summary": "applied the Argo CD v3.6.0-rc3 release candidate",
+          "topic": "gitops",
+          "category": "preview"
+        },
+        {
+          "id": "11b50f2a019fee97",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "security/14-waf-edge-api-security.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/"
+          ],
+          "title": "announcement of dual-stack",
+          "summary": "applied the announcement of dual-stack (IPv6) support for CloudFront VPC origins",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "b0d658c584e4b565",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "blockchain/01-fundamentals.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/"
+          ],
+          "title": "launch of Blockchain Snapshots on AWS",
+          "summary": "applied the launch of Blockchain Snapshots on AWS (free pre-synced snapshots for Ethereum/Solana node bootstrapping)",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "a0f4726887a07600",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "security/01-kyverno-policy-management.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/"
+          ],
+          "title": "CNCF blog introduction of Nirmata Runtime for Kyverno",
+          "summary": "applied the CNCF blog introduction of Nirmata Runtime for Kyverno (kernel-level runtime policy enforcement via eBPF/LSM)",
+          "topic": "security",
+          "category": "guide"
+        },
+        {
+          "id": "5397394db1517ff0",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/"
+          ],
+          "title": "CNCF blog proposal to treat Software Carbon Intensity",
+          "summary": "applied the CNCF blog proposal to treat Software Carbon Intensity (SCI) as OpenTelemetry semantic conventions",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "6c3a0988cfecd2c3",
+          "period": "2026-W43",
+          "week": "2026-W43",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/"
+          ],
+          "title": "Tracing the admission state of Kueue-managed Jobs with Headlamp, Kubernetes blog",
+          "summary": "Tracing the admission state of Kueue-managed Jobs with Headlamp, Kubernetes blog",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
         {
           "id": "f36c8c35ad236185",
           "period": "2026-W42",
@@ -2453,7 +2719,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-12"
+      "updated": "2026-10-19"
     }
   }
 }

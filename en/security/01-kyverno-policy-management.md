@@ -1,7 +1,7 @@
 # Policy Management with Kyverno
 
 > **Validation baseline**: Kyverno/CLI 1.19.1, Helm chart 3.9.1. The current release guide lists Kubernetes 1.33–1.35 as tested; the chart's broader install constraint is not a compatibility guarantee.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 19, 2026
 
 Kyverno evaluates Kubernetes policy and performs explicitly configured mutation, generation and deletion. These examples were checked locally with the real CLI and released schemas/charts. No live cluster installation, admission, network isolation, cleanup or AWS integration was executed.
 
@@ -35,6 +35,10 @@ A validating policy does not delete or repair existing noncompliant resources. B
 ### Kyverno vs OPA Gatekeeper
 
 Kyverno's current policies use CEL in YAML/JSON manifests; legacy policies also use patterns and JMESPath. Kubernetes-native packaging does not eliminate the need to learn policy expressions. Gatekeeper uses ConstraintTemplates/Constraints and supported policy engines for its version, with separate admission/audit/mutation capabilities. Compare required features, expression languages, policy tests, controller availability and measured workload impact. The old “easy/complex” and “good/very good performance” ratings were unsupported comparisons, not benchmarks.
+
+### October 2026 Update: Runtime Enforcement Beyond Admission
+
+In an [October 15 CNCF post](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/), Nirmata (the creator of Kyverno) describes the limits of admission control — it answers only "does this spec look right" and cannot catch a running workload diverging from its spec (a second-stage payload pulled after startup, traffic to an unapproved destination) — and introduces **Nirmata Runtime for Kyverno**, an open source implementation that enforces policy at the kernel level using eBPF and Linux Security Modules (LSM). The approach targets runtime security for non-deterministic workloads such as AI agents. It is a separate component with its own permissions, distinct from the admission/background policies in this chapter, and the post is a vendor (Nirmata) introduction — verify feature scope and kernel/platform requirements before adopting it.
 
 ## Installing Kyverno
 

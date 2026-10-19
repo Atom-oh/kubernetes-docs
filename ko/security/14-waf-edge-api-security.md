@@ -1,7 +1,7 @@
 # WAF·엣지·API 보안과 origin 우회 차단
 
 > **검토 기준**: AWS WAF·CloudFront·ALB 공식 문서. 기능·검사 한도는 연결 리소스별로 구분합니다.
-> **마지막 업데이트**: 2026년 10월 15일
+> **마지막 업데이트**: 2026년 10월 19일
 
 이 장의 목표는 “WAF가 있다”를 “보호 대상 요청이 WAF를 통과하고, 검사 범위와 예외를 알며, 앱까지 안전하게 처리된다”로 바꾸는 것입니다. 앱·origin·운영 검증 항목은 이 가이드의 설계 제안입니다.
 
@@ -48,6 +48,10 @@ AWS의 CloudFront→ALB 제한 예제를 기반으로 다음 통제를 결합합
 ### 선택 B: CloudFront VPC origin
 
 CloudFront VPC origins는 지원되는 VPC 내 private subnet origin으로 전달하는 선택지입니다. Internet Gateway 부착 요구가 origin에 공인 IP를 부여하라는 뜻은 아닙니다. 지원 Region·리소스·프로토콜 제약, subnet 주소와 서비스 관리 security group 설정을 현재 문서에서 확인합니다. NLB의 지원과 WAF의 NLB 직접 연결은 서로 다른 문제입니다. [S17]
+
+#### 2026년 10월 업데이트: VPC origin dual-stack 지원
+
+[2026년 10월 15일 발표](https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/)에 따르면 CloudFront VPC origin이 dual-stack을 지원합니다. 이전에는 VPC origin 연결이 IPv4 전용이어서 IPv6를 쓰려면 origin을 public subnet으로 옮기는 트레이드오프가 있었지만, 이제 private subnet origin을 유지한 채 IPv6 트래픽을 전달하도록 구성할 수 있습니다. VPC origin을 지원하는 상용 Region에서 제공되며, dual-stack 전환 시에도 위의 origin 우회 경로 점검은 그대로 필요합니다.
 
 어느 선택이든 별도 공인 Service·NodePort·관리 endpoint가 같은 앱을 노출하는지 확인합니다. private origin이라는 명칭만으로 모든 진입 경로 검토를 끝내지 않습니다.
 

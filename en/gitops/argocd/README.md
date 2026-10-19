@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Review baseline**: Argo CD 3.5.2, Argo Rollouts 1.10.0; Argo CD manifest pins updated to patch 3.5.5 after release-note review (examples not re-run)
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 19, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -226,7 +226,9 @@ This is the upstream test matrix recorded in the 3.5.5 repository. It differs fr
 - 3.5.2: released 2026-08-27.
 - 3.5.3: released 2026-09-14. Bug fixes (health checks, sync retry state, UI).
 - 3.5.4: released 2026-10-06. A **security patch release**: it fixes four CRITICAL issues, namely command execution in the repo-server via a Kustomize remote ref and via a Kustomize Helm config home, repo-server file reads via a Jsonnet import, and AppProject restrictions bypassed by PreDelete/PostDelete hooks (CVE-2026-77459). The same fixes were backported in v3.4.10/v3.3.15. Behavior changes: Kustomize builds no longer honor `helmGlobals.configHome`, and OCI manifests over 4 MiB are rejected; review the [release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4) before upgrading.
+- 3.5.5: released 2026-10-12. A bug-fix patch release (stale manifests and a goroutine leak in the repo-server after a CMP failure, OCI cache behavior, and more); v3.4.11/v3.3.16 were published the same day. See the [release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5).
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): first release candidate of the 3.6 line, published 2026-09-15. Not a production baseline.
+- [3.6.0-rc3](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3): latest release candidate of the 3.6 line, published 2026-10-15. Likewise not a production baseline.
 
 ### October 2026 Update: Argo CD 4.0 Visioning Begins
 

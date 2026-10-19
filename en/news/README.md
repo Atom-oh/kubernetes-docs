@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 19, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -12,6 +12,15 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W43: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.2/1.30.6/1.29.9 patch releases published (including the ISTIO-SECURITY-2026-007 security patch; already reflected in the doc by its earlier review) ([source](https://istio.io/news/releases/1.31.x/announcing-1.31.2/))
+- 2026-W43: [networking/cilium/README.md](../networking/cilium/README.md) — applied the Cilium 1.20.3/1.19.9/1.18.15 patch releases (bug fixes including conntrack GC and handling of CNPs with `nodeSelector`) ([source](https://github.com/cilium/cilium/releases/tag/v1.20.3))
+- 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.5/v3.4.11/v3.3.16 bug-fix patch releases ([source](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5))
+- 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.6.0-rc3 release candidate ([source](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3))
+- 2026-W43: [security/14-waf-edge-api-security.md](../security/14-waf-edge-api-security.md) — applied the announcement of dual-stack (IPv6) support for CloudFront VPC origins ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/))
+- 2026-W43: [blockchain/01-fundamentals.md](../blockchain/01-fundamentals.md) — applied the launch of Blockchain Snapshots on AWS (free pre-synced snapshots for Ethereum/Solana node bootstrapping) ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/))
+- 2026-W43: [security/01-kyverno-policy-management.md](../security/01-kyverno-policy-management.md) — applied the CNCF blog introduction of Nirmata Runtime for Kyverno (kernel-level runtime policy enforcement via eBPF/LSM) ([source](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/))
+- 2026-W43: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied the CNCF blog proposal to treat Software Carbon Intensity (SCI) as OpenTelemetry semantic conventions ([source](https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/))
+- 2026-W43: no matching doc — Tracing the admission state of Kueue-managed Jobs with Headlamp, Kubernetes blog ([source](https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/))
 - 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.15.0 release (node repair as a voluntary disruption with reboot support, CEL in KubeletConfiguration, broader DRA support, and more)
 - 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.4/v3.4.10/v3.3.15 security patch releases (four CRITICAL issues including repo-server command execution, CVE-2026-77459)
 - 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — applied the Kubernetes blog's cgroup v1 deprecation status (`failCgroupV1` defaults to `true` from v1.35)

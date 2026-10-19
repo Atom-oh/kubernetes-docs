@@ -1,7 +1,7 @@
 # WAF, Edge and API Security with Origin Protection
 
 > **Review basis**: Official AWS WAF, CloudFront and ALB documentation. Features and inspection limits are distinguished by associated resource.
-> **Last Updated**: October 15, 2026
+> **Last Updated**: October 19, 2026
 
 The goal is to demonstrate that protected requests traverse WAF, that inspection limits and exceptions are understood, and that the application processes requests safely. Application, origin and operational criteria below are design proposals.
 
@@ -48,6 +48,10 @@ Combine controls based on the AWS CloudFront-to-ALB restriction example. [S16]
 ### Option B: CloudFront VPC origin
 
 CloudFront VPC origins can deliver to supported origins in private VPC subnets. The Internet Gateway attachment requirement does not require a public IP on the origin. Check current Region, resource and protocol restrictions, subnet addresses and service-managed security group configuration. NLB origin support is separate from direct WAF-to-NLB association. [S17]
+
+#### October 2026 Update: Dual-stack support for VPC origins
+
+Per the [October 15, 2026 announcement](https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/), CloudFront VPC origins now support dual-stack. Previously the VPC origin connection was IPv4-only, forcing a trade-off of moving the origin to a public subnet to serve IPv6; you can now keep the origin in a private subnet and configure IPv6 delivery to it. It is available in commercial Regions where VPC origins are supported, and the origin-bypass checks above still apply after a dual-stack migration.
 
 For either option, review additional public Services, NodePorts and management endpoints exposing the same application. A private-origin label does not complete the entry-path inventory.
 

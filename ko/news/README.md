@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 19일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -12,6 +12,15 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W43: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.2/1.30.6/1.29.9 패치 릴리스 공개(ISTIO-SECURITY-2026-007 보안 패치 포함, 문서에는 기존 검토로 이미 반영됨) ([원문](https://istio.io/news/releases/1.31.x/announcing-1.31.2/))
+- 2026-W43: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.3/1.19.9/1.18.15 패치 릴리스(conntrack GC, `nodeSelector` CNP 처리 등 버그 수정) 반영 ([원문](https://github.com/cilium/cilium/releases/tag/v1.20.3))
+- 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.5/v3.4.11/v3.3.16 버그 수정 패치 릴리스 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5))
+- 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.6.0-rc3 release candidate 공개 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3))
+- 2026-W43: [security/14-waf-edge-api-security.md](../security/14-waf-edge-api-security.md) — CloudFront VPC origin의 dual-stack(IPv6) 지원 발표 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-vpc-origin-dualstack/))
+- 2026-W43: [blockchain/01-fundamentals.md](../blockchain/01-fundamentals.md) — Blockchain Snapshots on AWS 출시(Ethereum·Solana 노드 부트스트랩용 무료 사전 동기화 스냅샷) 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/blockchain-snapshots-node-bootstrapping/))
+- 2026-W43: [security/01-kyverno-policy-management.md](../security/01-kyverno-policy-management.md) — Nirmata Runtime for Kyverno(eBPF·LSM 기반 커널 수준 런타임 정책 적용) CNCF 블로그 소개 반영 ([원문](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/))
+- 2026-W43: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — 소프트웨어 탄소 집약도(SCI)를 OpenTelemetry semantic convention으로 다루자는 CNCF 블로그 제안 반영 ([원문](https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/))
+- 2026-W43: 매칭 문서 없음 — Kueue가 관리하는 Job의 admission 상태를 Headlamp로 추적하기, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/))
 - 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.0 릴리스(노드 복구의 자발적 중단 전환·재부팅 복구, KubeletConfiguration CEL 지원, DRA 지원 확대 등) 반영
 - 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.4/v3.4.10/v3.3.15 보안 패치 릴리스(repo-server 명령 실행 등 CRITICAL 4건, CVE-2026-77459 포함) 반영
 - 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — Kubernetes 블로그의 cgroup v1 지원 중단 현황(v1.35부터 `failCgroupV1` 기본 `true`) 반영
