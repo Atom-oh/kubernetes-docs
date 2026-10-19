@@ -159,7 +159,7 @@ EKS 1.35 于 **2026 年 1 月 27 日**提供，1.36 于 **2026 年 6 月 2 日**
 aws eks describe-cluster-versions --region "$AWS_REGION" --no-cli-pager \
   --query clusterVersions --output json
 ```
-This prints the service’s version records rather than assuming the first array element is the newest version or reusing an old example’s status. No AWS query was executed during this audit.
+这会打印服务的版本记录，而不是假设数组首项就是最新版本，也不会沿用旧示例中的状态。本次审查没有执行 AWS 查询。
 
 ### 升级政策和自动升级
 
@@ -1598,6 +1598,8 @@ spec:
 最小组大小以及 Job 的 parallelism/completions 均为八。这是独立的组示例：必须由所有者/控制器管理组的生命周期，并在 Pod 调度期间保持关联关系稳定。调度决策不保证进程同时启动、就绪、分布式计算成功，也不保证不会发生任何死锁。应用程序仍需屏障、超时/恢复逻辑和兼容容量。这些对象仅进行了 schema 检查；没有执行组放置实验。
 
 #### 选定的版本和升级注意事项
+| 主题 | 正确解释 |
+|---|---|
 | JobManagedBy | 1.35 达到 GA |
 | ImageVolume | Beta，现在默认启用；1.36 达到 GA |
 | PodLevelResources | 1.34 升为 Beta 后仍为 Beta |
