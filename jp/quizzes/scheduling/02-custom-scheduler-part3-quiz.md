@@ -274,6 +274,7 @@ profiles:
 - C. Podを実行できないノードを除外する: これは`Filter`拡張ポイントの役割です。
 - D. ノードにスコアを割り当てる: これは`Score`拡張ポイントの役割です。
 </details>
+
 ### 3. KubernetesにおけるGang Schedulingの主な目的は何ですか？
 
 A. Podを特定のノードだけに配置する
@@ -413,6 +414,7 @@ extenders:
 
 [パート2](../../scheduling/02-custom-scheduler-part2.md)にある、上限を設けたhandlerを一式で使用してください。`bindVerb`は未設定のままにして、`DefaultBinder`を維持します。ここでは追加のHTTP serverも、常に成功を返す偽のbind endpointも用意していません。
 </details>
+
 ### 5. Kubernetesスケジューラーフレームワークにおける「PostFilter」拡張ポイントの役割は何ですか？
 
 A. filtering後にノードへスコアを付ける
@@ -607,6 +609,7 @@ func WeightedGPUScore(packing int64, utilization float64) (int64, error) {
 - C. リソース使用率が高いノードに高いスコアを付ける: これは`NodeResourcesFit`の`MostAllocated`方式です。
 - D. ノードのリソース上限を設定する: これはスケジューラープラグインの役割ではありません。ノードのリソース上限はノード自体のプロパティです。
 </details>
+
 ### 7. Kubernetesスケジューラーにおける「PreBind」拡張ポイントの役割は何ですか？
 
 A. Podをノードにbindする
@@ -815,6 +818,7 @@ spec:
 - B. ノードのリソース上限を設定する: これはノード設定またはkubeletの役割です。
 - D. ノード間のリソース使用量の均衡を保つ: これは`NodeResourcesBalancedAllocation`プラグインの役割です。
 </details>
+
 ### 9. Kubernetesスケジューラーの`InterPodAffinity`プラグインの主な目的は何ですか？
 
 A. Podとノード間のaffinityを処理する

@@ -1,1369 +1,1143 @@
-# Análisis de observabilidad: correlación de logs/métricas/trazas
+# Análisis de observabilidad: logs, métricas y trazas
 
-> **Versiones compatibles**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
-> **Última actualización**: February 23, 2026
+> **Base de revisión**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.162.0, Alloy 1.20.1, Loki 3.7.8, Tempo 3.0.3, Grafana 13.2.4\
+> **Última revisión**: 16 de octubre de 2026. El comportamiento del SDK, los logs y los exemplars se probó con exportadores en memoria y dobles de prueba HTTP; LogQL se ejecutó con logs sintéticos en una instancia local de Loki. No se exportaron datos a un clúster real ni a un backend de telemetría externo.
 
-< [Anterior: Configuración de alertas operativas](./07-observability-alerts.md) | [Tabla de contenidos](./README.md) | [Siguiente: Operaciones del stack de observabilidad](./09-observability-stack.md) >
+< [Anterior: Alertas operativas](07-observability-alerts.md) | [Contenido](README.md) | [Siguiente: Operaciones del stack](09-observability-stack.md) >
 
----
+La correlación conecta evidencias del mismo momento, servicio y solicitud. La coincidencia por sí sola no demuestra la causa raíz. Comprueba si faltan datos, revisa el muestreo y la retención, y después valida una hipótesis.
 
-## 1. Estrategia de correlación
+## 1. Identificadores y rutas de transporte reales
 
-La observabilidad efectiva requiere correlacionar logs, métricas y trazas para comprender el comportamiento del sistema. Esta sección cubre la arquitectura y la implementación de la correlación entre señales en entornos EKS.
+| Señal | Ruta usada en este capítulo | Contrato de correlación |
+|---|---|---|
+| Trazas | SDK → OTLP/HTTP Collector → Tempo | Contexto W3C y `service.name` |
+| Logs | stdout JSON → fuente de logs de Alloy para Kubernetes → Loki | `trace_id` y `span_id` en JSON |
+| Métricas | cliente Prometheus → scrape OpenMetrics de `/metrics` | `trace_id` del exemplar |
+| Consultas | Grafana → cada fuente de datos | UID explícitos y asignaciones de etiquetas |
 
-### Estándares de propagación de Trace ID
+Un exportador de trazas no convierte automáticamente los logs de stdout ni las métricas del cliente Prometheus a OTLP. Para enviar todas las señales mediante OTLP se necesitan los exportadores y las canalizaciones correspondientes del SDK y del Collector. Tempo tampoco combina automáticamente los almacenes de logs y métricas.
 
-Dos estándares principales para la propagación del contexto de trazas distribuidas:
+### W3C y B3
 
-**W3C TraceContext (Recomendado)**
-
-```
+```text
 traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
-             |  |                                |                |
-             |  |                                |                └─ flags (sampled)
-             |  |                                └─ parent span ID (16 hex chars)
-             |  └─ trace ID (32 hex chars)
-             └─ version
-
-tracestate: vendor1=value1,vendor2=value2
 ```
 
-**B3 Headers (Legacy/Zipkin)**
+Los identificadores de traza W3C tienen 32 caracteres hexadecimales y los identificadores de span padre, dieciséis; los identificadores compuestos solo por ceros no son válidos. Las banderas incluyen información como el bit de muestreo. Un ID válido o una bandera de muestreo activa no garantizan que el backend almacene los datos ni que los conserve.
 
+B3 es otro formato de propagación compatible, con identificadores de traza de 64 o 128 bits. Si aceptas varios formatos, define la precedencia cuando los encabezados entren en conflicto y delimita la frontera de confianza de entrada. Estos ejemplos usan solo W3C TraceContext. No propagues indiscriminadamente valores sensibles en baggage.
+
+## 2. Ejemplos ejecutables del SDK
+
+Go y Python son **implementaciones alternativas** del mismo contrato de logs y métricas. No inicies ambas en el mismo puerto. Sus puntos de entrada principales son demostraciones locales enlazadas a loopback; al desplegarlas, usa la configuración adecuada del servidor de aplicaciones, el Service y la dirección de enlace.
+
+El servicio compartido se llama `correlation-api`. El JSON contiene `timestamp`, `level`, `message`, `service_name`, `route` con cardinalidad acotada, `status_code`, `latency_ms` e identificadores válidos de traza y span. No uses URL sin procesar ni identificadores de usuario como etiquetas de métricas ordinarias.
+
+### Go
+
+Usa un entorno Go 1.25+ con parches compatibles. La compilación local de esta revisión usó Go 1.25.0; eso no determina qué versión de parche debes elegir para producción.
+
+```text
+module example.com/correlation-demo
+
+go 1.25.0
+
+require (
+	github.com/prometheus/client_golang v1.24.1
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0
+	go.opentelemetry.io/otel v1.46.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
+	go.opentelemetry.io/otel/sdk v1.46.0
+	go.opentelemetry.io/otel/trace v1.46.0
+)
+
+require (
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
+	github.com/go-logr/logr v1.4.4 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
+	github.com/prometheus/common v0.70.1 // indirect
+	github.com/prometheus/procfs v0.21.1 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0 // indirect
+	go.opentelemetry.io/otel/metric v1.46.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/grpc v1.83.1 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
+)
 ```
-X-B3-TraceId: 463ac35c9f6413ad48485a3953bb6124
-X-B3-SpanId: 0020000000000001
-X-B3-ParentSpanId: 0010000000000000
-X-B3-Sampled: 1
-X-B3-Flags: 0
-
-# Single header format
-b3: 463ac35c9f6413ad48485a3953bb6124-0020000000000001-1-0010000000000000
-```
-
-### Instrumentación del SDK de OpenTelemetry
-
-Configura el SDK de OTEL para la propagación automática de trazas:
-
-```yaml
-# otel-config.yaml for Kubernetes deployment
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector-config
-  namespace: observability
-data:
-  config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-            cors:
-              allowed_origins:
-                - "*"
-
-    processors:
-      batch:
-        timeout: 1s
-        send_batch_size: 1024
-
-      resource:
-        attributes:
-          - key: k8s.cluster.name
-            value: "production"
-            action: upsert
-          - key: deployment.environment
-            value: "production"
-            action: upsert
-
-      # Add Kubernetes metadata
-      k8sattributes:
-        auth_type: "serviceAccount"
-        passthrough: false
-        extract:
-          metadata:
-            - k8s.namespace.name
-            - k8s.deployment.name
-            - k8s.pod.name
-            - k8s.node.name
-          labels:
-            - tag_name: app
-              key: app.kubernetes.io/name
-            - tag_name: version
-              key: app.kubernetes.io/version
-
-    exporters:
-      otlp/tempo:
-        endpoint: tempo-distributor.observability:4317
-        tls:
-          insecure: true
-
-      prometheusremotewrite:
-        endpoint: http://prometheus:9090/api/v1/write
-
-      loki:
-        endpoint: http://loki-gateway.observability:3100/loki/api/v1/push
-        labels:
-          resource:
-            k8s.namespace.name: "namespace"
-            k8s.pod.name: "pod"
-            service.name: "service"
-
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [batch, resource, k8sattributes]
-          exporters: [otlp/tempo]
-        metrics:
-          receivers: [otlp]
-          processors: [batch, resource]
-          exporters: [prometheusremotewrite]
-        logs:
-          receivers: [otlp]
-          processors: [batch, resource]
-          exporters: [loki]
-```
-
-### Ejemplo de instrumentación de aplicaciones
-
-Aplicación Python Flask con OTEL:
-
-```python
-# app.py
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.propagate import set_global_textmap
-from opentelemetry.propagators.composite import CompositePropagator
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.propagators.b3 import B3MultiFormat
-import logging
-import json_log_formatter
-
-# Configure trace propagation (both W3C and B3 for compatibility)
-set_global_textmap(CompositePropagator([
-    TraceContextTextMapPropagator(),
-    B3MultiFormat()
-]))
-
-# Configure tracer
-trace.set_tracer_provider(TracerProvider())
-otlp_exporter = OTLPSpanExporter(endpoint="otel-collector:4317", insecure=True)
-trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(otlp_exporter))
-
-# Configure logging with trace correlation
-class TraceIdFilter(logging.Filter):
-    def filter(self, record):
-        span = trace.get_current_span()
-        if span.is_recording():
-            ctx = span.get_span_context()
-            record.trace_id = format(ctx.trace_id, '032x')
-            record.span_id = format(ctx.span_id, '016x')
-        else:
-            record.trace_id = '0' * 32
-            record.span_id = '0' * 16
-        return True
-
-# JSON formatter for structured logging
-formatter = json_log_formatter.JSONFormatter()
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-handler.addFilter(TraceIdFilter())
-
-logger = logging.getLogger('app')
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
-# Flask application
-from flask import Flask, request
-app = Flask(__name__)
-FlaskInstrumentor().instrument_app(app)
-RequestsInstrumentor().instrument()
-
-@app.route('/api/orders/<order_id>')
-def get_order(order_id):
-    logger.info('Processing order request', extra={
-        'order_id': order_id,
-        'method': request.method,
-        'path': request.path
-    })
-    # Business logic here
-    return {'order_id': order_id, 'status': 'completed'}
-```
-
-### Exemplars: de métricas a trazas
-
-Los exemplars enlazan muestras de métricas de alta cardinalidad con trazas específicas:
-
-```yaml
-# Prometheus configuration to enable exemplars
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'app-metrics'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['app:8080']
-    # Enable exemplar storage
-    enable_http2: true
-```
-
-Código de aplicación para emitir exemplars:
 
 ```go
-// Go application with exemplars
+// main.go
+package main
+
 import (
-    "github.com/prometheus/client_golang/prometheus"
-    "github.com/prometheus/client_golang/prometheus/promauto"
-    "go.opentelemetry.io/otel/trace"
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
-var requestDuration = promauto.NewHistogramVec(
-    prometheus.HistogramOpts{
-        Name:    "http_request_duration_seconds",
-        Help:    "HTTP request duration in seconds",
-        Buckets: prometheus.DefBuckets,
-    },
-    []string{"method", "path", "status"},
-)
+const serviceName = "correlation-api"
 
-func recordMetric(ctx context.Context, method, path string, status int, duration float64) {
-    span := trace.SpanFromContext(ctx)
-    if span.SpanContext().IsSampled() {
-        requestDuration.WithLabelValues(method, path, strconv.Itoa(status)).(prometheus.ExemplarObserver).ObserveWithExemplar(
-            duration,
-            prometheus.Labels{
-                "traceID": span.SpanContext().TraceID().String(),
-                "spanID":  span.SpanContext().SpanID().String(),
-            },
-        )
-    } else {
-        requestDuration.WithLabelValues(method, path, strconv.Itoa(status)).Observe(duration)
-    }
+func newLogger(writer io.Writer) *slog.Logger {
+	return slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if len(groups) == 0 {
+				if attr.Key == slog.TimeKey {
+					attr.Key = "timestamp"
+				}
+				if attr.Key == slog.MessageKey {
+					attr.Key = "message"
+				}
+			}
+			return attr
+		},
+	}))
+}
+
+func newProvider(exporter sdktrace.SpanExporter, ratio float64) *sdktrace.TracerProvider {
+	// Explicit resource attributes avoid mixing incompatible schema URLs.
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewSchemaless(
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", "1.0.0"),
+			attribute.String("deployment.environment.name", "demo"),
+		)),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(ratio))),
+	)
+}
+
+func newHandler(tp *sdktrace.TracerProvider, logger *slog.Logger, downstream string, transport http.RoundTripper) http.Handler {
+	registry := prometheus.NewRegistry()
+	requests := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total", Help: "Completed requests",
+	}, []string{"method", "route", "status"})
+	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds", Help: "HTTP duration in seconds", Buckets: prometheus.DefBuckets,
+	}, []string{"method", "route", "status"})
+	registry.MustRegister(requests, duration)
+	propagator := propagation.TraceContext{}
+	client := &http.Client{
+		Transport: otelhttp.NewTransport(transport, otelhttp.WithTracerProvider(tp), otelhttp.WithPropagators(propagator)),
+		Timeout:   5 * time.Second,
+	}
+	tracer := tp.Tracer("correlation-demo")
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{EnableOpenMetrics: true}))
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.Handle("GET /api/orders", otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		status := http.StatusOK
+		ctx, span := tracer.Start(r.Context(), "prepare-order-response")
+		span.SetAttributes(attribute.String("app.operation", "orders.list"))
+		if downstream != "" {
+			// Trusted configuration only; never derive the destination from request input.
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, downstream, nil)
+			if err == nil {
+				var response *http.Response
+				response, err = client.Do(req)
+				if err == nil {
+					_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
+					_ = response.Body.Close()
+					if response.StatusCode >= 400 {
+						err = errors.New("dependency returned unsuccessful status")
+					}
+				}
+			}
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "dependency unavailable")
+				status = http.StatusBadGateway
+			}
+		}
+		span.End()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": status == http.StatusOK})
+		seconds := time.Since(started).Seconds()
+		statusLabel := strconv.Itoa(status)
+		method := r.Method // The GET ServeMux pattern accepts GET and HEAD.
+		requests.WithLabelValues(method, "/api/orders", statusLabel).Inc()
+		context := trace.SpanContextFromContext(r.Context())
+		observer := duration.WithLabelValues(method, "/api/orders", statusLabel)
+		if context.IsValid() && context.IsSampled() {
+			observer.(prometheus.ExemplarObserver).ObserveWithExemplar(seconds, prometheus.Labels{"trace_id": context.TraceID().String()})
+		} else {
+			observer.Observe(seconds)
+		}
+		attributes := []any{
+			"service_name", serviceName, "method", method, "route", "/api/orders",
+			"status_code", status, "latency_ms", seconds * 1000,
+		}
+		if context.IsValid() {
+			attributes = append(attributes, "trace_id", context.TraceID().String(), "span_id", context.SpanID().String())
+		}
+		level := slog.LevelInfo
+		if status >= 500 {
+			level = slog.LevelError
+		}
+		logger.Log(r.Context(), level, "request completed", attributes...)
+	}), "orders", otelhttp.WithTracerProvider(tp), otelhttp.WithPropagators(propagator),
+		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+			return r.Method + " /api/orders"
+		})))
+	return mux
+}
+
+func main() {
+	logger := newLogger(os.Stdout)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	// Standard OTEL exporter variables configure the real endpoint and TLS/auth.
+	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithTimeout(5*time.Second))
+	if err != nil {
+		logger.Error("cannot configure trace exporter", "error", err)
+		os.Exit(1)
+	}
+	provider := newProvider(exporter, 0.1)
+	server := &http.Server{
+		Addr:              "127.0.0.1:8080",
+		Handler:           newHandler(provider, logger, os.Getenv("DEMO_DOWNSTREAM_URL"), http.DefaultTransport),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	failed := make(chan error, 1)
+	go func() { failed <- server.ListenAndServe() }()
+	select {
+	case err := <-failed:
+		if !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("HTTP server failed", "error", err)
+		}
+	case <-ctx.Done():
+	}
+	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdown); err != nil {
+		logger.Error("HTTP shutdown incomplete", "error", err)
+	}
+	// Use a fresh deadline so HTTP draining does not consume the exporter budget.
+	flush, cancelFlush := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFlush()
+	if err := provider.Shutdown(flush); err != nil {
+		logger.Error("trace shutdown incomplete", "error", err)
+	}
 }
 ```
 
-### Diagrama de arquitectura de correlación
+Los atributos explícitos de `resource.NewSchemaless` evitan que se ignoren silenciosamente los conflictos entre SchemaURLs de convenciones semánticas. La configuración del proveedor y del propagador se pasa al handler y al transporte. El apagado HTTP y el apagado del exportador tienen plazos independientes. Si falla una dependencia, se registra un span de error y se devuelve HTTP 502.
 
-```
-                    ┌─────────────────────────────────────────────────────────────┐
-                    │                     Application                              │
-                    │  ┌──────────────────────────────────────────────────────┐   │
-                    │  │  Request with TraceContext Header                     │   │
-                    │  │  traceparent: 00-abc123...-def456...-01               │   │
-                    │  └──────────────────────────────────────────────────────┘   │
-                    │         │              │                │                    │
-                    │         ▼              ▼                ▼                    │
-                    │    ┌────────┐    ┌─────────┐     ┌────────────┐             │
-                    │    │ Logs   │    │ Metrics │     │   Traces   │             │
-                    │    │traceID │    │exemplar │     │  spans     │             │
-                    │    └────┬───┘    └────┬────┘     └─────┬──────┘             │
-                    └─────────┼─────────────┼───────────────┼─────────────────────┘
-                              │             │               │
-              ┌───────────────┼─────────────┼───────────────┼─────────────────────┐
-              │ OTEL Collector│             │               │                      │
-              │               ▼             ▼               ▼                      │
-              │         ┌─────────────────────────────────────────┐               │
-              │         │  Enrich with K8s metadata               │               │
-              │         │  namespace, pod, node, service          │               │
-              │         └─────────────────────────────────────────┘               │
-              └───────────────┬─────────────┬───────────────┬─────────────────────┘
-                              │             │               │
-                    ┌─────────┼─────────────┼───────────────┼─────────────────────┐
-                    │ Storage │             │               │                      │
-                    │         ▼             ▼               ▼                      │
-                    │    ┌────────┐    ┌─────────┐     ┌────────────┐             │
-                    │    │  Loki  │    │Prometheus│    │   Tempo    │             │
-                    │    │        │    │         │     │            │             │
-                    │    └────┬───┘    └────┬────┘     └─────┬──────┘             │
-                    └─────────┼─────────────┼───────────────┼─────────────────────┘
-                              │             │               │
-                    ┌─────────┼─────────────┼───────────────┼─────────────────────┐
-                    │ Grafana │             │               │                      │
-                    │         ▼             ▼               ▼                      │
-                    │  ┌─────────────────────────────────────────────────────┐    │
-                    │  │              Unified Query Interface                 │    │
-                    │  │  Logs ──(traceID)──▶ Traces                         │    │
-                    │  │  Metrics ──(exemplar)──▶ Traces                     │    │
-                    │  │  Traces ──(labels)──▶ Logs                          │    │
-                    │  └─────────────────────────────────────────────────────┘    │
-                    └─────────────────────────────────────────────────────────────┘
+### Python
+
+Dependencias directas validadas con Python 3.12:
+
+```text
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.44.0
+opentelemetry-instrumentation-flask==0.65b0
+opentelemetry-instrumentation-requests==0.65b0
+Flask==3.1.3
+requests==2.34.2
+prometheus-client==0.26.0
 ```
 
-### Flujo de trabajo de correlación
+```python
+# app.py
+"""Local correlation demo: OTLP traces, JSON stdout logs, OpenMetrics metrics."""
+import json
+import logging
+import os
+import sys
+import time
+from datetime import datetime, timezone
 
-1. **La solicitud llega** con o sin contexto de traza
-2. **La aplicación crea/continúa la traza** y registra logs con traceID
-3. **Las métricas se registran** con un exemplar que contiene traceID
-4. **OTEL Collector enriquece** todas las señales con metadatos de K8s
-5. **Las consultas de Grafana** pueden navegar entre señales usando identificadores compartidos
+import requests
+from flask import Flask, Response, g, jsonify, request
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from prometheus_client import CollectorRegistry, Counter, Histogram
+from prometheus_client.openmetrics.exposition import CONTENT_TYPE_LATEST, generate_latest
 
----
+SERVICE_NAME = "correlation-api"
 
-## 2. Análisis LogQL de Loki
 
-Loki proporciona un lenguaje de consulta potente (LogQL) para el análisis de logs. Esta sección cubre patrones prácticos para el análisis operativo de EKS.
+class CorrelatedJSON(logging.Formatter):
+    def format(self, record):
+        result = {
+            "timestamp": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "service_name": SERVICE_NAME,
+        }
+        context = trace.get_current_span().get_span_context()
+        # Unsampled context can still be valid. Do not invent all-zero IDs.
+        if context.is_valid:
+            result.update(trace_id=f"{context.trace_id:032x}", span_id=f"{context.span_id:016x}")
+        for key in ("method", "route", "status_code", "latency_ms"):
+            if hasattr(record, key):
+                result[key] = getattr(record, key)
+        return json.dumps(result, ensure_ascii=False, allow_nan=False)
 
-### Cálculo de tasa de errores
 
-Calcula tasas de errores a partir de flujos de logs:
+def make_provider(exporter, sample_ratio=0.1):
+    if not 0 <= sample_ratio <= 1:
+        raise ValueError("sample_ratio must be between zero and one")
+    provider = TracerProvider(
+        resource=Resource({
+            "service.name": SERVICE_NAME,
+            "service.version": "1.0.0",
+            "deployment.environment.name": "demo",
+        }),
+        sampler=ParentBased(TraceIdRatioBased(sample_ratio)),
+        shutdown_on_exit=False,
+    )
+    provider.add_span_processor(BatchSpanProcessor(exporter))
+    return provider
 
-```logql
-# Error rate per service (last 5 minutes)
-sum(rate({namespace="production"} |= "error" [5m])) by (app)
-/ sum(rate({namespace="production"} [5m])) by (app)
 
-# HTTP 5xx error rate from structured logs
-sum(rate({namespace="production"} | json | status_code >= 500 [5m])) by (service)
-/ sum(rate({namespace="production"} | json | status_code > 0 [5m])) by (service)
+def create_app(provider, log_stream=None, session=None, downstream_url=None):
+    app = Flask(__name__)
+    registry = CollectorRegistry()
+    counts = Counter("http_requests_total", "Completed HTTP requests", ["method", "route", "status"], registry=registry)
+    duration = Histogram("http_request_duration_seconds", "HTTP duration in seconds", ["method", "route", "status"], registry=registry)
+    logger = logging.getLogger("correlation-demo")
+    logger.handlers.clear()
+    logger.propagate = False
+    handler = logging.StreamHandler(log_stream if log_stream is not None else sys.stdout)
+    handler.setFormatter(CorrelatedJSON())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    set_global_textmap(TraceContextTextMapPropagator())
+    FlaskInstrumentor().instrument_app(app, tracer_provider=provider, excluded_urls="metrics,healthz")
+    RequestsInstrumentor().instrument(tracer_provider=provider)
+    tracer = provider.get_tracer("correlation-demo")
+    client = session if session is not None else requests.Session()
 
-# Error rate with severity label
-sum(rate({namespace="production", level="error"} [5m])) by (app)
+    @app.before_request
+    def start_timer():
+        g.started = time.perf_counter()
+
+    @app.after_request
+    def observe(response):
+        route = request.url_rule.rule if request.url_rule is not None else "unmatched"
+        if route in {"/metrics", "/healthz"}:
+            return response
+        elapsed = time.perf_counter() - g.started
+        method = request.method if request.method in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"} else "_OTHER"
+        status = str(response.status_code)
+        context = trace.get_current_span().get_span_context()
+        exemplar = {"trace_id": f"{context.trace_id:032x}"} if context.is_valid and context.trace_flags.sampled else None
+        counts.labels(method, route, status).inc()
+        duration.labels(method, route, status).observe(elapsed, exemplar=exemplar)
+        logger.log(logging.ERROR if response.status_code >= 500 else logging.INFO, "request completed",
+                   extra={"method": method, "route": route, "status_code": response.status_code, "latency_ms": round(elapsed * 1000, 3)})
+        return response
+
+    @app.get("/api/orders")
+    def orders():
+        with tracer.start_as_current_span("prepare-order-response") as span:
+            span.set_attribute("app.operation", "orders.list")
+            if downstream_url is not None:
+                try:
+                    # This URL comes from trusted configuration, not request input.
+                    with client.get(downstream_url, timeout=(2, 5)) as response:
+                        response.raise_for_status()
+                except requests.RequestException as error:
+                    span.record_exception(error)
+                    span.set_status(Status(StatusCode.ERROR))
+                    return jsonify(error="dependency unavailable"), 502
+            # Demonstration data, not a real database query.
+            return jsonify(orders=[{"id": "demo-1", "state": "ready"}])
+
+    @app.get("/metrics")
+    def metrics():
+        return Response(generate_latest(registry), content_type=CONTENT_TYPE_LATEST)
+
+    @app.get("/healthz")
+    def health():
+        return jsonify(status="ok")
+
+    return app, client
+
+
+if __name__ == "__main__":
+    # Configure the real OTLP endpoint/TLS/auth through standard exporter settings.
+    provider = make_provider(OTLPSpanExporter(), sample_ratio=0.1)
+    app, session = create_app(provider, downstream_url=os.environ.get("DEMO_DOWNSTREAM_URL"))
+    try:
+        # Local demonstration server. Use a proper WSGI server for deployment.
+        app.run(host="127.0.0.1", port=8080, debug=False, use_reloader=False)
+    finally:
+        session.close()
+        RequestsInstrumentor().uninstrument()
+        provider.shutdown()
 ```
 
-### Extracción de latencia desde logs
+El formateador y el nivel INFO sí están configurados. `logging.info(..., extra=...)` por sí solo puede descartarse con la configuración de logging predeterminada o puede omitir los campos adicionales. El contexto válido sin muestrear se conserva en los logs; si falta contexto, no se inventan IDs compuestos solo por ceros.
 
-Extrae métricas de latencia desde mensajes de log:
+Los atributos semánticos HTTP dependen de la versión de instrumentación y de la configuración optativa. De forma predeterminada, esta ejecución de Python emitió nombres compatibles como `http.method` y `http.status_code`. Inspecciona los atributos reales del span en vez de cambiar todas las consultas solo porque el SDK sea nuevo.
 
-```logql
-# Extract duration from JSON logs
-{namespace="production", app="api-gateway"}
-| json
-| duration_ms > 1000
-| line_format "{{.method}} {{.path}} took {{.duration_ms}}ms"
+La configuración estándar del exportador OTel proporciona el endpoint real. Para HTTP/protobuf:
 
-# Calculate latency percentiles from logs
-quantile_over_time(0.99,
-  {namespace="production"}
-  | json
-  | unwrap duration_ms [5m]
-) by (service)
-
-# Average latency per endpoint
-avg_over_time(
-  {namespace="production", app="api"}
-  | json
-  | unwrap response_time_ms [5m]
-) by (path)
+```bash
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc:4318
 ```
 
-### Reglas de alerta basadas en logs
+La dirección presupone que ya existe un Service del Collector. Configura por separado TLS, la autenticación y los controles de red del despliegue. Distingue el endpoint base de los endpoints específicos de señal que ya incluyen `/v1/traces`.
 
-Crea alertas a partir de patrones de logs:
+### Logs JSON de Java
+
+Esta configuración del encoder se comprobó con Logback 1.6.3, logstash-logback-encoder 9.0 y JDK 21.
+
+```xml
+<configuration>
+  <!-- A configured OTel Java agent or MDC bridge must supply these MDC keys. -->
+  <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <fieldNames>
+        <timestamp>timestamp</timestamp>
+      </fieldNames>
+      <customFields>{"service_name":"correlation-api"}</customFields>
+      <includeMdcKeyName>trace_id</includeMdcKeyName>
+      <includeMdcKeyName>span_id</includeMdcKeyName>
+    </encoder>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="JSON"/>
+  </root>
+</configuration>
+```
+
+Antes, un agente Java de OTel o un puente MDC configurado debe rellenar `trace_id`/`span_id`; el XML por sí solo no activa la instrumentación. Haz coincidir el service.name del agente Java con el nombre real del servicio registrado en los logs. La prueba proporcionó valores MDC para validar el encoder, las claves permitidas y el JSON multilínea escapado. No ejecutó la propagación del agente Java.
+
+## 3. Collectors y conexión con los backends
+
+Estos son **archivos de configuración para componentes desplegados**. Un ConfigMap por sí solo no crea un Deployment, Service, RBAC ni backend. Usa los namespaces, nombres de Service y métodos de autenticación reales.
+
+### Collector de trazas
 
 ```yaml
-# loki-alert-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
+# collector.yaml
+# Trace gateway configuration only. Deploy a matching Collector Service and
+# constrain network/authentication separately; this file does not install it.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  batch:
+    timeout: 1s
+    send_batch_size: 512
+exporters:
+  otlphttp/tempo:
+    endpoint: http://tempo-distributor.observability.svc:4318
+    timeout: 5s
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/tempo]
+```
+
+Esta pasarela procesa solo trazas y aplica límites de memoria y agrupación por lotes sin recurrir innecesariamente a CORS con comodines. Para enriquecer datos de Kubernetes, añade el procesador `k8sattributes` correcto, la asociación de pods y el RBAC antes de agrupar por lotes. Una dirección de conexión observada después de un proxy intermediario no necesariamente identifica el Pod original de la aplicación.
+
+Los atributos de recurso y los encabezados de propagación requieren una frontera de confianza adecuada; no sustituyen las identidades de autenticación ni de autorización.
+
+### Logs de stdout y Alloy
+
+Promtail llegó al final de su vida útil el 2 de marzo de 2026. El ejemplo usa la fuente de logs de la API de Kubernetes de Alloy.
+
+```yaml
+# log-reader-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: loki-alerts
+  name: correlation-log-reader
   namespace: observability
-spec:
-  groups:
-    - name: loki.alerts
-      rules:
-        # High error rate in logs
-        - alert: HighLogErrorRate
-          expr: |
-            sum(rate({namespace="production"} |= "error" [5m])) by (app)
-            / sum(rate({namespace="production"} [5m])) by (app)
-            > 0.05
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High error rate in logs for {{ $labels.app }}"
-            description: "Error rate is {{ $value | printf \"%.2f\" }}%"
-
-        # Out of memory errors
-        - alert: OutOfMemoryErrors
-          expr: |
-            sum(count_over_time({namespace="production"}
-              |~ "OutOfMemoryError|OOMKilled|memory allocation failed" [15m]
-            )) by (pod) > 0
-          for: 1m
-          labels:
-            severity: critical
-          annotations:
-            summary: "OOM errors detected in {{ $labels.pod }}"
-
-        # Database connection errors
-        - alert: DatabaseConnectionErrors
-          expr: |
-            sum(rate({namespace="production"}
-              |~ "connection refused|connection timed out|too many connections" [5m]
-            )) by (app) > 1
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Database connection errors in {{ $labels.app }}"
-
-        # Authentication failures
-        - alert: HighAuthFailureRate
-          expr: |
-            sum(rate({namespace="production"}
-              | json
-              | event_type="authentication_failed" [5m]
-            )) by (app) > 10
-          for: 5m
-          labels:
-            severity: warning
-            category: security
-          annotations:
-            summary: "High authentication failure rate in {{ $labels.app }}"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: correlation-log-reader
+  namespace: observability
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: correlation-log-reader
+  namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: correlation-log-reader
+subjects:
+  - kind: ServiceAccount
+    name: correlation-log-reader
+    namespace: observability
 ```
 
-### Estrategia de labels y cardinalidad
+Ejecuta Alloy en el namespace `observability` con `correlation-log-reader` y proporciona esta configuración en la ruta real del archivo de configuración. Los Pods de destino deben llevar `app=correlation-api`.
 
-Gestiona la cardinalidad de labels para evitar problemas de rendimiento:
+```alloy
+// logs.alloy
+// Kubernetes API log source: configure its ServiceAccount permissions first.
+discovery.kubernetes "application" {
+  role = "pod"
+  namespaces {
+    names = ["observability"]
+  }
+  selectors {
+    role  = "pod"
+    label = "app=correlation-api"
+  }
+}
+
+discovery.relabel "application_logs" {
+  targets = discovery.kubernetes.application.targets
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "service_name"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
+
+loki.source.kubernetes "application" {
+  targets    = discovery.relabel.application_logs.output
+  forward_to = [loki.process.application.receiver]
+}
+
+loki.process "application" {
+  stage.json {
+    expressions = {
+      level = "level",
+    }
+  }
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+  // Keep the complete JSON body, including trace_id/span_id. They are not
+  // indexed stream labels and remain available for parsing/correlation.
+  forward_to = [loki.write.backend.receiver]
+}
+
+loki.write "backend" {
+  endpoint {
+    url = "http://loki.observability.svc:3100/loki/api/v1/push"
+  }
+}
+```
+
+Los logs obtenidos mediante la API de Kubernetes y la lectura de archivos del host son entradas distintas. La lectura de archivos requiere el encuadre CRI/Docker adecuado y el tratamiento de líneas parciales y multilínea. Mantener una pila de llamadas como saltos de línea escapados dentro de un único evento JSON evita unir por error registros que no están relacionados.
+
+Conserva los ID de traza, solicitud y usuario en el cuerpo del log o en los metadatos estructurados apropiados, no en las etiquetas indexadas del stream de Loki. Ten en cuenta también la rotación y la retención de las etiquetas de Pod e instancia.
+
+No reutilices el exportador `loki` del Collector, que se eliminó. Para logs OTLP nativos, una alternativa es un exportador `otlphttp` con destino `http://<loki>/otlp`, conectado a una canalización de logs y usado con una configuración compatible de metadatos estructurados y esquema de Loki. Esa ruta es distinta de la ruta de logs de stdout descrita arriba.
+
+### Métricas y almacenamiento de exemplars
 
 ```yaml
-# promtail-config.yaml - Label extraction strategy
+# prometheus.yaml
+# Direct application scrape. HTTP/2 does not enable exemplar storage.
+global:
+  scrape_interval: 15s
+rule_files:
+  - recording-rules.yaml
 scrape_configs:
-  - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      # Keep only essential labels
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-      # Drop high-cardinality labels
-      - action: labeldrop
-        regex: __meta_kubernetes_pod_label_(pod-template-hash|controller-revision-hash)
-    pipeline_stages:
-      - json:
-          expressions:
-            level: level
-            # Don't extract high-cardinality fields as labels
-      - labels:
-          level:
-      # Keep request_id in log line, not as label
-      - output:
-          source: message
+  - job_name: correlation-api
+    scrape_protocols: [OpenMetricsText1.0.0, PrometheusText0.0.4]
+    static_configs:
+      - targets: [correlation-api.observability.svc:8080]
+        labels:
+          service: correlation-api
+          namespace: observability
+storage:
+  exemplars:
+    max_exemplars: 10000
 ```
 
-### Coincidencia de patrones y análisis sintáctico con LogQL
+Prometheus 3.15 también requiere configurar la opción de almacenamiento de exemplars. `enable_http2` no la activa.
 
-Patrones avanzados de análisis sintáctico:
+```bash
+prometheus --config.file=prometheus.yaml --enable-feature=exemplar-storage
+```
+
+Mantén el archivo de reglas de grabación junto a la configuración. Las aplicaciones exponen OpenMetrics y adjuntan exemplars solo cuando el contexto es válido y está muestreado. El muestreo, el reemplazo del búfer y la retención de Tempo pueden hacer que no haya una traza coincidente. Un exemplar no representa cada observación ni necesariamente la solicitud exacta del P99.
+
+## 4. LogQL
+
+Las consultas usan el contrato de registro de solicitudes completadas de este ejemplo, con `service_name` y niveles JSON en mayúsculas. Un cociente genérico de errores basado en coincidencias de subcadena no equivale automáticamente a un cociente de solicitudes fallidas.
+
+### Filtrado y agregación
 
 ```logql
-# Parse unstructured Nginx logs
-{app="nginx"}
-| pattern `<ip> - - [<timestamp>] "<method> <path> <_>" <status> <bytes>`
-| status >= 500
-
-# Parse with regex
-{app="api"}
-| regexp `(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<message>.*)`
-| level = "ERROR"
-
-# Parse JSON and filter
-{namespace="production"}
-| json
-| line_format `{{.timestamp}} [{{.level}}] {{.message}}`
-| level = "error"
-| message =~ ".*timeout.*"
-
-# Unpack nested JSON
-{app="api-gateway"}
-| json
-| json request_body="request.body"
-| request_body != ""
+{service_name="correlation-api"} | json | level="ERROR" | __error__=""
 ```
-
-### Consultas de agregación
-
-Agrega datos de logs para análisis:
 
 ```logql
-# Count errors by service over time
-sum by (service) (count_over_time({namespace="production", level="error"} [1h]))
-
-# Top 10 error messages
-topk(10, sum by (message) (count_over_time(
-  {namespace="production"}
-  | json
-  | level = "error" [24h]
-)))
-
-# Log volume by namespace
-sum by (namespace) (bytes_over_time({job="kubernetes-pods"} [1h]))
-
-# Rate of specific events
-sum(rate({namespace="production"} |= "payment_processed" [5m])) by (app)
+sum by (service_name) (rate({service_name="correlation-api"} | json | message="request completed" | status_code>=500 | status_code<600 | __error__="" [5m]))
 ```
 
-### Manejo de logs multilínea
-
-Configura el análisis de logs multilínea:
-
-```yaml
-# promtail-config.yaml - Multi-line configuration
-scrape_configs:
-  - job_name: java-apps
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-    pipeline_stages:
-      # Java stack trace multi-line
-      - multiline:
-          firstline: '^\d{4}-\d{2}-\d{2}'
-          max_wait_time: 3s
-          max_lines: 128
-      - regex:
-          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) (?P<level>\w+) .*'
-      - labels:
-          level:
-
-  - job_name: python-apps
-    kubernetes_sd_configs:
-      - role: pod
-    pipeline_stages:
-      # Python traceback multi-line
-      - multiline:
-          firstline: '^\d{4}-\d{2}-\d{2}|^Traceback'
-          max_wait_time: 3s
+```logql
+sum by (service_name) (count_over_time({service_name="correlation-api"} | json | level="ERROR" | __error__="" [1h]))
 ```
 
-### YAML completo de reglas de alerta de Loki
+`rate` devuelve líneas/s; `count_over_time` cuenta las líneas de cada intervalo. Agrega cuando necesites los totales de varios streams. `|=` busca subcadenas distinguiendo mayúsculas y minúsculas; no comprueba de forma estructurada el nivel de severidad.
+
+### Latencia y errores del parser
+
+```logql
+quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
+```
+
+```logql
+avg_over_time({service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
+```
+
+El análisis de JSON, las comparaciones numéricas y el operador unwrap pueden producir errores, por lo que los filtros `__error__=""` deben colocarse correctamente. Estas consultas validan primero `latency_ms>=0`. Con Loki 3.7.8, valores válidos de 10 ms y 800 ms, un valor no numérico y JSON mal formado, las consultas corregidas devolvieron una media de 405 ms y un P95 de 760.5 ms.
+
+Son agregaciones de rango de valores extraídos, no buckets de un histograma de Prometheus. Agrupar por mensajes sin restricciones o URL sin procesar también puede elevar la cardinalidad de los resultados de la consulta.
+
+### Búsqueda de trazas
+
+```logql
+{service_name="correlation-api"} | json | trace_id="0af7651916cd43dd8448eb211c80319c" | __error__=""
+```
+
+Comprueba los errores de los parsers regex, de patrones y JSON. Un segundo `| json` no parsea automáticamente una cadena JSON anidada concreta; extrae el campo deseado o transforma la línea antes de volver a parsearla.
+
+### Loki Ruler
 
 ```yaml
-apiVersion: 1
+# loki-rules.yaml
+# Native Loki Ruler file. Store through the configured Ruler backend/API.
+# This is not a PrometheusRule CRD and not a Grafana Alerting provisioning file.
 groups:
-  - name: loki-application-alerts
+  - name: correlation.logs
     rules:
-      - alert: ApplicationErrorSpike
+      - alert: CompletedRequestErrorLogsHigh
         expr: |
-          sum(rate({namespace="production"} |= "error" [5m])) by (app)
-          > 1.5 * sum(rate({namespace="production"} |= "error" [1h])) by (app)
+          sum by (service_name) (
+            rate({service_name="correlation-api"} | json
+              | message="request completed" | status_code>=500 | __error__="" [5m])
+          ) > 1
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Error spike detected in {{ $labels.app }}"
-
-      - alert: SlowRequestsDetected
-        expr: |
-          avg_over_time(
-            {namespace="production"}
-            | json
-            | unwrap response_time_ms [5m]
-          ) by (service) > 5000
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Slow requests in {{ $labels.service }}"
-
-      - alert: UnusualLogVolume
-        expr: |
-          sum(rate({namespace="production"} [5m])) by (app)
-          > 3 * avg_over_time(sum(rate({namespace="production"} [5m])) by (app) [1d])
-        for: 15m
-        labels:
-          severity: info
-        annotations:
-          summary: "Unusual log volume from {{ $labels.app }}"
-
-      - alert: CriticalPatternDetected
-        expr: |
-          count_over_time({namespace="production"}
-            |~ "FATAL|panic|segfault|core dumped" [5m]) > 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical error pattern detected"
-
-      - alert: PodCrashLoopDetected
-        expr: |
-          count_over_time({namespace="production"}
-            |= "Back-off restarting failed container" [10m]) > 3
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Pod crash loop detected"
+          summary: High completed-request error log rate
+          description: '{{ $labels.service_name }} emitted {{ printf "%.2f" $value }} matching log lines/s.'
 ```
 
----
+Conecta este archivo de reglas nativo al almacenamiento o la API de Loki Ruler. Prometheus no puede evaluar LogQL dentro de un recurso CRD PrometheusRule. El aprovisionamiento de Grafana Alerting usa otro esquema y otro contrato de `apiVersion`.
 
-## 3. Patrones de PromQL de Prometheus
+Un contador acumulativo de ingesta igual a cero no detecta que la ingesta se haya detenido. Correlaciona las tasas recientes, la entrada esperada, los errores del Collector, la contrapresión y los fallos de almacenamiento. La actividad de almacenamiento nula sin entrada esperada no demuestra por sí sola una interrupción.
 
-PromQL proporciona capacidades de consulta potentes para el análisis de métricas. Esta sección cubre patrones esenciales para operaciones de EKS.
-
-### Cálculo de RPS
-
-Calcula solicitudes por segundo:
-
-```promql
-# Total RPS across all services
-sum(rate(http_requests_total[5m]))
-
-# RPS by service
-sum(rate(http_requests_total[5m])) by (service)
-
-# RPS by endpoint (be careful with cardinality)
-sum(rate(http_requests_total[5m])) by (service, path)
-
-# RPS increase compared to yesterday
-sum(rate(http_requests_total[5m]))
-- sum(rate(http_requests_total[5m] offset 1d))
-```
-
-### Tasa de errores (método RED)
-
-Rate, Errors, Duration: el método RED:
-
-```promql
-# Error rate (errors / total requests)
-sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-/ sum(rate(http_requests_total[5m])) by (service)
-
-# Error rate with threshold
-(
-  sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-  / sum(rate(http_requests_total[5m])) by (service)
-) > 0.01
-
-# Client error rate (4xx)
-sum(rate(http_requests_total{status=~"4.."}[5m])) by (service)
-/ sum(rate(http_requests_total[5m])) by (service)
-
-# Success rate (inverse of error rate)
-1 - (
-  sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-  / sum(rate(http_requests_total[5m])) by (service)
-)
-```
-
-### Percentiles de latencia
-
-Calcula percentiles de latencia a partir de histogramas:
-
-```promql
-# P50 latency
-histogram_quantile(0.50,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
-
-# P95 latency
-histogram_quantile(0.95,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
-
-# P99 latency
-histogram_quantile(0.99,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
-
-# Apdex score (target: 500ms, tolerated: 2s)
-(
-  sum(rate(http_request_duration_seconds_bucket{le="0.5"}[5m])) by (service)
-  + sum(rate(http_request_duration_seconds_bucket{le="2"}[5m])) by (service)
-) / 2
-/ sum(rate(http_request_duration_seconds_count[5m])) by (service)
-```
-
-### Métricas de Istio Service Mesh
-
-Consulta la telemetría de Istio:
-
-```promql
-# Request rate by source and destination
-sum(rate(istio_requests_total[5m])) by (source_workload, destination_workload)
-
-# Service error rate
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service)
-/ sum(rate(istio_requests_total[5m])) by (destination_service)
-
-# P99 latency by service
-histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le, destination_service)
-)
-
-# TCP connections
-sum(istio_tcp_connections_opened_total) by (source_workload, destination_workload)
-- sum(istio_tcp_connections_closed_total) by (source_workload, destination_workload)
-
-# Request size
-histogram_quantile(0.99,
-  sum(rate(istio_request_bytes_bucket[5m])) by (le, destination_service)
-)
-```
-
-### Métricas de ALB mediante CloudWatch
-
-Consulta métricas de ALB exportadas desde CloudWatch:
-
-```promql
-# ALB request count
-sum(rate(aws_applicationelb_request_count_sum[5m])) by (load_balancer)
-
-# ALB target response time
-aws_applicationelb_target_response_time_average
-
-# ALB 5xx errors
-sum(rate(aws_applicationelb_httpcode_elb_5xx_count_sum[5m])) by (load_balancer)
-
-# ALB healthy host count
-aws_applicationelb_healthy_host_count_average
-
-# ALB active connection count
-aws_applicationelb_active_connection_count_sum
-```
-
-### Patrones de Amazon Managed Prometheus (AMP)
-
-Consultas optimizadas para AMP:
-
-```promql
-# Use recording rules to reduce query complexity
-# AMP has query limits, so pre-aggregate where possible
-
-# Efficient aggregation
-sum by (namespace) (
-  rate(container_cpu_usage_seconds_total[5m])
-)
-
-# Avoid high-cardinality queries
-# Bad: sum(rate(http_requests_total[5m])) by (pod, path, method, status)
-# Good: sum(rate(http_requests_total[5m])) by (service, status_class)
-
-# Use label_replace to reduce cardinality
-sum by (service, status_class) (
-  label_replace(
-    rate(http_requests_total[5m]),
-    "status_class", "${1}xx", "status", "([0-9]).*"
-  )
-)
-```
-
-### Reglas de recording
-
-Precalcula consultas costosas:
+## 5. PromQL y unidades de las métricas
 
 ```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: recording-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: http.recording.rules
-      interval: 30s
-      rules:
-        # Request rate by service
-        - record: service:http_requests:rate5m
-          expr: sum(rate(http_requests_total[5m])) by (service)
-
-        # Error rate by service
-        - record: service:http_errors:rate5m
-          expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-
-        # Error ratio by service
-        - record: service:http_error_ratio:rate5m
-          expr: |
-            service:http_errors:rate5m
-            / service:http_requests:rate5m
-
-        # P50 latency by service
-        - record: service:http_latency_p50:rate5m
-          expr: |
-            histogram_quantile(0.50,
-              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-            )
-
-        # P95 latency by service
-        - record: service:http_latency_p95:rate5m
-          expr: |
-            histogram_quantile(0.95,
-              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-            )
-
-        # P99 latency by service
-        - record: service:http_latency_p99:rate5m
-          expr: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-            )
-
-    - name: kubernetes.recording.rules
-      interval: 30s
-      rules:
-        # Node CPU utilization
-        - record: node:cpu_utilization:rate5m
-          expr: |
-            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-
-        # Node memory utilization
-        - record: node:memory_utilization:ratio
-          expr: |
-            1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-
-        # Pod CPU usage by namespace
-        - record: namespace:pod_cpu:rate5m
-          expr: |
-            sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)
-
-        # Pod memory usage by namespace
-        - record: namespace:pod_memory:bytes
-          expr: |
-            sum(container_memory_working_set_bytes{container!=""}) by (namespace)
-
-    - name: istio.recording.rules
-      interval: 30s
-      rules:
-        # Service request rate
-        - record: service:istio_requests:rate5m
-          expr: |
-            sum(rate(istio_requests_total[5m])) by (destination_service)
-
-        # Service error rate
-        - record: service:istio_errors:rate5m
-          expr: |
-            sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service)
-
-        # Service P99 latency
-        - record: service:istio_latency_p99:rate5m
-          expr: |
-            histogram_quantile(0.99,
-              sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le, destination_service)
-            )
+# recording-rules.yaml
+groups:
+  - name: correlation.red
+    interval: 30s
+    rules:
+      - record: service:http_requests:rate5m
+        expr: sum by (namespace, service) (rate(http_requests_total[5m]))
+      - record: service:http_errors:rate5m
+        expr: |
+          sum by (namespace, service) (rate(http_requests_total{status=~"5.."}[5m]))
+          or on (namespace, service) (0 * service:http_requests:rate5m)
+      - record: service:http_error_ratio:rate5m
+        expr: service:http_errors:rate5m / (service:http_requests:rate5m > 0)
+      - record: service:http_latency_p99:seconds
+        expr: |
+          histogram_quantile(0.99,
+            sum by (namespace, service, le) (rate(http_request_duration_seconds_bucket[5m]))
+          )
+      - record: service:http_latency_mean:seconds
+        expr: |
+          sum by (namespace, service) (rate(http_request_duration_seconds_sum[5m]))
+          /
+          (sum by (namespace, service) (rate(http_request_duration_seconds_count[5m])) > 0)
 ```
 
----
+Conserva `le` al agregar buckets de histogramas clásicos. Si no existe una serie de errores, completa con cero usando la serie real de solicitudes de ese servicio. Si tampoco hay solicitudes, no inventes un cociente de errores saludable igual a cero. Haz coincidir las unidades de las reglas de recording con `s`, `percentunit` y `reqps` en los dashboards.
 
-## 4. Análisis TraceQL de Tempo
+Usa tasas o incrementos de contadores adecuados a la pregunta. Promediar un contador acumulativo durante treinta días no produce el RPS promedio. Las medias, los percentiles de muestra y los cuantiles de histograma son estadísticas distintas.
 
-TraceQL de Tempo proporciona una sintaxis similar a SQL para buscar y analizar trazas distribuidas.
+Los datos que Istio registra desde las perspectivas de origen y destino pueden duplicar observaciones. Selecciona el punto de vista deseado, por ejemplo:
 
-### Sintaxis básica de TraceQL
+```promql
+sum by (cluster, destination_service_namespace, destination_service_name) (
+  rate(istio_requests_total{reporter="destination"}[5m])
+)
+```
+
+Distingue las duraciones de Istio expresadas en milisegundos de las de la aplicación expresadas en segundos. Un cociente de mTLS sobre solicitudes L7 observadas no demuestra que todo el tráfico L4 cumpla la política de cifrado. Las instalaciones Ambient necesitan la ruta real de telemetría L7, incluidos los requisitos de waypoint cuando corresponda.
+
+El `_sum` de un exportador de CloudWatch puede ser un gauge de una estadística del período, no un contador monótono. No apliques `rate()` a ciegas. Para convertir a RPS un RequestCount Sum de 60 segundos, comprueba el período, la marca de tiempo o demora del exportador y las series duplicadas. Los prefijos y las etiquetas varían según el exportador.
+
+Las consultas de AMP abarcan los datos ingeridos en un espacio de trabajo. AMP no ingiere CloudWatch automáticamente, no federa espacios de trabajo ni regiones y no crea un destino `up{job="amp-remote-write"}`. Inspecciona la cola real de remote write, sus errores y la telemetría de ingesta compatible con AMP.
+
+## 6. TraceQL
+
+Estas consultas se comprobaron con la documentación de Tempo 3.0.3 y la gramática oficial de Grafana. Los nombres de atributos deben coincidir con el esquema real de instrumentación.
 
 ```traceql
-# Find all traces for a service
-{ resource.service.name = "api-gateway" }
-
-# Filter by span name
-{ name = "HTTP GET" }
-
-# Filter by attribute
-{ span.http.status_code >= 500 }
-
-# Combine filters
-{ resource.service.name = "order-service" && span.http.status_code = 500 }
-
-# Duration filter
-{ resource.service.name = "payment-service" && duration > 1s }
-
-# Find traces with specific error
-{ status = error && span.error.message =~ ".*timeout.*" }
+{ resource.service.name = "correlation-api" }
 ```
-
-### Análisis de latencia
-
-Encuentra y analiza trazas lentas:
 
 ```traceql
-# Traces slower than 5 seconds
-{ duration > 5s }
-
-# Slow database queries
-{ span.db.system = "postgresql" && duration > 500ms }
-
-# Slow HTTP calls
-{ span.http.method = "POST" && duration > 2s }
-
-# Find the slowest spans in a trace
-{ duration > 1s } | select(duration, name, resource.service.name)
-
-# P99 latency traces
-{ resource.service.name = "checkout" && duration > 2s } | quantile_over_time(duration, 0.99)
+{ resource.service.name = "correlation-api" && span:duration > 500ms }
 ```
-
-### Búsqueda de trazas con errores
-
-Encuentra y analiza trazas con errores:
 
 ```traceql
-# All error traces
-{ status = error }
-
-# Errors by service
-{ resource.service.name = "inventory-service" && status = error }
-
-# Specific error types
-{ span.exception.type = "java.lang.NullPointerException" }
-
-# HTTP errors
-{ span.http.status_code >= 500 }
-
-# gRPC errors
-{ span.rpc.grpc.status_code != 0 }
-
-# Database errors
-{ span.db.system = "mysql" && status = error }
+{ trace:duration > 2s }
 ```
 
-### Mapeo de dependencias de servicios
-
-Analiza dependencias de servicios:
+`span:duration` es la duración de un span; `trace:duration` abarca la traza completa. Los elementos intrínsecos como `span:name` son distintos de un atributo de usuario llamado `span.name`.
 
 ```traceql
-# Find all downstream calls from a service
-{ resource.service.name = "api-gateway" && kind = client }
-
-# Find all upstream callers of a service
-{ resource.service.name = "user-service" && kind = server }
-
-# Cross-service calls
-{
-  resource.service.name = "order-service"
-  && span.peer.service = "payment-service"
-}
-
-# External dependency calls
-{ span.http.url =~ ".*external-api.com.*" }
+{ resource.service.name = "correlation-api" && span:status = error }
 ```
-
-### Filtrado de atributos de span
-
-Filtra por diversos atributos de span:
 
 ```traceql
-# Kubernetes metadata
-{ resource.k8s.namespace.name = "production" }
-{ resource.k8s.pod.name =~ "api-.*" }
-{ resource.k8s.node.name = "ip-10-0-1-100.ec2.internal" }
-
-# HTTP attributes
-{ span.http.method = "POST" && span.http.route = "/api/orders" }
-{ span.http.request_content_length > 1000000 }
-
-# Database attributes
-{ span.db.statement =~ ".*SELECT.*users.*" }
-{ span.db.operation = "INSERT" }
-
-# Custom attributes
-{ span.user.id = "user-123" }
-{ span.order.total > 1000 }
+{ resource.service.name = "correlation-api" && span.http.status_code >= 500 }
 ```
 
-### Consultas estructurales (padre-hijo)
-
-Consulta la estructura de trazas:
+La ejecución de Go emitió `http.request.method` y `http.response.status_code`. Usa la siguiente consulta para ese backend de Go.
 
 ```traceql
-# Find child spans of a specific parent
-{ name = "HTTP POST /checkout" } >> { span.db.system = "postgresql" }
-
-# Find parent of slow database queries
-{ span.db.system = "postgresql" && duration > 1s } << { }
-
-# Multi-level ancestry
-{ name = "api-gateway" } >> { name = "order-service" } >> { span.db.system = "postgresql" }
-
-# Sibling spans (same parent)
-{ name = "inventory-check" } ~ { name = "payment-process" }
-
-# Find traces where DB query is child of HTTP call
-{ span.http.method = "GET" } >> { span.db.operation = "SELECT" && duration > 500ms }
+{ resource.service.name = "correlation-api" && span.http.response.status_code >= 500 }
 ```
 
-### Comparación de trazas
+El estado de error no equivale a HTTP 500. La demostración de Python emitió `http.status_code` de forma predeterminada; si optas por convenciones más recientes, actualiza las consultas según los atributos reales, como `http.response.status_code`.
 
-Compara trazas entre momentos o versiones:
+### Relaciones y agregaciones
 
 ```traceql
-# Compare latency between deployments (using resource attributes)
-{ resource.service.version = "v2.0.0" && duration > 1s }
-{ resource.service.version = "v1.9.0" && duration > 1s }
-
-# Find anomalous traces (compare to baseline)
-{
-  resource.service.name = "checkout"
-  && duration > 2s
-  && span.http.route = "/api/checkout"
-}
-
-# Traces by environment
-{ resource.deployment.environment = "canary" && status = error }
+{ span:kind = server } > { span:name = "prepare-order-response" }
 ```
-
-### Consultas de grafo de servicios
-
-Analiza la topología de servicios:
 
 ```traceql
-# Service graph metrics (via Tempo metrics generator)
-# These generate Prometheus metrics from trace data
-
-# Request rate between services
-traces_service_graph_request_total
-
-# Error rate between services
-traces_service_graph_request_failed_total
-
-# Latency between services
-traces_service_graph_request_server_seconds_bucket
+{ span:kind = server } >> { span:status = error }
 ```
 
-Configuración de Tempo Metrics Generator:
+```traceql
+{ span:name = "check-stock" } ~ { span:name = "check-payment" }
+```
+
+`>` selecciona hijos directos, `>>` descendientes a cualquier profundidad, `<` padres directos y `~` spans hermanos que comparten un padre. Seleccionar spans cliente/servidor de un servicio no asigna automáticamente todos los pares.
+
+```traceql
+{ resource.service.name = "correlation-api" } | by(span:name) | count() > 1
+```
+
+Que se repitan los nombres de span no demuestra que haya reintentos. Evita sintaxis de repetición no compatible, como `{ }*`; usa la búsqueda por ID de traza y consultas estructurales explícitas.
+
+```traceql
+{ resource.service.name = "correlation-api" } | quantile_over_time(duration, 0.99)
+```
+
+Esto devuelve series de métricas de TraceQL, no una lista de trazas lentas individuales. Comprueba el modo de consulta y la ruta de datos o las funciones habilitadas en el despliegue de Tempo. Los gráficos de servicios requieren un generador o procesador compatible, además de configuración de almacenamiento y consulta.
+
+Las métricas generadas, como `traces_service_graph_request_total`, se consultan con **PromQL** en el backend de métricas. El emparejamiento de spans cliente/servidor y el muestreo pueden dejar incompletos los gráficos. Los fragmentos antiguos `processor.*.enabled=true` no constituyen una configuración completa y actual de Tempo.
+
+## 7. Fuentes de datos y dashboards de Grafana
 
 ```yaml
-# tempo-config.yaml
-metrics_generator:
-  registry:
-    external_labels:
-      source: tempo
-      cluster: production
-  storage:
-    path: /var/tempo/generator/wal
-    remote_write:
-      - url: http://prometheus:9090/api/v1/write
-        send_exemplars: true
-  traces_storage:
-    path: /var/tempo/generator/traces
-  processor:
-    service_graphs:
-      dimensions:
-        - k8s.namespace.name
-        - k8s.deployment.name
-      histogram_buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5]
-      max_items: 10000
-      wait: 10s
-      workers: 10
-    span_metrics:
-      dimensions:
-        - service.name
-        - span.name
-        - http.method
-        - http.status_code
-      histogram_buckets: [0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256, 0.512, 1.024]
+# datasources.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus.observability.svc:9090
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+          urlDisplayLabel: View trace
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki.observability.svc:3100
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id"\s*:\s*"([0-9a-f]{32})"'
+          datasourceUid: tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: View trace
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo-query-frontend.observability.svc:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"
+        tags:
+          - key: service.name
+            value: service_name
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: false
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: Request rate
+            query: 'sum(rate(http_requests_total{$$__tags}[5m]))'
 ```
 
----
+Los tres UID se especifican explícitamente y las referencias coinciden. El `trace_id` del exemplar, el `trace_id` JSON y el campo derivado de Loki comparten el mismo contrato de nombres. La regex acepta espacios en el JSON y captura exactamente 32 caracteres hexadecimales.
 
-## 5. Dashboards de Grafana
+En el YAML de aprovisionamiento, conserva `$` como `$$` para macros como `${__value.raw}` y `__tags`. Un enlace interno de Tempo recibe una consulta con el ID de traza sin procesar; no lo combines con una URL de Explore construida manualmente y sin relación.
 
-Los dashboards de Grafana reúnen métricas, logs y trazas para una observabilidad unificada.
+`tracesToLogsV2` asigna el recurso de traza `service.name` a la etiqueta de Loki `service_name`. Al consultar los logs de una traza completa, evita restringir innecesariamente el ID de span. Configura la tenancy, TLS/autenticación y las URL reales de Service para el despliegue.
 
-### Paneles de los métodos RED/USE
+### Formato de aprovisionamiento desde archivos
 
-**Dashboard del método RED (centrado en solicitudes)**
+```yaml
+# dashboard-provider.yaml
+apiVersion: 1
+providers:
+  - name: correlation
+    orgId: 1
+    folder: Observability
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards/correlation
+```
+
+Monta el archivo de fuentes de datos en la ruta de aprovisionamiento de fuentes de datos de Grafana, el archivo del proveedor en la ruta de aprovisionamiento de dashboards y el JSON en el directorio configurado para el proveedor. Crear un ConfigMap por sí solo no conecta estos archivos con Grafana.
 
 ```json
 {
+  "id": null,
+  "uid": "correlation-demo",
+  "title": "Service correlation demo",
+  "tags": [
+    "observability",
+    "correlation"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "panels": [
     {
-      "title": "Request Rate",
+      "id": 1,
+      "title": "Request rate",
       "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[5m])) by (service)",
-          "legendFormat": "{{ service }}"
+          "refId": "A",
+          "expr": "service:http_requests:rate5m{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
     },
     {
-      "title": "Error Rate",
+      "id": 2,
+      "title": "HTTP error ratio",
       "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service)",
-          "legendFormat": "{{ service }}"
+          "refId": "A",
+          "expr": "service:http_error_ratio:rate5m{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "thresholds": {
-            "steps": [
-              {"value": 0, "color": "green"},
-              {"value": 0.01, "color": "yellow"},
-              {"value": 0.05, "color": "red"}
-            ]
-          }
-        }
-      }
-    },
-    {
-      "title": "Latency (P95)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
-          "legendFormat": "{{ service }}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s"
-        }
-      }
-    }
-  ]
-}
-```
-
-**Dashboard del método USE (centrado en recursos)**
-
-```json
-{
-  "panels": [
-    {
-      "title": "CPU Utilization",
-      "type": "gauge",
-      "targets": [
-        {
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "CPU %"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "max": 100,
-          "thresholds": {
-            "steps": [
-              {"value": 0, "color": "green"},
-              {"value": 70, "color": "yellow"},
-              {"value": 85, "color": "red"}
-            ]
-          }
-        }
-      }
-    },
-    {
-      "title": "Memory Saturation",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
-          "legendFormat": "{{ instance }}"
-        }
-      ]
-    },
-    {
-      "title": "Disk I/O Errors",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "rate(node_disk_io_time_seconds_total{device!~\"dm-.*\"}[5m])",
-          "legendFormat": "{{ device }}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Enlaces entre datasources
-
-**Prometheus a Tempo mediante exemplars**
-
-```yaml
-# Grafana datasource configuration
-apiVersion: 1
-datasources:
-  - name: Prometheus
-    type: prometheus
-    url: http://prometheus:9090
-    jsonData:
-      exemplarTraceIdDestinations:
-        - name: traceID
-          datasourceUid: tempo
-          urlDisplayLabel: "View Trace"
-      httpMethod: POST
-```
-
-**Loki a Tempo mediante campos derivados**
-
-```yaml
-# Grafana datasource configuration
-apiVersion: 1
-datasources:
-  - name: Loki
-    type: loki
-    url: http://loki:3100
-    jsonData:
-      derivedFields:
-        - name: TraceID
-          matcherRegex: '"traceId":"([a-f0-9]+)"'
-          url: '$${__value.raw}'
-          datasourceUid: tempo
-          urlDisplayLabel: "View Trace"
-        - name: TraceID-W3C
-          matcherRegex: 'traceparent.*-([a-f0-9]{32})-'
-          url: '$${__value.raw}'
-          datasourceUid: tempo
-```
-
-### Provisioning de dashboards
-
-```yaml
-# grafana-dashboards-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboards
-  namespace: observability
-  labels:
-    grafana_dashboard: "1"
-data:
-  eks-overview.json: |
-    {
-      "dashboard": {
-        "title": "EKS Cluster Overview",
-        "uid": "eks-overview",
-        "tags": ["eks", "kubernetes"],
-        "timezone": "browser",
-        "refresh": "30s",
-        "templating": {
-          "list": [
-            {
-              "name": "namespace",
-              "type": "query",
-              "datasource": "Prometheus",
-              "query": "label_values(kube_namespace_labels, namespace)",
-              "refresh": 2,
-              "multi": true,
-              "includeAll": true
-            },
-            {
-              "name": "service",
-              "type": "query",
-              "datasource": "Prometheus",
-              "query": "label_values(kube_service_info{namespace=~\"$namespace\"}, service)",
-              "refresh": 2,
-              "multi": true,
-              "includeAll": true
-            }
-          ]
+          "min": 0
         },
-        "panels": []
-      }
-    }
-```
-
-### Plantillas de variables
-
-```json
-{
-  "templating": {
-    "list": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "query": "prometheus"
+        "overrides": []
       },
-      {
-        "name": "cluster",
-        "type": "query",
-        "datasource": "${datasource}",
-        "query": "label_values(up, cluster)",
-        "refresh": 2
-      },
-      {
-        "name": "namespace",
-        "type": "query",
-        "datasource": "${datasource}",
-        "query": "label_values(kube_pod_info{cluster=\"$cluster\"}, namespace)",
-        "refresh": 2,
-        "multi": true,
-        "includeAll": true
-      },
-      {
-        "name": "workload",
-        "type": "query",
-        "datasource": "${datasource}",
-        "query": "label_values(kube_deployment_labels{cluster=\"$cluster\", namespace=~\"$namespace\"}, deployment)",
-        "refresh": 2,
-        "multi": true
-      },
-      {
-        "name": "interval",
-        "type": "interval",
-        "query": "1m,5m,15m,30m,1h,6h,12h,1d",
-        "current": {
-          "value": "5m"
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
         }
       }
-    ]
-  }
-}
-```
-
-### Ejemplo de modelo JSON de dashboard
-
-Panel completo con enlaces entre datasources:
-
-```json
-{
-  "title": "Service Latency with Traces",
-  "type": "timeseries",
-  "datasource": "Prometheus",
-  "targets": [
+    },
     {
-      "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\", service=\"$service\"}[$interval])) by (le))",
-      "legendFormat": "P99 Latency",
-      "exemplar": true
+      "id": 3,
+      "title": "P99 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "service:http_latency_p99:seconds{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Request histogram with trace exemplars",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (le) (rate(http_request_duration_seconds_bucket{service=\"correlation-api\",namespace=\"observability\"}[5m]))",
+          "legendFormat": "le={{le}}",
+          "exemplar": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Correlated application logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{namespace=\"observability\",service_name=\"correlation-api\"}",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
     }
   ],
-  "fieldConfig": {
-    "defaults": {
-      "unit": "s",
-      "links": [
-        {
-          "title": "View slow traces",
-          "url": "/explore?orgId=1&left=%7B%22datasource%22:%22Tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22query%22:%22%7Bresource.service.name%3D%5C%22${service}%5C%22%20%26%26%20duration%20%3E%201s%7D%22%7D%5D%7D",
-          "targetBlank": true
-        },
-        {
-          "title": "View logs",
-          "url": "/explore?orgId=1&left=%7B%22datasource%22:%22Loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bnamespace%3D%5C%22${namespace}%5C%22,%20app%3D%5C%22${service}%5C%22%7D%22%7D%5D%7D",
-          "targetBlank": true
-        }
-      ]
-    }
+  "templating": {
+    "list": []
   },
-  "options": {
-    "tooltip": {
-      "mode": "single"
-    },
-    "legend": {
-      "displayMode": "list",
-      "placement": "bottom"
-    }
+  "annotations": {
+    "list": []
   }
 }
 ```
 
----
+El aprovisionamiento desde archivos consume directamente el objeto del dashboard, sin el wrapper `{"dashboard": ...}` de la API HTTP. El ejemplo usa un servicio fijo y UID explícitos en vez de variables sin definir.
 
-## Recursos relacionados
+Usa paneles `timeseries` actuales en vez del panel `graph` heredado. Las curvas acumulativas de buckets de un histograma son distintas de la distribución por bucket de un heatmap. No etiquetes los resultados de una búsqueda de trazas sin procesar como un recuento de «trazas activas» ni des por sentado que son un data frame de mapa de servicios.
 
-- [Optimización de observabilidad](../observability/09-observability-optimization.md) - Ajuste de rendimiento para el stack de observabilidad
-- [Stack de logging](../observability/logging/README.md) - Despliegue y configuración de Loki
-- [Configuración de alertas operativas](./07-observability-alerts.md) - Reglas de alerta y configuración de Alertmanager
+Al añadir variables, usa etiquetas que existan en las métricas reales. Los valores múltiples o All requieren operadores y escape regex adecuados; no presupongas que son una única cadena. Comprueba la sintaxis de consulta de cada fuente de datos.
 
----
+## Alcance de la validación
 
-< [Anterior: Configuración de alertas operativas](./07-observability-alerts.md) | [Tabla de contenidos](./README.md) | [Siguiente: Operaciones del stack de observabilidad](./09-observability-stack.md) >
+Las pruebas del SDK construyeron exportadores explícitos en memoria y transportes HTTP falsos, sin exportadores OTLP externos. La grabación se habilitó solo dentro de esas pruebas aisladas, sin endpoints personales heredados ni atributos de recursos.
+
+Se validaron la configuración nativa de Collector/Alloy, los resultados de consultas locales de Loki, los cálculos de reglas de recording de Prometheus, la codificación Java, las regex de ID de traza y las referencias de UID. Validar la gramática de TraceQL no sustituye la ingesta o búsqueda real en Tempo; la UI de Grafana, la autenticación del backend y el despliegue requieren validar el entorno por separado.
+
+## Referencias
+
+- [OpenTelemetry Go 1.46](https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.46.0)
+- [OTLP nativo de Loki](https://grafana.com/docs/loki/latest/send-data/otel/)
+- [Fin de vida útil de Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [TraceQL de Tempo 3.0.3](https://github.com/grafana/tempo/blob/v3.0.3/docs/sources/tempo/traceql/construct-traceql-queries.md)
+- [Aprovisionamiento de Tempo en Grafana](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/)
+- [Configuración de Loki en Grafana](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
+- [Cuestionario del capítulo](../quizzes/ops/08-observability-analysis-quiz.md)
+
+< [Anterior: Alertas operativas](07-observability-alerts.md) | [Contenido](README.md) | [Siguiente: Operaciones del stack](09-observability-stack.md) >

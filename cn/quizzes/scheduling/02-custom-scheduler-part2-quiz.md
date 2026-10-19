@@ -299,6 +299,7 @@ spec:
 - C. 仅将 Pod 放置到特定可用区中：这是通过节点亲和性将 Pod 放置到特定可用区的做法；拓扑分布约束的主要目的是均匀分布。
 - D. 仅将 Pod 放置到带有特定标签的节点上：这是 nodeSelector 或 nodeAffinity 的职责。
 </details>
+
 ### 4. Kubernetes 中 Taints 和 Tolerations 的主要目的是什么？
 
 A. 确保特定 Pod 只调度到特定节点上
@@ -605,6 +606,7 @@ Go 类型会将字段名序列化为首字母大写形式。`nodeCacheCapable: f
 - B. 提供过滤和优先级排序能力：Scheduler Extender 的有效特征。
 - D. 作为外部进程运行：Scheduler Extender 的有效特征。
 </details>
+
 ### 6. Kubernetes 中 Pod Affinity 和 Anti-Affinity 的主要目的是什么？
 
 A. 定义 Pod 与节点之间的关系
@@ -835,6 +837,7 @@ kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.no
 - B. 排除 Pod 无法运行的节点：这是“Filter”扩展点的职责。
 - D. 将 Pod 绑定到节点：这是“Bind”扩展点的职责。
 </details>
+
 ### 8. Kubernetes 中 Pod Priority Preemption 的主要目的是什么？
 
 A. 移除低优先级 Pod，以便高优先级 Pod 能够调度

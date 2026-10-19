@@ -1,13 +1,13 @@
 # CloudWatch Metrics
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 > Helm の例: amazon-cloudwatch-observability 6.6.0。
 > 以下に記載する 4 月/7 月の過去のアナウンスは、実際の日付をそのまま保持しています。
 
 ## 概要
 
 CloudWatch はストレージ、クエリ、ダッシュボード、アラームを管理します。それでもチームは
-コレクター、ワークロード ID、ネットワークアクセス、カーディナリティ、保持期間、対応の
+コレクター、ワークロード ID、ネットワークアクセス、カーディナリティ、保持期間、インシデント対応の
 オーナーシップを設定する必要があります。マネージドバックエンドを使っても、これらの運用責任は
 なくなりません。
 
@@ -1316,23 +1316,23 @@ Markdown/図のレンダリングが含まれます。チャートは、より�
 
 ## 参考資料
 
-- [EKS add-on and Helm installation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
-- [Reviewed Helm 6.6.0 release](https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0)
-- [Traditional EKS metrics and dimensions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
-- [Enhanced EKS metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-enhanced-EKS.html)
+- [EKS アドオンと Helm のインストール](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [レビュー対象の Helm 6.6.0 リリース](https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0)
+- [従来型 EKS メトリクスとディメンション](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
+- [拡張 EKS メトリクス](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-enhanced-EKS.html)
 - [OTel Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel.html)
-- [OTel quick start](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel-quickstart.html)
-- [April 2 preview announcement](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
-- [July 6 Service Events announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/)
-- [Agent configuration reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
-- [Prometheus / EMF configuration](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html)
+- [OTel クイックスタート](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel-quickstart.html)
+- [4月2日のプレビュー発表](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+- [7月6日の Service Events 発表](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/)
+- [エージェント設定リファレンス](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+- [Prometheus / EMF 設定](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html)
 - [ADOT v0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0)
 - [PutMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricData.html)
-- [Namespace IAM condition](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
+- [Namespace に関する IAM 条件キー](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
 - [Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
-- [Dashboard body structure](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html)
-- [Log class capabilities](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
-- [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/)
-- [Billing alarm prerequisites](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html)
+- [ダッシュボード本文の構造](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html)
+- [ログクラスの機能](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
+- [CloudWatch の料金](https://aws.amazon.com/cloudwatch/pricing/)
+- [請求額アラームの前提条件](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html)
 
-[Quiz](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
+[クイズ](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)

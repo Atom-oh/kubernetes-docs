@@ -1,13 +1,13 @@
 # Cuestionario de resiliencia
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 >
-> **Versiones**: Istio 1.31, que admite Kubernetes 1.32–1.37.
+> **Versiones**: Istio 1.31, compatible con Kubernetes 1.32–1.37.
 > Consulte el capítulo de instalación para conocer la compatibilidad con EKS.
 
-Este cuestionario evalúa su comprensión de las características de resiliencia de Istio.
+Este cuestionario evalúa su comprensión de las funciones de resiliencia de Istio.
 
-Cada ejemplo es independiente y asume que existen los Services, las etiquetas, los namespaces y las cargas de trabajo sidecar HTTP8080 indicados. Los valores son ilustrativos; las comprobaciones de esquema/consulta sin conexión no son pruebas de producción/carga. Los ejemplos de localidad usan `localityLbSetting`, no la API independiente `zoneAwareLbSetting`.
+Cada ejemplo es independiente y presupone que existen los Services, las etiquetas, los namespaces y las aplicaciones con sidecar que atienden HTTP en el puerto 8080 indicados. Los valores sirven de ejemplo; las comprobaciones locales de esquemas y consultas no sustituyen las pruebas en producción ni las pruebas de carga. Los ejemplos de localidad usan `localityLbSetting`, no la API independiente `zoneAwareLbSetting`.
 
 ## Preguntas de opción múltiple (1-5)
 
@@ -16,9 +16,9 @@ Cada ejemplo es independiente y asume que existen los Services, las etiquetas, l
 ¿Cuál de las siguientes opciones **NO** es un propósito principal de Outlier Detection?
 
 A. Detectar automáticamente instancias con comportamiento anómalo\
-B. Expulsarlas temporalmente cuando lo permitan el umbral de fallos configurado y el límite de expulsiones\
+B. Excluirlas temporalmente cuando lo permitan el umbral de fallos configurado y el límite de expulsiones\
 C. Eliminar permanentemente las instancias retiradas\
-D. Hacer que un host expulsado temporalmente vuelva a ser elegible después de su período de expulsión
+D. Permitir que un host excluido temporalmente vuelva a recibir tráfico cuando termine su período de expulsión
 
 <details>
 
@@ -26,7 +26,7 @@ D. Hacer que un host expulsado temporalmente vuelva a ser elegible después de s
 
 **Respuesta: C**
 
-Outlier Detection **no elimina instancias**, sino que las retira temporalmente del grupo de tráfico.
+Outlier Detection **no elimina instancias**: las excluye temporalmente del conjunto de destinos que pueden recibir tráfico.
 
 **Explicación:**
 
@@ -35,16 +35,16 @@ Outlier Detection **no elimina instancias**, sino que las retira temporalmente d
 
 **Características principales:**
 
-1. **Detección automática**: Cuenta fallos HTTP/de transporte consecutivos que cumplen los criterios configurados
-2. **Expulsión automática**: Retira temporalmente del grupo de tráfico cuando se supera el umbral
-3. **Reincorporación**: La expulsión vence; esto no envía una sonda activa ni prueba la recuperación
-4. **Medida temporal**: Solo bloquea el tráfico sin eliminar instancias
+1. **Detección automática**: Cuenta los fallos HTTP o de transporte consecutivos que cumplen los criterios configurados
+2. **Expulsión automática**: Excluye temporalmente un destino del tráfico cuando se supera el umbral
+3. **Reincorporación**: Al vencer el período de expulsión, el destino vuelve a ser elegible; esto no envía una sonda activa ni demuestra que se haya recuperado
+4. **Medida temporal**: Impide que el destino reciba tráfico sin eliminar la instancia
 
 **Por qué la opción C es incorrecta:**
 
-* Outlier Detection es un patrón Circuit Breaker
-* **Expulsa temporalmente** las instancias sin eliminarlas
-* El tráfico posterior exitoso confirma la recuperación; los fallos repetidos pueden activar expulsiones más prolongadas
+* Outlier Detection es un patrón de circuit breaker
+* **Excluye temporalmente** las instancias sin eliminarlas
+* El tráfico posterior que termina correctamente confirma la recuperación; nuevos fallos pueden provocar expulsiones más prolongadas
 
 **Referencia:**
 
@@ -75,12 +75,12 @@ Local Rate Limiting limita las solicitudes **de forma independiente en cada prox
 
 **Comparación entre Local y Global Rate Limiting:**
 
-| Característica  | Local Rate Limiting | Global Rate Limiting             |
-| --------------- | ------------------- | -------------------------------- |
-| **Ámbito de cuota** | Bucket local configurado | Dominio/descripción y ventana compartidos |
-| **Rendimiento** | Muy rápido           | Ligeramente más lento                  |
-| **Complejidad**  | Baja                 | Alta (requiere un servicio externo) |
-| **Caso de uso**    | Protección general  | Cuando se necesita una limitación precisa  |
+| Característica | Local Rate Limiting | Global Rate Limiting |
+| --- | --- | --- |
+| **Ámbito de la cuota** | Depósito local configurado | Dominio, descriptor y ventana compartidos |
+| **Rendimiento** | Muy rápido | Ligeramente más lento |
+| **Complejidad** | Baja | Alta: requiere un servicio externo |
+| **Caso de uso** | Protección general | Límites que requieren precisión |
 
 **Características de Local Rate Limiting:**
 
@@ -126,7 +126,7 @@ spec:
               denominator: HUNDRED
 ```
 
-El bucket mostrado comienza con100 tokens y se rellena con10/s. Tres réplicas pueden sostener aproximadamente30/s en conjunto con una distribución de carga adecuada, con asignaciones de ráfaga independientes; no es un límite compartido de30/s.
+El depósito del ejemplo comienza con 100 tokens y recibe 10 tokens por segundo. Con una distribución adecuada de la carga, tres réplicas pueden admitir unas 30 solicitudes por segundo en conjunto, además de sus ráfagas independientes. Esto no equivale a un límite compartido de 30 solicitudes por segundo.
 
 **Características de Global Rate Limiting:**
 
@@ -138,7 +138,7 @@ El bucket mostrado comienza con100 tokens y se rellena con10/s. Tres réplicas p
 
 **Algoritmo Token Bucket:**
 
-![Flujo de trabajo de un limitador de tasa token-bucket: un bucket con un máximo de 100 tokens se rellena a 10 tokens por segundo, y cada solicitud entrante se permite al consumir un token o se rechaza con HTTP 429 cuando no queda ninguno.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-1.png)
+![Funcionamiento de un limitador de tasa con un depósito de tokens: el depósito admite como máximo 100 tokens y recibe 10 por segundo. Cada solicitud consume un token para ser admitida o recibe HTTP 429 cuando no quedan tokens.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-resilience-1.html)
 
@@ -154,10 +154,10 @@ El bucket mostrado comienza con100 tokens y se rellena con10/s. Tres réplicas p
 
 ¿Cuál **NO** es un beneficio de usar Zone Aware Routing?
 
-A. Menor latencia mediante comunicación dentro de la misma AZ\
-B. Ahorro en costos de transferencia de datos entre AZ\
-C. Mejora garantizada de la disponibilidad al colocar cada réplica de Service en una AZ\
-D. Failover a endpoints sanos accesibles cuando existen la política y la capacidad adecuadas
+A. Menor latencia al comunicarse dentro de la misma AZ\
+B. Ahorro en la transferencia de datos entre AZ\
+C. Mejora garantizada de la disponibilidad al colocar todas las réplicas de un servicio en una sola AZ\
+D. Conmutación a endpoints sanos y accesibles cuando existen la política y la capacidad necesarias
 
 <details>
 
@@ -165,7 +165,7 @@ D. Failover a endpoints sanos accesibles cuando existen la política y la capaci
 
 **Respuesta: C**
 
-C no es una garantía. La localidad es relativa a cada llamador; puede concentrar el tráfico de un llamador en su zona local. Mover cada réplica a una AZ crea un dominio de fallo compartido y puede sobrecargar esa zona.
+La opción C no ofrece esa garantía. La localidad depende del cliente que realiza la llamada y puede concentrar su tráfico en la zona local. Colocar todas las réplicas en una sola AZ crea un dominio de fallo compartido y puede sobrecargar esa zona.
 
 **Explicación:**
 
@@ -174,7 +174,7 @@ C no es una garantía. La localidad es relativa a cada llamador; puede concentra
 
 **Beneficios reales de Zone Aware Routing:**
 
-El enrutamiento dentro de la misma zona puede reducir el componente de red de la latencia y los bytes facturables entre zonas, pero la latencia, los precios y los ahorros exactos dependen de la implementación. Una ponderación80/10/10 significa que el tráfico normal se envía a las tres zonas sanas; las porciones de10% no son failover en espera. Las otras zonas necesitan endpoints reales y accesibles, y capacidad disponible.
+El enrutamiento dentro de la misma zona puede reducir la latencia de red y los bytes facturables entre zonas. La latencia, los precios y el ahorro concretos dependen del despliegue. Una distribución 80/10/10 envía tráfico normal a las tres zonas sanas: las dos porciones del 10% no son capacidad en espera para una conmutación por fallo. Las otras zonas deben tener endpoints accesibles y capacidad disponible.
 
 **Ejemplo de configuración de DestinationRule:**
 
@@ -235,7 +235,7 @@ D. Expulsar incondicionalmente cada 30 segundos
 
 **Respuesta: B**
 
-B identifica el desencadenante. Cinco fallos consecutivos que cumplen los criterios pueden activar una expulsión en línea; `interval` es un intervalo de barrido periódico y `maxEjectionPercent` puede impedir la aplicación. Una respuesta exitosa lenta por sí sola no es un valor atípico de latencia.
+La opción B identifica el desencadenante. Cinco fallos consecutivos que cumplen los criterios pueden activar la expulsión al detectarse; `interval` fija la frecuencia del barrido periódico y `maxEjectionPercent` puede impedir que se aplique la expulsión. Una respuesta correcta pero lenta no constituye por sí sola un caso de latencia anómala.
 
 **Explicación:**
 
@@ -331,7 +331,7 @@ spec:
 
 **Ejemplo de funcionamiento:**
 
-Un éxito restablece la secuencia consecutiva relevante. Cuando un host alcanza el umbral puede ser expulsado si el límite lo permite; se vuelve elegible después de su duración real de expulsión. Las expulsiones repetidas aumentan esa duración con un multiplicador/límite de Envoy. `minHealthPercent` es un umbral de pánico/fail-open, no una fracción garantizada de Pods sanos;0 deshabilita ese umbral.
+Una operación que termina correctamente reinicia la secuencia de fallos consecutivos correspondiente. Si un host alcanza el umbral, puede ser expulsado cuando el límite lo permita; vuelve a ser elegible al terminar su período real de expulsión. Las expulsiones repetidas prolongan ese período mediante el multiplicador y el límite de Envoy. `minHealthPercent` es un umbral para el modo de pánico o fail-open, no una garantía de que cierta fracción de los Pods esté sana; el valor 0 deshabilita ese umbral.
 
 **Referencia:**
 
@@ -343,7 +343,7 @@ Un éxito restablece la secuencia consecutiva relevante. Cuando un host alcanza 
 
 ### Pregunta 5: Algoritmo Token Bucket
 
-Con un token por solicitud y demanda sostenida, ¿cuál es la tasa de admisión a largo plazo limitada por el relleno después de la ráfaga inicial?
+Con un token por solicitud y demanda sostenida, ¿qué tasa media de admisión permite la reposición de tokens una vez consumida la ráfaga inicial?
 
 ```yaml
 token_bucket:
@@ -369,9 +369,9 @@ Con `tokens_per_fill: 10` y `fill_interval: 1s`, **se agregan 10 tokens por segu
 
 **Parámetros del algoritmo Token Bucket:**
 
-* **max\_tokens**: Máximo de tokens que se pueden almacenar en el bucket (asignación de ráfaga)
-* **tokens\_per\_fill**: Tokens que se agregan por fill\_interval (**rendimiento promedio**)
-* **fill\_interval**: Intervalo de adición de tokens
+* **max\_tokens**: Número máximo de tokens almacenados en el depósito; determina la ráfaga admisible
+* **tokens\_per\_fill**: Tokens añadidos en cada fill\_interval; determina la **tasa media de admisión**
+* **fill\_interval**: Intervalo entre reposiciones de tokens
 
 **Método de cálculo:**
 
@@ -483,21 +483,21 @@ spec:
 
 ### Pregunta 6: Implementación de Outlier Detection
 
-Un `product-service` que se ejecuta en producción se vuelve lento de forma intermitente y experimenta timeouts. Desea implementar Outlier Detection para expulsar automáticamente las instancias problemáticas. Escriba un DestinationRule que cumpla los siguientes requisitos:
+El servicio `product-service`, que se ejecuta en producción, presenta lentitud intermitente y fallos por tiempo de espera. Desea usar Outlier Detection para excluir automáticamente las instancias problemáticas. Escriba una DestinationRule que cumpla los siguientes requisitos:
 
 **Requisitos:**
 
 * Expulsar después de 3 errores consecutivos
-* Usar un barrido periódico de20 segundos; los fallos consecutivos se pueden detectar en línea
-* Establecer la duración inicial base de expulsión en60 segundos
-* Permitir la expulsión de un máximo de 30%
-* Detectar también los errores gateway 502, 503, 504
+* Realizar un barrido periódico cada 20 segundos; los fallos consecutivos pueden detectarse al producirse
+* Establecer en 60 segundos la duración base inicial de la expulsión
+* Permitir expulsar como máximo el 30% de las instancias
+* Detectar también los errores de gateway 502, 503 y 504
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Las respuestas lentas por sí solas no son un criterio de valor atípico. El ejemplo separa los errores HTTP de los fallos de transporte observados localmente; debe existir un timeout de ruta/cliente real para que se observen los timeouts.
+Las respuestas lentas no cumplen por sí solas un criterio de Outlier Detection. El ejemplo distingue los errores HTTP de los fallos de transporte observados localmente; para observar tiempos de espera agotados debe existir un límite de tiempo real en la ruta o el cliente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -519,9 +519,9 @@ spec:
       consecutiveGatewayErrors: 3
 ```
 
-El subconjunto gateway502/503/504 ya está incluido en5xx. Umbrales iguales de3 son redundantes pero válidos; umbrales gateway más bajos expulsarían antes por ese subconjunto. `interval: 20s` no retrasa la detección de errores consecutivos. `baseEjectionTime: 60s` es la duración mínima inicial, no una sonda de estado activa. El límite de30% limita las expulsiones, pero no puede mantener sanos los endpoints restantes. `minHealthPercent: 70` habilitaría el comportamiento de pánico por debajo de su umbral, no preservaría70% de capacidad sana. Los campos `enforcing*` no admitidos son elementos internos de Envoy, no de esta API DestinationRule.
+Los errores de gateway 502, 503 y 504 ya forman parte de los errores 5xx. Usar el mismo umbral de 3 para ambos grupos es redundante, aunque válido; un umbral menor para los errores de gateway permitiría expulsar antes por ese subconjunto. `interval: 20s` no retrasa la detección de errores consecutivos. `baseEjectionTime: 60s` fija la duración mínima inicial y no realiza una sonda activa de salud. El límite del 30% restringe las expulsiones, pero no mantiene sanos los endpoints restantes. `minHealthPercent: 70` activaría el modo de pánico al caer por debajo de ese umbral; no conservaría un 70% de capacidad sana. Los campos `enforcing*` no admitidos pertenecen a la configuración interna de Envoy, no a esta API de DestinationRule.
 
-Un ejemplo de diez hosts puede alcanzar el límite después de tres expulsiones, pero el tamaño del grupo descubierto, el redondeo y el estado actual importan; inspeccione los contadores reales de aplicado/detectado/desbordamiento. Un host que regresa debe recibir tráfico exitoso para demostrar su recuperación.
+En un ejemplo con diez hosts, tres expulsiones pueden alcanzar el límite. También importan el tamaño del conjunto descubierto, el redondeo y su estado actual: inspeccione los contadores reales de expulsiones detectadas, aplicadas y bloqueadas por el límite. Un host reincorporado debe atender tráfico correctamente para demostrar que se ha recuperado.
 
 ```bash
 istioctl proxy-config clusters <caller-pod> -n production --fqdn product-service.production.svc.cluster.local -o json
@@ -533,7 +533,7 @@ envoy_cluster_outlier_detection_ejections_active{namespace="production"}
 rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="production"}[5m])
 ```
 
-Habilite las estadísticas/recopilación opcionales como se indica en el [capítulo sobre valores atípicos](../../../service-mesh/istio/resilience/01-outlier-detection.md). Ajuste los umbrales a partir de los errores medidos y la capacidad disponible; no se sobreentiende un valor universal de «producción».
+Habilite las estadísticas y su recopilación opcional como indica el [capítulo de Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md). Ajuste los umbrales según los errores medidos y la capacidad disponible; no existe un valor universal adecuado para toda producción.
 
 </details>
 
@@ -541,7 +541,7 @@ Habilite las estadísticas/recopilación opcionales como se indica en el [capít
 
 ### Pregunta 7: Aplicación de Local Rate Limiting
 
-Una aplicación con sidecar inyectado denominada `api-gateway` está recibiendo tráfico HTTP excesivo. Desea aplicar Local Rate Limiting para limitar cada proxy Envoy a 50 solicitudes por segundo con una ráfaga de hasta 200. Escriba el EnvoyFilter.
+Una aplicación llamada `api-gateway`, con un sidecar inyectado, recibe demasiado tráfico HTTP. Desea aplicar Local Rate Limiting para limitar cada proxy Envoy a 50 solicitudes por segundo, con una ráfaga de hasta 200 solicitudes. Escriba el EnvoyFilter.
 
 Requisitos adicionales:
 
@@ -552,7 +552,7 @@ Requisitos adicionales:
 
 <summary>Mostrar respuesta</summary>
 
-Suponga que `api-gateway` es una aplicación con un sidecar inyectado en HTTP8080 en `production`. Esto protege las solicitudes HTTP seleccionadas después de que llegan a Envoy; no es una protección completa contra DDoS ni contra conexiones/TLS. Para un gateway de entrada de Istio real, use su namespace/selector y el contexto `GATEWAY` como se indica en el capítulo sobre límites de tasa.
+Suponga que `api-gateway` es una aplicación con sidecar que atiende HTTP en el puerto 8080, en el namespace `production`. El filtro protege las solicitudes HTTP seleccionadas una vez que llegan a Envoy; no proporciona una protección completa contra DDoS ni protege por completo las conexiones o TLS. Para un gateway de entrada real de Istio, use su namespace, su selector y el contexto `GATEWAY`, como indica el capítulo de límites de tasa.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -609,9 +609,9 @@ spec:
               value: '1'
 ```
 
-El bucket lleno admite hasta200 solicitudes inmediatamente y luego se rellena con50 tokens/s. Con100 solicitudes/s sostenidas después de agotarse, se pueden admitir aproximadamente50/s, suponiendo un token por solicitud y sin otros límites. Una demanda uniforme de40/s puede caber, pero un promedio de40/s por sí solo no garantiza que se acepte cada ráfaga. La admisión no garantiza el éxito del procesamiento de backend.
+Un depósito lleno permite admitir hasta 200 solicitudes de inmediato y luego recibe 50 tokens por segundo. Si llegan 100 solicitudes por segundo de forma sostenida después de agotarlo, pueden admitirse unas 50 por segundo, suponiendo un token por solicitud y ningún otro límite. Una demanda uniforme de 40 solicitudes por segundo puede quedar dentro del límite, pero ese promedio no garantiza que se acepten todas las ráfagas. Admitir una solicitud tampoco garantiza que el backend la procese correctamente.
 
-El filtro usa HTTP429 de forma predeterminada y agrega estos encabezados solo a sus respuestas de límite de tasa aplicadas. Una respuesta200 normal no recibe estos encabezados de esta configuración. `Retry-After: 1` es un retraso aconsejado, no una reserva ni una garantía de éxito un segundo después. Este ejemplo no crea metadatos dinámicos `tokens_remaining`, por lo que se omite un encabezado Remaining inventado.
+El filtro devuelve HTTP 429 de forma predeterminada y añade estos encabezados únicamente a las respuestas que genera al aplicar el límite de tasa. Esta configuración no añade esos encabezados a una respuesta normal con estado 200. `Retry-After: 1` recomienda esperar un segundo: no reserva capacidad ni garantiza que el siguiente intento tenga éxito. El ejemplo no crea los metadatos dinámicos `tokens_remaining`, por lo que se omite un encabezado Remaining que dependería de datos inexistentes.
 
 ```http
 HTTP/1.1 429 Too Many Requests
@@ -620,7 +620,7 @@ X-Local-Rate-Limit: true
 Retry-After: 1
 ```
 
-Para buckets con prefijos de ruta distintos, use esta **alternativa**, no un segundo filtro superpuesto. El generador explícito de descriptores es compatible con la API Envoy fijada con Istio1.31. Las rutas ausentes/sin coincidencia usan el bucket predeterminado limitado; la coincidencia de prefijo incluye rutas más largas que comienzan con el texto proporcionado.
+Para asignar depósitos distintos según el prefijo de la ruta, use esta **alternativa** en lugar de añadir un segundo filtro superpuesto. La API de Envoy incluida en la versión indicada de Istio 1.31 admite el generador explícito de descriptores. Si la ruta falta o no coincide, se aplica el depósito predeterminado, que también tiene un límite. La coincidencia por prefijo incluye las rutas más largas que comiencen con el texto indicado.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -699,7 +699,7 @@ spec:
 sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="production"}[5m]))
 ```
 
-Consulte [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md) para la recopilación de estadísticas opcionales, los requisitos de servicio global/Redis y el manejo de identidades de confianza.
+Consulte el capítulo de [límites de tasa](../../../service-mesh/istio/resilience/02-rate-limiting.md) para conocer la recopilación de estadísticas opcionales, los requisitos del servicio global y Redis, y el tratamiento de identidades de confianza.
 
 </details>
 
@@ -712,15 +712,15 @@ Su clúster de AWS EKS está distribuido en 3 AZ (us-east-1a, us-east-1b, us-eas
 **Requisitos:**
 
 * Enviar el 70% del tráfico a Pods de la misma AZ
-* Distribuir 15% a cada una de las otras AZ
-* Explicar una alternativa independiente de failover por prioridad y las limitaciones de una interrupción completa de AZ
-* Explicar por qué minHealthPercent50 no es una garantía de estar50% sano ni un interruptor de activación de localidad
+* Distribuir el 15% a cada una de las otras AZ
+* Explicar una alternativa independiente de conmutación por prioridad y las limitaciones de una caída completa de una AZ
+* Explicar por qué minHealthPercent 50 no garantiza que el 50% de los Pods esté sano ni activa el enrutamiento por localidad
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Estos requisitos mezclan distribución ponderada, failover por prioridad y una garantía de capacidad sana. No se pueden expresar todos combinando campos en una política de localidad. Use la siguiente política de distribución para el tráfico normal70/15/15; `minHealthPercent` no es un interruptor que active la localidad solo cuando la mitad de los Pods están sanos.
+Estos requisitos combinan una distribución ponderada, una conmutación por prioridad y una garantía de capacidad sana. No pueden implementarse todos mezclando campos en una única política de localidad. Use la siguiente política para distribuir el tráfico normal en proporción 70/15/15; `minHealthPercent` no activa la localidad solo cuando la mitad de los Pods está sana.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -760,7 +760,7 @@ spec:
       minHealthPercent: 0
 ```
 
-Para prioridad y desbordamiento de zona local, aplique en su lugar esta **alternativa**, no ambas políticas. `localityLbSetting.failover` acepta nombres de región, no rutas `region/zone`. `distribute` y los modos de prioridad son mutuamente excluyentes en esta API.
+Si desea dar prioridad a la zona local y derivar el tráfico que no pueda atender, aplique esta **alternativa** en lugar de usar ambas políticas. `localityLbSetting.failover` acepta nombres de región, no rutas `region/zone`. En esta API, `distribute` y los modos de prioridad son mutuamente excluyentes.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -787,18 +787,18 @@ spec:
       minHealthPercent: 0
 ```
 
-Una interrupción completa de zona también afecta al cliente de esa zona: se necesita un cliente o punto de entrada superviviente/recreado en otro lugar. La capacidad restante de endpoints sanos, la detección, la reutilización de conexiones y la accesibilidad de red determinan el failover; la política no promete100% a zoneB ni una recuperación instantánea. `minHealthPercent: 0` deshabilita el uso en pánico de hosts no sanos, y un límite de100% permite que se expulsen todos los endpoints si todos fallan. Ninguno crea capacidad sana.
+La caída completa de una zona también afecta a los clientes que están en ella: se necesita un cliente o punto de entrada que sobreviva, o que se vuelva a crear, en otra zona. La capacidad de los endpoints sanos restantes, la detección, la reutilización de conexiones y la conectividad de red determinan la conmutación. La política no garantiza enviar el 100% a zoneB ni recuperarse de inmediato. `minHealthPercent: 0` deshabilita el uso de hosts no sanos en modo de pánico, y un límite del 100% permite expulsar todos los endpoints si todos fallan. Ninguno de estos valores crea capacidad sana.
 
-Use el [capítulo sobre zonas](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) para las comprobaciones de topología Node→Pod, `topologySpreadConstraints` coincidentes, los grupos de nodos de EKS y los diagnósticos de EDS. No asigne manualmente etiquetas de topología cloud solo para que un ejemplo coincida. Las métricas estándar de Istio no contienen `source_cluster_zone`/`destination_cluster_zone`; las consultas por zona requieren enriquecimiento verificado, independiente del enrutamiento.
+Consulte el [capítulo de enrutamiento por zona](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) para comprobar la topología Node→Pod, las topologySpreadConstraints correspondientes, los grupos de nodos de EKS y los diagnósticos de EDS. No asigne manualmente etiquetas de topología de la nube solo para que el ejemplo coincida. Las métricas estándar de Istio no contienen `source_cluster_zone`/`destination_cluster_zone`; las consultas por zona requieren un enriquecimiento verificado, independiente del enrutamiento.
 
-**Aritmética de costos ilustrativa**: suponga1TB decimal=1000GB, un cargo efectivo de$0.01 por GB facturable, una fracción de referencia entre zonas de2/3 y una fracción posterior de0.30. Esta es una suposición simplificada, no una cotización de precios de AWS, un ahorro medido ni una factura de red completa.
+**Ejemplo de cálculo de costos**: suponga que 1 TB decimal equivale a 1000 GB, que el cargo efectivo es de $0.01 por GB facturable y que la fracción del tráfico entre zonas pasa de 2/3 a 0.30. Son supuestos simplificados; no constituyen una tarifa de AWS, un ahorro medido ni una factura de red completa.
 
 | Tráfico mensual | Antes | Después | Ahorro mensual | Ahorro anual |
 |---|---:|---:|---:|---:|
 |1TB|$6.67|$3.00|$3.67|$44.00|
 |100TB|$666.67|$300.00|$366.67|$4,400.00|
 
-La reducción modelada es55%. Calcule a partir de fracciones exactas y redondee únicamente la moneda mostrada; el ahorro anual no debe multiplicar un ahorro mensual$367 redondeado prematuramente. Las direcciones facturables reales, los volúmenes de bytes, la región y los cargos de procesamiento de Service necesitan evidencia de facturación/flujo.
+La reducción calculada es del 55%. Use las fracciones exactas y redondee únicamente los importes mostrados: no calcule el ahorro anual multiplicando un ahorro mensual redondeado antes de tiempo a $367. Para conocer las direcciones facturables, los volúmenes de bytes, la región y los cargos de procesamiento de los servicios, necesita datos de facturación y de flujo.
 
 ```bash
 kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
@@ -812,12 +812,12 @@ istioctl proxy-config all <caller-pod> -n production -o json
 
 ### Pregunta 9: Estrategia de resiliencia combinada
 
-`payment-service` es un Service crítico que llama a API de pago externas. Implemente la siguiente estrategia de resiliencia combinada:
+El servicio `payment-service` es crítico y llama a API de pago externas. Implemente la siguiente estrategia combinada de resiliencia:
 
 1. **Outlier Detection**: Expulsar la instancia después de 3 errores consecutivos
-2. **Retry**: Permitir hasta3 reintentos en502/503/504 para lecturas idempotentes verificadas; deshabilitar explícitamente los reintentos de escritura
-3. **Timeout**: Timeout de 5 segundos por solicitud
-4. **Circuit Breaker**: Explicar por qué «bloquear todo el Service por encima de50% de errores» no es el breaker de pool de esta API; mostrar en su lugar límites de concurrencia admitidos
+2. **Retry**: Permitir hasta 3 reintentos ante errores 502, 503 o 504 para lecturas cuya idempotencia se haya verificado; deshabilitar explícitamente los reintentos de escritura
+3. **Timeout**: Establecer un tiempo de espera de 5 segundos por solicitud
+4. **Circuit Breaker**: Explicar por qué «bloquear todo el servicio cuando los errores superen el 50%» no corresponde al circuit breaker del pool de esta API y mostrar los límites de concurrencia admitidos
 
 Escriba el DestinationRule y el VirtualService.
 
@@ -825,9 +825,9 @@ Escriba el DestinationRule y el VirtualService.
 
 <summary>Mostrar respuesta</summary>
 
-Un DestinationRule no puede implementar «bloquear globalmente este Service por encima de50% de errores» mediante los campos de tasa de éxito enumerados. Esos campos no son compatibles aquí, y la desviación estadística no es un umbral fijo de porcentaje de errores. Los circuit breakers de pool restringen las conexiones/solicitudes simultáneas por clúster upstream de proxy llamador; Outlier Detection cambia la elegibilidad del host. Un breaker de proporción de errores coordinado para todo el Service necesitaría un mecanismo de aplicación/controlador diseñado por separado.
+Una DestinationRule no puede «bloquear globalmente este servicio cuando los errores superen el 50%» mediante los campos de tasa de éxito enumerados. Esos campos no se admiten aquí, y la desviación estadística no equivale a un umbral fijo de porcentaje de errores. Los circuit breakers del pool limitan las conexiones y solicitudes simultáneas del clúster upstream de cada proxy que realiza las llamadas; Outlier Detection determina qué hosts pueden recibir tráfico. Un circuit breaker coordinado para todo el servicio, basado en la proporción de errores, requiere un mecanismo de aplicación o controlador diseñado por separado.
 
-Esta respuesta se aplica a **caller→payment-service HTTP8080**. La llamada API de pago saliente del Service necesita su propia política de destino y visibilidad TLS como se describe en el [capítulo sobre valores atípicos](../../../service-mesh/istio/resilience/01-outlier-detection.md). Los reintentos de mesh no pueden proporcionar idempotencia de pagos.
+Esta respuesta se aplica a **caller→payment-service HTTP8080**. La llamada que el servicio realiza a la API de pago externa necesita su propia política de destino y visibilidad TLS, como explica el [capítulo de Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md). Los reintentos de la malla no proporcionan idempotencia de pagos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -902,17 +902,17 @@ spec:
       attempts: 0
 ```
 
-Las reglas explícitas de escritura/respaldo deshabilitan los reintentos heredados de mesh. Reintente solo las lecturas coincidentes cuya semántica de aplicación sea segura de repetir. `gateway-error` cubre502/503/504; no se agregan condiciones amplias de restablecimiento/5xx/4xx a las escrituras de pago. Un error de transporte no establece si se confirmó un pago.
+Las reglas explícitas de escritura y de último recurso deshabilitan los reintentos heredados de la malla. Reintente únicamente las lecturas que coincidan y cuya semántica permita repetirlas de forma segura. `gateway-error` cubre los errores 502, 503 y 504; no se añaden condiciones amplias de restablecimiento de conexión ni de errores 5xx o 4xx a las escrituras de pago. Un error de transporte no permite saber si el pago se confirmó.
 
-`attempts: 3` significa hasta tres reintentos **después** del intento inicial. Cuatro intentos completos de2s más el backoff no caben dentro de5s, por lo que el presupuesto total de ruta se detiene antes; los plazos de la aplicación también deben cubrir carga/streaming y trabajo downstream. Esto no es una cronología exacta de fallos ni una promesa de un estado HTTP final concreto.
+`attempts: 3` permite hasta tres reintentos **después** del intento inicial. Cuatro intentos completos de 2 segundos, más las esperas entre reintentos, no caben en 5 segundos; el límite total de la ruta los interrumpe antes. Los plazos de la aplicación también deben cubrir la carga de datos, la transmisión y el trabajo de los servicios posteriores. El ejemplo no describe una secuencia exacta de fallos ni garantiza un estado HTTP final concreto.
 
-`maxRetries: 3` limita los reintentos simultáneos pendientes de ese proxy/clúster, no los reintentos por solicitud. `http2MaxRequests` también se aplica a HTTP/1.1. `maxRequestsPerConnection: 0` permite la reutilización sin ese límite de recuento de solicitudes. El desbordamiento de solicitudes pendientes/activas puede rechazar solicitudes HTTP, mientras que alcanzar un límite de conexión puede primero provocar cola. Ninguna de estas configuraciones es un circuit global de50% de errores.
+`maxRetries: 3` limita los reintentos simultáneos pendientes de ese proxy y clúster, no el número de reintentos por solicitud. `http2MaxRequests` también se aplica a HTTP/1.1. `maxRequestsPerConnection: 0` permite reutilizar la conexión sin ese límite de solicitudes. Superar el límite de solicitudes pendientes o activas puede provocar el rechazo de solicitudes HTTP; alcanzar el límite de conexiones puede primero hacer que se encolen. Ninguno de estos valores implementa un circuit breaker global que se active al superar el 50% de errores.
 
 | Observación | Interpretación correcta |
-|---|---|
-|Una lectura segura obtiene502 y luego tiene éxito en un reintento|Un reintento puede ayudar; puede volver a visitar un host y no se garantiza que tenga éxito|
-|Un host alcanza su umbral de fallos|Ese llamador puede expulsarlo si el límite lo permite; otros llamadores mantienen su propio estado|
-|Todos los endpoints fallan|Puede no quedar ningún destino sano; un temporizador de expulsión no repara el Service ni implementa una prueba coordinada de semiapertura|
+| --- | --- |
+| Una lectura segura recibe 502 y luego tiene éxito al reintentarse | El reintento puede ayudar, pero puede dirigirse al mismo host y no garantiza el éxito |
+| Un host alcanza su umbral de fallos | El proxy que realiza la llamada puede expulsarlo si el límite lo permite; los demás proxies mantienen su propio estado |
+| Fallan todos los endpoints | Puede no quedar ningún destino sano; el temporizador de expulsión no repara el servicio ni implementa una prueba coordinada del estado semiabierto |
 
 ```promql
 sum(rate(envoy_cluster_upstream_rq_retry{namespace="production"}[5m]))
@@ -921,7 +921,7 @@ sum(rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="pro
 sum(rate(istio_requests_total{reporter="source",destination_service_name="payment-service",destination_service_namespace="production",response_flags=~".*UT.*"}[5m]))
 ```
 
-La serie `_open` es un gauge0/1, no un contador que se deba pasar a `rate`. Delimite las etiquetas del clúster Envoy y habilite las estadísticas pertinentes. Consulte [retry/timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md) y [circuit breaking](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md) para conocer compromisos operativos seguros.
+La serie `_open` es una métrica gauge con valores 0 o 1, no un contador al que se deba aplicar `rate`. Delimite las etiquetas de los clústeres de Envoy y habilite las estadísticas correspondientes. Consulte los capítulos de [reintentos y tiempos de espera](../../../service-mesh/istio/traffic-management/05-retry-timeout.md) y [circuit breakers](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md) para evaluar sus efectos operativos.
 
 </details>
 
@@ -929,30 +929,30 @@ La serie `_open` es un gauge0/1, no un contador que se deba pasar a `rate`. Deli
 
 ### Pregunta 10: Optimización de rendimiento y reducción de costos
 
-En un entorno de microservicios a gran escala, los costos mensuales de red son $5,000. Desarrolle una estrategia integral para optimizar el rendimiento y reducir los costos mediante las características de resiliencia de Istio.
+En un entorno de microservicios a gran escala, los costos mensuales de red ascienden a $5,000. Diseñe una estrategia integral para mejorar el rendimiento y reducir los costos mediante las funciones de resiliencia de Istio.
 
 **Situación actual:**
 
-* 100 Services distribuidos uniformemente en 3 AZ
-* Tráfico mensual: 500TB
-* Tiempo de respuesta promedio: 150ms
+* 100 servicios distribuidos uniformemente en 3 AZ
+* Tráfico mensual: 500 TB
+* Tiempo de respuesta medio: 150 ms
 * Tasa de errores: 3%
 
 **Objetivos:**
 
-* Reducción del 50% en costos entre AZ
-* Tiempo de respuesta promedio inferior a 100ms
-* Tasa de errores inferior a 1%
+* Reducir el 50% de los costos entre AZ
+* Alcanzar un tiempo de respuesta medio inferior a 100 ms
+* Mantener la tasa de errores por debajo del 1%
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Trate los100 Services proporcionados,500TB/mes, la factura de$5,000, la latencia de150ms y los errores de3% como una **referencia hipotética**, no como resultados medidos de esta auditoría. Primero identifique los componentes de tráfico facturables y el límite SLI orientado al usuario. La latencia del salto de proxy no es automáticamente la latencia de solicitud de extremo a extremo.
+Considere los 100 servicios, los 500 TB al mes, la factura de $5,000, los 150 ms de latencia y el 3% de errores como una **situación inicial hipotética**; no son resultados medidos en esta revisión. Primero identifique los componentes de tráfico facturables y el alcance del SLI que refleja la experiencia del usuario. La latencia de un salto entre proxies no equivale automáticamente a la latencia de extremo a extremo de la solicitud.
 
-**1. Consolidar una política de destino por Service revisado**
+**1. Consolidar una política de destino por servicio revisado**
 
-El ejemplo representativo de `api-service` combina límites de pool, ponderación de localidad y Outlier Detection admitido en un DestinationRule. No aplique varias reglas wildcard en conflicto ni enrute todos los Services a un backend genérico. Dimensione los valores según cada llamador y destino; la muestra no es un valor predeterminado de producción.
+El ejemplo de `api-service` combina límites del pool, ponderaciones por localidad y Outlier Detection admitido en una única DestinationRule. Evite aplicar varias reglas con comodines que compitan entre sí o dirigir todos los servicios a un backend genérico. Dimensione los valores para cada cliente y destino; el ejemplo no ofrece valores predeterminados para producción.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1049,7 +1049,7 @@ spec:
 
 **2. Límites de tasa como controles de admisión medidos**
 
-Estos son buckets independientes por proxy en HTTP8080 en `production`. Verifique las etiquetas de nivel y la capacidad; una etiqueta «critical» por sí sola no justifica una tasa determinada. No imponen una cuota de Service/cuenta compartida ni sustituyen la protección de borde.
+Los depósitos son independientes por proxy y se aplican al tráfico HTTP del puerto 8080 en `production`. Verifique las etiquetas de nivel y la capacidad: una etiqueta «critical» no justifica por sí sola una tasa concreta. Estos límites no imponen una cuota compartida por servicio o cuenta ni sustituyen la protección del perímetro.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -1135,7 +1135,7 @@ spec:
 
 **3. Separar un modelo ilustrativo de una factura real**
 
-Suponga500TB decimales=500,000GB, una fracción de referencia entre AZ de2/3, una fracción posterior de0.20 y un **valor efectivo supuesto** de$0.015 por GB facturable. El componente variable modelado es:
+Suponga que 500 TB decimales equivalen a 500,000 GB, que la fracción del tráfico entre AZ pasa de 2/3 a 0.20 y que el **cargo efectivo supuesto** es de $0.015 por GB facturable. El componente variable calculado es:
 
 | Modelo | Cálculo | Importe mensual |
 |---|---|---:|
@@ -1143,23 +1143,23 @@ Suponga500TB decimales=500,000GB, una fracción de referencia entre AZ de2/3, un
 |Después|500,000 × 0.20 × 0.015|$1,500|
 |Diferencia|5,000 − 1,500|$3,500 (70%)|
 
-Esto coincide con la referencia completa de$5,000 solo si toda la factura es este componente variable. Las facturas de red reales pueden incluir otras direcciones, procesamiento de balanceador de carga/NAT, transferencia de Internet/región y costos fijos. Las ponderaciones de solicitudes no tienen por qué ser iguales a las fracciones de bytes cuando difieren los tamaños de solicitud/respuesta. Valide los ahorros modelados frente a los datos de flujo/CUR facturables y los precios actuales; no prometa un ahorro de70% en la factura total.
+El cálculo coincide con la factura inicial completa de $5,000 solo si toda la factura corresponde a ese componente variable. Una factura de red real puede incluir otras direcciones de tráfico, procesamiento de balanceadores de carga y NAT, transferencias hacia Internet o entre regiones y costos fijos. Las proporciones de solicitudes no tienen por qué coincidir con las de bytes si varían los tamaños de las solicitudes y respuestas. Compare el ahorro calculado con los datos facturables de flujo o CUR y con los precios vigentes; no prometa una reducción del 70% en la factura total.
 
-Para latencias de red ilustrativas de un salto de0.3ms dentro de la misma AZ y1.5ms entre AZ, una referencia equitativa de tres zonas da0.3×1/3+1.5×2/3=1.10ms;80/20 da0.54ms. Este cambio de componente de0.56ms no puede establecer una mejora de extremo a extremo de150ms→100ms. Rastree la ruta crítica real, las esperas de base de datos/pool, el trabajo de la aplicación y la amplificación de reintentos.
+Si se suponen latencias de un salto de 0.3 ms dentro de la misma AZ y de 1.5 ms entre AZ, una distribución uniforme entre tres zonas da 0.3×1/3+1.5×2/3=1.10 ms; una distribución 80/20 da 0.54 ms. Esta reducción de 0.56 ms en un componente no demuestra una mejora de extremo a extremo de 150 ms a 100 ms. Rastree la ruta crítica real, las esperas de bases de datos y pools, el trabajo de la aplicación y el tráfico adicional causado por los reintentos.
 
 **4. Validar cambios por etapas**
 
-| Etapa ilustrativa | Evidencia necesaria antes de ampliar el alcance |
-|---|---|
-|Semanas1–2: topología/localidad|Asignación real de Node/Pod/EDS, capacidad zonal, distribución de solicitudes y bytes facturables, comportamiento ante fallos|
-|Semanas3–4: límites de outlier/pool|Expulsiones aplicadas, endpoints restantes, desbordamiento, latencia y causas de errores de la aplicación|
-|Semanas5–6: límites de tasa|Sobrecarga genuina rechazada sin rechazar solicitudes legítimas de forma inaceptable; observar el comportamiento de reintento del cliente|
+| Etapa de ejemplo | Evidencia necesaria antes de ampliar el alcance |
+| --- | --- |
+| Semanas 1–2: topología y localidad | Correspondencia real entre Node, Pod y EDS, capacidad por zona, distribución de solicitudes y bytes facturables, comportamiento ante fallos |
+| Semanas 3–4: límites de Outlier Detection y del pool | Expulsiones aplicadas, endpoints restantes, límites superados, latencia y causas de los errores de la aplicación |
+| Semanas 5–6: límites de tasa | Rechazo de la sobrecarga real sin rechazar una cantidad inaceptable de solicitudes legítimas; observación de los reintentos de los clientes |
 
-El calendario es ilustrativo. Defina criterios de rollback/detención y mida después de cada cambio. Outlier Detection puede eliminar capacidad o exponer un fallo subyacente; no garantiza errores por debajo de1%. Un timeout modificado puede producir más fallos en lugar de hacer el trabajo más rápido.
+El calendario sirve de ejemplo. Defina cuándo detener los cambios o revertirlos y mida el resultado después de cada modificación. Outlier Detection puede reducir la capacidad o revelar un fallo existente; no garantiza una tasa de errores inferior al 1%. Cambiar un tiempo de espera puede generar más fallos en lugar de acelerar el trabajo.
 
 **5. Usar métricas con tipo y ámbito correctos**
 
-Las siguientes consultas por Service diagnostican el Service representativo. Mida el SLI orientado al usuario por separado. La latencia media usa la suma/recuento del histograma, no P50; las expulsiones activas son un gauge, mientras que los eventos de expulsión aplicados son un contador.
+Las siguientes consultas por servicio permiten diagnosticar el servicio del ejemplo. Mida por separado el SLI que refleja la experiencia del usuario. La latencia media se calcula a partir de la suma y el recuento del histograma, no del P50. Las expulsiones activas se representan con una métrica gauge; los eventos de expulsión aplicada, con un contador.
 
 ```promql
 # Per-service mean request duration, milliseconds
@@ -1175,11 +1175,11 @@ sum(rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="pro
 sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="production"}[5m]))
 ```
 
-Habilite las estadísticas opcionales y gestione la ausencia de tráfico/fallos de recopilación. Una consulta entre AZ requiere enriquecimiento de zona real; `source_cluster_zone!=destination_cluster_zone` no es PromQL válido. Consulte el [capítulo sobre zonas](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) para consultas condicionales con ámbito explícito.
+Habilite las estadísticas opcionales y gestione la ausencia de tráfico y los fallos de recopilación. Una consulta entre AZ requiere un enriquecimiento real con datos de zona; `source_cluster_zone!=destination_cluster_zone` no es PromQL válido. Consulte el [capítulo de enrutamiento por zona](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) para conocer las consultas condicionales con alcance explícito.
 
-**Los objetivos aún deben medirse**: costo entre AZ−50%, latencia media orientada al usuario≤100ms y errores<1% son criterios de aceptación, no resultados previstos. La ubicación de caché puede reducir la distancia, pero no aumenta por sí sola la tasa de aciertos. Evalúe los requisitos de características/capacidad de ambient antes de comparar la sobrecarga; no se ha establecido un ahorro genérico de30–50%. Un HPA sobre un Deployment multizona no escala de forma independiente cada zona; el escalado zonal independiente necesita un diseño explícito de carga de trabajo/controlador.
+**Todavía debe comprobarse el cumplimiento de los objetivos**: reducir un 50% el costo entre AZ, mantener la latencia media percibida por el usuario en 100 ms o menos y los errores por debajo del 1% son criterios de aceptación, no resultados previstos. La ubicación de la caché puede reducir la distancia, pero no aumenta por sí sola su tasa de aciertos. Evalúe los requisitos de funciones y capacidad de ambient antes de comparar su sobrecarga; no se ha demostrado un ahorro general del 30–50%. Un HPA que controla un Deployment distribuido entre zonas no escala cada zona de forma independiente; para hacerlo se necesita un diseño explícito de las cargas de trabajo y sus controladores.
 
-Referencias: [Outlier detection](../../../service-mesh/istio/resilience/01-outlier-detection.md), [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md), [optimización de costos de red de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html).
+Referencias: [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md), [límites de tasa](../../../service-mesh/istio/resilience/02-rate-limiting.md) y [optimización de costos de red de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html).
 
 </details>
 
@@ -1193,11 +1193,11 @@ Referencias: [Outlier detection](../../../service-mesh/istio/resilience/01-outli
 
 **Criterios de evaluación:**
 
-* 90-100 puntos: Excelente (experto en Istio Resilience)
-* 80-89 puntos: Buena comprensión; la validación de la implementación es independiente
-* 70-79 puntos: Promedio (se recomienda estudio adicional)
-* 60-69 puntos: Por debajo del promedio (se necesita revisión de conceptos básicos)
-* 0-59 puntos: Necesita volver a estudiar
+* 90-100 puntos: Excelente; dominio de la resiliencia de Istio
+* 80-89 puntos: Buena comprensión; la validación del despliegue requiere una evaluación independiente
+* 70-79 puntos: Nivel medio; se recomienda seguir estudiando
+* 60-69 puntos: Nivel inferior al esperado; repase los conceptos básicos
+* 0-59 puntos: Es necesario volver a estudiar el material
 
 ## Recursos de aprendizaje
 

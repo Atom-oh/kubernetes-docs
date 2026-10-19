@@ -1,11 +1,11 @@
 # Glosario de Istio
 
 > **Versión revisada**: Istio 1.31.0
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Este glosario organiza los términos clave relacionados con Istio y Service Mesh (malla de servicios) en secciones de referencia agrupadas.
+Este glosario reúne los principales términos de Istio y de las mallas de servicios en secciones temáticas.
 
-> **Idioma de referencia:** los enlaces de las secciones de Arquitectura y DestinationRule que aparecen a continuación apuntan a las guías en inglés, que son las mantenidas. Estos enlaces ofrecen la referencia actual allí donde las traducciones locales aún no se han sincronizado.
+> **Idioma de referencia:** los enlaces de las secciones Arquitectura y DestinationRule llevan a las guías en inglés, que se mantienen actualizadas. Sirven como referencia mientras no se sincronizan las traducciones locales.
 
 ## Tabla de contenidos
 
@@ -28,15 +28,15 @@ Política de seguridad de Istio que define el comportamiento ALLOW, DENY, CUSTOM
 
 ### Control Plane
 
-Capa de configuración, descubrimiento y gestión de identidad, implementada por istiod. Las cargas útiles de las aplicaciones circulan por los proxies del data plane, no a través de istiod.
+Capa de configuración, descubrimiento e identidad de Istio, implementada por istiod. El tráfico de las aplicaciones atraviesa los proxies del plano de datos, no istiod.
 
 ### Ambient Mode
 
-Modo de data plane que se lanzó por primera vez como alpha en Istio 1.18 y está disponible de forma general desde Istio 1.24, y que proporciona la funcionalidad de service mesh sin Sidecar Proxies.
+Modo del plano de datos que se lanzó como versión alfa en Istio 1.18 y está disponible de forma general desde Istio 1.24. Ofrece funciones de malla de servicios sin proxies sidecar.
 
 **Características**:
 - No requiere contenedores Sidecar
-- Usa ztunnel a nivel de nodo
+- ztunnel se ejecuta a nivel de nodo
 - Mayor eficiencia de recursos
 - Separación de las funciones L4 y L7
 
@@ -59,14 +59,14 @@ Autoridad que emite y gestiona los certificados para la comunicación mTLS entre
 
 ### Circuit Breaker
 
-Patrón que bloquea las solicitudes hacia servicios con fallos para evitar la propagación del fallo a todo el sistema.
+Mecanismo que deja de enviar solicitudes a servicios con fallos para evitar que estos se propaguen por todo el sistema.
 
 **Cómo funciona**:
 1. **Closed**: funcionamiento normal
 2. **Open**: bloquea las solicitudes tras fallos consecutivos
 3. **Half-Open**: permite algunas solicitudes después de cierto tiempo
 
-**Implementación en Istio**: el corte de circuito del pool de conexiones y la expulsión de endpoints por outlier detection no exponen literalmente esta máquina de tres estados.
+**Implementación en Istio**: la limitación mediante circuit breaker del grupo de conexiones y la expulsión de endpoints por detección de anomalías no implementan literalmente esta máquina de tres estados.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -102,13 +102,13 @@ Componente de seguridad que existió de forma independiente hasta Istio 1.4. Act
 
 ### CDS (Cluster Discovery Service)
 
-Una de las APIs xDS que permite a Envoy recibir dinámicamente la configuración de los servicios upstream (clusters).
+Una de las API xDS que permite a Envoy recibir dinámicamente la configuración de los servicios de destino (clusters upstream).
 
 **Información que proporciona**:
 - Nombre y tipo de cluster
 - Política de balanceo de carga
-- Configuración de health check
-- Configuración de circuit breaker
+- Configuración de comprobación de estado
+- Configuración del control de circuit breaker
 - Configuración de TLS
 
 **Términos relacionados**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
@@ -119,12 +119,12 @@ Una de las APIs xDS que permite a Envoy recibir dinámicamente la configuración
 
 ### Data Plane
 
-Capa que gestiona el tráfico real en una service mesh.
+Capa que gestiona el tráfico real de la malla de servicios.
 
-**El Data Plane de Istio**:
-- Sidecars de Envoy, o ztunnel en ambient más waypoints L7 opcionales
-- Gestiona el tráfico de la malla incorporado; se aplican exclusiones y límites de protocolo
-- Cifrado/descifrado mTLS
+**El plano de datos de Istio**:
+- Proxies Envoy de tipo sidecar o, en Ambient Mode, ztunnel con waypoints L7 opcionales
+- Gestiona el tráfico de las cargas de trabajo incorporadas a la malla; se aplican exclusiones y límites de protocolo
+- Cifrado y descifrado del tráfico mediante mTLS
 - Recolección de métricas
 
 **Términos relacionados**: [Control Plane](#control-plane), [Envoy](#envoy-proxy)
@@ -133,12 +133,12 @@ Capa que gestiona el tráfico real en una service mesh.
 
 ### DestinationRule
 
-CRD de Istio que define las políticas para el tráfico enrutado por VirtualService.
+CRD de Istio que define políticas para el tráfico que enruta VirtualService.
 
 **Funciones principales**:
-- Definición de subsets (versión, región, etc.)
+- Definición de subconjuntos (versión, región, etc.)
 - Política de balanceo de carga
-- Configuración del Connection Pool
+- Configuración del grupo de conexiones
 - Configuración del Circuit Breaker
 - Configuración de TLS
 
@@ -166,7 +166,7 @@ spec:
 
 Tecnología que permite ejecutar programas de forma segura dentro del kernel de Linux.
 
-Istio puede coexistir con un CNI principal basado en eBPF, como Cilium. Istio CNI es un plugin encadenado/agente de nodo independiente que configura la redirección; ambient no requiere eBPF y no sustituye al CNI principal.
+Istio puede coexistir con un CNI principal basado en eBPF, como Cilium. Istio CNI es un plugin encadenado y un agente de nodo independientes que configuran la redirección. Ambient Mode no requiere eBPF ni sustituye al CNI principal.
 
 **Ventajas**:
 - Poca sobrecarga
@@ -179,7 +179,7 @@ Istio puede coexistir con un CNI principal basado en eBPF, como Cilium. Istio CN
 
 ### EDS (Endpoint Discovery Service)
 
-Una de las APIs xDS que proporciona dinámicamente los endpoints reales (IPs de los Pods) dentro de un cluster.
+Una de las API xDS que proporciona dinámicamente los endpoints reales (direcciones IP de los Pods) del clúster.
 
 **Información que proporciona**:
 - Direcciones IP y puertos de los endpoints
@@ -208,18 +208,18 @@ Una de las APIs xDS que proporciona dinámicamente los endpoints reales (IPs de 
 
 ### Envoy Proxy
 
-Proxy L7 de alto rendimiento que constituye el Data Plane de Istio.
+Proxy L7 de alto rendimiento que forma el plano de datos de Istio.
 
 **Historia**:
 - Desarrollado por Matt Klein en Lyft en 2016
-- Proyecto CNCF Incubating en 2017
-- Proyecto CNCF Graduated en 2018
+- Proyecto incubado por la CNCF en 2017
+- Proyecto graduado por la CNCF en 2018
 
 **Características clave**:
 - Proxy de alto rendimiento escrito en C++
 - Configuración dinámica mediante la API xDS
 - Compatibilidad con HTTP/1.1, HTTP/2 y gRPC
-- Observabilidad rica
+- Amplias capacidades de observabilidad
 
 **Componentes**:
 - Listeners: escucha en puertos
@@ -250,7 +250,7 @@ Componente de validación de configuración que existió de forma independiente 
 
 ### Gateway
 
-CRD de Istio que define los puntos de entrada del tráfico externo que llega a la Service Mesh.
+CRD de Istio que define los puntos por los que el tráfico externo entra en la malla de servicios.
 
 **Tipos**:
 1. **Ingress Gateway**: tráfico del exterior hacia el interior
@@ -289,7 +289,7 @@ Framework RPC (Remote Procedure Call) de alto rendimiento desarrollado por Googl
 **Ventajas**:
 - Streaming bidireccional
 - Baja latencia
-- Usa Protocol Buffers
+- Utiliza Protocol Buffers
 
 **Términos relacionados**: [xDS](#xds-discovery-service)
 
@@ -297,10 +297,10 @@ Framework RPC (Remote Procedure Call) de alto rendimiento desarrollado por Googl
 
 ### Identity
 
-Representa la identidad de una carga de trabajo dentro de la Service Mesh.
+Representa la identidad de una carga de trabajo dentro de la malla de servicios.
 
 **La identidad en Istio**:
-- Usa el formato SPIFFE ID
+- El SPIFFE ID sigue el formato definido por SPIFFE
 - Se basa en el ServiceAccount de Kubernetes
 - Se demuestra mediante certificados X.509
 
@@ -319,8 +319,8 @@ Herramienta de firewall que controla el tráfico de red en Linux.
 
 **Función en Istio**:
 - istio-init o el agente de nodo de Istio CNI configura la redirección del tráfico
-- Redirige todo el tráfico del Pod a Envoy
-- Usa la tabla NAT (cadenas PREROUTING y OUTPUT)
+- Redirige a Envoy todo el tráfico del Pod
+- La redirección utiliza la tabla NAT (cadenas PREROUTING y OUTPUT)
 
 **Reglas simplificadas (a modo ilustrativo, no es un script de instalación)**:
 ```bash
@@ -339,11 +339,11 @@ iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 
 ### Istiod
 
-Componente unificado del Control Plane en Istio 1.5+.
+Componente unificado del plano de control desde Istio 1.5.
 
 **Funciones integradas**:
-- **Pilot**: Service Discovery, Traffic Management
-- **Citadel**: Certificate Authority, Identity
+- **Pilot**: descubrimiento de servicios y gestión del tráfico
+- **Citadel**: autoridad certificadora e identidad
 - **Galley**: validación de configuración
 
 **Método de ejecución**:
@@ -373,9 +373,9 @@ Una de las APIs xDS que permite a Envoy recibir dinámicamente los puertos en lo
 - Configuración de TLS
 
 **Listeners predeterminados de Istio**:
-- `0.0.0.0:15001`: TCP outbound
-- `0.0.0.0:15006`: TCP inbound
-- `0.0.0.0:15021`: health check
+- `0.0.0.0:15001`: TCP saliente
+- `0.0.0.0:15006`: TCP entrante
+- `0.0.0.0:15021`: comprobación de estado
 - `0.0.0.0:15090`: métricas de Prometheus
 
 **Términos relacionados**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
@@ -384,12 +384,12 @@ Una de las APIs xDS que permite a Envoy recibir dinámicamente los puertos en lo
 
 ### Locality-aware Load Balancing
 
-Método de balanceo de carga que tiene en cuenta la información de localidad (Region, Zone).
+Método de balanceo de carga que tiene en cuenta la ubicación geográfica o topológica (región y zona).
 
 **Prioridad**:
-1. Endpoints en la misma Zone
-2. Otra Zone en la misma Region
-3. Otra Region
+1. Endpoints en la misma zona
+2. Otra zona de la misma región
+3. Otra región
 
 **Ejemplo de configuración**:
 ```yaml
@@ -421,7 +421,7 @@ spec:
 Componente de políticas y telemetría que existió hasta Istio 1.4.
 
 **Funciones principales**:
-- Aplicación de políticas (Rate Limiting, Access Control)
+- Aplicación de políticas (limitación de solicitudes y control de acceso)
 - Recolección de telemetría
 
 **Motivos de su eliminación**:
@@ -436,17 +436,17 @@ Componente de políticas y telemetría que existió hasta Istio 1.4.
 
 ### mTLS (Mutual TLS)
 
-Método de comunicación TLS bidireccional en el que cliente y servidor se autentican mutuamente.
+Método de comunicación TLS en el que cliente y servidor se autentican mutuamente.
 
 **El mTLS de Istio**:
 - Emisión y renovación automáticas de certificados
 - Autenticación basada en SPIFFE ID
-- El cifrado TLS se negocia; no está fijado a AES-256-GCM
+- La suite criptográfica TLS se negocia; no está fijada a AES-256-GCM
 
 **Modos**:
 1. **STRICT**: solo se permite mTLS
-2. **PERMISSIVE**: se permite mTLS + texto plano (para migraciones)
-3. **DISABLE**: deshabilita el mTLS de transporte de Istio en modo sidecar; no está soportado en ambient
+2. **PERMISSIVE**: se permiten mTLS y texto sin cifrar (para facilitar la migración)
+3. **DISABLE**: deshabilita el mTLS de transporte de Istio en modo sidecar; no está disponible en Ambient Mode
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -469,7 +469,7 @@ Funcionalidad que excluye automáticamente los endpoints que muestran un comport
 **Condiciones de detección**:
 - Número de errores consecutivos
 - Tasa de errores
-- Fallos de conexión/timeouts; la latencia por sí sola no es un umbral de expulsión por outlier
+- Fallos de conexión o tiempos de espera agotados; la latencia por sí sola no activa la expulsión de valores atípicos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -494,12 +494,12 @@ spec:
 
 ### Downstream
 
-Desde la perspectiva de Envoy, se refiere a **la parte que envía las solicitudes**. Es decir, el cliente que inicia una conexión hacia Envoy.
+Desde la perspectiva de Envoy, es **el lado que envía las solicitudes**: el cliente que inicia una conexión con Envoy.
 
 **El Downstream de Envoy**:
-- Conexiones que llegan a Envoy (Inbound)
+- Conexiones que llegan a Envoy (tráfico entrante)
 - Cliente que envía las solicitudes
-- Conexiones recibidas por el Listener
+- Conexiones recibidas por el listener
 
 **Flujo de tráfico**:
 ```
@@ -508,7 +508,7 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 **Escenarios de ejemplo**:
 
-#### 1. Modo Sidecar: solicitud outbound
+#### 1. Modo sidecar: solicitud saliente
 
 ![En modo sidecar, la aplicación (downstream) envía una solicitud al sidecar de Envoy del mismo Pod, y Envoy la reenvía al servicio backend (upstream).](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
 
@@ -547,7 +547,7 @@ spec:
         per_connection_buffer_limit_bytes: 32768  # Downstream buffer
 ```
 
-**Métricas de Downstream**:
+**Métricas del tráfico downstream**:
 ```bash
 # Downstream connection count
 envoy_listener_downstream_cx_active
@@ -565,10 +565,10 @@ envoy_http_downstream_rq_time
 
 ### Upstream
 
-Desde la perspectiva de Envoy, se refiere a **la parte que recibe las solicitudes**. Es decir, el servicio backend hacia el que Envoy inicia una conexión.
+Desde la perspectiva de Envoy, es **el lado que recibe las solicitudes**: el servicio backend al que Envoy inicia una conexión.
 
 **El Upstream de Envoy**:
-- Conexiones que salen de Envoy (Outbound)
+- Conexiones que salen de Envoy (tráfico saliente)
 - Servicio backend que procesa las solicitudes
 - Endpoints gestionados por el Cluster
 
@@ -703,7 +703,7 @@ Ingress Gateway (Envoy)
 Internal Service (Upstream)
 ```
 
-**Métricas de Upstream**:
+**Métricas del tráfico upstream**:
 
 ```bash
 # Upstream connection count
@@ -722,7 +722,7 @@ envoy_cluster_health_check_success
 envoy_cluster_circuit_breakers_default_remaining_rq
 ```
 
-**Detección pasiva del estado de Upstream**: las estadísticas de health check activo requieren una configuración aparte.
+**Detección pasiva del estado del upstream**: las métricas de las comprobaciones de estado activas requieren una configuración aparte.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -768,8 +768,8 @@ istioctl proxy-config all <pod-name> -o json | \
 Componente de gestión de tráfico que existió de forma independiente hasta Istio 1.4. Actualmente está integrado en Istiod.
 
 **Funciones principales**:
-- Service Discovery
-- Gestión de tráfico (procesamiento de VirtualService y DestinationRule)
+- Descubrimiento de servicios
+- Gestión del tráfico (procesamiento de VirtualService y DestinationRule)
 - Servidor xDS
 
 **Estado actual**: existe como función interna de Istiod en Istio 1.5+
@@ -783,10 +783,10 @@ Componente de gestión de tráfico que existió de forma independiente hasta Ist
 Una de las APIs xDS que proporciona dinámicamente las reglas de enrutamiento HTTP.
 
 **Información que proporciona**:
-- Reglas de coincidencia de rutas (path, headers, etc.)
+- Reglas de coincidencia de rutas (ruta, cabeceras, etc.)
 - Enrutamiento basado en pesos
 - Reglas de redirección y reescritura
-- Configuración de timeout y retry
+- Configuración de tiempos de espera y reintentos
 
 **Relación con VirtualService**:
 - VirtualService -> convertido por Istiod -> configuración RDS
@@ -797,11 +797,11 @@ Una de las APIs xDS que proporciona dinámicamente las reglas de enrutamiento HT
 
 ### Rate Limiting
 
-Funcionalidad que limita el número de solicitudes permitidas por unidad de tiempo.
+Función que limita cuántas solicitudes se permiten por unidad de tiempo.
 
 **Métodos de implementación**:
-1. **Local Rate Limiting**: procesado localmente por Envoy
-2. **Global Rate Limiting**: usa un servicio externo de Rate Limit
+1. **Limitación local de solicitudes**: Envoy la aplica localmente.
+2. **Limitación global de solicitudes**: requiere un servicio externo de limitación.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -856,11 +856,11 @@ Una de las APIs xDS que proporciona dinámicamente certificados y claves TLS.
 
 **Información que proporciona**:
 - Certificados X.509
-- Clave privada (Private Key)
+- Clave privada
 - Certificado raíz de la CA
 
 **Ventajas**:
-- No requiere sistema de archivos
+- No requiere distribuir certificados mediante archivos locales
 - Renovación automática de certificados
 - Renovación sin interrupciones
 
@@ -870,11 +870,11 @@ Una de las APIs xDS que proporciona dinámicamente certificados y claves TLS.
 
 ### Service Entry
 
-CRD de Istio que registra en la malla servicios externos a la Service Mesh.
+CRD de Istio que registra en la malla los servicios externos.
 
 **Casos de uso**:
 - Control de acceso a APIs externas
-- Aplicar funciones de Istio a servicios externos (Retry, Timeout, etc.)
+- Aplicar funciones de Istio a servicios externos (reintentos, tiempos de espera, etc.)
 - Integración con Egress Gateway
 
 ```yaml
@@ -899,13 +899,13 @@ spec:
 
 ### Service Mesh
 
-Capa de infraestructura que gestiona la comunicación entre microservicios.
+Capa de infraestructura que coordina la comunicación entre microservicios.
 
 **Funciones principales**:
-- Gestión de tráfico (enrutamiento, balanceo de carga)
-- Seguridad (mTLS, autenticación/autorización)
-- Observabilidad (métricas, logs, trazas)
-- Resiliencia (Retry, Circuit Breaker)
+- Gestión del tráfico (enrutamiento y balanceo de carga)
+- Seguridad (mTLS y autenticación/autorización)
+- Observabilidad (métricas, registros y trazas)
+- Resiliencia (reintentos y circuit breaker)
 
 **Implementaciones principales**:
 - Istio
@@ -932,12 +932,12 @@ Protocolo de firma para autenticar las solicitudes a las APIs de AWS.
    - Ruta URI
    - Cadena de consulta
    - Headers
-   - Hash del payload
+   - Hash de la carga útil
 
 2. **String to Sign**: cadena que se va a firmar
    - Algoritmo: `AWS4-HMAC-SHA256`
    - Marca de tiempo
-   - Credential Scope
+   - Ámbito de credenciales
    - Hash de la Canonical Request
 
 3. **Signing Key**: cálculo de la clave de firma
@@ -954,13 +954,13 @@ Protocolo de firma para autenticar las solicitudes a las APIs de AWS.
 
 Los SDK de AWS y la AWS CLI firman las solicitudes HTTPS con credenciales temporales proporcionadas por IRSA o EKS Pod Identity. Así la firma queda asociada a los permisos de AWS de la carga de trabajo. La identidad mTLS de Istio y la identidad de AWS IAM son independientes.
 
-El filtro HTTP `aws_request_signing` de Envoy es una alternativa avanzada. Requiere una compilación de Envoy que incluya la extensión, credenciales disponibles para el **contenedor del proxy**, el servicio/región de AWS correctos y una coincidencia de filtro restringida al destino de AWS previsto. Insértalo antes del router y después de cualquier reescritura de headers o rutas que afecte a la firma. El HTTPS originado por la aplicación es opaco para este filtro HTTP: Envoy no puede añadir una firma dentro de TLS cifrado. Un diseño de firma en el proxy debe presentar HTTP al proxy que firma y originar TLS verificado hacia el upstream; evita la doble originación de TLS o exponer HTTP sin firmar más allá de la ruta local prevista del proxy.
+El filtro HTTP `aws_request_signing` de Envoy es una alternativa avanzada. Requiere una compilación de Envoy que incluya la extensión, credenciales disponibles para el **contenedor del proxy**, el servicio y la región de AWS correctos, y una regla que limite el filtro al destino de AWS previsto. Colóquelo antes del router y después de cualquier reescritura de cabeceras o rutas que afecte a la firma. El tráfico HTTPS que inicia la aplicación queda cifrado y este filtro HTTP no puede firmarlo dentro de TLS. Un diseño de firma en el proxy debe enviar tráfico HTTP al proxy firmante y establecer TLS verificado desde allí hasta el servidor de destino. Evite iniciar TLS dos veces o exponer HTTP sin firmar fuera de la ruta local prevista del proxy.
 
-El diagrama anterior describe esta ruta de proxy de firma configurada explícitamente, no una capacidad predeterminada de Istio. Una anotación de IRSA en el ServiceAccount de la aplicación no demuestra por sí sola que un gateway o un sidecar disponga del entorno de credenciales y del montaje de token que necesita.
+El diagrama anterior muestra una ruta de firma mediante proxy que requiere configuración explícita; no es una función predeterminada de Istio. Una anotación de IRSA en el ServiceAccount de la aplicación no demuestra por sí sola que el gateway o el sidecar disponga de las variables de entorno y del montaje del token que necesita.
 
 **La autenticación no es validación de JWT**:
 
-SigV4 es una firma HMAC de la solicitud, no un JWT. `https://sts.amazonaws.com/.well-known/jwks` no es un endpoint de emisor de JWT para validar firmas de las APIs de AWS. RequestAuthentication de Istio valida JWT de un emisor OIDC real. Una AuthorizationPolicy CUSTOM requiere además un servicio configurado en `extensionProviders` que implemente autorización externa; sin esa implementación no puede validar SigV4. Es preferible usar endpoints de AWS autenticados con IAM o el SDK de AWS para acceder a las APIs de AWS.
+SigV4 es una firma HMAC de la solicitud, no un JWT. `https://sts.amazonaws.com/.well-known/jwks` no es un endpoint de emisor de JWT para validar firmas de las APIs de AWS. RequestAuthentication de Istio valida JWT de un emisor OIDC real. Una AuthorizationPolicy CUSTOM también requiere un servicio definido en `extensionProviders` que implemente autorización externa; sin ese servicio no puede validar SigV4. Es preferible usar endpoints de AWS autenticados con IAM o el SDK de AWS para acceder a las APIs de AWS.
 
 **Ejemplo de verificación de solo lectura** (AWS CLI instalada en la carga de trabajo, con su rol de IAM previsto):
 
@@ -971,11 +971,11 @@ aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 
 **Consideraciones operativas**:
 
-- Concede a la carga de trabajo solo las acciones y los recursos de AWS necesarios. Evita depender de un rol de instancia de nodo compartido.
-- Confirma que el proveedor de credenciales seleccionado admite credenciales temporales y su renovación. La duración de la sesión es configurable, no es universalmente de una hora.
+- Conceda a la carga de trabajo solo las acciones y los recursos de AWS que necesita. Evite depender de un rol de instancia compartido por los nodos.
+- Confirme que el proveedor de credenciales seleccionado admite credenciales temporales y su renovación. La duración de la sesión es configurable; no siempre es de una hora.
 - Los eventos de administración y los eventos de datos de CloudTrail tienen coberturas distintas; el acceso a objetos de S3 requiere la configuración adecuada de eventos de datos.
-- Inspecciona la configuración del proxy para confirmar la ubicación del filtro. Un config dump no muestra el header Authorization de cada solicitud en vivo, y un curl sin firmar sobre HTTPS no es una prueba de SigV4.
-- Mide la sobrecarga de firma, buffering y obtención de credenciales para los tamaños de solicitud reales; no se garantiza una sobrecarga fija en milisegundos.
+- Inspeccione la configuración del proxy para confirmar dónde está el filtro. El volcado de configuración no muestra la cabecera Authorization de cada solicitud en curso, y un curl sin firma sobre HTTPS no sirve para comprobar SigV4.
+- Mida la sobrecarga de firma, almacenamiento en búfer y obtención de credenciales con los tamaños de solicitud reales; no se garantiza una latencia fija en milisegundos.
 
 **Términos relacionados**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
 
@@ -997,7 +997,7 @@ Patrón de contenedor auxiliar que se despliega junto al contenedor de la aplica
 - Intercepta el tráfico configurado mediante el init-container o la redirección de Istio CNI
 
 **Métodos de inyección**:
-1. **Automática**: label del Namespace
+1. **Automática**: etiqueta del namespace
 2. **Manual**: `istioctl kube-inject`
 
 ```yaml
@@ -1015,12 +1015,12 @@ metadata:
 
 ### Sidecar Resource
 
-CRD de Istio que limita la información de servicios que recibe Envoy.
+CRD de Istio que limita la información sobre servicios que recibe Envoy.
 
 **Propósito**:
 - Reducir el uso de memoria
-- Acortar el tiempo de push de configuración
-- Delimitar el alcance de la configuración; no es un límite de seguridad de red
+- Reducir el tiempo de propagación de la configuración
+- Limitar el alcance de la configuración; no constituye una barrera de seguridad de red
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1036,7 +1036,7 @@ spec:
 ```
 
 **Efecto**:
-- Importar menos servicios puede reducir la memoria y el trabajo de configuración; mide el ahorro real.
+- Importar menos servicios puede reducir el consumo de memoria y el trabajo de configuración; mida el ahorro real.
 
 **Documentación relacionada**: [Architecture - Sidecar Resource](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#optimization-with-sidecar-resource)
 
@@ -1044,7 +1044,7 @@ spec:
 
 ### SPIFFE (Secure Production Identity Framework for Everyone)
 
-Estándar para demostrar la identidad de las cargas de trabajo en entornos cloud-native.
+Estándar para demostrar la identidad de las cargas de trabajo en entornos nativos de la nube.
 
 **Formato del SPIFFE ID**:
 ```
@@ -1104,12 +1104,12 @@ spec:
 
 ### Waypoint Proxy
 
-Proxy opcional que proporciona funcionalidad L7 en Ambient Mode.
+Proxy opcional que ofrece funciones de capa 7 en Ambient Mode.
 
 **Función**:
-- Se selecciona con labels de namespace, Service o Pod; no automáticamente por ServiceAccount
+- Se selecciona mediante etiquetas de namespace, Service o Pod; no se asigna automáticamente por ServiceAccount
 - Basado en Envoy Proxy
-- Dedicado a las funciones de gestión de tráfico L7
+- Dedicado a la gestión del tráfico de capa 7
 - Funciona junto con ztunnel
 
 **Funciones que proporciona**:
@@ -1136,19 +1136,19 @@ spec:
 
 **Características**:
 - ztunnel gestiona solo L4, el waypoint gestiona L7
-- Uso selectivo solo para los servicios que lo necesitan
-- Más eficiente en recursos que el Sidecar (enfoque compartido)
-- Se selecciona con labels de namespace, Service o Pod; no automáticamente por ServiceAccount
+- Se usa solo con los servicios que necesitan esas funciones
+- Su uso compartido puede requerir menos recursos que un sidecar por carga de trabajo
+- Se selecciona mediante etiquetas de namespace, Service o Pod; no se asigna automáticamente por ServiceAccount
 
 **Términos relacionados**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
 
 ---
 
-Después de crear el waypoint, incorpora el servicio previsto, por ejemplo `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`. Desplegar solo un Gateway no hace que el tráfico pase por él.
+Después de crear el waypoint, asigne la etiqueta correspondiente al servicio que debe usarlo; por ejemplo: `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`. Desplegar un Gateway por sí solo no dirige el tráfico a través de él.
 
 ### VirtualService
 
-CRD de Istio que define cómo se enruta el tráfico dentro de la Service Mesh.
+CRD de Istio que define cómo se enruta el tráfico dentro de la malla de servicios.
 
 **Funciones principales**:
 - Enrutamiento basado en URI, headers y parámetros de consulta
@@ -1184,7 +1184,7 @@ spec:
 
 ### WASM (WebAssembly)
 
-Formato de instrucciones binario diseñado para ejecutarse en navegadores web. En Istio se usa para ampliar la funcionalidad del proxy Envoy.
+Formato binario de instrucciones diseñado para ejecutarse en navegadores web. Istio lo usa para ampliar las funciones del proxy Envoy.
 
 **Uso en Istio**:
 - Añadir lógica personalizada como filtro de Envoy
@@ -1198,7 +1198,7 @@ Formato de instrucciones binario diseñado para ejecutarse en navegadores web. E
 3. **Enrutamiento avanzado**: lógica de enrutamiento personalizada
 4. **Recolección de métricas**: telemetría especializada
 
-Las URLs de registro, los digests, las credenciales y los campos pluginConfig que aparecen a continuación son valores de ejemplo para tu propio plugin compilado; Istio no proporciona esas imágenes de ejemplo ni interpreta las opciones específicas del plugin. Un módulo file:// debe existir dentro del contenedor del proxy.
+Las URL de registro, los resúmenes criptográficos, las credenciales y los campos pluginConfig que aparecen a continuación son ejemplos para un plugin compilado por usted. Istio no proporciona esas imágenes ni interpreta las opciones específicas del plugin. El módulo indicado mediante file:// debe existir dentro del contenedor del proxy.
 
 **Ejemplo de plugin WASM**:
 ```yaml
@@ -1282,14 +1282,14 @@ impl HttpContext for CustomFilter {
 
 **Requisitos previos de compilación y despliegue**:
 
-Usa un crate de Rust `cdylib` con una dependencia `proxy-wasm` compatible y una versión de dependencia fijada. El callback anterior sigue el [ejemplo oficial del SDK de Rust](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers). Instala el target `wasm32-unknown-unknown`, compila el módulo y empaqueta el `.wasm` resultante en una imagen OCI Wasm compatible antes de referenciarlo desde WasmPlugin. Un `docker build` genérico sin Dockerfile no realiza ese empaquetado.
+Use un crate de Rust de tipo `cdylib` con una dependencia `proxy-wasm` compatible y una versión fijada. La función callback anterior sigue el [ejemplo oficial del SDK de Rust](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers). Instale el target `wasm32-unknown-unknown`, compile el módulo y empaquete el `.wasm` resultante en una imagen OCI Wasm compatible antes de referenciarlo en WasmPlugin. Ejecutar `docker build` sin un Dockerfile no realiza ese empaquetado.
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-Mide el tiempo de arranque, la memoria y la sobrecarga por solicitud del plugin concreto. Wasm se ejecuta en un sandbox de runtime dentro del proceso del proxy; no es un proceso aparte ni una garantía incondicional de seguridad o rendimiento.
+Mida el tiempo de arranque, la memoria y la sobrecarga por solicitud del plugin concreto. Wasm se ejecuta en un entorno aislado dentro del proceso del proxy; no es un proceso independiente ni garantiza por sí solo la seguridad o el rendimiento.
 
 **Compatibilidad con Ambient Mode**:
 
@@ -1321,10 +1321,10 @@ istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@t
 ```
 
 **Consideraciones de seguridad**:
-1. **Aislamiento del sandbox**: sandbox de runtime dentro de Envoy; revisa la confianza en el plugin y su uso de recursos
+1. **Aislamiento**: entorno aislado dentro de Envoy; revise la confianza en el plugin y su consumo de recursos
 2. **Límites de recursos**: se pueden configurar límites de CPU y memoria
 3. **Verificación de integridad**: SHA256 comprueba el contenido, no autentica al publicador
-4. **Mínimo privilegio**: concede solo los permisos necesarios
+4. **Mínimo privilegio**: conceda solo los permisos necesarios
 
 **Ventajas**:
 - Alto rendimiento (a nivel de código nativo)
@@ -1350,7 +1350,7 @@ istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@t
 
 ### xDS (Discovery Service)
 
-Conjunto de APIs para la configuración dinámica de Envoy Proxy.
+Conjunto de API que permiten configurar dinámicamente el proxy Envoy.
 
 **Significado de "xDS"**:
 - `x`: variable que representa varios tipos
@@ -1383,17 +1383,17 @@ Istiod pushes LDS/CDS/EDS/RDS updates; local agent serves SDS certificates
 
 ### Zone
 
-Representa una Availability Zone de Kubernetes.
+Representa una zona de disponibilidad de Kubernetes.
 
-**Formato del label**:
+**Formato de la etiqueta**:
 ```yaml
 topology.kubernetes.io/zone: us-west-1a
 ```
 
 **Uso en Istio**:
-- Locality-aware Load Balancing
-- Zone Aware Routing
-- Enrutamiento con prioridad a la misma Zone
+- Balanceo de carga según la ubicación
+- Enrutamiento con reconocimiento de zona
+- Preferencia por endpoints de la misma zona
 
 **Términos relacionados**: [Locality-aware Load Balancing](#locality-aware-load-balancing)
 
@@ -1401,25 +1401,25 @@ topology.kubernetes.io/zone: us-west-1a
 
 ### ztunnel (Zero Trust Tunnel)
 
-Componente central de Ambient Mode: un proxy L4 ligero que se ejecuta a nivel de nodo.
+Componente central de Ambient Mode: proxy L4 ligero que se ejecuta en cada nodo.
 
 **Función**:
 - Se despliega como DaemonSet en cada nodo
-- Gestiona el tráfico L4 de todos los Pods
-- Proporciona funcionalidad de service mesh sin Sidecar
+- Gestiona el tráfico de capa 4 de los Pods incorporados a la malla
+- Ofrece funciones de malla de servicios sin sidecar
 - Se integra con el plugin CNI
 
 **Funciones que proporciona**:
-- **mTLS**: cifrado/descifrado automático
+- **mTLS**: cifrado y descifrado automáticos del tráfico
 - **Telemetría L4**: recolección de métricas
-- **Identity**: autenticación basada en Service Account
+- **Identidad**: autenticación basada en cuentas de servicio
 - **Balanceo de carga L4**: balanceo de carga básico
 
 **Características técnicas**:
 - Escrito en Rust (alto rendimiento)
-- Redirección de tráfico gestionada por Istio CNI
+- Istio CNI gestiona la redirección del tráfico
 - No requiere Init Container
-- Recursos de proxy L4 compartidos; dimensiónalos según la carga de trabajo medida del nodo
+- Los recursos del proxy L4 se comparten; dimensione su capacidad según la carga real del nodo
 
 **Ejemplo de despliegue**:
 ```bash
@@ -1428,7 +1428,7 @@ istioctl install --set profile=ambient
 kubectl rollout status daemonset/ztunnel -n istio-system
 ```
 
-Para una carga de trabajo existente con sidecar, elimina los labels de inyección/revisión y reinicia los Pods para quitar los sidecars antes de incorporarla a ambient; una carga de trabajo nueva sin sidecar no necesita reinicio.
+Para incorporar a Ambient Mode una carga de trabajo existente con sidecar, elimine las etiquetas de inyección o revisión y reinicie los Pods para retirar los sidecars. Una carga de trabajo nueva sin sidecar no necesita reiniciarse.
 
 **Activación por Namespace**:
 ```bash
@@ -1438,14 +1438,14 @@ kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 ```
 
 **Ventajas**:
-- El posible ahorro de memoria depende del nodo/carga de trabajo y de la capacidad del waypoint
+- El ahorro de memoria depende del nodo, de la carga de trabajo y de la capacidad del waypoint
 - No requiere reiniciar los Pods
 - Transparencia para la aplicación
-- Latencia inicial minimizada
+- Reducción de la latencia inicial
 
 **Limitaciones**:
 - Se requiere Waypoint Proxy para las funciones L7
-- Requiere una plataforma de Kubernetes sobre Linux compatible, un CNI principal y los requisitos previos de Istio CNI
+- Requiere una plataforma Linux y una versión de Kubernetes compatibles, un CNI principal y los requisitos previos de Istio CNI
 
 **Términos relacionados**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
 
@@ -1466,7 +1466,7 @@ kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 
 ---
 
-**Última actualización**: September 13, 2026
+**Última actualización**: 13 de septiembre de 2026
 
 - [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Install the Istio CNI node agent](https://istio.io/latest/docs/setup/additional-setup/cni/)

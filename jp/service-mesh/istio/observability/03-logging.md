@@ -1,11 +1,11 @@
-# Istioログ記録
+# Istioのログ記録
 
 > **対応バージョン**: Istio 1.31
-> **最終更新**: September 11, 2026
+> **最終更新**: 2026年9月11日
 
-> **検証範囲**: 演習設定は公式資料とオフライン検証器で確認し、クラスターはデプロイしていません。名前空間、ID、ストレージ、バックエンド、負荷の前提は各例で示し、対象環境で検証する必要があります。
+> **検証範囲**: 演習設定は公式資料とオフライン検証器で確認し、クラスターはデプロイしていません。名前空間、アイデンティティ、ストレージ、バックエンド、負荷の前提は各例で示し、対象環境で検証する必要があります。
 
-設定したアクセスログは観測要求/接続のメタデータを記録します。Envoy/istiod診断やアプリログとは別で、全メッシュ活動や要求/応答本文全体は取得しません。例はサイドカー用です。ambient L7ログにはwaypoint接続が必要で、ztunnelには別L4ログがあります。
+アクセスログは設定に応じて、観測したリクエストや接続のメタデータを記録します。Envoy/istiod診断やアプリログとは別で、全メッシュ活動や要求/応答本文全体は取得しません。例はサイドカー用です。ambient L7ログにはwaypointへのアタッチが必要で、ztunnelには別L4ログがあります。
 
 ## 目次
 
@@ -24,7 +24,7 @@
 
 ### Istioログのレイヤー
 
-Envoy → 構造化標準出力 → Alloy Kubernetesログ収集 → Loki → Grafana。代替としてEnvoy OTLPアクセスログproviderがOpenTelemetry Collectorへ送ります。同じログは重複を避け1経路を選びます。Istiodが選択Telemetry/provider設定を配布します。
+Envoy → 構造化標準出力 → AlloyによるKubernetesログ収集 → Loki → Grafana。代替経路として、Envoy OTLPアクセスログproviderからOpenTelemetry Collectorへ送信できます。同じログの重複を避けるため、配送経路は1つ選んでください。Istiodは選択したTelemetry/provider設定を配布します。
 
 ### ログの種類
 
@@ -93,7 +93,7 @@ spec:
             peer_uri_san: '%DOWNSTREAM_PEER_URI_SAN%'
 ```
 
-provider形式がJSONフィールドを作り、Telemetryフィルターが記録イベントを選びます。ログの`duration`はミリ秒、CELの`request.duration`は期間値です。`trace_id`はトレースが提供する実アクティブID、`request_id`は別の要求相関値です。クエリ文字列は省略します。追加ヘッダーは記録前に確認します。
+provider形式がJSONフィールドを作り、Telemetryフィルターが記録イベントを選びます。ログの`duration`はミリ秒、CELの`request.duration`は期間値です。`trace_id`はトレーシング機能から提供される実際のトレースIDで、`request_id`は別のリクエスト相関値です。クエリ文字列は省略します。追加ヘッダーは記録前に確認します。
 
 ログ更新はプロキシ設定として配信され、全istiod/ワークロード再起動は通常の有効化手順ではありません。実効リスナーとテスト要求を確認します。後述のbootstrapログレベル変更には選択プロキシのロールアウトが必要です。
 
@@ -606,7 +606,7 @@ spec:
 
 ## Alloy + Loki統合 {#alloy--loki-integration}
 
-Promtailは**March 2, 2026**にサポート終了しました。新デプロイはAlloyなど対応クライアントを使います。例は旧PromtailファイルtailをAlloy Kubernetes APIログ収集へ置換し、Dockerパス、特権コンテナ、ノードFSマウントは不要です。
+Promtailは**2026年3月2日**にサポートを終了しました。新デプロイはAlloyなど対応クライアントを使います。例は旧PromtailファイルtailをAlloy Kubernetes APIログ収集へ置換し、Dockerパス、特権コンテナ、ノードFSマウントは不要です。
 
 ### 1. Lokiのインストール（単一バイナリ）
 

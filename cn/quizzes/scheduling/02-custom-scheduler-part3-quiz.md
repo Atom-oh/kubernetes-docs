@@ -279,6 +279,7 @@ profiles:
 - C. 排除 Pod 无法运行的节点：这是“Filter”扩展点的作用。
 - D. 为节点分配评分：这是“Score”扩展点的作用。
 </details>
+
 ### 3. Kubernetes 中 Gang 调度的主要目的是什么？
 
 A. 仅将 Pod 放置到特定节点
@@ -418,6 +419,7 @@ extenders:
 
 请使用 [Part2](../../scheduling/02-custom-scheduler-part2.md) 中完整且有界的处理程序。该处理程序不设置 `bindVerb`，以保留 `DefaultBinder`。此处未提供额外 HTTP 服务器或伪造成功的 bind 端点。
 </details>
+
 ### 5. Kubernetes 调度框架中“PostFilter”扩展点的作用是什么？
 
 A. 过滤后为节点分配评分
@@ -617,6 +619,7 @@ func WeightedGPUScore(packing int64, utilization float64) (int64, error) {
 - C. 为资源使用率较高的节点提供更高评分：这是 NodeResourcesFit 的 MostAllocated 策略。
 - D. 设置节点资源限制：这不是调度器插件的作用；节点资源限制是节点自身的属性。
 </details>
+
 ### 7. Kubernetes 调度器中“PreBind”扩展点的作用是什么？
 
 A. 将 Pod 绑定到节点
@@ -825,6 +828,7 @@ spec:
 - B. 设置节点资源限制：这是节点配置或 kubelet 的作用。
 - D. 保持节点资源使用均衡：这是“NodeResourcesBalancedAllocation”插件的作用。
 </details>
+
 ### 9. Kubernetes 调度器中“InterPodAffinity”插件的主要目的是什么？
 
 A. 处理 Pod 与节点之间的亲和性规则

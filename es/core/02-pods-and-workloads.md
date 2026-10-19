@@ -1,13 +1,13 @@
 # Pods y cargas de trabajo de Kubernetes
 
 > **Versiones compatibles**: Kubernetes 1.35, 1.36, 1.37
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Este documento proporciona una explicación detallada de los Pods, la unidad básica de ejecución en Kubernetes, y los diversos recursos de carga de trabajo que los gestionan. Partiendo del concepto de Pods, abordaremos las características y los casos de uso de diversos recursos de carga de trabajo, incluidos Deployments, StatefulSets, DaemonSets y más.
+Este documento explica los Pods, la unidad básica de ejecución de Kubernetes, y los recursos que los administran. Describe sus conceptos, características y casos de uso, incluidos Deployment, StatefulSet y DaemonSet.
 
 ## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
+Para seguir los ejemplos, necesita las siguientes herramientas y un entorno de Kubernetes:
 
 ### Herramientas necesarias
 - kubectl con una diferencia máxima de una versión menor respecto al servidor de la API
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -66,19 +66,19 @@ kubectl -n workloads-demo get deployments,pods
 - [DaemonSet](#daemonset)
 - [Jobs y CronJobs](#jobs-and-cronjobs)
 
-## Conceptos de Pod
+## Conceptos de Pod {#pod-concepts}
 
-> **Concepto clave**: Un Pod es la unidad de computación desplegable más pequeña de Kubernetes y consta de uno o más grupos de contenedores que comparten almacenamiento y red.
+> **Concepto clave**: Un Pod es la unidad de ejecución más pequeña que puede desplegarse en Kubernetes. Agrupa contenedores que comparten almacenamiento y red.
 
-Un Pod es la unidad de computación desplegable más pequeña de Kubernetes. Un Pod es un grupo de uno o más contenedores que comparten almacenamiento y red y se programan juntos.
+Un Pod es la unidad de ejecución más pequeña que puede desplegarse en Kubernetes. Agrupa uno o más contenedores que comparten almacenamiento y red y se planifican juntos.
 
 ### Características de Pod
 
-1. **Contexto compartido**: Los contenedores comparten la red del Pod y normalmente IPC; compartir el espacio de nombres de procesos requiere `shareProcessNamespace: true`. Los sistemas de archivos raíz de los contenedores siguen siendo independientes.
-2. **Mismo nodo**: Todos los contenedores de un Pod siempre se ejecutan en el mismo nodo.
+1. **Contexto compartido**: Los contenedores comparten la red del Pod y, normalmente, el espacio de IPC; para compartir el espacio de nombres de procesos se necesita `shareProcessNamespace: true`. Cada contenedor conserva su propio sistema de archivos raíz.
+2. **Mismo nodo**: Todos los contenedores de un Pod se ejecutan en el mismo nodo.
 3. **Dirección IP única**: Cada Pod tiene una dirección IP única dentro del clúster.
-4. **Efímero**: Los Pods son intrínsecamente efímeros y se pueden reemplazar por Pods nuevos en caso de error.
-5. **Unidad atómica**: Los Pods son la unidad atómica de despliegue, programación y replicación.
+4. **Carácter efímero**: Los Pods son efímeros y pueden sustituirse por otros nuevos si fallan.
+5. **Unidad atómica**: El Pod es la unidad de despliegue, planificación y replicación.
 
 ### Estructura de Pod
 
@@ -89,7 +89,7 @@ Un Pod consta de los siguientes componentes:
 3. **Red**: Dirección IP y puertos asignados al Pod
 4. **Especificación del contenedor**: Imagen de contenedor, variables de entorno, requisitos de recursos, etc.
 
-![Un límite de Pod de Kubernetes que muestra un contenedor de aplicación, un contenedor sidecar y un contenedor init que comparten una dirección IP de Pod y un espacio de nombres de red, junto con cuatro tipos de volúmenes de almacenamiento montables (emptyDir, configMap, secret, persistentVolumeClaim).](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
+![Estructura de un Pod de Kubernetes: los contenedores de aplicación, sidecar e inicialización comparten una IP y un espacio de nombres de red. Se muestran cuatro tipos de volúmenes que pueden montarse: emptyDir, configMap, secret y persistentVolumeClaim.](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-02-pods-and-workloads-0.html)
 
@@ -105,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     volumeMounts:
@@ -130,7 +130,7 @@ spec:
 
 ### Ejemplo práctico: Pod de aplicación web
 
-El siguiente es un ejemplo de un Pod que contiene una aplicación web y un contenedor sidecar:
+El siguiente Pod contiene una aplicación web y un contenedor sidecar:
 
 ```yaml
 apiVersion: v1
@@ -143,7 +143,7 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -173,19 +173,19 @@ spec:
     emptyDir: {}
 ```
 
-Este ejemplo demuestra el siguiente escenario real:
-- Ejecutar el servidor web Nginx como contenedor principal
-- Ejecutar el recolector de logs Fluentd como contenedor sidecar
-- Compartir el volumen de logs entre dos contenedores
-- Establecer solicitudes y límites de recursos para cada contenedor
+El ejemplo muestra cómo:
+- Ejecutar Nginx como contenedor principal
+- Ejecutar Fluentd como sidecar para recopilar logs
+- Compartir un volumen de logs entre ambos contenedores
+- Establecer las solicitudes y los límites de recursos de cada contenedor
 
-Esta configuración es adecuada para ejecutar contenedores estrechamente conectados mientras se separan funcionalidades como el registro, la monitorización y la creación de proxies en arquitecturas de microservicios.
+Esta configuración permite ejecutar juntos contenedores estrechamente relacionados y separar funciones como logging, monitorización o proxy en una arquitectura de microservicios.
 
-Estos manifiestos de registro ilustran la conexión de volúmenes. Fluentd también necesita una configuración explícita de origen y salida tail; montar un directorio por sí solo no recopila sus logs. Las imágenes y la configuración de la aplicación son ilustrativas, no recomendaciones de versiones de producción. Los sidecars nativos utilizan `initContainers` con `restartPolicy: Always` (estable desde la v1.33); los Pods multi-contenedor ordinarios no garantizan el orden de inicio o apagado.
+Estos manifiestos muestran cómo conectar los volúmenes de logs. Fluentd también necesita una fuente de entrada tail y una configuración de salida explícitas; montar un directorio no basta para recopilar sus logs. Las imágenes y la configuración sirven de ejemplo y no son recomendaciones de versiones para producción. Los sidecars nativos se definen en `initContainers` con `restartPolicy: Always`, una función estable desde la versión 1.33. Un Pod convencional con varios contenedores no garantiza su orden de arranque o apagado.
 
 ### Definición de Pod
 
-Los Pods se definen mediante archivos de manifiesto en formato YAML o JSON. Este es un ejemplo básico de definición de Pod:
+Los Pods se definen mediante manifiestos YAML o JSON. El siguiente ejemplo muestra una definición básica:
 
 ```yaml
 apiVersion: v1
@@ -197,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     resources:
@@ -212,15 +212,15 @@ spec:
 ### Pods de un solo contenedor frente a Pods multi-contenedor
 
 **Pods de un solo contenedor**:
-- Caso de uso más común
-- Contiene solo un contenedor de aplicación
-- Estructura simple e intuitiva
+- Son el caso de uso más común
+- Contienen un único contenedor de aplicación
+- Tienen una estructura sencilla
 
-**Pods multi-contenedor**:
-- Contiene varios contenedores estrechamente acoplados
-- Posibilidad de comunicación local entre contenedores (localhost)
-- Uso compartido de datos mediante volúmenes compartidos
-- Se escalan y colocan juntos
+**Pods con varios contenedores**:
+- Agrupan contenedores estrechamente relacionados
+- Permiten la comunicación local entre contenedores mediante localhost
+- Comparten datos mediante volúmenes
+- Sus contenedores se escalan y se ubican juntos
 
 ### Patrones de Pod multi-contenedor
 
@@ -235,7 +235,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
@@ -314,10 +314,10 @@ spec:
 
 Los contenedores dentro de un Pod tienen las siguientes características de red:
 
-1. **Misma dirección IP**: Todos los contenedores dentro de un Pod comparten la misma dirección IP.
-2. **Uso compartido de puertos**: Los contenedores dentro de un Pod comparten el espacio de puertos, por lo que normalmente no pueden asociar la misma combinación de IP/protocolo/puerto.
-3. **Comunicación mediante localhost**: Los contenedores dentro de un Pod pueden comunicarse entre sí a través de localhost.
-4. **Comunicación entre Pods**: Cada Pod tiene una dirección IP única y puede comunicarse directamente con otros Pods.
+1. **Misma dirección IP**: Todos los contenedores del Pod comparten su dirección IP.
+2. **Puertos compartidos**: Comparten el espacio de puertos; normalmente no pueden escuchar en la misma combinación de IP, protocolo y puerto.
+3. **Comunicación local**: Pueden comunicarse entre sí mediante localhost.
+4. **Comunicación entre Pods**: Cada Pod tiene una IP única y puede comunicarse directamente con otros Pods.
 
 ### Almacenamiento de Pod
 
@@ -352,9 +352,9 @@ spec:
       name: app-config
 ```
 
-## Ciclo de vida de Pod
+## Ciclo de vida de Pod {#pod-lifecycle}
 
-Los Pods pasan por diversas etapas del ciclo de vida desde su creación hasta su terminación. Comprender este ciclo de vida es importante para garantizar la estabilidad y disponibilidad de la aplicación.
+Los Pods atraviesan distintas etapas desde su creación hasta su terminación. Conocerlas ayuda a mantener la estabilidad y disponibilidad de la aplicación.
 
 ### Fases de Pod
 
@@ -370,26 +370,26 @@ Los Pods pasan por las siguientes fases:
 
 Cada contenedor dentro de un Pod puede tener los siguientes estados:
 
-1. **Waiting**: Estado previo a la ejecución del contenedor (descargando la imagen, esperando dependencias, etc.)
-2. **Running**: El proceso se está ejecutando; esto por sí solo no establece el estado de salud ni la preparación de la aplicación
-3. **Terminated**: El contenedor ha completado la ejecución o ha fallado por algún motivo
+1. **Waiting**: El contenedor todavía no se ejecuta; por ejemplo, está descargando la imagen o esperando dependencias
+2. **Running**: El proceso se ejecuta, pero eso no demuestra por sí solo que la aplicación esté sana o preparada para atender solicitudes
+3. **Terminated**: El contenedor ha finalizado su ejecución o ha fallado
 
 ### Condiciones de Pod
 
 Los Pods indican su estado de forma más específica mediante las siguientes condiciones:
 
-1. **PodScheduled**: Si el Pod se ha programado en un nodo
-2. **ContainersReady**: Si todos los contenedores del Pod están preparados
-3. **Initialized**: Los contenedores init regulares se han completado y los contenedores init reiniciables (sidecars nativos) se han iniciado
-4. **Ready**: Si el Pod puede gestionar solicitudes y puede añadirse al grupo de balanceo de carga de los servicios
+1. **PodScheduled**: Indica si el Pod se ha asignado a un nodo
+2. **ContainersReady**: Indica si todos sus contenedores están preparados
+3. **Initialized**: Los contenedores de inicialización convencionales han terminado y los reiniciables, usados como sidecars nativos, han arrancado
+4. **Ready**: Indica si el Pod puede atender solicitudes e incorporarse al conjunto de destinos de los servicios
 
-### Probes de contenedor
+### Sondas de los contenedores
 
-Kubernetes proporciona las siguientes probes para comprobar el estado de los contenedores:
+Kubernetes ofrece las siguientes sondas para comprobar el estado de los contenedores:
 
-1. **livenessProbe**: Comprueba si el contenedor está activo; reinicia el contenedor en caso de error
-2. **readinessProbe**: Comprueba si el contenedor está preparado para gestionar solicitudes; se excluye del tráfico del servicio en caso de error
-3. **startupProbe**: Comprueba si se ha iniciado la aplicación dentro del contenedor; deshabilita otras probes hasta que se complete correctamente
+1. **livenessProbe**: Comprueba si el contenedor está vivo y provoca su reinicio si falla
+2. **readinessProbe**: Comprueba si está preparado para atender solicitudes y lo excluye del tráfico del servicio si falla
+3. **startupProbe**: Comprueba si la aplicación ha arrancado y mantiene deshabilitadas las otras sondas hasta que tenga éxito
 
 ```yaml
 apiVersion: v1
@@ -428,23 +428,23 @@ spec:
 
 Cuando se termina un Pod, ocurre el siguiente proceso:
 
-1. **Solicitud de eliminación al servidor de la API**: El usuario o controlador solicita la eliminación del Pod
-2. **Inicio del período de terminación**: Se establece el período de terminación predeterminado (30 segundos)
-3. **Actualización de la API**: El servidor de la API actualiza la marca de tiempo de eliminación del Pod
-4. **Actualización de endpoint**: Los EndpointSlices marcan el endpoint como terminándose y no preparado; la propagación ocurre simultáneamente con el apagado del nodo
-5. **Señal de detención**: kubelet ejecuta cualquier hook preStop dentro del período de gracia y, después, solicita al runtime que envíe la señal de detención (normalmente SIGTERM, salvo que la imagen o el contenedor la anulen)
-6. **Espera de apagado ordenado**: Se proporciona tiempo para que las aplicaciones se apaguen ordenadamente
-7. **Señal SIGKILL**: Si los contenedores no terminan tras el período de terminación, se envía la señal SIGKILL
+1. **Solicitud de eliminación**: Un usuario o controlador solicita al servidor de API que elimine el Pod
+2. **Inicio del período de terminación**: Se establece el período de terminación, de 30 segundos por defecto
+3. **Actualización de la API**: El servidor de API registra la marca de tiempo de eliminación del Pod
+4. **Actualización del endpoint**: Los EndpointSlices lo marcan como en terminación y no preparado; el cambio se propaga al mismo tiempo que el nodo realiza el apagado
+5. **Señal de detención**: kubelet ejecuta el hook preStop, si existe, dentro del período de gracia y solicita al runtime que envíe la señal de detención, normalmente SIGTERM, salvo que la imagen o el contenedor la hayan sustituido
+6. **Espera del apagado ordenado**: La aplicación dispone de tiempo para terminar de forma ordenada
+7. **Señal SIGKILL**: Si los contenedores no terminan dentro del período permitido, se envía SIGKILL
 8. **Limpieza de recursos**: kubelet limpia los recursos del Pod
 
 ### Contenedores init
 
 Los contenedores init son contenedores especiales que se ejecutan antes de que se inicien los contenedores de aplicación de un Pod:
 
-1. **Ejecución secuencial**: Los contenedores init se ejecutan uno a la vez en el orden en que se definen
-2. **Requisito previo**: Cada contenedor init comienza solo después de que el contenedor anterior haya finalizado correctamente
-3. **Reinicio en caso de error**: Si un contenedor init falla, se reinicia según la política de reinicio del Pod
-4. **Propósito**: Configuración antes de que se inicie el contenedor de aplicación, verificación de dependencias, configuración de permisos, etc.
+1. **Ejecución secuencial**: Los contenedores de inicialización se ejecutan uno a uno, en el orden definido
+2. **Dependencia previa**: Cada uno empieza cuando el anterior termina correctamente
+3. **Reinicio tras un fallo**: Si falla, se reinicia según la política de reinicio del Pod
+4. **Finalidad**: Preparar la aplicación, comprobar dependencias o configurar permisos antes de su arranque
 
 ```yaml
 apiVersion: v1
@@ -473,25 +473,25 @@ Las interrupciones de Pod se pueden dividir en voluntarias o involuntarias:
    - Actualizaciones de Deployment
    - Eliminación de Pod
 
-2. **Interrupciones involuntarias**: Interrupciones debidas a fallos de hardware, kernel panics, particiones de red, etc.
+2. **Interrupciones involuntarias**: Las causadas por fallos de hardware, fallos críticos del kernel, particiones de red u otros problemas similares
 
-PodDisruptionBudget limita las expulsiones voluntarias mediante la API Eviction (por ejemplo, drain). La eliminación directa de Pods y las actualizaciones continuas de Deployment la omiten; configura por separado la disponibilidad del rollout. No puede evitar fallos involuntarios.
+PodDisruptionBudget limita los desalojos voluntarios realizados mediante la API Eviction, como los de un drenaje de nodos. La eliminación directa de Pods y las actualizaciones progresivas de Deployment no pasan por esa protección: configure por separado la disponibilidad durante el despliegue. El presupuesto no evita los fallos involuntarios.
 
-## Patrones de diseño de Pod
+## Patrones de diseño de Pod {#pod-design-patterns}
 
-Hay varios patrones y prácticas recomendadas que se deben considerar al diseñar Pods. Comprender y aplicar estos patrones puede mejorar la estabilidad, escalabilidad y facilidad de mantenimiento de la aplicación.
+Al diseñar Pods, estos patrones y buenas prácticas pueden mejorar la estabilidad, la escalabilidad y el mantenimiento de la aplicación.
 
 ### Principio de responsabilidad única
 
 Los Pods deben seguir el principio de responsabilidad única:
 
-1. **Una función principal**: Cada Pod debe ser responsable de una función o proceso principal
-2. **Escalado independiente**: Diseña de modo que cada función pueda escalar de forma independiente
-3. **Ciclo de vida independiente**: Diseña de modo que cada función pueda tener su propio ciclo de vida
+1. **Una función principal**: Cada Pod debe tener una función o proceso principal
+2. **Escalado independiente**: Diseñe cada función para que pueda escalar de forma independiente
+3. **Ciclo de vida propio**: Diseñe cada función para que pueda tener su propio ciclo de vida
 
 ### Plantillas de Pod
 
-Las plantillas de Pod son especificaciones utilizadas para crear Pods en recursos de carga de trabajo (Deployments, StatefulSets, etc.):
+Las plantillas de Pod describen los Pods que crearán recursos como Deployment o StatefulSet:
 
 ```yaml
 apiVersion: apps/v1
@@ -510,7 +510,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
   # Pod template ends
@@ -520,8 +520,8 @@ spec:
 
 La afinidad y antiafinidad de Pod son reglas que controlan en qué nodos se programan los Pods:
 
-1. **Afinidad de Pod**: Programa en el mismo nodo o dominio de topología que Pods específicos
-2. **Antiafinidad de Pod**: Programa en un nodo o dominio de topología distinto de Pods específicos
+1. **Afinidad de Pod**: Ubica el Pod en el mismo nodo o dominio de topología que determinados Pods
+2. **Antiafinidad de Pod**: Lo ubica en un nodo o dominio de topología distinto
 
 ```yaml
 apiVersion: v1
@@ -552,12 +552,12 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ### Afinidad de nodo
 
-La afinidad de nodo es una regla que restringe que los Pods se programen en nodos específicos:
+La afinidad de nodo restringe los nodos en los que puede planificarse un Pod:
 
 ```yaml
 apiVersion: v1
@@ -579,9 +579,9 @@ spec:
     image: gpu-app:1.0
 ```
 
-### Taints y tolerations
+### Taints y tolerancias
 
-Los taints se aplican a los nodos para evitar que se programen determinados Pods, y las tolerations se aplican a los Pods para permitir la programación en nodos con taints:
+Los taints de un nodo impiden planificar en él determinados Pods. Las tolerancias de un Pod permiten que se planifique en nodos que tengan esos taints:
 
 ```bash
 # Apply taint to node
@@ -607,7 +607,7 @@ spec:
 
 ### Solicitudes y límites de recursos
 
-Establecer solicitudes y límites de recursos para los contenedores en Pods es importante para el uso eficiente de los recursos del clúster y para garantizar la estabilidad:
+Configurar las solicitudes y los límites de recursos de los contenedores ayuda a utilizar los recursos del clúster de forma eficiente y mantener su estabilidad:
 
 ```yaml
 apiVersion: v1
@@ -651,9 +651,9 @@ spec:
         - ALL
 ```
 
-### Prioridad y preemption de Pod
+### Prioridad y preempción de Pods
 
-La prioridad y preemption de Pod determinan qué Pods se programan y cuáles se expropian cuando los recursos del clúster son insuficientes:
+Cuando los recursos del clúster no bastan, la prioridad y la preempción determinan qué Pods se planifican y cuáles se desalojan para ceder recursos:
 
 ```yaml
 # Priority class definition
@@ -677,7 +677,7 @@ spec:
     image: myapp:1.0
 ```
 
-## Resumen de recursos de carga de trabajo
+## Resumen de recursos de carga de trabajo {#workload-resources-overview}
 
 Kubernetes proporciona diversos recursos de carga de trabajo para gestionar Pods. Cada recurso de carga de trabajo está diseñado para casos de uso y requisitos específicos.
 
@@ -704,7 +704,7 @@ Criterios para seleccionar el recurso de carga de trabajo adecuado:
 
 ## ReplicaSet
 
-Un ReplicaSet garantiza que siempre se esté ejecutando un número especificado de réplicas de Pod. Si los Pods fallan o se eliminan, el ReplicaSet crea automáticamente Pods de reemplazo.
+Un ReplicaSet mantiene el número especificado de réplicas de un Pod. Si un Pod falla o se elimina, el controlador crea un reemplazo.
 
 ### Características principales de ReplicaSet
 
@@ -760,23 +760,23 @@ ReplicaSet es el sucesor de Replication Controller y proporciona selectores de e
 
 ### Casos de uso de ReplicaSet
 
-Los ReplicaSets generalmente se utilizan de forma indirecta a través de Deployments, en lugar de directamente. Sin embargo, se pueden utilizar directamente en los siguientes casos:
+Normalmente se administran ReplicaSets mediante Deployments. También pueden usarse directamente en los siguientes casos:
 
-1. **Replicación simple**: Cuando simplemente se mantienen réplicas de Pod
-2. **Actualizaciones personalizadas**: Cuando se necesitan mecanismos de actualización personalizados
-3. **Compatibilidad con sistemas heredados**: Compatibilidad con aplicaciones heredadas
+1. **Replicación sencilla**: Mantener réplicas de Pods
+2. **Actualizaciones personalizadas**: Implementar mecanismos de actualización propios
+3. **Compatibilidad con sistemas heredados**: Administrar aplicaciones heredadas
 
 ## Deployment
 
-Un Deployment gestiona ReplicaSets para proporcionar actualizaciones declarativas de los Pods. Los Deployments gestionan actualizaciones continuas, reversiones, escalado y más para las aplicaciones.
+Un Deployment administra ReplicaSets para actualizar Pods de forma declarativa. Permite realizar actualizaciones progresivas, reversiones y cambios en el número de réplicas.
 
 ### Características principales de Deployment
 
-1. **Actualizaciones declarativas**: Declara el estado deseado y Deployment cambia el estado actual al estado deseado
-2. **Actualizaciones continuas**: Actualiza aplicaciones sin tiempo de inactividad
-3. **Reversión**: Reversión sencilla a versiones anteriores
+1. **Actualizaciones declarativas**: Se declara el estado deseado y el Deployment ajusta el estado actual
+2. **Actualizaciones progresivas**: Permite actualizar la aplicación sin interrupción del servicio
+3. **Reversión**: Facilita volver a versiones anteriores
 4. **Escalado**: Ajusta el número de réplicas de la aplicación
-5. **Historial de despliegue**: Mantiene registros de versiones de despliegues anteriores
+5. **Historial de despliegues**: Conserva los registros de las versiones desplegadas
 
 ### Definición de Deployment
 
@@ -804,7 +804,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -832,9 +832,9 @@ spec:
 
 Los Deployments proporcionan dos estrategias de actualización:
 
-1. **RollingUpdate**: Actualiza gradualmente los Pods para el despliegue sin tiempo de inactividad (predeterminado)
-   - **maxSurge**: Número máximo de Pods que se pueden crear por encima del recuento de Pods deseado
-   - **maxUnavailable**: Número máximo de Pods no disponibles durante la actualización
+1. **RollingUpdate**: Actualiza los Pods gradualmente para desplegar sin interrumpir el servicio; es la estrategia predeterminada
+   - **maxSurge**: Número máximo de Pods adicionales por encima del número deseado
+   - **maxUnavailable**: Número máximo de Pods que pueden no estar disponibles durante la actualización
 
 2. **Recreate**: Elimina todos los Pods existentes antes de crear Pods nuevos (provoca tiempo de inactividad temporal)
 
@@ -870,14 +870,14 @@ kubectl apply -f deployment.yaml
 
 ### Pausar y reanudar Deployment
 
-Los rollouts de Deployment se pueden pausar y reanudar:
+Las actualizaciones de un Deployment pueden pausarse y reanudarse:
 
 ```bash
 # Pause rollout
 kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # Apply multiple changes
-kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.6-alpine
 kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # Resume rollout
@@ -886,7 +886,7 @@ kubectl -n workloads-demo rollout resume deployment/nginx-deployment
 
 ### Estado de Deployment
 
-Las condiciones de Deployment incluyen `Progressing`, `Available` y `ReplicaFailure`. Un rollout bloqueado puede informar `Progressing=False` con la razón `ProgressDeadlineExceeded`; Kubernetes no lo revierte automáticamente. “Completo” describe la finalización del rollout en lugar de un tipo de condición.
+Las condiciones de un Deployment incluyen `Progressing`, `Available` y `ReplicaFailure`. Una actualización bloqueada puede mostrar `Progressing=False` con el motivo `ProgressDeadlineExceeded`; Kubernetes no la revierte automáticamente. «Complete» describe que la actualización terminó, no un tipo de condición.
 
 ## StatefulSet
 
@@ -894,10 +894,10 @@ StatefulSet es un recurso de carga de trabajo para aplicaciones que requieren pe
 
 ### Características principales de StatefulSet
 
-1. **Identificadores de red estables y únicos**: Los nombres y hostnames de Pod se mantienen incluso después de reinicios
-2. **Almacenamiento estable y persistente**: Acceso al mismo almacenamiento incluso cuando los Pods se reprograman
+1. **Identidad de red estable y única**: Los nombres de los Pods y sus nombres de host se conservan después de reinicios
+2. **Almacenamiento estable y persistente**: Cada Pod mantiene el acceso al mismo almacenamiento al volver a planificarse
 3. **Despliegue y escalado secuenciales**: Los Pods se crean, actualizan y eliminan en orden
-4. **Actualizaciones continuas automáticas secuenciales**: Los Pods se actualizan en orden
+4. **Actualizaciones progresivas automáticas**: Los Pods se actualizan en orden
 
 ### Definición de StatefulSet
 
@@ -922,7 +922,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
           name: web
@@ -949,9 +949,9 @@ StatefulSet asigna identificadores únicos a los Pods en el siguiente formato:
 
 Por ejemplo, un StatefulSet `web` crea Pods como `web-0`, `web-1`, `web-2`.
 
-### Service sin cabecera de StatefulSet
+### Service headless de un StatefulSet
 
-Los StatefulSets se utilizan normalmente con un service sin cabecera (clusterIP: None). Esto crea registros DNS para cada Pod:
+Los StatefulSets suelen usarse con un Service headless, configurado con clusterIP: None. Este crea registros DNS para cada Pod:
 
 ```yaml
 apiVersion: v1
@@ -969,7 +969,7 @@ spec:
     app: nginx
 ```
 
-Con esto, cada Pod tiene un nombre DNS en el siguiente formato:
+Cada Pod obtiene así un nombre DNS con el siguiente formato:
 ```
 <Pod name>.<service name>.<namespace>.svc.cluster.local
 ```
@@ -978,7 +978,7 @@ Ejemplo: `web-0.nginx.default.svc.cluster.local`
 
 ### Almacenamiento de StatefulSet
 
-Los StatefulSets utilizan `volumeClaimTemplates` para crear automáticamente Persistent Volume Claims (PVCs) para cada Pod. Estos PVCs se mantienen incluso cuando los Pods se reprograman.
+Los StatefulSets usan `volumeClaimTemplates` para crear automáticamente solicitudes de volumen persistente, o PVC, para cada Pod. Estas se conservan cuando el Pod vuelve a planificarse.
 
 ### Estrategias de actualización de StatefulSet
 
@@ -1005,7 +1005,7 @@ Los StatefulSets son adecuados para las siguientes aplicaciones:
 
 ### Ejemplo de StatefulSet: instancia MySQL persistente
 
-Este ejemplo demuestra una identidad estable y un PVC para una instancia de MySQL. **No** configura replicación ni failover automático de la base de datos. Aumentar `replicas` crearía bases de datos independientes. Crea `mysql-secret` con una clave `password` en el mismo namespace y proporciona una StorageClass predeterminada (o establece explícitamente una clase adecuada). Utiliza un patch/digest probado de MySQL 8.4; los cambios de credenciales requieren rotación a nivel de base de datos, no simplemente actualizar el Secret.
+El ejemplo muestra una identidad estable y un PVC para una sola instancia de MySQL. **No** configura la replicación ni la conmutación automática por fallo de la base de datos. Aumentar `replicas` crearía bases de datos independientes. Cree `mysql-secret` con una clave `password` en el mismo namespace y proporcione una StorageClass predeterminada, o indique expresamente una adecuada. Use una versión de parche o una imagen fijada por digest de MySQL 8.4 que haya probado. Para cambiar las credenciales, debe rotarlas en la base de datos; actualizar el Secret no basta.
 
 ```yaml
 apiVersion: v1
@@ -1080,11 +1080,11 @@ spec:
           storage: 10Gi
 ```
 
-Para la replicación y promoción de líder, utiliza un operador de base de datos o un runbook de replicación probado por separado. StatefulSet por sí solo no proporciona ninguno de los dos. El [tutorial de replicación upstream](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/) utiliza explícitamente valores predeterminados de enseñanza inseguros y no es una configuración de producción.
+Para configurar la replicación y la promoción de un líder, use un operador de bases de datos o un procedimiento de replicación probado por separado. StatefulSet por sí solo no ofrece esas funciones. El [tutorial de replicación del proyecto](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/) usa expresamente valores predeterminados inseguros para enseñar el concepto y no constituye una configuración de producción.
 
 ## DaemonSet
 
-Un DaemonSet garantiza que una copia de un Pod se ejecute en todos los nodos (o nodos específicos). Cuando se añade un nodo al clúster, los Pods se añaden automáticamente y, cuando se elimina un nodo, los Pods también se eliminan.
+Un DaemonSet mantiene una copia de un Pod en todos los nodos, o en los nodos seleccionados. Cuando se incorpora un nodo al clúster, añade el Pod correspondiente; cuando se retira, elimina su Pod.
 
 ### Características principales de DaemonSet
 
@@ -1139,7 +1139,7 @@ spec:
           path: /var/log
 ```
 
-Para los runtimes CRI, configura el recolector para analizar los logs de CRI en `/var/log/pods` (normalmente enlazados desde `/var/log/containers`), no los logs JSON de Docker. El recolector necesita su propia configuración de origen/salida y RBAC.
+Para runtimes CRI, configure el recolector para analizar los logs de CRI bajo `/var/log/pods`, normalmente enlazados desde `/var/log/containers`, en lugar de los logs JSON de Docker. El recolector necesita su propia configuración de entrada y salida y los permisos de RBAC correspondientes.
 
 ### Estrategias de actualización de DaemonSet
 
@@ -1162,9 +1162,9 @@ spec:
         disk: ssd
 ```
 
-### Tolerations de DaemonSet para taints
+### Tolerancias de DaemonSet para taints
 
-Los DaemonSets pueden establecer tolerations para ejecutarse en nodos con taints:
+Los DaemonSets pueden configurar tolerancias para ejecutarse en nodos con taints:
 
 ```yaml
 spec:
@@ -1249,20 +1249,20 @@ spec:
           path: /
 ```
 
-## Jobs y CronJobs
+## Jobs y CronJobs {#jobs-and-cronjobs}
 
-Los Jobs y CronJobs son recursos de carga de trabajo para ejecutar tareas únicas o periódicas.
+Los Jobs y CronJobs ejecutan tareas que deben terminar o repetirse periódicamente.
 
 ### Job
 
-Un Job crea uno o más Pods y continúa la ejecución hasta que finalice correctamente un número especificado de Pods.
+Un Job crea uno o más Pods y continúa hasta que el número especificado de Pods haya terminado correctamente.
 
 #### Características principales de Job
 
-1. **Seguimiento de finalización**: Realiza seguimiento de Pods correctos; los límites de reintentos o plazos pueden hacer que un Job falle
-2. **Ejecución paralela**: Puede ejecutar varios Pods en paralelo
-3. **Reintento**: Reintento automático de Pods que fallan
-4. **Limpieza después de la finalización**: Limpieza opcional de Pods después de que se complete el job
+1. **Seguimiento de la finalización**: Cuenta los Pods que terminan correctamente; alcanzar los límites de reintentos o de tiempo puede hacer que el Job falle
+2. **Ejecución paralela**: Puede ejecutar varios Pods a la vez
+3. **Reintentos**: Reintenta automáticamente los Pods que fallan
+4. **Limpieza al terminar**: Permite limpiar los Pods después de completar el Job
 
 #### Definición de Job
 
@@ -1297,8 +1297,8 @@ spec:
 
 Los Jobs proporcionan dos modos de finalización:
 
-1. **NonIndexed**: Modo de job estándar en el que el job se completa cuando el número especificado de Pods finaliza correctamente
-2. **Indexed**: A cada Pod se le asigna un índice a partir de 0, realizando tareas para intervalos de índices específicos
+1. **NonIndexed**: Modo estándar; el Job termina cuando el número especificado de Pods completa su ejecución correctamente
+2. **Indexed**: Asigna a cada Pod un índice a partir de 0 para ejecutar tareas asociadas a índices concretos
 
 ```yaml
 apiVersion: batch/v1
@@ -1329,14 +1329,14 @@ Los Jobs se utilizan para los siguientes fines:
 
 ### CronJob
 
-Los CronJobs ejecutan Jobs periódicamente según una programación especificada. Funcionan de forma similar a los trabajos cron de Linux.
+Los CronJobs crean Jobs periódicamente según un calendario, de forma similar a cron en Linux.
 
 #### Características principales de CronJob
 
-1. **Ejecución programada**: Especifica la programación de ejecución mediante expresiones cron
-2. **Gestión de Job**: Crea Jobs según la programación
-3. **Política de concurrencia**: Define el comportamiento cuando el job anterior aún está en ejecución
-4. **Límite de historial**: Limita el historial de jobs completados
+1. **Ejecución programada**: Define el calendario mediante expresiones cron
+2. **Gestión de Jobs**: Crea Jobs según ese calendario
+3. **Política de concurrencia**: Define qué sucede si el Job anterior sigue ejecutándose
+4. **Límite del historial**: Restringe cuántos Jobs terminados se conservan
 
 #### Definición de CronJob
 
@@ -1460,12 +1460,12 @@ spec:
               claimName: backup-pvc
 ```
 
-La programación de CronJob es aproximada: los jobs deben tolerar la ejecución duplicada. `Forbid` se aplica solo a los Jobs del mismo CronJob. Los límites de historial eliminan objetos Job/Pod, no archivos de copia de seguridad. El ejemplo de copia de seguridad se ejecuta a las 02:00 UTC y requiere `backup-pvc`, `postgres-secret` y una base de datos accesible; `pg_dump` debe ser como mínimo tan reciente como la versión principal del servidor. Especifica `PGDATABASE` cuando sea diferente de `PGUSER`. Prueba las restauraciones reales por separado.
+La programación de un CronJob es aproximada: las tareas deben tolerar ejecuciones duplicadas. `Forbid` solo se aplica a los Jobs creados por el mismo CronJob. Los límites del historial eliminan objetos Job y Pod, no los archivos de las copias de seguridad. El ejemplo se ejecuta a las 02:00 UTC y necesita `backup-pvc`, `postgres-secret` y una base de datos accesible. La versión principal de `pg_dump` debe ser igual o posterior a la del servidor. Indique `PGDATABASE` si difiere de `PGUSER` y pruebe las restauraciones reales por separado.
 
 ## Conclusión
 
-Este documento abordó los Pods, el bloque de construcción básico de Kubernetes, y diversos recursos de carga de trabajo. Partiendo del concepto de Pods, exploramos las características y los casos de uso de diversos recursos de carga de trabajo, incluidos Deployments, StatefulSets, DaemonSets, Jobs y CronJobs. Cada uno de estos recursos tiene propósitos y características únicos, y utilizarlos adecuadamente permite un despliegue y una gestión eficientes de las aplicaciones.
+El capítulo describe los Pods y los recursos que los administran: Deployment, StatefulSet, DaemonSet, Job y CronJob. Cada recurso responde a necesidades distintas; elegir el adecuado permite desplegar y administrar las aplicaciones de forma eficiente.
 
 ## Cuestionario
 
-Para evaluar lo que aprendiste en este capítulo, prueba el [Cuestionario de Pods y cargas de trabajo](../quizzes/core/02-pods-and-workloads-quiz.md).
+Para comprobar lo aprendido, complete el [cuestionario de Pods y cargas de trabajo](../quizzes/core/02-pods-and-workloads-quiz.md).
