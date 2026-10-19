@@ -1,128 +1,128 @@
 # ArgoCD
 
-> **Base de revisión**: Argo CD 3.5.2, Argo Rollouts 1.10.0; los manifiestos de Argo CD se actualizaron al parche 3.5.5 después de revisar las notas de versión (no se volvieron a ejecutar los ejemplos)
-> **Última actualización**: 16 de octubre de 2026
+> **Base de revisión**: Argo CD 3.5.2, Argo Rollouts 1.10.0; los manifiestos de Argo CD se actualizaron para fijar la versión de parche 3.5.5 tras revisar las notas de la versión (no se volvieron a ejecutar los ejemplos)
+> **Última actualización**: 19 de octubre de 2026
 
-## Tabla de contenido
+## Tabla de contenidos
 - [¿Qué es ArgoCD?](#what-is-argocd)
-- [Beneficios clave](#key-benefits)
-- [Resumen de la arquitectura](#architecture-overview)
-- [Conceptos principales](#core-concepts)
-- [Navegación de las guías](#sub-guide-navigation)
+- [Ventajas principales](#key-benefits)
+- [Descripción general de la arquitectura](#architecture-overview)
+- [Conceptos básicos](#core-concepts)
+- [Navegación por las guías](#sub-guide-navigation)
 - [Inicio rápido](#quick-start)
 - [Compatibilidad de versiones](#version-compatibility)
 
-## ¿Qué es ArgoCD? {#what-is-argocd}
+## ¿Qué es ArgoCD?
 
 ArgoCD es una herramienta declarativa de entrega continua basada en GitOps para Kubernetes. Automatiza el despliegue de aplicaciones en clústeres de Kubernetes al sincronizar el estado deseado definido en repositorios Git con el estado real del clúster.
 
-Argo CD forma parte del proyecto Argo de la CNCF, que alcanzó el nivel Graduated. Su adopción, por sí sola, no demuestra que sea adecuado para un requisito concreto de seguridad o disponibilidad.
+Argo CD forma parte del proyecto Argo de la CNCF, que se graduó. La adopción por sí sola no demuestra que sea adecuada para un requisito de seguridad o disponibilidad particular.
 
-![Diagrama de arquitectura: el plano de control de ArgoCD obtiene manifiestos de Git, Helm y OCI mediante su Repo Server; el Application Controller reconcilia y sincroniza los manifiestos con los clústeres de Kubernetes administrados; los usuarios acceden al API Server desde la interfaz web, la CLI o la API gRPC.](../../.gitbook/assets/en-gitops-argocd-overview-0.png)
+![Diagrama de arquitectura que muestra el plano de control de ArgoCD obteniendo manifiestos de Git, Helm y fuentes OCI a través de su Repo Server, mientras el Application Controller reconcilia y sincroniza esos manifiestos en clústeres de Kubernetes administrados, y los usuarios acceden al API Server a través de la interfaz web, la CLI o la API gRPC.](../../.gitbook/assets/en-gitops-argocd-overview-0.png)
 
-[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
-## Beneficios clave {#key-benefits}
+## Ventajas principales
 
 ### Nativo de GitOps
 
-- **Git como única fuente de verdad**: todas las configuraciones de aplicaciones se almacenan en Git
+- **Git como única fuente de verdad**: todas las configuraciones de las aplicaciones se almacenan en Git
 - **Despliegues declarativos**: define el estado deseado y ArgoCD se encarga del resto
-- **Pista de auditoría**: historial completo de los cambios mediante commits de Git
-- **Reversión**: vuelve a desplegar revisiones de configuración conservadas; la recuperación de bases de datos y estado externo es independiente
+- **Registro de auditoría**: historial completo de todos los cambios mediante confirmaciones de Git
+- **Reversión**: vuelve a desplegar revisiones de configuración conservadas; la recuperación de bases de datos y estados externos es independiente
 
 ### Administración de varios clústeres
 
 - **Control centralizado**: administra cientos de clústeres desde una sola instancia de ArgoCD
 - **ApplicationSet**: despliegues en varios clústeres basados en plantillas
-- **Cluster Generator**: selección dinámica de clústeres según sus etiquetas
+- **Generador de clústeres**: selección dinámica de clústeres según sus etiquetas
 
-### Apto para entornos empresariales
+### Preparado para empresas
 
 - **RBAC**: control de acceso basado en roles con permisos detallados
-- **Integración de SSO**: OIDC directo o conectores Dex compatibles con otros proveedores de identidad
-- **Multitenencia**: aislamiento basado en proyectos
+- **Integración con SSO**: OIDC directo o conectores Dex compatibles con otros proveedores de identidad
+- **Multiinquilinato**: aislamiento basado en proyectos
 - **Alta disponibilidad**: despliegue de alta disponibilidad listo para producción
 
-### Experiencia para desarrolladores
+### Experiencia de desarrollo
 
-- **Interfaz web**: administración visual y supervisión de aplicaciones
-- **CLI**: interfaz de línea de comandos completa
+- **Interfaz web**: administración y supervisión visuales de aplicaciones
+- **CLI**: interfaz de línea de comandos con todas las funciones
 - **Notificaciones**: integraciones con Slack, Teams, correo electrónico y webhooks
 - **Supervisión del estado**: comprobaciones de estado integradas y personalizadas
 
-## Resumen de la arquitectura {#architecture-overview}
+## Descripción general de la arquitectura
 
 ### Componentes principales
 
-| Componente | Descripción | Réplicas (alta disponibilidad) |
+| Componente | Descripción | Réplicas (HA) |
 |-----------|-------------|---------------|
-| **API Server** | Gestiona las solicitudes a la API, la autenticación y RBAC | 2 o más |
-| **Repository Server** | Clona repositorios, genera manifiestos y guarda resultados en caché | 2 o más |
-| **Application Controller** | Supervisa las aplicaciones y reconcilia su estado | 2 o más (dividido en shards) |
-| **Redis** | Capa de caché para Repo Server y el controlador | 3 (alta disponibilidad) |
-| **Dex** | Agente de identidad opcional; no se consigue un escalado seguro agregando réplicas al almacenamiento en memoria incluido | 1 en el paquete estándar |
-| **Notification Controller** | Envía notificaciones sobre eventos | 1 o más |
-| **ApplicationSet Controller** | Administra los recursos ApplicationSet | 1 o más |
+| **API Server** | Gestiona todas las solicitudes a la API, la autenticación y RBAC | 2+ |
+| **Repository Server** | Clona repositorios, genera manifiestos y almacena en caché los resultados | 2+ |
+| **Application Controller** | Supervisa las aplicaciones y reconcilia el estado | 2+ (fragmentado) |
+| **Redis** | Capa de caché para el servidor de repositorios y el controlador | 3 (HA) |
+| **Dex** | Agente de identidad opcional; no es seguro escalar el almacenamiento en memoria incluido agregando réplicas | 1 en el paquete estándar |
+| **Notification Controller** | Envía notificaciones cuando se producen eventos | 1+ |
+| **ApplicationSet Controller** | Administra recursos ApplicationSet | 1+ |
 
 ### Flujo de datos
 
-![Diagrama de secuencia: un usuario crea una aplicación de ArgoCD mediante el API Server, que renderiza los manifiestos con Repo Server; después, el Application Controller compara repetidamente el estado deseado con el real en Kubernetes y aplica cambios cuando detecta desviaciones, dentro de un bucle de reconciliación.](../../.gitbook/assets/en-gitops-argocd-overview-1.png)
+![Diagrama de secuencia que muestra a un usuario creando una aplicación ArgoCD a través del API Server, que representa manifiestos mediante el Repo Server; después, el Application Controller compara repetidamente el estado deseado y el real con Kubernetes y aplica cambios cuando detecta divergencias, como parte de un ciclo de reconciliación.](../../.gitbook/assets/en-gitops-argocd-overview-1.png)
 
-[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
-## Conceptos principales {#core-concepts}
+## Conceptos básicos
 
 ### Application
 
 El CRD Application es el recurso principal de ArgoCD. Define:
-- **Origen**: de dónde obtener los manifiestos (repositorio Git, chart de Helm u OCI)
-- **Destino**: dónde desplegarlos (clúster y espacio de nombres)
+- **Origen**: de dónde obtener los manifiestos (repositorio Git, chart de Helm, OCI)
+- **Destino**: dónde realizar el despliegue (clúster y espacio de nombres)
 - **Política de sincronización**: cómo gestionar la sincronización
 
 ### Project
 
-Los proyectos agrupan recursos de forma lógica y controlan el acceso:
+Los proyectos proporcionan agrupación lógica y control de acceso:
 - Restringen los repositorios que se pueden usar
 - Limitan los clústeres y espacios de nombres de destino
-- Definen los recursos permitidos y denegados
+- Definen los recursos permitidos o denegados
 
 ### ApplicationSet
 
 ApplicationSet permite administrar varias aplicaciones desde una sola definición mediante generadores:
-- **List Generator**: lista estática de valores
-- **Cluster Generator**: selecciona clústeres registrados
-- **Git Generator**: examina directorios y archivos del repositorio
-- **Matrix/Merge**: combina varios generadores
+- **Generador de listas**: lista estática de valores
+- **Generador de clústeres**: selecciona clústeres registrados
+- **Generador de Git**: explora directorios y archivos de repositorios
+- **Matriz/fusión**: combina varios generadores
 
-### Sync
+### Sincronización
 
 La sincronización hace que el estado del clúster coincida con el estado deseado:
-- **Sincronización manual**: la inicia el usuario
-- **Sincronización automática**: se inicia cuando cambia Git
-- **Autorreparación**: corrige automáticamente las desviaciones
+- **Sincronización manual**: iniciada por el usuario
+- **Sincronización automática**: automática cuando hay cambios en Git
+- **Autorreparación**: corrige automáticamente las divergencias
 - **Poda**: elimina los recursos huérfanos
 
-## Navegación de las guías {#sub-guide-navigation}
+## Navegación por las guías
 
 | Guía | Descripción |
 |-------|-------------|
-| [Instalación](01-installation.md) | Métodos de instalación, configuración de CLI, alta disponibilidad e integración con EKS |
+| [Instalación](01-installation.md) | Métodos de instalación, configuración de la CLI, configuración de HA e integración con EKS |
 | [Aplicaciones](02-applications.md) | CRD Application, tipos de origen, comprobaciones de estado, hooks y App of Apps |
 | [Estrategias de sincronización](03-sync-strategies.md) | Políticas de sincronización, waves, ventanas, comparación de diferencias y configuración de reintentos |
 | [ApplicationSets](04-applicationsets.md) | Todos los generadores, plantillas, sincronización progresiva y patrones para varios clústeres |
-| [Gestión del tráfico](05-traffic-management.md) | Argo Rollouts, blue-green, canary, análisis e integración con ingress |
+| [Administración del tráfico](05-traffic-management.md) | Argo Rollouts, blue-green, canary, análisis e integración con ingress |
 | [Proyectos y RBAC](06-projects-rbac.md) | AppProject, políticas RBAC, multiinquilinato y tokens JWT |
-| [Seguridad](07-security.md) | Integración de SSO, gestión de secrets, TLS y registro de auditoría |
-| [Notificaciones](08-notifications.md) | Servicios de notificación, desencadenadores, plantillas y suscripciones |
-| [Prácticas recomendadas](09-best-practices.md) | Patrones de repositorio, ajuste de rendimiento, solución de problemas y consejos para EKS |
-| [Análisis detallado de Rollouts Experiments](10-rollouts-experiment.md) | CRD Experiment, validación de ReplicaSet efímero y veredictos de AnalysisRun |
+| [Seguridad](07-security.md) | Integración con SSO, administración de secretos, TLS y registro de auditoría |
+| [Notificaciones](08-notifications.md) | Servicios de notificación, activadores, plantillas y suscripciones |
+| [Prácticas recomendadas](09-best-practices.md) | Patrones de repositorio, optimización del rendimiento, resolución de problemas y consejos para EKS |
+| [Análisis detallado de los experimentos de Rollouts](10-rollouts-experiment.md) | CRD Experiment, validación de ReplicaSet efímeros y veredictos de AnalysisRun |
 
-## Inicio rápido {#quick-start}
+## Inicio rápido
 
 ### 1. Instalar ArgoCD
 
-Este ejemplo de evaluación es autoadministrado y no tiene alta disponibilidad. Prepara un clúster compatible, permisos para los CRD y RBAC, y un espacio de nombres dedicado y vacío. Para decidir sobre alta disponibilidad, autenticación y actualizaciones en producción, consulta la [guía de instalación](01-installation.md).
+Este es un ejemplo de evaluación autoadministrado, sin alta disponibilidad. Prepara un clúster compatible, permisos para CRD/RBAC y un espacio de nombres dedicado y vacío; consulta la [guía de instalación](01-installation.md) para tomar decisiones de producción sobre HA, autenticación y actualizaciones.
 
 ```bash
 # Create namespace
@@ -135,7 +135,7 @@ kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argop
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
 ```
 
-### 2. Acceder a la interfaz
+### 2. Acceder a la interfaz de usuario
 
 ```bash
 # Port forward to access locally
@@ -152,7 +152,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 
 ### 4. Iniciar sesión mediante la CLI
 
-Instala la CLI correspondiente al sistema operativo y la arquitectura, y verifica las sumas de comprobación de la versión como se indica en la [guía de instalación](01-installation.md). Mantén el reenvío de puertos en ejecución en otra terminal.
+Instala la CLI correspondiente al sistema operativo y la arquitectura, y verifica las sumas de comprobación de la versión como se indica en la [guía de instalación](01-installation.md). Mantén activo el reenvío de puertos en otra terminal.
 
 ```bash
 # Install CLI (macOS)
@@ -166,7 +166,7 @@ argocd account update-password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
-### 5. Desplegar la primera aplicación
+### 5. Desplegar tu primera aplicación
 
 ```bash
 # Create application via CLI
@@ -205,9 +205,9 @@ spec:
       - CreateNamespace=true
 ```
 
-## Compatibilidad de versiones {#version-compatibility}
+## Compatibilidad de versiones
 
-La base de revisión es **Argo CD 3.5.2 / chart de Helm 10.8.4**; los manifiestos de ejemplo se actualizaron al parche 3.5.5 después de revisar las notas de versión (no se volvieron a ejecutar). El chart 10.8.4 todavía despliega Argo CD v3.5.2; la versión 3.5.5 aparece por primera vez en el chart 10.10.3. La versión de la aplicación y la del chart de instalación son distintas. Argo CD publica parches para las tres líneas menores más recientes; las anteriores están fuera de soporte (EOL).
+La base de revisión es **Argo CD 3.5.2 / Helm chart 10.8.4**; los ejemplos de manifiestos se actualizaron para usar el parche 3.5.5 tras revisar las notas de la versión (no se volvieron a ejecutar). Chart 10.8.4 sigue desplegando Argo CD v3.5.2; la versión 3.5.5 aparece por primera vez en chart 10.10.3. Las versiones de la aplicación y del chart de instalación son distintas. Argo CD aplica parches a las tres líneas de versiones menores más recientes; las líneas anteriores están fuera de servicio (EOL).
 
 ### Combinaciones de Kubernetes probadas
 
@@ -217,28 +217,30 @@ La base de revisión es **Argo CD 3.5.2 / chart de Helm 10.8.4**; los manifiesto
 | 3.4 | 1.35, 1.34, 1.33, 1.32 |
 | 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-Esta es la matriz de pruebas upstream registrada en el repositorio 3.5.5. Difiere de la restricción mínima `kubeVersion` de un chart, de los períodos de soporte de Kubernetes/EKS y de la política de versiones administradas de Argo CD. No hay una correspondencia uno a uno entre una versión menor de EKS y una versión menor de Argo CD.
+Esta es la matriz de pruebas upstream registrada en el repositorio 3.5.5. Difiere de la restricción de versión mínima de Kubernetes de un chart, de los períodos de compatibilidad de Kubernetes/EKS y de la política de versiones de Argo CD administrado. No existe una correspondencia biunívoca entre las versiones menores de EKS y las de Argo CD.
 
 ### Versiones recientes
 
-- 3.5.0: publicada el **4 de agosto de 2026**. Consulta la guía de migración para ver los cambios, incluido el renderizador Helm 4 del servidor.
+- 3.5.0: publicada el **4 de agosto de 2026**. Consulta la guía de migración para conocer los cambios, incluido el renderizador Helm 4 del servidor.
 - 3.5.1: publicada el 12 de agosto de 2026.
 - 3.5.2: publicada el 27 de agosto de 2026.
-- 3.5.3: publicada el 14 de septiembre de 2026. Correcciones de errores en comprobaciones de estado, estado de reintentos de sincronización e interfaz de usuario.
-- 3.5.4: publicada el 6 de octubre de 2026. Es una **versión de parches de seguridad**: corrige cuatro problemas CRITICAL: ejecución de comandos en repo-server mediante una referencia remota de Kustomize y mediante `helmGlobals.configHome` de Kustomize; lectura de archivos por repo-server mediante una importación de Jsonnet; y elusión de restricciones de AppProject mediante los hooks PreDelete/PostDelete (CVE-2026-77459). Las mismas correcciones se retroportaron a v3.4.10/v3.3.15. Cambios de comportamiento: los builds de Kustomize ya no respetan `helmGlobals.configHome` y se rechazan los manifiestos OCI que superan 4 MiB; consulta las [notas de la versión](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4) antes de actualizar.
-- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): primera versión candidata de la línea 3.6, publicada el 15 de septiembre de 2026. No es una versión base para producción.
+- 3.5.3: publicada el 14 de septiembre de 2026. Correcciones de errores (comprobaciones de estado, estado de reintentos de sincronización e interfaz de usuario).
+- 3.5.4: publicada el 6 de octubre de 2026. Una **versión de parche de seguridad**: corrige cuatro problemas CRÍTICOS, concretamente la ejecución de comandos en repo-server mediante una referencia remota de Kustomize y mediante un directorio de configuración Helm de Kustomize, la lectura de archivos de repo-server mediante una importación de Jsonnet y la elusión de las restricciones de AppProject mediante hooks PreDelete/PostDelete (CVE-2026-77459). Las mismas correcciones se retrointegraron en v3.4.10/v3.3.15. Cambios de comportamiento: las compilaciones de Kustomize ya no respetan `helmGlobals.configHome` y se rechazan los manifiestos OCI de más de 4 MiB; revisa las [notas de la versión](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4) antes de actualizar.
+- 3.5.5: publicada el 12 de octubre de 2026. Una versión de parche con correcciones de errores (manifiestos obsoletos y una fuga de goroutines en repo-server después de un fallo de CMP, comportamiento de la caché OCI y más); v3.4.11/v3.3.16 se publicaron el mismo día. Consulta las [notas de la versión](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5).
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): primera versión candidata de la línea 3.6, publicada el 15 de septiembre de 2026. No es una base para producción.
+- [3.6.0-rc3](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3): versión candidata más reciente de la línea 3.6, publicada el 15 de octubre de 2026. Tampoco es una base para producción.
 
 ### Actualización de octubre de 2026: comienza la planificación de Argo CD 4.0
 
-Según la [publicación de la CNCF del 30 de septiembre](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), la comunidad de Argo inició el proceso para definir la visión de Argo CD 4.0. ArgoCon North America 2026, un evento de jornada completa y dos sesiones simultáneas junto con KubeCon NA, comenzará con ponencias de los mantenedores sobre los avances recientes y las próximas versiones. Es una orientación inicial de la hoja de ruta; aún no hay compromisos sobre las funciones ni las fechas de 4.0.
+Según la [publicación de la CNCF del 30 de septiembre](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), la comunidad de Argo ha comenzado el proceso de planificación de Argo CD 4.0, y ArgoCon North America 2026 (un evento de jornada completa y dos sesiones simultáneas, celebrado junto con KubeCon NA) comenzará con ponencias principales de los mantenedores sobre novedades recientes y próximas versiones. Esta es una orientación inicial de la hoja de ruta; todavía no se han confirmado las funciones ni los plazos de la versión 4.0.
 
 ### Argo Rollouts
 
-Rollouts es un controlador independiente que se puede usar sin Argo CD. Esta revisión usa su documentación 1.10.0. Valida por separado los CRD y el controlador de Rollouts, los plugins de tráfico, Kubernetes y la integración de comprobaciones de estado de Argo CD; no deduzcas compatibilidad a partir de números de versión de productos distintos.
+Rollouts es un controlador independiente que puede usarse sin Argo CD. Esta revisión utiliza la documentación de la versión 1.10.0. Valida la integración entre los CRD y el controlador de Rollouts, los complementos de tráfico, Kubernetes y las comprobaciones de estado de Argo CD, en lugar de relacionar números de versión de productos que no guardan relación.
 
-### Capacidad de Argo CD administrada por EKS
+### Capacidad de Argo CD administrado en EKS
 
-EKS Capability for Argo CD es un modelo operativo distinto de una instalación autoadministrada. Su configuración personalizada solo se aplica a las claves de argocd-cm **compatibles**, en el espacio de nombres configurado para la capacidad y con la etiqueta `app.kubernetes.io/part-of: argocd`. Las claves o flags no compatibles se ignoran; no supongas que están disponibles las bibliotecas Lua estándar ni plugins de ejecución arbitraria. Consulta la [guía de configuración administrada](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
+EKS Capability for Argo CD ofrece un modelo operativo distinto al de una instalación autoadministrada. Su configuración personalizada solo se aplica a las claves de argocd-cm **compatibles**, en el espacio de nombres configurado para la capacidad y con la etiqueta `app.kubernetes.io/part-of: argocd`. Las claves y los indicadores no compatibles se ignoran; no des por sentado que están disponibles las bibliotecas Lua estándar ni los complementos de ejecución arbitrarios. Consulta la [guía de configuración administrada](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
 
 ## Próximos pasos
 
@@ -251,13 +253,13 @@ EKS Capability for Argo CD es un modelo operativo distinto de una instalación a
 - [Documentación oficial de ArgoCD](https://argo-cd.readthedocs.io/)
 - [Repositorio de ArgoCD en GitHub](https://github.com/argoproj/argo-cd)
 - [Documentación de Argo Rollouts](https://argoproj.github.io/argo-rollouts/)
-- [Página del proyecto Argo de la CNCF](https://www.cncf.io/projects/argo/)
+- [Página del proyecto ArgoCD en la CNCF](https://www.cncf.io/projects/argo/)
 
 ## Cuestionario
 
-Para comprobar lo aprendido, prueba el [cuestionario de instalación de ArgoCD](../../quizzes/gitops/argocd/01-installation-quiz.md).
+Para comprobar lo que has aprendido, prueba el [cuestionario de instalación de ArgoCD](../../quizzes/gitops/argocd/01-installation-quiz.md).
 
-### Fuentes de revisión versionadas
+### Fuentes de revisión por versión
 
 - [Versiones de Kubernetes probadas con Argo CD 3.5.5](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/tested-kubernetes-versions.md)
 - [Política de soporte de versiones](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/developer-guide/release-process-and-cadence.md)
@@ -266,4 +268,4 @@ Para comprobar lo aprendido, prueba el [cuestionario de instalación de ArgoCD](
 - [Versión 3.5.3](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3)
 - [Versión 3.5.4](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)
 - [Chart 10.10.3 (primer chart con Argo CD 3.5.5)](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.10.3)
-- [Comportamiento de los componentes en alta disponibilidad](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)
+- [Comportamiento de los componentes de HA](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)

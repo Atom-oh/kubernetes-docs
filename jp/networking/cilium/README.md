@@ -1,113 +1,114 @@
-# Cilium詳説：クラウドネイティブネットワーキングの将来
+# Cilium 詳細解説：クラウドネイティブネットワーキングの未来
 
-## 概要とレビュー済み基準
+## 概要とレビュー済みベースライン
 
-この章ではCiliumのネットワーク、ポリシー、可観測性を扱います。例は**Cilium／Helm chart 1.20.3**、Cilium CLI **0.20.1**、Hubble CLI **1.20.2**を基準にレビューしています。Cilium 1.20のKubernetes互換性ページでは**1.33～1.36**がテスト済みとされています。上流の1.37リリースが出ても、この互換性範囲が自動的に広がるわけではありません。サポート対象のホストは、カーネル**5.10以降**のAMD64／AArch64 Linux、またはRHEL 8.10のバックポート済み4.18カーネルのように文書化されたディストリビューション相当環境です。機能ごとに追加要件があります。
+このセクションでは、Ciliumのネットワーキング、ポリシー、可観測性について説明します。各例は、**Cilium/Helm chart 1.20.3**、Cilium CLI **0.20.1**、Hubble CLI **1.20.2**を基準にレビューしています。Cilium 1.20のKubernetes互換性ページでは、**1.33～1.36**がテスト済みとして記載されています。上流の1.37リリースが出ても、この対応表が自動的に拡張されるわけではありません。サポート対象ホストは、カーネル**5.10以降**を搭載したAMD64/AArch64 Linux、またはRHEL 8.10のバックポート版4.18カーネルなど、文書に記載されたディストリビューション相当の環境です。機能ごとに追加要件があります。
 
-> **最終更新日**：2026年10月16日
+> **最終更新日**: 2026年10月19日
 
 ### 過去のリリースノート
 
-以下の日付はUTCでのGitHub公開日であり、記載したリリースの日付です。現在のインストールバージョンを示すものではありません。機能のバックポート状況はリリース系列ごとに異なります。
+以下の日付はGitHubでの公開日（UTC）であり、それぞれのリリースを示すものです。現在のインストール時に指定するバージョンではありません。バックポートされる機能はリリース系列によって異なります。
 
 | 日付 | リリース | 確認済みの主な内容 |
 | --- | --- | --- |
 | 2026年7月14日 | [1.20.0-rc.0](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.0) | 1.20最初のリリース候補 |
-| 2026年7月16日 | [1.19.6](https://github.com/cilium/cilium/releases/tag/v1.19.6)、[1.18.12](https://github.com/cilium/cilium/releases/tag/v1.18.12)、[1.17.18](https://github.com/cilium/cilium/releases/tag/v1.17.18) | Gatewayのアクセスログ設定は1.19.6／1.18.12に記載されています。再起動ポリシーとClusterMeshアフィニティの修正は1.19.6に記載され、3つすべてのリリースに含まれるものではありません。 |
-| 2026年7月21日 | [1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) | 1.20の2番目のリリース候補 |
-| 2026年7月29日 | [1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) | GAリリース。選択した変更点は下記のとおりです。 |
-| 2026年8月3日 | [1.21.0-pre.0](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0) | 次の開発サイクルのプレリリース。本ガイドのデプロイ基準ではありません。 |
-| 2026年8月18日 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMeshのドキュメントとバグ修正。再起動／CIDRポリシーの処理を含みます。 |
-| 2026年8月18日 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | ENIインターフェースのタイミング、Service／LBなどに関する修正を含みます。 |
-| 2026年8月18日 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP／IGMPのホストファイアウォール対応と関連修正。 |
-| 2026年9月9日 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | プレリリース。変更履歴はpre.0からpre.2までを対象とします。**1.21.0-pre.1は公開されていません。** |
-| 2026年9月16日 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAMのプレフィックス委任の割り当て／解放とセカンダリVPC CIDR処理、ClusterMesh、ポリシー変更直後に作成されたPodのポリシーrevision、LocalRedirectPolicyのリグレッション、v1.15以前に作成されたクラスターのアップグレード（`CiliumNodeConfig v2alpha1` CRDバージョン）などのバグ修正。 |
-| 2026年9月16日 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8)、[1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 以前からサポートされている系列のパッチリリース。 |
-| 2026年10月2日 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 最新の1.21プレリリース。**1.21はまだプレリリースのみで、GAではありません**。本ガイドで1.21と記した項目は変更される可能性があります。 |
-| 2026年10月15日 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API依存関係v1.6.3、conntrack GC、`nodeSelector`を含むCNPの処理などの修正。本ガイドの現在のレビュー基準です。 |
+| 2026年7月16日 | [1.19.6](https://github.com/cilium/cilium/releases/tag/v1.19.6)、[1.18.12](https://github.com/cilium/cilium/releases/tag/v1.18.12)、[1.17.18](https://github.com/cilium/cilium/releases/tag/v1.17.18) | Gatewayのアクセスログ設定は1.19.6/1.18.12に記載されています。ここで挙げている再起動ポリシーとClusterMeshのアフィニティ修正は1.19.6に記載されており、3つすべてのリリースに含まれているわけではありません |
+| 2026年7月21日 | [1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) | 1.20の2つ目のリリース候補 |
+| 2026年7月29日 | [1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) | GAリリース。主な変更点は以下を参照 |
+| 2026年8月3日 | [1.21.0-pre.0](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0) | 次期サイクルのプレリリース。このガイドのデプロイベースラインではありません |
+| 2026年8月18日 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMeshのドキュメントとバグ修正。再起動/CIDRポリシーの処理などを含みます |
+| 2026年8月18日 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | ENIインターフェイスのタイミング、Service/LBなどの修正を含みます |
+| 2026年8月18日 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMPのホストファイアウォール対応と関連修正 |
+| 2026年9月9日 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | プレリリース。**1.21.0-pre.1は公開されなかった**ため、変更履歴はpre.0からpre.2までを対象としています |
+| 2026年9月16日 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAMのプレフィックス委譲における割り当て/解放とセカンダリVPC CIDRの処理、ClusterMesh、ポリシー変更直後に作成されたPodのポリシーリビジョン、LocalRedirectPolicyのリグレッション、v1.15以前に作成されたクラスターのアップグレード（`CiliumNodeConfig v2alpha1` CRDバージョン）などのバグ修正 |
+| 2026年9月16日 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8)、[1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 旧サポート系列のパッチリリース |
+| 2026年10月2日 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 最新の1.21プレリリース。**1.21はプレリリースのみ**（GAはまだありません）であり、このガイドで1.21と記載している項目は変更される可能性があります |
+| 2026年10月15日 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API依存関係v1.6.3、conntrack GC、`nodeSelector`を含むCNPの処理などの修正。このガイドで現在レビューしているベースライン |
+| 2026年10月15日 | [1.19.9](https://github.com/cilium/cilium/releases/tag/v1.19.9)、[1.18.15](https://github.com/cilium/cilium/releases/tag/v1.18.15) | 旧サポート系列のパッチリリース |
 
-2026年9月14日、CNCFブログで[Cilium 1.20の機能紹介](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)が公開されました（Gateway API ExternalAuth、TCPRoute／UDPRoute、IPv6 ENI IPAMなど）。内容は下記の1.20.0発表概要と同じ範囲です。
+2026年9月14日、CNCFブログは[ Cilium 1.20の機能まとめ](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)（Gateway API ExternalAuth、TCPRoute/UDPRoute、IPv6 ENI IPAMなど）を公開しました。内容は、以下に示す1.20.0の発表概要と同じ範囲を扱っています。
 
-1.20.0の発表では、**2,660件超の新しいコミット**が報告されています。これを支えた**1,100人超の貢献者コミュニティ**という数はコミュニティの規模であり、このリリースの作者数ではありません。主な内容は次のとおりです。
+1.20.0の発表では、**2,660件を超える新規コミット**が報告されており、**1,100人を超えるコントリビューターのコミュニティ**に支えられています。後者はコミュニティの規模であり、このリリースにおける作者数ではありません。主な内容は次のとおりです。
 
-- Gateway API **1.6.1**、TCPRoute／UDPRoute、BackendTLSPolicy、ListenerSets、ExternalAuth、CORS対応。各機能にはそれぞれ設定とAPI成熟度に関する条件があります。
-- データパスプラグインと、オプトインの`bpf.datapathMode=auto`。発表時のデフォルトはvethです。デュアルスタッククラスターではIPv6 egress gatewayアドレスを設定できます。
-- **Beta**のIPv6 ENI IPAMと、クラスターを再構築せずにcluster-poolからmulti-poolへ移行する機能。インプレース移行で中断が発生しない保証はありません。
-- トラフィック分散ヒント、重み付きMaglevバックエンド、安定版MCS連携、Kubernetes ClusterNetworkPolicy対応、**Beta**のztunnelベースワークロードアイデンティティ。
-- `cilium-cni`バイナリを約**77 MBから16 MB**へ縮小したとの報告。ADS／Delta xDSの改善は1.20発表に含まれ、1.18.13のパッチノートの内容ではありません。いずれも上流リリースの発表値であり、この監査で再測定していません。
+- Gateway API **1.6.1**、TCPRoute/UDPRoute、BackendTLSPolicy、ListenerSets、ExternalAuth、CORS対応。ただし、機能ごとの設定とAPIの成熟度に依存します。
+- Datapathプラグインとオプトインの`bpf.datapathMode=auto`。発表時点でのデフォルトは引き続きvethです。デュアルスタッククラスターでは、IPv6のegress gatewayアドレスを設定できます。
+- **ベータ**のIPv6 ENI IPAMと、クラスターを再構築せずにcluster-poolからmulti-poolへ移行する機能。インプレース移行でも、中断が発生しないとは限りません。
+- トラフィック分散ヒント、重み付きMaglevバックエンド、安定したMCS統合、Kubernetes ClusterNetworkPolicyのサポート、**ベータ**のztunnelベースのワークロードID。
+- `cilium-cni`バイナリが約**77 MBから16 MB**に縮小したとの報告。ADS/Delta xDSの改善は1.20の発表に記載されています。1.18.13のパッチノートの内容として扱わないでください。これらは上流リリースの発表内容であり、この監査で再測定した値ではありません。
 
-Mutual Authentication（**1.20で非推奨**、1.21プレリリースで削除）、削除／置換されたEnvoy Go拡張、Kafka対応ポリシー、旧CiliumNodeConfig API、libnetwork連携、カスタムCNI設定を使っている場合は、[1.20アップグレードノート](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)を確認してください。
+相互認証（**1.20で非推奨**、1.21プレリリースで削除）、削除/置換されたEnvoy Go拡張機能、Kafka対応ポリシー、旧CiliumNodeConfig API、libnetwork統合、カスタムCNI設定の変更については、[1.20アップグレードノート](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)を確認してください。
 
-### NetworkPolicyのセキュリティアドバイザリ
+### NetworkPolicyセキュリティアドバイザリ
 
-[GHSA-fm8w-2m5w-9j7r／CVE-2026-56743](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)のプロジェクト側アドバイザリ公開日は**2026年7月6日**です。プロジェクトAPIとGitHub全体のアドバイザリAPIでは日付が異なり、後者には9月3日と記録されています。このリリース年表ではプロジェクトの開示日を使います。全体側の記録日がより後の修正リリースを意味するわけではありません。この問題は、アドバイザリに記載された独自のクラスター名条件下で**1.19.0～1.19.4**に影響します。`ipBlock`だけを含む標準Kubernetes NetworkPolicyのpeerにより、選択されたPodと同じNamespaceのワークロードからIngressが意図せず許可される可能性があります。デプロイ時には適切な現行パッチリリースを使用してください。CiliumNetworkPolicy／ClusterwideNetworkPolicyと1.19.0未満のリリースは、この特定のバグの影響を受けないとアドバイザリに記載されています。
+[GHSA-fm8w-2m5w-9j7r / CVE-2026-56743](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)のプロジェクトアドバイザリ公開日は**2026年7月6日**です。プロジェクトAPIとGitHubのグローバルアドバイザリAPIでは異なる日付が表示されます。後者には9月3日と記録されています。このリリース年表ではプロジェクトの開示日を使用してください。グローバルレコードの日付は、より後の修正リリースを意味するものではありません。この問題は、アドバイザリに記載されたカスタムクラスター名の条件下で**1.19.0～1.19.4**に影響します。標準的なKubernetes NetworkPolicyのpeerに`ipBlock`だけが含まれていると、選択されたPodと同じnamespace内のワークロードからのingressが意図せず許可される可能性があります。**1.19.5**で修正されています。デプロイには、適切な現行のパッチ適用済みリリースを使用してください。このアドバイザリによると、CiliumNetworkPolicy/ClusterwideNetworkPolicy、および1.19.0未満のリリースは、この特定のバグの影響を受けません。
 
 ## はじめに
 
-Ciliumは、サポート対象のLinux Kubernetes環境向けにネットワーク、セキュリティ、可観測性を提供します。ルーティング、IPAM、暗号化、Service処理はそれぞれ別の選択肢です。eBPFを選んだだけで、すべての機能が使えることや性能が保証されるわけではありません。旧Docker libnetwork連携は1.20で削除されたため、Docker／Mesosを現在のインストール対象として並列に扱わないでください。
+Ciliumは、サポート対象のLinux Kubernetes環境向けにネットワーキング、セキュリティ、可観測性を提供します。ルーティング、IPAM、暗号化、Service処理はそれぞれ別の選択肢です。eBPFを選択しただけでは、すべての機能が有効になるわけでも、性能が保証されるわけでもありません。従来のDocker libnetwork統合は1.20で削除されたため、Docker/Mesosを現行のインストール対象としてここに同列に記載するべきではありません。
 
 ### eBPFと主な機能
 
-カーネルはeBPFプログラムをロード前に検証し、対応するフックで実行するためにJITコンパイルできます。これにより、独自のカーネルモジュールを使わずにパケット処理や可観測性を実現できますが、verifierはアプリケーションやポリシーの正しさを保証しません。実際のスループット、レイテンシー、メモリ使用量は、プログラム、プラットフォーム、ワークロードによって異なります。
+カーネルはeBPFプログラムをロード前に検証し、サポート対象のフックで実行できるようJITコンパイルする場合があります。これにより、カスタムカーネルモジュールなしでパケット処理や可観測性を実現できます。ただし、検証器はアプリケーションやポリシーの正しさを保証するものではありません。実際のスループット、レイテンシ、メモリ使用量は、プログラム、プラットフォーム、ワークロードによって異なります。
 
-CiliumはL3／L4ポリシー、Envoy／DNS proxy連携によるL7ポリシー、任意のWireGuard／IPsec、Serviceロードバランシング、Hubbleによるフロー可視化、ClusterMesh、BGP広告を提供します。XDP高速化は任意で、デバイスや設定に依存します。L7機能ではノードごとのEnvoyを使う場合があります。ztunnelによるワークロードアイデンティティには別途Beta設定が必要です。Agentをインストールしただけで、すべてのメッシュ、暗号化、マルチクラスター機能が有効になるわけではありません。
+Ciliumは、L3/L4ポリシー、Envoy/DNS proxy統合によるL7ポリシー、オプションのWireGuard/IPsec、Serviceロードバランシング、Hubbleによるフローの可視化、ClusterMesh、BGP広告を提供します。XDPアクセラレーションはオプションで、デバイスや設定に依存します。L7機能ではノードごとのEnvoyを使用する場合があります。ztunnelによるワークロードIDには、別途ベータ版の設定が必要です。エージェントをインストールしただけでは、すべてのメッシュ、暗号化、マルチクラスターの動作が有効になるわけではありません。
 
-### 他のネットワークプロジェクトとの比較
+### 他のネットワーキングプロジェクトとの比較
 
-| プロジェクト | 接続性／IPAM | ポリシーと関連機能 |
+| プロジェクト | 接続性 / IPAM | ポリシーと関連機能 |
 | --- | --- | --- |
-| Cilium | ネイティブまたはオーバーレイルーティング。クラウドENIを含むIPAMモード | eBPFデータプレーン、Cilium／Kubernetesポリシー、L7連携、Hubble、任意の暗号化 |
-| Calico | Calicoまたは外部IPAMによるNative／IPIP／VXLANプロファイル | Linux iptables／nftables／BPF、サポート対象のWindows HNS、OSS WireGuard、段階的ポリシー、別途L7連携 |
-| Flannel | VXLAN／host-gw／WireGuardなど選択したバックエンドによるPod接続 | ルーティングデーモン自体はNetworkPolicyを適用しません。Helm chartで`netpol.enabled`を使ってSIGs network-policy controllerを導入するか、別のポリシー実装と組み合わせられます。 |
-| AWS VPC CNI | VPC ENIによるアドレス割り当て／ネットワーク | 対応するEC2 Linuxノード上のネイティブネットワークポリシーと、別機能のSecurity Group for Pods。EKS Auto Modeは異なるマネージド実装です。 |
+| Cilium | ネイティブルーティングまたはオーバーレイルーティング。クラウドENIを含むIPAMモード | eBPF dataplane、Cilium/Kubernetesポリシー、L7統合、Hubble、オプションの暗号化 |
+| Calico | Calicoまたは外部IPAMを使用するネイティブ/IPIP/VXLANプロファイル | LinuxのIptables/Nftables/BPF、サポート対象のWindows HNS、OSS版WireGuard、段階的なポリシー適用、個別のL7統合 |
+| Flannel | VXLAN/host-gw/WireGuardなど、選択したバックエンドを介したPod接続 | ルーティングデーモン自体はNetworkPolicyを適用しません。チャートで`netpol.enabled`を設定し、SIGsのnetwork-policy controllerをデプロイすることも、別のポリシー実装と組み合わせることもできます |
+| AWS VPC CNI | VPC ENIによるアドレス割り当て/ネットワーキング | サポート対象のEC2 Linuxノードでのネイティブネットワークポリシーと、独立したSG-for-Pods機能。EKS Auto Modeは別のマネージド実装です |
 
-ルーティングモードとパケット処理の実装は、同じ分類ではありません。Calicoはiptables／IPVSだけに限られず、Flannelは暗号化バックエンドを使えます。また、AWSのポリシーが常にセキュリティグループと同義というわけでもありません。Service meshは任意のレイヤーであり、クラスター間VPC接続がTransit Gatewayだけに限られるわけでもありません。普遍的な性能順位ではなく、測定対象のワークロードと明示的なサポートマトリクスを使ってください。
+ルーティングモードとパケット処理の実装方式は、同じ分類ではありません。Calicoはiptables/IPVSだけに限定されず、Flannelは暗号化バックエンドを使用でき、AWSのポリシーがセキュリティグループと同義というわけでもありません。Service meshはオプションのレイヤーであり、クラスター間のVPC接続がTransit Gatewayに限定されるわけでもありません。普遍的な性能ランキングではなく、実測したワークロードと明示的なサポートマトリクスを使用してください。
 
 ## アーキテクチャ
 
-**Kubernetes APIサーバー**がKubernetes／Ciliumリソースを保存します。Cilium Agentは関連状態を監視して各ノードのデータプレーンを設定し、Cilium Operatorは選択したIPAMやIdentity／Controller処理などクラスター単位の責務を担います。この基本構成に、クラスター全体で必須となる独立した「Cilium API Server」はありません。AgentにはローカルAPIがあり、任意のClusterMesh API Serverは別の目的で使われます。
+**Kubernetes API server**はKubernetes/Ciliumリソースを保存します。Cilium agentは関連する状態を監視し、各ノードのdataplaneを設定します。Cilium Operatorは、選択されたIPAMやID/コントローラー関連の作業など、クラスター全体に関わる責務を担います。この基本アーキテクチャに、クラスター全体で必須となる別個の「Cilium API Server」デプロイはありません。agentにはローカルAPIがあり、オプションのClusterMesh API serverは別の目的で使われます。
 
 | コンポーネント | 役割 |
 | --- | --- |
-| Cilium Agent | ノード単位のエンドポイント、ポリシー、ルーティング／Service状態、eBPF管理 |
-| Cilium Operator | クラスター単位の調整と、モードに応じた割り当て／Controller処理 |
-| Envoy | 有効化したL7ポリシー、Ingress／Gatewayなどのユーザー空間Proxy |
-| Hubble server | Agentと統合されたノードローカルのフローAPI |
-| Hubble Relay／UI | フローの集約／Service mapとフローの表示 |
-| Prometheusメトリクスエンドポイント | 独立した統計収集。Relay／UIはメトリクスのスクレイプ経路ではありません。 |
-| cilium／cilium-dbg／hubble | クラスター管理CLI／Agent診断／フロー参照クライアント |
+| Cilium Agent | ノードローカルのエンドポイント、ポリシー、ルーティング/Serviceの状態、eBPFの管理 |
+| Cilium Operator | クラスター全体の調整、およびモードに応じた割り当て/コントローラー処理 |
+| Envoy | 有効化されたL7ポリシー、ingress/Gateway、関連機能向けのユーザー空間プロキシ |
+| Hubble server | agentと統合されたノードローカルのフローAPI |
+| Hubble Relay / UI | フローストリームの集約 / Serviceマップやフローの表示 |
+| Prometheusメトリクスエンドポイント | 独立した統計情報の収集。Relay/UIはメトリクスのスクレイピング経路ではありません |
+| cilium / cilium-dbg / hubble | それぞれクラスター管理CLI / agent診断 / フロークライアント |
 
-### ネットワークとパケット経路
+### ネットワーキングとパケット経路
 
-Native routingには到達可能なアンダーレイが必要です。トンネリングではVXLANまたはGeneveを使います。AWS ENIとAzure IPAMは、それぞれ固有のプラットフォーム要件を伴う割り当て／連携方式です。CiliumのBGP Control Planeはルーターに到達性を広告しますが、データパスを設定したりクラスター内部のルーティングを提供したりはしません。
+ネイティブルーティングには到達可能なunderlayが必要です。トンネリングではVXLANまたはGeneveを使用します。AWS ENIとAzure IPAMは割り当て/統合方式の選択肢で、それぞれ独自のプラットフォーム要件があります。CiliumのBGP Control Planeはルーターに到達可能性を広告しますが、**datapathを設定したり、クラスター内部のルーティングを提供したりするものではありません**。
 
-XDP→TC→Podという一律の処理順序はありません。ソケットロードバランシングはパケット生成前に動作する場合があり、TC／netkitのフックはデータパスに依存します。任意のXDPは選択したトラフィックを高速化し、L7トラフィックがEnvoyを通る場合もあります。戻り通信もNAT、conntrack、DSRの選択に依存します。選択したプロファイルについて、ネットワークとeBPFの各章を参照してください。
+XDP→TC→Podという一律の順序はありません。socket load balancingはパケットが存在する前に動作する場合があり、TC/netkitフックはdatapathに依存します。オプションのXDPは選択したトラフィックを高速化し、L7トラフィックはEnvoyを経由する場合があります。戻りトラフィックもNAT、conntrack、DSRの選択に依存します。選択したプロファイルについては、ネットワーキングとeBPFの各章を参照してください。
 
-## Amazon EKSとの連携
+## Amazon EKSとの統合
 
-インストールする前に、実際のネットワーク／コンピュートプロファイルを選んでください。`cilium`／`v1.17.0-eksbuild.1`という例のアドオン名／バージョンは、AWS配布物として確認できていないため、インストールコマンドではありません。パッケージ済みベンダーアドオンを検討する場合は、リージョンの実際のアドオンカタログ、発行元、ライセンス、対応コンピュートタイプを確認してください。
+インストールを始める前に、実際に使用するネットワーキングとコンピューティングのプロファイルを選択してください。例にあるアドオン名/バージョン`cilium` / `v1.17.0-eksbuild.1`は、AWSの配布物として確認されたものではなく、ここではインストールコマンドとして扱いません。パッケージ化されたベンダーアドオンを検討する場合は、対象リージョンの実際のアドオンカタログ、発行元、ライセンス、サポート対象のコンピューティングタイプを確認してください。
 
 | EKSプロファイル | 確認事項 |
 | --- | --- |
-| 通常のEC2ノードでCilium ENIがVPC CNIを置き換える | 上流／パートナー管理のCNIです。AWSがEC2向けにサポートするCNIはVPC CNIです。CNI管理、IAM、アドレス、ルート、ブートストラップ、ノード移行を計画してください。 |
-| 通常のEC2ノードでVPC CNIチェーンを使う | VPC CNIがインターフェース／IPAMを管理し、その後Ciliumがデータプレーンをアタッチします。既存Podは再作成が必要です。L7／IPsecには文書化された制限があります。 |
-| Hybrid Nodes | AWS固有のCNIガイドとAWS管理のCiliumビルドマトリクスに従います。上流1.20.3がAWSのサポート対象ビルドとは限りません。 |
-| Auto Mode | 別のCNI／ポリシープラグインは非対応です。マネージドNodeClass／ネットワーク機能を使ってください。 |
-| Fargate | 別のCNI／DaemonSetのインストールは非対応です。 |
-| Windows | Cilium Agentの要件はLinuxです。この手順をWindowsワーカーに適用しないでください。 |
+| 通常のEC2ノード、Cilium ENIでVPC CNIを置き換える | 上流/パートナー管理のCNI。AWSがサポートするEC2 CNIはVPC CNIです。CNIの所有者、IAM、アドレス指定、ルート、ブートストラップ、ノード移行を計画してください |
+| 通常のEC2ノード、AWS VPC CNI chaining | VPC CNIがインターフェイス/IPAMを管理し、その後Ciliumがdataplaneを接続します。既存のPodは再作成が必要で、L7/IPsecには文書化された制約があります |
+| Hybrid Nodes | AWSの専用CNIガイドと、AWSが保守するCiliumビルドマトリクスに従ってください。上流の1.20.3が自動的にサポート対象のAWSビルドになるわけではありません |
+| Auto Mode | 代替CNI/ポリシープラグインはサポートされません。マネージドのNodeClass/ネットワーキング機能を使用してください |
+| Fargate | 代替CNI/DaemonSetのインストールはサポートされません |
+| Windows | Cilium agentの要件はLinuxです。この手順をWindowsワーカーに適用しないでください |
 
-AWSの一般的な別CNIページとHybrid向け専用ガイドでは、Calicoの対応状況に関する表現が異なります。リポジトリを移動した例があるだけで、サポート終了が確定するわけではありません。Hybrid Nodesでは、正確な配布物、機能範囲、サポート責任者を確認してください。Auto Modeでは、ノードローカルのCoreDNS／システムネットワークも本ガイドの通常EC2構成とは異なります。Auto Modeではないノードが混在する場合、従来のDNS Deploymentも必要です。
+AWSの一般的な代替CNIページと専用のHybridガイドでは、Calicoのサポートに関する記述が異なります。リポジトリの移動例があるからといって、サポート終了が確定するわけではありません。Hybrid Nodesでは、正確な配布物、機能セット、サポート担当者を確認してください。Auto Modeでは、ノードローカルのCoreDNS/システムネットワーキングもこのガイドの通常のEC2構成とは異なります。Auto Mode以外のノードが混在する場合は、従来型のDNS Deploymentも引き続き必要です。
 
-### Cilium ENIを使う準備済みEC2クラスター
+### Cilium ENIを使用する準備済みEC2クラスター
 
-以下は**準備済みのIPv4 EC2クラスター向けCilium Helm値**です。クラスター作成や稼働中クラスターの移行手順全体ではありません。適用前に次の点を確認します。
+以下は**準備済みのIPv4 EC2クラスター向けCilium Helm values**であり、クラスター作成やインプレース移行の手順一式ではありません。使用前に次の点を確認してください。
 
-1. サポート対象のEKS／KubernetesバージョンとLinux AMIを選び、CNIの管理者を1つに決めます。既存ワークロードクラスターから`aws-node`を近道として削除しないでください。
-2. Ciliumがノードを管理するまでワークロードを待機させるため、taint／スケジューリングを準備します。上流EKSガイドは`node.cilium.io/agent-not-ready=true:NoExecute`を使用します。実際のノードライフサイクルで退避／ブートストラップへの影響を評価してください。
-3. サブネット容量、ENI quota／security group、ノードのメタデータアクセス、Operatorに必要なEC2権限を準備します。下記ARNは、Helm値で作成するロールではなく、適切な信頼設定を持つ**cilium-operator ServiceAccount用ロール**のプレースホルダーです。
-4. `kubeProxyReplacement: false`のこの例では、稼働中のkube-proxyとDNSを維持します。置き換えモードには、APIへの直接接続／ブートストラップDNSに関する別の前提条件があります。max-Podsは一律の110ではなく、実際のインスタンス／IPAM容量から選択してください。
+1. サポート対象のEKS/KubernetesバージョンとLinux AMIを選び、CNIの管理主体を1つに決めます。既存のワークロードクラスターで、安易な方法として`aws-node`を削除しないでください。
+2. Ciliumがノードを管理するまでワークロードが待機するよう、ノードのtaint/スケジューリングを準備します。上流のEKSガイダンスでは`node.cilium.io/agent-not-ready=true:NoExecute`が使われています。実際のノードライフサイクルで、退避やブートストラップへの影響を評価してください。
+3. サブネット容量、ENIクォータ/セキュリティグループ、ノードのメタデータアクセス、Operatorに必要なEC2権限を準備します。以下のロールARNは、適切に信頼関係が設定された**cilium-operator ServiceAccount**用ロールのプレースホルダーであり、valuesファイルによって作成されるロールではありません。
+4. この`kubeProxyReplacement: false`の例では、動作中のkube-proxyとDNSを維持してください。置換モードでは、APIへの直接アクセス/ブートストラップDNSに関する別の要件に従ってください。max-Podsは一律に110とせず、実際のインスタンス/IPAM容量に基づいて選択してください。
 
-`cilium-eni-values.yaml`として保存し、ロールとインターフェースの値をレビュー済みの内容に置き換えます。
+`cilium-eni-values.yaml`として保存し、ロール/インターフェイスの選択をレビュー済みの値に置き換えてください。
 
 ```yaml
 eni:
@@ -139,13 +140,13 @@ helm install cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-eni-values.yaml
 ```
 
-これらの設定はインストール管理者を通じて運用してください。必要な値を数個だけ含む`cilium-config`に置き換えると、他の必須設定を削除する可能性があります。古い`tunnel=disabled`値は`routingMode: native`に置き換わっています。ENI割り当て／権限とSNAT動作は実環境で引き続き検証が必要です。レンダリングに成功しただけではEC2ネットワークが利用可能とは証明できません。
+これらの設定は、インストールの管理主体を通じて管理してください。必要な設定がほかにもあるのに、数個のキーだけを含む`cilium-config`に置き換えると、それらが削除される場合があります。旧式の`tunnel=disabled`は`routingMode: native`に置き換えられています。ENIの割り当て/権限とSNATの動作は、引き続き実環境で検証が必要です。レンダリングに成功しても、EC2ネットワーキングが利用可能だと証明されたことにはなりません。
 
-**IPv6に関する補足**：1.20.3のENI IPAMリファレンスはIPv6をBetaと説明していますが、EKS前提条件ページにはIPv4のみのENI連携と記載されています。本ガイドではIPv4の例を示し、この文書間の不一致を記録しています。いずれか一方の記述だけを本番EKSのIPv6互換性の証明として扱わないでください。IPv6を別途設計する前に、現在のENI／dual-stackサブネット要件を確認してください。
+**IPv6に関する補足:** 1.20.3のENI IPAMリファレンスではIPv6をベータと記載していますが、EKSの前提条件ページでは引き続きIPv4のみのENI統合とされています。このガイドではIPv4の例を示し、どちらか一方の記述を本番環境でのEKS IPv6互換性の証明とみなすのではなく、ドキュメント間の不整合を記録しています。IPv6を別途設計する場合は、最新のENI/デュアルスタックサブネット要件を確認してください。
 
-### VPC CNIチェーンを使う代替方式
+### VPC CNI chainingの代替案
 
-上流のチェーンガイドではVPC CNI 1.11.2以降が必要で、次のプロファイルが記載されています。
+上流のchainingガイドではVPC CNI 1.11.2以降が必要とされており、次のプロファイルが説明されています。
 
 ```yaml
 cni:
@@ -156,26 +157,26 @@ routingMode: native
 kubeProxyReplacement: false
 ```
 
-これはENI置き換え設定への上乗せではなく、**別の設定**として使います。VPC CNIが引き続きIPを割り当てます。実際のマネージドアドオンは、古い上流DaemonSetを適用せず、その管理者を通じてアップグレードしてください。同じエンドポイントで複数のポリシーエンジンが競合しないようにします。CNIチェーンを変更しても既存Podに遡ってCiliumが接続されるわけではありません。計画的なロールアウトでPodを再作成し、エンドポイント管理を確認してください。チェーン方式にはL7ポリシー／IPsecの文書化された制限があるため、後述の例がすべてこのプロファイルでも使えると仮定しないでください。
+これは、ENI置換用のvaluesに重ねて適用するのではなく、**別の設定**として使用してください。割り当ては引き続きVPC CNIが行います。過去の上流DaemonSetを適用するのではなく、実際のマネージドアドオンをその管理主体を通じてアップグレードしてください。同じエンドポイントでポリシーエンジンが競合しないようにしてください。CNIチェーンを変更しても、既存のPodが遡ってCiliumに接続されることはありません。計画したリリースのもとでPodを再作成し、エンドポイントが管理されていることを確認してください。chainingにはL7ポリシー/IPsecの文書化された制約があるため、このページ後半の例がすべてそのプロファイルで動作すると想定しないでください。
 
 ### ClusterMesh
 
-ClusterMeshには、重複しないクラスターID、互換性のあるバージョン、到達可能で重複しないPodネットワーク、認証されたAPI接続、適切な公開方法が必要です。LoadBalancer Serviceはクラウドリソースを作成する可能性があり、ネットワーク／セキュリティを意図的に設計する必要があります。2つのパブリックエンドポイントを作成するだけでは、安全なクラスター接続にはなりません。選択したトポロジーに応じて、保守されている[ClusterMeshガイド](13-clustermesh-install-upgrade.md)と詳細章に従ってください。
+ClusterMeshには、一意のクラスターID、互換性のあるバージョン、到達可能で重複しないPodネットワーク、認証されたAPI接続、適切な公開方式が必要です。LoadBalancer Serviceを使うとクラウドリソースが作成される場合があるため、意図的なネットワーク/セキュリティ設計が必要です。パブリックエンドポイントを2つ作るだけでは、クラスターを安全に接続できません。選択したトポロジーに応じて、保守されている[ClusterMeshガイド](13-clustermesh-install-upgrade.md)と詳細解説の章に従ってください。
 
 ## インストールと設定
 
 ### クライアントツール
 
-ワークステーションのOS／アーキテクチャに合った公式Cilium CLI 0.20.1とHubble CLI 1.20.2を使い、展開前に配布されたチェックサムを検証してください。Linux ARM64とAMD64では配布物が異なります。macOSでは対応するDarwin配布物を使います。CLIのバージョンはCilium Agent／chartのバージョンとは別です。[検証済みCLIインストール手順](../../service-mesh/cilium-service-mesh/README.md)を参照してください。
+ワークステーションのOS/アーキテクチャに適した公式Cilium CLI 0.20.1とHubble CLI 1.20.2のアセットを使用し、展開前に提供されたチェックサムを検証してください。Linux ARM64とAMD64ではアセットが異なり、macOSでは対応するDarwinアセットを使います。CLIのバージョンはCilium agent/chartのバージョンとは別です。[確認済みのCLIインストールガイダンス](../../service-mesh/cilium-service-mesh/README.md)を参照してください。
 
 ```bash
 cilium version --client
 hubble version
 ```
 
-### クラウド以外のCluster-Pool例
+### クラウド以外のcluster-poolの例
 
-以下は、kube-proxyとDNSがすでに機能する準備済みの通常Linuxクラスター向けの**代替設定**です。例のPod範囲`10.244.0.0/16`がクラスターと互換性を持ち、Service、ノード、VPC、接続ネットワークの各範囲と重複しないことを確認してください。ENIモードでこのPool設定を使わないでください。
+次の**代替例**は、kube-proxyとDNSがすでに動作している準備済みの通常のLinuxクラスター向けです。例で使われている`10.244.0.0/16`のPod範囲がクラスターと互換性があり、Service、ノード、VPC、接続ネットワークの範囲と重複していないことを確認してください。ENIモードでは、このpool設定を使用しないでください。
 
 ```yaml
 routingMode: tunnel
@@ -207,7 +208,7 @@ hubble:
     - httpV2
 ```
 
-`cilium-values.yaml`として保存し、chartを固定バージョンでレンダリングしてから、準備済みクラスターだけにインストールします。
+`cilium-values.yaml`として保存し、固定したバージョンのchartをレンダリングしてから、準備済みのクラスターにのみインストールしてください。
 
 ```bash
 helm template cilium cilium/cilium --version 1.20.3 \
@@ -217,24 +218,24 @@ helm install cilium cilium/cilium --version 1.20.3 \
 cilium status --wait
 ```
 
-既存リリースでは、そのアップグレード／GitOps手順を使い、管理対象の値を保持し、バージョン固有のアップグレード手順に従ってください。設定を個別に変更する一般的な方法として、`cilium install`を繰り返し実行しないでください。
+既存のリリースでは、そのアップグレード/GitOpsプロセスを使用し、管理対象のvaluesを維持して、バージョン固有のアップグレード手順に従ってください。`cilium install`の例を繰り返すのは、個別の設定を変更する一般的な方法ではありません。
 
-| 選択項目 | 現在の設定と前提条件 |
+| 選択肢 | 現行の設定と前提条件 |
 | --- | --- |
-| VXLAN／Geneve | `routingMode: tunnel`と`tunnelProtocol`を設定します。選択したカプセル化通信を許可し、経路に応じてMTUを設定してください。 |
-| Native routing | `routingMode: native`を設定し、アンダーレイがPodアドレスをルーティングできる必要があります。`autoDirectNodeRoutes`には適切な直接接続が必要で、任意の複数サブネット間ルーティング向けではありません。 |
-| kube-proxy置き換え | 旧`strict`ではなく、`kubeProxyReplacement: true`または`false`を使います。置き換えには到達可能な`k8sServiceHost`／`k8sServicePort`と文書化されたブートストラップ計画が必要です。 |
-| WireGuard | カーネル／プラットフォームとピア経路を確認後、サポート対象の暗号化モードを有効にします。あらゆる通信経路が自動的に暗号化されるわけではありません。 |
-| IPsec | 文書化された鍵Secret、鍵の配布／ローテーション、互換性のあるモードが必要です。Helmの有効化フラグだけでは設定は完了しません。 |
-| XDP／DSR／BBR | デバイス／カーネル／トポロジーに依存する個別の選択肢です。一律に使うインストールプリセットではありません。 |
+| VXLAN/Geneve | `routingMode: tunnel`と`tunnelProtocol`を設定します。選択したカプセル化方式を許可し、経路に合わせてMTUを設定してください |
+| ネイティブルーティング | `routingMode: native`を設定します。underlayはPodアドレスをルーティングできる必要があります。`autoDirectNodeRoutes`には適切な直接接続性が必要で、任意のマルチサブネットルーティングに対応するものではありません |
+| kube-proxy置換 | レガシーの`strict`ではなく、`kubeProxyReplacement: true`または`false`を使用します。置換には到達可能な`k8sServiceHost`/`k8sServicePort`と、文書に記載されたブートストラップ計画が必要です |
+| WireGuard | カーネル/プラットフォームとpeer間の経路を確認したうえで、サポート対象の暗号化モードを有効にします。あらゆるトラフィック経路が自動的に暗号化されるわけではありません |
+| IPsec | 文書に記載された鍵Secret、鍵の配布/ローテーション、互換性のあるモードが必要です。Helmの有効化フラグだけでは不十分です |
+| XDP/DSR/BBR | 個別のデバイス/カーネル/トポロジーに依存する選択肢であり、汎用のインストールプリセットではありません |
 
-## ネットワークポリシー
+## NetworkPolicy
 
-Kubernetesの`networking.k8s.io/v1` NetworkPolicyとCiliumの`cilium.io/v2`ポリシーは異なるAPIです。複数のallowポリシーは組み合わさる場合があります。以下の例は**別々に準備したテストNamespace**を使うため、L4許可がL7制限を意図せず迂回することはありません。結論を出す前に、実際のエンドポイントを選択するすべてのポリシーを確認してください。
+Kubernetesの`networking.k8s.io/v1` NetworkPolicyとCiliumの`cilium.io/v2`ポリシーは別々のAPIです。複数のallowポリシーは組み合わされる場合があります。以下の例では、L4のallowによってL7の制限が気付かないうちに迂回されないよう、**事前に準備した別々のテストnamespace**を使用しています。結論を出す前に、実際のエンドポイントを選択するすべてのポリシーを確認してください。
 
 ### L4の例
 
-`cilium-l4-demo`では、次のポリシーがバックエンドPodを選択し、同じNamespaceのフロントエンドPodからのTCP 8080 ingressを許可します。
+`cilium-l4-demo`では、バックエンドPodを選択し、同じnamespaceのフロントエンドPodからのTCP 8080へのingressを許可します。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -260,7 +261,7 @@ spec:
 
 ### HTTPの例
 
-別の`cilium-l7-demo` Namespaceでは、次のポリシーがバックエンドPodを選択し、そのNamespace内のフロントエンドPodから指定されたmethod／pathへの平文HTTP（TCP 8080）だけを許可します。選択したCNIモードでL7 proxyが利用可能でなければなりません。対応する終端設定なしに、暗号化されたHTTPが自動的に検査されるわけではありません。
+別の`cilium-l7-demo`namespaceでは、バックエンドPodを選択し、そのnamespace内のフロントエンドPodからの平文HTTPについて、TCP 8080上で指定されたメソッド/パスのみを許可します。選択したCNIモードでL7プロキシが利用できる必要があります。サポート対象の終端設定がなければ、暗号化されたHTTPが自動的に検査されることはありません。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -287,11 +288,11 @@ spec:
           path: ^/api/v1/products$
 ```
 
-同じpeer／ポートに一致する、制限のないL4許可を追加しないでください。Ciliumの説明では、そのような許可がより狭いL7制限の効果をなくします。L7の拒否はパケット破棄ではなくHTTP 403を返す場合があります。実際のエンドポイントIDを使って、許可されるGETと拒否されるmethod／pathをテストしてください。
+同じpeer/ポートに対して、該当する無制限のL4 allowを追加しないでください。Ciliumの説明によると、そのようなallowを設定すると、より限定的なL7制限の効果がなくなります。L7で拒否した場合、パケットをドロップするのではなくHTTP 403を返すことがあります。実際のエンドポイントIDを使って、許可されるGETリクエストと拒否されるメソッド/パスをテストしてください。
 
-### DNS／FQDNの例
+### DNS/FQDNの例
 
-`cilium-dns-demo`では、通常のCoreDNS PodへのDNS問い合わせと、`api.example.com`で学習したアドレスへのTCP 443を許可します。これは例示用ドメインです。承認された宛先に置き換えてください。広範な`*.amazonaws.com`ワイルドカードはアカウント／リソースの境界ではないため、例から省いています。
+`cilium-dns-demo`では、通常のCoreDNS PodへのDNSクエリと、`api.example.com`について学習したアドレスへのTCP 443を許可します。ドメインは例です。承認済みの宛先に置き換えてください。広範な`*.amazonaws.com`ワイルドカードはアカウント/リソースの境界にはならないため、省略しています。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -323,19 +324,19 @@ spec:
         protocol: TCP
 ```
 
-DNSワイルドカードは、選択されたResolverへの問い合わせを許可するものであり、返されるすべてのアドレスへの接続を許可するものではありません。ただし、任意のDNS名を問い合わせられる可能性はあるため、必要に応じてDNS検索サフィックスを考慮して問い合わせ名を制限してください。NodeLocal DNSや別Resolverでは適切な宛先選択が必要です。FQDNポリシーはDNS由来のIP認可であり、TLSホスト名検証やHTTP URLの認可ではありません。共有IPやアプリケーションのTLS／認証も引き続き考慮してください。
+DNSワイルドカードで許可されるのは選択したresolverへのクエリであり、応答されたすべてのアドレスへの接続ではありません。ただし、任意のDNS名を問い合わせられる可能性はあるため、必要に応じてDNS search suffixを考慮しながらクエリ名を制限してください。NodeLocal DNSや別のresolverを使用する場合は、適切な宛先選択が必要です。FQDNポリシーはDNSから導出したIPアドレスに対する認可であり、TLSホスト名の検証やHTTP URLの認可ではありません。共有IPが使われる場合や、アプリケーションのTLS/認証がある場合も考慮してください。
 
 ## Hubbleによる可観測性
 
-上記のcluster-pool設定ではRelay／UIとコンポーネントメトリクスが有効になります。既存インストールでは、意図したHubble設定を管理者経由で適用してください。`cilium hubble enable --ui`はサポート対象の簡便コマンドですが、`cilium hubble enable --metrics=...`は0.20.1 CLIのサポート対象フラグではありません。Helm値の`hubble.metrics.enabled`を設定してください。旧`http`と`httpV2`のハンドラーを同時に有効化しないでください。
+上記のcluster-pool valuesでは、Relay/UIとコンポーネントのメトリクスが有効になります。既存のインストールでは、意図したHubbleのvaluesを設定の管理主体を通じて適用してください。`cilium hubble enable --ui`はサポート対象の便利なコマンドですが、`cilium hubble enable --metrics=...`は0.20.1 CLIでサポートされているフラグではありません。代わりに、Helm valuesで`hubble.metrics.enabled`を設定してください。レガシーの`http`と`httpV2`ハンドラーを同時に有効化しないでください。
 
-1つ目の端末でRelayへのport-forwardを実行したままにします。
+1つ目のターミナルでは、Relayのポートフォワードを実行したままにします。
 
 ```bash
 cilium hubble port-forward --port-forward 4245
 ```
 
-Hubble CLIをインストールした別の端末で、次を実行します。
+Hubble CLIをインストールした別のターミナルで、次のコマンドを実行します。
 
 ```bash
 hubble observe --server 127.0.0.1:4245 --namespace cilium-l7-demo
@@ -345,20 +346,20 @@ hubble observe --server 127.0.0.1:4245 --verdict DROPPED
 hubble observe --server 127.0.0.1:4245 --http-status 403
 ```
 
-このローカル例はRelayのデフォルトサーバー設定を前提とします。RelayでTLSを有効にした場合、対応するクライアントの信頼設定／認証が必要です。HTTPイベントには、設定済みのL7 proxyを通る通信が必要です。`DROPPED`はデータパスの判定であり、アプリケーションリクエストの失敗すべてを意味するわけではありません。UIのport-forwardには`cilium hubble ui`を使い、Prometheusのターゲット検出は別途設定します。Hubbleのフローストリーミングだけで分散アプリケーショントレースが実現するわけではありません。
+このローカルの例では、デフォルトのRelay server設定を前提としています。TLS有効のRelayでは、対応するクライアント側の信頼設定/認証が必要です。HTTPイベントが生成されるには、設定済みのL7プロキシをトラフィックが通過する必要があります。`DROPPED`はdatapathの判定であり、アプリケーションの失敗すべてを示すものではありません。UIのポートフォワードには`cilium hubble ui`を使用し、メトリクスについてはPrometheusのターゲット検出を別途設定してください。Hubbleのフローストリーミングだけでは、分散アプリケーションのトレーシングにはなりません。
 
 ## テストと運用
 
-接続性／性能のコマンドはテスト用ワークロードを作成し、ポリシーを変更したり大量のトラフィックを生成したりする場合があります。レビュー済みのテストNamespace／環境と必要な権限を使ってください。この監査ではクラスター上で実行していません。
+接続性/性能のコマンドはテスト用ワークロードを作成する場合があり、ポリシーを変更したり、大量のトラフィックを生成したりする可能性があります。レビュー済みのテストnamespace/環境と適切な権限を使用してください。この監査では、クラスターに対してこれらのコマンドを実行していません。
 
 ```bash
 cilium connectivity test --help
 cilium connectivity perf --help
 ```
 
-性能測定を実行するサブコマンドは`cilium connectivity perf`です。`connectivity test --test=performance`はテスト名のフィルターを渡すだけで、性能測定の実行コマンドではありません。スループット／レイテンシーを比較する前に、ソフトウェアバージョン、トポロジー、トラフィック、生の結果を記録してください。
+性能サブコマンドは`cilium connectivity perf`です。`connectivity test --test=performance`はテスト名のフィルターを指定するだけで、性能テストの実行コマンドではありません。スループット/レイテンシを比較する前に、ソフトウェアバージョン、トポロジー、トラフィック、未加工の結果を記録してください。
 
-調査時には、管理CLIと**Agent側の`cilium-dbg`を区別してください**。
+調査では、管理CLIと**agent側の`cilium-dbg`を区別してください**。
 
 ```bash
 cilium status --verbose
@@ -373,50 +374,50 @@ kubectl exec -n kube-system "$CILIUM_POD" -c cilium-agent -- cilium-dbg metrics 
 kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200 --timestamps
 ```
 
-管理CLIの`cilium endpoint list`、`cilium bpf maps list`、`cilium metrics list`は、それぞれ対応する同等コマンドではありません。`cilium sysdump`は診断資料を収集できます。生成されたインフラ情報／ログを保護してください。AgentがReadyであることやスクレイプに成功したことは、アプリケーション試験や拒否ポリシー試験の代わりにはなりません。
+`cilium endpoint list`、`cilium bpf maps list`、`cilium metrics list`は、管理CLIにおける同等のコマンドではありません。`cilium sysdump`で診断情報を収集できます。生成されたインフラストラクチャ/ログデータは適切に保護してください。agentがReadyであることやスクレイピングに成功したことは、アプリケーションテストや拒否側のポリシーテストの代わりにはなりません。
 
 ### 運用上の優先事項
 
-- map preallocation、XDP、DSR、BBR、固定デバイスパターンを有効にする前に測定してください。リソース消費やパケット経路の変更があり、機能ごとの確認が必要です。
-- 対象範囲を選んでdefault-denyを導入し、DNS、API、Identity、アプリケーションの依存関係を明示的に許可してください。既存接続だけでなく、新しいPodとアップグレード時の移行も確認します。
-- 暗号化、証明書／鍵のローテーション、ポリシー適用、可観測性を別々の受け入れ試験として扱います。管理／復旧経路を利用できる状態に保ってください。
-- 現行のプラットフォームマトリクスとサポート対象のアップグレード経路を確認してください。過去のリリース発表だけでは、現在のデプロイ互換性は確認できません。
+- mapの事前割り当て、XDP、DSR、BBR、固定デバイスパターンを有効にする前に測定してください。これらはリソースを消費したりパケット経路を変えたりするため、機能ごとの確認が必要です。
+- デフォルト拒否は、DNS、API、ID、アプリケーションの依存関係を明示的に許可したうえで、対象範囲を選んで導入してください。確立済みの接続だけでなく、新しいPodやアップグレード時の移行も確認してください。
+- 暗号化、証明書/鍵のローテーション、ポリシー適用、可観測性は別々の受け入れ確認項目として扱ってください。利用可能な管理/復旧経路を維持してください。
+- 最新のプラットフォームマトリクスとサポート対象のアップグレード経路を確認してください。過去のリリース発表だけでは、現在のデプロイ互換性は確認できません。
 
-## 詳細目次
+## 詳細解説の目次
 
-**[Ciliumの紹介と基本概念](01-introduction.md)**
+**[Ciliumの概要と基本概念](01-introduction.md)**
 - Ciliumの概要と歴史
-- コンテナネットワークの基礎
-- CNI（Container Network Interface）の理解
-- Cilium独自の機能
+- コンテナネットワーキングの基本
+- CNI（Container Network Interface）を理解する
+- Ciliumの差別化要因
 
-**[eBPF技術の詳細](02-ebpf.md)**
-- eBPF技術の紹介と歴史
-- カーネル内でのeBPFの動作
+**[eBPF技術の詳細解説](02-ebpf.md)**
+- eBPF技術の概要と歴史
+- カーネル内部でのeBPFの動作
 - eBPFプログラムの種類とマップ
-- CiliumでのeBPFの利用
+- CiliumでのeBPFの活用
 
-**[ネットワークモデルとVXLAN](03-networking.md)**
-- コンテナネットワークモデルの比較
-- VXLAN技術の詳細
-- Ciliumのオーバーレイネットワーク
-- 性能の最適化手法
-- カプセル化とNative routingのルーティング方式
-- クラウド事業者のネットワーク（AWS ENI、Google Cloud）
+**[ネットワーキングモデルとVXLAN](03-networking.md)**
+- コンテナネットワーキングモデルの比較
+- VXLAN技術の詳細解説
+- Ciliumのオーバーレイネットワーキング
+- 性能最適化の手法
+- ルーティング方式（カプセル化とネイティブルーティング）
+- クラウドプロバイダーのネットワーキング（AWS ENI、Google Cloud）
 
 **[IPAMとネットワークポリシー](04-ipam-policy.md)**
-- IPアドレス管理（IPAM）の戦略
-- KubernetesとCilium IPAMの連携
+- IPアドレス管理（IPAM）の方式
+- KubernetesとCiliumのIPAM統合
 - ネットワークポリシーの設計と実装
-- マルチクラスターの構成
+- マルチクラスターのシナリオ
 - IPAMモードの詳細（Cluster Scope、Kubernetes Host Scope、Multi-Pool）
-- クラウドIPAM（Azure IPAM、AWS ENI、GKE）
+- クラウドプロバイダーのIPAM（Azure IPAM、AWS ENI、GKE）
 - CRDベースのIPAM
 
-**[L2～L7ネットワークとロードバランシング](05-l2-l7-networking.md)**
-- OSIモデルの各層（L2、L3、L4、L7）
+**[L2-L7ネットワーキングとロードバランシング](05-l2-l7-networking.md)**
+- OSI参照モデルの各レイヤー（L2、L3、L4、L7）
 - Ciliumのレイヤー別機能
-- Service Meshとの連携
+- Service meshとの統合
 - ロードバランシングのアーキテクチャ
 - マスカレードの設定と実装モード
 - IPv4フラグメントの処理
@@ -424,62 +425,62 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 **[セキュリティと可視性](06-security-visibility.md)**
 - Ciliumのセキュリティ機能
 - ネットワークの可視性と監視
-- Hubbleのアーキテクチャと利用方法
-- リアルタイム脅威検出
+- Hubbleのアーキテクチャと使い方
+- リアルタイムの脅威検出
 
-**[高度なトピックと実例](07-advanced-topics.md)**
-- 性能調整とトラブルシューティング
-- 大規模デプロイメントの戦略
-- 実際のユースケース
-- 今後のロードマップと開発方針
+**[高度なトピックと実際の事例](07-advanced-topics.md)**
+- 性能のチューニングとトラブルシューティング
+- 大規模デプロイ戦略
+- 実際のユースケース事例
+- 今後のロードマップと開発の方向性
 
-**[eBPFデータパス内部](08-ebpf-datapath-internals.md)**
-- プログラムセット、アタッチポイント、テールコール
-- BPFマップ一覧、サイズ設定、コンパイル／ロードの流れ
-- ポリシー適用経路とHubbleイベントパイプライン
+**[eBPF datapathの内部](08-ebpf-datapath-internals.md)**
+- プログラムセット、アタッチポイント、tail call
+- BPF mapの一覧、サイズ設定、コンパイル/ロードの流れ
+- ポリシー適用の経路とHubbleイベントのパイプライン
 
-**[オーバーレイとNative routing](09-overlay-native-routing.md)**
-- VXLAN／Geneve、VNI内のIdentity、MTU、パケット経路
-- Native routing、マスカレード、ホストルーティング、DSR、netkit
-- EKSの選択表：overlay、ENI、VPC CNI chaining
+**[オーバーレイとネイティブルーティング](09-overlay-native-routing.md)**
+- VXLAN/Geneve、VNI内のID、MTU、パケットの経路
+- ネイティブルーティング、マスカレード、ホストルーティング、DSR、netkit
+- EKSの選択表：オーバーレイ、ENI、VPC CNI chaining
 
-**[IPAMの詳細](10-ipam-deep-dive.md)**
-- すべてのIPAMモード、容量計算、選定表
-- Multi-Pool、`CiliumPodIPPool`、ENI、LB IPAM、Node IPAM
-- IP枯渇のトラブルシューティングと1.21 API変更
+**[IPAM詳細解説](10-ipam-deep-dive.md)**
+- すべてのIPAMモード、サイズ計算、選択マトリクス
+- Multi-pool、`CiliumPodIPPool`、ENI、LB IPAM、Node IPAM
+- 枯渇時のトラブルシューティングと1.21のAPI変更
 
-**[BGP、LoadBalancer IP、egress](11-bgp-lb-egress-edge.md)**
-- BGP Control Plane v2 CRD、広告、確認方法
-- L2 announcements、Egress Gateway、Local Redirect Policy
-- Gateway APIの要件とEKSでの内部限定公開
+**[BGP、ロードバランサーIP、egress](11-bgp-lb-egress-edge.md)**
+- BGP Control Plane v2 CRD、広告、確認
+- L2アナウンス、Egress Gateway、Local Redirect Policy
+- Gateway APIの要件とEKSでの内部向け公開
 
-**[mTLS、暗号化、Identity](12-mtls-encryption-identity.md)**
-- Identityモデル、ポリシーの意味、監査モード
-- Mutual Authenticationの時系列、ztunnelワークロードmTLS
+**[mTLS、暗号化、ID](12-mtls-encryption-identity.md)**
+- IDモデル、ポリシーの意味、監査モード
+- 相互認証の変遷、ztunnelによるワークロードmTLS
 - WireGuard、IPsec、Hubble、証明書管理
 
-**[バージョン、インストール／アップグレード、Cluster Mesh](13-clustermesh-install-upgrade.md)**
-- 1.17～1.21の機能マトリクス、アップグレード／ロールバック規則
-- EKSのインストール詳細、Cluster Mesh、MCS-API
+**[バージョン、インストール/アップグレード、Cluster Mesh](13-clustermesh-install-upgrade.md)**
+- 1.17～1.21の機能マトリクス、アップグレードとロールバックのルール
+- EKSへのインストールの詳細、Cluster Mesh、MCS-API
 
 ## 追加リソース
 
-- [ネットワーク概念の詳細](networking-concepts.md)
+- [ネットワーキング概念の詳細解説](networking-concepts.md)
 - [用語集と略語](glossary.md)
 
 ## 参考資料
 
-- [Cilium 1.20のKubernetes互換性](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
-- [Ciliumシステム要件](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [Cilium 1.20とKubernetesの互換性](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
+- [Ciliumのシステム要件](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
 - [EKSの前提条件](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)
 - [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)
 - [AWSの代替CNIサポート](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
 - [AWS Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 - [Cilium L7ポリシーの仕様](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
 - [Hubbleプロジェクト](https://github.com/cilium/hubble)
-- [Flannelのネットワークとポリシー連携](https://github.com/flannel-io/flannel)
-- [Calico比較用語](../calico/glossary.md)
+- [Flannelのネットワーキングとポリシー統合](https://github.com/flannel-io/flannel)
+- [Calico比較用語集](../calico/glossary.md)
 
 ## クイズ
 
-このセクションの理解度を確認するには、[Cilium詳説クイズ](../../quizzes/networking/cilium/01-introduction-quiz.md)に挑戦してください。
+このセクションで学んだ内容を確認するには、[Cilium詳細解説クイズ](../../quizzes/networking/cilium/01-introduction-quiz.md)に挑戦してください。

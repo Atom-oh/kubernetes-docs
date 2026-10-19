@@ -1,70 +1,70 @@
 # OpenTelemetry
 
-> **レビュー基準**: Collector Contrib 0.160.0; Operator 0.158.0; 言語バージョンは以下を参照
-> **最終更新**: 2026 年 10 月 12 日
+> **レビュー基準**: Collector Contrib 0.160.0、Operator 0.158.0、以下の言語バージョン  
+> **最終更新日**: 2026年10月19日
 
 ## はじめに
 
-OpenTelemetry (OTel) は、クラウドネイティブソフトウェア向けのオブザーバビリティフレームワークです。Traces、Metrics、Logs という 3 つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。2026 年 7 月 24 日付の CNCF 回顧記事では、貢献の速度が Kubernetes に次いで高いとされています。プロジェクトの成熟度と、個々の SDK/コンポーネントの安定性は別のものです。
+OpenTelemetry（OTel）は、クラウドネイティブソフトウェア向けのオブザーバビリティフレームワークです。トレース、メトリクス、ログという3つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。2026年7月24日付のCNCFの振り返り記事では、コントリビューションの勢いでKubernetesに次ぐプロジェクトと評されました。プロジェクトの成熟度と、個々のSDK／コンポーネントの安定性は別のものです。
 
-### 2026 年 7 月の更新: CNCF Graduation
+### 2026年7月の更新: CNCFの卒業
 
-OpenTelemetry は **2026 年 5 月**に CNCF の **graduated** ステータスを達成しました。7 月 24 日の記事はその回顧です。これは Foundation の最高成熟度レベルであり、Kubernetes や Prometheus などのプロジェクトも保持しています。Graduation は、プロジェクトのガバナンス、セキュリティプラクティス、採用状況が本番利用向けに検証されたことを示します。回顧では、GenAI semantic conventions、ブラウザ/モバイルのオブザーバビリティ、スキーマのガバナンスとロールアウトツールについて扱っています。背景とロードマップは CNCF ブログ記事の ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) を参照してください。
+OpenTelemetryは**2026年5月**にCNCFの**卒業**（graduated）ステータスを達成しました。7月24日の記事は、その振り返りです。これは財団における最高の成熟度レベルで、KubernetesやPrometheusなどのプロジェクトも同じステータスです。卒業は、プロジェクトのガバナンス、セキュリティ慣行、導入状況が本番利用に適しているか審査されたことを示します。振り返りでは、GenAIのセマンティック規約、ブラウザー／モバイルのオブザーバビリティ、Schemaのガバナンス、ロールアウト用ツールについて論じています。背景とロードマップについては、CNCFブログ記事「[OpenTelemetry has graduated… Now what?](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)」を参照してください。
 
-## OpenTelemetry とは
+## OpenTelemetryとは？
 
-OpenTelemetry は OpenTracing と OpenCensus プロジェクトの統合から生まれました。
+OpenTelemetryは、OpenTracingプロジェクトとOpenCensusプロジェクトの統合から生まれました。
 
-![歴史的なマイルストーンには、OpenTracing の CNCF 参加（2016 年）、OpenCensus Go リポジトリ（2017 年）、OpenTelemetry の統合（2019 年）、続く Specification、SDKs、Collector、Protocol が含まれます。](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
+![OpenTracingのCNCFへの参加（2016年）、OpenCensus Goリポジトリ（2017年）、OpenTelemetryの統合（2019年）から、Specification、SDK、Collector、Protocolへと続く歴史的なマイルストーン。](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-0.html)
 
 ## コアコンセプト
 
-### 3 つのシグナル
+### 3つのシグナル
 
-この章では、traces、metrics、logs に焦点を当てます。Profiling も発展中のシグナルですが、サポートと安定性は実装によって異なります。Trace/log ID と metric exemplars には、適切な instrumentation と backend の設定が必要です。
+この章ではトレース、メトリクス、ログを扱います。プロファイリングも発展途上のシグナルの1つですが、サポート状況と安定性は実装によって異なります。トレース／ログのIDやメトリクスのエグザンプラーを利用するには、適切な計装とバックエンドの設定が必要です。
 
 | シグナル | 説明 | ユースケース |
 |--------|-------------|-----------|
-| **Traces** | 分散リクエストトレーシング | レイテンシー分析、依存関係マッピング |
-| **Metrics** | 数値測定値 | リソース使用量、SLI/SLO |
-| **Logs** | イベント記録 | デバッグ、監査 |
+| **トレース** | 分散リクエストのトレーシング | レイテンシ分析、依存関係のマッピング |
+| **メトリクス** | 数値による測定値 | リソース使用量、SLI/SLO |
+| **ログ** | イベントの記録 | デバッグ、監査 |
 
 ### コアコンポーネント
 
-![アプリケーションコードは OTel API と SDK を通じてテレメトリーを生成し、受信・処理・エクスポートのパイプラインを経て、Tempo、Prometheus、Loki、X-Ray、Datadog の 5 つのオブザーバビリティ backend に分岐します。](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
+![アプリケーションコードがOTel APIとSDKを通じてテレメトリを出力し、受信・処理・エクスポートのパイプラインを経て、Tempo、Prometheus、Loki、X-Ray、Datadogの5つのオブザーバビリティバックエンドに分配する。](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-2.html)
 
-図はシグナル別の backend 選択肢を示しています。有効になるのは設定済みの exporter だけであり、以下の基本例ですべての vendor が自動的に有効になるわけではありません。
+図にはシグナルごとのバックエンドの選択肢が示されています。有効になるのは設定済みのエクスポーターのみです。以下の基本例では、すべてのベンダーが自動的に有効になるわけではありません。
 
 
 ## OpenTelemetry SDK
 
-Collector、Operator、Java agent、言語 SDK のバージョン番号は独立しています。これらの Linux workload テンプレートは Kubernetes 1.35 スキーマに対して確認されています。アプリケーションイメージ、namespace、証明書、宛先 Service は、それぞれの所有者が準備する必要があります。より広範な Operator マトリクスが、native sidecars などレシピ固有の要件をなくすわけではありません。ローカルチェックは、デプロイ済み EKS アプリケーションを保証するものではありません。
+Collector、Operator、Java agent、各言語のSDKには、それぞれ独立したバージョン番号があります。以下のLinuxワークロードテンプレートは、Kubernetes 1.35のSchemaに照らして確認済みです。アプリケーションイメージ、名前空間、証明書、接続先Serviceは、それぞれの所有者が準備する必要があります。Operator全体の互換性マトリクスを確認しても、ネイティブサイドカーなど、レシピ固有の要件がなくなるわけではありません。ローカルでの確認は、EKSにアプリケーションがデプロイ済みであることを示すものではありません。
 
-| コンポーネント | 基準と境界 |
+| コンポーネント | 基準と範囲 |
 |---|---|
-| スタンドアロン Collector Contrib | 0.160.0; 実際の binary でコンポーネントとスキーマを確認 |
-| Operator | 0.158.0; 互換性テーブルには Kubernetes 1.25–1.36 および cert-manager v1 が記載されている |
-| Java agent | 2.31.1、対象 SDK は 1.65.0; Operator のデフォルト Java イメージと同じバージョンではない |
-| Python | SDK/exporter 1.44.0、instrumentation/distro 0.65b0; Python ≥3.10 |
-| Node.js CommonJS の例 | SDK-node 0.220.0、auto-instrumentations-node 0.78.0、resources 2.9.0、API 1.9.1 |
+| スタンドアロンCollector Contrib | 0.160.0。実際のバイナリでコンポーネントとSchemaを確認済み |
+| Operator | 0.158.0。互換性表ではKubernetes 1.25～1.36およびcert-manager v1を対象としている |
+| Java agent | 2.31.1、対象SDKは1.65.0。OperatorのデフォルトJavaイメージと同じバージョンではない |
+| Python | SDK/exporter 1.44.0、instrumentation/distro 0.65b0。Python ≥3.10 |
+| Node.js CommonJSの例 | SDK-node 0.220.0、auto-instrumentations-node 0.78.0、resources 2.9.0、API 1.9.1 |
 
-Operator のデフォルトは Collector 0.158.0 です。以下のスタンドアロン 0.160.0 workloads は、Operator 管理下の Collector のアップグレードではありません。サポート対象 EKS バージョンとの共通範囲を確認してください。最新の Kubernetes リリースが自動的に Operator マトリクスに含まれるわけではありません。
+OperatorのデフォルトはCollector 0.158.0です。以下のスタンドアロン版0.160.0のワークロードは、Operator管理のCollectorをアップグレードするものではありません。サポート対象のEKSバージョンとの共通範囲を確認してください。最新のKubernetesリリースが、必ずOperatorの互換性マトリクスに含まれるとは限りません。
 
-### Auto-instrumentation
+### 自動計装
 
-2026 年 10 月 12 日時点で、EKS の標準サポート対象は 1.34–1.37 です。Kubernetes 1.35 のスキーマ基準はこの範囲と Operator の互換性マトリクスに含まれますが、稼働環境でのプラットフォームやアドオンの受け入れ確認に代わるものではありません。
+2026年10月12日時点で、EKSの標準サポート対象には1.34～1.37が含まれます。Schemaの基準である1.35はこの範囲とOperatorの互換性マトリクスの両方に含まれていますが、実際のプラットフォーム／アドオンでの受け入れ確認は別途必要です。
 
-ゼロコード instrumentation はサポート対象ライブラリをフックしますが、任意のビジネス操作を検出するものではありません。プロセスには、直接準備した agent/launcher または Operator injection のいずれかを選んでください。すでに設定済みの provider 上で 2 つ目の SDK を初期化しないでください。以下のアプリケーションイメージは、起動コマンドと依存関係を含む、独自のビルド用プレースホルダーです。
+ゼロコード計装は、サポート対象ライブラリにフックします。任意のビジネスオペレーションを自動検出するものではありません。プロセスごとに、あらかじめ準備したagent／launcherを直接使うか、Operatorによるインジェクションを選択してください。すでに設定済みのproviderに、2つ目のSDKを初期化しないでください。以下のアプリケーションイメージは、起動コマンドと依存関係を含め、独自にビルドするイメージのプレースホルダーです。
 
-`ecommerce` namespace と、そこに `ca.crt`、`tls.crt`、`tls.key` を含む `otel-client-tls` Secret を準備してください。client 証明書は Collector に受け入れられ、Collector の証明書は `otel-collector.otel.svc.cluster.local` と一致する必要があります。Secret ファイルは読み取り専用でマウントされます。UID/GID のアクセス権はイメージに合わせて調整してください。環境変数には、キーの内容や bearer token ではなく、証明書の**パス**だけを指定します。これらのテンプレートは TLS ポート 4318 上の OTLP HTTP/protobuf を使用します。
+`ecommerce`名前空間を準備し、そこに`ca.crt`、`tls.crt`、`tls.key`を含む`otel-client-tls` Secretを作成します。クライアント証明書はCollectorに受け入れられる必要があります。また、Collectorの証明書は`otel-collector.otel.svc.cluster.local`と一致している必要があります。Secretのファイルは読み取り専用でマウントされます。イメージに応じてUID/GIDのアクセス権を調整してください。環境変数に含まれるのは証明書の**パス**だけであり、鍵の内容やBearer tokenではありません。これらのテンプレートでは、TLSの4318番ポートでOTLP HTTP/protobufを使用します。
 
-#### Java Auto-instrumentation
+#### Javaの自動計装
 
-固定した agent をアプリケーションビルドにダウンロードし、release asset のチェックサムを確認してください。2.31.1 の JAR は 25,107,554 バイトであり、Kubernetes の 1 MiB ConfigMap 上限を超えます。イメージに含めるか Operator injection を使用してください。ConfigMap は agent binary の配布メカニズムではありません。
+バージョンを固定したagentをアプリケーションのビルドにダウンロードし、リリースアセットのチェックサムを確認してください。2.31.1のJARは25,107,554バイトで、KubernetesのConfigMap上限である1 MiBを超えています。イメージに含めるか、Operatorによるインジェクションを利用してください。ConfigMapはagentバイナリの配布手段ではありません。
 
 
 ```bash
@@ -79,7 +79,7 @@ printf '%s  %s\n' \
 # Add to the application's existing Dockerfile; not a complete image build.
 COPY opentelemetry-javaagent.jar /opt/otel/opentelemetry-javaagent.jar
 ```
-既存の `JAVA_TOOL_OPTIONS` がある場合は agent オプションを統合し、アプリケーションの JVM オプションを破棄しないでください。Deployment selector と Pod labels は一致する必要があります。
+agentのオプションは、既存の`JAVA_TOOL_OPTIONS`と統合してください。アプリケーションのJVMオプションを破棄しないでください。DeploymentのselectorとPodのラベルは一致している必要があります。
 
 
 ```yaml
@@ -141,9 +141,9 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-#### Python Auto-instrumentation
+#### Pythonの自動計装
 
-Flask アプリケーションの場合、対応するパッケージをビルド環境にインストールし、解決されたアプリケーション依存関係をロックしてください。他の framework では対応する instrumentation パッケージが必要です。この例では、Python HTTP のデフォルトを gRPC ポート 4317 へ送信するのではなく、HTTP exporter を明示的に選択しています。
+Flaskアプリケーションの場合は、ビルド環境に互換性のあるパッケージをインストールし、解決済みのアプリケーション依存関係をロックしてください。他のフレームワークでは、それぞれに対応したinstrumentationパッケージが必要です。この例ではHTTP exporterを明示的に選択し、PythonのHTTPデフォルトがgRPCの4317番ポートに送信されないようにしています。
 
 
 ```bash
@@ -215,7 +215,7 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-#### Node.js Auto-instrumentation
+#### Node.jsの自動計装
 
 
 ```bash
@@ -225,7 +225,7 @@ npm install --save-exact \
   @opentelemetry/auto-instrumentations-node@0.78.0
 # Commit package-lock.json and use npm ci for subsequent application builds.
 ```
-`tracing.cjs` として保存し、application/framework modules より前にロードします。これは CommonJS の例です。ESM のロードには言語ガイドの別セットアップが必要です。SDK は、以下で明示された OTEL exporter/TLS 環境変数を読み取ります。プログラムによる metric readers には、非推奨の単数オプションに代わる `metricReaders` を現在の設定で使用します。アプリケーション自身のリクエストドレイン手順の後に `shutdownTelemetry()` を統合してください。
+これを`tracing.cjs`として保存し、アプリケーション／フレームワークのモジュールより前に読み込んでください。これはCommonJSの例です。ESMで読み込む場合は、言語ガイドにある別の設定が必要です。SDKは、以下で明示するOTEL exporter／TLS環境変数を読み取ります。メトリクスリーダーをプログラムで設定する場合、現在の設定では非推奨の単数形オプションに代わって`metricReaders`を使用します。アプリケーション独自のリクエスト排出処理の後に`shutdownTelemetry()`を組み込んでください。
 
 
 ```javascript
@@ -316,15 +316,15 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-これらの例では、意図的に `OTEL_LOGS_EXPORTER=none` を設定しています。log exporter を有効にしてもアプリケーション stdout は tail されません。適切な logging bridge/handler または log collector をインストールし、最初に payload の露出を確認してください。`parentbased_always_on` sampler も、サンプリングされていない親を尊重します。代わりに 10% の head sampling を選択した場合、tail Collector は破棄された span を復元できません。
+これらの例では、意図的に`OTEL_LOGS_EXPORTER=none`を設定しています。ログexporterを有効にしても、アプリケーションの標準出力を末尾から読み取るわけではありません。適切なロギングブリッジ／ハンドラーまたはログコレクターをインストールし、まずペイロードの露出を確認してください。`parentbased_always_on`サンプラーも、サンプリングされていない親の状態を尊重します。代わりに10%のヘッドサンプリングを選択した場合、tail Collectorが破棄されたスパンを復元することはできません。
 
-### Manual Instrumentation
+### 手動計装
 
-agent または application によって初期化された OpenTelemetry instance/provider を再利用してください。SDK provider がない場合、API 呼び出しは no-op になる可能性があります。これらの business-workflow span は INTERNAL です。instrumentation 済み HTTP/database client は独自の CLIENT span を作成し、context を伝播します。CLIENT span を手動で作成するだけでは、リクエストの送信も trace context の注入も行われません。
+agentまたはアプリケーションが初期化したOpenTelemetryインスタンス／providerを再利用してください。SDK providerがなければ、API呼び出しは何もしない場合があります。以下のビジネスワークフローのスパンはINTERNALです。計装済みのHTTP／データベースクライアントは独自のCLIENTスパンを作成し、コンテキストを伝搬します。CLIENTスパンを手動で作成するだけでは、リクエストの送信にもトレースコンテキストの注入にもなりません。
 
-#### Java Manual Instrumentation
+#### Javaの手動計装
 
-アプリケーションは inventory/payment callbacks を提供します。order/customer ID、金額、transaction ID、未加工の exception message は記録されません。これらは application operations であり、payment-service の実装やテスト済み Spring deployment ではありません。
+在庫／決済のコールバックはアプリケーション側で用意します。注文ID、顧客ID、金額、トランザクションID、生の例外メッセージは記録されません。以下はアプリケーションのオペレーションであり、決済サービスの実装でも、テスト済みのSpringデプロイメントでもありません。
 
 
 ```java
@@ -373,9 +373,9 @@ public final class OrderTelemetry {
     }
 }
 ```
-#### Python Manual Instrumentation
+#### Pythonの手動計装
 
-同期 decorator はネストした span を終了しつつ、結果とエラーを保持します。生の exception event の重複を避けるため、error type のみを記録します。async function には async 対応 wrapper が必要です。独自のパラメーター化された database lookup、validation、persistence、event-publishing callbacks を提供してください。ローカル検証では synthetic callbacks と in-memory exporter を使用しました。
+同期デコレーターは、ネストしたスパンを終了しながら、戻り値とエラーをそのまま維持します。生の例外イベントが重複しないよう、エラーの型だけを記録します。非同期関数には、非同期対応のラッパーが必要です。パラメーター化されたデータベース検索、検証、永続化、イベント公開のコールバックは独自に用意してください。ローカルでの検証には、合成コールバックとメモリー内exporterを使用しました。
 
 
 ```python
@@ -430,7 +430,7 @@ def create_user(user_data, validate, save, publish):
         publish(result)
     return result
 ```
-実際の database/message instrumentation では、`db.system.name`、`db.operation.name`、`messaging.destination.name` など、実装された convention version に従ってください。user ID を SQL telemetry strings にコピーしたり、未加工の query を metric labels として使用したりしないでください。上記の business callbacks は PostgreSQL または Kafka の実行を示すものではありません。
+実際のデータベース／メッセージ計装では、実装済みの規約バージョンに従ってください。たとえば、`db.system.name`、`db.operation.name`、`messaging.destination.name`などです。ユーザーIDをSQLテレメトリ文字列にコピーしたり、生のクエリをメトリクスラベルに使用したりしないでください。上記のビジネスコールバックは、PostgreSQLやKafkaが実行されたことを示すものではありません。
 
 ## OTEL Collector
 
@@ -452,15 +452,15 @@ flowchart TD
     L --> K["Loki native OTLP HTTP / mTLS"]
 ```
 
-以下の設定のシグナルルートです。trace-preprocessing ボックスは、2 つの独立した trace pipeline における同等の処理を要約しています。span metrics は tail sampling より前に分岐し、受信 metrics と logs はそれぞれ独自の pipeline を使用します。
+以下の設定におけるシグナルの経路です。トレース前処理のボックスは、2つの独立したトレースパイプラインにおける同等の処理をまとめて示しています。スパンメトリクスはtail samplingより前に分岐します。受信したメトリクスとログは、それぞれ独自のパイプラインを通ります。
 
-### Collector の設定
+### Collectorの設定
 
-`otel-collector-config.yaml` として保存してください。これはラボ向けの単一のアクティブな stateful sampling/aggregation instance であり、HA/capacity を保証するものではありません。別の trace pipeline は **tail sampling より前**に metrics を生成します。head-sampled または filter された span は、これらの metrics にも含まれません。これらの counters は一意の end-user requests ではなく観測された spans をカウントします。request SLIs には適切な span kinds と境界付き dimensions を選択してください。cumulative span-metric counters は 0.160.0 では最初にゼロを export します。最初の値をトラフィックなしと解釈する前に、後続の flush を評価してください。
+`otel-collector-config.yaml`として保存します。これはラボ向けの、サンプリング／集約を行う単一のアクティブなステートフルインスタンスであり、高可用性や処理能力を保証するものではありません。別のトレースパイプラインが、**tail samplingより前に**メトリクスを生成します。ヘッドサンプリングされたスパンやフィルターで除外されたスパンは、これらのメトリクスにも含まれません。これらのカウンターが数えるのは観測されたスパンであり、固有のエンドユーザーリクエストではありません。リクエストSLIには、適切なスパン種別と上限のあるディメンションを選んでください。0.160.0では、累積スパンメトリクスカウンターの初回エクスポート値は0です。初回の値をトラフィックなしと解釈する前に、その後のフラッシュを評価してください。
 
-OTLP 対応 Tempo、Prometheus 互換 remote-write receiver、および Loki の native OTLP ingestion を、運用者提供の TLS/authentication gateways とともに準備してください。以下の gateway 名の例は、このガイドが作成する Service ではありません。Prometheus では remote-write receiver を有効にする必要があります（Prometheus 自体を使用する場合は `--web.enable-remote-write-receiver`）。Loki の exporter base は `/otlp` で終わり、HTTP exporter が `/v1/logs` を追加します。必要に応じて Loki structured metadata と信頼済み tenant mapping を設定してください。tenant header は authentication ではありません。
+OTLP対応のTempo、Prometheus互換のremote-write receiver、LokiネイティブのOTLP取り込みを準備し、運用者が提供するTLS／認証ゲートウェイを用意してください。以下のゲートウェイ名は、このガイドで作成するServiceではありません。Prometheus自体を使う場合は、remote-write receiverを有効にする必要があります（`--web.enable-remote-write-receiver`）。Loki exporterのベースURLは`/otlp`で終わり、HTTP exporterが`/v1/logs`を追加します。必要に応じて、Lokiの構造化メタデータと信頼できるテナントマッピングを設定してください。テナントヘッダーは認証ではありません。
 
-環境変数は既存の証明書と endpoints を識別します。設定されたすべての receivers は mutual TLS を使用し、ワイルドカードの browser CORS や public profiling endpoint は有効化されません。名前付き属性の削除は限定的な制御であり、log bodies、span events、resource attributes、任意の payload の完全な redaction ではありません。SDK 側でもデータを最小化してください。
+環境変数は、既存の証明書とエンドポイントを指定します。設定済みのreceiverはすべて相互TLSを使用します。ワイルドカードのブラウザーCORSや公開されたプロファイリングエンドポイントは有効にしていません。指定した属性の削除は限定的な制御であり、ログ本文、スパンイベント、リソース属性、任意のペイロードを完全にマスキングするものではありません。SDK側でもデータを最小限にしてください。
 
 
 ```yaml
@@ -608,13 +608,13 @@ service:
                 host: 127.0.0.1
                 port: 8888
 ```
-positive sampling policies は、順序付き priority ladder ではなく OR 条件です。選択された services は baseline probability とは独立して保持できます。latency は厳密な `>1000 ms` 比較を使用します。timer-based decisions は trace の完了を証明せず、health filter はエラーがあっても一致する spans を意図的に除外します。個別の span を filtering すると、部分的な traces が残る可能性があります。
+サンプリングを行う正のポリシーはOR条件であり、優先順位の順に並ぶ段階ではありません。選択されたサービスは、ベースラインの確率とは独立して保持できます。レイテンシ条件は厳密な`>1000 ms`比較です。タイマーによる判定は、トレースが完了したことを証明するものではありません。また、ヘルスフィルターはエラーがある場合でも一致するスパンを意図的に除去します。個々のスパンをフィルタリングすると、不完全なトレースが残る場合があります。
 
-hard memory limit は 384 MiB、soft limit は 288 MiB で、テンプレート内の 512 MiB container limit より下に余裕を残しています。それでも拒否、retries、queues、bursts は測定が必要です。ここでの batch/trace/cardinality limits はデモ設定であり、benchmark 結果ではありません。
+ハードメモリ上限は384 MiB、ソフト上限は288 MiBです。これにより、テンプレート内のコンテナ上限512 MiBに対して余裕が確保されます。それでも、拒否、再試行、キュー、バーストは測定が必要です。ここでのバッチ／トレース／カーディナリティの上限はデモ用の設定であり、ベンチマーク結果ではありません。
 
-### 単一 instance の workload と設定
+### 単一インスタンスのワークロードと設定
 
-`otel` namespace と、`tls.crt`、`tls.key`、`ca.crt` を含む `otel-ingest-tls` / `otel-backend-tls` Secrets を準備してください。関連する Service/gateway 名と一致する certificate SANs、適切な trust bundle、正しい server/client usages を持つ証明書を使用してください。10001 UID/GID のファイルアクセスを調整してください。configuration map にはテキスト設定を含め、private keys は含めません。`Recreate` は、この単一 instance sampler の通常の rolling-surge overlap を停止時間と引き換えに回避しますが、restart をまたいで in-memory traces を保持するものではありません。
+`otel`名前空間を作成し、`tls.crt`、`tls.key`、`ca.crt`を含む`otel-ingest-tls`／`otel-backend-tls` Secretを準備します。関連するService／ゲートウェイ名と一致する証明書SAN、適切な信頼バンドル、サーバー／クライアントの用途が正しい証明書を使用してください。UID/GID 10001からアクセスできるよう調整します。ConfigMapに含めるのはテキスト形式の設定であり、秘密鍵ではありません。この単一インスタンスのsamplerでは、`Recreate`により通常のローリング更新で一時的に複数Podが重なることを避けられますが、ダウンタイムが発生します。また、再起動をまたいでメモリー内のトレースを保持することはできません。
 
 
 ```bash
@@ -756,24 +756,24 @@ spec:
     port: 4318
     targetPort: otlp-http
 ```
-### 任意の収集とエンリッチメント
+### オプションの収集とエンリッチメント
 
-| 要件 | 必要な個別設定 |
+| 要件 | 別途必要な設定 |
 |---|---|
-| Legacy Jaeger/Zipkin clients | それらの receiver components は引き続き利用可能です。必要な protocols/ports だけを有効にし、pipeline 内の receiver IDs を一致させてください。削除された Jaeger exporter ではなく、OTLP 経由で Jaeger に export してください。 |
-| Collector self-metrics | `service.telemetry.metrics.readers` は現在の Prometheus reader を設定します。古い `address` フィールドは削除されています。意図的に設計された monitor path を通じて loopback endpoint を scrape してください。 |
-| Kubernetes cluster metrics | 1 つのアクティブな `k8s_cluster` receiver を実行するか、その leader-elector extension を設定してください。API credentials とレビュー済み RBAC を提供してから、metrics pipeline に接続してください。上記のデフォルト tokenless workloads は、その前提条件を提供しません。 |
-| Node/container logs または host metrics | 適切な receiver、mounts、permissions を追加してください。DaemonSet だけでは収集されません。 |
-| EC2/EKS resource detection | 必要な detector とその metadata/API access を意図的に設定してください。workload identity を Collector host identity に置き換えないでください。 |
-| Span-derived metrics | 明示的な duration unit と境界付き dimensions で `span_metrics` connector を使用してください。古い spanmetrics processor は削除されています。 |
+| レガシーJaeger／Zipkinクライアント | それらのreceiverコンポーネントは引き続き利用できます。必要なプロトコル／ポートだけを有効にし、パイプライン内のreceiver IDを一致させてください。Jaegerへのエクスポートには、削除されたJaeger exporterではなくOTLPを使用してください。 |
+| Collectorのセルフメトリクス | `service.telemetry.metrics.readers`で現在のPrometheus readerを設定します。古い`address`フィールドは削除されています。意図して設計した監視経路を通じて、ループバックエンドポイントをスクレイプしてください。 |
+| Kubernetesクラスターメトリクス | アクティブな`k8s_cluster` receiverを1つ実行するか、そのleader-elector拡張機能を設定します。API認証情報とレビュー済みのRBACを用意し、メトリクスパイプラインに接続してください。上記のトークンを使用しないワークロードのデフォルト設定では、これらの前提条件は満たされません。 |
+| ノード／コンテナのログまたはホストメトリクス | 適切なreceiver、マウント、権限を追加してください。DaemonSetだけでは収集できません。 |
+| EC2/EKSのリソース検出 | 必要なdetectorとメタデータ／APIへのアクセスを意図的に設定してください。ワークロードIDをCollectorホストのIDに置き換えないでください。 |
+| スパンから生成するメトリクス | 明示的な継続時間単位と上限のあるディメンションを指定し、`span_metrics` connectorを使用します。古いspanmetrics processorは削除されています。 |
 
-[collector guide](../logging/05-collectors.md) および [Kubernetes cluster receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/receiver/k8sclusterreceiver) を参照してください。未使用の receiver/processor を宣言して、それが有効だと想定しないでください。
+[Collectorガイド](../logging/05-collectors.md)と[Kubernetes cluster receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/receiver/k8sclusterreceiver)を参照してください。使用していないreceiver／processorを宣言しただけで、有効になっていると考えないでください。
 
-## EKS Deployment Patterns
+## EKSのデプロイパターン
 
-これらは代替の deployment patterns であり、無差別に適用する stack ではありません。stateless relay は、3 つすべてのシグナルを上記の単一 sampling tier に転送します。tail sampling と span aggregation を、任意に load-balanced された node/sidecar/HPA tier から除外してください。複数の sampling instances には trace-ID-aware routing と、endpoint changes、in-flight traces、restarts、storage の計画が必要です。Service や HPA だけでは、これらのどれも提供しません。
+これらは代替となるデプロイパターンであり、無差別にすべて適用するための一式ではありません。ステートレスなrelayが、3つすべてのシグナルを上記の単一サンプリング層に転送します。tail samplingとスパン集約を、任意のロードバランサー配下にあるノード／サイドカー／HPAの階層に置かないでください。複数のサンプリングインスタンスを使うには、trace IDを認識するルーティングと、エンドポイントの変更、処理中のトレース、再起動、ストレージに関する計画が必要です。ServiceやHPAだけでは、そのどれも実現できません。
 
-`otel-relay-config.yaml` を保存し、同じ client-side ConfigMap-generation 手順で `otel-relay-config` を作成してください。`OTEL_UPSTREAM_ENDPOINT` と client certificate は、別途準備した upstream Collector を識別します。relay は sampling decisions に関して stateless です。ただし、その in-memory batching/export queues には依然として failure と shutdown の制限があります。
+`otel-relay-config.yaml`を保存し、同じクライアント側ConfigMap生成手順で`otel-relay-config`を作成します。`OTEL_UPSTREAM_ENDPOINT`とクライアント証明書は、別途準備した上流Collectorを指定します。relayはサンプリング判断についてステートレスですが、メモリー内のバッチ／エクスポートキューには障害やシャットダウン時の制限があります。
 
 
 ```yaml
@@ -853,9 +853,9 @@ service:
               host: 127.0.0.1
               port: 8888
 ```
-### DaemonSet Pattern
+### DaemonSetパターン
 
-DaemonSet は、EKS Fargate ではなく、対象となる Linux nodes 上で実行されます。承認済み nodes 用の selectors/tolerations を設定してください。ここには包括的な toleration や hostPort reservation はありません。`internalTrafficPolicy: Local` はこの Service を呼び出し元 node の ready endpoint にのみルーティングし、存在しない場合はトラフィックを破棄します。これは Fargate clients の fallback mechanism ではありません。Applications は明示的に telemetry をこの endpoint に送信する必要があります。
+DaemonSetは、対象となるLinuxノード上で実行されます。EKS Fargate上では実行されません。承認済みノード向けにselector／tolerationを設定してください。ここでは包括的なtolerationもhostPort予約も設定していません。`internalTrafficPolicy: Local`では、このServiceは呼び出し元と同じノード上のReadyなエンドポイントだけにルーティングし、そのようなエンドポイントがなければトラフィックを破棄します。Fargateクライアント向けのフォールバック機能ではありません。アプリケーションから、このエンドポイントにテレメトリを明示的に送信する必要があります。
 
 
 ```yaml
@@ -973,9 +973,9 @@ spec:
     targetPort: otlp-http
   internalTrafficPolicy: Local
 ```
-### Sidecar Pattern
+### サイドカーパターン
 
-以下の設定を含む別の `otel-sidecar-config` ConfigMap を使用してください。同じ Pod だけが loopback plaintext OTLP receiver を使用し、upstream traffic は mutual TLS を使用します。このプロファイルには、256 MiB sidecar に対して 192 MiB hard / 144 MiB soft limit があります。app image には選択した SDK/agent を含める必要があります。endpoint variable だけで instrumentation が追加されるわけではありません。この Kubernetes 1.35 スキーマ例では native sidecar（`restartPolicy: Always` を持つ `initContainers`、1.33 で GA）を使用しています。その startup probe は app startup より先行し、通常の shutdown では sidecar より先に app containers が停止します。backend delivery と abrupt-failure recovery は引き続き別途確認が必要です。
+以下の設定を使い、別の`otel-sidecar-config` ConfigMapを用意してください。ループバックの平文OTLP receiverを使うのは同じPod内だけです。上流へのトラフィックには相互TLSを使用します。この構成では、256 MiBのサイドカーに対して、ハード上限を192 MiB、ソフト上限を144 MiBに設定しています。アプリケーションイメージには、選択したSDK／agentを含める必要があります。エンドポイント変数を設定するだけでは、計装は追加されません。このKubernetes 1.35のSchema例では、ネイティブサイドカー（`restartPolicy: Always`を指定した`initContainers`、1.33でGA）を使用しています。アプリケーションの起動前にstartup probeが実行され、通常のシャットダウンではサイドカーより先にアプリケーションコンテナが停止します。バックエンドへの配送と突発的な障害からの復旧は、それぞれ別途確認が必要です。
 
 
 ```yaml
@@ -1149,9 +1149,9 @@ spec:
           failureThreshold: 30
   replicas: 1
 ```
-### Gateway Pattern
+### ゲートウェイパターン
 
-この HPA は stateful sampler ではなく stateless **relay** をスケールします。Metrics Server と適切な requests/capacity が前提条件です。3 replicas、preferred anti-affinity、3–10 の範囲は例示的な選択であり、HA や throughput を証明するものではありません。Deployment ベースの collectors は、その実行、storage、networking、receiver 要件を確認した後にのみ、Fargate または Auto Mode 向けに検討できます。
+このHPAがスケールするのは、ステートフルなsamplerではなく、ステートレスな**relay**です。前提条件として、Metrics Serverと適切なrequests／処理能力が必要です。3レプリカ、優先アンチアフィニティ、3～10の範囲は例示的な選択であり、高可用性やスループットの証明ではありません。DeploymentベースのCollectorをFargateまたはAuto Modeで検討する場合は、実行方法、ストレージ、ネットワーク、receiverの要件を確認してください。
 
 
 ```yaml
@@ -1307,9 +1307,9 @@ spec:
 
 ## Kubernetes Operator
 
-Operator 0.158.0 には個別の compatibility matrix があります。その release manifest は準備済みの cert-manager v1 installation を想定しています。廃止された 1.13.3 の例をインストールするのではなく、[cert-manager guide](../../security/10-cert-manager.md) にある、保守された互換リリースを使用してください。既存の owner-managed installation をアップグレードする前に、0.158.0 の CRD changes と default network policies を確認してください。
+Operator 0.158.0には独立した互換性マトリクスがあります。リリースマニフェストは、cert-manager v1がすでに準備されていることを前提としています。古い1.13.3の例ではなく、[cert-managerガイド](../../security/10-cert-manager.md)にある、保守されている互換性のあるリリースを使用してください。既存の所有者管理のインストールをアップグレードする前に、CRDの変更と0.158.0のデフォルトのネットワークポリシーを確認してください。
 
-### Operator Installation
+### Operatorのインストール
 
 
 ```bash
@@ -1324,7 +1324,7 @@ kubectl --context "$KUBE_CONTEXT" apply -f opentelemetry-operator.yaml
 ```
 ### Instrumentation CR
 
-resource と example app はどちらも `ecommerce` 内にあります。固定された Operator は versioned default instrumentation images を提供します。inject された images を確認し、すべてを `latest` に置き換えないでください。Java/Python defaults は上記で直接インストールするバージョンとは異なります。プロセスごとに 1 つの instrumentation route を使用してください。TLS Secret mounts は引き続き application の責任です。
+リソースとアプリケーションの例は、どちらも`ecommerce`にあります。バージョンを固定したOperatorが、そのバージョンに対応したデフォルトのinstrumentationイメージを提供します。インジェクションされるイメージを確認し、すべてを`latest`に置き換えないでください。Java／Pythonのデフォルトは、上記で直接インストールしたバージョンとは異なります。プロセスごとに、計装の方法は1つだけ使用してください。TLS Secretのマウントは、引き続きアプリケーション側の責任です。
 
 
 ```yaml
@@ -1361,11 +1361,11 @@ spec:
   - name: OTEL_METRIC_EXPORT_INTERVAL
     value: '60000'
 ```
-ここでは W3C Trace Context と baggage を選択しています。B3 は、言語の propagator package と peers がサポートする場合にのみ選択できる任意の interoperability オプションです。credentials や personal data を baggage に入れないでください。propagation は service と trust boundaries をまたぐ可能性があります。
+ここではW3C Trace Contextとbaggageを選択しています。B3は、言語のpropagatorパッケージと相手側が対応している場合に限り、相互運用性のためのオプションとして選択できます。baggageに認証情報や個人データを入れないでください。伝搬によって、サービス境界や信頼境界を越える可能性があります。
 
-### Auto-instrumentation Injection
+### 自動計装のインジェクション
 
-annotation は Deployment metadata だけでなく Pod template に属します。`otel-instrumentation` は Pod namespace 内の名前付き resource を選択します。`namespace/name` で別の namespace を明示的に選択できます。namespace-wide annotations もありますが、すべての Pod に対して Java、Python、Node.js を無差別に有効にしないでください。injection は、新しい Pods が admission されたときに発生し、実行中の Pods に遡って適用されることはありません。
+アノテーションはDeploymentのmetadataだけでなく、Podテンプレートに指定します。`otel-instrumentation`はPodと同じ名前空間内にある、名前が一致するリソースを選択します。別の名前空間を指定する場合は`namespace/name`を使えます。名前空間全体にアノテーションを付ける方法もありますが、すべてのPodにJava、Python、Node.jsを無差別に有効にしないでください。インジェクションが行われるのは新しいPodが受け入れられるときであり、実行中のPodに遡って適用されることはありません。
 
 
 ```yaml
@@ -1427,11 +1427,11 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-Java、Python、Node.js、.NET、Go、Apache HTTPD、Nginx にはそれぞれ異なる前提条件があります。このリリースでは、Go auto-instrumentation は対象 executable path を必要とし、privileged UID-0 component を inject します。一般的な Restricted-PSS/Fargate レシピではありません。operator feature settings と言語ごとのガイドを確認してください。Python/.NET/Go HTTP defaults は、対応する protocol configuration なしに gRPC endpoint を指すべきではありません。
+Java、Python、Node.js、.NET、Go、Apache HTTPD、Nginxでは、それぞれ異なる前提条件があります。このリリースでは、Goの自動計装に対象実行ファイルのパスが必要であり、特権付きのUID 0コンポーネントがインジェクションされます。一般的なRestricted-PSS／Fargate向けの手順ではありません。Operatorの機能設定と言語ごとのガイドを確認してください。Python／.NET／GoのHTTPデフォルトを、対応するプロトコルを設定せずにgRPCエンドポイントへ向けないでください。
 
-## Multi-backend Configuration
+## マルチバックエンドの設定
 
-この fragment をレビュー済み base configuration にマージしてください。これは standalone ではありません。各 backend には独自の endpoint、trust、authorization が必要です。AWS X-Ray は設定済み Region と workload identity を使用します。正確な IAM trust/permissions は [X-Ray guide](./02-xray.md) に従ってください。attribute indexing を無効化しても redaction にはなりません。Datadog api object は、key（引用符付き文字列）と site を含む Secret 管理の api.yaml から取得します。その read-only Secret mount を workload に追加してください。base workload はこれを mount しません。環境変数に key は配置しません。この監査では AWS/Datadog/Jaeger service call は実行されませんでした。
+この断片をレビュー済みの基本設定に統合してください。単独では使用できません。各バックエンドに、それぞれのエンドポイント、信頼設定、認可設定が必要です。AWS X-Rayは、設定したRegionとワークロードIDを使用します。IAMの信頼／権限の詳細は、[X-Rayガイド](./02-xray.md)を参照してください。属性インデックスを無効にしても、データはマスキングされません。Datadogのapiオブジェクトは、`key`（引用符で囲んだ文字列）と`site`を含む、Secretで管理された`api.yaml`から読み込まれます。Secretを読み取り専用でワークロードにマウントしてください。基本のワークロードにはマウントされていません。環境変数にキーは設定しません。この監査では、AWS／Datadog／Jaegerサービスへの呼び出しは実行していません。
 
 
 ```yaml
@@ -1458,36 +1458,40 @@ service:
       - datadog
       - otlp_grpc/jaeger
 ```
-Fan-out は atomic delivery や backends 間で同一の retention を提供しません。
+複数のバックエンドへの同時配信は、アトミックな配送も、バックエンド間で同じ保持期間になることも保証しません。
 
-### 2026 年 7 月の更新: AI Agent Traffic の Network Boundary を観測する
+### 2026年7月の更新: AIエージェントのトラフィックに対するネットワーク境界の監視
 
-[7 月 8 日の CNCF 記事](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)は、NGINX と OTel を使用する single-node prototype を報告しています。その boundary は、proxy variable を設定するだけでなく、代替 egress paths をブロックする network rules に依存します。spans は設定された proxy から見える traffic を記述します。TLS handling、sampling、collector retention、proxy security も引き続き重要です。これは network control の 1 層であり、agent の decisions が正しいまたは安全であることを確立するものではありません。
+[7月8日のCNCF記事](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)では、NGINXとOTelを使った単一ノードのプロトタイプが紹介されています。その境界は、単にプロキシ変数を設定するだけでなく、別の送信経路を遮断するネットワークルールに依存します。スパンが示すのは、設定したプロキシから見えるトラフィックです。TLSの処理、サンプリング、Collectorでの保持、プロキシのセキュリティも引き続き重要です。これはネットワーク制御の一層にすぎず、エージェントの判断が正しい、または安全であることを保証するものではありません。
 
-### 2026 年 8 月の更新: Slow SQL Queries を Reliability Metrics に抽出する
+### 2026年8月の更新: 遅いSQLクエリを信頼性メトリクスにまとめる
 
-[8 月 21 日の CNCF 記事](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)とその [lab](https://github.com/causely-oss/slow-query-lab) は、query duration、traffic-weighted impact、span-derived metrics を anomaly baselines と比較しています。記事の historical examples は、クラスタの capacity measurements ではなく例として扱ってください。記事自体も、生の SQL を metric labels に使用すること、sensitive parameters、cardinality、baseline warm-up について警告しています。lab configuration を採用する前に dimensions をサニタイズし境界付けてください。latency anomaly は症状であり、root cause の証拠ではありません。
+[8月21日のCNCF記事](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)と[ラボ](https://github.com/causely-oss/slow-query-lab)では、クエリ時間、トラフィックで重み付けした影響、スパンから生成したメトリクスを、異常の基準値と比較しています。記事にある過去の例は例として扱い、クラスターの処理能力を測定した値として扱わないでください。記事自体も、生のSQLをメトリクスラベルに含めること、機密パラメーター、カーディナリティ、基準値のウォームアップについて警告しています。ラボの設定を採用する前に、ディメンションをサニタイズして上限を設けてください。レイテンシの異常は症状であり、根本原因の証明ではありません。
 
-### 2026 年 10 月の更新: OTel ストリームでインシデント検知を再構築する
+### 2026年10月の更新: OTelシグナルとしてのSoftware Carbon Intensity（SCI）
 
-[9 月 30 日の CNCF 記事](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)で、Atlassian は OpenTelemetry、Apache Kafka、Apache Flink を用いて、Kubernetes 上の自動インシデント作成基盤を 18 か月かけて再構築した事例を紹介しています。イベント発生からメトリクス反映までの遅延を 40 秒超から 10 秒未満へ短縮しました。記事自身が記すように、対象範囲内の再現率は約 60% から 86% に上がったものの、成績の悪い月には 64% に戻り、適合率も目標を下回っています。これらは同社での測定値であり、このアーキテクチャが保証する結果ではありません。共有キュー上のノイズの多い利用者の分離やコストなど、記事で議論されるトレードオフに注目してください。
+[10月15日のCNCF記事](https://www.cncf.io/blog/2026/10/15/carbon-as-a-first-class-signal-bringing-software-carbon-intensity-to-opentelemetry/)で、KeplerのメンテナーでありCNCFアンバサダーでもあるDiana Todea氏は、Observability Summit Europe 2026の基調講演を発展させ、Green Software FoundationのSoftware Carbon Intensity（SCI）標準をOpenTelemetryのセマンティック規約として扱い、炭素排出をワークロードやサービスに結び付けて観測可能なシグナルにすることを提案しています。これは標準化に関する議論が続く、方向性を示す提案です。特定のOTelリリースに搭載された機能でも、完成したセマンティック規約でもありません。導入を計画する前に、上流プロジェクトの進捗を確認してください。
+
+### 2026年10月の更新: OTelストリームを基盤としたインシデント検出の再構築
+
+[9月30日のCNCF記事](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)で、Atlassianは、OpenTelemetry、Apache Kafka、Apache FlinkをKubernetes上で利用して自動インシデント作成プラットフォームを18か月かけて再構築し、イベントからメトリクスまでのレイテンシを40秒超から10秒未満に短縮したと説明しています。記事自身が述べているように、対象範囲内での再現率は約60%から86%に上昇しましたが、調子の悪かった月には64%に低下し、適合率は依然として目標を下回っています。これらの数値はその組織での測定結果であり、アーキテクチャが保証する成果ではありません。共有キュー上でノイジーネイバーを分離する方法やコストなど、トレードオフの議論が記事の特に参考になる点です。
 
 ## ベストプラクティス
 
-### 1. Resource Attributes を標準化する
+### 1. リソース属性を標準化する
 
-| 属性 | 例 / ソース |
+| 属性 | 例／情報源 |
 |---|---|
-| `service.name`, `service.version`, `service.namespace` | `order-service`, `1.2.3`, `ecommerce`; application configuration |
-| `deployment.environment.name` | `demo`; 非推奨の `deployment.environment` を置き換える |
-| `cloud.provider`, `cloud.region`, `cloud.availability_zone` | Collector host からの推測ではなく、検証済み deployment metadata |
-| `k8s.cluster.name`, `k8s.namespace.name`, `k8s.pod.name`, `k8s.deployment.name` | 正しく設定された Kubernetes enrichment または workload metadata |
+| `service.name`、`service.version`、`service.namespace` | `order-service`、`1.2.3`、`ecommerce`。アプリケーション設定 |
+| `deployment.environment.name` | `demo`。非推奨の`deployment.environment`に代わる属性 |
+| `cloud.provider`、`cloud.region`、`cloud.availability_zone` | Collectorホストから推測せず、確認済みのデプロイメントメタデータを使用 |
+| `k8s.cluster.name`、`k8s.namespace.name`、`k8s.pod.name`、`k8s.deployment.name` | 正しく設定したKubernetesエンリッチメント、またはワークロードメタデータ |
 
-これは attribute inventory であり、Collector processor YAML ではありません。Resource は producer を識別します。すべての resource attribute を metric labels にコピーすることは避けてください。Pod names、user IDs、raw query text は high cardinality を引き起こす可能性があります。Profiles は追加の発展中シグナルです。このガイドは traces、metrics、logs に焦点を当て、SDK の安定性が一様であるとは主張しません。
+これは属性の一覧であり、Collector processorのYAMLではありません。Resourceはデータの生成元を示します。すべてのリソース属性をメトリクスラベルにコピーしないでください。Pod名、ユーザーID、生のクエリテキストはカーディナリティを高くする可能性があります。プロファイルは発展途上の追加シグナルです。このガイドではトレース、メトリクス、ログに重点を置いており、すべてのSDKが一様に安定しているとは主張していません。
 
-### 2. Sampling Strategy
+### 2. サンプリング戦略
 
-高度な例（errors、2 秒超の latency、50% の critical-service condition、5% の baseline）では、各 positive rule を first-match priority や reserved quota ではなく OR 条件として扱ってください。別の rule によって trace が保持されることがあります。exclusive classes や span-rate budget が必要な場合は、その policy を明示的に設計、テストしてください。head sampling、dropped spans、shard changes、late arrival は引き続き別の制限です。
+高度な例（エラー、2秒を超えるレイテンシ、重要なサービスに対する50%の条件、5%のベースライン）では、それぞれの正のルールをOR条件として扱ってください。先に一致したルールが優先されるわけでも、サンプリング枠が予約されるわけでもありません。他のルールによってトレースが保持される場合もあります。排他的な分類やスパン数の予算が必要な場合は、そのポリシーを明示的に設計してテストしてください。ヘッドサンプリング、破棄されたスパン、シャードの変更、到着の遅れは、引き続き別の制約となります。
 
 
 ```yaml
@@ -1524,34 +1528,34 @@ processors:
       probabilistic:
         sampling_percentage: 5
 ```
-### 3. Security Considerations
+### 3. セキュリティ上の考慮事項
 
-`client_ca_file` のない server TLS は、client certificates を要求することと同じではありません。両方向を保護し、certificate names と lifecycle を検証し、Service/network/backend access を制限してください。sidecar 例における same-Pod loopback plaintext は別の trust boundary です。browser telemetry には wildcard CORS ではなく、独自の origin/authentication/rate-limit 設計が必要です。
+`client_ca_file`を指定しないサーバーTLSは、クライアント証明書を必須にする設定とは異なります。両方向を保護し、証明書名とライフサイクルを検証して、Service／ネットワーク／バックエンドへのアクセスを制限してください。サイドカーの例にある同一Pod内のループバック平文通信は、別の信頼境界です。ブラウザーテレメトリには、ワイルドカードCORSではなく、独自のオリジン／認証／レート制限の設計が必要です。
 
-attributes processor の `hash` action は SHA-1 を使用します。予測可能な IDs や SQL text を hashing しても匿名化にはなりません。dictionary recovery と linkability は引き続き可能です。まず sensitive values を収集しないようにし、その後 export 前に明確に識別した fields を削除してください。log bodies、span events、resource attributes を個別に確認してください。詳細な debug exporters や profiling endpoints はデータを露出する可能性があるため、一時的で制御された diagnostics にすべきです。
+attributes processorの`hash`アクションではSHA-1が使用されます。推測しやすいIDやSQLテキストをハッシュ化しても匿名化にはなりません。辞書攻撃による復元や、データ同士の関連付けは依然として可能です。機密値はそもそも収集しないことを優先し、その後、明示的に特定したフィールドをエクスポート前に削除してください。ログ本文、スパンイベント、リソース属性は個別に確認します。詳細なdebug exporterやプロファイリングエンドポイントはデータを露出させる可能性があるため、一時的かつ管理された診断に限って使用してください。
 
 ### 検証と制限
 
-ローカル検証では、synthetic OTLP traffic と mTLS loopback endpoints を使用して、trace/log handling と pre-tail span metrics を含む実際の Collector 0.160.0 を使用しました。remote-write check は test sink への HTTPS delivery を確立しましたが、live Prometheus ingestion result ではありません。Python manual spans では SDK 1.44.0 と in-memory exporter を使用しました。Kubernetes/Instrumentation schemas と Node.js syntax は確認しましたが、Java/Node application startup、zero-code injection、実際の backend products、EKS、IAM、autoscaling は実行していません。
+ローカル検証では、実際のCollector 0.160.0を使い、mTLSのループバックエンドポイント経由で合成OTLPトラフィックを流しました。トレース／ログの処理と、tail sampling前のスパンメトリクスも検証しました。remote-writeの確認では、テストシンクへのHTTPS配送を確認しましたが、稼働中のPrometheusへの取り込み結果を確認したものではありません。Pythonの手動スパンにはSDK 1.44.0とメモリー内exporterを使用しました。Kubernetes／InstrumentationのSchemaとNode.jsの構文は確認済みです。Java／Nodeアプリケーションの起動、ゼロコードインジェクション、実際のバックエンド製品、EKS、IAM、自動スケーリングは実行していません。
 
 ### 公式リファレンス
 
-- [Collector 0.160.0 components](https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.160.0/distributions/otelcol-contrib/manifest.yaml)
-- [Operator 0.158.0 compatibility](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/getting-started/compatibility.md)
-- [Operator auto-instrumentation](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/auto-instrumentation/README.md)
+- [Collector 0.160.0のコンポーネント](https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.160.0/distributions/otelcol-contrib/manifest.yaml)
+- [Operator 0.158.0の互換性](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/getting-started/compatibility.md)
+- [Operatorによる自動計装](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/auto-instrumentation/README.md)
 - [Java agent 2.31.1](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.31.1)
-- [OTLP exporter configuration](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/)
-- [Collector scaling](https://opentelemetry.io/docs/collector/scaling/)
+- [OTLP exporterの設定](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/)
+- [Collectorのスケーリング](https://opentelemetry.io/docs/collector/scaling/)
 - [Tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
 - [Span metrics connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/connector/spanmetricsconnector)
 - [Memory limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/memorylimiterprocessor)
-- [Loki native OTLP](https://grafana.com/docs/loki/latest/send-data/otel/)
+- [LokiネイティブOTLP](https://grafana.com/docs/loki/latest/send-data/otel/)
 - [W3C Trace Context](https://www.w3.org/TR/trace-context/)
-- [Kubernetes native sidecars](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
-- [EKS Kubernetes lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
-- [OpenTracing CNCF milestones](https://www.cncf.io/projects/opentracing/)
-- [OpenCensus Go repository](https://github.com/census-instrumentation/opencensus-go)
+- [Kubernetesネイティブサイドカー](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+- [EKS Kubernetesのライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [OpenTracingのCNCFマイルストーン](https://www.cncf.io/projects/opentracing/)
+- [OpenCensus Goリポジトリ](https://github.com/census-instrumentation/opencensus-go)
 
 ## クイズ
 
-[OpenTelemetry クイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で理解度を確認してください。
+[OpenTelemetryクイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で理解度を確認してください。

@@ -1,46 +1,50 @@
 # Gestión de políticas con Kyverno
 
-> **Línea de base de validación**: Kyverno/CLI 1.19.1, chart de Helm 3.9.1. La guía de la versión actual enumera Kubernetes 1.33–1.35 como versiones probadas; la restricción de instalación más amplia del chart no es una garantía de compatibilidad.
-> **Última actualización**: 13 de septiembre de 2026
+> **Referencia de validación**: Kyverno/CLI 1.19.1, Helm chart 3.9.1. La guía de la versión actual indica que Kubernetes 1.33–1.35 se probaron; el requisito de instalación más amplio del chart no garantiza compatibilidad.
+> **Última actualización**: 19 de octubre de 2026
 
-Kyverno evalúa políticas de Kubernetes y realiza mutación, generación y eliminación configuradas explícitamente. Estos ejemplos se verificaron localmente con la CLI real y los esquemas/charts publicados. No se instaló Kyverno en un clúster en vivo ni se probaron la admisión, el aislamiento de red, la limpieza o la integración con AWS.
+Kyverno evalúa las políticas de Kubernetes y realiza las operaciones de mutación, generación y eliminación que se configuren explícitamente. Estos ejemplos se verificaron localmente con el CLI real y los esquemas/charts publicados. No se realizó ninguna instalación en un clúster activo, admisión, aislamiento de red, limpieza ni integración con AWS.
 
-Los ejemplos originales de `ClusterPolicy` se actualizaron a políticas CEL de `policies.kyverno.io/v1`. La guía oficial de migración de la versión 1.19 declara obsoletos ClusterPolicy/Policy, CleanupPolicy y el PolicyException heredado de `kyverno.io`, cuya eliminación está prevista para 1.20. Aún no han desaparecido en 1.19; migre y pruebe antes de actualizar, en lugar de limitarse a cambiar la cadena de `apiVersion`.
+Los ejemplos originales de `ClusterPolicy` se actualizaron a políticas CEL `policies.kyverno.io/v1`. La guía oficial de migración de la versión 1.19 marca como obsoletos ClusterPolicy/Policy, CleanupPolicy y PolicyException heredado `kyverno.io`, cuya eliminación está prevista para la versión 1.20. No han desaparecido aún en la versión 1.19; migre y haga pruebas antes de actualizar, en lugar de limitarse a reemplazar una cadena apiVersion.
 
-## Configuración del entorno de laboratorio
+## Configuración del entorno del laboratorio
 
 ### Herramientas necesarias
 
-Use kubectl con una diferencia de versión admitida por el API server de destino, una versión compatible de Helm con capacidad OCI y la CLI verificada de Kyverno 1.19.1 para estas pruebas locales. Obtenga el archivo de la CLI correspondiente al sistema operativo y la arquitectura, y verifique la suma de comprobación o firma publicada. No reutilice un archivo 1.10.0 ni canalice una descarga sin verificar hacia una instalación con privilegios de root.
+Para estas pruebas locales, use kubectl con una diferencia de versiones admitida por el servidor de API de destino, una versión compatible de Helm con capacidad para OCI y el CLI verificado de Kyverno 1.19.1. Obtenga el archivo del CLI correspondiente al sistema operativo y la arquitectura, y verifique la suma de comprobación/firma publicada. No reutilice un archivo de la versión 1.10.0 ni canalice una descarga no verificada a una instalación con permisos de root.
 
-Comience con archivos locales. Las políticas siguientes son ejemplos independientes, no un conjunto que deba aplicar íntegramente. Los ejemplos de Pod se dirigen a `policy-lab`; la generación requiere además una etiqueta explícita. Restrinja quién puede cambiar estas políticas, etiquetas de namespace, Roles y PolicyExceptions. Esos selectores no son por sí mismos un límite de seguridad de RBAC.
+Empiece con archivos locales. Las políticas siguientes son ejemplos independientes, no un conjunto para aplicar en bloque. Los ejemplos de Pod se dirigen a `policy-lab`; la generación también requiere una etiqueta explícita. Restrinja quién puede modificar estas políticas, las etiquetas de los espacios de nombres, los Roles y las PolicyExceptions. Esos selectores no constituyen por sí solos un límite de seguridad de RBAC.
 
 ### Instalación de Kyverno
 
-Prepare un namespace dedicado `kyverno`. Verifique la versión de EKS/Kubernetes elegida, la conectividad del API server a los webhooks, DNS, el comportamiento de fallos/timeouts de admisión y el procedimiento de actualización de CRD antes de cambiar un cluster compartido. Los ServiceAccounts y RBAC de Kubernetes autorizan a los controladores; instalar Kyverno no requiere por sí solo un rol de administrador de AWS.
+Prepare un espacio de nombres dedicado `kyverno`. Antes de modificar un clúster compartido, compruebe la versión elegida de EKS/Kubernetes, la conectividad entre el servidor de API y el webhook, el DNS, el comportamiento ante errores/tiempos de espera de admisión y el procedimiento de actualización de CRD. Las ServiceAccounts/RBAC de Kubernetes autorizan a los controladores; la instalación de Kyverno no requiere por sí misma un rol de administrador de AWS.
 
 ## Introducción a Kyverno
 
-### Arquitectura de Kyverno y cómo funciona
+### Arquitectura de Kyverno y su funcionamiento
 
 | Componente | Responsabilidad |
 |---|---|
-| Controlador de admisión | Solicitudes coincidentes y validación, mutación o verificación de imágenes de políticas; no todas las solicitudes GET/list |
-| Controlador en segundo plano | Tareas de generación y de mutate-existing habilitadas explícitamente |
-| Controlador de informes | Agregación y elaboración de informes de resultados de políticas |
+| Controlador de admisión | Coincidir con las solicitudes de admisión y validar/mutar políticas y comprobar imágenes; no procesa todas las solicitudes GET/list |
+| Controlador en segundo plano | Generar y realizar las operaciones mutate-existing habilitadas explícitamente |
+| Controlador de informes | Agregar e informar los resultados de las políticas |
 | Controlador de limpieza | Políticas de eliminación programada y operaciones de limpieza permitidas |
 
-Una política de validación no elimina ni repara recursos no conformes existentes. Los informes en segundo plano, mutate-existing, generate-existing y la eliminación programada son mecanismos independientes con permisos distintos. La generación puede ser asíncrona; la creación de namespace y la aplicación de NetworkPolicy generada no son una operación atómica.
+Una política de validación no elimina ni repara los recursos existentes que no cumplen las reglas. Los informes en segundo plano, mutate-existing, generate-existing y la eliminación programada son mecanismos independientes con permisos distintos. La generación puede ser asíncrona; la creación del espacio de nombres y la aplicación de NetworkPolicy generadas no son una operación atómica.
 
 ### Kyverno frente a OPA Gatekeeper
 
-Las políticas actuales de Kyverno usan CEL en manifiestos YAML/JSON; las políticas heredadas también usan patrones y JMESPath. El empaquetado nativo de Kubernetes no elimina la necesidad de aprender expresiones de políticas. Gatekeeper utiliza ConstraintTemplates/Constraints y motores de políticas compatibles con su versión, con capacidades independientes de admisión/auditoría/mutación. Compare las características necesarias, los lenguajes de expresión, las pruebas de políticas, la disponibilidad de controllers y el impacto medido en las cargas de trabajo. Las antiguas calificaciones de «fácil/complejo» y «buen/muy buen rendimiento» eran comparaciones sin respaldo, no benchmarks.
+Las políticas actuales de Kyverno usan CEL en manifiestos YAML/JSON; las políticas heredadas también usan patrones y JMESPath. El empaquetado nativo de Kubernetes no elimina la necesidad de aprender expresiones de políticas. Gatekeeper usa ConstraintTemplates/Constraints y los motores de políticas compatibles con su versión, con capacidades independientes de admisión/auditoría/mutación. Compare las funciones necesarias, los lenguajes de expresiones, las pruebas de políticas, la disponibilidad de los controladores y el impacto medido en la carga de trabajo. Las antiguas calificaciones de «fácil/complejo» y «rendimiento bueno/muy bueno» eran comparaciones sin fundamento, no pruebas de rendimiento.
+
+### Actualización de octubre de 2026: aplicación en tiempo de ejecución, más allá de la admisión
+
+En una [publicación de CNCF del 15 de octubre de 2026](https://www.cncf.io/blog/2026/10/15/extending-kubernetes-policy-enforcement-to-runtime-security-for-ai-workloads/), Nirmata (creadora de Kyverno) describe los límites del control de admisión —que solo responde «¿esta especificación parece correcta?» y no puede detectar que una carga de trabajo en ejecución se desvíe de su especificación (por ejemplo, una carga útil de segunda etapa que se descarga después del inicio o tráfico dirigido a un destino no aprobado)— y presenta **Nirmata Runtime for Kyverno**, una implementación de código abierto que aplica políticas a nivel del kernel mediante eBPF y los módulos de seguridad de Linux (LSM). Este enfoque está dirigido a la seguridad en tiempo de ejecución de cargas de trabajo no deterministas, como los agentes de IA. Es un componente separado, con sus propios permisos, distinto de las políticas de admisión/en segundo plano de este capítulo; además, la publicación es una presentación del proveedor (Nirmata). Antes de adoptarlo, compruebe el alcance de las funciones y los requisitos del kernel/plataforma.
 
 ## Instalación de Kyverno
 
 ### Instalación mediante Helm
 
-Guarde esto como `kyverno-values.yaml`. Es un perfil de **laboratorio** con una sola réplica. Los CRD de ServiceMonitor y una instalación de Prometheus que seleccione el namespace/las etiquetas reales ya deben existir; reemplace la etiqueta de ejemplo `release: kube-prom` por el selector de esa instalación o deshabilite los ServiceMonitors hasta estar preparado.
+Guarde esto como `kyverno-values.yaml`. Es una configuración de **laboratorio** con una sola réplica. Las CRD de ServiceMonitor y una instalación de Prometheus que seleccione el espacio de nombres/las etiquetas reales ya deben existir; sustituya la etiqueta de ejemplo `release: kube-prom` por el selector de esa instalación, o desactive ServiceMonitors hasta que esté todo preparado.
 
 ```yaml
 admissionController:
@@ -82,17 +86,17 @@ helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
   --values kyverno-values.yaml
 ```
 
-El manifiesto renderizado incluye cuatro Deployments, uno por controlador, y cuatro ServiceMonitors de métricas. Añadir réplicas requiere planificar la topología, las interrupciones, el dimensionamiento de recursos y la disponibilidad de los webhooks; un controlador con una sola réplica no ofrece alta disponibilidad. Inspeccione los valores predeterminados del chart actual y las etiquetas de imagen renderizadas reales, en lugar de interpretar la etiqueta de versión de un chart como la versión de la aplicación.
+El renderizado contiene cuatro Deployments de controladores y cuatro ServiceMonitors de métricas. Para usar más réplicas se necesita planificar la topología, las interrupciones, el dimensionamiento de recursos y la disponibilidad de los webhooks; una réplica por controlador no es un diseño de alta disponibilidad. Inspeccione los valores predeterminados del chart actual y las etiquetas de imagen realmente renderizadas, en lugar de interpretar la etiqueta de versión del chart como la versión de la aplicación.
 
 ### Instalación mediante manifiestos YAML
 
-Si GitOps administra YAML, renderice el chart fijado y revise sus CRD, RBAC, certificados y hooks como un conjunto administrado. Un `kubectl apply` sin procesar de un render no ejecuta la semántica de hook/actualización de Helm. No aplique el antiguo install.yaml 1.10.0 sobre una versión más reciente ni asigne varios responsables a los mismos controladores.
+Si GitOps administra YAML, renderice el chart fijado a una versión y revise sus CRD, RBAC, certificados y hooks como un conjunto administrado. Un `kubectl apply` directo del renderizado no ejecuta la semántica de hooks/actualización de Helm. No aplique el antiguo install.yaml de la versión 1.10.0 sobre una versión más reciente ni mezcle varios responsables de los mismos controladores.
 
 ## Tipos de políticas
 
 ### 1. Políticas de validación
 
-Guarde este ejemplo independiente como `require-limits.yaml`. Comprueba que los contenedores **normales y de inicialización** tengan límites de CPU y memoria no vacíos. Los contenedores efímeros no pueden declarar solicitudes ni límites de recursos; las verificaciones de seguridad a continuación los cubren por separado. Esta política ilustra una opción por contenedor, no afirma que todas las cargas de trabajo de Kubernetes deban usar esta estrategia de recursos.
+Guarde este ejemplo independiente como `require-limits.yaml`. Comprueba que los contenedores **normales y de inicialización** tengan límites no vacíos de CPU/memoria. Los contenedores efímeros no pueden declarar solicitudes/límites de recursos; las comprobaciones de seguridad de abajo los cubren por separado. Esta es una política elegida para cada contenedor, no una afirmación de que todas las cargas de trabajo de Kubernetes deban usar esta estrategia de recursos.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -125,11 +129,11 @@ spec:
     expression: object.spec.containers + object.spec.?initContainers.orValue([])
 ```
 
-`validationActions: [Audit]` registra infracciones mientras permite las solicitudes de admisión coincidentes; `[Deny]` las rechaza tras la preparación/revisión de impacto. `Warn` puede proporcionar advertencias al cliente. El `failurePolicy` de webhook gobierna los fallos de evaluación/transporte y es una configuración diferente. Los resultados de fallo de la CLI offline no demuestran que una política Audit haya denegado una solicitud en vivo.
+`validationActions: [Audit]` registra las infracciones y permite las solicitudes de admisión coincidentes; `[Deny]` las rechaza después de evaluar la puesta en marcha/el impacto. `Warn` puede mostrar advertencias al cliente. La opción `failurePolicy` del webhook determina qué ocurre si falla la evaluación/el transporte, y es una configuración distinta. Un resultado fallido del CLI sin conexión no demuestra que una política Audit haya rechazado una solicitud activa.
 
 ### 2. Políticas de mutación
 
-Guarde como `add-default-label.yaml`. Se preservan las etiquetas `environment` existentes, incluidos los valores explícitamente vacíos. Esto usa CEL ApplyConfiguration, no la sintaxis de plantilla Go de Helm `if`/`hasKey` dentro de Kyverno.
+Guarde el archivo como `add-default-label.yaml`. Se conservan las etiquetas `environment` existentes, incluso si sus valores se han dejado explícitamente vacíos. Esto usa ApplyConfiguration de CEL, no la sintaxis `if`/`hasKey` de las plantillas Go de Helm dentro de Kyverno.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -163,11 +167,11 @@ spec:
         : Object{metadata: Object.metadata{labels: {"environment": object.metadata.namespace}}}
 ```
 
-El ejemplo deshabilita mutate-existing. La mutación de admisión aún puede afectar solicitudes CREATE/UPDATE coincidentes. Una alternativa JSONPatch debe crear un mapa de etiquetas faltante antes de agregar una clave secundaria y escapar `/` como `~1` en las rutas JSON Pointer. El orden de mutación no está garantizado entre políticas independientes.
+El ejemplo desactiva mutate-existing. La mutación de admisión aún puede afectar las solicitudes CREATE/UPDATE coincidentes. Una alternativa con JSONPatch debe crear un mapa de etiquetas cuando no exista antes de agregar una clave secundaria, y debe escapar `/` como `~1` en las rutas de JSON Pointer. No se garantiza el orden de mutación entre políticas independientes.
 
 ### 3. Políticas de generación
 
-Guarde como `generate-networkpolicy.yaml`. Solo un Namespace llamado `policy-lab` con `training.example.com/managed: "true"` activa este ejemplo. Para un objeto Namespace, haga coincidir su **nombre/etiquetas**, no `metadata.namespace` ni una lista de exclusión de namespace heredada.
+Guarde el archivo como `generate-networkpolicy.yaml`. Este ejemplo solo se activa para un Namespace llamado `policy-lab` que tenga `training.example.com/managed: "true"`. Para un objeto Namespace, haga la coincidencia con su **nombre/etiquetas**, no con `metadata.namespace` ni con una lista heredada de exclusión de espacios de nombres.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -207,25 +211,25 @@ spec:
       }])
 ```
 
-Prepare las reglas necesarias de DNS/API/aplicación antes de que las cargas de trabajo dependan de este namespace. El aislamiento de Kubernetes NetworkPolicy requiere un CNI que lo aplique; las demás políticas que permiten tráfico se suman, y también hay que considerar el comportamiento de la red del host. Un manifiesto generado localmente no demuestra que se haya bloqueado el tráfico.
+Prepare las reglas de permiso necesarias para DNS/API/aplicaciones antes de que las cargas de trabajo dependan de este espacio de nombres. El aislamiento de NetworkPolicy de Kubernetes requiere un CNI que lo aplique; otras políticas de permiso son aditivas y se debe tener en cuenta el comportamiento de host-network. Un manifiesto generado localmente no demuestra que se haya bloqueado el tráfico.
 
-La sincronización y generate-existing están deshabilitados aquí. Un Namespace ya existente no se completa automáticamente cuando se instala esta política: use después un trigger coincidente o revise explícitamente la habilitación de generate-existing antes de cambiar esa configuración. Con la sincronización habilitada, el ciclo de vida downstream depende de los datos frente a la fuente clone, de cambios en el trigger y de `orphanDownstreamOnPolicyDelete`; no es un mecanismo universal de copia de seguridad/reversión. Compartir Secrets requiere una lista de allow explícita de origen/destino y una revisión de RBAC/ciclo de vida de credenciales, no una copia en cada namespace nuevo.
+Aquí se desactivan la sincronización y generate-existing. Al instalar esta política, un Namespace que ya exista no se completará automáticamente: use un desencadenador coincidente posterior o revise explícitamente si se habilita generate-existing antes de cambiar esa configuración. Con la sincronización habilitada, el ciclo de vida de los recursos dependientes varía según se usen datos o una fuente de clonación, los cambios en el desencadenador y `orphanDownstreamOnPolicyDelete`; no es un mecanismo universal de copia de seguridad/reversión. Para compartir Secrets se necesita una lista de permitidos explícita para orígenes/destinos y una revisión de RBAC/ciclo de vida de credenciales, no una copia en todos los espacios de nombres nuevos.
 
 ### 4. Eliminación programada
 
-`DeletingPolicy` usa `spec.schedule` y condiciones CEL; es independiente de la validación y no tiene un interruptor validationActions Audit. Un controller de limpieza necesita permisos explícitos de eliminación. Prefiera una etiqueta de namespace/objeto estrecha y un requisito claro de retención por antigüedad/estado, inspeccione los candidatos seleccionados y pruebe la recuperación antes de habilitar una programación. El ejemplo opcional del quiz selecciona Pods completados marcados; no significa «más de 24 horas», y aquí no se ejecutó ninguna eliminación programada.
+`DeletingPolicy` usa `spec.schedule` y condiciones CEL; es independiente de la validación y no tiene un selector Audit en validationActions. El controlador de limpieza necesita permisos de eliminación explícitos. Prefiera una etiqueta acotada de espacio de nombres/objeto y un requisito claro de retención por antigüedad/estado, inspeccione los objetos seleccionados y pruebe la recuperación antes de habilitar una programación. El ejemplo opcional del cuestionario selecciona Pods completados y marcados; no significa «de más de 24 horas» y aquí no se ejecutó ninguna eliminación programada.
 
 ## Casos de uso de Kyverno en EKS
 
 ### Arquitectura de integración de EKS y Kyverno
 
-El API server de EKS invoca los webhooks de admisión coincidentes mediante la ruta de red/RBAC de Kubernetes configurada. La exportación a CloudWatch es un collector/integración configurado independiente con su propio IAM y retención; instalar Kyverno no envía automáticamente todos los PolicyReport a CloudWatch. Evite imprimir payloads de admisión sin procesar que puedan contener secretos.
+El servidor de API de EKS invoca los webhooks de admisión coincidentes mediante la ruta de red/RBAC configurada en Kubernetes. La exportación a CloudWatch es una integración/recopilador independiente que requiere su propia configuración, IAM y retención; instalar Kyverno no envía automáticamente todos los PolicyReport a CloudWatch. Evite imprimir cargas útiles de admisión sin enmascarar, ya que pueden contener secretos.
 
-### 1. Fortalecimiento de seguridad
+### 1. Refuerzo de la seguridad
 
-#### Prevención de containers privilegiados
+#### Impedir los contenedores privilegiados
 
-La ausencia de `privileged` se trata como false. La comprobación cubre containers normales, init y efímeros; la coincidencia declarada de `pods/ephemeralcontainers` aún requiere pruebas de admisión/subrecurso en vivo en el entorno de destino.
+Si falta `privileged`, se considera `false`. La comprobación cubre los contenedores normales, de inicialización y efímeros; la coincidencia declarada con `pods/ephemeralcontainers` sigue requiriendo pruebas de admisión/subrecurso en vivo en el entorno de destino.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -258,9 +262,9 @@ spec:
     expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
 ```
 
-#### Prevención de la ejecución como usuario root
+#### Impedir la ejecución como usuario root
 
-La política usa la anulación de cada container o el valor predeterminado a nivel de Pod, requiere un runAsNonRoot efectivo y rechaza un UID efectivo explícito de 0. Esto valida la declaración; el comportamiento de kubelet/la imagen sigue siendo relevante en tiempo de ejecución.
+La política usa la anulación de cada contenedor o el valor predeterminado del Pod, exige un valor efectivo de runAsNonRoot y rechaza un UID efectivo explícito de 0. Esto valida la declaración; el comportamiento del kubelet/de la imagen sigue siendo relevante en tiempo de ejecución.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -296,9 +300,9 @@ spec:
 
 ### 2. Optimización de costos
 
-#### Configuración de límites de recursos
+#### Definir límites de recursos
 
-Guarde como `default-resources.yaml`. Este ejemplo solo de CREATE evita cambiar recursos de Pod en ejecución durante una actualización ordinaria y proporciona valores predeterminados solo cuando un container normal no tiene **requests ni limits**. Conserva la configuración de recursos existente completa y parcial en lugar de sobrescribir el dimensionamiento de la carga de trabajo o producir un request mayor que un límite pequeño existente. Revise las configuraciones parciales por separado; no completa todos los campos faltantes ni establece valores predeterminados para recursos init/efímeros.
+Guarde el archivo como `default-resources.yaml`. Este ejemplo, que solo se aplica a CREATE, evita cambiar los recursos de Pods en ejecución durante una actualización normal y proporciona valores predeterminados solo cuando un contenedor normal **no tiene solicitudes ni límites**. Conserva los ajustes de recursos existentes, completos o parciales, en lugar de sobrescribir el dimensionamiento de la carga de trabajo o generar una solicitud superior a un límite pequeño existente. Revise por separado los ajustes parciales; esta política no rellena todos los campos que falten ni establece valores predeterminados para los recursos de contenedores de inicialización/efímeros.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -337,9 +341,9 @@ spec:
         )}}
 ```
 
-#### Aplicación de tipos de instancia específicos
+#### Aplicar tipos de instancia específicos
 
-Los nombres de instancia originales son una lista de allow ilustrativa, no una recomendación actual. Un nodeSelector explícito es una restricción de programación obligatoria. Esta política CREATE solo de admisión rechaza un nodeName proporcionado; el escaneo en segundo plano está deshabilitado porque los Pods programados adquieren legítimamente nodeName. La confianza en las etiquetas de nodo, los permisos de scheduler/binding y la capacidad disponible es independiente. Una comprobación de declaración no puede garantizar la ubicación frente a una entidad a la que se permite vincular Pods o modificar Nodes.
+Los nombres de instancia originales son una lista de permitidos ilustrativa, no una recomendación actual. Un nodeSelector explícito es una restricción de programación obligatoria. Esta política de admisión, solo para CREATE, rechaza un nodeName proporcionado; el análisis en segundo plano está desactivado porque los Pods programados adquieren legítimamente un nodeName. La confianza en las etiquetas de los nodos, los permisos de programación/vinculación y la capacidad disponible son cuestiones independientes. Una comprobación de declaraciones no puede garantizar la ubicación frente a una entidad principal con permiso para vincular Pods o modificar Nodes.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -371,11 +375,11 @@ spec:
       enabled: false
 ```
 
-### 3. Cumplimiento
+### 3. Cumplimiento normativo
 
 #### Generación automática de PodDisruptionBudget
 
-Este ejemplo opt-in de Deployment requiere al menos dos réplicas deseadas y copia el **spec.selector completo**, incluidos matchExpressions, en lugar de una etiqueta app de nivel superior que podría estar ausente. No prueba que dos réplicas estén Ready. Este presupuesto de laboratorio estático requiere una decisión independiente de propiedad/revisión después de cambios de escalado o selector, especialmente con la sincronización deshabilitada. Los PDB restringen las expulsiones voluntarias elegibles, no cada rollout ni fallo involuntario.
+Este ejemplo opcional de Deployment exige al menos dos réplicas deseadas y copia **todo el spec.selector**, incluidos matchExpressions, en lugar de una etiqueta app de nivel superior que podría no existir. No demuestra que haya dos réplicas en estado Ready. Este presupuesto estático de laboratorio requiere una decisión independiente sobre quién lo administra y lo revisa tras cambiar la escala o el selector, especialmente con la sincronización desactivada. Los PDB restringen las expulsiones voluntarias que cumplen los requisitos, pero no todos los rollouts ni los fallos involuntarios.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -414,7 +418,7 @@ spec:
       }])
 ```
 
-El controlador en segundo plano necesita permiso real para crear el recurso generado. Para la versión renderizada de `kyverno`, este Role/Binding adicional en el namespace ilustra un permiso limitado para PDB. El chart ya incluye otros permisos para el controlador; este ejemplo no representa toda su política RBAC efectiva. Ajuste los nombres de ServiceAccount al manifiesto renderizado y verifique la autorización en el clúster de destino.
+El controlador en segundo plano necesita permisos reales para crear el recurso generado. Para la versión renderizada de `kyverno`, este Role/Binding adicional del espacio de nombres ilustra una concesión acotada para PDB. El chart ya incluye otros permisos de controlador; no describa esto como la política RBAC efectiva completa del controlador. Ajuste los nombres de ServiceAccount según el renderizado y compruebe la autorización en el clúster de destino.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -451,9 +455,9 @@ roleRef:
   name: kyverno-lab-pdb-writer
 ```
 
-#### Generación automática de ResourceQuota de Namespace
+#### Generación automática de ResourceQuota para espacios de nombres
 
-Se aplica el mismo opt-in explícito de Namespace. Los valores de cuota son una política de laboratorio, no un presupuesto de AWS ni un tope de costos; tenga en cuenta los requests de la carga de trabajo, los containers init, los limits y las cuotas existentes antes de habilitarla.
+Se aplica la misma opción explícita para Namespace. Los valores de cuota son una política de laboratorio, no un presupuesto de AWS ni un límite de costos; antes de habilitarla, tenga en cuenta las solicitudes de las cargas de trabajo, los contenedores de inicialización, los límites y las cuotas existentes.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -495,13 +499,13 @@ spec:
 
 ## Pruebas y validación de políticas
 
-### Flujo de trabajo de aplicación de políticas
+### Flujo de trabajo para aplicar políticas
 
-Revise la propiedad y el alcance de la política, pruebe localmente casos positivos/negativos/omitidos, inspeccione los objetos generados/mutados y, luego, prepare la admisión en vivo y los permisos de los controllers. Audit es una acción de validación; no hace que la mutación, la generación ni la eliminación sean inocuas. La autogeneración de políticas para controladores de Pods y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opciones independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de suponer que cubre todas las plantillas de controladores.
+Revise quién administra las políticas y su alcance; pruebe localmente casos positivos, negativos y omitidos; inspeccione los objetos generados/modificados y, luego, prepare por etapas la admisión activa y los permisos de los controladores. Audit es una acción de validación; no hace que la mutación, la generación o la eliminación sean inocuas. La autogeneración de controladores de Pod y la generación nativa de ValidatingAdmissionPolicy/MutatingAdmissionPolicy son opciones independientes con límites de compatibilidad; inspeccione el estado de la política generada en lugar de suponer que se cubren todas las plantillas de controladores.
 
 ### Simulación de políticas
 
-Cree `policy-lab-tests/` y guarde allí los cuatro archivos siguientes. La prueba espera intencionalmente una infracción para `missing-label`; una suite de pruebas aprobada significa que las expectativas coincidieron, no que cada entrada cumplió.
+Cree `policy-lab-tests/` y guarde allí los cuatro archivos siguientes. La prueba espera intencionadamente una infracción para `missing-label`; que el conjunto de pruebas pase significa que se cumplieron las expectativas, no que todas las entradas cumplieran las reglas.
 
 `require-team.yaml`:
 
@@ -532,7 +536,7 @@ spec:
     message: A nonempty team label is required.
 ```
 
-`pod.yaml` (un fixture local; su imagen no se descarga):
+`pod.yaml` (un recurso de prueba local; no se descarga su imagen):
 
 ```yaml
 apiVersion: v1
@@ -600,15 +604,15 @@ kyverno apply add-default-label.yaml --resource ./policy-lab-tests/pod.yaml --ou
 
 ### Validación de políticas
 
-`kyverno test` toma un directorio con un manifiesto de prueba; `kyverno apply` evalúa la política frente a los recursos proporcionados. `--cluster` lee recursos del cluster seleccionado para la evaluación; no es un comando de instalación de políticas. Instalar una política revisada usa kubectl/GitOps y cambia el cluster. Consulte la ayuda de la CLI fijada: un flujo de trabajo genérico de `kyverno validate` o `kyverno create disallow-latest-tag` no es la interfaz probada. `create` existe para recursos auxiliares compatibles de Kyverno.
+`kyverno test` recibe un directorio con un manifiesto de prueba; `kyverno apply` evalúa la política con los recursos proporcionados. `--cluster` lee recursos del clúster seleccionado para evaluarlos; no es un comando para instalar políticas. La instalación de una política revisada se realiza con kubectl/GitOps y modifica el clúster. Consulte la ayuda del CLI fijado a una versión: un flujo de trabajo genérico `kyverno validate` o `kyverno create disallow-latest-tag` no es la interfaz probada. `create` sí existe para los recursos auxiliares de Kyverno compatibles.
 
-## Monitoreo e informes de políticas
+## Supervisión e informes de políticas
 
 ### Informes de políticas
 
-El perfil predeterminado utiliza las API `PolicyReport`/`ClusterPolicyReport` de Policy WG. Un PolicyReport tiene alcance de namespace; ClusterPolicyReport cubre recursos con alcance de cluster, no simplemente todos los namespaces combinados. La configuración de informes y los tipos de reglas compatibles importan. Los escaneos en segundo plano informan resultados de validación; no deniegan, mutan ni eliminan retroactivamente objetos existentes. Los objetos existentes siguen sujetos a comprobaciones de admisión coincidentes cuando se actualizan incluso si el escaneo en segundo plano está deshabilitado.
+La configuración predeterminada usa las API `PolicyReport`/`ClusterPolicyReport` del grupo de trabajo de políticas (Policy WG). Un PolicyReport pertenece a un espacio de nombres; ClusterPolicyReport abarca recursos con ámbito de clúster, no simplemente la combinación de todos los espacios de nombres. La configuración de informes y los tipos de reglas compatibles son importantes. Los análisis en segundo plano informan de resultados de validación; no rechazan, modifican ni eliminan retroactivamente objetos existentes. Los objetos existentes siguen sujetos a las comprobaciones de admisión coincidentes cuando se actualizan, aunque el análisis en segundo plano esté desactivado.
 
-Este es un **ejemplo de esquema sintético**, no un informe recopilado de un cluster. Los resultados usan `resources` y `result`, no `resource`/`status`; si se proporciona una marca de tiempo, usa segundos/nanos enteros. Los recuentos del resumen deben coincidir con las entradas.
+Este es un **ejemplo de esquema sintético**, no un informe recopilado de un clúster. Los resultados usan `resources` y `result`, no `resource`/`status`; si se proporciona una marca de tiempo, usa segundos/nanosegundos enteros. Los recuentos del resumen deben coincidir con las entradas.
 
 ```yaml
 apiVersion: wgpolicyk8s.io/v1alpha2
@@ -642,32 +646,32 @@ results:
   message: A nonempty team label is required.
 ```
 
-Consulte los informes reales con `kubectl get policyreports -n policy-lab` y `kubectl get clusterpolicyreports`. Reports Server/OpenReports son instalaciones/configuraciones opcionales independientes; verifique la API realmente instalada antes de asumir el backend.
+Consulte los informes reales con `kubectl get policyreports -n policy-lab` y `kubectl get clusterpolicyreports`. Reports Server/OpenReports son instalaciones/configuraciones opcionales e independientes; verifique que la API esté realmente instalada antes de dar por hecho que el backend existe.
 
 ### Métricas de Prometheus
 
-Use los Services de métricas creados por el chart y los ServiceMonitors por controller de los valores probados anteriores. El nombre de puerto Service es `metrics-port` en 8000, con selectores de component/instance/part-of, no `app: kyverno`. El render los coloca en `kyverno` y configura `namespaceSelector.matchNames: [kyverno]`. Prometheus debe seleccionar esos monitors y el namespace. La existencia de recursos no prueba scraping ni exportación a CloudWatch.
+Use los Services de métricas creados por el chart y los ServiceMonitors por controlador de los valores probados anteriormente. El nombre del puerto Service es `metrics-port`, en 8000, con selectores de componente/instancia/parte, no `app: kyverno`. El renderizado los coloca en `kyverno` y configura `namespaceSelector.matchNames: [kyverno]`. Prometheus debe seleccionar esos monitores y el espacio de nombres. La existencia de los recursos no demuestra que se estén recopilando métricas ni exportando a CloudWatch.
 
-## Mejores prácticas
+## Prácticas recomendadas
 
 ### 1. Despliegue gradual
 
-Prepare la nueva validación con Audit, revise informes y excepciones reales y, después, elija Deny cuando sea apropiado. Compruebe la política de fallo de webhook, el timeout, la disponibilidad de réplicas y la recuperación de emergencia. Mantenga separadas la revisión de generación, mutation-existing y eliminación destructiva.
+Introduzca las nuevas validaciones por etapas con Audit, revise los informes y las excepciones reales y, luego, elija Deny cuando corresponda. Compruebe la política de errores del webhook, el tiempo de espera, la disponibilidad de réplicas y el procedimiento de recuperación de emergencia. Revise por separado la generación, mutate-existing y la eliminación destructiva.
 
 ### 2. Gestión de excepciones
 
-Las matchConstraints/matchConditions estrechas no equivalen a una exención ilimitada. Revise el alcance de namespace, nombres, kinds y la disponibilidad de información de admisión/usuario. No se puede asumir que las reglas clásicas que dependen de información de usuario/rol sean evaluables en escaneos en segundo plano. CEL PolicyException utiliza `policies.kyverno.io/v1`, policyRefs/matchConditions explícitos y opcionalmente expiresAt; restrinja quién puede crearlo y verifique el soporte de instalación/configuración. Una excepción es un objeto sensible a la autorización, no una omisión de admisión que todo equipo de aplicaciones deba recibir.
+Unos matchConstraints/matchConditions acotados no equivalen a una exención ilimitada. Revise el alcance del espacio de nombres, los nombres, los tipos y la disponibilidad de la información de admisión/usuario. No se puede suponer que las reglas clásicas que dependen de información de usuario/rol puedan evaluarse en análisis en segundo plano. CEL PolicyException usa `policies.kyverno.io/v1`, policyRefs/matchConditions explícitos y, de forma opcional, expiresAt; restrinja quién puede crearlas y verifique que la instalación/configuración las admita. Una excepción es un objeto sensible para la autorización, no un mecanismo para omitir la admisión que deba recibir cualquier equipo de aplicaciones.
 
 ### 3. Organización de políticas
 
-Mantenga políticas versionadas de validación, mutación, generación y eliminación con pruebas y propietarios. Los patrones/JMESPath de ClusterPolicy heredado difieren de CEL; migre regla por regla con comparaciones de salida. La verificación de firma de imagen es `ImageValidatingPolicy` en la API actual; consulte la [guía de seguridad de imágenes](./07-image-security.md) para los requisitos previos de attestor/registry/trust. La verificación de firmas no es escaneo de vulnerabilidades ni una lista de allow general para registry.
+Mantenga políticas de validación, mutación, generación y eliminación con versiones, pruebas y responsables definidos. Los patrones/JMESPath de ClusterPolicy heredados difieren de CEL; migre regla por regla y compare los resultados. La verificación de firmas de imágenes se implementa con `ImageValidatingPolicy` en la API actual; consulte la [guía de seguridad de imágenes](./07-image-security.md) para conocer los requisitos previos de atestadores/registro/confianza. La verificación de firmas no es un análisis de vulnerabilidades ni una lista general de registros permitidos.
 
 ## Conclusión
 
-La validación local cubrió la evaluación de políticas y la preservación de salida de Kyverno 1.19.1 reales, los esquemas de API publicados y el renderizado de charts. No se ejecutaron el orden/autogeneración de webhook en vivo, el RBAC de controller, las redes, la confianza de imagen ni las acciones destructivas del ciclo de vida. Estos siguen siendo comprobaciones de aceptación de despliegue.
+La validación local cubrió la evaluación real de políticas con Kyverno 1.19.1 y la conservación de la salida, los esquemas de API publicados y el renderizado del chart. No se ejecutaron el orden de los webhooks activos/autogeneración, el RBAC de los controladores, las redes, la confianza en las imágenes ni las acciones destructivas del ciclo de vida. Estos siguen siendo controles de aceptación del despliegue.
 
 - [Versiones de Kyverno y versiones probadas de Kubernetes](https://kyverno.io/docs/installation/releases/)
-- [Instalación y responsabilidades de los controllers](https://kyverno.io/docs/installation/installation/)
+- [Instalación y responsabilidades de los controladores](https://kyverno.io/docs/installation/installation/)
 - [Migración a CEL](https://kyverno.io/docs/guides/migration-to-cel/)
 - [ValidatingPolicy](https://kyverno.io/docs/policy-types/validating-policy/)
 - [MutatingPolicy](https://kyverno.io/docs/policy-types/mutating-policy/)
@@ -675,6 +679,6 @@ La validación local cubrió la evaluación de políticas y la preservación de 
 - [DeletingPolicy](https://kyverno.io/docs/policy-types/deleting-policy/)
 - [CLI de Kyverno](https://kyverno.io/docs/kyverno-cli/reference/kyverno/)
 
-## Quiz
+## Cuestionario
 
-Pruebe el [Quiz de gestión de políticas de Kyverno](../quizzes/security/01-kyverno-policy-management-quiz.md).
+Pruebe el [cuestionario sobre gestión de políticas con Kyverno](../quizzes/security/01-kyverno-policy-management-quiz.md).
