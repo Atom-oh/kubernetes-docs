@@ -1,1342 +1,1108 @@
-# Profundización en los conceptos de redes
+# Conceptos de redes en profundidad
 
-> **Última actualización**: February 22, 2026
+> **Versión de referencia**: Cilium 1.20.3.
+> **Última revisión**: 16 de octubre de 2026.
 
-Este documento proporciona explicaciones detalladas de los conceptos fundamentales de redes necesarios para comprender Cilium. Explora los conceptos técnicos que constituyen la base de Cilium, incluidos las redes de contenedores, las redes de superposición y los protocolos de enrutamiento.
+Este documento explica en detalle los conceptos de redes necesarios para entender Cilium: redes de contenedores, redes superpuestas, NAT, enrutamiento, DNS, balanceo de carga y políticas. Los ejemplos son conceptuales o configuraciones parciales de Helm y de API para entornos de prueba preparados; no constituyen procedimientos completos de instalación o migración. Compruebe los requisitos de plataforma y versión en [la introducción a Cilium](README.md), ya que las plataformas administradas no permiten todas las mismas funciones de CNI.
 
 ## Objetivos de aprendizaje
 
-A través de este documento, comprenderá:
-- La estructura básica del modelo OSI y la pila TCP/IP, así como el rol de cada capa
-- Los principios básicos y los métodos de implementación de las redes de contenedores
-- Las diferencias entre las redes de superposición y las redes subyacentes
-- Cómo se utilizan en Cilium los conceptos fundamentales de redes como NAT, enrutamiento y DNS
+Al estudiar este documento, comprenderá:
+- La estructura básica de los modelos OSI y TCP/IP y la función de cada capa
+- Los principios básicos y las formas de implementar las redes de contenedores
+- Las diferencias entre las redes overlay y underlay
+- Cómo utiliza Cilium conceptos como NAT, enrutamiento y DNS
 
 ## Índice
 
-1. [Modelo OSI y pila TCP/IP](#osi-model-and-tcpip-stack)
-2. [Conceptos básicos de redes de contenedores](#container-networking-basics)
-3. [Redes de superposición](#overlay-networks)
+1. [Modelo OSI y pila TCP/IP](#osi-model-and-tcp-ip-stack)
+2. [Fundamentos de redes de contenedores](#container-networking-basics)
+3. [Redes overlay](#overlay-networks)
 4. [Traducción de direcciones de red (NAT)](#network-address-translation-nat)
 5. [Protocolos de enrutamiento](#routing-protocols)
 6. [DNS y descubrimiento de servicios](#dns-and-service-discovery)
 7. [Conceptos de balanceo de carga](#load-balancing-concepts)
-8. [Conceptos básicos de seguridad de red](#network-security-basics)
+8. [Fundamentos de seguridad de red](#network-security-basics)
 
-<span id="osi-model-and-tcpip-stack"></span>
+## Modelo OSI y pila TCP/IP {#osi-model-and-tcp-ip-stack}
 
-## Modelo OSI y pila TCP/IP
+> **Concepto clave**: El modelo OSI clasifica la comunicación de red en siete capas abstractas para facilitar la comprensión de procesos de red complejos.
 
-> **Concepto clave**: El modelo OSI es un marco conceptual que clasifica la comunicación de red en 7 capas abstractas, lo que facilita la comprensión de procesos de red complejos.
+El modelo OSI (Open Systems Interconnection) es un marco conceptual que clasifica la comunicación de red en siete capas abstractas. Cada capa cumple funciones específicas y permite descomponer los procesos complejos para entenderlos mejor.
 
-El modelo OSI (Open Systems Interconnection) es un marco conceptual que clasifica la comunicación de red en 7 capas abstractas. Cada capa es responsable de funciones de red específicas, lo que permite descomponer procesos de red complejos para facilitar su comprensión.
+### Comparación de los modelos OSI y TCP/IP
 
-### Comparación entre el modelo OSI y el modelo TCP/IP
+![Diagrama que relaciona las siete capas de referencia OSI con las cuatro capas de la pila TCP/IP e indica protocolos representativos de cada capa OSI.](../../.gitbook/assets/en-networking-cilium-networking-concepts-0.png)
 
-```mermaid
-flowchart LR
-    subgraph "OSI Model"
-        OSI7[7. Application Layer]
-        OSI6[6. Presentation Layer]
-        OSI5[5. Session Layer]
-        OSI4[4. Transport Layer]
-        OSI3[3. Network Layer]
-        OSI2[2. Data Link Layer]
-        OSI1[1. Physical Layer]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-0.html)
 
-    subgraph "TCP/IP Model"
-        TCP4[4. Application Layer]
-        TCP3[3. Transport Layer]
-        TCP2[2. Internet Layer]
-        TCP1[1. Network Access Layer]
-    end
+Esta correspondencia es una aproximación didáctica, no una especificación para implementar protocolos. La etiqueta SSL de la figura es heredada; en los sistemas actuales, use versiones de TLS compatibles.
 
-    OSI7 & OSI6 & OSI5 --- TCP4
-    OSI4 --- TCP3
-    OSI3 --- TCP2
-    OSI2 & OSI1 --- TCP1
-
-    subgraph "Protocol Examples"
-        P7[HTTP, FTP, SMTP, DNS]
-        P6[SSL/TLS, JPEG, ASCII]
-        P5[NetBIOS, RPC]
-        P4[TCP, UDP]
-        P3[IP, ICMP, IGMP]
-        P2[Ethernet, PPP, ARP]
-        P1[RS-232, Ethernet]
-    end
-
-    OSI7 --- P7
-    OSI6 --- P6
-    OSI5 --- P5
-    OSI4 --- P4
-    OSI3 --- P3
-    OSI2 --- P2
-    OSI1 --- P1
-
-    classDef app fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef transport fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef link fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef physical fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class OSI7,OSI6,OSI5,TCP4,P7,P6,P5 app;
-    class OSI4,TCP3,P4 transport;
-    class OSI3,TCP2,P3 network;
-    class OSI2,P2 link;
-    class OSI1,TCP1,P1 physical;
-```
-
-### Modelo OSI de 7 capas
+### Modelo OSI de siete capas
 
 1. **Capa física**
-   - Convierte flujos de bits en señales eléctricas, ópticas o inalámbricas
-   - Incluye dispositivos físicos como cables, switches y hubs
-   - Unidad de datos: Bit
+   - Convierte secuencias de bits en señales eléctricas, ópticas o inalámbricas
+   - Incluye cables, transceptores y señalización física; un switch también realiza funciones de capas superiores
+   - Unidad de datos: bit
 
 2. **Capa de enlace de datos**
-   - Responsable de la transferencia de datos entre nodos en una red física
-   - Identificación de dispositivos mediante direcciones MAC (Media Access Control)
-   - Detección y corrección de errores
-   - Unidad de datos: Trama
-   - Los protocolos Ethernet y Wi-Fi operan en esta capa
+   - Transfiere datos entre nodos de una red física
+   - Identifica dispositivos mediante direcciones MAC (Media Access Control)
+   - Detecta errores y permite recuperarse de ellos cuando el protocolo de enlace lo contempla; la detección de errores de Ethernet no corrige por sí sola las tramas dañadas
+   - Unidad de datos: trama
+   - En esta capa operan protocolos como Ethernet y Wi-Fi
 
 3. **Capa de red**
-   - Responsable del enrutamiento de paquetes entre redes diferentes
-   - Direccionamiento lógico (direcciones IP)
-   - Determinación de rutas y reenvío de paquetes
-   - Unidad de datos: Paquete
+   - Enruta paquetes entre redes diferentes
+   - Utiliza direcciones lógicas, como las direcciones IP
+   - Determina rutas y reenvía paquetes
+   - Unidad de datos: paquete
    - IP (Internet Protocol) es el protocolo principal de esta capa
 
 4. **Capa de transporte**
-   - Control de la comunicación de extremo a extremo
-   - Segmentación y reensamblaje de datos
-   - Control de flujo y recuperación de errores
-   - Unidad de datos: Segmento
-   - TCP (Transmission Control Protocol) y UDP (User Datagram Protocol) son los protocolos principales de esta capa
+   - Controla la comunicación de extremo a extremo
+   - Segmenta y reensambla los datos
+   - TCP ofrece control de flujo y retransmisión; UDP no ofrece esas garantías
+   - Unidad de datos: segmento TCP o datagrama UDP
+   - TCP (Transmission Control Protocol) y UDP (User Datagram Protocol) son los principales protocolos de esta capa
 
 5. **Capa de sesión**
-   - Establecimiento, mantenimiento y terminación de sesiones de comunicación
-   - Sincronización y control de diálogo
-   - Establecimiento de puntos de control y recuperación
-   - NetBIOS y RPC (Remote Procedure Call) son ejemplos de esta capa
+   - Establece, mantiene y termina sesiones de comunicación
+   - Gestiona la sincronización y el diálogo
+   - Establece puntos de control y permite la recuperación
+   - La gestión de sesiones puede describirse en esta capa; las implementaciones reales de RPC no se corresponden necesariamente con una única capa OSI
 
 6. **Capa de presentación**
-   - Conversión y cifrado de formatos de datos
-   - Codificación de caracteres, compresión de datos, cifrado/descifrado
-   - SSL/TLS, JPEG y ASCII son ejemplos de esta capa
+   - Convierte formatos de datos y realiza funciones de cifrado
+   - Gestiona codificación de caracteres, compresión y cifrado/descifrado
+   - La codificación y la compresión ilustran esta función; TLS es un protocolo de Internet, no una implementación literal de la capa de presentación OSI
 
 7. **Capa de aplicación**
-   - Proporciona interfaz de usuario y servicios de aplicación
-   - Servicios como correo electrónico, transferencia de archivos y navegación web
+   - Proporciona los servicios de red que utilizan las aplicaciones, sin requerir una interfaz gráfica de usuario
+   - Incluye servicios como correo electrónico, transferencia de archivos y navegación web
    - HTTP, FTP, SMTP y DNS son ejemplos de esta capa
 
 ### Relación entre Cilium y el modelo OSI
 
 Cilium opera en varias capas OSI:
 
-| Capa OSI | Funcionalidad de Cilium | Ejemplo |
+| Capa OSI | Función de Cilium | Ejemplo |
 |-----------|----------------|---------|
-| L2 (enlace de datos) | Manejo de ARP, filtrado de MAC | Verificación de dirección MAC entre nodos |
-| L3 (red) | Enrutamiento IP, políticas basadas en CIDR | Enrutamiento IP entre Pods |
-| L4 (transporte) | Filtrado basado en puertos, seguimiento de conexiones | Control de acceso al puerto de Service |
-| L7 (aplicación) | Filtrado de HTTP, gRPC y Kafka | Control de acceso basado en rutas de API |
+| L2 (enlace de datos) | Conectividad de enlace; L2 Announcements opcional | Respuestas ARP/NDP para las VIP de Service configuradas |
+| L3 (red) | Enrutamiento IP y políticas basadas en CIDR | Enrutamiento IP entre Pods |
+| L4 (transporte) | Filtrado por puertos y seguimiento de conexiones | Control de acceso a puertos de Service |
+| L7 (aplicación) | Reglas compatibles de proxy HTTP/gRPC y DNS | Políticas de rutas HTTP o de consultas DNS |
+
+L2 Announcements sigue en fase Beta en esta versión y requiere configurar su controlador y los dispositivos. No constituye una interfaz general de políticas de seguridad basadas en direcciones MAC.
 
 ### Pila TCP/IP
 
-La pila TCP/IP es un conjunto de protocolos que constituye la base de Internet, un modelo simplificado de 4 capas del modelo OSI.
+La pila TCP/IP reúne los protocolos que forman la base de Internet. Su arquitectura suele describirse mediante cuatro capas y compararse con OSI, pero no es una implementación directa del modelo de siete capas.
 
 1. **Capa de interfaz de red**
-   - Corresponde a las capas física y de enlace de datos del modelo OSI
-   - Responsable de la interfaz con los medios de red físicos
+   - Se corresponde con las capas física y de enlace de datos del modelo OSI
+   - Proporciona la interfaz con el medio físico de red
    - Incluye protocolos como Ethernet y Wi-Fi
 
 2. **Capa de Internet**
-   - Corresponde a la capa de red del modelo OSI
-   - Enrutamiento de paquetes mediante IP (Internet Protocol)
-   - Incluye ICMP (Internet Control Message Protocol) y ARP (Address Resolution Protocol)
+   - Se corresponde con la capa de red del modelo OSI
+   - Enruta paquetes mediante IP (Internet Protocol)
+   - Incluye ICMP (Internet Control Message Protocol); ARP resuelve las direcciones de enlace del siguiente salto IPv4 en el límite de la capa de enlace, mientras que IPv6 utiliza Neighbor Discovery
 
 3. **Capa de transporte**
-   - Igual que la capa de transporte del modelo OSI
+   - Se corresponde con la capa de transporte del modelo OSI
    - Incluye los protocolos TCP y UDP
    - Proporciona comunicación orientada a conexión (TCP) y sin conexión (UDP)
 
 4. **Capa de aplicación**
    - Integra las capas de sesión, presentación y aplicación del modelo OSI
    - Incluye protocolos como HTTP, SMTP, FTP y DNS
-   - Proporciona una interfaz entre las aplicaciones de usuario y la red
+   - Proporciona la interfaz entre las aplicaciones del usuario y la red
 
-### Funcionalidades de Cilium por capa
+### Funciones de Cilium por capa
 
-Cilium proporciona funcionalidades en diversas capas de red:
+Cilium proporciona funciones en varias capas de red:
 
-- **L2 (capa de enlace de datos)**: Filtrado basado en direcciones MAC, prevención de suplantación ARP
-- **L3 (capa de red)**: Enrutamiento y filtrado basados en direcciones IP, IPAM
-- **L4 (capa de transporte)**: Filtrado basado en puertos, balanceo de carga, seguimiento de conexiones
-- **L7 (capa de aplicación)**: Filtrado y balanceo de carga conscientes del protocolo para HTTP, gRPC, Kafka, etc.
+- **L2 (enlace de datos)**: Conectividad de enlace y anuncios opcionales de Service en L2; no proporciona una API general de NetworkPolicy por direcciones MAC ni protección universal contra la suplantación ARP
+- **L3 (red)**: Enrutamiento y filtrado por direcciones IP, e IPAM
+- **L4 (transporte)**: Filtrado por puertos, balanceo de carga y seguimiento de conexiones
+- **L7 (aplicación)**: Funciones de proxy HTTP/gRPC y políticas DNS configuradas; la antigua API de políticas Kafka L7 se ha eliminado
 
-<span id="container-networking-basics"></span>
+## Fundamentos de redes de contenedores {#container-networking-basics}
 
-## Conceptos básicos de redes de contenedores
-
-Las redes de contenedores son un mecanismo que permite que las aplicaciones en contenedores se comuniquen entre sí y con el mundo exterior. Las plataformas de orquestación de contenedores como Kubernetes utilizan diversos modelos y soluciones de red.
+Las redes de contenedores permiten que las aplicaciones en contenedores se comuniquen entre sí y con el exterior. Las plataformas de orquestación como Kubernetes utilizan diversos modelos y soluciones de red.
 
 ### Container Network Interface (CNI)
 
-CNI (Container Network Interface) define una interfaz estándar entre los tiempos de ejecución de contenedores y los plugins de red. Esto permite integrar diversas soluciones de red en las plataformas de contenedores.
+CNI (Container Network Interface) define una interfaz estándar entre los entornos de ejecución de contenedores y los plugins de red. Kubernetes utiliza actualmente un entorno de ejecución CRI para invocar los plugins CNI. Esta interfaz permite distintas implementaciones de red; la especificación CNI no exige que todos los plugins implementen Kubernetes NetworkPolicy.
 
-#### Componentes clave de CNI:
+#### Componentes principales de CNI:
 
-1. **Plugins**: Ejecutables responsables de crear y configurar interfaces de red
-2. **Archivos de configuración**: Archivos en formato JSON que definen el comportamiento de los plugins
-3. **IPAM (IP Address Management)**: Módulo responsable de la asignación y gestión de direcciones IP
+1. **Plugins**: Ejecutables que crean y configuran interfaces de red
+2. **Archivos de configuración**: Archivos JSON que definen el comportamiento del plugin
+3. **IPAM (IP Address Management)**: Módulo que asigna y gestiona direcciones IP
 
-#### Responsabilidades principales de los plugins de CNI:
+#### Responsabilidades principales de los plugins CNI:
 
-- Agregar/eliminar interfaces a/de los espacios de nombres de red de contenedores
+- Añadir y eliminar interfaces en los espacios de nombres de red de los contenedores
 - Asignar y liberar direcciones IP
 - Configurar tablas de enrutamiento
-- Aplicar políticas de red
+- Una implementación de red puede proporcionar por separado controladores de políticas y su aplicación en el plano de datos; aplicar políticas no es una operación obligatoria de la ejecución de CNI
 
 ### Modelos de redes de contenedores
 
-Existen varios modelos de redes de contenedores, cada uno adecuado para distintos casos de uso y requisitos.
+Existen varios modelos de redes de contenedores, adecuados para distintas necesidades y casos de uso.
 
-#### 1. Redes de bridge
+#### 1. Redes bridge
 
-- Crea un bridge virtual en el host para conectar contenedores
-- Cada contenedor se conecta al bridge mediante pares virtuales de ethernet (veth)
-- Comunicación eficiente entre contenedores en el mismo host
-- Modo de red predeterminado para Docker
+- Crean un puente virtual en el host para conectar contenedores
+- Cada contenedor se conecta al puente mediante un par de interfaces Ethernet virtuales (veth)
+- Permiten comunicación eficiente entre contenedores del mismo host
+- El puente predeterminado es un ejemplo de Docker independiente sobre Linux; no representa el modelo de red de Kubernetes ni de Cilium
 
-```mermaid
-graph TD
-    subgraph "Container A"
-        A["Container A<br>IP: 172.17.0.2"]
-        vethA[veth0]
-    end
+![Diagrama de dos contenedores conectados mediante pares veth al puente Linux docker0 del host Docker, que reenvía el tráfico hacia la red del host a través de eth0.](../../.gitbook/assets/en-networking-cilium-networking-concepts-1.png)
 
-    subgraph "Container B"
-        B["Container B<br>IP: 172.17.0.3"]
-        vethB[veth1]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-1.html)
 
-    bridge["docker0<br>Bridge (172.17.0.1/24)"]
-    host["Host Network<br>eth0, 192.168.1.10"]
+Este ejemplo de puente Docker sobre Linux utiliza direcciones ilustrativas. La ruta de enrutamiento y NAT del host está simplificada; no representa la topología bridge predeterminada de Cilium.
 
-    vethA --> bridge
-    vethB --> bridge
-    bridge --> host
-```
-
-#### 2. Redes de host
+#### 2. Redes host
 
 - El contenedor utiliza directamente el espacio de nombres de red del host
-- No hay aislamiento de red separado
-- Proporciona el mejor rendimiento de red
-- Posibilidad de conflictos de puertos
+- No existe un aislamiento de red independiente
+- Se evita un espacio de nombres de red propio del contenedor; el rendimiento sigue dependiendo de la carga y de la ruta real
+- Puede haber conflictos de puertos
 
-```mermaid
-graph TD
-    subgraph "Host"
-        subgraph "Container A"
-            A[Container A]
-        end
+![Diagrama de dos contenedores de un mismo host que comparten directamente su pila de red (eth0, 192.168.1.10), sin un espacio de nombres de red independiente ni una capa de aislamiento de red entre ellos.](../../.gitbook/assets/en-networking-cilium-networking-concepts-2.png)
 
-        subgraph "Container B"
-            B[Container B]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-2.html)
 
-        network[Host Network Stack<br>eth0, 192.168.1.10]
+Aquí, «sin aislamiento» significa que se comparte el espacio de nombres de red. No significa que desaparezcan todos los límites de aislamiento de procesos, sistemas de archivos u otros recursos del contenedor.
 
-        A --> network
-        B --> network
-    end
-```
+#### 3. Redes overlay
 
-#### 3. Redes de superposición
+- Permiten la comunicación entre contenedores de distintos hosts
+- Utilizan protocolos de encapsulación como VXLAN y GENEVE
+- Son adecuadas para clústeres grandes
+- Las admiten Cilium, Calico y Flannel, entre otros
 
-- Admite la comunicación entre contenedores en varios hosts
-- Utiliza protocolos de encapsulación como VXLAN y GENEVE
-- Adecuado para clústeres a gran escala
-- Compatible con Cilium, Calico, Flannel, etc.
+![Diagrama de dos hosts con contenedores en la red overlay 10.0.0.0/24: los paquetes se encapsulan en eth0 del host A, atraviesan la red física por un túnel VXLAN y se desencapsulan en eth0 del host B para llegar al otro contenedor.](../../.gitbook/assets/en-networking-cilium-networking-concepts-3.png)
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        overlayA[Overlay Network<br>10.0.0.0/24]
-        ethA[eth0: 192.168.1.10]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-3.html)
 
-        A --> overlayA
-        overlayA --> ethA
-    end
+Este esquema genérico de VXLAN utiliza el puerto UDP estándar 4789 y una subred L2 compartida. El puerto VXLAN predeterminado de Cilium es 8472; las asignaciones de CIDR de los Pods deben seguir el modo IPAM elegido, en lugar de copiar el dibujo.
 
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        overlayB[Overlay Network<br>10.0.0.0/24]
-        ethB[eth0: 192.168.1.11]
+#### 4. Redes underlay (enrutamiento directo)
 
-        B --> overlayB
-        overlayB --> ethB
-    end
+- Utilizan directamente la infraestructura física de red
+- No añaden sobrecarga de encapsulación
+- Requieren control sobre la infraestructura de red
+- Pueden integrarse con protocolos de enrutamiento como BGP
 
-    ethA <-->|VXLAN| ethB
-```
+![Diagrama de dos hosts que enrutan el tráfico de los contenedores desde una tabla de enrutamiento local directamente hacia la red física, sin encapsulación.](../../.gitbook/assets/en-networking-cilium-networking-concepts-4.png)
 
-#### 4. Redes subyacentes (enrutamiento directo)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-4.html)
 
-- Utiliza directamente la infraestructura de red física
-- Sin sobrecarga de encapsulación
-- Requiere control sobre la infraestructura de red
-- Puede integrarse con protocolos de enrutamiento como BGP
+Las entradas ilustran rutas de host. Un despliegue real sigue necesitando siguientes saltos accesibles y rutas válidas de ida y retorno para las direcciones de sus Pods.
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        routeA[Route:<br>10.0.0.2 -> local<br>10.0.0.3 -> Host B]
-        ethA[eth0: 192.168.1.10]
+### Modelo de red de Kubernetes
 
-        A --> routeA
-        routeA --> ethA
-    end
+El modelo de Kubernetes proporciona conectividad directa entre Pods, **salvo cuando existe una segmentación de red intencionada**:
 
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        routeB[Route:<br>10.0.0.3 -> local<br>10.0.0.2 -> Host A]
-        ethB[eth0: 192.168.1.11]
+1. Los Pods pueden comunicarse entre sí sin que la red de Pods requiera obligatoriamente un proxy o NAT.
+2. Los agentes de un nodo deben poder comunicarse con los Pods **de ese nodo**. Esto no exige que todos los hosts puedan llegar a todos los Pods.
+3. La conectividad externa sigue las políticas de enrutamiento y seguridad del clúster; no requiere acceso ilimitado a Internet.
 
-        B --> routeB
-        routeB --> ethB
-    end
-
-    ethA <-->|Physical Network| ethB
-```
-
-### Modelo de redes de Kubernetes
-
-Kubernetes tiene un requisito fundamental: todos los Pods deben poder comunicarse entre sí sin NAT. Para lograrlo, define el siguiente modelo de red:
-
-1. **Comunicación de Pod a Pod**: Todos los Pods deben poder comunicarse entre sí sin NAT
-2. **Comunicación de nodo a Pod**: Los nodos deben poder comunicarse con todos los Pods sin NAT
-3. **Comunicación de Pod a red externa**: Los Pods deben poder comunicarse con redes externas (normalmente mediante NAT)
+La aplicación de NetworkPolicy depende de una implementación de red que la admita. La API puede existir aunque el plugin instalado no aplique sus políticas.
 
 #### Componentes de red de Kubernetes:
 
-1. **Red de Pods**: Red que conecta todos los Pods del clúster
-2. **Red de Services**: Proporciona endpoints estables para conjuntos de Pods
-3. **DNS del clúster**: Servicio DNS para el descubrimiento de servicios
+1. **Red de Pods**: Conecta los Pods del clúster
+2. **Red de Services**: Proporciona puntos de acceso estables para conjuntos de Pods
+3. **DNS del clúster**: Proporciona resolución DNS para descubrir servicios
 4. **Ingress/Egress**: Gestiona la comunicación con el exterior del clúster
 
-### Enfoque de Cilium para las redes de contenedores
+### Redes de contenedores con Cilium
 
-Cilium aprovecha eBPF para proporcionar una solución de redes de contenedores escalable y de alto rendimiento:
+Cilium utiliza eBPF para proporcionar una solución de redes de contenedores escalable y de alto rendimiento:
 
-1. **Ruta de datos basada en eBPF**: Procesamiento directo de paquetes dentro del kernel
-2. **Compatibilidad con diversos modos de red**: Superposición (VXLAN, Geneve) y subyacente (enrutamiento directo)
-3. **Balanceo de carga avanzado**: Funcionalidad de reemplazo de kube-proxy
-4. **Políticas de red**: Políticas granulares en los niveles L3-L7
-5. **IPAM integrado**: Compatibilidad con diversas estrategias de asignación de direcciones IP
+1. **Plano de datos basado en eBPF**: Procesa paquetes directamente en el kernel
+2. **Varios modos de red**: Overlay (VXLAN, Geneve) y enrutamiento nativo; Helm utiliza de forma genérica túneles VXLAN por defecto, salvo las configuraciones específicas de cada plataforma
+3. **Balanceo de carga avanzado**: Permite reemplazar kube-proxy
+4. **Políticas de red**: Aplica políticas detalladas en las capas L3-L7
+5. **IPAM integrado**: Admite diversas estrategias de asignación de direcciones IP
 
-<span id="overlay-networks"></span>
+Una instalación genérica de Helm sin ajustes de plataforma utiliza por defecto IPAM cluster-pool: el operador asigna CIDR a los nodos y los agentes asignan IP a los Pods desde el conjunto de su nodo. `ipam.mode: kubernetes` utiliza `spec.podCIDR`/`spec.podCIDRs` del objeto Node. El modo ENI utiliza interfaces EC2 y direcciones de la VPC; no es una recomendación universal para todos los tipos de cómputo de EKS. Consulte [IPAM y políticas](04-ipam-policy.md).
 
-## Redes de superposición
+## Redes overlay {#overlay-networks}
 
-Las redes de superposición son una tecnología que construye una capa de red virtual sobre la infraestructura de red existente. Esta tecnología permite crear topologías de red virtuales independientemente de la topología de red física. En entornos de contenedores, se utiliza ampliamente para habilitar la comunicación entre contenedores en varios hosts.
+Las redes overlay crean una capa de red virtual sobre la infraestructura existente. Esto permite definir topologías virtuales independientes de la topología física. En entornos de contenedores, suelen utilizarse para comunicar contenedores de diferentes hosts.
 
-### Cómo funcionan las redes de superposición
+### Funcionamiento de las redes overlay
 
-Las redes de superposición funcionan mediante tecnología de encapsulación. Los paquetes originales se encapsulan dentro de otros paquetes y se transmiten a través de la red física.
+Las redes overlay utilizan encapsulación: los paquetes originales se introducen en otros paquetes que se transmiten por la red física.
 
-1. **Encapsulación de paquetes**: El paquete original (paquete interno) se envuelve con nuevos encabezados y, a veces, nuevos tráileres.
-2. **Tunelización**: Los paquetes encapsulados se transmiten a través de la red física hasta el host de destino.
-3. **Desencapsulación de paquetes**: En el host de destino, se elimina el encabezado externo y se extrae el paquete original.
-4. **Reenvío de paquetes**: El paquete original se reenvía al contenedor de destino.
+1. **Encapsulación**: El paquete original, o paquete interno, recibe nuevas cabeceras y, en algunos casos, nuevos campos finales.
+2. **Túnel**: Los paquetes encapsulados atraviesan la red física hasta el host de destino.
+3. **Desencapsulación**: El host de destino elimina la cabecera externa y extrae el paquete original.
+4. **Reenvío**: El paquete original se entrega al contenedor de destino.
 
-### Principales protocolos de redes de superposición
+### Principales protocolos de redes overlay
 
 #### VXLAN (Virtual Extensible LAN)
 
-VXLAN es uno de los protocolos de superposición más utilizados en las redes de contenedores.
+VXLAN es uno de los protocolos overlay más utilizados en las redes de contenedores.
 
-- **VXLAN Tunnel Endpoint (VTEP)**: Responsable de la encapsulación y desencapsulación de paquetes
-- **VXLAN Network Identifier (VNI)**: Admite hasta 16,777,216 redes virtuales
-- **Encapsulación UDP**: Los paquetes VXLAN se transmiten a través del puerto UDP 4789
-- **Encapsulación MAC-en-UDP**: Encapsula las tramas L2 originales en paquetes UDP
+- **VXLAN Tunnel Endpoint (VTEP)**: Encapsula y desencapsula paquetes
+- **VXLAN Network Identifier (VNI)**: Campo de 24 bits con 16.777.216 valores posibles; esta cifra no representa la capacidad admitida de tenants o endpoints de Cilium
+- **Encapsulación UDP**: VXLAN estándar utiliza UDP 4789; el puerto de túnel VXLAN predeterminado de Cilium es UDP 8472
+- **Encapsulación MAC-in-UDP**: Introduce las tramas L2 originales en paquetes UDP
 
-Estructura de paquetes VXLAN:
-```mermaid
-graph TD
-    outerEth[Outer Ethernet]
-    outerIP[Outer IP]
-    outerUDP[Outer UDP]
-    vxlanHeader["VXLAN Header<br>VNI(VXLAN Network Identifier)"]
-    origEth[Original Ethernet]
-    origIP[Original IP]
-    origTCP[Original TCP/UDP]
-    payload[Payload]
+Estructura de un paquete VXLAN:
 
-    outerEth --> outerIP
-    outerIP --> outerUDP
-    outerUDP --> vxlanHeader
-    vxlanHeader --> origEth
-    origEth --> origIP
-    origIP --> origTCP
-    origTCP --> payload
+![Diagrama de un paquete VXLAN: las cabeceras externas Ethernet, IP y UDP envuelven la cabecera VXLAN, que contiene la trama Ethernet original, las cabeceras IP y TCP/UDP y la carga útil.](../../.gitbook/assets/en-networking-cilium-networking-concepts-5.png)
 
-    style vxlanHeader fill:#f9f,stroke:#333,stroke-width:2px
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-5.html)
+
+Este es el formato genérico de VXLAN en la red. UDP 4789 y el VNI de 24 bits pertenecen al estándar; Cilium utiliza UDP 8472 por defecto y metadatos overlay para representar la identidad. El tamaño del campo no garantiza una determinada capacidad del clúster.
 
 #### GENEVE (Generic Network Virtualization Encapsulation)
 
-GENEVE es un protocolo de superposición más flexible diseñado para superar las limitaciones de VXLAN.
+GENEVE es un protocolo overlay más flexible, diseñado para superar las limitaciones de VXLAN.
 
-- **Encabezados de opciones extensibles**: Admite diversos metadatos
-- **Independiente del protocolo**: Puede utilizarse con diversas tecnologías de virtualización
-- **Encapsulación UDP**: Se transmite a través del puerto UDP 6081
-- **Tunelización flexible**: Admite diversos requisitos de virtualización de red
+- **Cabeceras de opciones extensibles**: Admiten diversos metadatos
+- **Independencia del protocolo**: Permite utilizar diferentes tecnologías de virtualización
+- **Encapsulación UDP**: Transmite a través del puerto UDP 6081
+- **Túneles flexibles**: Adapta la encapsulación a distintas necesidades de virtualización de red
 
 #### IPsec
 
 IPsec es un conjunto de protocolos que proporciona servicios de seguridad a nivel de paquetes IP.
 
-- **Autenticación y cifrado**: Garantiza la integridad y confidencialidad de los datos
-- **Modos de transporte y túnel**: Admite diversos escenarios de implementación
-- **Asociación de seguridad (SA)**: Define parámetros de seguridad entre las partes que se comunican
-- **Internet Key Exchange (IKE)**: Automatiza la gestión de claves de seguridad
+- **Autenticación y cifrado**: Proporciona mecanismos de integridad y autenticación y, con el modo adecuado, confidencialidad
+- **Modos de transporte y túnel**: Admite diferentes escenarios de despliegue
+- **Security Association (SA)**: Define los parámetros de seguridad entre las partes que se comunican
+- **Internet Key Exchange (IKE)**: Mecanismo general de negociación de IPsec. La configuración IPsec de Cilium utiliza, en cambio, un Secret de claves proporcionado por el administrador y el procedimiento de rotación documentado
 
-### Ventajas y desventajas de las redes de superposición
+### Ventajas y desventajas de las redes overlay
 
 #### Ventajas:
 
-- **Flexibilidad**: Permite configurar redes virtuales independientemente de la topología de red física
-- **Escalabilidad**: Admite grandes segmentos de red y numerosos endpoints
-- **Aislamiento**: Proporciona aislamiento de red entre distintos tenants o aplicaciones
-- **Compatibilidad**: Puede funcionar con la infraestructura de red existente
+- **Flexibilidad**: Permiten configurar redes virtuales independientes de la topología física
+- **Escalabilidad**: Admiten segmentos de red grandes y numerosos endpoints
+- **Aislamiento**: Los segmentos lógicos pueden separar el tráfico si están bien configurados; la encapsulación por sí sola no proporciona autenticación, cifrado ni un límite completo de políticas
+- **Compatibilidad**: Pueden funcionar sobre la infraestructura de red existente
 
 #### Desventajas:
 
-- **Sobrecarga**: Aumento del tamaño de los paquetes y de la sobrecarga de procesamiento debido a la encapsulación
-- **Consideraciones de MTU**: Reducción de la Maximum Transmission Unit (MTU) debido a la encapsulación
-- **Complejidad**: La resolución de problemas y la depuración pueden ser más complejas
-- **Latencia**: Se añade una ligera latencia durante la encapsulación y la desencapsulación
+- **Sobrecarga**: La encapsulación aumenta el tamaño del paquete y el trabajo de procesamiento
+- **MTU**: La encapsulación reduce la unidad máxima de transmisión disponible para el paquete interno
+- **Complejidad**: Puede dificultar el diagnóstico y la depuración
+- **Latencia**: La encapsulación añade procesamiento; mida su efecto real con la implementación y las funciones de descarga de procesamiento elegidas
 
-### Redes de superposición en Cilium
+### Redes overlay en Cilium
 
-Cilium admite protocolos de superposición como VXLAN y Geneve, y aprovecha eBPF para proporcionar un procesamiento eficiente de paquetes.
+Cilium admite protocolos overlay como VXLAN y Geneve y utiliza eBPF para procesar paquetes de forma eficiente.
 
-- **Procesamiento VXLAN basado en eBPF**: Encapsulación y desencapsulación de paquetes directamente dentro del kernel
-- **Enrutamiento eficiente**: Reenvío de paquetes a través de rutas optimizadas
-- **Opciones de cifrado**: Superposición cifrada mediante IPsec o WireGuard
-- **Híbrido con enrutamiento directo**: Puede combinar la superposición y el enrutamiento directo según sea necesario
+- **Procesamiento de VXLAN con eBPF**: Los programas BPF no construyen directamente la cabecera VXLAN. Configuran los metadatos del túnel (`bpf_skb_set_tunnel_key`) y redirigen al dispositivo `cilium_vxlan` o `cilium_geneve`, que funciona por flujos; el controlador VXLAN/Geneve del kernel encapsula y desencapsula los paquetes. Consulte [Overlay y enrutamiento nativo](09-overlay-native-routing.md)
+- **Enrutamiento eficiente**: Reenvío de paquetes por rutas optimizadas
+- **Opciones de cifrado**: Overlay cifrado con IPsec o WireGuard
+- **Selección de modo**: Elija un modo de enrutamiento compatible. La combinación de rutas directas automáticas entre nodos y modo túnel se rechaza; no es un mecanismo de respaldo
 
-#### Ejemplo de configuración de VXLAN de Cilium:
+#### Ejemplo de configuración VXLAN de Cilium:
+
+Valores de Helm para una **instalación IPv4 de prueba nueva y preparada**. Elija CIDR de Pods que no se solapen. No es un procedimiento de migración de IPAM en uso ni un ConfigMap de reemplazo.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
-  ipv4-range: "10.0.0.0/16"
-  ipv4-tunnel-endpoint-selector: "kubernetes.io/hostname"
+# vxlan-values.yaml
+routingMode: tunnel
+tunnelProtocol: vxlan
+tunnelPort: 8472
+autoDirectNodeRoutes: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
 ```
 
-<span id="network-address-translation-nat"></span>
+## Traducción de direcciones de red (NAT) {#network-address-translation-nat}
 
-## Traducción de direcciones de red (NAT)
+Network Address Translation (NAT) modifica las direcciones de origen o destino de paquetes IP. Se utiliza principalmente para que los dispositivos de redes privadas se comuniquen con Internet o para comunicar redes cuyos espacios de direcciones se solapan.
 
-La traducción de direcciones de red (NAT) es el proceso de modificar las direcciones de origen o destino de los paquetes IP. NAT se utiliza principalmente para permitir que los dispositivos de redes privadas se comuniquen con Internet pública, o para habilitar la comunicación entre dos redes con espacios de direcciones de red superpuestos.
+### Principales tipos de NAT
 
-### Tipos principales de NAT
+#### 1. Source NAT (SNAT)
 
-#### 1. NAT de origen (SNAT)
+Source NAT modifica la dirección IP de origen de los paquetes. Suele utilizarse cuando los dispositivos de redes privadas acceden a Internet.
 
-NAT de origen modifica la dirección IP de origen de los paquetes. Normalmente se utiliza cuando los dispositivos de redes privadas acceden a Internet.
+- **Funcionamiento**: Reescribe una dirección de origen y, en ocasiones, su puerto; la traducción de una dirección privada a una pública es un uso habitual
+- **Casos de uso**: Acceso a Internet y conexiones salientes
+- **Seguimiento**: Guarda el estado de las conexiones en la tabla NAT
 
-- **Cómo funciona**: Traduce la dirección IP privada de los hosts internos a una dirección IP pública
-- **Casos de uso**: Acceso a Internet, conexiones salientes
-- **Seguimiento**: Almacena el estado de la conexión en la tabla NAT
+![Diagrama de un cliente interno (10.0.0.2:1234) que envía tráfico a un servidor de Internet (203.0.113.5) a través de un router NAT; SNAT reescribe el origen como 198.51.100.1:5678.](../../.gitbook/assets/en-networking-cilium-networking-concepts-6.png)
 
-```mermaid
-graph LR
-    subgraph "Internal Network"
-        client[Client<br>10.0.0.2]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-6.html)
 
-    subgraph "NAT Router"
-        snat[SNAT]
-    end
+Las direcciones reservadas para documentación ilustran un caso de SNAT de una red privada a una pública. SNAT significa traducción del origen; la dirección de reemplazo no tiene que ser siempre pública.
 
-    subgraph "Internet"
-        server[Server<br>203.0.113.5]
-    end
+#### 2. Destination NAT (DNAT)
 
-    client -->|10.0.0.2:1234| snat
-    snat -->|198.51.100.1:5678| server
+Destination NAT modifica la dirección IP de destino de los paquetes. Suele utilizarse para acceder desde Internet a servicios de redes privadas.
 
-    note1[Translates private IP to public IP]
-    snat --- note1
-```
+- **Funcionamiento**: Reescribe una dirección o un puerto de destino; el reenvío de una dirección pública a una privada es un ejemplo
+- **Casos de uso**: Reenvío de puertos, balanceo de carga y conexiones entrantes
+- **Configuración**: Define correspondencias para puertos o rangos de puertos concretos
 
-#### 2. NAT de destino (DNAT)
+![Diagrama de un cliente de Internet cuyo tráfico pasa por un router NAT que reescribe el destino para llegar a la IP privada de un servidor de la red interna.](../../.gitbook/assets/en-networking-cilium-networking-concepts-7.png)
 
-NAT de destino modifica la dirección IP de destino de los paquetes. Normalmente se utiliza al acceder desde Internet pública a servicios en redes privadas.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-7.html)
 
-- **Cómo funciona**: Traduce las direcciones IP públicas a direcciones IP privadas de hosts internos
-- **Casos de uso**: Reenvío de puertos, balanceo de carga, conexiones entrantes
-- **Configuración**: Define asignaciones para puertos específicos o rangos de puertos
+Este ejemplo utiliza direcciones de documentación para mostrar DNAT de una dirección pública a una privada. DNAT traduce el destino y también se utiliza entre otros espacios de direcciones.
 
-```mermaid
-graph LR
-    subgraph "Internet"
-        client[Client<br>203.0.113.5]
-    end
+#### 3. Port Address Translation (PAT)
 
-    subgraph "NAT Router"
-        dnat[DNAT]
-    end
+PAT modifica tanto las direcciones IP como los números de puerto. Así, varios hosts internos pueden compartir una única dirección IP pública.
 
-    subgraph "Internal Network"
-        server[Server<br>10.0.0.3]
-    end
+- **Funcionamiento**: Traduce las combinaciones IP:puerto de hosts internos a distintos puertos de una única IP pública
+- **Casos de uso**: Conservación de direcciones IP y conectividad para numerosos hosts internos
+- **Límites**: Los puertos y los recursos para guardar estado son finitos; los flujos simultáneos también dependen del protocolo, las tuplas de destino y la reutilización de correspondencias, por lo que no existe un límite universal de 65.000 conexiones
 
-    client -->|198.51.100.1:80| dnat
-    dnat -->|10.0.0.3:8080| server
+![Diagrama de dos hosts internos que comparten la IP pública 198.51.100.1 mediante un router PAT, que asigna un puerto distinto a cada host (5000 y 5001) al comunicarse con un servidor de Internet.](../../.gitbook/assets/en-networking-cilium-networking-concepts-8.png)
 
-    note1[Translates public IP to private IP]
-    dnat --- note1
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-8.html)
 
-#### 3. Traducción de direcciones de puerto (PAT)
+El ejemplo utiliza puertos traducidos distintos para el mismo servidor remoto. El espacio de unos 65.000 puertos no constituye un límite universal para todas las conexiones NAT: influyen el protocolo, la tupla de destino, el comportamiento de las correspondencias y la capacidad para guardar estado.
 
-PAT modifica tanto las direcciones IP como los números de puerto. Esto permite que varios hosts internos compartan una única dirección IP pública.
+#### 4. Twice NAT y NAT bidireccional
 
-- **Cómo funciona**: Traduce las combinaciones IP:puerto de los hosts internos a distintos puertos de una única IP pública
-- **Casos de uso**: Conservación de direcciones IP, compatibilidad con muchos hosts internos
-- **Limitaciones**: Limitada por el número de puertos disponibles (aproximadamente 65,000)
+**Twice NAT** modifica tanto el origen como el destino cuando el tráfico atraviesa espacios de direcciones, y puede ayudar a comunicar espacios solapados. Las correspondencias de direcciones, los supuestos de DNS y de la aplicación y la ruta de retorno deben diseñarse conjuntamente.
 
-```mermaid
-graph LR
-    subgraph "Internal Network"
-        hostA[Host A<br>10.0.0.2:1234]
-        hostB[Host B<br>10.0.0.3:1234]
-    end
-
-    subgraph "NAT Router (PAT)"
-        pat[198.51.100.1]
-    end
-
-    subgraph "Internet"
-        serverA[Server<br>203.0.113.5:80]
-        serverB[Server<br>203.0.113.5:80]
-    end
-
-    hostA --> pat
-    hostB --> pat
-    pat -->|198.51.100.1:5000| serverA
-    pat -->|198.51.100.1:5001| serverB
-
-    note1[Multiple internal hosts share a single public IP]
-    pat --- note1
-```
-
-#### 4. NAT bidireccional
-
-NAT bidireccional modifica tanto las direcciones de origen como las de destino. Esto permite la comunicación entre dos redes con espacios de direcciones de red superpuestos.
-
-- **Cómo funciona**: Traducción de direcciones en ambas direcciones
-- **Casos de uso**: Fusiones de redes, resolución de conflictos de espacio de direcciones
-- **Complejidad**: Configuración y mantenimiento más complejos
+En cambio, **NAT bidireccional**, según RFC 2663, permite iniciar sesiones desde cualquiera de los dos espacios. Su definición no implica modificar ambas direcciones de cada paquete.
 
 ### Ventajas y desventajas de NAT
 
 #### Ventajas:
 
-- **Conservación de direcciones IP**: Admite muchos hosts internos con un número limitado de direcciones IP públicas
-- **Seguridad mejorada**: Oculta la topología de la red interna
-- **Aislamiento de red**: Puede conectar redes con espacios de direcciones superpuestos
-- **Diseño de red flexible**: Puede cambiar de ISP sin reconfigurar la red interna
+- **Conservación de direcciones IP**: Permite conectar numerosos hosts internos con pocas direcciones IP públicas
+- **Ocultación de direcciones**: Puede ocultar direcciones internas, pero no reemplaza las políticas de firewall ni la autenticación
+- **Conexión de espacios de direcciones**: Una traducción adecuada puede comunicar espacios solapados, sin proporcionar por sí sola aislamiento
+- **Flexibilidad del diseño de red**: Permite cambiar de proveedor de Internet sin reconfigurar la red interna
 
 #### Desventajas:
 
-- **Sobrecarga del seguimiento de conexiones**: Recursos necesarios para el mantenimiento de la tabla de estado
-- **Problemas con determinados protocolos**: Es posible que algunos protocolos no sean compatibles con NAT
-- **Pérdida de conectividad de extremo a extremo**: Dificultad para la comunicación directa entre pares
-- **Resolución de problemas compleja**: La depuración de problemas relacionados con NAT puede ser compleja
+- **Sobrecarga del seguimiento de conexiones**: Mantener las tablas de estado requiere recursos
+- **Problemas con ciertos protocolos**: Algunos protocolos pueden ser incompatibles con NAT
+- **Pérdida de conectividad de extremo a extremo**: Dificulta la comunicación directa entre pares
+- **Diagnóstico complejo**: Depurar problemas relacionados con NAT puede resultar complicado
 
 ### NAT en Kubernetes y Cilium
 
 #### NAT en Kubernetes
 
-Kubernetes utiliza NAT en diversos escenarios:
+Kubernetes utiliza NAT en distintos escenarios:
 
-1. **Comunicación fuera del clúster**: SNAT cuando los Pods se comunican fuera del clúster
-2. **Implementación de Service**: Los Services Cluster IP utilizan DNAT para redirigir el tráfico a los Pods
-3. **Services NodePort**: DNAT desde IP:puerto del nodo a los Pods
-4. **Services LoadBalancer**: DNAT desde la IP externa del balanceador de carga a los Pods
+1. **Comunicación con el exterior del clúster**: Puede utilizar SNAT según la accesibilidad de las direcciones, las exclusiones de masquerading y el plano de datos elegido
+2. **Implementación de Service**: Las implementaciones que procesan paquetes pueden traducir el destino de un Service; el balanceo a nivel de socket puede seleccionar un backend antes de que exista ese paquete
+3. **Services NodePort**: La implementación reenvía el tráfico dirigido a la IP:puerto de un nodo hacia los backends elegidos; la ruta de retorno depende de SNAT/DSR y de la política de tráfico
+4. **Services LoadBalancer**: El comportamiento varía según el proveedor y el controlador; no tiene por qué consistir en un único paso DNAT de una dirección pública a un Pod
 
 #### NAT en Cilium
 
-Cilium aprovecha eBPF para proporcionar una implementación eficiente de NAT:
+Cilium utiliza eBPF para implementar NAT de forma eficiente:
 
-1. **NAT basado en eBPF**: Realiza NAT directamente dentro del kernel
-2. **Seguimiento de conexiones de alto rendimiento**: Seguimiento del estado de conexión mediante mapas BPF optimizados
-3. **Políticas NAT**: Puede definir reglas NAT granulares
-4. **Masquerading**: SNAT automático para la comunicación desde los Pods hacia fuera del clúster
+1. **NAT basado en eBPF**: Realiza la traducción directamente en el kernel
+2. **Seguimiento de conexiones de alto rendimiento**: Guarda el estado en mapas BPF optimizados
+3. **Controles de NAT**: Las exclusiones de masquerading, el reenvío de Services y Egress Gateway tienen configuraciones y requisitos diferentes
+4. **Masquerading**: Traduce el origen de forma condicional en las rutas y dispositivos configurados; las exclusiones de CIDR y los modos compatibles afectan al resultado
+
+Egress Gateway es una función independiente que dirige el tráfico saliente coincidente a nodos seleccionados y aplica SNAT para usar las direcciones configuradas del gateway. Cambia la IP de origen original; hay que preparar las interfaces, las direcciones y las rutas de retorno. Los Pods nuevos pueden enviar tráfico antes de que converja la política, de modo que no garantiza inmediatamente una IP de origen mediante un comportamiento fail-closed.
 
 #### Ejemplo de configuración NAT de Cilium:
 
+Este fragmento de Helm supone un entorno preparado con reemplazo de kube-proxy, masquerading BPF y un endpoint de API accesible. Revise primero los dispositivos conectados y las rutas reales. Excluir un CIDR de SNAT no crea una ruta de retorno; el tamaño de NAT es ilustrativo, no una capacidad recomendada para todos los entornos.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable masquerading for communication outside the cluster
-  enable-ipv4-masquerade: "true"
-
-  # Use eBPF-based masquerading
-  enable-bpf-masquerade: "true"
-
-  # NAT map size setting
-  bpf-nat-global-max: "262144"
-
-  # Exclude specific CIDRs from masquerading
-  ipv4-masquerade-exclude-cidr: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+# masquerade-values.yaml
+enableIPv4Masquerade: true
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
+  natMax: 262144
+ipMasqAgent:
+  enabled: true
+  config:
+    nonMasqueradeCIDRs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    masqLinkLocal: false
 ```
 
-<span id="routing-protocols"></span>
+## Protocolos de enrutamiento {#routing-protocols}
 
-## Protocolos de enrutamiento
-
-Los protocolos de enrutamiento definen las reglas y los procedimientos que determinan la ruta óptima para que los paquetes viajen desde el origen hasta el destino en una red. Estos protocolos desempeñan un papel importante al adaptarse a los cambios de topología de red, reenviar el tráfico de forma eficiente y evitar fallos de red.
+Los protocolos de enrutamiento definen las reglas y los procedimientos para determinar la ruta óptima de los paquetes entre el origen y el destino de una red. Permiten adaptarse a cambios de topología, reenviar tráfico de forma eficiente y buscar rutas alternativas ante fallos de red.
 
 ### Clasificación de los protocolos de enrutamiento
 
-#### 1. Protocolos de gateway interior (IGP)
+#### 1. Interior Gateway Protocols (IGP)
 
-Los protocolos de gateway interior se utilizan para intercambiar información de enrutamiento dentro de un único Autonomous System (AS).
+Los protocolos IGP intercambian información de enrutamiento dentro de un único sistema autónomo (AS).
 
 ##### Protocolos de vector de distancia
 
 - **RIP (Routing Information Protocol)**
-  - Utiliza el recuento de saltos como métrica
-  - Límite máximo de 15 saltos
-  - Implementación sencilla, adecuada para redes pequeñas
-  - Actualiza toda la tabla de enrutamiento cada 30 segundos
+  - Utiliza el número de saltos como métrica
+  - Las métricas válidas llegan hasta 15 saltos; la métrica 16 indica un destino inaccesible
+  - Su implementación es sencilla y adecuada para redes pequeñas
+  - Envía actualizaciones periódicas aproximadamente cada 30 segundos, con temporizadores aleatorizados y actualizaciones desencadenadas por cambios
 
 - **EIGRP (Enhanced Interior Gateway Routing Protocol)**
-  - Métrica compuesta que considera ancho de banda, retraso, carga y fiabilidad
-  - Envía solo actualizaciones parciales
-  - Convergencia rápida
-  - Protocolo propietario de Cisco (anteriormente)
+  - Utiliza una métrica compuesta configurable; los coeficientes predeterminados consideran capacidad/ancho de banda y retardo, no carga ni fiabilidad
+  - Envía únicamente actualizaciones parciales
+  - Converge rápidamente
+  - Es un protocolo originado en Cisco y documentado en el RFC informativo 7868; esa publicación no lo convierte en un estándar del IETF
 
 ##### Protocolos de estado de enlace
 
 - **OSPF (Open Shortest Path First)**
   - Calcula la ruta más corta mediante el algoritmo de Dijkstra
-  - Jerarquía basada en áreas
-  - Convergencia rápida
-  - Admite redes a gran escala
+  - Organiza la red en una jerarquía de áreas
+  - Converge rápidamente
+  - Admite redes grandes
   - Intercambia información de topología mediante Link State Advertisements (LSA)
 
 - **IS-IS (Intermediate System to Intermediate System)**
-  - Protocolo de estado de enlace similar a OSPF
-  - Ampliamente utilizado en grandes redes de proveedores de servicios
+  - Es un protocolo de estado de enlace similar a OSPF
+  - Se utiliza ampliamente en las grandes redes de proveedores de servicios
   - Admite varias capas de red
-  - Actualizaciones de enrutamiento eficientes
+  - Actualiza las rutas de forma eficiente
 
-#### 2. Protocolos de gateway exterior (EGP)
+#### 2. Exterior Gateway Protocols (EGP)
 
-Los protocolos de gateway exterior se utilizan para intercambiar información de enrutamiento entre Autonomous Systems diferentes.
+Los protocolos EGP intercambian información de enrutamiento entre distintos sistemas autónomos.
 
 - **BGP (Border Gateway Protocol)**
-  - Protocolo de enrutamiento central de Internet
-  - Protocolo de vector de ruta
-  - Decisiones de enrutamiento basadas en políticas
-  - Sesiones fiables sobre TCP
-  - Selección de rutas mediante atributos de ruta (AS path, preferencia local, etc.)
-  - Variantes iBGP (BGP interno) y eBGP (BGP externo)
+  - Es el principal protocolo de enrutamiento de Internet
+  - Utiliza un vector de rutas
+  - Toma decisiones basadas en políticas
+  - Mantiene sesiones fiables sobre TCP
+  - Selecciona rutas mediante atributos como AS path y local preference
+  - Incluye las variantes iBGP (BGP interno) y eBGP (BGP externo)
 
-### Protocolos de enrutamiento en las redes de contenedores
+### Protocolos de enrutamiento en redes de contenedores
 
-En los entornos de contenedores, los protocolos de enrutamiento tradicionales se utilizan junto con mecanismos de enrutamiento específicos para contenedores.
+Los entornos de contenedores combinan protocolos tradicionales con mecanismos de enrutamiento específicos para contenedores.
 
 #### 1. Redes de contenedores con BGP
 
-BGP está ganando popularidad en las redes de contenedores por los siguientes motivos:
+BGP se utiliza cada vez más en las redes de contenedores por estas razones:
 
-- **Enrutamiento directo**: Enruta las IP de Pod directamente sin la sobrecarga de superposición
-- **Escalabilidad**: Admite clústeres a gran escala y entornos multiclúster
-- **Integración con la red existente**: Integración con la infraestructura de red del centro de datos
-- **Alta disponibilidad**: Compatibilidad con múltiples rutas y failover rápido
+- **Anuncio de accesibilidad**: Anuncia prefijos de Pods o Services a los routers; la implementación local de reenvío sigue determinando cómo circula el tráfico
+- **Escalabilidad**: Admite clústeres grandes y entornos multiclúster
+- **Integración con redes existentes**: Se integra con la infraestructura de red del centro de datos
+- **Disponibilidad**: Las rutas múltiples y la convergencia dependen de las políticas del router, los temporizadores y un plano de datos funcional; una sesión por sí sola no garantiza una conmutación rápida
 
 #### 2. Mecanismos de enrutamiento de redes de contenedores
 
-- **Enrutamiento basado en host**: Cada nodo anuncia información de enrutamiento para su propio CIDR de Pod
-- **Enrutamiento centralizado**: Un controlador gestiona las decisiones de enrutamiento de forma centralizada
-- **Enrutamiento distribuido**: Intercambio directo de información de enrutamiento entre nodos
-- **Enrutamiento basado en políticas**: Decisiones de enrutamiento basadas en las características del tráfico
+- **Enrutamiento basado en hosts**: Los hosts mantienen rutas de Pods y pueden participar en un mecanismo de anuncio de rutas configurado por separado
+- **Enrutamiento centralizado**: Un controlador gestiona las decisiones de enrutamiento
+- **Enrutamiento distribuido**: Los nodos intercambian directamente información de rutas
+- **Enrutamiento basado en políticas**: Las características del tráfico determinan las decisiones de enrutamiento
 
 ### Enrutamiento en Cilium
 
-Cilium implementa un enrutamiento eficiente mediante eBPF y admite diversos modos de enrutamiento.
+Cilium implementa el enrutamiento con eBPF y admite distintos modos del plano de datos. **El enrutamiento dentro del host se configura por separado**: BPF host routing optimiza el reenvío en el nodo y puede evitar partes de la pila del host y de netfilter. Requiere un reemplazo de kube-proxy y masquerading BPF compatibles, y tiene restricciones de integración. No equivale a elegir enrutamiento nativo en lugar de túneles entre nodos.
 
-#### 1. Enrutamiento nativo (enrutamiento directo)
+#### 1. Enrutamiento nativo (directo)
 
-En el modo de enrutamiento nativo, Cilium enruta las IP de Pod directamente sin encapsulación de superposición.
+En modo nativo, Cilium enruta directamente las IP de los Pods sin encapsulación overlay.
 
-- **Cómo funciona**: Cada nodo anuncia información de enrutamiento para su CIDR de Pod
-- **Ventajas**: Sin sobrecarga de encapsulación, rendimiento óptimo
-- **Requisitos**: Red enrutable entre nodos
-- **Casos de uso**: Cargas de trabajo críticas para el rendimiento, clústeres de una sola subred
+- **Funcionamiento**: El tráfico de Pods utiliza rutas underlay sin encapsulación overlay; activar el modo nativo no activa BGP automáticamente
+- **Ventajas**: Evita la sobrecarga de encapsulación overlay; el rendimiento real debe medirse
+- **Requisitos**: Rutas válidas para las direcciones de Pods correspondientes y su tráfico de retorno, además de la conectividad entre IP de nodos
+- **Casos de uso**: Cargas sensibles al rendimiento y clústeres de una única subred
 
-```mermaid
-graph TD
-    subgraph "Node A"
-        podA[Pod A<br>10.0.0.2]
-        routeA[Routing Table:<br>10.0.0.0/24 -> local<br>10.0.1.0/24 -> Node B]
-        ethA[eth0: 192.168.1.10]
-
-        podA --> routeA
-        routeA --> ethA
-    end
-
-    subgraph "Node B"
-        podB[Pod B<br>10.0.1.2]
-        routeB[Routing Table:<br>10.0.1.0/24 -> local<br>10.0.0.0/24 -> Node A]
-        ethB[eth0: 192.168.1.11]
-
-        podB --> routeB
-        routeB --> ethB
-    end
-
-    ethA <-->|Physical Network| ethB
-```
+El enrutamiento nativo necesita rutas válidas para los Pods, pero seleccionar `routingMode: native` no las anuncia automáticamente mediante BGP. Prepare las rutas underlay y de retorno, o configure un mecanismo adecuado para distribuirlas. El esquema anterior de rutas de host ilustra el principio de reenvío.
 
 #### 2. Enrutamiento BGP
 
-Cilium admite el enrutamiento BGP para integrar las IP de Pod con la infraestructura de red física.
+Cilium admite BGP para integrar las IP de los Pods con la infraestructura física de red.
 
-- **Cómo funciona**: Cilium anuncia los CIDR de Pod a través de peering BGP
-- **Ventajas**: Integración con la infraestructura de red existente, alta disponibilidad
-- **Componentes**: Peering BGP, filtrado de rutas, atributos de comunidad
-- **Casos de uso**: Integración con redes de centros de datos, entornos multiclúster
+- **Funcionamiento**: Cilium anuncia los CIDR de Pods mediante sesiones BGP con sus pares
+- **Ventajas**: Integración con la infraestructura existente y alta disponibilidad
+- **Componentes**: Sesiones con pares BGP, filtrado de rutas y atributos de comunidad
+- **Casos de uso**: Integración con redes de centros de datos y entornos multiclúster
 
-#### 3. Enrutamiento de superposición
+#### 3. Enrutamiento overlay
 
-Cilium puede enrutar el tráfico de Pod entre nodos mediante protocolos de superposición como VXLAN o Geneve.
+Cilium puede enrutar tráfico de Pods entre nodos mediante protocolos overlay como VXLAN o Geneve.
 
-- **Cómo funciona**: Encapsula paquetes de Pod para transmitirlos entre nodos
-- **Ventajas**: Minimiza los requisitos de infraestructura de red, implementación flexible
-- **Casos de uso**: Entornos de nube, topologías de red complejas
+- **Funcionamiento**: Encapsula los paquetes de Pods para transmitirlos entre nodos
+- **Ventajas**: Reduce los requisitos de infraestructura de red y facilita despliegues flexibles
+- **Casos de uso**: Entornos de nube y topologías de red complejas
 
 #### 4. Enrutamiento híbrido
 
-Cilium admite un enfoque híbrido que combina el enrutamiento directo y el enrutamiento de superposición.
+No dé por hecho que Cilium utiliza automáticamente rutas nativas si están disponibles y recurre a un overlay en caso contrario. El modo túnel actual no puede combinarse con `autoDirectNodeRoutes: true`; el agente rechaza esa configuración. Elija un plano de datos compatible y prepare su red underlay.
 
-- **Cómo funciona**: Utiliza el enrutamiento directo cuando es posible y superposición en caso contrario
-- **Ventajas**: Equilibrio entre rendimiento y flexibilidad
-- **Casos de uso**: Entornos de red mixtos, implementaciones en la nube y on-premises
+El modo válido de balanceo llamado `hybrid` es otra función: TCP utiliza DSR y UDP utiliza SNAT. No es un mecanismo de respaldo entre enrutamiento overlay y nativo.
 
-### Ejemplos de configuración de enrutamiento de Cilium
+### Ejemplos de configuración del enrutamiento de Cilium
 
 #### Configuración de enrutamiento nativo:
 
+Este fragmento supone que el CIDR de Pods es el previsto y que los nodos son accesibles en una red L2 compartida para instalar rutas directas automáticas. Otras topologías necesitan un mecanismo de enrutamiento apropiado. No lo combine con el modo túnel como respaldo automático.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "disabled"
-  enable-auto-direct-node-routes: "true"
-  ipv4-native-routing-cidr: "10.0.0.0/16"
+# native-values.yaml
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: 10.244.0.0/16
 ```
 
 #### Configuración de enrutamiento BGP:
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "disabled"
-  enable-bgp: "true"
-  bgp-announce-pod-cidr: "true"
-  bgp-config-path: "/var/lib/cilium/bgp/config.yaml"
-```
-
-#### Configuración de enrutamiento de superposición:
+La opción siguiente es solo uno de los requisitos. Configure los recursos actuales `CiliumBGPClusterConfig`, `CiliumBGPPeerConfig` y `CiliumBGPAdvertisement`, junto con el router externo, según se explica en [Temas avanzados](07-advanced-topics.md). El anuncio BGP y el modo de enrutamiento del plano de datos son decisiones independientes.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  ipv4-range: "10.0.0.0/16"
+# bgp-values.yaml
+bgpControlPlane:
+  enabled: true
 ```
 
-<span id="dns-and-service-discovery"></span>
+#### Configuración de enrutamiento overlay:
 
-## DNS y descubrimiento de servicios
+Utilice el ejemplo completo de valores VXLAN anterior. Compruebe el modo y el puerto en el estado del agente; no sobrescriba los ajustes de instalación con un ConfigMap reducido.
 
-DNS (Domain Name System) y el descubrimiento de servicios desempeñan un papel fundamental en las aplicaciones de red modernas, especialmente en entornos dinámicos de contenedores. Estos mecanismos abstraen las ubicaciones de los servicios y permiten que las aplicaciones se adapten a los cambios en la topología de red.
+## DNS y descubrimiento de servicios {#dns-and-service-discovery}
+
+DNS (Domain Name System) y el descubrimiento de servicios son fundamentales para las aplicaciones de red actuales, especialmente en entornos dinámicos de contenedores. Permiten abstraer la ubicación de los servicios y adaptar las aplicaciones a los cambios de topología.
 
 ### DNS (Domain Name System)
 
-DNS es un sistema distribuido que traduce nombres de dominio legibles por humanos a direcciones IP.
+DNS es un sistema distribuido que convierte nombres de dominio legibles en direcciones IP.
 
-#### Cómo funciona DNS
+#### Funcionamiento de DNS
 
-1. **Espacio de nombres jerárquico**: Los nombres de dominio se organizan en una estructura jerárquica separada por puntos (por ejemplo, www.example.com)
-2. **Base de datos distribuida**: Red de servidores DNS distribuidos en todo el mundo
-3. **Consultas iterativas y recursivas**: Dos métodos principales para procesar solicitudes de clientes
-4. **Caché**: Almacenamiento temporal de resultados para mejorar el rendimiento
+1. **Espacio de nombres jerárquico**: Los nombres se organizan en una jerarquía separada por puntos, como www.example.com
+2. **Base de datos distribuida**: Los servidores DNS forman una red distribuida por todo el mundo
+3. **Consultas iterativas y recursivas**: Son las dos formas principales de procesar solicitudes
+4. **Caché**: Guarda temporalmente los resultados para mejorar el rendimiento
 
 #### Tipos de registros DNS
 
-- **Registro A**: Asigna un nombre de dominio a una dirección IPv4
-- **Registro AAAA**: Asigna un nombre de dominio a una dirección IPv6
-- **Registro CNAME**: Alias (nombre canónico) de un nombre de dominio
-- **Registro MX**: Especifica el servidor de correo
-- **Registro SRV**: Especifica el servidor que proporciona un servicio concreto
-- **Registro TXT**: Almacena información de texto (utilizado principalmente para verificación y políticas)
-- **Registro PTR**: Asignación inversa de dirección IP a nombre de dominio (DNS inverso)
+- **A**: Relaciona un nombre de dominio con una dirección IPv4
+- **AAAA**: Relaciona un nombre de dominio con una dirección IPv6
+- **CNAME**: Define un alias para un nombre de dominio canónico
+- **MX**: Identifica el servidor de correo
+- **SRV**: Identifica el servidor de un servicio concreto
+- **TXT**: Guarda texto, principalmente para verificaciones y políticas
+- **PTR**: Relaciona una dirección IP con un nombre de dominio (DNS inverso)
 
 #### Proceso de resolución DNS
 
-```mermaid
-sequenceDiagram
-    participant Client as Client
-    participant Root as Root DNS Server
-    participant TLD as .com DNS Server
-    participant Auth as example.com DNS Server
+Una consulta habitual sin resultados en caché distingue entre el resolvedor local de la aplicación y el resolvedor recursivo:
 
-    Client->>Root: 1. Query www.example.com
-    Root->>TLD: 2. Refer to .com DNS Server
-    TLD->>Auth: 3. Refer to example.com DNS Server
-    Auth->>Client: 4. www.example.com = 192.0.2.1
-```
+| Paso | Consulta/respuesta |
+| --- | --- |
+| 1 | El resolvedor local consulta a su resolvedor recursivo configurado por `www.example.com`. |
+| 2 | El resolvedor recursivo consulta a un servidor raíz y recibe una referencia a los servidores `.com`. |
+| 3 | Consulta a un servidor `.com` y recibe una referencia a los servidores autoritativos de `example.com`. |
+| 4 | Consulta al servidor autoritativo y obtiene la respuesta correspondiente. |
+| 5 | Guarda el resultado en caché según su TTL y devuelve la respuesta al resolvedor local. |
+
+Normalmente, los servidores autoritativos no se reenvían entre sí las consultas de esta secuencia. Las cachés, los alias y los reenviadores configurados pueden modificar los intercambios concretos.
 
 ### Descubrimiento de servicios en entornos de contenedores
 
-El descubrimiento de servicios es el proceso de detectar automáticamente los servicios disponibles y localizarlos en una red. En los entornos de contenedores, es especialmente importante para gestionar de manera eficaz los servicios creados y eliminados dinámicamente.
+El descubrimiento de servicios detecta automáticamente los servicios disponibles y su ubicación en la red. Resulta especialmente útil para gestionar servicios que se crean y eliminan dinámicamente en entornos de contenedores.
 
-#### Enfoques de descubrimiento de servicios
+#### Métodos de descubrimiento de servicios
 
-1. **Descubrimiento de servicios basado en DNS**
+1. **Descubrimiento mediante DNS**
    - Crea registros DNS cuando se registran servicios
-   - Los clientes descubren servicios mediante búsquedas DNS estándar
-   - Sencillo y ampliamente compatible
-   - Ejemplos: Kubernetes DNS, CoreDNS
+   - Los clientes descubren servicios mediante consultas DNS estándar
+   - Es sencillo y ampliamente compatible
+   - Ejemplos: DNS de Kubernetes y CoreDNS
 
-2. **Descubrimiento de servicios basado en almacén clave-valor**
-   - Almacena información de servicios en almacenes clave-valor centralizados
+2. **Descubrimiento mediante almacenes de clave-valor**
+   - Guarda información de servicios en almacenes centralizados de clave-valor
    - Los clientes consultan el almacén para descubrir servicios
-   - Compatibilidad con metadatos enriquecidos
-   - Ejemplos: etcd, Consul, ZooKeeper
+   - Admite metadatos detallados
+   - Ejemplos: etcd, Consul y ZooKeeper
 
-3. **Descubrimiento de servicios basado en API**
-   - Proporciona información de servicios a través de API dedicadas
-   - Los clientes llaman a las API para descubrir servicios
-   - Compatibilidad con consultas y filtrado complejos
-   - Ejemplo: Kubernetes API Server
+3. **Descubrimiento mediante API**
+   - Proporciona información de servicios mediante API específicas
+   - Los clientes invocan las API para descubrir servicios
+   - Admite consultas y filtros complejos
+   - Ejemplo: servidor de API de Kubernetes
 
-4. **Descubrimiento de servicios basado en mesh**
-   - La infraestructura de service mesh gestiona el descubrimiento de servicios
-   - Admite balanceo de carga y enrutamiento en el lado del cliente
-   - Funcionalidades avanzadas de gestión de tráfico
-   - Ejemplos: Istio, Linkerd
+4. **Descubrimiento mediante mesh**
+   - La infraestructura service mesh gestiona el descubrimiento
+   - Admite balanceo y enrutamiento del lado del cliente
+   - Proporciona funciones avanzadas de gestión del tráfico
+   - Ejemplos: Istio y Linkerd
 
 ### DNS y descubrimiento de servicios en Kubernetes
 
-Kubernetes proporciona mecanismos integrados para el descubrimiento de servicios dentro del clúster.
+Kubernetes incluye mecanismos para descubrir servicios dentro del clúster.
 
-#### Kubernetes Services
+#### Services de Kubernetes
 
-Los Kubernetes Services proporcionan endpoints estables para conjuntos de Pods:
+Los Services de Kubernetes proporcionan puntos de acceso estables para conjuntos de Pods:
 
-- **ClusterIP**: IP virtual accesible solo dentro del clúster
-- **NodePort**: Accesible mediante un puerto específico en todos los nodos
-- **LoadBalancer**: Accesible mediante un balanceador de carga externo
-- **ExternalName**: Alias DNS para un servicio externo
+- **ClusterIP**: IP virtual de Service, utilizada normalmente dentro del clúster; su accesibilidad externa requiere un diseño de red explícito y no constituye un límite de seguridad inherente
+- **NodePort**: Puerto de nodo expuesto en las direcciones de nodos que correspondan, sujeto a políticas de tráfico, enrutamiento y reglas de firewall
+- **LoadBalancer**: Solicita una implementación de un proveedor o controlador, que puede ser pública o interna
+- **ExternalName**: Alias DNS de un servicio externo
 
-#### Kubernetes DNS
+#### DNS de Kubernetes
 
-Kubernetes ejecuta un servicio DNS de clúster (normalmente CoreDNS) para admitir el descubrimiento de servicios:
+Kubernetes ejecuta un servicio DNS de clúster, normalmente CoreDNS, para descubrir servicios:
 
-- **DNS de Service**: `<service-name>.<namespace>.svc.cluster.local`
-- **DNS de Pod**: `<pod-ip>.<namespace>.pod.cluster.local`
-- **Headless Services**: El nombre del Service se resuelve en registros DNS de todas las IP de Pod
+- **DNS de Service**: `<service-name>.<namespace>.svc.<cluster-domain>`; `cluster.local` es un dominio configurado habitual, no una constante universal
+- **DNS de Pod**: La antigua forma basada en direcciones `pod.<cluster-domain>` depende de la implementación y es heredada. Los nombres estables de Pods suelen utilizar hostname/subdomain con un Service headless correspondiente
+- **Services headless**: DNS puede devolver direcciones de endpoints en lugar de una VIP; readiness y `publishNotReadyAddresses` influyen en los registros publicados
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CoreDNS as CoreDNS
-    participant ServiceB as Service B<br>ClusterIP: 10.0.0.1
+La consulta DNS y el reenvío de Service son procesos distintos:
 
-    PodA->>CoreDNS: 1. Query service-b
-    CoreDNS->>ServiceB: 2. Resolve service-b
-    ServiceB->>CoreDNS: 3. Select backend pod
-    CoreDNS->>PodA: 4. Receive 10.0.0.1
+| Fase | Responsabilidad |
+| --- | --- |
+| Consulta DNS | CoreDNS resuelve el nombre de un Service ordinario a su ClusterIP a partir del estado de los objetos Kubernetes. No elige el backend de la aplicación para esa conexión. |
+| Conexión | El cliente envía tráfico a la dirección de Service devuelta. |
+| Reenvío | La implementación de Service, como el plano de datos de Cilium, elige un backend apto a partir de su estado derivado de Service/EndpointSlice. |
+| Service headless | DNS devuelve direcciones de endpoints en lugar de una VIP de Service; el comportamiento del cliente determina la dirección utilizada. |
 
-    note right of ServiceB: Pod B1, B2, B3
-```
+Los watches de objetos y las actualizaciones del plano de datos son asíncronos; una respuesta DNS no comprueba la salud del backend.
 
 #### Mecanismos de descubrimiento de servicios de Kubernetes
 
-1. **Variables de entorno**: Las variables de entorno para los servicios activos se inyectan en cada Pod
-2. **DNS**: Resolución de nombres de Service a través del DNS del clúster
-3. **API Server**: Recupera información de Service consultando directamente la API de Kubernetes
-4. **Objetos Endpoint**: Proporcionan información de IP y puerto de los Pods backend de un Service
+1. **Variables de entorno**: Service links puede reflejar los Services existentes cuando se crea el Pod; no proporciona un flujo de descubrimiento actualizado continuamente y puede deshabilitarse
+2. **DNS**: Resuelve los nombres de servicios mediante el DNS del clúster
+3. **Servidor de API**: Obtiene información de servicios consultando directamente la API de Kubernetes
+4. **Objetos EndpointSlice**: Proporcionan direcciones, puertos y datos de readiness de los backends a las implementaciones de Service
 
 ### DNS y descubrimiento de servicios en Cilium
 
-Cilium se integra con los mecanismos de descubrimiento de servicios de Kubernetes y proporciona funcionalidades adicionales.
+Cilium se integra con los mecanismos de descubrimiento de Kubernetes y añade otras funciones.
 
-#### Políticas basadas en DNS de Cilium
+#### Políticas de Cilium basadas en DNS
 
-Cilium puede definir políticas de red basadas en nombres DNS:
+Cilium permite definir políticas de red basadas en nombres DNS:
 
-- **Filtrado basado en nombres DNS**: Control de acceso para nombres de dominio específicos
-- **Compatibilidad con comodines**: Coincidencia de patrones como `*.example.com`
-- **Políticas FQDN**: Políticas basadas en Fully Qualified Domain Names (FQDN)
+- **Filtrado por nombre DNS**: Controla el acceso a dominios concretos
+- **Comodines**: `*.example.com` coincide con un nivel de subdominio; `**.example.com` admite varios niveles en esta versión. Ninguno incluye el dominio raíz sin una coincidencia explícita
+- **Políticas FQDN**: Utilizan nombres de dominio completos (Fully Qualified Domain Names)
+
+Este ejemplo define únicamente una política y requiere que existan el espacio de nombres, la carga etiquetada y una ruta de resolución comprobada. La observación DNS y los permisos para destinos TCP 443 son independientes. El comodín DNS `*` permite consultar cualquier nombre; toFQDNs no autentica nombres de host.
 
 ```yaml
-apiVersion: "cilium.io/v2"
+# dns-policy.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "dns-policy"
+  name: dns-policy
+  namespace: cilium-fqdn-demo
 spec:
   endpointSelector:
     matchLabels:
       app: myapp
   egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: '*'
   - toFQDNs:
-    - matchName: "api.example.com"
-    - matchPattern: "*.api.example.com"
+    - matchName: api.example.com
+    - matchPattern: '*.api.example.com'
+    toPorts:
+    - ports:
+      - port: '443'
+        protocol: TCP
 ```
 
-#### Mejoras de Cilium para el descubrimiento de servicios
+#### Mejoras de Cilium para descubrir servicios
 
-Cilium proporciona varias funcionalidades que mejoran el descubrimiento de servicios de Kubernetes:
+Cilium amplía el descubrimiento de servicios de Kubernetes con varias funciones:
 
-1. **Implementación de Service basada en eBPF**:
+1. **Implementación de Service con eBPF**:
    - Reemplazo de kube-proxy
-   - Balanceo de carga directo de Service dentro del kernel
-   - Mejor rendimiento y funcionalidades
+   - Balanceo de servicios directamente en el kernel
+   - Mejoras de rendimiento y funcionalidad
 
 2. **Services globales**:
-   - Descubrimiento de servicios en varios clústeres
+   - Descubrimiento de servicios entre clústeres
    - Balanceo de carga entre clústeres
-   - Espacio de nombres de Service unificado
+   - Nombres y espacios de nombres de Service coincidentes, junto con configuración explícita de uso compartido y ClusterMesh
 
 3. **Afinidad de Service**:
    - Compatibilidad con afinidad de sesión
-   - Selección consistente de backend basada en la IP de origen
+   - La afinidad ClientIP es independiente del algoritmo de balanceo; las rutas a nivel de socket pueden utilizar una cookie del espacio de nombres de red
    - Compatibilidad con conexiones con estado
 
-4. **Integración de comprobaciones de estado**:
-   - Supervisión del estado del backend
-   - Eliminación automática de backends no saludables
-   - Detección y recuperación rápidas de fallos
+4. **Integración de comprobaciones de salud**:
+   - El estado de los backends refleja la información de readiness/EndpointSlice de Kubernetes y las comprobaciones del proxy configuradas
+   - Los cambios se propagan de forma asíncrona
+   - No dé por hecho que todos los Services de Cilium realizan sondeos activos de aplicaciones ni conmutan de forma instantánea ante fallos
 
-#### Ejemplo de configuración de Service de Cilium:
+#### Ejemplo de configuración de Service con Cilium:
+
+La afinidad de sesión se configura en el Service. Los Services globales utilizan una anotación y necesitan un ClusterMesh funcional. Los Services de los otros clústeres deben tener el mismo nombre y espacio de nombres. Este ejemplo no crea la aplicación, ClusterMesh ni un balanceador externo.
 
 ```yaml
+# global-service.yaml
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable kube-proxy replacement
-  enable-k8s-services: "true"
-  kube-proxy-replacement: "strict"
-
-  # Enable DNS policy support
-  enable-fqdn-filter: "true"
-
-  # Configure service affinity
-  enable-session-affinity: "true"
-
-  # Enable global services
-  enable-global-services: "true"
+  name: api
+  namespace: cilium-service-demo
+  annotations:
+    service.cilium.io/global: 'true'
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
 ```
 
-<span id="load-balancing-concepts"></span>
+## Conceptos de balanceo de carga {#load-balancing-concepts}
 
-## Conceptos de balanceo de carga
-
-El balanceo de carga es una tecnología que distribuye el tráfico de red entre varios servidores o servicios backend para optimizar el uso de recursos, aumentar el rendimiento, reducir la latencia y garantizar una alta disponibilidad. En los entornos de contenedores, es especialmente importante distribuir eficazmente el tráfico entre instancias backend que cambian dinámicamente.
+El balanceo de carga distribuye tráfico entre varios servidores o servicios backend para optimizar el uso de recursos y ayudar a cumplir los objetivos de capacidad, latencia y disponibilidad, junto con capacidad suficiente y una gestión adecuada de la salud de los backends. En entornos de contenedores, resulta especialmente importante repartir el tráfico entre instancias que cambian dinámicamente.
 
 ### Tipos de balanceo de carga
 
-#### 1. Balanceo de carga L4 (capa de transporte)
+#### 1. Balanceo L4 (capa de transporte)
 
-El balanceo de carga L4 distribuye el tráfico basándose en información de la capa de transporte, como direcciones IP y números de puerto.
+El balanceo L4 distribuye tráfico según información de la capa de transporte, como las direcciones IP y los puertos.
 
-- **Cómo funciona**: Decisiones de enrutamiento basadas en información de encabezados TCP/UDP
-- **Ventajas**: Procesamiento rápido, baja sobrecarga, puede manejar tráfico cifrado
-- **Desventajas**: No puede realizar enrutamiento avanzado basado en información de la capa de aplicación
-- **Casos de uso**: Servicios basados en TCP/UDP, requisitos de alto rendimiento
+- **Funcionamiento**: Toma decisiones a partir de las cabeceras TCP/UDP
+- **Ventajas**: Procesamiento rápido, poca sobrecarga y capacidad para transportar tráfico cifrado
+- **Desventajas**: No permite enrutamiento avanzado basado en información de la capa de aplicación
+- **Casos de uso**: Servicios TCP/UDP y necesidades de alto rendimiento
 
-```mermaid
-graph LR
-    client[Client<br>203.0.113.1:12345]
-    lb[L4 Load Balancer<br>TCP/UDP Header Analysis]
-    serverA[Server A<br>10.0.0.1:8080]
-    serverB[Server B<br>10.0.0.2:8080]
+![Diagrama de una solicitud de cliente que un balanceador de transporte dirige a uno de dos servidores backend utilizando únicamente la información de las cabeceras TCP/UDP.](../../.gitbook/assets/en-networking-cilium-networking-concepts-12.png)
 
-    client -->|Request| lb
-    lb --> serverA
-    lb --> serverB
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-12.html)
 
-#### 2. Balanceo de carga L7 (capa de aplicación)
+Las ramas representan alternativas de backend, no el envío de una misma conexión a ambos servidores. El reenvío L4 puede transportar TLS sin inspeccionar el contenido HTTP cifrado.
 
-El balanceo de carga L7 distribuye el tráfico basándose en información de la capa de aplicación, como encabezados HTTP, URL y cookies.
+#### 2. Balanceo L7 (capa de aplicación)
 
-- **Cómo funciona**: Decisiones de enrutamiento mediante la inspección del contenido de solicitudes HTTP/HTTPS
-- **Ventajas**: Enrutamiento basado en contenido, gestión avanzada de tráfico, funcionalidades de seguridad
-- **Desventajas**: Mayor sobrecarga de procesamiento, se requiere terminación SSL para el tráfico cifrado
-- **Casos de uso**: Aplicaciones web, microservicios, API gateways
+El balanceo L7 distribuye tráfico a partir de información de aplicación, como cabeceras HTTP, URL y cookies.
 
-```mermaid
-graph LR
-    client[Client<br>GET /api/users]
-    lb[L7 Load Balancer<br>URL Path Analysis<br>Header Inspection]
-    apiServer[API Server<br>/api/*]
-    webServer[Web Server<br>/web/*]
+- **Funcionamiento**: Inspecciona el contenido de las solicitudes HTTP/HTTPS para decidir la ruta
+- **Ventajas**: Enrutamiento por contenido, gestión avanzada del tráfico y funciones de seguridad
+- **Desventajas**: Coste de procesamiento del proxy; inspeccionar el contenido HTTP de HTTPS requiere una terminación TLS adecuada
+- **Casos de uso**: Aplicaciones web, microservicios y gateways de API
 
-    client -->|HTTP Request| lb
-    lb --> apiServer
-    lb --> webServer
-```
+![Diagrama de una solicitud HTTP de cliente que un balanceador de aplicación dirige a uno de dos servicios backend mediante la inspección de la ruta URL y las cabeceras.](../../.gitbook/assets/en-networking-cilium-networking-concepts-13.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-13.html)
+
+La ruta elegida depende de los atributos de la solicitud. Enrutar por contenido HTTP sobre HTTPS requiere una ruta adecuada de terminación o inspección TLS.
 
 ### Algoritmos de balanceo de carga
 
-Los algoritmos de balanceo de carga determinan cómo se distribuye el tráfico a los servidores backend.
+Los algoritmos determinan cómo se distribuye el tráfico entre los servidores backend.
 
 #### 1. Round Robin
 
-- **Cómo funciona**: Distribuye las solicitudes a cada servidor backend de forma secuencial
-- **Ventajas**: Implementación sencilla, distribución uniforme
-- **Desventajas**: No considera las diferencias de capacidad de los servidores ni la carga actual
-- **Variantes**: Round Robin ponderado (aplica pesos según la capacidad del servidor)
+- **Funcionamiento**: Distribuye solicitudes entre los servidores de forma secuencial
+- **Ventajas**: Secuencia sencilla; recibir la misma cantidad de solicitudes no implica realizar la misma cantidad de trabajo
+- **Desventajas**: No considera las diferencias de capacidad ni la carga actual de los servidores
+- **Variantes**: Weighted Round Robin, que aplica pesos según la capacidad
 
-#### 2. Menor número de conexiones
+#### 2. Least Connections
 
-- **Cómo funciona**: Reenvía las nuevas solicitudes al servidor con menos conexiones activas
-- **Ventajas**: Considera la carga del servidor, eficaz para conexiones largas
-- **Desventajas**: El número de conexiones no siempre refleja con precisión la carga
-- **Variantes**: Menor número de conexiones ponderado (aplica pesos según la capacidad del servidor)
+- **Funcionamiento**: Envía las solicitudes nuevas al servidor con menos conexiones activas
+- **Ventajas**: Tiene en cuenta la carga y resulta útil para conexiones largas
+- **Desventajas**: La cantidad de conexiones no siempre refleja con precisión la carga
+- **Variantes**: Weighted Least Connections, que aplica pesos según la capacidad
 
-#### 3. Hash de IP
+#### 3. IP Hash
 
-- **Cómo funciona**: Aplica hash a la dirección IP del cliente para una selección consistente del servidor backend
-- **Ventajas**: Proporciona persistencia de sesión; el mismo cliente se enruta al mismo servidor
-- **Desventajas**: Posible distribución desigual, posible sobrecarga en servidores específicos
-- **Variantes**: Hash de IP de origen-destino (considera tanto las IP de origen como las de destino)
+- **Funcionamiento**: Calcula un hash de la IP del cliente para seleccionar un backend de forma consistente
+- **Ventajas**: Puede mantener una selección estable mientras no cambien las entradas ni el conjunto de backends; no almacena sesiones de forma permanente
+- **Desventajas**: Puede distribuir la carga de manera desigual y sobrecargar ciertos servidores
+- **Variantes**: Source-Destination IP Hash, que considera tanto la IP de origen como la de destino
 
-#### 4. Menor tiempo de respuesta
+#### 4. Least Response Time
 
-- **Cómo funciona**: Reenvía las solicitudes al servidor con el tiempo de respuesta más corto
-- **Ventajas**: Considera el rendimiento y la disponibilidad, adecuado para aplicaciones sensibles a la latencia
-- **Desventajas**: Sobrecarga de medición del tiempo de respuesta, afectado por la variabilidad de la red
-- **Variantes**: Tiempo de respuesta ponderado (considera tanto la capacidad del servidor como el tiempo de respuesta)
+- **Funcionamiento**: Envía solicitudes al servidor con menor tiempo de respuesta
+- **Ventajas**: Considera rendimiento y disponibilidad; resulta adecuado para aplicaciones sensibles a la latencia
+- **Desventajas**: Medir los tiempos añade sobrecarga y la variabilidad de la red influye en los resultados
+- **Variantes**: Weighted Response Time, que combina capacidad y tiempo de respuesta
 
 #### 5. Selección aleatoria
 
-- **Cómo funciona**: Selecciona aleatoriamente un servidor backend
-- **Ventajas**: Implementación sencilla, no requiere seguimiento de estado especial
-- **Desventajas**: Posible distribución desigual
-- **Variantes**: Selección aleatoria ponderada (ajusta la probabilidad según la capacidad del servidor)
+- **Funcionamiento**: Elige un servidor backend al azar
+- **Ventajas**: Implementación sencilla, sin seguimiento especial de estado
+- **Desventajas**: Puede distribuir la carga de manera desigual
+- **Variantes**: Selección aleatoria ponderada, que ajusta la probabilidad según la capacidad
 
-### Modelos de implementación de balanceadores de carga
+### Modelos de despliegue de balanceadores
 
-#### 1. Balanceadores de carga de hardware
+#### 1. Balanceadores de hardware
 
 - **Características**: Equipos físicos dedicados
-- **Ventajas**: Alto rendimiento, fiabilidad, aceleración de hardware dedicada
-- **Desventajas**: Coste, escalabilidad limitada, falta de flexibilidad
-- **Ejemplos**: F5 BIG-IP, Citrix ADC, A10 Networks
+- **Ventajas**: Alto rendimiento, fiabilidad y aceleración por hardware
+- **Desventajas**: Coste, escalabilidad limitada y menor flexibilidad
+- **Ejemplos**: Equipos Application Delivery Controller; algunas familias también incluyen versiones virtuales o de software
 
-#### 2. Balanceadores de carga de software
+#### 2. Balanceadores de software
 
-- **Características**: Software que se ejecuta en servidores de propósito general
-- **Ventajas**: Flexibilidad, eficiencia de costes, programabilidad
-- **Desventajas**: Generalmente menor rendimiento que los balanceadores de carga de hardware
-- **Ejemplos**: NGINX, HAProxy, Envoy
+- **Características**: Software ejecutado en servidores de propósito general
+- **Ventajas**: Flexibilidad, eficiencia de costes y capacidad de programación
+- **Desventajas**: La capacidad depende de la implementación, el hardware y la carga; un balanceador de software no es necesariamente más lento que cualquier equipo dedicado
+- **Ejemplos**: NGINX, HAProxy y Envoy
 
-#### 3. Balanceadores de carga de nube
+#### 3. Balanceadores de nube
 
-- **Características**: Servicios gestionados por proveedores de nube
-- **Ventajas**: Menor sobrecarga de gestión, escalado automático, alta disponibilidad
-- **Desventajas**: Dependencia del proveedor, personalización limitada
-- **Ejemplos**: AWS ELB/ALB/NLB, Google Cloud Load Balancing, Azure Load Balancer
+- **Características**: Servicios administrados por proveedores de nube
+- **Ventajas**: Menor trabajo de administración, escalado automático y alta disponibilidad
+- **Desventajas**: Dependencia del proveedor y personalización limitada
+- **Ejemplos**: AWS ELB/ALB/NLB, Google Cloud Load Balancing y Azure Load Balancer
 
-#### 4. Balanceadores de carga nativos para contenedores
+#### 4. Balanceadores nativos de contenedores
 
-- **Características**: Balanceo de carga optimizado para entornos de contenedores
-- **Ventajas**: Integración con la orquestación de contenedores, descubrimiento dinámico de servicios
-- **Desventajas**: Especializados para entornos de contenedores
-- **Ejemplos**: Kubernetes Services, Istio, Cilium
+- **Características**: Balanceo optimizado para entornos de contenedores
+- **Ventajas**: Integración con la orquestación y descubrimiento dinámico de servicios
+- **Desventajas**: Especialización en entornos de contenedores
+- **Ejemplos**: Services de Kubernetes, Istio y Cilium
 
 ### Balanceo de carga en Kubernetes
 
-Kubernetes proporciona varios niveles de balanceo de carga:
+Kubernetes proporciona varios niveles de balanceo:
 
-#### 1. Balanceo de carga de Service
+#### 1. Balanceo mediante Service
 
-- **ClusterIP**: Balanceo de carga interno del clúster
-- **NodePort**: Acceso externo a través de puertos de nodo
-- **LoadBalancer**: Aprovisionamiento de balanceador de carga externo
-- **ExternalName**: Alias DNS para servicios externos
+- **ClusterIP**: Balanceo dentro del clúster
+- **NodePort**: Acceso externo por puertos de los nodos
+- **LoadBalancer**: Aprovisionamiento de un balanceador externo
+- **ExternalName**: Alias DNS de servicios externos
 
 #### 2. Controladores Ingress
 
-- Balanceo de carga y enrutamiento L7
-- Enrutamiento basado en URL, terminación SSL, autenticación
-- Diversas implementaciones: NGINX, Traefik, HAProxy, Istio
+- Balanceo y enrutamiento L7
+- Enrutamiento por URL y terminación TLS; la autenticación depende del controlador y de su configuración
+- Entre las implementaciones se encuentran controladores basados en Traefik, HAProxy e Istio. El proyecto comunitario `ingress-nginx` se retiró en marzo de 2026; sus artefactos restantes no constituyen una recomendación de instalación mantenida
 
 #### 3. Service Mesh
 
 - Gestión avanzada del tráfico entre microservicios
-- Enrutamiento granular, división de tráfico, inyección de fallos
-- Ejemplos: Istio, Linkerd, Consul Connect
+- Enrutamiento detallado, reparto de tráfico e inyección de fallos
+- Ejemplos: Istio, Linkerd y Consul service mesh; sus funciones de gestión del tráfico y seguridad difieren
 
 ### Balanceo de carga en Cilium
 
-Cilium implementa un balanceo de carga eficiente mediante eBPF:
+Cilium implementa balanceo eficiente mediante eBPF:
 
-#### 1. Balanceo de carga basado en eBPF
+#### 1. Balanceo basado en eBPF
 
-- **Reemplazo de kube-proxy**: Balanceo de carga directo de Service dentro del kernel
-- **Mejora del rendimiento**: Latencia reducida mediante la omisión de la pila de red
+- **Reemplazo de kube-proxy**: Balanceo de servicios directamente en el kernel
+- **Rendimiento**: Las rutas BPF compatibles pueden evitar partes de la pila convencional; mida el resultado con la carga real
 - **Escalabilidad**: Admite Services y endpoints a gran escala
-- **Optimización del seguimiento de conexiones**: Gestión eficiente del estado
+- **Optimización del seguimiento de conexiones**: Gestiona el estado de forma eficiente
 
-```mermaid
-graph TD
-    subgraph "Pod A (Client)"
-        client[Pod A]
-    end
+![Diagrama del balanceo con eBPF de Cilium: un paquete que el Pod A envía a una IP de Service atraviesa cuatro etapas en el kernel (intercepción, consulta del mapa de Service, selección del backend y reenvío) y llega directamente al Pod B sin kube-proxy.](../../.gitbook/assets/en-networking-cilium-networking-concepts-14.png)
 
-    subgraph "Kernel + eBPF Program"
-        intercept[1. Packet Intercept]
-        lookup[2. Service Map Lookup]
-        select[3. Backend Selection]
-        forward[4. Packet Forwarding]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-14.html)
 
-        intercept --> lookup
-        lookup --> select
-        select --> forward
-    end
+El esquema representa la traducción de Service en la ruta de paquetes. El balanceo a nivel de socket puede seleccionar el backend antes de que exista un paquete destinado a la IP de Service. Las mejoras de latencia deben medirse en la ruta real.
 
-    subgraph "Pod B (Server)"
-        server[Pod B]
-    end
+#### 2. Algoritmos de balanceo
 
-    client --> intercept
-    forward --> server
-```
+Los algoritmos BPF de Service son **random** (predeterminado) y **Maglev**. Maglev aplica un hash a la información del flujo; no equivale simplemente a afinidad por IP de origen. La selección ordinaria entre servicios internos a nivel de socket utiliza una ruta distinta de las rutas de paquetes externos donde se aplica Maglev.
 
-#### 2. Algoritmos de balanceo de carga
+La afinidad de sesión `ClientIP` se configura por separado en un Service. Su tiempo de espera no es un «tiempo de espera de Maglev»: Maglev no tiene un temporizador que redistribuya periódicamente las sesiones. Los cambios del conjunto de backends, la semilla o la tabla pueden modificar la selección; un backend eliminado no puede seguir atendiendo una conexión solo porque el hash sea consistente.
 
-Cilium admite diversos algoritmos de balanceo de carga:
+#### 3. Balanceo L7
 
-- **Round Robin**: Algoritmo predeterminado, distribución uniforme
-- **Maglev**: Selección consistente de backend basada en la IP de origen
-- **Afinidad de sesión**: Conexiones persistentes basadas en la IP del cliente
-- **Tiempo de espera de Maglev**: Reequilibrio después del tiempo especificado
+Cilium también admite balanceo L7, en la capa de aplicación:
 
-#### 3. Balanceo de carga L7
+- **Enrutamiento por cabeceras HTTP**: Utiliza valores concretos de cabeceras
+- **Enrutamiento por rutas URL**: Distribuye tráfico según patrones de URL
+- **Enrutamiento gRPC**: Utiliza métodos y metadatos gRPC
+- **Kafka**: Cilium actual no proporciona la antigua función de políticas o enrutamiento L7 por temas Kafka; utilice controles adecuados para el broker
 
-Cilium también admite el balanceo de carga L7 (capa de aplicación):
+#### 4. Balanceo de Services globales
 
-- **Enrutamiento basado en encabezados HTTP**: Enrutamiento basado en valores de encabezado específicos
-- **Enrutamiento basado en rutas URL**: Distribución de tráfico basada en patrones URL
-- **Enrutamiento gRPC**: Enrutamiento basado en métodos y metadatos gRPC
-- **Enrutamiento Kafka**: Enrutamiento basado en temas Kafka y claves de mensaje
+Cilium admite balanceo entre varios clústeres:
 
-#### 4. Balanceo de carga de Service global
+- **Balanceo entre clústeres**: Distribuye tráfico entre backends de distintos clústeres
+- **Preferencia de ubicación**: La afinidad local/remota configurada no mide automáticamente la latencia de la red
+- **Gestión de fallos**: Depende del estado de endpoints y de la caché remota; el TTL de caché predeterminado de cero puede conservar estado remoto obsoleto, por lo que debe probarse la conmutación de la aplicación
 
-Cilium admite el balanceo de carga entre varios clústeres:
+#### Ejemplo de configuración del balanceo de Cilium:
 
-- **Balanceo de carga entre clústeres**: Distribución de tráfico entre backends de varios clústeres
-- **Enrutamiento consciente de la ubicación**: Selección de backend que considera latencia y ubicación
-- **Failover**: Failover automático durante fallos del clúster
-
-#### Ejemplo de configuración de balanceo de carga de Cilium:
+Estos valores de Helm requieren una instalación preparada. La semilla mostrada es un **valor ilustrativo válido de 12 bytes en base64**. Para desplegar, genere y conserve una semilla aleatoria común para los nodos participantes; trate los cambios de semilla o tabla como operaciones que pueden afectar a las conexiones. Consulte el [perfil de balanceo preparado](05-l2-l7-networking.md).
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable kube-proxy replacement
-  kube-proxy-replacement: "strict"
-
-  # Configure load balancing algorithm
-  load-balancing-algorithm: "maglev"
-  maglev-hash-seed: "Cilium"
-  maglev-table-size: "16381"
-
-  # Configure session affinity
-  enable-session-affinity: "true"
-
-  # Enable L7 load balancing
-  enable-l7-proxy: "true"
+# load-balancing-values.yaml
+kubeProxyReplacement: true
+loadBalancer:
+  algorithm: maglev
+maglev:
+  tableSize: 16381
+  hashSeed: AAECAwQFBgcICQoL
 ```
 
-<span id="network-security-basics"></span>
+## Fundamentos de seguridad de red {#network-security-basics}
 
-## Conceptos básicos de seguridad de red
+La seguridad de red protege la infraestructura, las aplicaciones y los datos frente al acceso no autorizado, el uso indebido, los fallos y las modificaciones. En los entornos de contenedores cobra especial importancia por su naturaleza dinámica y distribuida.
 
-La seguridad de red es la práctica de proteger la infraestructura de red, las aplicaciones y los datos frente al acceso no autorizado, el uso indebido, los fallos o la modificación. En los entornos de contenedores, la seguridad de red es aún más importante debido a su naturaleza dinámica y distribuida.
-
-### Conceptos fundamentales de seguridad de red
+### Conceptos principales de seguridad de red
 
 #### 1. Defensa en profundidad
 
-La defensa en profundidad es un enfoque que implementa múltiples capas de seguridad para que el fallo de un único mecanismo de seguridad no provoque una brecha completa en la seguridad del sistema.
+La defensa en profundidad combina controles para reducir el impacto de un fallo individual. Las dependencias compartidas o una configuración incorrecta común aún pueden afectar a varias capas.
 
-- **Múltiples capas de seguridad**: Protección en los niveles de red, host, aplicación y datos
-- **Controles redundantes**: Combinación de diversos mecanismos de seguridad
-- **Aislamiento de fallos**: El fallo en una capa no afecta a las demás capas
+- **Múltiples capas de seguridad**: Protección a nivel de red, host, aplicación y datos
+- **Controles redundantes**: Combinación de distintos mecanismos de seguridad
+- **Aislamiento de fallos**: Diseñe y pruebe los límites; la independencia entre fallos no es automática
 - **Detección y respuesta a amenazas**: Supervisión y respuesta en cada capa
 
 #### 2. Principio de privilegio mínimo
 
-El principio de privilegio mínimo es una práctica de seguridad que concede a usuarios, procesos o aplicaciones solo los privilegios mínimos necesarios para realizar sus tareas.
+El principio de privilegio mínimo concede a usuarios, procesos o aplicaciones únicamente los permisos necesarios para realizar sus tareas.
 
-- **Control de acceso granular**: Restringir el acceso únicamente a los recursos necesarios
-- **Separación de privilegios**: Separación de privilegios para diversas funciones
-- **Denegación predeterminada**: Denegar todo acceso que no esté explícitamente permitido
-- **Revisión regular**: Auditoría y ajuste periódicos de privilegios
+- **Control de acceso detallado**: Restringe el acceso a los recursos necesarios
+- **Separación de privilegios**: Separa los permisos de las distintas funciones
+- **Denegación predeterminada**: Deniega lo que no esté permitido explícitamente
+- **Revisión periódica**: Audita y ajusta los permisos regularmente
 
 #### 3. Segmentación de red
 
-La segmentación de red es una técnica que divide una red en segmentos o zonas más pequeños para mejorar la seguridad y limitar el movimiento lateral de las amenazas.
+La segmentación divide una red en segmentos o zonas menores para reforzar la seguridad y limitar el movimiento lateral de las amenazas.
 
-- **Zonas de seguridad**: Agrupación de sistemas con requisitos de seguridad similares
-- **Microsegmentación**: Control granular a nivel de carga de trabajo
+- **Zonas de seguridad**: Agrupan sistemas con requisitos de seguridad similares
+- **Microsegmentación**: Control detallado a nivel de carga de trabajo
 - **Protección del perímetro**: Control y supervisión del tráfico entre zonas
-- **Aislamiento de amenazas**: Limitación del alcance del impacto de una brecha
+- **Aislamiento de amenazas**: Limita el impacto de una intrusión
 
 #### 4. Cifrado
 
-El cifrado es el proceso de transformar datos para que no puedan ser leídos por partes no autorizadas.
+El cifrado transforma los datos para que no puedan leerlos personas no autorizadas.
 
-- **Cifrado en tránsito**: Protección de los datos que se desplazan por la red (por ejemplo, TLS/SSL)
-- **Cifrado en reposo**: Protección de los datos almacenados en disco o en bases de datos
-- **Cifrado de extremo a extremo**: Protección de los datos a lo largo de toda la ruta de comunicación
-- **Gestión de claves**: Generación, almacenamiento y rotación seguros de claves de cifrado
+- **Cifrado en tránsito**: Protege datos que circulan por la red, por ejemplo mediante TLS compatible
+- **Cifrado en reposo**: Protege datos guardados en discos o bases de datos
+- **Cifrado de extremo a extremo**: Protege los datos a lo largo de toda la ruta de comunicación
+- **Gestión de claves**: Genera, almacena y rota claves de forma segura
 
-### Amenazas de seguridad en las redes de contenedores
+### Amenazas de seguridad en redes de contenedores
 
-Los entornos de contenedores presentan desafíos de seguridad únicos:
+Los entornos de contenedores plantean desafíos de seguridad específicos:
 
-#### 1. Ataques basados en red
+#### 1. Ataques de red
 
-- **Ataques DDoS (Distributed Denial of Service)**: Grandes volúmenes de tráfico para interrumpir la disponibilidad del servicio
-- **Escaneo de puertos**: Exploración de puertos abiertos y vulnerabilidades
-- **Suplantación ARP**: Manipulación de Address Resolution Protocol para interceptar tráfico de red
-- **Envenenamiento DNS**: Redirección de búsquedas DNS a destinos maliciosos
+- **DDoS (denegación de servicio distribuida)**: Grandes volúmenes de tráfico que interrumpen la disponibilidad
+- **Escaneo de puertos**: Búsqueda de puertos abiertos y vulnerabilidades
+- **Suplantación ARP**: Manipulación de Address Resolution Protocol para interceptar tráfico
+- **Envenenamiento DNS**: Redirección de consultas DNS hacia destinos maliciosos
 
-#### 2. Ataques de la capa de aplicación
+#### 2. Ataques de capa de aplicación
 
-- **Inyección SQL**: Inserción de código SQL malicioso
-- **XSS (Cross-Site Scripting)**: Inserción de scripts del lado del cliente
-- **CSRF (Cross-Site Request Forgery)**: Realización de acciones maliciosas a través de usuarios autenticados
-- **Inyección de comandos**: Entrada maliciosa para ejecutar comandos del sistema
+- **Inyección SQL**: Introducción de código SQL malicioso
+- **XSS (Cross-Site Scripting)**: Introducción de scripts del lado del cliente
+- **CSRF (Cross-Site Request Forgery)**: Acciones maliciosas realizadas mediante usuarios autenticados
+- **Inyección de comandos**: Entradas maliciosas que permiten ejecutar comandos del sistema
 
 #### 3. Amenazas específicas de contenedores
 
-- **Vulnerabilidades de imágenes**: Imágenes de contenedor que contienen componentes vulnerables
-- **Escalada de privilegios**: Elevación de privilegios del contenedor al host
+- **Vulnerabilidades de imágenes**: Componentes vulnerables en las imágenes de contenedores
+- **Escalada de privilegios**: Obtención de permisos dentro de un límite o al atravesarlo; no siempre equivale a escapar de un contenedor
 - **Movimiento lateral**: Acceso no autorizado de un contenedor a otro
-- **Explotación de montajes de volumen**: Acceso a rutas sensibles del host
+- **Explotación de volúmenes montados**: Acceso a rutas sensibles del host
 
 ### Controles de seguridad de red
 
 #### 1. Firewalls
 
-Los firewalls son sistemas de seguridad de red que filtran el tráfico de red según reglas de seguridad definidas.
+Los firewalls filtran el tráfico de red según reglas de seguridad definidas.
 
-- **Filtrado de paquetes**: Filtrado basado en direcciones IP, puertos y protocolos
-- **Inspección con estado**: Decisiones basadas en el contexto que rastrean el estado de conexión
-- **Filtrado de capa de aplicación**: Comprensión e inspección de protocolos de aplicación
-- **Firewalls de próxima generación (NGFW)**: Funcionalidades avanzadas de detección y prevención de amenazas
+- **Filtrado de paquetes**: Utiliza direcciones IP, puertos y protocolos
+- **Inspección con estado**: Toma decisiones contextuales mediante el seguimiento de conexiones
+- **Filtrado de aplicación**: Interpreta e inspecciona protocolos de aplicación
+- **Firewalls de próxima generación (NGFW)**: Incluyen funciones avanzadas de detección y prevención de amenazas
 
 #### 2. Sistemas de detección y prevención de intrusiones (IDS/IPS)
 
-IDS/IPS son sistemas que supervisan el tráfico de red y detectan o bloquean actividades maliciosas.
+Los sistemas IDS/IPS supervisan el tráfico y detectan o bloquean actividades maliciosas.
 
-- **Detección basada en firmas**: Coincidencia con patrones de ataque conocidos
-- **Detección de anomalías**: Identificación de actividades que se desvían del comportamiento normal
-- **Supervisión de comportamiento**: Análisis de patrones de actividad sospechosa
-- **Respuesta automatizada**: Respuesta en tiempo real ante amenazas detectadas
+- **Detección por firmas**: Identifica patrones de ataques conocidos
+- **Detección de anomalías**: Identifica actividades que se apartan del comportamiento normal
+- **Supervisión del comportamiento**: Analiza patrones de actividad sospechosos
+- **Respuesta automática**: Responde en tiempo real a las amenazas detectadas
 
 #### 3. Políticas de red
 
-Las políticas de red son conjuntos de reglas que definen la comunicación permitida dentro de una red.
+Las políticas de red definen mediante reglas la comunicación permitida.
 
-- **Control de Ingress**: Restricción del tráfico entrante
-- **Control de Egress**: Restricción del tráfico saliente
-- **Políticas granulares**: Control de comunicación a nivel de carga de trabajo
-- **Políticas basadas en etiquetas**: Aplicación flexible de políticas en entornos dinámicos
+- **Control de entrada**: Restringe el tráfico entrante
+- **Control de salida**: Restringe el tráfico saliente
+- **Políticas detalladas**: Controlan la comunicación a nivel de carga de trabajo
+- **Políticas por etiquetas**: Se aplican de forma flexible en entornos dinámicos
 
 #### 4. Protocolos de cifrado
 
-Los protocolos de cifrado proporcionan comunicación segura a través de las redes.
+Los protocolos de cifrado permiten comunicarse de forma segura por la red.
 
-- **TLS/SSL**: Protección del tráfico web y la comunicación de API
-- **IPsec**: Cifrado de capa de red
+- **TLS**: Protege el tráfico web y la comunicación con API; los protocolos SSL están obsoletos
+- **IPsec**: Cifra en la capa de red
 - **WireGuard**: Protocolo VPN moderno y eficiente
-- **mTLS (TLS mutuo)**: Autenticación tanto del cliente como del servidor
+- **mTLS (TLS mutuo)**: Autentica tanto al cliente como al servidor
 
 ### Seguridad de red en Kubernetes
 
-Kubernetes proporciona varios mecanismos para la seguridad de red de las aplicaciones en contenedores:
+Kubernetes proporciona varios mecanismos para proteger las redes de aplicaciones en contenedores:
 
 #### 1. Políticas de red
 
-Las políticas de red de Kubernetes son especificaciones que controlan la comunicación entre Pods.
+Kubernetes NetworkPolicy especifica los permisos L3/L4 de los Pods seleccionados. Necesita una implementación de red que los aplique. Los permisos de las políticas aplicables se combinan, y las rutas de conexiones existentes o de red del host tienen su propia semántica.
 
-- **Selectores de Pod**: Selección de los Pods a los que se aplican políticas según etiquetas
-- **Reglas de Ingress**: Control del tráfico entrante
-- **Reglas de Egress**: Control del tráfico saliente
-- **Reglas basadas en CIDR**: Filtrado basado en rangos de IP
+- **Selectores de Pods**: Seleccionan mediante etiquetas los Pods a los que se aplica la política
+- **Reglas de entrada**: Controlan el tráfico entrante
+- **Reglas de salida**: Controlan el tráfico saliente
+- **Reglas CIDR**: Filtran según rangos de direcciones IP
+
+Este ejemplo L4 utiliza su propio espacio de nombres y supone que existen las cargas frontend/API/base de datos coincidentes y las etiquetas CoreDNS indicadas. Incluye salida DNS. Manténgalo separado del ejemplo L7 posterior: un permiso L4 amplio puede permitir tráfico que una restricción L7 solapada pretendía limitar.
 
 ```yaml
+# api-l4-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: api-allow
+  namespace: cilium-policy-l4-demo
 spec:
   podSelector:
     matchLabels:
       app: api
+  policyTypes:
+  - Ingress
+  - Egress
   ingress:
   - from:
     - podSelector:
@@ -1353,73 +1119,91 @@ spec:
     ports:
     - protocol: TCP
       port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
-#### 2. Seguridad de Service Mesh
+#### 2. Seguridad de service mesh
 
-Service mesh es una capa de infraestructura que gestiona y protege la comunicación entre microservicios.
+Una service mesh es una capa de infraestructura que gestiona y protege la comunicación entre microservicios.
 
-- **mTLS**: Comunicación cifrada entre servicios
-- **Autenticación y autorización**: Verificación de identidad de Service y control de acceso
-- **Políticas de tráfico**: Enrutamiento granular y control de acceso
-- **Observabilidad**: Visibilidad de la comunicación de servicio a servicio
+- **mTLS**: Cifra la comunicación entre servicios
+- **Autenticación y autorización**: Verifica identidades de servicio y controla el acceso
+- **Políticas de tráfico**: Proporcionan enrutamiento y control de acceso detallados
+- **Observabilidad**: Permite observar la comunicación entre servicios
 
 #### 3. Contextos de seguridad
 
-Los contextos de seguridad definen la configuración de privilegios y control de acceso para Pods y contenedores.
+Los contextos de seguridad definen los privilegios y ajustes de control de acceso de Pods y contenedores.
 
-- **Restricción de privilegios**: Ejecución como usuario no root
-- **Restricción de capacidades**: Permitir solo las capacidades de Linux necesarias
-- **Sistema de archivos de solo lectura**: Sistema de archivos de contenedor inmutable
-- **seccomp y AppArmor**: Restricción de llamadas al sistema y comportamiento de la aplicación
+- **Restricción de privilegios**: Ejecución con un usuario no root
+- **Restricción de capacidades**: Concesión exclusiva de las capabilities de Linux necesarias
+- **Sistema de archivos raíz de solo lectura**: Restringe las escrituras en el sistema raíz del contenedor; los volúmenes montados pueden seguir admitiendo escrituras
+- **seccomp y AppArmor**: Restringen las llamadas al sistema y el comportamiento de la aplicación
 
-### Funcionalidades de seguridad de red de Cilium
+### Funciones de seguridad de red de Cilium
 
-Cilium aprovecha eBPF para proporcionar potentes funcionalidades de seguridad de red:
+Cilium utiliza eBPF para proporcionar funciones avanzadas de seguridad de red:
 
 #### 1. Seguridad basada en identidad
 
-Cilium aplica políticas de seguridad basadas en la identidad de la carga de trabajo en lugar de direcciones IP.
+Cilium admite políticas de identidad de cargas derivadas de etiquetas relevantes para la seguridad, junto con controles explícitos por CIDR o IP cuando se configuran.
 
-- **Políticas basadas en etiquetas**: Seguridad coherente en entornos dinámicos
-- **Políticas basadas en Service Account**: Control de acceso basado en cuentas de servicio de Kubernetes
-- **Políticas basadas en DNS**: Control de Egress basado en FQDN
-- **Seguridad consciente de API**: Filtrado basado en métodos y rutas HTTP
+- **Políticas por etiquetas**: Seguridad consistente en entornos dinámicos
+- **Políticas por ServiceAccount**: Control de acceso basado en las cuentas de servicio de Kubernetes
+- **Políticas por DNS**: Control de salida basado en FQDN
+- **Seguridad consciente de API**: Filtrado por métodos y rutas HTTP
+
+`toCIDR` selecciona rangos de destino, pero sus selectores no coinciden por defecto con los Pods y nodos administrados dentro del clúster; esta versión ofrece una opción Beta explícita para esos casos. La entidad `world` abarca endpoints externos, no todas las identidades conocidas del clúster o de ClusterMesh. Utilice el ámbito adecuado de identidad o entidad; no interprete `world` como permiso para todos los clústeres.
 
 #### 2. Cifrado transparente
 
-Cilium puede cifrar el tráfico de red sin modificar las aplicaciones.
+Cilium puede cifrar las rutas compatibles sin modificar las aplicaciones. Los túneles entre nodos no cubren el tráfico del mismo nodo ni todos los destinos externos. El handshake independiente de autenticación mutua SPIRE no cifra por sí mismo el tráfico de aplicación; el mTLS de cargas con ztunnel, en fase Beta, tiene sus propios requisitos.
 
-- **IPsec**: Cifrado de capa de red para el tráfico entre nodos
+- **IPsec**: Cifrado de red para tráfico entre nodos
 - **WireGuard**: Protocolo de cifrado moderno y eficiente
-- **Integración transparente**: Cifrado aplicado sin cambios en la aplicación
-- **Rotación de claves**: Gestión automatizada de claves de cifrado
+- **Integración transparente**: Cifra sin modificar la aplicación
+- **Rotación de claves**: Siga el ciclo de vida del modo elegido; IPsec de Cilium necesita claves previamente proporcionadas y el procedimiento documentado de rotación del Secret
 
 #### 3. Detección de amenazas y visibilidad
 
-Cilium proporciona una visibilidad profunda de la actividad de red y capacidades de detección de amenazas.
+Cilium/Hubble proporciona observaciones de red útiles para investigar incidentes. Un IDS/WAF completo, la aplicación de controles en tiempo de ejecución o los flujos de alerta y respuesta requieren configuraciones o integraciones adicionales.
 
-- **Hubble**: Supervisión y análisis de flujos de red
-- **Registros de flujo**: Registros detallados de la comunicación de Pod a Pod
-- **Detección de anomalías**: Identificación de patrones de red anómalos
-- **Alertas de eventos de seguridad**: Alertas ante infracciones de políticas e intentos de ataque
+- **Hubble**: Supervisa y analiza flujos de red
+- **Registros de flujo**: Registran detalles de las comunicaciones entre Pods
+- **Detección de anomalías**: Las reglas externas pueden analizar los patrones observados; Hubble no clasifica automáticamente todos los ataques
+- **Alertas de seguridad**: Configure una integración de alertas o SIEM y tenga en cuenta la pérdida de eventos, el ruido y las observaciones incompletas
 
 #### 4. Aplicación de políticas L3-L7
 
-Cilium proporciona una aplicación integral de políticas desde la capa de red hasta la capa de aplicación.
+Cilium permite aplicar políticas desde la capa de red hasta la de aplicación.
 
-- **Políticas L3/L4**: Filtrado basado en IP y puertos
-- **Filtrado HTTP L7**: Control basado en URL, método y encabezados
-- **Filtrado gRPC L7**: Control basado en métodos y metadatos gRPC
-- **Filtrado Kafka L7**: Control basado en temas y mensajes Kafka
+- **Políticas L3/L4**: Filtrado por IP y puertos
+- **Filtrado HTTP L7**: Control por URL, métodos y cabeceras
+- **Filtrado gRPC L7**: Control por métodos y metadatos gRPC
+- **Políticas DNS**: Filtrado de consultas y observación DNS para reglas FQDN; no existen actualmente políticas L7 por temas Kafka
 
 #### Ejemplo de configuración de seguridad de red de Cilium:
 
+Esta alternativa L7 utiliza un espacio de nombres diferente del ejemplo L4. Requiere HTTP visible en texto plano o una ruta adecuada de inspección TLS, dependencias reales etiquetadas y un resolvedor accesible. El nombre externo `.example` es un marcador; no se aprovisiona ningún servicio externo funcional.
+
 ```yaml
-apiVersion: "cilium.io/v2"
+# api-l7-policy.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "secure-api"
+  name: secure-api
+  namespace: cilium-policy-l7-demo
 spec:
   endpointSelector:
     matchLabels:
@@ -1427,61 +1211,103 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-policy-l7-demo
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/products"
+        - method: GET
+          path: /api/v1/products
   egress:
   - toEndpoints:
     - matchLabels:
-        app: database
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-policy-l7-demo
+        k8s:app: database
+    toPorts:
+    - ports:
+      - port: '5432'
         protocol: TCP
   - toFQDNs:
-    - matchName: "api.external-service.com"
+    - matchName: api.external-service.example
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
-### Prácticas recomendadas de seguridad de red
+### Buenas prácticas de seguridad de red
 
 #### 1. Política de denegación predeterminada
 
-- Implementar una política de denegación predeterminada que permita solo el tráfico explícitamente autorizado
-- Abrir únicamente las rutas de comunicación necesarias
-- Revisión periódica de políticas y eliminación de reglas innecesarias
-- Mantener un registro de auditoría de los cambios de políticas
+- Aplique una política que permita únicamente el tráfico autorizado de forma explícita
+- Abra solo las rutas de comunicación necesarias
+- Revise regularmente las políticas y elimine reglas innecesarias
+- Conserve un registro de auditoría de los cambios
 
-#### 2. Enfoque de defensa en profundidad
+#### 2. Defensa en profundidad
 
-- Implementar múltiples capas de seguridad
-- Combinar protección a nivel de red, host y aplicación
-- Controles redundantes con diversos mecanismos de seguridad
-- Eliminar puntos únicos de fallo
+- Implemente varias capas de seguridad
+- Combine protección de red, host y aplicación
+- Utilice distintos mecanismos de seguridad con controles redundantes
+- Elimine los puntos únicos de fallo
 
 #### 3. Redes con privilegio mínimo
 
-- Permitir solo el acceso de red mínimo necesario
-- Definir políticas granulares por Service
-- Bloquear puertos y protocolos innecesarios
-- Revisión y ajuste periódicos de acceso
+- Permita únicamente el acceso mínimo necesario
+- Defina políticas detalladas por servicio
+- Bloquee puertos y protocolos innecesarios
+- Revise y ajuste el acceso regularmente
 
 #### 4. Supervisión y auditoría continuas
 
-- Supervisar el tráfico de red y las infracciones de políticas
-- Detectar anomalías y amenazas potenciales
-- Alertas y respuesta ante eventos de seguridad
-- Auditorías de seguridad y evaluaciones de vulnerabilidades periódicas
+- Supervise el tráfico y las infracciones de políticas
+- Detecte anomalías y amenazas potenciales
+- Configure alertas y respuestas a eventos de seguridad
+- Realice auditorías de seguridad y evaluaciones de vulnerabilidades periódicas
+
+## Referencias primarias
+
+- [Enrutamiento de Cilium](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/concepts/routing.rst)
+- [Valores del chart de Cilium](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Reemplazo de kube-proxy](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/concepts/masquerading.rst)
+- [Plano de control BGP](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Services globales](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/clustermesh/global-services.rst)
+- [Lenguaje de políticas](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/policy/layer3.rst)
+- [Políticas DNS](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/dns.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [Modelo de red de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/)
+- [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [DNS de Services y Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Especificación CNI](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
+- [Redes bridge de Docker](https://docs.docker.com/engine/network/drivers/bridge/)
+- [Redes host de Docker](https://docs.docker.com/engine/network/drivers/host/)
+- [Retirada de Ingress NGINX](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
+- [Arquitectura de Internet / RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.txt)
+- [DNS / RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.txt)
+- [Terminología NAT / RFC 2663](https://www.rfc-editor.org/rfc/rfc2663.txt)
+- [Correspondencias NAT / RFC 4787](https://www.rfc-editor.org/rfc/rfc4787.txt)
+- [RIP v2 / RFC 2453](https://www.rfc-editor.org/rfc/rfc2453.txt)
+- [EIGRP / RFC 7868](https://www.rfc-editor.org/rfc/rfc7868.txt)
 
 ## Cuestionario
 
-Para poner a prueba lo aprendido en este capítulo, pruebe el [Cuestionario del tema](../../quizzes/networking/cilium/networking-concepts-quiz.md).
+Para comprobar lo aprendido en este capítulo, realice el [cuestionario del tema](../../quizzes/networking/cilium/networking-concepts-quiz.md).

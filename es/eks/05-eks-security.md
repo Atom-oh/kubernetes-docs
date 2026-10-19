@@ -43,7 +43,7 @@ Usa varios controles con un ámbito explícito; ninguna herramienta individual e
 
 ### Controles de identidad y red
 
-IRSA y Pod Identity proporcionan credenciales de AWS a las cargas de trabajo; NetworkPolicy proporciona filtrado de red compatible; un motor de admisión comprueba las solicitudes de Kubernetes configuradas. Una service mesh compatible y mantenida puede añadir mTLS y políticas de tráfico de aplicaciones. AWS App Mesh dejará de recibir soporte el September30,2026, por lo que una implementación existente necesita un plan de migración, en lugar de recomendarla como nueva opción predeterminada.
+IRSA y Pod Identity proporcionan credenciales de AWS a las cargas de trabajo; NetworkPolicy proporciona filtrado de red compatible; un motor de admisión comprueba las solicitudes de Kubernetes configuradas. Una service mesh compatible y mantenida puede añadir mTLS y políticas de tráfico de aplicaciones. AWS App Mesh dejó de recibir soporte el 30 de septiembre de 2026, por lo que un despliegue existente necesita un plan de migración, en lugar de recomendarla como nueva opción predeterminada.
 
 ### Seguridad de la cadena de suministro
 
@@ -55,9 +55,9 @@ ECR actualmente admite la firma administrada de imágenes con AWS Signer, así c
 
 GuardDuty EKS Protection analiza un flujo independiente de registros de auditoría de EKS. Runtime Monitoring es una capacidad independiente basada en agentes; actualmente admite EKS en EC2 y Auto Mode, con requisitos de plataforma y agente, y excluye EKS Fargate y Hybrid Nodes. La entrega de registros de auditoría a CloudWatch es una configuración independiente. Security Hub CSPM evalúa los controles configurados; Security Hub puede correlacionar hallazgos. Ninguno sustituye la autorización de aplicaciones ni una evaluación de todos los requisitos reglamentarios.
 
-Usa herramientas de tiempo de ejecución y motores de políticas compatibles, como Falco, Gatekeeper o Kyverno, con la integración de kernel, controlador, API y metadatos necesaria. Los tiempos de ejecución adicionales en sandbox, como gVisor/Kata, requieren un diseño compatible de nodos y tiempos de ejecución, y no están disponibles en todas las rutas de cómputo de EKS. Las políticas, las imágenes o el refuerzo del SO reducen riesgos específicos; no garantizan que toda evasión o acción maliciosa sea imposible.
+Usa herramientas de tiempo de ejecución y motores de políticas compatibles, como Falco, Gatekeeper o Kyverno, con la integración de kernel, controlador, API y metadatos necesaria. Los entornos de ejecución adicionales en sandbox, como gVisor/Kata, requieren un diseño compatible de nodos y entornos de ejecución, y no están disponibles en todas las rutas de cómputo de EKS. Las políticas, las imágenes o el refuerzo del SO reducen riesgos específicos; no garantizan que todo escape de contenedores o acción maliciosa sea imposible.
 
-Las herramientas de políticas como código también operan en distintas etapas: Gatekeeper/Kyverno pueden evaluar la admisión de Kubernetes, CloudFormation Guard o Sentinel pueden evaluar cambios en la infraestructura y AWS Config evalúa la configuración de los recursos implementados que admite. Las herramientas de investigación, como Detective, dependen de sus fuentes de datos configuradas. Mantén diferenciadas estas funciones de la prevención en tiempo de ejecución.
+Las herramientas de políticas como código también operan en distintas etapas: Gatekeeper/Kyverno pueden evaluar la admisión de Kubernetes, CloudFormation Guard o Sentinel pueden evaluar cambios en la infraestructura y AWS Config evalúa la configuración de los recursos desplegados que admite. Las herramientas de investigación, como Detective, dependen de sus fuentes de datos configuradas. Mantén diferenciadas estas funciones de la prevención en tiempo de ejecución.
 
 ## IAM y autenticación {#iam-and-authentication}
 
@@ -229,7 +229,7 @@ IAM eks:DescribeCluster/ListClusters admite operaciones de administración y des
 
 ## Análisis detallado del proveedor OIDC {#oidc-provider-deep-dive}
 
-EKS publica un emisor OIDC del clúster y claves públicas de firma. Ese endpoint por sí solo no crea un proveedor OIDC de IAM ni autoriza la asunción de roles. Para IRSA, la cuenta del rol debe tener el proveedor OIDC de IAM previsto, el rol debe confiar en él con las condiciones correctas de emisor, asunto y audiencia, y la carga de trabajo debe usar un SDK compatible.
+EKS publica un emisor OIDC del clúster y claves públicas de firma. Ese endpoint por sí solo no crea un proveedor OIDC de IAM ni autoriza la asunción de roles. Para IRSA, la cuenta del rol debe tener el proveedor OIDC de IAM previsto, el rol debe confiar en él con las condiciones correctas de emisor, sujeto y audiencia, y la carga de trabajo debe usar un SDK compatible.
 
 ![Diagrama de secuencia que muestra un Pod intercambiando su JWT proyectado de ServiceAccount de Kubernetes con AWS STS mediante AssumeRoleWithWebIdentity; STS valida el token con el JWKS del proveedor OIDC de EKS y la política de confianza del rol IAM, y luego devuelve credenciales temporales que el Pod utiliza para llamar a un servicio de AWS.](../.gitbook/assets/en-eks-05-eks-security-3.png)
 
@@ -264,7 +264,7 @@ Esta es una **estructura ilustrativa de carga útil decodificada**, con marcas d
 }
 ```
 
-Valida el emisor, la audiencia, la caducidad y el asunto esperado, no solo si el JSON se puede decodificar. No incluyas tokens sin procesar, claves de acceso secretas de AWS ni tokens de sesión en ejemplos o registros. Un rol puede confiar en varias cuentas de servicio o emisores permitidos explícitamente; IRSA no exige exactamente un rol por ServiceAccount.
+Valida el emisor, la audiencia, la caducidad y el sujeto esperado, no solo si el JSON se puede decodificar. No incluyas tokens sin procesar, claves de acceso secretas de AWS ni tokens de sesión en ejemplos o registros. Un rol puede confiar en varias cuentas de servicio o emisores permitidos explícitamente; IRSA no exige exactamente un rol por ServiceAccount.
 
 ### Descubrimiento e inspección de JWKS
 
@@ -447,12 +447,12 @@ EKS Pod Identity proporciona credenciales temporales de AWS mediante el proveedo
 
 | Propiedad | IRSA | EKS Pod Identity |
 |---|---|---|
-| Confianza | Proveedor OIDC de IAM y confianza en emisor/asunto/audiencia | Confianza de pods.eks.amazonaws.com y asociación |
-| Reutilización del rol | Se permiten varios asuntos/emisores dentro de los límites de las políticas de IAM | Se puede reutilizar con las condiciones de confianza y asociación adecuadas |
+| Confianza | Proveedor OIDC de IAM y confianza en emisor/sujeto/audiencia | Confianza de pods.eks.amazonaws.com y asociación |
+| Reutilización del rol | Se permiten varios sujetos/emisores dentro de los límites de las políticas de IAM | Se puede reutilizar con las condiciones de confianza y asociación adecuadas |
 | Etiquetas de sesión de Kubernetes integradas | La ruta estándar de IRSA de EKS no las proporciona automáticamente | Habilitadas de forma predeterminada; se pueden deshabilitar deliberadamente |
 | Proveedor de credenciales | Intercambio de identidad web con STS | Endpoint de credenciales de contenedor respaldado por EKS Auth |
 | Entre cuentas | Confianza OIDC directa en la cuenta del rol o encadenamiento de roles | Rol de asociación en la misma cuenta, con encadenamiento opcional a un rol de destino |
-| Actualización | Kubernetes rota el token; el SDK actualiza las credenciales de AWS | Kubernetes rota el token proyectado; el agente/servicio de caché y el SDK gestionan las credenciales de AWS |
+| Actualización | Kubernetes rota el token; el SDK actualiza las credenciales de AWS | Kubernetes rota el token proyectado; el agente, la caché del servicio y el SDK gestionan las credenciales de AWS |
 
 Las etiquetas de sesión identifican la sesión del rol asumido; no etiquetan automáticamente todos los recursos de AWS que crea una aplicación. Una configuración más sencilla no elimina los requisitos de validación de IAM, red, SDK o aplicación.
 
@@ -464,13 +464,13 @@ Las etiquetas de sesión identifican la sesión del rol asumido; no etiquetan au
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-4.html)
 -->
 
-Para un Pod asociado recién creado, EKS inyecta un token con audiencia pods.eks.amazonaws.com, una variable de entorno con la ruta del archivo del token y un URI de credenciales de contenedor. El SDK llama al endpoint del agente, habitualmente169.254.170.23/v1/credentials. El agente llama a **AssumeRoleForPodIdentity en EKS Auth** y pone las credenciales devueltas a disposición del SDK. No es un interceptor transparente de todas las solicitudes de la aplicación; la aplicación sigue llamando directamente a los servicios de AWS con sus credenciales.
+Para un Pod asociado recién creado, EKS inyecta un token con audiencia pods.eks.amazonaws.com, una variable de entorno con la ruta del archivo del token y un URI de credenciales de contenedor. El SDK llama al endpoint del agente, habitualmente 169.254.170.23/v1/credentials. El agente llama a **AssumeRoleForPodIdentity en EKS Auth** y pone las credenciales devueltas a disposición del SDK. No es un interceptor transparente de todas las solicitudes de la aplicación; la aplicación sigue llamando directamente a los servicios de AWS con sus credenciales.
 
 Los nodos EC2 compatibles estándar usan el complemento/DaemonSet Pod Identity Agent. Auto Mode proporciona la capacidad como parte de sus nodos administrados. Hybrid Nodes la admite con la configuración documentada de SO, agente y credenciales del nodo; no reutilices a ciegas una configuración estándar de agente de EC2. EKS Fargate no admite esta ruta del agente de Pod Identity. Verifica la compatibilidad real del cómputo y los permisos/acceso de red del nodo a EKS Auth.
 
 ### Rol y asociación preparados
 
-Para una instalación estándar con agente administrado, inspecciona la versión real del clúster y el catálogo de complementos compatibles a través del responsable. No fijes la compilación obsoletav1.0.0 ni instales un agente duplicado sobre Auto Mode u otro responsable:
+Para una instalación estándar con agente administrado, inspecciona la versión real del clúster y el catálogo de complementos compatibles con el responsable de la instalación. No fijes la compilación obsoleta v1.0.0 ni instales un agente duplicado sobre Auto Mode ni sobre una instalación gestionada por otra herramienta:
 
 ```bash
 set -euo pipefail
@@ -613,7 +613,7 @@ spec:
 
 El rol de asociación debe estar en la cuenta del clúster de EKS. Un rol de IAM de destino opcional puede estar en otra cuenta; Pod Identity encadena el rol de la misma cuenta al rol de destino, con la confianza y los permisos para asumir el rol configurados en ambos. Esto no permite asociar directamente como rol de asociación cualquier rol externo.
 
-La guía actual sobre roles de destino documenta credenciales almacenadas en caché durante6hours sin un rol de destino y59minutes con un rol de destino. Los cambios de asociación no restablecen esa caché; recrear los Pods puede hacer que reciban antes la nueva configuración. Comprueba el comportamiento real de actualización y revocación en la aplicación. La opción más reciente de política de sesión de la asociación requiere que las etiquetas de sesión estén deshabilitadas y restringe el rol de destino cuando se configura uno; no la combines sin revisión con condiciones de confianza que requieran esas etiquetas.
+La guía actual sobre roles de destino documenta credenciales almacenadas en caché durante 6 horas sin un rol de destino y 59 minutos con un rol de destino. Los cambios de asociación no restablecen esa caché; recrear los Pods puede hacer que reciban antes la nueva configuración. Comprueba el comportamiento real de actualización y revocación en la aplicación. La opción más reciente de política de sesión de la asociación requiere que las etiquetas de sesión estén deshabilitadas y restringe el rol de destino cuando se configura uno; no la combines sin revisión con condiciones de confianza que requieran esas etiquetas.
 
 ### Procedimiento de migración de IRSA a Pod Identity
 
@@ -631,8 +631,8 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 ```
 
 1. Verifica la compatibilidad del cómputo real, el SDK/proveedor de credenciales de contenedor compatible, el agente Pod Identity o la capacidad integrada y los permisos preparados del rol de IAM.
-2. Combina la declaración de confianza de Pod Identity revisada con la política de confianza existente a través de su responsable; conserva las condiciones de emisor, asunto y audiencia de IRSA y las declaraciones válidas no relacionadas hasta que se hayan migrado todos los consumidores.
-3. Crea una asociación acotada y un canario que use un ServiceAccount independiente con solo la ruta de credenciales Pod Identity prevista. No elimines la anotación IRSA de producción ni reinicies la implementación de producción antes de esta validación.
+2. Combina la declaración de confianza de Pod Identity revisada con la política de confianza existente a través de su responsable; conserva las condiciones de emisor, sujeto y audiencia de IRSA y las declaraciones válidas no relacionadas hasta que se hayan migrado todos los consumidores.
+3. Crea una asociación acotada y un canario que use un ServiceAccount independiente con solo la ruta de credenciales Pod Identity prevista. No elimines la anotación IRSA de producción ni reinicies el despliegue de producción antes de esta validación.
 4. Verifica el proveedor de credenciales realmente utilizado y el acceso previsto a AWS sin imprimir tokens ni valores secretos. Es posible que las credenciales anteriores en la cadena del SDK sigan en uso después de crear una asociación. Un get-caller-identity satisfactorio que muestre el mismo rol de IAM, por sí solo, no distingue entre IRSA y Pod Identity.
 5. Migra la carga de trabajo prevista mediante un despliegue controlado, recrea los Pods según sea necesario para recibir la configuración inyectada y verifica el comportamiento y la actualización de la aplicación. Los cambios de anotación de ServiceAccount no reescriben los entornos de los Pods existentes.
 6. Conserva una ruta de reversión probada para la configuración de la carga de trabajo. Elimina la confianza IRSA antigua solo después de inventariar todos los consumidores restantes y verificar que la migración se ha completado.
@@ -653,7 +653,7 @@ El direccionamiento público no demuestra por sí solo que el tráfico de EC2 a 
 
 ### Inspeccionar y conservar la configuración existente
 
-Ejecuta los bloques relacionados en la misma shell y conserva el nuevo directorio de revisión. Usa una identidad de administración de AWS que pueda inspeccionar y recuperar la configuración del endpoint, por separado del inicio de sesión de Kubernetes. Esto registra únicamente los campos modificables de acceso al endpoint para recuperación; no intenta restaurar ajustes de VPC no relacionados ni el modo de salida unidireccional descrito más adelante.
+Ejecuta los bloques relacionados en la misma shell y conserva el nuevo directorio de revisión. Usa una identidad de administración de AWS que pueda inspeccionar y recuperar la configuración del endpoint, por separado del inicio de sesión de Kubernetes. Esto registra únicamente los campos modificables de acceso al endpoint para recuperación; no intenta restaurar ajustes de VPC no relacionados ni el modo de salida irreversible que se describe más adelante.
 
 ```bash
 set -euo pipefail
@@ -685,9 +685,9 @@ PY
 
 ### Restringir la ruta de dirección pública
 
-Una lista de permitidos pública debe incluir las direcciones de salida públicas reales aprobadas de NAT/VPN/oficinas. Los rangos privados como10.0.0.0/8 no describen una dirección de origen pública. Los rangos de documentación como203.0.113.0/24 son marcadores de posición, no redes de oficina funcionales.
+Una lista de permitidos pública debe incluir las direcciones de salida públicas reales aprobadas de NAT/VPN/oficinas. Los rangos privados como 10.0.0.0/8 no describen una dirección de origen pública. Los rangos de documentación como 203.0.113.0/24 son marcadores de posición, no redes de oficina funcionales.
 
-Asigna a PUBLIC_EGRESS_CIDRS una matriz JSON proporcionada por el responsable de la red. Este ejemplo acotado acepta CIDR IPv4 y rechaza rangos privados, predeterminados o de documentación evidentes; no demuestra la propiedad ni que el cliente actual esté incluido. Revisa el alcance, la cuota y la compatibilidad con la familia IP del clúster. La configuración de doble pila/IPv6 necesita una lista de permitidos verificada por separado.
+Asigna a PUBLIC_EGRESS_CIDRS un array JSON proporcionado por el responsable de la red. Este ejemplo acotado acepta CIDR IPv4 y rechaza rangos privados, predeterminados o de documentación evidentes; no demuestra la propiedad ni que el cliente actual esté incluido. Revisa el alcance, la cuota y la compatibilidad con la familia IP del clúster. La configuración de doble pila/IPv6 necesita una lista de permitidos verificada por separado.
 
 ```bash
 set -euo pipefail
@@ -727,7 +727,7 @@ La configuración pública restringida prevista también habilita el acceso priv
 
 VPN, Direct Connect/TGW y un host de administración aprobado son posibles rutas, siempre que se configuren las rutas, DNS, grupos de seguridad y autorización. Un único comando create de Client VPN no configura asociaciones de subredes, reglas de autorización, rutas, certificados y registros de conexión. Un Deployment que ejecute una imagen de AWS CLI no crea un bastión administrado por SSM ni instala kubectl/SSM Agent.
 
-Para el reenvío a un host remoto mediante SSM, prepara un host administrado con SSM Agent3.1.1374.0 o posterior, acceso de IAM/red a Session Manager, el complemento local de Session Manager y DNS/enrutamiento hacia el endpoint privado de EKS. Verifica que el acceso al endpoint privado esté habilitado y que el host resuelva y alcance realmente su ruta privada. Mantén activa la sesión de reenvío en la primera terminal:
+Para el reenvío a un host remoto mediante SSM, prepara un host administrado con SSM Agent 3.1.1374.0 o posterior, acceso de IAM/red a Session Manager, el complemento local de Session Manager y DNS/enrutamiento hacia el endpoint privado de EKS. Verifica que el acceso al endpoint privado esté habilitado y que el host resuelva y alcance realmente su ruta privada. Mantén activa la sesión de reenvío en la primera terminal:
 
 ```bash
 set -euo pipefail
@@ -751,7 +751,7 @@ kubectl --kubeconfig "$CLUSTER_KUBECONFIG" \
   --request-timeout=10s -n security-demo get pods
 ```
 
-El documento remote-host reenvía al host de EKS proporcionado. El documento anterior AWS-StartPortForwardingSession reenvía un puerto del propio host administrado; reenviar su puerto443 no convierte ese host en el servidor de API de EKS. Un túnel o una comprobación de estado satisfactorios no son por sí solos una prueba de autorización o de ruta privada. Verifica la operación de API prevista, las direcciones DNS/privadas y la ruta real antes de quitar el acceso público.
+El documento remote-host reenvía al host de EKS proporcionado. El documento anterior AWS-StartPortForwardingSession reenvía un puerto del propio host administrado; reenviar su puerto 443 no convierte ese host en el servidor de API de EKS. Un túnel o una comprobación de estado satisfactorios no son por sí solos una prueba de autorización o de ruta privada. Verifica la operación de API prevista, las direcciones DNS/privadas y la ruta real antes de quitar el acceso público.
 
 ### Aplicar un cambio de endpoint revisado
 
@@ -807,7 +807,7 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query cluster.resourcesVpcConfig --output json
 ```
 
-Usa el ID de actualización devuelto y el estado Successful, no solo ACTIVE del clúster, para confirmar la actualización. Si se agota el tiempo de espera, inspecciona la operación existente; no envíes a ciegas otro cambio. Vuelve a comprobar la ruta real de la API después. Mantén disponibles los campos anteriores del endpoint y el acceso de recuperación de administración de AWS; esta revisión no realizó un cambio de endpoint activo.
+Usa el ID de actualización devuelto y el estado Successful, no solo ACTIVE del clúster, para confirmar la actualización. Si se agota el tiempo de espera, inspecciona la operación existente; no envíes a ciegas otro cambio. Vuelve a comprobar la ruta real de la API después. Mantén disponibles los campos anteriores del endpoint y el acceso de recuperación de administración de AWS; esta revisión no realizó un cambio en un endpoint real.
 
 ### Dependencias de servicios de AWS privados
 
@@ -825,7 +825,7 @@ Un endpoint de interfaz de EKS no es el endpoint de la API de Kubernetes. Los en
 
 ### Salida del plano de control enrutada por el cliente (junio de 2026)
 
-Anunciado el June18,2026, CUSTOMER_ROUTED es un modo de salida compatible del plano de control de EKS. Usa las interfaces de red entre cuentas existentes del clúster en tus subredes, en lugar de crear una ENI de salida independiente. Se aplica a llamadas del servidor de API a destinos accesibles por el cliente, como webhooks de admisión, descubrimiento OIDC y servidores de API agregada.
+Anunciado el 18 de junio de 2026, CUSTOMER_ROUTED es un modo de salida compatible del plano de control de EKS. Usa las interfaces de red entre cuentas existentes del clúster en tus subredes, en lugar de crear una ENI de salida independiente. Se aplica a llamadas del servidor de API a servicios del cliente, como webhooks de admisión, descubrimiento OIDC y servidores de API agregada.
 
 **El cambio es unidireccional: una vez habilitado CUSTOMER_ROUTED, el clúster no puede volver a AWS_MANAGED.** No presentes una configuración guardada ni una reversión de versión de Kubernetes como forma de deshacer este modo. Corrige el enrutamiento o la conectividad si falla la nueva ruta.
 
@@ -854,8 +854,8 @@ Registra el ID de actualización devuelto e inspecciona DescribeUpdate hasta que
 
 | Tráfico | Efecto de este ajuste |
 |---|---|
-| Salida del servidor de API hacia destinos accesibles por el cliente | Usa la ruta de VPC del cliente configurada |
-| API de Kubelet en10250 | Usa la ruta de nodo/ENI del clúster; no el dispositivo de salida externo |
+| Salida del servidor de API hacia servicios del cliente | Usa la ruta de VPC del cliente configurada |
+| API de kubelet en el puerto 10250 | Usa la ruta de nodo/ENI del clúster; no el dispositivo de salida externo |
 | etcd, registros de CloudWatch, tráfico interno de EKS | Continúa por rutas administradas por EKS |
 | Controladores de EKS Capabilities, como ArgoCD/ACK/KRO administrados | Se ejecutan en infraestructura administrada independiente; esta función no los reencamina |
 | Llamadas de aplicaciones a STS/EKS Auth/S3 | Siguen la red de cargas de trabajo/nodos; este modo del servidor de API no las controla |
@@ -899,7 +899,7 @@ La clave eks:controlPlaneEgressMode evalúa el modo especificado en solicitudes 
 }
 ```
 
-Este es un control deliberado para las solicitudes, no una migración automática de los clústeres existentes. Los clústeres AWS_MANAGED existentes aún pueden recibir actualizaciones no relacionadas con este ejemplo. Las organizaciones que exijan otra política de implementación deben modelarla por separado. Las SCP no conceden permisos de IAM ni configuran enrutamiento/DNS. Revisa la herencia de políticas y prueba solicitudes representativas permitidas/denegadas con el responsable de la organización antes de implementarlas.
+Este es un control deliberado para las solicitudes, no una migración automática de los clústeres existentes. Los clústeres AWS_MANAGED existentes aún pueden recibir actualizaciones no relacionadas con este ejemplo. Las organizaciones que exijan otra política de despliegue deben modelarla por separado. Las SCP no conceden permisos de IAM ni configuran enrutamiento/DNS. Revisa la herencia de políticas y prueba solicitudes representativas permitidas/denegadas con el responsable de la organización antes de aplicarlas.
 
 ## Seguridad de red {#network-security}
 
@@ -911,19 +911,19 @@ Usa grupos de seguridad, enrutamiento, NetworkPolicy y autenticación de aplicac
 
 ### Grupos de seguridad y rutas necesarias
 
-Para la ruta de API/nodo, permite el tráfico TCP443 necesario de nodo a API y el flujo TCP10250 de plano de control a kubelet. DNS, webhooks y cargas de trabajo pueden necesitar otros puertos de destino reales. No existe un requisito universal de abrir TCP1025–65535 para la «comunicación entre nodos». Los grupos de seguridad son con estado; las NACL y sus reglas de ruta de retorno son independientes.
+Para la ruta de API/nodo, permite el tráfico TCP 443 necesario de nodo a API y el flujo TCP 10250 de plano de control a kubelet. DNS, webhooks y cargas de trabajo pueden necesitar otros puertos de destino reales. No existe un requisito universal de abrir TCP 1025–65535 para la «comunicación entre nodos». Los grupos de seguridad son con estado; las NACL y sus reglas de ruta de retorno son independientes.
 
 Inspecciona los grupos de seguridad asociados a las ENI/nodos reales. Una configuración de SG personalizada en una plantilla de lanzamiento no hereda automáticamente todas las reglas predeterminadas de EKS. Security Groups for Pods y los selectores de pod-security-group de Auto Mode NodeClass son mecanismos distintos con su propio soporte/comportamiento; los SG no se limitan a una capa abstracta de instancia. Revisa el cómputo/CNI seleccionado y la interfaz de origen real.
 
 ### Semántica de NetworkPolicy
 
-NetworkPolicy necesita una implementación de aplicación compatible y configurada. Crear YAML por sí solo no filtra paquetes. Usa la capacidad compatible de políticas de EKS VPC CNI del responsable de red existente o la pila de red compatible que se haya seleccionado deliberadamente. No instales un manifiesto Calico flotante ni una configuración Cilium no relacionada sobre un clúster existente. Auto Mode administra la red por sí mismo; no es un destino para instalar cualquier CNI de reemplazo.
+NetworkPolicy necesita una implementación de red compatible y configurada que aplique las políticas. Crear YAML por sí solo no filtra paquetes. Usa la capacidad compatible de políticas de EKS VPC CNI del responsable de red existente o la pila de red compatible que se haya seleccionado deliberadamente. No instales un manifiesto de Calico sin una versión fijada ni una configuración Cilium no relacionada sobre un clúster existente. Auto Mode administra la red por sí mismo; no es un destino para instalar cualquier CNI de reemplazo.
 
-Las políticas son aditivas. Para aislar una conexión, deben permitirla tanto la salida del origen como la entrada del destino. El orden de las reglas no es un sistema de prioridad de denegación/permiso. Un podSelector por sí solo selecciona pares del espacio de nombres de la política; namespaceSelector y podSelector en el mismo par constituyen una condición AND. Las entradas de pares independientes se combinan como alternativas.
+Las políticas son aditivas. Cuando se aplica aislamiento, tanto la salida del origen como la entrada del destino deben permitir la conexión. El orden de las reglas no es un sistema de prioridad de denegación/permiso. Un podSelector por sí solo selecciona pares del espacio de nombres de la política; namespaceSelector y podSelector en el mismo par constituyen una condición AND. Las entradas de pares independientes se combinan como alternativas.
 
 ### Ejercicio de políticas aisladas
 
-Este ejemplo usa espacios de nombres nuevos de demostración, redes Linux de EC2 con un CNI que aplica las políticas y un Deployment tradicional de CoreDNS etiquetado como k8s-app=kube-dns en kube-system. Presupone Pods de frontend/API/base de datos preparados y etiquetados como app=frontend/api/database; la API escucha en8080 y expone métricas de demostración en9090, y la base de datos escucha en5432. Estas políticas no implementan esas aplicaciones.
+Este ejemplo usa espacios de nombres nuevos de demostración, redes Linux de EC2 con un CNI que aplica las políticas y un Deployment tradicional de CoreDNS etiquetado como k8s-app=kube-dns en kube-system. Presupone Pods de frontend/API/base de datos preparados y etiquetados como app=frontend/api/database; la API escucha en 8080 y expone métricas de demostración en 9090, y la base de datos escucha en 5432. Estas políticas no despliegan esas aplicaciones.
 
 La denegación predeterminada incluye ambas direcciones. DNS y cada flujo previsto entre origen y destino se especifican de forma explícita. No apliques estos supuestos a un espacio de nombres de producción existente sin inventariar todas las dependencias:
 
@@ -1145,13 +1145,13 @@ spec:
       port: 443
 ```
 
-Permitir0.0.0.0/0 en443 permite un amplio conjunto de destinos públicos; excluir rangos privados/enlazados localmente no identifica un servicio de confianza. NetworkPolicy nativa no resuelve un dominio para crear una lista de permitidos duradera ni proporciona autorización de IAM. Las excepciones de nodo/hostNetwork, el orden de NAT y el comportamiento específico de la implementación también implican que no es el único mecanismo de aislamiento de IMDS.
+Permitir 0.0.0.0/0 en 443 permite un amplio conjunto de destinos públicos; excluir rangos privados o link-local no identifica un servicio de confianza. NetworkPolicy nativa no resuelve un dominio para crear una lista de permitidos duradera ni proporciona autorización de IAM. Las excepciones de nodo/hostNetwork, el orden de NAT y el comportamiento específico de la implementación también implican que no es el único mecanismo de aislamiento de IMDS.
 
 Prueba conexiones nuevas positivas y negativas en el CNI real. Los cambios de políticas pueden propagarse de forma asíncrona, y el tratamiento de las conexiones existentes depende de la implementación. Los ejemplos de origen se comprobaron con casos sintéticos de selectores/puertos; durante esta revisión no se ejecutó filtrado de paquetes, resolución DNS ni tráfico activo.
 
 ## Seguridad de Pod {#pod-security}
 
-Pod Security Standards define perfiles; Pod Security Admission (PSA) aplica la política de espacio de nombres seleccionada. PSA es estable desde Kubernetes1.25. PodSecurityPolicy quedó obsoleto en1.21 y **se eliminó en1.25**; no es una API que se deba implementar en un clúster actual de EKS. Una restricción de Gatekeeper que incluya PSP en su nombre es un recurso personalizado distinto, no la API eliminada.
+Pod Security Standards define perfiles; Pod Security Admission (PSA) aplica la política de espacio de nombres seleccionada. PSA es estable desde Kubernetes 1.25. PodSecurityPolicy quedó obsoleto en 1.21 y **se eliminó en 1.25**; no es una API que se deba desplegar en un clúster actual de EKS. Una restricción de Gatekeeper que incluya PSP en su nombre es un recurso personalizado distinto, no la API eliminada.
 
 ![Diagrama que muestra cómo se aplican a los Pods privilegiados, de aplicaciones y del sistema los estándares de seguridad de Pod Privileged, Baseline y Restricted, seleccionados mediante etiquetas de espacio de nombres (enforce, audit, warn), los ajustes de securityContext de los Pods y las políticas de OPA Gatekeeper o Kyverno aplicadas mediante un webhook de admisión.](../.gitbook/assets/en-eks-05-eks-security-9.png)
 
@@ -1165,11 +1165,11 @@ Pod Security Standards define perfiles; Pod Security Admission (PSA) aplica la p
 | Baseline | Conjunto básico de restricciones sobre configuraciones conocidas que amplían los privilegios |
 | Restricted | Añade restricciones más estrictas, incluidos los requisitos compatibles de usuario no root, capacidades y seccomp |
 
-enforce en el espacio de nombres rechaza las solicitudes de Pod que infringen la política. Audit y warn registran o comunican infracciones; no convierten la aplicación satisfactoria de un controlador en prueba de que sus Pods se puedan ejecutar. En las plantillas de Deployment/Job, audit/warn pueden comunicar problemas, mientras que la aplicación se hace efectiva en los Pods resultantes. Comprueba el rollout y los eventos, no solo que kubectl apply haya tenido éxito. Cambiar la política del espacio de nombres no expulsa retroactivamente los Pods existentes.
+enforce en el espacio de nombres rechaza las solicitudes de Pod que infringen la política. Audit y warn registran o comunican infracciones; no convierten la aplicación correcta del manifiesto de un controlador en prueba de que sus Pods se puedan ejecutar. En las plantillas de Deployment/Job, audit/warn pueden comunicar problemas, mientras que la política se exige a los Pods resultantes. Comprueba el rollout y los eventos, no solo que kubectl apply haya tenido éxito. Cambiar la política del espacio de nombres no expulsa retroactivamente los Pods existentes.
 
 ### Ejemplo completo de contexto de seguridad de Linux
 
-Lo siguiente es una demostración pequeña de identidad/contexto de seguridad de Linux que usa una imagen real y no tiene rutas de tiempo de ejecución de aplicación con permisos de escritura. No es una implementación de una aplicación nginx. Usa la versión PSS apropiada para el clúster real; este ejemplo está fijado a la política EKS 1.36 revisada.
+Lo siguiente es una demostración pequeña de identidad/contexto de seguridad de Linux que usa una imagen real y no necesita rutas de aplicación escribibles durante la ejecución. No es un despliegue de una aplicación nginx. Usa la versión PSS apropiada para el clúster real; este ejemplo está fijado a la política EKS 1.36 revisada.
 
 ```yaml
 apiVersion: v1
@@ -1228,7 +1228,7 @@ Para una aplicación real, prepara el UID/GID de la imagen, los volúmenes de es
 
 ### Ejemplo de política de admisión
 
-Usa una instalación compatible del motor de políticas bajo tu responsabilidad y sus CRD reales. Kyverno1.19.1 sirve la API ValidatingPolicy de policies.kyverno.io/v1; el formato ClusterPolicy anterior quedó obsoleto en esa versión. El siguiente ejemplo acotado se aplica solo a security-demo y comprueba contenedores normales, init y efímeros. Se acepta que privileged esté omitido, pues su valor predeterminado es false; se rechaza privileged:true.
+Usa una instalación compatible del motor de políticas bajo tu responsabilidad y sus CRD reales. Kyverno 1.19.1 expone la API ValidatingPolicy de policies.kyverno.io/v1; el formato ClusterPolicy anterior quedó obsoleto en esa versión. El siguiente ejemplo acotado se aplica solo a security-demo y comprueba contenedores normales, init y efímeros. Se acepta que privileged esté omitido, pues su valor predeterminado es false; se rechaza privileged:true.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -1276,7 +1276,7 @@ Bottlerocket es un host de contenedores Linux con una pequeña superficie de sof
 
 ### Configuración basada en API
 
-El host suele administrarse mediante su API, no con un servidor SSH o un administrador de paquetes instalado. Los contenedores de host control/admin tienen acceso y privilegios distintos. Protege las vías de acceso SSM/SSH, el IAM del nodo y el acceso al socket local de la API; el acceso a ese socket puede cambiar la configuración del host. Habilitar el contenedor control por sí solo no configura el registro de SSM, los permisos ni la conectividad de red.
+El host suele administrarse mediante su API, no con un servidor SSH o un administrador de paquetes instalado. Los contenedores de host control/admin tienen acceso y privilegios distintos. Protege las vías de acceso SSM/SSH, los permisos de IAM del nodo y el acceso al socket local de la API; el acceso a ese socket puede cambiar la configuración del host. Habilitar el contenedor control por sí solo no configura el registro de SSM, los permisos ni la conectividad de red.
 
 ```bash
 # Run inside an authorized Bottlerocket control container.
@@ -1299,7 +1299,7 @@ enabled = false
 
 ### SELinux e integridad del sistema de archivos
 
-SELinux se ejecuta en modo de aplicación y restringe el acceso según las etiquetas de procesos y archivos. Los servicios de host previstos siguen necesitando acceso privilegiado, y los usuarios con privilegios suficientes pueden cambiar algunas etiquetas. Estos controles reducen el riesgo; no demuestran que se impidan todas las evasiones de contenedores.
+SELinux se ejecuta en modo enforcing y restringe el acceso según las etiquetas de procesos y archivos. Los servicios de host previstos siguen necesitando acceso privilegiado, y los usuarios con privilegios suficientes pueden cambiar algunas etiquetas. Estos controles reducen el riesgo; no demuestran que se impidan todas las evasiones de contenedores.
 
 En EKS Kubernetes 1.37, los montajes de volúmenes SELinux son estables y están habilitados de forma predeterminada para las configuraciones compatibles. El comportamiento se aplica cuando el Pod establece `seLinuxOptions` y el controlador CSI declara `seLinuxMount: true`. Como un montaje lleva una sola etiqueta SELinux, un Pod puede quedar en `ContainerCreating` si otro Pod del mismo nodo ya utiliza el volumen con una etiqueta SELinux, `seLinuxChangePolicy` o nivel de privilegio diferente; los nodos sin SELinux habilitado no se ven afectados. Antes de actualizar, identifica los controladores con `seLinuxMount: true` y armoniza `seLinuxOptions.level` y `seLinuxChangePolicy` en los Pods que comparten un volumen (`Recursive` mantiene el comportamiento de reasignación de etiquetas anterior). Consulta la sección de Kubernetes 1.37 de las [notas de lanzamiento de soporte estándar de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html).
 
@@ -1311,7 +1311,7 @@ El sistema de archivos raíz usa dm-verity: los bloques protegidos se verifican 
 
 ### Actualizaciones in situ o sustitución de nodos
 
-Bottlerocket **admite actualizaciones de imagen in situ**. `apiclient update check` descubre una actualización apta; `apiclient update apply` escribe en la partición alternativa y la selecciona para el siguiente arranque. El reinicio es un paso disruptivo independiente, a menos que se combine explícitamente con la actualización. Los comandos de actualización sin procesar de apiclient/SSM no vacían las cargas de trabajo de Kubernetes.
+Bottlerocket **admite actualizaciones de imagen in situ**. `apiclient update check` descubre una actualización apta; `apiclient update apply` escribe en la partición alternativa y la selecciona para el siguiente arranque. El reinicio es un paso disruptivo independiente, a menos que se combine explícitamente con la actualización. Los comandos de actualización sin procesar de apiclient/SSM no realizan el drenaje de las cargas de trabajo de Kubernetes.
 
 Para Kubernetes, la documentación de Bottlerocket recomienda Brupop para orquestar actualizaciones in situ. Las actualizaciones de grupos de nodos administrados de EKS pueden reemplazar las instancias. Elige un solo responsable coordinado para toda la flota, revisa la compatibilidad de versión/variante, la capacidad, los PDB, los datos locales y el estado de las cargas de trabajo, y valida un rollout pequeño antes de continuar. Las particiones A/B admiten mecanismos de recuperación, pero no garantizan la recuperación automática de todos los errores de aplicación o de arranque.
 
@@ -1350,7 +1350,7 @@ managedNodeGroups:
             enabled: true
 ```
 
-Para una implementación revisada, el comando de creación es `eksctl create nodegroup --config-file bottlerocket-nodegroup.yaml`. No pongas los permisos de Secrets Manager de las aplicaciones ni los permisos de administración de volúmenes del controlador CSI en todos los nodos solo para completar un ejemplo de límite de nodos. Proporciona a esas cargas de trabajo su propia identidad compatible. Revisa los permisos necesarios del nodo para EKS Auth/registro/SSM según las funciones habilitadas.
+Para un despliegue revisado, el comando de creación es `eksctl create nodegroup --config-file bottlerocket-nodegroup.yaml`. No pongas los permisos de Secrets Manager de las aplicaciones ni los permisos de administración de volúmenes del controlador CSI en todos los nodos solo para que funcione un ejemplo de límite de permisos del nodo. Proporciona a esas cargas de trabajo su propia identidad compatible. Revisa los permisos necesarios del nodo para EKS Auth/registro/SSM según las funciones habilitadas.
 
 Antes de cambiar una flota, inspecciona su grupo de nodos administrado y el SO que notifican realmente los nodos. Asegúrate de que el contexto de kubectl corresponde al mismo clúster bajo tu responsabilidad:
 
@@ -1366,7 +1366,7 @@ kubectl get nodes -l "eks.amazonaws.com/nodegroup=$NODEGROUP_NAME" \
   -o custom-columns='NAME:.metadata.name,OS:.status.nodeInfo.osImage,KUBELET:.status.nodeInfo.kubeletVersion'
 ```
 
-Una versión de AMI no es un registro de auditoría completo de los cambios posteriores de ajustes de API o actualizaciones de SO in situ. Conserva los ajustes deseados, los resultados de actualización y el inventario de nodos en ejecución. La sustitución de nodos necesita un plan explícito de estado/reversión; no encadenes un drain sin verificar con la eliminación de emptyDir y la eliminación del grupo de nodos.
+Una versión de AMI no es un registro de auditoría completo de los cambios posteriores de ajustes de API o actualizaciones de SO in situ. Conserva los ajustes deseados, los resultados de actualización y el inventario de nodos en ejecución. La sustitución de nodos necesita un plan explícito de comprobación de salud y reversión; no encadenes un drain sin verificar con la eliminación de emptyDir y la eliminación del grupo de nodos.
 
 La validación aquí incluyó la sintaxis de TOML, el esquema publicado de configuración de eksctl y la sintaxis de shell. No se creó ni probó ningún nodo Bottlerocket, actualización, sesión SSM o grupo de nodos.
 
@@ -1408,11 +1408,11 @@ Este límite ilustrativo permite enumerar un solo bucket y leer sus objetos. Sus
 
 Aplica un límite revisado mediante el proceso de IaC/propiedad existente del rol y verifica casos de uso permitidos y denegados. Un rol de Pod puede usar un límite, pero debe seguir satisfaciendo los requisitos de asociación, confianza y sesión. Impide que los administradores delegados sustituyan o eliminen el límite obligatorio o cambien su versión de política.
 
-No asocies este límite a un rol de nodo de EKS. Los requisitos del nodo dependen de las funciones habilitadas y pueden incluir descubrimiento de nodos de EKS, descargas de registros, `eks-auth:AssumeRoleForPodIdentity` y operaciones de SSM. Una lista de permisos permitidos incompleta y escrita a mano puede impedir que funcionen los nodos o las credenciales. Inventaría las políticas reales de nodos y las dependencias de funciones antes de probar un límite de nodo en un canario. Mantén los permisos de secretos de aplicaciones y los permisos de controladores CSI/CNI en las identidades de carga de trabajo compatibles, en lugar de añadirlos a cada nodo.
+No asocies este límite a un rol de nodo de EKS. Los requisitos del nodo dependen de las funciones habilitadas y pueden incluir descubrimiento de nodos de EKS, descarga de imágenes del registro, `eks-auth:AssumeRoleForPodIdentity` y operaciones de SSM. Una lista incompleta de permisos permitidos y escrita a mano puede impedir que funcionen los nodos o las credenciales. Inventaría las políticas reales de nodos y las dependencias de funciones antes de probar un límite de nodo en un canario. Mantén los permisos de secretos de aplicaciones y los permisos de controladores CSI/CNI en las identidades de carga de trabajo compatibles, en lugar de añadirlos a cada nodo.
 
 ### Patrones de privilegios mínimos
 
-**Acceso a espacios de nombres de Kubernetes:** usa la entrada de acceso con políticas de acceso de EKS delimitadas por espacio de nombres, o un Role/RoleBinding de RBAC, como se muestra en la sección de autenticación. `eks:AccessKubernetesApi` permite ver objetos de Kubernetes mediante la consola de EKS; no es un permiso general de RBAC de espacio de nombres para kubectl. `eks:namespaces` es una condición ArrayOfString en solicitudes `AssociateAccessPolicy`/`DisassociateAccessPolicy`, no en `AccessKubernetesApi`. IAM `DescribeCluster`/`ListClusters` por sí solas no autorizan operaciones de Kubernetes. Las concesiones múltiples son aditivas; una asociación acotada no elimina una concesión existente para todo el clúster.
+**Acceso a espacios de nombres de Kubernetes:** usa la entrada de acceso con políticas de acceso de EKS delimitadas por espacio de nombres, o un Role/RoleBinding de RBAC, como se muestra en la sección de autenticación. `eks:AccessKubernetesApi` permite ver objetos de Kubernetes mediante la consola de EKS; no es un permiso general de RBAC de espacio de nombres para kubectl. `eks:namespaces` es una condición ArrayOfString en solicitudes `AssociateAccessPolicy`/`DisassociateAccessPolicy`, no en `AccessKubernetesApi`. Los permisos de IAM `DescribeCluster`/`ListClusters` por sí solos no autorizan operaciones de Kubernetes. Las concesiones múltiples son aditivas; una asociación acotada no elimina una concesión existente para todo el clúster.
 
 **Descargas limitadas a repositorios:** las acciones de lectura de imágenes se pueden limitar a ARN de repositorios aprobados. `GetAuthorizationToken` requiere `Resource: "*"`; ese permiso de autenticación por sí solo no concede acceso a imágenes.
 
@@ -1472,13 +1472,13 @@ No asocies este límite a un rol de nodo de EKS. Los requisitos del nodo depende
 }
 ```
 
-Un principal/sesión regido por separado debe tener realmente la etiqueta Environment coincidente. Etiquetar un objeto de Kubernetes o un recurso de asociación de Pod Identity no proporciona automáticamente esa etiqueta de principal arbitraria. Audita las políticas existentes del bucket antes de habilitar ABAC y limita quién puede cambiar las etiquetas o el estado de ABAC. Después de habilitarlo, usa S3 `TagResource`/`UntagResource` para cambiar las etiquetas del bucket; `PutBucketTagging`/`DeleteBucketTagging` dejan de funcionar. Consulta el estado con `aws s3api get-bucket-abac --bucket YOUR_OWNED_BUCKET --region YOUR_REGION`. Este ejemplo no habilita ABAC ni modifica un bucket.
+La identidad del principal o de la sesión, gestionada por separado, debe incluir realmente la etiqueta Environment coincidente. Etiquetar un objeto de Kubernetes o un recurso de asociación de Pod Identity no proporciona automáticamente esa etiqueta de principal arbitraria. Audita las políticas existentes del bucket antes de habilitar ABAC y limita quién puede cambiar las etiquetas o el estado de ABAC. Después de habilitarlo, usa S3 `TagResource`/`UntagResource` para cambiar las etiquetas del bucket; `PutBucketTagging`/`DeleteBucketTagging` dejan de funcionar. Consulta el estado con `aws s3api get-bucket-abac --bucket YOUR_OWNED_BUCKET --region YOUR_REGION`. Este ejemplo no habilita ABAC ni modifica un bucket.
 
 ### Salvaguardas de SCP de Organizations
 
 Las SCP restringen a los principales aplicables de las cuentas miembro; no conceden permisos ni se aplican a la cuenta de administración o a los roles vinculados a servicios. Una SCP no sustituye RBAC de Kubernetes ni los controles de red. Pruébala en una OU/cuenta limitada y conserva una ruta de recuperación bajo tu responsabilidad antes de asociarla de forma más amplia. El ejemplo de solo denegación presupone que la jerarquía de Organizations aún tiene las políticas Allow necesarias.
 
-Por ejemplo, esta salvaguarda de eliminación deja fuera de esta Deny un rol de operador con nombre explícito. Sustituye su cuenta/rol por el principal de recuperación revisado; la excepción no concede por sí misma permiso de eliminación:
+Por ejemplo, esta salvaguarda de eliminación excluye de esta denegación un rol de operador con nombre explícito. Sustituye su cuenta/rol por el principal de recuperación revisado; la excepción no concede por sí misma permiso de eliminación:
 
 ```json
 {
@@ -1501,7 +1501,7 @@ Por ejemplo, esta salvaguarda de eliminación deja fuera de esta Deny un rol de 
 
 ### Siete nuevas claves de condición de IAM de EKS (abril de 2026)
 
-El anuncio del 20 de abril de 2026 es válido. Usa cada condición solo con las acciones que la exponen en la referencia de autorización de servicio actual:
+Estas claves se anunciaron el 20 de abril de 2026. Usa cada condición solo con las acciones que la exponen en la referencia de autorización de servicio actual:
 
 | Clave | Tipo | Ámbito de acciones compatible |
 |---|---|---|
@@ -1599,7 +1599,7 @@ Las declaraciones de creación deniegan deliberadamente los campos de endpoint o
 
 La condición de clave del cliente solo comprueba que haya un valor; una lista de permitidos de claves aprobadas requiere operadores apropiados de conjunto/ARN y tratamiento de valores ausentes para la clave ArrayOfARN. No es válida para UpdateClusterConfig. Exigir una clave del cliente es un requisito de propiedad/control: EKS 1.28+ ya cifra de forma predeterminada todos los datos de la API de Kubernetes mediante el mecanismo KMS v2 de propiedad de AWS. CreateCluster no admite el alcance por ARN de recurso del clúster, así que su declaración usa `Resource: "*"` con condiciones de solicitud.
 
-Se comprobaron localmente el JSON y tablas de verdad de condiciones específicas. No se asoció ninguna SCP, cambió ningún rol de IAM ni se simuló ninguna autorización de política de AWS; valida el contexto completo de la organización/políticas de recursos antes del despliegue.
+Se comprobaron localmente el JSON y tablas de verdad de condiciones específicas. No se asociaron SCP, no se modificaron roles de IAM ni se ejecutaron simulaciones de autorización de políticas de AWS; valida el contexto completo de la organización/políticas de recursos antes del despliegue.
 
 Referencias principales: [límites de IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html), [efectos de las SCP](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html), [referencia de autorización de EKS](https://docs.aws.amazon.com/service-authorization/latest/reference/list_eks.html), [anuncio de claves de condición de EKS](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/), [habilitación de ABAC en S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html), [condiciones de etiquetas de bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging.html).
 
@@ -1607,7 +1607,7 @@ Referencias principales: [límites de IAM](https://docs.aws.amazon.com/IAM/lates
 
 ### Cifrado predeterminado y propiedad de las claves del cliente
 
-Los clústeres de EKS que ejecutan Kubernetes 1.28+ cifran **todos los datos de la API de Kubernetes**, incluidos Secrets y ConfigMaps, con cifrado de sobre KMS v2 predeterminado mediante una clave propiedad de AWS. Esto es distinto del cifrado existente del disco de etcd. Una clave KMS administrada por el cliente cambia la propiedad/control de la clave; no convierte en cifrado un clúster actual de EKS que de otro modo estaría en texto sin formato. Revisa las concesiones, disponibilidad de la clave, rotación y protección contra eliminación antes de elegir una clave del cliente. Este control no cifra los datos de aplicaciones en nodos, volúmenes EBS/EFS ni conexiones de red.
+Los clústeres de EKS que ejecutan Kubernetes 1.28+ cifran **todos los datos de la API de Kubernetes**, incluidos Secrets y ConfigMaps, con cifrado de envolvente KMS v2 predeterminado mediante una clave propiedad de AWS. Esto es distinto del cifrado existente del disco de etcd. Una clave KMS administrada por el cliente cambia la propiedad/control de la clave; no convierte en cifrado un clúster actual de EKS que de otro modo estaría en texto sin formato. Revisa las concesiones, disponibilidad de la clave, rotación y protección contra eliminación antes de elegir una clave del cliente. Este control no cifra los datos de aplicaciones en nodos, volúmenes EBS/EFS ni conexiones de red.
 
 La codificación Base64 en un manifiesto Secret no es cifrado. La autorización de API, los permisos de admisión, las copias de seguridad, el acceso a nodos y el acceso de cargas de trabajo siguen siendo pertinentes: un principal autorizado a leer el Secret mediante la API recibe su contenido pese al cifrado en reposo.
 
@@ -1629,7 +1629,7 @@ No permitas que ESO y la sincronización de CSI gestionen el mismo Secret de des
 
 ### ESO con una identidad IRSA delimitada por espacio de nombres
 
-Para una **instalación nueva bajo tu responsabilidad**, este ejemplo fija la versión 2.10.0 del gráfico/aplicación y su API `external-secrets.io/v1`. Inspecciona primero los lanzamientos de Helm existentes y la propiedad de CRD; revisa el procedimiento de migración para una instalación existente en lugar de ejecutar un segundo controlador. El gráfico se generó localmente para Kubernetes 1.36; no se implementó en EKS.
+Para una **instalación nueva bajo tu responsabilidad**, este ejemplo fija la versión 2.10.0 del chart y de la aplicación y su API `external-secrets.io/v1`. Inspecciona primero las releases de Helm existentes y la propiedad de CRD; revisa el procedimiento de migración para una instalación existente en lugar de ejecutar un segundo controlador. El chart se renderizó localmente para Kubernetes 1.36; no se desplegó en EKS.
 
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io
@@ -1639,7 +1639,7 @@ helm install external-secrets external-secrets/external-secrets \
   --set installCRDs=true --wait --timeout 5m
 ```
 
-Prepara un secreto JSON de Secrets Manager con las propiedades `username` y `password` mediante el proceso aprobado de ingreso de secretos. Sustituye su ARN, cuenta y región exactos en todos los ejemplos. La confianza IRSA del rol debe usar el proveedor OIDC de IAM real y el asunto exacto de espacio de nombres/cuenta de servicio. Sustituye el **nombre de host/ruta completos del emisor**, incluida cualquier forma de emisor de doble pila:
+Prepara un secreto JSON de Secrets Manager con las propiedades `username` y `password` mediante el proceso aprobado de ingreso de secretos. Sustituye el ARN exacto del secreto, la cuenta, la región y el rol en todos los ejemplos. La confianza IRSA del rol debe usar el proveedor OIDC de IAM real y el sujeto exacto de espacio de nombres/cuenta de servicio. Sustituye el **nombre de host/ruta completos del emisor**, incluida cualquier forma de emisor de doble pila:
 
 ```json
 {
@@ -1680,7 +1680,7 @@ La política de lectura de las claves remotas explícitas siguientes se puede de
 }
 ```
 
-El ServiceAccount, SecretStore y ExternalSecret comparten un espacio de nombres. ESO solicita un token de corta duración para el ServiceAccount referenciado; deshabilitar el montaje automático de tokens en esa cuenta no impide la operación TokenRequest. El controlador necesita el RBAC de Kubernetes que exige el gráfico y acceso de red a la API de Kubernetes, STS regional y Secrets Manager.
+El ServiceAccount, SecretStore y ExternalSecret comparten un espacio de nombres. ESO solicita un token de corta duración para el ServiceAccount referenciado; deshabilitar el montaje automático de tokens en esa cuenta no impide la operación TokenRequest. El controlador necesita el RBAC de Kubernetes que exige el chart y acceso de red a la API de Kubernetes, STS regional y Secrets Manager.
 
 ```yaml
 apiVersion: v1
@@ -1741,7 +1741,7 @@ spec:
         property: password
 ```
 
-Aquí `creationPolicy: Owner` hace que ExternalSecret sea propietario de `eso-db-credentials`; al eliminar ExternalSecret se puede recolectar ese Secret mediante garbage collection. `deletionPolicy: Retain` se refiere a la ausencia del secreto en el backend, no a la inmunidad frente a la recolección por parte del propietario. Comprueba las condiciones Ready y los eventos de SecretStore/ExternalSecret sin imprimir los datos de Secret.
+Aquí `creationPolicy: Owner` hace que ExternalSecret sea propietario de `eso-db-credentials`; al eliminar ExternalSecret ese Secret también puede eliminarse mediante garbage collection. `deletionPolicy: Retain` se refiere a la ausencia del secreto en el backend, no a la protección frente a la eliminación asociada al propietario. Comprueba las condiciones Ready y los eventos de SecretStore/ExternalSecret sin imprimir los datos del Secret.
 
 **Alternativa de Pod Identity:** asocia el ServiceAccount propio del controlador ESO a su rol y omite el bloque `auth` del almacén para que se use la cadena de credenciales del controlador. No mantengas `auth.jwt.serviceAccountRef` esperando que ESO suplante una cuenta arbitraria asociada a Pod Identity. IRSA por almacén y Pod Identity del controlador son rutas de autenticación distintas; revisa el límite de confianza resultante para todo el controlador.
 
@@ -1753,7 +1753,7 @@ La rotación del backend, la sincronización y la recarga de la aplicación son 
 
 ### SOPS para archivos cifrados
 
-SOPS recibe mantenimiento del proyecto getsops; «Mozilla SOPS» es su origen histórico. Usa una instalación/herramienta de versión verificada. La sintaxis SOPS 3.13.3 siguiente cifra los campos data/stringData de un Secret de Kubernetes con una clave KMS de AWS revisada. Mantén el texto sin cifrar fuera de Git, no pases valores secretos como argumentos de comando y no habilites el trazado de shell:
+SOPS recibe mantenimiento del proyecto getsops; «Mozilla SOPS» es su origen histórico. Instala la herramienta desde una versión verificada. La sintaxis SOPS 3.13.3 siguiente cifra los campos data/stringData de un Secret de Kubernetes con una clave KMS de AWS revisada. Mantén el texto sin cifrar fuera de Git, no pases valores secretos como argumentos de comando y no habilites el trazado de shell:
 
 ```bash
 set -euo pipefail
@@ -1769,7 +1769,7 @@ sops encrypt --kms "$SOPS_KMS_ARN" \
   --output "$ENCRYPTED_FILE" "$PLAINTEXT_FILE"
 ```
 
-Esta expresión regular deja visibles los metadatos y otros campos; es específica para archivos Secret de Kubernetes, no para YAML arbitrario. Si se usan reglas de creación `.sops.yaml`, `path_regex` coincide con la ruta de entrada (o `--filename-override`), no con el destino de una redirección de shell. Inspecciona la salida cifrada antes de prepararla para confirmar. El acceso a KMS sigue necesitando los permisos reales del solicitante y la política de la clave.
+Esta expresión regular deja visibles los metadatos y otros campos; es específica para archivos Secret de Kubernetes, no para YAML arbitrario. Si se usan reglas de creación `.sops.yaml`, `path_regex` coincide con la ruta de entrada (o `--filename-override`), no con el destino de una redirección de shell. Inspecciona la salida cifrada antes de añadirla al área de preparación de Git. El acceso a KMS sigue necesitando los permisos reales del solicitante y la política de la clave.
 
 Para una comprobación local autorizada, descifra en un archivo temporal privado y elimínalo al salir; no imprimas texto sin cifrar en los registros de CI:
 
@@ -1787,9 +1787,9 @@ test -s "$review_dir/secret.yaml"
 
 Eliminar un archivo temporal no garantiza un borrado seguro en todos los sistemas de archivos. Protege el entorno de ejecución y las copias de seguridad. Terraform `sensitive` oculta las salidas seleccionadas, pero no evita por sí solo que un valor secreto aparezca en el estado; evita incluir valores secretos reales en recursos Terraform de ejemplo o en artefactos de plan/estado no protegidos.
 
-La validación usa las CRD/gráficos publicados de ESO, el esquema nativo de Kubernetes y datos SOPS sintéticos locales cifrados con age. El cifrado/descifrado con AWS KMS, la recuperación de secretos, la reconciliación del controlador y la rotación de aplicaciones son comprobaciones específicas del entorno que no se ejecutaron.
+La validación usa las CRD y el chart publicados de ESO, el esquema nativo de Kubernetes y datos SOPS sintéticos locales cifrados con age. El cifrado/descifrado con AWS KMS, la recuperación de secretos, la reconciliación del controlador y la rotación de aplicaciones son comprobaciones específicas del entorno que no se ejecutaron.
 
-Referencias principales: [cifrado de sobre de EKS](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [autenticación de AWS de ESO 2.10](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md), [versión de ESO](https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0), [Secrets de Kubernetes](https://kubernetes.io/docs/concepts/configuration/secret/), [CLI de rotación de Secrets Manager](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html), [SOPS](https://getsops.io/docs/).
+Referencias principales: [cifrado de envolvente de EKS](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [autenticación de AWS de ESO 2.10](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md), [versión de ESO](https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0), [Secrets de Kubernetes](https://kubernetes.io/docs/concepts/configuration/secret/), [CLI de rotación de Secrets Manager](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html), [SOPS](https://getsops.io/docs/).
 
 ## Cumplimiento y auditoría {#compliance-and-auditing}
 
@@ -1797,7 +1797,7 @@ Referencias principales: [cifrado de sobre de EKS](https://docs.aws.amazon.com/e
 
 Los registros de auditoría de Kubernetes registran las solicitudes seleccionadas por la política y el nivel de auditoría; no son un registro incondicional del cuerpo de todas las solicitudes ni de todas las acciones de una carga de trabajo. CloudTrail registra la actividad de las API de AWS, mientras que el acceso a los datos de aplicaciones puede requerir registros específicos de la aplicación/servicio. Estas fuentes se complementan.
 
-Inspecciona primero la configuración real de registros del clúster. La entrega de los registros del plano de control de EKS a CloudWatch es de mejor esfuerzo, normalmente en cuestión de minutos, y tiene costos de ingesta/almacenamiento. Configura la retención, los controles de acceso, la entrega posterior y la detección de registros ausentes. Habilitar la exportación no crea un registro retrospectivo de eventos que no se exportaron.
+Inspecciona primero la configuración real de registros del clúster. La entrega de los registros del plano de control de EKS a CloudWatch se realiza con un compromiso de mejor esfuerzo, normalmente en cuestión de minutos, y tiene costos de ingesta/almacenamiento. Configura la retención, los controles de acceso, la entrega posterior y la detección de registros ausentes. Habilitar la exportación no crea un registro retrospectivo de eventos que no se exportaron.
 
 ```bash
 set -euo pipefail
@@ -1841,7 +1841,7 @@ Usa la regla administrada exacta y sus parámetros/disponibilidad regional. Las 
 | Regla | Qué comprueba |
 |---|---|
 | `eks-cluster-logging-enabled` | Comprueba periódicamente que estén habilitados todos los tipos de registros del plano de control; no tiene parámetros |
-| `eks-cluster-log-enabled` | Comprobación ante cambios de configuración; `logTypes` CSV opcional selecciona los tipos de registros |
+| `eks-cluster-log-enabled` | Comprobación ante cambios de configuración; el parámetro opcional `logTypes`, en formato CSV, selecciona los tipos de registros |
 | `eks-cluster-oldest-supported-version` | Compara con el valor proporcionado de `oldestVersionSupported`; mantén ese parámetro, no un catálogo de soporte que se actualice automáticamente |
 | `eks-endpoint-no-public-access` | Comprueba si el endpoint es accesible públicamente |
 | `eks-secrets-encrypted` | Comprueba encryptionConfig/secrets explícitos y `kmsKeyArns` opcional; un hallazgo no demuestra que los datos de la API actual de EKS estén almacenados en texto sin cifrar |
@@ -1854,7 +1854,7 @@ El flujo actual de hallazgos OCSF de Security Hub y los eventos ASFF de CSPM tie
 
 ## Supervisión y detección de seguridad {#security-monitoring-and-detection}
 
-Usa controles independientes para la detección de amenazas basada en auditoría, la telemetría de tiempo de ejecución basada en agentes, la evaluación de postura y la respuesta ante incidentes. Que un servicio esté habilitado no demuestra la cobertura completa del clúster/nodo ni la entrega correcta de notificaciones.
+Usa controles independientes para la detección de amenazas basada en auditoría, la telemetría durante la ejecución recopilada por agentes, la evaluación de postura y la respuesta ante incidentes. Que un servicio esté habilitado no demuestra la cobertura completa del clúster/nodo ni la entrega correcta de notificaciones.
 
 ![Diagrama de arquitectura que muestra los servicios de seguridad de AWS (GuardDuty, Security Hub, CloudWatch) y las herramientas de seguridad de Kubernetes (Falco, kube-audit) que cubren la detección en tiempo de ejecución, red, identidad y configuración; los resultados alimentan un flujo de detección de amenazas de recopilación, análisis, detección, respuesta y corrección, y los hallazgos se notifican de nuevo a Security Hub.](../.gitbook/assets/en-eks-05-eks-security-15.png)
 
@@ -1890,13 +1890,13 @@ Para la configuración revisada de funciones, los nombres actuales son distintos
 ]
 ```
 
-Esta es una carga útil de ejemplo para funciones, no una implementación completa de la cuenta. Inventaría primero el detector regional existente y la política de la organización. Si está habilitado el modo heredado `EKS_RUNTIME_MONITORING`, sigue la migración documentada a `RUNTIME_MONITORING`; no habilites simultáneamente modos antiguos/nuevos incompatibles.
+Esta es una carga útil de ejemplo para funciones, no un despliegue completo en la cuenta. Inventaría primero el detector regional existente y la política de la organización. Si está habilitado el modo heredado `EKS_RUNTIME_MONITORING`, sigue la migración documentada a `RUNTIME_MONITORING`; no habilites simultáneamente modos antiguos/nuevos incompatibles.
 
-Elige deliberadamente entre la administración manual y automática del agente. La administración automática puede implementar agentes y crear endpoints de datos/grupos de seguridad de GuardDuty; las etiquetas de inclusión/exclusión y los permisos para editarlas afectan a la cobertura. La administración manual requiere el agente compatible y un endpoint de datos accesible. Prueba la cobertura y una ruta controlada de hallazgo/notificación; no deduzcas que la protección funciona porque una respuesta de API haya tenido éxito.
+Elige deliberadamente entre la administración manual y automática del agente. La administración automática puede desplegar agentes y crear endpoints de datos/grupos de seguridad de GuardDuty; las etiquetas de inclusión/exclusión y los permisos para editarlas afectan a la cobertura. La administración manual requiere el agente compatible y un endpoint de datos accesible. Prueba la cobertura y una ruta controlada de hallazgo/notificación; no deduzcas que la protección funciona porque una respuesta de API haya tenido éxito.
 
 ### Reglas de tiempo de ejecución de Falco
 
-Falco evalúa eventos de tiempo de ejecución según reglas. Los valores de formación siguientes usan el gráfico estable 9.2.0 / Falco 0.45.0, un nodo Linux EC2 compatible con eBPF moderno y el complemento de metadatos de contenedor del gráfico. No es una implementación validada para Fargate, Hybrid Nodes ni todas las configuraciones de Auto Mode. Inspecciona el acceso representado/privilegiado al host, los sockets de tiempo de ejecución, los requisitos de kernel/BTF, la programación y las excepciones de admisión de espacios de nombres antes de la instalación.
+Falco evalúa eventos durante la ejecución según sus reglas. Los siguientes valores de configuración para formación usan el chart estable 9.2.0 / Falco 0.45.0, un nodo Linux EC2 compatible con eBPF moderno y el plugin de metadatos de contenedor del chart. Este despliegue no se ha validado para Fargate, Hybrid Nodes ni todas las configuraciones de Auto Mode. Antes de instalarlo, inspecciona los privilegios y accesos al host de los manifiestos renderizados, los sockets del entorno de ejecución, los requisitos de kernel/BTF, la asignación de Pods a nodos y las excepciones de admisión del espacio de nombres.
 
 Guárdalo como `falco-demo-values.yaml`. Añade una regla de auditoría de shell con un nombre único en lugar de redefinir la regla incluida Terminal shell in container. Incluye eventos exec satisfactorios y una comprobación de terminal; las shells administrativas legítimas pueden coincidir. La salida evita los argumentos de la línea de comandos y no presupone que esté habilitado el enriquecimiento de metadatos de Kubernetes:
 
@@ -1924,13 +1924,13 @@ customRules:
       - audit
 ```
 
-Para una instalación nueva bajo tu responsabilidad después de estas comprobaciones, usa `helm install falco falcosecurity/falco --version 9.2.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`, con el repositorio `falcosecurity` configurado como `https://falcosecurity.github.io/charts`. Los lanzamientos existentes necesitan el procedimiento de actualización de su responsable.
+Para una instalación nueva bajo tu responsabilidad después de estas comprobaciones, usa `helm install falco falcosecurity/falco --version 9.2.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`, con el repositorio `falcosecurity` configurado como `https://falcosecurity.github.io/charts`. Las releases existentes necesitan el procedimiento de actualización de su responsable.
 
-Deshabilitar artifact follow detiene las actualizaciones periódicas de reglas; el gráfico sigue instalando sus artefactos de reglas/complementos configurados cuando arranca el Pod. Su referencia predeterminada `falco-rules:5` es una etiqueta de versión principal, por lo que fijar la versión del gráfico no basta para obtener un paquete de reglas inmutable. Revisa/fija los artefactos OCI reales antes de un rollout de producción. La salida de Pod/espacio de nombres necesita el recopilador/complemento de metadatos de Kubernetes compatible y RBAC; no se proporciona simplemente escribiendo `%k8s.pod.name` en una regla.
+Deshabilitar artifact follow detiene las actualizaciones periódicas de reglas; el chart sigue instalando sus artefactos de reglas/complementos configurados cuando arranca el Pod. Su referencia predeterminada `falco-rules:5` es una etiqueta de versión principal, por lo que fijar la versión del chart no basta para obtener un paquete de reglas inmutable. Revisa/fija los artefactos OCI reales antes de un rollout de producción. La salida de Pod/espacio de nombres necesita el recopilador/complemento de metadatos de Kubernetes compatible y RBAC; no se proporciona simplemente escribiendo `%k8s.pod.name` en una regla.
 
-La regla personalizada y un control negativo de macro indefinida se comprobaron con Falco 0.45.0 y el complemento de contenedor 0.7.4 reales, en modo `--validate` con todos los recopiladores de tiempo de ejecución deshabilitados. Se eliminó la condición obsoleta `evt.dir` tras una advertencia del analizador. Se comprobó la generación de Helm; no se ejecutaron captura de llamadas al sistema, controlador de kernel, conexión BPF, instalación en clúster ni alerta real.
+La regla personalizada y un control negativo de macro indefinida se comprobaron con Falco 0.45.0 y el complemento de contenedor 0.7.4 reales, en modo `--validate` con todos los recopiladores de tiempo de ejecución deshabilitados. Se eliminó la condición obsoleta `evt.dir` tras una advertencia del analizador. Se comprobó el renderizado de Helm; no se capturaron llamadas al sistema, no se cargó un controlador de kernel, no se conectó BPF, no se instaló nada en un clúster ni se generó una alerta real.
 
-Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [regla Config para todos los tipos](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [regla Config para tipos seleccionados](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [estándares CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [eventos ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [eventos V2](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [EKS Protection de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [tiempo de ejecución de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [gráfico Falco 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0).
+Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [regla Config para todos los tipos](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [regla Config para tipos seleccionados](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [estándares CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [eventos ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [eventos V2](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [EKS Protection de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [tiempo de ejecución de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [chart de Falco 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0).
 
 ## Prácticas recomendadas de seguridad de EKS {#eks-security-best-practices}
 
@@ -1944,7 +1944,7 @@ Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/late
 
 ### Seguridad de nodos y contenedores
 
-1. **Mantén las imágenes de nodo con parches**: selecciona un SO/AMI compatible con el clúster y la arquitectura, y valida luego la actualización en un canario
+1. **Mantén las imágenes de nodo con parches**: selecciona un SO/AMI compatible con el clúster y la arquitectura, y valida luego la actualización en un nodo canario
 2. **Analiza y verifica las imágenes**: usa el analizador configurado de ECR/Inspector u otro y verifica la procedencia/firmas de imágenes en los controles requeridos; ningún análisis demuestra la ausencia de todas las puertas traseras o vulnerabilidades
 3. **Coordina las actualizaciones de nodos**: usa la sustitución controlada de instancias o la orquestación in situ compatible de Bottlerocket; verifica la capacidad, los PDB, los datos locales y el estado de las cargas de trabajo antes de retirar la capacidad antigua
 4. **Ejecuta contenedores como usuario no root**: ejecuta los contenedores como usuario no root para limitar los privilegios
@@ -1960,7 +1960,7 @@ Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/late
 
 ## Consideraciones de seguridad de EKS para servicios financieros {#eks-security-considerations-for-financial-services}
 
-Lo siguiente son consideraciones de diseño para una carga de trabajo financiera acotada, no una lista de comprobación de certificación ni una afirmación de que este ejemplo se haya probado para producción. Determina la jurisdicción, los tipos de datos, los requisitos contractuales y las pruebas de controles aplicables con los responsables de seguridad/cumplimiento correspondientes.
+Las siguientes son consideraciones de diseño para una carga de trabajo financiera acotada. No constituyen una lista de comprobación para obtener una certificación ni una afirmación de que este ejemplo se haya probado para producción. Determina la jurisdicción, los tipos de datos, los requisitos contractuales y las pruebas de controles aplicables con los responsables de seguridad/cumplimiento correspondientes.
 
 ### Cumplimiento normativo
 
@@ -1977,7 +1977,7 @@ Lo siguiente son consideraciones de diseño para una carga de trabajo financiera
 
 ### Alta disponibilidad y recuperación ante desastres
 
-1. **Implementación multizona**: distribuye réplicas de cargas de trabajo y verifica el comportamiento ante fallos de almacenamiento/base de datos/AZ; un plano de control administrado y multizona por sí solo no hace que todas las aplicaciones sean altamente disponibles
+1. **Despliegue multizona**: distribuye réplicas de cargas de trabajo y verifica el comportamiento ante fallos de almacenamiento/base de datos/AZ; un plano de control administrado y multizona por sí solo no hace que todas las aplicaciones sean altamente disponibles
 2. **Plan de recuperación ante desastres**: establece un plan de recuperación ante desastres que incluya copias de seguridad periódicas y pruebas de recuperación
 3. **Continuidad del negocio**: define RTO (objetivo de tiempo de recuperación) y RPO (objetivo de punto de recuperación) adecuados para los servicios financieros
 
@@ -1991,7 +1991,7 @@ Este es un diagrama lógico de ubicación de controles: WAF está asociado al re
 
 ## Conclusión
 
-La seguridad de EKS combina autorización de IAM y Kubernetes, admisión de cargas de trabajo, controles de red, cifrado, imágenes de nodo mantenidas y respuesta ante incidentes observable. Cada control tiene su propio alcance y modos de fallo; verifica el comportamiento implementado y las excepciones, en lugar de tratar una función habilitada o un manifiesto de ejemplo como prueba de protección.
+La seguridad de EKS combina autorización de IAM y Kubernetes, admisión de cargas de trabajo, controles de red, cifrado, imágenes de nodo mantenidas y respuesta ante incidentes observable. Cada control tiene su propio alcance y modos de fallo; verifica el comportamiento del sistema desplegado y las excepciones, en lugar de tratar una función habilitada o un manifiesto de ejemplo como prueba de protección.
 
 En sectores con normativas estrictas, como los servicios financieros, deben tenerse en cuenta controles de seguridad y requisitos de cumplimiento adicionales. Es importante mantener la postura de seguridad del entorno de EKS mediante evaluaciones periódicas de seguridad, análisis de vulnerabilidades y supervisión continua.
 

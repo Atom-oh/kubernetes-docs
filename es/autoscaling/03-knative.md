@@ -1,7 +1,7 @@
 # Knative
 
 > **Versiones de ejemplo**: Serving/Eventing/Kourier 1.23.0; Operator 1.23.1. Verifique la compatibilidad de Kubernetes/EKS antes de la instalación.
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenido
 
@@ -21,14 +21,14 @@
 
 ### ¿Qué es Knative?
 
-Knative es un proyecto **Graduado de CNCF** que amplía Kubernetes para ofrecer un conjunto de componentes de middleware con los que se pueden crear, implementar y administrar cargas de trabajo serverless modernas. En lugar de reemplazar las primitivas de Kubernetes, Knative se construye sobre ellas y ofrece abstracciones de nivel superior que simplifican patrones habituales, como el escalado automático basado en solicitudes, la entrega de eventos y la administración del tráfico.
+Knative es un proyecto **graduado de la CNCF** que amplía Kubernetes para ofrecer un conjunto de componentes de middleware con los que se pueden crear, implementar y administrar cargas de trabajo serverless modernas. En lugar de reemplazar las primitivas de Kubernetes, Knative se construye sobre ellas y ofrece abstracciones de nivel superior que simplifican patrones habituales, como el escalado automático basado en solicitudes, la entrega de eventos y la administración del tráfico.
 
-CNCF aceptó Knative en el nivel Incubating el 2 de marzo de 2022 y lo graduó el 11 de septiembre de 2025. La madurez del proyecto no establece que una implementación particular esté lista para producción.
+La CNCF aceptó Knative en el nivel Incubating el 2 de marzo de 2022 y lo graduó el 11 de septiembre de 2025. La madurez del proyecto no establece que una implementación particular esté lista para producción.
 
 Knative consta de dos componentes que se pueden instalar de forma independiente:
 
 - **Knative Serving** -- Administra el ciclo de vida de las cargas de trabajo serverless. Automatiza la implementación, el escalado (incluido el escalado a cero), el seguimiento de revisiones y el enrutamiento del tráfico.
-- **Knative Eventing** -- Proporciona infraestructura para producir, enrutar y consumir eventos conforme a la especificación CloudEvents. Desacopla a los productores de eventos de los consumidores, lo que permite crear arquitecturas basadas en eventos con bajo acoplamiento.
+- **Knative Eventing** -- Proporciona infraestructura para producir, enrutar y consumir eventos conforme a la especificación CloudEvents. Desacopla a los productores de eventos de los consumidores, lo que permite crear arquitecturas basadas en eventos con un bajo acoplamiento.
 
 ### Serverless en Kubernetes
 
@@ -56,11 +56,11 @@ El resultado es una plataforma que conserva toda la potencia de Kubernetes (prog
 |---|---|---|---|
 | Entorno de ejecución | Contenedores que cumplen el contrato de ejecución de Serving | Entornos de ejecución de Lambda compatibles o imágenes que implementan su API de ejecución | Tareas de ECS/Pods de EKS compatibles; se aplican restricciones de la plataforma |
 | Duración de la solicitud/ejecución | Tiempo de espera de solicitud configurable; el valor predeterminado es 300 s y el máximo permitido es 600 s, salvo que se reconfigure | Tiempo de espera de función estándar de hasta 900 s | Regida por el ciclo de vida de la tarea/Pod, no por un límite de invocación al estilo de Lambda |
-| Escalado a cero | KPA admite el escalado a cero de Revisions inactivas | Ejecución bajo demanda | Las tareas deseadas de ECS o las réplicas de Kubernetes pueden ser 0; la activación requiere un controlador/métrica apropiado |
-| Arranques en frío | Réplicas de referencia, ajuste de imágenes/inicio/preparación | Optimización específica del entorno de ejecución y concurrencia aprovisionada | Inicio de tareas/Pods y configuración de imagen/red; no hay una comparación de tiempos fija |
-| Memoria | Capacidad asignable del nodo, solicitudes de contenedor y sidecars | 128–10 240 MB configurables | Slots de EKS Fargate de hasta 120 GB; se aplican la sobrecarga de la plataforma y las combinaciones compatibles de CPU/memoria |
+| Escalado a cero | KPA admite el escalado a cero de Revisions inactivas | Ejecución bajo demanda | Las tareas deseadas de ECS o las réplicas de Kubernetes pueden ser 0; la activación requiere un controlador o una métrica adecuados |
+| Arranques en frío | Réplicas mínimas y optimización de la imagen, el arranque y las comprobaciones de disponibilidad | Optimización específica del entorno de ejecución y concurrencia aprovisionada | Inicio de tareas/Pods y configuración de imagen y red; no hay una comparación de tiempos fija |
+| Memoria | Capacidad disponible para asignación en el nodo, solicitudes de contenedor y sidecars | 128–10 240 MB configurables | Capacidad de EKS Fargate de hasta 120 GB; se aplican la sobrecarga de la plataforma y las combinaciones compatibles de CPU/memoria |
 | GPU | Requiere nodos adecuados, complementos de dispositivos, solicitudes de recursos y funciones de PodSpec habilitadas | No hay GPU en el cómputo estándar de Lambda | Las GPU no están disponibles en Fargate |
-| Redes | Kubernetes/CNI y configuración de la gateway | La conexión a la VPC del cliente es opcional | Redes de VPC; EKS Fargate tiene restricciones de plataforma |
+| Redes | Kubernetes/CNI y configuración de la puerta de enlace | La conexión a la VPC del cliente es opcional | Redes de VPC; EKS Fargate tiene restricciones de plataforma |
 | Portabilidad | API de Kubernetes/Knative; las integraciones de identidad/almacenamiento en la nube siguen siendo relevantes | API de servicios/entorno de ejecución específicas de AWS | Integración con ECS o EKS y API de plataforma compatibles |
 | Entrada de eventos | HTTP/CloudEvents y adaptadores configurados | Integraciones de eventos de AWS compatibles | Integraciones de aplicación/controlador; no es un servicio genérico de enrutamiento de eventos |
 | Pruebas locales | Kubernetes local es útil, pero el comportamiento en la nube aún debe validarse | Las herramientas/emuladores locales son opcionales y tienen límites de fidelidad | La lógica del contenedor se puede probar localmente; el comportamiento de la plataforma es distinto |
@@ -1973,11 +1973,11 @@ kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.url}'
 kn service update order-api --namespace knative-demo --tag order-api-v1=stable --tag @latest=canary
 ```
 
-5. **Controle la visibilidad del enrutamiento interno.** Aplique la etiqueta cluster-local cuando corresponda y, por separado, exija autorización de red/aplicación. Es posible que siga existiendo una gateway/balanceador de carga compartido de Knative, por lo que la etiqueta no garantiza una reducción independiente de los costos del balanceador de carga.
+5. **Controle la visibilidad del enrutamiento interno.** Aplique la etiqueta cluster-local cuando corresponda y, por separado, exija autorización de red/aplicación. Knative puede seguir usando una puerta de enlace o un balanceador de carga compartido, por lo que la etiqueta no garantiza una reducción independiente de sus costos.
 
 ### Patrones de microservicios basados en eventos
 
-Para CQRS/abastecimiento de eventos, la ruta de comandos debe confirmar el evento autoritativo o una outbox transaccional antes de confirmar el comando. Un Broker es una capa de entrega, no el almacén de eventos autoritativo. Un consumidor de archivo asíncrono por sí solo no hace transaccional la gestión de comandos; valide el orden, la idempotencia, la reproducción y las ventanas de fallo.
+Para CQRS y event sourcing, la ruta de comandos debe confirmar el evento autoritativo o una outbox transaccional antes de confirmar el comando. Un Broker es una capa de entrega, no el almacén de eventos autoritativo. Un consumidor asíncrono que archive eventos no vuelve transaccional por sí solo la gestión de comandos; valide el orden, la idempotencia, la reproducción y las ventanas de fallo.
 
 1. **Use Brokers para el enrutamiento a varios consumidores.** Cuando varios servicios deban reaccionar al mismo tipo de evento, use un único Broker con varios Triggers en vez de duplicar la fuente del evento.
 

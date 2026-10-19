@@ -1,2026 +1,1946 @@
 # Amazon EKS トラブルシューティングクイズ
 
-このクイズでは、Amazon EKS クラスターで発生する可能性があるさまざまな問題を診断し、解決する能力を確認します。
+> **最終更新日**: 2026年9月12日
 
-## クイズ概要
-- クラスター作成と設定の問題
-- ネットワークの問題
-- Node と Pod の問題
-- Storage の問題
-- セキュリティとアクセスの問題
-- パフォーマンスとスケーラビリティの問題
+このクイズでは、Amazon EKS クラスターで起こり得る問題の診断と解決について確認します。
 
-## 多肢選択問題
+## クイズの概要
 
-### 1. Amazon EKS クラスターの作成に失敗した場合、最初に何を確認すべきですか？
+- クラスターの作成と設定
+- ネットワーク
+- ノードと Pod
+- ストレージ
+- セキュリティとアクセス
+- パフォーマンスとスケーラビリティ
 
-A. クラスター名が一意であるか確認する
-B. IAM permissions、VPC configuration、service quotas を確認する
-C. 別の region で再試行する
-D. より大きな instance type を選択する
+## 選択問題
+
+### 1. EKS コントロールプレーンの作成に失敗したとき、最初に何を調べるべきですか？
+
+- A. クラスター名が一意かどうかだけを確認する
+- B. 正確なエラーとリクエストを調べ、呼び出し元とサービスロールの IAM、VPC とサブネット、関連クォータを確認する
+- C. すぐに別のリージョンでクラスターを作成する
+- D. より大きなワーカーノードのインスタンスタイプを選ぶ
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. IAM permissions、VPC configuration、service quotas を確認する**
+**正解: B. 正確なエラーとリクエストを調べ、呼び出し元とサービスロールの IAM、VPC とサブネット、関連クォータを確認する**
 
-**解説:**
-Amazon EKS クラスターの作成に失敗した場合、最初に確認すべきものは IAM permissions、VPC configuration、service quotas です。これらはクラスター作成失敗の最も一般的な原因であり、体系的に確認することで問題をすばやく特定し解決できます。
+CloudFormation イベントまたは失敗したリクエストから調査を始めます。IAM、ネットワーク、クォータ、名前の競合は確認すべき仮説ですが、エラーを読む前に原因だと決めつけてはいけません。
 
-**確認すべき主な項目:**
+**確認する証拠**
 
-1. **IAM permissions の確認**:
-   - クラスター作成に必要な IAM permissions があるか
-   - service-linked roles を作成する権限
-   - Cluster role と policy configuration
+| 対象 | 確認事項 |
+| --- | --- |
+| 呼び出し元 | 正しいアカウント、リージョン、プロファイルか。必要な EKS アクション、`iam:PassRole`、境界、セッションや SCP の制御、必要に応じたサービスリンクロール作成権限があるか |
+| クラスターサービスロール | 正確なロール ARN、EKS の信頼関係、必要なサービスロールポリシー。呼び出し元やワーカーノードのロールと混同しない |
+| クラスターサブネット | 対応 AZ、異なる2つ以上の AZ、空き IP アドレス。ノード、Pod、ロードバランサー用の容量は別に見積もる |
+| エンドポイントと依存先 | 意図したプライベート/パブリック構成、DNS、ルート、SG/NACL、必要な AWS サービスへのアクセス |
+| クォータ | 実際のサービスクォータとアカウント/リージョンで適用中の上限。ノード作成時は EC2 vCPU 制限も確認 |
+| インフラ所有者 | 元の Terraform/CloudFormation/eksctl 設定、state、失敗した操作 |
 
-2. **VPC configuration の確認**:
-   - Subnet configuration（少なくとも 2 つの availability zones に分散された subnets）
-   - Subnet CIDR size（最小 /28、推奨 /24）
-   - Internet connectivity（NAT gateway または internet gateway）
-   - Security group と network ACL settings
+選択した各クラスターサブネットには現在少なくとも **6個の IP アドレス**が必要で、**16個以上が推奨**されます。また、2つ以上の AZ にサブネットが必要です。CIDR の大きさだけでは、必要なアドレスが空いているとは確認できません。従来の一般的な「最低 /28、推奨 /24」という記述は、コントロールプレーンとワークロードのサイズを混同していました。必要なエンドポイントを用意したプライベート構成も可能で、NAT や一般インターネット接続が常に必要とは限りません。
 
-3. **Service quotas の確認**:
-   - EKS cluster count quota
-   - EC2 instance quota
-   - VPC と subnet quotas
-   - その他の関連 service quotas
+`AmazonEKSClusterPolicy` はクラスターサービスロールに付与するポリシーです。人間のユーザーに付与しても、作成権限や PassRole、Kubernetes RBAC が一括で得られるわけではありません。サブネットにクラスター所有タグを追加することも、作成失敗を普遍的に解決する方法ではありません。
 
-**トラブルシューティング方法:**
+**読み取り専用の調査**
 
-1. **IAM permission issues の解決**:
-   ```bash
-   # Check IAM permissions
-   aws sts get-caller-identity
+```bash
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${EXPECTED_ACCOUNT_ID:?}"; : "${CLUSTER_NAME:?}"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+if [ "$ACCOUNT_ID" != "$EXPECTED_ACCOUNT_ID" ]; then
+  echo "Account mismatch" >&2; exit 1
+fi
+aws cloudtrail lookup-events --region "$AWS_REGION" \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateCluster \
+  --max-items 20 --output json
+aws service-quotas list-service-quotas --service-code eks --region "$AWS_REGION"
+: "${VPC_ID:?Set the VPC from the original request}"
+aws ec2 describe-subnets --region "$AWS_REGION" --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'Subnets[].{Id:SubnetId,AZ:AvailabilityZone,AZId:AvailabilityZoneId,AvailableIPs:AvailableIpAddressCount}'
+# For an eksctl-owned creation attempt, inspect its existing stacks:
+eksctl utils describe-stacks --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
+```
 
-   # Attach required policy
-   aws iam attach-user-policy \
-     --user-name myuser \
-     --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+利用可能なクラスターがある場合は `describe-cluster` で調べます。まだない場合は、ResourceNotFound を第2の根本原因とみなさず、作成時のエラーを保存します。別の CloudFormation 所有者については対象スタックのイベントを確認します。`eksctl create cluster --verbose ...` と CLI の debug モードはリソースを作成するため、読み取り専用の診断ではありません。
 
-   # Create service-linked role
-   aws iam create-service-linked-role --aws-service-name eks.amazonaws.com
-   ```
+**エラーメッセージの例**
 
-2. **VPC configuration issues の解決**:
-   ```bash
-   # Check VPC and subnets
-   aws ec2 describe-vpcs --vpc-ids vpc-12345678
-   aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-12345678"
+- `eks:CreateCluster` の拒否なら、呼び出し元の権限を調べます。サービスロールの問題とは権限経路が異なります。
+- `us-west-2a` で容量不足とする旧例は、AZ/容量への対応例であり、現在のリージョン状況を示すものではありません。
+- “Current limit is 5” という旧例は過去の説明です。引き上げ値を選ぶ前に、現在適用されているクォータを調べます。
+- `UnsupportedAvailabilityZoneException` は、そのアカウントで EKS クラスターに使えない AZ を示します。EC2 インスタンスタイプの提供状況だけを示すものではありません。
 
-   # Check subnet tags
-   aws ec2 describe-tags --filters "Name=resource-id,Values=subnet-12345678"
+**インフラ設定の確認**
 
-   # Add subnet tags
-   aws ec2 create-tags \
-     --resources subnet-12345678 subnet-87654321 \
-     --tags Key=kubernetes.io/cluster/my-cluster,Value=shared
-   ```
+元の所有者が管理する設定を調べ、修正します。次の Terraform 例はバージョンとネットワークの意図を明示し、状態出力を示すものです。診断中に適用する完全な新規クラスター用モジュールではありません。
 
-3. **Service quota issues の解決**:
-   ```bash
-   # Check service quotas
-   aws service-quotas list-service-quotas --service-code eks
+```hcl
+# Excerpt of the original state-owned configuration, not a diagnostic apply.
+# Preserve its other settings and role/policy dependencies.
+resource "aws_eks_cluster" "main" {
+  name     = var.cluster_name
+  role_arn = var.cluster_role_arn
+  version  = var.cluster_version
+  vpc_config {
+    subnet_ids              = var.subnet_ids
+    security_group_ids      = var.cluster_security_group_ids
+    endpoint_private_access = true
+    endpoint_public_access  = false
+  }
+}
 
-   # Request quota increase
-   aws service-quotas request-service-quota-increase \
-     --service-code eks \
-     --quota-code L-1194D53C \
-     --desired-value 10
-   ```
+output "cluster_status" {
+  value = aws_eks_cluster.main.status
+}
+```
 
-**一般的なエラーメッセージと解決策:**
+確認済みの既存ロール/サブネット/セキュリティグループを渡し、必要なロールポリシーの依存関係や他の設定を維持します。プライベートエンドポイントへのアクセス経路も確認します。Terraform の output は state から評価されるため、作成失敗時に最新の失敗情報を必ず含むとは限りません。プロバイダーの診断情報と AWS リクエスト/スタックの証拠を使います。このレビューでは Terraform apply もクラスター作成も行っていません。
 
-1. **IAM permissions 不足**:
-   - エラー: "User: arn:aws:iam::123456789012:user/myuser is not authorized to perform: eks:CreateCluster"
-   - 解決策: 必要な IAM permissions を追加する
+原因を特定した後、対象を絞った権限、ネットワーク、クォータの修正を所有者と確認し、再試行します。A は限定的な確認には有用ですが、それだけでは不十分です。C は配置やデータ、ネットワークを変え、費用が増える可能性があります。D はワーカーノードを変えるだけで、コントロールプレーンの作成問題には対処しません。
 
-2. **VPC subnet issues**:
-   - エラー: "Cannot create cluster 'my-cluster' because us-west-2a, the targeted availability zone, does not have sufficient capacity to support the cluster. Retry after some time or try other availability zones."
-   - 解決策: 別の availability zones の subnets を使用する、または新しい subnets を作成する
+参考: [EKS のネットワーク要件](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)、[EKS のトラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Terraform EKS クラスター](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster)
 
-3. **Service quota 超過**:
-   - エラー: "Account cannot create more EKS clusters in region us-west-2. Current limit is 5"
-   - 解決策: service quota increase をリクエストする、または不要なクラスターを削除する
-
-**ベストプラクティス:**
-
-1. **クラスター作成前の準備**:
-   - 必要な IAM permissions を確認する
-   - 適切な VPC と subnets を設定する
-   - Service quotas を確認する
-
-2. **体系的なトラブルシューティングアプローチ**:
-   - エラーメッセージを分析する
-   - AWS CloudTrail logs を確認する
-   - コンポーネントを段階的に検証する
-
-3. **自動化された infrastructure configuration**:
-   - AWS CloudFormation または Terraform を使用する
-   - eksctl などの tools を活用する
-   - Infrastructure configuration を version control する
-
-**実践的な実装例:**
-
-1. **eksctl によるクラスター作成のトラブルシューティング**:
-   ```bash
-   # Create cluster in debug mode
-   eksctl create cluster --name my-cluster --region us-west-2 --verbose 4
-
-   # Check cluster creation status
-   eksctl get cluster --name my-cluster --region us-west-2
-   ```
-
-2. **AWS CLI によるクラスター作成のトラブルシューティング**:
-   ```bash
-   # Attempt cluster creation
-   aws eks create-cluster \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
-     --resources-vpc-config subnetIds=subnet-12345678,subnet-87654321,securityGroupIds=sg-12345678
-
-   # Check cluster status
-   aws eks describe-cluster --name my-cluster
-   ```
-
-3. **Terraform によるクラスター作成のトラブルシューティング**:
-   ```hcl
-   # EKS cluster definition
-   resource "aws_eks_cluster" "main" {
-     name     = "my-cluster"
-     role_arn = aws_iam_role.eks_cluster.arn
-
-     vpc_config {
-       subnet_ids         = var.subnet_ids
-       security_group_ids = [aws_security_group.eks_cluster.id]
-     }
-
-     # Explicit dependencies
-     depends_on = [
-       aws_iam_role_policy_attachment.eks_cluster_policy,
-       aws_iam_role_policy_attachment.eks_service_policy
-     ]
-   }
-
-   # Debug output on error
-   output "cluster_status" {
-     value = aws_eks_cluster.main.status
-   }
-   ```
-
-他の選択肢の問題点:
-- **A. クラスター名が一意であるか確認する**: 一意でないクラスター名はエラーの原因になり得ますが、最も一般的な失敗原因ではありません。
-- **C. 別の region で再試行する**: これは根本原因を解決しない回避策であり、他の regions でも同じ問題が発生する可能性があります。
-- **D. より大きな instance type を選択する**: Instance type は node groups に適用されるものであり、クラスター作成自体には影響しません。
 </details>
-### 2. Amazon EKS クラスターで node が NotReady 状態の場合、最も効果的なトラブルシューティングアプローチは何ですか？
 
-A. すぐに node を終了して置き換える
-B. Node logs、resource usage、network connectivity を確認する
-C. Cluster API server を再起動する
-D. すべての pods を削除して再デプロイする
+### 2. EKS ノードが NotReady になった場合、最初に何を調べるのが効果的ですか？
+
+- A. すぐにノードを終了する
+- B. ノードの condition/event、ログ、リソース、実際のネットワーク/ID 経路を調べる
+- C. 管理対象 EKS API サーバーを自分で再起動する
+- D. クラスター内のすべての Pod を削除する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Node logs、resource usage、network connectivity を確認する**
+**正解: B. ノードの condition/event、ログ、リソース、実際のネットワーク/ID 経路を調べる**
 
-**解説:**
-Amazon EKS クラスターで node が NotReady 状態の場合、最も効果的なトラブルシューティングアプローチは node logs、resource usage、network connectivity を確認することです。この体系的なアプローチにより、問題の根本原因を特定し、適切な解決策を適用できます。
+condition の理由と時刻、ノードの実際の ID を使って調査します。Ready=False、heartbeat 欠落による Ready=Unknown、DiskPressure、MemoryPressure は異なる証拠であり、いずれも単独で根本原因を特定するものではありません。
 
-**確認すべき主な項目:**
+**ノードとワークロードの一覧**
 
-1. **Node status と events の確認**:
-   - Node status の詳細
-   - Node 関連 events
-   - Node conditions
+次の読み取り専用例はノード名/UID でノードを特定し、`spec.nodeName` で Pod を選択します。IP や grep による不確かな照合を避けます。
 
-2. **Node logs の分析**:
-   - kubelet logs
-   - System logs
-   - Container runtime logs
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+NODE_JSON=$(kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o json)
+printf '%s\n' "$NODE_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,labels:.metadata.labels,providerID:.spec.providerID,taints:.spec.taints,unschedulable:.spec.unschedulable,nodeInfo:.status.nodeInfo,conditions:.status.conditions,capacity:.status.capacity,allocatable:.status.allocatable}'
+NODE_UID=$(printf '%s\n' "$NODE_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" get events -A --field-selector "involvedObject.uid=$NODE_UID" \
+  --sort-by='.metadata.creationTimestamp'
+kubectl --context "$KUBE_CONTEXT" get pods -A --field-selector "spec.nodeName=$NODE_NAME" -o wide
+```
 
-3. **Resource usage の確認**:
-   - CPU、memory、disk usage
-   - Resource limits と pressure
-   - System process status
+EC2 やホストにアクセスする前に ProviderID、アカウント/リージョン、コンピューティング種別を確認します。マネージドグループでは、その健全性と修復/更新設定を調べます。
 
-4. **Network connectivity の確認**:
-   - Control plane への接続
-   - DNS resolution
-   - VPC と subnet configuration
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{status:status,health:health,version:version,release:releaseVersion,nodeRole:nodeRole,repair:nodeRepairConfig,update:updateConfig}'
+```
 
-**トラブルシューティング方法:**
+アクセス可能な標準 Linux ノードでは、[元ガイドのリモートセッション手順](../../eks/09-eks-troubleshooting.md)を使い、kubelet/containerd の journal、バイト数と inode、メモリ、ルーティングを確認します。実際のイメージに Docker daemon や `/var/log/syslog` があるとは限りません。ノード DNS は自動的に Pod のクラスタ DNS と同じではありません。エンドポイント TLS にはクラスター CA を使い、`curl -k` で証明書の問題を隠さないでください。
 
-1. **Node status と events の確認**:
-   ```bash
-   # Check node status
-   kubectl get nodes
-   kubectl describe node <node-name>
+イメージ削除、journal 削除、再起動の前に証拠を保全します。`kubectl top` は正常なメトリクス経路が必要で、異常なノードでは失敗する場合があります。秘密鍵を表示せずに証明書パスを確認します。`kubeadm alpha certs renew all` は現在の一般的なコマンドでも EKS ノード修復手順でもありません。`eksctl replace nodegroup` はサポートされません。
 
-   # Check node events
-   kubectl get events --field-selector involvedObject.name=<node-name>
-   ```
+**自動修復と復旧の区別**
 
-2. **Node logs の分析**:
-   ```bash
-   # SSH access to node (for self-managed nodes)
-   ssh ec2-user@<node-ip>
+原因を特定してから、容量、PDB、データ、ノード所有者と調整し、ノードの置き換え/再起動を行います。drain が上限時間内に完了しなければ停止します。非同期再起動の直後に無条件で uncordon してはいけません。
 
-   # Check kubelet logs
-   sudo journalctl -u kubelet
+自動ノード修復は実際にある EKS の機能です。`update_config.max_unavailable` はバージョン更新による中断数を制御しますが、修復を有効にする設定ではありません。また `health_check { type = "EKS" }` は `aws_eks_node_group` のブロックではありません。現在のプロバイダーには `node_repair_config` があります。
 
-   # Check system logs
-   sudo tail -f /var/log/syslog
+```hcl
+# Fragment of a reviewed EKS-optimized-AMI managed node group.
+resource "aws_eks_node_group" "self_healing" {
+  cluster_name    = var.cluster_name
+  node_group_name = var.node_group_name
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = var.private_subnet_ids
+  version         = var.node_kubernetes_version
+  ami_type        = var.ami_type
+  release_version = var.ami_release
+  instance_types  = var.instance_types
 
-   # Check container runtime logs
-   sudo journalctl -u docker  # When using Docker
-   sudo journalctl -u containerd  # When using containerd
-   ```
+  scaling_config {
+    desired_size = 3
+    min_size     = 3
+    max_size     = 6
+  }
+  update_config {
+    max_unavailable = 1
+  }
+  node_repair_config {
+    enabled                           = true
+    max_parallel_nodes_repaired_count = 1
+  }
+}
+```
 
-3. **Resource usage の確認**:
-   ```bash
-   # Check node resource usage
-   kubectl top node <node-name>
+これは設定断片であり、本番で検証済みのモジュールではありません。互換性を確認した Kubernetes/AMI/インスタンス入力と既存の所有関係が必要です。オートスケーラーが管理している場合は希望容量を調整します。ノードグループのタグが、基礎となる ASG に CA が必要とするタグがある証拠にはなりません。
 
-   # Check resources via SSH
-   ssh ec2-user@<node-ip>
+修復の既定値やしきい値はコンピューティング所有者によって異なります。Auto Mode は既定で修復を有効にします。マネージドグループでは有効化が必要で、Karpenter にも独自の要件があります。ノード監視は修復が無効でも問題を報告できます。現在の既定修復表は MemoryPressure や DiskPressure を自動修復しません。Fleet health のしきい値、並列数、ARC 制御は実行を制限するため、必ず置き換えられる/PDB が常に守られると約束してはいけません。
 
-   # Check disk usage
-   df -h
+**監視の例**
 
-   # Check memory usage
-   free -m
+`AWS/EKS` のメトリクス名 `NodeNotReady` が組み込みだと仮定できません。既存の kube-state-metrics/Prometheus Operator 構成では、実際のノード condition を評価できます。
 
-   # Check CPU usage
-   top
-   ```
+```yaml
+# Existing single-cluster Prometheus Operator/KSM installation required.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-readiness-example
+  namespace: monitoring
+  labels:
+    release: observability
+spec:
+  groups:
+    - name: node-readiness-example
+      rules:
+        - alert: NodeNotReady
+          expr: max by (node) (kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"}) == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} is not Ready"
+            description: "Investigate node conditions, reachability and workload impact before recovery."
+```
 
-4. **Network connectivity の確認**:
-   ```bash
-   # Check API server connection from node
-   curl -k https://<api-server-endpoint>
+namespace/release/job の selector を実際の導入構成に合わせます。10分の待機は例です。scrape や condition のデータが欠ける場合は、telemetry の健全性を別に監視し、正常なノードと見なしてはいけません。この alert は通知を接続せず復旧も実行しません。個別に検証してください。未定義の `node-recovery.zip` Lambda を作っても安全な自動復旧にはなりません。
 
-   # Check DNS resolution
-   nslookup kubernetes.default.svc.cluster.local
+C は顧客が管理対象 EKS API サーバーを再起動する手段ではありません。ただし API 接続が readiness の問題になることはあります。A と D は中断を広げ、原因を解決せず証拠を失わせる可能性があります。
 
-   # Check network interfaces
-   ip addr show
+参考: [EKS ノード修復](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Terraform マネージドノードリソース](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group)、[ノードメトリクス](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md)
 
-   # Check routing table
-   ip route
-   ```
-
-**一般的な NotReady の原因と解決策:**
-
-1. **kubelet issues**:
-   - **症状**: kubelet service が実行されていない、または API server に接続できない
-   - **解決策**:
-     ```bash
-     # Check kubelet service status
-     sudo systemctl status kubelet
-
-     # Restart kubelet service
-     sudo systemctl restart kubelet
-
-     # Check kubelet configuration
-     sudo cat /etc/kubernetes/kubelet/kubelet-config.json
-     ```
-
-2. **Network issues**:
-   - **症状**: Node が control plane と通信できない
-   - **解決策**:
-     ```bash
-     # Check security groups
-     aws ec2 describe-security-groups --group-ids sg-12345678
-
-     # Check routing tables
-     aws ec2 describe-route-tables --route-table-ids rtb-12345678
-
-     # Check VPC CNI pod status
-     kubectl get pods -n kube-system -l k8s-app=aws-node
-     kubectl logs -n kube-system -l k8s-app=aws-node
-     ```
-
-3. **Resource shortage**:
-   - **症状**: Node 上の CPU、memory、または disk space が不足している
-   - **解決策**:
-     ```bash
-     # Free up disk space
-     sudo du -sh /var/log/*
-     sudo journalctl --vacuum-time=1d
-
-     # Clean up unnecessary containers and images
-     docker system prune -af  # When using Docker
-     ```
-
-4. **Certificate issues**:
-   - **症状**: Certificate が期限切れ、または不一致
-   - **解決策**:
-     ```bash
-     # Check certificates
-     sudo ls -la /etc/kubernetes/pki/
-
-     # Renew certificates (for self-managed nodes)
-     sudo kubeadm alpha certs renew all
-
-     # For managed node groups, replace nodes
-     eksctl replace nodegroup --cluster=my-cluster --name=my-nodegroup
-     ```
-
-**ベストプラクティス:**
-
-1. **体系的なトラブルシューティングアプローチ**:
-   - 症状を特定して文書化する
-   - 関連する logs と events を収集する
-   - 考えられる原因を体系的に検証する
-
-2. **Node status monitoring の実装**:
-   - CloudWatch alarms を設定する
-   - Node status dashboards を設定する
-   - 自動 alerting system
-
-3. **Auto-recovery mechanisms の実装**:
-   - Self-healing node groups を設定する
-   - Health checks と automatic replacement
-   - Failed nodes の automatic draining
-
-**実践的な実装例:**
-
-1. **Node troubleshooting script**:
-   ```bash
-   #!/bin/bash
-   # EKS node troubleshooting script
-
-   NODE_NAME=$1
-
-   if [ -z "$NODE_NAME" ]; then
-     echo "Please specify a node name."
-     exit 1
-   fi
-
-   echo "=== Troubleshooting node $NODE_NAME ==="
-
-   # Check node status
-   echo "=== Check node status ==="
-   kubectl get node $NODE_NAME -o wide
-   kubectl describe node $NODE_NAME
-
-   # Check node events
-   echo
-   echo "=== Check node events ==="
-   kubectl get events --field-selector involvedObject.name=$NODE_NAME --sort-by='.lastTimestamp'
-
-   # Check node pods
-   echo
-   echo "=== Check node pods ==="
-   kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName=$NODE_NAME
-
-   # Check system pod logs
-   echo
-   echo "=== Check system pod logs ==="
-   NODE_IP=$(kubectl get node $NODE_NAME -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
-   KUBE_PROXY_POD=$(kubectl get pods -n kube-system -l k8s-app=kube-proxy -o wide | grep $NODE_IP | awk '{print $1}')
-   AWS_NODE_POD=$(kubectl get pods -n kube-system -l k8s-app=aws-node -o wide | grep $NODE_IP | awk '{print $1}')
-
-   if [ -n "$KUBE_PROXY_POD" ]; then
-     echo "kube-proxy logs:"
-     kubectl logs -n kube-system $KUBE_PROXY_POD --tail=50
-   fi
-
-   if [ -n "$AWS_NODE_POD" ]; then
-     echo
-     echo "aws-node (VPC CNI) logs:"
-     kubectl logs -n kube-system $AWS_NODE_POD --tail=50
-   fi
-
-   # Node access instructions
-   echo
-   echo "=== Node access instructions ==="
-   echo "To access the node directly, use the following command:"
-   echo "aws ssm start-session --target <instance-id>"
-   echo "or"
-   echo "ssh ec2-user@$NODE_IP  # SSH key and security group configuration required"
-
-   echo
-   echo "=== Troubleshooting complete ==="
-   ```
-
-2. **Terraform による self-healing node group configuration**:
-   ```hcl
-   # Self-healing node group
-   resource "aws_eks_node_group" "self_healing" {
-     cluster_name    = aws_eks_cluster.main.name
-     node_group_name = "self-healing"
-     node_role_arn   = aws_iam_role.node_role.arn
-     subnet_ids      = var.private_subnet_ids
-
-     scaling_config {
-       desired_size = 3
-       min_size     = 3
-       max_size     = 6
-     }
-
-     # Self-healing settings
-     update_config {
-       max_unavailable = 1
-     }
-
-     # Health check settings
-     health_check {
-       type = "EKS"
-     }
-
-     # Auto scaling group tags
-     tags = {
-       "k8s.io/cluster-autoscaler/enabled" = "true"
-       "k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
-     }
-   }
-   ```
-
-3. **CloudWatch alarms と automated recovery configuration**:
-   ```bash
-   # Create CloudWatch alarm
-   aws cloudwatch put-metric-alarm \
-     --alarm-name EKS-Node-NotReady \
-     --metric-name NodeNotReady \
-     --namespace AWS/EKS \
-     --statistic Maximum \
-     --period 60 \
-     --threshold 0 \
-     --comparison-operator GreaterThanThreshold \
-     --dimensions Name=ClusterName,Value=my-cluster \
-     --evaluation-periods 3 \
-     --alarm-actions arn:aws:sns:us-west-2:123456789012:eks-alerts
-
-   # Automated recovery using AWS Lambda function
-   aws lambda create-function \
-     --function-name EKS-Node-Recovery \
-     --runtime python3.9 \
-     --role arn:aws:iam::123456789012:role/EKS-Node-Recovery-Role \
-     --handler index.handler \
-     --zip-file fileb://node-recovery.zip
-   ```
-
-他の選択肢の問題点:
-- **A. すぐに node を終了して置き換える**: 根本原因を特定せずに node を置き換えると、新しい node でも同じ問題が発生する可能性があり、診断情報も失われます。
-- **C. Cluster API server を再起動する**: API server は node status と直接関係しておらず、再起動するとクラスター全体に影響する可能性があります。
-- **D. すべての pods を削除して再デプロイする**: Pods を削除しても node 自体の問題は修正されず、不要な service disruption を引き起こす可能性があります。
 </details>
-### 3. Amazon EKS クラスターで pod が "ImagePullBackOff" 状態の場合、最も可能性の高い原因と解決策は何ですか？
 
-A. Pod resource limit exceeded / Resource limits を増やす
-B. Image name error または authentication issue / Image name を確認し image pull secrets を設定する
-C. Node disk space shortage / Disk space を解放する
-D. Network policy restrictions / Network policies を修正する
+### 3. EKS の ImagePullBackOff を適切に調査する方法はどれですか？
+
+- A. すべてのコンテナのメモリ上限を増やす
+- B. pull エラーを読み、イメージ/プラットフォームと実際の pull ID/ネットワーク経路を確認する
+- C. エラーを確認せず強制的にイメージを再取得する
+- D. すべての NetworkPolicy を削除する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Image name error または authentication issue / Image name を確認し image pull secrets を設定する**
+**正解: B. pull エラーを読み、イメージ/プラットフォームと実際の pull ID/ネットワーク経路を確認する**
 
-**解説:**
-Amazon EKS クラスターで pod が "ImagePullBackOff" 状態の場合、最も可能性の高い原因は image name error または authentication issue です。これを解決するには、image name を確認し、必要に応じて image pull secrets を設定する必要があります。
+ImagePullBackOff は再試行時の待機状態であり、単一の「最も可能性の高い」原因を示しません。対象となるすべての通常/init コンテナと kubelet event を調べます。
 
-**主な原因と解決策:**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+POD_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json)
+printf '%s\n' "$POD_JSON" | jq '{
+  name:.metadata.name,uid:.metadata.uid,owners:.metadata.ownerReferences,
+  node:.spec.nodeName,serviceAccount:.spec.serviceAccountName,
+  imagePullSecrets:.spec.imagePullSecrets,
+  containers:[.spec.containers[] | {name,image,imagePullPolicy,resources}],
+  initContainers:[.spec.initContainers[]? | {name,image,resources}],
+  phase:.status.phase,reason:.status.reason,message:.status.message,
+  conditions:.status.conditions,containerStatuses:.status.containerStatuses,
+  initContainerStatuses:.status.initContainerStatuses
+}'
+POD_UID=$(printf '%s\n' "$POD_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$POD_UID" --sort-by='.metadata.creationTimestamp'
+```
 
-1. **Image name error**:
-   - 不正な image name または tag
-   - 存在しない image
-   - Registry URL error
+リポジトリ、tag/digest の欠落、非対応アーキテクチャ、認証/認可、レジストリの rate limit、ノード DNS/TLS/egress、ローカルディスク/runtime の問題を区別します。ローカル Docker pull は別の ID/経路を使うため、ノードが pull できる証明にはなりません。
 
-   **解決策**:
-   ```bash
-   # Check pod definition
-   kubectl describe pod <pod-name>
+**ECR の ID とネットワーク**
 
-   # Fix image name and tag
-   kubectl edit deployment <deployment-name>
-   # or
-   kubectl set image deployment/<deployment-name> container-name=image:tag
-   ```
+EC2 ノードは通常ノードの pull credential 経路を使い、Fargate は Pod 実行ロールを使います。アプリケーションの IRSA/Pod Identity は、アプリ起動前のイメージ取得に使う ID ではありません。必要に応じてリポジトリポリシーとクロスアカウントアクセスを確認します。compute に関連付けていない IAM ロールを作っても pull 動作は変わりません。
 
-2. **Private registry authentication issues**:
-   - Authentication credentials がない
-   - Credentials の期限切れ
-   - Permissions 不足
+任意のイメージ文字列を `cut` で分割せず、リポジトリ/アカウント/リージョンと tag **または** digest を明示します。
 
-   **解決策**:
-   ```bash
-   # Create Docker registry secret
-   kubectl create secret docker-registry regcred \
-     --docker-server=<registry-server> \
-     --docker-username=<username> \
-     --docker-password=<password> \
-     --docker-email=<email>
+```bash
+set -euo pipefail
+: "${REGISTRY_REGION:?Set the image registry Region}"
+: "${REGISTRY_ACCOUNT_ID:?Set its account ID}"
+: "${REPOSITORY_NAME:?Set the exact repository path}"
+: "${ECR_IMAGE_ID:?Set imageTag=... or imageDigest=sha256:...}"
+aws ecr describe-images --region "$REGISTRY_REGION" \
+  --registry-id "$REGISTRY_ACCOUNT_ID" --repository-name "$REPOSITORY_NAME" \
+  --image-ids "$ECR_IMAGE_ID" \
+  --query 'imageDetails[].{digest:imageDigest,tags:imageTags,pushedAt:imagePushedAt,mediaType:imageManifestMediaType}'
+```
 
-   # Link secret to pod or service account
-   kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "regcred"}]}'
-   # or
-   kubectl patch pod <pod-name> -p '{"spec":{"imagePullSecrets":[{"name":"regcred"}]}}'
-   ```
+これは操作者の AWS credential でイメージメタデータを調べるもので、kubelet の権限を検証するものではありません。プライベート ECR では ECR API/DKR と S3 への経路、endpoint policy/security group、DNS が必要になることがあります。`ecr.dkr` は任意のプライベートレジストリ用 endpoint ではありません。通常の Pod NetworkPolicy 変更で、ノード runtime のレジストリ認証問題が直るわけではありません。
 
-3. **Amazon ECR authentication issues**:
-   - ECR permissions 不足
-   - Token の期限切れ
-   - Cross-account access issues
+**権限の例**
 
-   **解決策**:
-   ```bash
-   # Get ECR authentication token
-   aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-west-2.amazonaws.com
+意図的に選んだ既存 EC2 ノードロールでは、次の権限が1リポジトリからの pull を示します。`GetAuthorizationToken` はリポジトリの resource scope を持たないため、該当 statement はリージョン条件付き `*` を使います。イメージ読み取り権限はリポジトリに限定します。
 
-   # Create ECR pull secret
-   TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
-   echo $TOKEN | base64 -d | cut -d: -f2 > password.txt
+```hcl
+# Permission example for a reviewed existing EC2 node role.
+# This does not create/associate a new role or create an image-pull Secret.
+data "aws_iam_role" "node" {
+  name = var.existing_node_role_name
+}
 
-   kubectl create secret docker-registry ecr-secret \
-     --docker-server=123456789012.dkr.ecr.us-west-2.amazonaws.com \
-     --docker-username=AWS \
-     --docker-password="$(cat password.txt)" \
-     --docker-email=no-reply@example.com
+resource "aws_iam_policy" "ecr_pull" {
+  name = var.pull_policy_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+        Condition = {
+          StringEquals = { "aws:RequestedRegion" = var.registry_region }
+        }
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer"
+        ]
+        Resource = var.repository_arn
+      }
+    ]
+  })
+}
 
-   rm password.txt
-   ```
+resource "aws_iam_role_policy_attachment" "ecr_pull" {
+  role       = data.aws_iam_role.node.name
+  policy_arn = aws_iam_policy.ecr_pull.arn
+}
+```
 
-4. **Network connectivity issues**:
-   - Registry への network access が制限されている
-   - DNS resolution issues
-   - Proxy configuration issues
+実際のリポジトリ ARN/リージョンを使い、既存 grant、境界、SCP、クロスアカウントのリポジトリポリシーを確認します。限定ポリシーを追加しても既存の広範なポリシーは削除されません。Fargate には専用の実行ロール設定が必要です。この EC2 例は Kubernetes Secret を作成せず、Fargate profile も設定しません。このレビューでは IAM 変更を実行していません。
 
-   **解決策**:
-   ```bash
-   # Check registry connection from node
-   ssh ec2-user@<node-ip>
-   curl -v https://<registry-url>
+**イメージ pull Secret**
 
-   # Check DNS resolution
-   nslookup <registry-url>
+Secret が必要なレジストリでは、保護された自己完結型の Docker auth ファイルと[元ガイドの namespace 指定 Secret/Pod template 手順](../../eks/09-eks-troubleshooting.md)を使います。Secret の値や token を表示したり、診断コマンドラインに password を渡したりしません。デスクトップの credential-helper 参照だけでは kubelet の認証データになりません。
 
-   # Configure VPC endpoint for private registry
-   aws ec2 create-vpc-endpoint \
-     --vpc-id vpc-12345678 \
-     --service-name com.amazonaws.us-west-2.ecr.dkr \
-     --vpc-endpoint-type Interface \
-     --subnet-ids subnet-12345678 \
-     --security-group-ids sg-12345678
-   ```
+既存 Pod の imagePullSecrets は通常その場で patch できません。既存の pull-secret リストを維持し、所有する Deployment/StatefulSet template を変更して制御された rollout を行います。ServiceAccount 更新の影響を受けるのは新しく admission された Pod です。無関係なアプリケーション用に default ServiceAccount を変更しないでください。
 
-**トラブルシューティング手順:**
+**credential 更新設計**
 
-1. **Pod status と events の確認**:
-   ```bash
-   # Check pod status
-   kubectl get pod <pod-name>
+標準的な EKS の ECR pull に、従来の token 更新 CronJob は不要です。ECR 認可 token の有効期間は12時間です。ECR の pull Secret を手動管理する必要が本当にある非標準 consumer では、サポートされた credential 機能か、明示的に設計した更新手順を使います。
 
-   # Check pod details and events
-   kubectl describe pod <pod-name>
-   ```
+旧スケジュール `*/6 * * * *` は6時間ごとではなく **6分ごと**です。6時間ごとの例は `0 */6 * * *` で、controller の timezone またはサポートされる `.spec.timeZone` を確認します。スケジュールだけでは更新処理になりません。必要なツールを含む確認済みイメージ、AWS ID、範囲を限定した Kubernetes 権限、正確な対象 namespace、重複/失敗処理、テスト済みの rotation が要ります。確認が終わるまでは suspend します。credential の空白期間を作らないよう、事前作成した名前付き Secret を更新します。標準の AWS CLI image に kubectl が含まれるとは限りません。
 
-2. **Image name と registry の確認**:
-   ```bash
-   # Check image name
-   kubectl get pod <pod-name> -o jsonpath='{.spec.containers[0].image}'
+意図した image digest を固定し、レジストリの可用性を維持して、変更前に実際の event を調査します。`Always` でも存在しないイメージや権限不足は解決しません。A/C/D は失敗した pull 経路を特定しません。
 
-   # Verify image exists
-   docker pull <image-name>  # In local environment
-   # or
-   aws ecr describe-images \
-     --repository-name <repository-name> \
-     --image-ids imageTag=<tag>  # For ECR
-   ```
+参考: [Fargate 実行ロール](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)、[ECR token コマンド](https://docs.aws.amazon.com/cli/latest/reference/ecr/get-authorization-token.html)、[プライベートレジストリの Secret](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
 
-3. **Authentication configuration の確認**:
-   ```bash
-   # Check service account and image pull secrets
-   kubectl get serviceaccount default -o yaml
-
-   # Check secret contents
-   kubectl get secret <secret-name> -o yaml
-   ```
-
-4. **一時的な回避策の適用**:
-   ```bash
-   # Pull image locally and transfer to node (for emergencies)
-   docker pull <image-name>
-   docker save <image-name> -o image.tar
-   scp image.tar ec2-user@<node-ip>:~/
-   ssh ec2-user@<node-ip> "docker load -i image.tar"
-   ```
-
-**ベストプラクティス:**
-
-1. **Image tag management**:
-   - 特定の tags の代わりに digests を使用する
-   - `latest` tag の使用を避ける
-   - Version management strategy を実装する
-
-2. **Image pull secret management**:
-   - Secrets を service accounts にリンクする
-   - 定期的な secret renewal
-   - Secret management を自動化する
-
-3. **Image registry accessibility の確保**:
-   - Private registries 用の VPC endpoints を設定する
-   - Network policies と security groups を設定する
-   - Image caching を検討する
-
-4. **ECR 使用時のベストプラクティス**:
-   - IAM role-based authentication を使用する
-   - Automatic token renewal を実装する
-   - Image scanning と lifecycle policies を設定する
-
-他の選択肢の問題点:
-- **A. Pod resource limit exceeded / Resource limits を増やす**: Resource limit issues は通常、"OOMKilled" または "Pending" 状態を引き起こし、"ImagePullBackOff" ではありません。
-- **C. Node disk space shortage / Disk space を解放する**: Disk space shortage が "ImagePullBackOff" の原因になることはありますが、disk space 関連のエラーは通常 node events に表示され、最も一般的な原因ではありません。
-- **D. Network policy restrictions / Network policies を修正する**: Network policies は pods 間の通信に影響しますが、通常 image pull issues の主な原因ではありません。
 </details>
-### 4. Amazon EKS クラスターで service が pods に traffic を routing していない場合、最も効果的なトラブルシューティング手順は何ですか？
 
-A. すぐに新しい service を作成する
-B. Service と pod labels、endpoints、network policies を確認する
-C. すべての pods を再起動する
-D. Cluster API server を再起動する
+### 4. Service が Pod に到達しないとき、最初に何を調べるべきですか？
+
+- A. Service をすぐに作り直す
+- B. selector/type、Pod readiness、EndpointSlice、port、実際に許可された経路を調べる
+- C. すべての Pod を再起動する
+- D. 管理対象 API サーバーを自分で再起動する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Service と pod labels、endpoints、network policies を確認する**
+**正解: B. selector/type、Pod readiness、EndpointSlice、port、実際に許可された経路を調べる**
 
-**解説:**
-Amazon EKS クラスターで service が pods に traffic を routing していない場合、最も効果的なトラブルシューティング手順は service と pod labels、endpoints、network policies を確認することです。この体系的なアプローチにより、service discovery と traffic routing issues の根本原因を特定できます。
+リソースを変更する前に、Service の検出と routing を順に追います。対象 namespace と送信元 client を使い、Service 設定を実際のアプリケーション listener/readiness と比較します。
 
-**確認すべき主な項目:**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${SERVICE_NAME:?}"
+SERVICE_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get service "$SERVICE_NAME" -o json)
+printf '%s\n' "$SERVICE_JSON" | jq '{metadata: {name: .metadata.name, namespace: .metadata.namespace}, spec: .spec, status: .status}'
+SELECTOR=$(printf '%s\n' "$SERVICE_JSON" | jq -r '(.spec.selector // {}) | to_entries | map("\(.key)=\(.value)") | join(",")')
+if [ -n "$SELECTOR" ]; then
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o wide
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o json \
+    | jq '.items[] | {name:.metadata.name,phase:.status.phase,ready:[.status.conditions[]? | select(.type=="Ready")],containers:.status.containerStatuses}'
+else
+  printf 'No selector: inspect ExternalName or explicitly managed EndpointSlices as applicable.\n'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
+```
 
-1. **Service と pod labels の確認**:
-   - Service selector と pod label の一致
-   - Label syntax と typos
-   - Namespace の確認
+この helper は selector のない Service に対し、誤ってすべての Pod を選択しません。ExternalName は別名を解決し、headless Service は意図的に `clusterIP: None` を使います。手動管理の EndpointSlice も有効な構成です。endpoint の Ready/serving/terminating condition と traffic policy を調べます。ready sidecar が1つあることや phase=Running は、Pod の Ready condition と同じではありません。
 
-2. **Endpoints の確認**:
-   - Service endpoint creation
-   - Endpoint IP と pod IP の一致
-   - Ready pods の数
+**観測した問題の修正**
 
-3. **Network policies の確認**:
-   - Traffic を制限している network policies
-   - Ingress と egress rules
-   - Inter-namespace communication restrictions
+- selector の不一致: 置き換え可能な Pod 1つの label だけでなく、所有者の Service/Pod template を直します。
+- port の不一致: Service port、名前付き targetPort、実際のアプリ listener を一致させます。containerPort 宣言だけでは listener は作られません。
+- policy の制限: 送信元 egress と宛先 ingress の両方、label、実装範囲を確認します。policy を削除したり、すべての namespace から全 port を許可したりしません。
+- DNS/data plane: 名前解決と transport を区別し、標準 kube-proxy、別の実装、Auto Mode のいずれかを特定します。Auto Mode のみのクラスターではノード DNS を使います。混在クラスターでは Auto Mode 以外のノード用に DNS を残します。
 
-4. **Service と pod status の確認**:
-   - Pod running と ready state
-   - Service type と port configuration
-   - Health check configuration
+この**独立した policy の例**は、確認済みの peer/port だけを許可します。使用前に label/namespace と必要な通信経路の全体表を調整してください。
 
-**トラブルシューティング方法:**
+```yaml
+# Example ingress policy only: review both peers and the complete allowed-flow matrix.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-from-web
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 8080
+```
 
-1. **Service と pod labels の確認**:
-   ```bash
-   # Check service selector
-   kubectl get service <service-name> -o yaml | grep -A 5 selector
+別の許可 policy がなければ、これは選択した backend ingress 以外を隔離する可能性があります。client の egress rule は作りません。許可経路と拒否経路の両方をテストします。
 
-   # Check pod labels
-   kubectl get pods --show-labels
+**Terraform の Service/Deployment fixture**
 
-   # Check pods matching selector
-   kubectl get pods -l key=value
-   ```
+元の Service-to-Pod の例は、listener、label、readiness、上限付き resource を宣言した、破棄可能な Linux fixture として維持します。provider に確認済みの test context を設定し、新しい namespace を選択します。既存アプリケーションの namespace を import しないでください。
 
-2. **Endpoints の確認**:
-   ```bash
-   # Check service endpoints
-   kubectl get endpoints <service-name>
+```hcl
+# Disposable example; configure the Kubernetes provider/context externally.
+variable "test_namespace" {
+  type = string
+  validation {
+    condition     = can(regex("^docs-service-check-[a-z0-9]{8,16}$", var.test_namespace))
+    error_message = "Supply a new unique namespace with the test prefix."
+  }
+}
+resource "kubernetes_namespace_v1" "app" {
+  metadata {
+    name = var.test_namespace
+  }
+}
+resource "kubernetes_deployment_v1" "app" {
+  metadata {
+    name      = "app-deployment"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+  spec {
+    replicas = 2
+    selector {
+      match_labels = { app = "service-demo" }
+    }
+    template {
+      metadata {
+        labels = { app = "service-demo" }
+      }
+      spec {
+        automount_service_account_token = false
+        node_selector                   = { "kubernetes.io/os" = "linux" }
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 65532
+          run_as_group    = 65532
+          fs_group        = "65532"
+          seccomp_profile {
+            type = "RuntimeDefault"
+          }
+        }
+        container {
+          name    = "app"
+          image   = "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+          command = ["sh", "-ec"]
+          args    = ["mkdir -p /tmp/www; printf 'ok\\n' > /tmp/www/index.html; exec httpd -f -p 8080 -h /tmp/www"]
+          port {
+            name           = "http"
+            container_port = 8080
+          }
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = "http"
+            }
+            period_seconds = 5
+          }
+          resources {
+            requests = { cpu = "10m", memory = "16Mi" }
+            limits   = { cpu = "100m", memory = "64Mi" }
+          }
+          security_context {
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
+          volume_mount {
+            name       = "tmp"
+            mount_path = "/tmp"
+          }
+        }
+        volume {
+          name = "tmp"
+          empty_dir {}
+        }
+      }
+    }
+  }
+}
+resource "kubernetes_service_v1" "app" {
+  metadata {
+    name      = "app-service"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+  spec {
+    selector = { app = "service-demo" }
+    type     = "ClusterIP"
+    port {
+      name        = "http"
+      port        = 80
+      target_port = "http"
+    }
+  }
+}
+```
 
-   # Check endpoint details
-   kubectl describe endpoints <service-name>
+これは本番アプリケーションでも、測定済みの resource 推奨値でもありません。アプリケーション API/RBAC 要件もありません。provider の field は確認しましたが、実環境で Terraform apply したり image を実行したりしたとは主張していません。
 
-   # Compare endpoint and pod IPs
-   kubectl get pods -o wide
-   ```
+**範囲を限定した接続 Job**
 
-3. **Network policies の確認**:
-   ```bash
-   # Check network policies
-   kubectl get networkpolicy
+fixture Service と Pod の readiness が整った後、namespace を準備済みの値に置き換えて Job を保存します。この probe に kubectl binary や Kubernetes API token は不要です。
 
-   # Check network policy details
-   kubectl describe networkpolicy <policy-name>
+```yaml
+# Use kubectl create; replace namespace with the prepared fixture namespace.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: service-probe-
+  namespace: docs-service-check-12345678
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: probe
+          image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+          command: [sh, -ec]
+          args:
+            - nslookup app-service; wget -T 5 -q -O- http://app-service:80
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+```
 
-   # Temporarily disable network policy
-   kubectl delete networkpolicy <policy-name>
-   ```
+共通名を再利用せず、新しい一意な名前の Job を作成します。
 
-4. **Service connectivity のテスト**:
-   ```bash
-   # Create temporary debug pod
-   kubectl run -it --rm debug --image=nicolaka/netshoot -- bash
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${TEST_NAMESPACE:?}"; : "${SERVICE_PROBE_FILE:?}"
+JOB_NAME=$(kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" create \
+  -f "$SERVICE_PROBE_FILE" -o jsonpath='{.metadata.name}')
+: "${JOB_NAME:?Job creation did not return a name}"
+printf 'Created probe: %s/%s\n' "$TEST_NAMESPACE" "$JOB_NAME"
+kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" wait \
+  --for=condition=complete "job/$JOB_NAME" --timeout=90s
+kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" logs "job/$JOB_NAME"
+```
 
-   # Test service DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+wait が失敗した場合は生成された Job を残し、その Pod/event/log を調べます。無条件の成功を表示したり、既存 namespace を削除したりしません。UID を記録し、証拠を確認した後に所有する test resource だけを削除します。この test が確認するのは DNS と1回の HTTP request であり、すべての client ID、直接 Pod への経路、load balancer、SLO ではありません。必要に応じて、許可された同じ送信元から Pod への直接接続と Service 経由を別々に比較します。
 
-   # Test service connectivity
-   curl <service-ip>:<port>
+A/C は診断前に証拠を失うか中断を増やします。D は顧客が操作する EKS control plane の手段ではありません。証拠が示す場合は API/controller の健全性を調べます。
 
-   # Test direct pod connectivity
-   curl <pod-ip>:<container-port>
-   ```
+参考: [Service](https://kubernetes.io/docs/concepts/services-networking/service/)、[EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)、[NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
-**一般的な service issues と解決策:**
-
-1. **Label mismatch**:
-   - **症状**: Service endpoints が空である
-   - **解決策**:
-     ```bash
-     # Modify service selector
-     kubectl edit service <service-name>
-     # or
-     kubectl patch service <service-name> -p '{"spec":{"selector":{"app":"correct-label"}}}'
-
-     # Modify pod labels
-     kubectl label pods <pod-name> app=correct-label --overwrite
-     ```
-
-2. **Port configuration error**:
-   - **症状**: Service は接続されるが application response がない
-   - **解決策**:
-     ```bash
-     # Check service port configuration
-     kubectl describe service <service-name>
-
-     # Check pod container port
-     kubectl describe pod <pod-name>
-
-     # Modify service port
-     kubectl edit service <service-name>
-     ```
-
-3. **Network policy restrictions**:
-   - **症状**: 特定の sources からのみ service にアクセスできない
-   - **解決策**:
-     ```bash
-     # Modify network policy
-     kubectl edit networkpolicy <policy-name>
-
-     # Add allow rule
-     kubectl apply -f - <<EOF
-     apiVersion: networking.k8s.io/v1
-     kind: NetworkPolicy
-     metadata:
-       name: allow-service-access
-       namespace: <namespace>
-     spec:
-       podSelector:
-         matchLabels:
-           app: <app-label>
-       ingress:
-       - from:
-         - namespaceSelector: {}
-       policyTypes:
-       - Ingress
-     EOF
-     ```
-
-4. **CoreDNS issues**:
-   - **症状**: Service name resolution が失敗する
-   - **解決策**:
-     ```bash
-     # Check CoreDNS pods
-     kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-     # Check CoreDNS logs
-     kubectl logs -n kube-system -l k8s-app=kube-dns
-
-     # Check CoreDNS configuration
-     kubectl get configmap -n kube-system coredns -o yaml
-     ```
-
-**ベストプラクティス:**
-
-1. **体系的なトラブルシューティングアプローチ**:
-   - Service configuration から始め、pods、network policies、DNS の順に確認する
-   - 各ステップで明確な証拠を収集する
-   - 一度に 1 つの変数だけを変更する
-
-2. **Service debugging tools の活用**:
-   ```bash
-   # Check kube-proxy logs
-   kubectl logs -n kube-system -l k8s-app=kube-proxy
-
-   # Check iptables rules (for self-managed nodes)
-   ssh ec2-user@<node-ip>
-   sudo iptables-save | grep <service-ip>
-
-   # DNS debugging
-   kubectl run -it --rm dnsutils --image=tutum/dnsutils -- bash
-   ```
-
-3. **Service monitoring の実装**:
-   - Service endpoint status を監視する
-   - Service connectivity status を検証する
-   - Traffic flow を可視化する
-
-4. **Service configuration management**:
-   - 一貫した labeling strategy
-   - 明示的な port naming
-   - Services の文書化
-
-他の選択肢の問題点:
-- **A. すぐに新しい service を作成する**: 根本原因を特定せずに新しい service を作成すると、同じ問題が発生する可能性があり、診断情報も失われます。
-- **C. すべての pods を再起動する**: Pods の再起動では service configuration issues は修正されず、不要な service disruption を引き起こす可能性があります。
-- **D. Cluster API server を再起動する**: API server の再起動は極端な対応であり、service routing issues とは直接関係ありません。クラスター全体にも影響する可能性があります。
 </details>
-### 5. Amazon EKS クラスターで PersistentVolumeClaim が "Pending" 状態のままになる場合、最も可能性の高い原因と解決策は何ですか？
 
-A. Node resource shortage / より大きな nodes を追加する
-B. Storage class issue または volume provisioning permissions 不足 / Storage class を確認し IAM permissions を設定する
-C. Pod priority が低い / Pod priority を上げる
-D. Cluster autoscaler が無効 / Autoscaler を有効にする
+### 5. PVC が Pending のままのとき、最初に何を調べるべきですか？
+
+- A. 常に大きなノードを追加する
+- B. claim/class、binding mode、利用 Pod の scheduling、driver、provisioner の ID を調べる
+- C. 常に Pod priority を上げる
+- D. 常に Cluster Autoscaler を導入する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Storage class issue または volume provisioning permissions 不足 / Storage class を確認し IAM permissions を設定する**
+**正解: B. claim/class、binding mode、利用 Pod の scheduling、driver、provisioner の ID を調べる**
 
-**解説:**
-Amazon EKS クラスターで PersistentVolumeClaim (PVC) が "Pending" 状態のままになる場合、最も可能性の高い原因は storage class issue または volume provisioning permissions 不足です。これを解決するには、storage class を確認し、必要な IAM permissions を設定する必要があります。
+Pending は、それだけでストレージ障害を示しません。WaitForFirstConsumer では、適切な利用 Pod の scheduling まで claim が待つ場合があります。EBS または IAM 障害と決めつけず、実際の driver/compute 経路を確認します。
 
-**主な原因と解決策:**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${PVC_NAME:?}"
+PVC_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pvc "$PVC_NAME" -o json)
+printf '%s\n' "$PVC_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,status:.status,spec:.spec,storageClassFieldPresent:(.spec | has("storageClassName"))}'
+PVC_UID=$(printf '%s\n' "$PVC_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$PVC_UID" --sort-by='.metadata.creationTimestamp'
+SC_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.storageClassName // empty')
+if [ -n "$SC_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get storageclass "$SC_NAME" -o yaml
+else
+  printf 'Inspect absent versus explicitly empty storageClassName and default/static binding intent.\n'
+fi
+PV_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.volumeName // empty')
+if [ -n "$PV_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get pv "$PV_NAME" -o yaml
+  kubectl --context "$KUBE_CONTEXT" get volumeattachments -o json \
+    | jq --arg pv "$PV_NAME" '.items[] | select(.spec.source.persistentVolumeName == $pv) | {name:.metadata.name,spec,status}'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o json \
+  | jq --arg pvc "$PVC_NAME" '.items[] | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $pvc)) | {name:.metadata.name,node:.spec.nodeName,phase:.status.phase,conditions:.status.conditions}'
+```
 
-1. **Storage class issues**:
-   - 存在しない storage class を指定している
-   - Storage class parameter errors
-   - Provisioner configuration issues
+この helper は storageClassName の未指定/空文字を区別し、JSON で利用 Pod を選択します。Kubernetes は以前の Pod field selector `spec.volumes.persistentVolumeClaim.claimName` をサポートしません。claim が Bound の場合、binding 完了をアプリ検証済みとせず、mount/readability を調べます。
 
-   **解決策**:
-   ```bash
-   # Check storage classes
-   kubectl get storageclass
+**観測された状態の確認**
 
-   # Check storage class details
-   kubectl describe storageclass <storage-class-name>
+- Class/provisioner: 参照先 class が存在し、標準 EBS、Auto Mode、EFS、他の driver のどれに合うか確認します。明示的な空の class と default の省略は異なる binding 経路を要求します。
+- 遅延 binding: 利用 Pod の request、taint/affinity、zone、容量を調べます。consumer の都合で node 供給、priority、autoscaling が間接的に PVC に影響する場合はあります。A/C/D は普遍的な修正ではありません。
+- ID: node role だけでなく、実際の controller IRSA/Pod Identity と KMS 権限を調べます。Fargate は EBS volume を mount できません。Auto Mode は別の provisioner を使います。
+- CSI: controller/node の健全性、event、現行の互換 add-on version、所有関係を確認します。エラーを把握せず force で再インストールしないでください。
 
-   # Set default storage class
-   kubectl patch storageclass <storage-class-name> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-   ```
+**Class とデータのライフサイクル**
 
-2. **IAM permissions 不足**:
-   - EBS CSI driver service account に permissions がない
-   - Node IAM role に permissions がない
-   - Cross-account access issues
+既存 StorageClass の変更不可な binding mode を patch したり、1つの claim のためにクラスターの default を切り替えたりしません。新しい standard-driver class を明示して選ぶ場合は次のようにします。
 
-   **解決策**:
-   ```bash
-   # Check EBS CSI driver service account
-   kubectl get serviceaccount -n kube-system ebs-csi-controller-sa
+```yaml
+# New, explicitly selected StorageClass for standard EBS CSI, not an in-place edit.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: diagnostic-ebs-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  csi.storage.k8s.io/fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+```
 
-   # Check IAM role attachment
-   kubectl describe serviceaccount -n kube-system ebs-csi-controller-sa
+YAML は設定例であり、既存 class に適用するコマンドではありません。Retain は別途ライフサイクルを判断するまで storage を残し、料金が発生し続ける可能性があります。PVC YAML はデータバックアップではありません。claim の削除/再作成はデータ破損や、Retain された volume の意図しない再 bind を招く場合があります。
 
-   # Attach required IAM policy
-   aws iam attach-role-policy \
-     --role-name <role-name> \
-     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-   ```
+Auto Mode には標準 provisioner ではなく `ebs.csi.eks.amazonaws.com` が必要です。ノードの root/data encryption だけでは、動的に作成される全 PVC が暗号化されたことになりません。`encrypted: "true"` を明示し、実際の EBS volume/key を調べます。bind 済み claim の provisioner/class を変更するのではなく、文書化された snapshot または適切な Retain/static migration 手順を使います。
 
-3. **Volume binding mode issues**:
-   - Availability zone mismatch
-   - WaitForFirstConsumer setting issues
-   - Topology constraints
+**Terraform による所有例**
 
-   **解決策**:
-   ```bash
-   # Check volume binding mode
-   kubectl get storageclass <storage-class-name> -o jsonpath='{.volumeBindingMode}'
+既存の standard EBS CSI add-on には、確認した version、schema 検証済みの完全な設定、準備済み controller ID を使います。この IRSA 例は Pod Identity も同時に設定するものではありません。
 
-   # Modify storage class
-   kubectl patch storageclass <storage-class-name> -p '{"volumeBindingMode":"WaitForFirstConsumer"}'
+```hcl
+# Existing standard EBS CSI add-on with a reviewed IRSA identity.
+# Preserve/import its existing resource ownership; do not create a duplicate add-on.
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = var.reviewed_ebs_addon_version
+  service_account_role_arn    = var.controller_irsa_role_arn
+  configuration_values        = file(var.reviewed_configuration_file)
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
+```
 
-   # Create new storage class
-   kubectl apply -f - <<EOF
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: ebs-sc-waitforfirstconsumer
-   provisioner: ebs.csi.aws.com
-   volumeBindingMode: WaitForFirstConsumer
-   parameters:
-     type: gp3
-   EOF
-   ```
+既存の所有関係を維持/取り込みます。controller role には現在の scope を限定した EBS 権限/tag 条件と、必要なら customer key の権限が必要です。以前の IAM module/add-on version の組み合わせは、現在の互換性を保証しません。また `--role-only` は role を add-on に関連付けません。詳しくは[ストレージの元ガイド](../../eks/04-eks-storage-part1.md)と現行 add-on catalog を参照します。
 
-4. **CSI driver issues**:
-   - CSI driver がインストールされていない、またはエラーがある
-   - Version compatibility issues
-   - Controller pod errors
+同じ新しい class は、現行 Kubernetes resource 経由でも管理できます。
 
-   **解決策**:
-   ```bash
-   # Check CSI driver pods
-   kubectl get pods -n kube-system -l app=ebs-csi-controller
+```hcl
+# New standard-driver class, explicitly selected by test PVCs.
+resource "kubernetes_storage_class_v1" "ebs_gp3" {
+  metadata {
+    name = "diagnostic-ebs-gp3"
+  }
+  storage_provisioner    = "ebs.csi.aws.com"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+  reclaim_policy         = "Retain"
+  parameters = {
+    type                        = "gp3"
+    encrypted                   = "true"
+    "csi.storage.k8s.io/fstype" = "ext4"
+  }
+}
+```
 
-   # Check CSI driver logs
-   kubectl logs -n kube-system -l app=ebs-csi-controller -c ebs-plugin
+その class の所有者は YAML **または** Terraform のどちらかにします。provider field/syntax をローカルで確認しても、IAM、CSI provisioning、対象クラスターでのデータ復旧が証明されるわけではありません。
 
-   # Reinstall CSI driver
-   eksctl create addon --name aws-ebs-csi-driver --cluster <cluster-name> --force
-   ```
+**分離された provisioning test**
 
-**ベストプラクティス:**
+確認済みの Linux EC2 経路を試すには、[EKS upgrade](../../eks/08-eks-upgrades.md) の `eks-upgrade-smoke.py` helper 全体を保存し、明示的に選んだ test context/class を使います。
 
-1. **適切な storage class configuration**:
-   ```yaml
-   # gp3 storage class example
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: ebs-gp3
-     annotations:
-       storageclass.kubernetes.io/is-default-class: "true"
-   provisioner: ebs.csi.aws.com
-   volumeBindingMode: WaitForFirstConsumer
-   parameters:
-     type: gp3
-     encrypted: "true"
-   allowVolumeExpansion: true
-   ```
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed test context}"
+: "${TEST_STORAGE_CLASS:?Set the reviewed compatible test class}"
+export KUBE_CONTEXT TEST_STORAGE_CLASS
+export RUN_SMOKE_TEST=yes
+export CLEANUP_ON_SUCCESS=no
+# Save the complete helper from the EKS upgrades source guide first.
+python3 eks-upgrade-smoke.py
+```
 
-2. **IRSA (IAM Roles for Service Accounts) configuration**:
-   ```bash
-   # Create IRSA for EBS CSI driver
-   eksctl create iamserviceaccount \
-     --name ebs-csi-controller-sa \
-     --namespace kube-system \
-     --cluster <cluster-name> \
-     --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-     --approve \
-     --override-existing-serviceaccounts
-   ```
+一意な namespace と PVC writer を作成してから遅延 binding を待ち、別の consumer で marker を読み取ります。証拠を記録し、失敗した resource は保持します。実際に実行する場合は Retain の後処理とストレージ料金を考慮します。この監査ではクラウド provisioning、volume 作成、mount、benchmark を実行していません。無関係で請求対象になり得る volume を作る旧 AWS CLI Job を PVC 診断に使わないでください。
 
-3. **最適化された PVC request**:
-   ```yaml
-   # Optimized PVC example
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: my-pvc
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     storageClassName: ebs-gp3
-     resources:
-       requests:
-         storage: 10Gi
-   ```
+参考: [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/)、[EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[Auto Mode class](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)
 
-4. **Volume binding mode optimization**:
-   - WaitForFirstConsumer を使用する
-   - Pod と PV の availability zone が一致していることを確認する
-   - Topology-aware provisioning を活用する
-
-他の選択肢の問題点:
-- **A. Node resource shortage / より大きな nodes を追加する**: Node resource shortage は通常 pods が "Pending" 状態になる原因ですが、PVC が "Pending" 状態になることとは直接関係しません。
-- **C. Pod priority が低い / Pod priority を上げる**: Pod priority は scheduling decisions に影響しますが、PVC provisioning には影響しません。
-- **D. Cluster autoscaler が無効 / Autoscaler を有効にする**: Autoscaler は nodes の数を調整するのに役立ちますが、PVC provisioning issues とは直接関係しません。
 </details>
-### 6. Amazon EKS クラスターで autoscaling が期待どおりに動作しない場合、最も効果的なトラブルシューティングアプローチは何ですか？
 
-A. すべての pods により多くの resources を割り当てる
-B. 手動で nodes を追加する
-C. HPA、CA、VPA configuration、metrics、permissions、events を確認する
-D. クラスターを再作成する
+### 6. autoscaling が期待どおりに動かないとき、最も効果的な調査方法は何ですか？
+
+- A. すべての Pod に多くの resource を割り当てる
+- B. 手動でノードを増やして調査をやめる
+- C. replica/resource/node の所有者を特定し、その metric、condition、上限、ID、event を調べる
+- D. クラスターを作り直す
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. HPA、CA、VPA configuration、metrics、permissions、events を確認する**
+**正解: C. replica/resource/node の所有者を特定し、その metric、condition、上限、ID、event を調べる**
 
-**解説:**
-Amazon EKS クラスターで autoscaling が期待どおりに動作しない場合、最も効果的なトラブルシューティングアプローチは HPA (Horizontal Pod Autoscaler)、CA (Cluster Autoscaler)、VPA (Vertical Pod Autoscaler) configuration、metrics、permissions、events を確認することです。この体系的なアプローチにより、autoscaling issues の根本原因を特定し解決できます。
+HPA による replica scaling、VPA による resource の推奨/更新、CA/Karpenter/Auto Mode による node provisioning を分けて調べます。それぞれ制御する resource も依存する signal も異なります。全て導入されている必要はありません。
 
-**確認すべき主な項目:**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get hpa -o json \
+  | jq '.items[] | {name:.metadata.name,target:.spec.scaleTargetRef,min:.spec.minReplicas,max:.spec.maxReplicas,current:.status.currentReplicas,desired:.status.desiredReplicas,metrics:.status.currentMetrics,conditions:.status.conditions}'
+kubectl --context "$KUBE_CONTEXT" get apiservice v1beta1.metrics.k8s.io
+kubectl --context "$KUBE_CONTEXT" get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/$NAMESPACE/pods"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp'
+```
 
-1. **HPA (Horizontal Pod Autoscaler) の確認**:
-   - HPA configuration と status
-   - Metrics availability と values
-   - Scaling limits と behavior
+HPA の condition、現在の metric、request、min/max、behavior を確認します。desired/current replica の差は、正常な収束中であることもあります。metric data の欠落や error は scale-down を妨げる場合があります。CPU/memory の resource metric には Metrics Server が必要です。custom/external metric には専用 adapter/integration が必要です。query 失敗から API/CRD が存在しないとは判断できません。
 
-2. **CA (Cluster Autoscaler) の確認**:
-   - CA deployment と configuration
-   - IAM permissions と roles
-   - Node group tags と settings
+既存の managed node group は、tag を推測して全アカウントの group を探さず、実際の ASG を調べます。
 
-3. **VPA (Vertical Pod Autoscaler) の確認**:
-   - VPA configuration と mode
-   - Resource recommendations
-   - Update policies
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{scaling:scalingConfig,health:health,autoScalingGroups:resources.autoScalingGroups}'
+: "${ASG_NAME:?Select the actual group returned above}"
+aws autoscaling describe-auto-scaling-groups --region "$AWS_REGION" \
+  --auto-scaling-group-names "$ASG_NAME" \
+  --query 'AutoScalingGroups[].{Name:AutoScalingGroupName,Min:MinSize,Max:MaxSize,Desired:DesiredCapacity,Instances:Instances,Tags:Tags}'
+```
 
-4. **Metrics と events の確認**:
-   - Metrics server status
-   - CloudWatch metrics availability
-   - Autoscaling events と logs
+CA は平均 node CPU の高さではなく、schedule 不可能な Pod とその制約に反応します。対応する Kubernetes minor、正確な Pod identity、最小権限の discovery/scaling 権限、ASG tag、最大サイズ、EC2/IP quota、起動失敗を確認します。node group tag だけでは CA discovery 用の ASG tag がある証拠になりません。managed group の上限は EKS/インフラ所有者に確認します。ASG を直接編集すると drift が起きることがあり、scaling 設定変更は PDB を考慮しません。
 
-**トラブルシューティング方法:**
+Karpenter/Auto Mode では該当する NodePool/NodeClaim/provider の上限と event を調べます。固定した CA Pod label に一致する object がないからという理由で CA を導入しません。VPA の Off/Initial は意図的な設定の場合があります。Auto mode は Recreate に置き換えられる予定の非推奨 mode です。同じ CPU/memory signal を使う HPA との組み合わせで、mode 変更が中断を引き起こす場合があります。
 
-1. **HPA troubleshooting**:
-   ```bash
-   # Check HPA status
-   kubectl get hpa
+**Helm/Terraform 設定例**
 
-   # Check HPA details
-   kubectl describe hpa <hpa-name>
+これは既存 Helm 管理下の CA と Metrics Server にのみ使います。確認済み chart version と、対象クラスター minor に互換な CA image version を渡します。chart default の image が対象環境に追随しているとは限りません。各 component の所有者を1つにします。
 
-   # Check metrics
-   kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/<namespace>/pods"
+```hcl
+# Existing Helm-owned installations only; supply reviewed compatible versions.
+# The IRSA trust subject must match kube-system:cluster-autoscaler.
+resource "helm_release" "cluster_autoscaler" {
+  name       = "cluster-autoscaler"
+  repository = "https://kubernetes.github.io/autoscaler"
+  chart      = "cluster-autoscaler"
+  version    = var.ca_chart_version
+  namespace  = "kube-system"
+  wait       = true
+  timeout    = 600
+  values = [yamlencode({
+    autoDiscovery = { clusterName = var.cluster_name }
+    awsRegion     = var.aws_region
+    image         = { tag = var.ca_image_tag }
+    rbac = {
+      serviceAccount = {
+        create = true
+        name   = "cluster-autoscaler"
+        annotations = {
+          "eks.amazonaws.com/role-arn" = var.ca_irsa_role_arn
+        }
+      }
+    }
+  })]
+}
 
-   # Check metrics server status
-   kubectl get pods -n kube-system -l k8s-app=metrics-server
-   kubectl logs -n kube-system -l k8s-app=metrics-server
-   ```
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = var.metrics_server_chart_version
+  namespace  = "kube-system"
+  wait       = true
+  timeout    = 600
+  # Retain/migrate the existing owner's reviewed values.
+  values = [file(var.metrics_server_values_file)]
+}
+```
 
-2. **CA troubleshooting**:
-   ```bash
-   # Check CA pod status
-   kubectl get pods -n kube-system -l app=cluster-autoscaler
+これは Helm provider 3.x と互換性がある values document を使い、削除された繰り返し `set {}` 構文は使いません。CA ServiceAccount 名を明示し、IRSA trust subject と一致させます。Pod Identity は別途所有する設定です。role には[cost/scaling ガイド](../../eks/07-eks-cost-optimization.md)に記載された範囲付き権限が必要です。一般的な対処として AutoScalingFullAccess を付与しません。
 
-   # Check CA logs
-   kubectl logs -n kube-system -l app=cluster-autoscaler
+Metrics Server の既存導入から確認済み values を merge します。現行 upstream chart の default は kubelet の安全な接続経路を使い、`--kubelet-insecure-tls` を意味しません。certificate/trust/address の問題を調べてから、lab 限定の回避策を選びます。EKS add-on が所有する component に別 Helm release を作りません。chart/ID/network/runtime の互換性は対象環境で検証が必要です。このレビューでは Helm install を行っていません。
 
-   # Check node group tags
-   aws autoscaling describe-auto-scaling-groups \
-     --auto-scaling-group-names <asg-name> \
-     --query "AutoScalingGroups[].Tags"
+**HPA metric と behavior**
 
-   # Check CA events
-   kubectl get events --sort-by='.lastTimestamp' | grep -i "cluster-autoscaler"
-   ```
+次の resource metric の例は CPU/memory と scale-up/down policy の考え方を維持します。
 
-3. **VPA troubleshooting**:
-   ```bash
-   # Check VPA status
-   kubectl get vpa
+```yaml
+# Example resource metrics and behavior; requires an existing target with requests.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-hpa
+  namespace: applications
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 4
+          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Min
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+```
 
-   # Check VPA details
-   kubectl describe vpa <vpa-name>
+utilization target には request が必要です。HPA は複数 metric の desired replica 数の最大値を選びます。一方、欠損/error metric は scale-down を抑制する場合があります。Policy の Max/Min は許可する変更率を選びます。stabilization は一律の「cooldown」ではありません。percentage、上限、期間は例示で、memory scaling の挙動が CPU と同じとは限りません。Terraform/GitOps と他の autoscaler が同じ replica 数を競合して管理しないようにします。
 
-   # Check VPA recommendations
-   kubectl get vpa <vpa-name> -o jsonpath='{.status.recommendation}'
+**Dashboard の例**
 
-   # Check VPA component status
-   kubectl get pods -n kube-system -l app=vpa-recommender
-   ```
+data source UID が `prometheus` で、sidecar が `grafana_dashboard=1` label を `monitoring` 内で監視する、既存の単一クラスター kube-prometheus-stack 構成を想定します。
 
-4. **Metrics と permissions のトラブルシューティング**:
-   ```bash
-   # Check metrics server status
-   kubectl get apiservices v1beta1.metrics.k8s.io
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autoscaling-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  autoscaling-dashboard.json: |
+    {
+      "uid": "eks-autoscaling-diagnostics",
+      "title": "EKS Autoscaling Diagnostics",
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "utc",
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "HPA replicas",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_current_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Current {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "B",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_desired_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Desired {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "C",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_spec_min_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Min {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "D",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_spec_max_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Max {{namespace}}/{{horizontalpodautoscaler}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Observed node count",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count(max by (node) (kube_node_info{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Nodes"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Pod CPU usage (cores)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace, pod) (max by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{job=\"kubelet\",metrics_path=\"/metrics/cadvisor\",container!=\"\",container!=\"POD\",image!=\"\"}[5m])))",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Pod working set (bytes)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace, pod) (max by (namespace, pod, container) (container_memory_working_set_bytes{job=\"kubelet\",metrics_path=\"/metrics/cadvisor\",container!=\"\",container!=\"POD\",image!=\"\"}))",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        }
+      ]
+    }
+```
 
-   # Check IAM roles and policies
-   aws iam get-role --role-name <role-name>
-   aws iam list-attached-role-policies --role-name <role-name>
+selector/UID/namespace を実環境に合わせます。HPA series は namespace を維持し、集約前に exporter の重複を除きます。CPU は core 単位の使用量、memory は working-set byte で、割合ではありません。複数クラスターの data source には cluster dimension/filter を追加します。scrape の欠落は正常なゼロではなく no-data/unknown として残します。Dashboard は scaling 成功の証明でも alert/automation pipeline でもありません。
 
-   # Check CloudWatch metrics
-   aws cloudwatch list-metrics \
-     --namespace AWS/EC2 \
-     --metric-name CPUUtilization \
-     --dimensions Name=AutoScalingGroupName,Value=<asg-name>
-   ```
+A/B は一時的に capacity を変えるだけで、controller/metric の失敗を特定しません。D は原因を診断せず migration のリスクを増やします。期待した挙動と実測、復旧させた具体的な変更を記録します。
 
-**一般的な autoscaling issues と解決策:**
+参考: [HPA behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[Cluster Autoscaler AWS](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md)、[CA chart](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
 
-1. **HPA metrics issues**:
-   - **症状**: HPA が scaling decisions を行わない
-   - **原因**: Metrics server error または metrics availability issue
-   - **解決策**:
-     ```bash
-     # Reinstall metrics server
-     kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-
-     # Verify metrics
-     kubectl top pods
-     kubectl top nodes
-     ```
-
-2. **CA permission issues**:
-   - **症状**: CA が nodes を追加しない
-   - **原因**: IAM permissions 不足、または ASG tags がない
-   - **解決策**:
-     ```bash
-     # Attach CA IAM policy
-     aws iam attach-role-policy \
-       --role-name <role-name> \
-       --policy-arn arn:aws:iam::aws:policy/AutoScalingFullAccess
-
-     # Add ASG tags
-     aws autoscaling create-or-update-tags \
-       --tags "ResourceId=<asg-name>,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true" \
-       "ResourceId=<asg-name>,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/<cluster-name>,Value=owned,PropagateAtLaunch=true"
-     ```
-
-3. **Scaling limit issues**:
-   - **症状**: Scaling が特定の値を超えない
-   - **原因**: HPA または CA limit settings
-   - **解決策**:
-     ```bash
-     # Modify HPA max replicas
-     kubectl patch hpa <hpa-name> -p '{"spec":{"maxReplicas":20}}'
-
-     # Modify ASG max size
-     aws autoscaling update-auto-scaling-group \
-       --auto-scaling-group-name <asg-name> \
-       --max-size 10
-     ```
-
-4. **VPA update mode issues**:
-   - **症状**: VPA が resources を更新しない
-   - **原因**: Update mode が "Off" または "Initial" に設定されている
-   - **解決策**:
-     ```bash
-     # Modify VPA update mode
-     kubectl patch vpa <vpa-name> -p '{"spec":{"updatePolicy":{"updateMode":"Auto"}}}'
-     ```
-
-**ベストプラクティス:**
-
-1. **体系的なトラブルシューティングアプローチ**:
-   - 各 autoscaling component を個別に確認する
-   - Logs と events を分析する
-   - 段階的なトラブルシューティング
-
-2. **Autoscaling monitoring の実装**:
-   - Autoscaling activity を監視する
-   - Scaling event notifications を設定する
-   - Scaling metrics dashboard を設定する
-
-3. **Autoscaling configuration の最適化**:
-   - Workload characteristics に適した scaling thresholds を設定する
-   - Scaling behavior と cooldown periods を調整する
-   - Cost と performance のバランスを取る
-
-4. **複数 autoscaling components の統合**:
-   - HPA、CA、VPA の組み合わせを使用する
-   - Components 間の conflict を防ぐ
-   - 一貫した scaling strategy を実装する
-
-他の選択肢の問題点:
-- **A. すべての pods により多くの resources を割り当てる**: これは根本原因を解決せず、resources を浪費し、autoscaling issues の実際の原因を特定できません。
-- **B. 手動で nodes を追加する**: これは一時的な解決策にすぎず、autoscaling system の根本的な問題を解決しません。
-- **D. クラスターを再作成する**: これは根本原因を特定しない極端な対応であり、不要な downtime と作業を発生させます。
 </details>
-### 7. Amazon EKS クラスターで network policies が期待どおりに動作しない場合、最も効果的なトラブルシューティングアプローチは何ですか？
 
-A. すべての network policies を削除して defaults を使用する
-B. Cluster CNI plugin、network policy configuration、logs、events を確認する
-C. すべての pods に hostNetwork: true を設定する
-D. Cluster VPC を再設定する
+### 7. NetworkPolicy の動作が予想と異なるとき、最も効果的な調査方法は何ですか？
+
+- A. すべての NetworkPolicy を削除する
+- B. 実際の enforcement 実装、policy selector/意味、log、失敗する通信を調べる
+- C. 全 Pod に hostNetwork を設定する
+- D. VPC を再構築する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Cluster CNI plugin、network policy configuration、logs、events を確認する**
+**正解: B. 実際の enforcement 実装、policy selector/意味、log、失敗する通信を調べる**
 
-**解説:**
-Amazon EKS クラスターで network policies が期待どおりに動作しない場合、最も効果的なトラブルシューティングアプローチは cluster CNI plugin、network policy configuration、logs、events を体系的に確認することです。このアプローチにより、network policy issues の根本原因を特定し解決できます。
+宣言された policy と、それを適用する実装の両方を確認します。NetworkPolicy object を作っただけでは enforcement engine は導入されません。
 
-**確認すべき主な項目:**
+**一覧と policy の意味**
 
-1. **CNI plugin の確認**:
-   - 使用中の CNI plugin の種類（AWS VPC CNI、Calico、Cilium など）
-   - CNI plugin version と compatibility
-   - Network policy support
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{name:.metadata.name,labels:.metadata.labels,owners:.metadata.ownerReferences,node:.spec.nodeName,hostNetwork:.spec.hostNetwork,status:.status.phase}'
+kubectl --context "$KUBE_CONTEXT" get namespace "$NAMESPACE" --show-labels
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get networkpolicies -o yaml
+kubectl --context "$KUBE_CONTEXT" get daemonsets -A -o json \
+  | jq '.items[] | {namespace:.metadata.namespace,name:.metadata.name,containers:[.spec.template.spec.containers[] | {name,image}]}'
+```
 
-2. **Network policy configuration の確認**:
-   - Network policy syntax と selectors
-   - Policy priority と conflicts
-   - Namespace と label selectors
+Pod list が空でも kubectl は成功 exit code を返します。`if kubectl get pods -l ...` で VPC CNI、Calico、Cilium の導入を証明しないでください。設定上の所有者、実際の object/image、policy agent の状態、対応する compute/kernel/version を確認します。Auto Mode は組み込み NodeClass network control を使い、任意の代替 CNI 導入を受け付けません。
 
-3. **Logs と events の確認**:
-   - CNI plugin logs
-   - Network policy controller logs
-   - 関連 events と error messages
+VPC CNI は native policy をサポートします。現在の AWS ガイドは、新規 Pod の rule を設定中に初期許可する standard startup mode と、初期拒否となり DNS/依存先への経路が必要な strict mode を区別しています。実際の policy-agent container と有効な event logging を確認し、古い「VPC CNI は policy 非対応」という説明を適用しないでください。
 
-4. **Network connectivity のテスト**:
-   - Pod-to-pod connectivity test
-   - Service connectivity test
-   - External connectivity test
+**standard networking.k8s.io/v1 NetworkPolicy** では、許可 traffic は加算され、rule に優先度や last-wins の競合解決はありません。隔離された送信元の egress と宛先の ingress の両方で接続を許可する必要があります。admin/cluster-wide/vendor の policy API は異なる意味を持つため、別途考慮します。HostNetwork の挙動も実装に依存するため、全 Pod に設定するのは安全な修正ではありません。
 
-**トラブルシューティング方法:**
+**範囲を限定した policy の例**
 
-1. **CNI plugin の確認**:
-   ```bash
-   # Check CNI plugin pods
-   kubectl get pods -n kube-system -l k8s-app=aws-node  # AWS VPC CNI
-   kubectl get pods -n kube-system -l k8s-app=calico-node  # Calico
-   kubectl get pods -n kube-system -l k8s-app=cilium  # Cilium
+次の2つの document は `---` で分かれた object です。既存の backend namespace、frontend web Pod、database Pod、従来型 CoreDNS Pod endpoint を想定します。
 
-   # Check CNI plugin logs
-   kubectl logs -n kube-system -l k8s-app=aws-node
-   kubectl logs -n kube-system -l k8s-app=calico-node
-   kubectl logs -n kube-system -l k8s-app=cilium
+```yaml
+# Independent example for a reviewed backend namespace and traditional CoreDNS Pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: backend
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: database
+          podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
 
-   # Check CNI configuration
-   kubectl describe daemonset -n kube-system aws-node
-   kubectl describe daemonset -n kube-system calico-node
-   kubectl describe daemonset -n kube-system cilium
-   ```
+namespace selector と Pod selector は**同じ peer 内**なので、両方に一致する必要があります。peer を分けると OR になります。namespace 名には標準の kubernetes.io/metadata.name label を使います。独自の `name` label があるとは仮定しないでください。
 
-2. **Network policies の確認**:
-   ```bash
-   # List network policies
-   kubectl get networkpolicies --all-namespaces
+default deny は backend の全 Pod を選択し、示した例外を受けるのは選択した API Pod だけです。他の backend workload や API 依存先には、別の確認済み許可が必要です。frontend egress や database ingress は設定しません。DNS rule の対象は CoreDNS Pod であり、すべての Auto Mode/NodeLocal resolver 経路ではありません。
 
-   # Check specific network policy details
-   kubectl describe networkpolicy <policy-name> -n <namespace>
+適切な owner-managed test workload から、許可される frontend-web→API:8080、誤った namespace/label/port からの拒否、API→database:5432、実際の DNS 経路をテストします。後から作った label のない debug Pod は対象 Pod と異なる policy を受ける場合があります。ping だけでは TCP/UDP policy を証明しません。capture を許可する場合は、対象の network namespace/traffic と期間を制限します。別 Pod の tcpdump が他の Pod を観測できるとは限りません。
 
-   # Check network policy YAML
-   kubectl get networkpolicy <policy-name> -n <namespace> -o yaml
-   ```
+**Terraform の代替例**
 
-3. **Pod network information の確認**:
-   ```bash
-   # Check pod IP and node information
-   kubectl get pods -o wide
+```hcl
+# Alternative owner for the same policy intent; do not also apply duplicate YAML.
+resource "kubernetes_network_policy_v1" "default_deny" {
+  metadata {
+    name      = "default-deny"
+    namespace = var.backend_namespace
+  }
+  spec {
+    pod_selector {}
+    policy_types = ["Ingress", "Egress"]
+  }
+}
+resource "kubernetes_network_policy_v1" "api" {
+  metadata {
+    name      = "api-allow"
+    namespace = var.backend_namespace
+  }
+  spec {
+    pod_selector {
+      match_labels = { app = "api" }
+    }
+    policy_types = ["Ingress", "Egress"]
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "frontend" }
+        }
+        pod_selector {
+          match_labels = { app = "web" }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "8080"
+      }
+    }
+    egress {
+      to {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "database" }
+        }
+        pod_selector {
+          match_labels = { app = "db" }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "5432"
+      }
+    }
+    egress {
+      to {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "kube-system" }
+        }
+        pod_selector {
+          match_labels = { "k8s-app" = "kube-dns" }
+        }
+      }
+      ports {
+        protocol = "UDP"
+        port     = "53"
+      }
+      ports {
+        protocol = "TCP"
+        port     = "53"
+      }
+    }
+  }
+}
+```
 
-   # Check pod network interface
-   kubectl exec -it <pod-name> -- ip addr
+所有者を1つにし、隔離環境で通信経路全体を確認/適用します。現行 Kubernetes provider field を確認しましたが、この監査では policy を適用せず traffic enforcement も試していません。version を固定しない Calico/Cilium の導入や aws-node image だけの変更は、一般的な policy 修正ではありません。現行実装がサポートする upgrade/migration 手順を使います。
 
-   # Check pod routing table
-   kubectl exec -it <pod-name> -- ip route
-   ```
+**一覧表示は enforcement の証拠ではない**
 
-4. **Network connectivity のテスト**:
-   ```bash
-   # Create debug pod
-   kubectl run network-debug --rm -it --image=nicolaka/netshoot -- /bin/bash
+元の `kube_networkpolicy_info`/`calico_denied_packets` の例は、想定した label でその metric があることを確認していませんでした。現行 kube-state-metrics は experimental な created/ingress-rule/egress-rule gauge を文書化しています。既存の単一クラスター scrape 構成と Grafana sidecar を前提に、次の ConfigMap は宣言済み policy の一覧を示します。
 
-   # Test pod-to-pod connectivity
-   ping <target-pod-ip>
-   nc -zv <target-pod-ip> <port>
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-policy-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  network-policy-dashboard.json: |
+    {
+      "uid": "eks-network-policy-inventory",
+      "title": "Declared NetworkPolicy Inventory",
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "utc",
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Declared policies by namespace",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_created{job=\"kube-state-metrics\"}))",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Declared ingress/egress rule counts",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_spec_ingress_rules{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Ingress {{namespace}}"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_spec_egress_rules{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Egress {{namespace}}"
+            }
+          ]
+        }
+      ]
+    }
+```
 
-   # Test DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+experimental metric が公開されていることを確認し、job/UID/namespace selector を適合させます。rule がゼロなら deny-all の可能性があり、policy/rule 件数では dropped connection を測定したり enforcement を証明したりできません。telemetry がなければ正常ではなく unknown です。deny/allow の証拠には実装固有の有効な decision log/flow observability を使い、公表済み label/schema を確認します。“policy” を含むすべての log を denial と見なして、存在しない counter を作ってはいけません。
 
-   # Packet capture
-   tcpdump -i eth0 -n
-   ```
+policy 削除、全 workload の hostNetwork 変更、VPC 再構築は、原因を見つけずに公開範囲を広げる可能性があります。失敗した通信の証拠を保全し、確認済みの policy/configuration だけを変更します。
 
-**一般的な network policy issues と解決策:**
+参考: [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[VPC CNI policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[kube-state-metrics policy metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/policy/networkpolicy-metrics.md)
 
-1. **CNI plugin compatibility issues**:
-   - **症状**: Network policies が適用されない
-   - **原因**: 使用中の CNI plugin が network policies をサポートしていない
-   - **解決策**:
-     ```bash
-     # Add Calico policy engine to AWS VPC CNI
-     kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-     kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-
-     # Or switch to Cilium
-     helm repo add cilium https://helm.cilium.io/
-     helm install cilium cilium/cilium --namespace kube-system
-     ```
-
-2. **Network policy selector issues**:
-   - **症状**: Policies が期待した pods に適用されない
-   - **原因**: 不正な label selector または namespace selector
-   - **解決策**:
-     ```bash
-     # Check pod labels
-     kubectl get pods --show-labels
-
-     # Modify network policy
-     kubectl edit networkpolicy <policy-name> -n <namespace>
-     ```
-
-3. **Policy conflict issues**:
-   - **症状**: 予期しない connection blocking または allowing
-   - **原因**: 複数 policies 間の conflicts または priority issues
-   - **解決策**:
-     ```bash
-     # Review all network policies
-     kubectl get networkpolicies --all-namespaces -o yaml
-
-     # Simplify or reconfigure policies
-     kubectl apply -f updated-network-policy.yaml
-     ```
-
-4. **CNI plugin bugs または configuration errors**:
-   - **症状**: 断続的な connection issues または一貫しない動作
-   - **原因**: CNI plugin bugs または不正な configuration
-   - **解決策**:
-     ```bash
-     # Update CNI plugin
-     kubectl set image daemonset/aws-node -n kube-system aws-node=<new-image-version>
-
-     # Check and modify CNI configuration
-     kubectl edit configmap -n kube-system aws-node
-     ```
-
-**ベストプラクティス:**
-
-1. **体系的な network policy design**:
-   - Default deny policy から開始する
-   - 必要な connections のみを明示的に許可する
-   - Namespace と label-based policies を使用する
-
-2. **Network policies のテストと検証**:
-   - Policies を適用する前にテストする
-   - Connectivity testing を自動化する
-   - 段階的な policy rollout
-
-3. **Network monitoring と logging**:
-   - Network traffic を監視する
-   - Connection denials を log に記録する
-   - Network performance を監視する
-
-4. **CNI plugin selection と configuration**:
-   - Workload requirements に適した CNI を選択する
-   - 最新状態を維持する
-   - 適切な resources を割り当てる
-
-他の選択肢の問題点:
-- **A. すべての network policies を削除して defaults を使用する**: これは security risks を生み、必要な network isolation を削除し、根本原因を解決しません。
-- **C. すべての pods に hostNetwork: true を設定する**: これは network policies を迂回し、security risks を生み、pods 間の isolation を削除します。
-- **D. Cluster VPC を再設定する**: これは極端な対応であり、ほとんどの network policy issues は VPC レベルではなく、クラスター内の CNI と policy configuration に関連しています。
 </details>
-### 8. Amazon EKS クラスターで Helm chart deployment issues をトラブルシューティングする最も効果的なアプローチは何ですか？
 
-A. すべての Helm charts を削除して再インストールする
-B. クラスターを再作成する
-C. Helm version、chart configuration、dependencies、permissions、logs を体系的に確認する
-D. すべての resources を手動でデプロイする
+### 8. Helm deployment の問題を調べる最も効果的な方法は何ですか？
+
+- A. すべての Helm release を削除する
+- B. EKS クラスターを作り直す
+- C. client/chart/dependency 設定、release 所有関係、権限、event、workload の挙動を調べる
+- D. release manager をすべて手動 object に置き換える
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. Helm version、chart configuration、dependencies、permissions、logs を体系的に確認する**
+**正解: C. client/chart/dependency 設定、release 所有関係、権限、event、workload の挙動を調べる**
 
-**解説:**
-Amazon EKS クラスターで Helm chart deployment issues をトラブルシューティングする最も効果的なアプローチは、Helm version、chart configuration、dependencies、permissions、logs を体系的に確認することです。このアプローチにより、Helm deployment issues の根本原因を特定し解決できます。
+client/chart の error、Kubernetes admission/権限、workload readiness、アプリケーションの挙動を切り分けます。Helm 2/Tiller は過去の移行に関する話です。現行 Helm 3/4 の操作に Tiller deployment は必要ありません。
 
-**確認すべき主な項目:**
+**実際の release を調べる**
 
-1. **Helm version と compatibility の確認**:
-   - Helm client と Tiller (Helm 2) version
-   - Kubernetes API version compatibility
-   - EKS version compatibility
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${RELEASE_NAME:?}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+HELM_EVIDENCE=$(mktemp -d "$EVIDENCE_PARENT/helm-diagnosis.XXXXXXXX")
+helm version --short
+helm status "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT"
+helm history "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT"
+helm get values "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  --all > "$HELM_EVIDENCE/values.yaml"
+helm get manifest "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  > "$HELM_EVIDENCE/manifest.yaml"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp' > "$HELM_EVIDENCE/events.txt"
+printf 'Review protected evidence in %s\n' "$HELM_EVIDENCE"
+```
 
-2. **Chart configuration と values の確認**:
-   - Chart syntax errors
-   - Values file configuration
-   - Template rendering issues
+query の失敗は権限/network/context の問題かもしれず、release がない証明にはなりません。values と rendered manifest に credential や Secret data が含まれることがあるため、保護し、共有前に redact します。app.kubernetes.io/instance のような label は慣例であり、所有関係の完全な一覧ではありません。release manifest で正確な resource を特定し、condition/event を調べます。
 
-3. **Dependencies と repositories の確認**:
-   - Chart dependency availability
-   - Repository accessibility
-   - Chart version compatibility
+Helm client が使う Kubernetes identity と chart values が選ぶ workload ServiceAccount は別です。現行 `helm install --service-account` option はありません。chart の文書化された ServiceAccount value を使い、該当 actor の RBAC を確認します。impersonation には権限が必要で、EKS access policy のすべてを再現するとは限りません。
 
-4. **Permissions と RBAC の確認**:
-   - Service account permissions
-   - RBAC rules
-   - Namespace access
+**変更前の設定検証**
 
-5. **Logs と events の確認**:
-   - Helm debug logs
-   - Kubernetes events
-   - 関連 pod logs
+```bash
+set -euo pipefail
+: "${CHART_DIR:?}"; : "${VALUES_FILE:?}"; : "${KUBE_VERSION:?Set the target capability version}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+RENDER_DIR=$(mktemp -d "$EVIDENCE_PARENT/helm-render.XXXXXXXX")
+# For charts with dependencies, first review/commit Chart.lock and build from that lock.
+helm lint "$CHART_DIR" --values "$VALUES_FILE"
+helm template review "$CHART_DIR" --namespace review \
+  --kube-version "$KUBE_VERSION" --values "$VALUES_FILE" \
+  > "$RENDER_DIR/rendered.yaml"
+```
 
-**トラブルシューティング方法:**
+render/lint だけでは、server-side API/admission 互換性、CRD 導入、image 動作、readiness、アプリ test 成功は確認できません。`--debug` 付き install は実際に install します。`helm dependency update` は lock/dependency 選択を変更し得るため、再現性を保つには確認済み Chart.lock と `dependency build` を使います。lock がない場合、build が dependency を解決することがあります。それを lock 済み検証と説明しないでください。
 
-1. **Helm version と configuration の確認**:
-   ```bash
-   # Check Helm version
-   helm version
+resource 競合では既存所有者と意図した移行方法を特定します。release を自動 uninstall したり、残存 resource を削除したり、force/take-ownership を使ったり、別 release 名を選んだりしないでください。これらは data に影響したり controller を重複させたりします。管理下の upgrade の前に既存 values、schema/CRD、stateful dependency を保全します。
 
-   # Check Helm environment variables
-   env | grep HELM
+**Terraform Helm provider の意味**
 
-   # Check Helm plugins
-   helm plugin list
+この例はローカルで schema を確認した Helm provider 3.3 と、準備済み namespace/release owner を対象とします。長時間の apply で一度取得した短期 token を使わず、確認済み exec-credential flow の kubeconfig を使います。
 
-   # Check Helm repositories
-   helm repo list
-   helm repo update
-   ```
+```hcl
+# Choose the existing release/configuration owner and reviewed chart artifact.
+variable "verify_chart_provenance" {
+  type = bool
+}
+provider "helm" {
+  debug = false
+  kubernetes = {
+    config_path    = var.kubeconfig_path
+    config_context = var.kube_context
+  }
+}
+resource "helm_release" "example" {
+  name              = var.release_name
+  repository        = var.chart_repository
+  chart             = var.chart_name
+  version           = var.chart_version
+  namespace         = var.release_namespace
+  create_namespace  = false
+  values            = [file(var.reviewed_values_file)]
+  dependency_update = false
+  lint              = true
+  wait              = true
+  wait_for_jobs     = true
+  timeout           = 600
+  atomic            = true
+  verify            = var.verify_chart_provenance
+  keyring           = var.chart_keyring
+}
+```
 
-2. **Charts の検証と debug**:
-   ```bash
-   # Validate chart syntax
-   helm lint ./my-chart
+`lint` は有効な release field で、plan 中に Helm lint を実行します。`debug` は provider の設定で、helm_release の設定ではありません。provider 3.x は `set = [...]` のような nested value attribute を使います。上の values-file 形式は、繰り返しの古い set block を避けます。
 
-   # Check template rendering
-   helm template ./my-chart --debug
+`verify` は信頼済み keyring で chart package の provenance を検証するもので、Helm test hook は実行しません。実際の artifact に provenance/trust 設定がある場合だけ有効にし、配布方法も確認します。`wait_for_jobs` と `wait` は readiness/job の待機であり、すべての application test ではありません。`atomic` は Helm install failure の cleanup/upgrade rollback を行いますが、database/PVC のデータ復元や hook/CRD/外部副作用をすべて自動で元に戻すものではありません。
 
-   # Update chart dependencies
-   helm dependency update ./my-chart
+`set_sensitive` は表示上の redaction を行いますが、通常の state/release storage に保存される value の公開安全性は高めません。別管理の Secret への参照を使い、Terraform state と Helm release storage を保護します。このレビューでは provider apply や release installation はしていません。
 
-   # Install with debug mode
-   helm install my-release ./my-chart --debug
-   ```
+**Chart test hook**
 
-3. **Release status と history の確認**:
-   ```bash
-   # List releases
-   helm list -A
+chart は `my-chart.fullname` を定義し、その Service 名を使い、設定した HTTP path を公開する必要があります。次は values 断片を含む、**別々の template file 2つ**です。
 
-   # Include failed releases
-   helm list -A --failed
+```yaml
+# Relevant values fragment for the chart that owns the Service.
+service:
+  port: 80
+tests:
+  enabled: true
+  image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+  apiPath: /api/health
+```
 
-   # Check release status
-   helm status my-release
+`templates/tests/test-connection.yaml` として保存します。
 
-   # Check release history
-   helm history my-release
+```yaml
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-connection" (include "my-chart.fullname" .) | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 60
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: probe
+      image: {{ .Values.tests.image | quote }}
+      command: [wget]
+      args:
+        - "-T"
+        - "5"
+        - "-q"
+        - "-O-"
+        - {{ printf "http://%s:%v/" (include "my-chart.fullname" .) .Values.service.port | quote }}
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+{{- end }}
+```
 
-   # Check release details
-   helm get all my-release
-   ```
+`templates/tests/test-api.yaml` として保存します。
 
-4. **Resources と events の確認**:
-   ```bash
-   # Check deployed resources
-   kubectl get all -n <namespace> -l app.kubernetes.io/instance=my-release
+```yaml
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-api" (include "my-chart.fullname" .) | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 60
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: probe
+      image: {{ .Values.tests.image | quote }}
+      command: [wget]
+      args:
+        - "-T"
+        - "5"
+        - "-q"
+        - "-O-"
+        - {{ printf "http://%s:%v%s" (include "my-chart.fullname" .) .Values.service.port .Values.tests.apiPath | quote }}
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+{{- end }}
+```
 
-   # Check events
-   kubectl get events -n <namespace> --sort-by='.lastTimestamp'
+test label に application selector label をコピーしていません。probe は応答を stdout に書き、Kubernetes API token を使わず、request/Pod の lifetime に上限があります。before-hook-creation は再実行を可能にし、次回実行/所有 resource の cleanup まで log を保持します。この HTTP check はすべての business behavior を検証しません。`/api/health` が実際に存在する必要があります。
 
-   # Check pod logs
-   kubectl logs -n <namespace> -l app.kubernetes.io/instance=my-release
+既に準備された分離 test cluster では、release/namespace 名を明示します。
 
-   # Check pod status
-   kubectl describe pods -n <namespace> -l app.kubernetes.io/instance=my-release
-   ```
+```bash
+set -euo pipefail
+: "${TEST_CONTEXT:?Set the owned disposable cluster context}"
+: "${TEST_NAMESPACE:?Choose a new unique namespace}"
+: "${TEST_RELEASE:?}"; : "${CHART_DIR:?}"; : "${VALUES_FILE:?}"
+# Fails on an existing namespace rather than adopting it.
+TEST_NAMESPACE_UID=$(kubectl --context "$TEST_CONTEXT" create namespace "$TEST_NAMESPACE" \
+  -o jsonpath='{.metadata.uid}')
+printf 'Test namespace: %s UID: %s\n' "$TEST_NAMESPACE" "$TEST_NAMESPACE_UID"
+helm install "$TEST_RELEASE" "$CHART_DIR" --kube-context "$TEST_CONTEXT" \
+  --namespace "$TEST_NAMESPACE" --values "$VALUES_FILE" --wait --timeout 5m
+helm test "$TEST_RELEASE" --kube-context "$TEST_CONTEXT" \
+  --namespace "$TEST_NAMESPACE" --logs --timeout 90s
+```
 
-5. **Permissions と RBAC の確認**:
-   ```bash
-   # Check service accounts
-   kubectl get serviceaccount -n <namespace>
+失敗時は resource を残し、hook/workload log を調べます。namespace UID を記録し、test namespace だと確認してから cleanup します。既存 namespace を削除しないでください。変更 trigger のない以前の null_resource は、release 変更のたびに再検証される保証がありませんでした。
 
-   # Check roles and role bindings
-   kubectl get roles,rolebindings -n <namespace>
+**静的 CI の例**
 
-   # Check cluster roles and bindings
-   kubectl get clusterroles,clusterrolebindings -l app.kubernetes.io/instance=my-release
+この workflow は、commit 済み dependency/Chart.lock と Secret を含まない `ci/values.yaml` を使って chart を確認します。chart path と対象 capability version は合わせてください。dependency のない chart では lock/build の step を省略します。クラスターは作らず runtime test 成功も主張しません。
 
-   # Check service account permissions
-   kubectl auth can-i --list --as=system:serviceaccount:<namespace>:<serviceaccount>
-   ```
+```yaml
+name: Static Helm chart validation
+on:
+  pull_request:
+    paths:
+      - charts/**
+      - ci/values.yaml
+      - .github/workflows/helm-validate.yml
+permissions:
+  contents: read
+jobs:
+  lint-render:
+    runs-on: ubuntu-24.04
+    env:
+      CHART_DIR: charts/my-chart
+      VALUES_FILE: ci/values.yaml
+      KUBE_VERSION: "1.36.0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.21.3
+      - name: Build reviewed dependencies, lint and render
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -f "$CHART_DIR/Chart.lock"
+          helm dependency build "$CHART_DIR"
+          helm lint "$CHART_DIR" --values "$VALUES_FILE"
+          helm template chart-ci "$CHART_DIR" --namespace chart-ci \
+            --kube-version "$KUBE_VERSION" --values "$VALUES_FILE" \
+            > "$RUNNER_TEMP/chart-rendered.yaml"
+```
 
-**一般的な Helm deployment issues と解決策:**
+setup action/release pin は公式 metadata と照合済みです。必要なら所有する使い捨て環境で integration/test-hook stage を別に実行します。chart-testing を使う場合は、report された release/namespace と test option を用います。chart directory 名は後続 `helm test` loop の契約ではありません。
 
-1. **Chart syntax errors**:
-   - **症状**: `helm install` または `helm template` command が失敗する
-   - **原因**: YAML syntax errors、不正な template functions または variables
-   - **解決策**:
-     ```bash
-     # Validate chart syntax
-     helm lint ./my-chart
+すべての chart を削除する、EKS を作り直す、release manager をやめるだけでは、元の chart/権限/runtime 問題を診断できません。
 
-     # Check template rendering
-     helm template ./my-chart --debug
+参考: [Helm debugging](https://helm.sh/docs/chart_template_guide/debugging/)、[chart test](https://helm.sh/docs/topics/chart_tests/)、[Helm provider release](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release)、[setup-helm release](https://github.com/Azure/setup-helm/releases/tag/v5.0.1)、[Helm 3.21.3](https://github.com/helm/helm/releases/tag/v3.21.3)
 
-     # Render template with specific values
-     helm template ./my-chart --set key=value --debug
-     ```
-
-2. **Dependency issues**:
-   - **症状**: Chart installation 中に dependency errors が発生する
-   - **原因**: Missing dependencies、version mismatches、または repository access issues
-   - **解決策**:
-     ```bash
-     # Update dependencies
-     helm dependency update ./my-chart
-
-     # Add and update repository
-     helm repo add bitnami https://charts.bitnami.com/bitnami
-     helm repo update
-
-     # Build dependencies
-     helm dependency build ./my-chart
-     ```
-
-3. **Permission issues**:
-   - **症状**: Permission denied errors
-   - **原因**: RBAC permissions 不足、または不正な service account configuration
-   - **解決策**:
-     ```bash
-     # Create required RBAC resources
-     kubectl apply -f rbac.yaml
-
-     # Specify service account
-     helm install my-release ./my-chart --service-account=my-service-account
-
-     # Check permissions
-     kubectl auth can-i create deployments --as=system:serviceaccount:<namespace>:<serviceaccount>
-     ```
-
-4. **Resource conflicts**:
-   - **症状**: Resource already exists error
-   - **原因**: 以前の installation の resources が残っている、または name conflicts
-   - **解決策**:
-     ```bash
-     # Remove existing release
-     helm uninstall my-release
-
-     # Check and delete remaining resources
-     kubectl get all -n <namespace> -l app.kubernetes.io/instance=my-release
-     kubectl delete <resource-type> <resource-name> -n <namespace>
-
-     # Install with different release name
-     helm install new-release ./my-chart
-     ```
-
-5. **Values configuration issues**:
-   - **症状**: デプロイされた application が期待どおりに動作しない
-   - **原因**: 不正な configuration values、または必要な values の不足
-   - **解決策**:
-     ```bash
-     # Check current values
-     helm get values my-release
-
-     # Check default values
-     helm show values ./my-chart
-
-     # Upgrade with values file
-     helm upgrade my-release ./my-chart -f values.yaml
-
-     # Set specific values
-     helm upgrade my-release ./my-chart --set key=value
-     ```
-
-**ベストプラクティス:**
-
-1. **体系的なトラブルシューティングアプローチ**:
-   - 段階的な verification と validation
-   - Log と event analysis
-   - Symptom から cause まで追跡する
-
-2. **Helm charts のテストと検証**:
-   - Deployment 前に charts を検証する
-   - まず test environment でテストする
-   - CI/CD pipeline に validation steps を含める
-
-3. **Version management と compatibility**:
-   - 互換性のある Helm と Kubernetes versions を使用する
-   - Chart versions を明示的に指定する
-   - Dependency versions を固定する
-
-4. **Documentation と values management**:
-   - Chart values を文書化する
-   - Environment-specific values files を管理する
-   - Sensitive values に security practices を適用する
-
-他の選択肢の問題点:
-- **A. すべての Helm charts を削除して再インストールする**: これは data loss を引き起こす可能性のある極端な対応であり、根本原因を解決しません。
-- **B. クラスターを再作成する**: これは非常に極端な対応であり、ほとんどの Helm deployment issues は cluster-level issues ではなく chart configuration または permissions に関連しています。
-- **D. すべての resources を手動でデプロイする**: これは Helm の利点を放棄するものであり、complex applications ではエラーが起きやすく管理が困難です。
 </details>
-### 9. Amazon EKS クラスターで memory leak issues をトラブルシューティングする最も効果的なアプローチは何ですか？
 
-A. すべての pods を再起動する
-B. Cluster node size を増やす
-C. Memory usage を profile し、container limits を review し、application code を analyze する
-D. さらに nodes を追加する
+### 9. メモリリークと他の memory-pressure 原因を区別するため、何を調べますか？
+
+- A. すべての Pod を再起動する
+- B. node size だけを増やす
+- C. memory/process evidence、limit、runtime profile、アプリケーション code を関連付ける
+- D. node だけを追加する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. Memory usage を profile し、container limits を review し、application code を analyze する**
+**正解: C. memory/process evidence、limit、runtime profile、アプリケーション code を関連付ける**
 
-**解説:**
-Amazon EKS クラスターで memory leak issues をトラブルシューティングする最も効果的なアプローチは、memory usage profiling、container limits review、application code analysis を含む体系的なアプローチです。この方法により、memory leaks の根本原因を特定し解決できます。
+working set の増加、OOMKilled container、MemoryPressure node は、単独ではメモリリークを診断しません。修正を選ぶ前に負荷、process lifetime/UID、heap/native memory、cache、limit を比較します。
 
-**確認すべき主な項目:**
+**比較できる証拠の収集**
 
-1. **Memory usage profiling**:
-   - Pod と node レベルで memory usage を監視する
-   - 時系列で memory usage patterns を分析する
-   - Memory leaks の兆候を特定する
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${APP_SELECTOR:?Set an explicit label selector}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+MEMORY_DIR=$(mktemp -d "$EVIDENCE_PARENT/memory-observation.XXXXXXXX")
+for sample in {1..10}; do
+  date -u +"%Y-%m-%dT%H:%M:%SZ" > "$MEMORY_DIR/sample-$sample.time"
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$APP_SELECTOR" -o json \
+    | jq '[.items[] | {
+        name:.metadata.name,uid:.metadata.uid,created:.metadata.creationTimestamp,
+        node:.spec.nodeName,phase:.status.phase,
+        resources:[.spec.containers[] | {name,resources}],
+        containers:((.status.initContainerStatuses // []) + (.status.containerStatuses // []))
+      }]' > "$MEMORY_DIR/sample-$sample.pods.json"
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods \
+    -l "$APP_SELECTOR" --containers > "$MEMORY_DIR/sample-$sample.usage.txt"
+  if [ "$sample" -lt 10 ]; then sleep 30; fi
+done
+printf 'Observations saved to %s; these samples do not establish a leak.\n' "$MEMORY_DIR"
+```
 
-2. **Container limits の review**:
-   - Memory request と limit settings を確認する
-   - Container OOM (Out of Memory) events を分析する
-   - Resource allocation を最適化する
+これは30秒間隔で10回観測するため、元の5分間の計測計画に command 実行時間を足した例です。監査中に実行していません。短時間の窓で長期リークを証明できません。query に失敗すると収集を停止して部分結果を残します。metric 欠落を使用量ゼロに変換しないでください。
 
-3. **Application code analysis**:
-   - Application 内部の memory usage patterns を review する
-   - 潜在的な memory leaks がある code を特定する
-   - Application profiling tools を使用する
+不確かな Pod 名 prefix を label 値として使わず、kubectl の quantity 対応出力を使います。存在しない4列目で sort しないでください。Pod snapshot には UID と通常/init container の state を記録します。名前は置き換え後に再利用されることがあります。metric と status request は atomic snapshot ではありません。現在/直近の termination reason と restart count を調べますが、status に残る過去情報は限定的です。
 
-4. **System components の review**:
-   - kubelet memory management settings
-   - Node system resource usage
-   - Cluster component status
+**memory pressure の解釈**
 
-**トラブルシューティング方法:**
+- working set、RSS、管理対象 heap、native allocation は異なる計測値です。cache 増加や traffic 増加もリークに見えることがあります。
+- node に空き memory があっても container が cgroup limit に達する場合があります。request/limit の差が大きいだけでは OOM 原因になりません。
+- kubelet は node の process であり、kube-system で log を読む汎用 `kubelet-pod` ではありません。サポートされた node/monitoring 経路を使います。
+- fragmentation は証拠を要する仮説です。定期 reboot や強制 GC は普遍的な修正ではありません。
 
-1. **Memory usage の監視と分析**:
-   ```bash
-   # Check node memory usage
-   kubectl top nodes
+**現行 metric と単位の例**
 
-   # Check pod memory usage
-   kubectl top pods -A
+既存の単一クラスター kube-prometheus-stack 構成に対し、この rule は現行の container 単位 limit metric を使い、重複 exporter sample を減らし、欠落/ゼロ limit を除外します。
 
-   # Check pod memory usage in specific namespace
-   kubectl top pods -n <namespace>
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: memory-observation
+  namespace: monitoring
+  labels:
+    release: observability
+spec:
+  groups:
+  - name: memory-observation
+    rules:
+    - alert: ContainerWorkingSetHigh
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{job="kube-state-metrics",resource="memory",unit="byte"})
+        > 0) > 0.85
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Container working set is above 85% of its declared limit
+        description: Inspect {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container
+          }} and actual termination/pressure evidence.
+    - alert: ContainerWorkingSetCritical
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{job="kube-state-metrics",resource="memory",unit="byte"})
+        > 0) > 0.95
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Container working set is above 95% of its declared limit
+        description: This is an observation threshold, not proof of a leak or guaranteed
+          OOM prediction.
+    - alert: ContainerWorkingSetGrowth
+      expr: max by (namespace, pod, container) (deriv(container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""}[30m]))
+        > 5 * 1024 * 1024 / 60
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: Estimated working-set slope exceeds 5 MiB/min
+        description: The rolling 30-minute regression has stayed above the threshold;
+          correlate with load and process lifetime.
+    - alert: NodeMemoryPressure
+      expr: max by (node) (kube_node_status_condition{job="kube-state-metrics",condition="MemoryPressure",status="true"})
+        == 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Node {{ $labels.node }} reports MemoryPressure
+        description: Investigate node resources and workloads; this is distinct from
+          a container limit OOM.
+```
 
-   # Check memory usage per container
-   kubectl top pods -n <namespace> --containers
+namespace/release/job selector を実際の導入に合わせます。この rule は通常 container の limit を扱います。init-container と Pod 単位 budget は別に確認します。正の limit が報告されない container はこの比率に含まれません。健全と見なさず、coverage を別に監視します。working-set/limit のしきい値は観測例で、heap leak detector ではありません。
 
-   # Identify pods with high memory usage
-   kubectl top pods -A --sort-by=memory
-   ```
+ここで `deriv` が返すのは**バイト/秒**です。`5 * 1024 * 1024` を60で割るため、しきい値は **5 MiB/分**です。旧式は5 MiB/s と比較しながら説明では per minute としていました。30分の regression と `for: 30m` の保持は、全時点で単調増加した証明ではありません。scrape 欠落、restart、workload 変更も解釈に影響します。
 
-2. **Container limits と OOM events の確認**:
-   ```bash
-   # Check pod memory limits
-   kubectl get pods -n <namespace> -o jsonpath='{.items[*].spec.containers[*].resources}'
+**runtime profile の前提条件**
 
-   # Check pod details
-   kubectl describe pod <pod-name> -n <namespace>
+| Runtime | 適切な調査範囲 |
+| --- | --- |
+| JVM | 対象 JVM PID に対応する JDK tool/権限を使います。`jcmd PID GC.heap_info` はサポートされた調査コマンドです。native-memory report には起動時の tracking が必要です。heap dump は process を停止させたり Secret を含んだりする可能性があります |
+| Node.js | 対象 process がサポートする inspector/profiling 機構を使います。`node --inspect` は新しい process を起動します。debugger access を制限します |
+| Python | 実アプリケーションまたは制御した再現環境で profiling/tracemalloc を設定します。別の interpreter は既存 process の allocation を見ません。また Python allocation tracking が native RSS 全体を示すわけではありません |
+| Go | 実際の保護された heap profile と、対応する binary/symbol 情報を pprof で使います。認証不要の profiling endpoint や既存の `/tmp/profile` があると決めつけません |
 
-   # Check OOM events
-   kubectl get events -n <namespace> --sort-by='.lastTimestamp' | grep -i "OOMKilled"
+本番で使う前に tool/runtime version と収集負荷を確認します。稼働中アプリケーションに任意の profiling package を既定で install しないでください。このレビューでは JVM、profiler、heap dump、実メモリ実験は行っていません。
 
-   # Check node OOM events
-   kubectl get events --field-selector involvedObject.kind=Node --sort-by='.lastTimestamp' | grep -i "memory"
-   ```
+**アプリケーション設定の例**
 
-3. **Application logs と profiling**:
-   ```bash
-   # Check application logs
-   kubectl logs <pod-name> -n <namespace>
+元の256m/768m heap と1Gi container 値は説明用であり、測定された最適値ではありません。OpenJDK 21 は JAVA_TOOL_OPTIONS を読みます。JAVA_OPTS は image entrypoint が転送する場合にだけ有効です。command-line flag や _JAVA_OPTIONS がこれらを上書きする可能性があるため、実際の JVM option を確認します。JVM startup 時に option が表示される場合があり、Secret を含めないでください。
 
-   # Check previous pod logs
-   kubectl logs <pod-name> -n <namespace> --previous
+```yaml
+# Pod-template fragment for an existing reviewed OpenJDK 21 application container.
+# Merge through its owner; this is not a standalone Deployment manifest.
+spec:
+  template:
+    spec:
+      containers:
+        - name: java-app
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+              ephemeral-storage: 4Gi
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+                -Xms256m -Xmx768m
+                -XX:+HeapDumpOnOutOfMemoryError
+                -XX:HeapDumpPath=/diagnostics
+                -XX:+ExitOnOutOfMemoryError
+          volumeMounts:
+            - name: heap-diagnostics
+              mountPath: /diagnostics
+      volumes:
+        - name: heap-diagnostics
+          emptyDir:
+            sizeLimit: 2Gi
+```
 
-   # Run application profiling tool
-   kubectl exec -it <pod-name> -n <namespace> -- <profiling-command>
+アプリケーションの実際の image、起動動作、他の環境変数/volume、security context を保ちます。diagnostic mount に UID が書き込めることを確認します。`MaxGCPauseMillis` は soft target です。heap は process memory の一部にすぎません。native allocation、thread、code/metaspace、その他 overhead 用に測定済みの余裕を残します。
 
-   # Generate memory dump
-   kubectl exec -it <pod-name> -n <namespace> -- <memory-dump-command>
-   ```
+disk-backed emptyDir は Pod 削除後に永続しません。artifact を意図的に収集/保護し、container PID 再利用時の filename collision を考慮します。kernel/cgroup の SIGKILL は JVM の heap dump 処理を妨げる場合があります。`ExitOnOutOfMemoryError` は JVM が投げる OOM を処理するだけで、dump を保証せず allocation 原因も解決しません。
 
-4. **Node と system resources の確認**:
-   ```bash
-   # Check node details
-   kubectl describe node <node-name>
+従来の MEMORY_MONITOR_* 環境変数は JVM/Kubernetes の組み込み機能ではありません。Spring Actuator の liveness/readiness path は、アプリケーションが実際に有効にして公開した場合にのみ使えます。想像した URL ではなく実際の health contract を確認します。
 
-   # Check node memory pressure
-   kubectl get nodes -o jsonpath='{.items[*].status.conditions[?(@.type=="MemoryPressure")]}'
+**既存監視の管理**
 
-   # Check kubelet logs
-   kubectl logs -n kube-system <kubelet-pod-name>
+```hcl
+# Prometheus Operator CRD must already exist before planning this resource.
+# Save the reviewed PrometheusRule YAML above as the supplied file.
+resource "kubernetes_manifest" "memory_alerts" {
+  manifest = yamldecode(file(var.memory_rules_file))
+}
+```
 
-   # Check system memory statistics
-   kubectl debug node/<node-name> -it --image=busybox -- sh -c "cat /proc/meminfo"
-   ```
+Kubernetes manifest provider は plan 時に PrometheusRule CRD を必要とします。同一 apply 内の Helm install に `depends_on` を指定するのは、schema discovery の一般的な解決策ではありません。既存 monitoring stack と問6の working-set panel を再利用します。別 stack を導入したり、説明のない dashboard file を参照したりしません。rule 選択、alert routing、実環境の telemetry 健全性を確認します。
 
-**一般的な memory leak issues と解決策:**
+A/B/D は一時的な capacity 緩和にはなるかもしれませんが、allocation 不具合を立証/修正しません。示された原因を記録し、代表的な負荷で実際の code/config 修正を検証します。
 
-1. **Application memory leaks**:
-   - **症状**: Memory usage が時間とともに継続的に増加する
-   - **原因**: Application code 内の memory leaks、cache management 不足
-   - **解決策**:
-     - Application code を review して修正する
-     - Memory profiling tools を使用する
-     - 定期的な garbage collection を設定する
-     - Cache size limits と expiration policies を実装する
+参考: [Prometheus deriv](https://prometheus.io/docs/prometheus/latest/querying/functions/#deriv)、[current Pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)、[OpenJDK 21 option processing](https://github.com/openjdk/jdk21u/blob/master/src/hotspot/share/runtime/arguments.cpp)、[Java 21 options](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)、[jcmd](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html)
 
-2. **Container memory limit issues**:
-   - **症状**: 頻繁な OOM terminations、pod restarts
-   - **原因**: 不適切な memory limit settings、resource requests と limits の差が大きい
-   - **解決策**:
-     ```yaml
-     # Set appropriate memory requests and limits
-     apiVersion: v1
-     kind: Pod
-     metadata:
-       name: memory-optimized-pod
-     spec:
-       containers:
-       - name: app
-         image: app-image
-         resources:
-           requests:
-             memory: "256Mi"
-           limits:
-             memory: "512Mi"
-     ```
-
-3. **System component memory issues**:
-   - **症状**: Node instability、kubelet または他の system components による高い memory usage
-   - **原因**: kubelet configuration issues、system component bugs
-   - **解決策**:
-     - kubelet configuration を最適化する
-     - System components を更新する
-     - Node resource reservations を調整する
-
-4. **Memory fragmentation issues**:
-   - **症状**: 十分な total available memory があるにもかかわらず OOM が発生する
-   - **原因**: Memory fragmentation、large page allocation failures
-   - **解決策**:
-     - 定期的な node reboots をスケジュールする
-     - High memory pressure の workloads を分散する
-     - Node memory overcommit を減らす
-
-**ベストプラクティス:**
-
-1. **体系的な memory monitoring**:
-   - Cluster、node、pod levels で memory を監視する
-   - 時系列で memory usage patterns を追跡する
-   - Anomalies に対する alerts を設定する
-
-2. **適切な resource limits の設定**:
-   - Workload characteristics に適した memory requests と limits を設定する
-   - Memory requests と limits の適切な ratio を維持する
-   - 定期的な resource usage review と adjustment
-
-3. **Application optimization**:
-   - Memory-efficient code を書く
-   - 定期的な memory profiling と optimization
-   - 適切な caching strategies を実装する
-
-4. **Cluster configuration optimization**:
-   - Node memory reservations を最適化する
-   - 適切な kubelet memory management settings
-   - Workload distribution と isolation
-
-他の選択肢の問題点:
-- **A. すべての pods を再起動する**: これは一時的な解決策にすぎず、memory leaks の根本原因を解決しません。Pods が再起動すると問題は再発します。
-- **B. Cluster node size を増やす**: これは根本原因を解決せず、症状を隠すだけです。Memory leaks が続けば、より大きな nodes でも最終的に memory が不足します。
-- **D. さらに nodes を追加する**: B と同様に、これは根本原因を解決せずに症状を隠すだけです。Memory leak issues は nodes の数に関係なく続きます。
 </details>
-### 10. Amazon EKS クラスターで DNS resolution issues をトラブルシューティングする最も効果的なアプローチは何ですか？
 
-A. すべての pods に static IPs を割り当てる
-B. CoreDNS configuration、network policies、DNS policies、connectivity を体系的に確認する
-C. すべての services に ExternalName を使用する
-D. Cluster VPC を再設定する
+### 10. EKS の DNS 解決に失敗するとき、最も効果的な調査方法は何ですか？
+
+- A. すべての Pod に固定 IP を割り当てる
+- B. 実際の Pod resolver、DNS 実装、policy/transport、upstream 設定を追跡する
+- C. すべての Service に ExternalName を使う
+- D. VPC を再構築する
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. CoreDNS configuration、network policies、DNS policies、connectivity を体系的に確認する**
+**正解: B. 実際の Pod resolver、DNS 実装、policy/transport、upstream 設定を追跡する**
 
-**解説:**
-Amazon EKS クラスターで DNS resolution issues をトラブルシューティングする最も効果的なアプローチは、CoreDNS configuration、network policies、DNS policies、connectivity を体系的に確認することです。このアプローチにより、DNS issues の根本原因を特定し解決できます。
+問題が発生する Pod の resolver と失敗する名前から調べます。tool 不足、DNS answer、UDP/TCP transport、upstream/private zone 設定、アプリケーション cache を切り分けます。
 
-**確認すべき主な項目:**
+**Pod の実際の経路を調べる**
 
-1. **CoreDNS configuration と status の確認**:
-   - CoreDNS pod status と logs
-   - CoreDNS ConfigMap configuration
-   - CoreDNS service と endpoints
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{name:.metadata.name,uid:.metadata.uid,node:.spec.nodeName,hostNetwork:.spec.hostNetwork,dnsPolicy:.spec.dnsPolicy,dnsConfig:.spec.dnsConfig}'
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- cat /etc/resolv.conf
+# Run only where the selected container actually has this diagnostic tool.
+: "${DNS_TEST_NAME:?Set the actual Service FQDN or reviewed external name}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- nslookup "$DNS_TEST_NAME"
+```
 
-2. **Network policies と connectivity の確認**:
-   - DNS ports (53/UDP, 53/TCP) 用の network policies
-   - Pods と CoreDNS 間の network connectivity
-   - VPC DNS settings
+image に cat/nslookup がなくても DNS 障害とは限りません。対象 Pod の network/identity context を保つ準備済みの診断方法を使います。新しい debug Pod では label、policy、DNS 設定が異なる可能性があります。DNS server 自身の Service 名を解決できることに依存せず、実際の nameserver IP を使って resolver transport を調べます。必要に応じて UDP/TCP 53 を確認します。TCP のみの接続 test は DNS response を検証しません。
 
-3. **DNS policies と configuration の確認**:
-   - Pod DNS policy settings
-   - DNS configuration options
-   - Host namespace settings
+従来の CoreDNS では Deployment readiness、Service/EndpointSlice、設定、log を確認します。
 
-4. **Cluster と VPC configuration の確認**:
-   - EKS cluster DNS settings
-   - VPC DNS attributes
-   - DHCP option sets
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"
+# Traditional CoreDNS path only; pure Auto Mode node DNS is different.
+kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get pods -l k8s-app=kube-dns -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get service kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get endpointslices \
+  -l kubernetes.io/service-name=kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get configmap coredns -o yaml
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
+  --all-containers=true --prefix=true --since=15m --tail=100
+```
 
-**トラブルシューティング方法:**
+**Auto Mode node では CoreDNS は node system service として動きます。** Auto Mode のみの構成には従来の Deployment がない場合があります。混在クラスターでは非 Auto node 用に残す必要があります。どのクラスターでも Deployment がないのを障害と決めつけたり、Auto Mode に2つ目の node-local DNS service を導入したりしません。
 
-1. **CoreDNS status と configuration の確認**:
-   ```bash
-   # Check CoreDNS pod status
-   kubectl get pods -n kube-system -l k8s-app=kube-dns
+**Resolver 設定と policy**
 
-   # Check CoreDNS logs
-   kubectl logs -n kube-system -l k8s-app=kube-dns
+cluster DNS を使う通常 Pod 経路は ClusterFirst です。hostNetwork を意図的に設定した Pod が cluster DNS を使うには通常 ClusterFirstWithHostNet が必要です。DNS 修正のためだけに hostNetwork にすると isolation が変わるので、一般的な対処ではありません。DNSPolicy None には意図的に完全な resolver 設定が必要です。
 
-   # Check CoreDNS ConfigMap
-   kubectl get configmap coredns -n kube-system -o yaml
+旧 `169.254.20.10` は選択された NodeLocal DNSCache の IP で、VPC resolver の共通値ではありません。`8.8.8.8` のような public resolver は Kubernetes Service zone/private AWS name を解決せず、nameserver list は zone ごとの fallback を保証しません。`172.20.0.10` や public backup を固定指定せず、実際の CoreDNS/NodeLocal upstream と cluster domain を調べます。
 
-   # Check CoreDNS service
-   kubectl get service kube-dns -n kube-system
+standard CoreDNS Pod 向けの次の例は、選択した backend への DNS だけを許可します。適用前に他のアプリケーション egress をすべて確認します。
 
-   # Check CoreDNS endpoints
-   kubectl get endpoints kube-dns -n kube-system
-   ```
+```yaml
+# Example for application Pods using traditional CoreDNS Pod endpoints.
+# This selects applications and isolates other egress unless another policy allows it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-dns-egress
+  namespace: applications
+spec:
+  podSelector:
+    matchLabels:
+      app: example
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
 
-2. **DNS resolution のテスト**:
-   ```bash
-   # Create debug pod
-   kubectl run dns-test --rm -it --image=busybox -- sh
+送信元 egress と宛先 ingress の両方に許可が必要なことがあります。1つの peer 内では namespace と Pod selector は AND です。Auto Mode/NodeLocal 経路には実装固有の設定が必要です。Pod label selector が host-level cache を対象にすると仮定しないでください。別 Pod の tcpdump は別 workload の query を capture できません。該当 context で許可された短時間の capture を使います。
 
-   # Test cluster internal DNS resolution
-   nslookup kubernetes.default.svc.cluster.local
+**VPC DNS 設定を正しく読む**
 
-   # Test service DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+VPC_ID=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.resourcesVpcConfig.vpcId --output text)
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --region "$AWS_REGION" \
+  --attribute enableDnsSupport
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --region "$AWS_REGION" \
+  --attribute enableDnsHostnames
+DHCP_OPTIONS_ID=$(aws ec2 describe-vpcs --vpc-ids "$VPC_ID" --region "$AWS_REGION" \
+  --query 'Vpcs[0].DhcpOptionsId' --output text)
+aws ec2 describe-dhcp-options --dhcp-options-ids "$DHCP_OPTIONS_ID" --region "$AWS_REGION"
+```
 
-   # Test external domain resolution
-   nslookup google.com
+DNS attribute は DescribeVpcs の field ではなく DescribeVpcAttribute から取得します。クラスター名と Region は明示します。任意の kubeconfig alias を分割してクラスター名を決めるのは安全ではありません。query 前にアカウント/context を確認します。共有 VPC 設定を変更する前に DHCP option、DNS routing/forwarding、private zone を確認します。新しい DHCP option set の作成/関連付けは一般的な修正ではありません。
 
-   # Check DNS server
-   cat /etc/resolv.conf
-   ```
+**CoreDNS 設定と所有関係**
 
-3. **Network policies と connectivity の確認**:
-   ```bash
-   # Check DNS-related network policies
-   kubectl get networkpolicies --all-namespaces
+EKS managed CoreDNS add-on が導入済みなら、version/configuration と確認中候補の schema を調べます。
 
-   # Test connection to CoreDNS
-   kubectl run netcat-test --rm -it --image=busybox -- sh -c "nc -zv kube-dns.kube-system.svc.cluster.local 53"
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --addon-name coredns --output json
+: "${COREDNS_ADDON_VERSION:?Select a reviewed compatible candidate}"
+aws eks describe-addon-configuration --addon-name coredns \
+  --addon-version "$COREDNS_ADDON_VERSION" --region "$AWS_REGION" --output json
+```
 
-   # Capture DNS packets
-   kubectl run tcpdump-test --rm -it --image=nicolaka/netshoot -- tcpdump -i any port 53
-   ```
+custom zone/forwarder を保ち、health/ready plugin を実際の probe と一致させます。replica count、CPU/memory、PDB、placement、autoscaling は workload ごとの確認が必要です。旧3 replica/70Mi/170Mi 例は普遍的に最適な値ではありません。既存 Deployment を EKS-Distro 1.8.7 の古い image に置き換えたり、汎用 Corefile で local customization を上書きしたりしないでください。
 
-4. **Pod DNS configuration の確認**:
-   ```bash
-   # Check pod DNS policy
-   kubectl get pod <pod-name> -o jsonpath='{.spec.dnsPolicy}'
+Terraform 所有者は既存 add-on を管理し、既存 VPC を調べられます。
 
-   # Check pod DNS configuration
-   kubectl get pod <pod-name> -o jsonpath='{.spec.dnsConfig}'
+```hcl
+# Existing EKS-managed CoreDNS for standard/mixed clusters only.
+# Preserve/import the existing resource; do not duplicate its ownership.
+resource "aws_eks_addon" "coredns" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "coredns"
+  addon_version               = var.reviewed_coredns_version
+  configuration_values        = file(var.complete_reviewed_coredns_config)
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
 
-   # Check pod internal resolv.conf
-   kubectl exec -it <pod-name> -- cat /etc/resolv.conf
-   ```
+# Read an existing VPC; do not add a second aws_vpc resource to repair DNS.
+data "aws_vpc" "cluster" {
+  id = var.cluster_vpc_id
+}
+output "vpc_dns_attributes" {
+  value = {
+    enable_dns_support   = data.aws_vpc.cluster.enable_dns_support
+    enable_dns_hostnames = data.aws_vpc.cluster.enable_dns_hostnames
+  }
+}
+```
 
-5. **VPC と cluster DNS settings の確認**:
-   ```bash
-   # Check VPC DNS attributes
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].EnableDnsSupport'
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].EnableDnsHostnames'
+完全な configuration file を、選択した add-on schema と現行設定に照らして検証する必要があります。PRESERVE は明示 payload の完全な merge を保証しません。[EKS upgrades](../../eks/08-eks-upgrades.md) の正確な update procedure に従い、実際の DNS 動作を確認します。この例は Auto Mode の node DNS を設定せず、共有 VPC の置き換えも許可しません。
 
-   # Check DHCP option set
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].DhcpOptionsId'
-   aws ec2 describe-dhcp-options --dhcp-options-id <dhcp-options-id>
+**対応した標準 node 構成で使う任意の NodeLocal DNSCache**
 
-   # Check node DNS configuration
-   kubectl debug node/<node-name> -it --image=busybox -- cat /etc/resolv.conf
-   ```
+[公式 install guide](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)と確認済みの release manifest を使います。旧い手書き DaemonSet は不完全でした。image だけ変更しても必要な interface、filtering rule、mount、upstream Service、kubelet 配線は追加されません。
 
-**一般的な DNS issues と解決策:**
+| 判断項目 | 事前準備 |
+| --- | --- |
+| Local address | 競合しない node-local IP、実際の cluster domain/CoreDNS Service IP を選びます。IPv6 address/port 表記も考慮します |
+| 既存 data plane | 文書化された iptables 経路では cache が local と CoreDNS Service IP で listen します。対応 IPVS 構成では local のみで listen し、kubelet の cluster-DNS 設定変更が必要です。他方式には現行の統合ガイドがあります |
+| Manifest/configuration | 文書化された placeholder を render し、必要な privilege/interface/filtering/lock mount、probe、upstream 設定を保ちます。不完全な旧 DaemonSet に置き換えません |
+| Workload 移行 | node/kubelet 設定と新規/既存 Pod resolver が合うことを確認し、段階的な rollout と cache/kubelet 変更双方の戻し方を計画します |
+| Memory/運用 | query/cache/concurrency の観測から容量を決め、failure を監視し、再起動/rollout 中の DNS 維持を計画します |
 
-1. **CoreDNS pod issues**:
-   - **症状**: DNS queries が失敗し、CoreDNS pods が異常である
-   - **原因**: CoreDNS pod crashes、resource shortage、configuration errors
-   - **解決策**:
-     ```bash
-     # Restart CoreDNS pods
-     kubectl rollout restart deployment coredns -n kube-system
+NodeLocal DNSCache は cache miss を適切な upstream に転送します。すべての query を local cache hit にするものではありません。公式ガイドは OOM による終了後、packet-filtering rule が停止中の local cache を指したままになり、再起動まで DNS が中断する可能性を説明しています。小さな固定 memory request や cache 追加だけで性能が保証されるわけではありません。
 
-     # Increase CoreDNS resources
-     kubectl edit deployment coredns -n kube-system
-     # Increase requests and limits in resources section
+このレビューでは DNS query、packet capture、CoreDNS 更新、NodeLocal 導入、Terraform apply を実行していません。選択した topology と仮定を管理環境で検証してください。
 
-     # Check CoreDNS logs
-     kubectl logs -n kube-system -l k8s-app=kube-dns
-     ```
+Pod 固定 IP、すべての Service に ExternalName、VPC 再構築では、失敗した resolver 経路は特定できません。実際の query/response、送信元 context、設定変更、復旧証拠を記録します。
 
-2. **Network policy issues**:
-   - **症状**: 特定の namespaces または pods からのみ DNS resolution が失敗する
-   - **原因**: Restrictive network policies が DNS traffic をブロックしている
-   - **解決策**:
-     ```yaml
-     # Network policy allowing DNS traffic
-     apiVersion: networking.k8s.io/v1
-     kind: NetworkPolicy
-     metadata:
-       name: allow-dns
-       namespace: <namespace>
-     spec:
-       podSelector: {}
-       policyTypes:
-       - Egress
-       egress:
-       - to:
-         - namespaceSelector:
-             matchLabels:
-               kubernetes.io/metadata.name: kube-system
-           podSelector:
-             matchLabels:
-               k8s-app: kube-dns
-         ports:
-         - protocol: UDP
-           port: 53
-         - protocol: TCP
-           port: 53
-     ```
+参考: [EKS CoreDNS](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)、[Auto Mode DNS](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[Pod DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)、[VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)、[NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)
 
-3. **DNS policy と configuration issues**:
-   - **症状**: 特定の種類の DNS queries のみ失敗する
-   - **原因**: 不適切な DNS policy または configuration
-   - **解決策**:
-     ```yaml
-     # Create pod with custom DNS configuration
-     apiVersion: v1
-     kind: Pod
-     metadata:
-       name: dns-custom-pod
-     spec:
-       containers:
-       - name: app
-         image: busybox
-         command: ["sleep", "3600"]
-       dnsPolicy: "None"
-       dnsConfig:
-         nameservers:
-         - "169.254.20.10"  # VPC DNS server
-         - "8.8.8.8"        # Backup DNS server
-         searches:
-         - <namespace>.svc.cluster.local
-         - svc.cluster.local
-         - cluster.local
-         options:
-         - name: ndots
-           value: "5"
-     ```
-
-4. **VPC DNS settings issues**:
-   - **症状**: External domain resolution が失敗する
-   - **原因**: VPC DNS attributes が無効、または DHCP option set issues
-   - **解決策**:
-     ```bash
-     # Enable VPC DNS attributes
-     aws ec2 modify-vpc-attribute --vpc-id <vpc-id> --enable-dns-support
-     aws ec2 modify-vpc-attribute --vpc-id <vpc-id> --enable-dns-hostnames
-
-     # Create custom DHCP option set
-     aws ec2 create-dhcp-options \
-       --dhcp-configurations \
-       "Key=domain-name-servers,Values=AmazonProvidedDNS" \
-       "Key=domain-name,Values=<region>.compute.internal"
-
-     # Associate DHCP option set with VPC
-     aws ec2 associate-dhcp-options --dhcp-options-id <dhcp-options-id> --vpc-id <vpc-id>
-     ```
-
-5. **CoreDNS configuration issues**:
-   - **症状**: 特定 domain の resolution が失敗する、または DNS resolution が遅い
-   - **原因**: CoreDNS configuration errors または最適化されていない settings
-   - **解決策**:
-     ```yaml
-     # Optimized CoreDNS ConfigMap
-     apiVersion: v1
-     kind: ConfigMap
-     metadata:
-       name: coredns
-       namespace: kube-system
-     data:
-       Corefile: |
-         .:53 {
-             errors
-             health {
-                lameduck 5s
-             }
-             ready
-             kubernetes cluster.local in-addr.arpa ip6.arpa {
-                pods insecure
-                fallthrough in-addr.arpa ip6.arpa
-                ttl 30
-             }
-             prometheus :9153
-             forward . /etc/resolv.conf {
-                max_concurrent 1000
-                health_check 5s
-             }
-             cache 30
-             loop
-             reload
-             loadbalance
-         }
-     ```
-
-**ベストプラクティス:**
-
-1. **CoreDNS monitoring と scaling**:
-   - CoreDNS performance と status を監視する
-   - Cluster size に応じて CoreDNS replicas を scaling する
-   - 適切な resources を割り当てる
-
-2. **DNS caching と optimization**:
-   - 適切な TTL と cache settings
-   - Node-level DNS caching を実装する
-   - Application-level DNS caching を検討する
-
-3. **Network policy design**:
-   - DNS traffic を明示的に許可する
-   - Least privilege principle を適用する
-   - Network policies をテストして検証する
-
-4. **DNS troubleshooting tools と processes**:
-   - DNS troubleshooting tools と scripts を準備する
-   - 体系的な troubleshooting process を確立する
-   - DNS 関連 events と logs を監視する
-
-他の選択肢の問題点:
-- **A. すべての pods に static IPs を割り当てる**: これは DNS issues を解決せず、pod IP allocation と DNS resolution は別の問題です。Pods に static IPs を割り当てることは Kubernetes の動的な性質にも反し、管理の複雑さを増します。
-- **C. すべての services に ExternalName を使用する**: これは特定の use cases にのみ適しており、ほとんどの DNS issues を解決しません。ExternalName は external services の aliases を提供するために使用され、cluster internal DNS resolution issues を解決しません。
-- **D. Cluster VPC を再設定する**: これは極端な対応であり、ほとんどの DNS issues は VPC レベルではなく、クラスター内の DNS configuration に関連しています。VPC reconfiguration は不要な downtime と complexity を引き起こす可能性があります。
 </details>
