@@ -1,7 +1,7 @@
 # Extender Kubernetes
 
-> **Versiones upstream de Kubernetes revisadas**: Kubernetes 1.35, 1.36, 1.37
-> **Última actualización**: October 12, 2026
+> **Versiones de Kubernetes revisadas (proyecto original)**: Kubernetes 1.35, 1.36, 1.37
+> **Última actualización**: 12 de octubre de 2026
 
 Kubernetes es una plataforma diseñada teniendo en cuenta la extensibilidad, lo que permite ampliar su funcionalidad de varias maneras. En este capítulo, exploraremos los distintos métodos para extender Kubernetes y cómo aprovechar las funciones de extensión en Amazon EKS.
 
@@ -28,7 +28,7 @@ Kubernetes proporciona varios puntos de extensión para ampliar y personalizar s
 2. **Operadores**: Combinar recursos personalizados y controladores para administrar aplicaciones complejas
 3. **Controladores de admisión**: Interceptar, modificar o validar solicitudes de API
 4. **Extensiones del servidor de API**: Agregar nuevos endpoints al servidor de API
-5. **Extensiones del Scheduler**: Personalizar la lógica de programación de los Pod
+5. **Extensiones del Scheduler**: Personalizar la lógica de planificación de los Pod
 6. **Cloud Controller Manager**: Integrar funciones específicas de los proveedores de nube
 7. **CSI (Container Storage Interface)**: Integrar sistemas de almacenamiento
 8. **CNI (Container Network Interface)**: Integrar soluciones de redes
@@ -48,7 +48,7 @@ Aspectos que debes tener en cuenta al elegir un método de extensión adecuado:
 2. **Complejidad**: Complejidad de la implementación y el mantenimiento
 3. **Impacto en el rendimiento**: Impacto de la extensión en el rendimiento del clúster
 4. **Compatibilidad con las actualizaciones**: Compatibilidad con las actualizaciones de versión de Kubernetes
-5. **Compatibilidad con la comunidad**: Nivel de apoyo de la comunidad para el método de extensión
+5. **Apoyo de la comunidad**: Nivel de apoyo de la comunidad para el método de extensión
 
 ## Recursos personalizados {#custom-resources}
 
@@ -201,7 +201,7 @@ spec:
 
 ## Patrón de operador {#operator-pattern}
 
-El patrón de operador permite automatizar el conocimiento operativo de aplicaciones complejas mediante la combinación de recursos personalizados y controladores.
+El patrón de operador combina recursos personalizados y controladores para automatizar las operaciones de aplicaciones complejas a partir del conocimiento necesario para administrarlas.
 
 El siguiente diagrama muestra cómo funciona el patrón de operador:
 
@@ -352,7 +352,7 @@ Kubernetes incluye varios controladores de admisión:
 
 1. **NamespaceLifecycle**: Impide crear recursos en espacios de nombres que se están eliminando
 2. **LimitRanger**: Establece límites predeterminados de recursos para los Pod y contenedores
-3. **ServiceAccount**: Establece como predeterminada y valida la cuenta de servicio del Pod e inyecta un volumen de token proyectado, salvo que el montaje automático esté deshabilitado; otros controladores crean las cuentas predeterminadas.
+3. **ServiceAccount**: Asigna una cuenta de servicio predeterminada al Pod o valida la especificada e inyecta un volumen con un token proyectado, salvo que el montaje automático esté deshabilitado; otros controladores crean las cuentas predeterminadas.
 4. **DefaultStorageClass**: Asigna la clase de almacenamiento predeterminada a los PVC
 5. **ResourceQuota**: Limita el uso de recursos por espacio de nombres
 6. **PodSecurity**: Aplica los estándares de seguridad de los Pod del espacio de nombres; PodSecurityPolicy se eliminó en 1.25.
@@ -414,7 +414,7 @@ webhooks:
 
 ### Implementación del servidor de webhook
 
-Estos fragmentos de Go pertenecen a un mismo archivo e implementan controladores AdmissionReview v1. Conecta /mutate y /validate mediante HTTPS con un certificado y un paquete de CA que coincidan con el Service. No producen efectos secundarios externos y son seguros para la ejecución en seco; limita la configuración del webhook a los espacios de nombres previstos. La comprobación de etiquetas es un ejemplo de política, no una validación completa de referencias de imágenes o firmas.
+Estos fragmentos de Go pertenecen a un mismo archivo e implementan los manejadores de AdmissionReview v1. Configura /mutate y /validate mediante HTTPS, con un certificado que corresponda al Service y el paquete de certificados de CA necesario para verificarlo. Los manejadores no producen efectos secundarios externos y admiten la ejecución en seco; limita la configuración del webhook a los espacios de nombres previstos. La comprobación de etiquetas es un ejemplo de política, no una validación completa de referencias de imágenes ni de firmas.
 
 ```go
 package main
@@ -564,7 +564,7 @@ Un servidor de API de extensión consta de los siguientes componentes:
 2. **Controladores de recursos**: Gestionan las solicitudes de tipos de recursos específicos
 3. **Backend de almacenamiento**: Almacena los datos de los recursos
 
-Este es un esquema de implementación, no un programa independiente. Empieza con la versión oficial de sample-apiserver que coincida con tus dependencias de k8s.io; configura el servicio seguro, la autenticación y autorización delegadas, los tipos example.com/v1 reales, el almacenamiento y el contexto de apagado. El grupo y la versión de APIService deben coincidir con los del servidor.
+Este es un esquema de implementación, no un programa independiente. Parte de la versión oficial de sample-apiserver que coincida con tus dependencias de k8s.io; configura el servicio HTTPS, la autenticación y autorización delegadas, los tipos reales de example.com/v1, el almacenamiento y el contexto para el cierre del servidor. El grupo y la versión de APIService deben coincidir con los del servidor.
 
 ```go
 // Extension API Server Example
@@ -637,9 +637,9 @@ Las extensiones del Scheduler permiten personalizar el comportamiento del Schedu
 
 ### Framework del Scheduler
 
-El framework del Scheduler, introducido en Kubernetes 1.15, permite ampliar varias etapas del flujo de programación mediante complementos:
+El framework del Scheduler, introducido en Kubernetes 1.15, permite ampliar varias etapas del proceso de planificación mediante complementos:
 
-1. **Ordenación de la cola**: Ordena los Pod de la cola de programación
+1. **Ordenación de la cola**: Ordena los Pod de la cola de planificación
 2. **Pre-filter**: Comprueba el estado del Pod y del clúster antes del filtrado
 3. **Filter**: Filtra los nodos que no pueden ejecutar el Pod
 4. **Post-filter**: Realiza acciones después del filtrado
@@ -647,7 +647,7 @@ El framework del Scheduler, introducido en Kubernetes 1.15, permite ampliar vari
 6. **Score**: Asigna puntuaciones a los nodos
 7. **Normalización de la puntuación**: Normaliza las puntuaciones
 8. **Reserve**: Reserva recursos para el Pod
-9. **Permit**: Permite, deniega o retrasa la programación del Pod
+9. **Permit**: Permite, deniega o retrasa la planificación del Pod
 10. **Pre-bind**: Realiza acciones antes de la vinculación
 11. **Bind**: Vincula el Pod a un nodo
 12. **Post-bind**: Realiza acciones después de la vinculación
@@ -677,7 +677,7 @@ profiles:
 
 ### Scheduler personalizado
 
-El siguiente Deployment requiere una imagen compilada de custom-scheduler, un ConfigMap llamado custom-scheduler-config que contenga el config.yaml anterior y un ServiceAccount con RBAC revisado para programación/Lease. Usa la autenticación dentro del clúster; un worker no puede montar el scheduler.conf de un plano de control administrado. El schedulerName debe coincidir con el del Pod.
+El siguiente Deployment requiere una imagen compilada de custom-scheduler, un ConfigMap llamado custom-scheduler-config que contenga el config.yaml anterior y un ServiceAccount con permisos RBAC revisados para la planificación y los recursos Lease. Usa la autenticación dentro del clúster; un nodo de trabajo no puede montar el scheduler.conf de un plano de control administrado. El schedulerName debe coincidir con el del Pod.
 
 ```yaml
 apiVersion: apps/v1
@@ -750,7 +750,7 @@ CSI proporciona una interfaz estándar entre Kubernetes y los sistemas de almace
 
 El siguiente diagrama muestra la arquitectura y el funcionamiento de CSI:
 
-![Diagrama de arquitectura que muestra una PersistentVolumeClaim creada por un usuario y que hace referencia a una StorageClass y un aprovisionador externo CSI que solicita un volumen al controlador CSI; los servicios de controlador y nodo crean y montan el volumen en el sistema de almacenamiento, donde se vincula como PersistentVolume y se monta en el Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-4.png)
+![Una PersistentVolumeClaim creada por el usuario hace referencia a una StorageClass. El aprovisionador externo CSI solicita un volumen al controlador CSI, cuyos servicios de controlador y nodo crean y montan el volumen del sistema de almacenamiento. El volumen se representa mediante un PersistentVolume vinculado a la solicitud y se monta en el Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-4.html)
 
@@ -788,7 +788,7 @@ CSI consta de los siguientes componentes:
 +-------------------+
 ```
 
-### Implementación del controlador CSI
+### Despliegue del controlador CSI
 
 Lo siguiente es una plantilla para autores de controladores, no una instalación completa. Proporciona la imagen y los argumentos del controlador, versiones compatibles de sidecar, ServiceAccounts/RBAC y el registro CSIDriver del proveedor. NodePlugin se ejecuta en Linux y requiere las rutas del host y los privilegios documentados.
 
@@ -972,7 +972,7 @@ CNI proporciona una interfaz estándar entre Kubernetes y las soluciones de rede
 
 El siguiente diagrama muestra la arquitectura y el funcionamiento de CNI:
 
-![Diagrama de arquitectura que muestra a kubelet solicitando al tiempo de ejecución de contenedores que cree un contenedor; este solicita la configuración de red al complemento CNI, que asigna una IP del conjunto del complemento IPAM y aplica la configuración de red a la red del Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-5.png)
+![Kubelet solicita al entorno de ejecución de contenedores que cree un contenedor. Este solicita la configuración de red al complemento CNI, que asigna una IP del conjunto gestionado por el complemento IPAM y configura la red del Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-5.html)
 
@@ -1011,7 +1011,7 @@ CNI consta de los siguientes componentes:
 
 ### Configuración del complemento CNI
 
-Este ejemplo de bridge/host-local de un solo nodo ilustra el contrato de CNI; un clúster necesita subredes únicas por nodo y enrutamiento entre nodos. El tiempo de ejecución de CRI llama a CNI; kubelet moderno no lo hace directamente.
+Este ejemplo de bridge/host-local para un solo nodo ilustra el contrato de CNI; un clúster necesita subredes únicas por nodo y enrutamiento entre nodos. El entorno de ejecución que implementa CRI llama a CNI; las versiones modernas de kubelet no lo hacen directamente.
 
 ```json
 {
@@ -1091,9 +1091,9 @@ Los complementos de dispositivos constan de los siguientes componentes:
 
 ### Complemento de dispositivos GPU de NVIDIA
 
-Ejemplo de implementación del complemento de dispositivos GPU de NVIDIA:
+Ejemplo de despliegue del complemento de dispositivos GPU de NVIDIA:
 
-Primero, configura controladores NVIDIA, Container Toolkit y tiempo de ejecución de contenedores compatibles. Fija una versión probada del chart oficial de Helm del complemento de dispositivos de NVIDIA y selecciona nodos GPU Linux. Evita una instalación duplicada si GPU Operator o Auto Mode ya administra el complemento.
+Primero, configura controladores NVIDIA, Container Toolkit y un entorno de ejecución de contenedores compatibles entre sí. Fija una versión probada del chart oficial de Helm del complemento de dispositivos de NVIDIA y selecciona nodos Linux con GPU. Evita una instalación duplicada si GPU Operator o Auto Mode ya administra el complemento.
 
 ### Pod que solicita una GPU
 
@@ -1127,13 +1127,13 @@ spec:
 
 ## Funciones de extensión en Amazon EKS {#extension-features-in-amazon-eks}
 
-La compatibilidad de versiones de EKS difiere de la de upstream. A fecha de 2026-10-12, la compatibilidad estándar de EKS abarca de 1.34 a 1.37; comprueba también la matriz de compatibilidad de cada complemento y controlador.
+El soporte de versiones de EKS difiere del que ofrece el proyecto original de Kubernetes. A fecha de 2026-10-12, el soporte estándar de EKS cubre las versiones 1.34 a 1.37; comprueba también la matriz de compatibilidad de cada complemento y controlador.
 
 Amazon EKS admite varias funciones de extensión para ampliar las capacidades de los clústeres de Kubernetes.
 
 El siguiente diagrama muestra la arquitectura de las funciones de extensión en Amazon EKS:
 
-![EKS administra el plano de control; las cargas de trabajo de los complementos se ejecutan en recursos de cómputo de worker compatibles. IRSA concede permisos a los Pod mediante ServiceAccounts, mientras que los roles IAM de los nodos son independientes. ACK reconcilia los recursos de AWS mediante las API de AWS.](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
+![EKS administra el plano de control; las cargas de trabajo de los complementos se ejecutan en recursos de cómputo compatibles de los nodos de trabajo. IRSA concede permisos a los Pod mediante ServiceAccounts; los roles IAM de los nodos son independientes. ACK reconcilia los recursos de AWS mediante las API de AWS.](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-6.html)
 
@@ -1179,7 +1179,7 @@ helm upgrade --install ack-s3-controller oci://public.ecr.aws/aws-controllers-k8
 # Creating a Bucket CR provisions a real AWS resource: review IAM, naming and retention first.
 ```
 
-El siguiente ejemplo de Bucket aprovisiona un recurso real de AWS cuando el controlador y los permisos de IAM están configurados. Sustituye el nombre por un valor único globalmente y revisa la configuración del ciclo de vida y la retención. La eliminación del objeto de Kubernetes puede eliminar el bucket; configura la política de eliminación del controlador según tus requisitos de retención de datos.
+El siguiente ejemplo de Bucket crea un recurso real de AWS cuando están configurados el controlador y los permisos IAM. Sustituye el nombre por uno único en todo el mundo y revisa la configuración del ciclo de vida y de retención. Eliminar el objeto de Kubernetes puede eliminar también el bucket; configura la política de eliminación del controlador según tus requisitos de retención de datos.
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -1192,7 +1192,7 @@ spec:
 
 ### AWS Load Balancer Controller
 
-AWS Load Balancer Controller integra los Service y los ingress de Kubernetes con los balanceadores de carga de AWS:
+AWS Load Balancer Controller integra los recursos Service e Ingress de Kubernetes con los balanceadores de carga de AWS:
 
 ```yaml
 # ALB Ingress example
@@ -1218,9 +1218,9 @@ spec:
               number: 80
 ```
 
-### Roles de IAM para Service Accounts (IRSA)
+### Roles de IAM para cuentas de servicio (IRSA)
 
-IRSA permite que los Pod accedan de forma segura a los servicios de AWS al asociar roles de AWS IAM con Service Accounts de Kubernetes:
+IRSA permite que los Pod accedan de forma segura a los servicios de AWS al asociar roles IAM de AWS con cuentas de servicio de Kubernetes:
 
 ```bash
 # Create OIDC provider
@@ -1262,7 +1262,7 @@ Veamos las prácticas recomendadas que debes tener en cuenta al implementar func
 
 1. **Usar interfaces estándar**: Usa interfaces estándar como CSI y CNI siempre que sea posible
 2. **Diseño declarativo de API**: Diseña API declarativas en lugar de imperativas
-3. **Seguir los principios de diseño de Kubernetes**: Sigue principios como el patrón de controlador y la activación por nivel
+3. **Seguir los principios de diseño de Kubernetes**: Sigue principios como el patrón de controlador y la reconciliación basada en el estado actual
 4. **Administración de versiones**: Administra las versiones de API y mantén la compatibilidad
 5. **Principio de privilegio mínimo**: Concede solo los permisos mínimos necesarios
 
@@ -1270,15 +1270,15 @@ Veamos las prácticas recomendadas que debes tener en cuenta al implementar func
 
 1. **Aprovechar bibliotecas reutilizables**: Aprovecha bibliotecas como client-go y controller-runtime
 2. **Gestión adecuada de errores**: Gestiona y registra adecuadamente las situaciones de error
-3. **Retroceso exponencial**: Usa el retroceso exponencial para los reintentos
+3. **Espera exponencial entre reintentos**: Aumenta exponencialmente el tiempo de espera entre reintentos
 4. **Establecer límites de recursos**: Establece límites de memoria y CPU
 5. **Informes de estado**: Informa correctamente del estado de los recursos
 
-### Prácticas recomendadas de implementación en producción
+### Prácticas recomendadas de despliegue
 
 1. **Despliegue gradual**: Despliega gradualmente en lugar de cambiar todo de una vez
 2. **Administración de versiones**: Evita usar la etiqueta latest para las imágenes
-3. **Comprobaciones de estado**: Configura sondas de disponibilidad y actividad adecuadas
+3. **Comprobaciones de estado**: Configura sondas adecuadas de actividad (liveness) y disponibilidad (readiness)
 4. **Registro y supervisión**: Configura un registro y una supervisión completos
 5. **Documentación**: Documenta las API y su uso
 

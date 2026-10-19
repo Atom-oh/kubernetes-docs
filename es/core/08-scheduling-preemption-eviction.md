@@ -1,20 +1,20 @@
-# Programación, desalojo por prioridad y expulsión en Kubernetes
+# Planificación, desalojo por prioridad y expulsión en Kubernetes
 
 > **Versiones compatibles**: Kubernetes 1.34 - 1.37 (ejemplo de Descheduler v0.37)
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-En Kubernetes, la programación es el proceso de colocar Pods en nodos adecuados. El desalojo por prioridad es el proceso de eliminar Pods de menor prioridad para hacer espacio para Pods de mayor prioridad, y la expulsión termina un Pod; su controlador de carga de trabajo puede crear un reemplazo que el programador coloca por separado. En este capítulo, aprenderemos sobre los mecanismos de programación de Kubernetes, la selección de nodos, el desalojo por prioridad, la expulsión y los métodos de optimización de la programación en Amazon EKS.
+En Kubernetes, la planificación es el proceso de colocar Pods en nodos adecuados. El desalojo por prioridad es el proceso de eliminar Pods de menor prioridad para hacer espacio para Pods de mayor prioridad, y la expulsión termina un Pod; su controlador de carga de trabajo puede crear un reemplazo que el planificador coloca por separado. En este capítulo, aprenderemos sobre los mecanismos de planificación de Kubernetes, la selección de nodos, el desalojo por prioridad, la expulsión y los métodos de optimización de la planificación en Amazon EKS.
 
 ## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitas las siguientes herramientas y el siguiente entorno:
 
 ### Herramientas necesarias
-- kubectl dentro de una versión secundaria de la del servidor de API
+- kubectl con una diferencia máxima de una versión menor respecto al servidor de API
 - Un clúster de Kubernetes funcional (EKS, minikube, kind, etc.)
-- Un clúster con varios nodos (para pruebas de programación)
+- Un clúster con varios nodos (para las pruebas de planificación)
 
-### Configuración del ejemplo de programación
+### Configuración del ejemplo de planificación
 
 ```bash
 # Create namespace
@@ -72,13 +72,13 @@ spec:
 EOF
 ```
 
-## Arquitectura de programación de Kubernetes
+## Arquitectura de planificación de Kubernetes
 
-![Arquitectura de programación de Kubernetes: kube-scheduler ejecuta Pods mediante las etapas de encolado, filtrado, puntuación y vinculación, sujeto a políticas de colocación, con el desalojo por prioridad y la expulsión que retroalimentan el proceso.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-0.png)
+![Arquitectura de planificación de Kubernetes: kube-scheduler asigna los Pods mediante las etapas de cola, filtrado, puntuación y vinculación, respetando las políticas de ubicación. El desalojo por prioridad y la expulsión realimentan este proceso.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-0.html)
 
-## Comparación de conceptos de programación
+## Comparación de conceptos de planificación
 
 | Concepto | Propósito | Casos de uso | Versión de Kubernetes |
 |---------|---------|-----------|-------------------|
@@ -86,20 +86,20 @@ EOF
 | **Afinidad de nodo** | Definir reglas complejas de selección de nodos | Selección avanzada de nodos | 1.6+ |
 | **Afinidad de Pods** | Colocar Pods cerca de otros Pods | Ubicar juntos servicios relacionados | 1.6+ |
 | **Antiafinidad de Pods** | Colocar Pods lejos de otros Pods | Garantizar alta disponibilidad | 1.6+ |
-| **Taints y tolerations** | Permitir solo ciertos Pods en los nodos | Nodos dedicados, aislamiento de nodos | 1.6+ |
+| **Taints y tolerancias** | Permitir solo ciertos Pods en los nodos | Nodos dedicados, aislamiento de nodos | 1.6+ |
 | **Restricciones de distribución de topología** | Distribuir Pods entre dominios de topología | Distribución entre zonas de disponibilidad | 1.16+ (GA en 1.19) |
 | **Prioridad y desalojo por prioridad** | Dar prioridad a las cargas de trabajo importantes | Garantías para servicios críticos | 1.8+ (GA en 1.14) |
 | **Presupuesto de interrupción de Pods** | Limitar los Pods interrumpidos simultáneamente | Garantizar alta disponibilidad | 1.4+ (GA en 1.21) |
 
-## Conceptos básicos de programación
+## Conceptos básicos de planificación
 
-> **Concepto clave**: El programador de Kubernetes es un componente del plano de control que selecciona el nodo óptimo para ejecutar Pods y opera en dos fases: filtrado y puntuación.
+> **Concepto clave**: El planificador de Kubernetes es un componente del plano de control que selecciona el nodo óptimo para ejecutar Pods y opera en dos fases: filtrado y puntuación.
 
-### Proceso de programación
+### Proceso de planificación
 
 1. **Fase de filtrado (predicados)**
    - Identifica un conjunto adecuado de nodos donde se puede ejecutar el Pod
-   - Tiene en cuenta los requisitos de recursos, los selectores de nodo, las reglas de afinidad, los taints/tolerations, etc.
+   - Tiene en cuenta los requisitos de recursos, los selectores de nodo, las reglas de afinidad, los taints/tolerancias, etc.
    - Excluye un nodo si no se cumple alguna condición
 
 2. **Fase de puntuación (prioridades)**
@@ -112,11 +112,11 @@ EOF
    - Actualiza la información de vinculación en el servidor de API
 
 ## Tabla de contenido
-1. [Descripción general de la programación](#scheduling-overview)
-2. [Cómo funciona el programador](#how-the-scheduler-works)
+1. [Descripción general de la planificación](#scheduling-overview)
+2. [Cómo funciona el planificador](#how-the-scheduler-works)
 3. [Selección de nodos](#node-selection)
 4. [Afinidad y antiafinidad de Pods](#pod-affinity-and-anti-affinity)
-5. [Taints y tolerations](#taints-and-tolerations)
+5. [Taints y tolerancias](#taints-and-tolerations)
 6. [Afinidad de nodo](#node-affinity)
 7. [Prioridad de Pods y desalojo por prioridad](#pod-priority-and-preemption)
 8. [Expulsión de Pods](#pod-eviction)
@@ -125,24 +125,24 @@ EOF
 11. [TopologySpreadConstraints](#topologyspreadconstraints)
 12. [Costo de eliminación de Pods](#pod-deletion-cost)
 13. [Descheduler](#descheduler)
-14. [Optimización de la programación en Amazon EKS](#scheduling-optimization-in-amazon-eks)
-15. [Prácticas recomendadas de programación](#scheduling-best-practices)
+14. [Optimización de la planificación en Amazon EKS](#scheduling-optimization-in-amazon-eks)
+15. [Prácticas recomendadas de planificación](#scheduling-best-practices)
 16. [Conclusión](#conclusion)
 
-## Descripción general de la programación {#scheduling-overview}
+## Descripción general de la planificación {#scheduling-overview}
 
-El programador de Kubernetes es un componente del plano de control que coloca Pods en nodos adecuados. El programador tiene en cuenta diversos factores para determinar el nodo óptimo donde colocar los Pods:
+El planificador de Kubernetes es un componente del plano de control que coloca Pods en nodos adecuados. El planificador tiene en cuenta diversos factores para determinar el nodo óptimo donde colocar los Pods:
 
 1. **Requisitos de recursos**: CPU, memoria y otros recursos solicitados por el Pod
 2. **Restricciones de hardware/software/políticas**: selectores de nodo, afinidad de nodo, taints, etc.
 3. **Especificaciones de afinidad/antiafinidad**: relaciones de colocación con otros Pods
 4. **Localidad de los datos**: colocar Pods cerca de los datos
 5. **Interferencia entre cargas de trabajo**: minimizar la interferencia entre distintas cargas de trabajo
-6. **Objetivos personalizados**: la programación que tiene en cuenta los plazos o la interferencia entre cargas de trabajo requiere lógica personalizada adecuada; el programador predeterminado no infiere los plazos de las aplicaciones
+6. **Objetivos personalizados**: la planificación que tiene en cuenta los plazos o la interferencia entre cargas de trabajo requiere lógica personalizada adecuada; el planificador predeterminado no infiere los plazos de las aplicaciones
 
-### Proceso de programación
+### Proceso de planificación
 
-El proceso de programación se divide, en términos generales, en dos fases:
+El proceso de planificación se divide, en términos generales, en dos fases:
 
 1. **Filtrado**: identifica un conjunto de nodos donde se puede ejecutar el Pod
    - Comprueba si se cumplen los requisitos de recursos
@@ -152,31 +152,31 @@ El proceso de programación se divide, en términos generales, en dos fases:
    - Equilibrio de la utilización de recursos
    - Afinidad/antiafinidad entre Pods
    - Localidad de los datos
-   - Taints/tolerations
+   - Taints/tolerancias
 
-## Cómo funciona el programador {#how-the-scheduler-works}
+## Cómo funciona el planificador {#how-the-scheduler-works}
 
-El programador de Kubernetes opera mediante el siguiente proceso:
+El planificador de Kubernetes opera mediante el siguiente proceso:
 
-![Diagrama de flujo que muestra un evento de creación de un Pod que avanza por la cola de programación, kube-scheduler, los complementos de filtrado y puntuación, la selección del mejor nodo y una solicitud de vinculación al servidor de API, hasta que el Pod queda en un nodo.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-1.png)
+![Diagrama de flujo que muestra un evento de creación de un Pod que avanza por la cola de planificación, kube-scheduler, los complementos de filtrado y puntuación, la selección del mejor nodo y una solicitud de vinculación al servidor de API, hasta que el Pod queda en un nodo.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-1.html)
 
-1. **Supervisión de la cola de Pods**: el programador supervisa el servidor de API en busca de Pods sin programar.
-2. **Filtrado de nodos**: identifica un conjunto de nodos donde se puede ejecutar el Pod.
-3. **Puntuación de nodos**: asigna puntuaciones a los nodos filtrados.
+1. **Supervisión de la cola de Pods**: el planificador observa el servidor de API para detectar Pods que aún no tienen un nodo asignado.
+2. **Filtrado de nodos**: identifica los nodos donde puede ejecutarse el Pod.
+3. **Puntuación de nodos**: asigna puntuaciones a los nodos que superaron el filtrado.
 4. **Selección de nodo**: selecciona el nodo con la puntuación más alta.
 5. **Vinculación**: vincula el Pod al nodo seleccionado.
 
-### Complementos de programación
+### Complementos de planificación
 
-El programador de Kubernetes está diseñado para ser extensible mediante una arquitectura de complementos. Varios complementos operan en distintas etapas del proceso de programación:
+El planificador de Kubernetes está diseñado para ser extensible mediante una arquitectura de complementos. Varios complementos operan en distintas etapas del proceso de planificación:
 
 1. **Complementos de filtrado**: descartan los nodos donde no se puede ejecutar el Pod
    - NodeResourcesFit: comprueba la capacidad de recursos del nodo
    - NodeName: comprueba el campo nodeName del Pod
-   - NodeUnschedulable: comprueba si se puede programar en el nodo
-   - TaintToleration: comprueba los taints y las tolerations
+   - NodeUnschedulable: comprueba si el nodo admite nuevas asignaciones de Pods
+   - TaintToleration: comprueba los taints y las tolerancias
 
 2. **Complementos de puntuación**: asignan puntuaciones a los nodos
    - NodeResourcesBalancedAllocation: tiene en cuenta el equilibrio del uso de recursos
@@ -189,8 +189,8 @@ El programador de Kubernetes está diseñado para ser extensible mediante una ar
 `NodeResourcesFit` es tanto un complemento de filtrado (¿el nodo tiene suficiente CPU/memoria asignable para el Pod?) como un complemento de puntuación. El comportamiento de su complemento de puntuación se controla mediante `scoringStrategy.type`, configurado a través de `KubeSchedulerConfiguration`:
 
 - **`LeastAllocated`** (predeterminado): asigna puntuaciones más altas a los nodos cuanto *menos* recursos tengan asignados. Los nuevos Pods se dirigen a los nodos más vacíos para distribuir la carga de manera uniforme.
-- **`MostAllocated`**: asigna puntuaciones más altas a los nodos cuanto *más* recursos tengan asignados (siempre que el Pod todavía quepa). Los nuevos Pods se agrupan primero en los nodos más ocupados y dejan los demás nodos intactos o vacíos.
-- **`RequestedToCapacityRatio`**: una curva configurable entre ambas estrategias, útil para recursos extendidos como las GPU, cuando se necesita una forma personalizada en lugar de un mínimo/máximo puro.
+- **`MostAllocated`**: asigna puntuaciones más altas a los nodos cuanto *más* recursos tengan asignados (siempre que el nodo disponga de recursos suficientes para el Pod). Los nuevos Pods se agrupan primero en los nodos más ocupados y dejan los demás nodos intactos o vacíos.
+- **`RequestedToCapacityRatio`**: una curva configurable entre ambas estrategias, útil para recursos extendidos como las GPU, cuando se necesita una curva de puntuación personalizada en lugar de favorecer únicamente la asignación mínima o máxima.
 
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
@@ -209,24 +209,24 @@ profiles:
           weight: 1
 ```
 
-El plano de control de Amazon EKS está totalmente administrado, por lo que no puedes editar directamente `KubeSchedulerConfiguration` del kube-scheduler predeterminado. Para usar `MostAllocated`, ejecuta un segundo programador (un `Deployment` que ejecute el binario `kube-scheduler` con esta configuración, vinculado a `system:kube-scheduler`/`system:volume-scheduler` mediante un `ServiceAccount` dedicado) y dirige Pods específicos a él con `spec.schedulerName`, como se muestra más abajo en [Varios programadores](#multiple-schedulers), siguiendo el mismo patrón que en [Crear un programador personalizado](../scheduling/01-custom-scheduler-part1.md).
+El plano de control de Amazon EKS está totalmente administrado, por lo que no puedes editar directamente `KubeSchedulerConfiguration` del kube-scheduler predeterminado. Para usar `MostAllocated`, ejecuta un segundo planificador (un `Deployment` que ejecute el binario `kube-scheduler` con esta configuración, vinculado a `system:kube-scheduler`/`system:volume-scheduler` mediante un `ServiceAccount` dedicado) y dirige Pods específicos a él con `spec.schedulerName`, como se muestra más abajo en [Varios planificadores](#multiple-schedulers), siguiendo el mismo patrón que en [Crear un planificador personalizado](../scheduling/01-custom-scheduler-part1.md).
 
-**Prueba verificada: comportamiento de distribución frente a empaquetado compacto.** Para confirmar la diferencia práctica, se preparó un clúster `kind` desechable de 3 nodos de trabajo (`kubectl version` v1.37.0, aislado y eliminado tras la prueba; no se afectó ninguna infraestructura compartida) con una carga de referencia desigual mediante Pods de relleno fijados con `nodeName` (16 CPU asignables por nodo): `worker`=12 Pods (75%), `worker2`=6 Pods (37%), `worker3`=0 Pods (0%). Luego se programaron seis Pods idénticos de 1 CPU dos veces, una con el programador predeterminado (`LeastAllocated`) y otra con un segundo programador configurado con `MostAllocated`, usando el mismo estado inicial:
+**Prueba verificada: comportamiento de distribución frente a empaquetado compacto.** Para confirmar la diferencia práctica, se preparó un clúster `kind` desechable de 3 nodos de trabajo (`kubectl version` v1.37.0, aislado y eliminado tras la prueba; no se afectó ninguna infraestructura compartida) con una carga de referencia desigual mediante Pods de relleno fijados con `nodeName` (16 CPU asignables por nodo): `worker`=12 Pods (75%), `worker2`=6 Pods (37%), `worker3`=0 Pods (0%). Luego se asignaron seis Pods idénticos de 1 CPU dos veces, una con el planificador predeterminado (`LeastAllocated`) y otra con un segundo planificador configurado con `MostAllocated`, usando el mismo estado inicial:
 
-| Programador / estrategia | Dónde quedaron los 6 Pods nuevos | Utilización final de CPU (worker / worker2 / worker3) |
+| Planificador / estrategia | Dónde quedaron los 6 Pods nuevos | Utilización final de CPU (worker / worker2 / worker3) |
 |---|---|---|
 | Predeterminado (`LeastAllocated`) | Los 6 en `worker3` (el nodo más vacío) | 75% / 37% / 37% (los tres nodos ahora están ocupados) |
 | `MostAllocated` | 3 en `worker`, 3 en `worker2` (los dos nodos más ocupados) | 93% / 56% / 0% (`worker3` quedó completamente inactivo) |
 
-`LeastAllocated` aumentó la carga de `worker3` hasta igualar a `worker2`, por lo que todos los nodos terminan parcialmente utilizados y ninguno puede reducirse de forma segura. `MostAllocated` siguió concentrando la carga en los nodos ya ocupados y dejó `worker3` intacto: exactamente el nodo que un autoescalador de clúster o un proceso de consolidación de Karpenter terminaría después.
+`LeastAllocated` aumentó la carga de `worker3` hasta igualar a `worker2`, de modo que todos los nodos quedaron parcialmente utilizados y ninguno podía retirarse con seguridad. `MostAllocated` siguió concentrando la carga en los nodos ya ocupados y dejó `worker3` vacío: precisamente el nodo que Cluster Autoscaler o la consolidación de Karpenter podría retirar después.
 
 Por eso se suele recomendar `MostAllocated` para las **cargas de trabajo por lotes o los trabajos de corta duración** que se ejecutan junto con Karpenter o Cluster Autoscaler: empaquetar los trabajos en menos nodos maximiza la cantidad de nodos que quedan completamente inactivos y pasan a ser aptos para la consolidación, lo que reduce directamente el costo de cómputo. `LeastAllocated` sigue siendo la mejor opción predeterminada para servicios de larga duración sensibles a la latencia, ya que distribuir la carga deja capacidad disponible en cada nodo para absorber picos de tráfico o un `kubectl drain` sin concentrar la presión en un único nodo saturado.
 
-Reproduce esta comparación exacta, paso a paso, en el [Laboratorio de estrategias de puntuación del programador](../labs/core/08-scheduling-preemption-eviction-lab.md).
+Reproduce esta comparación exacta, paso a paso, en el [Laboratorio de estrategias de puntuación del planificador](../labs/core/08-scheduling-preemption-eviction-lab.md).
 
-### Varios programadores {#multiple-schedulers}
+### Varios planificadores {#multiple-schedulers}
 
-Kubernetes puede ejecutar varios programadores al mismo tiempo. Esto permite implementar lógica de programación personalizada para cargas de trabajo específicas.
+Kubernetes puede ejecutar varios planificadores al mismo tiempo. Esto permite implementar lógica de planificación personalizada para cargas de trabajo específicas.
 
 ```yaml
 apiVersion: v1
@@ -240,7 +240,7 @@ spec:
     image: nginx
 ```
 
-En el ejemplo anterior, el campo `schedulerName` especifica el programador que programará el Pod.
+En el ejemplo anterior, el campo `schedulerName` especifica el planificador encargado de asignar el Pod a un nodo.
 
 ## Selección de nodos {#node-selection}
 
@@ -273,11 +273,11 @@ spec:
 
 En el ejemplo anterior, el Pod solo se coloca en nodos con la etiqueta `gpu=true`.
 
-El ejemplo de GPU solo prueba la programación: el nodo debe tener realmente una GPU y un complemento de dispositivo funcional que anuncie `nvidia.com/gpu`. Una etiqueta `gpu=true` por sí sola no asigna recursos de GPU.
+El ejemplo de GPU solo prueba la planificación: el nodo debe tener realmente una GPU y un complemento de dispositivo funcional que anuncie `nvidia.com/gpu`. Una etiqueta `gpu=true` por sí sola no asigna recursos de GPU.
 
 ### nodeName
 
-Puedes usar el campo `nodeName` para colocar directamente un Pod en un nodo específico. Este método omite el programador y, por lo general, no se recomienda.
+Puedes usar el campo `nodeName` para colocar directamente un Pod en un nodo específico. Este método omite el planificador y, por lo general, no se recomienda.
 
 ```yaml
 apiVersion: v1
@@ -361,7 +361,7 @@ En el ejemplo anterior, el Pod `frontend` se coloca en un host distinto al de ot
 
 La afinidad y la antiafinidad de Pods tienen dos tipos:
 
-1. **requiredDuringSchedulingIgnoredDuringExecution**: requisito estricto que debe cumplirse durante la programación
+1. **requiredDuringSchedulingIgnoredDuringExecution**: requisito estricto que debe cumplirse durante la planificación
 2. **preferredDuringSchedulingIgnoredDuringExecution**: requisito flexible que se prefiere, pero no es obligatorio
 
 ```yaml
@@ -382,17 +382,17 @@ affinity:
 
 En el ejemplo anterior, el campo `weight` indica el peso de esta preferencia. Si hay varias preferencias, las de mayor peso se consideran más importantes.
 
-## Taints y tolerations {#taints-and-tolerations}
+## Taints y tolerancias {#taints-and-tolerations}
 
-Los taints y las tolerations son mecanismos que permiten a los nodos rechazar determinados Pods.
+Los taints y las tolerancias son mecanismos que permiten a los nodos rechazar determinados Pods.
 
-![Diagrama que muestra un taint de nodo que rechaza Pods salvo que tengan una toleration coincidente, los tres efectos de taint NoSchedule, PreferNoSchedule y NoExecute, y un ejemplo práctico en el que un nodo GPU con el taint key=gpu:NoSchedule rechaza un Pod normal, pero admite un Pod GPU con una toleration coincidente.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-4.png)
+![Diagrama que muestra un taint de nodo que rechaza Pods salvo que tengan una tolerancia coincidente, los tres efectos de taint NoSchedule, PreferNoSchedule y NoExecute, y un ejemplo práctico en el que un nodo GPU con el taint key=gpu:NoSchedule rechaza un Pod normal, pero admite un Pod GPU con una tolerancia coincidente.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-4.html)
 
 ### Taints
 
-Los taints se aplican a los nodos para restringir la programación de Pods en ellos.
+Los taints se aplican a los nodos para restringir la planificación de Pods en ellos.
 
 ```bash
 # Add taint to node
@@ -401,13 +401,13 @@ kubectl taint nodes node1 key=value:NoSchedule
 
 Hay tres efectos de taint:
 
-1. **NoSchedule**: los Pods sin tolerations no se programan en el nodo
-2. **PreferNoSchedule**: se procura no programar en el nodo Pods sin tolerations
-3. **NoExecute**: los Pods sin tolerations se expulsan del nodo
+1. **NoSchedule**: los Pods sin tolerancias no se asignan al nodo
+2. **PreferNoSchedule**: se procura no asignar al nodo Pods sin tolerancias
+3. **NoExecute**: los Pods sin tolerancias se expulsan del nodo
 
-### Tolerations
+### Tolerancias
 
-Las tolerations se aplican a los Pods para permitir su programación en nodos con taints.
+Las tolerancias se aplican a los Pods para permitir su planificación en nodos con taints.
 
 ```yaml
 apiVersion: v1
@@ -425,15 +425,15 @@ spec:
     image: nginx
 ```
 
-En el ejemplo anterior, el Pod se puede programar en nodos con el taint `key=value:NoSchedule`.
+En el ejemplo anterior, el Pod se puede asignar a nodos con el taint `key=value:NoSchedule`.
 
 ### Casos de uso
 
-Casos de uso habituales de taints y tolerations:
+Casos de uso habituales de taints y tolerancias:
 
 1. **Nodos dedicados**: designar nodos para ejecutar solo cargas de trabajo específicas
 2. **Hardware especializado**: administrar nodos con hardware especializado, como GPU
-3. **Mantenimiento de nodos**: impedir que se programen nuevos Pods en nodos en mantenimiento
+3. **Mantenimiento de nodos**: impedir que se asignen nuevos Pods en nodos en mantenimiento
 4. **Problemas en los nodos**: expulsar Pods de nodos con problemas
 
 ### Taints predeterminados
@@ -446,7 +446,7 @@ Kubernetes aplica taints predeterminados a algunos nodos:
 - **node.kubernetes.io/disk-pressure**: el nodo tiene presión de disco
 - **node.kubernetes.io/pid-pressure**: el nodo tiene presión de PID
 - **node.kubernetes.io/network-unavailable**: la red del nodo no está disponible
-- **node.kubernetes.io/unschedulable**: no se puede programar en el nodo
+- **node.kubernetes.io/unschedulable**: el nodo no admite nuevas asignaciones de Pods
 
 ## Afinidad de nodo {#node-affinity}
 
@@ -456,7 +456,7 @@ La afinidad de nodo ofrece una manera más expresiva de colocar Pods en conjunto
 
 La afinidad de nodo tiene dos tipos:
 
-1. **requiredDuringSchedulingIgnoredDuringExecution**: requisito estricto que debe cumplirse durante la programación
+1. **requiredDuringSchedulingIgnoredDuringExecution**: requisito estricto que debe cumplirse durante la planificación
 2. **preferredDuringSchedulingIgnoredDuringExecution**: requisito flexible que se prefiere, pero no es obligatorio
 
 ```yaml
@@ -505,7 +505,7 @@ La afinidad de nodo admite varios operadores:
 
 Kubernetes ofrece funciones de prioridad y desalojo por prioridad de Pods para garantizar que las cargas de trabajo importantes puedan obtener recursos del clúster.
 
-![Diagrama que muestra cómo PriorityClass asigna prioridad a un Pod y activa el desalojo por prioridad de Pods de menor prioridad cuando los recursos son insuficientes, junto con el proceso de desalojo por prioridad de cuatro pasos, desde el fallo de programación hasta la programación del Pod de mayor prioridad, y ejemplos de clases de prioridad integradas.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-5.png)
+![Diagrama que muestra cómo PriorityClass asigna prioridad a un Pod y activa el desalojo por prioridad de Pods de menor prioridad cuando los recursos son insuficientes, junto con el proceso de desalojo por prioridad de cuatro pasos, desde el fallo de planificación hasta la planificación del Pod de mayor prioridad, y ejemplos de clases de prioridad integradas.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-5.html)
 
@@ -543,27 +543,27 @@ spec:
 
 ### Desalojo por prioridad
 
-El desalojo por prioridad es el proceso de eliminar Pods de menor prioridad para programar Pods de mayor prioridad. Cuando el programador no puede encontrar un nodo para programar un Pod de mayor prioridad, desaloja Pods de menor prioridad para obtener recursos.
+El desalojo por prioridad es el proceso de eliminar Pods de menor prioridad para asignar Pods de mayor prioridad. Cuando el planificador no puede encontrar un nodo para asignar un Pod de mayor prioridad, desaloja Pods de menor prioridad para obtener recursos.
 
 Proceso de desalojo por prioridad:
-1. El programador no puede encontrar un nodo para programar un Pod de mayor prioridad
-2. El programador selecciona un nodo para eliminar Pods de menor prioridad mediante el desalojo por prioridad
-3. Solicita la eliminación de los Pods seleccionados de menor prioridad a través de la API; kubelet/runtime realizan la terminación
-4. Cuando los Pods terminan correctamente, programa el Pod de mayor prioridad en ese nodo
+1. El planificador no encuentra un nodo para el Pod de mayor prioridad
+2. Selecciona un nodo en el que desalojará Pods de menor prioridad
+3. Solicita la eliminación de los Pods seleccionados mediante la API; kubelet y el entorno de ejecución realizan su terminación
+4. Una vez que los Pods completan su cierre ordenado, asigna el Pod de mayor prioridad a ese nodo
 
 ### Consideraciones sobre el desalojo por prioridad
 
 Aspectos que se deben tener en cuenta al usar el desalojo por prioridad:
 
-1. **Período de terminación gradual**: los Pods desalojados por prioridad atraviesan el proceso de terminación gradual durante el tiempo especificado en `terminationGracePeriodSeconds`
-2. **PodDisruptionBudget**: el programador intenta evitar incumplimientos, pero el desalojo por prioridad puede incumplir un PDB si no hay víctimas adecuadas que permitan evitarlo
+1. **Período de cierre ordenado**: los Pods desalojados por prioridad atraviesan el proceso de cierre ordenado durante el tiempo especificado en `terminationGracePeriodSeconds`
+2. **PodDisruptionBudget**: el planificador intenta evitar incumplimientos, pero el desalojo por prioridad puede incumplir un PDB si no puede seleccionar Pods para desalojar sin incumplirlo
 3. **Clases de prioridad del sistema**: Kubernetes proporciona clases de prioridad para componentes del sistema
    - `system-cluster-critical`: Pods críticos para el funcionamiento del clúster
    - `system-node-critical`: Pods críticos para el funcionamiento del nodo
 
 ## Expulsión de Pods {#pod-eviction}
 
-La expulsión termina un Pod; su controlador de carga de trabajo puede crear un reemplazo que el programador coloca por separado. La expulsión puede ocurrir por varios motivos.
+La expulsión termina un Pod; su controlador de carga de trabajo puede crear un reemplazo que el planificador coloca por separado. La expulsión puede ocurrir por varios motivos.
 
 ![Diagrama que agrupa la expulsión de Pods en tres orígenes: el administrador de controladores que expulsa Pods de nodos NotReady o Unreachable; kubelet que expulsa Pods por escasez de recursos o problemas de hardware mientras supervisa las señales de expulsión memory, nodefs, imagefs y pid; y los usuarios que vacían nodos para realizar mantenimiento.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-6.png)
 
@@ -572,7 +572,7 @@ La expulsión termina un Pod; su controlador de carga de trabajo puede crear un 
 ### Tipos de expulsión
 
 1. **Expulsión por kube-controller-manager**:
-   - El taint-eviction-controller gestiona los taints NoExecute. Normalmente, los Pods reciben tolerations de 300 segundos para los estados not-ready/unreachable; la expulsión sigue la configuración de sus tolerations
+   - El taint-eviction-controller gestiona los taints NoExecute. Normalmente, los Pods reciben tolerancias de 300 segundos para los estados not-ready/unreachable; la expulsión sigue la configuración de sus tolerancias
    - Cuando un nodo está en estado Unreachable
 
 2. **Expulsión por kubelet**:
@@ -619,7 +619,7 @@ evictionPressureTransitionPeriod: "30s"
 
 ### Prioridad de expulsión
 
-kubelet ordena los candidatos según si el uso supera las solicitudes, luego según la prioridad del Pod y, por último, según el uso relativo a las solicitudes. No expulsa simplemente primero todos los Pods BestEffort, luego todos los Burstable y después todos los Guaranteed. La presión de disco/PID tiene restricciones contables distintas; QoS no es un orden de expulsión universal.
+kubelet ordena los candidatos según si su uso supera los recursos solicitados, después según la prioridad del Pod y, por último, según su uso relativo a las solicitudes. No expulsa simplemente todos los Pods BestEffort, luego todos los Burstable y después todos los Guaranteed. El cálculo del consumo bajo presión de disco o de PID tiene restricciones distintas; QoS no determina un orden universal de expulsión.
 
 ## Presupuesto de interrupción de Pods (PDB) {#pod-disruption-budget-pdb}
 
@@ -668,7 +668,7 @@ En los ejemplos anteriores:
 2. Si se cumplen las condiciones del PDB, se procede con la expulsión del Pod
 3. Si no se cumplen las condiciones del PDB, se deniega la expulsión del Pod
 
-Los PDB controlan las solicitudes a la API de expulsión, como las operaciones normales de vaciado y de Descheduler. La eliminación directa de Pods, los despliegues graduales de controladores y la expulsión por presión en el nodo omiten este control. `minAvailable: 2` y `maxUnavailable: 1` son equivalentes únicamente para una carga de trabajo con tres réplicas deseadas; ninguna de las dos opciones crea capacidad de reemplazo.
+Los PDB controlan las solicitudes a la API de expulsión, como las operaciones normales de vaciado de nodos y de Descheduler. La eliminación directa de Pods, las actualizaciones de cargas de trabajo realizadas por sus controladores y la expulsión por presión en el nodo no pasan por este control. `minAvailable: 2` y `maxUnavailable: 1` solo son equivalentes para una carga de trabajo con tres réplicas deseadas; ninguna de las opciones crea capacidad de reemplazo.
 
 ### Prácticas recomendadas para PDB
 
@@ -741,8 +741,8 @@ TopologySpreadConstraints permiten controlar de forma precisa cómo se distribuy
 
 ### Opciones de whenUnsatisfiable
 
-- **DoNotSchedule**: el programador no programa el Pod si no se puede satisfacer la restricción (restricción estricta)
-- **ScheduleAnyway**: el programador sigue programando el Pod y da mayor prioridad a los nodos que minimizan la desviación (restricción flexible)
+- **DoNotSchedule**: el planificador no asigna el Pod si no se puede satisfacer la restricción (restricción estricta)
+- **ScheduleAnyway**: el planificador sigue asignando el Pod y da mayor prioridad a los nodos que minimizan la desviación (restricción flexible)
 
 ### Ejemplo de distribución entre zonas de disponibilidad en EKS
 
@@ -820,7 +820,7 @@ spec:
         image: myapp:v1
 ```
 
-- **minDomains**: si hay menos de 3 dominios aptos, el mínimo global pasa a ser cero. Con maxSkew 1, todavía se puede programar un Pod coincidente en cada dominio apto; los Pods adicionales pueden quedar en estado Pending. No bloquea todos los Pods de inmediato.
+- **minDomains**: si hay menos de 3 dominios aptos, el mínimo global pasa a ser cero. Con maxSkew 1, todavía se puede asignar un Pod coincidente en cada dominio apto; los Pods adicionales pueden quedar en estado Pending. No bloquea todos los Pods de inmediato.
 - **matchLabelKeys**: usa automáticamente en el selector el valor de la etiqueta `version` del Pod, lo que permite distribuir cada revisión sin modificar el selector.
 
 ### Ventajas frente a la antiafinidad de Pods
@@ -828,14 +828,14 @@ spec:
 | Aspecto | TopologySpreadConstraints | Antiafinidad de Pods |
 |--------|---------------------------|-------------------|
 | **Flexibilidad** | Permite una desviación controlada (maxSkew > 1) | Binaria: mismo dominio o dominio diferente |
-| **Restricciones flexibles** | `ScheduleAnyway` para el mejor esfuerzo | `preferredDuringScheduling`, pero con menos control |
+| **Restricciones flexibles** | `ScheduleAnyway` para intentar distribuir los Pods | `preferredDuringScheduling`, pero con menos control |
 | **Varios niveles** | Varias restricciones con distintos topologyKeys | Requiere reglas anidadas complejas |
-| **Rendimiento** | Mejor rendimiento del programador a escala | Puede ralentizar la programación con muchos Pods |
+| **Rendimiento** | Mejor rendimiento del planificador a escala | Puede ralentizar la planificación con muchos Pods |
 | **Caso de uso** | Distribución uniforme con tolerancia | Separación estricta |
 
 ## Costo de eliminación de Pods {#pod-deletion-cost}
 
-El costo de eliminación de Pods es una preferencia de mejor esfuerzo que usa el controlador ReplicaSet al reducir la escala. HPA cambia el número deseado de réplicas; no selecciona Pods individuales como víctimas. La anotación no protege Jobs/StatefulSets, no impide la expulsión ni garantiza el orden de eliminación.
+El costo de eliminación de Pods es una preferencia que el controlador ReplicaSet intenta respetar al reducir el número de réplicas. HPA cambia el número deseado de réplicas; no selecciona los Pods concretos que se eliminarán. La anotación no protege Jobs ni StatefulSets, no impide la expulsión y no garantiza el orden de eliminación.
 
 ### Cómo funciona
 
@@ -888,7 +888,7 @@ spec:
 
 ### Patrón de protección de caché
 
-Ejecuta la caché con solicitudes de CPU explícitas si se va a escalar mediante HPA basado en la utilización de CPU. Lo siguiente es un ejemplo de programación, no una configuración de Redis completa para producción:
+Ejecuta la caché con solicitudes de CPU explícitas si se va a escalar mediante HPA basado en la utilización de CPU. Lo siguiente es un ejemplo de planificación, no una configuración de Redis completa para producción:
 
 ```yaml
 apiVersion: apps/v1
@@ -915,7 +915,7 @@ spec:
             memory: 128Mi
 ```
 
-Después de medir el estado real de calentamiento de la caché, un operador/controlador autorizado puede anotar una vez un Pod seleccionado propiedad de ReplicaSet antes de reducir la escala:
+Después de medir cuánto se ha calentado realmente la caché, un operador o controlador autorizado puede añadir una anotación una sola vez a un Pod seleccionado que pertenezca a un ReplicaSet, antes de reducir el número de réplicas:
 
 ```bash
 kubectl -n default annotate pod "$CACHE_POD" \
@@ -926,24 +926,24 @@ Asigna a `CACHE_POD` el nombre de un Pod de caché real. Escribir anotaciones co
 
 ### Casos de uso prácticos
 
-1. **Cachés con estado administradas por un ReplicaSet**: preferir conservar las réplicas calientes
+1. **Cachés con estado administradas por un ReplicaSet**: preferir conservar las réplicas cuya caché ya está preparada
 2. **Elección de líder**: mantener los Pods líderes en ejecución durante más tiempo
 3. **Drenaje de conexiones**: dar tiempo a las conexiones de larga duración
-4. **Calentamiento de caché**: conservar los Pods con cachés calientes
+4. **Calentamiento de caché**: conservar los Pods cuya caché ya está preparada
 5. **Limitaciones**: los controladores Job y StatefulSet no usan esta preferencia
 
 ## Descheduler
 
-Descheduler es un componente de Kubernetes que expulsa Pods de los nodos para que el programador pueda volver a programarlos en nodos más adecuados. A diferencia del programador, que solo coloca nuevos Pods, Descheduler ayuda a mantener una ubicación óptima de los Pods a lo largo del tiempo.
+Descheduler es un componente de Kubernetes que expulsa Pods de los nodos para que el planificador pueda colocar sus reemplazos en nodos más adecuados. Mientras que el planificador se ocupa de asignar nuevos Pods, Descheduler ayuda a mantener una distribución adecuada a lo largo del tiempo.
 
-![Diagrama que muestra cómo Descheduler restablece el equilibrio cuando las incorporaciones o eliminaciones de nodos o los cambios en Pods alteran la distribución uniforme del clúster, expulsando Pods en ejecución para que el programador los coloque de nuevo, junto con seis estrategias representativas de Descheduler, como RemoveDuplicates, LowNodeUtilization y PodLifeTime.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-9.png)
+![Diagrama que muestra cómo Descheduler restablece el equilibrio cuando las incorporaciones o eliminaciones de nodos o los cambios en Pods alteran la distribución uniforme del clúster, expulsando Pods en ejecución para que el planificador los coloque de nuevo, junto con seis estrategias representativas de Descheduler, como RemoveDuplicates, LowNodeUtilization y PodLifeTime.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-9.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-9.html)
 
-### Por qué se necesita reprogramar
+### Por qué se necesita Descheduler
 
 1. **Cambios en el clúster**: se agregan nodos nuevos o cambian las etiquetas de nodo
-2. **Deriva de los Pods**: la ubicación inicial se vuelve subóptima con el tiempo
+2. **Cambios en la ubicación de los Pods**: la distribución inicial deja de ser adecuada con el tiempo
 3. **Incumplimientos de afinidad**: se infringen reglas tras cambios en el clúster
 4. **Desequilibrio de recursos**: algunos nodos están sobreutilizados y otros infrautilizados
 5. **Pods fallidos**: Pods atascados en bucles de reinicio
@@ -955,14 +955,14 @@ Descheduler es un componente de Kubernetes que expulsa Pods de los nodos para qu
 | **RemoveDuplicates** | Elimina Pods duplicados del mismo nodo | Garantizar alta disponibilidad después de fallos de nodo |
 | **LowNodeUtilization** | Mueve Pods de nodos sobreutilizados a nodos infrautilizados | Equilibrar los recursos del clúster |
 | **RemovePodsHavingTooManyRestarts** | Expulsa Pods con demasiados reinicios | Limpiar Pods problemáticos |
-| **PodLifeTime** | Expulsa Pods que superan la antigüedad especificada | Forzar una nueva programación |
+| **PodLifeTime** | Expulsa Pods que superan la antigüedad especificada | Forzar una nueva planificación |
 | **RemovePodsViolatingInterPodAntiAffinity** | Expulsa Pods que incumplen las reglas de antiafinidad | Restablecer el cumplimiento de las reglas de afinidad |
 | **RemovePodsViolatingNodeAffinity** | Expulsa Pods que incumplen las reglas de afinidad de nodo | Restablecer el cumplimiento de las reglas de afinidad |
 | **RemovePodsViolatingTopologySpreadConstraint** | Expulsa Pods que incumplen las restricciones de distribución | Restablecer una distribución uniforme |
 
 ### Instalación con Helm
 
-Descheduler v0.37.0 es la versión de ejemplo verificada, dirigida a Kubernetes v1.37 y a las dos versiones secundarias anteriores de su ventana de pruebas. Comprueba la matriz de compatibilidad antes de aplicarla a otra versión. Guarda los valores de Helm revisados en `descheduler-values.yaml` con `schedule` y `deschedulerPolicy.profiles` (los perfiles de política que se muestran abajo); los valores antiguos `strategies.*.enabled` no configuran esta API.
+Descheduler v0.37.0 es la versión verificada del ejemplo. Su intervalo de pruebas incluye Kubernetes v1.37 y las dos versiones menores anteriores. Comprueba la matriz de compatibilidad antes de usarla con otra versión. Guarda los valores de Helm revisados en `descheduler-values.yaml`, con `schedule` y `deschedulerPolicy.profiles` (los perfiles de política que se muestran más abajo); los antiguos valores `strategies.*.enabled` no configuran esta API.
 
 ```bash
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
@@ -1040,9 +1040,9 @@ spec:
       app: web
 ```
 
-Con este PDB, Descheduler garantiza que al menos 2 Pods con la etiqueta `app: web` sigan disponibles durante las operaciones de reprogramación.
+Con este PDB, Descheduler garantiza que al menos 2 Pods con la etiqueta `app: web` sigan disponibles durante las operaciones de replanificación.
 
-La política anterior es un archivo de configuración de Descheduler, no un objeto de API para kubectl apply. Usa complementos Balance para redistribuir grupos y complementos Deschedule para tomar decisiones por Pod. LowNodeUtilization normalmente evalúa las solicitudes de recursos, en lugar del uso real de CPU, y la expulsión no garantiza que el Pod de reemplazo termine en otro lugar. Revisa las medidas de seguridad y prueba en modo de ejecución simulada antes de habilitar expulsiones recurrentes.
+La política anterior es un archivo de configuración de Descheduler, no un objeto de API para kubectl apply. Usa complementos Balance para redistribuir grupos y complementos Deschedule para tomar decisiones por Pod. LowNodeUtilization normalmente evalúa las solicitudes de recursos, en lugar del uso real de CPU, y la expulsión no garantiza que el Pod de reemplazo termine en otro lugar. Revisa las medidas de seguridad y prueba en modo de ejecución en seco antes de habilitar expulsiones recurrentes.
 
 ### Ejemplo de CronJob de Descheduler
 
@@ -1076,18 +1076,18 @@ spec:
           restartPolicy: OnFailure
 ```
 
-El CronJob independiente es una alternativa a Helm, no una instalación adicional. Requiere la ServiceAccount/RBAC `descheduler` y un ConfigMap `descheduler-policy` con la clave `policy.yaml`; usa los manifiestos/gráficos oficiales para proporcionar estos requisitos previos.
+El CronJob independiente es una alternativa a la instalación con Helm, no una segunda instalación. Requiere la ServiceAccount y los permisos RBAC `descheduler`, además de un ConfigMap `descheduler-policy` con la clave `policy.yaml`; usa el chart o los manifiestos oficiales para proporcionar estos requisitos previos.
 
-> **Análisis detallado**: para obtener información detallada sobre programadores personalizados, consulta:
-> - [Programador personalizado, parte 1: conceptos básicos](../scheduling/01-custom-scheduler-part1.md)
-> - [Programador personalizado, parte 2: implementación](../scheduling/02-custom-scheduler-part2.md)
-> - [Programador personalizado, parte 3: funciones avanzadas](../scheduling/03-custom-scheduler-part3.md)
+> **Análisis detallado**: para obtener información detallada sobre planificadores personalizados, consulta:
+> - [Planificador personalizado, parte 1: conceptos básicos](../scheduling/01-custom-scheduler-part1.md)
+> - [Planificador personalizado, parte 2: implementación](../scheduling/02-custom-scheduler-part2.md)
+> - [Planificador personalizado, parte 3: funciones avanzadas](../scheduling/03-custom-scheduler-part3.md)
 
-## Optimización de la programación en Amazon EKS {#scheduling-optimization-in-amazon-eks}
+## Optimización de la planificación en Amazon EKS {#scheduling-optimization-in-amazon-eks}
 
-En Amazon EKS, puedes optimizar las cargas de trabajo mediante las funciones de programación de Kubernetes.
+En Amazon EKS, puedes optimizar las cargas de trabajo mediante las funciones de planificación de Kubernetes.
 
-![Diagrama que muestra cuatro mecanismos de optimización de la programación en EKS: selección de grupos de nodos y tipos de instancia, distribución entre zonas de disponibilidad, escalado automático de Karpenter y ajuste de solicitudes y límites de recursos; cada uno está conectado al mecanismo o herramienta de automatización que lo implementa: Cluster Autoscaler, despliegue en varias zonas de disponibilidad, NodePool de Karpenter y Vertical Pod Autoscaler.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-11.png)
+![Diagrama que muestra cuatro mecanismos de optimización de la planificación en EKS: selección de grupos de nodos y tipos de instancia, distribución entre zonas de disponibilidad, escalado automático de Karpenter y ajuste de solicitudes y límites de recursos; cada uno está conectado al mecanismo o herramienta de automatización que lo implementa: Cluster Autoscaler, despliegue en varias zonas de disponibilidad, NodePool de Karpenter y Vertical Pod Autoscaler.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-11.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-11.html)
 
@@ -1096,7 +1096,7 @@ En Amazon EKS, puedes optimizar las cargas de trabajo mediante las funciones de 
 En EKS, puedes proporcionar recursos adecuados para las cargas de trabajo mediante distintos grupos de nodos y tipos de instancia:
 
 1. **Distintos tipos de instancia**: optimizados para cómputo, memoria, almacenamiento, etc.
-2. **Instancias Spot**: instancias Spot para cargas de trabajo rentables
+2. **Instancias Spot**: instancias Spot para cargas de trabajo en las que se busca reducir costos
 3. **Instancias GPU**: instancias GPU para cargas de trabajo de IA/ML
 
 Puedes usar etiquetas de nodo y taints para colocar cargas de trabajo específicas en grupos de nodos específicos:
@@ -1231,9 +1231,9 @@ spec:
     updateMode: "Recreate"
 ```
 
-## Prácticas recomendadas de programación {#scheduling-best-practices}
+## Prácticas recomendadas de planificación {#scheduling-best-practices}
 
-Prácticas recomendadas para optimizar la programación en Kubernetes y EKS:
+Prácticas recomendadas para optimizar la planificación en Kubernetes y EKS:
 
 1. **Configura solicitudes y límites de recursos adecuados**:
    - Configura las solicitudes de recursos según el uso real de recursos de la carga de trabajo
@@ -1260,17 +1260,17 @@ Prácticas recomendadas para optimizar la programación en Kubernetes y EKS:
    - Usa las clases de prioridad `system-cluster-critical` o `system-node-critical` para los componentes del sistema
    - Comprende y prueba el impacto del desalojo por prioridad
 
-6. **Taints y tolerations de nodos**:
+6. **Taints y tolerancias de nodos**:
    - Configura nodos dedicados para cargas de trabajo especializadas
    - Aplica taints a los nodos en mantenimiento
-   - Configura tolerations adecuadas
+   - Configura tolerancias adecuadas
 
 ## Conclusión
 
-Los mecanismos de programación, desalojo por prioridad y expulsión de Kubernetes cumplen funciones importantes en la gestión eficiente de los recursos del clúster y el mantenimiento de la disponibilidad de las cargas de trabajo. Al comprender y utilizar estas funciones, puedes optimizar y operar de forma fiable las cargas de trabajo en clústeres de Amazon EKS.
+Los mecanismos de planificación, desalojo por prioridad y expulsión de Kubernetes cumplen funciones importantes en la gestión eficiente de los recursos del clúster y el mantenimiento de la disponibilidad de las cargas de trabajo. Al comprender y utilizar estas funciones, puedes optimizar y operar de forma fiable las cargas de trabajo en clústeres de Amazon EKS.
 
-La optimización de la programación es un proceso continuo, y los ajustes deben realizarse de manera constante según las características de las cargas de trabajo y el estado del clúster. Es importante hacer un seguimiento del uso de recursos del clúster mediante herramientas de supervisión y ajustar las políticas de programación según sea necesario.
+La optimización de la planificación es un proceso continuo, y los ajustes deben realizarse de manera constante según las características de las cargas de trabajo y el estado del clúster. Es importante hacer un seguimiento del uso de recursos del clúster mediante herramientas de supervisión y ajustar las políticas de planificación según sea necesario.
 
 ## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, prueba el [Cuestionario sobre programación, desalojo por prioridad y expulsión](../quizzes/core/08-scheduling-preemption-eviction-quiz.md).
+Para comprobar lo que aprendiste en este capítulo, prueba el [Cuestionario sobre planificación, desalojo por prioridad y expulsión](../quizzes/core/08-scheduling-preemption-eviction-quiz.md).

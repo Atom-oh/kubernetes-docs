@@ -1,7 +1,7 @@
 # ArgoCD トラフィック管理
 
 > **確認対象**: Argo CD 3.5.2、Argo Rollouts 1.10.0、Helm chart 2.43.1。リリースノートの確認後、Argo CD 3.5.4 および chart 2.43.6（Rollouts は引き続き 1.10.0）に更新（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 ## 目次
 - [Argo Rollouts の概要](#argo-rollouts-overview)
@@ -14,7 +14,7 @@
 - [Experiment](#experiments)
 - [通知](#notifications)
 
-## Argo Rollouts の概要
+## Argo Rollouts の概要 {#argo-rollouts-overview}
 
 Argo Rollouts は、blue-green デプロイメント、canary デプロイメント、プログレッシブデリバリー機能などの高度なデプロイメント機能を提供する Kubernetes コントローラーです。
 
@@ -39,7 +39,7 @@ Kubernetes Deployment は RollingUpdate と Recreate、および一時停止/再
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-0.html)
 
-## インストール
+## インストール {#installation}
 
 ### Argo Rollouts Controller をインストール
 
@@ -138,7 +138,7 @@ kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
 
 `http://127.0.0.1:3100/rollouts` を開きます。共有アクセスには、別の認証済みかつ認可済みの proxy が必要です。
 
-## Blue-Green デプロイメント
+## Blue-Green デプロイメント {#blue-green-deployments}
 
 例の `myapp`/registry イメージ、ECR アカウント/タグ、およびメトリクス名を、アプリケーションの設定に置き換えてください。namespace、イメージアクセス、readiness 応答、メトリクス収集、AnalysisTemplate を準備し、各シナリオを個別に実行します。初回デプロイメントには以前の安定した ReplicaSet はありません。v1 を正常にデプロイした後、Git 内のイメージを v2 に変更して rollout を確認します。
 
@@ -247,7 +247,7 @@ strategy:
     previewReplicaCount: 3
 ```
 
-## Canary デプロイメント
+## Canary デプロイメント {#canary-deployments}
 
 `setWeight` は、trafficRouting が設定されている場合に相対的な router weight を変更します。router がない場合は ReplicaSet 数によって比率を近似しますが、正確なリクエスト割合は保証されません。router がある場合、stable replica の容量はトラフィック weight から独立しています。
 
@@ -387,7 +387,7 @@ kubectl argo rollouts promote myapp-canary -n myapp
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
-## 分析と検証
+## 分析と検証 {#analysis-and-verification}
 
 AnalysisTemplate はデプロイメントの健全性を検証する方法を定義します。
 
@@ -608,7 +608,7 @@ spec:
     inconclusiveLimit: 0
 ```
 
-## Ingress 統合
+## Ingress 統合 {#ingress-integration}
 
 Argo Rollouts はネイティブのトラフィックプロバイダーと plugin 拡張をサポートします。Kong など、ネイティブ統合を持たないプロバイダーは、代わりに **Gateway API plugin** を通じてサポートされます。
 
@@ -1001,14 +1001,14 @@ kind: GatewayClass
 metadata:
   name: kong
   annotations:
-    konghq.com/gatewayclass-unmanaged: "true"   # required — without it the Gateway stays stuck on "Waiting for controller"
+    konghq.com/gatewayclass-unmanaged: "true"   # required: without it the Gateway stays stuck on "Waiting for controller"
 spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
 ここからは、上記と同じ [Gateway API plugin](#gateway-api-plugin-httproute) 設定を適用してください。Rollout と HTTPRoute YAML は同一です。
 
-### EKS での検証結果
+### EKS での検証結果 {#verification-results-on-eks}
 
 以前のドキュメントは、EKS 1.36、Rollouts 1.9.0、AWS Load Balancer Controller 3.2.1、Istio 1.30、KIC 3.5、および plugin0.16.0 で以下の結果を報告していました。raw log、request count、measurement duration、実行済み manifest は添付されていないため、この静的レビューではレポートを再現できませんでした。これらは過去の観測であり、新しい 1.10.0/0.17.0 の結果でも、即時かつダウンタイムゼロの移行を保証するものでもありません。
 
@@ -1021,7 +1021,7 @@ spec:
 
 Argo CD がルーティングリソースを管理する場合、Rollouts が所有する field（該当の ALB action annotation、Istio route weight、HTTPRoute backend weight、Service の rollouts-pod-template-hash selector）に対する狭い diff exclusion をレビューしてください。spec/manager 全体を無視しないでください。sync 中に値を維持するには、RespectIgnoreDifferences=true と既存リソースに関するその制限も必要です。
 
-## ロールバック戦略
+## ロールバック戦略 {#rollback-strategies}
 
 ### 分析失敗時の自動ロールバック
 
@@ -1074,7 +1074,7 @@ spec:
             value: myapp-canary
 ```
 
-## Experiment
+## Experiment {#experiments}
 
 1.10.0 では、すべての `requiredForCompletion: true` 分析が成功すると、`duration` より前に Experiment を完了できます。duration を最小検証 window とみなさないでください。experiment トラフィック隔離のため、Service/router selector を明示的に検証してください。状態遷移と cleanup delay については、[詳細解説](10-rollouts-experiment.md)を参照してください。
 
@@ -1193,7 +1193,7 @@ spec:
     requiredForCompletion: true
 ```
 
-## 通知
+## 通知 {#notifications}
 
 rollout event を通知システムと統合します。
 

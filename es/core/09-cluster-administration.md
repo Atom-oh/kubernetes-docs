@@ -5,12 +5,12 @@
 
 La administración de clústeres de Kubernetes es una tarea importante que incluye la configuración, el mantenimiento, la supervisión, la solución de problemas y las actualizaciones del clúster. En este capítulo, exploraremos diversos aspectos de la administración de clústeres de Kubernetes y las prácticas recomendadas para la gestión de clústeres en Amazon EKS.
 
-Las operaciones de kubeadm autogestionadas y las operaciones del servicio EKS son distintas. EKS no expone los hosts del plano de control, los manifiestos de Pod estáticos ni el acceso directo a etcd. Considera los bloques siguientes como ejemplos independientes, no como un único script que se debe ejecutar en secuencia. Comprueba la compatibilidad con la versión upstream y con los complementos para la versión real del clúster.
+Las operaciones de kubeadm autogestionadas y las operaciones del servicio EKS son distintas. EKS no expone los hosts del plano de control, los manifiestos de Pod estáticos ni el acceso directo a etcd. Considera los bloques siguientes como ejemplos independientes, no como un único script que se debe ejecutar en secuencia. Comprueba el soporte del proyecto original de Kubernetes y la compatibilidad de los complementos con la versión real del clúster.
 
 ## Conceptos básicos
 
 - **Gestión del ciclo de vida del clúster**: todo el proceso, desde la creación del clúster hasta su retirada
-- **Gestión del plano de control**: gestión de componentes principales como el servidor de API, el scheduler y el controller manager
+- **Gestión del plano de control**: gestión de componentes principales como el servidor de API, el planificador y el administrador de controladores
 - **Gestión de nodos**: incorporación, eliminación y mantenimiento de nodos de trabajo
 - **Asignación de recursos**: configuración de la asignación y los límites de recursos para CPU, memoria, almacenamiento, etc.
 - **Estrategia de actualización**: estrategias de actualización del clúster y las aplicaciones para minimizar el tiempo de inactividad
@@ -33,7 +33,7 @@ Las operaciones de kubeadm autogestionadas y las operaciones del servicio EKS so
 
 Se necesitan las siguientes herramientas para administrar clústeres:
 
-Usa la [guía oficial de instalación de kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) y mantén kubectl dentro de una versión secundaria del servidor de API. Para clústeres autogestionados, instala kubeadm/kubelet desde el repositorio `pkgs.k8s.io` de la versión secundaria de destino; los ejemplos antiguos de paquetes `1.x.y-00` ya no son válidos. Antes de la instalación, selecciona una versión exacta del paquete del repositorio configurado.
+Usa la [guía oficial de instalación de kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) y mantén una diferencia máxima de una versión menor entre kubectl y el servidor de API. Para clústeres autogestionados, instala kubeadm/kubelet desde el repositorio `pkgs.k8s.io` de la versión menor de destino; los ejemplos antiguos de paquetes `1.x.y-00` ya no son válidos. Antes de la instalación, selecciona una versión exacta del paquete del repositorio configurado.
 
 Instala Helm y k9s siguiendo las [instrucciones oficiales de Helm](https://helm.sh/docs/intro/install/) y las [versiones de k9s](https://github.com/derailed/k9s/releases); comprueba la arquitectura de la plataforma y las sumas de comprobación. La administración de EKS también requiere una CLI de AWS autenticada y una versión compatible de eksctl.
 
@@ -64,7 +64,7 @@ Un clúster de Kubernetes consta de componentes del plano de control y component
 
 ### Gestión de los componentes del plano de control
 
-![Diagrama de árbol que muestra el plano de control de Kubernetes desplegándose en sus cinco componentes (servidor de API, etcd, scheduler, controller manager y cloud controller manager), cada uno asociado con el aspecto operativo de su responsabilidad: autenticación y autorización, copia de seguridad de datos, políticas de planificación, supervisión del estado de los controladores y gestión de recursos de la nube.](../.gitbook/assets/en-core-09-cluster-administration-0.png)
+![Diagrama de árbol que muestra el plano de control de Kubernetes ramificándose en sus cinco componentes (servidor de API, etcd, planificador, administrador de controladores y administrador de controladores de nube), cada uno asociado con el aspecto operativo de su responsabilidad: autenticación y autorización, copia de seguridad de datos, políticas de planificación, supervisión del estado de los controladores y gestión de recursos de la nube.](../.gitbook/assets/en-core-09-cluster-administration-0.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-0.html)
 
@@ -164,7 +164,7 @@ Los componentes del plano de control administran el estado general del clúster:
 
 1. **kube-apiserver**: componente que expone la API de Kubernetes
 2. **etcd**: almacén de clave-valor que guarda los datos del clúster
-3. **kube-scheduler**: componente que programa pods en los nodos
+3. **kube-scheduler**: componente que asigna Pods a los nodos
 4. **kube-controller-manager**: componente que ejecuta controladores
 5. **cloud-controller-manager**: componente que interactúa con los proveedores de nube
 
@@ -195,7 +195,7 @@ kubectl exec -n kube-system etcd-<node-name> -- etcdctl \
 
 #### Configuración de los componentes del plano de control
 
-El manifiesto siguiente es solo un fragmento de configuración/opciones. Omite la red del host, los montajes de certificados y otros parámetros generados por kubeadm; no sustituyas el manifiesto del plano de control en ejecución por este fragmento. Asegúrate de que la imagen coincida con el plan de actualización del clúster.
+El manifiesto siguiente es solo un fragmento de opciones y configuración. Omite la red del host, los montajes de certificados y otros parámetros generados por kubeadm; no sustituyas el manifiesto del plano de control en ejecución por este fragmento. Asegúrate de que la imagen coincida con el plan de actualización del clúster.
 
 Cómo gestionar la configuración de los componentes del plano de control:
 
@@ -236,9 +236,9 @@ spec:
 
 ### Componentes de los nodos
 
-Los componentes de los nodos se ejecutan en cada nodo y administran los pods:
+Los componentes de los nodos se ejecutan en cada nodo y administran los Pods:
 
-1. **kubelet**: agente que se ejecuta en cada nodo y se asegura de que los pods y los contenedores estén en ejecución
+1. **kubelet**: agente que se ejecuta en cada nodo y se asegura de que los Pods y los contenedores estén en ejecución
 2. **kube-proxy**: mantiene las reglas de red y gestiona el reenvío de conexiones
 3. **Entorno de ejecución de contenedores**: software que ejecuta contenedores (containerd, CRI-O o Docker Engine con un adaptador CRI externo)
 
@@ -266,7 +266,7 @@ kubectl cordon <node-name>
 kubectl drain <node-name> --ignore-daemonsets
 ```
 
-El proceso de drain puede detenerse ante Pods independientes, PDB o datos locales. Investiga la causa en lugar de añadir `--force` o `--delete-emptydir-data` de forma predeterminada; esta última opción autoriza explícitamente la pérdida de datos de emptyDir. Espera a que finalice el drain y comprueba el estado de las cargas de trabajo antes del mantenimiento.
+El vaciado del nodo (drain) puede detenerse ante Pods independientes, PDB o datos locales. Investiga la causa en lugar de añadir `--force` o `--delete-emptydir-data` de forma predeterminada; esta última opción autoriza explícitamente la pérdida de datos de emptyDir. Espera a que finalice el vaciado y comprueba el estado de las cargas de trabajo antes del mantenimiento.
 
 #### Solución de problemas de nodos
 
@@ -321,7 +321,7 @@ spec:
     pods: "10"
 ```
 
-En el ejemplo anterior, el namespace `dev` puede tener un máximo de 10 pods, solicitudes de 1 CPU y 1Gi de memoria, y límites de 2 CPU y 2Gi de memoria.
+En el ejemplo anterior, el namespace `dev` puede tener un máximo de 10 Pods, solicitudes de 1 CPU y 1Gi de memoria, y límites de 2 CPU y 2Gi de memoria.
 
 ### Rangos de límites
 
@@ -354,7 +354,7 @@ En el ejemplo anterior, todos los contenedores del namespace `dev` tienen límit
 
 ### Horizontal Pod Autoscaler (HPA)
 
-HPA ajusta automáticamente el número de pods según el uso de CPU o métricas personalizadas:
+HPA ajusta automáticamente el número de Pods según el uso de CPU o métricas personalizadas:
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -381,7 +381,7 @@ En el ejemplo anterior, el Deployment `frontend` tiene como objetivo una utiliza
 
 ### Vertical Pod Autoscaler (VPA)
 
-VPA ajusta automáticamente las solicitudes de CPU y memoria de los pods:
+VPA ajusta automáticamente las solicitudes de CPU y memoria de los Pods:
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -397,23 +397,23 @@ spec:
     updateMode: "Recreate"
 ```
 
-En el ejemplo anterior, las solicitudes de CPU y memoria de los pods del Deployment `frontend` se ajustan automáticamente según el uso real de recursos.
+En el ejemplo anterior, las solicitudes de CPU y memoria de los Pods del Deployment `frontend` se ajustan automáticamente según el uso real de recursos.
 
 ## Redes del clúster {#cluster-networking}
 
-Las redes de clúster de Kubernetes gestionan la comunicación entre pods, Services y nodos.
+Las redes del clúster de Kubernetes gestionan la comunicación entre Pods, Services y nodos.
 
 ### Modelo de red del clúster
 
 Requisitos básicos del modelo de red de Kubernetes:
 
-1. Todos los pods pueden comunicarse con los demás sin NAT
-2. Los agentes de nodo (kubelet) pueden comunicarse con todos los pods de ese nodo
+1. Todos los Pods pueden comunicarse con los demás sin NAT
+2. Los agentes de nodo (kubelet) pueden comunicarse con todos los Pods de ese nodo
 3. La conectividad externa depende del enrutamiento y de la política de salida; no existe un requisito universal de modo NAT para los Pod
 
 El diagrama siguiente muestra los componentes de red de Kubernetes y los flujos de comunicación:
 
-![Diagrama de arquitectura que muestra el tráfico de cliente entrando mediante Ingress a un Service que distribuye la carga entre dos pods en nodos distintos; estos se comunican entre sí y acceden a un servicio externo.](../.gitbook/assets/en-core-09-cluster-administration-3.png)
+![Diagrama de arquitectura que muestra el tráfico de cliente entrando mediante Ingress a un Service que distribuye la carga entre dos Pods en nodos distintos; estos se comunican entre sí y acceden a un servicio externo.](../.gitbook/assets/en-core-09-cluster-administration-3.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-3.html)
 
@@ -442,11 +442,11 @@ kubectl get pods -A -l k8s-app=calico-node
 
 ### Redes de Service
 
-Los Service de Kubernetes proporcionan puntos de conexión estables para conjuntos de pods:
+Los Service de Kubernetes proporcionan puntos de conexión estables para conjuntos de Pods:
 
 1. **ClusterIP**: Service accesible solo dentro del clúster
 2. **NodePort**: Service accesible mediante un puerto específico en todos los nodos
-3. **LoadBalancer**: Service accesible mediante un equilibrador de carga externo
+3. **LoadBalancer**: Service accesible mediante un balanceador de carga externo
 4. **ExternalName**: proporciona un registro CNAME para servicios externos
 
 #### Configuración del CIDR de Service
@@ -502,7 +502,7 @@ data:
 
 ### Políticas de red
 
-Las políticas de red controlan la comunicación entre pods:
+Las políticas de red controlan la comunicación entre Pods:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -535,11 +535,11 @@ spec:
       port: 9090
 ```
 
-En el ejemplo anterior, los pods con la etiqueta `role=db` solo permiten el tráfico entrante TCP por el puerto 3306 desde pods con la etiqueta `role=frontend`, y el tráfico saliente TCP por el puerto 9090 hacia pods con la etiqueta `role=monitoring`.
+En el ejemplo anterior, los Pods con la etiqueta `role=db` solo permiten el tráfico entrante TCP por el puerto 3306 desde Pods con la etiqueta `role=frontend`, y el tráfico saliente TCP por el puerto 9090 hacia Pods con la etiqueta `role=monitoring`.
 
 ## Gestión de la autenticación y la autorización {#authentication-and-authorization-management}
 
-La gestión de la autenticación y la autorización de Kubernetes son elementos fundamentales de la seguridad del clúster.
+La gestión de la autenticación y la autorización de Kubernetes es un elemento fundamental de la seguridad del clúster.
 
 El diagrama siguiente muestra el flujo de autenticación y autorización de Kubernetes:
 
@@ -642,7 +642,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-En el ejemplo anterior, `user` tiene permiso para ver pods en el namespace `default`.
+En el ejemplo anterior, `user` tiene permiso para ver Pods en el namespace `default`.
 
 #### ClusterRole y ClusterRoleBinding
 
@@ -679,7 +679,7 @@ En el ejemplo anterior, `user` tiene permiso para ver todos los nodos del clúst
 
 ### Gestión de ServiceAccount
 
-Los ServiceAccount permiten que los pods se comuniquen con el servidor de API:
+Las cuentas de servicio (ServiceAccount) permiten que los Pods se comuniquen con el servidor de API:
 
 ```yaml
 # Create service account
@@ -720,7 +720,7 @@ spec:
 
 ### Contexto de seguridad
 
-El contexto de seguridad define los permisos y el control de acceso de pods y contenedores:
+El contexto de seguridad define los permisos y el control de acceso de Pods y contenedores:
 
 ```yaml
 apiVersion: v1
@@ -747,7 +747,7 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-En el ejemplo anterior, el pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene eliminadas todas las capacidades de Linux y tiene el sistema de archivos raíz montado en modo de solo lectura.
+En el ejemplo anterior, el pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene deshabilitadas todas las capacidades de Linux y tiene el sistema de archivos raíz montado en modo de solo lectura.
 
 ## Actualizaciones del clúster {#cluster-upgrades}
 
@@ -773,12 +773,12 @@ Consideraciones para planificar las actualizaciones del clúster:
 
 Actualización del plano de control con kubeadm:
 
-Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión secundaria de destino y selecciona una versión exacta del paquete publicada; actualiza una versión secundaria cada vez.
+Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión menor de destino y selecciona una versión de paquete publicada concreta; actualiza una versión menor cada vez.
 
 1. Haz una copia de seguridad de etcd y valida la compatibilidad de las cargas de trabajo y los complementos. En el primer nodo del plano de control, actualiza kubeadm, ejecuta `kubeadm upgrade plan` y, a continuación, `kubeadm upgrade apply <target-version>`.
 2. En los demás nodos del plano de control, actualiza kubeadm y ejecuta `kubeadm upgrade node`.
-3. Ejecuta drain en cada nodo antes de actualizar kubelet. Si drain falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, ejecuta uncordon desde un cliente administrativo.
-4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de drain, actualización de kubelet, verificación y uncordon. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
+3. Vacía cada nodo (drain) antes de actualizar kubelet. Si el vaciado falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, habilita de nuevo la asignación de Pods al nodo (uncordon) desde un cliente administrativo.
+4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de vaciado, actualización de kubelet, verificación y habilitación de nuevas asignaciones. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
 
 Ejecuta los comandos en el nodo o cliente administrativo identificado explícitamente; una secuencia de sesiones `ssh` anidadas no es un script de automatización multinodo.
 
@@ -786,12 +786,12 @@ Ejecuta los comandos en el nodo o cliente administrativo identificado explícita
 
 Proceso de actualización de nodos de trabajo:
 
-Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión secundaria de destino y selecciona una versión exacta del paquete publicada; actualiza una versión secundaria cada vez.
+Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión menor de destino y selecciona una versión de paquete publicada concreta; actualiza una versión menor cada vez.
 
 1. Haz una copia de seguridad de etcd y valida la compatibilidad de las cargas de trabajo y los complementos. En el primer nodo del plano de control, actualiza kubeadm, ejecuta `kubeadm upgrade plan` y, a continuación, `kubeadm upgrade apply <target-version>`.
 2. En los demás nodos del plano de control, actualiza kubeadm y ejecuta `kubeadm upgrade node`.
-3. Ejecuta drain en cada nodo antes de actualizar kubelet. Si drain falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, ejecuta uncordon desde un cliente administrativo.
-4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de drain, actualización de kubelet, verificación y uncordon. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
+3. Vacía cada nodo (drain) antes de actualizar kubelet. Si el vaciado falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, habilita de nuevo la asignación de Pods al nodo (uncordon) desde un cliente administrativo.
+4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de vaciado, actualización de kubelet, verificación y habilitación de nuevas asignaciones. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
 
 Ejecuta los comandos en el nodo o cliente administrativo identificado explícitamente; una secuencia de sesiones `ssh` anidadas no es un script de automatización multinodo.
 
@@ -844,7 +844,7 @@ etcdutl snapshot status --write-out=table /backup/etcd-snapshot-2023-01-01-12-00
 
 Restauración desde una instantánea de etcd:
 
-Para la recuperación ante desastres autogestionada, detén todos los servidores de API y los procesos de etcd afectados mediante el runbook específico de la distribución. Detener solo kubelet deja en ejecución los contenedores de los Pod estáticos existentes. Restaura en un directorio nuevo con una versión compatible de etcdutl; conserva los datos originales hasta verificar la recuperación. Este comando para un único miembro es ilustrativo, no es un procedimiento de restauración de alta disponibilidad con varios miembros:
+Para la recuperación ante desastres de un clúster autogestionado, detén todos los servidores de API y los procesos de etcd afectados mediante el procedimiento operativo específico de la distribución. Detener solo kubelet deja en ejecución los contenedores de los Pod estáticos existentes. Restaura en un directorio nuevo con una versión compatible de etcdutl; conserva los datos originales hasta verificar la recuperación. Este comando ilustra la restauración de un solo miembro; una restauración de alta disponibilidad con varios miembros requiere un procedimiento propio:
 
 ```bash
 etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
@@ -857,11 +857,11 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-Establece SNAPSHOT_FILE en la instantánea verificada. Para alta disponibilidad, restaura la misma instantánea en cada miembro con su nombre/URL de peer únicos y la misma lista completa de miembros. Elige un incremento de revisión que supere los cambios realizados desde la instantánea. Actualiza el manifiesto/servicio de etcd para que apunte a la ruta restaurada, con los permisos y certificados correctos; verifica el cuórum y el estado de salud y, después, reinicia los servidores de API y los controladores. Consulta la [guía oficial de recuperación](https://etcd.io/docs/v3.6/op-guide/recovery/). Los usuarios de EKS no pueden restaurar directamente etcd del plano de control administrado.
+Establece SNAPSHOT_FILE en la instantánea verificada. Para alta disponibilidad, restaura la misma instantánea en cada miembro con un nombre y una URL de comunicación únicos para ese miembro, y con la misma lista completa de miembros. Elige un incremento de revisión que supere los cambios realizados desde la instantánea. Actualiza el manifiesto/servicio de etcd para que apunte a la ruta restaurada, con el propietario y los certificados correctos; verifica el cuórum y el estado y, después, reinicia los servidores de API y los controladores. Consulta la [guía oficial de recuperación](https://etcd.io/docs/v3.6/op-guide/recovery/). Los usuarios de EKS no pueden restaurar directamente etcd del plano de control administrado.
 
 ### Copia de seguridad de recursos
 
-Estas exportaciones son inventarios protegidos, no un plan completo de restauración portátil. Incluyen Secrets, requieren permisos restringidos/cifrado y no incluyen los datos de PV. Usa `umask 077` y comprueba si falla algún comando; restaura las CRD y sus dependencias en el orden adecuado y elimina los metadatos propiedad del servidor cuando corresponda. `kubectl get all` solo devuelve un subconjunto de tipos de recursos.
+Estas exportaciones son inventarios protegidos, no un plan completo para restaurar el clúster en otro entorno. Incluyen Secrets, requieren permisos restringidos y cifrado y no incluyen los datos de PV. Usa `umask 077` y comprueba si falla algún comando; restaura las CRD y sus dependencias en el orden adecuado y elimina los metadatos administrados por el servidor cuando corresponda. `kubectl get all` solo devuelve un subconjunto de tipos de recursos.
 
 Haz copias de seguridad de los recursos de Kubernetes como archivos YAML:
 
@@ -885,7 +885,7 @@ done
 
 ### Automatización de copias de seguridad
 
-Solo para el ejemplo de kubeadm autogestionado: sustituye la imagen de herramientas por una imagen verificada que incluya una versión compatible de etcdctl, asegúrate de que la etiqueta/taint del plano de control y las rutas de certificados coincidan, y crea el PVC de copia de seguridad. El host seleccionado debe exponer etcd en la dirección loopback indicada y permitir el montaje del PVC. Esto no se ejecuta en el plano de control administrado de EKS. Verifica la instantánea y cópiala en un almacenamiento externo protegido; un PVC dentro del clúster por sí solo no constituye una recuperación ante desastres.
+Solo para el ejemplo de kubeadm autogestionado: sustituye la imagen de herramientas por una imagen verificada que incluya una versión compatible de etcdctl, asegúrate de que la etiqueta y el taint del plano de control y las rutas de certificados coincidan, y crea el PVC de copia de seguridad. El host seleccionado debe exponer etcd en la dirección de bucle local indicada y permitir el montaje del PVC. Esto no se ejecuta en el plano de control administrado de EKS. Verifica la instantánea y cópiala en un almacenamiento externo protegido; un PVC dentro del clúster por sí solo no constituye una recuperación ante desastres.
 
 Automatiza las tareas de copia de seguridad con CronJob:
 
@@ -961,7 +961,7 @@ La supervisión y el registro eficaces son elementos fundamentales de la adminis
 
 El diagrama siguiente muestra la arquitectura de supervisión y registro de un clúster de Kubernetes:
 
-![Diagrama de arquitectura que muestra las métricas del servidor de API y de los nodos fluyendo a través de kube-state-metrics y Node Exporter hacia Prometheus, y después hacia Alertmanager y Grafana; los registros de los pods pasan por Fluentd/Fluent Bit a Elasticsearch con Kibana y a Loki, que también envía datos a Grafana.](../.gitbook/assets/en-core-09-cluster-administration-7.png)
+![Diagrama de arquitectura que muestra las métricas del servidor de API y de los nodos fluyendo a través de kube-state-metrics y Node Exporter hacia Prometheus, y después hacia Alertmanager y Grafana; los registros de los Pods pasan por Fluentd/Fluent Bit a Elasticsearch con Kibana y a Loki, que también envía datos a Grafana.](../.gitbook/assets/en-core-09-cluster-administration-7.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-7.html)
 
@@ -995,7 +995,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 Métricas clave para supervisar:
 
 1. **Métricas de nodos**: uso de CPU, memoria, disco y red
-2. **Métricas de pods**: uso de CPU y memoria, número de reinicios
+2. **Métricas de Pods**: uso de CPU y memoria, número de reinicios
 3. **Métricas de contenedores**: uso de CPU, memoria y sistema de archivos
 4. **Métricas del servidor de API**: latencia de solicitudes, número de solicitudes, tasa de errores
 5. **Métricas de etcd**: E/S de disco, cambios de líder, latencia de confirmación
@@ -1014,7 +1014,7 @@ Herramientas para el registro de clústeres de Kubernetes:
 
 Instala la pila EFK mediante Helm:
 
-El repositorio independiente de charts de Helm de Elastic Stack está archivado. Para implementar una solución mantenida, usa Elastic Cloud on Kubernetes (ECK) y, después, define los recursos de Elasticsearch/Kibana y un recopilador de registros compatible. La instalación del operador por sí sola no crea una pila EFK:
+El repositorio independiente de charts de Helm de Elastic Stack está archivado. Para desplegar una solución mantenida, usa Elastic Cloud on Kubernetes (ECK) y, después, define los recursos de Elasticsearch/Kibana y un recopilador de registros compatible. La instalación del operador por sí sola no crea una pila EFK:
 
 ```bash
 helm repo add elastic https://helm.elastic.co
@@ -1023,11 +1023,11 @@ helm upgrade --install elastic-operator elastic/eck-operator \
   --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
-Mantén los dashboards detrás de ClusterIP/con acceso autenticado; configura el almacenamiento, TLS, las credenciales, el análisis del recopilador y RBAC siguiendo la [guía de ECK](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
+Mantén los paneles accesibles mediante ClusterIP y un acceso autenticado; configura el almacenamiento, TLS, las credenciales, el análisis de registros del recopilador y RBAC siguiendo la [guía de ECK](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
 
 #### Configuración de la recopilación de registros
 
-Este ejemplo analiza el formato de registro de CRI en lugar de presuponer que se trata de JSON de Docker. La imagen del recopilador debe incluir los complementos de metadatos/salida, montar los registros de los nodos y almacenamiento con permisos de escritura para el archivo de posiciones, y disponer de RBAC de metadatos con ámbito restringido. Configura TLS/autenticación para el servicio real de Elasticsearch; el host de marcador de posición por sí solo no constituye una integración completa con ECK. Gestiona los registros parciales/multilínea según el recopilador elegido.
+Este ejemplo analiza el formato de registro de CRI en lugar de presuponer que se trata de JSON de Docker. La imagen del recopilador debe incluir los complementos de metadatos y salida, montar los registros de los nodos y un almacenamiento con permisos de escritura para el archivo que guarda la posición de lectura, y disponer de RBAC de metadatos con ámbito restringido. Configura TLS/autenticación para el servicio real de Elasticsearch; el nombre de host de ejemplo por sí solo no constituye una integración completa con ECK. Gestiona los registros parciales y de varias líneas según el recopilador elegido.
 
 Ejemplo de configuración de Fluentd:
 
@@ -1073,9 +1073,9 @@ data:
 
 La solución de problemas de clústeres de Kubernetes es una parte importante de la administración de clústeres.
 
-### Solución de problemas de pods
+### Solución de problemas de Pods
 
-Comandos para solucionar problemas de pods:
+Comandos para solucionar problemas de Pods:
 
 ```bash
 # Check pod status
@@ -1177,7 +1177,7 @@ El diagrama siguiente muestra la arquitectura del clúster de Amazon EKS y sus c
 
 ### Configuración del clúster de EKS
 
-Establece el CIDR real del administrador antes de cambiar el acceso al endpoint y comprueba que el acceso privado siga siendo posible. Una actualización de versión debe pasar a la siguiente versión secundaria compatible, con complementos/nodos compatibles; no uses el ejemplo para degradar ni omitir versiones secundarias. Consulta el ID de actualización devuelto y detén los cambios dependientes si falla.
+Establece el CIDR real del administrador antes de cambiar el acceso al endpoint y comprueba que el acceso privado siga siendo posible. Una actualización de versión debe pasar a la siguiente versión menor compatible, con complementos/nodos compatibles; no uses el ejemplo para volver a una versión anterior ni omitir versiones menores. Consulta periódicamente el estado del ID de actualización devuelto y detén los cambios dependientes si falla.
 
 Gestión de la configuración del clúster de EKS:
 
@@ -1220,7 +1220,7 @@ aws eks update-nodegroup-version \
 
 ### Gestión de complementos de EKS
 
-Lee la versión actual con `aws eks describe-cluster --name my-cluster --query cluster.version --output text`; úsala para buscar complementos y seleccionar una versión compatible fijada. Revisa la configuración/IAM existente antes de crear o actualizar, y no vuelvas a crear un complemento que ya esté administrado. El ejemplo de eliminación usa `--preserve` para que el CNI siga en ejecución mientras se elimina la gestión de EKS; desinstalar una red activa es una operación disruptiva independiente.
+Lee la versión actual con `aws eks describe-cluster --name my-cluster --query cluster.version --output text`; úsala para buscar complementos y seleccionar una versión compatible concreta. Revisa la configuración/IAM existente antes de crear o actualizar, y no vuelvas a crear un complemento que ya esté administrado. El ejemplo de eliminación usa `--preserve` para que el CNI siga en ejecución mientras se elimina la gestión de EKS; desinstalar los componentes de red en uso es una operación disruptiva independiente.
 
 Gestión de complementos de EKS:
 
@@ -1324,7 +1324,7 @@ Prácticas recomendadas para administrar clústeres de Kubernetes y EKS:
 
 ### Prácticas recomendadas para la gestión de recursos
 
-1. **Solicitudes y límites de recursos**: establece solicitudes y límites de recursos adecuados para todos los pods
+1. **Solicitudes y límites de recursos**: establece solicitudes y límites de recursos adecuados para todos los Pods
 2. **Separación de namespaces**: separa las cargas de trabajo por namespace
 3. **Cuotas de recursos**: establece cuotas de recursos por namespace
 4. **HPA y VPA**: configura el escalado automático
@@ -1348,11 +1348,11 @@ La administración de clústeres es un proceso continuo que debe ajustarse const
 
 ## Redes del clúster
 
-Las redes de clúster de Kubernetes gestionan la comunicación entre pods, la detección de servicios y el acceso externo.
+Las redes del clúster de Kubernetes gestionan la comunicación entre Pods, el descubrimiento de servicios y el acceso externo.
 
 ### Arquitectura de red
 
-![Diagrama de arquitectura que muestra las redes del clúster divididas en red de pods, red de Service, ingress y políticas de red, cada una implementada por un complemento CNI, tipos de Service (ClusterIP, NodePort, LoadBalancer), un controlador de ingress y seguridad de red, respectivamente.](../.gitbook/assets/en-core-09-cluster-administration-9.png)
+![Diagrama de arquitectura que muestra las redes del clúster divididas en red de Pods, red de Service, ingress y políticas de red, cada una implementada por un complemento CNI, tipos de Service (ClusterIP, NodePort, LoadBalancer), un controlador de ingress y seguridad de red, respectivamente.](../.gitbook/assets/en-core-09-cluster-administration-9.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-9.html)
 
@@ -1403,14 +1403,14 @@ kubectl describe networkpolicy -n <namespace>
 ```
 ## Gestión de la autenticación y la autorización
 
-La gestión de la autenticación y la autorización de Kubernetes son elementos fundamentales de la seguridad del clúster. RBAC (Role-Based Access Control) se usa para gestionar los permisos de usuarios y cuentas de servicio.
+La gestión de la autenticación y la autorización de Kubernetes es un elemento fundamental de la seguridad del clúster. RBAC (Role-Based Access Control) se usa para gestionar los permisos de usuarios y cuentas de servicio.
 
 ### Métodos de autenticación
 
 Kubernetes admite varios métodos de autenticación:
 
 1. **Certificados X.509**: autenticación mediante certificados de cliente
-2. **Tokens de ServiceAccount**: se usan para acceder al servidor de API desde los pods
+2. **Tokens de ServiceAccount**: se usan para acceder al servidor de API desde los Pods
 3. **OpenID Connect (OIDC)**: integración con proveedores de identidad externos
 4. **Autenticación de tokens mediante webhook**: integración con servicios de autenticación externos
 5. **Proxy de autenticación**: autenticación mediante un proxy
@@ -1477,7 +1477,7 @@ roleRef:
 
 ### Creación de certificados de usuario
 
-Para la autenticación mediante certificados de cliente autogestionada, envía un CSR y haz que un aprobador autorizado verifique la identidad/grupos solicitados. No distribuyas la clave privada de la CA del clúster. El acceso de los usuarios de EKS debe gestionarse con IAM/access entries.
+Para la autenticación con certificados de cliente en un clúster autogestionado, envía una solicitud de firma de certificado (CSR) y haz que un aprobador autorizado verifique la identidad y los grupos solicitados. No distribuyas la clave privada de la CA del clúster. El acceso de los usuarios de EKS debe gestionarse con IAM y entradas de acceso.
 
 ```bash
 umask 077
@@ -1542,17 +1542,17 @@ Las actualizaciones de clústeres de Kubernetes son necesarias para aplicar nuev
 | Estrategia | Descripción | Ventajas | Desventajas | Entorno adecuado |
 |----------|-------------|------------|---------------|---------------------|
 | **Actualización in situ** | Actualizar directamente el clúster existente | Uso eficiente de recursos, procedimiento sencillo | Reversión compleja, posible tiempo de inactividad | Entornos de desarrollo y pruebas |
-| **Implementación blue/green** | Crear un clúster con la nueva versión y cambiar a él | Reversión segura, permite verificar | Duplicación de recursos, coste elevado | Entornos de producción |
-| **Implementación canary** | Mover solo algunas cargas de trabajo al clúster nuevo | Verificación gradual, riesgo reducido | Gestión compleja, operación en paralelo | Entornos de producción críticos |
+| **Despliegue blue/green** | Crear un clúster con la nueva versión y cambiar a él | Reversión segura, permite verificar | Duplicación de recursos, coste elevado | Entornos de producción |
+| **Despliegue canary** | Mover solo algunas cargas de trabajo al clúster nuevo | Verificación gradual, riesgo reducido | Gestión compleja, operación en paralelo | Entornos de producción críticos |
 
 ### Actualización mediante kubeadm
 
-Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión secundaria de destino y selecciona una versión exacta del paquete publicada; actualiza una versión secundaria cada vez.
+Sigue el [procedimiento de actualización de kubeadm específico para cada versión](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Habilita el repositorio pkgs.k8s.io de la versión menor de destino y selecciona una versión de paquete publicada concreta; actualiza una versión menor cada vez.
 
 1. Haz una copia de seguridad de etcd y valida la compatibilidad de las cargas de trabajo y los complementos. En el primer nodo del plano de control, actualiza kubeadm, ejecuta `kubeadm upgrade plan` y, a continuación, `kubeadm upgrade apply <target-version>`.
 2. En los demás nodos del plano de control, actualiza kubeadm y ejecuta `kubeadm upgrade node`.
-3. Ejecuta drain en cada nodo antes de actualizar kubelet. Si drain falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, ejecuta uncordon desde un cliente administrativo.
-4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de drain, actualización de kubelet, verificación y uncordon. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
+3. Vacía cada nodo (drain) antes de actualizar kubelet. Si el vaciado falla, detén el procedimiento y resuelve la causa. Actualiza kubelet/kubectl a versiones compatibles, vuelve a cargar systemd, reinicia kubelet, comprueba que el nodo esté Ready y que las cargas de trabajo estén sanas y, después, habilita de nuevo la asignación de Pods al nodo (uncordon) desde un cliente administrativo.
+4. En cada nodo de trabajo, actualiza kubeadm y ejecuta `kubeadm upgrade node`; después, realiza la secuencia de vaciado, actualización de kubelet, verificación y habilitación de nuevas asignaciones. No ejecutes una actualización genérica de todo el sistema como sustituto del procedimiento de Kubernetes específico para cada versión.
 
 Ejecuta los comandos en el nodo o cliente administrativo identificado explícitamente; una secuencia de sesiones `ssh` anidadas no es un script de automatización multinodo.
 
@@ -1579,7 +1579,7 @@ La copia de seguridad y recuperación de un clúster de Kubernetes es una parte 
 
 etcd es un componente fundamental que almacena toda la información de estado del clúster.
 
-Para la recuperación ante desastres autogestionada, detén todos los servidores de API y los procesos de etcd afectados mediante el runbook específico de la distribución. Detener solo kubelet deja en ejecución los contenedores de los Pod estáticos existentes. Restaura en un directorio nuevo con una versión compatible de etcdutl; conserva los datos originales hasta verificar la recuperación. Este comando para un único miembro es ilustrativo, no es un procedimiento de restauración de alta disponibilidad con varios miembros:
+Para la recuperación ante desastres de un clúster autogestionado, detén todos los servidores de API y los procesos de etcd afectados mediante el procedimiento operativo específico de la distribución. Detener solo kubelet deja en ejecución los contenedores de los Pod estáticos existentes. Restaura en un directorio nuevo con una versión compatible de etcdutl; conserva los datos originales hasta verificar la recuperación. Este comando ilustra la restauración de un solo miembro; una restauración de alta disponibilidad con varios miembros requiere un procedimiento propio:
 
 ```bash
 etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
@@ -1592,7 +1592,7 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-Establece SNAPSHOT_FILE en la instantánea verificada. Para alta disponibilidad, restaura la misma instantánea en cada miembro con su nombre/URL de peer únicos y la misma lista completa de miembros. Elige un incremento de revisión que supere los cambios realizados desde la instantánea. Actualiza el manifiesto/servicio de etcd para que apunte a la ruta restaurada, con los permisos y certificados correctos; verifica el cuórum y el estado de salud y, después, reinicia los servidores de API y los controladores. Consulta la [guía oficial de recuperación](https://etcd.io/docs/v3.6/op-guide/recovery/). Los usuarios de EKS no pueden restaurar directamente etcd del plano de control administrado.
+Establece SNAPSHOT_FILE en la instantánea verificada. Para alta disponibilidad, restaura la misma instantánea en cada miembro con un nombre y una URL de comunicación únicos para ese miembro, y con la misma lista completa de miembros. Elige un incremento de revisión que supere los cambios realizados desde la instantánea. Actualiza el manifiesto/servicio de etcd para que apunte a la ruta restaurada, con el propietario y los certificados correctos; verifica el cuórum y el estado y, después, reinicia los servidores de API y los controladores. Consulta la [guía oficial de recuperación](https://etcd.io/docs/v3.6/op-guide/recovery/). Los usuarios de EKS no pueden restaurar directamente etcd del plano de control administrado.
 
 ### Copia de seguridad de recursos de Kubernetes
 
@@ -1647,7 +1647,7 @@ velero restore create --from-backup full-cluster-backup
 |--------------|---------------|------------|---------------|---------------|
 | **Instantánea de etcd** | Estado del clúster | Función integrada, conserva el estado completo | No incluye los datos de volúmenes, proceso manual | Medio |
 | **Copia de seguridad de recursos YAML** | Objetos de Kubernetes | Implementación sencilla, restauración selectiva | No incluye los datos de volúmenes, relaciones complejas | Lento |
-| **Velero** | Recursos y volúmenes | Automatización, programación, instantáneas de volúmenes | Requiere instalar una herramienta adicional | Rápido |
+| **Velero** | Recursos y volúmenes | Automatización, ejecución programada, instantáneas de volúmenes | Requiere instalar una herramienta adicional | Rápido |
 | **Instantáneas del proveedor de nube** | Discos/sistemas de archivos compatibles | Puntos de recuperación nativos del backend | No captura todo el clúster de Kubernetes/EKS | Depende de los datos/backend |
 ## Supervisión y registro
 
@@ -1682,7 +1682,7 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 
 ### Instalación de la pila EFK (Elasticsearch, Fluentd y Kibana)
 
-El repositorio independiente de charts de Helm de Elastic Stack está archivado. Para implementar una solución mantenida, usa Elastic Cloud on Kubernetes (ECK) y, después, define los recursos de Elasticsearch/Kibana y un recopilador de registros compatible. La instalación del operador por sí sola no crea una pila EFK:
+El repositorio independiente de charts de Helm de Elastic Stack está archivado. Para desplegar una solución mantenida, usa Elastic Cloud on Kubernetes (ECK) y, después, define los recursos de Elasticsearch/Kibana y un recopilador de registros compatible. La instalación del operador por sí sola no crea una pila EFK:
 
 ```bash
 helm repo add elastic https://helm.elastic.co
@@ -1691,15 +1691,15 @@ helm upgrade --install elastic-operator elastic/eck-operator \
   --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
-Mantén los dashboards detrás de ClusterIP/con acceso autenticado; configura el almacenamiento, TLS, las credenciales, el análisis del recopilador y RBAC siguiendo la [guía de ECK](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
+Mantén los paneles accesibles mediante ClusterIP y un acceso autenticado; configura el almacenamiento, TLS, las credenciales, el análisis de registros del recopilador y RBAC siguiendo la [guía de ECK](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
 
 ### Métricas clave de supervisión
 
 | Tipo de métrica | Descripción | Métricas clave | Herramientas de supervisión |
 |-------------|-------------|-------------|-----------------|
 | **Métricas de nodos** | Uso de recursos a nivel de nodo | CPU, memoria, disco, red | node-exporter, Prometheus |
-| **Métricas de pods** | Uso de recursos de contenedores | CPU, uso de memoria, límites | cAdvisor, Prometheus |
-| **Métricas del clúster** | Estado y recursos del clúster | Número de pods, estado de nodos/objetos, réplicas deseadas/actuales | kube-state-metrics |
+| **Métricas de Pods** | Uso de recursos de contenedores | CPU, uso de memoria, límites | cAdvisor, Prometheus |
+| **Métricas del clúster** | Estado y recursos del clúster | Número de Pods, estado de nodos/objetos, réplicas deseadas/actuales | kube-state-metrics |
 | **Métricas de aplicaciones** | Métricas personalizadas de aplicaciones | Número de solicitudes, latencia, tasa de errores | Bibliotecas cliente de Prometheus |
 
 ### Recopilación y análisis de registros
@@ -1725,7 +1725,7 @@ kubectl logs -l app=nginx -n <namespace>
 
 Puedes configurar alertas con Prometheus Alertmanager:
 
-Crea un Secret protegido `slack-webhook` con la clave `url` en monitoring y, después, combina estos valores de Helm con los de la versión existente de kube-prometheus-stack. No incluyas la URL del webhook en el repositorio. El operador no consume automáticamente un ConfigMap independiente.
+Crea un Secret protegido `slack-webhook` con la clave `url` en monitoring y, después, combina estos valores de Helm con los de la instalación existente de kube-prometheus-stack. No incluyas la URL del webhook en el repositorio. El operador no consume automáticamente un ConfigMap independiente.
 
 ```yaml
 # alertmanager-values.yaml
@@ -1768,12 +1768,12 @@ La solución de problemas de clústeres de Kubernetes es una habilidad important
 | Tipo de problema | Síntomas | Comandos de diagnóstico | Soluciones habituales |
 |-------------|----------|---------------------|-----------------|
 | **El Pod no se inicia** | El Pod está en estado Pending o ContainerCreating | `kubectl describe pod <pod-name>` | Comprueba las restricciones de recursos, la disponibilidad de la imagen y los montajes de volúmenes |
-| **Problemas de conexión de Service** | No se puede acceder a los pods mediante el Service | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | Comprueba los selectores de etiquetas, el estado de los pods y las políticas de red |
+| **Problemas de conexión de Service** | No se puede acceder a los Pods mediante el Service | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | Comprueba los selectores de etiquetas, el estado de los Pods y las políticas de red |
 | **Problemas de nodos** | El nodo está en estado NotReady | `kubectl describe node <node-name>`, `kubectl get events` | Comprueba el estado de kubelet, los recursos del sistema y la conectividad de red |
-| **Problemas de DNS** | No se puede conectar por nombre de Service | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | Comprueba los pods de CoreDNS, el Service kube-dns y las políticas de red |
+| **Problemas de DNS** | No se puede conectar por nombre de Service | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | Comprueba los Pods de CoreDNS, el Service kube-dns y las políticas de red |
 | **Problemas de autenticación/autorización** | Se deniega el acceso al servidor de API | `kubectl auth can-i <verb> <resource>` | Comprueba la configuración de RBAC, la validez del certificado y la cuenta de servicio |
 
-### Solución de problemas de pods
+### Solución de problemas de Pods
 
 ```bash
 # Check pod status
@@ -1832,7 +1832,7 @@ curl <service-name>:<port>
 ```
 ## Administración de clústeres de Amazon EKS
 
-Amazon EKS (Elastic Kubernetes Service) es un servicio de Kubernetes administrado en AWS en el que AWS administra el plano de control. Las responsabilidades del cliente respecto a los nodos dependen de si se usan grupos de nodos administrados, Auto Mode, Fargate o recursos informáticos autogestionados; la seguridad y la configuración de las cargas de trabajo siguen siendo responsabilidad del cliente.
+Amazon EKS (Elastic Kubernetes Service) es un servicio de Kubernetes administrado en AWS en el que AWS administra el plano de control. Las responsabilidades del cliente respecto a los nodos dependen de si se usan grupos de nodos administrados, Auto Mode, Fargate o infraestructura de cómputo autogestionada; la seguridad y la configuración de las cargas de trabajo siguen siendo responsabilidad del cliente.
 
 ### Arquitectura del clúster de EKS
 
@@ -1921,7 +1921,7 @@ aws eks associate-access-policy --cluster-name my-cluster \
   --access-scope type=namespace,namespaces=default
 ```
 
-Consulta la [guía de access entries de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html). Los permisos para administrar access entries de EKS y los permisos sobre las cargas de trabajo de Kubernetes son independientes.
+Consulta la [guía de entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html). Los permisos para administrar entradas de acceso de EKS y los permisos sobre las cargas de trabajo de Kubernetes son independientes.
 
 ### Supervisión del clúster de EKS
 
@@ -1955,7 +1955,7 @@ Es importante seguir las prácticas recomendadas para una gestión eficaz de cl�
 ### Prácticas recomendadas de operaciones
 
 1. **Uso de configuración declarativa**: define todos los recursos en archivos YAML y guárdalos en un sistema de control de versiones
-2. **Adopción de GitOps**: usa Git como fuente única de verdad y crea pipelines de implementación automatizados
+2. **Adopción de GitOps**: usa Git como fuente única de verdad y crea pipelines de despliegue automatizados
 3. **Copias de seguridad periódicas**: realiza copias de seguridad periódicas de los datos de etcd y de los volúmenes persistentes
 4. **Supervisión y alertas**: crea sistemas completos de supervisión y configura alertas para las métricas clave
 5. **Registro centralizado**: recopila todos los registros en un sistema centralizado para facilitar su análisis
@@ -1963,7 +1963,7 @@ Es importante seguir las prácticas recomendadas para una gestión eficaz de cl�
 ### Prácticas recomendadas de seguridad
 
 1. **Principio de privilegio mínimo**: concede solo los permisos mínimos necesarios mediante RBAC
-2. **Segmentación de redes**: limita la comunicación entre pods mediante políticas de red
+2. **Segmentación de redes**: limita la comunicación entre Pods mediante políticas de red
 3. **Análisis de imágenes**: implementa el análisis de imágenes de contenedor para detectar vulnerabilidades
 4. **Gestión de Secrets**: usa herramientas externas de gestión de Secrets (por ejemplo, AWS Secrets Manager o HashiCorp Vault)
 5. **Auditorías de seguridad periódicas**: audita periódicamente la configuración y los permisos del clúster
@@ -1980,7 +1980,7 @@ Es importante seguir las prácticas recomendadas para una gestión eficaz de cl�
 
 1. **Selección de tamaños de nodo adecuados**: selecciona los tipos de nodo óptimos para las cargas de trabajo
 2. **Uso de instancias Spot**: usa instancias Spot para cargas de trabajo no críticas
-3. **Configuración del escalado automático**: configura el escalado automático hacia arriba y hacia abajo según la demanda
+3. **Configuración del escalado automático**: configura el aumento y la reducción automáticos de capacidad según la demanda
 4. **Optimización de solicitudes y límites de recursos**: establece solicitudes y límites de recursos según el uso real
 5. **Identificación de recursos inactivos**: identifica y elimina periódicamente los recursos inactivos
 
@@ -2005,7 +2005,7 @@ Para administrar clústeres de manera eficaz, céntrate en las siguientes áreas
 6. **Supervisión y registro**: supervisión del estado y el rendimiento del clúster
 7. **Solución de problemas**: enfoque sistemático para resolver problemas
 
-Al utilizar servicios de Kubernetes administrados como Amazon EKS, es importante comprender el modelo de responsabilidad compartida entre el proveedor del servicio y el usuario. AWS administra el plano de control, mientras que la responsabilidad de los recursos informáticos varía según el modo; los clientes siguen administrando la configuración y la seguridad de las aplicaciones.
+Al utilizar servicios de Kubernetes administrados como Amazon EKS, es importante comprender el modelo de responsabilidad compartida entre el proveedor del servicio y el usuario. AWS administra el plano de control, mientras que la responsabilidad sobre la infraestructura de cómputo varía según el modo; los clientes siguen administrando la configuración y la seguridad de las aplicaciones.
 
 Si sigues las prácticas recomendadas y utilizas las herramientas adecuadas, podrás operar un clúster de Kubernetes estable, seguro y eficiente. Es importante aprender y mejorar continuamente para reforzar las capacidades de gestión del clúster.
 

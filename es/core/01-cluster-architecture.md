@@ -1,11 +1,11 @@
 # Arquitectura del clúster
 
 > **Versiones compatibles**: Kubernetes 1.35, 1.36, 1.37
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-El encabezado de versión hace referencia a Kubernetes upstream. El proyecto mantiene ramas de lanzamiento para las tres versiones menores más recientes (1.35–1.37). Kubernetes upstream 1.34 está en modo de mantenimiento y seguirá recibiendo versiones de parche hasta el fin de su vida útil el **October 27, 2026**, por separado de la fecha de fin del soporte de AWS en EKS.
+El encabezado de versiones se refiere al proyecto original de Kubernetes. El proyecto mantiene ramas de publicación para las tres versiones menores más recientes (1.35–1.37). La versión 1.34 está en modo de mantenimiento y sigue recibiendo parches hasta el fin de su ciclo de vida el **27 de octubre de 2026**, una fecha distinta del fin de soporte de AWS en EKS.
 
-Al 12 de octubre de 2026, el soporte estándar de EKS cubre las versiones 1.34–1.37; EKS 1.37 estuvo disponible el 1 de octubre de 2026. Consulta el [estado de las versiones de Kubernetes](https://kubernetes.io/releases/) y el [ciclo de vida de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) antes de seleccionar una versión.
+A fecha de 12 de octubre de 2026, el soporte estándar de EKS cubre las versiones 1.34–1.37; EKS 1.37 pasó a estar disponible el 1 de octubre de 2026. Consulta el [estado de las versiones de Kubernetes](https://kubernetes.io/releases/) y el [ciclo de vida de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) antes de seleccionar una versión.
 
 Los comandos de los componentes que aparecen a continuación ilustran clústeres autogestionados; EKS administra su plano de control. Las etiquetas de imagen y los ID de infraestructura son ejemplos: selecciona imágenes compatibles y mantenidas, y reemplaza los marcadores de posición antes de usarlos.
 
@@ -14,7 +14,7 @@ Los comandos de los componentes que aparecen a continuación ilustran clústeres
 Para practicar los conceptos de este documento, necesitas las siguientes herramientas y entorno:
 
 ### Herramientas necesarias
-- kubectl cuya versión esté dentro de una versión menor de la del servidor de API
+- kubectl con una diferencia máxima de una versión menor respecto al servidor de API
 - Un clúster de Kubernetes en funcionamiento (EKS, minikube, kind, etc.)
 
 ### Configuración del entorno de desarrollo local
@@ -68,9 +68,9 @@ El plano de control actúa como el «cerebro» del clúster de Kubernetes y admi
 |-----------|---------------|----------------------|--------------------------------|
 | **kube-apiserver** | - Proporciona la API de Kubernetes<br>- Autenticación y autorización<br>- Procesamiento de solicitudes de API | - Todos los componentes<br>- etcd | Escalado horizontal con varias instancias |
 | **etcd** | - Almacena datos del clúster<br>- Almacén distribuido de clave-valor<br>- Garantiza la coherencia | - kube-apiserver | Clúster de varios nodos |
-| **kube-scheduler** | - Decisiones de ubicación de Pods<br>- Evalúa los recursos de los nodos<br>- Aplica afinidad/anti-afinidad | - kube-apiserver | Configuración activo-en espera |
-| **kube-controller-manager** | - Controlador de nodos<br>- Controlador de replicación<br>- Controlador de Endpoint<br>- Controlador de ServiceAccount | - kube-apiserver | Configuración activo-en espera |
-| **cloud-controller-manager** | - Integración con el proveedor de nube<br>- Ciclo de vida de los nodos<br>- Enrutamiento y balanceo de carga | - kube-apiserver<br>- API de la nube | Configuración activo-en espera |
+| **kube-scheduler** | - Decisiones de ubicación de Pods<br>- Evalúa los recursos de los nodos<br>- Aplica afinidad/antiafinidad | - kube-apiserver | Configuración con una instancia activa y otra en espera |
+| **kube-controller-manager** | - Controlador de nodos<br>- Controlador de replicación<br>- Controlador de Endpoint<br>- Controlador de ServiceAccount | - kube-apiserver | Configuración con una instancia activa y otra en espera |
+| **cloud-controller-manager** | - Integración con el proveedor de nube<br>- Ciclo de vida de los nodos<br>- Enrutamiento y balanceo de carga | - kube-apiserver<br>- API de la nube | Configuración con una instancia activa y otra en espera |
 
 ### Flujo de comunicación del plano de control
 
@@ -91,7 +91,7 @@ kube-apiserver es la interfaz del plano de control que expone la API de Kubernet
 - Comunicación con etcd
 - Escalabilidad horizontal (puede escalarse a varias instancias)
 
-**Indicadores principales y opciones de configuración**:
+**Principales opciones de arranque y configuración**:
 ```bash
 # Basic configuration example
 kube-apiserver \
@@ -127,10 +127,10 @@ etcd es un almacén de clave-valor coherente y de alta disponibilidad que guarda
 
 **Características principales**:
 - Sistema distribuido
-- Coherencia sólida (usa el algoritmo de consenso Raft)
+- Consistencia fuerte (usa el algoritmo de consenso Raft)
 - Alta disponibilidad (puede configurarse con varios nodos)
 - Almacenamiento seguro de datos
-- Funcionalidad de watch para supervisar cambios
+- Observación continua (watch) para detectar cambios
 
 **Configuración del clúster etcd**:
 ```bash
@@ -184,7 +184,7 @@ etcdutl snapshot restore snapshot.db \
 
 El 8 de julio de 2026, SIG etcd lanzó etcd v3.7.0. Novedades destacadas:
 
-- **RangeStream**: transmite resultados de rangos grandes en fragmentos en lugar de almacenarlos en búfer en memoria como una respuesta completa (una función solicitada desde hace mucho tiempo)
+- **RangeStream**: transmite resultados de consultas de rango extensas por fragmentos, sin mantener toda la respuesta en memoria (una función solicitada desde hace mucho tiempo)
 - **Mejoras de rendimiento**: solicitudes de rango optimizadas que solo devuelven claves; concesiones más rápidas y confiables
 - Elimina los últimos vestigios del antiguo v2store y completa una importante renovación de protobuf
 - Incluye dependencias principales actualizadas: bbolt v1.5.0 y raft v3.7.0
@@ -195,22 +195,22 @@ Consulta el [anuncio oficial](https://kubernetes.io/blog/2026/07/08/announcing-e
 
 kube-scheduler es el componente del plano de control que selecciona los nodos donde se ejecutarán los Pods recién creados.
 
-**Proceso de programación**:
+**Proceso de planificación**:
 1. **Filtrado**: Identificación de los nodos en los que puede ejecutarse el Pod
    - Requisitos de recursos (CPU, memoria)
    - Selectores de nodo, afinidad de nodo
-   - Taints y tolerations
+   - Taints y tolerancias
    - Restricciones de volúmenes
 
 2. **Puntuación**: Asignación de puntuaciones a los nodos adecuados
    - Utilización de recursos
-   - Interafinidad/anti-afinidad de Pods
+   - Afinidad y antiafinidad entre Pods
    - Localidad de los datos
    - Balanceo de carga entre nodos
 
 3. **Vinculación**: Asignación del Pod al nodo óptimo
 
-**Configuración del scheduler**:
+**Configuración del planificador**:
 ```bash
 # Basic configuration example
 kube-scheduler \
@@ -219,13 +219,13 @@ kube-scheduler \
   --v=2
 ```
 
-**Perfiles y complementos del scheduler**:
-- Perfiles predeterminados del scheduler
-- Perfiles personalizados del scheduler
-- Puntos de extensión del scheduler (filter, score, bind, etc.)
-- Compatibilidad con varios schedulers
+**Perfiles y complementos del planificador**:
+- Perfiles predeterminados del planificador
+- Perfiles personalizados del planificador
+- Puntos de extensión del planificador (filter, score, bind, etc.)
+- Compatibilidad con varios planificadores
 
-**Política de programación**:
+**Política de planificación**:
 ```yaml
 # Scheduling policy example
 apiVersion: kubescheduler.config.k8s.io/v1
@@ -278,7 +278,7 @@ kube-controller-manager \
 **Funcionamiento de los controladores**:
 1. Los controladores observan continuamente el estado del clúster a través del servidor de API
 2. Detectan las diferencias entre el estado actual y el deseado
-3. Realizan operaciones para conciliar las diferencias
+3. Realizan operaciones para reconciliar el estado actual con el deseado
 4. Informan los cambios de estado al servidor de API
 
 ### cloud-controller-manager
@@ -471,11 +471,11 @@ El entorno de ejecución de contenedores es el software que ejecuta los contened
 
 **Estructura por capas del entorno de ejecución de contenedores**:
 
-![Diagrama de arquitectura por capas que muestra cómo Kubernetes llama a Container Runtime Interface, que delega en containerd o CRI-O, cada uno respaldado por un entorno de ejecución de bajo nivel (runc o crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
+![Diagrama de arquitectura por capas que muestra cómo Kubernetes llama a Container Runtime Interface, que delega en containerd o CRI-O, cada uno apoyado en un entorno de ejecución de bajo nivel (runc o crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-1.html)
 
-**Ejemplo de configuración de containerd 1.x** (2.x usa distintos ID de complemento; genera valores predeterminados para la versión instalada):
+**Ejemplo de configuración de containerd 1.x** (2.x utiliza identificadores de complemento diferentes; genera valores predeterminados para la versión instalada):
 ```toml
 # /etc/containerd/config.toml
 version = 2
@@ -620,7 +620,7 @@ La comunicación entre los componentes del plano de control es la siguiente:
    - Puerto: 2379/TCP
    - Seguridad: Autenticación basada en certificados TLS
 
-2. **kube-scheduler y kube-apiserver**: kube-scheduler se comunica con kube-apiserver para programar Pods.
+2. **kube-scheduler y kube-apiserver**: kube-scheduler se comunica con kube-apiserver para asignar los Pods a nodos.
    - Protocolo: HTTPS
    - Puerto: 6443/TCP (kube-apiserver)
    - Seguridad: Autenticación basada en certificados TLS
@@ -643,7 +643,7 @@ La comunicación entre los componentes del plano de control es la siguiente:
 
 La comunicación entre el plano de control y los nodos es la siguiente:
 
-1. **kube-apiserver → kubelet**: El servidor de API llama a la API de kubelet para obtener registros, ejecutar comandos/adjuntarse y reenviar puertos.
+1. **kube-apiserver → kubelet**: El servidor de API llama a la API de kubelet para obtener registros, ejecutar comandos o conectarse a procesos (exec/attach) y reenviar puertos.
    - Protocolo: HTTPS
    - Puerto: 10250/TCP (kubelet)
    - Seguridad: Autenticación basada en certificados TLS
@@ -726,8 +726,8 @@ Los clústeres de Kubernetes de alta disponibilidad (HA) están diseñados para 
 
 La alta disponibilidad del plano de control se implementa mediante los siguientes métodos:
 
-1. **Varios nodos del plano de control**: Normalmente, se implementan 3 o 5 nodos del plano de control para proporcionar redundancia
-2. **Clúster etcd**: Se implementa un clúster compuesto por varias instancias de etcd (normalmente 3 o 5)
+1. **Varios nodos del plano de control**: Normalmente, se despliegan 3 o 5 nodos del plano de control para proporcionar redundancia
+2. **Clúster etcd**: Se despliega un clúster compuesto por varias instancias de etcd (normalmente 3 o 5)
 3. **Balanceador de carga**: Se coloca un balanceador de carga delante de los servidores de API para distribuir el tráfico
 
 **Arquitectura del plano de control de alta disponibilidad**:
@@ -749,9 +749,9 @@ La alta disponibilidad de los nodos de trabajo se implementa mediante los siguie
 1. **Varios nodos de trabajo**: Distribuye las cargas de trabajo entre varios nodos de trabajo
 2. **Recuperación automática de nodos**: Utiliza las funciones de recuperación automática del proveedor de nube
 3. **Escalado automático**: Escalado automático de nodos mediante Cluster Autoscaler
-4. **Varias zonas de disponibilidad**: Implementa nodos en varias zonas de disponibilidad
+4. **Varias zonas de disponibilidad**: Despliega nodos en varias zonas de disponibilidad
 
-**Implementación distribuida de nodos de trabajo**:
+**Despliegue distribuido de nodos de trabajo**:
 
 ![Diagrama de arquitectura que muestra nodos de trabajo distribuidos en grupos de dos por zona entre tres zonas de disponibilidad para aislar los fallos.](../.gitbook/assets/en-core-01-cluster-architecture-8.png)
 
@@ -762,11 +762,11 @@ La alta disponibilidad de los nodos de trabajo se implementa mediante los siguie
 La alta disponibilidad de las aplicaciones se implementa mediante los siguientes métodos:
 
 1. **ReplicaSet/Deployment**: Ejecutar varias réplicas de Pods
-2. **Reglas de distribución de Pods**: Distribuir Pods entre varios nodos mediante la anti-afinidad de Pods
+2. **Reglas de distribución de Pods**: Distribuir Pods entre varios nodos mediante la antiafinidad de Pods
 3. **PodDisruptionBudget**: Garantizar una disponibilidad mínima durante las interrupciones planificadas
 4. **Service y balanceo de carga**: Distribuir el tráfico entre varios Pods
 
-**Ejemplo de anti-afinidad de Pods**:
+**Ejemplo de antiafinidad de Pods**:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -815,7 +815,7 @@ spec:
 Las estrategias de recuperación ante desastres para clústeres de Kubernetes se implementan mediante los siguientes métodos:
 
 1. **Copia de seguridad y recuperación de etcd**: Establece procedimientos periódicos de copia de seguridad y recuperación de datos de etcd
-2. **Implementación en varias regiones**: Implementa clústeres en varias regiones
+2. **Despliegue en varias regiones**: Despliega clústeres en varias regiones
 3. **Federación de clústeres**: Administra varios clústeres en una federación
 4. **Copia de seguridad continua**: Realiza copias de seguridad continuas de los datos de las aplicaciones
 
@@ -832,10 +832,10 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S)
 **Procedimiento de recuperación de etcd (clústeres autogestionados)**:
 
 1. Valida la instantánea con `etcdutl snapshot status`. Restáurala en un directorio de datos nuevo con una versión compatible de `etcdutl`, como se muestra arriba.
-2. Antes de cambiar los directorios de datos, detén todas las instancias del servidor de API y los procesos etcd afectados siguiendo el runbook del clúster. Detener kubelet por sí solo no detiene los contenedores de Pods estáticos existentes.
-3. Para recuperar varios miembros, restaura la misma instantánea en cada miembro con un nombre/URL de par únicos y la misma membresía completa de `--initial-cluster`. El ejemplo de un solo miembro que aparece arriba no es una receta de recuperación de alta disponibilidad.
-4. Usa `--bump-revision` y `--mark-compacted` para las cachés watch del Kubernetes; elige un incremento que supere las revisiones desde la instantánea (el valor mostrado es un ejemplo).
-5. Actualiza el hostPath del Pod estático de etcd para que apunte al directorio restaurado, reinicia etcd, verifica el quórum y el estado, y luego reinicia los servidores de API y los controladores. Conserva los datos originales y la copia de seguridad hasta que finalice la verificación.
+2. Antes de cambiar los directorios de datos, detén todas las instancias del servidor de API y los procesos etcd afectados siguiendo el procedimiento operativo del clúster. Detener kubelet por sí solo no detiene los contenedores de Pods estáticos existentes.
+3. Para recuperar varios miembros, restaura la misma instantánea en cada uno, con un nombre y una URL de par únicos y la misma lista completa de miembros en `--initial-cluster`. El ejemplo anterior de un solo miembro no es un procedimiento de recuperación de alta disponibilidad.
+4. Usa `--bump-revision` y `--mark-compacted` para las cachés de observación (watch) de Kubernetes; elige un incremento que supere las revisiones acumuladas desde la instantánea (el valor mostrado es un ejemplo).
+5. Actualiza el hostPath del Pod estático de etcd para que apunte al directorio restaurado, reinicia etcd, verifica el quórum y el estado, y después reinicia los servidores de API y los controladores. Conserva los datos originales y la copia de seguridad hasta completar la verificación.
 
 Sigue la [guía de recuperación de etcd](https://etcd.io/docs/v3.6/op-guide/recovery/). Los usuarios de EKS no operan ni restauran directamente el etcd del plano de control administrado.
 
@@ -866,10 +866,10 @@ CNI es una interfaz estándar para implementar redes en Kubernetes. Existen vari
    - Casos de uso: Microservicios y entornos centrados en la seguridad
 
 3. **Flannel**: Red superpuesta sencilla
-   - Características: Configuración sencilla y poco peso
+   - Características: Configuración sencilla y bajo consumo de recursos
    - Casos de uso: Clústeres pequeños y entornos de desarrollo
 
-4. **Weave Net (histórico)**: El proyecto se archivó en junio de 2024; evalúa alternativas mantenidas para nuevas implementaciones.
+4. **Weave Net (histórico)**: El proyecto se archivó en junio de 2024; evalúa alternativas mantenidas para nuevos despliegues.
 
 **Ejemplo de configuración CNI (Calico)**:
 ```yaml
@@ -955,7 +955,7 @@ Ingress administra el enrutamiento HTTP y HTTPS desde fuera del clúster hasta l
 Client -> Ingress Controller -> Service -> Pod
 ```
 
-La comunidad retiró ingress-nginx en marzo de 2026; consulta el [aviso de retirada](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). Este ejemplo requiere un controlador Traefik instalado con una IngressClass llamada `traefik`; `/app` se reenvía sin cambios.
+El proyecto comunitario ingress-nginx se retiró en marzo de 2026; consulta el [aviso de retirada](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). Este ejemplo requiere un controlador Traefik instalado con una IngressClass llamada `traefik`; `/app` se reenvía sin cambios.
 
 **Ejemplo de Ingress**:
 ```yaml
@@ -1069,7 +1069,7 @@ Kubernetes admite varios tipos de volúmenes:
    - **downwardAPI**: Expone información del Pod y del contenedor como archivos
 
 2. **Volúmenes persistentes**:
-   - **Almacenamiento en bloques de nube mediante CSI**: AWS EBS, Azure Disk y GCE Persistent Disk; sus implementaciones heredadas integradas en el árbol de código se eliminaron
+   - **Almacenamiento en bloques de nube mediante CSI**: AWS EBS, Azure Disk y GCE Persistent Disk; se eliminaron sus antiguas implementaciones integradas en el código de Kubernetes
    - **nfs**: Volúmenes NFS
    - **csi**: Volúmenes mediante controladores CSI
 
@@ -1092,7 +1092,7 @@ spec:
       claimName: test-pvc
 ```
 
-### Persistent Volumes y Claims
+### Volúmenes persistentes y solicitudes de almacenamiento
 
 Persistent Volumes (PV) son recursos de almacenamiento del clúster que aprovisionan los administradores o que se aprovisionan dinámicamente mediante Storage Classes. Persistent Volume Claims (PVC) son solicitudes de almacenamiento de los usuarios.
 
@@ -1169,7 +1169,7 @@ CSI proporciona una interfaz estándar entre Kubernetes y los sistemas de almace
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-10.html)
 
-**Ejemplo de implementación de un controlador CSI**:
+**Ejemplo de despliegue de un controlador CSI**:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1196,11 +1196,11 @@ Prácticas recomendadas para usar el almacenamiento de Kubernetes:
 
 ## Escalabilidad del clúster
 
-La escalabilidad de un clúster de Kubernetes se refiere a su capacidad para gestionar cargas y requisitos crecientes. Puede implementarse mediante escalado horizontal (ampliación) y vertical (aumento de capacidad).
+La escalabilidad de un clúster de Kubernetes se refiere a su capacidad para gestionar cargas y requisitos crecientes. Puede implementarse mediante escalado horizontal (añadir nodos) y vertical (aumento de capacidad).
 
 ### Límites de tamaño del clúster
 
-La [guía de clústeres grandes](https://kubernetes.io/docs/setup/best-practices/cluster-large/) upstream describe un rango de soporte probado: 5000 nodos, 150 000 Pods en total, 300 000 contenedores en total y 110 Pods por nodo. Estos criterios se aplican en conjunto; no son límites universales estrictos de la API. No existe un límite general de 20 contenedores por Pod. La capacidad de Service también depende del rango de direcciones y del plano de datos. Los límites y las cuotas de las redes de nube pueden ser inferiores.
+La [guía de clústeres grandes](https://kubernetes.io/docs/setup/best-practices/cluster-large/) del proyecto original describe un conjunto de condiciones probado: 5000 nodos, 150 000 Pods en total, 300 000 contenedores en total y 110 Pods por nodo. Estos criterios se aplican conjuntamente; no son límites estrictos universales de la API. No existe un límite general de 20 contenedores por Pod. La capacidad de los Service también depende del rango de direcciones y del plano de datos. Los límites y las cuotas de red del proveedor de nube pueden ser inferiores.
 
 ### Escalado horizontal
 
@@ -1216,7 +1216,7 @@ tags:
   k8s.io/cluster-autoscaler/my-cluster: "owned"
 ```
 
-**Fragmento de implementación de Cluster Autoscaler (ejemplo de clúster v1.36)**: Selecciona una versión con parches que coincida con la versión menor del clúster. Proporciona el ServiceAccount, RBAC de Kubernetes y un rol de IAM dedicado; este fragmento no constituye una instalación completa.
+**Fragmento de despliegue de Cluster Autoscaler (ejemplo de clúster v1.36)**: Selecciona una versión con parches que coincida con la versión menor del clúster. Proporciona la ServiceAccount, RBAC de Kubernetes y un rol de IAM dedicado; este fragmento no constituye una instalación completa.
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1369,7 +1369,7 @@ Prácticas recomendadas para la escalabilidad de clústeres de Kubernetes:
 1. **Establece solicitudes y límites de recursos**: Establece solicitudes y límites de recursos adecuados para todos los Pods
 2. **Estrategia de grupos de nodos**: Configura varios grupos de nodos para distintas características de las cargas de trabajo
 3. **Configura el escalado automático**: Configura correctamente Cluster Autoscaler, HPA y VPA
-4. **Ubicación eficiente de Pods**: Utiliza la afinidad de nodos y la afinidad/anti-afinidad de Pods
+4. **Ubicación eficiente de Pods**: Utiliza la afinidad de nodos y la afinidad/antiafinidad de Pods
 5. **Supervisión del clúster**: Supervisa continuamente el uso de recursos y el rendimiento
 6. **Pruebas de carga**: Realiza pruebas de carga periódicas para validar las estrategias de escalado
 
@@ -1530,7 +1530,7 @@ Prácticas recomendadas para la seguridad de clústeres de Kubernetes:
 3. **Aislamiento de red**: Restringe la comunicación entre Pods mediante políticas de red
 4. **Seguridad de imágenes**: Usa únicamente imágenes de confianza e implementa análisis de vulnerabilidades
 5. **Registro de auditoría**: Habilita los registros de auditoría de la actividad del clúster
-6. **Referencias de seguridad**: Cumple estándares de seguridad como los benchmarks CIS
+6. **Criterios de evaluación de seguridad**: Cumple estándares de seguridad como los benchmarks CIS
 
 ## Actualizaciones del clúster
 
@@ -1551,13 +1551,13 @@ Antes de actualizar, asegúrate de revisar las obsolescencias y eliminaciones en
 
 El 23 de septiembre de 2026 se publicaron versiones de parche para todas las versiones menores compatibles: [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1), v1.36.5, v1.35.9 y v1.34.12. v1.37.1 es una versión periódica de corrección de errores: actualiza la compilación a Go 1.26.8 y corrige, entre otros problemas, un error por el que un DeviceTaintRule sin `spec.deviceSelector` impedía programar todos los dispositivos DRA, y un fallo que podía terminar kube-proxy de Windows (winkernel) al enumerar un balanceador de carga HNS sin asignaciones de puertos.
 
-Esa semana también se publicó la entrada de análisis detallado de v1.37 [Seguimiento de cuándo se usó por última vez un PersistentVolumeClaim (Beta)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/): la puerta de función `PersistentVolumeClaimUnusedSinceTime` pasó a Beta (habilitada de forma predeterminada), por lo que el controlador de protección de PVC ahora añade una condición `Unused` a cada PVC. Esto permite identificar PVC huérfanos a los que no hace referencia ningún Pod en ejecución sin herramientas personalizadas.
+Esa semana también se publicó la entrada de análisis detallado de v1.37 [Seguimiento de cuándo se usó por última vez un PersistentVolumeClaim (Beta)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/): el mecanismo de activación `PersistentVolumeClaimUnusedSinceTime` pasó a Beta (habilitada de forma predeterminada), por lo que el controlador de protección de PVC ahora añade la condición `Unused` a cada PVC. Esto permite identificar PVC huérfanos a los que no hace referencia ningún Pod en ejecución sin herramientas personalizadas.
 ### Actualización de septiembre de 2026: análisis detallado de las funciones de v1.37
 
 Entre el 14 y el 16 de septiembre de 2026, el blog de Kubernetes publicó una serie de entradas de análisis detallado sobre las funciones de v1.37:
 
-- **[Memory QoS pasa a Beta](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: la puerta de función `MemoryQoS` ahora está en Beta y habilitada de forma predeterminada en los kubelet de v1.37. En nodos Linux que ejecutan cgroup v2, utiliza el controlador de memoria para orientar mejor al kernel sobre cómo tratar la memoria de los contenedores. La configuración predeterminada de kubelet no escribe valores `memory.high`/`memory.min`/`memory.low`, por lo que nada cambia hasta que configures explícitamente campos como `memoryThrottlingFactor`.
-- **[Los administradores de recursos a nivel de Pod pasan a Beta](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (deshabilitados de forma predeterminada): Topology Manager, CPU Manager y Memory Manager de kubelet ahora pueden usar directamente las declaraciones de recursos a nivel de Pod (`.spec.resources`) para ubicar cargas alineadas con NUMA. Esto permite una asignación híbrida: núcleos exclusivos para contenedores principales mientras los sidecars ligeros comparten un grupo aislado del Pod.
+- **[Memory QoS pasa a Beta](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: el mecanismo de activación `MemoryQoS` ahora está en Beta y habilitada de forma predeterminada en los kubelet de v1.37. En nodos Linux que ejecutan cgroup v2, utiliza el controlador de memoria para orientar mejor al kernel sobre cómo tratar la memoria de los contenedores. La configuración predeterminada de kubelet no escribe valores `memory.high`/`memory.min`/`memory.low`, por lo que nada cambia hasta que configures explícitamente campos como `memoryThrottlingFactor`.
+- **[Los administradores de recursos a nivel de Pod pasan a Beta](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (deshabilitados de forma predeterminada): Topology Manager, CPU Manager y Memory Manager de kubelet ahora pueden usar directamente las declaraciones de recursos a nivel de Pod (`.spec.resources`) para ubicar cargas alineadas con NUMA. Esto permite una asignación híbrida: núcleos exclusivos para contenedores principales mientras los sidecars ligeros comparten un conjunto de recursos aislado para el Pod.
 - **[Refuerzo de la seguridad del almacenamiento de contenedores](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: los nuevos modos de permisos de `emptyDir` y las opciones de montaje bind (`noexec`, `nosuid`, `nodev`) permiten aplicar políticas de seguridad, como prohibir la ejecución de binarios arbitrarios desde volúmenes con permisos de escritura, directamente en Kubernetes y sin soluciones alternativas.
 
 ### Estrategias de actualización
@@ -1582,15 +1582,15 @@ Sigue la [guía de actualización de kubeadm específica de la versión](https:/
 
 1. Haz una copia de seguridad de etcd y verifica la compatibilidad de los complementos. Actualiza `kubeadm` en el primer nodo del plano de control, ejecuta `kubeadm upgrade plan` y luego `kubeadm upgrade apply <target-version>`.
 2. En los demás nodos del plano de control, actualiza `kubeadm` y ejecuta `kubeadm upgrade node`.
-3. Drena cada nodo antes de actualizar su kubelet; actualiza los paquetes de kubelet/kubectl a la versión de parche elegida, recarga systemd, reinicia kubelet, comprueba que esté listo y quita la marca de aislamiento.
-4. En los nodos de trabajo, actualiza `kubeadm`, ejecuta `kubeadm upgrade node` y luego sigue la secuencia de drenado/kubelet/quitar la marca de aislamiento. Mantén kubelet en una versión que no sea posterior a la del servidor de API.
+3. Vacía cada nodo antes de actualizar su kubelet; actualiza los paquetes de kubelet/kubectl a la versión de parche elegida, recarga systemd, reinicia kubelet, comprueba que esté listo y vuelve a permitir la asignación de Pods al nodo.
+4. En los nodos de trabajo, actualiza `kubeadm`, ejecuta `kubeadm upgrade node` y luego sigue la secuencia de vaciado del nodo, actualización de kubelet y habilitación de nuevas asignaciones. Mantén kubelet en una versión que no sea posterior a la del servidor de API.
 
 ### Consideraciones para la actualización
 
 Consideraciones para actualizar clústeres de Kubernetes:
 
 1. **Cambios en la API**: Comprueba los cambios de API en las versiones nuevas
-2. **Puertas de función**: Comprueba las nuevas puertas de función y los cambios en los valores predeterminados
+2. **Activación de funciones**: Comprueba los nuevos mecanismos de activación de funciones y los cambios en los valores predeterminados
 3. **Dependencias**: Comprueba la compatibilidad de componentes dependientes, como CNI y CSI
 4. **Tiempo de inactividad**: Planifica el tiempo de inactividad previsto durante las actualizaciones
 5. **Plan de reversión**: Establece un plan de reversión por si surgen problemas
@@ -1608,7 +1608,7 @@ Prácticas recomendadas para actualizar clústeres de Kubernetes:
 
 ## Arquitectura de clústeres de Amazon EKS
 
-Amazon EKS (Elastic Kubernetes Service) es un servicio administrado de Kubernetes proporcionado por AWS. EKS proporciona las funciones básicas de Kubernetes y añade integración con los servicios de AWS y comodidad de administración.
+Amazon EKS (Elastic Kubernetes Service) es un servicio administrado de Kubernetes proporcionado por AWS. EKS proporciona las funciones básicas de Kubernetes y añade integración con los servicios de AWS y facilita su administración.
 
 ### Descripción general de la arquitectura de EKS
 
@@ -1632,7 +1632,7 @@ AWS administra el plano de control de EKS, que proporciona alta disponibilidad e
 
 **Características principales**:
 1. **Servicio administrado**: AWS administra el mantenimiento y las actualizaciones del plano de control
-2. **Alta disponibilidad**: Se implementa en varias zonas de disponibilidad
+2. **Alta disponibilidad**: Se despliega en varias zonas de disponibilidad
 3. **Escalado automático**: Escala automáticamente según la carga
 4. **Seguridad**: Integración con los servicios de seguridad de AWS
 
@@ -1644,7 +1644,7 @@ EKS admite varios tipos de nodos:
 2. **Grupos de nodos administrados**: AWS administra el ciclo de vida de los nodos
 3. **Fargate**: Entorno sin servidor para ejecutar contenedores
 4. **EKS Auto Mode**: AWS administra el cómputo y la infraestructura integrada
-5. **EKS Hybrid Nodes**: Nodos locales administrados por el cliente
+5. **EKS Hybrid Nodes**: Nodos en instalaciones propias administrados por el cliente
 
 Bottlerocket es un sistema operativo de nodo, no un tipo independiente de administración de cómputo.
 
@@ -1690,7 +1690,7 @@ Las redes de EKS se basan en Amazon VPC e incluyen los siguientes componentes:
 }
 ```
 
-Combina estos valores con la configuración del complemento instalado y valida su esquema antes de actualizarlo. La compatibilidad con Pod ENI usa la variable de entorno `ENABLE_POD_ENI` y también requiere nodos compatibles, permisos de IAM y una SecurityGroupPolicy; una clave de ConfigMap por sí sola no la habilita. Consulta la [configuración de políticas de red](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html).
+Combina estos valores con la configuración del complemento instalado y valida su esquema antes de actualizarlo. El uso de Pod ENI requiere la variable de entorno `ENABLE_POD_ENI` y también requiere nodos compatibles, permisos de IAM y una SecurityGroupPolicy; una clave de ConfigMap por sí sola no la habilita. Consulta la [configuración de políticas de red](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html).
 
 ### Almacenamiento de EKS
 
@@ -1741,7 +1741,7 @@ EKS se integra con los servicios de supervisión y registro de AWS:
 
 1. **CloudWatch Container Insights**: Supervisión de contenedores
 2. **CloudWatch Logs**: Recopilación y análisis de registros
-3. **X-Ray**: Seguimiento distribuido
+3. **X-Ray**: Trazado distribuido
 4. **Prometheus y Grafana**: Integración con herramientas de supervisión de código abierto
 
 **Ejemplo de CloudWatch Container Insights**:
@@ -1775,7 +1775,7 @@ spec:
 
 Métodos para optimizar los costos de los clústeres de EKS:
 
-1. **Instancias Spot**: Utiliza instancias Spot rentables
+1. **Instancias Spot**: Utiliza instancias Spot para reducir costos
 2. **Fargate**: Reduce los costos de recursos inactivos con la ejecución de contenedores sin servidor
 3. **Escalado automático**: Optimiza los recursos mediante Cluster Autoscaler
 4. **Procesadores Graviton**: Utiliza instancias Graviton basadas en ARM
@@ -1804,7 +1804,7 @@ Para profundizar en la arquitectura del clúster descrita en este documento, con
 - [Introducción a Kubernetes](../basics/04-kubernetes-introduction.md) - Conceptos básicos e historia de Kubernetes
 - [Pods y cargas de trabajo](./02-pods-and-workloads.md) - Administración de las cargas de trabajo que se ejecutan en el clúster
 - [Services y redes](./03-services-networking.md) - Configuración de redes dentro del clúster
-- [Programación, prioridad y expulsión](./08-scheduling-preemption-eviction.md) - Cómo se ubican los Pods en los nodos
+- [Planificación, desalojo por prioridad y expulsión](./08-scheduling-preemption-eviction.md) - Cómo se ubican los Pods en los nodos
 - [Administración de clústeres](./09-cluster-administration.md) - Operación y administración del clúster
 - [Introducción a EKS](../eks/01-eks-introduction.md) - Descripción general del servicio Amazon EKS
 - [Creación de clústeres de EKS](../eks/02-eks-cluster-creation-part1.md) - Cómo crear clústeres de EKS

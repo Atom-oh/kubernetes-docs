@@ -1,6 +1,6 @@
 # ClickHouse
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 ClickHouse はカラム型の分析データベースです。インジェストスキーマ、保持期間、運用モデルがワークロードに適合する場合、SQL フィルタリング、集計、結合を必要とするログワークロードに適しています。
 
@@ -12,9 +12,9 @@ ClickHouse はカラム型の分析データベースです。インジェスト
 4. [ログインジェストパイプライン](#log-ingestion-pipeline)
 5. [SQL クエリ](#sql-queries)
 6. [Grafana 統合](#grafana-integration)
-7. [HyperDX (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#hyperdx-clickhouse-native-viewer)
+7. [HyperDX（ClickHouse ネイティブビューア）](#hyperdx-clickhouse-native-viewer)
 8. [パフォーマンス最適化](#performance-optimization)
-9. [S3 アーカイブ (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#s3-archiving-and-long-term-retention)
+9. [S3 アーカイブと長期保持](#s3-archiving-and-long-term-retention)
 
 <span id="overview"></span>
 
@@ -545,7 +545,7 @@ GROUP BY time ORDER BY time;
 
 heartbeat が存在しない場合、この query は time-series row を返しません。No Data と execution error を意図的に構成し、ingestion lag を考慮して notification delivery をテストしてください。
 
-## HyperDX（ClickHouse ネイティブビューア）
+## HyperDX（ClickHouse ネイティブビューア） {#hyperdx-clickhouse-native-viewer}
 
 ### 主な利点
 
@@ -627,7 +627,7 @@ setting を変更する前に、境界を定めた test workload を使用し、
 
 EKS では、EBS provisioned performance/capacity、cross-AZ traffic、node architecture、failure-domain placement、replacement capacity を含めてください。Fargate は node-based collector/ClickHouse deployment と同じ host-log/volume topology を提供しません。
 
-## S3 アーカイブと長期保持
+## S3 アーカイブと長期保持 {#s3-archiving-and-long-term-retention}
 
 ### アーカイブパイプライン
 

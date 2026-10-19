@@ -1,7 +1,7 @@
 # Flagger のプログレッシブデリバリー
 
 > **レビュー基準**: Flagger/Chart 1.45.0、Loadtester 0.39.0、Flux 2.9.5（リリースノートのレビュー後にパッチ 2.9.6 へ更新、例は再実行していません）、Podinfo 6.15.0
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 Flagger は Canary CRD を通じて Kubernetes ワークロードのプログレッシブデリバリーを管理します。制御対象はトラフィックとリビジョンであり、データベースや外部副作用のトランザクションロールバックではありません。これらのラボ例には、適合するネットワーク、計装、認可、および Service SLO が必要です。
 
@@ -982,7 +982,7 @@ spec:
 
 [インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
 
-Flux bootstrap は Flaggers を組み込み controller としてインストールしません。HelmRelease または Kustomization を通じて別途インストールしてください。同じリリースを Helm CLI でも同時に管理しないでください。前述の namespace、ServiceAccount、NetworkPolicy も Git で管理してください。
+Flux bootstrap は Flagger を組み込み controller としてインストールしません。HelmRelease または Kustomization を通じて別途インストールしてください。同じリリースを Helm CLI でも同時に管理しないでください。前述の namespace、ServiceAccount、NetworkPolicy も Git で管理してください。
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
