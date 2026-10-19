@@ -1,6 +1,6 @@
 # Service Mesh ソリューション比較
 
-> **最終更新**: September 11, 2026
+> **最終レビュー日**: 2026年9月11日
 > **API/artifact チェック**: Istio 1.31.0; Linkerd edge-26.9.1; Kong Mesh/Kuma 2.14.4; Consul/chart 2.0.4
 
 artifact バージョンは、例を確認するために使用したソースを示します。これらは**共通の Kubernetes 互換性マトリクス**でも、デプロイ済みの本番システムの証拠でもありません。元の Istio 1.24/Linkerd 2.15/Kong Mesh 2.8/Consul 1.19 のパフォーマンス数値は、歴史的で未検証のステータスのまま以下に保持されています。
@@ -562,7 +562,7 @@ linkerd viz dashboard
 |---|---|
 | Istio 1.31.0 | Kubernetes 1.32–1.37 をサポート。実際の upgrade/skew rule と platform 要件に従ってください |
 | Linkerd edge-26.9.1 CLI/CRD | Edge guidance はその artifact に属します。別途公開された **2.20** 表では Kubernetes 1.31–1.35 と Gateway API 1.2.1–1.5.1 を列挙しています。これらを後続のすべての edge/vendor build の自動的な境界として扱わないでください。 |
-| Kong Mesh/chart 2.14.4 | Kuma 2.14.4 とともに September 3 にリリースされました。公開された Kubernetes validation table は現在 2.13 で止まっています。chart render から 2.14 の互換性認定は推論されません。support table には 2.13 LTS が別途記載されています。 |
+| Kong Mesh/chart 2.14.4 | Kuma 2.14.4 とともに9月3日にリリースされました。公開された Kubernetes validation table は現在 2.13 で止まっています。chart render から 2.14 の互換性認定は推論されません。support table には 2.13 LTS が別途記載されています。 |
 | Consul/chart 2.0.4 | リリース済み application と Helm artifact を別々に確認しました。chart の Kubernetes minimum は metadata であり、完全なサポートバージョンマトリクスや upgrade 評価ではありません。 |
 
 Gateway API CRD は controller 間で共有される cluster-wide dependency です。すべての consumer を確認せずに catalog の最新バージョンを無条件にインストールしたり、既存 bundle を downgrade したりしないでください。

@@ -1,10 +1,10 @@
 {
-  "time": "2026-10-19T00:40:29.872751+00:00",
+  "time": "2026-10-19T00:52:22.405385+00:00",
   "status": "IN_PROGRESS",
   "sourcePages": 693,
   "modelCalls": 0,
   "reviewScope": "Complete English/native-locale document comparison",
-  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-0037",
+  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-0051",
   "locales": {
     "cn": {
       "sourcePages": 693,
@@ -40109,7 +40109,7 @@
     },
     "jp": {
       "sourcePages": 693,
-      "currentCompleteReviews": 611,
+      "currentCompleteReviews": 619,
       "minimumActualScore": 86,
       "reviews": {
         "jp/ai-ml/01-ai-ml-workloads.md": {
@@ -42199,6 +42199,72 @@
               "Scoped git diff --check passed",
               "Exact frozen source, original pre-edit Japanese page, and final Japanese bytes are SHA-256 verified and saved"
             ]
+          }
+        },
+        "jp/core/08-scheduling-preemption-eviction.md": {
+          "sourcePath": "en/core/08-scheduling-preemption-eviction.md",
+          "sourceBlob": "52d252c7adc9fbbc3409d6b075d8fd44d5543b19",
+          "sourceSha256": "4704f115825f49cd75fe5532bdb5b336e0362a62516fa00249512c85ed877c8a",
+          "targetSha256": "21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422",
+          "reviewer": "nativeGPT6Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/core/08-scheduling-preemption-eviction.md",
+            "sourceBlob": "52d252c7adc9fbbc3409d6b075d8fd44d5543b19",
+            "sourceSha256": "4704f115825f49cd75fe5532bdb5b336e0362a62516fa00249512c85ed877c8a",
+            "targetSha256": "21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422",
+            "initialTargetSha256": "e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0",
+            "preEditTargetSha256": "e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/4704f115825f49cd75fe5532bdb5b336e0362a62516fa00249512c85ed877c8a.md",
+            "initialSnapshot": "/tmp/jp-native-initial-snapshots/e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0.md",
+            "finalSnapshot": "/tmp/native-reviewed-target-snapshots/21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422.md",
+            "snapshot": "/tmp/native-reviewed-target-snapshots/21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422.md",
+            "completePageComparison": true,
+            "fidelityScore": 95,
+            "readabilityScore": 90,
+            "qualityScore": 92,
+            "qualityScale": "100-point complete-page Japanese fidelity/readability review; full source, initial, and final prose compared; protected code and structure checked separately",
+            "reviewer": "nativeGPT6Luna",
+            "reviewedAt": "2026-10-19T00:38:35+00:00",
+            "status": "passed",
+            "rationale": "I compared the complete pinned English source, the complete saved initial Japanese page, and the complete final Japanese page, including headings, tables, prose, code-adjacent explanations, examples, references, and caveats. The final Japanese now aligns to the current scheduling and Descheduler guidance. It preserves the distinction between scheduling, preemption, eviction, and later descheduling; the PDB and priority behavior; the supported versions and release boundaries; and the source caveats around resource requests, retries, and operational safety. The prose is clear for a Japanese-speaking Kubernetes audience, with conventional product and API names retained.",
+            "findings": [
+              "The initial translation was materially stale: it had an older Descheduler release and Kubernetes version range, an older last-reviewed date, and an inaccurate Kubernetes Priority and Preemption GA version. Some scheduling strategy descriptions were also awkward or imprecise.",
+              "After aligning those facts and wording, the final full-page read found no material omission or unresolved technical meaning drift. The concluding LeastAllocated comparison now accurately explains capacity headroom and resilience to traffic spikes and kubectl drain without overstating guarantees."
+            ],
+            "resolutions": [
+              "Updated the Descheduler and Kubernetes versions, review date, and Priority/Preemption GA reference to match the pinned source. Clarified strategy wording while preserving source qualifications and operational cautions.",
+              "Restored all 32 fenced blocks byte-for-byte from the source. All 45 Markdown link destinations and 84 heading levels match; the inline-code token multiset matches exactly across all 90 tokens. The owned anchor helper added no IDs.",
+              "Reread the complete final Japanese prose after the last wording edit. Translation validation, emphasis check, scoped actual VitePress rendering, and scoped whitespace validation passed; rendering reported zero Vue errors and zero literal-bold findings. Final bytes end with exactly one LF."
+            ],
+            "validation": {
+              "translationValidator": "passed",
+              "emphasisCheck": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 32,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 45,
+              "linkDestinationsExact": true,
+              "sourceHeadingLevels": 84,
+              "headingHierarchyExact": true,
+              "sourceInlineCodeTokens": 90,
+              "targetInlineCodeTokens": 90,
+              "inlineCodeTokenMultisetExact": true,
+              "ownedAnchorRepairAddedIds": 0,
+              "singleTerminalLF": true,
+              "scopedGitDiffCheck": "passed",
+              "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/4704f115825f49cd75fe5532bdb5b336e0362a62516fa00249512c85ed877c8a.md",
+              "initialSnapshot": "/tmp/jp-native-initial-snapshots/e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0.md",
+              "finalSnapshot": "/tmp/native-reviewed-target-snapshots/21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422.md",
+              "sourceBlob": "52d252c7adc9fbbc3409d6b075d8fd44d5543b19",
+              "sourceSha256": "4704f115825f49cd75fe5532bdb5b336e0362a62516fa00249512c85ed877c8a",
+              "initialTargetSha256": "e368b5364692d79cd19b4c0cb6a00c5b9c9fc930d6f55e8c9a296ed43a8ed9b0",
+              "targetSha256": "21bf5ffd46e16ee5da1852bdfd29fdb80673db80c2bc4138fc38d6faa6c8a422"
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-core-08-scheduling-preemption-eviction-20261019T003835Z.json",
+            "ledgerBackupSha256": "aded7fa8d9615b4a7065234e6724b935512451036fbe97ac33e122ab354f1c84"
           }
         },
         "jp/core/10-windows-in-kubernetes.md": {
@@ -46899,6 +46965,65 @@
             "rationale": "Full-page comparison completed. Japanese preserves the measurement boundaries, formulas, expected failures and environment-specific limits; it does not turn a reference run into a claim about the reader’s machine. Score reflects fidelity and technical readability alongside structural validation."
           }
         },
+        "jp/networking/README.md": {
+          "sourcePath": "en/networking/README.md",
+          "sourceBlob": "dbf8e18093e59fc290d0e7236a4498568ab9debe",
+          "sourceSha256": "f06772866fa3834cc3433ffc72432f00904bda86c5359454552087dbf80ed256",
+          "targetSha256": "1274e25a829bba9adf83359d065247c9b3033f9d5a3b32d05949309a5a30ce13",
+          "reviewer": "nativeGPT6Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/networking/README.md",
+            "sourceBlob": "dbf8e18093e59fc290d0e7236a4498568ab9debe",
+            "sourceSha256": "f06772866fa3834cc3433ffc72432f00904bda86c5359454552087dbf80ed256",
+            "targetSha256": "1274e25a829bba9adf83359d065247c9b3033f9d5a3b32d05949309a5a30ce13",
+            "initialTargetSha256": "428f65b771ce344506ba6b7b400b3f2437491af475fae79d2965ac6e6f27f7ed",
+            "preEditTargetSha256": "428f65b771ce344506ba6b7b400b3f2437491af475fae79d2965ac6e6f27f7ed",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/f06772866fa3834cc3433ffc72432f00904bda86c5359454552087dbf80ed256.md",
+            "initialSnapshot": "/tmp/jp-native-initial-snapshots/428f65b771ce344506ba6b7b400b3f2437491af475fae79d2965ac6e6f27f7ed.md",
+            "finalSnapshot": "/tmp/native-reviewed-target-snapshots/1274e25a829bba9adf83359d065247c9b3033f9d5a3b32d05949309a5a30ce13.md",
+            "snapshot": "/tmp/native-reviewed-target-snapshots/1274e25a829bba9adf83359d065247c9b3033f9d5a3b32d05949309a5a30ce13.md",
+            "completePageComparison": true,
+            "fidelityScore": 95,
+            "readabilityScore": 92,
+            "qualityScore": 94,
+            "qualityScale": "100-point whole-page Japanese fidelity/readability review; the complete pinned English source, saved initial Japanese translation, and complete final Japanese page were compared; rendering and structural checks are recorded separately.",
+            "reviewer": "nativeGPT6Luna",
+            "reviewedAt": "2026-10-19T00:47:29+00:00",
+            "status": "passed",
+            "rationale": "I compared the full pinned source, exact pre-edit Japanese page, and final Japanese page, including every prose section, table, heading, link label, and reference. The translation already covered the full source structure and technical scope. The final page preserves the distinct CNI, EKS, DNS/routing, GWLB, EFA/NVLink, HTTP/3/gRPC, diagnostics, and policy caveats while updating the stale release metadata and references. Executable code was restored byte-for-byte from the pinned source and all final prose was reread.",
+            "findings": [
+              "The initial page had the prior day as its update date and stale pinned release versions: Cilium 1.20.1, Flannel 0.28.9, AWS VPC CNI 1.23.0, and AWS Load Balancer Controller documentation links at 3.5.0. Its explanatory VPC CNI version statements and reference targets also used 1.23.0/0.28.9.",
+              "The remainder of the initial Japanese prose aligned with the current source’s full section sequence and technical distinctions. Review confirmed the separate EKS Auto Mode and standard-node behavior, version/OS conditions, route precedence, IPAM limits, policy semantics, and bounded test instructions."
+            ],
+            "resolutions": [
+              "Updated the date to 2026年10月16日 and the pinned Cilium/Flannel/upstream AWS VPC CNI examples to 1.20.3/0.28.10/1.23.2. Updated all matching explanatory statements, labels, and versioned Flannel/AWS VPC CNI reference URLs.",
+              "Updated the two AWS Load Balancer Controller reference labels and URLs from 3.5.0 to 3.6.0. Reread the full final Japanese prose against the pinned source and initial snapshot after these changes.",
+              "Confirmed all 14 fenced blocks are byte-identical to source, 56 heading levels and 43 inline-code tokens match, and the translation validator passes. Owned-anchor repair added no IDs; actual VitePress rendering reports zero Vue errors and zero literal-bold findings."
+            ],
+            "validation": {
+              "translationValidator": "passed",
+              "fencedBlocksByteExact": true,
+              "sourceFencedBlocks": 14,
+              "headingHierarchyExact": true,
+              "sourceHeadingCount": 56,
+              "tableShapesExact": true,
+              "sourceTableRows": 79,
+              "inlineCodeTokensExact": true,
+              "inlineCodeTokenCount": 43,
+              "linkDestinationsExact": true,
+              "ownedAnchorRepairAddedIds": 0,
+              "emphasisCheck": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "singleTerminalLF": true,
+              "diffCheck": "passed"
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-networking-README-20261019T004729Z.json",
+            "ledgerBackupSha256": "bddeedf14ce3ee036343f4b3129026861334d68377cf6dd464423b607f6ac617"
+          }
+        },
         "jp/networking/beginner/01-linux-cli.md": {
           "sourcePath": "en/networking/beginner/01-linux-cli.md",
           "sourceBlob": "9e69c25bd8cb7c80e6ba97814dc9f216c730958c",
@@ -48809,6 +48934,60 @@
             "ledgerBackupSha256": "b0686670d002a1c2d0865d911ac682ab87c0f64282e6ddba6f9d4943cd774cfa"
           }
         },
+        "jp/observability/logging/05-collectors.md": {
+          "sourcePath": "en/observability/logging/05-collectors.md",
+          "sourceBlob": "decef1a7163a545300ec66d87b0abbb7983b304a",
+          "sourceSha256": "2778cd176d35165661af6c0d92286f2d53c1ec0089dfebcdd17aca91473c7b18",
+          "targetSha256": "e38a616737fff1f2d7ed9669d8df5aa8162bf30d3e8a3b4b37c30f8c527fa9eb",
+          "reviewer": "nativeGPT6Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "observability/logging/05-collectors.md",
+            "sourcePath": "en/observability/logging/05-collectors.md",
+            "targetPath": "jp/observability/logging/05-collectors.md",
+            "sourceBlob": "decef1a7163a545300ec66d87b0abbb7983b304a",
+            "sourceSha256": "2778cd176d35165661af6c0d92286f2d53c1ec0089dfebcdd17aca91473c7b18",
+            "initialTargetSha256": "e62e89b216a0dc04dc35486f7a13097c69e0a82471d4de7f50437a5974bbc46d",
+            "targetSha256": "e38a616737fff1f2d7ed9669d8df5aa8162bf30d3e8a3b4b37c30f8c527fa9eb",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fullFinalReread": true,
+            "fidelityScore": 97,
+            "readabilityScore": 92,
+            "qualityScore": 94,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/2778cd176d35165661af6c0d92286f2d53c1ec0089dfebcdd17aca91473c7b18.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/e62e89b216a0dc04dc35486f7a13097c69e0a82471d4de7f50437a5974bbc46d.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/e38a616737fff1f2d7ed9669d8df5aa8162bf30d3e8a3b4b37c30f8c527fa9eb.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/e38a616737fff1f2d7ed9669d8df5aa8162bf30d3e8a3b4b37c30f8c527fa9eb.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "Compared the entire pinned English source and captured initial Japanese page with the entire final page. Technical content, version baselines, migration limitations, configuration explanations, testing scope and references matched. The initial update date remained in English, and the table of contents sent the comparison section to the English page instead of the Japanese section."
+            ],
+            "resolutions": [
+              "Localized the date as 2026年9月13日 and linked the table-of-contents entry to the Japanese page’s canonical comparison-and-selection fragment. Reread the full final Japanese page against the source and initial capture; no additional prose corrections were needed."
+            ],
+            "rationale": "The scores reflect actual full-page source/initial/final comparison. The Japanese page preserves the collector lifecycle, platform-specific collection requirements, parsing and buffering caveats, migration constraints, security boundaries, routing behavior, sample limitations and validation scope. The two corrections improve localized navigation and metadata without changing technical meaning.",
+            "validation": {
+              "translationValidator": "passed",
+              "fencedCodeBlocksExact": 13,
+              "linkDestinationsExact": 26,
+              "headingLevelsExact": 34,
+              "inlineCodeTokenMultisetExact": 92,
+              "tableShapesExact": 6,
+              "answerContainerTags": "exact",
+              "ownedAnchorRepair": "passed; no changes required",
+              "emphasisCheck": "passed; no repairs required",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "singleTerminalLF": true,
+              "trailingWhitespaceLines": 0,
+              "diffCheck": "passed; only the date and localized internal table-of-contents link changed"
+            }
+          }
+        },
         "jp/observability/logging/README.md": {
           "sourcePath": "en/observability/logging/README.md",
           "sourceBlob": "4ba0696d149bc39298c325550206f64d9b8dea55",
@@ -49409,6 +49588,123 @@
             ],
             "ledgerBackup": "/tmp/jp-native-content-review.pre-operational-alerts-20261018T223600Z.json",
             "ledgerBackupSha256": "7e6d836d51e485d7d72334c7cca55cbf88dc09b824553eec38f90a4bc2b606c7"
+          }
+        },
+        "jp/ops/09-observability-stack.md": {
+          "sourcePath": "en/ops/09-observability-stack.md",
+          "sourceBlob": "8fb944921d71512f5657f9dee46e9e41991adc8e",
+          "sourceSha256": "6178dc951b1a26d0de159c5b98136419135ab553a3608a17647a65211efa4e7b",
+          "targetSha256": "befe16ef2d122d4e0c0026a343602b229e2fae100a921693abb4834e237d169d",
+          "reviewer": "nativeGPT6Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "ops/09-observability-stack.md",
+            "sourcePath": "en/ops/09-observability-stack.md",
+            "targetPath": "jp/ops/09-observability-stack.md",
+            "sourceBlob": "8fb944921d71512f5657f9dee46e9e41991adc8e",
+            "sourceSha256": "6178dc951b1a26d0de159c5b98136419135ab553a3608a17647a65211efa4e7b",
+            "initialTargetSha256": "0eb2f65f53e6bba75c6c9c4f428d19f1c756faeb9d0e933b0c4fbcd99b28c2fe",
+            "targetSha256": "befe16ef2d122d4e0c0026a343602b229e2fae100a921693abb4834e237d169d",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fullFinalReread": true,
+            "fidelityScore": 97,
+            "readabilityScore": 93,
+            "qualityScore": 95,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/6178dc951b1a26d0de159c5b98136419135ab553a3608a17647a65211efa4e7b.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/0eb2f65f53e6bba75c6c9c4f428d19f1c756faeb9d0e933b0c4fbcd99b28c2fe.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/befe16ef2d122d4e0c0026a343602b229e2fae100a921693abb4834e237d169d.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/befe16ef2d122d4e0c0026a343602b229e2fae100a921693abb4834e237d169d.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "Compared the complete pinned English source and captured initial Japanese page with the final Japanese page. The initial text covered the current configuration and operational cautions, but its component/version header, Collector Contrib version paragraph and two versioned Collector references were stale.",
+              "Six fenced examples also differed from the frozen source, including current Loki, Collector and kube-prometheus-stack versions/configuration."
+            ],
+            "resolutions": [
+              "Updated the date and component versions to the source values (Loki 3.7.8, Tempo 3.0.3, Alloy 1.20.1, Collector Contrib 0.162.0 and kube-prometheus-stack 92.9.0), corrected the Collector prose version, and updated both versioned Collector references.",
+              "Reconciled the six changed fenced examples byte-for-byte with the current English source. Re-read the complete final Japanese prose and verified the Loki retention/tenant limits, Alloy collection behavior, Tempo deployment/migration boundaries, Collector sampling caveats, AMP IAM/HA limits and post-apply validation scope remain faithful.",
+              "All 30 fenced blocks are byte-exact; 17 link destinations, 17 heading levels, 101 inline-code tokens, answer tags and table shapes match. Translation validation passed; actual VitePress rendering has zero Vue errors and zero literal-bold findings; owned-anchor repair added no IDs."
+            ],
+            "rationale": "Scores reflect the complete source/initial/final bilingual comparison after updating all stale version references and code examples. The final page retains the source caveats that internal HTTP, Kafka, storage, retention, sampling, IAM and recovery behavior require environment-specific validation, and does not overstate deployment or access tests. Japanese remains clear and technically consistent throughout.",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 30,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 17,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 17,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 101,
+              "inlineCodeTokensExact": true,
+              "ownedAnchorRepairAddedIds": 0,
+              "singleTerminalLF": true,
+              "answerContainerTagsExact": true,
+              "tableShapesExact": true,
+              "emphasisVisibleTextInvariant": true
+            }
+          }
+        },
+        "jp/ops/10-resource-optimization.md": {
+          "sourcePath": "en/ops/10-resource-optimization.md",
+          "sourceBlob": "060d87b83575e6a5f74ba50f8ab7384305497a53",
+          "sourceSha256": "e764c73030b6113855a7f363563c5d506ecbdb4ac0670c0cccc5233f9d7f4cca",
+          "targetSha256": "1e9b4f0e8df7564c9c86bf839b11466fe4d8e20ea032eca510c097d9e59a2082",
+          "reviewer": "nativeGPT6Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "ops/10-resource-optimization.md",
+            "sourcePath": "en/ops/10-resource-optimization.md",
+            "targetPath": "jp/ops/10-resource-optimization.md",
+            "sourceBlob": "060d87b83575e6a5f74ba50f8ab7384305497a53",
+            "sourceSha256": "e764c73030b6113855a7f363563c5d506ecbdb4ac0670c0cccc5233f9d7f4cca",
+            "initialTargetSha256": "525e0c11e5b5f0abec0caecfd25fe43c49f1adf9cc2851e61836db697a4b86b3",
+            "targetSha256": "1e9b4f0e8df7564c9c86bf839b11466fe4d8e20ea032eca510c097d9e59a2082",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fullFinalReread": true,
+            "fidelityScore": 97,
+            "readabilityScore": 93,
+            "qualityScore": 95,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/e764c73030b6113855a7f363563c5d506ecbdb4ac0670c0cccc5233f9d7f4cca.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/525e0c11e5b5f0abec0caecfd25fe43c49f1adf9cc2851e61836db697a4b86b3.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/1e9b4f0e8df7564c9c86bf839b11466fe4d8e20ea032eca510c097d9e59a2082.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/1e9b4f0e8df7564c9c86bf839b11466fe4d8e20ea032eca510c097d9e59a2082.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "Compared the full pinned English source and captured initial Japanese page with the complete final page. The initial translation covered the current resource, VPA, JVM, Python, Node.js, Go/Rust, PromQL and EKS Auto Mode content, but the date and tested Node.js, Go and VPA versions were stale; the Node.js CLI link also targeted the older release.",
+              "The operational distinctions and numerical examples were otherwise aligned, including QoS/eviction, CPU quotas, heap versus container memory, SLO headroom, sampling, PromQL zero/missing-series behavior and Auto Mode spare capacity."
+            ],
+            "resolutions": [
+              "Updated the review date to October 16, 2026, Node.js to 24.22, Go to 1.27.2 and VPA to 1.8.0, and changed the Node.js CLI reference to the matching v24.22.0 URL.",
+              "Reread the complete final Japanese page against the source and initial capture. All 31 fenced blocks are byte-exact; 18 link destinations, 18 heading levels, 77 inline-code tokens, tables and answer tags match. Translation validation passed; VitePress rendering has zero Vue errors and zero literal-bold findings; no owned IDs were needed."
+            ],
+            "rationale": "Scores reflect the complete source/initial/final comparison. The final Japanese page preserves the source thresholds, version-specific runtime behavior, operational caveats and validation limits, while correcting stale release metadata and reference targets. All executable examples remain byte-identical to the pinned English source.",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 31,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 18,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 18,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 77,
+              "inlineCodeTokensExact": true,
+              "ownedAnchorRepairAddedIds": 0,
+              "singleTerminalLF": true,
+              "answerContainerTagsExact": true,
+              "tableShapesExact": true,
+              "emphasisVisibleTextInvariant": true
+            }
           }
         },
         "jp/ops/12-event-capacity-planning.md": {
@@ -60502,6 +60798,59 @@
             "ledgerBackupSha256": "db38b7493e79744c54635f3e16fed8f31eadf74702eabfd87b3eaeb38fc32514"
           }
         },
+        "jp/service-mesh/istio/advanced/02-multi-cluster.md": {
+          "sourcePath": "en/service-mesh/istio/advanced/02-multi-cluster.md",
+          "sourceBlob": "fb5c43d287c1ee3e24c0f6a9d67f82b9bf997434",
+          "sourceSha256": "4d6be14cc97a4fc332c73e793b227f1feb87805b2204caed68332a83e24c67ec",
+          "targetSha256": "0d924dff3e8bf166f5a6235705ec364f1cc000a5d8232008aff51713263cfd64",
+          "reviewer": "nativeGPT6Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "service-mesh/istio/advanced/02-multi-cluster.md",
+            "sourcePath": "en/service-mesh/istio/advanced/02-multi-cluster.md",
+            "targetPath": "jp/service-mesh/istio/advanced/02-multi-cluster.md",
+            "sourceBlob": "fb5c43d287c1ee3e24c0f6a9d67f82b9bf997434",
+            "sourceSha256": "4d6be14cc97a4fc332c73e793b227f1feb87805b2204caed68332a83e24c67ec",
+            "initialTargetSha256": "4b38fa3520e501a535cc75060fa9c92c3fd1b53e036a1f7b0fe916e35abdb577",
+            "targetSha256": "0d924dff3e8bf166f5a6235705ec364f1cc000a5d8232008aff51713263cfd64",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fullFinalReread": true,
+            "fidelityScore": 97,
+            "readabilityScore": 93,
+            "qualityScore": 95,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/4d6be14cc97a4fc332c73e793b227f1feb87805b2204caed68332a83e24c67ec.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/4b38fa3520e501a535cc75060fa9c92c3fd1b53e036a1f7b0fe916e35abdb577.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/0d924dff3e8bf166f5a6235705ec364f1cc000a5d8232008aff51713263cfd64.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/0d924dff3e8bf166f5a6235705ec364f1cc000a5d8232008aff51713263cfd64.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "Compared the complete pinned English page, the captured Japanese initial page and the complete final Japanese page. The translation covered all current architecture-selection guidance, topology prerequisites, code walkthroughs, VPC Lattice regional and identity boundaries, SigV4 authorization, Route 53 failover caveats, cost methodology and references. The initial update date and Kubernetes range were stale; the Istio version and substantive guidance matched the current source."
+            ],
+            "resolutions": [
+              "Localized the current review date to 2026年10月16日 and updated the Kubernetes range from 1.32–1.36 to 1.32–1.37. Reread the complete final page against the full source and initial capture; no other prose changes were needed."
+            ],
+            "rationale": "The scores reflect the actual complete source/initial/final comparison. The final Japanese page preserves the source conditions and caveats, including that DR outcomes are not mesh guarantees, topology and trust requirements, regional Lattice endpoint boundaries, the separate ingress/mTLS/SigV4 contracts, DNS failover limitations and the absence of reproducible benchmark claims. Executable examples and link destinations remain exact.",
+            "validation": {
+              "translationValidator": "passed",
+              "fencedCodeBlocksExact": 15,
+              "linkDestinationsExact": 44,
+              "headingLevelsExact": 81,
+              "inlineCodeTokenMultisetExact": 12,
+              "tableShapesExact": 3,
+              "answerContainerTags": "exact",
+              "ownedAnchorRepair": "passed; no changes required",
+              "emphasisCheck": "passed; no repairs required",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "singleTerminalLF": true,
+              "diffCheck": "passed; only the stale date and Kubernetes range were changed"
+            }
+          }
+        },
         "jp/service-mesh/istio/advanced/03-envoy-filter.md": {
           "sourcePath": "en/service-mesh/istio/advanced/03-envoy-filter.md",
           "sourceBlob": "7f09ad48746271d70ef1dd4fec725b92a5509577",
@@ -60817,6 +61166,65 @@
               "Saved exact final Japanese bytes at /tmp/native-reviewed-target-snapshots/18e5eae3b9ef1b987f475bd106eba938eacdf4b041143f66eece6a0e5cfd8770.md."
             ],
             "rationale": "The full-page comparison found faithful, readable operational guidance, including the critical distinction between IstioOperator input, Kubernetes resources, ambient-mode policies and Helm values. All examples remain clearly qualified as starting points. Score reflects high fidelity and natural technical Japanese with standard product terminology retained."
+          }
+        },
+        "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md": {
+          "sourcePath": "en/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "sourceBlob": "fc4288e0f527ecfee495d1734940e6a4a06978a6",
+          "sourceSha256": "99d7ebeb6fabd26171559008d44458a5febf34d4fc82bbf31b032d5e055e3367",
+          "targetSha256": "c19d11f506c0e0cc118eaebd0598a98f11f832ccbba906ad50f5b284156604ae",
+          "reviewer": "nativeGPT6Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "service-mesh/istio/comparison/01-service-mesh-comparison.md",
+            "sourcePath": "en/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+            "targetPath": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+            "sourceBlob": "fc4288e0f527ecfee495d1734940e6a4a06978a6",
+            "sourceSha256": "99d7ebeb6fabd26171559008d44458a5febf34d4fc82bbf31b032d5e055e3367",
+            "initialTargetSha256": "19f0dfde10dced1873b03555bcec89cd7c454749b24f1f29d583dfbc0e9555c5",
+            "targetSha256": "c19d11f506c0e0cc118eaebd0598a98f11f832ccbba906ad50f5b284156604ae",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "completePageComparison": true,
+            "fullFinalReread": true,
+            "fidelityScore": 97,
+            "readabilityScore": 92,
+            "qualityScore": 94,
+            "sourceSnapshot": "/tmp/native-cn-assisted-jp-source-snapshots/99d7ebeb6fabd26171559008d44458a5febf34d4fc82bbf31b032d5e055e3367.md",
+            "initialTargetSnapshot": "/tmp/native-cn-assisted-jp-initial-snapshots/19f0dfde10dced1873b03555bcec89cd7c454749b24f1f29d583dfbc0e9555c5.md",
+            "reviewedTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/c19d11f506c0e0cc118eaebd0598a98f11f832ccbba906ad50f5b284156604ae.md",
+            "finalTargetSnapshot": "/tmp/native-cn-assisted-jp-final-snapshots/c19d11f506c0e0cc118eaebd0598a98f11f832ccbba906ad50f5b284156604ae.md",
+            "sourcePinCommit": "0671be4213f6c764e9bf44ee785a17dd9f0ffe9d",
+            "partitionSha256": "d222653fb6896dfc29d637b3a61e564b3f9e120424c84d59d63baa1c864ca731",
+            "findings": [
+              "Compared the full pinned English source and captured initial Japanese page against the complete final Japanese page. The initial translation already covered the current comparison, security, observability, multicluster, installation/operations, cost/licensing, and selection guidance without a material technical omission.",
+              "The initial date label described the source “Last reviewed” value as “最終更新”, and the September 3 release date remained in English."
+            ],
+            "resolutions": [
+              "Changed the date label to “最終レビュー日” and localized the two date strings while preserving their exact dates; no other prose was changed.",
+              "Final review confirms the source distinctions and caveats remain intact, including unverified historical cost/performance figures, artifact/version boundaries, independent routing examples, security policy scope, multicluster prerequisites, and upgrade limits.",
+              "All 16 fenced code blocks are byte-exact; 54 link destinations, 35 heading levels, 14 inline-code tokens, answer tags, and table shapes match. Translation validation passed; actual VitePress rendering has zero Vue errors and zero literal-bold findings; no canonical IDs were needed."
+            ],
+            "rationale": "Scores reflect full-page comparison of the pinned English source, captured pre-edit Japanese, and the final Japanese page. The prose preserves technical qualifiers and avoids turning historical inputs into current guarantees. The only edits localized two date strings and corrected the reviewed-date label. Protected code, links, hierarchy, and rendered output passed checks.",
+            "validation": {
+              "translationValidator": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 16,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 54,
+              "linkDestinationsExact": true,
+              "sourceHeadingCount": 35,
+              "headingHierarchyExact": true,
+              "inlineCodeTokenCount": 14,
+              "inlineCodeTokensExact": true,
+              "ownedAnchorRepairAddedIds": 0,
+              "singleTerminalLF": true,
+              "answerContainerTagsExact": true,
+              "tableShapesExact": true,
+              "emphasisVisibleTextInvariant": true
+            }
           }
         },
         "jp/service-mesh/istio/comparison/README.md": {
@@ -61306,6 +61714,72 @@
               "Scoped git diff --check passed",
               "Exact frozen source, original pre-edit Japanese target, and final Japanese bytes are SHA-256 verified and saved"
             ]
+          }
+        },
+        "jp/service-mesh/istio/traffic-management/04-traffic-splitting.md": {
+          "sourcePath": "en/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+          "sourceBlob": "198ed2b04ad6f743e0d2625e2737a6057c5412b5",
+          "sourceSha256": "4e2bc32154b39cf5748ab59e1041850212ac937031f421aeebd16fb452ba47c5",
+          "targetSha256": "c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0",
+          "reviewer": "nativeGPT6Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+            "sourceBlob": "198ed2b04ad6f743e0d2625e2737a6057c5412b5",
+            "sourceSha256": "4e2bc32154b39cf5748ab59e1041850212ac937031f421aeebd16fb452ba47c5",
+            "targetSha256": "c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0",
+            "initialTargetSha256": "3de93ee4b1d6d7aeaa8231a9071699a6ee720027fb891bd4eaed1ee62bfafdbf",
+            "preEditTargetSha256": "3de93ee4b1d6d7aeaa8231a9071699a6ee720027fb891bd4eaed1ee62bfafdbf",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/4e2bc32154b39cf5748ab59e1041850212ac937031f421aeebd16fb452ba47c5.md",
+            "initialSnapshot": "/tmp/jp-native-initial-snapshots/3de93ee4b1d6d7aeaa8231a9071699a6ee720027fb891bd4eaed1ee62bfafdbf.md",
+            "finalSnapshot": "/tmp/native-reviewed-target-snapshots/c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0.md",
+            "snapshot": "/tmp/native-reviewed-target-snapshots/c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0.md",
+            "completePageComparison": true,
+            "fidelityScore": 96,
+            "readabilityScore": 91,
+            "qualityScore": 94,
+            "qualityScale": "100-point complete-page Japanese fidelity/readability review; entire pinned source, saved initial translation, and final translation compared; code and structural contracts checked separately",
+            "reviewer": "nativeGPT6Luna",
+            "reviewedAt": "2026-10-19T00:42:58+00:00",
+            "status": "passed",
+            "rationale": "I compared the complete pinned English source, the complete saved initial Japanese page, and the complete final Japanese page. The final Japanese now follows the current Istio 1.31.0 and Argo Rollouts 1.10.1 guidance, retains all operational and measurement limits, and clearly distinguishes controller-managed canary routing, Blue/Green promotion, manual progression, traffic mirroring, and rollback behavior. The technical Japanese reads clearly for a Kubernetes and Istio audience; established product, API, and operational terms remain in their conventional forms.",
+            "findings": [
+              "The initial translation was behind the pinned source: it had 61 fenced blocks while the source has 59, omitted the current reviewed-version context and multiple operating cautions, and included outdated statements about route naming and DestinationRule selectors.",
+              "The source adds specific safeguards for Prometheus relabeling and canary ReplicaSet measurements, trusted match headers and unmanaged canary routes, non-atomic updates, Blue/Green selector propagation and promotion states, Job-provider success semantics, and the distinction between Prometheus counter totals and rates and between Rollout abort and undo. The final version covers these details without material drift."
+            ],
+            "resolutions": [
+              "Reconstructed the current Japanese prose, headings, image descriptions, diagram labels, and reference labels from the pinned source. Corrected the route-name and DestinationRule-selector guidance and translated the added operational caveats.",
+              "Restored all 59 source code blocks byte-for-byte. The 39 Markdown link destinations and all 81 heading levels match the source; all 20 inline-code tokens match as a multiset. The owned anchor repair added the 7 required IDs.",
+              "Reread the full final Japanese prose after the anchor repair. Translation validation, emphasis check, actual VitePress rendering, and scoped whitespace validation passed; the renderer reported zero Vue errors and zero literal-bold findings. Final bytes end in exactly one LF."
+            ],
+            "validation": {
+              "translationValidator": "passed",
+              "emphasisCheck": "passed",
+              "vitepressVueErrors": 0,
+              "literalBoldFindings": 0,
+              "sourceFencedBlocks": 59,
+              "fencedBlocksByteExact": true,
+              "sourceLinkDestinations": 39,
+              "linkDestinationsExact": true,
+              "sourceHeadingLevels": 81,
+              "headingHierarchyExact": true,
+              "sourceInlineCodeTokens": 20,
+              "targetInlineCodeTokens": 20,
+              "inlineCodeTokenMultisetExact": true,
+              "ownedAnchorRepairAddedIds": 7,
+              "singleTerminalLF": true,
+              "scopedGitDiffCheck": "passed",
+              "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/4e2bc32154b39cf5748ab59e1041850212ac937031f421aeebd16fb452ba47c5.md",
+              "initialSnapshot": "/tmp/jp-native-initial-snapshots/3de93ee4b1d6d7aeaa8231a9071699a6ee720027fb891bd4eaed1ee62bfafdbf.md",
+              "finalSnapshot": "/tmp/native-reviewed-target-snapshots/c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0.md",
+              "sourceBlob": "198ed2b04ad6f743e0d2625e2737a6057c5412b5",
+              "sourceSha256": "4e2bc32154b39cf5748ab59e1041850212ac937031f421aeebd16fb452ba47c5",
+              "initialTargetSha256": "3de93ee4b1d6d7aeaa8231a9071699a6ee720027fb891bd4eaed1ee62bfafdbf",
+              "targetSha256": "c723f1eef3122692d6a3006188ad63db76c5962e14ada29b509da2a3c6c7a0e0"
+            },
+            "ledgerBackup": "/tmp/jp-native-content-review.pre-service-mesh-istio-traffic-management-04-traffic-splitting-20261019T004258Z.json",
+            "ledgerBackupSha256": "cf094601a37da9654ac1a6329587d5bf919ccb1db67afc3a052dbeca3f3ac284"
           }
         },
         "jp/service-mesh/istio/traffic-management/05-retry-timeout.md": {
@@ -62621,12 +63095,6 @@
           ]
         },
         {
-          "path": "jp/core/08-scheduling-preemption-eviction.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/core/09-cluster-administration.md",
           "issues": [
             "no native review"
@@ -62729,12 +63197,6 @@
           ]
         },
         {
-          "path": "jp/networking/README.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/networking/calico/04-bgp-deep-dive.md",
           "issues": [
             "no native review"
@@ -62789,12 +63251,6 @@
           ]
         },
         {
-          "path": "jp/observability/logging/05-collectors.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/observability/metrics/01-prometheus.md",
           "issues": [
             "no native review"
@@ -62838,18 +63294,6 @@
         },
         {
           "path": "jp/ops/08-observability-analysis.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/ops/09-observability-stack.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/ops/10-resource-optimization.md",
           "issues": [
             "no native review"
           ]
@@ -62987,12 +63431,6 @@
           ]
         },
         {
-          "path": "jp/service-mesh/istio/advanced/02-multi-cluster.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/service-mesh/istio/advanced/08-argo-rollouts.md",
           "issues": [
             "no native review"
@@ -63000,12 +63438,6 @@
         },
         {
           "path": "jp/service-mesh/istio/advanced/10-keda-autoscaling.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
           "issues": [
             "no native review"
           ]
@@ -63054,12 +63486,6 @@
         },
         {
           "path": "jp/service-mesh/istio/security/01-mtls.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/service-mesh/istio/traffic-management/04-traffic-splitting.md",
           "issues": [
             "no native review"
           ]
@@ -91071,12 +91497,12 @@
   },
   "rendererContract": {
     "auditPath": "/tmp/native-document-contract-audit-20261018.json",
-    "auditTime": "2026-10-19T00:38:27.715Z",
+    "auditTime": "2026-10-19T00:50:21.110Z",
     "scope": "Actual VitePress heading hierarchy and authored local fragment links; no semantic grades."
   },
   "renderingContract": {
     "auditPath": "/tmp/native-current-render-audit-20261018.json",
-    "auditTime": "2026-10-19T00:38:19.386Z",
+    "auditTime": "2026-10-19T00:50:12.812Z",
     "scope": "Actual VitePress configuration including default syntax highlighting"
   }
 }
