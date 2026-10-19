@@ -85,6 +85,7 @@
   * [Bare Metal OS Setup](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
   * [Network Separation Security Review](eks-hybrid-nodes/11-network-separation-security.md)
+  * [Pod Connectivity Without SNAT and PrivateLink](eks-hybrid-nodes/12-connectivity-validation.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
   * [Getting Started](eks-auto-mode/01-getting-started.md)
   * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -535,6 +536,7 @@
   * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway Quiz](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
   * [Network Separation Security Review Quiz](quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+  * [Pod Connectivity Without SNAT and PrivateLink Quiz](quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 * EKS Auto Mode
   * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool Configuration Quiz](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)

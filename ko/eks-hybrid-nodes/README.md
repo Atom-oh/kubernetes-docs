@@ -22,6 +22,7 @@ EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 이 가이드의
 9. [베어메탈 서버 OS 설치 및 마이그레이션 가이드](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
 11. [보안팀 관점의 망분리 검토](11-network-separation-security.md)
+12. [SNAT 없는 Pod 연결과 PrivateLink 검증](12-connectivity-validation.md)
 
 ## Hybrid Nodes 개요
 
@@ -123,6 +124,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 * [베어메탈 서버 OS 설치 퀴즈](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 * [EKS Hybrid Nodes Gateway 퀴즈](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 * [보안팀 관점의 망분리 검토 퀴즈](../quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+* [SNAT 없는 Pod 연결과 PrivateLink 검증 퀴즈](../quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 
 ### 관련 문서
 

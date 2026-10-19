@@ -22,6 +22,7 @@ Before choosing a version, check the [EKS version calendar](https://docs.aws.ama
 9. [Bare Metal Server OS Installation and Migration Guide](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
 11. [Network Separation Security Review](11-network-separation-security.md)
+12. [Pod Connectivity Without SNAT and PrivateLink](12-connectivity-validation.md)
 
 ## What Are Hybrid Nodes?
 
@@ -123,6 +124,7 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 * [Bare Metal Server OS Installation and Migration Quiz](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 * [EKS Hybrid Nodes Gateway Quiz](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 * [Network Separation Security Review Quiz](../quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
+* [Pod Connectivity Without SNAT and PrivateLink Quiz](../quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 
 ## Related Documents
 
